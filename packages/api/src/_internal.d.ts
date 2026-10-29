@@ -3,18 +3,8 @@
 import type { LiteralUnion } from './utils';
 import * as React$1 from 'react';
 import { ComponentType, ReactNode } from 'react';
-import * as ReactNativeModule from 'react-native';
-import {
-	AccessibilityState,
-	ImageSourcePropType,
-	ImageStyle,
-	PressableProps,
-	StyleProp,
-	TextInputProps as RNTextInputProps,
-	TextStyle,
-	ViewProps,
-	ViewStyle,
-} from 'react-native';
+import * as RN from 'react-native';
+import { ImageSourcePropType, ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
 declare const THEME_FLAG_KEYS: readonly [
 	'MOBILE_DARK_GRADIENT_THEME_ENABLED',
@@ -125,16 +115,202 @@ export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 		'native.runtime.events',
 	];
 };
-export type ActionSheetProps = {
-	children?: React$1.ReactNode;
-	startExpanded?: boolean;
+/**
+ * Props of `AIGlyphText` (function). Exports: AIGlyphText.
+ * @see design/visual-identities/ai/AIGlyphText.native.tsx
+ */
+export type AIGlyphTextProps = {
+	allowFontScaling?: React$1.ComponentProps<typeof RN.Text>['allowFontScaling'];
+	/** @default false */
+	animated?: boolean;
+	children?: React$1.ComponentProps<typeof RN.Text>['children'];
+	/** @default 'text-default' */
+	color?: 'none' | 'text-default' | (string & {});
+	ellipsizeMode?: React$1.ComponentProps<typeof RN.Text>['ellipsizeMode'];
+	numberOfLines?: React$1.ComponentProps<typeof RN.Text>['numberOfLines'];
+	size?: unknown;
+	style?: React$1.ComponentProps<typeof RN.Text>['style'];
 };
-export type ActionSheetRowProps = {
-	label: React$1.ReactNode;
-	subLabel?: React$1.ReactNode;
-	icon?: React$1.ReactNode;
-	onPress?: DiscordFunction<void>;
+export type AILoaderComponent = React$1.ComponentType<AILoaderProps>;
+/**
+ * Props of `AILoader` (memo). Exports: AILoader.
+ * @see design/visual-identities/ai/AILoader/AILoader.native.tsx
+ */
+export type AILoaderProps = {
+	accessibilityLabel?: React$1.ComponentProps<typeof RN.View>['accessibilityLabel'];
+	/** @default 'text-default' */
+	color?: SlotProps['color'];
+	/** @default 16 */
+	size?: number;
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
 };
+export type AIShimmerComponent = React$1.ComponentType<AIShimmerProps & Record<string, unknown>>;
+/**
+ * Props of `AIShimmerInner` (function). Exports: none.
+ * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
+ */
+export type AIShimmerInnerProps = {
+	color?: DesignTextProps['color'];
+	delay?: unknown;
+	duration?: unknown;
+	glyphColor?: ShimmerLayersProps['glyphColor'];
+	initialDelay?: unknown;
+	onComplete?: (...args: any[]) => unknown;
+	onStart?: (...args: any[]) => unknown;
+	ref?: React$1.Ref<any>;
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
+	text?: unknown;
+	/** @default 0 */
+	trailingWidth?: number;
+	variant?: DesignTextProps['variant'];
+};
+/**
+ * Props of `AIShimmer` (memo). Exports: AIShimmer.
+ * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
+ */
+export type AIShimmerProps = Omit<
+	AIShimmerInnerProps,
+	'delay' | 'duration' | 'initialDelay' | 'variant'
+> & {
+	delay?: unknown;
+	duration?: number;
+	/** @default 0 */
+	initialDelay?: number;
+	/** @default 'text-md/normal' */
+	variant?: AIShimmerInnerProps['variant'];
+};
+export type AccessibilityAnnouncerLiveRegionComponent =
+	React$1.ComponentType<AccessibilityAnnouncerLiveRegionProps>;
+/**
+ * Props of `AccessibilityAnnouncerLiveRegion` (memo). Exports: AccessibilityAnnouncerLiveRegion.
+ * @see ../discord_common/js/packages/design/components/AccessibilityAnnouncer/AccessibilityAnnouncerLiveRegion.native.tsx
+ */
+export type AccessibilityAnnouncerLiveRegionProps = {};
+export type AccessibilityViewComponent = React$1.ComponentType<
+	AccessibilityViewProps & Record<string, unknown>
+>;
+/**
+ * Props of `AccessibilityView` (function). Exports: AccessibilityView, AccessibilityViewAnimated.
+ * @see design/components/AccessibilityView/AccessibilityView.native.tsx
+ */
+export type AccessibilityViewProps = Omit<
+	React$1.ComponentProps<typeof RN.View>,
+	'accessibilityViewIsModal' | 'collapsable' | 'nativeID' | 'onAccessibilityEscape' | 'ref'
+> & {
+	/** @default false */
+	accessibilityViewIsModal?: React$1.ComponentProps<typeof RN.View>['accessibilityViewIsModal'];
+	collapsable?: React$1.ComponentProps<typeof RN.View>['collapsable'];
+	nativeID?: React$1.ComponentProps<typeof RN.View>['nativeID'];
+	onAccessibilityEscape?: React$1.ComponentProps<typeof RN.View>['onAccessibilityEscape'];
+	ref?: React$1.Ref<any>;
+};
+export type ActionSheetCloseButtonComponent = React$1.ComponentType<ActionSheetCloseButtonProps>;
+/**
+ * Props of `ActionSheetCloseButton` (function). Exports: ActionSheetCloseButton.
+ * @see design/components/Sheet/native/ActionSheetCloseButton.native.tsx
+ */
+export type ActionSheetCloseButtonProps = {
+	onPress?: PressableOpacityProps['onPress'];
+	variant?: 'overlay' | (string & {});
+};
+export type ActionSheetComponent = React$1.ComponentType<
+	ActionSheetProps & Record<string, unknown>
+>;
+export type ActionSheetHeaderBarComponent = React$1.ComponentType<ActionSheetHeaderBarProps>;
+/**
+ * Props of `ActionSheetHeaderBar` (function). Exports: ActionSheetHeaderBar.
+ * @see design/components/Sheet/native/ActionSheetHeaderBar.native.tsx
+ */
+export type ActionSheetHeaderBarProps = {
+	accessibilityLabel?: unknown;
+	onPress?: React$1.ComponentProps<typeof RN.TouchableWithoutFeedback>['onPress'];
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
+	tabStyle?: React$1.ComponentProps<typeof RN.View>['style'];
+	/** @default 'default' */
+	variant?: 'default' | 'floating' | 'overlay' | (string & {});
+};
+export type ActionSheetHeaderPressableTextComponent =
+	React$1.ComponentType<ActionSheetHeaderPressableTextProps>;
+/**
+ * Props of `ActionSheetHeaderPressableText` (function). Exports: ActionSheetHeaderPressableText.
+ * @see design/components/Sheet/native/ActionSheetHeaderPressableText.native.tsx
+ */
+export type ActionSheetHeaderPressableTextProps = {
+	accessibilityLabel?: PressableOpacityProps['accessibilityLabel'];
+	label?: DesignTextProps['children'];
+	onPress?: PressableOpacityProps['onPress'];
+};
+export type ActionSheetIconHeaderComponent = React$1.ComponentType<ActionSheetIconHeaderProps>;
+/**
+ * Props of `ActionSheetIconHeader` (function). Exports: ActionSheetIconHeader.
+ * @see design/components/Sheet/native/ActionSheetIconHeader.native.tsx
+ */
+export type ActionSheetIconHeaderProps = {
+	icon?: React$1.ComponentProps<typeof RN.View>['children'];
+	subtitle?: DesignTextProps['children'];
+	title?: DesignTextProps['children'];
+};
+export type ActionSheetPresenterComponent = React$1.ComponentType<ActionSheetPresenterProps>;
+/**
+ * Props of `ActionSheetPresenter` (function). Exports: ActionSheetPresenter.
+ * @see design/components/Sheet/native/ActionSheetPresenter.native.tsx
+ */
+export type ActionSheetPresenterProps = {
+	appEntryKey?: unknown;
+};
+/**
+ * Props of `ActionSheet` (function). Exports: ActionSheet.
+ * @see design/components/Sheet/native/ActionSheet.native.tsx
+ */
+export type ActionSheetProps = Omit<SheetBottomSheetProps, 'ref'> & {
+	ref?: SheetBottomSheetProps['ref'];
+};
+export type ActionSheetRowComponent = React$1.ComponentType<
+	ActionSheetRowProps & Record<string, unknown>
+> &
+	ActionSheetRowStatics;
+export type ActionSheetRowGroupComponent = React$1.ComponentType<ActionSheetRowGroupProps>;
+/**
+ * Props of `ActionSheetRowGroup` (function). Exports: none.
+ * @see design/components/Sheet/native/ActionSheetRow.native.tsx
+ */
+export type ActionSheetRowGroupProps = {
+	children?: TableRowGroupProps['children'];
+	hasIcons?: TableRowGroupProps['hasIcons'];
+	title?: TableRowGroupProps['title'];
+};
+export type ActionSheetRowIconComponent = React$1.ComponentType<ActionSheetRowIconProps>;
+/**
+ * Props of `ActionSheetRowIcon` (function). Exports: none.
+ * @see design/components/Sheet/native/ActionSheetRow.native.tsx
+ */
+export type ActionSheetRowIconProps = {
+	IconComponent?: unknown;
+	source?: TableRowIconProps['source'];
+};
+/**
+ * Props of `ActionSheetRow` (function). Exports: ActionSheetRow.
+ * @see design/components/Sheet/native/ActionSheetRow.native.tsx
+ */
+export type ActionSheetRowProps = Omit<TableRowProps, 'arrow' | 'icon' | 'label' | 'variant'> & {
+	arrow?: TableRowProps['arrow'];
+	icon?: TableRowProps['icon'];
+	label?: TableRowProps['label'];
+	/** @default 'default' */
+	variant?: TableRowProps['variant'];
+};
+export type ActionSheetRowStatics = {
+	Icon: ActionSheetRowIconComponent;
+	Group: ActionSheetRowGroupComponent;
+};
+export type ActionSheetSwitchRowComponent = React$1.ComponentType<
+	ActionSheetSwitchRowProps & Record<string, unknown>
+>;
+/**
+ * Props of `ActionSheetSwitchRow` (function). Exports: ActionSheetSwitchRow.
+ * @see design/components/Sheet/native/ActionSheetRow.native.tsx
+ */
+export type ActionSheetSwitchRowProps = TableSwitchRowProps;
 /** A loaded addon entity: its runtime state, instance, source bundle, and {@link AddonManifest}. */
 export type Addon = {
 	started: boolean;
@@ -198,82 +374,535 @@ export type AddonResolveable = string | Addon;
 /** Whether an addon's bundle carries a valid Unbound signature. */
 export type AddonTrust = 'signed' | 'unsigned';
 export type AddonType = (typeof ADDON_TYPES)[number];
-export type AlertActionButtonProps = {
-	text: string;
-	variant?: ButtonVariant;
-	loading?: boolean;
-	disabled?: boolean;
-	onPress?: DiscordFunction<void>;
+export type AlertActionButtonComponent = React$1.ComponentType<
+	AlertActionButtonProps & Record<string, unknown>
+>;
+/**
+ * Props of `AlertActionButton` (function). Exports: AlertActionButton.
+ * @see design/components/AlertModal/native/AlertModal.native.tsx
+ */
+export type AlertActionButtonProps = Omit<BaseTextButtonProps, 'loading' | 'onPress'> & {
+	loading?: BaseTextButtonProps['loading'];
+	onPress?: (...args: any[]) => unknown;
 };
+/**
+ * Props of `AlertActions` (function). Exports: AlertActions.
+ * @see design/components/AlertModal/native/AlertModal.native.tsx
+ */
+export type AlertActionsProps = {
+	children?: StackProps['children'];
+};
+export type AlertModalComponent = React$1.ComponentType<AlertModalProps>;
+export type AlertModalContainerComponent = React$1.ComponentType<AlertModalContainerProps>;
+/**
+ * Props of `AlertModalContainer` (memo). Exports: AlertModalContainer.
+ * @see design/components/AlertModal/native/AlertModal.native.tsx
+ */
+export type AlertModalContainerProps = {};
+/**
+ * Props of `AlertModal` (function). Exports: AlertModal.
+ * @see design/components/AlertModal/native/AlertModal.native.tsx
+ */
 export type AlertModalProps = {
-	title?: React$1.ReactNode;
-	content?: React$1.ReactNode;
-	extraContent?: React$1.ReactNode;
-	actions?: React$1.ReactNode;
+	actions?: AlertActionsProps['children'];
+	content?: DesignTextProps['children'];
+	extraContent?: StackProps['children'];
+	header?: StackProps['children'];
+	title?: DesignTextProps['children'];
 };
 /** The native module used to register and resolve {@link DiscordAsset}s by id. */
 export type AssetsModule = {
 	registerAsset: (asset: DiscordAsset) => number;
 	getAssetByID: (id: number) => DiscordAsset | null;
 };
-/** `Button` with its attached `Icon` static. */
-export type ButtonComponent = React$1.ComponentType<ButtonProps> & {
-	Icon: React$1.ComponentType<TableRowIconProps>;
-};
-export type ButtonProps = {
-	text?: string;
-	textElement?: React$1.ReactNode;
-	variant?: ButtonVariant;
-	size?: ButtonSize;
-	loading?: boolean;
-	disabled?: boolean;
-	icon?: React$1.ReactNode | number;
-	iconPosition?: 'start' | 'end';
-	grow?: boolean;
-	shrink?: boolean;
-	shiny?: boolean;
-	textVariant?: TextVariant;
-	style?: StyleProp<ViewStyle>;
-	accessibilityLabel?: string;
-	onPress?: DiscordFunction<void>;
-	onPressIn?: DiscordFunction<void>;
-	onPressOut?: DiscordFunction<void>;
-};
-export type ButtonSize = LiteralUnion<'sm' | 'md' | 'lg'>;
-export type ButtonVariant = LiteralUnion<
-	'primary' | 'secondary' | 'tertiary' | 'destructive' | 'active' | 'expressive'
+export type AvatarDuoPileComponent = React$1.ComponentType<
+	AvatarDuoPileProps & Record<string, unknown>
 >;
-export type CardProps = {
-	variant?: LiteralUnion<'primary' | 'secondary' | 'muted' | 'transparent'>;
-	border?: LiteralUnion<'none' | 'subtle' | 'strong'>;
-	shadow?: LiteralUnion<'none' | 'low' | 'medium' | 'high' | 'border'>;
-	radius?: number;
-	start?: boolean;
-	end?: boolean;
+/**
+ * Props of `AvatarDuoPile` (function). Exports: AvatarDuoPile.
+ * @see design/components/Pile/native/AvatarDuoPile.native.tsx
+ */
+export type AvatarDuoPileProps = {
+	'aria-label'?: PileProps['aria-label'];
+	children?: PileProps['children'];
+	names?: {
+		length?: unknown;
+	};
+	size: {
+		map?: unknown;
+	};
+};
+export type AvatarPileComponent = React$1.ComponentType<AvatarPileProps>;
+/**
+ * Props of `AvatarPile` (function). Exports: AvatarPile.
+ * @see design/components/Pile/native/AvatarPile.native.tsx
+ */
+export type AvatarPileProps = {
+	children?: PileProps['children'];
+	names?: {
+		length?: unknown;
+	};
+	size?: unknown;
+	totalCount?: number;
+};
+export type BackdropComponent = React$1.ComponentType<BackdropProps>;
+/**
+ * Props of `Backdrop` (function). Exports: Backdrop.
+ * @see design/components/Backdrop/native/Backdrop.native.tsx
+ */
+export type BackdropProps = {
+	accessibilityLabel?: unknown;
+	accessibleDismissStyle?: React$1.ComponentProps<typeof RN.Pressable>['style'];
+	animatedProps?: unknown;
+	'aria-hidden'?: React$1.ComponentProps<typeof RN.Pressable>['aria-hidden'];
+	/** @default 'none' */
+	blur?: 'none' | 'strong' | 'subtle' | (string & {});
+	onDismiss?: React$1.ComponentProps<typeof RN.Pressable>['onPress'];
+	/** @default false */
+	opaque?: boolean;
+	style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+};
+/**
+ * Props of `BackgroundBlurFill` (function). Exports: BackgroundBlurFill.
+ * @see design/components/experimental/BackgroundBlurView/native/BackgroundBlurFill.native.tsx
+ */
+export type BackgroundBlurFillProps = {
+	android_blurTargetViewNativeId?: VisualEffectViewProps['android_blurTargetViewNativeId'];
+	android_fallbackColor?: unknown;
+	blurAmount?: VisualEffectViewProps['blurAmount'];
+	blurStyle?: 'default' | (string & {});
+	blurTheme?: unknown;
+	style?: VisualEffectViewProps['style'];
+	tintColor?: unknown;
+};
+/**
+ * Props of `BackgroundBlurFillWithPress` (function). Exports: BackgroundBlurFillWithPress.
+ * @see design/components/experimental/BackgroundBlurView/native/BackgroundBlurFill.native.tsx
+ */
+export type BackgroundBlurFillWithPressProps = {
+	blurTheme?: unknown;
+	pressed: {
+		get?: unknown;
+	};
+	style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+};
+export type BackgroundBlurViewComponentComponent = React$1.ComponentType<
+	BackgroundBlurViewComponentProps & Record<string, unknown>
+>;
+/**
+ * Props of `BackgroundBlurViewComponent` (function). Exports: BackgroundBlurView.
+ * @see design/components/experimental/BackgroundBlurView/native/BackgroundBlurView.native.tsx
+ */
+export type BackgroundBlurViewComponentProps = Omit<
+	React$1.ComponentProps<typeof RN.View>,
+	'android_blurTargetViewNativeId' | 'blurTheme' | 'children' | 'pressed' | 'ref' | 'style'
+> & {
+	android_blurTargetViewNativeId?: BackgroundBlurFillProps['android_blurTargetViewNativeId'];
+	blurTheme?: 'dark' | (string & {});
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+	pressed?: BackgroundBlurFillWithPressProps['pressed'];
+	ref?: React$1.Ref<any>;
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
+};
+/**
+ * Props of `BaseIconButton` (function). Exports: BaseIconButton.
+ * @see design/components/Button/native/BaseIconButton.native.tsx
+ */
+export type BaseIconButtonProps = Omit<
+	ButtonBaseButtonProps,
+	| 'icon'
+	| 'loading'
+	| 'maxFontSizeMultiplier'
+	| 'pillStyle'
+	| 'ref'
+	| 'scaleAmountInPx'
+	| 'size'
+	| 'style'
+	| 'variant'
+> & {
+	icon?: React$1.ReactElement | VoidIconProps['source'];
+	loading?: ButtonPillProps['loading'];
+	maxFontSizeMultiplier?: unknown;
+	pillStyle?: ButtonPillProps['style'];
+	ref?: ButtonBaseButtonProps['ref'];
+	/** @default 4 */
+	scaleAmountInPx?: number;
+	size?: 'lg' | 'sm' | (string & {});
+	style?: ButtonBaseButtonProps['style'];
+	/** @default 'primary' */
+	variant?: ButtonPillProps['variant'];
+};
+/**
+ * Props of `BaseNavigationContainer` (forwardRef). Exports: BaseNavigationContainer.
+ * @see module 4784 (no source path)
+ */
+export type BaseNavigationContainerProps = {
+	children?: ThemeProviderProps['children'];
+	initialState?: {
+		key?: unknown;
+		routeNames?: unknown;
+		routes?: unknown;
+	};
+	/** @default false */
+	navigationInChildEnabled?: boolean;
+	onReady?: (...args: any[]) => unknown;
+	onStateChange?: (...args: any[]) => unknown;
+	onUnhandledAction?: (...args: any[]) => unknown;
+	theme?: unknown;
+};
+export type BaseTextButtonComponent = React$1.ComponentType<BaseTextButtonProps> &
+	BaseTextButtonStatics;
+/**
+ * Props of `BaseTextButtonIcon` (function). Exports: none.
+ * @see design/components/Button/native/BaseTextButton.native.tsx
+ */
+export type BaseTextButtonIconProps = {
+	icon?: VoidIconProps['source'];
+	iconOpticalOffsetMargin?: unknown;
+	iconPosition?: unknown;
+	size?: 'lg' | 'sm' | (string & {});
+	style?: VoidIconProps['style'];
+};
+/**
+ * Props of `BaseTextButton` (function). Exports: BaseTextButton.
+ * @see design/components/Button/native/BaseTextButton.native.tsx
+ */
+export type BaseTextButtonProps = Omit<
+	ButtonBaseButtonProps,
+	| 'accessibilityLabel'
+	| 'accessibilityRole'
+	| 'collapseText'
+	| 'grow'
+	| 'icon'
+	| 'iconOpticalOffsetMargin'
+	| 'iconPosition'
+	| 'loading'
+	| 'maxFontSizeMultiplier'
+	| 'onLayout'
+	| 'onPressIn'
+	| 'onPressOut'
+	| 'pillStyle'
+	| 'pointerEvents'
+	| 'ref'
+	| 'shiny'
+	| 'shrink'
+	| 'size'
+	| 'style'
+	| 'text'
+	| 'textElement'
+	| 'textVariant'
+	| 'variant'
+> & {
+	accessibilityLabel?: ButtonBaseButtonProps['accessibilityLabel'];
+	/** @default 'button' */
+	accessibilityRole?: ButtonBaseButtonProps['accessibilityRole'];
+	collapseText?: CollapsingTextProps['collapseText'];
+	/** @default false */
+	grow?: boolean;
+	icon?: React$1.ReactElement | BaseTextButtonIconProps['icon'];
+	/** @default 0 */
+	iconOpticalOffsetMargin?: number;
+	/** @default 'start' */
+	iconPosition?: 'end' | 'start' | (string & {});
+	loading?: ButtonPillProps['loading'];
+	maxFontSizeMultiplier?: number | string;
+	onLayout?: (...args: any[]) => unknown;
+	onPressIn?: (...args: any[]) => unknown;
+	onPressOut?: (...args: any[]) => unknown;
+	pillStyle?: ButtonPillProps['style'];
+	pointerEvents?: ButtonBaseButtonProps['pointerEvents'];
+	ref?: ButtonBaseButtonProps['ref'];
+	/** @default false */
+	shiny?: boolean;
+	/** @default false */
+	shrink?: boolean;
+	size?: 'lg' | 'md' | 'sm' | (string & {});
+	style?: ButtonBaseButtonProps['style'];
+	text?: React$1.ComponentProps<typeof RN.Text>['children'];
+	textElement?: unknown;
+	textVariant?: 'heading-md/bold' | 'text-md/semibold' | (string & {});
+	/** @default 'primary' */
+	variant?:
+		| 'active'
+		| 'critical-primary'
+		| 'critical-secondary'
+		| 'destructive'
+		| 'experimental_premium-basic'
+		| 'experimental_premium-primary'
+		| 'experimental_premium-secondary'
+		| 'expressive'
+		| 'primary'
+		| 'primary-overlay'
+		| 'secondary'
+		| 'secondary-overlay'
+		| 'tertiary'
+		| 'toggle-on'
+		| (string & {});
+};
+export type BaseTextButtonStatics = {
+	Icon: TextButtonIconComponent;
+};
+/**
+ * Props of `BaseTextField` (function). Exports: BaseTextField.
+ * @see design/components/TextField/native/BaseTextField.native.tsx
+ */
+export type BaseTextFieldProps = Omit<
+	InputTextInputProps,
+	| 'autoComplete'
+	| 'defaultValue'
+	| 'enableAndroidSanitizedInputWorkaround'
+	| 'inputStyle'
+	| 'keyboardType'
+	| 'leading'
+	| 'leadingIcon'
+	| 'onChangeText'
+	| 'ref'
+	| 'round'
+	| 'secureTextEntry'
+	| 'size'
+	| 'trailing'
+	| 'value'
+> & {
+	autoComplete?: InputTextInputProps['autoComplete'];
+	defaultValue?: {
+		replace?: unknown;
+	};
+	enableAndroidSanitizedInputWorkaround?: boolean;
+	inputStyle?: InputTextInputProps['style'];
+	/** @default 'default' */
+	keyboardType?: 'default' | (string & {});
+	leading?: InputFieldContainerProps['children'];
+	leadingIcon?: unknown;
+	onChangeText?: (...args: any[]) => unknown;
+	ref?: React$1.Ref<any>;
+	round?: unknown;
+	/** @default false */
+	secureTextEntry?: boolean;
+	size?: unknown;
+	trailing?: InputFieldContainerProps['children'];
+	value?: {
+		replace?: unknown;
+	};
+};
+/**
+ * Props of `BottomSheetBackdropComponent` (memo). Exports: BottomSheetBackdrop.
+ * @see design/components/Sheet/native/BottomSheetBackdrop.native.tsx
+ */
+export type BottomSheetBackdropComponentProps = {
+	animatedIndex: {
+		get?: unknown;
+	};
+	/** @default 0 */
+	appearsOnIndex?: number;
+	disappearsOnIndex?: unknown;
+	onPress?: (...args: any[]) => unknown;
+	/** @default 1 */
+	opacity?: number;
+	/** @default 'close' */
+	pressBehavior?: 'close' | 'collapse' | 'none' | (string & {});
+	style?: BackdropProps['style'];
+};
+export type BottomSheetTextInputComponent = React$1.ComponentType<
+	BottomSheetTextInputProps & Record<string, unknown>
+>;
+/**
+ * Props of `BottomSheetTextInput` (function). Exports: BottomSheetTextInput.
+ * @see design/components/Sheet/native/BottomSheetTextInput.native.tsx
+ */
+export type BottomSheetTextInputProps = Omit<VoidTextInputProps, 'onBlur' | 'onFocus' | 'ref'> & {
+	onBlur?: (...args: any[]) => unknown;
+	onFocus?: (...args: any[]) => unknown;
+	ref?: React$1.Ref<any>;
+};
+export type BottomSheetTitleHeaderComponent = React$1.ComponentType<BottomSheetTitleHeaderProps>;
+/**
+ * Props of `BottomSheetTitleHeader` (function). Exports: BottomSheetTitleHeader.
+ * @see design/components/Sheet/native/BottomSheetTitleHeader.native.tsx
+ */
+export type BottomSheetTitleHeaderProps = Omit<
+	RedesignBottomSheetTitleHeaderBaseProps,
+	'leading' | 'trailing'
+> & {
+	leading?: unknown;
+	trailing?: unknown;
+};
+/**
+ * Props of `BaseButton` (function). Exports: BaseButton.
+ * @see design/components/Button/native/BaseButton.native.tsx
+ */
+export type ButtonBaseButtonProps = {
+	accessibilityActions?: React$1.ComponentProps<typeof RN.Pressable>['accessibilityActions'];
+	accessibilityElementsHidden?: React$1.ComponentProps<
+		typeof RN.TouchableOpacity
+	>['accessibilityElementsHidden'];
+	accessibilityHint?: React$1.ComponentProps<typeof RN.Pressable>['accessibilityHint'];
+	accessibilityLabel?: React$1.ComponentProps<typeof RN.Pressable>['accessibilityLabel'];
+	/** @default 'button' */
+	accessibilityRole?: React$1.ComponentProps<typeof RN.Pressable>['accessibilityRole'];
+	accessibilityState?: unknown;
+	accessibilityValue?: React$1.ComponentProps<typeof RN.Pressable>['accessibilityValue'];
+	accessible?: React$1.ComponentProps<typeof RN.Pressable>['accessible'];
 	children?: React$1.ReactNode;
-} & ViewProps;
-export type CheckboxProps = {
-	label?: React$1.ReactNode;
-	description?: React$1.ReactNode;
-	checked: boolean;
-	required?: boolean;
-	accessibilityRole?: string;
-	accessibilityState?: AccessibilityState;
-	onToggle: DiscordFunction<void>;
+	/** @default false */
+	disabled?: boolean;
+	hitSlop?: React$1.ComponentProps<typeof RN.TouchableOpacity>['hitSlop'];
+	importantForAccessibility?: React$1.ComponentProps<
+		typeof RN.TouchableOpacity
+	>['importantForAccessibility'];
+	/** @default false */
+	loading?: boolean;
+	onAccessibilityAction?: React$1.ComponentProps<typeof RN.Pressable>['onAccessibilityAction'];
+	onLayout?: (...args: any[]) => unknown;
+	onLongPress?: React$1.ComponentProps<typeof RN.Pressable>['onLongPress'];
+	onPress?: (...args: any[]) => unknown;
+	onPressDisabled?: React$1.ComponentProps<typeof RN.TouchableOpacity>['onPress'];
+	onPressIn?: (...args: any[]) => unknown;
+	onPressOut?: (...args: any[]) => unknown;
+	pointerEvents?: React$1.ComponentProps<typeof RN.Pressable>['pointerEvents'];
+	pressed?: unknown;
+	ref?: React$1.ComponentProps<typeof RN.TouchableOpacity>['ref'];
+	scaleAmountInPx?: unknown;
+	style?: React$1.ComponentProps<typeof RN.TouchableOpacity>['style'];
+	/** @default 'primary' */
+	variant?: 'none' | 'primary' | 'primary-overlay' | 'secondary-overlay' | (string & {});
 };
-/** An entry of a `ContextMenu`. */
-export type ContextMenuItem = {
-	label: string;
-	action: DiscordFunction<void>;
-	variant?: LiteralUnion<'default' | 'destructive'>;
-	iconSource?: number;
+export type ButtonEllipsisComponent = React$1.ComponentType<ButtonEllipsisProps>;
+/**
+ * Props of `Ellipsis` (function). Exports: Ellipsis.
+ * @see design/components/Button/native/ButtonEllipsis.native.tsx
+ */
+export type ButtonEllipsisProps = EllipsisCircleProps;
+export type ButtonGroupComponent = React$1.ComponentType<
+	ButtonGroupProps & Record<string, unknown>
+>;
+/**
+ * Props of `ButtonGroup` (function). Exports: ButtonGroup.
+ * @see design/components/ButtonGroup/native/ButtonGroup.native.tsx
+ */
+export type ButtonGroupProps = Omit<StackProps, 'children' | 'size' | 'style'> & {
+	children?: StackProps['children'];
+	/** @default 'md' */
+	size?: 'lg' | 'md' | 'sm' | (string & {});
+	style?: StackProps['style'];
 };
-/** `ContextMenu`: an anchored popover whose `children` render the trigger from the props it passes. */
+export type ButtonIconButtonComponent = React$1.ComponentType<
+	ButtonIconButtonProps & Record<string, unknown>
+>;
+/**
+ * Props of `IconButton` (function). Exports: IconButton.
+ * @see design/components/Button/native/IconButton.native.tsx
+ */
+export type ButtonIconButtonProps = Omit<
+	BaseIconButtonProps,
+	'accessibilityHint' | 'accessibilityLabel' | 'grow' | 'label' | 'maxFontSizeMultiplier' | 'ref'
+> & {
+	accessibilityHint?: BaseIconButtonProps['accessibilityHint'];
+	accessibilityLabel?: BaseIconButtonProps['accessibilityLabel'];
+	grow?: boolean;
+	label?: DesignTextProps['children'];
+	maxFontSizeMultiplier?: number | string;
+	ref?: BaseIconButtonProps['ref'];
+};
+/**
+ * Props of `ButtonPill` (function). Exports: ButtonPill.
+ * @see design/components/Button/native/ButtonPill.native.tsx
+ */
+export type ButtonPillProps = Omit<LoadingButtonPillProps, 'loading'> & {
+	loading?: boolean;
+};
+/**
+ * Props of `ButtonShine` (function). Exports: ButtonShine.
+ * @see design/components/Button/native/ButtonShine.native.tsx
+ */
+export type ButtonShineProps = {
+	variant?: 'primary' | 'secondary' | 'tertiary' | (string & {});
+};
+export type CameraLottieComponent = React$1.ComponentType<
+	CameraLottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `CameraLottie` (function). Exports: CameraLottie.
+ * @see design/components/LottieIcon/native/generated/CameraLottie.tsx
+ */
+export type CameraLottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type CoachmarkComponent = React$1.ComponentType<CoachmarkProps>;
+/**
+ * Props of `Coachmark` (function). Exports: Coachmark.
+ * @see design/components/Coachmark/native/Coachmark.native.tsx
+ */
+export type CoachmarkProps = {
+	buttonIcon?: BaseTextButtonProps['icon'];
+	buttonLabel?: BaseTextButtonProps['text'];
+	buttonShiny?: unknown;
+	/** @default 'secondary' */
+	buttonVariant?: 'secondary' | (string & {});
+	description?: DesignTextProps['children'];
+	enterExitAnimatedStyles?: unknown;
+	experimental_withBlurBackground?: unknown;
+	gradientColor?: ExpressiveGradientProps['color'];
+	graphic?: {
+		aspectRatio?: unknown;
+	};
+	imgSource?: React$1.ComponentProps<typeof RN.Image>['source'];
+	/** @default 0 */
+	offsetY?: number;
+	onButtonPress?: BaseTextButtonProps['onPress'];
+	onDismiss?: React$1.ComponentProps<typeof RN.Pressable>['onPress'];
+	position?: 'bottom' | 'top' | (string & {});
+	renderImgComponent?: (...args: any[]) => unknown;
+	surfaceMeasurements?: unknown;
+	targetMeasurements?: unknown;
+	title?: DesignTextProps['children'];
+};
+/**
+ * Props of `CollapsingText` (function). Exports: none.
+ * @see design/components/Button/native/BaseTextButton.native.tsx
+ */
+export type CollapsingTextProps = {
+	children?: React$1.ReactNode;
+	collapseText?: {
+		get?: unknown;
+	};
+};
+export type ContextMenuComponent = React$1.ComponentType<ContextMenuProps>;
+export type ContextMenuContainerComponent = React$1.ComponentType<ContextMenuContainerProps>;
+/**
+ * Props of `ContextMenuContainer` (function). Exports: ContextMenuContainer.
+ * @see design/components/ContextMenu/native/ContextMenuContainer.native.tsx
+ */
+export type ContextMenuContainerProps = {};
+/**
+ * Props of `ContextMenu` (function). Exports: ContextMenu.
+ * @see design/components/ContextMenu/native/ContextMenu.native.tsx
+ */
 export type ContextMenuProps = {
+	/** @default 'auto' */
+	align?: 'above' | 'auto' | 'below' | 'left' | (string & {});
+	buttonRef?: {
+		observe?: unknown;
+	};
+	children: (...args: any[]) => unknown;
+	/** @default false */
+	disableGesture?: boolean;
+	/** @default true */
+	enabled?: boolean;
+	/** @default false */
+	ignoreKeyboardHide?: boolean;
+	items: {
+		flat?: unknown;
+		forEach?: unknown;
+	};
+	keyboardShouldPersistTaps?: 'handled' | (string & {});
+	onClose?: (...args: any[]) => unknown;
+	onOpen?: (...args: any[]) => unknown;
+	returnRef?: unknown;
 	title?: string;
-	items: ContextMenuItem[];
+	/** @default false */
+	triggerOnLongPress?: boolean;
+	/** @default false */
 	triggerOnTap?: boolean;
-	children: (props: PressableProps) => React$1.ReactNode;
 };
 /**
  * The style factory: turns a spec (or a function returning one) into a theme-aware hook, so call it
@@ -282,47 +911,211 @@ export type ContextMenuProps = {
 export type CreateStyles = <T extends StyleSheetSpec>(
 	styles: StyleSheetSpecOrFactory<T>,
 ) => () => ResolvedStyles<T>;
+export type DesignActivityIndicatorComponent = React$1.ComponentType<
+	DesignActivityIndicatorProps & Record<string, unknown>
+>;
+/**
+ * Props of `ActivityIndicator` (function). Exports: ActivityIndicator.
+ * @see design/components/ActivityIndicator/native/ActivityIndicator.native.tsx
+ */
+export type DesignActivityIndicatorProps = Omit<
+	React$1.ComponentProps<typeof RN.ActivityIndicator>,
+	'animating' | 'color' | 'size'
+> & {
+	/** @default true */
+	animating?: React$1.ComponentProps<typeof RN.ActivityIndicator>['animating'];
+	color?: React$1.ComponentProps<typeof RN.ActivityIndicator>['color'];
+	/** @default 'large' */
+	size?: React$1.ComponentProps<typeof RN.ActivityIndicator>['size'];
+};
+/** Exported components of `design/native.tsx` in Discord discord-350. */
+export type DesignBarrelComponents = {
+	AILoader: AILoaderComponent;
+	AIShimmer: AIShimmerComponent;
+	AccessibilityAnnouncerLiveRegion: AccessibilityAnnouncerLiveRegionComponent;
+	AccessibilityView: AccessibilityViewComponent;
+	AccessibilityViewAnimated: AccessibilityViewComponent;
+	ActionSheet: ActionSheetComponent;
+	ActionSheetCloseButton: ActionSheetCloseButtonComponent;
+	ActionSheetHeaderBar: ActionSheetHeaderBarComponent;
+	ActionSheetHeaderPressableText: ActionSheetHeaderPressableTextComponent;
+	ActionSheetIconHeader: ActionSheetIconHeaderComponent;
+	ActionSheetPresenter: ActionSheetPresenterComponent;
+	ActionSheetRow: ActionSheetRowComponent;
+	ActionSheetSwitchRow: ActionSheetSwitchRowComponent;
+	ActivityIndicator: DesignActivityIndicatorComponent;
+	AlertActionButton: AlertActionButtonComponent;
+	AlertModal: AlertModalComponent;
+	AlertModalContainer: AlertModalContainerComponent;
+	AvatarDuoPile: AvatarDuoPileComponent;
+	AvatarPile: AvatarPileComponent;
+	Backdrop: BackdropComponent;
+	BackgroundBlurView: BackgroundBlurViewComponentComponent;
+	BottomSheet: SheetBottomSheetComponent;
+	BottomSheetTextInput: BottomSheetTextInputComponent;
+	BottomSheetTitleHeader: BottomSheetTitleHeaderComponent;
+	Button: BaseTextButtonComponent;
+	ButtonGroup: ButtonGroupComponent;
+	CameraLottie: CameraLottieComponent;
+	Card: DesignCardComponent;
+	Checkbox: DesignCheckboxComponent;
+	Coachmark: CoachmarkComponent;
+	ContextMenu: ContextMenuComponent;
+	ContextMenuContainer: ContextMenuContainerComponent;
+	Dialog: DialogComponent;
+	DisableCustomTheme: DisableCustomThemeComponent;
+	Ellipsis: ButtonEllipsisComponent;
+	ExpressiveGradient: ExpressiveGradientComponent;
+	FauxHeader: FauxHeaderComponent;
+	FloatingActionButton: FloatingActionButtonComponent;
+	FormCheckbox: FormsFormCheckboxComponent;
+	FormRadio: FormsFormRadioComponent;
+	FormSwitch: FormsFormSwitchComponent;
+	GhostInput: GhostInputComponent;
+	GuildIconPile: GuildIconPileComponent;
+	HeaderActionButton: HeaderActionButtonComponent;
+	HeaderBackImage: HeaderBackImageComponent;
+	HeaderSubmittingIndicator: HeaderSubmittingIndicatorComponent;
+	Heading: TextHeadingComponent;
+	IconButton: ButtonIconButtonComponent;
+	ImageButton: ImageButtonComponent;
+	InlineNotice: InlineNoticeComponent;
+	Input: InputComponent;
+	InputContainer: InputFieldContainerComponent;
+	LayerScope: LayerScopeComponent;
+	ManaContextProvider: ManaContextProviderComponent;
+	Menu: MenuComponent;
+	MenuGroup: MenuGroupComponent;
+	MenuItem: MenuItemComponent;
+	MenuPopout: MenuPopoutComponent;
+	MessageRequestLottie: MessageRequestLottieComponent;
+	MessagesTabLottie: MessagesTabLottieComponent;
+	MicrophoneLottie: MicrophoneLottieComponent;
+	Modal: DesignModalComponent;
+	ModalActionButton: ModalActionButtonComponent;
+	ModalContent: ModalContentComponent;
+	ModalDisclaimer: ModalDisclaimerComponent;
+	ModalFloatingAction: ModalFloatingActionComponent;
+	ModalFloatingActionSpacer: ModalFloatingActionSpacerComponent;
+	ModalFooter: ModalFooterComponent;
+	ModalScreen: ModalScreenComponent;
+	ModalStepIndicator: ModalStepIndicatorComponent;
+	NavScrim: NavScrimComponent;
+	Navigator: NavigatorComponent;
+	NavigatorHeader: NavigatorHeaderComponent;
+	NavigatorScreen: NavigatorScreenComponent;
+	NitroGem12Lottie: NitroGem12LottieComponent;
+	NitroGem15Lottie: NitroGem15LottieComponent;
+	NitroGem18Lottie: NitroGem18LottieComponent;
+	NitroGem1Lottie: NitroGem1LottieComponent;
+	NitroGem24Lottie: NitroGem24LottieComponent;
+	NitroGem2Lottie: NitroGem2LottieComponent;
+	NitroGem3Lottie: NitroGem3LottieComponent;
+	NitroGem6Lottie: NitroGem6LottieComponent;
+	NitroGem9Lottie: NitroGem9LottieComponent;
+	NotificationsTabLottie: NotificationsTabLottieComponent;
+	Pile: PileComponent;
+	PileOverflow: PileOverflowComponent;
+	PlainTextExperimentProvider: PlainTextExperimentProviderComponent;
+	PromoSheet: PromoSheetComponent;
+	RedesignCompat: RedesignCompatComponent;
+	RootThemeContextProvider: ThemeContextProviderRootThemeContextProviderComponent;
+	RowButton: RowButtonComponent;
+	RowGroup: DesignRowGroupComponent;
+	SceneLoadingIndicator: SceneLoadingIndicatorComponent;
+	SearchField: SearchFieldComponent;
+	SegmentedControl: SegmentedControlComponent;
+	SegmentedControlPages: SegmentedControlPagesComponent;
+	ServerTabLottie: ServerTabLottieComponent;
+	SimpleActionSheet: SimpleActionSheetComponent;
+	Slider: SliderComponent;
+	SplitTextInput: SplitTextInputComponent;
+	Stack: StackComponent;
+	StepModal: StepModalComponent;
+	StickyWrapper: StickyWrapperComponent;
+	TableCheckboxRow: TableCheckboxRowComponent;
+	TableRadioGroup: TableRadioGroupComponent;
+	TableRadioRow: TableRadioRowComponent;
+	TableRow: TableRowComponent;
+	TableRowArrow: TableRowArrowComponent;
+	TableRowGroup: TableRowGroupComponent;
+	TableRowGroupTitle: TableRowGroupTitleComponent;
+	TableRowIcon: TableRowIconComponent;
+	TableRowTrailingText: TableRowTrailingTextComponent;
+	TableSwitchRow: TableSwitchRowComponent;
+	Tabs: TabsComponent;
+	TagGroup: TagGroupComponent;
+	Text: DesignTextComponent;
+	TextArea: TextAreaComponent;
+	TextAreaField: TextAreaFieldComponent;
+	TextField: TextFieldComponent;
+	TextInput: DesignTextInputComponent;
+	Toast: ToastComponent;
+	ToastContainer: ToastContainerComponent;
+	ToggleIconButton: ToggleIconButtonComponent;
+	YouTabLottie: YouTabLottieComponent;
+};
+export type DesignCardComponent = React$1.ComponentType<DesignCardProps & Record<string, unknown>>;
+/**
+ * Props of `Card` (function). Exports: Card, InternalCard.
+ * @see design/components/Card/native/Card.native.tsx
+ */
+export type DesignCardProps = Omit<
+	React$1.ComponentProps<typeof RN.View>,
+	| 'accessibilityRole'
+	| 'border'
+	| 'end'
+	| 'onPress'
+	| 'radius'
+	| 'shadow'
+	| 'start'
+	| 'style'
+	| 'variant'
+> & {
+	/** @default 'button' */
+	accessibilityRole?: 'button' | 'togglebutton' | (string & {});
+	/** @default 'faint' */
+	border?: 'control-secondary' | 'faint' | 'none' | 'strong' | 'subtle' | (string & {});
+	/** @default true */
+	end?: boolean;
+	onPress?: (...args: any[]) => unknown;
+	radius?: number;
+	/** @default 'none' */
+	shadow?: 'high' | 'low' | 'none' | (string & {});
+	/** @default true */
+	start?: boolean;
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
+	/** @default 'primary' */
+	variant?:
+		| 'control-secondary'
+		| 'muted'
+		| 'primary'
+		| 'secondary'
+		| 'surface-high'
+		| 'transparent'
+		| (string & {});
+};
+export type DesignCheckboxComponent = React$1.ComponentType<DesignCheckboxProps>;
+/**
+ * Props of `Checkbox` (function). Exports: Checkbox.
+ * @see design/components/Checkbox/native/Checkbox.native.tsx
+ */
+export type DesignCheckboxProps = {
+	checked?: FormsFormCheckboxProps['checked'];
+	description?: DesignTextProps['children'];
+	label?: DesignTextProps['children'];
+	onToggle: (...args: any[]) => unknown;
+	required?: unknown;
+};
 export type DesignComponentName = (typeof DESIGN_COMPONENTS)[number];
-export type DesignModule = {
+/** Every component the `design/native.tsx` barrel exports, typed only by `bun run generate-discord-types`. */
+export type DesignComponents = DesignBarrelComponents;
+/** The design module's non-component exports (hooks, functions, constants), which the generator does not type. */
+export type DesignHelpers = {
 	createStyles: CreateStyles;
 	TextStyleSheet: Record<TextVariant, TextStyle>;
 	useToken: (token: SemanticColorToken) => string;
-	Text: React$1.ComponentType<TextProps>;
-	Heading: React$1.ComponentType<TextProps>;
-	TableRow: TableRowComponent;
-	TableSwitchRow: React$1.ComponentType<TableSwitchRowProps>;
-	FormSwitch: React$1.ComponentType<SwitchProps>;
-	TableCheckboxRow: React$1.ComponentType<TableCheckboxRowProps>;
-	TableRadioRow: React$1.ComponentType<TableRadioRowProps>;
-	TableRadioGroup: React$1.ComponentType<TableRadioGroupProps>;
-	TableRowGroup: React$1.ComponentType<TableRowGroupProps>;
-	TableRowGroupTitle: React$1.ComponentType<TableRowGroupTitleProps>;
-	TableRowIcon: React$1.ComponentType<TableRowIconProps>;
-	RowButton: React$1.ComponentType<RowButtonProps>;
-	RowGroup: React$1.ComponentType<ViewProps>;
-	Button: ButtonComponent;
-	IconButton: React$1.ComponentType<IconButtonProps>;
-	ImageButton: React$1.ComponentType<ViewProps>;
-	FloatingActionButton: React$1.ComponentType<FloatingActionButtonProps>;
-	TextInput: React$1.ComponentType<TextInputProps>;
-	TextField: React$1.ComponentType<TextFieldProps>;
-	TextArea: React$1.ComponentType<TextAreaProps>;
-	TextAreaField: React$1.ComponentType<TextAreaProps>;
-	SearchField: React$1.ComponentType<Omit<TextFieldProps, 'leadingIcon'>>;
-	GhostInput: React$1.ComponentType<GhostInputProps>;
-	SplitTextInput: React$1.ComponentType<SplitTextInputProps>;
-	Slider: React$1.ComponentType<SliderProps>;
-	Checkbox: React$1.ComponentType<CheckboxProps>;
-	SegmentedControl: React$1.ComponentType<SegmentedControlProps>;
-	SegmentedControlPages: React$1.ComponentType<SegmentedControlPagesProps>;
 	useSegmentedControlState: (options: SegmentedControlStateOptions) => SegmentedControlState;
-	Stack: React$1.ComponentType<StackProps>;
-	Card: React$1.ComponentType<CardProps>;
-	AlertModal: React$1.ComponentType<AlertModalProps>;
-	AlertActionButton: React$1.ComponentType<AlertActionButtonProps>;
-	ActionSheet: React$1.ComponentType<ActionSheetProps>;
-	ActionSheetRow: React$1.ComponentType<ActionSheetRowProps>;
-	ContextMenu: React$1.ComponentType<ContextMenuProps>;
 	openAlert: DiscordFunction<void>;
 	dismissAlert: (key: string) => void;
 	dismissAlerts: DiscordFunction<void>;
@@ -338,6 +1131,191 @@ export type DesignModule = {
 	ThemeContextFlags: EnumLike<typeof THEME_FLAG_KEYS>;
 	WCAGContrastRatios: Record<'NonText' | 'Text' | 'HighContrastText', number>;
 };
+export type DesignModalComponent = React$1.ComponentType<
+	DesignModalProps & Record<string, unknown>
+>;
+/**
+ * Props of `Modal` (function). Exports: Modal.
+ * @see design/components/Modal/native/Modal.native.tsx
+ */
+export type DesignModalProps = NavigatorProps;
+/**
+ * The Discord mobile design system module (keyed by `createStyles` / `dismissAlerts` / `ContextMenu`).
+ * See `DESIGN.md` for the full catalogue.
+ */
+export type DesignModule = DesignComponents & DesignHelpers;
+export type DesignRowGroupComponent = React$1.ComponentType<DesignRowGroupProps>;
+/**
+ * Props of `RowGroup` (function). Exports: RowGroup.
+ * @see design/components/RowGroup/native/RowGroup.native.tsx
+ */
+export type DesignRowGroupProps = {
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+	title?: TableRowGroupTitleProps['title'];
+	trailing?: StackProps['children'];
+};
+export type DesignTextComponent = React$1.ComponentType<DesignTextProps & Record<string, unknown>>;
+export type DesignTextInputComponent = React$1.ComponentType<
+	DesignTextInputProps & Record<string, unknown>
+>;
+/**
+ * Props of `TextInput` (function). Exports: TextInput.
+ * @see design/components/TextInput/native/TextInput.native.tsx
+ */
+export type DesignTextInputProps = Omit<
+	TextFieldProps,
+	'errorMessage' | 'label' | 'ref' | 'required' | 'status'
+> & {
+	errorMessage?: string;
+	label?: unknown;
+	ref?: TextFieldProps['ref'];
+	required?: boolean;
+	status?: 'error' | (string & {});
+};
+/**
+ * Props of `Text` (function). Exports: Text.
+ * @see design/components/Text/native/Text.tsx
+ */
+export type DesignTextProps = {
+	/** @default false */
+	animated?: boolean;
+	children?: React$1.ReactNode;
+	/** @default 'text-default' */
+	color?:
+		| 'button-outline-primary-text'
+		| 'channels-default'
+		| 'control-brand-foreground'
+		| 'control-critical-primary-text-default'
+		| 'control-secondary-text-default'
+		| 'input-placeholder-text-default'
+		| 'input-text-error-default'
+		| 'interactive-text-active'
+		| 'interactive-text-default'
+		| 'interactive-text-hover'
+		| 'mobile-text-heading-primary'
+		| 'none'
+		| 'premium-nitro-pink-text'
+		| 'redesign-button-tertiary-text'
+		| 'redesign-channel-name-muted-text'
+		| 'redesign-channel-name-text'
+		| 'status-positive'
+		| 'text-brand'
+		| 'text-default'
+		| 'text-feedback-critical'
+		| 'text-feedback-info'
+		| 'text-feedback-positive'
+		| 'text-feedback-warning'
+		| 'text-link'
+		| 'text-muted'
+		| 'text-overlay-dark'
+		| 'text-overlay-light'
+		| 'text-strong'
+		| 'text-subtle'
+		| 'text-voice-connected'
+		| 'user-profile-about-me-heading-text'
+		| 'voice-channel-user-limit-text'
+		| (string & {});
+	/** @default 'tail' */
+	ellipsizeMode?: 'clip' | 'middle' | 'tail' | (string & {});
+	/** @default false */
+	experimental_useNativeText?: boolean;
+	/** @default false */
+	includeFontPadding?: boolean;
+	lineClamp?: number;
+	ref?: React$1.Ref<any>;
+	style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+	/** @default false */
+	tabularNumbers?: boolean;
+	variant?:
+		| 'display-lg'
+		| 'display-md'
+		| 'display-sm'
+		| 'experimental/body-lg/semibold'
+		| 'experimental/body-md/medium'
+		| 'experimental/body-md/normal'
+		| 'experimental/body-md/semibold'
+		| 'experimental/body-sm/medium'
+		| 'experimental/body-sm/normal'
+		| 'experimental/body-sm/semibold'
+		| 'experimental/body-xs/normal'
+		| 'experimental/body-xs/semibold'
+		| 'experimental/heading-lg/semibold'
+		| 'experimental/heading-md/semibold'
+		| 'experimental/mono-md/bold'
+		| 'eyebrow'
+		| 'heading-deprecated-12/extrabold'
+		| 'heading-deprecated-12/medium'
+		| 'heading-deprecated-12/semibold'
+		| 'heading-lg/bold'
+		| 'heading-lg/extrabold'
+		| 'heading-lg/medium'
+		| 'heading-lg/normal'
+		| 'heading-lg/semibold'
+		| 'heading-md/bold'
+		| 'heading-md/extrabold'
+		| 'heading-md/medium'
+		| 'heading-md/normal'
+		| 'heading-md/semibold'
+		| 'heading-sm/bold'
+		| 'heading-sm/extrabold'
+		| 'heading-sm/medium'
+		| 'heading-sm/normal'
+		| 'heading-sm/semibold'
+		| 'heading-xl/bold'
+		| 'heading-xl/extrabold'
+		| 'heading-xl/medium'
+		| 'heading-xl/semibold'
+		| 'heading-xxl/bold'
+		| 'heading-xxl/extrabold'
+		| 'heading-xxl/medium'
+		| 'heading-xxl/normal'
+		| 'heading-xxl/semibold'
+		| 'redesign/channel-title/semibold'
+		| 'redesign/heading-18/bold'
+		| 'redesign/heading-18/medium'
+		| 'redesign/heading-18/semibold'
+		| 'redesign/message-preview/medium'
+		| 'redesign/message-preview/normal'
+		| 'text-lg/bold'
+		| 'text-lg/medium'
+		| 'text-lg/normal'
+		| 'text-lg/semibold'
+		| 'text-md/bold'
+		| 'text-md/medium'
+		| 'text-md/normal'
+		| 'text-md/semibold'
+		| 'text-sm/bold'
+		| 'text-sm/medium'
+		| 'text-sm/normal'
+		| 'text-sm/semibold'
+		| 'text-xs/bold'
+		| 'text-xs/medium'
+		| 'text-xs/normal'
+		| 'text-xs/semibold'
+		| 'text-xxs/bold'
+		| 'text-xxs/medium'
+		| 'text-xxs/normal'
+		| 'text-xxs/semibold'
+		| (string & {});
+};
+export type DialogComponent = React$1.ComponentType<DialogProps & Record<string, unknown>>;
+/**
+ * Props of `Dialog` (function). Exports: Dialog.
+ * @see design/components/Dialog/native/Dialog.native.tsx
+ */
+export type DialogProps = Omit<AccessibilityViewProps, 'dialogKey' | 'onDismiss' | 'zIndex'> & {
+	dialogKey?: AccessibilityViewProps['nativeID'];
+	onDismiss?: AccessibilityViewProps['onAccessibilityEscape'];
+	zIndex?: unknown;
+};
+export type DisableCustomThemeComponent = React$1.ComponentType<DisableCustomThemeProps>;
+/**
+ * Props of `DisableCustomTheme` (function). Exports: DisableCustomTheme.
+ * @see design/components/ThemeContextProvider/native/RootThemeContextProvider.native.tsx
+ */
+export type DisableCustomThemeProps = {
+	children?: React$1.ReactNode;
+};
 /** An asset registered with Discord's packager (its metadata and dimensions). */
 export type DiscordAsset = {
 	__packager_asset?: boolean;
@@ -351,17 +1329,69 @@ export type DiscordAsset = {
 };
 /** A function exported by a Discord module, whose signature Discord does not document. */
 export type DiscordFunction<T = any> = (...args: any[]) => T;
+/**
+ * Props of `EllipsisCircle` (function). Exports: none.
+ * @see design/components/Button/native/ButtonEllipsis.native.tsx
+ */
+export type EllipsisCircleProps = {
+	offset?: number;
+	size?: unknown;
+	variant?: unknown;
+};
 /** Discord ships numeric enums as bidirectional maps; this models both directions. */
 export type EnumLike<K extends readonly string[]> = {
 	[P in K[number]]: number;
 } & {
 	[n: number]: K[number];
 };
-/** `FloatingActionButton`: a single-icon FAB, typically pinned to a screen corner. */
-export type FloatingActionButtonProps = {
-	icon?: React$1.ReactNode | number;
-	style?: StyleProp<ViewStyle>;
-	onPress?: DiscordFunction<void>;
+/**
+ * Props of `ErrorText` (function). Exports: ErrorText.
+ * @see design/components/ErrorText/native/ErrorText.native.tsx
+ */
+export type ErrorTextProps = {
+	children?: DesignTextProps['children'];
+	style?: StackProps['style'];
+};
+export type ExpressiveGradientComponent = React$1.ComponentType<ExpressiveGradientProps>;
+/**
+ * Props of `ExpressiveGradient` (function). Exports: ExpressiveGradient.
+ * @see design/components/ExpressiveGradient/native/ExpressiveGradient.native.tsx
+ */
+export type ExpressiveGradientProps = {
+	backgroundColor?: unknown;
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+	/** @default 'purple' */
+	color?: 'purple' | (string & {});
+	/** @default 0 */
+	offsetBottom?: number;
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
+};
+export type FauxHeaderComponent = React$1.ComponentType<FauxHeaderProps>;
+/**
+ * Props of `FauxHeader` (function). Exports: FauxHeader.
+ * @see design/components/Navigator/native/NavigatorHeader.native.tsx
+ */
+export type FauxHeaderProps = {
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
+};
+export type FloatingActionButtonComponent = React$1.ComponentType<
+	FloatingActionButtonProps & Record<string, unknown>
+>;
+/**
+ * Props of `FloatingActionButton` (function). Exports: FloatingActionButton.
+ * @see design/components/Button/native/FloatingActionButton.native.tsx
+ */
+export type FloatingActionButtonProps = Omit<
+	BaseIconButtonProps,
+	'accessibilityLabel' | 'icon' | 'positionBottom' | 'positionRight'
+> & {
+	accessibilityLabel?: BaseIconButtonProps['accessibilityLabel'];
+	icon?: unknown;
+	/** @default 16 */
+	positionBottom?: number;
+	/** @default 16 */
+	positionRight?: number;
 };
 /** A custom font the native loader has registered, as injected on `window.UNBOUND_FONTS`. */
 export type FontDescriptor = {
@@ -371,22 +1401,197 @@ export type FontDescriptor = {
 };
 /** A font managed by the Fonts manager: currently identical to its {@link FontDescriptor}. */
 export type FontEntity = FontDescriptor;
-/** `GhostInput`: a borderless field bridging to the `useTextField` hook. */
-export type GhostInputProps = {
-	isCentered?: boolean;
-	containerStyle?: StyleProp<ViewStyle>;
-} & TextFieldProps;
-export type IconButtonProps = {
-	icon?: React$1.ReactNode | number;
-	variant?: ButtonVariant;
-	size?: ButtonSize;
-	loading?: boolean;
-	disabled?: boolean;
-	label?: string;
-	accessibilityLabel?: string;
-	style?: StyleProp<ViewStyle>;
-	onPress?: DiscordFunction<void>;
+/**
+ * Props of `FormLabel` (function). Exports: default.
+ * @see design/void/Form/native/FormLabel.tsx
+ */
+export type FormLabelProps = {
+	accessible?: unknown;
+	/** @default 'mobile-text-heading-primary' */
+	color?: DesignTextProps['color'];
+	/** @default 0 */
+	numberOfLines?: DesignTextProps['lineClamp'];
+	style?: DesignTextProps['style'];
+	text?: DesignTextProps['children'];
 };
+/**
+ * Props of `FormRow` (function). Exports: default.
+ * @see design/void/Form/native/FormRow.tsx
+ */
+export type FormRowProps = {
+	DEPRECATED_style?: PressableHighlightProps['style'];
+	accessibilityActions?: PressableHighlightProps['accessibilityActions'];
+	accessibilityHint?: PressableHighlightProps['accessibilityHint'];
+	accessibilityLabel?: PressableHighlightProps['accessibilityLabel'];
+	/** @default 'button' */
+	accessibilityRole?: PressableHighlightProps['accessibilityRole'];
+	accessibilityState?: TableRowProps['accessibilityState'];
+	/** @default true */
+	accessible?: TableRowProps['accessible'];
+	delayLongPress?: PressableHighlightProps['delayLongPress'];
+	/** @default false */
+	disabled?: PressableHighlightProps['disabled'];
+	/** @default false */
+	end?: TableRowProps['end'];
+	/** @default false */
+	hasError?: boolean;
+	label?: React$1.ReactElement | FormLabelProps['text'];
+	labelStyle?: FormLabelProps['style'];
+	leading?: unknown;
+	leadingStyle?: React$1.ComponentProps<typeof RN.View>['style'];
+	numberOfLines?: TableRowProps['labelLineClamp'];
+	onAccessibilityAction?: PressableHighlightProps['onAccessibilityAction'];
+	onAccessibilityTap?: PressableHighlightProps['onAccessibilityTap'];
+	onLongPress?: PressableHighlightProps['onLongPress'];
+	onPress?: PressableHighlightProps['onPress'];
+	onPressOut?: PressableHighlightProps['onPressOut'];
+	ref?: PressableHighlightProps['ref'];
+	/** @default false */
+	start?: TableRowProps['start'];
+	style?: PressableHighlightProps['style'];
+	/** @default null */
+	subLabel?: React$1.ReactElement | FormSubLabelProps['text'];
+	trailing?: unknown;
+	trailingWrapperStyle?: React$1.ComponentProps<typeof RN.View>['style'];
+	variant?: TableRowProps['variant'];
+};
+/**
+ * Props of `FormSubLabel` (function). Exports: default.
+ * @see design/void/Form/native/FormSubLabel.tsx
+ */
+export type FormSubLabelProps = {
+	accessible?: unknown;
+	/** @default 'text-subtle' */
+	color?: DesignTextProps['color'];
+	numberOfLines?: DesignTextProps['lineClamp'];
+	style?: DesignTextProps['style'];
+	text?: DesignTextProps['children'];
+};
+export type FormsFormCheckboxComponent = React$1.ComponentType<FormsFormCheckboxProps>;
+/**
+ * Props of `FormCheckbox` (function). Exports: FormCheckbox.
+ * @see design/components/Forms/native/FormCheckbox.native.tsx
+ */
+export type FormsFormCheckboxProps = {
+	checked?: boolean;
+};
+export type FormsFormRadioComponent = React$1.ComponentType<FormsFormRadioProps>;
+/**
+ * Props of `FormRadio` (function). Exports: FormRadio.
+ * @see design/components/Forms/native/FormRadio.native.tsx
+ */
+export type FormsFormRadioProps = {
+	selected?: boolean;
+};
+export type FormsFormSwitchComponent = React$1.ComponentType<FormsFormSwitchProps>;
+/**
+ * Props of `FormSwitch` (function). Exports: FormSwitch.
+ * @see design/components/Forms/native/FormSwitch.native.tsx
+ */
+export type FormsFormSwitchProps = {
+	accessibilityHint?: unknown;
+	accessibilityLabel?: unknown;
+	'aria-hidden'?: boolean;
+	disabled?: React$1.ComponentProps<typeof RN.Pressable>['disabled'];
+	onValueChange?: (...args: any[]) => unknown;
+	value?: unknown;
+};
+export type GhostInputComponent = React$1.ComponentType<GhostInputProps & Record<string, unknown>>;
+/**
+ * Props of `GhostInput` (function). Exports: GhostInput.
+ * @see design/components/TextInput/native/GhostInput.native.tsx
+ */
+export type GhostInputProps = Omit<
+	InputTextInputProps,
+	| 'autoFocus'
+	| 'centered'
+	| 'containerStyle'
+	| 'disabled'
+	| 'label'
+	| 'onClear'
+	| 'required'
+	| 'size'
+	| 'status'
+> & {
+	/** @default true */
+	autoFocus?: InputTextInputProps['autoFocus'];
+	/** @default true */
+	centered?: boolean;
+	containerStyle?: InputProps['containerStyle'];
+	/** @default false */
+	disabled?: boolean;
+	label?: unknown;
+	onClear?: (...args: any[]) => unknown;
+	required?: boolean;
+	size?: unknown;
+	status?: unknown;
+};
+/**
+ * Props of `GlyphBand` (memo). Exports: none.
+ * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
+ */
+export type GlyphBandProps = {
+	animationProgress: {
+		get?: unknown;
+	};
+	color?: AIGlyphTextProps['color'];
+	fontSize?: unknown;
+	glyphChoices?: unknown;
+	overshootInSlots?: unknown;
+	slotCount?: unknown;
+	style?: AIGlyphTextProps['style'];
+};
+export type GuildIconPileComponent = React$1.ComponentType<GuildIconPileProps>;
+/**
+ * Props of `GuildIconPile` (function). Exports: GuildIconPile.
+ * @see design/components/Pile/native/GuildIconPile.native.tsx
+ */
+export type GuildIconPileProps = {
+	children?: PileProps['children'];
+	names?: {
+		length?: unknown;
+	};
+	size?: unknown;
+	totalCount?: number;
+};
+export type HeaderActionButtonComponent = React$1.ComponentType<HeaderActionButtonProps>;
+/**
+ * Props of `HeaderActionButton` (function). Exports: HeaderActionButton.
+ * @see design/components/Navigator/native/HeaderActionButton.native.tsx
+ */
+export type HeaderActionButtonProps = {
+	IconComponent?: unknown;
+	IconComponentSize?: unknown;
+	accessibilityActions?: PressableOpacityProps['accessibilityActions'];
+	accessibilityHint?: PressableOpacityProps['accessibilityHint'];
+	accessibilityLabel?: PressableOpacityProps['accessibilityLabel'];
+	disabled?: PressableOpacityProps['disabled'];
+	foregroundRipple?: boolean;
+	hitSlop?: PressableOpacityProps['hitSlop'];
+	icon?: PressableOpacityProps['children'];
+	iconSize?: unknown;
+	imageStyle?: VoidIconProps['style'];
+	onAccessibilityAction?: PressableOpacityProps['onAccessibilityAction'];
+	onPress?: PressableOpacityProps['onPress'];
+	ref?: PressableOpacityProps['ref'];
+	source?: VoidIconProps['source'];
+	style?: PressableOpacityProps['style'];
+	text?: DesignTextProps['children'];
+	textStyle?: DesignTextProps['style'];
+};
+export type HeaderBackImageComponent = React$1.ComponentType<HeaderBackImageProps>;
+/**
+ * Props of `HeaderBackImage` (function). Exports: HeaderBackImage.
+ * @see design/components/Navigator/native/NavigatorHeader.native.tsx
+ */
+export type HeaderBackImageProps = {};
+export type HeaderSubmittingIndicatorComponent =
+	React$1.ComponentType<HeaderSubmittingIndicatorProps>;
+/**
+ * Props of `HeaderSubmittingIndicator` (function). Exports: HeaderSubmittingIndicator.
+ * @see design/components/Navigator/native/NavigatorHeader.native.tsx
+ */
+export type HeaderSubmittingIndicatorProps = {};
 /** A loaded icon pack: its bundle marker and {@link IconPackManifest}. */
 export type IconPack = {
 	bundle: string;
@@ -397,21 +1602,343 @@ export type IconPackManifest = AddonManifest & {
 	type: 'icon-pack';
 	source: 'github' | 'other';
 };
-/** Icon slot: a rendered node, a component, or a render function. */
-export type IconSlot =
-	| React$1.ReactNode
-	| React$1.ComponentType<any>
-	| DiscordFunction<React$1.ReactNode>;
-/** Input sizing, shared by the whole `TextField`/`Input` family. */
-export type InputSize = LiteralUnion<'sm' | 'md' | 'lg'>;
-/** Input status. `focused` is an internal state and is not user-settable. */
-export type InputStatus = LiteralUnion<'default' | 'error'>;
+export type ImageButtonComponent = React$1.ComponentType<
+	ImageButtonProps & Record<string, unknown>
+>;
+/**
+ * Props of `ImageButton` (function). Exports: ImageButton.
+ * @see design/components/Button/native/ImageButton.native.tsx
+ */
+export type ImageButtonProps = Omit<
+	BaseIconButtonProps,
+	| 'accessibilityLabel'
+	| 'grow'
+	| 'image'
+	| 'label'
+	| 'maxFontSizeMultiplier'
+	| 'onPressIn'
+	| 'onPressOut'
+	| 'ref'
+	| 'size'
+> & {
+	accessibilityLabel?: BaseIconButtonProps['accessibilityLabel'];
+	grow?: boolean;
+	image?: React$1.ComponentProps<typeof RN.Image>['source'];
+	label?: DesignTextProps['children'];
+	maxFontSizeMultiplier?: number | string;
+	onPressIn?: (...args: any[]) => unknown;
+	onPressOut?: (...args: any[]) => unknown;
+	ref?: BaseIconButtonProps['ref'];
+	/** @default 'lg' */
+	size?: BaseIconButtonProps['size'];
+};
+export type InlineNoticeComponent = React$1.ComponentType<InlineNoticeProps>;
+/**
+ * Props of `InlineNotice` (function). Exports: InlineNotice.
+ * @see design/mana/components/InlineNotice/InlineNotice.native.tsx
+ */
+export type InlineNoticeProps = Omit<
+	NewInlineNoticeProps,
+	'action' | 'hidden' | 'message' | 'title' | 'type'
+> & {
+	action?: {
+		onClick?: unknown;
+		text?: unknown;
+	};
+	hidden?: boolean;
+	message?: unknown;
+	title?: DesignTextProps['children'];
+	type?: 'critical' | 'info' | 'positive' | 'warning' | (string & {});
+};
+export type InputComponent = React$1.ComponentType<InputProps>;
+export type InputFieldContainerComponent = React$1.ComponentType<InputFieldContainerProps>;
+/**
+ * Props of `InputFieldContainer` (function). Exports: InputFieldContainer.
+ * @see design/components/Input/native/InputFieldContainer.native.tsx
+ */
+export type InputFieldContainerProps = {
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+	/** @default false */
+	disabled?: boolean;
+	grow?: unknown;
+	/** @default false */
+	isFocused?: boolean;
+	leadingIcon?: unknown;
+	/** @default false */
+	round?: boolean;
+	size?: 'sm' | (string & {});
+	/** @default 'default' */
+	status?: 'default' | (string & {});
+};
+/**
+ * Props of `Input` (function). Exports: Input.
+ * @see design/components/Input/native/Input.native.tsx
+ */
+export type InputProps = {
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+	containerStyle?: React$1.ComponentProps<typeof RN.View>['style'];
+	description?: DesignTextProps['children'];
+	errorMessage?: ErrorTextProps['children'];
+	label?: DesignTextProps['children'];
+	labelId?: string;
+	labelTrailing?: React$1.ComponentProps<typeof RN.View>['children'];
+	required?: boolean;
+};
+/**
+ * Props of `TextInput` (function). Exports: NativeTextInput.
+ * @see design/components/Input/native/NativeTextInput.native.tsx
+ */
+export type InputTextInputProps = Omit<
+	React$1.ComponentProps<typeof RN.TextInput>,
+	'keyboardAppearance' | 'multiline' | 'ref'
+> & {
+	keyboardAppearance?: React$1.ComponentProps<typeof RN.TextInput>['keyboardAppearance'];
+	multiline?: boolean;
+	ref?: React$1.Ref<any>;
+};
 /** {@link ToastOptions} enriched with the fields the store tracks internally. */
 export type InternalToastOptions = {
 	id: string;
 	closing?: boolean;
 	date?: number;
 } & ToastOptions;
+export type LayerScopeComponent = React$1.ComponentType<LayerScopeProps>;
+/**
+ * Props of `LayerScope` (function). Exports: LayerScope.
+ * @see design/components/Layers/native/LayerScope.native.tsx
+ */
+export type LayerScopeProps = {
+	children?: React$1.ReactNode;
+	zIndex?: number;
+};
+/**
+ * Props of `LoadingButtonPill` (function). Exports: LoadingButtonPill.
+ * @see design/components/Button/native/ButtonPill.native.tsx
+ */
+export type LoadingButtonPillProps = {
+	children?: React$1.ReactNode;
+	expressivePressState?: unknown;
+	expressiveRiveRef?: unknown;
+	/** @default 'md' */
+	loaderSize?: 'md' | (string & {});
+	/** @default false */
+	loading?: boolean;
+	pressed?: PillWrapperProps['pressed'];
+	size?: unknown;
+	style?: PillWrapperProps['style'];
+	/** @default 'primary' */
+	variant?: PillWrapperProps['variant'];
+};
+/**
+ * Props of `LottieIcon` (function). Exports: LottieIcon.
+ * @see design/components/LottieIcon/native/LottieIcon.tsx
+ */
+export type LottieIconProps = {
+	animation?: 'all' | (string & {});
+	autoPlay?: unknown;
+	color?: unknown;
+	dotLottie?: unknown;
+	height?: unknown;
+	layers: {
+		map?: unknown;
+	};
+	markers: {
+		find?: unknown;
+	};
+	/** @default 1 */
+	opacity?: number;
+	ref?: React$1.Ref<any>;
+	/** @default 'md' */
+	size?: 'custom' | 'md' | (string & {});
+	useLottieDefaultColors?: boolean;
+	width?: unknown;
+};
+export type ManaContextProviderComponent = React$1.ComponentType<ManaContextProviderProps>;
+/**
+ * Props of `ManaContextProvider` (function). Exports: ManaContextProvider.
+ * @see ../discord_common/js/packages/design/components/ManaContext/ManaContext.native.tsx
+ */
+export type ManaContextProviderProps = {
+	children?: React$1.ReactNode;
+	value?: unknown;
+};
+export type MenuComponent = React$1.ComponentType<MenuProps>;
+export type MenuGroupComponent = React$1.ComponentType<MenuGroupProps>;
+/**
+ * Props of `MenuGroup` (function). Exports: MenuGroup.
+ * @see design/components/Menu/native/MenuGroup.tsx
+ */
+export type MenuGroupProps = {
+	children?: React$1.ReactNode;
+	ref?: React$1.Ref<any>;
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
+};
+export type MenuItemComponent = React$1.ComponentType<MenuItemProps>;
+/**
+ * Props of `MenuItem` (function). Exports: MenuItem.
+ * @see design/components/Menu/native/MenuItem.tsx
+ */
+export type MenuItemProps = {
+	IconComponent?: unknown;
+	action: (...args: any[]) => unknown;
+	/** @default false */
+	disabled?: FormRowProps['disabled'];
+	iconSource?: VoidIconProps['source'];
+	label?: FormLabelProps['text'];
+	ref?: FormRowProps['ref'];
+	/** @default false */
+	showIconFirst?: boolean;
+	style?: FormRowProps['style'];
+};
+export type MenuPopoutComponent = React$1.ComponentType<MenuPopoutProps>;
+/**
+ * Props of `MenuPopout` (function). Exports: MenuPopout.
+ * @see design/components/Menu/native/MenuPopout.tsx
+ */
+export type MenuPopoutProps = {
+	align?: MenuProps['align'];
+	children: (...args: any[]) => unknown;
+	key?: unknown;
+	menuItems?: {
+		find?: unknown;
+		map?: unknown;
+	};
+	offset?: MenuProps['offset'];
+	offsetAnimated?: MenuProps['offsetAnimated'];
+	onRequestClose?: (...args: any[]) => unknown;
+	onRequestOpen?: (...args: any[]) => unknown;
+	position?: MenuProps['position'];
+};
+/**
+ * Props of `Menu` (function). Exports: Menu.
+ * @see design/components/Menu/native/Menu.tsx
+ */
+export type MenuProps = {
+	/** @default 'start' */
+	align?: 'end' | 'start' | (string & {});
+	children?: React$1.ReactNode;
+	offset?: {
+		x?: unknown;
+		y?: unknown;
+	};
+	offsetAnimated?: {
+		get?: unknown;
+	};
+	onClose?: (...args: any[]) => unknown;
+	/** @default 'right' */
+	position?: 'bottom' | 'left' | 'right' | 'top' | (string & {});
+	style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+	toggleButtonRef?: {
+		current?: unknown;
+	};
+};
+export type MessageRequestLottieComponent = React$1.ComponentType<
+	MessageRequestLottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `MessageRequestLottie` (function). Exports: MessageRequestLottie.
+ * @see design/components/LottieIcon/native/generated/MessageRequestLottie.tsx
+ */
+export type MessageRequestLottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type MessagesTabLottieComponent = React$1.ComponentType<
+	MessagesTabLottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `MessagesTabLottie` (function). Exports: MessagesTabLottie.
+ * @see design/components/LottieIcon/native/generated/MessagesTabLottie.tsx
+ */
+export type MessagesTabLottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type MicrophoneLottieComponent = React$1.ComponentType<
+	MicrophoneLottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `MicrophoneLottie` (function). Exports: MicrophoneLottie.
+ * @see design/components/LottieIcon/native/generated/MicrophoneLottie.tsx
+ */
+export type MicrophoneLottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type ModalActionButtonComponent = React$1.ComponentType<
+	ModalActionButtonProps & Record<string, unknown>
+>;
+/**
+ * Props of `ModalActionButton` (function). Exports: ModalActionButton.
+ * @see design/components/Modal/native/ModalActionButton.native.tsx
+ */
+export type ModalActionButtonProps = Omit<BaseTextButtonProps, 'variant'> & {
+	variant?: BaseTextButtonProps['variant'];
+};
+export type ModalContentComponent = React$1.ComponentType<ModalContentProps>;
+/**
+ * Props of `ModalContent` (function). Exports: ModalContent.
+ * @see design/components/Modal/native/ModalContent.native.tsx
+ */
+export type ModalContentProps = {
+	children?: React$1.ComponentProps<typeof RN.ScrollView>['children'];
+	ref?: React$1.Ref<any>;
+};
+export type ModalDisclaimerComponent = React$1.ComponentType<ModalDisclaimerProps>;
+/**
+ * Props of `ModalDisclaimer` (function). Exports: ModalDisclaimer.
+ * @see design/components/Modal/native/ModalDisclaimer.native.tsx
+ */
+export type ModalDisclaimerProps = {
+	children?: DesignTextProps['children'];
+};
+export type ModalFloatingActionComponent = React$1.ComponentType<
+	ModalFloatingActionProps & Record<string, unknown>
+>;
+/**
+ * Props of `ModalFloatingAction` (function). Exports: ModalFloatingAction.
+ * @see design/components/Modal/native/ModalFloatingAction.native.tsx
+ */
+export type ModalFloatingActionProps = Omit<
+	ModalActionButtonProps,
+	'floatingBackgroundColor' | 'isVisible'
+> & {
+	floatingBackgroundColor?: unknown;
+	isVisible?: boolean;
+};
+export type ModalFloatingActionSpacerComponent =
+	React$1.ComponentType<ModalFloatingActionSpacerProps>;
+/**
+ * Props of `ModalFloatingActionSpacer` (function). Exports: ModalFloatingActionSpacer.
+ * @see design/components/Modal/native/ModalFloatingAction.native.tsx
+ */
+export type ModalFloatingActionSpacerProps = {};
+export type ModalFooterComponent = React$1.ComponentType<ModalFooterProps>;
+/**
+ * Props of `ModalFooter` (function). Exports: ModalFooter.
+ * @see design/components/Modal/native/ModalFooter.native.tsx
+ */
+export type ModalFooterProps = {
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+};
+export type ModalScreenComponent = React$1.ComponentType<ModalScreenProps>;
+/**
+ * Props of `ModalScreen` (function). Exports: ModalScreen.
+ * @see design/components/Modal/native/ModalScreen.native.tsx
+ */
+export type ModalScreenProps = {
+	backgroundColor?: string;
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+};
+export type ModalStepIndicatorComponent = React$1.ComponentType<ModalStepIndicatorProps>;
+/**
+ * Props of `ModalStepIndicator` (function). Exports: ModalStepIndicator.
+ * @see design/components/Modal/native/ModalStepIndicator.native.tsx
+ */
+export type ModalStepIndicatorProps = {
+	activeColor?: unknown;
+	currentStep?: number;
+	inactiveColor?: unknown;
+	inactiveOpacity?: StepPillProps['inactiveOpacity'];
+	totalSteps?: number;
+};
 /** The outcome of checking an addon's signature against the keys compiled into the loader. */
 export type NativeAddonVerification = {
 	readonly status: 'signed' | 'unsigned' | 'invalid';
@@ -944,6 +2471,12 @@ export type NativeViewSnapshotOptions = {
 	maxDepth?: number;
 	maxNodes?: number;
 };
+export type NavScrimComponent = React$1.ComponentType<NavScrimProps>;
+/**
+ * Props of `NavScrim` (memo). Exports: NavScrim.
+ * @see design/components/Navigator/native/NavScrim.ios.tsx
+ */
+export type NavScrimProps = {};
 export type Navigation<T = any> = {
 	push: (route: string, params?: T) => void;
 	pop: () => void;
@@ -952,10 +2485,268 @@ export type Navigation<T = any> = {
 	setOptions: (options: NavigationOptions) => void;
 	addListener: (event: string, callback: DiscordFunction) => DiscordFunction<void>;
 };
+/**
+ * Props of `NavigationContainerInner` (forwardRef). Exports: NavigationContainer.
+ * @see module 4871 (no source path)
+ */
+export type NavigationContainerInnerProps = Omit<
+	BaseNavigationContainerProps,
+	'direction' | 'documentTitle' | 'fallback' | 'initialState' | 'linking' | 'theme'
+> & {
+	direction?: unknown;
+	documentTitle?: unknown;
+	/** @default null */
+	fallback?: ThemeProviderProps['children'];
+	initialState?: BaseNavigationContainerProps['initialState'];
+	linking?: {
+		config?: unknown;
+		enabled?: unknown;
+		getActionFromState?: unknown;
+		getPathFromState?: unknown;
+		getStateFromPath?: unknown;
+		prefixes?: unknown;
+	};
+	theme?: unknown;
+};
 /** The screen options accepted by {@link Navigation.setOptions}. */
 export type NavigationOptions = {
 	title?: string;
 	headerRight?: DiscordFunction<React$1.ReactNode>;
+};
+/**
+ * Props of `NavigationStack` (function). Exports: none.
+ * @see design/components/Navigator/native/Navigator.native.tsx
+ */
+export type NavigationStackProps = {
+	cardOverlayEnabled?: unknown;
+	cardShadowEnabled?: unknown;
+	cardStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+	detachInactiveScreens?: unknown;
+	disableHeaderAnimation?: boolean;
+	gestureDirection?: unknown;
+	gestureResponseDistance?: unknown;
+	headerBackTitle?: unknown;
+	headerLeftContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+	headerRightContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+	headerStatusBarHeight?: unknown;
+	headerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+	/** @default 'center' */
+	headerTitleAlign?: 'center' | (string & {});
+	headerTitleContainerStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+	hideTitle?: boolean;
+	initialRouteName?: unknown;
+	onDidFocus?: (...args: any[]) => unknown;
+	onWillFocus?: (...args: any[]) => unknown;
+	screens?: unknown;
+	viewStyle?: NavigatorScreenProps['viewStyle'];
+};
+export type NavigatorComponent = React$1.ComponentType<NavigatorProps & Record<string, unknown>>;
+export type NavigatorHeaderComponent = React$1.ComponentType<NavigatorHeaderProps>;
+/**
+ * Props of `NavigatorHeader` (function). Exports: NavigatorHeader.
+ * @see design/components/Navigator/native/NavigatorHeader.native.tsx
+ */
+export type NavigatorHeaderProps = {
+	icon?: React$1.ComponentProps<typeof RN.View>['children'];
+	subtitle?: DesignTextProps['children'];
+	title?: DesignTextProps['children'];
+};
+/**
+ * Props of `Navigator` (function). Exports: Navigator.
+ * @see design/components/Navigator/native/Navigator.native.tsx
+ */
+export type NavigatorProps = Omit<
+	WrappedNavigationStackProps,
+	'containerStyle' | 'useContainer'
+> & {
+	containerStyle?: React$1.ComponentProps<typeof RN.View>['style'];
+	/** @default true */
+	useContainer?: boolean;
+};
+export type NavigatorScreenComponent = React$1.ComponentType<NavigatorScreenProps>;
+/**
+ * Props of `NavigatorScreen` (memo). Exports: NavigatorScreen.
+ * @see design/components/Navigator/native/NavigatorScreen.native.tsx
+ */
+export type NavigatorScreenProps = {
+	navigation?: unknown;
+	route: {
+		params?: unknown;
+	};
+	screen: {
+		customNavbar?: unknown;
+		ignoreKeyboard?: unknown;
+		postponeRender?: unknown;
+		render?: unknown;
+	};
+	viewStyle?: PostponeRenderProps['viewStyle'];
+};
+/**
+ * Props of `NewInlineNotice` (function). Exports: NewInlineNotice.
+ * @see design/mana/components/InlineNotice/NewInlineNotice.native.tsx
+ */
+export type NewInlineNoticeProps = {
+	action?: {
+		onClick?: unknown;
+		text?: unknown;
+	};
+	hidden?: boolean;
+	message?: DesignTextProps['children'];
+	onDismiss?: ButtonIconButtonProps['onPress'];
+	role?: 'alert' | 'static' | 'status' | (string & {});
+	title?: DesignTextProps['children'];
+	type?: 'info' | 'warning' | (string & {});
+};
+export type NitroGem12LottieComponent = React$1.ComponentType<
+	NitroGem12LottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `NitroGem12Lottie` (function). Exports: NitroGem12Lottie.
+ * @see design/components/LottieIcon/native/generated/NitroGem12Lottie.tsx
+ */
+export type NitroGem12LottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type NitroGem15LottieComponent = React$1.ComponentType<
+	NitroGem15LottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `NitroGem15Lottie` (function). Exports: NitroGem15Lottie.
+ * @see design/components/LottieIcon/native/generated/NitroGem15Lottie.tsx
+ */
+export type NitroGem15LottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type NitroGem18LottieComponent = React$1.ComponentType<
+	NitroGem18LottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `NitroGem18Lottie` (function). Exports: NitroGem18Lottie.
+ * @see design/components/LottieIcon/native/generated/NitroGem18Lottie.tsx
+ */
+export type NitroGem18LottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type NitroGem1LottieComponent = React$1.ComponentType<
+	NitroGem1LottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `NitroGem1Lottie` (function). Exports: NitroGem1Lottie.
+ * @see design/components/LottieIcon/native/generated/NitroGem1Lottie.tsx
+ */
+export type NitroGem1LottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type NitroGem24LottieComponent = React$1.ComponentType<
+	NitroGem24LottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `NitroGem24Lottie` (function). Exports: NitroGem24Lottie.
+ * @see design/components/LottieIcon/native/generated/NitroGem24Lottie.tsx
+ */
+export type NitroGem24LottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type NitroGem2LottieComponent = React$1.ComponentType<
+	NitroGem2LottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `NitroGem2Lottie` (function). Exports: NitroGem2Lottie.
+ * @see design/components/LottieIcon/native/generated/NitroGem2Lottie.tsx
+ */
+export type NitroGem2LottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type NitroGem3LottieComponent = React$1.ComponentType<
+	NitroGem3LottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `NitroGem3Lottie` (function). Exports: NitroGem3Lottie.
+ * @see design/components/LottieIcon/native/generated/NitroGem3Lottie.tsx
+ */
+export type NitroGem3LottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type NitroGem6LottieComponent = React$1.ComponentType<
+	NitroGem6LottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `NitroGem6Lottie` (function). Exports: NitroGem6Lottie.
+ * @see design/components/LottieIcon/native/generated/NitroGem6Lottie.tsx
+ */
+export type NitroGem6LottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type NitroGem9LottieComponent = React$1.ComponentType<
+	NitroGem9LottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `NitroGem9Lottie` (function). Exports: NitroGem9Lottie.
+ * @see design/components/LottieIcon/native/generated/NitroGem9Lottie.tsx
+ */
+export type NitroGem9LottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type NotificationsTabLottieComponent = React$1.ComponentType<
+	NotificationsTabLottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `NotificationsTabLottie` (function). Exports: NotificationsTabLottie.
+ * @see design/components/LottieIcon/native/generated/NotificationsTabLottie.tsx
+ */
+export type NotificationsTabLottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
+export type PileComponent = React$1.ComponentType<PileProps>;
+export type PileOverflowComponent = React$1.ComponentType<PileOverflowProps>;
+/**
+ * Props of `PileOverflow` (function). Exports: PileOverflow.
+ * @see design/components/Pile/native/PileOverflow.native.tsx
+ */
+export type PileOverflowProps = {
+	borderRadius?: unknown;
+	size?: unknown;
+	value?: unknown;
+};
+/**
+ * Props of `Pile` (function). Exports: Pile.
+ * @see design/components/Pile/native/Pile.native.tsx
+ */
+export type PileProps = {
+	'aria-label'?: React$1.ComponentProps<typeof RN.View>['aria-label'];
+	children?: React$1.ReactNode;
+	depthX?: number;
+	depthY?: number;
+	gap?: number;
+	shape?: 'circle' | 'rounded-rect' | (string & {});
+	size: number;
+};
+/**
+ * Props of `PillWrapper` (function). Exports: none.
+ * @see design/components/Button/native/ButtonPill.native.tsx
+ */
+export type PillWrapperProps = {
+	children?: React$1.ReactNode;
+	expressivePressState?: unknown;
+	expressiveRiveRef?: unknown;
+	pressed?: {
+		get?: unknown;
+	};
+	/** @default false */
+	shiny?: boolean;
+	size?: unknown;
+	style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+	variant?: ButtonShineProps['variant'];
+};
+export type PlainTextExperimentProviderComponent =
+	React$1.ComponentType<PlainTextExperimentProviderProps>;
+/**
+ * Props of `PlainTextExperimentProvider` (function). Exports: PlainTextExperimentProvider.
+ * @see design/components/Text/native/PlainTextExperimentContext.tsx
+ */
+export type PlainTextExperimentProviderProps = {
+	children?: React$1.ReactNode;
+	enabled?: boolean;
 };
 export type PluginContext = {
 	readonly manifest: AddonManifest;
@@ -969,6 +2760,92 @@ export type PluginContext = {
 export type PluginEntity = Addon & {
 	instance: Plugin$1 | null;
 };
+/**
+ * Props of `PostponeRender` (function). Exports: PostponeRender.
+ * @see design/components/Navigator/native/PostponeRender.native.tsx
+ */
+export type PostponeRenderProps = {
+	children?: React$1.ReactNode;
+	ignoreKeyboard?: unknown;
+	postpone?: unknown;
+	viewStyle?: React$1.ComponentProps<typeof RN.View>['style'];
+};
+/**
+ * Props of `PressableBase` (function). Exports: none.
+ * @see design/void/Pressables/native/Pressables.tsx
+ */
+export type PressableBaseProps = Omit<
+	React$1.ComponentProps<typeof RN.Pressable>,
+	| 'activeOpacity'
+	| 'androidRippleConfig'
+	| 'children'
+	| 'innerRef'
+	| 'style'
+	| 'type'
+	| 'underlayColor'
+> & {
+	/** @default 0.2 */
+	activeOpacity?: number;
+	androidRippleConfig?: {
+		cornerRadius?: unknown;
+	};
+	children?: React$1.ComponentProps<typeof RN.Pressable>['children'];
+	innerRef?: React$1.ComponentProps<typeof RN.Pressable>['ref'];
+	style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+	type?: 'highlight' | 'opacity' | (string & {});
+	underlayColor?: unknown;
+};
+/**
+ * Props of `PressableHighlight` (function). Exports: PressableHighlight.
+ * @see design/void/Pressables/native/Pressables.tsx
+ */
+export type PressableHighlightProps = Omit<PressableBaseProps, 'ref' | 'underlayColor'> & {
+	ref?: PressableBaseProps['innerRef'];
+	underlayColor?: unknown;
+};
+/**
+ * Props of `PressableOpacity` (function). Exports: PressableOpacity.
+ * @see design/void/Pressables/native/Pressables.tsx
+ */
+export type PressableOpacityProps = Omit<PressableBaseProps, 'activeOpacity' | 'ref'> & {
+	/** @default 0.2 */
+	activeOpacity?: PressableBaseProps['activeOpacity'];
+	ref?: PressableBaseProps['innerRef'];
+};
+export type PromoSheetComponent = React$1.ComponentType<PromoSheetProps & Record<string, unknown>>;
+/**
+ * Props of `PromoSheet` (function). Exports: PromoSheet.
+ * @see design/components/Sheet/native/PromoSheet.native.tsx
+ */
+export type PromoSheetProps = Omit<
+	SheetBottomSheetProps,
+	'actions' | 'description' | 'gradientColor' | 'graphic' | 'illustration' | 'title'
+> & {
+	actions?: StackProps['children'];
+	description?: DesignTextProps['children'];
+	gradientColor?: ExpressiveGradientProps['color'];
+	graphic?: unknown;
+	illustration?: React$1.ComponentProps<typeof RN.View>['children'];
+	title?: DesignTextProps['children'];
+};
+/**
+ * Props of `RedesignBottomSheetTitleHeaderBase` (function). Exports: none.
+ * @see design/components/Sheet/native/BottomSheetTitleHeader.native.tsx
+ */
+export type RedesignBottomSheetTitleHeaderBaseProps = {
+	subtitle?: SubtitleProps['children'];
+	title?: TitleProps['children'];
+};
+export type RedesignCompatComponent = React$1.ComponentType<RedesignCompatProps>;
+/**
+ * Props of `RedesignCompat` (function). Exports: RedesignCompat.
+ * @see design/components/RedesignCompat/native/RedesignCompat.native.tsx
+ */
+export type RedesignCompatProps = {
+	children?: React$1.ReactNode;
+	/** @default true */
+	enabled?: boolean;
+};
 /** Resolves each key of a {@link StyleSheetSpec} to the concrete RN style type it produced. */
 export type ResolvedStyles<T extends StyleSheetSpec> = {
 	[K in keyof T]: T[K] extends ImageStyle
@@ -977,32 +2854,130 @@ export type ResolvedStyles<T extends StyleSheetSpec> = {
 			? TextStyle
 			: ViewStyle;
 };
-export type RowButtonProps = {
-	label?: React$1.ReactNode;
-	icon?: React$1.ReactNode;
+export type RowButtonComponent = React$1.ComponentType<RowButtonProps & Record<string, unknown>> &
+	RowButtonStatics;
+/**
+ * Props of `RowButton` (function). Exports: RowButton.
+ * @see design/components/TableRow/native/RowButton.native.tsx
+ */
+export type RowButtonProps = Omit<
+	TableRowInnerProps,
+	'arrow' | 'disabled' | 'experimental_withBlurBackground' | 'icon' | 'onPress' | 'variant'
+> & {
+	/** @default true */
 	arrow?: boolean;
-	disabled?: boolean;
-	variant?: LiteralUnion<'primary' | 'secondary'>;
-	onPress?: DiscordFunction<void>;
+	/** @default false */
+	disabled?: TableRowInnerProps['disabled'];
+	experimental_withBlurBackground?: boolean;
+	icon?: React$1.ReactElement | TableRowIconProps['source'];
+	onPress?: RowButtonWrapperProps['onPress'];
+	/** @default 'secondary' */
+	variant?: 'primary' | 'secondary' | (string & {});
 };
+export type RowButtonStatics = {
+	Icon: TableRowIconComponent;
+};
+/**
+ * Props of `RowButtonWrapper` (function). Exports: none.
+ * @see design/components/TableRow/native/RowButton.native.tsx
+ */
+export type RowButtonWrapperProps = Omit<
+	DesignCardProps,
+	| 'children'
+	| 'disabled'
+	| 'experimental_withBlurBackground'
+	| 'onPress'
+	| 'onPressIn'
+	| 'onPressOut'
+> & {
+	children?: BackgroundBlurViewComponentProps['children'];
+	disabled?: boolean;
+	experimental_withBlurBackground?: unknown;
+	onPress?: DesignCardProps['onPress'];
+	onPressIn?: (...args: any[]) => unknown;
+	onPressOut?: (...args: any[]) => unknown;
+};
+export type SceneLoadingIndicatorComponent = React$1.ComponentType<SceneLoadingIndicatorProps>;
+/**
+ * Props of `SceneLoadingIndicator` (function). Exports: SceneLoadingIndicator.
+ * @see design/components/Navigator/native/SceneLoadingIndicator.native.tsx
+ */
+export type SceneLoadingIndicatorProps = {};
+export type SearchFieldComponent = React$1.ComponentType<
+	SearchFieldProps & Record<string, unknown>
+>;
+/**
+ * Props of `SearchField` (function). Exports: SearchField.
+ * @see design/components/TextField/native/SearchField.native.tsx
+ */
+export type SearchFieldProps = Omit<TextFieldProps, 'ref'> & {
+	ref?: TextFieldProps['ref'];
+};
+export type SegmentedControlComponent = React$1.ComponentType<SegmentedControlProps>;
 /** A tab of a segmented control, with the page it shows. */
 export type SegmentedControlItem = {
 	id: string;
 	label: string;
 	page?: React$1.ReactNode;
 };
-/** `SegmentedControlPages`: the swipeable pages driven by a segmented control's state. */
+/**
+ * Props of `SegmentedControlItem` (function). Exports: SegmentedControlItem.
+ * @see design/components/SegmentedControl/native/SegmentedControlItem.native.tsx
+ */
+export type SegmentedControlItemProps = {
+	icon?: React$1.ComponentProps<typeof RN.View>['children'];
+	index?: unknown;
+	itemCount?: unknown;
+	label?: DesignTextProps['children'];
+	onPress?: React$1.ComponentProps<typeof RN.Pressable>['onPress'];
+	onPressIn?: React$1.ComponentProps<typeof RN.Pressable>['onPressIn'];
+	onPressOut?: React$1.ComponentProps<typeof RN.Pressable>['onPressOut'];
+	pressed: {
+		get?: unknown;
+	};
+	state: {
+		activeIndex?: unknown;
+	};
+	style?: React$1.ComponentProps<typeof RN.Pressable>['style'];
+	variant?: 'experimental_Large' | (string & {});
+};
+export type SegmentedControlPagesComponent = React$1.ComponentType<SegmentedControlPagesProps>;
+/**
+ * Props of `SegmentedControlPages` (function). Exports: SegmentedControlPages.
+ * @see design/components/SegmentedControl/native/SegmentedControlPages.native.tsx
+ */
 export type SegmentedControlPagesProps = {
-	state: SegmentedControlState;
+	bounces?: React$1.ComponentProps<typeof RN.ScrollView>['bounces'];
+	nativeGesture?: unknown;
+	onBeginDragWorklet?: (...args: any[]) => unknown;
+	onEndDragWorklet?: (...args: any[]) => unknown;
+	onScrollWorklet?: (...args: any[]) => unknown;
+	state: {
+		activeIndex?: unknown;
+		items?: unknown;
+		onPageChangeRef?: unknown;
+		pageWidth?: unknown;
+		pagerRef?: unknown;
+		pressedIndex?: unknown;
+		scrollOverflow?: unknown;
+		scrollTarget?: unknown;
+		visiblePageRange?: unknown;
+	};
+	style?: React$1.ComponentProps<typeof RN.ScrollView>['style'];
 };
+/**
+ * Props of `SegmentedControl` (function). Exports: SegmentedControl.
+ * @see design/components/SegmentedControl/native/SegmentedControl.native.tsx
+ */
 export type SegmentedControlProps = {
-	/** The controller returned by `useSegmentedControlState`. */
-	state: SegmentedControlState;
+	keyboardShouldPersistTaps?: React$1.ComponentProps<
+		typeof RN.ScrollView
+	>['keyboardShouldPersistTaps'];
+	state: SegmentedControlItemProps['state'];
 	/** @default 'default' */
-	variant?: LiteralUnion<'default'>;
-	keyboardShouldPersistTaps?: boolean | 'always' | 'never' | 'handled';
+	variant?: SegmentedControlItemProps['variant'];
 };
-/** The state controller a `SegmentedControl` is driven by. */
+/** The state controller `useSegmentedControlState` returns, which drives a `SegmentedControl`. */
 export type SegmentedControlState = {
 	activeIndex: number;
 	items: SegmentedControlItem[];
@@ -1015,11 +2990,18 @@ export type SegmentedControlStateOptions = {
 	defaultIndex?: number;
 	onPageChange?: (index: number) => void;
 };
-/**
- * The Discord mobile design system module (keyed by `createStyles` / `dismissAlerts` / `ContextMenu`).
- * See `DESIGN.md` for the full catalogue.
- */
+/** A semantic colour token from `Theme.colors`, which `useToken` resolves to a colour string. */
 export type SemanticColorToken = Readonly<Record<string, string | number | boolean>>;
+export type ServerTabLottieComponent = React$1.ComponentType<
+	ServerTabLottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `ServerTabLottie` (function). Exports: ServerTabLottie.
+ * @see design/components/LottieIcon/native/generated/ServerTabLottie.tsx
+ */
+export type ServerTabLottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
+};
 /** A registered Unbound settings entry, mirroring Discord's `SETTING_RENDERER_CONFIG` route shape. */
 export type SettingsEntry = {
 	type: 'route';
@@ -1044,244 +3026,642 @@ export type SettingsScreen = {
 };
 /** A JSON value held in a settings store. */
 export type SettingsValue = string | number | boolean | null | SettingsValue[] | SettingsObject;
+export type SheetBottomSheetComponent = React$1.ComponentType<
+	SheetBottomSheetProps & Record<string, unknown>
+>;
 /**
- * The DS `Slider`. It reads only `startIcon` / `endIcon` / `style` / `onValueChange` / `step`; the
- * remaining slider props (`value`, bounds, tint colours) are spread onto the underlying RN slider.
+ * Props of `BottomSheet` (function). Exports: BottomSheet.
+ * @see design/components/Sheet/native/BottomSheet.native.tsx
+ */
+export type SheetBottomSheetProps = {
+	animatedIndex?: unknown;
+	backdropChildren?: React$1.ComponentProps<typeof RN.View>['children'];
+	backdropOpacity?: BottomSheetBackdropComponentProps['opacity'];
+	backgroundComponent?: unknown;
+	backgroundStyles?: unknown;
+	bodyStyles?: React$1.ComponentProps<typeof RN.View>['style'];
+	borderGradient?: unknown;
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+	containerHeight?: unknown;
+	contentHeight?: unknown;
+	contentStyles?: React$1.ComponentProps<typeof RN.View>['style'];
+	dismissAccessibilityLabel?: unknown;
+	extraContent?: unknown;
+	footer?: unknown;
+	handleComponent?: unknown;
+	/** @default false */
+	handleDisabled?: boolean;
+	header?: React$1.ComponentProps<typeof RN.View>['children'];
+	keyboardShouldPersistTaps?: 'always' | 'handled' | (string & {});
+	maxHeight?: unknown;
+	onDismiss?: (...args: any[]) => unknown;
+	onExpand?: (...args: any[]) => unknown;
+	ref?: React$1.Ref<any>;
+	/** @default false */
+	scrollable?: boolean;
+	showGradient?: boolean;
+	/** @default false */
+	startExpanded?: boolean;
+	startHeight?: number | string;
+};
+/**
+ * Props of `ShimmerLayers` (function). Exports: none.
+ * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
+ */
+export type ShimmerLayersProps = {
+	animationProgress?: GlyphBandProps['animationProgress'];
+	animationWidth?: unknown;
+	clippingWindowWidth?: unknown;
+	color?: ShimmerTextSlotProps['color'];
+	crossFadeOpacity?: unknown;
+	glyphColor?: GlyphBandProps['color'];
+	glyphCount?: unknown;
+	glyphFontSize?: unknown;
+	overshoot?: unknown;
+	pass: {
+		band?: unknown;
+		slotA?: unknown;
+		slotB?: unknown;
+	};
+	styles: ShimmerTextSlotProps['styles'];
+	variant?: ShimmerTextSlotProps['variant'];
+};
+/**
+ * Props of `ShimmerTextSlot` (function). Exports: none.
+ * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
+ */
+export type ShimmerTextSlotProps = {
+	animatedStyles: {
+		plainText?: unknown;
+		plainWindow?: unknown;
+		shiftedInnerWindow?: unknown;
+		shiftedOuterWindow?: unknown;
+		shiftedText?: unknown;
+	};
+	animationWidth?: unknown;
+	clippingWindowWidth?: unknown;
+	color?: DesignTextProps['color'];
+	shiftedText?: DesignTextProps['children'];
+	styles: {
+		layer?: unknown;
+		window?: unknown;
+	};
+	text?: DesignTextProps['children'];
+	variant?: DesignTextProps['variant'];
+};
+export type SimpleActionSheetComponent = React$1.ComponentType<SimpleActionSheetProps>;
+/**
+ * Props of `SimpleActionSheet` (function). Exports: SimpleActionSheet, default.
+ * @see design/components/Sheet/native/SimpleActionSheet.native.tsx
+ */
+export type SimpleActionSheetProps = {
+	hasIcons?: ActionSheetRowGroupProps['hasIcons'];
+	header?: {
+		icon?: unknown;
+		onClose?: unknown;
+		subtitle?: unknown;
+		title?: unknown;
+	};
+	hideActionSheet: (...args: any[]) => unknown;
+	options: {
+		map?: unknown;
+	};
+};
+export type SliderComponent = React$1.ComponentType<SliderProps & Record<string, unknown>>;
+/**
+ * Props of `Slider` (function). Exports: Slider.
+ * @see design/components/Slider/native/Slider.native.tsx
  */
 export type SliderProps = {
-	value?: number;
-	defaultValue?: number;
-	minimumValue?: number;
-	maximumValue?: number;
-	step?: number;
-	disabled?: boolean;
-	inverted?: boolean;
-	tapToSeek?: boolean;
-	lowerLimit?: number;
-	upperLimit?: number;
-	startIcon?: React$1.ReactNode;
-	endIcon?: React$1.ReactNode;
-	valueLabel?: React$1.ReactNode;
-	minimumTrackTintColor?: string;
-	maximumTrackTintColor?: string;
-	style?: StyleProp<ViewStyle>;
-	onValueChange?: (value: number) => void;
-	onSlidingStart?: (value: number) => void;
-	onSlidingComplete?: (value: number) => void;
+	endIcon?: React$1.ComponentProps<typeof RN.View>['children'];
+	onValueChange?: (...args: any[]) => unknown;
+	startIcon?: React$1.ComponentProps<typeof RN.View>['children'];
+	step?: unknown;
+	style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 };
-/** `SplitTextInput` / `SplitTextField`: a segmented input (e.g. verification codes). */
-export type SplitTextInputProps = {
-	isRound?: boolean;
-	leadingText?: string;
-	leadingPressableProps?: PressableProps;
-} & TextFieldProps;
+/**
+ * Props of `Slot` (function). Exports: none.
+ * @see design/visual-identities/ai/AILoader/AILoader.native.tsx
+ */
+export type SlotProps = {
+	color?: AIGlyphTextProps['color'];
+	cycle?: unknown;
+	index?: unknown;
+	size?: unknown;
+	stagger?: unknown;
+};
+/**
+ * Props of `SplitTextField` (function). Exports: SplitTextField.
+ * @see design/components/SplitTextInput/native/SplitTextField.native.tsx
+ */
+export type SplitTextFieldProps = Omit<
+	BaseTextFieldProps,
+	| 'aria-disabled'
+	| 'clearable'
+	| 'disabled'
+	| 'editable'
+	| 'focusable'
+	| 'leadingPressableProps'
+	| 'leadingText'
+	| 'onChange'
+	| 'onChangeText'
+	| 'onClear'
+	| 'ref'
+	| 'round'
+	| 'size'
+	| 'trailingIcon'
+	| 'trailingPressableProps'
+	| 'trailingText'
+> & {
+	clearable?: unknown;
+	/** @default false */
+	disabled?: boolean;
+	focusable?: unknown;
+	leadingPressableProps?: unknown;
+	leadingText?: DesignTextProps['children'];
+	onChange?: (...args: any[]) => unknown;
+	onClear?: (...args: any[]) => unknown;
+	ref?: React$1.Ref<any>;
+	round?: unknown;
+	size?: unknown;
+	trailingIcon?: unknown;
+	trailingPressableProps?: unknown;
+	trailingText?: DesignTextProps['children'];
+};
+export type SplitTextInputComponent = React$1.ComponentType<
+	SplitTextInputProps & Record<string, unknown>
+>;
+/**
+ * Props of `SplitTextInput` (function). Exports: SplitTextInput.
+ * @see design/components/SplitTextInput/native/SplitTextInput.native.tsx
+ */
+export type SplitTextInputProps = Omit<SplitTextFieldProps, 'label' | 'ref' | 'required'> & {
+	label?: unknown;
+	ref?: SplitTextFieldProps['ref'];
+	required?: boolean;
+};
+export type StackComponent = React$1.ComponentType<StackProps>;
+/**
+ * Props of `Stack` (function). Exports: Stack.
+ * @see design/components/Stack/native/Stack.native.tsx
+ */
 export type StackProps = {
+	/** @default 'stretch' */
+	align?: 'center' | 'flex-end' | 'flex-start' | 'stretch' | (string & {});
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+	/** @default 'vertical' */
+	direction?: 'horizontal' | 'vertical' | (string & {});
+	/** @default 'flex-start' */
+	justify?: 'center' | 'flex-end' | 'flex-start' | 'space-between' | (string & {});
+	onLayout?: React$1.ComponentProps<typeof RN.View>['onLayout'];
+	/** @default 8 */
 	spacing?: number;
-	direction?: 'horizontal' | 'vertical';
-	align?: 'start' | 'center' | 'end' | 'stretch';
-	justify?: 'start' | 'center' | 'end' | 'between' | 'around';
-	children?: React$1.ReactNode;
-} & ViewProps;
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
+};
+export type StepModalComponent = React$1.ComponentType<StepModalProps & Record<string, unknown>>;
+/**
+ * Props of `StepModal` (function). Exports: StepModal.
+ * @see design/components/Modal/native/StepModal.native.tsx
+ */
+export type StepModalProps = Omit<DesignModalProps, 'onWillFocus' | 'steps'> & {
+	onWillFocus?: (...args: any[]) => unknown;
+	steps?: {
+		indexOf?: unknown;
+		length?: unknown;
+	};
+};
+/**
+ * Props of `StepPill` (function). Exports: none.
+ * @see design/components/Modal/native/ModalStepIndicator.native.tsx
+ */
+export type StepPillProps = {
+	activeColor?: unknown;
+	inactiveColor?: unknown;
+	/** @default 1 */
+	inactiveOpacity?: number;
+	isActive?: boolean;
+};
+export type StickyWrapperComponent = React$1.ComponentType<StickyWrapperProps>;
+/**
+ * Props of `StickyWrapper` (function). Exports: StickyWrapper.
+ * @see design/components/Sticky/native/StickyWrapper.native.tsx
+ */
+export type StickyWrapperProps = {
+	children?: React$1.ComponentProps<typeof RN.View>['children'];
+	header?: React$1.ComponentProps<typeof RN.View>['children'];
+	pointerEvents?: React$1.ComponentProps<typeof RN.View>['pointerEvents'];
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
+};
 /** A stylesheet spec: each key maps to a view, text, or image style. */
 export type StyleSheetSpec = Record<string, ViewStyle | TextStyle | ImageStyle>;
 /** A stylesheet spec, or a function producing one (Discord accepts both forms). */
 export type StyleSheetSpecOrFactory<T extends StyleSheetSpec> = T | ((...args: any[]) => T);
-export type SwitchProps = {
-	value: boolean;
-	disabled?: boolean;
-	accessibilityLabel?: string;
-	onValueChange: (value: boolean) => void;
-};
-export type TableCheckboxRowProps = {
-	label?: React$1.ReactNode;
-	subLabel?: React$1.ReactNode;
-	checked: boolean;
-	disabled?: boolean;
-	accessibilityHint?: string;
-	onPress: DiscordFunction<void>;
-};
-export type TableRadioGroupProps = {
-	title?: string;
-	description?: string;
-	value: any;
-	hasIcons?: boolean;
-	onChange: (value: any) => void;
-	children?: React$1.ReactNode;
-};
-export type TableRadioRowProps = {
-	label?: React$1.ReactNode;
-	icon?: React$1.ReactNode;
-	subLabel?: React$1.ReactNode;
-	value: any;
-	disabled?: boolean;
-	accessibilityHint?: string;
-	legacyCompat?: boolean;
-};
-/** `TableRow` with its attached statics (`Icon`, `Arrow`, `TrailingText`). */
-export type TableRowComponent = React$1.ComponentType<TableRowProps> & {
-	Icon: React$1.ComponentType<TableRowIconProps>;
-	Arrow: React$1.ComponentType<ViewProps>;
-	TrailingText: React$1.ComponentType<TrailingTextProps>;
-};
-export type TableRowGroupProps = {
-	title?: string;
-	description?: string;
-	helperText?: string;
-	hasIcons?: boolean;
-	hasTrailingText?: boolean;
-	accessibilityRole?: string;
-	accessibilityLabel?: string;
-	children?: React$1.ReactNode;
-};
-export type TableRowGroupTitleProps = {
-	title: string;
-};
-export type TableRowIconProps = {
-	source?: number;
-	IconComponent?: React$1.ComponentType<any>;
-	variant?: LiteralUnion<'default' | 'danger' | 'blurple'>;
-};
-export type TableRowProps = {
-	label?: React$1.ReactNode;
-	subLabel?: React$1.ReactNode;
-	icon?: React$1.ReactNode;
-	trailing?: React$1.ReactNode;
-	arrow?: boolean;
-	disabled?: boolean;
-	/** Rounds the top corners; set on the first row of a manually laid-out group. */
-	start?: boolean;
-	/** Rounds the bottom corners; set on the last row of a manually laid-out group. */
-	end?: boolean;
-	labelLineClamp?: number;
-	subLabelLineClamp?: number;
-	variant?: LiteralUnion<'default' | 'danger'>;
-	draggable?: boolean;
-	onPress?: DiscordFunction<void>;
-	children?: React$1.ReactNode;
-};
-export type TableSwitchRowProps = {
-	label?: React$1.ReactNode;
-	subLabel?: React$1.ReactNode;
-	icon?: React$1.ReactNode;
-	trailing?: React$1.ReactNode;
-	value: boolean;
-	disabled?: boolean;
-	accessibilityHint?: string;
-	variant?: LiteralUnion<'default'>;
-	onValueChange: (value: boolean) => void;
-};
-/** `TextArea` extends the field family with a character limit. */
-export type TextAreaProps = {
-	maxLength?: number;
-} & TextFieldProps;
 /**
- * The redesign `TextField` family (`TextArea`, `SearchField`, `GhostInput`, `SplitTextInput`), which
- * owns the `size` / `status` / `leadingIcon` chrome. `onChange` receives the string value.
+ * Props of `Subtitle` (function). Exports: none.
+ * @see design/components/Sheet/native/BottomSheetTitleHeader.native.tsx
  */
-export type TextFieldProps = {
-	value?: string;
-	defaultValue?: string;
-	placeholder?: string;
-	autoFocus?: boolean;
-	size?: InputSize;
-	/** @default 'default' */
-	status?: InputStatus;
-	isClearable?: boolean;
-	isDisabled?: boolean;
-	isRound?: boolean;
-	grow?: boolean;
-	leadingIcon?: IconSlot;
-	trailingIcon?: IconSlot;
-	leadingText?: string;
-	trailingText?: string;
-	leadingPressableProps?: PressableProps;
-	trailingPressableProps?: PressableProps;
-	secureTextEntry?: boolean;
-	keyboardType?: RNTextInputProps['keyboardType'];
-	autoComplete?: RNTextInputProps['autoComplete'];
-	returnKeyType?: RNTextInputProps['returnKeyType'];
-	maxLength?: number;
-	enableAndroidSanitizedInputWorkaround?: boolean;
-	style?: StyleProp<ViewStyle>;
-	inputStyle?: StyleProp<TextStyle>;
-	children?: React$1.ReactNode;
-	onChange?: (value: string) => void;
-	onClear?: DiscordFunction<void>;
-	onFocus?: RNTextInputProps['onFocus'];
-	onBlur?: RNTextInputProps['onBlur'];
+export type SubtitleProps = {
+	children?: DesignTextProps['children'];
 };
 /**
- * Native `TextInput` props forwarded through `TextInput` (`maxLength`, `selectionColor`, `onFocus`, …),
- * minus the members `TextInput` overrides with its own semantics.
+ * Props of `TabItemCount` (function). Exports: none.
+ * @see design/components/Tabs/native/TabItem.native.tsx
  */
-export type TextInputPassthrough = Omit<
-	RNTextInputProps,
-	| 'value'
-	| 'placeholder'
-	| 'multiline'
-	| 'numberOfLines'
-	| 'autoFocus'
-	| 'secureTextEntry'
-	| 'keyboardType'
-	| 'keyboardAppearance'
-	| 'autoCapitalize'
-	| 'autoCorrect'
-	| 'style'
-	| 'onChange'
+export type TabItemCountProps = {
+	activeIndex?: unknown;
+	count?: DesignTextProps['children'];
+	index?: unknown;
+	pressed?: unknown;
+	variant?: unknown;
+};
+/**
+ * Props of `TabItem` (function). Exports: TabItem.
+ * @see design/components/Tabs/native/TabItem.native.tsx
+ */
+export type TabItemProps = Omit<
+	React$1.ComponentProps<typeof RN.Pressable>,
+	'count' | 'grow' | 'index' | 'itemCount' | 'label' | 'pressed' | 'state' | 'variant'
+> & {
+	count?: TabItemCountProps['count'];
+	grow?: unknown;
+	index?: unknown;
+	itemCount?: unknown;
+	label?: DesignTextProps['children'];
+	pressed?: unknown;
+	state: {
+		activeIndex?: unknown;
+		setItemDimensions?: unknown;
+	};
+	variant?: unknown;
+};
+export type TableCheckboxRowComponent = React$1.ComponentType<
+	TableCheckboxRowProps & Record<string, unknown>
 >;
 /**
- * Discord's form-style `TextInput` (`TextInput.native`), whose `onChange` receives the string value.
- * Props it does not read are spread onto the native input via {@link TextInputPassthrough}.
+ * Props of `TableCheckboxRow` (function). Exports: TableCheckboxRow.
+ * @see design/components/TableRow/native/TableCheckboxRow.native.tsx
  */
-export type TextInputProps = {
+export type TableCheckboxRowProps = Omit<
+	TableRowProps,
+	'accessibilityHint' | 'checked' | 'disabled' | 'label' | 'onPress' | 'subLabel'
+> & {
+	accessibilityHint?: TableRowProps['accessibilityHint'];
+	checked?: FormsFormCheckboxProps['checked'];
+	/** @default false */
+	disabled?: TableRowProps['disabled'];
+	label?: React$1.ReactElement | TableRowProps['label'];
+	onPress: (...args: any[]) => unknown;
+	subLabel?: React$1.ReactElement | TableRowProps['subLabel'];
+};
+export type TableRadioGroupComponent = React$1.ComponentType<TableRadioGroupProps>;
+/**
+ * Props of `TableRadioGroup` (function). Exports: TableRadioGroup.
+ * @see design/components/TableRow/native/TableRadioGroup.native.tsx
+ */
+export type TableRadioGroupProps = {
+	accessibilityLabel?: TableRowGroupProps['accessibilityLabel'];
+	children?: React$1.ReactNode;
+	/** @default null */
+	defaultValue?: unknown;
+	description?: TableRowGroupProps['description'];
+	groupRef?: unknown;
+	hasIcons?: TableRowGroupProps['hasIcons'];
+	helperText?: TableRowGroupProps['helperText'];
+	onChange?: (...args: any[]) => unknown;
+	title?: TableRowGroupProps['title'];
+	/** @default null */
 	value?: string;
-	/** @default '' */
-	placeholder?: string;
-	/** Field label rendered above the input. @default '' */
-	title?: string;
-	/** @default '' */
-	helpText?: string;
-	/** Error message, or `true` to show the error state without text. */
-	error?: string | boolean;
+};
+export type TableRadioRowComponent = React$1.ComponentType<
+	TableRadioRowProps & Record<string, unknown>
+>;
+/**
+ * Props of `TableRadioRow` (function). Exports: TableRadioRow.
+ * @see design/components/TableRow/native/TableRadioRow.native.tsx
+ */
+export type TableRadioRowProps = Omit<
+	TableRowProps,
+	| 'accessibilityHint'
+	| 'disabled'
+	| 'label'
+	| 'legacyCompat_onPress'
+	| 'legacyCompat_selected'
+	| 'subLabel'
+	| 'value'
+> & {
+	accessibilityHint?: TableRowProps['accessibilityHint'];
+	/** @default false */
+	disabled?: TableRowProps['disabled'];
+	label?: React$1.ReactElement | TableRowProps['label'];
+	legacyCompat_onPress?: (...args: any[]) => unknown;
+	legacyCompat_selected?: FormsFormRadioProps['selected'];
+	subLabel?: React$1.ReactElement | TableRowProps['subLabel'];
+	value?: unknown;
+};
+export type TableRowArrowComponent = React$1.ComponentType<TableRowArrowProps>;
+/**
+ * Props of `TableRowArrow` (function). Exports: TableRowArrow.
+ * @see design/components/TableRow/native/TableRowArrow.native.tsx
+ */
+export type TableRowArrowProps = {};
+export type TableRowComponent = React$1.ComponentType<TableRowProps & Record<string, unknown>> &
+	TableRowStatics;
+/**
+ * Props of `TableRowDivider` (function). Exports: TableRowDivider.
+ * @see design/components/TableRow/native/TableRowDivider.native.tsx
+ */
+export type TableRowDividerProps = {
+	/** @default false */
+	adjustSpacingForIcon?: boolean;
+};
+export type TableRowGroupComponent = React$1.ComponentType<TableRowGroupProps>;
+/**
+ * Props of `TableRowGroup` (function). Exports: TableRowGroup.
+ * @see design/components/TableRow/native/TableRowGroup.native.tsx
+ */
+export type TableRowGroupProps = {
+	accessibilityLabel?: React$1.ComponentProps<typeof RN.View>['accessibilityLabel'];
+	/** @default 'none' */
+	accessibilityRole?: React$1.ComponentProps<typeof RN.View>['accessibilityRole'];
+	children?: React$1.ReactNode;
+	description?: DesignTextProps['children'];
+	hasIcons?: TableRowDividerProps['adjustSpacingForIcon'];
+	/** @default false */
+	hasTrailingText?: boolean;
+	helperText?: DesignTextProps['children'];
+	title?: TableRowGroupTitleProps['title'];
+};
+export type TableRowGroupTitleComponent = React$1.ComponentType<TableRowGroupTitleProps>;
+/**
+ * Props of `TableRowGroupTitle` (function). Exports: TableRowGroupTitle.
+ * @see design/components/TableRow/native/TableRowGroup.native.tsx
+ */
+export type TableRowGroupTitleProps = {
+	lineClamp?: DesignTextProps['lineClamp'];
+	style?: DesignTextProps['style'];
+	title?: DesignTextProps['children'];
+};
+export type TableRowIconComponent = React$1.ComponentType<TableRowIconProps>;
+/**
+ * Props of `TableRowIcon` (function). Exports: TableRowIcon.
+ * @see design/components/TableRow/native/TableRowIcon.native.tsx
+ */
+export type TableRowIconProps = {
+	IconComponent?: unknown;
+	source?: VoidIconProps['source'];
+	/** @default 'default' */
+	variant?:
+		| 'danger'
+		| 'default'
+		| 'secondary'
+		| 'text-status-dnd'
+		| 'text-status-idle'
+		| 'text-status-offline'
+		| 'text-status-online'
+		| 'translucent'
+		| 'xbox'
+		| (string & {});
+};
+/**
+ * Props of `TableRowInner` (function). Exports: TableRowInner.
+ * @see design/components/TableRow/native/TableRow.native.tsx
+ */
+export type TableRowInnerProps = {
+	arrow?: unknown;
+	borderRadius?: unknown;
+	disabled?: boolean;
+	dragHandlePressableProps?: unknown;
+	/** @default false */
+	draggable?: boolean;
+	height?: unknown;
+	icon?: React$1.ComponentProps<typeof RN.View>['children'];
+	label?: DesignTextProps['children'];
+	labelLineClamp?: DesignTextProps['lineClamp'];
+	subLabel?: DesignTextProps['children'];
+	subLabelLineClamp?: DesignTextProps['lineClamp'];
+	trailing?: React$1.ComponentProps<typeof RN.View>['children'];
+	/** @default 'default' */
+	variant?: 'danger' | 'default' | (string & {});
+};
+/**
+ * Props of `TableRow` (function). Exports: TableRow.
+ * @see design/components/TableRow/native/TableRow.native.tsx
+ */
+export type TableRowProps = Omit<
+	DesignCardProps,
+	| 'arrow'
+	| 'disabled'
+	| 'dragHandlePressableProps'
+	| 'draggable'
+	| 'end'
+	| 'height'
+	| 'icon'
+	| 'label'
+	| 'labelLineClamp'
+	| 'onPress'
+	| 'start'
+	| 'subLabel'
+	| 'subLabelLineClamp'
+	| 'trailing'
+	| 'variant'
+> & {
+	arrow?: boolean;
+	/** @default false */
+	disabled?: TableRowInnerProps['disabled'];
+	dragHandlePressableProps?: unknown;
+	draggable?: TableRowInnerProps['draggable'];
+	end?: boolean;
+	height?: number | string;
+	icon?: TableRowInnerProps['icon'];
+	label?: TableRowInnerProps['label'];
+	labelLineClamp?: TableRowInnerProps['labelLineClamp'];
+	onPress?: DesignCardProps['onPress'];
+	start?: boolean;
+	subLabel?: TableRowInnerProps['subLabel'];
+	subLabelLineClamp?: TableRowInnerProps['subLabelLineClamp'];
+	trailing?: TableRowInnerProps['trailing'];
+	/** @default 'default' */
+	variant?: TableRowInnerProps['variant'];
+};
+export type TableRowStatics = {
+	Icon: TableRowIconComponent;
+	Arrow: TableRowArrowComponent;
+	TrailingText: TableRowTrailingTextComponent;
+};
+export type TableRowTrailingTextComponent = React$1.ComponentType<TableRowTrailingTextProps>;
+/**
+ * Props of `TableRowTrailingText` (function). Exports: TableRowTrailingText.
+ * @see design/components/TableRow/native/TableRowTrailingText.native.tsx
+ */
+export type TableRowTrailingTextProps = {
+	text?: DesignTextProps['children'];
+};
+export type TableSwitchRowComponent = React$1.ComponentType<
+	TableSwitchRowProps & Record<string, unknown>
+>;
+/**
+ * Props of `TableSwitchRow` (function). Exports: TableSwitchRow.
+ * @see design/components/TableRow/native/TableSwitchRow.native.tsx
+ */
+export type TableSwitchRowProps = Omit<
+	TableRowProps,
+	| 'accessibilityHint'
+	| 'disabled'
+	| 'label'
+	| 'onValueChange'
+	| 'subLabel'
+	| 'trailing'
+	| 'value'
+	| 'variant'
+> & {
+	accessibilityHint?: TableRowProps['accessibilityHint'];
+	/** @default false */
+	disabled?: FormsFormSwitchProps['disabled'];
+	label?: DesignTextProps['children'];
+	onValueChange?: (...args: any[]) => unknown;
+	subLabel?: React$1.ReactElement | TableRowProps['subLabel'];
+	trailing?: React$1.ComponentProps<typeof RN.View>['children'];
+	value?: boolean;
+	variant?: TableRowProps['variant'];
+};
+export type TabsComponent = React$1.ComponentType<TabsProps>;
+/**
+ * Props of `Tabs` (function). Exports: Tabs.
+ * @see design/components/Tabs/native/Tabs.native.tsx
+ */
+export type TabsProps = {
+	formatCount?: (...args: any[]) => unknown;
+	/** @default true */
+	grow?: boolean;
+	onEndDrag?: (...args: any[]) => unknown;
+	onScrollWorklet?: (...args: any[]) => unknown;
+	simultaneousHandlers?: unknown;
+	state: TabItemProps['state'];
+	variant?: 'overlay' | (string & {});
+};
+export type TagGroupComponent = React$1.ComponentType<TagGroupProps>;
+/**
+ * Props of `TagGroup` (function). Exports: TagGroup.
+ * @see design/components/TagGroup/native/TagGroup.native.tsx
+ */
+export type TagGroupProps = {
+	items: {
+		map?: unknown;
+	};
+	label?: React$1.ComponentProps<typeof RN.View>['accessibilityLabel'];
+	/** @default 'default' */
+	layout?: 'default' | 'inline' | (string & {});
+	size?: 'md' | 'sm' | 'xs' | (string & {});
+	/** @default 'default' */
+	variant?: 'default' | 'filter' | (string & {});
+};
+export type TextAreaComponent = React$1.ComponentType<TextAreaProps & Record<string, unknown>>;
+export type TextAreaFieldComponent = React$1.ComponentType<
+	TextAreaFieldProps & Record<string, unknown>
+>;
+/**
+ * Props of `TextAreaField` (function). Exports: TextAreaField.
+ * @see design/components/TextField/native/TextAreaField.native.tsx
+ */
+export type TextAreaFieldProps = Omit<
+	InputTextInputProps,
+	'disabled' | 'label' | 'maxLength' | 'onClear' | 'ref'
+> & {
+	disabled?: boolean;
+	label?: unknown;
+	maxLength?: InputTextInputProps['maxLength'];
+	onClear?: (...args: any[]) => unknown;
+	ref?: React$1.Ref<any>;
+};
+/**
+ * Props of `TextArea` (function). Exports: TextArea.
+ * @see design/components/TextInput/native/TextArea.native.tsx
+ */
+export type TextAreaProps = Omit<TextAreaFieldProps, 'ref' | 'required'> & {
+	ref?: TextAreaFieldProps['ref'];
+	required?: boolean;
+};
+export type TextButtonIconComponent = React$1.ComponentType<TextButtonIconProps>;
+/**
+ * Props of `TextButtonIcon` (function). Exports: none.
+ * @see design/components/Button/native/BaseTextButton.native.tsx
+ */
+export type TextButtonIconProps = {
+	/** @default true */
+	disableColor?: VoidIconProps['disableColor'];
+	source?: VoidIconProps['source'];
+	/** @default 'icon' */
+	variant?: 'entity' | 'icon' | (string & {});
+};
+export type TextFieldComponent = React$1.ComponentType<TextFieldProps & Record<string, unknown>>;
+/**
+ * Props of `TextField` (function). Exports: TextField.
+ * @see design/components/TextField/native/TextField.native.tsx
+ */
+export type TextFieldProps = Omit<
+	BaseTextFieldProps,
+	| 'aria-disabled'
+	| 'clearable'
+	| 'disabled'
+	| 'editable'
+	| 'focusable'
+	| 'leadingPressableProps'
+	| 'leadingText'
+	| 'onChange'
+	| 'onChangeText'
+	| 'onClear'
+	| 'ref'
+	| 'trailingIcon'
+	| 'trailingPressableProps'
+	| 'trailingText'
+> & {
+	clearable?: unknown;
 	/** @default false */
 	disabled?: boolean;
-	/** @default false */
-	multiline?: boolean;
-	/** @default 1 */
-	numberOfLines?: number;
-	/** @default false */
-	autoFocus?: boolean;
-	/** @default false */
-	secureTextEntry?: boolean;
-	keyboardType?: RNTextInputProps['keyboardType'];
-	keyboardAppearance?: RNTextInputProps['keyboardAppearance'];
-	autoCapitalize?: RNTextInputProps['autoCapitalize'];
-	autoCorrect?: boolean;
-	/** iOS clear-button mode; forwarded to the native input. */
-	clearButtonVisibility?: LiteralUnion<'never' | 'always' | 'unless-editing' | 'while-editing'>;
-	showBorder?: boolean;
-	/** @default false */
-	showCharactersRemaining?: boolean;
-	inputTextStyle?: StyleProp<TextStyle>;
-	style?: StyleProp<ViewStyle>;
-	/** @default false */
-	enableAndroidSanitizedInputWorkaround?: boolean;
-	/** Switches between the legacy and redesign render paths. @default true */
-	allowRedesignTextInput?: boolean;
-	onChange?: (value: string) => void;
-} & TextInputPassthrough;
-export type TextProps = {
-	children?: React$1.ReactNode;
-	variant?: TextVariant;
-	color?: LiteralUnion<'text-normal' | 'text-muted' | 'header-primary' | 'header-secondary'>;
-	style?: StyleProp<TextStyle>;
-	lineClamp?: number;
-	ellipsizeMode?: 'head' | 'middle' | 'tail' | 'clip';
-	tabularNumbers?: boolean;
-	animated?: boolean;
-	numberOfLines?: number;
-	allowFontScaling?: boolean;
-} & ViewProps;
+	focusable?: unknown;
+	leadingPressableProps?: unknown;
+	leadingText?: DesignTextProps['children'];
+	onChange?: (...args: any[]) => unknown;
+	onClear?: (...args: any[]) => unknown;
+	ref?: React$1.Ref<any>;
+	trailingIcon?: unknown;
+	trailingPressableProps?: unknown;
+	trailingText?: DesignTextProps['children'];
+};
+export type TextHeadingComponent = React$1.ComponentType<
+	TextHeadingProps & Record<string, unknown>
+>;
+/**
+ * Props of `Heading` (function). Exports: Heading.
+ * @see design/components/Text/native/Text.tsx
+ */
+export type TextHeadingProps = Omit<DesignTextProps, 'ref' | 'variant'> & {
+	ref?: DesignTextProps['ref'];
+	variant?:
+		| 'display-md'
+		| 'display-sm'
+		| 'eyebrow'
+		| 'heading-lg/bold'
+		| 'heading-lg/extrabold'
+		| 'heading-lg/medium'
+		| 'heading-lg/semibold'
+		| 'heading-md/bold'
+		| 'heading-md/extrabold'
+		| 'heading-md/semibold'
+		| 'heading-sm/medium'
+		| 'heading-sm/semibold'
+		| 'heading-xl/bold'
+		| 'heading-xl/extrabold'
+		| 'heading-xxl/bold'
+		| 'nitro-sm'
+		| 'redesign/heading-18/bold'
+		| 'text-lg/bold'
+		| 'text-md/medium'
+		| 'text-md/semibold'
+		| 'text-sm/semibold'
+		| 'text-xs/semibold'
+		| (string & {});
+};
 /** Every typography variant Discord ships in `TextStyleSheet`, kept open for new ones. */
 export type TextVariant = LiteralUnion<
 	| `heading-${'sm' | 'md' | 'lg' | 'xl' | 'xxl'}/${TextWeight | 'extrabold'}`
@@ -1312,10 +3692,47 @@ export type Theme = {
 		url: string;
 	};
 };
+export type ThemeContextProviderRootThemeContextProviderComponent =
+	React$1.ComponentType<ThemeContextProviderRootThemeContextProviderProps>;
+/**
+ * Props of `RootThemeContextProvider` (function). Exports: RootThemeContextProvider.
+ * @see design/components/ThemeContextProvider/native/RootThemeContextProvider.native.tsx
+ */
+export type ThemeContextProviderRootThemeContextProviderProps = {
+	children?: React$1.ReactNode;
+	/** @default 1 */
+	contrast?: number;
+	/** @default 'compact' */
+	density?: 'compact' | (string & {});
+	/** @default false */
+	disableAdaptiveTheme?: boolean;
+	enabledExperiments?: unknown;
+	/** @default 0 */
+	flags?: number;
+	/** @default null */
+	gradient?: unknown;
+	/** @default null */
+	primaryColor?: unknown;
+	/** @default false */
+	reduceAdaptiveTheme?: boolean;
+	/** @default 1 */
+	saturation?: number;
+	/** @default null */
+	secondaryColor?: unknown;
+	theme?: unknown;
+};
 /** An {@link Addon} whose instance is a {@link Theme}, tracking its registration state. */
 export type ThemeEntity = Addon & {
 	registered: boolean;
 	instance: Theme | null;
+};
+/**
+ * Props of `ThemeProvider` (function). Exports: ThemeProvider.
+ * @see module 4804 (no source path)
+ */
+export type ThemeProviderProps = {
+	children?: React$1.ReactNode;
+	value?: unknown;
 };
 /** A single semantic colour definition in a {@link Theme}. */
 export type ThemeSemanticColor = {
@@ -1323,6 +3740,11 @@ export type ThemeSemanticColor = {
 	value: string;
 	opacity?: number;
 };
+/**
+ * Props of `Title` (function). Exports: none.
+ * @see design/components/Sheet/native/BottomSheetTitleHeader.native.tsx
+ */
+export type TitleProps = DesignTextProps;
 /** A button rendered inside a toast. */
 export type ToastButton = {
 	variant?: 'primary' | 'secondary' | 'tertiary';
@@ -1331,6 +3753,47 @@ export type ToastButton = {
 	content: string;
 	icon?: number;
 	onPress: () => void;
+};
+export type ToastComponent = React$1.ComponentType<ToastProps>;
+export type ToastContainerComponent = React$1.ComponentType<ToastContainerProps>;
+/**
+ * Props of `ToastContainer` (function). Exports: ToastContainer.
+ * @see design/mana/components/Toast/ToastContainer.native.tsx
+ */
+export type ToastContainerProps = {
+	offset?: {
+		bottom?: unknown;
+		top?: unknown;
+	};
+	/** @default false */
+	overlay?: boolean;
+	/** @default 'app' */
+	surface?: 'app' | (string & {});
+};
+/**
+ * Props of `ToastEntityContent` (function). Exports: none.
+ * @see design/mana/components/Toast/ToastEntity.native.tsx
+ */
+export type ToastEntityContentProps = {
+	entity: {
+		alt?: unknown;
+		name?: unknown;
+		src?: unknown;
+		type?: unknown;
+		unicode?: unknown;
+	};
+	styles: {
+		glyph?: unknown;
+		image?: unknown;
+	};
+};
+/**
+ * Props of `ToastEntity` (function). Exports: ToastEntity.
+ * @see design/mana/components/Toast/ToastEntity.native.tsx
+ */
+export type ToastEntityProps = {
+	entity: ToastEntityContentProps['entity'];
+	style?: React$1.ComponentProps<typeof RN.View>['style'];
 };
 /** A handle returned when showing a toast, used to update or close it. */
 export type ToastHandle = {
@@ -1348,14 +3811,39 @@ export type ToastOptions = {
 	buttons?: ToastButton[];
 	tintedIcon?: boolean;
 };
+/**
+ * Props of `Toast` (function). Exports: Toast.
+ * @see design/mana/components/Toast/Toast.native.tsx
+ */
+export type ToastProps = {
+	icon?: ToastEntityProps['entity'];
+	iconColor?: unknown;
+	secondaryIconColor?: unknown;
+	text?: DesignTextProps['children'];
+	/** @default 'default' */
+	variant?: 'critical' | 'default' | 'success' | (string & {});
+};
 /** State and actions of the toast store. */
 export type ToastStoreState = {
 	toasts: Record<string, InternalToastOptions>;
 	addToast: (options: InternalToastOptions) => ToastHandle;
 	updateToastWithOptions: (id: string, options: Partial<InternalToastOptions>) => void;
 };
-export type TrailingTextProps = {
-	text: string;
+export type ToggleIconButtonComponent = React$1.ComponentType<
+	ToggleIconButtonProps & Record<string, unknown>
+>;
+/**
+ * Props of `ToggleIconButton` (function). Exports: ToggleIconButton.
+ * @see design/components/Button/native/ToggleIconButton.native.tsx
+ */
+export type ToggleIconButtonProps = {
+	icon?: unknown;
+	/** @default false */
+	pressed?: boolean;
+	ref?: BaseIconButtonProps['ref'];
+	selectedIcon?: unknown;
+	/** @default 'default' */
+	variant?: 'default' | (string & {});
 };
 /** `TransitionStates`: MOUNTED = 0, ENTERED = 1, YEETED = 2. */
 export type TransitionState = 'MOUNTED' | 'ENTERED' | 'YEETED';
@@ -1363,6 +3851,91 @@ export type TransitionState = 'MOUNTED' | 'ENTERED' | 'YEETED';
 export type UnboundAsset = DiscordAsset & {
 	iconPackPath?: string;
 	iconPackScale?: number;
+};
+/**
+ * Props of `VisualEffectView` (function). Exports: default.
+ * @see modules/visual_effect_view/native/VisualEffectView.tsx
+ */
+export type VisualEffectViewProps = Omit<
+	React$1.ComponentProps<typeof RN.View>,
+	| 'android_blurTargetViewNativeId'
+	| 'android_fallbackColor'
+	| 'android_softwareBlurDisabled'
+	| 'blurAmount'
+	| 'blurStyle'
+	| 'blurTheme'
+	| 'ref'
+	| 'style'
+	| 'tintColor'
+> & {
+	android_blurTargetViewNativeId?: string;
+	android_fallbackColor?: unknown;
+	/** @default false */
+	android_softwareBlurDisabled?: boolean;
+	/** @default 1 */
+	blurAmount?: number;
+	/** @default 'default' */
+	blurStyle?: 'default' | 'ultra-thin' | (string & {});
+	blurTheme?: 'dark' | 'light' | (string & {});
+	ref?: React$1.Ref<any>;
+	style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
+	tintColor?: unknown;
+};
+/**
+ * Props of `Icon` (memo). Exports: default.
+ * @see design/void/Icon/native/Icon.tsx
+ */
+export type VoidIconProps = {
+	accessibilityLabel?: React$1.ComponentProps<typeof RN.Image>['accessibilityLabel'];
+	accessible?: React$1.ComponentProps<typeof RN.Image>['accessible'];
+	color?: unknown;
+	/** @default false */
+	disableColor?: boolean;
+	ref?: React$1.Ref<any>;
+	/** @default 'cover' */
+	resizeMode?: React$1.ComponentProps<typeof RN.Image>['resizeMode'];
+	size?: unknown;
+	source?: React$1.ComponentProps<typeof RN.Image>['source'];
+	style?: React$1.ComponentProps<typeof RN.Image>['style'];
+};
+/**
+ * Props of `VoidTextInput` (function). Exports: default.
+ * @see design/void/TextInput/native/TextInput.tsx
+ */
+export type VoidTextInputProps = Omit<
+	React$1.ComponentProps<typeof RN.TextInput>,
+	'ref' | 'style'
+> & {
+	ref?: React$1.Ref<any>;
+	style?: React$1.ComponentProps<typeof RN.TextInput>['style'];
+};
+/**
+ * Props of `WrappedNavigationStack` (function). Exports: none.
+ * @see design/components/Navigator/native/Navigator.native.tsx
+ */
+export type WrappedNavigationStackProps = Omit<
+	NavigationStackProps,
+	| 'initialRouteName'
+	| 'initialRouteStack'
+	| 'initialRouteState'
+	| 'navigationTheme'
+	| 'onStateChange'
+> & {
+	initialRouteName?: unknown;
+	initialRouteStack?: unknown;
+	initialRouteState?: unknown;
+	navigationTheme?: unknown;
+	onStateChange?: NavigationContainerInnerProps['onStateChange'];
+};
+export type YouTabLottieComponent = React$1.ComponentType<
+	YouTabLottieProps & Record<string, unknown>
+>;
+/**
+ * Props of `YouTabLottie` (function). Exports: YouTabLottie.
+ * @see design/components/LottieIcon/native/generated/YouTabLottie.tsx
+ */
+export type YouTabLottieProps = Omit<LottieIconProps, 'ref'> & {
+	ref?: LottieIconProps['ref'];
 };
 /** The lifecycle and settings contract implemented by a plugin. */
 type Plugin$1 = {

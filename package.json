@@ -8,8 +8,10 @@
 			"packages/debugger",
 			"packages/debugger-protocol",
 			"packages/types",
+			"packages/discord-types",
 			"packages/api",
 			"apps/sdk-generator",
+			"apps/discord-typegen",
 			"apps/web",
 			"apps/discord-bot",
 			"packages/contracts",
@@ -44,6 +46,7 @@
 	"scripts": {
 		"prepare": "lefthook install --reset-hooks-path",
 		"generate-sdk": "bun apps/sdk-generator/src/index.ts",
+		"generate-discord-types": "bun apps/discord-typegen/src/index.ts",
 		"test:s3": "bun scripts/test-s3.ts",
 		"lint": "bun run lint:js && bun run loader:lint",
 		"lint:js": "bun run lint:rules && bun run --filter @unbound-app/web build:types && oxlint --config .oxlintrc.json --type-aware apps packages && bun run plugins:lint",

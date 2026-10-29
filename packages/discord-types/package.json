@@ -1,0 +1,39 @@
+{
+	"name": "@unbound-app/discord-types",
+	"version": "0.0.0",
+	"description": "Generated TypeScript types for the React Native components in Discord's mobile app.",
+	"author": {
+		"name": "Mario P.",
+		"email": "contact@marioparaschiv.com",
+		"url": "https://github.com/marioparaschiv"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/marioparaschiv/unbound.git",
+		"directory": "packages/discord-types"
+	},
+	"files": [
+		"src"
+	],
+	"types": "./src/index.gen.d.ts",
+	"exports": {
+		".": "./src/index.gen.d.ts",
+		"./design": "./src/barrels.gen.d.ts"
+	},
+	"peerDependencies": {
+		"@types/react": "catalog:react",
+		"react-native": "catalog:react",
+		"typescript": "catalog:"
+	},
+	"peerDependenciesMeta": {
+		"@types/react": {
+			"optional": false
+		},
+		"react-native": {
+			"optional": false
+		},
+		"typescript": {
+			"optional": false
+		}
+	}
+}

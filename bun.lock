@@ -53,6 +53,18 @@
         "typescript": "catalog:",
       },
     },
+    "apps/discord-typegen": {
+      "name": "@unbound-app/discord-typegen",
+      "version": "0.0.0",
+      "dependencies": {
+        "@unbound-app/logger": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "ts-morph": "^28.0.0",
+        "typescript": "catalog:",
+      },
+    },
     "apps/sdk-generator": {
       "name": "@unbound-app/sdk-generator",
       "version": "0.8.4",
@@ -290,6 +302,15 @@
         "tsdown": "^0.23.2",
       },
       "peerDependencies": {
+        "typescript": "catalog:",
+      },
+    },
+    "packages/discord-types": {
+      "name": "@unbound-app/discord-types",
+      "version": "0.0.0",
+      "peerDependencies": {
+        "@types/react": "catalog:react",
+        "react-native": "catalog:react",
         "typescript": "catalog:",
       },
     },
@@ -879,6 +900,7 @@
       "name": "@unbound-app/types",
       "version": "0.9.0",
       "dependencies": {
+        "@unbound-app/discord-types": "workspace:*",
         "possess": "catalog:",
       },
       "peerDependencies": {
@@ -1883,6 +1905,10 @@
     "@unbound-app/debugger-protocol": ["@unbound-app/debugger-protocol@workspace:packages/debugger-protocol"],
 
     "@unbound-app/discord-bot": ["@unbound-app/discord-bot@workspace:apps/discord-bot"],
+
+    "@unbound-app/discord-typegen": ["@unbound-app/discord-typegen@workspace:apps/discord-typegen"],
+
+    "@unbound-app/discord-types": ["@unbound-app/discord-types@workspace:packages/discord-types"],
 
     "@unbound-app/logger": ["@unbound-app/logger@workspace:packages/logger"],
 

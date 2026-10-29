@@ -33,6 +33,7 @@ type SdkConfig = {
 export const config: SdkConfig = {
 	inlinedLibraries: [
 		'@unbound-app/types',
+		'@unbound-app/discord-types',
 		'@unbound-app/logger',
 		'@unbound-app/utils',
 		'possess',

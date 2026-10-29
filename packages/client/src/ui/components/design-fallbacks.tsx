@@ -1,21 +1,46 @@
-import type { CardProps, StackProps, SwitchProps, TextProps } from '@unbound-app/types/components';
+import type { DesignModule } from '@unbound-app/types/components';
 import type { FlexAlignType, ViewStyle } from 'react-native';
 import { Switch, Text, View } from 'react-native';
+import type { ComponentProps } from 'react';
 
-const ALIGN: Record<NonNullable<StackProps['align']>, FlexAlignType> = {
-	start: 'flex-start',
-	center: 'center',
-	end: 'flex-end',
-	stretch: 'stretch',
-};
+type TextProps = ComponentProps<DesignModule['Text']>;
+type SwitchProps = ComponentProps<DesignModule['FormSwitch']>;
+type StackProps = ComponentProps<DesignModule['Stack']>;
+type CardProps = ComponentProps<DesignModule['Card']>;
 
-const JUSTIFY: Record<NonNullable<StackProps['justify']>, ViewStyle['justifyContent']> = {
-	start: 'flex-start',
-	center: 'center',
-	end: 'flex-end',
-	between: 'space-between',
-	around: 'space-around',
-};
+type JustifyContent = NonNullable<ViewStyle['justifyContent']>;
+type EllipsizeMode = NonNullable<ComponentProps<typeof Text>['ellipsizeMode']>;
+
+const ELLIPSIZE_MODES: readonly EllipsizeMode[] = ['head', 'middle', 'tail', 'clip'];
+
+const ALIGN_ITEMS: readonly FlexAlignType[] = [
+	'flex-start',
+	'flex-end',
+	'center',
+	'stretch',
+	'baseline',
+];
+
+const JUSTIFY_CONTENT: readonly JustifyContent[] = [
+	'flex-start',
+	'flex-end',
+	'center',
+	'space-between',
+	'space-around',
+	'space-evenly',
+];
+
+function isAlignItems(value: string): value is FlexAlignType {
+	return (ALIGN_ITEMS as readonly string[]).includes(value);
+}
+
+function isEllipsizeMode(value: TextProps['ellipsizeMode']): value is EllipsizeMode {
+	return typeof value === 'string' && (ELLIPSIZE_MODES as readonly string[]).includes(value);
+}
+
+function isJustifyContent(value: string): value is JustifyContent {
+	return (JUSTIFY_CONTENT as readonly string[]).includes(value);
+}
 
 /**
  * @description Unbound's stand-in for Discord's `Text`: plain React Native text with the same text props.
@@ -30,12 +55,14 @@ export function FallbackText({
 	ellipsizeMode,
 	allowFontScaling,
 }: TextProps) {
+	const lines = numberOfLines ?? lineClamp;
+
 	return (
 		<Text
 			style={style}
-			numberOfLines={numberOfLines ?? lineClamp}
-			ellipsizeMode={ellipsizeMode}
-			allowFontScaling={allowFontScaling}
+			numberOfLines={typeof lines === 'number' ? lines : undefined}
+			ellipsizeMode={isEllipsizeMode(ellipsizeMode) ? ellipsizeMode : undefined}
+			allowFontScaling={typeof allowFontScaling === 'boolean' ? allowFontScaling : undefined}
 		>
 			{children}
 		</Text>
@@ -64,37 +91,41 @@ export function FallbackSwitch({
 }: SwitchProps) {
 	return (
 		<Switch
-			value={value}
-			disabled={disabled}
-			accessibilityLabel={accessibilityLabel}
-			onValueChange={onValueChange}
+			value={value === true}
+			disabled={disabled ?? undefined}
+			accessibilityLabel={
+				typeof accessibilityLabel === 'string' ? accessibilityLabel : undefined
+			}
+			onValueChange={(next) => void onValueChange?.(next)}
 		/>
 	);
 }
 
 /**
  * @description Unbound's stand-in for Discord's `Stack`: a view laying its children out with even spacing.
+ * Like Discord's, `align` and `justify` are the flexbox values themselves.
  * @param props The stack props.
  * @returns The stack element.
  */
 export function FallbackStack({
 	spacing = 8,
 	direction = 'vertical',
-	align,
-	justify,
+	align = 'stretch',
+	justify = 'flex-start',
 	style,
 	children,
-	...rest
+	onLayout,
 }: StackProps) {
 	return (
 		<View
-			{...rest}
+			onLayout={onLayout}
 			style={[
 				{
+					width: '100%',
 					flexDirection: direction === 'horizontal' ? 'row' : 'column',
 					gap: spacing,
-					alignItems: align ? ALIGN[align] : undefined,
-					justifyContent: justify ? JUSTIFY[justify] : undefined,
+					alignItems: isAlignItems(align) ? align : undefined,
+					justifyContent: isJustifyContent(justify) ? justify : undefined,
 				},
 				style,
 			]}
@@ -110,7 +141,7 @@ export function FallbackStack({
  * @returns The card element.
  */
 export function FallbackCard({
-	radius = 16,
+	radius,
 	style,
 	children,
 	variant: _variant,
@@ -118,10 +149,22 @@ export function FallbackCard({
 	shadow: _shadow,
 	start: _start,
 	end: _end,
+	onPress: _onPress,
+	accessibilityRole: _accessibilityRole,
 	...rest
 }: CardProps) {
 	return (
-		<View {...rest} style={[{ padding: 16, borderRadius: radius, overflow: 'hidden' }, style]}>
+		<View
+			{...rest}
+			style={[
+				{
+					padding: 16,
+					borderRadius: typeof radius === 'number' ? radius : 16,
+					overflow: 'hidden',
+				},
+				style,
+			]}
+		>
 			{children}
 		</View>
 	);

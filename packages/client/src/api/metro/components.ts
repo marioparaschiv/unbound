@@ -1,7 +1,7 @@
-import type { SwitchProps, TextFieldProps } from '@unbound-app/types/components';
+import type { DesignModule } from '@unbound-app/types/components';
+import type { ComponentProps, ComponentType } from 'react';
 import firstOf from '@unbound-app/utils/first-of';
 import lazy from '@unbound-app/utils/lazy';
-import type { ComponentType } from 'react';
 import { createElement } from 'react';
 
 import {
@@ -16,7 +16,8 @@ import type { HelpMessageProps } from '~/ui/components/help-message';
 import { findByPropsLazy } from '~/api/metro/wrappers';
 import { findByName } from '~/api/metro/search';
 
-type SearchFieldProps = Omit<TextFieldProps, 'leadingIcon'>;
+type SwitchProps = ComponentProps<DesignModule['FormSwitch']>;
+type SearchFieldProps = ComponentProps<DesignModule['SearchField']>;
 
 export {
 	Discord,
