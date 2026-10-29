@@ -1,5 +1,6 @@
-import { Platform, SafeAreaView, StatusBar } from 'react-native';
+import { Platform, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/shallow';
+import type { ReactNode } from 'react';
 
 import { useSettingsStore } from '~/api/storage';
 import { Screens } from '~/api/metro/common';
@@ -10,6 +11,22 @@ import Toast from './toast';
 
 const androidInset =
 	Platform.OS === 'android' ? { paddingTop: StatusBar.currentHeight ?? 0 } : null;
+
+function AndroidOverlay({ children }: { children: ReactNode }) {
+	return (
+		<View style={StyleSheet.absoluteFill} pointerEvents='box-none'>
+			{children}
+		</View>
+	);
+}
+
+function ToastOverlay({ children }: { children: ReactNode }) {
+	if (Platform.OS === 'android') {
+		return <AndroidOverlay>{children}</AndroidOverlay>;
+	}
+
+	return <Screens.FullWindowOverlay>{children}</Screens.FullWindowOverlay>;
+}
 
 function ToastContainer() {
 	const settings = useSettingsStore('unbound', ({ key }) => key === 'toasts.maxOnScreen');
@@ -33,13 +50,13 @@ function ToastContainer() {
 	if (!ids.length) return null;
 
 	return (
-		<Screens.FullWindowOverlay>
+		<ToastOverlay>
 			<SafeAreaView style={[styles.container, androidInset]} pointerEvents='box-none'>
 				{ids.map((id) => (
 					<Toast key={id} id={id} />
 				))}
 			</SafeAreaView>
-		</Screens.FullWindowOverlay>
+		</ToastOverlay>
 	);
 }
 
