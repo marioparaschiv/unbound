@@ -1,10 +1,19 @@
 import { describe, expect, mock, test } from 'bun:test';
 
 import type { AddonAttribution } from '~/api/crash-guard';
+import type { CrashEvent } from '~/lib/crash-report';
 
 type RecordedToast = { content?: unknown };
 
 const toasts: RecordedToast[] = [];
+const crashes: CrashEvent[] = [];
+
+mock.module('~/lib/crash-reports', () => ({
+	CRASH_REPORTS_SETTING: 'crash-reports',
+	reportCrash: async (event: CrashEvent) => {
+		crashes.push(event);
+	},
+}));
 const actualToasts = await import('~/api/toasts');
 
 mock.module('~/api/toasts', () => ({
@@ -62,6 +71,9 @@ describe('freeze handling', () => {
 			detail: 'It has been inside the native call invoke(sleep) for 6686 ms.',
 		});
 
+		expect(crashes.at(-1)?.message).toBe(
+			'It has been inside the native call invoke(sleep) for 6686 ms.',
+		);
 		expect(toasts.at(-1)?.content).toBe(
 			'freeze.detail froze Discord for 7 seconds. It has been inside the native call invoke(sleep) for 6686 ms.',
 		);
