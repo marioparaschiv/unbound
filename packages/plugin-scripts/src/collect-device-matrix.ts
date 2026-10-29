@@ -1,8 +1,9 @@
-import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
-import { catalogPlugins, renderDeviceMatrix, type DeviceCheck } from './device-matrix';
+import { compareRuns, renderChanges, type MeasuredCheck } from './compare-device-matrix';
+import { catalogPlugins, renderDeviceMatrix } from './device-matrix';
 import { PLUGINS_DIR, REPO_ROOT } from './paths';
 
 export type CycleResult = {
@@ -17,6 +18,8 @@ export type CycleResult = {
 	hooksStopped: number;
 	hooksAfter: number;
 	hooksUpdated: number;
+	stopMs?: number;
+	startMs?: number;
 	selfTest?: { ok: boolean; detail: string };
 };
 
@@ -42,9 +45,13 @@ export function cycleScript(id: string): string {
 	}
 	var before = manager.errors.get(id);
 	result.hooksBefore = hooks();
+	var stopping = Date.now();
 	try { await manager.stop(id); } catch (failure) { result.error = result.error || message(failure); }
+	result.stopMs = Date.now() - stopping;
 	result.hooksStopped = hooks();
+	var starting = Date.now();
 	try { await manager.start(id); } catch (failure) { result.error = result.error || message(failure); }
+	result.startMs = Date.now() - starting;
 	await settle();
 	var after = manager.errors.get(id);
 	if (!result.error && after && after !== before) result.error = message(after);
@@ -90,7 +97,7 @@ function lifecycleFailure(result: CycleResult): string | undefined {
 	return undefined;
 }
 
-export function checkFromCycle(result: CycleResult, screenshot?: string): DeviceCheck {
+export function checkFromCycle(result: CycleResult, screenshot?: string): MeasuredCheck {
 	if (!result.installed) {
 		return {
 			id: result.id,
@@ -120,6 +127,13 @@ export function checkFromCycle(result: CycleResult, screenshot?: string): Device
 		lifecycle: failure ? 'fail' : 'pass',
 		evidence,
 		...(note ? { note } : {}),
+		metrics: {
+			stopMs: result.stopMs ?? 0,
+			startMs: result.startMs ?? 0,
+			leakedHooks:
+				Math.max(0, result.hooksAfter - result.hooksBefore) +
+				Math.max(0, result.hooksUpdated - result.hooksAfter),
+		},
 	};
 }
 
@@ -226,6 +240,26 @@ function screenshotTarget(values: { ios?: boolean; udid?: string; serial?: strin
 	return { kind: 'android', serial: values.serial } as const;
 }
 
+export function mergeChecks(previous: MeasuredCheck[], current: MeasuredCheck[]): MeasuredCheck[] {
+	const updated = new Map(current.map((check) => [check.id, check]));
+	const merged = previous.map((check) => updated.get(check.id) ?? check);
+	const known = new Set(previous.map((check) => check.id));
+
+	return [...merged, ...current.filter((check) => !known.has(check.id))];
+}
+
+function readBaseline(path: string): MeasuredCheck[] | undefined {
+	if (!existsSync(path)) return undefined;
+
+	try {
+		const parsed = JSON.parse(readFileSync(path, 'utf8')) as unknown;
+
+		return Array.isArray(parsed) ? (parsed as MeasuredCheck[]) : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 async function main(): Promise<void> {
 	const { values } = parseArgs({
 		options: {
@@ -236,12 +270,13 @@ async function main(): Promise<void> {
 			udid: { type: 'string' },
 			only: { type: 'string' },
 			device: { type: 'string' },
+			baseline: { type: 'string' },
 		},
 	});
 
 	if (!values.out) {
 		throw new Error(
-			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>]',
+			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>]',
 		);
 	}
 
@@ -250,7 +285,7 @@ async function main(): Promise<void> {
 	const target = screenshotTarget(values);
 	const only = values.only ? new Set(values.only.split(',')) : undefined;
 	const catalog = catalogPlugins(PLUGINS_DIR).filter((plugin) => !only || only.has(plugin.id));
-	const checks: DeviceCheck[] = [];
+	const checks: MeasuredCheck[] = [];
 
 	mkdirSync(out, { recursive: true });
 
@@ -269,7 +304,22 @@ async function main(): Promise<void> {
 		);
 	}
 
-	writeFileSync(join(out, 'results.json'), `${JSON.stringify(checks, null, '\t')}\n`);
+	const baseline = readBaseline(
+		values.baseline ? resolve(values.baseline) : join(out, 'results.json'),
+	);
+
+	const compared = baseline?.filter((check) => !only || only.has(check.id));
+	const saved = only && baseline ? mergeChecks(baseline, checks) : checks;
+
+	writeFileSync(join(out, 'results.json'), `${JSON.stringify(saved, null, '\t')}\n`);
+
+	if (compared) {
+		const changes = compareRuns(compared, checks);
+
+		writeFileSync(join(out, 'changes.md'), `${renderChanges(changes)}\n`);
+
+		for (const change of changes) console.error(`changed: ${change}`);
+	}
 	writeFileSync(
 		join(out, 'matrix.md'),
 		`${renderDeviceMatrix(catalog, checks, values.device ?? (target.kind === 'ios' ? 'iOS' : 'Android'))}\n`,

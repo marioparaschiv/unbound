@@ -28,6 +28,7 @@ test('a clean cycle passes with its hook counts and screenshot as evidence', () 
 		behavior: 'pass',
 		lifecycle: 'pass',
 		evidence: ['cycle: hooks 12→9→12→12', 'screenshot: unbound.alpha.png'],
+		metrics: { stopMs: 0, startMs: 0, leakedHooks: 0 },
 	});
 });
 
