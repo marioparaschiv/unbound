@@ -199,6 +199,10 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 		throw new Error('You must provide a filter to search by.');
 	}
 
+	if (options.lazy) {
+		return searchWithOptions([], options, () => filter);
+	}
+
 	const {
 		all = false,
 		cacheOnly = false,

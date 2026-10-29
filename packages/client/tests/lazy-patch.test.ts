@@ -108,6 +108,9 @@ define(20, (_, __, ___, ____, module) => {
 define(21, (_, __, ___, ____, module) => {
 	module.exports = { late: () => 21 };
 });
+define(22, (_, __, ___, ____, module) => {
+	module.exports = { viaFind: () => 22 };
+});
 metroRequire(0);
 metroRequire(1);
 
@@ -272,6 +275,15 @@ describe('patching a lazy module', () => {
 		expect(isLoaded(2)).toBe(false);
 		expect(metroRequire(2).triple(2)).toBe(7);
 		expect(Tripler.triple(2)).toBe(7);
+	});
+
+	test('find with lazy returns a handle whose patch waits for the module', () => {
+		const ViaFind = metro.find(byProps('viaFind'), { lazy: true });
+
+		after(ViaFind, 'viaFind', ({ result }) => result + 1);
+
+		expect(isLoaded(22)).toBe(false);
+		expect(metroRequire(22).viaFind()).toBe(23);
 	});
 
 	test('the returned unpatch cancels a patch that is still waiting', () => {
