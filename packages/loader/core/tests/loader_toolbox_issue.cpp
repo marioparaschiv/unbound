@@ -64,7 +64,7 @@ int main()
     assert(row(report, "Unbound") ==
            std::string("loader ") + loader::loaderVersion() + " (`Unbound.dylib`, `ElleKit`)");
     assert(std::isdigit(static_cast<unsigned char>(loader::loaderVersion()[0])));
-    assert(row(report, "Discord") == "300.0 Stable, build 1234 (TrollStore)");
+    assert(row(report, "Discord") == "300.0 stable, build 1234 (TrollStore)");
     assert(row(report, "Device") == "iPhone SE on iOS 26.0.1");
     assert(row(report, "State") == "jailbroken, system app");
     assert(report.attachments.size() == 1);
@@ -96,7 +96,7 @@ int main()
         loader::toolbox::issueReport(android, "Android", "352.10 - Beta (352110)");
     assert(row(androidReport, "Unbound") ==
            std::string("loader ") + loader::loaderVersion() + " (`libunbound.so`, `Vector`)");
-    assert(row(androidReport, "Discord") == "352.10 Beta, build 352110 (Google Play)");
+    assert(row(androidReport, "Discord") == "352.10 beta, build 352110 (Google Play)");
     assert(row(androidReport, "Device") == "Google Pixel 9 on Android 16");
     assert(row(androidReport, "State") == "stock, emulator");
     assert(androidReport.attachments.empty());
@@ -106,7 +106,7 @@ int main()
     assert(row(bare, "Discord") == "unknown");
     assert(loader::toolbox::discordLine("351.0", "App Store") == "351.0 (App Store)");
     assert(loader::toolbox::discordLine("352.0 (52)", "TestFlight") ==
-           "352.0 Beta, build 52 (TestFlight)");
+           "352.0 beta, build 52 (TestFlight)");
 
     const auto            root = makeTemporaryDirectory();
     loader::SettingsStore settings((root / "settings.json").string());
@@ -136,7 +136,7 @@ int main()
     assert(issue.find("bug%28iOS%29") != std::string::npos);
     assert(issue.find("iPhone%20SE") != std::string::npos);
     assert(issue.find("Unbound%3A%2A%2A") < issue.find("Device%3A%2A%2A"));
-    assert(issue.find("300.0%20Stable%2C%20build%201234") != std::string::npos);
+    assert(issue.find("300.0%20stable%2C%20build%201234") != std::string::npos);
     assert(issue.find("State%3A%2A%2A%20jailbroken") != std::string::npos);
     assert(issue.find("Entitlements") != std::string::npos);
     assert(loader::currentNativePlatformProvider()->platform == "ios");
