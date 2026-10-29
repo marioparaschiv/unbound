@@ -527,7 +527,7 @@ export type NativePlatformIOSBridge = {
 
 export type NativePlatformApp = {
 	getAppSource(): string;
-	/** The framework that injected the loader, such as Vector, LSPosed or ElleKit, or an empty string. Missing on older loaders. */
+	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. Missing on older loaders. */
 	getFramework?(): string;
 	/** True for the first caller in this process; a reloaded runtime sees false. Missing on older loaders. */
 	claimLaunchURL?(): boolean;

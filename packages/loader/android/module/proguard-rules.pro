@@ -7,3 +7,4 @@
 -keepclasseswithmembernames class * { native <methods>; }
 -keep class app.unbound.android.ActivityTracker { *; }
 -keep class app.unbound.android.TextRewrites { *; }
+-keep class app.unbound.android.HermesSampler { *; }

@@ -3,6 +3,7 @@
 #include <mutex>
 
 #include "AndroidFileWatcher.h"
+#include "AndroidHermesSampler.h"
 #include "AndroidHotReload.h"
 #include "AndroidLoader.h"
 #include "HermesBytecodeHeader.h"
@@ -532,7 +533,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
     if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) !=
             JNI_OK ||
         !cacheCallbacks(env, bridge.get()) || !registerHotReloadNatives(env) ||
-        !registerFileWatcherNatives(env))
+        !registerFileWatcherNatives(env) || !registerHermesSampler(env))
     {
         clearPendingException(env);
         return JNI_ERR;
