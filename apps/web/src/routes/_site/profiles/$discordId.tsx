@@ -11,7 +11,9 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import { developerQuery } from '~/queries/developers/developers';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import type { IdentifiedAuthor } from '~/lib/authors/resolve';
+import BlurReveal from '~/components/motion/blur-reveal';
 import TEAM_GROUPS from '~/components/team/team-groups';
 import type { CssVariables } from '~/lib/css-variables';
 import { formatDate } from '~/components/addon/format';
@@ -60,29 +62,40 @@ function DeveloperPage() {
 			<header className='flex sm:flex-row flex-col sm:items-center gap-4'>
 				<UserAvatar
 					size='xl'
-					className='rounded-surface object-cover'
+					className='rounded-surface object-cover animate-reveal'
+					style={staggerStyle(0)}
 					src={author.avatarUrl}
 					name={author.name}
 				/>
 				<div className='flex flex-col flex-1 gap-1 min-w-0'>
 					<div className='flex items-center gap-2 min-w-0'>
 						<Text as='h1' variant='heading-lg' className='truncate'>
-							{author.name}
+							<BlurReveal text={author.name} />
 						</Text>
-						{author.kind === 'user' && author.badge ? (
-							<UserBadge badge={author.badge} />
-						) : null}
-						<Tag variant={group === 'addon-developer' ? 'default' : 'primary'}>
-							{TEAM_GROUPS[group].member}
-						</Tag>
+						<div
+							className='flex items-center gap-2 animate-reveal'
+							style={staggerStyle(1)}
+						>
+							{author.kind === 'user' && author.badge ? (
+								<UserBadge badge={author.badge} />
+							) : null}
+							<Tag variant={group === 'addon-developer' ? 'default' : 'primary'}>
+								{TEAM_GROUPS[group].member}
+							</Tag>
+						</div>
 					</div>
-					<Text variant='text-sm' color='muted'>
+					<Text
+						variant='text-sm'
+						color='muted'
+						className='animate-reveal'
+						style={staggerStyle(1)}
+					>
 						<DeveloperDetails author={author} />
 					</Text>
 				</div>
 			</header>
 
-			<div className='flex flex-col gap-4'>
+			<div className='flex flex-col gap-4 animate-reveal' style={staggerStyle(2)}>
 				<Text as='h2' variant='heading-sm'>
 					Addons
 				</Text>
@@ -100,8 +113,13 @@ function DeveloperPage() {
 					</Empty>
 				) : (
 					<div style={GRID_STYLE} className='fill-grid gap-3'>
-						{addons.map((addon) => (
-							<AddonCard addon={addon} key={addon.id} />
+						{addons.map((addon, index) => (
+							<AddonCard
+								addon={addon}
+								key={addon.id}
+								className='animate-reveal'
+								style={staggerStyle(index + 3)}
+							/>
 						))}
 					</div>
 				)}
@@ -124,14 +142,14 @@ function DeveloperNotFound() {
 			</EmptyHeader>
 			<EmptyContent>
 				<Button asChild>
-					<Link to='/developers'>Browse Team</Link>
+					<Link to='/team'>Browse Team</Link>
 				</Button>
 			</EmptyContent>
 		</Empty>
 	);
 }
 
-export const Route = createFileRoute('/_site/developers/$discordId')({
+export const Route = createFileRoute('/_site/profiles/$discordId')({
 	// `loader` comes before `head` so `head` can infer the loader data's type.
 	loader: async ({ context, params }) => {
 		const developer = await context.queryClient.ensureQueryData(

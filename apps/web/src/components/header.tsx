@@ -31,7 +31,7 @@ const ROUTES: NavRoute[] = [
 	{ path: '/', title: 'Home', icon: IconHouse },
 	{ path: '/plugins', title: 'Plugins', icon: IconPlug },
 	{ path: '/themes', title: 'Themes', icon: IconPalette },
-	{ path: '/developers', title: 'Team', icon: IconUsers },
+	{ path: '/team', title: 'Team', icon: IconUsers },
 	{ path: '/faq', title: 'FAQ', icon: IconBookmark },
 ];
 

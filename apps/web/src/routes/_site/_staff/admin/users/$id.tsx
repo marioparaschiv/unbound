@@ -5,9 +5,11 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { formatDate, formatDateTime } from '~/components/admin/format-date';
 import SubmissionHistory from '~/components/admin/submission-history';
 import { adminUserQuery } from '~/queries/admin-users/admin-users';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import DetailSection from '~/components/admin/detail-section';
 import StatusPill from '~/components/dashboard/status-pill';
 import UserActions from '~/components/admin/user-actions';
+import BlurReveal from '~/components/motion/blur-reveal';
 import DetailFact from '~/components/admin/detail-fact';
 import StaffNotes from '~/components/admin/staff-notes';
 import EventLog from '~/components/admin/event-log';
@@ -44,24 +46,40 @@ function AdminUserPage() {
 				</Link>
 				<div className='flex flex-wrap justify-between items-start gap-4'>
 					<div className='flex items-center gap-4 min-w-0'>
-						<UserAvatar src={user.image} name={user.name} size='lg' />
+						<UserAvatar
+							src={user.image}
+							name={user.name}
+							size='lg'
+							className='animate-reveal'
+							style={staggerStyle(0)}
+						/>
 						<div className='flex flex-col gap-1 min-w-0'>
 							<Text variant='heading-lg' className='truncate'>
-								{user.name}
+								<BlurReveal text={user.name} />
 							</Text>
-							<Text variant='text-sm' color='muted' className='font-mono'>
+							<Text
+								variant='text-sm'
+								color='muted'
+								className='font-mono animate-reveal'
+								style={staggerStyle(1)}
+							>
 								{user.id}
 							</Text>
 						</div>
 					</div>
-					<UserActions
-						user={user}
-						canSetRole={canSetRole}
-						canBan={canBan}
-						isSelf={user.id === viewer.id}
-					/>
+					<div className='animate-reveal' style={staggerStyle(1)}>
+						<UserActions
+							user={user}
+							canSetRole={canSetRole}
+							canBan={canBan}
+							isSelf={user.id === viewer.id}
+						/>
+					</div>
 				</div>
-				<Card className='gap-4 grid grid-cols-2 md:grid-cols-4 p-(--card-pad)'>
+				<Card
+					className='gap-4 grid grid-cols-2 md:grid-cols-4 p-(--card-pad) animate-reveal'
+					style={staggerStyle(2)}
+				>
 					<DetailFact label='Email'>
 						<span className='break-all'>{user.email}</span>
 					</DetailFact>
@@ -94,7 +112,7 @@ function AdminUserPage() {
 				</Card>
 			</div>
 
-			<DetailSection title='Addons'>
+			<DetailSection title='Addons' className='animate-reveal' style={staggerStyle(3)}>
 				{addons.length === 0 ? (
 					<Card className='p-(--card-pad)'>
 						<Text variant='text-sm' color='muted'>
@@ -129,11 +147,11 @@ function AdminUserPage() {
 				)}
 			</DetailSection>
 
-			<DetailSection title='Submissions'>
+			<DetailSection title='Submissions' className='animate-reveal' style={staggerStyle(4)}>
 				<SubmissionHistory submissions={submissions} label='addon' />
 			</DetailSection>
 
-			<DetailSection title='Staff notes'>
+			<DetailSection title='Staff notes' className='animate-reveal' style={staggerStyle(5)}>
 				<StaffNotes
 					subject={{ type: 'user', id: user.id }}
 					notes={notes}
@@ -141,7 +159,11 @@ function AdminUserPage() {
 				/>
 			</DetailSection>
 
-			<DetailSection title='Moderation log'>
+			<DetailSection
+				title='Moderation log'
+				className='animate-reveal'
+				style={staggerStyle(6)}
+			>
 				<EventLog subject={{ type: 'user', id: user.id }} timeline={events} />
 			</DetailSection>
 		</div>

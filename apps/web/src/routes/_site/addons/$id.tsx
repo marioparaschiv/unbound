@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import ContributorsCard from '~/components/addon/contributors-card';
 import VersionHistory from '~/components/addon/version-history';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import AddonHeader from '~/components/addon/addon-header';
 import AuthorsCard from '~/components/addon/authors-card';
 import DetailsCard from '~/components/addon/details-card';
@@ -39,14 +40,14 @@ function AddonPage() {
 			<div className='items-start gap-6 grid grid-cols-1 lg:grid-cols-3'>
 				<div className='flex flex-col gap-6 lg:col-span-2 min-w-0'>
 					{source?.addonMd ? (
-						<Card>
+						<Card className='animate-reveal' style={staggerStyle(4)}>
 							<CardContent>
 								<Markdown source={source.addonMd} pin={source.pin} />
 							</CardContent>
 						</Card>
 					) : null}
 
-					<Card>
+					<Card className='animate-reveal' style={staggerStyle(5)}>
 						<CardHeader>
 							<CardTitle>Version History</CardTitle>
 						</CardHeader>
@@ -57,12 +58,22 @@ function AddonPage() {
 				</div>
 
 				<aside className='flex flex-col gap-6 min-w-0'>
-					{source ? <SourceCard source={source} /> : null}
-					{source && source.details.contributors.length > 0 ? (
-						<ContributorsCard contributors={source.details.contributors} />
+					{source ? (
+						<div className='animate-reveal' style={staggerStyle(4)}>
+							<SourceCard source={source} />
+						</div>
 					) : null}
-					<DetailsCard addon={addon} />
-					<AuthorsCard authors={addon.authors} />
+					{source && source.details.contributors.length > 0 ? (
+						<div className='animate-reveal' style={staggerStyle(5)}>
+							<ContributorsCard contributors={source.details.contributors} />
+						</div>
+					) : null}
+					<div className='animate-reveal' style={staggerStyle(6)}>
+						<DetailsCard addon={addon} />
+					</div>
+					<div className='animate-reveal' style={staggerStyle(7)}>
+						<AuthorsCard authors={addon.authors} />
+					</div>
 				</aside>
 			</div>
 		</div>

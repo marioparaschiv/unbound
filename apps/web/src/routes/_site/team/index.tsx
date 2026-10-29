@@ -165,7 +165,7 @@ function TeamPage() {
 	);
 }
 
-export const Route = createFileRoute('/_site/developers/')({
+export const Route = createFileRoute('/_site/team/')({
 	head: () => ({ meta: [{ title: 'Unbound | Team' }] }),
 	validateSearch: teamSearchSchema,
 	loaderDeps: ({ search }) => search,
