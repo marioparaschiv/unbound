@@ -20,6 +20,7 @@ import {
 } from '@unbound-plugins/shared/native/android/java-values';
 import { readViewText } from '@unbound-plugins/shared/native/android/spans';
 import { connectTextRewrites } from '@unbound-plugins/shared/native/android/text-rewrites';
+import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 import {
 	currentDecorView,
 	findViewsOfClass,
@@ -77,6 +78,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 	if (!connectTextRewrites(java, MESSAGE_CONTENT_VIEW)) return undefined;
 
 	const embeds = new Map<string, Embed>();
+	const retries = createRewriteRetry();
 	const bySurface = new Map<string, Embed>();
 	const heights = new Map<string, number>();
 	const listeners = new Map<string, Set<() => void>>();
@@ -135,11 +137,11 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		return heights.get(targetKey(target)) ?? Surface.minHeight;
 	}
 
-	function define(embed: Embed) {
+	function define(embed: Embed): boolean {
 		const px = (value: number) => Math.round(value * embed.density);
 		const height = heightFor(embed.target);
 
-		inline.define({
+		return inline.define({
 			original: embed.original,
 			rendered: embed.rendered,
 			textView: embed.textView,
@@ -300,7 +302,12 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		embeds.set(rendered, embed);
 		bySurface.set(embed.surfaceId, embed);
 		publish(embed);
-		define(embed);
+
+		if (define(embed)) {
+			retries.succeeded(key);
+		} else {
+			retries.retry(key, () => schedule(messageView, messageId));
+		}
 	}
 
 	function schedule(messageView: NativeJavaReference, messageId: string) {
@@ -368,6 +375,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 			for (const scan of scans) clearTimeout(scan);
 
 			disposed = true;
+			retries.clear();
 			controller.abort();
 			hooks.remove(token);
 			hooks.remove(sizeToken);

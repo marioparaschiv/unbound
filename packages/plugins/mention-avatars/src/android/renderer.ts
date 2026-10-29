@@ -14,6 +14,7 @@ import {
 	inlineDrawable,
 } from '@unbound-plugins/shared/native/android/images';
 import { readViewText, spansOf } from '@unbound-plugins/shared/native/android/spans';
+import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 import {
 	currentDecorView,
 	findViewsOfClass,
@@ -80,6 +81,7 @@ export function createAndroidRenderer(
 	let disposed = false;
 	const rewrites = connectTextRewrites(java, TEXT_VIEW);
 	const rules = new Set<string>();
+	const retries = createRewriteRetry();
 	const renderedTexts = new Set<string>();
 	const registered = new Set<string>();
 
@@ -227,7 +229,18 @@ export function createAndroidRenderer(
 			});
 		}
 
-		active.put(original, rendered, edits);
+		const key = viewKey(view as NativeJavaValue);
+
+		if (!active.put(original, rendered, edits)) {
+			active.reapply(view);
+
+			if (key) retries.retry(key, () => schedule(view));
+
+			return;
+		}
+
+		if (key) retries.succeeded(key);
+
 		rules.add(original);
 		renderedTexts.add(rendered);
 		active.reapply(view);
@@ -334,6 +347,7 @@ export function createAndroidRenderer(
 			for (const scan of scans) clearTimeout(scan);
 
 			disposed = true;
+			retries.clear();
 			hooks.remove(token);
 
 			for (const original of rules) rewrites?.remove(original);

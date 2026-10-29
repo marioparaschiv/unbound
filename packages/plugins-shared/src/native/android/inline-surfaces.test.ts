@@ -25,6 +25,7 @@ type FakeState = {
 	unmounted: FakeValue[];
 	mounted: FakeValue[];
 	blank: Set<string>;
+	declined: boolean;
 };
 
 const handle = (value: string): FakeValue => ({ type: 'handle', value });
@@ -45,6 +46,10 @@ function fakeNative(available: boolean, state: FakeState) {
 			invoke(target: FakeValue, method: string, args: FakeValue[] = []): FakeValue {
 				if (target.value === 'rewrites') {
 					state.calls.push({ method, args });
+				}
+
+				if (method === 'put') {
+					return { type: 'boolean', value: !state.declined };
 				}
 
 				if (method === 'getChildAt') {
@@ -101,6 +106,7 @@ function setup(available = true) {
 		unmounted: [],
 		mounted: [],
 		blank: new Set(),
+		declined: false,
 	};
 	const native: Parameters<typeof createInlineSurfaces>[0] = Object.assign(
 		Object.create(null),
@@ -166,6 +172,19 @@ describe('createInlineSurfaces', () => {
 		} finally {
 			jest.useRealTimers();
 		}
+	});
+
+	test('backs off when another rule already rewrites the same text', async () => {
+		const { state, surfaces } = setup();
+
+		state.declined = true;
+
+		expect(surfaces!.define(definition)).toBe(false);
+
+		await settled();
+
+		expect(methods(state)).toEqual(['watch', 'put', 'reapply']);
+		expect(surfaces!.isDefined('code ￼')).toBe(false);
 	});
 
 	test('adds a group when the loader asks for another host', async () => {
