@@ -14,7 +14,6 @@ function listed(source, constant) {
 export async function generateLazyBundled(source) {
 	const languages = listed(source, 'BUNDLED_LANGUAGES');
 	const themes = listed(source, 'BUNDLED_THEMES');
-	const registrations = new Map();
 	const grammarNames = {};
 
 	for (const key of languages) {
@@ -22,9 +21,6 @@ export async function generateLazyBundled(source) {
 		const order = grammar.map((language) => language.name);
 
 		for (const language of grammar) {
-			if (!registrations.has(language.name))
-				registrations.set(language.name, JSON.stringify(language));
-
 			for (const name of [language.name, ...(language.aliases ?? [])]) {
 				grammarNames[name] = order;
 			}
@@ -38,25 +34,18 @@ export async function generateLazyBundled(source) {
 	}
 
 	return [
-		`const sources = ${JSON.stringify(Object.fromEntries(registrations))};`,
 		`const grammarNames = ${JSON.stringify(grammarNames)};`,
 		`const themeSources = ${JSON.stringify(themeSources)};`,
-		'const parsed = new Map();',
 		'let themes;',
-		'function registration(name) {',
-		'\tif (!parsed.has(name)) parsed.set(name, Object.freeze(JSON.parse(sources[name])));',
-		'\treturn parsed.get(name);',
-		'}',
 		`export const BUNDLED_LANGUAGES = ${JSON.stringify(languages)};`,
 		`export const BUNDLED_THEMES = ${JSON.stringify(themes)};`,
-		'export function bundledGrammar(name) {',
-		'\tconst order = grammarNames[name];',
-		'\treturn order ? order.map(registration) : undefined;',
+		'export function grammarOrder(name) {',
+		'\treturn Object.prototype.hasOwnProperty.call(grammarNames, name) ? grammarNames[name] : undefined;',
 		'}',
 		'export function bundledThemes() {',
 		'\treturn (themes ??= themeSources.map((source) => Object.freeze(JSON.parse(source))));',
 		'}',
-		'export default { BUNDLED_LANGUAGES, BUNDLED_THEMES, bundledGrammar, bundledThemes };',
+		'export default { BUNDLED_LANGUAGES, BUNDLED_THEMES, grammarOrder, bundledThemes };',
 	].join('\n');
 }
 

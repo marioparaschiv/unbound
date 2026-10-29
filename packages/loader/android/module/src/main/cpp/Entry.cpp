@@ -257,31 +257,6 @@ static jstring nativeThreeFingerEvent(JNIEnv *env, jclass, jstring event, jint p
     return toJavaString(env, loader::toolbox::gestureActionName(action));
 }
 
-static jlong nativeParseColor(JNIEnv *env, jclass, jstring value)
-{
-    if (!value)
-    {
-        return -1;
-    }
-    const auto color = loader::parseColor(toStdString(env, value));
-    return color ? static_cast<jlong>(loader::toARGB(*color)) : -1;
-}
-
-static jdoubleArray nativeMessageBubbleStyle(JNIEnv *env, jclass)
-{
-    const auto   &style    = loader::preferences::kMessageBubbleStyle;
-    const jdouble values[] = {
-        style.radius, style.horizontalPadding, style.verticalPadding,
-        static_cast<jdouble>(loader::toARGB(loader::preferences::messageBubbleColor(true))),
-        static_cast<jdouble>(loader::toARGB(loader::preferences::messageBubbleColor(false)))};
-    jdoubleArray result = env->NewDoubleArray(5);
-    if (result)
-    {
-        env->SetDoubleArrayRegion(result, 0, 5, values);
-    }
-    return result;
-}
-
 static jstring nativeResolveFont(JNIEnv *env, jclass, jstring family)
 {
     auto loader = currentLoader();
@@ -404,20 +379,6 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.scheduleRuntime = env->GetStaticMethodID(bridge, "scheduleRuntimeWork", "()V");
     gCallbacks.scheduleMain    = env->GetStaticMethodID(bridge, "scheduleMainWork", "()V");
     gCallbacks.isMainThread    = env->GetStaticMethodID(bridge, "isMainThread", "()Z");
-    gCallbacks.lookupViews =
-        env->GetStaticMethodID(bridge, "lookupViews", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.snapshotViews =
-        env->GetStaticMethodID(bridge, "snapshotViews", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.measureView =
-        env->GetStaticMethodID(bridge, "measureView", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.setViewFrame =
-        env->GetStaticMethodID(bridge, "setViewFrame", "(Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.mountView = env->GetStaticMethodID(
-        bridge, "mountView",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.updateView =
-        env->GetStaticMethodID(bridge, "updateView", "(Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.unmountView = env->GetStaticMethodID(bridge, "unmountView", "(Ljava/lang/String;)V");
     gCallbacks.javaGetClass =
         env->GetStaticMethodID(bridge, "javaGetClass", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaClassName =
@@ -484,13 +445,11 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.onBundleExecuted = env->GetStaticMethodID(bridge, "onBundleExecuted", "()V");
 
     return !clearPendingException(env) && gCallbacks.scheduleRuntime && gCallbacks.scheduleMain &&
-           gCallbacks.isMainThread && gCallbacks.lookupViews && gCallbacks.snapshotViews &&
-           gCallbacks.measureView && gCallbacks.setViewFrame && gCallbacks.mountView &&
-           gCallbacks.updateView && gCallbacks.unmountView && gCallbacks.javaGetClass &&
-           gCallbacks.javaClassName && gCallbacks.javaDescribe && gCallbacks.javaConstruct &&
-           gCallbacks.javaRespondsTo && gCallbacks.javaInvoke && gCallbacks.javaGetField &&
-           gCallbacks.javaSetField && gCallbacks.javaRelease && gCallbacks.hooksInstall &&
-           gCallbacks.hooksRemove && gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
+           gCallbacks.isMainThread && gCallbacks.javaGetClass && gCallbacks.javaClassName &&
+           gCallbacks.javaDescribe && gCallbacks.javaConstruct && gCallbacks.javaRespondsTo &&
+           gCallbacks.javaInvoke && gCallbacks.javaGetField && gCallbacks.javaSetField &&
+           gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
+           gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
            gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&
@@ -542,8 +501,6 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativeShakeSample", "(FFFJ)Z", reinterpret_cast<void *>(nativeShakeSample)},
         {"nativeThreeFingerEvent", "(Ljava/lang/String;I)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeThreeFingerEvent)},
-        {"nativeParseColor", "(Ljava/lang/String;)J", reinterpret_cast<void *>(nativeParseColor)},
-        {"nativeMessageBubbleStyle", "()[D", reinterpret_cast<void *>(nativeMessageBubbleStyle)},
         {"nativeResolveFont", "(Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeResolveFont)},
         {"nativeDocumentsName", "()Ljava/lang/String;",

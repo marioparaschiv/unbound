@@ -21,7 +21,7 @@ function AuthorRow({ author }: AuthorRowProps) {
 			author.name
 		) : (
 			<Link
-				to='/developers/$discordId'
+				to='/profiles/$discordId'
 				params={{ discordId: author.discordId }}
 				className='underline-offset-4 hover:underline'
 			>

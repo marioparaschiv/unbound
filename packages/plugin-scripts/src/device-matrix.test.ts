@@ -24,7 +24,7 @@ const checks = [
 ];
 
 test('the device matrix discovers the complete plugin catalog', () => {
-	expect(catalogPlugins(PLUGINS_DIR)).toHaveLength(32);
+	expect(catalogPlugins(PLUGINS_DIR)).toHaveLength(34);
 });
 
 test('the device matrix accepts one evidenced result per plugin', () => {

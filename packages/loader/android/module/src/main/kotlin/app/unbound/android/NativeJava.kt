@@ -84,8 +84,8 @@ object NativeJava {
         val target = loadClass(name)
         val arguments = parseArguments(argumentsJSON)
         val constructor = target.declaredConstructors
-            .filter { it.parameterCount == arguments.size }
-            .firstOrNull { matches(it.parameterTypes, arguments) }
+            .filter { it.parameterCount == arguments.size && matches(it.parameterTypes, arguments) }
+            .minByOrNull { specificity(it.parameterTypes, arguments) }
             ?: throw IllegalArgumentException(
                 "No constructor of $name accepts these arguments; it has ${signatures(
                     target.declaredConstructors.map {

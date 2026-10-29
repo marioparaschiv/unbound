@@ -304,10 +304,7 @@ static CGPoint devOverlayDragStartCenter = {0, 0};
 
 + (void)settingsDidChange:(NSNotification *)notification
 {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        [self refreshOverlay];
-        [ChatUI reloadPreferences];
-    });
+    dispatch_async(dispatch_get_main_queue(), ^{ [self refreshOverlay]; });
 }
 
 + (void)ensureOverlayForWindow:(UIWindow *)keyWindow

@@ -1,11 +1,17 @@
 import type { AddonType } from '@unbound-app/contracts/addons';
+import type { LoaderFnContext } from '@tanstack/react-router';
 import { infiniteQueryOptions } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 
 import { fetchMarketplacePage, type MarketplaceSearch } from '~/lib/marketplace';
-import { pickedAuthorsQuery, authorsQuery } from '~/queries/marketplace/authors';
+import { pickedAuthorsQuery } from '~/queries/marketplace/authors';
 import { sortOrder, splitList } from '~/lib/addon-filters';
 import { tagsQuery } from '~/queries/marketplace/tags';
+
+type LoaderCause = LoaderFnContext['cause'];
+
+/** Every marketplace query key starts with this, so invalidating it refreshes the listings, tags and authors. */
+export const marketplaceKey = ['marketplace'] as const;
 
 /**
  * @description The `/plugins` or `/themes` listing as an infinite query, one cache entry per URL search.
@@ -15,7 +21,7 @@ import { tagsQuery } from '~/queries/marketplace/tags';
  */
 export function listingQuery(type: AddonType, search: MarketplaceSearch) {
 	return infiniteQueryOptions({
-		queryKey: ['marketplace', 'listing', type, search],
+		queryKey: [...marketplaceKey, 'listing', type, search],
 		queryFn: ({ pageParam, signal }) =>
 			fetchMarketplacePage({
 				data: {
@@ -37,17 +43,27 @@ export function listingQuery(type: AddonType, search: MarketplaceSearch) {
  * @param queryClient The router's query cache.
  * @param type The listing's addon type.
  * @param search The URL's search, filters and sort.
- * @returns Resolves once the results and tags are cached; the authors stream in after.
+ * @param cause Why the route loads; `stay` is a search changed on the page.
+ * @returns Resolves once the results and tags are cached, or at once for a search changed on the page.
  */
 export async function prefetchListing(
 	queryClient: QueryClient,
 	type: AddonType,
 	search: MarketplaceSearch,
+	cause: LoaderCause,
 ): Promise<void> {
 	const picked = splitList(search.authors);
 
-	// Not awaited: the Author menu is a click away, and its first page hydrates when it lands.
-	void queryClient.prefetchInfiniteQuery(authorsQuery(type, ''));
+	// The fetches start here rather than after the next render, but the old results stay up until they land.
+	if (cause === 'stay') {
+		void queryClient.prefetchInfiniteQuery(listingQuery(type, search));
+
+		if (picked.length > 0) {
+			void queryClient.prefetchQuery(pickedAuthorsQuery(picked));
+		}
+
+		return;
+	}
 
 	await Promise.all([
 		queryClient.ensureInfiniteQueryData(listingQuery(type, search)),
@@ -56,4 +72,4 @@ export async function prefetchListing(
 	]);
 }
 
-export default { listingQuery, prefetchListing };
+export default { marketplaceKey, listingQuery, prefetchListing };

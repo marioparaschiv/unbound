@@ -140,7 +140,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.10.0-373c2e83f7d138f3b42c175fab64c72d2050337a9748fe3ff85a454beb1c2550",
+      "version": "0.10.0-a661157579540710d5cf6432601c1d2fe7fdc62b2571f70a9ed63698dc82a7af",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -360,6 +360,20 @@
         "react-native": "^0.86.0",
       },
     },
+    "packages/plugins/avatar-radius": {
+      "name": "avatar-radius",
+      "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
+        "rollup": "^4.62.2",
+      },
+    },
     "packages/plugins/channel-typing-indicators": {
       "name": "channel-typing-indicators",
       "version": "1.0.0",
@@ -387,6 +401,20 @@
         "@unbound-app/api": "workspace:*",
         "@unbound-plugins/rollup-config": "workspace:*",
         "react-native": "^0.86.0",
+        "rollup": "^4.62.2",
+      },
+    },
+    "packages/plugins/chat-bubbles": {
+      "name": "chat-bubbles",
+      "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-plugins/rollup-config": "workspace:*",
         "rollup": "^4.62.2",
       },
     },
@@ -1961,6 +1989,8 @@
 
     "asap": ["asap@2.0.6", "", {}, "sha512-BSHWgDSAiKs50o2Re8ppvp3seVHXSRM44cdSsT9FfNEUUZLOGWVCsiWaRPWM1Znn+mqZ1OfVZ3z3DWEzSp7hRA=="],
 
+    "avatar-radius": ["avatar-radius@workspace:packages/plugins/avatar-radius"],
+
     "babel-dead-code-elimination": ["babel-dead-code-elimination@1.0.12", "", { "dependencies": { "@babel/core": "^7.23.7", "@babel/parser": "^7.23.6", "@babel/traverse": "^7.23.7", "@babel/types": "^7.23.6" } }, "sha512-GERT7L2TiYcYDtYk1IpD+ASAYXjKbLTDPhBtYj7X1NuRMDTMtAx9kyBenub1Ev41lo91OHCKdmP+egTDmfQ7Ig=="],
 
     "babel-plugin-polyfill-corejs2": ["babel-plugin-polyfill-corejs2@0.4.17", "", { "dependencies": { "@babel/compat-data": "^7.28.6", "@babel/helper-define-polyfill-provider": "^0.6.8", "semver": "^6.3.1" }, "peerDependencies": { "@babel/core": "^7.4.0 || ^8.0.0-0 <8.0.0" } }, "sha512-aTyf30K/rqAsNwN76zYrdtx8obu0E4KoUME29B1xj+B3WxgvWkp943vYQ+z8Mv3lw9xHXMHpvSPOBxzAkIa94w=="],
@@ -2040,6 +2070,8 @@
     "character-entities-legacy": ["character-entities-legacy@3.0.0", "", {}, "sha512-RpPp0asT/6ufRm//AJVwpViZbGM/MkjQFxJccQRHmISF/22NBtsHqAWmL+/pmkPWoIUJdWyeVleTl1wydHATVQ=="],
 
     "character-reference-invalid": ["character-reference-invalid@2.0.1", "", {}, "sha512-iBZ4F4wRbyORVsu0jPV7gXkOsGYjGHPmAyv+HiHG8gi5PtC9KI2j1+v8/tlibRvjoWX027ypmG/n0HtO5t7unw=="],
+
+    "chat-bubbles": ["chat-bubbles@workspace:packages/plugins/chat-bubbles"],
 
     "chokidar": ["chokidar@4.0.3", "", { "dependencies": { "readdirp": "^4.0.1" } }, "sha512-Qgzu8kfBvo+cA4962jnP1KkS6Dop5NS6g7R5LFYJr4b8Ub94PPQXUksCw9PvXoeXPRRddRNC5C1JQUR2SMGtnA=="],
 

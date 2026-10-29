@@ -1,10 +1,9 @@
-import { useTransition } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import getAuthErrorMessage from '~/lib/auth/error-message';
+import { signInMutation } from '~/queries/account/session';
 import DiscordIcon from '~/components/icons/discord';
 import { Button } from '~/components/ui/button';
-import authClient from '~/lib/auth/client';
 
 type SignInProps = {
 	/** Where Discord sends the user back to once they have signed in. */
@@ -18,16 +17,10 @@ function SignIn({
 	title = 'Sign in to Unbound',
 	description = 'Discord is used to sign in and create your account',
 }: SignInProps) {
-	const [isPending, startTransition] = useTransition();
+	const { mutate, isPending } = useMutation(signInMutation());
 
 	function signIn() {
-		startTransition(async () => {
-			const { error } = await authClient.signIn.social({ provider: 'discord', callbackURL });
-
-			if (error) {
-				toast.error(getAuthErrorMessage(error));
-			}
-		});
+		mutate(callbackURL, { onError: (error) => toast.error(error.message) });
 	}
 
 	return (

@@ -57,9 +57,6 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 		"instanceTarget",
 		"isExecutableAddress",
 		"invokeHookOriginal",
-		"setHookSizeHeightFloor",
-		"applyHookSizeHeightFloors",
-		"setSizeHeightFloor",
 		"loader::ffi::callInterface(signature->result, signature->arguments)",
 		"&dispatcher->signature->interface->cif",
 		"valueToData",
@@ -210,13 +207,6 @@ func TestAndroidNativeBridgeContractIsSynchronized(t *testing.T) {
 	sourceText := string(source)
 	for _, contract := range []string{
 		"loader::native::NativePluginRootBuilder bridge(runtime, loader::native::NativePluginPlatform::Android);",
-		`define(runtime, ui, "lookup",`,
-		`define(runtime, ui, "snapshot",`,
-		`define(runtime, ui, "measure",`,
-		`define(runtime, ui, "setFrame",`,
-		`define(runtime, ui, "mount",`,
-		`define(runtime, ui, "update",`,
-		`define(runtime, ui, "unmount",`,
 		`define(runtime, java, "getClass",`,
 		`define(runtime, java, "className",`,
 		`define(runtime, java, "construct",`,

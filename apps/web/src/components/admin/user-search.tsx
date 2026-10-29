@@ -1,7 +1,6 @@
+import { ADMIN_SEARCH_MIN_LENGTH } from '@unbound-app/contracts/admin';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { useRef, useState, useTransition } from 'react';
 import { IconMagnifier } from 'nucleo-micro-bold';
-import { toast } from 'sonner';
 
 import {
 	Combobox,
@@ -11,9 +10,9 @@ import {
 	ComboboxList,
 	ComboboxStatus,
 } from '~/components/ui/combobox';
+import type { UserSearchState } from '~/queries/admin-users/use-user-search';
+import useUserSearch from '~/queries/admin-users/use-user-search';
 import { InputGroupAddon } from '~/components/ui/input-group';
-import getApiErrorMessage from '~/lib/api/error-message';
-import { fetchAdminUsers } from '~/lib/admin-functions';
 import UserAvatar from '~/components/user-avatar';
 
 type UserSearchProps = {
@@ -24,84 +23,27 @@ type UserSearchProps = {
 	onPick: (user: UserSummary) => void;
 };
 
-type SearchResults = {
-	matchedQuery: string;
-	users: UserSummary[];
-	failed: boolean;
+const STATUS: Record<UserSearchState, string | null> = {
+	short: `Type at least ${ADMIN_SEARCH_MIN_LENGTH} characters to search`,
+	searching: 'Searching...',
+	failed: 'Search failed',
+	done: null,
 };
 
-const MIN_QUERY_LENGTH = 3;
-
-const RESULT_LIMIT = 5;
-
-const SEARCH_DEBOUNCE_MS = 300;
-
-const NO_RESULTS: SearchResults = { matchedQuery: '', users: [], failed: false };
-
-function describeStatus(query: string, results: SearchResults, isSearching: boolean) {
-	if (query.length < MIN_QUERY_LENGTH) {
-		return `Type at least ${MIN_QUERY_LENGTH} characters to search`;
-	}
-
-	if (isSearching || results.matchedQuery !== query) {
-		return 'Searching...';
-	}
-
-	if (results.failed) {
-		return 'Search failed';
-	}
-
-	return results.users.length === 0 ? 'No users found' : null;
-}
-
 function UserSearch({ id, placeholder, className, disabledIds, onPick }: UserSearchProps) {
-	const [query, setQuery] = useState('');
-	const [results, setResults] = useState(NO_RESULTS);
-	const [isSearching, startSearch] = useTransition();
-	const activeQuery = useRef<string | null>(null);
-	const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-	const status = describeStatus(query.trim(), results, isSearching);
-
-	function search(q: string) {
-		if (q.length < MIN_QUERY_LENGTH) {
-			setResults({ matchedQuery: q, users: [], failed: false });
-
-			return;
-		}
-
-		startSearch(async () => {
-			try {
-				const page = await fetchAdminUsers({ data: { q } });
-
-				if (q !== activeQuery.current) return;
-
-				setResults({
-					matchedQuery: q,
-					users: page.items.slice(0, RESULT_LIMIT),
-					failed: false,
-				});
-			} catch (error) {
-				if (q !== activeQuery.current) return;
-
-				toast.error(getApiErrorMessage(error));
-				setResults({ matchedQuery: q, users: [], failed: true });
-			}
-		});
-	}
+	const { query, setQuery, clear, users, state } = useUserSearch();
+	const status = state === 'done' && users.length === 0 ? 'No users found' : STATUS[state];
 
 	function pick(user: UserSummary | null) {
 		if (!user) return;
 
-		clearTimeout(searchTimer.current);
-		activeQuery.current = null;
-		setQuery('');
-		setResults(NO_RESULTS);
+		clear();
 		onPick(user);
 	}
 
 	return (
 		<Combobox
-			items={results.users}
+			items={users}
 			filter={null}
 			value={null}
 			inputValue={query}
@@ -111,12 +53,7 @@ function UserSearch({ id, placeholder, className, disabledIds, onPick }: UserSea
 				// Picking fills the input with the user's name; `pick` clears it instead.
 				if (reason === 'item-press') return;
 
-				const q = next.trim();
-
-				activeQuery.current = q;
 				setQuery(next);
-				clearTimeout(searchTimer.current);
-				searchTimer.current = setTimeout(() => search(q), SEARCH_DEBOUNCE_MS);
 			}}
 		>
 			<ComboboxInput

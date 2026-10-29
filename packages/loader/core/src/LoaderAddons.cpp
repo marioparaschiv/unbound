@@ -5,6 +5,7 @@
 #include "HermesBytecodeHeader.h"
 #include "LoaderAddonSignature.h"
 #include "LoaderBundleSignature.h"
+#include "LoaderDigestCache.h"
 #include "LoaderFiles.h"
 #include "LoaderFonts.h"
 #include "LoaderJSON.h"
@@ -122,10 +123,11 @@ std::optional<std::string> readPluginBytecode(const std::string &documents,
     {
         return std::nullopt;
     }
-    std::optional<std::string> bytecode = readTextFile(bytecodePathFor(*entry, bytecodeVersion));
+    std::string                bytecodePath = bytecodePathFor(*entry, bytecodeVersion);
+    std::optional<std::string> bytecode     = readTextFile(bytecodePath);
     if (!bytecode || !isHermesBytecode(bytecode->data(), bytecode->size()) ||
         hermesBytecodeVersion(bytecode->data(), bytecode->size()) != bytecodeVersion ||
-        sha512Hex(*bytecode) != digest->get<std::string>())
+        cachedSha512(directory, bytecodePath, *bytecode) != digest->get<std::string>())
     {
         return std::nullopt;
     }
@@ -177,8 +179,9 @@ nlohmann::json scanPlugins(const std::string &documents)
                 return;
             }
 
+            std::string          digest = cachedSha512(directory, *entry, *bundle);
             AddonSignatureResult signature =
-                verifyAddonSignature(*manifest, *bundle, compiledBundleTrust());
+                verifyAddonSignature(*manifest, *bundle, compiledBundleTrust(), &digest);
             if (signature.status == AddonSignatureStatus::Invalid)
             {
                 log(LogLevel::Error, LOG_CATEGORY_PLUGINS,

@@ -37,11 +37,15 @@ const pushCommand: CommandDefinition<typeof schema> = {
 			return NOT_CONNECTED;
 		}
 
-		const { manifest, bundle } = readBuiltAddon(resolved.addon);
-		const result = await client.pushPlugin({ addonId: resolved.addon.id, bundle, manifest });
+		const built = readBuiltAddon(resolved.addon);
+		const result = await client.pushPlugin({ addonId: resolved.addon.id, ...built });
+		const compiled = Object.keys(built.bytecode ?? {});
+		const summary = compiled.length
+			? `${built.bundle.length} bytes, bytecode ${compiled.join(', ')}`
+			: `${built.bundle.length} bytes`;
 
 		return result.ok
-			? { ok: true, text: `Pushed ${resolved.addon.id} (${bundle.length} bytes).` }
+			? { ok: true, text: `Pushed ${resolved.addon.id} (${summary}).` }
 			: { ok: false, text: `Pushing ${resolved.addon.id} failed: ${result.error}` };
 	},
 };

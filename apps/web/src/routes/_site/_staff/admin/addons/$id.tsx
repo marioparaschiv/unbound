@@ -1,16 +1,19 @@
 import { createFileRoute, Link, notFound, redirect } from '@tanstack/react-router';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { IconArrowLeft } from 'nucleo-micro-bold';
 
 import AddonSettingsForm from '~/components/admin/addon-settings/addon-settings-form';
 import SubmissionHistory from '~/components/admin/submission-history';
+import { adminAddonQuery } from '~/queries/admin-addons/admin-addons';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import DetailSection from '~/components/admin/detail-section';
 import AddonActions from '~/components/admin/addon-actions';
 import { formatDate } from '~/components/admin/format-date';
 import VersionTable from '~/components/admin/version-table';
 import StatusPill from '~/components/dashboard/status-pill';
+import BlurReveal from '~/components/motion/blur-reveal';
 import DetailFact from '~/components/admin/detail-fact';
 import StaffNotes from '~/components/admin/staff-notes';
-import { fetchAdminAddon } from '~/lib/admin-functions';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
 import EventLog from '~/components/admin/event-log';
 import UserAvatar from '~/components/user-avatar';
@@ -21,7 +24,14 @@ import Tag from '~/components/tag';
 
 function AdminAddonPage() {
 	const { user: viewer } = Route.useRouteContext();
-	const view = Route.useLoaderData();
+	const { id } = Route.useParams();
+	const { data: view } = useSuspenseQuery(adminAddonQuery(id));
+
+	// A refetch after the addon was deleted finds nothing.
+	if (!view) {
+		throw notFound();
+	}
+
 	const { addon, maintainers, versions, submissions, events, notes } = view;
 	const canEdit = hasPermission(viewer.role, { addon: ['edit'] });
 	const canDelist = hasPermission(viewer.role, { addon: ['delist'] });
@@ -43,20 +53,41 @@ function AdminAddonPage() {
 					<div className='flex flex-col gap-1 min-w-0'>
 						<div className='flex items-center gap-3'>
 							<Text variant='heading-lg' className='truncate'>
-								{addon.name}
+								<BlurReveal text={addon.name} />
 							</Text>
-							<StatusPill status={addon.delistedAt ? 'delisted' : 'listed'} />
+							<div className='animate-reveal' style={staggerStyle(1)}>
+								<StatusPill status={addon.delistedAt ? 'delisted' : 'listed'} />
+							</div>
 						</div>
-						<Text variant='text-sm' color='muted' className='font-mono'>
+						<Text
+							variant='text-sm'
+							color='muted'
+							className='font-mono animate-reveal'
+							style={staggerStyle(1)}
+						>
 							{addon.id}
 						</Text>
-						<Text variant='text-md' color='muted'>
+						<Text
+							variant='text-md'
+							color='muted'
+							className='animate-reveal'
+							style={staggerStyle(2)}
+						>
 							{addon.description}
 						</Text>
 					</div>
-					<AddonActions addon={addon} canDelist={canDelist} canTransfer={canTransfer} />
+					<div className='animate-reveal' style={staggerStyle(1)}>
+						<AddonActions
+							addon={addon}
+							canDelist={canDelist}
+							canTransfer={canTransfer}
+						/>
+					</div>
 				</div>
-				<Card className='gap-4 grid grid-cols-2 md:grid-cols-4 p-(--card-pad)'>
+				<Card
+					className='gap-4 grid grid-cols-2 md:grid-cols-4 p-(--card-pad) animate-reveal'
+					style={staggerStyle(2)}
+				>
 					<DetailFact label='Type'>
 						<span className='capitalize'>{addon.type}</span>
 					</DetailFact>
@@ -72,11 +103,15 @@ function AdminAddonPage() {
 			</div>
 
 			{canEdit ? (
-				<DetailSection title='Settings'>
+				<DetailSection title='Settings' className='animate-reveal' style={staggerStyle(3)}>
 					<AddonSettingsForm key={view.form.revision} view={view} />
 				</DetailSection>
 			) : (
-				<DetailSection title='Maintainers'>
+				<DetailSection
+					title='Maintainers'
+					className='animate-reveal'
+					style={staggerStyle(3)}
+				>
 					<Card className='flex-row flex-wrap gap-3 p-(--card-pad)'>
 						{maintainers.map((maintainer) => (
 							<Link
@@ -102,15 +137,15 @@ function AdminAddonPage() {
 				</DetailSection>
 			)}
 
-			<DetailSection title='Versions'>
+			<DetailSection title='Versions' className='animate-reveal' style={staggerStyle(4)}>
 				<VersionTable addonId={addon.id} versions={versions} canServe={canServe} />
 			</DetailSection>
 
-			<DetailSection title='Submissions'>
+			<DetailSection title='Submissions' className='animate-reveal' style={staggerStyle(5)}>
 				<SubmissionHistory submissions={submissions} label='author' />
 			</DetailSection>
 
-			<DetailSection title='Staff notes'>
+			<DetailSection title='Staff notes' className='animate-reveal' style={staggerStyle(6)}>
 				<StaffNotes
 					subject={{ type: 'addon', id: addon.id }}
 					notes={notes}
@@ -118,12 +153,12 @@ function AdminAddonPage() {
 				/>
 			</DetailSection>
 
-			<DetailSection title='Moderation log'>
-				<EventLog
-					key={events.items[0]?.id ?? 0}
-					subject={{ type: 'addon', id: addon.id }}
-					timeline={events}
-				/>
+			<DetailSection
+				title='Moderation log'
+				className='animate-reveal'
+				style={staggerStyle(7)}
+			>
+				<EventLog subject={{ type: 'addon', id: addon.id }} timeline={events} />
 			</DetailSection>
 		</div>
 	);
@@ -136,8 +171,8 @@ export const Route = createFileRoute('/_site/_staff/admin/addons/$id')({
 		}
 	},
 	// `loader` comes before `head` so `head` can infer the loader data's type.
-	loader: async ({ params }) => {
-		const view = await fetchAdminAddon({ data: params.id });
+	loader: async ({ context, params }) => {
+		const view = await context.queryClient.ensureQueryData(adminAddonQuery(params.id));
 
 		if (!view) {
 			throw notFound();

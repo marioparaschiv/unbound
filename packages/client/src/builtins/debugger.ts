@@ -178,9 +178,20 @@ async function handleEvalRequest(id: string, code: string) {
 
 // A thin transport caller: the reload lifecycle lives on the Plugins manager. Report the manager's
 // own returned outcome straight back over the wire so the CLI stages the reload result.
+function runtimeBytecode(request: PluginPushRequest): string | undefined {
+	const version = window.UNBOUND_LOADER?.bytecodeVersion;
+
+	return version ? request.bytecode?.[String(version)] : void 0;
+}
+
 async function handlePluginPush(request: PluginPushRequest) {
 	try {
-		const result = await plugins.reload(request.addonId, request.bundle, request.manifest);
+		const result = await plugins.reload(
+			request.addonId,
+			request.bundle,
+			request.manifest,
+			runtimeBytecode(request),
+		);
 
 		if (result.ok) {
 			plugins.markDevelopmentCopy(request.addonId);
@@ -267,7 +278,7 @@ function inspect(value: unknown): string {
  * @returns A frame the bridge accepts: string text and a level of 1, 2 or 3.
  */
 // UNKNOWN: nativeLoggingHook is called by native code and other patches with whatever they pass.
-export function logFrame(message: unknown, level: unknown): LogMessage {
+function logFrame(message: unknown, level: unknown): LogMessage {
 	return {
 		type: 'log',
 		level: level === 2 || level === 3 ? level : 1,

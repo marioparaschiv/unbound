@@ -1,9 +1,10 @@
-import { serveVersionRequestSchema } from '@unbound-app/contracts/admin';
-import { useRouter } from '@tanstack/react-router';
+import { moderationReasonSchema } from '@unbound-app/contracts/admin';
+import { useMutation } from '@tanstack/react-query';
 import { IconHistory } from 'nucleo-micro-bold';
-import { useState, useTransition } from 'react';
-import type { FormEvent } from 'react';
+import { useForm } from '@tanstack/react-form';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { z } from 'zod/mini';
 
 import {
 	Dialog,
@@ -14,8 +15,8 @@ import {
 	DialogTitle,
 	DialogTrigger,
 } from '~/components/ui/dialog';
+import { serveVersionMutation } from '~/queries/admin-addons/addon-mutations';
 import { Field, FieldError, FieldLabel } from '~/components/ui/field';
-import { submitServeVersion } from '~/lib/admin-functions';
 import getApiErrorMessage from '~/lib/api/error-message';
 import type { AdminVersion } from '~/lib/admin-addon';
 import { Button } from '~/components/ui/button';
@@ -35,6 +36,8 @@ type VersionListProps = {
 	versions: string[];
 };
 
+const SERVE_FORM_SCHEMA = z.object({ reason: moderationReasonSchema });
+
 function VersionList({ label, versions }: VersionListProps) {
 	if (versions.length === 0) return null;
 
@@ -46,11 +49,28 @@ function VersionList({ label, versions }: VersionListProps) {
 }
 
 function ServeVersionDialog({ addonId, versions, version }: ServeVersionDialogProps) {
-	const router = useRouter();
 	const [open, setOpen] = useState(false);
-	const [reason, setReason] = useState('');
-	const [error, setError] = useState<string | null>(null);
-	const [isPending, startTransition] = useTransition();
+	const serve = useMutation(serveVersionMutation());
+	const form = useForm({
+		defaultValues: { reason: '' },
+		validators: { onSubmit: SERVE_FORM_SCHEMA },
+		onSubmit: async ({ value, formApi }) => {
+			try {
+				await serve.mutateAsync({
+					id: addonId,
+					request: { version, reason: value.reason },
+				});
+			} catch (error) {
+				toast.error(getApiErrorMessage(error));
+
+				return;
+			}
+
+			setOpen(false);
+			formApi.reset();
+			toast.success(`${addonId} now serves ${version}`);
+		},
+	});
 	const plan = planServe(
 		versions.map((entry) => ({
 			version: entry.version,
@@ -58,34 +78,6 @@ function ServeVersionDialog({ addonId, versions, version }: ServeVersionDialogPr
 		})),
 		version,
 	);
-
-	function submit(event: FormEvent<HTMLFormElement>) {
-		event.preventDefault();
-
-		const parsed = serveVersionRequestSchema.safeParse({ version, reason });
-
-		if (!parsed.success) {
-			setError(parsed.error.issues[0]?.message ?? 'Give a reason.');
-
-			return;
-		}
-
-		setError(null);
-		startTransition(async () => {
-			try {
-				await submitServeVersion({ data: { id: addonId, request: parsed.data } });
-			} catch (caught) {
-				toast.error(getApiErrorMessage(caught));
-
-				return;
-			}
-
-			setOpen(false);
-			setReason('');
-			await router.invalidate();
-			toast.success(`${addonId} now serves ${version}`);
-		});
-	}
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
@@ -96,7 +88,13 @@ function ServeVersionDialog({ addonId, versions, version }: ServeVersionDialogPr
 				</Button>
 			</DialogTrigger>
 			<DialogContent>
-				<form onSubmit={submit} className='flex flex-col gap-4'>
+				<form
+					className='flex flex-col gap-4'
+					onSubmit={(event) => {
+						event.preventDefault();
+						void form.handleSubmit();
+					}}
+				>
 					<DialogHeader>
 						<DialogTitle>
 							Serve {addonId} <span className='font-mono'>{version}</span>?
@@ -113,27 +111,32 @@ function ServeVersionDialog({ addonId, versions, version }: ServeVersionDialogPr
 						<VersionList label='Withdraws' versions={plan?.withdrawn ?? []} />
 						<VersionList label='Restores' versions={plan?.restored ?? []} />
 					</div>
-					<Field data-invalid={Boolean(error)}>
-						<FieldLabel htmlFor={`serve-reason-${version}`}>Reason</FieldLabel>
-						<Textarea
-							id={`serve-reason-${version}`}
-							value={reason}
-							onChange={(event) => setReason(event.target.value)}
-							placeholder='Why is this version being served?'
-							aria-invalid={Boolean(error)}
-						/>
-						<FieldError>{error}</FieldError>
-					</Field>
+					<form.Field name='reason'>
+						{(field) => (
+							<Field data-invalid={field.state.meta.errors.length > 0}>
+								<FieldLabel htmlFor={`serve-reason-${version}`}>Reason</FieldLabel>
+								<Textarea
+									id={`serve-reason-${version}`}
+									value={field.state.value}
+									onChange={(event) => field.handleChange(event.target.value)}
+									onBlur={field.handleBlur}
+									placeholder='Why is this version being served?'
+									aria-invalid={field.state.meta.errors.length > 0}
+								/>
+								<FieldError errors={field.state.meta.errors} />
+							</Field>
+						)}
+					</form.Field>
 					<DialogFooter>
 						<Button
 							type='button'
 							variant='outline'
 							onClick={() => setOpen(false)}
-							disabled={isPending}
+							disabled={serve.isPending}
 						>
 							Cancel
 						</Button>
-						<Button type='submit' disabled={isPending}>
+						<Button type='submit' disabled={serve.isPending}>
 							<IconHistory size={24} />
 							Serve {version}
 						</Button>

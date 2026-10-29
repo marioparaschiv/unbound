@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { IconFaceNeutral } from 'nucleo-micro-bold';
 
 import {
@@ -12,16 +13,24 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import ContributorsCard from '~/components/addon/contributors-card';
 import VersionHistory from '~/components/addon/version-history';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import AddonHeader from '~/components/addon/addon-header';
 import AuthorsCard from '~/components/addon/authors-card';
 import DetailsCard from '~/components/addon/details-card';
-import { fetchMarketplaceAddon } from '~/lib/marketplace';
+import { addonQuery } from '~/queries/marketplace/addon';
 import SourceCard from '~/components/addon/source-card';
 import { Button } from '~/components/ui/button';
 import Markdown from '~/components/markdown';
 
 function AddonPage() {
-	const addon = Route.useLoaderData();
+	const { id } = Route.useParams();
+	const { data: addon } = useSuspenseQuery(addonQuery(id));
+
+	// A refetch can find the addon delisted since the page loaded.
+	if (!addon) {
+		throw notFound();
+	}
+
 	const { source } = addon;
 
 	return (
@@ -31,14 +40,14 @@ function AddonPage() {
 			<div className='items-start gap-6 grid grid-cols-1 lg:grid-cols-3'>
 				<div className='flex flex-col gap-6 lg:col-span-2 min-w-0'>
 					{source?.addonMd ? (
-						<Card>
+						<Card className='animate-reveal' style={staggerStyle(4)}>
 							<CardContent>
 								<Markdown source={source.addonMd} pin={source.pin} />
 							</CardContent>
 						</Card>
 					) : null}
 
-					<Card>
+					<Card className='animate-reveal' style={staggerStyle(5)}>
 						<CardHeader>
 							<CardTitle>Version History</CardTitle>
 						</CardHeader>
@@ -49,12 +58,22 @@ function AddonPage() {
 				</div>
 
 				<aside className='flex flex-col gap-6 min-w-0'>
-					{source ? <SourceCard source={source} /> : null}
-					{source && source.details.contributors.length > 0 ? (
-						<ContributorsCard contributors={source.details.contributors} />
+					{source ? (
+						<div className='animate-reveal' style={staggerStyle(4)}>
+							<SourceCard source={source} />
+						</div>
 					) : null}
-					<DetailsCard addon={addon} />
-					<AuthorsCard authors={addon.authors} />
+					{source && source.details.contributors.length > 0 ? (
+						<div className='animate-reveal' style={staggerStyle(5)}>
+							<ContributorsCard contributors={source.details.contributors} />
+						</div>
+					) : null}
+					<div className='animate-reveal' style={staggerStyle(6)}>
+						<DetailsCard addon={addon} />
+					</div>
+					<div className='animate-reveal' style={staggerStyle(7)}>
+						<AuthorsCard authors={addon.authors} />
+					</div>
 				</aside>
 			</div>
 		</div>
@@ -84,8 +103,8 @@ function AddonNotFound() {
 
 export const Route = createFileRoute('/_site/addons/$id')({
 	// `loader` comes before `head` so `head` can infer the loader data's type.
-	loader: async ({ params }) => {
-		const addon = await fetchMarketplaceAddon({ data: params.id });
+	loader: async ({ context, params }) => {
+		const addon = await context.queryClient.ensureQueryData(addonQuery(params.id));
 
 		if (!addon) {
 			throw notFound();

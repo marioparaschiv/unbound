@@ -51,7 +51,7 @@ const managerDirectories: Record<ManagerType, string> = {
 export type ReloadResult = { ok: true } | { ok: false; error: Error };
 
 /** A single freeze at least this long disables the addon at once. */
-export const LONG_FREEZE_SECONDS = 20;
+const LONG_FREEZE_SECONDS = 20;
 
 type AddonEvents<T extends Addon> = {
 	loaded: (entity: T) => void;
@@ -227,12 +227,14 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 	 * @param entity The addon to reload, as its id or the entity itself.
 	 * @param bundle The freshly built bundle source.
 	 * @param manifest The freshly built, validated manifest.
+	 * @param bytecode The bundle compiled for this runtime, base64-encoded, whose digest the manifest lists.
 	 * @returns The reload outcome: `{ ok: true }`, or `{ ok: false, error }` on failure.
 	 */
 	async reload(
 		entity: AddonResolveable,
 		bundle: string,
 		manifest: AddonManifest,
+		bytecode?: string,
 	): Promise<ReloadResult> {
 		const resolved = this.resolve(entity);
 
@@ -256,6 +258,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			try {
 				this.validateManifest(manifest);
 				await this.persist(bundle, manifest);
+				await this.persistBytecode(manifest, bytecode);
 				this.load(bundle, manifest);
 
 				const loaded = this.getEntity(manifest.id);
@@ -292,6 +295,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			const wasStarted = resolved.started || this.pendingStarts.has(resolved.id);
 
 			await this.persist(bundle, manifest);
+			await this.persistBytecode(manifest, bytecode);
 
 			this.pendingStarts.delete(resolved.id);
 
@@ -407,6 +411,7 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 				resolved,
 				bundle,
 				this.verifySignature(manifest, bundle, resolved),
+				bytecode,
 			);
 
 			if (!result.ok) {
@@ -414,8 +419,6 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 
 				return;
 			}
-
-			await this.persistBytecode(manifest, bytecode);
 
 			this.emit('updated', resolved);
 		} catch (error) {

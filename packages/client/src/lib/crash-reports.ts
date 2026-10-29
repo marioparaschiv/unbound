@@ -21,7 +21,7 @@ const LOG_FILE = 'Unbound/Logs/unbound.log';
  * @description Reads whether the user turned crash reporting on. It is off until they do.
  * @returns Whether reports may be sent.
  */
-export function crashReportsEnabled(): boolean {
+function crashReportsEnabled(): boolean {
 	return storage.get('unbound', CRASH_REPORTS_SETTING, false);
 }
 

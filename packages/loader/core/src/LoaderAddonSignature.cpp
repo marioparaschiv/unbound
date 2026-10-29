@@ -56,9 +56,11 @@ static std::vector<std::pair<uint64_t, std::string>> sortedDigests(const nlohman
 }
 
 std::string addonSigningMessage(const std::string &id, const std::string &version,
-                                const std::string &bundle, const nlohmann::json &bytecode)
+                                const std::string &bundle, const nlohmann::json &bytecode,
+                                const std::string *bundleDigest)
 {
-    std::string message = "unbound-addon/v1\n" + id + "\n" + version + "\n" + sha512Hex(bundle);
+    std::string message = "unbound-addon/v1\n" + id + "\n" + version + "\n" +
+                          (bundleDigest ? *bundleDigest : sha512Hex(bundle));
     for (const auto &[bytecodeVersion, digest] : sortedDigests(bytecode))
     {
         message += "\nbytecode " + std::to_string(bytecodeVersion) + " " + digest;
@@ -73,7 +75,7 @@ static std::string stringField(const nlohmann::json &object, const char *key)
 }
 
 AddonSignatureResult verifyAddonSignature(const nlohmann::json &manifest, const std::string &bundle,
-                                          const BundleTrust &trust)
+                                          const BundleTrust &trust, const std::string *bundleDigest)
 {
     auto signature = manifest.find("signature");
     if (signature == manifest.end() || signature->is_null())
@@ -109,7 +111,8 @@ AddonSignatureResult verifyAddonSignature(const nlohmann::json &manifest, const 
 
     TrustedSigner signer = verifyTrustedSignature(
         addonSigningMessage(id, version, bundle,
-                            bytecode != manifest.end() ? *bytecode : nlohmann::json()),
+                            bytecode != manifest.end() ? *bytecode : nlohmann::json(),
+                            bundleDigest),
         ed25519, trust);
     if (signer == TrustedSigner::None)
     {

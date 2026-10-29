@@ -30,6 +30,57 @@ export function codeSlots(text: string, blocks: SpanRange[]): CodeSlot[] {
 		.filter(({ code }) => code.length > 0);
 }
 
+const PLACEHOLDER = '\ufffc';
+const TAG_MARKS = ['\u200b', '\u200c', '\u200d', '\u2060'];
+const TAG_LENGTH = 16;
+
+function textTag(text: string): string {
+	let hash = 0x811c9dc5;
+
+	for (let index = 0; index < text.length; index++) {
+		hash = Math.imul(hash ^ text.charCodeAt(index), 0x01000193);
+	}
+
+	let tag = '';
+
+	for (let index = 0; index < TAG_LENGTH; index++) {
+		tag += TAG_MARKS[(hash >>> (index * 2)) & 3];
+	}
+
+	return tag;
+}
+
+/**
+ * @description Builds the text that replaces each slot. The last placeholder carries an invisible tag of the original text, so messages that differ only inside their code blocks still render to different text.
+ * @param original The message text.
+ * @param slots The slots, in text order.
+ * @returns Each slot's replacement text.
+ */
+export function placeholderTexts(original: string, slots: SpanRange[]): string[] {
+	return slots.map((_, index) =>
+		index === slots.length - 1 ? PLACEHOLDER + textTag(original) : PLACEHOLDER,
+	);
+}
+
+/**
+ * @description Replaces each slot of a message text with its placeholder.
+ * @param original The message text.
+ * @param slots The slots, in text order.
+ * @returns The text Discord shows once the cards take the slots' place.
+ */
+export function renderedText(original: string, slots: SpanRange[]): string {
+	const texts = placeholderTexts(original, slots);
+	let text = original;
+
+	for (let index = slots.length - 1; index >= 0; index--) {
+		const slot = slots[index]!;
+
+		text = text.slice(0, slot.start) + texts[index] + text.slice(slot.end);
+	}
+
+	return text;
+}
+
 /**
  * @description Finds where each placeholder lands once every slot is replaced by one character.
  * @param slots The slots, in text order.

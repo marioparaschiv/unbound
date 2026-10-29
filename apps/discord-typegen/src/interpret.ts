@@ -1,8 +1,8 @@
 import { ts } from 'ts-morph';
 
 import type { FunctionInfo, ModuleContext, ObjectBuild, Value } from './values';
-import type { Frame } from './frame';
 import type { ComponentRecord, ImportRef } from './types';
+import type { Frame } from './frame';
 
 import {
 	assignComputed,

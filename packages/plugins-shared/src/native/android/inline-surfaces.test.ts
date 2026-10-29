@@ -1,10 +1,10 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, jest, test } from 'bun:test';
 
 import { createInlineSurfaces, type InlineDefinition } from './inline-surfaces';
 
 type FakeValue = {
 	type: string;
-	value?: string;
+	value?: string | number;
 };
 
 type Call = {
@@ -23,6 +23,8 @@ type FakeState = {
 	handler: HookHandler | null;
 	removed: boolean;
 	unmounted: FakeValue[];
+	mounted: FakeValue[];
+	blank: Set<string>;
 };
 
 const handle = (value: string): FakeValue => ({ type: 'handle', value });
@@ -43,6 +45,16 @@ function fakeNative(available: boolean, state: FakeState) {
 			invoke(target: FakeValue, method: string, args: FakeValue[] = []): FakeValue {
 				if (target.value === 'rewrites') {
 					state.calls.push({ method, args });
+				}
+
+				if (method === 'getChildAt') {
+					return handle(`root-${target.value}`);
+				}
+
+				if (method === 'getChildCount') {
+					const host = String(target.value).replace('root-', '');
+
+					return { type: 'int', value: state.blank.has(host) ? 0 : 1 };
 				}
 
 				return handle('context');
@@ -66,7 +78,12 @@ function fakeNative(available: boolean, state: FakeState) {
 			},
 		},
 		fabric: {
-			mountAsync: (host: FakeValue) => Promise.resolve(handle(`surface-${host.value}`)),
+			mountAsync(host: FakeValue) {
+				state.mounted.push(host);
+				state.blank.delete(String(host.value));
+
+				return Promise.resolve(handle(`surface-${host.value}`));
+			},
 			unmountAsync(surface: FakeValue) {
 				state.unmounted.push(surface);
 
@@ -77,7 +94,14 @@ function fakeNative(available: boolean, state: FakeState) {
 }
 
 function setup(available = true) {
-	const state: FakeState = { calls: [], handler: null, removed: false, unmounted: [] };
+	const state: FakeState = {
+		calls: [],
+		handler: null,
+		removed: false,
+		unmounted: [],
+		mounted: [],
+		blank: new Set(),
+	};
 	const native: Parameters<typeof createInlineSurfaces>[0] = Object.assign(
 		Object.create(null),
 		fakeNative(available, state),
@@ -116,6 +140,32 @@ describe('createInlineSurfaces', () => {
 
 		expect(methods(state)).toEqual(['watch', 'put', 'reapply', 'addHost', 'addHost']);
 		expect(surfaces!.isDefined('code ￼')).toBe(true);
+	});
+
+	test('remounts a surface that never rendered into its host', async () => {
+		jest.useFakeTimers();
+
+		try {
+			const { state, surfaces } = setup();
+
+			surfaces!.define(definition);
+			await Promise.resolve();
+			await Promise.resolve();
+
+			const first = state.mounted[0];
+
+			state.blank.add(String(first.value));
+			jest.advanceTimersByTime(1_500);
+
+			for (let tick = 0; tick < 8; tick++) await Promise.resolve();
+
+			expect(state.unmounted).toEqual([handle(`surface-${first.value}`)]);
+			expect(state.mounted.filter((host) => host.value === first.value)).toHaveLength(2);
+			expect(state.mounted).toHaveLength(3);
+			expect(methods(state)).toContain('refresh');
+		} finally {
+			jest.useRealTimers();
+		}
 	});
 
 	test('adds a group when the loader asks for another host', async () => {

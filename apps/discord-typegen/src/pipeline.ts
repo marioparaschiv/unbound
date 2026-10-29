@@ -8,8 +8,8 @@ import { isComponentCandidate, summarize } from './split';
 import { createParser, extractModule } from './extract';
 import { assignNames, sortComponents } from './naming';
 import { bindPassed, isHookName } from './evidence';
-import { buildReport } from './report';
 import { parseCallees } from './callees';
+import { buildReport } from './report';
 import { infer } from './infer';
 import { emit } from './emit';
 

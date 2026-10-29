@@ -1,6 +1,22 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
+import type { LanguageRegistration } from 'shiki';
 
-import { createHighlighter } from './highlighter';
+mock.module('@unbound-app/api', () => ({ fs: {} }));
+
+const { createHighlighter: createWithSource } = await import('./highlighter');
+
+async function localRegistration(name: string): Promise<LanguageRegistration> {
+	const grammar: LanguageRegistration[] = (await import(`@shikijs/langs/${name}`)).default;
+	const registration = grammar.find((language) => language.name === name);
+
+	if (!registration) throw new Error(`${name} is not a local registration`);
+
+	return registration;
+}
+
+function createHighlighter() {
+	return createWithSource(localRegistration);
+}
 
 function text(tokens: { content: string }[] | undefined) {
 	return tokens?.map((token) => token.content).join('');

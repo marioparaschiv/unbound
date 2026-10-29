@@ -235,8 +235,6 @@ struct HookState {
     std::mutex                    returnCacheMutex;
     __strong NSMutableDictionary<NSArray *, NSData *> *returnCache =
         [NSMutableDictionary dictionary];
-    __strong NSMutableDictionary<NSArray *, NSNumber *> *sizeHeightFloors =
-        [NSMutableDictionary dictionary];
     bool              cacheOnly = false;
     bool              once      = false;
     loader::AddonSlot addon     = loader::kNoAddon;
@@ -317,10 +315,6 @@ static void setHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState
 static void removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookState> &state,
                                   const Value *args, size_t count);
 static void clearHookReturnCache(const std::shared_ptr<HookState> &state);
-static void setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                   const Value *args, size_t count);
-static void removeHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                      const Value *args, size_t count);
 
 class IOSNativePluginExecutor final : public loader::native::NativePluginExecutor
 {
@@ -2470,26 +2464,6 @@ Value HookTokenHost::get(Runtime &runtime, const PropNameID &name)
                 return Value::undefined();
             });
     }
-    if (property == "setSizeHeightFloor")
-    {
-        std::shared_ptr<HookState> state = state_;
-        return Function::createFromHostFunction(
-            runtime, PropNameID::forUtf8(runtime, "setSizeHeightFloor"), 3,
-            [state](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-                setHookSizeHeightFloor(rt, state, args, count);
-                return Value::undefined();
-            });
-    }
-    if (property == "removeSizeHeightFloor")
-    {
-        std::shared_ptr<HookState> state = state_;
-        return Function::createFromHostFunction(
-            runtime, PropNameID::forUtf8(runtime, "removeSizeHeightFloor"), 2,
-            [state](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
-                removeHookSizeHeightFloor(rt, state, args, count);
-                return Value::undefined();
-            });
-    }
     return Value::undefined();
 }
 
@@ -3001,103 +2975,8 @@ static void clearHookReturnCache(const std::shared_ptr<HookState> &state)
         return;
     }
     std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-    loader::native::nativeCachedReturnBudget().release(state->returnCache.count +
-                                                       state->sizeHeightFloors.count);
+    loader::native::nativeCachedReturnBudget().release(state->returnCache.count);
     [state->returnCache removeAllObjects];
-    [state->sizeHeightFloors removeAllObjects];
-}
-
-static void setHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                   const Value *args, size_t count)
-{
-    if (!state || !state->cacheOnly || count < 3 || !args[2].isNumber())
-    {
-        throw JSError(runtime, "Native hook size floor requires a number");
-    }
-
-    std::shared_ptr<HookDispatcher> dispatcher = state->dispatcher.lock();
-    if (!dispatcher || dispatcher->signature->result.name != "struct:CGSize")
-    {
-        throw JSError(runtime, "Native hook size floor requires a CGSize return type");
-    }
-
-    double floor = args[2].getNumber();
-    if (!std::isfinite(floor) || floor < 0 || floor > 4096)
-    {
-        throw JSError(runtime, "Native hook size floor is outside the supported range");
-    }
-
-    NSArray                    *key = hookReturnCacheKey(runtime, state, args, count);
-    std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-    if (floor == 0)
-    {
-        releaseHookCacheEntry(state->sizeHeightFloors, key);
-    }
-    else
-    {
-        reserveHookCacheEntry(runtime, state, state->sizeHeightFloors, key);
-        state->sizeHeightFloors[key] = @(floor);
-    }
-}
-
-static void removeHookSizeHeightFloor(Runtime &runtime, const std::shared_ptr<HookState> &state,
-                                      const Value *args, size_t count)
-{
-    NSArray                    *key = hookReturnCacheKey(runtime, state, args, count);
-    std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-    releaseHookCacheEntry(state->sizeHeightFloors, key);
-}
-
-static void applyHookSizeHeightFloors(const std::shared_ptr<HookDispatcher>         &dispatcher,
-                                      const std::vector<std::shared_ptr<HookState>> &hooks,
-                                      void **arguments, void *returnValue)
-{
-    if (!returnValue || dispatcher->signature->result.name != "struct:CGSize" ||
-        loader::ffi::typeSize(dispatcher->signature->result) < sizeof(CGSize))
-    {
-        return;
-    }
-
-    NSArray *key = nil;
-    CGSize   size{};
-    memcpy(&size, returnValue, sizeof(size));
-    if (!std::isfinite(size.height) || size.height < 0)
-    {
-        return;
-    }
-
-    for (const std::shared_ptr<HookState> &state : hooks)
-    {
-        if (!state->active || !state->cacheOnly)
-        {
-            continue;
-        }
-
-        NSNumber *floorValue = nil;
-        {
-            std::lock_guard<std::mutex> lock(state->returnCacheMutex);
-            if (state->sizeHeightFloors.count == 0)
-            {
-                continue;
-            }
-            if (!key)
-            {
-                key = hookReturnCacheKey(dispatcher, arguments);
-            }
-            if (key)
-            {
-                floorValue = state->sizeHeightFloors[key];
-            }
-        }
-        if (!floorValue)
-        {
-            continue;
-        }
-
-        size.height = std::max(size.height, floorValue.doubleValue);
-    }
-
-    memcpy(returnValue, &size, sizeof(size));
 }
 
 static std::shared_ptr<HookDispatcher> findHookDispatcher(id object, SEL selector,
@@ -3226,7 +3105,6 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         {
             invokeHookOriginal(dispatcher, arguments, returnValue);
         }
-        applyHookSizeHeightFloors(dispatcher, hooks, arguments, returnValue);
         for (const std::shared_ptr<HookState> &state : onceHooks)
         {
             removeHook(state);
@@ -3344,8 +3222,6 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         invokeHookOriginal(dispatcher, arguments, returnValue);
         copyHookResult(invocation, returnValue);
     }
-
-    applyHookSizeHeightFloors(dispatcher, hooks, arguments, returnValue);
 
     for (const std::shared_ptr<HookState> &state : hooks)
     {

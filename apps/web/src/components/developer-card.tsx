@@ -45,7 +45,7 @@ function DeveloperCard({ developer, className, ...props }: DeveloperCardProps) {
 			<CardContent className='flex flex-col gap-0.5 p-(--card-pad) min-w-0'>
 				<Text variant='heading-sm' className='truncate leading-tight!'>
 					<Link
-						to='/developers/$discordId'
+						to='/profiles/$discordId'
 						params={{ discordId: author.discordId }}
 						className='after:absolute after:inset-0 after:rounded-surface'
 					>
