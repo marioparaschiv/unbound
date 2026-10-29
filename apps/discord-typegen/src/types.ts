@@ -56,6 +56,8 @@ export type PropObservation =
 	| { kind: 'default'; value: LiteralValue }
 	| { kind: 'default-expression' }
 	| { kind: 'compared'; value: LiteralValue }
+	/** A literal some JSX call site passes for the prop. */
+	| { kind: 'passed'; value: LiteralValue }
 	| { kind: 'called'; argCount: number }
 	| { kind: 'forwarded'; target: TargetRef; key: string }
 	| { kind: 'spread'; target: TargetRef }
@@ -110,4 +112,13 @@ export type ModuleFacts = {
 	/** Exported `useX` functions, walked like components so a component spreading their result can be typed. */
 	hooks: ComponentRecord[];
 	reExports: ReExport[];
+	/** Literal props passed to JSX elements, attached to the target's evidence once targets resolve. */
+	passed: PassedLiteral[];
+};
+
+/** A literal prop value at a JSX call site: `jsx(Text, { variant: 'heading-sm/normal' })`. */
+export type PassedLiteral = {
+	target: TargetRef;
+	key: string;
+	value: LiteralValue;
 };

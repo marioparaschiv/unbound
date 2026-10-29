@@ -412,7 +412,7 @@ export type RTCDebugOverlayComponent = React.ComponentType<RTCDebugOverlayProps>
  */
 export type CallsSectionProps = {
 		children?: React.ComponentProps<typeof RN.View>['children'];
-		title?: unknown;
+		title?: string;
 	};
 export type CallsSectionComponent = React.ComponentType<CallsSectionProps>;
 /**
@@ -958,10 +958,10 @@ export type JumpToPresentButtonComponent = React.ComponentType<JumpToPresentButt
  */
 export type CommonActionButtonProps = {
 		IconComponent?: unknown;
-		accessibilityLabel?: unknown;
+		accessibilityLabel?: ButtonIconButtonProps['accessibilityLabel'];
 		onPress?: ButtonIconButtonProps['onPress'];
 		styles?: React.ComponentProps<typeof RN.View>['style'];
-		type?: 'positive' | (string & {});
+		type?: 'neutral' | 'positive' | (string & {});
 	};
 export type CommonActionButtonComponent = React.ComponentType<CommonActionButtonProps>;
 /**
@@ -1012,7 +1012,7 @@ export type DescriptionEllipsisComponent = React.ComponentType<DescriptionEllips
  */
 export type FastImageProps = Omit<React.ComponentProps<typeof RN.Image>, 'accessibilityLabel' | 'accessible' | 'autoPlay' | 'enableAnimation' | 'fadeDuration' | 'paused' | 'placeholder' | 'resizeMode' | 'source' | 'style' | 'tintColor' | 'usesSmallCache'> & {
 		accessibilityLabel?: React.ComponentProps<typeof RN.Image>['accessibilityLabel'];
-		accessible?: unknown;
+		accessible?: boolean;
 		/** @default true */
 		autoPlay?: boolean;
 		/** @default true */
@@ -1248,12 +1248,12 @@ export type CommonUserSummaryItemProps = {
 		/** @default 3 */
 		max?: number;
 		namesStyle?: DesignTextProps['style'];
-		namesVariant?: unknown;
+		namesVariant?: DesignTextProps['variant'];
 		renderedUsers?: { length?: unknown };
 		style?: React.ComponentProps<typeof RN.View>['style'];
 		users: { forEach?: unknown; length?: unknown };
-		withNames?: unknown;
-		withPlusCount?: unknown;
+		withNames?: boolean;
+		withPlusCount?: boolean;
 	};
 export type CommonUserSummaryItemComponent = React.ComponentType<CommonUserSummaryItemProps>;
 /**
@@ -1265,7 +1265,7 @@ export type VideoComponentProps = {
 		controls?: { props?: unknown };
 		disableFocus?: boolean;
 		httpEngine?: unknown;
-		importantForAccessibility?: unknown;
+		importantForAccessibility?: 'no-hide-descendants' | (string & {});
 		mixWithOthers?: unknown;
 		/** @default true */
 		muted?: boolean;
@@ -1282,11 +1282,11 @@ export type VideoComponentProps = {
 		playInBackground?: boolean;
 		poster?: unknown;
 		/** @default 'contain' */
-		posterResizeMode?: 'contain' | (string & {});
+		posterResizeMode?: 'contain' | 'cover' | (string & {});
 		/** @default true */
 		preventsDisplaySleepDuringVideoPlayback?: boolean;
 		/** @default 'contain' */
-		resizeMode?: 'contain' | (string & {});
+		resizeMode?: 'contain' | 'cover' | (string & {});
 		source?: unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
@@ -1319,7 +1319,7 @@ export type VoiceSensitivityComponent = React.ComponentType<VoiceSensitivityProp
 export type VolumeSliderProps = {
 		accessibilityLabel?: unknown;
 		maxTrackTintColor?: unknown;
-		maxVolume?: unknown;
+		maxVolume?: number | string;
 		minTrackColor?: unknown;
 		onResponderGrant?: (...args: any[]) => unknown;
 		onValueChange: (...args: any[]) => unknown;
@@ -1332,7 +1332,7 @@ export type VolumeSliderComponent = React.ComponentType<VolumeSliderProps & Reco
  * @see components_native/common/color_picker/ColorBlock.tsx
  */
 export type ColorBlockProps = {
-		color?: unknown;
+		color?: number;
 		onSelect?: (...args: any[]) => unknown;
 		/** @default false */
 		selected?: boolean;
@@ -1360,7 +1360,7 @@ export type GiftPurchaseButtonProps = {
 		recipientUserId: (...args: any[]) => unknown;
 		style?: React.ComponentProps<typeof RN.View>['style'];
 		/** @default 'primary' */
-		variant?: 'primary' | (string & {});
+		variant?: BaseTextButtonProps['variant'];
 	};
 export type GiftPurchaseButtonComponent = React.ComponentType<GiftPurchaseButtonProps>;
 /**
@@ -1775,12 +1775,12 @@ export type BurstReactionFirstSendActionSheetComponent = React.ComponentType<Bur
 export type GatedContentProps = {
 		agreement?: BaseTextButtonProps['text'];
 		/** @default 'primary' */
-		agreementButtonVariant?: 'primary' | (string & {});
+		agreementButtonVariant?: BaseTextButtonProps['variant'];
 		channelId?: string;
 		description?: DesignTextProps['children'];
 		disagreement?: BaseTextButtonProps['text'];
 		/** @default 'secondary' */
-		disagreementButtonVariant?: 'primary' | 'secondary' | (string & {});
+		disagreementButtonVariant?: BaseTextButtonProps['variant'];
 		guildId?: string;
 		modalType?: unknown;
 		onAgree?: (...args: any[]) => unknown;

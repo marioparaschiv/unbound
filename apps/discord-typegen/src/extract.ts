@@ -37,7 +37,7 @@ export function extractModule(project: Project, record: ModuleRecord): ModuleFac
 		const factory = factoryOf(file);
 
 		if (!factory) {
-			return { moduleId: record.id, components: [], hooks: [], reExports: [] };
+			return { moduleId: record.id, components: [], hooks: [], reExports: [], passed: [] };
 		}
 
 		const ctx: ModuleContext = {
@@ -52,6 +52,7 @@ export function extractModule(project: Project, record: ModuleRecord): ModuleFac
 			getters: [],
 			staticOwners: [],
 			displayNames: new Map(),
+			passed: [],
 		};
 		const params: Value[] = [0, 1, 2, 3, 4, 5, 6].map((index) => ({ kind: 'param', index }));
 
@@ -63,7 +64,13 @@ export function extractModule(project: Project, record: ModuleRecord): ModuleFac
 			(component) => isHookName(component.name) && component.exportNames.length > 0,
 		);
 
-		return { moduleId: record.id, components: nameComponents(ctx), hooks, reExports };
+		return {
+			moduleId: record.id,
+			components: nameComponents(ctx),
+			hooks,
+			reExports,
+			passed: ctx.passed,
+		};
 	} finally {
 		project.removeSourceFile(source);
 	}

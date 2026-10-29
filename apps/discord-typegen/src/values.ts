@@ -1,6 +1,13 @@
 import type { ts } from 'ts-morph';
 
-import type { ComponentRecord, HookRef, ImportRef, LiteralValue, TargetRef } from './types';
+import type {
+	ComponentRecord,
+	HookRef,
+	ImportRef,
+	LiteralValue,
+	PassedLiteral,
+	TargetRef,
+} from './types';
 
 /** A function expression seen in a module, walked after the function that defines it finishes. */
 export type FunctionInfo = {
@@ -35,6 +42,7 @@ export type ModuleContext = {
 	getters: GetterBinding[];
 	staticOwners: StaticOwner[];
 	displayNames: Map<ComponentRecord, string>;
+	passed: PassedLiteral[];
 };
 
 export type ExportBinding = { name: string; value: Value };

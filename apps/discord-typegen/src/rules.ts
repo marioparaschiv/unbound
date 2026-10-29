@@ -14,6 +14,7 @@ export type RuleName =
 	| 'compared'
 	| 'called'
 	| 'name'
+	| 'passed'
 	| 'members'
 	| 'unknown';
 
@@ -85,6 +86,44 @@ function literalsOf(evidence: PropEvidence, kinds: ReadonlyArray<PropObservation
 	return values;
 }
 
+// Enum members read like `heading-sm/bold`, `secondary` or `flex-start`: one lowercase-led token, no spaces.
+const ENUM_TOKEN = /^[a-z]\w*(?:[-/.]\w+)*$/;
+// Props that carry data or prose, whose call-site values are examples rather than a closed set.
+const FREE_TEXT_NAME =
+	/^(?:children|id|key|name|title|subtitle|label|text|description|message|hint|placeholder|url|uri|value|defaultValue|query)$|(?:Id|ID|Key|Name|Title|Label|Text|Description|Message|Hint|Placeholder|Url|URL|Uri)$/;
+
+const DIMENSION_NAME =
+	/^(?:width|height|top|left|right|bottom|inset|flexBasis)$|(?:Width|Height|Top|Left|Right|Bottom|Inset|Radius|Margin|Padding|Offset)$|^(?:min|max|margin|padding)[A-Z]/;
+
+/**
+ * @description Types a prop from the literals call sites pass when nothing better applies. Layout dimensions take
+ * numbers and strings (`12`, `'100%'`), so one caller's choice does not close the other off.
+ * @param name The prop's name.
+ * @param values The passed literals.
+ * @returns The type text, or undefined when the values disagree on their type.
+ */
+export function passedType(name: string, values: LiteralValue[]): string | undefined {
+	const types = new Set(values.map((value) => typeof value));
+	const [type] = types;
+
+	if (types.size !== 1 || !type) return;
+
+	return DIMENSION_NAME.test(name) && type !== 'boolean' ? 'number | string' : type;
+}
+
+/**
+ * @description Tells whether the literals call sites pass for a prop read as members of an enum, not as free text.
+ * @param name The prop's name.
+ * @param values The passed literals.
+ * @returns True when every value is an enum token and the prop's name does not mark it as data or prose.
+ */
+export function isEnumLike(name: string, values: LiteralValue[]): boolean {
+	return (
+		!FREE_TEXT_NAME.test(name) &&
+		values.every((value) => typeof value === 'string' && ENUM_TOKEN.test(value))
+	);
+}
+
 function firstForwarded(
 	evidence: PropEvidence,
 	lookup: (target: TargetRef, key: string) => InferredType | undefined,
@@ -139,8 +178,12 @@ export const RULES: readonly Rule[] = [
 	},
 	{
 		name: 'literal-union',
-		infer: ({ evidence }) => {
-			const values = literalsOf(evidence, ['default', 'compared']);
+		infer: ({ name, evidence }) => {
+			const passed = literalsOf(evidence, ['passed']);
+			const values = [
+				...literalsOf(evidence, ['default', 'compared']),
+				...(isEnumLike(name, passed) ? passed : []),
+			];
 
 			if (values.length === 0 || !values.every((value) => typeof value === 'string')) return;
 
@@ -181,6 +224,15 @@ export const RULES: readonly Rule[] = [
 			return text ? typed(text, 'name') : undefined;
 		},
 	},
+	// After `name`: a caller's literal shows one type the prop accepts, not every type.
+	{
+		name: 'passed',
+		infer: ({ name, evidence }) => {
+			const text = passedType(name, literalsOf(evidence, ['passed']));
+
+			return text ? typed(text, 'passed') : undefined;
+		},
+	},
 	{
 		name: 'members',
 		infer: ({ evidence }) => {
@@ -211,4 +263,12 @@ export function propertyKey(name: string): string {
 	return /^[A-Za-z_$][\w$]*$/.test(name) ? name : literalType(name);
 }
 
-export default { RULES, FUNCTION_TYPE, STYLE_TYPE, literalType, propertyKey };
+export default {
+	RULES,
+	FUNCTION_TYPE,
+	STYLE_TYPE,
+	isEnumLike,
+	passedType,
+	literalType,
+	propertyKey,
+};

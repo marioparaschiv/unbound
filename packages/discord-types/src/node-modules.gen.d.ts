@@ -254,7 +254,7 @@ export type BottomSheetBackdropProps = {
 		enableTouchThrough?: boolean;
 		onPress?: (...args: any[]) => unknown;
 		opacity?: unknown;
-		pressBehavior?: unknown;
+		pressBehavior?: 'collapse' | (string & {});
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
 export type BottomSheetBackdropComponent = React.ComponentType<BottomSheetBackdropProps>;
@@ -2031,7 +2031,7 @@ export type PortalProps = {
 		handleOnMount?: (...args: any[]) => unknown;
 		handleOnUnmount?: (...args: any[]) => unknown;
 		handleOnUpdate?: (...args: any[]) => unknown;
-		hostName?: unknown;
+		hostName?: string;
 		name?: unknown;
 	};
 export type PortalComponent = React.ComponentType<PortalProps>;
@@ -2040,7 +2040,7 @@ export type PortalComponent = React.ComponentType<PortalProps>;
  * @see module 4994 (no source path)
  */
 export type PortalHostProps = {
-		name?: unknown;
+		name?: string;
 	};
 export type PortalHostComponent = React.ComponentType<PortalHostProps>;
 /**
@@ -2050,7 +2050,7 @@ export type PortalHostComponent = React.ComponentType<PortalHostProps>;
 export type PortalProviderProps = {
 		children?: React.ReactNode;
 		/** @default 'root' */
-		rootHostName?: 'root' | (string & {});
+		rootHostName?: PortalHostProps['name'];
 		/** @default true */
 		shouldAddRootHost?: boolean;
 	};
@@ -2771,7 +2771,7 @@ export type StickyHeadersProps = {
 		renderItem?: ViewHolderProps['renderItem'];
 		scrollY: { interpolate?: unknown };
 		stickyHeaderIndices?: unknown;
-		stickyHeaderOffset?: unknown;
+		stickyHeaderOffset?: number | string;
 		stickyHeaderRef?: unknown;
 		/** @default 2 */
 		stickyHeaderZIndex?: number;

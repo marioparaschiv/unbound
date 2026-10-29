@@ -1,5 +1,14 @@
-import type { ComponentRecord, PropObservation, ReExport, TargetRef } from './types';
+import type {
+	ComponentRecord,
+	LiteralValue,
+	ModuleFacts,
+	PropEvidence,
+	PropObservation,
+	ReExport,
+	TargetRef,
+} from './types';
 import type { ModuleContext, PropValue, Value } from './values';
+import type { Resolver } from './resolve';
 
 import { UNKNOWN, spreadSources, targetOf } from './values';
 
@@ -93,6 +102,11 @@ export function element(
 
 		for (const [key, value] of entries) {
 			forward(value, target, key);
+
+			// `null` is the placeholder Hermes slot-fills later, so it says nothing about the prop's type.
+			if (value.kind === 'literal' && value.value !== undefined && value.value !== null) {
+				ctx.passed.push({ target, key, value: value.value });
+			}
 		}
 	}
 
@@ -112,6 +126,39 @@ function forward(value: Value, target: TargetRef, key: string) {
 	for (const item of value.items) {
 		if (item?.kind === 'prop') {
 			observe(item, { kind: 'forwarded', target, key });
+		}
+	}
+}
+
+/**
+ * @description Attaches each literal passed at a JSX call site to the prop of the component it resolves to.
+ * Only props the component reads gain evidence, so a call site never invents a prop. A value counts once per
+ * module, so an observation count is how many modules pass it, not how many compiled copies of a call there are.
+ * @param facts The extracted modules.
+ * @param resolve The cross-module resolver.
+ */
+export function bindPassed(facts: ModuleFacts[], resolve: Resolver) {
+	for (const module of facts) {
+		const seen = new Map<PropEvidence, Set<LiteralValue>>();
+
+		for (const { target, key, value } of module.passed) {
+			const resolved = resolve(target);
+			const evidence =
+				resolved?.kind === 'component' ? resolved.component.props.get(key) : undefined;
+
+			if (!evidence) {
+				continue;
+			}
+
+			const values = seen.get(evidence) ?? new Set();
+
+			if (values.has(value)) {
+				continue;
+			}
+
+			values.add(value);
+			seen.set(evidence, values);
+			evidence.push({ kind: 'passed', value });
 		}
 	}
 }
@@ -378,4 +425,5 @@ export default {
 	defineExport,
 	bindClassMethods,
 	bindExports,
+	bindPassed,
 };

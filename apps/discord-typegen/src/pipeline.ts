@@ -6,7 +6,7 @@ import { createResolver, findReactNative, listExports } from './resolve';
 import { isComponentCandidate, summarize } from './split';
 import { createParser, extractModule } from './extract';
 import { assignNames, sortComponents } from './naming';
-import { isHookName } from './evidence';
+import { bindPassed, isHookName } from './evidence';
 import { buildReport } from './report';
 import { infer } from './infer';
 import { emit } from './emit';
@@ -58,6 +58,9 @@ export async function runPipeline(
 
 	const reactNative = findReactNative(summaries);
 	const resolve = createResolver(facts, reactNative, new Set(hosts.keys()));
+
+	bindPassed(facts, resolve);
+
 	const found = facts.flatMap((module) => module.components);
 	const components = sortComponents(found.filter(isComponent));
 	const names = assignNames(components);

@@ -252,7 +252,7 @@ export type ButtonBaseButtonProps = {
 		scaleAmountInPx?: unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		/** @default 'primary' */
-		variant?: 'primary' | (string & {});
+		variant?: 'none' | 'primary' | (string & {});
 	};
 export type ButtonBaseButtonComponent = React.ComponentType<ButtonBaseButtonProps>;
 /**
@@ -267,7 +267,7 @@ export type BaseIconButtonProps = Omit<ButtonBaseButtonProps, 'icon' | 'loading'
 		ref?: ButtonBaseButtonProps['ref'];
 		/** @default 4 */
 		scaleAmountInPx?: number;
-		size?: unknown;
+		size?: 'lg' | 'sm' | (string & {});
 		style?: ButtonBaseButtonProps['style'];
 		/** @default 'primary' */
 		variant?: ButtonPillProps['variant'];
@@ -290,23 +290,23 @@ export type BaseTextButtonProps = Omit<ButtonBaseButtonProps, 'accessibilityLabe
 		/** @default 'start' */
 		iconPosition?: 'end' | 'start' | (string & {});
 		loading?: ButtonPillProps['loading'];
-		maxFontSizeMultiplier?: unknown;
+		maxFontSizeMultiplier?: number | string;
 		onLayout?: (...args: any[]) => unknown;
 		onPressIn?: (...args: any[]) => unknown;
 		onPressOut?: (...args: any[]) => unknown;
 		pillStyle?: ButtonPillProps['style'];
-		pointerEvents?: unknown;
+		pointerEvents?: 'none' | (string & {});
 		ref?: ButtonBaseButtonProps['ref'];
 		/** @default false */
 		shiny?: boolean;
 		/** @default false */
 		shrink?: boolean;
-		size?: unknown;
+		size?: 'lg' | 'md' | 'sm' | (string & {});
 		style?: ButtonBaseButtonProps['style'];
 		text?: React.ComponentProps<typeof RN.Text>['children'];
 		textElement?: unknown;
-		textVariant?: unknown;
-		variant?: unknown;
+		textVariant?: 'heading-md/bold' | 'text-md/semibold' | (string & {});
+		variant?: 'active' | 'critical-primary' | 'critical-secondary' | 'destructive' | 'experimental_premium-basic' | 'experimental_premium-primary' | 'experimental_premium-secondary' | 'expressive' | 'primary' | 'primary-overlay' | 'secondary' | 'secondary-overlay' | 'tertiary' | 'toggle-on' | (string & {});
 	};
 export type BaseTextButtonStatics = {
 		Icon: TextButtonIconComponent;
@@ -335,7 +335,7 @@ export type ButtonEllipsisComponent = React.ComponentType<ButtonEllipsisProps>;
  * @see design/components/Button/native/ButtonEllipsis.native.tsx
  */
 export type EllipsisCircleProps = {
-		offset?: unknown;
+		offset?: number;
 		size?: unknown;
 		variant?: unknown;
 	};
@@ -387,9 +387,9 @@ export type PillWrapperComponent = React.ComponentType<PillWrapperProps>;
  * @see design/components/Button/native/FloatingActionButton.native.tsx
  */
 export type FloatingActionButtonProps = Omit<BaseIconButtonProps, 'accessibilityLabel' | 'icon' | 'positionBottom' | 'positionRight'> & {
-		accessibilityLabel?: unknown;
+		accessibilityLabel?: string;
 		icon?: unknown;
-		positionBottom?: unknown;
+		positionBottom?: number | string;
 		positionRight?: unknown;
 	};
 export type FloatingActionButtonComponent = React.ComponentType<FloatingActionButtonProps & Record<string, unknown>>;
@@ -399,10 +399,10 @@ export type FloatingActionButtonComponent = React.ComponentType<FloatingActionBu
  */
 export type ButtonIconButtonProps = Omit<BaseIconButtonProps, 'accessibilityHint' | 'accessibilityLabel' | 'grow' | 'label' | 'maxFontSizeMultiplier' | 'ref'> & {
 		accessibilityHint?: unknown;
-		accessibilityLabel?: unknown;
-		grow?: unknown;
+		accessibilityLabel?: string;
+		grow?: boolean;
 		label?: DesignTextProps['children'];
-		maxFontSizeMultiplier?: unknown;
+		maxFontSizeMultiplier?: number | string;
 		ref?: BaseIconButtonProps['ref'];
 	};
 export type ButtonIconButtonComponent = React.ComponentType<ButtonIconButtonProps & Record<string, unknown>>;
@@ -412,15 +412,15 @@ export type ButtonIconButtonComponent = React.ComponentType<ButtonIconButtonProp
  */
 export type ImageButtonProps = Omit<BaseIconButtonProps, 'accessibilityLabel' | 'grow' | 'image' | 'label' | 'maxFontSizeMultiplier' | 'onPressIn' | 'onPressOut' | 'ref' | 'size'> & {
 		accessibilityLabel?: unknown;
-		grow?: unknown;
+		grow?: boolean;
 		image?: React.ComponentProps<typeof RN.Image>['source'];
 		label?: DesignTextProps['children'];
-		maxFontSizeMultiplier?: unknown;
+		maxFontSizeMultiplier?: number | string;
 		onPressIn?: (...args: any[]) => unknown;
 		onPressOut?: (...args: any[]) => unknown;
 		ref?: BaseIconButtonProps['ref'];
 		/** @default 'lg' */
-		size?: 'lg' | (string & {});
+		size?: BaseIconButtonProps['size'];
 	};
 export type ImageButtonComponent = React.ComponentType<ImageButtonProps & Record<string, unknown>>;
 /**
@@ -444,7 +444,7 @@ export type ToggleIconButtonComponent = React.ComponentType<ToggleIconButtonProp
 export type ButtonGroupProps = Omit<StackProps, 'children' | 'size' | 'style'> & {
 		children?: StackProps['children'];
 		/** @default 'md' */
-		size?: 'md' | 'sm' | (string & {});
+		size?: 'lg' | 'md' | 'sm' | (string & {});
 		style?: StackProps['style'];
 	};
 export type ButtonGroupComponent = React.ComponentType<ButtonGroupProps & Record<string, unknown>>;
@@ -453,20 +453,20 @@ export type ButtonGroupComponent = React.ComponentType<ButtonGroupProps & Record
  * @see design/components/Card/native/Card.native.tsx
  */
 export type DesignCardProps = Omit<React.ComponentProps<typeof RN.View>, 'accessibilityRole' | 'border' | 'end' | 'onPress' | 'radius' | 'shadow' | 'start' | 'style' | 'variant'> & {
-		accessibilityRole?: unknown;
+		accessibilityRole?: 'button' | 'togglebutton' | (string & {});
 		/** @default 'faint' */
-		border?: 'faint' | (string & {});
+		border?: 'control-secondary' | 'faint' | 'none' | 'strong' | 'subtle' | (string & {});
 		/** @default true */
 		end?: boolean;
 		onPress?: (...args: any[]) => unknown;
-		radius?: unknown;
+		radius?: number;
 		/** @default 'none' */
-		shadow?: 'none' | (string & {});
+		shadow?: 'high' | 'low' | 'none' | (string & {});
 		/** @default true */
 		start?: boolean;
 		style?: React.ComponentProps<typeof RN.View>['style'];
 		/** @default 'primary' */
-		variant?: 'primary' | (string & {});
+		variant?: 'control-secondary' | 'muted' | 'primary' | 'secondary' | 'surface-high' | 'transparent' | (string & {});
 	};
 export type DesignCardComponent = React.ComponentType<DesignCardProps & Record<string, unknown>>;
 /**
@@ -523,11 +523,11 @@ export type ContextMenuProps = {
 		/** @default false */
 		ignoreKeyboardHide?: boolean;
 		items: { flat?: unknown; forEach?: unknown };
-		keyboardShouldPersistTaps?: unknown;
+		keyboardShouldPersistTaps?: 'handled' | (string & {});
 		onClose?: (...args: any[]) => unknown;
 		onOpen?: (...args: any[]) => unknown;
 		returnRef?: unknown;
-		title?: unknown;
+		title?: string;
 		/** @default false */
 		triggerOnLongPress?: boolean;
 		/** @default false */
@@ -596,7 +596,7 @@ export type FormsFormRadioComponent = React.ComponentType<FormsFormRadioProps>;
 export type FormsFormSwitchProps = {
 		accessibilityHint?: unknown;
 		accessibilityLabel?: unknown;
-		'aria-hidden'?: unknown;
+		'aria-hidden'?: boolean;
 		disabled?: boolean;
 		onValueChange?: (...args: any[]) => unknown;
 		value?: unknown;
@@ -631,7 +631,7 @@ export type InputFieldContainerProps = {
 		leadingIcon?: unknown;
 		/** @default false */
 		round?: boolean;
-		size?: unknown;
+		size?: 'sm' | (string & {});
 		/** @default 'default' */
 		status?: 'default' | (string & {});
 	};
@@ -642,7 +642,7 @@ export type InputFieldContainerComponent = React.ComponentType<InputFieldContain
  */
 export type InputTextInputProps = Omit<React.ComponentProps<typeof RN.TextInput>, 'keyboardAppearance' | 'multiline' | 'ref'> & {
 		keyboardAppearance?: unknown;
-		multiline?: unknown;
+		multiline?: boolean;
 		ref?: React.Ref<any>;
 	};
 export type InputTextInputComponent = React.ComponentType<InputTextInputProps & Record<string, unknown>>;
@@ -652,7 +652,7 @@ export type InputTextInputComponent = React.ComponentType<InputTextInputProps & 
  */
 export type LayerScopeProps = {
 		children?: React.ReactNode;
-		zIndex?: unknown;
+		zIndex?: number;
 	};
 export type LayerScopeComponent = React.ComponentType<LayerScopeProps>;
 /**
@@ -660,7 +660,7 @@ export type LayerScopeComponent = React.ComponentType<LayerScopeProps>;
  * @see design/components/LottieIcon/native/LottieIcon.tsx
  */
 export type LottieIconProps = {
-		animation?: unknown;
+		animation?: 'all' | (string & {});
 		autoPlay?: unknown;
 		color?: unknown;
 		dotLottie?: unknown;
@@ -875,7 +875,7 @@ export type DesignModalComponent = React.ComponentType<DesignModalProps & Record
  * @see design/components/Modal/native/ModalActionButton.native.tsx
  */
 export type ModalActionButtonProps = Omit<BaseTextButtonProps, 'variant'> & {
-		variant?: 'secondary' | (string & {});
+		variant?: BaseTextButtonProps['variant'];
 	};
 export type ModalActionButtonComponent = React.ComponentType<ModalActionButtonProps & Record<string, unknown>>;
 /**
@@ -923,7 +923,7 @@ export type ModalFooterComponent = React.ComponentType<ModalFooterProps>;
  * @see design/components/Modal/native/ModalScreen.native.tsx
  */
 export type ModalScreenProps = {
-		backgroundColor?: unknown;
+		backgroundColor?: string;
 		children?: React.ComponentProps<typeof RN.View>['children'];
 	};
 export type ModalScreenComponent = React.ComponentType<ModalScreenProps>;
@@ -936,7 +936,7 @@ export type ModalStepIndicatorProps = {
 		currentStep?: number;
 		inactiveColor?: unknown;
 		inactiveOpacity?: StepPillProps['inactiveOpacity'];
-		totalSteps?: unknown;
+		totalSteps?: number;
 	};
 export type ModalStepIndicatorComponent = React.ComponentType<ModalStepIndicatorProps>;
 /**
@@ -971,7 +971,7 @@ export type HeaderActionButtonProps = {
 		accessibilityHint?: PressableOpacityProps['accessibilityHint'];
 		accessibilityLabel?: unknown;
 		disabled?: PressableOpacityProps['disabled'];
-		foregroundRipple?: unknown;
+		foregroundRipple?: boolean;
 		hitSlop?: PressableOpacityProps['hitSlop'];
 		icon?: PressableOpacityProps['children'];
 		iconSize?: unknown;
@@ -1118,7 +1118,7 @@ export type AvatarPileProps = {
 		children?: PileProps['children'];
 		names?: unknown;
 		size?: unknown;
-		totalCount?: unknown;
+		totalCount?: number;
 	};
 export type AvatarPileComponent = React.ComponentType<AvatarPileProps>;
 /**
@@ -1129,7 +1129,7 @@ export type GuildIconPileProps = {
 		children?: PileProps['children'];
 		names?: unknown;
 		size?: unknown;
-		totalCount?: unknown;
+		totalCount?: number;
 	};
 export type GuildIconPileComponent = React.ComponentType<GuildIconPileProps>;
 /**
@@ -1139,11 +1139,11 @@ export type GuildIconPileComponent = React.ComponentType<GuildIconPileProps>;
 export type PileProps = {
 		'aria-label'?: React.ComponentProps<typeof RN.View>['aria-label'];
 		children?: React.ReactNode;
-		depthX?: unknown;
-		depthY?: unknown;
-		gap?: unknown;
+		depthX?: number;
+		depthY?: number;
+		gap?: number;
 		shape?: unknown;
-		size: { length?: unknown };
+		size: number;
 	};
 export type PileComponent = React.ComponentType<PileProps>;
 /**
@@ -1245,7 +1245,7 @@ export type ActionSheetHeaderBarProps = {
 		style?: React.ComponentProps<typeof RN.View>['style'];
 		tabStyle?: React.ComponentProps<typeof RN.View>['style'];
 		/** @default 'default' */
-		variant?: 'default' | (string & {});
+		variant?: 'default' | 'floating' | 'overlay' | (string & {});
 	};
 export type ActionSheetHeaderBarComponent = React.ComponentType<ActionSheetHeaderBarProps>;
 /**
@@ -1281,7 +1281,7 @@ export type ActionSheetPresenterComponent = React.ComponentType<ActionSheetPrese
  * @see design/components/Sheet/native/ActionSheetRow.native.tsx
  */
 export type ActionSheetRowProps = Omit<TableRowProps, 'arrow' | 'icon' | 'label' | 'variant'> & {
-		arrow?: unknown;
+		arrow?: TableRowProps['arrow'];
 		icon?: TableRowProps['icon'];
 		label?: TableRowProps['label'];
 		/** @default 'default' */
@@ -1340,7 +1340,7 @@ export type SheetBottomSheetProps = {
 		/** @default false */
 		handleDisabled?: boolean;
 		header?: React.ComponentProps<typeof RN.View>['children'];
-		keyboardShouldPersistTaps?: unknown;
+		keyboardShouldPersistTaps?: 'always' | 'handled' | (string & {});
 		maxHeight?: unknown;
 		onDismiss?: (...args: any[]) => unknown;
 		onExpand?: (...args: any[]) => unknown;
@@ -1350,7 +1350,7 @@ export type SheetBottomSheetProps = {
 		showGradient?: boolean;
 		/** @default false */
 		startExpanded?: boolean;
-		startHeight?: unknown;
+		startHeight?: number | string;
 	};
 export type SheetBottomSheetComponent = React.ComponentType<SheetBottomSheetProps & Record<string, unknown>>;
 /**
@@ -1485,12 +1485,12 @@ export type SplitTextInputComponent = React.ComponentType<SplitTextInputProps & 
  */
 export type StackProps = {
 		/** @default 'stretch' */
-		align?: 'stretch' | (string & {});
+		align?: 'center' | 'flex-end' | 'flex-start' | 'stretch' | (string & {});
 		children?: React.ComponentProps<typeof RN.View>['children'];
 		/** @default 'vertical' */
-		direction?: 'vertical' | (string & {});
+		direction?: 'horizontal' | 'vertical' | (string & {});
 		/** @default 'flex-start' */
-		justify?: 'flex-start' | (string & {});
+		justify?: 'center' | 'flex-end' | 'flex-start' | 'space-between' | (string & {});
 		onLayout?: React.ComponentProps<typeof RN.View>['onLayout'];
 		/** @default 8 */
 		spacing?: number;
@@ -1517,7 +1517,7 @@ export type RowButtonProps = Omit<TableRowInnerProps, 'arrow' | 'disabled' | 'ex
 		arrow?: boolean;
 		/** @default false */
 		disabled?: TableRowInnerProps['disabled'];
-		experimental_withBlurBackground?: unknown;
+		experimental_withBlurBackground?: boolean;
 		icon?: TableRowIconProps['source'];
 		onPress?: RowButtonWrapperProps['onPress'];
 		/** @default 'secondary' */
@@ -1568,7 +1568,7 @@ export type TableRadioGroupProps = {
 		helperText?: TableRowGroupProps['helperText'];
 		onChange?: (...args: any[]) => unknown;
 		title?: TableRowGroupProps['title'];
-		value?: unknown;
+		value?: string;
 	};
 export type TableRadioGroupComponent = React.ComponentType<TableRadioGroupProps>;
 /**
@@ -1591,20 +1591,20 @@ export type TableRadioRowComponent = React.ComponentType<TableRadioRowProps & Re
  * @see design/components/TableRow/native/TableRow.native.tsx
  */
 export type TableRowProps = Omit<DesignCardProps, 'arrow' | 'disabled' | 'dragHandlePressableProps' | 'draggable' | 'end' | 'height' | 'icon' | 'label' | 'labelLineClamp' | 'onPress' | 'start' | 'subLabel' | 'subLabelLineClamp' | 'trailing' | 'variant'> & {
-		arrow?: unknown;
+		arrow?: boolean;
 		/** @default false */
 		disabled?: TableRowInnerProps['disabled'];
 		dragHandlePressableProps?: unknown;
 		draggable?: TableRowInnerProps['draggable'];
 		end?: boolean;
-		height?: unknown;
+		height?: number | string;
 		icon?: TableRowInnerProps['icon'];
 		label?: TableRowInnerProps['label'];
-		labelLineClamp?: unknown;
+		labelLineClamp?: TableRowInnerProps['labelLineClamp'];
 		onPress?: DesignCardProps['onPress'];
 		start?: boolean;
 		subLabel?: TableRowInnerProps['subLabel'];
-		subLabelLineClamp?: unknown;
+		subLabelLineClamp?: TableRowInnerProps['subLabelLineClamp'];
 		trailing?: TableRowInnerProps['trailing'];
 		/** @default 'default' */
 		variant?: TableRowInnerProps['variant'];
@@ -1629,9 +1629,9 @@ export type TableRowInnerProps = {
 		height?: unknown;
 		icon?: React.ComponentProps<typeof RN.View>['children'];
 		label?: DesignTextProps['children'];
-		labelLineClamp?: unknown;
+		labelLineClamp?: DesignTextProps['lineClamp'];
 		subLabel?: DesignTextProps['children'];
-		subLabelLineClamp?: unknown;
+		subLabelLineClamp?: DesignTextProps['lineClamp'];
 		trailing?: React.ComponentProps<typeof RN.View>['children'];
 		/** @default 'default' */
 		variant?: 'danger' | 'default' | (string & {});
@@ -1674,7 +1674,7 @@ export type TableRowGroupComponent = React.ComponentType<TableRowGroupProps>;
  * @see design/components/TableRow/native/TableRowGroup.native.tsx
  */
 export type TableRowGroupTitleProps = {
-		lineClamp?: unknown;
+		lineClamp?: DesignTextProps['lineClamp'];
 		style?: DesignTextProps['style'];
 		title?: DesignTextProps['children'];
 	};
@@ -1687,7 +1687,7 @@ export type TableRowIconProps = {
 		IconComponent?: unknown;
 		source?: VoidIconProps['source'];
 		/** @default 'default' */
-		variant?: 'danger' | 'default' | 'secondary' | 'translucent' | (string & {});
+		variant?: 'danger' | 'default' | 'secondary' | 'text-status-dnd' | 'text-status-idle' | 'text-status-offline' | 'text-status-online' | 'translucent' | 'xbox' | (string & {});
 	};
 export type TableRowIconComponent = React.ComponentType<TableRowIconProps>;
 /**
@@ -1710,7 +1710,7 @@ export type TableSwitchRowProps = Omit<TableRowProps, 'accessibilityHint' | 'dis
 		onValueChange?: (...args: any[]) => unknown;
 		subLabel?: TableRowProps['subLabel'];
 		trailing?: React.ComponentProps<typeof RN.View>['children'];
-		value?: unknown;
+		value?: boolean;
 		variant?: TableRowProps['variant'];
 	};
 export type TableSwitchRowComponent = React.ComponentType<TableSwitchRowProps & Record<string, unknown>>;
@@ -1753,7 +1753,7 @@ export type TabsProps = {
 		onScrollWorklet?: (...args: any[]) => unknown;
 		simultaneousHandlers?: unknown;
 		state: TabItemProps['state'];
-		variant?: unknown;
+		variant?: 'overlay' | (string & {});
 	};
 export type TabsComponent = React.ComponentType<TabsProps>;
 /**
@@ -1765,9 +1765,9 @@ export type TagGroupProps = {
 		label?: React.ComponentProps<typeof RN.View>['accessibilityLabel'];
 		/** @default 'default' */
 		layout?: 'default' | 'inline' | (string & {});
-		size?: unknown;
+		size?: 'md' | 'sm' | 'xs' | (string & {});
 		/** @default 'default' */
-		variant?: 'default' | (string & {});
+		variant?: 'default' | 'filter' | (string & {});
 	};
 export type TagGroupComponent = React.ComponentType<TagGroupProps>;
 /**
@@ -1785,7 +1785,7 @@ export type PlainTextExperimentProviderComponent = React.ComponentType<PlainText
  */
 export type TextHeadingProps = Omit<DesignTextProps, 'ref' | 'variant'> & {
 		ref?: DesignTextProps['ref'];
-		variant?: unknown;
+		variant?: 'display-md' | 'display-sm' | 'eyebrow' | 'heading-lg/bold' | 'heading-lg/extrabold' | 'heading-lg/medium' | 'heading-lg/semibold' | 'heading-md/bold' | 'heading-md/extrabold' | 'heading-md/semibold' | 'heading-sm/medium' | 'heading-sm/semibold' | 'heading-xl/bold' | 'heading-xl/extrabold' | 'heading-xxl/bold' | 'nitro-sm' | 'redesign/heading-18/bold' | 'text-lg/bold' | 'text-md/medium' | 'text-md/semibold' | 'text-sm/semibold' | 'text-xs/semibold' | (string & {});
 	};
 export type TextHeadingComponent = React.ComponentType<TextHeadingProps & Record<string, unknown>>;
 /**
@@ -1796,18 +1796,18 @@ export type DesignTextProps = {
 		/** @default false */
 		animated?: boolean;
 		children?: React.ReactNode;
-		color?: unknown;
-		ellipsizeMode?: unknown;
+		color?: 'button-outline-primary-text' | 'channels-default' | 'control-brand-foreground' | 'control-critical-primary-text-default' | 'control-secondary-text-default' | 'input-placeholder-text-default' | 'input-text-error-default' | 'interactive-text-active' | 'interactive-text-default' | 'interactive-text-hover' | 'mobile-text-heading-primary' | 'none' | 'premium-nitro-pink-text' | 'redesign-button-tertiary-text' | 'redesign-channel-name-muted-text' | 'redesign-channel-name-text' | 'status-positive' | 'text-brand' | 'text-default' | 'text-feedback-critical' | 'text-feedback-info' | 'text-feedback-positive' | 'text-feedback-warning' | 'text-link' | 'text-muted' | 'text-overlay-dark' | 'text-overlay-light' | 'text-strong' | 'text-subtle' | 'text-voice-connected' | 'user-profile-about-me-heading-text' | 'voice-channel-user-limit-text' | (string & {});
+		ellipsizeMode?: 'clip' | 'middle' | 'tail' | (string & {});
 		/** @default false */
 		experimental_useNativeText?: boolean;
 		/** @default false */
 		includeFontPadding?: boolean;
-		lineClamp?: unknown;
+		lineClamp?: number;
 		ref?: React.Ref<any>;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		/** @default false */
 		tabularNumbers?: boolean;
-		variant?: unknown;
+		variant?: 'display-lg' | 'display-md' | 'display-sm' | 'experimental/body-lg/semibold' | 'experimental/body-md/medium' | 'experimental/body-md/normal' | 'experimental/body-md/semibold' | 'experimental/body-sm/medium' | 'experimental/body-sm/normal' | 'experimental/body-sm/semibold' | 'experimental/body-xs/normal' | 'experimental/body-xs/semibold' | 'experimental/heading-lg/semibold' | 'experimental/heading-md/semibold' | 'experimental/mono-md/bold' | 'eyebrow' | 'heading-deprecated-12/extrabold' | 'heading-deprecated-12/medium' | 'heading-deprecated-12/semibold' | 'heading-lg/bold' | 'heading-lg/extrabold' | 'heading-lg/medium' | 'heading-lg/normal' | 'heading-lg/semibold' | 'heading-md/bold' | 'heading-md/extrabold' | 'heading-md/medium' | 'heading-md/normal' | 'heading-md/semibold' | 'heading-sm/bold' | 'heading-sm/extrabold' | 'heading-sm/medium' | 'heading-sm/normal' | 'heading-sm/semibold' | 'heading-xl/bold' | 'heading-xl/extrabold' | 'heading-xl/medium' | 'heading-xl/semibold' | 'heading-xxl/bold' | 'heading-xxl/extrabold' | 'heading-xxl/medium' | 'heading-xxl/normal' | 'heading-xxl/semibold' | 'redesign/channel-title/semibold' | 'redesign/heading-18/bold' | 'redesign/heading-18/medium' | 'redesign/heading-18/semibold' | 'redesign/message-preview/medium' | 'redesign/message-preview/normal' | 'text-lg/bold' | 'text-lg/medium' | 'text-lg/normal' | 'text-lg/semibold' | 'text-md/bold' | 'text-md/medium' | 'text-md/normal' | 'text-md/semibold' | 'text-sm/bold' | 'text-sm/medium' | 'text-sm/normal' | 'text-sm/semibold' | 'text-xs/bold' | 'text-xs/medium' | 'text-xs/normal' | 'text-xs/semibold' | 'text-xxs/bold' | 'text-xxs/medium' | 'text-xxs/normal' | 'text-xxs/semibold' | (string & {});
 	};
 export type DesignTextComponent = React.ComponentType<DesignTextProps & Record<string, unknown>>;
 /**
@@ -1903,11 +1903,11 @@ export type TextAreaComponent = React.ComponentType<TextAreaProps & Record<strin
  * @see design/components/TextInput/native/TextInput.native.tsx
  */
 export type DesignTextInputProps = Omit<TextFieldProps, 'errorMessage' | 'label' | 'ref' | 'required' | 'status'> & {
-		errorMessage?: unknown;
+		errorMessage?: string;
 		label?: unknown;
 		ref?: TextFieldProps['ref'];
-		required?: unknown;
-		status?: unknown;
+		required?: boolean;
+		status?: 'error' | (string & {});
 	};
 export type DesignTextInputComponent = React.ComponentType<DesignTextInputProps & Record<string, unknown>>;
 /**
@@ -1976,7 +1976,7 @@ export type BackgroundBlurFillWithPressComponent = React.ComponentType<Backgroun
  */
 export type BackgroundBlurViewComponentProps = Omit<React.ComponentProps<typeof RN.View>, 'android_blurTargetViewNativeId' | 'blurTheme' | 'children' | 'pressed' | 'ref' | 'style'> & {
 		android_blurTargetViewNativeId?: BackgroundBlurFillProps['android_blurTargetViewNativeId'];
-		blurTheme?: unknown;
+		blurTheme?: 'dark' | (string & {});
 		children?: React.ComponentProps<typeof RN.View>['children'];
 		pressed?: BackgroundBlurFillWithPressProps['pressed'];
 		ref?: React.Ref<any>;
@@ -1992,7 +1992,7 @@ export type InlineNoticeProps = Omit<NewInlineNoticeProps, 'action' | 'hidden' |
 		hidden?: boolean;
 		message?: unknown;
 		title?: DesignTextProps['children'];
-		type?: unknown;
+		type?: 'critical' | 'info' | 'positive' | 'warning' | (string & {});
 	};
 export type InlineNoticeComponent = React.ComponentType<InlineNoticeProps>;
 /**
@@ -2006,7 +2006,7 @@ export type NewInlineNoticeProps = {
 		onDismiss?: ButtonIconButtonProps['onPress'];
 		role?: 'alert' | 'static' | 'status' | (string & {});
 		title?: DesignTextProps['children'];
-		type?: unknown;
+		type?: 'info' | 'warning' | (string & {});
 	};
 export type NewInlineNoticeComponent = React.ComponentType<NewInlineNoticeProps>;
 /**
@@ -2019,7 +2019,7 @@ export type ToastProps = {
 		secondaryIconColor?: unknown;
 		text?: DesignTextProps['children'];
 		/** @default 'default' */
-		variant?: 'default' | (string & {});
+		variant?: 'critical' | 'default' | 'success' | (string & {});
 	};
 export type ToastComponent = React.ComponentType<ToastProps>;
 /**
@@ -2063,8 +2063,8 @@ export type AIGlyphTextProps = {
 		children?: React.ReactNode;
 		/** @default 'text-default' */
 		color?: 'none' | 'text-default' | (string & {});
-		ellipsizeMode?: unknown;
-		numberOfLines?: unknown;
+		ellipsizeMode?: 'clip' | (string & {});
+		numberOfLines?: number;
 		size?: unknown;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
@@ -2100,11 +2100,11 @@ export type SlotComponent = React.ComponentType<SlotProps>;
  */
 export type AIShimmerProps = Omit<AIShimmerInnerProps, 'delay' | 'duration' | 'initialDelay' | 'variant'> & {
 		delay?: unknown;
-		duration?: unknown;
+		duration?: number;
 		/** @default 0 */
 		initialDelay?: number;
 		/** @default 'text-md/normal' */
-		variant?: 'text-md/normal' | (string & {});
+		variant?: AIShimmerInnerProps['variant'];
 	};
 export type AIShimmerComponent = React.ComponentType<AIShimmerProps & Record<string, unknown>>;
 /**
@@ -2112,7 +2112,7 @@ export type AIShimmerComponent = React.ComponentType<AIShimmerProps & Record<str
  * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
  */
 export type AIShimmerInnerProps = {
-		color?: ShimmerLayersProps['glyphColor'];
+		color?: DesignTextProps['color'];
 		delay?: unknown;
 		duration?: unknown;
 		glyphColor?: unknown;
@@ -2123,57 +2123,9 @@ export type AIShimmerInnerProps = {
 		style?: React.ComponentProps<typeof RN.View>['style'];
 		text?: unknown;
 		trailingWidth?: unknown;
-		variant?: unknown;
+		variant?: DesignTextProps['variant'];
 	};
 export type AIShimmerInnerComponent = React.ComponentType<AIShimmerInnerProps>;
-/**
- * Props of `GlyphBand` (memo). Exports: none.
- * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
- */
-export type GlyphBandProps = {
-		animationProgress: { get?: unknown };
-		color?: AIGlyphTextProps['color'];
-		fontSize?: unknown;
-		glyphChoices?: unknown;
-		overshootInSlots?: unknown;
-		slotCount?: unknown;
-		style?: AIGlyphTextProps['style'];
-	};
-export type GlyphBandComponent = React.ComponentType<GlyphBandProps>;
-/**
- * Props of `ShimmerLayers` (function). Exports: none.
- * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
- */
-export type ShimmerLayersProps = {
-		animationProgress?: GlyphBandProps['animationProgress'];
-		animationWidth?: unknown;
-		clippingWindowWidth?: unknown;
-		color?: unknown;
-		crossFadeOpacity?: unknown;
-		glyphColor?: GlyphBandProps['color'];
-		glyphCount?: unknown;
-		glyphFontSize?: unknown;
-		overshoot?: unknown;
-		pass: { band?: unknown; slotA?: unknown; slotB?: unknown };
-		styles: ShimmerTextSlotProps['styles'];
-		variant?: unknown;
-	};
-export type ShimmerLayersComponent = React.ComponentType<ShimmerLayersProps>;
-/**
- * Props of `ShimmerTextSlot` (function). Exports: none.
- * @see design/visual-identities/ai/AIShimmer/AIShimmer.native.tsx
- */
-export type ShimmerTextSlotProps = {
-		animatedStyles: { plainText?: unknown; plainWindow?: unknown; shiftedInnerWindow?: unknown; shiftedOuterWindow?: unknown; shiftedText?: unknown };
-		animationWidth?: unknown;
-		clippingWindowWidth?: unknown;
-		color?: unknown;
-		shiftedText?: DesignTextProps['children'];
-		styles: { layer?: unknown; window?: unknown };
-		text?: DesignTextProps['children'];
-		variant?: unknown;
-	};
-export type ShimmerTextSlotComponent = React.ComponentType<ShimmerTextSlotProps>;
 /**
  * Props of `FormArrow` (function). Exports: default.
  * @see design/void/Form/native/FormArrow.tsx
@@ -2216,9 +2168,9 @@ export type FormIconComponent = React.ComponentType<FormIconProps & Record<strin
 export type FormLabelProps = {
 		accessible?: unknown;
 		/** @default 'mobile-text-heading-primary' */
-		color?: 'mobile-text-heading-primary' | (string & {});
+		color?: DesignTextProps['color'];
 		/** @default 0 */
-		numberOfLines?: number;
+		numberOfLines?: DesignTextProps['lineClamp'];
 		style?: DesignTextProps['style'];
 		text?: DesignTextProps['children'];
 	};
@@ -2240,7 +2192,7 @@ export type FormRowProps = {
 		accessibilityActions?: PressableHighlightProps['accessibilityActions'];
 		accessibilityHint?: PressableHighlightProps['accessibilityHint'];
 		accessibilityLabel?: PressableHighlightProps['accessibilityLabel'];
-		accessibilityRole?: React.ComponentProps<typeof RN.View>['accessibilityRole'];
+		accessibilityRole?: TableRowProps['accessibilityRole'];
 		accessibilityState?: TableRowProps['accessibilityState'];
 		/** @default true */
 		accessible?: TableRowProps['accessible'];
@@ -2255,7 +2207,7 @@ export type FormRowProps = {
 		labelStyle?: FormLabelProps['style'];
 		leading?: unknown;
 		leadingStyle?: React.ComponentProps<typeof RN.View>['style'];
-		numberOfLines?: FormLabelProps['numberOfLines'];
+		numberOfLines?: TableRowProps['labelLineClamp'];
 		onAccessibilityAction?: PressableHighlightProps['onAccessibilityAction'];
 		onAccessibilityTap?: PressableHighlightProps['onAccessibilityTap'];
 		onLongPress?: PressableHighlightProps['onLongPress'];
@@ -2287,8 +2239,8 @@ export type FormRowComponent = React.ComponentType<FormRowProps> & FormRowStatic
 export type FormSubLabelProps = {
 		accessible?: unknown;
 		/** @default 'text-subtle' */
-		color?: 'text-subtle' | (string & {});
-		numberOfLines?: unknown;
+		color?: DesignTextProps['color'];
+		numberOfLines?: DesignTextProps['lineClamp'];
 		style?: DesignTextProps['style'];
 		text?: DesignTextProps['children'];
 	};
@@ -2324,7 +2276,7 @@ export type PressableBaseProps = Omit<React.ComponentProps<typeof RN.Pressable>,
 		children?: React.ComponentProps<typeof RN.Pressable>['children'];
 		innerRef?: React.ComponentProps<typeof RN.Pressable>['ref'];
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
-		type?: 'highlight' | (string & {});
+		type?: 'highlight' | 'opacity' | (string & {});
 		underlayColor?: unknown;
 	};
 export type PressableBaseComponent = React.ComponentType<PressableBaseProps & Record<string, unknown>>;

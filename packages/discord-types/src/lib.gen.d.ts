@@ -7,9 +7,9 @@ import type * as RN from 'react-native';
  */
 export type FastListStickySectionRendererComponentProps = {
 		children?: React.ReactNode;
-		debug?: unknown;
+		debug?: boolean;
 		fastListInstance?: unknown;
-		horizontal?: unknown;
+		horizontal?: boolean;
 		layoutSize?: unknown;
 		layoutStart?: unknown;
 		nextSectionLayoutPosition?: unknown;

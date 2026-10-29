@@ -4,14 +4,15 @@ import { join } from 'node:path';
 
 import type { ModuleRecord } from '../src/types';
 
+import { isEnumLike, passedType } from '../src/rules';
 import { runPipeline } from '../src/pipeline';
 import { loadHostProps } from '../src/hosts';
 import { splitModules } from '../src/split';
 import { TYPES_DIR } from '../src/paths';
 
 // Verbatim slices of discord-350's main.js: react-native's entry, Stack, TableRow, NavigatorScreen, TableSwitchRow,
-// TextField, useTextField, BaseTextField.
-const FIXTURE_IDS = [17, 5378, 6181, 6722, 6882, 6294, 6295, 6304];
+// TextField, useTextField, BaseTextField, ErrorText.
+const FIXTURE_IDS = [17, 5378, 6181, 6722, 6882, 6294, 6295, 6304, 6290];
 const lines = FIXTURE_IDS.flatMap((id) =>
 	readFileSync(join(import.meta.dir, 'fixtures', `module-${id}.txt`), 'utf8').split('\n'),
 );
@@ -106,9 +107,41 @@ describe('Stack', () => {
 		const props = alias('design.gen.d.ts', 'StackProps');
 
 		expect(props).toContain('/** @default 8 */ spacing?: number;');
+	});
+
+	test('string literals a call site passes join the default in the open literal union', () => {
+		const props = alias('design.gen.d.ts', 'StackProps');
+
 		expect(props).toContain(
-			"/** @default 'vertical' */ direction?: 'vertical' | (string & {});",
+			"/** @default 'vertical' */ direction?: 'horizontal' | 'vertical' | (string & {});",
 		);
+		expect(props).toContain(
+			"/** @default 'stretch' */ align?: 'flex-start' | 'stretch' | (string & {});",
+		);
+	});
+});
+
+describe('call-site literals', () => {
+	test('a literal passed for an otherwise untyped prop types it by its typeof', () => {
+		expect(alias('design.gen.d.ts', 'TableRowProps')).toContain('arrow?: boolean;');
+	});
+
+	test('enum tokens form a union; free text and data props do not', () => {
+		expect(isEnumLike('variant', ['heading-sm/bold', 'flex-start', 'secondary'])).toBe(true);
+		expect(isEnumLike('label', ['secondary'])).toBe(false);
+		expect(isEnumLike('screenKey', ['debugLogs'])).toBe(false);
+		expect(isEnumLike('variant', ['Send Gift'])).toBe(false);
+		expect(isEnumLike('href', ['https://discord.com'])).toBe(false);
+		expect(isEnumLike('size', ['sm', 16])).toBe(false);
+	});
+
+	test('one caller passing a string or a number to a layout dimension does not close off the other', () => {
+		expect(passedType('height', ['100%'])).toBe('number | string');
+		expect(passedType('maxWidth', [240])).toBe('number | string');
+		expect(passedType('borderRadius', [8])).toBe('number | string');
+		expect(passedType('columns', [2])).toBe('number');
+		expect(passedType('hidden', [true])).toBe('boolean');
+		expect(passedType('size', ['sm', 16])).toBeUndefined();
 	});
 });
 
