@@ -1,8 +1,17 @@
 import type { CommandRunner, DropTarget } from './device-drops';
 
-export type MemoryReport = { beforeMB?: number; afterMB?: number; relaunched: boolean };
+export type MemoryReport = {
+	beforeMB?: number;
+	afterMB?: number;
+	relaunched: boolean;
+	springBoard?: ProcessMemory;
+};
 
-type ListedProcess = { name?: string; footprintMB?: number };
+export type ProcessMemory = { footprintMB: number; peakMB: number };
+
+type ListedProcess = { name?: string; footprintMB?: number; peakFootprintMB?: number };
+
+export const SPRINGBOARD_WARNING_MB = 300;
 
 const KILOBYTES_PER_MB = 1024;
 
@@ -12,13 +21,68 @@ const KILOBYTES_PER_MB = 1024;
  * @returns The footprint in megabytes, or `undefined` when Discord is not running.
  */
 export function parseIOSFootprint(output: string): number | undefined {
+	return parseProcessMemory(output, 'Discord')?.footprintMB;
+}
+
+/**
+ * @description Reads one process's footprint and peak from `jb-p1lot process_memory` output.
+ * @param output The command's JSON output.
+ * @param name The exact process name.
+ * @returns The footprint and peak in megabytes, or `undefined` when the process is not listed.
+ */
+export function parseProcessMemory(output: string, name: string): ProcessMemory | undefined {
 	try {
 		const { processes } = JSON.parse(output) as { processes?: ListedProcess[] };
+		const found = processes?.find((process) => process.name === name);
 
-		return processes?.find((process) => process.name === 'Discord')?.footprintMB;
+		return found?.footprintMB === undefined
+			? undefined
+			: {
+					footprintMB: found.footprintMB,
+					peakMB: found.peakFootprintMB ?? found.footprintMB,
+				};
 	} catch {
 		return undefined;
 	}
+}
+
+/**
+ * @description Measures SpringBoard on an iOS device, where a leak in the device agent would show.
+ * @param target The device.
+ * @param run Runs a host command.
+ * @returns SpringBoard's footprint and peak, or `undefined` off iOS or when it could not be read.
+ */
+export async function springBoardMemory(
+	target: DropTarget,
+	run: CommandRunner,
+): Promise<ProcessMemory | undefined> {
+	if (target.kind !== 'ios') return undefined;
+
+	const { stdout } = await run([
+		'jb-p1lot',
+		'process_memory',
+		'--device',
+		target.udid,
+		'--process',
+		'SpringBoard',
+		'--limit',
+		'5',
+	]);
+
+	return parseProcessMemory(stdout, 'SpringBoard');
+}
+
+/**
+ * @description Describes SpringBoard's memory at the end of a run, flagging it above the warning level.
+ * @param memory The reading.
+ * @returns A line such as `SpringBoard 76 MB (peak 95 MB)`.
+ */
+export function describeSpringBoard(memory: ProcessMemory): string {
+	const line = `SpringBoard ${Math.round(memory.footprintMB)} MB (peak ${Math.round(memory.peakMB)} MB)`;
+
+	return memory.footprintMB > SPRINGBOARD_WARNING_MB
+		? `${line}, **above ${SPRINGBOARD_WARNING_MB} MB: check the device agent for a leak**`
+		: line;
 }
 
 /**

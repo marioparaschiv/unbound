@@ -7,7 +7,7 @@ import { catalogPlugins, renderDeviceMatrix, type CatalogPlugin } from './device
 import { readMatrixConfig } from './matrix-config';
 import { PLUGINS_DIR, REPO_ROOT } from './paths';
 import { dropBaseline, dropReason, relaunchCommands } from './device-drops';
-import { discordMemory } from './device-memory';
+import { discordMemory, springBoardMemory } from './device-memory';
 import {
 	SELF_TEST_MARKER,
 	judgeSelfTest,

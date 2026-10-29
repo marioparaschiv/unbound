@@ -3,7 +3,12 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import type { MeasuredCheck } from './compare-device-matrix';
-import { describeMemory, largestGrowers, type MemoryReport } from './device-memory';
+import {
+	describeMemory,
+	describeSpringBoard,
+	largestGrowers,
+	type MemoryReport,
+} from './device-memory';
 import type { SelfTestResult } from './loader-self-test';
 import {
 	MATRIX_CONFIG_PATH,
@@ -111,7 +116,11 @@ export function renderSummary(runs: DeviceRun[]): string {
 		const growers = largestGrowers(run.checks);
 		const detail = growers.length ? `; largest plugin cycles: ${growers.join(', ')}` : '';
 
-		return line ? [`- ${run.device.name}: ${line}${detail}`] : [];
+		const springBoard = run.memory?.springBoard
+			? [`- ${run.device.name}: ${describeSpringBoard(run.memory.springBoard)}`]
+			: [];
+
+		return [...(line ? [`- ${run.device.name}: ${line}${detail}`] : []), ...springBoard];
 	});
 	const dropped = runs.flatMap((run) =>
 		(run.drops ?? []).map((drop) => `- ${run.device.name}, during ${drop}`),
