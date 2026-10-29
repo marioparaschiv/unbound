@@ -2,14 +2,18 @@
 export type DebugInfo = {
 	client: string;
 	loader: string;
+	loaderOrigin: string;
 	discord: string;
 	discordBuild: string;
+	appSource: string;
 	react: string;
 	reactNative: string;
 	hermes: string;
 	bytecode: string;
-	system: string;
+	platform: string;
+	os: string;
 	device: string;
+	flags: string[];
 };
 
 /**
@@ -18,14 +22,16 @@ export type DebugInfo = {
  * @returns The message text.
  */
 export function formatDebugInfo(info: DebugInfo): string {
+	const flags = info.flags.length ? ` (${info.flags.join(', ')})` : '';
+
 	return [
 		'**Unbound Debug Info**',
-		`> Unbound: ${info.client} (Loader ${info.loader})`,
-		`> Discord: ${info.discord} (${info.discordBuild})`,
+		`> Unbound: ${info.client} (Loader ${info.loader}, ${info.loaderOrigin})`,
+		`> Discord: ${info.discord} (${info.discordBuild}) via ${info.appSource}`,
+		`> Platform: ${info.platform} ${info.os}`,
+		`> Device: ${info.device}${flags}`,
 		`> React: ${info.react} (RN ${info.reactNative})`,
 		`> Hermes: ${info.hermes} (bcv${info.bytecode})`,
-		`> System: ${info.system}`,
-		`> Device: ${info.device}`,
 	].join('\n');
 }
 
