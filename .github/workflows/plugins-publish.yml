@@ -57,7 +57,7 @@ jobs:
               env:
                   UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
               run: |
-                  for attempt in 1 2 3; do
+                  for _ in 1 2 3; do
                     bun packages/plugin-scripts/src/verify-published.ts && exit 0
                     sleep 60
                   done
