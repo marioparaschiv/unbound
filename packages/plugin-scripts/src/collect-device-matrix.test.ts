@@ -5,6 +5,7 @@ import {
 	cycleScript,
 	fixtureScript,
 	parseChannel,
+	applyOffMainPolicy,
 	parseOffMainWarnings,
 	withReconnects,
 	type CycleResult,
@@ -157,4 +158,25 @@ test('reads the off-main view calls each plugin made since the run began', () =>
 			['Avatar Radius', ['android.view.View.getWidth()']],
 		]),
 	);
+});
+
+test('fails a plugin for off-main calls it did not make last run, or for any with --strict', () => {
+	const check = {
+		id: 'unbound.alpha',
+		behavior: 'pass',
+		lifecycle: 'pass',
+		evidence: [],
+	} as const;
+	const current = [{ ...check, evidence: [], offMainCalls: ['a()', 'b()'] }];
+	const baseline = [{ ...check, evidence: [], offMainCalls: ['a()'] }];
+
+	expect(applyOffMainPolicy(current, baseline, false)[0]).toMatchObject({
+		behavior: 'fail',
+		note: 'new off-main view calls: b()',
+	});
+	expect(applyOffMainPolicy(current, undefined, false)[0]!.behavior).toBe('pass');
+	expect(applyOffMainPolicy(current, baseline, true)[0]).toMatchObject({
+		behavior: 'fail',
+		note: 'off-main view calls: a(), b()',
+	});
 });

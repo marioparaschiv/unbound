@@ -150,6 +150,31 @@ export function parseOffMainWarnings(lines: string[], since: string): Map<string
 	return new Map([...calls].map(([plugin, found]) => [plugin, [...found].sort()]));
 }
 
+export function applyOffMainPolicy(
+	checks: MeasuredCheck[],
+	baseline: MeasuredCheck[] | undefined,
+	strict: boolean,
+): MeasuredCheck[] {
+	const known = new Map(baseline?.map((check) => [check.id, new Set(check.offMainCalls ?? [])]));
+
+	return checks.map((check) => {
+		const calls = check.offMainCalls ?? [];
+		const flagged = strict
+			? calls
+			: calls.filter((call) => known.has(check.id) && !known.get(check.id)!.has(call));
+
+		if (!flagged.length) return check;
+
+		const failure = `${strict ? 'off-main' : 'new off-main'} view calls: ${flagged.join(', ')}`;
+
+		return {
+			...check,
+			behavior: 'fail',
+			note: [check.note, failure].filter(Boolean).join('; '),
+		};
+	});
+}
+
 export function restoreScript(id: string): string {
 	return `Promise.resolve(unbound.plugins.stop(${JSON.stringify(id)})).then(function () { return "stopped"; })`;
 }
@@ -343,12 +368,13 @@ async function main(): Promise<void> {
 			channel: { type: 'string' },
 			device: { type: 'string' },
 			baseline: { type: 'string' },
+			strict: { type: 'boolean' },
 		},
 	});
 
 	if (!values.out) {
 		throw new Error(
-			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>] [--channel <guild id>/<channel id>]',
+			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>] [--channel <guild id>/<channel id>] [--strict]',
 		);
 	}
 
@@ -410,6 +436,13 @@ async function main(): Promise<void> {
 	);
 
 	const compared = baseline?.filter((check) => !only || only.has(check.id));
+
+	checks.splice(
+		0,
+		checks.length,
+		...applyOffMainPolicy(checks, compared, Boolean(values.strict)),
+	);
+
 	const saved = only && baseline ? mergeChecks(baseline, checks) : checks;
 
 	writeFileSync(join(out, 'results.json'), `${JSON.stringify(saved, null, '\t')}\n`);
