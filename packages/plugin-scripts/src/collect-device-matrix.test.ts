@@ -1,0 +1,70 @@
+import { expect, test } from 'bun:test';
+
+import { checkFromCycle, cycleScript, type CycleResult } from './collect-device-matrix';
+import { validateDeviceMatrix } from './device-matrix';
+
+const healthy: CycleResult = {
+	id: 'unbound.alpha',
+	installed: true,
+	wasStarted: true,
+	error: '',
+	restarted: true,
+	updateError: '',
+	updated: true,
+	hooksBefore: 12,
+	hooksStopped: 9,
+	hooksAfter: 12,
+	hooksUpdated: 12,
+};
+
+test('a clean cycle passes with its hook counts and screenshot as evidence', () => {
+	expect(checkFromCycle(healthy, 'unbound.alpha.png')).toEqual({
+		id: 'unbound.alpha',
+		behavior: 'pass',
+		lifecycle: 'pass',
+		evidence: ['cycle: hooks 12→9→12→12', 'screenshot: unbound.alpha.png'],
+	});
+});
+
+test('a plugin that is not installed fails with a note', () => {
+	const check = checkFromCycle({ ...healthy, installed: false });
+
+	expect(check.behavior).toBe('fail');
+	expect(check.note).toBe('Not installed on the device.');
+});
+
+test('leaked hooks fail the lifecycle but not the behavior', () => {
+	const check = checkFromCycle({ ...healthy, hooksAfter: 14, hooksUpdated: 14 });
+
+	expect(check.behavior).toBe('pass');
+	expect(check.lifecycle).toBe('fail');
+	expect(check.note).toBe('restarting leaked 2 native hooks');
+});
+
+test('a failed reload fails both checks', () => {
+	const check = checkFromCycle({ ...healthy, updateError: 'boom', updated: false });
+
+	expect(check.behavior).toBe('fail');
+	expect(check.lifecycle).toBe('fail');
+	expect(check.note).toBe('reload failed: boom');
+});
+
+test('every collected check is valid for the matrix', () => {
+	const catalog = [
+		{ id: 'unbound.alpha', name: 'Alpha' },
+		{ id: 'unbound.beta', name: 'Beta' },
+	];
+	const checks = [
+		checkFromCycle(healthy),
+		checkFromCycle({ ...healthy, id: 'unbound.beta', error: 'threw on start' }),
+	];
+
+	expect(validateDeviceMatrix(catalog, checks)).toEqual([]);
+});
+
+test('the cycle script names the plugin it cycles and parses', () => {
+	const script = cycleScript('unbound.alpha');
+
+	expect(script).toContain('"unbound.alpha"');
+	expect(() => new Function(`return ${script}`)).not.toThrow();
+});

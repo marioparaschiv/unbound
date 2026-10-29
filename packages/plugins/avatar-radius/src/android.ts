@@ -65,6 +65,7 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 	);
 	const originalOutline = java.createAssociationKey();
 	const originalBackground = java.createAssociationKey();
+	const roundedBorder = java.createAssociationKey();
 	const circles = new Map<string, boolean>();
 	const borderClasses = new Map<string, boolean>();
 	const tracked: Rounded[] = [];
@@ -202,7 +203,10 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 
 		const rounded: Rounded = { kind: 'border', view, circle: size / 2 };
 
-		track(rounded);
+		if (isMissing(java.getAssociatedObject(view, roundedBorder))) {
+			java.setAssociatedObject(view, roundedBorder, javaBoolean(true));
+			track(rounded);
+		}
 
 		return rounded;
 	}

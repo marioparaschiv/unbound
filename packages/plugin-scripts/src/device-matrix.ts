@@ -81,7 +81,11 @@ function cell(value: string): string {
 	return value.replaceAll('|', '\\|').replaceAll('\n', ' ');
 }
 
-export function renderDeviceMatrix(catalog: CatalogPlugin[], checks: DeviceCheck[]): string {
+export function renderDeviceMatrix(
+	catalog: CatalogPlugin[],
+	checks: DeviceCheck[],
+	device = 'SE',
+): string {
 	const byId = new Map(checks.map((check) => [check.id, check]));
 	const passed = checks.filter(
 		(check) => check.behavior === 'pass' && check.lifecycle === 'pass',
@@ -91,7 +95,7 @@ export function renderDeviceMatrix(catalog: CatalogPlugin[], checks: DeviceCheck
 		return `| ${cell(plugin.name)} | ${cell(plugin.id)} | ${check.behavior} | ${check.lifecycle} | ${check.evidence.map(cell).join(', ')} | ${cell(check.note ?? '')} |`;
 	});
 	return [
-		`# SE plugin device matrix`,
+		`# ${device} plugin device matrix`,
 		'',
 		`${passed}/${catalog.length} plugins passed behavior and lifecycle checks.`,
 		'',
