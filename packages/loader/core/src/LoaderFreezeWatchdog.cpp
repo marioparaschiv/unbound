@@ -11,6 +11,7 @@
 #include "LoaderCrashGuard.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
+#include "NativeCallActivity.h"
 #include "NativePluginRuntime.h"
 
 namespace loader {
@@ -109,16 +110,19 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
             return field != parsed.end() && field->is_string() ? field->get<std::string>()
                                                                : std::string();
         };
-        current = {textOf("id"), textOf("name"), static_cast<double>(now - sentAt) / 1000.0, false};
+        current = {
+            textOf("id"), textOf("name"), static_cast<double>(now - sentAt) / 1000.0, false, {}};
         if (current.id.empty())
         {
             continue;
         }
         createDirectories(state->directory);
         writeTextFileAtomically(frozenPath(state->directory), record);
+        current.detail =
+            describeNativeCall(nativeCallOnThread(state->runtimeThread.load()), nativeCallClock());
         log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
             "Discord's JavaScript thread has been frozen in " + current.name + " for " +
-                std::to_string(now - sentAt) + " ms.");
+                std::to_string(now - sentAt) + " ms. " + current.detail);
         reported = true;
     }
 }
