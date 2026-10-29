@@ -156,13 +156,13 @@ describe('createInlineSurfaces', () => {
 
 			state.blank.add(String(first.value));
 			jest.advanceTimersByTime(1_500);
-			await Promise.resolve();
-			await Promise.resolve();
-			await Promise.resolve();
+
+			for (let tick = 0; tick < 8; tick++) await Promise.resolve();
 
 			expect(state.unmounted).toEqual([handle(`surface-${first.value}`)]);
 			expect(state.mounted.filter((host) => host.value === first.value)).toHaveLength(2);
 			expect(state.mounted).toHaveLength(3);
+			expect(methods(state)).toContain('refresh');
 		} finally {
 			jest.useRealTimers();
 		}

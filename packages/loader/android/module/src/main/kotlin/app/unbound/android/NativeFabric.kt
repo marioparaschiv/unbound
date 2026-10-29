@@ -83,17 +83,17 @@ object NativeFabric {
         val density = view.resources.displayMetrics.density
         view.minimumWidth = ceil(minimum.getDouble("width") * density).toInt()
         view.minimumHeight = ceil(minimum.getDouble("height") * density).toInt()
-        NativeUI.applySize(view, JSONObject(maximumJSON))
+        ViewGeometry.applySize(view, JSONObject(maximumJSON))
     }
 
     fun setFrame(handleJSON: String, frameJSON: String) {
         requireMainThread()
-        NativeUI.applyFrame(resolve(parseHandle(handleJSON)).view, JSONObject(frameJSON))
+        ViewGeometry.applyFrame(resolve(parseHandle(handleJSON)).view, JSONObject(frameJSON))
     }
 
     fun measure(handleJSON: String): String {
         requireMainThread()
-        return NativeUI.measure(viewFor(handleJSON))
+        return ViewGeometry.measure(viewFor(handleJSON))
     }
 
     fun unmountAll() {
@@ -115,16 +115,13 @@ object NativeFabric {
 
     private fun containerFor(containerHandleJSON: String, context: Context): ViewGroup {
         if (containerHandleJSON.isBlank() || containerHandleJSON == "{}") {
-            val root = NativeUI.decorView(context)
+            val root = ViewGeometry.decorView(context)
                 ?: throw IllegalStateException("The Android activity has no content view")
             return root
         }
 
-        val container = if (NativeJava.isJavaHandle(containerHandleJSON)) {
-            NativeJava.objectForHandle(containerHandleJSON)
-        } else {
-            NativeUI.viewForHandle(containerHandleJSON)
-        }
+        require(NativeJava.isJavaHandle(containerHandleJSON)) { "A React surface container must be a Java handle" }
+        val container = NativeJava.objectForHandle(containerHandleJSON)
         require(container is ViewGroup) { "A React surface container cannot contain child views" }
 
         return container
@@ -133,11 +130,8 @@ object NativeFabric {
     private fun viewFor(handleJSON: String): View {
         val id = parseHandle(handleJSON)
         synchronized(this) { mounted[id] }?.let { return it.view }
-        val view = if (NativeJava.isJavaHandle(handleJSON)) {
-            NativeJava.objectForHandle(handleJSON)
-        } else {
-            NativeUI.viewForHandle(handleJSON)
-        }
+        require(NativeJava.isJavaHandle(handleJSON)) { "The measured handle must be a Java handle" }
+        val view = NativeJava.objectForHandle(handleJSON)
         require(view is View) { "The measured handle is not an Android view" }
         return view
     }
