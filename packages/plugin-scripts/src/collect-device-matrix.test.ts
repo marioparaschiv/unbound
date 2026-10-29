@@ -3,6 +3,8 @@ import { expect, test } from 'bun:test';
 import {
 	checkFromCycle,
 	cycleScript,
+	fixtureScript,
+	parseChannel,
 	withReconnects,
 	type CycleResult,
 } from './collect-device-matrix';
@@ -120,4 +122,21 @@ test('does not retry other evaluation failures', async () => {
 
 	await expect(withReconnects(broken, async () => undefined)).rejects.toThrow('TypeError');
 	expect(calls).toBe(1);
+});
+
+test('reads a fixture channel as guild and channel ids', () => {
+	expect(parseChannel('709061970078335027/709062739581992971')).toEqual({
+		guild: '709061970078335027',
+		channel: '709062739581992971',
+	});
+	expect(() => parseChannel('development')).toThrow('<guild id>/<channel id>');
+});
+
+test('the fixture script opens the channel and injects local messages only', () => {
+	const script = fixtureScript('1', '2');
+
+	expect(script).toContain('transitionToGuild("1", "2")');
+	expect(script).toContain('receiveMessage');
+	expect(script).not.toContain('sendMessage(');
+	expect(() => new Function(`return ${script}`)).not.toThrow();
 });
