@@ -96,7 +96,16 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 		}
 	}
 
+	function isRounded(core: NativeObjectHandle): boolean {
+		const layer = layerOf(objc, core);
+		const target = cornerRadius(radius(), width(objc, core));
+
+		return !!layer && Number(objc.call(layer, 'cornerRadius')) === target;
+	}
+
 	function roundFastImage(core: NativeObjectHandle) {
+		if (isRounded(core)) return;
+
 		const image = adoptFastImage(core);
 		const key = image && viewKey(objc, core);
 

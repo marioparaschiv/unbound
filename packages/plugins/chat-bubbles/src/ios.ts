@@ -43,6 +43,7 @@ function textWidth(objc: NativeObjCBridge, view: NativeObjectHandle, limit: numb
 export function drawIOSBubbles(objc: NativeObjCBridge) {
 	const bubbles = new Map<string, { cell: NativeObjectHandle; bubble: NativeObjectHandle }>();
 	const pending = new Map<string, NativeObjectHandle>();
+	const placedSizes = new Map<string, string>();
 	const clear = clearColor(objc);
 	let flushing = false;
 	let disposed = false;
@@ -89,7 +90,15 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		return Boolean(outer);
 	}
 
+	function sizeOf(cell: NativeObjectHandle): string {
+		const { width, height } = readRect(objc.call(cell, 'bounds'));
+
+		return `${Math.round(width)}x${Math.round(height)}`;
+	}
+
 	async function place(key: string, cell: NativeObjectHandle) {
+		placedSizes.set(key, sizeOf(cell));
+
 		if (await isNested(cell)) return;
 
 		const nodes = (await objc.snapshot(cell, SNAPSHOT)) as SnapshotNode[];
@@ -151,10 +160,12 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		}
 	}
 
-	function schedule(cell: NativeObjectHandle) {
+	function schedule(cell: NativeObjectHandle, onlyWhenResized = false) {
 		const key = viewKey(objc, cell);
 
 		if (disposed || key === undefined) return;
+
+		if (onlyWhenResized && bubbles.has(key) && placedSizes.get(key) === sizeOf(cell)) return;
 
 		pending.set(key, cell);
 
@@ -168,8 +179,17 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		objc.hook(IOSClass.separatorCell, 'setBackgroundColor:', {
 			before: (context) => context.replaceObjectArgument(0, clear),
 		}),
-		objc.hook(IOSClass.messageCell, 'layoutSubviews', { after: ({ self }) => schedule(self) }),
-		objc.hook(IOSClass.messageCell, 'prepareForReuse', { after: ({ self }) => schedule(self) }),
+		objc.hook(IOSClass.messageCell, 'layoutSubviews', {
+			after: ({ self }) => schedule(self, true),
+		}),
+		objc.hook(IOSClass.messageCell, 'prepareForReuse', {
+			after: ({ self }) => {
+				const key = viewKey(objc, self);
+
+				if (key !== undefined) placedSizes.delete(key);
+				schedule(self);
+			},
+		}),
 	];
 
 	async function refresh() {
@@ -193,6 +213,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 			for (const hook of hooks) hook.remove();
 
 			pending.clear();
+			placedSizes.clear();
 			await Promise.all(
 				[...bubbles.values()].map(({ bubble }) =>
 					objc.invokeAsync(bubble, 'removeFromSuperview', []).catch(() => undefined),
