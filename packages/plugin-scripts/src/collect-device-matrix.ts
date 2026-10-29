@@ -112,11 +112,6 @@ export function fixtureScript(guild: string, channel: string): string {
 	var self = metro.findStore('User').getCurrentUser().id;
 	var loaded = metro.findStore('Message').getMessages(${JSON.stringify(channel)});
 	var linked = (loaded && loaded.toArray ? loaded.toArray() : []).filter(function (message) { return message.author && !message.author.bot && /^\\d+$/.test(message.id); }).pop();
-	var contents = ${JSON.stringify(FIXTURE_MESSAGES)}.filter(function (content) { return linked || content.indexOf('{message}') === -1; });
-	for (var index = 0; index < contents.length; index++) {
-		var content = contents[index].replace('{self}', self).replace('{guild}', ${JSON.stringify(guild)}).replace('{channel}', ${JSON.stringify(channel)}).replace('{message}', linked ? linked.id : '');
-		actions.receiveMessage(${JSON.stringify(channel)}, bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: content }));
-	}
 	var make = function (fields) { return Object.assign(bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: '' }), { flags: 0 }, fields); };
 	var reference = function (message, type) { return { type: type, channel_id: ${JSON.stringify(channel)}, guild_id: ${JSON.stringify(guild)}, message_id: message.id }; };
 	var original = make({ content: ${JSON.stringify(LAYOUT_FIXTURES.original)} });
@@ -128,6 +123,11 @@ export function fixtureScript(guild: string, channel: string): string {
 		make({ attachments: [{ id: String(Date.now()), filename: 'fixture.png', url: image, proxy_url: image, width: 128, height: 128, content_type: 'image/png', size: 4096 }] }),
 		make({ message_reference: reference(original, 1), message_snapshots: [{ message: { content: ${JSON.stringify(LAYOUT_FIXTURES.forwarded)}, timestamp: new Date().toISOString(), type: 0, embeds: [], attachments: [], flags: 0 } }] }),
 	].forEach(function (message) { actions.receiveMessage(${JSON.stringify(channel)}, message); });
+	var contents = ${JSON.stringify(FIXTURE_MESSAGES)}.filter(function (content) { return linked || content.indexOf('{message}') === -1; });
+	for (var index = 0; index < contents.length; index++) {
+		var content = contents[index].replace('{self}', self).replace('{guild}', ${JSON.stringify(guild)}).replace('{channel}', ${JSON.stringify(channel)}).replace('{message}', linked ? linked.id : '');
+		actions.receiveMessage(${JSON.stringify(channel)}, bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: content }));
+	}
 	await new Promise(function (resolve) { setTimeout(resolve, 1500); });
 	return 'staged';
 })()`;
