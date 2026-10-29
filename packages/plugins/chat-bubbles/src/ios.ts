@@ -9,7 +9,7 @@ import { IOSClass, PLUGIN_NAME } from '~/constants';
 import { bubbleFrame } from '~/geometry';
 import type { BubbleColor } from '~/style';
 import { currentAppearance } from '~/theme';
-import { isOwnMessage } from '~/author';
+import { messageOwnership } from '~/author';
 
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
 const TEXT_MEASURE_HEIGHT = 100_000;
@@ -19,18 +19,20 @@ function clearColor(objc: NativeObjCBridge) {
 	return objc.call(objc.getClass('UIColor')!, 'clearColor') as NativeObjectHandle;
 }
 
-function textWidth(objc: NativeObjCBridge, view: NativeObjectHandle, limit: number): number {
-	const text = objc.call(view, 'attributedText') as NativeObjectHandle | null;
+async function textWidth(
+	objc: NativeObjCBridge,
+	view: NativeObjectHandle,
+	limit: number,
+): Promise<number> {
+	const text = (await objc.invokeAsync(view, 'attributedText', [])) as NativeObjectHandle | null;
 
 	if (!text) return 0;
 
-	const measured = objc.call(
-		text,
-		'boundingRectWithSize:options:context:',
+	const measured = await objc.invokeAsync(text, 'boundingRectWithSize:options:context:', [
 		objc.struct('CGSize', { width: limit, height: TEXT_MEASURE_HEIGHT }),
 		USES_LINE_FRAGMENT_ORIGIN,
 		null,
-	);
+	]);
 
 	return Math.ceil(readRect(measured).width);
 }
@@ -44,6 +46,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 	const bubbles = new Map<string, { cell: NativeObjectHandle; bubble: NativeObjectHandle }>();
 	const pending = new Map<string, NativeObjectHandle>();
 	const placedSizes = new Map<string, string>();
+	const ownership = new Map<string, boolean>();
 	const clear = clearColor(objc);
 	let flushing = false;
 	let disposed = false;
@@ -96,6 +99,20 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		return `${Math.round(width)}x${Math.round(height)}`;
 	}
 
+	async function isOwn(key: string, cell: NativeObjectHandle): Promise<boolean> {
+		const known = ownership.get(key);
+
+		if (known !== undefined) return known;
+
+		const info = await readNativeMessageInfo(cell, objc).catch(() => undefined);
+
+		const own = messageOwnership(info?.messageId, info?.channelId);
+
+		if (own !== undefined) ownership.set(key, own);
+
+		return own ?? false;
+	}
+
 	async function place(key: string, cell: NativeObjectHandle) {
 		placedSizes.set(key, sizeOf(cell));
 
@@ -117,7 +134,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 
 		const textView = layout.text ? nodes[layout.text.index]?.view : undefined;
 		const text = textView
-			? layout.text!.offset + textWidth(objc, textView, layout.body.width)
+			? layout.text!.offset + (await textWidth(objc, textView, layout.body.width))
 			: 0;
 		const style = currentAppearance();
 		const frame = bubbleFrame(layout.body, Math.max(text, layout.mediaRight), {
@@ -128,8 +145,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		const layer = objc.call(bubble, 'layer') as NativeObjectHandle;
 
 		await objc.invokeAsync(layer, 'setCornerRadius:', [style.radius]);
-		const info = await readNativeMessageInfo(cell, objc).catch(() => undefined);
-		const own = isOwnMessage(info?.messageId, info?.channelId);
+		const own = await isOwn(key, cell);
 
 		await objc.invokeAsync(bubble, 'setBackgroundColor:', [
 			color(own ? style.ownColor : style.color),
@@ -186,7 +202,11 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 			after: ({ self }) => {
 				const key = viewKey(objc, self);
 
-				if (key !== undefined) placedSizes.delete(key);
+				if (key !== undefined) {
+					placedSizes.delete(key);
+					ownership.delete(key);
+				}
+
 				schedule(self);
 			},
 		}),
@@ -214,6 +234,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 
 			pending.clear();
 			placedSizes.clear();
+			ownership.clear();
 			await Promise.all(
 				[...bubbles.values()].map(({ bubble }) =>
 					objc.invokeAsync(bubble, 'removeFromSuperview', []).catch(() => undefined),
