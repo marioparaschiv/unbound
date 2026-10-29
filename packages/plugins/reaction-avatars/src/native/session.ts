@@ -49,7 +49,6 @@ export type Session = {
 	tables: Map<string, TableLayout>;
 	tableHooks: NativeHookToken[];
 	cellHeights: Map<string, CellHeight>;
-	sizeHook: NativeHookToken | null;
 	/** Bumped to abandon a visible-cell scan that is still walking the windows. */
 	scanRevision: number;
 };
@@ -84,7 +83,6 @@ export function createSession(
 		tables: new Map(),
 		tableHooks: [],
 		cellHeights: new Map(),
-		sizeHook: null,
 		scanRevision: 0,
 	};
 

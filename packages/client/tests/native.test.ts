@@ -70,7 +70,6 @@ const cleared: unknown[] = [];
 const unmounted: NativeFabricSurface[] = [];
 const asynchronouslyUnmounted: NativeFabricSurface[] = [];
 const cancelled: string[] = [];
-const sizeHeightFloors: unknown[][] = [];
 const removedSubscriptions: string[] = [];
 const uiUnmounted: NativeUIHandle[] = [];
 const javaInvokeArguments: (NativeJavaArgument[] | undefined)[] = [];
@@ -146,8 +145,6 @@ const bridge: NativePluginBridge = {
 			setReturnValue: () => undefined,
 			removeReturnValue: () => undefined,
 			clearReturnValues: () => undefined,
-			setSizeHeightFloor: (...values: unknown[]) => sizeHeightFloors.push(values),
-			removeSizeHeightFloor: (...values: unknown[]) => sizeHeightFloors.push(values),
 			remove: () => removed.push('hook'),
 		}),
 		respondsTo: () => false,
@@ -315,7 +312,6 @@ afterEach(() => {
 	unmounted.length = 0;
 	asynchronouslyUnmounted.length = 0;
 	cancelled.length = 0;
-	sizeHeightFloors.length = 0;
 	removedSubscriptions.length = 0;
 	uiUnmounted.length = 0;
 	fluxSubscriptions.clear();
@@ -373,27 +369,6 @@ describe('native plugin capability scopes', () => {
 		expect(token.active).toBe(true);
 		context.dispose();
 		expect(removed).toEqual(['hook']);
-	});
-
-	test('scopes cached height floors to hooks owned by a plugin context', () => {
-		const context = createPluginContext({
-			...manifest,
-			capabilities: ['native.objc.classes', 'native.objc.hooks'],
-		});
-		const token = context.native.objc.hook('UIView', 'sizeThatFits:', {}, { cacheOnly: true });
-		const handle = context.native.objc.alloc('NSObject');
-		const args = [{ width: 375, height: 0 }];
-
-		token.setSizeHeightFloor(handle, args, 136);
-		token.removeSizeHeightFloor(handle, args);
-		expect(sizeHeightFloors).toEqual([
-			[handle, args, 136],
-			[handle, args],
-		]);
-		context.dispose();
-		expect(() => token.setSizeHeightFloor(handle, args, 136)).toThrow(
-			NativePluginDisposedError,
-		);
 	});
 
 	test('clears associations and denies calls after disposal', () => {

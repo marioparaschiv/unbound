@@ -3,7 +3,7 @@ import { safeInvoke } from '@unbound-plugins/shared/native/safe-invoke';
 
 import type { LayoutEntry } from '~/native/collections';
 import type { Session } from '~/native/session';
-import { frameOf, key } from '~/native/views';
+import { frameOf, key, readSize } from '~/native/views';
 import { NativeClass } from '~/constants';
 
 // A message cell keeps the tallest height any of its reaction collections asks for.
@@ -11,41 +11,56 @@ export type CellHeight = {
 	cell: NativeObjectHandle;
 	contributions: Map<string, number>;
 	floor: number;
+	hook: NativeHookToken | null;
 	messageKey: string;
 	width: number;
 };
-
-function sizeArgs(session: Session, height: CellHeight) {
-	return [session.objc.struct('CGSize', { width: height.width, height: 0 })];
-}
 
 function highest(contributions: Map<string, number>): number {
 	return Math.max(0, ...contributions.values());
 }
 
-function removeFloor(session: Session, height: CellHeight): void {
+function removeHook(height: CellHeight): void {
+	const hook = height.hook;
+
+	height.hook = null;
+
 	try {
-		session.sizeHook?.removeSizeHeightFloor(height.cell, sizeArgs(session, height));
+		hook?.remove();
 	} catch {
-		// Best effort: every floor goes away with the hook when the plugin stops.
+		return;
 	}
 }
 
 function forget(session: Session, cellKey: string, height: CellHeight): void {
-	removeFloor(session, height);
+	removeHook(height);
 	session.cellHeights.delete(cellKey);
 }
 
-function setFloor(
-	session: Session,
-	hook: NativeHookToken,
-	cellKey: string,
-	height: CellHeight,
-	floor: number,
-) {
+function hookCellSize(session: Session, height: CellHeight): NativeHookToken {
+	return session.objc.hook(
+		NativeClass.messageCell,
+		'sizeThatFits:',
+		{
+			replace(context) {
+				const size = context.original(...context.args);
+				const { width, height: natural } = readSize(size);
+
+				if (width === undefined || natural === undefined || natural >= height.floor) {
+					return size;
+				}
+
+				return session.objc.struct('CGSize', { width, height: height.floor });
+			},
+		},
+		{ instance: height.cell, thread: 'main' },
+	);
+}
+
+function setFloor(session: Session, cellKey: string, height: CellHeight, floor: number) {
 	try {
-		hook.setSizeHeightFloor(height.cell, sizeArgs(session, height), floor);
 		height.floor = floor;
+		height.hook ??= hookCellSize(session, height);
 
 		return true;
 	} catch {
@@ -53,28 +68,6 @@ function setFloor(
 
 		return false;
 	}
-}
-
-function hookCellSize(session: Session): NativeHookToken | null {
-	if (session.sizeHook) return session.sizeHook;
-
-	const hook = session.objc.hook(
-		NativeClass.messageCell,
-		'sizeThatFits:',
-		{},
-		{ cacheOnly: true, thread: 'main' },
-	);
-
-	// Older loaders cannot hold a height floor; the rows then keep Discord's height.
-	if (typeof hook.setSizeHeightFloor !== 'function') {
-		hook.remove();
-
-		return null;
-	}
-
-	session.sizeHook = hook;
-
-	return hook;
 }
 
 // The collection's planned bottom edge in the message cell's coordinates, plus a 2pt margin.
@@ -120,13 +113,7 @@ export function clearCellHeight(session: Session, entry: LayoutEntry): boolean {
 
 	if (Math.abs(height.floor - floor) < 0.5) return false;
 
-	if (!session.sizeHook) {
-		session.cellHeights.delete(entry.ownerCellKey);
-
-		return true;
-	}
-
-	setFloor(session, session.sizeHook, entry.ownerCellKey, height, floor);
+	setFloor(session, entry.ownerCellKey, height, floor);
 
 	return true;
 }
@@ -162,21 +149,12 @@ export function updateCellHeight(session: Session, entry: LayoutEntry): boolean 
 		height = undefined;
 	}
 
-	let hook: NativeHookToken | null;
-
-	try {
-		hook = hookCellSize(session);
-	} catch {
-		return false;
-	}
-
-	if (!hook) return false;
-
 	if (!height) {
 		height = {
 			cell: entry.ownerCell,
 			contributions: new Map(),
 			floor: 0,
+			hook: null,
 			messageKey: entry.ownerMessageKey,
 			width: cellFrame.width,
 		};
@@ -189,15 +167,15 @@ export function updateCellHeight(session: Session, entry: LayoutEntry): boolean 
 
 	if (Math.abs(height.floor - target) < 0.5) return false;
 
-	return setFloor(session, hook, entry.ownerCellKey, height, target);
+	return setFloor(session, entry.ownerCellKey, height, target);
 }
 
 /**
- * @description Removes every height floor and the `sizeThatFits:` hook.
+ * @description Removes every cell's `sizeThatFits:` hook.
  * @param session The running session.
  */
 export function clearCellHeights(session: Session): void {
-	session.sizeHook?.remove();
-	session.sizeHook = null;
+	for (const height of session.cellHeights.values()) removeHook(height);
+
 	session.cellHeights.clear();
 }

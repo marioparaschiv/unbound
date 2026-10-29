@@ -585,8 +585,6 @@ export type NativeHookToken = {
 	setReturnValue(self: NativeObjectHandle, args: unknown[], value: unknown): void;
 	removeReturnValue(self: NativeObjectHandle, args: unknown[]): void;
 	clearReturnValues(): void;
-	setSizeHeightFloor(self: NativeObjectHandle, args: unknown[], floor: number): void;
-	removeSizeHeightFloor(self: NativeObjectHandle, args: unknown[]): void;
 	remove(): void;
 };
 export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
