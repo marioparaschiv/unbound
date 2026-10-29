@@ -17,6 +17,7 @@
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
 #include "LoaderPreload.h"
+#include "LoaderThreadWarnings.h"
 #include "LoaderToolboxGestures.h"
 #include "NativePluginBridge.h"
 
@@ -191,6 +192,22 @@ static jstring nativeToolbox(JNIEnv *env, jclass, jstring action, jstring argume
     return toJavaString(env,
                         loader->toolbox(toStdString(env, action),
                                         argument ? toStdString(env, argument) : std::string()));
+}
+
+static void nativeWarnOffMainViewCall(JNIEnv *env, jclass, jstring call)
+{
+    static loader::threading::OffMainViewWarnings warnings([] {
+        auto loader = currentLoader();
+        return loader && loader::preferences::developerMode(loader->settings());
+    });
+    if (!call || !warnings.enabled())
+    {
+        return;
+    }
+    if (auto warning = warnings.warning(loader::currentAddon(), toStdString(env, call)))
+    {
+        loader::log(loader::LogLevel::Warning, LOG_CATEGORY_PLUGINS, *warning);
+    }
 }
 
 static jstring nativePreference(JNIEnv *env, jclass, jstring action, jstring argument)
@@ -518,6 +535,8 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeAppendLogFile)},
         {"nativeDevOverlayButtonSide", "()D", reinterpret_cast<void *>(nativeDevOverlayButtonSide)},
         {"nativeAttestation", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeAttestation)},
+        {"nativeWarnOffMainViewCall", "(Ljava/lang/String;)V",
+         reinterpret_cast<void *>(nativeWarnOffMainViewCall)},
         {"nativeIncompatibleHostMessage", "()Ljava/lang/String;",
          reinterpret_cast<void *>(nativeIncompatibleHostMessage)},
         {"nativeDevelopmentBuildBanner",
