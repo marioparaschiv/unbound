@@ -1,6 +1,8 @@
 import { useLocation, useRouter } from '@tanstack/react-router';
+import { createPortal } from 'react-dom';
 
 import { LAB_VARIANT_IDS } from '~/components/lab/lab-variant';
+import useInBrowser from '~/components/lab/use-in-browser';
 import LAB_VARIANTS from '~/components/lab/variants';
 import cn from '~/lib/cn';
 
@@ -42,6 +44,7 @@ function toLivePath(page: string): string {
 function LabSwitcher() {
 	const location = useLocation();
 	const router = useRouter();
+	const inBrowser = useInBrowser();
 	const { active, page } = parsePath(location.pathname);
 
 	function go(href: string) {
@@ -65,8 +68,11 @@ function LabSwitcher() {
 		},
 	];
 
-	return (
-		<div className='bottom-4 left-1/2 z-50 fixed flex items-center gap-1 bg-card/90 shadow-float backdrop-blur-md p-1 border rounded-full max-w-[calc(100vw-1rem)] -translate-x-1/2'>
+	if (!inBrowser) return null;
+
+	// Portalled to the body: the page wrapper's `clip-path` would otherwise hide it once the footer scrolls in.
+	return createPortal(
+		<div className='bottom-4 left-1/2 z-40 fixed flex items-center gap-1 bg-card/90 shadow-float backdrop-blur-md p-1 border rounded-full max-w-[calc(100vw-1rem)] -translate-x-1/2'>
 			<span className='hidden sm:inline px-3 font-semibold text-muted-foreground text-xs uppercase tracking-wide'>
 				Lab
 			</span>
@@ -87,7 +93,8 @@ function LabSwitcher() {
 					<span className='hidden sm:inline'>{item.label}</span>
 				</button>
 			))}
-		</div>
+		</div>,
+		document.body,
 	);
 }
 
