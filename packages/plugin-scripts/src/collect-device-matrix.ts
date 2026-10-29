@@ -7,6 +7,7 @@ import { catalogPlugins, renderDeviceMatrix, type CatalogPlugin } from './device
 import { readMatrixConfig } from './matrix-config';
 import { PLUGINS_DIR, REPO_ROOT } from './paths';
 import { dropBaseline, dropReason, relaunchCommands } from './device-drops';
+import { discordMemory } from './device-memory';
 
 export type CycleResult = {
 	id: string;
@@ -671,6 +672,8 @@ async function main(): Promise<void> {
 	await new Promise((done) => setTimeout(done, 1_500));
 
 	const dropsBefore = await dropBaseline(target, run);
+	const memoryBefore = await discordMemory(target, run);
+	let relaunched = false;
 
 	async function measure(plugin: CatalogPlugin): Promise<MeasuredCheck> {
 		if (
@@ -696,6 +699,7 @@ async function main(): Promise<void> {
 			'Discord stopped answering, and no crash or memory report explains it';
 
 		console.error(`dropped: ${id}: ${reason}`);
+		relaunched = true;
 
 		for (const command of relaunchCommands(target)) await run(command);
 
@@ -773,6 +777,14 @@ async function main(): Promise<void> {
 	const scroll = await afterRecovery('the scroll check', scrollPhase);
 
 	writeFileSync(join(out, 'scroll.json'), `${JSON.stringify(scroll, null, '\t')}\n`);
+
+	const memory = {
+		beforeMB: memoryBefore,
+		afterMB: await discordMemory(target, run),
+		relaunched,
+	};
+
+	writeFileSync(join(out, 'memory.json'), `${JSON.stringify(memory, null, '\t')}\n`);
 	console.error(
 		`scrolled ${scroll.swipes} times${scroll.moved === false ? ' without moving the list' : ''}; ${scroll.toasts.length} toasts appeared`,
 	);

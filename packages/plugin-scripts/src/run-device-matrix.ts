@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import type { MeasuredCheck } from './compare-device-matrix';
+import { describeMemory, type MemoryReport } from './device-memory';
 import {
 	MATRIX_CONFIG_PATH,
 	collectorArgs,
@@ -19,6 +20,7 @@ export type DeviceRun = {
 	emptyToasts?: string[];
 	scrollStuck?: boolean;
 	drops?: string[];
+	memory?: MemoryReport;
 	error?: string;
 };
 
@@ -95,6 +97,11 @@ export function renderSummary(runs: DeviceRun[]): string {
 	const toasts = runs
 		.filter((run) => run.scrollToasts?.length)
 		.map((run) => `- ${run.device.name}: ${run.scrollToasts!.join(', ')}`);
+	const memory = runs.flatMap((run) => {
+		const line = run.memory ? describeMemory(run.memory) : undefined;
+
+		return line ? [`- ${run.device.name}: ${line}`] : [];
+	});
 	const dropped = runs.flatMap((run) =>
 		(run.drops ?? []).map((drop) => `- ${run.device.name}, during ${drop}`),
 	);
@@ -121,6 +128,7 @@ export function renderSummary(runs: DeviceRun[]): string {
 		...(empty.length ? ['', '### Empty toasts', '', ...empty] : []),
 		...(stuck.length ? ['', '### Scrolling', '', ...stuck] : []),
 		...(dropped.length ? ['', '### Device drops', '', ...dropped] : []),
+		...(memory.length ? ['', '### Discord memory over the run', '', ...memory] : []),
 		...(offMain.length ? ['', '### Off-main view calls', '', ...offMain] : []),
 		...(errors.length ? ['', '### Plugin errors', '', ...errors] : []),
 		...(skipped.length
@@ -128,6 +136,12 @@ export function renderSummary(runs: DeviceRun[]): string {
 			: []),
 		...(changes.length ? ['', '### Changes since the last run', '', ...changes] : []),
 	].join('\n');
+}
+
+function readMemory(out: string): MemoryReport | undefined {
+	const file = join(out, 'memory.json');
+
+	return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as MemoryReport) : undefined;
 }
 
 function readScroll(out: string): ScrollResult | undefined {
@@ -160,6 +174,7 @@ async function collect(
 ): Promise<DeviceRun> {
 	mkdirSync(out, { recursive: true });
 	rmSync(join(out, 'scroll.json'), { force: true });
+	rmSync(join(out, 'memory.json'), { force: true });
 
 	const args = [...collectorArgs(device, out, channel, only), ...(lenient ? ['--lenient'] : [])];
 	const child = Bun.spawn(['bun', COLLECTOR, ...args], {
@@ -180,6 +195,7 @@ async function collect(
 	const scroll = readScroll(out);
 	const toasts = {
 		drops,
+		memory: readMemory(out),
 		scrollToasts: scroll?.toasts,
 		emptyToasts: scroll?.emptyToasts,
 		scrollStuck: scroll?.moved === false,

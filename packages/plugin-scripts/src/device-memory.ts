@@ -1,0 +1,88 @@
+import type { CommandRunner, DropTarget } from './device-drops';
+
+export type MemoryReport = { beforeMB?: number; afterMB?: number; relaunched: boolean };
+
+type ListedProcess = { name?: string; footprintMB?: number };
+
+const KILOBYTES_PER_MB = 1024;
+
+/**
+ * @description Reads Discord's footprint from `jb-p1lot process_memory` output.
+ * @param output The command's JSON output.
+ * @returns The footprint in megabytes, or `undefined` when Discord is not running.
+ */
+export function parseIOSFootprint(output: string): number | undefined {
+	try {
+		const { processes } = JSON.parse(output) as { processes?: ListedProcess[] };
+
+		return processes?.find((process) => process.name === 'Discord')?.footprintMB;
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * @description Reads the total proportional set size from `dumpsys meminfo`.
+ * @param output The command output.
+ * @returns The total PSS in megabytes, or `undefined` when it is missing.
+ */
+export function parseAndroidPss(output: string): number | undefined {
+	const kilobytes = /TOTAL PSS:\s+(\d+)/.exec(output)?.[1];
+
+	return kilobytes ? Math.round(Number(kilobytes) / KILOBYTES_PER_MB) : undefined;
+}
+
+/**
+ * @description Measures Discord's memory on a device.
+ * @param target The device.
+ * @param run Runs a host command.
+ * @returns Megabytes in use, or `undefined` when it could not be read.
+ */
+export async function discordMemory(
+	target: DropTarget,
+	run: CommandRunner,
+): Promise<number | undefined> {
+	if (target.kind === 'android') {
+		const serial = target.serial ? ['-s', target.serial] : [];
+		const { stdout } = await run([
+			'adb',
+			...serial,
+			'shell',
+			'dumpsys',
+			'meminfo',
+			'com.discord',
+		]);
+
+		return parseAndroidPss(stdout);
+	}
+
+	const { stdout } = await run([
+		'jb-p1lot',
+		'process_memory',
+		'--device',
+		target.udid,
+		'--process',
+		'Discord',
+		'--limit',
+		'5',
+	]);
+
+	return parseIOSFootprint(stdout);
+}
+
+/**
+ * @description Describes how Discord's memory changed over a run.
+ * @param report The measurements.
+ * @returns A line such as `312 MB → 340 MB (+28 MB)`, or `undefined` without both readings.
+ */
+export function describeMemory(report: MemoryReport): string | undefined {
+	if (report.beforeMB === undefined || report.afterMB === undefined) return undefined;
+
+	const before = Math.round(report.beforeMB);
+	const after = Math.round(report.afterMB);
+	const change = after - before;
+	const sign = change >= 0 ? '+' : '−';
+	const line = `${before} MB → ${after} MB (${sign}${Math.abs(change)} MB)`;
+
+	return report.relaunched ? `${line}, Discord relaunched during the run` : line;
+}
