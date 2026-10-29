@@ -11,6 +11,7 @@ import type { AdminAddonView } from '~/lib/admin-addon';
 
 /** The form fields a save pill counts, each named the way the pill says it. */
 export const CHANGE_LABELS = {
+	icon: 'Icon',
 	name: 'Name',
 	description: 'Description',
 	type: 'Type',

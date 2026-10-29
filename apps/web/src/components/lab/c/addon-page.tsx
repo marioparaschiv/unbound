@@ -1,4 +1,4 @@
-import { IconArrowLeft, IconArrowUpRight, IconPalette, IconPlug } from 'nucleo-micro-bold';
+import { IconArrowLeft, IconArrowUpRight } from 'nucleo-micro-bold';
 import { getRouteApi, Link, notFound, useRouteContext } from '@tanstack/react-router';
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
@@ -18,6 +18,8 @@ import StatusPill from '~/components/dashboard/status-pill';
 import { Card, CardContent } from '~/components/ui/card';
 import { addonQuery } from '~/queries/marketplace/addon';
 import StaffFacts from '~/components/lab/c/staff-facts';
+import AddonIconControl from '~/components/admin/addon-icon-control';
+import AddonIcon from '~/components/addon-icon';
 import type { AdminAddonView } from '~/lib/admin-addon';
 import AuthorByline from '~/components/author-byline';
 import { TONES } from '~/components/dashboard/status';
@@ -190,7 +192,6 @@ function Storefront({
 	const [reveal] = useState(revealProp);
 	const [filter, setFilter] = useState<ActivityFilter>('all');
 	const { addon, submissions } = view;
-	const Icon = addon.type === 'theme' ? IconPalette : IconPlug;
 	const inReview = submissions.some((submission) => submission.status === 'pending_review');
 	const tags = store?.source?.details.tags ?? [];
 	const changelogs = Object.fromEntries(
@@ -236,14 +237,31 @@ function Storefront({
 
 			<header className='flex flex-col gap-4'>
 				<div className='flex sm:flex-row flex-col sm:items-center gap-4'>
-					<div
-						className={cn(
-							'flex justify-center items-center bg-accent border rounded-surface size-16 shrink-0',
-							revealClass,
+					<div className={cn('shrink-0', revealClass)} style={at(0)}>
+						{form ? (
+							// The store's icon tile is itself the control, like the other fields edited in place.
+							<form.Field name='icon'>
+								{(field) => (
+									<AddonIconControl
+										compact
+										id='c-icon'
+										type={addon.type}
+										value={field.state.value}
+										saved={addon.icon}
+										savedSvg={addon.iconSvg}
+										onChange={(icon) => field.handleChange(icon)}
+									/>
+								)}
+							</form.Field>
+						) : (
+							<div className='flex justify-center items-center bg-accent border rounded-surface size-16'>
+								<AddonIcon
+									type={addon.type}
+									svg={addon.iconSvg}
+									className='size-8'
+								/>
+							</div>
 						)}
-						style={at(0)}
-					>
-						<Icon className='size-8' />
 					</div>
 					<div
 						className={cn('flex flex-col flex-1 gap-1 min-w-0', revealClass)}

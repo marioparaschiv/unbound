@@ -8,6 +8,7 @@ export const EDITABLE_LABELS: Record<EditableKey, string> = {
 	type: 'Type',
 	description: 'Description',
 	repository: 'Repository',
+	icon: 'Icon',
 	delisted: 'Visibility',
 	maintainers: 'Maintainers',
 };

@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 
 import { moderationEventsQuery } from '~/queries/moderation-events/moderation-events';
+import describeFieldChange from '~/components/admin/describe-field-change';
 import { formatDateTime } from '~/components/admin/format-date';
 import type { EventTimeline } from '~/lib/moderation-events';
 import getApiErrorMessage from '~/lib/api/error-message';
@@ -176,17 +177,7 @@ function EventSummary({ event, users }: EventSummaryProps) {
 		}
 
 		case 'addon.edited': {
-			return (
-				<>
-					edited{' '}
-					{event.data.changes
-						.map(
-							(change) =>
-								`${change.field} to ${change.to === null ? 'follow the manifest' : `"${change.to}"`}`,
-						)
-						.join(', ')}
-				</>
-			);
+			return <>edited {event.data.changes.map(describeFieldChange).join(', ')}</>;
 		}
 
 		case 'addon.rollback': {

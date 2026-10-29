@@ -4,6 +4,7 @@ import type { UserSummary } from '@unbound-app/contracts/account';
 import { getRouteApi, Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
+import describeFieldChange from '~/components/admin/describe-field-change';
 import { formatDateTime } from '~/components/admin/format-date';
 import type { EventTimeline } from '~/lib/moderation-events';
 
@@ -176,17 +177,7 @@ export function EventSummary({ event, users }: EventSummaryProps) {
 		}
 
 		case 'addon.edited': {
-			return (
-				<>
-					edited{' '}
-					{event.data.changes
-						.map(
-							(change) =>
-								`${change.field} to ${change.to === null ? 'follow the manifest' : `"${change.to}"`}`,
-						)
-						.join(', ')}
-				</>
-			);
+			return <>edited {event.data.changes.map(describeFieldChange).join(', ')}</>;
 		}
 
 		case 'addon.rollback': {

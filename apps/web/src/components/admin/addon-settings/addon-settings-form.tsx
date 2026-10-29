@@ -21,7 +21,7 @@ function AddonSettingsForm({ view }: AddonSettingsFormProps) {
 				void form.handleSubmit();
 			}}
 		>
-			<ListingPanel form={form} manifest={view.manifest} />
+			<ListingPanel form={form} manifest={view.manifest} addon={view.addon} />
 			<SourcePanel form={form} />
 			<VisibilityPanel form={form} />
 			<MaintainersPanel form={form} maintainers={view.maintainers} />
