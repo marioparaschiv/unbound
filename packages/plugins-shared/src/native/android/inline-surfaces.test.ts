@@ -161,7 +161,7 @@ describe('createInlineSurfaces', () => {
 			const first = state.mounted[0];
 
 			state.blank.add(String(first.value));
-			jest.advanceTimersByTime(1_500);
+			jest.advanceTimersByTime(1_000);
 
 			for (let tick = 0; tick < 8; tick++) await Promise.resolve();
 
@@ -169,6 +169,43 @@ describe('createInlineSurfaces', () => {
 			expect(state.mounted.filter((host) => host.value === first.value)).toHaveLength(2);
 			expect(state.mounted).toHaveLength(3);
 			expect(methods(state)).toContain('refresh');
+		} finally {
+			jest.useRealTimers();
+		}
+	});
+
+	test('waits longer between remounts and stops after three', async () => {
+		jest.useFakeTimers();
+
+		try {
+			const { state, surfaces } = setup();
+
+			surfaces!.define(definition);
+			await Promise.resolve();
+			await Promise.resolve();
+
+			const first = state.mounted[0];
+			const flush = async () => {
+				for (let tick = 0; tick < 8; tick++) await Promise.resolve();
+			};
+			const remounts = () =>
+				state.unmounted.filter((surface) => surface.value === `surface-${first.value}`)
+					.length;
+
+			state.blank.add(String(first.value));
+
+			for (const [elapsed, expected] of [
+				[1_000, 1],
+				[1_400, 1],
+				[100, 2],
+				[2_500, 3],
+				[10_000, 3],
+			] as const) {
+				state.blank.add(String(first.value));
+				jest.advanceTimersByTime(elapsed);
+				await flush();
+				expect(remounts()).toBe(expected);
+			}
 		} finally {
 			jest.useRealTimers();
 		}
