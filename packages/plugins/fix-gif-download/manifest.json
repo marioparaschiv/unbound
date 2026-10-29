@@ -10,5 +10,9 @@
 	],
 	"version": "1.0.0",
 	"icon": "GifIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "PYpxWKWRUE4KhbIoLW6le0q8lvBQUBfRGf5y2szEuZY9pffcu2+BnNUnpwJkNYKzAKDd29Juk67R7NIJVPmECA=="
+	}
 }

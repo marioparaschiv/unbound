@@ -14,5 +14,9 @@
 	],
 	"version": "1.0.0",
 	"icon": "EyeIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "Rfzmaf4nFO0Cz4XGP7sT5hOL4CvHAkDWc+yN/Ln9Tda9v8XvBTQLOo8iQOnsEqWMtSCf/KBJTjJkE+nbeq8jCw=="
+	}
 }

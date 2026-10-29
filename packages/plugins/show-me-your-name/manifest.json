@@ -22,5 +22,9 @@
 	],
 	"version": "1.0.0",
 	"icon": "TextIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"signature": {
+		"version": 1,
+		"ed25519": "xE0jP6G6PTNUu1pLsboYrhM6zHFUduL/w6dMunEjH+U7rjb6R7N5/bXDCUfj29+aMuYWWPCv0WvzH5gL9y/yBA=="
+	}
 }

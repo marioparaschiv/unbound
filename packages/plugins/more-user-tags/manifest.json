@@ -49,5 +49,9 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"signature": {
+		"version": 1,
+		"ed25519": "IH+YO16PHbqugq7Jh20k9K0HygM/Hp7eWmfE33AkU1DpXzzqgTTOeaVUAuOyAw3dmeEga6qh0RwAA8Wpp9i3CQ=="
+	}
 }

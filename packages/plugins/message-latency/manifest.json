@@ -14,7 +14,10 @@
 	],
 	"version": "1.0.0",
 	"icon": "TimerIcon",
-	"platforms": ["ios", "android"],
+	"platforms": [
+		"ios",
+		"android"
+	],
 	"capabilities": [],
 	"platformCapabilities": {
 		"ios": [
@@ -41,5 +44,9 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"signature": {
+		"version": 1,
+		"ed25519": "YClhoGdXFwHHF30rPwI9bPaZJPVnW/PvUeEx2DV6yTSa/WZIPrExwofsAGNPA8thUsoZ+Ni9ObcNj+te8jE7Cw=="
+	}
 }

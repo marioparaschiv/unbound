@@ -14,5 +14,9 @@
 	],
 	"version": "1.0.0",
 	"icon": "StickerIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "rEWcbKldE03ieSuVXhQhtdtFFukLepvs7fwmhkDItuNEWPE0Y3apHbGmdmWHUmkX9KucZjlrbwNNLiJsNvjeBg=="
+	}
 }

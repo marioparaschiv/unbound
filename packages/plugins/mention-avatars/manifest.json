@@ -18,7 +18,10 @@
 	],
 	"version": "1.0.0",
 	"icon": "UserCircleIcon",
-	"platforms": ["ios", "android"],
+	"platforms": [
+		"ios",
+		"android"
+	],
 	"capabilities": [],
 	"platformCapabilities": {
 		"ios": [
@@ -40,5 +43,9 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "aKgo/2vcmzeZML/C1p8YMzwn6FTFV2WQ6AetGLh8J1rWj2IVb8VSFATbeaRXSsYl6Y0XHFMKeznN+udLHouFCw=="
+	}
 }

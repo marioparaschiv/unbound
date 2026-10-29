@@ -14,5 +14,9 @@
 	],
 	"version": "1.0.0",
 	"icon": "GiftIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "guiTKLi7VyCrOpF0oOSRz4/1MbR/m18v/CAHbD/ieW0xuNpLfd5RrIQV4CvTut38giax5WL042pTN4TSaAcJDA=="
+	}
 }
