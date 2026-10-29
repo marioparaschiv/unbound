@@ -35,12 +35,14 @@ function once(seen: Set<string>, key: string | undefined): boolean {
  * @param objc The Objective-C bridge from `context.native`.
  * @param className The cell class, such as `DCDMessageTableViewCell`.
  * @param signal Aborts the scan between native calls, when a newer scan or `stop` supersedes it.
+ * @param limits How deep and how many views to search in each window, for views nested deeper than cells.
  * @returns Each visible cell once, or `[]` when the scan was aborted or a window went away mid-scan.
  */
 export async function findVisibleCells(
 	objc: NativeObjCBridge,
 	className: string,
 	signal?: AbortSignal,
+	limits: { maxDepth?: number; maxVisited?: number } = {},
 ): Promise<NativeObjectHandle[]> {
 	const UIApplication = objc.getClass('UIApplication');
 
@@ -74,8 +76,8 @@ export async function findVisibleCells(
 			}
 
 			const found = await objc.findViews(window, className, {
-				maxDepth: 40,
-				maxVisited: 1_600,
+				maxDepth: limits.maxDepth ?? 40,
+				maxVisited: limits.maxVisited ?? 1_600,
 				maxResults: 256,
 				attachedOnly: true,
 				stopAtMatch: true,
