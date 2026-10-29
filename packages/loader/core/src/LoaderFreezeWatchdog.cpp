@@ -186,6 +186,8 @@ void startFreezeWatchdog(const std::string &directory)
                     event.setProperty(runtime, "name",
                                       jsi::String::createFromUtf8(runtime, report.name));
                     event.setProperty(runtime, "seconds", report.seconds);
+                    event.setProperty(runtime, "detail",
+                                      jsi::String::createFromUtf8(runtime, report.detail));
                     listener.asObject(runtime).asFunction(runtime).call(runtime, event);
                 });
             });

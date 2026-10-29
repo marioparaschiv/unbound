@@ -556,8 +556,10 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 			addon: this.reportedAddon(entity),
 			seconds: freeze.seconds,
 		});
+		const detail = freeze.detail ? ` ${freeze.detail}` : '';
+
 		this.logger.warn(
-			`${entity.data.name} froze Discord for ${seconds} seconds (freeze ${count} this session).`,
+			`${entity.data.name} froze Discord for ${seconds} seconds (freeze ${count} this session).${detail}`,
 		);
 
 		if (disable) {
@@ -567,8 +569,8 @@ export abstract class Addons<T extends Addon> extends Manager<T, AddonEvents<T>>
 		showToast({
 			title: entity.data.name,
 			content: disable
-				? `Disabled ${entity.data.name} because it froze Discord for ${seconds} seconds.`
-				: `${entity.data.name} froze Discord for ${seconds} seconds.`,
+				? `Disabled ${entity.data.name} because it froze Discord for ${seconds} seconds.${detail}`
+				: `${entity.data.name} froze Discord for ${seconds} seconds.${detail}`,
 		});
 	}
 
