@@ -107,22 +107,6 @@ uiColors(const std::map<std::string, loader::RGBAColor> &colors)
     return loader::isDarkColor({red, green, blue, alpha});
 }
 
-+ (CGFloat)messageBubbleRadius
-{
-    return loader::preferences::kMessageBubbleStyle.radius;
-}
-
-+ (CGSize)messageBubblePadding
-{
-    return CGSizeMake(loader::preferences::kMessageBubbleStyle.horizontalPadding,
-                      loader::preferences::kMessageBubbleStyle.verticalPadding);
-}
-
-+ (UIColor *)messageBubbleColorForDarkTheme:(BOOL)dark
-{
-    return uiColor(loader::preferences::messageBubbleColor(dark));
-}
-
 static std::string fontAttribute(CTFontDescriptorRef descriptor, CFStringRef attribute)
 {
     NSString *value = CFBridgingRelease(CTFontDescriptorCopyAttribute(descriptor, attribute));

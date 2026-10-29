@@ -44,7 +44,8 @@ int main()
            plain.items[1].followUp == FollowUp::EditSettings);
     assert(plain.items[2].followUp == FollowUp::OpenToolbox);
 
-    loader::preferences::setMessageBubbles(settings, true);
+    loader::preferences::setGestureEnabled(settings, loader::preferences::ToolboxGesture::Shake,
+                                           false);
     const nlohmann::json json = menuJSON(settings);
     assert(json["title"] == "Developer" && json["cancel"] == "Cancel");
     assert(json["items"].size() == 3);
@@ -58,13 +59,15 @@ int main()
     assert(!syntax.saved && syntax.error == kInvalidSettingsMessage);
     const SettingsEditResult array = saveSettings(settings, "[]");
     assert(!array.saved && array.error == kInvalidSettingsMessage);
-    assert(loader::preferences::messageBubbles(settings));
+    assert(
+        !loader::preferences::gestureEnabled(settings, loader::preferences::ToolboxGesture::Shake));
 
     const SettingsEditResult saved =
         saveSettings(settings, "{\"unbound\":{\"developer-mode\":true}}");
     assert(saved.saved && saved.error.empty());
     assert(loader::preferences::developerMode(settings));
-    assert(!loader::preferences::messageBubbles(settings));
+    assert(
+        loader::preferences::gestureEnabled(settings, loader::preferences::ToolboxGesture::Shake));
     assert(editResultJSON(saved) == nlohmann::json({{"saved", true}, {"error", ""}}));
     assert(editResultJSON(syntax)["error"] == kInvalidSettingsMessage);
 

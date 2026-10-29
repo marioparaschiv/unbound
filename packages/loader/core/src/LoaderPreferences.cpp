@@ -5,14 +5,12 @@
 #include "LoaderFonts.h"
 
 namespace loader::preferences {
-static constexpr const char *kRecovery       = "recovery";
-static constexpr const char *kDeveloperMode  = "developer-mode";
-static constexpr const char *kHotReload      = "loader.update.hmr";
-static constexpr const char *kLoaderEnabled  = "loader.enabled";
-static constexpr const char *kFontStates     = "font-states";
-static constexpr const char *kAppliedTheme   = "applied";
-static constexpr const char *kMessageBubbles = "chat.message-bubbles";
-static constexpr const char *kAvatarRadius   = "chat.avatar-radius";
+static constexpr const char *kRecovery      = "recovery";
+static constexpr const char *kDeveloperMode = "developer-mode";
+static constexpr const char *kHotReload     = "loader.update.hmr";
+static constexpr const char *kLoaderEnabled = "loader.enabled";
+static constexpr const char *kFontStates    = "font-states";
+static constexpr const char *kAppliedTheme  = "applied";
 
 static const char *gestureKey(ToolboxGesture gesture)
 {
@@ -108,33 +106,6 @@ bool setGestureEnabled(SettingsStore &settings, ToolboxGesture gesture, bool ena
     return settings.save();
 }
 
-RGBAColor messageBubbleColor(bool dark)
-{
-    return parseColor(dark ? kMessageBubbleStyle.darkColor : kMessageBubbleStyle.lightColor)
-        .value_or(RGBAColor{});
-}
-
-bool messageBubbles(const SettingsStore &settings)
-{
-    return settings.getBoolean(kStore, kMessageBubbles, false);
-}
-
-bool setMessageBubbles(SettingsStore &settings, bool enabled)
-{
-    settings.set(kStore, kMessageBubbles, enabled);
-    return settings.save();
-}
-
-std::optional<double> avatarRadius(const SettingsStore &settings)
-{
-    const auto value = settings.get(kStore, kAvatarRadius);
-    if (!value || !value->is_number() || value->get<double>() < 0)
-    {
-        return std::nullopt;
-    }
-    return value->get<double>();
-}
-
 std::string recoveryActionLabel(bool enabled)
 {
     return enabled ? "Disable Recovery Mode" : "Enable Recovery Mode";
@@ -148,17 +119,6 @@ std::string recoveryStatusText(bool enabled)
 static std::string flag(bool value)
 {
     return value ? "true" : "false";
-}
-
-static std::string radiusText(std::optional<double> radius)
-{
-    if (!radius)
-    {
-        return "";
-    }
-    char text[32];
-    std::snprintf(text, sizeof(text), "%g", *radius);
-    return text;
 }
 
 std::string perform(SettingsStore &settings, const std::string &action, const std::string &argument)
@@ -222,14 +182,6 @@ std::string perform(SettingsStore &settings, const std::string &action, const st
             setGestureEnabled(settings, *gesture, argument.substr(separator + 1) == "true");
         }
         return flag(gestureEnabled(settings, *gesture));
-    }
-    if (action == "message-bubbles")
-    {
-        return flag(messageBubbles(settings));
-    }
-    if (action == "avatar-radius")
-    {
-        return radiusText(avatarRadius(settings));
     }
     return "";
 }

@@ -708,7 +708,7 @@ export type NativeJavaValue =
 	| {
 			type: 'array';
 			componentType: string;
-			value: (NativeJavaValue | string | number | boolean)[];
+			value: (NativeJavaValue | NativeJavaHandle | string | number | boolean)[];
 	  };
 export type NativeObjCBridge = {
 	getClass(name: string): NativeClassHandle | null;

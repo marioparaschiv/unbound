@@ -67,9 +67,6 @@ object NativeBridge {
     external fun nativeThreeFingerEvent(event: String, pointers: Int): String
 
     @JvmStatic
-    external fun nativeMessageBubbleStyle(): DoubleArray
-
-    @JvmStatic
     external fun nativeResolveFont(family: String): String
 
     @JvmStatic
