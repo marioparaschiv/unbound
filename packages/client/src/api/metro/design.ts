@@ -1,4 +1,10 @@
-import type { DesignComponentName, DesignModule } from '@unbound-app/types/components';
+import type {
+	DesignComponentName,
+	DesignModule,
+	ResolvedStyles,
+	StyleSheetSpec,
+	StyleSheetSpecOrFactory,
+} from '@unbound-app/types/components';
 import { DESIGN_COMPONENTS } from '@unbound-app/types/components';
 import type { ComponentType, ElementType } from 'react';
 
@@ -51,11 +57,28 @@ export function registerDesignFallback<K extends DesignComponentName>(
 	designFallbacks.set(name, component as ComponentType<never>);
 }
 
+// Style files call `createStyles` when imported, so the design module is read on the first render instead.
+function createStyles<T extends StyleSheetSpec>(
+	styles: StyleSheetSpecOrFactory<T>,
+): () => ResolvedStyles<T> {
+	let useStyles: (() => ResolvedStyles<T>) | undefined;
+
+	return () => {
+		useStyles ??= designModule.createStyles(styles);
+
+		return useStyles();
+	};
+}
+
 const designTarget: DesignModule = Object.create(null);
 
 /** Discord's design module, with Unbound's fallbacks standing in for components a build lacks. */
 export const Discord: DesignModule = new Proxy(designTarget, {
 	get(_, key) {
+		if (key === 'createStyles') {
+			return createStyles;
+		}
+
 		const value = readDesignModule(key);
 
 		if (isDesignComponent(key) && !isRenderable(value)) {
