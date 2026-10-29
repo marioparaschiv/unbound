@@ -49,6 +49,9 @@ void registerNativePlatformProvider(void)
         NSDictionary *entitlements = [Utilities getApplicationEntitlements];
         return toStdString([Utilities formatEntitlementsAsPlist:entitlements]);
     };
+    provider->framework = []() {
+        return toStdString([Utilities getInjectionFramework]);
+    };
     provider->appSource = []() {
         return toStdString([Utilities getAppSource]);
     };

@@ -2,6 +2,7 @@
 
 #import <arpa/inet.h>
 #import <dlfcn.h>
+#import <mach-o/dyld.h>
 #import <netinet/in.h>
 #import <sys/socket.h>
 #import <sys/sysctl.h>
@@ -811,6 +812,36 @@ static NSString *defaultGatewayAddress(void)
 #else
     return NO;
 #endif
+}
+
++ (NSString *)getInjectionFramework
+{
+    NSDictionary<NSString *, NSString *> *frameworks = @{
+        @"libellekit" : @"ElleKit",
+        @"CydiaSubstrate" : @"Substrate",
+        @"libsubstrate" : @"Substrate",
+        @"libhooker" : @"libhooker",
+    };
+
+    for (uint32_t index = 0; index < _dyld_image_count(); index++)
+    {
+        const char *name = _dyld_get_image_name(index);
+        if (!name)
+        {
+            continue;
+        }
+
+        NSString *image = @(name);
+        for (NSString *marker in frameworks)
+        {
+            if ([image containsString:marker])
+            {
+                return frameworks[marker];
+            }
+        }
+    }
+
+    return @"";
 }
 
 + (NSString *)getAppSource

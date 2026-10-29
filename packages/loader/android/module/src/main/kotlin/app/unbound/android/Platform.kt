@@ -53,7 +53,8 @@ object Platform {
         .put("osVersion", Build.VERSION.RELEASE)
         .put("isRooted", SU_PATHS.any { File(it).exists() })
         .put("isSystemApp", appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0)
-        .put("appSource", frameworkName)
+        .put("appSource", InstallSource.current(application()))
+        .put("framework", frameworkName)
         .put("isVirtualDevice", isEmulator())
         .put("virtualDeviceHost", emulatorHostAddress() ?: JSONObject.NULL)
 
