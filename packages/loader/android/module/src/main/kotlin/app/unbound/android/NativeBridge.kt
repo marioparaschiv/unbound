@@ -261,6 +261,7 @@ object NativeBridge {
                 connection.inputStream.use { input -> staging.outputStream().use { input.copyTo(it) } }
                 if (!staging.renameTo(target)) {
                     staging.delete()
+                    Logger.info(LogCategory.UPDATER, "Downloading $url failed: the bundle could not be saved to $destination")
                     return null
                 }
             }
@@ -269,7 +270,10 @@ object NativeBridge {
             deadline.cancel(false)
             connection.disconnect()
         }
-    }.onFailure { Logger.error(LogCategory.UPDATER, "Bundle download failed: $it") }.getOrNull()
+    }.onFailure { Logger.info(LogCategory.UPDATER, "Downloading $url failed: ${downloadFailureReason(it)}") }.getOrNull()
+
+    fun downloadFailureReason(error: Throwable): String =
+        listOfNotNull(error::class.java.simpleName, error.message).joinToString(": ")
 
     @JvmStatic
     fun devServerHost(): String? = Platform.emulatorHostAddress()
