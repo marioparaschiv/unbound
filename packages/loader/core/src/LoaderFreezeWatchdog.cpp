@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <thread>
 
+#include "HermesSampling.h"
 #include "LoaderAddonActivity.h"
 #include "LoaderCrashGuard.h"
 #include "LoaderFiles.h"
@@ -118,8 +119,17 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
         }
         createDirectories(state->directory);
         writeTextFileAtomically(frozenPath(state->directory), record);
-        current.detail =
-            describeNativeCall(nativeCallOnThread(state->runtimeThread.load()), nativeCallClock());
+        auto call      = nativeCallOnThread(state->runtimeThread.load());
+        current.detail = describeNativeCall(call, nativeCallClock());
+        if (!call)
+        {
+            std::string stack = native::describeSampledStack(
+                native::sampleJavaScriptStack(state->options.sampling));
+            if (!stack.empty())
+            {
+                current.detail += " " + stack;
+            }
+        }
         log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
             "Discord's JavaScript thread has been frozen in " + current.name + " for " +
                 std::to_string(now - sentAt) + " ms. " + current.detail);

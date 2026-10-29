@@ -18,6 +18,7 @@ struct FreezeReport {
 struct FreezeWatchdogOptions {
     std::chrono::milliseconds interval{1000};
     std::chrono::milliseconds threshold{6000};
+    std::chrono::milliseconds sampling{300};
 };
 
 using FreezeHeartbeat = std::function<bool(std::function<void()> beat)>;
