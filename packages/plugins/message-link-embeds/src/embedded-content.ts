@@ -73,16 +73,18 @@ function recordFields(message: Message, channelId: string): Message {
 
 /**
  * @description Builds the record and row generator that render a linked message as a chat row, without reactions and with media playing.
- * @param renderers Discord's `MessageRecord` and `RowManager`.
+ * @param renderers Discord's `MessageRecord`, `RowManager` and the `ChatItem` that renders the row.
  * @param message The linked message.
  * @param channelId The linked message's channel.
- * @returns The content for an embed, or `undefined` when Discord could not build its row.
+ * @returns The content for an embed, or `undefined` when a renderer is missing or Discord could not build its row.
  */
 export function buildEmbeddedContent(
-	{ MessageRecord, RowManager }: Renderers,
+	{ MessageRecord, RowManager, ChatItem }: Renderers,
 	message: Message,
 	channelId: string,
 ): EmbeddedContent | undefined {
+	if (!MessageRecord || !RowManager || !ChatItem) return;
+
 	try {
 		const record: Message = new MessageRecord(recordFields(message, channelId));
 

@@ -9,13 +9,14 @@ import { messageTextViewClass } from '@unbound-plugins/shared/native/text-attach
 import {
 	ChannelStore,
 	FastImageSource,
-	findRenderers,
 	LottieAnimationViewSource,
 	MessageActions,
+	MessageRecord,
 	MessageStore,
 	NativeLottieViewSource,
+	renderers,
+	RowManager,
 	SelectedChannelStore,
-	type Renderers,
 } from '~/modules';
 import { patchLottieAnimationView } from '~/patches/lottie-animation-view';
 import { patchNativeLottieView } from '~/patches/native-lottie-view';
@@ -30,13 +31,14 @@ let dispose: () => Promise<void> | undefined = () => undefined;
 
 function start(context: PluginContext) {
 	const { objc, fabric } = context.native;
-	const renderers = findRenderers();
+	// `ChatItem` has a fallback search, so it is checked when an embed renders.
 	const modules = {
 		ChannelStore,
 		MessageStore,
 		SelectedChannelStore,
-		fetchMessage: MessageActions.fetchMessage,
-		...renderers,
+		MessageActions,
+		MessageRecord,
+		RowManager,
 	};
 
 	if (context.platform === 'android') {
@@ -48,8 +50,8 @@ function start(context: PluginContext) {
 		}
 
 		const android =
-			createNativeEmbeds(context.native, renderers as Renderers) ??
-			createAndroidEmbeds(context.native, renderers as Renderers);
+			createNativeEmbeds(context.native, renderers) ??
+			createAndroidEmbeds(context.native, renderers);
 
 		if (!android) {
 			console.error('[Message Link Embeds] Skipped, the embed surface did not register.');
@@ -78,8 +80,7 @@ function start(context: PluginContext) {
 		return;
 	}
 
-	// `ensureModules` found every renderer.
-	const embeds = createSession(objc, fabric, renderers as Renderers);
+	const embeds = createSession(objc, fabric, renderers);
 
 	if (!embeds) {
 		console.error('[Message Link Embeds] Skipped, the embed surface did not register.');
