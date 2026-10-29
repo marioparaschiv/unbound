@@ -37,7 +37,15 @@ export function extractModule(project: Project, record: ModuleRecord): ModuleFac
 		const factory = factoryOf(file);
 
 		if (!factory) {
-			return { moduleId: record.id, components: [], hooks: [], reExports: [], passed: [] };
+			return {
+				moduleId: record.id,
+				components: [],
+				hooks: [],
+				reExports: [],
+				passed: [],
+				constants: new Map(),
+				starExports: [],
+			};
 		}
 
 		const ctx: ModuleContext = {
@@ -49,6 +57,7 @@ export function extractModule(project: Project, record: ModuleRecord): ModuleFac
 			slots: new Map(),
 			components: new Map(),
 			exports: [],
+			starExports: [],
 			getters: [],
 			staticOwners: [],
 			displayNames: new Map(),
@@ -58,7 +67,7 @@ export function extractModule(project: Project, record: ModuleRecord): ModuleFac
 
 		walkFunction(ctx, factory.body, params, UNKNOWN, void 0, void 0);
 
-		const reExports = bindExports(ctx);
+		const bound = bindExports(ctx);
 
 		const hooks = [...ctx.components.values()].filter(
 			(component) => isHookName(component.name) && component.exportNames.length > 0,
@@ -68,7 +77,7 @@ export function extractModule(project: Project, record: ModuleRecord): ModuleFac
 			moduleId: record.id,
 			components: nameComponents(ctx),
 			hooks,
-			reExports,
+			...bound,
 			passed: ctx.passed,
 		};
 	} finally {

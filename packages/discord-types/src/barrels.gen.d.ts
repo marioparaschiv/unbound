@@ -358,7 +358,8 @@ export type LoadingButtonPillProps = {
 		children?: React.ReactNode;
 		expressivePressState?: unknown;
 		expressiveRiveRef?: unknown;
-		loaderSize?: unknown;
+		/** @default 'md' */
+		loaderSize?: 'md' | (string & {});
 		/** @default false */
 		loading?: boolean;
 		pressed?: unknown;
@@ -1149,7 +1150,7 @@ export type PileProps = {
 		depthX?: number;
 		depthY?: number;
 		gap?: number;
-		shape?: unknown;
+		shape?: 'circle' | 'rounded-rect' | (string & {});
 		size: number;
 	};
 export type PileComponent = React.ComponentType<PileProps>;

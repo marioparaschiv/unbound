@@ -3,6 +3,7 @@ import type { HostProps } from './hosts';
 import type { Report } from './report';
 
 import { createResolver, findReactNative, listExports } from './resolve';
+import { createConstantLookup, resolveConstantRefs } from './constants';
 import { isComponentCandidate, summarize } from './split';
 import { createParser, extractModule } from './extract';
 import { assignNames, sortComponents } from './naming';
@@ -62,6 +63,9 @@ export async function runPipeline(
 	bindPassed(facts, resolve);
 
 	const found = facts.flatMap((module) => module.components);
+
+	resolveConstantRefs(found, createConstantLookup(facts));
+
 	const components = sortComponents(found.filter(isComponent));
 	const names = assignNames(components);
 	const inference = infer(components, resolve, hosts, names);

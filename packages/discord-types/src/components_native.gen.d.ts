@@ -157,7 +157,7 @@ export type CreateChannelProps = {
 		categoryId?: AppChannelApplicationSelectorProps['channelId'];
 		channelType?: unknown;
 		cloneChannelId?: string;
-		createMode?: unknown;
+		createMode?: number;
 		guildId?: AppChannelApplicationSelectorProps['guildId'];
 		onChannelCreated?: (...args: any[]) => unknown;
 	};
@@ -548,7 +548,7 @@ export type ChannelSettingsNotificationsSplitComponent = React.ComponentType<Cha
  * @see components_native/channel_settings/ChannelSettingsOverview.tsx
  */
 export type ConnectedChannelSettingsOverviewProps = {
-		autoFocusElement?: unknown;
+		autoFocusElement?: 'channel-name' | (string & {});
 		channelId?: string;
 	};
 export type ConnectedChannelSettingsOverviewComponent = React.ComponentType<ConnectedChannelSettingsOverviewProps>;
@@ -582,7 +582,7 @@ export type OverrideOptionProps = {
 		permissionTitle?: unknown;
 		selected?: boolean;
 		styles: { allowActive?: unknown; allowSelected?: unknown; denyActive?: unknown; denySelected?: unknown; iconWrapper?: unknown; passthroughActive?: unknown; passthroughSelected?: unknown };
-		type?: unknown;
+		type?: 'ALLOW' | 'DENY' | 'PASSTHROUGH' | (string & {});
 	};
 export type OverrideOptionComponent = React.ComponentType<OverrideOptionProps>;
 /**
@@ -593,7 +593,7 @@ export type ChannelSettingsPermissionsOverridesProps = {
 		channelId: (...args: any[]) => unknown;
 		fromCreate?: (...args: any[]) => unknown;
 		id: DetailedGuildIdentityUserRowProps['userId'];
-		type?: unknown;
+		type?: 'MEMBER' | (string & {});
 	};
 export type ChannelSettingsPermissionsOverridesComponent = React.ComponentType<ChannelSettingsPermissionsOverridesProps>;
 /**
@@ -775,7 +775,7 @@ export type ChatBeginningRowGuildNonDefaultChannelComponent = React.ComponentTyp
  * @see components_native/chat/ChatBeginningRow.tsx
  */
 export type ChatBeginningRowHeaderProps = {
-		channelType?: unknown;
+		channelType?: ChatBeginningRowIconProps['channelType'];
 		isForumPost?: ChatBeginningRowIconProps['isForumPost'];
 		isGameInvitesPost?: boolean;
 		isNSFW?: ChatBeginningRowIconProps['isNSFW'];
@@ -791,7 +791,7 @@ export type ChatBeginningRowHeaderComponent = React.ComponentType<ChatBeginningR
  * @see components_native/chat/ChatBeginningRow.tsx
  */
 export type ChatBeginningRowIconProps = {
-		channelType?: unknown;
+		channelType?: number;
 		isForumPost?: boolean;
 		isNSFW?: boolean;
 		isPrivate?: boolean;
@@ -980,7 +980,7 @@ export type AlertConnectedComponent = React.ComponentType<AlertConnectedProps & 
 export type AlertWrapperProps = {
 		cleanUp?: unknown;
 		item: { isDismissable?: unknown; renderAlert?: unknown; renderKey?: unknown };
-		transitionState?: unknown;
+		transitionState?: number;
 	};
 export type AlertWrapperComponent = React.ComponentType<AlertWrapperProps>;
 /**
@@ -1112,6 +1112,7 @@ export type CommonNotificationsComponent = React.ComponentType<CommonNotificatio
 export type RolePillProps = {
 		color?: unknown;
 		disableInteraction?: PressableHighlightProps['disabled'];
+		/** @default '' */
 		guildId?: VerifiedRoleIconProps['guildId'];
 		role: { colorString?: unknown; id?: unknown; name?: unknown; tags?: unknown };
 	};
@@ -1320,7 +1321,8 @@ export type VoiceSensitivityComponent = React.ComponentType<VoiceSensitivityProp
 export type VolumeSliderProps = {
 		accessibilityLabel?: unknown;
 		maxTrackTintColor?: unknown;
-		maxVolume?: number | string;
+		/** @default 200 */
+		maxVolume?: number;
 		minTrackColor?: unknown;
 		onResponderGrant?: (...args: any[]) => unknown;
 		onValueChange: (...args: any[]) => unknown;
@@ -1347,7 +1349,8 @@ export type ColorBlockComponent = React.ComponentType<ColorBlockProps>;
 export type RoleColorPickerActionSheetProps = {
 		color?: unknown;
 		confirmLabel?: BaseTextButtonProps['text'];
-		defaultColor?: unknown;
+		/** @default 10070709 */
+		defaultColor?: number;
 		onSelect: (...args: any[]) => unknown;
 	};
 export type RoleColorPickerActionSheetComponent = React.ComponentType<RoleColorPickerActionSheetProps>;
@@ -1369,7 +1372,8 @@ export type GiftPurchaseButtonComponent = React.ComponentType<GiftPurchaseButton
  * @see components_native/premium/GuildBoostingGuildList.tsx
  */
 export type GuildBoostingGuildListProps = {
-		guildCount?: unknown;
+		/** @default 4 */
+		guildCount?: number;
 		style?: React.ComponentProps<typeof RN.View>['style'];
 	};
 export type GuildBoostingGuildListComponent = React.ComponentType<GuildBoostingGuildListProps>;
@@ -1392,7 +1396,7 @@ export type PremiumSComponent = React.ComponentType<PremiumSProps>;
  * @see components_native/premium/GuildBoostingUpsell.tsx
  */
 export type GuildBoostingUpsellProps = {
-		fractionalState?: unknown;
+		fractionalState?: number;
 		hasAvailableSlots?: boolean;
 		isInReverseTrial?: boolean;
 		onLearnMorePremium?: PremiumSubscriptionUpsellProps['onLearnMorePremium'];
@@ -1623,7 +1627,7 @@ export type PremiumUpsellAlertProps = {
 		analyticsLocations?: unknown;
 		analyticsProperties?: unknown;
 		imageSource?: unknown;
-		initialUpsellKey?: unknown;
+		initialUpsellKey?: 'animated-emoji' | 'app-icons' | 'custom-profiles' | 'global-emoji' | 'global-sticker' | 'guild-cap' | 'longer-message' | 'premium-guild-profile' | 'upload' | (string & {});
 		onClose?: (...args: any[]) => unknown;
 	};
 export type PremiumUpsellAlertComponent = React.ComponentType<PremiumUpsellAlertProps>;

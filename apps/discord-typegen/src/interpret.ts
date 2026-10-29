@@ -5,6 +5,7 @@ import type { ComponentRecord, ImportRef } from './types';
 import type { PendingDefault } from './defaults';
 
 import {
+	assignComputed,
 	assignKey,
 	bindClassMethods,
 	componentFor,
@@ -215,6 +216,8 @@ function consumeDefault(frame: Frame, expression: ts.Expression): boolean {
 	} else if (value.kind === 'presence' && value.register === pending.register) {
 		// The target still holds the test, which has this value when the prop is absent.
 		observe(pending.prop, { kind: 'default', value: !value.present });
+	} else if (value.kind === 'import') {
+		observe(pending.prop, { kind: 'default-ref', ref: value });
 	} else if (!pending.copy) {
 		observe(pending.prop, { kind: 'default-expression' });
 	}
@@ -377,6 +380,10 @@ function elementRead(frame: Frame, node: ts.ElementAccessExpression): Value {
 		return { kind: 'dep', index: Number(index.text.slice(1)) };
 	}
 
+	if (base.kind === 'module' && !base.interop) {
+		return { kind: 'star', moduleId: base.moduleId };
+	}
+
 	return UNKNOWN;
 }
 
@@ -474,6 +481,10 @@ function binary(frame: Frame, node: ts.BinaryExpression): Value {
 		[left, right],
 		[right, left],
 	] as const) {
+		if (a.kind === 'prop' && b.kind === 'import') {
+			observe(a, { kind: 'compared-ref', ref: b });
+		}
+
 		if (a.kind !== 'prop' || b.kind !== 'literal') {
 			continue;
 		}
@@ -506,6 +517,8 @@ function assign(frame: Frame, target: ts.Expression, value: Value) {
 			assignKey(frame.ctx, base, intern(key.text), value);
 		} else if (ts.isNumericLiteral(key)) {
 			assignSlot(base, Number(key.text), value);
+		} else {
+			assignComputed(frame.ctx, base, value);
 		}
 	}
 }

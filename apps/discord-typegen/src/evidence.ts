@@ -1,5 +1,6 @@
 import type {
 	ComponentRecord,
+	ConstantValue,
 	LiteralValue,
 	ModuleFacts,
 	PropEvidence,
@@ -11,6 +12,14 @@ import type { ModuleContext, PropValue, Value } from './values';
 import type { Resolver } from './resolve';
 
 import { UNKNOWN, spreadSources, targetOf } from './values';
+import { constantOf } from './constants';
+
+/** What a module's exports are, besides its components: values from other modules, and constants. */
+export type BoundExports = {
+	reExports: ReExport[];
+	constants: Map<string, ConstantValue>;
+	starExports: number[];
+};
 
 const MODULE = 4;
 const EXPORTS = 5;
@@ -253,14 +262,27 @@ export function assignKey(ctx: ModuleContext, base: Value, name: string, value: 
 	}
 }
 
+/**
+ * @description Handles `base[key] = value` with a computed key: an export-star loop copying another module's exports.
+ * @param ctx The module.
+ * @param base The object written to.
+ * @param value The value written.
+ */
+export function assignComputed(ctx: ModuleContext, base: Value, value: Value) {
+	if (base.kind === 'param' && base.index === EXPORTS && value.kind === 'star') {
+		ctx.starExports.push(value.moduleId);
+	}
+}
+
 function addStatic(ctx: ModuleContext, component: ComponentRecord, name: string, value: Value) {
 	if (name === 'defaultProps' && value.kind === 'object') {
 		for (const [prop, entry] of value.object.entries) {
+			const target: PropValue = { kind: 'prop', component, name: prop };
+
 			if (entry.kind === 'literal' && entry.value !== undefined) {
-				observe(
-					{ kind: 'prop', component, name: prop },
-					{ kind: 'default', value: entry.value },
-				);
+				observe(target, { kind: 'default', value: entry.value });
+			} else if (entry.kind === 'import') {
+				observe(target, { kind: 'default-ref', ref: entry });
 			}
 		}
 
@@ -355,10 +377,11 @@ export function bindClassMethods(args: Value[]) {
 /**
  * @description Applies the module's export assignments and export getters to its components.
  * @param ctx The walked module.
- * @returns The exports whose value is read from another module.
+ * @returns The exports whose value is read from another module, and the exported constants.
  */
-export function bindExports(ctx: ModuleContext): ReExport[] {
+export function bindExports(ctx: ModuleContext): BoundExports {
 	const reExports: ReExport[] = [];
+	const constants = new Map<string, ConstantValue>();
 	const bindings = [
 		...ctx.exports,
 		...ctx.getters.flatMap(({ name, fn }) => fn.returns.map((value) => ({ name, value }))),
@@ -369,10 +392,16 @@ export function bindExports(ctx: ModuleContext): ReExport[] {
 			value.fn.component.exportNames.push(name);
 		} else if (value.kind === 'import') {
 			reExports.push({ exportName: name, target: value });
+		} else {
+			const constant = constantOf(value);
+
+			if (constant !== undefined) {
+				constants.set(name, constant);
+			}
 		}
 	}
 
-	return reExports;
+	return { reExports, constants, starExports: ctx.starExports };
 }
 
 /**
@@ -425,6 +454,7 @@ export default {
 	componentFor,
 	element,
 	assignKey,
+	assignComputed,
 	wrap,
 	defineExport,
 	bindClassMethods,

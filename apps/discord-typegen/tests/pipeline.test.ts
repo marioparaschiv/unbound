@@ -10,9 +10,10 @@ import { loadHostProps } from '../src/hosts';
 import { splitModules } from '../src/split';
 import { TYPES_DIR } from '../src/paths';
 
-// Verbatim slices of discord-350's main.js: react-native's entry, Stack, TableRow, NavigatorScreen, TableSwitchRow,
-// TextField, useTextField, BaseTextField, ErrorText, Text.
-const FIXTURE_IDS = [17, 5378, 6181, 6722, 6882, 6294, 6295, 6304, 6290, 5085];
+// Verbatim module slices of discord-350's main.js; each fixture names its source path.
+const FIXTURE_IDS = [
+	17, 5378, 6181, 6722, 6882, 6294, 6295, 6304, 6290, 5085, 4732, 6196, 4428, 4439, 9432,
+];
 const lines = FIXTURE_IDS.flatMap((id) =>
 	readFileSync(join(import.meta.dir, 'fixtures', `module-${id}.txt`), 'utf8').split('\n'),
 );
@@ -147,8 +148,9 @@ describe('call-site literals', () => {
 
 describe('Text', () => {
 	test('a `??` fallback types and documents the prop like a destructuring default', () => {
-		expect(alias('design.gen.d.ts', 'TextProps')).toContain(
-			"/** @default 'text-default' */ color?: 'text-default' | 'text-feedback-critical' | (string & {});",
+		// Call sites in other fixtures add their own colours to the union, so only the default's part is pinned.
+		expect(alias('design.gen.d.ts', 'TextProps')).toMatch(
+			/\/\*\* @default 'text-default' \*\/ color\?: [^;]*'text-default' \|/,
 		);
 	});
 });
@@ -180,6 +182,18 @@ describe('TextField', () => {
 		expect(alias('design.gen.d.ts', 'TextFieldComponent')).toBe(
 			'export type TextFieldComponent = React.ComponentType<TextFieldProps & Record<string, unknown>>;',
 		);
+	});
+});
+
+describe('imported constants', () => {
+	test('a prop compared with members of an imported enum is typed by their values', () => {
+		expect(alias('modules.gen.d.ts', 'IdentityVerificationFieldProps')).toContain(
+			"platform?: 'email' | 'phone' | (string & {});",
+		);
+	});
+
+	test('an enum imported through an export-star barrel resolves', () => {
+		expect(alias('design.gen.d.ts', 'AnimatedRenderItemProps')).toContain('state?: number;');
 	});
 });
 

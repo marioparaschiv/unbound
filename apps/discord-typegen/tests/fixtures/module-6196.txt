@@ -1,0 +1,689 @@
+    r10 = r7.__d;
+    r0 = 6196;
+    r9 = [19, 17, 21, 5089, 589, 560, 578, 5085, 1128, 6197, 5380, 4732, 6199, 5935, 6730, 1603, 6733, 6756, 6640, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun6197: for(var _fun6197_ip = 0; ; ) switch(_fun6197_ip) {
+case 0:
+            r4 = a1;
+            var _closure0_slot0 = r4;
+            r10 = a2;
+            var _closure0_slot1 = r10;
+            r2 = a5;
+            r3 = a6;
+            var _closure0_slot2 = r3;
+            r1 = function(a0, a1) { // Original name: getLabel, environment: r5
+                _fun38504: for(var _fun38504_ip = 0; ; ) switch(_fun38504_ip) {
+case 0:
+                    r4 = a0;
+                    r1 = a1;
+                    r5 = _closure0_slot0;
+                    r2 = _closure0_slot2;
+                    r3 = r2[r11];
+                    r0 = undefined;
+                    r3 = r5.bind(r0)(r3);
+                    r3 = r3.UserVerificationFieldPlatforms;
+                    r3 = r3.EMAIL;
+                    if(!(r3 !== r4)) { _fun38504_ip = 186; continue _fun38504 }
+case 47:
+                    r3 = r2[r11];
+                    r3 = r5.bind(r0)(r3);
+                    r3 = r3.UserVerificationFieldPlatforms;
+                    r3 = r3.PHONE;
+                    if(!(r3 !== r4)) { _fun38504_ip = 120; continue _fun38504 }
+case 72:
+                    r3 = r2[r8];
+                    r3 = r5.bind(r0)(r3);
+                    r6 = r3.intl;
+                    r4 = r6.string;
+                    r3 = r2[r8];
+                    r3 = r5.bind(r0)(r3);
+                    r3 = r3.t;
+                    r3 = r3.mhv8BM;
+                    r3 = r4.bind(r6)(r3);
+                    return r3;
+case 120:
+                    r3 = r2[r8];
+                    r3 = r5.bind(r0)(r3);
+                    r7 = r3.intl;
+                    r6 = r7.string;
+                    r3 = r2[r8];
+                    r3 = r5.bind(r0)(r3);
+                    r4 = r3.t;
+                    if(r1) { _fun38504_ip = 171; continue _fun38504 }
+case 156:
+                    r3 = r4.woMjLV;
+                    r3 = r6.bind(r7)(r3);
+                    _fun38504_ip = 184; continue _fun38504;
+case 171:
+                    r4 = r4.xO2XI/;
+                    r3 = r6.bind(r7)(r4);
+case 184:
+                    return r3;
+case 186:
+                    r3 = r2[r8];
+                    r3 = r5.bind(r0)(r3);
+                    r4 = r3.intl;
+                    r3 = r4.string;
+                    r2 = r2[r8];
+                    r2 = r5.bind(r0)(r2);
+                    r2 = r2.t;
+                    if(r1) { _fun38504_ip = 237; continue _fun38504 }
+case 222:
+                    r1 = r2.c6EUJI;
+                    r1 = r3.bind(r4)(r1);
+                    _fun38504_ip = 250; continue _fun38504;
+case 237:
+                    r2 = r2.INsLgA;
+                    r1 = r3.bind(r4)(r2);
+case 250:
+                    return r1;
+                }
+            };
+            var _closure0_slot8 = r1;
+            r1 = global;
+            r8 = r1.Object;
+            r7 = r8.defineProperty;
+            r6 = '__esModule';
+            r1 = {'value': true};
+            r1 = r7.bind(r8)(r2, r6, r1);
+            r6 = r3[r0];
+            r0 = undefined;
+            r1 = a3;
+            r1 = r1.bind(r0)(r6);
+            r1 = r3[r1];
+            r1 = r4.bind(r0)(r1);
+            r1 = r1.View;
+            var _closure0_slot3 = r1;
+            r1 = r3[r2];
+            r1 = r4.bind(r0)(r1);
+            r6 = r1.jsx;
+            var _closure0_slot4 = r6;
+            r1 = r1.jsxs;
+            var _closure0_slot5 = r1;
+            r1 = r3[r3];
+            r7 = r4.bind(r0)(r1);
+            r6 = r7.createStyles;
+            r1 = {'container': null, 'icon': null, 'label': null, 'verifiedContainer': null, 'ctaButton': null};
+            r8 = {'padding': 8, 'marginTop': 8, 'borderRadius': null, 'height': 48, 'flexDirection': 'row', 'alignItems': 'center', 'justifyContent': 'space-between', 'backgroundColor': null};
+            r9 = r3[r4];
+            r9 = r10.bind(r0)(r9);
+            r9 = r9.radii;
+            r9 = r9.sm;
+            r8[2] = r9;
+            r9 = r3[r4];
+            r9 = r10.bind(r0)(r9);
+            r9 = r9.colors;
+            r9 = r9.BACKGROUND_SURFACE_HIGH;
+            r8[7] = r9;
+            r1[0] = r8;
+            r8 = {'marginLeft': 4, 'marginRight': 8};
+            r1[1] = r8;
+            r8 = {'flex': 1, 'marginLeft': 4, 'lineHeight': 20};
+            r1[2] = r8;
+            r8 = {'paddingVertical': 7, 'paddingHorizontal': 4, 'flexDirection': 'row', 'alignItems': 'center'};
+            r1[3] = r8;
+            r8 = {'flexGrow': 0, 'alignSelf': 'center', 'paddingHorizontal': 16};
+            r1[4] = r8;
+            r1 = r6.bind(r7)(r1);
+            var _closure0_slot6 = r1;
+            r1 = r3[r5];
+            r6 = r4.bind(r0)(r1);
+            r1 = r6.isReactCompilerEnabled;
+            r1 = r1.bind(r6)();
+            if(r1) { _fun6197_ip = 308; continue _fun6197 }
+case 301:
+            r1 = function(a0) { // Original name: BaseIdentityVerificationField, environment: r5
+                _fun38506: for(var _fun38506_ip = 0; ; ) switch(_fun38506_ip) {
+case 0:
+                    r2 = a0;
+                    r14 = r2.label;
+                    r6 = r2.passesVerification;
+                    r13 = r2.onPress;
+                    r10 = r2.icon;
+                    r2 = _closure0_slot6;
+                    r0 = undefined;
+                    r11 = r2.bind(r0)();
+                    r4 = _closure0_slot5;
+                    r3 = _closure0_slot3;
+                    r2 = {'style': null, 'children': null};
+                    r5 = r11.container;
+                    r2[0] = r5;
+                    r7 = null;
+                    r1 = r7 != r10;
+                    if(!r1) { _fun38506_ip = 98; continue _fun38506 }
+case 73:
+                    r9 = _closure0_slot4;
+                    r5 = {'style': null};
+                    r12 = r11.icon;
+                    r5[0] = r12;
+                    r7 = r9.bind(r0)(r10, r5);
+case 98:
+                    r5 = new Array(3);
+                    r5[0] = r7;
+                    r7 = _closure0_slot4;
+                    r10 = _closure0_slot0;
+                    r9 = _closure0_slot2;
+                    r8 = r9[r7];
+                    r8 = r10.bind(r0)(r8);
+                    r12 = r8.Text;
+                    r8 = {'style': null, 'variant': 'text-md/medium', 'color': 'mobile-text-heading-primary', 'children': null};
+                    r15 = r11.label;
+                    r8[0] = r15;
+                    r8[3] = r14;
+                    r8 = r7.bind(r0)(r12, r8);
+                    r5[1] = r8;
+                    if(r6) { _fun38506_ip = 272; continue _fun38506 }
+case 168:
+                    r6 = {'style': null, 'children': null};
+                    r8 = r11.ctaButton;
+                    r6[0] = r8;
+                    r8 = r9[r10];
+                    r8 = r10.bind(r0)(r8);
+                    r12 = r8.Button;
+                    r8 = {'variant': 'primary', 'size': 'sm', 'grow': true, 'text': null, 'onPress': null};
+                    r14 = r9[r8];
+                    r14 = r10.bind(r0)(r14);
+                    r16 = r14.intl;
+                    r15 = r16.string;
+                    r14 = r9[r8];
+                    r14 = r10.bind(r0)(r14);
+                    r14 = r14.t;
+                    r14 = r14["13ofGu"];
+                    r14 = r15.bind(r16)(r14);
+                    r8[3] = r14;
+                    r8[4] = r13;
+                    r8 = r7.bind(r0)(r12, r8);
+                    r6[1] = r8;
+                    _fun38506_ip = 380; continue _fun38506;
+case 272:
+                    r8 = {'style': null, 'accessible': true, 'accessibilityLabel': null, 'children': null};
+                    r11 = r11.verifiedContainer;
+                    r8[0] = r11;
+                    r11 = r9[r8];
+                    r11 = r10.bind(r0)(r11);
+                    r13 = r11.intl;
+                    r12 = r13.string;
+                    r11 = r9[r8];
+                    r11 = r10.bind(r0)(r11);
+                    r11 = r11.t;
+                    r11 = r11.g62IJl;
+                    r11 = r12.bind(r13)(r11);
+                    r8[2] = r11;
+                    r9 = r9[r9];
+                    r9 = r10.bind(r0)(r9);
+                    r10 = r9.CheckmarkLargeIcon;
+                    r9 = {'color': 'status-positive'};
+                    r9 = r7.bind(r0)(r10, r9);
+                    r8[3] = r9;
+                    r6 = r8;
+case 380:
+                    r6 = r7.bind(r0)(r3, r6);
+                    r5[2] = r6;
+                    r2[1] = r5;
+                    r2 = r4.bind(r0)(r3, r2);
+                    return r2;
+                }
+            };
+            _fun6197_ip = 313; continue _fun6197;
+case 308:
+            r1 = function(a0) { // Original name: BaseIdentityVerificationField, environment: r5
+                _fun38505: for(var _fun38505_ip = 0; ; ) switch(_fun38505_ip) {
+case 0:
+                    r3 = a0;
+                    r16 = _closure0_slot0;
+                    r15 = _closure0_slot2;
+                    r5 = r15[r6];
+                    r1 = undefined;
+                    r6 = r16.bind(r1)(r5);
+                    r5 = r6.c;
+                    r0 = 16;
+                    r5 = r5.bind(r6)(r0);
+                    r6 = r3.label;
+                    r10 = r3.passesVerification;
+                    r11 = r3.onPress;
+                    r7 = r3.icon;
+                    r3 = _closure0_slot6;
+                    r9 = r3.bind(r1)();
+                    r3 = r5[r0];
+                    if(!(r3 === r7)) { _fun38505_ip = 94; continue _fun38505 }
+case 75:
+                    r8 = r5[r1];
+                    r3 = r9.icon;
+                    if(!(r8 === r3)) { _fun38505_ip = 94; continue _fun38505 }
+case 88:
+                    r8 = r5[r2];
+                    _fun38505_ip = 156; continue _fun38505;
+case 94:
+                    r3 = null;
+                    r2 = r3 != r7;
+                    if(!r2) { _fun38505_ip = 128; continue _fun38505 }
+case 103:
+                    r13 = _closure0_slot4;
+                    r12 = {'style': null};
+                    r14 = r9.icon;
+                    r12[0] = r14;
+                    r3 = r13.bind(r1)(r7, r12);
+case 128:
+                    r0 = 0;
+                    r5[r0] = r7;
+                    r7 = r9.icon;
+                    r0 = 1;
+                    r5[r0] = r7;
+                    r0 = 2;
+                    r5[r0] = r3;
+                    r8 = r3;
+case 156:
+                    r3 = r5[r3];
+                    if(!(r3 === r6)) { _fun38505_ip = 183; continue _fun38505 }
+case 164:
+                    r7 = r5[r4];
+                    r3 = r9.label;
+                    if(!(r7 === r3)) { _fun38505_ip = 183; continue _fun38505 }
+case 177:
+                    r7 = r5[r5];
+                    _fun38505_ip = 259; continue _fun38505;
+case 183:
+                    r13 = _closure0_slot4;
+                    r3 = r15[r7];
+                    r3 = r16.bind(r1)(r3);
+                    r12 = r3.Text;
+                    r3 = {'style': null, 'variant': 'text-md/medium', 'color': 'mobile-text-heading-primary', 'children': null};
+                    r14 = r9.label;
+                    r3[0] = r14;
+                    r3[3] = r6;
+                    r3 = r13.bind(r1)(r12, r3);
+                    r0 = 3;
+                    r5[r0] = r6;
+                    r6 = r9.label;
+                    r0 = 4;
+                    r5[r0] = r6;
+                    r0 = 5;
+                    r5[r0] = r3;
+                    r7 = r3;
+case 259:
+                    r3 = r5[r6];
+                    if(!(r3 === r11)) { _fun38505_ip = 312; continue _fun38505 }
+case 267:
+                    r3 = r5[r7];
+                    if(!(r3 === r10)) { _fun38505_ip = 312; continue _fun38505 }
+case 275:
+                    r6 = r5[r8];
+                    r3 = r9.ctaButton;
+                    if(!(r6 === r3)) { _fun38505_ip = 312; continue _fun38505 }
+case 289:
+                    r6 = r5[r9];
+                    r3 = r9.verifiedContainer;
+                    if(!(r6 === r3)) { _fun38505_ip = 312; continue _fun38505 }
+case 303:
+                    r6 = r5[r10];
+                    _fun38505_ip = 591; continue _fun38505;
+case 312:
+                    r13 = _closure0_slot4;
+                    r12 = _closure0_slot3;
+                    if(r10) { _fun38505_ip = 427; continue _fun38505 }
+case 323:
+                    r3 = {'style': null, 'children': null};
+                    r14 = r9.ctaButton;
+                    r3[0] = r14;
+                    r14 = r15[r10];
+                    r14 = r16.bind(r1)(r14);
+                    r17 = r14.Button;
+                    r14 = {'variant': 'primary', 'size': 'sm', 'grow': true, 'text': null, 'onPress': null};
+                    r18 = r15[r8];
+                    r18 = r16.bind(r1)(r18);
+                    r20 = r18.intl;
+                    r19 = r20.string;
+                    r18 = r15[r8];
+                    r18 = r16.bind(r1)(r18);
+                    r18 = r18.t;
+                    r18 = r18["13ofGu"];
+                    r18 = r19.bind(r20)(r18);
+                    r14[3] = r18;
+                    r14[4] = r11;
+                    r14 = r13.bind(r1)(r17, r14);
+                    r3[1] = r14;
+                    _fun38505_ip = 535; continue _fun38505;
+case 427:
+                    r14 = {'style': null, 'accessible': true, 'accessibilityLabel': null, 'children': null};
+                    r17 = r9.verifiedContainer;
+                    r14[0] = r17;
+                    r17 = r15[r8];
+                    r17 = r16.bind(r1)(r17);
+                    r19 = r17.intl;
+                    r18 = r19.string;
+                    r17 = r15[r8];
+                    r17 = r16.bind(r1)(r17);
+                    r17 = r17.t;
+                    r17 = r17.g62IJl;
+                    r17 = r18.bind(r19)(r17);
+                    r14[2] = r17;
+                    r15 = r15[r9];
+                    r15 = r16.bind(r1)(r15);
+                    r16 = r15.CheckmarkLargeIcon;
+                    r15 = {'color': 'status-positive'};
+                    r15 = r13.bind(r1)(r16, r15);
+                    r14[3] = r15;
+                    r3 = r14;
+case 535:
+                    r3 = r13.bind(r1)(r12, r3);
+                    r0 = 6;
+                    r5[r0] = r11;
+                    r0 = 7;
+                    r5[r0] = r10;
+                    r10 = r9.ctaButton;
+                    r0 = 8;
+                    r5[r0] = r10;
+                    r10 = r9.verifiedContainer;
+                    r0 = 9;
+                    r5[r0] = r10;
+                    r0 = 10;
+                    r5[r0] = r3;
+                    r6 = r3;
+case 591:
+                    r10 = r5[r11];
+                    r3 = r9.container;
+                    if(!(r10 === r3)) { _fun38505_ip = 634; continue _fun38505 }
+case 604:
+                    r3 = r5[r12];
+                    if(!(r3 === r8)) { _fun38505_ip = 634; continue _fun38505 }
+case 612:
+                    r3 = r5[r13];
+                    if(!(r3 === r7)) { _fun38505_ip = 634; continue _fun38505 }
+case 620:
+                    r3 = r5[r14];
+                    if(!(r3 === r6)) { _fun38505_ip = 634; continue _fun38505 }
+case 628:
+                    r3 = r5[r15];
+                    _fun38505_ip = 730; continue _fun38505;
+case 634:
+                    r11 = _closure0_slot5;
+                    r10 = _closure0_slot3;
+                    r4 = {'style': null, 'children': null};
+                    r12 = r9.container;
+                    r4[0] = r12;
+                    r12 = new Array(3);
+                    r12[0] = r8;
+                    r12[1] = r7;
+                    r12[2] = r6;
+                    r4[1] = r12;
+                    r4 = r11.bind(r1)(r10, r4);
+                    r9 = r9.container;
+                    r0 = 11;
+                    r5[r0] = r9;
+                    r0 = 12;
+                    r5[r0] = r8;
+                    r0 = 13;
+                    r5[r0] = r7;
+                    r0 = 14;
+                    r5[r0] = r6;
+                    r0 = 15;
+                    r5[r0] = r4;
+                    r3 = r4;
+case 730:
+                    return r3;
+                }
+            };
+case 313:
+            var _closure0_slot7 = r1;
+            r1 = r3[r5];
+            r6 = r4.bind(r0)(r1);
+            r1 = r6.isReactCompilerEnabled;
+            r1 = r1.bind(r6)();
+            if(r1) { _fun6197_ip = 345; continue _fun6197 }
+case 338:
+            r1 = function(a0) { // Original name: IdentityVerificationField, environment: r5
+                _fun38508: for(var _fun38508_ip = 0; ; ) switch(_fun38508_ip) {
+case 0:
+                    r3 = a0;
+                    r4 = r3.platform;
+                    r6 = r3.passesVerification;
+                    r3 = _closure0_slot8;
+                    r0 = 0;
+                    r8 = r3.bind(r0)(r4, r6);
+                    r5 = _closure0_slot0;
+                    r3 = _closure0_slot2;
+                    r7 = r3[r11];
+                    r1 = undefined;
+                    r7 = r5.bind(r1)(r7);
+                    r7 = r7.UserVerificationFieldPlatforms;
+                    r7 = r7.EMAIL;
+                    if(!(r7 !== r4)) { _fun38508_ip = 124; continue _fun38508 }
+case 65:
+                    r7 = r3[r11];
+                    r7 = r5.bind(r1)(r7);
+                    r7 = r7.UserVerificationFieldPlatforms;
+                    r7 = r7.PHONE;
+                    if(!(r7 !== r4)) { _fun38508_ip = 107; continue _fun38508 }
+case 90:
+                    r7 = r3[r17];
+                    r7 = r5.bind(r1)(r7);
+                    r7 = r7.EnvelopeIcon;
+                    _fun38508_ip = 139; continue _fun38508;
+case 107:
+                    r9 = r3[r18];
+                    r9 = r5.bind(r1)(r9);
+                    r7 = r9.MobilePhoneIcon;
+                    _fun38508_ip = 139; continue _fun38508;
+case 124:
+                    r9 = r3[r17];
+                    r9 = r5.bind(r1)(r9);
+                    r7 = r9.EnvelopeIcon;
+case 139:
+                    r9 = r3[r11];
+                    r9 = r5.bind(r1)(r9);
+                    r9 = r9.UserVerificationFieldPlatforms;
+                    r9 = r9.EMAIL;
+                    if(!(r9 !== r4)) { _fun38508_ip = 207; continue _fun38508 }
+case 164:
+                    r3 = r3[r11];
+                    r3 = r5.bind(r1)(r3);
+                    r3 = r3.UserVerificationFieldPlatforms;
+                    r3 = r3.PHONE;
+                    if(!(r3 !== r4)) { _fun38508_ip = 198; continue _fun38508 }
+case 189:
+                    r5 = function() {
+                        r0 = undefined;
+                        return r0;
+                    };
+                    _fun38508_ip = 214; continue _fun38508;
+case 198:
+                    r5 = function() { // Environment: r2
+                        r3 = _closure0_slot1;
+                        r5 = _closure0_slot2;
+                        r2 = r5[r13];
+                        r0 = undefined;
+                        r4 = r3.bind(r0)(r2);
+                        r3 = r4.pushLazy;
+                        r6 = _closure0_slot0;
+                        r1 = r5[r15];
+                        r7 = r6.bind(r0)(r1);
+                        r2 = r5[r14];
+                        r1 = r5.paths;
+                        r2 = r7.bind(r0)(r2, r1);
+                        r1 = {'reason': null};
+                        r5 = r5[r16];
+                        r5 = r6.bind(r0)(r5);
+                        r5 = r5.ChangePhoneReason;
+                        r5 = r5.GUILD_PHONE_REQUIRED;
+                        r1[0] = r5;
+                        r1 = r3.bind(r4)(r2, r1);
+                        return r0;
+                    };
+                    _fun38508_ip = 214; continue _fun38508;
+case 207:
+                    r5 = function() { // Environment: r2
+                        r2 = _closure0_slot1;
+                        r1 = _closure0_slot2;
+                        r1 = r1[r12];
+                        r0 = undefined;
+                        r2 = r2.bind(r0)(r1);
+                        r1 = r2.open;
+                        r1 = r1.bind(r2)();
+                        return r0;
+                    };
+case 214:
+                    r4 = _closure0_slot4;
+                    r3 = _closure0_slot7;
+                    r2 = {'label': null, 'icon': null, 'passesVerification': null, 'onPress': null};
+                    r2[0] = r8;
+                    r2[1] = r7;
+                    r2[2] = r6;
+                    r2[3] = r5;
+                    r2 = r4.bind(r1)(r3, r2);
+                    return r2;
+                }
+            };
+            _fun6197_ip = 350; continue _fun6197;
+case 345:
+            r1 = function(a0) { // Original name: IdentityVerificationField, environment: r5
+                _fun38507: for(var _fun38507_ip = 0; ; ) switch(_fun38507_ip) {
+case 0:
+                    r5 = a0;
+                    r10 = _closure0_slot0;
+                    r2 = _closure0_slot2;
+                    r4 = r2[r6];
+                    r1 = undefined;
+                    r6 = r10.bind(r1)(r4);
+                    r4 = r6.c;
+                    r0 = 12;
+                    r4 = r4.bind(r6)(r0);
+                    r9 = r5.platform;
+                    r5 = r5.passesVerification;
+                    r6 = r4[r0];
+                    if(!(r6 === r5)) { _fun38507_ip = 72; continue _fun38507 }
+case 58:
+                    r6 = r4[r1];
+                    if(!(r6 === r9)) { _fun38507_ip = 72; continue _fun38507 }
+case 66:
+                    r6 = r4[r2];
+                    _fun38507_ip = 105; continue _fun38507;
+case 72:
+                    r7 = _closure0_slot8;
+                    r0 = 0;
+                    r7 = r7.bind(r0)(r9, r5);
+                    r4[r0] = r5;
+                    r0 = 1;
+                    r4[r0] = r9;
+                    r0 = 2;
+                    r4[r0] = r7;
+                    r6 = r7;
+case 105:
+                    r7 = r4[r3];
+                    if(!(r7 === r9)) { _fun38507_ip = 119; continue _fun38507 }
+case 113:
+                    r7 = r4[r4];
+                    _fun38507_ip = 235; continue _fun38507;
+case 119:
+                    r8 = r2[r11];
+                    r8 = r10.bind(r1)(r8);
+                    r8 = r8.UserVerificationFieldPlatforms;
+                    r8 = r8.EMAIL;
+                    if(!(r8 !== r9)) { _fun38507_ip = 203; continue _fun38507 }
+case 144:
+                    r8 = r2[r11];
+                    r8 = r10.bind(r1)(r8);
+                    r8 = r8.UserVerificationFieldPlatforms;
+                    r8 = r8.PHONE;
+                    if(!(r8 !== r9)) { _fun38507_ip = 186; continue _fun38507 }
+case 169:
+                    r8 = r2[r17];
+                    r8 = r10.bind(r1)(r8);
+                    r8 = r8.EnvelopeIcon;
+                    _fun38507_ip = 218; continue _fun38507;
+case 186:
+                    r11 = r2[r18];
+                    r11 = r10.bind(r1)(r11);
+                    r8 = r11.MobilePhoneIcon;
+                    _fun38507_ip = 218; continue _fun38507;
+case 203:
+                    r11 = r2[r17];
+                    r11 = r10.bind(r1)(r11);
+                    r8 = r11.EnvelopeIcon;
+case 218:
+                    r0 = 3;
+                    r4[r0] = r9;
+                    r0 = 4;
+                    r4[r0] = r8;
+                    r7 = r8;
+case 235:
+                    r8 = r4[r5];
+                    if(!(r8 === r9)) { _fun38507_ip = 249; continue _fun38507 }
+case 243:
+                    r8 = r4[r6];
+                    _fun38507_ip = 341; continue _fun38507;
+case 249:
+                    r11 = r2[r11];
+                    r11 = r10.bind(r1)(r11);
+                    r11 = r11.UserVerificationFieldPlatforms;
+                    r11 = r11.EMAIL;
+                    if(!(r11 !== r9)) { _fun38507_ip = 317; continue _fun38507 }
+case 274:
+                    r2 = r2[r11];
+                    r2 = r10.bind(r1)(r2);
+                    r2 = r2.UserVerificationFieldPlatforms;
+                    r2 = r2.PHONE;
+                    if(!(r2 !== r9)) { _fun38507_ip = 308; continue _fun38507 }
+case 299:
+                    r2 = /* fn#93073 already emitted */;
+                    _fun38507_ip = 324; continue _fun38507;
+case 308:
+                    r2 = /* fn#93072 already emitted */;
+                    _fun38507_ip = 324; continue _fun38507;
+case 317:
+                    r2 = /* fn#93071 already emitted */;
+case 324:
+                    r0 = 5;
+                    r4[r0] = r9;
+                    r0 = 6;
+                    r4[r0] = r2;
+                    r8 = r2;
+case 341:
+                    r2 = r4[r7];
+                    if(!(r2 === r8)) { _fun38507_ip = 379; continue _fun38507 }
+case 349:
+                    r2 = r4[r8];
+                    if(!(r2 === r7)) { _fun38507_ip = 379; continue _fun38507 }
+case 357:
+                    r2 = r4[r9];
+                    if(!(r2 === r6)) { _fun38507_ip = 379; continue _fun38507 }
+case 365:
+                    r2 = r4[r10];
+                    if(!(r2 === r5)) { _fun38507_ip = 379; continue _fun38507 }
+case 373:
+                    r2 = r4[r11];
+                    _fun38507_ip = 457; continue _fun38507;
+case 379:
+                    r10 = _closure0_slot4;
+                    r9 = _closure0_slot7;
+                    r3 = {'label': null, 'icon': null, 'passesVerification': null, 'onPress': null};
+                    r3[0] = r6;
+                    r3[1] = r7;
+                    r3[2] = r5;
+                    r3[3] = r8;
+                    r3 = r10.bind(r1)(r9, r3);
+                    r0 = 7;
+                    r4[r0] = r8;
+                    r0 = 8;
+                    r4[r0] = r7;
+                    r0 = 9;
+                    r4[r0] = r6;
+                    r0 = 10;
+                    r4[r0] = r5;
+                    r0 = 11;
+                    r4[r0] = r3;
+                    r2 = r3;
+case 457:
+                    return r2;
+                }
+            };
+case 350:
+            r3 = r3[r19];
+            r5 = r4.bind(r0)(r3);
+            r4 = r5.fileFinishedImporting;
+            r3 = 'modules/guild_member_verification/native/components/form_fields/IdentityVerificationField.tsx';
+            r3 = r4.bind(r5)(r3);
+            r2['default'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

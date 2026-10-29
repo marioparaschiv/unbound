@@ -40,7 +40,7 @@ export type AnimatedRenderItemProps = {
 		item?: unknown;
 		renderItem: (...args: any[]) => unknown;
 		shouldAnimate?: boolean;
-		state?: unknown;
+		state?: number;
 		useReducedMotion?: boolean;
 	};
 export type AnimatedRenderItemComponent = React.ComponentType<AnimatedRenderItemProps>;
@@ -194,7 +194,7 @@ export type ContextMenuDividerComponent = React.ComponentType<ContextMenuDivider
 export type ContextMenuPopoutProps = {
 		cleanUp?: unknown;
 		menu: { dividerIndexes?: unknown; height?: unknown; items?: unknown; keyboardShouldPersistTaps?: unknown; onClose?: unknown; positionX?: unknown; positionY?: unknown; requestClose?: unknown; state?: unknown; title?: unknown; x?: unknown; y?: unknown };
-		transitionState?: unknown;
+		transitionState?: number;
 	};
 export type ContextMenuPopoutComponent = React.ComponentType<ContextMenuPopoutProps>;
 /**
@@ -5352,7 +5352,7 @@ export type AnimatedToastProps = {
 		enterDelayMs?: unknown;
 		entry: { toast?: unknown };
 		position?: 'top' | (string & {});
-		state?: unknown;
+		state?: number;
 	};
 export type AnimatedToastComponent = React.ComponentType<AnimatedToastProps>;
 /**
@@ -5401,7 +5401,7 @@ export type AvatarProps = {
 		/** @default false */
 		speaking?: boolean;
 		speakingColor?: unknown;
-		status?: unknown;
+		status?: 'unknown' | (string & {});
 		statusSizeOverride?: unknown;
 		statusStyle?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 		/** @default false */
@@ -6375,7 +6375,7 @@ export type StatusProps = {
 		/** @default false */
 		isVROnline?: boolean;
 		size?: unknown;
-		status?: unknown;
+		status?: 'dnd' | 'idle' | 'invisible' | 'offline' | (string & {});
 		/** @default false */
 		streaming?: boolean;
 		style?: React.ComponentProps<typeof RN.View>['style'];
@@ -6391,7 +6391,7 @@ export type StatusWithTypingProps = {
 		/** @default false */
 		isVROnline?: boolean;
 		size?: unknown;
-		status?: unknown;
+		status?: 'dnd' | 'idle' | 'invisible' | 'offline' | (string & {});
 		/** @default false */
 		streaming?: boolean;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;

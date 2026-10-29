@@ -51,13 +51,22 @@ export type ComponentKind = 'function' | 'memo' | 'forwardRef' | 'class';
 
 export type LiteralValue = string | number | boolean | null;
 
+/** An exported constant: a literal, or an object of them keyed by member name (`ButtonVariants.PRIMARY`). */
+export type ConstantValue = LiteralValue | ConstantTable;
+
+export type ConstantTable = Map<string, ConstantValue>;
+
 /** One thing the decompile showed about a prop. A prop's evidence is the list of these. */
 export type PropObservation =
 	| { kind: 'default'; value: LiteralValue }
 	| { kind: 'default-expression' }
+	/** A default read from another module, resolved to `default` or `default-expression` after extraction. */
+	| { kind: 'default-ref'; ref: ImportRef }
 	| { kind: 'compared'; value: LiteralValue }
 	/** A literal some JSX call site passes for the prop. */
 	| { kind: 'passed'; value: LiteralValue }
+	/** A comparison with a value from another module, resolved to `compared` (or dropped) after extraction. */
+	| { kind: 'compared-ref'; ref: ImportRef }
 	| { kind: 'called'; argCount: number }
 	| { kind: 'forwarded'; target: TargetRef; key: string }
 	| { kind: 'spread'; target: TargetRef }
@@ -114,6 +123,10 @@ export type ModuleFacts = {
 	reExports: ReExport[];
 	/** Literal props passed to JSX elements, attached to the target's evidence once targets resolve. */
 	passed: PassedLiteral[];
+	/** Exports whose value is a literal or an object of literals, by export name. */
+	constants: Map<string, ConstantValue>;
+	/** Modules whose every export this one copies. */
+	starExports: number[];
 };
 
 /** A literal prop value at a JSX call site: `jsx(Text, { variant: 'heading-sm/normal' })`. */

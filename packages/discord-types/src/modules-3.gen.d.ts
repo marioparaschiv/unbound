@@ -46,7 +46,7 @@ export type ReferralProgramCoachmarkImgComponent = React.ComponentType<ReferralP
  */
 export type ProgressWheelProps = {
 		altImage?: unknown;
-		nReferralsSent?: unknown;
+		nReferralsSent?: number;
 	};
 export type ProgressWheelComponent = React.ComponentType<ProgressWheelProps>;
 /**
@@ -99,7 +99,7 @@ export type ReferralProgramShareConfirmationActionSheetComponent = React.Compone
  * @see modules/premium/referral_program/native/ReferralProgramShareConfirmationActionSheet.tsx
  */
 export type SharedUserProps = {
-		trialCreationResult?: unknown;
+		trialCreationResult?: number;
 		user: { id?: unknown };
 	};
 export type SharedUserComponent = React.ComponentType<SharedUserProps>;
@@ -125,7 +125,7 @@ export type OrbsGrantNoticeComponent = React.ComponentType<OrbsGrantNoticeProps>
  */
 export type RewardGrantNoticeProps = {
 		nRewardsGranted?: number;
-		referralRewardType?: unknown;
+		referralRewardType?: 'discount' | 'orbs' | (string & {});
 	};
 export type RewardGrantNoticeComponent = React.ComponentType<RewardGrantNoticeProps>;
 /**
@@ -135,7 +135,7 @@ export type RewardGrantNoticeComponent = React.ComponentType<RewardGrantNoticePr
 export type PremiumExpressionPickerFeatureUpsellProps = {
 		analyticsLocation?: unknown;
 		bottomSheetIndex: { get?: unknown };
-		featureName?: unknown;
+		featureName?: PremiumFeatureUpsellProps['featureName'];
 		inPortalKeyboard?: unknown;
 		shouldShow: boolean;
 	};
@@ -163,7 +163,7 @@ export type ViewsDComponent = React.ComponentType<ViewsDProps>;
  * @see modules/premium/roadblocks/native/views/PremiumFeatureUpsell.tsx
  */
 export type PremiumFeatureUpsellProps = {
-		featureName?: unknown;
+		featureName?: 'appIcons' | 'emojisEverywhere' | 'increasedFileUploadSize' | 'soundboardEverywhere' | 'stickersEverywhere' | 'streamHighQuality' | (string & {});
 		shouldShow?: boolean;
 	};
 export type PremiumFeatureUpsellComponent = React.ComponentType<PremiumFeatureUpsellProps & Record<string, unknown>>;
@@ -173,7 +173,7 @@ export type PremiumFeatureUpsellComponent = React.ComponentType<PremiumFeatureUp
  */
 export type PremiumFeatureUpsellPillProps = {
 		analyticsLocation?: unknown;
-		featureName?: unknown;
+		featureName?: 'stickersEverywhere' | (string & {});
 		/** @default true */
 		showShadow?: boolean;
 		style?: React.ComponentProps<typeof RN.View>['style'];
@@ -307,7 +307,8 @@ export type TieredTenureBadgePerkCardComponent = React.ComponentType<TieredTenur
  */
 export type ProfileBannerProps = {
 		backgroundColor?: unknown;
-		bannerHeight?: unknown;
+		/** @default 150 */
+		bannerHeight?: number;
 		/** @default 0 */
 		bannerSafeArea?: number;
 		bannerSource?: FastImageProps['source'];
@@ -480,7 +481,7 @@ export type QuarantineModeInfoAlertComponent = React.ComponentType<QuarantineMod
  */
 export type QuestContentImpressionTrackerProps = {
 		adContentIds?: unknown;
-		adCreativeType?: unknown;
+		adCreativeType?: number;
 		children: (...args: any[]) => unknown;
 		focused?: boolean;
 		focusedChanged?: unknown;
@@ -818,7 +819,7 @@ export type BountiesModalProps = {
 		bounty?: BountiesModalContentProps['bounty'];
 		bountyId?: BountiesModalContentProps['bountyId'];
 		sourceQuestContent?: unknown;
-		variant?: unknown;
+		variant?: 'vertical_scroll' | (string & {});
 	};
 export type BountiesModalComponent = React.ComponentType<BountiesModalProps>;
 /**
@@ -1336,7 +1337,7 @@ export type QuestBottomSheetTComponent = React.ComponentType<QuestBottomSheetTPr
 export type ConsoleRowProps = {
 		account?: unknown;
 		onPress: (...args: any[]) => unknown;
-		type?: unknown;
+		type?: 'playstation' | 'xbox' | (string & {});
 	};
 export type ConsoleRowComponent = React.ComponentType<ConsoleRowProps & Record<string, unknown>>;
 /**
@@ -1419,7 +1420,7 @@ export type QuestBottomSheetFooterProps = {
 		onLayout?: AnimatedFooterProps['onLayout'];
 		quest: { config?: unknown; id?: unknown; userStatus?: unknown };
 		sourceQuestContent?: unknown;
-		step?: unknown;
+		step?: 'CONSOLE_CONNECT' | 'TASK_SELECT' | 'TASK_STATUS' | (string & {});
 		style?: AnimatedFooterProps['style'];
 		withSafeArea?: AnimatedFooterProps['withSafeArea'];
 	};
@@ -1506,7 +1507,7 @@ export type QuestCardComponent = React.ComponentType<QuestCardProps>;
  */
 export type AdContentImpressionTrackerBaseNativeProps = Omit<QuestContentImpressionTrackerProps, 'adContentId' | 'adCreativeType' | 'overrideVisibility' | 'questOrQuests' | 'skipRemountKey' | 'visibilityRef'> & {
 		adContentId?: string;
-		adCreativeType?: unknown;
+		adCreativeType?: QuestContentImpressionTrackerProps['adCreativeType'];
 		overrideVisibility?: unknown;
 		questOrQuests?: unknown;
 		skipRemountKey?: unknown;
@@ -2396,7 +2397,7 @@ export type QuestsFooterComponent = React.ComponentType<QuestsFooterProps>;
  */
 export type QuestOrbMultiplierPerkInfoActionSheetProps = {
 		multiplier?: unknown;
-		orbMultiplierEligibility?: unknown;
+		orbMultiplierEligibility?: 'NITRO' | 'UPSELL' | 'XBOX_GAME_PASS' | (string & {});
 	};
 export type QuestOrbMultiplierPerkInfoActionSheetComponent = React.ComponentType<QuestOrbMultiplierPerkInfoActionSheetProps>;
 /**
@@ -2415,7 +2416,7 @@ export type SheetContentComponent = React.ComponentType<SheetContentProps>;
  */
 export type QuestOrbMultiplierPerkPillProps = {
 		onPress?: (...args: any[]) => unknown;
-		orbMultiplierEligibility?: unknown;
+		orbMultiplierEligibility?: 'XBOX_GAME_PASS' | (string & {});
 		questId?: string;
 	};
 export type QuestOrbMultiplierPerkPillComponent = React.ComponentType<QuestOrbMultiplierPerkPillProps>;
@@ -2809,7 +2810,7 @@ export type QuestCollectibleRewardModalMessagesComponent = React.ComponentType<Q
  */
 export type FiltersButtonProps = {
 		selectedFilters: { length?: unknown };
-		selectedSortMethod?: unknown;
+		selectedSortMethod?: 'suggested' | (string & {});
 		setSelectedFilters?: unknown;
 		setSelectedSortMethod?: unknown;
 	};
@@ -3906,7 +3907,7 @@ export type ForLaterCardStatusHeaderComponent = React.ComponentType<ForLaterCard
  * @see modules/saved_messages/native/ForLaterIntro.tsx
  */
 export type ForLaterIntroProps = {
-		type?: unknown;
+		type?: 'REMINDER' | (string & {});
 	};
 export type ForLaterIntroComponent = React.ComponentType<ForLaterIntroProps>;
 /**
@@ -3962,7 +3963,7 @@ export type ForLaterMessageRowComponent = React.ComponentType<ForLaterMessageRow
  * @see modules/saved_messages/native/ForLaterModal.tsx
  */
 export type ForLaterModalProps = {
-		type?: unknown;
+		type?: ForLaterScreenProps['type'];
 	};
 export type ForLaterModalComponent = React.ComponentType<ForLaterModalProps>;
 /**
@@ -3971,7 +3972,7 @@ export type ForLaterModalComponent = React.ComponentType<ForLaterModalProps>;
  */
 export type BadgedIconProps = {
 		showRedDot?: boolean;
-		type?: unknown;
+		type?: 'REMINDER' | (string & {});
 	};
 export type BadgedIconComponent = React.ComponentType<BadgedIconProps>;
 /**
@@ -3981,7 +3982,7 @@ export type BadgedIconComponent = React.ComponentType<BadgedIconProps>;
 export type ForLaterActionButtonProps = {
 		onOpen: (...args: any[]) => unknown;
 		ref?: React.Ref<any>;
-		type?: unknown;
+		type?: BadgedIconProps['type'];
 	};
 export type ForLaterActionButtonComponent = React.ComponentType<ForLaterActionButtonProps>;
 /**
@@ -3990,7 +3991,7 @@ export type ForLaterActionButtonComponent = React.ComponentType<ForLaterActionBu
  */
 export type ForLaterPageProps = {
 		handleScroll?: unknown;
-		type?: unknown;
+		type?: ForLaterIntroProps['type'];
 	};
 export type ForLaterPageComponent = React.ComponentType<ForLaterPageProps>;
 /**
@@ -3998,7 +3999,7 @@ export type ForLaterPageComponent = React.ComponentType<ForLaterPageProps>;
  * @see modules/saved_messages/native/ForLaterScreen.tsx
  */
 export type ForLaterScreenProps = {
-		type?: unknown;
+		type?: ForLaterPageProps['type'];
 	};
 export type ForLaterScreenComponent = React.ComponentType<ForLaterScreenProps>;
 /**
@@ -4209,7 +4210,7 @@ export type SearchFilterButtonComponent = React.ComponentType<SearchFilterButton
 export type AnimatedEnterExitContainerProps = {
 		children?: React.ReactNode;
 		cleanUp?: unknown;
-		state?: unknown;
+		state?: number;
 	};
 export type AnimatedEnterExitContainerComponent = React.ComponentType<AnimatedEnterExitContainerProps>;
 /**
@@ -4406,7 +4407,7 @@ export type SearchMediaImageProps = {
 		mediaHeight?: unknown;
 		mediaUrl?: unknown;
 		mediaWidth?: unknown;
-		obscureReason?: unknown;
+		obscureReason?: SearchMediaObscurityIconProps['obscureReason'];
 		placeholder?: unknown;
 		placeholderVersion?: ImageWithPlaceholderProps['placeholderVersion'];
 		renderFallback?: (...args: any[]) => unknown;
@@ -4419,7 +4420,7 @@ export type SearchMediaImageComponent = React.ComponentType<SearchMediaImageProp
  */
 export type SearchMediaObscurityIconProps = {
 		height?: unknown;
-		obscureReason?: unknown;
+		obscureReason?: 'explicit_content' | 'gore_content' | 'potential_explicit_content' | 'self_harm_content' | 'spoiler' | (string & {});
 		width?: unknown;
 	};
 export type SearchMediaObscurityIconComponent = React.ComponentType<SearchMediaObscurityIconProps>;
@@ -4446,7 +4447,7 @@ export type DMRowProps = {
 		onPress: (...args: any[]) => unknown;
 		premiumSince?: unknown;
 		trailing?: unknown;
-		type?: unknown;
+		type?: FriendPresenceProps['type'];
 		user: FriendPresenceProps['user'];
 	};
 export type DMRowComponent = React.ComponentType<DMRowProps>;
@@ -4457,7 +4458,7 @@ export type DMRowComponent = React.ComponentType<DMRowProps>;
 export type FriendPresenceProps = {
 		animate?: ActivityStatusProps['animate'];
 		guildId?: ActivityStatusProps['guildId'];
-		type?: unknown;
+		type?: number;
 		user: { id?: unknown };
 	};
 export type FriendPresenceComponent = React.ComponentType<FriendPresenceProps>;
@@ -4861,7 +4862,7 @@ export type SearchTabsLayoutComponent = React.ComponentType<SearchTabsLayoutProp
  */
 export type ConnectedSearchTabsPageProps = {
 		searchContext?: SearchTabsPageProps['searchContext'];
-		tab?: unknown;
+		tab?: SearchTabsPageProps['tab'];
 		width?: unknown;
 	};
 export type ConnectedSearchTabsPageComponent = React.ComponentType<ConnectedSearchTabsPageProps>;
@@ -4873,7 +4874,7 @@ export type SearchTabsPageProps = {
 		isFocused?: MessagesPinsScreenProps['isFocused'];
 		searchContext: MessagesPinsScreenProps['searchContext'];
 		selectMediaTab?: RecentScreenContainerProps['onJumpToMedia'];
-		tab?: unknown;
+		tab?: MessagesPinsScreenProps['tab'];
 		width?: unknown;
 	};
 export type SearchTabsPageComponent = React.ComponentType<SearchTabsPageProps>;
@@ -4884,7 +4885,7 @@ export type SearchTabsPageComponent = React.ComponentType<SearchTabsPageProps>;
 export type AnimatedTabsProps = {
 		cleanUp?: unknown;
 		state: TabsProps['state'];
-		transitionState?: unknown;
+		transitionState?: number;
 	};
 export type AnimatedTabsComponent = React.ComponentType<AnimatedTabsProps>;
 /**
@@ -5014,8 +5015,8 @@ export type BaseMessagesScreenProps = {
 		numColumns?: SearchListProps['numColumns'];
 		searchContext?: unknown;
 		/** @default null */
-		smartSearchStatus?: unknown;
-		tab?: unknown;
+		smartSearchStatus?: 'loaded' | 'loading' | (string & {});
+		tab?: HistoricalIndexingHeaderProps['tab'];
 	};
 export type BaseMessagesScreenComponent = React.ComponentType<BaseMessagesScreenProps>;
 /**
@@ -5025,7 +5026,7 @@ export type BaseMessagesScreenComponent = React.ComponentType<BaseMessagesScreen
 export type FilesScreenProps = {
 		isFocused?: BaseMessagesScreenProps['isFocused'];
 		searchContext?: unknown;
-		tab?: unknown;
+		tab?: BaseMessagesScreenProps['tab'];
 		width?: unknown;
 	};
 export type FilesScreenComponent = React.ComponentType<FilesScreenProps>;
@@ -5036,7 +5037,7 @@ export type FilesScreenComponent = React.ComponentType<FilesScreenProps>;
 export type LinksScreenProps = {
 		isFocused?: BaseMessagesScreenProps['isFocused'];
 		searchContext?: unknown;
-		tab?: unknown;
+		tab?: BaseMessagesScreenProps['tab'];
 		width?: unknown;
 	};
 export type LinksScreenComponent = React.ComponentType<LinksScreenProps>;
@@ -5047,7 +5048,7 @@ export type LinksScreenComponent = React.ComponentType<LinksScreenProps>;
 export type MediaScreenProps = {
 		isFocused?: BaseMessagesScreenProps['isFocused'];
 		searchContext?: unknown;
-		tab?: unknown;
+		tab?: BaseMessagesScreenProps['tab'];
 		width?: unknown;
 	};
 export type MediaScreenComponent = React.ComponentType<MediaScreenProps>;
@@ -5058,7 +5059,7 @@ export type MediaScreenComponent = React.ComponentType<MediaScreenProps>;
 export type MessagesScreenProps = {
 		isFocused?: BaseMessagesScreenProps['isFocused'];
 		searchContext?: unknown;
-		tab?: unknown;
+		tab?: BaseMessagesScreenProps['tab'];
 	};
 export type MessagesScreenComponent = React.ComponentType<MessagesScreenProps>;
 /**
@@ -5077,7 +5078,7 @@ export type InitialPinsScreenComponent = React.ComponentType<InitialPinsScreenPr
 export type MessagesPinsScreenProps = {
 		isFocused?: InitialPinsScreenProps['isFocused'];
 		searchContext: InitialPinsScreenProps['searchContext'];
-		tab?: unknown;
+		tab?: MessagesScreenProps['tab'];
 	};
 export type MessagesPinsScreenComponent = React.ComponentType<MessagesPinsScreenProps>;
 /**
@@ -5087,7 +5088,7 @@ export type MessagesPinsScreenComponent = React.ComponentType<MessagesPinsScreen
 export type HistoricalIndexingHeaderProps = {
 		documentsIndexed?: unknown;
 		searchContext?: unknown;
-		tab?: unknown;
+		tab?: 'messages' | 'pins' | (string & {});
 	};
 export type HistoricalIndexingHeaderComponent = React.ComponentType<HistoricalIndexingHeaderProps>;
 /**
@@ -6147,7 +6148,7 @@ export type SlayerStorefrontNComponent = React.ComponentType<SlayerStorefrontNPr
  */
 export type SocialLayerStorefrontGiftModalProps = {
 		analyticsLocations?: unknown;
-		giftingOrigin?: unknown;
+		giftingOrigin?: SocialLayerStorefrontGiftPurchaseSectionProps['giftingOrigin'];
 		lockedRecipientUser?: unknown;
 		onGiftModalDismiss?: UnsupportedFeatureModalProps['onDismiss'];
 		skuId?: UnifiedGiftModalProps['skuId'];
@@ -6168,7 +6169,7 @@ export type SocialLayerStorefrontGiftProductDetailsComponent = React.ComponentTy
 export type SocialLayerStorefrontGiftPurchaseSectionProps = {
 		analyticsLocations?: unknown;
 		giftOptions: { recipient_id?: unknown };
-		giftingOrigin?: unknown;
+		giftingOrigin?: number;
 		isPurchaseDisabled?: boolean;
 		sku?: { applicationId?: unknown; orbsReward?: unknown };
 		skuId?: string;
@@ -6551,7 +6552,7 @@ export type AudienceTileComponent = React.ComponentType<AudienceTileProps>;
  * @see modules/stage_channels/native/components/AudienceTile.tsx
  */
 export type RaisedHandIconProps = {
-		rtsState?: unknown;
+		rtsState?: number;
 	};
 export type RaisedHandIconComponent = React.ComponentType<RaisedHandIconProps>;
 /**
@@ -6704,7 +6705,7 @@ export type SpeakerPulseComponent = React.ComponentType<SpeakerPulseProps>;
 export type SpeakerTileProps = {
 		channel: { guild_id?: unknown; id?: unknown };
 		participant: { blocked?: unknown; id?: unknown; ignored?: unknown; user?: unknown };
-		size?: unknown;
+		size?: number;
 	};
 export type SpeakerTileComponent = React.ComponentType<SpeakerTileProps>;
 /**
@@ -7691,7 +7692,7 @@ export type EnterExitCrossFadeContainerProps = {
 		children?: React.ComponentProps<typeof RN.View>['children'];
 		cleanUp?: unknown;
 		contentContainerStyle?: React.ComponentProps<typeof RN.View>['style'];
-		state?: unknown;
+		state?: number;
 	};
 export type EnterExitCrossFadeContainerComponent = React.ComponentType<EnterExitCrossFadeContainerProps>;
 /**
@@ -7805,7 +7806,7 @@ export type AccountStatusNoticeComponent = React.ComponentType<AccountStatusNoti
  * @see modules/tiny_bronco/native/TinyBroncoAgeGroupHeader.tsx
  */
 export type AgeGroupCallToActionProps = {
-		ageGroup?: unknown;
+		ageGroup?: 'adult' | 'teen' | 'unverified' | (string & {});
 	};
 export type AgeGroupCallToActionComponent = React.ComponentType<AgeGroupCallToActionProps>;
 /**
@@ -7813,7 +7814,7 @@ export type AgeGroupCallToActionComponent = React.ComponentType<AgeGroupCallToAc
  * @see modules/tiny_bronco/native/TinyBroncoAgeGroupHeader.tsx
  */
 export type AgeGroupDescriptionProps = {
-		ageGroup?: unknown;
+		ageGroup?: 'adult' | 'teen' | 'unverified' | (string & {});
 	};
 export type AgeGroupDescriptionComponent = React.ComponentType<AgeGroupDescriptionProps>;
 /**
@@ -8431,7 +8432,7 @@ export type EditUserProfileAvatarProps = {
 		/** @default false */
 		isTryItOut?: boolean;
 		isUserProfileEditingRefresh?: boolean;
-		size?: unknown;
+		size?: 'editAvatarDecoration' | (string & {});
 		statusStyle?: HeaderAvatarProps['statusStyle'];
 		style?: PressableOpacityProps['style'];
 		user: HeaderAvatarProps['user'];
@@ -8864,7 +8865,7 @@ export type TimestampBadgeComponent = React.ComponentType<TimestampBadgeProps>;
  */
 export type ConnectPlatformButtonProps = {
 		onAction: (...args: any[]) => unknown;
-		type?: unknown;
+		type?: 'playstation' | (string & {});
 	};
 export type ConnectPlatformButtonComponent = React.ComponentType<ConnectPlatformButtonProps>;
 /**
@@ -9114,7 +9115,8 @@ export type OpenableUserProfileAvatarComponent = React.ComponentType<OpenableUse
 export type UserProfileAvatarProps = Omit<HeaderAvatarProps, 'backgroundColor' | 'ref' | 'size'> & {
 		backgroundColor?: unknown;
 		ref?: HeaderAvatarProps['ref'];
-		size?: unknown;
+		/** @default 'xxlarge' */
+		size?: 'xxlarge' | (string & {});
 	};
 export type UserProfileAvatarComponent = React.ComponentType<UserProfileAvatarProps & Record<string, unknown>>;
 /**
@@ -9145,7 +9147,8 @@ export type UserProfileBadgesEditButtonComponent = React.ComponentType<UserProfi
  * @see modules/user_profile/native/UserProfileBanner.tsx
  */
 export type UserProfileBannerProps = {
-		bannerHeight?: number | string;
+		/** @default 150 */
+		bannerHeight?: ProfileBannerProps['bannerHeight'];
 		/** @default 0 */
 		bannerSafeArea?: ProfileBannerProps['bannerSafeArea'];
 		/** @default false */
@@ -9626,7 +9629,7 @@ export type EditUserProfileBannerComponent = React.ComponentType<EditUserProfile
  * @see modules/user_profile/native/UserProfileEditForm.tsx
  */
 export type UserProfileEditFormProps = {
-		autoFocusElement?: unknown;
+		autoFocusElement?: 'AVATAR' | 'BADGES' | 'BIO' | (string & {});
 		currentUser: EditUserProfileBannerProps['user'];
 		/** @default false */
 		isTryItOut?: EditUserProfileBannerProps['isTryItOut'];
@@ -9967,7 +9970,7 @@ export type UserProfileMutualsActionSheetProps = {
 		guildId?: MutualFriendRowProps['guildId'];
 		onPressMutualFriend: (...args: any[]) => unknown;
 		onPressMutualGuild: (...args: any[]) => unknown;
-		section?: unknown;
+		section?: 'MUTUAL_GUILDS' | (string & {});
 		user?: MutualGuildRowProps['user'];
 	};
 export type UserProfileMutualsActionSheetComponent = React.ComponentType<UserProfileMutualsActionSheetProps>;
@@ -10218,7 +10221,7 @@ export type ProfileBadgeProps = {
 		/** @default true */
 		showToastOnPress?: boolean;
 		source?: FastImageProps['source'];
-		themeType?: unknown;
+		themeType?: 'you_screen' | (string & {});
 		userId?: string;
 	};
 export type ProfileBadgeComponent = React.ComponentType<ProfileBadgeProps>;
@@ -10237,7 +10240,7 @@ export type ProfileBadgeRowsProps = {
 		/** @default true */
 		showToastOnPress?: ProfileBadgeProps['showToastOnPress'];
 		style?: PressableOpacityProps['style'];
-		themeType?: unknown;
+		themeType?: ProfileBadgeProps['themeType'];
 		userId?: ProfileBadgeProps['userId'];
 	};
 export type ProfileBadgeRowsComponent = React.ComponentType<ProfileBadgeRowsProps>;
@@ -10266,7 +10269,7 @@ export type UserProfilePrimaryInfoProps = {
 		showBadgeToastOnPress?: GuildTagProps['showToastOnPress'];
 		showChevron?: DisplayNameProps['showChevron'];
 		style?: React.ComponentProps<typeof RN.View>['style'];
-		themeType?: unknown;
+		themeType?: ProfileBadgeRowsProps['themeType'];
 		user: DisplayNameProps['user'];
 		userTagAccessibilityHint?: UserTagAndPronounsProps['userTagAccessibilityHint'];
 	};
@@ -10826,7 +10829,7 @@ export type ModulesUserProfileEditSectionProps = {
 		isProfileLoaded?: boolean;
 		markAsDismissed: DisplayNameStylesFlywheelProfileCoachmarkProps['markAsDismissed'];
 		navigateToProfileCustomization: (...args: any[]) => unknown;
-		visibleContent?: unknown;
+		visibleContent?: number;
 	};
 export type ModulesUserProfileEditSectionComponent = React.ComponentType<ModulesUserProfileEditSectionProps>;
 /**
@@ -10883,7 +10886,7 @@ export type YouScreenUserProfileContentComponent = React.ComponentType<YouScreen
  * @see modules/user_profile/native/YouScreenUserProfileContent.tsx
  */
 export type YouScreenWidgetsBoardContainerProps = {
-		activeSection?: unknown;
+		activeSection?: 'WIDGETS' | (string & {});
 		containerBackground?: unknown;
 		containerBorderColor?: unknown;
 		userId?: UserProfileWidgetsBoardProps['userId'];
@@ -11153,7 +11156,7 @@ export type ConnectedThemePickerProps = {
 		/** @default false */
 		hasSaveButton?: ThemePickerProps['hasSaveButton'];
 		headerTitle?: unknown;
-		mode?: unknown;
+		mode?: 'dark' | (string & {});
 		onSaveTheme?: ThemePickerProps['onSaveTheme'];
 		/** @default 'nitro' */
 		themeSelector?: ThemePickerProps['themeSelector'];
@@ -11405,7 +11408,7 @@ export type UserSettingsAuthedAppPermissionsComponent = React.ComponentType<User
  * @see modules/user_settings/authorized_apps/native/UserSettingsAuthedApps.tsx
  */
 export type DisclosureIconProps = {
-		disclosure?: unknown;
+		disclosure?: number;
 		style?: CircleInformationIconProps['style'];
 	};
 export type DisclosureIconComponent = React.ComponentType<DisclosureIconProps>;
@@ -11804,7 +11807,7 @@ export type CrunchyrollLinkDiscordSuccessComponent = React.ComponentType<Crunchy
 export type PlayStationLinkDiscordConsentProps = {
 		callbackCode?: unknown;
 		callbackState?: TwoWayLinkDiscordConsentProps['callbackState'];
-		platformType?: unknown;
+		platformType?: 'playstation-stg' | (string & {});
 	};
 export type PlayStationLinkDiscordConsentComponent = React.ComponentType<PlayStationLinkDiscordConsentProps>;
 /**
@@ -11812,7 +11815,7 @@ export type PlayStationLinkDiscordConsentComponent = React.ComponentType<PlaySta
  * @see modules/user_settings/connections/native/two_way_link/playstation/PlayStationLinkError.tsx
  */
 export type PlayStationLinkErrorProps = {
-		errorCode?: unknown;
+		errorCode?: number;
 		onClose?: TwoWayLinkErrorProps['onClose'];
 	};
 export type PlayStationLinkErrorComponent = React.ComponentType<PlayStationLinkErrorProps>;
@@ -12906,7 +12909,7 @@ export type PremiumFeaturesBackgroundProps = {
 		children?: React.ReactNode;
 		/** @default 1 */
 		opacity?: number;
-		premiumType?: unknown;
+		premiumType?: number;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
 export type PremiumFeaturesBackgroundComponent = React.ComponentType<PremiumFeaturesBackgroundProps & Record<string, unknown>>;
@@ -12928,7 +12931,7 @@ export type PremiumFeaturesCardProps = {
 		onPaymentDismiss?: (...args: any[]) => unknown;
 		onPaymentSuccess?: (...args: any[]) => unknown;
 		premiumGroupRole?: unknown;
-		premiumType?: unknown;
+		premiumType?: PremiumFeaturesLogoProps['premiumType'];
 		style?: PremiumFeaturesBackgroundProps['style'];
 	};
 export type PremiumFeaturesCardComponent = React.ComponentType<PremiumFeaturesCardProps>;
@@ -12988,7 +12991,7 @@ export type PremiumFeaturesCarouselSectionComponent = React.ComponentType<Premiu
  * @see modules/user_settings/premium/native/PremiumFeaturesLogo.tsx
  */
 export type PremiumFeaturesLogoProps = {
-		premiumType?: unknown;
+		premiumType?: number;
 		style?: FastImageProps['style'];
 	};
 export type PremiumFeaturesLogoComponent = React.ComponentType<PremiumFeaturesLogoProps>;
@@ -13061,7 +13064,7 @@ export type PremiumRowComponent = React.ComponentType<PremiumRowProps>;
  * @see modules/user_settings/premium/native/PremiumFeaturesWumpus.tsx
  */
 export type PremiumFeaturesWumpusProps = {
-		premiumType?: unknown;
+		premiumType?: number;
 	};
 export type PremiumFeaturesWumpusComponent = React.ComponentType<PremiumFeaturesWumpusProps>;
 /**
@@ -13159,7 +13162,7 @@ export type NitroHomeHeaderComponent = React.ComponentType<NitroHomeHeaderProps>
  */
 export type PerksTabProps = {
 		extraBottomHeight?: unknown;
-		fractionalState?: unknown;
+		fractionalState?: number;
 		isInReverseTrial?: boolean;
 	};
 export type PerksTabComponent = React.ComponentType<PerksTabProps>;
@@ -14410,7 +14413,7 @@ export type GestureContainerComponent = React.ComponentType<GestureContainerProp
 export type HideSelfStreamAndVideoConfirmDialogProps = Omit<AlertConnectedProps, 'onClose' | 'onConfirm' | 'type'> & {
 		onClose?: (...args: any[]) => unknown;
 		onConfirm: (...args: any[]) => unknown;
-		type?: unknown;
+		type?: number;
 	};
 export type HideSelfStreamAndVideoConfirmDialogComponent = React.ComponentType<HideSelfStreamAndVideoConfirmDialogProps & Record<string, unknown>>;
 /**
@@ -15366,7 +15369,7 @@ export type VoiceMessagePromptProps = {
 		exiting?: unknown;
 		initialAnimation: { get?: unknown };
 		recordingAnimation: { get?: unknown };
-		voiceMessageState?: unknown;
+		voiceMessageState?: number;
 	};
 export type VoiceMessagePromptComponent = React.ComponentType<VoiceMessagePromptProps>;
 /**
@@ -15607,7 +15610,7 @@ export type SpeakingIndicatorComponent = React.ComponentType<SpeakingIndicatorPr
 export type VoicePanelCardProps = {
 		cleanUp?: unknown;
 		item: { id?: unknown; type?: unknown };
-		transitionState?: unknown;
+		transitionState?: number;
 	};
 export type VoicePanelCardComponent = React.ComponentType<VoicePanelCardProps>;
 /**
@@ -15684,7 +15687,7 @@ export type RingingIconWrapperComponent = React.ComponentType<RingingIconWrapper
  * @see modules/voice_panel/native/card/VoicePanelCardFloatingControls.tsx
  */
 export type StreamIconProps = {
-		voicePlatform?: unknown;
+		voicePlatform?: number;
 	};
 export type StreamIconComponent = React.ComponentType<StreamIconProps>;
 /**
@@ -15769,7 +15772,7 @@ export type VoicePanelDismissChatButtonComponent = React.ComponentType<VoicePane
 export type VoicePanelConsoleStatusProps = {
 		accessoryHeights?: unknown;
 		cleanUp?: unknown;
-		state?: unknown;
+		state?: number;
 		wrapperSpecs?: unknown;
 	};
 export type VoicePanelConsoleStatusComponent = React.ComponentType<VoicePanelConsoleStatusProps>;
@@ -16070,7 +16073,7 @@ export type ActivityItemMissingCardComponent = React.ComponentType<ActivityItemM
  * @see modules/voice_panel/native/controls/activities/ActivityShelfItem.tsx
  */
 export type ActivityActionOverlayProps = {
-		action?: unknown;
+		action?: number;
 		activityItem: { application?: unknown };
 		applicationId?: string;
 		context: { channel?: unknown; type?: unknown };
@@ -16097,7 +16100,7 @@ export type ActivityShelfItemComponent = React.ComponentType<ActivityShelfItemPr
  * @see modules/voice_panel/native/controls/activities/ActivityShelfItem.tsx
  */
 export type ParticipantsTextProps = {
-		action?: unknown;
+		action?: number;
 		activityItem: { application?: unknown };
 		channelId?: string;
 		guildId?: string;
@@ -16413,7 +16416,7 @@ export type VoicePanelSettingsOverviewHeaderComponent = React.ComponentType<Voic
  */
 export type PIPWrapperProps = {
 		transitionCleanUp: (...args: any[]) => unknown;
-		transitionState?: unknown;
+		transitionState?: number;
 	};
 export type PIPWrapperComponent = React.ComponentType<PIPWrapperProps>;
 /**
@@ -16436,7 +16439,7 @@ export type ActivityInVoiceProps = {
 		layoutTransition?: unknown;
 		participantId?: string;
 		transitionCleanUp?: unknown;
-		transitionState?: unknown;
+		transitionState?: number;
 	};
 export type ActivityInVoiceComponent = React.ComponentType<ActivityInVoiceProps>;
 /**
@@ -16455,7 +16458,7 @@ export type AnimatedVideoWrapperComponent = React.ComponentType<AnimatedVideoWra
  */
 export type EmptyPIPProps = {
 		transitionCleanUp: (...args: any[]) => unknown;
-		transitionState?: unknown;
+		transitionState?: number;
 	};
 export type EmptyPIPComponent = React.ComponentType<EmptyPIPProps>;
 /**
@@ -16574,7 +16577,7 @@ export type ConsoleConnectionPaddingComponent = React.ComponentType<ConsoleConne
  */
 export type PreJoinTransitionerProps = Omit<VoicePanelPreJoinContentInnerProps, 'transitionCleanUp' | 'transitionState'> & {
 		transitionCleanUp?: unknown;
-		transitionState?: unknown;
+		transitionState?: number;
 	};
 export type PreJoinTransitionerComponent = React.ComponentType<PreJoinTransitionerProps & Record<string, unknown>>;
 /**
@@ -16681,8 +16684,8 @@ export type MemberRowItemComponent = React.ComponentType<MemberRowItemProps>;
  * @see modules/voice_panel/native/shared/FormComponents.tsx
  */
 export type VoiceBadgesProps = {
-		muteDeafenIconState?: unknown;
-		videoIconState?: unknown;
+		muteDeafenIconState?: MuteDeafenIconProps['state'];
+		videoIconState?: VoicePanelVideoIconProps['state'];
 	};
 export type VoiceBadgesComponent = React.ComponentType<VoiceBadgesProps>;
 /**
@@ -16709,7 +16712,7 @@ export type VoicePanelChannelOptInNoticeComponent = React.ComponentType<VoicePan
  */
 export type VoicePanelOProps = {
 		markAsDismissed?: unknown;
-		visibleContent?: unknown;
+		visibleContent?: number;
 	};
 export type VoicePanelOComponent = React.ComponentType<VoicePanelOProps>;
 /**
@@ -16825,7 +16828,7 @@ export type VoicePanelVisualEffectViewInnerComponent = React.ComponentType<Voice
 export type MuteDeafenIconProps = {
 		/** @default false */
 		alwaysWhite?: boolean;
-		state?: unknown;
+		state?: number;
 		style?: MicrophoneSlashIconProps['style'];
 	};
 export type MuteDeafenIconComponent = React.ComponentType<MuteDeafenIconProps>;
@@ -16843,7 +16846,7 @@ export type VideoDisabledSvgIconComponent = React.ComponentType<VideoDisabledSvg
  * @see modules/voice_panel/native/shared/VoiceStateIcons.tsx
  */
 export type VoicePanelVideoIconProps = Omit<VideoDisabledSvgIconProps, 'state' | 'style'> & {
-		state?: unknown;
+		state?: number;
 		style?: RN.StyleProp<RN.ViewStyle | RN.TextStyle | RN.ImageStyle>;
 	};
 export type VoicePanelVideoIconComponent = React.ComponentType<VoicePanelVideoIconProps & Record<string, unknown>>;
@@ -16976,7 +16979,7 @@ export type CollectiblesWishlistItemCardProps = Omit<WishlistItemCardBaseProps, 
 		overlay?: unknown;
 		size?: WishlistItemCardBaseProps['size'];
 		sku: { id?: unknown };
-		source?: unknown;
+		source?: WishlistItemCardBaseProps['source'];
 		wishlistOwnerId?: string;
 	};
 export type CollectiblesWishlistItemCardComponent = React.ComponentType<CollectiblesWishlistItemCardProps & Record<string, unknown>>;
@@ -16993,7 +16996,7 @@ export type WishlistsPComponent = React.ComponentType<WishlistsPProps>;
 export type PremiumWishlistItemCardProps = Omit<WishlistItemCardBaseProps, 'size' | 'sku' | 'source'> & {
 		size?: WishlistItemCardBaseProps['size'];
 		sku: { name?: unknown };
-		source?: unknown;
+		source?: WishlistItemCardBaseProps['source'];
 	};
 export type PremiumWishlistItemCardComponent = React.ComponentType<PremiumWishlistItemCardProps & Record<string, unknown>>;
 /**
@@ -17006,7 +17009,7 @@ export type SocialLayerStorefrontWishlistItemCardProps = Omit<WishlistItemCardBa
 		overlay?: unknown;
 		size?: WishlistItemCardBaseProps['size'];
 		sku: { applicationId?: unknown; id?: unknown; name?: unknown };
-		source?: unknown;
+		source?: WishlistItemCardBaseProps['source'];
 		wishlistOwnerId?: string;
 	};
 export type SocialLayerStorefrontWishlistItemCardComponent = React.ComponentType<SocialLayerStorefrontWishlistItemCardProps & Record<string, unknown>>;
@@ -17017,7 +17020,7 @@ export type SocialLayerStorefrontWishlistItemCardComponent = React.ComponentType
 export type WishlistItemCardProps = Omit<SocialLayerStorefrontWishlistItemCardProps, 'isOwned' | 'sku' | 'source' | 'wishlistOwnerId'> & {
 		isOwned?: SocialLayerStorefrontWishlistItemCardProps['isOwned'];
 		sku: SocialLayerStorefrontWishlistItemCardProps['sku'];
-		source?: unknown;
+		source?: SocialLayerStorefrontWishlistItemCardProps['source'];
 		wishlistOwnerId?: SocialLayerStorefrontWishlistItemCardProps['wishlistOwnerId'];
 	};
 export type WishlistItemCardComponent = React.ComponentType<WishlistItemCardProps & Record<string, unknown>>;
@@ -17042,7 +17045,7 @@ export type WishlistItemCardBaseProps = {
 		renderPreview: (...args: any[]) => unknown;
 		/** @default 170 */
 		size?: number;
-		source?: unknown;
+		source?: 'wishlist' | (string & {});
 	};
 export type WishlistItemCardBaseComponent = React.ComponentType<WishlistItemCardBaseProps>;
 /**

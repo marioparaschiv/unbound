@@ -39,6 +39,8 @@ export type ModuleContext = {
 	slots: Map<string, Value>;
 	components: Map<string, ComponentRecord>;
 	exports: ExportBinding[];
+	/** Modules whose every export this one copies (`for (k in m) exports[k] = m[k]`). */
+	starExports: number[];
 	getters: GetterBinding[];
 	staticOwners: StaticOwner[];
 	displayNames: Map<ComponentRecord, string>;
@@ -74,6 +76,8 @@ export type Value =
 	| { kind: 'builtin'; path: string }
 	| { kind: 'dep'; index: number }
 	| { kind: 'module'; moduleId: number; interop: boolean }
+	/** A member of a required module under a computed key, as in an export-star loop. */
+	| { kind: 'star'; moduleId: number }
 	| ImportRef
 	| { kind: 'jsx' }
 	| { kind: 'wrapper'; wrapper: 'memo' | 'forwardRef' }

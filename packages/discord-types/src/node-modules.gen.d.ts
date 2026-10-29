@@ -231,7 +231,7 @@ export type Module6312BottomSheetProps = {
 		onChange?: (...args: any[]) => unknown;
 		onClose?: (...args: any[]) => unknown;
 		overDragResistanceFactor?: unknown;
-		overrideReduceMotion?: unknown;
+		overrideReduceMotion?: 'always' | 'system' | (string & {});
 		renderFooter?: BottomSheetFooterContainerProps['renderFooter'];
 		simultaneousHandlers?: unknown;
 		snapPoints?: unknown;
@@ -304,7 +304,7 @@ export type BottomSheetContentComponentProps = {
 		animationConfigs?: unknown;
 		children?: React.ReactNode;
 		detached?: unknown;
-		keyboardBehavior?: unknown;
+		keyboardBehavior?: 'extend' | 'fillParent' | 'interactive' | (string & {});
 		overrideReduceMotion?: unknown;
 	};
 export type BottomSheetContentComponentComponent = React.ComponentType<BottomSheetContentComponentProps>;

@@ -6,6 +6,8 @@ import type {
 	TargetRef,
 } from './types';
 
+import { compare } from './naming';
+
 export type RuleName =
 	| 'forwarded'
 	| 'host'
@@ -65,6 +67,10 @@ const BOOLEAN_NAMES = new Set([
 	'editable',
 	'inverted',
 ]);
+
+function isIdName(name: string): boolean {
+	return name === 'id' || name === 'testID' || /[a-z]Id$/.test(name);
+}
 
 function typed(text: string, rule: RuleName, refs: TypeRef[] = []): InferredType {
 	return { text, rule, refs };
@@ -162,7 +168,7 @@ const NAME_TYPES: ReadonlyArray<readonly [(name: string) => boolean, string]> = 
 	[(name) => name === 'children', 'React.ReactNode'],
 	[(name) => name === 'style' || name.endsWith('Style'), STYLE_TYPE],
 	[(name) => BOOLEAN_PREFIX.test(name) || BOOLEAN_NAMES.has(name), 'boolean'],
-	[(name) => name === 'id' || name === 'testID' || /[a-z]Id$/.test(name), 'string'],
+	[isIdName, 'string'],
 	[(name) => name === 'ref', 'React.Ref<any>'],
 ];
 
@@ -186,9 +192,14 @@ export const RULES: readonly Rule[] = [
 				...(isEnumLike(name, passed) ? passed : []),
 			].filter((value) => value !== '');
 
-			if (values.length === 0 || !values.every((value) => typeof value === 'string')) return;
+			// An id compared with known ids or sentinels (`skuId === SKU_IDS.X`) is still free text, not an enum.
+			if (isIdName(name) || values.length === 0) return;
 
-			const members = [...new Set(values)].sort().map(literalType);
+			const strings = values.filter((value) => typeof value === 'string');
+
+			if (strings.length < values.length) return;
+
+			const members = [...new Set(strings)].sort(compare).map(literalType);
 
 			// `string & {}` keeps the observed values as suggestions without rejecting unseen ones.
 			return typed([...members, '(string & {})'].join(' | '), 'literal-union');
@@ -204,7 +215,10 @@ export const RULES: readonly Rule[] = [
 	},
 	{
 		name: 'compared',
-		infer: ({ evidence }) => {
+		infer: ({ name, evidence }) => {
+			// `channelId !== EVERYONE_CHANNEL_ID` compares a string id with a numeric sentinel.
+			if (isIdName(name)) return;
+
 			const types = new Set(literalsOf(evidence, ['compared']).map((value) => typeof value));
 
 			return types.size === 1 ? typed([...types][0]!, 'compared') : undefined;
