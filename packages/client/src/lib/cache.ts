@@ -81,7 +81,7 @@ function removeAssetFromCache(moduleId: number) {
 /**
  * @description Returns the cached module ids stored under a filter's cache key.
  * @param key The cache key to look up.
- * @returns The cached module ids for the key, or `undefined` if none are cached.
+ * @returns The cached module ids for the key, an empty list when no module matches, or `undefined` if none are cached.
  */
 export function getModuleCacheForKey(key: string) {
 	return state.modules[key];
@@ -101,6 +101,15 @@ export function addCachedIDForKey(key: string, item: number) {
 	}
 
 	state.modules[key].push(item);
+	save();
+}
+
+/**
+ * @description Records that no module in this build matches a cache key, as an empty id list.
+ * @param key The cache key no module matches.
+ */
+export function markKeyMissing(key: string) {
+	state.modules[key] = [];
 	save();
 }
 
@@ -202,6 +211,7 @@ export default {
 	removeAssetFromCache,
 	getModuleCacheForKey,
 	addCachedIDForKey,
+	markKeyMissing,
 	removeCachedIDForKey,
 	addModuleFlag,
 	hasModuleFlag,

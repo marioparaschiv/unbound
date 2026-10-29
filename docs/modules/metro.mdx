@@ -105,6 +105,8 @@ Metro keeps startup fast in two ways: it caches search results, and it can defer
 
 Every filter has a cache key, so Metro remembers a successful search. The next search for the same shape resolves from the cache instead of walking the registry.
 
+A search looks first at modules Discord has already initialized: the cached ids for its filter, then the rest of the registry. Only when none of them matches does it initialize modules to search them, the cached ids first. Pass `initialize: false` to search initialized modules only. A search that initializes the whole registry and still finds nothing is remembered for that Discord build, so the next search for the same filter returns `null` at once.
+
 To defer a search, pass `{ lazy: true }`. You get a proxy back, and the search runs the _first time you access it_. A module referenced at the top of a file but used only inside a rarely called function costs nothing until that function runs.
 
 ```ts

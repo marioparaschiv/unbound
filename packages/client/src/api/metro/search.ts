@@ -188,8 +188,8 @@ export const on = addListener;
 export const off = removeListener;
 
 /**
- * @description Core synchronous module search. Tries the per-key cache fast-path first, then falls
- * back to scanning the registry, degrading gracefully if the supplied filter throws.
+ * @description Core synchronous module search. Modules Discord has initialized are searched first, cached ids
+ * then the registry; only when none matches does it initialize modules, unless `initialize` is false.
  * @param filter The filter to match modules against.
  * @param options Search options controlling interop, caching, esModule unwrapping, and `all`.
  * @returns The first matching module, an array of matches when `all` is set, or `null`.
@@ -242,31 +242,21 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 		search.isRaw = true;
 	}
 
-	/****** CACHE ******/
-	const cache = filter[CACHE_KEY] && Cache.getModuleCacheForKey(filter[CACHE_KEY]);
+	const key = filter[CACHE_KEY];
+	const cached = key ? Cache.getModuleCacheForKey(key) : void 0;
 
-	if (cache) {
-		for (const id of cache) {
+	// Tests each module of `ids` in order; an uninitialized one is skipped, or initialized first when `force` is set.
+	function scan(ids: readonly number[], force: boolean) {
+		for (let i = 0, len = ids.length; i < len; i++) {
+			const id = ids[i];
 			const rawModule = window.modules.get(id);
 
-			if (!rawModule) {
+			if (!rawModule || blacklist.has(id)) {
 				continue;
 			}
 
-			if (blacklist.has(id)) {
+			if (!rawModule.isInitialized && (!force || !initializeModule(id))) {
 				continue;
-			}
-
-			if (!rawModule.isInitialized) {
-				if (!initializeModules) {
-					continue;
-				}
-
-				const initialized = initializeModule(id);
-
-				if (!initialized) {
-					continue;
-				}
 			}
 
 			const found = searchExports(search, rawModule, id, esModules, interop, raw);
@@ -282,57 +272,64 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 			result.found.push(found);
 		}
 
+		return null;
+	}
+
+	// An empty list records that a full scan of this build found nothing.
+	if (cached?.length === 0) {
 		return all ? result.found : null;
 	}
 
-	/****** END CACHE ******/
-	if (cacheOnly) {
-		return all ? result.found : null;
+	// One pass collects every match, so an `all` search does not look at initialized modules first.
+	if (all) {
+		if (cached || cacheOnly) {
+			scan(cached ?? [], initializeModules);
+
+			return result.found;
+		}
+
+		scan(Cache.moduleIds, initializeModules);
+
+		if (initializeModules && !result.found.length) {
+			recordMissing(key, result.errored);
+		}
+
+		return result.found;
 	}
 
-	const store = useCache ? data.cache : window.modules;
-	const keys = useCache ? [...store.keys()] : Cache.moduleIds;
+	// Modules Discord has already initialized come first, so a search forces nothing it does not need.
+	let found = cached ? scan(cached, false) : null;
 
-	for (let i = 0, len = keys.length; i < len; i++) {
-		const id = keys[i];
-		const rawModule = store.get(id);
-
-		if (blacklist.has(id)) {
-			continue;
-		}
-
-		if (!rawModule.isInitialized) {
-			if (!initializeModules) {
-				continue;
-			}
-
-			const initialized = initializeModule(id);
-
-			if (!initialized) {
-				continue;
-			}
-		}
-
-		const found = searchExports(search, rawModule, id, esModules, interop, raw);
-
-		if (!found) {
-			continue;
-		}
-
-		if (!all) {
-			return found;
-		}
-
-		result.found.push(found);
+	if (!found && !cacheOnly) {
+		found =
+			(useCache ? scan([...data.cache.keys()], false) : null) ?? scan(Cache.moduleIds, false);
 	}
 
-	if (useCache && !all && !result.found.length) {
-		return find(filter, Object.assign(options, { cache: false }));
-	} else if (useCache && all) {
-		return find(filter, Object.assign(options, { cache: false, initial: result.found }));
+	if (found || !initializeModules) {
+		return found;
 	}
 
-	return all ? result.found : null;
+	// A cached entry, even a stale one, settles the search without a forcing scan of the registry.
+	if (cached) {
+		return scan(cached, true);
+	}
+
+	if (cacheOnly) return null;
+
+	found = scan(Cache.moduleIds, true);
+
+	if (!found) {
+		recordMissing(key, result.errored);
+	}
+
+	return found;
+}
+
+// A filter that threw may have missed its module, so only a clean full scan proves it is absent.
+function recordMissing(key: string | undefined, errored: boolean) {
+	if (key && !errored) {
+		Cache.markKeyMissing(key);
+	}
 }
 
 /**

@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 
+import type { MetroFilter } from '~/api/metro/filters';
+
 type Exports = Record<string, (...args: number[]) => number | null>;
 type Factory = (
 	global: typeof globalThis,
@@ -88,6 +90,24 @@ define(14, (_, __, ___, ____, module) => {
 define(15, (_, __, ___, ____, module) => {
 	module.exports = { fifth: (n) => n / 5 };
 });
+define(16, (_, __, ___, ____, module) => {
+	module.exports = { picked: () => 16 };
+});
+define(17, (_, __, ___, ____, module) => {
+	module.exports = { picked: () => 17 };
+});
+define(18, (_, __, ___, ____, module) => {
+	module.exports = { remembered: () => 18 };
+});
+define(19, (_, __, ___, ____, module) => {
+	module.exports = { remembered: () => 19 };
+});
+define(20, (_, __, ___, ____, module) => {
+	module.exports = { forced: () => 20 };
+});
+define(21, (_, __, ___, ____, module) => {
+	module.exports = { late: () => 21 };
+});
 metroRequire(0);
 metroRequire(1);
 
@@ -108,6 +128,9 @@ mock.module('~/lib/cache', () => ({
 			cachedIds[key] ??= [];
 			cachedIds[key].push(id);
 		},
+		markKeyMissing(key: string) {
+			cachedIds[key] = [];
+		},
 	},
 }));
 
@@ -116,6 +139,7 @@ const metro = await import('~/api/metro/search');
 const { findLazy } = await import('~/api/metro/finders');
 const { onModuleLoaded, waitForModule } = await import('~/api/metro/wait');
 const { byProps } = await import('~/api/metro/filters');
+const { CACHE_KEY } = await import('~/lib/constants');
 const { after, createPatcher, unpatchAll, unpatchAllByCaller } = await import('~/api/patcher');
 
 beforeEach(() => {
@@ -126,6 +150,10 @@ afterEach(() => unpatchAll());
 
 function isLoaded(id: number) {
 	return Boolean(modules.get(id)?.isInitialized);
+}
+
+function loadedIds() {
+	return [...modules.keys()].filter(isLoaded);
 }
 
 describe('onModuleLoaded', () => {
@@ -287,5 +315,65 @@ describe('a lazy wrapper handle (findByPropsLazy and the like)', () => {
 		expect('fifth' in Fifth).toBe(true);
 		expect({ ...Fifth }.fifth).toBe(metroRequire(15).fifth);
 		expect(Object.getPrototypeOf(Fifth)).toBe(Object.prototype);
+	});
+});
+
+describe('find', () => {
+	test('returns an initialized module without loading an earlier match', () => {
+		metroRequire(17);
+
+		const before = loadedIds();
+
+		expect(metro.findByProps('picked').picked()).toBe(17);
+		expect(loadedIds()).toEqual(before);
+	});
+
+	test('prefers an initialized module over an uninitialized cached id', () => {
+		cachedIds['byProps::remembered'] = [18];
+		metroRequire(19);
+
+		expect(metro.findByProps('remembered').remembered()).toBe(19);
+		expect(isLoaded(18)).toBe(false);
+	});
+
+	test('loads only the cached module when no initialized module matches', () => {
+		cachedIds['byProps::forced'] = [20];
+
+		const before = loadedIds();
+
+		expect(metro.findByProps('forced').forced()).toBe(20);
+		expect(loadedIds()).toEqual([...before, 20].sort((a, b) => a - b));
+	});
+
+	test('a wait on a remembered miss still matches any module that loads', () => {
+		cachedIds['byProps::late'] = [];
+
+		const found: Exports[] = [];
+
+		onModuleLoaded(byProps('late'), (mdl) => found.push(mdl));
+		metroRequire(21);
+
+		expect(found.map((mdl) => mdl.late())).toEqual([21]);
+	});
+
+	// Runs last: a miss loads the whole registry.
+	test('remembers a miss after a full scan, and scans nothing for it again', () => {
+		let tested = 0;
+		const filter: MetroFilter = (mdl) => {
+			tested++;
+
+			return mdl.nowhere !== void 0;
+		};
+
+		filter[CACHE_KEY] = 'test::nowhere';
+
+		expect(metro.find(filter)).toBeNull();
+		expect(tested).toBeGreaterThan(0);
+		expect(cachedIds['test::nowhere']).toEqual([]);
+
+		tested = 0;
+
+		expect(metro.find(filter)).toBeNull();
+		expect(tested).toBe(0);
 	});
 });
