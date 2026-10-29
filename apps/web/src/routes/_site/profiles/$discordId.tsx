@@ -69,7 +69,7 @@ function DeveloperPage() {
 					{bannerUrl ? (
 						<img src={bannerUrl} alt='' className='size-full object-cover' />
 					) : (
-						<AvatarGlow src={author.avatarUrl} className='opacity-60' />
+						<AvatarGlow src={author.avatarUrl} className='opacity-60 saturate-300' />
 					)}
 				</div>
 				<div className='flex sm:flex-row flex-col gap-4 -mt-10 px-4 sm:px-6'>
