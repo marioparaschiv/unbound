@@ -4,7 +4,7 @@ import { viewAttachment } from '@unbound-plugins/shared/native/text-attachments'
 import type { LineOverflow } from '~/preferences';
 import type { TokenLines } from '~/highlighter';
 import { buildCodeMarkup } from '~/markup';
-import { Palette } from '~/constants';
+import { Palette, PLUGIN_ID } from '~/constants';
 
 import type { Session, Surface } from './session';
 import type { NativeUI } from './ui';
@@ -151,6 +151,7 @@ export function textWithCards(
 				view: part.host.host,
 				width: surface.width,
 				height: part.height,
+				owner: PLUGIN_ID,
 			});
 
 			if (!attachment) return null;

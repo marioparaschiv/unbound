@@ -9,6 +9,8 @@ export type TextStructFields = Parameters<NativeObjCBridge['struct']>[1];
 
 export const ATTACHMENT_CHARACTER = '￼';
 
+export const ATTACHMENT_OWNER_ATTRIBUTE = 'UnboundAttachmentOwner';
+
 export const MESSAGE_TEXT_VIEW_CLASSES = ['DCDAttributedTextView', 'DCDReusableYYLabel'] as const;
 
 /**
@@ -61,6 +63,7 @@ export type ViewAttachmentOptions = {
 	view: NativeObjectHandle;
 	width: number;
 	height: number;
+	owner?: string;
 };
 
 export type AttachedView = {
@@ -410,7 +413,49 @@ export function viewAttachment(
 	engine: TextEngine,
 	options: ViewAttachmentOptions,
 ): NativeObjectHandle | null {
-	return engine === 'textkit' ? textKitView(bridge, options) : yyTextView(bridge, options);
+	const result =
+		engine === 'textkit' ? textKitView(bridge, options) : yyTextView(bridge, options);
+
+	if (result && options.owner) {
+		bridge.call(
+			result,
+			'addAttribute:value:range:',
+			ATTACHMENT_OWNER_ATTRIBUTE,
+			options.owner,
+			range(bridge, 0, 1),
+		);
+	}
+
+	return result;
+}
+
+/**
+ * @description Finds the view attachments one owner put into a text, so the owner can tell its own text apart after another plugin has added to it.
+ * @param bridge The attachment bridge.
+ * @param text The attributed text.
+ * @param string The text's characters.
+ * @param owner The owner the attachments were made with.
+ * @returns The index of each attachment the owner made, in text order.
+ */
+export function ownedAttachments(
+	bridge: TextAttachmentBridge,
+	text: NativeObjectHandle,
+	string: string,
+	owner: string,
+): number[] {
+	const found: number[] = [];
+
+	for (let index = string.indexOf(ATTACHMENT_CHARACTER); index >= 0;) {
+		const attributes = bridge.call(text, 'attributesAtIndex:effectiveRange:', index, null);
+
+		if (isAttributes(attributes) && attributes[ATTACHMENT_OWNER_ATTRIBUTE] === owner) {
+			found.push(index);
+		}
+
+		index = string.indexOf(ATTACHMENT_CHARACTER, index + 1);
+	}
+
+	return found;
 }
 
 function hasAttribute(
@@ -549,6 +594,7 @@ export default {
 	placeAttachedViews,
 	removeAttachedViews,
 	viewAttachment,
+	ownedAttachments,
 	isAttachmentRun,
 	isTappableRun,
 	isTextBoundary,

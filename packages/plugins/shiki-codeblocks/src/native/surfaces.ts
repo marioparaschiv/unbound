@@ -117,6 +117,31 @@ function paintSurface(session: Session, surface: Surface): void {
  * @param session The renderer session.
  * @param surface The surface.
  */
+/**
+ * @description Keeps a surface on a label whose text another plugin rewrote around the cards, re-placing the cards where they now sit.
+ * @param session The running session.
+ * @param surface The label's surface.
+ * @param rendered The label's new text.
+ * @param indices Where each of the surface's cards now sits in that text.
+ * @returns `true` when the text still holds every card and the surface took it over.
+ */
+export function adoptRenderedText(
+	session: Session,
+	surface: Surface,
+	rendered: string,
+	indices: number[],
+): boolean {
+	if (!indices.length || indices.length !== surface.parts.length) return false;
+
+	surface.renderedText = rendered;
+	surface.parts.forEach((part, index) => {
+		part.attachmentIndex = indices[index]!;
+	});
+	placeCards(session, surface);
+
+	return true;
+}
+
 export function applyTheme(session: Session, surface: Surface): void {
 	const { theme, opacity, hljs } = readPreferences();
 

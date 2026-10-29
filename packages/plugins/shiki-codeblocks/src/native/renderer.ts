@@ -10,18 +10,25 @@ import {
 	attributeRun,
 	CODE_BLOCK_ATTRIBUTE,
 	MESSAGE_TEXT_VIEW_CLASSES,
+	ownedAttachments,
 	textAttachmentBridge,
 	textEngine,
 } from '@unbound-plugins/shared/native/text-attachments';
 
-import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
+import { CARD_SETTINGS, Limits, PLUGIN_ID, PLUGIN_NAME } from '~/constants';
 import { locateCodeBlocks, parseFencedCodeBlocks, type CodeBlockPlacement } from '~/fences';
 import { getLanguageMetadata, loadLanguageCatalog } from '~/catalog';
 import { MessageStore, settings } from '~/modules';
 import { createHighlighter } from '~/highlighter';
 import { changesCardLayout } from '~/preferences';
 
-import { applyTheme, mountSurface, rebuildSurface, restoreSurface } from './surfaces';
+import {
+	adoptRenderedText,
+	applyTheme,
+	mountSurface,
+	rebuildSurface,
+	restoreSurface,
+} from './surfaces';
 import { detachSurface, surfaceMatchesCell, visibleChannelId } from './session';
 import { cellForLabel, messageIdentity } from './cells';
 import type { Session } from './session';
@@ -82,6 +89,20 @@ function renderLabel(session: Session, label: NativeObjectHandle, original: Nati
 
 	// Our own cards coming back through `setAttributedText:` after a reuse.
 	if (rendered === surfaces.get(labelKey)?.renderedText) return;
+
+	const current = surfaces.get(labelKey);
+
+	if (
+		current &&
+		adoptRenderedText(
+			session,
+			current,
+			rendered,
+			ownedAttachments(session.text, original, rendered, PLUGIN_ID),
+		)
+	) {
+		return;
+	}
 
 	const content = MessageStore.getMessage(sourceChannelId ?? channelId, messageId)?.content;
 

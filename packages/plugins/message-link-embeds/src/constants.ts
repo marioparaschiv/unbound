@@ -1,3 +1,5 @@
+export const PLUGIN_ID = 'unbound.message-link-embeds';
+
 export const MESSAGE_LINK_PATTERN =
 	/https?:\/\/(?:\w+\.)?discord(?:app)?\.com\/channels\/(?:(?:\d{17,20}|@me)\/)?(\d{17,20})\/(\d{17,20})/g;
 
