@@ -20,8 +20,7 @@ const NEEDS_HOST_PARAMETERS = ['android.widget.TextView', 'java.lang.String'];
 const MAX_GROUPS_PER_TEXT = 4;
 const INITIAL_GROUPS = 2;
 const MAX_DEFINITIONS = 48;
-const BLANK_SURFACE_CHECK_MS = 1_500;
-const BLANK_SURFACE_REMOUNTS = 2;
+const BLANK_SURFACE_CHECKS_MS = [1_000, 1_500, 2_500];
 
 export type InlineSlot = TextRewriteAnchor & {
 	surfaceId: string;
@@ -121,7 +120,7 @@ export function createInlineSurfaces(
 				}
 
 				active.addHost(group.id, entry.rendered, host, anchorOf(current));
-				watchForBlank(entry, group, index, BLANK_SURFACE_REMOUNTS);
+				watchForBlank(entry, group, index, 0);
 			});
 		}
 
@@ -142,7 +141,11 @@ export function createInlineSurfaces(
 		}
 	}
 
-	function watchForBlank(entry: Entry, group: Group, index: number, remounts: number) {
+	function watchForBlank(entry: Entry, group: Group, index: number, attempt: number) {
+		const delay = BLANK_SURFACE_CHECKS_MS[attempt];
+
+		if (delay === undefined) return;
+
 		setTimeout(() => {
 			const host = group.hosts[index];
 			const slot = entry.slots[index];
@@ -156,11 +159,9 @@ export function createInlineSurfaces(
 
 				active.refresh(entry.rendered);
 
-				if (remounts > 1) {
-					watchForBlank(entry, group, index, remounts - 1);
-				}
+				watchForBlank(entry, group, index, attempt + 1);
 			});
-		}, BLANK_SURFACE_CHECK_MS);
+		}, delay);
 	}
 
 	async function remount(group: Group, index: number, host: NativeJavaHandle, surfaceId: string) {
