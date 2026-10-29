@@ -14,7 +14,10 @@
 	],
 	"version": "1.0.1",
 	"icon": "PaintPaletteIcon",
-	"platforms": ["ios", "android"],
+	"platforms": [
+		"ios",
+		"android"
+	],
 	"capabilities": [],
 	"platformCapabilities": {
 		"ios": [
@@ -38,5 +41,12 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "144a5767e00656e3d6b761d18debf24bce85f57a7fb555660031ec9eabd038b206eddf1c417930dcd430a6547bea852a6f3f703539a8a18f655d51a553efa088"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "0zVVU/+H+pAnKRvKFr8jOE8qMsbmPtmw0HVS6E5Lxwmb3XOGSLt6WGLA19ZTYTiuaSSZ4iDe/3uaOOK+KWsdAg=="
+	}
 }
