@@ -24,17 +24,17 @@ const (
 	avdSnapshotManifestName = "manifest.json"
 	avdSnapshotRamdiskName  = "ramdisk.img"
 	avdSnapshotAdbName      = "adb.tgz"
-	avdSnapshotUnboundName  = "unbound.tgz"
-	avdSnapshotDeviceDir    = "/data/local/tmp/unbound-avd-snapshot"
+	avdSnapshotAstralName   = "astral.tgz"
+	avdSnapshotDeviceDir    = "/data/local/tmp/astral-avd-snapshot"
 	discordPackage          = "com.discord"
 	discordFilesDir         = "/data/data/com.discord/files"
 )
 
-var avdSnapshotPackages = []string{"com.topjohnwu.magisk", "app.unbound.android", discordPackage}
+var avdSnapshotPackages = []string{"com.topjohnwu.magisk", "app.astral.android", discordPackage}
 
 var avdSnapshotAdbExcludes = []string{"adb/lspd/log", "adb/lspd/log.old", "adb/lspd/.cli_sock", "adb/lspd/lock"}
 
-var avdSnapshotUnboundEntries = []string{"Unbound/Plugins", "Unbound/Themes", "Unbound/Fonts", "Unbound/i18n", "Unbound/unbound.bundle", "Unbound/unbound.bundle.trust"}
+var avdSnapshotAstralEntries = []string{"astral/Plugins", "astral/Themes", "astral/Fonts", "astral/i18n", "astral/astral.bundle", "astral/astral.bundle.trust"}
 
 var discordTokenPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`[A-Za-z0-9_-]{24,28}\.[A-Za-z0-9_-]{6}\.[A-Za-z0-9_-]{27,38}`),
@@ -64,7 +64,7 @@ func runAVDSnapshot(args []string) error {
 	name := set.String("name", "", "Android virtual device name")
 	out := set.String("out", "", "snapshot file to write")
 	from := set.String("from", "", "snapshot file to restore")
-	withSettings := set.Bool("with-settings", false, "include Unbound settings.json")
+	withSettings := set.Bool("with-settings", false, "include astral settings.json")
 	withoutDiscord := set.Bool("without-discord", false, "leave Discord's APKs out, so the snapshot can be published; restore downloads Discord")
 	checksum := set.String("sha256", "", "SHA-256 the snapshot must match when restoring")
 	discordChannel := set.String("discord-channel", "stable", "Discord channel restore downloads when the snapshot has no Discord")
@@ -114,7 +114,7 @@ func saveAVDSnapshot(profile avdProfile, out string, withSettings, withoutDiscor
 	if err := rootAndroidDevice(serial); err != nil {
 		return err
 	}
-	staging, err := os.MkdirTemp("", "unbound-avd-snapshot-")
+	staging, err := os.MkdirTemp("", "astral-avd-snapshot-")
 	if err != nil {
 		return err
 	}
@@ -130,10 +130,10 @@ func saveAVDSnapshot(profile avdProfile, out string, withSettings, withoutDiscor
 	if err := pullDeviceArchive(serial, filepath.Join(staging, avdSnapshotAdbName), adbArchiveCommand()); err != nil {
 		return err
 	}
-	if err := pullDeviceArchive(serial, filepath.Join(staging, avdSnapshotUnboundName), unboundArchiveCommand(withSettings)); err != nil {
+	if err := pullDeviceArchive(serial, filepath.Join(staging, avdSnapshotAstralName), astralArchiveCommand(withSettings)); err != nil {
 		return err
 	}
-	if err := ensureNoDiscordToken(filepath.Join(staging, avdSnapshotAdbName), filepath.Join(staging, avdSnapshotUnboundName)); err != nil {
+	if err := ensureNoDiscordToken(filepath.Join(staging, avdSnapshotAdbName), filepath.Join(staging, avdSnapshotAstralName)); err != nil {
 		return err
 	}
 	discordVersion := ""
@@ -164,7 +164,7 @@ func saveAVDSnapshot(profile avdProfile, out string, withSettings, withoutDiscor
 }
 
 func restoreAVDSnapshot(profile avdProfile, from string, options avdSnapshotRestoreOptions) error {
-	staging, err := os.MkdirTemp("", "unbound-avd-restore-")
+	staging, err := os.MkdirTemp("", "astral-avd-restore-")
 	if err != nil {
 		return err
 	}
@@ -225,7 +225,7 @@ func restoreAVDSnapshot(profile avdProfile, from string, options avdSnapshotRest
 	if err := rootAndroidDevice(serial); err != nil {
 		return err
 	}
-	if err := pushDeviceArchive(serial, filepath.Join(staging, avdSnapshotUnboundName), restoreUnboundCommand()); err != nil {
+	if err := pushDeviceArchive(serial, filepath.Join(staging, avdSnapshotAstralName), restoreAstralCommand()); err != nil {
 		return err
 	}
 	fmt.Printf("Restored AVD snapshot from %s onto %s; sign in to Discord to continue\n", from, profile.Name)
@@ -356,10 +356,10 @@ func adbArchiveCommand() string {
 	return "tar -czf - " + strings.Join(excludes, " ") + " -C /data adb 2>/dev/null"
 }
 
-func unboundArchiveCommand(withSettings bool) string {
-	entries := append([]string{}, avdSnapshotUnboundEntries...)
+func astralArchiveCommand(withSettings bool) string {
+	entries := append([]string{}, avdSnapshotAstralEntries...)
 	if withSettings {
-		entries = append(entries, "Unbound/settings.json")
+		entries = append(entries, "astral/settings.json")
 	}
 	present := []string{}
 	for _, entry := range entries {
@@ -368,11 +368,11 @@ func unboundArchiveCommand(withSettings bool) string {
 	return "cd " + discordFilesDir + " && tar -czf - " + strings.Join(present, " ") + " 2>/dev/null"
 }
 
-func restoreUnboundCommand() string {
+func restoreAstralCommand() string {
 	archive := avdSnapshotDeviceDir + "/archive.tgz"
 	owner := "$(stat -c %u:%g /data/data/" + discordPackage + ")"
 	return "mkdir -p -m 700 " + discordFilesDir + " && tar -xzf " + archive + " -C " + discordFilesDir +
-		" && chmod 700 " + discordFilesDir + " " + discordFilesDir + "/Unbound" +
+		" && chmod 700 " + discordFilesDir + " " + discordFilesDir + "/astral" +
 		" && chown -R " + owner + " " + discordFilesDir + " && restorecon -R " + discordFilesDir
 }
 

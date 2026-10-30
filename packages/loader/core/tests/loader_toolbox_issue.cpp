@@ -61,8 +61,8 @@ int main()
 
     const auto report = loader::toolbox::issueReport(ios, "iOS", "300.0 (1234)");
     assert(report.platform == "iOS");
-    assert(row(report, "Unbound") ==
-           std::string("loader ") + loader::loaderVersion() + " (`Unbound.dylib`, `ElleKit`)");
+    assert(row(report, "astral") ==
+           std::string("loader ") + loader::loaderVersion() + " (`astral.dylib`, `ElleKit`)");
     assert(std::isdigit(static_cast<unsigned char>(loader::loaderVersion()[0])));
     assert(row(report, "Discord") == "300.0 stable, build 1234 (TrollStore)");
     assert(row(report, "Device") == "iPhone SE on iOS 26.0.1");
@@ -94,8 +94,8 @@ int main()
 
     const auto androidReport =
         loader::toolbox::issueReport(android, "Android", "352.10 - Beta (352110)");
-    assert(row(androidReport, "Unbound") ==
-           std::string("loader ") + loader::loaderVersion() + " (`libunbound.so`, `Vector`)");
+    assert(row(androidReport, "astral") ==
+           std::string("loader ") + loader::loaderVersion() + " (`libastral.so`, `Vector`)");
     assert(row(androidReport, "Discord") == "352.10 beta, build 352110 (Google Play)");
     assert(row(androidReport, "Device") == "Google Pixel 9 on Android 16");
     assert(row(androidReport, "State") == "stock, emulator");
@@ -135,7 +135,7 @@ int main()
     const std::string issue = loader::toolbox::perform(context, "issue-url", "300.0 (1234)");
     assert(issue.find("bug%28iOS%29") != std::string::npos);
     assert(issue.find("iPhone%20SE") != std::string::npos);
-    assert(issue.find("Unbound%3A%2A%2A") < issue.find("Device%3A%2A%2A"));
+    assert(issue.find("astral%3A%2A%2A") < issue.find("Device%3A%2A%2A"));
     assert(issue.find("300.0%20stable%2C%20build%201234") != std::string::npos);
     assert(issue.find("State%3A%2A%2A%20jailbroken") != std::string::npos);
     assert(issue.find("Entitlements") != std::string::npos);

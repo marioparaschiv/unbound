@@ -21,9 +21,9 @@
 #include "LoaderToolboxGestures.h"
 #include "NativePluginBridge.h"
 
-using namespace unbound::android;
+using namespace astral::android;
 
-static const char *const kBridgeClass = "app/unbound/android/NativeBridge";
+static const char *const kBridgeClass = "app/astral/android/NativeBridge";
 
 static JavaCallbacks gCallbacks;
 
@@ -46,7 +46,7 @@ static int androidPriority(loader::LogLevel level)
 static void writeLog(loader::LogLevel level, const std::string &category,
                      const std::string &message)
 {
-    __android_log_write(androidPriority(level), "Unbound",
+    __android_log_write(androidPriority(level), "astral",
                         loader::formatLogLine(category, message).c_str());
     loader::appendLogFile(level, category, message);
 }
@@ -139,8 +139,8 @@ static void nativeDispatchHookEvent(JNIEnv *env, jclass, jstring token, jstring 
         return;
     }
 
-    unbound::android::dispatchHookEvent(unbound::android::toStdString(env, token),
-                                        unbound::android::toStdString(env, payload));
+    astral::android::dispatchHookEvent(astral::android::toStdString(env, token),
+                                       astral::android::toStdString(env, payload));
 }
 
 static void nativeDrainMainWork(JNIEnv *, jclass)
@@ -177,7 +177,7 @@ static jstring nativeHookReturnValue(JNIEnv *env, jclass, jstring token, jstring
     {
         return nullptr;
     }
-    std::optional<std::string> value = unbound::android::hookReturnValue(
+    std::optional<std::string> value = astral::android::hookReturnValue(
         toStdString(env, token), toStdString(env, self), toStdString(env, arguments));
     return value ? toJavaString(env, *value) : nullptr;
 }

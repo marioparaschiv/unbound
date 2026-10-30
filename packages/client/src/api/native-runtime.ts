@@ -211,7 +211,9 @@ export const NativePlatform: NativePlatformBridge | undefined = globalThis.Nativ
  * @returns The platform, which an unrecognised host may report as something other than `ios` or `android`.
  */
 export function currentPlatform(): NativePluginPlatform | undefined {
-	return NativePlatform?.device.platform ?? NativePlatform?.platform;
+	const platform = globalThis.NativePlatform;
+
+	return platform?.device?.platform ?? platform?.platform;
 }
 
 /**

@@ -31,7 +31,7 @@ int main()
     const auto enabled = loader::toolbox::toggleRecoveryFromShortcut(settings, false);
     assert(enabled.enabled && !enabled.restartRequired);
     assert(enabled.status == "Recovery Mode enabled");
-    assert(settings.getBoolean("unbound", "recovery", false));
+    assert(settings.getBoolean("astral", "recovery", false));
     assert(lines.size() == 1 &&
            lines.back() == "default: Recovery shortcut: Recovery Mode enabled.");
 
@@ -89,14 +89,14 @@ int main()
     assert(third["restartRequired"] == false);
 
     assert(loader::toolbox::perform(context, "recovery-shortcut-action", "") ==
-           "app.unbound.recovery.toggle");
+           "app.astral.recovery.toggle");
 
     ready                               = true;
-    const bool           recoveryBefore = settings.getBoolean("unbound", "recovery", false);
+    const bool           recoveryBefore = settings.getBoolean("astral", "recovery", false);
     const nlohmann::json ignored        = nlohmann::json::parse(
         loader::toolbox::perform(context, "recovery-shortcut-activate", "com.discord.search"));
     assert(ignored == nlohmann::json({{"handled", false}}));
-    assert(settings.getBoolean("unbound", "recovery", false) == recoveryBefore);
+    assert(settings.getBoolean("astral", "recovery", false) == recoveryBefore);
     assert(!loader::toolbox::activateShortcut(settings, true, ""));
 
     const nlohmann::json activated = nlohmann::json::parse(loader::toolbox::perform(
@@ -105,7 +105,7 @@ int main()
     assert(activated["enabled"] == !recoveryBefore);
     assert(activated["status"] ==
            (recoveryBefore ? "Recovery Mode disabled" : "Recovery Mode enabled"));
-    assert(settings.getBoolean("unbound", "recovery", false) == !recoveryBefore);
+    assert(settings.getBoolean("astral", "recovery", false) == !recoveryBefore);
 
     const auto direct = loader::toolbox::activateShortcut(settings, false,
                                                           loader::toolbox::kRecoveryShortcutAction);
@@ -120,7 +120,7 @@ int main()
                {loader::toolbox::kRecoveryShortcutAction, loader::toolbox::kRecoveryShortcutAction})
                .empty());
     assert(loader::toolbox::perform(context, "recovery-shortcut-order",
-                                    "[\"a\",\"app.unbound.recovery.toggle\",\"b\"]") == "[0,2]");
+                                    "[\"a\",\"app.astral.recovery.toggle\",\"b\"]") == "[0,2]");
     assert(loader::toolbox::perform(context, "recovery-shortcut-order", "[1,\"b\"]") == "[0,1]");
     assert(loader::toolbox::perform(context, "recovery-shortcut-order", "nonsense") == "[]");
 

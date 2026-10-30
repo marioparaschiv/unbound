@@ -76,7 +76,7 @@ static uint64_t connectionOf(NSURLSessionTask *task)
 {
     if ((self = [super init]))
     {
-        _queue = dispatch_queue_create("app.unbound.hotreload", DISPATCH_QUEUE_SERIAL);
+        _queue = dispatch_queue_create("app.astral.hotreload", DISPATCH_QUEUE_SERIAL);
 
         NSOperationQueue *delegateQueue           = [[NSOperationQueue alloc] init];
         delegateQueue.underlyingQueue             = _queue;
@@ -91,9 +91,9 @@ static uint64_t connectionOf(NSURLSessionTask *task)
 
         dispatch_queue_t queue = _queue;
         _controller            = std::make_shared<loader::HotReloadController>(
-            UnboundSettingsStore(),
+            AstralSettingsStore(),
             [] {
-                return UnboundUpdateURL();
+                return AstralUpdateURL();
             },
             std::make_shared<IOSHotReloadTransport>(self),
             [queue](double seconds, std::function<void()> work) {

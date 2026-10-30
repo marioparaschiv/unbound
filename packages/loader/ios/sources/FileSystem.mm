@@ -8,7 +8,7 @@
 #import "CoreConversions.h"
 #include "LoaderFileWatcher.h"
 
-using unbound::ios::toStdString;
+using astral::ios::toStdString;
 
 static const unsigned long kFileVnodeMask =
     DISPATCH_VNODE_ATTRIB | DISPATCH_VNODE_DELETE | DISPATCH_VNODE_EXTEND | DISPATCH_VNODE_LINK |

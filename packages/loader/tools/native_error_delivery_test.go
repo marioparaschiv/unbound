@@ -38,7 +38,7 @@ func TestNativeFailureGuardRethrowsEnvelopesInJavaScript(t *testing.T) {
 	}
 	script := "const guard = " + strings.TrimSuffix(strings.TrimSpace(string(source)), ";") + `;
 const check = (condition, message) => { if (!condition) throw new Error(message); };
-const failing = guard(function () { return { __unboundNativeFailure: { code: 'NATIVE_TEST', message: 'boom' } }; });
+const failing = guard(function () { return { __astralNativeFailure: { code: 'NATIVE_TEST', message: 'boom' } }; });
 let caught;
 try { failing(); } catch (error) { caught = error; }
 check(caught instanceof Error, 'an envelope must throw an Error');
@@ -51,7 +51,7 @@ var hostLike = new Proxy({}, { getOwnPropertyDescriptor: function () { return { 
 check(guard(function () { return hostLike; })() === hostLike, 'objects that only claim the failure key must pass through');
 check(guard(function () { return null; })() === null, 'null must pass through');
 check(guard(function () { return undefined; })() === undefined, 'undefined must pass through');
-check(globalThis.__unboundGuardNativeFunction === guard, 'the guard must be cached on the global');
+check(globalThis.__astralGuardNativeFunction === guard, 'the guard must be cached on the global');
 `
 	command := exec.Command(engine, "-e", script)
 	if output, err := command.CombinedOutput(); err != nil {
@@ -111,7 +111,7 @@ func TestHostFunctionsOnlyComeFromTheGuardedFactory(t *testing.T) {
 
 func TestAndroidKotlinLeavesBridgeLimitsToCore(t *testing.T) {
 	root := loaderRoot(t)
-	directory := filepath.Join(root, "android", "module", "src", "main", "kotlin", "app", "unbound", "android")
+	directory := filepath.Join(root, "android", "module", "src", "main", "kotlin", "app", "astral", "android")
 	for _, name := range []string{"NativeJava.kt", "NativeHooks.kt", "NativeFabric.kt", "ViewGeometry.kt", "NativeBridge.kt"} {
 		source, err := os.ReadFile(filepath.Join(directory, name))
 		if err != nil {

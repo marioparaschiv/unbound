@@ -83,6 +83,31 @@ describe('native Java bridge', () => {
 		expect(javaReleased).toEqual([nativeHandle, javaHandle]);
 	});
 
+	test('keeps a Java handle another plugin still holds when one plugin releases it', () => {
+		Object.assign(nativePlatformBridge.device, { platform: 'android' });
+		Object.assign(nativePlatformBridge, { platform: 'android' });
+		javaReleased.length = 0;
+
+		const scoped = {
+			...manifest,
+			platforms: ['android' as const],
+			capabilities: ['native.java.classes' as const],
+		};
+		const first = createPluginContext(scoped);
+		const second = createPluginContext(scoped);
+		const handle = first.native.java.getClass('java.lang.Integer');
+
+		second.native.java.getClass('java.lang.Integer');
+		first.native.java.release(handle);
+		first.dispose();
+
+		expect(javaReleased).toEqual([]);
+
+		second.dispose();
+
+		expect(javaReleased).toEqual([nativeHandle]);
+	});
+
 	test('rejects Java calls once the plugin scope is disposed', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });

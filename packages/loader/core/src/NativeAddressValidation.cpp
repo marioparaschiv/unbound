@@ -16,14 +16,14 @@
 #if defined(__has_feature)
 #if __has_feature(ptrauth_calls)
 #include <ptrauth.h>
-#define UNBOUND_STRIPS_CODE_POINTERS 1
+#define ASTRAL_STRIPS_CODE_POINTERS 1
 #endif
 #endif
 
 namespace {
 std::uintptr_t codeAddress(void *address)
 {
-#if defined(UNBOUND_STRIPS_CODE_POINTERS)
+#if defined(ASTRAL_STRIPS_CODE_POINTERS)
     address = ptrauth_strip(address, ptrauth_key_function_pointer);
 #endif
     return reinterpret_cast<std::uintptr_t>(address);

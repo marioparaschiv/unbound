@@ -39,7 +39,7 @@ func startupBudgetProblems(times smokeStartupTimes, budget smokeStartupBudget, c
 		return nil
 	}
 	var problems []string
-	if problem := milestoneProblem("executing Unbound's bundle", times.bundle, budget.bundle); problem != "" {
+	if problem := milestoneProblem("executing astral's bundle", times.bundle, budget.bundle); problem != "" {
 		problems = append(problems, problem)
 	}
 	if problem := milestoneProblem("loading every plugin", times.plugins, budget.plugins); problem != "" {
@@ -55,7 +55,7 @@ func milestoneProblem(milestone string, took, budget time.Duration) string {
 	case took == 0:
 		return fmt.Sprintf("startup never reached %s, which has a %s budget", milestone, budget)
 	case took > budget:
-		return fmt.Sprintf("Unbound took %s to reach %s, over its %s budget", roundStartup(took), milestone, budget)
+		return fmt.Sprintf("astral took %s to reach %s, over its %s budget", roundStartup(took), milestone, budget)
 	default:
 		return ""
 	}
@@ -69,7 +69,7 @@ func renderStartupTimes(times smokeStartupTimes, budget smokeStartupBudget) stri
 	}
 	report.WriteString("| Startup milestone | Time | Budget |\n| --- | --- | --- |\n")
 	fmt.Fprintf(&report, "| Discord's runtime started | %s | none |\n", describeStartupTimeAfter(times.runtime, "launch"))
-	fmt.Fprintf(&report, "| Unbound's bundle executed | %s | %s |\n", describeStartupTimeAfter(times.bundle, origin), describeBudget(budget.bundle))
+	fmt.Fprintf(&report, "| astral's bundle executed | %s | %s |\n", describeStartupTimeAfter(times.bundle, origin), describeBudget(budget.bundle))
 	fmt.Fprintf(&report, "| Every plugin loaded | %s | %s |\n\n", describeStartupTimeAfter(times.plugins, origin), describeBudget(budget.plugins))
 	return report.String()
 }

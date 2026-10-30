@@ -14,6 +14,7 @@
 
 #include "JniEnvironment.h"
 #include "LoaderAddonActivity.h"
+#include "LoaderBootstrap.h"
 #include "LoaderLog.h"
 #include "LoaderThreadWarnings.h"
 #include "NativeBoundedValue.h"
@@ -29,7 +30,7 @@
 #include "NativeResourceBudget.h"
 #include "NativeTraversalOptions.h"
 
-namespace unbound::android {
+namespace astral::android {
 namespace jsi = facebook::jsi;
 
 static std::string takeJavaFailure(JNIEnv *env, const char *fallback)
@@ -397,10 +398,7 @@ static jsi::Value javaSynchronously(jsi::Runtime &runtime, const JavaCallbacks &
     return parseJavaResult(runtime, callJavaString(callbacks, method, arguments));
 }
 
-static constexpr const char *kCatchingCallName = "__unboundCatchingCall";
-static constexpr const char *kCatchingCallSource =
-    "(function (listener, value) { try { listener(value); return undefined; } catch (error) { "
-    "return String(error && error.message ? error.message : error); } })";
+static constexpr const char *kCatchingCallName = "__astralCatchingCall";
 
 static jsi::Function catchingCall(jsi::Runtime &runtime)
 {
@@ -410,14 +408,14 @@ static jsi::Function catchingCall(jsi::Runtime &runtime)
     {
         return cached.asObject(runtime).asFunction(runtime);
     }
-    jsi::Function created =
-        runtime
-            .evaluateJavaScript(std::make_shared<jsi::StringBuffer>(kCatchingCallSource),
-                                "unbound-catching-call")
-            .asObject(runtime)
-            .asFunction(runtime);
-    global.setProperty(runtime, kCatchingCallName, created);
-    return created;
+    std::optional<jsi::Function> created =
+        loader::bootstrap::function(runtime, loader::bootstrap::kCatchingCall);
+    if (!created)
+    {
+        throw jsi::JSError(runtime, "The catching-call bootstrap script is unavailable.");
+    }
+    global.setProperty(runtime, kCatchingCallName, *created);
+    return std::move(*created);
 }
 
 struct HookListener {

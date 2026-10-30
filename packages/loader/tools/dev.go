@@ -302,7 +302,7 @@ func startAVD(profile avdProfile) error {
 		}
 	}
 	if serial == "" {
-		logFile, err := os.OpenFile(filepath.Join(os.TempDir(), "unbound-"+profile.Name+".log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+		logFile, err := os.OpenFile(filepath.Join(os.TempDir(), "astral-"+profile.Name+".log"), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
 		if err != nil {
 			return err
 		}
@@ -317,7 +317,7 @@ func startAVD(profile avdProfile) error {
 			return err
 		}
 		logFile.Close()
-		fmt.Printf("Started Android AVD %s; boot log: %s\n", profile.Name, filepath.Join(os.TempDir(), "unbound-"+profile.Name+".log"))
+		fmt.Printf("Started Android AVD %s; boot log: %s\n", profile.Name, filepath.Join(os.TempDir(), "astral-"+profile.Name+".log"))
 		serial, err = waitForAVD(profile.Name, 3*time.Minute)
 		if err != nil {
 			return err
@@ -384,7 +384,7 @@ func reportAndroidSetup(serial string) {
 	}
 	fmt.Printf("  su root: %t\n", strings.Contains(shell("su -c id"), "uid=0(root)"))
 	fmt.Printf("  Xposed framework: %s\n", valueOr(xposedFramework(shell("su -c 'ls /data/adb/modules'")), "missing; install Vector as a Magisk module"))
-	fmt.Printf("  Unbound module: %t\n", strings.Contains(shell("pm path app.unbound.android"), "package:"))
+	fmt.Printf("  astral module: %t\n", strings.Contains(shell("pm path app.astral.android"), "package:"))
 	fmt.Printf("  Discord: %s\n", valueOr(packageVersionName(shell("dumpsys package com.discord")), "not installed"))
 	overlays := enabledEmulationOverlays(shell("cmd overlay list android"))
 	fmt.Printf("  emulation overlays: %s\n", valueOr(strings.Join(overlays, ", "), "none"))

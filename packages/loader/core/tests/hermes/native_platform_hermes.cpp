@@ -40,21 +40,21 @@ static const char *const kBridgeChecks = R"JS((function () {
 	var fonts = platform.fonts.list();
 	check(Array.isArray(fonts) && fonts.length === 1 && fonts[0].name === 'Test Sans', 'fonts list');
 
-	check(platform.settings.apply([{ store: 'unbound', key: 'answer', value: { nested: [1, 'two', null] } }]) === true, 'settings apply');
-	check(platform.settings.apply([{ store: 'unbound', key: 'answer', remove: true }, { store: 'other', key: 'kept', value: true }]) === true, 'settings remove');
+	check(platform.settings.apply([{ store: 'astral', key: 'answer', value: { nested: [1, 'two', null] } }]) === true, 'settings apply');
+	check(platform.settings.apply([{ store: 'astral', key: 'answer', remove: true }, { store: 'other', key: 'kept', value: true }]) === true, 'settings remove');
 	check(throws(function () { platform.settings.apply('not changes'); }), 'settings apply rejects a non-array');
 	check(platform.settings.apply([{ key: 'no store' }, 7, null]) === true, 'settings apply skips malformed changes');
 	var cyclic = { name: 'loop' };
 	cyclic.self = cyclic;
-	check(throws(function () { platform.settings.apply([{ store: 'unbound', key: 'cyclic', value: cyclic }]); }), 'settings apply refuses a value that refers to itself');
+	check(throws(function () { platform.settings.apply([{ store: 'astral', key: 'cyclic', value: cyclic }]); }), 'settings apply refuses a value that refers to itself');
 	var deep = {};
 	var cursor = deep;
 	for (var level = 0; level < 5000; level++) { cursor.next = {}; cursor = cursor.next; }
-	check(throws(function () { platform.settings.apply([{ store: 'unbound', key: 'deep', value: deep }]); }), 'settings apply refuses a value nested thousands deep');
+	check(throws(function () { platform.settings.apply([{ store: 'astral', key: 'deep', value: deep }]); }), 'settings apply refuses a value nested thousands deep');
 	var nested = {};
 	var nestedCursor = nested;
 	for (var depth = 0; depth < 140; depth++) { nestedCursor.next = {}; nestedCursor = nestedCursor.next; }
-	check(throws(function () { platform.settings.apply([{ store: 'unbound', key: 'nested', value: nested }]); }), 'settings apply refuses a value past the native depth limit');
+	check(throws(function () { platform.settings.apply([{ store: 'astral', key: 'nested', value: nested }]); }), 'settings apply refuses a value past the native depth limit');
 
 	check(platform.files.remove('Plugins/doomed') === true, 'files remove inside documents');
 	check(platform.files.remove('Plugins/doomed') === false, 'files remove twice');
@@ -62,17 +62,17 @@ static const char *const kBridgeChecks = R"JS((function () {
 	check(platform.files.remove('/etc') === false, 'files remove refuses absolute paths');
 	check(platform.files.remove() === false, 'files remove without a path');
 
-	check(typeof platform.crashGuard.register('unbound.example', 'Example') === 'number', 'crash guard register');
-	check(typeof platform.crashGuard.begin('unbound.example', 'Example') === 'boolean', 'crash guard begin');
-	check(typeof platform.crashGuard.end('unbound.example') === 'boolean', 'crash guard end');
+	check(typeof platform.crashGuard.register('astral.example', 'Example') === 'number', 'crash guard register');
+	check(typeof platform.crashGuard.begin('astral.example', 'Example') === 'boolean', 'crash guard begin');
+	check(typeof platform.crashGuard.end('astral.example') === 'boolean', 'crash guard end');
 	var cell = platform.crashGuard.activity();
 	check(cell === undefined || cell instanceof ArrayBuffer, 'crash guard activity cell');
 
 	var missing = platform.addons.verify();
 	check(missing.status === 'invalid' && typeof missing.problem === 'string', 'verify without arguments');
 	check(platform.addons.verify('"a string"', 'bundle').status === 'invalid', 'verify a non-object manifest');
-	check(platform.addons.verify('{"id":"unbound.example","version":"1.0.0"}', 'bundle').status === 'unsigned', 'verify an unsigned manifest');
-	var forged = platform.addons.verify('{"id":"unbound.example","version":"1.0.0","signature":"AAAA"}', 'bundle');
+	check(platform.addons.verify('{"id":"astral.example","version":"1.0.0"}', 'bundle').status === 'unsigned', 'verify an unsigned manifest');
+	var forged = platform.addons.verify('{"id":"astral.example","version":"1.0.0","signature":"AAAA"}', 'bundle');
 	check(forged.status === 'invalid', 'verify a forged signature');
 
 	return JSON.stringify(failures);
@@ -90,7 +90,7 @@ static void require(bool condition, const char *check)
 int main()
 {
     std::filesystem::path documents =
-        std::filesystem::temp_directory_path() / "unbound-native-platform-hermes";
+        std::filesystem::temp_directory_path() / "astral-native-platform-hermes";
     std::filesystem::remove_all(documents);
     std::filesystem::create_directories(documents / "Plugins" / "doomed");
     std::filesystem::path outside = documents.parent_path() / "outside";
@@ -144,7 +144,7 @@ int main()
         "reload-claim.js");
     require(reclaimed.isBool() && !reclaimed.getBool(),
             "a reloaded runtime sees the launch URL as claimed");
-    require(!settings.get("unbound", "answer").has_value(), "a removed setting is gone natively");
+    require(!settings.get("astral", "answer").has_value(), "a removed setting is gone natively");
     require(settings.getBoolean("other", "kept", false), "an applied setting is stored natively");
     require(!std::filesystem::exists(documents / "Plugins" / "doomed"),
             "the removed folder is gone");

@@ -57,14 +57,14 @@ func compatPolicyLink(sourceURL string) string {
 func renderCompatSupportIssue(raises []compatSupportRaise, removable []compatLegacyName, reminderDays int, sourceURL string) string {
 	var builder strings.Builder
 	builder.WriteString("## " + compatSupportTitle + "\n\n")
-	builder.WriteString("Unbound supports every Discord build from the minimum in " + compatPolicyLink(sourceURL) + " onwards. Once the stable channel has been newer than that minimum for more than " + strconv.Itoa(reminderDays) + " days, the minimum moves up to the current stable build, so code that only older builds need can go.\n\n")
+	builder.WriteString("astral supports every Discord build from the minimum in " + compatPolicyLink(sourceURL) + " onwards. Once the stable channel has been newer than that minimum for more than " + strconv.Itoa(reminderDays) + " days, the minimum moves up to the current stable build, so code that only older builds need can go.\n\n")
 	builder.WriteString("| Platform | Oldest supported | Stable | Stable newer since |\n| --- | --- | --- | --- |\n")
 	android := false
 	for _, raise := range raises {
 		android = android || raise.Platform == "android"
 		builder.WriteString("| " + compatPlatformLabels[raise.Platform] + " | " + raise.Minimum + " | " + raise.Stable + " | " + raise.NewerSince.Format("2006-01-02") + " |\n")
 	}
-	builder.WriteString("\nSet `minimumDiscordVersion` in the policy file to the stable versions above. Users on an older Discord then see a warning that Unbound no longer supports their version.\n\n")
+	builder.WriteString("\nSet `minimumDiscordVersion` in the policy file to the stable versions above. Users on an older Discord then see a warning that astral no longer supports their version.\n\n")
 	builder.WriteString("### What raising it lets the team remove\n\n")
 	if !android || len(removable) == 0 {
 		builder.WriteString("No legacy name is waiting on the minimum, so raising it removes nothing yet. It still lets the next names Discord drops go sooner.\n")

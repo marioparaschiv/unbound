@@ -5,17 +5,17 @@ import "testing"
 func TestLoaderReleasesAlwaysNameTheirPlatform(t *testing.T) {
 	for releaseVersion, want := range map[string]loaderReleaseNames{
 		"353.0": {
-			IOS:     &loaderRelease{"discord-353.0-ios", "Unbound 1.0.1 for Discord 353.0, iOS"},
-			Android: &loaderRelease{"discord-353.0-android", "Unbound 1.0.1 for Discord 353.0, Android"},
+			IOS:     &loaderRelease{"discord-353.0-ios", "astral 1.0.1 for Discord 353.0, iOS"},
+			Android: &loaderRelease{"discord-353.0-android", "astral 1.0.1 for Discord 353.0, Android"},
 		},
 		"353.0_119349-ios-testflight": {
-			IOS: &loaderRelease{"discord-353.0_119349-ios-testflight", "Unbound 1.0.1 for Discord 353.0 (119349), iOS TestFlight"},
+			IOS: &loaderRelease{"discord-353.0_119349-ios-testflight", "astral 1.0.1 for Discord 353.0 (119349), iOS TestFlight"},
 		},
 		"352.10-android-beta": {
-			Android: &loaderRelease{"discord-352.10-android-beta", "Unbound 1.0.1 for Discord 352.10, Android beta"},
+			Android: &loaderRelease{"discord-352.10-android-beta", "astral 1.0.1 for Discord 352.10, Android beta"},
 		},
 		"353.1-android-alpha": {
-			Android: &loaderRelease{"discord-353.1-android-alpha", "Unbound 1.0.1 for Discord 353.1, Android alpha"},
+			Android: &loaderRelease{"discord-353.1-android-alpha", "astral 1.0.1 for Discord 353.1, Android alpha"},
 		},
 	} {
 		names, err := nameLoaderReleases(releaseVersion, "1.0.1")

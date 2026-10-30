@@ -18,7 +18,7 @@ constexpr size_t      kSignatureLengthOffset = 56;
 constexpr size_t      kSignatureOffset       = 60;
 constexpr size_t      kCommitHashOffset      = 156;
 constexpr size_t      kCommitHashCapacity    = 41;
-constexpr const char *kELFSectionName        = ".unbound.attestation";
+constexpr const char *kELFSectionName        = ".astral.attestation";
 
 struct Record {
     uint32_t    magic      = 0;

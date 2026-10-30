@@ -61,7 +61,7 @@ jobs:
                   restore-keys: native-fuzz-corpus-
 
             - name: Configure the fuzzers
-              run: cmake -S core -B build/libfuzzer -DUNBOUND_CORE_TESTS=ON -DUNBOUND_CORE_FUZZ=ON -DUNBOUND_CORE_JSI_FUZZ=ON -DUNBOUND_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
+              run: cmake -S core -B build/libfuzzer -DASTRAL_CORE_TESTS=ON -DASTRAL_CORE_FUZZ=ON -DASTRAL_CORE_JSI_FUZZ=ON -DASTRAL_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
 
             - name: Build the fuzzers
               run: cmake --build build/libfuzzer --target native_jsi_libfuzzer native_bridge_libfuzzer -j"$(nproc)"

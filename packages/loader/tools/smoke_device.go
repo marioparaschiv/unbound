@@ -28,7 +28,7 @@ const (
 	deviceBackupArchive  = "/var/tmp/ubd-smoke-backup.tgz"
 	deviceTar            = "/var/jb/usr/bin/tar"
 	deviceGzip           = "/var/jb/usr/bin/gzip"
-	deviceLogFile        = "Logs/unbound.log"
+	deviceLogFile        = "Logs/astral.log"
 	deviceLogPoll        = 2 * time.Second
 	deviceRootMarker     = "UBD_ROOT="
 	deviceContainersRoot = "/var/mobile/Containers/Data/Application"
@@ -121,7 +121,7 @@ func parsePilotShell(output string) (string, error) {
 func deviceRootScript() string {
 	return strings.Join([]string{
 		"for plist in $(grep -l '" + smokeIOSBundleID + "' " + deviceContainersRoot + "/*/.com.apple.mobile_container_manager.metadata.plist 2>/dev/null); do",
-		`if [ -d "${plist%/*}/Documents/Unbound" ]; then echo "` + deviceRootMarker + `${plist%/*}/Documents/Unbound"; exit 0; fi`,
+		`if [ -d "${plist%/*}/Documents/astral" ]; then echo "` + deviceRootMarker + `${plist%/*}/Documents/astral"; exit 0; fi`,
 		"done",
 		"exit 1",
 	}, "\n")
@@ -139,14 +139,14 @@ func parseDeviceRoot(output string) string {
 func (target *deviceSmokeTarget) prepare(ctx context.Context, plugins []smokePlugin, settings []byte) error {
 	output, err := target.shell(ctx, time.Minute, deviceRootScript())
 	if err != nil {
-		return fmt.Errorf("find Discord's Unbound folder; launch Discord with Unbound once: %w", err)
+		return fmt.Errorf("find Discord's astral folder; launch Discord with astral once: %w", err)
 	}
 	target.root = parseDeviceRoot(output)
 	if target.root == "" {
-		return errors.New("no Discord data container has an Unbound folder")
+		return errors.New("no Discord data container has an astral folder")
 	}
 	if _, err := target.shell(ctx, 3*time.Minute, "killall -9 Discord 2>/dev/null; cd "+shellQuote(target.root)+" && "+deviceTar+" -cf - . | "+deviceGzip+" > "+deviceBackupArchive); err != nil {
-		return fmt.Errorf("back up the Unbound folder: %w", err)
+		return fmt.Errorf("back up the astral folder: %w", err)
 	}
 	target.backedUp = true
 	current, err := target.shell(ctx, time.Minute, "cat "+shellQuote(target.root+"/settings.json")+" 2>/dev/null || true")
@@ -381,11 +381,11 @@ func (target *deviceSmokeTarget) restore() {
 		"rm -f " + deviceBackupArchive,
 	}, "; ")
 	if _, err := target.shell(ctx, 4*time.Minute, script); err != nil {
-		fmt.Fprintf(os.Stderr, "smoke: restoring the iPhone's Unbound folder failed, its backup is at %s: %v\n", deviceBackupArchive, err)
+		fmt.Fprintf(os.Stderr, "smoke: restoring the iPhone's astral folder failed, its backup is at %s: %v\n", deviceBackupArchive, err)
 		return
 	}
 	_, _ = target.shell(ctx, time.Minute, "/var/jb/usr/bin/uiopen --bundleid "+smokeIOSBundleID)
-	fmt.Println("Restored the iPhone's Unbound folder")
+	fmt.Println("Restored the iPhone's astral folder")
 }
 
 func shellQuote(value string) string {

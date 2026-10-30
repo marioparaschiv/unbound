@@ -21,6 +21,8 @@ export const IOSClass = {
 	avatar: 'DCDAvatarView',
 	attributedText: 'DCDAttributedTextView',
 	reactions: 'DCDReactionListView',
+	ephemeral: 'DiscordChat.EphemeralView',
+	button: 'UIButton',
 };
 
 export const MEDIA_VIEW_CLASSES = [

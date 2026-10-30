@@ -56,10 +56,10 @@ struct Signer {
 
 static nlohmann::json signedManifest(const Signer &signer, const std::string &bundle)
 {
-    nlohmann::json manifest = {{"id", "unbound.example"}, {"version", "1.2.3"}};
+    nlohmann::json manifest = {{"id", "astral.example"}, {"version", "1.2.3"}};
     manifest["signature"]   = {
         {"version", 1},
-        {"ed25519", signer.sign(loader::addonSigningMessage("unbound.example", "1.2.3", bundle))}};
+        {"ed25519", signer.sign(loader::addonSigningMessage("astral.example", "1.2.3", bundle))}};
     return manifest;
 }
 
@@ -86,14 +86,14 @@ int main()
            loader::AddonSignatureStatus::Invalid);
 
     nlohmann::json renamed = manifest;
-    renamed["id"]          = "unbound.other";
+    renamed["id"]          = "astral.other";
     assert(loader::verifyAddonSignature(renamed, bundle, trust).status ==
            loader::AddonSignatureStatus::Invalid);
 
     assert(loader::verifyAddonSignature(signedManifest(stranger, bundle), bundle, trust).status ==
            loader::AddonSignatureStatus::Invalid);
 
-    nlohmann::json unsignedManifest = {{"id", "unbound.example"}, {"version", "1.2.3"}};
+    nlohmann::json unsignedManifest = {{"id", "astral.example"}, {"version", "1.2.3"}};
     assert(loader::verifyAddonSignature(unsignedManifest, bundle, trust).status ==
            loader::AddonSignatureStatus::Unsigned);
 
@@ -113,7 +113,7 @@ int main()
     loader::BundleTrust published;
     published.productionKey          = "6kpsY+KcUgq+9VB7Ey7F+ZVHdq6+vnuSQh7qaRRG0iw=";
     nlohmann::json fromPluginScripts = {
-        {"id", "unbound.example"},
+        {"id", "astral.example"},
         {"version", "1.2.3"},
         {"signature",
          {{"version", 1},
@@ -124,20 +124,20 @@ int main()
     assert(production.publicBase64() == published.productionKey);
 
     assert(loader::addonSigningMessage("a", "1.0.0", "x") ==
-           "unbound-addon/v1\na\n1.0.0\n" + loader::sha512Hex("x"));
+           "astral-addon/v1\na\n1.0.0\n" + loader::sha512Hex("x"));
 
     std::string    newer   = loader::sha512Hex("98");
     std::string    older   = loader::sha512Hex("96");
     nlohmann::json digests = {{"98", newer}, {"96", older}};
     assert(loader::addonSigningMessage("a", "1.0.0", "x", digests) ==
-           "unbound-addon/v1\na\n1.0.0\n" + loader::sha512Hex("x") + "\nbytecode 96 " + older +
+           "astral-addon/v1\na\n1.0.0\n" + loader::sha512Hex("x") + "\nbytecode 96 " + older +
                "\nbytecode 98 " + newer);
 
     nlohmann::json withBytecode = {
-        {"id", "unbound.example"}, {"version", "1.2.3"}, {"bytecode", digests}};
+        {"id", "astral.example"}, {"version", "1.2.3"}, {"bytecode", digests}};
     withBytecode["signature"] = {{"version", 1},
                                  {"ed25519", production.sign(loader::addonSigningMessage(
-                                                 "unbound.example", "1.2.3", bundle, digests))}};
+                                                 "astral.example", "1.2.3", bundle, digests))}};
     assert(loader::verifyAddonSignature(withBytecode, bundle, trust).status ==
            loader::AddonSignatureStatus::Signed);
 

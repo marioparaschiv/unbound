@@ -59,7 +59,7 @@ std::string addonSigningMessage(const std::string &id, const std::string &versio
                                 const std::string &bundle, const nlohmann::json &bytecode,
                                 const std::string *bundleDigest)
 {
-    std::string message = "unbound-addon/v1\n" + id + "\n" + version + "\n" +
+    std::string message = "astral-addon/v1\n" + id + "\n" + version + "\n" +
                           (bundleDigest ? *bundleDigest : sha512Hex(bundle));
     for (const auto &[bytecodeVersion, digest] : sortedDigests(bytecode))
     {

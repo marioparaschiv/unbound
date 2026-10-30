@@ -84,7 +84,7 @@ int main()
 {
     std::filesystem::path root   = makeTemporaryDirectory();
     std::string           marker = (root / loader::AddonCrashGuard::kFrozenFile).string();
-    loader::AddonSlot     slot   = loader::registerAddonSlot("unbound.frozen", "Frozen Plugin");
+    loader::AddonSlot     slot   = loader::registerAddonSlot("astral.frozen", "Frozen Plugin");
     FakeRuntimeThread     runtime;
     std::mutex            reportsMutex;
     std::vector<loader::FreezeReport> reports;
@@ -130,7 +130,7 @@ int main()
         assert(markerSeen);
         std::lock_guard<std::mutex> lock(reportsMutex);
         assert(reports.size() == 1);
-        assert(reports[0].id == "unbound.frozen");
+        assert(reports[0].id == "astral.frozen");
         assert(reports[0].name == "Frozen Plugin");
         assert(reports[0].resolved);
         assert(reports[0].seconds >= 0.15);
@@ -160,13 +160,13 @@ int main()
     assert(!loader::fileExists(marker));
 
     assert(loader::writeTextFileAtomically(marker,
-                                           R"({"id":"unbound.frozen","name":"Frozen Plugin"})"));
+                                           R"({"id":"astral.frozen","name":"Frozen Plugin"})"));
     assert(loader::AddonCrashGuard(root.string()).recoverFromPreviousLaunch().empty());
     assert(loader::writeTextFileAtomically(marker,
-                                           R"({"id":"unbound.frozen","name":"Frozen Plugin"})"));
+                                           R"({"id":"astral.frozen","name":"Frozen Plugin"})"));
     std::vector<loader::CrashedAddon> disabled =
         loader::AddonCrashGuard(root.string()).recoverFromPreviousLaunch();
-    assert(disabled.size() == 1 && disabled[0].id == "unbound.frozen");
+    assert(disabled.size() == 1 && disabled[0].id == "astral.frozen");
     assert(disabled[0].phase == loader::CrashPhase::Frozen);
     assert(loader::crashDisabledNotice(disabled[0]) ==
            "Disabled Frozen Plugin because Discord froze in it and had to be closed.");

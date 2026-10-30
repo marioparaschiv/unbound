@@ -26,9 +26,9 @@ int main()
     char *directory = mkdtemp(templatePath.data());
     assert(directory);
     const std::filesystem::path root(directory);
-    const auto                  candidate = root / "unbound.bundle.candidate";
-    const auto                  target    = root / "unbound.bundle";
-    const auto                  backup    = root / "unbound.bundle.previous";
+    const auto                  candidate = root / "astral.bundle.candidate";
+    const auto                  target    = root / "astral.bundle";
+    const auto                  backup    = root / "astral.bundle.previous";
 
     writeFile(target, "old bundle");
     writeFile(candidate, "new bundle");
@@ -62,7 +62,7 @@ int main()
     assert(!std::filesystem::exists(backup));
 
     writeFile(candidate, "blocked bundle");
-    const auto missingBackup = root / "missing" / "unbound.bundle.previous";
+    const auto missingBackup = root / "missing" / "astral.bundle.previous";
     assert(!promoteNativeBundle(candidate.c_str(), target.c_str(), missingBackup.c_str()));
     assert(readFile(target) == "first bundle");
     assert(readFile(candidate) == "blocked bundle");

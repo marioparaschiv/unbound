@@ -62,11 +62,11 @@ struct Fixture {
 
 static void splitsPaths()
 {
-    assert(parentDirectory("/var/mobile/Documents/Unbound/settings.json") ==
-           "/var/mobile/Documents/Unbound");
+    assert(parentDirectory("/var/mobile/Documents/astral/settings.json") ==
+           "/var/mobile/Documents/astral");
     assert(parentDirectory("/settings.json") == "/");
     assert(parentDirectory("settings.json") == "");
-    assert(lastPathComponent("/var/Unbound/settings.json") == "settings.json");
+    assert(lastPathComponent("/var/astral/settings.json") == "settings.json");
     assert(lastPathComponent("settings.json") == "settings.json");
 }
 

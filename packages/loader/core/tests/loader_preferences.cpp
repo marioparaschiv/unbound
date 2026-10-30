@@ -16,7 +16,7 @@ int main()
     const auto path = (std::filesystem::path(templatePath) / kSettingsFile).string();
     assert(loader::writeTextFileAtomically(
         path,
-        R"({"unbound":{"recovery":true,"font-states":{"*":"Ginto"}},"themes":{"applied":"adrian.theme"}})"));
+        R"({"astral":{"recovery":true,"font-states":{"*":"Ginto"}},"themes":{"applied":"adrian.theme"}})"));
 
     loader::SettingsStore settings(path);
     settings.load();

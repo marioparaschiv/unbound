@@ -26,7 +26,7 @@ int main()
     assert(reads == 1);
 
     now += std::chrono::seconds(1);
-    AddonSlot plugin = registerAddonSlot("unbound.example", "Example");
+    AddonSlot plugin = registerAddonSlot("astral.example", "Example");
     assert(*warnings.warning(plugin, "-[UIView bounds]") ==
            "Example called -[UIView bounds] off the main thread. Views are only safe on the main "
            "thread; use invokeAsync instead.");

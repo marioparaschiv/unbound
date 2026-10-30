@@ -97,16 +97,16 @@ int main()
     loader::preferences::setGestureEnabled(settings, loader::preferences::ToolboxGesture::Shake,
                                            false);
     const auto ios = loader::toolbox::menu(
-        settings, loader::toolbox::menuOptions(R"({"openAppFolder":true,"unboundIcon":true})"));
+        settings, loader::toolbox::menuOptions(R"({"openAppFolder":true,"astralIcon":true})"));
     assert(item(ios, "toggle-recovery").title == "Disable Recovery Mode");
     assert(!item(ios, "gesture-shake").on);
     assert(item(ios, "gesture-three-finger").on);
     assert((ids(ios[2]) == std::vector<std::string>{"toggle-recovery", "factory-reset",
                                                     "open-app-folder", "open-issue"}));
     assert((ids(ios[3]) ==
-            std::vector<std::string>{"gesture-shake", "gesture-three-finger", "unbound-icon"}));
-    assert(item(ios, "unbound-icon").kind == loader::toolbox::MenuItemKind::Toggle);
-    assert(!item(ios, "unbound-icon").gesture);
+            std::vector<std::string>{"gesture-shake", "gesture-three-finger", "astral-icon"}));
+    assert(item(ios, "astral-icon").kind == loader::toolbox::MenuItemKind::Toggle);
+    assert(!item(ios, "astral-icon").gesture);
 
     const auto android = loader::toolbox::menu(
         settings, loader::toolbox::menuOptions(R"({"copyAppFolderPath":true})"));
@@ -116,7 +116,7 @@ int main()
     assert(loader::toolbox::menuOptions("not json").openAppFolder == false);
 
     const nlohmann::json json = loader::toolbox::menuJSON(settings, {});
-    assert(json["title"] == "Unbound Toolbox");
+    assert(json["title"] == "astral Toolbox");
     assert(json["close"] == "Close");
     assert(json["confirmation"]["message"] == loader::toolbox::kDestructiveConfirmation);
     assert(json["confirmation"]["confirm"] == "Confirm");

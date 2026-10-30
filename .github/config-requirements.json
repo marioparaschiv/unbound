@@ -1,10 +1,10 @@
 {
-	"UNBOUND_BUNDLE_SIGNING_KEY": {
+	"ASTRAL_BUNDLE_SIGNING_KEY": {
 		"kind": "secret",
 		"required": true,
 		"purpose": "Signs client bundles, their manifest and first-party plugins."
 	},
-	"UNBOUND_PR_BUNDLE_SIGNING_KEY": {
+	"ASTRAL_PR_BUNDLE_SIGNING_KEY": {
 		"kind": "secret",
 		"required": true,
 		"purpose": "Signs pull request test bundles that PR loader builds trust."
@@ -49,15 +49,15 @@
 		"required": false,
 		"purpose": "Lets the hermesc sync open its pull request as a user, so the pull request's own CI runs; without it the sync uses GITHUB_TOKEN."
 	},
-	"UNBOUND_API_KEY": {
+	"ASTRAL_API_KEY": {
 		"kind": "secret",
 		"required": true,
-		"purpose": "Publishes first-party plugins and loader releases to the Unbound API."
+		"purpose": "Publishes first-party plugins and loader releases to the astral API."
 	},
-	"UNBOUND_API_URL": {
+	"ASTRAL_API_URL": {
 		"kind": "var",
 		"required": true,
-		"purpose": "Origin of the Unbound API that plugins and loader releases are published to."
+		"purpose": "Origin of the astral API that plugins and loader releases are published to."
 	},
 	"S3_ENDPOINT": {
 		"kind": "var",

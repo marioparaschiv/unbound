@@ -46,7 +46,7 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 		"ffi_closure_alloc",
 		"ffi_prep_closure_loc",
 		"dispatchFFIHook",
-		"dispatchVoidHook",
+		"makeTypedHook",
 		"dispatchTypedHook",
 		"fallbackHooks()",
 		"fallbackHook<int8_t, id, id>(\"i8\", {\"object\", \"object\"})",
@@ -153,7 +153,7 @@ func TestNativeBridgeContractIsSynchronized(t *testing.T) {
 	}
 	if !containsCode(string(ffiCall), "class CallInterfaceCache") ||
 		!containsCode(string(ffiCall), "entries_.size() > kCallInterfaceCacheCapacity") {
-		t.Fatal("native FFI call interface cache is missing or unbounded")
+		t.Fatal("native FFI call interface cache is missing or astraled")
 	}
 	for _, shared := range []string{
 		`makeFunction("symbol", 2, runtime, loader::ffi::lookupSymbol)`,
@@ -268,7 +268,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	loader, err := os.ReadFile(filepath.Join(root, "ios", "sources", "Unbound.xm"))
+	loader, err := os.ReadFile(filepath.Join(root, "ios", "sources", "astral.xm"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -365,7 +365,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		t.Fatal("the shared loader pipeline no longer bounds bundle preparation")
 	}
 	if containsCode(string(bridge), "dispatch_sync(dispatch_get_main_queue()") {
-		t.Fatal("native bridge still uses an unbounded synchronous main-thread dispatch")
+		t.Fatal("native bridge still uses an astraled synchronous main-thread dispatch")
 	}
 	superStart := codeIndex(string(bridge), "static void setSuperFFIArgument(")
 	superEnd := codeIndex(string(bridge), "static Value invokeSuperObject(")

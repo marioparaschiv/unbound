@@ -1,10 +1,10 @@
-# Unbound Loader
+# astral Loader
 
 [![Build](https://github.com/marioparaschiv/unbound/actions/workflows/loader-build.yml/badge.svg)](https://github.com/marioparaschiv/unbound/actions/workflows/loader-build.yml)
 [![iOS](https://github.com/marioparaschiv/unbound/actions/workflows/loader-ios.yml/badge.svg)](https://github.com/marioparaschiv/unbound/actions/workflows/loader-ios.yml)
 [![Android](https://github.com/marioparaschiv/unbound/actions/workflows/loader-android.yml/badge.svg)](https://github.com/marioparaschiv/unbound/actions/workflows/loader-android.yml)
 
-Unbound Loader injects [Unbound](https://github.com/marioparaschiv/unbound) into Discord on iOS and Android. A shared C++ core handles bundle loading, settings, addon lifecycle and runtime scheduling; platform adapters connect those shared services to Theos/ElleKit on iOS and libxposed (through Vector or LSPatch) on Android.
+astral Loader injects [astral](https://github.com/marioparaschiv/unbound) into Discord on iOS and Android. A shared C++ core handles bundle loading, settings, addon lifecycle and runtime scheduling; platform adapters connect those shared services to Theos/ElleKit on iOS and libxposed (through Vector or LSPatch) on Android.
 
 ## Layout
 
@@ -28,7 +28,7 @@ Builds are in the [Releases](https://github.com/marioparaschiv/unbound/releases/
 
 **Jailbroken:** add the apt repo <https://builds.unbound.rip/repo> to your package manager, or install the `.deb` directly.
 
-**Jailed:** add <https://builds.unbound.rip/repo/app-repo.json> to your sideloading tool, or install [Unbound.ipa](https://github.com/marioparaschiv/unbound/releases/download/loader-latest/Unbound.ipa).
+**Jailed:** add <https://builds.unbound.rip/repo/app-repo.json> to your sideloading tool, or install [astral.ipa](https://github.com/marioparaschiv/unbound/releases/download/loader-latest/astral.ipa).
 
 <div>
     <a href="https://intradeus.github.io/http-protocol-redirector?r=sidestore://source?url=https://builds.unbound.rip/repo/app-repo.json"><img src="../../.github/resources/sidestore-badge.png" alt="Add to SideStore" height="60"></a>
@@ -37,7 +37,7 @@ Builds are in the [Releases](https://github.com/marioparaschiv/unbound/releases/
     &nbsp;
     <a href="https://intradeus.github.io/http-protocol-redirector?r=altstore://source?url=https://builds.unbound.rip/repo/app-repo.json"><img src="../../.github/resources/altstore-badge.png" alt="Add to AltStore" height="60"></a>
     &nbsp;
-    <a href="https://github.com/marioparaschiv/unbound/releases/download/loader-latest/Unbound.ipa"><img src="../../.github/resources/github-badge.png" alt="Download from GitHub" height="60"></a>
+    <a href="https://github.com/marioparaschiv/unbound/releases/download/loader-latest/astral.ipa"><img src="../../.github/resources/github-badge.png" alt="Download from GitHub" height="60"></a>
 </div>
 
 > [!WARNING]
@@ -45,23 +45,23 @@ Builds are in the [Releases](https://github.com/marioparaschiv/unbound/releases/
 
 ### Android
 
-**Rooted (Vector):** install `app.unbound.android.xposed.apk`, enable the module, and scope it to `com.discord`. The module works with every Discord channel.
+**Rooted (Vector):** install `app.astral.android.xposed.apk`, enable the module, and scope it to `com.discord`. The module works with every Discord channel.
 
-[Add the Unbound Xposed module to Obtainium](obtainium://app/%7B%22id%22%3A%22app.unbound.android%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20Loader%20%28Xposed%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eapp%5C%5C%5C%5C.unbound%5C%5C%5C%5C.android%5C%5C%5C%5C.xposed%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20.%2B%2C%20Android%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D) to receive updates from GitHub Releases. The release workflow requires a persistent Android signing key so installed copies can be updated safely.
+[Add the astral Xposed module to Obtainium](obtainium://app/%7B%22id%22%3A%22app.astral.android%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22astral%20Loader%20%28Xposed%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eapp%5C%5C%5C%5C.astral%5C%5C%5C%5C.android%5C%5C%5C%5C.xposed%5C%5C%5C%5C.apk%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eastral%20.%2B%20for%20Discord%20.%2B%2C%20Android%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D) to receive updates from GitHub Releases. The release workflow requires a persistent Android signing key so installed copies can be updated safely.
 
-Every release of the module is signed with the same key. Check a downloaded APK with `apksigner verify --print-certs app.unbound.android.xposed.apk`; its certificate SHA-256 digest must be `3923c381141ea804a1a311c69b616ac9c360d4fb0dccb5fbcd09a6b8b78842c5`.
+Every release of the module is signed with the same key. Check a downloaded APK with `apksigner verify --print-certs app.astral.android.xposed.apk`; its certificate SHA-256 digest must be `3923c381141ea804a1a311c69b616ac9c360d4fb0dccb5fbcd09a6b8b78842c5`.
 
 **Not rooted:** install the pre-patched Discord, which is Discord with the module embedded through LSPatch. It contains Android split APKs, so use Obtainium or a split-APK installer such as SAI. It replaces an existing Play Store Discord because the signature differs. It is built for each Discord channel on Google Play:
 
-| Channel | Release tag                                     | Asset                | Obtainium                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| ------- | ----------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Stable  | `discord-<version>-android` and `loader-latest` | `Unbound.apks`       | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%2C%20Android%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D)                                                                               |
-| Beta    | `discord-<version>-android-beta` (prerelease)   | `Unbound-beta.apks`  | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20%28Discord%20beta%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound-beta%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%2C%20Android%20beta%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D)    |
-| Alpha   | `discord-<version>-android-alpha` (prerelease)  | `Unbound-alpha.apks` | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22Unbound%20%28Discord%20alpha%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5EUnbound-alpha%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5EUnbound%20.%2B%20for%20Discord%20%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%2C%20Android%20alpha%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D) |
+| Channel | Release tag                                     | Asset               | Obtainium                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------- | ----------------------------------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stable  | `discord-<version>-android` and `loader-latest` | `astral.apks`       | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22astral%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eastral%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eastral%20.%2B%20for%20Discord%20%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%2C%20Android%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%7D%22%7D)                                                                               |
+| Beta    | `discord-<version>-android-beta` (prerelease)   | `astral-beta.apks`  | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22astral%20%28Discord%20beta%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eastral-beta%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eastral%20.%2B%20for%20Discord%20%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%2C%20Android%20beta%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D)    |
+| Alpha   | `discord-<version>-android-alpha` (prerelease)  | `astral-alpha.apks` | [Add to Obtainium](obtainium://app/%7B%22id%22%3A%22com.discord%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2Fmarioparaschiv%2Funbound%22%2C%22author%22%3A%22unbound-app%22%2C%22name%22%3A%22astral%20%28Discord%20alpha%29%22%2C%22additionalSettings%22%3A%22%7B%5C%22apkFilterRegEx%5C%22%3A%5C%22%5Eastral-alpha%5C%5C%5C%5C.apks%24%5C%22%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5Eastral%20.%2B%20for%20Discord%20%5B0-9%5D%2B%5C%5C%5C%5C.%5B0-9%5D%2B%2C%20Android%20alpha%24%5C%22%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22includePrereleases%5C%22%3Atrue%7D%22%7D) |
 
 The Obtainium configs are [`obtainium.json`](obtainium.json) for the module and `obtainium-<channel>.json` for patched Discord. Each patched config filters release titles to its own channel's tags and falls back past the newer releases of other channels.
 
-Stable releases attach both Android packages next to the iOS Debian package, `Unbound.ipa` and the iOS simulator archive. Beta and alpha prereleases attach the module and the patched Discord for that channel.
+Stable releases attach both Android packages next to the iOS Debian package, `astral.ipa` and the iOS simulator archive. Beta and alpha prereleases attach the module and the patched Discord for that channel.
 
 ## Release pipeline
 
@@ -104,7 +104,7 @@ JavaScript the loader runs inside Discord lives in `bootstrap/` and is formatted
 <summary>Shared core</summary>
 
 ```bash
-cmake -S core -B build/shared-core -DUNBOUND_CORE_TESTS=ON
+cmake -S core -B build/shared-core -DASTRAL_CORE_TESTS=ON
 cmake --build build/shared-core
 ctest --test-dir build/shared-core --output-on-failure
 ```
@@ -190,7 +190,7 @@ go run ./tools dev android-avd start
 
 `setup` creates the named AVD only when it is absent and applies the tracked performance settings without wiping its userdata. If the system image is missing, install its Android SDK license interactively with `sdkmanager --licenses`, then rerun setup. `start` reuses an already-running matching emulator, enables `adb root` only on that emulator, waits for Android to finish booting, and verifies the root shell. Use `--name` to target another AVD by name. Use `adb -s <serial> install -r <apk>` to install a debug build on the active emulator; `go run ./tools dev status` reports its serial and root state.
 
-The profile runs at the Pixel 7's own 1080×2400 screen, so the emulator's `com.android.internal.emulation.pixel_7` overlay sizes the status bar and cutout correctly; `start` re-enables that overlay if it was turned off. `status` reports what the loader needs on a running AVD: a `su` root shell, an Xposed framework installed as a Magisk module, the Unbound module, Discord's version, and the enabled emulation overlays.
+The profile runs at the Pixel 7's own 1080×2400 screen, so the emulator's `com.android.internal.emulation.pixel_7` overlay sizes the status bar and cutout correctly; `start` re-enables that overlay if it was turned off. `status` reports what the loader needs on a running AVD: a `su` root shell, an Xposed framework installed as a Magisk module, the astral module, Discord's version, and the enabled emulation overlays.
 
 Rooting is a one-time manual step, because it patches the system image with third-party tools:
 
@@ -201,11 +201,11 @@ Rooting is a one-time manual step, because it patches the system image with thir
 Once one AVD is provisioned, save it as a snapshot so others can skip those steps:
 
 ```bash
-go run ./tools dev android-avd snapshot save --out unbound-avd.tar
-go run ./tools dev android-avd snapshot restore --from unbound-avd.tar
+go run ./tools dev android-avd snapshot save --out astral-avd.tar
+go run ./tools dev android-avd snapshot restore --from astral-avd.tar
 ```
 
-`save` reads a running AVD and captures the Magisk-patched ramdisk, `/data/adb` (Magisk, the Xposed framework and its module scope, without logs), the Magisk, Unbound and Discord APKs, and Unbound's plugins, themes, fonts and bundle. It never reads Discord's own data stores, leaves Unbound's `settings.json` out unless you pass `--with-settings`, and refuses to write the file if anything it captured looks like a Discord token. `restore` needs the AVD stopped: it installs the ramdisk into the system image, creates and boots the AVD, installs everything and reboots, leaving Discord at its sign-in screen.
+`save` reads a running AVD and captures the Magisk-patched ramdisk, `/data/adb` (Magisk, the Xposed framework and its module scope, without logs), the Magisk, astral and Discord APKs, and astral's plugins, themes, fonts and bundle. It never reads Discord's own data stores, leaves astral's `settings.json` out unless you pass `--with-settings`, and refuses to write the file if anything it captured looks like a Discord token. `restore` needs the AVD stopped: it installs the ramdisk into the system image, creates and boots the AVD, installs everything and reboots, leaving Discord at its sign-in screen.
 
 A provisioned snapshot without Discord is published as a GitHub release (`avd-snapshot-*`), so a new AVD can skip the rooting steps entirely:
 
@@ -221,7 +221,7 @@ Refresh the published snapshot after updating Magisk, Vector or the module, or a
 go run ./tools dev android-avd snapshot publish
 ```
 
-With the provisioned AVD running, `publish` saves a snapshot without Discord, stops the AVD, restores the snapshot onto a throwaway `<name>_snapshot_verify` AVD, and checks it gives root, has the Xposed module, and loads every plugin and Unbound's bundle. It then deletes the throwaway AVD, restarts yours, and publishes the snapshot as an `avd-snapshot-<date>` prerelease with its SHA-256, the restore command and the Magisk and Vector versions. Nothing is published if the check fails. `--dry-run` stops before publishing and prints the release notes, and `--tag` and `--repo` override where it goes.
+With the provisioned AVD running, `publish` saves a snapshot without Discord, stops the AVD, restores the snapshot onto a throwaway `<name>_snapshot_verify` AVD, and checks it gives root, has the Xposed module, and loads every plugin and astral's bundle. It then deletes the throwaway AVD, restarts yours, and publishes the snapshot as an `avd-snapshot-<date>` prerelease with its SHA-256, the restore command and the Magisk and Vector versions. Nothing is published if the check fails. `--dry-run` stops before publishing and prints the release notes, and `--tag` and `--repo` override where it goes.
 
 For iOS, `xcrun simctl list devices available` shows installable runtimes and devices; boot one with `xcrun simctl boot <UDID>`. `go run ./tools build all --simulator --ipa <Discord.ipa>` produces the Simulator app archive. Install the extracted `Payload/Discord.app` with `xcrun simctl install booted <path>`, and launch it with `xcrun simctl launch booted com.hammerandchisel.discord`. The simulator target is useful for packaging and UI smoke tests; private Discord runtime behavior still requires an actual device.
 
@@ -239,13 +239,13 @@ On the iOS vphone and the Android emulator, the loader finds a dev server on the
 
 Point `debugger.address` at a running `ub-debugger` bridge to evaluate JavaScript on a device. The emulator reaches the host at `10.0.2.2`.
 
-`ubd logs` tails the loader's and the client's output without the bridge: `adb logcat` filtered to the `Unbound`, `ReactNativeJS` and `unknown:ReactNative` tags and Discord's crashes on Android, or the unified log of a jailbroken iPhone over USB through `idevicesyslog` with `--ios`. The SE has neither `log` nor a working `oslog`, so jb-p1lot only picks the device. The loader also writes its own log, the JavaScript console included, to `Unbound/Logs/unbound.log` in Discord's data, keeping three files of up to 1 MiB each; `ubd logs --pull [--out <folder>]` copies them off the device as root, so history from before a crash or a restart survives without a tail running. `ubd inspect class|views|find` describes Java classes and dumps native views through the bridge.
+`ubd logs` tails the loader's and the client's output without the bridge: `adb logcat` filtered to the `astral`, `ReactNativeJS` and `unknown:ReactNative` tags and Discord's crashes on Android, or the unified log of a jailbroken iPhone over USB through `idevicesyslog` with `--ios`. The SE has neither `log` nor a working `oslog`, so jb-p1lot only picks the device. The loader also writes its own log, the JavaScript console included, to `astral/Logs/astral.log` in Discord's data, keeping three files of up to 1 MiB each; `ubd logs --pull [--out <folder>]` copies them off the device as root, so history from before a crash or a restart survives without a tail running. `ubd inspect class|views|find` describes Java classes and dumps native views through the bridge.
 
 </details>
 
 ## Addon crash protection
 
-The client asks the loader to write `addon-starting.json` in the Unbound data directory before it starts each plugin or theme, and the loader removes the file once that start returns. The file is replaced atomically, so it survives a native crash.
+The client asks the loader to write `addon-starting.json` in the astral data directory before it starts each plugin or theme, and the loader removes the file once that start returns. The file is replaced atomically, so it survives a native crash.
 
 At the next launch, the shared core reads any marker that was left behind before the client runs. It records the addon in `addon-crashes.json`, and a clean launch clears that count. If Discord dies while starting the same addon on two consecutive launches, the core logs it, shows the native notice "Disabled <name> because Discord crashed while starting it." (a toast on Android, an alert on iOS), and reports the addon through `NativePlatform.crashGuard.disabled()`. The client then saves the addon as disabled and skips its start. To try the addon again, enable it in settings. Recovery mode skips the markers because it starts no addon code.
 
@@ -279,11 +279,11 @@ Browser login (`LoaderBrowserLogin`) and the loader's attestation digest (`Loade
 }
 ```
 
-`channel` comes from `UNBOUND_CHANNEL` (`build-bundle.yml` sets `beta` for pushes to main and `stable` for releases; local builds write `local`, dev builds `dev`). `buildTime` is ISO 8601 in UTC. `sha512` holds the lowercase hex SHA-512 of every bundle in the build. `nativeBridge` holds the native bridge `api` and `abi` versions from `core/include/NativePluginVersion.h` that the bundle was built against.
+`channel` comes from `ASTRAL_CHANNEL` (`build-bundle.yml` sets `beta` for pushes to main and `stable` for releases; local builds write `local`, dev builds `dev`). `buildTime` is ISO 8601 in UTC. `sha512` holds the lowercase hex SHA-512 of every bundle in the build. `nativeBridge` holds the native bridge `api` and `abi` versions from `core/include/NativePluginVersion.h` that the bundle was built against.
 
-When `UNBOUND_BUNDLE_SIGNING_KEY` holds a PEM PKCS#8 Ed25519 key, the build refreshes `sha512` and writes a base64 Ed25519 signature of the manifest's exact bytes to `manifest.json.sig`. The bundles are covered by their SHA-512 in the signed manifest. Without the key, the build writes no signatures and still succeeds, so local and fork builds keep working.
+When `ASTRAL_BUNDLE_SIGNING_KEY` holds a PEM PKCS#8 Ed25519 key, the build refreshes `sha512` and writes a base64 Ed25519 signature of the manifest's exact bytes to `manifest.json.sig`. The bundles are covered by their SHA-512 in the signed manifest. Without the key, the build writes no signatures and still succeeds, so local and fork builds keep working.
 
-To sign a build that already exists, run `bun run --cwd packages/client sign [--dir <dist>] [--pr <n>] [--key-env <VAR>]`. It reads the key from `UNBOUND_BUNDLE_SIGNING_KEY`, or from `UNBOUND_PR_BUNDLE_SIGNING_KEY` with `--pr`; `--key-env` names another variable. `bun run --cwd packages/client verify-signatures [--dir <dist>] [--pr <n>]` and `go run ./tools bundle-key verify --dir <dist> [--pr <n>]` check a build against the committed public key: every signature, the manifest's fields, and that the manifest hashes exactly the bundles in the build.
+To sign a build that already exists, run `bun run --cwd packages/client sign [--dir <dist>] [--pr <n>] [--key-env <VAR>]`. It reads the key from `ASTRAL_BUNDLE_SIGNING_KEY`, or from `ASTRAL_PR_BUNDLE_SIGNING_KEY` with `--pr`; `--key-env` names another variable. `bun run --cwd packages/client verify-signatures [--dir <dist>] [--pr <n>]` and `go run ./tools bundle-key verify --dir <dist> [--pr <n>]` check a build against the committed public key: every signature, the manifest's fields, and that the manifest hashes exactly the bundles in the build.
 
 ### Trust model
 
@@ -294,7 +294,7 @@ The loader compiles in `core/keys/bundle-signing.pub`, the production public key
 3. Download the bundle and compare its SHA-512 with the manifest. A mismatch rejects the candidate, and the current bundle keeps running.
 4. Store the signed manifest and its signature beside the candidate as `<candidate>.trust`.
 
-The candidate is verified again from `<candidate>.trust` before it runs (every `resolveBundlePath`) and before it is promoted. A candidate that fails, or has no `.trust` file, is discarded and downloaded again at the same update check. That covers candidates downloaded by a loader from before signing existed. On promotion, the record moves to `unbound.<ext>.trust`, and the manifest becomes the anti-rollback baseline.
+The candidate is verified again from `<candidate>.trust` before it runs (every `resolveBundlePath`) and before it is promoted. A candidate that fails, or has no `.trust` file, is discarded and downloaded again at the same update check. That covers candidates downloaded by a loader from before signing existed. On promotion, the record moves to `astral.<ext>.trust`, and the manifest becomes the anti-rollback baseline.
 
 The active bundle is not re-verified at launch, so a bundle verified at install keeps running offline. An active bundle without a `.trust` file came from an older loader. It keeps running, so the app works offline after the upgrade, but the next update check skips `If-None-Match` and downloads a verified copy, which replaces it on the next launch.
 
@@ -323,13 +323,13 @@ A bundle is only accepted through a signed manifest that lists its SHA-512. A bu
 
 ### Signed plugins
 
-`plugins-publish.yml` signs every first-party plugin it publishes with the same production key. The signature covers `unbound-addon/v1`, the manifest `id`, the `version` and the lowercase hex SHA-512 of the built bundle, one per line, and is stored in the published `manifest.json`:
+`plugins-publish.yml` signs every first-party plugin it publishes with the same production key. The signature covers `astral-addon/v1`, the manifest `id`, the `version` and the lowercase hex SHA-512 of the built bundle, one per line, and is stored in the published `manifest.json`:
 
 ```json
 { "signature": { "version": 1, "ed25519": "<base64>" } }
 ```
 
-At startup the loader checks every plugin under `Unbound/Plugins` that has a `signature`. A plugin whose signature does not match its bundle is skipped and logged; every other plugin reaches the client with `trust` set to `signed` or `unsigned`. Third-party plugins have no signature and load as `unsigned`.
+At startup the loader checks every plugin under `astral/Plugins` that has a `signature`. A plugin whose signature does not match its bundle is skipped and logged; every other plugin reaches the client with `trust` set to `signed` or `unsigned`. Third-party plugins have no signature and load as `unsigned`.
 
 `NativePlatform.addons.verify(manifest, bundle)` runs the same check for the client. Installs and updates refuse a bundle whose signature does not match, and refuse an unsigned update for an installed plugin that was signed. A loader built without a key reports every plugin as `unsigned`.
 
@@ -337,18 +337,18 @@ At startup the loader checks every plugin under `Unbound/Plugins` that has a `si
 
 Every pull request that runs the loader build (`loader-ci.yml`), forks included, also gets its latest build in the public bucket, so it can be tested with no settings changes:
 
-| Prefix                 | Contents                                                                                                                                                                                                                     |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unbound/pr/<number>/` | the pull request's client build: the signed `manifest.json` with `bytecodeVersions`, `channel` `pr-<number>` and each bundle's SHA-512, every `unbound.<bytecode>.bundle` and `unbound.js` it emits, and `manifest.json.sig` |
-| `loader/pr/<number>/`  | the rootless `.deb`, `Unbound.ipa`, `app.unbound.android.xposed.apk` and `Unbound.apks`                                                                                                                                      |
+| Prefix                | Contents                                                                                                                                                                                                                    |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `astral/pr/<number>/` | the pull request's client build: the signed `manifest.json` with `bytecodeVersions`, `channel` `pr-<number>` and each bundle's SHA-512, every `astral.<bytecode>.bundle` and `unbound.js` it emits, and `manifest.json.sig` |
+| `loader/pr/<number>/` | the rootless `.deb`, `astral.ipa`, `app.astral.android.xposed.apk` and `astral.apks`                                                                                                                                        |
 
-Each push overwrites both prefixes and deletes files the new build no longer has, so the links stay the same for the life of the pull request. The client is built with `TMPDIR` on the runner disk so hermesc emits every bytecode version and with `UNBOUND_CHANNEL=pr-<number>`, so a pull request loader never takes another channel's manifest at that URL. It is then signed with the pull request key through `bun run --cwd packages/client sign --dir dist --pr <number>` and checked with `verify-signatures --dir dist --pr <number>` before anything is uploaded. Pull request bundles are never signed with the production key, so only that pull request's loader accepts them. The pull request comment lists the bundle base URL and each loader build under **S3**, next to the artifact links.
+Each push overwrites both prefixes and deletes files the new build no longer has, so the links stay the same for the life of the pull request. The client is built with `TMPDIR` on the runner disk so hermesc emits every bytecode version and with `ASTRAL_CHANNEL=pr-<number>`, so a pull request loader never takes another channel's manifest at that URL. It is then signed with the pull request key through `bun run --cwd packages/client sign --dir dist --pr <number>` and checked with `verify-signatures --dir dist --pr <number>` before anything is uploaded. Pull request bundles are never signed with the production key, so only that pull request's loader accepts them. The pull request comment lists the bundle base URL and each loader build under **S3**, next to the artifact links.
 
-Pull request loader builds already get `UNBOUND_PR_NUMBER` through `loader-build.yml`, which makes them trust `core/keys/pr-bundle-signing.pub` for that number. When the `CDN_URL` variable is set, the build jobs also export `UNBOUND_BUNDLE_URL=<CDN_URL>/unbound/pr/<number>/`, and the loader compiles it in as its default update URL, so installing it loads the pull request's client. A `loader.update.url` in settings still wins. `core/include/LoaderUpdater.h` falls back to `https://builds.unbound.rip/` unless `UNBOUND_DEFAULT_BUNDLE_URL` is defined. The iOS Makefile defines it from `UNBOUND_BUNDLE_URL`, and the Android module from the `unboundBundleURL` Gradle property or the `UNBOUND_BUNDLE_URL` environment variable, passed to CMake and required to be an `https` URL ending in `/`:
+Pull request loader builds already get `ASTRAL_PR_NUMBER` through `loader-build.yml`, which makes them trust `core/keys/pr-bundle-signing.pub` for that number. When the `CDN_URL` variable is set, the build jobs also export `ASTRAL_BUNDLE_URL=<CDN_URL>/astral/pr/<number>/`, and the loader compiles it in as its default update URL, so installing it loads the pull request's client. A `loader.update.url` in settings still wins. `core/include/LoaderUpdater.h` falls back to `https://builds.unbound.rip/` unless `ASTRAL_DEFAULT_BUNDLE_URL` is defined. The iOS Makefile defines it from `ASTRAL_BUNDLE_URL`, and the Android module from the `astralBundleURL` Gradle property or the `ASTRAL_BUNDLE_URL` environment variable, passed to CMake and required to be an `https` URL ending in `/`:
 
 ```bash
-UNBOUND_PR_NUMBER=42 UNBOUND_BUNDLE_URL=https://cdn.example.com/unbound/pr/42/ go run ./tools build tweak --configuration release --non-interactive
-UNBOUND_PR_NUMBER=42 ./android/gradlew -p android :module:assembleRelease -PunboundBundleURL=https://cdn.example.com/unbound/pr/42/
+ASTRAL_PR_NUMBER=42 ASTRAL_BUNDLE_URL=https://cdn.example.com/unbound/pr/42/ go run ./tools build tweak --configuration release --non-interactive
+ASTRAL_PR_NUMBER=42 ./android/gradlew -p android :module:assembleRelease -PastralBundleURL=https://cdn.example.com/unbound/pr/42/
 ```
 
 Release, scheduled and `main` builds have no pull request number and keep the default. Pull request loaders never point at the stable or beta bucket paths. Set `CDN_URL` together with the bucket variables and secrets, since a pull request loader built against it expects its bundle there.
@@ -356,7 +356,7 @@ Release, scheduled and `main` builds have no pull request number and keep the de
 The `pr-builds` job decides with `bun scripts/pr-builds-plan.ts plan`, and the uploads stay inert, with the reason in the job summary and the comment, until all of these exist:
 
 - variables `S3_ENDPOINT`, `S3_REGION`, `S3_PUBLIC_BUCKET` and `CDN_URL` (the public `https` base URL the bucket is served from)
-- secrets `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `UNBOUND_PR_BUNDLE_SIGNING_KEY`
+- secrets `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `ASTRAL_PR_BUNDLE_SIGNING_KEY`
 
 Pull requests from forks are published without ever giving the fork's code a secret:
 
@@ -408,7 +408,7 @@ Or let the scan fetch the channel's latest builds itself:
 DKRYPT_API_KEY=... go run ./tools compat-scan --channel beta --report report.md
 ```
 
-With `--channel`, it downloads whichever of `--ipa` and `--apk` is missing: the channel's newest Android base APK through the same sources as `discord-apk`, and, for `stable` and `beta`, the newest App Store or TestFlight IPA from dkrypt. Without `DKRYPT_API_KEY` only Android is scanned, and `alpha` has no iOS build. Builds are kept in `--cache` (default `$UNBOUND_DISCORD_CACHE`, else the user cache directory under `unbound/discord`), per platform and channel, keyed by version and verified against their version code or dkrypt's SHA-256 before reuse, so a rerun against the same release downloads nothing; older builds are pruned. CI's compat scan passes the dkrypt action's IPA with `--ipa` and keeps the cache between runs with `actions/cache`.
+With `--channel`, it downloads whichever of `--ipa` and `--apk` is missing: the channel's newest Android base APK through the same sources as `discord-apk`, and, for `stable` and `beta`, the newest App Store or TestFlight IPA from dkrypt. Without `DKRYPT_API_KEY` only Android is scanned, and `alpha` has no iOS build. Builds are kept in `--cache` (default `$ASTRAL_DISCORD_CACHE`, else the user cache directory under `astral/discord`), per platform and channel, keyed by version and verified against their version code or dkrypt's SHA-256 before reuse, so a rerun against the same release downloads nothing; older builds are pruned. CI's compat scan passes the dkrypt action's IPA with `--ipa` and keeps the cache between runs with `actions/cache`.
 
 Each run's `compat.json` is the next run's `--baseline`. A name that resolved in an earlier build and disappears is reported as broken, even when the scan cannot tell who owns it.
 
@@ -443,9 +443,9 @@ val loadJSBundle = reactInstance.legacyMethod("loadJSBundle", bundleLoader)
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 ```
 
-`legacyJavaClass` comes from `@unbound-plugins/shared/native/android/legacy-classes`. Only mark a name once the code handles its absence. A legacy name can be removed once the oldest supported Discord build no longer has it, as [Supported Discord versions](#supported-discord-versions) describes.
+`legacyJavaClass` comes from `@astral-plugins/shared/native/android/legacy-classes`. Only mark a name once the code handles its absence. A legacy name can be removed once the oldest supported Discord build no longer has it, as [Supported Discord versions](#supported-discord-versions) describes.
 
-Plugins find obfuscated members by their shape instead of their name. The shapes live in [`discord-shapes.json`](../plugins-shared/src/native/android/discord-shapes.json), which `shapeMethod`, `shapeField` and `hasShapeConstructor` from `@unbound-plugins/shared/native/android/discord-shapes` read at runtime and the scan checks against the dex:
+Plugins find obfuscated members by their shape instead of their name. The shapes live in [`discord-shapes.json`](../plugins-shared/src/native/android/discord-shapes.json), which `shapeMethod`, `shapeField` and `hasShapeConstructor` from `@astral-plugins/shared/native/android/discord-shapes` read at runtime and the scan checks against the dex:
 
 ```ts
 const bind = shapeMethod(java, 'messageBind');
@@ -453,7 +453,7 @@ const bind = shapeMethod(java, 'messageBind');
 
 A shape names its class with `owner`. When the code gets the class at runtime instead, `extends`, `implements` and `withFields` tell the scan how to find it. The member must be the only one that fits, or the one with the most parameters for `"pick": "most-parameters"`. A shape nothing fits is broken, and so is one several members fit, because the helper then refuses the lookup. A shape found through `extends`, `implements` or `withFields` must fit exactly one class, or the scan cannot tell which one the code gets. The scan also checks the resource ids that `viewByIdName` looks up against the APK's resource table.
 
-Plugins find obfuscated members by their shape instead of their name. The shapes live in [`discord-shapes.json`](../plugins-shared/src/native/android/discord-shapes.json), which `shapeMethod`, `shapeField` and `hasShapeConstructor` from `@unbound-plugins/shared/native/android/discord-shapes` read at runtime and the scan checks against the dex:
+Plugins find obfuscated members by their shape instead of their name. The shapes live in [`discord-shapes.json`](../plugins-shared/src/native/android/discord-shapes.json), which `shapeMethod`, `shapeField` and `hasShapeConstructor` from `@astral-plugins/shared/native/android/discord-shapes` read at runtime and the scan checks against the dex:
 
 ```ts
 const bind = shapeMethod(java, 'messageBind');
@@ -471,13 +471,13 @@ go run ./tools compat-scan --ipa discord.ipa --apk discord-stable/base.apk --and
 
 The client ships one bundle per Hermes bytecode version. The loader loads the one that matches the bytecode Discord runs, and falls back to the uncompiled `unbound.js` when none does. The versions it builds are listed in [`hermes.json`](../client/scripts/build/hermes.json). A release build fails when the bundles it compiled differ from that list, so the list always matches what ships.
 
-The scan reads the bytecode version from the header of Discord's `index.android.bundle` and `main.jsbundle` and compares it with that list. A version the client does not build is a warning, listed under "Warnings" at the top of the report: Unbound still loads, only with a slower startup, so it does not count as a breakage, does not fail `--fail-on-breakage` and does not stop a release. It shows up in the channel's `discord-compat` issue when that issue is open for other reasons. When Discord moves to a new bytecode version, add it to `hermes.json` once [hermesc](https://github.com/unbound-app/hermesc) publishes it.
+The scan reads the bytecode version from the header of Discord's `index.android.bundle` and `main.jsbundle` and compares it with that list. A version the client does not build is a warning, listed under "Warnings" at the top of the report: astral still loads, only with a slower startup, so it does not count as a breakage, does not fail `--fail-on-breakage` and does not stop a release. It shows up in the channel's `discord-compat` issue when that issue is open for other reasons. When Discord moves to a new bytecode version, add it to `hermes.json` once [hermesc](https://github.com/unbound-app/hermesc) publishes it.
 
 A bundle whose header or string table the scan cannot read is a broken finding, because none of its lookups could be checked. It is listed at the top of the report and stops a release like any other breakage.
 
 ### Supported Discord versions
 
-[`compat-policy.json`](compat-policy.json) sets the oldest Discord version Unbound supports on each platform:
+[`compat-policy.json`](compat-policy.json) sets the oldest Discord version astral supports on each platform:
 
 ```json
 {
@@ -497,14 +497,14 @@ Legacy code is removed against the minimum, not against stable. When the scanned
 
 ## Smoke tests
 
-Every loader build installs what it built and checks that Discord loads Unbound and every first-party plugin without anyone signing in. They run on pull requests that touch the loader or the plugins, on pushes to `main`, and before every release: the release jobs only run once the Android and iOS builds, smoke tests included, succeed.
+Every loader build installs what it built and checks that Discord loads astral and every first-party plugin without anyone signing in. They run on pull requests that touch the loader or the plugins, on pushes to `main`, and before every release: the release jobs only run once the Android and iOS builds, smoke tests included, succeed.
 
-- **Android** (`smoke` in `loader-android.yml`) boots an x86_64 `google_apis` emulator (API 34) with KVM, installs the patched Discord from `patch-discord` with the `config.x86_64` split it patches alongside (and keeps out of `Unbound.apks`), and uses `adb root` to copy the plugins and a `settings.json` into Discord's data the way `ubd install --serial` does.
+- **Android** (`smoke` in `loader-android.yml`) boots an x86_64 `google_apis` emulator (API 34) with KVM, installs the patched Discord from `patch-discord` with the `config.x86_64` split it patches alongside (and keeps out of `astral.apks`), and uses `adb root` to copy the plugins and a `settings.json` into Discord's data the way `ubd install --serial` does.
 - **iOS** (`smoke-simulator` in `loader-ios.yml`) boots a fresh iPhone simulator on the newest installed runtime, installs `Discord.app` from the simulator build with `xcrun simctl install`, and writes the plugins and `settings.json` into its data container.
 
 Both build the client and the plugins from the same commit. The tool serves `packages/client/dist` to the app as its bundle (`loader.update.url`), turns on the debugger and points it at a `ub-debugger` bridge it starts, and enables every plugin. It then launches Discord and passes when, within the timeout:
 
-- the loader logs `[plugins] Loaded <id> from …` for every plugin built for that platform and `Loaded <n> plugins.` (logcat tag `Unbound`, or the `app.unbound` subsystem of the unified log),
+- the loader logs `[plugins] Loaded <id> from …` for every plugin built for that platform and `Loaded <n> plugins.` (logcat tag `astral`, or the `app.astral` subsystem of the unified log),
 - nothing logs `Failed to start addon` or `Failed to load addon`, and Discord neither crashes nor exits,
 - `bun packages/cli/src/index.ts eval` over the bridge reports every plugin as `started`.
 
@@ -526,25 +526,25 @@ To smoke-test a jailbroken iPhone that already runs the loader, drive it through
 go run ./tools smoke ios-device --udid <udid> --bridge-port 9092
 ```
 
-It backs up the device's Unbound folder, installs only the first-party plugins with the smoke settings merged into the device's own (so a pinned bundle URL survives unless you pass `--client`), unlocks the device, relaunches Discord, follows the loader's on-device log file, and checks every plugin over the bridge. The backup is restored afterwards, also when the run fails. The device reaches the bridge at this machine's LAN address, or `--host` when that is wrong; pick a `--bridge-port` other than a bridge you already run.
+It backs up the device's astral folder, installs only the first-party plugins with the smoke settings merged into the device's own (so a pinned bundle URL survives unless you pass `--client`), unlocks the device, relaunches Discord, follows the loader's on-device log file, and checks every plugin over the bridge. The backup is restored afterwards, also when the run fails. The device reaches the bridge at this machine's LAN address, or `--host` when that is wrong; pick a `--bridge-port` other than a bridge you already run.
 
 ## Symbolicating native crashes
 
-Every build keeps the unstripped loader next to its stripped packages. iOS uploads the `tweak symbols` artifact with a dSYM per architecture, and Android uploads the `android symbols` artifact with `<abi>/libunbound.so.dbg` for `arm64-v8a` and `x86_64`. Both hold the build IDs or UUIDs they were checked against and the commit they came from. Releases attach them as `unbound-ios-symbols.zip` and `unbound-android-symbols.zip`. Pull request artifacts expire after 14 days, and other builds keep the repository default.
+Every build keeps the unstripped loader next to its stripped packages. iOS uploads the `tweak symbols` artifact with a dSYM per architecture, and Android uploads the `android symbols` artifact with `<abi>/libastral.so.dbg` for `arm64-v8a` and `x86_64`. Both hold the build IDs or UUIDs they were checked against and the commit they came from. Releases attach them as `astral-ios-symbols.zip` and `astral-android-symbols.zip`. Pull request artifacts expire after 14 days, and other builds keep the repository default.
 
 To symbolicate an Android tombstone or a logcat crash backtrace, download the symbols of the build that crashed and pipe the backtrace into `symbolicate-android`:
 
 ```bash
 adb shell cat /data/tombstones/tombstone_00 > tombstone.txt
-go run ./tools symbolicate-android --symbols unbound-android-symbols.zip < tombstone.txt
+go run ./tools symbolicate-android --symbols astral-android-symbols.zip < tombstone.txt
 adb logcat -d -b crash | go run ./tools symbolicate-android --symbols android-symbols
 ```
 
-`--symbols` takes the release zip or an extracted artifact directory. The tool resolves every `libunbound*.so` frame with `llvm-symbolizer` from the Android NDK (`ANDROID_NDK_HOME`, or the newest NDK under `ANDROID_HOME`), or the one passed with `--symbolizer`, and prints each frame's functions, inlined callers and source lines under it. The ABI comes from the frame's library path or the tombstone's `ABI:` line; pass `--abi` when the backtrace names neither. A frame whose `BuildId` differs from the symbols is reported instead of resolved, since those symbols belong to another build.
+`--symbols` takes the release zip or an extracted artifact directory. The tool resolves every `libastral*.so` frame with `llvm-symbolizer` from the Android NDK (`ANDROID_NDK_HOME`, or the newest NDK under `ANDROID_HOME`), or the one passed with `--symbolizer`, and prints each frame's functions, inlined callers and source lines under it. The ABI comes from the frame's library path or the tombstone's `ABI:` line; pass `--abi` when the backtrace names neither. A frame whose `BuildId` differs from the symbols is reported instead of resolved, since those symbols belong to another build.
 
 ## Patching an IPA
 
-The IPA build patches Discord before injecting the tweak: it names the app Unbound, drops the supported-device list, enables file sharing, adds the Unbound alternate icon and the `unbound://` URL scheme, and renames the React Navigation elements module. The same step runs on its own:
+The IPA build patches Discord before injecting the tweak: it names the app astral, drops the supported-device list, enables file sharing, adds the astral alternate icon and the `astral://` URL scheme, and renames the React Navigation elements module. The same step runs on its own:
 
 ```bash
 go run ./tools patch-ipa --ipa Discord.ipa --output Patched.ipa

@@ -45,7 +45,7 @@ static const char *const kKeyPaths[] = {"loader.enabled",
                                         "active",
                                         "states"};
 
-static const char *const kStores[] = {"unbound", "themes", "plugins", "fonts", "icons", "settings"};
+static const char *const kStores[] = {"astral", "themes", "plugins", "fonts", "icons", "settings"};
 
 class Generator
 {
@@ -165,7 +165,7 @@ public:
             }
             case 2: {
                 size_t      depth = 1000 + next(100000);
-                std::string text  = "{\"unbound\":{\"loader\":";
+                std::string text  = "{\"astral\":{\"loader\":";
                 for (size_t level = 0; level < depth; level++)
                 {
                     text += "{\"a\":";
@@ -209,10 +209,10 @@ static void exercise(loader::SettingsStore &store)
                                98);
     store.serialize();
     store.snapshot();
-    store.getString("unbound", "loader.update.url", "");
-    store.getBoolean("unbound", "loader.update.force", false);
-    store.apply(nlohmann::json::array(
-        {{{"store", "unbound"}, {"key", "loader.enabled"}, {"value", true}}}));
+    store.getString("astral", "loader.update.url", "");
+    store.getBoolean("astral", "loader.update.force", false);
+    store.apply(
+        nlohmann::json::array({{{"store", "astral"}, {"key", "loader.enabled"}, {"value", true}}}));
 }
 
 static std::string readFile(const fs::path &path)
@@ -225,10 +225,10 @@ static std::string readFile(const fs::path &path)
 
 int main()
 {
-    const char *roundsVariable = std::getenv("UNBOUND_FUZZ_ITERATIONS");
+    const char *roundsVariable = std::getenv("ASTRAL_FUZZ_ITERATIONS");
     const long  rounds         = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 150;
     Generator   generator(0x5e771);
-    fs::path    directory = fs::temp_directory_path() / "unbound-settings-fuzz";
+    fs::path    directory = fs::temp_directory_path() / "astral-settings-fuzz";
 
     for (long round = 0; round < rounds; round++)
     {

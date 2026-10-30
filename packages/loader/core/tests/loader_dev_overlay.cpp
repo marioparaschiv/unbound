@@ -55,7 +55,7 @@ int main()
     assert(json["editor"]["title"] == "Edit Settings JSON");
     assert(json["editor"]["save"] == "Save" && json["editor"]["cancel"] == "Cancel");
 
-    const SettingsEditResult syntax = saveSettings(settings, "{\"unbound\":");
+    const SettingsEditResult syntax = saveSettings(settings, "{\"astral\":");
     assert(!syntax.saved && syntax.error == kInvalidSettingsMessage);
     const SettingsEditResult array = saveSettings(settings, "[]");
     assert(!array.saved && array.error == kInvalidSettingsMessage);
@@ -63,7 +63,7 @@ int main()
         !loader::preferences::gestureEnabled(settings, loader::preferences::ToolboxGesture::Shake));
 
     const SettingsEditResult saved =
-        saveSettings(settings, "{\"unbound\":{\"developer-mode\":true}}");
+        saveSettings(settings, "{\"astral\":{\"developer-mode\":true}}");
     assert(saved.saved && saved.error.empty());
     assert(loader::preferences::developerMode(settings));
     assert(
@@ -109,7 +109,7 @@ int main()
     assert(saveButtonCenter(settings, {187.5, 333.5}, phone));
     const Point stored = position(settings);
     assert(near(stored.x, 0.5) && near(stored.y, 0.5));
-    const auto raw = settings.get("unbound", "dev-overlay.position");
+    const auto raw = settings.get("astral", "dev-overlay.position");
     assert(raw && raw->is_object() && near((*raw)["x"].get<double>(), 0.5));
     const Point resized = buttonCenter(settings, {800, 400}, {});
     assert(near(resized.x, 400) && near(resized.y, 200));
@@ -119,9 +119,9 @@ int main()
     assert(!saveButtonCenter(settings, {10, 10}, {0, 100}));
     assert(!saveButtonCenter(settings, {NAN, 10}, phone));
 
-    settings.set("unbound", "dev-overlay.position", {{"x", "left"}, {"y", 3}});
+    settings.set("astral", "dev-overlay.position", {{"x", "left"}, {"y", 3}});
     assert(near(position(settings).x, kDefaultPosition.x) && near(position(settings).y, 1));
-    settings.set("unbound", "dev-overlay.position", 4);
+    settings.set("astral", "dev-overlay.position", 4);
     assert(near(position(settings).y, kDefaultPosition.y));
 
     std::filesystem::remove_all(templatePath);

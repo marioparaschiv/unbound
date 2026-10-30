@@ -13,11 +13,11 @@ func TestConsoleEntriesFromEachPlatform(t *testing.T) {
 		ok    bool
 	}{
 		{"10-26 21:00:00.000  4242  4243 E ReactNativeJS: TypeError: Cannot read property 'x' of undefined at 12:34", androidConsoleEntry, smokeConsoleEntry{"error", "TypeError: Cannot read property 'x' of undefined at #:#"}, true},
-		{"10-26 21:00:00.000  4242  4243 W Unbound : [plugins] unbound.moyai started in 1234 ms", androidConsoleEntry, smokeConsoleEntry{"warning", "[plugins] unbound.moyai started in # ms"}, true},
+		{"10-26 21:00:00.000  4242  4243 W astral : [plugins] astral.moyai started in 1234 ms", androidConsoleEntry, smokeConsoleEntry{"warning", "[plugins] astral.moyai started in # ms"}, true},
 		{"10-26 21:00:00.000  4242  4243 I ReactNativeJS: hello", androidConsoleEntry, smokeConsoleEntry{}, false},
 		{"10-26 21:00:00.000   600   700 E ActivityManager: unrelated", androidConsoleEntry, smokeConsoleEntry{}, false},
-		{"2026-10-26 21:00:00.000 E  Discord[4242:1a2b] [app.unbound:JS] Failed to fetch 0xdeadbeef", iosConsoleEntry, smokeConsoleEntry{"error", "Failed to fetch <hex>"}, true},
-		{"2026-10-26 21:00:00.000 I  Discord[4242:1a2b] [app.unbound:plugins] Loaded 3 plugins.", iosConsoleEntry, smokeConsoleEntry{}, false},
+		{"2026-10-26 21:00:00.000 E  Discord[4242:1a2b] [app.astral:JS] Failed to fetch 0xdeadbeef", iosConsoleEntry, smokeConsoleEntry{"error", "Failed to fetch <hex>"}, true},
+		{"2026-10-26 21:00:00.000 I  Discord[4242:1a2b] [app.astral:plugins] Loaded 3 plugins.", iosConsoleEntry, smokeConsoleEntry{}, false},
 		{"2026-10-27T21:00:00.123Z W [plugins] slow start for 3f2b9c1e-1111-2222-3333-444455556666", deviceConsoleEntry, smokeConsoleEntry{"warning", "[plugins] slow start for <uuid>"}, true},
 		{"2026-10-27T21:00:00.123Z I [plugins] fine", deviceConsoleEntry, smokeConsoleEntry{}, false},
 	}

@@ -19,7 +19,7 @@ import (
 const (
 	cyanRepository     = "https://github.com/asdfzxcvbn/pyzule-rw"
 	cyanCommit         = "740d3716dcd98c20c000f12cdb88f1f0b2a533a4"
-	linkRelayAppName   = "UnboundLink.app"
+	linkRelayAppName   = "AstralLink.app"
 	pillowVersion      = "11.3.0"
 	simforgeRepository = "https://github.com/EthanArbuckle/simforge"
 	simforgeCommit     = "c1de4439aa00a6057d497f6097fecda530800a29"
@@ -337,7 +337,7 @@ func buildSimulator(options buildOptions, runner commandRunner) error {
 	if err := runner(options.root, "codesign", []string{"-f", "-s", "-", app}, os.Environ(), os.Stdout, os.Stderr); err != nil {
 		return err
 	}
-	dylib, err := findFile(app, "Unbound.dylib")
+	dylib, err := findFile(app, "astral.dylib")
 	if err != nil {
 		return err
 	}
@@ -639,7 +639,7 @@ func rejectLinkRelayApp(entries []string) error {
 	for _, entry := range entries {
 		for _, part := range strings.Split(entry, "/") {
 			if part == linkRelayAppName {
-				return fmt.Errorf("final IPA must not contain %s (Discord itself claims unbound:// in a sideloaded IPA): %s", linkRelayAppName, entry)
+				return fmt.Errorf("final IPA must not contain %s (Discord itself claims astral:// in a sideloaded IPA): %s", linkRelayAppName, entry)
 			}
 		}
 	}
@@ -701,10 +701,10 @@ func rewritePlist(path string) error {
 	if _, err := os.Stat(path); err != nil {
 		return err
 	}
-	if err := exec.Command("/usr/libexec/PlistBuddy", "-c", "Set :URLScheme unbound", path).Run(); err == nil {
+	if err := exec.Command("/usr/libexec/PlistBuddy", "-c", "Set :URLScheme astral", path).Run(); err == nil {
 		return nil
 	}
-	return exec.Command("/usr/libexec/PlistBuddy", "-c", "Add :URLScheme string unbound", path).Run()
+	return exec.Command("/usr/libexec/PlistBuddy", "-c", "Add :URLScheme string astral", path).Run()
 }
 
 func rejectInjectedIPA(ipa, work string, runner commandRunner) error {
@@ -727,8 +727,8 @@ func rejectInjectedIPA(ipa, work string, runner commandRunner) error {
 				return err
 			}
 			output, _ := exec.Command("otool", "-L", binary).CombinedOutput()
-			if strings.Contains(string(output), "Unbound.dylib") {
-				return errors.New("input IPA already contains Unbound.dylib; use a clean Discord IPA")
+			if strings.Contains(string(output), "astral.dylib") {
+				return errors.New("input IPA already contains astral.dylib; use a clean Discord IPA")
 			}
 			return nil
 		}
@@ -741,9 +741,9 @@ func verifyIPA(ipa, work string, runner commandRunner) error {
 	if err := unzip(ipa, verification, runner, "."); err != nil {
 		return err
 	}
-	dylib, err := findFile(filepath.Join(verification, "Payload"), "Unbound.dylib")
+	dylib, err := findFile(filepath.Join(verification, "Payload"), "astral.dylib")
 	if err != nil {
-		return errors.New("final IPA contains no Unbound.dylib")
+		return errors.New("final IPA contains no astral.dylib")
 	}
 	public, err := pinnedPublicKey()
 	if err != nil {

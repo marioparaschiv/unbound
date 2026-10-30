@@ -64,7 +64,7 @@ type loaderLatestUpdateResponse struct {
 
 func runPublishLoaderReleases(args []string) error {
 	set := flag.NewFlagSet("publish-loader-releases", flag.ContinueOnError)
-	endpoint := set.String("api-url", envOr("UNBOUND_API_URL", defaultLoaderReleaseEndpoint), "loader release publication endpoint")
+	endpoint := set.String("api-url", envOr("ASTRAL_API_URL", defaultLoaderReleaseEndpoint), "loader release publication endpoint")
 	version := set.String("version", "", "semantic loader version")
 	iosURL := set.String("ios-url", "", "public iOS release asset URL")
 	androidURL := set.String("android-url", "", "public Android release asset URL")
@@ -83,7 +83,7 @@ func runPublishLoaderReleases(args []string) error {
 
 	result, err := publishLoaderReleases(context.Background(), loaderReleaseBatchConfig{
 		endpoint:   *endpoint,
-		apiKey:     os.Getenv("UNBOUND_API_KEY"),
+		apiKey:     os.Getenv("ASTRAL_API_KEY"),
 		version:    *version,
 		iosURL:     *iosURL,
 		androidURL: *androidURL,
@@ -109,7 +109,7 @@ func runPublishLoaderReleases(args []string) error {
 
 func publishLoaderReleases(ctx context.Context, config loaderReleaseBatchConfig) (loaderReleaseBatchResult, error) {
 	if config.apiKey == "" {
-		return loaderReleaseBatchResult{}, errors.New("UNBOUND_API_KEY is required")
+		return loaderReleaseBatchResult{}, errors.New("ASTRAL_API_KEY is required")
 	}
 	if config.version == "" {
 		return loaderReleaseBatchResult{}, errors.New("loader release version is required")
@@ -214,7 +214,7 @@ func postLoaderRelease(ctx context.Context, config loaderReleasePublishConfig, c
 		return false, fmt.Errorf("create loader release request: %w", err)
 	}
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("User-Agent", "unbound-loader-release-publisher/1.0")
+	request.Header.Set("User-Agent", "astral-loader-release-publisher/1.0")
 	request.Header.Set("X-API-Key", config.apiKey)
 
 	response, err := client.Do(request)
@@ -258,7 +258,7 @@ func latestLoaderReleaseVersion(ctx context.Context, endpoint string, platform s
 	if err != nil {
 		return "", false, fmt.Errorf("create latest loader release request: %w", err)
 	}
-	request.Header.Set("User-Agent", "unbound-loader-release-publisher/1.0")
+	request.Header.Set("User-Agent", "astral-loader-release-publisher/1.0")
 	response, err := client.Do(request)
 	if err != nil {
 		return "", false, fmt.Errorf("read latest %s loader release: %w", platform, err)

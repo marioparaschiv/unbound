@@ -435,7 +435,7 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                                      return jsi::Value::undefined();
                                  }
                                  return evaluateBytecode(rt, std::move(*bytecode),
-                                                         "unbound-plugin:" + folder);
+                                                         "astral-plugin:" + folder);
                              }));
     platform.setProperty(runtime, "addons", std::move(addons));
 

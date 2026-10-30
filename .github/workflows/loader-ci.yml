@@ -118,11 +118,11 @@ jobs:
                   CDN_URL: ${{ vars.CDN_URL }}
                   HAS_S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID != '' }}
                   HAS_S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY != '' }}
-                  HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}
+                  HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY != '' }}
               run: bun scripts/pr-builds-plan.ts plan
 
     build:
-        name: Build Unbound
+        name: Build astral
         permissions:
             contents: write
             id-token: write
@@ -177,7 +177,7 @@ jobs:
 
             - name: Sign the bundles with the pull request key
               env:
-                  UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}
+                  UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY }}
               run: bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"
 
             - name: Check every bundle is signed

@@ -21,7 +21,7 @@ import (
 const (
 	smokeAndroidPackage = "com.discord"
 	smokeAndroidData    = "/data/data/" + smokeAndroidPackage
-	smokeAndroidStaging = "/data/local/tmp/unbound-smoke"
+	smokeAndroidStaging = "/data/local/tmp/astral-smoke"
 )
 
 var androidSplitABIs = map[string]string{
@@ -111,7 +111,7 @@ func (target *androidSmokeTarget) prepare(ctx context.Context, plugins []smokePl
 	if _, err := target.shell(ctx, time.Minute, "rm -rf "+smokeAndroidStaging+" && mkdir -p "+smokeAndroidStaging+"/Plugins"); err != nil {
 		return err
 	}
-	staging, err := os.MkdirTemp("", "unbound-smoke-settings-")
+	staging, err := os.MkdirTemp("", "astral-smoke-settings-")
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (target *androidSmokeTarget) prepare(ctx context.Context, plugins []smokePl
 			}
 		}
 	}
-	documents := smokeAndroidData + "/files/Unbound"
+	documents := smokeAndroidData + "/files/astral"
 	install := strings.Join([]string{
 		"mkdir -p " + documents,
 		"cp -R " + smokeAndroidStaging + "/. " + documents + "/",
@@ -253,7 +253,7 @@ func (target *androidSmokeTarget) running(ctx context.Context) bool {
 }
 
 func (target *androidSmokeTarget) isLoaderLine(line string) bool {
-	return strings.Contains(line, " Unbound ") || strings.Contains(line, " Unbound:")
+	return strings.Contains(line, " astral ") || strings.Contains(line, " astral:")
 }
 
 func (target *androidSmokeTarget) consoleEntry(line string) (smokeConsoleEntry, bool) {
@@ -273,8 +273,8 @@ func (target *androidSmokeTarget) isCrashLine(line string) bool {
 
 func (target *androidSmokeTarget) collect(ctx context.Context, artifacts string) {
 	saveSmokeOutput(ctx, filepath.Join(artifacts, "screenshot.png"), time.Minute, "adb", "-s", target.serial, "exec-out", "screencap", "-p")
-	saveSmokeOutput(ctx, filepath.Join(artifacts, "unbound-files.txt"), time.Minute, "adb", "-s", target.serial, "shell", "ls -laRZ "+smokeAndroidData+"/files/Unbound")
-	saveSmokeOutput(ctx, filepath.Join(artifacts, "settings-after.json"), time.Minute, "adb", "-s", target.serial, "shell", "cat "+smokeAndroidData+"/files/Unbound/settings.json")
+	saveSmokeOutput(ctx, filepath.Join(artifacts, "astral-files.txt"), time.Minute, "adb", "-s", target.serial, "shell", "ls -laRZ "+smokeAndroidData+"/files/astral")
+	saveSmokeOutput(ctx, filepath.Join(artifacts, "settings-after.json"), time.Minute, "adb", "-s", target.serial, "shell", "cat "+smokeAndroidData+"/files/astral/settings.json")
 	saveSmokeOutput(ctx, filepath.Join(artifacts, "crash-buffer.txt"), time.Minute, "adb", "-s", target.serial, "logcat", "-d", "-b", "crash")
 	saveSmokeOutput(ctx, filepath.Join(artifacts, "activity.txt"), time.Minute, "adb", "-s", target.serial, "shell", "dumpsys activity activities | grep -E 'mResumedActivity|topResumedActivity|mFocusedApp'")
 }

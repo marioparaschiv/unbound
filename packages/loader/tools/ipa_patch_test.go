@@ -111,7 +111,7 @@ func TestPatchIPA(t *testing.T) {
 	if entries[modules+patchedReactNavigation+"/node_modules/x.png"] != "x" {
 		t.Fatalf("React Navigation module was not renamed: %v", keys(entries))
 	}
-	for _, icon := range []string{"UnboundIcon60x60@2x.png", "UnboundIcon76x76@2x~ipad.png"} {
+	for _, icon := range []string{"AstralIcon60x60@2x.png", "AstralIcon76x76@2x~ipad.png"} {
 		if entries[app+icon] == "" {
 			t.Fatalf("missing icon %s", icon)
 		}
@@ -136,14 +136,14 @@ func TestPatchIPA(t *testing.T) {
 	if info.get("UISupportedDevices") != nil {
 		t.Fatal("supported devices were kept")
 	}
-	if info.get("CFBundleName").text != unboundAppName || info.get("CFBundleDisplayName").text != unboundAppName {
+	if info.get("CFBundleName").text != astralAppName || info.get("CFBundleDisplayName").text != astralAppName {
 		t.Fatal("app name was not set")
 	}
 	if info.get("UIFileSharingEnabled").kind != plistTrueKind || info.get("UISupportsDocumentBrowser").kind != plistTrueKind {
 		t.Fatal("file access was not enabled")
 	}
-	phone := info.get("CFBundleIcons").get("CFBundleAlternateIcons").get(unboundAlternateIcon).get("CFBundleIconFiles")
-	pad := info.get("CFBundleIcons~ipad").get("CFBundleAlternateIcons").get(unboundAlternateIcon).get("CFBundleIconFiles")
+	phone := info.get("CFBundleIcons").get("CFBundleAlternateIcons").get(astralAlternateIcon).get("CFBundleIconFiles")
+	pad := info.get("CFBundleIcons~ipad").get("CFBundleAlternateIcons").get(astralAlternateIcon).get("CFBundleIconFiles")
 	if len(phone.values) != 1 || len(pad.values) != 2 {
 		t.Fatal("alternate icons were not added")
 	}
@@ -151,7 +151,7 @@ func TestPatchIPA(t *testing.T) {
 		t.Fatal("existing icon entries were dropped")
 	}
 	urlTypes := info.get("CFBundleURLTypes").values
-	if len(urlTypes) != 2 || urlTypes[1].get("CFBundleURLSchemes").values[0].text != unboundURLScheme {
+	if len(urlTypes) != 2 || urlTypes[1].get("CFBundleURLSchemes").values[0].text != astralURLScheme {
 		t.Fatal("URL scheme was not appended")
 	}
 }

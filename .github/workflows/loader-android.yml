@@ -94,7 +94,7 @@ jobs:
                   fetch-depth: 1
 
             - name: Configure core
-              run: cmake -S core -B build/core -DUNBOUND_CORE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
+              run: cmake -S core -B build/core -DASTRAL_CORE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
 
             - name: Build core
               run: cmake --build build/core -j"$(nproc)"
@@ -134,7 +134,7 @@ jobs:
               run: sudo apt-get install -y -qq libffi-dev
 
             - name: Configure the fuzzer
-              run: cmake -S core -B build/jsi-fuzz -DUNBOUND_CORE_TESTS=ON -DUNBOUND_CORE_JSI_FUZZ=ON -DUNBOUND_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all"
+              run: cmake -S core -B build/jsi-fuzz -DASTRAL_CORE_TESTS=ON -DASTRAL_CORE_JSI_FUZZ=ON -DASTRAL_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all"
 
             - name: Build the Hermes tests and fuzzer
               run: cmake --build build/jsi-fuzz --target native_platform_hermes native_runtime_hermes native_preload_hermes native_fabric_hermes native_handle_leases_hermes native_struct_layouts_hermes native_jsi_fuzz -j"$(nproc)"
@@ -151,7 +151,7 @@ jobs:
 
             - name: Fuzz
               env:
-                  UNBOUND_FUZZ_ITERATIONS: '20000'
+                  ASTRAL_FUZZ_ITERATIONS: '20000'
               run: build/jsi-fuzz/native_jsi_fuzz
 
     native-bridge-fuzz:
@@ -165,7 +165,7 @@ jobs:
                   fetch-depth: 1
 
             - name: Configure the fuzzer
-              run: cmake -S core -B build/fuzz -DUNBOUND_CORE_FUZZ=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
+              run: cmake -S core -B build/fuzz -DASTRAL_CORE_FUZZ=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
 
             - name: Build the fuzzer
               run: cmake --build build/fuzz --target native_bridge_libfuzzer -j"$(nproc)"
@@ -191,7 +191,7 @@ jobs:
             ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
             ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
+            ASTRAL_PR_NUMBER: ${{ inputs.pr_number || '' }}
         outputs:
             module_filename: ${{ steps.collect.outputs.module_filename }}
             module_url: ${{ steps.upload-module.outputs.artifact-url }}
@@ -232,7 +232,7 @@ jobs:
                       fi
                       exit 0
                   fi
-                  keystore="$RUNNER_TEMP/unbound-android-release.keystore"
+                  keystore="$RUNNER_TEMP/astral-android-release.keystore"
                   printf '%s' "$ANDROID_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$keystore"
                   echo "ANDROID_SIGNING_STORE_FILE=$keystore" >> "$GITHUB_ENV"
 
@@ -242,12 +242,12 @@ jobs:
                   CDN_URL: ${{ vars.CDN_URL }}
               run: |
                   if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then
-                    echo "UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
+                    echo "ASTRAL_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
                   fi
 
             - name: Build module
               working-directory: packages/loader/android
-              run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PunboundBuildNumber="${GITHUB_RUN_NUMBER}"
+              run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PastralBuildNumber="${GITHUB_RUN_NUMBER}"
 
             - name: Test module
               working-directory: packages/loader/android
@@ -257,7 +257,7 @@ jobs:
               id: collect
               run: |
                   set -euo pipefail
-                  name="app.unbound.android.xposed.apk"
+                  name="app.astral.android.xposed.apk"
                   cp android/module/build/outputs/apk/release/module-release.apk "$name"
                   echo "module_filename=$name" >> "$GITHUB_OUTPUT"
 
@@ -270,12 +270,12 @@ jobs:
                   mkdir -p android-symbols
                   unzip -q android/module/build/outputs/native-debug-symbols/release/native-debug-symbols.zip -d android-symbols
                   for abi in arm64-v8a x86_64; do
-                    symbols="android-symbols/$abi/libunbound.so.dbg"
-                    library="$RUNNER_TEMP/$abi-libunbound.so"
+                    symbols="android-symbols/$abi/libastral.so.dbg"
+                    library="$RUNNER_TEMP/$abi-libastral.so"
                     test -f "$symbols"
                     sections=$("$readelf" -S "$symbols" 2>/dev/null)
                     grep -q '\.debug_info' <<< "$sections"
-                    unzip -p "$module" "lib/$abi/libunbound.so" > "$library"
+                    unzip -p "$module" "lib/$abi/libastral.so" > "$library"
                     library_id=$("$readelf" -n "$library" | awk '/Build ID:/ { print $3 }')
                     symbols_id=$("$readelf" -n "$symbols" 2>/dev/null | awk '/Build ID:/ { print $3 }')
                     test -n "$library_id"
@@ -400,8 +400,8 @@ jobs:
                   java -jar "$LSPATCH_JAR" discord/*.apk -m module/*.apk -l 2 -o patched -f
                   mkdir emulator
                   mv patched/config.x86_64*.apk emulator/
-                  name="Unbound.apks"
-                  if [ "$DISCORD_CHANNEL" != stable ]; then name="Unbound-$DISCORD_CHANNEL.apks"; fi
+                  name="astral.apks"
+                  if [ "$DISCORD_CHANNEL" != stable ]; then name="astral-$DISCORD_CHANNEL.apks"; fi
                   (cd patched && zip -q "../$name" ./*.apk)
                   echo "patched_filename=$name" >> "$GITHUB_OUTPUT"
 

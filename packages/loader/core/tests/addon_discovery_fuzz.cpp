@@ -307,10 +307,10 @@ static void scanRound(Generator &generator, const fs::path &base)
 
 int main()
 {
-    const char *roundsVariable = std::getenv("UNBOUND_FUZZ_ITERATIONS");
+    const char *roundsVariable = std::getenv("ASTRAL_FUZZ_ITERATIONS");
     const long  rounds         = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 150;
     Generator   generator(0xadd0);
-    fs::path    base = fs::temp_directory_path() / "unbound-addon-discovery-fuzz";
+    fs::path    base = fs::temp_directory_path() / "astral-addon-discovery-fuzz";
 
     for (long round = 0; round < rounds; round++)
     {

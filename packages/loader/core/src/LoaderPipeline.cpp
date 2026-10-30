@@ -128,7 +128,7 @@ void LoaderPipeline::prefetchBundle()
             if (token == prefetchToken_.load())
             {
                 host_->alert(
-                    "Failed to load Unbound's bundle. Please report this to the developers.");
+                    "Failed to load astral's bundle. Please report this to the developers.");
             }
             settle(std::string(), std::string());
         }
@@ -160,7 +160,7 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime)
         if (std::optional<std::string> devtools = bootstrap::script(bootstrap::kDevtools))
         {
             log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Executing DevTools bundle...");
-            evaluateScript(runtime, *devtools, "unbound:devtools");
+            evaluateScript(runtime, *devtools, "astral:devtools");
         }
     }
 
@@ -192,7 +192,7 @@ void LoaderPipeline::onRuntimeCreated(jsi::Runtime &runtime)
         executeNow(rt, kRunApplicationBundleWait);
     });
     log(gated ? LogLevel::Info : LogLevel::Error, LOG_CATEGORY_RUNTIME,
-        gated ? "Unbound will run before Discord's first surface starts."
+        gated ? "astral will run before Discord's first surface starts."
               : "The run-application gate could not be installed.");
 }
 
@@ -231,7 +231,7 @@ void LoaderPipeline::enqueueBundle()
             return;
         }
 
-        log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Scheduling Unbound's bundle for execution...");
+        log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Scheduling astral's bundle for execution...");
         executeBundle(pending, token, 0);
     });
 }
@@ -311,8 +311,7 @@ bool LoaderPipeline::executeNow(jsi::Runtime &runtime, std::chrono::milliseconds
         return false;
     }
 
-    log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
-        "Executing Unbound's bundle before the app starts...");
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Executing astral's bundle before the app starts...");
     return evaluatePending(runtime, currentPending(), prefetchToken_.load());
 }
 
@@ -331,7 +330,7 @@ bool LoaderPipeline::evaluatePending(jsi::Runtime                         &runti
     injectPreBundle(runtime);
 
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Attempting to execute bundle...");
-    if (!evaluateScript(runtime, pending->bundle, "unbound"))
+    if (!evaluateScript(runtime, pending->bundle, "astral"))
     {
         global.setProperty(runtime, "__loaderBundleInstalled", jsi::Value(false));
         updater_.rejectBundle(pending->path);
@@ -342,7 +341,7 @@ bool LoaderPipeline::evaluatePending(jsi::Runtime                         &runti
     {
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT, "Validated bundle could not be promoted.");
     }
-    log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Unbound's bundle was successfully executed.");
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "astral's bundle was successfully executed.");
     if (token == prefetchToken_.load())
     {
         bundleReady_.store(true);

@@ -82,7 +82,7 @@ int main()
     pipeline.prepare();
     assert(host->addonPreparations == 3);
 
-    settings.set("unbound", "loader.enabled", false);
+    settings.set("astral", "loader.enabled", false);
     pipeline.prepare();
     assert(host->addonPreparations == 3);
     assert(!pipeline.waitForPreparedBundle(std::chrono::milliseconds(1)));

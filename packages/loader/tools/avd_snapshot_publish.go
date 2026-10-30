@@ -17,7 +17,7 @@ import (
 const (
 	avdSnapshotVerifySuffix = "_snapshot_verify"
 	avdSnapshotVerifyLimit  = 5 * time.Minute
-	avdSnapshotAsset        = "unbound-avd.tar"
+	avdSnapshotAsset        = "astral-avd.tar"
 )
 
 var loadedPluginsLine = regexp.MustCompile(`Loaded (\d+) plugins?\.`)
@@ -33,7 +33,7 @@ func publishAVDSnapshot(profile avdProfile, repository, tag string, dryRun bool)
 		return err
 	}
 	components := readSnapshotComponents(serial)
-	staging, err := os.MkdirTemp("", "unbound-avd-publish-")
+	staging, err := os.MkdirTemp("", "astral-avd-publish-")
 	if err != nil {
 		return err
 	}
@@ -109,14 +109,14 @@ func checkRestoredAVD(serial string) error {
 	}
 	deadline := time.Now().Add(avdSnapshotVerifyLimit)
 	for time.Now().Before(deadline) {
-		logs, _ := devCommandOutput("adb", "-s", serial, "logcat", "-d", "-s", "Unbound")
+		logs, _ := devCommandOutput("adb", "-s", serial, "logcat", "-d", "-s", "astral")
 		if count, executed := restoredAVDProgress(logs); count > 0 && executed {
-			fmt.Printf("Restored AVD loaded %d plugins and executed Unbound's bundle\n", count)
+			fmt.Printf("Restored AVD loaded %d plugins and executed astral's bundle\n", count)
 			return nil
 		}
 		time.Sleep(3 * time.Second)
 	}
-	return fmt.Errorf("Discord did not load Unbound's plugins and bundle within %s on the restored AVD", avdSnapshotVerifyLimit)
+	return fmt.Errorf("Discord did not load astral's plugins and bundle within %s on the restored AVD", avdSnapshotVerifyLimit)
 }
 
 func restoredAVDProgress(logs string) (int, bool) {
@@ -183,7 +183,7 @@ func snapshotReleaseNotes(profile avdProfile, repository, tag, checksum string, 
 	fmt.Fprintf(&notes, "```bash\ngo run ./tools dev android-avd snapshot restore --from %s --sha256 %s\n```\n\n", url, checksum)
 	notes.WriteString("Run it from `packages/loader` with the AVD stopped. Restore downloads Discord's newest stable build; pick another channel with `--discord-channel beta|alpha`.\n\n")
 	fmt.Fprintf(&notes, "**SHA-256:** `%s`\n\n", checksum)
-	notes.WriteString("Before publishing, this snapshot was restored onto a fresh AVD, which gave root, loaded the Xposed module and every plugin, and executed Unbound's bundle. It holds no Discord APK and no Discord account data.\n\n")
+	notes.WriteString("Before publishing, this snapshot was restored onto a fresh AVD, which gave root, loaded the Xposed module and every plugin, and executed astral's bundle. It holds no Discord APK and no Discord account data.\n\n")
 	notes.WriteString("## Third-party components\n")
 	fmt.Fprintf(&notes, "- [Magisk](https://github.com/topjohnwu/Magisk) %s, GPL-3.0. Source: https://github.com/topjohnwu/Magisk/tree/v%s\n", valueOr(components.magisk, "unknown"), components.magisk)
 	fmt.Fprintf(&notes, "- [Vector](https://github.com/JingMatrix/Vector) %s, GPL-3.0. Source: https://github.com/JingMatrix/Vector\n", valueOr(components.vector, "unknown"))

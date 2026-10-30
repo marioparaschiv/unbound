@@ -1,6 +1,7 @@
 import type { LineOverflow } from '~/preferences';
 
 export const CODE_LINE_HEIGHT = 14.5;
+export const CODE_SIDE_PADDING = 12;
 
 export type CodeBlockLayout = {
 	/** Height of the code text. */
@@ -25,7 +26,7 @@ export function codeBlockLayout(
 ): CodeBlockLayout {
 	const lines = code.split('\n');
 	const longestLine = Math.max(...lines.map((line) => line.replaceAll('\t', '    ').length));
-	const charactersPerLine = Math.max(12, Math.floor((width - 44) / 7.25));
+	const charactersPerLine = Math.max(12, Math.floor((width - CODE_SIDE_PADDING * 2) / 7.25));
 	const lineCount =
 		overflow === 'scroll'
 			? lines.length

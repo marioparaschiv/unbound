@@ -11,17 +11,17 @@ val packageVersion: String = repositoryRoot.resolve("ios/control").readLines()
     .first { it.startsWith("Version:") }
     .substringAfter(":")
     .trim()
-val buildNumber = providers.gradleProperty("unboundBuildNumber").orNull?.toIntOrNull()
+val buildNumber = providers.gradleProperty("astralBuildNumber").orNull?.toIntOrNull()
 val packageVersionCode = packageVersion.split(".").take(3).fold(0) { code, part ->
     code * 100 + (part.filter(Char::isDigit).toIntOrNull() ?: 0)
 }
 val resolvedVersionCode = buildNumber?.let { 1_000_000 + it } ?: packageVersionCode.coerceAtLeast(1)
-val bundleURL = (providers.gradleProperty("unboundBundleURL").orNull ?: System.getenv("UNBOUND_BUNDLE_URL"))
+val bundleURL = (providers.gradleProperty("astralBundleURL").orNull ?: System.getenv("ASTRAL_BUNDLE_URL"))
     ?.trim()
     ?.takeIf(String::isNotEmpty)
 
 if (bundleURL != null && !bundleURL.matches(Regex("https://[A-Za-z0-9.-]+(:[0-9]+)?/[A-Za-z0-9._~/-]*/"))) {
-    throw GradleException("unboundBundleURL must be an https URL ending in /, got $bundleURL")
+    throw GradleException("astralBundleURL must be an https URL ending in /, got $bundleURL")
 }
 fun gitOutput(vararg arguments: String): String = providers.exec {
     commandLine("git", "-C", repositoryRoot.absolutePath, *arguments)
@@ -34,8 +34,8 @@ val commitHash = gitOutput("rev-parse", "HEAD")
 val commitShortHash = gitOutput("rev-parse", "--short", "HEAD")
 val commitSubject = gitOutput("log", "-1", "--pretty=format:%s")
 val commitBranch = gitOutput("branch", "--show-current").ifEmpty { "detached" }
-val pullRequestNumber: String = providers.gradleProperty("unboundPrNumber").orNull
-    ?: System.getenv("UNBOUND_PR_NUMBER").orEmpty()
+val pullRequestNumber: String = providers.gradleProperty("astralPrNumber").orNull
+    ?: System.getenv("ASTRAL_PR_NUMBER").orEmpty()
 val buildTimestamp: String = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"))
 val signingStoreFile = System.getenv("ANDROID_SIGNING_STORE_FILE")
 val signingStorePassword = System.getenv("ANDROID_SIGNING_STORE_PASSWORD")
@@ -49,12 +49,12 @@ if (releaseSigningValues.any { !it.isNullOrBlank() } && !hasReleaseSigning) {
 }
 
 android {
-    namespace = "app.unbound.android"
+    namespace = "app.astral.android"
     compileSdk = 36
     ndkVersion = "27.3.13750724"
 
     defaultConfig {
-        applicationId = "app.unbound.android"
+        applicationId = "app.astral.android"
         minSdk = 28
         targetSdk = 36
         versionCode = resolvedVersionCode
@@ -71,9 +71,9 @@ android {
                 arguments +=
                     listOf(
                         "-DANDROID_STL=c++_static",
-                        "-DUNBOUND_VERSION=$packageVersion",
-                        "-DUNBOUND_PR_NUMBER=${pullRequestNumber.trim()}",
-                        "-DUNBOUND_BUNDLE_URL=${bundleURL.orEmpty()}",
+                        "-DASTRAL_VERSION=$packageVersion",
+                        "-DASTRAL_PR_NUMBER=${pullRequestNumber.trim()}",
+                        "-DASTRAL_BUNDLE_URL=${bundleURL.orEmpty()}",
                     )
                 cppFlags += listOf("-std=c++20", "-fexceptions", "-frtti")
             }
@@ -123,7 +123,7 @@ android {
         unitTests.all {
             val vectors = repositoryRoot.resolve("core/tests/vectors/crypto-cross-check.txt")
             it.inputs.file(vectors)
-            it.systemProperty("unbound.coreCryptoVectors", vectors.absolutePath)
+            it.systemProperty("astral.coreCryptoVectors", vectors.absolutePath)
         }
     }
 
@@ -197,9 +197,9 @@ abstract class GenerateDiscordShapes : DefaultTask() {
             val arguments = (rule as Map<*, *>).entries.joinToString(", ") { (key, value) -> "$key = ${literal(value)}" }
             "    ${literal(name)} to DiscordShape($arguments),\n"
         }
-        val file = output.get().asFile.resolve("app/unbound/android/DiscordShapeRules.kt")
+        val file = output.get().asFile.resolve("app/astral/android/DiscordShapeRules.kt")
         file.parentFile.mkdirs()
-        file.writeText("package app.unbound.android\n\ninternal val DISCORD_SHAPE_RULES: Map<String, DiscordShape> = mapOf(\n$entries)\n")
+        file.writeText("package app.astral.android\n\ninternal val DISCORD_SHAPE_RULES: Map<String, DiscordShape> = mapOf(\n$entries)\n")
     }
 
     private fun literal(value: Any?): String = when (value) {

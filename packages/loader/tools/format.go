@@ -34,7 +34,7 @@ var formatSourceExtensions = map[string]string{
 	".xm":  ".mm",
 }
 
-const logosPragma = "#pragma unbound_logos "
+const logosPragma = "#pragma astral_logos "
 
 var vendoredSourceDirectories = []string{"ios/headers/ReactCommon"}
 

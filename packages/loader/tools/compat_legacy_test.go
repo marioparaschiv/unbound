@@ -15,7 +15,7 @@ func legacyReference(references []*compatReference, name string, legacy bool) *c
 }
 
 func TestKotlinLegacyExtraction(t *testing.T) {
-	source := `package app.unbound.android
+	source := `package app.astral.android
 
 object Themes {
     private val THEME_MANAGER = HostClass.legacy("com.discord.theme.ThemeManager")
@@ -26,7 +26,7 @@ object Themes {
 }
 `
 	set := newCompatSourceSet()
-	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/unbound/android/Themes.kt", component: "loader-android", platform: "android"}
+	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/astral/android/Themes.kt", component: "loader-android", platform: "android"}
 	extractNativeReferences(set, file, source)
 	references := set.sorted()
 
@@ -46,7 +46,7 @@ object Themes {
 }
 
 func TestScriptLegacyExtraction(t *testing.T) {
-	source := `import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-classes';
+	source := `import { legacyJavaClass } from '@astral-plugins/shared/native/android/legacy-classes';
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 const ROW = 'com.discord.reactions.ShortcutsFlexbox';
 `
@@ -99,15 +99,15 @@ func TestEvaluateCompatLegacy(t *testing.T) {
 }
 
 func TestKotlinLegacyMethodExtraction(t *testing.T) {
-	source := `package app.unbound.android
+	source := `package app.astral.android
 
-object Unbound {
+object astral {
     fun loaders(reactInstance: Class<*>, bundleLoader: Class<*>) =
         reactInstance.legacyMethod("loadJSBundle", bundleLoader) ?: reactInstance.getDeclaredMethod("loadJSBundleFromFile", String::class.java)
 }
 `
 	set := newCompatSourceSet()
-	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/unbound/android/Unbound.kt", component: "loader-android", platform: "android"}
+	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/astral/android/astral.kt", component: "loader-android", platform: "android"}
 	extractNativeReferences(set, file, source)
 	var legacy, current *compatReference
 	for _, reference := range set.sorted() {
@@ -130,7 +130,7 @@ object Unbound {
 }
 
 func TestEvaluateCompatLegacyMethodSeenBefore(t *testing.T) {
-	location := []compatLocation{{File: "Unbound.kt", Line: 5}}
+	location := []compatLocation{{File: "astral.kt", Line: 5}}
 	reference := &compatReference{Kind: referenceJavaMethod, Name: "loadJSBundle", Legacy: true, Component: "loader-android", Locations: location}
 	target := compatTestTargets()[1]
 	baseline := &compatResults{Platforms: map[string]*compatPlatformState{"android": {Seen: []string{reference.key()}, Statuses: map[string]string{}}}}
@@ -146,7 +146,7 @@ func TestEvaluateCompatLegacyMethodSeenBefore(t *testing.T) {
 }
 
 func TestEvaluateCompatLegacyMethodWithoutBaseline(t *testing.T) {
-	location := []compatLocation{{File: "Unbound.kt", Line: 5}}
+	location := []compatLocation{{File: "astral.kt", Line: 5}}
 	reference := &compatReference{Kind: referenceJavaMethod, Name: "loadJSBundle", Legacy: true, Component: "loader-android", Locations: location}
 	results := evaluateCompat([]*compatReference{reference}, []*compatTarget{compatTestTargets()[1]}, nil)
 	for _, finding := range results.Findings {

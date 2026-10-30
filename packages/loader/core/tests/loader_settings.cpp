@@ -24,27 +24,27 @@ int main()
     loader::SettingsStore missing(path);
     missing.load();
     assert(loader::readTextFile(path).value() == "{}");
-    assert(missing.getBoolean("unbound", "loader.enabled", true));
+    assert(missing.getBoolean("astral", "loader.enabled", true));
 
     assert(loader::writeTextFileAtomically(
         path,
-        R"({"unbound":{"loader":{"enabled":false,"update":{"url":"http://host/unbound.js"}}}})"));
+        R"({"astral":{"loader":{"enabled":false,"update":{"url":"http://host/unbound.js"}}}})"));
     loader::SettingsStore store(path);
     store.load();
-    assert(!store.getBoolean("unbound", "loader.enabled", true));
-    assert(store.getString("unbound", "loader.update.url", "") == "http://host/unbound.js");
-    assert(store.getString("unbound", "loader.update.etag", "fallback") == "fallback");
+    assert(!store.getBoolean("astral", "loader.enabled", true));
+    assert(store.getString("astral", "loader.update.url", "") == "http://host/unbound.js");
+    assert(store.getString("astral", "loader.update.etag", "fallback") == "fallback");
     assert(!store.get("other", "loader.enabled"));
 
-    store.set("unbound", "loader.update.etag", "\"abc\"");
-    store.set("unbound", "debugger.enabled", true);
+    store.set("astral", "loader.update.etag", "\"abc\"");
+    store.set("astral", "debugger.enabled", true);
     assert(store.save());
 
     loader::SettingsStore reloaded(path);
     reloaded.load();
-    assert(reloaded.getString("unbound", "loader.update.etag", "") == "\"abc\"");
-    assert(reloaded.getBoolean("unbound", "debugger.enabled", false));
-    assert(reloaded.getString("unbound", "loader.update.url", "") == "http://host/unbound.js");
+    assert(reloaded.getString("astral", "loader.update.etag", "") == "\"abc\"");
+    assert(reloaded.getBoolean("astral", "debugger.enabled", false));
+    assert(reloaded.getString("astral", "loader.update.url", "") == "http://host/unbound.js");
 
     assert(loader::writeTextFileAtomically(path, "{not json"));
     loader::SettingsStore corrupt(path);
@@ -58,29 +58,29 @@ int main()
     assert(foundBackup);
 
     assert(!corrupt.replace("[]"));
-    assert(corrupt.replace(R"({"unbound":{"recovery":true}})"));
-    assert(corrupt.getBoolean("unbound", "recovery", false));
+    assert(corrupt.replace(R"({"astral":{"recovery":true}})"));
+    assert(corrupt.getBoolean("astral", "recovery", false));
 
     {
         const auto fresh = (root / "fresh.json").string();
-        assert(loader::writeTextFileAtomically(fresh, R"({"unbound":{"recovery":false}})"));
+        assert(loader::writeTextFileAtomically(fresh, R"({"astral":{"recovery":false}})"));
         loader::SettingsStore native(fresh);
         native.load();
-        assert(!native.getBoolean("unbound", "recovery", true));
+        assert(!native.getBoolean("astral", "recovery", true));
 
         assert(loader::writeTextFileAtomically(
             fresh,
-            R"({"unbound":{"recovery":false,"toasts":{"enabled":false}},"plugins":{"a":1}})"));
+            R"({"astral":{"recovery":false,"toasts":{"enabled":false}},"plugins":{"a":1}})"));
         std::filesystem::last_write_time(fresh, std::filesystem::file_time_type::clock::now() +
                                                     std::chrono::seconds(2));
-        assert(!native.getBoolean("unbound", "toasts.enabled", true));
+        assert(!native.getBoolean("astral", "toasts.enabled", true));
 
-        native.set("unbound", "recovery", true);
+        native.set("astral", "recovery", true);
         assert(native.save());
         const std::string written = loader::readTextFile(fresh).value();
         assert(written.find("\"plugins\"") != std::string::npos);
         assert(written.find("\"toasts\"") != std::string::npos);
-        assert(native.getBoolean("unbound", "recovery", false));
+        assert(native.getBoolean("astral", "recovery", false));
     }
 
     std::filesystem::remove_all(root);
@@ -88,33 +88,33 @@ int main()
         const auto applied = std::filesystem::temp_directory_path() / "loader-settings-apply.json";
         std::filesystem::remove(applied);
         loader::SettingsStore owner(applied.string());
-        owner.set("unbound", "loader.update.etag", std::string("native"));
+        owner.set("astral", "loader.update.etag", std::string("native"));
         owner.set("obsolete", "key", true);
         owner.save();
 
         loader::SettingsStore client(applied.string());
         client.load();
         assert(client.apply(nlohmann::json::array({
-            {{"store", "plugins"}, {"key", "states"}, {"value", {{"unbound.test", true}}}},
-            {{"store", "unbound"}, {"key", "recovery"}, {"value", false}},
-            {{"store", "unbound"}, {"key", "missing"}, {"remove", true}},
+            {{"store", "plugins"}, {"key", "states"}, {"value", {{"astral.test", true}}}},
+            {{"store", "astral"}, {"key", "recovery"}, {"value", false}},
+            {{"store", "astral"}, {"key", "missing"}, {"remove", true}},
             {{"store", "obsolete"}, {"clear", true}},
         })));
 
         loader::SettingsStore reader(applied.string());
         reader.load();
-        assert(reader.getString("unbound", "loader.update.etag", "") == "native");
-        assert(reader.get("plugins", "states") == nlohmann::json({{"unbound.test", true}}));
-        assert(!reader.getBoolean("unbound", "recovery", true));
+        assert(reader.getString("astral", "loader.update.etag", "") == "native");
+        assert(reader.get("plugins", "states") == nlohmann::json({{"astral.test", true}}));
+        assert(!reader.getBoolean("astral", "recovery", true));
         assert(!reader.get("obsolete", "key"));
 
-        owner.set("unbound", "loader.update.etag", std::string("newer"));
+        owner.set("astral", "loader.update.etag", std::string("newer"));
         owner.save();
-        assert(client.apply(nlohmann::json::array(
-            {{{"store", "unbound"}, {"key", "recovery"}, {"remove", true}}})));
+        assert(client.apply(
+            nlohmann::json::array({{{"store", "astral"}, {"key", "recovery"}, {"remove", true}}})));
         reader.load();
-        assert(!reader.get("unbound", "recovery"));
-        assert(reader.getString("unbound", "loader.update.etag", "") == "newer");
+        assert(!reader.get("astral", "recovery"));
+        assert(reader.getString("astral", "loader.update.etag", "") == "newer");
         assert(!client.apply(nlohmann::json::object()));
         std::filesystem::remove(applied);
     }

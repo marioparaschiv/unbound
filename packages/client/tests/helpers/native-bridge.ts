@@ -288,9 +288,9 @@ export const {
 	NativePluginUnavailableError,
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
-} = await import('~/api/native');
+} = require('~/api/native') as typeof import('~/api/native');
 export const { createPluginContext, validateNativePluginRequirements, withNativeConstants } =
-	await import('~/api/native-runtime');
+	require('~/api/native-runtime') as typeof import('~/api/native-runtime');
 
 /**
  * @description Puts the fake bridges back to the iOS defaults and empties every recorded call.

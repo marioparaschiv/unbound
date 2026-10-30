@@ -16,7 +16,7 @@
 #include "NativePlatformBridge.h"
 #include "NativePluginBridge.h"
 
-namespace unbound::android {
+namespace astral::android {
 namespace jsi = facebook::jsi;
 
 static constexpr const char *kAssetFontPrefix = "asset:";

@@ -32,7 +32,7 @@ static void require(bool condition, const std::string &check)
 
 static std::optional<std::string> bootstrapScript(const std::string &name)
 {
-    std::ifstream file(std::string(UNBOUND_BOOTSTRAP_DIR) + "/" + name + ".js");
+    std::ifstream file(std::string(ASTRAL_BOOTSTRAP_DIR) + "/" + name + ".js");
     if (!file)
     {
         return std::nullopt;
@@ -60,7 +60,7 @@ static std::string compiledPlugin(const fs::path &documents, uint32_t &version)
     fs::path source = documents / "compiled-source.js";
     fs::path output = documents / "compiled.hbc";
     write(source, "((React) => { return ({ marker: React.tag + '-bytecode' }) })");
-    std::string command = std::string("\"") + UNBOUND_HERMESC + "\" --emit-binary -O -g0 --out \"" +
+    std::string command = std::string("\"") + ASTRAL_HERMESC + "\" --emit-binary -O -g0 --out \"" +
                           output.string() + "\" \"" + source.string() + "\"";
     require(std::system(command.c_str()) == 0, "hermesc compiles the plugin");
     version = loader::hermesBytecodeVersionOfFile(output.string());
@@ -76,8 +76,8 @@ static const char *const kPreloadChecks = R"JS((function () {
 	function check(condition, name) {
 		if (!condition) failures.push(name);
 	}
-	var plugins = globalThis.UNBOUND_PLUGINS;
-	check(Array.isArray(plugins), 'UNBOUND_PLUGINS is an array');
+	var plugins = globalThis.ASTRAL_PLUGINS;
+	check(Array.isArray(plugins), 'ASTRAL_PLUGINS is an array');
 	var ids = plugins.map(function (entry) { return entry.manifest.id; }).sort();
 	check(JSON.stringify(ids) === JSON.stringify(['a.binary', 'a.compiled', 'a.large', 'a.plain', 'a.tampered', 'a.unicode']), 'exactly the loadable plugins arrive, got ' + JSON.stringify(ids));
 	var byId = {};
@@ -88,13 +88,13 @@ static const char *const kPreloadChecks = R"JS((function () {
 	check(binary === 'a\uFFFD\uFFFD\uFFFDz', 'invalid UTF-8 in a bundle is replaced, not truncated, got ' + JSON.stringify(binary));
 	check(byId['a.large'].bundle.length === 3 * 1024 * 1024, 'a 3 MiB bundle arrives whole');
 	check(byId['a.plain'].manifest.trust === 'unsigned' && typeof byId['a.plain'].manifest.entry === 'string', 'the loader adds trust and entry');
-	check(Array.isArray(globalThis.UNBOUND_THEMES) && globalThis.UNBOUND_THEMES.length === 1, 'the valid theme arrives');
-	check(typeof globalThis.UNBOUND_SETTINGS === 'object' && globalThis.UNBOUND_SETTINGS.unbound.answer === 42, 'settings arrive');
-	check(globalThis.UNBOUND_SETTINGS['名前'] && globalThis.UNBOUND_SETTINGS['名前']['ü'] === 1, 'unicode settings keys arrive intact, got ' + JSON.stringify(Object.keys(globalThis.UNBOUND_SETTINGS)));
-	check(Array.isArray(globalThis.UNBOUND_FONTS), 'UNBOUND_FONTS is an array');
-	check(Array.isArray(globalThis.UNBOUND_AVAILABLE_FONTS) && globalThis.UNBOUND_AVAILABLE_FONTS[0] === 'System', 'available fonts arrive');
-	check(globalThis.UNBOUND_LOADER.origin === 'https://example.invalid' && typeof globalThis.UNBOUND_LOADER.version === 'string', 'loader info arrives');
-	var version = globalThis.UNBOUND_LOADER.bytecodeVersion;
+	check(Array.isArray(globalThis.ASTRAL_THEMES) && globalThis.ASTRAL_THEMES.length === 1, 'the valid theme arrives');
+	check(typeof globalThis.ASTRAL_SETTINGS === 'object' && globalThis.ASTRAL_SETTINGS.astral.answer === 42, 'settings arrive');
+	check(globalThis.ASTRAL_SETTINGS['名前'] && globalThis.ASTRAL_SETTINGS['名前']['ü'] === 1, 'unicode settings keys arrive intact, got ' + JSON.stringify(Object.keys(globalThis.ASTRAL_SETTINGS)));
+	check(Array.isArray(globalThis.ASTRAL_FONTS), 'ASTRAL_FONTS is an array');
+	check(Array.isArray(globalThis.ASTRAL_AVAILABLE_FONTS) && globalThis.ASTRAL_AVAILABLE_FONTS[0] === 'System', 'available fonts arrive');
+	check(globalThis.ASTRAL_LOADER.origin === 'https://example.invalid' && typeof globalThis.ASTRAL_LOADER.version === 'string', 'loader info arrives');
+	var version = globalThis.ASTRAL_LOADER.bytecodeVersion;
 	check(typeof version === 'number' && version > 0, 'the runtime bytecode version arrives');
 	var addons = globalThis.NativePlatform.addons;
 	var factory = addons.evaluateBytecode('compiled', version);
@@ -112,7 +112,7 @@ static const char *const kPreloadChecks = R"JS((function () {
 int main()
 {
     loader::bootstrap::setScriptSource(bootstrapScript);
-    fs::path documents = fs::temp_directory_path() / "unbound-preload-hermes";
+    fs::path documents = fs::temp_directory_path() / "astral-preload-hermes";
     fs::remove_all(documents);
 
     plugin(documents, "plain", R"({"id":"a.plain","name":"Plain","main":"index.js"})",
@@ -133,7 +133,7 @@ int main()
     plugin(documents, "broken", "{\"id\":", "module.exports = 4;");
     write(documents / "Themes" / "good" / "manifest.json", R"({"id":"theme.good","name":"Good"})");
     write(documents / "Themes" / "good" / "bundle.json", R"({"semantic":{},"raw":{}})");
-    write(documents / "settings.json", R"({"unbound":{"answer":42},"名前":{"ü":1}})");
+    write(documents / "settings.json", R"({"astral":{"answer":42},"名前":{"ü":1}})");
     uint32_t    version  = 0;
     std::string bytecode = compiledPlugin(documents, version);
     plugin(documents, "compiled",

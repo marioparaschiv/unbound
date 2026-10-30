@@ -72,10 +72,15 @@ function SettingsPanel() {
 						}
 						subLabel={
 							<Discord.Slider
+								minValue={0}
+								maxValue={100}
 								minimumValue={0}
 								maximumValue={100}
 								value={saturation}
-								onValueChange={(value) =>
+								onChange={(value: number) =>
+									store.set('messageSaturation', Math.round(value / 10) * 10)
+								}
+								onValueChange={(value: number) =>
 									store.set('messageSaturation', Math.round(value / 10) * 10)
 								}
 							/>

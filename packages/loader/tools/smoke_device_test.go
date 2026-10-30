@@ -8,21 +8,21 @@ import (
 )
 
 func TestMergeDeviceSettingsKeepsTheDevicesOwnSettings(t *testing.T) {
-	current := []byte(`{"unbound":{"debugger":{"enabled":false,"address":"10.0.0.2:9090"},"loader":{"update":{"url":"http://127.0.0.1:9/"}}},"plugins":{"states":{"user.plugin":true}},"theme":"dark"}`)
-	smoke := []byte(`{"unbound":{"debugger":{"enabled":true,"address":"192.168.1.5:9092"}},"plugins":{"states":{"unbound.moyai":true}}}`)
+	current := []byte(`{"astral":{"debugger":{"enabled":false,"address":"10.0.0.2:9090"},"loader":{"update":{"url":"http://127.0.0.1:9/"}}},"plugins":{"states":{"user.plugin":true}},"theme":"dark"}`)
+	smoke := []byte(`{"astral":{"debugger":{"enabled":true,"address":"192.168.1.5:9092"}},"plugins":{"states":{"astral.moyai":true}}}`)
 	merged, err := mergeDeviceSettings(current, smoke)
 	if err != nil {
 		t.Fatal(err)
 	}
 	var settings struct {
-		Unbound struct {
+		Astral struct {
 			Debugger map[string]any `json:"debugger"`
 			Loader   struct {
 				Update struct {
 					URL string `json:"url"`
 				} `json:"update"`
 			} `json:"loader"`
-		} `json:"unbound"`
+		} `json:"astral"`
 		Plugins struct {
 			States map[string]bool `json:"states"`
 		} `json:"plugins"`
@@ -31,19 +31,19 @@ func TestMergeDeviceSettingsKeepsTheDevicesOwnSettings(t *testing.T) {
 	if err := json.Unmarshal(merged, &settings); err != nil {
 		t.Fatal(err)
 	}
-	if settings.Unbound.Debugger["address"] != "192.168.1.5:9092" || settings.Unbound.Debugger["enabled"] != true {
-		t.Fatalf("the smoke debugger must win: %v", settings.Unbound.Debugger)
+	if settings.Astral.Debugger["address"] != "192.168.1.5:9092" || settings.Astral.Debugger["enabled"] != true {
+		t.Fatalf("the smoke debugger must win: %v", settings.Astral.Debugger)
 	}
-	if settings.Unbound.Loader.Update.URL != "http://127.0.0.1:9/" || settings.Theme != "dark" {
+	if settings.Astral.Loader.Update.URL != "http://127.0.0.1:9/" || settings.Theme != "dark" {
 		t.Fatalf("the device's own settings must survive: %s", merged)
 	}
-	if len(settings.Plugins.States) != 1 || !settings.Plugins.States["unbound.moyai"] {
+	if len(settings.Plugins.States) != 1 || !settings.Plugins.States["astral.moyai"] {
 		t.Fatalf("only the smoke plugins may be enabled: %v", settings.Plugins.States)
 	}
 }
 
 func TestParseDeviceRootReadsTheMarker(t *testing.T) {
-	if got := parseDeviceRoot("noise\nUBD_ROOT=/var/mobile/Containers/Data/Application/X/Documents/Unbound\n"); got != "/var/mobile/Containers/Data/Application/X/Documents/Unbound" {
+	if got := parseDeviceRoot("noise\nUBD_ROOT=/var/mobile/Containers/Data/Application/X/Documents/astral\n"); got != "/var/mobile/Containers/Data/Application/X/Documents/astral" {
 		t.Fatalf("unexpected root %q", got)
 	}
 	if parseDeviceRoot("") != "" {
@@ -79,7 +79,7 @@ func TestSmokeArchiveHoldsSettingsAndPlugins(t *testing.T) {
 	if err := os.WriteFile(directory+"/index.js", []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	archive, err := smokeArchive([]smokePlugin{{id: "unbound.moyai", directory: directory, files: []string{"index.js"}}}, []byte("{}"))
+	archive, err := smokeArchive([]smokePlugin{{id: "astral.moyai", directory: directory, files: []string{"index.js"}}}, []byte("{}"))
 	if err != nil || len(archive) == 0 {
 		t.Fatalf("archive failed: %v", err)
 	}

@@ -2,6 +2,6 @@
 	"id": "com.discord",
 	"url": "https://github.com/marioparaschiv/unbound",
 	"author": "unbound-app",
-	"name": "Unbound",
-	"additionalSettings": "{\"apkFilterRegEx\":\"^Unbound\\\\.apks$\",\"filterReleaseTitlesByRegEx\":\"^Unbound .+ for Discord [0-9]+\\\\.[0-9]+, Android$\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\"}"
+	"name": "astral",
+	"additionalSettings": "{\"apkFilterRegEx\":\"^astral\\\\.apks$\",\"filterReleaseTitlesByRegEx\":\"^astral .+ for Discord [0-9]+\\\\.[0-9]+, Android$\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\"}"
 }

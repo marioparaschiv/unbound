@@ -34,8 +34,8 @@ jobs:
                   frozen-lockfile: 'true'
             - name: Check the configuration
               env:
-                  CONFIG_PRESENT_UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY != '' }}
-                  CONFIG_PRESENT_UNBOUND_PR_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}
+                  CONFIG_PRESENT_ASTRAL_BUNDLE_SIGNING_KEY: ${{ secrets.ASTRAL_BUNDLE_SIGNING_KEY != '' }}
+                  CONFIG_PRESENT_ASTRAL_PR_BUNDLE_SIGNING_KEY: ${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY != '' }}
                   CONFIG_PRESENT_ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 != '' }}
                   CONFIG_PRESENT_ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS != '' }}
                   CONFIG_PRESENT_ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD != '' }}
@@ -44,8 +44,8 @@ jobs:
                   CONFIG_PRESENT_GPG_KEY: ${{ secrets.GPG_KEY != '' }}
                   CONFIG_PRESENT_DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY != '' }}
                   CONFIG_PRESENT_HERMES_SYNC_TOKEN: ${{ secrets.HERMES_SYNC_TOKEN != '' }}
-                  CONFIG_PRESENT_UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY != '' }}
-                  CONFIG_PRESENT_UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL != '' }}
+                  CONFIG_PRESENT_ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY != '' }}
+                  CONFIG_PRESENT_ASTRAL_API_URL: ${{ vars.ASTRAL_API_URL != '' }}
                   CONFIG_PRESENT_S3_ENDPOINT: ${{ vars.S3_ENDPOINT != '' }}
                   CONFIG_PRESENT_S3_REGION: ${{ vars.S3_REGION != '' }}
                   CONFIG_PRESENT_S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET != '' }}

@@ -6,8 +6,8 @@
 #include "LoaderBrowserLogin.h"
 #include "LoaderDiagnostics.h"
 
-using unbound::ios::toNSString;
-using unbound::ios::toStdString;
+using astral::ios::toNSString;
+using astral::ios::toStdString;
 
 namespace browserlogin = loader::browserlogin;
 

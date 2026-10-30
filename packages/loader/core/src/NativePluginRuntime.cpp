@@ -136,7 +136,7 @@ std::shared_ptr<NativePluginExecutor> executor()
     return gExecutor;
 }
 
-static constexpr const char *kRuntimeGenerationMarker = "__unboundRuntimeGeneration";
+static constexpr const char *kRuntimeGenerationMarker = "__astralRuntimeGeneration";
 
 static bool carriesGeneration(jsi::Runtime &runtime, uint64_t generation)
 {

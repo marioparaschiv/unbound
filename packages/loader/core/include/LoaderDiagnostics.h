@@ -14,7 +14,7 @@ struct BuildInfo {
 };
 
 constexpr const char *kIncompatibleHostMessage =
-    "This version of Discord is incompatible with this version of Unbound.";
+    "This version of Discord is incompatible with this version of astral.";
 constexpr const char *kDevelopmentBuildTitle = "DEVELOPMENT BUILD - DO NOT USE";
 constexpr size_t      kBannerSubjectLength   = 36;
 constexpr unsigned    kBannerSeconds         = 10;
@@ -45,7 +45,7 @@ struct StartupWarning {
 
 constexpr const char *kAttestationWarningTitle = "⚠️ SECURITY WARNING";
 constexpr const char *kAttestationWarningMessage =
-    "The injected tweak failed Unbound's embedded integrity verification. "
+    "The injected tweak failed astral's embedded integrity verification. "
     "You cannot be sure that this is free of malware. "
     "If this app was obtained via 'cypwn' or similar sources "
     "we heavily recommend you uninstall it immediately.";

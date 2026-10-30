@@ -14,8 +14,8 @@
 
 namespace attestation = loader::attestation;
 
-extern "C" __attribute__((section(".unbound.attestation"), used, retain, visibility("hidden")))
-const unsigned char UnboundAttestationPlaceholder[attestation::kSectionSize] = {0};
+extern "C" __attribute__((section(".astral.attestation"), used, retain, visibility("hidden")))
+const unsigned char AstralAttestationPlaceholder[attestation::kSectionSize] = {0};
 
 #if defined(__aarch64__)
 static constexpr int32_t kLoadedMachine = EM_AARCH64;
@@ -68,5 +68,5 @@ jstring nativeAttestation(JNIEnv *env, jclass)
     nlohmann::json result    = evaluation();
     result["warningTitle"]   = loader::diagnostics::kAttestationWarningTitle;
     result["warningMessage"] = loader::diagnostics::kAttestationWarningMessage;
-    return unbound::android::toJavaString(env, result.dump());
+    return astral::android::toJavaString(env, result.dump());
 }

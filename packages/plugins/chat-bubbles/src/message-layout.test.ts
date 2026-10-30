@@ -72,6 +72,20 @@ describe('message layout', () => {
 		expect(messageLayout(reacted)?.body).toEqual({ x: 68, y: 38, width: 291, height: 50 });
 	});
 
+	test('reaches the help button of an ephemeral footer, leaving its text out of the message text', () => {
+		const ephemeral = [
+			...cell.slice(0, 13),
+			node(11, 'DiscordChat.EphemeralView', [0, 8, 291, 17]),
+			node(13, 'UIImageView', [0, 0, 16, 16]),
+			node(13, 'DCDAttributedTextView', [20, 0, 255, 17], 'Only you can see this'),
+			node(13, 'UIButton', [275, 1, 16, 16]),
+		];
+		const layout = messageLayout(ephemeral);
+
+		expect(layout?.text).toEqual({ index: 12, offset: 0 });
+		expect(layout?.footerRight).toBe(291);
+	});
+
 	test('gives up on rows without an avatar column', () => {
 		expect(
 			messageLayout(cell.filter((entry) => entry.className !== 'DCDAvatarView')),

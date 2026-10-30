@@ -53,7 +53,7 @@ export function ensureClasses(plugin: string, objc: NativeObjCBridge, classes: s
 }
 `,
 		"packages/plugins/demo/src/native/bridge.ts": `
-import { safeInvoke } from '@unbound-plugins/shared/native/safe-invoke';
+import { safeInvoke } from '@astral-plugins/shared/native/safe-invoke';
 
 export type Bridge = ReturnType<typeof createBridge>;
 
@@ -75,8 +75,8 @@ export function createBridge(objc: NativeObjCBridge) {
 `,
 		"packages/plugins/demo/src/native/views.ts": `
 import type { Bridge } from './bridge';
-import ensure from '@unbound-plugins/shared/native/ensure-classes';
-import { ensureClasses } from '@unbound-plugins/shared/native/ensure-classes';
+import ensure from '@astral-plugins/shared/native/ensure-classes';
+import { ensureClasses } from '@astral-plugins/shared/native/ensure-classes';
 
 const REQUIRED = ['DCDMessageTableViewCell', 'DCDTableView'] as const;
 

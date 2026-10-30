@@ -1,0 +1,54 @@
+{
+    "minVersion": "0.1",
+    "headerImage": "https://assets.unbound.rip/logo/logo.png",
+    "tintColor": "#aa454d",
+    "tabs": [
+        {
+            "tabname": "Details",
+            "views": [
+                {
+                    "title": "astral",
+                    "useBoldText": true,
+                    "useBottomMargin": false,
+                    "class": "DepictionSubheaderView"
+                },
+                {
+                    "markdown": "Discord mobile client aimed at providing the user control, stability and customizability.",
+                    "useSpacing": true,
+                    "class": "DepictionMarkdownView"
+                },
+                {
+                    "title": "Links",
+                    "class": "DepictionHeaderView"
+                },
+                {
+                    "spacing": 8,
+                    "class": "DepictionSpacerView"
+                },
+                {
+                    "class": "DepictionTableButtonView",
+                    "title": "View Source Code",
+                    "action": "https://github.com/marioparaschiv/unbound"
+                },
+                {
+                    "class": "DepictionTableButtonView",
+                    "title": "Report an Issue",
+                    "action": "https://github.com/marioparaschiv/unbound/issues/new"
+                }
+            ],
+            "class": "DepictionStackView"
+        },
+        {
+            "tabname": "Changelog",
+            "views": [
+                {
+                    "markdown": "See [Releases](https://github.com/marioparaschiv/unbound/releases) for the full changelog.",
+                    "useSpacing": true,
+                    "class": "DepictionMarkdownView"
+                }
+            ],
+            "class": "DepictionStackView"
+        }
+    ],
+    "class": "DepictionTabView"
+}
