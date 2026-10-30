@@ -28,6 +28,7 @@ export function createRenderer(
 	const activeCells = new Map<string, Handle>();
 	const pendingCells = new Map<string, Handle>();
 	const waitingCells = new Map<string, Handle>();
+	let rendering = 0;
 	const images = createImageCache(bridge, () => {
 		for (const cell of activeCells.values()) schedule(cell);
 	});
@@ -103,12 +104,15 @@ export function createRenderer(
 
 			if (disposed || !pending) return;
 
-			void render(pending).then((retry) => {
-				if (retry) wait(key, pending);
-				else waitingCells.delete(key);
+			rendering++;
+			void render(pending)
+				.finally(() => rendering--)
+				.then((retry) => {
+					if (retry) wait(key, pending);
+					else waitingCells.delete(key);
 
-				if (!settled) setTimeout(() => schedule(pending, true), SETTLE_MS);
-			});
+					if (!settled) setTimeout(() => schedule(pending, true), SETTLE_MS);
+				});
 		}, 0);
 	}
 
@@ -158,6 +162,7 @@ export function createRenderer(
 		clear,
 		dispose,
 		rendered: textViews.rendered,
+		settling: () => pendingCells.size > 0 || rendering > 0,
 		failed: images.failed,
 	};
 }

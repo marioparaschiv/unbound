@@ -9,13 +9,14 @@ import SettingsPanel from '~/components/settings-panel';
 import { MessageStore, SelectedChannelStore } from '~/modules';
 import { createAndroidCards } from '~/android/cards';
 import { createNativeCards } from '~/android/native-cards';
-import { misplacedCards, startRenderer } from '~/ios/renderer';
+import { cardProgress, misplacedCards, startRenderer } from '~/ios/renderer';
 import { PLUGIN_NAME } from '~/constants';
 import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 let running = false;
+let progress: () => { drawn: number; settling: boolean } = () => ({ drawn: 0, settling: false });
 
 function start(context: PluginContext) {
 	if (
@@ -30,6 +31,7 @@ function start(context: PluginContext) {
 
 		if (cards) {
 			dispose = applyFeatures(PLUGIN_NAME, [() => cards.dispose]);
+			progress = cards.progress;
 			running = true;
 		}
 
@@ -46,6 +48,7 @@ function start(context: PluginContext) {
 	}
 
 	dispose = applyFeatures(PLUGIN_NAME, [() => startRenderer(context.native.objc)]);
+	progress = cardProgress;
 	running = true;
 }
 
@@ -54,6 +57,7 @@ function stop() {
 
 	dispose = () => undefined;
 	running = false;
+	progress = () => ({ drawn: 0, settling: false });
 
 	return finished;
 }
@@ -73,9 +77,13 @@ async function selfTest() {
 		};
 	}
 
+	const { drawn, settling } = progress();
+
 	return {
 		ok: running && colors > 1,
-		detail: `${running ? 'cards running' : 'cards not running'}, sample TypeScript in ${theme} used ${colors} colors`,
+		detail: `${running ? `${drawn} cards drawn` : 'cards not running'}, sample TypeScript in ${theme} used ${colors} colors`,
+		...(drawn ? {} : { nothingDrawn: true }),
+		...(settling ? { settling: true } : {}),
 	};
 }
 

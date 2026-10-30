@@ -76,9 +76,14 @@ export function featureSelfTest(): SelfTestResult {
  * @description Reports whether the plugin's features are applied and drew something, for the device matrix, which opens fixture messages first.
  * @param drawn How many things the plugin has drawn on screen, or `undefined` when it never started drawing.
  * @param noun What it draws, plural, such as `embeds`.
+ * @param settling Reads whether the plugin is still drawing what is on screen.
  * @returns `ok` when the features are applied and at least one thing is drawn.
  */
-export function drawnSelfTest(drawn: (() => number) | undefined, noun: string): SelfTestResult {
+export function drawnSelfTest(
+	drawn: (() => number) | undefined,
+	noun: string,
+	settling?: () => boolean,
+): SelfTestResult {
 	const features = featureSelfTest();
 
 	if (!features.ok) {
@@ -88,7 +93,11 @@ export function drawnSelfTest(drawn: (() => number) | undefined, noun: string): 
 	const count = drawn?.() ?? 0;
 
 	return count > 0
-		? { ok: true, detail: `${count} ${noun} drawn on screen` }
+		? {
+				ok: true,
+				detail: `${count} ${noun} drawn on screen`,
+				...(settling?.() ? { settling: true } : {}),
+			}
 		: { ok: false, detail: `no ${noun} are drawn on screen`, nothingDrawn: true };
 }
 

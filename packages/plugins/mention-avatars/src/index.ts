@@ -24,6 +24,7 @@ import {
 let dispose = () => {};
 let rendered: (() => number) | undefined;
 let failed: (() => string[]) | undefined;
+let settling: (() => boolean) | undefined;
 
 function start(context: PluginContext) {
 	const { objc } = context.native;
@@ -51,6 +52,7 @@ function start(context: PluginContext) {
 
 		rendered = android.rendered;
 		failed = android.failed;
+		settling = android.settling;
 		dispose = applyFeatures('Mention Avatars', [
 			() => android.dispose,
 			() => patchRowGenerator(index),
@@ -65,6 +67,7 @@ function start(context: PluginContext) {
 
 	rendered = renderer.rendered;
 	failed = renderer.failed;
+	settling = renderer.settling;
 
 	dispose = applyFeatures('Mention Avatars', [
 		() => renderer.dispose,
@@ -86,6 +89,7 @@ function stop() {
 	dispose = () => {};
 	rendered = undefined;
 	failed = undefined;
+	settling = undefined;
 }
 
 function selfTest() {
@@ -95,7 +99,7 @@ function selfTest() {
 		return { ok: false, detail: `${missing.length} mention avatars failed to load` };
 	}
 
-	return drawnSelfTest(rendered, 'mention avatars');
+	return drawnSelfTest(rendered, 'mention avatars', settling);
 }
 
 export default {

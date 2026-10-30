@@ -273,6 +273,24 @@ function labelLanguages(session: Session): void {
  * @throws When the label's `setAttributedText:` cannot be hooked.
  */
 let active: Session | undefined;
+let activeTimers: Set<ReturnType<typeof setTimeout>> | undefined;
+
+/**
+ * @description Counts the cards on screen and says whether any are still being placed.
+ * @returns The number of mounted cards and whether rendering or row correction is pending.
+ */
+export function cardProgress(): { drawn: number; settling: boolean } {
+	const surfaces = active ? [...active.surfaces.values()] : [];
+
+	return {
+		drawn: surfaces.length,
+		settling:
+			Boolean(activeTimers?.size) ||
+			surfaces.some(
+				(surface) => surface.placing || surface.rowTimer || surface.rowCorrectionPending,
+			),
+	};
+}
 
 /**
  * @description Lists the cards drawn on a message other than the one they were made for, which happens when a reused cell keeps an old card.
@@ -325,6 +343,7 @@ export function startRenderer(objc: NativeObjCBridge): () => void {
 	const timers = new Set<ReturnType<typeof setTimeout>>();
 
 	active = session;
+	activeTimers = timers;
 	session.highlighter.warm(readPreferences().theme);
 
 	const [required, ...optional] = labelHooks(session, timers);
@@ -341,10 +360,18 @@ export function startRenderer(objc: NativeObjCBridge): () => void {
 	const unsubscribe = subscribeSettings(session);
 
 	labelLanguages(session);
-	timers.add(setTimeout(() => void renderVisibleLabels(session).catch(() => undefined), 300));
+	const firstRender = setTimeout(() => {
+		timers.delete(firstRender);
+		void renderVisibleLabels(session).catch(() => undefined);
+	}, 300);
+
+	timers.add(firstRender);
 
 	return () => {
-		if (active === session) active = undefined;
+		if (active === session) {
+			active = undefined;
+			activeTimers = undefined;
+		}
 
 		controller.abort();
 		session.recovery.dispose();
