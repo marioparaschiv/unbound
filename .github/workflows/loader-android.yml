@@ -93,6 +93,11 @@ jobs:
               with:
                   fetch-depth: 1
 
+            - name: Setup ccache
+              uses: ./.github/actions/setup-ccache
+              with:
+                  key: core-tests
+
             - name: Configure core
               run: cmake -S core -B build/core -DASTRAL_CORE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
 
@@ -100,7 +105,7 @@ jobs:
               run: cmake --build build/core -j"$(nproc)"
 
             - name: Run core tests
-              run: ctest --test-dir build/core --output-on-failure
+              run: ctest --test-dir build/core --output-on-failure -j"$(nproc)"
 
     native-jsi-fuzz:
         name: Host Hermes bridge tests and fuzzing
@@ -133,6 +138,11 @@ jobs:
             - name: Install libffi
               run: sudo apt-get install -y -qq libffi-dev
 
+            - name: Setup ccache
+              uses: ./.github/actions/setup-ccache
+              with:
+                  key: hermes-bridge
+
             - name: Configure the fuzzer
               run: cmake -S core -B build/jsi-fuzz -DASTRAL_CORE_TESTS=ON -DASTRAL_CORE_JSI_FUZZ=ON -DASTRAL_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all"
 
@@ -163,6 +173,11 @@ jobs:
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   fetch-depth: 1
+
+            - name: Setup ccache
+              uses: ./.github/actions/setup-ccache
+              with:
+                  key: bridge-fuzz
 
             - name: Configure the fuzzer
               run: cmake -S core -B build/fuzz -DASTRAL_CORE_FUZZ=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
@@ -213,6 +228,11 @@ jobs:
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
+
+            - name: Setup ccache
+              uses: ./.github/actions/setup-ccache
+              with:
+                  key: android-module
 
             - name: Install NDK and CMake
               run: |
@@ -453,12 +473,36 @@ jobs:
                   bun run plugins:build
 
             - name: Download patched Discord
+              id: download-patched
+              continue-on-error: true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
                   name: patched discord
                   path: packages/loader/smoke/package
 
             - name: Download the emulator split
+              id: download-split
+              continue-on-error: true
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: patched discord emulator split
+                  path: packages/loader/smoke/apks
+
+            - name: Wait before downloading again
+              if: steps.download-patched.outcome == 'failure' || steps.download-split.outcome == 'failure'
+              run: |
+                  rm -rf smoke/package smoke/apks
+                  sleep 60
+
+            - name: Download patched Discord again
+              if: steps.download-patched.outcome == 'failure' || steps.download-split.outcome == 'failure'
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: patched discord
+                  path: packages/loader/smoke/package
+
+            - name: Download the emulator split again
+              if: steps.download-patched.outcome == 'failure' || steps.download-split.outcome == 'failure'
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
                   name: patched discord emulator split

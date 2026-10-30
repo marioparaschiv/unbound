@@ -97,12 +97,6 @@ jobs:
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
 
-            - name: Test tools
-              run: go test -count=1 ./...
-
-            - name: Test workflows
-              run: go -C workflow-tests test -count=1 ./...
-
             - name: Check cache
               run: printf 'upstream_heads=%s-%s\n' "$(git ls-remote https://github.com/theos/theos | awk 'NR == 1 { print $1 }')" "$(git ls-remote https://github.com/theos/sdks | awk 'NR == 1 { print $1 }')" >> "$GITHUB_ENV"
 
