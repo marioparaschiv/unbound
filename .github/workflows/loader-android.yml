@@ -132,11 +132,13 @@ jobs:
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
               with:
                   path: packages/loader/build/jsi-fuzz
-                  key: jsi-fuzz-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}-${{ hashFiles('packages/loader/vendor/**') }}-${{ hashFiles('packages/loader/core/**') }}
-                  restore-keys: jsi-fuzz-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}-
+                  key: jsi-fuzz-ninja-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}-${{ hashFiles('packages/loader/core/**') }}
+                  restore-keys: jsi-fuzz-ninja-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}-
 
-            - name: Install libffi
-              run: sudo apt-get install -y -qq libffi-dev
+            - name: Install libffi, Ninja and lld
+              run: |
+                  sudo apt-get update -qq
+                  sudo apt-get install -y -qq libffi-dev ninja-build lld
 
             - name: Setup ccache
               uses: ./.github/actions/setup-ccache
@@ -144,7 +146,7 @@ jobs:
                   key: hermes-bridge
 
             - name: Configure the fuzzer
-              run: cmake -S core -B build/jsi-fuzz -DASTRAL_CORE_TESTS=ON -DASTRAL_CORE_JSI_FUZZ=ON -DASTRAL_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all"
+              run: cmake -S core -B build/jsi-fuzz -G Ninja -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DASTRAL_CORE_TESTS=ON -DASTRAL_CORE_JSI_FUZZ=ON -DASTRAL_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all"
 
             - name: Build the Hermes tests and fuzzer
               run: cmake --build build/jsi-fuzz --target native_platform_hermes native_runtime_hermes native_preload_hermes native_fabric_hermes native_handle_leases_hermes native_struct_layouts_hermes native_jsi_fuzz -j"$(nproc)"
