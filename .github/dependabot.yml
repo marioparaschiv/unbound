@@ -9,14 +9,22 @@ updates:
       open-pull-requests-limit: 5
       commit-message:
           prefix: 'ci(deps)'
+      groups:
+          actions:
+              patterns:
+                  - '*'
 
     - package-ecosystem: 'gitsubmodule'
       directory: '/'
       schedule:
-          interval: 'daily'
+          interval: 'weekly'
       open-pull-requests-limit: 5
       commit-message:
           prefix: 'build(deps)'
+      groups:
+          submodules:
+              patterns:
+                  - '*'
 
     - package-ecosystem: 'bun'
       directory: '/'
@@ -51,6 +59,11 @@ updates:
       open-pull-requests-limit: 5
       commit-message:
           prefix: 'build(deps)'
+      groups:
+          minor-and-patch:
+              update-types:
+                  - 'minor'
+                  - 'patch'
 
     - package-ecosystem: 'gradle'
       directory: '/packages/loader/android'
