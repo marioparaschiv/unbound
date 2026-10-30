@@ -6,6 +6,7 @@ import type { PluginContext } from '@unbound-app/api/native';
 import { createTagGradients } from '~/native/tag-gradient-renderer';
 import { patchGetTagProperties } from '~/patches/get-tag-properties';
 import { createLabelAppearances } from '~/label-appearances';
+import { clearTagProblems, tagProblems } from '~/tag-problems';
 import SettingsPanel from '~/components/settings-panel';
 import {
 	ChannelStore,
@@ -34,15 +35,29 @@ function start(context: PluginContext) {
 }
 
 function stop() {
+	clearTagProblems();
 	dispose();
 	dispose = () => {};
 
 	return settled();
 }
 
+function selfTest() {
+	const problems = tagProblems();
+
+	if (problems.length) {
+		return {
+			ok: false,
+			detail: `${problems.length} tags look wrong: ${problems.slice(0, 3).join('; ')}`,
+		};
+	}
+
+	return featureSelfTest();
+}
+
 export default {
 	start,
 	stop,
-	selfTest: featureSelfTest,
+	selfTest,
 	getSettingsPanel: () => <SettingsPanel />,
 };

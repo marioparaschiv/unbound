@@ -36,6 +36,8 @@ import {
 	closeScreenScript,
 } from './device-scripts';
 import { withSettings } from './settings-check';
+import { reusableLeak } from './leak-reuse';
+import { describeScreenChange, keepPrevious, screenDifference } from './screen-diff';
 import {
 	isEmptyToast,
 	parseOffMainWarnings,
@@ -110,12 +112,13 @@ async function main(): Promise<void> {
 			baseline: { type: 'string' },
 			lenient: { type: 'boolean' },
 			'leak-cycles': { type: 'string' },
+			'full-leak-check': { type: 'boolean' },
 		},
 	});
 
 	if (!values.out) {
 		throw new Error(
-			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>] [--channel <guild id>/<channel id>] [--lenient]',
+			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>] [--channel <guild id>/<channel id>] [--lenient] [--leak-cycles <n>] [--full-leak-check]',
 		);
 	}
 
@@ -129,6 +132,7 @@ async function main(): Promise<void> {
 	mkdirSync(out, { recursive: true });
 
 	const timings = createTimings();
+	const screenChanges: string[] = [];
 	const fixtureChannel = values.channel ?? readMatrixConfig()?.channel;
 	const fixtures = fixtureChannel ? parseChannel(fixtureChannel) : undefined;
 
@@ -177,7 +181,17 @@ async function main(): Promise<void> {
 		await new Promise((done) => setTimeout(done, SETTINGS_SETTLE_MS));
 
 		const file = `${id}.settings.png`;
+		const previous = keepPrevious(join(out, file));
 		const captured = await screenshot(target, join(out, file));
+
+		if (captured && previous) {
+			const change = describeScreenChange(
+				`${id} settings`,
+				await screenDifference(previous, join(out, file)),
+			);
+
+			if (change) screenChanges.push(change);
+		}
 		const probe = await evaluateJson(port, settingsProbeScript(), settingsProbeSchema);
 
 		await evaluate(port, closeScreenScript());
@@ -295,7 +309,32 @@ async function main(): Promise<void> {
 		if (result.installed && !result.wasStarted) await evaluate(port, restoreScript(id));
 	}
 
+	const previousRun = values['full-leak-check']
+		? undefined
+		: readBaseline(values.baseline ? resolve(values.baseline) : join(out, 'results.json'));
+
+	function recordLeak(check: MeasuredCheck, perCycle: number) {
+		check.leakPerCycleMB = perCycle;
+
+		const note = leakNote(perCycle, leakCycles);
+
+		if (note) {
+			check.behavior = 'fail';
+			check.note = [check.note, note].filter(Boolean).join('; ');
+		}
+	}
+
 	async function leakCheck(check: MeasuredCheck): Promise<void> {
+		const reused = reusableLeak(check, previousRun);
+
+		if (reused !== undefined) {
+			recordLeak(check, reused);
+			check.evidence.push('leak check: kept from the last run, the bundle is unchanged');
+			console.error(`leak check ${check.id}: ${reused} MB per cycle, kept from the last run`);
+
+			return;
+		}
+
 		await cycleQuietly(check.id);
 
 		const before = Number(await evaluate(port, liveHeapScript()));
@@ -310,15 +349,7 @@ async function main(): Promise<void> {
 
 		if (perCycle === undefined) return;
 
-		check.leakPerCycleMB = perCycle;
-
-		const note = leakNote(perCycle, leakCycles);
-
-		if (note) {
-			check.behavior = 'fail';
-			check.note = [check.note, note].filter(Boolean).join('; ');
-		}
-
+		recordLeak(check, perCycle);
 		console.error(`leak check ${check.id}: ${perCycle} MB per cycle`);
 	}
 
@@ -436,6 +467,8 @@ async function main(): Promise<void> {
 
 		for (const change of changes) console.error(`changed: ${change}`);
 	}
+
+	for (const change of screenChanges) console.error(`changed: ${change}`);
 	writeFileSync(
 		join(out, 'matrix.md'),
 		`${renderDeviceMatrix(catalog, checks, values.device ?? (target.kind === 'ios' ? 'iOS' : 'Android'))}\n`,

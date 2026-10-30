@@ -15,6 +15,7 @@ export const cycleResultSchema = z.object({
 	stopMs: z.optional(z.number()),
 	startMs: z.optional(z.number()),
 	selfTest: z.optional(z.object({ ok: z.boolean(), detail: z.string() })),
+	bundleHash: z.optional(z.string()),
 });
 
 export type CycleResult = z.infer<typeof cycleResultSchema>;
@@ -33,6 +34,11 @@ export function cycleScript(id: string): string {
 	var entity = manager.getEntity(id);
 	var result = { id: id, installed: Boolean(entity), wasStarted: Boolean(entity && entity.started), error: '', restarted: false, updateError: '', updated: false, hooksBefore: 0, hooksStopped: 0, hooksAfter: 0, hooksUpdated: 0 };
 	if (!entity) return JSON.stringify(result);
+	if (typeof entity.bundle === 'string') {
+		var hash = 0x811c9dc5;
+		for (var index = 0; index < entity.bundle.length; index++) hash = Math.imul(hash ^ entity.bundle.charCodeAt(index), 0x01000193);
+		result.bundleHash = (hash >>> 0).toString(16) + ':' + entity.bundle.length;
+	}
 	if (!result.wasStarted) {
 		try { await manager.start(id); } catch (failure) { result.error = message(failure); }
 		await settle();

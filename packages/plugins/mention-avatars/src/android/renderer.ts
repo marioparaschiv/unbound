@@ -335,6 +335,8 @@ export function createAndroidRenderer(
 
 	return {
 		rendered: () => rules.size,
+		failed: () =>
+			[...images].flatMap(([url, entry]) => (!entry.pending && !entry.bitmap ? [url] : [])),
 		dispose() {
 			for (const scan of scans) clearTimeout(scan);
 

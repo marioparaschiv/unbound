@@ -1,6 +1,9 @@
 import { metro } from '@unbound-app/api';
 import { Discord } from '@unbound-app/api/metro/components';
 import { View } from 'react-native';
+import { useEffect, useState } from 'react';
+
+import { parseTypedColor } from './typed-color';
 
 type ActionSheets = {
 	openLazy(component: Promise<{ default: unknown }>, key: string, props: object): void;
@@ -44,17 +47,49 @@ function openPicker(color: string, onSelect: (color: string) => void): boolean {
 }
 
 /**
- * @description A settings row that shows a color swatch, opens Discord's color picker when pressed and offers a reset back to the default.
+ * @description A settings row that shows a color swatch, opens Discord's color picker when pressed, takes a typed hex code and offers a reset back to the default. A typed code is saved even when it matches the default, which the picker cannot do: Discord's picker reports its current color when it is dismissed, so a pick that matches the color already shown is ignored.
  * @param props The row's label, chosen color, the default it falls back to and the change handler.
  * @returns The row.
  */
 function ColorRow({ label, color, fallbackColor, fallbackLabel, onChange }: ColorRowProps) {
 	const shown = color ?? fallbackColor;
+	const [draft, setDraft] = useState(color ?? '');
+
+	useEffect(() => setDraft(color ?? ''), [color]);
+
+	function saveDraft() {
+		const typed = parseTypedColor(draft);
+
+		if (!draft.trim()) {
+			onChange(undefined);
+
+			return;
+		}
+
+		if (typed) onChange(typed);
+		else setDraft(color ?? '');
+	}
 
 	return (
 		<Discord.TableRow
 			label={label}
-			subLabel={color ?? fallbackLabel}
+			subLabel={
+				<View style={{ gap: 8 }}>
+					<Discord.Text variant='text-sm/medium' color='text-muted'>
+						{color ? 'Tap to pick a color, or type a hex code' : fallbackLabel}
+					</Discord.Text>
+					<Discord.TextInput
+						value={draft}
+						onChange={setDraft}
+						onEndEditing={saveDraft}
+						onSubmitEditing={saveDraft}
+						placeholder={fallbackColor}
+						autoCapitalize='characters'
+						autoCorrect={false}
+						maxLength={7}
+					/>
+				</View>
+			}
 			onPress={() => openPicker(shown, onChange)}
 			trailing={
 				<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

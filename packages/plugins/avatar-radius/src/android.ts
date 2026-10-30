@@ -373,8 +373,32 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 
 	roundAttached().catch(report);
 
+	async function isUnrounded(rounded: Rounded): Promise<boolean> {
+		if (rounded.kind === 'border') return false;
+
+		const { view } = rounded;
+
+		if (!javaFlag(await onMain(view, 'isAttachedToWindow'))) return false;
+
+		const expected = radius() * (await displayDensity(java, view));
+		const background = javaReference(await onMain(view, 'getBackground'));
+		const clipped = javaFlag(await onMain(view, 'getClipToOutline'));
+		const corner = background
+			? javaNumber(await onMain(background, 'getCornerRadius'))
+			: undefined;
+
+		return !clipped || corner === undefined || Math.abs(corner - expected) > SQUARE_TOLERANCE;
+	}
+
 	return {
 		rounded: () => tracked.length,
+		async unrounded() {
+			const checks = await Promise.all(
+				tracked.map((rounded) => isUnrounded(rounded).catch(() => false)),
+			);
+
+			return checks.filter(Boolean).length;
+		},
 		refresh() {
 			for (const rounded of tracked) apply(rounded).catch(report);
 		},

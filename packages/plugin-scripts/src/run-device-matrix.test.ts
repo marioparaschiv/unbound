@@ -202,3 +202,26 @@ test('fails a run whose swipes did not move the list', () => {
 		true,
 	);
 });
+
+test('lists what the self-tests and settings checks saw wrong under their own heading', () => {
+	const summary = renderSummary([
+		{
+			device: phone,
+			checks: [
+				{
+					id: 'unbound.chat-bubbles',
+					behavior: 'fail',
+					lifecycle: 'pass',
+					evidence: [],
+					note: 'self-test failed: 1 bubbles look wrong: 9 reaches the left edge of the screen',
+					visualProblems: ['1 bubbles look wrong: 9 reaches the left edge of the screen'],
+				},
+			],
+			changes: [],
+		},
+	]);
+
+	expect(summary).toContain(
+		'### Visual problems\n\n- iPhone SE, unbound.chat-bubbles: 1 bubbles look wrong: 9 reaches the left edge of the screen',
+	);
+});

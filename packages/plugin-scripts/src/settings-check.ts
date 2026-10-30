@@ -37,5 +37,6 @@ export function withSettings(
 		behavior: 'fail',
 		evidence,
 		note: [check.note, failure].filter(Boolean).join('; '),
+		visualProblems: [...(check.visualProblems ?? []), failure],
 	};
 }

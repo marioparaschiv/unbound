@@ -103,6 +103,13 @@ export function renderSummary(runs: DeviceRun[]): string {
 	const changes = runs.flatMap((run) =>
 		run.changes.map((change) => `- ${run.device.name}: ${change}`),
 	);
+	const visual = runs.flatMap((run) =>
+		run.checks
+			.filter((check) => check.visualProblems?.length)
+			.map(
+				(check) => `- ${run.device.name}, ${check.id}: ${check.visualProblems!.join('; ')}`,
+			),
+	);
 	const toasts = runs
 		.filter((run) => run.scrollToasts?.length)
 		.map((run) => `- ${run.device.name}: ${run.scrollToasts!.join(', ')}`);
@@ -164,6 +171,7 @@ export function renderSummary(runs: DeviceRun[]): string {
 			? ['', 'Every plugin passed on every device.']
 			: []),
 		...(loader.length ? ['', '### Loader self-test', '', ...loader] : []),
+		...(visual.length ? ['', '### Visual problems', '', ...visual] : []),
 		...(toasts.length ? ['', '### Toasts while scrolling', '', ...toasts] : []),
 		...(empty.length ? ['', '### Empty toasts', '', ...empty] : []),
 		...(stuck.length ? ['', '### Scrolling', '', ...stuck] : []),
@@ -232,6 +240,7 @@ async function collect(
 	only: string | undefined,
 	lenient = false,
 	leakCycles?: number,
+	fullLeakCheck = false,
 ): Promise<DeviceRun> {
 	mkdirSync(out, { recursive: true });
 	rmSync(join(out, 'scroll.json'), { force: true });
@@ -242,6 +251,7 @@ async function collect(
 	const args = [
 		...collectorArgs(device, out, channel, only, leakCycles),
 		...(lenient ? ['--lenient'] : []),
+		...(fullLeakCheck ? ['--full-leak-check'] : []),
 	];
 	const child = Bun.spawn(['bun', COLLECTOR, ...args], {
 		stdout: 'pipe',
@@ -287,13 +297,14 @@ async function main(): Promise<void> {
 			channel: { type: 'string' },
 			lenient: { type: 'boolean' },
 			'leak-cycles': { type: 'string' },
+			'full-leak-check': { type: 'boolean' },
 		},
 	});
 	const config = readMatrixConfig(resolve(values.config));
 
 	if (!config?.devices.length || !values.out) {
 		throw new Error(
-			`Usage: bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir> [--only <id,id>] [--channel <guild id>/<channel id>] [--lenient] [--leak-cycles <n>] [--config ${MATRIX_CONFIG_PATH}], with the devices listed in the config.`,
+			`Usage: bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir> [--only <id,id>] [--channel <guild id>/<channel id>] [--lenient] [--leak-cycles <n>] [--full-leak-check] [--config ${MATRIX_CONFIG_PATH}], with the devices listed in the config.`,
 		);
 	}
 
@@ -308,6 +319,7 @@ async function main(): Promise<void> {
 				values.only,
 				values.lenient,
 				values['leak-cycles'] ? Number(values['leak-cycles']) : undefined,
+				values['full-leak-check'],
 			),
 		),
 	);
