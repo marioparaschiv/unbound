@@ -64,6 +64,7 @@ type smokeOptions struct {
 	bridgePort int
 	bundlePort int
 	budget     smokeStartupBudget
+	quick      bool
 }
 
 type smokeStartupBudget struct {
@@ -149,6 +150,7 @@ func registerSmokeFlags(set *flag.FlagSet) *smokeOptions {
 	set.StringVar(&options.summary, "summary", os.Getenv("GITHUB_STEP_SUMMARY"), "markdown file to append the report to")
 	set.DurationVar(&options.timeout, "timeout", 10*time.Minute, "how long the app gets to load every plugin and answer the debugger")
 	set.IntVar(&options.bridgePort, "bridge-port", 9090, "port of the debugger bridge")
+	set.BoolVar(&options.quick, "quick", false, "check startup, plugin loads and the debugger only, skipping the plugin cycle and fault injection")
 	set.IntVar(&options.bundlePort, "bundle-port", 3000, "port the built client is served on")
 	set.DurationVar(&options.budget.bundle, "bundle-budget", 0, "longest Discord may take from launch to executing astral's bundle; 0 only reports it")
 	set.DurationVar(&options.budget.plugins, "plugins-budget", 0, "longest Discord may take from launch to loading every plugin; 0 only reports it")
@@ -334,7 +336,9 @@ func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, t
 	}
 	if evalErr == nil {
 		result.resources = measureSmokeResources(ctx, options)
-		result.cycle = cycleSmokePlugins(ctx, options, result.resources)
+		if !options.quick {
+			result.cycle = cycleSmokePlugins(ctx, options, result.resources)
+		}
 	}
 	settle := time.Now().Add(5 * time.Second)
 	for time.Now().Before(settle) && ctx.Err() == nil {
@@ -346,7 +350,7 @@ func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, t
 		}
 	}
 	watcher.snapshot(result)
-	if evalErr == nil && !watcher.crashed() {
+	if evalErr == nil && !watcher.crashed() && !options.quick {
 		result.faults = runSmokeFaults(ctx, target, options, result.startup.runtime)
 	}
 	result.statuses = statuses
