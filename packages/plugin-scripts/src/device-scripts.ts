@@ -127,6 +127,22 @@ export function developerModeScript(enabled: boolean): string {
 })()`;
 }
 
+export const MATRIX_TOAST_MS = 300;
+
+/**
+ * @description Sets how long Unbound's toasts stay on screen, so the matrix's screenshots are not covered by the toast each plugin reload shows.
+ * @param milliseconds The duration to set, or `null` to remove the setting.
+ * @returns A script whose result is the previous value as JSON, `null` when unset.
+ */
+export function toastDurationScript(milliseconds: number | null): string {
+	return `(function () {
+	var store = unbound.storage.getStore('unbound');
+	var previous = store.get('toasts.duration', null);
+	${milliseconds === null ? "store.remove('toasts.duration');" : `store.set('toasts.duration', ${milliseconds});`}
+	return JSON.stringify(previous);
+})()`;
+}
+
 export function pluginLogScript(): string {
 	return `Promise.resolve(unbound.fs.read('Unbound/Logs/unbound.log')).then(function (text) {
 	return JSON.stringify(String(text).split('\\n').filter(function (line) { return line.indexOf('off the main thread') !== -1 || line.indexOf(' E [') !== -1 || line.indexOf('Native plugin hook skipped in') !== -1; }));
