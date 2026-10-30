@@ -76,6 +76,20 @@ export function listCalls(calls: string[]): string {
 	return more > 0 ? `${listed.join(', ')} and ${more} more` : listed.join(', ');
 }
 
+function slowest(
+	run: DeviceRun,
+	label: string,
+	time: (check: MeasuredCheck) => number | undefined,
+): string[] {
+	const timed = run.checks
+		.filter((check) => time(check) !== undefined)
+		.sort((a, b) => time(b)! - time(a)!)
+		.slice(0, PLACEMENT_LISTED)
+		.map((check) => `${check.id} ${time(check)} ms`);
+
+	return timed.length ? [`- ${run.device.name}, ${label}: ${timed.join(', ')}`] : [];
+}
+
 export function renderSummary(runs: DeviceRun[]): string {
 	const ids = [...new Set(runs.flatMap((run) => run.checks.map((check) => check.id)))].sort();
 	const totals = runs.map((run) => {
@@ -156,15 +170,10 @@ export function renderSummary(runs: DeviceRun[]): string {
 			? [`- ${run.device.name}, most growth per cycle: ${measured.join(', ')}`]
 			: [];
 	});
-	const placement = runs.flatMap((run) => {
-		const timed = run.checks
-			.filter((check) => check.metrics?.drawnMs !== undefined)
-			.sort((a, b) => b.metrics!.drawnMs! - a.metrics!.drawnMs!)
-			.slice(0, PLACEMENT_LISTED)
-			.map((check) => `${check.id} ${check.metrics!.drawnMs} ms`);
-
-		return timed.length ? [`- ${run.device.name}, slowest to draw: ${timed.join(', ')}`] : [];
-	});
+	const placement = runs.flatMap((run) => [
+		...slowest(run, 'slowest to draw', (check) => check.metrics?.drawnMs),
+		...slowest(run, 'slowest to redraw after scrolling', (check) => check.redrawMs),
+	]);
 	const durations = runs
 		.filter((run) => run.timings)
 		.map((run) => `- ${run.device.name}: ${describeTimings(run.timings!)}`);

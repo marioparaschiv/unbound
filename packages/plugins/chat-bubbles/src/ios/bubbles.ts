@@ -377,6 +377,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 
 	return {
 		placed: () => bubbles.size,
+		settling: () => flushing || pending.size > 0,
 		problems: async () => [
 			...[...problems].map(([key, problem]) => `${key} ${problem}`),
 			...(await staleBubbles()),

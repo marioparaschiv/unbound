@@ -139,9 +139,10 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number, drawnPo
 					const report = (await instance?.selfTest?.()) as {
 						ok?: unknown;
 						nothingDrawn?: unknown;
+						settling?: unknown;
 					} | null;
 
-					if (report?.ok && !report.nothingDrawn) {
+					if (report?.ok && !report.nothingDrawn && !report.settling) {
 						result.drawnMs = Date.now() - since;
 
 						return;
@@ -175,9 +176,11 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number, drawnPo
 
 		result.updated = Boolean(updated?.started);
 		result.hooksUpdated = hooks();
-		await new Promise((resolve) => setTimeout(resolve, selfTestDelayMs));
+		await Promise.race([drawn, new Promise((resolve) => setTimeout(resolve, selfTestDelayMs))]);
 		watching = false;
 		await drawn;
+
+		if (result.drawnMs !== undefined) await settle();
 
 		const instance = updated?.instance;
 
@@ -548,6 +551,47 @@ function runSelfTests() {
  */
 export function selfTestsScript(): string {
 	return deviceScript(runSelfTests);
+}
+
+export const redrawTimesSchema = z.record(z.string(), z.number());
+
+function timeRedraws(limitMs: number, pollMs: number) {
+	const started = Date.now();
+	const times: Record<string, number> = {};
+	const waiting = [...unbound.plugins.entities.values()].filter(
+		(entity) => entity.started && typeof entity.instance?.selfTest === 'function',
+	);
+
+	return (async () => {
+		while (waiting.length && Date.now() - started < limitMs) {
+			for (let index = waiting.length - 1; index >= 0; index--) {
+				const entity = waiting[index]!;
+
+				try {
+					const report = (await entity.instance!.selfTest!()) as {
+						ok?: unknown;
+						nothingDrawn?: unknown;
+						settling?: unknown;
+					} | null;
+
+					if (report?.ok && !report.nothingDrawn && !report.settling) {
+						times[entity.id] = Date.now() - started;
+						waiting.splice(index, 1);
+					}
+				} catch {
+					waiting.splice(index, 1);
+				}
+			}
+
+			await new Promise((resolve) => setTimeout(resolve, pollMs));
+		}
+
+		return JSON.stringify(times);
+	})();
+}
+
+export function redrawTimesScript(limitMs: number): string {
+	return deviceScript(timeRedraws, limitMs, DRAWN_POLL_MS);
 }
 
 export const MATRIX_TOAST_MS = 300;

@@ -233,6 +233,7 @@ test('lists the plugins slowest to draw after a reload', () => {
 		lifecycle: 'pass',
 		evidence: [],
 		metrics: { stopMs: 0, startMs: 0, drawnMs, leakedHooks: 0 },
+		redrawMs: drawnMs * 2,
 	});
 	const summary = renderSummary([
 		{
@@ -243,6 +244,11 @@ test('lists the plugins slowest to draw after a reload', () => {
 	]);
 
 	expect(summary).toContain(
-		'### Placement time\n\n- Android Emulator, slowest to draw: unbound.slow 900 ms, unbound.fast 40 ms',
+		[
+			'### Placement time',
+			'',
+			'- Android Emulator, slowest to draw: unbound.slow 900 ms, unbound.fast 40 ms',
+			'- Android Emulator, slowest to redraw after scrolling: unbound.slow 1800 ms, unbound.fast 80 ms',
+		].join('\n'),
 	);
 });

@@ -75,6 +75,8 @@ export function createAndroidRenderer(
 	const images = new Map<string, ImageEntry>();
 	const views = new Map<string, NativeJavaReference>();
 	const pending = new Set<string>();
+	const waiting = new Map<string, NativeJavaReference>();
+	let resolvedCount = -1;
 	let imageSize = 0;
 	let disposed = false;
 	const rewrites = connectTextRewrites(java, TEXT_VIEW);
@@ -241,6 +243,35 @@ export function createAndroidRenderer(
 		active.reapply(view);
 	}
 
+	function wait(view: NativeJavaReference) {
+		const key = javaViewKey(view as NativeJavaValue);
+
+		if (!key) return;
+
+		waiting.delete(key);
+		waiting.set(key, view);
+
+		if (waiting.size > MAX_TRACKED_VIEWS) waiting.delete(waiting.keys().next().value!);
+	}
+
+	function retryWaiting() {
+		if (!waiting.size) return;
+
+		index.hydrateChannel();
+
+		const count = index.all().length;
+
+		if (count === resolvedCount) return;
+
+		resolvedCount = count;
+
+		const views = [...waiting.values()];
+
+		waiting.clear();
+
+		for (const view of views) schedule(view);
+	}
+
 	async function render(view: NativeJavaReference) {
 		const content = await readViewTextAsync(java, view);
 
@@ -252,12 +283,12 @@ export function createAndroidRenderer(
 
 		const mentions = index.all();
 
-		if (!mentions.length) return;
+		if (!mentions.length) return wait(view);
 
 		const tappable = spansOf(java, text, string.length, TAPPABLE_SPAN);
 		const placements = planPlacements(string, tappable, mentions, showAtSymbol());
 
-		if (!placements.length) return;
+		if (!placements.length) return wait(view);
 
 		const resources = javaReference(await java.invokeAsync(view, 'getResources', []));
 
@@ -334,6 +365,7 @@ export function createAndroidRenderer(
 	const scans = scheduleStartupScans('Mention Avatars', scanVisible);
 
 	return {
+		retryWaiting,
 		rendered: () => rules.size,
 		failed: () =>
 			[...images].flatMap(([url, entry]) => (!entry.pending && !entry.bitmap ? [url] : [])),
@@ -341,6 +373,7 @@ export function createAndroidRenderer(
 			for (const scan of scans) clearTimeout(scan);
 
 			disposed = true;
+			waiting.clear();
 			retries.clear();
 			hooks.remove(token);
 

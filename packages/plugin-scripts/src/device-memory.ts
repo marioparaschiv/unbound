@@ -184,3 +184,24 @@ export function largestGrowers(checks: PluginGrowth[]): string[] {
 		.slice(0, LISTED_GROWERS)
 		.map((check) => `${check.id} (+${check.memoryDeltaMB} MB)`);
 }
+
+export const SETTLED_SAMPLES = 3;
+export const SETTLED_GAP_MS = 1_000;
+
+export async function settledDiscordMemory(
+	target: DropTarget,
+	run: CommandRunner,
+	sleep: (ms: number) => Promise<void> = Bun.sleep,
+): Promise<number | undefined> {
+	const samples: number[] = [];
+
+	for (let index = 0; index < SETTLED_SAMPLES; index++) {
+		if (index) await sleep(SETTLED_GAP_MS);
+
+		const sample = await discordMemory(target, run);
+
+		if (sample !== undefined) samples.push(sample);
+	}
+
+	return samples.length ? Math.min(...samples) : undefined;
+}

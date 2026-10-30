@@ -9,6 +9,7 @@ import { PLUGIN_NAME } from '~/constants';
 
 let dispose: () => void | Promise<void> = () => {};
 let placed: (() => number) | null = null;
+let settling: (() => boolean) | null = null;
 let problems: (() => string[] | Promise<string[]>) | null = null;
 
 function start(context: PluginContext) {
@@ -21,10 +22,12 @@ function start(context: PluginContext) {
 	const unsubscribe = subscribeAppearance(() => bubbles.refresh());
 
 	placed = bubbles.placed;
+	settling = bubbles.settling;
 	problems = bubbles.problems;
 	dispose = () => {
 		unsubscribe();
 		placed = null;
+		settling = null;
 		problems = null;
 
 		return bubbles.dispose();
@@ -53,7 +56,14 @@ async function selfTest() {
 		};
 	}
 
-	return { ok: true, detail: `${placed()} bubbles placed on screen` };
+	const count = placed();
+
+	return {
+		ok: true,
+		detail: `${count} bubbles placed on screen`,
+		...(count ? {} : { nothingDrawn: true }),
+		...(settling?.() ? { settling: true } : {}),
+	};
 }
 
 export default {
