@@ -66,7 +66,7 @@ export function selfTestFinishScript(): string {
 }
 
 /**
- * @description Runs native calls that end early through the self-test host: one cancelled straight away, one still queued when the host stops (the host is started again after), and on Android one made on a released handle.
+ * @description Runs native calls that end early through the self-test host: one cancelled straight away, one still queued when the host stops (the host is started again after), and on Android one made on a released handle to an object the test constructs itself, since releasing a shared handle would revoke it for every plugin.
  * @returns A script whose result is the JSON outcome of each case: `resolved`, `cancellation`, or `other: <message>`.
  */
 export function selfTestCancellationScript(): string {
@@ -91,7 +91,7 @@ export function selfTestCancellationScript(): string {
 	cancelled.cancel();
 	outcomes.cancelled = await settle(cancelled);
 	if (!ios) {
-		var released = native.java.getField(native.java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE');
+		var released = native.java.construct('java.lang.Object', []);
 		native.java.release(released);
 		try { outcomes.released = await settle(call(released)); } catch (error) { outcomes.released = classify(error); }
 	}
