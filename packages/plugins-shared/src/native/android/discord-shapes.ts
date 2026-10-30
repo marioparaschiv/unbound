@@ -4,8 +4,8 @@ import type {
 	NativeJavaMethodDescription,
 } from '@unbound-app/api/native';
 
-import { describeJavaClass } from './java-classes';
-import shapes from './discord-shapes.json';
+import { describeJavaClass } from '@unbound-plugins/shared/native/android/java-classes';
+import shapes from '@unbound-plugins/shared/native/android/discord-shapes.json';
 
 export type DiscordShapeName = keyof typeof shapes;
 

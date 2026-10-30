@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { CODE_LINE_HEIGHT, codeBlockLayout, codeScrollHeight, shouldCorrectRow } from './layout';
+import { CODE_LINE_HEIGHT, codeBlockLayout, codeScrollHeight, shouldCorrectRow } from '~/layout';
 
 describe('codeBlockLayout', () => {
 	test('keeps long lines on one row in horizontal-scroll mode', () => {

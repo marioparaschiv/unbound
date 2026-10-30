@@ -11,7 +11,7 @@ import {
 import { MAX_AVATARS } from '~/constants';
 import type { User } from '~/types';
 
-import useStyles from './typing-avatars.style';
+import useStyles from '~/components/typing-avatars.style';
 
 type TypingAvatarsProps = {
 	users: (User | null)[];

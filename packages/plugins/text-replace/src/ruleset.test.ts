@@ -1,7 +1,7 @@
 import type { TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
 import { expect, test } from 'bun:test';
 
-import { parseRuleset, serializeRuleset } from './ruleset';
+import { parseRuleset, serializeRuleset } from '~/ruleset';
 
 function rule(find: string, replace: string, onlyIfIncludes: string = ''): TextReplaceRule {
 	return { find, replace, onlyIfIncludes, id: find };

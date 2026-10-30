@@ -39,7 +39,7 @@ mock.module('~/modules', () => ({
 	},
 }));
 
-const { createStaging } = await import('./staging');
+const { createStaging } = await import('~/staging');
 
 function fakeInput(text = ''): FakeInput {
 	const input: FakeInput = {

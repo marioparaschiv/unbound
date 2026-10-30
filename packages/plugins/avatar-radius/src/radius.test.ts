@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { cornerRadius, storedRadius } from './radius';
+import { cornerRadius, storedRadius } from '~/radius';
 
 describe('avatar radius', () => {
 	test('reads the stored radius, clamped and rounded', () => {

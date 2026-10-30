@@ -1,8 +1,8 @@
 import { metro } from '@unbound-app/api';
 
-import { scheduleLayoutRefresh } from '~/native/collections';
-import { reloadReactors } from '~/native/reaction-surfaces';
-import type { Session } from '~/native/session';
+import { scheduleLayoutRefresh } from '~/ios/collections';
+import { reloadReactors } from '~/ios/reaction-surfaces';
+import type { Session } from '~/ios/session';
 import { REACTION_ACTIONS } from '~/constants';
 
 type ReactionChange = {

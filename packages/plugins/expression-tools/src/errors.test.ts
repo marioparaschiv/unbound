@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { getErrorMessage } from './errors';
+import { getErrorMessage } from '~/errors';
 
 test('prefers the API message, then the error message, then the response text', () => {
 	expect(getErrorMessage(new Error('boom'))).toBe('boom');

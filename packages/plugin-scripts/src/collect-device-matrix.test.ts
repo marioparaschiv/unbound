@@ -15,6 +15,7 @@ import {
 } from './device-scripts';
 import { withReconnects, parseScreenSize, swipeCommands } from './device-io';
 import { checkFromCycle, applyLogPolicy } from './matrix-policy';
+import { fakeDiscord, runOnFakeDevice } from './device-fakes';
 import { parseChannel } from './collect-device-matrix';
 import { validateDeviceMatrix } from './device-matrix';
 
@@ -154,13 +155,16 @@ test('reads a fixture channel as guild and channel ids', () => {
 	expect(() => parseChannel('development')).toThrow('<guild id>/<channel id>');
 });
 
-test('the fixture script opens the channel and injects local messages only', () => {
-	const script = fixtureScript('1', '2');
+test('the fixture script opens the channel and injects local messages only', async () => {
+	const discord = fakeDiscord();
 
-	expect(script).toContain('transitionToGuild("1", "2")');
-	expect(script).toContain('receiveMessage');
-	expect(script).not.toContain('sendMessage(');
-	expect(() => new Function(`return ${script}`)).not.toThrow();
+	expect(await runOnFakeDevice(fixtureScript('1', '2'), discord.unbound)).toBe('staged');
+	expect(discord.transitions).toEqual([['1', '2']]);
+	expect(discord.sent).toEqual([]);
+	expect(discord.received.every(({ channel }) => channel === '2')).toBe(true);
+	expect(discord.received.map(({ message }) => message.content)).toContain(
+		'Plain fixture message for bubbles and avatars.',
+	);
 });
 
 test('reads the off-main view calls each plugin made since the run began', () => {
@@ -201,12 +205,24 @@ test('fails a plugin for off-main calls it did not make last run, or for any wit
 	});
 });
 
-test('checks that the fixture channel is open and its fixtures are still loaded', () => {
-	const script = fixturesPresentScript('2');
+test('checks that the fixture channel is open and its fixtures are still loaded', async () => {
+	const loaded = [{ id: '9', content: 'Plain fixture message for bubbles and avatars.' }];
 
-	expect(script).toContain('getMessages("2")');
-	expect(script).toContain('Plain fixture message for bubbles and avatars.');
-	expect(script).toContain("'present' : 'missing'");
+	expect(
+		await runOnFakeDevice(
+			fixturesPresentScript('2'),
+			fakeDiscord({ selected: '2', loaded }).unbound,
+		),
+	).toBe('present');
+	expect(
+		await runOnFakeDevice(
+			fixturesPresentScript('2'),
+			fakeDiscord({ selected: '3', loaded }).unbound,
+		),
+	).toBe('missing');
+	expect(
+		await runOnFakeDevice(fixturesPresentScript('2'), fakeDiscord({ selected: '2' }).unbound),
+	).toBe('missing');
 });
 
 test('attributes native hook failures and console errors to plugins', () => {
@@ -242,12 +258,24 @@ test('fails a plugin for errors it did not log last run', () => {
 	).toMatchObject({ behavior: 'fail', note: 'new errors: boom' });
 });
 
-test('stages a reply, an attachment-only message and a forward beside the text fixtures', () => {
-	const script = fixtureScript('1', '2');
+test('stages a reply, an attachment-only message and a forward beside the text fixtures', async () => {
+	const discord = fakeDiscord();
 
-	expect(script).toContain('Fixture reply to the message above');
-	expect(script).toContain('message_snapshots');
-	expect(script).toContain("filename: 'fixture.png'");
+	await runOnFakeDevice(fixtureScript('1', '2'), discord.unbound);
+
+	const messages = discord.received.map(({ message }) => message);
+
+	expect(
+		messages.some((message) => message.content === 'Fixture reply to the message above'),
+	).toBe(true);
+	expect(messages.some((message) => Array.isArray(message.message_snapshots))).toBe(true);
+	expect(
+		messages.some((message) =>
+			(message.attachments as { filename?: string }[] | undefined)?.some(
+				(attachment) => attachment.filename === 'fixture.png',
+			),
+		),
+	).toBe(true);
 });
 
 test('reads the physical screen size, preferring an override', () => {

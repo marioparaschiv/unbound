@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { placeTooltip, tooltipTextWidth } from './tooltip-layout';
+import { placeTooltip, tooltipTextWidth } from '~/tooltip-layout';
 
 const bounds = { x: 0, y: 0, width: 320, height: 640 };
 const text = { width: 120, height: 18 };

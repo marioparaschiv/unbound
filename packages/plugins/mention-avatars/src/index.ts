@@ -1,15 +1,15 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
-import hookMessageCells from '@unbound-plugins/shared/native/message-cell-hooks';
+import hookMessageCells from '@unbound-plugins/shared/native/ios/message-cell-hooks';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { drawnSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { createAndroidRenderer } from '~/android/renderer';
-import { createVisibleCellScanner } from '~/native/visible-cells';
+import { createVisibleCellScanner } from '~/ios/visible-cells';
 import { subscribeSelectedChannel } from '~/events/selected-channel';
 import { patchRowGenerator } from '~/patches/row-generator';
-import { createRenderer } from '~/native/renderer';
+import { createRenderer } from '~/ios/renderer';
 import { createMentionIndex } from '~/mention-index';
 import {
 	MessageStore,

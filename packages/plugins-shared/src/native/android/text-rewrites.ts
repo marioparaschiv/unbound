@@ -1,6 +1,10 @@
 import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
 
-import { javaFlag, javaReference, javaString } from './java-values';
+import {
+	javaFlag,
+	javaReference,
+	javaString,
+} from '@unbound-plugins/shared/native/android/java-values';
 
 export const TEXT_REWRITES_CLASS = 'app.unbound.android.TextRewrites';
 

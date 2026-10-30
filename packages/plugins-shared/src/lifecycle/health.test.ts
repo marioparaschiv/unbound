@@ -1,7 +1,12 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { drawnSelfTest, featureSelfTest, recordSkip, resetHealth } from './health';
-import { applyFeatures } from './apply-features';
+import {
+	drawnSelfTest,
+	featureSelfTest,
+	recordSkip,
+	resetHealth,
+} from '@unbound-plugins/shared/lifecycle/health';
+import { applyFeatures } from '@unbound-plugins/shared/lifecycle/apply-features';
 
 beforeEach(resetHealth);
 

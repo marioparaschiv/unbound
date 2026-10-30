@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { characterLimit, counterTone } from './counter';
+import { characterLimit, counterTone } from '~/counter';
 
 describe('characterLimit', () => {
 	test('uses Discord message limits for standard and Nitro accounts', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { composerMentions } from './composer-mentions';
+import { composerMentions } from '~/composer-mentions';
 
 const aliases = {
 	owners: new Map([

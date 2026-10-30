@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { buildCodeMarkup } from './markup';
+import { buildCodeMarkup } from '~/markup';
 
 describe('buildCodeMarkup', () => {
 	test('numbers lines and merges adjacent runs of one color', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { locateCodeBlocks, parseFencedCodeBlocks } from './fences';
+import { locateCodeBlocks, parseFencedCodeBlocks } from '~/fences';
 
 describe('parseFencedCodeBlocks', () => {
 	test('parses supported blocks and preserves indentation', () => {

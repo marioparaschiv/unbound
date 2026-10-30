@@ -36,8 +36,21 @@ import {
 	closeScreenScript,
 } from './device-scripts';
 import { withSettings } from './settings-check';
-import { reusableLeak } from './leak-reuse';
-import { describeScreenChange, keepPrevious, screenDifference } from './screen-diff';
+import { reusableLeak, reusableSettings } from './run-reuse';
+import {
+	deviceEnvironmentSchema,
+	deviceEnvironmentScript,
+	loaderDigest,
+	readEnvironment,
+	sameEnvironment,
+	writeEnvironment,
+} from './environment';
+import {
+	describeScreenChange,
+	keepGoodScreens,
+	referenceFor,
+	screenDifference,
+} from './screen-diff';
 import {
 	isEmptyToast,
 	parseOffMainWarnings,
@@ -76,6 +89,7 @@ type ScrollReport = ScrollOutcome & { toasts: string[]; emptyToasts: string[] };
 const SELF_TEST_SWIPES = 4;
 const TOAST_SETTLE_MS = 5_500;
 const SETTINGS_SETTLE_MS = 1_200;
+const SETTINGS_SCREEN_SUFFIX = '.settings.png';
 const COLLECT_GARBAGE_SCRIPT = "typeof gc === 'function' ? (gc(), 'collected') : 'unavailable'";
 
 export function parseChannel(value: string): FixtureChannel {
@@ -148,6 +162,26 @@ async function main(): Promise<void> {
 	await evaluate(port, developerModeScript(true));
 	await new Promise((done) => setTimeout(done, 1_500));
 
+	const deviceEnvironment = await evaluateJson(
+		port,
+		deviceEnvironmentScript(),
+		deviceEnvironmentSchema,
+	);
+	const environment = {
+		...deviceEnvironment,
+		loaderFile: await loaderDigest(target, run, deviceEnvironment.origin),
+	};
+	const unchanged = sameEnvironment(readEnvironment(out), environment);
+	const previousRun =
+		values['full-leak-check'] || !unchanged
+			? undefined
+			: readBaseline(values.baseline ? resolve(values.baseline) : join(out, 'results.json'));
+
+	if (!unchanged)
+		console.error(
+			'changed: the loader, client or Discord changed, so every plugin is measured again',
+		);
+
 	const dropsBefore = await dropBaseline(target, run);
 	const memoryBefore = await discordMemory(target, run);
 	let relaunched = false;
@@ -164,11 +198,19 @@ async function main(): Promise<void> {
 		const result = await evaluateJson(port, cycleScript(plugin.id), cycleResultSchema);
 		const file = join(out, `${plugin.id}.png`);
 		const captured = result.installed && (await screenshot(target, file));
-		const settings = result.installed ? await captureSettings(plugin.id) : undefined;
+		const keptSettings = reusableSettings(plugin.id, result.bundleHash, previousRun);
+		const settings =
+			result.installed && !keptSettings ? await captureSettings(plugin.id) : undefined;
 
 		if (result.installed && !result.wasStarted) await evaluate(port, restoreScript(plugin.id));
 
 		const check = checkFromCycle(result, captured ? `${plugin.id}.png` : undefined);
+
+		if (keptSettings) {
+			check.evidence.push(
+				`${keptSettings} (kept from the last run, the plugin is unchanged)`,
+			);
+		}
 
 		return settings ? withSettings(check, settings.file, settings.probe) : check;
 	}
@@ -180,8 +222,8 @@ async function main(): Promise<void> {
 
 		await new Promise((done) => setTimeout(done, SETTINGS_SETTLE_MS));
 
-		const file = `${id}.settings.png`;
-		const previous = keepPrevious(join(out, file));
+		const file = `${id}${SETTINGS_SCREEN_SUFFIX}`;
+		const previous = referenceFor(join(out, file));
 		const captured = await screenshot(target, join(out, file));
 
 		if (captured && previous) {
@@ -308,10 +350,6 @@ async function main(): Promise<void> {
 
 		if (result.installed && !result.wasStarted) await evaluate(port, restoreScript(id));
 	}
-
-	const previousRun = values['full-leak-check']
-		? undefined
-		: readBaseline(values.baseline ? resolve(values.baseline) : join(out, 'results.json'));
 
 	function recordLeak(check: MeasuredCheck, perCycle: number) {
 		check.leakPerCycleMB = perCycle;
@@ -459,6 +497,11 @@ async function main(): Promise<void> {
 	const saved = only && baseline ? mergeChecks(baseline, checks) : checks;
 
 	writeFileSync(join(out, 'results.json'), `${JSON.stringify(saved, null, '\t')}\n`);
+	writeEnvironment(out, environment);
+
+	if (checks.every((check) => check.behavior === 'pass' && check.lifecycle === 'pass')) {
+		keepGoodScreens(out, SETTINGS_SCREEN_SUFFIX);
+	}
 
 	if (compared) {
 		const changes = compareRuns(compared, checks);

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createFlatRecovery } from './flat-recovery';
+import { createFlatRecovery } from '~/flat-recovery';
 
 function foreground() {
 	const listeners = new Set<() => void>();

@@ -3,7 +3,7 @@ import { Modal, Pressable, useWindowDimensions, View } from 'react-native';
 import { tooltipPlacement, type TooltipAnchor } from '~/tooltip-placement';
 import { Tooltips } from '~/modules';
 
-import useStyles from './typing-tooltip.style';
+import useStyles from '~/components/typing-tooltip.style';
 
 type TypingTooltipProps = {
 	anchor: TooltipAnchor;

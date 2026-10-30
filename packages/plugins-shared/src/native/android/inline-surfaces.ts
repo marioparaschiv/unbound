@@ -13,8 +13,13 @@ import {
 	type TextRewriteAnchor,
 	type TextRewriteEdit,
 	type TextRewrites,
-} from './text-rewrites';
-import { javaInt, javaNumber, javaReference, javaText } from './java-values';
+} from '@unbound-plugins/shared/native/android/text-rewrites';
+import {
+	javaInt,
+	javaNumber,
+	javaReference,
+	javaText,
+} from '@unbound-plugins/shared/native/android/java-values';
 
 const NEEDS_HOST_PARAMETERS = ['android.widget.TextView', 'java.lang.String'];
 const MAX_GROUPS_PER_TEXT = 4;

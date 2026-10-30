@@ -1,6 +1,9 @@
 import { describe, expect, jest, test } from 'bun:test';
 
-import { createInlineSurfaces, type InlineDefinition } from './inline-surfaces';
+import {
+	createInlineSurfaces,
+	type InlineDefinition,
+} from '@unbound-plugins/shared/native/android/inline-surfaces';
 
 type FakeValue = {
 	type: string;

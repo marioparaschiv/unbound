@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 
 mock.module('@unbound-app/api', () => ({ fs: {} }));
 
-const { createTokenStore } = await import('./token-store');
+const { createTokenStore } = await import('~/token-store');
 
 function memoryFiles(initial: Record<string, string> = {}) {
 	const files = new Map(Object.entries(initial));

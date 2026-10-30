@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isCancellation } from './cancellation';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 
 describe('isCancellation', () => {
 	test('matches a disposed scope or cancelled async call', () => {

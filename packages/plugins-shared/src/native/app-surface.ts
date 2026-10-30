@@ -3,7 +3,7 @@ import { AppRegistry } from 'react-native';
 import { metro } from '@unbound-app/api';
 import { createElement } from 'react';
 
-import { nextSurfaceName } from './surface-name';
+import { nextSurfaceName } from '@unbound-plugins/shared/native/surface-name';
 
 type Registry = Pick<typeof AppRegistry, 'registerComponent'> &
 	Partial<Pick<typeof AppRegistry, 'getAppKeys'>>;

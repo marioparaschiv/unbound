@@ -1,5 +1,5 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
-import hookMessageCells from '@unbound-plugins/shared/native/message-cell-hooks';
+import hookMessageCells from '@unbound-plugins/shared/native/ios/message-cell-hooks';
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
@@ -14,14 +14,14 @@ import {
 	SelectedChannelStore,
 	UserStore,
 } from '~/modules';
-import { disposeRenderer, messageCellHandlers, renderCell } from '~/native/renderer';
+import { disposeRenderer, messageCellHandlers, renderCell } from '~/ios/renderer';
 import ReactionAvatarSurface from '~/components/reaction-avatar-surface';
 import { subscribeChannelChanges } from '~/events/selected-channel-change';
 import { subscribeReactionChanges } from '~/events/message-reaction';
 import { subscribeConnectionOpen } from '~/events/connection-open';
-import { scanInitialCells } from '~/native/visible-cells';
+import { scanInitialCells } from '~/ios/visible-cells';
 import { createAndroidReactions } from '~/android/reactions';
-import { createSession } from '~/native/session';
+import { createSession } from '~/ios/session';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 

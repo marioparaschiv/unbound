@@ -6,7 +6,7 @@ import {
 	placeholderTexts,
 	renderedText,
 	sourceBlock,
-} from './code-ranges';
+} from '~/android/code-ranges';
 
 describe('android code blocks', () => {
 	const text = 'fresh shiki fixture\nconst answer = 42;\nconsole.log(answer); \n​';

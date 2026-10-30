@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { formatLatency, latencyDetails, latencyTooltip, snowflakeTimestamp } from './latency';
+import { formatLatency, latencyDetails, latencyTooltip, snowflakeTimestamp } from '~/latency';
 
 const DISCORD_EPOCH = 1_420_070_400_000;
 const ANDROID_OFFSET = 1_471_228_928;

@@ -1,6 +1,6 @@
 import { metro } from '@unbound-app/api';
 
-import useStyles from './raw-icon.style';
+import useStyles from '~/components/raw-icon.style';
 
 function RawIcon() {
 	const styles = useStyles();

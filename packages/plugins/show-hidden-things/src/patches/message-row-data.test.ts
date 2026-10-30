@@ -23,7 +23,7 @@ mock.module('~/modules', () => ({
 	},
 }));
 
-const { patchTimeoutIcons } = await import('./message-row-data');
+const { patchTimeoutIcons } = await import('~/patches/message-row-data');
 
 function row(message: Record<string, unknown>, rowFields: Record<string, unknown> = {}) {
 	const result = { message: { ...rowFields } };

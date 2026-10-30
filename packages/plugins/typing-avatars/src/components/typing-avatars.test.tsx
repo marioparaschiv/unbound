@@ -16,7 +16,7 @@ mock.module('~/modules', () => ({
 	UserStore: { getUser: (id: string) => (cached.has(id) ? { id } : undefined) },
 }));
 
-const { withTypingAvatars } = await import('./typing-avatars');
+const { withTypingAvatars } = await import('~/components/typing-avatars');
 
 type Rendered = ReactElement<{ children?: ReactNode; users?: { id: string }[]; guildId?: string }>;
 

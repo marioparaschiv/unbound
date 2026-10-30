@@ -1,5 +1,5 @@
 import { MENTION_PLACEHOLDER } from '~/constants';
-import { isTextBoundary } from '@unbound-plugins/shared/native/text-attachments';
+import { isTextBoundary } from '@unbound-plugins/shared/native/ios/text-attachments';
 
 export type MentionType = 'role' | 'user';
 

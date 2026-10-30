@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { combineTagText, toRendererColor, withTag } from './tag-properties';
+import { combineTagText, toRendererColor, withTag } from '~/tag-properties';
 
 const colors = { background: '#248046', text: '#ffffff' };
 

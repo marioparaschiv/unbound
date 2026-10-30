@@ -1,5 +1,5 @@
-import type { VisibleCellScanner } from '~/native/visible-cells';
-import type { Renderer } from '~/native/renderer';
+import type { VisibleCellScanner } from '~/ios/visible-cells';
+import type { Renderer } from '~/ios/renderer';
 import { SelectedChannelStore } from '~/modules';
 
 function selectedChannelId(): string | undefined {

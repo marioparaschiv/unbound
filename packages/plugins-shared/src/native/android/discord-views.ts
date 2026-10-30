@@ -4,8 +4,13 @@ import type {
 	NativeJavaReference,
 } from '@unbound-app/api/native';
 
-import { javaInt, javaNumber, javaReference, javaString } from './java-values';
-import { shapeField, shapeMethod } from './discord-shapes';
+import {
+	javaInt,
+	javaNumber,
+	javaReference,
+	javaString,
+} from '@unbound-plugins/shared/native/android/java-values';
+import { shapeField, shapeMethod } from '@unbound-plugins/shared/native/android/discord-shapes';
 
 export const MESSAGE_VIEW = 'com.discord.chat.presentation.message.MessageView';
 export const DRAWEE_TEXT_VIEW = 'com.facebook.drawee.span.SimpleDraweeSpanTextView';

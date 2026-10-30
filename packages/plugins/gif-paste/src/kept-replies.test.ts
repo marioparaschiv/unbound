@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createKeptReplies } from './kept-replies';
+import { createKeptReplies } from '~/kept-replies';
 
 describe('createKeptReplies', () => {
 	test('keeps a reply for the clear that follows a GIF selection, once', () => {

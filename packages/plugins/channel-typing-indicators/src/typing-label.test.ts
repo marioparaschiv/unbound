@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { typingLabel, type TypingLabelValues } from './typing-label';
+import { typingLabel, type TypingLabelValues } from '~/typing-label';
 
 function unavailable() {
 	return undefined;

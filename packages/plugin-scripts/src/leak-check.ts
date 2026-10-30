@@ -1,3 +1,5 @@
+import { deviceScript } from './device-script';
+
 export const LEAK_THRESHOLD_MB_PER_CYCLE = 0.5;
 
 const BYTES_PER_MB = 1_048_576;
@@ -6,12 +8,19 @@ const BYTES_PER_MB = 1_048_576;
  * @description Collects garbage and reads Hermes' live heap, so the reading reflects what is retained rather than what is uncollected.
  * @returns A script whose result is the live heap in bytes, or `-1` when Hermes exposes no statistics.
  */
-export function liveHeapScript(): string {
-	return `(function () {
+function liveHeap() {
 	if (typeof gc === 'function') gc();
-	var stats = typeof HermesInternal !== 'undefined' && HermesInternal.getInstrumentedStats ? HermesInternal.getInstrumentedStats() : null;
+
+	const stats =
+		typeof HermesInternal !== 'undefined'
+			? HermesInternal?.getInstrumentedStats?.()
+			: undefined;
+
 	return String(stats ? stats.js_allocatedBytes : -1);
-})()`;
+}
+
+export function liveHeapScript(): string {
+	return deviceScript(liveHeap);
 }
 
 /**

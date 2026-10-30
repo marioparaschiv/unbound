@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 
 const SCREEN_CHANGE_RATIO = 0.005;
@@ -42,6 +42,35 @@ export function keepPrevious(file: string): string | undefined {
 	copyFileSync(file, previous);
 
 	return previous;
+}
+
+/**
+ * @description Picks the screenshot to compare a new one with: the one from the last run that passed everywhere, or else the one from the last run.
+ * @param file The screenshot about to be replaced.
+ * @returns The reference screenshot, or `undefined` when there is none.
+ */
+export function referenceFor(file: string): string | undefined {
+	const previous = keepPrevious(file);
+	const good = join(dirname(file), 'good', basename(file));
+
+	return existsSync(good) ? good : previous;
+}
+
+/**
+ * @description Keeps the screenshots of a run that passed everywhere as the reference for later runs.
+ * @param out The output directory.
+ * @param suffix Which screenshots to keep, such as `.settings.png`.
+ * @returns How many screenshots were kept.
+ */
+export function keepGoodScreens(out: string, suffix: string): number {
+	const good = join(out, 'good');
+	const files = readdirSync(out).filter((name) => name.endsWith(suffix));
+
+	mkdirSync(good, { recursive: true });
+
+	for (const name of files) copyFileSync(join(out, name), join(good, name));
+
+	return files.length;
 }
 
 /**
