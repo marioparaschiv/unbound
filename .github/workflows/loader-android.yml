@@ -127,7 +127,7 @@ jobs:
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
               with:
                   distribution: temurin
-                  java-version: '17'
+                  java-version-file: packages/loader/android/.java-version
 
             - name: Setup Gradle
               uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6
@@ -146,7 +146,13 @@ jobs:
               run: |
                   set -eu
                   yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
-                  "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;27.3.13750724" "cmake;3.22.1" "platforms;android-36" "build-tools;36.0.0" > /dev/null
+                  gradle=android/module/build.gradle.kts
+                  ndk=$(sed -n 's/.*ndkVersion = "\(.*\)"/\1/p' "$gradle")
+                  cmake=$(sed -n 's/.*version = "\([0-9.]*\)"/\1/p' "$gradle")
+                  sdk=$(sed -n 's/.*compileSdk = \([0-9]*\)/\1/p' "$gradle")
+                  test -n "$ndk" && test -n "$cmake" && test -n "$sdk"
+                  echo "ANDROID_NDK_VERSION=$ndk" >> "$GITHUB_ENV"
+                  "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;$ndk" "cmake;$cmake" "platforms;android-$sdk" "build-tools;$sdk.0.0" > /dev/null
 
             - name: Configure persistent release signing
               env:
@@ -211,7 +217,7 @@ jobs:
               run: |
                   set -euo pipefail
                   module=android/module/build/outputs/apk/release/module-release.apk
-                  readelf=$(find "$ANDROID_HOME/ndk/27.3.13750724/toolchains/llvm/prebuilt" -path '*/bin/llvm-readelf' -print -quit)
+                  readelf=$(find "$ANDROID_HOME/ndk/$ANDROID_NDK_VERSION/toolchains/llvm/prebuilt" -path '*/bin/llvm-readelf' -print -quit)
                   test -x "$readelf"
                   mkdir -p android-symbols
                   unzip -q android/module/build/outputs/native-debug-symbols/release/native-debug-symbols.zip -d android-symbols
@@ -270,6 +276,7 @@ jobs:
             LSPATCH_VERSION: v1.2
             LSPATCH_JAR: lspatch-v1.2-487-release.jar
             LSPATCH_SHA256: d238fdc414d121b7fa454d8b4ccf420df3a8c97d563761861ff92bd9c5da2165
+            LSPATCH_JAVA_VERSION: '21'
             DISCORD_CERT_SHA256: 3c39d23cf9367849a5c699395647fe0e5bfea5a1f1f40d8c717ddc70f8bfa113
             DISCORD_TRACKER: https://tracker.vendetta.rocks/tracker
             DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
@@ -291,7 +298,7 @@ jobs:
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
               with:
                   distribution: temurin
-                  java-version: '21'
+                  java-version: ${{ env.LSPATCH_JAVA_VERSION }}
 
             - name: Download module
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
@@ -427,8 +434,6 @@ jobs:
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
 
             - name: Build the client and the plugins
               working-directory: .

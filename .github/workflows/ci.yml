@@ -36,8 +36,6 @@ jobs:
                   persist-credentials: false
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
             - name: Check formatting
               run: bun run fmt:js:check
             - name: Lint
@@ -106,8 +104,6 @@ jobs:
                   persist-credentials: false
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
             - name: Install podman
               run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
             - name: Run the S3 tests against MinIO

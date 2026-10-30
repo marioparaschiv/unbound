@@ -25,8 +25,6 @@ jobs:
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
 
             - name: Lint the title the squash merge will commit
               env:

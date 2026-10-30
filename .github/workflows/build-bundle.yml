@@ -59,8 +59,6 @@ jobs:
             # so install without it until stable 1.4 lands.
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
 
             - name: Build the client
               run: bun run --cwd packages/client build

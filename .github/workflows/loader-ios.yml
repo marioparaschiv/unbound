@@ -515,8 +515,6 @@ jobs:
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
 
             - name: Build the client and the plugins
               working-directory: .

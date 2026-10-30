@@ -103,7 +103,7 @@ jobs:
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
               with:
                   distribution: temurin
-                  java-version: '17'
+                  java-version-file: packages/loader/android/.java-version
 
             - name: Setup Gradle
               uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6
@@ -144,7 +144,6 @@ jobs:
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
               with:
-                  bun-version: canary
                   install: 'false'
 
             - name: Plan the uploads
@@ -220,8 +219,6 @@ jobs:
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
 
             - name: Build the client
               env:
@@ -300,8 +297,6 @@ jobs:
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
 
             - name: Build the client
               env:
@@ -370,7 +365,6 @@ jobs:
             - name: Setup Bun
               uses: ./.github/actions/setup-bun-deps
               with:
-                  bun-version: canary
                   install: 'false'
 
             - name: Describe the S3 builds

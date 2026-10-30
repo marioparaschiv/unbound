@@ -423,7 +423,7 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 		t.Fatalf("setup-go-tools must install Go and restore its cache, got %+v", goTools.Runs.Steps)
 	}
 	bun := loadCompositeAction(t, "setup-bun-deps")
-	for input, value := range map[string]string{"bun-version": "", "install": "true", "frozen-lockfile": "false"} {
+	for input, value := range map[string]string{"bun-version": "canary", "install": "true", "frozen-lockfile": "false"} {
 		if declared, ok := bun.Inputs[input]; !ok || declared.Default != value {
 			t.Fatalf("setup-bun-deps input %s must default to %q, got %+v", input, value, bun.Inputs)
 		}
@@ -439,7 +439,7 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 		}
 	}
 	syncLock := loadWorkflow(t, "release.yml").job(t, "release").stepUsing(t, "./.github/actions/setup-bun-deps")
-	if syncLock.With["install"] != "false" || syncLock.With["bun-version"] != "canary" {
+	if syncLock.With["install"] != "false" {
 		t.Fatalf("the release PR job installs while it syncs bun.lock, got %+v", syncLock.With)
 	}
 }
@@ -849,5 +849,32 @@ func TestParsedManualBuildIsNotARelease(t *testing.T) {
 	}
 	if release, ok := workflow.On.WorkflowDispatch.Inputs["release"]; !ok || release.Default != false {
 		t.Fatalf("a manual loader build must not default to a release, release input %+v", release)
+	}
+}
+
+func TestToolchainVersionsLiveInOnePlace(t *testing.T) {
+	gradle, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "..", "..", "packages", "loader", "android", "module", "build.gradle.kts"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ndk := regexp.MustCompile(`ndkVersion\s*=\s*"([^"]+)"`).FindSubmatch(gradle)
+	if ndk == nil {
+		t.Fatal("the module build pins no NDK version")
+	}
+	pins := map[string]*regexp.Regexp{
+		"a Bun version, which belongs in the setup-bun-deps default":                     regexp.MustCompile(`(?m)^\s*bun-version:`),
+		"a literal Java version, which belongs in packages/loader/android/.java-version": regexp.MustCompile(`(?m)^\s*java-version:\s*['"]?\d`),
+		"the NDK version, which belongs in build.gradle.kts":                             regexp.MustCompile(regexp.QuoteMeta(string(ndk[1]))),
+	}
+	for _, name := range workflowFiles(t) {
+		data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for description, pattern := range pins {
+			if pattern.Match(data) {
+				t.Errorf("%s pins %s", name, description)
+			}
+		}
 	}
 }

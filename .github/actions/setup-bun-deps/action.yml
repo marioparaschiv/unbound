@@ -3,9 +3,9 @@ description: Installs Bun, restores its install cache and installs the workspace
 
 inputs:
     bun-version:
-        description: Bun version to install; empty uses the setup-bun default.
+        description: Bun version to install; every workflow uses this default.
         required: false
-        default: ''
+        default: canary
     install:
         description: Whether to run bun install after restoring the cache.
         required: false
