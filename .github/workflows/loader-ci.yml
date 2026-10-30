@@ -40,6 +40,8 @@ jobs:
             native: ${{ steps.files.outputs.native }}
             ios: ${{ steps.files.outputs.ios }}
             release: ${{ steps.files.outputs.release }}
+            ios_version: ${{ steps.source.outputs.version }}
+            ipa_url: ${{ steps.source.outputs.ipa_url }}
         steps:
             - name: List the changed loader files
               id: files
@@ -65,6 +67,27 @@ jobs:
                       echo "release=true" >> "$GITHUB_OUTPUT"
                   else
                       echo "release=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Pick the iOS source
+              id: source
+              env:
+                  HAS_DKRYPT_KEY: ${{ secrets.DKRYPT_API_KEY != '' }}
+                  FALLBACK_IPA_URL: https://raw.githubusercontent.com/Tulugaak/Discord-205.0-IPA/4eec98e61e20d0720c091d42c4a762710b32e8c5/com.hammerandchisel.discord_861573261.ipa
+              run: |
+                  set -euo pipefail
+                  version=""
+                  if [ "$HAS_DKRYPT_KEY" = true ]; then
+                      version=$(curl -fsSL --retry 2 "https://itunes.apple.com/lookup?bundleId=com.hammerandchisel.discord" | jq -r '.results[0].version // empty' || true)
+                  fi
+                  if [ -n "$version" ]; then
+                      echo "version=$version" >> "$GITHUB_OUTPUT"
+                      echo "ipa_url=" >> "$GITHUB_OUTPUT"
+                      echo "::notice title=iOS source::Building against the current App Store Discord, $version."
+                  else
+                      echo "version=" >> "$GITHUB_OUTPUT"
+                      echo "ipa_url=$FALLBACK_IPA_URL" >> "$GITHUB_OUTPUT"
+                      echo "::notice title=iOS source::No dkrypt key in this run, so it builds against the public Discord 205.0 IPA."
                   fi
 
     rehearse-release:
@@ -224,7 +247,8 @@ jobs:
             actions: read
         uses: ./.github/workflows/loader-build.yml
         with:
-            ipa_url: https://raw.githubusercontent.com/Tulugaak/Discord-205.0-IPA/4eec98e61e20d0720c091d42c4a762710b32e8c5/com.hammerandchisel.discord_861573261.ipa
+            ipa_url: ${{ needs.changes.outputs.ipa_url }}
+            version: ${{ needs.changes.outputs.ios_version }}
             release: false
             caller_workflow: 'ci'
             pr_number: ${{ github.event.pull_request.number }}
@@ -458,7 +482,7 @@ jobs:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
     comment-startup:
-        name: Comment the startup comparison
+        name: Comment the smoke test results
         runs-on: ubuntu-26.04
         permissions:
             contents: read
@@ -486,14 +510,20 @@ jobs:
                   path: smoke
 
             - name: Setup Go tools
-              if: steps.smoke.outcome == 'success' && hashFiles('smoke/comparison.md') != ''
+              if: steps.smoke.outcome == 'success' && hashFiles('smoke/report.md') != ''
               uses: ./.github/actions/setup-go-tools
 
-            - name: Keep one comment with the comparison
-              if: steps.smoke.outcome == 'success' && hashFiles('smoke/comparison.md') != ''
+            - name: Keep one comment with the failures and the comparison
+              if: steps.smoke.outcome == 'success' && hashFiles('smoke/report.md') != ''
               working-directory: packages/loader
               env:
                   GH_TOKEN: ${{ github.token }}
                   PLATFORM: ${{ matrix.platform }}
                   PR_NUMBER: ${{ github.event.pull_request.number }}
-              run: go run ./tools pr-comment --pr "$PR_NUMBER" --title "$PLATFORM smoke test" --body-file "$GITHUB_WORKSPACE/smoke/comparison.md"
+              run: |
+                  set -euo pipefail
+                  body="$RUNNER_TEMP/smoke-comment.md"
+                  go run ./tools smoke-failure-summary --artifacts "$GITHUB_WORKSPACE/smoke" --output "$body"
+                  if [ -s "$body" ]; then
+                      go run ./tools pr-comment --pr "$PR_NUMBER" --title "$PLATFORM smoke test" --body-file "$body"
+                  fi

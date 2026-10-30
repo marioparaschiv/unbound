@@ -1,5 +1,5 @@
 {
-	"id": "unbound.avatar-radius",
+	"id": "astral.avatar-radius",
 	"name": "Avatar Radius",
 	"description": "Rounds avatars to a corner radius you choose instead of circles.",
 	"authors": [

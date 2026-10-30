@@ -1,0 +1,48 @@
+name: Dependabot titles
+
+on:
+    pull_request_target:
+        types: [opened, reopened, synchronize]
+
+permissions:
+    contents: read
+
+concurrency:
+    group: dependabot-title-${{ github.event.pull_request.number }}
+    cancel-in-progress: true
+
+jobs:
+    shorten:
+        name: Fit the title to the commit header limit
+        if: github.event.pull_request.user.login == 'dependabot[bot]'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            contents: read
+            pull-requests: write
+        steps:
+            - name: Checkout the base branch
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Setup Bun
+              uses: ./.github/actions/setup-bun-deps
+              with:
+                  install: 'false'
+
+            - name: Shorten the title
+              id: title
+              env:
+                  PR_TITLE: ${{ github.event.pull_request.title }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+              run: bun scripts/dependabot-title.ts
+
+            - name: Retitle the pull request
+              if: steps.title.outputs.changed == 'true'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  TITLE: ${{ steps.title.outputs.title }}
+              run: gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --title "$TITLE"

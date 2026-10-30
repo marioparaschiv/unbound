@@ -195,7 +195,7 @@ function runCancellations(trackerClass: string) {
 }
 
 export function selfTestCancellationScript(): string {
-	return deviceScript(runCancellations, 'app.unbound.android.ActivityTracker');
+	return deviceScript(runCancellations, 'app.astral.android.ActivityTracker');
 }
 
 /**

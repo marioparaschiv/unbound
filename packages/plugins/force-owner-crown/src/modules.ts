@@ -4,4 +4,4 @@ export const MessageRowData = metro.findByProps('generateMessageRowData', { lazy
 export const AssetUris = metro.findByProps('getAssetUriForEmbed', { lazy: true });
 export const GuildStore = metro.stores.Guilds;
 
-export const Patcher = patcher.createPatcher('unbound.force-owner-crown');
+export const Patcher = patcher.createPatcher('astral.force-owner-crown');

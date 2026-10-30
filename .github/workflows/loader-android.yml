@@ -115,6 +115,7 @@ jobs:
         outputs:
             module_filename: ${{ steps.collect.outputs.module_filename }}
             module_url: ${{ steps.upload-module.outputs.artifact-url }}
+            attested: ${{ steps.attestation-key.outputs.present }}
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -122,6 +123,16 @@ jobs:
                   persist-credentials: false
                   submodules: recursive
                   fetch-depth: 1
+
+            - name: Check for the attestation key
+              id: attestation-key
+              run: |
+                  if [ -n "$ATTESTATION_PK" ]; then
+                      echo "present=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "present=false" >> "$GITHUB_OUTPUT"
+                      echo "::notice title=Unattested build::This run has no attestation key, so the module refuses to start and the smoke test is skipped."
+                  fi
 
             - name: Setup Java
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
@@ -317,26 +328,10 @@ jobs:
               id: choose
               run: |
                   set -euo pipefail
-                  version="$ANDROID_CODE"
-                  if [ -z "$version" ] && [ "$DISCORD_CHANNEL" != stable ]; then
-                      version=$(env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" | jq -er '.code')
-                  elif [ -z "$version" ]; then
-                      latest_version=$(curl -fsSL "$DISCORD_TRACKER/index" | jq -r '.latest.stable')
-                      if [[ "$IOS_VERSION" =~ ^([0-9]+)\.([0-9]+)(\.|_|$) ]]; then
-                          candidate="${BASH_REMATCH[1]}$(printf '%03d' "${BASH_REMATCH[2]}")"
-                          if [ "$REQUIRE_MATCHING_VERSION" = true ]; then
-                              version="$candidate"
-                          elif curl -fsSL --range 0-0 --max-time 15 -o /dev/null "$DISCORD_TRACKER/download/$candidate/base"; then
-                              version="$candidate"
-                          fi
-                      fi
-                      if [ "$REQUIRE_MATCHING_VERSION" = true ] && [ -z "$version" ]; then
-                          echo "::error::Cannot derive an Android version matching iOS version $IOS_VERSION"
-                          exit 1
-                      fi
-                      version="${version:-$latest_version}"
-                  fi
-                  echo "version=$version" >> "$GITHUB_OUTPUT"
+                  args=(--channel "$DISCORD_CHANNEL" --ios-version "$IOS_VERSION")
+                  if [ -n "$ANDROID_CODE" ]; then args+=(--code "$ANDROID_CODE"); fi
+                  if [ "$REQUIRE_MATCHING_VERSION" = true ]; then args+=(--require-matching); fi
+                  go run ./tools android-version "${args[@]}"
 
             - name: Restore the cached Discord APKs
               id: apk-cache
@@ -416,7 +411,8 @@ jobs:
 
     smoke:
         name: Smoke test patched Discord
-        needs: patch-discord
+        needs: [build-module, patch-discord]
+        if: needs.build-module.outputs.attested == 'true'
         runs-on: ubuntu-26.04
         timeout-minutes: 20
         permissions:

@@ -1,3 +1,4 @@
+import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 import { expect, test } from 'bun:test';
 
 import { settings } from '~/api/storage';
@@ -5,7 +6,7 @@ import { settings } from '~/api/storage';
 import { getSetting, isSettingChange, setSetting, toggleSetting } from './unbound-settings';
 
 test('falls back to the default until a value is stored', () => {
-	delete settings.unbound;
+	delete settings[CORE_SETTINGS_STORE];
 
 	expect(getSetting('toasts.duration')).toBe(5000);
 	expect(getSetting('toasts.maxOnScreen')).toBe(3);
@@ -17,7 +18,7 @@ test('falls back to the default until a value is stored', () => {
 });
 
 test('reads and writes the persisted key paths saved settings already use', () => {
-	settings.unbound = { toasts: { maxOnScreen: 7 }, recovery: true };
+	settings[CORE_SETTINGS_STORE] = { toasts: { maxOnScreen: 7 }, recovery: true };
 
 	expect(getSetting('toasts.maxOnScreen')).toBe(7);
 	expect(getSetting('recovery')).toBe(true);
@@ -25,7 +26,7 @@ test('reads and writes the persisted key paths saved settings already use', () =
 	toggleSetting('recovery');
 	setSetting('debugger.address', '10.0.0.2:9090');
 
-	expect(settings.unbound).toEqual({
+	expect(settings[CORE_SETTINGS_STORE]).toEqual({
 		toasts: { maxOnScreen: 7 },
 		recovery: false,
 		debugger: { address: '10.0.0.2:9090' },
@@ -34,7 +35,10 @@ test('reads and writes the persisted key paths saved settings already use', () =
 
 test('matches a change only to the same key of the core store', () => {
 	expect(
-		isSettingChange({ store: 'unbound', key: 'staff-mode', value: true }, 'staff-mode'),
+		isSettingChange(
+			{ store: CORE_SETTINGS_STORE, key: 'staff-mode', value: true },
+			'staff-mode',
+		),
 	).toBe(true);
 	expect(
 		isSettingChange({ store: 'plugins', key: 'staff-mode', value: true }, 'staff-mode'),

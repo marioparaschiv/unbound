@@ -5,6 +5,6 @@ export const InvitePermissions = metro.findByProps('useInvitesDisabledPermission
 export const GuildMemberStore = metro.findStore('GuildMember', { lazy: true });
 export const ChannelStore = metro.findStore('Channel', { lazy: true });
 
-export const settings = storage.getStore('unbound.show-hidden-things');
+export const settings = storage.getStore('astral.show-hidden-things');
 
-export const Patcher = patcher.createPatcher('unbound.show-hidden-things');
+export const Patcher = patcher.createPatcher('astral.show-hidden-things');

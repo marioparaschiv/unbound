@@ -1,5 +1,5 @@
 {
-	"id": "unbound.show-hidden-things",
+	"id": "astral.show-hidden-things",
 	"name": "Show Hidden Things",
 	"description": "Displays hidden and moderator-only features regardless of permissions.",
 	"authors": [

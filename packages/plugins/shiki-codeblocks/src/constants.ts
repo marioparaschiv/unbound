@@ -1,6 +1,6 @@
 export const PLUGIN_NAME = 'Shiki Codeblocks';
 
-export const PLUGIN_ID = 'unbound.shiki-codeblocks';
+export const PLUGIN_ID = 'astral.shiki-codeblocks';
 
 export const DEFAULT_THEME = 'dark-plus';
 

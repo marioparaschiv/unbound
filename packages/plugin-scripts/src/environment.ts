@@ -7,7 +7,7 @@ import { deviceScript } from './device-script';
 
 const ENVIRONMENT_FILE = 'environment.json';
 const IOS_TWEAK_DIRECTORY = '/var/jb/Library/MobileSubstrate/DynamicLibraries';
-const ANDROID_MODULES = ['app.unbound.android', 'app.astral.android'];
+const ANDROID_MODULES = ['app.astral.android'];
 const SHA256 = /\b([0-9a-f]{64})\b/;
 
 export const deviceEnvironmentSchema = z.object({

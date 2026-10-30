@@ -1,3 +1,3 @@
 import { storage } from '@unbound-app/api';
 
-export const settings = storage.getStore('unbound.avatar-radius');
+export const settings = storage.getStore('astral.avatar-radius');

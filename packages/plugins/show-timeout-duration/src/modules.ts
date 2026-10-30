@@ -4,4 +4,4 @@ export const MessageRowData = metro.findByProps('generateMessageRowData', { lazy
 export const GuildMemberStore = metro.findStore('GuildMember', { lazy: true });
 export const ChannelStore = metro.findStore('Channel', { lazy: true });
 
-export const Patcher = patcher.createPatcher('unbound.show-timeout-duration');
+export const Patcher = patcher.createPatcher('astral.show-timeout-duration');

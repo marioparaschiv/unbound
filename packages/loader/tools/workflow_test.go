@@ -230,9 +230,8 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 	}
 	for _, required := range []string{
 		"name=\"app.astral.android.xposed.apk\"",
-		`if [[ "$IOS_VERSION" =~ ^([0-9]+)\.([0-9]+)(\.|_|$) ]]; then`,
-		"candidate=\"${BASH_REMATCH[1]}$(printf '%03d' \"${BASH_REMATCH[2]}\")\"",
-		"version=\"${version:-$latest_version}\"",
+		`go run ./tools android-version "${args[@]}"`,
+		`if [ "$REQUIRE_MATCHING_VERSION" = true ]; then args+=(--require-matching); fi`,
 		"REQUIRE_MATCHING_VERSION: ${{ inputs.require_matching_version }}",
 		`apk_version_code=$("$build_tools/aapt" dump badging discord/base.apk`,
 		`"$apk_version_code" != "$version"`,

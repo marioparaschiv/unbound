@@ -165,9 +165,9 @@ export declare function getStore(store: string): {
  */
 export declare function persist(): Promise<void>;
 /**
- * @description Deletes a top-level key from a store, dropping the store entirely if it becomes empty, and emits `changed` and `removed`.
+ * @description Deletes a value at a dot-separated key path, pruning objects the deletion leaves empty and the store itself when it becomes empty, and emits `changed` and `removed`.
  * @param store The store to remove the key from.
- * @param key The key to delete.
+ * @param key The dot-separated key path to delete.
  */
 export declare function remove(store: string, key: string): void;
 /**

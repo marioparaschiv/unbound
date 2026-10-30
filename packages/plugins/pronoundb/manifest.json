@@ -1,5 +1,5 @@
 {
-	"id": "unbound.pronoundb",
+	"id": "astral.pronoundb",
 	"name": "PronounDB",
 	"description": "Adds pronouns to user messages using PronounDB.",
 	"authors": [
