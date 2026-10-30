@@ -26,7 +26,9 @@ import {
 	pluginLogScript,
 	restoreScript,
 	scrollFillerScript,
+	toastDurationScript,
 	toastLogScript,
+	MATRIX_TOAST_MS,
 } from './device-scripts';
 import {
 	isEmptyToast,
@@ -126,6 +128,9 @@ async function main(): Promise<void> {
 
 	const since = new Date(Date.now() - 2_000).toISOString();
 	const developerMode = (await evaluate(port, developerModeScript(false))) === 'true';
+	const toastDuration = JSON.parse(await evaluate(port, toastDurationScript(MATRIX_TOAST_MS))) as
+		| number
+		| null;
 
 	await new Promise((done) => setTimeout(done, 1_500));
 	await evaluate(port, developerModeScript(true));
@@ -364,6 +369,8 @@ async function main(): Promise<void> {
 	writeFileSync(join(out, 'timing.json'), `${JSON.stringify(timings.result(), null, '\t')}\n`);
 
 	if (!developerMode) await evaluate(port, developerModeScript(false));
+
+	await evaluate(port, toastDurationScript(toastDuration));
 
 	for (const check of checks) {
 		const name = catalog.find((plugin) => plugin.id === check.id)?.name;
