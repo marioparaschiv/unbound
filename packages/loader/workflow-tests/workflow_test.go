@@ -112,8 +112,8 @@ func TestParsedReleaseBuildsWaitForTheGate(t *testing.T) {
 	build := loadWorkflow(t, "loader-build.yml")
 	gate := build.job(t, "compat-gate")
 	requireNeeds(t, "compat-gate", gate, "resolve-source")
-	if gate.If != "inputs.release == true && needs.resolve-source.result == 'success'" {
-		t.Fatalf("the gate must run for every successful release resolution, runs if %q", gate.If)
+	if gate.If != "inputs.release == true && needs.resolve-source.result == 'success' && (inputs.is_testflight != true || needs.resolve-source.outputs.ipa_available != 'false')" {
+		t.Fatalf("the gate must run for every successful release resolution that has something to scan, runs if %q", gate.If)
 	}
 	if !strings.Contains(gate.step(t, "Check the release for breakages").Run, "--fail-on-breakage") {
 		t.Fatal("the gate must fail on breakages")
@@ -144,8 +144,12 @@ func TestParsedIOSBuildReusesTheResolvedIPA(t *testing.T) {
 		t.Fatalf("the IPA download must fail softly so the job can decide, got %+v", decrypt)
 	}
 	require := build.job(t, "resolve-source").step(t, "Require the iOS source for a release")
-	if require.If != "steps.decrypt.outcome == 'failure' && (inputs.release == true || inputs.release == 'true')" || !strings.Contains(require.Run, "exit 1") {
-		t.Fatalf("a release must fail without the iOS source, got %+v", require)
+	if require.If != "steps.decrypt.outcome == 'failure' && (inputs.release == true || inputs.release == 'true') && inputs.is_testflight != true" || !strings.Contains(require.Run, "exit 1") {
+		t.Fatalf("a stable release must fail without the iOS source, got %+v", require)
+	}
+	skip := build.job(t, "resolve-source").step(t, "Skip the TestFlight release without a source IPA")
+	if skip.If != "steps.decrypt.outcome == 'failure' && inputs.is_testflight == true" || strings.Contains(skip.Run, "exit 1") {
+		t.Fatalf("a TestFlight release without its IPA must be skipped, not failed, got %+v", skip)
 	}
 	ios := build.job(t, "ios")
 	if !strings.Contains(ios.If, "needs.resolve-source.outputs.ipa_available != 'false'") {
