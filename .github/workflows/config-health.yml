@@ -14,6 +14,8 @@ on:
         paths:
             - .github/**
             - scripts/config-health.ts
+            - scripts/workflow-files.ts
+            - packages/loader/vendor/versions.json
 
 permissions:
     contents: read
