@@ -544,7 +544,7 @@ jobs:
               run: go run ./tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY"
 
             - name: Upload smoke test logs
-              if: always()
+              if: ${{ !cancelled() }}
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: android smoke test

@@ -399,7 +399,7 @@ jobs:
 
     android:
         needs: [resolve-source, compat-gate]
-        if: always() && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success' && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
+        if: ${{ !cancelled() && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success' && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped') }}
         permissions:
             contents: read
             actions: read
@@ -415,7 +415,7 @@ jobs:
 
     ios:
         needs: [resolve-source, compat-gate, tool-tests]
-        if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || (needs.resolve-source.result == 'success' && needs.resolve-source.outputs.ipa_available != 'false' && needs.tool-tests.result == 'success')) && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
+        if: ${{ !cancelled() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || (needs.resolve-source.result == 'success' && needs.resolve-source.outputs.ipa_available != 'false' && needs.tool-tests.result == 'success')) && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped') }}
         permissions:
             contents: write
             actions: read
@@ -438,7 +438,7 @@ jobs:
         secrets: inherit
 
     release:
-        if: always() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
+        if: ${{ !cancelled() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success') }}
         needs: [resolve-source, ios, android]
         runs-on: ubuntu-26.04
         timeout-minutes: 15
@@ -606,7 +606,7 @@ jobs:
                     --changelog-file release-assets/loader-changelog.md
 
     android-prerelease:
-        if: always() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'
+        if: ${{ !cancelled() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success' }}
         needs: [resolve-source, android]
         runs-on: ubuntu-26.04
         timeout-minutes: 10
@@ -651,7 +651,7 @@ jobs:
                   token: ${{ github.token }}
 
     publish-app-repo:
-        if: always() && inputs.release == true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
+        if: ${{ !cancelled() && inputs.release == true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success') }}
         needs: [resolve-source, ios, android, release]
         permissions:
             contents: write

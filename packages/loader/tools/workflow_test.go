@@ -254,7 +254,7 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		"uses: ./.github/workflows/loader-build.yml",
 		"is_testflight: true",
 		"needs: [testflight-candidate, stable-release]",
-		"if: always() && needs.testflight-candidate.outputs.version != ''",
+		"if: ${{ !cancelled() && needs.testflight-candidate.outputs.version != ''",
 	} {
 		if !strings.Contains(string(pollWorkflow), required) {
 			t.Fatalf("scheduled release polling is missing %q", required)
@@ -805,8 +805,8 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"android_code: ${{ steps.candidate.outputs.android_code }}",
 		"needs: [android-beta-candidate, testflight-release]",
 		"needs: [android-alpha-candidate, android-beta-release]",
-		"if: always() && needs.android-beta-candidate.outputs.version != ''",
-		"if: always() && needs.android-alpha-candidate.outputs.version != ''",
+		"if: ${{ !cancelled() && needs.android-beta-candidate.outputs.version != ''",
+		"if: ${{ !cancelled() && needs.android-alpha-candidate.outputs.version != ''",
 		"android_channel: beta",
 		"android_channel: alpha",
 		"android_code: ${{ needs.android-beta-candidate.outputs.android_code }}",
@@ -825,9 +825,9 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"android_code: ${{ steps.select.outputs.code }}",
 		"discord_channel: ${{ inputs.android_channel || 'stable' }}",
 		"android_code: ${{ needs.resolve-source.outputs.android_code }}",
-		"if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true",
-		"if: always() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true",
-		"if: always() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'",
+		"if: ${{ !cancelled() && inputs.android_channel == '' && (inputs.only_app_repo == true",
+		"if: ${{ !cancelled() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true",
+		"if: ${{ !cancelled() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'",
 		"name: Publish Android prerelease",
 	} {
 		if !strings.Contains(build, required) {

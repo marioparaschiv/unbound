@@ -122,7 +122,7 @@ jobs:
 
     testflight-release:
         needs: [testflight-candidate, stable-release]
-        if: always() && needs.testflight-candidate.outputs.version != ''
+        if: ${{ !cancelled() && needs.testflight-candidate.outputs.version != '' }}
         permissions:
             contents: write
             id-token: write
@@ -138,7 +138,7 @@ jobs:
 
     android-beta-release:
         needs: [android-beta-candidate, testflight-release]
-        if: always() && needs.android-beta-candidate.outputs.version != ''
+        if: ${{ !cancelled() && needs.android-beta-candidate.outputs.version != '' }}
         permissions:
             contents: write
             id-token: write
@@ -155,7 +155,7 @@ jobs:
 
     android-alpha-release:
         needs: [android-alpha-candidate, android-beta-release]
-        if: always() && needs.android-alpha-candidate.outputs.version != ''
+        if: ${{ !cancelled() && needs.android-alpha-candidate.outputs.version != '' }}
         permissions:
             contents: write
             id-token: write
