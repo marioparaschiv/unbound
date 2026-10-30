@@ -344,6 +344,7 @@ jobs:
             ANDROID_CHANNEL: ${{ inputs.android_channel || 'stable' }}
             ANDROID_CODE: ${{ needs.resolve-source.outputs.android_code }}
             DISCORD_VERSION: ${{ needs.resolve-source.outputs.version }}
+            RELEASE_DRY_RUN: ${{ inputs.release_dry_run }}
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -401,6 +402,10 @@ jobs:
                   status=0
                   go run ./tools compat-scan "${scan_args[@]}" || status=$?
                   cat report.md >> "$GITHUB_STEP_SUMMARY"
+                  if [ "$status" -ne 0 ] && [ "$RELEASE_DRY_RUN" = true ]; then
+                    echo "::warning::This Discord build breaks parts of astral, so a real release would stop here. The dry run carries on; the job summary lists what broke."
+                    exit 0
+                  fi
                   if [ "$status" -ne 0 ]; then
                     echo "::error::This Discord build breaks parts of astral, so nothing is built or released. The job summary lists what broke."
                   fi
