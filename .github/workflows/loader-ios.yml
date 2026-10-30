@@ -499,7 +499,7 @@ jobs:
         if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
         needs: build-simulator
         runs-on: macos-26
-        timeout-minutes: 45
+        timeout-minutes: 20
         permissions:
             contents: read
             actions: read

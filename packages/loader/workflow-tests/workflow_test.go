@@ -366,6 +366,24 @@ func TestParsedEveryJobHasATimeout(t *testing.T) {
 	}
 }
 
+func TestParsedSmokeTestsTimeOutQuickly(t *testing.T) {
+	smokeJobs := 0
+	for _, name := range workflowFiles(t) {
+		for jobName, job := range loadWorkflow(t, name).Jobs {
+			if job.Uses != "" || !strings.Contains(strings.ToLower(job.Name), "smoke") {
+				continue
+			}
+			smokeJobs++
+			if job.TimeoutMinutes > 20 {
+				t.Errorf("%s %s is a smoke test and must time out within 20 minutes, has %d", name, jobName, job.TimeoutMinutes)
+			}
+		}
+	}
+	if smokeJobs < 2 {
+		t.Fatalf("found %d smoke jobs, want the Android and iOS ones", smokeJobs)
+	}
+}
+
 func TestParsedSharedSetupActionsRunAfterCheckout(t *testing.T) {
 	sharedSetups := map[string]int{}
 	for _, name := range workflowFiles(t) {
