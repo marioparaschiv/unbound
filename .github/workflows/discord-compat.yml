@@ -45,27 +45,14 @@ jobs:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
-              with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
-
-            - name: Cache Discord builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+            - name: Restore the cached Discord builds
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
               with:
                   path: ~/.cache/astral-discord
-                  key: discord-builds-${{ matrix.channel }}-${{ github.run_id }}
+                  key: discord-builds-${{ matrix.channel }}-
                   restore-keys: discord-builds-${{ matrix.channel }}-
 
             - name: Download Discord for iOS
@@ -80,6 +67,19 @@ jobs:
                   bundle-id: com.hammerandchisel.discord
                   channel: ${{ env.IOS_SOURCE }}
                   output: packages/loader/discord.ipa
+
+            - name: Keep or reuse the last decrypted iOS build
+              if: env.IOS_SOURCE != 'none'
+              run: |
+                  set -euo pipefail
+                  kept="$HOME/.cache/astral-discord/last-ipa/$IOS_SOURCE.ipa"
+                  if [ -f discord.ipa ]; then
+                      mkdir -p "${kept%/*}"
+                      cp discord.ipa "$kept"
+                  elif [ -f "$kept" ]; then
+                      cp "$kept" discord.ipa
+                      echo "::warning title=Older iOS build::dkrypt did not decrypt a new iOS $IOS_SOURCE build, so this scan uses the last one it did."
+                  fi
 
             - name: Find the platform SDKs
               id: sdks
@@ -125,6 +125,21 @@ jobs:
                   fi
                   go run ./tools compat-scan "${scan_args[@]}"
                   cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Name the Discord builds cache
+              id: builds
+              run: |
+                  set -euo pipefail
+                  cache="$HOME/.cache/astral-discord"
+                  contents=$(find "$cache" -type f 2>/dev/null | sort | while read -r file; do echo "${file#"$cache"/} $(wc -c < "$file")"; done | shasum -a 256 | cut -c1-16)
+                  echo "key=discord-builds-$CHANNEL-$contents" >> "$GITHUB_OUTPUT"
+
+            - name: Save the Discord builds when they changed
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              continue-on-error: true
+              with:
+                  path: ~/.cache/astral-discord
+                  key: ${{ steps.builds.outputs.key }}
 
             - name: Upload the scan
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
