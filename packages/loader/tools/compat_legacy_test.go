@@ -46,7 +46,7 @@ object Themes {
 }
 
 func TestScriptLegacyExtraction(t *testing.T) {
-	source := `import { legacyJavaClass } from '@astral-plugins/shared/native/android/legacy-classes';
+	source := `import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-classes';
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 const ROW = 'com.discord.reactions.ShortcutsFlexbox';
 `
