@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"errors"
 	"sort"
 	"strings"
 	"testing"
@@ -280,5 +281,11 @@ func TestEvaluateCompatScansASinglePlatformBuild(t *testing.T) {
 	}
 	if plan := planCompatIssue(nil, "alpha", compatIssueVersions(results), true); plan.Title != "Discord compatibility (alpha): Android 352.8" {
 		t.Fatalf("issue title is %q", plan.Title)
+	}
+}
+
+func TestCompatScanTreatsAnUnknownChannelAsALabel(t *testing.T) {
+	if err := runCompatScan([]string{"--channel", "release"}); !errors.Is(err, errNoCompatTarget) {
+		t.Fatalf("a label channel with no build to scan must ask for one, got %v", err)
 	}
 }
