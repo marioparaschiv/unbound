@@ -39,6 +39,7 @@ jobs:
         outputs:
             native: ${{ steps.files.outputs.native }}
             ios: ${{ steps.files.outputs.ios }}
+            release: ${{ steps.files.outputs.release }}
         steps:
             - name: List the changed loader files
               id: files
@@ -59,6 +60,57 @@ jobs:
                       echo "ios=true" >> "$GITHUB_OUTPUT"
                   else
                       echo "ios=false" >> "$GITHUB_OUTPUT"
+                  fi
+                  if grep -Eq '^(packages/loader/tools/(release|loader_release|loader_changelog|sbom|http_retry)[a-z_]*\.go|\.github/workflows/(loader-build|loader-release-poll|release-dry-run)\.yml)$' <<< "$files"; then
+                      echo "release=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "release=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+    rehearse-release:
+        name: Rehearse the release steps
+        needs: changes
+        if: needs.changes.outputs.release == 'true'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        permissions:
+            contents: read
+        defaults:
+            run:
+                working-directory: packages/loader
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 0
+
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
+
+            - name: Run the release commands without building
+              env:
+                  ASTRAL_API_URL: ${{ vars.ASTRAL_API_URL }}
+              run: |
+                  set -euo pipefail
+                  out="$RUNNER_TEMP/release"
+                  mkdir -p "$out"
+                  version=$(sed -n 's/^Version: *//p' ios/control)
+                  go run ./tools release-pairing --ios-version 351.0 --android-code 351011 --output "$out/pairing"
+                  grep -qx 'android_version=351.11' "$out/pairing"
+                  GITHUB_OUTPUT="$out/names" go run ./tools release-names --release-version 351.0 --android-version 351.11
+                  cat "$out/names"
+                  go run ./tools sbom --version "$version" --commit "$GITHUB_SHA" --output "$out/sbom.spdx.json"
+                  jq -e '.spdxVersion and (.packages | length > 0)' "$out/sbom.spdx.json" > /dev/null
+                  go run ./tools generate-loader-changelog --version "$version" --output "$out/changelog.md"
+                  test -s "$out/changelog.md"
+                  if [ -n "$ASTRAL_API_URL" ]; then
+                      go run ./tools publish-loader-releases --dry-run \
+                        --api-url "${ASTRAL_API_URL%/}/api/v1/loader/releases" \
+                        --version "$version" \
+                        --ios-url "https://example.invalid/ios.deb" \
+                        --android-url "https://example.invalid/android.apk" \
+                        --changelog-file "$out/changelog.md"
                   fi
 
     validate-submodules:
