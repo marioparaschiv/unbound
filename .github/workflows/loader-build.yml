@@ -470,6 +470,32 @@ jobs:
                           | awk -F '\t' '{ printf "| %s | %s | %s |\n", $1, $2, $3 }'
                   } >> "$GITHUB_STEP_SUMMARY"
 
+            - name: Flag jobs slower than the last main build
+              working-directory: .
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  JOB_TIMES: '.jobs[] | select(.conclusion == "success" and .started_at != null and .completed_at != null) | [(.name | sub("^Build [^/]+ / "; "")), ((.completed_at | fromdateiso8601) - (.started_at | fromdateiso8601))] | @tsv'
+              run: |
+                  set -euo pipefail
+                  baseline=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow loader-build.yml --branch main --event push --status completed --limit 5 --json databaseId --jq "[.[] | select(.databaseId != $GITHUB_RUN_ID)][0].databaseId // empty")
+                  if [ -z "$baseline" ]; then
+                      exit 0
+                  fi
+                  gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$baseline/jobs" --jq "$JOB_TIMES" | sort > baseline.tsv
+                  gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" --jq "$JOB_TIMES" | sort > current.tsv
+                  slower=$(join -t "$(printf '\t')" baseline.tsv current.tsv | awk -F '\t' '$3 > $2 * 1.5 && $3 - $2 >= 60 { printf "| %s | %d | %d |\n", $1, $2, $3 }')
+                  if [ -z "$slower" ]; then
+                      exit 0
+                  fi
+                  {
+                      echo "### Jobs slower than the last main build"
+                      echo
+                      echo "| Job | Before (s) | Now (s) |"
+                      echo "| --- | ---: | ---: |"
+                      echo "$slower"
+                  } >> "$GITHUB_STEP_SUMMARY"
+                  echo "::warning title=Slower jobs::Some jobs took over 1.5 times as long as on the last main build. The job summary lists them."
+
     android:
         needs: [resolve-source, compat-gate]
         if: ${{ !cancelled() && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success' && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped') }}
