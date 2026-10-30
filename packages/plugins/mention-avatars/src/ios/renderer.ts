@@ -7,6 +7,10 @@ import { createBridge, type Handle } from '~/ios/bridge';
 import { createImageCache } from '~/ios/image-cache';
 import type { MentionIndex } from '~/mention-index';
 
+const MAX_RETRIES = 12;
+const RETRY_MS = 100;
+const SETTLE_MS = 250;
+
 export type Renderer = ReturnType<typeof createRenderer>;
 
 /**
@@ -85,7 +89,11 @@ export function createRenderer(
 			if (disposed || !pending) return;
 
 			void render(pending).then((retry) => {
-				if (retry && attempt < 12) setTimeout(() => schedule(pending, attempt + 1), 100);
+				if (retry && attempt < MAX_RETRIES) {
+					setTimeout(() => schedule(pending, attempt + 1), RETRY_MS);
+				} else if (attempt === 0) {
+					setTimeout(() => schedule(pending, MAX_RETRIES), SETTLE_MS);
+				}
 			});
 		}, 0);
 	}
