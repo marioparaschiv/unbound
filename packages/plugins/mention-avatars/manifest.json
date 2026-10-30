@@ -18,7 +18,10 @@
 	],
 	"version": "1.0.1",
 	"icon": "UserCircleIcon",
-	"platforms": ["ios", "android"],
+	"platforms": [
+		"ios",
+		"android"
+	],
 	"capabilities": [],
 	"platformCapabilities": {
 		"ios": [
@@ -41,5 +44,12 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "6bfa6b5ea7e2353aabd06e1484506258fa62123082fbb73ed5a7315edc9c9ddd80d66b89e857dd823161e5ad3b1f0558e0461db959e86aa5ce6027dcfddc3873"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "NsuPboxVdrzbo634mLlgtD7JPUIXiXOlsBzsm9OF7bFJArs46Z8Bm89Y8QdbKOUa+v8Rl10nCj9betkf7Ux1BQ=="
+	}
 }
