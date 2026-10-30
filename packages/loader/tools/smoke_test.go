@@ -75,7 +75,7 @@ func TestSmokeSettingsEnableEveryPluginAndTheDebugger(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected := map[string]any{
-		"unbound": map[string]any{
+		"astral": map[string]any{
 			"debugger": map[string]any{"enabled": true, "address": "10.0.2.2:9090"},
 			"loader":   map[string]any{"update": map[string]any{"url": "http://10.0.2.2:3000/"}},
 		},

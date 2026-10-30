@@ -34,8 +34,8 @@ const (
 )
 
 const smokeCycleExpression = `(async function () {
-	var manager = unbound.plugins;
-	var read = unbound.native && unbound.native.getNativeResources;
+	var manager = astral.plugins;
+	var read = astral.native && astral.native.getNativeResources;
 	var hooks = function () { var counts = read ? read() : null; return counts ? counts.hooks : 0; };
 	var settle = function () { return new Promise(function (resolve) { setTimeout(resolve, 300); }); };
 	var results = [];

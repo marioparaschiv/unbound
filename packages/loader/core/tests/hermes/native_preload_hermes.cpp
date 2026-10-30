@@ -133,7 +133,7 @@ int main()
     plugin(documents, "broken", "{\"id\":", "module.exports = 4;");
     write(documents / "Themes" / "good" / "manifest.json", R"({"id":"theme.good","name":"Good"})");
     write(documents / "Themes" / "good" / "bundle.json", R"({"semantic":{},"raw":{}})");
-    write(documents / "settings.json", R"({"unbound":{"answer":42},"名前":{"ü":1}})");
+    write(documents / "settings.json", R"({"astral":{"answer":42},"名前":{"ü":1}})");
     uint32_t    version  = 0;
     std::string bytecode = compiledPlugin(documents, version);
     plugin(documents, "compiled",
