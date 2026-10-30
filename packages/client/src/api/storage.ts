@@ -145,16 +145,45 @@ export function toggle(store: string, key: string, def: boolean) {
 }
 
 /**
- * @description Deletes a top-level key from a store, dropping the store entirely if it becomes empty, and emits `changed` and `removed`.
+ * @description Deletes a value at a dot-separated key path, pruning objects the deletion leaves empty and the store itself when it becomes empty, and emits `changed` and `removed`.
  * @param store The store to remove the key from.
- * @param key The key to delete.
+ * @param key The dot-separated key path to delete.
  */
 export function remove(store: string, key: string) {
-	if (settings[store]?.[key] === undefined) return;
+	const keys = key.split('.');
+	const last = keys.pop() ?? key;
+	const parents: SettingsObject[] = [];
+	let current: SettingsValue | undefined = settings[store];
 
-	delete settings[store][key];
+	for (const segment of keys) {
+		if (!isSettingsObject(current)) return;
 
-	if (isEmpty(settings[store])) {
+		parents.push(current);
+		current = current[segment];
+	}
+
+	if (!isSettingsObject(current) || current[last] === undefined) return;
+
+	delete current[last];
+
+	for (let index = keys.length - 1; index >= 0; index--) {
+		const parent = parents[index];
+		const segment = keys[index];
+
+		if (!parent || segment === undefined) {
+			break;
+		}
+
+		const child = parent[segment];
+
+		if (!isSettingsObject(child) || !isEmpty(child)) {
+			break;
+		}
+
+		delete parent[segment];
+	}
+
+	if (settings[store] && isEmpty(settings[store])) {
 		delete settings[store];
 	}
 

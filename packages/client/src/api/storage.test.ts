@@ -24,3 +24,18 @@ test('removes keys whose value is falsy', () => {
 test('ignores a key in a store that does not exist', () => {
 	expect(() => remove('storage-test-missing', 'key')).not.toThrow();
 });
+
+test('removes a value at a nested key path and prunes what it leaves empty', () => {
+	set('storage-nested', 'toasts.duration', 300);
+	set('storage-nested', 'toasts.opacity', 0.5);
+
+	remove('storage-nested', 'toasts.duration');
+
+	expect(get('storage-nested', 'toasts.duration', 5000)).toBe(5000);
+	expect(settings['storage-nested']).toEqual({ toasts: { opacity: 0.5 } });
+
+	remove('storage-nested', 'toasts.opacity');
+
+	expect(settings['storage-nested']).toBeUndefined();
+	expect(() => remove('storage-nested', 'toasts.missing.deeper')).not.toThrow();
+});
