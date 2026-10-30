@@ -117,3 +117,21 @@ func TestParsedCallersPassExactlyTheDeclaredSecrets(t *testing.T) {
 		}
 	}
 }
+
+func TestParsedMainBuildsFinishInsteadOfCancellingEachOther(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "loader-build.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var workflow struct {
+		Concurrency struct {
+			CancelInProgress any `yaml:"cancel-in-progress"`
+		} `yaml:"concurrency"`
+	}
+	if err := yaml.Unmarshal(data, &workflow); err != nil {
+		t.Fatal(err)
+	}
+	if workflow.Concurrency.CancelInProgress != false {
+		t.Fatalf("main builds feed the smoke baselines and loader-latest, so they must not cancel each other, got %v", workflow.Concurrency.CancelInProgress)
+	}
+}
