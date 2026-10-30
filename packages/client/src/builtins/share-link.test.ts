@@ -38,7 +38,7 @@ describe('share links', () => {
 	});
 
 	test('accepts the unbound scheme and single encoding', () => {
-		expect(parseShareLink('unbound://share?url=file%3A%2F%2F%2Ftmp%2Fdoc.pdf')).toEqual([
+		expect(parseShareLink('astral://share?url=file%3A%2F%2F%2Ftmp%2Fdoc.pdf')).toEqual([
 			{
 				uri: 'file:///tmp/doc.pdf',
 				path: '/tmp/doc.pdf',
