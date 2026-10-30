@@ -100,9 +100,17 @@ async function changedFiles(): Promise<string[]> {
 	return output.split('\n').filter(Boolean);
 }
 
+// Git exports `GIT_DIR` and friends to its hooks; tests that create their own repositories must not inherit them.
+function checkEnv(): Record<string, string | undefined> {
+	return Object.fromEntries(
+		Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')),
+	);
+}
+
 async function runCheck(check: Check): Promise<boolean> {
 	const child = Bun.spawn(check.command, {
 		cwd: resolve(root, check.cwd),
+		env: checkEnv(),
 		stdout: 'pipe',
 		stderr: 'pipe',
 	});
