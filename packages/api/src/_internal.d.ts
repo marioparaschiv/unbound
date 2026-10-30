@@ -18,7 +18,7 @@ declare const nativeHandle: unique symbol;
 /** The kinds of addon a manifest can declare. */
 export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'font'];
 /** The core settings store; each addon's settings store is named after the addon id. */
-export declare const CORE_SETTINGS_STORE = 'unbound';
+export declare const CORE_SETTINGS_STORE = 'astral';
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
 export declare const DESIGN_COMPONENTS: readonly [
 	'Text',
