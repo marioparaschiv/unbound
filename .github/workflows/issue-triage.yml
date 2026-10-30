@@ -1,0 +1,80 @@
+name: Issue triage
+
+on:
+    issues:
+        types: [opened, edited]
+    schedule:
+        - cron: '23 4 * * *'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    triage:
+        name: Label and ask for details
+        if: github.event_name == 'issues' && github.event.issue.pull_request == null
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            contents: read
+            issues: write
+        steps:
+            - name: Checkout the triage script
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  fetch-depth: 1
+                  sparse-checkout: scripts
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+
+            - name: Read the form answers
+              id: triage
+              env:
+                  ISSUE_BODY: ${{ github.event.issue.body }}
+                  ISSUE_LABELS: ${{ toJSON(github.event.issue.labels.*.name) }}
+              run: bun scripts/issue-triage.ts
+
+            - name: Apply the labels
+              if: steps.triage.outputs.labels != ''
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  NUMBER: ${{ github.event.issue.number }}
+                  LABELS: ${{ steps.triage.outputs.labels }}
+              run: gh issue edit "$NUMBER" --repo "$GITHUB_REPOSITORY" --add-label "$LABELS"
+
+            - name: Ask for the versions
+              if: steps.triage.outputs.needs-details == 'true' && !contains(github.event.issue.labels.*.name, 'needs-info')
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  NUMBER: ${{ github.event.issue.number }}
+              run: |
+                  gh issue edit "$NUMBER" --repo "$GITHUB_REPOSITORY" --add-label needs-info
+                  gh issue comment "$NUMBER" --repo "$GITHUB_REPOSITORY" --body "Thanks for the report! To look into it we need your Discord, Unbound and loader versions. In the app, open **Settings → Unbound → General → Debug Info** and paste it into the issue's **Environment** section by editing the issue. Issues still missing it after 14 days are closed, and you can reopen them any time."
+
+            - name: Clear the request once the details are in
+              if: steps.triage.outputs.needs-details == 'false' && contains(github.event.issue.labels.*.name, 'needs-info')
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  NUMBER: ${{ github.event.issue.number }}
+              run: gh issue edit "$NUMBER" --repo "$GITHUB_REPOSITORY" --remove-label needs-info
+
+    stale:
+        name: Close issues still missing details
+        if: github.event_name != 'issues'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            issues: write
+        steps:
+            - name: Close needs-info issues untouched for 14 days
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  set -euo pipefail
+                  cutoff=$(date -u -d '14 days ago' +%Y-%m-%d)
+                  gh issue list --repo "$GITHUB_REPOSITORY" --state open --label needs-info --search "updated:<$cutoff" --limit 100 --json number --jq '.[].number' |
+                      while read -r number; do
+                          gh issue close "$number" --repo "$GITHUB_REPOSITORY" --reason "not planned" --comment "Closing because the details we asked for haven't arrived in 14 days. Reopen it with your debug info any time."
+                      done
