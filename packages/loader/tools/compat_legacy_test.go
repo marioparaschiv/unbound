@@ -107,7 +107,7 @@ object astral {
 }
 `
 	set := newCompatSourceSet()
-	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/astral/android/astral.kt", component: "loader-android", platform: "android"}
+	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/astral/android/Astral.kt", component: "loader-android", platform: "android"}
 	extractNativeReferences(set, file, source)
 	var legacy, current *compatReference
 	for _, reference := range set.sorted() {
@@ -130,7 +130,7 @@ object astral {
 }
 
 func TestEvaluateCompatLegacyMethodSeenBefore(t *testing.T) {
-	location := []compatLocation{{File: "astral.kt", Line: 5}}
+	location := []compatLocation{{File: "Astral.kt", Line: 5}}
 	reference := &compatReference{Kind: referenceJavaMethod, Name: "loadJSBundle", Legacy: true, Component: "loader-android", Locations: location}
 	target := compatTestTargets()[1]
 	baseline := &compatResults{Platforms: map[string]*compatPlatformState{"android": {Seen: []string{reference.key()}, Statuses: map[string]string{}}}}
@@ -146,7 +146,7 @@ func TestEvaluateCompatLegacyMethodSeenBefore(t *testing.T) {
 }
 
 func TestEvaluateCompatLegacyMethodWithoutBaseline(t *testing.T) {
-	location := []compatLocation{{File: "astral.kt", Line: 5}}
+	location := []compatLocation{{File: "Astral.kt", Line: 5}}
 	reference := &compatReference{Kind: referenceJavaMethod, Name: "loadJSBundle", Legacy: true, Component: "loader-android", Locations: location}
 	results := evaluateCompat([]*compatReference{reference}, []*compatTarget{compatTestTargets()[1]}, nil)
 	for _, finding := range results.Findings {

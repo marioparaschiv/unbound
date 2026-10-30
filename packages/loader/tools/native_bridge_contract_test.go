@@ -268,7 +268,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	loader, err := os.ReadFile(filepath.Join(root, "ios", "sources", "astral.xm"))
+	loader, err := os.ReadFile(filepath.Join(root, "ios", "sources", "Astral.xm"))
 	if err != nil {
 		t.Fatal(err)
 	}

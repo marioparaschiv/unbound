@@ -115,9 +115,6 @@ func runLint(args []string) error {
 	if err := runQuiet(filepath.Join(rootPath, workflowTestsModule), "go", "vet", "./..."); err != nil {
 		return fmt.Errorf("go vet %s: %w", workflowTestsModule, err)
 	}
-	if err := runKotlinLinter(rootPath); err != nil {
-		return fmt.Errorf("ktlint: %w", err)
-	}
 	if err := lintWorkflows(rootPath); err != nil {
 		return fmt.Errorf("actionlint: %w", err)
 	}
@@ -455,10 +452,6 @@ func runKotlinFormatter(root string, check bool, files []string) error {
 		return runGradle(root, task)
 	}
 	return runGradle(root, task, "-PktlintFiles="+strings.Join(files, ","))
-}
-
-func runKotlinLinter(root string) error {
-	return runGradle(root, ":module:ktlintCheck")
 }
 
 func runGradle(root, task string, arguments ...string) error {
