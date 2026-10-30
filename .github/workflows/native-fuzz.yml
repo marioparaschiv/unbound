@@ -74,7 +74,7 @@ jobs:
             - name: Fuzz the native parsers
               run: |
                   mkdir -p build/fuzz-corpus/bridge build/fuzz-crashes
-                  build/libfuzzer/native_bridge_libfuzzer build/fuzz-corpus/bridge -max_total_time=600 -max_len=4096 -artifact_prefix=build/fuzz-crashes/bridge-
+                  build/libfuzzer/native_bridge_libfuzzer build/fuzz-corpus/bridge core/tests/fuzz/corpus -max_total_time=600 -max_len=4096 -artifact_prefix=build/fuzz-crashes/bridge-
 
             - name: Minimise the corpus
               run: |

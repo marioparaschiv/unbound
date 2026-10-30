@@ -186,7 +186,9 @@ jobs:
               run: cmake --build build/fuzz --target native_bridge_libfuzzer -j"$(nproc)"
 
             - name: Fuzz for a minute
-              run: build/fuzz/native_bridge_libfuzzer -max_total_time=60 -max_len=4096 -artifact_prefix=build/fuzz/
+              run: |
+                  mkdir -p build/fuzz/corpus
+                  build/fuzz/native_bridge_libfuzzer -max_total_time=60 -max_len=4096 -artifact_prefix=build/fuzz/ build/fuzz/corpus core/tests/fuzz/corpus
 
             - name: Upload crashing inputs
               if: failure()

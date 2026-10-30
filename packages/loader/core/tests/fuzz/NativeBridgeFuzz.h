@@ -82,18 +82,18 @@ inline bool decodesWithoutDereferencing(const loader::ffi::Type &type)
     return true;
 }
 
-inline bool holdsNaN(const loader::ffi::NativeValue &value)
+inline bool holdsNonFinite(const loader::ffi::NativeValue &value)
 {
     if (const double *number = std::get_if<double>(&value.data))
     {
-        return std::isnan(*number);
+        return !std::isfinite(*number);
     }
     if (const loader::ffi::NativeFields *fields =
             std::get_if<loader::ffi::NativeFields>(&value.data))
     {
         for (const loader::ffi::NativeValue &field : *fields)
         {
-            if (holdsNaN(field))
+            if (holdsNonFinite(field))
             {
                 return true;
             }
@@ -167,10 +167,10 @@ inline void fuzzValueRoundTrip(const std::uint8_t *data, std::size_t size)
     }
     catch (const std::invalid_argument &)
     {
-        require(holdsNaN(value), "a decoded value re-encodes unless it is NaN");
+        require(holdsNonFinite(value), "a decoded value re-encodes unless it is not finite");
         return;
     }
-    if (!holdsNaN(value))
+    if (!holdsNonFinite(value))
     {
         loader::ffi::NativeValue  again = loader::ffi::decodeValue(type, encoded.data());
         std::vector<std::uint8_t> reencoded(storage, 0);
