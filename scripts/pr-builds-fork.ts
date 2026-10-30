@@ -67,19 +67,54 @@ export async function resolveForkPullRequest(
  * @returns Why the manifest is refused, or an empty string.
  */
 export function forkManifestProblem(manifestText: string, pullRequest: number): string {
-	let manifest: { channel?: string } | null;
+	let manifest: unknown;
 
 	try {
-		manifest = JSON.parse(manifestText) as { channel?: string } | null;
+		manifest = JSON.parse(manifestText);
 	} catch {
 		return 'manifest.json is not JSON.';
 	}
 
 	const expected = `pr-${pullRequest}`;
+	const channel =
+		typeof manifest === 'object' && manifest !== null && 'channel' in manifest
+			? manifest.channel
+			: undefined;
 
-	return manifest?.channel === expected
+	return channel === expected
 		? ''
-		: `manifest.json declares channel ${String(manifest?.channel)}, not ${expected}.`;
+		: `manifest.json declares channel ${String(channel)}, not ${expected}.`;
+}
+
+// UNKNOWN: any parsed JSON value.
+function isObject(value: unknown): value is object {
+	return typeof value === 'object' && value !== null;
+}
+
+// UNKNOWN: a repository object from the GitHub API.
+function hasFullName(value: unknown): boolean {
+	return isObject(value) && 'full_name' in value && typeof value.full_name === 'string';
+}
+
+// UNKNOWN: the GitHub API's pull request response, narrowed on the fields the fork check reads.
+function isPullRequestSummary(value: unknown): value is PullRequestSummary {
+	return (
+		isObject(value) &&
+		'number' in value &&
+		typeof value.number === 'number' &&
+		'state' in value &&
+		typeof value.state === 'string' &&
+		'head' in value &&
+		isObject(value.head) &&
+		'sha' in value.head &&
+		typeof value.head.sha === 'string' &&
+		'repo' in value.head &&
+		(value.head.repo === null || hasFullName(value.head.repo)) &&
+		'base' in value &&
+		isObject(value.base) &&
+		'repo' in value.base &&
+		hasFullName(value.base.repo)
+	);
 }
 
 /**
@@ -108,7 +143,15 @@ export function githubPullRequestFetcher(repository: string, token: string): Pul
 			);
 		}
 
-		return (await response.json()) as PullRequestSummary;
+		const summary: unknown = await response.json();
+
+		if (!isPullRequestSummary(summary)) {
+			throw new Error(
+				`The GitHub API answered pull request ${number} in an unexpected shape.`,
+			);
+		}
+
+		return summary;
 	};
 }
 
@@ -122,14 +165,14 @@ export function parseEventPullRequests(json: string | undefined): number[] {
 		return [];
 	}
 
-	const parsed = JSON.parse(json) as Array<{ number?: number } | null> | null;
+	const parsed: unknown = JSON.parse(json);
 
 	if (!Array.isArray(parsed)) {
 		return [];
 	}
 
 	return parsed.flatMap((entry) => {
-		const number = entry?.number;
+		const number = isObject(entry) && 'number' in entry ? entry.number : undefined;
 
 		return typeof number === 'number' && Number.isSafeInteger(number) && number > 0
 			? [number]

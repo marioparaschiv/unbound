@@ -6,6 +6,12 @@
 		"./node_modules/@marioparaschiv/oxc-config/jsdoc.json"
 	],
 	"plugins": ["unicorn", "typescript", "oxc", "react", "import"],
+	"jsPlugins": [
+		{
+			"name": "unbound",
+			"specifier": "./scripts/oxlint/plugin.ts"
+		}
+	],
 	"rules": {
 		"react-hooks/rules-of-hooks": "error",
 		"react/jsx-key": "error",
@@ -41,6 +47,92 @@
 				"aliasRoots": ["packages/*/src", "apps/*/src"],
 				"relativeRoots": ["packages/plugins-shared/src"]
 			}
+		],
+		"unbound/max-file-bytes": "error",
+		"unbound/no-asserted-external-data": "error",
+		"unbound/no-pass-through-wrapper": "error",
+		"unbound/no-env-mutation": "error",
+		"unbound/prefer-discriminated-union": "error",
+		"unbound/no-upward-imports": [
+			"error",
+			{
+				"layers": [
+					{
+						"from": ["packages/client/src/api"],
+						"deny": ["~/ui", "~/builtins", "~/managers"],
+						"except": ["packages/client/src/api/index.ts"],
+						"because": "client `api/` is the public capability layer below `ui/`, `builtins/` and `managers/`"
+					},
+					{
+						"from": ["packages/client/src/lib"],
+						"deny": ["~/ui", "~/builtins", "~/managers", "~/stores"],
+						"because": "client `lib/` is internal infrastructure below every feature layer"
+					},
+					{
+						"from": ["packages/client/src/managers", "packages/client/src/stores"],
+						"deny": ["~/ui"],
+						"because": "managers and stores hold state that `ui/` renders, never the reverse"
+					},
+					{
+						"from": ["packages/client/src/ui"],
+						"deny": ["~/builtins"],
+						"because": "`ui/` components must not depend on builtins wired in at startup"
+					},
+					{
+						"from": ["packages/cli/src/lib"],
+						"deny": ["~/registry", "~/commands", "~/adapters"],
+						"because": "cli `lib/` sits below the commands, their registry and the adapters that run them"
+					},
+					{
+						"from": ["apps/web/src/db"],
+						"deny": [
+							"~/lib",
+							"~/endpoints",
+							"~/components",
+							"~/queries",
+							"~/routes",
+							"~/hooks"
+						],
+						"because": "web `db/` is the bottom layer"
+					},
+					{
+						"from": ["apps/web/src/lib", "apps/web/src/endpoints", "apps/web/src/api"],
+						"deny": ["~/components", "~/queries", "~/routes", "~/hooks"],
+						"because": "server code must not depend on client UI"
+					},
+					{
+						"from": [
+							"apps/web/src/components",
+							"apps/web/src/queries",
+							"apps/web/src/hooks"
+						],
+						"deny": ["~/db", "~/lib/app", "~/endpoints"],
+						"because": "client UI reaches the server through server functions in `queries/`, never the database or endpoints"
+					},
+					{
+						"from": ["apps/discord-bot/src/lib"],
+						"deny": ["~/dispatchers", "~/db", "~/commands", "~/listeners", "~/runtime"],
+						"because": "bot `lib/` sits below the features that use it"
+					},
+					{
+						"from": [
+							"packages/types/src",
+							"packages/types/typings",
+							"packages/utils/src",
+							"packages/logger/src",
+							"packages/contracts/src",
+							"packages/debugger-protocol/src"
+						],
+						"deny": [
+							"@unbound-app/cli",
+							"@unbound-app/client",
+							"@unbound-app/debugger",
+							"@unbound-app/web"
+						],
+						"because": "shared packages sit below the apps and tools that consume them"
+					}
+				]
+			}
 		]
 	},
 	"ignorePatterns": [
@@ -75,6 +167,12 @@
 			"files": ["packages/plugins-shared/src/native/app-surface.ts"],
 			"rules": {
 				"typescript/no-implied-eval": "off"
+			}
+		},
+		{
+			"files": ["packages/*/src/**", "apps/*/src/**"],
+			"rules": {
+				"unbound/no-import-outside-package": "error"
 			}
 		}
 	]

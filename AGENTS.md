@@ -5,7 +5,7 @@ This is the canonical style guide for this repository, and the `AGENTS.md` that 
 The hierarchy of authority, highest first:
 
 1. **`oxfmt`** - owns all whitespace, quoting, and line-wrapping. Never fight it; never hand-format. Run it.
-2. **`oxlint`** (`.oxlintrc.json`, run `--type-aware`) - correctness, structural bans (the custom `oxc-config/*` rules), JSDoc shape, statement padding, and import/export ordering via `perfectionist`. Every rule is an `error`. The rules and the commitlint config come from `@marioparaschiv/oxc-config`; `.oxlintrc.json` extends its `base`, `react` and `jsdoc` presets; change a shared rule in that package, not here. Locally it adds the `react` and `import` plugins and a few repo rules (`eqeqeq`, `switch-exhaustiveness-check`, `no-misused-promises`, and `consistent-import-paths` for the `~/` alias in §3.3). The one local relaxation allows `any` in the metro layer and the Discord design-module typings (§4). `bun run lint` also runs `oxc-config-check`, which fails on unknown rule names.
+2. **`oxlint`** (`.oxlintrc.json`, run `--type-aware`) - correctness, structural bans (the custom `oxc-config/*` rules), JSDoc shape, statement padding, and import/export ordering via `perfectionist`. Every rule is an `error`. The rules and the commitlint config come from `@marioparaschiv/oxc-config`; `.oxlintrc.json` extends its `base`, `react` and `jsdoc` presets; change a shared rule in that package, not here. Locally it adds the `react` and `import` plugins and a few repo rules (`eqeqeq`, `switch-exhaustiveness-check`, `no-misused-promises`, and `consistent-import-paths` for the `~/` alias in §3.3). The one local relaxation allows `any` in the metro layer and the Discord design-module typings (§4). `bun run lint` also runs `oxc-config-check`, which fails on unknown rule names. Repo-specific architecture rules live in a local plugin, `scripts/oxlint/` (`unbound/*`, each with a fixture test): `max-file-bytes` (20 KB per file), `no-upward-imports` (the layer table in `.oxlintrc.json`), `no-import-outside-package`, `no-asserted-external-data` (parse `JSON.parse`/`.json()` output with a schema), `no-pass-through-wrapper`, `no-env-mutation` and `prefer-discriminated-union`.
 3. **This document** - the conventions the tools can't encode: naming, file shape, module structure, the _feel_ of the code.
 
 Fix a lint finding in the code. Don't silence it with a disable comment, a cast, or a config override.
@@ -115,7 +115,7 @@ The default object lists members roughly in definition order (constants first, t
 
 ### 3.1 Naming
 
-- **Files: `kebab-case.ts` / `kebab-case.tsx`** (`oxc-config/kebab-case-filename`). `toast-container.tsx`, `use-toast-state.ts`, `create-proxy.ts`, `is-empty.ts`, `error-boundary.tsx`.
+- **Files: `kebab-case.ts` / `kebab-case.tsx`** (`oxc-config/kebab-case-filename`). `toast-container.tsx`, `use-toast-state.ts`, `first-of.ts`, `is-empty.ts`, `error-boundary.tsx`.
 - **One concept per file.** `utils/src/` is the purest expression: `noop.ts`, `uuid.ts`, `lazy.ts`, `debounce.ts` - each is a single default-exported function and nothing else.
 - **Co-located styles** use the `.style.ts` suffix next to the component: `toast.tsx` ↔ `toast.style.ts`, `toast-container.tsx` ↔ `toast-container.style.ts`.
 - **Hooks** are files prefixed `use-` exporting a `useThing` function as default: `use-toast-state.ts` → `export default useToastState`.
@@ -321,7 +321,7 @@ Used for stateful, identity-bearing things: managers, the `Logger`. Plain functi
     ```
 
 - **`ReturnType<typeof factory>`** to type a field whose value comes from a factory function (`createLogger`, `createPatcher`, `storage.getStore`) instead of importing/declaring the type.
-- **Parameter properties** for constructor-injected readonly config: `constructor(public readonly type: ManagerType)`.
+- **Parameter properties** for constructor-injected readonly config: `constructor(public readonly type: ManagerKind)`.
 - **Visibility is explicit and minimal**: `protected` for subclass-only internals (`resolve`, `getByName`, `getStates`, `validateManifest`), `private` for class-only (`Logger.inspectFn`), public (no modifier) for the API surface.
 - **`static` factory + `static` helpers** pattern on `Logger` (`static create(…)`, `static setInspector()`), alongside an exported free function wrapper (`export function createLogger(...)`).
 - **A leading-underscore prefix** marks methods that are public-by-necessity but conceptually internal (`Logger._getPrefix`, `_getColor`, `_inspect`). New code prefers `private`/`protected`; the underscore convention persists where TS visibility can't be used.

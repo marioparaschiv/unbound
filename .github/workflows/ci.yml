@@ -55,9 +55,10 @@ jobs:
               env:
                   DATABASE_URL: postgres://unbound_bot:unbound_bot@localhost:5432/postgres
                   POSTGRES_SUPERUSER_URL: postgres://postgres:postgres@localhost:5432/postgres
-              run: bun test --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/plugin-scripts/**' --path-ignore-patterns 'packages/client/tests/native.test.ts'
-            - name: Run native bridge tests
-              run: bun test --isolate packages/client/tests/native.test.ts
+              run: bun test --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/plugin-scripts/**' --path-ignore-patterns 'packages/client/**'
+            # Client tests replace modules with `mock.module`, which leaks across files in one process.
+            - name: Run client tests
+              run: bun test --isolate packages/client
             - name: Generate the plugin SDK
               run: bun run generate-sdk
             # Releases replace the generated `<version>-<hash>` with the plain release version.

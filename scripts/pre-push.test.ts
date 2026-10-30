@@ -34,6 +34,12 @@ describe('pre-push checks', () => {
 		).toEqual(['packages/plugin-scripts tests', 'packages/plugin-scripts type-check']);
 	});
 
+	test('runs the client tests in isolation', () => {
+		const [check] = checksFor(['packages/client/src/index.ts'], exists);
+
+		expect(check?.command).toEqual(['bun', 'test', '--isolate']);
+	});
+
 	test('only type-checks apps and skips the loader', () => {
 		expect(labels(['apps/web/app/root.tsx', 'packages/loader/core/src/a.cpp'])).toEqual([
 			'apps/web type-check',

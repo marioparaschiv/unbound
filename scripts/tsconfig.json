@@ -12,5 +12,5 @@
 		"types": ["bun"],
 		"noEmit": true
 	},
-	"include": ["*.ts"]
+	"include": ["*.ts", "oxlint/**/*.ts"]
 }

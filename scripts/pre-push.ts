@@ -11,6 +11,8 @@ const ALL_PLUGINS: Check[] = [
 	{ label: 'plugin type-check', cwd: '.', command: ['bun', 'run', 'plugins:typecheck'] },
 ];
 const UNTESTED = new Set(['apps/web', 'apps/discord-bot']);
+// Their tests replace modules with `mock.module`, which leaks across files in one process.
+const ISOLATED = new Set(['packages/client']);
 const SKIPPED = ['packages/loader/', 'docs/', '.github/'];
 
 function projectOf(file: string): string | undefined {
@@ -73,7 +75,9 @@ export function checksFor(files: string[], exists: (path: string) => boolean): C
 		}
 
 		if (!UNTESTED.has(project) && exists(`${project}/package.json`)) {
-			add({ label: `${project} tests`, cwd: project, command: ['bun', 'test'] });
+			const command = ISOLATED.has(project) ? ['bun', 'test', '--isolate'] : ['bun', 'test'];
+
+			add({ label: `${project} tests`, cwd: project, command });
 		}
 
 		if (PROJECTS.includes(project)) {

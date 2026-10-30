@@ -43,12 +43,38 @@ export type Workspaces = {
 };
 
 /**
+ * @description Parses the text of a `package.json`, checking the `name` every workspace manifest carries.
+ * @param text The manifest's JSON.
+ * @param path Where the text came from, named in the error.
+ * @returns The parsed manifest.
+ */
+export function parseManifest(text: string, path: string): Manifest {
+	const value: unknown = JSON.parse(text);
+
+	if (!isManifest(value)) {
+		throw new Error(`${path} is not a package manifest: it has no string \`name\`.`);
+	}
+
+	return value;
+}
+
+// UNKNOWN: a parsed `package.json`, narrowed on the field every manifest has.
+function isManifest(value: unknown): value is Manifest {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'name' in value &&
+		typeof value.name === 'string'
+	);
+}
+
+/**
  * @description Reads and parses a `package.json`.
  * @param path The absolute path of the manifest.
  * @returns The parsed manifest.
  */
 export function readManifest(path: string): Manifest {
-	return JSON.parse(readFileSync(path, 'utf8'));
+	return parseManifest(readFileSync(path, 'utf8'), path);
 }
 
 // Entries may be globs (`packages/plugins/*`); only the matched directories with a manifest are workspaces.

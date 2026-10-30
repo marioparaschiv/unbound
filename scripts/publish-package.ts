@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path';
 
 import type { DependencyField, Manifest } from './workspaces';
 
-import { loadWorkspaces } from './workspaces';
+import { loadWorkspaces, parseManifest, readManifest } from './workspaces';
 
 const ROOT = join(import.meta.dir, '..');
 
@@ -62,7 +62,7 @@ function distManifest(manifest: Manifest): Manifest {
 // Publishing goes through the npm CLI for OIDC (bun publish lacks it, oven-sh/bun#22423), and npm
 // cannot read bun's workspace/catalog specifiers, so they are resolved to concrete versions here.
 function resolveSpecifiers(manifest: Manifest): Manifest {
-	const root: Manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+	const root = readManifest(join(ROOT, 'package.json'));
 	const workspace = workspaceManifests();
 	const next: Manifest = { ...manifest };
 
@@ -156,7 +156,7 @@ function publish() {
 	const target = resolve(ROOT, dir);
 	const path = join(target, 'package.json');
 	const original = readFileSync(path, 'utf8');
-	const manifest: Manifest = JSON.parse(original);
+	const manifest = parseManifest(original, path);
 
 	if (isPublished(manifest.name, manifest.version)) {
 		console.log(`${manifest.name}@${manifest.version} is already published, skipping.`);
