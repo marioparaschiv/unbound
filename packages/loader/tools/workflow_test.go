@@ -855,7 +855,7 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"options: [stable, beta, alpha]",
 		"DISCORD_CHANNEL: ${{ inputs.discord_channel || 'stable' }}",
 		"ANDROID_CODE: ${{ inputs.android_code }}",
-		`env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$version" --output-dir discord "${split_args[@]}"`,
+		`env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$VERSION" --output-dir discord "${split_args[@]}"`,
 		`if [ "$DISCORD_CHANNEL" != stable ]; then name="astral-$DISCORD_CHANNEL.apks"; fi`,
 	} {
 		if !strings.Contains(android, required) {

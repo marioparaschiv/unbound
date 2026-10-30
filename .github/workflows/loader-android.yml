@@ -255,8 +255,8 @@ jobs:
                     "https://github.com/JingMatrix/LSPatch/releases/download/$LSPATCH_VERSION/$LSPATCH_JAR" -o "$LSPATCH_JAR"
                   echo "$LSPATCH_SHA256  $LSPATCH_JAR" | sha256sum -c -
 
-            - name: Download Discord
-              id: discord
+            - name: Choose the Discord version
+              id: choose
               run: |
                   set -euo pipefail
                   version="$ANDROID_CODE"
@@ -278,11 +278,33 @@ jobs:
                       fi
                       version="${version:-$latest_version}"
                   fi
+                  echo "version=$version" >> "$GITHUB_OUTPUT"
+
+            - name: Restore the cached Discord APKs
+              id: apk-cache
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: packages/loader/discord
+                  key: discord-apks-${{ env.DISCORD_CHANNEL }}-${{ steps.choose.outputs.version }}
+
+            - name: Download Discord
+              if: steps.apk-cache.outputs.cache-hit != 'true'
+              env:
+                  VERSION: ${{ steps.choose.outputs.version }}
+              run: |
+                  set -euo pipefail
                   split_args=()
                   for split in base config.arm64_v8a config.armeabi_v7a config.x86_64 config.xxhdpi config.en; do
                       split_args+=(--split "$split")
                   done
-                  env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$version" --output-dir discord "${split_args[@]}" > /dev/null
+                  env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$VERSION" --output-dir discord "${split_args[@]}" > /dev/null
+
+            - name: Check the Discord APKs
+              id: discord
+              env:
+                  version: ${{ steps.choose.outputs.version }}
+              run: |
+                  set -euo pipefail
                   build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
                   apk_version_code=$("$build_tools/aapt" dump badging discord/base.apk | sed -n "s/^package: name='com.discord' versionCode='\\([^']*\\)'.*/\\1/p")
                   if [ -z "$apk_version_code" ] || [ "$apk_version_code" != "$version" ]; then

@@ -216,9 +216,24 @@ jobs:
                     echo "requested_version=$requested_version"
                   } >> "$GITHUB_OUTPUT"
 
+            - name: Name the source IPA cache
+              id: ipa-key
+              if: steps.select.outputs.platform == 'ios' && (inputs.ipa_url != '' || steps.select.outputs.requested_version != '')
+              env:
+                  SOURCE: ${{ inputs.is_testflight && 'testflight' || 'appstore' }} ${{ inputs.ipa_url }} ${{ steps.select.outputs.requested_version }}
+              run: echo "key=source-ipa-$(printf '%s' "$SOURCE" | sha256sum | cut -c1-32)" >> "$GITHUB_OUTPUT"
+
+            - name: Restore the cached source IPA
+              id: ipa-cache
+              if: steps.ipa-key.outputs.key != ''
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: packages/loader/source.ipa
+                  key: ${{ steps.ipa-key.outputs.key }}
+
             - name: Decrypt the source IPA
               id: decrypt
-              if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == ''
+              if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == '' && steps.ipa-cache.outputs.cache-hit != 'true'
               continue-on-error: true
               uses: castdrian/dkrypt@v1.1.1
               with:
@@ -230,7 +245,7 @@ jobs:
                   output: packages/loader/source.ipa
 
             - name: Download the source IPA
-              if: steps.select.outputs.platform == 'ios' && inputs.ipa_url != ''
+              if: steps.select.outputs.platform == 'ios' && inputs.ipa_url != '' && steps.ipa-cache.outputs.cache-hit != 'true'
               env:
                   DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
                   INPUT_IPA_URL: ${{ inputs.ipa_url }}
