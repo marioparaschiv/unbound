@@ -38,6 +38,7 @@ jobs:
               if: steps.release.outputs.prs_created == 'true'
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
 
             # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
@@ -52,6 +53,9 @@ jobs:
 
             - name: Sync bun.lock with the release versions
               if: steps.release.outputs.prs_created == 'true'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
               run: |
                   bun install
                   git diff --quiet -- bun.lock && exit 0
@@ -59,7 +63,7 @@ jobs:
                   git config user.name 'github-actions[bot]'
                   git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
                   git commit -m 'chore: sync bun.lock with the release versions' -- bun.lock
-                  git push
+                  git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:$BRANCH"
 
     publish:
         needs: release
@@ -97,4 +101,7 @@ jobs:
         uses: ./.github/workflows/build-bundle.yml
         with:
             version: ${{ needs.release.outputs.client-version }}
-        secrets: inherit
+        secrets:
+            ASTRAL_BUNDLE_SIGNING_KEY: ${{ secrets.ASTRAL_BUNDLE_SIGNING_KEY }}
+            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}

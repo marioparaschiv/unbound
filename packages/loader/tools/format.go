@@ -502,7 +502,7 @@ func auditWorkflows(root string) error {
 		return errors.New("zizmor is required to audit the GitHub workflows")
 	}
 	github := filepath.Join(root, "..", "..", ".github")
-	return runQuiet(root, binary, "--offline", "--quiet", "--min-severity", "high", "--config", filepath.Join(github, "zizmor.yml"), filepath.Join(github, "workflows"))
+	return runQuiet(root, binary, "--offline", "--quiet", "--min-severity", "medium", "--config", filepath.Join(github, "zizmor.yml"), filepath.Join(github, "workflows"))
 }
 
 func runQuiet(directory, name string, args ...string) error {
