@@ -376,6 +376,27 @@ jobs:
                   fi
                   exit "$status"
 
+    tool-tests:
+        name: Tool and workflow tests
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        permissions:
+            contents: read
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  submodules: recursive
+
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
+
+            - name: Test tools
+              run: go test -count=1 ./...
+
+            - name: Test workflows
+              run: go -C workflow-tests test -count=1 ./...
+
     android:
         needs: [resolve-source, compat-gate]
         if: always() && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success' && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
@@ -393,8 +414,8 @@ jobs:
         secrets: inherit
 
     ios:
-        needs: [resolve-source, compat-gate]
-        if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || (needs.resolve-source.result == 'success' && needs.resolve-source.outputs.ipa_available != 'false')) && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
+        needs: [resolve-source, compat-gate, tool-tests]
+        if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || (needs.resolve-source.result == 'success' && needs.resolve-source.outputs.ipa_available != 'false' && needs.tool-tests.result == 'success')) && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
         permissions:
             contents: write
             actions: read
