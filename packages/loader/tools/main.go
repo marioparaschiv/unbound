@@ -41,6 +41,8 @@ func run(args []string) error {
 		return runReleaseNames(args[1:])
 	case "sbom":
 		return runSBOM(args[1:])
+	case "release-pairing":
+		return runReleasePairing(args[1:])
 	case "publish-loader-releases":
 		return runPublishLoaderReleases(args[1:])
 	case "generate-loader-changelog":
