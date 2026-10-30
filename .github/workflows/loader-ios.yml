@@ -170,6 +170,13 @@ jobs:
                   export TARGET_CC TARGET_CXX
                   go run ./tools build tweak --configuration release --non-interactive
 
+            - name: Save the compiler cache
+              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ${{ runner.temp }}/ccache
+                  key: ccache-${{ runner.os }}-ios-tweak-${{ github.sha }}
+
             - name: Collect tweak symbols and UUIDs
               run: |
                   set -euo pipefail

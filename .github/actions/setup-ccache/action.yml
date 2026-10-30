@@ -23,7 +23,7 @@ runs:
               fi
 
         - name: Restore the compiler cache
-          uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+          uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
           with:
               path: ${{ runner.temp }}/ccache
               key: ccache-${{ runner.os }}-${{ inputs.key }}-${{ github.sha }}
@@ -36,7 +36,7 @@ runs:
                   echo "CCACHE_DIR=${{ runner.temp }}/ccache"
                   echo "CCACHE_BASEDIR=${{ github.workspace }}"
                   echo "CCACHE_COMPRESS=true"
-                  echo "CCACHE_MAXSIZE=500M"
+                  echo "CCACHE_MAXSIZE=200M"
                   echo "CMAKE_C_COMPILER_LAUNCHER=ccache"
                   echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache"
               } >> "$GITHUB_ENV"
