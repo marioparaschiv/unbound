@@ -36,8 +36,6 @@ jobs:
                   persist-credentials: false
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
             - name: Check formatting
               run: bun run fmt:js:check
             - name: Lint
@@ -60,6 +58,9 @@ jobs:
               run: bun test --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/plugin-scripts/**' --path-ignore-patterns 'packages/client/**'
             # Client tests replace modules with `mock.module`, which leaks across files in one process.
             - name: Run client tests
+              env:
+                  DATABASE_URL: postgres://unbound_bot:unbound_bot@localhost:5432/postgres
+                  POSTGRES_SUPERUSER_URL: postgres://postgres:postgres@localhost:5432/postgres
               run: bun test --isolate packages/client
             - name: Generate the plugin SDK
               run: bun run generate-sdk
@@ -103,8 +104,6 @@ jobs:
                   persist-credentials: false
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
             - name: Install podman
               run: command -v podman || { sudo apt-get update && sudo apt-get install -y podman; }
             - name: Run the S3 tests against MinIO

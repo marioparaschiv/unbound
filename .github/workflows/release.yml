@@ -48,7 +48,6 @@ jobs:
               if: steps.release.outputs.prs_created == 'true'
               uses: ./.github/actions/setup-bun-deps
               with:
-                  bun-version: canary
                   install: 'false'
 
             - name: Sync bun.lock with the release versions
@@ -81,8 +80,6 @@ jobs:
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
 
             # Publishing uses npm trusted publishing (OIDC), which needs npm >= 11.5.1; the runner's
             # preinstalled npm is older.

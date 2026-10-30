@@ -29,7 +29,6 @@ jobs:
             - name: Setup Bun
               uses: ./.github/actions/setup-bun-deps
               with:
-                  bun-version: canary
                   install: 'false'
 
             - name: Check the bucket configuration
