@@ -4,6 +4,7 @@ import {
 	avatarPngURL,
 	containsMentionText,
 	extractMentionTokens,
+	rebuildsFromLiveText,
 	roleImageSource,
 	selectMentionLabel,
 } from '~/mentions';
@@ -96,5 +97,22 @@ describe('avatarPngURL', () => {
 		expect(avatarPngURL('https://cdn.discordapp.com/avatars/1/a.png?animated=false')).toBe(
 			'https://cdn.discordapp.com/avatars/1/a.png?animated=false&size=32',
 		);
+	});
+});
+
+describe('rebuildsFromLiveText', () => {
+	test('starts from the live text the first time', () => {
+		expect(rebuildsFromLiveText('@adrián hi', undefined)).toBe(true);
+	});
+
+	test('reuses the saved original while the view shows our own render', () => {
+		expect(rebuildsFromLiveText('\uFFFC@adrián hi', '@adrián hi')).toBe(false);
+		expect(rebuildsFromLiveText('@adrián hi', '@adrián hi')).toBe(false);
+	});
+
+	test('takes new text Discord set, even when it mentions the same people', () => {
+		expect(
+			rebuildsFromLiveText('Fixture mention @adrián with a link', '@adrián 352 parity check'),
+		).toBe(true);
 	});
 });
