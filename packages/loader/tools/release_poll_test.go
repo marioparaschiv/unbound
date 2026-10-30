@@ -43,9 +43,8 @@ func TestDiscoverStableCandidateSelectsLatestSharedAndroidVersion(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	version := candidate.Version
-	if version != "350.8" {
-		t.Fatalf("selected version %q, want 350.8", version)
+	if candidate.Version != "350.9" || candidate.AndroidCode != 350008 {
+		t.Fatalf("selected %+v, want iOS 350.9 with Android 350008", candidate)
 	}
 }
 
@@ -56,7 +55,7 @@ func TestDiscoverStableCandidateSelectsLatestSharedVersionWhenAndroidIsAhead(t *
 			fmt.Fprint(writer, `{"resultCount":1,"results":[{"bundleId":"com.hammerandchisel.discord","trackId":985746746,"version":"350.8"}]}`)
 		case "/tracker/index":
 			fmt.Fprint(writer, `{"latest":{"stable":"350009"}}`)
-		case "/tracker/download/350008/base":
+		case "/tracker/download/350009/base":
 			writer.WriteHeader(http.StatusPartialContent)
 			fmt.Fprint(writer, "x")
 		default:
@@ -76,9 +75,8 @@ func TestDiscoverStableCandidateSelectsLatestSharedVersionWhenAndroidIsAhead(t *
 	if err != nil {
 		t.Fatal(err)
 	}
-	version := candidate.Version
-	if version != "350.8" {
-		t.Fatalf("selected version %q, want 350.8", version)
+	if candidate.Version != "350.8" || candidate.AndroidCode != 350009 {
+		t.Fatalf("selected %+v, want iOS 350.8 with Android 350009", candidate)
 	}
 }
 
@@ -272,5 +270,50 @@ func TestLoaderReleaseTagsNameThePlatformOfPrereleases(t *testing.T) {
 		if got := loaderReleaseTag(channel, version); got != want {
 			t.Fatalf("%s release tag is %s, want %s", channel, got, want)
 		}
+	}
+}
+
+func stableCandidateFor(t *testing.T, itunesVersion, androidStable string, downloadable bool) releaseCandidate {
+	t.Helper()
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/lookup":
+			fmt.Fprintf(writer, `{"resultCount":1,"results":[{"bundleId":"com.hammerandchisel.discord","trackId":985746746,"version":%q}]}`, itunesVersion)
+		case "/tracker/index":
+			fmt.Fprintf(writer, `{"latest":{"stable":%s}}`, androidStable)
+		case "/tracker/download/" + androidStable + "/base":
+			if !downloadable {
+				writer.WriteHeader(http.StatusNotFound)
+				return
+			}
+			writer.WriteHeader(http.StatusPartialContent)
+			fmt.Fprint(writer, "x")
+		default:
+			t.Fatalf("unexpected request path %q", request.URL.Path)
+		}
+	}))
+	defer server.Close()
+	candidate, err := discoverReleaseCandidate(context.Background(), releasePollConfig{
+		channel:           "stable",
+		bundleID:          defaultBundleID,
+		itunesLookupURL:   server.URL + "/lookup",
+		androidTrackerURL: server.URL + "/tracker",
+		httpClient:        server.Client(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return candidate
+}
+
+func TestDiscoverStableCandidatePairsTheSameDiscordRelease(t *testing.T) {
+	if candidate := stableCandidateFor(t, "351.0", "351011", true); candidate.Version != "351.0" || candidate.AndroidCode != 351011 {
+		t.Fatalf("selected %+v, want iOS 351.0 with Android 351011", candidate)
+	}
+}
+
+func TestDiscoverStableCandidateWaitsForBothPlatformsToShipTheSameRelease(t *testing.T) {
+	if candidate := stableCandidateFor(t, "352.0", "351011", true); candidate.Version != "" {
+		t.Fatalf("selected %+v, want no candidate while iOS is on 352 and Android on 351", candidate)
 	}
 }

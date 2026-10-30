@@ -18,7 +18,7 @@ func TestLoaderReleasesAlwaysNameTheirPlatform(t *testing.T) {
 			Android: &loaderRelease{"discord-353.1-android-alpha", "astral 1.0.1 for Discord 353.1, Android alpha"},
 		},
 	} {
-		names, err := nameLoaderReleases(releaseVersion, "1.0.1")
+		names, err := nameLoaderReleases(releaseVersion, "1.0.1", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -33,11 +33,24 @@ func TestLoaderReleasesAlwaysNameTheirPlatform(t *testing.T) {
 
 func TestLoaderReleaseNamesRejectMalformedVersions(t *testing.T) {
 	for _, releaseVersion := range []string{"", "353", "353.0_119349", "353.0-ios-testflight", "353.0_1-android-beta", "353.0-android-nightly"} {
-		if _, err := nameLoaderReleases(releaseVersion, "1.0.1"); err == nil {
+		if _, err := nameLoaderReleases(releaseVersion, "1.0.1", ""); err == nil {
 			t.Fatalf("%q was named", releaseVersion)
 		}
 	}
-	if _, err := nameLoaderReleases("353.0", ""); err == nil {
+	if _, err := nameLoaderReleases("353.0", "", ""); err == nil {
 		t.Fatal("a release was named without a loader version")
+	}
+}
+
+func TestStableReleasesNameAndroidByItsOwnVersion(t *testing.T) {
+	names, err := nameLoaderReleases("351.0", "1.0.1", "351.11")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if names.IOS.Tag != "discord-351.0-ios" || names.IOS.Title != "astral 1.0.1 for Discord 351.0, iOS" {
+		t.Fatalf("unexpected iOS release %+v", names.IOS)
+	}
+	if names.Android.Tag != "discord-351.11-android" || names.Android.Title != "astral 1.0.1 for Discord 351.11, Android" {
+		t.Fatalf("unexpected Android release %+v", names.Android)
 	}
 }

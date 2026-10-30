@@ -38,7 +38,7 @@ func releaseTitle(loaderVersion, discordVersion, build, label string) string {
 	return fmt.Sprintf("astral %s for Discord %s, %s", loaderVersion, discordVersion, label)
 }
 
-func nameLoaderReleases(releaseVersion, loaderVersion string) (loaderReleaseNames, error) {
+func nameLoaderReleases(releaseVersion, loaderVersion, androidVersion string) (loaderReleaseNames, error) {
 	match := releaseVersionPattern.FindStringSubmatch(releaseVersion)
 	if match == nil {
 		return loaderReleaseNames{}, fmt.Errorf("%q is not a <version>[_<build>][-<platform>-<channel>] release version", releaseVersion)
@@ -51,9 +51,12 @@ func nameLoaderReleases(releaseVersion, loaderVersion string) (loaderReleaseName
 		return loaderReleaseNames{}, fmt.Errorf("%q pairs a build number with the wrong channel", releaseVersion)
 	}
 	if channel == "" {
+		if androidVersion == "" {
+			androidVersion = discordVersion
+		}
 		return loaderReleaseNames{
 			IOS:     &loaderRelease{releaseTag(discordVersion, "ios"), releaseTitle(loaderVersion, discordVersion, "", "iOS")},
-			Android: &loaderRelease{releaseTag(discordVersion, "android"), releaseTitle(loaderVersion, discordVersion, "", "Android")},
+			Android: &loaderRelease{releaseTag(androidVersion, "android"), releaseTitle(loaderVersion, androidVersion, "", "Android")},
 		}, nil
 	}
 	release := &loaderRelease{"discord-" + releaseVersion, releaseTitle(loaderVersion, discordVersion, build, releaseChannelLabels[channel])}
@@ -77,6 +80,7 @@ func runReleaseNames(args []string) error {
 	set := flag.NewFlagSet("release-names", flag.ContinueOnError)
 	releaseVersion := set.String("release-version", "", "the build's release version, such as 353.0, 353.0_119349-ios-testflight or 352.10-android-beta")
 	control := set.String("control", "ios/control", "package control file holding the loader version")
+	androidVersion := set.String("android-version", "", "the Android version a stable release pairs with, when it differs from the iOS version")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -90,7 +94,7 @@ func runReleaseNames(args []string) error {
 			loaderVersion = strings.TrimSpace(value)
 		}
 	}
-	names, err := nameLoaderReleases(*releaseVersion, loaderVersion)
+	names, err := nameLoaderReleases(*releaseVersion, loaderVersion, *androidVersion)
 	if err != nil {
 		return err
 	}

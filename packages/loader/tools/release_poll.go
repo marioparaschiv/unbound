@@ -138,8 +138,7 @@ func discoverReleaseCandidate(ctx context.Context, config releasePollConfig) (re
 	if err != nil {
 		return releaseCandidate{}, err
 	}
-	version, err := discoverStableCandidate(ctx, config, lookup.Version)
-	return releaseCandidate{Version: version}, err
+	return discoverStableCandidate(ctx, config, lookup.Version)
 }
 
 func loaderReleaseTag(channel, version string) string {
@@ -215,33 +214,29 @@ func lookupItunesApp(ctx context.Context, client *http.Client, endpoint, bundleI
 	return result, nil
 }
 
-func discoverStableCandidate(ctx context.Context, config releasePollConfig, itunesVersion string) (string, error) {
+func discoverStableCandidate(ctx context.Context, config releasePollConfig, itunesVersion string) (releaseCandidate, error) {
 	iosCode, err := androidCodeForDiscordVersion(itunesVersion)
 	if err != nil {
-		return "", fmt.Errorf("map iTunes version %q to an Android version code: %w", itunesVersion, err)
+		return releaseCandidate{}, fmt.Errorf("read the iTunes version %q: %w", itunesVersion, err)
 	}
 	androidCode, err := lookupAndroidStable(ctx, config.httpClient, config.androidTrackerURL)
 	if err != nil {
-		return "", err
+		return releaseCandidate{}, err
 	}
-	candidateCode := androidCode
-	if iosCode < candidateCode {
-		candidateCode = iosCode
+	if iosCode/1000 != androidCode/1000 {
+		fmt.Printf("::notice title=release poll::iTunes stable %s and Android stable %d are different Discord releases; waiting until both ship the same one\n", itunesVersion, androidCode)
+		return releaseCandidate{}, nil
 	}
-	version, err := discordVersionForAndroidCode(candidateCode)
+	available, err := verifyAndroidBasePackage(ctx, config.httpClient, config.androidTrackerURL, androidCode)
 	if err != nil {
-		return "", err
-	}
-	available, err := verifyAndroidBasePackage(ctx, config.httpClient, config.androidTrackerURL, candidateCode)
-	if err != nil {
-		return "", err
+		return releaseCandidate{}, err
 	}
 	if !available {
-		fmt.Printf("::notice title=release poll::Android version %d is not downloadable; no common release is available\n", candidateCode)
-		return "", nil
+		fmt.Printf("::notice title=release poll::Android version %d is not downloadable; no common release is available\n", androidCode)
+		return releaseCandidate{}, nil
 	}
-	fmt.Printf("::notice title=release poll::iTunes stable %s, Android stable %d, selecting common version %s\n", itunesVersion, androidCode, version)
-	return version, nil
+	fmt.Printf("::notice title=release poll::iTunes stable %s pairs with Android stable %d\n", itunesVersion, androidCode)
+	return releaseCandidate{Version: itunesVersion, AndroidCode: androidCode}, nil
 }
 
 func lookupAndroidStable(ctx context.Context, client *http.Client, trackerURL string) (int, error) {

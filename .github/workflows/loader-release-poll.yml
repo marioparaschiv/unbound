@@ -22,6 +22,7 @@ jobs:
         timeout-minutes: 10
         outputs:
             version: ${{ steps.candidate.outputs.version }}
+            android_code: ${{ steps.candidate.outputs.android_code }}
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -124,6 +125,7 @@ jobs:
         uses: ./.github/workflows/loader-build.yml
         with:
             version: ${{ needs.stable-candidate.outputs.version }}
+            android_code: ${{ needs.stable-candidate.outputs.android_code }}
             release: true
             is_testflight: false
         secrets:
