@@ -323,7 +323,7 @@ A bundle is only accepted through a signed manifest that lists its SHA-512. A bu
 
 ### Signed plugins
 
-`plugins-publish.yml` signs every first-party plugin it publishes with the same production key. The signature covers `astral-addon/v1`, the manifest `id`, the `version` and the lowercase hex SHA-512 of the built bundle, one per line, and is stored in the published `manifest.json`:
+`plugins-publish.yml` signs every first-party plugin it publishes with the same production key. The signature covers `unbound-addon/v1`, the manifest `id`, the `version` and the lowercase hex SHA-512 of the built bundle, one per line, and is stored in the published `manifest.json`:
 
 ```json
 { "signature": { "version": 1, "ed25519": "<base64>" } }
