@@ -9,6 +9,7 @@ import {
 } from './log-parsers';
 import {
 	cycleScript,
+	clearStagedScript,
 	fixtureScript,
 	fixturesPresentScript,
 	type CycleResult,
@@ -289,6 +290,20 @@ test('removes the messages an earlier run staged before staging new ones', async
 
 	expect(second.dispatched.length).toBe(first.received.length);
 	expect(second.dispatched.every((action) => action.type === 'MESSAGE_DELETE')).toBe(true);
+});
+
+test('clears every message the staging bot left in the channel', async () => {
+	const discord = fakeDiscord({
+		loaded: [
+			{ id: 'old-filler', content: 'Scroll filler 1', author: { id: 'clyde', bot: true } },
+			{ id: 'real', content: 'hello', author: { id: 'someone' } },
+		],
+	});
+
+	expect(await runOnFakeDevice(clearStagedScript('2'), discord.unbound)).toBe('1');
+	expect(discord.dispatched).toEqual([
+		{ type: 'MESSAGE_DELETE', id: 'old-filler', channelId: '2' },
+	]);
 });
 
 test('reads the physical screen size, preferring an override', () => {

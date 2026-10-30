@@ -195,6 +195,7 @@ type BotMessages = {
 };
 type MessageActions = { receiveMessage(channel: string, message: object): void };
 type Dispatcher = { dispatch(action: object): void };
+type StagedAuthor = { author?: { id?: string } };
 type StagedMessages = { matrixStagedMessages?: { channel: string; id: string }[] };
 type CurrentUser = { id: string; avatar: string };
 
@@ -604,6 +605,32 @@ function stageScrollFiller(channel: string, count: number) {
 	}
 
 	return new Promise((resolve) => setTimeout(resolve, 1500)).then(() => 'staged');
+}
+
+function clearStaged(channel: string) {
+	const { metro } = unbound;
+	const bot = metro.findByProps<BotMessages>('createBotMessage');
+	const dispatcher = metro.findByProps<Dispatcher>('dispatch', 'subscribe');
+	const author = (bot.createBotMessage({ channelId: channel, content: '' }) as StagedAuthor)
+		.author?.id;
+	const loaded = metro
+		.findStore<{ getMessages(channel: string): StoredMessages }>('Message')
+		.getMessages(channel);
+	const staged = (loaded?.toArray ? loaded.toArray() : []).filter(
+		(message) => author !== undefined && (message as StagedAuthor).author?.id === author,
+	);
+
+	for (const message of staged) {
+		dispatcher.dispatch({ type: 'MESSAGE_DELETE', id: message.id, channelId: channel });
+	}
+
+	(globalThis as StagedMessages).matrixStagedMessages = [];
+
+	return String(staged.length);
+}
+
+export function clearStagedScript(channel: string): string {
+	return deviceScript(clearStaged, channel);
 }
 
 export function scrollFillerScript(channel: string): string {

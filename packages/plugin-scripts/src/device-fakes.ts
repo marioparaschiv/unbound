@@ -40,6 +40,7 @@ export function fakeDiscord(
 		createBotMessage: {
 			createBotMessage: (fields: { channelId: string; content: string }) => ({
 				id: 'bot',
+				author: { id: 'clyde', bot: true },
 				...fields,
 			}),
 		},

@@ -252,6 +252,7 @@ async function collect(
 	lenient = false,
 	leakCycles?: number,
 	fullLeakCheck = false,
+	clearStaged = false,
 ): Promise<DeviceRun> {
 	mkdirSync(out, { recursive: true });
 	rmSync(join(out, 'scroll.json'), { force: true });
@@ -263,6 +264,7 @@ async function collect(
 		...collectorArgs(device, out, channel, only, leakCycles),
 		...(lenient ? ['--lenient'] : []),
 		...(fullLeakCheck ? ['--full-leak-check'] : []),
+		...(clearStaged ? ['--clear-staged'] : []),
 	];
 	const child = Bun.spawn(['bun', COLLECTOR, ...args], {
 		stdout: 'pipe',
@@ -314,13 +316,14 @@ async function main(): Promise<void> {
 			lenient: { type: 'boolean' },
 			'leak-cycles': { type: 'string' },
 			'full-leak-check': { type: 'boolean' },
+			'clear-staged': { type: 'boolean' },
 		},
 	});
 	const config = readMatrixConfig(resolve(values.config));
 
 	if (!config?.devices.length || !values.out) {
 		throw new Error(
-			`Usage: bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir> [--only <id,id>] [--channel <guild id>/<channel id>] [--lenient] [--leak-cycles <n>] [--full-leak-check] [--config ${MATRIX_CONFIG_PATH}], with the devices listed in the config.`,
+			`Usage: bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir> [--only <id,id>] [--channel <guild id>/<channel id>] [--lenient] [--leak-cycles <n>] [--full-leak-check] [--clear-staged] [--config ${MATRIX_CONFIG_PATH}], with the devices listed in the config.`,
 		);
 	}
 
@@ -336,6 +339,7 @@ async function main(): Promise<void> {
 				values.lenient,
 				values['leak-cycles'] ? Number(values['leak-cycles']) : undefined,
 				values['full-leak-check'],
+				values['clear-staged'],
 			),
 		),
 	);
