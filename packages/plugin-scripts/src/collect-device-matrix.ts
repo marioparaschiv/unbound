@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -52,6 +52,7 @@ import {
 	describeScreenChange,
 	keepGoodScreens,
 	referenceFor,
+	saveFullResolutionBands,
 	screenDifference,
 } from './screen-diff';
 import {
@@ -148,6 +149,10 @@ async function main(): Promise<void> {
 
 	mkdirSync(out, { recursive: true });
 
+	const crops = join(out, 'crops');
+
+	if (!only) rmSync(crops, { recursive: true, force: true });
+
 	const timings = createTimings();
 	const screenChanges: string[] = [];
 	const fixtureChannel = values.channel ?? readMatrixConfig()?.channel;
@@ -221,6 +226,8 @@ async function main(): Promise<void> {
 		const result = await evaluateJson(port, cycleScript(plugin.id), cycleResultSchema);
 		const file = join(out, `${plugin.id}.png`);
 		const captured = result.installed && (await screenshot(target, file));
+
+		if (captured) await saveFullResolutionBands(file, crops, plugin.id);
 		const keptSettings = reusableSettings(plugin.id, result.bundleHash, previousRun);
 		const settings =
 			result.installed && !keptSettings ? await captureSettings(plugin.id) : undefined;
