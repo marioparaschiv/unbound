@@ -117,6 +117,8 @@ function checkEnv(): Record<string, string | undefined> {
 	);
 }
 
+const NO_TESTS = /No tests found|\b0 test files matching/;
+
 async function runCheck(check: Check): Promise<boolean> {
 	const child = Bun.spawn(check.command, {
 		cwd: resolve(root, check.cwd),
@@ -129,7 +131,7 @@ async function runCheck(check: Check): Promise<boolean> {
 		new Response(child.stderr).text(),
 		child.exited,
 	]);
-	const passed = code === 0 || /No tests found/.test(stdout + stderr);
+	const passed = code === 0 || NO_TESTS.test(stdout + stderr);
 
 	if (!passed) {
 		console.error(
