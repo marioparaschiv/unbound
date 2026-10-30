@@ -482,7 +482,7 @@ jobs:
                   github-token: ${{ secrets.GITHUB_TOKEN }}
 
     comment-startup:
-        name: Comment the startup comparison
+        name: Comment the smoke test results
         runs-on: ubuntu-26.04
         permissions:
             contents: read
@@ -510,14 +510,20 @@ jobs:
                   path: smoke
 
             - name: Setup Go tools
-              if: steps.smoke.outcome == 'success' && hashFiles('smoke/comparison.md') != ''
+              if: steps.smoke.outcome == 'success' && hashFiles('smoke/report.md') != ''
               uses: ./.github/actions/setup-go-tools
 
-            - name: Keep one comment with the comparison
-              if: steps.smoke.outcome == 'success' && hashFiles('smoke/comparison.md') != ''
+            - name: Keep one comment with the failures and the comparison
+              if: steps.smoke.outcome == 'success' && hashFiles('smoke/report.md') != ''
               working-directory: packages/loader
               env:
                   GH_TOKEN: ${{ github.token }}
                   PLATFORM: ${{ matrix.platform }}
                   PR_NUMBER: ${{ github.event.pull_request.number }}
-              run: go run ./tools pr-comment --pr "$PR_NUMBER" --title "$PLATFORM smoke test" --body-file "$GITHUB_WORKSPACE/smoke/comparison.md"
+              run: |
+                  set -euo pipefail
+                  body="$RUNNER_TEMP/smoke-comment.md"
+                  go run ./tools smoke-failure-summary --artifacts "$GITHUB_WORKSPACE/smoke" --output "$body"
+                  if [ -s "$body" ]; then
+                      go run ./tools pr-comment --pr "$PR_NUMBER" --title "$PLATFORM smoke test" --body-file "$body"
+                  fi
