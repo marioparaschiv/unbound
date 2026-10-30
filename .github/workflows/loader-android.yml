@@ -472,6 +472,8 @@ jobs:
                   sudo udevadm trigger --name-match=kvm
 
             - name: Run the smoke test
+              id: smoke
+              continue-on-error: true
               uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
               with:
                   api-level: 34
@@ -485,6 +487,38 @@ jobs:
                   disable-animations: true
                   working-directory: packages/loader
                   script: go run ./tools smoke android --apks smoke/apks --client ../client/dist --artifacts smoke/artifacts --bundle-budget 30s --plugins-budget 20s --plugin-start-budget 1s ${{ inputs.pr_number != '' && '--quick --timeout 6m' || '--timeout 12m' }}
+
+            - name: Check whether the emulator booted
+              id: booted
+              if: steps.smoke.outcome == 'failure'
+              run: |
+                  if [ -d smoke/artifacts ] && [ -n "$(ls -A smoke/artifacts)" ]; then
+                      echo "booted=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "::warning title=Emulator did not boot::The smoke test never started, so the emulator boots once more."
+                      echo "booted=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Boot the emulator again and run the smoke test
+              id: smoke-retry
+              if: steps.smoke.outcome == 'failure' && steps.booted.outputs.booted != 'true'
+              uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+              with:
+                  api-level: 34
+                  target: google_apis
+                  arch: x86_64
+                  profile: pixel_6
+                  ram-size: 4096M
+                  disk-size: 8G
+                  emulator-boot-timeout: 900
+                  emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect
+                  disable-animations: true
+                  working-directory: packages/loader
+                  script: go run ./tools smoke android --apks smoke/apks --client ../client/dist --artifacts smoke/artifacts --bundle-budget 30s --plugins-budget 20s --plugin-start-budget 1s ${{ inputs.pr_number != '' && '--quick --timeout 6m' || '--timeout 12m' }}
+
+            - name: Fail when the smoke test failed
+              if: steps.smoke.outcome == 'failure' && (steps.booted.outputs.booted == 'true' || steps.smoke-retry.outcome == 'failure')
+              run: exit 1
 
             - name: Compare startup and the console with main
               if: success() && github.event_name == 'pull_request'
