@@ -44,6 +44,8 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
@@ -60,7 +62,7 @@ jobs:
               if: env.IOS_SOURCE != 'none'
               continue-on-error: true
               timeout-minutes: 12
-              uses: castdrian/dkrypt@v1.1.1
+              uses: castdrian/dkrypt@86270418b5f3eaf22229dd0682b9aa5e0dc99bd5
               with:
                   api-url: ${{ env.DKRYPT_BASE_URL }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}

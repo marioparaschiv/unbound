@@ -1,0 +1,42 @@
+name: Labels
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - .github/labels.json
+    schedule:
+        - cron: '41 5 * * 1'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    sync:
+        name: Create and update the labels
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            contents: read
+            issues: write
+        steps:
+            - name: Checkout the label list
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  sparse-checkout: .github/labels.json
+                  sparse-checkout-cone-mode: false
+
+            - name: Create or update each label
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  set -euo pipefail
+                  jq -c '.[]' .github/labels.json | while read -r label; do
+                      name=$(jq -r '.name' <<< "$label")
+                      color=$(jq -r '.color' <<< "$label")
+                      description=$(jq -r '.description // ""' <<< "$label")
+                      gh label create "$name" --repo "$GITHUB_REPOSITORY" --color "$color" --description "$description" --force > /dev/null
+                  done
+                  echo "Synced $(jq length .github/labels.json) labels."

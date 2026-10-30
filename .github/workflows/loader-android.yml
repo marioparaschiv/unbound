@@ -87,6 +87,11 @@ jobs:
         name: Build Xposed module
         runs-on: ubuntu-26.04
         timeout-minutes: 12
+        permissions:
+            contents: read
+            id-token: write
+            attestations: write
+            artifact-metadata: write
         env:
             ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
             ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
@@ -101,6 +106,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   submodules: recursive
                   fetch-depth: 1
 
@@ -228,11 +234,22 @@ jobs:
                   path: packages/loader/${{ steps.collect.outputs.module_filename }}
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
+            - name: Attest the build
+              if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+              with:
+                  subject-path: packages/loader/${{ steps.collect.outputs.module_filename }}
+
     patch-discord:
         name: Build patched Discord APK
         needs: build-module
         runs-on: ubuntu-26.04
         timeout-minutes: 10
+        permissions:
+            contents: read
+            id-token: write
+            attestations: write
+            artifact-metadata: write
         outputs:
             patched_filename: ${{ steps.patch.outputs.patched_filename }}
             patched_url: ${{ steps.upload-patched.outputs.artifact-url }}
@@ -251,6 +268,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   fetch-depth: 1
 
             - name: Setup Go tools
@@ -362,6 +380,12 @@ jobs:
                   path: packages/loader/${{ steps.patch.outputs.patched_filename }}
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
+            - name: Attest the build
+              if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+              with:
+                  subject-path: packages/loader/${{ steps.patch.outputs.patched_filename }}
+
             - name: Upload the emulator split
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
@@ -382,6 +406,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   fetch-depth: 1
 
             - name: Setup Go tools
@@ -447,6 +472,8 @@ jobs:
                   sudo udevadm trigger --name-match=kvm
 
             - name: Run the smoke test
+              id: smoke
+              continue-on-error: true
               uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
               with:
                   api-level: 34
@@ -460,6 +487,38 @@ jobs:
                   disable-animations: true
                   working-directory: packages/loader
                   script: go run ./tools smoke android --apks smoke/apks --client ../client/dist --artifacts smoke/artifacts --bundle-budget 30s --plugins-budget 20s --plugin-start-budget 1s ${{ inputs.pr_number != '' && '--quick --timeout 6m' || '--timeout 12m' }}
+
+            - name: Check whether the emulator booted
+              id: booted
+              if: steps.smoke.outcome == 'failure'
+              run: |
+                  if [ -d smoke/artifacts ] && [ -n "$(ls -A smoke/artifacts)" ]; then
+                      echo "booted=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "::warning title=Emulator did not boot::The smoke test never started, so the emulator boots once more."
+                      echo "booted=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            - name: Boot the emulator again and run the smoke test
+              id: smoke-retry
+              if: steps.smoke.outcome == 'failure' && steps.booted.outputs.booted != 'true'
+              uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+              with:
+                  api-level: 34
+                  target: google_apis
+                  arch: x86_64
+                  profile: pixel_6
+                  ram-size: 4096M
+                  disk-size: 8G
+                  emulator-boot-timeout: 900
+                  emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect
+                  disable-animations: true
+                  working-directory: packages/loader
+                  script: go run ./tools smoke android --apks smoke/apks --client ../client/dist --artifacts smoke/artifacts --bundle-budget 30s --plugins-budget 20s --plugin-start-budget 1s ${{ inputs.pr_number != '' && '--quick --timeout 6m' || '--timeout 12m' }}
+
+            - name: Fail when the smoke test failed
+              if: steps.smoke.outcome == 'failure' && (steps.booted.outputs.booted == 'true' || steps.smoke-retry.outcome == 'failure')
+              run: exit 1
 
             - name: Compare startup and the console with main
               if: success() && github.event_name == 'pull_request'

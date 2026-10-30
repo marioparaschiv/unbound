@@ -1,0 +1,5 @@
+rules:
+    dangerous-triggers:
+        ignore:
+            - pr-builds-cleanup.yml
+            - pr-builds-publish.yml

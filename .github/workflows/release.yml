@@ -9,10 +9,7 @@ on:
     workflow_dispatch:
 
 permissions:
-    contents: write
-    issues: write
-    pull-requests: write
-    id-token: write
+    contents: read
 
 concurrency:
     group: release
@@ -21,6 +18,10 @@ concurrency:
 jobs:
     release:
         runs-on: ubuntu-26.04
+        permissions:
+            contents: write
+            issues: write
+            pull-requests: write
         timeout-minutes: 10
         outputs:
             releases-created: ${{ steps.release.outputs.releases_created }}
@@ -29,7 +30,7 @@ jobs:
         steps:
             - name: Run release-please
               id: release
-              uses: googleapis/release-please-action@v5
+              uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
 
             # release-please bumps package.json versions but only knows npm lockfiles, so the
             # workspace versions recorded in bun.lock are refreshed on the release PR branch.
@@ -63,6 +64,9 @@ jobs:
     publish:
         needs: release
         if: needs.release.outputs.releases-created == 'true'
+        permissions:
+            contents: read
+            id-token: write
         runs-on: ubuntu-26.04
         timeout-minutes: 15
         steps:
@@ -88,6 +92,8 @@ jobs:
     bundle:
         needs: release
         if: needs.release.outputs.client-released == 'true'
+        permissions:
+            contents: write
         uses: ./.github/workflows/build-bundle.yml
         with:
             version: ${{ needs.release.outputs.client-version }}
