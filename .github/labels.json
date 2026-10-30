@@ -145,6 +145,11 @@
 		"description": "Plugin scaffold and developer tooling"
 	},
 	{
+		"name": "release-dry-run",
+		"color": "B60205",
+		"description": "The weekly stable release dry run failed"
+	},
+	{
 		"name": "released",
 		"color": "ededed",
 		"description": ""
