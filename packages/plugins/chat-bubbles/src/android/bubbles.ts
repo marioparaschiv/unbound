@@ -76,6 +76,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	const problems = new Map<string, string>();
 	const pending: NativeJavaReference[] = [];
 	let scheduled = false;
+	let placing = 0;
 	let disposed = false;
 	let contentStart = Number.POSITIVE_INFINITY;
 	const measuredLefts: { row: NativeJavaReference; left: number }[] = [];
@@ -462,6 +463,8 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	async function placeAll() {
 		const queue = pending.splice(0);
 
+		placing++;
+
 		async function worker() {
 			for (let row = queue.shift(); row && !disposed; row = queue.shift()) {
 				await place(row).catch((error) => {
@@ -472,7 +475,11 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			}
 		}
 
-		await Promise.all(Array.from({ length: PLACEMENT_WORKERS }, worker));
+		try {
+			await Promise.all(Array.from({ length: PLACEMENT_WORKERS }, worker));
+		} finally {
+			placing--;
+		}
 	}
 
 	function flush() {
@@ -571,6 +578,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 	return {
 		placed: () => tracked.length,
+		settling: () => scheduled || placing > 0 || pending.length > 0,
 		problems: async () => [
 			...[...problems].map(([id, problem]) => `${id} ${problem}`),
 			...(await lostBubbles()),

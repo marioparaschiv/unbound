@@ -3,6 +3,7 @@ export type SelfTestResult = {
 	detail: string;
 	/** Set when the plugin works but has nothing on screen to draw, which says where the chat is rather than that drawing is wrong. */
 	nothingDrawn?: boolean;
+	settling?: boolean;
 };
 
 const state = {
