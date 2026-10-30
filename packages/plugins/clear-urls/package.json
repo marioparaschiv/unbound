@@ -17,6 +17,6 @@
 		"@unbound-app/api": "workspace:*",
 		"@unbound-plugins/rollup-config": "workspace:*",
 		"react-native": "^0.86.0",
-		"rollup": "^4.62.2"
+		"rollup": "^4.65.1"
 	}
 }
