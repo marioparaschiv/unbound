@@ -1,0 +1,192 @@
+[
+	{
+		"name": "agent-stuck",
+		"color": "4EA7FC",
+		"description": ""
+	},
+	{
+		"name": "Android",
+		"color": "bfdadc",
+		"description": "Affects Android"
+	},
+	{
+		"name": "API",
+		"color": "a2eeef",
+		"description": "Core API surface (assets, commands, storage, etc.)"
+	},
+	{
+		"name": "autorelease: pending",
+		"color": "ededed",
+		"description": ""
+	},
+	{
+		"name": "autorelease: tagged",
+		"color": "ededed",
+		"description": ""
+	},
+	{
+		"name": "Bug",
+		"color": "d73a4a",
+		"description": "Something isn't working"
+	},
+	{
+		"name": "Crash",
+		"color": "b60205",
+		"description": "Crashes and startup failures"
+	},
+	{
+		"name": "Debugger",
+		"color": "c5def5",
+		"description": "WebSocket debugger package"
+	},
+	{
+		"name": "dependencies",
+		"color": "0366d6",
+		"description": "Pull requests that update a dependency file"
+	},
+	{
+		"name": "Developer Tools",
+		"color": "4EA7FC",
+		"description": "Developer experience and debugging tools"
+	},
+	{
+		"name": "Discord Bot",
+		"color": "5865F2",
+		"description": "Community Discord bot"
+	},
+	{
+		"name": "discord-compat",
+		"color": "D93F0B",
+		"description": "A Discord build breaks part of Unbound"
+	},
+	{
+		"name": "discord-compat-cleanup",
+		"color": "0E8A16",
+		"description": "Code for names Discord no longer ships can be removed"
+	},
+	{
+		"name": "discord-support-policy",
+		"color": "5319E7",
+		"description": "The oldest supported Discord version is due to be raised"
+	},
+	{
+		"name": "discord-update",
+		"color": "e99695",
+		"description": "Reported as broken after a Discord update"
+	},
+	{
+		"name": "Documentation",
+		"color": "0075ca",
+		"description": "Improvements or additions to documentation"
+	},
+	{
+		"name": "Feature",
+		"color": "0e8a16",
+		"description": "New user-facing capability"
+	},
+	{
+		"name": "Infrastructure",
+		"color": "1d76db",
+		"description": "Build tooling, architecture, and platform work"
+	},
+	{
+		"name": "iOS",
+		"color": "c5def5",
+		"description": "Affects iOS"
+	},
+	{
+		"name": "java",
+		"color": "ffa221",
+		"description": "Pull requests that update java code"
+	},
+	{
+		"name": "javascript",
+		"color": "168700",
+		"description": "Pull requests that update javascript code"
+	},
+	{
+		"name": "Loader",
+		"color": "8B5CF6",
+		"description": "iOS and Android native loaders"
+	},
+	{
+		"name": "Native",
+		"color": "e99695",
+		"description": "Native iOS/Android loader code"
+	},
+	{
+		"name": "native-fuzz",
+		"color": "B60205",
+		"description": "The nightly native fuzzer found a crash"
+	},
+	{
+		"name": "needs-info",
+		"color": "d4c5f9",
+		"description": "Waiting for details from the reporter"
+	},
+	{
+		"name": "needs-triage",
+		"color": "fbca04",
+		"description": "Not looked at yet"
+	},
+	{
+		"name": "Patcher",
+		"color": "EC4899",
+		"description": "iOS patcher CLI (ub-patcher-ios)"
+	},
+	{
+		"name": "Plugin",
+		"color": "5319e7",
+		"description": "First-party plugins"
+	},
+	{
+		"name": "Plugin Template",
+		"color": "10B981",
+		"description": "Plugin scaffold and developer tooling"
+	},
+	{
+		"name": "released",
+		"color": "ededed",
+		"description": ""
+	},
+	{
+		"name": "Types",
+		"color": "bfdadc",
+		"description": "Type system and @unbound-app/types"
+	},
+	{
+		"name": "UI",
+		"color": "d876e3",
+		"description": "UI components and settings"
+	},
+	{
+		"name": "wayfinder:grilling",
+		"color": "ededed",
+		"description": ""
+	},
+	{
+		"name": "wayfinder:map",
+		"color": "ededed",
+		"description": ""
+	},
+	{
+		"name": "wayfinder:prototype",
+		"color": "ededed",
+		"description": ""
+	},
+	{
+		"name": "wayfinder:research",
+		"color": "ededed",
+		"description": ""
+	},
+	{
+		"name": "wayfinder:task",
+		"color": "ededed",
+		"description": ""
+	},
+	{
+		"name": "Web",
+		"color": "FF6B35",
+		"description": "Web marketplace, public site, and API (ub-web-tanstack)"
+	}
+]
