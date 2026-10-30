@@ -8,6 +8,7 @@ import type { PluginContext } from '@unbound-app/api/native';
 import { createAndroidRenderer } from '~/android/renderer';
 import { createVisibleCellScanner } from '~/ios/visible-cells';
 import { subscribeSelectedChannel } from '~/events/selected-channel';
+import { subscribeMentionSources } from '~/events/mention-sources';
 import { patchRowGenerator } from '~/patches/row-generator';
 import { createRenderer } from '~/ios/renderer';
 import { createMentionIndex } from '~/mention-index';
@@ -75,6 +76,7 @@ function start(context: PluginContext) {
 				textChanged: renderer.schedule,
 			}),
 		() => subscribeSelectedChannel(renderer, scanner),
+		() => subscribeMentionSources(renderer.retryWaiting),
 	]);
 }
 

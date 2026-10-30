@@ -21,6 +21,7 @@ import {
 	cycleResultSchema,
 	cycleScript,
 	developerModeScript,
+	clearStagedScript,
 	fixtureScript,
 	fixturesPresentScript,
 	logLinesSchema,
@@ -131,12 +132,13 @@ async function main(): Promise<void> {
 			lenient: { type: 'boolean' },
 			'leak-cycles': { type: 'string' },
 			'full-leak-check': { type: 'boolean' },
+			'clear-staged': { type: 'boolean' },
 		},
 	});
 
 	if (!values.out) {
 		throw new Error(
-			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>] [--channel <guild id>/<channel id>] [--lenient] [--leak-cycles <n>] [--full-leak-check]',
+			'Usage: bun packages/plugin-scripts/src/collect-device-matrix.ts --out <dir> [--port 9090] [--serial <adb serial> | --udid <iPhone UDID>] [--only <id,id>] [--device <name>] [--baseline <results.json>] [--channel <guild id>/<channel id>] [--lenient] [--leak-cycles <n>] [--full-leak-check] [--clear-staged]',
 		);
 	}
 
@@ -157,6 +159,12 @@ async function main(): Promise<void> {
 	const screenChanges: string[] = [];
 	const fixtureChannel = values.channel ?? readMatrixConfig()?.channel;
 	const fixtures = fixtureChannel ? parseChannel(fixtureChannel) : undefined;
+
+	if (fixtures && values['clear-staged']) {
+		console.error(
+			`cleared ${await evaluate(port, clearStagedScript(fixtures.channel))} staged messages`,
+		);
+	}
 
 	if (fixtures) {
 		await evaluate(port, fixtureScript(fixtures.guild, fixtures.channel));

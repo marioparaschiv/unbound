@@ -16,6 +16,7 @@ export const cycleResultSchema = z.object({
 	hooksUpdated: z.number(),
 	stopMs: z.optional(z.number()),
 	startMs: z.optional(z.number()),
+	drawnMs: z.optional(z.number()),
 	selfTest: z.optional(z.object({ ok: z.boolean(), detail: z.string() })),
 	bundleHash: z.optional(z.string()),
 });
@@ -24,6 +25,7 @@ export type CycleResult = z.infer<typeof cycleResultSchema>;
 
 const CYCLE_SETTLE_MS = 300;
 const SELF_TEST_DELAY_MS = 1_000;
+const DRAWN_POLL_MS = 200;
 
 /** The log lines {@link pluginLogScript} and {@link toastLogScript} return. */
 export const logLinesSchema = z.array(z.string());
@@ -48,7 +50,7 @@ type ReactFiber = {
 
 type StoredMessages = { toArray?: () => DeviceMessage[] } | undefined;
 
-function runCycle(id: string, settleMs: number, selfTestDelayMs: number) {
+function runCycle(id: string, settleMs: number, selfTestDelayMs: number, drawnPollMs: number) {
 	const manager = unbound.plugins;
 	const read = unbound.native?.getNativeResources;
 	const hooks = () => read?.()?.hooks ?? 0;
@@ -127,9 +129,39 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number) {
 		result.restarted = Boolean(entity?.started);
 		result.hooksAfter = hooks();
 
+		let watching = false;
+
+		async function watchDrawn(since: number) {
+			while (watching) {
+				const instance = manager.getEntity(id)?.instance;
+
+				try {
+					const report = (await instance?.selfTest?.()) as {
+						ok?: unknown;
+						nothingDrawn?: unknown;
+					} | null;
+
+					if (report?.ok && !report.nothingDrawn) {
+						result.drawnMs = Date.now() - since;
+
+						return;
+					}
+				} catch {}
+
+				await new Promise((resolve) => setTimeout(resolve, drawnPollMs));
+			}
+		}
+
+		let drawn: Promise<void> = Promise.resolve();
+
 		if (result.restarted && entity) {
+			const reloading = Date.now();
+
 			try {
 				const update = await manager.reload(id, entity.bundle, entity.data);
+
+				watching = true;
+				drawn = watchDrawn(reloading);
 
 				if (!update.ok) result.updateError = message(update.error);
 			} catch (failure) {
@@ -144,6 +176,8 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number) {
 		result.updated = Boolean(updated?.started);
 		result.hooksUpdated = hooks();
 		await new Promise((resolve) => setTimeout(resolve, selfTestDelayMs));
+		watching = false;
+		await drawn;
 
 		const instance = updated?.instance;
 
@@ -171,7 +205,7 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number) {
  * @returns A script whose result is the {@link CycleResult} as JSON.
  */
 export function cycleScript(id: string): string {
-	return deviceScript(runCycle, id, CYCLE_SETTLE_MS, SELF_TEST_DELAY_MS);
+	return deviceScript(runCycle, id, CYCLE_SETTLE_MS, SELF_TEST_DELAY_MS, DRAWN_POLL_MS);
 }
 
 export const FIXTURE_MESSAGES = [
@@ -195,6 +229,7 @@ type BotMessages = {
 };
 type MessageActions = { receiveMessage(channel: string, message: object): void };
 type Dispatcher = { dispatch(action: object): void };
+type StagedAuthor = { author?: { id?: string } };
 type StagedMessages = { matrixStagedMessages?: { channel: string; id: string }[] };
 type CurrentUser = { id: string; avatar: string };
 
@@ -604,6 +639,32 @@ function stageScrollFiller(channel: string, count: number) {
 	}
 
 	return new Promise((resolve) => setTimeout(resolve, 1500)).then(() => 'staged');
+}
+
+function clearStaged(channel: string) {
+	const { metro } = unbound;
+	const bot = metro.findByProps<BotMessages>('createBotMessage');
+	const dispatcher = metro.findByProps<Dispatcher>('dispatch', 'subscribe');
+	const author = (bot.createBotMessage({ channelId: channel, content: '' }) as StagedAuthor)
+		.author?.id;
+	const loaded = metro
+		.findStore<{ getMessages(channel: string): StoredMessages }>('Message')
+		.getMessages(channel);
+	const staged = (loaded?.toArray ? loaded.toArray() : []).filter(
+		(message) => author !== undefined && (message as StagedAuthor).author?.id === author,
+	);
+
+	for (const message of staged) {
+		dispatcher.dispatch({ type: 'MESSAGE_DELETE', id: message.id, channelId: channel });
+	}
+
+	(globalThis as StagedMessages).matrixStagedMessages = [];
+
+	return String(staged.length);
+}
+
+export function clearStagedScript(channel: string): string {
+	return deviceScript(clearStaged, channel);
 }
 
 export function scrollFillerScript(channel: string): string {

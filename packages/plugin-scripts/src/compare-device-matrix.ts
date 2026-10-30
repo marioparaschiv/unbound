@@ -5,6 +5,7 @@ import type { DeviceCheck } from './device-matrix';
 export type CheckMetrics = {
 	stopMs: number;
 	startMs: number;
+	drawnMs?: number;
 	leakedHooks: number;
 };
 
@@ -30,7 +31,12 @@ export const measuredChecksSchema: z.ZodMiniType<MeasuredCheck[]> = z.array(
 		evidence: z.array(z.string()),
 		note: z.optional(z.string()),
 		metrics: z.optional(
-			z.object({ stopMs: z.number(), startMs: z.number(), leakedHooks: z.number() }),
+			z.object({
+				stopMs: z.number(),
+				startMs: z.number(),
+				drawnMs: z.optional(z.number()),
+				leakedHooks: z.number(),
+			}),
 		),
 		offMainCalls: z.optional(z.array(z.string())),
 		errors: z.optional(z.array(z.string())),
@@ -64,6 +70,14 @@ function metricChanges(id: string, previous?: CheckMetrics, current?: CheckMetri
 
 	if (isSlower(previous.startMs, current.startMs)) {
 		changes.push(`${id} starts slower: ${previous.startMs} ms → ${current.startMs} ms`);
+	}
+
+	if (
+		previous.drawnMs !== undefined &&
+		current.drawnMs !== undefined &&
+		isSlower(previous.drawnMs, current.drawnMs)
+	) {
+		changes.push(`${id} draws slower: ${previous.drawnMs} ms → ${current.drawnMs} ms`);
 	}
 
 	if (current.leakedHooks > previous.leakedHooks) {

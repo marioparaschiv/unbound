@@ -7,9 +7,8 @@ import { createBridge, type Handle } from '~/ios/bridge';
 import { createImageCache } from '~/ios/image-cache';
 import type { MentionIndex } from '~/mention-index';
 
-const MAX_RETRIES = 12;
-const RETRY_MS = 100;
 const SETTLE_MS = 250;
+const MAX_WAITING = 96;
 
 export type Renderer = ReturnType<typeof createRenderer>;
 
@@ -28,6 +27,7 @@ export function createRenderer(
 	const bridge = createBridge(objc);
 	const activeCells = new Map<string, Handle>();
 	const pendingCells = new Map<string, Handle>();
+	const waitingCells = new Map<string, Handle>();
 	const images = createImageCache(bridge, () => {
 		for (const cell of activeCells.values()) schedule(cell);
 	});
@@ -72,7 +72,22 @@ export function createRenderer(
 		return retry;
 	}
 
-	function schedule(cell: Handle, attempt: number = 0) {
+	function wait(key: string, cell: Handle) {
+		waitingCells.delete(key);
+		waitingCells.set(key, cell);
+
+		if (waitingCells.size > MAX_WAITING) waitingCells.delete(waitingCells.keys().next().value!);
+	}
+
+	function retryWaiting() {
+		const cells = [...waitingCells.values()];
+
+		waitingCells.clear();
+
+		for (const cell of cells) schedule(cell, true);
+	}
+
+	function schedule(cell: Handle, settled: boolean = false) {
 		if (disposed) return;
 
 		const key = viewKey(objc, cell);
@@ -89,11 +104,10 @@ export function createRenderer(
 			if (disposed || !pending) return;
 
 			void render(pending).then((retry) => {
-				if (retry && attempt < MAX_RETRIES) {
-					setTimeout(() => schedule(pending, attempt + 1), RETRY_MS);
-				} else if (attempt === 0) {
-					setTimeout(() => schedule(pending, MAX_RETRIES), SETTLE_MS);
-				}
+				if (retry) wait(key, pending);
+				else waitingCells.delete(key);
+
+				if (!settled) setTimeout(() => schedule(pending, true), SETTLE_MS);
 			});
 		}, 0);
 	}
@@ -107,6 +121,7 @@ export function createRenderer(
 		if (key) {
 			activeCells.delete(key);
 			pendingCells.delete(key);
+			waitingCells.delete(key);
 			textViews.forgetCell(key);
 		}
 
@@ -120,6 +135,7 @@ export function createRenderer(
 
 		activeCells.clear();
 		pendingCells.clear();
+		waitingCells.clear();
 		textViews.clear();
 	}
 
@@ -136,7 +152,8 @@ export function createRenderer(
 	}
 
 	return {
-		schedule,
+		schedule: (cell: Handle) => schedule(cell),
+		retryWaiting,
 		reuse,
 		clear,
 		dispose,
