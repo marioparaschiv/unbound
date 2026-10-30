@@ -7,6 +7,7 @@ import {
 	sharedContentStart,
 	union,
 	bubbleProblem,
+	frameDrift,
 } from '~/geometry';
 
 const padding = { horizontal: 8, vertical: 4 };
@@ -105,5 +106,15 @@ describe('bubble problems', () => {
 		expect(bubbleProblem({ x: 60, y: 0, width: 330, height: 30 }, 375, 314)).toBe(
 			'runs past its row',
 		);
+	});
+});
+
+describe('frame drift', () => {
+	test('measures the furthest edge a drawn bubble is off by', () => {
+		const expected = { x: 60, y: 0, width: 120, height: 30 };
+
+		expect(frameDrift(expected, expected)).toBe(0);
+		expect(frameDrift({ ...expected, height: 90 }, expected)).toBe(60);
+		expect(frameDrift({ ...expected, x: 58, width: 124 }, expected)).toBe(2);
 	});
 });

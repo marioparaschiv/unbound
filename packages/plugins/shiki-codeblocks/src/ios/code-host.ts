@@ -39,6 +39,31 @@ export type CodeHostOptions = {
  * @param options The code, its language and the card's size and style.
  * @returns The card's views, or `null` when UIKit refused to build them.
  */
+export const CARD_TAG = 0x5c0de;
+
+const MAX_STRAY_CARDS = 8;
+
+/**
+ * @description Removes every code card left inside a view, such as a reused cell or a label that no longer shows code, whichever surface drew it.
+ * @param ui The renderer's UIKit helpers.
+ * @param root The view to clear.
+ * @returns How many cards were removed.
+ */
+export function removeStrayCards(ui: NativeUI, root: NativeObjectHandle): number {
+	let removed = 0;
+
+	while (removed < MAX_STRAY_CARDS) {
+		const card = ui.view(root, 'viewWithTag:', CARD_TAG);
+
+		if (!card || ui.key(card) === ui.key(root)) break;
+
+		ui.call(card, 'removeFromSuperview');
+		removed++;
+	}
+
+	return removed;
+}
+
 export function createCodeHost(ui: NativeUI, options: CodeHostOptions): CodeHost | null {
 	const { code, language, width, layout, light, opacity, overflow, iconMode } = options;
 	const { call, objc } = ui;
@@ -47,6 +72,7 @@ export function createCodeHost(ui: NativeUI, options: CodeHostOptions): CodeHost
 	try {
 		const host = objc.alloc('UIView');
 
+		call(host, 'setTag:', CARD_TAG);
 		call(host, 'setFrame:', ui.rect(0, 0, width, layout.height));
 		call(host, 'setBackgroundColor:', ui.color(palette.background, opacity / 100));
 

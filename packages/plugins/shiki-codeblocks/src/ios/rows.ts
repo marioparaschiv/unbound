@@ -5,6 +5,9 @@ import type { Session, Surface } from '~/ios/session';
 import { detachSurface, isMounted, isOnScreen, visibleChannelId } from '~/ios/session';
 import { measureRow, tableForCell } from '~/ios/cells';
 
+const ROW_RETRY_MS = 80;
+const SCROLL_RETRY_MS = 150;
+
 function isCurrent(session: Session, surface: Surface): boolean {
 	return isMounted(session, surface) && visibleChannelId() === surface.channelId;
 }
@@ -63,6 +66,7 @@ export function scheduleRowCorrection(
 async function correctRow(session: Session, surface: Surface): Promise<void> {
 	const { objc } = session.ui;
 	let retry = false;
+	let delay = ROW_RETRY_MS;
 
 	try {
 		const geometry = await measureRow(objc, surface.cell, surface.label);
@@ -91,7 +95,14 @@ async function correctRow(session: Session, surface: Surface): Promise<void> {
 			{ target: table, selector: 'isDecelerating', args: [] },
 		]);
 
-		if (!isCurrent(session, surface) || scrolling.some(Boolean)) return;
+		if (!isCurrent(session, surface)) return;
+
+		if (scrolling.some(Boolean)) {
+			retry = true;
+			delay = SCROLL_RETRY_MS;
+
+			return;
+		}
 
 		surface.rowRetries++;
 
@@ -106,7 +117,7 @@ async function correctRow(session: Session, surface: Surface): Promise<void> {
 	} finally {
 		surface.rowCorrectionPending = false;
 
-		if (retry) scheduleRowCorrection(session, surface, 80);
+		if (retry) scheduleRowCorrection(session, surface, delay);
 	}
 }
 

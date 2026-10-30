@@ -448,6 +448,53 @@ export function closeScreenScript(): string {
 	return deviceScript(closeScreen);
 }
 
+export const selfTestReportsSchema = z.record(
+	z.string(),
+	z.object({ ok: z.boolean(), detail: z.string(), nothingDrawn: z.boolean() }),
+);
+
+type SelfTestReport = { ok: boolean; detail: string; nothingDrawn: boolean };
+
+function runSelfTests() {
+	const reports: Record<string, SelfTestReport> = {};
+	const message = (failure: unknown) =>
+		String(failure && (failure as Error).message ? (failure as Error).message : failure);
+
+	return (async () => {
+		for (const entity of unbound.plugins.entities.values()) {
+			const instance = entity.started ? entity.instance : undefined;
+
+			if (typeof instance?.selfTest !== 'function') continue;
+
+			try {
+				const report = (await instance.selfTest()) as Partial<
+					Record<keyof SelfTestReport, unknown>
+				> | null;
+
+				if (report) {
+					reports[entity.id] = {
+						ok: Boolean(report.ok),
+						detail: String(report.detail),
+						nothingDrawn: Boolean(report.nothingDrawn),
+					};
+				}
+			} catch (failure) {
+				reports[entity.id] = { ok: false, detail: message(failure), nothingDrawn: false };
+			}
+		}
+
+		return JSON.stringify(reports);
+	})();
+}
+
+/**
+ * @description Runs the self-test of every running plugin, such as after the matrix scrolled the chat, where cells are reused and stale drawing shows up.
+ * @returns A script whose result is each plugin's report by id, as JSON.
+ */
+export function selfTestsScript(): string {
+	return deviceScript(runSelfTests);
+}
+
 export const MATRIX_TOAST_MS = 300;
 
 /**

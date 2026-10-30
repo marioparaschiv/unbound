@@ -37,13 +37,16 @@ import { detachSurface, surfaceMatchesCell, visibleChannelId } from '~/ios/sessi
 import { cellForLabel, messageIdentity } from '~/ios/cells';
 import type { Session, Surface } from '~/ios/session';
 import { createNativeUI } from '~/ios/ui';
+import { CARD_TAG, removeStrayCards } from '~/ios/code-host';
 
 type HookSpec = [className: string, selector: string, handlers: NativeHookHandlers];
 
-function forgetLabel(session: Session, labelKey: string): void {
+function forgetLabel(session: Session, labelKey: string, label?: NativeObjectHandle): void {
 	const surface = session.surfaces.get(labelKey);
 
 	if (surface) detachSurface(session, surface);
+
+	if (label) removeStrayCards(session.ui, label);
 }
 
 function expandToCodeRuns(
@@ -81,15 +84,22 @@ function renderLabel(session: Session, label: NativeObjectHandle, original: Nati
 
 	const identity = messageIdentity(ui, cell);
 	const channelId = visibleChannelId();
+	const previous = surfaces.get(labelKey);
+	const sameMessage =
+		!!previous &&
+		!!identity &&
+		!!channelId &&
+		surfaceMatchesCell(previous, channelId, identity.messageId, ui.key(cell));
+
+	const known = !!identity && !!channelId;
+
+	if (previous && !sameMessage && (known || rendered !== previous.renderedText)) {
+		detachSurface(session, previous);
+	}
 
 	if (!identity || !channelId) return;
 
 	const { messageId, sourceChannelId } = identity;
-	const previous = surfaces.get(labelKey);
-
-	if (previous && !surfaceMatchesCell(previous, channelId, messageId, ui.key(cell))) {
-		detachSurface(session, previous);
-	}
 
 	// Our own cards coming back through `setAttributedText:` after a reuse.
 	if (rendered === surfaces.get(labelKey)?.renderedText) return;
@@ -121,7 +131,7 @@ function renderLabel(session: Session, label: NativeObjectHandle, original: Nati
 		!placements.length ||
 		placements.some(({ block }) => block.code.length > Limits.codeLength)
 	) {
-		forgetLabel(session, labelKey);
+		forgetLabel(session, labelKey, label);
 
 		return;
 	}
@@ -208,6 +218,8 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 		for (const surface of [...session.surfaces.values()]) {
 			if (surface.cellKey === cellKey) detachSurface(session, surface);
 		}
+
+		removeStrayCards(session.ui, self);
 	}
 
 	const classes = textViewClasses(objc);
@@ -260,6 +272,39 @@ function labelLanguages(session: Session): void {
  * @returns A function that removes every hook, timer and card and restores Discord's text.
  * @throws When the label's `setAttributedText:` cannot be hooked.
  */
+let active: Session | undefined;
+
+/**
+ * @description Lists the cards drawn on a message other than the one they were made for, which happens when a reused cell keeps an old card.
+ * @returns Each misplaced card's message and the message its cell shows now.
+ */
+export async function misplacedCards(): Promise<string[]> {
+	const session = active;
+
+	if (!session) return [];
+
+	const misplaced = [...session.surfaces.values()].flatMap((surface) => {
+		const identity = messageIdentity(session.ui, surface.cell);
+
+		return identity && identity.messageId !== surface.messageId
+			? [`the card for ${surface.messageId} is on ${identity.messageId}`]
+			: [];
+	});
+	const owned = new Set([...session.surfaces.values()].map((surface) => surface.cellKey));
+
+	for (const cell of await findVisibleCells(session.ui.objc, 'DCDMessageTableViewCell')) {
+		const card = session.ui.view(cell, 'viewWithTag:', CARD_TAG);
+
+		if (!card || owned.has(session.ui.key(cell))) continue;
+
+		const identity = messageIdentity(session.ui, cell);
+
+		misplaced.push(`a card no message owns is left on ${identity?.messageId ?? 'a cell'}`);
+	}
+
+	return misplaced;
+}
+
 export function startRenderer(objc: NativeObjCBridge): () => void {
 	const controller = new AbortController();
 	const session: Session = {
@@ -279,6 +324,7 @@ export function startRenderer(objc: NativeObjCBridge): () => void {
 	};
 	const timers = new Set<ReturnType<typeof setTimeout>>();
 
+	active = session;
 	session.highlighter.warm(readPreferences().theme);
 
 	const [required, ...optional] = labelHooks(session, timers);
@@ -298,6 +344,8 @@ export function startRenderer(objc: NativeObjCBridge): () => void {
 	timers.add(setTimeout(() => void renderVisibleLabels(session).catch(() => undefined), 300));
 
 	return () => {
+		if (active === session) active = undefined;
+
 		controller.abort();
 		session.recovery.dispose();
 

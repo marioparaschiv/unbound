@@ -9,7 +9,7 @@ import SettingsPanel from '~/components/settings-panel';
 import { MessageStore, SelectedChannelStore } from '~/modules';
 import { createAndroidCards } from '~/android/cards';
 import { createNativeCards } from '~/android/native-cards';
-import { startRenderer } from '~/ios/renderer';
+import { misplacedCards, startRenderer } from '~/ios/renderer';
 import { PLUGIN_NAME } from '~/constants';
 import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';
@@ -64,10 +64,17 @@ async function selfTest() {
 		.tokenize({ code: 'const answer: number = 42;', language: 'typescript' }, theme, hljs)
 		.catch(() => null);
 	const colors = new Set(tokens?.flat().map((token) => token.color)).size;
-	const ok = running && colors > 1;
+	const misplaced = await misplacedCards();
+
+	if (misplaced.length) {
+		return {
+			ok: false,
+			detail: `${misplaced.length} cards are on the wrong message: ${misplaced.slice(0, 2).join('; ')}`,
+		};
+	}
 
 	return {
-		ok,
+		ok: running && colors > 1,
 		detail: `${running ? 'cards running' : 'cards not running'}, sample TypeScript in ${theme} used ${colors} colors`,
 	};
 }

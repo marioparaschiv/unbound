@@ -9,7 +9,7 @@ import { PLUGIN_NAME } from '~/constants';
 
 let dispose: () => void | Promise<void> = () => {};
 let placed: (() => number) | null = null;
-let problems: (() => string[]) | null = null;
+let problems: (() => string[] | Promise<string[]>) | null = null;
 
 function start(context: PluginContext) {
 	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
@@ -39,12 +39,12 @@ function stop() {
 	return stopping;
 }
 
-function selfTest() {
+async function selfTest() {
 	if (!placed) {
 		return { ok: false, detail: 'bubbles are not drawing' };
 	}
 
-	const found = problems?.() ?? [];
+	const found = (await problems?.()) ?? [];
 
 	if (found.length) {
 		return {
