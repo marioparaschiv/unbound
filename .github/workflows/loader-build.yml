@@ -170,6 +170,8 @@ jobs:
         steps:
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
@@ -345,6 +347,8 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
@@ -418,6 +422,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   submodules: recursive
 
             - name: Setup Go tools
@@ -508,6 +513,7 @@ jobs:
               if: needs.resolve-source.outputs.is_testflight != 'true'
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   fetch-depth: 0
 
             - name: Setup Go tools for loader update publishing

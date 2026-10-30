@@ -92,6 +92,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   submodules: recursive
 
             - name: Setup Go tools
@@ -248,6 +249,8 @@ jobs:
         steps:
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
@@ -348,6 +351,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   submodules: recursive
 
             - name: Select Xcode Version
@@ -413,7 +417,7 @@ jobs:
 
             - name: Set ipa filename
               id: set-ipa-filename
-              run: echo "filename=${{ env.APP_NAME }}.ipa" >> "$GITHUB_OUTPUT"
+              run: echo "filename=$APP_NAME.ipa" >> "$GITHUB_OUTPUT"
 
     build-simulator:
         if: *only_build_check
@@ -435,6 +439,8 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
@@ -491,6 +497,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   fetch-depth: 1
 
             - name: Setup Go tools
@@ -569,6 +576,8 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
@@ -654,6 +663,7 @@ jobs:
             - name: Update app-repo.json
               if: inputs.only_apt_repo != true
               env:
+                  SOURCE_IS_TESTFLIGHT: ${{ needs.resolve-source-ipa.outputs.is_testflight }}
                   VERSION_SELECTOR: ${{ inputs.version }}
               run: |
                   set -euo pipefail
@@ -668,7 +678,7 @@ jobs:
                       IS_TESTFLIGHT=false
                     fi
                   else
-                    IS_TESTFLIGHT="${{ needs.resolve-source-ipa.outputs.is_testflight }}"
+                    IS_TESTFLIGHT="$SOURCE_IS_TESTFLIGHT"
                   fi
 
                   if [[ "$IS_TESTFLIGHT" == true ]]; then
@@ -698,7 +708,7 @@ jobs:
             - name: Update depiction version
               if: inputs.only_app_repo != true
               run: |
-                  DEB_FILE="apt-repo/repo/debs/${{ env.NEW_DEB_FILENAME }}"
+                  DEB_FILE="apt-repo/repo/debs/$NEW_DEB_FILENAME"
                   VERSION=$(dpkg-deb -f "$DEB_FILE" Version)
                   PACKAGE_ID=$(dpkg-deb -f "$DEB_FILE" Package)
 

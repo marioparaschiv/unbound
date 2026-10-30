@@ -50,9 +50,9 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   ref: ${{ inputs.version && format('client-v{0}', inputs.version) || '' }}
                   fetch-depth: 0
-                  persist-credentials: false
 
             # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
             # canary's frozen-lockfile check fails on a self-generated lockfile (round-trip bug),
