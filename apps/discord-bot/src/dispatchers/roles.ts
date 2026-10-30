@@ -3,15 +3,9 @@ import type { Member, MemberQuery, MemberSubject } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 import { inArray } from 'drizzle-orm';
 
-import {
-	ADDON_DEVELOPER_ROLE_ID,
-	CONTRIBUTOR_ROLE_ID,
-	GUILD_ID,
-	SPONSOR_ROLE_ID,
-} from '~/lib/constants';
-import { type ContributorCache, createContributorCache } from '~/lib/github-contributors';
+import { DISCORD_IDS, type IdConstantName } from '~/lib/constants';
+import type { ContributorCache } from '~/lib/github-contributors';
 import createSerialQueue from '~/runtime/serial-queue';
-import type { IdConstantName } from '~/lib/constants';
 import type { Stores } from '~/dispatchers/types';
 import type { Database } from '~/db/database';
 import { roleGrant } from '~/db/schema';
@@ -44,7 +38,31 @@ export type RolesClient = {
 };
 export type RolesContext = Stores & { client: RolesClient };
 
-export type RoleKey = 'contributor' | 'addonDeveloper' | 'sponsor';
+type RoleDefinition = {
+	key: string;
+	/** The id constant in `src/lib/constants.ts` holding the role's id. */
+	constant: IdConstantName;
+	/** Asked only of a member with GitHub linked, the precondition of every role. */
+	qualifies: (row: Member, contributors: ReadonlySet<string> | undefined) => boolean;
+};
+
+// Adding a role is one entry here and its id constant.
+const ROLES = [
+	{
+		key: 'contributor',
+		constant: 'CONTRIBUTOR_ROLE_ID',
+		qualifies: (row, contributors) =>
+			row.githubId !== null && Boolean(contributors?.has(row.githubId)),
+	},
+	{
+		key: 'addonDeveloper',
+		constant: 'ADDON_DEVELOPER_ROLE_ID',
+		qualifies: (row) => row.isAddonDeveloper,
+	},
+	{ key: 'sponsor', constant: 'SPONSOR_ROLE_ID', qualifies: (row) => row.isSponsor },
+] as const satisfies readonly RoleDefinition[];
+
+export type RoleKey = (typeof ROLES)[number]['key'];
 export type RoleIds = Record<RoleKey, string>;
 /** One Discord account: the union of every member with this discord id. */
 type Claim = { discordId: string; wanted: ReadonlySet<RoleKey>; granted: ReadonlySet<string> };
@@ -54,9 +72,10 @@ type Pending = [key: RoleKey, roleId: string];
 type RoleCheck = { grantable: Map<RoleKey, string>; problems: string[] };
 
 export type RolesOptions = {
-	guildId?: string;
+	guildId: string;
+	contributors: ContributorCache;
+	/** Role id per key; the id constants by default, where an unset one is never granted. */
 	roleIds?: RoleIds;
-	contributors?: ContributorCache;
 	now?: () => number;
 };
 
@@ -70,17 +89,6 @@ export type RolesDispatcher = {
 	drain: () => Promise<void>;
 };
 
-const ROLE_KEYS: RoleKey[] = ['contributor', 'addonDeveloper', 'sponsor'];
-const ROLE_CONSTANTS: Record<RoleKey, string> = {
-	contributor: 'CONTRIBUTOR_ROLE_ID',
-	addonDeveloper: 'ADDON_DEVELOPER_ROLE_ID',
-	sponsor: 'SPONSOR_ROLE_ID',
-};
-const DEFAULT_ROLE_IDS: RoleIds = {
-	contributor: CONTRIBUTOR_ROLE_ID,
-	addonDeveloper: ADDON_DEVELOPER_ROLE_ID,
-	sponsor: SPONSOR_ROLE_ID,
-};
 const DELETED_RETRY_MS = 60 * 60 * 1000;
 const ALL_MEMBERS: MemberQuery = { by: 'all' };
 // The subjects the bot's triggers write into `member_changed` payloads; `discord` is for joins only.
@@ -115,25 +123,13 @@ export function qualifyingRoles(
 	row: Member,
 	contributors: ReadonlySet<string> | undefined,
 ): Set<RoleKey> {
-	const roles = new Set<RoleKey>();
-
 	if (row.githubId === null) {
-		return roles;
+		return new Set();
 	}
 
-	if (contributors?.has(row.githubId)) {
-		roles.add('contributor');
-	}
-
-	if (row.isAddonDeveloper) {
-		roles.add('addonDeveloper');
-	}
-
-	if (row.isSponsor) {
-		roles.add('sponsor');
-	}
-
-	return roles;
+	return new Set(
+		ROLES.filter((role) => role.qualifies(row, contributors)).map((role) => role.key),
+	);
 }
 
 function heldKey(discordId: string, roleId: string) {
@@ -168,17 +164,18 @@ function isMissingPermissions(error: unknown): error is DiscordAPIError {
 
 /**
  * @description Creates the grant-only role-sync dispatcher.
- * @param options Guild, role ids and contributor cache; production defaults.
+ * @param options Guild and contributor cache; role ids and clock default to the constants and `Date.now`.
  * @returns A dispatcher assignable to `Dispatcher`, plus `drain()`.
  */
-export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatcher {
-	const {
-		guildId = GUILD_ID,
-		roleIds = DEFAULT_ROLE_IDS,
-		contributors = createContributorCache(),
-		now = Date.now,
-	} = options;
-	const allRoles: Grantable = new Map(ROLE_KEYS.map((key) => [key, roleIds[key]]));
+export function createRolesDispatcher(options: RolesOptions): RolesDispatcher {
+	const { guildId, contributors, roleIds, now = Date.now } = options;
+	const allRoles: Grantable = new Map(
+		ROLES.flatMap(({ key, constant }): Pending[] => {
+			const roleId = roleIds ? roleIds[key] : DISCORD_IDS[constant];
+
+			return roleId === undefined ? [] : [[key, roleId]];
+		}),
+	);
 	const queue = createSerialQueue();
 	// `discordId:roleId` pairs seen held by hand; per process, so a restart checks them once more.
 	const held = new Set<string>();
@@ -253,12 +250,18 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 			return { grantable, problems };
 		}
 
-		for (const [key, roleId] of allRoles) {
+		for (const { key, constant } of ROLES) {
+			const roleId = allRoles.get(key);
+
+			if (roleId === undefined) {
+				continue;
+			}
+
 			const role = guild.roles.cache.get(roleId);
 
 			if (!role) {
 				problems.push(
-					`Cannot grant ${key}: role ${ROLE_CONSTANTS[key]}=${roleId} does not exist in guild ${guildId}. Fix it in src/lib/constants.ts.`,
+					`Cannot grant ${key}: role ${constant}=${roleId} does not exist in guild ${guildId}. Fix it in src/lib/constants.ts.`,
 				);
 
 				continue;
@@ -419,7 +422,7 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 	return {
 		name: 'roles',
 		channel: 'member_changed',
-		requires: ['CONTRIBUTOR_ROLE_ID', 'ADDON_DEVELOPER_ROLE_ID', 'SPONSOR_ROLE_ID'],
+		requires: ROLES.map((role) => role.constant),
 		reconcile(current) {
 			attach(current);
 
@@ -438,6 +441,4 @@ export function createRolesDispatcher(options: RolesOptions = {}): RolesDispatch
 	};
 }
 
-export const rolesDispatcher = createRolesDispatcher();
-
-export default { parseMemberPayload, createRolesDispatcher, qualifyingRoles, rolesDispatcher };
+export default { parseMemberPayload, createRolesDispatcher, qualifyingRoles };

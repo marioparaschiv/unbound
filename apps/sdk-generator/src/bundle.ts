@@ -11,13 +11,19 @@ import {
 	UTILS_OUT,
 	INTERNAL_OUT,
 	API_SRC,
-	relativeSpecifier,
 	isJsonObject,
 	readJson,
 	CLIENT,
 	logger,
 } from './paths';
-import { stripInternal, declaredNames, exportedNames, collectReferencedNames } from './transform';
+import {
+	stripInternal,
+	declaredNames,
+	exportedNames,
+	collectReferencedNames,
+	groupByOwner,
+	typeOnlyStatements,
+} from './transform';
 import { parseSource } from './project';
 
 export type HoistFile = {
@@ -218,28 +224,11 @@ export function bundleLibrary(
 	// A pruned name still referenced by a surviving declaration must be imported from its owning hoist
 	// file so the reference resolves (e.g. `_internal.d.ts` referencing `Fn`, now owned by `utils.d.ts`).
 	const referenced = collectReferencedNames(survivors);
-	const importsByOwner = new Map<string, Set<string>>();
-
-	for (const name of referenced) {
-		const owner = ownerByName.get(name);
-
-		if (owner === void 0 || owner === out) {
-			continue;
-		}
-
-		const bucket = importsByOwner.get(owner) ?? new Set<string>();
-
-		bucket.add(name);
-		importsByOwner.set(owner, bucket);
-	}
-
-	const imports = [...importsByOwner.entries()]
-		.map(([owner, importedNames]) => {
-			const specifier = relativeSpecifier(out, owner);
-
-			return `import type { ${[...importedNames].sort().join(', ')} } from '${specifier}';`;
-		})
-		.sort();
+	const importsByOwner = groupByOwner(
+		[...referenced].filter((name) => ownerByName.get(name) !== out),
+		ownerByName,
+	);
+	const imports = typeOnlyStatements('import', importsByOwner, out);
 
 	if (imports.length > 0) {
 		sourceFile.insertStatements(0, imports.join('\n'));

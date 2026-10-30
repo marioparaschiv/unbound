@@ -10,9 +10,9 @@ import {
 } from 'bun:test';
 import { Client } from 'discord.js';
 
+import { DISCORD_IDS, GUILD_ID, type DiscordIds, type IdConstantName } from '~/lib/constants';
 import type { Dispatcher, DispatcherContext, NotifyChannel } from '~/dispatchers/types';
-import { DISCORD_IDS, GUILD_ID, type IdConstantName } from '~/lib/constants';
-import { startDispatchers, type DiscordIds } from '~/runtime/start';
+import { startDispatchers } from '~/runtime/start';
 import { checkConfig } from '~/lib/config';
 
 import {
@@ -95,8 +95,8 @@ describe.skipIf(!DATABASE_URL)('dispatcher gating', () => {
 		const ids: DiscordIds = {
 			...DISCORD_IDS,
 			PLUGINS_CHANNEL_ID: '1',
-			RELEASES_CHANNEL_ID: '0',
-			RELEASES_ROLE_ID: '0',
+			RELEASES_CHANNEL_ID: undefined,
+			RELEASES_ROLE_ID: undefined,
 		};
 		const ready = fakeDispatcher('ready', 'addon_changed', ['PLUGINS_CHANNEL_ID']);
 		const pending = fakeDispatcher('pending', 'member_changed', [
@@ -123,7 +123,7 @@ describe.skipIf(!DATABASE_URL)('dispatcher gating', () => {
 		expect(pending.calls).toBe(0);
 		expect(warnings()).toHaveLength(1);
 		expect(warnings()[0]).toContain(
-			"Not starting pending: RELEASES_CHANNEL_ID, RELEASES_ROLE_ID are still '0' in src/lib/constants.ts.",
+			'Not starting pending: RELEASES_CHANNEL_ID, RELEASES_ROLE_ID are still unset in src/lib/constants.ts.',
 		);
 	});
 

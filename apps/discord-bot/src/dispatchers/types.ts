@@ -4,7 +4,15 @@ import type { Client } from 'discord.js';
 import type { IdConstantName } from '~/lib/constants';
 import type { Database } from '~/db/database';
 
-export type NotifyChannel = 'addon_changed' | 'audit_event' | 'loader_release' | 'member_changed';
+/** The channels the bot's trigger migrations `pg_notify`; `tests/notify-channels.test.ts` checks the SQL agrees. */
+export const NOTIFY_CHANNELS = [
+	'addon_changed',
+	'audit_event',
+	'loader_release',
+	'member_changed',
+] as const;
+
+export type NotifyChannel = (typeof NOTIFY_CHANNELS)[number];
 
 export type DispatcherContext = {
 	/** The bot's own schema: posted state, grants, tags. */
@@ -20,7 +28,7 @@ export type Stores = Pick<DispatcherContext, 'db' | 'web'>;
 export type Dispatcher = {
 	name: string;
 	channel: NotifyChannel;
-	/** The id constants it needs; it is not started while any is still `'0'`. */
+	/** The id constants it needs; it is not started while any is still unset. */
 	requires: readonly IdConstantName[];
 	/** Brings every Discord message in line with the web's data; runs on each (re)connect and on a timer. */
 	reconcile: (context: DispatcherContext) => Promise<void>;

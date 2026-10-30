@@ -9,7 +9,7 @@ import type { AuditEvent } from '@unbound-app/web/bot';
 import { SeverityNumber } from '@opentelemetry/api';
 import { createLogger } from '@unbound-app/logger';
 
-import { otelEnvSchema, type OtelEnv } from '~/lib/env';
+import type { OtelEnv } from '~/lib/env';
 
 export type AuditTelemetry = {
 	/** Records one moderation event as an OpenTelemetry log; a no-op without an exporter. */
@@ -19,8 +19,8 @@ export type AuditTelemetry = {
 };
 
 export type AuditTelemetryOptions = {
-	/** The telemetry variables; `process.env` by default. */
-	env?: OtelEnv;
+	/** The telemetry variables, from the validated environment. */
+	env: OtelEnv;
 	/** Replaces the OTLP exporter, for tests; it exports even with `OTEL_ENABLED` off. */
 	exporter?: LogRecordExporter;
 };
@@ -57,8 +57,8 @@ function exporterFor(env: OtelEnv): LogRecordExporter | undefined {
  * @param options The telemetry variables and, for tests, an exporter.
  * @returns The telemetry; a no-op unless `OTEL_ENABLED` and `OTEL_ENDPOINT` are set or an exporter is given.
  */
-export function createAuditTelemetry(options: AuditTelemetryOptions = {}): AuditTelemetry {
-	const { env = otelEnvSchema.parse(process.env), exporter = exporterFor(env) } = options;
+export function createAuditTelemetry(options: AuditTelemetryOptions): AuditTelemetry {
+	const { env, exporter = exporterFor(env) } = options;
 
 	if (!exporter) {
 		return DISABLED;
@@ -100,6 +100,4 @@ export function createAuditTelemetry(options: AuditTelemetryOptions = {}): Audit
 	};
 }
 
-export const auditTelemetry = createAuditTelemetry();
-
-export default { serviceName, createAuditTelemetry, auditTelemetry };
+export default { serviceName, createAuditTelemetry };

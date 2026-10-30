@@ -1,12 +1,10 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { DISCORD_IDS, type DiscordIds, type IdConstantName } from '~/lib/constants';
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
-import { DISCORD_IDS, type IdConstantName } from '~/lib/constants';
 import createSerialQueue from '~/runtime/serial-queue';
 import type { Unlisten } from '~/runtime/listen';
 import { listen } from '~/runtime/listen';
-
-export type DiscordIds = Readonly<Record<IdConstantName, string>>;
 
 export type SkippedDispatcher = {
 	dispatcher: Dispatcher;
@@ -28,7 +26,7 @@ const logger = createLogger('Bot', 'Dispatchers');
 /**
  * @description Splits the dispatchers into those whose required ids are all set and those still missing one.
  * @param dispatchers The registered dispatchers.
- * @param ids The id constants; an id still `'0'` is unset.
+ * @param ids The id constants; an `undefined` id is unset.
  * @returns The dispatchers to start, and each skipped one with its unset constants.
  */
 export function selectDispatchers(
@@ -38,7 +36,7 @@ export function selectDispatchers(
 	const selection: DispatcherSelection = { started: [], skipped: [] };
 
 	for (const dispatcher of dispatchers) {
-		const missing = dispatcher.requires.filter((name) => ids[name] === '0');
+		const missing = dispatcher.requires.filter((name) => ids[name] === undefined);
 
 		if (missing.length) {
 			selection.skipped.push({ dispatcher, missing });
@@ -70,7 +68,7 @@ export function startDispatchers(
 
 	for (const { dispatcher, missing } of skipped) {
 		logger.warn(
-			`Not starting ${dispatcher.name}: ${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} still '0' in src/lib/constants.ts.`,
+			`Not starting ${dispatcher.name}: ${missing.join(', ')} ${missing.length === 1 ? 'is' : 'are'} still unset in src/lib/constants.ts.`,
 		);
 	}
 

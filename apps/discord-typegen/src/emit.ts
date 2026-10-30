@@ -6,7 +6,7 @@ import type {
 } from 'ts-morph';
 import { IndentationText, Project, QuoteKind, StructureKind, Writers } from 'ts-morph';
 
-import type { ComponentRecord, ExportEntry, PropEvidence } from './types';
+import type { ComponentRecord, ExportEntry, PropEvidence, StaticRecord } from './types';
 import type { Resolver } from './resolve';
 import type { Inference } from './infer';
 
@@ -120,6 +120,21 @@ function propsType(input: EmitInput, component: ComponentRecord): string | Write
 	return keys.length === 0 ? inherited : Writers.intersectionType(inherited, own);
 }
 
+function staticType(input: EmitInput, item: StaticRecord): string {
+	if (item.kind === 'literal') {
+		return item.literal === null ? 'null' : typeof item.literal;
+	}
+
+	const resolved = item.kind === 'target' ? input.resolve(item.target) : undefined;
+	const name = resolved?.kind === 'component' ? input.names.get(resolved.component) : undefined;
+
+	if (name) {
+		return `${name}Component`;
+	}
+
+	return resolved?.kind === 'host' ? `typeof RN.${resolved.name}` : 'unknown';
+}
+
 function staticsType(input: EmitInput, component: ComponentRecord): string | undefined {
 	const seen = new Set<string>();
 	const members: string[] = [];
@@ -131,20 +146,7 @@ function staticsType(input: EmitInput, component: ComponentRecord): string | und
 
 		seen.add(item.name);
 
-		const resolved = item.target ? input.resolve(item.target) : undefined;
-		const name =
-			resolved?.kind === 'component' ? input.names.get(resolved.component) : undefined;
-		let type = 'unknown';
-
-		if (name) {
-			type = `${name}Component`;
-		} else if (resolved?.kind === 'host') {
-			type = `typeof RN.${resolved.name}`;
-		} else if (item.literal !== undefined) {
-			type = item.literal === null ? 'null' : typeof item.literal;
-		}
-
-		members.push(`\t${propertyKey(item.name)}: ${type};`);
+		members.push(`\t${propertyKey(item.name)}: ${staticType(input, item)};`);
 	}
 
 	return members.length > 0 ? `{\n${members.join('\n')}\n}` : undefined;
@@ -214,7 +216,7 @@ function referencedComponents(input: EmitInput, component: ComponentRecord): Com
 	}
 
 	for (const item of component.statics) {
-		const resolved = item.target ? input.resolve(item.target) : undefined;
+		const resolved = item.kind === 'target' ? input.resolve(item.target) : undefined;
 
 		if (resolved?.kind === 'component' && input.names.has(resolved.component)) {
 			refs.push(resolved.component);

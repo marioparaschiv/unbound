@@ -5,7 +5,7 @@ import { createLogger } from '@unbound-app/logger';
 import postgres from 'postgres';
 import { z } from 'zod';
 
-import { ADDON_CHANNELS, type AddonChannels } from '~/dispatchers/addons';
+import { ADDON_CHANNELS, desiredChannel, type AddonChannels } from '~/dispatchers/addons';
 import { contentHash } from '~/lib/content-hash';
 import { parseDatabaseEnv } from '~/lib/env';
 import { SITE_URL } from '~/lib/constants';
@@ -218,7 +218,7 @@ async function hashDrift(target: postgres.Sql, options: MoveOptions): Promise<Ha
 
 	for (const post of posts) {
 		const addon = await reads.addon(post.addonId);
-		const channelId = addon?.listed ? channels[addon.type] : undefined;
+		const channelId = addon ? desiredChannel(addon, channels) : undefined;
 
 		if (!addon || !channelId) {
 			drift.wouldDelete++;

@@ -1,13 +1,17 @@
 import type { ModuleRecord, ModuleSummary } from './types';
 
+import { EXPORTS, FACTORY_ARITY, paramName } from './metro-params';
 import intern from './intern';
 
+const FACTORY_PARAMS = Array.from({ length: FACTORY_ARITY }, (_, index) => paramName(index));
 const TOP_LEVEL_ASSIGN = /^ {4}(r\d+) = (.*);$/;
-const FACTORY_START = /^ {4}(r\d+) = function\(a0, a1, a2, a3, a4, a5, a6\) \{/;
+const FACTORY_START = new RegExp(
+	String.raw`^ {4}(r\d+) = function\(${FACTORY_PARAMS.join(', ')}\) \{`,
+);
 const FACTORY_END = '    };';
 const DEFINE_CALL = /^ {4}r\d+ = (r\d+)\.bind\(r\d+\)\((r\d+), (r\d+), (r\d+)\);$/;
 const PATH = /\.fileFinishedImporting;\n\s*r\d+ = '((?:[^'\\]|\\.)*)';/;
-const EXPORTS_REGISTER = /^ {8,}(r\d+) = a5;$/gm;
+const EXPORTS_REGISTER = new RegExp(String.raw`^ {8,}(r\d+) = ${paramName(EXPORTS)};$`, 'gm');
 const EXPORT_GETTER = /Original name: get ([\w$]+),/g;
 
 type Factory = {

@@ -1,9 +1,8 @@
 import type { ContextMenuCommandSuccessPayload } from '@sapphire/framework';
-import { Events, Listener, LogLevel } from '@sapphire/framework';
-import type { Logger } from '@sapphire/plugin-logger';
+import { Events, Listener } from '@sapphire/framework';
 import { ApplyOptions } from '@sapphire/decorators';
 
-import { logSuccessCommand } from '~/lib/log-command';
+import { isDebugLogging, logSuccessCommand } from '~/lib/log-command';
 
 @ApplyOptions<Listener.Options>({ event: Events.ContextMenuCommandSuccess })
 export class ContextMenuCommandSuccessListener extends Listener<
@@ -14,7 +13,7 @@ export class ContextMenuCommandSuccessListener extends Listener<
 	}
 
 	public override onLoad() {
-		this.enabled = (this.container.logger as Logger).level <= LogLevel.Debug;
+		this.enabled = isDebugLogging();
 
 		return super.onLoad();
 	}

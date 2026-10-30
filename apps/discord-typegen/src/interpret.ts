@@ -18,17 +18,13 @@ import {
 	recordOverrides,
 	wrap,
 } from './evidence';
+import { DEPENDENCY_MAP, IMPORT_ALL, IMPORT_DEFAULT, REQUIRE } from './metro-params';
 import { isComparison, landsOn, pendingDefault, presenceCheck } from './defaults';
 import { param, readSlot, undoSlotWrites, writeSlot } from './frame';
 import { UNKNOWN, member, spreadSources, targetOf } from './values';
 import intern from './intern';
 
 const ORIGINAL_NAME = /Original name: ([^,\s]+)/;
-
-const REQUIRE = 1;
-const IMPORT_DEFAULT = 2;
-const IMPORT_ALL = 3;
-const DEPENDENCY_MAP = 6;
 
 /**
  * @description Walks a function body in textual order, then every function it defines, recording evidence.

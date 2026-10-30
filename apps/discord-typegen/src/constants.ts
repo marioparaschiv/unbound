@@ -9,11 +9,12 @@ import type {
 } from './types';
 import type { Value } from './values';
 
+import { exportKey, indexReExports, MAX_HOPS } from './export-graph';
+
 /** Resolves an imported value to the literal it holds, or undefined when it is not a known constant. */
 export type ConstantLookup = (ref: ImportRef) => LiteralValue | undefined;
 
 const MAX_DEPTH = 4;
-const MAX_HOPS = 16;
 
 /**
  * @description Reads a walked value as a constant: a literal, or an object whose entries are constants.
@@ -49,13 +50,7 @@ export function constantOf(value: Value, depth: number = 0): ConstantValue | und
  */
 export function createConstantLookup(facts: ModuleFacts[]): ConstantLookup {
 	const modules = new Map(facts.map((module) => [module.moduleId, module]));
-	const reExports = new Map<string, ImportRef>();
-
-	for (const module of facts) {
-		for (const { exportName, target } of module.reExports) {
-			reExports.set(`${module.moduleId}:${exportName}`, target);
-		}
-	}
+	const reExports = indexReExports(facts);
 
 	function lookup(moduleId: number, path: string[], hops: number): LiteralValue | undefined {
 		const [head, ...rest] = path;
@@ -69,7 +64,7 @@ export function createConstantLookup(facts: ModuleFacts[]): ConstantLookup {
 			return walk(own, rest);
 		}
 
-		const reExport = reExports.get(`${moduleId}:${head}`);
+		const reExport = reExports.get(exportKey(moduleId, head));
 
 		if (reExport) {
 			return lookup(reExport.moduleId, [...reExport.name.split('.'), ...rest], hops + 1);

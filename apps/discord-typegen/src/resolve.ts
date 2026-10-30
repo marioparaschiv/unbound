@@ -1,12 +1,6 @@
-import type {
-	ComponentRecord,
-	ExportEntry,
-	ImportRef,
-	ModuleFacts,
-	ModuleSummary,
-	TargetRef,
-} from './types';
+import type { ComponentRecord, ExportEntry, ModuleFacts, ModuleSummary, TargetRef } from './types';
 
+import { exportKey, indexReExports, MAX_HOPS } from './export-graph';
 import { compare } from './naming';
 
 /** A target after cross-module resolution: a component of this build, a React Native host component, or a function. */
@@ -18,7 +12,6 @@ export type Resolved =
 export type Resolver = (target: TargetRef) => Resolved | undefined;
 
 const REACT_NATIVE_MARKERS = ['View', 'Text', 'StyleSheet', 'Platform', 'Pressable'];
-const MAX_HOPS = 16;
 
 /**
  * @description Finds the `react-native` package entry: a module without a source path exporting its core names.
@@ -55,30 +48,27 @@ export function createResolver(
 ): Resolver {
 	const byExport = new Map<string, ComponentRecord>();
 	const functionsByExport = new Map<string, ComponentRecord>();
-	const reExports = new Map<string, ImportRef>();
+	const reExports = indexReExports(facts);
 
 	for (const module of facts) {
 		for (const component of module.components) {
 			for (const name of component.exportNames) {
-				byExport.set(`${module.moduleId}:${name}`, component);
+				byExport.set(exportKey(module.moduleId, name), component);
 			}
 		}
 
 		for (const fn of module.functions) {
 			for (const name of fn.exportNames) {
-				functionsByExport.set(`${module.moduleId}:${name}`, fn);
+				functionsByExport.set(exportKey(module.moduleId, name), fn);
 			}
-		}
-
-		for (const { exportName, target } of module.reExports) {
-			reExports.set(`${module.moduleId}:${exportName}`, target);
 		}
 	}
 
 	function resolveImport(moduleId: number, name: string, hops: number): Resolved | undefined {
-		const component = byExport.get(`${moduleId}:${name}`);
-		const fn = functionsByExport.get(`${moduleId}:${name}`);
-		const reExport = reExports.get(`${moduleId}:${name}`);
+		const key = exportKey(moduleId, name);
+		const component = byExport.get(key);
+		const fn = functionsByExport.get(key);
+		const reExport = reExports.get(key);
 
 		if (hops > MAX_HOPS) return;
 
@@ -114,7 +104,7 @@ export function createResolver(
 
 		const member = owner.component.statics.find((item) => item.name === name.slice(dot + 1));
 
-		return member?.target ? resolve(member.target, hops + 1) : undefined;
+		return member?.kind === 'target' ? resolve(member.target, hops + 1) : undefined;
 	}
 
 	function resolve(target: TargetRef, hops: number = 0): Resolved | undefined {
