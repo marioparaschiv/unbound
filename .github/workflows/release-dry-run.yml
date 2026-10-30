@@ -1,0 +1,35 @@
+name: Weekly release dry run
+
+on:
+    schedule:
+        - cron: '13 6 * * 2'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+jobs:
+    stable:
+        name: Stable release
+        if: github.repository == 'marioparaschiv/unbound'
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+            actions: read
+        uses: ./.github/workflows/loader-build.yml
+        with:
+            release: true
+            release_dry_run: true
+            is_testflight: false
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
