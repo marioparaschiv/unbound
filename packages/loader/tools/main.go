@@ -39,6 +39,8 @@ func run(args []string) error {
 		return runReleaseCandidate(args[1:])
 	case "release-names":
 		return runReleaseNames(args[1:])
+	case "sbom":
+		return runSBOM(args[1:])
 	case "publish-loader-releases":
 		return runPublishLoaderReleases(args[1:])
 	case "generate-loader-changelog":

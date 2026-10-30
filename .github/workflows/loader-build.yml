@@ -612,6 +612,15 @@ jobs:
                     fi
                   done
 
+            - name: Write the software bill of materials
+              if: needs.resolve-source.outputs.is_testflight != 'true'
+              env:
+                  IOS_DEB_FILENAME: ${{ needs.ios.outputs.deb_filename }}
+              run: |
+                  set -euo pipefail
+                  loader_version=$(dpkg-deb -f "release-assets/$IOS_DEB_FILENAME" Version)
+                  go run ./tools sbom --version "$loader_version" --commit "$GITHUB_SHA" --output release-assets/loader-sbom.spdx.json
+
             - name: Show what the release would publish
               if: inputs.release_dry_run == true
               env:
@@ -652,6 +661,7 @@ jobs:
                       packages/loader/release-assets/${{ needs.ios.outputs.ipa_filename }}
                       packages/loader/release-assets/${{ needs.ios.outputs.simulator_filename }}
                       packages/loader/release-assets/astral-ios-symbols.zip
+                      packages/loader/release-assets/loader-sbom.spdx.json
                   generate_release_notes: true
                   make_latest: false
                   fail_on_unmatched_files: true
@@ -667,6 +677,7 @@ jobs:
                       packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
                       packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
                       packages/loader/release-assets/astral-android-symbols.zip
+                      packages/loader/release-assets/loader-sbom.spdx.json
                   generate_release_notes: true
                   make_latest: false
                   fail_on_unmatched_files: true
@@ -691,7 +702,8 @@ jobs:
                     "release-assets/${{ needs.ios.outputs.ipa_filename }}" \
                     "release-assets/${{ needs.ios.outputs.simulator_filename }}" \
                     "release-assets/${{ needs.android.outputs.module_filename }}" \
-                    "release-assets/${{ needs.android.outputs.patched_filename }}"
+                    "release-assets/${{ needs.android.outputs.patched_filename }}" \
+                    release-assets/loader-sbom.spdx.json
 
             - name: Publish TestFlight prerelease
               if: needs.resolve-source.outputs.is_testflight == 'true' && inputs.release_dry_run != true
