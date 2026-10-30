@@ -115,6 +115,7 @@ jobs:
         outputs:
             module_filename: ${{ steps.collect.outputs.module_filename }}
             module_url: ${{ steps.upload-module.outputs.artifact-url }}
+            attested: ${{ steps.attestation-key.outputs.present }}
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -122,6 +123,16 @@ jobs:
                   persist-credentials: false
                   submodules: recursive
                   fetch-depth: 1
+
+            - name: Check for the attestation key
+              id: attestation-key
+              run: |
+                  if [ -n "$ATTESTATION_PK" ]; then
+                      echo "present=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "present=false" >> "$GITHUB_OUTPUT"
+                      echo "::notice title=Unattested build::This run has no attestation key, so the module refuses to start and the smoke test is skipped."
+                  fi
 
             - name: Setup Java
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
@@ -416,7 +427,8 @@ jobs:
 
     smoke:
         name: Smoke test patched Discord
-        needs: patch-discord
+        needs: [build-module, patch-discord]
+        if: needs.build-module.outputs.attested == 'true'
         runs-on: ubuntu-26.04
         timeout-minutes: 20
         permissions:

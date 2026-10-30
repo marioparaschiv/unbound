@@ -540,8 +540,9 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 	}
 	smoke := android.job(t, "smoke")
 	requireNeeds(t, "smoke", smoke, "patch-discord")
-	if smoke.If != "" || smoke.ContinueOnError {
-		t.Fatalf("the Android smoke test must run and fail the build every time, runs if %q", smoke.If)
+	requireNeeds(t, "smoke", smoke, "build-module")
+	if smoke.If != "needs.build-module.outputs.attested == 'true'" || smoke.ContinueOnError {
+		t.Fatalf("the Android smoke test must fail the build whenever the module is attested, runs if %q", smoke.If)
 	}
 	runner := smoke.stepUsing(t, "reactivecircus/android-emulator-runner@")
 	if !regexp.MustCompile(`@[0-9a-f]{40}$`).MatchString(runner.Uses) {
