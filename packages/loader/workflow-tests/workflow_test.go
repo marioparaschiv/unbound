@@ -189,7 +189,7 @@ func TestParsedDkryptStepsShareOnePinnedRelease(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pinned := regexp.MustCompile(`^castdrian/dkrypt@v[0-9]+\.[0-9]+\.[0-9]+$`)
+	pinned := regexp.MustCompile(`^castdrian/dkrypt@[0-9a-f]{40}$`)
 	refs := map[string]bool{}
 	for _, entry := range entries {
 		if filepath.Ext(entry.Name()) != ".yml" {
@@ -201,7 +201,7 @@ func TestParsedDkryptStepsShareOnePinnedRelease(t *testing.T) {
 					continue
 				}
 				if !pinned.MatchString(step.Uses) {
-					t.Fatalf("%s %s %q must use a released version of the dkrypt action, uses %q", entry.Name(), jobName, step.Name, step.Uses)
+					t.Fatalf("%s %s %q must pin the dkrypt action to a commit, uses %q", entry.Name(), jobName, step.Name, step.Uses)
 				}
 				if step.With["api-key"] != "${{ secrets.DKRYPT_API_KEY }}" {
 					t.Fatalf("%s %s %q must authenticate with the DKRYPT_API_KEY secret", entry.Name(), jobName, step.Name)

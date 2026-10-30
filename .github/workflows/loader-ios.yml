@@ -280,7 +280,7 @@ jobs:
             - name: Decrypt the source ipa
               id: dkrypt
               if: inputs.source_ipa_artifact == '' && inputs.ipa_url == ''
-              uses: castdrian/dkrypt@v1.1.1
+              uses: castdrian/dkrypt@86270418b5f3eaf22229dd0682b9aa5e0dc99bd5
               with:
                   api-url: ${{ inputs.dkrypt_base_url }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}

@@ -48,7 +48,7 @@ jobs:
 
             - name: Resolve the latest TestFlight build
               id: testflight
-              uses: castdrian/dkrypt@v1.1.1
+              uses: castdrian/dkrypt@86270418b5f3eaf22229dd0682b9aa5e0dc99bd5
               with:
                   api-url: ${{ vars.DKRYPT_BASE_URL || 'https://ipa.dylib.dev' }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}
