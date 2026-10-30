@@ -446,24 +446,49 @@ func (selection fileSelection) withExtensions(extensions ...string) []string {
 	return files
 }
 
+type kotlinProject struct {
+	directory string
+	module    string
+}
+
+var kotlinProjects = []kotlinProject{{"android", ":module"}, {"manager", ":app"}}
+
 func runKotlinFormatter(root string, check bool, files []string) error {
-	task := ":module:ktlintFormat"
+	task := ":ktlintFormat"
 	if check {
-		task = ":module:ktlintCheck"
+		task = ":ktlintCheck"
 	}
-	if len(files) == 0 {
-		return runGradle(root, task)
+	for _, project := range kotlinProjects {
+		if len(files) == 0 {
+			if err := runGradle(root, project.directory, project.module+task); err != nil {
+				return err
+			}
+			continue
+		}
+		prefix := filepath.Join(root, project.directory) + string(filepath.Separator)
+		var owned []string
+		for _, file := range files {
+			if strings.HasPrefix(file, prefix) {
+				owned = append(owned, file)
+			}
+		}
+		if len(owned) == 0 {
+			continue
+		}
+		if err := runGradle(root, project.directory, project.module+task, "-PktlintFiles="+strings.Join(owned, ",")); err != nil {
+			return err
+		}
 	}
-	return runGradle(root, task, "-PktlintFiles="+strings.Join(files, ","))
+	return nil
 }
 
 func runKotlinLinter(root string) error {
-	return runGradle(root, ":module:ktlintCheck")
+	return runKotlinFormatter(root, true, nil)
 }
 
-func runGradle(root, task string, arguments ...string) error {
+func runGradle(root, directory, task string, arguments ...string) error {
 	command := exec.Command("./gradlew", append([]string{"--quiet", task}, arguments...)...)
-	command.Dir = filepath.Join(root, "android")
+	command.Dir = filepath.Join(root, directory)
 	command.Env = androidEnvironment()
 	var output bytes.Buffer
 	command.Stdout = &output

@@ -1,0 +1,233 @@
+[
+	{
+		"tag_name": "web-v0.10.0",
+		"name": "web: v0.10.0",
+		"draft": true,
+		"prerelease": false,
+		"created_at": "2026-10-25T14:50:51Z",
+		"published_at": null,
+		"body": "## [0.10.0](https://github.com/marioparaschiv/unbound/compare/web-v0.9.0...web-v0.10.0) (2026-10-25)\n\n",
+		"assets": []
+	},
+	{
+		"tag_name": "loader-v353.1-android-alpha",
+		"name": "loader-v353.1-android-alpha",
+		"draft": false,
+		"prerelease": true,
+		"created_at": "2026-10-27T13:37:37Z",
+		"published_at": "2026-10-27T15:41:00Z",
+		"body": "<!-- Release notes generated using configuration in .github/release.yml at main -->\n\n## What's Changed",
+		"assets": [
+			{
+				"name": "app.unbound.android.lsposed.apk",
+				"content_type": "application/vnd.android.package-archive",
+				"size": 1405906,
+				"digest": "sha256:ec26c32a0cecef851509439c5fc7371919239cbda74352e1b7b2b09c130ed05f",
+				"created_at": "2026-10-27T15:41:02Z",
+				"updated_at": "2026-10-27T15:41:02Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.1-android-alpha/app.unbound.android.lsposed.apk"
+			},
+			{
+				"name": "Unbound-alpha.apks",
+				"content_type": "application/octet-stream",
+				"size": 144988812,
+				"digest": "sha256:8bf11167990c1450ae24657d106e2f98f65c22e8cc7800ad92cacd5997555661",
+				"created_at": "2026-10-27T15:41:02Z",
+				"updated_at": "2026-10-27T15:41:07Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.1-android-alpha/Unbound-alpha.apks"
+			},
+			{
+				"name": "unbound-android-symbols.zip",
+				"content_type": "application/zip",
+				"size": 14052291,
+				"digest": "sha256:c46c46fdbe07399e36a325a2cd86964d1f15997dd7d27dd8c85a1e87ae2726e7",
+				"created_at": "2026-10-27T15:41:02Z",
+				"updated_at": "2026-10-27T15:41:03Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.1-android-alpha/unbound-android-symbols.zip"
+			}
+		]
+	},
+	{
+		"tag_name": "loader-v353.0_119349",
+		"name": "loader-v353.0_119349",
+		"draft": false,
+		"prerelease": true,
+		"created_at": "2026-10-27T13:37:37Z",
+		"published_at": "2026-10-27T15:33:02Z",
+		"body": "<!-- Release notes generated using configuration in .github/release.yml at main -->\n\n## What's Changed",
+		"assets": [
+			{
+				"name": "app.unbound.ios_1.0.0_iphoneos-arm64.deb",
+				"content_type": "application/x-debian-package",
+				"size": 681770,
+				"digest": "sha256:2ff23cb77de8131031b6c90ca4d930f544a733391ec1307a03902bd727c477ed",
+				"created_at": "2026-10-27T15:33:04Z",
+				"updated_at": "2026-10-27T15:33:04Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0_119349/app.unbound.ios_1.0.0_iphoneos-arm64.deb"
+			},
+			{
+				"name": "unbound-ios-simulator.zip",
+				"content_type": "application/zip",
+				"size": 102445837,
+				"digest": "sha256:4d24305bcc1cd1a3db2d8d0382415cab4506214c80e98edb760b22a2d004215e",
+				"created_at": "2026-10-27T15:33:04Z",
+				"updated_at": "2026-10-27T15:33:12Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0_119349/unbound-ios-simulator.zip"
+			},
+			{
+				"name": "unbound-ios-symbols.zip",
+				"content_type": "application/zip",
+				"size": 11532580,
+				"digest": "sha256:f357f6134f9478b738362a6f19d78a0768ef0e2b6932632dc9a2f7e1e0a69bad",
+				"created_at": "2026-10-27T15:33:04Z",
+				"updated_at": "2026-10-27T15:33:06Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0_119349/unbound-ios-symbols.zip"
+			},
+			{
+				"name": "Unbound.ipa",
+				"content_type": "application/octet-stream",
+				"size": 102789592,
+				"digest": "sha256:9a6fc342d43c52b8de70d0e4477e1f76e7dc5cc963df765027f69dc6ed8c48a5",
+				"created_at": "2026-10-27T15:33:04Z",
+				"updated_at": "2026-10-27T15:33:08Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0_119349/Unbound.ipa"
+			}
+		]
+	},
+	{
+		"tag_name": "avd-snapshot-20261027",
+		"name": "Provisioned AVD snapshot (2026-10-27)",
+		"draft": false,
+		"prerelease": true,
+		"created_at": "2026-10-27T21:16:29Z",
+		"published_at": "2026-10-27T21:45:29Z",
+		"body": "A rooted, Xposed-ready snapshot of the `unbound_root` dev AVD (`system-images;android-35;google_apis;arm64-v8a`, Pixel 7 profile), so a new AVD can skip the manual rooting steps.\n\n```bash",
+		"assets": [
+			{
+				"name": "unbound-avd.tar",
+				"content_type": "application/x-tar",
+				"size": 31380480,
+				"digest": "sha256:f24c7150fbcfee812a6b01413bf16814a37de4bf34c7dd5b1c5b4b156056c94d",
+				"created_at": "2026-10-27T21:45:20Z",
+				"updated_at": "2026-10-27T21:45:28Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/avd-snapshot-20261027/unbound-avd.tar"
+			}
+		]
+	},
+	{
+		"tag_name": "loader-v353.0_119038",
+		"name": "loader-v353.0_119038",
+		"draft": false,
+		"prerelease": true,
+		"created_at": "2026-10-26T20:39:28Z",
+		"published_at": "2026-10-26T20:41:55Z",
+		"body": "<!-- Release notes generated using configuration in .github/release.yml at main -->\n\n## What's Changed",
+		"assets": [
+			{
+				"name": "app.unbound.ios_1.0.0_iphoneos-arm64.deb",
+				"content_type": "application/x-debian-package",
+				"size": 586662,
+				"digest": "sha256:644f14178242cbb7b402ecc352bb116e0d4f50a9c48698aff2b65a2e98f3d63e",
+				"created_at": "2026-10-26T20:41:57Z",
+				"updated_at": "2026-10-26T20:41:57Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0_119038/app.unbound.ios_1.0.0_iphoneos-arm64.deb"
+			},
+			{
+				"name": "unbound-ios-simulator.zip",
+				"content_type": "application/zip",
+				"size": 102124593,
+				"digest": "sha256:5d9ca587114e5dc27bc35fbee2745be9a915af96870c9c49f8d85a61a9edd766",
+				"created_at": "2026-10-26T20:41:57Z",
+				"updated_at": "2026-10-26T20:42:02Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0_119038/unbound-ios-simulator.zip"
+			},
+			{
+				"name": "Unbound.ipa",
+				"content_type": "application/octet-stream",
+				"size": 102468175,
+				"digest": "sha256:98cc30556f5790838b7b0e95d38b0a4e92648cf572f1a8291b8725f8f1a7178d",
+				"created_at": "2026-10-26T20:41:57Z",
+				"updated_at": "2026-10-26T20:42:01Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0_119038/Unbound.ipa"
+			}
+		]
+	},
+	{
+		"tag_name": "loader-v353.0-android-alpha",
+		"name": "loader-v353.0-android-alpha",
+		"draft": false,
+		"prerelease": true,
+		"created_at": "2026-10-26T20:47:49Z",
+		"published_at": "2026-10-26T20:54:40Z",
+		"body": "<!-- Release notes generated using configuration in .github/release.yml at main -->\n\n## What's Changed",
+		"assets": [
+			{
+				"name": "app.unbound.android.lsposed.apk",
+				"content_type": "application/vnd.android.package-archive",
+				"size": 1298702,
+				"digest": "sha256:9220087ea7700fed7efae01f71abd145f274167c2604f3e0df08ef5bfa8046bb",
+				"created_at": "2026-10-26T20:54:42Z",
+				"updated_at": "2026-10-26T20:54:42Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0-android-alpha/app.unbound.android.lsposed.apk"
+			},
+			{
+				"name": "Unbound-alpha.apks",
+				"content_type": "application/octet-stream",
+				"size": 145523727,
+				"digest": "sha256:27e900683e51dbf2d1dd1ff64c476e35e5ecb2d204ba53abed2f0433bab4daf1",
+				"created_at": "2026-10-26T20:54:42Z",
+				"updated_at": "2026-10-26T20:54:53Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0-android-alpha/Unbound-alpha.apks"
+			}
+		]
+	},
+	{
+		"tag_name": "loader-v352.10-android-beta",
+		"name": "loader-v352.10-android-beta",
+		"draft": false,
+		"prerelease": true,
+		"created_at": "2026-10-26T20:39:28Z",
+		"published_at": "2026-10-26T20:47:42Z",
+		"body": "<!-- Release notes generated using configuration in .github/release.yml at main -->\n\n## What's Changed",
+		"assets": [
+			{
+				"name": "app.unbound.android.lsposed.apk",
+				"content_type": "application/vnd.android.package-archive",
+				"size": 1298702,
+				"digest": "sha256:9220087ea7700fed7efae01f71abd145f274167c2604f3e0df08ef5bfa8046bb",
+				"created_at": "2026-10-26T20:47:43Z",
+				"updated_at": "2026-10-26T20:47:43Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v352.10-android-beta/app.unbound.android.lsposed.apk"
+			},
+			{
+				"name": "Unbound-beta.apks",
+				"content_type": "application/octet-stream",
+				"size": 145587119,
+				"digest": "sha256:7662b5983d391ab1d8b38a5e367eef77b28a70002f123bb8953092ebbbec8107",
+				"created_at": "2026-10-26T20:47:43Z",
+				"updated_at": "2026-10-26T20:47:47Z",
+				"browser_download_url": "https://github.com/marioparaschiv/unbound/releases/download/loader-v352.10-android-beta/Unbound-beta.apks"
+			}
+		]
+	},
+	{
+		"tag_name": "debugger-v0.8.1",
+		"name": "debugger: v0.8.1",
+		"draft": false,
+		"prerelease": false,
+		"created_at": "2026-10-25T14:50:51Z",
+		"published_at": "2026-10-25T14:51:03Z",
+		"body": "## [0.8.1](https://github.com/marioparaschiv/unbound/compare/debugger-v0.8.0...debugger-v0.8.1) (2026-10-25)\n\n",
+		"assets": []
+	},
+	{
+		"tag_name": "v0.9.0",
+		"name": "v0.9.0",
+		"draft": false,
+		"prerelease": false,
+		"created_at": "2026-10-23T12:06:19Z",
+		"published_at": "2026-10-23T12:06:41Z",
+		"body": "# [0.9.0](https://github.com/marioparaschiv/unbound/compare/v0.8.4...v0.9.0) (2026-10-23)\n\n",
+		"assets": []
+	}
+]

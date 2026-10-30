@@ -25,6 +25,11 @@
 			"dependencies": ["loader-core", "loader-bootstrap"]
 		},
 		{
+			"name": "loader-android-manager",
+			"path": "manager",
+			"kind": "android-app"
+		},
+		{
 			"name": "loader-bootstrap",
 			"path": "bootstrap",
 			"kind": "shared-bootstrap"
