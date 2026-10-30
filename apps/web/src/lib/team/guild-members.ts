@@ -1,8 +1,9 @@
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
 import { z } from 'zod';
 
-import type { DiscordId, DiscordUser } from '~/lib/authors/discord-users';
+import type { DiscordUser } from '~/lib/authors/discord-users';
 import { isBotTokenHost } from '~/lib/discord';
+import type { DiscordId } from '~/db/schema';
 import type { Env } from '~/lib/env';
 
 export type GuildMember = {

@@ -2,7 +2,7 @@ import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
 
 import { fetchDeveloper, fetchDevelopers } from '~/lib/developer-functions';
-import { marketplaceKey } from '~/queries/marketplace/listing';
+import { marketplaceKey } from '~/queries/keys';
 
 // Under the marketplace root: a write that changes the listing also changes who is credited where.
 const developersKey = [...marketplaceKey, 'developers'] as const;

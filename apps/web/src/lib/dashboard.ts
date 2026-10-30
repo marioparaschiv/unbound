@@ -11,6 +11,7 @@ import { LATEST_VERSION, getManifestType } from '~/lib/addons';
 import { OPEN_SUBMISSION_STATUSES } from '~/lib/submissions';
 import { submission, submissionSource } from '~/db/schema';
 import type { Caller, CallerUser } from '~/lib/api/caller';
+import { readReview } from '~/lib/submission-review';
 import { renderAddonIcon } from '~/lib/addon-icons';
 import { hasPermission } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
@@ -329,8 +330,9 @@ function compareAddons(a: DashboardAddon, b: DashboardAddon): number {
 
 function toTimelineEntry(record: SubmissionRecord): TimelineEntry[] {
 	const rule = OUTCOMES[record.status];
-	const outcome = rule === 'kept_decision' ? record.reviewDecision : rule;
-	const at = record.reviewedAt ?? record.submittedAt;
+	const review = readReview(record);
+	const outcome = rule === 'kept_decision' ? review?.decision : rule;
+	const at = review?.reviewedAt ?? record.submittedAt;
 
 	if (!outcome || !at) {
 		return [];

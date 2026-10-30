@@ -5,18 +5,15 @@ import {
 import { z } from 'zod';
 
 import { publishFirstParty } from '~/lib/first-party';
-import { requireCaller } from '~/lib/api/caller';
-import endpoint from '~/lib/api/endpoint';
+import { callerEndpoint } from '~/lib/api/endpoint';
 
-const publishFirstPartyEndpoint = endpoint(
+const publishFirstPartyEndpoint = callerEndpoint(
 	{
 		body: publishFirstPartyRequestSchema,
 		query: z.undefined(),
 		response: publishFirstPartyResponseSchema,
 	},
-	async ({ ctx, request, body }) => {
-		const caller = await requireCaller(ctx, request.headers);
-
+	async ({ ctx, body, caller }) => {
 		return publishFirstParty(ctx, caller, body);
 	},
 );

@@ -12,9 +12,8 @@ import { submissionPreviewResponseSchema } from '@unbound-app/contracts/review';
 import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 
 import { createBrowserClient } from '~/lib/api/browser-client';
-import { dashboardQuery } from '~/queries/dashboard/dashboard';
 import { getSubmitOverview } from '~/lib/publishing';
-import { reviewKey } from '~/queries/review/review';
+import { invalidate } from '~/queries/invalidate';
 
 /** The pinned addon directory a preview reads and a submission publishes. */
 export type PreviewRequest = Omit<CreateSubmissionRequest, 'details'>;
@@ -132,14 +131,7 @@ export function createSubmissionMutation() {
 			return submission;
 		},
 		onSuccess: (_submission, _request, _result, context) =>
-			Promise.all([
-				// `/submit` goes to the dashboard next, so a cached copy refetches now, not after it renders.
-				context.client.invalidateQueries({
-					queryKey: dashboardQuery().queryKey,
-					refetchType: 'all',
-				}),
-				context.client.invalidateQueries({ queryKey: reviewKey }),
-			]),
+			invalidate(context.client, 'submission'),
 	});
 }
 

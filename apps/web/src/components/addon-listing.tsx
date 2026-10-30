@@ -1,10 +1,10 @@
 import { IconMagnifierMinus, IconPalette, IconPlug, IconPlus, IconXmark } from 'nucleo-micro-bold';
+import { Link, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
-import { Link, useRouteContext } from '@tanstack/react-router';
 import type { AddonSort } from '@unbound-app/contracts/addons';
+import { useCallback, useMemo, useState } from 'react';
 import debounce from '@unbound-app/utils/debounce';
 import type { ComponentType } from 'react';
-import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -15,13 +15,17 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from '~/components/ui/empty';
-import { filtersFromSearch, searchFromFilters, type AddonFilter } from '~/lib/addon-filters';
+import {
+	filtersFromSearch,
+	searchFromFilters,
+	type AddonFilter,
+	type MarketplaceSearch,
+} from '~/lib/addon-filters';
 import { TagList } from '~/components/addon-filters/filter-parts';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import FilterBar from '~/components/addon-filters/filter-bar';
 import { listingQuery } from '~/queries/marketplace/listing';
 import SortMenu from '~/components/addon-filters/sort-menu';
-import type { MarketplaceSearch } from '~/lib/marketplace';
 import type { CssVariables } from '~/lib/css-variables';
 import PageHeader from '~/components/page-header';
 import AddonCard from '~/components/addon-card';
@@ -45,7 +49,6 @@ type ListingCopy = {
 type AddonListingProps = {
 	type: ListingType;
 	search: MarketplaceSearch;
-	onSearchChange: (search: MarketplaceSearch) => void;
 };
 
 type AddonResultsProps = {
@@ -186,8 +189,13 @@ function AddonResults({ type, search, onClearFilters }: AddonResultsProps) {
 	);
 }
 
-function AddonListing({ type, search, onSearchChange }: AddonListingProps) {
+function AddonListing({ type, search }: AddonListingProps) {
 	const copy = COPY[type];
+	const navigate = useNavigate();
+	const onSearchChange = useCallback(
+		(next: MarketplaceSearch) => void navigate({ to: '.', search: next }),
+		[navigate],
+	);
 	const [searchInput, setSearchInput] = useState(search.q ?? '');
 	const filters = filtersFromSearch(search);
 

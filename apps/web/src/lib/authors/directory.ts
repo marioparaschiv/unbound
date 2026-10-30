@@ -3,11 +3,11 @@ import type { AddonType } from '@unbound-app/contracts/addons';
 import { z } from 'zod';
 
 import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';
-import type { DiscordId } from '~/lib/authors/discord-users';
+import { decodeCursor, encodeCursor } from '~/lib/keyset';
 import { AUTHOR_PAGE_SIZE } from '~/lib/addon-filters';
 import { listListedAddons } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
-import { ApiError } from '~/lib/api/errors';
+import type { DiscordId } from '~/db/schema';
 
 /** One author in the filter menu. */
 export type AuthorOption = {
@@ -92,14 +92,6 @@ function compareKeys([countA, nameA, idA]: SortKey, [countB, nameB, idB]: SortKe
 	);
 }
 
-function decodeCursor(cursor: string): SortKey {
-	try {
-		return CURSOR.parse(JSON.parse(Buffer.from(cursor, 'base64url').toString()));
-	} catch {
-		throw new ApiError('invalid_request', 'The cursor does not belong to this list.');
-	}
-}
-
 /**
  * @description Searches the authors credited by the newest version of a listed addon, one page at a time.
  * @param ctx The application context.
@@ -109,7 +101,7 @@ function decodeCursor(cursor: string): SortKey {
 export async function searchAuthors(ctx: AppContext, search: AuthorSearch): Promise<AuthorPage> {
 	const needle = search.q?.trim().toLowerCase() ?? '';
 	const ids = search.ids ? new Set<string>(search.ids) : undefined;
-	const after = search.cursor ? decodeCursor(search.cursor) : undefined;
+	const after = search.cursor ? decodeCursor(search.cursor, CURSOR) : undefined;
 	const found = (await loadEntries(ctx, search.type))
 		.filter((entry) => !ids || ids.has(entry.author.discordId))
 		.filter((entry) => !needle || matches(entry, needle))
@@ -125,10 +117,7 @@ export async function searchAuthors(ctx: AppContext, search: AuthorSearch): Prom
 			avatarUrl: author.avatarUrl,
 			count,
 		})),
-		nextCursor:
-			rest.length > AUTHOR_PAGE_SIZE && last
-				? Buffer.from(JSON.stringify(sortKey(last))).toString('base64url')
-				: null,
+		nextCursor: rest.length > AUTHOR_PAGE_SIZE && last ? encodeCursor(sortKey(last)) : null,
 		total: found.length,
 	};
 }

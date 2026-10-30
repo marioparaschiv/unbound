@@ -2,8 +2,8 @@ import { mutationOptions, queryOptions } from '@tanstack/react-query';
 import type { AnyRouter } from '@tanstack/react-router';
 
 import unwrapAuthResult from '~/queries/account/unwrap-auth-result';
-import { marketplaceKey } from '~/queries/marketplace/listing';
 import { getSession } from '~/lib/auth/session';
+import { marketplaceKey } from '~/queries/keys';
 import authClient from '~/lib/auth/client';
 
 /** The session's query key; the root `beforeLoad` reads it into `context.session`. */

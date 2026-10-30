@@ -453,13 +453,9 @@ export function createGitHubClient(env: Env, token: string | null) {
 	};
 }
 
-/**
- * @description Reads the user's linked GitHub token, refreshing it first when it has expired.
- * @param ctx The application context.
- * @param userId The user.
- * @returns The token, `undefined` when no GitHub account is linked; `github_not_linked` when GitHub refuses the refresh.
- */
-export async function getGitHubToken(ctx: AppContext, userId: string): Promise<string | undefined> {
+// Refreshes an expired token first. `undefined` when no GitHub account is linked; throws
+// `github_not_linked` when GitHub refuses the refresh.
+async function getGitHubToken(ctx: AppContext, userId: string): Promise<string | undefined> {
 	const linked = await ctx.db.query.account.findFirst({
 		where: { userId, providerId: 'github' },
 		columns: { id: true },
@@ -505,10 +501,31 @@ export async function connectGitHub(ctx: AppContext, userId: string): Promise<Gi
 	return createGitHubClient(ctx.env, token);
 }
 
+/**
+ * @description Builds a client for public reads that uses the user's GitHub token when one is linked.
+ * @param ctx The application context.
+ * @param userId The user.
+ * @returns A client for the user's token, or the app's anonymous client when no link exists or it expired.
+ */
+export async function connectGitHubIfLinked(
+	ctx: AppContext,
+	userId: string,
+): Promise<GitHubClient> {
+	try {
+		return createGitHubClient(ctx.env, (await getGitHubToken(ctx, userId)) ?? null);
+	} catch (error) {
+		if (!(error instanceof ApiError) || error.code !== 'github_not_linked') {
+			throw error;
+		}
+
+		return createGitHubClient(ctx.env, null);
+	}
+}
+
 export default {
 	gitBlobSha,
 	getGitHubAuthorization,
 	createGitHubClient,
-	getGitHubToken,
 	connectGitHub,
+	connectGitHubIfLinked,
 };

@@ -1,13 +1,10 @@
 import { addonResponseSchema, maintainersResponseSchema } from '@unbound-app/contracts/addons';
 import type { EditAddonRequest, ServeVersionRequest } from '@unbound-app/contracts/admin';
-import type { QueryClient } from '@tanstack/react-query';
 import { mutationOptions } from '@tanstack/react-query';
 
 import { submitAddonEdit, submitServeVersion } from '~/lib/admin-functions';
-import { adminAddonsKey } from '~/queries/admin-addons/admin-addons';
-import { adminUsersKey } from '~/queries/admin-users/admin-users';
 import { createBrowserClient } from '~/lib/api/browser-client';
-import { marketplaceKey } from '~/queries/marketplace/listing';
+import { invalidate } from '~/queries/invalidate';
 
 export type TransferAddonVariables = {
 	id: string;
@@ -24,15 +21,6 @@ export type EditAddonVariables = {
 	edit: EditAddonRequest;
 };
 
-// A user's admin page lists their addons, and the public listing shows what an addon serves.
-async function invalidateAddon(client: QueryClient) {
-	await Promise.all([
-		client.invalidateQueries({ queryKey: adminAddonsKey }),
-		client.invalidateQueries({ queryKey: adminUsersKey }),
-		client.invalidateQueries({ queryKey: marketplaceKey }),
-	]);
-}
-
 /**
  * @description Hides an addon from listings and update checks, then refreshes the pages that show it.
  * @returns Mutation options taking the addon id.
@@ -44,7 +32,7 @@ export function delistAddonMutation() {
 				params: { id },
 				response: addonResponseSchema,
 			}),
-		onSuccess: (_data, _id, _result, context) => invalidateAddon(context.client),
+		onSuccess: (_data, _id, _result, context) => invalidate(context.client, 'addon'),
 	});
 }
 
@@ -59,7 +47,7 @@ export function relistAddonMutation() {
 				params: { id },
 				response: addonResponseSchema,
 			}),
-		onSuccess: (_data, _id, _result, context) => invalidateAddon(context.client),
+		onSuccess: (_data, _id, _result, context) => invalidate(context.client, 'addon'),
 	});
 }
 
@@ -75,7 +63,7 @@ export function transferAddonMutation() {
 				body: { userId },
 				response: maintainersResponseSchema,
 			}),
-		onSuccess: (_data, _variables, _result, context) => invalidateAddon(context.client),
+		onSuccess: (_data, _variables, _result, context) => invalidate(context.client, 'addon'),
 	});
 }
 
@@ -87,7 +75,7 @@ export function serveVersionMutation() {
 	return mutationOptions({
 		mutationFn: ({ id, request }: ServeVersionVariables) =>
 			submitServeVersion({ data: { id, request } }),
-		onSuccess: (_data, _variables, _result, context) => invalidateAddon(context.client),
+		onSuccess: (_data, _variables, _result, context) => invalidate(context.client, 'addon'),
 	});
 }
 
@@ -98,7 +86,7 @@ export function serveVersionMutation() {
 export function editAddonMutation() {
 	return mutationOptions({
 		mutationFn: ({ id, edit }: EditAddonVariables) => submitAddonEdit({ data: { id, edit } }),
-		onSuccess: (_data, _variables, _result, context) => invalidateAddon(context.client),
+		onSuccess: (_data, _variables, _result, context) => invalidate(context.client, 'addon'),
 	});
 }
 

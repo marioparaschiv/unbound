@@ -1,15 +1,12 @@
 import { addonResponseSchema } from '@unbound-app/contracts/addons';
 import { z } from 'zod';
 
-import endpoint, { requireParam } from '~/lib/api/endpoint';
-import { requireCaller } from '~/lib/api/caller';
+import { callerEndpoint, requireParam } from '~/lib/api/endpoint';
 import { relistAddon } from '~/lib/addons';
 
-const relistAddonEndpoint = endpoint(
+const relistAddonEndpoint = callerEndpoint(
 	{ body: z.undefined(), query: z.undefined(), response: addonResponseSchema },
-	async ({ ctx, request, params }) => {
-		const caller = await requireCaller(ctx, request.headers);
-
+	async ({ ctx, params, caller }) => {
 		return relistAddon(ctx, caller, requireParam(params, 'id'));
 	},
 );

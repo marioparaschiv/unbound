@@ -2,11 +2,11 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import { refreshDiscordProfiles, startProfileRefresher } from '~/lib/authors/profiles';
-import type { DiscordId } from '~/lib/authors/discord-users';
 import type { ManifestAuthor } from '~/lib/authors/resolve';
 import { loadAuthors } from '~/lib/authors/resolve';
 import { discordProfile, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
+import type { DiscordId } from '~/db/schema';
 
 import { createTestContext, signInWithDiscord } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';

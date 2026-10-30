@@ -2,12 +2,12 @@ import { listAddonsResponseSchema, type ListAddonsQuery } from '@unbound-app/con
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
-import type { DiscordId } from '~/lib/authors/discord-users';
 import listAddonsEndpoint from '~/endpoints/list-addons';
 import { searchAuthors } from '~/lib/authors/directory';
 import { addon, addonTag, tag } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import { createApiClient } from '~/api/client';
+import type { DiscordId } from '~/db/schema';
 import { listTags } from '~/lib/addon-tags';
 import { listAddons } from '~/lib/addons';
 import type { Api } from '~/api';

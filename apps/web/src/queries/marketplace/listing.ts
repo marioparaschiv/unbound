@@ -3,15 +3,13 @@ import type { LoaderFnContext } from '@tanstack/react-router';
 import { infiniteQueryOptions } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 
-import { fetchMarketplacePage, type MarketplaceSearch } from '~/lib/marketplace';
+import { sortOrder, splitList, type MarketplaceSearch } from '~/lib/addon-filters';
 import { pickedAuthorsQuery } from '~/queries/marketplace/authors';
-import { sortOrder, splitList } from '~/lib/addon-filters';
+import { fetchMarketplacePage } from '~/lib/marketplace';
 import { tagsQuery } from '~/queries/marketplace/tags';
+import { marketplaceKey } from '~/queries/keys';
 
 type LoaderCause = LoaderFnContext['cause'];
-
-/** Every marketplace query key starts with this, so invalidating it refreshes the listings, tags and authors. */
-export const marketplaceKey = ['marketplace'] as const;
 
 /**
  * @description The `/plugins` or `/themes` listing as an infinite query, one cache entry per URL search.
@@ -72,4 +70,4 @@ export async function prefetchListing(
 	]);
 }
 
-export default { marketplaceKey, listingQuery, prefetchListing };
+export default { listingQuery, prefetchListing };

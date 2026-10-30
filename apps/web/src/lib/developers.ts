@@ -1,18 +1,19 @@
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
 import { z } from 'zod';
 
-import { compareGroups, TEAM_GROUPS, type StaffRole, type TeamGroup } from '~/lib/team/roles';
 import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';
 import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
 import { readTeamMembers, type TeamMemberRow } from '~/lib/team/snapshot';
+import type { DiscordId, StaffRole, TeamGroup } from '~/db/schema';
 import { getBannerUrl, getGuildBannerUrl } from '~/lib/discord';
-import type { DiscordId } from '~/lib/authors/discord-users';
+import { decodeCursor, encodeCursor } from '~/lib/keyset';
 import { readProfiles } from '~/lib/authors/profiles';
+import { compareGroups } from '~/lib/team/roles';
 import { listListedAddons } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
-import { ApiError } from '~/lib/api/errors';
+import { TEAM_GROUPS } from '~/db/team-groups';
 
-export type { TeamGroup } from '~/lib/team/roles';
+export type { TeamGroup } from '~/db/schema';
 
 export type DevelopersQuery = {
 	/** Case-insensitive name/alias match; empty for all. */
@@ -176,18 +177,6 @@ function compareKeys(
 	);
 }
 
-function encodeCursor(key: SortKey): string {
-	return Buffer.from(JSON.stringify(key)).toString('base64url');
-}
-
-function decodeCursor(cursor: string): SortKey {
-	try {
-		return CURSOR.parse(JSON.parse(Buffer.from(cursor, 'base64url').toString()));
-	} catch {
-		throw new ApiError('invalid_request', 'The cursor does not belong to this list.');
-	}
-}
-
 /**
  * @description Lists one page of the Team: everyone holding a team role in the Unbound Discord, then
  * the other Discord ids credited by the newest version of a listed addon.
@@ -200,7 +189,7 @@ export async function listDevelopers(
 	query: DevelopersQuery,
 ): Promise<DevelopersPage> {
 	const pageSize = ctx.env.DEVELOPER_LIST_PAGE_SIZE;
-	const after = query.cursor ? decodeCursor(query.cursor) : undefined;
+	const after = query.cursor ? decodeCursor(query.cursor, CURSOR) : undefined;
 	const found = [...(await loadPeople(ctx)).values()]
 		.filter((person) => !query.search || matches(person, query.search))
 		.filter((person) => !after || compareKeys(sortKey(person), after) > 0)

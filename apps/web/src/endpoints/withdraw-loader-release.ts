@@ -2,15 +2,12 @@ import { loaderPlatformSchema, loaderReleaseSchema } from '@unbound-app/contract
 import { semverSchema } from '@unbound-app/contracts/manifest';
 import { z } from 'zod';
 
+import { callerEndpoint, parseParam } from '~/lib/api/endpoint';
 import { withdrawLoaderRelease } from '~/lib/loader-releases';
-import endpoint, { parseParam } from '~/lib/api/endpoint';
-import { requireCaller } from '~/lib/api/caller';
 
-const withdrawLoaderReleaseEndpoint = endpoint(
+const withdrawLoaderReleaseEndpoint = callerEndpoint(
 	{ body: z.undefined(), query: z.undefined(), response: loaderReleaseSchema },
-	async ({ ctx, request, params }) => {
-		const caller = await requireCaller(ctx, request.headers);
-
+	async ({ ctx, params, caller }) => {
 		return withdrawLoaderRelease(
 			ctx,
 			caller,

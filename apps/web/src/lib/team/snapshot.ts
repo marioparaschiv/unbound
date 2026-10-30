@@ -1,9 +1,9 @@
 import { notInArray, sql } from 'drizzle-orm';
 
-import type { DiscordTeamGroup, StaffRole, TeamStanding } from '~/lib/team/roles';
-import type { DiscordId } from '~/lib/authors/discord-users';
+import type { DiscordId, DiscordTeamGroup, StaffRole } from '~/db/schema';
 import type { GuildMember } from '~/lib/team/guild-members';
 import { discordProfile, teamMember } from '~/db/schema';
+import type { TeamStanding } from '~/lib/team/roles';
 import type { AppContext } from '~/lib/context';
 
 /** A guild member holding a team role, with what their roles make them. */
