@@ -225,3 +225,24 @@ test('lists what the self-tests and settings checks saw wrong under their own he
 		'### Visual problems\n\n- iPhone SE, unbound.chat-bubbles: 1 bubbles look wrong: 9 reaches the left edge of the screen',
 	);
 });
+
+test('lists the plugins slowest to draw after a reload', () => {
+	const timed = (id: string, drawnMs: number): MeasuredCheck => ({
+		id,
+		behavior: 'pass',
+		lifecycle: 'pass',
+		evidence: [],
+		metrics: { stopMs: 0, startMs: 0, drawnMs, leakedHooks: 0 },
+	});
+	const summary = renderSummary([
+		{
+			device: emulator,
+			checks: [timed('unbound.fast', 40), timed('unbound.slow', 900)],
+			changes: [],
+		},
+	]);
+
+	expect(summary).toContain(
+		'### Placement time\n\n- Android Emulator, slowest to draw: unbound.slow 900 ms, unbound.fast 40 ms',
+	);
+});

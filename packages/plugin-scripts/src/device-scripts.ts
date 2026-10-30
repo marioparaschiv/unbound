@@ -16,6 +16,7 @@ export const cycleResultSchema = z.object({
 	hooksUpdated: z.number(),
 	stopMs: z.optional(z.number()),
 	startMs: z.optional(z.number()),
+	drawnMs: z.optional(z.number()),
 	selfTest: z.optional(z.object({ ok: z.boolean(), detail: z.string() })),
 	bundleHash: z.optional(z.string()),
 });
@@ -24,6 +25,7 @@ export type CycleResult = z.infer<typeof cycleResultSchema>;
 
 const CYCLE_SETTLE_MS = 300;
 const SELF_TEST_DELAY_MS = 1_000;
+const DRAWN_POLL_MS = 200;
 
 /** The log lines {@link pluginLogScript} and {@link toastLogScript} return. */
 export const logLinesSchema = z.array(z.string());
@@ -48,7 +50,7 @@ type ReactFiber = {
 
 type StoredMessages = { toArray?: () => DeviceMessage[] } | undefined;
 
-function runCycle(id: string, settleMs: number, selfTestDelayMs: number) {
+function runCycle(id: string, settleMs: number, selfTestDelayMs: number, drawnPollMs: number) {
 	const manager = unbound.plugins;
 	const read = unbound.native?.getNativeResources;
 	const hooks = () => read?.()?.hooks ?? 0;
@@ -127,9 +129,39 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number) {
 		result.restarted = Boolean(entity?.started);
 		result.hooksAfter = hooks();
 
+		let watching = false;
+
+		async function watchDrawn(since: number) {
+			while (watching) {
+				const instance = manager.getEntity(id)?.instance;
+
+				try {
+					const report = (await instance?.selfTest?.()) as {
+						ok?: unknown;
+						nothingDrawn?: unknown;
+					} | null;
+
+					if (report?.ok && !report.nothingDrawn) {
+						result.drawnMs = Date.now() - since;
+
+						return;
+					}
+				} catch {}
+
+				await new Promise((resolve) => setTimeout(resolve, drawnPollMs));
+			}
+		}
+
+		let drawn: Promise<void> = Promise.resolve();
+
 		if (result.restarted && entity) {
+			const reloading = Date.now();
+
 			try {
 				const update = await manager.reload(id, entity.bundle, entity.data);
+
+				watching = true;
+				drawn = watchDrawn(reloading);
 
 				if (!update.ok) result.updateError = message(update.error);
 			} catch (failure) {
@@ -144,6 +176,8 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number) {
 		result.updated = Boolean(updated?.started);
 		result.hooksUpdated = hooks();
 		await new Promise((resolve) => setTimeout(resolve, selfTestDelayMs));
+		watching = false;
+		await drawn;
 
 		const instance = updated?.instance;
 
@@ -171,7 +205,7 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number) {
  * @returns A script whose result is the {@link CycleResult} as JSON.
  */
 export function cycleScript(id: string): string {
-	return deviceScript(runCycle, id, CYCLE_SETTLE_MS, SELF_TEST_DELAY_MS);
+	return deviceScript(runCycle, id, CYCLE_SETTLE_MS, SELF_TEST_DELAY_MS, DRAWN_POLL_MS);
 }
 
 export const FIXTURE_MESSAGES = [

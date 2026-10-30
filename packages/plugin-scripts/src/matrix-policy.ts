@@ -92,6 +92,7 @@ export function checkFromCycle(result: CycleResult, screenshot?: string): Measur
 		metrics: {
 			stopMs: result.stopMs ?? 0,
 			startMs: result.startMs ?? 0,
+			...(result.drawnMs !== undefined ? { drawnMs: result.drawnMs } : {}),
 			leakedHooks:
 				Math.max(0, result.hooksAfter - result.hooksBefore) +
 				Math.max(0, result.hooksUpdated - Math.max(result.hooksAfter, result.hooksBefore)),
