@@ -14,8 +14,8 @@ mock.module('@unbound-app/api', () => ({
 }));
 
 const { cachedRegistration, grammarModuleUrl, loadBundledGrammar, registrationFromModule } =
-	await import('./grammar-files');
-const { SHIKI_LANGS_VERSION } = await import('./constants');
+	await import('~/grammar-files');
+const { SHIKI_LANGS_VERSION } = await import('~/constants');
 
 const langs = dirname(require.resolve('@shikijs/langs/package.json'));
 const realFetch = globalThis.fetch;

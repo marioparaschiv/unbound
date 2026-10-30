@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { applyFeatures } from './apply-features';
+import { applyFeatures } from '@unbound-plugins/shared/lifecycle/apply-features';
 
 describe('applyFeatures', () => {
 	test('removes features in reverse order', () => {

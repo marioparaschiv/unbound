@@ -3,7 +3,7 @@ import { Discord } from '@unbound-app/api/metro/components';
 import { View } from 'react-native';
 import { useEffect, useState } from 'react';
 
-import { parseTypedColor } from './typed-color';
+import { parseTypedColor, typedColorState } from '@unbound-plugins/shared/colors/typed-color';
 
 type ActionSheets = {
 	openLazy(component: Promise<{ default: unknown }>, key: string, props: object): void;
@@ -52,42 +52,57 @@ function openPicker(color: string, onSelect: (color: string) => void): boolean {
  * @returns The row.
  */
 function ColorRow({ label, color, fallbackColor, fallbackLabel, onChange }: ColorRowProps) {
-	const shown = color ?? fallbackColor;
+	const [typing, setTyping] = useState(false);
 	const [draft, setDraft] = useState(color ?? '');
+	const state = typedColorState(draft);
+	const shown = (typing && parseTypedColor(draft)) || color || fallbackColor;
 
 	useEffect(() => setDraft(color ?? ''), [color]);
 
 	function saveDraft() {
-		const typed = parseTypedColor(draft);
+		if (state === 'empty') onChange(undefined);
+		else if (state === 'complete') onChange(parseTypedColor(draft));
+		else return;
 
-		if (!draft.trim()) {
-			onChange(undefined);
-
-			return;
-		}
-
-		if (typed) onChange(typed);
-		else setDraft(color ?? '');
+		setTyping(false);
 	}
 
 	return (
 		<Discord.TableRow
 			label={label}
 			subLabel={
-				<View style={{ gap: 8 }}>
+				<View style={{ gap: 8, alignItems: 'flex-start' }}>
 					<Discord.Text variant='text-sm/medium' color='text-muted'>
-						{color ? 'Tap to pick a color, or type a hex code' : fallbackLabel}
+						{color ?? fallbackLabel}
 					</Discord.Text>
-					<Discord.TextInput
-						value={draft}
-						onChange={setDraft}
-						onEndEditing={saveDraft}
-						onSubmitEditing={saveDraft}
-						placeholder={fallbackColor}
-						autoCapitalize='characters'
-						autoCorrect={false}
-						maxLength={7}
-					/>
+					{typing ? (
+						<View style={{ alignSelf: 'stretch' }}>
+							<Discord.TextInput
+								value={draft}
+								onChange={setDraft}
+								onEndEditing={saveDraft}
+								onSubmitEditing={saveDraft}
+								placeholder={fallbackColor}
+								autoCapitalize='characters'
+								autoCorrect={false}
+								autoFocus
+								maxLength={7}
+								status={state === 'invalid' ? 'error' : undefined}
+								errorMessage={
+									state === 'invalid'
+										? 'Use six hex digits, like #5865F2.'
+										: undefined
+								}
+							/>
+						</View>
+					) : (
+						<Discord.Button
+							size='sm'
+							variant='tertiary'
+							text='Type a hex code'
+							onPress={() => setTyping(true)}
+						/>
+					)}
 				</View>
 			}
 			onPress={() => openPicker(shown, onChange)}

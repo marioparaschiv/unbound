@@ -3,8 +3,8 @@ import type { PluginContext } from '@unbound-app/api/native';
 
 import SettingsPanel from '~/components/settings-panel';
 import { subscribeAppearance } from '~/theme';
-import { drawAndroidBubbles } from '~/android';
-import { drawIOSBubbles } from '~/ios';
+import { drawAndroidBubbles } from '~/android/bubbles';
+import { drawIOSBubbles } from '~/ios/bubbles';
 import { PLUGIN_NAME } from '~/constants';
 
 let dispose: () => void | Promise<void> = () => {};

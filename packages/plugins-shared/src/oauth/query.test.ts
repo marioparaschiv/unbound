@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { readQuery } from './query';
+import { readQuery } from '@unbound-plugins/shared/oauth/query';
 
 describe('readQuery', () => {
 	test('decodes keys and values, reading plus signs as spaces', () => {

@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 
 mock.module('~/constants', () => ({ Sound: { fallbackDuration: 3000, id: 1, url: 'sound.mp3' } }));
 
-const { createPlayer, soundDuration } = await import('./sound');
+const { createPlayer, soundDuration } = await import('~/sound');
 
 describe('soundDuration', () => {
 	test('reads iOS durations as seconds and Android ones as milliseconds', () => {

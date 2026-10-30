@@ -9,7 +9,7 @@ import {
 	parseNativeColorDescription,
 	roleColorAt,
 	roleColorRuns,
-} from './role-colors';
+} from '@unbound-plugins/shared/colors/role-colors';
 
 const holographic = {
 	primaryColor: '#112233',

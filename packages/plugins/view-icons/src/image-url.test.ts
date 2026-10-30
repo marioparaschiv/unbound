@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { normalizeImageUrl } from './image-url';
+import { normalizeImageUrl } from '~/image-url';
 
 test('requests a static image as WebP at the given size', () => {
 	expect(normalizeImageUrl('https://cdn.discordapp.com/avatars/1/abc.png?size=128', 4096)).toBe(

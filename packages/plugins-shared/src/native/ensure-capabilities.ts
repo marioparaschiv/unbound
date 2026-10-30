@@ -1,6 +1,6 @@
 import type { NativePluginBridge, NativePluginCapability } from '@unbound-app/api/native';
 
-import { recordSkip } from '../lifecycle/health';
+import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
 
 /**
  * @description Checks that the loader offers every native capability a feature uses, since a missing bridge is a stand-in whose methods throw.

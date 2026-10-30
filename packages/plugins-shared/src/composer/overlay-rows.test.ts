@@ -8,7 +8,7 @@ import {
 	showComposerRow,
 	slowmodeInset,
 	spaceBelow,
-} from './overlay-rows';
+} from '@unbound-plugins/shared/composer/overlay-rows';
 
 describe('composerRowTop', () => {
 	test('sits the lowest row right above the composer', () => {

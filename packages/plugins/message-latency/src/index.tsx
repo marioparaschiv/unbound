@@ -1,17 +1,17 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
-import ensureClasses from '@unbound-plugins/shared/native/ensure-classes';
+import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { patchMessageRowData } from '~/patches/message-row-data';
 import { subscribeMessageCreate } from '~/events/message-create';
 import { createAndroidIndicators } from '~/android/indicators';
-import { createMessageCells } from '~/native/message-cells';
+import { createMessageCells } from '~/ios/message-cells';
 import { createAndroidTooltips } from '~/android/tooltip';
 import SettingsPanel from '~/components/settings-panel';
-import { createTooltips } from '~/native/tooltip';
+import { createTooltips } from '~/ios/tooltip';
 import { createLatencyRecords } from '~/records';
 import { Theme, UserStore } from '~/modules';
 

@@ -3,7 +3,7 @@ import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
-import { createTagGradients } from '~/native/tag-gradient-renderer';
+import { createTagGradients } from '~/ios/tag-gradient-renderer';
 import { patchGetTagProperties } from '~/patches/get-tag-properties';
 import { createLabelAppearances } from '~/label-appearances';
 import { clearTagProblems, tagProblems } from '~/tag-problems';
@@ -18,6 +18,8 @@ import {
 
 let dispose = () => {};
 let settled = () => Promise.resolve();
+let gradientProblems: () => Promise<string[]> = () => Promise.resolve([]);
+let gradientsDrawn = () => 0;
 
 function start(context: PluginContext) {
 	const modules = { DiscordConstants, PermissionUtils, TagProperties, ChannelStore, GuildStore };
@@ -28,6 +30,8 @@ function start(context: PluginContext) {
 	const gradients = createTagGradients(context, appearances);
 
 	settled = gradients.settled;
+	gradientProblems = gradients.problems;
+	gradientsDrawn = gradients.drawn;
 	dispose = applyFeatures('More User Tags', [
 		() => gradients.start(),
 		() => patchGetTagProperties(context.platform, appearances),
@@ -42,8 +46,8 @@ function stop() {
 	return settled();
 }
 
-function selfTest() {
-	const problems = tagProblems();
+async function selfTest() {
+	const problems = [...tagProblems(), ...(await gradientProblems())];
 
 	if (problems.length) {
 		return {
@@ -52,7 +56,12 @@ function selfTest() {
 		};
 	}
 
-	return featureSelfTest();
+	const features = featureSelfTest();
+	const drawn = gradientsDrawn();
+
+	return drawn && features.ok
+		? { ...features, detail: `${features.detail}, ${drawn} tag gradients look right` }
+		: features;
 }
 
 export default {

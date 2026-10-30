@@ -5,8 +5,13 @@ import type {
 	NativeJavaValue,
 } from '@unbound-app/api/native';
 
-import { javaFlag, javaInt, javaNumber, javaReference } from './java-values';
-import { isCancellation } from '../cancellation';
+import {
+	javaFlag,
+	javaInt,
+	javaNumber,
+	javaReference,
+} from '@unbound-plugins/shared/native/android/java-values';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 
 export type ViewBridge = Pick<
 	NativeJavaBridge,

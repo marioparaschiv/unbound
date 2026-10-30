@@ -2,10 +2,10 @@ import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabiliti
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { drawnSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
-import ensureClasses from '@unbound-plugins/shared/native/ensure-classes';
+import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
-import { messageTextViewClass } from '@unbound-plugins/shared/native/text-attachments';
+import { messageTextViewClass } from '@unbound-plugins/shared/native/ios/text-attachments';
 
 import {
 	ChannelStore,
@@ -20,12 +20,12 @@ import {
 } from '~/modules';
 import { patchLottieAnimationView } from '~/patches/lottie-animation-view';
 import { patchNativeLottieView } from '~/patches/native-lottie-view';
-import { subscribeMessageStore } from '~/native/message-sync';
+import { subscribeMessageStore } from '~/ios/message-sync';
 import { createAndroidEmbeds } from '~/android/embeds';
 import { createNativeEmbeds } from '~/android/native-embeds';
 import { patchFastImage } from '~/patches/fast-image';
-import { hookMessageCells } from '~/native/cells';
-import { createSession } from '~/native/session';
+import { hookMessageCells } from '~/ios/cells';
+import { createSession } from '~/ios/session';
 import { emptyEmbeds } from '~/components/message-surface';
 
 let dispose: () => Promise<void> | undefined = () => undefined;

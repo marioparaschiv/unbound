@@ -1,8 +1,8 @@
-import { scanVisibleCells } from '~/native/visible-cells';
-import { cancelLayoutRefreshes } from '~/native/collections';
-import { clearRenderedCells } from '~/native/renderer';
+import { scanVisibleCells } from '~/ios/visible-cells';
+import { cancelLayoutRefreshes } from '~/ios/collections';
+import { clearRenderedCells } from '~/ios/renderer';
 import { selectedChannelId } from '~/selected-channel';
-import type { Session } from '~/native/session';
+import type { Session } from '~/ios/session';
 import { SelectedChannelStore } from '~/modules';
 
 /**

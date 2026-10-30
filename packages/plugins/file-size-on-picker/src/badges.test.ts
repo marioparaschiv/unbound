@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { formatBytes, sizeBadgesForRow, type MediaItemElement } from './badges';
+import { formatBytes, sizeBadgesForRow, type MediaItemElement } from '~/badges';
 
 function item(
 	key: string | null,

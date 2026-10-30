@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { tooltipPlacement } from './tooltip-placement';
+import { tooltipPlacement } from '~/tooltip-placement';
 
 describe('tooltipPlacement', () => {
 	test('sits above the indicator inside the window, pointing at its center', () => {

@@ -26,7 +26,7 @@ function byFilePath(path: string): Filter {
 
 void mock.module('@unbound-app/api', () => ({ metro: { findLazy, filters: { byFilePath } } }));
 
-const { whenAllLoaded, whenLoaded } = await import('./when-loaded');
+const { whenAllLoaded, whenLoaded } = await import('@unbound-plugins/shared/metro/when-loaded');
 
 function filter(): Filter {
 	return () => false;

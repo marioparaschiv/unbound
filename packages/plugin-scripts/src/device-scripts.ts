@@ -1,5 +1,7 @@
 import { z } from '@unbound-app/contracts/zod';
 
+import { deviceScript } from './device-script';
+
 export const cycleResultSchema = z.object({
 	id: z.string(),
 	installed: z.boolean(),
@@ -20,64 +22,156 @@ export const cycleResultSchema = z.object({
 
 export type CycleResult = z.infer<typeof cycleResultSchema>;
 
+const CYCLE_SETTLE_MS = 300;
+const SELF_TEST_DELAY_MS = 1_000;
+
 /** The log lines {@link pluginLogScript} and {@link toastLogScript} return. */
 export const logLinesSchema = z.array(z.string());
 
+type MatrixGlobal = typeof globalThis & {
+	__matrixSettingsProbe?: SettingsProbeState;
+};
+
+type SettingsProbeState = {
+	rendered: boolean;
+	error: string;
+	boundary: { _reactInternals?: ReactFiber } | null;
+};
+
+type ReactFiber = {
+	tag: number;
+	type: unknown;
+	memoizedProps?: { children?: unknown };
+	child?: ReactFiber | null;
+	sibling?: ReactFiber | null;
+};
+
+type StoredMessages = { toArray?: () => DeviceMessage[] } | undefined;
+
+function runCycle(id: string, settleMs: number, selfTestDelayMs: number) {
+	const manager = unbound.plugins;
+	const read = unbound.native?.getNativeResources;
+	const hooks = () => read?.()?.hooks ?? 0;
+	const settle = () => new Promise((resolve) => setTimeout(resolve, settleMs));
+	const message = (failure: unknown) =>
+		String(failure && (failure as Error).message ? (failure as Error).message : failure);
+	let entity = manager.getEntity(id);
+	const result: CycleResult = {
+		id,
+		installed: Boolean(entity),
+		wasStarted: Boolean(entity?.started),
+		error: '',
+		restarted: false,
+		updateError: '',
+		updated: false,
+		hooksBefore: 0,
+		hooksStopped: 0,
+		hooksAfter: 0,
+		hooksUpdated: 0,
+	};
+
+	return (async () => {
+		if (!entity) return JSON.stringify(result);
+
+		if (typeof entity.bundle === 'string') {
+			let hash = 0x811c9dc5;
+
+			for (let index = 0; index < entity.bundle.length; index++) {
+				hash = Math.imul(hash ^ entity.bundle.charCodeAt(index), 0x01000193);
+			}
+
+			result.bundleHash = `${(hash >>> 0).toString(16)}:${entity.bundle.length}`;
+		}
+
+		if (!result.wasStarted) {
+			try {
+				await manager.start(id);
+			} catch (failure) {
+				result.error = message(failure);
+			}
+
+			await settle();
+		}
+
+		const before = manager.errors.get(id);
+
+		result.hooksBefore = hooks();
+
+		const stopping = Date.now();
+
+		try {
+			await manager.stop(id);
+		} catch (failure) {
+			result.error = result.error || message(failure);
+		}
+
+		result.stopMs = Date.now() - stopping;
+		result.hooksStopped = hooks();
+
+		const starting = Date.now();
+
+		try {
+			await manager.start(id);
+		} catch (failure) {
+			result.error = result.error || message(failure);
+		}
+
+		result.startMs = Date.now() - starting;
+		await settle();
+
+		const after = manager.errors.get(id);
+
+		if (!result.error && after && after !== before) result.error = message(after);
+
+		entity = manager.getEntity(id);
+		result.restarted = Boolean(entity?.started);
+		result.hooksAfter = hooks();
+
+		if (result.restarted && entity) {
+			try {
+				const update = await manager.reload(id, entity.bundle, entity.data);
+
+				if (!update.ok) result.updateError = message(update.error);
+			} catch (failure) {
+				result.updateError = message(failure);
+			}
+
+			await settle();
+		}
+
+		const updated = manager.getEntity(id);
+
+		result.updated = Boolean(updated?.started);
+		result.hooksUpdated = hooks();
+		await new Promise((resolve) => setTimeout(resolve, selfTestDelayMs));
+
+		const instance = updated?.instance;
+
+		if (result.updated && typeof instance?.selfTest === 'function') {
+			try {
+				const report = (await instance.selfTest()) as {
+					ok?: unknown;
+					detail?: unknown;
+				} | null;
+
+				if (report)
+					result.selfTest = { ok: Boolean(report.ok), detail: String(report.detail) };
+			} catch (failure) {
+				result.selfTest = { ok: false, detail: message(failure) };
+			}
+		}
+
+		return JSON.stringify(result);
+	})();
+}
+
+/**
+ * @description Stops, starts and reloads a plugin on the device, counting its native hooks at each step and running its self-test after.
+ * @param id The plugin's id.
+ * @returns A script whose result is the {@link CycleResult} as JSON.
+ */
 export function cycleScript(id: string): string {
-	return `(async function () {
-	var manager = unbound.plugins;
-	var read = unbound.native && unbound.native.getNativeResources;
-	var hooks = function () { var counts = read ? read() : null; return counts ? counts.hooks : 0; };
-	var settle = function () { return new Promise(function (resolve) { setTimeout(resolve, 300); }); };
-	var message = function (failure) { return String(failure && failure.message ? failure.message : failure); };
-	var id = ${JSON.stringify(id)};
-	var entity = manager.getEntity(id);
-	var result = { id: id, installed: Boolean(entity), wasStarted: Boolean(entity && entity.started), error: '', restarted: false, updateError: '', updated: false, hooksBefore: 0, hooksStopped: 0, hooksAfter: 0, hooksUpdated: 0 };
-	if (!entity) return JSON.stringify(result);
-	if (typeof entity.bundle === 'string') {
-		var hash = 0x811c9dc5;
-		for (var index = 0; index < entity.bundle.length; index++) hash = Math.imul(hash ^ entity.bundle.charCodeAt(index), 0x01000193);
-		result.bundleHash = (hash >>> 0).toString(16) + ':' + entity.bundle.length;
-	}
-	if (!result.wasStarted) {
-		try { await manager.start(id); } catch (failure) { result.error = message(failure); }
-		await settle();
-	}
-	var before = manager.errors.get(id);
-	result.hooksBefore = hooks();
-	var stopping = Date.now();
-	try { await manager.stop(id); } catch (failure) { result.error = result.error || message(failure); }
-	result.stopMs = Date.now() - stopping;
-	result.hooksStopped = hooks();
-	var starting = Date.now();
-	try { await manager.start(id); } catch (failure) { result.error = result.error || message(failure); }
-	result.startMs = Date.now() - starting;
-	await settle();
-	var after = manager.errors.get(id);
-	if (!result.error && after && after !== before) result.error = message(after);
-	entity = manager.getEntity(id);
-	result.restarted = Boolean(entity && entity.started);
-	result.hooksAfter = hooks();
-	if (result.restarted) {
-		try {
-			var update = await manager.reload(id, entity.bundle, entity.data);
-			if (!update.ok) result.updateError = message(update.error);
-		} catch (failure) { result.updateError = message(failure); }
-		await settle();
-	}
-	var updated = manager.getEntity(id);
-	result.updated = Boolean(updated && updated.started);
-	result.hooksUpdated = hooks();
-	await new Promise(function (resolve) { setTimeout(resolve, 1000); });
-	var instance = updated && updated.instance;
-	if (result.updated && instance && typeof instance.selfTest === 'function') {
-		try {
-			var report = await instance.selfTest();
-			if (report) result.selfTest = { ok: Boolean(report.ok), detail: String(report.detail) };
-		} catch (failure) { result.selfTest = { ok: false, detail: message(failure) }; }
-	}
-	return JSON.stringify(result);
-})()`;
+	return deviceScript(runCycle, id, CYCLE_SETTLE_MS, SELF_TEST_DELAY_MS);
 }
 
 export const FIXTURE_MESSAGES = [
@@ -93,44 +187,131 @@ export const LAYOUT_FIXTURES = {
 	forwarded: 'Fixture forwarded text',
 };
 
+type BotMessages = {
+	createBotMessage(fields: {
+		channelId: string;
+		content: string;
+	}): DeviceMessage & Record<string, unknown>;
+};
+type MessageActions = { receiveMessage(channel: string, message: object): void };
+type CurrentUser = { id: string; avatar: string };
+
+function stageFixtures(
+	guild: string,
+	channel: string,
+	fixtures: typeof LAYOUT_FIXTURES,
+	messages: string[],
+) {
+	const { metro } = unbound;
+
+	metro
+		.findByProps<{ transitionToGuild(guild: string, channel: string): void }>(
+			'transitionToGuild',
+		)
+		.transitionToGuild(guild, channel);
+
+	return (async () => {
+		await new Promise((resolve) => setTimeout(resolve, 1500));
+
+		const actions = metro.findByProps<MessageActions>('sendMessage', 'receiveMessage');
+		const bot = metro.findByProps<BotMessages>('createBotMessage');
+		const me = metro.findStore<{ getCurrentUser(): CurrentUser }>('User').getCurrentUser();
+		const loaded = metro
+			.findStore<{ getMessages(channel: string): StoredMessages }>('Message')
+			.getMessages(channel);
+		const linked = (loaded?.toArray ? loaded.toArray() : [])
+			.filter((message) => message.author && !message.author.bot && /^\d+$/.test(message.id))
+			.pop();
+		const make = (fields: object) =>
+			Object.assign(
+				bot.createBotMessage({ channelId: channel, content: '' }),
+				{ flags: 0 },
+				fields,
+			);
+		const reference = (message: DeviceMessage, type: number) => ({
+			type,
+			channel_id: channel,
+			guild_id: guild,
+			message_id: message.id,
+		});
+		const original = make({ content: fixtures.original });
+		const image = `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=128`;
+
+		actions.receiveMessage(channel, original);
+
+		for (const message of [
+			make({
+				type: 19,
+				content: fixtures.reply,
+				message_reference: reference(original, 0),
+				referenced_message: original,
+			}),
+			make({
+				attachments: [
+					{
+						id: String(Date.now()),
+						filename: 'fixture.png',
+						url: image,
+						proxy_url: image,
+						width: 128,
+						height: 128,
+						content_type: 'image/png',
+						size: 4096,
+					},
+				],
+			}),
+			make({
+				message_reference: reference(original, 1),
+				message_snapshots: [
+					{
+						message: {
+							content: fixtures.forwarded,
+							timestamp: new Date().toISOString(),
+							type: 0,
+							embeds: [],
+							attachments: [],
+							flags: 0,
+						},
+					},
+				],
+			}),
+		]) {
+			actions.receiveMessage(channel, message);
+		}
+
+		for (const template of messages.filter(
+			(content) => linked || !content.includes('{message}'),
+		)) {
+			const content = template
+				.replace('{self}', me.id)
+				.replace('{guild}', guild)
+				.replace('{channel}', channel)
+				.replace('{message}', linked ? linked.id : '');
+
+			actions.receiveMessage(channel, bot.createBotMessage({ channelId: channel, content }));
+		}
+
+		await new Promise((resolve) => setTimeout(resolve, 1500));
+
+		return 'staged';
+	})();
+}
+
 export function fixtureScript(guild: string, channel: string): string {
-	return `(async function () {
-	var metro = unbound.metro;
-	metro.findByProps('transitionToGuild').transitionToGuild(${JSON.stringify(guild)}, ${JSON.stringify(channel)});
-	await new Promise(function (resolve) { setTimeout(resolve, 1500); });
-	var actions = metro.findByProps('sendMessage', 'receiveMessage');
-	var bot = metro.findByProps('createBotMessage');
-	var self = metro.findStore('User').getCurrentUser().id;
-	var loaded = metro.findStore('Message').getMessages(${JSON.stringify(channel)});
-	var linked = (loaded && loaded.toArray ? loaded.toArray() : []).filter(function (message) { return message.author && !message.author.bot && /^\\d+$/.test(message.id); }).pop();
-	var make = function (fields) { return Object.assign(bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: '' }), { flags: 0 }, fields); };
-	var reference = function (message, type) { return { type: type, channel_id: ${JSON.stringify(channel)}, guild_id: ${JSON.stringify(guild)}, message_id: message.id }; };
-	var original = make({ content: ${JSON.stringify(LAYOUT_FIXTURES.original)} });
-	var me = metro.findStore('User').getCurrentUser();
-	var image = 'https://cdn.discordapp.com/avatars/' + me.id + '/' + me.avatar + '.png?size=128';
-	actions.receiveMessage(${JSON.stringify(channel)}, original);
-	[
-		make({ type: 19, content: ${JSON.stringify(LAYOUT_FIXTURES.reply)}, message_reference: reference(original, 0), referenced_message: original }),
-		make({ attachments: [{ id: String(Date.now()), filename: 'fixture.png', url: image, proxy_url: image, width: 128, height: 128, content_type: 'image/png', size: 4096 }] }),
-		make({ message_reference: reference(original, 1), message_snapshots: [{ message: { content: ${JSON.stringify(LAYOUT_FIXTURES.forwarded)}, timestamp: new Date().toISOString(), type: 0, embeds: [], attachments: [], flags: 0 } }] }),
-	].forEach(function (message) { actions.receiveMessage(${JSON.stringify(channel)}, message); });
-	var contents = ${JSON.stringify(FIXTURE_MESSAGES)}.filter(function (content) { return linked || content.indexOf('{message}') === -1; });
-	for (var index = 0; index < contents.length; index++) {
-		var content = contents[index].replace('{self}', self).replace('{guild}', ${JSON.stringify(guild)}).replace('{channel}', ${JSON.stringify(channel)}).replace('{message}', linked ? linked.id : '');
-		actions.receiveMessage(${JSON.stringify(channel)}, bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: content }));
-	}
-	await new Promise(function (resolve) { setTimeout(resolve, 1500); });
-	return 'staged';
-})()`;
+	return deviceScript(stageFixtures, guild, channel, LAYOUT_FIXTURES, FIXTURE_MESSAGES);
+}
+
+function setDeveloperMode(enabled: boolean) {
+	const store = unbound.storage.getStore('unbound');
+	const previous = store.get('developer-mode', false);
+
+	store.set('developer-mode', enabled);
+
+	return String(previous);
 }
 
 export function developerModeScript(enabled: boolean): string {
-	return `(function () {
-	var store = unbound.storage.getStore('unbound');
-	var previous = store.get('developer-mode', false);
-	store.set('developer-mode', ${enabled});
-	return String(previous);
-})()`;
+	return deviceScript(setDeveloperMode, enabled);
 }
 
 export const settingsProbeSchema = z.object({
@@ -141,73 +322,130 @@ export const settingsProbeSchema = z.object({
 
 export type SettingsProbe = z.infer<typeof settingsProbeSchema>;
 
+function openSettingsScreen(id: string) {
+	const entity = unbound.plugins.getEntity(id);
+	const instance = entity?.instance;
+
+	if (!entity || !instance || typeof instance.getSettingsPanel !== 'function') return 'none';
+
+	const { React } = unbound.metro.common;
+	const probe: SettingsProbeState = { rendered: false, error: '', boundary: null };
+	type BoundaryInstance = {
+		props: { children?: unknown };
+		state: { failed: boolean };
+	};
+	const Boundary = function (this: BoundaryInstance, props: BoundaryInstance['props']) {
+		React.Component.call(this, props);
+		this.state = { failed: false };
+	} as unknown as { prototype: Record<string, unknown>; getDerivedStateFromError?: () => object };
+
+	(globalThis as MatrixGlobal).__matrixSettingsProbe = probe;
+	Boundary.getDerivedStateFromError = () => ({ failed: true });
+	Boundary.prototype = Object.assign(Object.create(React.Component.prototype) as object, {
+		constructor: Boundary,
+		componentDidCatch(error: unknown) {
+			probe.error = String(
+				error && (error as Error).message ? (error as Error).message : error,
+			);
+		},
+		componentDidMount(this: SettingsProbeState['boundary']) {
+			probe.boundary = this;
+		},
+		render(this: BoundaryInstance) {
+			return this.state.failed ? null : this.props.children;
+		},
+	});
+
+	const Panel = () => {
+		probe.rendered = true;
+
+		return instance.getSettingsPanel?.();
+	};
+
+	unbound.metro
+		.findByProps<{ getRootNavigationRef(): { navigate(name: string, params: object): void } }>(
+			'getRootNavigationRef',
+		)
+		.getRootNavigationRef()
+		.navigate('settings', {
+			screen: 'UNBOUND_CUSTOM',
+			params: {
+				title: entity.data.name,
+				render: () => React.createElement(Boundary, null, React.createElement(Panel)),
+			},
+		});
+
+	return 'opened';
+}
+
 /**
  * @description Opens a plugin's settings panel in Unbound's custom settings screen, the way its card's cog does, inside a probe that records whether the panel rendered and the error it threw.
  * @param id The plugin's id.
  * @returns A script whose result is `opened`, or `none` when the plugin is not running or has no panel.
  */
 export function settingsScreenScript(id: string): string {
-	return `(function () {
-	var entity = unbound.plugins.getEntity(${JSON.stringify(id)});
-	var instance = entity && entity.instance;
-	if (!instance || typeof instance.getSettingsPanel !== 'function') return 'none';
-	var React = unbound.metro.common.React;
-	var probe = { rendered: false, error: '', boundary: null };
-	globalThis.__matrixSettingsProbe = probe;
-	function Boundary(props) { React.Component.call(this, props); this.state = { failed: false }; }
-	Boundary.prototype = Object.create(React.Component.prototype);
-	Boundary.prototype.constructor = Boundary;
-	Boundary.getDerivedStateFromError = function () { return { failed: true }; };
-	Boundary.prototype.componentDidCatch = function (error) { probe.error = String(error && error.message ? error.message : error); };
-	Boundary.prototype.componentDidMount = function () { probe.boundary = this; };
-	Boundary.prototype.render = function () { return this.state.failed ? null : this.props.children; };
-	function Panel() { probe.rendered = true; return instance.getSettingsPanel(); }
-	var navigation = unbound.metro.findByProps('getRootNavigationRef').getRootNavigationRef();
-	navigation.navigate('settings', {
-		screen: 'UNBOUND_CUSTOM',
-		params: {
-			title: entity.data.name,
-			render: function () {
-				return React.createElement(Boundary, null, React.createElement(Panel));
-			},
-		},
-	});
-	return 'opened';
-})()`;
+	return deviceScript(openSettingsScreen, id);
 }
 
 /**
  * @description Reads what the settings probe recorded for the panel on screen, counting the text the panel rendered by walking React's tree below the probe.
  * @returns A script whose result is the probe as JSON.
  */
-export function settingsProbeScript(): string {
-	return `(function () {
-	var probe = globalThis.__matrixSettingsProbe;
-	if (!probe) return JSON.stringify({ rendered: false, texts: 0, error: 'the settings screen did not open' });
-	var texts = 0;
-	var root = probe.boundary && probe.boundary._reactInternals;
-	var stack = root && root.child ? [root.child] : [];
+function readSettingsProbe() {
+	const probe = (globalThis as MatrixGlobal).__matrixSettingsProbe;
+
+	if (!probe)
+		return JSON.stringify({
+			rendered: false,
+			texts: 0,
+			error: 'the settings screen did not open',
+		});
+
+	let texts = 0;
+	const root = probe.boundary?._reactInternals;
+	const stack = root?.child ? [root.child] : [];
+
 	while (stack.length) {
-		var fiber = stack.pop();
-		var children = fiber.memoizedProps && fiber.memoizedProps.children;
-		if (fiber.tag === 6 || (typeof fiber.type === 'string' && (typeof children === 'string' || typeof children === 'number'))) texts++;
+		const fiber = stack.pop()!;
+		const children = fiber.memoizedProps?.children;
+
+		if (
+			fiber.tag === 6 ||
+			(typeof fiber.type === 'string' &&
+				(typeof children === 'string' || typeof children === 'number'))
+		) {
+			texts++;
+		}
+
 		if (fiber.sibling) stack.push(fiber.sibling);
 		if (fiber.child) stack.push(fiber.child);
 	}
-	return JSON.stringify({ rendered: probe.rendered, texts: texts, error: probe.error });
-})()`;
+
+	return JSON.stringify({ rendered: probe.rendered, texts, error: probe.error });
+}
+
+export function settingsProbeScript(): string {
+	return deviceScript(readSettingsProbe);
 }
 
 /**
  * @description Leaves the screen the matrix opened, back to the chat.
  * @returns A script whose result is `closed`.
  */
-export function closeScreenScript(): string {
-	return `(function () {
-	var navigation = unbound.metro.findByProps('getRootNavigationRef').getRootNavigationRef();
+function closeScreen() {
+	const navigation = unbound.metro
+		.findByProps<{ getRootNavigationRef(): { canGoBack(): boolean; goBack(): void } }>(
+			'getRootNavigationRef',
+		)
+		.getRootNavigationRef();
+
 	if (navigation.canGoBack()) navigation.goBack();
+
 	return 'closed';
-})()`;
+}
+
+export function closeScreenScript(): string {
+	return deviceScript(closeScreen);
 }
 
 export const MATRIX_TOAST_MS = 300;
@@ -217,55 +455,88 @@ export const MATRIX_TOAST_MS = 300;
  * @param milliseconds The duration to set, or `null` to remove the setting.
  * @returns A script whose result is the previous value as JSON, `null` when unset.
  */
-export function toastDurationScript(milliseconds: number | null): string {
-	return `(function () {
-	var store = unbound.storage.getStore('unbound');
-	var previous = store.get('toasts.duration', null);
-	${milliseconds === null ? "store.remove('toasts.duration');" : `store.set('toasts.duration', ${milliseconds});`}
+function setToastDuration(milliseconds: number | null) {
+	const store = unbound.storage.getStore('unbound');
+	const previous = store.get('toasts.duration', null);
+
+	if (milliseconds === null) store.remove('toasts.duration');
+	else store.set('toasts.duration', milliseconds);
+
 	return JSON.stringify(previous);
-})()`;
 }
 
+export function toastDurationScript(milliseconds: number | null): string {
+	return deviceScript(setToastDuration, milliseconds);
+}
+
+function logLines(path: string, needles: string[]) {
+	return Promise.resolve(unbound.fs.read(path)).then(
+		(text) =>
+			JSON.stringify(
+				String(text)
+					.split('\n')
+					.filter((line) => needles.some((needle) => line.includes(needle))),
+			),
+		() => '[]',
+	);
+}
+
+const LOG_PATH = 'Unbound/Logs/unbound.log';
+
 export function pluginLogScript(): string {
-	return `Promise.resolve(unbound.fs.read('Unbound/Logs/unbound.log')).then(function (text) {
-	return JSON.stringify(String(text).split('\\n').filter(function (line) { return line.indexOf('off the main thread') !== -1 || line.indexOf(' E [') !== -1 || line.indexOf('Native plugin hook skipped in') !== -1; }));
-}, function () { return '[]'; })`;
+	return deviceScript(logLines, LOG_PATH, [
+		'off the main thread',
+		' E [',
+		'Native plugin hook skipped in',
+	]);
+}
+
+function checkFixtures(channel: string, marker: string) {
+	const { metro } = unbound;
+	const selected = metro.findStore<{ getChannelId(): string }>('SelectedChannel').getChannelId();
+	const loaded = metro
+		.findStore<{ getMessages(channel: string): StoredMessages }>('Message')
+		.getMessages(channel);
+	const messages = loaded?.toArray ? loaded.toArray() : [];
+	const staged = messages.some((message) => message.content === marker);
+
+	return selected === channel && staged ? 'present' : 'missing';
 }
 
 export function fixturesPresentScript(channel: string): string {
-	return `(function () {
-	var metro = unbound.metro;
-	var selected = metro.findStore('SelectedChannel').getChannelId();
-	var loaded = metro.findStore('Message').getMessages(${JSON.stringify(channel)});
-	var messages = loaded && loaded.toArray ? loaded.toArray() : [];
-	var staged = messages.some(function (message) { return message.content === ${JSON.stringify(FIXTURE_MESSAGES[2])}; });
-	return selected === ${JSON.stringify(channel)} && staged ? 'present' : 'missing';
-})()`;
+	return deviceScript(checkFixtures, channel, FIXTURE_MESSAGES[2]!);
+}
+
+function stopPlugin(id: string) {
+	return Promise.resolve(unbound.plugins.stop(id)).then(() => 'stopped');
 }
 
 export function restoreScript(id: string): string {
-	return `Promise.resolve(unbound.plugins.stop(${JSON.stringify(id)})).then(function () { return "stopped"; })`;
+	return deviceScript(stopPlugin, id);
 }
 
 export const SCROLL_FILLER = 30;
 
-export function scrollFillerScript(channel: string): string {
-	return `(async function () {
-	var metro = unbound.metro;
-	var actions = metro.findByProps('sendMessage', 'receiveMessage');
-	var bot = metro.findByProps('createBotMessage');
-	var self = metro.findStore('User').getCurrentUser().id;
-	for (var index = 0; index < ${SCROLL_FILLER}; index++) {
-		var content = index % 3 === 0 ? 'Scroll filler ' + index + ' for <@' + self + '>' : 'Scroll filler ' + index;
-		actions.receiveMessage(${JSON.stringify(channel)}, bot.createBotMessage({ channelId: ${JSON.stringify(channel)}, content: content }));
+function stageScrollFiller(channel: string, count: number) {
+	const { metro } = unbound;
+	const actions = metro.findByProps<MessageActions>('sendMessage', 'receiveMessage');
+	const bot = metro.findByProps<BotMessages>('createBotMessage');
+	const self = metro.findStore<{ getCurrentUser(): CurrentUser }>('User').getCurrentUser().id;
+
+	for (let index = 0; index < count; index++) {
+		const content =
+			index % 3 === 0 ? `Scroll filler ${index} for <@${self}>` : `Scroll filler ${index}`;
+
+		actions.receiveMessage(channel, bot.createBotMessage({ channelId: channel, content }));
 	}
-	await new Promise(function (resolve) { setTimeout(resolve, 1500); });
-	return 'staged';
-})()`;
+
+	return new Promise((resolve) => setTimeout(resolve, 1500)).then(() => 'staged');
+}
+
+export function scrollFillerScript(channel: string): string {
+	return deviceScript(stageScrollFiller, channel, SCROLL_FILLER);
 }
 
 export function toastLogScript(): string {
-	return `Promise.resolve(unbound.fs.read('Unbound/Logs/unbound.log')).then(function (text) {
-	return JSON.stringify(String(text).split('\\n').filter(function (line) { return line.indexOf('[Toasts]') !== -1; }));
-}, function () { return '[]'; })`;
+	return deviceScript(logLines, LOG_PATH, ['[Toasts]']);
 }

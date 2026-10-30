@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { headerLayout } from './header-layout';
+import { headerLayout } from '~/header-layout';
 
 const header = {
 	row: { view: 'row', frame: { x: 0, y: 0, width: 300, height: 20 } },

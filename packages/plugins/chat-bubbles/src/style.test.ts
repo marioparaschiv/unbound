@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { argb, bubbleAppearance, parseHexColor } from './style';
+import { argb, bubbleAppearance, parseHexColor } from '~/style';
 
 const reader = (values: Record<string, unknown>) => (key: string) => values[key];
 

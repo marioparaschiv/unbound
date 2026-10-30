@@ -6,7 +6,7 @@ import { copyText, isFavoriteSticker, setFavoriteSticker } from '~/actions';
 import { closeExpressionSheet, openCloneSheet } from '~/sheets';
 import { notifyError } from '~/notify';
 
-import styles from './expression-action-bar.style';
+import styles from '~/components/expression-action-bar.style';
 
 type ExpressionActionBarProps = {
 	expression: Expression;

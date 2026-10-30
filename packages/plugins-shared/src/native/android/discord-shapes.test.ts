@@ -7,9 +7,13 @@ import {
 	MESSAGE_VIEW,
 	messageBindMethod,
 	messageIdField,
-} from './discord-views';
-import { hasShapeConstructor, shapeField, shapeMethod } from './discord-shapes';
-import shapes from './discord-shapes.json';
+} from '@unbound-plugins/shared/native/android/discord-views';
+import {
+	hasShapeConstructor,
+	shapeField,
+	shapeMethod,
+} from '@unbound-plugins/shared/native/android/discord-shapes';
+import shapes from '@unbound-plugins/shared/native/android/discord-shapes.json';
 
 const MESSAGE = 'com.discord.chat.bridge.Message';
 const STRING = 'java.lang.String';

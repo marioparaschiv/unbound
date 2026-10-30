@@ -1,15 +1,15 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
-import ensureClasses from '@unbound-plugins/shared/native/ensure-classes';
+import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
-import { messageTextViewClass } from '@unbound-plugins/shared/native/text-attachments';
+import { messageTextViewClass } from '@unbound-plugins/shared/native/ios/text-attachments';
 
 import SettingsPanel from '~/components/settings-panel';
 import { MessageStore, SelectedChannelStore } from '~/modules';
 import { createAndroidCards } from '~/android/cards';
 import { createNativeCards } from '~/android/native-cards';
-import { startRenderer } from '~/native/renderer';
+import { startRenderer } from '~/ios/renderer';
 import { PLUGIN_NAME } from '~/constants';
 import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';

@@ -1,7 +1,7 @@
 import { metro } from '@unbound-app/api';
 
-import { reloadReactors } from '~/native/reaction-surfaces';
-import type { Session } from '~/native/session';
+import { reloadReactors } from '~/ios/reaction-surfaces';
+import type { Session } from '~/ios/session';
 
 /**
  * @description Refetches every shown reactor list after the gateway reconnects, since reactions changed while it was away.

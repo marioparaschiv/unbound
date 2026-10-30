@@ -1,4 +1,8 @@
-import { getElementName, isElementNode, type ElementNode } from '../react/find-element';
+import {
+	getElementName,
+	isElementNode,
+	type ElementNode,
+} from '@unbound-plugins/shared/react/find-element';
 
 function isRow(value: unknown): value is ElementNode {
 	if (!isElementNode(value) || !isElementNode(value.props) || Array.isArray(value.props)) {

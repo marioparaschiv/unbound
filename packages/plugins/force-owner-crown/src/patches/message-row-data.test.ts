@@ -39,7 +39,7 @@ mock.module('~/modules', () => ({
 	},
 }));
 
-const { patchOwnerCrown } = await import('./message-row-data');
+const { patchOwnerCrown } = await import('~/patches/message-row-data');
 
 function row(message: Record<string, unknown>) {
 	const result = { message: { ...message } };

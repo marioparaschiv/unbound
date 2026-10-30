@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { messageLayout, type SnapshotNode } from './message-layout';
+import { messageLayout, type SnapshotNode } from '~/message-layout';
 
 function node(
 	parent: number,

@@ -7,8 +7,8 @@ import { getOwnedGuilds, type Guild } from '~/guilds';
 import { cloneExpression } from '~/clone';
 import { notifyError } from '~/notify';
 
-import styles from './clone-sheet.style';
-import GuildRow from './guild-row';
+import styles from '~/components/clone-sheet.style';
+import GuildRow from '~/components/guild-row';
 
 type CloneSheetProps = {
 	expression: Expression;

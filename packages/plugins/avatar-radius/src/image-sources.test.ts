@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { mayBeAvatar } from './image-sources';
+import { mayBeAvatar } from '~/image-sources';
 
 test('keeps user, member and default avatars', () => {
 	expect(mayBeAvatar('https://cdn.discordapp.com/avatars/1/abc.webp?size=128')).toBe(true);

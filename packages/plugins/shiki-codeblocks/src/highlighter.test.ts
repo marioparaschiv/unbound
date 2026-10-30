@@ -3,7 +3,7 @@ import type { LanguageRegistration } from 'shiki';
 
 mock.module('@unbound-app/api', () => ({ fs: {} }));
 
-const { createHighlighter: createWithSource } = await import('./highlighter');
+const { createHighlighter: createWithSource } = await import('~/highlighter');
 
 async function localRegistration(name: string): Promise<LanguageRegistration> {
 	const grammar: LanguageRegistration[] = (await import(`@shikijs/langs/${name}`)).default;

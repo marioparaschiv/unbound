@@ -2,8 +2,8 @@ import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabiliti
 import type { PluginContext } from '@unbound-app/api/native';
 
 import SettingsPanel from '~/components/settings-panel';
-import { roundAndroidAvatars } from '~/android';
-import { roundIOSAvatars } from '~/ios';
+import { roundAndroidAvatars } from '~/android/avatars';
+import { roundIOSAvatars } from '~/ios/avatars';
 import { PLUGIN_NAME } from '~/constants';
 import { storedRadius } from '~/radius';
 import { settings } from '~/modules';

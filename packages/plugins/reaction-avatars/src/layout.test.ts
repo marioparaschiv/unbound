@@ -6,8 +6,8 @@ import {
 	reactionBaseViewWidth,
 	reflowReactionItems,
 	type LayoutFrame,
-} from './layout';
-import { reactionAvatarReservedExtraWidth } from './avatars';
+} from '~/layout';
+import { reactionAvatarReservedExtraWidth } from '~/avatars';
 
 describe('framesMatch', () => {
 	test('detects when native layout replaces an expanded reaction cell frame', () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { sameIds, visibleTypingIds } from './typing-users';
+import { sameIds, visibleTypingIds } from '~/typing-users';
 
 const typing = { self: 1, blocked: 2, ignored: 3, visible: 4 };
 const relationships = {

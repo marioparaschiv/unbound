@@ -1,6 +1,11 @@
 import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
 
-import { javaInt, javaNumber, javaReference, javaText } from './java-values';
+import {
+	javaInt,
+	javaNumber,
+	javaReference,
+	javaText,
+} from '@unbound-plugins/shared/native/android/java-values';
 
 export type SpanBridge = Pick<NativeJavaBridge, 'getClass' | 'invoke'>;
 

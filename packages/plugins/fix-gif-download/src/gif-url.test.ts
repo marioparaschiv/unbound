@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { getPreferredGifUrl, isGifSource } from './gif-url';
+import { getPreferredGifUrl, isGifSource } from '~/gif-url';
 
 describe('getPreferredGifUrl', () => {
 	test('prefers a retained GIF over the video Discord plays', () => {

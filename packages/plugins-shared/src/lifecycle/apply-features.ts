@@ -1,4 +1,4 @@
-import { recordApplied, recordFailure } from './health';
+import { recordApplied, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
 
 type Cleanup = () => void | Promise<void>;
 type Feature = () => Cleanup;

@@ -10,7 +10,7 @@ import { patchVoiceUserNameItem } from '~/patches/voice-user-name-item';
 import { patchTypingIndicator } from '~/patches/typing-indicator';
 import { patchUsersFastList } from '~/patches/users-fast-list';
 import SettingsPanel from '~/components/settings-panel';
-import { createNativeMentions } from '~/native/mentions';
+import { createNativeMentions } from '~/ios/mentions';
 import { patchRowManager } from '~/patches/row-manager';
 import { GuildMemberStore, settings } from '~/modules';
 import { PLUGIN_NAME } from '~/constants';

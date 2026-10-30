@@ -1,8 +1,8 @@
 import { IndicatorsRunning } from '~/modules';
 import type { Channel } from '~/types';
 
-import IndicatorBoundary from './indicator-boundary';
-import TypingIndicator from './typing-indicator';
+import IndicatorBoundary from '~/components/indicator-boundary';
+import TypingIndicator from '~/components/typing-indicator';
 
 type ChannelTypingIndicatorProps = {
 	channel: Channel;

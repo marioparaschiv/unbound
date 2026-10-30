@@ -12,8 +12,8 @@ import {
 	javaReference,
 	javaText,
 	sameJavaReference,
-} from './java-values';
-import { readCalls, runOnMain } from './views';
+} from '@unbound-plugins/shared/native/android/java-values';
+import { readCalls, runOnMain } from '@unbound-plugins/shared/native/android/views';
 
 export type InlineHostBridge = Pick<
 	NativeJavaBridge,

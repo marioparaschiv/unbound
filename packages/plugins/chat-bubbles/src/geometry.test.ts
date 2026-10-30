@@ -7,7 +7,7 @@ import {
 	sharedContentStart,
 	union,
 	bubbleProblem,
-} from './geometry';
+} from '~/geometry';
 
 const padding = { horizontal: 8, vertical: 4 };
 
