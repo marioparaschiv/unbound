@@ -8,8 +8,8 @@ import (
 )
 
 func TestMergeDeviceSettingsKeepsTheDevicesOwnSettings(t *testing.T) {
-	current := []byte(`{"astral":{"debugger":{"enabled":false,"address":"10.0.0.2:9090"},"loader":{"update":{"url":"http://127.0.0.1:9/"}}},"plugins":{"states":{"user.plugin":true}},"theme":"dark"}`)
-	smoke := []byte(`{"astral":{"debugger":{"enabled":true,"address":"192.168.1.5:9092"}},"plugins":{"states":{"astral.moyai":true}}}`)
+	current := []byte(`{"unbound":{"debugger":{"enabled":false,"address":"10.0.0.2:9090"},"loader":{"update":{"url":"http://127.0.0.1:9/"}}},"plugins":{"states":{"user.plugin":true}},"theme":"dark"}`)
+	smoke := []byte(`{"unbound":{"debugger":{"enabled":true,"address":"192.168.1.5:9092"}},"plugins":{"states":{"astral.moyai":true}}}`)
 	merged, err := mergeDeviceSettings(current, smoke)
 	if err != nil {
 		t.Fatal(err)
@@ -22,7 +22,7 @@ func TestMergeDeviceSettingsKeepsTheDevicesOwnSettings(t *testing.T) {
 					URL string `json:"url"`
 				} `json:"update"`
 			} `json:"loader"`
-		} `json:"astral"`
+		} `json:"unbound"`
 		Plugins struct {
 			States map[string]bool `json:"states"`
 		} `json:"plugins"`

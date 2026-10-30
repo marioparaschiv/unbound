@@ -48,9 +48,9 @@ int main()
     assert(!loader::toolbox::useCustomBundle(settings, "file:///sdcard/unbound.js"));
     assert(!loader::toolbox::useCustomBundle(settings, "https://"));
     assert(loader::toolbox::useCustomBundle(settings, "https://example.com/unbound.bundle"));
-    assert(settings.getString("astral", "loader.update.url", "") ==
+    assert(settings.getString("unbound", "loader.update.url", "") ==
            "https://example.com/unbound.bundle");
-    assert(settings.getBoolean("astral", "loader.update.force", false));
+    assert(settings.getBoolean("unbound", "loader.update.force", false));
 
     loader::BundleUpdater updater(
         root.string(), loader::updaterSettings(settings),
@@ -67,10 +67,10 @@ int main()
     loader::toolbox::deleteBundle(settings, updater, root.string());
     assert(!std::filesystem::exists(root / "astral.bundle"));
     assert(!std::filesystem::exists(root / "astral.bundle.trust"));
-    assert(settings.getString("astral", "loader.update.url", "none") == "none");
+    assert(settings.getString("unbound", "loader.update.url", "none") == "none");
 
     assert(loader::toolbox::toggleRecovery(settings));
-    assert(settings.getBoolean("astral", "recovery", false));
+    assert(settings.getBoolean("unbound", "recovery", false));
     assert(!loader::toolbox::toggleRecovery(settings));
 
     loader::toolbox::IssueReport report{
@@ -85,7 +85,7 @@ int main()
     assert(url.find(' ') == std::string::npos);
 
     assert(loader::toolbox::useCustomBundle(settings, "  https://example.com/padded.bundle \n"));
-    assert(settings.getString("astral", "loader.update.url", "") ==
+    assert(settings.getString("unbound", "loader.update.url", "") ==
            "https://example.com/padded.bundle");
 
     loader::BundleUpdater failing(

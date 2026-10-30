@@ -33,7 +33,7 @@ var (
 	errSmokeNotConnected  = errors.New("no device is connected to the debugger bridge")
 	errSmokeEvalTimedOut  = errors.New("the debugger evaluation timed out")
 	smokeStatusExpression = `(function () {
-	var manager = astral.plugins;
+	var manager = unbound.plugins;
 	var entities = manager.getEntities();
 	var statuses = [];
 	for (var index = 0; index < entities.length; index++) {
@@ -212,14 +212,14 @@ func smokeSettings(plugins []smokePlugin, debuggerAddress, bundleURL string) ([]
 	for _, plugin := range plugins {
 		states[plugin.id] = true
 	}
-	astral := map[string]any{
+	unbound := map[string]any{
 		"debugger": map[string]any{"enabled": true, "address": debuggerAddress},
 	}
 	if bundleURL != "" {
-		astral["loader"] = map[string]any{"update": map[string]any{"url": bundleURL}}
+		unbound["loader"] = map[string]any{"update": map[string]any{"url": bundleURL}}
 	}
 	return json.MarshalIndent(map[string]any{
-		"astral":  astral,
+		"unbound": unbound,
 		"plugins": map[string]any{"states": states},
 	}, "", "\t")
 }

@@ -70,13 +70,13 @@ UpdaterSettings updaterSettings(SettingsStore &store)
 {
     UpdaterSettings settings;
     settings.getString = [&store](const std::string &key, const std::string &fallback) {
-        return store.getString("astral", key, fallback);
+        return store.getString("unbound", key, fallback);
     };
     settings.getBoolean = [&store](const std::string &key, bool fallback) {
-        return store.getBoolean("astral", key, fallback);
+        return store.getBoolean("unbound", key, fallback);
     };
     settings.setString = [&store](const std::string &key, const std::string &value) {
-        store.set("astral", key, value);
+        store.set("unbound", key, value);
         store.save();
     };
     return settings;
