@@ -242,6 +242,7 @@ jobs:
               id: decrypt
               if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == '' && steps.ipa-cache.outputs.cache-hit != 'true'
               continue-on-error: true
+              timeout-minutes: 12
               uses: castdrian/dkrypt@v1.1.1
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}

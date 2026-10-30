@@ -88,7 +88,8 @@ func fetchCompatBuilds(ctx context.Context, channel, cache string, wanted compat
 	}
 	ipa, err := cachedIOSBuild(ctx, envOr("DKRYPT_BASE_URL", defaultDkryptURL), apiKey, source, filepath.Join(cache, "ios", source))
 	if err != nil {
-		return compatBuilds{}, fmt.Errorf("iOS %s build: %w", source, err)
+		fmt.Fprintf(os.Stderr, "compat-scan: dkrypt could not provide the iOS %s build (%v), scanning Android only\n", source, err)
+		return builds, nil
 	}
 	builds.ipa = ipa
 	return builds, nil

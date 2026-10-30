@@ -69,7 +69,10 @@ jobs:
                   restore-keys: discord-builds-${{ matrix.channel }}-
 
             - name: Download Discord for iOS
+              id: ios
               if: env.IOS_SOURCE != 'none'
+              continue-on-error: true
+              timeout-minutes: 12
               uses: castdrian/dkrypt@v1.1.1
               with:
                   api-url: ${{ env.DKRYPT_BASE_URL }}
@@ -115,7 +118,11 @@ jobs:
                     --report report.md
                     --source-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA"
                   )
-                  if [ "$IOS_SOURCE" != none ]; then scan_args+=(--ipa discord.ipa); fi
+                  if [ "$IOS_SOURCE" != none ] && [ -f discord.ipa ]; then
+                    scan_args+=(--ipa discord.ipa)
+                  elif [ "$IOS_SOURCE" != none ]; then
+                    echo "::warning title=No new iOS build::dkrypt did not decrypt the iOS $IOS_SOURCE build in time, so this scan uses its latest cached iOS build or Android only."
+                  fi
                   go run ./tools compat-scan "${scan_args[@]}"
                   cat report.md >> "$GITHUB_STEP_SUMMARY"
 
