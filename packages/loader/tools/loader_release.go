@@ -90,7 +90,7 @@ func runPublishLoaderReleases(args []string) error {
 		iosURL:     *iosURL,
 		androidURL: *androidURL,
 		changelog:  *changelog,
-		client:     &http.Client{Timeout: 30 * time.Second},
+		client:     lookupClient(30 * time.Second),
 		dryRun:     *dryRun,
 	})
 	if err != nil {
@@ -136,7 +136,7 @@ func publishLoaderReleases(ctx context.Context, config loaderReleaseBatchConfig)
 
 	client := config.client
 	if client == nil {
-		client = &http.Client{Timeout: 30 * time.Second}
+		client = lookupClient(30 * time.Second)
 	}
 	platforms := []struct {
 		name string
