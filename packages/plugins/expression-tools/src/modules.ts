@@ -18,4 +18,4 @@ export const StickerFavorites = metro.findByProps('isFavoriteSticker', { lazy: t
 export const EmojiActions = metro.findByProps('uploadEmoji', { lazy: true });
 export const Auth = metro.findByProps('getToken', { lazy: true });
 
-export const Patcher = patcher.createPatcher('unbound.expression-tools');
+export const Patcher = patcher.createPatcher('astral.expression-tools');

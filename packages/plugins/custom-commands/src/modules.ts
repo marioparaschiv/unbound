@@ -6,5 +6,5 @@ export const PendingReplyStore = metro.findStore('PendingReply', { lazy: true })
 export const CloudUploader = metro.findByProps('CloudUpload', { lazy: true });
 export const ImagePicker = metro.findByProps('launchImageLibraryAsync', { lazy: true });
 
-export const settings = storage.getStore('unbound.custom-commands');
-export const Patcher = patcher.createPatcher('unbound.custom-commands');
+export const settings = storage.getStore('astral.custom-commands');
+export const Patcher = patcher.createPatcher('astral.custom-commands');

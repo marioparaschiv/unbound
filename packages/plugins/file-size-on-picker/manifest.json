@@ -1,5 +1,5 @@
 {
-	"id": "unbound.file-size-on-picker",
+	"id": "astral.file-size-on-picker",
 	"name": "File Size On Picker",
 	"description": "Shows file sizes on media picker thumbnails.",
 	"authors": [

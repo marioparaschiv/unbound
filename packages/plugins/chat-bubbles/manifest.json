@@ -1,5 +1,5 @@
 {
-	"id": "unbound.chat-bubbles",
+	"id": "astral.chat-bubbles",
 	"name": "Chat Bubbles",
 	"description": "Draws a rounded bubble behind each message.",
 	"authors": [

@@ -18,7 +18,7 @@ export function differenceRatio(output: string): number | undefined {
 
 /**
  * @description Describes how a screen changed since the last run, when the change is large enough to look at.
- * @param name What the screen is, such as `unbound.chat-bubbles settings`.
+ * @param name What the screen is, such as `astral.chat-bubbles settings`.
  * @param ratio The share of pixels that differ.
  * @returns The change, or `undefined` for a screen that looks the same.
  */

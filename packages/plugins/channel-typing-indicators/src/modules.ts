@@ -42,6 +42,6 @@ export const ActionSheets = metro.api.ActionSheets;
 // The same module as `metro.common.Theme`, which its typings do not declare yet.
 export const Theme = metro.findByProps('colors', 'internal', { lazy: true });
 
-export const settings = storage.getStore('unbound.channel-typing-indicators');
-export const Patcher = patcher.createPatcher('unbound.channel-typing-indicators');
-export const IndicatorsRunning = createRunningFlag('unbound.channel-typing-indicators');
+export const settings = storage.getStore('astral.channel-typing-indicators');
+export const Patcher = patcher.createPatcher('astral.channel-typing-indicators');
+export const IndicatorsRunning = createRunningFlag('astral.channel-typing-indicators');

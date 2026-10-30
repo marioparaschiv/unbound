@@ -46,4 +46,4 @@ export const FloatingChatInputContainer = metro.findByFilePath(
 	{ lazy: true, interop: false },
 );
 
-export const Patcher = patcher.createPatcher('unbound.sticker-preview');
+export const Patcher = patcher.createPatcher('astral.sticker-preview');

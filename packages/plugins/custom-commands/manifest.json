@@ -1,5 +1,5 @@
 {
-	"id": "unbound.custom-commands",
+	"id": "astral.custom-commands",
 	"name": "Custom Commands",
 	"description": "Create slash commands that send saved text, images, and videos.",
 	"authors": [

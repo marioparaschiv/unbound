@@ -1,5 +1,5 @@
 {
-	"id": "unbound.mention-avatars",
+	"id": "astral.mention-avatars",
 	"name": "Mention Avatars",
 	"description": "Shows user avatars and role icons inside mentions.",
 	"authors": [

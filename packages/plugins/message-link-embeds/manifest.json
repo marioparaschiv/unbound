@@ -1,5 +1,5 @@
 {
-	"id": "unbound.message-link-embeds",
+	"id": "astral.message-link-embeds",
 	"name": "Message Link Embeds",
 	"description": "Adds previews to messages that link to other Discord messages.",
 	"authors": [

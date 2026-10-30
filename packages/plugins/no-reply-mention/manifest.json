@@ -1,5 +1,5 @@
 {
-	"id": "unbound.no-reply-mention",
+	"id": "astral.no-reply-mention",
 	"name": "No Reply Mention",
 	"description": "Disable reply mentions by default.",
 	"authors": [

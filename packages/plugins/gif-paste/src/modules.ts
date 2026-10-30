@@ -7,4 +7,4 @@ export const ChatInputRegistry = metro.findByProps('getBestActiveInputForChannel
 	lazy: true,
 });
 
-export const Patcher = patcher.createPatcher('unbound.gif-paste');
+export const Patcher = patcher.createPatcher('astral.gif-paste');

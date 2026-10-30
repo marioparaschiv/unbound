@@ -6,6 +6,6 @@ export const ChannelStore = metro.findStore('Channel', { lazy: true });
 export const MessageStore = metro.findStore('Message', { lazy: true });
 export const UserStore = metro.stores.Users;
 
-export const settings = storage.getStore('unbound.pronoundb');
+export const settings = storage.getStore('astral.pronoundb');
 
-export const Patcher = patcher.createPatcher('unbound.pronoundb');
+export const Patcher = patcher.createPatcher('astral.pronoundb');

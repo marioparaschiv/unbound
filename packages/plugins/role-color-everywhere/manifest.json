@@ -1,5 +1,5 @@
 {
-	"id": "unbound.role-color-everywhere",
+	"id": "astral.role-color-everywhere",
 	"name": "Role Color Everywhere",
 	"description": "Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.",
 	"authors": [

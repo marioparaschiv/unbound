@@ -1,5 +1,5 @@
 {
-	"id": "unbound.text-replace",
+	"id": "astral.text-replace",
 	"name": "Text Replace",
 	"description": "Replace text in messages before you send them.",
 	"authors": [
