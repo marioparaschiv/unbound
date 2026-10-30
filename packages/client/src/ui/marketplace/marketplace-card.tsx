@@ -8,10 +8,9 @@ import AddonCardHeader from '~/ui/addons/addon-card-header';
 import type { InstallStatus } from '~/lib/catalog';
 import type { UpdatableKind } from '~/lib/updates';
 import { Discord } from '~/api/metro/components';
-import { compareVersions } from '~/lib/catalog';
+import { compareVersions } from '~/lib/versions';
 import { ActionSheets } from '~/api/metro/api';
 import { Messages, format } from '~/api/i18n';
-import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
 import { showToast } from '~/api/toasts';
 import { confirm } from '~/api/dialogs';
@@ -98,7 +97,7 @@ function MarketplaceCard({ addon, tab }: MarketplaceCardProps) {
 	const [pending, setPending] = useState<InstallStatus | null>(null);
 	const { manifest, version: latest } = addon.latestVersion;
 	const action = ACTIONS[pending ?? status];
-	const updatable = tab.kind === ManagerKind.Fonts ? undefined : tab.kind;
+	const updatable = tab.kind === 'fonts' ? undefined : tab.kind;
 
 	async function run(install: () => Promise<boolean>): Promise<boolean> {
 		setPending(status);

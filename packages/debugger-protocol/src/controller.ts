@@ -1,4 +1,4 @@
-import type { AddonManifest } from '@unbound-app/types';
+import type { PushedManifest } from '@unbound-app/types';
 
 import type { DeviceInfo, EvalResult, LogMessage, PluginPushResult } from './index';
 
@@ -29,7 +29,7 @@ type PendingPush = {
 type PluginPush = {
 	addonId: string;
 	bundle: string;
-	manifest: AddonManifest;
+	manifest: PushedManifest;
 	bytecode?: Record<string, string>;
 };
 

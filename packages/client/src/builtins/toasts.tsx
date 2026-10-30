@@ -1,17 +1,16 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { getSetting, useUnboundSettings } from '~/lib/unbound-settings';
 import { find, findByFilePath, findByProps } from '~/api/metro';
 import { createPatcher } from '~/api/patcher';
 import { ToastContainer } from '~/ui/toasts';
 import { showToast } from '~/api/toasts';
-import storage from '~/api/storage';
 
 import discordToastOptions, { type DiscordToastOptions } from './discord-toast-options';
 import findToastContainers from './find-toast-containers';
 
 const Patcher = createPatcher('unbound::toasts');
 const Logger = createLogger('Toasts');
-const Settings = storage.getStore('unbound');
 
 /** Replaces Discord's toast container and toast API with Unbound's toasts. */
 export function start() {
@@ -35,9 +34,9 @@ function patchToastContainer() {
 
 	for (const [module, key] of targets) {
 		Patcher.after(module, key, ({ result }) => {
-			const settings = Settings.useSettingsStore(({ key }) => key?.startsWith('toasts'));
+			const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 
-			if (settings.get('toasts.enabled', true)) {
+			if (settings.get('toasts.enabled')) {
 				return <ToastContainer />;
 			}
 
@@ -56,7 +55,7 @@ function patchToastAPI() {
 	}
 
 	Patcher.instead(Toasts, 'open', ({ args, original, this: self }) => {
-		if (!Settings.get('toasts.enabled', true)) {
+		if (!getSetting('toasts.enabled')) {
 			return original.apply(self, args);
 		}
 

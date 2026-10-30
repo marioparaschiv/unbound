@@ -6,7 +6,6 @@ import { confirm, showDialog } from '~/api/dialogs';
 import MarketplaceStore from '~/stores/marketplace';
 import { toRelease } from '~/lib/addon-versions';
 import { Messages, format } from '~/api/i18n';
-import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
 import { showToast } from '~/api/toasts';
 
@@ -31,7 +30,7 @@ function asDependency(listed: ListedAddon): ListedDependency {
 }
 
 function describePlan(install: ListedDependency[], update: ListedDependency[]): string {
-	const plugins = getManager(ManagerKind.Plugins).getEntities();
+	const plugins = getManager('plugins').getEntities();
 	const lines = [
 		...install.map((dependency) =>
 			format('UNBOUND_DEPENDENCY_INSTALL', { name: dependency.name }),
@@ -58,7 +57,7 @@ function describePlan(install: ListedDependency[], update: ListedDependency[]): 
  * @returns Whether its dependencies are in place, so the plugin itself can install.
  */
 export async function installDependencies(manifest: PublishedManifest): Promise<boolean> {
-	const manager = getManager(ManagerKind.Plugins);
+	const manager = getManager('plugins');
 	const listed = listedPlugins();
 	const installed = new Map(
 		manager.getEntities().map((entity) => [entity.id, entity.data.version]),

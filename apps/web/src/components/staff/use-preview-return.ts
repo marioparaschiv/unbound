@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
+import { z } from 'zod/mini';
 
-type ReturnState = {
-	id: string;
-	open: boolean;
-	y: number;
-};
+const RETURN_STATE = z.object({ id: z.string(), open: z.boolean(), y: z.number() });
+
+type ReturnState = z.infer<typeof RETURN_STATE>;
 
 const KEY = 'review-preview-return';
 
@@ -20,6 +19,21 @@ export function savePreviewReturn(id: string, open: boolean) {
 	const state: ReturnState = { id, open, y: scrollY };
 
 	sessionStorage.setItem(KEY, JSON.stringify(state));
+}
+
+function readSaved(): ReturnState | null {
+	const raw = sessionStorage.getItem(KEY);
+
+	if (!raw) return null;
+
+	try {
+		const result = RETURN_STATE.safeParse(JSON.parse(raw));
+
+		return result.success ? result.data : null;
+	} catch {
+		// Not JSON: another version of the page wrote it, so there is nothing to restore.
+		return null;
+	}
 }
 
 /**
@@ -39,8 +53,7 @@ export function usePreviewReturn(id: string, setOpen: (open: boolean) => void) {
 
 		addEventListener('pageshow', onPageShow);
 
-		const raw = sessionStorage.getItem(KEY);
-		const saved: ReturnState | null = raw ? JSON.parse(raw) : null;
+		const saved = readSaved();
 
 		if (saved?.id === id) {
 			setOpen(saved.open);

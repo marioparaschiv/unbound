@@ -150,7 +150,7 @@ export function toggle(store: string, key: string, def: boolean) {
  * @param key The key to delete.
  */
 export function remove(store: string, key: string) {
-	if (!settings[store][key]) return;
+	if (settings[store]?.[key] === undefined) return;
 
 	delete settings[store][key];
 
@@ -175,6 +175,15 @@ export function clear(store: string) {
 	Events.emit('cleared', { store });
 }
 
+function bindStore(store: string) {
+	return {
+		set: (key: string, value: SettingsValue) => set(store, key, value),
+		get: <T>(key: string, def: T): Widen<T> => get(store, key, def),
+		toggle: (key: string, def: boolean) => toggle(store, key, def),
+		remove: (key: string) => remove(store, key),
+	};
+}
+
 /**
  * @description Builds a store-scoped facade binding every settings operation to a single store name.
  * @param store The store name to scope every operation to.
@@ -182,10 +191,7 @@ export function clear(store: string) {
  */
 export function getStore(store: string) {
 	return {
-		set: (key: string, value: SettingsValue) => set(store, key, value),
-		get: <T>(key: string, def: T): Widen<T> => get(store, key, def),
-		toggle: (key: string, def: boolean) => toggle(store, key, def),
-		remove: (key: string) => remove(store, key),
+		...bindStore(store),
 		clear: () => clear(store),
 		useSettingsStore: (predicate?: (payload: SettingsPayload) => PredicateResult) =>
 			useSettingsStore(store, predicate),
@@ -234,12 +240,7 @@ export function useSettingsStore(
 		return () => void Events.off('changed', handler);
 	}, []);
 
-	return {
-		set: (key: string, value: SettingsValue) => set(store, key, value),
-		get: <T>(key: string, def: T): Widen<T> => get(store, key, def),
-		toggle: (key: string, def: boolean) => toggle(store, key, def),
-		remove: (key: string) => remove(store, key),
-	};
+	return bindStore(store);
 }
 
 const pending: NativeSettingsChange[] = [];
@@ -283,5 +284,6 @@ export default {
 	remove,
 	removeListener,
 	set,
+	toggle,
 	useSettingsStore,
 };

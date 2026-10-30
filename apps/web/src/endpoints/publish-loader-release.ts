@@ -5,18 +5,15 @@ import {
 import { z } from 'zod';
 
 import { publishLoaderRelease } from '~/lib/loader-releases';
-import { requireCaller } from '~/lib/api/caller';
-import endpoint from '~/lib/api/endpoint';
+import { callerEndpoint } from '~/lib/api/endpoint';
 
-const publishLoaderReleaseEndpoint = endpoint(
+const publishLoaderReleaseEndpoint = callerEndpoint(
 	{
 		body: publishLoaderReleaseRequestSchema,
 		query: z.undefined(),
 		response: loaderReleaseSchema,
 	},
-	async ({ ctx, request, body }) => {
-		const caller = await requireCaller(ctx, request.headers);
-
+	async ({ ctx, body, caller }) => {
 		return publishLoaderRelease(ctx, caller, body);
 	},
 );

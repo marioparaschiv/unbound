@@ -8,7 +8,6 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { and, eq, inArray, ne, sql } from 'drizzle-orm';
 
 import { OPEN_SUBMISSION_STATUSES, insertSubmissionSource } from '~/lib/submissions';
-import { createGitHubClient, getGitHubToken } from '~/lib/github';
 import { VERSION_SOURCE, writeArtifact } from '~/lib/artifacts';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { recordReviewDecision } from '~/lib/moderation-events';
@@ -17,6 +16,7 @@ import { publishVersion, replaceVersion } from '~/lib/review';
 import type { AddonSource } from '~/lib/addon-source';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
+import { connectGitHubIfLinked } from '~/lib/github';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
@@ -210,8 +210,7 @@ export async function publishFirstParty(
 	}
 
 	// CI has no push-capable GitHub link; the API key and the repository check are the trust.
-	const token = await getGitHubToken(ctx, caller.user.id).catch(() => undefined);
-	const github = createGitHubClient(ctx.env, token ?? null);
+	const github = await connectGitHubIfLinked(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request, false);
 	const { manifest, pin } = source;
 

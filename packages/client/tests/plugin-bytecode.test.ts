@@ -130,10 +130,11 @@ describe('plugin bytecode', () => {
 		evaluations = [];
 		writes.length = 0;
 
+		const pushed = { ...makeManifest('bytecode.example'), bytecode: { '98': 'digest' } };
 		const result = await plugins.reload(
 			'bytecode.example',
 			'({ start() { globalThis.__bytecodeTestPushedSource = true; }, stop() {} })',
-			{ ...makeManifest('bytecode.example'), bytecode: { '98': 'digest' } },
+			pushed,
 			'xh+8Aw==',
 		);
 

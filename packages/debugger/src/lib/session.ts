@@ -1,5 +1,6 @@
 import type {
 	DeviceInfo,
+	DeviceStatus,
 	LogMessage,
 	EvalResult,
 	EvalRequest,
@@ -376,9 +377,11 @@ function getControllerDelivery(socket: SocketLike): (result: EvalResult) => void
 }
 
 function sendDeviceStatus(socket: SocketLike, connected: boolean) {
-	const device = connected ? (state.deviceInfo ?? void 0) : void 0;
+	const status: DeviceStatus = connected
+		? { type: 'device-status', connected, device: state.deviceInfo ?? void 0 }
+		: { type: 'device-status', connected };
 
-	socket.send(JSON.stringify({ type: 'device-status', connected, device }));
+	socket.send(JSON.stringify(status));
 }
 
 function broadcastDeviceStatus(connected: boolean) {

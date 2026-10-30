@@ -5,11 +5,12 @@ import type {
 	NativeObjCBridge,
 	NativeObjectHandle,
 } from '@unbound-app/api/native';
+import { parseRect, parseSize, toRect } from '@unbound-plugins/shared/native/rect';
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/safe-invoke';
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
-import { readFrame, readSize, setFrame, toRect } from '~/native/views';
+import { setFrame } from '~/native/views';
 import LatencyTooltip from '~/components/latency-tooltip';
 import { placeTooltip, tooltipTextWidth } from '~/tooltip-layout';
 import { Icon, Tooltip } from '~/constants';
@@ -116,7 +117,7 @@ export function createTooltips(
 
 		const size = objc.struct('CGSize', { width: maxWidth, height: 1000 });
 
-		return readSize(await safeInvokeAsync(objc, label, 'sizeThatFits:', size));
+		return parseSize(await safeInvokeAsync(objc, label, 'sizeThatFits:', size)) ?? null;
 	}
 
 	async function show(anchor: TooltipAnchor, isCurrent: () => boolean) {
@@ -133,7 +134,7 @@ export function createTooltips(
 			'window',
 		)) as NativeObjectHandle | null;
 		const windowFrame = uiWindow
-			? readFrame(await safeInvokeAsync(objc, uiWindow, 'bounds'))
+			? (parseRect(await safeInvokeAsync(objc, uiWindow, 'bounds')) ?? null)
 			: null;
 
 		if (!uiWindow || !windowFrame) return;
@@ -151,9 +152,16 @@ export function createTooltips(
 			const text = await measure(anchor.tooltip, tooltipTextWidth(windowFrame.width));
 			// The visible bars sit 4pt below the top of the taller tap target.
 			const iconRect = toRect(objc, { x: 0, y: 4, width: Icon.width, height: Icon.height });
-			const iconFrame = readFrame(
-				await safeInvokeAsync(objc, anchor.icon, 'convertRect:toView:', iconRect, uiWindow),
-			);
+			const iconFrame =
+				parseRect(
+					await safeInvokeAsync(
+						objc,
+						anchor.icon,
+						'convertRect:toView:',
+						iconRect,
+						uiWindow,
+					),
+				) ?? null;
 			const placement = text && iconFrame ? placeTooltip(text, iconFrame, windowFrame) : null;
 
 			if (!placement) return;

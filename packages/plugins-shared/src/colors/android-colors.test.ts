@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { androidColor, hexColor } from './tag-gradients';
+import { androidColor, hexColor } from './android-colors';
 
-describe('Android tag colors', () => {
+describe('Android colors', () => {
 	test('turns hex colors into opaque signed ARGB ints', () => {
 		expect(androidColor('#ff0080')).toBe(0xffff0080 | 0);
 		expect(androidColor('#000000')).toBe(0xff000000 | 0);

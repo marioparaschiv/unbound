@@ -7,7 +7,8 @@ import type { CommandResult, CommandRunner } from '../src/lib/run-command';
 import type { PluginPayload } from '../src/lib/plugin-install';
 
 import { installOnAndroid, ANDROID_PLUGINS_DIRECTORY } from '../src/lib/android-install';
-import { installOnIOS, parseShellResult, resolvePilot } from '../src/lib/ios-install';
+import { parseShellResult, resolvePilot } from '../src/lib/pilot';
+import { installOnIOS } from '../src/lib/ios-install';
 
 type Call = { command: string; args: string[]; timeoutMs: number };
 
@@ -278,6 +279,10 @@ describe('parseShellResult', () => {
 		expect(parseShellResult(ok('invalid_frame'))).toEqual({
 			ok: false,
 			error: 'jb-p1lot answered with something other than JSON: invalid_frame',
+		});
+		expect(parseShellResult(ok('{"exitCode":"0"}'))).toMatchObject({
+			ok: false,
+			error: expect.stringContaining('jb-p1lot answered with unexpected JSON'),
 		});
 	});
 });

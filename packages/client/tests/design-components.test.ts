@@ -13,7 +13,7 @@ mock.module('~/api/metro/search', () => ({
 }));
 
 const components = await import('~/api/metro/components');
-const fallbacks = await import('~/ui/components/design-fallbacks');
+const fallbacks = await import('~/api/metro/fallbacks/design-fallbacks');
 
 const BARREL_MEMBER = /^\s*(\w+): \w+Component;$/;
 

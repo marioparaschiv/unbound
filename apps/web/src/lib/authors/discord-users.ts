@@ -1,10 +1,8 @@
-import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { z } from 'zod';
 
 import { isBotTokenHost } from '~/lib/discord';
+import type { DiscordId } from '~/db/schema';
 import type { Env } from '~/lib/env';
-
-export type DiscordId = PublishedManifest['authors'][number]['id'];
 
 export type DiscordUser = {
 	id: DiscordId;

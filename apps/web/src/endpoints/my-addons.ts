@@ -1,15 +1,12 @@
 import { myAddonsResponseSchema } from '@unbound-app/contracts/addons';
 import { z } from 'zod';
 
-import { requireCaller } from '~/lib/api/caller';
+import { callerEndpoint } from '~/lib/api/endpoint';
 import { listMyAddons } from '~/lib/addons';
-import endpoint from '~/lib/api/endpoint';
 
-const myAddonsEndpoint = endpoint(
+const myAddonsEndpoint = callerEndpoint(
 	{ body: z.undefined(), query: z.undefined(), response: myAddonsResponseSchema },
-	async ({ ctx, request }) => {
-		const caller = await requireCaller(ctx, request.headers);
-
+	async ({ ctx, caller }) => {
 		return listMyAddons(ctx, caller);
 	},
 );

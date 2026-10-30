@@ -1,9 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
 import { captureNativeHook } from '~/lib/probes';
+import { bridgePortField } from '~/lib/context';
 
 const schema = z.object({
 	className: z.string().describe('The class that declares or inherits the method.'),
@@ -14,10 +14,7 @@ const schema = z.object({
 		.describe('The Java parameter type names, such as int or android.view.MotionEvent.'),
 	duration: z.number().default(3000).describe('How long to record calls, in milliseconds.'),
 	samples: z.number().default(10).describe('How many calls to describe.'),
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 });
 
 const hookCommand: CommandDefinition<typeof schema> = {

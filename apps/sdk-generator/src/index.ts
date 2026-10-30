@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 
 import {
 	logger,
+	API_MANIFEST,
 	API_SRC,
 	INTERNAL_OUT,
 	BANNER,
@@ -31,7 +32,7 @@ async function generate() {
 	rmSync(API_SRC, { recursive: true, force: true });
 	mkdirSync(API_SRC, { recursive: true });
 
-	const entries = buildEntries();
+	const { root, modules: entries } = buildEntries();
 
 	const ownedByModule = buildOwnership(entries);
 
@@ -41,6 +42,7 @@ async function generate() {
 	// file (`global`, a hoist file) or a duplicated additional subpath would silently overwrite it.
 	const producers = new Map<string, string>([
 		[join(API_SRC, 'global.d.ts'), 'the globals file'],
+		[root.out, 'the root barrel'],
 		...hoistFiles.map((file) => [file.out, 'a hoist file'] as [string, string]),
 	]);
 
@@ -68,10 +70,6 @@ async function generate() {
 	const outputs = new Map<string, string>();
 
 	for (const entry of entries) {
-		if (entry.name === '.') {
-			continue;
-		}
-
 		// A folder module's direct children (`metro/common` under `metro`) become `export * as` imports
 		// instead of inlined namespaces.
 		const children = new Map<string, ModuleEntry>();
@@ -94,8 +92,6 @@ async function generate() {
 			),
 		);
 	}
-
-	const root = entries.find((entry) => entry.name === '.')!;
 
 	outputs.set(root.out, buildRoot(entries));
 
@@ -156,7 +152,7 @@ async function generate() {
 
 	writeManifest(version, entries);
 
-	format([join(ROOT, 'packages', 'api', 'package.json')]);
+	format([API_MANIFEST]);
 
 	const duration = (performance.now() - start).toFixed(2);
 

@@ -1,3 +1,5 @@
+import { z } from '@unbound-app/contracts/zod';
+
 import type { CommandRunner, DropTarget } from './device-drops';
 
 export type MemoryReport = {
@@ -9,7 +11,17 @@ export type MemoryReport = {
 
 export type ProcessMemory = { footprintMB: number; peakMB: number };
 
-type ListedProcess = { name?: string; footprintMB?: number; peakFootprintMB?: number };
+const processListSchema = z.object({
+	processes: z.optional(
+		z.array(
+			z.object({
+				name: z.optional(z.string()),
+				footprintMB: z.optional(z.number()),
+				peakFootprintMB: z.optional(z.number()),
+			}),
+		),
+	),
+});
 
 export const SPRINGBOARD_WARNING_MB = 300;
 
@@ -32,7 +44,11 @@ export function parseIOSFootprint(output: string): number | undefined {
  */
 export function parseProcessMemory(output: string, name: string): ProcessMemory | undefined {
 	try {
-		const { processes } = JSON.parse(output) as { processes?: ListedProcess[] };
+		const parsed = processListSchema.safeParse(JSON.parse(output));
+
+		if (!parsed.success) return undefined;
+
+		const { processes } = parsed.data;
 		const found = processes?.find((process) => process.name === name);
 
 		return found?.footprintMB === undefined

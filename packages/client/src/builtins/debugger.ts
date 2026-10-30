@@ -9,6 +9,7 @@ import { parseMessage } from '@unbound-app/debugger-protocol';
 import type { PluginEntity } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 
+import { getSetting, isSettingChange } from '~/lib/unbound-settings';
 import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/lib/constants';
 import { currentEnvironment } from '~/lib/environment';
 import { reloadSummary } from '~/lib/reload-summary';
@@ -19,7 +20,6 @@ import storage from '~/api/storage';
 
 const Patcher = createPatcher('Debugger');
 const Logger = createLogger('Debugger');
-const Settings = storage.getStore('unbound');
 
 // How long to wait before re-dialling the bridge after a drop or failed attempt, so a reloaded app
 // or a restarted bridge reconnects on its own without waiting for the next AppState transition.
@@ -72,7 +72,7 @@ export function stop() {
  * @returns `true` when `debugger.enabled` is set.
  */
 export function shouldStart() {
-	return Settings.get('debugger.enabled', false);
+	return getSetting('debugger.enabled');
 }
 
 function connect(isReconnect = false) {
@@ -121,7 +121,7 @@ function connect(isReconnect = false) {
 // Read per attempt so an address edited in settings applies on the next reconnect. The build-time
 // fallback tracks the dev host and is empty in production builds.
 function resolveAddress() {
-	return Settings.get('debugger.address', '') || DEBUGGER_ADDRESS;
+	return getSetting('debugger.address') || DEBUGGER_ADDRESS;
 }
 
 function scheduleReconnect() {
@@ -199,12 +199,16 @@ async function handlePluginPush(request: PluginPushRequest) {
 			plugins.markDevelopmentCopy(request.addonId);
 		}
 
-		reply({
-			type: 'plugin-push-result',
-			id: request.id,
-			ok: result.ok,
-			error: result.ok ? void 0 : inspect(result.error),
-		});
+		reply(
+			result.ok
+				? { type: 'plugin-push-result', id: request.id, ok: true }
+				: {
+						type: 'plugin-push-result',
+						id: request.id,
+						ok: false,
+						error: inspect(result.error),
+					},
+		);
 	} catch (error) {
 		reply({ type: 'plugin-push-result', id: request.id, ok: false, error: inspect(error) });
 	}
@@ -335,10 +339,12 @@ function listenToAppState() {
 }
 
 function listenToSettings() {
-	return Settings.addListener(
-		(payload) => Boolean(payload.key?.startsWith('debugger.')),
+	return storage.addListener(
+		(payload) =>
+			isSettingChange(payload, 'debugger.enabled') ||
+			isSettingChange(payload, 'debugger.address'),
 		(payload) => {
-			if (payload.key === 'debugger.enabled') {
+			if (isSettingChange(payload, 'debugger.enabled')) {
 				if (payload.value) {
 					start();
 				} else {
@@ -348,7 +354,7 @@ function listenToSettings() {
 				return;
 			}
 
-			if (payload.key !== 'debugger.address' || ws?.readyState !== WebSocket.OPEN) return;
+			if (ws?.readyState !== WebSocket.OPEN) return;
 
 			Logger.info('Address changed, reconnecting...');
 			// The close handler clears `ws` and schedules the retry; dialling here would hit the

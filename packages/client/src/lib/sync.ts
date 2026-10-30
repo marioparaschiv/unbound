@@ -264,7 +264,7 @@ export function reconcileBase(
 	previous: SyncDocument,
 	failed: SyncAction[],
 ): SyncDocument {
-	const result: SyncDocument = JSON.parse(JSON.stringify(document));
+	const result = structuredClone(document);
 
 	for (const action of failed) {
 		if (action.type === 'install') {

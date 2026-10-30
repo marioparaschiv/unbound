@@ -1,19 +1,13 @@
-import {
-	DEFAULT_BRIDGE_PORT,
-	DEFAULT_EVAL_TIMEOUT_MS,
-	MAX_EVAL_TIMEOUT_MS,
-} from '@unbound-app/debugger-protocol';
+import { DEFAULT_EVAL_TIMEOUT_MS, MAX_EVAL_TIMEOUT_MS } from '@unbound-app/debugger-protocol';
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 import { z } from 'zod';
 
+import { bridgePortField } from '~/lib/context';
 import { runOnDevice } from '~/lib/device';
 
 const schema = z.object({
 	code: z.string().describe('The JavaScript to evaluate on the device.'),
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 	timeout: z
 		.number()
 		.int()
@@ -33,6 +27,7 @@ const evalCommand: CommandDefinition<typeof schema> = {
 		'read globals (e.g. `unbound.metro`), call APIs, and probe Discord internals. The last ' +
 		'expression is the return value, and a returned promise is awaited for its resolved value; ' +
 		'`console.log`/`warn`/`error` are captured separately. Pass `timeout` for long-running code.',
+	summary: 'Run JavaScript on the connected device.',
 	surfaces: { cli: 'root', mcp: true },
 	schema,
 	cli: { positionals: ['code'] },

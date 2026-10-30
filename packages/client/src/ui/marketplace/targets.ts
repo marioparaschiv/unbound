@@ -1,9 +1,9 @@
 import type { AddonType, AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
+import type { ManagerKind } from '@unbound-app/types/addons';
 
 import { installDependencies } from '~/ui/marketplace/install-dependencies';
 import type { UpdatableKind } from '~/lib/updates';
 import { toRelease } from '~/lib/addon-versions';
-import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
 import { Messages } from '~/api/i18n';
 
@@ -23,25 +23,25 @@ export const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'de
 export const MARKETPLACE_TABS: MarketplaceTab[] = [
 	{
 		type: 'plugin',
-		kind: ManagerKind.Plugins,
+		kind: 'plugins',
 		label: () => Messages.UNBOUND_PLUGINS,
 		icon: 'PuzzlePieceIcon',
 	},
 	{
 		type: 'theme',
-		kind: ManagerKind.Themes,
+		kind: 'themes',
 		label: () => Messages.UNBOUND_THEMES,
 		icon: 'PaintPaletteIcon',
 	},
 	{
 		type: 'icon-pack',
-		kind: ManagerKind.Icons,
+		kind: 'icons',
 		label: () => Messages.UNBOUND_ICONS,
 		icon: 'ImageIcon',
 	},
 	{
 		type: 'font',
-		kind: ManagerKind.Fonts,
+		kind: 'fonts',
 		label: () => Messages.UNBOUND_FONTS,
 		icon: 'LettersIcon',
 	},
@@ -59,7 +59,7 @@ function fontFile(addon: ListedAddon): string {
  * @returns The installed version, the listed one for an installed font, or `undefined` if absent.
  */
 export function getInstalledVersion(kind: ManagerKind, addon: ListedAddon): string | undefined {
-	if (kind === ManagerKind.Fonts) {
+	if (kind === 'fonts') {
 		const installed = getManager(kind)
 			.getEntities()
 			.some((font) => font.file === fontFile(addon));
@@ -85,7 +85,7 @@ export async function installVersion(
 	version: AddonVersion,
 	hold: boolean = false,
 ): Promise<boolean> {
-	if (kind === ManagerKind.Plugins && !(await installDependencies(version.manifest))) {
+	if (kind === 'plugins' && !(await installDependencies(version.manifest))) {
 		return false;
 	}
 
@@ -116,7 +116,7 @@ export async function installVersion(
  * @returns Whether the install succeeded.
  */
 export async function installFont(addon: ListedAddon): Promise<boolean> {
-	return Boolean(await getManager(ManagerKind.Fonts).install(addon.latestVersion.bundleUrl));
+	return Boolean(await getManager('fonts').install(addon.latestVersion.bundleUrl));
 }
 
 export default {

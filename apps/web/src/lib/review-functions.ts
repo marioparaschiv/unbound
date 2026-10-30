@@ -1,10 +1,9 @@
 import { reviewQueueQuerySchema } from '@unbound-app/contracts/review';
-import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createServerFn } from '@tanstack/react-start';
 
 import type { ReviewEntry } from '~/lib/review-entry';
+import requestCaller from '~/lib/api/request-caller';
 import { toReviewEntry } from '~/lib/review-entry';
-import { requireCaller } from '~/lib/api/caller';
 import { listReviewQueue } from '~/lib/review';
 import app from '~/lib/app';
 
@@ -15,7 +14,7 @@ import app from '~/lib/app';
 export const fetchReviewQueue = createServerFn({ method: 'GET' })
 	.validator(reviewQueueQuerySchema)
 	.handler(async ({ data }): Promise<ReviewEntry[]> => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 		const { submissions } = await listReviewQueue(app, caller, data?.kind);
 
 		return submissions.map(toReviewEntry);

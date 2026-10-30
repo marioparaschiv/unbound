@@ -1,15 +1,12 @@
 import { reviewQueueQuerySchema, reviewQueueResponseSchema } from '@unbound-app/contracts/review';
 import { z } from 'zod';
 
-import { requireCaller } from '~/lib/api/caller';
+import { callerEndpoint } from '~/lib/api/endpoint';
 import { listReviewQueue } from '~/lib/review';
-import endpoint from '~/lib/api/endpoint';
 
-const reviewQueueEndpoint = endpoint(
+const reviewQueueEndpoint = callerEndpoint(
 	{ body: z.undefined(), query: reviewQueueQuerySchema, response: reviewQueueResponseSchema },
-	async ({ ctx, request, query }) => {
-		const caller = await requireCaller(ctx, request.headers);
-
+	async ({ ctx, query, caller }) => {
 		return listReviewQueue(ctx, caller, query?.kind);
 	},
 );

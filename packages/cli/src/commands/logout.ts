@@ -10,6 +10,7 @@ const schema = z.object({});
 const logoutCommand: CommandDefinition<typeof schema> = {
 	name: 'logout',
 	description: 'Delete the credentials `ubd login` stored.',
+	summary: 'Delete the stored login.',
 	surfaces: { cli: 'root', mcp: false },
 	schema,
 	async handler() {

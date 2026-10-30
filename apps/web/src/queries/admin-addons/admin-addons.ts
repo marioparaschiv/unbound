@@ -2,9 +2,7 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import type { AdminAddonsSearch } from '@unbound-app/contracts/admin';
 
 import { fetchAdminAddon, fetchAdminAddons } from '~/lib/admin-functions';
-
-/** Every admin addons query key starts with this, so invalidating it refreshes the list pages and each addon's page. */
-export const adminAddonsKey = ['admin-addons'] as const;
+import { adminAddonsKey } from '~/queries/keys';
 
 /**
  * @description One page of `/admin/addons`; a new search, filter or page keeps the old one on screen until it loads.
@@ -33,4 +31,4 @@ export function adminAddonQuery(id: string) {
 	});
 }
 
-export default { adminAddonsKey, adminAddonsQuery, adminAddonQuery };
+export default { adminAddonsQuery, adminAddonQuery };

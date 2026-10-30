@@ -32,6 +32,7 @@ import type { Transaction } from '~/db/database';
 import { splitList } from '~/lib/addon-filters';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
+import { DAY_MS } from '~/lib/calendar-date';
 import { ApiError } from '~/lib/api/errors';
 import one from '~/db/one';
 
@@ -68,8 +69,6 @@ type ManifestTypeFields = Pick<PublishedManifest, 'type' | 'main'>;
 type ListingTable = Pick<typeof addon, 'id' | 'updatedAt'>;
 
 type ListingFilters = NonNullable<ListAddonsQuery>;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const SORT_COLUMNS = {
 	name: 'name',

@@ -9,8 +9,8 @@ import {
 	snowflakeAt,
 } from '@unbound-app/web/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { and, eq, sql } from 'drizzle-orm';
 import { randomBytes } from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
 
 import { addonMessage, auditPost, releasePost, roleGrant, tag } from '~/db/schema';
 
@@ -145,7 +145,8 @@ describe.skipIf(!DATABASE_URL)('triggers on the web tables', () => {
 		await database.web.db.insert(account).values({
 			id: uniqueId('credential'),
 			accountId: userId,
-			providerId: 'credential',
+			// The app only writes social providers, so the typed column takes another id as raw SQL.
+			providerId: sql`'credential'`,
 			userId,
 			updatedAt: new Date(),
 		});

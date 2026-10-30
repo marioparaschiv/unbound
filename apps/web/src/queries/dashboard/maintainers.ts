@@ -3,9 +3,9 @@ import type { MaintainersResponse } from '@unbound-app/contracts/addons';
 import { mutationOptions, queryOptions } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 
-import { dashboardKey, dashboardQuery } from '~/queries/dashboard/dashboard';
 import { createBrowserClient } from '~/lib/api/browser-client';
-import { marketplaceKey } from '~/queries/marketplace/listing';
+import { invalidate } from '~/queries/invalidate';
+import { dashboardKey } from '~/queries/keys';
 
 function maintainersKey(addonId: string) {
 	return [...dashboardKey, 'maintainers', addonId] as const;
@@ -34,10 +34,7 @@ async function applyMaintainers(
 ) {
 	client.setQueryData(maintainersKey(addonId), response);
 	// The public addon page, the Team pages and the Author filter credit maintainers too.
-	await Promise.all([
-		client.invalidateQueries({ queryKey: dashboardQuery().queryKey }),
-		client.invalidateQueries({ queryKey: marketplaceKey }),
-	]);
+	await invalidate(client, 'maintainedAddon');
 }
 
 /**

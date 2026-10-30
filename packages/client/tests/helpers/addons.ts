@@ -52,7 +52,6 @@ mock.module('react-native', () => ({
 
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.
-export const { ManagerType } = await import('~/managers/base');
 export const { Addons } = await import('~/managers/addons');
 export const { createPluginContext } = await import('~/api/native-runtime');
 
@@ -68,13 +67,8 @@ export function makeManifest(id: string, version: string = '1.0.0'): AddonManife
 		name: id,
 		description: 'test',
 		authors: [{ name: 'Mario', id: '1' }],
-		icon: '',
-		updates: '',
 		main: 'index.js',
 		version,
-		folder: '',
-		path: '',
-		url: '',
 	};
 }
 
@@ -106,7 +100,7 @@ export class FakeAddons extends Addons<Addon> {
 	nextInstanceStartFails = false;
 
 	constructor() {
-		super(ManagerType.PLUGINS);
+		super('plugins');
 	}
 
 	initialize() {}

@@ -1,4 +1,4 @@
-import type { AddonManifest, NativePluginCapability } from '@unbound-app/types';
+import type { Addon, AddonManifest, NativePluginCapability } from '@unbound-app/types';
 
 /** Capabilities that reach native code without the bridge's type and object checks. */
 const CONSENT_CAPABILITIES: readonly NativePluginCapability[] = [
@@ -8,6 +8,43 @@ const CONSENT_CAPABILITIES: readonly NativePluginCapability[] = [
 
 /** The consent the user gave, keyed by addon id: the capabilities it covered, as {@link consentKey} returns. */
 export type NativeConsents = Record<string, string>;
+
+/** Asks the user whether an addon may use consent-gated capabilities; resolves to their answer. */
+export type ConsentPrompt = (
+	addon: Addon,
+	capabilities: readonly NativePluginCapability[],
+) => Promise<boolean>;
+
+let consentPrompt: ConsentPrompt | undefined;
+
+/**
+ * @description Registers how the UI asks for consent before an addon gets direct native access.
+ * @param prompt The prompt, or `undefined` to refuse every request.
+ */
+export function setConsentPrompt(prompt: ConsentPrompt | undefined): void {
+	consentPrompt = prompt;
+}
+
+/**
+ * @description Asks the user, through the registered prompt, to allow an addon's consent-gated capabilities.
+ * @param addon The addon asking.
+ * @returns The user's answer, or `false` when no prompt is registered.
+ */
+export function promptForConsent(addon: Addon): Promise<boolean> {
+	if (!consentPrompt) {
+		return Promise.resolve(false);
+	}
+
+	return consentPrompt(addon, consentCapabilities(addon.data));
+}
+
+/** Thrown when an addon asks for direct native access the user has not allowed. */
+export class NativeConsentRequiredError extends Error {
+	constructor(name: string) {
+		super(`${name} needs your permission for direct native access.`);
+		this.name = 'NativeConsentRequiredError';
+	}
+}
 
 /**
  * @description Lists the consent-gated capabilities a manifest asks for on any platform.

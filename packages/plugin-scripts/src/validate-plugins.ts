@@ -39,6 +39,10 @@ type PluginManifest = {
 	platformCapabilities?: unknown;
 };
 
+function isManifestObject(value: unknown): value is PluginManifest {
+	return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
 function providingPlatforms(capability: string): string[] {
 	return supportedPlatforms.filter((platform) =>
 		platformCapabilities[platform]?.includes(capability),
@@ -169,11 +173,11 @@ export function validatePluginFolder(folder: string, manifest: unknown): string[
 	}
 	if (!FOLDER_PATTERN.test(folder)) errors.push('folder must use lowercase kebab-case');
 
-	if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+	if (!isManifestObject(manifest)) {
 		return [...errors, 'manifest must be an object'];
 	}
 
-	const data = manifest as PluginManifest;
+	const data = manifest;
 	validateText(data.name, 'name', PLUGIN_NAME_MAX_LENGTH, errors);
 	if (
 		typeof data.name === 'string' &&
@@ -292,6 +296,31 @@ export function validatePluginSources(pluginDirectory: string): string[] {
 	);
 }
 
+/**
+ * @description Checks that rollup.config.mjs sets `settingsPanel: true` exactly when the entry file exports `getSettingsPanel`.
+ * @param pluginDirectory The plugin's folder.
+ * @returns The mismatch found, empty when the flag and the entry file agree.
+ */
+export function validateSettingsPanel(pluginDirectory: string): string[] {
+	const configPath = join(pluginDirectory, 'rollup.config.mjs');
+	const entryPath = ['index.tsx', 'index.ts']
+		.map((name) => join(pluginDirectory, 'src', name))
+		.find((path) => existsSync(path));
+
+	if (!existsSync(configPath) || !entryPath) return [];
+
+	const flagged = /\bsettingsPanel:\s*true\b/.test(readFileSync(configPath, 'utf8'));
+	const exported = /\bgetSettingsPanel\b/.test(readFileSync(entryPath, 'utf8'));
+
+	if (flagged === exported) return [];
+
+	return [
+		exported
+			? 'rollup.config.mjs must set settingsPanel: true because src/index exports getSettingsPanel'
+			: 'rollup.config.mjs sets settingsPanel: true but src/index does not export getSettingsPanel',
+	];
+}
+
 export function validatePluginDirectory(pluginsDirectory: string): string[] {
 	const errors: string[] = [];
 	const ids = new Map<string, string>();
@@ -324,7 +353,7 @@ export function validatePluginDirectory(pluginsDirectory: string): string[] {
 		for (const error of validatePluginFolder(folder, manifest))
 			errors.push(`${folder}: ${error}`);
 
-		const version = (manifest as PluginManifest | null)?.version;
+		const version = isManifestObject(manifest) ? manifest.version : undefined;
 
 		for (const error of validatePluginDocs(
 			pluginDirectory,
@@ -335,8 +364,11 @@ export function validatePluginDirectory(pluginsDirectory: string): string[] {
 		for (const error of validatePluginSources(pluginDirectory))
 			errors.push(`${folder}: ${error}`);
 
-		if (manifest && typeof manifest === 'object' && !Array.isArray(manifest)) {
-			const data = manifest as PluginManifest;
+		for (const error of validateSettingsPanel(pluginDirectory))
+			errors.push(`${folder}: ${error}`);
+
+		if (isManifestObject(manifest)) {
+			const data = manifest;
 			if (typeof data.id === 'string') {
 				const previous = ids.get(data.id);
 				if (previous)

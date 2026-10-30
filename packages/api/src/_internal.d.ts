@@ -17,6 +17,8 @@ declare const TRANSITION_STATE_KEYS: readonly ['MOUNTED', 'ENTERED', 'YEETED'];
 declare const nativeHandle: unique symbol;
 /** The kinds of addon a manifest can declare. */
 export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'font'];
+/** The core settings store; each addon's settings store is named after the addon id. */
+export declare const CORE_SETTINGS_STORE = 'unbound';
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
 export declare const DESIGN_COMPONENTS: readonly [
 	'Text',
@@ -55,6 +57,8 @@ export declare const DESIGN_COMPONENTS: readonly [
 	'ActionSheetRow',
 	'ContextMenu',
 ];
+/** The addon managers. Each names its settings store and its Cloud Sync section. */
+export declare const MANAGER_KINDS: readonly ['plugins', 'themes', 'icons', 'fonts'];
 export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.objc.classes',
 	'native.objc.invoke',
@@ -327,47 +331,14 @@ export type AddonAuthor = {
 	name: string;
 	id: `${number}`;
 };
-/** The manifest describing an addon's metadata, entry point, and source. */
-export type AddonManifest = {
-	id: string;
-	/** The addon kind this manifest describes; used to validate installs. */
-	type?: AddonType;
-	name: string;
-	description: string;
-	authors: AddonAuthor[];
-	icon:
-		| (string & {})
-		| {
-				uri: string;
-		  };
-	updates: string;
-	main: string;
-	version: string;
-	folder: string;
-	path: string;
-	url: string;
-	platforms?: NativePluginPlatform[];
-	capabilities?: NativePluginCapability[];
-	platformCapabilities?: Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
-	minNativePluginApi?: string;
-	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
-	signature?: {
-		version: 1;
-		ed25519: string;
-	};
-	/** Marks a plugin other plugins build on, which the plugin list hides by default. */
-	library?: boolean;
-	/** The addons this one needs, by id, each with the semver range it accepts, such as `^1.2.0`. */
-	dependencies?: Record<string, string>;
-	/** The SHA-512 of each bundle compiled to Hermes bytecode, by bytecode version; covered by `signature`. */
-	bytecode?: Record<string, string>;
+/** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what the loader and installer record. */
+export type AddonManifest = AuthoredAddonManifest & {
+	/** Set by the loader for an addon it read from disk: the addon's folder name. */
+	folder?: string;
+	/** Set by the loader for an addon it read from disk: the addon's absolute directory. */
+	path?: string;
 	/** Set by the loader and installer: whether the bundle carries a valid Unbound signature. */
 	trust?: AddonTrust;
-	/** Requirements on the Unbound client running the addon. */
-	unbound?: {
-		/** The minimum Unbound client version (semver) the addon supports. */
-		min?: string;
-	};
 };
 /** An addon referenced either by its id string or the {@link Addon} entity itself. */
 export type AddonResolveable = string | Addon;
@@ -414,6 +385,42 @@ export type AlertModalProps = {
 export type AssetsModule = {
 	registerAsset: (asset: DiscordAsset) => number;
 	getAssetByID: (id: number) => DiscordAsset | null;
+};
+/** The manifest an author ships in an addon's `manifest.json`: its metadata and entry point. */
+export type AuthoredAddonManifest = {
+	id: string;
+	/** The addon kind this manifest describes; used to validate installs. */
+	type?: AddonType;
+	name: string;
+	description: string;
+	authors: AddonAuthor[];
+	icon?:
+		| string
+		| {
+				uri: string;
+		  };
+	main: string;
+	version: string;
+	platforms?: NativePluginPlatform[];
+	capabilities?: NativePluginCapability[];
+	platformCapabilities?: Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
+	minNativePluginApi?: string;
+	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
+	signature?: {
+		version: 1;
+		ed25519: string;
+	};
+	/** Marks a plugin other plugins build on, which the plugin list hides by default. */
+	library?: boolean;
+	/** The addons this one needs, by id, each with the semver range it accepts, such as `^1.2.0`. */
+	dependencies?: Record<string, string>;
+	/** The SHA-512 of each bundle compiled to Hermes bytecode, by bytecode version; covered by `signature`. */
+	bytecode?: Record<string, string>;
+	/** Requirements on the Unbound client running the addon. */
+	unbound?: {
+		/** The minimum Unbound client version (semver) the addon supports. */
+		min?: string;
+	};
 };
 export type AvatarDuoPileComponent = React$1.ComponentType<
 	AvatarDuoPileProps & Record<string, unknown>
@@ -1762,6 +1769,7 @@ export type ManaContextProviderProps = {
 	children?: React$1.ReactNode;
 	value?: unknown;
 };
+export type ManagerKind = (typeof MANAGER_KINDS)[number];
 export type MenuComponent = React$1.ComponentType<MenuProps>;
 export type MenuGroupComponent = React$1.ComponentType<MenuGroupProps>;
 /**
@@ -1985,13 +1993,20 @@ export type NativeDebugEnvironment = {
 export type NativeDebugEvaluation = {
 	id: string;
 	code: string;
-	ok: boolean;
-	value?: string;
-	error?: string;
-	logs?: {
-		level: 1 | 2 | 3;
-		message: string;
-	}[];
+	logs?: NativeDebugEvaluationLog[];
+} & (
+	| {
+			ok: true;
+			value?: string;
+	  }
+	| {
+			ok: false;
+			error?: string;
+	  }
+);
+export type NativeDebugEvaluationLog = {
+	level: 1 | 2 | 3;
+	message: string;
 };
 export type NativeFFIBridge = {
 	symbol(name: string, image?: string): NativePointer | null;
@@ -2843,6 +2858,16 @@ export type PromoSheetProps = Omit<
 	graphic?: unknown;
 	illustration?: React$1.ComponentProps<typeof RN.View>['children'];
 	title?: DesignTextProps['children'];
+};
+/**
+ * A manifest pushed by `ubd dev`. The CLI only checks the fields it reads; the device validates the
+ * whole manifest the same way it validates one it loads, so a dev build is never held to the publish rules.
+ */
+export type PushedManifest = {
+	id: string;
+	main: string;
+	/** The SHA-512 of each bytecode build the push carries, by bytecode version; the CLI fills it in. */
+	bytecode?: Record<string, string>;
 };
 /**
  * Props of `RedesignBottomSheetTitleHeaderBase` (function). Exports: none.

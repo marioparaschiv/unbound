@@ -1,3 +1,4 @@
+import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
@@ -17,10 +18,12 @@ import {
 	javaFlag,
 	javaNumber,
 	javaReference,
+	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
 import { readViewTextAsync } from '@unbound-plugins/shared/native/android/spans';
 import {
 	currentDecorView,
+	displayDensity,
 	findViewsOfClass,
 	readCalls,
 	runOnMain,
@@ -39,13 +42,14 @@ import {
 	type CodeSlot,
 } from '~/android/code-ranges';
 import { registerCodeCardSurface, type CardContent } from '~/components/code-card';
-import { MessageStore, SelectedChannelStore, settings } from '~/modules';
+import { channelBlocks } from '~/android/channel-blocks';
+import { settings } from '~/modules';
 import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
 import { createFlatRecovery } from '~/flat-recovery';
 import { onAppForeground } from '~/foreground';
 import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';
-import { parseFencedCodeBlocks, type CodeBlock } from '~/fences';
+import type { CodeBlock } from '~/fences';
 import { codeBlockLayout } from '~/layout';
 
 const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
@@ -58,10 +62,6 @@ type Native = {
 	java: NativeJavaBridge;
 	hooks: NativeJavaHooksBridge;
 	fabric: NativeFabricBridge;
-};
-
-type Message = {
-	content?: unknown;
 };
 
 type Card = CardContent & {
@@ -79,21 +79,6 @@ type Layout = {
 	width: number;
 };
 
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
-function channelBlocks(): CodeBlock[] {
-	const channelId = SelectedChannelStore.getChannelId();
-	const messages: Message[] = MessageStore.getMessages(channelId)?._array ?? [];
-
-	return messages.flatMap((message) =>
-		typeof message.content === 'string' && message.content.includes('```')
-			? parseFencedCodeBlocks(message.content)
-			: [],
-	);
-}
-
 /**
  * @description Replaces the code blocks in Discord's Android message text with Shiki cards through the loader's native text rewrites, so cards stay in place while the chat scrolls.
  * @param native The plugin's Java, hook and Fabric bridges.
@@ -108,7 +93,7 @@ export function createNativeCards(native: Native) {
 
 	highlighter.warm(readPreferences().theme);
 	const cards = new Map<string, Card>();
-	const listeners = new Map<string, Set<() => void>>();
+	const listeners = createSurfaceListeners();
 	const layouts = new Map<string, Layout>();
 	const contentCache = new Map<string, Promise<CardContent>>();
 	const pending = new Set<string>();
@@ -122,18 +107,7 @@ export function createNativeCards(native: Native) {
 	const surfaceModule = registerCodeCardSurface({
 		card: (surfaceId) => cards.get(surfaceId),
 		revision: (surfaceId) => cards.get(surfaceId)?.revision ?? -1,
-		subscribe(surfaceId, listener) {
-			const set = listeners.get(surfaceId) ?? new Set();
-
-			set.add(listener);
-			listeners.set(surfaceId, set);
-
-			return () => {
-				set.delete(listener);
-
-				if (!set.size) listeners.delete(surfaceId);
-			};
-		},
+		subscribe: listeners.subscribe,
 	});
 
 	if (!surfaceModule) return undefined;
@@ -147,19 +121,6 @@ export function createNativeCards(native: Native) {
 	if (!surfaces) return undefined;
 
 	const inline = surfaces;
-
-	function publish(surfaceId: string) {
-		for (const listener of listeners.get(surfaceId) ?? []) listener();
-	}
-
-	async function displayDensity(textView: NativeJavaReference): Promise<number> {
-		const resources = javaReference(await java.invokeAsync(textView, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
-	}
 
 	async function textGeometry(textView: NativeJavaReference) {
 		const [width, left, right, attached] = await runOnMain(
@@ -255,7 +216,7 @@ export function createNativeCards(native: Native) {
 				block: layout.blocks[index]!,
 				revision: (previous?.revision ?? -1) + 1,
 			});
-			publish(surfaceId);
+			listeners.notify(surfaceId);
 		});
 
 		const px = (value: number) => Math.round(value * layout.density);
@@ -284,7 +245,7 @@ export function createNativeCards(native: Native) {
 				offsetY: px(TOP_GAP),
 			})),
 		});
-		const key = viewKey(layout.textView as NativeJavaValue);
+		const key = javaViewKey(layout.textView as NativeJavaValue);
 
 		if (!key) return;
 
@@ -296,7 +257,7 @@ export function createNativeCards(native: Native) {
 	}
 
 	async function render(textView: NativeJavaReference) {
-		const key = viewKey(textView as NativeJavaValue);
+		const key = javaViewKey(textView as NativeJavaValue);
 		const content = await readViewTextAsync(java, textView);
 
 		if (!key || !content || inline.isDefined(content.string)) return;
@@ -313,7 +274,7 @@ export function createNativeCards(native: Native) {
 			return;
 		}
 
-		const density = await displayDensity(textView);
+		const density = await displayDensity(java, textView);
 		const rendered = renderedText(content.string, slots);
 		const previous = layouts.get(rendered);
 		const geometry = await textGeometry(textView);
@@ -342,7 +303,7 @@ export function createNativeCards(native: Native) {
 	}
 
 	async function resize(textView: NativeJavaReference) {
-		const key = viewKey(textView as NativeJavaValue);
+		const key = javaViewKey(textView as NativeJavaValue);
 		const rendered = key ? renderedByView.get(key) : undefined;
 		const layout = rendered ? layouts.get(rendered) : undefined;
 		const shown = (await readViewTextAsync(java, textView))?.string;
@@ -361,7 +322,7 @@ export function createNativeCards(native: Native) {
 	}
 
 	function schedule(textView: NativeJavaReference) {
-		const key = viewKey(textView as NativeJavaValue);
+		const key = javaViewKey(textView as NativeJavaValue);
 
 		if (disposed || !key || pending.has(key)) return;
 
@@ -413,7 +374,7 @@ export function createNativeCards(native: Native) {
 		SIZE_PARAMETERS,
 		{ notify: true },
 		({ self }) => {
-			const key = viewKey(self);
+			const key = javaViewKey(self);
 			const textView = key ? awaitingSize.get(key) : undefined;
 
 			if (key && textView) {

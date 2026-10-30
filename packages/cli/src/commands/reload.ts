@@ -1,10 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import type { UnboundGlobal } from '@unbound-app/api/global';
 import { z } from 'zod';
 
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
-import { waitForDevice } from '~/lib/context';
+import { bridgePortField, waitForDevice } from '~/lib/context';
 import { formatResult } from '~/lib/format';
 
 /** The global the running bundle is tagged with, so the reloaded one can be told apart. */
@@ -18,10 +17,7 @@ const schema = z.object({
 		.number()
 		.default(60_000)
 		.describe('How long to wait for the reloaded app to reconnect, in milliseconds.'),
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 });
 
 // Runs on the device: tags the bundle, then reloads once the eval has answered.

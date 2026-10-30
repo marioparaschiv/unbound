@@ -1,13 +1,12 @@
 import type { SponsorshipState } from '@unbound-app/contracts/sponsors';
 
 import type { sponsorship } from '~/db/schema';
+import { DAY_MS } from '~/lib/calendar-date';
 
 export type Sponsorship = typeof sponsorship.$inferSelect;
 
 /** Days sponsor perks outlast a sponsorship unless `SPONSOR_PERK_GRACE_DAYS` says otherwise. */
 export const DEFAULT_PERK_GRACE_DAYS = 7;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type SponsoringStanding =
 	| { kind: 'active'; sponsorship: Sponsorship }

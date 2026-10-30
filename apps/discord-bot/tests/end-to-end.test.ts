@@ -13,10 +13,12 @@ import { eq } from 'drizzle-orm';
 import { announceRelease, reconcileReleases, type ReleaseTarget } from '~/dispatchers/releases';
 import { reconcileAddons, syncAddon, type AddonChannels } from '~/dispatchers/addons';
 import type { Dispatcher, DispatcherContext } from '~/dispatchers/types';
-import { startDispatchers, type DiscordIds } from '~/runtime/start';
+import { DISCORD_IDS, type DiscordIds } from '~/lib/constants';
+import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { createAuditDispatcher } from '~/dispatchers/audit';
 import { createRolesDispatcher } from '~/dispatchers/roles';
-import { DISCORD_IDS } from '~/lib/constants';
+import { startDispatchers } from '~/runtime/start';
+import { otelEnvSchema } from '~/lib/env';
 
 import {
 	createFakeDiscord as createFakeChannels,
@@ -88,7 +90,10 @@ describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake 
 				reconcile: (context) => reconcileReleases(context, rest, selfId, RELEASES),
 				handle: (payload, context) => announceRelease(context, rest, payload, RELEASES),
 			},
-			createAuditDispatcher(auditLog.channelId),
+			createAuditDispatcher(
+				createAuditTelemetry({ env: otelEnvSchema.parse({}) }),
+				auditLog.channelId,
+			),
 			{
 				...roles,
 				reconcile: (context) => roles.reconcile({ ...context, client: guild.client }),

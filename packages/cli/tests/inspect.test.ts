@@ -1,7 +1,12 @@
 import type { EvalResult } from '@unbound-app/debugger-protocol';
 import { describe, expect, test } from 'bun:test';
 
-import type { ClassReport, InspectReport, ViewRecord, ViewsReport } from '../src/lib/inspect-probe';
+import type {
+	ClassReport,
+	InspectReport,
+	ViewRecord,
+	ViewsReport,
+} from '../src/lib/inspect-report';
 import type { DeviceClient } from '../src/lib/device';
 
 import { formatClassReport, formatFoundViews, formatViewTree } from '../src/lib/inspect-format';

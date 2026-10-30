@@ -1,18 +1,21 @@
 import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join, relative, resolve } from 'node:path';
+import { z } from 'zod';
 
 import type { BuiltAddon } from '~/lib/reload-transport';
+import { readDevManifest } from '~/lib/manifest';
 
 const SKIPPED = new Set(['node_modules', '.git']);
 
 type NewestFile = { path: string; modifiedMs: number };
 
-type PackageManifest = {
-	name?: string;
-	dependencies?: Record<string, string>;
-	devDependencies?: Record<string, string>;
-};
+const packageManifestSchema = z.object({
+	dependencies: z.record(z.string(), z.string()).optional(),
+	devDependencies: z.record(z.string(), z.string()).optional(),
+});
+
+type PackageManifest = z.infer<typeof packageManifestSchema>;
 
 type SharedPackage = { name: string; dir: string };
 
@@ -51,11 +54,11 @@ function newestFile(directory: string, skip: string, skipTests = false): NewestF
 	return newest;
 }
 
-function readManifest(dir: string): PackageManifest | undefined {
+function readPackageManifest(dir: string): PackageManifest | undefined {
 	const path = join(dir, 'package.json');
 
 	return existsSync(path)
-		? (JSON.parse(readFileSync(path, 'utf8')) as PackageManifest)
+		? packageManifestSchema.safeParse(JSON.parse(readFileSync(path, 'utf8'))).data
 		: undefined;
 }
 
@@ -72,7 +75,7 @@ function resolvePackage(from: string, name: string): string | undefined {
 }
 
 function sharedPackages(addonDir: string): SharedPackage[] {
-	const manifest = readManifest(addonDir);
+	const manifest = readPackageManifest(addonDir);
 	const found = new Map<string, SharedPackage>();
 	const pending = [
 		...workspaceNames(manifest?.dependencies),
@@ -88,7 +91,7 @@ function sharedPackages(addonDir: string): SharedPackage[] {
 
 		found.set(next.name, { name: next.name, dir });
 
-		for (const name of workspaceNames(readManifest(dir)?.dependencies)) {
+		for (const name of workspaceNames(readPackageManifest(dir)?.dependencies)) {
 			pending.push({ name, from: dir });
 		}
 	}
@@ -122,10 +125,7 @@ function newestSharedFile(addon: BuiltAddon) {
 export function staleBuildReason(addon: BuiltAddon, builtSince?: number): string | undefined {
 	if (addon.static) return;
 
-	const manifest = JSON.parse(readFileSync(join(addon.dir, 'manifest.json'), 'utf8')) as {
-		main: string;
-	};
-	const bundle = join(addon.output, getBundleName(false, manifest.main));
+	const bundle = join(addon.output, getBundleName(false, readDevManifest(addon.dir).main));
 
 	if (!existsSync(bundle)) {
 		return `${relative(addon.dir, bundle)} has not been built.`;

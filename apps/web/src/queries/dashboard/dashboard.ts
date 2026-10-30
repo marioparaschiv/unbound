@@ -1,9 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 
+import { dashboardPageKey } from '~/queries/keys';
 import { getDashboard } from '~/lib/publishing';
-
-/** Every dashboard query key starts with this, so invalidating it refreshes the page and its maintainer lists. */
-export const dashboardKey = ['dashboard'] as const;
 
 /**
  * @description The signed-in user's `/dashboard`: their addons, recent submissions and GitHub link.
@@ -11,9 +9,9 @@ export const dashboardKey = ['dashboard'] as const;
  */
 export function dashboardQuery() {
 	return queryOptions({
-		queryKey: [...dashboardKey, 'page'],
+		queryKey: dashboardPageKey,
 		queryFn: () => getDashboard(),
 	});
 }
 
-export default { dashboardKey, dashboardQuery };
+export default { dashboardQuery };

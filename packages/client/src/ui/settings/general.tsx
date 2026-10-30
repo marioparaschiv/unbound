@@ -2,13 +2,12 @@ import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 
 import { Screens, SOCIAL_LINKS, DISCORD_INVITE, VERSION, REPOSITORY } from '~/lib/constants';
-import { readDebugInfo, readEntitlements } from '~/builtins/debug-report';
+import { readDebugInfo, readEntitlements } from '~/lib/debug-report/debug-report';
 import { BundleInfo, reload, getRuntimeProperties } from '~/api/native';
-import { CRASH_REPORTS_SETTING } from '~/lib/crash-reports';
+import { useUnboundSettings } from '~/lib/unbound-settings';
+import { issueURL } from '~/lib/debug-report/issue-report';
 import { Linking, Invites } from '~/api/metro/api';
-import { issueURL } from '~/builtins/issue-report';
 import { Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
 import Unbound from '~/ui/icons/unbound';
 import { Page } from '~/ui/components';
 import { Messages } from '~/api/i18n';
@@ -38,7 +37,7 @@ function InfoRow({ label, value, icon, onPress }: InfoRowProps) {
  */
 function GeneralPage() {
 	const navigation = Discord.useNavigation();
-	const settings = useSettingsStore('unbound');
+	const settings = useUnboundSettings();
 	const bytecode = useMemo(() => getRuntimeProperties()['Bytecode Version'], []);
 
 	function confirmRestart() {
@@ -63,7 +62,7 @@ function GeneralPage() {
 					label={Messages.UNBOUND_RECOVERY_MODE}
 					subLabel={Messages.UNBOUND_RECOVERY_MODE_DESC}
 					icon={<Discord.TableRowIcon source={Icons.WrenchIcon} />}
-					value={settings.get('recovery', false)}
+					value={settings.get('recovery')}
 					onValueChange={setRecoveryMode}
 				/>
 				<Discord.TableRow
@@ -93,20 +92,20 @@ function GeneralPage() {
 					label={Messages.UNBOUND_CRASH_REPORTS}
 					subLabel={Messages.UNBOUND_CRASH_REPORTS_DESCRIPTION}
 					icon={<Discord.TableRowIcon source={Icons.BugIcon ?? Icons.WarningIcon} />}
-					value={settings.get(CRASH_REPORTS_SETTING, false)}
-					onValueChange={() => settings.toggle(CRASH_REPORTS_SETTING, false)}
+					value={settings.get('crash-reports')}
+					onValueChange={() => settings.toggle('crash-reports')}
 				/>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_STAFF_MODE}
 					icon={<Discord.TableRowIcon source={Icons.EyeIcon} />}
-					value={settings.get('staff-mode', false)}
-					onValueChange={() => settings.toggle('staff-mode', false)}
+					value={settings.get('staff-mode')}
+					onValueChange={() => settings.toggle('staff-mode')}
 				/>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_DEVELOPER_MODE}
 					icon={<Discord.TableRowIcon source={Icons.WrenchIcon} />}
-					value={settings.get('developer-mode', false)}
-					onValueChange={() => settings.toggle('developer-mode', false)}
+					value={settings.get('developer-mode')}
+					onValueChange={() => settings.toggle('developer-mode')}
 				/>
 			</Discord.TableRowGroup>
 

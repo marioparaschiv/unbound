@@ -2,7 +2,7 @@ import { Platform, SafeAreaView, StatusBar, StyleSheet, View } from 'react-nativ
 import { useShallow } from 'zustand/shallow';
 import type { ReactNode } from 'react';
 
-import { useSettingsStore } from '~/api/storage';
+import { useUnboundSettings } from '~/lib/unbound-settings';
 import { Screens } from '~/api/metro/common';
 import useToastStore from '~/stores/toasts';
 
@@ -29,10 +29,10 @@ function ToastOverlay({ children }: { children: ReactNode }) {
 }
 
 function ToastContainer() {
-	const settings = useSettingsStore('unbound', ({ key }) => key === 'toasts.maxOnScreen');
+	const settings = useUnboundSettings(({ key }) => key === 'toasts.maxOnScreen');
 	const styles = useStyles();
 
-	const maxOnScreen = settings.get<number>('toasts.maxOnScreen', 3);
+	const maxOnScreen = settings.get('toasts.maxOnScreen');
 
 	// Select only the ordered id list so the container re-renders when toasts are added/removed/reordered,
 	// not when a single toast's fields update.

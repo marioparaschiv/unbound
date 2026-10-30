@@ -1,13 +1,19 @@
-import type { Addon, AddonManifest, Plugin, PluginContext, PluginEntity } from '@unbound-app/types';
+import type {
+	Addon,
+	PushedManifest,
+	Plugin,
+	PluginContext,
+	PluginEntity,
+} from '@unbound-app/types';
 
 import { createScopedReact, performRefresh, withRefreshScope } from '~/lib/hot/runtime';
 import { attributeAddon, setFreezeListener } from '~/api/crash-guard';
 import { createPluginContext } from '~/api/native-runtime';
 import type { AddonAttribution } from '~/api/crash-guard';
+import { setOwnerCheck } from '~/lib/commands/owners';
 import type { ReloadResult } from '~/managers/addons';
 import { reload as reloadApp } from '~/api/native';
 import { registry } from '~/lib/commands/registry';
-import { ManagerType } from '~/managers/base';
 import { Addons } from '~/managers/addons';
 
 /**
@@ -30,10 +36,10 @@ export class Plugins extends Addons<PluginEntity> {
 	private evaluated = new Map<string, EvaluatedPlugin>();
 
 	/**
-	 * @description Creates the plugins manager bound to the {@link ManagerType.PLUGINS} type.
+	 * @description Creates the plugins manager bound to the {@link 'plugins'} type.
 	 */
 	constructor() {
-		super(ManagerType.PLUGINS);
+		super('plugins');
 	}
 
 	/**
@@ -41,6 +47,7 @@ export class Plugins extends Addons<PluginEntity> {
 	 */
 	initialize() {
 		setFreezeListener((freeze) => this.handleFreeze(freeze));
+		setOwnerCheck((owner) => Boolean(this.getEntity(owner)));
 
 		for (const { bundle, manifest } of window.UNBOUND_PLUGINS ?? []) {
 			if ('folder' in manifest && typeof manifest.folder === 'string') {
@@ -68,21 +75,32 @@ export class Plugins extends Addons<PluginEntity> {
 	 * A component whose hooks changed can't keep its state, so the app reloads instead.
 	 * @param entity The plugin to reload, as its id or the entity itself.
 	 * @param bundle The freshly built bundle source.
-	 * @param manifest The freshly built, validated manifest.
+	 * @param manifest The freshly built manifest, as received; {@link Addons.reload} validates it.
 	 * @param bytecode The bundle compiled for this runtime, base64-encoded, which then runs instead of the source.
 	 * @returns The reload outcome.
 	 */
 	async reload(
 		entity: string | Addon,
 		bundle: string,
-		manifest: AddonManifest,
+		manifest: PushedManifest,
 		bytecode?: string,
 	): Promise<ReloadResult> {
+		// The bytecode lookup during the reload reads this entry; a rejected push puts the old one back.
+		const previous = this.scanned.get(manifest.id);
+
 		if (bytecode) {
 			this.scanned.set(manifest.id, { bundle, folder: manifest.id });
 		}
 
 		const result = await super.reload(entity, bundle, manifest, bytecode);
+
+		if (!result.ok && bytecode) {
+			if (previous) {
+				this.scanned.set(manifest.id, previous);
+			} else {
+				this.scanned.delete(manifest.id);
+			}
+		}
 
 		if (result.ok && performRefresh().needsRemount) {
 			this.logger.info(`${manifest.id} changed a component's hooks; reloading.`);

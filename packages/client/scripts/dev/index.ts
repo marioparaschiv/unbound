@@ -1,14 +1,17 @@
 import Logger from '@unbound-app/logger';
 
+import { IS_DEV_BUILD } from '../build/constants';
+import * as refresh from '../serve/refresh';
+import { startServer } from '../serve';
+import { hotBuild } from '../build';
+
 const logger = Logger.create('Dev');
 
-// Set before importing the build module: it reads `UNBOUND_DEV` at module-eval time to bake the dev
-// server URL into the bundle. Dynamic imports below keep this assignment ahead of that read.
-process.env.UNBOUND_DEV = '1';
-
-const { hotBuild } = await import('../build');
-const { startServer } = await import('../serve');
-const refresh = await import('../serve/refresh');
+// The build bakes the dev server URL in only for a dev build, which `--dev` or `UNBOUND_DEV=1` selects.
+if (!IS_DEV_BUILD) {
+	logger.error('Run the dev server with `--dev` (as `bun run dev` does) or `UNBOUND_DEV=1`.');
+	process.exit(1);
+}
 
 const engine = await hotBuild((update) => void refresh.deliver(update));
 

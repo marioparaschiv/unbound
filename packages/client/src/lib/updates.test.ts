@@ -6,14 +6,10 @@ import type { InstalledEntry, UpdatableKind, UpdatableManager } from './updates'
 
 import { autoApplies, automaticUpdates, buildUpdatesRequest, toPendingUpdates } from './updates';
 
-// `ManagerKind` lives beside build-time tokens that only exist in a client bundle.
-const PLUGINS: UpdatableKind = 0;
-const THEMES: UpdatableKind = 1;
-
 function entry(
 	id: string,
 	version: string = '1.0.0',
-	kind: UpdatableKind = PLUGINS,
+	kind: UpdatableKind = 'plugins',
 	name: string = id,
 ): InstalledEntry {
 	return { kind, id, name, version };
@@ -45,10 +41,10 @@ describe('buildUpdatesRequest', () => {
 		const request = buildUpdatesRequest(
 			[
 				entry('dev.alpha'),
-				entry('dev.alpha', '2.0.0', THEMES),
+				entry('dev.alpha', '2.0.0', 'themes'),
 				entry('local plugin'),
 				entry('dev.beta', 'next'),
-				entry('dev.gamma', '0.3.1', THEMES),
+				entry('dev.gamma', '0.3.1', 'themes'),
 			],
 			'1.4.0',
 		);
@@ -88,16 +84,16 @@ describe('toPendingUpdates', () => {
 
 		const pending = toPendingUpdates(
 			[
-				entry('dev.zeta', '1.0.0', THEMES, 'Zeta'),
-				entry('dev.alpha', '1.0.0', PLUGINS, 'Alpha'),
-				entry('dev.alpha', '9.0.0', THEMES, 'Shadowed'),
+				entry('dev.zeta', '1.0.0', 'themes', 'Zeta'),
+				entry('dev.alpha', '1.0.0', 'plugins', 'Alpha'),
+				entry('dev.alpha', '9.0.0', 'themes', 'Shadowed'),
 			],
 			{ updates: [zeta, alpha] },
 		);
 
 		expect(pending).toEqual([
-			{ kind: PLUGINS, id: 'dev.alpha', name: 'Alpha', from: '1.0.0', update: alpha },
-			{ kind: THEMES, id: 'dev.zeta', name: 'Zeta', from: '1.0.0', update: zeta },
+			{ kind: 'plugins', id: 'dev.alpha', name: 'Alpha', from: '1.0.0', update: alpha },
+			{ kind: 'themes', id: 'dev.zeta', name: 'Zeta', from: '1.0.0', update: zeta },
 		]);
 	});
 

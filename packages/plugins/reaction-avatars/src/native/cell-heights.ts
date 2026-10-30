@@ -1,9 +1,10 @@
 import type { NativeHookToken, NativeObjectHandle } from '@unbound-app/api/native';
 import { safeInvoke } from '@unbound-plugins/shared/native/safe-invoke';
+import { parseSize } from '@unbound-plugins/shared/native/rect';
 
 import type { LayoutEntry } from '~/native/collections';
 import type { Session } from '~/native/session';
-import { frameOf, key, readSize } from '~/native/views';
+import { frameOf, key } from '~/native/views';
 import { NativeClass } from '~/constants';
 
 // A message cell keeps the tallest height any of its reaction collections asks for.
@@ -44,13 +45,16 @@ function hookCellSize(session: Session, height: CellHeight): NativeHookToken {
 		{
 			replace(context) {
 				const size = context.original(...context.args);
-				const { width, height: natural } = readSize(size);
+				const natural = parseSize(size);
 
-				if (width === undefined || natural === undefined || natural >= height.floor) {
+				if (!natural || natural.height >= height.floor) {
 					return size;
 				}
 
-				return session.objc.struct('CGSize', { width, height: height.floor });
+				return session.objc.struct('CGSize', {
+					width: natural.width,
+					height: height.floor,
+				});
 			},
 		},
 		{ instance: height.cell, thread: 'main' },

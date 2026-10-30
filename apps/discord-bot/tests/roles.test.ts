@@ -43,7 +43,7 @@ function logged(spy: ReturnType<typeof spyOn>) {
 	return spy.mock.calls.flat().map(String).join('\n');
 }
 
-function dispatcher(overrides: RolesOptions = {}) {
+function dispatcher(overrides: Partial<RolesOptions> = {}) {
 	return createRolesDispatcher({
 		guildId: FAKE_GUILD_ID,
 		roleIds: ROLE_IDS,

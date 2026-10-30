@@ -29,6 +29,7 @@ import type { LocalPlugin, PluginDecision, PublishedVersions } from './select-pl
 import type { PluginCommit } from './plugin-changelog';
 import { createRelease, mergeRelease, renderRelease } from './plugin-changelog';
 import { getSelected, selectPlugins } from './select-plugins';
+import { readPluginManifest } from './plugin-manifests';
 import {
 	parsePluginSigningKey,
 	PLUGIN_SIGNING_KEY_VARIABLE,
@@ -49,10 +50,6 @@ type Options = {
 	dryRun: boolean;
 	apiUrl: string;
 	apiKey: string;
-};
-
-type ManifestVersion = {
-	version?: unknown;
 };
 
 type GitOptions = {
@@ -197,16 +194,10 @@ function discoverPlugins(root: string): LocalPlugin[] {
 			continue;
 		}
 
-		const manifest: ManifestVersion = JSON.parse(files.read(`${dir}/manifest.json`) ?? '{}');
-
-		if (typeof manifest.version !== 'string') {
-			throw new Error(`${addon.id}: manifest.json has no string "version".`);
-		}
-
 		plugins.push({
 			id: addon.id,
 			dir,
-			version: manifest.version,
+			version: readPluginManifest(join(workspace, dir, 'manifest.json')).version,
 			bundle: addon.bundle,
 			...builtContent(root, addon.bundle),
 		});

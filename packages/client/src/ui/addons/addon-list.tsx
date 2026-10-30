@@ -1,19 +1,19 @@
 import { Pressable } from 'react-native';
 import { memo } from 'react';
 
-import { ManagerKind, ManagerNames, DEV } from '~/lib/constants';
+import { useUnboundSettings } from '~/lib/unbound-settings';
 import { isLibrary } from '~/lib/addon-dependencies';
 import { Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
 import { Messages, format } from '~/api/i18n';
 import { Empty } from '~/ui/components';
 import { useAddons } from '~/ui/hooks';
+import { DEV } from '~/lib/constants';
 
 import sampleAddons from './sample-addons';
 import AddonCard from './addon-card';
 
 type AddonListProps = {
-	kind: ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons;
+	kind: 'plugins' | 'themes' | 'icons';
 };
 
 /**
@@ -23,12 +23,11 @@ type AddonListProps = {
  */
 function AddonList({ kind }: AddonListProps) {
 	const managedAddons = useAddons(kind);
-	const settings = useSettingsStore('unbound', ({ key }) => key === 'plugins.showLibraries');
-	const showLibraries = settings.get('plugins.showLibraries', false);
-	const all =
-		DEV && kind === ManagerKind.Plugins && !managedAddons.length ? sampleAddons : managedAddons;
+	const settings = useUnboundSettings(({ key }) => key === 'plugins.showLibraries');
+	const showLibraries = settings.get('plugins.showLibraries');
+	const all = DEV && kind === 'plugins' && !managedAddons.length ? sampleAddons : managedAddons;
 	const libraries = new Set(
-		kind === ManagerKind.Plugins
+		kind === 'plugins'
 			? all.filter((addon) => isLibrary(addon, all)).map((addon) => addon.id)
 			: [],
 	);
@@ -48,11 +47,11 @@ function AddonList({ kind }: AddonListProps) {
 	) : null;
 
 	if (!addons.length) {
-		const type = ManagerNames[kind].toLowerCase();
-
 		return (
 			<>
-				<Empty image='empty_permission'>{format('UNBOUND_NO_ADDONS', { type })}</Empty>
+				<Empty image='empty_permission'>
+					{format('UNBOUND_NO_ADDONS', { type: kind })}
+				</Empty>
 				{toggle}
 			</>
 		);

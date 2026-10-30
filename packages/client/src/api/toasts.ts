@@ -2,12 +2,11 @@ import type { ToastHandle, ToastOptions } from '@unbound-app/types/toasts';
 import { createLogger } from '@unbound-app/logger';
 import uuid from '@unbound-app/utils/uuid';
 
-import { hasVisibleContent } from '~/builtins/discord-toast-options';
+import { hasVisibleContent } from '~/lib/toast-content';
+import { getSetting } from '~/lib/unbound-settings';
 import useToastStore from '~/stores/toasts';
-import storage from '~/api/storage';
 
 const Logger = createLogger('Toasts');
-const Settings = storage.getStore('unbound');
 
 const noopHandle: ToastHandle = {
 	update() {},
@@ -29,7 +28,7 @@ export function showToast(options: ToastOptions): ToastHandle {
 	const store = useToastStore.getState();
 	const id = options.id ?? uuid();
 
-	if (Settings.get('developer-mode', false)) {
+	if (getSetting('developer-mode')) {
 		Logger.info('Showing a toast:', typeof options.title === 'string' ? options.title : id);
 	}
 

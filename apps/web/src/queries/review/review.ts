@@ -3,12 +3,9 @@ import { keepPreviousData, mutationOptions, queryOptions } from '@tanstack/react
 import { reviewSubmissionResponseSchema } from '@unbound-app/contracts/review';
 
 import { createBrowserClient } from '~/lib/api/browser-client';
-import { marketplaceKey } from '~/queries/marketplace/listing';
-import { dashboardKey } from '~/queries/dashboard/dashboard';
 import { fetchReviewQueue } from '~/lib/review-functions';
-
-/** Every review query key starts with this, so invalidating it refreshes every kind filter. */
-export const reviewKey = ['review'] as const;
+import { invalidate } from '~/queries/invalidate';
+import { reviewKey } from '~/queries/keys';
 
 /**
  * @description The `/review` queue for a kind filter; switching the filter keeps the old list up until it loads.
@@ -40,14 +37,10 @@ export function reviewDecisionMutation(submissionId: string) {
 				response: reviewSubmissionResponseSchema,
 			}),
 		onSuccess: (_response, body, _result, context) =>
-			Promise.all([
-				context.client.invalidateQueries({ queryKey: reviewKey }),
-				context.client.invalidateQueries({ queryKey: dashboardKey }),
-				body.decision === 'approved'
-					? context.client.invalidateQueries({ queryKey: marketplaceKey })
-					: undefined,
-			]),
+			body.decision === 'approved'
+				? invalidate(context.client, 'review', 'release')
+				: invalidate(context.client, 'review'),
 	});
 }
 
-export default { reviewKey, reviewQueueQuery, reviewDecisionMutation };
+export default { reviewQueueQuery, reviewDecisionMutation };

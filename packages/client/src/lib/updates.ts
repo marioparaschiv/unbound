@@ -4,16 +4,16 @@ import {
 	updatesResponseSchema,
 } from '@unbound-app/contracts/updates';
 import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
+import type { ManagerKind } from '@unbound-app/types/addons';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Addon } from '@unbound-app/types';
 import type { Api } from '@unbound-app/web/api';
 import sha256 from '@unbound-app/utils/sha256';
 
-import type { ManagerKind } from '~/lib/constants';
 import type { Addons } from '~/managers/addons';
 
 /** Managers whose addons carry a marketplace id and version; fonts have neither. */
-export type UpdatableKind = Exclude<ManagerKind, ManagerKind.Fonts>;
+export type UpdatableKind = Exclude<ManagerKind, 'fonts'>;
 
 /** The part of an addon manager the updater drives; each manager narrows the entity type. */
 export type UpdatableManager = Pick<

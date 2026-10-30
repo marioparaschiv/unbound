@@ -1,6 +1,20 @@
 import { createLogger } from '@unbound-app/logger';
 
-import * as allBuiltIns from '~/builtins';
+import discordSupport from '~/builtins/discord-support';
+import errorBoundary from '~/builtins/error-boundary';
+import coreCommands from '~/builtins/core-commands';
+import hotRefresh from '~/builtins/hot-refresh';
+import cloudSync from '~/builtins/cloud-sync';
+import staffMode from '~/builtins/staff-mode';
+import commands from '~/builtins/commands';
+import settings from '~/builtins/settings';
+import tracking from '~/builtins/tracking';
+import updater from '~/builtins/updater';
+import debug from '~/builtins/debugger';
+import themes from '~/builtins/themes';
+import toasts from '~/builtins/toasts';
+import links from '~/builtins/links';
+import i18n from '~/builtins/i18n';
 
 const Logger = createLogger('BuiltIns');
 
@@ -10,6 +24,25 @@ export type BuiltIn = {
 	stop?: () => void;
 	shouldStart?: () => boolean;
 };
+
+/** Every built-in under its registered name, in start order. Shutdown stops them in reverse. */
+const BUILT_INS: [name: string, builtin: BuiltIn][] = [
+	['cloudSync', cloudSync],
+	['commands', commands],
+	['coreCommands', coreCommands],
+	['debug', debug],
+	['discordSupport', discordSupport],
+	['errorBoundary', errorBoundary],
+	['hotRefresh', hotRefresh],
+	['i18n', i18n],
+	['links', links],
+	['settings', settings],
+	['staffMode', staffMode],
+	['themes', themes],
+	['toasts', toasts],
+	['tracking', tracking],
+	['updater', updater],
+];
 
 /**
  * @description Registers, starts, and stops the framework's built-in features, tracking which are currently active.
@@ -69,7 +102,7 @@ class BuiltInsManager {
 			return;
 		}
 
-		for (const [name, builtin] of Object.entries<BuiltIn>(allBuiltIns)) {
+		for (const [name, builtin] of BUILT_INS) {
 			if (typeof builtin.shouldStart === 'function' && !builtin.shouldStart()) {
 				continue;
 			}

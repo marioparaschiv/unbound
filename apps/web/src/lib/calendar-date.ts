@@ -1,3 +1,6 @@
+/** One day in milliseconds; a calendar day is longer or shorter across a daylight-saving change. */
+export const DAY_MS = 86_400_000;
+
 /**
  * @description Reads a `YYYY-MM-DD` calendar day as local midnight of that day.
  * @param day The calendar day.
@@ -26,4 +29,4 @@ export function formatCalendarDate(date: Date): string {
 	return `${year}-${month}-${day}`;
 }
 
-export default { parseCalendarDate, formatCalendarDate };
+export default { DAY_MS, parseCalendarDate, formatCalendarDate };

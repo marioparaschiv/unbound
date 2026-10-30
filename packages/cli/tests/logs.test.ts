@@ -15,13 +15,9 @@ import {
 	parseSyslogLine,
 	unquoteConsoleArguments,
 } from '../src/lib/log-lines';
-import {
-	followLoaderLogFile,
-	parseArchiveEvent,
-	readLoaderLogHistory,
-	tailAndroid,
-} from '../src/lib/log-tail';
+import { followLoaderLogFile, readLoaderLogHistory } from '../src/lib/loader-log-file';
 import { createFrameRewriter, listBundles } from '../src/lib/log-symbolicator';
+import { parseArchiveEvent, tailAndroid } from '../src/lib/log-tail';
 
 const NOW = new Date(2026, 9, 26, 22, 30, 0).getTime();
 const roots: string[] = [];
@@ -494,7 +490,10 @@ describe('readLoaderLogHistory', () => {
 	test('reads the rotated and current files from a start time', async () => {
 		const entries = await readLoaderLogHistory(target, Date.parse('2026-10-29T16:30:00.000Z'));
 
-		expect(entries?.map((entry) => entry.message)).toEqual(['current', 'latest']);
+		expect('error' in entries ? entries : entries.map((entry) => entry.message)).toEqual([
+			'current',
+			'latest',
+		]);
 		expect(commands.at(-1)).toContain("'/data/Documents/Unbound/Logs/unbound.1.log'");
 	});
 
@@ -503,6 +502,27 @@ describe('readLoaderLogHistory', () => {
 
 		expect(entries).toHaveLength(3);
 		expect(commands.at(-1)).toStartWith('tail -n 200');
+	});
+
+	test('reports output jb-p1lot garbled instead of reading it as no log', async () => {
+		const garbled = await readLoaderLogHistory({
+			...target,
+			run: async (_command, args) =>
+				args[0] === 'app_container'
+					? { ok: true, stdout: JSON.stringify({ dataContainer: '/data' }) }
+					: { ok: true, stdout: 'invalid_frame' },
+		});
+		const noContainer = await readLoaderLogHistory({
+			...target,
+			run: async () => ({ ok: true, stdout: 'invalid_frame' }),
+		});
+
+		expect(garbled).toEqual({
+			error: 'jb-p1lot answered with something other than JSON: invalid_frame',
+		});
+		expect(noContainer).toEqual({
+			error: 'jb-p1lot answered with something other than JSON: invalid_frame',
+		});
 	});
 });
 

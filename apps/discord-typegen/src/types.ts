@@ -83,11 +83,12 @@ export type PropObservation =
 export type PropEvidence = PropObservation[];
 
 /** A static attached to a component (`Button.Icon = ButtonIcon`). */
-export type StaticRecord = {
-	name: string;
-	target: TargetRef | undefined;
-	literal: LiteralValue | undefined;
-};
+export type StaticRecord = { name: string } & (
+	| { kind: 'target'; target: TargetRef }
+	| { kind: 'literal'; literal: LiteralValue }
+	/** Neither a component nor a literal, so it is typed `unknown`. */
+	| { kind: 'opaque' }
+);
 
 export type ComponentRecord = {
 	name: string;

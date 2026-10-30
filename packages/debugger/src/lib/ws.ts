@@ -1,4 +1,8 @@
-import { parseMessage, type DeviceInfo } from '@unbound-app/debugger-protocol';
+import {
+	CONTROLLER_ENDPOINT_MARKER,
+	parseMessage,
+	type DeviceInfo,
+} from '@unbound-app/debugger-protocol';
 import { terminal, stripEscapeSequences } from 'terminal-kit';
 import os from 'node:os';
 
@@ -85,7 +89,7 @@ export function setupWebSocket() {
 
 			// Controllers (the MCP server, and any future tooling) attach with `?mcp`. Any number may
 			// share the one device, so they're never rejected for being "busy".
-			if (url.searchParams.has('mcp')) {
+			if (url.searchParams.has(CONTROLLER_ENDPOINT_MARKER)) {
 				server.upgrade(request, { data: { role: 'controller' } });
 
 				return;
@@ -193,7 +197,10 @@ export function setupWebSocket() {
 
 	const localAddress = getLocalAddress();
 
-	printBanner(`${localAddress}:${argv.flags.port}`, `ws://127.0.0.1:${argv.flags.port}?mcp`);
+	printBanner(
+		`${localAddress}:${argv.flags.port}`,
+		`ws://127.0.0.1:${argv.flags.port}?${CONTROLLER_ENDPOINT_MARKER}`,
+	);
 }
 
 function handleDeviceMessage(raw: string) {

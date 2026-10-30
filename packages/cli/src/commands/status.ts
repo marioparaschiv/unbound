@@ -1,5 +1,4 @@
-import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
+import type { CommandDefinition, CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import type { DeviceInfo } from '@unbound-app/debugger-protocol';
 import type { UnboundGlobal } from '@unbound-app/api/global';
 import { z } from 'zod';
@@ -7,12 +6,11 @@ import { z } from 'zod';
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
 import { logToStderr } from '~/lib/plugin-install';
 import type { DeviceClient } from '~/lib/device';
+import { bridgePortField } from '~/lib/context';
+import { parseJson } from '~/lib/parse-json';
 
 const schema = z.object({
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 	watch: z
 		.boolean()
 		.default(false)
@@ -70,12 +68,14 @@ export function analyzeSamples(samples: ResourceSample[]): SampleAnalysis {
 	return { lines, growing };
 }
 
-type DeviceStatusReport = {
-	started: number;
-	failed: string[];
-	stopped: string[];
-	resources: Record<string, number> | null;
-};
+const deviceStatusReportSchema = z.object({
+	started: z.number(),
+	failed: z.array(z.string()),
+	stopped: z.array(z.string()),
+	resources: z.record(z.string(), z.number()).nullable(),
+});
+
+type DeviceStatusReport = z.infer<typeof deviceStatusReportSchema>;
 
 type PluginManagerView = {
 	getEntities(): { id: string; started: boolean; failed: boolean }[];
@@ -146,12 +146,20 @@ function formatStatus(device: DeviceInfo | undefined, report: DeviceStatusReport
 	return lines.join('\n');
 }
 
-async function readReport(client: DeviceClient): Promise<DeviceStatusReport | undefined> {
+async function readReport(client: DeviceClient): Promise<DeviceStatusReport | CommandOutput> {
 	const result = await evaluateOnDevice(client, toDeviceCode(readDeviceStatus));
 
-	return result?.ok && typeof result.value === 'string'
-		? (JSON.parse(result.value) as DeviceStatusReport)
-		: void 0;
+	if (!result) {
+		return NOT_CONNECTED;
+	}
+
+	if (!result.ok) {
+		return { ok: false, text: result.error };
+	}
+
+	const report = parseJson(result.value, deviceStatusReportSchema, 'The device');
+
+	return report.ok ? report.value : { ok: false, text: report.error };
 }
 
 async function watchResources(client: DeviceClient, interval: number, count: number) {
@@ -164,10 +172,10 @@ async function watchResources(client: DeviceClient, interval: number, count: num
 
 		const report = await readReport(client);
 
-		if (!report) {
+		if ('text' in report) {
 			return taken.length
 				? summarize(taken, 'The device stopped answering; summary so far:')
-				: NOT_CONNECTED;
+				: report;
 		}
 
 		if (!report.resources) {
@@ -205,20 +213,11 @@ const statusCommand: CommandDefinition<typeof schema> = {
 			return watchResources(client, interval, Math.max(2, samples));
 		}
 
-		const result = await evaluateOnDevice(client, toDeviceCode(readDeviceStatus));
+		const report = await readReport(client);
 
-		if (!result) {
-			return NOT_CONNECTED;
+		if ('text' in report) {
+			return report;
 		}
-
-		if (!result.ok || typeof result.value !== 'string') {
-			return {
-				ok: false,
-				text: result.error ?? 'The device did not answer the status check.',
-			};
-		}
-
-		const report = JSON.parse(result.value) as DeviceStatusReport;
 
 		return {
 			ok: true,

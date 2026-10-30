@@ -8,9 +8,9 @@ import {
 	startProfileRefresher,
 } from '~/lib/authors/profiles';
 import { fetchDiscordUser } from '~/lib/authors/discord-users';
-import type { DiscordId } from '~/lib/authors/discord-users';
 import { addon, discordProfile } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
+import type { DiscordId } from '~/db/schema';
 import { parseEnv } from '~/lib/env';
 
 import {

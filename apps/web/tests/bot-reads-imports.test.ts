@@ -11,6 +11,7 @@ const ALLOWED = [
 	/^~\/lib\/bot\//,
 	/^~\/lib\/sponsors\/standing$/,
 	/^~\/lib\/live-versions$/,
+	/^~\/lib\/calendar-date$/,
 	/^@unbound-app\/contracts\//,
 	/^drizzle-orm(\/|$)/,
 	/^postgres$/,

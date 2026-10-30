@@ -1,5 +1,4 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import { closeSync, openSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { connect } from 'node:net';
@@ -7,16 +6,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { z } from 'zod';
 
+import { bridgePortField } from '~/lib/context';
 import { runCommand } from '~/lib/run-command';
 
 const schema = z.object({
 	action: z
 		.enum(['restart', 'start'])
 		.describe('Restart the running bridge, or start one when none runs.'),
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 });
 
 const LISTEN_TIMEOUT_MS = 15_000;

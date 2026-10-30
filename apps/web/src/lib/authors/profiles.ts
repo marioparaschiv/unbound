@@ -1,10 +1,11 @@
 import { createLogger } from '@unbound-app/logger';
 import { inArray } from 'drizzle-orm';
 
-import type { DiscordId, DiscordLookup, DiscordUser } from '~/lib/authors/discord-users';
+import type { DiscordLookup, DiscordUser } from '~/lib/authors/discord-users';
 import { fetchDiscordUser } from '~/lib/authors/discord-users';
 import { listListedAddons } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
+import type { DiscordId } from '~/db/schema';
 import { discordProfile } from '~/db/schema';
 import { isDiscordId } from '~/lib/discord';
 

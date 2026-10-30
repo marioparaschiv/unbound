@@ -1,3 +1,4 @@
+import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
@@ -16,12 +17,14 @@ import {
 	javaNumber,
 	javaReference,
 	javaText,
+	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
 import { readViewTextAsync, type ViewText } from '@unbound-plugins/shared/native/android/spans';
 import { connectTextRewrites } from '@unbound-plugins/shared/native/android/text-rewrites';
 import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 import {
 	currentDecorView,
+	displayDensity,
 	findViewsOfClass,
 	readCalls,
 	runOnMain,
@@ -63,10 +66,6 @@ type WaitingView = {
 	messageId: string;
 };
 
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
 /**
  * @description Embeds the message each Android message links to as a real chat row through the loader's native text rewrites, so embeds stay in place while the chat scrolls.
  * @param native The plugin's Java, hook and Fabric bridges.
@@ -82,7 +81,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 	const retries = createRewriteRetry();
 	const bySurface = new Map<string, Embed>();
 	const heights = new Map<string, number>();
-	const listeners = new Map<string, Set<() => void>>();
+	const listeners = createSurfaceListeners();
 	const waiting = new Map<string, Map<string, WaitingView>>();
 	const awaitingSize = new Map<string, WaitingView>();
 	const controller = new AbortController();
@@ -102,18 +101,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		surface: (surfaceId) => bySurface.get(surfaceId),
 		reportLayout: (surfaceId, height) => reportLayout(surfaceId, height),
 		revision: (surfaceId) => bySurface.get(surfaceId)?.revision ?? -1,
-		subscribe(surfaceId, listener) {
-			const set = listeners.get(surfaceId) ?? new Set();
-
-			set.add(listener);
-			listeners.set(surfaceId, set);
-
-			return () => {
-				set.delete(listener);
-
-				if (!set.size) listeners.delete(surfaceId);
-			};
-		},
+		subscribe: listeners.subscribe,
 	});
 
 	if (!surfaceModule) return undefined;
@@ -130,8 +118,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 
 	function publish(embed: Embed) {
 		embed.revision++;
-
-		for (const listener of listeners.get(embed.surfaceId) ?? []) listener();
+		listeners.notify(embed.surfaceId);
 	}
 
 	function heightFor(target: LinkTarget): number {
@@ -222,17 +209,8 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		return (width - left - right) / density;
 	}
 
-	async function displayDensity(textView: NativeJavaReference): Promise<number> {
-		const resources = javaReference(await java.invokeAsync(textView, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
-	}
-
 	async function render(messageView: NativeJavaReference, messageId: string) {
-		const key = viewKey(messageView as NativeJavaValue);
+		const key = javaViewKey(messageView as NativeJavaValue);
 		const channelId = currentChannelId();
 		const source: Message | undefined = channelId
 			? MessageStore.getMessage(channelId, messageId)
@@ -264,7 +242,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 
 		const range = findRenderedLinkRange(content.string, channelName);
 		const built = buildEmbeddedContent(renderers, linkedMessage, target.channelId);
-		const density = await displayDensity(textView);
+		const density = await displayDensity(java, textView);
 		const width = await textWidth(textView, density);
 
 		if (!range || !built) return;
@@ -341,7 +319,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		SIZE_PARAMETERS,
 		{ notify: true },
 		({ self }) => {
-			const key = viewKey(self);
+			const key = javaViewKey(self);
 			const pending = key ? awaitingSize.get(key) : undefined;
 
 			if (!key || !pending) return;

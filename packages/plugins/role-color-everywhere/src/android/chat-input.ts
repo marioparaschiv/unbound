@@ -5,6 +5,7 @@ import type {
 	NativeJavaReference,
 } from '@unbound-app/api/native';
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
+import { androidColor } from '@unbound-plugins/shared/colors/android-colors';
 import {
 	javaInt,
 	javaNumber,
@@ -33,15 +34,6 @@ type InputState = {
 
 function keyOf(view: NativeJavaReference): string {
 	return 'value' in view ? String(view.value) : '';
-}
-
-/**
- * @description Converts a `#rrggbb` color to the signed ARGB `int` Android text spans take.
- * @param hex The color.
- * @returns The opaque color as a signed 32-bit integer.
- */
-export function androidColor(hex: string): number {
-	return 0xff000000 | Number.parseInt(hex.slice(1, 7), 16) | 0;
 }
 
 /**

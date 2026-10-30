@@ -11,6 +11,8 @@ const ALL_PLUGINS: Check[] = [
 	{ label: 'plugin type-check', cwd: '.', command: ['bun', 'run', 'plugins:typecheck'] },
 ];
 const UNTESTED = new Set(['apps/web', 'apps/discord-bot']);
+// Their tests replace modules with `mock.module`, which leaks across files in one process.
+const ISOLATED = new Set(['packages/client']);
 const SKIPPED = ['packages/loader/', 'docs/', '.github/'];
 
 function projectOf(file: string): string | undefined {
@@ -73,7 +75,9 @@ export function checksFor(files: string[], exists: (path: string) => boolean): C
 		}
 
 		if (!UNTESTED.has(project) && exists(`${project}/package.json`)) {
-			add({ label: `${project} tests`, cwd: project, command: ['bun', 'test'] });
+			const command = ISOLATED.has(project) ? ['bun', 'test', '--isolate'] : ['bun', 'test'];
+
+			add({ label: `${project} tests`, cwd: project, command });
 		}
 
 		if (PROJECTS.includes(project)) {
@@ -96,9 +100,17 @@ async function changedFiles(): Promise<string[]> {
 	return output.split('\n').filter(Boolean);
 }
 
+// Git exports `GIT_DIR` and friends to its hooks; tests that create their own repositories must not inherit them.
+function checkEnv(): Record<string, string | undefined> {
+	return Object.fromEntries(
+		Object.entries(process.env).filter(([key]) => !key.startsWith('GIT_')),
+	);
+}
+
 async function runCheck(check: Check): Promise<boolean> {
 	const child = Bun.spawn(check.command, {
 		cwd: resolve(root, check.cwd),
+		env: checkEnv(),
 		stdout: 'pipe',
 		stderr: 'pipe',
 	});

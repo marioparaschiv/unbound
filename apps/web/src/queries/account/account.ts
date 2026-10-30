@@ -1,29 +1,16 @@
 import { mutationOptions, queryOptions } from '@tanstack/react-query';
 import type { Badge } from '@unbound-app/contracts/sponsors';
-import type { QueryClient } from '@tanstack/react-query';
 
 import unwrapAuthResult from '~/queries/account/unwrap-auth-result';
 import { createBrowserClient } from '~/lib/api/browser-client';
-import { marketplaceKey } from '~/queries/marketplace/listing';
 import { getAccountOverview } from '~/lib/auth/account';
+import { accountOverviewKey } from '~/queries/keys';
+import { invalidate } from '~/queries/invalidate';
 import authClient from '~/lib/auth/client';
-
-/** Every account query key starts with this, so invalidating it refreshes `/account`. */
-export const accountKey = ['account'] as const;
-
-const overviewKey = [...accountKey, 'overview'] as const;
 
 // The sponsor contracts are classic zod; loading them on use keeps it out of the entry chunk every page loads.
 async function loadBadgeClaimResponseSchema() {
 	return (await import('@unbound-app/contracts/sponsors')).badgeClaimResponseSchema;
-}
-
-// The badge also shows next to the user on addon pages and the Team pages.
-function refreshBadge(client: QueryClient) {
-	return Promise.all([
-		client.invalidateQueries({ queryKey: overviewKey }),
-		client.invalidateQueries({ queryKey: marketplaceKey }),
-	]);
 }
 
 /**
@@ -32,7 +19,7 @@ function refreshBadge(client: QueryClient) {
  */
 export function accountOverviewQuery() {
 	return queryOptions({
-		queryKey: overviewKey,
+		queryKey: accountOverviewKey,
 		queryFn: () => getAccountOverview(),
 	});
 }
@@ -48,7 +35,7 @@ export function saveBadgeMutation() {
 				body: badge,
 				response: await loadBadgeClaimResponseSchema(),
 			}),
-		onSuccess: (_data, _badge, _result, context) => refreshBadge(context.client),
+		onSuccess: (_data, _badge, _result, context) => invalidate(context.client, 'badge'),
 	});
 }
 
@@ -62,7 +49,7 @@ export function removeBadgeMutation() {
 			createBrowserClient()('DELETE /api/v1/me/badge', {
 				response: await loadBadgeClaimResponseSchema(),
 			}),
-		onSuccess: (_data, _variables, _result, context) => refreshBadge(context.client),
+		onSuccess: (_data, _variables, _result, context) => invalidate(context.client, 'badge'),
 	});
 }
 
@@ -74,8 +61,7 @@ export function createApiKeyMutation() {
 	return mutationOptions({
 		mutationFn: async (name: string) =>
 			unwrapAuthResult(await authClient.apiKey.create({ name })),
-		onSuccess: (_data, _name, _result, context) =>
-			context.client.invalidateQueries({ queryKey: overviewKey }),
+		onSuccess: (_data, _name, _result, context) => invalidate(context.client, 'account'),
 	});
 }
 
@@ -88,8 +74,7 @@ export function deleteApiKeyMutation() {
 		mutationFn: async (keyId: string) => {
 			unwrapAuthResult(await authClient.apiKey.delete({ keyId }));
 		},
-		onSuccess: (_data, _keyId, _result, context) =>
-			context.client.invalidateQueries({ queryKey: overviewKey }),
+		onSuccess: (_data, _keyId, _result, context) => invalidate(context.client, 'account'),
 	});
 }
 
@@ -102,8 +87,7 @@ export function unlinkAccountMutation() {
 		mutationFn: async (accountId: string) => {
 			unwrapAuthResult(await authClient.unlinkAccount({ accountId }));
 		},
-		onSuccess: (_data, _accountId, _result, context) =>
-			context.client.invalidateQueries({ queryKey: overviewKey }),
+		onSuccess: (_data, _accountId, _result, context) => invalidate(context.client, 'account'),
 	});
 }
 
@@ -121,7 +105,6 @@ export function linkSocialMutation() {
 }
 
 export default {
-	accountKey,
 	accountOverviewQuery,
 	saveBadgeMutation,
 	removeBadgeMutation,

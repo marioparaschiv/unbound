@@ -10,7 +10,6 @@ import {
 } from '@unbound-app/contracts/admin';
 import { userSummarySchema } from '@unbound-app/contracts/account';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { getRequestHeaders } from '@tanstack/react-start/server';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod/mini';
@@ -25,8 +24,8 @@ import type { AdminAddonsPage } from '~/lib/admin-addons';
 import type { ServeVersionResult } from '~/lib/rollback';
 import type { AdminAddonView } from '~/lib/admin-addon';
 import { listAdminAddons } from '~/lib/admin-addons';
+import requestCaller from '~/lib/api/request-caller';
 import type { StaffNote } from '~/lib/staff-notes';
-import { requireCaller } from '~/lib/api/caller';
 import { serveVersion } from '~/lib/rollback';
 import app from '~/lib/app';
 
@@ -42,7 +41,7 @@ export type AdminAddonsView = AdminAddonsPage & {
 export const fetchAdminUsers = createServerFn({ method: 'GET' })
 	.validator(adminUsersSearchSchema)
 	.handler(async ({ data }): Promise<AdminUsersPage> => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 
 		return listAdminUsers(app, caller, data);
 	});
@@ -55,7 +54,7 @@ export const fetchAdminUsers = createServerFn({ method: 'GET' })
 export const fetchAdminAddons = createServerFn({ method: 'GET' })
 	.validator(adminAddonsSearchSchema)
 	.handler(async ({ data }): Promise<AdminAddonsView> => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 		const [page, maintainer] = await Promise.all([
 			listAdminAddons(app, caller, data),
 			data.maintainer ? getUserSummary(app, caller, data.maintainer) : undefined,
@@ -71,7 +70,7 @@ export const fetchAdminAddons = createServerFn({ method: 'GET' })
 export const fetchAdminAddon = createServerFn({ method: 'GET' })
 	.validator(addonIdSchema)
 	.handler(async ({ data }): Promise<AdminAddonView | null> => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 
 		return (await getAdminAddon(app, caller, data)) ?? null;
 	});
@@ -83,7 +82,7 @@ export const fetchAdminAddon = createServerFn({ method: 'GET' })
 export const fetchAdminUser = createServerFn({ method: 'GET' })
 	.validator(userSummarySchema.shape.id)
 	.handler(async ({ data }): Promise<AdminUserView | null> => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 
 		return (await getAdminUser(app, caller, data)) ?? null;
 	});
@@ -95,7 +94,7 @@ export const fetchAdminUser = createServerFn({ method: 'GET' })
 export const fetchEvents = createServerFn({ method: 'GET' })
 	.validator(moderationEventPageRequestSchema)
 	.handler(async ({ data }): Promise<EventTimeline> => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 
 		return getEventTimeline(app, caller, data.subject, data.before);
 	});
@@ -107,7 +106,7 @@ export const fetchEvents = createServerFn({ method: 'GET' })
 export const submitServeVersion = createServerFn({ method: 'POST' })
 	.validator(z.object({ id: addonIdSchema, request: serveVersionRequestSchema }))
 	.handler(async ({ data }): Promise<ServeVersionResult> => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 
 		return serveVersion(app, caller, data.id, data.request);
 	});
@@ -119,7 +118,7 @@ export const submitServeVersion = createServerFn({ method: 'POST' })
 export const submitAddonEdit = createServerFn({ method: 'POST' })
 	.validator(z.object({ id: addonIdSchema, edit: editAddonRequestSchema }))
 	.handler(async ({ data }): Promise<AdminAddonView> => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 
 		return editAddon(app, caller, data.id, data.edit);
 	});
@@ -131,7 +130,7 @@ export const submitAddonEdit = createServerFn({ method: 'POST' })
 export const createStaffNoteFn = createServerFn({ method: 'POST' })
 	.validator(createStaffNoteRequestSchema)
 	.handler(async ({ data }): Promise<StaffNote> => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 
 		return createStaffNote(app, caller, data);
 	});
@@ -143,7 +142,7 @@ export const createStaffNoteFn = createServerFn({ method: 'POST' })
 export const editStaffNoteFn = createServerFn({ method: 'POST' })
 	.validator(editStaffNoteRequestSchema)
 	.handler(async ({ data }): Promise<StaffNote> => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 
 		return editStaffNote(app, caller, data);
 	});
@@ -154,7 +153,7 @@ export const editStaffNoteFn = createServerFn({ method: 'POST' })
 export const deleteStaffNoteFn = createServerFn({ method: 'POST' })
 	.validator(deleteStaffNoteRequestSchema)
 	.handler(async ({ data }) => {
-		const caller = await requireCaller(app, getRequestHeaders());
+		const caller = await requestCaller();
 
 		await deleteStaffNote(app, caller, data);
 	});

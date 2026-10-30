@@ -4,6 +4,7 @@
 		"composite": false,
 		"paths": {
 			"~/*": ["./src/*"],
+			"@i18n/*": ["../../i18n/*"],
 			"@unbound-app/types": ["../types/index.d.ts"],
 			"@unbound-app/types/*": ["../types/typings/*.ts"],
 			"@unbound-app/discord-types": ["../discord-types/src/index.gen.d.ts"],

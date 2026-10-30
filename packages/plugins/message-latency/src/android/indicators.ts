@@ -1,3 +1,4 @@
+import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
@@ -20,6 +21,7 @@ import {
 	javaNumber,
 	javaReference,
 	javaText,
+	javaViewKey,
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
 import {
@@ -30,6 +32,7 @@ import {
 } from '@unbound-plugins/shared/native/android/discord-views';
 import {
 	currentDecorView,
+	displayDensity,
 	findViewsOfClass,
 	readCalls,
 	runOnMain,
@@ -66,10 +69,6 @@ type Indicator = {
 	disposed: boolean;
 };
 
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
 /**
  * @description Draws the latency indicator in front of the author name of Discord's Android message rows, like the iOS one, and opens its tooltip on tap.
  * @param native The plugin's Java, hook and Fabric bridges.
@@ -85,7 +84,7 @@ export function createAndroidIndicators(
 	const indicators = new Map<string, Indicator>();
 	const byId = new Map<string, Indicator>();
 	const bound = new Map<string, { messageView: NativeJavaReference; messageId: string }>();
-	const listeners = new Map<string, Set<() => void>>();
+	const listeners = createSurfaceListeners();
 	const queues = new Map<string, Promise<void>>();
 	let nextId = 0;
 	let disposed = false;
@@ -93,18 +92,7 @@ export function createAndroidIndicators(
 	const iconModule = registerLatencyIconSurface({
 		record: (surfaceId) => byId.get(surfaceId)?.record,
 		revision: (surfaceId) => byId.get(surfaceId)?.revision ?? -1,
-		subscribe(surfaceId, listener) {
-			const set = listeners.get(surfaceId) ?? new Set();
-
-			set.add(listener);
-			listeners.set(surfaceId, set);
-
-			return () => {
-				set.delete(listener);
-
-				if (!set.size) listeners.delete(surfaceId);
-			};
-		},
+		subscribe: listeners.subscribe,
 		press(surfaceId) {
 			const indicator = byId.get(surfaceId);
 
@@ -122,17 +110,7 @@ export function createAndroidIndicators(
 
 	function publish(indicator: Indicator) {
 		indicator.revision++;
-
-		for (const listener of listeners.get(indicator.id) ?? []) listener();
-	}
-
-	async function density(view: NativeJavaReference): Promise<number> {
-		const resources = javaReference(await java.invokeAsync(view, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
+		listeners.notify(indicator.id);
 	}
 
 	async function startDrawable(
@@ -146,7 +124,7 @@ export function createAndroidIndicators(
 	}
 
 	async function createSpacer(authorName: NativeJavaReference): Promise<NativeJavaHandle> {
-		const scale = await density(authorName);
+		const scale = await displayDensity(java, authorName);
 		const spacer = java.construct('android.graphics.drawable.ColorDrawable', [javaInt(0)]);
 
 		java.invoke(spacer, 'setBounds', [
@@ -167,7 +145,7 @@ export function createAndroidIndicators(
 	async function remove(indicator: Indicator) {
 		indicator.disposed = true;
 		byId.delete(indicator.id);
-		indicators.delete(viewKey(indicator.messageView as NativeJavaValue) ?? '');
+		indicators.delete(javaViewKey(indicator.messageView as NativeJavaValue) ?? '');
 		tooltips?.dismissFor(indicator.id);
 
 		const mounted = await indicator.mounting?.catch(() => null);
@@ -190,7 +168,7 @@ export function createAndroidIndicators(
 	async function place(indicator: Indicator) {
 		if (indicator.disposed) return;
 
-		const scale = await density(indicator.authorName);
+		const scale = await displayDensity(java, indicator.authorName);
 		const container = await hostContainer(java, indicator.authorName);
 
 		if (!container) return;
@@ -253,7 +231,7 @@ export function createAndroidIndicators(
 	}
 
 	async function render(messageView: NativeJavaReference, messageId: string) {
-		const key = viewKey(messageView as NativeJavaValue);
+		const key = javaViewKey(messageView as NativeJavaValue);
 
 		if (!key || disposed) return;
 
@@ -322,7 +300,7 @@ export function createAndroidIndicators(
 	}
 
 	function schedule(messageView: NativeJavaReference, messageId: string) {
-		const key = viewKey(messageView as NativeJavaValue);
+		const key = javaViewKey(messageView as NativeJavaValue);
 
 		if (!key || disposed) return;
 

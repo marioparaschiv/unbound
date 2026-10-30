@@ -19,6 +19,7 @@ import {
 	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
+import { androidColor, hexColor } from '@unbound-plugins/shared/colors/android-colors';
 import { shapeMethod } from '@unbound-plugins/shared/native/android/discord-shapes';
 
 import type { LabelAppearances } from '~/label-appearances';
@@ -35,24 +36,6 @@ type Painted = {
 	original: NativeJavaReference;
 	gradient: NativeJavaReference;
 };
-
-/**
- * @description Converts a `#rrggbb` color to the signed ARGB `int` Android drawables take.
- * @param hex The color.
- * @returns The opaque color as a signed 32-bit integer.
- */
-export function androidColor(hex: string): number {
-	return 0xff000000 | Number.parseInt(hex.slice(1, 7), 16) | 0;
-}
-
-/**
- * @description Converts an ARGB `int` read from Android back to `#rrggbb`, dropping its alpha.
- * @param color The signed or unsigned color.
- * @returns The lowercase hex color.
- */
-export function hexColor(color: number): string {
-	return `#${((color >>> 0) & 0xffffff).toString(16).padStart(6, '0')}`;
-}
 
 function viewKey(view: NativeJavaReference): string {
 	return 'value' in view ? String(view.value) : '';

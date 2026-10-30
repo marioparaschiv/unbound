@@ -14,7 +14,7 @@ import type { TestContext } from '@unbound-app/web/testing';
 import type { Addon } from '@unbound-app/types';
 
 import { applyUpdate, fetchUpdates, listInstalled, reinstallFromStore } from '~/lib/updates';
-import type { InstalledEntry, PendingUpdate, UpdatableKind } from '~/lib/updates';
+import type { InstalledEntry, PendingUpdate } from '~/lib/updates';
 
 import {
 	FakeAddons,
@@ -26,9 +26,6 @@ import {
 } from './helpers/addons';
 
 const CLIENT_VERSION = '1.0.0';
-
-// `ManagerKind` lives beside build-time tokens that only exist in a client bundle.
-const PLUGINS: UpdatableKind = 0;
 
 // The CDN: real bytes over HTTP, keyed by path, standing in for the public bucket.
 const files = new Map<string, string>();
@@ -113,7 +110,7 @@ async function check(
 	const entries: InstalledEntry[] = [];
 
 	for (const manager of managers) {
-		for (const entry of listInstalled(PLUGINS, manager)) {
+		for (const entry of listInstalled('plugins', manager)) {
 			if (!owners.has(entry.id)) {
 				owners.set(entry.id, manager);
 			}
@@ -309,7 +306,7 @@ describe('listInstalled', () => {
 		seed(manager, 'up.pushed', true);
 		manager.markDevelopmentCopy('up.pushed');
 
-		expect(listInstalled(PLUGINS, manager).map((entry) => entry.id)).toEqual(['up.store']);
+		expect(listInstalled('plugins', manager).map((entry) => entry.id)).toEqual(['up.store']);
 		expect(manager.isDevelopmentCopy('up.pushed')).toBe(true);
 		expect(manager.isDevelopmentCopy('up.store')).toBe(false);
 	});
@@ -340,7 +337,7 @@ describe('reinstallFromStore', () => {
 		seed(manager, 'up.pushed', true);
 		manager.markDevelopmentCopy('up.pushed');
 
-		const applied = await reinstallFromStore(PLUGINS, manager, 'up.pushed', {
+		const applied = await reinstallFromStore('plugins', manager, 'up.pushed', {
 			baseUrl: 'http://127.0.0.1:9',
 			clientVersion: CLIENT_VERSION,
 		}).catch(() => false);

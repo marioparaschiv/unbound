@@ -2,7 +2,9 @@ import { isPostgresSafe } from '@unbound-app/contracts/text';
 import { createLogger } from '@unbound-app/logger';
 import { z } from 'zod';
 
+import { requireCaller } from '~/lib/api/caller';
 import type { AppContext } from '~/lib/context';
+import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
 
 const logger = createLogger('Web', 'API');
@@ -16,6 +18,10 @@ export type EndpointInput<TBody, TQuery> = {
 	params: PathParams;
 	body: TBody;
 	query: TQuery;
+};
+
+export type CallerEndpointInput<TBody, TQuery> = EndpointInput<TBody, TQuery> & {
+	caller: Caller;
 };
 
 export type EndpointSchemas<
@@ -45,6 +51,10 @@ export type EndpointOptions<TResponse extends z.core.$ZodType> = {
 	 */
 	anyJsonBody?: boolean;
 };
+
+type Handler<TInput, TResponse extends z.core.$ZodType> = (
+	input: TInput,
+) => Promise<z.input<TResponse>>;
 
 /** A `/api/v1` handler bound to the contract schemas its request and response follow. */
 export type Endpoint<
@@ -123,9 +133,7 @@ export function endpoint<
 	TQuery extends z.core.$ZodType,
 >(
 	schemas: EndpointSchemas<TBody, TResponse, TQuery>,
-	handler: (
-		input: EndpointInput<z.output<TBody>, z.output<TQuery>>,
-	) => Promise<z.input<TResponse>>,
+	handler: Handler<EndpointInput<z.output<TBody>, z.output<TQuery>>, TResponse>,
 	options: EndpointOptions<TResponse> = {},
 ): Endpoint<TBody, TResponse, TQuery> {
 	return {
@@ -176,6 +184,31 @@ export function endpoint<
 			}
 		},
 	};
+}
+
+/**
+ * @description Defines a JSON endpoint, as {@link endpoint} does, that only a signed-in caller or an
+ * API key may call. The caller resolves once the request parses, else it fails with `unauthorized`.
+ * @param schemas The request body, query and response schemas.
+ * @param handler The endpoint logic, given the resolved `caller`.
+ * @param options Conditional-request support, e.g. an `etag` derived from the result.
+ * @returns The endpoint, served from a route with `serve` and called directly from tests.
+ */
+export function callerEndpoint<
+	TBody extends z.core.$ZodType,
+	TResponse extends z.core.$ZodType,
+	TQuery extends z.core.$ZodType,
+>(
+	schemas: EndpointSchemas<TBody, TResponse, TQuery>,
+	handler: Handler<CallerEndpointInput<z.output<TBody>, z.output<TQuery>>, TResponse>,
+	options: EndpointOptions<TResponse> = {},
+): Endpoint<TBody, TResponse, TQuery> {
+	return endpoint(
+		schemas,
+		async (input) =>
+			handler({ ...input, caller: await requireCaller(input.ctx, input.request.headers) }),
+		options,
+	);
 }
 
 /**

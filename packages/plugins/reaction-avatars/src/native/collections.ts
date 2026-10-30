@@ -1,4 +1,5 @@
 import type { NativeObjectHandle } from '@unbound-app/api/native';
+import { parseRect, parseSize } from '@unbound-plugins/shared/native/rect';
 import { safeInvoke } from '@unbound-plugins/shared/native/safe-invoke';
 
 import {
@@ -8,8 +9,6 @@ import {
 	itemOfCell,
 	key,
 	reactionViewOf,
-	readRect,
-	readSize,
 	sectionCount,
 	sectionItemCount,
 	setContentSize,
@@ -119,7 +118,7 @@ function setAncestorFrames(session: Session, entry: LayoutEntry, delta: number):
 }
 
 function planLayout(session: Session, entry: LayoutEntry): LayoutPlan | undefined {
-	const width = readRect(safeInvoke(session.objc, entry.collection, 'bounds'))?.width;
+	const width = parseRect(safeInvoke(session.objc, entry.collection, 'bounds'))?.width;
 
 	if (width === undefined || width <= 0 || entry.baseItems.size < entry.itemCount) return;
 
@@ -163,12 +162,12 @@ function restoreLayout(session: Session, entry: LayoutEntry): void {
 		: entry.plan?.baseHeight;
 
 	if (baseHeight !== undefined) {
-		const size = readSize(safeInvoke(objc, entry.collection, 'contentSize'));
+		const size = parseSize(safeInvoke(objc, entry.collection, 'contentSize'));
 		const frame = frameOf(objc, entry.collection);
 
 		setContentSize(objc, entry.collection, {
 			height: baseHeight,
-			width: size.width ?? frame?.width ?? 0,
+			width: size?.width ?? frame?.width ?? 0,
 		});
 
 		if (frame) setFrame(objc, entry.collection, { ...frame, height: baseHeight });
@@ -347,7 +346,7 @@ export function captureLayoutItems(session: Session, entry: LayoutEntry): void {
 				session,
 				entry,
 				item,
-				readRect(safeInvoke(objc, attributes, 'frame')),
+				parseRect(safeInvoke(objc, attributes, 'frame')),
 			);
 		}
 	}
@@ -579,9 +578,9 @@ export function applyLayout(session: Session, entry: LayoutEntry): void {
 		if (state) fitReactionView(session, state);
 	}
 
-	const size = readSize(safeInvoke(objc, entry.collection, 'contentSize'));
+	const size = parseSize(safeInvoke(objc, entry.collection, 'contentSize'));
 	const frame = frameOf(objc, entry.collection);
-	const contentHeight = size.height ?? 0;
+	const contentHeight = size?.height ?? 0;
 	const frameHeight = frame?.height ?? 0;
 	const contentChanged = Math.abs(contentHeight - plan.height) >= 1;
 	const frameChanged = Math.abs(frameHeight - plan.height) >= 1;
@@ -589,7 +588,7 @@ export function applyLayout(session: Session, entry: LayoutEntry): void {
 	if (contentChanged) {
 		setContentSize(objc, entry.collection, {
 			height: plan.height,
-			width: size.width ?? plan.width,
+			width: size?.width ?? plan.width,
 		});
 	}
 

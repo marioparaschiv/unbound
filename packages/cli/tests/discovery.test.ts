@@ -2,7 +2,7 @@ import { afterEach, expect, test } from 'bun:test';
 
 import { createTempDir, type TempDir } from './helpers/ubd';
 import { discoverAddons } from '../src/lib/discovery';
-import { loadConfig } from '../src/lib/config';
+import { loadWorkspace } from './helpers/config';
 
 const dirs: TempDir[] = [];
 
@@ -26,7 +26,7 @@ test('finds addons without descending into node_modules or .git', async () => {
 
 	dirs.push(workspace);
 
-	const addons = await discoverAddons(loadConfig(workspace.path));
+	const addons = await discoverAddons(loadWorkspace(workspace.path));
 
 	expect(addons.map((addon) => addon.id)).toEqual(['com.example.first', 'com.example.second']);
 });

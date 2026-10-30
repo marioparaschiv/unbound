@@ -9,10 +9,10 @@ import {
 	type CachedProfile,
 } from '~/lib/authors/profiles';
 import { getAvatarUrl, getDefaultAvatarUrl, isDiscordId } from '~/lib/discord';
-import type { DiscordId } from '~/lib/authors/discord-users';
 import { getVisibleBadges } from '~/lib/sponsors/badges';
 import { DEFAULT_ROLE } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
+import type { DiscordId } from '~/db/schema';
 import { account, user } from '~/db/schema';
 import { isBanned } from '~/lib/api/caller';
 

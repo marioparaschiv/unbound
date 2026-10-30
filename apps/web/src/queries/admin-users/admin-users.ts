@@ -5,9 +5,7 @@ import type { UserSummary } from '@unbound-app/contracts/account';
 
 import { fetchAdminUser, fetchAdminUsers } from '~/lib/admin-functions';
 import type { AdminUsersPage } from '~/lib/admin-users';
-
-/** Every admin users query key starts with this, so invalidating it refreshes the list, each user's page and the pickers. */
-export const adminUsersKey = ['admin-users'] as const;
+import { adminUsersKey } from '~/queries/keys';
 
 /** How many users a picker's search shows. */
 const USER_SEARCH_RESULTS = 5;
@@ -57,4 +55,4 @@ export function userSearchQuery(term: string) {
 	});
 }
 
-export default { adminUsersKey, adminUsersQuery, adminUserQuery, userSearchQuery };
+export default { adminUsersQuery, adminUserQuery, userSearchQuery };

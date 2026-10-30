@@ -89,6 +89,31 @@ describe('createAuditTelemetry', () => {
 		});
 	});
 
+	test('the startup setup leaves NODE_ENV unset, so the bot files as production', async () => {
+		const saved = process.env.NODE_ENV;
+		const exporter = new RecordingExporter();
+
+		delete process.env.NODE_ENV;
+
+		try {
+			await import('~/lib/setup');
+			expect(process.env.NODE_ENV).toBeUndefined();
+
+			const env = otelEnvSchema.parse({ ...process.env });
+			const telemetry = createAuditTelemetry({ env, exporter });
+
+			telemetry.emit(EVENT, 'x');
+			await telemetry.shutdown();
+		} finally {
+			process.env.NODE_ENV = saved;
+		}
+
+		expect(exporter.records[0]?.resource.attributes).toMatchObject({
+			'service.name': 'unbound-discord-bot',
+			'deployment.environment.name': 'production',
+		});
+	});
+
 	test('a system action is attributed to System', async () => {
 		const exporter = new RecordingExporter();
 		const telemetry = createAuditTelemetry({ env: PRODUCTION, exporter });

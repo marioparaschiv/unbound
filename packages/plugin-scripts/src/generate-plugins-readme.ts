@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { pluginIcon, readPluginManifests, type PluginManifestEntry } from './plugin-manifests';
 import { PLUGIN_ICONS_DIR, PLUGINS_DIR } from './paths';
 
 const pluginsDir = PLUGINS_DIR;
@@ -21,24 +22,9 @@ const catalogWidth =
 	authorColumnWidth;
 const rowStart = 150;
 
-interface PluginAuthor {
-	name: string;
-	id: string;
-}
-
-interface PluginManifest {
-	id: string;
+type PluginInfo = PluginManifestEntry & {
 	icon: string;
-	name: string;
-	description: string;
-	version: string;
-	authors: PluginAuthor[];
-}
-
-interface PluginInfo {
-	folder: string;
-	manifest: PluginManifest;
-}
+};
 
 interface CatalogRow {
 	plugin: PluginInfo;
@@ -93,23 +79,11 @@ function wrapText(value: string, limit: number): string[] {
 	return lines;
 }
 
-function readPluginManifests(): PluginInfo[] {
-	const plugins: PluginInfo[] = [];
-
-	for (const entry of readdirSync(pluginsDir, { withFileTypes: true })) {
-		if (!entry.isDirectory()) continue;
-
-		const folder = entry.name;
-		const manifestPath = resolve(pluginsDir, folder, 'manifest.json');
-		if (!existsSync(manifestPath)) continue;
-
-		const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PluginManifest;
-		if (!manifest.icon) throw new Error(`Plugin ${manifest.id} is missing a manifest icon.`);
-		if (!/^[A-Za-z0-9_-]+$/.test(manifest.icon))
-			throw new Error(`Plugin ${manifest.id} has an invalid icon name: ${manifest.icon}.`);
-
-		plugins.push({ folder, manifest });
-	}
+function readPlugins(): PluginInfo[] {
+	const plugins = readPluginManifests(pluginsDir).map((entry) => ({
+		...entry,
+		icon: pluginIcon(entry.manifest),
+	}));
 
 	return plugins.sort((first, second) => first.manifest.name.localeCompare(second.manifest.name));
 }
@@ -117,16 +91,16 @@ function readPluginManifests(): PluginInfo[] {
 function readIconData(plugins: PluginInfo[]): Map<string, string> {
 	const icons = new Map<string, string>();
 
-	for (const { manifest } of plugins) {
-		if (icons.has(manifest.icon)) continue;
+	for (const { icon } of plugins) {
+		if (icons.has(icon)) continue;
 
-		const iconPath = resolve(iconsDir, `${manifest.icon}.png`);
+		const iconPath = resolve(iconsDir, `${icon}.png`);
 		if (!existsSync(iconPath))
 			throw new Error(
-				`Plugin icon ${manifest.icon} is missing; sync icons from the latest loader IPA.`,
+				`Plugin icon ${icon} is missing; sync icons from the latest loader IPA.`,
 			);
 
-		icons.set(manifest.icon, readFileSync(iconPath).toString('base64'));
+		icons.set(icon, readFileSync(iconPath).toString('base64'));
 	}
 
 	return icons;
@@ -175,8 +149,8 @@ function renderCatalog(plugins: PluginInfo[], icons: Map<string, string>): strin
 	const rowMarkup = rows.flatMap((row, index) => {
 		const { plugin, descriptionLines, authorLines, height: rowHeight, y } = row;
 		const centerY = y + rowHeight / 2;
-		const iconBase64 = icons.get(plugin.manifest.icon);
-		if (!iconBase64) throw new Error(`Plugin icon ${plugin.manifest.icon} has no image data.`);
+		const iconBase64 = icons.get(plugin.icon);
+		if (!iconBase64) throw new Error(`Plugin icon ${plugin.icon} has no image data.`);
 
 		const pluginLink = `https://github.com/marioparaschiv/unbound/tree/main/packages/plugins/${plugin.folder}`;
 		const rowFill = index % 2 === 0 ? '#17181c' : '#121316';
@@ -225,7 +199,7 @@ function renderCatalog(plugins: PluginInfo[], icons: Map<string, string>): strin
 }
 
 function generate(): void {
-	const plugins = readPluginManifests();
+	const plugins = readPlugins();
 	const icons = readIconData(plugins);
 	const catalog = renderCatalog(plugins, icons);
 	const readme =

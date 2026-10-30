@@ -14,9 +14,9 @@ export function formatResult(result: EvalResult): string {
 	}
 
 	if (result.ok) {
-		parts.push('--- result ---', result.value ?? 'undefined');
+		parts.push('--- result ---', result.value);
 	} else {
-		parts.push('--- error ---', result.error ?? 'Unknown error.');
+		parts.push('--- error ---', result.error);
 	}
 
 	return parts.join('\n');

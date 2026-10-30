@@ -52,7 +52,18 @@ function write(path: string, contents: string) {
 function writePlugin(dir: string, version: string) {
 	write(
 		`packages/plugins/${dir}/manifest.json`,
-		`${JSON.stringify({ id: `unbound.${dir}`, version, main: 'index.tsx' }, null, '\t')}\n`,
+		`${JSON.stringify(
+			{
+				id: `unbound.${dir}`,
+				name: dir,
+				description: `The ${dir} plugin.`,
+				authors: [{ name: 'adrian', id: '1' }],
+				version,
+				main: 'index.tsx',
+			},
+			null,
+			'\t',
+		)}\n`,
 	);
 	write(`packages/plugins/${dir}/package.json`, '{ "scripts": { "build": "rollup" } }\n');
 	write(`packages/plugins/${dir}/dist/index.js`, `export default '${dir} ${version}';\n`);

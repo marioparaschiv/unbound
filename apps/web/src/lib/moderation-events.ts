@@ -17,6 +17,7 @@ import type { Database, Transaction } from '~/db/database';
 import type { SubmissionRow } from '~/lib/submissions';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
+import { readReview } from '~/lib/submission-review';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import one from '~/db/one';
@@ -137,23 +138,23 @@ export async function recordReviewDecision(
 	reviewed: SubmissionRow,
 	build?: FirstPartyBuild,
 ): Promise<void> {
-	const { reviewDecision, reviewedAt } = reviewed;
+	const review = readReview(reviewed);
 
-	if (!reviewDecision || !reviewedAt) {
+	if (!review) {
 		throw new Error(`Submission ${reviewed.id} has no review decision to record.`);
 	}
 
 	await appendEvent(tx, {
 		subject: { type: 'addon', id: reviewed.addonId },
 		actorId: reviewed.reviewerId,
-		at: reviewedAt,
-		reason: reviewed.reviewNote,
+		at: review.reviewedAt,
+		reason: review.note,
 		kind: 'review.decided',
 		data: {
 			submissionId: reviewed.id,
 			submissionKind: reviewed.kind,
 			version: reviewed.version,
-			decision: reviewDecision,
+			decision: review.decision,
 			...(build ? { build } : {}),
 		},
 	});

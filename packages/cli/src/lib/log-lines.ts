@@ -38,8 +38,6 @@ export type PrinterOptions = {
 	colors?: boolean;
 };
 
-export const DISCORD_PACKAGE = 'com.discord';
-
 const LOADER_LOG_LINE = /^(\d{4}-\d\d-\d\dT[\d:.]+Z) ([DIWE]) \[([^\]]+)\] (.*)$/;
 const LOADER_LOG_LEVELS: Record<string, LogLevel> = {
 	D: 'debug',

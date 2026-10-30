@@ -1,12 +1,12 @@
 import { createLogger } from '@unbound-app/logger';
 import { Platform } from 'react-native';
 
+import { getSetting, setSetting } from '~/lib/unbound-settings';
 import { CLIENT_VERSION } from '~/lib/constants';
 import ErrorFallback from '~/ui/error-boundary';
 import { createPatcher } from '~/api/patcher';
 import { findByName } from '~/api/metro';
 import { reload } from '~/api/native';
-import storage from '~/api/storage';
 
 type BoundaryState = {
 	error?: Error | null;
@@ -24,16 +24,15 @@ type BoundaryInstance = {
 
 const Patcher = createPatcher('ErrorBoundary');
 const Logger = createLogger('ErrorBoundary');
-const Settings = storage.getStore('unbound');
 
 function enterRecoveryMode() {
-	Settings.set('recovery', true);
+	setSetting('recovery', true);
 	void reload();
 }
 
 /** Replaces Discord's crash screen with Unbound's fallback and logs what it caught, unless disabled in settings. */
 export function start() {
-	const enabled = Settings.get('error-boundary.enabled', true);
+	const enabled = getSetting('error-boundary.enabled');
 
 	if (!enabled) return;
 

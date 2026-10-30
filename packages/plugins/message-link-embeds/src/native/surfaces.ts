@@ -4,6 +4,7 @@ import type {
 	NativeObjectHandle,
 } from '@unbound-app/api/native';
 import { safeInvoke } from '@unbound-plugins/shared/native/safe-invoke';
+import { toRect } from '@unbound-plugins/shared/native/rect';
 import {
 	MESSAGE_TEXT_VIEW_CLASSES,
 	ownedAttachments,
@@ -13,13 +14,7 @@ import {
 	type TextEngine,
 } from '@unbound-plugins/shared/native/text-attachments';
 
-import {
-	availableMessageWidth,
-	findTable,
-	nativeFrame,
-	nativeString,
-	readLabelText,
-} from '~/native/objc';
+import { availableMessageWidth, findTable, nativeString, readLabelText } from '~/native/objc';
 import { captureBottomAnchor, clearReactionLayout, refreshRowSize } from '~/native/scroll-anchor';
 import { findRenderedLinkRange, type LinkTarget, type TextRange } from '~/link-targets';
 import { BottomAnchorTracker, surfaceHeightCacheKey } from '~/surface-layout';
@@ -416,7 +411,7 @@ async function createHost(
 	try {
 		const view = objc.alloc('UIView');
 
-		await objc.invokeAsync(view, 'setFrame:', [nativeFrame(objc, width, height)]);
+		await objc.invokeAsync(view, 'setFrame:', [toRect(objc, { x: 0, y: 0, width, height })]);
 
 		return view;
 	} catch {
@@ -464,7 +459,7 @@ export function reportSurfaceLayout(session: Session, surfaceId: string, height:
 			session.objc,
 			surface.host,
 			'setFrame:',
-			nativeFrame(session.objc, surface.width, settledHeight),
+			toRect(session.objc, { x: 0, y: 0, width: surface.width, height: settledHeight }),
 		);
 		applyAttachment(session, surface, true);
 	}, Surface.settleDelay);

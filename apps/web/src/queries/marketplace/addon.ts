@@ -1,8 +1,8 @@
 import { queryOptions } from '@tanstack/react-query';
 
 import { fetchSubmissionPreview } from '~/lib/submission-preview-functions';
-import { marketplaceKey } from '~/queries/marketplace/listing';
 import { fetchMarketplaceAddon } from '~/lib/marketplace';
+import { marketplaceKey } from '~/queries/keys';
 
 /**
  * @description A listed addon's public page.

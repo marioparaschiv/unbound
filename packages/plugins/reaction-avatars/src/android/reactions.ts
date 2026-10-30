@@ -22,11 +22,13 @@ import {
 	javaNumber,
 	javaReference,
 	javaText,
+	javaViewKey,
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
 import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-classes';
 import {
 	currentDecorView,
+	displayDensity,
 	findViewsOfClass,
 	readCalls,
 	runOnMain,
@@ -89,10 +91,6 @@ type Pill = {
 type Message = {
 	reactions?: Reaction[];
 };
-
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
 
 function emojiKey(reaction: Reaction): string | undefined {
 	if (typeof reaction.emoji === 'string') return reaction.emoji;
@@ -185,18 +183,9 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		return javaReference(row);
 	}
 
-	async function density(view: NativeJavaReference): Promise<number> {
-		const resources = javaReference(await java.invokeAsync(view, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
-	}
-
 	async function removePill(pill: Pill) {
 		pill.disposed = true;
-		pills.delete(viewKey(pill.reactionView as NativeJavaValue) ?? '');
+		pills.delete(javaViewKey(pill.reactionView as NativeJavaValue) ?? '');
 		surfaceStates.delete(pill.id);
 
 		const mounted = await settledWithin(pill.mounting, UNMOUNT_WAIT_MS);
@@ -227,7 +216,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		context: ReactionContext,
 		users: Reactor[],
 	): Promise<Pill> {
-		const scale = await density(reactionView);
+		const scale = await displayDensity(java, reactionView);
 		const total = reactionAvatarSelection(context.reaction, context.reactionType).count;
 		const width = reactionAvatarStackWidth(reactionAvatarReservedSlotCount(total));
 		const viewContext = javaReference(await java.invokeAsync(reactionView, 'getContext', []));
@@ -254,7 +243,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		]);
 		java.setField(params, 'gravity', javaInt(CENTER_VERTICAL));
 		describe(pill, context, users);
-		pills.set(viewKey(reactionView as NativeJavaValue) ?? '', pill);
+		pills.set(javaViewKey(reactionView as NativeJavaValue) ?? '', pill);
 		await java.invokeAsync(reactionView, 'addView', [host, params]);
 
 		return pill;
@@ -300,7 +289,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		const changed: Pill[] = [];
 
 		for (const [position, reactionView] of views.entries()) {
-			const key = viewKey(reactionView as NativeJavaValue) ?? '';
+			const key = javaViewKey(reactionView as NativeJavaValue) ?? '';
 			const existing = pills.get(key);
 			const shown = javaNumber(visibility[position]) === VISIBLE;
 			const field = shown ? emojiField(reactionView) : undefined;
@@ -354,7 +343,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 			changed.push(await addPill(reactionView, context, users));
 		}
 
-		const messageKey = viewKey(messageView as NativeJavaValue) ?? '';
+		const messageKey = javaViewKey(messageView as NativeJavaValue) ?? '';
 
 		if (reactions.length && !used.size) {
 			awaitingSize.set(messageKey, { messageView, messageId });
@@ -373,7 +362,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 	}
 
 	function schedule(messageView: NativeJavaReference, messageId: string) {
-		const key = viewKey(messageView as NativeJavaValue);
+		const key = javaViewKey(messageView as NativeJavaValue);
 
 		if (!key || disposed) return;
 
@@ -421,7 +410,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		SIZE_PARAMETERS,
 		{ notify: true },
 		({ self }) => {
-			const key = viewKey(self);
+			const key = javaViewKey(self);
 			const pending = key ? awaitingSize.get(key) : undefined;
 
 			if (!key || !pending) return;

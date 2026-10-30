@@ -17,11 +17,6 @@ function manifest(overrides: Partial<AddonManifest>): AddonManifest {
 		authors: [{ name: 'Someone', id: '1' }],
 		version: '1.0.0',
 		main: 'index.js',
-		icon: '',
-		updates: '',
-		folder: '',
-		path: '',
-		url: '',
 		...overrides,
 	};
 }

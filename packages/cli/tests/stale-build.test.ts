@@ -13,7 +13,17 @@ function addon() {
 	directories.push(dir);
 	mkdirSync(join(dir, 'src'));
 	mkdirSync(join(dir, 'dist'));
-	writeFileSync(join(dir, 'manifest.json'), JSON.stringify({ main: 'src/index.ts' }));
+	writeFileSync(
+		join(dir, 'manifest.json'),
+		JSON.stringify({
+			id: 'unbound.alpha',
+			name: 'Alpha',
+			description: 'A test plugin.',
+			authors: [{ name: 'Mario', id: '1' }],
+			main: 'src/index.ts',
+			version: '1.0.0',
+		}),
+	);
 	writeFileSync(join(dir, 'src', 'index.ts'), 'export default {};');
 	writeFileSync(join(dir, 'dist', 'index.js'), 'bundle');
 

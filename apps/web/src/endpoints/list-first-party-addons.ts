@@ -2,14 +2,11 @@ import { listFirstPartyAddonsResponseSchema } from '@unbound-app/contracts/publi
 import { z } from 'zod';
 
 import { listFirstPartyAddons } from '~/lib/first-party';
-import { requireCaller } from '~/lib/api/caller';
-import endpoint from '~/lib/api/endpoint';
+import { callerEndpoint } from '~/lib/api/endpoint';
 
-const listFirstPartyAddonsEndpoint = endpoint(
+const listFirstPartyAddonsEndpoint = callerEndpoint(
 	{ body: z.undefined(), query: z.undefined(), response: listFirstPartyAddonsResponseSchema },
-	async ({ ctx, request }) => {
-		const caller = await requireCaller(ctx, request.headers);
-
+	async ({ ctx, caller }) => {
 		return listFirstPartyAddons(ctx, caller);
 	},
 );

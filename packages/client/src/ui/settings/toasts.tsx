@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 
+import { useUnboundSettings } from '~/lib/unbound-settings';
 import { Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
 import { Page } from '~/ui/components';
 import { Messages } from '~/api/i18n';
 import { Icons } from '~/api/assets';
@@ -19,7 +19,7 @@ function formatDuration(duration: number): string {
  * @description Settings page controlling toast behaviour and appearance.
  */
 function ToastsPage() {
-	const settings = useSettingsStore('unbound', ({ key }) => key?.startsWith('toasts'));
+	const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 
 	return (
 		<Page>
@@ -27,14 +27,14 @@ function ToastsPage() {
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_TOASTS_ENABLED}
 					icon={<Discord.TableRowIcon source={Icons.BellIcon} />}
-					value={settings.get('toasts.enabled', true)}
-					onValueChange={() => settings.toggle('toasts.enabled', true)}
+					value={settings.get('toasts.enabled')}
+					onValueChange={() => settings.toggle('toasts.enabled')}
 				/>
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_TOASTS_ANIMATIONS}
 					icon={<Discord.TableRowIcon source={Icons.EyeIcon} />}
-					value={settings.get('toasts.animations', true)}
-					onValueChange={() => settings.toggle('toasts.animations', true)}
+					value={settings.get('toasts.animations')}
+					onValueChange={() => settings.toggle('toasts.animations')}
 				/>
 			</Discord.TableRowGroup>
 
@@ -53,13 +53,13 @@ function ToastsPage() {
 								color='text-muted'
 								style={{ marginLeft: 'auto' }}
 							>
-								{Math.floor(settings.get('toasts.maxOnScreen', 3))}
+								{Math.floor(settings.get('toasts.maxOnScreen'))}
 							</Discord.Text>
 						</View>
 					}
 					subLabel={
 						<Discord.Slider
-							value={settings.get('toasts.maxOnScreen', 3)}
+							value={settings.get('toasts.maxOnScreen')}
 							minimumValue={0}
 							maximumValue={10}
 							onValueChange={(value: number) =>
@@ -82,13 +82,13 @@ function ToastsPage() {
 								color='text-muted'
 								style={{ marginLeft: 'auto' }}
 							>
-								{formatDuration(settings.get('toasts.duration', 5000))}
+								{formatDuration(settings.get('toasts.duration'))}
 							</Discord.Text>
 						</View>
 					}
 					subLabel={
 						<Discord.Slider
-							value={settings.get('toasts.duration', 5000)}
+							value={settings.get('toasts.duration')}
 							minimumValue={0}
 							maximumValue={10000}
 							onValueChange={(value: number) =>

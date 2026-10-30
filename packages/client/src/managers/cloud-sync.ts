@@ -12,7 +12,7 @@ import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
 import type { Api } from '@unbound-app/web/api';
 
-import { applyActions, collectLocalDocument } from '~/lib/sync-device';
+import { applyActions, collectLocalDocument } from '~/managers/sync-device';
 import { isJsonEqual, plan, reconcileBase } from '~/lib/sync';
 import { authorizeWithDiscord } from '~/lib/discord-oauth';
 import type { SyncStrategy } from '~/lib/sync';

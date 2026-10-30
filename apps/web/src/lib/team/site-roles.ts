@@ -1,10 +1,11 @@
 import { and, eq, isNotNull } from 'drizzle-orm';
 
-import { STAFF_ROLES, type StaffRole } from '~/lib/team/roles';
 import { setRoleWithRecord } from '~/lib/moderation-events';
 import { account, teamMember, user } from '~/db/schema';
 import { DEFAULT_ROLE } from '~/lib/auth/access';
+import { STAFF_ROLES } from '~/lib/team/roles';
 import type { Database } from '~/db/database';
+import type { StaffRole } from '~/db/schema';
 
 export type RoleChange = {
 	userId: string;

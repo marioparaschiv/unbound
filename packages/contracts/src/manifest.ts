@@ -3,6 +3,12 @@ import { ADDON_TYPES } from '@unbound-app/types/addons';
 
 import { z } from './zod';
 
+/** The file in an addon's directory that holds its manifest. */
+export const MANIFEST_FILENAME = 'manifest.json';
+
+/** The file `ubd install` leaves in an installed addon's folder so the client treats it as a development copy. */
+export const DEVELOPMENT_MARKER = 'development';
+
 /**
  * A strict SemVer 2.0.0 version (the specification's own pattern): no `v` prefix, no leading zeros.
  * Versions become object-storage path segments and are ordered by the server, so loose forms are refused.
@@ -76,6 +82,8 @@ export const addonManifestSchema = z.looseObject({
 export type PublishedManifest = z.infer<typeof addonManifestSchema>;
 
 export default {
+	MANIFEST_FILENAME,
+	DEVELOPMENT_MARKER,
 	semverSchema,
 	addonIdSchema,
 	addonMainSchema,

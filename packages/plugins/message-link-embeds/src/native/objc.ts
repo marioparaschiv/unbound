@@ -28,17 +28,6 @@ export function nativeString(objc: NativeObjCBridge, value: unknown): string | u
 }
 
 /**
- * @description Builds a `CGRect` at the origin.
- * @param objc The Objective-C bridge.
- * @param width The rectangle's width.
- * @param height The rectangle's height.
- * @returns The struct.
- */
-export function nativeFrame(objc: NativeObjCBridge, width: number, height: number) {
-	return objc.struct('CGRect', { origin: { x: 0, y: 0 }, size: { width, height } });
-}
-
-/**
  * @description Reads a label's attributed text and its plain string in one batch.
  * @param objc The Objective-C bridge.
  * @param label The label.

@@ -6,12 +6,14 @@ import type {
 	PropEvidence,
 	PropObservation,
 	ReExport,
+	StaticRecord,
 	TargetRef,
 } from './types';
 import type { ModuleContext, PropValue, Value } from './values';
 import type { Resolver } from './resolve';
 
 import { UNKNOWN, spreadSources, targetOf } from './values';
+import { EXPORTS, MODULE } from './metro-params';
 import { constantOf } from './constants';
 
 /** What a module's exports are, besides its components: values from other modules, and constants. */
@@ -21,8 +23,6 @@ export type BoundExports = {
 	starExports: number[];
 };
 
-const MODULE = 4;
-const EXPORTS = 5;
 const HOOK_NAME = /^use[A-Z]/;
 
 /**
@@ -321,11 +321,21 @@ function addStatic(ctx: ModuleContext, component: ComponentRecord, name: string,
 		ctx.staticOwners.push({ component: value.fn.component, parent: component, key: name });
 	}
 
-	component.statics.push({
-		name,
-		target: targetOf(value),
-		literal: value.kind === 'literal' && value.value !== undefined ? value.value : void 0,
-	});
+	component.statics.push(staticRecord(name, value));
+}
+
+function staticRecord(name: string, value: Value): StaticRecord {
+	const target = targetOf(value);
+
+	if (target) {
+		return { name, kind: 'target', target };
+	}
+
+	if (value.kind === 'literal' && value.value !== undefined) {
+		return { name, kind: 'literal', literal: value.value };
+	}
+
+	return { name, kind: 'opaque' };
 }
 
 /**

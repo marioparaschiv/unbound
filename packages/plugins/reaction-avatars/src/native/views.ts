@@ -1,4 +1,5 @@
 import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
+import { parseRect, toRect } from '@unbound-plugins/shared/native/rect';
 import { safeInvoke } from '@unbound-plugins/shared/native/safe-invoke';
 import viewKey from '@unbound-plugins/shared/native/view-key';
 
@@ -7,15 +8,6 @@ import { framesMatch, type Frame } from '~/layout';
 export type Size = {
 	height: number;
 	width: number;
-};
-
-type StructValue = {
-	value?: {
-		height?: number;
-		origin?: { x?: number; y?: number };
-		size?: { height?: number; width?: number };
-		width?: number;
-	};
 };
 
 let unkeyed = 0;
@@ -63,43 +55,13 @@ export function toHandles(objc: NativeObjCBridge, value: unknown): NativeObjectH
 }
 
 /**
- * @description Reads a `CGRect`.
- * @param value The struct, as a selector returned it.
- * @returns The rect, or `undefined` when a field is missing.
- */
-// UNKNOWN: selectors return untyped values.
-export function readRect(value: unknown): Frame | undefined {
-	const fields = (value as StructValue | null)?.value;
-	const x = toNumber(fields?.origin?.x);
-	const y = toNumber(fields?.origin?.y);
-	const width = toNumber(fields?.size?.width);
-	const height = toNumber(fields?.size?.height);
-
-	if (x === undefined || y === undefined || width === undefined || height === undefined) return;
-
-	return { height, width, x, y };
-}
-
-/**
- * @description Reads a `CGSize`.
- * @param value The struct, as a selector returned it.
- * @returns The size, with a missing field left `undefined`.
- */
-// UNKNOWN: selectors return untyped values.
-export function readSize(value: unknown): Partial<Size> {
-	const fields = (value as StructValue | null)?.value;
-
-	return { height: toNumber(fields?.height), width: toNumber(fields?.width) };
-}
-
-/**
  * @description Reads a view's frame.
  * @param objc The Objective-C bridge.
  * @param view The view.
  * @returns Its frame, or `undefined` when it could not be read.
  */
 export function frameOf(objc: NativeObjCBridge, view: NativeObjectHandle): Frame | undefined {
-	return readRect(safeInvoke(objc, view, 'frame'));
+	return parseRect(safeInvoke(objc, view, 'frame'));
 }
 
 /**
@@ -111,15 +73,7 @@ export function frameOf(objc: NativeObjCBridge, view: NativeObjectHandle): Frame
 export function setFrame(objc: NativeObjCBridge, view: NativeObjectHandle, frame: Frame): void {
 	if (framesMatch(frameOf(objc, view), frame)) return;
 
-	safeInvoke(
-		objc,
-		view,
-		'setFrame:',
-		objc.struct('CGRect', {
-			origin: { x: frame.x, y: frame.y },
-			size: { height: frame.height, width: frame.width },
-		}),
-	);
+	safeInvoke(objc, view, 'setFrame:', toRect(objc, frame));
 }
 
 /**

@@ -6,14 +6,6 @@ import type { Session } from '~/native/session';
 import { NativeClass } from '~/constants';
 
 /**
- * @description Abandons any visible-cell scan in progress.
- * @param session The running session.
- */
-export function cancelVisibleScans(session: Session): void {
-	session.scanRevision++;
-}
-
-/**
  * @description Renders every message cell on screen, for cells that appeared before the hooks.
  * @param session The running session.
  */

@@ -16,20 +16,6 @@ import { loadAuthors } from '~/lib/authors/resolve';
 import { splitList } from '~/lib/addon-filters';
 import app from '~/lib/app';
 
-export type MarketplaceSearch = z.infer<typeof marketplaceSearchSchema>;
-
-/** The `/plugins` and `/themes` URL search parameters. The sort brings its own order. */
-export const marketplaceSearchSchema = z.pick(listAddonsQuerySchema.def.innerType, {
-	q: true,
-	sort: true,
-	tags: true,
-	tagMatch: true,
-	authors: true,
-	authorMatch: true,
-	updated: true,
-	updatedMatch: true,
-});
-
 const listingQuery = listAddonsQuerySchema.def.innerType.shape;
 
 const authorSearchSchema = z.object({
@@ -152,7 +138,6 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 	});
 
 export default {
-	marketplaceSearchSchema,
 	fetchMarketplacePage,
 	fetchMarketplaceTags,
 	fetchMarketplaceAuthors,

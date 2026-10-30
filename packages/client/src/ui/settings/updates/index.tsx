@@ -1,7 +1,7 @@
+import { useUnboundSettings } from '~/lib/unbound-settings';
 import type { UpdatesState } from '~/stores/updates';
 import type { PendingUpdate } from '~/lib/updates';
 import { Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
 import { automaticUpdates } from '~/lib/updates';
 import { Messages, format } from '~/api/i18n';
 import { getManager } from '~/managers/utils';
@@ -81,7 +81,7 @@ function UpdateRow({ entry }: UpdateRowProps) {
 
 /** @description Addon and loader updates: check, apply one or all, and read each update's changelog. */
 function UpdatesPage() {
-	const settings = useSettingsStore('unbound');
+	const settings = useUnboundSettings();
 	const state = UpdatesStore((store) => store.state);
 	const { check, applyAll } = UpdatesStore.getState();
 	const updates = state.status === 'ready' ? state.updates : [];
@@ -110,7 +110,7 @@ function UpdatesPage() {
 					label={Messages.UNBOUND_UPDATES_AUTO}
 					subLabel={Messages.UNBOUND_UPDATES_AUTO_DESC}
 					icon={<Discord.TableRowIcon source={Icons.ClockIcon} />}
-					value={settings.get('updater.auto', true)}
+					value={settings.get('updater.auto')}
 					onValueChange={(value) => settings.set('updater.auto', value)}
 				/>
 			</Discord.TableRowGroup>
