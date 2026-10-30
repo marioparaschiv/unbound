@@ -116,3 +116,31 @@ export async function screenDifference(
 		return;
 	}
 }
+
+export const CROP_BANDS = 3;
+
+export async function saveFullResolutionBands(
+	screenshot: string,
+	directory: string,
+	name: string,
+): Promise<boolean> {
+	mkdirSync(directory, { recursive: true });
+
+	try {
+		const child = Bun.spawn(
+			[
+				'magick',
+				screenshot,
+				'-crop',
+				`1x${CROP_BANDS}@`,
+				'+repage',
+				join(directory, `${name}-%d.png`),
+			],
+			{ stdout: 'ignore', stderr: 'ignore' },
+		);
+
+		return (await child.exited) === 0;
+	} catch {
+		return false;
+	}
+}

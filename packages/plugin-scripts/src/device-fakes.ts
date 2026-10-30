@@ -28,6 +28,7 @@ export function fakeDiscord(
 	const received: Received[] = [];
 	const transitions: string[][] = [];
 	const sent: unknown[] = [];
+	const dispatched: Record<string, unknown>[] = [];
 	const modules: Record<string, object> = {
 		transitionToGuild: { transitionToGuild: (...args: string[]) => transitions.push(args) },
 		receiveMessage: {
@@ -35,6 +36,7 @@ export function fakeDiscord(
 				received.push({ channel, message }),
 			sendMessage: (...args: unknown[]) => sent.push(args),
 		},
+		subscribe: { dispatch: (action: Record<string, unknown>) => dispatched.push(action) },
 		createBotMessage: {
 			createBotMessage: (fields: { channelId: string; content: string }) => ({
 				id: 'bot',
@@ -54,5 +56,5 @@ export function fakeDiscord(
 		},
 	};
 
-	return { unbound, received, transitions, sent };
+	return { unbound, received, transitions, sent, dispatched };
 }

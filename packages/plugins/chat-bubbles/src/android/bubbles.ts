@@ -147,19 +147,32 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		'getBottom',
 	];
 
-	async function contentArea(row: NativeJavaReference): Promise<Edges | undefined> {
+	const ROW_READS = ['getWidth', 'getHeight', 'getBackground'];
+
+	type RowMeasure = {
+		area: Edges | undefined;
+		width: number;
+		height: number;
+		background: NativeJavaReference | null;
+		iconShifts: NativeJavaBatchOperation[];
+	};
+
+	async function measureRow(row: NativeJavaReference): Promise<RowMeasure | undefined> {
 		const [accessories] = await directChildren(row, AndroidClass.accessories);
 
 		if (!accessories) return;
 
 		const kids = await directChildren(accessories, 'android.view.View');
 		const values = await runOnMain(java, [
+			...readCalls(row, ROW_READS),
 			...readCalls(accessories, ['getLeft', 'getTop']),
 			...kids.flatMap((child) => readCalls(child, CHILD_READS)),
 		]);
+		const [rowWidth, rowHeight, background, accessoriesLeft, accessoriesTop] = values;
+		const childValues = values.slice(ROW_READS.length + 2);
 		const measured = kids.map((child, index) => {
-			const [visibility, width, height, left, right, top, bottom] = values
-				.slice(2 + index * CHILD_READS.length, 2 + (index + 1) * CHILD_READS.length)
+			const [visibility, width, height, left, right, top, bottom] = childValues
+				.slice(index * CHILD_READS.length, (index + 1) * CHILD_READS.length)
 				.map((value) => javaNumber(value) ?? 0);
 
 			return { child, visibility, width, height, left, right, top, bottom };
@@ -167,22 +180,37 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		const shown = measured.filter(
 			(child) => child.visibility === VISIBLE && child.width > 0 && child.height > 0,
 		);
-		const rights = await Promise.all(shown.map(tightRight));
-		const area = union(
-			shown.map((child, index) => ({
-				left: child.left,
-				top: child.top,
-				right: rights[index]!,
-				bottom: child.bottom,
-			})),
-		);
+		const iconShifts: NativeJavaBatchOperation[] = [];
+		const rights = await Promise.all(shown.map((child) => tightRight(child, iconShifts)));
 
-		if (!area) return;
+		return {
+			area: offsetArea(
+				row,
+				union(
+					shown.map((child, index) => ({
+						left: child.left,
+						top: child.top,
+						right: rights[index]!,
+						bottom: child.bottom,
+					})),
+				),
+				javaNumber(accessoriesLeft),
+				javaNumber(accessoriesTop) ?? 0,
+			),
+			width: javaNumber(rowWidth) ?? 0,
+			height: javaNumber(rowHeight) ?? 0,
+			background: javaReference(background),
+			iconShifts,
+		};
+	}
 
-		const x = javaNumber(values[0]);
-		const y = javaNumber(values[1]) ?? 0;
-
-		if (x === undefined || !isLaidOut(area.left + x)) return;
+	function offsetArea(
+		row: NativeJavaReference,
+		area: Edges | undefined,
+		x: number | undefined,
+		y: number,
+	): Edges | undefined {
+		if (!area || x === undefined || !isLaidOut(area.left + x)) return;
 
 		noteContentStart(row, area.left + x);
 
@@ -196,7 +224,10 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 	type MeasuredChild = { child: NativeJavaReference; width: number; left: number; right: number };
 
-	async function tightRight(measured: MeasuredChild): Promise<number> {
+	async function tightRight(
+		measured: MeasuredChild,
+		iconShifts: NativeJavaBatchOperation[],
+	): Promise<number> {
 		if (isInstance(contentClass, measured.child)) {
 			return Math.min(
 				measured.right,
@@ -204,10 +235,13 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			);
 		}
 
-		return (await footerRight(measured)) ?? measured.right;
+		return (await footerRight(measured, iconShifts)) ?? measured.right;
 	}
 
-	async function footerRight(footer: MeasuredChild): Promise<number | undefined> {
+	async function footerRight(
+		footer: MeasuredChild,
+		iconShifts: NativeJavaBatchOperation[],
+	): Promise<number | undefined> {
 		const children = await directChildren(footer.child, 'android.view.View');
 
 		if (children.length !== 3) return;
@@ -231,11 +265,14 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		const spacing = ICON_SPACING_DP * (await density(icon));
 		const gap = Math.max(0, labelWidth - (await textWidth(label, labelWidth)) - spacing);
 
-		if (disposed) return;
-
 		if (!shiftedIcons.some((entry) => sameJavaReference(entry, icon))) shiftedIcons.push(icon);
 
-		await java.invokeAsync(icon, 'setTranslationX', [javaFloat(-gap)]);
+		iconShifts.push({
+			op: 'invoke',
+			handle: icon,
+			name: 'setTranslationX',
+			args: [javaFloat(-gap)],
+		});
 
 		return footer.right - gap;
 	}
@@ -348,15 +385,21 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	}
 
 	async function place(row: NativeJavaReference) {
-		const area = await contentArea(row);
+		const [measure, header, scale] = await Promise.all([
+			measureRow(row),
+			headerBottom(row),
+			density(row),
+		]);
+		const area = measure?.area;
 
-		if (!area) return restore(row);
+		if (disposed) return;
 
-		const scale = await density(row);
-		const [rowWidth, rowHeight, currentBackground] = await runOnMain(
-			java,
-			readCalls(row, ['getWidth', 'getHeight', 'getBackground']),
-		);
+		if (!measure || !area) {
+			await runOnMain(java, measure?.iconShifts ?? []);
+
+			return restore(row);
+		}
+
 		const style = currentAppearance();
 		const frame = bubbleFrame(
 			{
@@ -370,14 +413,11 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 				horizontal: style.horizontalPadding * scale,
 				vertical: style.verticalPadding * scale,
 			},
-			await headerBottom(row),
+			header,
 		);
-		const insets = rowInsets(frame, javaNumber(rowWidth) ?? 0, javaNumber(rowHeight) ?? 0);
+		const insets = rowInsets(frame, measure.width, measure.height);
 
-		noteProblem(
-			messageId(row),
-			bubbleProblem(frame, javaNumber(rowWidth) ?? 0, area.right - area.left),
-		);
+		noteProblem(messageId(row), bubbleProblem(frame, measure.width, area.right - area.left));
 		const shape = java.construct('android.graphics.drawable.GradientDrawable', []);
 
 		java.invoke(shape, 'setCornerRadius', [javaFloat(style.radius * scale)]);
@@ -398,7 +438,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			javaInt(insets.bottom),
 		]);
 		java.invoke(bubble, 'setPadding', [javaInt(0), javaInt(0), javaInt(0), javaInt(0)]);
-		const current = javaReference(currentBackground);
+		const current = measure.background;
 		const drawn = javaReference(java.getAssociatedObject(row, ours));
 
 		if (!drawn || !current || !sameJavaReference(current, drawn)) {
@@ -411,7 +451,10 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 		java.setAssociatedObject(row, ours, bubble);
 		track(row);
-		await java.invokeAsync(row, 'setBackground', [bubble]);
+		await runOnMain(java, [
+			...measure.iconShifts,
+			{ op: 'invoke', handle: row, name: 'setBackground', args: [bubble] },
+		]);
 	}
 
 	let flushing: Promise<void> = Promise.resolve();

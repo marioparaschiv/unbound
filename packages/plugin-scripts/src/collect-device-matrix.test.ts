@@ -278,6 +278,19 @@ test('stages a reply, an attachment-only message and a forward beside the text f
 	).toBe(true);
 });
 
+test('removes the messages an earlier run staged before staging new ones', async () => {
+	const first = fakeDiscord();
+
+	await runOnFakeDevice(fixtureScript('1', '2'), first.unbound);
+
+	const second = fakeDiscord();
+
+	await runOnFakeDevice(fixtureScript('1', '2'), second.unbound);
+
+	expect(second.dispatched.length).toBe(first.received.length);
+	expect(second.dispatched.every((action) => action.type === 'MESSAGE_DELETE')).toBe(true);
+});
+
 test('reads the physical screen size, preferring an override', () => {
 	expect(parseScreenSize('Physical size: 1080x2400')).toEqual({ width: 1080, height: 2400 });
 	expect(parseScreenSize('Physical size: 1080x2400\nOverride size: 720x1600')).toEqual({

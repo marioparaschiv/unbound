@@ -48,6 +48,17 @@ function cell(check: MeasuredCheck | undefined): string {
 }
 
 const LISTED_CALLS = 6;
+const collectors = new Set<Bun.Subprocess>();
+
+function stopCollectorsOn(signal: NodeJS.Signals, code: number) {
+	process.once(signal, () => {
+		for (const collector of collectors) collector.kill('SIGTERM');
+
+		void Promise.all([...collectors].map((collector) => collector.exited)).finally(() =>
+			process.exit(code),
+		);
+	});
+}
 
 export function failureReason(lines: string[]): string | undefined {
 	const errors = lines.filter(
@@ -257,7 +268,12 @@ async function collect(
 		stdout: 'pipe',
 		stderr: 'pipe',
 	});
+
+	collectors.add(child);
+
 	const [stderr, exit] = await Promise.all([new Response(child.stderr).text(), child.exited]);
+
+	collectors.delete(child);
 	const lines = stderr.split('\n');
 	const changes = lines
 		.filter((line) => line.startsWith('changed: '))
@@ -331,4 +347,8 @@ async function main(): Promise<void> {
 	if (runs.some(runFailed)) process.exitCode = 1;
 }
 
-if (import.meta.main) await main();
+if (import.meta.main) {
+	stopCollectorsOn('SIGINT', 130);
+	stopCollectorsOn('SIGTERM', 143);
+	await main();
+}

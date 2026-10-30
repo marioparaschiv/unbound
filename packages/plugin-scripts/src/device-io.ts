@@ -213,6 +213,14 @@ export async function swipeAll(commands: string[][]): Promise<number> {
 	return performed;
 }
 
+export const NEWEST_SWIPES = 4;
+
+export async function scrollToNewest(target: ScreenshotTarget): Promise<number> {
+	const commands = swipeCommands(target, await screenSize(target), NEWEST_SWIPES * 2);
+
+	return swipeAll(commands.slice(NEWEST_SWIPES));
+}
+
 export async function scrollStress(target: ScreenshotTarget, out: string): Promise<ScrollOutcome> {
 	const commands = swipeCommands(target, await screenSize(target), SCROLL_SWIPES);
 	const half = commands.length / 2;

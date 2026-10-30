@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -11,6 +11,7 @@ import {
 	screenshot,
 	screenshotTarget,
 	scrollStress,
+	scrollToNewest,
 	swipeAll,
 	swipeCommands,
 	waitForBridge,
@@ -51,6 +52,7 @@ import {
 	describeScreenChange,
 	keepGoodScreens,
 	referenceFor,
+	saveFullResolutionBands,
 	screenDifference,
 } from './screen-diff';
 import {
@@ -147,18 +149,42 @@ async function main(): Promise<void> {
 
 	mkdirSync(out, { recursive: true });
 
+	const crops = join(out, 'crops');
+
+	if (!only) rmSync(crops, { recursive: true, force: true });
+
 	const timings = createTimings();
 	const screenChanges: string[] = [];
 	const fixtureChannel = values.channel ?? readMatrixConfig()?.channel;
 	const fixtures = fixtureChannel ? parseChannel(fixtureChannel) : undefined;
 
-	if (fixtures) await evaluate(port, fixtureScript(fixtures.guild, fixtures.channel));
+	if (fixtures) {
+		await evaluate(port, fixtureScript(fixtures.guild, fixtures.channel));
+		await scrollToNewest(target);
+	}
 
 	const since = new Date(Date.now() - 2_000).toISOString();
 	const developerMode = (await evaluate(port, developerModeScript(false))) === 'true';
 	const toastDuration = JSON.parse(await evaluate(port, toastDurationScript(MATRIX_TOAST_MS))) as
 		| number
 		| null;
+	let restored: Promise<void> | undefined;
+	const restoreDevice = () =>
+		(restored ??= (async () => {
+			if (!developerMode) await evaluate(port, developerModeScript(false));
+
+			await evaluate(port, toastDurationScript(toastDuration));
+		})());
+	const stopOnSignal = (signal: NodeJS.Signals, code: number) =>
+		process.once(signal, () => {
+			console.error(`${signal}: restoring the device before exiting`);
+			void restoreDevice()
+				.catch((error) => console.error('Failed to restore the device:', error))
+				.finally(() => process.exit(code));
+		});
+
+	stopOnSignal('SIGINT', 130);
+	stopOnSignal('SIGTERM', 143);
 
 	await new Promise((done) => setTimeout(done, 1_500));
 	await evaluate(port, developerModeScript(true));
@@ -200,6 +226,8 @@ async function main(): Promise<void> {
 		const result = await evaluateJson(port, cycleScript(plugin.id), cycleResultSchema);
 		const file = join(out, `${plugin.id}.png`);
 		const captured = result.installed && (await screenshot(target, file));
+
+		if (captured) await saveFullResolutionBands(file, crops, plugin.id);
 		const keptSettings = reusableSettings(plugin.id, result.bundleHash, previousRun);
 		const settings =
 			result.installed && !keptSettings ? await captureSettings(plugin.id) : undefined;
@@ -486,9 +514,7 @@ async function main(): Promise<void> {
 	timings.lap('logs');
 	writeFileSync(join(out, 'timing.json'), `${JSON.stringify(timings.result(), null, '\t')}\n`);
 
-	if (!developerMode) await evaluate(port, developerModeScript(false));
-
-	await evaluate(port, toastDurationScript(toastDuration));
+	await restoreDevice();
 
 	for (const check of checks) {
 		const name = catalog.find((plugin) => plugin.id === check.id)?.name;
