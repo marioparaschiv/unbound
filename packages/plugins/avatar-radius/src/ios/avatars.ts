@@ -12,7 +12,11 @@ const SQUARE_TOLERANCE = 1;
 const MAX_TRACKED = 512;
 const IMAGE_SEARCH = { maxDepth: 96, maxVisited: 8_000 };
 
-type FastImage = { width: number; layers: NativeObjectHandle[] };
+type FastImage = {
+	width: number;
+	layers: NativeObjectHandle[];
+	clip?: { view: NativeObjectHandle; key: string; mask: NativeObjectHandle | null };
+};
 
 async function boundsOf(objc: NativeObjCBridge, view: NativeObjectHandle) {
 	return readRect(await objc.invokeAsync(view, 'bounds', []));
@@ -51,6 +55,55 @@ async function imageUrl(
 	return typeof text === 'string' ? text : undefined;
 }
 
+const innerCorners = new Map<string, number>();
+
+async function innerClips(
+	objc: NativeObjCBridge,
+	avatar: NativeObjectHandle,
+	width: number,
+): Promise<NativeObjectHandle[]> {
+	const subviews = (await objc.invokeAsync(avatar, 'subviews', [])) as
+		| NativeObjectHandle[]
+		| null;
+	const clips: NativeObjectHandle[] = [];
+
+	for (const view of Array.isArray(subviews) ? subviews : []) {
+		const layer = await layerOf(objc, view);
+
+		if (!layer || !(await objc.invokeAsync(layer, 'masksToBounds', []))) continue;
+
+		if (Math.abs((await boundsOf(objc, view)).width - width) <= SQUARE_TOLERANCE)
+			clips.push(view);
+	}
+
+	return clips;
+}
+
+async function roundInner(
+	objc: NativeObjCBridge,
+	view: NativeObjectHandle,
+	corner: number | undefined,
+): Promise<void> {
+	const layer = await layerOf(objc, view);
+	const key = viewKey(objc, view);
+
+	if (!layer || !key) return;
+
+	if (corner === undefined) {
+		const original = innerCorners.get(key);
+
+		innerCorners.delete(key);
+
+		if (original !== undefined) await objc.invokeAsync(layer, 'setCornerRadius:', [original]);
+
+		return;
+	}
+
+	if (!innerCorners.has(key)) innerCorners.set(key, await cornerOf(objc, layer));
+
+	await objc.invokeAsync(layer, 'setCornerRadius:', [corner]);
+}
+
 async function round(
 	objc: NativeObjCBridge,
 	avatar: NativeObjectHandle,
@@ -58,8 +111,13 @@ async function round(
 ): Promise<void> {
 	const { width } = await boundsOf(objc, avatar);
 	const layer = await layerOf(objc, avatar);
+	const restoring = radius === Number.POSITIVE_INFINITY;
 
 	if (layer) await objc.invokeAsync(layer, 'setCornerRadius:', [cornerRadius(radius, width)]);
+
+	for (const inner of await innerClips(objc, avatar, width)) {
+		await roundInner(objc, inner, restoring ? undefined : cornerRadius(radius, width));
+	}
 }
 
 async function roundVisible(objc: NativeObjCBridge, radius: number): Promise<void> {
@@ -105,15 +163,46 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 			(layer): layer is NativeObjectHandle => !!layer,
 		);
 
-		return { width: size, layers };
+		return { width: size, layers, ...(await circleClip(frame)) };
+	}
+
+	async function circleClip(frame: NativeObjectHandle | null): Promise<Pick<FastImage, 'clip'>> {
+		const clipClass = objc.getClass(AvatarClass.iosClip);
+		const view = frame
+			? ((await objc.invokeAsync(frame, 'superview', [])) as NativeObjectHandle | null)
+			: null;
+
+		if (!clipClass || !view || !objc.call(view, 'isKindOfClass:', clipClass)) return {};
+
+		const key = viewKey(objc, view);
+		const layer = await layerOf(objc, view);
+
+		if (!key || !layer) return {};
+
+		const mask = (await objc.invokeAsync(layer, 'mask', [])) as NativeObjectHandle | null;
+
+		return { clip: { view, key, mask } };
+	}
+
+	async function setClipMask(image: FastImage, mask: NativeObjectHandle | null) {
+		const layer = image.clip ? await layerOf(objc, image.clip.view) : null;
+
+		if (layer) await objc.invokeAsync(layer, 'setMask:', [mask]);
 	}
 
 	async function applyFastImage(image: FastImage, corner: (image: FastImage) => number) {
-		await Promise.all(
-			image.layers.map((layer) =>
+		await Promise.all([
+			...image.layers.map((layer) =>
 				objc.invokeAsync(layer, 'setCornerRadius:', [corner(image)]).catch(() => undefined),
 			),
-		);
+			setClipMask(image, null).catch(() => undefined),
+		]);
+	}
+
+	function clippedImage(clip: NativeObjectHandle): FastImage | undefined {
+		const key = viewKey(objc, clip);
+
+		return [...fastImages.values()].find((image) => image.clip?.key === key);
 	}
 
 	const corner = (image: FastImage) => cornerRadius(radius(), image.width);
@@ -140,6 +229,47 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 		await applyFastImage(image, corner);
 	}
 
+	async function roundFrame(frame: NativeObjectHandle) {
+		const [core] = await objc.findViews(frame, AvatarClass.iosImage, {
+			maxDepth: 1,
+			maxResults: 1,
+		});
+
+		if (core) await roundFastImage(core as NativeObjectHandle);
+	}
+
+	function clipHooks() {
+		if (!objc.getClass(AvatarClass.iosClip)) return [];
+
+		try {
+			return [
+				objc.hook(AvatarClass.iosClip, 'layoutSubviews', {
+					after: ({ self }) => {
+						const image = clippedImage(self);
+
+						if (image) void setClipMask(image, null).catch(() => undefined);
+					},
+				}),
+			];
+		} catch {
+			return [];
+		}
+	}
+
+	function frameUpdateHooks() {
+		if (!objc.getClass(AvatarClass.iosImageFrame)) return [];
+
+		try {
+			return [
+				objc.hook(AvatarClass.iosImageFrame, 'finalizeUpdates:', {
+					after: ({ self }) => void roundFrame(self).catch(() => undefined),
+				}),
+			];
+		} catch {
+			return [];
+		}
+	}
+
 	async function eachFastImage(cornerFor: (image: FastImage) => number) {
 		await Promise.all(
 			[...fastImages.values()].map((image) => applyFastImage(image, cornerFor)),
@@ -153,6 +283,8 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 		objc.hook(AvatarClass.iosImage, 'layoutSubviews', {
 			after: ({ self }) => void roundFastImage(self).catch(() => undefined),
 		}),
+		...frameUpdateHooks(),
+		...clipHooks(),
 	];
 
 	const refresh = () => {
@@ -171,15 +303,35 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 		const expected = corner(image);
 		const corners = await Promise.all(image.layers.map((layer) => cornerOf(objc, layer)));
 
+		const clipLayer = image.clip ? await layerOf(objc, image.clip.view) : null;
+		const masked = clipLayer ? !!(await objc.invokeAsync(clipLayer, 'mask', [])) : false;
+
+		return masked || corners.some((actual) => Math.abs(actual - expected) > SQUARE_TOLERANCE);
+	}
+
+	async function isNativeUnrounded(avatar: NativeObjectHandle): Promise<boolean> {
+		const { width } = await boundsOf(objc, avatar);
+		const expected = cornerRadius(radius(), width);
+		const views = [avatar, ...(await innerClips(objc, avatar, width))];
+		const corners = await Promise.all(
+			views.map(async (view) => {
+				const layer = await layerOf(objc, view);
+
+				return layer ? cornerOf(objc, layer) : expected;
+			}),
+		);
+
 		return corners.some((actual) => Math.abs(actual - expected) > SQUARE_TOLERANCE);
 	}
 
 	return {
 		rounded: () => fastImages.size,
 		async unrounded() {
-			const checks = await Promise.all(
-				[...fastImages.values()].map((image) => isUnrounded(image).catch(() => false)),
-			);
+			const visible = await findVisibleCells(objc, AvatarClass.ios);
+			const checks = await Promise.all([
+				...[...fastImages.values()].map((image) => isUnrounded(image).catch(() => false)),
+				...visible.map((avatar) => isNativeUnrounded(avatar).catch(() => false)),
+			]);
 
 			return checks.filter(Boolean).length;
 		},
@@ -191,6 +343,13 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 				roundVisible(objc, Number.POSITIVE_INFINITY),
 				eachFastImage((image) => image.width / 2),
 			]);
+			await Promise.all(
+				[...fastImages.values()].map((image) =>
+					image.clip
+						? setClipMask(image, image.clip.mask).catch(() => undefined)
+						: undefined,
+				),
+			);
 			fastImages.clear();
 		},
 	};

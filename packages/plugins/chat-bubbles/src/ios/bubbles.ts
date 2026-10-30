@@ -15,6 +15,20 @@ import { messageOwnership } from '~/author';
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
 const BUBBLE_TAG = 0x0b0b1e;
 const FRAME_TOLERANCE = 2;
+
+function describeBox({
+	x,
+	y,
+	width,
+	height,
+}: {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}) {
+	return [x, y, width, height].map((value) => Math.round(value)).join(',');
+}
 const REUSE_SETTLE_MS = 150;
 const MAX_STALE_BUBBLES = 8;
 const TEXT_MEASURE_HEIGHT = 100_000;
@@ -192,7 +206,9 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 			const drawn = readRect(await objc.invokeAsync(bubble, 'frame', []));
 
 			if (frameDrift(drawn, measured.frame) > FRAME_TOLERANCE) {
-				found.push(`${key} does not match its message`);
+				found.push(
+					`${key} does not match its message (drawn ${describeBox(drawn)}, needed ${describeBox(measured.frame)})`,
+				);
 			}
 		}
 
@@ -298,6 +314,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		objc.hook(IOSClass.messageCell, 'layoutSubviews', {
 			after: ({ self }) => schedule(self, true),
 		}),
+		...textChangeHooks(),
 		objc.hook(IOSClass.messageCell, 'prepareForReuse', {
 			after: ({ self }) => {
 				const key = viewKey(objc, self);
@@ -320,6 +337,31 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 			},
 		}),
 	];
+
+	function textChangeHooks() {
+		try {
+			return [
+				objc.hook(IOSClass.attributedText, 'setAttributedText:', {
+					after: ({ self }) => void scheduleOwningCell(self).catch(() => undefined),
+				}),
+			];
+		} catch {
+			return [];
+		}
+	}
+
+	async function scheduleOwningCell(view: NativeObjectHandle) {
+		if (disposed) return;
+
+		const [cell] = await objc.findViews(view, IOSClass.messageCell, {
+			direction: 'ancestors',
+			maxDepth: 24,
+			maxResults: 1,
+			stopAtMatch: true,
+		});
+
+		if (cell) schedule(cell as NativeObjectHandle);
+	}
 
 	async function refresh() {
 		for (const className of [IOSClass.messageCell, IOSClass.separatorCell]) {

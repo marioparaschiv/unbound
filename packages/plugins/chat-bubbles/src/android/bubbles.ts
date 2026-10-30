@@ -52,6 +52,7 @@ const VISIBLE = 0;
 const ICON_SPACING_DP = 4;
 const BUBBLE_LAYER_ID = 0x0b0b1e;
 const BIND_SETTLE_MS = 50;
+const PLACEMENT_WORKERS = 8;
 const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
 
 /**
@@ -227,7 +228,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		if (!isInstance(textViewClass, label) || !isInstance(imageViewClass, icon)) return;
 
 		const labelWidth = javaNumber(reads[3]) ?? 0;
-		const spacing = ICON_SPACING_DP * (await displayDensity(java, icon));
+		const spacing = ICON_SPACING_DP * (await density(icon));
 		const gap = Math.max(0, labelWidth - (await textWidth(label, labelWidth)) - spacing);
 
 		if (disposed) return;
@@ -338,12 +339,20 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		return !!javaReference(layer);
 	}
 
+	let densityValue: Promise<number> | undefined;
+
+	function density(view: NativeJavaReference): Promise<number> {
+		densityValue ??= displayDensity(java, view);
+
+		return densityValue;
+	}
+
 	async function place(row: NativeJavaReference) {
 		const area = await contentArea(row);
 
 		if (!area) return restore(row);
 
-		const scale = await displayDensity(java, row);
+		const scale = await density(row);
 		const [rowWidth, rowHeight, currentBackground] = await runOnMain(
 			java,
 			readCalls(row, ['getWidth', 'getHeight', 'getBackground']),
@@ -408,15 +417,19 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	let flushing: Promise<void> = Promise.resolve();
 
 	async function placeAll() {
-		for (const row of pending.splice(0)) {
-			if (disposed) return;
+		const queue = pending.splice(0);
 
-			await place(row).catch((error) => {
-				if (!isCancellation(error)) {
-					console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
-				}
-			});
+		async function worker() {
+			for (let row = queue.shift(); row && !disposed; row = queue.shift()) {
+				await place(row).catch((error) => {
+					if (!isCancellation(error)) {
+						console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
+					}
+				});
+			}
 		}
+
+		await Promise.all(Array.from({ length: PLACEMENT_WORKERS }, worker));
 	}
 
 	function flush() {
