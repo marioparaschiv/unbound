@@ -118,6 +118,16 @@ export function compareRuns(previous: MeasuredCheck[], current: MeasuredCheck[])
 
 		changes.push(...metricChanges(check.id, earlier.metrics, check.metrics));
 
+		if (
+			earlier.redrawMs !== undefined &&
+			check.redrawMs !== undefined &&
+			isSlower(earlier.redrawMs, check.redrawMs)
+		) {
+			changes.push(
+				`${check.id} redraws slower after scrolling: ${earlier.redrawMs} ms → ${check.redrawMs} ms`,
+			);
+		}
+
 		const known = new Set(earlier.offMainCalls ?? []);
 		const added = (check.offMainCalls ?? []).filter((call) => !known.has(call));
 

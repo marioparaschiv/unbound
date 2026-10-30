@@ -37,6 +37,15 @@ test('describes the change over a run', () => {
 		'312 MB → 300 MB (−12 MB), Discord relaunched during the run',
 	);
 	expect(describeMemory({ beforeMB: 312, relaunched: false })).toBeUndefined();
+	expect(
+		describeMemory({
+			beforeMB: 312,
+			afterMB: 320,
+			beforeRange: { lowMB: 312, highMB: 312 },
+			afterRange: { lowMB: 320, highMB: 335 },
+			relaunched: false,
+		}),
+	).toBe('312 MB → 320 MB (+8 MB); readings 312 MB before, 320–335 MB after');
 });
 
 test('lists the plugin cycles that grew memory the most', () => {
@@ -72,5 +81,8 @@ test('reads Discord memory as the lowest of several samples', async () => {
 		async () => {},
 	);
 
-	expect(memory).toBe(Math.round(760000 / 1024));
+	expect(memory).toEqual({
+		lowMB: Math.round(760000 / 1024),
+		highMB: Math.round(800000 / 1024),
+	});
 });

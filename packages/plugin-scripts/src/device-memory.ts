@@ -2,9 +2,13 @@ import { z } from '@unbound-app/contracts/zod';
 
 import type { CommandRunner, DropTarget } from './device-drops';
 
+export type MemoryRange = { lowMB: number; highMB: number };
+
 export type MemoryReport = {
 	beforeMB?: number;
 	afterMB?: number;
+	beforeRange?: MemoryRange;
+	afterRange?: MemoryRange;
 	relaunched: boolean;
 	springBoard?: ProcessMemory;
 };
@@ -155,6 +159,15 @@ export async function discordMemory(
  * @param report The measurements.
  * @returns A line such as `312 MB → 340 MB (+28 MB)`, or `undefined` without both readings.
  */
+function describeRange(label: string, range: MemoryRange | undefined): string | undefined {
+	if (!range) return undefined;
+
+	const low = Math.round(range.lowMB);
+	const high = Math.round(range.highMB);
+
+	return low === high ? `${low} MB ${label}` : `${low}–${high} MB ${label}`;
+}
+
 export function describeMemory(report: MemoryReport): string | undefined {
 	if (report.beforeMB === undefined || report.afterMB === undefined) return undefined;
 
@@ -162,7 +175,11 @@ export function describeMemory(report: MemoryReport): string | undefined {
 	const after = Math.round(report.afterMB);
 	const change = after - before;
 	const sign = change >= 0 ? '+' : '−';
-	const line = `${before} MB → ${after} MB (${sign}${Math.abs(change)} MB)`;
+	const ranges = [
+		describeRange('before', report.beforeRange),
+		describeRange('after', report.afterRange),
+	].filter(Boolean);
+	const line = `${before} MB → ${after} MB (${sign}${Math.abs(change)} MB)${ranges.length ? `; readings ${ranges.join(', ')}` : ''}`;
 
 	return report.relaunched ? `${line}, Discord relaunched during the run` : line;
 }
@@ -192,7 +209,7 @@ export async function settledDiscordMemory(
 	target: DropTarget,
 	run: CommandRunner,
 	sleep: (ms: number) => Promise<void> = Bun.sleep,
-): Promise<number | undefined> {
+): Promise<MemoryRange | undefined> {
 	const samples: number[] = [];
 
 	for (let index = 0; index < SETTLED_SAMPLES; index++) {
@@ -203,5 +220,7 @@ export async function settledDiscordMemory(
 		if (sample !== undefined) samples.push(sample);
 	}
 
-	return samples.length ? Math.min(...samples) : undefined;
+	return samples.length
+		? { lowMB: Math.min(...samples), highMB: Math.max(...samples) }
+		: undefined;
 }
