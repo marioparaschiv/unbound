@@ -30,8 +30,12 @@ import {
 	toastLogScript,
 	MATRIX_TOAST_MS,
 	settingsScreenScript,
+	settingsProbeScript,
+	settingsProbeSchema,
+	type SettingsProbe,
 	closeScreenScript,
 } from './device-scripts';
+import { withSettings } from './settings-check';
 import {
 	isEmptyToast,
 	parseOffMainWarnings,
@@ -70,6 +74,7 @@ type ScrollReport = ScrollOutcome & { toasts: string[]; emptyToasts: string[] };
 const SELF_TEST_SWIPES = 4;
 const TOAST_SETTLE_MS = 5_500;
 const SETTINGS_SETTLE_MS = 1_200;
+const COLLECT_GARBAGE_SCRIPT = "typeof gc === 'function' ? (gc(), 'collected') : 'unavailable'";
 
 export function parseChannel(value: string): FixtureChannel {
 	const match = /^(\d+)\/(\d+)$/.exec(value.trim());
@@ -161,23 +166,24 @@ async function main(): Promise<void> {
 
 		const check = checkFromCycle(result, captured ? `${plugin.id}.png` : undefined);
 
-		if (settings) check.evidence.push(`settings: ${settings}`);
-
-		return check;
+		return settings ? withSettings(check, settings.file, settings.probe) : check;
 	}
 
-	async function captureSettings(id: string): Promise<string | undefined> {
+	async function captureSettings(
+		id: string,
+	): Promise<{ file: string | undefined; probe: SettingsProbe } | undefined> {
 		if ((await evaluate(port, settingsScreenScript(id))) !== 'opened') return;
 
 		await new Promise((done) => setTimeout(done, SETTINGS_SETTLE_MS));
 
 		const file = `${id}.settings.png`;
 		const captured = await screenshot(target, join(out, file));
+		const probe = await evaluateJson(port, settingsProbeScript(), settingsProbeSchema);
 
 		await evaluate(port, closeScreenScript());
 		await new Promise((done) => setTimeout(done, SETTINGS_SETTLE_MS));
 
-		return captured ? file : undefined;
+		return { file: captured ? file : undefined, probe };
 	}
 
 	async function recover(id: string): Promise<string> {
@@ -250,6 +256,8 @@ async function main(): Promise<void> {
 				const before = await discordMemory(target, run);
 
 				check = await measure(plugin);
+
+				await evaluate(port, COLLECT_GARBAGE_SCRIPT);
 
 				const after = await discordMemory(target, run);
 

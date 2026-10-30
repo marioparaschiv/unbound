@@ -9,6 +9,7 @@ import { PLUGIN_NAME } from '~/constants';
 
 let dispose: () => void | Promise<void> = () => {};
 let placed: (() => number) | null = null;
+let problems: (() => string[]) | null = null;
 
 function start(context: PluginContext) {
 	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
@@ -20,9 +21,11 @@ function start(context: PluginContext) {
 	const unsubscribe = subscribeAppearance(() => bubbles.refresh());
 
 	placed = bubbles.placed;
+	problems = bubbles.problems;
 	dispose = () => {
 		unsubscribe();
 		placed = null;
+		problems = null;
 
 		return bubbles.dispose();
 	};
@@ -39,6 +42,15 @@ function stop() {
 function selfTest() {
 	if (!placed) {
 		return { ok: false, detail: 'bubbles are not drawing' };
+	}
+
+	const found = problems?.() ?? [];
+
+	if (found.length) {
+		return {
+			ok: false,
+			detail: `${found.length} bubbles look wrong: ${found.slice(0, 3).join('; ')}`,
+		};
 	}
 
 	return { ok: true, detail: `${placed()} bubbles placed on screen` };

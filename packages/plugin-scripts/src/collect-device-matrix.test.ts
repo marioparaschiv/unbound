@@ -57,6 +57,20 @@ test('leaked hooks fail the lifecycle but not the behavior', () => {
 	expect(check.note).toBe('restarting leaked 2 native hooks');
 });
 
+test('hooks a plugin installs late after a restart are not a reload leak', () => {
+	const check = checkFromCycle({ ...healthy, hooksAfter: 10, hooksUpdated: 12 });
+
+	expect(check.lifecycle).toBe('pass');
+	expect(check.metrics?.leakedHooks).toBe(0);
+});
+
+test('a reload that ends above the steady hook count leaks', () => {
+	const check = checkFromCycle({ ...healthy, hooksAfter: 10, hooksUpdated: 13 });
+
+	expect(check.lifecycle).toBe('fail');
+	expect(check.note).toBe('reloading leaked 1 native hooks');
+});
+
 test('a failed reload fails both checks', () => {
 	const check = checkFromCycle({ ...healthy, updateError: 'boom', updated: false });
 

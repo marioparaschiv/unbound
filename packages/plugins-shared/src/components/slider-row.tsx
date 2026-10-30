@@ -34,6 +34,8 @@ function SliderRow({
 
 	if (!Discord.Slider) return null;
 
+	const changed = dragged !== defaultValue;
+
 	const snap = (raw: number) =>
 		Math.max(minimum, Math.min(maximum, Math.round(raw / step) * step));
 
@@ -51,14 +53,19 @@ function SliderRow({
 					>
 						{`${dragged}${unit}`}
 					</Discord.Text>
-					{dragged !== defaultValue ? (
+					<View
+						style={{ opacity: changed ? 1 : 0 }}
+						pointerEvents={changed ? 'auto' : 'none'}
+						accessibilityElementsHidden={!changed}
+						importantForAccessibility={changed ? 'auto' : 'no-hide-descendants'}
+					>
 						<Discord.Button
 							size='sm'
 							variant='secondary'
 							text='Reset'
 							onPress={() => onChange(defaultValue)}
 						/>
-					) : null}
+					</View>
 				</View>
 			}
 			subLabel={

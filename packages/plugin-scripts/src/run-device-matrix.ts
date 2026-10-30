@@ -116,7 +116,9 @@ export function renderSummary(runs: DeviceRun[]): string {
 	const memory = runs.flatMap((run) => {
 		const line = run.memory ? describeMemory(run.memory) : undefined;
 		const growers = largestGrowers(run.checks);
-		const detail = growers.length ? `; largest plugin cycles: ${growers.join(', ')}` : '';
+		const detail = growers.length
+			? `; largest swings during a plugin cycle, not kept (the leak check measures what is): ${growers.join(', ')}`
+			: '';
 
 		const springBoard = run.memory?.springBoard
 			? [`- ${run.device.name}: ${describeSpringBoard(run.memory.springBoard)}`]

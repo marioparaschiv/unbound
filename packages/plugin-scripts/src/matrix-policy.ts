@@ -47,8 +47,10 @@ function lifecycleFailure(result: CycleResult): string | undefined {
 	if (result.hooksStopped > result.hooksBefore) return 'stopping added native hooks';
 	if (result.hooksAfter > result.hooksBefore)
 		return `restarting leaked ${result.hooksAfter - result.hooksBefore} native hooks`;
-	if (result.hooksUpdated > result.hooksAfter)
-		return `reloading leaked ${result.hooksUpdated - result.hooksAfter} native hooks`;
+	const settled = Math.max(result.hooksAfter, result.hooksBefore);
+
+	if (result.hooksUpdated > settled)
+		return `reloading leaked ${result.hooksUpdated - settled} native hooks`;
 
 	return undefined;
 }
@@ -88,7 +90,7 @@ export function checkFromCycle(result: CycleResult, screenshot?: string): Measur
 			startMs: result.startMs ?? 0,
 			leakedHooks:
 				Math.max(0, result.hooksAfter - result.hooksBefore) +
-				Math.max(0, result.hooksUpdated - result.hooksAfter),
+				Math.max(0, result.hooksUpdated - Math.max(result.hooksAfter, result.hooksBefore)),
 		},
 	};
 }
