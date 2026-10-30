@@ -56,6 +56,18 @@ describe('drawnSelfTest', () => {
 		expect(drawnSelfTest(() => 0, 'embeds')).toEqual({
 			ok: false,
 			detail: 'no embeds are drawn on screen',
+			nothingDrawn: true,
+		});
+		expect(
+			drawnSelfTest(
+				() => 3,
+				'embeds',
+				() => true,
+			),
+		).toEqual({
+			ok: true,
+			detail: '3 embeds drawn on screen',
+			settling: true,
 		});
 		expect(drawnSelfTest(undefined, 'embeds').ok).toBe(false);
 	});

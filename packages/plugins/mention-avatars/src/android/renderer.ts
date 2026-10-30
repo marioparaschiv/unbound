@@ -75,6 +75,7 @@ export function createAndroidRenderer(
 	const images = new Map<string, ImageEntry>();
 	const views = new Map<string, NativeJavaReference>();
 	const pending = new Set<string>();
+	let rendering = 0;
 	const waiting = new Map<string, NativeJavaReference>();
 	let resolvedCount = -1;
 	let imageSize = 0;
@@ -336,7 +337,10 @@ export function createAndroidRenderer(
 
 			if (disposed) return;
 
-			render(view).catch(() => views.delete(key));
+			rendering++;
+			render(view)
+				.catch(() => views.delete(key))
+				.finally(() => rendering--);
 		}, 0);
 	}
 
@@ -367,6 +371,7 @@ export function createAndroidRenderer(
 	return {
 		retryWaiting,
 		rendered: () => rules.size,
+		settling: () => pending.size > 0 || rendering > 0,
 		failed: () =>
 			[...images].flatMap(([url, entry]) => (!entry.pending && !entry.bitmap ? [url] : [])),
 		dispose() {

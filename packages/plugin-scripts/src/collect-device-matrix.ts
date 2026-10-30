@@ -223,7 +223,8 @@ async function main(): Promise<void> {
 		);
 
 	const dropsBefore = await dropBaseline(target, run);
-	const memoryBefore = await settledDiscordMemory(target, run);
+	const rangeBefore = await settledDiscordMemory(target, run);
+	const memoryBefore = rangeBefore?.lowMB;
 	let relaunched = false;
 
 	async function measure(plugin: CatalogPlugin): Promise<MeasuredCheck> {
@@ -515,9 +516,12 @@ async function main(): Promise<void> {
 
 	await afterRecovery('the memory read', () => evaluate(port, COLLECT_GARBAGE_SCRIPT));
 
+	const rangeAfter = await settledDiscordMemory(target, run);
 	const memory = {
 		beforeMB: memoryBefore,
-		afterMB: await settledDiscordMemory(target, run),
+		beforeRange: rangeBefore,
+		afterMB: rangeAfter?.lowMB,
+		afterRange: rangeAfter,
 		relaunched,
 		springBoard: await springBoardMemory(target, run),
 	};

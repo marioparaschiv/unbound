@@ -428,6 +428,10 @@ export function createNativeCards(native: Native) {
 	const scans = scheduleStartupScans('Shiki Codeblocks', scanVisible);
 
 	return {
+		progress: () => ({
+			drawn: renderedByView.size,
+			settling: pending.size > 0 || awaitingSize.size > 0,
+		}),
 		dispose() {
 			for (const scan of scans) clearTimeout(scan);
 

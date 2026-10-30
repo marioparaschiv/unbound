@@ -75,3 +75,12 @@ test('reports off-main view calls a plugin did not make before', () => {
 		),
 	).toEqual(['unbound.alpha makes new off-main view calls: -[UIView bounds]']);
 });
+
+test('reports plugins that redraw much slower after scrolling', () => {
+	expect(compareRuns([check('a', { redrawMs: 80 })], [check('a', { redrawMs: 900 })])).toEqual([
+		'a redraws slower after scrolling: 80 ms → 900 ms',
+	]);
+	expect(compareRuns([check('a', { redrawMs: 80 })], [check('a', { redrawMs: 150 })])).toEqual(
+		[],
+	);
+});

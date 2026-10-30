@@ -24,7 +24,7 @@ export const cycleResultSchema = z.object({
 export type CycleResult = z.infer<typeof cycleResultSchema>;
 
 const CYCLE_SETTLE_MS = 300;
-const SELF_TEST_DELAY_MS = 1_000;
+const SELF_TEST_DELAY_MS = 2_500;
 const DRAWN_POLL_MS = 200;
 
 /** The log lines {@link pluginLogScript} and {@link toastLogScript} return. */

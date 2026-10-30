@@ -514,6 +514,10 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 	const scans = scheduleStartupScans('Shiki Codeblocks', scanVisible);
 
 	return {
+		progress: () => ({
+			drawn: views.size,
+			settling: pending.size > 0 || awaitingSize.size > 0,
+		}),
 		dispose() {
 			for (const scan of scans) clearTimeout(scan);
 

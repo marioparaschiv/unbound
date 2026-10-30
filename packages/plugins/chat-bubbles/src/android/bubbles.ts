@@ -541,23 +541,37 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	);
 
 	async function lostBubbles(): Promise<string[]> {
-		const found: string[] = [];
+		const drawn = tracked.filter((row) => javaReference(java.getAssociatedObject(row, ours)));
+		const states = await runOnMain(
+			java,
+			drawn.flatMap((row) => readCalls(row, ['isAttachedToWindow', 'getBackground'])),
+		);
+		const attached = drawn
+			.map((row, index) => ({
+				row,
+				attached: javaFlag(states[index * 2]),
+				background: javaReference(states[index * 2 + 1]),
+			}))
+			.filter((entry) => entry.attached);
+		const layered = attached.filter(
+			(entry) => entry.background && isInstance(layerDrawableClass, entry.background),
+		);
+		const layers = await runOnMain(
+			java,
+			layered.map((entry) => ({
+				op: 'invoke' as const,
+				handle: entry.background!,
+				name: 'findDrawableByLayerId',
+				args: [javaInt(BUBBLE_LAYER_ID)],
+			})),
+		);
+		const bubbled = new Set(
+			layered.filter((_, index) => javaReference(layers[index])).map((entry) => entry.row),
+		);
 
-		for (const row of tracked) {
-			if (!javaReference(java.getAssociatedObject(row, ours))) continue;
-
-			const [attached, background] = await runOnMain(
-				java,
-				readCalls(row, ['isAttachedToWindow', 'getBackground']),
-			);
-			const current = javaReference(background);
-
-			if (!javaFlag(attached) || (current && (await isBubble(current)))) continue;
-
-			found.push(`${messageId(row) ?? 'a row'} lost its bubble`);
-		}
-
-		return found;
+		return attached
+			.filter((entry) => !bubbled.has(entry.row))
+			.map((entry) => `${messageId(entry.row) ?? 'a row'} lost its bubble`);
 	}
 
 	async function refreshVisible() {
