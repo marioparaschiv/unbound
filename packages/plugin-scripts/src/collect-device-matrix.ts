@@ -11,6 +11,7 @@ import {
 	screenshot,
 	screenshotTarget,
 	scrollStress,
+	scrollToNewest,
 	swipeAll,
 	swipeCommands,
 	waitForBridge,
@@ -152,7 +153,10 @@ async function main(): Promise<void> {
 	const fixtureChannel = values.channel ?? readMatrixConfig()?.channel;
 	const fixtures = fixtureChannel ? parseChannel(fixtureChannel) : undefined;
 
-	if (fixtures) await evaluate(port, fixtureScript(fixtures.guild, fixtures.channel));
+	if (fixtures) {
+		await evaluate(port, fixtureScript(fixtures.guild, fixtures.channel));
+		await scrollToNewest(target);
+	}
 
 	const since = new Date(Date.now() - 2_000).toISOString();
 	const developerMode = (await evaluate(port, developerModeScript(false))) === 'true';

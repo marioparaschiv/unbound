@@ -194,6 +194,8 @@ type BotMessages = {
 	}): DeviceMessage & Record<string, unknown>;
 };
 type MessageActions = { receiveMessage(channel: string, message: object): void };
+type Dispatcher = { dispatch(action: object): void };
+type StagedMessages = { matrixStagedMessages?: { channel: string; id: string }[] };
 type CurrentUser = { id: string; avatar: string };
 
 function stageFixtures(
@@ -222,6 +224,24 @@ function stageFixtures(
 		const linked = (loaded?.toArray ? loaded.toArray() : [])
 			.filter((message) => message.author && !message.author.bot && /^\d+$/.test(message.id))
 			.pop();
+		const dispatcher = metro.findByProps<Dispatcher>('dispatch', 'subscribe');
+		const holder = globalThis as StagedMessages;
+		const staged = holder.matrixStagedMessages ?? [];
+
+		holder.matrixStagedMessages = staged;
+
+		for (const message of staged.splice(0)) {
+			dispatcher.dispatch({
+				type: 'MESSAGE_DELETE',
+				id: message.id,
+				channelId: message.channel,
+			});
+		}
+
+		const receive = (message: DeviceMessage) => {
+			staged.push({ channel, id: message.id });
+			actions.receiveMessage(channel, message);
+		};
 		const make = (fields: object) =>
 			Object.assign(
 				bot.createBotMessage({ channelId: channel, content: '' }),
@@ -237,7 +257,7 @@ function stageFixtures(
 		const original = make({ content: fixtures.original });
 		const image = `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=128`;
 
-		actions.receiveMessage(channel, original);
+		receive(original);
 
 		for (const message of [
 			make({
@@ -276,7 +296,7 @@ function stageFixtures(
 				],
 			}),
 		]) {
-			actions.receiveMessage(channel, message);
+			receive(message);
 		}
 
 		for (const template of messages.filter(
@@ -288,7 +308,7 @@ function stageFixtures(
 				.replace('{channel}', channel)
 				.replace('{message}', linked ? linked.id : '');
 
-			actions.receiveMessage(channel, bot.createBotMessage({ channelId: channel, content }));
+			receive(bot.createBotMessage({ channelId: channel, content }));
 		}
 
 		await new Promise((resolve) => setTimeout(resolve, 1500));
@@ -569,12 +589,18 @@ function stageScrollFiller(channel: string, count: number) {
 	const actions = metro.findByProps<MessageActions>('sendMessage', 'receiveMessage');
 	const bot = metro.findByProps<BotMessages>('createBotMessage');
 	const self = metro.findStore<{ getCurrentUser(): CurrentUser }>('User').getCurrentUser().id;
+	const holder = globalThis as StagedMessages;
+	const staged = holder.matrixStagedMessages ?? [];
+
+	holder.matrixStagedMessages = staged;
 
 	for (let index = 0; index < count; index++) {
 		const content =
 			index % 3 === 0 ? `Scroll filler ${index} for <@${self}>` : `Scroll filler ${index}`;
+		const message = bot.createBotMessage({ channelId: channel, content });
 
-		actions.receiveMessage(channel, bot.createBotMessage({ channelId: channel, content }));
+		staged.push({ channel, id: message.id });
+		actions.receiveMessage(channel, message);
 	}
 
 	return new Promise((resolve) => setTimeout(resolve, 1500)).then(() => 'staged');
