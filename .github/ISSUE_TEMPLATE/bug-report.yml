@@ -1,0 +1,131 @@
+name: Bug report
+description: Something in Unbound, the loader, a first-party plugin or the website doesn't work as it should.
+title: 'bug: '
+labels: [Bug, needs-triage]
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Thanks for reporting! The fastest way to fill this in is **Settings → Unbound → General → Report an Issue** in the app, which opens this form with your versions already filled in. For a crash or an app that won't start, use the crash form instead.
+    - type: dropdown
+      id: platform
+      attributes:
+          label: Platform
+          options:
+              - iOS
+              - Android
+      validations:
+          required: true
+    - type: dropdown
+      id: install
+      attributes:
+          label: How Unbound is installed
+          options:
+              - Sideloaded IPA
+              - Jailbreak package (.deb)
+              - Patched Discord APK
+              - Xposed module (rooted)
+              - Not sure
+      validations:
+          required: true
+    - type: dropdown
+      id: area
+      attributes:
+          label: Where is the problem?
+          options:
+              - Unbound client (settings, marketplace, themes, fonts)
+              - Loader (installing, updating, recovery menu)
+              - A first-party plugin
+              - Website or marketplace
+              - Developer tools (CLI, debugger)
+              - Not sure
+      validations:
+          required: true
+    - type: dropdown
+      id: plugin
+      attributes:
+          label: Plugin
+          description: Only if the problem is in a first-party plugin.
+          options:
+              - Not a plugin
+              - Avatar Radius
+              - Channel Typing Indicators
+              - Character Counter
+              - Chat Bubbles
+              - Clear URLs
+              - Custom Commands
+              - Expression Tools
+              - File Size On Picker
+              - Fix GIF Downloads
+              - Force Owner Crown
+              - GIF Paste
+              - Hide Gift Button
+              - Mention Avatars
+              - Message Latency
+              - Message Link Embeds
+              - More User Tags
+              - Moyai
+              - Multi Account
+              - No Blocked Messages
+              - No Reply Mention
+              - Preview Message
+              - PronounDB
+              - Reaction Avatars
+              - ReviewDB
+              - Role Color Everywhere
+              - Shiki Codeblocks
+              - Show Hidden Things
+              - Show Me Your Name
+              - Show Timeout Duration
+              - Sticker Preview
+              - Text Replace
+              - Translate
+              - Typing Avatars
+              - View Icons
+              - View Raw
+    - type: textarea
+      id: environment
+      attributes:
+          label: Environment
+          description: Paste the debug info from **Settings → Unbound → General → Debug Info**, or list the Discord, Unbound and loader versions and your device.
+      validations:
+          required: true
+    - type: textarea
+      id: description
+      attributes:
+          label: What happened?
+          description: What did you expect, and what happened instead?
+      validations:
+          required: true
+    - type: textarea
+      id: steps
+      attributes:
+          label: Steps to reproduce
+          placeholder: |
+              1. Open …
+              2. Tap …
+              3. See …
+      validations:
+          required: true
+    - type: textarea
+      id: logs
+      attributes:
+          label: Logs
+          description: Optional. Any relevant logs or console output.
+          render: text
+    - type: textarea
+      id: screenshots
+      attributes:
+          label: Screenshots or recordings
+          description: Optional. Drag images or videos in here.
+    - type: checkboxes
+      id: checks
+      attributes:
+          label: Before you submit
+          options:
+              - label: I'm on the latest Unbound and loader version.
+                required: true
+              - label: I searched the existing issues and this hasn't been reported.
+                required: true
+              - label: This is about Unbound or a first-party plugin, not a plugin or theme from someone else.
+                required: true
