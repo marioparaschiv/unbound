@@ -756,11 +756,19 @@ func verifyIPA(ipa, work string, runner commandRunner) error {
 }
 
 func plistExecutable(path string) (string, error) {
-	output, err := exec.Command("/usr/libexec/PlistBuddy", "-c", "Print :CFBundleExecutable", path).CombinedOutput()
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return "", fmt.Errorf("could not read IPA executable name: %s", strings.TrimSpace(string(output)))
+		return "", fmt.Errorf("could not read IPA executable name: %w", err)
 	}
-	return strings.TrimSpace(string(output)), nil
+	info, err := readPlist(data)
+	if err != nil {
+		return "", fmt.Errorf("could not read IPA executable name: %w", err)
+	}
+	executable := info.get("CFBundleExecutable")
+	if executable == nil || strings.TrimSpace(executable.text) == "" {
+		return "", fmt.Errorf("could not read IPA executable name: %s has no CFBundleExecutable", path)
+	}
+	return strings.TrimSpace(executable.text), nil
 }
 
 func unzip(path, destination string, runner commandRunner, root string) error {

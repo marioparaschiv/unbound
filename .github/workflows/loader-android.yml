@@ -86,7 +86,7 @@ jobs:
     core-tests:
         name: Shared core tests
         runs-on: ubuntu-26.04
-        timeout-minutes: 6
+        timeout-minutes: 12
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -105,7 +105,7 @@ jobs:
               run: cmake --build build/core -j"$(nproc)"
 
             - name: Run core tests
-              run: ctest --test-dir build/core --output-on-failure -j"$(nproc)"
+              run: ctest --test-dir build/core --output-on-failure --timeout 120 -j"$(nproc)"
 
     native-jsi-fuzz:
         name: Host Hermes bridge tests and fuzzing

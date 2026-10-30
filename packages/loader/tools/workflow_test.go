@@ -472,7 +472,7 @@ func TestMetroRegistryIsCapturedBeforeBundleWithoutLegacyPatch(t *testing.T) {
 	}
 	for _, path := range []string{
 		filepath.Join(root, "core", "src", "LoaderPipeline.cpp"),
-		filepath.Join(root, "ios", "sources", "astral.xm"),
+		filepath.Join(root, "ios", "sources", "Astral.xm"),
 		filepath.Join(root, "android", "module", "src", "main", "cpp", "AndroidLoader.cpp"),
 	} {
 		contents, err := os.ReadFile(path)
