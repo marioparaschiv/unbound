@@ -100,6 +100,9 @@ on:
             pr_number:
                 default: ''
                 type: string
+            skip_core:
+                default: false
+                type: boolean
         outputs:
             deb_url:
                 description: 'Download URL for the deb package artifact'
@@ -377,7 +380,7 @@ jobs:
                   exit "$status"
 
     core:
-        if: inputs.only_app_repo != true && inputs.only_apt_repo != true
+        if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_core != true
         permissions:
             contents: read
         uses: ./.github/workflows/loader-core.yml
