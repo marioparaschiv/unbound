@@ -154,8 +154,21 @@ jobs:
                     echo "ASTRAL_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
                   fi
 
+            - name: Setup ccache
+              uses: ./.github/actions/setup-ccache
+              with:
+                  key: ios-tweak
+
             - name: Build package
-              run: go run ./tools build tweak --configuration release --non-interactive
+              env:
+                  CCACHE_DEPEND: 'true'
+                  CCACHE_SLOPPINESS: modules,time_macros,include_file_mtime,include_file_ctime
+              run: |
+                  set -euo pipefail
+                  TARGET_CC="ccache $(xcrun -sdk iphoneos -f clang)"
+                  TARGET_CXX="ccache $(xcrun -sdk iphoneos -f clang++)"
+                  export TARGET_CC TARGET_CXX
+                  go run ./tools build tweak --configuration release --non-interactive
 
             - name: Collect tweak symbols and UUIDs
               run: |
