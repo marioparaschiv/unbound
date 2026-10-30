@@ -827,7 +827,7 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"android_code: ${{ needs.resolve-source.outputs.android_code }}",
 		"if: ${{ !cancelled() && inputs.android_channel == '' && (inputs.only_app_repo == true",
 		"if: ${{ !cancelled() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true",
-		"if: ${{ !cancelled() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'",
+		"if: ${{ !cancelled() && inputs.release == true && inputs.release_dry_run != true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'",
 		"name: Publish Android prerelease",
 	} {
 		if !strings.Contains(build, required) {

@@ -54,6 +54,10 @@ on:
                 default: false
                 description: 'Create a GitHub release'
                 type: boolean
+            release_dry_run:
+                default: false
+                description: 'Run a release without publishing anything'
+                type: boolean
             only_app_repo:
                 default: false
                 description: 'Build and deploy app-repo'
@@ -71,6 +75,9 @@ on:
                 default: ''
                 type: string
             release:
+                default: false
+                type: boolean
+            release_dry_run:
                 default: false
                 type: boolean
             is_testflight:
@@ -533,8 +540,37 @@ jobs:
                     fi
                   done
 
+            - name: Show what the release would publish
+              if: inputs.release_dry_run == true
+              env:
+                  IOS_RELEASE_TAG: ${{ needs.resolve-source.outputs.ios_release_tag }}
+                  IOS_RELEASE_TITLE: ${{ needs.resolve-source.outputs.ios_release_title }}
+                  ANDROID_RELEASE_TAG: ${{ needs.resolve-source.outputs.android_release_tag }}
+                  ANDROID_RELEASE_TITLE: ${{ needs.resolve-source.outputs.android_release_title }}
+                  IS_TESTFLIGHT: ${{ needs.resolve-source.outputs.is_testflight }}
+              run: |
+                  set -euo pipefail
+                  {
+                      echo "### Release dry run"
+                      echo
+                      echo "Nothing was published. A release would create:"
+                      echo
+                      echo "- iOS: \`$IOS_RELEASE_TAG\` \"$IOS_RELEASE_TITLE\""
+                      if [ "$IS_TESTFLIGHT" != true ]; then
+                          echo "- Android: \`$ANDROID_RELEASE_TAG\` \"$ANDROID_RELEASE_TITLE\""
+                          echo "- The rolling \`loader-latest\` release"
+                      fi
+                      echo
+                      echo "Assets:"
+                      echo
+                      for asset in release-assets/*; do
+                          [ -f "$asset" ] || continue
+                          echo "- \`${asset##*/}\` ($(wc -c < "$asset" | tr -d ' ') bytes)"
+                      done
+                  } >> "$GITHUB_STEP_SUMMARY"
+
             - name: Publish stable iOS release
-              if: needs.resolve-source.outputs.is_testflight != 'true'
+              if: needs.resolve-source.outputs.is_testflight != 'true' && inputs.release_dry_run != true
               uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
               with:
                   tag_name: ${{ needs.resolve-source.outputs.ios_release_tag }}
@@ -550,7 +586,7 @@ jobs:
                   token: ${{ github.token }}
 
             - name: Publish stable Android release
-              if: needs.resolve-source.outputs.is_testflight != 'true'
+              if: needs.resolve-source.outputs.is_testflight != 'true' && inputs.release_dry_run != true
               uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
               with:
                   tag_name: ${{ needs.resolve-source.outputs.android_release_tag }}
@@ -565,7 +601,7 @@ jobs:
                   token: ${{ github.token }}
 
             - name: Refresh the rolling loader-latest release
-              if: needs.resolve-source.outputs.is_testflight != 'true'
+              if: needs.resolve-source.outputs.is_testflight != 'true' && inputs.release_dry_run != true
               env:
                   GH_TOKEN: ${{ github.token }}
                   IOS_RELEASE_TAG: ${{ needs.resolve-source.outputs.ios_release_tag }}
@@ -586,7 +622,7 @@ jobs:
                     "release-assets/${{ needs.android.outputs.patched_filename }}"
 
             - name: Publish TestFlight prerelease
-              if: needs.resolve-source.outputs.is_testflight == 'true'
+              if: needs.resolve-source.outputs.is_testflight == 'true' && inputs.release_dry_run != true
               uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
               with:
                   tag_name: ${{ needs.resolve-source.outputs.ios_release_tag }}
@@ -611,9 +647,10 @@ jobs:
                   ANDROID_RELEASE_TAG: ${{ needs.resolve-source.outputs.android_release_tag }}
                   IOS_DEB_FILENAME: ${{ needs.ios.outputs.deb_filename }}
                   ANDROID_MODULE_FILENAME: ${{ needs.android.outputs.module_filename }}
+                  RELEASE_DRY_RUN: ${{ inputs.release_dry_run }}
               run: |
                   set -euo pipefail
-                  : "${ASTRAL_API_KEY:?ASTRAL_API_KEY is required for stable release publication}"
+                  if [ "$RELEASE_DRY_RUN" != true ]; then : "${ASTRAL_API_KEY:?ASTRAL_API_KEY is required for stable release publication}"; fi
                   : "${ASTRAL_API_URL:?ASTRAL_API_URL is required for stable release publication}"
                   api_url="${ASTRAL_API_URL%/}/api/v1/loader/releases"
                   deb_path="release-assets/$IOS_DEB_FILENAME"
@@ -622,7 +659,9 @@ jobs:
                   go run ./tools generate-loader-changelog \
                     --version "$loader_version" \
                     --output release-assets/loader-changelog.md
-                  go run ./tools publish-loader-releases \
+                  dry_run=()
+                  if [ "$RELEASE_DRY_RUN" = true ]; then dry_run=(--dry-run); fi
+                  go run ./tools publish-loader-releases "${dry_run[@]}" \
                     --api-url "$api_url" \
                     --version "$loader_version" \
                     --ios-url "$release_url/$IOS_RELEASE_TAG/$IOS_DEB_FILENAME" \
@@ -630,7 +669,7 @@ jobs:
                     --changelog-file release-assets/loader-changelog.md
 
     android-prerelease:
-        if: ${{ !cancelled() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success' }}
+        if: ${{ !cancelled() && inputs.release == true && inputs.release_dry_run != true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success' }}
         needs: [resolve-source, android]
         runs-on: ubuntu-26.04
         timeout-minutes: 10
@@ -675,7 +714,7 @@ jobs:
                   token: ${{ github.token }}
 
     publish-app-repo:
-        if: ${{ !cancelled() && inputs.release == true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success') }}
+        if: ${{ !cancelled() && inputs.release == true && inputs.release_dry_run != true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success') }}
         needs: [resolve-source, ios, android, release]
         permissions:
             contents: write
