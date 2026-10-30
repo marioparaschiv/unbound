@@ -93,5 +93,10 @@
 		"kind": "var",
 		"required": false,
 		"purpose": "dkrypt API origin; defaults to https://ipa.dylib.dev."
+	},
+	"GRADLE_ENCRYPTION_KEY": {
+		"kind": "secret",
+		"required": false,
+		"purpose": "Encrypts Gradle's configuration cache so loader builds can reuse it between runs; without it Gradle reconfigures each time."
 	}
 }
