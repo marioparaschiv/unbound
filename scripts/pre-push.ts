@@ -14,6 +14,12 @@ const UNTESTED = new Set(['apps/web', 'apps/discord-bot']);
 // Their tests replace modules with `mock.module`, which leaks across files in one process.
 const ISOLATED = new Set(['packages/client']);
 const SKIPPED = ['packages/loader/', 'docs/', '.github/'];
+const LOADER_LINTED = ['packages/loader/', '.github/'];
+const LOADER_LINT: Check = {
+	label: 'loader lint',
+	cwd: 'packages/loader',
+	command: ['go', 'run', './tools', 'lint'],
+};
 
 function projectOf(file: string): string | undefined {
 	const plugin = /^packages\/plugins\/([^/]+)\//.exec(file);
@@ -42,6 +48,10 @@ export function checksFor(files: string[], exists: (path: string) => boolean): C
 	const add = (check: Check) => checks.set(`${check.cwd} ${check.command.join(' ')}`, check);
 
 	for (const file of files) {
+		if (LOADER_LINTED.some((prefix) => file.startsWith(prefix)) && !/\.mdx?$/.test(file)) {
+			add(LOADER_LINT);
+		}
+
 		if (SKIPPED.some((prefix) => file.startsWith(prefix))) {
 			continue;
 		}
