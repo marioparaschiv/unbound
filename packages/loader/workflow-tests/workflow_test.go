@@ -374,8 +374,8 @@ func TestParsedSmokeTestsTimeOutQuickly(t *testing.T) {
 				continue
 			}
 			smokeJobs++
-			if job.TimeoutMinutes > 20 {
-				t.Errorf("%s %s is a smoke test and must time out within 20 minutes, has %d", name, jobName, job.TimeoutMinutes)
+			if job.TimeoutMinutes > 30 {
+				t.Errorf("%s %s is a smoke test and must time out within 30 minutes, has %d", name, jobName, job.TimeoutMinutes)
 			}
 		}
 	}

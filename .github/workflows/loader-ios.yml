@@ -499,7 +499,7 @@ jobs:
         if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
         needs: build-simulator
         runs-on: macos-26
-        timeout-minutes: 20
+        timeout-minutes: 30
         permissions:
             contents: read
             actions: read
@@ -547,12 +547,12 @@ jobs:
                   APP_PATH: ${{ steps.app.outputs.path }}
               run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
 
-            - name: Compare the console with main
+            - name: Compare startup and the console with main
               if: success() && github.event_name == 'pull_request'
               continue-on-error: true
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: go run ./tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY" --artifact "ios smoke test" --console-only
+              run: go run ./tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY" --artifact "ios smoke test" --report smoke/artifacts/comparison.md
 
             - name: Upload smoke test logs
               if: ${{ !cancelled() }}

@@ -420,6 +420,10 @@ jobs:
         timeout-minutes: 5
         needs: [build, comment-pr]
         if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+        strategy:
+            fail-fast: false
+            matrix:
+                platform: [Android, iOS]
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -427,12 +431,12 @@ jobs:
                   persist-credentials: false
                   fetch-depth: 1
 
-            - name: Download the Android smoke test
+            - name: Download the smoke test
               id: smoke
               continue-on-error: true
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
               with:
-                  name: android smoke test
+                  name: ${{ matrix.platform == 'iOS' && 'ios smoke test' || 'android smoke test' }}
                   path: smoke
 
             - name: Setup Go tools
@@ -444,5 +448,6 @@ jobs:
               working-directory: packages/loader
               env:
                   GH_TOKEN: ${{ github.token }}
+                  PLATFORM: ${{ matrix.platform }}
                   PR_NUMBER: ${{ github.event.pull_request.number }}
-              run: go run ./tools pr-comment --pr "$PR_NUMBER" --title "Android startup compared with main" --body-file "$GITHUB_WORKSPACE/smoke/comparison.md"
+              run: go run ./tools pr-comment --pr "$PR_NUMBER" --title "$PLATFORM smoke test" --body-file "$GITHUB_WORKSPACE/smoke/comparison.md"
