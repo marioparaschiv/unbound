@@ -477,13 +477,13 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 			t.Fatalf("the release must download %s into its own directory, got %+v", artifact, download.With)
 		}
 	}
-	if !strings.Contains(release.step(t, "Package native symbols").Run, `zip -qr "../unbound-$platform-symbols.zip" .`) {
+	if !strings.Contains(release.step(t, "Package native symbols").Run, `zip -qr "../astral-$platform-symbols.zip" .`) {
 		t.Fatal("the release must zip each platform's symbols")
 	}
 	for step, archives := range map[string][]string{
-		"Publish stable iOS release":     {"unbound-ios-symbols.zip"},
-		"Publish stable Android release": {"unbound-android-symbols.zip"},
-		"Publish TestFlight prerelease":  {"unbound-ios-symbols.zip"},
+		"Publish stable iOS release":     {"astral-ios-symbols.zip"},
+		"Publish stable Android release": {"astral-android-symbols.zip"},
+		"Publish TestFlight prerelease":  {"astral-ios-symbols.zip"},
 	} {
 		files := release.step(t, step).With["files"]
 		for _, archive := range archives {
@@ -501,7 +501,7 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 		t.Fatal("the stable Android release must attach only Android assets")
 	}
 	prerelease := build.job(t, "android-prerelease")
-	if prerelease.step(t, "Download Android native symbols").With["name"] != "android symbols" || !strings.Contains(prerelease.step(t, "Publish Android prerelease").With["files"], "release-assets/unbound-android-symbols.zip") {
+	if prerelease.step(t, "Download Android native symbols").With["name"] != "android symbols" || !strings.Contains(prerelease.step(t, "Publish Android prerelease").With["files"], "release-assets/astral-android-symbols.zip") {
 		t.Fatal("Android prereleases must attach their native symbols")
 	}
 	module := loadWorkflow(t, "loader-android.yml").job(t, "build-module")
@@ -610,17 +610,17 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 		t.Fatalf("the plan must come from the tested script, runs %q", planStep.Run)
 	}
 	for name, value := range map[string]string{
-		"IS_FORK":                           "${{ github.event.pull_request.head.repo.full_name != github.repository }}",
-		"HAS_S3_ACCESS_KEY_ID":              "${{ secrets.S3_ACCESS_KEY_ID != '' }}",
-		"HAS_S3_SECRET_ACCESS_KEY":          "${{ secrets.S3_SECRET_ACCESS_KEY != '' }}",
-		"HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY": "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}",
-		"CDN_URL":                           "${{ vars.CDN_URL }}",
+		"IS_FORK":                          "${{ github.event.pull_request.head.repo.full_name != github.repository }}",
+		"HAS_S3_ACCESS_KEY_ID":             "${{ secrets.S3_ACCESS_KEY_ID != '' }}",
+		"HAS_S3_SECRET_ACCESS_KEY":         "${{ secrets.S3_SECRET_ACCESS_KEY != '' }}",
+		"HAS_ASTRAL_PR_BUNDLE_SIGNING_KEY": "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY != '' }}",
+		"CDN_URL":                          "${{ vars.CDN_URL }}",
 	} {
 		if planStep.Env[name] != value {
 			t.Fatalf("the plan must see %s as %q, got %q", name, value, planStep.Env[name])
 		}
 	}
-	for _, name := range []string{"S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "UNBOUND_PR_BUNDLE_SIGNING_KEY"} {
+	for _, name := range []string{"S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "ASTRAL_PR_BUNDLE_SIGNING_KEY"} {
 		if _, ok := planStep.Env[name]; ok {
 			t.Fatalf("the plan must only learn whether %s is set, never its value", name)
 		}
@@ -636,22 +636,22 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 		t.Fatalf("uploads must stay off unless planned, runs if %q", upload.If)
 	}
 	clientBuild := upload.step(t, "Build the client")
-	if clientBuild.Env["TMPDIR"] != "${{ runner.temp }}" || clientBuild.Env["UNBOUND_CHANNEL"] != "pr-${{ github.event.pull_request.number }}" {
+	if clientBuild.Env["TMPDIR"] != "${{ runner.temp }}" || clientBuild.Env["ASTRAL_CHANNEL"] != "pr-${{ github.event.pull_request.number }}" {
 		t.Fatalf("the uploaded bundles must be compiled to bytecode on the pull request's own channel, got %+v", clientBuild.Env)
 	}
-	if _, ok := clientBuild.Env["UNBOUND_BUNDLE_SIGNING_KEY"]; ok {
+	if _, ok := clientBuild.Env["ASTRAL_BUNDLE_SIGNING_KEY"]; ok {
 		t.Fatal("pull request bundles must never be signed with the production key")
 	}
 	sign := upload.step(t, "Sign the bundles with the pull request key")
-	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || sign.Run != `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"` {
+	if sign.Env["ASTRAL_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY }}" || sign.Run != `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"` {
 		t.Fatalf("pull request bundles must be signed with the pull request key, got %+v", sign)
 	}
 	if upload.step(t, "Check every bundle is signed").Run != `bun run --cwd packages/client verify-signatures --dir dist --pr "$PR_NUMBER"` {
 		t.Fatal("unsigned bundles must never reach the bucket")
 	}
 	client := upload.step(t, "Upload the client bundles")
-	if client.Env["UNBOUND_CHANNEL"] != "pr" || client.Env["UNBOUND_VERSION"] != "${{ github.event.pull_request.number }}" {
-		t.Fatalf("the client must upload to unbound/pr/<number>/, got %+v", client.Env)
+	if client.Env["ASTRAL_CHANNEL"] != "pr" || client.Env["ASTRAL_VERSION"] != "${{ github.event.pull_request.number }}" {
+		t.Fatalf("the client must upload to astral/pr/<number>/, got %+v", client.Env)
 	}
 	downloads := map[string]bool{}
 	for _, step := range upload.Steps {
@@ -687,7 +687,7 @@ func TestParsedLoaderBuildsDeriveThePullRequestBundleURL(t *testing.T) {
 		if derive.Env["PR_NUMBER"] != "${{ inputs.pr_number || '' }}" || derive.Env["CDN_URL"] != "${{ vars.CDN_URL }}" {
 			t.Fatalf("%s must derive the bundle URL from the pull request number it already gets, got %+v", name, derive.Env)
 		}
-		if !strings.Contains(derive.Run, `if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then`) || !strings.Contains(derive.Run, `UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/`) {
+		if !strings.Contains(derive.Run, `if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then`) || !strings.Contains(derive.Run, `ASTRAL_BUNDLE_URL=${CDN_URL%/}/astral/pr/$PR_NUMBER/`) {
 			t.Fatalf("%s must only set a bundle URL for pull request builds, runs %q", name, derive.Run)
 		}
 	}
@@ -737,7 +737,7 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 	if stage.If != "needs.pr-builds.outputs.stage == 'true'" {
 		t.Fatalf("only planned fork builds are staged, runs if %q", stage.If)
 	}
-	if _, signed := stage.step(t, "Build the client").Env["UNBOUND_BUNDLE_SIGNING_KEY"]; signed {
+	if _, signed := stage.step(t, "Build the client").Env["ASTRAL_BUNDLE_SIGNING_KEY"]; signed {
 		t.Fatal("the untrusted fork build must stay secret-free")
 	}
 	staged := map[string]bool{}
@@ -782,7 +782,7 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 		t.Fatalf("the claimed pull request must be checked against the run's head, got %+v", confirm)
 	}
 	plan := publish.step(t, "Plan the uploads")
-	if plan.Env["PR_NUMBER"] != "${{ steps.pull-request.outputs.number }}" || plan.Env["HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}" {
+	if plan.Env["PR_NUMBER"] != "${{ steps.pull-request.outputs.number }}" || plan.Env["HAS_ASTRAL_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY != '' }}" {
 		t.Fatalf("the publisher must plan with the confirmed number and the pull request key, got %+v", plan.Env)
 	}
 	for _, step := range publish.Steps {
@@ -794,10 +794,10 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 		}
 	}
 	sign := publish.step(t, "Sign the bundles with the pull request key")
-	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || !strings.Contains(sign.Run, `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"`) || !strings.Contains(sign.Run, `verify-signatures --dir dist --pr "$PR_NUMBER"`) {
+	if sign.Env["ASTRAL_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY }}" || !strings.Contains(sign.Run, `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"`) || !strings.Contains(sign.Run, `verify-signatures --dir dist --pr "$PR_NUMBER"`) {
 		t.Fatalf("fork bundles must be signed with the pull request key, got %+v", sign)
 	}
-	if _, ok := sign.Env["UNBOUND_BUNDLE_SIGNING_KEY"]; ok {
+	if _, ok := sign.Env["ASTRAL_BUNDLE_SIGNING_KEY"]; ok {
 		t.Fatal("fork bundles must never be signed with the production key")
 	}
 	if check := publish.step(t, "Check the fork's manifest"); check.Run != "bun scripts/pr-builds-fork.ts check-manifest" {

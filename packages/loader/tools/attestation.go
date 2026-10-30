@@ -34,7 +34,7 @@ const (
 	attestationKeyID     = uint32(0x3ce00b70)
 	sectionSize          = 256
 	signatureCapacity    = 96
-	elfSectionName       = ".unbound.attestation"
+	elfSectionName       = ".astral.attestation"
 )
 
 type AttestationError struct {
@@ -162,7 +162,7 @@ func attestStageCommand(args []string) error {
 	if !publicKeysEqual(&private.PublicKey, public) {
 		return errors.New("attestation private key does not match the pinned public key")
 	}
-	dylib, err := findFile(*staging, "Unbound.dylib")
+	dylib, err := findFile(*staging, "astral.dylib")
 	if err != nil {
 		return err
 	}
@@ -184,7 +184,7 @@ func attestStageCommand(args []string) error {
 func attestStageELFCommand(args []string) error {
 	set := flag.NewFlagSet("attest stage-elf", flag.ContinueOnError)
 	directory := set.String("dir", "", "Directory holding the stripped libraries")
-	library := set.String("library", "libunbound.so", "Library file name")
+	library := set.String("library", "libastral.so", "Library file name")
 	commitHash := set.String("commit-hash", "", "Commit hash")
 	packageVersion := set.String("package-version", "", "Package version")
 	if err := set.Parse(args); err != nil {

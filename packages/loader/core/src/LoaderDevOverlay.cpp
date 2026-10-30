@@ -32,7 +32,7 @@ Menu menu(const SettingsStore &settings)
             {
                 {"reload-bundle", "Reload Bundle", FollowUp::ReloadApp},
                 {"edit-settings", kSettingsEditorTitle, FollowUp::EditSettings},
-                {"open-toolbox", "Open Unbound Toolbox", FollowUp::OpenToolbox},
+                {"open-toolbox", "Open astral Toolbox", FollowUp::OpenToolbox},
             }};
 }
 

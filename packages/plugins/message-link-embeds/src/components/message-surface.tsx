@@ -43,6 +43,7 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 		const surface = source.surface(surfaceId);
 		const { ChatItem } = source.renderers;
 		const [mountAttempt, setMountAttempt] = useState(0);
+		const [laidOut, setLaidOut] = useState(false);
 		const remount = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
 		useEffect(() => () => clearTimeout(remount.current), []);
@@ -53,6 +54,7 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 			const collapsed = event.nativeEvent.layout.height < CollapsedRemount.minHeight;
 
 			clearTimeout(remount.current);
+			setLaidOut(!collapsed || mountAttempt >= CollapsedRemount.limit);
 
 			if (!collapsed || mountAttempt >= CollapsedRemount.limit) return;
 
@@ -75,6 +77,7 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 						borderRadius: 8,
 						overflow: 'hidden',
 						minHeight: Surface.minHeight,
+						opacity: laidOut ? 1 : 0,
 						paddingBottom: 0,
 						paddingTop: 6,
 						width: surface.width,

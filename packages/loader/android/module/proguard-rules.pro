@@ -1,10 +1,10 @@
--keep class app.unbound.android.Unbound { *; }
--keep class app.unbound.android.NativeBridge { *; }
--keep class app.unbound.android.HotReload { *; }
--keep class app.unbound.android.SettingsWatcher { *; }
--keep class app.unbound.android.Http { *; }
--keep class app.unbound.android.RuntimeScheduler { *; }
+-keep class app.astral.android.Astral { *; }
+-keep class app.astral.android.NativeBridge { *; }
+-keep class app.astral.android.HotReload { *; }
+-keep class app.astral.android.SettingsWatcher { *; }
+-keep class app.astral.android.Http { *; }
+-keep class app.astral.android.RuntimeScheduler { *; }
 -keepclasseswithmembernames class * { native <methods>; }
--keep class app.unbound.android.ActivityTracker { *; }
--keep class app.unbound.android.TextRewrites { *; }
--keep class app.unbound.android.HermesSampler { *; }
+-keep class app.astral.android.ActivityTracker { *; }
+-keep class app.astral.android.TextRewrites { *; }
+-keep class app.astral.android.HermesSampler { *; }

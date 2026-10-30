@@ -35,7 +35,7 @@ func releaseTitle(loaderVersion, discordVersion, build, label string) string {
 	if build != "" {
 		discordVersion += " (" + build + ")"
 	}
-	return fmt.Sprintf("Unbound %s for Discord %s, %s", loaderVersion, discordVersion, label)
+	return fmt.Sprintf("astral %s for Discord %s, %s", loaderVersion, discordVersion, label)
 }
 
 func nameLoaderReleases(releaseVersion, loaderVersion string) (loaderReleaseNames, error) {

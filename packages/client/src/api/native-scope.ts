@@ -47,6 +47,25 @@ type AssociationBinding = {
 };
 
 const JAVA_HANDLE_PRUNE_SIZE = 1_024;
+const javaHandleHolders = new WeakMap<NativeJavaReference, number>();
+
+function holdJavaHandle(handle: NativeJavaReference) {
+	javaHandleHolders.set(handle, (javaHandleHolders.get(handle) ?? 0) + 1);
+}
+
+function dropJavaHandle(handle: NativeJavaReference): boolean {
+	const holders = (javaHandleHolders.get(handle) ?? 1) - 1;
+
+	if (holders > 0) {
+		javaHandleHolders.set(handle, holders);
+
+		return false;
+	}
+
+	javaHandleHolders.delete(handle);
+
+	return true;
+}
 
 type ScopedNativePlugin = {
 	bridge: NativePluginBridge;
@@ -450,17 +469,35 @@ export function createScopedNativePlugin(
 			}
 		}
 
-		javaHandles.add(new WeakRef(handle));
+		if (!holdsJavaHandle(handle)) {
+			javaHandles.add(new WeakRef(handle));
+			holdJavaHandle(handle);
+		}
 
 		return handle;
 	}
 
-	function untrackJavaHandle(handle: NativeJavaReference) {
+	function holdsJavaHandle(handle: NativeJavaReference): boolean {
+		for (const tracked of javaHandles) {
+			if (tracked.deref() === handle) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	function untrackJavaHandle(handle: NativeJavaReference): boolean {
+		let held = false;
+
 		for (const tracked of javaHandles) {
 			if (tracked.deref() === handle) {
 				javaHandles.delete(tracked);
+				held = true;
 			}
 		}
+
+		return held;
 	}
 
 	const java: NativeJavaBridge = {
@@ -522,8 +559,15 @@ export function createScopedNativePlugin(
 			javaCapabilities.setAssociatedObject,
 		),
 		release: (handle) => {
-			untrackJavaHandle(handle);
-			scopeMethod(javaBridge.release.bind(javaBridge), javaCapabilities.release)(handle);
+			const release = scopeMethod(
+				javaBridge.release.bind(javaBridge),
+				javaCapabilities.release,
+			);
+			const held = untrackJavaHandle(handle);
+
+			if (held ? dropJavaHandle(handle) : !javaHandleHolders.has(handle)) {
+				release(handle);
+			}
 		},
 	};
 
@@ -607,7 +651,7 @@ export function createScopedNativePlugin(
 			for (const tracked of javaHandles) {
 				const handle = tracked.deref();
 
-				if (!handle) {
+				if (!handle || !dropJavaHandle(handle)) {
 					continue;
 				}
 

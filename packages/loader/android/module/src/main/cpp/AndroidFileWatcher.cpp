@@ -10,8 +10,8 @@
 #include "LoaderFileWatcher.h"
 #include "LoaderPreferences.h"
 
-namespace unbound::android {
-static const char *const kSettingsWatcherClass = "app/unbound/android/SettingsWatcher";
+namespace astral::android {
+static const char *const kSettingsWatcherClass = "app/astral/android/SettingsWatcher";
 
 struct SettingsWatcherCallbacks {
     jclass    watcherClass  = nullptr;

@@ -13,6 +13,8 @@ import { currentAppearance } from '~/theme';
 import { messageOwnership } from '~/author';
 
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
+const BUBBLE_TAG = 0x0b0b1e;
+const MAX_STALE_BUBBLES = 8;
 const TEXT_MEASURE_HEIGHT = 100_000;
 const USES_LINE_FRAGMENT_ORIGIN = 1;
 
@@ -70,15 +72,32 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 
 		if (existing) return existing.bubble;
 
+		await removeStaleBubbles(cell);
+
 		const bubble = objc.alloc('UIView');
 		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
 
 		bubbles.set(key, { cell, bubble });
+		await objc.invokeAsync(bubble, 'setTag:', [BUBBLE_TAG]);
 		await objc.invokeAsync(layer, 'setMasksToBounds:', [true]);
 		await objc.invokeAsync(bubble, 'setUserInteractionEnabled:', [false]);
 		await objc.invokeAsync(cell, 'insertSubview:atIndex:', [bubble, 0]);
 
+		if (disposed) await objc.invokeAsync(bubble, 'removeFromSuperview', []);
+
 		return bubble;
+	}
+
+	async function removeStaleBubbles(cell: NativeObjectHandle) {
+		for (let removed = 0; removed < MAX_STALE_BUBBLES; removed++) {
+			const stale = (await objc.invokeAsync(cell, 'viewWithTag:', [
+				BUBBLE_TAG,
+			])) as NativeObjectHandle | null;
+
+			if (!stale) return;
+
+			await objc.invokeAsync(stale, 'removeFromSuperview', []);
+		}
 	}
 
 	async function isNested(cell: NativeObjectHandle): Promise<boolean> {
@@ -147,7 +166,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		const style = currentAppearance();
 		const frame = bubbleFrame(
 			layout.body,
-			Math.max(text, layout.mediaRight),
+			Math.max(text, layout.footerRight ?? 0, layout.mediaRight),
 			{ horizontal: style.horizontalPadding, vertical: style.verticalPadding },
 			layout.headerBottom,
 		);

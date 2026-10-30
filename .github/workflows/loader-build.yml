@@ -1,4 +1,4 @@
-name: Loader Build Unbound
+name: Loader Build astral
 run-name: >-
     ${{
       inputs.only_app_repo == true && 'app-repo deploy' ||
@@ -372,7 +372,7 @@ jobs:
                   go run ./tools compat-scan "${scan_args[@]}" || status=$?
                   cat report.md >> "$GITHUB_STEP_SUMMARY"
                   if [ "$status" -ne 0 ]; then
-                    echo "::error::This Discord build breaks parts of Unbound, so nothing is built or released. The job summary lists what broke."
+                    echo "::error::This Discord build breaks parts of astral, so nothing is built or released. The job summary lists what broke."
                   fi
                   exit "$status"
 
@@ -484,7 +484,7 @@ jobs:
                   set -euo pipefail
                   for platform in ios android; do
                     if [ -d "release-assets/$platform-symbols" ]; then
-                      (cd "release-assets/$platform-symbols" && zip -qr "../unbound-$platform-symbols.zip" .)
+                      (cd "release-assets/$platform-symbols" && zip -qr "../astral-$platform-symbols.zip" .)
                     fi
                   done
 
@@ -498,7 +498,7 @@ jobs:
                       packages/loader/release-assets/${{ needs.ios.outputs.deb_filename }}
                       packages/loader/release-assets/${{ needs.ios.outputs.ipa_filename }}
                       packages/loader/release-assets/${{ needs.ios.outputs.simulator_filename }}
-                      packages/loader/release-assets/unbound-ios-symbols.zip
+                      packages/loader/release-assets/astral-ios-symbols.zip
                   generate_release_notes: true
                   make_latest: false
                   fail_on_unmatched_files: true
@@ -513,7 +513,7 @@ jobs:
                   files: |
                       packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
                       packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
-                      packages/loader/release-assets/unbound-android-symbols.zip
+                      packages/loader/release-assets/astral-android-symbols.zip
                   generate_release_notes: true
                   make_latest: false
                   fail_on_unmatched_files: true
@@ -531,7 +531,7 @@ jobs:
                   gh release create loader-latest \
                     --repo "$GITHUB_REPOSITORY" \
                     --target "$GITHUB_SHA" \
-                    --title "Unbound loader (latest)" \
+                    --title "astral loader (latest)" \
                     --notes "The most recent stable loader, currently $IOS_RELEASE_TAG and $ANDROID_RELEASE_TAG." \
                     --latest=false \
                     "release-assets/${{ needs.ios.outputs.deb_filename }}" \
@@ -550,7 +550,7 @@ jobs:
                       packages/loader/release-assets/${{ needs.ios.outputs.deb_filename }}
                       packages/loader/release-assets/${{ needs.ios.outputs.ipa_filename }}
                       packages/loader/release-assets/${{ needs.ios.outputs.simulator_filename }}
-                      packages/loader/release-assets/unbound-ios-symbols.zip
+                      packages/loader/release-assets/astral-ios-symbols.zip
                   generate_release_notes: true
                   prerelease: true
                   make_latest: false
@@ -560,17 +560,17 @@ jobs:
             - name: Publish loader update records
               if: needs.resolve-source.outputs.is_testflight != 'true'
               env:
-                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
-                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
+                  ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY }}
+                  ASTRAL_API_URL: ${{ vars.ASTRAL_API_URL }}
                   IOS_RELEASE_TAG: ${{ needs.resolve-source.outputs.ios_release_tag }}
                   ANDROID_RELEASE_TAG: ${{ needs.resolve-source.outputs.android_release_tag }}
                   IOS_DEB_FILENAME: ${{ needs.ios.outputs.deb_filename }}
                   ANDROID_MODULE_FILENAME: ${{ needs.android.outputs.module_filename }}
               run: |
                   set -euo pipefail
-                  : "${UNBOUND_API_KEY:?UNBOUND_API_KEY is required for stable release publication}"
-                  : "${UNBOUND_API_URL:?UNBOUND_API_URL is required for stable release publication}"
-                  api_url="${UNBOUND_API_URL%/}/api/v1/loader/releases"
+                  : "${ASTRAL_API_KEY:?ASTRAL_API_KEY is required for stable release publication}"
+                  : "${ASTRAL_API_URL:?ASTRAL_API_URL is required for stable release publication}"
+                  api_url="${ASTRAL_API_URL%/}/api/v1/loader/releases"
                   deb_path="release-assets/$IOS_DEB_FILENAME"
                   loader_version=$(dpkg-deb -f "$deb_path" Version)
                   release_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download"
@@ -612,7 +612,7 @@ jobs:
 
             - name: Package native symbols
               working-directory: packages/loader/release-assets/android-symbols
-              run: zip -qr ../unbound-android-symbols.zip .
+              run: zip -qr ../astral-android-symbols.zip .
 
             - name: Publish Android prerelease
               uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
@@ -622,7 +622,7 @@ jobs:
                   files: |
                       packages/loader/release-assets/${{ needs.android.outputs.module_filename }}
                       packages/loader/release-assets/${{ needs.android.outputs.patched_filename }}
-                      packages/loader/release-assets/unbound-android-symbols.zip
+                      packages/loader/release-assets/astral-android-symbols.zip
                   generate_release_notes: true
                   prerelease: true
                   make_latest: false

@@ -29,6 +29,8 @@ import {
 	toastDurationScript,
 	toastLogScript,
 	MATRIX_TOAST_MS,
+	settingsScreenScript,
+	closeScreenScript,
 } from './device-scripts';
 import {
 	isEmptyToast,
@@ -67,6 +69,7 @@ type ScrollReport = ScrollOutcome & { toasts: string[]; emptyToasts: string[] };
 
 const SELF_TEST_SWIPES = 4;
 const TOAST_SETTLE_MS = 5_500;
+const SETTINGS_SETTLE_MS = 1_200;
 
 export function parseChannel(value: string): FixtureChannel {
 	const match = /^(\d+)\/(\d+)$/.exec(value.trim());
@@ -152,10 +155,29 @@ async function main(): Promise<void> {
 		const result = await evaluateJson(port, cycleScript(plugin.id), cycleResultSchema);
 		const file = join(out, `${plugin.id}.png`);
 		const captured = result.installed && (await screenshot(target, file));
+		const settings = result.installed ? await captureSettings(plugin.id) : undefined;
 
 		if (result.installed && !result.wasStarted) await evaluate(port, restoreScript(plugin.id));
 
-		return checkFromCycle(result, captured ? `${plugin.id}.png` : undefined);
+		const check = checkFromCycle(result, captured ? `${plugin.id}.png` : undefined);
+
+		if (settings) check.evidence.push(`settings: ${settings}`);
+
+		return check;
+	}
+
+	async function captureSettings(id: string): Promise<string | undefined> {
+		if ((await evaluate(port, settingsScreenScript(id))) !== 'opened') return;
+
+		await new Promise((done) => setTimeout(done, SETTINGS_SETTLE_MS));
+
+		const file = `${id}.settings.png`;
+		const captured = await screenshot(target, join(out, file));
+
+		await evaluate(port, closeScreenScript());
+		await new Promise((done) => setTimeout(done, SETTINGS_SETTLE_MS));
+
+		return captured ? file : undefined;
 	}
 
 	async function recover(id: string): Promise<string> {

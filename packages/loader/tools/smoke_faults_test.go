@@ -27,7 +27,7 @@ func TestSmokeFaultExpressionsUseTheCrashFixture(t *testing.T) {
 			t.Fatalf("an expression does not name the crash fixture:\n%s", expression)
 		}
 	}
-	if !strings.Contains(smokeCrashArmExpression, "unbound.storage.persist()") {
+	if !strings.Contains(smokeCrashArmExpression, "astral.storage.persist()") {
 		t.Fatal("the crash fixture must persist its consent and state before it crashes Discord")
 	}
 }

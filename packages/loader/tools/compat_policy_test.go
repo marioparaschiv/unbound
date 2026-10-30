@@ -87,7 +87,7 @@ func TestEvaluateCompatSupport(t *testing.T) {
 		t.Fatalf("a build older than the minimum must be flagged: %+v", support["android"])
 	}
 	report := renderCompatReport(&compatResults{Targets: []*compatTarget{old}, Support: support})
-	if !strings.Contains(report, "Oldest supported Discord: Android 350.8. **Android 349.3 is older than Unbound supports.**") {
+	if !strings.Contains(report, "Oldest supported Discord: Android 350.8. **Android 349.3 is older than astral supports.**") {
 		t.Fatalf("the report must call out an unsupported build:\n%s", report)
 	}
 }

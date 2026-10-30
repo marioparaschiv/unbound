@@ -41,8 +41,8 @@ func TestRejectLinkRelayAppKeepsTheJailbreakRelayOutOfIPAs(t *testing.T) {
 		t.Fatalf("IPA without the relay rejected: %v", err)
 	}
 	for _, entry := range []string{
-		"Payload/UnboundLink.app/Info.plist",
-		"Payload/Discord.app/UnboundLink.app/UnboundLink",
+		"Payload/AstralLink.app/Info.plist",
+		"Payload/Discord.app/AstralLink.app/AstralLink",
 	} {
 		if err := rejectLinkRelayApp(append(append([]string{}, clean...), entry)); err == nil {
 			t.Fatalf("relay at %s was not rejected", entry)

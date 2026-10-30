@@ -273,7 +273,7 @@ static __weak id gFabricHostInstance      = nil;
 
 static os_log_t nativePerformanceLog()
 {
-    static os_log_t log = os_log_create("app.unbound", "NativePluginPerformance");
+    static os_log_t log = os_log_create("app.astral", "NativePluginPerformance");
     return log;
 }
 
@@ -368,12 +368,12 @@ public:
 
 static Value objcJSIValue(Runtime &runtime, id value)
 {
-    return loader::toJSIValue(runtime, unbound::ios::jsonFromObject(value));
+    return loader::toJSIValue(runtime, astral::ios::jsonFromObject(value));
 }
 
 static NSString *jsiString(Runtime &runtime, const Value &value)
 {
-    return value.isString() ? unbound::ios::toNSString(value.asString(runtime).utf8(runtime)) : nil;
+    return value.isString() ? astral::ios::toNSString(value.asString(runtime).utf8(runtime)) : nil;
 }
 
 static Value makeFunction(const char *name, unsigned int argCount, Runtime &runtime,
@@ -928,7 +928,7 @@ private:
 
 static NSDictionary *fabricDictionary(const nlohmann::json &properties)
 {
-    id object = unbound::ios::objectFromJSON(properties);
+    id object = astral::ios::objectFromJSON(properties);
     return [object isKindOfClass:[NSDictionary class]] ? object : @{};
 }
 
@@ -3699,7 +3699,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
 static void warnOffMainViewCall(id object, NSString *selectorName)
 {
     static loader::threading::OffMainViewWarnings warnings([] {
-        return loader::preferences::developerMode(UnboundSettingsStore());
+        return loader::preferences::developerMode(AstralSettingsStore());
     });
     if ([NSThread isMainThread] || !warnings.enabled() || ![object isKindOfClass:[UIView class]] ||
         [NSObject instancesRespondToSelector:NSSelectorFromString(selectorName)])

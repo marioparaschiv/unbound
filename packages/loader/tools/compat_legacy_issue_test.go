@@ -7,7 +7,7 @@ import (
 )
 
 func TestRemovableLegacyNames(t *testing.T) {
-	themes := compatLocation{File: "packages/loader/android/module/src/main/kotlin/app/unbound/android/Themes.kt", Line: 4}
+	themes := compatLocation{File: "packages/loader/android/module/src/main/kotlin/app/astral/android/Themes.kt", Line: 4}
 	reactions := compatLocation{File: "packages/plugins/reaction-avatars/src/android/reactions.ts", Line: 47}
 	other := compatLocation{File: "packages/plugins/demo/src/android/index.ts", Line: 2}
 	references := []*compatReference{
@@ -29,7 +29,7 @@ func TestRemovableLegacyNames(t *testing.T) {
 
 	body := renderCompatLegacyIssue(want, "350.8", "350.8", "https://github.com/unbound-app/unbound/blob/abc")
 	for _, line := range []string{
-		"Unbound supports Discord Android 350.8 and newer",
+		"astral supports Discord Android 350.8 and newer",
 		"The stable scan checked Android 350.8",
 		"the list stays as it is until the minimum is raised",
 		"- class `com.discord.reactions.ReactionView` · [packages/plugins/reaction-avatars/src/android/reactions.ts:47](https://github.com/unbound-app/unbound/blob/abc/packages/plugins/reaction-avatars/src/android/reactions.ts#L47)",

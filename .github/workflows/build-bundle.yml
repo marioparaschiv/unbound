@@ -67,7 +67,7 @@ jobs:
               env:
                   TMPDIR: ${{ runner.temp }}
                   UNBOUND_CHANNEL: ${{ inputs.version && 'stable' || 'beta' }}
-                  UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
+                  UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.ASTRAL_BUNDLE_SIGNING_KEY }}
 
             - name: Check every bundle and the manifest are signed
               run: bun run --cwd packages/client verify-signatures

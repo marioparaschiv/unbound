@@ -1,12 +1,12 @@
-Name: Unbound
+Name: astral
 Description: Discord mobile client aimed at providing the user control, stability and customizability.
 Version: 1.0.0
-Package: app.unbound.ios
+Package: app.astral.ios
 Architecture: iphoneos-arm
 Maintainer: eternal, acquitelol, Adrian Castro
-Author: Unbound Team
+Author: astral Team
 Section: Tweaks
 Depends: ellekit, uikittools
-SileoDepiction: https://builds.unbound.rip/repo/depictions/unbound.json
+SileoDepiction: https://builds.unbound.rip/repo/depictions/astral.json
 Icon: https://assets.unbound.rip/logo/logo.png
 Conflicts: app.enmity, mod.vendetta, app.pyoncord

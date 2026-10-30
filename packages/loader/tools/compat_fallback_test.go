@@ -15,7 +15,7 @@ func groupedReference(references []*compatReference, kind, name string, grouped 
 }
 
 func TestKotlinFallbackExtraction(t *testing.T) {
-	source := `package app.unbound.android
+	source := `package app.astral.android
 
 object Themes {
     private val THEME_MANAGER = HostClass(
@@ -28,7 +28,7 @@ object Themes {
 }
 `
 	set := newCompatSourceSet()
-	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/unbound/android/Themes.kt", component: "loader-android", platform: "android"}
+	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/astral/android/Themes.kt", component: "loader-android", platform: "android"}
 	extractNativeReferences(set, file, source)
 	references := set.sorted()
 
@@ -211,8 +211,8 @@ export const Notice = firstOf(() => findByName('HelpMessage'), () => OwnNotice);
 
 	results := evaluateCompat([]*compatReference{notice}, compatTestTargets()[:1], nil)
 	finding := fallbackFinding(results, "HelpMessage", notice.Group)
-	if finding.Status != compatFallback || !strings.Contains(finding.Reason, "Unbound's own implementation") {
-		t.Fatalf("a lookup Unbound implements itself must be covered, got %q (%s)", finding.Status, finding.Reason)
+	if finding.Status != compatFallback || !strings.Contains(finding.Reason, "astral's own implementation") {
+		t.Fatalf("a lookup astral implements itself must be covered, got %q (%s)", finding.Status, finding.Reason)
 	}
 	if compatHasProblems(results) {
 		t.Fatalf("a covered lookup must not be a problem: %+v", results.Findings)

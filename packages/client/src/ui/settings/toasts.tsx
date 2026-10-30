@@ -60,8 +60,12 @@ function ToastsPage() {
 					subLabel={
 						<Discord.Slider
 							value={settings.get('toasts.maxOnScreen')}
+							minValue={0}
+							maxValue={10}
 							minimumValue={0}
 							maximumValue={10}
+							step={1}
+							onChange={(value: number) => settings.set('toasts.maxOnScreen', value)}
 							onValueChange={(value: number) =>
 								settings.set('toasts.maxOnScreen', value)
 							}
@@ -89,8 +93,12 @@ function ToastsPage() {
 					subLabel={
 						<Discord.Slider
 							value={settings.get('toasts.duration')}
+							minValue={0}
+							maxValue={10000}
 							minimumValue={0}
 							maximumValue={10000}
+							step={100}
+							onChange={(value: number) => settings.set('toasts.duration', value)}
 							onValueChange={(value: number) =>
 								settings.set('toasts.duration', value)
 							}

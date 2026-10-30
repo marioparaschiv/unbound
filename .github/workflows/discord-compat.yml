@@ -64,7 +64,7 @@ jobs:
             - name: Cache Discord builds
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
               with:
-                  path: ~/.cache/unbound-discord
+                  path: ~/.cache/astral-discord
                   key: discord-builds-${{ matrix.channel }}-${{ github.run_id }}
                   restore-keys: discord-builds-${{ matrix.channel }}-
 
@@ -107,7 +107,7 @@ jobs:
                   scan_args=(
                     --root ../..
                     --channel "$CHANNEL"
-                    --cache "$HOME/.cache/unbound-discord"
+                    --cache "$HOME/.cache/astral-discord"
                     --ios-sdk "$IOS_SDK"
                     --android-jar "$ANDROID_JAR"
                     --baseline baseline/compat.json
@@ -132,7 +132,7 @@ jobs:
               if: github.ref_name == github.event.repository.default_branch
               run: |
                   set -euo pipefail
-                  gh label create discord-compat --repo "$GITHUB_REPOSITORY" --color D93F0B --description "A Discord build breaks part of Unbound" --force >/dev/null
+                  gh label create discord-compat --repo "$GITHUB_REPOSITORY" --color D93F0B --description "A Discord build breaks part of astral" --force >/dev/null
                   go run ./tools compat-issue --repo "$GITHUB_REPOSITORY" --channel "$CHANNEL" --results compat.json --report report.md
 
             - name: Track the legacy names the oldest supported build no longer has

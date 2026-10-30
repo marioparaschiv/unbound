@@ -9,7 +9,7 @@
 
 int main()
 {
-    char        pattern[] = "/tmp/unbound-digest-XXXXXX";
+    char        pattern[] = "/tmp/astral-digest-XXXXXX";
     std::string directory = mkdtemp(pattern);
     std::string bundle    = loader::joinPath(directory, "index.js");
 

@@ -112,7 +112,7 @@ func TestPublishLoaderReleasesReadsChangelogFile(t *testing.T) {
 		fmt.Fprintf(writer, "{\"platform\":%q,\"version\":%q,\"url\":%q}", body.Platform, body.Version, body.URL)
 	}))
 	defer server.Close()
-	t.Setenv("UNBOUND_API_KEY", "ci-key")
+	t.Setenv("ASTRAL_API_KEY", "ci-key")
 
 	if err := runPublishLoaderReleases([]string{
 		"--api-url", server.URL + "/api/v1/loader/releases",
@@ -235,7 +235,7 @@ func TestPublishLoaderReleasesRejectsConfigurationAndAPIErrors(t *testing.T) {
 		iosURL:     "https://example.com/Unbound.deb",
 		androidURL: "https://example.com/Unbound.apk",
 	}
-	if _, err := publishLoaderReleases(context.Background(), config); err == nil || !strings.Contains(err.Error(), "UNBOUND_API_KEY") {
+	if _, err := publishLoaderReleases(context.Background(), config); err == nil || !strings.Contains(err.Error(), "ASTRAL_API_KEY") {
 		t.Fatalf("expected a missing-key error, got %v", err)
 	}
 

@@ -120,8 +120,8 @@ namespace {
             return false;
         }
         std::string location = name.substr(open + 1, name.size() - open - 2);
-        return location.rfind("unbound:", 0) != 0 && location.rfind("address at unbound", 0) != 0 &&
-               location != "unbound";
+        return location.rfind("astral:", 0) != 0 && location.rfind("address at astral", 0) != 0 &&
+               location != "astral";
     }
 
     bool isJavaScript(const nlohmann::json &frame)

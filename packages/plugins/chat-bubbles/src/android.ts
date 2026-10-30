@@ -1,5 +1,6 @@
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
+	NativeJavaBatchOperation,
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
 	NativeJavaReference,
@@ -46,6 +47,8 @@ type AndroidNative = {
 const MAX_TRACKED = 256;
 const MAX_ANCESTORS = 16;
 const VISIBLE = 0;
+const ICON_SPACING_DP = 4;
+const BUBBLE_LAYER_ID = 0x0b0b1e;
 const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
 
 /**
@@ -58,9 +61,13 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	const messageClass = java.getClass(AndroidClass.messageView);
 	const idField = messageIdField(java);
 	const contentClass = java.getClass(AndroidClass.content);
+	const textViewClass = java.getClass('android.widget.TextView');
+	const imageViewClass = java.getClass('android.widget.ImageView');
+	const layerDrawableClass = java.getClass('android.graphics.drawable.LayerDrawable');
 	const ours = java.createAssociationKey();
 	const original = java.createAssociationKey();
 	const tracked: NativeJavaReference[] = [];
+	const shiftedIcons: NativeJavaReference[] = [];
 	const pending: NativeJavaReference[] = [];
 	let scheduled = false;
 	let disposed = false;
@@ -154,16 +161,12 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		const shown = measured.filter(
 			(child) => child.visibility === VISIBLE && child.width > 0 && child.height > 0,
 		);
-		const only =
-			shown.length === 1 && isInstance(contentClass, shown[0]!.child) ? shown[0] : undefined;
-		const tightRight = only
-			? Math.min(only.right, only.left + (await textWidth(only.child, only.width)))
-			: undefined;
+		const rights = await Promise.all(shown.map(tightRight));
 		const area = union(
-			shown.map((child) => ({
+			shown.map((child, index) => ({
 				left: child.left,
 				top: child.top,
-				right: child === only ? tightRight! : child.right,
+				right: rights[index]!,
 				bottom: child.bottom,
 			})),
 		);
@@ -183,6 +186,52 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			right: area.right + x,
 			bottom: area.bottom + y,
 		};
+	}
+
+	type MeasuredChild = { child: NativeJavaReference; width: number; left: number; right: number };
+
+	async function tightRight(measured: MeasuredChild): Promise<number> {
+		if (isInstance(contentClass, measured.child)) {
+			return Math.min(
+				measured.right,
+				measured.left + (await textWidth(measured.child, measured.width)),
+			);
+		}
+
+		return (await footerRight(measured)) ?? measured.right;
+	}
+
+	async function footerRight(footer: MeasuredChild): Promise<number | undefined> {
+		const children = await directChildren(footer.child, 'android.view.View');
+
+		if (children.length !== 3) return;
+
+		const reads = await runOnMain(
+			java,
+			children.flatMap((child) => readCalls(child, ['getVisibility', 'getWidth'])),
+		);
+
+		if (reads.some((value, index) => index % 2 === 0 && javaNumber(value) !== VISIBLE)) return;
+
+		const [, label, icon] = children as [
+			NativeJavaReference,
+			NativeJavaReference,
+			NativeJavaReference,
+		];
+
+		if (!isInstance(textViewClass, label) || !isInstance(imageViewClass, icon)) return;
+
+		const labelWidth = javaNumber(reads[3]) ?? 0;
+		const spacing = ICON_SPACING_DP * (await displayDensity(java, icon));
+		const gap = Math.max(0, labelWidth - (await textWidth(label, labelWidth)) - spacing);
+
+		if (disposed) return;
+
+		if (!shiftedIcons.some((entry) => sameJavaReference(entry, icon))) shiftedIcons.push(icon);
+
+		await java.invokeAsync(icon, 'setTranslationX', [javaFloat(-gap)]);
+
+		return footer.right - gap;
 	}
 
 	async function isNested(row: NativeJavaReference): Promise<boolean> {
@@ -229,12 +278,50 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		]);
 	}
 
+	function restoreOperations(row: NativeJavaReference): NativeJavaBatchOperation[] {
+		const drawn = javaReference(java.getAssociatedObject(row, ours));
+
+		if (!drawn) return [];
+
+		const background = javaReference(java.getAssociatedObject(row, original));
+
+		java.setAssociatedObject(row, ours, { type: 'null' });
+
+		return [
+			{
+				op: 'invoke',
+				handle: row,
+				name: 'setBackground',
+				args: [background ?? { type: 'null', class: 'android.graphics.drawable.Drawable' }],
+			},
+		];
+	}
+
+	function unshiftOperation(icon: NativeJavaReference): NativeJavaBatchOperation {
+		return { op: 'invoke', handle: icon, name: 'setTranslationX', args: [javaFloat(0)] };
+	}
+
 	function messageId(row: NativeJavaReference): string | undefined {
 		try {
 			return javaText(java.getField(row, idField));
 		} catch {
 			return undefined;
 		}
+	}
+
+	async function isBubble(background: NativeJavaReference): Promise<boolean> {
+		if (!isInstance(layerDrawableClass, background)) return false;
+
+		const [layer] = await runOnMain(java, [
+			{
+				op: 'invoke',
+				handle: background,
+				name: 'findDrawableByLayerId',
+				args: [javaInt(BUBBLE_LAYER_ID)],
+			},
+		]);
+
+		return !!javaReference(layer);
 	}
 
 	async function place(row: NativeJavaReference) {
@@ -274,6 +361,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			{ type: 'array', componentType: 'android.graphics.drawable.Drawable', value: [shape] },
 		]);
 
+		java.invoke(bubble, 'setId', [javaInt(0), javaInt(BUBBLE_LAYER_ID)]);
 		java.invoke(bubble, 'setLayerInset', [
 			javaInt(0),
 			javaInt(insets.left),
@@ -286,7 +374,9 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		const drawn = javaReference(java.getAssociatedObject(row, ours));
 
 		if (!drawn || !current || !sameJavaReference(current, drawn)) {
-			java.setAssociatedObject(row, original, current ?? { type: 'null' });
+			const stale = current && (await isBubble(current));
+
+			java.setAssociatedObject(row, original, stale || !current ? { type: 'null' } : current);
 		}
 
 		if (disposed) return;
@@ -385,15 +475,16 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			pending.length = 0;
 			await flushing;
 
-			await Promise.all(
-				tracked.splice(0).map((row) =>
-					restore(row).catch((error) => {
-						if (!isCancellation(error)) {
-							console.error(`[${PLUGIN_NAME}] Failed to restore a row:`, error);
-						}
-					}),
-				),
-			);
+			try {
+				await runOnMain(java, [
+					...tracked.splice(0).flatMap(restoreOperations),
+					...shiftedIcons.splice(0).map(unshiftOperation),
+				]);
+			} catch (error) {
+				if (!isCancellation(error)) {
+					console.error(`[${PLUGIN_NAME}] Failed to restore the rows:`, error);
+				}
+			}
 		},
 	};
 }

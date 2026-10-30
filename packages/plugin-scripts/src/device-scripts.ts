@@ -127,6 +127,37 @@ export function developerModeScript(enabled: boolean): string {
 })()`;
 }
 
+/**
+ * @description Opens a plugin's settings panel in Unbound's custom settings screen, the way its card's cog does.
+ * @param id The plugin's id.
+ * @returns A script whose result is `opened`, or `none` when the plugin is not running or has no panel.
+ */
+export function settingsScreenScript(id: string): string {
+	return `(function () {
+	var entity = unbound.plugins.getEntity(${JSON.stringify(id)});
+	var instance = entity && entity.instance;
+	if (!instance || typeof instance.getSettingsPanel !== 'function') return 'none';
+	var navigation = unbound.metro.findByProps('getRootNavigationRef').getRootNavigationRef();
+	navigation.navigate('settings', {
+		screen: 'UNBOUND_CUSTOM',
+		params: { title: entity.data.name, render: function () { return instance.getSettingsPanel(); } },
+	});
+	return 'opened';
+})()`;
+}
+
+/**
+ * @description Leaves the screen the matrix opened, back to the chat.
+ * @returns A script whose result is `closed`.
+ */
+export function closeScreenScript(): string {
+	return `(function () {
+	var navigation = unbound.metro.findByProps('getRootNavigationRef').getRootNavigationRef();
+	if (navigation.canGoBack()) navigation.goBack();
+	return 'closed';
+})()`;
+}
+
 export const MATRIX_TOAST_MS = 300;
 
 /**

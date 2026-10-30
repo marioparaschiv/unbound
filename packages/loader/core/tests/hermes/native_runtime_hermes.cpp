@@ -12,7 +12,7 @@
 
 #include "LoaderBootstrap.h"
 #include "NativePluginRuntime.h"
-#if UNBOUND_TEST_FFI
+#if ASTRAL_TEST_FFI
 #include "NativeFFI.h"
 #endif
 
@@ -29,7 +29,7 @@ static void require(bool condition, const std::string &check)
 
 static std::optional<std::string> bootstrapScript(const std::string &name)
 {
-    std::ifstream file(std::string(UNBOUND_BOOTSTRAP_DIR) + "/" + name + ".js");
+    std::ifstream file(std::string(ASTRAL_BOOTSTRAP_DIR) + "/" + name + ".js");
     if (!file)
     {
         return std::nullopt;
@@ -68,7 +68,7 @@ static void installProbes(jsi::Runtime &runtime)
                size_t count) -> jsi::Value {
                 return count ? jsi::Value(rt, args[0]) : jsi::Value::undefined();
             });
-#if UNBOUND_TEST_FFI
+#if ASTRAL_TEST_FFI
     jsi::Object ffi(runtime);
     ffi.setProperty(runtime, "symbol",
                     loader::native::makeFunction(runtime, "symbol", 2,
@@ -128,7 +128,7 @@ static const char *const kRuntimeChecks = R"JS((function () {
 		var strlen = ffi.symbol('strlen');
 		check(strlen !== null && typeof strlen === 'object', 'ffi.symbol finds strlen');
 		check(Number(ffi.call(strlen, { returnType: 'u64', args: ['cstring'] }, 'hermes')) === 6, 'ffi.call runs strlen through libffi');
-		check(ffi.symbol('definitely_not_a_symbol_unbound') === null, 'a missing symbol is null');
+		check(ffi.symbol('definitely_not_a_symbol_astral') === null, 'a missing symbol is null');
 		check(caught(function () { ffi.call(strlen, { returnType: 'u64', args: ['cstring'] }); }) instanceof Error, 'a wrong argument count is refused');
 		check(caught(function () { ffi.call(strlen, { args: ['cstring'] }, 'x'); }) instanceof Error, 'a signature without a return type is refused');
 		check(caught(function () { ffi.call(strlen, { returnType: 'u64', args: ['not-a-type'] }, 'x'); }) instanceof Error, 'an unknown type is refused');
@@ -188,6 +188,6 @@ int main()
     runChecks(loader::native::NativeErrorDelivery::Envelope, "envelope delivery");
     freshRuntimesAdvanceTheGeneration();
     std::printf("native runtime: all checks passed on Hermes in both error deliveries%s\n",
-                UNBOUND_TEST_FFI ? ", FFI included" : "");
+                ASTRAL_TEST_FFI ? ", FFI included" : "");
     return 0;
 }

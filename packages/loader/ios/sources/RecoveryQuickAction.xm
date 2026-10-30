@@ -2,10 +2,10 @@
 
 #import "CoreBridge.h"
 #import "CoreConversions.h"
-#import "Unbound.h"
+#import "astral.h"
 
-using unbound::ios::toNSString;
-using unbound::ios::toStdString;
+using astral::ios::toNSString;
+using astral::ios::toStdString;
 
 static NSString *recoveryShortcutType(void)
 {
@@ -16,7 +16,7 @@ static NSString *recoveryShortcutType(void)
     return type;
 }
 
-static NSString *const kDiscordShortcutItemsKey = @"UnboundDiscordShortcutItems";
+static NSString *const kDiscordShortcutItemsKey = @"AstralDiscordShortcutItems";
 
 static NSDictionary *shortcutRecord(UIApplicationShortcutItem *item)
 {

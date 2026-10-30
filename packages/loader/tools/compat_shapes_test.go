@@ -370,7 +370,7 @@ func TestEvaluateCompatShapes(t *testing.T) {
 func TestScriptShapeExtraction(t *testing.T) {
 	set := scriptProgramReferences(t, map[string]string{
 		"packages/plugins-shared/src/native/android/discord-views.ts": `
-import { shapeField, shapeMethod } from '@unbound-plugins/shared/native/android/discord-shapes';
+import { shapeField, shapeMethod } from '@astral-plugins/shared/native/android/discord-shapes';
 
 export function messageBindMethod(java: NativeJavaBridge) {
 	return shapeMethod(java, 'messageBind');
@@ -385,8 +385,8 @@ export function viewByIdName(java: NativeJavaBridge, view: NativeJavaReference, 
 }
 `,
 		"packages/plugins/demo/src/android/index.ts": `
-import { fieldOf, viewByIdName } from '@unbound-plugins/shared/native/android/discord-views';
-import { hasShapeConstructor } from '@unbound-plugins/shared/native/android/discord-shapes';
+import { fieldOf, viewByIdName } from '@astral-plugins/shared/native/android/discord-views';
+import { hasShapeConstructor } from '@astral-plugins/shared/native/android/discord-shapes';
 
 const HEADER = 'header';
 
@@ -714,7 +714,7 @@ func TestEvaluateStructuralShapes(t *testing.T) {
 		Kind:      referenceJavaShape,
 		Name:      "surface",
 		Component: "loader-android",
-		Locations: []compatLocation{{File: "packages/loader/android/module/src/main/kotlin/app/unbound/android/ReactSurfaces.kt", Line: 48}},
+		Locations: []compatLocation{{File: "packages/loader/android/module/src/main/kotlin/app/astral/android/ReactSurfaces.kt", Line: 48}},
 	}}, []*compatTarget{legacy}, nil)
 	if compatBreakageError(results) != nil {
 		t.Fatal("a shape Discord does not need yet must not fail the release gate")
@@ -725,7 +725,7 @@ func TestEvaluateStructuralShapes(t *testing.T) {
 }
 
 func TestKotlinShapeExtraction(t *testing.T) {
-	source := `package app.unbound.android
+	source := `package app.astral.android
 
 object ReactSurfaces {
     fun pieces(shapes: DiscordShapes) = listOf(
@@ -741,7 +741,7 @@ object ReactSurfaces {
 }
 `
 	set := newCompatSourceSet()
-	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/unbound/android/ReactSurfaces.kt", component: "loader-android", platform: "android"}
+	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/astral/android/ReactSurfaces.kt", component: "loader-android", platform: "android"}
 	extractNativeReferences(set, file, source)
 
 	lines := map[string]int{}

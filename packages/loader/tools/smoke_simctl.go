@@ -19,7 +19,7 @@ import (
 
 const (
 	smokeIOSBundleID     = "com.hammerandchisel.discord"
-	smokeIOSLogPredicate = `subsystem == "app.unbound" OR subsystem == "com.facebook.react.log"`
+	smokeIOSLogPredicate = `subsystem == "app.astral" OR subsystem == "com.facebook.react.log"`
 )
 
 type iosSmokeTarget struct {
@@ -110,7 +110,7 @@ func (target *iosSmokeTarget) prepare(ctx context.Context, plugins []smokePlugin
 	if err != nil {
 		return err
 	}
-	documents := filepath.Join(strings.TrimSpace(container), "Documents", "Unbound")
+	documents := filepath.Join(strings.TrimSpace(container), "Documents", "astral")
 	if err := os.MkdirAll(filepath.Join(documents, "Plugins"), 0o755); err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (target *iosSmokeTarget) createDevice(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	created, err := target.simctl(ctx, 2*time.Minute, "create", "Unbound smoke", deviceType, runtime)
+	created, err := target.simctl(ctx, 2*time.Minute, "create", "astral smoke", deviceType, runtime)
 	if err != nil {
 		return err
 	}
@@ -267,7 +267,7 @@ func simulatorProcessListed(listing string, pid int) bool {
 }
 
 func (target *iosSmokeTarget) isLoaderLine(line string) bool {
-	return strings.Contains(line, "app.unbound")
+	return strings.Contains(line, "app.astral")
 }
 
 func (target *iosSmokeTarget) consoleEntry(line string) (smokeConsoleEntry, bool) {
@@ -285,7 +285,7 @@ func (target *iosSmokeTarget) collect(ctx context.Context, artifacts string) {
 	_, _ = target.simctl(ctx, time.Minute, "io", target.device, "screenshot", filepath.Join(artifacts, "screenshot.png"))
 	saveSmokeOutput(ctx, filepath.Join(artifacts, "ios-log-show.txt"), 2*time.Minute, "xcrun", "simctl", "spawn", target.device, "log", "show", "--last", "30m", "--info", "--style", "compact", "--predicate", smokeIOSLogPredicate)
 	if container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, smokeIOSBundleID, "data"); err == nil {
-		saveSmokeOutput(ctx, filepath.Join(artifacts, "settings-after.json"), time.Minute, "cat", filepath.Join(strings.TrimSpace(container), "Documents", "Unbound", "settings.json"))
+		saveSmokeOutput(ctx, filepath.Join(artifacts, "settings-after.json"), time.Minute, "cat", filepath.Join(strings.TrimSpace(container), "Documents", "astral", "settings.json"))
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {

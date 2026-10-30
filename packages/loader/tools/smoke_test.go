@@ -28,9 +28,9 @@ func writeSmokePlugin(t *testing.T, root, folder, manifest string, files ...stri
 
 func TestDiscoverSmokePluginsKeepsThePlatformsBuiltPlugins(t *testing.T) {
 	root := t.TempDir()
-	writeSmokePlugin(t, root, "view-raw", `{"id":"unbound.view-raw","main":"index.js"}`, "index.js")
-	writeSmokePlugin(t, root, "moyai", `{"id":"unbound.moyai","main":"index.js","platforms":["ios","android"]}`, "index.js")
-	writeSmokePlugin(t, root, "ios-only", `{"id":"unbound.ios-only","main":"index.js","platforms":["ios"]}`, "index.js")
+	writeSmokePlugin(t, root, "view-raw", `{"id":"astral.view-raw","main":"index.js"}`, "index.js")
+	writeSmokePlugin(t, root, "moyai", `{"id":"astral.moyai","main":"index.js","platforms":["ios","android"]}`, "index.js")
+	writeSmokePlugin(t, root, "ios-only", `{"id":"astral.ios-only","main":"index.js","platforms":["ios"]}`, "index.js")
 	if err := os.MkdirAll(filepath.Join(root, "shared", "src"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -45,14 +45,14 @@ func TestDiscoverSmokePluginsKeepsThePlatformsBuiltPlugins(t *testing.T) {
 			t.Fatalf("%s must copy its built files, got %v", plugin.id, plugin.files)
 		}
 	}
-	if !reflect.DeepEqual(ids, []string{"unbound.moyai", "unbound.view-raw"}) {
+	if !reflect.DeepEqual(ids, []string{"astral.moyai", "astral.view-raw"}) {
 		t.Fatalf("unexpected Android plugins %v", ids)
 	}
 }
 
 func TestDiscoverSmokePluginsRejectsUnbuiltPlugins(t *testing.T) {
 	root := t.TempDir()
-	writeSmokePlugin(t, root, "view-raw", `{"id":"unbound.view-raw","main":"index.js"}`)
+	writeSmokePlugin(t, root, "view-raw", `{"id":"astral.view-raw","main":"index.js"}`)
 	if _, err := discoverSmokePlugins(root, "ios"); err == nil || !strings.Contains(err.Error(), "not built") {
 		t.Fatalf("a plugin without its bundle must be rejected, got %v", err)
 	}
@@ -66,7 +66,7 @@ func TestDiscoverSmokePluginsRejectsUnbuiltPlugins(t *testing.T) {
 }
 
 func TestSmokeSettingsEnableEveryPluginAndTheDebugger(t *testing.T) {
-	data, err := smokeSettings([]smokePlugin{{id: "unbound.moyai"}, {id: "unbound.view-raw"}}, "10.0.2.2:9090", "http://10.0.2.2:3000/")
+	data, err := smokeSettings([]smokePlugin{{id: "astral.moyai"}, {id: "astral.view-raw"}}, "10.0.2.2:9090", "http://10.0.2.2:3000/")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,11 +75,11 @@ func TestSmokeSettingsEnableEveryPluginAndTheDebugger(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected := map[string]any{
-		"unbound": map[string]any{
+		"astral": map[string]any{
 			"debugger": map[string]any{"enabled": true, "address": "10.0.2.2:9090"},
 			"loader":   map[string]any{"update": map[string]any{"url": "http://10.0.2.2:3000/"}},
 		},
-		"plugins": map[string]any{"states": map[string]any{"unbound.moyai": true, "unbound.view-raw": true}},
+		"plugins": map[string]any{"states": map[string]any{"astral.moyai": true, "astral.view-raw": true}},
 	}
 	if !reflect.DeepEqual(settings, expected) {
 		t.Fatalf("unexpected settings %s", data)
@@ -96,23 +96,23 @@ func TestSmokeSettingsEnableEveryPluginAndTheDebugger(t *testing.T) {
 func TestSmokeLogWatcherReadsLogcat(t *testing.T) {
 	watcher := newSmokeLogWatcher(&androidSmokeTarget{})
 	for _, line := range []string{
-		"10-26 21:00:00.000  4242  4242 I Unbound : [plugins] Loaded unbound.moyai from /data/user/0/com.discord/files/Unbound/Plugins/unbound.moyai/index.js.",
-		"10-26 21:00:00.001  4242  4242 I SomeoneElse: Loaded unbound.view-raw from somewhere",
-		"10-26 21:00:00.002  4242  4242 I Unbound : [plugins] Loaded 1 plugin.",
-		"10-26 21:00:01.000  4242  4300 E ReactNativeJS: [Unbound] [Plugins] Failed to start addon unbound.moyai: TypeError: undefined is not a function",
+		"10-26 21:00:00.000  4242  4242 I astral : [plugins] Loaded astral.moyai from /data/user/0/com.discord/files/astral/Plugins/astral.moyai/index.js.",
+		"10-26 21:00:00.001  4242  4242 I SomeoneElse: Loaded astral.view-raw from somewhere",
+		"10-26 21:00:00.002  4242  4242 I astral : [plugins] Loaded 1 plugin.",
+		"10-26 21:00:01.000  4242  4300 E ReactNativeJS: [astral] [Plugins] Failed to start addon astral.moyai: TypeError: undefined is not a function",
 	} {
 		watcher.observe(line)
 	}
-	plugins := []smokePlugin{{id: "unbound.moyai"}}
+	plugins := []smokePlugin{{id: "astral.moyai"}}
 	if !watcher.loadedAll(plugins) {
 		t.Fatal("the loader line must count as loaded")
 	}
-	if watcher.loadedAll([]smokePlugin{{id: "unbound.moyai"}, {id: "unbound.view-raw"}}) {
+	if watcher.loadedAll([]smokePlugin{{id: "astral.moyai"}, {id: "astral.view-raw"}}) {
 		t.Fatal("only the loader's own log lines count")
 	}
 	result := &smokeResult{loaded: map[string]bool{}, failures: map[string][]string{}}
 	watcher.snapshot(result)
-	if result.count != 1 || len(result.failures["unbound.moyai"]) != 1 {
+	if result.count != 1 || len(result.failures["astral.moyai"]) != 1 {
 		t.Fatalf("unexpected watcher state %+v", result)
 	}
 	if watcher.crashed() {
@@ -122,9 +122,9 @@ func TestSmokeLogWatcherReadsLogcat(t *testing.T) {
 
 func TestSmokeLogWatcherReadsTheUnifiedLog(t *testing.T) {
 	watcher := newSmokeLogWatcher(&iosSmokeTarget{})
-	watcher.observe("2026-10-26 21:00:00.000 I  Discord[4242:1a2b] [app.unbound:plugins] Loaded unbound.view-raw from /Users/runner/Library/Developer/CoreSimulator/Devices/X/data/Containers/Data/Application/Y/Documents/Unbound/Plugins/unbound.view-raw/index.js.")
-	watcher.observe("2026-10-26 21:00:00.001 I  Discord[4242:1a2b] [app.unbound:plugins] Loaded 1 plugin.")
-	if !watcher.loadedAll([]smokePlugin{{id: "unbound.view-raw"}}) {
+	watcher.observe("2026-10-26 21:00:00.000 I  Discord[4242:1a2b] [app.astral:plugins] Loaded astral.view-raw from /Users/runner/Library/Developer/CoreSimulator/Devices/X/data/Containers/Data/Application/Y/Documents/astral/Plugins/astral.view-raw/index.js.")
+	watcher.observe("2026-10-26 21:00:00.001 I  Discord[4242:1a2b] [app.astral:plugins] Loaded 1 plugin.")
+	if !watcher.loadedAll([]smokePlugin{{id: "astral.view-raw"}}) {
 		t.Fatal("the unified log line must count as loaded")
 	}
 }
@@ -136,7 +136,7 @@ func TestAndroidSmokeRecognisesDiscordCrashes(t *testing.T) {
 		"10-26 21:00:00.000  4242  4242 F libc    : Fatal signal 11 (SIGSEGV), code 1, tid 4242 (com.discord), pid 4242 (com.discord)": true,
 		"10-26 21:00:00.000   600   700 I ActivityManager: Process com.discord (pid 4242) has died: fg  TOP":                           true,
 		"10-26 21:00:00.000  1111  1111 F libc    : Fatal signal 6 (SIGABRT), code -1, tid 1111 (other.app), pid 1111 (other.app)":     false,
-		"10-26 21:00:00.000  4242  4242 I Unbound : [plugins] Loaded 3 plugins.":                                                       false,
+		"10-26 21:00:00.000  4242  4242 I astral : [plugins] Loaded 3 plugins.":                                                        false,
 	} {
 		if target.isCrashLine(line) != crash {
 			t.Errorf("isCrashLine(%q) = %v", line, !crash)
@@ -145,14 +145,14 @@ func TestAndroidSmokeRecognisesDiscordCrashes(t *testing.T) {
 }
 
 func TestParseSmokeEvalOutput(t *testing.T) {
-	statuses, err := parseSmokeEvalOutput([]byte(`{"type":"eval-result","id":"1","ok":true,"value":"[{\"id\":\"unbound.moyai\",\"started\":true,\"failed\":false,\"error\":\"\"}]"}`+"\n"), nil)
+	statuses, err := parseSmokeEvalOutput([]byte(`{"type":"eval-result","id":"1","ok":true,"value":"[{\"id\":\"astral.moyai\",\"started\":true,\"failed\":false,\"error\":\"\"}]"}`+"\n"), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(statuses, []smokePluginStatus{{ID: "unbound.moyai", Started: true}}) {
+	if !reflect.DeepEqual(statuses, []smokePluginStatus{{ID: "astral.moyai", Started: true}}) {
 		t.Fatalf("unexpected statuses %+v", statuses)
 	}
-	if _, err := parseSmokeEvalOutput([]byte(`{"type":"eval-result","id":"1","ok":false,"error":"ReferenceError: unbound is not defined"}`), errors.New("exit status 1")); err == nil || !strings.Contains(err.Error(), "unbound is not defined") {
+	if _, err := parseSmokeEvalOutput([]byte(`{"type":"eval-result","id":"1","ok":false,"error":"ReferenceError: astral is not defined"}`), errors.New("exit status 1")); err == nil || !strings.Contains(err.Error(), "astral is not defined") {
 		t.Fatalf("a device-side error must be reported, got %v", err)
 	}
 	if _, err := parseSmokeEvalOutput([]byte("bridge exploded"), errors.New("exit status 1")); err == nil || !strings.Contains(err.Error(), "bridge exploded") {
@@ -161,35 +161,35 @@ func TestParseSmokeEvalOutput(t *testing.T) {
 }
 
 func TestSmokeProblemsRequireEveryPluginLoadedAndStarted(t *testing.T) {
-	plugins := []smokePlugin{{id: "unbound.moyai"}, {id: "unbound.view-raw"}, {id: "unbound.translate"}}
+	plugins := []smokePlugin{{id: "astral.moyai"}, {id: "astral.view-raw"}, {id: "astral.translate"}}
 	result := &smokeResult{
 		plugins:  plugins,
-		loaded:   map[string]bool{"unbound.moyai": true, "unbound.view-raw": true},
+		loaded:   map[string]bool{"astral.moyai": true, "astral.view-raw": true},
 		count:    2,
-		failures: map[string][]string{"unbound.view-raw": {"Failed to start addon unbound.view-raw: boom"}},
+		failures: map[string][]string{"astral.view-raw": {"Failed to start addon astral.view-raw: boom"}},
 		statuses: []smokePluginStatus{
-			{ID: "unbound.moyai", Started: true},
-			{ID: "unbound.view-raw", Failed: true, Error: "boom"},
+			{ID: "astral.moyai", Started: true},
+			{ID: "astral.view-raw", Failed: true, Error: "boom"},
 		},
 	}
 	problems := smokeProblems(result)
 	for _, expected := range []string{
-		"the loader never logged Loaded unbound.translate",
+		"the loader never logged Loaded astral.translate",
 		"the loader reported 2 plugins, expected 3",
-		"unbound.view-raw failed to start: Failed to start addon unbound.view-raw: boom",
-		"unbound.view-raw is not started: boom",
-		"the client does not know unbound.translate",
+		"astral.view-raw failed to start: Failed to start addon astral.view-raw: boom",
+		"astral.view-raw is not started: boom",
+		"the client does not know astral.translate",
 	} {
 		if !strings.Contains(strings.Join(problems, "\n"), expected) {
 			t.Errorf("problems are missing %q: %v", expected, problems)
 		}
 	}
-	if strings.Contains(strings.Join(problems, "\n"), "unbound.moyai") {
+	if strings.Contains(strings.Join(problems, "\n"), "astral.moyai") {
 		t.Fatalf("a started plugin is not a problem: %v", problems)
 	}
 	result.problems = problems
 	report := renderSmokeReport(result)
-	for _, expected := range []string{"## ", "| `unbound.moyai` | yes | started |", "| `unbound.translate` | no | unknown to the client |"} {
+	for _, expected := range []string{"## ", "| `astral.moyai` | yes | started |", "| `astral.translate` | no | unknown to the client |"} {
 		if !strings.Contains(report, expected) {
 			t.Fatalf("the report is missing %q:\n%s", expected, report)
 		}
@@ -197,14 +197,14 @@ func TestSmokeProblemsRequireEveryPluginLoadedAndStarted(t *testing.T) {
 }
 
 func TestSmokeProblemsPassACleanRun(t *testing.T) {
-	plugins := []smokePlugin{{id: "unbound.moyai"}}
+	plugins := []smokePlugin{{id: "astral.moyai"}}
 	result := &smokeResult{
 		platform: "android",
 		plugins:  plugins,
-		loaded:   map[string]bool{"unbound.moyai": true},
+		loaded:   map[string]bool{"astral.moyai": true},
 		count:    1,
 		failures: map[string][]string{},
-		statuses: []smokePluginStatus{{ID: "unbound.moyai", Started: true}},
+		statuses: []smokePluginStatus{{ID: "astral.moyai", Started: true}},
 	}
 	if problems := smokeProblems(result); len(problems) != 0 {
 		t.Fatalf("a clean run has no problems, got %v", problems)
@@ -307,12 +307,12 @@ func TestSmokeTestsSkipUnsupportedDiscordBuilds(t *testing.T) {
 
 func TestSmokeLogWatcherForgetsAFirstLaunchCrash(t *testing.T) {
 	watcher := newSmokeLogWatcher(&androidSmokeTarget{})
-	watcher.observe("10-26 21:00:00.000  4242  4242 I Unbound : [plugins] Loaded unbound.moyai from /x.")
+	watcher.observe("10-26 21:00:00.000  4242  4242 I astral : [plugins] Loaded astral.moyai from /x.")
 	watcher.observe("10-26 21:00:00.001   600   700 I ActivityManager: Process com.discord (pid 4242) has died: fg  TOP")
 	if crash := watcher.takeCrashBeforeLoads(); !strings.Contains(crash, "has died") {
 		t.Fatalf("the first crash must be handed over, got %q", crash)
 	}
-	if watcher.crashed() || watcher.loadedAll([]smokePlugin{{id: "unbound.moyai"}}) {
+	if watcher.crashed() || watcher.loadedAll([]smokePlugin{{id: "astral.moyai"}}) {
 		t.Fatal("a relaunch must start from a clean slate")
 	}
 	if crash := watcher.takeCrashBeforeLoads(); crash != "" {
@@ -329,7 +329,7 @@ func TestParseSmokeEvalOutputMarksTimeoutsAsRetryable(t *testing.T) {
 	if !errors.Is(err, errSmokeEvalTimedOut) {
 		t.Fatalf("a timed-out evaluation must be retryable, got %v", err)
 	}
-	_, err = parseSmokeEvalOutput([]byte(`{"type":"eval-result","id":"1","ok":false,"error":"ReferenceError: unbound is not defined"}`+"\n"), nil)
+	_, err = parseSmokeEvalOutput([]byte(`{"type":"eval-result","id":"1","ok":false,"error":"ReferenceError: astral is not defined"}`+"\n"), nil)
 	if err == nil || errors.Is(err, errSmokeEvalTimedOut) || !strings.Contains(err.Error(), "threw on the device") {
 		t.Fatalf("an evaluation that threw must fail at once, got %v", err)
 	}

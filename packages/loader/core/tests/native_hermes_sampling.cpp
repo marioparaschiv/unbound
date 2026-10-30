@@ -34,7 +34,7 @@ int main()
           {"2", {{"name", "sleepInNative(:1:50)"}, {"category", "JavaScript"}, {"parent", "1"}}},
           {"3", {{"name", "invoke"}, {"category", "JavaScript"}, {"parent", "2"}}},
           {"4",
-           {{"name", "(unbound:native-failure-guard:7:31)"},
+           {{"name", "(astral:native-failure-guard:7:31)"},
             {"category", "JavaScript"},
             {"parent", "3"}}},
           {"5", {{"name", "[Native] invoke"}, {"category", "Native"}, {"parent", "4"}}}}},

@@ -33,7 +33,7 @@ const (
 var bundleKeyNames = []string{bundleSigningKeyName, pullRequestBundleSigningKeyName}
 
 func pullRequestSigningContext(number uint64) string {
-	return "unbound-pr-bundle/v1/" + strconv.FormatUint(number, 10) + "/"
+	return "astral-pr-bundle/v1/" + strconv.FormatUint(number, 10) + "/"
 }
 
 func signedMessage(contents []byte, pullRequest uint64) []byte {

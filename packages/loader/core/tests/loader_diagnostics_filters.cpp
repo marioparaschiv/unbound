@@ -23,7 +23,7 @@ static void checkKnownCodes()
     assert(isIgnoredError(error("com.apple.Gestures", 4)));
     assert(isIgnoredError(error("NSPOSIXErrorDomain", 57)));
     assert(!isIgnoredError(error("NSPOSIXErrorDomain", 1)));
-    assert(!isIgnoredError(error("app.unbound", 1)));
+    assert(!isIgnoredError(error("app.astral", 1)));
     assert(!isIgnoredError(error("", 0)));
 }
 

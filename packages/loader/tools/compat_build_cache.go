@@ -41,13 +41,13 @@ type compatBuilds struct {
 var unsafeCacheName = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
 func defaultCompatCache() string {
-	if directory := os.Getenv("UNBOUND_DISCORD_CACHE"); directory != "" {
+	if directory := os.Getenv("ASTRAL_DISCORD_CACHE"); directory != "" {
 		return directory
 	}
 	if directory, err := os.UserCacheDir(); err == nil {
-		return filepath.Join(directory, "unbound", "discord")
+		return filepath.Join(directory, "astral", "discord")
 	}
-	return filepath.Join(os.TempDir(), "unbound-discord")
+	return filepath.Join(os.TempDir(), "astral-discord")
 }
 
 func iosSourceForChannel(channel string) string {

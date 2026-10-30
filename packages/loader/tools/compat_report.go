@@ -222,7 +222,7 @@ func compatSupportSummary(results *compatResults) string {
 	}
 	summary := "Oldest supported Discord: " + strings.Join(minimums, ", ") + "."
 	if len(older) > 0 {
-		summary += " **" + strings.Join(older, " and ") + " is older than Unbound supports.**"
+		summary += " **" + strings.Join(older, " and ") + " is older than astral supports.**"
 	}
 	return summary
 }
@@ -249,7 +249,7 @@ func renderCompatReportWithSource(results *compatResults, sourceURL string) stri
 		builder.WriteString(summary + "\n\n")
 	}
 	if warnings := compatLines(results.Findings, compatWarning, sourceURL); len(warnings) > 0 {
-		builder.WriteString("### Warnings\n\nThese do not break Unbound or block a release. Add the version to `hermes.json` once hermesc can build it.\n\n")
+		builder.WriteString("### Warnings\n\nThese do not break astral or block a release. Add the version to `hermes.json` once hermesc can build it.\n\n")
 		for _, line := range warnings {
 			builder.WriteString(line.text + "\n")
 		}

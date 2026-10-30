@@ -165,7 +165,7 @@ static void exemptSourcesSkipTheChecks()
     server.publish(kBase, kCurrent, {{kBundle, "current"}});
     assert(server.install(updater, std::nullopt));
     server.publish(kBase, kOlder, {{kBundle, "unsigned"}}, Signer{&bundle_test::foreignKey()});
-    server.settings.set("unbound", "loader.update.unsigned", true);
+    server.settings.set("astral", "loader.update.unsigned", true);
     assert(server.install(updater, std::nullopt));
     assert(server.activeContents() == "unsigned");
     assert(trustRecord(server.active())["exemption"] == "unsigned");
@@ -187,7 +187,7 @@ static void bindsPullRequestBuildsToTheirNumber()
         };
 
         assert(accepts("pr 5", Signer{&bundle_test::pullRequestKey(), 5}) == (build == 5));
-        assert(!accepts("unbound pr key", Signer{&bundle_test::pullRequestKey(), 0}));
+        assert(!accepts("astral pr key", Signer{&bundle_test::pullRequestKey(), 0}));
         assert(!accepts("production key with context", Signer{&bundle_test::productionKey(), 5}));
         assert(accepts("production", Signer{}));
     }
@@ -241,10 +241,10 @@ static void reverifiesCandidatesBeforeRunningAndPromoting()
     assert(!loader::fileExists(server.candidate()));
     assert(server.activeContents() == "current");
 
-    server.settings.set("unbound", "loader.update.unsigned", true);
+    server.settings.set("astral", "loader.update.unsigned", true);
     server.files[kBase + kBundle] = "unsigned";
     assert(server.download(updater, std::nullopt));
-    server.settings.set("unbound", "loader.update.unsigned", false);
+    server.settings.set("astral", "loader.update.unsigned", false);
     assert(updater.resolveBundlePath() == server.active());
     assert(!loader::fileExists(server.candidate()));
 }
@@ -267,7 +267,7 @@ static void replacesAPreSigningActiveBundle()
     assert(loader::writeTextFileAtomically(server.active(), "pre-signing"));
     server.publish(kBase, kCurrent, {{kBundle, "verified"}});
     std::string etag = "\"" + loader::sha512Hex("verified").substr(0, 16) + "\"";
-    server.settings.set("unbound", "loader.update.etag", etag);
+    server.settings.set("astral", "loader.update.etag", etag);
 
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     assert(updater.resolveBundlePath() == server.active());

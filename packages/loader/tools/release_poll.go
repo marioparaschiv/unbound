@@ -20,7 +20,7 @@ const (
 	defaultItunesLookupURL  = "https://itunes.apple.com/lookup"
 	defaultAndroidTracker   = "https://tracker.vendetta.rocks/tracker"
 	defaultGithubAPI        = "https://api.github.com"
-	releasePollUserAgent    = "unbound-loader-release-poll/1.0"
+	releasePollUserAgent    = "astral-loader-release-poll/1.0"
 	releasePollRequestLimit = 45 * time.Second
 )
 

@@ -20,6 +20,19 @@ describe('codeBlockLayout', () => {
 		expect(layout.height).toBe(50 + layout.contentHeight);
 	});
 
+	test('wraps a line only when it does not fit beside the line numbers', () => {
+		const code = [
+			'const answer: number = 42;',
+			'function double(value: number) {',
+			'    return value * 2;',
+			'}',
+		].join('\n');
+
+		expect(codeBlockLayout(code, 291, 'wrap').contentHeight).toBe(
+			Math.ceil(2 + 4 * CODE_LINE_HEIGHT),
+		);
+	});
+
 	test('caps the card height and leaves the overflow to scroll', () => {
 		const code = Array.from({ length: 36 }, (_, index) => `print(${index + 1})`).join('\n');
 		const layout = codeBlockLayout(code, 240, 'wrap');

@@ -59,28 +59,28 @@ int main()
     manifest = R"({"bytecodeVersions":[98]})";
 
     std::string initial = updater.resolveBundlePath();
-    assert(initial == (root / "unbound.bundle").string());
+    assert(initial == (root / "astral.bundle").string());
 
     std::string candidate = updater.downloadBundle(initial, std::nullopt, 98);
-    assert(candidate == (root / "unbound.bundle.candidate").string());
+    assert(candidate == (root / "astral.bundle.candidate").string());
     assert(requestedHeaders.empty());
     assert(updater.resolveBundlePath() == candidate);
 
     assert(updater.markBundleAttempted(candidate));
     assert(updater.acceptBundle(candidate));
-    assert(loader::fileExists((root / "unbound.bundle").string()));
+    assert(loader::fileExists((root / "astral.bundle").string()));
     assert(!loader::fileExists(candidate));
-    assert(settings.getString("unbound", "loader.update.etag", "") == "\"etag-1\"");
+    assert(settings.getString("astral", "loader.update.etag", "") == "\"etag-1\"");
 
     nextStatus            = 304;
     std::string unchanged = updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98);
-    assert(unchanged == (root / "unbound.bundle").string());
+    assert(unchanged == (root / "astral.bundle").string());
     assert(requestedHeaders.at("If-None-Match") == "\"etag-1\"");
 
     nextStatus         = 200;
     std::string second = updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98);
     assert(updater.markBundleAttempted(second));
-    assert(updater.resolveBundlePath() == (root / "unbound.bundle").string());
+    assert(updater.resolveBundlePath() == (root / "astral.bundle").string());
     assert(!loader::fileExists(second));
 
     nextStatus    = 500;
@@ -94,7 +94,7 @@ int main()
         rejected = true;
     }
     assert(rejected);
-    assert(!loader::fileExists((root / "unbound.bundle.candidate").string()));
+    assert(!loader::fileExists((root / "astral.bundle.candidate").string()));
     assert(loader::isAcceptedDownloadStatus(200) && loader::isAcceptedDownloadStatus(304));
     assert(!loader::isAcceptedDownloadStatus(404));
 

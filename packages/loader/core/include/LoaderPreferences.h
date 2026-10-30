@@ -8,10 +8,10 @@
 #include "LoaderSettings.h"
 
 namespace loader::preferences {
-constexpr const char *kStore         = "unbound";
+constexpr const char *kStore         = "astral";
 constexpr const char *kThemesStore   = "themes";
 constexpr const char *kSettingsFile  = "settings.json";
-constexpr const char *kDocumentsName = "Unbound";
+constexpr const char *kDocumentsName = "astral";
 
 enum class ToolboxGesture
 {

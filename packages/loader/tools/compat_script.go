@@ -1845,8 +1845,8 @@ func (program *scriptProgram) resolveModule(file *scriptFile, specifier string) 
 		base = path.Join(file.srcRoot, strings.TrimPrefix(specifier, "~/"))
 	case strings.HasPrefix(specifier, "./") || strings.HasPrefix(specifier, "../"):
 		base = path.Join(path.Dir(file.source.path), specifier)
-	case strings.HasPrefix(specifier, "@unbound-plugins/shared/"):
-		base = path.Join("packages/plugins-shared/src", strings.TrimPrefix(specifier, "@unbound-plugins/shared/"))
+	case strings.HasPrefix(specifier, "@astral-plugins/shared/"):
+		base = path.Join("packages/plugins-shared/src", strings.TrimPrefix(specifier, "@astral-plugins/shared/"))
 	default:
 		return nil
 	}

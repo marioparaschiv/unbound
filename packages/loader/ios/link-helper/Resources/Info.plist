@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>Unbound</string>
+	<string>astral</string>
 	<key>CFBundleExecutable</key>
-	<string>UnboundLink</string>
+	<string>AstralLink</string>
 	<key>CFBundleIdentifier</key>
-	<string>app.unbound.link</string>
+	<string>app.astral.link</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>UnboundLink</string>
+	<string>AstralLink</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -27,7 +27,7 @@
 			<string>app.unbound.rip</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>unbound</string>
+				<string>astral</string>
 			</array>
 		</dict>
 	</array>

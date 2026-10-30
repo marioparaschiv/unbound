@@ -84,7 +84,7 @@ jobs:
             deb_filename: ${{ steps.set-deb-filename.outputs.filename }}
         env:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
+            ASTRAL_PR_NUMBER: ${{ inputs.pr_number || '' }}
             HOMEBREW_NO_AUTO_UPDATE: 1
             HOMEBREW_NO_INSTALL_CLEANUP: 1
 
@@ -157,7 +157,7 @@ jobs:
                   CDN_URL: ${{ vars.CDN_URL }}
               run: |
                   if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then
-                    echo "UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
+                    echo "ASTRAL_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
                   fi
 
             - name: Build package
@@ -168,7 +168,7 @@ jobs:
                   set -euo pipefail
                   mkdir -p symbols
                   for architecture in arm64 arm64e; do
-                    binary="ios/.theos/obj/${architecture}/Unbound.dylib"
+                    binary="ios/.theos/obj/${architecture}/astral.dylib"
                     bundle="${binary}.dSYM"
                     test -f "$binary"
                     test -d "$bundle"
@@ -176,7 +176,7 @@ jobs:
                     symbols_uuid=$(dwarfdump --uuid "$bundle" | awk '{print $2}')
                     test -n "$binary_uuid"
                     test "$binary_uuid" = "$symbols_uuid"
-                    cp -R "$bundle" "symbols/${architecture}-Unbound.dylib.dSYM"
+                    cp -R "$bundle" "symbols/${architecture}-astral.dylib.dSYM"
                     printf '%s %s\n' "$architecture" "$binary_uuid" >> symbols/uuids.txt
                   done
                   test -s symbols/uuids.txt
@@ -402,7 +402,7 @@ jobs:
         needs: build-ipa
         env:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
+            ASTRAL_PR_NUMBER: ${{ inputs.pr_number || '' }}
         outputs:
             simulator_url: ${{ steps.upload-simulator.outputs.artifact-url }}
             simulator_filename: ${{ steps.set-simulator-filename.outputs.filename }}
@@ -433,25 +433,25 @@ jobs:
                   restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
 
             - name: Build simulator
-              run: go run ./tools build simulator --ipa "${APP_NAME}.ipa" --output unbound-ios-simulator.zip --configuration release --non-interactive
+              run: go run ./tools build simulator --ipa "${APP_NAME}.ipa" --output astral-ios-simulator.zip --configuration release --non-interactive
 
             - name: Upload iOS Simulator artifact
               id: upload-simulator
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: ios-simulator
-                  path: packages/loader/unbound-ios-simulator.zip
+                  path: packages/loader/astral-ios-simulator.zip
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
             - name: Attest iOS Simulator artifact
               if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
               uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
               with:
-                  subject-path: packages/loader/unbound-ios-simulator.zip
+                  subject-path: packages/loader/astral-ios-simulator.zip
 
             - name: Set simulator filename
               id: set-simulator-filename
-              run: echo "filename=unbound-ios-simulator.zip" >> "$GITHUB_OUTPUT"
+              run: echo "filename=astral-ios-simulator.zip" >> "$GITHUB_OUTPUT"
 
     smoke-simulator:
         name: Smoke test the simulator build
@@ -495,7 +495,7 @@ jobs:
               id: app
               run: |
                   set -euo pipefail
-                  unzip -q smoke/package/unbound-ios-simulator.zip -d smoke/app
+                  unzip -q smoke/package/astral-ios-simulator.zip -d smoke/app
                   app=$(find smoke/app -maxdepth 2 -type d -name Discord.app -print -quit)
                   test -n "$app"
                   echo "path=$app" >> "$GITHUB_OUTPUT"

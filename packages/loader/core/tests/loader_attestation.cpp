@@ -20,7 +20,7 @@ static constexpr size_t      kSection      = 512;
 static constexpr size_t      kSignature    = 1024;
 static constexpr size_t      kSignatureLen = 64;
 static constexpr const char *kGoELFCanonicalDigest =
-    "29d2713b315ef31b19e1cebfa5f0b4c5b9a793b91b2df7e62f51437009b61c17";
+    "303a7625ce34a3f8983e39bdd812d81f8d16d037fc085aa88479d00b5f656309";
 static constexpr const char *kGoCanonicalDigest =
     "fc022ffc817e367f6293adf91242fbe729532a55fec2c0d5455d7e6b7628fe48";
 
@@ -274,7 +274,7 @@ static std::string attestedELF()
     putLittle(data, 60, 3, 2);
     putLittle(data, 62, 2, 2);
 
-    const char names[] = "\0.unbound.attestation\0.shstrtab";
+    const char names[] = "\0.astral.attestation\0.shstrtab";
     data.replace(400, sizeof(names), names, sizeof(names));
     putLittle(data, 512 + 64, 1, 4);
     putLittle(data, 512 + 64 + 24, 128, 8);

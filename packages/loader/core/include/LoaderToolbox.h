@@ -59,7 +59,7 @@ struct MenuSection {
 struct MenuOptions {
     bool openAppFolder     = false;
     bool copyAppFolderPath = false;
-    bool unboundIcon       = false;
+    bool astralIcon        = false;
 };
 
 struct IssueReport {
@@ -73,7 +73,7 @@ struct IssueFacts {
     std::string device;
     std::string osVersion;
     std::string discordVersion;
-    std::string unboundVersion;
+    std::string astralVersion;
     std::string appSource;
     std::string registration;
     bool        virtualDevice = false;
@@ -114,8 +114,8 @@ struct RecoveryToggle {
 };
 
 constexpr const char *kIssueRepository        = "marioparaschiv/unbound";
-constexpr const char *kRecoveryShortcutAction = "app.unbound.recovery.toggle";
-constexpr const char *kToolboxTitle           = "Unbound Toolbox";
+constexpr const char *kRecoveryShortcutAction = "app.astral.recovery.toggle";
+constexpr const char *kToolboxTitle           = "astral Toolbox";
 constexpr const char *kCloseText              = "Close";
 constexpr const char *kConfirmText            = "Confirm";
 constexpr const char *kCancelText             = "Cancel";

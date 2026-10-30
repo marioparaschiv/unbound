@@ -28,12 +28,12 @@ var (
 	smokePluginID         = regexp.MustCompile(`^[\w.-]+$`)
 	smokeLoadedCount      = regexp.MustCompile(`Loaded (\d+) plugins?\.`)
 	smokeAddonFailure     = regexp.MustCompile(`Failed to (?:start|load) addon ([\w.-]+)`)
-	smokeBundleExecuted   = "Unbound's bundle was successfully executed."
+	smokeBundleExecuted   = "astral's bundle was successfully executed."
 	smokeRuntimeCreated   = "Metro module capture "
 	errSmokeNotConnected  = errors.New("no device is connected to the debugger bridge")
 	errSmokeEvalTimedOut  = errors.New("the debugger evaluation timed out")
 	smokeStatusExpression = `(function () {
-	var manager = unbound.plugins;
+	var manager = astral.plugins;
 	var entities = manager.getEntities();
 	var statuses = [];
 	for (var index = 0; index < entities.length; index++) {
@@ -150,7 +150,7 @@ func registerSmokeFlags(set *flag.FlagSet) *smokeOptions {
 	set.DurationVar(&options.timeout, "timeout", 10*time.Minute, "how long the app gets to load every plugin and answer the debugger")
 	set.IntVar(&options.bridgePort, "bridge-port", 9090, "port of the debugger bridge")
 	set.IntVar(&options.bundlePort, "bundle-port", 3000, "port the built client is served on")
-	set.DurationVar(&options.budget.bundle, "bundle-budget", 0, "longest Discord may take from launch to executing Unbound's bundle; 0 only reports it")
+	set.DurationVar(&options.budget.bundle, "bundle-budget", 0, "longest Discord may take from launch to executing astral's bundle; 0 only reports it")
 	set.DurationVar(&options.budget.plugins, "plugins-budget", 0, "longest Discord may take from launch to loading every plugin; 0 only reports it")
 	set.DurationVar(&options.budget.pluginStart, "plugin-start-budget", 0, "longest any single plugin may take to start; 0 only reports it")
 	return options
@@ -212,14 +212,14 @@ func smokeSettings(plugins []smokePlugin, debuggerAddress, bundleURL string) ([]
 	for _, plugin := range plugins {
 		states[plugin.id] = true
 	}
-	unbound := map[string]any{
+	astral := map[string]any{
 		"debugger": map[string]any{"enabled": true, "address": debuggerAddress},
 	}
 	if bundleURL != "" {
-		unbound["loader"] = map[string]any{"update": map[string]any{"url": bundleURL}}
+		astral["loader"] = map[string]any{"update": map[string]any{"url": bundleURL}}
 	}
 	return json.MarshalIndent(map[string]any{
-		"unbound": unbound,
+		"astral":  astral,
 		"plugins": map[string]any{"states": states},
 	}, "", "\t")
 }
@@ -237,7 +237,7 @@ func unsupportedDiscordReason(repository, platform, version string) (string, err
 	if order >= 0 {
 		return "", nil
 	}
-	return fmt.Sprintf("Skipped: this build patches Discord %s, older than %s, the oldest %s version Unbound supports (compat-policy.json), so the loader is not expected to inject into it. Builds of a supported Discord, such as main pushes and releases, run the smoke test.", version, minimum, platform), nil
+	return fmt.Sprintf("Skipped: this build patches Discord %s, older than %s, the oldest %s version astral supports (compat-policy.json), so the loader is not expected to inject into it. Builds of a supported Discord, such as main pushes and releases, run the smoke test.", version, minimum, platform), nil
 }
 
 func skipSmokeTest(platform string, options *smokeOptions, reason string) error {

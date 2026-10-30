@@ -180,7 +180,7 @@ func renderRegressionReport(current smokeStartupRecord, baseline []smokeStartupR
 	}
 	regressions := startupRegressions(current, baseline)
 	fmt.Fprintf(&markdown, "| Milestone | This run | Median of %d main runs |\n| --- | --- | --- |\n", len(baseline))
-	fmt.Fprintf(&markdown, "| Unbound's bundle executed | %.1fs | %.1fs |\n", current.BundleMs/1000, medianOf(baseline, func(record smokeStartupRecord) (float64, bool) { return record.BundleMs, record.BundleMs > 0 })/1000)
+	fmt.Fprintf(&markdown, "| astral's bundle executed | %.1fs | %.1fs |\n", current.BundleMs/1000, medianOf(baseline, func(record smokeStartupRecord) (float64, bool) { return record.BundleMs, record.BundleMs > 0 })/1000)
 	fmt.Fprintf(&markdown, "| Every plugin loaded | %.1fs | %.1fs |\n\n", current.PluginsMs/1000, medianOf(baseline, func(record smokeStartupRecord) (float64, bool) { return record.PluginsMs, record.PluginsMs > 0 })/1000)
 	if len(regressions) == 0 {
 		markdown.WriteString("No startup regression.\n\n")
@@ -205,7 +205,7 @@ func startupRegressions(current smokeStartupRecord, baseline []smokeStartupRecor
 			regressions = append(regressions, startupRegression{name: name, current: value, baseline: median})
 		}
 	}
-	check("Unbound's bundle", current.BundleMs, func(record smokeStartupRecord) (float64, bool) { return record.BundleMs, record.BundleMs > 0 }, regressionRatio, regressionMinimumMs)
+	check("astral's bundle", current.BundleMs, func(record smokeStartupRecord) (float64, bool) { return record.BundleMs, record.BundleMs > 0 }, regressionRatio, regressionMinimumMs)
 	check("Loading every plugin", current.PluginsMs, func(record smokeStartupRecord) (float64, bool) { return record.PluginsMs, record.PluginsMs > 0 }, regressionRatio, regressionMinimumMs)
 	ids := make([]string, 0, len(current.Plugins))
 	for id := range current.Plugins {

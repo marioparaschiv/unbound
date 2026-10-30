@@ -82,7 +82,7 @@ func TestValidateWorkspaceManifestRequiresEveryPackageRootToBeRegistered(t *test
 		}
 	}
 	manifest := workspaceManifest{
-		Name: "unbound-loader",
+		Name: "astral-loader",
 		Packages: []workspaceModule{
 			{Name: "core", Path: "core", Kind: "shared"},
 			{Name: "ios", Path: "ios", Kind: "platform", Dependencies: []string{"core"}},
@@ -173,7 +173,7 @@ func TestPrintWorkspacePackagesSortsPackagesAndDependencies(t *testing.T) {
 
 func TestValidateWorkspaceIgnoresUntrackedDirectoriesInAGitCheckout(t *testing.T) {
 	root := t.TempDir()
-	for _, name := range []string{"core", "arm64-Unbound.dylib.dSYM"} {
+	for _, name := range []string{"core", "arm64-astral.dylib.dSYM"} {
 		if err := os.MkdirAll(filepath.Join(root, name), 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -186,7 +186,7 @@ func TestValidateWorkspaceIgnoresUntrackedDirectoriesInAGitCheckout(t *testing.T
 			t.Fatal(err)
 		}
 	}
-	manifest := workspaceManifest{Name: "unbound-loader", Packages: []workspaceModule{{Name: "core", Path: "core", Kind: "shared"}}}
+	manifest := workspaceManifest{Name: "astral-loader", Packages: []workspaceModule{{Name: "core", Path: "core", Kind: "shared"}}}
 	if err := validateWorkspaceManifest(root, manifest); err != nil {
 		t.Fatalf("an untracked build artifact directory must not fail validation: %v", err)
 	}

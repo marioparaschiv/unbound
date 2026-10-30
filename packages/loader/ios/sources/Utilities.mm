@@ -21,8 +21,8 @@
 #include "LoaderAlertCountdown.h"
 #include "LoaderEnvironment.h"
 
-using unbound::ios::toNSString;
-using unbound::ios::toStdString;
+using astral::ios::toNSString;
+using astral::ios::toStdString;
 
 static void loaderImageAnchor(void) {}
 
@@ -49,7 +49,7 @@ static NSString *bundle = nil;
         return bundle;
     }
 
-    NSString *bundlePath = ROOT_PATH_NS(@"/Library/Application Support/UnboundResources.bundle");
+    NSString *bundlePath = ROOT_PATH_NS(@"/Library/Application Support/AstralResources.bundle");
 
     if ([FileSystem exists:bundlePath])
     {
@@ -58,7 +58,7 @@ static NSString *bundle = nil;
     }
 
     NSURL    *url      = [[NSBundle mainBundle] bundleURL];
-    NSString *relative = [NSString stringWithFormat:@"%@/UnboundResources.bundle", [url path]];
+    NSString *relative = [NSString stringWithFormat:@"%@/AstralResources.bundle", [url path]];
     if ([FileSystem exists:relative])
     {
         bundle = relative;
@@ -95,7 +95,7 @@ static NSString *bundle = nil;
 
 + (void)alert:(NSString *)message
 {
-    [self presentAlert:message title:@"Unbound" buttons:nil timeout:0 warning:NO tts:NO];
+    [self presentAlert:message title:@"astral" buttons:nil timeout:0 warning:NO tts:NO];
 }
 
 + (void)alert:(NSString *)message title:(NSString *)title

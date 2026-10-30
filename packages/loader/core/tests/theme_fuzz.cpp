@@ -159,7 +159,7 @@ static void checkColor(const std::optional<loader::RGBAColor> &color, const std:
 
 int main()
 {
-    const char *roundsVariable = std::getenv("UNBOUND_FUZZ_ITERATIONS");
+    const char *roundsVariable = std::getenv("ASTRAL_FUZZ_ITERATIONS");
     const long  rounds         = roundsVariable ? std::strtol(roundsVariable, nullptr, 10) : 5000;
     Generator   generator(0x7e3e);
 

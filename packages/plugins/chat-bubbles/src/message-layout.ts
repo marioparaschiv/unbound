@@ -20,6 +20,7 @@ export type MessageLayout = {
 	text?: { index: number; offset: number };
 	mediaRight: number;
 	headerBottom?: number;
+	footerRight?: number;
 };
 
 function shows(node: SnapshotNode): boolean {
@@ -119,6 +120,20 @@ function descendants(nodes: SnapshotNode[], index: number, stop: (node: Snapshot
 	return found;
 }
 
+function ephemeralFooterRight(nodes: SnapshotNode[], body: number, left: number) {
+	const [footer] = descendants(nodes, body, (node) => node.className === IOSClass.ephemeral);
+	const [button] =
+		footer === undefined
+			? []
+			: descendants(nodes, footer, (node) => node.className === IOSClass.button);
+
+	if (button === undefined) return;
+
+	const box = absolute(nodes, button);
+
+	return box.x + box.width - left;
+}
+
 /**
  * @description Finds a message cell's body, the view its bubble wraps, from a snapshot of the cell.
  * @param nodes The cell's snapshot, the cell first, each frame in its parent's coordinates.
@@ -149,7 +164,12 @@ export function messageLayout(nodes: SnapshotNode[]): MessageLayout | undefined 
 	const headerBottom = above.length
 		? Math.max(...above.map((box) => box.y + box.height))
 		: undefined;
-	const [text] = descendants(nodes, body, isText);
+	const [text] = descendants(
+		nodes,
+		body,
+		(node) => isText(node) || node.className === IOSClass.ephemeral,
+	).filter((index) => isText(nodes[index]!));
+	const footerRight = ephemeralFooterRight(nodes, body, frame.x);
 	const mediaRight = Math.max(
 		0,
 		...descendants(nodes, body, isMedia).map((media) => {
@@ -167,6 +187,7 @@ export function messageLayout(nodes: SnapshotNode[]): MessageLayout | undefined 
 				: { index: text, offset: absolute(nodes, text).x - frame.x },
 		mediaRight,
 		...(headerBottom === undefined ? {} : { headerBottom }),
+		...(footerRight === undefined ? {} : { footerRight }),
 	};
 }
 

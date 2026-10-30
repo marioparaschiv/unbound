@@ -41,10 +41,10 @@ static void recognisesDevelopmentServers()
     assert(loader::isDevelopmentBundleURL("http://10.0.2.2:3000/unbound.98.bundle"));
     assert(loader::isDevelopmentBundleURL("http://127.0.0.1:3000/unbound.js"));
     assert(loader::isDevelopmentBundleURL("http://localhost:3000/"));
-    assert(loader::isDevelopmentBundleURL("HTTP://192.168.1.20:3000/unbound.bundle"));
+    assert(loader::isDevelopmentBundleURL("HTTP://192.168.1.20:3000/astral.bundle"));
     assert(loader::isDevelopmentBundleURL("http://172.20.0.4/unbound.bundle"));
     assert(loader::isDevelopmentBundleURL("http://mac.local:3000/unbound.bundle"));
-    assert(loader::isDevelopmentBundleURL("http://[::1]:3000/unbound.bundle"));
+    assert(loader::isDevelopmentBundleURL("http://[::1]:3000/astral.bundle"));
     assert(loader::isDevelopmentBundleURL("http://user@10.0.2.2:3000/unbound.bundle"));
     assert(!loader::isDevelopmentBundleURL("https://127.0.0.1:3000/unbound.bundle"));
     assert(!loader::isDevelopmentBundleURL("https://builds.unbound.rip/unbound.98.bundle"));
@@ -53,7 +53,7 @@ static void recognisesDevelopmentServers()
     assert(!loader::isDevelopmentBundleURL("http://10.0.2.2.example.com/unbound.bundle"));
     assert(!loader::isDevelopmentBundleURL("http://localhost.example.com/unbound.bundle"));
     assert(!loader::isDevelopmentBundleURL("http://evil.com@/unbound.bundle"));
-    assert(!loader::isDevelopmentBundleURL("file:///tmp/unbound.bundle"));
+    assert(!loader::isDevelopmentBundleURL("file:///tmp/astral.bundle"));
 }
 
 static void hashesWithSha512()
@@ -72,7 +72,7 @@ static void bindsPullRequestSignaturesToTheirNumber()
     using loader::TrustedSigner;
 
     const std::string message = "bundle bytes";
-    assert(loader::pullRequestSigningContext(5) == "unbound-pr-bundle/v1/5/");
+    assert(loader::pullRequestSigningContext(5) == "astral-pr-bundle/v1/5/");
 
     const loader::BundleTrust production = bundle_test::productionTrust();
     const loader::BundleTrust pr5        = bundle_test::pullRequestTrust(5);

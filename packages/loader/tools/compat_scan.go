@@ -27,7 +27,9 @@ const (
 )
 
 var compatEnvironmentClasses = map[string]string{
-	"LCSharedUtils": "LiveContainer's own class, present only when Discord runs inside LiveContainer, so its absence is expected",
+	"LCSharedUtils":                             "LiveContainer's own class, present only when Discord runs inside LiveContainer, so its absence is expected",
+	"android.os.SystemProperties":               "a hidden Android platform class that the public SDK stubs leave out; it exists on every device, and the loader falls back to `Build` values when reading it fails",
+	"org.lsposed.lspatch.loader.LSPApplication": "LSPatch's own class, present only when Discord was patched with LSPatch, so its absence is expected",
 }
 
 type compatTarget struct {
@@ -608,7 +610,7 @@ func resolveFallbacks(findings []compatFinding) {
 			covering = append(covering, describeCompatReference(findings[member].Reference))
 		}
 		if len(covering) == 0 {
-			covering = append(covering, "Unbound's own implementation in the same lookup")
+			covering = append(covering, "astral's own implementation in the same lookup")
 		}
 		for _, members := range alternatives[group] {
 			for _, member := range members {

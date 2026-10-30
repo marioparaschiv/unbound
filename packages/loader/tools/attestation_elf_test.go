@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-const elfCanonicalDigest = "29d2713b315ef31b19e1cebfa5f0b4c5b9a793b91b2df7e62f51437009b61c17"
+const elfCanonicalDigest = "303a7625ce34a3f8983e39bdd812d81f8d16d037fc085aa88479d00b5f656309"
 
 func testELF() []byte {
 	data := make([]byte, 1024)
@@ -22,7 +22,7 @@ func testELF() []byte {
 	binary.LittleEndian.PutUint16(data[58:], 64)
 	binary.LittleEndian.PutUint16(data[60:], 3)
 	binary.LittleEndian.PutUint16(data[62:], 2)
-	names := []byte("\x00.unbound.attestation\x00.shstrtab\x00")
+	names := []byte("\x00.astral.attestation\x00.shstrtab\x00")
 	copy(data[400:], names)
 	binary.LittleEndian.PutUint32(data[512+64:], 1)
 	binary.LittleEndian.PutUint64(data[512+64+24:], 128)
@@ -66,7 +66,7 @@ func TestSignAndVerifyELF(t *testing.T) {
 		t.Fatal(err)
 	}
 	directory := t.TempDir()
-	path := filepath.Join(directory, "arm64-v8a", "libunbound.so")
+	path := filepath.Join(directory, "arm64-v8a", "libastral.so")
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 		t.Fatal(err)
 	}
