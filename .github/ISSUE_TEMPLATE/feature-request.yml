@@ -1,0 +1,33 @@
+name: Feature request
+description: Suggest something new for Unbound, the loader, the website or the developer tools.
+title: 'feature: '
+labels: [Feature]
+body:
+    - type: dropdown
+      id: area
+      attributes:
+          label: Area
+          options:
+              - Unbound client
+              - Loader
+              - Website or marketplace
+              - Developer tools (CLI, debugger, plugin template)
+              - Documentation
+      validations:
+          required: true
+    - type: textarea
+      id: problem
+      attributes:
+          label: What problem would it solve?
+      validations:
+          required: true
+    - type: textarea
+      id: proposal
+      attributes:
+          label: What would you like to happen?
+      validations:
+          required: true
+    - type: textarea
+      id: alternatives
+      attributes:
+          label: Alternatives you've tried

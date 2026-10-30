@@ -644,7 +644,7 @@ func TestCompatScanCoversEveryDiscordChannel(t *testing.T) {
 		"uses: castdrian/dkrypt@",
 		"channel: ${{ env.IOS_SOURCE }}",
 		"output: packages/loader/discord.ipa",
-		`if [ "$IOS_SOURCE" != none ]; then scan_args+=(--ipa discord.ipa); fi`,
+		`if [ "$IOS_SOURCE" != none ] && [ -f discord.ipa ]; then`,
 		"name: compat-${{ matrix.channel }}",
 		`--name "compat-$CHANNEL"`,
 		`go run ./tools compat-issue --repo "$GITHUB_REPOSITORY" --channel "$CHANNEL"`,

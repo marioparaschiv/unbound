@@ -637,7 +637,7 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
 
 std::string issueBody(const IssueReport &report)
 {
-    std::string body = "### Environment\n";
+    std::string body;
 
     for (const auto &[name, value] : report.environment)
     {
@@ -649,20 +649,14 @@ std::string issueBody(const IssueReport &report)
         body += "\n### " + title + "\n```\n" + content + "\n```\n";
     }
 
-    body += "\n### Issue Description\n"
-            "<!-- Describe the issue you're experiencing -->\n\n"
-            "**Steps to reproduce:**\n1. \n2. \n3. \n\n"
-            "**Expected behavior:**\n\n"
-            "**Actual behavior:**\n\n";
     return body;
 }
 
 std::string issueURL(const IssueReport &report)
 {
-    const std::string title = "bug(" + report.platform + "): replace this with a descriptive title";
-
     return std::string("https://github.com/") + kIssueRepository +
-           "/issues/new?title=" + percentEncode(title) +
-           "&body=" + percentEncode(issueBody(report));
+           "/issues/new?template=crash-report.yml&title=" + percentEncode("crash: ") +
+           "&platform=" + percentEncode(report.platform) +
+           "&environment=" + percentEncode(issueBody(report));
 }
 }

@@ -2,47 +2,36 @@ import { REPOSITORY } from '~/lib/repository';
 
 import { debugLines, type DebugInfo } from './format-debug-info';
 
-const DESCRIPTION_TEMPLATE = [
-	'### Issue Description',
-	"<!-- Describe the issue you're experiencing -->",
-	'',
-	'**Steps to reproduce:**',
-	'1. ',
-	'2. ',
-	'3. ',
-	'',
-	'**Expected behavior:**',
-	'',
-	'**Actual behavior:**',
-	'',
-].join('\n');
+const BUG_REPORT_FORM = 'bug-report.yml';
 
 /**
- * @description Builds the body of a GitHub issue the way the loader toolbox does: the environment, the iOS entitlements when there are any, and a template to describe the problem.
+ * @description Builds the environment section of a bug report the way the loader toolbox does: the versions and device, and the iOS entitlements when there are any.
  * @param info The versions and device details `/debug` reports.
  * @param entitlements The app's entitlements as a plist, or an empty string.
- * @returns The issue body as Markdown.
+ * @returns The environment as Markdown.
  */
-export function issueBody(info: DebugInfo, entitlements = ''): string {
+export function issueEnvironment(info: DebugInfo, entitlements = ''): string {
 	return [
-		'### Environment',
 		...debugLines(info),
-		'',
-		...(entitlements ? ['### Entitlements', '```xml', entitlements.trim(), '```', ''] : []),
-		DESCRIPTION_TEMPLATE,
+		...(entitlements ? ['', '### Entitlements', '```xml', entitlements.trim(), '```'] : []),
 	].join('\n');
 }
 
 /**
- * @description Builds a link that opens a new GitHub issue prefilled with the device's details.
+ * @description Builds a link that opens the repository's bug report form with the platform and the device's details filled in.
  * @param info The versions and device details `/debug` reports.
  * @param entitlements The app's entitlements as a plist, or an empty string.
  * @returns The `issues/new` URL.
  */
 export function issueURL(info: DebugInfo, entitlements = ''): string {
-	const title = `bug(${info.platform}): replace this with a descriptive title`;
+	const query = new URLSearchParams({
+		template: BUG_REPORT_FORM,
+		title: 'bug: ',
+		platform: info.platform,
+		environment: issueEnvironment(info, entitlements),
+	});
 
-	return `https://github.com/${REPOSITORY}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(issueBody(info, entitlements))}`;
+	return `https://github.com/${REPOSITORY}/issues/new?${query.toString()}`;
 }
 
-export default { issueBody, issueURL };
+export default { issueEnvironment, issueURL };

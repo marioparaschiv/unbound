@@ -1,0 +1,78 @@
+name: Plugin idea
+description: Suggest a new first-party plugin, or a change to one we ship.
+title: 'plugin: '
+labels: [Feature, Plugin]
+body:
+    - type: markdown
+      attributes:
+          value: Ideas for plugins made by other people belong with their authors. This form is for plugins in this repository.
+    - type: dropdown
+      id: plugin
+      attributes:
+          label: Plugin
+          options:
+              - New plugin
+              - Avatar Radius
+              - Channel Typing Indicators
+              - Character Counter
+              - Chat Bubbles
+              - Clear URLs
+              - Custom Commands
+              - Expression Tools
+              - File Size On Picker
+              - Fix GIF Downloads
+              - Force Owner Crown
+              - GIF Paste
+              - Hide Gift Button
+              - Mention Avatars
+              - Message Latency
+              - Message Link Embeds
+              - More User Tags
+              - Moyai
+              - Multi Account
+              - No Blocked Messages
+              - No Reply Mention
+              - Preview Message
+              - PronounDB
+              - Reaction Avatars
+              - ReviewDB
+              - Role Color Everywhere
+              - Shiki Codeblocks
+              - Show Hidden Things
+              - Show Me Your Name
+              - Show Timeout Duration
+              - Sticker Preview
+              - Text Replace
+              - Translate
+              - Typing Avatars
+              - View Icons
+              - View Raw
+      validations:
+          required: true
+    - type: dropdown
+      id: platforms
+      attributes:
+          label: Platforms
+          multiple: true
+          options:
+              - iOS
+              - Android
+      validations:
+          required: true
+    - type: textarea
+      id: problem
+      attributes:
+          label: What problem would it solve?
+      validations:
+          required: true
+    - type: textarea
+      id: proposal
+      attributes:
+          label: What should it do?
+          description: Describe the behaviour and any settings it should have.
+      validations:
+          required: true
+    - type: textarea
+      id: alternatives
+      attributes:
+          label: Alternatives you've tried

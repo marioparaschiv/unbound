@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { issueBody, issueURL } from './issue-report';
+import { issueEnvironment, issueURL } from './issue-report';
 
 const info = {
 	client: 'v0.11.0',
@@ -23,28 +23,26 @@ const info = {
 };
 
 describe('issue report', () => {
-	test('lists the environment the way /debug does, then the description template', () => {
-		const body = issueBody(info);
+	test('lists the environment the way /debug does', () => {
+		const environment = issueEnvironment(info);
 
-		expect(body.startsWith('### Environment\n- **Unbound:** v0.11.0')).toBe(true);
-		expect(body).toContain('- **Device:** Google Pixel 8 Pro on Android 15 (SDK 35)');
-		expect(body).toContain('**Steps to reproduce:**');
-		expect(body).not.toContain('### Entitlements');
+		expect(environment.startsWith('- **Unbound:** v0.11.0')).toBe(true);
+		expect(environment).toContain('- **Device:** Google Pixel 8 Pro on Android 15 (SDK 35)');
+		expect(environment).not.toContain('### Entitlements');
 	});
 
 	test('includes the entitlements on iOS', () => {
-		expect(issueBody({ ...info, platform: 'iOS' }, '<plist/>\n')).toContain(
+		expect(issueEnvironment({ ...info, platform: 'iOS' }, '<plist/>\n')).toContain(
 			'### Entitlements\n```xml\n<plist/>\n```',
 		);
 	});
 
-	test('opens a new issue in the Unbound repository with a platform title', () => {
+	test('opens the bug report form with the platform and environment filled in', () => {
 		const url = new URL(issueURL(info));
 
 		expect(url.pathname).toBe('/marioparaschiv/unbound/issues/new');
-		expect(url.searchParams.get('title')).toBe(
-			'bug(Android): replace this with a descriptive title',
-		);
-		expect(url.searchParams.get('body')).toBe(issueBody(info));
+		expect(url.searchParams.get('template')).toBe('bug-report.yml');
+		expect(url.searchParams.get('platform')).toBe('Android');
+		expect(url.searchParams.get('environment')).toBe(issueEnvironment(info));
 	});
 });
