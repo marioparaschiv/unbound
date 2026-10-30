@@ -85,6 +85,10 @@ export function checkFromCycle(result: CycleResult, screenshot?: string): Measur
 		lifecycle: failure ? 'fail' : 'pass',
 		evidence,
 		...(note ? { note } : {}),
+		...(result.bundleHash ? { bundleHash: result.bundleHash } : {}),
+		...(result.selfTest && !result.selfTest.ok
+			? { visualProblems: [result.selfTest.detail] }
+			: {}),
 		metrics: {
 			stopMs: result.stopMs ?? 0,
 			startMs: result.startMs ?? 0,

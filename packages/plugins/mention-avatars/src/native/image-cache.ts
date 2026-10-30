@@ -126,6 +126,10 @@ export function createImageCache(bridge: Bridge, onLoad: () => void) {
 	return {
 		imageFor,
 		revision: () => revision,
+		failed: () =>
+			[...images].flatMap(([url, entry]) =>
+				!entry.image && entry.retryAt !== undefined ? [url] : [],
+			),
 		dispose() {
 			disposed = true;
 			images.clear();

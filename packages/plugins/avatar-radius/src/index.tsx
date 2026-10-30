@@ -12,6 +12,7 @@ let dispose: () => void | Promise<void> = () => {};
 
 const radiusSetting = () => storedRadius(settings.get('radius', undefined));
 let rounded: (() => number) | null = null;
+let unrounded: (() => Promise<number>) | null = null;
 
 function start(context: PluginContext) {
 	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
@@ -27,9 +28,11 @@ function start(context: PluginContext) {
 	);
 
 	rounded = avatars.rounded;
+	unrounded = avatars.unrounded;
 	dispose = () => {
 		unsubscribe();
 		rounded = null;
+		unrounded = null;
 
 		return avatars.dispose();
 	};
@@ -43,9 +46,18 @@ function stop() {
 	return stopping;
 }
 
-function selfTest() {
+async function selfTest() {
 	if (!rounded) {
 		return { ok: false, detail: 'avatars are not being rounded' };
+	}
+
+	const wrong = (await unrounded?.()) ?? 0;
+
+	if (wrong) {
+		return {
+			ok: false,
+			detail: `${wrong} avatars lost their ${radiusSetting()} point corners`,
+		};
 	}
 
 	return { ok: true, detail: `${rounded()} avatars rounded to ${radiusSetting()} points` };

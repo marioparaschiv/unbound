@@ -22,6 +22,7 @@ import {
 
 let dispose = () => {};
 let rendered: (() => number) | undefined;
+let failed: (() => string[]) | undefined;
 
 function start(context: PluginContext) {
 	const { objc } = context.native;
@@ -48,6 +49,7 @@ function start(context: PluginContext) {
 		const android = createAndroidRenderer(context.native, index, showAtSymbol);
 
 		rendered = android.rendered;
+		failed = android.failed;
 		dispose = applyFeatures('Mention Avatars', [
 			() => android.dispose,
 			() => patchRowGenerator(index),
@@ -60,6 +62,7 @@ function start(context: PluginContext) {
 	const scanner = createVisibleCellScanner(objc, renderer.schedule);
 
 	rendered = renderer.rendered;
+	failed = renderer.failed;
 
 	dispose = applyFeatures('Mention Avatars', [
 		() => renderer.dispose,
@@ -79,10 +82,21 @@ function stop() {
 	dispose();
 	dispose = () => {};
 	rendered = undefined;
+	failed = undefined;
+}
+
+function selfTest() {
+	const missing = failed?.() ?? [];
+
+	if (missing.length) {
+		return { ok: false, detail: `${missing.length} mention avatars failed to load` };
+	}
+
+	return drawnSelfTest(rendered, 'mention avatars');
 }
 
 export default {
 	start,
 	stop,
-	selfTest: () => drawnSelfTest(rendered, 'mention avatars'),
+	selfTest,
 };

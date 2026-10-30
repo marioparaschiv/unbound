@@ -167,8 +167,22 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 		},
 	);
 
+	async function isUnrounded(image: FastImage): Promise<boolean> {
+		const expected = corner(image);
+		const corners = await Promise.all(image.layers.map((layer) => cornerOf(objc, layer)));
+
+		return corners.some((actual) => Math.abs(actual - expected) > SQUARE_TOLERANCE);
+	}
+
 	return {
 		rounded: () => fastImages.size,
+		async unrounded() {
+			const checks = await Promise.all(
+				[...fastImages.values()].map((image) => isUnrounded(image).catch(() => false)),
+			);
+
+			return checks.filter(Boolean).length;
+		},
 		refresh,
 		async dispose() {
 			for (const hook of hooks) hook.remove();
