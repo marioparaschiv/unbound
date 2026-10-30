@@ -58,14 +58,19 @@ function ColorRow({ label, color, fallbackColor, fallbackLabel, onChange }: Colo
 			onPress={() => openPicker(shown, onChange)}
 			trailing={
 				<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-					{color ? (
+					<View
+						style={{ opacity: color ? 1 : 0 }}
+						pointerEvents={color ? 'auto' : 'none'}
+						accessibilityElementsHidden={!color}
+						importantForAccessibility={color ? 'auto' : 'no-hide-descendants'}
+					>
 						<Discord.Button
 							size='sm'
 							variant='secondary'
 							text='Reset'
 							onPress={() => onChange(undefined)}
 						/>
-					) : null}
+					</View>
 					<View
 						style={{
 							width: 28,

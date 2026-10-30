@@ -1,6 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 
-import { bubbleFrame, isLaidOut, rowInsets, sharedContentStart, union } from './geometry';
+import {
+	bubbleFrame,
+	isLaidOut,
+	rowInsets,
+	sharedContentStart,
+	union,
+	bubbleProblem,
+} from './geometry';
 
 const padding = { horizontal: 8, vertical: 4 };
 
@@ -80,5 +87,23 @@ describe('shared content start', () => {
 	test('aligns to the smallest laid-out left among recent rows', () => {
 		expect(sharedContentStart([168, 148, 0, 168])).toBe(148);
 		expect(sharedContentStart([])).toBe(Number.POSITIVE_INFINITY);
+	});
+});
+
+describe('bubble problems', () => {
+	test('accepts a bubble beside the avatar column that fits its row', () => {
+		expect(bubbleProblem({ x: 60, y: 0, width: 120, height: 30 }, 375, 104)).toBeUndefined();
+	});
+
+	test('flags bubbles that wrap nothing, reach the left edge or run past their row', () => {
+		expect(bubbleProblem({ x: 60, y: 0, width: 120, height: 30 }, 375, 0)).toBe(
+			'wraps no content',
+		);
+		expect(bubbleProblem({ x: 0, y: 0, width: 120, height: 30 }, 375, 104)).toBe(
+			'reaches the left edge of the screen',
+		);
+		expect(bubbleProblem({ x: 60, y: 0, width: 330, height: 30 }, 375, 314)).toBe(
+			'runs past its row',
+		);
 	});
 });

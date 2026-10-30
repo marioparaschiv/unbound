@@ -7,7 +7,7 @@ import { readNativeMessageInfo } from '@unbound-plugins/shared/native/message-in
 
 import { messageLayout, type SnapshotNode } from '~/message-layout';
 import { IOSClass, PLUGIN_NAME } from '~/constants';
-import { bubbleFrame } from '~/geometry';
+import { bubbleFrame, bubbleProblem } from '~/geometry';
 import type { BubbleColor } from '~/style';
 import { currentAppearance } from '~/theme';
 import { messageOwnership } from '~/author';
@@ -52,6 +52,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 	const pending = new Map<string, PendingCell>();
 	const placedSizes = new Map<string, string>();
 	const ownership = new Map<string, boolean>();
+	const problems = new Map<string, string>();
 	const clear = clearColor(objc);
 	let flushing = false;
 	let disposed = false;
@@ -163,13 +164,19 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		const text = textView
 			? layout.text!.offset + (await textWidth(objc, textView, layout.body.width))
 			: 0;
+		const contentWidth = Math.max(text, layout.footerRight ?? 0, layout.mediaRight);
 		const style = currentAppearance();
 		const frame = bubbleFrame(
 			layout.body,
-			Math.max(text, layout.footerRight ?? 0, layout.mediaRight),
+			contentWidth,
 			{ horizontal: style.horizontalPadding, vertical: style.verticalPadding },
 			layout.headerBottom,
 		);
+		const problem = bubbleProblem(frame, Number(size.split('x')[0]), contentWidth);
+
+		if (problem) problems.set(key, problem);
+		else problems.delete(key);
+
 		const bubble = await bubbleFor(key, cell);
 		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
 
@@ -268,6 +275,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 
 	return {
 		placed: () => bubbles.size,
+		problems: () => [...problems].map(([key, problem]) => `${key} ${problem}`),
 		refresh: () => void refresh(),
 		async dispose() {
 			disposed = true;
@@ -277,6 +285,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 			pending.clear();
 			placedSizes.clear();
 			ownership.clear();
+			problems.clear();
 			await Promise.all(
 				[...bubbles.values()].map(({ bubble }) =>
 					objc.invokeAsync(bubble, 'removeFromSuperview', []).catch(() => undefined),

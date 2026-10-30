@@ -28,6 +28,7 @@ import {
 
 import {
 	bubbleFrame,
+	bubbleProblem,
 	isLaidOut,
 	rowInsets,
 	sharedContentStart,
@@ -68,6 +69,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	const original = java.createAssociationKey();
 	const tracked: NativeJavaReference[] = [];
 	const shiftedIcons: NativeJavaReference[] = [];
+	const problems = new Map<string, string>();
 	const pending: NativeJavaReference[] = [];
 	let scheduled = false;
 	let disposed = false;
@@ -301,6 +303,15 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		return { op: 'invoke', handle: icon, name: 'setTranslationX', args: [javaFloat(0)] };
 	}
 
+	function noteProblem(id: string | undefined, problem: string | undefined) {
+		const key = id ?? 'unknown message';
+
+		if (problem) problems.set(key, problem);
+		else problems.delete(key);
+
+		if (problems.size > MAX_TRACKED) problems.delete(problems.keys().next().value!);
+	}
+
 	function messageId(row: NativeJavaReference): string | undefined {
 		try {
 			return javaText(java.getField(row, idField));
@@ -350,6 +361,11 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			await headerBottom(row),
 		);
 		const insets = rowInsets(frame, javaNumber(rowWidth) ?? 0, javaNumber(rowHeight) ?? 0);
+
+		noteProblem(
+			messageId(row),
+			bubbleProblem(frame, javaNumber(rowWidth) ?? 0, area.right - area.left),
+		);
 		const shape = java.construct('android.graphics.drawable.GradientDrawable', []);
 
 		java.invoke(shape, 'setCornerRadius', [javaFloat(style.radius * scale)]);
@@ -460,6 +476,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 	return {
 		placed: () => tracked.length,
+		problems: () => [...problems].map(([id, problem]) => `${id} ${problem}`),
 		refresh() {
 			for (const row of tracked) schedule(row);
 

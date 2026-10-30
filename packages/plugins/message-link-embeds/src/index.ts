@@ -26,6 +26,7 @@ import { createNativeEmbeds } from '~/android/native-embeds';
 import { patchFastImage } from '~/patches/fast-image';
 import { hookMessageCells } from '~/native/cells';
 import { createSession } from '~/native/session';
+import { emptyEmbeds } from '~/components/message-surface';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 let drawn: (() => number) | undefined;
@@ -113,4 +114,12 @@ function stop() {
 	return finished;
 }
 
-export default { start, stop, selfTest: () => drawnSelfTest(drawn, 'embeds') };
+function selfTest() {
+	const empty = emptyEmbeds();
+
+	if (empty.length) return { ok: false, detail: `${empty.length} embeds stayed empty` };
+
+	return drawnSelfTest(drawn, 'embeds');
+}
+
+export default { start, stop, selfTest };

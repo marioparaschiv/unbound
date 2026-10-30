@@ -18,6 +18,23 @@ export type Edges = {
 };
 
 /**
+ * @description Says what is visibly wrong with a bubble: one that wraps nothing, reaches the screen's left edge past the avatar column, or runs past its row.
+ * @param bubble The bubble's frame in its row.
+ * @param rowWidth The row's width.
+ * @param contentWidth How wide the content the bubble wraps is.
+ * @returns The problem, or `undefined` for a bubble that fits its content.
+ */
+export function bubbleProblem(
+	bubble: Box,
+	rowWidth: number,
+	contentWidth: number,
+): string | undefined {
+	if (contentWidth <= 0 || bubble.width <= 0 || bubble.height <= 0) return 'wraps no content';
+	if (bubble.x <= 0) return 'reaches the left edge of the screen';
+	if (rowWidth > 0 && bubble.x + bubble.width > rowWidth + 1) return 'runs past its row';
+}
+
+/**
  * @description Narrows a message body to its content and grows it by the bubble padding, without reaching above the message's header.
  * @param body The message body's frame.
  * @param contentWidth How far the body's text and media reach from its left edge, or 0 when unknown.
@@ -97,4 +114,4 @@ export function rowInsets(bubble: Box, width: number, height: number): Edges {
 	};
 }
 
-export default { bubbleFrame, rowInsets, union };
+export default { bubbleFrame, bubbleProblem, rowInsets, union };

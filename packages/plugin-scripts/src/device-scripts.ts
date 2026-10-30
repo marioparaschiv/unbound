@@ -127,8 +127,16 @@ export function developerModeScript(enabled: boolean): string {
 })()`;
 }
 
+export const settingsProbeSchema = z.object({
+	rendered: z.boolean(),
+	texts: z.number(),
+	error: z.string(),
+});
+
+export type SettingsProbe = z.infer<typeof settingsProbeSchema>;
+
 /**
- * @description Opens a plugin's settings panel in Unbound's custom settings screen, the way its card's cog does.
+ * @description Opens a plugin's settings panel in Unbound's custom settings screen, the way its card's cog does, inside a probe that records whether the panel rendered and the error it threw.
  * @param id The plugin's id.
  * @returns A script whose result is `opened`, or `none` when the plugin is not running or has no panel.
  */
@@ -137,12 +145,50 @@ export function settingsScreenScript(id: string): string {
 	var entity = unbound.plugins.getEntity(${JSON.stringify(id)});
 	var instance = entity && entity.instance;
 	if (!instance || typeof instance.getSettingsPanel !== 'function') return 'none';
+	var React = unbound.metro.common.React;
+	var probe = { rendered: false, error: '', boundary: null };
+	globalThis.__matrixSettingsProbe = probe;
+	function Boundary(props) { React.Component.call(this, props); this.state = { failed: false }; }
+	Boundary.prototype = Object.create(React.Component.prototype);
+	Boundary.prototype.constructor = Boundary;
+	Boundary.getDerivedStateFromError = function () { return { failed: true }; };
+	Boundary.prototype.componentDidCatch = function (error) { probe.error = String(error && error.message ? error.message : error); };
+	Boundary.prototype.componentDidMount = function () { probe.boundary = this; };
+	Boundary.prototype.render = function () { return this.state.failed ? null : this.props.children; };
+	function Panel() { probe.rendered = true; return instance.getSettingsPanel(); }
 	var navigation = unbound.metro.findByProps('getRootNavigationRef').getRootNavigationRef();
 	navigation.navigate('settings', {
 		screen: 'UNBOUND_CUSTOM',
-		params: { title: entity.data.name, render: function () { return instance.getSettingsPanel(); } },
+		params: {
+			title: entity.data.name,
+			render: function () {
+				return React.createElement(Boundary, null, React.createElement(Panel));
+			},
+		},
 	});
 	return 'opened';
+})()`;
+}
+
+/**
+ * @description Reads what the settings probe recorded for the panel on screen, counting the text the panel rendered by walking React's tree below the probe.
+ * @returns A script whose result is the probe as JSON.
+ */
+export function settingsProbeScript(): string {
+	return `(function () {
+	var probe = globalThis.__matrixSettingsProbe;
+	if (!probe) return JSON.stringify({ rendered: false, texts: 0, error: 'the settings screen did not open' });
+	var texts = 0;
+	var root = probe.boundary && probe.boundary._reactInternals;
+	var stack = root && root.child ? [root.child] : [];
+	while (stack.length) {
+		var fiber = stack.pop();
+		var children = fiber.memoizedProps && fiber.memoizedProps.children;
+		if (fiber.tag === 6 || (typeof fiber.type === 'string' && (typeof children === 'string' || typeof children === 'number'))) texts++;
+		if (fiber.sibling) stack.push(fiber.sibling);
+		if (fiber.child) stack.push(fiber.child);
+	}
+	return JSON.stringify({ rendered: probe.rendered, texts: texts, error: probe.error });
 })()`;
 }
 
