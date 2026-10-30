@@ -476,6 +476,9 @@ jobs:
         permissions:
             contents: read
             actions: read
+            id-token: write
+            attestations: write
+            artifact-metadata: write
         uses: ./.github/workflows/loader-android.yml
         with:
             ios_version: ${{ needs.resolve-source.outputs.version }}

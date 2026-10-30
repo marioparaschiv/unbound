@@ -87,6 +87,11 @@ jobs:
         name: Build Xposed module
         runs-on: ubuntu-26.04
         timeout-minutes: 12
+        permissions:
+            contents: read
+            id-token: write
+            attestations: write
+            artifact-metadata: write
         env:
             ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
             ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
@@ -229,11 +234,22 @@ jobs:
                   path: packages/loader/${{ steps.collect.outputs.module_filename }}
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
+            - name: Attest the build
+              if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+              with:
+                  subject-path: packages/loader/${{ steps.collect.outputs.module_filename }}
+
     patch-discord:
         name: Build patched Discord APK
         needs: build-module
         runs-on: ubuntu-26.04
         timeout-minutes: 10
+        permissions:
+            contents: read
+            id-token: write
+            attestations: write
+            artifact-metadata: write
         outputs:
             patched_filename: ${{ steps.patch.outputs.patched_filename }}
             patched_url: ${{ steps.upload-patched.outputs.artifact-url }}
@@ -363,6 +379,12 @@ jobs:
                   name: patched discord
                   path: packages/loader/${{ steps.patch.outputs.patched_filename }}
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
+
+            - name: Attest the build
+              if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+              uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+              with:
+                  subject-path: packages/loader/${{ steps.patch.outputs.patched_filename }}
 
             - name: Upload the emulator split
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
