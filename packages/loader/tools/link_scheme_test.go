@@ -28,11 +28,11 @@ func TestAstralURLSchemeMatchesTheRelayAppAndTheClient(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	match := regexp.MustCompile(`export const ASTRAL_SCHEME = '([^']*)';`).FindSubmatch(source)
+	match := regexp.MustCompile(`export const UNBOUND_SCHEME = '([^']*)';`).FindSubmatch(source)
 	if match == nil {
-		t.Fatal("contracts/src/links.ts no longer declares ASTRAL_SCHEME")
+		t.Fatal("contracts/src/links.ts no longer declares UNBOUND_SCHEME")
 	}
 	if string(match[1]) != astralURLScheme {
-		t.Fatalf("ASTRAL_SCHEME is %q, the IPA patch registers %q", match[1], astralURLScheme)
+		t.Fatalf("UNBOUND_SCHEME is %q, the IPA patch registers %q", match[1], astralURLScheme)
 	}
 }
