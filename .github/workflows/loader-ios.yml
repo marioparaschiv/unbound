@@ -528,7 +528,7 @@ jobs:
             - name: Run the smoke test
               env:
                   APP_PATH: ${{ steps.app.outputs.path }}
-              run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --timeout 25m --bundle-budget 60s --plugins-budget 60s
+              run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
 
             - name: Compare the console with main
               if: success() && github.event_name == 'pull_request'
