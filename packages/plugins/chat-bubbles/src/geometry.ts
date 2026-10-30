@@ -52,6 +52,24 @@ export function bubbleFrame(
  * @param boxes The rectangles.
  * @returns Their bounding rectangle, or `undefined` when there are none.
  */
+/**
+ * @description Whether a row's content left edge has been laid out: an unread or zero edge means the row has not been measured yet, since message content always sits right of the avatar gutter.
+ * @param left The content's left edge, if it could be read.
+ * @returns True when the position can be trusted.
+ */
+export function isLaidOut(left: number | undefined): left is number {
+	return typeof left === 'number' && left > 0;
+}
+
+/**
+ * @description Picks the left edge every bubble aligns to from the rows measured recently, so one stale reading ages out instead of dragging every bubble with it.
+ * @param lefts The recently measured content lefts.
+ * @returns The smallest laid-out left, or infinity before any row is measured.
+ */
+export function sharedContentStart(lefts: number[]): number {
+	return Math.min(Number.POSITIVE_INFINITY, ...lefts.filter((left) => isLaidOut(left)));
+}
+
 export function union(boxes: Edges[]): Edges | undefined {
 	if (!boxes.length) return;
 
