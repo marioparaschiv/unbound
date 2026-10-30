@@ -95,3 +95,9 @@ describe('android code blocks', () => {
 		expect(sourceBlock('three', blocks)).toBeUndefined();
 	});
 });
+
+test('matches a slot whose tabs Discord rendered as spaces', () => {
+	const block = { code: 'function f() {\n\treturn 1;\n}', language: 'typescript' };
+
+	expect(sourceBlock('function f() {\n    return 1;\n}', [block])?.language).toBe('typescript');
+});

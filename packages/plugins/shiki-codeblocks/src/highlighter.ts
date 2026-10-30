@@ -8,7 +8,7 @@ import { bundledThemes } from '~/bundled';
 import { highlightCodeToTokens, shouldUseHighlightJs } from '~/highlight-js';
 import { isLightTheme, loadThemeDefinition, themeUrl } from '~/themes';
 import { Limits, Palette, PLUGIN_NAME } from '~/constants';
-import type { CodeBlock } from '~/fences';
+import { expandTabs, type CodeBlock } from '~/fences';
 import { sharedTokenStore, type TokenStore } from '~/token-store';
 
 type ThemeInput = Parameters<HighlighterCore['loadTheme']>[0];
@@ -227,18 +227,19 @@ export function createHighlighter(
 		hljsPreference: string,
 	): Promise<TokenLines | null> {
 		const language = block.sourceLanguage ?? (block.language === 'plain' ? '' : block.language);
+		const code = expandTabs(block.code);
 
 		if (!shouldUseHighlightJs(language, block.language !== 'plain', hljsPreference)) {
-			return shikiTokens(block.code, block.language, theme);
+			return shikiTokens(code, block.language, theme);
 		}
 
 		const { light } = appearance(theme);
-		const key = `${light ? 'light' : 'dark'}\u0000hljs:${language}\u0000${block.code}`;
+		const key = `${light ? 'light' : 'dark'}\u0000hljs:${language}\u0000${code}`;
 		const cached = tokenCache.get(key);
 
 		if (cached) return cached;
 
-		const tokens = highlightCodeToTokens(block.code, language, light);
+		const tokens = highlightCodeToTokens(code, language, light);
 
 		remember(key, tokens);
 

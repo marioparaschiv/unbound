@@ -96,4 +96,17 @@ describe('createHighlighter', () => {
 		await expect(highlighter.tokenize(block, 'dark-plus', 'secondary')).rejects.toThrow();
 		expect(attempts).toBe(4);
 	});
+
+	test('shows tabs as four spaces so indentation survives the card', async () => {
+		const tokens = await createHighlighter().tokenize(
+			{
+				code: 'function double(value: number) {\n\treturn value * 2;\n}',
+				language: 'typescript',
+			},
+			'dark-plus',
+			'secondary',
+		);
+
+		expect(text(tokens?.[1])).toBe('    return value * 2;');
+	});
 });

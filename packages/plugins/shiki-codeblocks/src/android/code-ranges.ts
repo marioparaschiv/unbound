@@ -1,6 +1,6 @@
 import type { SpanRange } from '@unbound-plugins/shared/native/android/spans';
 
-import type { CodeBlock } from '~/fences';
+import { expandTabs, type CodeBlock } from '~/fences';
 
 export type CodeSlot = SpanRange & {
 	blockEnd: number;
@@ -107,7 +107,8 @@ export function placeholderOffsets(slots: SpanRange[]): number[] {
 export function sourceBlock(code: string, blocks: CodeBlock[]): CodeBlock | undefined {
 	return (
 		blocks.find((block) => block.code === code) ??
-		blocks.find((block) => block.code.trim() === code.trim())
+		blocks.find((block) => expandTabs(block.code) === code) ??
+		blocks.find((block) => expandTabs(block.code).trim() === code.trim())
 	);
 }
 
