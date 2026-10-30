@@ -289,14 +289,16 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			java.setAssociatedObject(row, original, current ?? { type: 'null' });
 		}
 
+		if (disposed) return;
+
 		java.setAssociatedObject(row, ours, bubble);
 		track(row);
 		await java.invokeAsync(row, 'setBackground', [bubble]);
 	}
 
-	async function flush() {
-		scheduled = false;
+	let flushing: Promise<void> = Promise.resolve();
 
+	async function placeAll() {
 		for (const row of pending.splice(0)) {
 			if (disposed) return;
 
@@ -306,6 +308,13 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 				}
 			});
 		}
+	}
+
+	function flush() {
+		scheduled = false;
+		flushing = flushing.then(placeAll);
+
+		return flushing;
 	}
 
 	function schedule(row: NativeJavaReference) {
@@ -374,6 +383,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 			disposed = true;
 			hooks.remove(token);
 			pending.length = 0;
+			await flushing;
 
 			await Promise.all(
 				tracked.splice(0).map((row) =>
