@@ -15,7 +15,8 @@
 #include "LoaderCrashHandler.h"
 #include "NativePluginRuntime.h"
 
-static constexpr int kPreviousHandlerExit = 42;
+static constexpr int      kPreviousHandlerExit  = 42;
+static constexpr unsigned kChildDeadlineSeconds = 30;
 
 static std::filesystem::path makeTemporaryDirectory()
 {
@@ -179,6 +180,9 @@ static void stackOverflowIsAttributed(const std::filesystem::path &root)
     assert(child >= 0);
     if (child == 0)
     {
+        alarm(kChildDeadlineSeconds);
+        signal(SIGSEGV, SIG_DFL);
+        signal(SIGBUS, SIG_DFL);
         loader::AddonSlot slot = loader::registerAddonSlot("plugins:deep", "Deep");
         if (!loader::installAddonCrashHandler(marker.string()))
         {
@@ -206,6 +210,7 @@ static int crashInChild(const std::filesystem::path &marker, const std::string &
     assert(child >= 0);
     if (child == 0)
     {
+        alarm(kChildDeadlineSeconds);
         if (withPreviousHandler)
         {
             struct sigaction previous = {};
