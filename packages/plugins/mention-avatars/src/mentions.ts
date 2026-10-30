@@ -1,3 +1,4 @@
+import { MENTION_PLACEHOLDER } from '~/constants';
 import { isTextBoundary } from '@unbound-plugins/shared/native/text-attachments';
 
 export type MentionType = 'role' | 'user';
@@ -119,3 +120,16 @@ export default {
 	roleImageSource,
 	avatarPngURL,
 };
+
+/**
+ * @description Whether a text view's live text should be the base for the next render, rather than the original saved before the last one. Live text that is neither our own render, which carries the placeholder, nor the saved original was set by Discord, possibly for another message in a reused view, so it always wins.
+ * @param live The view's current string.
+ * @param savedOriginal The original string saved with the last render, if any.
+ * @returns True when the next render should start from the live text.
+ */
+export function rebuildsFromLiveText(live: string, savedOriginal: string | undefined): boolean {
+	return (
+		savedOriginal === undefined ||
+		(!live.includes(MENTION_PLACEHOLDER) && live !== savedOriginal)
+	);
+}

@@ -6,7 +6,7 @@ import type { Bridge, Handle } from '~/native/bridge';
 import viewKey from '@unbound-plugins/shared/native/view-key';
 
 import { MENTION_PLACEHOLDER } from '~/constants';
-import { containsMentionText } from '~/mentions';
+import { rebuildsFromLiveText } from '~/mentions';
 import type { Mention } from '~/mentions';
 
 type TextViewState = {
@@ -187,15 +187,10 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 			return false;
 		}
 
-		// Rebuild from the live text when Discord replaced it, else from the saved original so images never stack.
 		const base =
-			!state ||
-			(!string.includes(MENTION_PLACEHOLDER) &&
-				(string !== state.originalString ||
-					!containsMentionText(state.originalString, mentions)) &&
-				containsMentionText(string, mentions))
-				? { original: text, originalString: string }
-				: state;
+			state && !rebuildsFromLiveText(string, state.originalString)
+				? state
+				: { original: text, originalString: string };
 		const rendered = insertMentionImages(
 			bridge,
 			textEngine(textAttachmentBridge(bridge.objc), view),
@@ -218,6 +213,11 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 		if (bridge.call(rendered, 'isEqual:', text)) return false;
 
 		bridge.call(view, 'setAttributedText:', rendered);
+
+		const stored = attributedText(view).text;
+		const saved = states.get(key);
+
+		if (stored && saved) saved.rendered = stored;
 
 		return true;
 	}
