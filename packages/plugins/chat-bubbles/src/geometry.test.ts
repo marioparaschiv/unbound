@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { bubbleFrame, rowInsets, union } from './geometry';
+import { bubbleFrame, isLaidOut, rowInsets, sharedContentStart, union } from './geometry';
 
 const padding = { horizontal: 8, vertical: 4 };
 
@@ -67,5 +67,18 @@ describe('bubble geometry', () => {
 			right: 0,
 			bottom: 0,
 		});
+	});
+});
+
+describe('shared content start', () => {
+	test('ignores rows that have not been laid out', () => {
+		expect(isLaidOut(undefined)).toBe(false);
+		expect(isLaidOut(0)).toBe(false);
+		expect(isLaidOut(148)).toBe(true);
+	});
+
+	test('aligns to the smallest laid-out left among recent rows', () => {
+		expect(sharedContentStart([168, 148, 0, 168])).toBe(148);
+		expect(sharedContentStart([])).toBe(Number.POSITIVE_INFINITY);
 	});
 });

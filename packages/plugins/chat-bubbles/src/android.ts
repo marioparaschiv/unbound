@@ -24,7 +24,14 @@ import {
 	viewByIdNameAsync,
 } from '@unbound-plugins/shared/native/android/discord-views';
 
-import { bubbleFrame, rowInsets, union, type Edges } from '~/geometry';
+import {
+	bubbleFrame,
+	isLaidOut,
+	rowInsets,
+	sharedContentStart,
+	union,
+	type Edges,
+} from '~/geometry';
 import { AndroidClass, PLUGIN_NAME } from '~/constants';
 import { currentAppearance } from '~/theme';
 import { argb } from '~/style';
@@ -68,12 +75,14 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 		if (measuredLefts.length > MAX_TRACKED) measuredLefts.shift();
 
-		if (left >= contentStart) return;
+		const previous = contentStart;
 
-		contentStart = left;
+		contentStart = sharedContentStart(measuredLefts.map((entry) => entry.left));
+
+		if (contentStart === previous) return;
 
 		for (const entry of measuredLefts) {
-			if (entry.left > contentStart) schedule(entry.row);
+			if (!sameJavaReference(entry.row, row)) schedule(entry.row);
 		}
 	}
 
@@ -160,8 +169,10 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 		if (!area) return;
 
-		const x = javaNumber(values[0]) ?? 0;
+		const x = javaNumber(values[0]);
 		const y = javaNumber(values[1]) ?? 0;
+
+		if (x === undefined || !isLaidOut(area.left + x)) return;
 
 		noteContentStart(row, area.left + x);
 
