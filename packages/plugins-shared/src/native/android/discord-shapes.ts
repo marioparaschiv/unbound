@@ -3,7 +3,6 @@ import type {
 	NativeJavaFieldDescription,
 	NativeJavaMethodDescription,
 } from '@unbound-app/api/native';
-
 import { describeJavaClass } from '@unbound-plugins/shared/native/android/java-classes';
 import shapes from '@unbound-plugins/shared/native/android/discord-shapes.json';
 

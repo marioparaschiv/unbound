@@ -1,6 +1,5 @@
-import { describe, expect, test } from 'bun:test';
-
 import { androidColor, hexColor } from '@unbound-plugins/shared/colors/android-colors';
+import { describe, expect, test } from 'bun:test';
 
 describe('Android colors', () => {
 	test('turns hex colors into opaque signed ARGB ints', () => {

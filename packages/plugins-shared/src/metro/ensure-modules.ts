@@ -1,6 +1,5 @@
-import type { metro } from '@unbound-app/api';
-
 import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import type { metro } from '@unbound-app/api';
 
 // Metro results, lazy proxies and native modules are all untyped `find` results; only their presence matters.
 type ModuleHandle = ReturnType<typeof metro.find>;

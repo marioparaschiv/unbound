@@ -1,5 +1,3 @@
-import { beforeEach, describe, expect, test } from 'bun:test';
-
 import {
 	drawnSelfTest,
 	featureSelfTest,
@@ -7,6 +5,7 @@ import {
 	resetHealth,
 } from '@unbound-plugins/shared/lifecycle/health';
 import { applyFeatures } from '@unbound-plugins/shared/lifecycle/apply-features';
+import { beforeEach, describe, expect, test } from 'bun:test';
 
 beforeEach(resetHealth);
 

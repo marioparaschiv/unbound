@@ -1,3 +1,10 @@
+import {
+	connectTextRewrites,
+	TEXT_REWRITES_CLASS,
+	type TextRewriteAnchor,
+	type TextRewriteEdit,
+	type TextRewrites,
+} from '@unbound-plugins/shared/native/android/text-rewrites';
 import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
@@ -6,14 +13,6 @@ import type {
 	NativeJavaHooksBridge,
 	NativeJavaReference,
 } from '@unbound-app/api/native';
-
-import {
-	connectTextRewrites,
-	TEXT_REWRITES_CLASS,
-	type TextRewriteAnchor,
-	type TextRewriteEdit,
-	type TextRewrites,
-} from '@unbound-plugins/shared/native/android/text-rewrites';
 import {
 	javaInt,
 	javaNumber,

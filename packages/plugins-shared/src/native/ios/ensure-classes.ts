@@ -1,6 +1,5 @@
-import type { NativeObjCBridge } from '@unbound-app/api/native';
-
 import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import type { NativeObjCBridge } from '@unbound-app/api/native';
 
 /**
  * @description Checks that every Objective-C class a plugin hooks or allocates exists, so `start` can bail out before applying a partial feature.

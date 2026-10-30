@@ -1,6 +1,3 @@
-import type { NativeObjectHandle } from '@unbound-app/api/native';
-import { describe, expect, test } from 'bun:test';
-
 import {
 	ATTACHMENT_CHARACTER,
 	attributeRun,
@@ -15,6 +12,8 @@ import {
 	type TextAttachmentArgument,
 	type TextAttachmentBridge,
 } from '@unbound-plugins/shared/native/ios/text-attachments';
+import type { NativeObjectHandle } from '@unbound-app/api/native';
+import { describe, expect, test } from 'bun:test';
 
 type Call = { target: NativeObjectHandle; selector: string; args: TextAttachmentArgument[] };
 

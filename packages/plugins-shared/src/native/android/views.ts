@@ -4,7 +4,6 @@ import type {
 	NativeJavaReference,
 	NativeJavaValue,
 } from '@unbound-app/api/native';
-
 import {
 	javaFlag,
 	javaInt,

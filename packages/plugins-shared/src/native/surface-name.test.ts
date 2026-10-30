@@ -1,6 +1,5 @@
-import { expect, test } from 'bun:test';
-
 import { nextSurfaceName } from '@unbound-plugins/shared/native/surface-name';
+import { expect, test } from 'bun:test';
 
 test('takes index 0 when nothing is registered', () => {
 	expect(nextSurfaceName('Surface', [])).toBe('Surface0');

@@ -1,6 +1,5 @@
-import { expect, spyOn, test } from 'bun:test';
-
 import { ensureCapabilities } from '@unbound-plugins/shared/native/ensure-capabilities';
+import { expect, spyOn, test } from 'bun:test';
 
 test('passes when the loader offers every capability', () => {
 	const native = { capabilities: ['native.objc.classes', 'native.objc.hooks'] as const };

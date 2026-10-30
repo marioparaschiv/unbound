@@ -1,10 +1,9 @@
-import type { NativeObjectHandle } from '@unbound-app/api/native';
-import { describe, expect, test } from 'bun:test';
-
 import {
 	readNativeMessageInfo,
 	type NativeMessageCellBridge,
 } from '@unbound-plugins/shared/native/ios/message-info';
+import type { NativeObjectHandle } from '@unbound-app/api/native';
+import { describe, expect, test } from 'bun:test';
 
 // Each call is a distinct opaque object, like the handles the bridge returns.
 function handle(): NativeObjectHandle {

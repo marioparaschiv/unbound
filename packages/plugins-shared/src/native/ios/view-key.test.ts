@@ -1,7 +1,6 @@
 import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
-import { describe, expect, test } from 'bun:test';
-
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
+import { describe, expect, test } from 'bun:test';
 
 type Answers = {
 	hash?: () => number | bigint;

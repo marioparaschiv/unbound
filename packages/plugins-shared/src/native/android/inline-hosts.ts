@@ -1,9 +1,3 @@
-import type {
-	NativeJavaBridge,
-	NativeJavaHandle,
-	NativeJavaReference,
-} from '@unbound-app/api/native';
-
 import {
 	javaFlag,
 	javaFloat,
@@ -13,6 +7,11 @@ import {
 	javaText,
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
+import type {
+	NativeJavaBridge,
+	NativeJavaHandle,
+	NativeJavaReference,
+} from '@unbound-app/api/native';
 import { readCalls, runOnMain } from '@unbound-plugins/shared/native/android/views';
 
 export type InlineHostBridge = Pick<

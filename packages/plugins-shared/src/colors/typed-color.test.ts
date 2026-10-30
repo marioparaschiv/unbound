@@ -1,6 +1,5 @@
-import { describe, expect, test } from 'bun:test';
-
 import { parseTypedColor, typedColorState } from '@unbound-plugins/shared/colors/typed-color';
+import { describe, expect, test } from 'bun:test';
 
 describe('typed colors', () => {
 	test('reads six-digit hex codes with or without the hash', () => {

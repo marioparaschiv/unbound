@@ -1,6 +1,5 @@
-import { describe, expect, test } from 'bun:test';
-
 import { parseRect, parseSize, readRect } from '@unbound-plugins/shared/native/ios/rect';
+import { describe, expect, test } from 'bun:test';
 
 describe('readRect', () => {
 	test('reads a CGRect boxed in an NSValue', () => {

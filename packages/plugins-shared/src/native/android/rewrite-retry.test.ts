@@ -1,6 +1,5 @@
-import { describe, expect, jest, test } from 'bun:test';
-
 import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
+import { describe, expect, jest, test } from 'bun:test';
 
 describe('rewrite retry', () => {
 	test('retries a declined rewrite at most five times', () => {
