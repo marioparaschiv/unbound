@@ -147,11 +147,12 @@ tasks.matching { it.name.matches(Regex("strip\\w*DebugSymbols")) }.configureEach
     val stripped = outputs.files
     val hash = commitHash
     val version = packageVersion
+    val commands = providers
     outputs.cacheIf { false }
     doLast {
         val libraries = stripped.files.firstOrNull { it.resolve("lib").isDirectory }?.resolve("lib")
             ?: throw GradleException("The stripped native libraries were not found")
-        providers.exec {
+        commands.exec {
             workingDir = toolsDirectory
             commandLine(
                 "go", "run", "./tools", "attest", "stage-elf",
