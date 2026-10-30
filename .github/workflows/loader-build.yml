@@ -180,7 +180,7 @@ jobs:
             version: ${{ steps.resolve.outputs.version || steps.select.outputs.version }}
             release_version: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
             is_testflight: ${{ steps.resolve.outputs.is_testflight || steps.select.outputs.is_testflight }}
-            android_code: ${{ steps.select.outputs.code }}
+            android_code: ${{ steps.select.outputs.code || steps.resolve.outputs.android_code }}
             ios_release_tag: ${{ steps.names.outputs.ios_release_tag }}
             ios_release_title: ${{ steps.names.outputs.ios_release_title }}
             android_release_tag: ${{ steps.names.outputs.android_release_tag }}
@@ -233,15 +233,15 @@ jobs:
                     } >> "$GITHUB_OUTPUT"
                     exit 0
                   fi
-                  requested_version="$INPUT_VERSION"
-                  if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ] && [ -z "$requested_version" ] && [ -z "$INPUT_IPA_URL" ]; then
+                  android_code="$INPUT_ANDROID_CODE"
+                  if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ] && [ -z "$android_code" ]; then
                     android_code=$(curl -fsSL "$INPUT_ANDROID_TRACKER/index" | jq -er '.latest.stable | tonumber')
-                    requested_version=$(go run ./tools discord-version --android-code "$android_code")
-                    echo "::notice::Selecting the latest Android stable version available to both platforms: $requested_version"
+                    echo "::notice::Pairing the iOS build with the latest Android stable, $android_code"
                   fi
                   {
                     echo "platform=ios"
-                    echo "requested_version=$requested_version"
+                    echo "requested_version=$INPUT_VERSION"
+                    echo "android_stable_code=$android_code"
                   } >> "$GITHUB_OUTPUT"
 
             - name: Name the source IPA cache
@@ -344,28 +344,37 @@ jobs:
                   INPUT_RELEASE: ${{ inputs.release }}
                   RELEASE_DRY_RUN: ${{ inputs.release_dry_run }}
                   REQUESTED_VERSION: ${{ steps.select.outputs.requested_version }}
+                  ANDROID_STABLE_CODE: ${{ steps.select.outputs.android_stable_code }}
               run: |
                   set -euo pipefail
                   ipa_info=$(go run ./tools ipa-info --ipa source.ipa)
                   version=$(jq -r '.version' <<< "$ipa_info")
                   build=$(jq -r '.build' <<< "$ipa_info")
+                  android_code=""
+                  android_version=""
                   if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ]; then
-                    actual_android_code=$(go run ./tools discord-version --version "$version")
-                    if [ -n "$REQUESTED_VERSION" ]; then
-                      requested_android_code=$(go run ./tools discord-version --version "$REQUESTED_VERSION")
-                      if [ "$actual_android_code" != "$requested_android_code" ] && [ "$RELEASE_DRY_RUN" = true ]; then
-                        echo "::warning::The iOS IPA is $version but the requested matching release is $REQUESTED_VERSION. A real release would stop here."
-                      elif [ "$actual_android_code" != "$requested_android_code" ]; then
-                        echo "::error::The iOS IPA is $version but the requested matching release is $REQUESTED_VERSION"
-                        exit 1
-                      fi
+                    mismatch=""
+                    if [ -n "$REQUESTED_VERSION" ] && [ "$version" != "$REQUESTED_VERSION" ]; then
+                      mismatch="The iOS IPA is $version but the requested release is $REQUESTED_VERSION"
+                    elif [ "${version%%.*}" != "$((ANDROID_STABLE_CODE / 1000))" ]; then
+                      mismatch="iOS $version and Android stable $ANDROID_STABLE_CODE are different Discord releases"
                     fi
+                    if [ -n "$mismatch" ] && [ "$RELEASE_DRY_RUN" = true ]; then
+                      echo "::warning::$mismatch. A real release would stop here."
+                    elif [ -n "$mismatch" ]; then
+                      echo "::error::$mismatch"
+                      exit 1
+                    fi
+                    android_code="$ANDROID_STABLE_CODE"
+                    android_version=$(go run ./tools discord-version --android-code "$android_code")
                   fi
                   release_version="$version"
                   if [ "$INPUT_IS_TESTFLIGHT" = true ]; then release_version="${version}_${build}-ios-testflight"; fi
                   {
                     echo "version=$version"
                     echo "release_version=$release_version"
+                    echo "android_code=$android_code"
+                    echo "android_version=$android_version"
                     echo "is_testflight=$INPUT_IS_TESTFLIGHT"
                   } >> "$GITHUB_OUTPUT"
 
@@ -374,7 +383,8 @@ jobs:
               if: inputs.release == true
               env:
                   RELEASE_VERSION: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
-              run: go run ./tools release-names --release-version "$RELEASE_VERSION"
+                  ANDROID_VERSION: ${{ steps.resolve.outputs.android_version }}
+              run: go run ./tools release-names --release-version "$RELEASE_VERSION" ${ANDROID_VERSION:+--android-version "$ANDROID_VERSION"}
 
             - name: Keep the source IPA for the gate and the iOS build
               if: steps.select.outputs.platform == 'ios' && steps.source.outputs.missing != 'true'
