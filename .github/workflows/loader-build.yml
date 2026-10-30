@@ -428,6 +428,33 @@ jobs:
             - name: Test workflows
               run: go -C workflow-tests test -count=1 ./...
 
+    timings:
+        name: Slowest steps
+        needs: [resolve-source, core, tool-tests, android, ios]
+        if: ${{ !cancelled() }}
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            actions: read
+        steps:
+            - name: List the slowest steps
+              working-directory: .
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  STEP_TIMES: '.jobs[] | .name as $job | .steps[] | select(.started_at != null and .completed_at != null) | [((.completed_at | fromdateiso8601) - (.started_at | fromdateiso8601)), $job, .name] | @tsv'
+              run: |
+                  set -euo pipefail
+                  {
+                      echo "### Slowest steps"
+                      echo
+                      echo "| Seconds | Job | Step |"
+                      echo "| ---: | --- | --- |"
+                      gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" \
+                          --jq "$STEP_TIMES" \
+                          | sort -t "$(printf '\t')" -k1,1nr | head -15 \
+                          | awk -F '\t' '{ printf "| %s | %s | %s |\n", $1, $2, $3 }'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
     android:
         needs: [resolve-source, compat-gate]
         if: ${{ !cancelled() && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success' && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped') }}

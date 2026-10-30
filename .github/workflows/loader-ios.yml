@@ -170,6 +170,17 @@ jobs:
                   export TARGET_CC TARGET_CXX
                   go run ./tools build tweak --configuration release --non-interactive
 
+            - name: Report the compiler cache
+              if: ${{ !cancelled() }}
+              run: |
+                  {
+                      echo "### Compiler cache"
+                      echo
+                      echo '```'
+                      ccache --show-stats
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
             - name: Save the compiler cache
               if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
               uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
