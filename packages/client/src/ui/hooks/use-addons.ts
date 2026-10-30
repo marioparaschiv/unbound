@@ -1,13 +1,12 @@
 import type { Addon } from '@unbound-app/types';
 import { useEffect } from 'react';
 
-import type { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
 
 import useForceUpdate from './use-force-update';
 
 /** The manager kinds whose entities render as an addon list (Fonts are override targets, not addons). */
-type AddonListKind = ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons;
+type AddonListKind = 'plugins' | 'themes' | 'icons';
 
 /**
  * @description Returns the entities of the manager for the given kind, re-rendering when they change.

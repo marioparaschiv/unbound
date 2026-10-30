@@ -1,4 +1,4 @@
-import type { AddonManifest, NativeAddonVerification } from '@unbound-app/types';
+import type { NativeAddonVerification } from '@unbound-app/types';
 import { describe, expect, test } from 'bun:test';
 
 const verifications: { manifest: string; bundle: string }[] = [];
@@ -20,17 +20,8 @@ Object.defineProperty(globalThis, 'NativePlatform', {
 	},
 });
 
-const { FakeAddons, makeManifest } = await import('./helpers/addons');
-
-class SignatureAddons extends FakeAddons {
-	check(manifest: AddonManifest, bundle: string, installedTrust?: 'signed' | 'unsigned') {
-		const installed = installedTrust
-			? { ...this.getEntity(manifest.id), data: { ...manifest, trust: installedTrust } }
-			: undefined;
-
-		return this.verifySignature(manifest, bundle, installed as never);
-	}
-}
+const { makeManifest } = await import('./helpers/addons');
+const { verifySignature } = await import('~/lib/addon-download');
 
 const signature = { version: 1 as const, ed25519: 'c2lnbmF0dXJl' };
 
@@ -39,7 +30,7 @@ describe('addon signatures', () => {
 		nextVerification = { status: 'signed', signer: 'the production key' };
 		verifications.length = 0;
 		const manifest = { ...makeManifest('signed.addon'), signature, trust: 'signed' as const };
-		const checked = new SignatureAddons().check(manifest, 'bundle');
+		const checked = verifySignature(manifest, 'bundle');
 
 		expect(checked.trust).toBe('signed');
 		expect(verifications[0]?.bundle).toBe('bundle');
@@ -54,29 +45,24 @@ describe('addon signatures', () => {
 		};
 
 		expect(() =>
-			new SignatureAddons().check(
-				{ ...makeManifest('tampered.addon'), signature },
-				'changed',
-			),
+			verifySignature({ ...makeManifest('tampered.addon'), signature }, 'changed'),
 		).toThrow(/Refused tampered\.addon/);
 	});
 
 	test('keeps unsigned addons installable', () => {
 		nextVerification = { status: 'unsigned' };
 
-		expect(new SignatureAddons().check(makeManifest('third.party'), 'bundle').trust).toBe(
-			'unsigned',
-		);
+		expect(verifySignature(makeManifest('third.party'), 'bundle').trust).toBe('unsigned');
 	});
 
 	test('refuses an unsigned update for a signed addon', () => {
 		nextVerification = { status: 'unsigned' };
 
-		expect(() =>
-			new SignatureAddons().check(makeManifest('stripped.addon'), 'bundle', 'signed'),
-		).toThrow(/Refused stripped\.addon: .*\bsigned\b/);
-		expect(
-			new SignatureAddons().check(makeManifest('still.unsigned'), 'bundle', 'unsigned').trust,
-		).toBe('unsigned');
+		expect(() => verifySignature(makeManifest('stripped.addon'), 'bundle', 'signed')).toThrow(
+			/Refused stripped\.addon: .*\bsigned\b/,
+		);
+		expect(verifySignature(makeManifest('still.unsigned'), 'bundle', 'unsigned').trust).toBe(
+			'unsigned',
+		);
 	});
 });

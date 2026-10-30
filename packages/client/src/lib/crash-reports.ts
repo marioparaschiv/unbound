@@ -6,14 +6,12 @@ import type { Api } from '@unbound-app/web/api';
 import { currentEnvironment } from '~/lib/environment';
 import { buildCrashReport } from '~/lib/crash-report';
 import type { CrashEvent } from '~/lib/crash-report';
-import storage from '~/api/storage';
+import { getSetting } from '~/lib/unbound-settings';
 import fs from '~/api/fs';
 
 export type { CrashEvent, CrashReportAddon } from '~/lib/crash-report';
 
 const logger = createLogger('Crash Reports');
-
-export const CRASH_REPORTS_SETTING = 'crash-reports';
 
 const LOG_FILE = 'Unbound/Logs/unbound.log';
 
@@ -22,7 +20,7 @@ const LOG_FILE = 'Unbound/Logs/unbound.log';
  * @returns Whether reports may be sent.
  */
 function crashReportsEnabled(): boolean {
-	return storage.get('unbound', CRASH_REPORTS_SETTING, false);
+	return getSetting('crash-reports');
 }
 
 async function readLoaderLog(): Promise<string | undefined> {

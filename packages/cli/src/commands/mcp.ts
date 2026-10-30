@@ -5,6 +5,7 @@ import { command, cli, type Command } from 'cleye';
 
 import { toCleyeCommand } from '~/adapters/cleye';
 import { createContext } from '~/lib/context';
+import type { MenuEntry } from '~/lib/menu';
 import { toMcpTool } from '~/adapters/mcp';
 import { commands } from '~/registry';
 
@@ -49,6 +50,12 @@ export const mcpCommand: Command = command(
 		void server.connect(transport);
 	},
 );
+
+/** How the `ubd` menu lists {@link mcpCommand}, which is not a registry entry. */
+export const mcpMenuEntry: MenuEntry = {
+	name: 'mcp',
+	summary: 'Serve the debugger as an MCP server.',
+};
 
 /**
  * @description Whether a name is one of the tools run as `ubd mcp <tool>`.

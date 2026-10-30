@@ -1,3 +1,5 @@
+import { sendDebugReport } from '~/lib/debug-report/debug-report';
+import { getSetting, setSetting } from '~/lib/unbound-settings';
 import { createCommands, option } from '~/api/commands';
 import { Discord } from '~/api/metro/components';
 import { findByProps } from '~/api/metro';
@@ -9,10 +11,8 @@ import { reload } from '~/api/native';
 import storage from '~/api/storage';
 
 import formatCodeBlock from './format-code-block';
-import { sendDebugReport } from './debug-report';
 
 const Commands = createCommands('unbound');
-const Settings = storage.getStore('unbound');
 const Navigation = findByProps('getRootNavigationRef', { lazy: true });
 
 /** Registers Unbound's own slash commands in the shared Unbound section. */
@@ -49,13 +49,13 @@ export function start() {
 				}),
 			},
 			execute({ address }) {
-				const enabled = address ? true : !Settings.get('debugger.enabled', false);
+				const enabled = address ? true : !getSetting('debugger.enabled');
 
 				if (address) {
-					Settings.set('debugger.address', address.trim());
+					setSetting('debugger.address', address.trim());
 				}
 
-				Settings.set('debugger.enabled', enabled);
+				setSetting('debugger.enabled', enabled);
 
 				// The debugger only listens for these settings while it runs, so restart it directly.
 				debug.stop();
@@ -64,7 +64,7 @@ export function start() {
 					debug.start();
 				}
 
-				const target = Settings.get('debugger.address', '') || 'the default address';
+				const target = getSetting('debugger.address') || 'the default address';
 
 				return {
 					ephemeral: true,
@@ -99,7 +99,7 @@ export function stop() {
 }
 
 function confirmRecovery() {
-	const enabled = !Settings.get('recovery', false);
+	const enabled = !getSetting('recovery');
 
 	Discord.showConfirmModal({
 		title: Messages.UNBOUND_RECOVERY_MODE,
@@ -107,7 +107,7 @@ function confirmRecovery() {
 		confirmText: Messages.UNBOUND_RESTART,
 		cancelText: Messages.UNBOUND_CANCEL,
 		onConfirm() {
-			Settings.set('recovery', enabled);
+			setSetting('recovery', enabled);
 			void reload();
 		},
 	});

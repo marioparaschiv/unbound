@@ -1,12 +1,12 @@
 import type { UnboundLink } from '@unbound-app/contracts/links';
 import { parseUnboundLink } from '@unbound-app/contracts/links';
+import type { ManagerKind } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import { getInstalledVersion, MARKETPLACE_TABS } from '~/ui/marketplace/targets';
 import { navigationReady } from '~/lib/navigation-ready';
 import { getNativeModule } from '~/api/native-runtime';
 import MarketplaceStore from '~/stores/marketplace';
-import type { ManagerKind } from '~/lib/constants';
 import { Messages, format } from '~/api/i18n';
 import { Linking } from '~/api/metro/api';
 import { Screens } from '~/lib/constants';

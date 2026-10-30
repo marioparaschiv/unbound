@@ -1,14 +1,13 @@
 import { formatChangelogIssues, parseChangelog } from '@unbound-app/contracts/changelog';
 import { createSubmissionResponseSchema } from '@unbound-app/contracts/publish';
-import { addonManifestSchema } from '@unbound-app/contracts/manifest';
 import type { Submission } from '@unbound-app/contracts/publish';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { z } from 'zod';
 
 import type { GitSource, GitSourceOverrides } from '~/lib/git';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import { createClient } from '~/lib/api-client';
+import { readManifest } from '~/lib/manifest';
 import { readGitSource } from '~/lib/git';
 import type { Env } from '~/lib/env';
 
@@ -16,17 +15,6 @@ export type PublishOptions = GitSourceOverrides & {
 	env: Env;
 	addon: DiscoveredAddon;
 };
-
-function readVersion(addon: DiscoveredAddon): string {
-	const path = join(addon.dir, 'manifest.json');
-	const parsed = addonManifestSchema.safeParse(JSON.parse(readFileSync(path, 'utf8')));
-
-	if (!parsed.success) {
-		throw new Error(`Invalid ${path}:\n${z.prettifyError(parsed.error)}`);
-	}
-
-	return parsed.data.version;
-}
 
 function checkChangelog(addon: DiscoveredAddon, source: GitSource) {
 	const file = join(addon.dir, 'CHANGELOG.md');
@@ -40,7 +28,7 @@ function checkChangelog(addon: DiscoveredAddon, source: GitSource) {
 		throw new Error(formatChangelogIssues(parsed.issues, path));
 	}
 
-	const version = readVersion(addon);
+	const { version } = readManifest(addon.dir);
 
 	if (!parsed.releases.has(version)) {
 		throw new Error(`${path} has no entry for ${version}.`);

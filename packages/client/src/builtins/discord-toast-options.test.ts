@@ -1,6 +1,8 @@
 import { expect, test } from 'bun:test';
 
-import discordToastOptions, { hasVisibleContent } from './discord-toast-options';
+import { hasVisibleContent } from '~/lib/toast-content';
+
+import discordToastOptions from './discord-toast-options';
 
 test('shows Discord content as the toast title', () => {
 	const mapped = discordToastOptions({ content: 'Copied' });

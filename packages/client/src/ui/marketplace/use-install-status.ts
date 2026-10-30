@@ -1,9 +1,9 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
+import type { ManagerKind } from '@unbound-app/types/addons';
 import { useEffect } from 'react';
 
 import type { InstallStatus } from '~/lib/catalog';
 import { getInstallStatus } from '~/lib/catalog';
-import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
 import { useForceUpdate } from '~/ui/hooks';
 
@@ -19,7 +19,7 @@ function useInstallStatus(kind: ManagerKind, addon: ListedAddon): InstallStatus 
 	const forceUpdate = useForceUpdate();
 
 	useEffect(() => {
-		if (kind === ManagerKind.Fonts) {
+		if (kind === 'fonts') {
 			const fonts = getManager(kind);
 
 			fonts.on('changed', forceUpdate);

@@ -9,7 +9,6 @@ const toasts: RecordedToast[] = [];
 const crashes: CrashEvent[] = [];
 
 mock.module('~/lib/crash-reports', () => ({
-	CRASH_REPORTS_SETTING: 'crash-reports',
 	reportCrash: async (event: CrashEvent) => {
 		crashes.push(event);
 	},

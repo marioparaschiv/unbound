@@ -66,19 +66,3 @@ export const SOCIAL_LINKS = {
 
 /** Discord invite code for the support server, opened as a deep link from the General page. */
 export const DISCORD_INVITE = 'rMdzhWUaGTx';
-
-/** Discriminates which addon manager a UI surface (addon card/list) is bound to. */
-export enum ManagerKind {
-	Plugins,
-	Themes,
-	Icons,
-	Fonts,
-}
-
-/** Maps a {@link ManagerKind} to its manager export name on `~/managers`. */
-export const ManagerNames: Record<ManagerKind, 'Plugins' | 'Themes' | 'Icons' | 'Fonts'> = {
-	[ManagerKind.Plugins]: 'Plugins',
-	[ManagerKind.Themes]: 'Themes',
-	[ManagerKind.Icons]: 'Icons',
-	[ManagerKind.Fonts]: 'Fonts',
-};

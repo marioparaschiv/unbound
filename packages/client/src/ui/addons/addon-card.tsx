@@ -2,10 +2,9 @@ import type { Addon } from '@unbound-app/types';
 import { View } from 'react-native';
 import { memo } from 'react';
 
+import { useUnboundSettings } from '~/lib/unbound-settings';
 import { Discord } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
-import { ManagerKind } from '~/lib/constants';
-import { ManagerType } from '~/managers/base';
 import { getManager } from '~/managers/utils';
 import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';
@@ -22,7 +21,7 @@ import AddonTitle from './addon-title';
 
 type AddonCardProps = {
 	addon: Addon;
-	kind: ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons;
+	kind: 'plugins' | 'themes' | 'icons';
 	/** Whether the plugin is a library other plugins build on. */
 	library?: boolean;
 };
@@ -36,16 +35,12 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 	const manager = getManager(kind);
 	const { name, version, authors, description } = addon.data;
 
-	const recovery = useSettingsStore('unbound', ({ key }) => key === 'recovery').get(
-		'recovery',
-		false,
-	);
+	const recovery = useUnboundSettings(({ key }) => key === 'recovery').get('recovery');
 	const disabled = addon.failed || recovery;
-	const developmentCopy =
-		useSettingsStore(
-			ManagerType[manager.type].toLowerCase(),
-			({ key }) => key === 'development',
-		).get<Record<string, boolean>>('development', {})[addon.id] === true;
+
+	useSettingsStore(kind, ({ key }) => key === 'development');
+
+	const developmentCopy = manager.isDevelopmentCopy(addon.id);
 	const tag = library
 		? Messages.UNBOUND_LIBRARY
 		: developmentCopy
@@ -53,7 +48,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 			: void 0;
 
 	const trailing =
-		kind === ManagerKind.Plugins ? (
+		kind === 'plugins' ? (
 			<AddonSwitch addon={addon} kind={kind} disabled={disabled} />
 		) : (
 			<AddonRadio addon={addon} kind={kind} disabled={disabled} />
@@ -74,7 +69,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 					{authors?.length ? <AddonAuthors authors={authors} /> : null}
 				</View>
 				<View style={styles.actions}>
-					{kind === ManagerKind.Plugins ? (
+					{kind === 'plugins' ? (
 						<AddonSettings addon={addon} disabled={disabled} />
 					) : null}
 					<AddonOverflow addon={addon} kind={kind} developmentCopy={developmentCopy} />

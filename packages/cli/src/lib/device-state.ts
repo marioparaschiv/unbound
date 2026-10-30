@@ -13,26 +13,31 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
+	ANDROID_FILES_DIRECTORY,
 	DISCORD_BUNDLE_ID,
+	DISCORD_PACKAGE,
+	IOS_CONTAINERS_DIRECTORY,
+	IOS_TAR,
+	IOS_UIOPEN,
+} from '~/lib/device-paths';
+import {
+	ERROR_MARKER,
 	IOS_TIMEOUTS,
-	parseShellResult,
 	pickDevice,
+	pilotShell,
+	readMarker,
 	resolvePilot,
-} from '~/lib/ios-install';
+} from '~/lib/pilot';
 import type { CommandResult, CommandRunner } from '~/lib/run-command';
 import { ANDROID_TIMEOUTS } from '~/lib/android-install';
 import { runCommand } from '~/lib/run-command';
 
-const ANDROID_FILES_DIRECTORY = '/data/data/com.discord/files';
 const ANDROID_STAGING = '/data/local/tmp';
 const IOS_STAGING = '/var/tmp';
-const IOS_CONTAINERS = '/var/mobile/Containers/Data/Application';
-const IOS_TAR = '/var/jb/usr/bin/tar';
 const IOS_GZIP = '/var/jb/usr/bin/gzip';
 const IOS_SPLIT = '/var/jb/usr/bin/split';
 const IOS_PART_BYTES = 2 * 1024 * 1024;
 const RESULT_MARKER = 'UBD_RESULT=';
-const ERROR_MARKER = 'UBD_ERROR=';
 const SNAPSHOT_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
 const TRANSFER_TIMEOUT_MS = 600_000;
 
@@ -64,14 +69,6 @@ type DeviceTarget = {
 	push(local: string, remote: string): Promise<CommandResult>;
 	pull(remote: string, local: string): Promise<CommandResult>;
 };
-
-function readMarker(output: string, marker: string): string | undefined {
-	return output
-		.split('\n')
-		.find((line) => line.startsWith(marker))
-		?.slice(marker.length)
-		.trim();
-}
 
 function scriptResult(ok: boolean, output: string, error: string): ScriptResult {
 	const value = readMarker(output, RESULT_MARKER);
@@ -183,8 +180,8 @@ function androidTarget(
 		packCommand: (archive) => `tar -czf '${archive}' -C "$parent" Unbound`,
 		unpackCommand: (archive) => `tar -xzf '${archive}' -C "$parent"`,
 		ownerScript: 'chown -R $(stat -c %u:%g "$parent") "$parent/Unbound"',
-		stopScript: 'am force-stop com.discord',
-		startScript: 'monkey -p com.discord -c android.intent.category.LAUNCHER 1 >/dev/null',
+		stopScript: `am force-stop ${DISCORD_PACKAGE}`,
+		startScript: `monkey -p ${DISCORD_PACKAGE} -c android.intent.category.LAUNCHER 1 >/dev/null`,
 		async run(script, timeoutMs) {
 			const quoted = script.replaceAll("'", "'\\''");
 			const result = await adb(['shell', asRoot ? script : `su -c '${quoted}'`], timeoutMs);
@@ -303,9 +300,10 @@ export async function pushInParts(
 }
 
 function iosTarget(udid: string, run: CommandRunner, pilot: string): DeviceTarget {
-	const pilotCommand = (args: string[], timeoutMs: number) => run(pilot, args, timeoutMs);
+	const device = { udid, pilot, run };
 	const transfer: Transfer = (direction, source, destination) =>
-		pilotCommand(
+		run(
+			pilot,
 			[
 				'file_transfer',
 				'--device',
@@ -319,33 +317,23 @@ function iosTarget(udid: string, run: CommandRunner, pilot: string): DeviceTarge
 			],
 			TRANSFER_TIMEOUT_MS,
 		);
-	const shell: Shell = async (script) => {
-		const result = parseShellResult(
-			await pilotCommand(
-				[
-					'shell_exec',
-					'--device',
-					udid,
-					'--command',
-					script,
-					'--timeoutMs',
-					String(TRANSFER_TIMEOUT_MS),
-				],
-				TRANSFER_TIMEOUT_MS + 10_000,
-			),
-		);
+
+	async function runScript(script: string, timeoutMs: number): Promise<ScriptResult> {
+		const result = await pilotShell(device, script, { timeoutMs, onDevice: true });
 
 		return result.ok
 			? scriptResult(true, result.output, '')
 			: scriptResult(false, '', result.error);
-	};
+	}
+
+	const shell: Shell = (script) => runScript(script, TRANSFER_TIMEOUT_MS);
 
 	return {
 		platform: 'ios',
 		id: udid,
 		parentScript: [
 			"parent=''",
-			`for plist in $(grep -l '${DISCORD_BUNDLE_ID}' ${IOS_CONTAINERS}/*/.com.apple.mobile_container_manager.metadata.plist 2>/dev/null); do parent="\${plist%/*}/Documents"; break; done`,
+			`for plist in $(grep -l '${DISCORD_BUNDLE_ID}' ${IOS_CONTAINERS_DIRECTORY}/*/.com.apple.mobile_container_manager.metadata.plist 2>/dev/null); do parent="\${plist%/*}/Documents"; break; done`,
 			`if [ -z "$parent" ]; then echo '${ERROR_MARKER}Discord has no data container on this device.'; exit 1; fi`,
 		].join('\n'),
 		staging: IOS_STAGING,
@@ -355,27 +343,8 @@ function iosTarget(udid: string, run: CommandRunner, pilot: string): DeviceTarge
 			`${IOS_GZIP} -dc '${archive}' | ${IOS_TAR} -xf - -C "$parent" --no-same-owner`,
 		ownerScript: 'chown -R mobile:mobile "$parent/Unbound"',
 		stopScript: 'killall -9 Discord 2>/dev/null; sleep 1',
-		startScript: `/var/jb/usr/bin/uiopen --bundleid ${DISCORD_BUNDLE_ID}`,
-		async run(script, timeoutMs) {
-			const result = parseShellResult(
-				await pilotCommand(
-					[
-						'shell_exec',
-						'--device',
-						udid,
-						'--command',
-						script,
-						'--timeoutMs',
-						String(timeoutMs),
-					],
-					timeoutMs + 10_000,
-				),
-			);
-
-			return result.ok
-				? scriptResult(true, result.output, '')
-				: scriptResult(false, '', result.error);
-		},
+		startScript: `${IOS_UIOPEN} --bundleid ${DISCORD_BUNDLE_ID}`,
+		run: runScript,
 		push: (local, remote) => pushInParts(local, remote, transfer, shell),
 		pull: (remote, local) => pullInParts(remote, local, transfer, shell),
 	};

@@ -150,9 +150,47 @@ describe('createReloadTransport', () => {
 		expect(client.pushes).toEqual([]);
 		expect(errors).toContain(join(plugin.output, 'index.js'));
 	});
+
+	test('an invalid manifest is reported and never pushed', async () => {
+		const client: FakeClient = { isDeviceConnected: true, pushes: [], result: ok };
+		const plugin = builtPlugin();
+
+		writeFileSync(
+			join(plugin.dir, 'manifest.json'),
+			JSON.stringify({ id: 'com.example.sample' }),
+		);
+
+		const write = spyOn(process.stderr, 'write').mockImplementation(() => true);
+		let errors = '';
+
+		try {
+			await createReloadTransport(fakeContext(client)).reload(plugin);
+
+			errors = write.mock.calls.map(([chunk]) => String(chunk)).join('');
+		} finally {
+			write.mockRestore();
+		}
+
+		expect(client.pushes).toEqual([]);
+		expect(errors).toContain(`Invalid ${join(plugin.dir, 'manifest.json')}`);
+	});
 });
 
 describe('readBuiltAddon', () => {
+	test('reads a dev manifest the publish rules would refuse, keeping every field', () => {
+		const plugin = builtPlugin();
+		const manifest = {
+			id: 'com.example.sample',
+			main: 'index.tsx',
+			version: '1.0',
+			authors: [{ name: 'Mario', id: 'mario' }],
+		};
+
+		writeFileSync(join(plugin.dir, 'manifest.json'), JSON.stringify(manifest));
+
+		expect(readBuiltAddon(plugin).manifest).toMatchObject(manifest);
+	});
+
 	test('sends the bytecode built with the bundle and lists its digests in the manifest', () => {
 		const plugin = builtPlugin();
 		const compiled = Buffer.from([0xc6, 0x1f, 0xbc, 0x03, 0x01]);

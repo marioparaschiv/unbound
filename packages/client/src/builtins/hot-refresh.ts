@@ -57,19 +57,76 @@ function connect() {
 	const socket = new WebSocket(`${DEV_SERVER_URL.replace(/^http/, 'ws')}/__refresh`);
 
 	socket.addEventListener('open', () => Logger.success('Connected'));
-	socket.addEventListener('message', ({ data }) => handle(socket, JSON.parse(data)));
-	socket.addEventListener('close', () => {
-		ws = null;
+	socket.addEventListener('message', ({ data }) => {
+		const message = parseServerMessage(data);
 
-		if (stopped || reconnectTimer) return;
-
-		reconnectTimer = setTimeout(() => {
-			reconnectTimer = null;
-			connect();
-		}, RECONNECT_DELAY_MS);
+		if (message) {
+			handle(socket, message);
+		}
 	});
 
+	// RN may fire only one of error and close on a failed dial; a socket left in `ws` would block every retry.
+	socket.addEventListener('error', () => {
+		// An error on a socket that stays open leaves it working; only a failed dial needs a retry.
+		if (socket.readyState !== WebSocket.OPEN) {
+			scheduleReconnect(socket);
+		}
+	});
+	socket.addEventListener('close', () => scheduleReconnect(socket));
+
 	ws = socket;
+}
+
+function scheduleReconnect(socket: WebSocket) {
+	if (ws === socket) {
+		ws = null;
+	}
+
+	if (stopped || ws || reconnectTimer) return;
+
+	reconnectTimer = setTimeout(() => {
+		reconnectTimer = null;
+		connect();
+	}, RECONNECT_DELAY_MS);
+}
+
+function isStringArray(value: unknown): value is string[] {
+	return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+function isServerMessage(value: unknown): value is ServerMessage {
+	if (typeof value !== 'object' || value === null || !('type' in value)) {
+		return false;
+	}
+
+	if (value.type === 'reload') {
+		return true;
+	}
+
+	return (
+		value.type === 'patch' &&
+		'code' in value &&
+		typeof value.code === 'string' &&
+		'filename' in value &&
+		typeof value.filename === 'string' &&
+		'changedIds' in value &&
+		isStringArray(value.changedIds)
+	);
+}
+
+// UNKNOWN: a WebSocket frame's data is whatever the dev server sent.
+function parseServerMessage(data: unknown): ServerMessage | undefined {
+	if (typeof data !== 'string') return;
+
+	try {
+		const value: unknown = JSON.parse(data);
+
+		return isServerMessage(value) ? value : undefined;
+	} catch {
+		Logger.warn('Ignored a malformed message from the dev server.');
+
+		return undefined;
+	}
 }
 
 function handle(socket: WebSocket, message: ServerMessage) {

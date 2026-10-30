@@ -7,27 +7,28 @@ export const ADDON_TYPES = ['plugin', 'theme', 'icon-pack', 'font'] as const;
 
 export type AddonType = (typeof ADDON_TYPES)[number];
 
+/** The addon managers. Each names its settings store and its Cloud Sync section. */
+export const MANAGER_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
+
+export type ManagerKind = (typeof MANAGER_KINDS)[number];
+
 /** The author of an addon: a display name and a numeric user id. */
 export type AddonAuthor = {
 	name: string;
 	id: `${number}`;
 };
 
-/** The manifest describing an addon's metadata, entry point, and source. */
-export type AddonManifest = {
+/** The manifest an author ships in an addon's `manifest.json`: its metadata and entry point. */
+export type AuthoredAddonManifest = {
 	id: string;
 	/** The addon kind this manifest describes; used to validate installs. */
 	type?: AddonType;
 	name: string;
 	description: string;
 	authors: AddonAuthor[];
-	icon: (string & {}) | { uri: string };
-	updates: string;
+	icon?: string | { uri: string };
 	main: string;
 	version: string;
-	folder: string;
-	path: string;
-	url: string;
 	platforms?: NativePluginPlatform[];
 	capabilities?: NativePluginCapability[];
 	platformCapabilities?: Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
@@ -43,13 +44,32 @@ export type AddonManifest = {
 	dependencies?: Record<string, string>;
 	/** The SHA-512 of each bundle compiled to Hermes bytecode, by bytecode version; covered by `signature`. */
 	bytecode?: Record<string, string>;
-	/** Set by the loader and installer: whether the bundle carries a valid Unbound signature. */
-	trust?: AddonTrust;
 	/** Requirements on the Unbound client running the addon. */
 	unbound?: {
 		/** The minimum Unbound client version (semver) the addon supports. */
 		min?: string;
 	};
+};
+
+/** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what the loader and installer record. */
+export type AddonManifest = AuthoredAddonManifest & {
+	/** Set by the loader for an addon it read from disk: the addon's folder name. */
+	folder?: string;
+	/** Set by the loader for an addon it read from disk: the addon's absolute directory. */
+	path?: string;
+	/** Set by the loader and installer: whether the bundle carries a valid Unbound signature. */
+	trust?: AddonTrust;
+};
+
+/**
+ * A manifest pushed by `ubd dev`. The CLI only checks the fields it reads; the device validates the
+ * whole manifest the same way it validates one it loads, so a dev build is never held to the publish rules.
+ */
+export type PushedManifest = {
+	id: string;
+	main: string;
+	/** The SHA-512 of each bytecode build the push carries, by bytecode version; the CLI fills it in. */
+	bytecode?: Record<string, string>;
 };
 
 /** Whether an addon's bundle carries a valid Unbound signature. */

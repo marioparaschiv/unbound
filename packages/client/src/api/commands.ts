@@ -14,8 +14,8 @@ import { createLogger } from '@unbound-app/logger';
 import { normalize, resolveSection } from '~/lib/commands/normalize';
 import { option as builders } from '~/lib/commands/options';
 import type { ErasedTree } from '~/lib/commands/normalize';
+import { isKnownOwner } from '~/lib/commands/owners';
 import { registry } from '~/lib/commands/registry';
-import { plugins } from '~/managers/plugins';
 
 export type * from '@unbound-app/types/commands';
 
@@ -54,7 +54,7 @@ export function createCommands(owner: string, options: CommandsOptions = {}): Co
 }
 
 function warnIfUnowned(owner: string) {
-	if (owner === BUILT_IN_OWNER || warned.has(owner) || plugins.getEntity(owner)) return;
+	if (owner === BUILT_IN_OWNER || warned.has(owner) || isKnownOwner(owner)) return;
 
 	warned.add(owner);
 	Logger.warn(

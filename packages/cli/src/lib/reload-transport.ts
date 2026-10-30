@@ -1,11 +1,12 @@
 import type { ControllerClient } from '@unbound-app/debugger-protocol/controller';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { getBundleName } from '@unbound-app/contracts/workspace';
-import type { AddonManifest } from '@unbound-app/types';
+import type { PushedManifest } from '@unbound-app/types';
 import { basename, dirname, join } from 'node:path';
 import toError from '@unbound-app/utils/to-error';
 import { createHash } from 'node:crypto';
 
+import { readDevManifest } from '~/lib/manifest';
 import { waitForDevice } from '~/lib/context';
 
 export type ReloadClient = Pick<ControllerClient, 'isDeviceConnected' | 'pushPlugin'>;
@@ -28,7 +29,7 @@ export type ReloadTransport = {
 };
 
 export type ReadAddon = {
-	manifest: AddonManifest;
+	manifest: PushedManifest;
 	bundle: string;
 	bytecode?: Record<string, string>;
 };
@@ -106,12 +107,10 @@ export function createReloadTransport(
  * as-is, so its bundle is the file named by `main` in its directory; a built addon's bundle is the
  * JavaScript the build emitted into the output directory, named after `main` with a `.js` extension.
  * @param addon The freshly built addon.
- * @returns The parsed manifest and the bundle source.
+ * @returns The validated manifest and the bundle source; throws naming the manifest when it is invalid.
  */
 export function readBuiltAddon(addon: BuiltAddon): ReadAddon {
-	const manifest: AddonManifest = JSON.parse(
-		readFileSync(join(addon.dir, 'manifest.json'), 'utf8'),
-	);
+	const manifest = readDevManifest(addon.dir);
 
 	const bundleName = getBundleName(addon.static, manifest.main);
 	const bundlePath = join(addon.output, bundleName);

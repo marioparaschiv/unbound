@@ -10,9 +10,9 @@ import {
 	FallbackStack,
 	FallbackSwitch,
 	FallbackText,
-} from '~/ui/components/design-fallbacks';
+} from '~/api/metro/fallbacks/design-fallbacks';
 import { Discord, isRenderable, registerDesignFallback } from '~/api/metro/design';
-import type { HelpMessageProps } from '~/ui/components/help-message';
+import type { HelpMessageProps } from '~/api/metro/fallbacks/help-message';
 import { findByPropsLazy } from '~/api/metro/wrappers';
 import { findByName } from '~/api/metro/search';
 
@@ -44,8 +44,8 @@ export function HelpMessage(props: HelpMessageProps) {
 	const component: ComponentType<HelpMessageProps> = (helpMessage ??=
 		firstOf(
 			() => findByName('HelpMessage'),
-			() => require('~/ui/components/help-message').default,
-		) ?? require('~/ui/components/help-message').default);
+			() => require('~/api/metro/fallbacks/help-message').default,
+		) ?? require('~/api/metro/fallbacks/help-message').default);
 
 	return createElement(component, props);
 }
@@ -54,7 +54,7 @@ export const HelpMessageTypes = lazy(
 	() =>
 		firstOf(
 			() => require('~/api/metro').findByProps('HelpMessageTypes')?.HelpMessageTypes,
-			() => require('~/ui/components/help-message').HelpMessageTypes,
+			() => require('~/api/metro/fallbacks/help-message').HelpMessageTypes,
 		) ?? {},
 );
 let switchComponent: ComponentType<SwitchProps> | undefined;

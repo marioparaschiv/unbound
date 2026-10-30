@@ -429,14 +429,13 @@ export type NativeJavaBatchOperation = {
 
 export type NativeJavaAssociationKey = NativeHandle;
 
+export type NativeDebugEvaluationLog = { level: 1 | 2 | 3; message: string };
+
 export type NativeDebugEvaluation = {
 	id: string;
 	code: string;
-	ok: boolean;
-	value?: string;
-	error?: string;
-	logs?: { level: 1 | 2 | 3; message: string }[];
-};
+	logs?: NativeDebugEvaluationLog[];
+} & ({ ok: true; value?: string } | { ok: false; error?: string });
 
 export type NativeResourceCounts = {
 	hooks: number;

@@ -1,8 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { bridgePortField } from '~/lib/context';
 import { searchModules } from '~/lib/probes';
 
 const schema = z.object({
@@ -10,10 +10,7 @@ const schema = z.object({
 		.string()
 		.describe('A case-insensitive regular expression for file paths or export names.'),
 	max: z.number().default(40).describe('How many modules to list.'),
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 });
 
 const modulesCommand: CommandDefinition<typeof schema> = {

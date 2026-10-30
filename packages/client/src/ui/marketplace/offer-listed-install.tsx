@@ -1,8 +1,8 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
+import type { ManagerKind } from '@unbound-app/types/addons';
 
 import { Discord } from '~/api/metro/components';
 import { getInstallStatus } from '~/lib/catalog';
-import { ManagerKind } from '~/lib/constants';
 import { showToast } from '~/api/toasts';
 import { format } from '~/api/i18n';
 
@@ -69,7 +69,7 @@ export async function offerListedInstall(kind: ManagerKind, addon: ListedAddon):
 	}
 
 	const ok =
-		kind === ManagerKind.Fonts
+		kind === 'fonts'
 			? await installFont(addon)
 			: await installVersion(kind, addon, addon.latestVersion);
 

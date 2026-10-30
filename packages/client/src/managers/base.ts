@@ -1,17 +1,10 @@
+import type { ManagerKind } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import type { DefaultEventMap } from '~/lib/event-emitter';
 import { EventEmitter } from '~/lib/event-emitter';
 import { createPatcher } from '~/api/patcher';
 import storage from '~/api/storage';
-
-/** Discriminates the kind of addon a {@link Manager} subclass governs. */
-export enum ManagerType {
-	PLUGINS,
-	THEMES,
-	ICONS,
-	FONTS,
-}
 
 type BaseManagerEvents<T> = {
 	load: (entity: T) => void;
@@ -43,13 +36,13 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 	 * @description Constructs the manager, deriving its logger, settings store, and patcher from the type.
 	 * @param type The kind of addon this manager governs.
 	 */
-	constructor(public readonly type: ManagerType) {
+	constructor(public readonly type: ManagerKind) {
 		super();
 
-		const name = ManagerType[type];
+		const name = type.toUpperCase();
 
 		this.logger = createLogger(name);
-		this.settings = storage.getStore(name.toLowerCase());
+		this.settings = storage.getStore(type);
 		this.patcher = createPatcher(name);
 	}
 

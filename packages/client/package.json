@@ -10,7 +10,7 @@
 	"scripts": {
 		"build": "bun --bun scripts/build/index.ts",
 		"build:dev": "bun --bun scripts/build/index.ts --dev",
-		"dev": "bun --bun scripts/dev",
+		"dev": "bun --bun scripts/dev --dev",
 		"serve": "bun scripts/serve/start.ts",
 		"upload": "bun scripts/build/upload.ts",
 		"sign": "bun scripts/build/sign.ts",

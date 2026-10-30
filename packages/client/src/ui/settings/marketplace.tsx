@@ -1,3 +1,4 @@
+import type { ManagerKind } from '@unbound-app/types/addons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, View } from 'react-native';
 
@@ -9,7 +10,6 @@ import {
 } from '~/ui/marketplace';
 import { Discord, SafeArea } from '~/api/metro/components';
 import MarketplaceStore from '~/stores/marketplace';
-import type { ManagerKind } from '~/lib/constants';
 import { Messages, format } from '~/api/i18n';
 
 type MarketplaceParams = {

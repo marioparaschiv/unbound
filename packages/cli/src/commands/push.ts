@@ -1,20 +1,16 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import { z } from 'zod';
 
+import { bridgePortField, waitForDevice } from '~/lib/context';
 import { resolveAddonTarget } from '~/lib/addon-target';
 import { readBuiltAddon } from '~/lib/reload-transport';
 import { staleBuildReason } from '~/lib/stale-build';
-import { waitForDevice } from '~/lib/context';
 import { NOT_CONNECTED } from '~/lib/device';
 
 const schema = z.object({
 	addon: z.string().default('.').describe('The plugin to push, as its manifest id or directory.'),
 	build: z.boolean().default(true).describe('Build the plugin before pushing it.'),
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 });
 
 const pushCommand: CommandDefinition<typeof schema> = {

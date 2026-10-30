@@ -324,6 +324,43 @@ describe('Addons.reload', () => {
 		expect(manager.entities.size).toBe(0);
 		expect(writes).toEqual([]);
 	});
+
+	test('an invalid pushed manifest fails before anything is persisted or stopped', async () => {
+		const manifest = makeManifest('i');
+		const failures: Error[] = [];
+
+		manager.seed({
+			id: 'i',
+			data: manifest,
+			bundle: 'old',
+			instance: makeInstance('old', manager.log),
+			started: true,
+			failed: false,
+		});
+		manager.on('reload-error', (_entity, error) => void failures.push(error));
+
+		const pushed = { ...manifest, authors: [] };
+		const result = await manager.reload('i', 'new', pushed);
+
+		expect(result.ok).toBe(false);
+		expect(failures.map((error) => error.message)).toEqual([
+			'Manifest authors must be a non-empty array',
+		]);
+		expect(manager.errors.get('i')).toBe(failures[0]);
+		expect(manager.log).toEqual([]);
+		expect(writes).toEqual([]);
+		expect(manager.getEntity('i')?.bundle).toBe('old');
+	});
+
+	test('an invalid pushed manifest for an absent addon is recorded without loading it', async () => {
+		const pushed = { ...makeManifest('j'), authors: [] };
+		const result = await manager.reload('j', 'fresh', pushed);
+
+		expect(result.ok).toBe(false);
+		expect(manager.errors.get('j')?.message).toBe('Manifest authors must be a non-empty array');
+		expect(manager.entities.size).toBe(0);
+		expect(writes).toEqual([]);
+	});
 });
 
 describe('Addons manifest validation', () => {

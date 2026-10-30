@@ -4,7 +4,7 @@ import type { AddonVersion } from '@unbound-app/contracts/addons';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Api } from '@unbound-app/web/api';
 
-import { compareVersions } from '~/lib/catalog';
+import { compareVersions } from '~/lib/versions';
 
 /** A version that can be installed. `holds`: installing it pauses automatic updates for the addon. */
 export type AvailableChoice = {

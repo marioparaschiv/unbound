@@ -8,8 +8,9 @@ import type {
 import type { UnboundGlobal } from '@unbound-app/api/global';
 
 type PluginEntity = { started?: boolean; context?: PluginContext };
-type PluginEntities = Map<string, PluginEntity>;
-type PluginManager = { entities: PluginEntities };
+
+/** The slice of Unbound's plugin manager the device probes borrow a running plugin's native bridge from. */
+export type PluginManager = { entities: Map<string, PluginEntity> };
 type ModuleRecord = {
 	isInitialized?: boolean;
 	__filePath?: string;

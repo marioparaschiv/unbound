@@ -1,4 +1,4 @@
-import type { ClassReport, ViewRecord, ViewsReport } from '~/lib/inspect-probe';
+import type { ClassReport, ViewRecord, ViewsReport } from '~/lib/inspect-report';
 
 const DISCORD_PREFIX = /^com\.discord\./;
 

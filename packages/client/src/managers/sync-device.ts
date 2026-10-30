@@ -15,6 +15,7 @@ import type {
 import { createLogger } from '@unbound-app/logger';
 
 import storage, { settings } from '~/api/storage';
+import { getManager } from '~/managers/utils';
 import type { SyncAction } from '~/lib/sync';
 import { plugins } from '~/managers/plugins';
 import { themes } from '~/managers/themes';
@@ -49,18 +50,10 @@ const ACTION_ORDER: Record<SyncAction['type'], number> = {
 	'set-setting': 4,
 };
 
-function getStates(kind: SyncKind): Record<string, boolean> {
-	return storage.get<Record<string, boolean>>(kind, 'states', {});
-}
-
-function getSources(kind: SyncKind): Record<string, string> {
-	return storage.get<Record<string, string>>(kind, 'sources', {});
-}
-
 const adapters: Record<SyncKind, KindAdapter> = {
 	plugins: {
 		getApplied: () => null,
-		isEnabled: (id) => Boolean(getStates('plugins')[id]),
+		isEnabled: (id) => plugins.isEnabled(id),
 		isInstalled: (id) => Boolean(plugins.getEntity(id)),
 		install: (url) => plugins.install(url),
 		delete: (id) => plugins.delete(id),
@@ -70,15 +63,15 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		forgetSource: (id) => plugins.forgetSource(id),
 	},
 	themes: {
-		getApplied: () => storage.get<string | null>('themes', 'applied', null),
-		isEnabled: (id) => storage.get<string | null>('themes', 'applied', null) === id,
+		getApplied: () => themes.getAppliedId(),
+		isEnabled: (id) => themes.getAppliedId() === id,
 		isInstalled: (id) => Boolean(themes.getEntity(id)),
 		install: (url) => themes.install(url),
 		delete: (id) => themes.delete(id),
 		// A theme is enabled by being applied.
 		setEnabled: () => undefined,
 		apply: (id) => {
-			const current = storage.get<string | null>('themes', 'applied', null);
+			const current = themes.getAppliedId();
 
 			if (id) {
 				themes.enable(id);
@@ -105,7 +98,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		isEnabled: () => true,
 		// A new font only registers natively after a relaunch, so its recorded source counts too.
 		isInstalled: (id) =>
-			id in getSources('fonts') || fonts.getEntities().some((font) => font.file === id),
+			id in fonts.getSources() || fonts.getEntities().some((font) => font.file === id),
 		install: (url) => fonts.install(url),
 		delete: (id) => fonts.delete(id),
 		setEnabled: () => undefined,
@@ -117,7 +110,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 
 function collectKind(kind: SyncKind): SyncKindDocument {
 	const adapter = adapters[kind];
-	const installs = Object.entries(getSources(kind))
+	const installs = Object.entries(getManager(kind).getSources())
 		.filter(([id]) => SYNC_ID_PATTERN.test(id))
 		.map(([id, url]) => ({ id, url, enabled: adapter.isEnabled(id) }));
 	const applied = adapter.getApplied();
@@ -129,7 +122,7 @@ function collectKind(kind: SyncKind): SyncKindDocument {
 }
 
 function clone(store: SyncSettingsStore): SyncSettingsStore {
-	return JSON.parse(JSON.stringify(store));
+	return structuredClone(store);
 }
 
 /**
@@ -218,7 +211,7 @@ async function applyAction(action: SyncAction): Promise<boolean> {
 		case 'set-setting': {
 			if (action.value !== undefined) {
 				storage.set(action.store, action.key, action.value);
-			} else if (settings[action.store]?.[action.key] !== undefined) {
+			} else {
 				storage.remove(action.store, action.key);
 			}
 

@@ -4,48 +4,16 @@ import type {
 	NativeJavaValue,
 	NativeObjectHandle,
 	NativePluginCapability,
-	PluginContext,
 } from '@unbound-app/api/native';
 import type { UnboundGlobal } from '@unbound-app/api/global';
+
+import type { InspectReport, ViewRecord } from '~/lib/inspect-report';
+import type { PluginManager } from '~/lib/probes';
 
 export type InspectRequest =
 	| { kind: 'class'; name: string }
 	| { kind: 'views'; className: string; maxDepth: number; maxNodes: number; chunk: number }
 	| { kind: 'find'; className: string; maxResults: number; maxNodes: number; chunk: number };
-
-export type ClassReport = {
-	platform: 'android' | 'ios';
-	name: string;
-	superclasses: string[];
-	interfaces: string[];
-	constructors: string[][];
-	methods: { name: string; parameters: string[]; returnType: string; static: boolean }[];
-	fields: { name: string; type: string; static: boolean }[];
-	members: boolean;
-};
-
-export type ViewRecord = {
-	depth: number;
-	className: string;
-	id: string | null;
-	width: number;
-	height: number;
-	visibility: 'visible' | 'invisible' | 'gone' | 'hidden';
-	text: string | null;
-	handle: string | null;
-};
-
-export type ViewsReport = {
-	platform: 'android' | 'ios';
-	roots: ViewRecord[][];
-	visited: number | null;
-	truncated: boolean;
-};
-
-export type InspectReport = ClassReport | ViewsReport | { error: string };
-
-type PluginEntity = { started?: boolean; context?: PluginContext };
-type PluginManager = { entities: Map<string, PluginEntity> };
 
 /**
  * @description Answers one `ubd inspect` request on the device: a Java class description, the current activity's view tree, or the attached views of a class on Android, and the same through the Objective-C bridge on iOS where it allows. It borrows the native bridge of a running plugin that holds the needed capabilities, and yields to the JavaScript thread between chunks of a view walk. Runs on the device through `toDeviceCode`, so it only uses its parameters and the device's globals.

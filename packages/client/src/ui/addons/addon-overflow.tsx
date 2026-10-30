@@ -4,7 +4,6 @@ import { Pressable } from 'react-native';
 import { useMemo, memo } from 'react';
 
 import { API_URL, CLIENT_VERSION } from '~/lib/constants';
-import type { ManagerKind } from '~/lib/constants';
 import { reinstallFromStore } from '~/lib/updates';
 import { Discord } from '~/api/metro/components';
 import { getManager } from '~/managers/utils';
@@ -19,7 +18,7 @@ import confirmDelete from './confirm-delete';
 
 type AddonOverflowProps = {
 	addon: Addon;
-	kind: ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons;
+	kind: 'plugins' | 'themes' | 'icons';
 	developmentCopy?: boolean;
 };
 

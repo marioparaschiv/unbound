@@ -1,3 +1,4 @@
+import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join } from 'node:path';
 
@@ -6,9 +7,6 @@ import type { DiscoveredAddon } from '~/lib/discovery';
 import type { CommandRunner } from '~/lib/run-command';
 
 export type PluginFile = { name: string; path: string };
-
-/** The file `ubd install` leaves in a plugin's folder so the client treats it as a development copy. */
-export const DEVELOPMENT_MARKER = 'development';
 
 export type PluginPayload = { id: string; files: PluginFile[] };
 
@@ -31,7 +29,7 @@ export function readPluginPayload(addon: DiscoveredAddon): PluginPayload | { err
 	}
 
 	const { manifest } = readBuiltAddon(addon);
-	const names = ['manifest.json', getBundleName(addon.static, manifest.main)];
+	const names = [MANIFEST_FILENAME, getBundleName(addon.static, manifest.main)];
 
 	return { id: addon.id, files: names.map((name) => ({ name, path: join(addon.output, name) })) };
 }
