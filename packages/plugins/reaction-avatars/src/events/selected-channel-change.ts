@@ -1,4 +1,4 @@
-import { cancelVisibleScans, scanVisibleCells } from '~/native/visible-cells';
+import { scanVisibleCells } from '~/native/visible-cells';
 import { cancelLayoutRefreshes } from '~/native/collections';
 import { clearRenderedCells } from '~/native/renderer';
 import { selectedChannelId } from '~/selected-channel';
@@ -27,7 +27,8 @@ export function subscribeChannelChanges(session: Session): () => void {
 		if (!next || next === channelId) return;
 
 		channelId = next;
-		cancelVisibleScans(session);
+		// Abandons any visible-cell scan in progress.
+		session.scanRevision++;
 		cancelScans();
 		cancelLayoutRefreshes(session);
 		clearRenderedCells(session);

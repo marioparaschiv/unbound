@@ -6,6 +6,7 @@ import type {
 } from '@unbound-app/api/native';
 import {
 	currentDecorView,
+	displayDensity,
 	findViewsOfClass,
 	readCalls,
 	runOnMain,
@@ -184,15 +185,6 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		return !!javaReference(outer);
 	}
 
-	async function density(row: NativeJavaReference): Promise<number> {
-		const resources = javaReference(await java.invokeAsync(row, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
-	}
-
 	async function headerBottom(row: NativeJavaReference): Promise<number | undefined> {
 		const header = await viewByIdNameAsync(java, row, 'header');
 
@@ -239,7 +231,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 		if (!area) return restore(row);
 
-		const scale = await density(row);
+		const scale = await displayDensity(java, row);
 		const [rowWidth, rowHeight, currentBackground] = await runOnMain(
 			java,
 			readCalls(row, ['getWidth', 'getHeight', 'getBackground']),

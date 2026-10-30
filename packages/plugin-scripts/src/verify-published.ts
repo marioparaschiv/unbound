@@ -1,12 +1,15 @@
 import { addonManifestSchema } from '@unbound-app/contracts/manifest';
 import { updatesResponseSchema } from '@unbound-app/contracts/updates';
-import { appendFileSync, readdirSync, readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync } from 'node:fs';
+import { z } from '@unbound-app/contracts/zod';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
+import { readPluginManifests } from './plugin-manifests';
 import { PLUGINS_DIR, REPO_ROOT } from './paths';
 
 const UNINSTALLED_VERSION = '0.0.0';
+const clientPackageSchema = z.object({ version: z.string() });
 
 type FirstPartyPlugin = { id: string };
 
@@ -39,25 +42,19 @@ export function digestOf(bytes: ArrayBuffer, algorithm: 'sha256' | 'sha512'): st
 	return createHash(algorithm).update(new Uint8Array(bytes)).digest('hex');
 }
 
-function firstPartyPlugins(): FirstPartyPlugin[] {
-	return readdirSync(PLUGINS_DIR, { withFileTypes: true })
-		.filter((entry) => entry.isDirectory())
-		.flatMap((entry) => {
-			try {
-				const manifest = JSON.parse(
-					readFileSync(join(PLUGINS_DIR, entry.name, 'manifest.json'), 'utf8'),
-				);
-
-				return typeof manifest.id === 'string' ? [{ id: manifest.id }] : [];
-			} catch {
-				return [];
-			}
-		});
+/**
+ * @description Lists the first-party plugins in a plugins workspace; a plugin with a broken manifest throws instead of escaping verification.
+ * @param directory The plugins workspace folder.
+ * @returns Each plugin's id.
+ */
+export function firstPartyPlugins(directory: string): FirstPartyPlugin[] {
+	return readPluginManifests(directory).map(({ manifest }) => ({ id: manifest.id }));
 }
 
 function clientVersion(): string {
-	return JSON.parse(readFileSync(join(REPO_ROOT, 'packages/client/package.json'), 'utf8'))
-		.version;
+	return clientPackageSchema.parse(
+		JSON.parse(readFileSync(join(REPO_ROOT, 'packages/client/package.json'), 'utf8')),
+	).version;
 }
 
 async function publishedReleases(
@@ -147,7 +144,7 @@ export async function verifyPublished(
 	apiUrl: string,
 	fetcher: Fetcher = fetch,
 ): Promise<{ problems: string[]; unpublished: string[] }> {
-	const plugins = firstPartyPlugins();
+	const plugins = firstPartyPlugins(PLUGINS_DIR);
 	const releases = await publishedReleases(apiUrl, plugins, fetcher);
 	const published = new Set(releases.map((release) => release.id));
 	const problems = (

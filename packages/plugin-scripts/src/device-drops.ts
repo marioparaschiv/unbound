@@ -1,3 +1,5 @@
+import { z } from '@unbound-app/contracts/zod';
+
 export type DropTarget = { kind: 'android'; serial?: string } | { kind: 'ios'; udid: string };
 
 export type DropBaseline = { crashFiles: Set<string>; lastExit?: string };
@@ -11,7 +13,21 @@ const IOS_BUNDLE = 'com.hammerandchisel.discord';
 const ANDROID_PACKAGE = 'com.discord';
 const PAGE_BYTES = 16_384;
 
-type JetsamProcess = { name?: string; reason?: string; rpages?: number };
+const jetsamReportSchema = z.object({
+	processes: z.optional(
+		z.array(
+			z.object({
+				name: z.optional(z.string()),
+				reason: z.optional(z.string()),
+				rpages: z.optional(z.number()),
+			}),
+		),
+	),
+});
+
+const shellReplySchema = z.object({ output: z.optional(z.string()) });
+
+type JetsamProcess = NonNullable<z.infer<typeof jetsamReportSchema>['processes']>[number];
 
 /**
  * @description Names every process a jetsam report killed, with the reason and its memory.
@@ -23,7 +39,9 @@ export function parseJetsamKills(report: string): string[] {
 	let processes: JetsamProcess[] = [];
 
 	try {
-		processes = (JSON.parse(body) as { processes?: JetsamProcess[] }).processes ?? [];
+		const parsed = jetsamReportSchema.safeParse(JSON.parse(body));
+
+		processes = parsed.success ? (parsed.data.processes ?? []) : [];
 	} catch {
 		return [];
 	}
@@ -61,7 +79,9 @@ function iosShell(target: Extract<DropTarget, { kind: 'ios' }>, command: string)
 
 function shellOutput(stdout: string): string {
 	try {
-		return (JSON.parse(stdout) as { output?: string }).output ?? '';
+		const parsed = shellReplySchema.safeParse(JSON.parse(stdout));
+
+		return parsed.success ? (parsed.data.output ?? '') : '';
 	} catch {
 		return stdout;
 	}

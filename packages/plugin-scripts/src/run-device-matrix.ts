@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
-import type { MeasuredCheck } from './compare-device-matrix';
+import { measuredChecksSchema, type MeasuredCheck } from './compare-device-matrix';
 import {
 	describeMemory,
 	describeSpringBoard,
@@ -218,7 +218,9 @@ export function runFailed(run: DeviceRun): boolean {
 function readChecks(out: string): MeasuredCheck[] {
 	const file = join(out, 'results.json');
 
-	return existsSync(file) ? (JSON.parse(readFileSync(file, 'utf8')) as MeasuredCheck[]) : [];
+	return existsSync(file)
+		? measuredChecksSchema.parse(JSON.parse(readFileSync(file, 'utf8')))
+		: [];
 }
 
 async function collect(

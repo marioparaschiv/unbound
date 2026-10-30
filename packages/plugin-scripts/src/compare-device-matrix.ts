@@ -1,3 +1,5 @@
+import { z } from '@unbound-app/contracts/zod';
+
 import type { DeviceCheck } from './device-matrix';
 
 export type CheckMetrics = {
@@ -14,6 +16,27 @@ export type MeasuredCheck = DeviceCheck & {
 	memoryDeltaMB?: number;
 	leakPerCycleMB?: number;
 };
+
+const result = z.enum(['pass', 'fail']);
+
+/** A matrix run's `results.json`, or a baseline given on the command line. */
+export const measuredChecksSchema: z.ZodMiniType<MeasuredCheck[]> = z.array(
+	z.object({
+		id: z.string(),
+		behavior: result,
+		lifecycle: result,
+		evidence: z.array(z.string()),
+		note: z.optional(z.string()),
+		metrics: z.optional(
+			z.object({ stopMs: z.number(), startMs: z.number(), leakedHooks: z.number() }),
+		),
+		offMainCalls: z.optional(z.array(z.string())),
+		errors: z.optional(z.array(z.string())),
+		skippedHooks: z.optional(z.array(z.string())),
+		memoryDeltaMB: z.optional(z.number()),
+		leakPerCycleMB: z.optional(z.number()),
+	}),
+);
 
 const SLOWER_FACTOR = 2;
 const SLOWER_MARGIN_MS = 200;

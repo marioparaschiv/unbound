@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { withoutSelfTest } from './collect-device-matrix';
+import { withoutSelfTest } from './log-parsers';
 import { SELF_TEST_MARKER, judgeSelfTest } from './loader-self-test';
 
 const attributed = new Map([['Chat Bubbles', [SELF_TEST_MARKER]]]);

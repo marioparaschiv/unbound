@@ -18,6 +18,7 @@ import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewri
 import {
 	currentDecorView,
 	findViewsOfClass,
+	resourceDensity,
 	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 import {
@@ -26,6 +27,7 @@ import {
 	javaNumber,
 	javaReference,
 	javaString,
+	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
 
 import {
@@ -58,10 +60,6 @@ type ImageEntry = {
 
 export type AndroidRenderer = ReturnType<typeof createAndroidRenderer>;
 
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
 /**
  * @description Creates the renderer that draws mention images into Discord's Android message text.
  * @param native The plugin's Java and hook bridges.
@@ -88,10 +86,7 @@ export function createAndroidRenderer(
 	function sizeFor(view: NativeJavaReference, resources: NativeJavaReference): number {
 		if (imageSize > 0) return imageSize;
 
-		const metrics = javaReference(java.invoke(resources, 'getDisplayMetrics'));
-		const density = metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
-
-		imageSize = Math.round(IMAGE_SIZE * density);
+		imageSize = Math.round(IMAGE_SIZE * resourceDensity(java, resources));
 
 		return imageSize;
 	}
@@ -229,7 +224,7 @@ export function createAndroidRenderer(
 			});
 		}
 
-		const key = viewKey(view as NativeJavaValue);
+		const key = javaViewKey(view as NativeJavaValue);
 
 		if (!active.put(original, rendered, edits)) {
 			active.reapply(view);
@@ -299,7 +294,7 @@ export function createAndroidRenderer(
 	}
 
 	function schedule(view: NativeJavaReference) {
-		const key = viewKey(view as NativeJavaValue);
+		const key = javaViewKey(view as NativeJavaValue);
 
 		if (disposed || !key || pending.has(key)) return;
 

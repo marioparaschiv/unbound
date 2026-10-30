@@ -19,6 +19,38 @@ const VIEW_SEARCH = { maxDepth: 128, maxVisited: 8_192, maxResults: 256 };
 
 export const STARTUP_SCAN_DELAYS = [300];
 
+type DensityBridge = Pick<NativeJavaBridge, 'invoke' | 'invokeAsync' | 'getField'>;
+
+/**
+ * @description Reads the display density from a view's `Resources`.
+ * @param java The plugin's Java bridge.
+ * @param resources The view's `Resources`, or `null` when it has none.
+ * @returns Physical pixels per density-independent pixel, or `1` when it cannot be read.
+ */
+export function resourceDensity(
+	java: Pick<NativeJavaBridge, 'invoke' | 'getField'>,
+	resources: NativeJavaReference | null,
+): number {
+	const metrics = resources
+		? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
+		: null;
+
+	return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
+}
+
+/**
+ * @description Reads the display density of a view, asking for its `Resources` on the main thread.
+ * @param java The plugin's Java bridge.
+ * @param view The view.
+ * @returns Physical pixels per density-independent pixel, or `1` when it cannot be read.
+ */
+export async function displayDensity(
+	java: DensityBridge,
+	view: NativeJavaReference,
+): Promise<number> {
+	return resourceDensity(java, javaReference(await java.invokeAsync(view, 'getResources', [])));
+}
+
 /**
  * @description Reads the activity the loader's `ActivityTracker` saw resume last.
  * @param java The plugin's Java bridge.

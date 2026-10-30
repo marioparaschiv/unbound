@@ -3,8 +3,8 @@ import type {
 	NativeJavaFieldDescription,
 	NativeJavaMethodDescription,
 } from '@unbound-app/api/native';
-import { describeJavaClass } from '@unbound-plugins/shared/native/android/java-classes';
 
+import { describeJavaClass } from './java-classes';
 import shapes from './discord-shapes.json';
 
 export type DiscordShapeName = keyof typeof shapes;

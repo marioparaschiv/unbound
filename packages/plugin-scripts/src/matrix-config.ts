@@ -1,42 +1,37 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { z } from '@unbound-app/contracts/zod';
 import { resolve } from 'node:path';
 
 import { REPO_ROOT } from './paths';
 
-export type MatrixDevice = {
-	name: string;
-	port: number;
-	serial?: string;
-	udid?: string;
-};
+const matrixDeviceSchema = z.object({
+	name: z.string(),
+	port: z.number(),
+	serial: z.optional(z.string()),
+	udid: z.optional(z.string()),
+});
 
-export type MatrixConfig = {
-	channel?: string;
-	devices: MatrixDevice[];
-};
+const matrixConfigSchema = z.object({
+	channel: z.optional(z.string()),
+	devices: z._default(z.array(matrixDeviceSchema), []),
+});
+
+export type MatrixDevice = z.infer<typeof matrixDeviceSchema>;
+
+export type MatrixConfig = z.infer<typeof matrixConfigSchema>;
 
 export const MATRIX_CONFIG_PATH = resolve(REPO_ROOT, '.device-matrix.json');
 
-function isDevice(value: unknown): value is MatrixDevice {
-	if (!value || typeof value !== 'object') return false;
-
-	const device = value as Partial<MatrixDevice>;
-
-	return typeof device.name === 'string' && typeof device.port === 'number';
-}
-
 export function parseMatrixConfig(text: string): MatrixConfig {
-	const parsed = JSON.parse(text) as Partial<MatrixConfig>;
-	const devices = Array.isArray(parsed.devices) ? parsed.devices : [];
+	const result = matrixConfigSchema.safeParse(JSON.parse(text));
 
-	if (!devices.every(isDevice)) {
-		throw new Error('Every device in the matrix config needs a name and a port.');
+	if (!result.success) {
+		throw new Error(
+			`The matrix config needs an optional string channel and devices with a name and a port: ${result.error.message}`,
+		);
 	}
 
-	return {
-		...(typeof parsed.channel === 'string' ? { channel: parsed.channel } : {}),
-		devices,
-	};
+	return result.data;
 }
 
 export function readMatrixConfig(path: string = MATRIX_CONFIG_PATH): MatrixConfig | undefined {

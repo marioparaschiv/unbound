@@ -6,7 +6,11 @@ import type {
 	NativeJavaReference,
 	NativeJavaValue,
 } from '@unbound-app/api/native';
-import { currentDecorView, findViewsOfClass } from '@unbound-plugins/shared/native/android/views';
+import {
+	currentDecorView,
+	displayDensity,
+	findViewsOfClass,
+} from '@unbound-plugins/shared/native/android/views';
 import {
 	javaBoolean,
 	javaFlag,
@@ -284,20 +288,11 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		return adoptBorder(view);
 	}
 
-	async function density(view: NativeJavaReference): Promise<number> {
-		const resources = javaReference(await onMain(view, 'getResources'));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
-	}
-
 	async function apply(rounded: Rounded) {
 		if (disposed) return;
 
 		const { view } = rounded;
-		const corner = radius() * (await density(view));
+		const corner = radius() * (await displayDensity(java, view));
 
 		if (rounded.kind === 'border') {
 			await java.invokeAsync(view, 'setBorderRadius', [javaFloat(corner)]);

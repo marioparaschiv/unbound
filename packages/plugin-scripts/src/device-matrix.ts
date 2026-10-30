@@ -1,6 +1,6 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 
+import { readPluginManifests } from './plugin-manifests';
 import { PLUGINS_DIR } from './paths';
 
 export type DeviceCheck = {
@@ -17,17 +17,8 @@ export type CatalogPlugin = {
 };
 
 export function catalogPlugins(directory: string): CatalogPlugin[] {
-	return readdirSync(directory, { withFileTypes: true })
-		.filter(
-			(entry) =>
-				entry.isDirectory() && existsSync(join(directory, entry.name, 'manifest.json')),
-		)
-		.map((entry) => {
-			const manifest = JSON.parse(
-				readFileSync(join(directory, entry.name, 'manifest.json'), 'utf8'),
-			);
-			return { id: manifest.id, name: manifest.name } as CatalogPlugin;
-		})
+	return readPluginManifests(directory)
+		.map(({ manifest }) => ({ id: manifest.id, name: manifest.name }))
 		.sort((left, right) => left.name.localeCompare(right.name));
 }
 
@@ -110,7 +101,7 @@ function main(): void {
 	if (!path)
 		throw new Error('Usage: bun packages/plugin-scripts/src/device-matrix.ts <results.json>');
 	const catalog = catalogPlugins(PLUGINS_DIR);
-	const checks = JSON.parse(readFileSync(path, 'utf8')) as unknown;
+	const checks: unknown = JSON.parse(readFileSync(path, 'utf8'));
 	if (!Array.isArray(checks)) throw new Error('Results must be an array');
 	const errors = validateDeviceMatrix(catalog, checks);
 	if (errors.length) throw new Error(errors.join('\n'));

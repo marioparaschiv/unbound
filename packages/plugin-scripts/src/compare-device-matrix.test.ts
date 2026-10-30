@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 
 import { compareRuns, renderChanges, type MeasuredCheck } from './compare-device-matrix';
-import { mergeChecks } from './collect-device-matrix';
+import { mergeChecks } from './matrix-policy';
 
 function check(id: string, overrides: Partial<MeasuredCheck> = {}): MeasuredCheck {
 	return {
