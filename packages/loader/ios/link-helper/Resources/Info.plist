@@ -27,7 +27,7 @@
 			<string>app.unbound.rip</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>astral</string>
+				<string>unbound</string>
 			</array>
 		</dict>
 	</array>

@@ -544,7 +544,7 @@ adb logcat -d -b crash | go run ./tools symbolicate-android --symbols android-sy
 
 ## Patching an IPA
 
-The IPA build patches Discord before injecting the tweak: it names the app astral, drops the supported-device list, enables file sharing, adds the astral alternate icon and the `astral://` URL scheme, and renames the React Navigation elements module. The same step runs on its own:
+The IPA build patches Discord before injecting the tweak: it names the app astral, drops the supported-device list, enables file sharing, adds the astral alternate icon and the `unbound://` URL scheme, and renames the React Navigation elements module. The same step runs on its own:
 
 ```bash
 go run ./tools patch-ipa --ipa Discord.ipa --output Patched.ipa

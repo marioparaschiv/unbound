@@ -21,7 +21,7 @@ const (
 	ipaIconDirectory        = "assets/ipa-icons"
 	astralAppName           = "astral"
 	astralAlternateIcon     = "AstralIcon"
-	astralURLScheme         = "astral"
+	astralURLScheme         = "unbound"
 	astralURLName           = "app.unbound.rip"
 	reactNavigationElements = "@react-navigation+elements"
 	patchedReactNavigation  = "@react-navigation+elements@patched"

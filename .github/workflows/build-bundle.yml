@@ -32,7 +32,7 @@ on:
                 required: true
             S3_SECRET_ACCESS_KEY:
                 required: true
-            UNBOUND_BUNDLE_SIGNING_KEY:
+            ASTRAL_BUNDLE_SIGNING_KEY:
                 required: true
 
 permissions:

@@ -639,7 +639,7 @@ func rejectLinkRelayApp(entries []string) error {
 	for _, entry := range entries {
 		for _, part := range strings.Split(entry, "/") {
 			if part == linkRelayAppName {
-				return fmt.Errorf("final IPA must not contain %s (Discord itself claims astral:// in a sideloaded IPA): %s", linkRelayAppName, entry)
+				return fmt.Errorf("final IPA must not contain %s (Discord itself claims unbound:// in a sideloaded IPA): %s", linkRelayAppName, entry)
 			}
 		}
 	}
