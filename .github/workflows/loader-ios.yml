@@ -40,6 +40,9 @@ on:
             pr_number:
                 default: ''
                 type: string
+            skip_smoke:
+                default: false
+                type: boolean
             source_ipa_artifact:
                 default: ''
                 type: string
@@ -493,7 +496,7 @@ jobs:
 
     smoke-simulator:
         name: Smoke test the simulator build
-        if: *only_build_check
+        if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
         needs: build-simulator
         runs-on: macos-26
         timeout-minutes: 45

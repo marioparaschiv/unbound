@@ -129,6 +129,9 @@ on:
             skip_core:
                 default: false
                 type: boolean
+            skip_ios_smoke:
+                default: false
+                type: boolean
         outputs:
             deb_url:
                 description: 'Download URL for the deb package artifact'
@@ -583,6 +586,7 @@ jobs:
             version: ${{ needs.resolve-source.outputs.release_version || inputs.version }}
             ipa_url: ${{ inputs.ipa_url }}
             source_ipa_artifact: ${{ needs.resolve-source.result == 'success' && 'discord-source-ipa' || '' }}
+            skip_smoke: ${{ inputs.skip_ios_smoke || false }}
             release: ${{ inputs.release || false }}
             is_testflight: ${{ inputs.is_testflight || false }}
             authenticated_source: ${{ inputs.authenticated_source || false }}

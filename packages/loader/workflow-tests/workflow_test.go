@@ -549,8 +549,8 @@ func TestParsedIOSSmokeTestGatesTheIOSBuild(t *testing.T) {
 	ios := loadWorkflow(t, "loader-ios.yml")
 	smoke := ios.job(t, "smoke-simulator")
 	requireNeeds(t, "smoke-simulator", smoke, "build-simulator")
-	if smoke.If != ios.job(t, "build-simulator").If || smoke.ContinueOnError {
-		t.Fatalf("the iOS smoke test must run whenever the simulator is built, runs if %q", smoke.If)
+	if smoke.If != "inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true" || smoke.ContinueOnError {
+		t.Fatalf("the iOS smoke test must run whenever the simulator is built, unless a pull request touches nothing it covers, runs if %q", smoke.If)
 	}
 	if smoke.step(t, "Download the simulator build").With["name"] != "ios-simulator" {
 		t.Fatal("the smoke test must install this run's simulator build")
