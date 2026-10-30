@@ -7,7 +7,6 @@ export const MAXIMUM_RADIUS = 64;
 export const AvatarClass = {
 	ios: 'DCDAvatarView',
 	iosImage: 'DCDFastImageComponentViewCore',
-	iosImageFrame: 'DCDFastImageComponentView',
 	iosClip: 'DiscordSwift.ClipView',
 	android: 'com.facebook.drawee.view.SimpleDraweeView',
 };

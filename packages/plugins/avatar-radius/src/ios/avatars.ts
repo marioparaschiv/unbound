@@ -229,15 +229,6 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 		await applyFastImage(image, corner);
 	}
 
-	async function roundFrame(frame: NativeObjectHandle) {
-		const [core] = await objc.findViews(frame, AvatarClass.iosImage, {
-			maxDepth: 1,
-			maxResults: 1,
-		});
-
-		if (core) await roundFastImage(core as NativeObjectHandle);
-	}
-
 	function clipHooks() {
 		if (!objc.getClass(AvatarClass.iosClip)) return [];
 
@@ -249,20 +240,6 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 
 						if (image) void setClipMask(image, null).catch(() => undefined);
 					},
-				}),
-			];
-		} catch {
-			return [];
-		}
-	}
-
-	function frameUpdateHooks() {
-		if (!objc.getClass(AvatarClass.iosImageFrame)) return [];
-
-		try {
-			return [
-				objc.hook(AvatarClass.iosImageFrame, 'finalizeUpdates:', {
-					after: ({ self }) => void roundFrame(self).catch(() => undefined),
 				}),
 			];
 		} catch {
@@ -283,7 +260,6 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 		objc.hook(AvatarClass.iosImage, 'layoutSubviews', {
 			after: ({ self }) => void roundFastImage(self).catch(() => undefined),
 		}),
-		...frameUpdateHooks(),
 		...clipHooks(),
 	];
 
