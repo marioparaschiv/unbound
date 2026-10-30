@@ -376,6 +376,12 @@ jobs:
                   fi
                   exit "$status"
 
+    core:
+        if: inputs.only_app_repo != true && inputs.only_apt_repo != true
+        permissions:
+            contents: read
+        uses: ./.github/workflows/loader-core.yml
+
     tool-tests:
         name: Tool and workflow tests
         runs-on: ubuntu-26.04
