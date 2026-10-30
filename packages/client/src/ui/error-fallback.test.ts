@@ -33,7 +33,9 @@ describe('error fallback', () => {
 
 		expect(url.startsWith(`${ISSUES_URL}?`)).toBe(true);
 		expect(parsed.searchParams.get('title')).toHaveLength(120);
-		expect(parsed.searchParams.get('body')).toContain('**Platform:** ios');
-		expect(parsed.searchParams.get('body')?.length).toBeLessThan(6400);
+		expect(parsed.searchParams.get('template')).toBe('crash-report.yml');
+		expect(parsed.searchParams.get('platform')).toBe('iOS');
+		expect(parsed.searchParams.get('environment')).toContain('**Platform:** iOS');
+		expect(parsed.searchParams.get('error')?.length).toBeLessThanOrEqual(6000);
 	});
 });

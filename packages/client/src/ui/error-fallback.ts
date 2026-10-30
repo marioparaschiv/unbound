@@ -2,6 +2,8 @@
 export const ISSUES_URL = 'https://github.com/marioparaschiv/unbound/issues/new';
 
 const MAX_REPORT_LENGTH = 6000;
+const CRASH_REPORT_FORM = 'crash-report.yml';
+const PLATFORM_NAMES: Record<string, string> = { ios: 'iOS', android: 'Android' };
 
 export type CaughtError = {
 	error: Error;
@@ -43,19 +45,14 @@ export function describeError({ error, componentStack }: CaughtError): string {
  * @returns The new-issue URL.
  */
 export function bugReportURL(caught: CaughtError, context: ReportContext): string {
-	const details = describeError(caught).slice(0, MAX_REPORT_LENGTH);
-	const body = [
-		`**Unbound:** ${context.clientVersion}`,
-		`**Platform:** ${context.platform}`,
-		'',
-		'**What happened before the crash:**',
-		'',
-		'',
-		'```',
-		details,
-		'```',
-	].join('\n');
-	const title = `Crash: ${nameOf(caught.error)}: ${caught.error?.message ?? ''}`.slice(0, 120);
+	const platform = PLATFORM_NAMES[context.platform.toLowerCase()] ?? context.platform;
+	const query = new URLSearchParams({
+		template: CRASH_REPORT_FORM,
+		title: `crash: ${nameOf(caught.error)}: ${caught.error?.message ?? ''}`.slice(0, 120),
+		platform,
+		environment: `- **Unbound:** ${context.clientVersion}\n- **Platform:** ${platform}`,
+		error: describeError(caught).slice(0, MAX_REPORT_LENGTH),
+	});
 
-	return `${ISSUES_URL}?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+	return `${ISSUES_URL}?${query.toString()}`;
 }

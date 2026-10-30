@@ -80,8 +80,10 @@ int main()
     assert(body.find("### Logs\n```\nline\n```") != std::string::npos);
 
     const std::string url = loader::toolbox::issueURL(report);
-    assert(url.rfind("https://github.com/marioparaschiv/unbound/issues/new?title=bug%28Android%29",
-                     0) == 0);
+    assert(
+        url.rfind("https://github.com/marioparaschiv/unbound/issues/new?template=crash-report.yml",
+                  0) == 0);
+    assert(url.find("&platform=Android&environment=") != std::string::npos);
     assert(url.find(' ') == std::string::npos);
 
     assert(loader::toolbox::useCustomBundle(settings, "  https://example.com/padded.bundle \n"));
