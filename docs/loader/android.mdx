@@ -4,7 +4,7 @@ description: 'How the Android loader injects Unbound into Discord, where it keep
 icon: 'android'
 ---
 
-The Android loader is a [libxposed](https://github.com/libxposed/api) module with a native library, `libunbound.so`. The Kotlin side hooks Discord's React Native runtime and Android UI, and the native library runs the same C++ core as the iOS loader: settings, addon scanning, bundle updates and signature checks, the crash guard, the toolbox, and hot reload.
+The Android loader is a [libxposed](https://github.com/libxposed/api) module with a native library, `libastral.so`. The Kotlin side hooks Discord's React Native runtime and Android UI, and the native library runs the same C++ core as the iOS loader: settings, addon scanning, bundle updates and signature checks, the crash guard, the toolbox, and hot reload.
 
 ### Install
 
@@ -12,7 +12,7 @@ There are two ways to run the module. Both use the same module APK, signed with 
 
 <Tabs>
 	<Tab title='Rooted (Vector)'>
-		1. Install `app.unbound.android.xposed.apk` from the latest `discord-<version>-android` release.
+		1. Install `app.astral.android.xposed.apk` from the latest `discord-<version>-android` release.
 		2. In Vector, or another Xposed framework such as LSPosed, enable the module. Its scope is `com.discord`.
 		3. Force stop Discord and reopen it.
 
@@ -23,9 +23,9 @@ There are two ways to run the module. Both use the same module APK, signed with 
 
 		| Channel | Release tag | Asset |
 		| --- | --- | --- |
-		| Stable | `discord-<version>-android` and `loader-latest` | `Unbound.apks` |
-		| Beta | `discord-<version>-android-beta` (prerelease) | `Unbound-beta.apks` |
-		| Alpha | `discord-<version>-android-alpha` (prerelease) | `Unbound-alpha.apks` |
+		| Stable | `discord-<version>-android` and `loader-latest` | `astral.apks` |
+		| Beta | `discord-<version>-android-beta` (prerelease) | `astral-beta.apks` |
+		| Alpha | `discord-<version>-android-alpha` (prerelease) | `astral-alpha.apks` |
 
 		The asset is a split APK bundle, so install it with Obtainium or a split-APK installer such as SAI. It replaces a Play Store Discord because the signature differs.
 	</Tab>
@@ -37,7 +37,7 @@ The loader's [README](https://github.com/marioparaschiv/unbound/tree/main/packag
 
 When Discord's process starts, the module:
 
-1. Loads `libunbound.so`. If the module APK's library folder doesn't have it, the loader extracts it once to `code_cache/unbound` in Discord's data directory and reuses that copy until the module is updated.
+1. Loads `libastral.so`. If the module APK's library folder doesn't have it, the loader extracts it once to `code_cache/unbound` in Discord's data directory and reuses that copy until the module is updated.
 2. Opens the [log file](#logs), creates the `Unbound` folder, and reads `settings.json`.
 3. Reads the Hermes bytecode version of Discord's own bundle, which picks the right [bundle build](#bundle-updates).
 4. Hooks `ReactInstance`'s bundle loading. If no bundle loader method can be found, the loader shows `This version of Discord is incompatible with this version of Unbound.` and Discord runs without Unbound.
@@ -60,7 +60,7 @@ Just before Unbound's bundle runs, the loader installs the native modules and co
 | `UNBOUND_THEMES` | The installed themes. Each entry has a `manifest` and the theme's `bundle.json` as a string. |
 | `UNBOUND_FONTS` | The font files in `Fonts`. |
 | `UNBOUND_AVAILABLE_FONTS` | The font names Discord can already use. |
-| `UNBOUND_LOADER` | `origin` (`libunbound.so`), the loader `version`, and the runtime's `bytecodeVersion`. |
+| `UNBOUND_LOADER` | `origin` (`libastral.so`), the loader `version`, and the runtime's `bytecodeVersion`. |
 
 If no bundle is ready, the loader shows `Failed to load Unbound's bundle. Please report this to the developers.` and Discord runs without Unbound.
 
