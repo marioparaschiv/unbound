@@ -35,6 +35,21 @@ export function bubbleProblem(
 }
 
 /**
+ * @description Measures how far a drawn bubble is from where it should be, by its furthest edge.
+ * @param drawn The bubble's frame on screen.
+ * @param expected The frame its message needs now.
+ * @returns The largest difference between matching edges, in points.
+ */
+export function frameDrift(drawn: Box, expected: Box): number {
+	return Math.max(
+		Math.abs(drawn.x - expected.x),
+		Math.abs(drawn.y - expected.y),
+		Math.abs(drawn.x + drawn.width - (expected.x + expected.width)),
+		Math.abs(drawn.y + drawn.height - (expected.y + expected.height)),
+	);
+}
+
+/**
  * @description Narrows a message body to its content and grows it by the bubble padding, without reaching above the message's header.
  * @param body The message body's frame.
  * @param contentWidth How far the body's text and media reach from its left edge, or 0 when unknown.
@@ -114,4 +129,4 @@ export function rowInsets(bubble: Box, width: number, height: number): Edges {
 	};
 }
 
-export default { bubbleFrame, bubbleProblem, rowInsets, union };
+export default { bubbleFrame, bubbleProblem, frameDrift, rowInsets, union };

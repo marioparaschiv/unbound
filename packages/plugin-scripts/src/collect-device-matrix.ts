@@ -30,6 +30,8 @@ import {
 	toastLogScript,
 	MATRIX_TOAST_MS,
 	settingsScreenScript,
+	selfTestsScript,
+	selfTestReportsSchema,
 	settingsProbeScript,
 	settingsProbeSchema,
 	type SettingsProbe,
@@ -419,6 +421,14 @@ async function main(): Promise<void> {
 		}
 	}
 
+	function recordScrollProblem(check: MeasuredCheck, detail: string) {
+		const problem = `after scrolling: ${detail}`;
+
+		check.behavior = 'fail';
+		check.note = [check.note, problem].filter(Boolean).join('; ');
+		check.visualProblems = [...(check.visualProblems ?? []), problem];
+	}
+
 	async function scrollPhase(): Promise<ScrollReport> {
 		if (fixtures) await evaluate(port, scrollFillerScript(fixtures.channel));
 
@@ -428,6 +438,15 @@ async function main(): Promise<void> {
 		const { swipes, moved } = await scrollStress(target, out);
 
 		await Bun.sleep(2_000);
+
+		const afterScroll = await evaluateJson(port, selfTestsScript(), selfTestReportsSchema);
+
+		for (const check of checks) {
+			const report = afterScroll[check.id];
+
+			if (report && !report.ok && !report.nothingDrawn)
+				recordScrollProblem(check, report.detail);
+		}
 
 		const toastLines = await evaluateJson(port, toastLogScript(), logLinesSchema);
 

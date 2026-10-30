@@ -1,6 +1,8 @@
 export type SelfTestResult = {
 	ok: boolean;
 	detail: string;
+	/** Set when the plugin works but has nothing on screen to draw, which says where the chat is rather than that drawing is wrong. */
+	nothingDrawn?: boolean;
 };
 
 const state = {
@@ -86,7 +88,7 @@ export function drawnSelfTest(drawn: (() => number) | undefined, noun: string): 
 
 	return count > 0
 		? { ok: true, detail: `${count} ${noun} drawn on screen` }
-		: { ok: false, detail: `no ${noun} are drawn on screen` };
+		: { ok: false, detail: `no ${noun} are drawn on screen`, nothingDrawn: true };
 }
 
 export default {

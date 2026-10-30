@@ -22,6 +22,7 @@ import {
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
 import {
+	messageBindMethod,
 	messageIdField,
 	viewByIdNameAsync,
 } from '@unbound-plugins/shared/native/android/discord-views';
@@ -50,6 +51,7 @@ const MAX_ANCESTORS = 16;
 const VISIBLE = 0;
 const ICON_SPACING_DP = 4;
 const BUBBLE_LAYER_ID = 0x0b0b1e;
+const BIND_SETTLE_MS = 50;
 const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
 
 /**
@@ -61,6 +63,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	const accessoriesClass = java.getClass(AndroidClass.accessories);
 	const messageClass = java.getClass(AndroidClass.messageView);
 	const idField = messageIdField(java);
+	const bindMessage = messageBindMethod(java);
 	const contentClass = java.getClass(AndroidClass.content);
 	const textViewClass = java.getClass('android.widget.TextView');
 	const imageViewClass = java.getClass('android.widget.ImageView');
@@ -458,6 +461,42 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		},
 	);
 
+	const bindToken = hooks.hook(
+		AndroidClass.messageView,
+		bindMessage.name,
+		bindMessage.parameters,
+		{ notify: true },
+		({ self }) => {
+			const row = javaReference(self);
+
+			if (!row) return;
+
+			setTimeout(() => {
+				if (!disposed) schedule(row);
+			}, BIND_SETTLE_MS);
+		},
+	);
+
+	async function lostBubbles(): Promise<string[]> {
+		const found: string[] = [];
+
+		for (const row of tracked) {
+			if (!javaReference(java.getAssociatedObject(row, ours))) continue;
+
+			const [attached, background] = await runOnMain(
+				java,
+				readCalls(row, ['isAttachedToWindow', 'getBackground']),
+			);
+			const current = javaReference(background);
+
+			if (!javaFlag(attached) || (current && (await isBubble(current)))) continue;
+
+			found.push(`${messageId(row) ?? 'a row'} lost its bubble`);
+		}
+
+		return found;
+	}
+
 	async function refreshVisible() {
 		const root = currentDecorView(java);
 
@@ -476,7 +515,10 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 
 	return {
 		placed: () => tracked.length,
-		problems: () => [...problems].map(([id, problem]) => `${id} ${problem}`),
+		problems: async () => [
+			...[...problems].map(([id, problem]) => `${id} ${problem}`),
+			...(await lostBubbles()),
+		],
 		refresh() {
 			for (const row of tracked) schedule(row);
 
@@ -489,6 +531,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		async dispose() {
 			disposed = true;
 			hooks.remove(token);
+			hooks.remove(bindToken);
 			pending.length = 0;
 			await flushing;
 
