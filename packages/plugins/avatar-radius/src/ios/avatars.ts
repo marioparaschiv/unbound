@@ -13,6 +13,7 @@ const MAX_TRACKED = 512;
 const IMAGE_SEARCH = { maxDepth: 96, maxVisited: 8_000 };
 
 type FastImage = {
+	view: NativeObjectHandle;
 	width: number;
 	layers: NativeObjectHandle[];
 	clip?: { view: NativeObjectHandle; key: string; mask: NativeObjectHandle | null };
@@ -163,7 +164,7 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 			(layer): layer is NativeObjectHandle => !!layer,
 		);
 
-		return { width: size, layers, ...(await circleClip(frame)) };
+		return { view: core, width: size, layers, ...(await circleClip(frame)) };
 	}
 
 	async function circleClip(frame: NativeObjectHandle | null): Promise<Pick<FastImage, 'clip'>> {
@@ -276,6 +277,8 @@ export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
 	);
 
 	async function isUnrounded(image: FastImage): Promise<boolean> {
+		if (!(await objc.invokeAsync(image.view, 'window', []))) return false;
+
 		const expected = corner(image);
 		const corners = await Promise.all(image.layers.map((layer) => cornerOf(objc, layer)));
 
