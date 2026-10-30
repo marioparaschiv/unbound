@@ -6,7 +6,7 @@ TARGET := iphone:clang:latest:15.0
 
 include $(THEOS)/makefiles/common.mk
 
-# A hidden app that claims unbound:// on jailbroken devices, where Discord keeps its App Store
+# A hidden app that claims astral:// on jailbroken devices, where Discord keeps its App Store
 # signature and Info.plist, and reopens each link under Discord's own scheme.
 APPLICATION_NAME = AstralLink
 AstralLink_FILES = $(wildcard sources/*.m)

@@ -1,8 +1,8 @@
 #import <UIKit/UIKit.h>
 
-static NSString *const kAstralPrefix = @"unbound://";
-// Discord registers this scheme on every install, and its router ignores the unbound host.
-static NSString *const kRelayPrefix = @"com.hammerandchisel.discord://unbound/";
+static NSString *const kAstralPrefix = @"astral://";
+// Discord registers this scheme on every install, and its router ignores the astral host.
+static NSString *const kRelayPrefix = @"com.hammerandchisel.discord://astral/";
 
 @interface ULSceneDelegate : UIResponder <UIWindowSceneDelegate>
 @property (strong, nonatomic) UIWindow *window;

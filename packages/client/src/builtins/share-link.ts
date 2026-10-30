@@ -5,7 +5,7 @@ export type SharedFile = {
 	mimeType: string;
 };
 
-const SHARE_LINK = /^(?:discord|unbound):\/\/share\/?(?:\?(.*))?$/i;
+const SHARE_LINK = /^(?:discord|astral):\/\/share\/?(?:\?(.*))?$/i;
 const MAX_DECODES = 4;
 const MAX_SHARED_FILES = 10;
 
@@ -74,7 +74,7 @@ function sharedFile(uri: string): SharedFile | undefined {
 }
 
 /**
- * @description Reads the files a share extension handed over in a `discord://share?url=…` (or `unbound://share`) link.
+ * @description Reads the files a share extension handed over in a `discord://share?url=…` (or `astral://share`) link.
  * @param url The opened URL.
  * @returns The shared local files, or `undefined` when the URL is not a share link.
  */
