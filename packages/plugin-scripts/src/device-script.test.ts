@@ -22,6 +22,7 @@ const SAMPLE_ARGUMENTS: Record<string, unknown[]> = {
 	restoreScript: ['unbound.demo'],
 	scrollFillerScript: ['2'],
 	clearStagedScript: ['2'],
+	redrawTimesScript: [100],
 };
 
 function topLevelNames(source: string): string[] {

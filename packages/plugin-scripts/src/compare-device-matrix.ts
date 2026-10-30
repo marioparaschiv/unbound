@@ -15,6 +15,7 @@ export type MeasuredCheck = DeviceCheck & {
 	errors?: string[];
 	skippedHooks?: string[];
 	memoryDeltaMB?: number;
+	redrawMs?: number;
 	leakPerCycleMB?: number;
 	bundleHash?: string;
 	visualProblems?: string[];
@@ -42,6 +43,7 @@ export const measuredChecksSchema: z.ZodMiniType<MeasuredCheck[]> = z.array(
 		errors: z.optional(z.array(z.string())),
 		skippedHooks: z.optional(z.array(z.string())),
 		memoryDeltaMB: z.optional(z.number()),
+		redrawMs: z.optional(z.number()),
 		leakPerCycleMB: z.optional(z.number()),
 		bundleHash: z.optional(z.string()),
 		visualProblems: z.optional(z.array(z.string())),

@@ -22,6 +22,8 @@ import {
 	cycleScript,
 	developerModeScript,
 	clearStagedScript,
+	redrawTimesScript,
+	redrawTimesSchema,
 	fixtureScript,
 	fixturesPresentScript,
 	logLinesSchema,
@@ -93,6 +95,8 @@ type ScrollReport = ScrollOutcome & { toasts: string[]; emptyToasts: string[] };
 
 const SELF_TEST_SWIPES = 4;
 const TOAST_SETTLE_MS = 5_500;
+const SCROLL_REDRAW_LIMIT_MS = 2_000;
+const SCROLL_SETTLE_MS = 300;
 const SETTINGS_SETTLE_MS = 1_200;
 const SETTINGS_SCREEN_SUFFIX = '.settings.png';
 const COLLECT_GARBAGE_SCRIPT = "typeof gc === 'function' ? (gc(), 'collected') : 'unavailable'";
@@ -472,8 +476,17 @@ async function main(): Promise<void> {
 
 		const scrollSince = new Date().toISOString();
 		const { swipes, moved } = await scrollStress(target, out);
+		const redraws = await evaluateJson(
+			port,
+			redrawTimesScript(SCROLL_REDRAW_LIMIT_MS),
+			redrawTimesSchema,
+		);
 
-		await Bun.sleep(2_000);
+		for (const check of checks) {
+			if (redraws[check.id] !== undefined) check.redrawMs = redraws[check.id];
+		}
+
+		await Bun.sleep(SCROLL_SETTLE_MS);
 
 		const afterScroll = await evaluateJson(port, selfTestsScript(), selfTestReportsSchema);
 
