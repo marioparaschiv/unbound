@@ -129,6 +129,9 @@ on:
             skip_core:
                 default: false
                 type: boolean
+            skip_ios_smoke:
+                default: false
+                type: boolean
         outputs:
             deb_url:
                 description: 'Download URL for the deb package artifact'
@@ -350,31 +353,16 @@ jobs:
                   ipa_info=$(go run ./tools ipa-info --ipa source.ipa)
                   version=$(jq -r '.version' <<< "$ipa_info")
                   build=$(jq -r '.build' <<< "$ipa_info")
-                  android_code=""
-                  android_version=""
                   if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ]; then
-                    mismatch=""
-                    if [ -n "$REQUESTED_VERSION" ] && [ "$version" != "$REQUESTED_VERSION" ]; then
-                      mismatch="The iOS IPA is $version but the requested release is $REQUESTED_VERSION"
-                    elif [ "${version%%.*}" != "$((ANDROID_STABLE_CODE / 1000))" ]; then
-                      mismatch="iOS $version and Android stable $ANDROID_STABLE_CODE are different Discord releases"
-                    fi
-                    if [ -n "$mismatch" ] && [ "$RELEASE_DRY_RUN" = true ]; then
-                      echo "::warning::$mismatch. A real release would stop here."
-                    elif [ -n "$mismatch" ]; then
-                      echo "::error::$mismatch"
-                      exit 1
-                    fi
-                    android_code="$ANDROID_STABLE_CODE"
-                    android_version=$(go run ./tools discord-version --android-code "$android_code")
+                    pairing_args=(--ios-version "$version" --android-code "$ANDROID_STABLE_CODE" --requested-version "$REQUESTED_VERSION")
+                    if [ "$RELEASE_DRY_RUN" = true ]; then pairing_args+=(--dry-run); fi
+                    go run ./tools release-pairing "${pairing_args[@]}"
                   fi
                   release_version="$version"
                   if [ "$INPUT_IS_TESTFLIGHT" = true ]; then release_version="${version}_${build}-ios-testflight"; fi
                   {
                     echo "version=$version"
                     echo "release_version=$release_version"
-                    echo "android_code=$android_code"
-                    echo "android_version=$android_version"
                     echo "is_testflight=$INPUT_IS_TESTFLIGHT"
                   } >> "$GITHUB_OUTPUT"
 
@@ -598,6 +586,7 @@ jobs:
             version: ${{ needs.resolve-source.outputs.release_version || inputs.version }}
             ipa_url: ${{ inputs.ipa_url }}
             source_ipa_artifact: ${{ needs.resolve-source.result == 'success' && 'discord-source-ipa' || '' }}
+            skip_smoke: ${{ inputs.skip_ios_smoke || false }}
             release: ${{ inputs.release || false }}
             is_testflight: ${{ inputs.is_testflight || false }}
             authenticated_source: ${{ inputs.authenticated_source || false }}

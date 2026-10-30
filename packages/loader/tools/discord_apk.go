@@ -306,7 +306,7 @@ func runDiscordAPK(args []string) error {
 	sources := discordAPKSources{
 		sniffURL:   strings.TrimRight(*sniffURL, "/"),
 		trackerURL: strings.TrimRight(*trackerURL, "/"),
-		client:     &http.Client{Timeout: discordAPKLookupLimit},
+		client:     lookupClient(discordAPKLookupLimit),
 	}
 	if *code == 0 {
 		latest, err := sources.latestCode(ctx, *channel)

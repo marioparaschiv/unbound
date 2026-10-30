@@ -101,7 +101,7 @@ func runReleaseCandidate(args []string) error {
 		githubRepository:  *githubRepository,
 		testflightVersion: strings.TrimSpace(*testflightVersion),
 		githubToken:       os.Getenv("GITHUB_TOKEN"),
-		httpClient:        &http.Client{Timeout: releasePollRequestLimit},
+		httpClient:        lookupClient(releasePollRequestLimit),
 		now:               time.Now,
 	}
 

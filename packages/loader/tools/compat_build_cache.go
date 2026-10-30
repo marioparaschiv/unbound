@@ -99,7 +99,7 @@ func cachedAndroidBuild(ctx context.Context, channel, cache string) (string, str
 	sources := discordAPKSources{
 		sniffURL:   strings.TrimRight(envOr("DISCORD_SNIFF_URL", defaultSniffURL), "/"),
 		trackerURL: strings.TrimRight(envOr("DISCORD_TRACKER", defaultAndroidTracker), "/"),
-		client:     &http.Client{Timeout: discordAPKLookupLimit},
+		client:     lookupClient(discordAPKLookupLimit),
 	}
 	code, err := sources.latestCode(ctx, channel)
 	if err != nil {
@@ -146,7 +146,7 @@ func pruneCacheExcept(directory, keep string) {
 
 func cachedIOSBuild(ctx context.Context, baseURL, apiKey, source, cache string) (string, error) {
 	base := strings.TrimRight(baseURL, "/")
-	body, status, err := fetchResponse(ctx, &http.Client{Timeout: discordAPKLookupLimit}, base+"/v1/artifacts", apiKey, nil)
+	body, status, err := fetchResponse(ctx, lookupClient(discordAPKLookupLimit), base+"/v1/artifacts", apiKey, nil)
 	if err != nil {
 		return "", fmt.Errorf("list dkrypt artifacts: %w", err)
 	}

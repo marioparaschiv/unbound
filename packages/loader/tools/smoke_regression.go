@@ -62,6 +62,7 @@ func runSmokeRegression(args []string) error {
 	branch := set.String("branch", "main", "branch whose runs are the baseline")
 	artifact := set.String("artifact", "android smoke test", "smoke artifact name in those runs")
 	consoleOnly := set.Bool("console-only", false, "compare only console errors and warnings, not startup times")
+	failOnStartup := set.Bool("fail-on-startup-regression", false, "exit with an error when startup is markedly slower than the baseline")
 	runs := set.Int("runs", 10, "how many recent successful runs to compare against")
 	summary := set.String("summary", os.Getenv("GITHUB_STEP_SUMMARY"), "markdown file to append the comparison to")
 	if err := set.Parse(args); err != nil {
@@ -76,11 +77,14 @@ func runSmokeRegression(args []string) error {
 	}
 	baseline, err := baselineStartupRecords(*repository, *workflow, *branch, *artifact, *runs)
 	if err != nil {
-		return err
+		fmt.Printf("::warning title=Startup comparison skipped::could not read the %s baseline: %v\n", *branch, err)
+		return nil
 	}
 	report := renderConsoleReport(record, baseline)
+	startupRegressions := 0
 	if !*consoleOnly {
 		startup := renderRegressionReport(record, baseline)
+		startupRegressions = len(startup.warnings)
 		resources := renderResourceReport(record, baseline)
 		report = regressionReport{
 			markdown: startup.markdown + resources.markdown + report.markdown,
@@ -96,6 +100,9 @@ func runSmokeRegression(args []string) error {
 			_, _ = file.WriteString(report.markdown)
 			file.Close()
 		}
+	}
+	if *failOnStartup && startupRegressions > 0 {
+		return fmt.Errorf("startup is markedly slower than on %s: %d regressions", *branch, startupRegressions)
 	}
 	return nil
 }

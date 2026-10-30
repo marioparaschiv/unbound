@@ -38,6 +38,7 @@ jobs:
             pull-requests: read
         outputs:
             native: ${{ steps.files.outputs.native }}
+            ios: ${{ steps.files.outputs.ios }}
         steps:
             - name: List the changed loader files
               id: files
@@ -53,6 +54,11 @@ jobs:
                       echo "native=true" >> "$GITHUB_OUTPUT"
                   else
                       echo "native=false" >> "$GITHUB_OUTPUT"
+                  fi
+                  if grep -Evq '^(packages/loader/android/|\.github/workflows/loader-android\.yml$)|\.mdx?$' <<< "$files"; then
+                      echo "ios=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "ios=false" >> "$GITHUB_OUTPUT"
                   fi
 
     validate-submodules:
@@ -172,6 +178,7 @@ jobs:
             caller_workflow: 'ci'
             pr_number: ${{ github.event.pull_request.number }}
             skip_core: ${{ needs.changes.outputs.native != 'true' }}
+            skip_ios_smoke: ${{ needs.changes.outputs.ios != 'true' }}
         secrets:
             ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
             ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
