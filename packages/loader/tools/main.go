@@ -69,6 +69,8 @@ func run(args []string) error {
 		return runDev(args[1:])
 	case "smoke":
 		return runSmoke(args[1:])
+	case "pr-comment":
+		return runPRComment(args[1:])
 	case "smoke-regression":
 		return runSmokeRegression(args[1:])
 	case "symbolicate-android":
@@ -97,7 +99,7 @@ func run(args []string) error {
 }
 
 func printUsage() {
-	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|smoke-regression|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
+	fmt.Println("usage: go run ./tools <build|platform|validate|deps|packages|libffi-build|fetch|ipa-info|patch-ipa|ipa-icons|discord-version|discord-apk|release-candidate|generate-loader-changelog|publish-loader-releases|attest|bundle-key|smoke|smoke-regression|pr-comment|symbolicate-android|doctor|dev|compat-scan|compat-issue|compat-legacy-issue|compat-support-issue|format|lint>")
 	fmt.Println("       go run ./tools build <tweak|ipa|simulator|all> [flags]")
 	fmt.Println("       go run ./tools platform <build|test> <ios|android> [flags]")
 	fmt.Println("       go run ./tools validate [--root <path>]")

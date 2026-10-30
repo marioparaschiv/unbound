@@ -63,6 +63,7 @@ func runSmokeRegression(args []string) error {
 	artifact := set.String("artifact", "android smoke test", "smoke artifact name in those runs")
 	consoleOnly := set.Bool("console-only", false, "compare only console errors and warnings, not startup times")
 	failOnStartup := set.Bool("fail-on-startup-regression", false, "exit with an error when startup is markedly slower than the baseline")
+	reportPath := set.String("report", "", "file to write the comparison markdown to, for a pull request comment")
 	runs := set.Int("runs", 10, "how many recent successful runs to compare against")
 	summary := set.String("summary", os.Getenv("GITHUB_STEP_SUMMARY"), "markdown file to append the comparison to")
 	if err := set.Parse(args); err != nil {
@@ -99,6 +100,11 @@ func runSmokeRegression(args []string) error {
 		if file, err := os.OpenFile(*summary, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644); err == nil {
 			_, _ = file.WriteString(report.markdown)
 			file.Close()
+		}
+	}
+	if *reportPath != "" {
+		if err := os.WriteFile(*reportPath, []byte(report.markdown), 0o644); err != nil {
+			return err
 		}
 	}
 	if *failOnStartup && startupRegressions > 0 {

@@ -410,3 +410,39 @@ jobs:
                       <sub>This comment was automatically generated. [View workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>
                   comment-tag: build-result
                   github-token: ${{ secrets.GITHUB_TOKEN }}
+
+    comment-startup:
+        name: Comment the startup comparison
+        runs-on: ubuntu-26.04
+        permissions:
+            contents: read
+            pull-requests: write
+        timeout-minutes: 5
+        needs: [build, comment-pr]
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Download the Android smoke test
+              id: smoke
+              continue-on-error: true
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  name: android smoke test
+                  path: smoke
+
+            - name: Setup Go tools
+              if: steps.smoke.outcome == 'success' && hashFiles('smoke/comparison.md') != ''
+              uses: ./.github/actions/setup-go-tools
+
+            - name: Keep one comment with the comparison
+              if: steps.smoke.outcome == 'success' && hashFiles('smoke/comparison.md') != ''
+              working-directory: packages/loader
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+              run: go run ./tools pr-comment --pr "$PR_NUMBER" --title "Android startup compared with main" --body-file "$GITHUB_WORKSPACE/smoke/comparison.md"

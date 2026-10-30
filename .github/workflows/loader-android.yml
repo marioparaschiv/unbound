@@ -537,7 +537,7 @@ jobs:
               if: success() && github.event_name == 'pull_request'
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: go run ./tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY" --fail-on-startup-regression
+              run: go run ./tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY" --report smoke/artifacts/comparison.md --fail-on-startup-regression
 
             - name: Upload smoke test logs
               if: ${{ !cancelled() }}
