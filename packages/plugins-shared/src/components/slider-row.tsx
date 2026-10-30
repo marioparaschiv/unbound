@@ -1,6 +1,6 @@
 import { Discord } from '@unbound-app/api/metro/components';
-import { View } from 'react-native';
 import { useEffect, useState } from 'react';
+import { View } from 'react-native';
 
 type SliderRowProps = {
 	label: string;

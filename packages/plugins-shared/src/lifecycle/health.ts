@@ -1,10 +1,12 @@
-export type SelfTestResult = {
-	ok: boolean;
-	detail: string;
-	/** Set when the plugin works but has nothing on screen to draw, which says where the chat is rather than that drawing is wrong. */
-	nothingDrawn?: boolean;
-	settling?: boolean;
-};
+export type SelfTestResult =
+	| {
+			ok: true;
+			detail: string;
+			/** Set when the plugin works but has nothing on screen to draw, which says where the chat is rather than that drawing is wrong. */
+			nothingDrawn?: boolean;
+			settling?: boolean;
+	  }
+	| { ok: false; detail: string; nothingDrawn?: boolean };
 
 const state = {
 	applied: 0,

@@ -1,11 +1,10 @@
-import { describe, expect, test } from 'bun:test';
-
 import {
 	applyRules,
 	normalizeRules,
 	stringToRegex,
 	type TextReplaceRule,
 } from '@unbound-plugins/shared/text-replace/rules';
+import { describe, expect, test } from 'bun:test';
 
 function rule(find: string, replace: string, onlyIfIncludes: string = ''): TextReplaceRule {
 	return { find, replace, onlyIfIncludes, id: find };

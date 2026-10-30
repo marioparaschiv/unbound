@@ -1,6 +1,3 @@
-import type { NativeJavaBridge, NativeJavaClassDescription } from '@unbound-app/api/native';
-import { describe, expect, test } from 'bun:test';
-
 import {
 	draweeTextBuilder,
 	DRAWEE_TEXT_VIEW,
@@ -13,7 +10,9 @@ import {
 	shapeField,
 	shapeMethod,
 } from '@unbound-plugins/shared/native/android/discord-shapes';
+import type { NativeJavaBridge, NativeJavaClassDescription } from '@unbound-app/api/native';
 import shapes from '@unbound-plugins/shared/native/android/discord-shapes.json';
+import { describe, expect, test } from 'bun:test';
 
 const MESSAGE = 'com.discord.chat.bridge.Message';
 const STRING = 'java.lang.String';

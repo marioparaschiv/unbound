@@ -3,7 +3,6 @@ import type {
 	NativeObjCBridge,
 	NativeObjectHandle,
 } from '@unbound-app/api/native';
-
 import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/ios/text-attachments';
 
 export type MessageCellHandlers = {

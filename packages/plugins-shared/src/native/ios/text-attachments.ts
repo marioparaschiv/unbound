@@ -1,5 +1,4 @@
 import type { NativeHandle, NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
-
 import { safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import { readRect } from '@unbound-plugins/shared/native/ios/rect';
 

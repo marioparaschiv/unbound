@@ -435,7 +435,7 @@ func TestParsedLoaderArtifactsExpireOnlyOnPullRequests(t *testing.T) {
 				artifact, retention := step.With["name"], step.With["retention-days"]
 				uploaded[artifact] = retention
 				if diagnostics[artifact] {
-					if retention != "14" || step.If != "always()" {
+					if retention != "14" || step.If != "${{ !cancelled() }}" {
 						t.Errorf("%s %s must keep the %s logs of every run for 14 days, got %q if %q", name, jobName, artifact, retention, step.If)
 					}
 					continue
@@ -670,7 +670,7 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 
 	comment := ci.job(t, "comment-pr")
 	requireNeeds(t, "comment-pr", comment, "build", "pr-builds", "upload-pr-builds")
-	if !strings.HasPrefix(comment.If, "always() && needs.build.result == 'success'") {
+	if !strings.HasPrefix(comment.If, "${{ !cancelled() && needs.build.result == 'success'") {
 		t.Fatalf("the comment must still post when uploads are off, runs if %q", comment.If)
 	}
 	if comment.step(t, "Describe the S3 builds").Run != "bun scripts/pr-builds-plan.ts comment" || !strings.Contains(comment.step(t, "Comment on current PR").With["message"], "${{ steps.s3.outputs.section }}") {

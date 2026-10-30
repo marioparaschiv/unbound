@@ -125,12 +125,12 @@ int main()
     assert(fonts[0]["file"] == "Inter.ttf");
 
     loader::PreloadPayload payload;
-    payload.settings    = nlohmann::json::parse(R"({"astral":{}})");
+    payload.settings    = nlohmann::json::parse(R"({"unbound":{}})");
     payload.plugins     = plugins;
     payload.origin      = "libastral.so";
     payload.version     = "1.0.0";
     nlohmann::json data = loader::preloadData(payload);
-    assert(data["settings"] == nlohmann::json::parse(R"({"astral":{}})"));
+    assert(data["settings"] == nlohmann::json::parse(R"({"unbound":{}})"));
     assert(data["themes"] == nlohmann::json::array());
     assert(data["loader"]["origin"] == "libastral.so" && data["loader"]["version"] == "1.0.0");
     assert(data["plugins"][0]["manifest"]["id"] == "a.good");
@@ -150,14 +150,14 @@ int main()
     assert(!addons.theme("t.none"));
 
     loader::SettingsStore settings((root / "settings.json").string());
-    settings.set("astral", "recovery", false);
+    settings.set("unbound", "recovery", false);
     loader::PreloadPayload made = loader::makePreloadPayload(
         settings, addons, nlohmann::json::array({"Ginto"}), "astral.dylib", 98);
     assert(made.bytecodeVersion == 98);
     assert(loader::preloadData(made)["loader"]["bytecodeVersion"] == 98);
     assert(made.plugins[0]["manifest"]["id"] == "a.good");
     assert(made.availableFonts == nlohmann::json::array({"Ginto"}));
-    assert(made.settings["astral"].contains("recovery"));
+    assert(made.settings["unbound"].contains("recovery"));
     assert(made.origin == "astral.dylib" && made.version == loader::loaderVersion());
 
     std::filesystem::remove_all(root);

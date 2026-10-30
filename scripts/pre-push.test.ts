@@ -40,9 +40,15 @@ describe('pre-push checks', () => {
 		expect(check?.command).toEqual(['bun', 'test', '--isolate']);
 	});
 
-	test('only type-checks apps and skips the loader', () => {
+	test('only type-checks apps and lints the loader', () => {
 		expect(labels(['apps/web/app/root.tsx', 'packages/loader/core/src/a.cpp'])).toEqual([
 			'apps/web type-check',
+			'loader lint',
 		]);
+	});
+
+	test('lints the loader for workflow changes but not for its docs', () => {
+		expect(labels(['.github/workflows/loader-ci.yml'])).toEqual(['loader lint']);
+		expect(labels(['packages/loader/README.md'])).toEqual([]);
 	});
 });

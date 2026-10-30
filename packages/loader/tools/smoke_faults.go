@@ -26,7 +26,7 @@ function settle(ms) { return new Promise(function (resolve) { setTimeout(resolve
 
 const smokeThrowExpression = `(async function () {
 	` + smokeFaultFixture + `
-	var manager = astral.plugins;
+	var manager = unbound.plugins;
 	var id = 'smoke.fault.throws';
 	var fixture = smokeFixture(id, 'Smoke fault: throws', "({ start() { throw new Error('smoke fault: thrown on start'); }, stop() {} })");
 	var before = startedOthers(manager, id);
@@ -45,7 +45,7 @@ const smokeThrowExpression = `(async function () {
 
 const smokeFreezeExpression = `(async function () {
 	` + smokeFaultFixture + `
-	var manager = astral.plugins;
+	var manager = unbound.plugins;
 	var id = 'smoke.fault.freezes';
 	var fixture = smokeFixture(id, 'Smoke fault: freezes', "({ start() { var until = Date.now() + 8000; while (Date.now() < until) {} }, stop() {} })");
 	var before = startedOthers(manager, id);
@@ -70,7 +70,7 @@ const smokeCrashFixtureID = "smoke.fault.crashes"
 
 const smokeCrashArmExpression = `(async function () {
 	` + smokeFaultFixture + `
-	var manager = astral.plugins;
+	var manager = unbound.plugins;
 	var id = '` + smokeCrashFixtureID + `';
 	var capabilities = ['native.ffi.call', 'native.ffi.symbols'];
 	var fixture = smokeFixture(id, 'Smoke fault: crashes', "({ start(context) { var ffi = context.native.ffi; ffi.call(ffi.symbol('abort'), { returnType: 'void', args: [] }); }, stop() {} })", capabilities);
@@ -84,13 +84,13 @@ const smokeCrashArmExpression = `(async function () {
 	states = manager.settings.get('states', {});
 	states[id] = true;
 	manager.settings.set('states', states);
-	await astral.storage.persist();
+	await unbound.storage.persist();
 	setTimeout(function () { manager.start(id); }, 200);
 	return 'armed';
 })()`
 
 const smokeCrashCheckExpression = `(async function () {
-	var manager = astral.plugins;
+	var manager = unbound.plugins;
 	var id = '` + smokeCrashFixtureID + `';
 	var entity = manager.getEntity(id);
 	var enabled = manager.settings.get('states', {})[id] === true;

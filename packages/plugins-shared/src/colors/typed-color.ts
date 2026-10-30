@@ -6,7 +6,7 @@
 export function parseTypedColor(text: string): string | undefined {
 	const match = /^#?([0-9a-f]{6})$/i.exec(text.trim());
 
-	return match ? `#${match[1]!.toUpperCase()}` : undefined;
+	return match ? `#${match[1].toUpperCase()}` : undefined;
 }
 
 export type TypedColorState = 'empty' | 'partial' | 'complete' | 'invalid';
@@ -19,8 +19,13 @@ export type TypedColorState = 'empty' | 'partial' | 'complete' | 'invalid';
 export function typedColorState(text: string): TypedColorState {
 	const trimmed = text.trim();
 
-	if (!trimmed) return 'empty';
-	if (parseTypedColor(trimmed)) return 'complete';
+	if (!trimmed) {
+		return 'empty';
+	}
+
+	if (parseTypedColor(trimmed)) {
+		return 'complete';
+	}
 
 	return /^#?[0-9a-f]{0,5}$/i.test(trimmed) ? 'partial' : 'invalid';
 }

@@ -1,5 +1,4 @@
 import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
-
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 
 // UNKNOWN: `windows` comes back as a JS array or an `NSArray` handle.

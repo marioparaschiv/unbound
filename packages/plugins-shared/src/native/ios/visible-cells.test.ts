@@ -1,7 +1,6 @@
 import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
-import { expect, test } from 'bun:test';
-
 import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
+import { expect, test } from 'bun:test';
 
 type View = NativeObjectHandle & { id: string };
 

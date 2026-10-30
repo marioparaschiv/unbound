@@ -1,12 +1,18 @@
-import { metro } from '@unbound-app/api';
-import { Discord } from '@unbound-app/api/metro/components';
-import { View } from 'react-native';
-import { useEffect, useState } from 'react';
-
 import { parseTypedColor, typedColorState } from '@unbound-plugins/shared/colors/typed-color';
+import { Discord } from '@unbound-app/api/metro/components';
+import { useEffect, useState } from 'react';
+import { metro } from '@unbound-app/api';
+import { View } from 'react-native';
+
+type LazySheet = { default: unknown };
+
+type ColorPickerSheetProps = {
+	color: number;
+	onSelect: (selected: number) => void;
+};
 
 type ActionSheets = {
-	openLazy(component: Promise<{ default: unknown }>, key: string, props: object): void;
+	openLazy(component: Promise<LazySheet>, key: string, props: ColorPickerSheetProps): void;
 	hideActionSheet(key: string): void;
 };
 
@@ -32,12 +38,16 @@ function openPicker(color: string, onSelect: (color: string) => void): boolean {
 	const picker = metro.findByName('CustomColorPickerActionSheet');
 	const sheets = metro.findByProps('openLazy', 'hideActionSheet') as ActionSheets | undefined;
 
-	if (!picker || !sheets) return false;
+	if (!picker || !sheets) {
+		return false;
+	}
 
 	sheets.openLazy(Promise.resolve({ default: picker }), SHEET_KEY, {
 		color: toInteger(color),
 		onSelect: (selected: number) => {
-			if (selected !== toInteger(color)) onSelect(toHex(selected));
+			if (selected !== toInteger(color)) {
+				onSelect(toHex(selected));
+			}
 
 			sheets.hideActionSheet(SHEET_KEY);
 		},
@@ -60,9 +70,11 @@ function ColorRow({ label, color, fallbackColor, fallbackLabel, onChange }: Colo
 	useEffect(() => setDraft(color ?? ''), [color]);
 
 	function saveDraft() {
-		if (state === 'empty') onChange(undefined);
-		else if (state === 'complete') onChange(parseTypedColor(draft));
-		else return;
+		if (state === 'empty') {
+			onChange(undefined);
+		} else if (state === 'complete') {
+			onChange(parseTypedColor(draft));
+		} else return;
 
 		setTyping(false);
 	}

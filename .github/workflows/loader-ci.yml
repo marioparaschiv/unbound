@@ -14,6 +14,8 @@ on:
             - 'packages/plugins-shared/**'
             - '.gitmodules'
             - 'packages/types/typings/native.ts'
+            - '!**/*.md'
+            - '!**/*.mdx'
 
 permissions:
     contents: read
@@ -31,6 +33,32 @@ defaults:
         working-directory: packages/loader
 
 jobs:
+    changes:
+        name: Detect loader changes
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            contents: read
+            pull-requests: read
+        outputs:
+            native: ${{ steps.files.outputs.native }}
+        steps:
+            - name: List the changed loader files
+              id: files
+              working-directory: .
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+              run: |
+                  set -euo pipefail
+                  files=$(gh api --paginate "repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER/files" --jq '.[].filename')
+                  if grep -Eq '^(packages/loader/|\.github/workflows/loader-|\.github/actions/|\.gitmodules$)' <<< "$files" \
+                      && grep -E '^(packages/loader/|\.github/workflows/loader-|\.github/actions/|\.gitmodules$)' <<< "$files" | grep -Evq '\.mdx?$'; then
+                      echo "native=true" >> "$GITHUB_OUTPUT"
+                  else
+                      echo "native=false" >> "$GITHUB_OUTPUT"
+                  fi
+
     validate-submodules:
         name: Validate submodules
         runs-on: ubuntu-26.04
@@ -54,6 +82,8 @@ jobs:
 
     lint:
         name: Lint and format
+        needs: changes
+        if: needs.changes.outputs.native == 'true'
         runs-on: ubuntu-26.04
         timeout-minutes: 6
         steps:
@@ -73,6 +103,8 @@ jobs:
 
             - name: Setup Gradle
               uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6
+              with:
+                  cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
             - name: Install clang-format and actionlint
               run: |
@@ -126,6 +158,7 @@ jobs:
 
     build:
         name: Build astral
+        needs: changes
         permissions:
             contents: write
             id-token: write
@@ -138,6 +171,7 @@ jobs:
             release: false
             caller_workflow: 'ci'
             pr_number: ${{ github.event.pull_request.number }}
+            skip_core: ${{ needs.changes.outputs.native != 'true' }}
         secrets: inherit
 
     upload-pr-builds:
@@ -288,7 +322,7 @@ jobs:
         runs-on: ubuntu-26.04
         timeout-minutes: 5
         needs: [build, pr-builds, upload-pr-builds]
-        if: always() && needs.build.result == 'success' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        if: ${{ !cancelled() && needs.build.result == 'success' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1

@@ -1,5 +1,4 @@
 import type { NativePluginBridge, NativePluginCapability } from '@unbound-app/api/native';
-
 import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
 
 /**

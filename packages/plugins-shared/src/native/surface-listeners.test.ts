@@ -1,6 +1,5 @@
-import { describe, expect, test } from 'bun:test';
-
 import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
+import { describe, expect, test } from 'bun:test';
 
 describe('createSurfaceListeners', () => {
 	test('notifies only the listeners of the surface', () => {

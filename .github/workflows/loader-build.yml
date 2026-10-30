@@ -100,6 +100,9 @@ on:
             pr_number:
                 default: ''
                 type: string
+            skip_core:
+                default: false
+                type: boolean
         outputs:
             deb_url:
                 description: 'Download URL for the deb package artifact'
@@ -213,9 +216,24 @@ jobs:
                     echo "requested_version=$requested_version"
                   } >> "$GITHUB_OUTPUT"
 
+            - name: Name the source IPA cache
+              id: ipa-key
+              if: steps.select.outputs.platform == 'ios' && (inputs.ipa_url != '' || steps.select.outputs.requested_version != '')
+              env:
+                  SOURCE: ${{ inputs.is_testflight && 'testflight' || 'appstore' }} ${{ inputs.ipa_url }} ${{ steps.select.outputs.requested_version }}
+              run: echo "key=source-ipa-$(printf '%s' "$SOURCE" | sha256sum | cut -c1-32)" >> "$GITHUB_OUTPUT"
+
+            - name: Restore the cached source IPA
+              id: ipa-cache
+              if: steps.ipa-key.outputs.key != ''
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: packages/loader/source.ipa
+                  key: ${{ steps.ipa-key.outputs.key }}
+
             - name: Decrypt the source IPA
               id: decrypt
-              if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == ''
+              if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == '' && steps.ipa-cache.outputs.cache-hit != 'true'
               continue-on-error: true
               uses: castdrian/dkrypt@v1.1.1
               with:
@@ -227,7 +245,7 @@ jobs:
                   output: packages/loader/source.ipa
 
             - name: Download the source IPA
-              if: steps.select.outputs.platform == 'ios' && inputs.ipa_url != ''
+              if: steps.select.outputs.platform == 'ios' && inputs.ipa_url != '' && steps.ipa-cache.outputs.cache-hit != 'true'
               env:
                   DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
                   INPUT_IPA_URL: ${{ inputs.ipa_url }}
@@ -376,6 +394,12 @@ jobs:
                   fi
                   exit "$status"
 
+    core:
+        if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_core != true
+        permissions:
+            contents: read
+        uses: ./.github/workflows/loader-core.yml
+
     tool-tests:
         name: Tool and workflow tests
         runs-on: ubuntu-26.04
@@ -399,7 +423,7 @@ jobs:
 
     android:
         needs: [resolve-source, compat-gate]
-        if: always() && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success' && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
+        if: ${{ !cancelled() && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success' && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped') }}
         permissions:
             contents: read
             actions: read
@@ -415,7 +439,7 @@ jobs:
 
     ios:
         needs: [resolve-source, compat-gate, tool-tests]
-        if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || (needs.resolve-source.result == 'success' && needs.resolve-source.outputs.ipa_available != 'false' && needs.tool-tests.result == 'success')) && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped')
+        if: ${{ !cancelled() && inputs.android_channel == '' && (inputs.only_app_repo == true || inputs.only_apt_repo == true || (needs.resolve-source.result == 'success' && needs.resolve-source.outputs.ipa_available != 'false' && needs.tool-tests.result == 'success')) && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped') }}
         permissions:
             contents: write
             actions: read
@@ -438,7 +462,7 @@ jobs:
         secrets: inherit
 
     release:
-        if: always() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
+        if: ${{ !cancelled() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success') }}
         needs: [resolve-source, ios, android]
         runs-on: ubuntu-26.04
         timeout-minutes: 15
@@ -606,7 +630,7 @@ jobs:
                     --changelog-file release-assets/loader-changelog.md
 
     android-prerelease:
-        if: always() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'
+        if: ${{ !cancelled() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success' }}
         needs: [resolve-source, android]
         runs-on: ubuntu-26.04
         timeout-minutes: 10
@@ -651,7 +675,7 @@ jobs:
                   token: ${{ github.token }}
 
     publish-app-repo:
-        if: always() && inputs.release == true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success')
+        if: ${{ !cancelled() && inputs.release == true && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && needs.release.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success') }}
         needs: [resolve-source, ios, android, release]
         permissions:
             contents: write

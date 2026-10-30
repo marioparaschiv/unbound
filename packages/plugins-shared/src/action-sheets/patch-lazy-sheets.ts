@@ -1,8 +1,7 @@
-import type { AnyProps } from '@unbound-app/api/metro';
-import type { patcher } from '@unbound-app/api';
-
 import { findRenderTarget } from '@unbound-plugins/shared/react/render-target';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import type { AnyProps } from '@unbound-app/api/metro';
+import type { patcher } from '@unbound-app/api';
 
 type Cleanup = () => void;
 type Patcher = ReturnType<typeof patcher.createPatcher>;

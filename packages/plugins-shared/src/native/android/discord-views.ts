@@ -1,15 +1,14 @@
-import type {
-	NativeJavaBridge,
-	NativeJavaMethodDescription,
-	NativeJavaReference,
-} from '@unbound-app/api/native';
-
 import {
 	javaInt,
 	javaNumber,
 	javaReference,
 	javaString,
 } from '@unbound-plugins/shared/native/android/java-values';
+import type {
+	NativeJavaBridge,
+	NativeJavaMethodDescription,
+	NativeJavaReference,
+} from '@unbound-app/api/native';
 import { shapeField, shapeMethod } from '@unbound-plugins/shared/native/android/discord-shapes';
 
 export const MESSAGE_VIEW = 'com.discord.chat.presentation.message.MessageView';

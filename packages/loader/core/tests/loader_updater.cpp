@@ -70,7 +70,7 @@ int main()
     assert(updater.acceptBundle(candidate));
     assert(loader::fileExists((root / "astral.bundle").string()));
     assert(!loader::fileExists(candidate));
-    assert(settings.getString("astral", "loader.update.etag", "") == "\"etag-1\"");
+    assert(settings.getString("unbound", "loader.update.etag", "") == "\"etag-1\"");
 
     nextStatus            = 304;
     std::string unchanged = updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98);

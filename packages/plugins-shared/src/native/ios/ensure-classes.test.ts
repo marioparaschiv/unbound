@@ -1,7 +1,6 @@
 import type { NativeClassHandle, NativeObjCBridge } from '@unbound-app/api/native';
-import { describe, expect, spyOn, test } from 'bun:test';
-
 import { ensureClasses } from '@unbound-plugins/shared/native/ios/ensure-classes';
+import { describe, expect, spyOn, test } from 'bun:test';
 
 type ClassLookup = Pick<NativeObjCBridge, 'getClass'>;
 

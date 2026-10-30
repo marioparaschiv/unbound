@@ -1,9 +1,8 @@
-import { describe, expect, test } from 'bun:test';
-
 import {
 	androidResourceName,
 	androidResourceUri,
 } from '@unbound-plugins/shared/assets/android-resource';
+import { describe, expect, test } from 'bun:test';
 
 describe('androidResourceName', () => {
 	test('matches the drawable names React Native bundles', () => {
