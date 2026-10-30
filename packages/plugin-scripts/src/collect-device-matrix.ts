@@ -82,7 +82,7 @@ import { catalogPlugins, renderDeviceMatrix, type CatalogPlugin } from './device
 import { applyLogPolicy, checkFromCycle, mergeChecks } from './matrix-policy';
 import { dropBaseline, dropReason, relaunchCommands } from './device-drops';
 import { growthPerCycle, leakNote, liveHeapScript } from './leak-check';
-import { discordMemory, springBoardMemory } from './device-memory';
+import { discordMemory, settledDiscordMemory, springBoardMemory } from './device-memory';
 import { readMatrixConfig } from './matrix-config';
 import { PLUGINS_DIR } from './paths';
 import { createTimings } from './timings';
@@ -219,7 +219,7 @@ async function main(): Promise<void> {
 		);
 
 	const dropsBefore = await dropBaseline(target, run);
-	const memoryBefore = await discordMemory(target, run);
+	const memoryBefore = await settledDiscordMemory(target, run);
 	let relaunched = false;
 
 	async function measure(plugin: CatalogPlugin): Promise<MeasuredCheck> {
@@ -500,9 +500,11 @@ async function main(): Promise<void> {
 
 	writeFileSync(join(out, 'scroll.json'), `${JSON.stringify(scroll, null, '\t')}\n`);
 
+	await afterRecovery('the memory read', () => evaluate(port, COLLECT_GARBAGE_SCRIPT));
+
 	const memory = {
 		beforeMB: memoryBefore,
-		afterMB: await discordMemory(target, run),
+		afterMB: await settledDiscordMemory(target, run),
 		relaunched,
 		springBoard: await springBoardMemory(target, run),
 	};

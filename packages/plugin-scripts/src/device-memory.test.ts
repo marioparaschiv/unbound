@@ -5,6 +5,7 @@ import {
 	describeSpringBoard,
 	largestGrowers,
 	parseAndroidPss,
+	settledDiscordMemory,
 	parseIOSFootprint,
 	parseProcessMemory,
 } from './device-memory';
@@ -61,4 +62,15 @@ test('reads SpringBoard and flags it above the warning level', () => {
 	expect(describeSpringBoard({ footprintMB: 391, peakMB: 396 })).toBe(
 		'SpringBoard 391 MB (peak 396 MB), **above 300 MB: check the device agent for a leak**',
 	);
+});
+
+test('reads Discord memory as the lowest of several samples', async () => {
+	const readings = ['TOTAL PSS: 800000', 'TOTAL PSS: 760000', 'TOTAL PSS: 790000'];
+	const memory = await settledDiscordMemory(
+		{ kind: 'android' },
+		async () => ({ ok: true, stdout: readings.shift() ?? '', stderr: '' }),
+		async () => {},
+	);
+
+	expect(memory).toBe(Math.round(760000 / 1024));
 });
