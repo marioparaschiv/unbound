@@ -54,6 +54,7 @@ function start(context: PluginContext) {
 		dispose = applyFeatures('Mention Avatars', [
 			() => android.dispose,
 			() => patchRowGenerator(index),
+			() => subscribeMentionSources(android.retryWaiting),
 		]);
 
 		return;
