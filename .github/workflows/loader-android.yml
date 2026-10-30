@@ -495,7 +495,7 @@ jobs:
                   profile: pixel_6
                   ram-size: 4096M
                   disk-size: 8G
-                  emulator-boot-timeout: 900
+                  emulator-boot-timeout: 300
                   emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect
                   disable-animations: true
                   working-directory: packages/loader
@@ -523,7 +523,7 @@ jobs:
                   profile: pixel_6
                   ram-size: 4096M
                   disk-size: 8G
-                  emulator-boot-timeout: 900
+                  emulator-boot-timeout: 300
                   emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect
                   disable-animations: true
                   working-directory: packages/loader
