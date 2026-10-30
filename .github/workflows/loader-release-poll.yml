@@ -126,7 +126,16 @@ jobs:
             version: ${{ needs.stable-candidate.outputs.version }}
             release: true
             is_testflight: false
-        secrets: inherit
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
     testflight-release:
         needs: [testflight-candidate, stable-release]
@@ -142,7 +151,16 @@ jobs:
             version: ${{ needs.testflight-candidate.outputs.version }}
             release: true
             is_testflight: true
-        secrets: inherit
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
     android-beta-release:
         needs: [android-beta-candidate, testflight-release]
@@ -159,7 +177,16 @@ jobs:
             release: true
             android_channel: beta
             android_code: ${{ needs.android-beta-candidate.outputs.android_code }}
-        secrets: inherit
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
     android-alpha-release:
         needs: [android-alpha-candidate, android-beta-release]
@@ -176,4 +203,13 @@ jobs:
             release: true
             android_channel: alpha
             android_code: ${{ needs.android-alpha-candidate.outputs.android_code }}
-        secrets: inherit
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}

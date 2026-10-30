@@ -14,6 +14,8 @@ on:
         paths:
             - .github/**
             - scripts/config-health.ts
+            - scripts/workflow-files.ts
+            - packages/loader/vendor/versions.json
 
 permissions:
     contents: read
@@ -43,6 +45,7 @@ jobs:
                   CONFIG_PRESENT_ATTESTATION_PK: ${{ secrets.ATTESTATION_PK != '' }}
                   CONFIG_PRESENT_GPG_KEY: ${{ secrets.GPG_KEY != '' }}
                   CONFIG_PRESENT_DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY != '' }}
+                  CONFIG_PRESENT_GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY != '' }}
                   CONFIG_PRESENT_HERMES_SYNC_TOKEN: ${{ secrets.HERMES_SYNC_TOKEN != '' }}
                   CONFIG_PRESENT_ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY != '' }}
                   CONFIG_PRESENT_ASTRAL_API_URL: ${{ vars.ASTRAL_API_URL != '' }}

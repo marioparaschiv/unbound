@@ -2,6 +2,13 @@ name: Loader Build iOS
 
 on:
     workflow_call:
+        secrets:
+            ATTESTATION_PK:
+                required: false
+            DKRYPT_API_KEY:
+                required: false
+            GPG_KEY:
+                required: false
         inputs:
             version:
                 default: ''

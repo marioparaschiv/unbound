@@ -28,6 +28,19 @@ on:
                 required: false
                 type: string
     workflow_call:
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64:
+                required: false
+            ANDROID_SIGNING_KEY_ALIAS:
+                required: false
+            ANDROID_SIGNING_KEY_PASSWORD:
+                required: false
+            ANDROID_SIGNING_STORE_PASSWORD:
+                required: false
+            ATTESTATION_PK:
+                required: false
+            GRADLE_ENCRYPTION_KEY:
+                required: false
         inputs:
             ios_version:
                 description: 'Discord app version to match'

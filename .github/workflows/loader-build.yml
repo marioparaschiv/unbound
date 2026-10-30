@@ -67,6 +67,25 @@ on:
                 description: 'Build and deploy apt-repo'
                 type: boolean
     workflow_call:
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64:
+                required: false
+            ANDROID_SIGNING_KEY_ALIAS:
+                required: false
+            ANDROID_SIGNING_KEY_PASSWORD:
+                required: false
+            ANDROID_SIGNING_STORE_PASSWORD:
+                required: false
+            ASTRAL_API_KEY:
+                required: false
+            ATTESTATION_PK:
+                required: false
+            DKRYPT_API_KEY:
+                required: false
+            GPG_KEY:
+                required: false
+            GRADLE_ENCRYPTION_KEY:
+                required: false
         inputs:
             version:
                 default: ''
@@ -166,7 +185,7 @@ jobs:
             ios_release_title: ${{ steps.names.outputs.ios_release_title }}
             android_release_tag: ${{ steps.names.outputs.android_release_tag }}
             android_release_title: ${{ steps.names.outputs.android_release_title }}
-            ipa_available: ${{ steps.decrypt.outcome != 'failure' }}
+            ipa_available: ${{ steps.source.outputs.missing != 'true' }}
         steps:
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -254,6 +273,35 @@ jobs:
                   version: ${{ steps.select.outputs.requested_version }}
                   output: packages/loader/source.ipa
 
+            - name: Decrypt the latest source IPA for a dry run
+              id: decrypt-latest
+              if: steps.decrypt.outcome == 'failure' && inputs.release_dry_run == true
+              continue-on-error: true
+              timeout-minutes: 12
+              uses: castdrian/dkrypt@86270418b5f3eaf22229dd0682b9aa5e0dc99bd5
+              with:
+                  api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
+                  api-key: ${{ secrets.DKRYPT_API_KEY }}
+                  bundle-id: com.hammerandchisel.discord
+                  channel: ${{ inputs.is_testflight && 'testflight' || 'appstore' }}
+                  output: packages/loader/source.ipa
+
+            - name: Settle the source IPA
+              id: source
+              env:
+                  DECRYPTED: ${{ steps.decrypt.outcome }}
+                  DECRYPTED_LATEST: ${{ steps.decrypt-latest.outcome }}
+                  REQUESTED_VERSION: ${{ steps.select.outputs.requested_version }}
+              run: |
+                  set -euo pipefail
+                  missing=false
+                  if [ "$DECRYPTED" = failure ] && [ "$DECRYPTED_LATEST" != success ]; then
+                      missing=true
+                  elif [ "$DECRYPTED" = failure ]; then
+                      echo "::warning title=Latest iOS build::dkrypt could not provide ${REQUESTED_VERSION:-the requested version}, so this dry run uses the latest App Store build instead."
+                  fi
+                  echo "missing=$missing" >> "$GITHUB_OUTPUT"
+
             - name: Download the source IPA
               if: steps.select.outputs.platform == 'ios' && inputs.ipa_url != '' && steps.ipa-cache.outputs.cache-hit != 'true'
               env:
@@ -273,25 +321,28 @@ jobs:
                   go run ./tools fetch "${fetch_args[@]}"
 
             - name: Skip the TestFlight release without a source IPA
-              if: steps.decrypt.outcome == 'failure' && inputs.is_testflight == true
+              if: steps.source.outputs.missing == 'true' && inputs.is_testflight == true
               run: echo "::notice title=No TestFlight build::dkrypt could not provide the TestFlight IPA, so this TestFlight release is skipped. The next poll tries again."
 
             - name: Require the iOS source for a release
-              if: steps.decrypt.outcome == 'failure' && (inputs.release == true || inputs.release == 'true') && inputs.is_testflight != true
+              if: steps.source.outputs.missing == 'true' && (inputs.release == true || inputs.release == 'true') && inputs.is_testflight != true
+              env:
+                  REQUESTED_VERSION: ${{ steps.select.outputs.requested_version }}
               run: |
-                  echo "::error title=No iOS source::dkrypt could not provide the Discord IPA, and a release must build both platforms."
+                  echo "::error title=No iOS source::dkrypt could not provide Discord $REQUESTED_VERSION for iOS, and a release must build both platforms. The Decrypt the source IPA step shows dkrypt's reason."
                   exit 1
 
             - name: Skip iOS without a source IPA
-              if: steps.decrypt.outcome == 'failure'
+              if: steps.source.outputs.missing == 'true'
               run: echo "::warning title=No iOS source::dkrypt could not provide the Discord IPA, so this build skips iOS and still builds Android."
 
             - name: Resolve source version
               id: resolve
-              if: steps.select.outputs.platform == 'ios' && steps.decrypt.outcome != 'failure'
+              if: steps.select.outputs.platform == 'ios' && steps.source.outputs.missing != 'true'
               env:
                   INPUT_IS_TESTFLIGHT: ${{ inputs.is_testflight }}
                   INPUT_RELEASE: ${{ inputs.release }}
+                  RELEASE_DRY_RUN: ${{ inputs.release_dry_run }}
                   REQUESTED_VERSION: ${{ steps.select.outputs.requested_version }}
               run: |
                   set -euo pipefail
@@ -302,7 +353,9 @@ jobs:
                     actual_android_code=$(go run ./tools discord-version --version "$version")
                     if [ -n "$REQUESTED_VERSION" ]; then
                       requested_android_code=$(go run ./tools discord-version --version "$REQUESTED_VERSION")
-                      if [ "$actual_android_code" != "$requested_android_code" ]; then
+                      if [ "$actual_android_code" != "$requested_android_code" ] && [ "$RELEASE_DRY_RUN" = true ]; then
+                        echo "::warning::The iOS IPA is $version but the requested matching release is $REQUESTED_VERSION. A real release would stop here."
+                      elif [ "$actual_android_code" != "$requested_android_code" ]; then
                         echo "::error::The iOS IPA is $version but the requested matching release is $REQUESTED_VERSION"
                         exit 1
                       fi
@@ -324,7 +377,7 @@ jobs:
               run: go run ./tools release-names --release-version "$RELEASE_VERSION"
 
             - name: Keep the source IPA for the gate and the iOS build
-              if: steps.select.outputs.platform == 'ios' && steps.decrypt.outcome != 'failure'
+              if: steps.select.outputs.platform == 'ios' && steps.source.outputs.missing != 'true'
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: discord-source-ipa
@@ -513,7 +566,13 @@ jobs:
             discord_channel: ${{ inputs.android_channel || 'stable' }}
             android_code: ${{ needs.resolve-source.outputs.android_code }}
             pr_number: ${{ inputs.pr_number || '' }}
-        secrets: inherit
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
     ios:
         needs: [resolve-source, compat-gate, tool-tests]
@@ -537,7 +596,10 @@ jobs:
             only_apt_repo: ${{ inputs.only_apt_repo || false }}
             caller_workflow: ${{ inputs.caller_workflow || '' }}
             pr_number: ${{ inputs.pr_number || '' }}
-        secrets: inherit
+        secrets:
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
 
     release:
         if: ${{ !cancelled() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true && inputs.only_apt_repo != true && needs.resolve-source.result == 'success' && needs.ios.result == 'success' && (inputs.is_testflight == true || needs.android.result == 'success') }}
@@ -811,4 +873,7 @@ jobs:
             version: ${{ needs.resolve-source.outputs.release_version }}
             only_app_repo: true
             release: false
-        secrets: inherit
+        secrets:
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}

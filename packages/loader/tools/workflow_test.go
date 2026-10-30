@@ -186,7 +186,7 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		"android_code=$(curl -fsSL \"$INPUT_ANDROID_TRACKER/index\" | jq -er '.latest.stable | tonumber')",
 		"go run ./tools discord-version --android-code \"$android_code\"",
 		"The iOS IPA is $version but the requested matching release is $REQUESTED_VERSION",
-		"secrets: inherit",
+		"ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}",
 		"value: ${{ jobs.android.outputs.module_filename }}",
 		"value: ${{ jobs.android.outputs.patched_filename }}",
 		"name: ios-simulator",

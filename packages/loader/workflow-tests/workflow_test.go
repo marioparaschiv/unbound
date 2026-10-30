@@ -136,7 +136,7 @@ func TestParsedReleaseBuildsWaitForTheGate(t *testing.T) {
 func TestParsedIOSBuildReusesTheResolvedIPA(t *testing.T) {
 	build := loadWorkflow(t, "loader-build.yml")
 	keep := build.job(t, "resolve-source").step(t, "Keep the source IPA for the gate and the iOS build")
-	if keep.With["name"] != "discord-source-ipa" || keep.If != "steps.select.outputs.platform == 'ios' && steps.decrypt.outcome != 'failure'" {
+	if keep.With["name"] != "discord-source-ipa" || keep.If != "steps.select.outputs.platform == 'ios' && steps.source.outputs.missing != 'true'" {
 		t.Fatalf("resolve-source must keep every iOS source IPA it obtained as discord-source-ipa, got %+v", keep)
 	}
 	decrypt := build.job(t, "resolve-source").step(t, "Decrypt the source IPA")
@@ -144,11 +144,11 @@ func TestParsedIOSBuildReusesTheResolvedIPA(t *testing.T) {
 		t.Fatalf("the IPA download must fail softly so the job can decide, got %+v", decrypt)
 	}
 	require := build.job(t, "resolve-source").step(t, "Require the iOS source for a release")
-	if require.If != "steps.decrypt.outcome == 'failure' && (inputs.release == true || inputs.release == 'true') && inputs.is_testflight != true" || !strings.Contains(require.Run, "exit 1") {
+	if require.If != "steps.source.outputs.missing == 'true' && (inputs.release == true || inputs.release == 'true') && inputs.is_testflight != true" || !strings.Contains(require.Run, "exit 1") {
 		t.Fatalf("a stable release must fail without the iOS source, got %+v", require)
 	}
 	skip := build.job(t, "resolve-source").step(t, "Skip the TestFlight release without a source IPA")
-	if skip.If != "steps.decrypt.outcome == 'failure' && inputs.is_testflight == true" || strings.Contains(skip.Run, "exit 1") {
+	if skip.If != "steps.source.outputs.missing == 'true' && inputs.is_testflight == true" || strings.Contains(skip.Run, "exit 1") {
 		t.Fatalf("a TestFlight release without its IPA must be skipped, not failed, got %+v", skip)
 	}
 	ios := build.job(t, "ios")

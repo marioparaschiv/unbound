@@ -1,6 +1,8 @@
 import { appendFileSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
+import { workflowFileProblems } from './workflow-files';
+
 export type ConfigKind = 'secret' | 'var';
 
 export type ConfigRequirement = {
@@ -163,7 +165,13 @@ if (import.meta.main) {
 		appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
 	}
 
-	if (statuses.some((status) => status.required && !status.present)) {
+	const problems = workflowFileProblems(root);
+
+	for (const problem of problems) {
+		console.error(problem);
+	}
+
+	if (problems.length || statuses.some((status) => status.required && !status.present)) {
 		process.exit(1);
 	}
 }
