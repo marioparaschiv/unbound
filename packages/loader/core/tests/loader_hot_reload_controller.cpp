@@ -104,7 +104,7 @@ int main()
 {
     loader::SettingsStore settings(temporarySettingsPath());
     settings.load();
-    settings.set("unbound", "loader.update.etag", "\"1\"");
+    settings.set("astral", "loader.update.etag", "\"1\"");
 
     FakeScheduler              scheduler;
     auto                       transport  = std::make_shared<FakeTransport>();
@@ -126,14 +126,14 @@ int main()
     assert(!controller->isRunning());
     assert(transport->opened.empty());
 
-    settings.set("unbound", "loader.update.hmr", true);
-    settings.set("unbound", "loader.enabled", false);
+    settings.set("astral", "loader.update.hmr", true);
+    settings.set("astral", "loader.enabled", false);
     controller->sync();
     scheduler.runImmediate();
     assert(!controller->isRunning());
     assert(transport->opened.empty());
 
-    settings.set("unbound", "loader.enabled", true);
+    settings.set("astral", "loader.enabled", true);
     base = std::nullopt;
     controller->sync();
     scheduler.runImmediate();
@@ -212,7 +212,7 @@ int main()
     controller->onClosed(fifth, std::string("cancelled"));
     assert(scheduler.pending.size() == 1);
 
-    settings.set("unbound", "loader.update.hmr", false);
+    settings.set("astral", "loader.update.hmr", false);
     controller->sync();
     scheduler.runImmediate();
     assert(!controller->isRunning());
@@ -221,7 +221,7 @@ int main()
     scheduler.runNext();
     assert(transport->opened.size() == openedBeforeStop);
 
-    settings.set("unbound", "loader.update.hmr", true);
+    settings.set("astral", "loader.update.hmr", true);
     controller->sync();
     scheduler.runImmediate();
     assert(controller->isRunning());
@@ -232,12 +232,12 @@ int main()
     controller->onClosed(restarted, std::string("reset"));
     assert(scheduler.pending.back().seconds == 1.0);
 
-    settings.set("unbound", "loader.enabled", false);
+    settings.set("astral", "loader.enabled", false);
     controller->sync();
     scheduler.runImmediate();
     assert(!controller->isRunning());
 
-    settings.set("unbound", "loader.enabled", true);
+    settings.set("astral", "loader.enabled", true);
     controller->sync();
     controller.reset();
     while (!scheduler.pending.empty())

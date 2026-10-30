@@ -112,8 +112,8 @@ bool factoryReset(const std::string &documents)
 
 void deleteBundle(SettingsStore &settings, BundleUpdater &updater, const std::string &documents)
 {
-    settings.set("unbound", "loader.update.url", nullptr);
-    settings.set("unbound", "loader.update.force", nullptr);
+    settings.set("astral", "loader.update.url", nullptr);
+    settings.set("astral", "loader.update.force", nullptr);
     settings.save();
 
     for (const char *extension : {"bundle", "js"})
@@ -148,8 +148,8 @@ bool useCustomBundle(SettingsStore &settings, const std::string &input)
         return false;
     }
 
-    settings.set("unbound", "loader.update.url", url);
-    settings.set("unbound", "loader.update.force", true);
+    settings.set("astral", "loader.update.url", url);
+    settings.set("astral", "loader.update.force", true);
     return settings.save();
 }
 

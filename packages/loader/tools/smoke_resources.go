@@ -21,7 +21,7 @@ const (
 	smokeCollectExpression   = `(function () { if (typeof gc === 'function') gc(); return 'collected'; })()`
 	smokeResourcesExpression = `(function () {
 	if (typeof gc === 'function') gc();
-	var read = unbound.native && unbound.native.getNativeResources;
+	var read = astral.native && astral.native.getNativeResources;
 	return JSON.stringify(read ? read() || null : null);
 })()`
 	smokeReleaseSettle      = 3 * time.Second

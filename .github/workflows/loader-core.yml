@@ -40,6 +40,24 @@ jobs:
             - name: Run core tests
               run: ctest --test-dir build/core --output-on-failure --timeout 120 -j"$(nproc)"
 
+            - name: Report the compiler cache
+              if: ${{ !cancelled() }}
+              run: |
+                  {
+                      echo "### Compiler cache"
+                      echo
+                      echo '```'
+                      ccache --show-stats
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Save the compiler cache
+              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ${{ runner.temp }}/ccache
+                  key: ccache-${{ runner.os }}-core-tests-${{ github.sha }}
+
     native-jsi-fuzz:
         name: Host Hermes bridge tests and fuzzing
         runs-on: ubuntu-26.04
@@ -65,8 +83,7 @@ jobs:
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
               with:
                   path: packages/loader/build/jsi-fuzz
-                  key: jsi-fuzz-ninja-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}-${{ hashFiles('packages/loader/core/**') }}
-                  restore-keys: jsi-fuzz-ninja-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}-
+                  key: jsi-fuzz-ninja-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}
 
             - name: Install libffi, Ninja and lld
               run: |
@@ -83,6 +100,24 @@ jobs:
 
             - name: Build the Hermes tests and fuzzer
               run: cmake --build build/jsi-fuzz --target native_platform_hermes native_runtime_hermes native_preload_hermes native_fabric_hermes native_handle_leases_hermes native_struct_layouts_hermes native_jsi_fuzz -j"$(nproc)"
+
+            - name: Report the compiler cache
+              if: ${{ !cancelled() }}
+              run: |
+                  {
+                      echo "### Compiler cache"
+                      echo
+                      echo '```'
+                      ccache --show-stats
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Save the compiler cache
+              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ${{ runner.temp }}/ccache
+                  key: ccache-${{ runner.os }}-hermes-bridge-${{ github.sha }}
 
             - name: Test the native bridge on Hermes
               run: |
@@ -119,6 +154,24 @@ jobs:
 
             - name: Build the fuzzer
               run: cmake --build build/fuzz --target native_bridge_libfuzzer -j"$(nproc)"
+
+            - name: Report the compiler cache
+              if: ${{ !cancelled() }}
+              run: |
+                  {
+                      echo "### Compiler cache"
+                      echo
+                      echo '```'
+                      ccache --show-stats
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Save the compiler cache
+              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ${{ runner.temp }}/ccache
+                  key: ccache-${{ runner.os }}-bridge-fuzz-${{ github.sha }}
 
             - name: Fuzz for a minute
               run: |

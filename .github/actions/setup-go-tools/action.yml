@@ -17,5 +17,5 @@ runs:
                   ~/.cache/go-build
                   ~/Library/Caches/go-build
                   ~/go/pkg/mod
-              key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
+              key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/go.sum') }}
               restore-keys: go-${{ runner.os }}-${{ runner.arch }}-

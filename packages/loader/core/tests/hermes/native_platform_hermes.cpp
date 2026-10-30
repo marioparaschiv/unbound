@@ -144,7 +144,7 @@ int main()
         "reload-claim.js");
     require(reclaimed.isBool() && !reclaimed.getBool(),
             "a reloaded runtime sees the launch URL as claimed");
-    require(!settings.get("unbound", "answer").has_value(), "a removed setting is gone natively");
+    require(!settings.get("astral", "answer").has_value(), "a removed setting is gone natively");
     require(settings.getBoolean("other", "kept", false), "an applied setting is stored natively");
     require(!std::filesystem::exists(documents / "Plugins" / "doomed"),
             "the removed folder is gone");
