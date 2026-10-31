@@ -142,7 +142,9 @@ func runSmokeFaults(ctx context.Context, target smokeTarget, options *smokeOptio
 
 func runSmokeCrashFault(ctx context.Context, target smokeTarget, options *smokeOptions) smokeFaultResult {
 	const name = "native crash on start"
-	_, _ = evaluateSmokeExpressionWithin(ctx, options, smokeCrashArmExpression, 20*time.Second)
+	if problem := armSmokeCrashFixture(evaluateSmokeExpressionWithin(ctx, options, smokeCrashArmExpression, 20*time.Second)); problem != "" {
+		return smokeFaultResult{Name: name, Problem: problem}
+	}
 	if !waitUntil(ctx, smokeCrashStopWait, func() bool { return !target.running(ctx) }) {
 		return smokeFaultResult{Name: name, Problem: "the fixture that calls abort() while starting did not crash Discord"}
 	}
@@ -158,6 +160,16 @@ func runSmokeCrashFault(ctx context.Context, target smokeTarget, options *smokeO
 		return result
 	}
 	return smokeFaultResult{Name: name, Problem: fmt.Sprintf("Discord kept crashing for %d relaunches, so the loader never disabled the plugin that crashed it", smokeCrashRelaunches)}
+}
+
+func armSmokeCrashFixture(value string, err error) string {
+	switch {
+	case err != nil && strings.HasPrefix(err.Error(), smokeDeviceThrew):
+		return "the crash fixture could not be armed: " + err.Error()
+	case err == nil && value != "armed":
+		return fmt.Sprintf("the crash fixture could not be armed: the device answered %q", value)
+	}
+	return ""
 }
 
 func waitForSmokeDebugger(ctx context.Context, target smokeTarget, options *smokeOptions) bool {
