@@ -1,11 +1,13 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { findByProps, findStore } from '~/metro/search';
 import type { SectionEntry } from '~/settings/section';
 import { resolveThemeColor } from '~/themes/colors';
+import { onModuleLoaded } from '~/metro/wait';
 import { createPatcher } from '~/patcher/api';
 import DesignPage from '~/ui/settings/design';
 import { Screens } from '~/core/constants';
+import { findStore } from '~/metro/search';
+import { byProps } from '~/metro/filters';
 import ThemeStore from '~/themes/state';
 
 const Patcher = createPatcher('unbound::themes');
@@ -27,6 +29,7 @@ type ColorTokens = {
 	};
 };
 
+let stopWaiting: (() => void) | null = null;
 let unsubscribe: (() => void) | null = null;
 let restoreRaw: (() => void) | null = null;
 
@@ -51,12 +54,17 @@ function applyRawColors(raw: Record<string, string>) {
 }
 
 function refreshDiscordTheme() {
-	findStore('Theme')?.emitChange?.();
+	// A theme store Discord has not loaded yet has nothing to refresh.
+	findStore('Theme', { initialize: false })?.emitChange?.();
 }
 
-/** Recolours Discord's JavaScript colour tokens with the applied theme and follows theme changes. */
+/** Recolours Discord's JavaScript colour tokens with the applied theme once Discord loads them, and follows theme changes. */
 export function start() {
-	const tokens: ColorTokens | undefined = findByProps('SemanticColor')?.default;
+	// Discord loads its colour tokens at launch; patching them as they load beats every read of them.
+	stopWaiting = onModuleLoaded(byProps('SemanticColor'), (mdl) => recolor(mdl.default));
+}
+
+function recolor(tokens: ColorTokens | undefined) {
 	const resolver = tokens?.internal;
 
 	if (!tokens || typeof resolver?.resolveSemanticColor !== 'function') {
@@ -83,6 +91,8 @@ export function start() {
 
 /** Restores Discord's colour tokens. */
 export function stop() {
+	stopWaiting?.();
+	stopWaiting = null;
 	unsubscribe?.();
 	unsubscribe = null;
 	restoreRaw?.();
