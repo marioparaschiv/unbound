@@ -6,17 +6,17 @@ icon: 'square-terminal'
 
 ### Adding a command
 
-`createCommands` returns a handle for one owner. Call `register` on it with your commands, keyed by name. The commands appear in the `/` picker and in the list that opens when you type `/`.
+Call `commands.register` with your commands, keyed by name. The commands appear in the `/` picker and in the list that opens when you type `/`.
+
+In a plugin, `commands` is your plugin's own: the commands it registers belong to your plugin.
 
 ```ts
 import { commands } from '@unbound-app/api';
 // equivalent: import * as commands from '@unbound-app/api/commands';
 // runtime global: unbound.commands
 
-const Commands = commands.createCommands('my-plugin');
-
 function start() {
-	Commands.register({
+	commands.register({
 		hello: {
 			description: 'Say hello',
 			options: {
@@ -32,26 +32,32 @@ export default { start };
 
 `name` is a `string` in `execute` because the option is required. Returning a string sends it to the channel as a normal message from you.
 
-You don't need a `stop` for commands. Unbound removes a plugin's commands when the plugin stops, fails to start, is disabled, is unloaded, or is reloaded with `ubd push`. Command ids come from the owner id and the command's path, so a reload registers the same ids and Discord's recently used list keeps them.
+You don't need a `stop` for commands. Unbound removes a plugin's commands when the plugin stops, fails to start, is disabled, is unloaded, or is reloaded with `ubd push`. Command ids come from the plugin id and the command's path, so a reload registers the same ids and Discord's recently used list keeps them.
 
-### The owner id
+Without a section of their own, your commands go in the shared **Unbound** section of the picker.
+
+### A section of your own
+
+`createCommands(owner, options)` returns a handle with the same `register` and `unregister` as `commands`, with options of its own. The handle also has `unregisterAll()`, which removes every command of that owner.
 
 <ParamField path='owner' type='string' required>
-	The id that owns the commands, the same way `patcher.createPatcher` takes a caller. In a plugin,
-	pass the plugin's `id` from `manifest.json`. Unbound removes commands by this id when the plugin
-	ends. In an Unbound built-in, pass `'unbound'` and call `unregisterAll()` in `stop`.
+	The id that owns the commands. In a plugin, pass `addon.id`, your plugin's `id` from
+	`manifest.json`. Unbound removes commands by this id when the plugin ends. In an Unbound
+	built-in, pass `'unbound'` and call `unregisterAll()` in `stop`.
 </ParamField>
 <ParamField path='options.section' type='{ name: string; icon?: number | string }'>
-	Gives the owner its own section in the picker. `icon` is an asset id from `assets.Icons`, or a
+	Gives the owner its own section in the picker. `icon` is an asset id from `assets.icons`, or a
 	`data:` or `https:` uri. Without `section`, commands go in the shared **Unbound** section.
 </ParamField>
 
 ```ts
 import { assets, commands } from '@unbound-app/api';
 
-const Commands = commands.createCommands('my-plugin', {
-	section: { name: 'My Plugin', icon: assets.Icons.ic_application_command_24px },
+const mine = commands.createCommands(addon.id, {
+	section: { name: 'My Plugin', icon: assets.icons.ic_application_command_24px },
 });
+
+mine.register({ ping: { description: 'Ping', execute: () => 'Pong!' } });
 ```
 
 <Warning>
@@ -108,7 +114,7 @@ If `autocomplete` throws, the picker shows no suggestions and Unbound logs the e
 A command with `subcommands` instead of `options` and `execute` is a group. `subcommands` is a record with the same shape. Discord allows two levels below the root: `/root group command`.
 
 ```ts
-Commands.register({
+commands.register({
 	tag: {
 		description: 'Manage tags',
 		subcommands: {
@@ -155,13 +161,13 @@ If `execute` throws or rejects, you see an ephemeral message such as `/tag add f
 `register` returns a function that removes the commands from that call. Use it for commands that come and go while your plugin runs. You can call it more than once, and after the plugin stopped. Registering a root name that the same owner already registered replaces the whole command, subcommands included.
 
 ```ts
-const unregister = Commands.register({ ping: { description: 'Ping', execute: () => 'Pong!' } });
+const unregister = commands.register({ ping: { description: 'Ping', execute: () => 'Pong!' } });
 
 // later:
 unregister();
 ```
 
-`unregisterAll()` removes every command of the owner.
+`commands.unregister(name)` removes one root command with its subcommands.
 
 ### Built-in commands
 

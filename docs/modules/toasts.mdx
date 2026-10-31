@@ -4,26 +4,30 @@ description: 'Show transient, non-blocking notifications to the user.'
 icon: 'bells'
 ---
 
+import Deprecated from '/snippets/deprecated.mdx';
+
 ### Showing a toast
 
-`showToast` displays a toast and returns a handle for controlling it. If you don't pass an `id`, one is generated for you.
+`show` displays a toast and returns a handle for controlling it. If you don't pass an `id`, one is generated for you.
 
 A toast is a brief, non-blocking message that slides in, stays on screen for a moment, and slides out. Use it for feedback like "Copied!" or "Settings saved".
 
 ```ts
 import { toasts } from '@unbound-app/api';
+// equivalent: import * as toasts from '@unbound-app/api/toasts';
+// runtime global: unbound.toasts
 
-toasts.showToast({ content: 'Copied to clipboard' });
+toasts.show({ content: 'Copied to clipboard' });
 ```
 
 ### Toast handles
 
-The handle returned by `showToast` refers to the toast after it's shown. Use it to dismiss the toast early instead of waiting for it to time out.
+The handle returned by `show` refers to the toast after it's shown. Use it to dismiss the toast early instead of waiting for it to time out.
 
 ```ts
 import { toasts } from '@unbound-app/api';
 
-const toast = toasts.showToast({ content: 'Uploading...' });
+const toast = toasts.show({ content: 'Uploading...' });
 
 // later, once the work finishes:
 toast.close();
@@ -32,3 +36,11 @@ toast.close();
 <Tip>
 	Pass a stable `id` when a toast should _replace_ a previous one instead of stacking. This is useful for progress updates that shouldn't pile up on screen.
 </Tip>
+
+### Deprecated names
+
+<Deprecated />
+
+| Deprecated | Use |
+| --- | --- |
+| `toasts.showToast` | `toasts.show` |
