@@ -6,6 +6,7 @@ import {
 } from '@unbound-app/contracts/addon-page';
 import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-media';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
+import noop from '@unbound-app/utils/noop';
 import { z } from 'zod';
 
 import type { GitHubClient, GitTree, TreeEntry } from '~/lib/github';
@@ -26,7 +27,15 @@ export type PageLocation = {
 	addonMd: string | null;
 };
 
+/** Where one addon's media sit at one commit. */
+export type MediaLocation = Pick<PageLocation, 'repository' | 'tree' | 'commitSha' | 'addonDir'>;
+
+/** The bytes of a page's media files, by the path ADDON.md writes each as. */
+export type PageMediaFiles = ReadonlyMap<string, Uint8Array>;
+
 type CommittedMedia = {
+	/** The path as ADDON.md writes it, relative to the addon's directory. */
+	name: string;
 	path: string;
 	entry: TreeEntry;
 };
@@ -73,7 +82,7 @@ function parsePage(path: string, text: string): AddonPage {
 	return parsed.data;
 }
 
-function findMedia(env: Env, location: PageLocation, page: AddonPage): CommittedMedia[] {
+function findMedia(env: Env, location: MediaLocation, page: AddonPage): CommittedMedia[] {
 	const { tree, commitSha, addonDir } = location;
 	const committed: CommittedMedia[] = [];
 
@@ -99,7 +108,7 @@ function findMedia(env: Env, location: PageLocation, page: AddonPage): Committed
 			throw rebuild(path, `is ${entry.size} bytes, but it measured ${media.bytes} bytes`);
 		}
 
-		committed.push({ path, entry });
+		committed.push({ name: media.path, path, entry });
 	}
 
 	const total = committed.reduce((sum, { entry }) => sum + entry.size, 0);
@@ -132,8 +141,13 @@ async function forEachAtMost<T>(items: T[], limit: number, fn: (item: T) => Prom
 	await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
 }
 
-async function checkFormats(github: GitHubClient, repository: string, media: CommittedMedia[]) {
-	await forEachAtMost(media, MEDIA_READ_CONCURRENCY, async ({ path, entry }) => {
+async function readMedia(
+	github: GitHubClient,
+	repository: string,
+	media: CommittedMedia[],
+	keep: (name: string, data: Uint8Array) => void,
+) {
+	await forEachAtMost(media, MEDIA_READ_CONCURRENCY, async ({ name, path, entry }) => {
 		const data = await github.readBlob(repository, entry.sha);
 
 		if (!matchesMediaFormat(path, data)) {
@@ -142,6 +156,8 @@ async function checkFormats(github: GitHubClient, repository: string, media: Com
 				`${path} is not the format its extension names.`,
 			);
 		}
+
+		keep(name, data);
 	});
 }
 
@@ -185,9 +201,33 @@ export async function readAddonPage(
 		throw rebuild(path, 'does not measure exactly the media ADDON.md shows');
 	}
 
-	await checkFormats(github, repository, findMedia(env, location, page));
+	await readMedia(github, repository, findMedia(env, location, page), noop);
 
 	return page;
 }
 
-export default { MEDIA_READ_CONCURRENCY, readAddonPage };
+/**
+ * @description Reads every media file a stored page measured from its commit, re-checking each one's
+ * size, the size caps and its format, as {@link readAddonPage} did on submission.
+ * @param env The environment, for the size caps.
+ * @param github The GitHub client; each blob's bytes are checked against its git blob id.
+ * @param location The repository, tree, commit and addon directory the page was read from.
+ * @param page The stored page.
+ * @returns The bytes by media path; throws when a file no longer matches the page.
+ */
+export async function readPageMedia(
+	env: Env,
+	github: GitHubClient,
+	location: MediaLocation,
+	page: AddonPage,
+): Promise<PageMediaFiles> {
+	const files = new Map<string, Uint8Array>();
+
+	await readMedia(github, location.repository, findMedia(env, location, page), (name, data) =>
+		files.set(name, data),
+	);
+
+	return files;
+}
+
+export default { MEDIA_READ_CONCURRENCY, readAddonPage, readPageMedia };

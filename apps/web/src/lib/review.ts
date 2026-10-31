@@ -8,13 +8,14 @@ import type { ReviewDecision, SubmissionKind } from '@unbound-app/contracts/publ
 import { submissionKindSchema } from '@unbound-app/contracts/publish';
 import { and, eq } from 'drizzle-orm';
 
+import { toAddonVersion, writeArtifact, writeStorePage, type StorePage } from '~/lib/artifacts';
 import { addon, addonMaintainer, addonVersion, submission, user } from '~/db/schema';
 import { LATEST_VERSION, refreshAddonSummary, toAddonSummary } from '~/lib/addons';
 import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
 import { requireSourced, toSubmission } from '~/lib/submissions';
-import { toAddonVersion, writeArtifact } from '~/lib/artifacts';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { recordReviewDecision } from '~/lib/moderation-events';
+import { readPageMedia } from '~/lib/addon-page-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
 import { connectGitHubIfLinked } from '~/lib/github';
@@ -198,9 +199,34 @@ async function refetchBundle(ctx: AppContext, row: SourcedSubmissionRow): Promis
 	return github.readBlob(row.repository, row.source.bundleBlobSha);
 }
 
-async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<string> {
+async function readBundle(ctx: AppContext, row: SourcedSubmissionRow): Promise<Uint8Array> {
 	const staged = ctx.storage.staging.file(row.stagingKey);
-	const bundle = (await staged.exists()) ? await staged.bytes() : await refetchBundle(ctx, row);
+
+	return (await staged.exists()) ? staged.bytes() : refetchBundle(ctx, row);
+}
+
+// Media are never staged: they are re-read from the pinned commit, whose blobs are content-addressed.
+async function readStorePage(
+	ctx: AppContext,
+	row: SourcedSubmissionRow,
+): Promise<StorePage | undefined> {
+	const { addonMd, page, commitSha, path } = row.source;
+
+	if (addonMd === null) return;
+
+	if (!page) {
+		return { addonMd, measured: null, media: new Map() };
+	}
+
+	const github = await connectGitHubIfLinked(ctx, row.authorId);
+	const tree = await github.getTree(row.repository, commitSha);
+	const location = { repository: row.repository, tree, commitSha, addonDir: path };
+
+	return { addonMd, measured: page, media: await readPageMedia(ctx.env, github, location, page) };
+}
+
+async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<string> {
+	const [bundle, page] = await Promise.all([readBundle(ctx, row), readStorePage(ctx, row)]);
 	const sha256 = new Bun.CryptoHasher('sha256').update(bundle).digest('hex');
 
 	if (
@@ -214,7 +240,10 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
 		);
 	}
 
-	await writeArtifact(ctx, row, bundle);
+	await Promise.all([
+		writeArtifact(ctx, row, bundle),
+		page ? writeStorePage(ctx, row, page) : undefined,
+	]);
 
 	return sha256;
 }
