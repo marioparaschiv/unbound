@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { applyChatRoleColors, type ChatColorOptions, type ChatRow } from '~/chat-rows';
+import {
+	applyChatRoleColors,
+	type ChatColorOptions,
+	type ChatMessage,
+	type ChatRow,
+	type MentionNode,
+} from '~/chat-rows';
 import { blendArgb } from '~/argb';
 
 const members = {
@@ -28,6 +34,26 @@ const tinted: ChatColorOptions = {
 
 function messageRow(): ChatRow {
 	return { message: { authorId: 'user', guildId: 'guild', textColor: 0xffeeeeee } };
+}
+
+function messageOf(row: ChatRow): ChatMessage {
+	if (!row.message) {
+		throw new Error('Expected the row to carry a message.');
+	}
+
+	return row.message;
+}
+
+function firstMention(row: ChatRow) {
+	const [paragraph] = messageOf(row).content as MentionNode[];
+
+	if (!paragraph) {
+		throw new Error('Expected the message to carry a paragraph.');
+	}
+
+	const [mention] = paragraph.content as MentionNode[];
+
+	return mention;
 }
 
 describe('applyChatRoleColors', () => {
@@ -89,7 +115,11 @@ describe('applyChatRoleColors', () => {
 		};
 
 		applyChatRoleColors(row, members, { ...tinted, chatMentions: true });
-		expect(mention).toMatchObject({
+		expect(row.message?.content).toMatchObject([
+			{ content: [{ type: 'mention', userId: 'user' }] },
+		]);
+		expect(mention).toEqual({ type: 'mention', userId: 'user' });
+		expect(firstMention(row)).toMatchObject({
 			roleColor: 0x112233,
 			color: 0x112233,
 			colorString: '#112233',
@@ -102,29 +132,39 @@ describe('applyChatRoleColors', () => {
 	});
 
 	test('marks colored mentions with their color role only when asked', () => {
-		const plain = { type: 'mention', userId: 'user' };
-		const marked = { type: 'mention', userId: 'user' };
-		const owned = { type: 'mention', userId: 'user', roleId: 'kept' };
+		const plainRow: ChatRow = {
+			message: { guildId: 'guild', content: [{ type: 'mention', userId: 'user' }] },
+		};
+		const markedRow: ChatRow = {
+			message: {
+				guildId: 'guild',
+				content: [
+					{ type: 'mention', userId: 'user' },
+					{ type: 'mention', userId: 'user', roleId: 'kept' },
+				],
+			},
+		};
 
-		applyChatRoleColors({ message: { guildId: 'guild', content: [plain] } }, members, {
-			...tinted,
-			chatMentions: true,
-		});
-		applyChatRoleColors({ message: { guildId: 'guild', content: [marked, owned] } }, members, {
+		applyChatRoleColors(plainRow, members, { ...tinted, chatMentions: true });
+		applyChatRoleColors(markedRow, members, {
 			...tinted,
 			chatMentions: true,
 			roleMentionColors: true,
 		});
 
-		expect(plain).not.toHaveProperty('roleId');
+		const [marked, owned] = messageOf(markedRow).content as MentionNode[];
+
+		expect(plainRow.message?.content).not.toMatchObject([{ roleId: 'role' }]);
 		expect(marked).toMatchObject({ roleId: 'role', userId: 'user' });
 		expect(owned.roleId).toBe('kept');
 	});
 
 	test('leaves mentions alone when mention coloring is off', () => {
-		const mention = { type: 'mention', userId: 'user' };
+		const row: ChatRow = {
+			message: { guildId: 'guild', content: [{ type: 'mention', userId: 'user' }] },
+		};
 
-		applyChatRoleColors({ message: { guildId: 'guild', content: [mention] } }, members, tinted);
-		expect(mention).toEqual({ type: 'mention', userId: 'user' });
+		applyChatRoleColors(row, members, tinted);
+		expect(row.message?.content).toEqual([{ type: 'mention', userId: 'user' }]);
 	});
 });

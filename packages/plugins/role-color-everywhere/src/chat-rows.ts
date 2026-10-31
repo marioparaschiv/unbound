@@ -39,6 +39,13 @@ export type ChatRow = {
 	message?: ChatMessage;
 };
 
+type MentionContext = {
+	members: Members;
+	defaultGuildId: string | undefined;
+	asRoleMention: boolean;
+	visited: Set<object>;
+};
+
 type Tint = {
 	base: number;
 	applied: number;
@@ -61,54 +68,84 @@ function memberArgbColors(member: Member | null | undefined): number[] {
 		.filter((value) => value !== null);
 }
 
+function mentionColors(node: MentionNode, context: MentionContext): MentionNode | undefined {
+	const guildId = node.guildId ?? context.defaultGuildId;
+
+	if (node.type !== 'mention' || !node.userId || !guildId) return;
+
+	const member = context.members.getMember(guildId, node.userId);
+	const [primary, secondary, tertiary] = memberRgbColors(member);
+	const roleId = member?.colorRoleId ?? member?.hoistRoleId;
+
+	if (primary === undefined) return;
+
+	return {
+		...(context.asRoleMention && roleId && !node.roleId ? { roleId } : {}),
+		roleColor: primary,
+		color: primary,
+		colorString: `#${primary.toString(16).padStart(6, '0')}`,
+		roleColors: {
+			primaryColor: primary,
+			...(secondary === undefined ? {} : { secondaryColor: secondary }),
+			...(tertiary === undefined ? {} : { tertiaryColor: tertiary }),
+		},
+	};
+}
+
+function colorNode(value: unknown, context: MentionContext): unknown {
+	if (!value || typeof value !== 'object' || context.visited.has(value)) return value;
+
+	if (context.visited.size >= 400) return value;
+
+	context.visited.add(value);
+
+	const node: MentionNode = value;
+	const content = colorNodes(node.content, context);
+	const items = colorNodes(node.items, context);
+	const colors = mentionColors(node, context);
+
+	if (!colors && content === node.content && items === node.items) return node;
+
+	const copy: MentionNode = { ...node, ...colors };
+
+	if (content !== node.content) {
+		copy.content = content;
+	}
+
+	if (items !== node.items) {
+		copy.items = items;
+	}
+
+	return copy;
+}
+
+// Discord caches parsed content and builds every row from it, so colored nodes are copies and the cache stays as parsed.
+function colorNodes(nodes: unknown, context: MentionContext): unknown {
+	if (!Array.isArray(nodes)) return nodes;
+
+	let copy: unknown[] | undefined;
+
+	for (let i = 0, len = nodes.length; i < len; i++) {
+		const colored = colorNode(nodes[i], context);
+
+		if (colored === nodes[i]) {
+			continue;
+		}
+
+		copy ??= [...nodes];
+		copy[i] = colored;
+	}
+
+	return copy ?? nodes;
+}
+
 function colorMentions(
 	content: unknown,
 	members: Members,
 	defaultGuildId: string | undefined,
 	asRoleMention: boolean,
-): void {
-	if (!Array.isArray(content)) return;
-
-	const pending: unknown[] = [...content];
-	const visited = new Set<object>();
-
-	while (pending.length && visited.size < 400) {
-		const value = pending.pop();
-
-		if (!value || typeof value !== 'object' || visited.has(value)) {
-			continue;
-		}
-
-		visited.add(value);
-
-		const node: MentionNode = value;
-		const guildId = node.guildId ?? defaultGuildId;
-
-		if (node.type === 'mention' && node.userId && guildId) {
-			const member = members.getMember(guildId, node.userId);
-			const [primary, secondary, tertiary] = memberRgbColors(member);
-			const roleId = member?.colorRoleId ?? member?.hoistRoleId;
-
-			if (primary !== undefined && asRoleMention && roleId && !node.roleId) {
-				node.roleId = roleId;
-			}
-
-			if (primary !== undefined) {
-				node.roleColor = primary;
-				node.color = primary;
-				node.colorString = `#${primary.toString(16).padStart(6, '0')}`;
-				node.roleColors = {
-					primaryColor: primary,
-					...(secondary === undefined ? {} : { secondaryColor: secondary }),
-					...(tertiary === undefined ? {} : { tertiaryColor: tertiary }),
-				};
-			}
-		}
-
-		if (Array.isArray(node.content)) pending.push(...node.content);
-
-		if (Array.isArray(node.items)) pending.push(...node.items);
-	}
+): unknown {
+	return colorNodes(content, { members, defaultGuildId, asRoleMention, visited: new Set() });
 }
 
 function roleTextColor(message: ChatMessage, members: Members, options: ChatColorOptions) {
@@ -147,7 +184,7 @@ function tintMessage(message: ChatMessage, members: Members, options: ChatColorO
 }
 
 /**
- * @description Colors a generated chat row in place: mentions take the member's role colors and the text can be tinted with the author's.
+ * @description Colors a generated chat row: mentions take the member's role colors and the text can be tinted with the author's.
  * @param row The row Discord's `RowManager` generated.
  * @param members Looks up the guild members whose colors to use.
  * @param options The user's chat settings.
@@ -164,16 +201,32 @@ export function applyChatRoleColors(
 	if (options.chatMentions) {
 		const asRoleMention = options.roleMentionColors ?? false;
 
-		colorMentions(message.content, members, message.guildId, asRoleMention);
+		message.content = colorMentions(message.content, members, message.guildId, asRoleMention);
+		message.embeds &&= message.embeds.map((embed) => {
+			const description = colorMentions(
+				embed.description,
+				members,
+				message.guildId,
+				asRoleMention,
+			);
 
-		for (const embed of message.embeds ?? []) {
-			colorMentions(embed.description, members, message.guildId, asRoleMention);
-		}
+			return description === embed.description ? embed : { ...embed, description };
+		});
 
-		const referenced = message.referencedMessage?.message;
+		const reference = message.referencedMessage;
+		const referenced = reference?.message;
 
 		if (referenced) {
-			colorMentions(referenced.content, members, referenced.guildId, asRoleMention);
+			const content = colorMentions(
+				referenced.content,
+				members,
+				referenced.guildId,
+				asRoleMention,
+			);
+
+			if (content !== referenced.content) {
+				message.referencedMessage = { ...reference, message: { ...referenced, content } };
+			}
 		}
 	}
 
