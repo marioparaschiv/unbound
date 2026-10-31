@@ -128,7 +128,7 @@ export type AnyConstructor = {
 export type AnyFunction = (...args: any[]) => any;
 export type AnyObject = Record<any, any>;
 export type ArgsOf<F> =
-	IsAny<F> extends true
+	IsUntyped<F> extends true
 		? F[]
 		: F extends AnyFunction
 			? Parameters<F>
@@ -171,7 +171,7 @@ export type InsteadCallback<Args extends unknown[], Res, Self> = (
  * @template Self The method's `this`.
  */
 export type InsteadContext<Args extends unknown[], Res, Self> = BeforeContext<Args, Res, Self>;
-export type IsAny<T> = 0 extends 1 & T ? true : false;
+export type IsUntyped<T> = 0 extends 1 & T ? true : false;
 export type PatchMethod = string;
 export type PatchParent = AnyFunction | AnyObject;
 /**
@@ -187,7 +187,7 @@ export type PropOf<M> = {
 	[K in keyof M]: M[K] extends AnyFunction | AnyConstructor ? Extract<K, string> : never;
 }[keyof M];
 export type ResultOf<F> =
-	IsAny<F> extends true
+	IsUntyped<F> extends true
 		? F
 		: F extends AnyFunction
 			? ReturnType<F>

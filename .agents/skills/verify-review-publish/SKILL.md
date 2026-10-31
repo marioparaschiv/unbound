@@ -12,26 +12,26 @@ description: "Model-check addon review publishing in apps/web (TLA+/TLC plus a r
 ## 1. Does your change touch the verified code?
 
 ```sh
-git diff 29ed50d9b16524132e51722e81a07ba258665883 -- apps/web/src/lib/review.ts apps/web/src/lib/submissions.ts apps/web/src/lib/staging.ts apps/web/src/lib/github.ts apps/web/src/lib/auth/auth.ts apps/web/src/db/schema/addons.ts apps/web/src/lib/artifacts.ts
+git diff e3b0ccca6c1c29e4523d114e259df67abad9d064 -- apps/web/src/lib/review.ts apps/web/src/lib/submissions.ts apps/web/src/lib/staging.ts apps/web/src/lib/github.ts apps/web/src/lib/auth/auth.ts apps/web/src/db/schema/addons.ts apps/web/src/lib/artifacts.ts
 ```
 
 Empty output: the verification still describes the code. Otherwise map each hunk to the coverage table below and go on.
 
 | Code (at the sync commit)                                                                            | Model action in `spec/ReviewPublish.tla`     |
 | ---------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `submissions.ts` `stageAndReserve` 343-362 (staging write 353 before the row)                        | `Stage`                                      |
-| `submissions.ts` `reserve` 276-341, `createSubmission` 372-391                                       | `Create`; supersede is `Purge` then `Create` |
+| `submissions.ts` `stageAndReserve` 338-357 (staging write 348 before the row)                        | `Stage`                                      |
+| `submissions.ts` `reserve` 271-336, `createSubmission` 367-386                                       | `Create`; supersede is `Purge` then `Create` |
 | a staging write outside the app (no app path writes after create)                                    | `Tamper` (`Evil` bytes, any time)            |
 | `staging.ts` `deleteOrphans` 24-64 (grace window `STAGING_ORPHAN_GRACE_SECONDS`)                     | `Orphan`                                     |
-| `staging.ts` `purgeUserSubmissions` 105-144 (ban hook `auth.ts` 109)                                 | `Purge`                                      |
+| `staging.ts` `purgeUserSubmissions` 105-144 (ban hook `auth.ts` 129)                                 | `Purge`                                      |
 | `review.ts` `requirePendingReview` 158-189                                                           | `Start` (row snapshot incl. `sha256`)        |
-| `review.ts` `publishArtifact` 201-220, `refetchBundle` 193-199, `artifacts.ts` `writeArtifact` 59-72 | `ReadStaged`, `WriteBundle`, `WriteManifest` |
-| `review.ts` `decide` 265-312 (CAS 281, `publishVersion` 232-259, PKs from `db/schema/addons.ts`)     | `Decide`                                     |
-| `review.ts` `reviewSubmission` 323-356 (order, staged delete 344-346)                                | `pc` sequence, `Cleanup`                     |
+| `review.ts` `publishArtifact` 200-219, `refetchBundle` 193-198, `artifacts.ts` `writeArtifact` 70-87 | `ReadStaged`, `WriteBundle`, `WriteManifest` |
+| `review.ts` `decide` 290-337 (CAS 306, `publishVersion` 257-284, PKs from `db/schema/addons.ts`)     | `Decide`                                     |
+| `review.ts` `reviewSubmission` 348-381 (order, staged delete 369-371)                                | `pc` sequence, `Cleanup`                     |
 
 `reserve`, `decide` and the ban's cancel are each one Postgres SERIALIZABLE transaction that `createDatabase` retries whole on a serialization failure or deadlock, so each is still one indivisible step.
 
-Sync commit: `29ed50d9b16524132e51722e81a07ba258665883`. Move it forward only after you confirm, hunk by hunk, that every row above still describes the code at the new commit, and update the line numbers in the table and in the spec comments.
+Sync commit: `e3b0ccca6c1c29e4523d114e259df67abad9d064`. Move it forward only after you confirm, hunk by hunk, that every row above still describes the code at the new commit, and update the line numbers in the table and in the spec comments.
 
 ## 2. Run the check
 
@@ -39,7 +39,9 @@ Sync commit: `29ed50d9b16524132e51722e81a07ba258665883`. Move it forward only af
 bun .agents/skills/verify-review-publish/scripts/check.ts
 ```
 
-About 45 s. It runs `scripts/replay.ts` first (under 1 s), then one TLC job per expected violation plus one job per config for all invariants expected to hold. It downloads TLC 1.7.4 once to `~/.cache/tlaplus/1.7.4/tla2tools.jar` and checks sha256 `936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88`. Needs `java` on the PATH.
+About 20 s. It runs `scripts/replay.ts` first (under 1 s), then one TLC job per expected violation plus one job per config for all invariants expected to hold. It downloads TLC 1.7.4 once to `~/.cache/tlaplus/1.7.4/tla2tools.jar` and checks sha256 `936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88`. Needs `java` on the PATH.
+
+The replay creates throwaway Postgres databases through the web test helpers, so it needs `DATABASE_URL` (or `DATABASE_DIRECT_URL` in `apps/web/.env`) for a role with `CREATEDB` that can connect to the `postgres` database. Without one it fails with `permission denied for database "postgres"` or `No Postgres URL`; start a `postgres:18` container and a role as `.github/workflows/ci.yml` does.
 
 Memory is shared with other services. The script runs one TLC at a time with `-Xmx3g -XX:+UseParallelGC -workers 2` and refuses to start a job under 8 GB `MemAvailable`. Never run two copies at once.
 
@@ -84,4 +86,4 @@ Reviewers are symmetric (`SYMMETRY ReviewerSymmetry`). `reordered-pending-update
 
 The refetch is modelled as content-addressed: it yields the pinned bytes or fails, because `readBlob` checks the git blob SHA-1 (replay `approval refetches a lost bundle` runs both outcomes on the real code). `Orphan` may delete an object whose row is not inserted yet, over-approximating a create slower than the grace window.
 
-Not modelled: first-party publishing (`first-party.ts` `publishFirstParty`, added after the previous sync commit 208ddd3a), which also writes `addons/{id}/{version}/` through `writeArtifact` before its transaction re-checks the claim; S3 write failures and partial writes, GitHub outages beyond a failed refetch, user deletion cascades, delist/relist, `listReviewQueue`, author's listing caps, the per-request permission checks, and liveness (a live version having its files).
+Not modelled: first-party publishing (`first-party.ts` `publishFirstParty` 194-245), which also writes `addons/{id}/{version}/` through `writeArtifact` (with compiled `.hbc` bundles beside the bundle) before `commitApproved` 127-184 re-checks the claim, and since 2574b6b5 rewrites a live version's files and row in place (`review.ts` `replaceVersion` 239-252); S3 write failures and partial writes, GitHub outages beyond a failed refetch, user deletion cascades, delist/relist, `listReviewQueue`, author's listing caps, the per-request permission checks, and liveness (a live version having its files).

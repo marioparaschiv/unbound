@@ -1,5 +1,67 @@
 # Changelog
 
+## [0.12.0](https://github.com/marioparaschiv/unbound/compare/cli-v0.11.0...cli-v0.12.0) (2026-10-31)
+
+
+### Features
+
+* **cli:** follow the iOS log file with ranged file_read calls ([#517](https://github.com/marioparaschiv/unbound/issues/517)) ([c71661d](https://github.com/marioparaschiv/unbound/commit/c71661da3c87d6790433e61b0d84e2e6a766035c))
+* **cli:** read iOS log history from the loader's log files ([#513](https://github.com/marioparaschiv/unbound/issues/513)) ([3ad9e2d](https://github.com/marioparaschiv/unbound/commit/3ad9e2d02ca064e4e930c8acfec82a043d42ac8e))
+
+
+### Bug Fixes
+
+* **client:** read core settings from the loader's store ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **cli:** follow the loader log file when the iPhone's log is silent ([#504](https://github.com/marioparaschiv/unbound/issues/504)) ([251a24a](https://github.com/marioparaschiv/unbound/commit/251a24a225dbca4740d1827a538ad416afd74a9f))
+* **cli:** lower block scoping in code evaluated on the device ([#520](https://github.com/marioparaschiv/unbound/issues/520)) ([d37a94e](https://github.com/marioparaschiv/unbound/commit/d37a94e492b258ac3c1ed986347222f506709050))
+* **cli:** refuse pushes older than shared workspace code ([#531](https://github.com/marioparaschiv/unbound/issues/531)) ([3a23cdf](https://github.com/marioparaschiv/unbound/commit/3a23cdf45f51a1925b28a4abacdee1216a4ddfd1))
+* **cli:** refuse to push a stale build, and honour --no-&lt;flag&gt; ([#522](https://github.com/marioparaschiv/unbound/issues/522)) ([6deb87a](https://github.com/marioparaschiv/unbound/commit/6deb87a726b6c1a930e0a8bb8220d07ce913316f))
+* **plugins:** reach the Android module's current class names ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Code Refactoring
+
+* fix architecture smells and enforce them with oxlint rules ([#574](https://github.com/marioparaschiv/unbound/issues/574)) ([577a2af](https://github.com/marioparaschiv/unbound/commit/577a2af9ca4f479a805765481927b1ff9302c1ec))
+* **loader:** choose the Android build in a tested command ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **plugins:** move first-party plugin ids to the new namespace ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Build System
+
+* **deps:** bump @babel/plugin-transform-block-scoping ([#609](https://github.com/marioparaschiv/unbound/issues/609)) ([19d49f9](https://github.com/marioparaschiv/unbound/commit/19d49f9f3a94f0dafe15f9ca41bb9d5a81c213e5))
+* treat Bun's empty test runs as passing in the pre-push hook ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Tests
+
+* **cli:** check the eval lowering without node:vm ([#523](https://github.com/marioparaschiv/unbound/issues/523)) ([1b941de](https://github.com/marioparaschiv/unbound/commit/1b941dee9f7082faaccd507566b795f9958eba0f))
+* **cli:** skip the Postgres suites when no database is configured ([#542](https://github.com/marioparaschiv/unbound/issues/542)) ([b36ebd2](https://github.com/marioparaschiv/unbound/commit/b36ebd252daf649c4d717f4f16ea5ae412e89850))
+* **cli:** type the inspect request helper ([#532](https://github.com/marioparaschiv/unbound/issues/532)) ([0bd931e](https://github.com/marioparaschiv/unbound/commit/0bd931e6ad707344d21ae98c136910093f44fd2a))
+* **core:** keep sanitizer reports out of the crash attribution children ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* remove tautological tests and stop pinning brittle details ([#437](https://github.com/marioparaschiv/unbound/issues/437)) ([b69ca6c](https://github.com/marioparaschiv/unbound/commit/b69ca6c97c6470ac6cb1b0fa515c6e2f79639ba7))
+
+
+### Continuous Integration
+
+* **deps:** fit Dependabot titles to the commit header limit ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** build PRs against the current App Store Discord ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** let main builds finish instead of cancelling each other ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** show smoke failures and the first crash in the PR comment ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** skip the Android smoke test for unattested builds ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger-protocol bumped to 0.9.1
+  * devDependencies
+    * @unbound-app/api bumped to 0.12.0
+    * @unbound-app/contracts bumped to 0.12.0
+    * @unbound-app/types bumped to 0.11.0
+    * @unbound-app/utils bumped to 0.9.2
+    * @unbound-app/web bumped to 0.12.0
+
 ## [0.11.0](https://github.com/marioparaschiv/unbound/compare/cli-v0.10.0...cli-v0.11.0) (2026-10-29)
 
 
