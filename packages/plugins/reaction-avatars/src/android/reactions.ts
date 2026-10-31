@@ -34,7 +34,7 @@ import {
 	runOnMain,
 	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
-import { metro } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
 import {
 	reactionAvatarReservedSlotCount,
@@ -46,6 +46,7 @@ import { reactionContext, type Reaction, type ReactionContext } from '~/reaction
 import { Avatar, REACTION_ACTIONS } from '~/constants';
 import { ChannelStore, MessageStore } from '~/modules';
 import { selectedChannelId } from '~/selected-channel';
+import type { ReactionChange } from '~/types';
 import { surfaceStates } from '~/surface-states';
 import ReactionUserCache from '~/reactor-cache';
 import { fetchReactors } from '~/reactors';
@@ -86,10 +87,6 @@ type Pill = {
 	mounting: Promise<NativeFabricSurface> | null;
 	revision: number;
 	disposed: boolean;
-};
-
-type Message = {
-	reactions?: Reaction[];
 };
 
 function emojiKey(reaction: Reaction): string | undefined {
@@ -197,7 +194,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 
 	function describe(pill: Pill, context: ReactionContext, users: Reactor[]) {
 		surfaceStates.set(pill.id, {
-			guildId: ChannelStore.getChannel(context.channelId)?.guild_id,
+			guildId: ChannelStore.getChannel(context.channelId)?.guild_id ?? undefined,
 			height: HOST_HEIGHT,
 			measured: true,
 			onWidth: () => undefined,
@@ -275,9 +272,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 
 	async function render(messageView: NativeJavaReference, messageId: string) {
 		const channelId = selectedChannelId();
-		const message: Message | undefined = channelId
-			? MessageStore.getMessage(channelId, messageId)
-			: undefined;
+		const message = channelId ? MessageStore.getMessage(channelId, messageId) : undefined;
 		const row = await reactionRow(messageView);
 		const views = row ? (await children(row)).filter(isReactionView) : [];
 		const visibility = await runOnMain(
@@ -420,11 +415,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		},
 	);
 
-	function onReactionChange(event: {
-		messageId?: string;
-		message_id?: string;
-		channelId?: string;
-	}) {
+	function onReactionChange(event: ReactionChange) {
 		const messageId = event.messageId ?? event.message_id;
 
 		if (!messageId) return;
@@ -438,9 +429,9 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		}
 	}
 
-	for (const action of REACTION_ACTIONS) {
-		metro.common.Dispatcher.subscribe(action, onReactionChange);
-	}
+	const removeReactionListeners = REACTION_ACTIONS.map((action) =>
+		flux.onAction(action, onReactionChange),
+	);
 
 	async function scanVisible() {
 		const decor = currentDecorView(java);
@@ -465,9 +456,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 			hooks.remove(sizeToken);
 			awaitingSize.clear();
 
-			for (const action of REACTION_ACTIONS) {
-				metro.common.Dispatcher.unsubscribe(action, onReactionChange);
-			}
+			for (const remove of removeReactionListeners) remove();
 
 			const views = [...bound.values()];
 

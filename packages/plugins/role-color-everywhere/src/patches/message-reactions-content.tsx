@@ -1,8 +1,9 @@
+import { patcher } from '@unbound-app/api';
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement } from 'react';
 
-import { ChannelStore, GuildMemberStore, MessageReactionsContent, Patcher } from '~/modules';
+import { ChannelStore, GuildMemberStore, MessageReactionsContent } from '~/modules';
 import RoleColoredRender from '~/components/role-colored-render';
 import { guildIdOf } from '~/channel-guild';
 import { PLUGIN_NAME } from '~/constants';
@@ -52,7 +53,7 @@ export function patchMessageReactionsContent(): () => void {
 		return () => {};
 	}
 
-	return Patcher.after(
+	return patcher.after(
 		MessageReactionsContent,
 		'MessageReactionsContent',
 		({ args: [props], result }) => {

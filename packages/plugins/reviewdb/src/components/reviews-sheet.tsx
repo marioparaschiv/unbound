@@ -2,11 +2,12 @@ import { openSheet, type SheetProps } from '@unbound-plugins/shared/action-sheet
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
 import { Users } from '@unbound-app/api/metro/stores';
+import { storage } from '@unbound-app/api';
 import { useCallback, useEffect, useState } from 'react';
 
 import ReviewComposer from '~/components/review-composer';
 import ReviewsHeader from '~/components/reviews-header';
-import { RelationshipStore, settings } from '~/modules';
+import { RelationshipStore } from '~/modules';
 import { getReviewColors } from '~/colors';
 import ReviewItem from '~/components/review-item';
 import type { UserReviewsData } from '~/entities';
@@ -20,7 +21,7 @@ type ReviewsSheetProps = {
 
 function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 	const colors = getReviewColors();
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(addon.id);
 	const [data, setData] = useState<UserReviewsData | null>(null);
 	const [loading, setLoading] = useState(true);
 

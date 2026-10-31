@@ -15,7 +15,7 @@ export async function notifyNewReviews(): Promise<void> {
 	const lastReviewId = settings.get('lastReviewId', 0);
 
 	if (lastReviewId && lastReviewId < user.lastReviewID) {
-		toasts.showToast({ title: 'ReviewDB', content: 'You have new reviews on your profile!' });
+		toasts.show({ title: 'ReviewDB', content: 'You have new reviews on your profile!' });
 	}
 
 	settings.set('lastReviewId', user.lastReviewID);

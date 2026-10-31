@@ -16,10 +16,11 @@ import {
 	textEngine,
 } from '@unbound-plugins/shared/native/ios/text-attachments';
 
-import { CARD_SETTINGS, Limits, PLUGIN_ID, PLUGIN_NAME } from '~/constants';
+import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
 import { locateCodeBlocks, parseFencedCodeBlocks, type CodeBlockPlacement } from '~/fences';
 import { getLanguageMetadata, loadLanguageCatalog } from '~/catalog';
-import { MessageStore, settings } from '~/modules';
+import { MessageStore } from '~/modules';
+import { storage } from '@unbound-app/api';
 import { createFlatRecovery } from '~/flat-recovery';
 import { onAppForeground } from '~/foreground';
 import { createHighlighter } from '~/highlighter';
@@ -112,7 +113,7 @@ function renderLabel(session: Session, label: NativeObjectHandle, original: Nati
 			session,
 			current,
 			rendered,
-			ownedAttachments(session.text, original, rendered, PLUGIN_ID),
+			ownedAttachments(session.text, original, rendered, addon.id),
 		)
 	) {
 		return;
@@ -232,8 +233,8 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 }
 
 function subscribeSettings(session: Session): () => void {
-	return settings.addListener(
-		({ key }) => CARD_SETTINGS.includes(key ?? ''),
+	return storage.onChange(
+		({ store, key }) => store === addon.id && CARD_SETTINGS.includes(key ?? ''),
 		({ key }) => {
 			const rebuild = changesCardLayout(key ?? '');
 

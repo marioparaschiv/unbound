@@ -1,24 +1,25 @@
 import { sharedStagedStickers } from '@unbound-plugins/shared/stickers/staged-stickers';
-import { Animated, Platform, Pressable, type PressableStateCallbackType } from 'react-native';
+import { Animated, Pressable, type PressableStateCallbackType } from 'react-native';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Portal } from '@unbound-app/api/metro/components';
+import { flux } from '@unbound-app/api';
 
-import { DraftStore, FluxHooks, Haptics, PreviewRunning, type Sticker } from '~/modules';
+import { DraftStore, Haptics, PreviewRunning, type Sticker } from '~/modules';
 import { Button, CHANNEL_MESSAGE_DRAFT_TYPE, Timing } from '~/constants';
 import PreviewOverlay from '~/components/preview-overlay';
 import { dismissKeyboard } from '~/keyboard';
 
-const trailingGap = Platform.OS === 'android' ? Button.gap : 0;
-
 type PreviewButtonProps = {
 	channelId: string;
 	icon: number;
+	trailingGap?: number;
 };
 
 function useDraft(channelId: string): string {
-	return FluxHooks.useStateFromStores(
-		[DraftStore],
+	return flux.useStore(
+		DraftStore,
 		() => DraftStore.getDraft(channelId, CHANNEL_MESSAGE_DRAFT_TYPE) ?? '',
+		[channelId],
 	);
 }
 
@@ -76,7 +77,7 @@ function useSlotAnimation(visible: boolean) {
 	return { slotVisible, progress };
 }
 
-function PreviewButton({ channelId, icon }: PreviewButtonProps) {
+function PreviewButton({ channelId, icon, trailingGap = 0 }: PreviewButtonProps) {
 	const running = PreviewRunning.useRunning();
 	const [open, setOpen] = useState(false);
 	const cancelOpen = useRef<() => void>(undefined);

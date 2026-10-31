@@ -7,6 +7,7 @@ import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 import type { NativeObjCBridge } from '@unbound-app/api/native';
+import { flux } from '@unbound-app/api';
 
 import {
 	ChannelStore,
@@ -356,12 +357,13 @@ export function colorMessageMentions(objc: NativeObjCBridge): () => Promise<void
 		reused: forgetCell,
 	});
 
-	SelectedChannelStore.addChangeListener(onChannelChange);
+	const removeChannelListener = flux.onStoreChange(SelectedChannelStore, onChannelChange);
+
 	scheduleScans();
 
 	return async () => {
 		stopped = true;
-		SelectedChannelStore.removeChangeListener(onChannelChange);
+		removeChannelListener();
 
 		unhook();
 

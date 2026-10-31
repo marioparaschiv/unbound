@@ -43,7 +43,7 @@ import {
 } from '~/android/code-ranges';
 import { registerCodeCardSurface, type CardContent } from '~/components/code-card';
 import { channelBlocks } from '~/android/channel-blocks';
-import { settings } from '~/modules';
+import { storage } from '@unbound-app/api';
 import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
 import { createFlatRecovery } from '~/flat-recovery';
 import { onAppForeground } from '~/foreground';
@@ -399,8 +399,8 @@ export function createNativeCards(native: Native) {
 		},
 	);
 
-	const unsubscribe = settings.addListener(
-		({ key }) => CARD_SETTINGS.includes(key ?? ''),
+	const unsubscribe = storage.onChange(
+		({ store, key }) => store === addon.id && CARD_SETTINGS.includes(key ?? ''),
 		() => {
 			for (const [rendered, layout] of layouts) {
 				define(rendered, layout).catch((error) => {

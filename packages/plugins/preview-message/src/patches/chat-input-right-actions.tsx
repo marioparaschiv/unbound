@@ -1,9 +1,10 @@
+import { patcher } from '@unbound-app/api';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 import findRenderTarget from '@unbound-plugins/shared/react/render-target';
 import { Children, cloneElement } from 'react';
 
-import { Patcher, SelectedChannelStore } from '~/modules';
+import { SelectedChannelStore } from '~/modules';
 import PreviewButton from '~/components/preview-button';
 
 type RightActionsProps = {
@@ -29,7 +30,7 @@ export function patchChatInputRightActions(icon: number): () => void {
 				return () => {};
 			}
 
-			return Patcher.after(target.holder, target.key, ({ args, result }) => {
+			return patcher.after(target.holder, target.key, ({ args, result }) => {
 				if (!result?.props) return;
 
 				const props: RightActionsProps | undefined = args[0];
