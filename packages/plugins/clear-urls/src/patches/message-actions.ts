@@ -8,6 +8,8 @@ type Draft = {
 	content: string;
 };
 
+const METHODS = ['sendMessage', 'editMessage'];
+
 // UNKNOWN: a message action receives ids and option bags next to the draft.
 function isDraft(arg: unknown): arg is Draft {
 	return typeof (arg as Partial<Draft> | null)?.content === 'string';
@@ -29,11 +31,8 @@ export function patchedMethods(): string[] {
 export function patchMessageActions(): void {
 	const rules = compileRules(DEFAULT_RULES);
 
-	const methods = ['sendMessage', 'editMessage'].filter(
-		(method) => typeof MessageActions[method] === 'function',
-	);
-
-	for (const method of methods) {
+	// Patching the lazy handle waits for Discord to load the module; reading a method first would load it at start.
+	for (const method of METHODS) {
 		patcher.before(MessageActions, method, ({ args }) => {
 			const draft = args.find(isDraft);
 
@@ -41,5 +40,5 @@ export function patchMessageActions(): void {
 		});
 	}
 
-	patched = methods;
+	patched = METHODS;
 }
