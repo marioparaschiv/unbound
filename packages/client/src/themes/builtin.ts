@@ -1,8 +1,11 @@
 import { createLogger } from '@unbound-app/logger';
 
+import type { SectionEntry } from '~/settings/section';
 import { resolveThemeColor } from '~/themes/colors';
 import { findByProps, findStore } from '~/metro';
 import { createPatcher } from '~/patcher/api';
+import DesignPage from '~/ui/settings/design';
+import { Screens } from '~/core/constants';
 import ThemeStore from '~/themes/state';
 
 const Patcher = createPatcher('unbound::themes');
@@ -87,4 +90,11 @@ export function stop() {
 	Patcher.unpatchAll();
 }
 
-export default { start, stop };
+export const designSection: SectionEntry = {
+	key: Screens.Design,
+	titleKey: 'UNBOUND_DESIGN',
+	component: DesignPage,
+	icon: 'PaintPaletteIcon',
+};
+
+export default { start, stop, designSection };

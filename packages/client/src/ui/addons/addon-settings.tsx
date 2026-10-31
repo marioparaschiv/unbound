@@ -22,7 +22,7 @@ function AddonSettings({ addon, disabled }: AddonSettingsProps) {
 	function handlePress() {
 		if (!panel) return;
 
-		navigation.push(Screens.Custom, { title: addon.name, render: panel });
+		navigation.push(Screens.PanelHost, { title: addon.name, render: panel });
 	}
 
 	return (
