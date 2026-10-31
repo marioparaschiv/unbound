@@ -1,10 +1,11 @@
 import { cloneElement, type ReactElement, type ReactNode } from 'react';
+import { patcher } from '@unbound-app/api';
 
 import ThreadChannelInfo from '~/components/thread-channel-info';
 import { findThreadChannelSlot, type RenderNode } from '~/row-layout';
-import { Patcher, ThreadChannel } from '~/modules';
 import type { ChannelRowProps } from '~/types';
 import { INDICATOR_KEY } from '~/constants';
+import { ThreadChannel } from '~/modules';
 import { replaceChild } from '~/elements';
 
 type RowRenderer = (props: ChannelRowProps) => ReactNode;
@@ -38,13 +39,12 @@ function addIndicator(result: RenderNode, { channel, muted }: ChannelRowProps) {
 
 /**
  * @description Shows the typing indicator in thread rows, after the thread's channel info.
- * @returns A function that removes the patches.
  */
-export function patchThreadChannel(): () => void {
+export function patchThreadChannel(): void {
 	if (typeof ThreadChannel.default !== 'function') {
 		console.error('[Channel Typing Indicators] Skipped threads, the row is not a function.');
 
-		return () => {};
+		return;
 	}
 
 	let hooked: HookedRenderer | undefined;
@@ -56,7 +56,7 @@ export function patchThreadChannel(): () => void {
 			hooked?.unpatch();
 
 			const host = { render: type };
-			const unpatch = Patcher.after(host, 'render', ({ args: [props], result }) =>
+			const unpatch = patcher.after(host, 'render', ({ args: [props], result }) =>
 				addIndicator(result as RenderNode, props),
 			);
 
@@ -66,16 +66,11 @@ export function patchThreadChannel(): () => void {
 		return hooked.host.render;
 	}
 
-	const unpatch = Patcher.after(ThreadChannel, 'default', ({ result }) => {
+	patcher.after(ThreadChannel, 'default', ({ result }) => {
 		if (typeof result?.type !== 'function') return;
 
 		const Renderer = hookedRenderer(result.type);
 
 		return <Renderer {...result.props} key={result.key} />;
 	});
-
-	return () => {
-		unpatch();
-		hooked?.unpatch();
-	};
 }
