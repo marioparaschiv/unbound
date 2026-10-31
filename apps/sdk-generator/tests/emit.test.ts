@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import type { ModuleEntry } from '../src/paths';
 
-import { buildGlobal, buildRoot, normalizeForHash } from '../src/emit';
+import { buildExports, buildGlobal, buildRoot, normalizeForHash } from '../src/emit';
 import { readNamespaceAliases } from '../src/entries';
 import { API_SRC } from '../src/paths';
 
@@ -79,6 +79,29 @@ describe('buildGlobal', () => {
 			expect(text).not.toContain(`const ${name}:`);
 		}
 	}, 120_000);
+});
+
+describe('buildExports', () => {
+	test('keeps the testing kit beside the generated modules', () => {
+		const entries: ModuleEntry[] = [
+			{ name: 'assets', source: '', out: join(API_SRC, 'assets.d.ts'), topLevel: true },
+		];
+
+		expect(buildExports(entries)).toEqual({
+			'.': './src/index.d.ts',
+			'./assets': './src/assets.d.ts',
+			'./global': './src/global.d.ts',
+			'./testing': './testing/index.ts',
+		});
+	});
+
+	test('rejects a module named like the testing kit', () => {
+		const entries: ModuleEntry[] = [
+			{ name: 'testing', source: '', out: join(API_SRC, 'testing.d.ts'), topLevel: true },
+		];
+
+		expect(() => buildExports(entries)).toThrow('collides');
+	});
 });
 
 describe('namespace aliases', () => {
