@@ -1,4 +1,4 @@
-import { capabilitiesCheck } from '~/lib/checks/capabilities';
+import { capabilitiesCheck, declaredCapabilitiesCheck } from '~/lib/checks/capabilities';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import { layoutCheck } from '~/lib/checks/layout';
 import { namingCheck } from '~/lib/checks/naming';
@@ -21,6 +21,15 @@ export const BUILD_CHECKS: readonly BuildCheck[] = [
 	layoutCheck,
 	pageCheck,
 ];
+
+export const DECLARED_CAPABILITY_CHECKS: readonly BuildCheck[] = [
+	namingCheck,
+	declaredCapabilitiesCheck,
+	layoutCheck,
+	pageCheck,
+];
+
+export const DEV_BUILD_CHECKS: readonly BuildCheck[] = [declaredCapabilitiesCheck];
 
 /**
  * @description Runs each check against an addon in order and prints every issue, scoped to the addon.
@@ -82,4 +91,10 @@ async function collectIssues(
 	}
 }
 
-export default { BUILD_CHECKS, runBuildChecks, buildWithChecks };
+export default {
+	BUILD_CHECKS,
+	DECLARED_CAPABILITY_CHECKS,
+	DEV_BUILD_CHECKS,
+	runBuildChecks,
+	buildWithChecks,
+};
