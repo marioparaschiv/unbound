@@ -1,38 +1,17 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
-import type { DesignModule } from '@unbound-app/types/components';
-import type { ComponentProps } from 'react';
 
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Screens } from '~/core/constants';
-import { Linking } from '~/metro/api';
 import { icons } from '~/assets/api';
 
+import DownloadButton from './download-button';
 import Changelog from './changelog';
 import { headline } from './format';
 
 type LoaderUpdateRowProps = {
 	update: LoaderUpdate;
 };
-
-type DownloadButtonProps = {
-	url: string;
-	text: string;
-	size?: ComponentProps<DesignModule['Button']>['size'];
-	grow?: boolean;
-};
-
-function DownloadButton({ url, text, size = 'sm', grow }: DownloadButtonProps) {
-	return (
-		<Discord.Button
-			size={size}
-			grow={grow}
-			variant='primary'
-			text={text}
-			onPress={() => void Linking.openURL(url)}
-		/>
-	);
-}
 
 /** A newer native loader release: the version jump and what changed; pressing it opens the changelog. */
 function LoaderUpdateRow({ update }: LoaderUpdateRowProps) {
