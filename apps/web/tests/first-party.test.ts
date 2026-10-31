@@ -7,12 +7,12 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { eq } from 'drizzle-orm';
 
+import { getArtifactKeys, getCdnUrl, getVersionDirectory } from '~/lib/artifacts';
 import listFirstPartyAddonsEndpoint from '~/endpoints/list-first-party-addons';
 import publishFirstPartyEndpoint from '~/endpoints/publish-first-party';
 import { API_KEY_HEADER, createApiClient } from '~/api/client';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createSubmission } from '~/lib/submissions';
-import { getArtifactKeys, getCdnUrl, getVersionDirectory } from '~/lib/artifacts';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
 import type { Caller } from '~/lib/api/caller';
@@ -29,8 +29,8 @@ import {
 	signInWithDiscord,
 	snowflakeAt,
 } from './helpers/context';
+import { COMMITTED_ADDON_MD, committedPage, committedPageFiles, png } from './helpers/addon-page';
 import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
-import { committedPage, committedPageFiles } from './helpers/addon-page';
 import { failure, serveEndpoints } from './helpers/server';
 import { serveMemoryS3 } from './helpers/memory-s3';
 import { serveGitHub } from './helpers/github';
@@ -298,13 +298,14 @@ describe('POST /api/v1/first-party/publish', () => {
 
 		expect(pageUrl).toBe(getCdnUrl(ctx.env, `${directory}/ADDON.md`));
 
-		for (const name of ['ADDON.md', 'media/banner.png', 'media/shot.png', 'media/inline.png']) {
-			const published = await ctx.storage.public.file(`${directory}/${name}`).bytes();
-			const committed = files[name];
+		const addonMd = await ctx.storage.public.file(`${directory}/ADDON.md`).text();
 
-			expect(published).toEqual(
-				typeof committed === 'string' ? new TextEncoder().encode(committed) : committed,
-			);
+		expect(addonMd).toBe(COMMITTED_ADDON_MD);
+
+		for (const name of ['media/banner.png', 'media/shot.png', 'media/inline.png']) {
+			const published = await ctx.storage.public.file(`${directory}/${name}`).bytes();
+
+			expect(published).toEqual(new Uint8Array(png(64)));
 		}
 
 		const measured = await ctx.storage.public.file(`${directory}/page.json`).json();

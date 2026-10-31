@@ -7,8 +7,8 @@ import type {
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { and, eq, inArray, ne, sql } from 'drizzle-orm';
 
-import { OPEN_SUBMISSION_STATUSES, insertSubmissionSource } from '~/lib/submissions';
 import { VERSION_SOURCE, writeArtifact, writeStorePage, type StorePage } from '~/lib/artifacts';
+import { OPEN_SUBMISSION_STATUSES, insertSubmissionSource } from '~/lib/submissions';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { recordReviewDecision } from '~/lib/moderation-events';
 import { addon, addonVersion, submission } from '~/db/schema';
