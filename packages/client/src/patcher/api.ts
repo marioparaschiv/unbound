@@ -12,10 +12,12 @@ import type {
 	PatchParent,
 	PropOf,
 } from 'possess';
+import noop from '@unbound-app/utils/noop';
 import uuid from '@unbound-app/utils/uuid';
 import * as Possess from 'possess';
 
 import { patch, recordRemovals } from '~/hot-refresh/live-patch';
+import { whenModuleLoads } from '~/metro/lazy-registry';
 
 type IsUntyped<T> = 0 extends 1 & T ? true : false;
 
@@ -38,8 +40,6 @@ type ResultOf<F> =
 				: never;
 
 type SelfOf<M, F> = unknown extends ThisParameterType<F> ? M : ThisParameterType<F>;
-
-type ScopedPatcher = Pick<PatcherInstance, 'before' | 'instead' | 'after'>;
 
 export type { PatchOptions, PatchParent, PropOf } from 'possess';
 
@@ -113,6 +113,9 @@ export type PatcherInstance = {
 	unpatchAll: () => void;
 };
 
+// Patches on a lazy module proxy whose module has not loaded yet, each with its caller id.
+const waiting = new Map<() => void, string | undefined>();
+
 /** @internal */
 export const patches = Possess.patches;
 
@@ -144,7 +147,9 @@ export function before(
 	callback: PatchCallback,
 	options?: PatchOptions,
 ): () => void {
-	return patch(Possess.PatchType.Before, parent, method, callback, options);
+	return patchWhenLoaded(parent, options?.caller, (target) =>
+		patch(Possess.PatchType.Before, target, method, callback, options),
+	);
 }
 
 /**
@@ -169,7 +174,9 @@ export function instead(
 	callback: PatchCallback,
 	options?: PatchOptions,
 ): () => void {
-	return patch(Possess.PatchType.Instead, parent, method, callback, options);
+	return patchWhenLoaded(parent, options?.caller, (target) =>
+		patch(Possess.PatchType.Instead, target, method, callback, options),
+	);
 }
 
 /**
@@ -194,51 +201,68 @@ export function after(
 	callback: PatchCallback,
 	options?: PatchOptions,
 ): () => void {
-	return patch(Possess.PatchType.After, parent, method, callback, options);
+	return patchWhenLoaded(parent, options?.caller, (target) =>
+		patch(Possess.PatchType.After, target, method, callback, options),
+	);
 }
 
-function trackPatches<T extends (...args: never[]) => () => void>(
-	method: T,
-	unpatches: Set<() => void>,
-): T {
-	function register(...args: never[]): () => void {
-		const unpatch = Reflect.apply(method, undefined, args);
-		const parent = args[0] as object;
-		const key = args[1] as PropertyKey;
-		const installed = Reflect.get(parent, key);
-		let active = true;
+/**
+ * @description Applies a patch now, or when a lazy module proxy's module first loads, so a patch never forces a metro search.
+ * @param parent The object holding the method, or a lazy module proxy standing for it.
+ * @param caller The caller id, so a patch still waiting is dropped with the caller's other patches.
+ * @param apply Patches the loaded module and returns a function removing the patch.
+ * @returns A function removing the patch, or dropping it while it waits.
+ */
+function patchWhenLoaded(
+	parent: PatchParent,
+	caller: string | undefined,
+	apply: (target: PatchParent) => () => void,
+): () => void {
+	let unpatch = noop;
+	let stopWaiting = noop;
 
-		function remove(): void {
-			if (!active) return;
-
-			active = false;
-			unpatches.delete(remove);
-
-			if (Reflect.get(parent, key) !== installed) {
-				const replacement = Reflect.get(parent, key);
-				const descriptor = Object.getOwnPropertyDescriptor(parent, key);
-
-				try {
-					unpatch();
-				} finally {
-					if (descriptor) {
-						Object.defineProperty(parent, key, descriptor);
-					} else {
-						Reflect.set(parent, key, replacement);
-					}
-				}
-
-				return;
-			}
-
-			unpatch();
-		}
-		unpatches.add(remove);
-
-		return remove;
+	function drop() {
+		waiting.delete(drop);
+		stopWaiting();
 	}
 
-	return register as T;
+	waiting.set(drop, caller);
+	stopWaiting = whenModuleLoads(parent, (target) => {
+		waiting.delete(drop);
+		unpatch = apply(target);
+	});
+
+	return () => {
+		drop();
+		unpatch();
+		unpatch = noop;
+	};
+}
+
+// A replacement installed over the patched method after the patch survives its removal.
+function keepReplacement(parent: PatchParent, key: PropertyKey, unpatch: () => void) {
+	const installed = Reflect.get(parent, key);
+
+	return () => {
+		if (Reflect.get(parent, key) === installed) {
+			unpatch();
+
+			return;
+		}
+
+		const replacement = Reflect.get(parent, key);
+		const descriptor = Object.getOwnPropertyDescriptor(parent, key);
+
+		try {
+			unpatch();
+		} finally {
+			if (descriptor) {
+				Object.defineProperty(parent, key, descriptor);
+			} else {
+				Reflect.set(parent, key, replacement);
+			}
+		}
+	};
 }
 
 /**
@@ -252,22 +276,34 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 
 	defaults.caller ??= uuid();
 	const unpatches = new Set<() => void>();
-	const scoped: ScopedPatcher = {
-		before(parent, method, callback, options = {}) {
-			return before(parent, method, callback, { ...defaults, ...options });
-		},
-		instead(parent, method, callback, options = {}) {
-			return instead(parent, method, callback, { ...defaults, ...options });
-		},
-		after(parent, method, callback, options = {}) {
-			return after(parent, method, callback, { ...defaults, ...options });
-		},
-	};
+
+	function scoped(type: Possess.PatchType) {
+		return function scopedPatch(
+			parent: PatchParent,
+			method: string,
+			callback: PatchCallback,
+			options: PatchOptions = {},
+		): () => void {
+			const merged = { ...defaults, ...options };
+			const unpatch = patchWhenLoaded(parent, merged.caller, (target) =>
+				keepReplacement(target, method, patch(type, target, method, callback, merged)),
+			);
+
+			function remove() {
+				unpatches.delete(remove);
+				unpatch();
+			}
+
+			unpatches.add(remove);
+
+			return remove;
+		};
+	}
 
 	return {
-		before: trackPatches(scoped.before, unpatches),
-		instead: trackPatches(scoped.instead, unpatches),
-		after: trackPatches(scoped.after, unpatches),
+		before: scoped(Possess.PatchType.Before) as typeof before,
+		instead: scoped(Possess.PatchType.Instead) as typeof instead,
+		after: scoped(Possess.PatchType.After) as typeof after,
 		unpatchAll(): void {
 			for (const unpatch of unpatches) unpatch();
 		},
@@ -278,6 +314,8 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
  * @description Removes every patch.
  */
 export function unpatchAll(): void {
+	for (const drop of waiting.keys()) drop();
+
 	recordRemovals(() => true);
 	Possess.unpatchAll();
 }
@@ -288,6 +326,12 @@ export function unpatchAll(): void {
  * @internal
  */
 export function unpatchAllByCaller(caller: string): void {
+	for (const [drop, owner] of waiting) {
+		if (owner === caller) {
+			drop();
+		}
+	}
+
 	recordRemovals((patch) => patch.caller === caller);
 	Possess.unpatchAllByCaller(caller);
 }
