@@ -30,7 +30,7 @@ export function isSaved(media: DraftMedia): media is TagMedia {
  * @returns The attachment's URI in the app's documents directory.
  */
 export function mediaUri(media: TagMedia): string {
-	return `file://${fs.Documents}/${media.storedName}`;
+	return `file://${fs.documentsPath}/${media.storedName}`;
 }
 
 /**
@@ -66,7 +66,11 @@ export async function persistMedia(media: PickedMedia): Promise<TagMedia> {
 	const id = Math.random().toString(36).slice(2, 10);
 	const storedName = `custom-commands-${Date.now()}-${id}.${extension.toLowerCase()}`;
 
-	await fs.write(storedName, await fs.read(localPath(media.uri), 'base64', false), 'base64');
+	await fs.writeFile(
+		storedName,
+		await fs.readFile(localPath(media.uri), 'base64', false),
+		'base64',
+	);
 
 	return {
 		storedName,
@@ -85,7 +89,7 @@ export async function persistMedia(media: PickedMedia): Promise<TagMedia> {
  * @returns A promise that settles once the file is gone.
  */
 export async function removeStoredMedia(media: TagMedia): Promise<void> {
-	await fs.rm(media.storedName);
+	await fs.removeFile(media.storedName);
 }
 
 export default { isSaved, mediaUri, pickMedia, persistMedia, removeStoredMedia };
