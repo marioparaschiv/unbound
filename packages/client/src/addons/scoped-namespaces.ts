@@ -145,7 +145,6 @@ export function scopeStorage(subscriptions: Subscriptions, owner: string): Api['
 		const [event, listener] = args;
 		const emitter = liveNamespace('storage').on(...args);
 
-		// The emitter's `off` silences a lone listener even when passed a different one, so skip it once ours is gone.
 		subscriptions.add(() => {
 			if (emitter.listeners(event).includes(listener)) {
 				emitter.off(...args);
