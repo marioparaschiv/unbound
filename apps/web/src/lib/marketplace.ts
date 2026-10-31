@@ -13,6 +13,7 @@ import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-add
 import { resolvePlatforms, type PlatformSupport } from '~/lib/addon-platforms';
 import { searchAuthors, type AuthorPage } from '~/lib/authors/directory';
 import { getAddonDetails, listAddons } from '~/lib/addons';
+import { getPublishedMediaBase } from '~/lib/markdown-url';
 import { loadAuthors } from '~/lib/authors/resolve';
 import { splitList } from '~/lib/addon-filters';
 import app from '~/lib/app';
@@ -42,6 +43,8 @@ export type MarketplaceSource = {
 	pin: SourcePin;
 	details: RepositoryDetails;
 	addonMd: string | null;
+	/** The directory URL ADDON.md's `media/` paths load from. */
+	mediaBase: string;
 	/** When the version was approved, which dates the `details` snapshot. */
 	approvedAt: string;
 };
@@ -133,6 +136,7 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 							pin: latest.source,
 							details: details.details,
 							addonMd: details.addonMd,
+							mediaBase: getPublishedMediaBase(latest.manifestUrl),
 							approvedAt: latest.publishedAt,
 						}
 					: null,

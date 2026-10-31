@@ -3,8 +3,9 @@ import type { ReactNode } from 'react';
 
 import ChangelogSections from '~/components/changelog-sections';
 import SourcePinLink from '~/components/source-pin-link';
+import { getPinnedMediaBase } from '~/lib/markdown-url';
 import { getBundleUrl } from '~/lib/github-urls';
-import Markdown from '~/components/markdown';
+import AddonMd from '~/components/addon-md';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 
@@ -89,7 +90,11 @@ function SubmissionPreview({ preview }: SubmissionPreviewProps) {
 				</Text>
 				{preview.addonMd ? (
 					<div className='p-4 border border-border rounded-control max-h-[32rem] overflow-auto'>
-						<Markdown source={preview.addonMd} pin={source} />
+						<AddonMd
+							source={preview.addonMd}
+							pin={source}
+							mediaBase={getPinnedMediaBase(source)}
+						/>
 					</div>
 				) : (
 					<Text variant='text-sm' color='muted'>
