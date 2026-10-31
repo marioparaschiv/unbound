@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "20dd2bfc-c450-4cf4-913f-88704f1b08af",
+  "prevIds": [
+    "819238ea-5880-413d-8223-bba900961a22"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "submission",
+        "maintainers"
+      ],
+      "writes": [
+        "s|col|public.submission.maintainers",
+        "n|col|public.submission.maintainers",
+        "e|col|public.submission.maintainers"
+      ],
+      "reads": [
+        "n|tbl|public.submission",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "submission",
+        "name": "maintainers",
+        "type": "json",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

@@ -14,6 +14,7 @@ import { and, count, eq, gte, inArray, ne } from 'drizzle-orm';
 import { addon, addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
 import type { AddonSource } from '~/lib/addon-source';
+import { readSubmissionMaintainers, requireSubmissionMaintainers } from '~/lib/maintainers';
 import { readAddonTags, readTags, requireTags } from '~/lib/addon-tags';
 import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
@@ -55,10 +56,11 @@ type Staged = {
 	stagingKey: string;
 };
 
-/** What a submission stores: the source read from GitHub and the author's chosen tags, `null` for none. */
+/** What a submission stores: the source read from GitHub and the author's choices, `null` for none. */
 type Submitted = {
 	source: AddonSource;
 	tags: string[] | null;
+	maintainers: string[] | null;
 };
 
 type Reservation = {
@@ -280,7 +282,7 @@ function reserve(
 	ctx: AppContext,
 	caller: Caller,
 	staged: Staged,
-	{ source, tags }: Submitted,
+	{ source, tags, maintainers }: Submitted,
 	now: Date,
 ): Promise<Reservation> {
 	const { manifest, pin } = source;
@@ -311,6 +313,7 @@ function reserve(
 					stagingKey: staged.stagingKey,
 					sha256: source.sha256,
 					tags,
+					maintainers,
 					createdAt: now,
 					submittedAt: now,
 				})
@@ -370,7 +373,7 @@ async function stageAndReserve(
  * submission with changes requested.
  * @param ctx The application context.
  * @param caller The submitting user.
- * @param request The repository, addon path, ref, commit and the author's chosen tags.
+ * @param request The repository, addon path, ref, commit and the author's chosen tags and maintainers.
  * @returns The submission, pending review.
  */
 export async function createSubmission(
@@ -380,6 +383,7 @@ export async function createSubmission(
 ): Promise<CreateSubmissionResponse> {
 	const now = ctx.now();
 	const tags = request.details?.tags ?? null;
+	const maintainers = request.details?.maintainers ?? null;
 
 	await checkRateLimit(ctx, caller.user.id, now);
 	await checkAccountAge(ctx, caller.user.id, now);
@@ -387,7 +391,24 @@ export async function createSubmission(
 
 	const github = await connectGitHub(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request);
-	const { created, replaced } = await stageAndReserve(ctx, caller, { source, tags }, now);
+
+	if (maintainers) {
+		const { id } = source.manifest;
+
+		await requireSubmissionMaintainers(
+			ctx,
+			id,
+			await readSubmissionMaintainers(ctx, caller, id),
+			maintainers,
+		);
+	}
+
+	const { created, replaced } = await stageAndReserve(
+		ctx,
+		caller,
+		{ source, tags, maintainers },
+		now,
+	);
 
 	if (replaced) {
 		await ctx.storage.staging.delete(replaced.stagingKey);
@@ -415,8 +436,9 @@ async function suggestTags(
  * age gate, every GitHub read and check of a submission, then the claim and cap checks.
  * @param ctx The application context.
  * @param caller The author.
- * @param request The repository, addon path, ref, commit and the author's chosen tags.
- * @returns The kind, the source pin, the content reviewers would see and the tags to preselect.
+ * @param request The repository, addon path, ref, commit and the author's chosen tags and maintainers.
+ * @returns The kind, the source pin, the content reviewers would see, and the tags and maintainers to
+ * preselect.
  */
 export async function previewSubmission(
 	ctx: AppContext,
@@ -429,6 +451,12 @@ export async function previewSubmission(
 	const github = await connectGitHub(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request);
 	const { kind } = await ctx.db.transaction((tx) => checkClaim(ctx, tx, caller, source.manifest));
+	const { id } = source.manifest;
+	const access = await readSubmissionMaintainers(ctx, caller, id);
+
+	if (request.details?.maintainers) {
+		await requireSubmissionMaintainers(ctx, id, access, request.details.maintainers);
+	}
 
 	return {
 		preview: {
@@ -441,6 +469,8 @@ export async function previewSubmission(
 			changelog: source.changelog,
 			details: source.details,
 			suggestedTags: await suggestTags(ctx, kind, source),
+			suggestedMaintainers: access.current,
+			canEditMaintainers: access.editable,
 		},
 	};
 }

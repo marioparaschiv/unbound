@@ -29,6 +29,12 @@ export const submissionContentSchema = z.object({
 	details: repositoryDetailsSchema,
 });
 
+/** How approving a submission changes the addon's maintainers other than its owners. */
+export const maintainerChangeSchema = z.object({
+	added: z.array(userSummarySchema),
+	removed: z.array(userSummarySchema),
+});
+
 export const reviewQueueItemSchema = z.extend(submissionContentSchema, {
 	submission: submissionSchema,
 	source: sourcePinSchema,
@@ -36,6 +42,8 @@ export const reviewQueueItemSchema = z.extend(submissionContentSchema, {
 	submitter: userSummarySchema,
 	/** The tags approval gives the addon, in menu order, or `null` to keep its current ones. */
 	tags: z.nullable(z.array(tagSchema)),
+	/** The maintainers approval adds and removes, or `null` to keep the current ones. */
+	maintainers: z.nullable(maintainerChangeSchema),
 	/** The viewer authored it or maintains the addon, so the server refuses their review with `self_review`. */
 	selfReview: z.boolean(),
 	/** The addon's newest approved version, for updates. */
@@ -60,6 +68,10 @@ export const submissionPreviewSchema = z.extend(submissionContentSchema, {
 	source: sourcePinSchema,
 	/** The tags to preselect: an update's current tags, or a new listing's repository topics that are tag ids. */
 	suggestedTags: z.array(tagIdSchema),
+	/** The addon's maintainers other than its owners: an update's current ones, none for a new listing. */
+	suggestedMaintainers: z.array(userSummarySchema),
+	/** Whether the author may change them: they own the addon, or the new listing makes them its owner. */
+	canEditMaintainers: z.boolean(),
 });
 
 export const submissionPreviewResponseSchema = z.object({
@@ -86,6 +98,7 @@ export const reviewSubmissionResponseSchema = z.object({
 
 export type ReviewQueueQuery = z.infer<typeof reviewQueueQuerySchema>;
 export type SubmissionContent = z.infer<typeof submissionContentSchema>;
+export type MaintainerChange = z.infer<typeof maintainerChangeSchema>;
 export type ReviewQueueItem = z.infer<typeof reviewQueueItemSchema>;
 export type ReviewQueueResponse = z.infer<typeof reviewQueueResponseSchema>;
 export type SubmissionPreview = z.infer<typeof submissionPreviewSchema>;
@@ -96,6 +109,7 @@ export type ReviewSubmissionResponse = z.infer<typeof reviewSubmissionResponseSc
 export default {
 	reviewQueueQuerySchema,
 	submissionContentSchema,
+	maintainerChangeSchema,
 	reviewQueueItemSchema,
 	reviewQueueResponseSchema,
 	submissionPreviewSchema,

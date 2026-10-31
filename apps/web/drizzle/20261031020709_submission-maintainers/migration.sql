@@ -1,0 +1,1 @@
+ALTER TABLE "submission" ADD COLUMN "maintainers" json;

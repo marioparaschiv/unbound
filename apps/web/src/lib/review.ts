@@ -14,6 +14,7 @@ import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
 import { requireSourced, toSubmission } from '~/lib/submissions';
 import { toAddonVersion, writeArtifact } from '~/lib/artifacts';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
+import { applySubmissionMaintainers, describeMaintainerChanges } from '~/lib/maintainers';
 import { readTags, replaceAddonTags } from '~/lib/addon-tags';
 import { recordReviewDecision } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
@@ -106,7 +107,10 @@ export async function listReviewQueue(
 
 	const updated = rows.filter((row) => row.kind === 'update').map((row) => row.addonId);
 	const chosen = [...new Set(rows.flatMap((row) => row.tags ?? []))];
-	const [addons, memberships, tags] = await Promise.all([
+	const naming = rows.flatMap(({ id, addonId, maintainers }) =>
+		maintainers ? [{ id, addonId, maintainers }] : [],
+	);
+	const [addons, memberships, tags, maintainerChanges] = await Promise.all([
 		ctx.db.query.addon.findMany({
 			where: { id: { in: updated } },
 			with: LATEST_VERSION,
@@ -116,6 +120,7 @@ export async function listReviewQueue(
 			columns: { addonId: true },
 		}),
 		readTags(ctx, chosen),
+		describeMaintainerChanges(ctx, naming),
 	]);
 
 	const previous = new Map(addons.map((entry) => [entry.id, entry.versions[0]]));
@@ -146,6 +151,7 @@ export async function listReviewQueue(
 			submittedAt: submittedAt.toISOString(),
 			submitter: { id: author.id, name: author.name, image: author.image ?? null },
 			tags: row.tags ? tags.filter((entry) => row.tags?.includes(entry.id)) : null,
+			maintainers: maintainerChanges.get(row.id) ?? null,
 			selfReview: author.id === caller.user.id || maintained.has(row.addonId),
 			previousVersion: version ? toAddonVersion(ctx.env, version, version.submission) : null,
 			previousAddonMd: version?.submission?.source?.addonMd ?? null,
@@ -223,16 +229,6 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
 }
 
 /**
- * @description Makes an approved submission's version live, inside the approval's transaction: a
- * listing creates the addon with the author as owner, an update moves the addon to the submitted
- * repository and refreshes its summary.
- * @param tx The approval's transaction.
- * @param row The approved submission.
- * @param sha256 The verified SHA-256 of the published bundle.
- * @param publishedAt The approval time.
- * @returns Resolves once the version is live.
- */
-/**
  * @description Replaces a live version in place with a rebuild of the same version, as first-party CI
  * publishes before release: the row takes the new submission, manifest and bundle digest.
  * @param tx The transaction.
@@ -256,7 +252,15 @@ export async function replaceVersion(
 }
 
 /**
- *
+ * @description Makes an approved submission's version live, inside the approval's transaction: a
+ * listing creates the addon with the author as owner, an update moves the addon to the submitted
+ * repository and refreshes its summary. The submission's chosen tags and maintainers replace the
+ * addon's, when it chose any.
+ * @param tx The approval's transaction.
+ * @param row The approved submission.
+ * @param sha256 The verified SHA-256 of the published bundle.
+ * @param publishedAt The approval time.
+ * @returns Resolves once the version is live.
  */
 export async function publishVersion(
 	tx: Transaction,
@@ -283,6 +287,13 @@ export async function publishVersion(
 
 	if (row.tags) {
 		await replaceAddonTags(tx, row.addonId, row.tags);
+	}
+
+	if (row.maintainers) {
+		await applySubmissionMaintainers(tx, row.addonId, row.maintainers, {
+			actorId: row.authorId,
+			at: publishedAt,
+		});
 	}
 
 	if (row.kind !== 'update') return;

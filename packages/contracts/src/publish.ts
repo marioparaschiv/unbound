@@ -58,10 +58,23 @@ export const submissionSchema = z.object({
 
 export const MAX_CHANGELOG_LENGTH = 10_000;
 
+/** How many maintainers besides its owners one submission may give an addon. */
+export const MAX_SUBMISSION_MAINTAINERS = 20;
+
+/** The users an owner makes an addon's maintainers, by user id. */
+export const submissionMaintainersSchema = z
+	.array(z.string().check(z.minLength(1), z.maxLength(64)))
+	.check(
+		z.maxLength(MAX_SUBMISSION_MAINTAINERS),
+		z.refine((ids) => new Set(ids).size === ids.length, 'User ids must be unique.'),
+	);
+
 /** What the author chose for the listing; an omitted field keeps what the addon has. */
 export const submissionDetailsSchema = z.object({
 	/** Replaces the addon's tags on approval; `[]` clears them. */
 	tags: z.optional(submissionTagsSchema),
+	/** Replaces the addon's maintainers other than its owners on approval; `[]` removes them. Owners only. */
+	maintainers: z.optional(submissionMaintainersSchema),
 });
 
 /**
@@ -138,6 +151,8 @@ export type ListFirstPartyAddonsResponse = z.infer<typeof listFirstPartyAddonsRe
 
 export default {
 	MAX_CHANGELOG_LENGTH,
+	MAX_SUBMISSION_MAINTAINERS,
+	submissionMaintainersSchema,
 	submissionKindSchema,
 	submissionStatusSchema,
 	openSubmissionStatusSchema,
