@@ -16,10 +16,17 @@ const renderer: RendererConfig = {
 
 const Page = () => null;
 
-mock.module('~/metro/search', () => ({
-	findByProps: (prop: string) => (prop === 'SETTING_RENDERER_CONFIG' ? renderer : undefined),
-	findByName: () => undefined,
-	findByFilePath: () => undefined,
+mock.module('~/metro/wait', () => ({
+	onModuleLoaded(
+		filter: (mdl: RendererConfig) => boolean,
+		onLoad: (mdl: RendererConfig) => void,
+	) {
+		if (filter(renderer)) {
+			onLoad(renderer);
+		}
+
+		return () => void 0;
+	},
 }));
 
 mock.module('~/metro/cache', () => ({
