@@ -6,10 +6,7 @@ import { themes } from '~/managers/themes';
 import { fonts } from '~/managers/fonts';
 import { icons } from '~/managers/icons';
 
-/**
- * The addon manager singleton of every {@link ManagerKind}, in start order. Imports the leaf manager
- * modules directly (not the `~/managers` barrel) to avoid the builtins import cycle.
- */
+/** The addon manager singleton of every {@link ManagerKind}, in start order. */
 export const managers = {
 	plugins,
 	themes,
