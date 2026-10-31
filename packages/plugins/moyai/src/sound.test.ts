@@ -1,6 +1,11 @@
 import { describe, expect, mock, test } from 'bun:test';
 
-mock.module('~/constants', () => ({ Sound: { fallbackDuration: 3000, id: 1, url: 'sound.mp3' } }));
+const constants = { ...(await import('~/constants')) };
+
+mock.module('~/constants', () => ({
+	...constants,
+	Sound: { fallbackDuration: 3000, id: 1, url: 'sound.mp3' },
+}));
 
 const { createPlayer, soundDuration } = await import('~/sound');
 
