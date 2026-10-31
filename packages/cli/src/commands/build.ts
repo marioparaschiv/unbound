@@ -2,7 +2,7 @@ import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry'
 import { z } from 'zod';
 
 import { discoverAddons } from '~/lib/discovery';
-import { buildAddon } from '~/lib/build-addon';
+import { buildWithChecks } from '~/lib/build-checks';
 import { loadConfig } from '~/lib/config';
 
 const schema = z.object({});
@@ -10,7 +10,7 @@ const schema = z.object({});
 const buildCommand: CommandDefinition<typeof schema> = {
 	name: 'build',
 	description:
-		'Build every addon in the workspace once, reporting per-addon success and failure.',
+		'Build every addon in the workspace once, then run the post-build checks on each, reporting per-addon success and failure.',
 	summary: 'Build every addon in the workspace.',
 	surfaces: { cli: 'root', mcp: false },
 	schema,
@@ -30,14 +30,11 @@ const buildCommand: CommandDefinition<typeof schema> = {
 		const failed: string[] = [];
 
 		for (const addon of addons) {
-			if (addon.static) {
-				process.stdout.write(`Skipping ${addon.id} (static addon).\n`);
-				continue;
-			}
+			process.stdout.write(
+				addon.static ? `Checking ${addon.id} (static addon)…\n` : `Building ${addon.id}…\n`,
+			);
 
-			process.stdout.write(`Building ${addon.id}…\n`);
-
-			const ok = await buildAddon(addon, resolved.config.build);
+			const ok = await buildWithChecks(addon, resolved.config.build);
 
 			if (ok) {
 				process.stdout.write(`Built ${addon.id}.\n`);
