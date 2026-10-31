@@ -10,7 +10,7 @@ import type {
 	NativeJavaHookToken,
 	NativeJavaReference,
 	NativeJavaValue,
-	NativeObjCBridge,
+	LoaderObjCBridge,
 } from '@unbound-app/types';
 import { mock } from 'bun:test';
 
@@ -122,8 +122,7 @@ export function cancellable<T>(promise: Promise<T>, name: string) {
 	return Object.assign(promise, { cancel: () => cancelled.push(name) });
 }
 
-/** The bridge the loader installs, which has no `objc.create`. */
-type LoaderBridge = Omit<NativePluginBridge, 'objc'> & { objc: Omit<NativeObjCBridge, 'create'> };
+type LoaderBridge = Omit<NativePluginBridge, 'objc'> & { objc: LoaderObjCBridge };
 
 const fakeBridge: LoaderBridge = {
 	abiVersion: '1.0.0',

@@ -297,6 +297,8 @@ export type NativeObjCBridge = {
 	): NativeHookToken;
 };
 
+export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'>;
+
 export type NativeFFIBridge = {
 	symbol(name: string, image?: string): NativePointer | null;
 	// UNKNOWN: the result's type is described at runtime by `signature.returnType`.
@@ -649,8 +651,7 @@ export type NativePluginRuntimeBridge = Pick<
 	'apiVersion' | 'abiVersion' | 'capabilities'
 > &
 	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities' | 'objc'>> & {
-		/** The loader has no `create`; the client builds it from `alloc` and `invoke`. */
-		readonly objc?: Omit<NativeObjCBridge, 'create'>;
+		readonly objc?: LoaderObjCBridge;
 	};
 
 export type NativePluginErrorCode =
