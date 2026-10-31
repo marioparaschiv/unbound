@@ -4,47 +4,41 @@ import { IconMagnifier } from 'nucleo-micro-bold';
 import { useForm } from '@tanstack/react-form';
 import { useId } from 'react';
 
-import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
-import { repositoryAddonsQuery } from '~/queries/submissions/submissions';
-import usePrefetchIntent from '~/queries/use-prefetch-intent';
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from '~/components/ui/input-group';
+import RepositoryShortcuts from '~/components/submit/repository-shortcuts';
+import { Field, FieldError, FieldLabel } from '~/components/ui/field';
+import { SubmitCallout } from '~/components/submit/submit-callout';
+import { SubmitSection } from '~/components/submit/submit-section';
+import type { ApiErrorDetails } from '~/lib/api/error-details';
 import GitHubIcon from '~/components/icons/github';
 import { Button } from '~/components/ui/button';
-import Input from '~/components/ui/input';
-import Text from '~/components/ui/text';
+import Spinner from '~/components/ui/spinner';
 
 type RepositoryPickerProps = {
 	defaultValue: string;
 	repositories: PushableRepository[];
 	disabled: boolean;
+	/** The listing this picker asked for is being read. */
+	busy: boolean;
+	/** Why the last read failed. */
+	error: ApiErrorDetails | null;
 	/** Called with the repository as `owner/name`. */
 	onPick: (repository: string) => void;
 };
 
-type RepositoryShortcutProps = {
-	repository: string;
-	disabled: boolean;
-	onPick: () => void;
-};
-
-function RepositoryShortcut({ repository, disabled, onPick }: RepositoryShortcutProps) {
-	const prefetch = usePrefetchIntent(repositoryAddonsQuery({ repository }));
-
-	return (
-		<Button
-			type='button'
-			variant='ghost'
-			size='sm'
-			disabled={disabled}
-			onClick={onPick}
-			{...prefetch}
-		>
-			<GitHubIcon />
-			{repository}
-		</Button>
-	);
-}
-
-function RepositoryPicker({ defaultValue, repositories, disabled, onPick }: RepositoryPickerProps) {
+function RepositoryPicker({
+	defaultValue,
+	repositories,
+	disabled,
+	busy,
+	error,
+	onPick,
+}: RepositoryPickerProps) {
 	const id = useId();
 	const form = useForm({
 		defaultValues: { repository: defaultValue },
@@ -57,64 +51,78 @@ function RepositoryPicker({ defaultValue, repositories, disabled, onPick }: Repo
 	}
 
 	return (
-		<form
-			onSubmit={(event) => {
-				event.preventDefault();
-				void form.handleSubmit();
-			}}
-			className='flex flex-col gap-3'
+		<SubmitSection
+			title='Repository'
+			description='A public GitHub repository you can push to, as a URL or owner/name. The built bundle must be committed.'
 		>
-			<form.Field name='repository' validators={{ onSubmit: repositoryInputSchema }}>
-				{(field) => (
-					<Field data-invalid={field.state.meta.errors.length > 0}>
-						<FieldLabel htmlFor={`${id}-repository`}>Repository</FieldLabel>
-						<div className='flex gap-2'>
-							<Input
-								id={`${id}-repository`}
-								value={field.state.value}
-								onChange={(event) => field.handleChange(event.target.value)}
-								onBlur={field.handleBlur}
-								placeholder='https://github.com/owner/name'
-								aria-invalid={field.state.meta.errors.length > 0}
-								disabled={disabled}
-								required
-							/>
+			<form
+				onSubmit={(event) => {
+					event.preventDefault();
+					void form.handleSubmit();
+				}}
+				className='flex flex-col gap-4'
+			>
+				<form.Field name='repository' validators={{ onSubmit: repositoryInputSchema }}>
+					{(field) => (
+						<Field data-invalid={field.state.meta.errors.length > 0}>
+							<FieldLabel htmlFor={`${id}-repository`} className='sr-only'>
+								Repository
+							</FieldLabel>
+							<InputGroup>
+								<InputGroupAddon>
+									<GitHubIcon />
+								</InputGroupAddon>
+								<InputGroupInput
+									id={`${id}-repository`}
+									value={field.state.value}
+									onChange={(event) => field.handleChange(event.target.value)}
+									onBlur={field.handleBlur}
+									placeholder='owner/name'
+									aria-invalid={field.state.meta.errors.length > 0}
+									disabled={disabled}
+									required
+								/>
+								{/* Phones get the action as a full-width button under the field instead. */}
+								<InputGroupAddon align='inline-end' className='hidden sm:flex'>
+									<InputGroupButton
+										type='submit'
+										size='sm'
+										disabled={disabled || !field.state.value.trim()}
+									>
+										{busy ? <Spinner /> : <IconMagnifier size={24} />}
+										Find addons
+									</InputGroupButton>
+								</InputGroupAddon>
+							</InputGroup>
 							<Button
 								type='submit'
 								variant='outline'
+								className='sm:hidden'
 								disabled={disabled || !field.state.value.trim()}
 							>
-								<IconMagnifier size={24} />
+								{busy ? <Spinner /> : <IconMagnifier size={24} />}
 								Find addons
 							</Button>
-						</div>
-						<FieldDescription>
-							A public GitHub repository you can push to, as a URL or owner/name. The
-							bundle must be committed.
-						</FieldDescription>
-						<FieldError errors={field.state.meta.errors} />
-					</Field>
-				)}
-			</form.Field>
+							<FieldError errors={field.state.meta.errors} />
+							<SubmitCallout error={error} />
+						</Field>
+					)}
+				</form.Field>
 
-			{repositories.length > 0 ? (
-				<div className='flex flex-col gap-1'>
-					<Text variant='text-xs' color='muted'>
-						Repositories you can push to
-					</Text>
-					<div className='flex flex-wrap gap-2'>
-						{repositories.map((entry) => (
-							<RepositoryShortcut
-								key={entry.repository}
-								repository={entry.repository}
+				{repositories.length > 0 ? (
+					<form.Subscribe selector={(state) => state.values.repository}>
+						{(query) => (
+							<RepositoryShortcuts
+								repositories={repositories}
+								query={query}
 								disabled={disabled}
-								onPick={() => pick(entry.repository)}
+								onPick={pick}
 							/>
-						))}
-					</div>
-				</div>
-			) : null}
-		</form>
+						)}
+					</form.Subscribe>
+				) : null}
+			</form>
+		</SubmitSection>
 	);
 }
 

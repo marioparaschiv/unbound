@@ -48,7 +48,7 @@ function Header() {
 						to='/'
 						className='flex items-center justify-self-start pr-2.5 pl-0 rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-11 press-flat'
 					>
-						<Logo className='w-13 h-auto aspect-[474/202] text-foreground' />
+						<Logo className='w-auto h-9' />
 					</Link>
 
 					<Segmented value={pathname} tone='header' className='hidden md:flex'>

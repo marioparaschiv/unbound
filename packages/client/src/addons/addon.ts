@@ -8,7 +8,7 @@ import type {
 import type { ReactNode } from 'react';
 
 import type { AddonLifecycle } from '~/addons/lifecycle';
-import type { AddonScope } from '~/addons/scope';
+import type { PluginScope } from '~/addons/scope';
 
 /** What a manager keeps for one addon it governs. The manager is its only writer. */
 export type AddonState<I extends object> = {
@@ -17,7 +17,7 @@ export type AddonState<I extends object> = {
 	/** What the bundle evaluated to. Every addon kind may implement the {@link Plugin} lifecycle hooks. */
 	instance: (Plugin & I) | null;
 	context: PluginContext | undefined;
-	scope: AddonScope | undefined;
+	scope: PluginScope | undefined;
 	started: boolean;
 	failed: boolean;
 };

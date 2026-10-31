@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import AddonIconPopout from '~/components/dashboard/addon-icon-popout';
-import SubmitDialog from '~/components/dashboard/submit-dialog';
+import SubmitButton from '~/components/dashboard/submit-button';
 import StatusPill from '~/components/dashboard/status-pill';
 import AddonMenu from '~/components/dashboard/addon-menu';
 import RoleTag from '~/components/dashboard/role-tag';
@@ -14,7 +14,6 @@ import Tag from '~/components/tag';
 type AddonRowProps = {
 	addon: DashboardAddon;
 	userId: string;
-	githubLinked: boolean;
 };
 
 // Fixed to UTC so the server render and the hydrated page print the same day.
@@ -28,7 +27,7 @@ function describeLive(addon: DashboardAddon): string {
 	return `v${addon.live.version} · ${DATE_FORMAT.format(new Date(addon.live.publishedAt))}`;
 }
 
-function AddonRow({ addon, userId, githubLinked }: AddonRowProps) {
+function AddonRow({ addon, userId }: AddonRowProps) {
 	const [iconOpen, setIconOpen] = useState(false);
 
 	return (
@@ -88,12 +87,7 @@ function AddonRow({ addon, userId, githubLinked }: AddonRowProps) {
 
 			<div className='flex items-center gap-2 ml-auto'>
 				{addon.actions.submit ? (
-					<SubmitDialog
-						addonId={addon.id}
-						intent={addon.actions.submit}
-						githubLinked={githubLinked}
-						source={addon.pending?.source}
-					/>
+					<SubmitButton addonId={addon.id} intent={addon.actions.submit} />
 				) : null}
 				<AddonMenu addon={addon} userId={userId} onChangeIcon={() => setIconOpen(true)} />
 			</div>

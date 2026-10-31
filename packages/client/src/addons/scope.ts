@@ -27,7 +27,7 @@ export type AddonGlobals = {
 };
 
 /** A plugin's globals, and the `dispose` that undoes everything they registered. */
-export type AddonScope = {
+export type PluginScope = {
 	globals: AddonGlobals;
 	dispose: () => void;
 };
@@ -47,7 +47,7 @@ function liveUnboundView(patcher: AddonGlobals['patcher']): AddonGlobals['unboun
  * @param addon The plugin about to start.
  * @returns The globals, and a `dispose` that undoes each scoped part in reverse order of creation.
  */
-export function createAddonScope(addon: Addon<Plugin>): AddonScope {
+export function createAddonScope(addon: Addon<Plugin>): PluginScope {
 	const tagged = patcherApi.createPatcher(addon.id);
 	const timers = createScopedTimers();
 	const parts: ScopedPart[] = [{ dispose: tagged.unpatchAll }, timers];

@@ -3,11 +3,11 @@
 	"theme": "mint",
 	"name": "Unbound",
 	"colors": {
-		"primary": "#c74050",
-		"light": "#c74050",
-		"dark": "#c74050"
+		"primary": "#ab3745",
+		"light": "#ab3745",
+		"dark": "#ab3745"
 	},
-	"favicon": "/logo/dark.svg",
+	"favicon": "/logo/favicon.svg",
 	"navigation": {
 		"tabs": [
 			{

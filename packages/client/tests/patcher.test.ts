@@ -8,7 +8,7 @@ mock.module('~/metro/wrappers', () => ({
 const { after, before, createPatcher, instead, patches, unpatchAll } =
 	await import('~/patcher/api');
 const { flush } = await import('~/hot-refresh/live-patch');
-const { registerLazyModule } = await import('~/metro/lazy-registry');
+const { createLazyModule } = await import('~/metro/lazy-registry');
 
 function createTarget() {
 	const original = (a: number, b: number) => a + b;
@@ -78,19 +78,16 @@ describe('patcher', () => {
 		const { math } = createTarget();
 
 		function lazyProxy() {
-			const proxy = new Proxy(
-				{},
-				{
-					get: (_, prop) => Reflect.get(math, prop),
-					defineProperty: (_, prop, descriptor) =>
-						Reflect.defineProperty(math, prop, descriptor),
+			return createLazyModule(
+				() => math,
+				(callback) => {
+					callback(math);
+
+					return () => void 0;
 				},
-			);
-
-			registerLazyModule(proxy, () => math);
-
-			return proxy as typeof math;
+			) as typeof math;
 		}
+
 		const calls: string[] = [];
 
 		createPatcher('first').before(lazyProxy(), 'add', () => {
