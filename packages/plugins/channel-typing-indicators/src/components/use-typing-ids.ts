@@ -19,7 +19,7 @@ import {
  */
 function useTypingIds(channel: Channel, muted: boolean): string[] {
 	const store = storage.useBucket(addon.id);
-	const last = useRef<string[]>([]);
+	const previousIds = useRef<string[]>([]);
 	const includeCurrent = store.get('includeCurrentChannel', true);
 	const includeMuted = store.get('includeMutedChannels', false);
 	const includeBlocked = store.get('includeBlockedUsers', false);
@@ -45,15 +45,14 @@ function useTypingIds(channel: Channel, muted: boolean): string[] {
 		});
 	}
 
-	// Keeps the previous list while the IDs match, so the row re-renders only when they change.
-	function read(): string[] {
+	function readKeepingPreviousWhenSame(): string[] {
 		const next = visible();
 
-		if (!sameIds(last.current, next)) {
-			last.current = next;
+		if (!sameIds(previousIds.current, next)) {
+			previousIds.current = next;
 		}
 
-		return last.current;
+		return previousIds.current;
 	}
 
 	const stores = [
@@ -63,7 +62,7 @@ function useTypingIds(channel: Channel, muted: boolean): string[] {
 		SelectedChannelStore,
 	].filter((store) => Reflect.get(store, 'module'));
 
-	return flux.useStore(stores, read, [
+	return flux.useStore(stores, readKeepingPreviousWhenSame, [
 		channel.id,
 		channel.guild_id,
 		muted,
