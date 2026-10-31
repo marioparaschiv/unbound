@@ -26,7 +26,7 @@ Empty output: the verification still describes the code. Otherwise map each hunk
 | `staging.ts` `purgeUserSubmissions` 105-144 (ban hook `auth.ts` 129)                             | `Purge`                                      |
 | `review.ts` `requirePendingReview` 160-191                                                       | `Start` (row snapshot incl. `sha256`)        |
 | `review.ts` `publishArtifact` 227-248, `readBundle` 202-206, `refetchBundle` 195-200             | `ReadStaged`                                 |
-| `review.ts` `readPinnedStorePage` 208-225, `addon-page-source.ts` `readPageMedia` 217-230        | `ReadStaged` (its failure branch)            |
+| `review.ts` `readPinnedStorePage` 208-225, `addon-page-source.ts` `readPageMedia` 220-233        | `ReadStaged` (its failure branch)            |
 | `artifacts.ts` `writeArtifact` 94-111                                                            | `WriteBundle`, `WriteManifest`               |
 | `artifacts.ts` `writeStorePage` 120-142 (`ADDON.md`, `page.json`, `media/*`)                     | `WritePage`                                  |
 | `review.ts` `decide` 319-366 (CAS 335, `publishVersion` 286-313, PKs from `db/schema/addons.ts`) | `Decide`                                     |
@@ -34,7 +34,7 @@ Empty output: the verification still describes the code. Otherwise map each hunk
 
 `reserve`, `decide` and the ban's cancel are each one Postgres SERIALIZABLE transaction that `createDatabase` retries whole on a serialization failure or deadlock, so each is still one indivisible step.
 
-Sync commit: `fdaa4cf5ab901faf80791e76795681099c3955a9`. Move it forward only after you confirm, hunk by hunk, that every row above still describes the code at the new commit, and update the line numbers in the table and in the spec comments.
+Sync commit: `fdaa4cf5ab901faf80791e76795681099c3955a9`. The `readPageMedia` line numbers above already describe the code after #718, which only moved them. Move it forward only after you confirm, hunk by hunk, that every row above still describes the code at the new commit, and update the line numbers in the table and in the spec comments.
 
 ## 2. Run the check
 
@@ -91,4 +91,4 @@ Every modelled submission has a store page, the case with the most writes. `Writ
 
 The refetch is modelled as content-addressed: it yields the pinned bytes or fails, because `readBlob` checks the git blob SHA-1 (replay `approval refetches a lost bundle` runs both outcomes on the real code). `Orphan` may delete an object whose row is not inserted yet, over-approximating a create slower than the grace window.
 
-Not modelled: first-party publishing (`first-party.ts` `publishFirstParty` 194-245), which does not copy a store page and writes `addons/{id}/{version}/` through `writeArtifact` (with compiled `.hbc` bundles beside the bundle) before `commitApproved` 127-184 re-checks the claim, and since 2574b6b5 rewrites a live version's files and row in place (`review.ts` `replaceVersion` 268-281); S3 write failures and partial writes, GitHub outages beyond a failed refetch, user deletion cascades, delist/relist, `listReviewQueue`, author's listing caps, the per-request permission checks, and liveness (a live version having its files).
+Not modelled: first-party publishing (`first-party.ts` `publishFirstParty` 200-257), which writes `addons/{id}/{version}/` through `writeArtifact` (with compiled `.hbc` bundles beside the bundle) and `writeStorePage` (the page and media `readAddonSource` read and checked at the build commit, via `readAddonPage`) before `commitApproved` 133-190 re-checks the claim, and since 2574b6b5 rewrites a live version's files and row in place (`review.ts` `replaceVersion` 268-281); S3 write failures and partial writes, GitHub outages beyond a failed refetch, user deletion cascades, delist/relist, `listReviewQueue`, author's listing caps, the per-request permission checks, and liveness (a live version having its files).
