@@ -1,5 +1,7 @@
-import { findMediaShareActions, Patcher } from '~/modules';
+import { patcher } from '@unbound-app/api';
+
 import { isRecord, type MediaRecord } from '~/media-record';
+import { findMediaShareActions } from '~/modules';
 import { getPreferredGifUrl } from '~/gif-url';
 import { resolveKlipyGifUrl } from '~/klipy';
 
@@ -13,9 +15,8 @@ function pointAtGif(source: MediaRecord, gifUrl: string) {
 
 /**
  * @description Points the media viewer's share and save actions at the GIF instead of its video rendition.
- * @returns A function that removes the patches.
  */
-export function patchMediaShareActions(): () => void {
+export function patchMediaShareActions(): void {
 	const modules = [...new Set(findMediaShareActions())];
 
 	if (!modules.length) {
@@ -23,11 +24,11 @@ export function patchMediaShareActions(): () => void {
 			'[Fix GIF Downloads: share actions] Skipped, modules not found: useMediaShareActions.',
 		);
 
-		return () => {};
+		return;
 	}
 
-	const unpatches = modules.map((module) =>
-		Patcher.before(module, 'useMediaShareActions', ({ args }) => {
+	for (const module of modules) {
+		patcher.before(module, 'useMediaShareActions', ({ args }) => {
 			const [options] = args;
 
 			if (!isRecord(options) || !isRecord(options.source)) return;
@@ -44,10 +45,6 @@ export function patchMediaShareActions(): () => void {
 			void resolveKlipyGifUrl(source).then((resolved) => {
 				if (resolved) pointAtGif(source, resolved);
 			});
-		}),
-	);
-
-	return () => {
-		for (const unpatch of unpatches) unpatch();
-	};
+		});
+	}
 }
