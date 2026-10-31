@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import type { ModuleEntry } from '../src/paths';
 
 import { buildRoot, normalizeForHash } from '../src/emit';
+import { readNamespaceAliases } from '../src/entries';
 import { API_SRC } from '../src/paths';
 
 describe('normalizeForHash', () => {
@@ -56,6 +57,26 @@ describe('buildRoot', () => {
 
 		expect(buildRoot(entries)).toBe(
 			"export * as assets from './assets';\nexport * as metro from './metro/index';\n",
+		);
+	});
+});
+
+describe('namespace aliases', () => {
+	test('reads a barrel alias of a re-exported module with its JSDoc', () => {
+		expect(
+			readNamespaceAliases(join(import.meta.dirname, 'fixtures', 'namespace-aliases.ts')),
+		).toEqual([{ name: 'old', target: 'next', doc: '@deprecated Use next' }]);
+	});
+
+	test('declares each alias after the re-exports', () => {
+		const entries: ModuleEntry[] = [
+			{ name: 'next', source: '', out: join(API_SRC, 'next.d.ts'), topLevel: true },
+		];
+
+		expect(
+			buildRoot(entries, [{ name: 'old', target: 'next', doc: '@deprecated Use next' }]),
+		).toBe(
+			"export * as next from './next';\n/** @deprecated Use next */\nexport declare const old: typeof import('./next');\n",
 		);
 	});
 });

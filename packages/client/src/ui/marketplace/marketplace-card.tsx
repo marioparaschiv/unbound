@@ -3,6 +3,7 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { memo, useState } from 'react';
 import { View } from 'react-native';
 
+import { getInstalledVersion, installVersion } from '~/marketplace/install';
 import AddonCardHeader from '~/ui/components/addon-card-header';
 import type { InstallStatus } from '~/marketplace/catalog';
 import { brokenDependents } from '~/addons/dependencies';
@@ -21,7 +22,6 @@ import { show } from '~/toasts/api';
 
 import type { StorePageParams } from './store-page';
 
-import { getInstalledVersion, installVersion } from './targets';
 import VersionPickerSheet from './version-picker-sheet';
 import useInstallStatus from './use-install-status';
 import useStyles from './marketplace-card.style';

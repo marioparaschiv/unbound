@@ -8,6 +8,7 @@ import { createScopedReact } from '~/hot-refresh/runtime';
 import { createScopedTimers } from '~/addons/timers';
 import type { Addon } from '~/addons/addon';
 import * as patcherApi from '~/patcher/api';
+import type * as api from '~/core/api';
 
 type ScopedTimers = ReturnType<typeof createScopedTimers>;
 
@@ -18,7 +19,7 @@ type ScopedPart = {
 /** The globals one plugin's bundle is evaluated with, keyed by their parameter names. */
 export type AddonGlobals = {
 	React: ReturnType<typeof createScopedReact>;
-	unbound: typeof window.unbound;
+	unbound: Omit<typeof api, 'default'>;
 	addon: Addon<Plugin>;
 	patcher: typeof patcherApi;
 	logger: ReturnType<typeof createLogger>;
@@ -46,11 +47,13 @@ function liveUnboundView(scoped: ScopedNamespaces): AddonGlobals['unbound'] {
 
 	return new Proxy(view, {
 		get: (_target, key) =>
-			Object.hasOwn(scoped, key)
-				? Reflect.get(scoped, key)
-				: Reflect.get(window.unbound, key),
-		has: (_target, key) => key in window.unbound,
+			Object.hasOwn(scoped, key) ? Reflect.get(scoped, key) : Reflect.get(liveUnbound(), key),
+		has: (_target, key) => key in liveUnbound(),
 	}) as AddonGlobals['unbound'];
+}
+
+function liveUnbound(): object {
+	return Reflect.get(globalThis, 'unbound');
 }
 
 /**
