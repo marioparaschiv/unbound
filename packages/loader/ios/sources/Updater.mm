@@ -7,11 +7,11 @@
 #include "LoaderHotReload.h"
 #include "LoaderUpdater.h"
 #import "SettingsCore.h"
+#import "Unbound.h"
 #import "UpdaterCore.h"
-#import "astral.h"
 
-using astral::ios::toNSString;
-using astral::ios::toStdString;
+using unbound::ios::toNSString;
+using unbound::ios::toStdString;
 
 static bool isServingBundle(NSURL *url, NSTimeInterval timeout)
 {
@@ -44,7 +44,7 @@ static bool isServingBundle(NSURL *url, NSTimeInterval timeout)
 
 static loader::UpdaterSettings iosUpdaterSettings()
 {
-    return loader::updaterSettings(AstralSettingsStore());
+    return loader::updaterSettings(UnboundSettingsStore());
 }
 
 static std::optional<std::string> fetchText(const std::string &url, double timeout)
@@ -111,17 +111,17 @@ static std::optional<std::string> optionalUpdateURL()
         });
 }
 
-loader::BundleUpdater &AstralBundleUpdater()
+loader::BundleUpdater &UnboundBundleUpdater()
 {
     return bundleUpdater();
 }
 
-loader::UpdaterSettings AstralUpdaterSettings()
+loader::UpdaterSettings UnboundUpdaterSettings()
 {
     return iosUpdaterSettings();
 }
 
-std::optional<std::string> AstralUpdateURL()
+std::optional<std::string> UnboundUpdateURL()
 {
     return optionalUpdateURL();
 }

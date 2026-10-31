@@ -199,12 +199,12 @@ struct Server {
 
     std::string candidate() const
     {
-        return path("astral.bundle.candidate");
+        return path("unbound.bundle.candidate");
     }
 
     std::string active() const
     {
-        return path("astral.bundle");
+        return path("unbound.bundle");
     }
 
     bool download(loader::BundleUpdater &updater, const std::optional<std::string> &base)

@@ -4,7 +4,7 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
-namespace astral::ios {
+namespace unbound::ios {
 inline std::string toStdString(NSString *value)
 {
     const char *utf8 = value.UTF8String;

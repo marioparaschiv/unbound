@@ -12,6 +12,7 @@
 #include "LoaderAddons.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderDiagnostics.h"
+#include "LoaderDocuments.h"
 #include "LoaderFonts.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
@@ -21,12 +22,12 @@
 #include "LoaderToolbox.h"
 #import "Logger.h"
 #import "SettingsCore.h"
+#import "Unbound.h"
 #import "UpdaterCore.h"
-#import "astral.h"
 
-using astral::ios::jsonFromObject;
-using astral::ios::objectFromJSON;
-using astral::ios::toStdString;
+using unbound::ios::jsonFromObject;
+using unbound::ios::objectFromJSON;
+using unbound::ios::toStdString;
 
 static NSArray *arrayFromJSON(const nlohmann::json &value)
 {
@@ -34,7 +35,7 @@ static NSArray *arrayFromJSON(const nlohmann::json &value)
     return [converted isKindOfClass:[NSArray class]] ? converted : @[];
 }
 
-loader::AddonState &AstralAddonState()
+loader::AddonState &UnboundAddonState()
 {
     static loader::AddonState state;
     return state;
@@ -58,9 +59,9 @@ static LogLevel iosLogLevel(loader::LogLevel level)
 
 @implementation CoreBridge
 
-+ (NSString *)documentsName
++ (NSString *)documentsIn:(NSString *)parent
 {
-    return @(loader::preferences::kDocumentsName);
+    return @(loader::documentsDirectory(toStdString(parent)).c_str());
 }
 
 + (uint32_t)mainBundleBytecodeVersion
@@ -146,7 +147,7 @@ static nlohmann::json platformFontEntry(NSString *postScriptName, NSString *appP
     return entry;
 }
 
-const nlohmann::json &AstralPlatformFonts()
+const nlohmann::json &UnboundPlatformFonts()
 {
     static nlohmann::json  fonts;
     static dispatch_once_t onceToken;
@@ -163,14 +164,14 @@ const nlohmann::json &AstralPlatformFonts()
     return fonts;
 }
 
-nlohmann::json AstralFontCatalog()
+nlohmann::json UnboundFontCatalog()
 {
-    return loader::fontCatalog(AstralAddonState().fonts(), AstralPlatformFonts());
+    return loader::fontCatalog(UnboundAddonState().fonts(), UnboundPlatformFonts());
 }
 
 + (NSDictionary *)themeColorsForId:(NSString *)themeId
 {
-    std::optional<nlohmann::json> theme = AstralAddonState().theme(toStdString(themeId));
+    std::optional<nlohmann::json> theme = UnboundAddonState().theme(toStdString(themeId));
     if (!theme)
     {
         return nil;
@@ -194,7 +195,7 @@ nlohmann::json AstralFontCatalog()
 
 + (BOOL)hasTheme:(NSString *)themeId
 {
-    return AstralAddonState().theme(toStdString(themeId)).has_value();
+    return UnboundAddonState().theme(toStdString(themeId)).has_value();
 }
 
 + (void)installLogging
@@ -214,15 +215,15 @@ nlohmann::json AstralFontCatalog()
 
 + (void)scanAddons
 {
-    AstralAddonState().scan(toStdString(FileSystem.documents));
+    UnboundAddonState().scan(toStdString(FileSystem.documents));
 }
 
 + (NSArray *)themes
 {
-    return arrayFromJSON(AstralAddonState().themes());
+    return arrayFromJSON(UnboundAddonState().themes());
 }
 
-static loader::FontOverrideRegistry &AstralFontOverrides()
+static loader::FontOverrideRegistry &UnboundFontOverrides()
 {
     static loader::FontOverrideRegistry registry;
     return registry;
@@ -231,10 +232,10 @@ static loader::FontOverrideRegistry &AstralFontOverrides()
 + (NSDictionary *)fontOverridePlan
 {
     nlohmann::json targets =
-        loader::fontOverrideTargets(loader::preferences::fontOverrides(AstralSettingsStore()),
-                                    AstralAddonState().fonts(), AstralPlatformFonts());
+        loader::fontOverrideTargets(loader::preferences::fontOverrides(UnboundSettingsStore()),
+                                    UnboundAddonState().fonts(), UnboundPlatformFonts());
     id converted =
-        objectFromJSON(loader::fontOverridePlanJSON(AstralFontOverrides().plan(targets)));
+        objectFromJSON(loader::fontOverridePlanJSON(UnboundFontOverrides().plan(targets)));
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
 }
 
@@ -245,23 +246,23 @@ static loader::FontOverrideRegistry &AstralFontOverrides()
 
 + (NSArray<NSDictionary *> *)fonts
 {
-    return arrayFromJSON(AstralAddonState().fonts());
+    return arrayFromJSON(UnboundAddonState().fonts());
 }
 
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument
 {
-    loader::toolbox::ToolboxContext context{AstralSettingsStore(),
-                                            AstralBundleUpdater(),
+    loader::toolbox::ToolboxContext context{UnboundSettingsStore(),
+                                            UnboundBundleUpdater(),
                                             toStdString(FileSystem.documents),
                                             "iOS",
                                             [] {
-                                                return AstralUpdateURL();
+                                                return UnboundUpdateURL();
                                             },
                                             [] {
                                                 return [CoreBridge mainBundleBytecodeVersion];
                                             },
                                             [] {
-                                                return static_cast<bool>(AstralBundleIsReady());
+                                                return static_cast<bool>(UnboundBundleIsReady());
                                             }};
     std::string                     result =
         loader::toolbox::perform(context, toStdString(action), toStdString(argument));
@@ -270,7 +271,7 @@ static loader::FontOverrideRegistry &AstralFontOverrides()
 
 + (NSString *)preference:(NSString *)action argument:(NSString *)argument
 {
-    std::string result = loader::preferences::perform(AstralSettingsStore(), toStdString(action),
+    std::string result = loader::preferences::perform(UnboundSettingsStore(), toStdString(action),
                                                       toStdString(argument));
     return [NSString stringWithUTF8String:result.c_str()] ?: @"";
 }
@@ -322,7 +323,7 @@ static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
 + (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets
 {
     loader::devoverlay::Point center = loader::devoverlay::buttonCenter(
-        AstralSettingsStore(), coreSize(bounds), coreInsets(insets));
+        UnboundSettingsStore(), coreSize(bounds), coreInsets(insets));
     return CGPointMake(center.x, center.y);
 }
 
@@ -335,7 +336,7 @@ static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
 
 + (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds
 {
-    loader::devoverlay::saveButtonCenter(AstralSettingsStore(), {center.x, center.y},
+    loader::devoverlay::saveButtonCenter(UnboundSettingsStore(), {center.x, center.y},
                                          coreSize(bounds));
 }
 
@@ -358,7 +359,8 @@ static CGRect cgRect(const loader::devoverlay::Frame &frame)
 
 + (BOOL)devOverlayVisibleOnVirtualDevice:(BOOL)virtualDevice debugBuild:(BOOL)debugBuild
 {
-    return loader::preferences::devOverlayVisible(AstralSettingsStore(), virtualDevice, debugBuild);
+    return loader::preferences::devOverlayVisible(UnboundSettingsStore(), virtualDevice,
+                                                  debugBuild);
 }
 
 + (NSString *)incompatibleHostMessage
@@ -370,7 +372,7 @@ static CGRect cgRect(const loader::devoverlay::Frame &frame)
 {
     loader::diagnostics::BuildInfo info{toStdString(COMMIT_SHORT_HASH), toStdString(COMMIT_SUBJECT),
                                         toStdString(COMMIT_BRANCH), toStdString(BUILD_TIMESTAMP)};
-    return astral::ios::toNSString(loader::diagnostics::developmentBuildBanner(info));
+    return unbound::ios::toNSString(loader::diagnostics::developmentBuildBanner(info));
 }
 
 + (NSTimeInterval)developmentBuildBannerDuration

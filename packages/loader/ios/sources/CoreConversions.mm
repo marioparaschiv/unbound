@@ -1,6 +1,6 @@
 #import "CoreConversions.h"
 
-namespace astral::ios {
+namespace unbound::ios {
 id objectFromJSON(const nlohmann::json &value)
 {
     switch (value.type())

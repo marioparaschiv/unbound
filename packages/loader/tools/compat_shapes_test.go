@@ -714,7 +714,7 @@ func TestEvaluateStructuralShapes(t *testing.T) {
 		Kind:      referenceJavaShape,
 		Name:      "surface",
 		Component: "loader-android",
-		Locations: []compatLocation{{File: "packages/loader/android/module/src/main/kotlin/app/astral/android/ReactSurfaces.kt", Line: 48}},
+		Locations: []compatLocation{{File: "packages/loader/android/module/src/main/kotlin/app/unbound/android/ReactSurfaces.kt", Line: 48}},
 	}}, []*compatTarget{legacy}, nil)
 	if compatBreakageError(results) != nil {
 		t.Fatal("a shape Discord does not need yet must not fail the release gate")
@@ -725,7 +725,7 @@ func TestEvaluateStructuralShapes(t *testing.T) {
 }
 
 func TestKotlinShapeExtraction(t *testing.T) {
-	source := `package app.astral.android
+	source := `package app.unbound.android
 
 object ReactSurfaces {
     fun pieces(shapes: DiscordShapes) = listOf(
@@ -741,7 +741,7 @@ object ReactSurfaces {
 }
 `
 	set := newCompatSourceSet()
-	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/astral/android/ReactSurfaces.kt", component: "loader-android", platform: "android"}
+	file := compatSourceFile{path: "packages/loader/android/module/src/main/kotlin/app/unbound/android/ReactSurfaces.kt", component: "loader-android", platform: "android"}
 	extractNativeReferences(set, file, source)
 
 	lines := map[string]int{}

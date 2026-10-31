@@ -62,7 +62,7 @@ export async function displayDensity(
  */
 export function currentActivity(java: ViewBridge): NativeJavaReference | null {
 	const tracker = javaReference(
-		java.getField(java.getClass('app.astral.android.ActivityTracker'), 'INSTANCE'),
+		java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
 	);
 
 	return tracker ? javaReference(java.invoke(tracker, 'currentActivity', [])) : null;

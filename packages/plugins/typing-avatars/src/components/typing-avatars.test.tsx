@@ -15,7 +15,7 @@ mock.module('react-native', () => ({ View: 'View' }));
 const UserStore = { getUser: (id: string) => (cached.has(id) ? { id } : undefined) };
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.typing-avatars' },
+	manifest: { id: 'unbound.typing-avatars' },
 	unbound: { flux: { getStore: (name: string) => (name === 'User' ? UserStore : undefined) } },
 });
 

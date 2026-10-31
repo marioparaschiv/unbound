@@ -1,7 +1,7 @@
 {
-	"id": "app.astral.android",
+	"id": "app.unbound.android",
 	"url": "https://github.com/marioparaschiv/unbound",
 	"author": "unbound-app",
-	"name": "astral Loader (Xposed)",
-	"additionalSettings": "{\"apkFilterRegEx\":\"^app\\\\.astral\\\\.android\\\\.xposed\\\\.apk$\",\"filterReleaseTitlesByRegEx\":\"^astral .+ for Discord .+, Android\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\"}"
+	"name": "Unbound Loader (Xposed)",
+	"additionalSettings": "{\"apkFilterRegEx\":\"^app\\\\.unbound\\\\.android\\\\.xposed\\\\.apk$\",\"filterReleaseTitlesByRegEx\":\"^Unbound .+ for Discord .+, Android\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\"}"
 }

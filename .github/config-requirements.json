@@ -52,12 +52,12 @@
 	"ASTRAL_API_KEY": {
 		"kind": "secret",
 		"required": true,
-		"purpose": "Publishes first-party plugins and loader releases to the astral API."
+		"purpose": "Publishes first-party plugins and loader releases to the Unbound API."
 	},
 	"ASTRAL_API_URL": {
 		"kind": "var",
 		"required": true,
-		"purpose": "Origin of the astral API that plugins and loader releases are published to."
+		"purpose": "Origin of the Unbound API that plugins and loader releases are published to."
 	},
 	"S3_ENDPOINT": {
 		"kind": "var",

@@ -9,7 +9,7 @@
 #import "Discord.h"
 #import "FileSystem.h"
 #import "Settings.h"
-#import "astral.h"
+#import "Unbound.h"
 
 #define CS_DEBUGGED 0x10000000
 #ifdef __cplusplus

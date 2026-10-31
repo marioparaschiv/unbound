@@ -10,7 +10,7 @@ static dispatch_queue_t _logQueue;
 {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken,
-                  ^{ _logQueue = dispatch_queue_create("app.astral", DISPATCH_QUEUE_SERIAL); });
+                  ^{ _logQueue = dispatch_queue_create("app.unbound", DISPATCH_QUEUE_SERIAL); });
 }
 
 static os_log_t getLoggerForCategory(const char *category)
@@ -29,7 +29,7 @@ static os_log_t getLoggerForCategory(const char *category)
 
         if (!logger)
         {
-            logger = os_log_create("app.astral", category);
+            logger = os_log_create("app.unbound", category);
             if (logger)
             {
                 [loggers setObject:logger forKey:categoryKey];
@@ -50,7 +50,7 @@ static os_log_t getLoggerForCategory(const char *category)
     va_end(args);
 
     os_log_t logger = getLoggerForCategory(category);
-    AstralAppendLogFile((int) level, category, message.UTF8String);
+    UnboundAppendLogFile((int) level, category, message.UTF8String);
 
     dispatch_async(_logQueue, ^{
         switch (level)

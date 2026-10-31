@@ -1,5 +1,5 @@
 {
-	"name": "astral-loader",
+	"name": "unbound-loader",
 	"packages": [
 		{
 			"name": "loader-core",

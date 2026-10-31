@@ -1,5 +1,5 @@
 {
-	"id": "astral.character-counter",
+	"id": "unbound.character-counter",
 	"name": "Character Counter",
 	"description": "Shows the current message length and Discord's character limit in the composer.",
 	"authors": [

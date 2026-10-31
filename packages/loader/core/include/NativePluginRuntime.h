@@ -50,8 +50,8 @@ enum class NativeErrorDelivery
     Envelope,
 };
 
-inline constexpr const char *kNativeFailureEnvelopeKey = "__astralNativeFailure";
-inline constexpr const char *kNativeFailureGuardName   = "__astralGuardNativeFunction";
+inline constexpr const char *kNativeFailureEnvelopeKey = "__unboundNativeFailure";
+inline constexpr const char *kNativeFailureGuardName   = "__unboundGuardNativeFunction";
 
 NativeErrorDelivery nativeErrorDelivery();
 void                setNativeErrorDelivery(NativeErrorDelivery delivery);

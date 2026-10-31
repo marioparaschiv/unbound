@@ -38,7 +38,7 @@ const Messages = {
 };
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.sticker-preview' },
+	manifest: { id: 'unbound.sticker-preview' },
 	unbound: { flux: { getStore: (name: string) => (name === 'Draft' ? DraftStore : {}) } },
 });
 

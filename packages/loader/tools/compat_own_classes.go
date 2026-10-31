@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const ownJavaPrefix = "app.astral."
+const ownJavaPrefix = "app.unbound."
 
 var (
 	kotlinPackagePattern     = regexp.MustCompile(`(?m)^\s*package\s+([\w.]+)`)
