@@ -55,7 +55,6 @@ export const bytecodeDigestsSchema = z.record(
 	z.string().check(z.regex(/^[\da-f]{128}$/, 'Must be a lowercase SHA-512 digest.')),
 );
 
-// Each platform may only list the capabilities that platform's native bridge provides.
 export const addonPlatformsSchema = z
 	.strictObject({
 		ios: z.optional(
@@ -72,6 +71,8 @@ export const addonPlatformsSchema = z
 		),
 	})
 	.check(z.refine((platforms) => Object.keys(platforms).length > 0, 'Must list a platform.'));
+
+const legacyPlatformListSchema = z.array(z.enum(NATIVE_PLUGIN_PLATFORMS)).check(z.minLength(1));
 
 export const addonAuthorSchema = z.object({
 	name: z.string().check(z.minLength(1)),
@@ -92,13 +93,7 @@ export const addonManifestSchema = z.looseObject({
 	main: addonMainSchema,
 	version: semverSchema,
 	/** The platforms the addon runs on, each with its capabilities; absent means every platform. */
-	platforms: z.optional(
-		z.union([
-			addonPlatformsSchema,
-			// Deprecated: the array of platform names published addons still carry.
-			z.array(z.enum(NATIVE_PLUGIN_PLATFORMS)).check(z.minLength(1)),
-		]),
-	),
+	platforms: z.optional(z.union([addonPlatformsSchema, legacyPlatformListSchema])),
 	capabilities: z.optional(z.array(z.enum(NATIVE_PLUGIN_CAPABILITIES))),
 	/** @deprecated Use `platforms.<platform>.capabilities`. Still accepted for published addons. */
 	platformCapabilities: z.optional(

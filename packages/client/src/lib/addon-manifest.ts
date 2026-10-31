@@ -21,6 +21,12 @@ function isKnownPlatform(platform: unknown): platform is NativePluginPlatform {
 	return platform === 'ios' || platform === 'android';
 }
 
+function isPlatformList(
+	platforms: AddonManifest['platforms'],
+): platforms is NativePluginPlatform[] {
+	return Array.isArray(platforms);
+}
+
 function isCapability(capability: unknown): capability is NativePluginCapability {
 	return NATIVE_PLUGIN_CAPABILITIES.some((known) => known === capability);
 }
@@ -147,8 +153,7 @@ export function resolveManifestCapabilities(
 ): readonly NativePluginCapability[] {
 	const known = isKnownPlatform(platform) ? platform : undefined;
 
-	// parseAddonManifest accepts only the array form of `platforms` for now.
-	const platforms = Array.isArray(manifest.platforms) ? manifest.platforms : undefined;
+	const platforms = isPlatformList(manifest.platforms) ? manifest.platforms : undefined;
 
 	if (platforms?.length && (!known || !platforms.includes(known))) {
 		throw new NativePluginUnsupportedPlatformError(platforms, String(platform));
