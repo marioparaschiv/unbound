@@ -1,9 +1,9 @@
-import type { PredicateResult, SettingsObject, SettingsValue, Widen } from '@unbound-app/types';
+import type { PredicateResult, SettingsValue, Widen } from '@unbound-app/types';
 import debounce from '@unbound-app/utils/debounce';
 import { useEffect, useState } from 'react';
 
-import { EventEmitter } from '~/core/event-emitter';
 import { createSettingsBackend, type SettingsStores } from '~/storage/backend';
+import { EventEmitter } from '~/core/event-emitter';
 
 /** Payload describing a settings change, passed to `changed` listeners and predicates. */
 export type SettingsPayload = {

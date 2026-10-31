@@ -33,6 +33,7 @@ import { createMainThreadAlloc } from '~/native/main-thread-alloc';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { getNativePlugin } from '~/native/plugin-bridge';
+import { createScopedUIBridge } from '~/native/ui';
 
 type AssociationBinding = {
 	handle: NativeObjectHandle;
@@ -153,6 +154,7 @@ export function createScopedNativePlugin(
 	const runtimeTokens = new Set<NativeRuntimeEventToken>();
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
 	const associations: AssociationBinding[] = [];
+	const ui = createScopedUIBridge(capabilities, platform);
 	let disposed = false;
 	let stopping = false;
 	const mountAsync = fabricBridge.mountAsync?.bind(fabricBridge);
@@ -634,6 +636,7 @@ export function createScopedNativePlugin(
 			java,
 			hooks,
 			debug,
+			ui: ui.bridge,
 		},
 		beginStop: () => {
 			stopping = true;
@@ -642,6 +645,7 @@ export function createScopedNativePlugin(
 			if (disposed) return;
 
 			disposed = true;
+			ui.dispose();
 
 			for (const pending of pendingInvocations) pending.cancel();
 

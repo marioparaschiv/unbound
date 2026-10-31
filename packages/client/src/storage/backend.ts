@@ -37,11 +37,11 @@ function hasLazyAccess(bridge: NativePlatformSettings | undefined): bridge is La
  */
 export function createNativeBackend(bridge: LazyNativeSettings): SettingsBackend {
 	return {
-		read: (store, key) => bridge.get(store, key) as SettingsValue | undefined,
+		read: (store, key) => bridge.get(store, key),
 		readAll() {
 			const stores = bridge.get();
 
-			return isSettingsObject(stores as SettingsValue) ? (stores as SettingsStores) : {};
+			return isSettingsObject(stores) ? (stores as SettingsStores) : {};
 		},
 		write: (change) => void bridge.stage([change]),
 		flush: () => void bridge.flush(),
@@ -51,10 +51,14 @@ export function createNativeBackend(bridge: LazyNativeSettings): SettingsBackend
 function readPath(stores: SettingsStores, store: string, key: string): SettingsValue | undefined {
 	let result: SettingsValue | undefined = stores[store];
 
-	if (!key) return result;
+	if (!key) {
+		return result;
+	}
 
 	for (const segment of key.split('.')) {
-		if (!isSettingsObject(result)) return undefined;
+		if (!isSettingsObject(result)) {
+			return undefined;
+		}
 
 		result = result[segment];
 	}
@@ -87,13 +91,17 @@ function removePath(stores: SettingsStores, store: string, key: string): boolean
 	let current: SettingsValue | undefined = stores[store];
 
 	for (const segment of keys) {
-		if (!isSettingsObject(current)) return false;
+		if (!isSettingsObject(current)) {
+			return false;
+		}
 
 		parents.push(current);
 		current = current[segment];
 	}
 
-	if (!isSettingsObject(current) || current[last] === undefined) return false;
+	if (!isSettingsObject(current) || current[last] === undefined) {
+		return false;
+	}
 
 	delete current[last];
 
@@ -144,7 +152,7 @@ export function createMemoryBackend(
 			} else if ('remove' in change) {
 				if (!removePath(stores, change.store, change.key)) return;
 			} else {
-				writePath(stores, change.store, change.key, change.value as SettingsValue);
+				writePath(stores, change.store, change.key, change.value);
 			}
 
 			pending.push(change);
@@ -166,7 +174,9 @@ export function createMemoryBackend(
 export function createSettingsBackend(): SettingsBackend {
 	const bridge = globalThis.NativePlatform?.settings;
 
-	if (hasLazyAccess(bridge)) return createNativeBackend(bridge);
+	if (hasLazyAccess(bridge)) {
+		return createNativeBackend(bridge);
+	}
 
 	return createMemoryBackend(
 		globalThis.UNBOUND_SETTINGS ?? {},

@@ -1,8 +1,10 @@
 import type * as React from 'react';
 
+import type { NativeUIBridge, NativeUIScopeFactory } from './native-ui';
 import type { AddonManifest, Plugin } from './addons';
 
 export * from './native-methods';
+export * from './native-ui';
 
 export const NATIVE_PLUGIN_CAPABILITIES = [
 	'native.objc.classes',
@@ -297,7 +299,7 @@ export type NativeObjCBridge = {
 	): NativeHookToken;
 };
 
-export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'>;
+export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> & NativeUIScopeFactory;
 
 export type NativeFFIBridge = {
 	symbol(name: string, image?: string): NativePointer | null;
@@ -647,14 +649,21 @@ export type NativePluginBridge = {
 	readonly java: NativeJavaBridge;
 	readonly hooks: NativeJavaHooksBridge;
 	readonly debug: NativeDebugBridge;
+	readonly ui: NativeUIBridge;
 };
 
 export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities'
 > &
-	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities' | 'objc'>> & {
+	Partial<
+		Omit<
+			NativePluginBridge,
+			'apiVersion' | 'abiVersion' | 'capabilities' | 'objc' | 'java' | 'ui'
+		>
+	> & {
 		readonly objc?: LoaderObjCBridge;
+		readonly java?: NativeJavaBridge & NativeUIScopeFactory;
 	};
 
 export type NativePluginErrorCode =

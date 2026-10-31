@@ -28,7 +28,9 @@ function fakeBridge() {
 			get(store?: string, key?: string) {
 				reads.push(`${store ?? '*'}:${key ?? ''}`);
 
-				if (store === undefined) return data;
+				if (store === undefined) {
+					return data;
+				}
 
 				const value = data[store];
 

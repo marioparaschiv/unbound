@@ -3,9 +3,9 @@ import { beforeEach, expect, test } from 'bun:test';
 
 import { persist, snapshot } from '~/storage/api';
 
-const settings = snapshot();
-
 import { renameLegacyBuckets } from './legacy-buckets';
+
+const settings = snapshot();
 
 const applied: NativeSettingsChange[] = [];
 
