@@ -3,7 +3,6 @@ import type { Submission } from '@unbound-app/contracts/publish';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import { submitOverviewQuery } from '~/queries/submissions/submissions';
 import SubmitForm from '~/components/submit/submit-form';
 import PageHeader from '~/components/page-header';
@@ -23,21 +22,10 @@ function SubmitAddonPage() {
 		<div className='flex flex-col gap-6 page-frame'>
 			<PageHeader
 				title='Submit Addon'
-				description='Submit a new theme or plugin, or an update to one you maintain, for review. This is the same flow as ubd publish: reviewers see exactly the files at the commit you pick.'
+				description='Submit a new addon or an update from GitHub. Reviewers see exactly the files at the commit you pick.'
 			/>
 
-			<Card>
-				<CardHeader>
-					<CardTitle>From GitHub</CardTitle>
-					<CardDescription>
-						Pick a repository, then the addon and the commit to submit. Its built bundle
-						must be committed.
-					</CardDescription>
-				</CardHeader>
-				<CardContent>
-					<SubmitForm githubLinked={githubLinked} onSubmitted={handleSubmitted} />
-				</CardContent>
-			</Card>
+			<SubmitForm githubLinked={githubLinked} onSubmitted={handleSubmitted} />
 		</div>
 	);
 }

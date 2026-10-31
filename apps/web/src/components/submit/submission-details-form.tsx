@@ -5,6 +5,7 @@ import { useForm } from '@tanstack/react-form';
 import { useId } from 'react';
 
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '~/components/ui/field';
+import { SubmitSection } from '~/components/submit/submit-section';
 import { Button } from '~/components/ui/button';
 import Input from '~/components/ui/input';
 
@@ -44,54 +45,59 @@ function SubmissionDetailsForm({ preview, error, disabled, onSubmit }: Submissio
 
 	return (
 		<form
-			className='flex flex-col gap-6'
+			className='min-w-0'
 			onSubmit={(event) => {
 				event.preventDefault();
 				void form.handleSubmit();
 			}}
 		>
-			<FieldGroup>
-				<form.Field name='homepage'>
-					{(field) => (
-						<Field>
-							<FieldLabel htmlFor={`${id}-homepage`}>Homepage</FieldLabel>
-							<Input
-								id={`${id}-homepage`}
-								type='url'
-								value={field.state.value}
-								onChange={(event) => field.handleChange(event.target.value)}
-								onBlur={field.handleBlur}
-								placeholder='https://'
-								disabled={disabled}
-							/>
-						</Field>
-					)}
-				</form.Field>
-				<form.Field name='tags'>
-					{(field) => (
-						<Field>
-							<FieldLabel htmlFor={`${id}-tags`}>Tags</FieldLabel>
-							<Input
-								id={`${id}-tags`}
-								value={field.state.value}
-								onChange={(event) => field.handleChange(event.target.value)}
-								onBlur={field.handleBlur}
-								disabled={disabled}
-							/>
-							<FieldDescription>
-								Comma-separated. Defaults to the repository’s topics.
-							</FieldDescription>
-						</Field>
-					)}
-				</form.Field>
-			</FieldGroup>
-
-			<FieldError className='whitespace-pre-wrap'>{error}</FieldError>
-
-			<Button type='submit' disabled={disabled} className='w-full md:w-auto md:self-start'>
-				<IconPaperPlane2 size={24} />
-				{disabled ? 'Submitting...' : 'Submit for Review'}
-			</Button>
+			<SubmitSection
+				title='Details'
+				description='Read from the repository. Change them here for this submission.'
+				footer={
+					<Button type='submit' disabled={disabled} className='w-full sm:w-auto'>
+						<IconPaperPlane2 size={24} />
+						{disabled ? 'Submitting...' : 'Submit for Review'}
+					</Button>
+				}
+			>
+				<FieldGroup className='gap-6'>
+					<form.Field name='homepage'>
+						{(field) => (
+							<Field>
+								<FieldLabel htmlFor={`${id}-homepage`}>Homepage</FieldLabel>
+								<Input
+									id={`${id}-homepage`}
+									type='url'
+									value={field.state.value}
+									onChange={(event) => field.handleChange(event.target.value)}
+									onBlur={field.handleBlur}
+									placeholder='https://'
+									disabled={disabled}
+								/>
+							</Field>
+						)}
+					</form.Field>
+					<form.Field name='tags'>
+						{(field) => (
+							<Field>
+								<FieldLabel htmlFor={`${id}-tags`}>Tags</FieldLabel>
+								<Input
+									id={`${id}-tags`}
+									value={field.state.value}
+									onChange={(event) => field.handleChange(event.target.value)}
+									onBlur={field.handleBlur}
+									disabled={disabled}
+								/>
+								<FieldDescription>
+									Comma-separated. Defaults to the repository’s topics.
+								</FieldDescription>
+							</Field>
+						)}
+					</form.Field>
+					<FieldError className='whitespace-pre-wrap'>{error}</FieldError>
+				</FieldGroup>
+			</SubmitSection>
 		</form>
 	);
 }

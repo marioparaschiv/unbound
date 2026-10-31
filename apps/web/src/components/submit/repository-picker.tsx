@@ -4,18 +4,29 @@ import { IconMagnifier } from 'nucleo-micro-bold';
 import { useForm } from '@tanstack/react-form';
 import { useId } from 'react';
 
-import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from '~/components/ui/input-group';
+import { SubmitSection } from '~/components/submit/submit-section';
 import { repositoryAddonsQuery } from '~/queries/submissions/submissions';
+import { Field, FieldError, FieldLabel } from '~/components/ui/field';
 import usePrefetchIntent from '~/queries/use-prefetch-intent';
 import GitHubIcon from '~/components/icons/github';
 import { Button } from '~/components/ui/button';
-import Input from '~/components/ui/input';
+import Spinner from '~/components/ui/spinner';
 import Text from '~/components/ui/text';
 
 type RepositoryPickerProps = {
 	defaultValue: string;
 	repositories: PushableRepository[];
 	disabled: boolean;
+	/** The listing this picker asked for is being read. */
+	busy: boolean;
+	/** Why the last read failed. */
+	error: string | null;
 	/** Called with the repository as `owner/name`. */
 	onPick: (repository: string) => void;
 };
@@ -32,7 +43,7 @@ function RepositoryShortcut({ repository, disabled, onPick }: RepositoryShortcut
 	return (
 		<Button
 			type='button'
-			variant='ghost'
+			variant='outline'
 			size='sm'
 			disabled={disabled}
 			onClick={onPick}
@@ -44,7 +55,14 @@ function RepositoryShortcut({ repository, disabled, onPick }: RepositoryShortcut
 	);
 }
 
-function RepositoryPicker({ defaultValue, repositories, disabled, onPick }: RepositoryPickerProps) {
+function RepositoryPicker({
+	defaultValue,
+	repositories,
+	disabled,
+	busy,
+	error,
+	onPick,
+}: RepositoryPickerProps) {
 	const id = useId();
 	const form = useForm({
 		defaultValues: { repository: defaultValue },
@@ -57,64 +75,73 @@ function RepositoryPicker({ defaultValue, repositories, disabled, onPick }: Repo
 	}
 
 	return (
-		<form
-			onSubmit={(event) => {
-				event.preventDefault();
-				void form.handleSubmit();
-			}}
-			className='flex flex-col gap-3'
+		<SubmitSection
+			title='Repository'
+			description='A public GitHub repository you can push to, as a URL or owner/name. The built bundle must be committed.'
 		>
-			<form.Field name='repository' validators={{ onSubmit: repositoryInputSchema }}>
-				{(field) => (
-					<Field data-invalid={field.state.meta.errors.length > 0}>
-						<FieldLabel htmlFor={`${id}-repository`}>Repository</FieldLabel>
-						<div className='flex gap-2'>
-							<Input
-								id={`${id}-repository`}
-								value={field.state.value}
-								onChange={(event) => field.handleChange(event.target.value)}
-								onBlur={field.handleBlur}
-								placeholder='https://github.com/owner/name'
-								aria-invalid={field.state.meta.errors.length > 0}
-								disabled={disabled}
-								required
-							/>
-							<Button
-								type='submit'
-								variant='outline'
-								disabled={disabled || !field.state.value.trim()}
-							>
-								<IconMagnifier size={24} />
-								Find addons
-							</Button>
-						</div>
-						<FieldDescription>
-							A public GitHub repository you can push to, as a URL or owner/name. The
-							bundle must be committed.
-						</FieldDescription>
-						<FieldError errors={field.state.meta.errors} />
-					</Field>
-				)}
-			</form.Field>
+			<form
+				onSubmit={(event) => {
+					event.preventDefault();
+					void form.handleSubmit();
+				}}
+				className='flex flex-col gap-4'
+			>
+				<form.Field name='repository' validators={{ onSubmit: repositoryInputSchema }}>
+					{(field) => (
+						<Field data-invalid={field.state.meta.errors.length > 0}>
+							<FieldLabel htmlFor={`${id}-repository`} className='sr-only'>
+								Repository
+							</FieldLabel>
+							<InputGroup>
+								<InputGroupAddon>
+									<GitHubIcon />
+								</InputGroupAddon>
+								<InputGroupInput
+									id={`${id}-repository`}
+									value={field.state.value}
+									onChange={(event) => field.handleChange(event.target.value)}
+									onBlur={field.handleBlur}
+									placeholder='owner/name'
+									aria-invalid={field.state.meta.errors.length > 0}
+									disabled={disabled}
+									required
+								/>
+								<InputGroupAddon align='inline-end'>
+									<InputGroupButton
+										type='submit'
+										size='sm'
+										disabled={disabled || !field.state.value.trim()}
+									>
+										{busy ? <Spinner /> : <IconMagnifier size={24} />}
+										Find addons
+									</InputGroupButton>
+								</InputGroupAddon>
+							</InputGroup>
+							<FieldError errors={field.state.meta.errors} />
+							<FieldError className='whitespace-pre-wrap'>{error}</FieldError>
+						</Field>
+					)}
+				</form.Field>
 
-			{repositories.length > 0 ? (
-				<div className='flex flex-col gap-1'>
-					<Text variant='text-xs' color='muted'>
-						Repositories you can push to
-					</Text>
-					<div className='flex flex-wrap gap-2'>
-						{repositories.map((entry) => (
-							<RepositoryShortcut
-								key={entry.repository}
-								repository={entry.repository}
-								disabled={disabled}
-								onPick={() => pick(entry.repository)}
-							/>
-						))}
+				{repositories.length > 0 ? (
+					<div className='flex flex-col gap-2'>
+						<Text variant='text-xs' color='muted'>
+							Repositories you can push to
+						</Text>
+						<div className='flex flex-wrap gap-2'>
+							{repositories.map((entry) => (
+								<RepositoryShortcut
+									key={entry.repository}
+									repository={entry.repository}
+									disabled={disabled}
+									onPick={() => pick(entry.repository)}
+								/>
+							))}
+						</div>
 					</div>
-				</div>
-			) : null}
-		</form>
+				) : null}
+			</form>
+		</SubmitSection>
 	);
 }
 

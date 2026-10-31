@@ -1,56 +1,99 @@
 import type { ListRepositoryAddonsResponse, RepositoryAddon } from '@unbound-app/contracts/source';
-import { IconEye, IconRefresh } from 'nucleo-micro-bold';
+import { IconBox, IconCheck, IconCodeBranch, IconRefresh } from 'nucleo-micro-bold';
 import { useForm } from '@tanstack/react-form';
 import { useId } from 'react';
 
+import {
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from '~/components/ui/empty';
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from '~/components/ui/input-group';
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from '~/components/ui/accordion';
 import {
 	repositoryAddonsQuery,
 	submissionPreviewQuery,
 	toPreviewRequest,
 } from '~/queries/submissions/submissions';
-import { Field, FieldDescription, FieldLabel } from '~/components/ui/field';
+import { Field, FieldError, FieldLabel } from '~/components/ui/field';
+import { SubmitSection } from '~/components/submit/submit-section';
 import type { PreviewRequest } from '~/queries/submissions/submissions';
 import usePrefetchIntent from '~/queries/use-prefetch-intent';
 import { getTreeUrl, shortSha } from '~/lib/github-urls';
+import AddonIcon from '~/components/addon-icon';
 import { Button } from '~/components/ui/button';
-import Input from '~/components/ui/input';
+import Spinner from '~/components/ui/spinner';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
+import cn from '~/lib/cn';
 
 type AddonPickerProps = {
 	listing: ListRepositoryAddonsResponse;
 	lockedAddonId?: string;
 	selected: string | null;
 	disabled: boolean;
+	/** What the picker last asked for, while it loads. */
+	busy: 'ref' | 'preview' | null;
+	/** Why the last read or preview failed. */
+	error: string | null;
 	onRefChange: (ref: string) => void;
 	onPick: (addon: RepositoryAddon) => void;
 };
 
 type AddonOptionProps = {
 	addon: RepositoryAddon;
-	/** The preview the Preview button reads, or `null` when the addon cannot be previewed. */
+	/** The preview the Select button reads, or `null` when the addon cannot be previewed. */
 	request: PreviewRequest | null;
 	selected: boolean;
+	busy: boolean;
 	disabled: boolean;
 	onPick: () => void;
 };
 
-function AddonOption({ addon, request, selected, disabled, onPick }: AddonOptionProps) {
+type SkippedDirectoriesProps = {
+	listing: ListRepositoryAddonsResponse;
+};
+
+const LINK_CLASS = 'font-mono underline-offset-4 hover:underline';
+
+function AddonOption({ addon, request, selected, busy, disabled, onPick }: AddonOptionProps) {
 	const prefetch = usePrefetchIntent(submissionPreviewQuery(request));
 
 	return (
-		<li className='flex flex-wrap items-start gap-3 py-3'>
-			<div className='flex flex-col flex-1 gap-1 min-w-48'>
+		<li className='flex items-center gap-4 py-4 first:pt-0 last:pb-0'>
+			<div
+				className={cn(
+					'hidden sm:flex justify-center items-center bg-accent rounded-control size-10 shrink-0',
+					addon.issues.length > 0 ? 'opacity-60' : null,
+				)}
+			>
+				<AddonIcon type={addon.kind} svg={null} className='size-5' />
+			</div>
+
+			<div className='flex flex-col flex-1 gap-1 min-w-0'>
 				<div className='flex flex-wrap items-center gap-2'>
-					<Text as='span' variant='text-sm' className='font-medium'>
+					<Text as='span' variant='text-md' className='font-semibold'>
 						{addon.name ?? addon.id}
 					</Text>
-					<Text as='span' variant='text-xs' color='muted' className='font-mono'>
-						{addon.id} {addon.version ?? ''}
-					</Text>
-					<Tag className='uppercase'>{addon.kind}</Tag>
+					<Tag className='capitalize'>{addon.kind}</Tag>
 				</div>
-				<Text variant='text-xs' color='muted' className='font-mono'>
+				<Text variant='text-xs' color='muted' className='truncate'>
+					<span className='font-mono'>{addon.id}</span>
+					{addon.version ? ` · ${addon.version}` : null}
+				</Text>
+				<Text variant='text-xs' color='muted' className='font-mono break-all'>
 					{addon.bundle}
 				</Text>
 				{addon.issues.map((issue) => (
@@ -59,18 +102,50 @@ function AddonOption({ addon, request, selected, disabled, onPick }: AddonOption
 					</Text>
 				))}
 			</div>
+
 			<Button
 				type='button'
 				size='sm'
 				variant={selected ? 'default' : 'outline'}
 				disabled={disabled}
+				aria-pressed={selected}
 				onClick={onPick}
+				className='shrink-0'
 				{...prefetch}
 			>
-				<IconEye size={24} />
-				Preview
+				{busy ? <Spinner /> : selected ? <IconCheck size={24} /> : null}
+				{selected ? 'Selected' : 'Select'}
 			</Button>
 		</li>
+	);
+}
+
+function SkippedDirectories({ listing }: SkippedDirectoriesProps) {
+	const count = listing.skipped.length;
+
+	return (
+		<Accordion type='single' collapsible className='mt-2 border-t'>
+			<AccordionItem value='skipped'>
+				<AccordionTrigger className='pb-0 text-muted-foreground'>
+					{count === 1 ? '1 directory skipped' : `${count} directories skipped`}
+				</AccordionTrigger>
+				<AccordionContent className='flex flex-col gap-1 pt-3 pb-0'>
+					{listing.skipped.map((entry) => (
+						<Text key={entry.path} variant='text-xs' color='muted'>
+							<a
+								href={getTreeUrl({ ...listing, path: entry.path })}
+								target='_blank'
+								rel='noopener noreferrer'
+								className={LINK_CLASS}
+							>
+								{entry.path || '/'}
+							</a>
+							: {entry.reason}
+						</Text>
+					))}
+				</AccordionContent>
+			</AccordionItem>
+		</Accordion>
 	);
 }
 
@@ -79,6 +154,8 @@ function AddonPicker({
 	lockedAddonId,
 	selected,
 	disabled,
+	busy,
+	error,
 	onRefChange,
 	onPick,
 }: AddonPickerProps) {
@@ -94,112 +171,124 @@ function AddonPicker({
 		onSubmit: ({ value }) => onRefChange(value.ref),
 	});
 
-	return (
-		<div className='flex flex-col gap-3'>
-			<form
-				onSubmit={(event) => {
-					event.preventDefault();
-					void form.handleSubmit();
-				}}
+	const description = (
+		<>
+			Read at{' '}
+			<a
+				href={getTreeUrl({ ...listing, path: '' })}
+				target='_blank'
+				rel='noopener noreferrer'
+				className={LINK_CLASS}
 			>
-				<Field>
-					<FieldLabel htmlFor={`${id}-ref`}>Branch, tag or commit</FieldLabel>
-					<div className='flex gap-2'>
-						<form.Field name='ref'>
-							{(field) => (
-								<Input
-									id={`${id}-ref`}
-									value={field.state.value}
-									onChange={(event) => field.handleChange(event.target.value)}
-									onBlur={field.handleBlur}
-									disabled={disabled}
-									required
-								/>
-							)}
-						</form.Field>
-						<Button type='submit' variant='outline' disabled={disabled}>
-							<IconRefresh size={24} />
-							Read
-						</Button>
-					</div>
-					<FieldDescription>
-						Read at{' '}
-						<a
-							href={getTreeUrl({ ...listing, path: '' })}
-							target='_blank'
-							rel='noopener noreferrer'
-							className='font-mono underline-offset-4 hover:underline'
-						>
-							{shortSha(listing.commitSha)}
-						</a>
-						.
-						{releaseSource ? (
-							<>
-								{' '}
-								Latest release:{' '}
-								<Button
-									type='button'
-									variant='link'
-									className='px-0 h-auto'
-									disabled={disabled}
-									onClick={() => {
-										form.setFieldValue('ref', releaseSource.ref);
-										void form.handleSubmit();
-									}}
-									{...prefetchRelease}
-								>
-									{releaseSource.ref}
-								</Button>
-							</>
-						) : null}
-					</FieldDescription>
-				</Field>
-			</form>
-
-			{listing.addons.length === 0 ? (
-				<Text variant='text-sm' color='muted'>
-					No addons in {listing.repository} at this commit.
-				</Text>
-			) : (
-				<ul className='flex flex-col divide-y'>
-					{listing.addons.map((addon) => (
-						<AddonOption
-							key={addon.path}
-							addon={addon}
-							request={toPreviewRequest(listing, addon.path)}
-							selected={selected === addon.path}
-							disabled={
-								disabled ||
-								addon.issues.length > 0 ||
-								(lockedAddonId !== undefined && addon.id !== lockedAddonId)
-							}
-							onPick={() => onPick(addon)}
-						/>
-					))}
-				</ul>
-			)}
-
-			{listing.skipped.length > 0 ? (
-				<div className='flex flex-col gap-1'>
-					<Text variant='text-xs' color='muted'>
-						Skipped
-					</Text>
-					{listing.skipped.map((entry) => (
-						<Text key={entry.path} variant='text-xs' color='muted'>
-							<a
-								href={getTreeUrl({ ...listing, path: entry.path })}
-								target='_blank'
-								rel='noopener noreferrer'
-								className='font-mono underline-offset-4 hover:underline'
-							>
-								{entry.path || '/'}
-							</a>
-							: {entry.reason}
-						</Text>
-					))}
-				</div>
+				{shortSha(listing.commitSha)}
+			</a>
+			{releaseSource ? (
+				<>
+					{' · '}Latest release{' '}
+					<Button
+						type='button'
+						variant='link'
+						className='px-0 h-auto font-mono text-sm'
+						disabled={disabled}
+						onClick={() => {
+							form.setFieldValue('ref', releaseSource.ref);
+							void form.handleSubmit();
+						}}
+						{...prefetchRelease}
+					>
+						{releaseSource.ref}
+					</Button>
+				</>
 			) : null}
-		</div>
+		</>
+	);
+
+	return (
+		<SubmitSection title='Addon' description={description}>
+			<div className='flex flex-col gap-5'>
+				<form
+					onSubmit={(event) => {
+						event.preventDefault();
+						void form.handleSubmit();
+					}}
+				>
+					<form.Field name='ref'>
+						{(field) => (
+							<Field>
+								<FieldLabel htmlFor={`${id}-ref`} className='sr-only'>
+									Branch, tag or commit
+								</FieldLabel>
+								<InputGroup>
+									<InputGroupAddon>
+										<IconCodeBranch />
+									</InputGroupAddon>
+									<InputGroupInput
+										id={`${id}-ref`}
+										value={field.state.value}
+										onChange={(event) => field.handleChange(event.target.value)}
+										onBlur={field.handleBlur}
+										placeholder='Branch, tag or commit'
+										className='font-mono'
+										disabled={disabled}
+										required
+									/>
+									<InputGroupAddon align='inline-end'>
+										<InputGroupButton
+											type='submit'
+											size='sm'
+											disabled={disabled}
+										>
+											{busy === 'ref' ? (
+												<Spinner />
+											) : (
+												<IconRefresh size={24} />
+											)}
+											Read
+										</InputGroupButton>
+									</InputGroupAddon>
+								</InputGroup>
+							</Field>
+						)}
+					</form.Field>
+				</form>
+
+				{listing.addons.length === 0 ? (
+					<Empty className='border p-6 md:p-6'>
+						<EmptyHeader>
+							<EmptyMedia variant='icon'>
+								<IconBox />
+							</EmptyMedia>
+							<EmptyTitle>No addons found</EmptyTitle>
+							<EmptyDescription>
+								{listing.repository} registers no addons at this commit.
+							</EmptyDescription>
+						</EmptyHeader>
+					</Empty>
+				) : (
+					<ul className='flex flex-col divide-y'>
+						{listing.addons.map((addon) => (
+							<AddonOption
+								key={addon.path}
+								addon={addon}
+								request={toPreviewRequest(listing, addon.path)}
+								selected={selected === addon.path}
+								busy={busy === 'preview' && selected === addon.path}
+								disabled={
+									disabled ||
+									addon.issues.length > 0 ||
+									(lockedAddonId !== undefined && addon.id !== lockedAddonId)
+								}
+								onPick={() => onPick(addon)}
+							/>
+						))}
+					</ul>
+				)}
+
+				<FieldError className='whitespace-pre-wrap'>{error}</FieldError>
+			</div>
+
+			{listing.skipped.length > 0 ? <SkippedDirectories listing={listing} /> : null}
+		</SubmitSection>
 	);
 }
 
