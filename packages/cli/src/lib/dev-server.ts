@@ -5,6 +5,7 @@ import { resolve, join, sep } from 'node:path';
 import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import type { ResolvedConfig } from '~/lib/config';
+import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
 import { discoverAddons } from '~/lib/discovery';
 import { buildAddon } from '~/lib/build-addon';
 
@@ -88,7 +89,9 @@ export class DevServer {
 			process.stdout.write(`Building ${addon.id}…\n`);
 		}
 
-		const ok = await buildAddon(addon, this.resolved.config.build, DEV_BUILD_ENV);
+		const ok =
+			(await buildAddon(addon, this.resolved.config.build, DEV_BUILD_ENV)) &&
+			(await runBuildChecks(addon, DEV_BUILD_CHECKS));
 
 		if (!ok) {
 			process.stderr.write(`Failed to build ${addon.id}.\n`);
