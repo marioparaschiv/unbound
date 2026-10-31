@@ -31,9 +31,7 @@ const KINDS: Record<string, AuthErrorKind> = {
  * @returns The error kind, or `unknown` for codes without a dedicated page.
  */
 export function getAuthErrorKind(code: string | undefined): AuthErrorKind {
-	if (!code) return 'unknown';
-
-	return KINDS[code] ?? 'unknown';
+	return (code && KINDS[code]) || 'unknown';
 }
 
 export default { AUTH_ERROR_PATH, RATE_LIMITED_CODE, getAuthErrorKind };
