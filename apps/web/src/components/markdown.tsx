@@ -5,12 +5,18 @@ import { useMemo } from 'react';
 import { Lexer } from 'marked';
 
 import { resolveMarkdownUrl, type MarkdownPin } from '~/lib/markdown-url';
+import type { PageMediaMap } from '~/lib/page-media';
+import MediaFile from '~/components/media-file';
 import Text from '~/components/ui/text';
 
 type MarkdownProps = {
 	source: string;
 	pin: MarkdownPin;
+	/** The page's measured media; an image whose path is here renders in place instead of as a link. */
+	media?: PageMediaMap;
 };
+
+type RenderContext = Pick<MarkdownProps, 'pin' | 'media'>;
 
 type LinkProps = {
 	href: string | undefined;
@@ -86,17 +92,17 @@ function Link({ href, children }: LinkProps) {
 	);
 }
 
-function renderInline(tokens: Token[] | undefined, pin: MarkdownPin): ReactNode[] {
-	return (tokens ?? []).map((token, index) => renderInlineToken(token, pin, index));
+function renderInline(tokens: Token[] | undefined, ctx: RenderContext): ReactNode[] {
+	return (tokens ?? []).map((token, index) => renderInlineToken(token, ctx, index));
 }
 
 // Raw HTML never renders: its tags drop out and the text between them stays.
-function renderInlineToken(token: Token, pin: MarkdownPin, key: number): ReactNode {
+function renderInlineToken(token: Token, ctx: RenderContext, key: number): ReactNode {
 	switch (token.type) {
 		case 'text': {
 			const text = token as Tokens.Text;
 
-			return text.tokens ? renderInline(text.tokens, pin) : decodeEntities(text.text);
+			return text.tokens ? renderInline(text.tokens, ctx) : decodeEntities(text.text);
 		}
 		case 'escape': {
 			return (token as Tokens.Escape).text;
@@ -104,17 +110,17 @@ function renderInlineToken(token: Token, pin: MarkdownPin, key: number): ReactNo
 		case 'strong': {
 			return (
 				<strong key={key} className='font-semibold text-foreground'>
-					{renderInline((token as Tokens.Strong).tokens, pin)}
+					{renderInline((token as Tokens.Strong).tokens, ctx)}
 				</strong>
 			);
 		}
 		case 'em': {
-			return <em key={key}>{renderInline((token as Tokens.Em).tokens, pin)}</em>;
+			return <em key={key}>{renderInline((token as Tokens.Em).tokens, ctx)}</em>;
 		}
 		case 'del': {
 			return (
 				<del key={key} className='text-muted-foreground/70'>
-					{renderInline((token as Tokens.Del).tokens, pin)}
+					{renderInline((token as Tokens.Del).tokens, ctx)}
 				</del>
 			);
 		}
@@ -135,19 +141,32 @@ function renderInlineToken(token: Token, pin: MarkdownPin, key: number): ReactNo
 			const link = token as Tokens.Link;
 
 			return (
-				<Link key={key} href={resolveMarkdownUrl(link.href, pin, 'link')?.href}>
-					{renderInline(link.tokens, pin)}
+				<Link key={key} href={resolveMarkdownUrl(link.href, ctx.pin, 'link')?.href}>
+					{renderInline(link.tokens, ctx)}
 				</Link>
 			);
 		}
 		case 'image': {
-			// An image becomes a link to the file, so no remote content loads on the page.
 			const image = token as Tokens.Image;
+			const alt = decodeEntities(image.text.trim());
+			const media = ctx.media?.get(image.href);
 
+			if (media) {
+				return (
+					<MediaFile
+						key={key}
+						media={media}
+						alt={alt}
+						className='block max-w-full h-auto'
+					/>
+				);
+			}
+
+			// Any other image becomes a link to the file, so only measured repository media load on the page.
 			return (
-				<Link key={key} href={resolveMarkdownUrl(image.href, pin, 'image')?.href}>
+				<Link key={key} href={resolveMarkdownUrl(image.href, ctx.pin, 'image')?.href}>
 					<IconPhoto className='inline mr-1 size-4 align-[-0.125em]' aria-hidden />
-					{decodeEntities(image.text.trim()) || 'Image'}
+					{alt || 'Image'}
 				</Link>
 			);
 		}
@@ -157,16 +176,16 @@ function renderInlineToken(token: Token, pin: MarkdownPin, key: number): ReactNo
 	}
 }
 
-function renderBlocks(tokens: Token[], pin: MarkdownPin): ReactNode[] {
-	return tokens.map((token, index) => renderBlock(token, pin, index));
+function renderBlocks(tokens: Token[], ctx: RenderContext): ReactNode[] {
+	return tokens.map((token, index) => renderBlock(token, ctx, index));
 }
 
-function renderListItem(item: Tokens.ListItem, pin: MarkdownPin, key: number): ReactNode {
+function renderListItem(item: Tokens.ListItem, ctx: RenderContext, key: number): ReactNode {
 	// A tight item holds bare text; a loose one holds paragraphs.
 	const body = item.tokens.map((token, index) =>
 		token.type === 'text'
-			? renderInlineToken(token, pin, index)
-			: renderBlock(token, pin, index),
+			? renderInlineToken(token, ctx, index)
+			: renderBlock(token, ctx, index),
 	);
 
 	if (item.task) {
@@ -184,7 +203,7 @@ function renderListItem(item: Tokens.ListItem, pin: MarkdownPin, key: number): R
 	);
 }
 
-function renderTable(table: Tokens.Table, pin: MarkdownPin, key: number): ReactNode {
+function renderTable(table: Tokens.Table, ctx: RenderContext, key: number): ReactNode {
 	return (
 		<div key={key} className='border rounded-control overflow-x-auto'>
 			<table className='w-full text-sm border-collapse'>
@@ -195,7 +214,7 @@ function renderTable(table: Tokens.Table, pin: MarkdownPin, key: number): ReactN
 								key={index}
 								className={`px-3 py-2 font-medium text-foreground ${ALIGN_CLASSES[cell.align ?? 'left']}`}
 							>
-								{renderInline(cell.tokens, pin)}
+								{renderInline(cell.tokens, ctx)}
 							</th>
 						))}
 					</tr>
@@ -208,7 +227,7 @@ function renderTable(table: Tokens.Table, pin: MarkdownPin, key: number): ReactN
 									key={index}
 									className={`px-3 py-2 text-muted-foreground align-top ${ALIGN_CLASSES[cell.align ?? 'left']}`}
 								>
-									{renderInline(cell.tokens, pin)}
+									{renderInline(cell.tokens, ctx)}
 								</td>
 							))}
 						</tr>
@@ -220,7 +239,7 @@ function renderTable(table: Tokens.Table, pin: MarkdownPin, key: number): ReactN
 }
 
 // Raw HTML blocks and link definitions render nothing; definitions already resolved their links.
-function renderBlock(token: Token, pin: MarkdownPin, key: number): ReactNode {
+function renderBlock(token: Token, ctx: RenderContext, key: number): ReactNode {
 	switch (token.type) {
 		case 'heading': {
 			const heading = token as Tokens.Heading;
@@ -233,28 +252,28 @@ function renderBlock(token: Token, pin: MarkdownPin, key: number): ReactNode {
 					variant={style?.variant}
 					className={style?.className}
 				>
-					{renderInline(heading.tokens, pin)}
+					{renderInline(heading.tokens, ctx)}
 				</Text>
 			);
 		}
 		case 'paragraph': {
 			return (
 				<Text key={key} variant='text-md' color='muted'>
-					{renderInline((token as Tokens.Paragraph).tokens, pin)}
+					{renderInline((token as Tokens.Paragraph).tokens, ctx)}
 				</Text>
 			);
 		}
 		case 'text': {
 			return (
 				<Text key={key} variant='text-md' color='muted'>
-					{renderInlineToken(token, pin, key)}
+					{renderInlineToken(token, ctx, key)}
 				</Text>
 			);
 		}
 		case 'list': {
 			const list = token as Tokens.List;
 			const tasks = list.items.some((item) => item.task);
-			const items = list.items.map((item, index) => renderListItem(item, pin, index));
+			const items = list.items.map((item, index) => renderListItem(item, ctx, index));
 
 			return list.ordered ? (
 				<Text
@@ -293,7 +312,7 @@ function renderBlock(token: Token, pin: MarkdownPin, key: number): ReactNode {
 		case 'blockquote': {
 			return (
 				<blockquote key={key} className='flex flex-col gap-3 pl-4 border-border border-l-2'>
-					{renderBlocks((token as Tokens.Blockquote).tokens, pin)}
+					{renderBlocks((token as Tokens.Blockquote).tokens, ctx)}
 				</blockquote>
 			);
 		}
@@ -308,7 +327,7 @@ function renderBlock(token: Token, pin: MarkdownPin, key: number): ReactNode {
 			);
 		}
 		case 'table': {
-			return renderTable(token as Tokens.Table, pin, key);
+			return renderTable(token as Tokens.Table, ctx, key);
 		}
 		case 'hr': {
 			return <hr key={key} className='border-border' />;
@@ -321,15 +340,15 @@ function renderBlock(token: Token, pin: MarkdownPin, key: number): ReactNode {
 
 /**
  * @description Renders an addon's ADDON.md: GitHub-flavoured markdown without raw HTML, with every
- * URL passed through {@link resolveMarkdownUrl} and images shown as links.
- * @param props The markdown text and the source pin its relative URLs resolve against.
+ * URL passed through {@link resolveMarkdownUrl}, and images shown in place when measured, else as links.
+ * @param props The markdown text, the source pin its relative URLs resolve against and its measured media.
  * @returns The rendered document.
  */
-function Markdown({ source, pin }: MarkdownProps) {
+function Markdown({ source, pin, media }: MarkdownProps) {
 	// marked only tokenizes here; React builds the elements, so nothing renders as raw HTML.
 	const content = useMemo(
-		() => renderBlocks(Lexer.lex(source, { gfm: true }), pin),
-		[source, pin],
+		() => renderBlocks(Lexer.lex(source, { gfm: true }), { pin, media }),
+		[source, pin, media],
 	);
 
 	return <div className='flex flex-col gap-4 min-w-0 break-words'>{content}</div>;

@@ -121,6 +121,7 @@
         "recharts": "3.10.1",
         "sonner": "^2.0.7",
         "tailwind-merge": "^3.5.0",
+        "thumbhash": "^0.1.1",
         "vaul": "^1.1.2",
         "zod": "^4.0.0",
       },
@@ -3301,6 +3302,8 @@
     "throat": ["throat@5.0.0", "", {}, "sha512-fcwX4mndzpLQKBS1DVYhGAcYaYt7vsHNIvQV+WXMvnow5cgjPphq5CaayLaGsjRdSCKZFNGt7/GYAuXaNOiYCA=="],
 
     "through2": ["through2@2.0.5", "", { "dependencies": { "readable-stream": "~2.3.6", "xtend": "~4.0.1" } }, "sha512-/mrRod8xqpA+IHSLyGCQ2s8SPHiCDEeQJSep1jqLYeEUClOFG2Qsh+4FU6G9VeqpZnGW/Su8LQGc4YKni5rYSQ=="],
+
+    "thumbhash": ["thumbhash@0.1.1", "", {}, "sha512-kH5pKeIIBPQXAOni2AiY/Cu/NKdkFREdpH+TLdM0g6WA7RriCv0kPLgP731ady67MhTAqrVG/4mnEeibVuCJcg=="],
 
     "time-span": ["time-span@5.1.0", "", { "dependencies": { "convert-hrtime": "^5.0.0" } }, "sha512-75voc/9G4rDIJleOo4jPvN4/YC4GRZrY8yy1uU4lwrB3XEQbWve8zXoO5No4eFrGcTAMYyoY67p8jRQdtA1HbA=="],
 

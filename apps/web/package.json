@@ -70,6 +70,7 @@
 		"recharts": "3.10.1",
 		"sonner": "^2.0.7",
 		"tailwind-merge": "^3.5.0",
+		"thumbhash": "^0.1.1",
 		"vaul": "^1.1.2",
 		"zod": "^4.0.0"
 	},

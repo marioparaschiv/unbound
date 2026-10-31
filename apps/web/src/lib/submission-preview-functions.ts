@@ -5,6 +5,7 @@ import { z } from 'zod/mini';
 
 import { getArtifactKeys, getCdnUrl, pinSource, toVersionChangelog } from '~/lib/artifacts';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import { getPinnedMediaBase } from '~/lib/markdown-url';
 import type { Permissions } from '~/lib/auth/access';
 import { renderAddonIcon } from '~/lib/addon-icons';
 import { loadAuthors } from '~/lib/authors/resolve';
@@ -83,6 +84,8 @@ export const fetchSubmissionPreview = createServerFn({ method: 'GET' })
 				pin,
 				details: row.source.details,
 				addonMd: row.source.addonMd,
+				// Not published, so its media load from the pinned commit.
+				mediaBase: getPinnedMediaBase(pin),
 				approvedAt: submittedAt,
 			},
 		};
