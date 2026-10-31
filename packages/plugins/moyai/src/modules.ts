@@ -1,5 +1,5 @@
-import { metro, storage } from '@unbound-app/api';
+import { storage, flux } from '@unbound-app/api';
 
-export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
+export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
 
-export const settings = storage.getStore('astral.moyai');
+export const settings = storage.getBucket();
