@@ -1,5 +1,11 @@
 import type { ListRepositoryAddonsResponse, RepositoryAddon } from '@unbound-app/contracts/source';
-import { IconBox, IconCheck, IconCodeBranch, IconRefresh } from 'nucleo-micro-bold';
+import {
+	IconBox,
+	IconCheck,
+	IconCircleCheck,
+	IconCodeBranch,
+	IconRefresh,
+} from 'nucleo-micro-bold';
 import { useForm } from '@tanstack/react-form';
 import { useId } from 'react';
 
@@ -27,11 +33,14 @@ import {
 	submissionPreviewQuery,
 	toPreviewRequest,
 } from '~/queries/submissions/submissions';
-import { Field, FieldError, FieldLabel } from '~/components/ui/field';
+import { SubmitCallout, SubmitIssue } from '~/components/submit/submit-callout';
 import { SubmitSection } from '~/components/submit/submit-section';
 import type { PreviewRequest } from '~/queries/submissions/submissions';
 import usePrefetchIntent from '~/queries/use-prefetch-intent';
+import type { ApiErrorDetails } from '~/lib/api/error-details';
 import { getTreeUrl, shortSha } from '~/lib/github-urls';
+import { Field, FieldLabel } from '~/components/ui/field';
+import { TONES } from '~/components/dashboard/status';
 import AddonIcon from '~/components/addon-icon';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
@@ -46,7 +55,7 @@ type AddonPickerProps = {
 	/** What the picker last asked for, while it loads. */
 	busy: 'ref' | 'preview' | null;
 	/** Why the last read or preview failed. */
-	error: string | null;
+	error: ApiErrorDetails | null;
 	onRefChange: (ref: string) => void;
 	onPick: (addon: RepositoryAddon) => void;
 };
@@ -61,6 +70,11 @@ type AddonOptionProps = {
 	onPick: () => void;
 };
 
+type AddonOptionsProps = Pick<
+	AddonPickerProps,
+	'listing' | 'lockedAddonId' | 'selected' | 'disabled' | 'busy' | 'onPick'
+>;
+
 type SkippedDirectoriesProps = {
 	listing: ListRepositoryAddonsResponse;
 };
@@ -70,6 +84,7 @@ const LINK_CLASS = 'font-mono underline-offset-4 hover:underline';
 function AddonOption({ addon, request, selected, busy, disabled, onPick }: AddonOptionProps) {
 	const prefetch = usePrefetchIntent(submissionPreviewQuery(request));
 	const [issue] = addon.issues;
+	const dimmed = Boolean(issue) || addon.upToDate;
 
 	return (
 		<li>
@@ -90,7 +105,7 @@ function AddonOption({ addon, request, selected, busy, disabled, onPick }: Addon
 					className={cn(
 						'flex justify-center items-center rounded-control size-9 shrink-0 transition-colors',
 						selected ? 'bg-background/60' : 'bg-accent',
-						issue ? 'opacity-50' : null,
+						dimmed ? 'opacity-50' : null,
 					)}
 				>
 					<AddonIcon type={addon.kind} svg={null} className='size-4.5' />
@@ -101,7 +116,7 @@ function AddonOption({ addon, request, selected, busy, disabled, onPick }: Addon
 						<Text
 							as='span'
 							variant='text-sm'
-							className={cn('font-semibold truncate', issue ? 'opacity-60' : null)}
+							className={cn('font-semibold truncate', dimmed ? 'opacity-60' : null)}
 						>
 							{addon.name ?? addon.id}
 						</Text>
@@ -112,15 +127,7 @@ function AddonOption({ addon, request, selected, busy, disabled, onPick }: Addon
 						) : null}
 					</span>
 					{issue ? (
-						<Text
-							as='span'
-							variant='text-xs'
-							color='destructive'
-							className='truncate'
-							title={addon.issues.join('\n')}
-						>
-							{issue}
-						</Text>
+						<SubmitIssue issue={issue} />
 					) : (
 						<Text
 							as='span'
@@ -133,22 +140,98 @@ function AddonOption({ addon, request, selected, busy, disabled, onPick }: Addon
 					)}
 				</span>
 
-				<span
-					aria-hidden
-					className={cn(
-						'flex justify-center items-center border rounded-full size-5 shrink-0 transition-colors',
-						selected ? 'bg-primary border-primary text-primary-foreground' : null,
-						issue ? 'opacity-0' : null,
-					)}
-				>
-					{busy ? (
-						<Spinner className='size-3' />
-					) : selected ? (
-						<IconCheck className='size-3' />
-					) : null}
-				</span>
+				{addon.upToDate && !issue ? (
+					<span
+						className={cn(
+							'flex items-center gap-1 text-xs shrink-0',
+							TONES.success.text,
+						)}
+					>
+						<IconCheck size={12} />
+						Up to date
+					</span>
+				) : (
+					<span
+						aria-hidden
+						className={cn(
+							'flex justify-center items-center border rounded-full size-5 shrink-0 transition-colors',
+							selected ? 'bg-primary border-primary text-primary-foreground' : null,
+							issue ? 'opacity-0' : null,
+						)}
+					>
+						{busy ? (
+							<Spinner className='size-3' />
+						) : selected ? (
+							<IconCheck className='size-3' />
+						) : null}
+					</span>
+				)}
 			</button>
 		</li>
+	);
+}
+
+function AddonOptions({
+	listing,
+	lockedAddonId,
+	selected,
+	disabled,
+	busy,
+	onPick,
+}: AddonOptionsProps) {
+	if (listing.addons.length === 0) {
+		return (
+			<Empty className='border p-6 md:p-6'>
+				<EmptyHeader>
+					<EmptyMedia variant='icon'>
+						<IconBox />
+					</EmptyMedia>
+					<EmptyTitle>No addons found</EmptyTitle>
+					<EmptyDescription>
+						{listing.repository} registers no addons at this commit.
+					</EmptyDescription>
+				</EmptyHeader>
+			</Empty>
+		);
+	}
+
+	const locked = listing.addons.find((addon) => addon.id === lockedAddonId);
+
+	if (locked?.upToDate) {
+		return (
+			<Empty className='p-6 md:p-6'>
+				<EmptyHeader>
+					<EmptyMedia variant='icon' className={TONES.success.text}>
+						<IconCircleCheck />
+					</EmptyMedia>
+					<EmptyTitle>Everything is up to date</EmptyTitle>
+					<EmptyDescription>
+						Bump the version in manifest.json and commit it to submit an update.
+					</EmptyDescription>
+				</EmptyHeader>
+			</Empty>
+		);
+	}
+
+	return (
+		<ul className='flex flex-col gap-1'>
+			{listing.addons.map((addon) => (
+				<AddonOption
+					key={addon.path}
+					addon={addon}
+					request={toPreviewRequest(listing, addon.path)}
+					selected={selected === addon.path}
+					busy={busy === 'preview' && selected === addon.path}
+					disabled={
+						disabled ||
+						addon.issues.length > 0 ||
+						addon.upToDate ||
+						(lockedAddonId !== undefined && addon.id !== lockedAddonId)
+					}
+					onPick={() => onPick(addon)}
+				/>
+			))}
+		</ul>
 	);
 }
 
@@ -284,39 +367,16 @@ function AddonPicker({
 					</form.Field>
 				</form>
 
-				{listing.addons.length === 0 ? (
-					<Empty className='border p-6 md:p-6'>
-						<EmptyHeader>
-							<EmptyMedia variant='icon'>
-								<IconBox />
-							</EmptyMedia>
-							<EmptyTitle>No addons found</EmptyTitle>
-							<EmptyDescription>
-								{listing.repository} registers no addons at this commit.
-							</EmptyDescription>
-						</EmptyHeader>
-					</Empty>
-				) : (
-					<ul className='flex flex-col gap-1'>
-						{listing.addons.map((addon) => (
-							<AddonOption
-								key={addon.path}
-								addon={addon}
-								request={toPreviewRequest(listing, addon.path)}
-								selected={selected === addon.path}
-								busy={busy === 'preview' && selected === addon.path}
-								disabled={
-									disabled ||
-									addon.issues.length > 0 ||
-									(lockedAddonId !== undefined && addon.id !== lockedAddonId)
-								}
-								onPick={() => onPick(addon)}
-							/>
-						))}
-					</ul>
-				)}
+				<AddonOptions
+					listing={listing}
+					lockedAddonId={lockedAddonId}
+					selected={selected}
+					disabled={disabled}
+					busy={busy}
+					onPick={onPick}
+				/>
 
-				<FieldError className='whitespace-pre-wrap'>{error}</FieldError>
+				<SubmitCallout error={error} />
 			</div>
 
 			{listing.skipped.length > 0 ? <SkippedDirectories listing={listing} /> : null}

@@ -17,11 +17,12 @@ import {
 	toPreviewRequest,
 } from '~/queries/submissions/submissions';
 import type { PreviewRequest } from '~/queries/submissions/submissions';
-import getApiErrorMessage from '~/lib/api/error-message';
+import type { ApiErrorDetails } from '~/lib/api/error-details';
+import getApiErrorDetails from '~/lib/api/error-details';
 import type { PendingSource } from '~/lib/dashboard';
 
 type SubmitFlowOptions = {
-	/** Picked in every listing that has it, until the author picks an addon. */
+	/** Picked in every listing that has it, unless it is up to date, until the author picks an addon. */
 	lockedAddonId?: string;
 	/** Where the addon's last submission came from; read and previewed at once. */
 	pendingSource?: PendingSource;
@@ -34,7 +35,7 @@ type SubmitFlow = {
 	path: string | null;
 	request: PreviewRequest | null;
 	preview: SubmissionPreview | undefined;
-	error: string | null;
+	error: ApiErrorDetails | null;
 	isPending: boolean;
 	read: (source: ListRepositoryAddonsQuery) => void;
 	pick: (addon: RepositoryAddon) => void;
@@ -60,7 +61,9 @@ function useSubmitFlow({
 	const [picked, setPath] = useState(pendingSource?.path ?? null);
 	const repositories = useQuery(pushableRepositoriesQuery());
 	const listing = useQuery(repositoryAddonsQuery(source));
-	const locked = listing.data?.addons.find((addon) => addon.id === lockedAddonId);
+	const locked = listing.data?.addons.find(
+		(addon) => addon.id === lockedAddonId && !addon.upToDate,
+	);
 	const path = picked ?? locked?.path ?? null;
 	const request = toPreviewRequest(listing.data, path);
 	const preview = useQuery(submissionPreviewQuery(request));
@@ -103,7 +106,7 @@ function useSubmitFlow({
 		path,
 		request,
 		preview: preview.data,
-		error: error ? getApiErrorMessage(error) : null,
+		error: error ? getApiErrorDetails(error) : null,
 		isPending,
 		read,
 		pick,

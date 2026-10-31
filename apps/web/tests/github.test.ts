@@ -14,6 +14,7 @@ import type { Api } from '~/api';
 
 import { createTestContext, linkGitHub, signInWithDiscord } from './helpers/context';
 import { failure, serveEndpoints } from './helpers/server';
+import { manifest, seedApprovedAddon } from './helpers/addons';
 import { serveGitHub } from './helpers/github';
 
 const MONOREPO = 'acme/addons';
@@ -261,16 +262,46 @@ describe('GET /api/v1/github/addons', () => {
 			issues: [],
 		});
 		expect(byId.get('acme.nodist')?.issues).toEqual([
-			expect.stringContaining('plugins/nodist/dist/index.js'),
+			{
+				code: 'artifact_missing',
+				message: expect.stringContaining('plugins/nodist/dist/index.js'),
+			},
 		]);
 		expect(byId.get('acme.broken')).toMatchObject({ name: null, version: null });
 		expect(byId.get('acme.broken')?.issues).toEqual([
-			expect.stringContaining('plugins/broken/manifest.json'),
+			{
+				code: 'invalid_manifest',
+				message: expect.stringContaining('plugins/broken/manifest.json'),
+			},
 		]);
 		expect(listing.skipped.map((entry) => entry.path).sort()).toEqual([
 			'plugins/wip',
 			'scratch',
 		]);
+	});
+
+	test('marks the addons whose version is already published as up to date', async () => {
+		const { userId } = await signInWithDiscord(ctx, {
+			id: '80351110224679999',
+			name: 'Publisher',
+			email: 'publisher@example.com',
+		});
+
+		await seedApprovedAddon(ctx, userId, manifest('acme.hello', '1.0.0'));
+		await seedApprovedAddon(ctx, userId, manifest('acme.dark', '0.9.0'));
+
+		const listing = await listAddons(await signIn(), MONOREPO);
+		const upToDate = Object.fromEntries(
+			listing.addons.map((addon) => [addon.id, addon.upToDate]),
+		);
+
+		expect(upToDate).toEqual({
+			'acme.inner': false,
+			'acme.broken': false,
+			'acme.hello': true,
+			'acme.nodist': false,
+			'acme.dark': false,
+		});
 	});
 
 	test('snapshots the repository details', async () => {
@@ -310,6 +341,7 @@ describe('GET /api/v1/github/addons', () => {
 				hasAddonMd: false,
 				hasChangelog: false,
 				issues: [],
+				upToDate: false,
 			},
 		]);
 		expect(listing.details).toMatchObject({ homepage: null, license: null, readmeUrl: null });

@@ -5,7 +5,9 @@ import { useForm } from '@tanstack/react-form';
 import { useId } from 'react';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
-import { Field, FieldError, FieldGroup, FieldLabel } from '~/components/ui/field';
+import { Field, FieldGroup, FieldLabel } from '~/components/ui/field';
+import { SubmitCallout } from '~/components/submit/submit-callout';
+import type { ApiErrorDetails } from '~/lib/api/error-details';
 import MaintainerPicker from '~/components/submit/maintainer-picker';
 import { SubmitSection } from '~/components/submit/submit-section';
 import TagSelect from '~/components/submit/tag-select';
@@ -14,7 +16,7 @@ import { Button } from '~/components/ui/button';
 type SubmissionDetailsFormProps = {
 	/** Its suggested tags and maintainers are the form's starting values. */
 	preview: SubmissionPreview;
-	error: string | null;
+	error: ApiErrorDetails | null;
 	disabled: boolean;
 	onSubmit: (details: SubmissionDetails) => void;
 };
@@ -122,7 +124,7 @@ function SubmissionDetailsForm({ preview, error, disabled, onSubmit }: Submissio
 							</Field>
 						)}
 					</form.Field>
-					<FieldError className='whitespace-pre-wrap'>{error}</FieldError>
+					<SubmitCallout error={error} />
 				</FieldGroup>
 			</SubmitSection>
 		</form>

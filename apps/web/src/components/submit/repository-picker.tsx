@@ -10,7 +10,9 @@ import {
 	InputGroupButton,
 	InputGroupInput,
 } from '~/components/ui/input-group';
+import { SubmitCallout } from '~/components/submit/submit-callout';
 import { SubmitSection } from '~/components/submit/submit-section';
+import type { ApiErrorDetails } from '~/lib/api/error-details';
 import { repositoryAddonsQuery } from '~/queries/submissions/submissions';
 import { Field, FieldError, FieldLabel } from '~/components/ui/field';
 import usePrefetchIntent from '~/queries/use-prefetch-intent';
@@ -26,7 +28,7 @@ type RepositoryPickerProps = {
 	/** The listing this picker asked for is being read. */
 	busy: boolean;
 	/** Why the last read failed. */
-	error: string | null;
+	error: ApiErrorDetails | null;
 	/** Called with the repository as `owner/name`. */
 	onPick: (repository: string) => void;
 };
@@ -118,7 +120,7 @@ function RepositoryPicker({
 								</InputGroupAddon>
 							</InputGroup>
 							<FieldError errors={field.state.meta.errors} />
-							<FieldError className='whitespace-pre-wrap'>{error}</FieldError>
+							<SubmitCallout error={error} />
 						</Field>
 					)}
 				</form.Field>

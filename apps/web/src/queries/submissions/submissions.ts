@@ -88,7 +88,8 @@ export function repositoryAddonsQuery(source: ListRepositoryAddonsQuery | null) 
  * @description Pins one addon of a listing to the listing's commit: the request a preview and a submission send.
  * @param listing The repository listing, or `undefined` before it loads.
  * @param path The addon directory in the listing.
- * @returns The pinned request, or `null` when the listing has no such addon or the addon has issues.
+ * @returns The pinned request, or `null` when the listing has no such addon, the addon has issues, or
+ * its version is already published.
  */
 export function toPreviewRequest(
 	listing: ListRepositoryAddonsResponse | undefined,
@@ -96,7 +97,7 @@ export function toPreviewRequest(
 ): PreviewRequest | null {
 	const addon = listing?.addons.find((entry) => entry.path === path);
 
-	if (!listing || !addon || addon.issues.length > 0) return null;
+	if (!listing || !addon || addon.issues.length > 0 || addon.upToDate) return null;
 
 	return {
 		repository: listing.repository,

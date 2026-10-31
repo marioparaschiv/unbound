@@ -5,6 +5,7 @@ import {
 import { z } from 'zod';
 
 import { listRepositoryAddons } from '~/lib/addon-source';
+import { markUpToDate } from '~/lib/submissions';
 import { callerEndpoint } from '~/lib/api/endpoint';
 import { connectGitHub } from '~/lib/github';
 
@@ -17,7 +18,7 @@ const listRepositoryAddonsEndpoint = callerEndpoint(
 	async ({ ctx, query, caller: { user } }) => {
 		const github = await connectGitHub(ctx, user.id);
 
-		return listRepositoryAddons(ctx, github, query);
+		return markUpToDate(ctx, await listRepositoryAddons(ctx, github, query));
 	},
 );
 

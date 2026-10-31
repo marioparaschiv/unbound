@@ -1,3 +1,4 @@
+import { apiErrorCodeSchema } from './errors';
 import { z } from './zod';
 
 /** A GitHub repository as `owner/name`. */
@@ -150,6 +151,12 @@ export const repositoryDetailsSchema = z.object({
 	latestRelease: z.nullable(repositoryReleaseSchema),
 });
 
+/** Why an addon cannot be submitted, with the code the submission itself would fail with. */
+export const repositoryAddonIssueSchema = z.object({
+	code: apiErrorCodeSchema,
+	message: z.string(),
+});
+
 /** One addon a repository registers at a commit, as the repository picker lists it. */
 export const repositoryAddonSchema = z.object({
 	id: z.string(),
@@ -164,7 +171,9 @@ export const repositoryAddonSchema = z.object({
 	hasAddonMd: z.boolean(),
 	hasChangelog: z.boolean(),
 	/** Why the addon cannot be submitted at this commit as it is; empty when it can. */
-	issues: z.array(z.string()),
+	issues: z.array(repositoryAddonIssueSchema),
+	/** This version is already published, so there is nothing new to submit. */
+	upToDate: z.boolean(),
 });
 
 /** A directory a workspace registers that is not an addon, and why. */
@@ -203,6 +212,7 @@ export type SourcePin = z.infer<typeof sourcePinSchema>;
 export type RepositoryContributor = z.infer<typeof repositoryContributorSchema>;
 export type RepositoryRelease = z.infer<typeof repositoryReleaseSchema>;
 export type RepositoryDetails = z.infer<typeof repositoryDetailsSchema>;
+export type RepositoryAddonIssue = z.infer<typeof repositoryAddonIssueSchema>;
 export type RepositoryAddon = z.infer<typeof repositoryAddonSchema>;
 export type ListRepositoryAddonsQuery = z.infer<typeof listRepositoryAddonsQuerySchema>;
 export type ListRepositoryAddonsResponse = z.infer<typeof listRepositoryAddonsResponseSchema>;
@@ -220,6 +230,7 @@ export default {
 	repositoryContributorSchema,
 	repositoryReleaseSchema,
 	repositoryDetailsSchema,
+	repositoryAddonIssueSchema,
 	repositoryAddonSchema,
 	skippedDirectorySchema,
 	listRepositoryAddonsQuerySchema,

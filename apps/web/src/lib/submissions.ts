@@ -6,6 +6,7 @@ import type {
 	SubmissionKind,
 } from '@unbound-app/contracts/publish';
 import type { SubmissionPreviewResponse } from '@unbound-app/contracts/review';
+import type { ListRepositoryAddonsResponse } from '@unbound-app/contracts/source';
 import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
 import { MAX_SUBMISSION_TAGS } from '@unbound-app/contracts/tags';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
@@ -13,7 +14,7 @@ import { and, count, eq, gte, inArray, ne } from 'drizzle-orm';
 
 import { addon, addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
-import type { AddonSource } from '~/lib/addon-source';
+import type { AddonSource, RepositoryListing } from '~/lib/addon-source';
 import { readSubmissionMaintainers, requireSubmissionMaintainers } from '~/lib/maintainers';
 import { readAddonTags, readTags, requireTags } from '~/lib/addon-tags';
 import { appendEvent } from '~/lib/moderation-events';
@@ -475,6 +476,36 @@ export async function previewSubmission(
 	};
 }
 
+/**
+ * @description Marks the listed addons whose version is already published, which submitting would
+ * refuse with `version_exists`, so the picker shows them as up to date instead.
+ * @param ctx The application context.
+ * @param listing The repository listing read from GitHub.
+ * @returns The listing, each addon with `upToDate`.
+ */
+export async function markUpToDate(
+	ctx: AppContext,
+	listing: RepositoryListing,
+): Promise<ListRepositoryAddonsResponse> {
+	const ids = listing.addons.map((entry) => entry.id);
+	const rows =
+		ids.length > 0
+			? await ctx.db
+					.select({ addonId: addonVersion.addonId, version: addonVersion.version })
+					.from(addonVersion)
+					.where(inArray(addonVersion.addonId, ids))
+			: [];
+	const published = new Set(rows.map((row) => `${row.addonId}@${row.version}`));
+
+	return {
+		...listing,
+		addons: listing.addons.map((entry) => ({
+			...entry,
+			upToDate: published.has(`${entry.id}@${entry.version}`),
+		})),
+	};
+}
+
 export default {
 	OPEN_SUBMISSION_STATUSES,
 	REPLACEABLE_SUBMISSION_STATUSES,
@@ -483,4 +514,5 @@ export default {
 	insertSubmissionSource,
 	createSubmission,
 	previewSubmission,
+	markUpToDate,
 };
