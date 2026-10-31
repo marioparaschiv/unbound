@@ -44,8 +44,8 @@ export declare const on: typeof onModuleLoad;
  */
 declare function bulk(...items: MetroBulkItem[]): any[];
 /**
- * @description Core synchronous module search. Tries the per-key cache fast-path first, then falls
- * back to scanning the registry, degrading gracefully if the supplied filter throws.
+ * @description Core synchronous module search. Modules Discord has initialized are searched first, cached ids
+ * then the registry; only when none matches does it initialize modules, unless `initialize` is false.
  * @param filter The filter to match modules against.
  * @param options Search options controlling interop, caching, esModule unwrapping, and `all`.
  * @returns The first matching module, an array of matches when `all` is set, or `null`.
@@ -102,6 +102,13 @@ export declare function findByPrototypes<
  * @returns The loaded module, or a promise of the module once Discord loads it, or of `undefined` if `signal` aborts first.
  */
 export declare function findLazy(filter: MetroFilter, options?: MetroLazySearchOptions): any;
+/**
+ * @description Reports what is known of a lazy handle's module, without loading it or resolving the handle.
+ * A plugin should treat `unknown` as present: a patch on the handle waits for the module, so it never applies to nothing.
+ * @param handle A lazy handle, such as a `{ lazy: true }` search, `metro.common.*` or `metro.stores.*`.
+ * @returns The module's {@link MetroModulePresence}, or `undefined` when `handle` is not a handle a patch waits on.
+ */
+export declare function getModulePresence(handle: MetroExport): MetroModulePresence | undefined;
 /**
  * @description Registers a listener invoked with every module as it loads.
  * @param listener Callback receiving the module exports and its id.
@@ -208,6 +215,11 @@ export type MetroModule<TProps extends string> = MetroPropertyRecordOrArray<TPro
 export type MetroModuleLoadListener = (mdl: any, id: number) => void;
 /** Options for {@link onModuleLoaded}: whether to also match a module's `default` export, and to return it on such a match. */
 export type MetroModuleLoadedOptions = Pick<MetroSearchOptions, 'esModules' | 'interop'>;
+/**
+ * What is known of a module without loading it: `loaded` once loaded, `present` when an earlier search
+ * found it in this build, `missing` when a full search of this build found nothing, and `unknown` otherwise.
+ */
+export type MetroModulePresence = 'loaded' | 'present' | 'missing' | 'unknown';
 /** A bag carrying a `params` array of prop names. */
 export type MetroParamsBag<T extends string> = {
 	params: T[];

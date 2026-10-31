@@ -1,5 +1,5 @@
+import { createLazyModule, getModulePresence, whenModuleLoads } from '~/metro/lazy-registry';
 import { finder, type Finders, type TermOrOptions } from '~/metro/finders';
-import { createLazyModule, whenModuleLoads } from '~/metro/lazy-registry';
 
 /**
  * @description Lazily finds a module by its properties. The metro search is deferred until the
@@ -57,10 +57,11 @@ function lazySearch(name: Exclude<keyof Finders, 'find'>, args: TermOrOptions[])
 		return search;
 	}
 
-	return createLazyModule(
-		() => inner().module,
-		(callback) => whenModuleLoads(inner(), callback),
-	);
+	return createLazyModule(() => inner().module, {
+		wait: (callback) => whenModuleLoads(inner(), callback),
+		// A search that cannot wait is resolved, as a patch on it would be.
+		presence: () => getModulePresence(inner()) ?? (inner().module ? 'loaded' : 'missing'),
+	});
 }
 
 function withLazy(args: TermOrOptions[]): TermOrOptions[] {

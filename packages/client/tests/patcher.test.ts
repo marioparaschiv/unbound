@@ -78,14 +78,14 @@ describe('patcher', () => {
 		const { math } = createTarget();
 
 		function lazyProxy() {
-			return createLazyModule(
-				() => math,
-				(callback) => {
+			return createLazyModule(() => math, {
+				wait(callback) {
 					callback(math);
 
 					return () => void 0;
 				},
-			) as typeof math;
+				presence: () => 'loaded',
+			}) as typeof math;
 		}
 
 		const calls: string[] = [];

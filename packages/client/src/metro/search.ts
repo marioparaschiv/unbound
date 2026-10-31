@@ -21,6 +21,7 @@ import Filters, { type MetroFilter } from '~/metro/filters';
 import { isInvalidExport } from '~/metro/invalid-exports';
 import { createLazyModule } from '~/metro/lazy-registry';
 import Cache, { ModuleFlags } from '~/metro/cache';
+import { filterPresence } from '~/metro/presence';
 import { provideFinders } from '~/metro/finders';
 import { blacklist, data } from '~/metro/state';
 import { onModuleLoaded } from '~/metro/wait';
@@ -631,9 +632,10 @@ function searchWithOptions(
 
 		const { esModules, interop } = options;
 
-		return createLazyModule(search, (callback) =>
-			onModuleLoaded(create(...args), callback, { esModules, interop }),
-		);
+		return createLazyModule(search, {
+			wait: (callback) => onModuleLoaded(create(...args), callback, { esModules, interop }),
+			presence: () => filterPresence(create(...args), { esModules, interop }),
+		});
 	}
 
 	if (typeof filter === 'string') {

@@ -71,6 +71,9 @@ exporting(19, { remembered: () => 19 });
 exporting(20, { forced: () => 20 });
 exporting(21, { late: () => 21 });
 exporting(22, { viaFind: () => 22 });
+exporting(23, { presentLoaded: () => 23 });
+exporting(24, { presentCached: () => 24 });
+exporting(25, { presentUnseen: () => 25 });
 metroRequire(0);
 metroRequire(1);
 
@@ -99,6 +102,7 @@ mock.module('~/metro/cache', () => ({
 
 const metro = await import('~/metro/search');
 const { findByPropsLazy } = await import('~/metro/wrappers');
+const { getModulePresence } = await import('~/metro/lazy-registry');
 const { onModuleLoaded } = await import('~/metro/wait');
 const { byProps } = await import('~/metro/filters');
 const { CACHE_KEY } = await import('~/core/constants');
@@ -286,6 +290,44 @@ describe('a lazy wrapper handle (findByPropsLazy and the like)', () => {
 		expect('fifth' in Fifth).toBe(true);
 		expect({ ...Fifth }.fifth).toBe(metroRequire(15).fifth);
 		expect(Object.getPrototypeOf(Fifth)).toBe(Object.prototype);
+	});
+});
+
+describe('getModulePresence', () => {
+	test('reports a lazy handle as loaded, present, missing or unknown without loading anything', () => {
+		metroRequire(23);
+		cachedIds['byProps::presentCached'] = [24];
+		cachedIds['byProps::presentGone'] = [];
+
+		const before = loadedIds();
+		const presence = {
+			loaded: getModulePresence(metro.findByProps('presentLoaded', { lazy: true })),
+			present: getModulePresence(metro.findByProps('presentCached', { lazy: true })),
+			missing: getModulePresence(metro.findByProps('presentGone', { lazy: true })),
+			unknown: getModulePresence(findByPropsLazy('presentUnseen')),
+		};
+
+		expect(presence).toEqual({
+			loaded: 'loaded',
+			present: 'present',
+			missing: 'missing',
+			unknown: 'unknown',
+		});
+		expect(loadedIds()).toEqual(before);
+	});
+
+	test('reports a cached module as loaded once Discord loads it', () => {
+		cachedIds['byProps::presentCached'] = [24];
+
+		const Cached = metro.findByProps('presentCached', { lazy: true });
+
+		metroRequire(24);
+
+		expect(getModulePresence(Cached)).toBe('loaded');
+	});
+
+	test('has nothing to report for a value that is not a lazy handle', () => {
+		expect(getModulePresence({ presentLoaded: () => 23 })).toBeUndefined();
 	});
 });
 

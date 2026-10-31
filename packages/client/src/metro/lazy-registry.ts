@@ -1,21 +1,32 @@
 import noop from '@unbound-app/utils/noop';
 
+import type { MetroModulePresence } from '~/metro/types';
+
 type ModuleCallback = (mdl: MetroExport) => void;
 
-type WaitForModule = (callback: ModuleCallback) => () => void;
+/** How a lazy proxy waits for its module and reports it, without loading it. */
+export type LazyModuleSource = {
+	/** Calls back with the module once it has loaded; returns a function that stops waiting. */
+	wait: (callback: ModuleCallback) => () => void;
+	/** Reports what is known of the module. */
+	presence: () => MetroModulePresence;
+};
 
 // Plugins read this key's own descriptor to tell a lazy proxy from a module without resolving it.
 const LAZY_MARKER = '__METRO_LAZY__';
 
-const lazyModules = new WeakMap<WeakKey, WaitForModule>();
+const lazyModules = new WeakMap<WeakKey, LazyModuleSource>();
 
 /**
  * @description Creates the proxy a lazy lookup returns, which runs the search on first use and forwards every operation to the result.
  * @param search Runs the search, loading modules as needed; a nullish result reads as an empty module.
- * @param waitFor Calls back with the module once it has loaded, without loading it; omit it when the lookup stands for several modules.
+ * @param source How to wait for and report the module without loading it; omit it when the lookup stands for several modules.
  * @returns A proxy standing for the module.
  */
-export function createLazyModule(search: () => MetroExport, waitFor?: WaitForModule): MetroExport {
+export function createLazyModule(
+	search: () => MetroExport,
+	source?: LazyModuleSource,
+): MetroExport {
 	const target = { [LAZY_MARKER]: true };
 	let cache: MetroExport;
 
@@ -71,21 +82,24 @@ export function createLazyModule(search: () => MetroExport, waitFor?: WaitForMod
 		},
 	});
 
-	if (!waitFor) {
+	if (!source) {
 		return proxy;
 	}
 
-	lazyModules.set(proxy, (callback) => {
-		if (cache) {
-			callback(cache);
+	lazyModules.set(proxy, {
+		wait(callback) {
+			if (cache) {
+				callback(cache);
 
-			return noop;
-		}
+				return noop;
+			}
 
-		return waitFor((mdl) => {
-			cache ??= mdl;
-			callback(cache);
-		});
+			return source.wait((mdl) => {
+				cache ??= mdl;
+				callback(cache);
+			});
+		},
+		presence: () => (cache ? 'loaded' : source.presence()),
 	});
 
 	return proxy;
@@ -99,16 +113,29 @@ export function createLazyModule(search: () => MetroExport, waitFor?: WaitForMod
  * @returns A function that stops waiting.
  */
 export function whenModuleLoads<T>(value: T, callback: (mdl: T) => void): () => void {
-	const whenLoaded =
-		typeof value === 'object' && value !== null ? lazyModules.get(value) : void 0;
+	const lazy = lazyModuleOf(value);
 
-	if (!whenLoaded) {
+	if (!lazy) {
 		callback(value);
 
 		return noop;
 	}
 
-	return whenLoaded(callback);
+	return lazy.wait(callback);
 }
 
-export default { createLazyModule, whenModuleLoads };
+/**
+ * @description Reports what is known of a lazy handle's module, without loading it or resolving the handle.
+ * A plugin should treat `unknown` as present: a patch on the handle waits for the module, so it never applies to nothing.
+ * @param handle A lazy handle, such as a `{ lazy: true }` search, `metro.common.*` or `metro.stores.*`.
+ * @returns The module's {@link MetroModulePresence}, or `undefined` when `handle` is not a handle a patch waits on.
+ */
+export function getModulePresence(handle: MetroExport): MetroModulePresence | undefined {
+	return lazyModuleOf(handle)?.presence();
+}
+
+function lazyModuleOf(value: MetroExport) {
+	return typeof value === 'object' && value !== null ? lazyModules.get(value) : void 0;
+}
+
+export default { createLazyModule, whenModuleLoads, getModulePresence };

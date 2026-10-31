@@ -14,6 +14,7 @@ export {
 } from '~/metro/search';
 export { findByPrototypes, findByFilePath, findByProps, findByName } from '~/metro/lookups';
 export type { DiscordFunction } from '@unbound-app/types/components';
+export { getModulePresence } from '~/metro/lazy-registry';
 export * as components from '~/metro/components';
 export { blacklist, data } from '~/metro/state';
 export { onModuleLoaded } from '~/metro/wait';
