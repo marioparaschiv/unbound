@@ -171,7 +171,7 @@ const keysetSearch = {
 	dir: z.optional(pageDirectionSchema),
 };
 
-/** The admin users list, newest first. `q` matches the id, name or email. */
+/** The admin users list, newest first. `q` matches the id or name, and the email for the development team. */
 export const adminUsersSearchSchema = z.object({
 	q: z.optional(adminSearchTextSchema),
 	...keysetSearch,

@@ -216,7 +216,7 @@ describe('admin users list', () => {
 		expect(backward).toEqual(forward.toReversed());
 	});
 
-	test('searches a substring of the name, email or id, case-insensitively', async () => {
+	test('searches a substring of the name or id, case-insensitively, but not the email', async () => {
 		const [one, , , four] = walkers;
 
 		if (!one || !four) {
@@ -224,7 +224,7 @@ describe('admin users list', () => {
 		}
 
 		expect(await usersMatching('WALKER')).toEqual(newestFirst(walkers));
-		expect(await usersMatching('walker-four@exa')).toEqual([four.id]);
+		expect(await usersMatching('walker-four@exa')).toEqual([]);
 		expect(await usersMatching(one.id.slice(4, 16))).toEqual([one.id]);
 		expect(await usersMatching('Wal"ker')).toEqual([]);
 	});

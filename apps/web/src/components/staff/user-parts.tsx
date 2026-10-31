@@ -121,7 +121,11 @@ export function UserFacts({ user }: UserProps) {
 		<Card className='gap-4 grid grid-cols-2 md:grid-cols-4 p-(--card-pad)'>
 			<div className='col-span-2 md:col-span-1 min-w-0'>
 				<DetailFact label='Email'>
-					<span className='wrap-anywhere'>{user.email}</span>
+					{user.email ? (
+						<span className='wrap-anywhere'>{user.email}</span>
+					) : (
+						<span className='text-muted-foreground'>Hidden</span>
+					)}
 				</DetailFact>
 			</div>
 			<DetailFact label='Standing'>

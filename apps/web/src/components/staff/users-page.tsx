@@ -36,9 +36,11 @@ function StaffUserRow({ user }: StaffUserRowProps) {
 						>
 							{user.name}
 						</Link>
-						<span className='max-w-64 text-muted-foreground text-xs truncate'>
-							{user.email}
-						</span>
+						{user.email ? (
+							<span className='max-w-64 text-muted-foreground text-xs truncate'>
+								{user.email}
+							</span>
+						) : null}
 					</div>
 				</div>
 			</td>
@@ -95,7 +97,7 @@ function UsersPage() {
 				<SearchChip
 					key={search}
 					search={search}
-					placeholder='Search by id, name or email'
+					placeholder='Search by id or name'
 					pending={isPlaceholderData}
 					onSearch={(value) => void navigate({ search: { q: value || undefined } })}
 				/>
