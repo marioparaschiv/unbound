@@ -1,4 +1,5 @@
-import { PendingReplyActions, Patcher, settings } from '~/modules';
+import { patcher } from '@unbound-app/api';
+import { PendingReplyActions, settings } from '~/modules';
 import { shouldMention } from '~/user-list';
 
 /**
@@ -6,7 +7,7 @@ import { shouldMention } from '~/user-list';
  * @returns A function that removes the patch.
  */
 export function patchPendingReplyActions(): () => void {
-	return Patcher.before(PendingReplyActions, 'createPendingReply', ({ args: [reply] }) => {
+	return patcher.before(PendingReplyActions, 'createPendingReply', ({ args: [reply] }) => {
 		if (!reply) return;
 
 		reply.shouldMention = shouldMention(

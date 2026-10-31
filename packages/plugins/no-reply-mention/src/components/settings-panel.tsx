@@ -1,17 +1,15 @@
-import Page from '@unbound-plugins/shared/components/page';
 import { Discord } from '@unbound-app/api/metro/components';
-import { toasts } from '@unbound-app/api';
+import { storage, toasts, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import { addUserId, editUserId, isUserId, parseUserList, removeUserId } from '~/user-list';
 import UserIdEditor from '~/components/user-id-editor';
-import { settings } from '~/modules';
 
 // `original` is the ID being edited, or `null` while adding a new one.
 type Editor = { original: string | null };
 
 function SettingsPanel() {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(addon.id);
 	const [editor, setEditor] = useState<Editor | null>(null);
 	const userList = store.get('userList', '');
 	const pingListed = store.get('shouldPingListed', false);
@@ -21,7 +19,7 @@ function SettingsPanel() {
 		const userId = value.trim();
 
 		if (!isUserId(userId)) {
-			toasts.showToast({
+			toasts.show({
 				title: 'No Reply Mention',
 				content: 'Enter a numeric Discord user ID.',
 			});
@@ -50,9 +48,9 @@ function SettingsPanel() {
 	}
 
 	return (
-		<Page>
-			<Discord.TableRowGroup title='Exceptions'>
-				<Discord.TableRow
+		<ui.Page>
+			<ui.Section title='Exceptions'>
+				<ui.Row
 					label='Add user ID'
 					subLabel='Replies can mention these users when the exception is enabled'
 					arrow
@@ -64,7 +62,7 @@ function SettingsPanel() {
 						editor?.original === userId ? (
 							renderEditor(userId)
 						) : (
-							<Discord.TableRow
+							<ui.Row
 								key={userId}
 								label={userId}
 								subLabel='Tap to edit'
@@ -94,9 +92,9 @@ function SettingsPanel() {
 						),
 					)
 				) : (
-					<Discord.TableRow label='No users added yet.' />
+					<ui.Row label='No users added yet.' />
 				)}
-				<Discord.TableSwitchRow
+				<ui.SwitchRow
 					label='Only Ping Listed Users'
 					subLabel={
 						pingListed
@@ -106,8 +104,8 @@ function SettingsPanel() {
 					value={pingListed}
 					onValueChange={(value) => store.set('shouldPingListed', value)}
 				/>
-			</Discord.TableRowGroup>
-		</Page>
+			</ui.Section>
+		</ui.Page>
 	);
 }
 

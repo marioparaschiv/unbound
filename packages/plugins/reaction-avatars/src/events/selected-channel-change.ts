@@ -4,6 +4,7 @@ import { clearRenderedCells } from '~/ios/renderer';
 import { selectedChannelId } from '~/selected-channel';
 import type { Session } from '~/ios/session';
 import { SelectedChannelStore } from '~/modules';
+import { flux } from '@unbound-app/api';
 
 /**
  * @description Drops every avatar when the user switches channel, then renders the new channel's cells as they settle.
@@ -46,10 +47,10 @@ export function subscribeChannelChanges(session: Session): () => void {
 		}
 	}
 
-	SelectedChannelStore.addChangeListener(onChange);
+	const removeListener = flux.onStoreChange(SelectedChannelStore, onChange);
 
 	return () => {
-		SelectedChannelStore.removeChangeListener(onChange);
+		removeListener();
 		cancelScans();
 	};
 }

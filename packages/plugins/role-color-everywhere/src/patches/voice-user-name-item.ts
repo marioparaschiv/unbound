@@ -1,9 +1,10 @@
+import { patcher } from '@unbound-app/api';
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement } from 'react';
 import { Text } from 'react-native';
 
-import { GuildMemberStore, Patcher, VoiceUserNameItem } from '~/modules';
+import { GuildMemberStore, VoiceUserNameItem } from '~/modules';
 import { PLUGIN_NAME } from '~/constants';
 import { paintRoleText } from '~/role-text';
 
@@ -22,7 +23,7 @@ export function patchVoiceUserNameItem(): () => void {
 		return () => {};
 	}
 
-	return Patcher.after(VoiceUserNameItem, 'default', ({ args: [props], result }) => {
+	return patcher.after(VoiceUserNameItem, 'default', ({ args: [props], result }) => {
 		const { guildId, user, member } = props ?? {};
 
 		if (!guildId || !user?.id) return;

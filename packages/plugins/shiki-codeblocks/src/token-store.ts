@@ -5,8 +5,8 @@ type TokenLines = ThemedToken[][];
 
 export type TokenFiles = {
 	exists(path: string): Promise<boolean>;
-	read(path: string): Promise<string>;
-	write(path: string, contents: string): Promise<unknown>;
+	readFile(path: string): Promise<string>;
+	writeFile(path: string, contents: string): Promise<unknown>;
 };
 
 export type TokenStore = {
@@ -46,7 +46,7 @@ export function createTokenStore(files: TokenFiles, path = TOKEN_STORE_PATH): To
 		try {
 			if (!(await files.exists(path))) return;
 
-			const saved = JSON.parse(await files.read(path)) as [string, TokenLines][];
+			const saved = JSON.parse(await files.readFile(path)) as [string, TokenLines][];
 
 			for (const [key, tokens] of saved.slice(-STORED_ENTRIES)) entries.set(key, tokens);
 		} catch {
@@ -58,7 +58,7 @@ export function createTokenStore(files: TokenFiles, path = TOKEN_STORE_PATH): To
 		if (timer) clearTimeout(timer);
 
 		timer = null;
-		await files.write(path, JSON.stringify([...entries])).catch(() => undefined);
+		await files.writeFile(path, JSON.stringify([...entries])).catch(() => undefined);
 	}
 
 	return {
@@ -86,7 +86,7 @@ let shared: TokenStore | null | undefined;
  */
 export function sharedTokenStore(): TokenStore | undefined {
 	if (shared === undefined) {
-		shared = typeof fs?.read === 'function' ? createTokenStore(fs as TokenFiles) : null;
+		shared = typeof fs?.readFile === 'function' ? createTokenStore(fs) : null;
 	}
 
 	return shared ?? undefined;

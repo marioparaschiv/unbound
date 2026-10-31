@@ -1,51 +1,15 @@
-import { metro, patcher, storage } from '@unbound-app/api';
+import { metro, storage, flux } from '@unbound-app/api';
 
-import type { Channel, MemberStore, Message, Role, User } from '~/types';
+import type { MemberStore } from '~/types';
 
-type GuildRoleStore = {
-	getRole(guildId: string, roleId: string): Role | null | undefined;
-};
-
-type UserStore = {
-	getUser(userId: string): User | null | undefined;
-};
-
-type ChannelStore = {
-	getChannel(channelId: string): Channel | null | undefined;
-};
-
-type MessageStore = {
-	getMessage(channelId: string, messageId: string): Message | null | undefined;
-};
-
-type TypingStore = {
-	getTypingUsers(channelId: string): Record<string, number> | null | undefined;
-};
-
-type RelationshipStore = {
-	getNickname?(userId: string): string | null | undefined;
-};
-
-type SelectedChannelStore = {
-	getChannelId(): string | undefined;
-	addChangeListener(listener: () => void): void;
-	removeChangeListener(listener: () => void): void;
-};
-
-export const GuildMemberStore = metro.findStore('GuildMember', { lazy: true }) as MemberStore;
-export const GuildRoleStore = metro.findStore('GuildRole', { lazy: true }) as GuildRoleStore;
-export const UserStore = metro.stores.Users as UserStore;
-export const ChannelStore = metro.findStore('Channel', { lazy: true }) as ChannelStore;
-export const MessageStore = metro.findStore('Message', { lazy: true }) as MessageStore;
-export const TypingStore = metro.findStore('Typing', { lazy: true }) as TypingStore;
-
-export const RelationshipStore = metro.findStore('Relationship', {
-	lazy: true,
-}) as RelationshipStore;
-
-export const SelectedChannelStore = metro.findStore('SelectedChannel', {
-	lazy: true,
-}) as SelectedChannelStore;
+export const GuildMemberStore: MemberStore = flux.getStore('GuildMember', { lazy: true });
+export const GuildRoleStore = flux.getStore('GuildRole', { lazy: true });
+export const UserStore = flux.getStore('User', { lazy: true });
+export const ChannelStore = flux.getStore('Channel', { lazy: true });
+export const MessageStore = flux.getStore('Message', { lazy: true });
+export const TypingStore = flux.getStore('Typing', { lazy: true });
+export const RelationshipStore = flux.getStore('Relationship', { lazy: true });
+export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
 
 export const byRowManager = metro.filters.byName('RowManager');
 
@@ -69,6 +33,4 @@ export const VoiceUserNameItem = metro.findByFilePath(
 	{ interop: false, lazy: true },
 );
 
-export const settings = storage.getStore('astral.role-color-everywhere');
-
-export const Patcher = patcher.createPatcher('astral.role-color-everywhere');
+export const settings = storage.getBucket();

@@ -1,7 +1,13 @@
+import { installAddonGlobals } from '@unbound-app/api/testing';
 import { describe, expect, mock, test } from 'bun:test';
 import type { LanguageRegistration } from 'shiki';
 
-mock.module('@unbound-app/api', () => ({ fs: {} }));
+const scope = installAddonGlobals({
+	manifest: { id: 'astral.shiki-codeblocks' },
+	unbound: { fs: {} },
+});
+
+mock.module('@unbound-app/api', () => scope.unbound);
 
 const { createHighlighter: createWithSource } = await import('~/highlighter');
 

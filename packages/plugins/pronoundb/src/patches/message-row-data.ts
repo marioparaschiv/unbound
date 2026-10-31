@@ -1,13 +1,6 @@
-import { metro } from '@unbound-app/api';
+import { metro, patcher } from '@unbound-app/api';
 
-import {
-	ChannelStore,
-	MessageRowData,
-	Patcher,
-	settings,
-	UserProfileStore,
-	UserStore,
-} from '~/modules';
+import { ChannelStore, MessageRowData, settings, UserProfileStore, UserStore } from '~/modules';
 import { cleanProfilePronouns, pickPronouns } from '~/pronouns';
 import type { PronounLookup } from '~/lookup';
 import { addPronouns } from '~/header';
@@ -22,9 +15,12 @@ function isChatMessage(message: Message) {
 
 function discordPronouns(userId: string, channelId: string | undefined) {
 	const guildId = channelId ? ChannelStore.getChannel?.(channelId)?.guild_id : undefined;
+	const memberProfile = guildId
+		? UserProfileStore.getGuildMemberProfile(userId, guildId)
+		: undefined;
 
 	return (
-		cleanProfilePronouns(UserProfileStore.getGuildMemberProfile(userId, guildId)?.pronouns) ??
+		cleanProfilePronouns(memberProfile?.pronouns) ??
 		cleanProfilePronouns(UserProfileStore.getUserProfile(userId)?.pronouns)
 	);
 }
@@ -41,7 +37,7 @@ function isShownFor(author: Author | undefined): author is Author & { id: string
  * @returns A function that removes the patch.
  */
 export function patchMessageRowData(lookup: PronounLookup): () => void {
-	return Patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+	return patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const message: Message | undefined = args[0]?.message;
 
 		if (!message || !isChatMessage(message) || !isShownFor(message.author)) return;

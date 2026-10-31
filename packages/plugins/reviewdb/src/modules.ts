@@ -1,4 +1,4 @@
-import { metro, patcher, storage } from '@unbound-app/api';
+import { metro, storage, flux } from '@unbound-app/api';
 
 export const UserProfileCard = metro.findByFilePath(
 	'modules/user_profile/native/UserProfileCard.tsx',
@@ -12,7 +12,6 @@ export const UserProfileCardByName = metro.findByName('UserProfileCard', {
 
 // The same module as `metro.common.Theme`, which its typings do not declare yet.
 export const Theme = metro.findByProps('colors', 'internal', { lazy: true });
-export const RelationshipStore = metro.findStore('Relationship', { lazy: true });
+export const RelationshipStore = flux.getStore('Relationship', { lazy: true });
 
-export const settings = storage.getStore('astral.reviewdb');
-export const Patcher = patcher.createPatcher('astral.reviewdb');
+export const settings = storage.getBucket();

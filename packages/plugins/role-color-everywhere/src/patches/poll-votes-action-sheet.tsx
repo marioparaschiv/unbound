@@ -1,8 +1,9 @@
+import { patcher } from '@unbound-app/api';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { cloneElement } from 'react';
 
 import RoleColoredVotersList from '~/components/role-colored-voters-list';
-import { ChannelStore, Patcher, PollVotesActionSheet } from '~/modules';
+import { ChannelStore, PollVotesActionSheet } from '~/modules';
 import { guildIdOf } from '~/channel-guild';
 import { PLUGIN_NAME } from '~/constants';
 import type { Rendered } from '~/types';
@@ -22,7 +23,7 @@ export function patchPollVotesActionSheet(): () => void {
 		return () => {};
 	}
 
-	return Patcher.after(PollVotesActionSheet, 'default', ({ args: [props], result }) => {
+	return patcher.after(PollVotesActionSheet, 'default', ({ args: [props], result }) => {
 		const guildId = guildIdOf(props?.channelId);
 		const sheet = result?.props?.children;
 		const children = sheet?.props?.children;

@@ -1,4 +1,4 @@
-import { metro } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
 import { reloadReactors } from '~/ios/reaction-surfaces';
 import type { Session } from '~/ios/session';
@@ -14,7 +14,5 @@ export function subscribeConnectionOpen(session: Session): () => void {
 		reloadReactors(session, () => true);
 	}
 
-	metro.common.Dispatcher.subscribe('CONNECTION_OPEN', onConnectionOpen);
-
-	return () => metro.common.Dispatcher.unsubscribe('CONNECTION_OPEN', onConnectionOpen);
+	return flux.onAction('CONNECTION_OPEN', onConnectionOpen);
 }

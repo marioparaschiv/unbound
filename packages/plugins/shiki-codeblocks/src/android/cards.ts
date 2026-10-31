@@ -45,7 +45,7 @@ import { createBlockBackgroundFinder } from '~/android/block-backgrounds';
 import { codeSlots, placeholderOffsets, sourceBlock, type CodeSlot } from '~/android/code-ranges';
 import { registerCodeCardSurface, type CardContent } from '~/components/code-card';
 import { channelBlocks } from '~/android/channel-blocks';
-import { settings } from '~/modules';
+import { storage } from '@unbound-app/api';
 import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
 import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';
@@ -485,8 +485,8 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		},
 	);
 
-	const unsubscribe = settings.addListener(
-		({ key }) => CARD_SETTINGS.includes(key ?? ''),
+	const unsubscribe = storage.onChange(
+		({ store, key }) => store === addon.id && CARD_SETTINGS.includes(key ?? ''),
 		() => {
 			for (const entry of views.values()) {
 				repaint(entry).catch((error) => {

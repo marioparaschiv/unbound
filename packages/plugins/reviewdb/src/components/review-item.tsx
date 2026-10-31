@@ -86,7 +86,7 @@ function ReviewItem({ review, profileId, hideTimestamps, onChanged }: ReviewItem
 	function handleVote(isUpvote: boolean) {
 		void run(async () => {
 			if (author === myId) {
-				toasts.showToast({
+				toasts.show({
 					title: 'ReviewDB',
 					content: 'You cannot vote on your own review.',
 				});

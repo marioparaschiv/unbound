@@ -1,3 +1,4 @@
+import { installAddonGlobals } from '@unbound-app/api/testing';
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 import type { LanguageRegistration } from 'shiki';
 import { readFileSync } from 'node:fs';
@@ -5,13 +6,18 @@ import { dirname, join } from 'node:path';
 
 const files = new Map<string, string>();
 
-mock.module('@unbound-app/api', () => ({
-	fs: {
-		exists: async (path: string) => files.has(path),
-		read: async (path: string) => files.get(path) ?? '',
-		write: async (path: string, content: string) => void files.set(path, content),
+const scope = installAddonGlobals({
+	manifest: { id: 'astral.shiki-codeblocks' },
+	unbound: {
+		fs: {
+			exists: async (path: string) => files.has(path),
+			readFile: async (path: string) => files.get(path) ?? '',
+			writeFile: async (path: string, content: string) => void files.set(path, content),
+		},
 	},
-}));
+});
+
+mock.module('@unbound-app/api', () => scope.unbound);
 
 const { cachedRegistration, grammarModuleUrl, loadBundledGrammar, registrationFromModule } =
 	await import('~/grammar-files');

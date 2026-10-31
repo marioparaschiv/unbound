@@ -1,3 +1,4 @@
+import { patcher } from '@unbound-app/api';
 import {
 	getRoleColorAppearance,
 	type RoleColorAppearance,
@@ -7,7 +8,7 @@ import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import { cloneElement } from 'react';
 import { Text } from 'react-native';
 
-import { GuildMemberStore, GuildRoleStore, Patcher, USERS_FAST_LIST_PATH } from '~/modules';
+import { GuildMemberStore, GuildRoleStore, USERS_FAST_LIST_PATH } from '~/modules';
 import { PLUGIN_NAME } from '~/constants';
 import { paintRoleText } from '~/role-text';
 import type { Rendered } from '~/types';
@@ -89,13 +90,13 @@ function patchLoadedUsersFastList(module: UsersFastListModule): () => void {
 	if (!ensureModules(feature, { GuildRoleStore })) return () => {};
 
 	if (isFunctionList(module)) {
-		return Patcher.after(module, 'UsersFastList', ({ args: [props], result }) =>
+		return patcher.after(module, 'UsersFastList', ({ args: [props], result }) =>
 			paintSectionHeaders(props as UserListProps, result),
 		);
 	}
 
 	if (isForwardRef(list)) {
-		return Patcher.after(list, 'render', ({ args: [props], result }) =>
+		return patcher.after(list, 'render', ({ args: [props], result }) =>
 			paintSectionHeaders(props as UserListProps, result),
 		);
 	}

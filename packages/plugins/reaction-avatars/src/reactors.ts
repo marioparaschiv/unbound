@@ -1,4 +1,4 @@
-import { metro } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
 import { reactionAvatarSelection, type Reactor } from '~/avatars';
 import type { ReactionContext } from '~/reaction-context';
@@ -30,7 +30,7 @@ export async function fetchReactors(context: ReactionContext): Promise<Reactor[]
 				})) ?? []
 			).slice(0, remaining);
 
-			metro.common.Dispatcher.dispatch({
+			void flux.dispatch({
 				type: 'MESSAGE_REACTION_ADD_USERS',
 				channelId: context.channelId,
 				emoji: context.emoji,
@@ -46,7 +46,7 @@ export async function fetchReactors(context: ReactionContext): Promise<Reactor[]
 				}
 
 				users.set(user.id, user);
-				metro.common.Dispatcher.dispatch({ type: 'USER_UPDATE', user });
+				void flux.dispatch({ type: 'USER_UPDATE', user });
 
 				if (users.size >= Avatar.limit) break;
 			}
