@@ -62,7 +62,6 @@ export declare function SliderRow({
  * @returns The row.
  */
 export declare function SwitchRow(props: SwitchRowProps): React$1.ReactElement;
-/** Props of {@link ColorRow}. */
 export type ColorRowProps = {
 	label: string;
 	color: string | undefined;
@@ -73,7 +72,6 @@ export type ColorRowProps = {
 export type PageProps = {
 	children: React$1.ReactNode;
 };
-/** Props of {@link ResetRow}. */
 export type ResetRowProps = {
 	label?: string;
 	onReset: () => void;
@@ -82,7 +80,6 @@ export type ResetRowProps = {
 export type RowProps = React$1.ComponentProps<DesignModule['TableRow']>;
 /** Props of {@link Section}: Discord's `TableRowGroup` props, such as `title`. */
 export type SectionProps = React$1.ComponentProps<DesignModule['TableRowGroup']>;
-/** Props of {@link SliderRow}. */
 export type SliderRowProps = {
 	label: string;
 	value: number;

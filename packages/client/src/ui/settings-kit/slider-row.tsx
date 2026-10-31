@@ -4,7 +4,6 @@ import { View } from 'react-native';
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
 
-/** Props of {@link SliderRow}. */
 export type SliderRowProps = {
 	label: string;
 	value: number;

@@ -3,7 +3,6 @@ import type { ReactElement } from 'react';
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
 
-/** Props of {@link ResetRow}. */
 export type ResetRowProps = {
 	label?: string;
 	onReset: () => void;

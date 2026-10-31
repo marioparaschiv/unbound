@@ -7,7 +7,6 @@ import { findByName } from '~/metro/search';
 import { ActionSheets } from '~/metro/api';
 import { messages } from '~/i18n/api';
 
-/** Props of {@link ColorRow}. */
 export type ColorRowProps = {
 	label: string;
 	color: string | undefined;
