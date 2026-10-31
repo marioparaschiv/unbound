@@ -14,29 +14,6 @@
 	],
 	"version": "1.0.1",
 	"icon": "PaintPaletteIcon",
-	"platforms": ["ios", "android"],
-	"capabilities": [],
-	"platformCapabilities": {
-		"ios": [
-			"native.objc.classes",
-			"native.objc.invoke",
-			"native.objc.invokeAsync",
-			"native.objc.batch",
-			"native.objc.ivars",
-			"native.objc.snapshot",
-			"native.objc.hooks"
-		],
-		"android": [
-			"native.java.classes",
-			"native.java.invoke",
-			"native.java.batch",
-			"native.java.invokeAsync",
-			"native.java.construct",
-			"native.java.fields",
-			"native.java.hooks",
-			"native.java.associations"
-		]
-	},
 	"minNativePluginApi": "1.0.0",
 	"main": "index.tsx"
 }

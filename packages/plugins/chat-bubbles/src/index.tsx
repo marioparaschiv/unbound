@@ -3,8 +3,7 @@ import type { PluginContext } from '@unbound-app/api/native';
 
 import SettingsPanel from '~/components/settings-panel';
 import { subscribeAppearance } from '~/theme';
-import { drawAndroidBubbles } from '~/android/bubbles';
-import { drawIOSBubbles } from '~/ios/bubbles';
+import { drawBubbles } from '~/platform';
 import { PLUGIN_NAME } from '~/constants';
 
 let dispose: () => void | Promise<void> = () => {};
@@ -15,10 +14,7 @@ let problems: (() => string[] | Promise<string[]>) | null = null;
 function start(context: PluginContext) {
 	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
 
-	const bubbles =
-		context.platform === 'android'
-			? drawAndroidBubbles(context.native)
-			: drawIOSBubbles(context.native.objc);
+	const bubbles = drawBubbles(context.native);
 	const unsubscribe = subscribeAppearance(() => bubbles.refresh());
 
 	placed = bubbles.placed;

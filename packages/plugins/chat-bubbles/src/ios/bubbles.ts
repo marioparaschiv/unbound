@@ -1,5 +1,9 @@
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
-import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
+import type {
+	NativeObjCBridge,
+	NativeObjectHandle,
+	NativePluginBridge,
+} from '@unbound-app/api/native';
 import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
 import { readRect } from '@unbound-plugins/shared/native/ios/rect';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
@@ -63,7 +67,7 @@ type PendingCell = { cell: NativeObjectHandle; onlyWhenResized: boolean };
  * @param objc The Objective-C bridge.
  * @returns `refresh`, which repaints the bubbles on screen, and `dispose`, which removes them.
  */
-export function drawIOSBubbles(objc: NativeObjCBridge) {
+export function drawIOSBubbles({ objc }: NativePluginBridge) {
 	const bubbles = new Map<string, { cell: NativeObjectHandle; bubble: NativeObjectHandle }>();
 	const pending = new Map<string, PendingCell>();
 	const placedSizes = new Map<string, string>();
@@ -383,7 +387,7 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 			...(await staleBubbles()),
 			...(await missingBubbles()),
 		],
-		refresh: () => void refresh(),
+		refresh: (): void => void refresh(),
 		async dispose() {
 			disposed = true;
 
