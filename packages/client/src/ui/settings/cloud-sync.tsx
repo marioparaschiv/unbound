@@ -11,14 +11,14 @@ import {
 	signIn,
 	signOut,
 	sync,
-} from '~/managers/cloud-sync';
-import type { SyncMode, SyncSession } from '~/managers/cloud-sync';
-import { Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
-import type { SyncStrategy } from '~/lib/sync';
-import { Messages, format } from '~/api/i18n';
+} from '~/sync/api';
+import type { SyncMode, SyncSession } from '~/sync/api';
+import { useSettingsStore } from '~/storage/api';
+import type { SyncStrategy } from '~/sync/merge';
+import { Messages, format } from '~/i18n/api';
+import { Discord } from '~/metro/components';
 import { Page } from '~/ui/components';
-import { Icons } from '~/api/assets';
+import { Icons } from '~/assets/api';
 
 import useStyles from './cloud-sync.style';
 

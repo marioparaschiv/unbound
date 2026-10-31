@@ -1,14 +1,14 @@
 import { Pressable } from 'react-native';
 import { memo } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import type { Addon } from '~/managers/addon';
+import { Discord } from '~/metro/components';
 import { TintedIcon } from '~/ui/components';
+import type { Addon } from '~/addons/addon';
+import { Manager } from '~/addons/manager';
 import { useAddonState } from '~/ui/hooks';
-import { Manager } from '~/managers/base';
-import { Messages } from '~/api/i18n';
-import { reload } from '~/api/native';
-import { Icons } from '~/api/assets';
+import { reload } from '~/native/native';
+import { Messages } from '~/i18n/api';
+import { Icons } from '~/assets/api';
 
 type AddonRadioProps = {
 	addon: Addon;

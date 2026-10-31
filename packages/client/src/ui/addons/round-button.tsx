@@ -3,8 +3,8 @@ import { Pressable } from 'react-native';
 import { memo } from 'react';
 
 import { TintedIcon } from '~/ui/components';
-import { Theme } from '~/api/metro/common';
-import { Icons } from '~/api/assets';
+import { Theme } from '~/metro/common';
+import { Icons } from '~/assets/api';
 
 import useStyles from './round-button.style';
 

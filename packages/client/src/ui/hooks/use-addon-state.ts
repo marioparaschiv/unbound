@@ -1,5 +1,5 @@
-import { useSettingsStore } from '~/api/storage';
-import { Manager } from '~/managers/base';
+import { useSettingsStore } from '~/storage/api';
+import { Manager } from '~/addons/manager';
 
 /** A single addon's live state slice, so one toggle re-renders only that card's control. */
 export type AddonState = {

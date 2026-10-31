@@ -1,10 +1,10 @@
 import { memo } from 'react';
 
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { Discord } from '~/api/metro/components';
-import { findByProps } from '~/api/metro';
-import { Manager } from '~/managers/base';
-import { format } from '~/api/i18n';
+import { useUnboundSettings } from '~/settings/unbound';
+import { Discord } from '~/metro/components';
+import { Manager } from '~/addons/manager';
+import { findByProps } from '~/metro';
+import { format } from '~/i18n/api';
 
 import FontPickerSheet from './font-picker-sheet';
 

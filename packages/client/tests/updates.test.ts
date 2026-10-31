@@ -12,9 +12,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, spyOn, test } from '
 import { updatesRequestSchema } from '@unbound-app/contracts/updates';
 import type { TestContext } from '@unbound-app/web/testing';
 
-import type { InstalledEntry, PendingUpdate } from '~/lib/updates';
-import { fetchUpdates, reinstallFromStore } from '~/lib/updates';
-import type { Addon } from '~/managers/addon';
+import type { InstalledEntry, PendingUpdate } from '~/updates/addon-updates';
+import { fetchUpdates, reinstallFromStore } from '~/updates/addon-updates';
+import type { Addon } from '~/addons/addon';
 
 import {
 	FakeAddons,

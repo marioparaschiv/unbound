@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { EventEmitter } from '~/lib/event-emitter';
+import { EventEmitter } from '~/core/event-emitter';
 
 type Call = { self: unknown; args: unknown[] };
 type Events = { e: (...args: string[]) => void };

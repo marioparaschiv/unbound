@@ -1,9 +1,9 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import * as React from 'react';
 
-import { LateHook, hookList, runWithBudget, spliceHooks } from '~/lib/hot/hooks';
-import type { Budget, Dispatcher } from '~/lib/hot/hooks';
-import type { Fiber, Hook } from '~/lib/hot/refresh';
+import { LateHook, hookList, runWithBudget, spliceHooks } from '~/hot-refresh/hooks';
+import type { Budget, Dispatcher } from '~/hot-refresh/hooks';
+import type { Fiber, Hook } from '~/hot-refresh/refresh';
 
 import { createFiber } from './helpers/fiber';
 

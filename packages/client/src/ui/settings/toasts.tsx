@@ -1,10 +1,10 @@
 import { View } from 'react-native';
 
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { Discord } from '~/api/metro/components';
+import { useUnboundSettings } from '~/settings/unbound';
+import { Discord } from '~/metro/components';
 import { Page } from '~/ui/components';
-import { Messages } from '~/api/i18n';
-import { Icons } from '~/api/assets';
+import { Messages } from '~/i18n/api';
+import { Icons } from '~/assets/api';
 
 /** @description Formats a toast duration for its settings row. */
 function formatDuration(duration: number): string {

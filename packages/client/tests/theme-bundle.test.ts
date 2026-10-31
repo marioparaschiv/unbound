@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 import type { Theme } from '@unbound-app/types';
 
-import { parseThemeBundle } from '~/lib/theme-bundle';
+import { parseThemeBundle } from '~/themes/bundle';
 
 describe('parseThemeBundle', () => {
 	test('reads a complete theme', () => {

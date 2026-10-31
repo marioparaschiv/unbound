@@ -1,13 +1,13 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
-import type { AvailableChoice, VersionChoice } from '~/lib/addon-versions';
-import type { UpdatableKind } from '~/managers/manager-of';
-import { toVersionChoices } from '~/lib/addon-versions';
-import { BottomSheets } from '~/api/metro/components';
-import { CLIENT_VERSION } from '~/lib/constants';
-import { Messages, format } from '~/api/i18n';
-import { Moment } from '~/api/metro/common';
-import { Manager } from '~/managers/base';
+import type { AvailableChoice, VersionChoice } from '~/addons/versions';
+import type { UpdatableKind } from '~/addons/manager-of';
+import { toVersionChoices } from '~/addons/versions';
+import { CLIENT_VERSION } from '~/core/constants';
+import { BottomSheets } from '~/metro/components';
+import { Messages, format } from '~/i18n/api';
+import { Manager } from '~/addons/manager';
+import { Moment } from '~/metro/common';
 
 import useAddonVersions from './use-addon-versions';
 import { getInstalledVersion } from './targets';

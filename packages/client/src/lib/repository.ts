@@ -1,1 +1,1 @@
-export const REPOSITORY = 'marioparaschiv/unbound';
+export * from '~/core/repository';

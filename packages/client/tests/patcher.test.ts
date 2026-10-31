@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
 
 // No React surface is mounted under bun, so the renderer finds no roots.
-mock.module('~/api/metro/wrappers', () => ({
+mock.module('~/metro/wrappers', () => ({
 	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
 }));
 
 const { after, before, createPatcher, instead, patches, unpatchAll } =
-	await import('~/api/patcher');
-const { flush } = await import('~/lib/hot/live-patch');
-const { registerLazyModule } = await import('~/api/metro/lazy-registry');
+	await import('~/patcher/api');
+const { flush } = await import('~/hot-refresh/live-patch');
+const { registerLazyModule } = await import('~/metro/lazy-registry');
 
 function createTarget() {
 	const original = (a: number, b: number) => a + b;

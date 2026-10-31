@@ -1,10 +1,10 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 
-import { Discord } from '~/api/metro/components';
-import { getInstallStatus } from '~/lib/catalog';
-import { showToast } from '~/api/toasts';
-import { format } from '~/api/i18n';
+import { getInstallStatus } from '~/marketplace/catalog';
+import { Discord } from '~/metro/components';
+import { showToast } from '~/toasts/api';
+import { format } from '~/i18n/api';
 
 import { getInstalledVersion, installVersion } from './targets';
 

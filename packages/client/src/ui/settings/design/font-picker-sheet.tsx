@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import { Manager } from '~/managers/base';
-import { Icons } from '~/api/assets';
-import { format } from '~/api/i18n';
+import { Discord } from '~/metro/components';
+import { Manager } from '~/addons/manager';
+import { Icons } from '~/assets/api';
+import { format } from '~/i18n/api';
 
 type FontPickerSheetProps = {
 	family: string;

@@ -4,10 +4,10 @@ import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { Dimensions, View } from 'react-native';
 
 import { MarketplaceList, SearchContext, offerListedInstall } from '~/ui/marketplace';
-import { Discord, SafeArea } from '~/api/metro/components';
-import MarketplaceStore from '~/stores/marketplace';
-import { Messages, format } from '~/api/i18n';
-import { Manager } from '~/managers/base';
+import { Discord, SafeArea } from '~/metro/components';
+import MarketplaceStore from '~/marketplace/state';
+import { Messages, format } from '~/i18n/api';
+import { Manager } from '~/addons/manager';
 
 type MarketplaceParams = {
 	/** Opens on the tab of this manager, e.g. the page the install menu was opened from. */

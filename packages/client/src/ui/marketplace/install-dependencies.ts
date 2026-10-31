@@ -1,13 +1,13 @@
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
-import { dependentsOf, planDependencies, type ListedDependency } from '~/lib/addon-dependencies';
-import { confirm, showDialog } from '~/api/dialogs';
-import MarketplaceStore from '~/stores/marketplace';
-import { toRelease } from '~/lib/addon-versions';
-import { Messages, format } from '~/api/i18n';
-import { Manager } from '~/managers/base';
-import { showToast } from '~/api/toasts';
+import { dependentsOf, planDependencies, type ListedDependency } from '~/addons/dependencies';
+import { confirm, showDialog } from '~/dialogs/api';
+import MarketplaceStore from '~/marketplace/state';
+import { toRelease } from '~/addons/versions';
+import { Messages, format } from '~/i18n/api';
+import { Manager } from '~/addons/manager';
+import { showToast } from '~/toasts/api';
 
 function listedPlugins(): Map<string, ListedAddon> {
 	const { state } = MarketplaceStore.getState();

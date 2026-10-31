@@ -38,7 +38,7 @@ export const config: SdkConfig = {
 		'@unbound-app/utils',
 		'possess',
 	],
-	barrelPath: 'packages/client/src/api/index.ts',
+	barrelPath: 'packages/client/src/core/api.ts',
 	outDir: 'packages/api/src',
 	excludeSubpaths: [],
 	additionalSubpaths: [],

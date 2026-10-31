@@ -1,7 +1,7 @@
 import type { AddonManifest, Plugin, PluginContext } from '@unbound-app/types';
 import { mock } from 'bun:test';
 
-import type { Addon, AddonState } from '~/managers/addon';
+import type { Addon, AddonState } from '~/addons/addon';
 
 // The base Addons manager reaches native FS and storage through these modules, which pull in
 // react-native. Stub both so the pure lifecycle logic loads under bun with no device harness.
@@ -10,7 +10,7 @@ export const states: Record<string, boolean> = {};
 export const persists: number[] = [];
 export const existingFiles = new Set<string>();
 
-mock.module('~/api/fs', () => ({
+mock.module('~/native/fs', () => ({
 	default: {
 		Documents: '/docs',
 		write: async (path: string) => void writes.push(path),
@@ -46,7 +46,7 @@ export function rerendersOn(change: SettingsChange): boolean {
 	);
 }
 
-mock.module('~/api/storage', () => {
+mock.module('~/storage/api', () => {
 	const store = {
 		get: <T>(key: string, fallback: T) =>
 			key === 'states' ? states : ((storedSettings.get(key) as T | undefined) ?? fallback),
@@ -92,10 +92,10 @@ mock.module('react-native', () => ({
 
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.
-export const { Addons } = require('~/managers/addons') as typeof import('~/managers/addons');
+export const { Addons } = require('~/addons/addons') as typeof import('~/addons/addons');
 
 export const { createPluginContext } =
-	require('~/api/native-runtime') as typeof import('~/api/native-runtime');
+	require('~/native/runtime') as typeof import('~/native/runtime');
 
 /**
  * @description Loads the four addon managers, which read Discord's modules off `window` while they load.
@@ -104,12 +104,12 @@ export const { createPluginContext } =
 export async function loadManagers() {
 	Reflect.set(globalThis, 'window', globalThis);
 
-	const { Manager } = await import('~/managers/base');
+	const { Manager } = await import('~/addons/manager');
 
-	await import('~/managers/plugins');
-	await import('~/managers/themes');
-	await import('~/managers/icons');
-	await import('~/managers/fonts');
+	await import('~/plugins/manager');
+	await import('~/themes/manager');
+	await import('~/icon-packs/manager');
+	await import('~/fonts/manager');
 
 	return Manager;
 }

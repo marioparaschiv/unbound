@@ -1,15 +1,15 @@
 import { View } from 'react-native';
 import { memo } from 'react';
 
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { Discord } from '~/api/metro/components';
+import { useUnboundSettings } from '~/settings/unbound';
 import { useDevelopmentCopy } from '~/ui/hooks';
-import type { Addon } from '~/managers/addon';
+import { Discord } from '~/metro/components';
 import { TintedIcon } from '~/ui/components';
-import { Theme } from '~/api/metro/common';
-import { Manager } from '~/managers/base';
-import { Messages } from '~/api/i18n';
-import { Icons } from '~/api/assets';
+import type { Addon } from '~/addons/addon';
+import { Manager } from '~/addons/manager';
+import { Theme } from '~/metro/common';
+import { Messages } from '~/i18n/api';
+import { Icons } from '~/assets/api';
 
 import AddonOverflow from './addon-overflow';
 import AddonSettings from './addon-settings';

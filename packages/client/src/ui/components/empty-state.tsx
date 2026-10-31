@@ -1,8 +1,8 @@
 import { View, Image } from 'react-native';
 
-import { Discord } from '~/api/metro/components';
-import { Theme } from '~/api/metro/common';
-import { Icons } from '~/api/assets';
+import { Discord } from '~/metro/components';
+import { Theme } from '~/metro/common';
+import { Icons } from '~/assets/api';
 
 import useStyles from './empty-state.style';
 

@@ -15,12 +15,12 @@ Object.assign(globalThis, {
 	$$DEV$$: false,
 });
 
-mock.module('~/lib/cache', () => ({
+mock.module('~/metro/cache', () => ({
 	default: { moduleIds: [MODULE_ID], hasModuleFlag: () => false, addModuleFlag: () => void 0 },
 	ModuleFlags: { BLACKLISTED: 1 },
 }));
 
-const metro = await import('~/api/metro/search');
+const metro = await import('~/metro/search');
 
 function requireModuleOnce() {
 	record.factory?.(globalThis, () => void 0, null, null, { id: MODULE_ID, exports: {} });

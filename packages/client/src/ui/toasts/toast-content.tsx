@@ -3,7 +3,7 @@ import type { ComponentProps, ComponentType } from 'react';
 import { createElement, memo } from 'react';
 import { View } from 'react-native';
 
-import { Discord } from '~/api/metro/components';
+import { Discord } from '~/metro/components';
 
 import useStyles from './toast.style';
 

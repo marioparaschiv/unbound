@@ -1,0 +1,41 @@
+import type { ToastHandle, ToastOptions } from '@unbound-app/types/toasts';
+import { createLogger } from '@unbound-app/logger';
+import uuid from '@unbound-app/utils/uuid';
+
+import { hasVisibleContent } from '~/toasts/content';
+import { getSetting } from '~/settings/unbound';
+import useToastStore from '~/toasts/state';
+
+const Logger = createLogger('Toasts');
+
+const noopHandle: ToastHandle = {
+	update() {},
+	close() {},
+};
+
+/**
+ * @description Shows a toast, generating an id when one is not supplied.
+ * @param options The toast options, optionally including a custom `id`.
+ * @returns A {@link ToastHandle} for controlling the shown toast.
+ */
+export function show(options: ToastOptions): ToastHandle {
+	if (!hasVisibleContent(options)) {
+		Logger.warn('Ignored a toast with nothing to show', new Error().stack);
+
+		return noopHandle;
+	}
+
+	const store = useToastStore.getState();
+	const id = options.id ?? uuid();
+
+	if (getSetting('developer-mode')) {
+		Logger.info('Showing a toast:', typeof options.title === 'string' ? options.title : id);
+	}
+
+	return store.addToast({ ...options, id });
+}
+
+/** @deprecated Use show */
+export const showToast = show;
+
+export default { show, showToast };

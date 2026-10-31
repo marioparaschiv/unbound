@@ -2,9 +2,9 @@ import { Platform, SafeAreaView, StatusBar, StyleSheet, View } from 'react-nativ
 import { useShallow } from 'zustand/shallow';
 import type { ReactNode } from 'react';
 
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { Screens } from '~/api/metro/common';
-import useToastStore from '~/stores/toasts';
+import { useUnboundSettings } from '~/settings/unbound';
+import useToastStore from '~/toasts/state';
+import { Screens } from '~/metro/common';
 
 import useStyles from './toast-container.style';
 import Toast from './toast';

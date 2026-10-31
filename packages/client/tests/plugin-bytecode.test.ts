@@ -3,7 +3,7 @@ import type { Plugin } from '@unbound-app/types';
 
 import { makeManifest, resetDevice, states, writes } from './helpers/addons';
 
-const { Plugins } = await import('~/managers/plugins');
+const { Plugins } = await import('~/plugins/manager');
 
 type Evaluation = [folder: string, bytecodeVersion: number];
 

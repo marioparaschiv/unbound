@@ -3,8 +3,9 @@ import type { NativeCrashedAddon } from '@unbound-app/types/native';
 
 import { FakeAddons, makeManifest, persists, resetDevice, states } from './helpers/addons';
 
-const { attributeAddon, crashDisabledNotice, resetCrashGuard } = await import('~/api/crash-guard');
-const { Addon } = await import('~/managers/addon');
+const { attributeAddon, crashDisabledNotice, resetCrashGuard } =
+	await import('~/addons/crash-guard');
+const { Addon } = await import('~/addons/addon');
 
 type GuardCall = ['begin', string, string] | ['end', string];
 

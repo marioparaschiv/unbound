@@ -60,7 +60,7 @@ const fluxDispatcher = {
 	},
 };
 
-mock.module('~/api/metro/wrappers', () => ({
+mock.module('~/metro/wrappers', () => ({
 	findByPropsLazy: () => fluxDispatcher,
 }));
 
@@ -288,9 +288,9 @@ export const {
 	NativePluginUnavailableError,
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
-} = require('~/api/native') as typeof import('~/api/native');
+} = require('~/native/native') as typeof import('~/native/native');
 export const { createPluginContext, validateNativePluginRequirements, withNativeConstants } =
-	require('~/api/native-runtime') as typeof import('~/api/native-runtime');
+	require('~/native/runtime') as typeof import('~/native/runtime');
 
 /**
  * @description Puts the fake bridges back to the iOS defaults and empties every recorded call.

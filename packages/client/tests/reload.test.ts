@@ -1,6 +1,6 @@
 import { describe, expect, test, beforeEach } from 'bun:test';
 
-import type { Addon } from '~/managers/addon';
+import type { Addon } from '~/addons/addon';
 
 import {
 	FakeAddons,

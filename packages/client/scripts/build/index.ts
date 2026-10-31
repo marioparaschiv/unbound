@@ -41,12 +41,12 @@ const localeTarget = join(__dirname, '..', '..', 'dist', 'i18n');
 const root = join(__dirname, '..', '..');
 
 const config: RolldownOptions = {
-	input: 'src/entry.ts',
+	input: 'src/core/entry.ts',
 	cwd: root,
 	tsconfig: true,
 	resolve: {
 		alias: {
-			'#shims#': './src/shims',
+			'#shims#': './src/core/shims',
 		},
 	},
 	// `$$DEV$$` is replaced by Oxc's transformer (rolldown's `transform.define`), so `if ($$DEV$$)`
@@ -239,7 +239,7 @@ async function hotBuild(onUpdate: (update: HotUpdate) => void) {
 	const engine = await dev(
 		{
 			...config,
-			plugins: [refresh(root, '~/lib/hot/runtime'), config.plugins],
+			plugins: [refresh(root, '~/hot-refresh/runtime'), config.plugins],
 			experimental: {
 				devMode: {
 					implement: readFileSync(join(__dirname, 'dev-runtime.js'), 'utf8'),

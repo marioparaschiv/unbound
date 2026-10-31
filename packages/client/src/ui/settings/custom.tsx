@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
-import { Discord } from '~/api/metro/components';
+import { Discord } from '~/metro/components';
 
 type CustomScreenParams = {
 	title?: string;

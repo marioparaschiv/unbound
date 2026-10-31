@@ -7,13 +7,13 @@ import { join } from 'node:path';
 
 await import('./helpers/addons');
 
-mock.module('~/api/metro/search', () => ({
+mock.module('~/metro/search', () => ({
 	findByName: () => undefined,
 	findByProps: () => undefined,
 }));
 
-const components = await import('~/api/metro/components');
-const fallbacks = await import('~/api/metro/fallbacks/design-fallbacks');
+const components = await import('~/metro/components');
+const fallbacks = await import('~/metro/fallbacks/design-fallbacks');
 
 const BARREL_MEMBER = /^\s*(\w+): \w+Component;$/;
 

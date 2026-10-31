@@ -1,9 +1,9 @@
 import { useState, memo } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import type { Addon } from '~/managers/addon';
+import { Discord } from '~/metro/components';
+import type { Addon } from '~/addons/addon';
+import { Manager } from '~/addons/manager';
 import { useAddonState } from '~/ui/hooks';
-import { Manager } from '~/managers/base';
 
 type AddonSwitchProps = {
 	addon: Addon;

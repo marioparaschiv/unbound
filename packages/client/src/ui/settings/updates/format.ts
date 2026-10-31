@@ -1,7 +1,7 @@
-import type { UpdatableKind } from '~/managers/manager-of';
-import { Moment } from '~/api/metro/common';
-import { Manager } from '~/managers/base';
-import { Icons } from '~/api/assets';
+import type { UpdatableKind } from '~/addons/manager-of';
+import { Manager } from '~/addons/manager';
+import { Moment } from '~/metro/common';
+import { Icons } from '~/assets/api';
 
 /**
  * @description Resolves the asset that stands in for an addon's own icon, by its kind.

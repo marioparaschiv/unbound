@@ -27,7 +27,7 @@ const dismissed: string[] = [];
 
 mock.module('react-native', () => ({ Alert: { alert: () => undefined } }));
 
-mock.module('~/api/metro/design', () => ({
+mock.module('~/metro/design', () => ({
 	Discord: {
 		AlertModal: () => null,
 		AlertActionButton: () => null,
@@ -37,7 +37,7 @@ mock.module('~/api/metro/design', () => ({
 	},
 }));
 
-const { confirm, dismissAll, showDialog } = await import('~/api/dialogs');
+const { confirm, dismissAll, showDialog } = await import('~/dialogs/api');
 
 function buttonsOf(dialog: Opened | undefined): ActionButton[] {
 	return [dialog?.props.actions.props.children ?? []].flat();

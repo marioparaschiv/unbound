@@ -3,10 +3,10 @@ import { Dimensions, View } from 'react-native';
 import type { ComponentType } from 'react';
 import { useMemo, useState } from 'react';
 
-import { Discord, SafeArea } from '~/api/metro/components';
-import { installsFromManifest } from '~/managers/addons';
+import { installsFromManifest } from '~/addons/addons';
+import { Discord, SafeArea } from '~/metro/components';
 import InstallButton from '~/ui/addons/install-button';
-import storage from '~/api/storage';
+import storage from '~/storage/api';
 
 import ThemesTab from './themes';
 import FontsTab from './fonts';

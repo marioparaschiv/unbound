@@ -1,8 +1,8 @@
 import { View } from 'react-native';
 import { memo } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import { Theme } from '~/api/metro/common';
+import { Discord } from '~/metro/components';
+import { Theme } from '~/metro/common';
 
 import useStyles from './addon-title.style';
 

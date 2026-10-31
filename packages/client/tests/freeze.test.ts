@@ -1,21 +1,21 @@
 import { describe, expect, mock, test } from 'bun:test';
 
-import type { AddonAttribution } from '~/api/crash-guard';
-import type { CrashEvent } from '~/lib/crash-report';
+import type { AddonAttribution } from '~/addons/crash-guard';
+import type { CrashEvent } from '~/diagnostics/crash-report';
 
 type RecordedToast = { content?: unknown };
 
 const toasts: RecordedToast[] = [];
 const crashes: CrashEvent[] = [];
 
-mock.module('~/lib/crash-reports', () => ({
+mock.module('~/diagnostics/crash-reports', () => ({
 	reportCrash: async (event: CrashEvent) => {
 		crashes.push(event);
 	},
 }));
-const actualToasts = await import('~/api/toasts');
+const actualToasts = await import('~/toasts/api');
 
-mock.module('~/api/toasts', () => ({
+mock.module('~/toasts/api', () => ({
 	...actualToasts,
 	showToast: (toast: RecordedToast) => {
 		toasts.push(toast);
@@ -23,8 +23,8 @@ mock.module('~/api/toasts', () => ({
 }));
 
 const { FakeAddons, makeManifest } = await import('./helpers/addons');
-const { currentAddonAttribution, withAddonAttribution } = await import('~/api/crash-guard');
-const { before } = await import('~/api/patcher');
+const { currentAddonAttribution, withAddonAttribution } = await import('~/addons/crash-guard');
+const { before } = await import('~/patcher/api');
 
 type Counter = {
 	value: number;

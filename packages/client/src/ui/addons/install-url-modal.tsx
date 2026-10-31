@@ -1,9 +1,9 @@
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useState } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import { Manager } from '~/managers/base';
-import { format } from '~/api/i18n';
+import { Discord } from '~/metro/components';
+import { Manager } from '~/addons/manager';
+import { format } from '~/i18n/api';
 
 type InstallUrlModalProps = {
 	kind: AddonKind;

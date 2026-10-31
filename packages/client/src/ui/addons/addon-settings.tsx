@@ -1,8 +1,8 @@
 import { memo } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import type { Addon } from '~/managers/addon';
-import { Screens } from '~/lib/constants';
+import { Discord } from '~/metro/components';
+import type { Addon } from '~/addons/addon';
+import { Screens } from '~/core/constants';
 
 import RoundButton from './round-button';
 
