@@ -15,5 +15,18 @@
 	"version": "1.0.2",
 	"icon": "ImageIcon",
 	"minNativePluginApi": "1.0.0",
-	"main": "index.ts"
+	"main": "index.ts",
+	"platformCapabilities": {
+		"android": [
+			"native.java.batch",
+			"native.java.classes",
+			"native.java.fields",
+			"native.java.invoke",
+			"native.java.invokeAsync"
+		]
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "MKvzI+UMuxzgVBddCkqnSEXre3CtiD8MjYKNKOmbavZuX6WhjokasEZcvrGygT/opAR7LICpl2JjOv0BqxpiBw=="
+	}
 }

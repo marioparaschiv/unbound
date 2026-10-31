@@ -18,5 +18,9 @@
 	],
 	"version": "1.0.1",
 	"icon": "KeyboardIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "Lqt4A/8khF8a4WRcsCGDu9NuW7ZeHSA/zxq1Rns30hfSMyiEY5fSpslplNcYffUQ75CwegcqNvB8jO/I5OgUDw=="
+	}
 }
