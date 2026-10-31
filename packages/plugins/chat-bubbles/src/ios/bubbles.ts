@@ -10,6 +10,7 @@ import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
 
 import { messageLayout, type SnapshotNode } from '~/message-layout';
+import { installBubbleGuards } from '~/ios/ui-bubbles';
 import { IOSClass, PLUGIN_NAME } from '~/constants';
 import { bubbleFrame, bubbleProblem, frameDrift } from '~/geometry';
 import type { BubbleColor } from '~/style';
@@ -67,7 +68,8 @@ type PendingCell = { cell: NativeObjectHandle; onlyWhenResized: boolean };
  * @param objc The Objective-C bridge.
  * @returns `refresh`, which repaints the bubbles on screen, and `dispose`, which removes them.
  */
-export function drawIOSBubbles({ objc }: NativePluginBridge) {
+export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
+	const scope = ui.createScope();
 	const bubbles = new Map<string, { cell: NativeObjectHandle; bubble: NativeObjectHandle }>();
 	const pending = new Map<string, PendingCell>();
 	const placedSizes = new Map<string, string>();
@@ -300,27 +302,13 @@ export function drawIOSBubbles({ objc }: NativePluginBridge) {
 		if (!flushing) setTimeout(() => void flush(), 0);
 	}
 
-	async function clearSeparator(cell: NativeObjectHandle) {
-		if (!disposed)
-			await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]).catch(() => undefined);
-	}
-
-	const clearKey = viewKey(objc, clear);
-
-	function keepClear({ self, args }: { self: NativeObjectHandle; args: unknown[] }) {
-		const color = args[0] as NativeObjectHandle | null;
-
-		if (disposed || (color && viewKey(objc, color) === clearKey)) return;
-
-		void objc.invokeAsync(self, 'setBackgroundColor:', [clear]).catch(() => undefined);
-	}
+	ui.run(installBubbleGuards, scope, {
+		messageCell: IOSClass.messageCell,
+		separatorCell: IOSClass.separatorCell,
+		bubbleTag: BUBBLE_TAG,
+	});
 
 	const hooks = [
-		objc.hook(IOSClass.messageCell, 'setBackgroundColor:', { after: keepClear }),
-		objc.hook(IOSClass.separatorCell, 'setBackgroundColor:', { after: keepClear }),
-		objc.hook(IOSClass.separatorCell, 'layoutSubviews', {
-			after: ({ self }) => void clearSeparator(self),
-		}),
 		objc.hook(IOSClass.messageCell, 'layoutSubviews', {
 			after: ({ self }) => schedule(self, true),
 		}),
@@ -335,11 +323,6 @@ export function drawIOSBubbles({ objc }: NativePluginBridge) {
 				ownership.delete(key);
 				problems.delete(key);
 				pending.delete(key);
-
-				const bubble = bubbles.get(key)?.bubble;
-
-				if (bubble)
-					void objc.invokeAsync(bubble, 'setHidden:', [true]).catch(() => undefined);
 
 				setTimeout(() => {
 					if (!disposed) schedule(self);
@@ -396,6 +379,7 @@ export function drawIOSBubbles({ objc }: NativePluginBridge) {
 		refresh: (): void => void refresh(),
 		async dispose() {
 			disposed = true;
+			scope.dispose();
 
 			for (const hook of hooks) hook.remove();
 

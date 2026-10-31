@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0]
+
+### Changed
+
+- On iOS, message backgrounds are kept clear and a reused message's old bubble is hidden on the UI thread, in the same pass as Discord's change, so neither flashes while scrolling.
+
 ## [1.0.3]
 
 ### Fixed
