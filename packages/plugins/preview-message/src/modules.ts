@@ -3,7 +3,7 @@ import { metro, storage, flux } from '@unbound-app/api';
 
 export type { Sticker } from '@unbound-plugins/shared/stickers/staged-stickers';
 
-export const DraftStore = metro.findByProps('getDraft', { lazy: true });
+export const DraftStore = flux.getStore('Draft', { lazy: true });
 export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
 export const ChatInputs = metro.findByProps('getBestActiveInputForChannelId', { lazy: true });
 export const Haptics = metro.findByFilePath('modules/haptics/HapticUtils.native.tsx', {
