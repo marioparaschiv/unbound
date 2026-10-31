@@ -31,7 +31,7 @@ export type ModelMessage = {
 
 type ModelAction = {
 	type: string;
-	message?: RawMessage;
+	message?: Partial<RawMessage>;
 };
 
 export type MessageStoreModel = {
@@ -61,14 +61,20 @@ function sanitizeEmbed(embed: RawEmbed): ModelEmbed {
 export function createMessageStoreModel(currentUserId: string): MessageStoreModel {
 	const records = new Map<string, ModelMessage>();
 
-	function build(record: ModelMessage, raw: RawMessage): ModelMessage {
+	function build(record: ModelMessage, raw: Partial<RawMessage>): ModelMessage {
 		const next = { ...record };
 
-		if (raw.content != null) next.content = raw.content;
+		if (raw.content !== undefined) {
+			next.content = raw.content;
+		}
 
-		if (raw.mentions != null) next.mentions = raw.mentions.map((user) => user.id);
+		if (raw.mentions !== undefined) {
+			next.mentions = raw.mentions.map((user) => user.id);
+		}
 
-		if (raw.embeds != null) next.embeds = raw.embeds.map(sanitizeEmbed);
+		if (raw.embeds !== undefined) {
+			next.embeds = raw.embeds.map(sanitizeEmbed);
+		}
 
 		next.mentioned = next.mentions.includes(currentUserId);
 
@@ -100,7 +106,8 @@ export function createMessageStoreModel(currentUserId: string): MessageStoreMode
 			return record?.channel_id === channelId ? record : undefined;
 		},
 		dispatch(action) {
-			const existing = action.message && records.get(action.message.id);
+			const id = action.message?.id;
+			const existing = id === undefined ? undefined : records.get(id);
 
 			if (action.type === 'MESSAGE_UPDATE' && action.message && existing) {
 				records.set(existing.id, build(existing, action.message));
@@ -131,7 +138,9 @@ export function createChatModel<Row>(
 			return messageIds.flatMap(([channelId, messageId]) => {
 				const record = store.getMessage(channelId, messageId);
 
-				if (!record) return [];
+				if (!record) {
+					return [];
+				}
 
 				let entry = built.get(messageId);
 

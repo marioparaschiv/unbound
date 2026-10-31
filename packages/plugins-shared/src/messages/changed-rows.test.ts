@@ -1,30 +1,18 @@
-import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
-
 import {
 	createMessageStoreModel,
 	type MessageStoreModel,
 	type RawMessage,
 } from '@unbound-plugins/shared/messages/message-store-model';
+import {
+	CHANGED_ROWS_LIMIT,
+	trackChangedRows,
+} from '@unbound-plugins/shared/messages/changed-rows';
+import { afterAll, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 
 type Action = Parameters<MessageStoreModel['dispatch']>[0];
 
 let store = createMessageStoreModel('me');
 const dispatched: Action[] = [];
-let dispatch = (action: Action) => store.dispatch(action);
-
-void mock.module('@unbound-app/api', () => ({
-	flux: {
-		dispatch: (action: Action) => {
-			dispatched.push(action);
-
-			return dispatch(action);
-		},
-	},
-}));
-
-const { CHANGED_ROWS_LIMIT, trackChangedRows } =
-	await import('@unbound-plugins/shared/messages/changed-rows');
-
 const errors = spyOn(console, 'error').mockImplementation(() => {});
 
 function raw(id: string): RawMessage {
@@ -41,20 +29,25 @@ function isLoaded(channelId: string, id: string) {
 	return Boolean(store.getMessage(channelId, id));
 }
 
+function dispatch(action: Action) {
+	dispatched.push(action);
+
+	return store.dispatch(action);
+}
+
 beforeEach(() => {
 	store = createMessageStoreModel('me');
-	dispatch = (action) => store.dispatch(action);
 	dispatched.length = 0;
 	errors.mockClear();
 });
 
-afterEach(() => {
-	errors.mockClear();
+afterAll(() => {
+	errors.mockRestore();
 });
 
 describe('trackChangedRows', () => {
 	test('rebuild gives each recorded message a new record with the same data', async () => {
-		const rows = trackChangedRows('Test', isLoaded);
+		const rows = trackChangedRows('Test', { isLoaded, dispatch });
 		const before = store.add(raw('m1'));
 
 		rows.add(before);
@@ -73,7 +66,7 @@ describe('trackChangedRows', () => {
 	});
 
 	test('rebuild skips messages that are no longer loaded and forgets every message', () => {
-		const rows = trackChangedRows('Test', isLoaded);
+		const rows = trackChangedRows('Test', { isLoaded, dispatch });
 
 		rows.add(store.add(raw('m1')));
 		rows.add({ id: 'gone', channel_id: 'c1' });
@@ -86,7 +79,7 @@ describe('trackChangedRows', () => {
 	});
 
 	test('keeps only the most recently changed messages', () => {
-		const rows = trackChangedRows('Test', () => true);
+		const rows = trackChangedRows('Test', { isLoaded: () => true, dispatch });
 
 		for (let i = 0; i <= CHANGED_ROWS_LIMIT; i++) {
 			rows.add({ id: `m${i}`, channel_id: 'c1' });
@@ -103,25 +96,26 @@ describe('trackChangedRows', () => {
 	});
 
 	test('rebuild goes on past a failed lookup or dispatch, then forgets every message', async () => {
-		const rows = trackChangedRows('Test', (channelId, id) => {
-			if (id === 'm1') {
-				throw new TypeError('MessageStore is undefined');
-			}
+		const rows = trackChangedRows('Test', {
+			isLoaded(channelId, id) {
+				if (id === 'm1') {
+					throw new TypeError('MessageStore is undefined');
+				}
 
-			return isLoaded(channelId, id);
+				return isLoaded(channelId, id);
+			},
+			dispatch(action) {
+				if (action.message.id === 'm2') {
+					throw new Error('dispatch threw');
+				}
+
+				if (action.message.id === 'm3') {
+					return Promise.reject(new Error('dispatch rejected'));
+				}
+
+				return dispatch(action);
+			},
 		});
-
-		dispatch = (action) => {
-			if (action.message?.id === 'm2') {
-				throw new Error('dispatch threw');
-			}
-
-			if (action.message?.id === 'm3') {
-				return Promise.reject(new Error('dispatch rejected'));
-			}
-
-			return store.dispatch(action);
-		};
 
 		for (const id of ['m1', 'm2', 'm3', 'm4']) {
 			rows.add(store.add(raw(id)));

@@ -1,11 +1,18 @@
-import { flux } from '@unbound-app/api';
-
 type MessageKey = {
 	id?: string;
 	channel_id?: string;
 };
 
-type IsLoaded = (channelId: string, messageId: string) => boolean;
+// FluxActions types MESSAGE_UPDATE as a whole message, but Discord also applies the partial updates its gateway sends.
+type RowUpdate = {
+	type: string;
+	message: MessageKey;
+};
+
+export type MessageRows = {
+	isLoaded: (channelId: string, messageId: string) => boolean;
+	dispatch: (action: RowUpdate) => Promise<void>;
+};
 
 export type ChangedRows = {
 	add: (message: MessageKey | undefined) => void;
@@ -14,16 +21,13 @@ export type ChangedRows = {
 
 export const CHANGED_ROWS_LIMIT = 1000;
 
-// FluxActions types MESSAGE_UPDATE as a whole message, but Discord also applies the partial updates its gateway sends.
-const MESSAGE_UPDATE: string = 'MESSAGE_UPDATE';
-
 /**
  * @description Remembers the messages whose chat rows a plugin changed, so it can have Discord build those rows again once it stops changing them.
  * @param plugin The plugin's display name, used in the log lines.
- * @param isLoaded Whether one of Discord's message stores still holds the message.
+ * @param rows Whether one of Discord's message stores still holds a message, and Flux's `dispatch`.
  * @returns `add` records a message, keeping the most recent {@link CHANGED_ROWS_LIMIT}; `rebuild` updates each recorded message that is still loaded and forgets them all.
  */
-export function trackChangedRows(plugin: string, isLoaded: IsLoaded): ChangedRows {
+export function trackChangedRows(plugin: string, rows: MessageRows): ChangedRows {
 	const messages = new Map<string, string>();
 
 	// UNKNOWN: a caught error or rejection reason.
@@ -47,13 +51,13 @@ export function trackChangedRows(plugin: string, isLoaded: IsLoaded): ChangedRow
 		rebuild() {
 			for (const [id, channelId] of messages) {
 				try {
-					if (!isLoaded(channelId, id)) {
+					if (!rows.isLoaded(channelId, id)) {
 						continue;
 					}
 
 					// Discord keeps a built row and its parsed content until the message record changes. An id-only update replaces the record without changing its data.
-					flux.dispatch({
-						type: MESSAGE_UPDATE,
+					rows.dispatch({
+						type: 'MESSAGE_UPDATE',
 						message: { id, channel_id: channelId },
 					}).catch((error) => report(id, error));
 				} catch (error) {

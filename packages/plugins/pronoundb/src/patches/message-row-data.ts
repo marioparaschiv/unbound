@@ -1,5 +1,5 @@
 import { trackChangedRows } from '@unbound-plugins/shared/messages/changed-rows';
-import { metro, patcher } from '@unbound-app/api';
+import { flux, metro, patcher } from '@unbound-app/api';
 
 import {
 	ChannelStore,
@@ -45,9 +45,10 @@ function isShownFor(author: Author | undefined): author is Author & { id: string
  * @returns A function that removes the patch and has Discord rebuild the headers it labelled.
  */
 export function patchMessageRowData(lookup: PronounLookup): () => void {
-	const labelled = trackChangedRows('PronounDB', (channelId, id) =>
-		Boolean(MessageStore.getMessage(channelId, id)),
-	);
+	const labelled = trackChangedRows('PronounDB', {
+		isLoaded: (channelId, id) => Boolean(MessageStore.getMessage(channelId, id)),
+		dispatch: flux.dispatch,
+	});
 
 	const unpatch = patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const message: Message | undefined = args[0]?.message;

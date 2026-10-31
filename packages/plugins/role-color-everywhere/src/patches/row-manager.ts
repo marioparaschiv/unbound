@@ -1,7 +1,7 @@
 import { trackChangedRows } from '@unbound-plugins/shared/messages/changed-rows';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { MetroFunction } from '@unbound-app/api/metro';
-import { patcher } from '@unbound-app/api';
+import { flux, patcher } from '@unbound-app/api';
 
 import {
 	byRowManager,
@@ -35,7 +35,7 @@ function repliedTo(message: Message | undefined) {
  * @returns A function that stops waiting for `RowManager`, removes the patch and has Discord rebuild the rows it colored.
  */
 export function patchRowManager(): () => void {
-	const colored = trackChangedRows(PLUGIN_NAME, isLoaded);
+	const colored = trackChangedRows(PLUGIN_NAME, { isLoaded, dispatch: flux.dispatch });
 
 	return whenLoaded(byRowManager, (RowManager: MetroFunction) => {
 		if (typeof RowManager.prototype?.generate !== 'function') {
