@@ -1,7 +1,7 @@
 /** A public API member that moved, as dotted paths from the `@unbound-app/api` root, which is also `window.unbound`. */
 export type ApiRename = { from: string; to: string };
 
-/** Every rename in the public API (plan §6 and D24). The rename codemod applies a row once the SDK exports its target. */
+/** Every rename in the public API (plan §6 and D24). */
 export const API_RENAMES: readonly ApiRename[] = [
 	{ from: 'metro.findStore', to: 'flux.getStore' },
 	{ from: 'metro.addListener', to: 'metro.onModuleLoad' },

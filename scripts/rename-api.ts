@@ -33,8 +33,7 @@ function lastOf(path: string): string {
 	return path.slice(path.lastIndexOf('.') + 1);
 }
 
-// Mirrors the rollup globals: `@unbound-app/api/metro/filters` is `window.unbound.metro.filters`.
-function modulePath(specifier: string): string | undefined {
+function unboundPathOfImport(specifier: string): string | undefined {
 	if (specifier === API) {
 		return '';
 	}
@@ -51,7 +50,7 @@ function apiImports(source: ts.SourceFile): ts.ImportDeclaration[] {
 		(statement): statement is ts.ImportDeclaration =>
 			ts.isImportDeclaration(statement) &&
 			ts.isStringLiteral(statement.moduleSpecifier) &&
-			modulePath(statement.moduleSpecifier.text) !== undefined,
+			unboundPathOfImport(statement.moduleSpecifier.text) !== undefined,
 	);
 }
 
@@ -92,7 +91,8 @@ function planEdits(source: ts.SourceFile, state: PassState): Edit[] {
 	let identifiers: Set<string> | undefined;
 
 	for (const declaration of apiImports(source)) {
-		const base = modulePath((declaration.moduleSpecifier as ts.StringLiteral).text) ?? '';
+		const base =
+			unboundPathOfImport((declaration.moduleSpecifier as ts.StringLiteral).text) ?? '';
 		const named = declaration.importClause?.namedBindings;
 
 		if (!named) {
@@ -176,8 +176,7 @@ function planEdits(source: ts.SourceFile, state: PassState): Edit[] {
 		return found;
 	}
 
-	// The local name bound to a top-level namespace, adding `import { name } from '@unbound-app/api'` when none exists.
-	function namespaceBinding(name: string): string | undefined {
+	function bindOrImportNamespace(name: string): string | undefined {
 		for (const [local, path] of bindings) {
 			if (path === name) {
 				return local;
@@ -235,7 +234,7 @@ function planEdits(source: ts.SourceFile, state: PassState): Edit[] {
 		let text = `${base.getText(source)}.${rename.to}`;
 
 		if (pathOf(base) !== '') {
-			const local = namespaceBinding(head);
+			const local = bindOrImportNamespace(head);
 
 			if (!local) {
 				state.manual.add(`${rename.from} (the name ${head} is taken)`);
@@ -318,7 +317,6 @@ function countReferences(source: ts.SourceFile, name: string): number {
 	return count;
 }
 
-// Drops a namespace import the rewrite left unused, such as `metro` once `metro.findStore` became `flux.getStore`.
 function removeUnused(text: string, fileName: string, name: string): string {
 	const source = ts.createSourceFile(fileName, text, ts.ScriptTarget.Latest, true);
 
