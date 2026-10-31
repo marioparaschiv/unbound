@@ -19,7 +19,7 @@ type AddonMdProps = {
 	/** The directory URL the addon's `media/` folder sits in: the pinned commit before publish, the CDN version folder after. */
 	mediaBase: string;
 	/** The page as `ubd build` measured it; without it there is no banner or gallery, and media show as links. */
-	page?: AddonPage;
+	page?: AddonPage | null;
 };
 
 const FRONTMATTER_KEYS = new Set(Object.keys(addonPageFrontmatterSchema.shape));
@@ -36,7 +36,7 @@ function isPageFrontmatter(frontmatter: string): boolean {
 	);
 }
 
-function getBody(source: string, page: AddonPage | undefined): string {
+function getBody(source: string, page: AddonPage | null | undefined): string {
 	const { frontmatter, body } = splitFrontmatter(source);
 
 	if (frontmatter === undefined) {
