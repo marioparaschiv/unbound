@@ -4,19 +4,25 @@ export type { SettingsEntry } from './_internal';
 import type { SettingsEntry } from './_internal';
 import * as React$1 from 'react';
 import { ComponentType } from 'react';
-/**
- * @description Registers one or more settings entries into the section registry, warning on key collisions.
- * @param entries The settings entries to register.
- */
-export declare function registerSettings(...entries: SettingsEntry[]): void;
-/**
- * @description Removes one or more settings entries from the section registry by key.
- * @param keys The entry keys to remove.
- */
-export declare function removeSettings(...keys: string[]): void;
+/** @deprecated Use registerSection */
+export declare const registerSettings: typeof registerSection;
+/** @deprecated Use removeSection */
+export declare const removeSettings: typeof removeSection;
+/** @deprecated Use getSections */
+export declare const sections: typeof getSections;
 /**
  * @description Returns the current registry of settings entries.
  * @returns A record of entry key to its {@link SettingsEntry}.
  */
-export declare function sections(): Record<string, SettingsEntry>;
+export declare function getSections(): Record<string, SettingsEntry>;
+/**
+ * @description Registers one or more settings entries into the section registry, warning on key collisions.
+ * @param entries The settings entries to register.
+ */
+export declare function registerSection(...entries: SettingsEntry[]): void;
+/**
+ * @description Removes one or more settings entries from the section registry by key.
+ * @param keys The entry keys to remove.
+ */
+export declare function removeSection(...keys: string[]): void;
 export {};

@@ -18,7 +18,7 @@ const noopHandle: ToastHandle = {
  * @param options The toast options, optionally including a custom `id`.
  * @returns A {@link ToastHandle} for controlling the shown toast.
  */
-export function showToast(options: ToastOptions): ToastHandle {
+export function show(options: ToastOptions): ToastHandle {
 	if (!hasVisibleContent(options)) {
 		Logger.warn('Ignored a toast with nothing to show', new Error().stack);
 
@@ -35,4 +35,7 @@ export function showToast(options: ToastOptions): ToastHandle {
 	return store.addToast({ ...options, id });
 }
 
-export default { showToast };
+/** @deprecated Use show */
+export const showToast = show;
+
+export default { show, showToast };
