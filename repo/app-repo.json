@@ -1,0 +1,45 @@
+{
+  "name": "Unbound App Repo",
+  "identifier": "app.unbound.ios.repo",
+  "iconURL": "https://assets.unbound.rip/logo/logo.png",
+  "apps": [
+    {
+      "name": "Unbound",
+      "bundleIdentifier": "com.hammerandchisel.discord",
+      "developerName": "Unbound Team",
+      "iconURL": "https://assets.unbound.rip/logo/logo.png",
+      "localizedDescription": "A client mod for Discord",
+      "subtitle": "A client mod for Discord",
+      "tintColor": "aa454d",
+      "category": "social",
+      "versions": []
+    },
+    {
+      "name": "Unbound (TestFlight)",
+      "bundleIdentifier": "com.hammerandchisel.discord.testflight",
+      "developerName": "Unbound Team",
+      "beta": true,
+      "iconURL": "https://assets.unbound.rip/logo/logo.png",
+      "localizedDescription": "A client mod for Discord (TestFlight builds)",
+      "subtitle": "A client mod for Discord (TestFlight builds)",
+      "tintColor": "aa454d",
+      "category": "social",
+      "versions": [
+        {
+          "version": "353.0_119349",
+          "date": "2026-10-27",
+          "size": 102789592,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0_119349/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."
+        },
+        {
+          "version": "353.0_119038",
+          "date": "2026-10-26",
+          "size": 102468175,
+          "downloadURL": "https://github.com/marioparaschiv/unbound/releases/download/loader-v353.0_119038/Unbound.ipa",
+          "localizedDescription": "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."
+        }
+      ]
+    }
+  ]
+}

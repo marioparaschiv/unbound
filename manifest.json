@@ -1,0 +1,16 @@
+{
+  "revision": "e2651a29",
+  "channel": "beta",
+  "buildTime": "2026-10-31T20:49:47.545Z",
+  "sha512": {
+    "unbound.98.bundle": "dc4ea7053efeb62265720ba8fa0a51a6842b5b339b0eb4a50264b64927f9dc4daaec721f32cbd681d360ce19302e32244855da22ce7207f6665bc6ea6183d949",
+    "unbound.js": "395798a2f0a01302eb7777b6e0020fa88fcbceb34ec6182c30cf836c142186ebaee3c63e83ffb7eb58b08960232349ea1a73df23f3e40707926d2907183cea05"
+  },
+  "bytecodeVersions": [
+    98
+  ],
+  "nativeBridge": {
+    "api": "1.0.0",
+    "abi": "1.0.0"
+  }
+}

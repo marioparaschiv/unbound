@@ -1,0 +1,27 @@
+<package>
+	<id>app.unbound.ios</id>
+	<name>Unbound</name>
+	<version>2.0.1</version>
+	<compatibility>
+		<firmware>
+			<miniOS>15.0</miniOS>
+		</firmware>
+	</compatibility>
+	<dependencies>
+		<package>ellekit</package>
+	</dependencies>
+	<shortDescription>Discord mobile client aimed at providing the user control, stability and customizability.</shortDescription>
+	<descriptionlist>
+		<description>Discord mobile client aimed at providing the user control, stability and customizability.</description>
+	</descriptionlist>
+	<changelog>
+		<change>See the GitHub releases page for the full changelog.</change>
+	</changelog>
+	<links>
+		<link>
+			<name>Source Code</name>
+		<url>https://github.com/marioparaschiv/unbound</url>
+			<iconclass>fa-brands fa-github</iconclass>
+		</link>
+	</links>
+</package>
