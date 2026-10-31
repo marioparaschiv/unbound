@@ -2,12 +2,9 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import type { DefaultEventMap } from '~/lib/event-emitter';
+import type { ManagerOf } from '~/managers/manager-of';
 import { EventEmitter } from '~/lib/event-emitter';
-import type { Plugins } from '~/managers/plugins';
-import type { Themes } from '~/managers/themes';
 import { createPatcher } from '~/api/patcher';
-import type { Fonts } from '~/managers/fonts';
-import type { Icons } from '~/managers/icons';
 import storage from '~/api/storage';
 
 type BaseManagerEvents<T> = {
@@ -22,20 +19,12 @@ export type ManagerInfo = {
 	name: string;
 	/** The folder its addons live in, relative to the documents directory, cased as the loader scans it. */
 	directory: string;
-	/** The bucket its settings persist to. Spelled out because bucket names on disk never change. */
+	/** The bucket its settings persist to. */
 	bucket: string;
 	/** The message key of the tab and section label. */
 	label: string;
 	/** The asset name that stands in for an addon's own icon. */
 	icon: string;
-};
-
-// Type-only: importing the subclasses here would close the cycle base → plugins → addons → base.
-type ManagerOf = {
-	plugin: Plugins;
-	theme: Themes;
-	'icon-pack': Icons;
-	font: Fonts;
 };
 
 const registry: Partial<ManagerOf> = {};

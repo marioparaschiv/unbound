@@ -7,7 +7,7 @@ import type {
 } from '@unbound-app/types';
 
 import { createScopedReact, performRefresh, withRefreshScope } from '~/lib/hot/runtime';
-import { attributeAddon, setFreezeListener } from '~/api/crash-guard';
+import { attributeAddon, crashGuardKey, setFreezeListener } from '~/api/crash-guard';
 import { createPluginContext } from '~/api/native-runtime';
 import type { AddonAttribution } from '~/api/crash-guard';
 import { setOwnerCheck } from '~/lib/commands/owners';
@@ -197,7 +197,7 @@ export class Plugins extends Addons<PluginEntity> {
 	}
 
 	protected attribution(entity: PluginEntity): AddonAttribution | undefined {
-		return attributeAddon(this.crashGuardKey(entity.id), entity.data.name);
+		return attributeAddon(crashGuardKey(this.bucket, entity.id), entity.data.name);
 	}
 }
 

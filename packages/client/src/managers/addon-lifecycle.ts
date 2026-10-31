@@ -6,6 +6,7 @@ import {
 	beginAddonStart,
 	crashDisabledNotice,
 	crashedAddon,
+	crashGuardKey,
 	finishAddonStart,
 	withAddonAttribution,
 } from '~/api/crash-guard';
@@ -221,7 +222,7 @@ export abstract class AddonLifecycle<T extends Addon> extends Manager<T, AddonEv
 		}
 
 		const recoveryMode = getSetting('recovery');
-		const guardKey = this.crashGuardKey(resolved.id);
+		const guardKey = crashGuardKey(this.bucket, resolved.id);
 		const startedAt = monotonicNow();
 
 		if (!recoveryMode) {
@@ -278,7 +279,7 @@ export abstract class AddonLifecycle<T extends Addon> extends Manager<T, AddonEv
 	 */
 	handleFreeze(freeze: AddonFreeze): void {
 		const entity = this.getEntities().find(
-			(candidate) => this.crashGuardKey(candidate.id) === freeze.id,
+			(candidate) => crashGuardKey(this.bucket, candidate.id) === freeze.id,
 		);
 
 		if (!entity) return;
@@ -339,22 +340,12 @@ export abstract class AddonLifecycle<T extends Addon> extends Manager<T, AddonEv
 	}
 
 	/**
-	 * @description Names an addon in the loader's crash guard, unique across addon kinds.
-	 * @param id The addon's id.
-	 * @returns The crash guard key.
-	 */
-	protected crashGuardKey(id: string): string {
-		// The loader persists this key across launches, so it uses the bucket name, which never changes.
-		return `${this.bucket}:${id}`;
-	}
-
-	/**
 	 * @description Persistently disables an addon the loader reported crashing Discord on consecutive launches.
 	 * @param entity The addon about to start.
 	 * @returns Whether the addon was disabled instead of started.
 	 */
 	private disableAfterCrash(entity: T): boolean {
-		const crashed = crashedAddon(this.crashGuardKey(entity.id));
+		const crashed = crashedAddon(crashGuardKey(this.bucket, entity.id));
 
 		if (!crashed) {
 			return false;
