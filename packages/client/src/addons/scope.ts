@@ -42,7 +42,6 @@ function liveUnboundView(patcher: AddonGlobals['patcher']): AddonGlobals['unboun
 	}) as AddonGlobals['unbound'];
 }
 
-// Not `window.unbound`: its type lives in core/index, which the SDK build of this file never loads.
 function liveUnbound(): object {
 	return Reflect.get(globalThis, 'unbound');
 }
