@@ -1,8 +1,6 @@
 import { createLogger } from '@unbound-app/logger';
 import { z } from 'zod';
 
-import { envSchema } from '~/lib/env';
-
 const logger = createLogger('Bot', 'Contributors');
 
 /** Narrower than `typeof fetch`, which Bun extends with `preconnect`; `globalThis.fetch` is assignable. */
@@ -148,13 +146,13 @@ export async function fetchContributorIds(
 
 /**
  * @description Creates an in-memory contributor-id cache that refreshes every `refreshMs` and keeps the stale set on failure.
- * @param options Fetch, token (default `GITHUB_TOKEN`), refresh interval and clock.
+ * @param options Fetch, the validated `GITHUB_TOKEN`, refresh interval and clock.
  * @returns The cache; concurrent `get()` calls share one refresh.
  */
 export function createContributorCache(options: ContributorCacheOptions = {}): ContributorCache {
 	const {
 		fetch = globalThis.fetch,
-		token = envSchema.shape.GITHUB_TOKEN.parse(process.env.GITHUB_TOKEN),
+		token,
 		refreshMs = CONTRIBUTOR_REFRESH_MS,
 		now = Date.now,
 	} = options;

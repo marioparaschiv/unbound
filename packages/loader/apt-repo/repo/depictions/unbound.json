@@ -33,7 +33,7 @@
                 {
                     "class": "DepictionTableButtonView",
                     "title": "Report an Issue",
-                    "action": "https://github.com/marioparaschiv/unbound/issues/new"
+                    "action": "https://github.com/marioparaschiv/unbound/issues/new?template=bug-report.yml&platform=iOS&install=Jailbreak%20package%20%28.deb%29"
                 }
             ],
             "class": "DepictionStackView"

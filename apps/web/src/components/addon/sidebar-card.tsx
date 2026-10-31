@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import Text from '~/components/ui/text';
 
 type SidebarCardProps = {
-	title: string;
+	title: ReactNode;
 	children: ReactNode;
 };
 
@@ -24,7 +24,7 @@ function SidebarCard({ title, children }: SidebarCardProps) {
 	return (
 		<Card className='gap-4'>
 			<CardHeader>
-				<CardTitle className='text-lg'>{title}</CardTitle>
+				<CardTitle>{title}</CardTitle>
 			</CardHeader>
 			<CardContent className='flex flex-col gap-2.5'>{children}</CardContent>
 		</Card>

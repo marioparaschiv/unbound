@@ -1,3 +1,4 @@
+import { patcher } from '@unbound-app/api';
 import {
 	getRoleColorAppearance,
 	type RoleColorAppearance,
@@ -9,7 +10,6 @@ import { cloneElement } from 'react';
 import {
 	ChannelStore,
 	GuildMemberStore,
-	Patcher,
 	RelationshipStore,
 	SelectedChannelStore,
 	TYPING_INDICATOR_PATH,
@@ -53,9 +53,15 @@ function typingAppearances(): Map<string, RoleColorAppearance> {
 	return uniqueNames(owners);
 }
 
+type MemoComponent = { type: (...args: unknown[]) => Rendered };
+
 type TypingIndicatorModule = {
-	default?: { type?: (...args: unknown[]) => unknown };
+	default?: Partial<MemoComponent>;
 };
+
+function isMemo(value: Partial<MemoComponent> | undefined): value is MemoComponent {
+	return typeof value?.type === 'function';
+}
 
 function patchLoadedTypingIndicator(TypingIndicator: TypingIndicatorModule): () => void {
 	const feature = `${PLUGIN_NAME}: typing`;
@@ -63,7 +69,9 @@ function patchLoadedTypingIndicator(TypingIndicator: TypingIndicatorModule): () 
 
 	if (!ensureModules(feature, modules)) return () => {};
 
-	if (typeof TypingIndicator.default?.type !== 'function') {
+	const memo = TypingIndicator.default;
+
+	if (!isMemo(memo)) {
 		console.error(`[${feature}] Skipped, TypingIndicator is not a memo component.`);
 
 		return () => {};
@@ -72,7 +80,7 @@ function patchLoadedTypingIndicator(TypingIndicator: TypingIndicatorModule): () 
 	// A list rendered while patched keeps calling this `renderItem` after the patch is removed.
 	let active = true;
 
-	const unpatch = Patcher.after(TypingIndicator.default, 'type', ({ result }) => {
+	const unpatch = patcher.after(memo, 'type', ({ result }) => {
 		const renderItem = result?.props?.renderItem;
 
 		if (typeof renderItem !== 'function') return;

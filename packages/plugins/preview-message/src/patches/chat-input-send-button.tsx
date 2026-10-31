@@ -1,10 +1,12 @@
+import { patcher } from '@unbound-app/api';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 import findRenderTarget from '@unbound-plugins/shared/react/render-target';
 import { View } from 'react-native';
 
-import { Patcher, SelectedChannelStore } from '~/modules';
+import { SelectedChannelStore } from '~/modules';
 import PreviewButton from '~/components/preview-button';
+import { Button } from '~/constants';
 
 type SendButtonProps = {
 	channel?: { id?: string };
@@ -29,7 +31,7 @@ export function patchChatInputSendButton(icon: number): () => void {
 				return () => {};
 			}
 
-			return Patcher.after(target.holder, target.key, ({ args, result }) => {
+			return patcher.after(target.holder, target.key, ({ args, result }) => {
 				if (!result) return;
 
 				const props: SendButtonProps | undefined = args[0];
@@ -43,6 +45,7 @@ export function patchChatInputSendButton(icon: number): () => void {
 							key='unbound-preview-message'
 							channelId={channelId}
 							icon={icon}
+							trailingGap={Button.gap}
 						/>
 						{result}
 					</View>

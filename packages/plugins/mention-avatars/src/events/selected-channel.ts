@@ -1,5 +1,7 @@
-import type { VisibleCellScanner } from '~/native/visible-cells';
-import type { Renderer } from '~/native/renderer';
+import { flux } from '@unbound-app/api';
+
+import type { VisibleCellScanner } from '~/ios/visible-cells';
+import type { Renderer } from '~/ios/renderer';
 import { SelectedChannelStore } from '~/modules';
 
 function selectedChannelId(): string | undefined {
@@ -29,11 +31,12 @@ export function subscribeSelectedChannel(
 		scanner.schedule();
 	}
 
-	SelectedChannelStore.addChangeListener(onChange);
+	const unsubscribe = flux.onStoreChange(SelectedChannelStore, onChange);
+
 	scanner.schedule();
 
 	return () => {
-		SelectedChannelStore.removeChangeListener(onChange);
+		unsubscribe();
 		scanner.cancel();
 	};
 }

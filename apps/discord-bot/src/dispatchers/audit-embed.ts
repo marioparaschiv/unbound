@@ -1,8 +1,12 @@
 import type { AuditEvent } from '@unbound-app/web/bot';
 import type { APIEmbed } from 'discord.js';
 
-import { renderKind, type KindEmbed } from '~/dispatchers/audit-kinds';
+import { buildLink, deployBuild, renderKind, type KindEmbed } from '~/dispatchers/audit-kinds';
 import { COLOURS, SITE_URL } from '~/lib/constants';
+import { truncate } from '~/lib/discord-messages';
+
+/** The deploys one post lists, oldest first; never empty. */
+export type DeployBatch = [AuditEvent, ...AuditEvent[]];
 
 export const EMBED_LIMITS = {
 	title: 256,
@@ -14,32 +18,6 @@ export const EMBED_LIMITS = {
 
 const SUBJECT_PATHS: Record<string, string> = { addon: 'admin/addons', user: 'admin/users' };
 const CODE_FENCE = { open: '```json\n', close: '\n```' } as const;
-
-/**
- * @description Shortens a string to at most `max` characters, marking a cut with an ellipsis.
- * @param value The string to shorten.
- * @param max The largest length allowed.
- * @returns `value` unchanged when it fits, otherwise its start ending in `…`.
- */
-export function truncate(value: string, max: number): string {
-	if (value.length <= max) {
-		return value;
-	}
-
-	if (max <= 0) {
-		return '';
-	}
-
-	let end = max - 1;
-	const last = value.charCodeAt(end - 1);
-
-	// Never keep half of a surrogate pair; Discord rejects or mangles a lone surrogate.
-	if (last >= 0xd8_00 && last <= 0xdb_ff) {
-		end--;
-	}
-
-	return `${value.slice(0, end)}…`;
-}
 
 // Discord rejects a blank author name or title with a 400, which would stall every later event.
 function present(text: string) {
@@ -130,6 +108,44 @@ export function buildAuditEmbed(event: AuditEvent): APIEmbed {
 	};
 }
 
+function deployLine(event: AuditEvent) {
+	const name = (event.subjectName || event.subjectId).replaceAll(/[[\]]/g, '');
+	const link = subjectLink(event);
+	const version = renderKind(event.kind, event.data)?.suffix;
+
+	return [link ? `[${name}](${link})` : name, version].filter(Boolean).join(' ');
+}
+
+/**
+ * @description Renders first-party deploys of one build as a single embed listing each addon on its own line.
+ * @param events The deploys, oldest first.
+ * @returns The embed; a lone deploy renders as {@link buildAuditEmbed} does.
+ */
+export function buildDeployEmbed(events: DeployBatch): APIEmbed {
+	const [first] = events;
+	const last = events.at(-1) ?? first;
+	const build = deployBuild(first.kind, first.data);
+
+	if (events.length === 1 || !build) {
+		return buildAuditEmbed(first);
+	}
+
+	const footer = `Events #${first.id}–#${last.id} · ${last.kind}`;
+	const lines = [...events.map(deployLine), `-# First-party build ${buildLink(build)}`];
+
+	return {
+		author: {
+			name: truncate(present(last.actor?.name ?? 'System'), EMBED_LIMITS.authorName),
+			icon_url: avatarOf(last),
+		},
+		title: `🚀 Deployed ${events.length} first-party addons`,
+		description: truncate(lines.join('\n'), EMBED_LIMITS.description),
+		color: COLOURS.deploy,
+		footer: { text: footer },
+		timestamp: last.createdAt.toISOString(),
+	};
+}
+
 /**
  * @description Renders the bare minimum of an audit event, for when Discord rejected its full embed.
  * @param event The moderation event.
@@ -145,4 +161,4 @@ export function buildFallbackEmbed(event: AuditEvent): APIEmbed {
 	};
 }
 
-export default { EMBED_LIMITS, truncate, buildAuditEmbed, buildFallbackEmbed };
+export default { EMBED_LIMITS, buildAuditEmbed, buildDeployEmbed, buildFallbackEmbed };

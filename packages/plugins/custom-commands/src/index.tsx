@@ -1,25 +1,19 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest, recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import SettingsPanel from '~/components/settings-panel';
 import { patchCommands } from '~/patches/commands';
 import { Commands, Messages } from '~/modules';
 
-let dispose = () => {};
-
 function start() {
 	if (!ensureModules('Custom Commands', { Commands, Messages })) return;
 
-	dispose = applyFeatures('Custom Commands', [patchCommands]);
-}
-
-function stop() {
-	dispose();
-	dispose = () => {};
+	patchCommands();
+	recordApplied(1);
 }
 
 export default {
 	start,
-	stop,
+	selfTest: featureSelfTest,
 	getSettingsPanel: () => <SettingsPanel />,
 };

@@ -1,8 +1,7 @@
+import { findRenderTarget } from '@unbound-plugins/shared/react/render-target';
+import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 import type { patcher } from '@unbound-app/api';
-
-import { findRenderTarget } from '../react/render-target';
-import { whenLoaded } from '../metro/when-loaded';
 
 type Cleanup = () => void;
 type Patcher = ReturnType<typeof patcher.createPatcher>;
@@ -11,6 +10,11 @@ const DIRECT_SHEETS: readonly (readonly [path: string, key: string])[] = [
 	[
 		'modules/messages/native/long_press/LongPressMessageActionSheet.tsx',
 		'MessageLongPressActionSheet',
+	],
+	['modules/channel/native/ChannelLongPressActionSheet.tsx', 'ChannelLongPressActionSheet'],
+	[
+		'modules/threads/native/components/ThreadLongPressActionSheet.tsx',
+		'ThreadLongPressActionSheet',
 	],
 ];
 

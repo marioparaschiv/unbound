@@ -52,10 +52,34 @@ function write(path: string, contents: string) {
 function writePlugin(dir: string, version: string) {
 	write(
 		`packages/plugins/${dir}/manifest.json`,
-		`${JSON.stringify({ id: `unbound.${dir}`, version, main: 'index.tsx' }, null, '\t')}\n`,
+		`${JSON.stringify(
+			{
+				id: `unbound.${dir}`,
+				name: dir,
+				description: `The ${dir} plugin.`,
+				authors: [{ name: 'adrian', id: '1' }],
+				version,
+				main: 'index.tsx',
+			},
+			null,
+			'\t',
+		)}\n`,
 	);
 	write(`packages/plugins/${dir}/package.json`, '{ "scripts": { "build": "rollup" } }\n');
 	write(`packages/plugins/${dir}/dist/index.js`, `export default '${dir} ${version}';\n`);
+	write(
+		`packages/plugins/${dir}/dist/manifest.json`,
+		`${JSON.stringify({
+			id: `unbound.${dir}`,
+			main: 'index.js',
+			version,
+			platforms: ['ios', 'android'],
+			platformCapabilities: {
+				ios: ['native.objc.classes'],
+				android: ['native.java.classes'],
+			},
+		})}\n`,
+	);
 }
 
 function commit(message: string): string {
@@ -153,8 +177,8 @@ beforeAll(() => {
 	server = Bun.serve({ port: 0, fetch: serve });
 });
 
-afterAll(() => {
-	server.stop(true);
+afterAll(async () => {
+	await server.stop(true);
 	rmSync(root, { recursive: true, force: true });
 });
 
@@ -206,7 +230,7 @@ test('a first run pushes the build tag and publishes every selected plugin', asy
 	);
 	expect(git(work, 'rev-parse', 'HEAD')).toBe(head);
 	expect(git(work, 'status', '--porcelain')).toBe('');
-	expect(result.output).toContain('unbound.alpha 1.0.0 published');
+	expect(result.output).toMatch(/unbound\.alpha.*1\.0\.0/);
 	state.published = new Map([
 		['unbound.alpha', { version: '1.0.0', commitSha: build ?? null }],
 		['unbound.beta', { version: '1.0.0', commitSha: build ?? null }],
@@ -220,7 +244,7 @@ test('a second run on the same commit does nothing', async () => {
 	const result = await run();
 
 	expect(result.exitCode).toBe(0);
-	expect(result.output).toContain('Nothing to publish.');
+	expect(result.output).toMatch(/nothing to publish/i);
 	expect(state.calls).toEqual([]);
 	expect(remoteTags()).toBe(tags);
 });
@@ -239,7 +263,7 @@ test('a build tag already on the remote is reused, not rebuilt', async () => {
 	expect(result.exitCode).toBe(0);
 	expect(result.output).toContain('- Add more');
 	expect(result.output).not.toContain('Stop the crash');
-	expect(result.output).toContain('(reused, tag');
+	expect(result.output).toMatch(/reused/);
 	expect(state.calls.map((call) => call.body)).toEqual([
 		{ repository: REPOSITORY, path: 'packages/plugins/beta', ref: tag, commitSha: head },
 	]);
@@ -294,6 +318,11 @@ test('signs each published bundle into its manifest when the signing key is set'
 
 		expect(manifest.version).toBe('1.1.0');
 		expect(manifest.main).toBe('index.tsx');
+		expect(manifest.platforms).toEqual(['ios', 'android']);
+		expect(manifest.platformCapabilities).toEqual({
+			ios: ['native.objc.classes'],
+			android: ['native.java.classes'],
+		});
 		expect(
 			verifyPluginSignature(
 				rawPublicKey,

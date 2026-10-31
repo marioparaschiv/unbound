@@ -1,3 +1,5 @@
+import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
@@ -29,12 +31,14 @@ import {
 	javaReference,
 	javaString,
 	javaText,
+	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
 import { readViewText } from '@unbound-plugins/shared/native/android/spans';
 import {
 	currentDecorView,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	resourceDensity,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
 import { registerMessageSurface, type SurfaceContent } from '~/components/message-surface';
@@ -80,10 +84,6 @@ type Embed = SurfaceContent & {
 	disposed: boolean;
 };
 
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
 /**
  * @description Embeds the message each Android message links to as a real chat row, the way the iOS client shows it.
  * @param native The plugin's Java, hook and Fabric bridges.
@@ -101,40 +101,30 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 	const linked = createLinkedMessages(controller.signal, (key) => {
 		for (const { messageView, messageId } of waiting.get(key)?.values() ?? []) {
 			render(messageView, messageId).catch((error) => {
-				console.error(
-					'[Message Link Embeds] Failed to embed a linked message on Android:',
-					error,
-				);
+				if (!isCancellation(error)) {
+					console.error(
+						'[Message Link Embeds] Failed to embed a linked message on Android:',
+						error,
+					);
+				}
 			});
 		}
 
 		waiting.delete(key);
 	});
 
-	const listeners = new Map<string, Set<() => void>>();
+	const listeners = createSurfaceListeners();
 	const surfaceModule = registerMessageSurface({
 		renderers,
 		surface: (surfaceId) => byId.get(surfaceId),
 		reportLayout: (surfaceId, height) => reportLayout(surfaceId, height),
 		revision: (surfaceId) => byId.get(surfaceId)?.revision ?? -1,
-		subscribe(surfaceId, listener) {
-			const set = listeners.get(surfaceId) ?? new Set();
-
-			set.add(listener);
-			listeners.set(surfaceId, set);
-
-			return () => {
-				set.delete(listener);
-
-				if (!set.size) listeners.delete(surfaceId);
-			};
-		},
+		subscribe: listeners.subscribe,
 	});
 
 	function publish(embed: Embed) {
 		embed.revision++;
-
-		for (const listener of listeners.get(embed.id) ?? []) listener();
+		listeners.notify(embed.id);
 	}
 
 	if (!surfaceModule) return undefined;
@@ -174,7 +164,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 
 	async function teardown(embed: Embed) {
 		embed.disposed = true;
-		embeds.delete(viewKey(embed.messageView as NativeJavaValue) ?? '');
+		embeds.delete(javaViewKey(embed.messageView as NativeJavaValue) ?? '');
 		byId.delete(embed.id);
 
 		const mounted = await embed.mounting?.catch(() => null);
@@ -237,7 +227,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 	function isCurrent(embed: Embed): boolean {
 		return (
 			!embed.disposed &&
-			embeds.get(viewKey(embed.messageView as NativeJavaValue) ?? '') === embed &&
+			embeds.get(javaViewKey(embed.messageView as NativeJavaValue) ?? '') === embed &&
 			readViewText(java, embed.textView)?.string === embed.renderedText
 		);
 	}
@@ -245,8 +235,8 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 	async function place(embed: Embed) {
 		if (!isCurrent(embed)) return;
 
-		const container = hostContainer(java, embed.textView);
-		const position = reservedPosition(
+		const container = await hostContainer(java, embed.textView);
+		const position = await reservedPosition(
 			java,
 			embed.textView,
 			embed.placeholder,
@@ -266,7 +256,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		if (!isCurrent(embed)) {
 			if (
 				embed.disposed ||
-				embeds.get(viewKey(embed.messageView as NativeJavaValue) ?? '') !== embed
+				embeds.get(javaViewKey(embed.messageView as NativeJavaValue) ?? '') !== embed
 			) {
 				await removeHost(java, embed.host).catch(() => undefined);
 			}
@@ -277,7 +267,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		if (embed.mounting && !embed.disposed) {
 			const mounted = await embed.mounting.catch(() => null);
 
-			if (!hostHasContent(java, embed.host)) {
+			if (!(await hostHasContent(java, embed.host))) {
 				embed.mounting = null;
 
 				if (mounted) await fabric.unmountAsync(mounted).catch(() => undefined);
@@ -300,7 +290,12 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		for (const delay of SETTLE_DELAYS) {
 			setTimeout(() => {
 				place(embed).catch((error) => {
-					console.error('[Message Link Embeds] Failed to place an Android embed:', error);
+					if (!isCancellation(error)) {
+						console.error(
+							'[Message Link Embeds] Failed to place an Android embed:',
+							error,
+						);
+					}
 				});
 			}, delay);
 		}
@@ -329,7 +324,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 	}
 
 	async function render(messageView: NativeJavaReference, messageId: string) {
-		const key = viewKey(messageView as NativeJavaValue);
+		const key = javaViewKey(messageView as NativeJavaValue);
 
 		if (!key) return;
 
@@ -379,11 +374,10 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 
 		awaitingSize.delete(key);
 
-		const resources = javaReference(java.invoke(textView, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-		const density = metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
+		const density = resourceDensity(
+			java,
+			javaReference(java.invoke(textView, 'getResources', [])),
+		);
 		const textWidth =
 			(javaNumber(java.invoke(textView, 'getWidth', [])) ?? 0) -
 			(javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0) -
@@ -408,7 +402,7 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 						id: `message-link-android-${nextId++}`,
 						messageView,
 						textView,
-						host: createHost(java, textView),
+						host: await createHost(java, textView),
 						mounting: null,
 						messageId,
 						target,
@@ -449,10 +443,12 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 
 			setTimeout(() => {
 				render(messageView, messageId).catch((error) => {
-					console.error(
-						'[Message Link Embeds] Failed to embed a linked message on Android:',
-						error,
-					);
+					if (!isCancellation(error)) {
+						console.error(
+							'[Message Link Embeds] Failed to embed a linked message on Android:',
+							error,
+						);
+					}
 				});
 			}, 0);
 		},
@@ -464,46 +460,49 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		SIZE_PARAMETERS,
 		{ notify: true },
 		({ self }) => {
-			const key = viewKey(self);
+			const key = javaViewKey(self);
 			const pending = key ? awaitingSize.get(key) : undefined;
 
 			if (!key || !pending) return;
 
 			awaitingSize.delete(key);
 			render(pending.messageView, pending.messageId).catch((error) => {
-				console.error(
-					'[Message Link Embeds] Failed to embed a linked message on Android:',
-					error,
-				);
-			});
-		},
-	);
-
-	function scanVisible() {
-		const decor = currentDecorView(java);
-
-		if (!decor || controller.signal.aborted) return;
-
-		for (const messageView of findViewsOfClass(java, decor, MESSAGE_VIEW)) {
-			const messageId = javaText(java.getField(messageView, messageIdField(java)));
-
-			if (messageId) {
-				render(messageView, messageId).catch((error) => {
+				if (!isCancellation(error)) {
 					console.error(
 						'[Message Link Embeds] Failed to embed a linked message on Android:',
 						error,
 					);
+				}
+			});
+		},
+	);
+
+	async function scanVisible() {
+		const decor = currentDecorView(java);
+
+		if (!decor || controller.signal.aborted) return;
+
+		for (const messageView of await findViewsOfClass(java, decor, MESSAGE_VIEW)) {
+			const messageId = javaText(java.getField(messageView, messageIdField(java)));
+
+			if (messageId) {
+				render(messageView, messageId).catch((error) => {
+					if (!isCancellation(error)) {
+						console.error(
+							'[Message Link Embeds] Failed to embed a linked message on Android:',
+							error,
+						);
+					}
 				});
 			}
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	scheduleStartupScans('Message Link Embeds', scanVisible);
 
 	return {
+		drawn: () => embeds.size,
 		dispose() {
-			for (const scan of scans) clearTimeout(scan);
-
 			controller.abort();
 			hooks.remove(token);
 			hooks.remove(sizeToken);

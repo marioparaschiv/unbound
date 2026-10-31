@@ -1,7 +1,7 @@
 import { Children, createElement, isValidElement, type ReactElement } from 'react';
 import { expect, test } from 'bun:test';
 
-import { withoutGiftItem } from './gift-item';
+import { withoutGiftItem } from '~/gift-item';
 
 function TransitionItem() {
 	return null;

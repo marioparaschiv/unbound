@@ -1,7 +1,9 @@
+import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { watch, type FSWatcher } from 'node:fs';
 import { resolve, join, sep } from 'node:path';
 
 import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
+import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import type { ResolvedConfig } from '~/lib/config';
 import { discoverAddons } from '~/lib/discovery';
@@ -87,7 +89,9 @@ export class DevServer {
 			process.stdout.write(`Building ${addon.id}…\n`);
 		}
 
-		const ok = await buildAddon(addon, this.resolved.config.build, DEV_BUILD_ENV);
+		const ok =
+			(await buildAddon(addon, this.resolved.config.build, DEV_BUILD_ENV)) &&
+			(await runBuildChecks(addon, DEV_BUILD_CHECKS));
 
 		if (!ok) {
 			process.stderr.write(`Failed to build ${addon.id}.\n`);
@@ -144,7 +148,7 @@ function isInside(changedPath: string, dir: string): boolean {
 }
 
 function isManifestPath(changedPath: string): boolean {
-	return changedPath.endsWith(join(sep, 'manifest.json'));
+	return changedPath.endsWith(join(sep, MANIFEST_FILENAME));
 }
 
 function toBuiltAddon(addon: DiscoveredAddon): BuiltAddon {

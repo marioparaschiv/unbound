@@ -2,9 +2,10 @@ import { cloneElement, Fragment, isValidElement, type ReactElement, type ReactNo
 import findRenderTarget from '@unbound-plugins/shared/react/render-target';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
+import { patcher } from '@unbound-app/api';
 
 import CharacterCounter from '~/components/character-counter';
-import { Patcher, SelectedChannelStore } from '~/modules';
+import { SelectedChannelStore } from '~/modules';
 
 type ContainerProps = { channel?: { id?: string }; channelId?: string };
 type Parent = ReactElement<{ children?: ReactNode }>;
@@ -31,16 +32,16 @@ function withoutCounters(children: ReactNode): ReactNode {
 	return stripped === inner ? children : cloneElement(children, {}, stripped);
 }
 
-function patchContainer(module: AnyProps): () => void {
+function patchContainer(module: AnyProps) {
 	const target = findRenderTarget(module);
 
 	if (!target) {
 		console.error('[Character Counter] Skipped, the composer has no render function.');
 
-		return () => {};
+		return;
 	}
 
-	return Patcher.after(target.holder, target.key, ({ args, result }) => {
+	patcher.after(target.holder, target.key, ({ args, result }) => {
 		const props = args[0] as ContainerProps | undefined;
 		const parent: Parent | null = result;
 
@@ -64,8 +65,7 @@ function patchContainer(module: AnyProps): () => void {
 
 /**
  * @description Shows the counter above the composer, without changing the composer's layout, once the composer loads.
- * @returns A function that stops waiting for the composer, or removes the patch.
  */
-export function patchFloatingChatInputContainer(): () => void {
-	return whenLoaded('modules/chat_input/native/FloatingChatInputContainer.tsx', patchContainer);
+export function patchFloatingChatInputContainer(): void {
+	whenLoaded('modules/chat_input/native/FloatingChatInputContainer.tsx', patchContainer);
 }

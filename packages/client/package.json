@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/client",
-	"version": "0.10.0",
+	"version": "0.12.0",
 	"private": true,
 	"author": {
 		"name": "Mario P.",
@@ -10,11 +10,10 @@
 	"scripts": {
 		"build": "bun --bun scripts/build/index.ts",
 		"build:dev": "bun --bun scripts/build/index.ts --dev",
-		"dev": "bun --bun scripts/dev",
+		"dev": "bun --bun scripts/dev --dev",
 		"serve": "bun scripts/serve/start.ts",
 		"upload": "bun scripts/build/upload.ts",
 		"sign": "bun scripts/build/sign.ts",
-		"backfill-signatures": "bun scripts/build/backfill-signatures.ts",
 		"verify-signatures": "bun scripts/build/verify-signatures.ts",
 		"symbolicate": "bun scripts/build/symbolicate.ts",
 		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p ."

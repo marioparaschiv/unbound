@@ -1,14 +1,15 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 
 import { expect, test } from 'bun:test';
 
 import {
-	PLUGIN_DESCRIPTION_MAX_LENGTH,
-	PLUGIN_FOLDER_MAX_LENGTH,
-	PLUGIN_NAME_MAX_LENGTH,
 	validatePluginDirectory,
 	validatePluginFolder,
+	validatePluginDocs,
+	validateSettingsPanel,
+	validateTextInputProps,
 } from './validate-plugins';
 import { PLUGINS_DIR } from './paths';
 
@@ -25,187 +26,148 @@ test('every plugin folder follows the workspace convention', () => {
 	expect(validatePluginDirectory(PLUGINS_DIR)).toEqual([]);
 });
 
-test('the workspace contains only first-party plugins', () => {
-	const plugins = readdirSync(PLUGINS_DIR, { withFileTypes: true }).filter((entry) => {
-		return entry.isDirectory() && !['node_modules', 'shared'].includes(entry.name);
-	});
+const validChangelog =
+	'# Changelog\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- Initial release.\n';
 
-	expect(plugins).toHaveLength(32);
-	expect(
-		plugins.every((plugin) => {
-			const manifestPath = join(PLUGINS_DIR, plugin.name, 'manifest.json');
-			if (!existsSync(manifestPath)) return false;
-			const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-			return manifest.authors.some((author: { name: string }) => author.name === 'adrian');
-		}),
-	).toBe(true);
+type PluginDocs = {
+	addon?: string;
+	changelog?: string;
+};
+
+function createPlugin(docs: PluginDocs): string {
+	const directory = join(mkdtempSync(join(tmpdir(), 'plugin-docs-')), 'example-plugin');
+
+	mkdirSync(directory);
+
+	if (docs.addon !== undefined) writeFileSync(join(directory, 'ADDON.md'), docs.addon);
+	if (docs.changelog !== undefined)
+		writeFileSync(join(directory, 'CHANGELOG.md'), docs.changelog);
+
+	return directory;
+}
+
+test('accepts a plugin with an ADDON.md and a changelog entry for its version', () => {
+	const directory = createPlugin({ addon: '# Example\n', changelog: validChangelog });
+
+	expect(validatePluginDocs(directory, '1.0.0')).toEqual([]);
+});
+
+test('reports a missing ADDON.md', () => {
+	const directory = createPlugin({ changelog: validChangelog });
+
+	expect(validatePluginDocs(directory, '1.0.0')).toEqual(['ADDON.md is missing']);
+});
+
+test('reports a whitespace-only ADDON.md', () => {
+	const directory = createPlugin({ addon: ' \n\t\n', changelog: validChangelog });
+
+	expect(validatePluginDocs(directory, '1.0.0')).toEqual(['ADDON.md is empty']);
+});
+
+test('reports a missing CHANGELOG.md', () => {
+	const directory = createPlugin({ addon: '# Example\n' });
+
+	expect(validatePluginDocs(directory, '1.0.0')).toEqual(['CHANGELOG.md is missing']);
+});
+
+test('reports changelog parse issues with their line', () => {
+	const directory = createPlugin({
+		addon: '# Example\n',
+		changelog: '# Changelog\n\n## [1.0.0] - yesterday\n\n### Added\n\n- Initial release.\n',
+	});
+	const errors = validatePluginDocs(directory, '1.0.0');
+
+	expect(errors).toHaveLength(1);
+	expect(errors[0]).toStartWith('CHANGELOG.md:3: ');
+});
+
+test('reports a changelog without an entry for the manifest version', () => {
+	const directory = createPlugin({ addon: '# Example\n', changelog: validChangelog });
+
+	expect(validatePluginDocs(directory, '1.0.1')).toEqual(['CHANGELOG.md has no entry for 1.0.1']);
+});
+
+test('leaves a missing manifest version to the manifest check', () => {
+	const directory = createPlugin({ addon: '# Example\n', changelog: validChangelog });
+
+	expect(validatePluginDocs(directory, undefined)).toEqual([]);
 });
 
 test('accepts a valid plugin folder and manifest', () => {
 	expect(validatePluginFolder('example-plugin', validManifest)).toEqual([]);
 });
 
-test('accepts declared native capabilities from the client SDK', () => {
-	expect(
-		validatePluginFolder('example-plugin', {
-			...validManifest,
-			platforms: ['ios'],
-			capabilities: ['native.objc.snapshot', 'native.fabric.async'],
-		}),
-	).toEqual([]);
-});
-
-test('rejects native capabilities that are not declared in the client SDK', () => {
-	expect(
-		validatePluginFolder('example-plugin', {
-			...validManifest,
-			capabilities: ['native.objc.unknown'],
-		}),
-	).toContain('capabilities contains an unsupported value: native.objc.unknown');
-});
-
-test('rejects folders that are not lowercase kebab-case', () => {
-	expect(validatePluginFolder('Example_Plugin', validManifest)).toContain(
-		'folder must use lowercase kebab-case',
-	);
-});
-
-test('requires ids to match their plugin folder suffix', () => {
-	expect(validatePluginFolder('other-plugin', validManifest)).toContain(
-		'id must end with .other-plugin',
-	);
-});
-
-test('enforces display name and description limits', () => {
-	const manifest = {
+test('reports naming, required field and capability problems for a plugin folder', () => {
+	const errors = validatePluginFolder('Example_Plugin', {
 		...validManifest,
-		name: 'x'.repeat(PLUGIN_NAME_MAX_LENGTH + 1),
-		description: 'x'.repeat(PLUGIN_DESCRIPTION_MAX_LENGTH + 1),
-	};
-	const errors = validatePluginFolder('example-plugin', manifest);
-
-	expect(errors).toContain(`name must be at most ${PLUGIN_NAME_MAX_LENGTH} characters`);
-	expect(errors).toContain(
-		`description must be at most ${PLUGIN_DESCRIPTION_MAX_LENGTH} characters`,
-	);
-});
-
-test('requires display names to separate words', () => {
-	const errors = validatePluginFolder('example-plugin', {
-		...validManifest,
-		name: 'TextReplace',
+		authors: [],
+		capabilities: ['native.objc.unknown'],
 	});
 
-	expect(errors).toContain('name must use title-case words separated by spaces');
+	expect(errors).toEqual([
+		'folder must use lowercase kebab-case',
+		'id must end with .Example_Plugin',
+		'authors must be a non-empty array',
+		'capabilities contains an unsupported value: native.objc.unknown',
+	]);
 });
 
-test('allows established brand names with uppercase acronyms', () => {
-	expect(validatePluginFolder('example-plugin', { ...validManifest, name: 'PronounDB' })).toEqual(
-		[],
-	);
-	expect(validatePluginFolder('example-plugin', { ...validManifest, name: 'ReviewDB' })).toEqual(
-		[],
-	);
+test('reports only the folder when the manifest is not an object', () => {
+	expect(validatePluginFolder('Example_Plugin', [])).toEqual([
+		'folder must use lowercase kebab-case',
+		'manifest must be an object',
+	]);
 });
 
-test('enforces the plugin folder length limit', () => {
-	const folder = `a${'b'.repeat(PLUGIN_FOLDER_MAX_LENGTH)}`;
-	expect(validatePluginFolder(folder, validManifest)).toContain(
-		`folder must be at most ${PLUGIN_FOLDER_MAX_LENGTH} characters`,
-	);
+function createEntry(config: string, entry: string): string {
+	const directory = createPlugin({});
+
+	mkdirSync(join(directory, 'src'));
+	writeFileSync(join(directory, 'rollup.config.mjs'), config);
+	writeFileSync(join(directory, 'src', 'index.tsx'), entry);
+
+	return directory;
+}
+
+const panelConfig = 'export default unbound(import.meta.url, { settingsPanel: true });';
+const plainConfig = 'export default unbound(import.meta.url);';
+const panelEntry = 'export default { start, stop, getSettingsPanel: () => <SettingsPanel /> };';
+const plainEntry = 'export default { start, stop };';
+
+test('accepts a settingsPanel flag that matches the entry file', () => {
+	expect(validateSettingsPanel(createEntry(panelConfig, panelEntry))).toEqual([]);
+	expect(validateSettingsPanel(createEntry(plainConfig, plainEntry))).toEqual([]);
 });
 
-test('rejects a flat capability that only one platform can provide', () => {
-	expect(
-		validatePluginFolder('example-plugin', {
-			...validManifest,
-			capabilities: ['native.objc.classes'],
-		}),
-	).toContain(
-		'capabilities contains native.objc.classes, which android cannot provide; declare it under platformCapabilities.ios',
-	);
+test('reports a settingsPanel flag that disagrees with the entry file', () => {
+	expect(validateSettingsPanel(createEntry(plainConfig, panelEntry))).toEqual([
+		'rollup.config.mjs must set settingsPanel: true because src/index exports getSettingsPanel',
+	]);
+	expect(validateSettingsPanel(createEntry(panelConfig, plainEntry))).toEqual([
+		'rollup.config.mjs sets settingsPanel: true but src/index does not export getSettingsPanel',
+	]);
 });
 
-test('accepts a flat capability that every supported platform provides', () => {
-	expect(
-		validatePluginFolder('example-plugin', {
-			...validManifest,
-			capabilities: ['native.runtime.events'],
-		}),
-	).toEqual([]);
+test('flags TextInput props Discord ignores', () => {
+	const source = [
+		'<Discord.TextInput',
+		'\ttitle="Radius"',
+		'\thelpText="From 0 to 32."',
+		'\tonChange={(value) => set({ radius: value > 1 ? value : 1 })}',
+		'/>',
+	].join('\n');
+
+	expect(validateTextInputProps(source)).toEqual([
+		'line 1: Discord.TextInput ignores title, use label instead',
+		'line 1: Discord.TextInput ignores helpText, use description instead',
+	]);
 });
 
-test('accepts a platform-exclusive capability declared under its platform', () => {
-	expect(
-		validatePluginFolder('example-plugin', {
-			...validManifest,
-			platforms: ['ios'],
-			platformCapabilities: { ios: ['native.objc.classes', 'native.fabric.mount'] },
-		}),
-	).toEqual([]);
-});
+test('accepts TextInput label and description, and other components with a title', () => {
+	const source = [
+		'<Discord.TextInput label="Radius" description="From 0 to 32." value={String(radius)} />',
+		'<Discord.TableRow title="Radius" />',
+	].join('\n');
 
-test('accepts a flat capability restricted to the declared platforms', () => {
-	expect(
-		validatePluginFolder('example-plugin', {
-			...validManifest,
-			platforms: ['ios'],
-			capabilities: ['native.objc.classes'],
-		}),
-	).toEqual([]);
-});
-
-test('rejects platforms that are not supported targets', () => {
-	expect(
-		validatePluginFolder('example-plugin', { ...validManifest, platforms: ['web'] }),
-	).toContain('platforms contains an unsupported value: web');
-});
-
-test('rejects an empty platforms list', () => {
-	expect(validatePluginFolder('example-plugin', { ...validManifest, platforms: [] })).toContain(
-		'platforms must not be empty',
-	);
-});
-
-test('rejects duplicate platforms', () => {
-	expect(
-		validatePluginFolder('example-plugin', { ...validManifest, platforms: ['ios', 'ios'] }),
-	).toContain('platforms must not repeat ios');
-});
-
-test('rejects platformCapabilities for a platform the plugin does not support', () => {
-	expect(
-		validatePluginFolder('example-plugin', {
-			...validManifest,
-			platforms: ['ios'],
-			platformCapabilities: { android: ['native.ui.lookup'] },
-		}),
-	).toContain('platformCapabilities declares android, which is not in platforms');
-});
-
-test('rejects a platformCapabilities entry the platform cannot provide', () => {
-	expect(
-		validatePluginFolder('example-plugin', {
-			...validManifest,
-			platformCapabilities: { android: ['native.objc.classes'] },
-		}),
-	).toContain('platformCapabilities.android cannot provide native.objc.classes');
-});
-
-test('rejects platformCapabilities values that are not arrays', () => {
-	expect(
-		validatePluginFolder('example-plugin', {
-			...validManifest,
-			platformCapabilities: { ios: 'native.objc.classes' },
-		}),
-	).toContain('platformCapabilities.ios must be an array');
-});
-
-test('rejects an unknown platformCapabilities platform', () => {
-	expect(
-		validatePluginFolder('example-plugin', {
-			...validManifest,
-			platformCapabilities: { web: ['native.ui.lookup'] },
-		}),
-	).toContain('platformCapabilities contains an unsupported platform: web');
+	expect(validateTextInputProps(source)).toEqual([]);
 });

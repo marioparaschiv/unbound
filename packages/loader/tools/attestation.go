@@ -34,6 +34,7 @@ const (
 	attestationKeyID     = uint32(0x3ce00b70)
 	sectionSize          = 256
 	signatureCapacity    = 96
+	elfSectionName       = ".unbound.attestation"
 )
 
 type AttestationError struct {
@@ -87,13 +88,15 @@ type attestation struct {
 
 func runAttest(args []string) error {
 	if len(args) == 0 {
-		return errors.New("usage: attest <enabled|stage|sign|verify>")
+		return errors.New("usage: attest <enabled|stage|stage-elf|sign|verify>")
 	}
 	switch args[0] {
 	case "enabled":
 		return attestEnabledCommand()
 	case "stage":
 		return attestStageCommand(args[1:])
+	case "stage-elf":
+		return attestStageELFCommand(args[1:])
 	case "sign":
 		return attestSignCommand(args[1:])
 	case "verify":
@@ -174,6 +177,53 @@ func attestStageCommand(args []string) error {
 	}
 	if _, err := verifyFile(dylib, public); err != nil {
 		return err
+	}
+	return nil
+}
+
+func attestStageELFCommand(args []string) error {
+	set := flag.NewFlagSet("attest stage-elf", flag.ContinueOnError)
+	directory := set.String("dir", "", "Directory holding the stripped libraries")
+	library := set.String("library", "libunbound.so", "Library file name")
+	commitHash := set.String("commit-hash", "", "Commit hash")
+	packageVersion := set.String("package-version", "", "Package version")
+	if err := set.Parse(args); err != nil {
+		return err
+	}
+	if *directory == "" || *commitHash == "" || *packageVersion == "" {
+		return errors.New("usage: attest stage-elf --dir <dir> --commit-hash <hash> --package-version <version>")
+	}
+	privateBytes, err := privateKeyBytes()
+	if err != nil {
+		fmt.Println("No attestation key, leaving the libraries unsigned.")
+		return nil
+	}
+	private, err := parsePrivateKey(privateBytes)
+	if err != nil {
+		return err
+	}
+	public, err := pinnedPublicKey()
+	if err != nil {
+		return err
+	}
+	if !publicKeysEqual(&private.PublicKey, public) {
+		return errors.New("attestation private key does not match the pinned public key")
+	}
+	libraries, err := filepath.Glob(filepath.Join(*directory, "*", *library))
+	if err != nil {
+		return err
+	}
+	if len(libraries) == 0 {
+		return fmt.Errorf("no %s under %s", *library, *directory)
+	}
+	for _, path := range libraries {
+		if err := signFile(path, private, *commitHash, *packageVersion); err != nil {
+			return fmt.Errorf("%s: %w", path, err)
+		}
+		if _, err := verifyFile(path, public); err != nil {
+			return fmt.Errorf("%s: %w", path, err)
+		}
+		fmt.Printf("Signed %s\n", path)
 	}
 	return nil
 }
@@ -317,7 +367,52 @@ func publicKeysEqual(left, right *ecdsa.PublicKey) bool {
 	return left != nil && right != nil && left.Curve.Params().Name == right.Curve.Params().Name && left.X.Cmp(right.X) == 0 && left.Y.Cmp(right.Y) == 0
 }
 
+func isELF(data []byte) bool {
+	return len(data) >= 4 && bytes.Equal(data[:4], []byte{0x7f, 'E', 'L', 'F'})
+}
+
+func parseELF(data []byte) (machoInfo, error) {
+	if len(data) < 64 || data[4] != 2 || data[5] != 1 {
+		return machoInfo{}, &AttestationError{"expected a little-endian 64-bit ELF library"}
+	}
+	machine := binary.LittleEndian.Uint16(data[18:20])
+	tableOffset := binary.LittleEndian.Uint64(data[40:48])
+	entrySize := binary.LittleEndian.Uint16(data[58:60])
+	count := binary.LittleEndian.Uint16(data[60:62])
+	namesIndex := binary.LittleEndian.Uint16(data[62:64])
+	if entrySize != 64 || namesIndex >= count || tableOffset+uint64(count)*64 > uint64(len(data)) {
+		return machoInfo{}, &AttestationError{"ELF section table is invalid"}
+	}
+	header := func(index uint16) int { return int(tableOffset) + int(index)*64 }
+	namesOffset := binary.LittleEndian.Uint64(data[header(namesIndex)+24:])
+	namesSize := binary.LittleEndian.Uint64(data[header(namesIndex)+32:])
+	if namesOffset+namesSize > uint64(len(data)) {
+		return machoInfo{}, &AttestationError{"ELF section names are outside the file"}
+	}
+	names := data[namesOffset : namesOffset+namesSize]
+	info := machoInfo{cpuType: int32(machine), linkeditVMSize: -1, linkeditFileSize: -1, boundary: len(data)}
+	for index := uint16(0); index < count; index++ {
+		nameOffset := binary.LittleEndian.Uint32(data[header(index):])
+		if nameOffset == 0 || uint64(nameOffset) >= namesSize || cString(names[nameOffset:]) != elfSectionName {
+			continue
+		}
+		offset := binary.LittleEndian.Uint64(data[header(index)+24:])
+		size := binary.LittleEndian.Uint64(data[header(index)+32:])
+		if size != sectionSize || offset+size > uint64(len(data)) {
+			return machoInfo{}, &AttestationError{"invalid attestation section"}
+		}
+		info.section = machoSection{offset: offset, size: size}
+	}
+	if info.section.size == 0 {
+		return machoInfo{}, &AttestationError{"attestation section is missing"}
+	}
+	return info, nil
+}
+
 func parseThin(data []byte) (machoInfo, error) {
+	if isELF(data) {
+		return parseELF(data)
+	}
 	if len(data) < 32 {
 		return machoInfo{}, &AttestationError{"Mach-O header is truncated"}
 	}
@@ -594,7 +689,7 @@ func verifyFile(path string, public *ecdsa.PublicKey) ([]map[string]any, error) 
 		}
 		digest := sha256.Sum256(canonical)
 		if !bytes.Equal(digest[:], value.digest[:]) {
-			return nil, &AttestationError{"attestation digest does not match the Mach-O slice"}
+			return nil, &AttestationError{"attestation digest does not match the binary"}
 		}
 		if !ecdsa.VerifyASN1(public, digest[:], value.signature) {
 			return nil, &AttestationError{"attestation signature verification failed"}

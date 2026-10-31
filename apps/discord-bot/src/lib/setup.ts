@@ -6,8 +6,6 @@ import { ApplicationCommandRegistries, RegisterBehavior } from '@sapphire/framew
 import { PaginatedMessage } from '@sapphire/discord.js-utilities';
 import { ButtonStyle, ComponentType } from 'discord.js';
 
-process.env.NODE_ENV ??= 'development';
-
 ApplicationCommandRegistries.setDefaultBehaviorWhenNotIdentical(RegisterBehavior.BulkOverwrite);
 
 PaginatedMessage.defaultActions = [

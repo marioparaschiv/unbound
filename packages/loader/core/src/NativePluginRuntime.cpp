@@ -9,7 +9,10 @@
 #include "LoaderAddonActivity.h"
 #include "LoaderBootstrap.h"
 #include "LoaderLog.h"
+#include "LoaderThreadWarnings.h"
+#include "NativeCallActivity.h"
 #include "NativeOperationGate.h"
+#include "RuntimeStallGate.h"
 
 namespace loader::native {
 namespace jsi = facebook::jsi;
@@ -28,6 +31,7 @@ static std::atomic<NativeErrorDelivery> gErrorDelivery{NativeErrorDelivery::Thro
 #endif
 static std::atomic_uint64_t gNextInvocation{1};
 static std::atomic_uint     gMainThreadRuntimeWaits{0};
+static RuntimeStallGate     gMainThreadRuntimeStall;
 
 NativeCodedError::NativeCodedError(std::string code, const std::string &message)
     : std::runtime_error(message), code_(std::move(code))
@@ -73,9 +77,10 @@ void setNativeErrorDelivery(NativeErrorDelivery delivery)
     gErrorDelivery.store(delivery);
 }
 
-std::optional<uint64_t> RuntimeGenerationTracker::advance(const void *runtime)
+std::optional<uint64_t> RuntimeGenerationTracker::advance(const void *runtime,
+                                                          bool        alreadyRegistered)
 {
-    if (runtime_ == runtime)
+    if (runtime_ == runtime && alreadyRegistered)
     {
         return std::nullopt;
     }
@@ -131,20 +136,32 @@ std::shared_ptr<NativePluginExecutor> executor()
     return gExecutor;
 }
 
+static constexpr const char *kRuntimeGenerationMarker = "__unboundRuntimeGeneration";
+
+static bool carriesGeneration(jsi::Runtime &runtime, uint64_t generation)
+{
+    jsi::Value marker = runtime.global().getProperty(runtime, kRuntimeGenerationMarker);
+    return marker.isNumber() && marker.getNumber() == static_cast<double>(generation);
+}
+
 uint64_t registerRuntime(jsi::Runtime &runtime)
 {
+    bool alreadyRegistered = carriesGeneration(runtime, gGenerations.generation());
     std::optional<uint64_t> advanced;
     {
         std::lock_guard<std::mutex> lock(gStateMutex);
-        advanced       = gGenerations.advance(&runtime);
+        advanced       = gGenerations.advance(&runtime, alreadyRegistered);
         gRuntime       = &runtime;
         gRuntimeThread = std::this_thread::get_id();
     }
+    uint64_t generation = gGenerations.generation();
+    runtime.global().setProperty(runtime, kRuntimeGenerationMarker,
+                                 jsi::Value(static_cast<double>(generation)));
     if (advanced)
     {
         gGenerations.notify(*advanced);
     }
-    return gGenerations.generation();
+    return generation;
 }
 
 uint64_t runtimeGeneration()
@@ -299,12 +316,29 @@ static std::optional<jsi::Function> failureGuard(jsi::Runtime &runtime)
     return created.asObject(runtime).asFunction(runtime);
 }
 
+static constexpr size_t kLabelledArguments  = 3;
+static constexpr size_t kArgumentLabelLimit = 64;
+
+static std::string firstStringArgument(jsi::Runtime &runtime, const jsi::Value *args, size_t count)
+{
+    for (size_t index = 0; index < count && index < kLabelledArguments; index++)
+    {
+        if (args[index].isString())
+        {
+            std::string text = args[index].getString(runtime).utf8(runtime);
+            return text.size() > kArgumentLabelLimit ? text.substr(0, kArgumentLabelLimit) : text;
+        }
+    }
+    return {};
+}
+
 jsi::Function makeFunction(jsi::Runtime &runtime, const char *name, unsigned int argumentCount,
                            jsi::HostFunctionType handler)
 {
-    jsi::HostFunctionType guarded =
-        [handler = std::move(handler)](jsi::Runtime &rt, const jsi::Value &thisValue,
-                                       const jsi::Value *args, size_t count) -> jsi::Value {
+    jsi::HostFunctionType guarded = [handler = std::move(handler), label = std::string(name)](
+                                        jsi::Runtime &rt, const jsi::Value &thisValue,
+                                        const jsi::Value *args, size_t count) -> jsi::Value {
+        NativeCallScope scope(label, firstStringArgument(rt, args, count));
         return guard(rt, [&]() {
             return handler(rt, thisValue, args, count);
         });
@@ -585,11 +619,12 @@ void executeRuntimeAsynchronously(std::function<void(jsi::Runtime &)> callback)
             catch (const std::exception &error)
             {
                 log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                    std::string("Native plugin callback failed: ") + error.what());
+                    threading::callbackFailureMessage(addon, error.what()));
             }
             catch (...)
             {
-                log(LogLevel::Error, LOG_CATEGORY_PLUGINS, "Native plugin callback failed");
+                log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                    threading::callbackFailureMessage(addon, "an unknown error"));
             }
         });
 }
@@ -610,6 +645,12 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
         return false;
     }
 
+    bool mainThread = target->isMainThread();
+    if (mainThread && gMainThreadRuntimeStall.stalled())
+    {
+        return false;
+    }
+
     struct State {
         std::mutex              mutex;
         std::condition_variable done;
@@ -624,6 +665,7 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
     AddonSlot addon      = currentAddon();
     target->runOnRuntime([state, callback = std::move(callback), expected, generation,
                           addon](jsi::Runtime &runtime) {
+        gMainThreadRuntimeStall.answered();
         bool               completed = false;
         std::exception_ptr failure;
         if (!state->cancelled.load() && expected == &runtime &&
@@ -647,7 +689,6 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
         state->done.notify_all();
     });
 
-    bool mainThread = target->isMainThread();
     if (mainThread)
     {
         gMainThreadRuntimeWaits.fetch_add(1);
@@ -663,6 +704,10 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
     if (!signaled)
     {
         state->cancelled.store(true);
+        if (mainThread)
+        {
+            gMainThreadRuntimeStall.timedOut();
+        }
         return false;
     }
 

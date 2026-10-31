@@ -24,3 +24,4 @@ Search the source, then confirm live with `ubd eval` from the `unbound-dev` skil
 - **By name.** `grep -rln '<identifier>' ~/.cache/unbound/discord-<version>/mods`. Strings survive decompilation. Local variable names become registers (`r7`).
 - **Flux stores** live at `mods/stores/<Name>Store.tsx`. Search `= 'UserStore';`, since the name is assigned through a register. Live: `unbound.metro.findStore('User')`, which appends `Store` unless you pass `{ short: false }`. `unbound.metro.stores` is Unbound's own small set, not Discord's.
 - **Modules by props.** Find a distinctive export name in the source, then `unbound.metro.findByProps('<name>')` live.
+- **Component prop types.** `bun run generate-discord-types -- ~/.cache/unbound/discord-<version> --report /tmp/typegen.json` regenerates `packages/discord-types/src/*.gen.d.ts` and the build line of its README (import from `@unbound-app/discord-types`).

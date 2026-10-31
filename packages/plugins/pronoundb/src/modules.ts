@@ -1,11 +1,9 @@
-import { metro, patcher, storage } from '@unbound-app/api';
+import { metro, storage, flux } from '@unbound-app/api';
 
 export const MessageRowData = metro.findByProps('generateMessageRowData', { lazy: true });
-export const UserProfileStore = metro.findStore('UserProfile', { lazy: true });
-export const ChannelStore = metro.findStore('Channel', { lazy: true });
-export const MessageStore = metro.findStore('Message', { lazy: true });
-export const UserStore = metro.stores.Users;
+export const UserProfileStore = flux.getStore('UserProfile', { lazy: true });
+export const ChannelStore = flux.getStore('Channel', { lazy: true });
+export const MessageStore = flux.getStore('Message', { lazy: true });
+export const UserStore = flux.getStore('User', { lazy: true });
 
-export const settings = storage.getStore('unbound.pronoundb');
-
-export const Patcher = patcher.createPatcher('unbound.pronoundb');
+export const settings = storage.getBucket();

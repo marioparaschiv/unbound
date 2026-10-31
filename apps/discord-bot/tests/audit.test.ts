@@ -7,6 +7,7 @@ import type { Client } from 'discord.js';
 import type { DispatcherContext } from '~/dispatchers/types';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { createAuditDispatcher } from '~/dispatchers/audit';
+import { otelEnvSchema } from '~/lib/env';
 import { auditPost } from '~/db/schema';
 
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
@@ -16,6 +17,23 @@ import RecordingExporter from './helpers/recording-exporter';
 import { signUp } from './helpers/web';
 
 type EventColumns = Partial<AuditEvent>;
+
+const OTEL_OFF = otelEnvSchema.parse({});
+const NO_TELEMETRY = createAuditTelemetry({ env: OTEL_OFF });
+
+function deployOf(commitSha: string): EventColumns {
+	return {
+		kind: 'review.decided',
+		subjectType: 'addon',
+		data: {
+			submissionId: 'submission-1',
+			submissionKind: 'update',
+			version: '1.0.1',
+			decision: 'approved',
+			build: { repository: 'owner/repo', commitSha, ref: 'plugin-builds/abc' },
+		},
+	};
+}
 
 function footers(fake: FakeDiscord) {
 	return fake.messages.map((message) => message.embeds[0]?.footer?.text);
@@ -70,7 +88,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 
 	// The first run on an empty moderation log floors it at 0, so every event seeded after it posts.
 	async function enabled(channelId: string = fake.channelId) {
-		const audit = createAuditDispatcher(channelId);
+		const audit = createAuditDispatcher(NO_TELEMETRY, channelId);
 
 		await audit.reconcile(context());
 
@@ -99,7 +117,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	}
 
 	test('the first run posts no history and floors the log at its newest event', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = createAuditDispatcher(NO_TELEMETRY, fake.channelId);
 
 		for (const id of [1, 2, 3]) {
 			seed(id);
@@ -121,7 +139,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('an empty log floors at 0 and posts its first event', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = createAuditDispatcher(NO_TELEMETRY, fake.channelId);
 
 		await audit.reconcile(context());
 		seed(1);
@@ -133,8 +151,8 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 
 	test('each posted event is exported to telemetry once, after its post', async () => {
 		const exporter = new RecordingExporter();
-		const telemetry = createAuditTelemetry({ exporter });
-		const audit = createAuditDispatcher(fake.channelId, telemetry);
+		const telemetry = createAuditTelemetry({ env: OTEL_OFF, exporter });
+		const audit = createAuditDispatcher(telemetry, fake.channelId);
 
 		await audit.reconcile(context());
 		seed(1);
@@ -152,7 +170,7 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 	});
 
 	test('posts moved from the old database win over a floor', async () => {
-		const audit = createAuditDispatcher(fake.channelId);
+		const audit = createAuditDispatcher(NO_TELEMETRY, fake.channelId);
 
 		await database.db
 			.insert(auditPost)
@@ -309,6 +327,62 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 				description: '```json\n{\n  "expiresAt": 42\n}\n```',
 			},
 		]);
+	});
+
+	test('deploys of one build arriving one by one share one post', async () => {
+		const audit = await enabled();
+
+		for (const id of [1, 2, 3]) {
+			seed(id, deployOf('a'.repeat(40)));
+			await audit.handle(String(id), context());
+		}
+
+		seed(4, deployOf('b'.repeat(40)));
+		seed(5);
+		seed(6, deployOf('b'.repeat(40)));
+		await audit.handle('6', context());
+		await audit.reconcile(context());
+
+		expect(footers(fake)).toEqual([
+			'Events #1–#3 · review.decided',
+			'Event #4 · review.decided',
+			'Event #5 · user.unbanned',
+			'Event #6 · review.decided',
+		]);
+		expect(fake.messages[0]?.embeds[0]?.description?.split('\n')).toHaveLength(4);
+		expect(fake.edits).toHaveLength(2);
+		expect((await rows()).map((row) => row.messageId)).toEqual(
+			[0, 0, 0, 1, 2, 3].map((index) => fake.messages[index]?.id ?? null),
+		);
+	});
+
+	test('a deploy whose batch post was edited before a crash is adopted, not posted', async () => {
+		const audit = await enabled();
+
+		seed(1, deployOf('a'.repeat(40)));
+		seed(2, deployOf('a'.repeat(40)));
+		await audit.handle('2', context());
+		await database.db.delete(auditPost).where(eq(auditPost.eventId, 2));
+		await audit.reconcile(context());
+
+		expect(fake.requests).toHaveLength(1);
+		expect(fake.edits).toHaveLength(1);
+		expect(await rows()).toMatchObject([
+			{ id: 1, messageId: fake.messages[0]?.id },
+			{ id: 2, messageId: fake.messages[0]?.id },
+		]);
+	});
+
+	test('a deploy whose batch post was deleted gets a post of its own', async () => {
+		const audit = await enabled();
+
+		seed(1, deployOf('a'.repeat(40)));
+		await audit.handle('1', context());
+		fake.messages.splice(0);
+		seed(2, deployOf('a'.repeat(40)));
+		await audit.handle('2', context());
+
+		expect(footers(fake)).toEqual(['Event #2 · review.decided']);
 	});
 
 	test('a note full of mentions can ping no one', async () => {

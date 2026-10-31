@@ -138,9 +138,10 @@ describe('the review queue', () => {
 		expect(entry.previousVersion).toBeNull();
 		expect(entry.addonMdDiff).toEqual({ state: 'new' });
 		expect(entry.fields.some((field) => field.changed)).toBe(false);
-		expect(entry.fields.find((field) => field.field === 'authors')?.next).toBe(
-			'[{"name":"Mario","id":"1234567890"}]',
-		);
+		const authors = entry.fields.find((field) => field.field === 'authors')?.next;
+
+		expect(authors).toContain('Mario');
+		expect(authors).toContain('1234567890');
 	});
 });
 

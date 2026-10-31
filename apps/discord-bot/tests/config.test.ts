@@ -25,7 +25,7 @@ describe('SPONSOR_PERK_GRACE_DAYS', () => {
 
 describe('checkConfig', () => {
 	test('names every unset env var and an unset GUILD_ID, in one message', () => {
-		const result = checkConfig({}, '0');
+		const result = checkConfig({}, undefined);
 
 		expect(result.ok).toBe(false);
 
@@ -39,7 +39,7 @@ describe('checkConfig', () => {
 	});
 
 	test('fails on an unset GUILD_ID alone', () => {
-		const result = checkConfig(ENV, '0');
+		const result = checkConfig(ENV, undefined);
 
 		expect(result.ok ? '' : result.message).toContain('constant GUILD_ID');
 	});
@@ -51,11 +51,12 @@ describe('checkConfig', () => {
 		expect(result.ok ? '' : result.message).toContain('env RECONCILE_INTERVAL_SECONDS');
 	});
 
-	test('passes a complete env with the real constants, though channel ids are still 0', () => {
+	test('passes a complete env with the real constants, though some ids are still unset', () => {
 		const result = checkConfig(ENV, GUILD_ID);
 
 		expect(result).toEqual({
 			ok: true,
+			guildId: String(GUILD_ID),
 			env: {
 				...ENV,
 				RECONCILE_INTERVAL_SECONDS: 300,
@@ -72,10 +73,10 @@ describe('checkConfig', () => {
 	test('names DATABASE_DIRECT_URL alone when only the pooled url is set', () => {
 		const { DATABASE_DIRECT_URL: _, ...pooledOnly } = ENV;
 		const result = checkConfig(pooledOnly, GUILD_ID);
+		const problems = result.ok ? '' : result.message;
 
-		expect(result.ok ? '' : result.message).toBe(
-			'Refusing to start, the configuration is incomplete:\n  - env DATABASE_DIRECT_URL is not set',
-		);
+		expect(problems).toContain('env DATABASE_DIRECT_URL is not set');
+		expect(problems.match(/^\s+- /gm)).toHaveLength(1);
 	});
 
 	test('migrations read the direct url and refuse the pooled one alone', () => {

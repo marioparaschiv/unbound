@@ -7,17 +7,18 @@
 #include <string_view>
 
 namespace loader::attestation {
-constexpr uint32_t kMagic                 = 0x41545453u;
-constexpr uint16_t kVersion               = 1;
-constexpr uint16_t kAlgorithmP256SHA256   = 1;
-constexpr uint32_t kKeyID                 = 0x3ce00b70u;
-constexpr size_t   kSectionSize           = 256;
-constexpr size_t   kSignatureCapacity     = 96;
-constexpr size_t   kDigestOffset          = 24;
-constexpr size_t   kSignatureLengthOffset = 56;
-constexpr size_t   kSignatureOffset       = 60;
-constexpr size_t   kCommitHashOffset      = 156;
-constexpr size_t   kCommitHashCapacity    = 41;
+constexpr uint32_t    kMagic                 = 0x41545453u;
+constexpr uint16_t    kVersion               = 1;
+constexpr uint16_t    kAlgorithmP256SHA256   = 1;
+constexpr uint32_t    kKeyID                 = 0x3ce00b70u;
+constexpr size_t      kSectionSize           = 256;
+constexpr size_t      kSignatureCapacity     = 96;
+constexpr size_t      kDigestOffset          = 24;
+constexpr size_t      kSignatureLengthOffset = 56;
+constexpr size_t      kSignatureOffset       = 60;
+constexpr size_t      kCommitHashOffset      = 156;
+constexpr size_t      kCommitHashCapacity    = 41;
+constexpr const char *kELFSectionName        = ".unbound.attestation";
 
 struct Record {
     uint32_t    magic      = 0;
@@ -59,6 +60,7 @@ std::optional<SliceLayout>      parseSlice(std::string_view slice);
 Record                          readRecord(std::string_view slice, const SliceLayout &layout);
 bool                            hasValidMetadata(const Record &record, const SliceLayout &layout);
 std::optional<std::string>      canonicalDigest(std::string_view slice, const SliceLayout &layout);
+std::optional<SliceLayout>      parseELF(std::string_view file);
 Evaluation evaluate(std::string_view file, int32_t loadedCpuType, int32_t loadedCpuSubtype);
 std::optional<std::string> publicKeyPoint();
 }

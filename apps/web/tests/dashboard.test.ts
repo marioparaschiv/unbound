@@ -1,10 +1,11 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
-import type { Dashboard, DashboardAddon } from '~/lib/dashboard';
-import { TIMELINE_LIMIT, loadDashboard } from '~/lib/dashboard';
+import { TIMELINE_LIMIT, loadDashboard, loadSubmitTarget } from '~/lib/dashboard';
+import type { Dashboard, DashboardAddon, SubmitTarget } from '~/lib/dashboard';
 import { addon, addonMaintainer, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
+import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 
 import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
@@ -33,14 +34,22 @@ async function signUp(role: Role = 'user'): Promise<string> {
 	return userId;
 }
 
-async function dashboardOf(userId: string): Promise<Dashboard> {
+async function callerOf(userId: string): Promise<Caller> {
 	const row = await ctx.db.query.user.findFirst({ where: { id: userId } });
 
 	if (!row) {
 		throw new Error(`User ${userId} was not stored.`);
 	}
 
-	return loadDashboard(ctx, { user: row, via: 'session' }, false);
+	return { user: row, via: 'session' };
+}
+
+async function dashboardOf(userId: string): Promise<Dashboard> {
+	return loadDashboard(ctx, await callerOf(userId), false);
+}
+
+async function targetOf(userId: string, addonId: string): Promise<SubmitTarget | null> {
+	return loadSubmitTarget(ctx, await callerOf(userId), addonId);
 }
 
 function rowOf(dashboard: Dashboard, id: string): DashboardAddon {
@@ -75,13 +84,27 @@ describe('dashboard rows', () => {
 			visibility: 'listed',
 			live: { version: '1.0.0', publishedAt: NOW.toISOString() },
 			pending: null,
-			actions: { submit: 'update', maintainers: true, publicPage: true, staffManage: false },
+			icon: null,
+			iconSvg: null,
+			actions: {
+				submit: 'update',
+				maintainers: true,
+				icon: true,
+				publicPage: true,
+				staffManage: false,
+			},
 		});
 		expect(listing).toMatchObject({
 			kind: 'listing',
 			name: 'Fresh',
 			pending: { version: '0.1.0', status: 'pending_review', mine: true },
-			actions: { submit: null, maintainers: false, publicPage: false, staffManage: false },
+			actions: {
+				submit: null,
+				maintainers: false,
+				icon: false,
+				publicPage: false,
+				staffManage: false,
+			},
 		});
 	});
 
@@ -258,5 +281,82 @@ describe('the submission timeline', () => {
 
 		expect(dashboard.timeline.map((entry) => entry.id)).not.toContain(foreign.id);
 		expect(dashboard.addons.map((entry) => entry.id)).toEqual(['timeline.claimed']);
+	});
+});
+
+describe('submit targets', () => {
+	test('reads an update from the live version when nothing is open', async () => {
+		const owner = await signUp();
+
+		await seedApprovedAddon(ctx, owner, manifest('target.live'), {
+			repository: 'acme/live',
+			path: 'plugins/live',
+		});
+
+		expect(await targetOf(owner, 'target.live')).toEqual({
+			addonId: 'target.live',
+			intent: 'update',
+			source: { repository: 'acme/live', path: 'plugins/live' },
+		});
+	});
+
+	test('reads from the open submission over the live version', async () => {
+		const owner = await signUp();
+
+		await seedApprovedAddon(ctx, owner, manifest('target.open'), { repository: 'acme/old' });
+		await seedSubmission(
+			ctx,
+			owner,
+			manifest('target.open', '1.1.0'),
+			{ kind: 'update', status: 'changes_requested' },
+			{ repository: 'acme/moved', path: 'addons/open' },
+		);
+
+		expect(await targetOf(owner, 'target.open')).toEqual({
+			addonId: 'target.open',
+			intent: 'republish',
+			source: { repository: 'acme/moved', path: 'addons/open' },
+		});
+	});
+
+	test('republishes a new listing with changes requested', async () => {
+		const author = await signUp();
+
+		await seedSubmission(
+			ctx,
+			author,
+			manifest('target.listing', '0.1.0'),
+			{ status: 'changes_requested' },
+			{ repository: 'acme/listing', path: 'plugins/listing' },
+		);
+
+		expect(await targetOf(author, 'target.listing')).toEqual({
+			addonId: 'target.listing',
+			intent: 'republish',
+			source: { repository: 'acme/listing', path: 'plugins/listing' },
+		});
+	});
+
+	test('has no source for a legacy upload', async () => {
+		const owner = await signUp();
+
+		await seedApprovedAddon(ctx, owner, manifest('target.legacy'));
+
+		expect(await targetOf(owner, 'target.legacy')).toMatchObject({ source: null });
+	});
+
+	test('refuses addons the caller cannot submit for', async () => {
+		const owner = await signUp();
+		const stranger = await signUp('developer');
+		const author = await signUp();
+
+		await seedApprovedAddon(ctx, owner, manifest('target.foreign'));
+		await seedSubmission(ctx, author, manifest('target.reviewing', '0.1.0'));
+
+		expect(await targetOf(stranger, 'target.foreign')).toBeNull();
+		expect(await targetOf(stranger, 'target.missing')).toBeNull();
+		expect(await targetOf(stranger, 'target.reviewing')).toBeNull();
+		// The author's own listing is in review, so there is nothing to submit yet.
+		expect(await targetOf(author, 'target.reviewing')).toBeNull();
 	});
 });

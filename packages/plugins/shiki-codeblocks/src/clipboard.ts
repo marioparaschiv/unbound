@@ -11,12 +11,12 @@ export async function copyCode(code: string): Promise<boolean> {
 	try {
 		await metro.common.Clipboard.setString(code);
 	} catch {
-		toasts.showToast({ title: PLUGIN_NAME, content: 'Could not copy code.' });
+		toasts.show({ title: PLUGIN_NAME, content: 'Could not copy code.' });
 
 		return false;
 	}
 
-	toasts.showToast({ title: PLUGIN_NAME, content: 'Code copied to clipboard.' });
+	toasts.show({ title: PLUGIN_NAME, content: 'Code copied to clipboard.' });
 
 	return true;
 }

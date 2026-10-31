@@ -1,7 +1,7 @@
+import type { ReactElement, ReactNode } from 'react';
 import { View, ScrollView } from 'react-native';
-import type { ReactNode } from 'react';
 
-import { SafeArea } from '~/api/metro/components';
+import { SafeArea } from '~/metro/components';
 
 type PageProps = {
 	children: ReactNode;
@@ -12,9 +12,9 @@ type PageProps = {
  * inset and a 24px gap between form groups, matching how Discord lays out its own settings screens. Use
  * it as the root of every settings page.
  */
-function Page({ children }: PageProps) {
+function Page({ children }: PageProps): ReactElement {
 	return (
-		<ScrollView contentContainerStyle={{ padding: 16 }}>
+		<ScrollView contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps='handled'>
 			<SafeArea.SafeAreaPaddingView bottom>
 				<View style={{ gap: 24 }}>{children}</View>
 			</SafeArea.SafeAreaPaddingView>

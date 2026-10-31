@@ -1,0 +1,19 @@
+{
+	"id": "unbound.avatar-radius",
+	"name": "Avatar Radius",
+	"description": "Rounds avatars to a corner radius you choose instead of circles.",
+	"authors": [
+		{
+			"name": "Rosie<3",
+			"id": "581573474296791211"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.1.1",
+	"icon": "UserSquareIcon",
+	"minNativePluginApi": "1.0.0",
+	"main": "index.tsx"
+}

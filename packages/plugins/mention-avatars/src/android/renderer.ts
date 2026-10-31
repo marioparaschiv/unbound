@@ -13,11 +13,13 @@ import {
 	decodeBitmap,
 	inlineDrawable,
 } from '@unbound-plugins/shared/native/android/images';
-import { readViewText, spansOf } from '@unbound-plugins/shared/native/android/spans';
+import { readViewTextAsync, spansOf } from '@unbound-plugins/shared/native/android/spans';
+import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 import {
 	currentDecorView,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	resourceDensity,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 import {
 	javaFlag,
@@ -25,6 +27,7 @@ import {
 	javaNumber,
 	javaReference,
 	javaString,
+	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
 
 import {
@@ -57,10 +60,6 @@ type ImageEntry = {
 
 export type AndroidRenderer = ReturnType<typeof createAndroidRenderer>;
 
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
 /**
  * @description Creates the renderer that draws mention images into Discord's Android message text.
  * @param native The plugin's Java and hook bridges.
@@ -76,20 +75,21 @@ export function createAndroidRenderer(
 	const images = new Map<string, ImageEntry>();
 	const views = new Map<string, NativeJavaReference>();
 	const pending = new Set<string>();
+	let rendering = 0;
+	const waiting = new Map<string, NativeJavaReference>();
+	let resolvedCount = -1;
 	let imageSize = 0;
 	let disposed = false;
 	const rewrites = connectTextRewrites(java, TEXT_VIEW);
 	const rules = new Set<string>();
+	const retries = createRewriteRetry();
 	const renderedTexts = new Set<string>();
 	const registered = new Set<string>();
 
 	function sizeFor(view: NativeJavaReference, resources: NativeJavaReference): number {
 		if (imageSize > 0) return imageSize;
 
-		const metrics = javaReference(java.invoke(resources, 'getDisplayMetrics'));
-		const density = metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
-
-		imageSize = Math.round(IMAGE_SIZE * density);
+		imageSize = Math.round(IMAGE_SIZE * resourceDensity(java, resources));
 
 		return imageSize;
 	}
@@ -227,14 +227,54 @@ export function createAndroidRenderer(
 			});
 		}
 
-		active.put(original, rendered, edits);
+		const key = javaViewKey(view as NativeJavaValue);
+
+		if (!active.put(original, rendered, edits)) {
+			active.reapply(view);
+
+			if (key) retries.retry(key, () => schedule(view));
+
+			return;
+		}
+
+		if (key) retries.succeeded(key);
+
 		rules.add(original);
 		renderedTexts.add(rendered);
 		active.reapply(view);
 	}
 
-	function render(view: NativeJavaReference) {
-		const content = readViewText(java, view);
+	function wait(view: NativeJavaReference) {
+		const key = javaViewKey(view as NativeJavaValue);
+
+		if (!key) return;
+
+		waiting.delete(key);
+		waiting.set(key, view);
+
+		if (waiting.size > MAX_TRACKED_VIEWS) waiting.delete(waiting.keys().next().value!);
+	}
+
+	function retryWaiting() {
+		if (!waiting.size) return;
+
+		index.hydrateChannel();
+
+		const count = index.all().length;
+
+		if (count === resolvedCount) return;
+
+		resolvedCount = count;
+
+		const views = [...waiting.values()];
+
+		waiting.clear();
+
+		for (const view of views) schedule(view);
+	}
+
+	async function render(view: NativeJavaReference) {
+		const content = await readViewTextAsync(java, view);
 
 		if (!content?.string.includes('@') || renderedTexts.has(content.string)) return;
 
@@ -244,14 +284,14 @@ export function createAndroidRenderer(
 
 		const mentions = index.all();
 
-		if (!mentions.length) return;
+		if (!mentions.length) return wait(view);
 
 		const tappable = spansOf(java, text, string.length, TAPPABLE_SPAN);
 		const placements = planPlacements(string, tappable, mentions, showAtSymbol());
 
-		if (!placements.length) return;
+		if (!placements.length) return wait(view);
 
-		const resources = javaReference(java.invoke(view, 'getResources'));
+		const resources = javaReference(await java.invokeAsync(view, 'getResources', []));
 
 		if (!resources) return;
 
@@ -286,7 +326,7 @@ export function createAndroidRenderer(
 	}
 
 	function schedule(view: NativeJavaReference) {
-		const key = viewKey(view as NativeJavaValue);
+		const key = javaViewKey(view as NativeJavaValue);
 
 		if (disposed || !key || pending.has(key)) return;
 
@@ -297,11 +337,10 @@ export function createAndroidRenderer(
 
 			if (disposed) return;
 
-			try {
-				render(view);
-			} catch {
-				views.delete(key);
-			}
+			rendering++;
+			render(view)
+				.catch(() => views.delete(key))
+				.finally(() => rendering--);
 		}, 0);
 	}
 
@@ -319,21 +358,26 @@ export function createAndroidRenderer(
 		},
 	);
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || disposed) return;
 
-		for (const view of findViewsOfClass(java, decor, TEXT_VIEW)) schedule(view);
+		for (const view of await findViewsOfClass(java, decor, TEXT_VIEW)) schedule(view);
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	scheduleStartupScans('Mention Avatars', scanVisible);
 
 	return {
+		retryWaiting,
+		rendered: () => rules.size,
+		settling: () => pending.size > 0 || rendering > 0,
+		failed: () =>
+			[...images].flatMap(([url, entry]) => (!entry.pending && !entry.bitmap ? [url] : [])),
 		dispose() {
-			for (const scan of scans) clearTimeout(scan);
-
 			disposed = true;
+			waiting.clear();
+			retries.clear();
 			hooks.remove(token);
 
 			for (const original of rules) rewrites?.remove(original);

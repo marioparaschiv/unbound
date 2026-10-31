@@ -1,7 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 
-import { ReactionUserCache } from './reactor-cache';
-import { reactionAvatarKey, type Reactor } from './avatars';
+import { ReactionUserCache } from '~/reactor-cache';
+import { reactionAvatarKey, type Reactor } from '~/avatars';
 
 function deferred() {
 	let resolve: (users: Reactor[]) => void = () => undefined;

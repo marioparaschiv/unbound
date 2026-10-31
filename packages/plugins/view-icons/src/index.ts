@@ -1,4 +1,5 @@
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import {
@@ -13,8 +14,6 @@ import {
 import { patchContextMenus } from '~/patches/context-menus';
 import { patchActionSheets } from '~/patches/action-sheets';
 import type { SheetRef } from '~/opened-sheet';
-
-let dispose = () => {};
 
 function start() {
 	const ready = ensureModules('View Icons', {
@@ -31,15 +30,7 @@ function start() {
 
 	const opened: SheetRef = { current: null };
 
-	dispose = applyFeatures('View Icons', [
-		() => patchActionSheets(opened),
-		() => patchContextMenus(opened),
-	]);
+	applyFeatures('View Icons', [() => patchActionSheets(opened), () => patchContextMenus(opened)]);
 }
 
-function stop() {
-	dispose();
-	dispose = () => {};
-}
-
-export default { start, stop };
+export default { start, selfTest: featureSelfTest };

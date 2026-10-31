@@ -256,6 +256,10 @@ func (target *androidSmokeTarget) isLoaderLine(line string) bool {
 	return strings.Contains(line, " Unbound ") || strings.Contains(line, " Unbound:")
 }
 
+func (target *androidSmokeTarget) consoleEntry(line string) (smokeConsoleEntry, bool) {
+	return androidConsoleEntry(line)
+}
+
 func (target *androidSmokeTarget) isCrashLine(line string) bool {
 	switch {
 	case strings.Contains(line, "AndroidRuntime") && strings.Contains(line, "Process: "+smokeAndroidPackage+","):

@@ -14,7 +14,7 @@ const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', time
 
 function SubmissionTimeline({ entries }: SubmissionTimelineProps) {
 	return (
-		<Card className='p-5'>
+		<Card className='p-(--card-pad)'>
 			<ol className='flex flex-col'>
 				{entries.map((entry, index) => (
 					<li key={entry.id} className='relative pb-5 last:pb-0 pl-6'>
@@ -45,7 +45,7 @@ function SubmissionTimeline({ entries }: SubmissionTimelineProps) {
 							{DATE_FORMAT.format(new Date(entry.at))}
 						</Text>
 						{entry.note ? (
-							<div className='flex flex-col gap-0.5 bg-muted/50 mt-2 px-3 py-2 rounded-md'>
+							<div className='flex flex-col gap-0.5 bg-muted/50 mt-2 px-3 py-2 rounded-control'>
 								<Text variant='text-xs' color='muted' className='font-medium'>
 									Reviewer note
 								</Text>

@@ -1,0 +1,18 @@
+{
+	"id": "unbound.add-attachments",
+	"name": "Add Attachments",
+	"description": "Adds attachments to messages you already sent, while you edit them or from the message menu.",
+	"authors": [
+		{
+			"name": "Lumap",
+			"id": "585278686291427338"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "ImageIcon",
+	"main": "index.tsx"
+}

@@ -67,7 +67,11 @@ export function stripInternal(
 		}
 	}
 
-	const referenced = collectReferencedNames(survivors);
+	dropInternalExportSpecifiers(survivors, new Set([...candidates.values()].flat()));
+
+	const referenced = collectReferencedNames(
+		survivors.filter((statement) => !statement.wasForgotten()),
+	);
 
 	for (const [statement, names] of candidates) {
 		if (names.some((name) => referenced.has(name))) {
@@ -85,6 +89,21 @@ export function stripInternal(
 		for (const name of names) internalNames.add(name);
 
 		statement.remove();
+	}
+}
+
+// A bundler that renames a colliding declaration exports it through a list (`export { a$1 as a }`).
+function dropInternalExportSpecifiers(statements: Statement[], internal: Set<string>) {
+	for (const statement of statements) {
+		if (!Node.isExportDeclaration(statement) || statement.hasModuleSpecifier()) {
+			continue;
+		}
+
+		for (const specifier of statement.getNamedExports()) {
+			if (internal.has(specifier.getName())) {
+				specifier.remove();
+			}
+		}
 	}
 }
 
@@ -219,6 +238,80 @@ export function exportedNames(container: Node): Set<string> {
 	}
 
 	return names;
+}
+
+/**
+ * @description Removes a module's `default` export so each public name is declared once, as its named
+ * export. Drops the `default` binding and the unexported declaration behind it once nothing references it.
+ * @param sourceFile The parsed module bundle to rewrite. Handles `export { X as default }`,
+ * `export default X;` and `export default function`/`class` declarations.
+ */
+export function dropDefaultExport(sourceFile: Node) {
+	if (!Node.isStatemented(sourceFile)) return;
+
+	const locals = new Set<string>();
+
+	for (const statement of sourceFile.getStatements()) {
+		if (Node.isExportAssignment(statement) && !statement.isExportEquals()) {
+			locals.add(statement.getExpression().getText());
+			statement.remove();
+			continue;
+		}
+
+		if (Node.isExportable(statement) && statement.hasDefaultKeyword()) {
+			const [name] = declaredNames(statement);
+
+			if (!name || !Node.isModifierable(statement)) {
+				statement.remove();
+				continue;
+			}
+
+			statement.toggleModifier('default', false);
+			statement.toggleModifier('export', false);
+			locals.add(name);
+			continue;
+		}
+
+		if (!Node.isExportDeclaration(statement) || statement.getModuleSpecifier()) {
+			continue;
+		}
+
+		const specifier = statement
+			.getNamedExports()
+			.find((named) => named.getAliasNode()?.getText() === 'default');
+
+		if (!specifier) {
+			continue;
+		}
+
+		locals.add(specifier.getName());
+		specifier.remove();
+
+		if (statement.getNamedExports().length === 0) {
+			statement.remove();
+		}
+	}
+
+	if (locals.size === 0) return;
+
+	const backing = sourceFile
+		.getStatements()
+		.filter(
+			(statement) =>
+				!(Node.isExportable(statement) && statement.hasExportKeyword()) &&
+				declaredNames(statement).some((name) => locals.has(name)),
+		);
+	const referenced = collectReferencedNames(
+		sourceFile.getStatements().filter((statement) => !backing.includes(statement)),
+	);
+
+	for (const statement of backing) {
+		if (declaredNames(statement).some((name) => referenced.has(name))) {
+			continue;
+		}
+
+		statement.remove();
+	}
 }
 
 /**
@@ -366,46 +459,29 @@ export function hoistLibraries(
 	if (hoisted.length === 0) return;
 
 	const referenced = collectReferencedNames(survivors);
-	const importsByOwner = new Map<string, Set<string>>();
-	const exportsByOwner = new Map<string, Set<string>>();
+	const names = hoisted.flatMap((statement) => declaredNames(statement));
+	// Owned types are always re-exported so the public surface is stable. A re-export binds nothing
+	// locally, so any referenced name (owned or not) is imported as well.
+	const exportsByOwner = groupByOwner(
+		names.filter((name) => owned.has(name)),
+		ownerByName,
+	);
+	const importsByOwner = groupByOwner(
+		names.filter((name) => referenced.has(name)),
+		ownerByName,
+	);
+
+	for (const owner of [...exportsByOwner.keys(), ...importsByOwner.keys()]) {
+		usedOwners.add(owner);
+	}
 
 	for (const statement of hoisted) {
-		for (const name of declaredNames(statement)) {
-			const owner = ownerByName.get(name)!;
-
-			// Owned types are always re-exported so the public surface is stable. A re-export binds
-			// nothing locally, so any referenced name (owned or not) is imported as well.
-			if (owned.has(name)) {
-				const exports = exportsByOwner.get(owner) ?? new Set<string>();
-
-				exports.add(name);
-				exportsByOwner.set(owner, exports);
-				usedOwners.add(owner);
-			}
-
-			if (referenced.has(name)) {
-				const imports = importsByOwner.get(owner) ?? new Set<string>();
-
-				imports.add(name);
-				importsByOwner.set(owner, imports);
-				usedOwners.add(owner);
-			}
-		}
-
 		statement.remove();
 	}
 
 	const lines = [
-		...[...importsByOwner.entries()].map(([owner, names]) => {
-			const specifier = relativeSpecifier(outPath, owner);
-
-			return `import type { ${[...names].sort().join(', ')} } from '${specifier}';`;
-		}),
-		...[...exportsByOwner.entries()].map(([owner, names]) => {
-			const specifier = relativeSpecifier(outPath, owner);
-
-			return `export type { ${[...names].sort().join(', ')} } from '${specifier}';`;
-		}),
+		...typeOnlyStatements('import', importsByOwner, outPath),
+		...typeOnlyStatements('export', exportsByOwner, outPath),
 	].sort();
 
 	if (lines.length > 0) {
@@ -414,9 +490,55 @@ export function hoistLibraries(
 }
 
 /**
- * @description Parses a per-module bundle, strips its `@internal` declarations, collapses nested
- * namespace re-exports into imports of their child files, hoists inlined library declarations into
- * per-library imports, and returns the cleaned text.
+ * @description Groups names by the hoist file that owns them, dropping names no hoist file owns.
+ * @param names The names to attribute.
+ * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file.
+ * @returns Each owning hoist file's path and the names it owns, in first-seen order.
+ */
+export function groupByOwner(
+	names: Iterable<string>,
+	ownerByName: Map<string, string>,
+): Map<string, Set<string>> {
+	const byOwner = new Map<string, Set<string>>();
+
+	for (const name of names) {
+		const owner = ownerByName.get(name);
+
+		if (owner === void 0) {
+			continue;
+		}
+
+		byOwner.set(owner, (byOwner.get(owner) ?? new Set<string>()).add(name));
+	}
+
+	return byOwner;
+}
+
+/**
+ * @description Prints one `import type` or `export type` statement per owning hoist file.
+ * @param keyword Whether the statements import the names or re-export them.
+ * @param byOwner Each owning hoist file's path and the names to take from it.
+ * @param outPath The absolute output path of the file the statements go in.
+ * @returns The statements, each with its names sorted, sorted by text.
+ */
+export function typeOnlyStatements(
+	keyword: 'import' | 'export',
+	byOwner: Map<string, Set<string>>,
+	outPath: string,
+): string[] {
+	return [...byOwner]
+		.map(([owner, names]) => {
+			const specifier = relativeSpecifier(outPath, owner);
+
+			return `${keyword} type { ${[...names].sort().join(', ')} } from '${specifier}';`;
+		})
+		.sort();
+}
+
+/**
+ * @description Parses a per-module bundle, drops its `default` export, strips its `@internal`
+ * declarations, collapses nested namespace re-exports into imports of their child files, hoists
+ * inlined library declarations into per-library imports, and returns the cleaned text.
  * @param text The raw bundle text.
  * @param outPath The module's absolute output path, used to resolve relative specifiers.
  * @param children The nested subpath entries whose parent is this module.
@@ -435,6 +557,7 @@ export function strip(
 ): string {
 	const sourceFile = parseSource('bundle.d.ts', text);
 
+	dropDefaultExport(sourceFile);
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 	collapseNamespaces(sourceFile, outPath, children);
 	hoistLibraries(sourceFile, outPath, ownerByName, usedOwners, owned);

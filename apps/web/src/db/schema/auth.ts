@@ -4,6 +4,9 @@ import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import { searchText, timestampMs, trigramIndex } from './columns';
 
+/** The `socialProviders` Better Auth signs in or links with; it writes no other account rows. */
+export type AuthProvider = 'discord' | 'github';
+
 export const user = pgTable(
 	'user',
 	{
@@ -37,6 +40,15 @@ export function userSearchText(table: Record<'id' | 'name' | 'email', AnyPgColum
 	return searchText([table.id, table.name, table.email]);
 }
 
+/**
+ * @description Builds a user's search text without the email, for staff who may not search by it.
+ * @param table The user table or an alias of it.
+ * @returns The search text of the row's id and name.
+ */
+export function userNameSearchText(table: Record<'id' | 'name', AnyPgColumn>): SQL {
+	return searchText([table.id, table.name]);
+}
+
 export const session = pgTable(
 	'session',
 	{
@@ -62,7 +74,7 @@ export const account = pgTable(
 	{
 		id: text('id').primaryKey(),
 		accountId: text('account_id').notNull(),
-		providerId: text('provider_id').notNull(),
+		providerId: text('provider_id').$type<AuthProvider>().notNull(),
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),

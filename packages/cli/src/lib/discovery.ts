@@ -1,5 +1,11 @@
-import { isWorkspaceAddon, matchAddonDirs, readAddon } from '@unbound-app/contracts/workspace';
+import {
+	getOutputDir,
+	isWorkspaceAddon,
+	matchAddonDirs,
+	readAddon,
+} from '@unbound-app/contracts/workspace';
 import type { WorkspaceAddon, WorkspaceFiles } from '@unbound-app/contracts/workspace';
+import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { existsSync, readFileSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -34,9 +40,15 @@ export async function discoverAddons(resolved: ResolvedConfig): Promise<Discover
 	};
 
 	const candidates = bare ? listBareCandidates(root) : await listManifestDirs(root);
+	const dirs = matchAddonDirs(config, bare, candidates);
+	const outputDirs = new Set(dirs.map((path) => getOutputDir(path, config)));
 	const addons: DiscoveredAddon[] = [];
 
-	for (const path of matchAddonDirs(config, bare, candidates)) {
+	for (const path of dirs) {
+		if (outputDirs.has(path)) {
+			continue;
+		}
+
 		const result = readAddon(path, files, config);
 		const dir = join(root, path);
 
@@ -53,12 +65,12 @@ export async function discoverAddons(resolved: ResolvedConfig): Promise<Discover
 }
 
 function listBareCandidates(root: string): string[] {
-	return existsSync(join(root, 'manifest.json')) ? [''] : [];
+	return existsSync(join(root, MANIFEST_FILENAME)) ? [''] : [];
 }
 
 async function listManifestDirs(root: string, relative = ''): Promise<string[]> {
 	const entries = await readdir(join(root, relative), { withFileTypes: true });
-	const dirs = entries.some((entry) => entry.isFile() && entry.name === 'manifest.json')
+	const dirs = entries.some((entry) => entry.isFile() && entry.name === MANIFEST_FILENAME)
 		? [relative]
 		: [];
 

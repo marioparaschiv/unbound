@@ -1,9 +1,8 @@
 import type { MessageCommandSuccessPayload } from '@sapphire/framework';
-import { Events, Listener, LogLevel } from '@sapphire/framework';
-import type { Logger } from '@sapphire/plugin-logger';
+import { Events, Listener } from '@sapphire/framework';
 import { ApplyOptions } from '@sapphire/decorators';
 
-import { logSuccessCommand } from '~/lib/log-command';
+import { isDebugLogging, logSuccessCommand } from '~/lib/log-command';
 
 @ApplyOptions<Listener.Options>({ event: Events.MessageCommandSuccess })
 export class MessageCommandSuccessListener extends Listener<typeof Events.MessageCommandSuccess> {
@@ -12,7 +11,7 @@ export class MessageCommandSuccessListener extends Listener<typeof Events.Messag
 	}
 
 	public override onLoad() {
-		this.enabled = (this.container.logger as Logger).level <= LogLevel.Debug;
+		this.enabled = isDebugLogging();
 
 		return super.onLoad();
 	}

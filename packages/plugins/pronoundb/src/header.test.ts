@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { addPronouns } from './header';
+import { addPronouns } from '~/header';
 
 const IPHONE_WIDTH = 375;
 

@@ -1,11 +1,13 @@
-import { MessageRowData, Patcher, RelationshipStore, UserStore, settings } from '~/modules';
+import { patcher } from '@unbound-app/api';
+
+import { MessageRowData, RelationshipStore, UserStore, settings } from '~/modules';
 import { formatName, type NameMode } from '~/format-name';
 import { AUTOMOD_MESSAGE_TYPE } from '~/constants';
 
 type Author = {
 	id?: string;
 	username?: string;
-	globalName?: string;
+	globalName?: string | null;
 };
 
 type Message = {
@@ -68,7 +70,7 @@ function relabel(row: Row | undefined, messageAuthor: Author | undefined) {
  * @returns A function that removes the patch.
  */
 export function patchAuthorNames(): () => void {
-	return Patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+	return patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const message: Message | undefined = args[0]?.message;
 
 		if (isAutomod(message)) return;
@@ -82,7 +84,7 @@ export function patchAuthorNames(): () => void {
  * @returns A function that removes the patch.
  */
 export function patchReplyNames(): () => void {
-	return Patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+	return patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const message: Message | undefined = args[0]?.message;
 		const reply = message?.referencedMessage?.message ?? message?.referenced_message;
 

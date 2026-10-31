@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/contracts",
-	"version": "0.10.0",
+	"version": "0.12.0",
 	"private": true,
 	"description": "Runtime-validated wire contracts shared by the Unbound web server, the CLI and the client.",
 	"author": {
@@ -12,9 +12,14 @@
 	"exports": {
 		"./*": "./src/*.ts"
 	},
+	"scripts": {
+		"typecheck": "tsc --noEmit -p ."
+	},
 	"dependencies": {
 		"@unbound-app/types": "workspace:*",
+		"marked": "^18.1.2",
 		"picomatch": "^4.0.7",
+		"yaml": "^2.9.1",
 		"zod": "^4.0.0"
 	},
 	"devDependencies": {

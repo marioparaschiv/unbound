@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <regex>
 #include <system_error>
 
 #include "LoaderDevOverlay.h"
@@ -213,28 +214,73 @@ static std::string flag(bool value)
     return value ? "true" : "false";
 }
 
+std::string discordLine(const std::string &label, const std::string &appSource)
+{
+    static const std::regex pattern(R"(^\s*(.*?)(?:\s*-\s*(alpha|beta))?\s*\((\d+)\)\s*$)",
+                                    std::regex::icase);
+    const std::string       source = appSource.empty() ? std::string() : " (" + appSource + ")";
+    std::smatch             match;
+
+    if (label.empty())
+    {
+        return "unknown" + source;
+    }
+    if (!std::regex_match(label, match, pattern))
+    {
+        return label + source;
+    }
+
+    std::string channel = match[2].str();
+    if (channel.empty())
+    {
+        channel = appSource == "TestFlight" ? "beta" : "stable";
+    }
+    else
+    {
+        std::transform(channel.begin(), channel.end(), channel.begin(),
+                       [](unsigned char character) {
+                           return std::tolower(character);
+                       });
+    }
+    return match[1].str() + " " + channel + ", build " + match[3].str() + source;
+}
+
+static std::string loaderFile(const std::string &platform)
+{
+    return platform == "iOS" ? "Unbound.dylib" : "libunbound.so";
+}
+
 std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFacts &facts)
 {
     const auto known = [](const std::string &value) {
         return value.empty() ? std::string("unknown") : value;
     };
-    std::vector<std::pair<std::string, std::string>> rows = {
-        {"Device", known(facts.device)},
-        {facts.platform + " Version", known(facts.osVersion)},
-        {"Discord Version", known(facts.discordVersion)},
-        {"Unbound Version", known(facts.unboundVersion)},
-    };
+    const bool  android = facts.platform == "Android";
+    std::string loader =
+        "loader " + known(facts.unboundVersion) + " (`" + loaderFile(facts.platform) + "`";
+    if (!facts.framework.empty())
+    {
+        loader += ", `" + facts.framework + "`";
+    }
+    loader += ")";
 
-    if (!facts.appSource.empty())
+    std::string state =
+        android ? (facts.rooted ? "rooted" : "stock") : (facts.rooted ? "jailbroken" : "jailed");
+    if (facts.virtualDevice)
     {
-        rows.emplace_back("App Source", facts.appSource);
+        state += android ? ", emulator" : ", simulator";
     }
-    if (!facts.registration.empty())
+    if (facts.registration == "System")
     {
-        rows.emplace_back("App Registration", facts.registration);
+        state += ", system app";
     }
-    rows.emplace_back("Virtual Device", facts.virtualDevice ? "Yes" : "No");
-    return rows;
+
+    return {
+        {"Unbound", loader},
+        {"Discord", discordLine(facts.discordVersion, facts.appSource)},
+        {"Device", known(facts.device) + " on " + facts.platform + " " + known(facts.osVersion)},
+        {"State", state},
+    };
 }
 
 static MenuItem restartingAction(std::string id, std::string title, std::string action,
@@ -458,7 +504,9 @@ IssueFacts issueFacts(const NativePlatformProvider &provider, const std::string 
                      loaderVersion(),
                      provided(provider.appSource),
                      "",
-                     provider.isVirtualDevice && provider.isVirtualDevice()};
+                     provider.isVirtualDevice && provider.isVirtualDevice(),
+                     provided(provider.framework),
+                     provider.isRooted && provider.isRooted()};
     if (provider.isSystemApp)
     {
         facts.registration = provider.isSystemApp() ? "System" : "User";
@@ -589,11 +637,11 @@ std::string perform(ToolboxContext &context, const std::string &action, const st
 
 std::string issueBody(const IssueReport &report)
 {
-    std::string body = "### Environment\n";
+    std::string body;
 
     for (const auto &[name, value] : report.environment)
     {
-        body += "- **" + name + "**: " + value + "\n";
+        body += "- **" + name + ":** " + value + "\n";
     }
 
     for (const auto &[title, content] : report.attachments)
@@ -601,20 +649,14 @@ std::string issueBody(const IssueReport &report)
         body += "\n### " + title + "\n```\n" + content + "\n```\n";
     }
 
-    body += "\n### Issue Description\n"
-            "<!-- Describe the issue you're experiencing -->\n\n"
-            "**Steps to reproduce:**\n1. \n2. \n3. \n\n"
-            "**Expected behavior:**\n\n"
-            "**Actual behavior:**\n\n";
     return body;
 }
 
 std::string issueURL(const IssueReport &report)
 {
-    const std::string title = "bug(" + report.platform + "): replace this with a descriptive title";
-
     return std::string("https://github.com/") + kIssueRepository +
-           "/issues/new?title=" + percentEncode(title) +
-           "&body=" + percentEncode(issueBody(report));
+           "/issues/new?template=crash-report.yml&title=" + percentEncode("crash: ") +
+           "&platform=" + percentEncode(report.platform) +
+           "&environment=" + percentEncode(issueBody(report));
 }
 }

@@ -33,8 +33,9 @@ using namespace facebook;
 
 #pragma mark - Pre/post bundle injection
 
-static jsi::Runtime *gRuntime  = nullptr;
-static __weak id     gInstance = nil;
+static jsi::Runtime *gRuntime             = nullptr;
+static __weak id     gInstance            = nil;
+static BOOL          gHostPreparedRuntime = NO;
 
 static loader::browserlogin::PendingLogin &pendingBrowserLogin(void)
 {
@@ -160,9 +161,9 @@ public:
     loader::PreloadPayload preloadPayload() override
     {
         nlohmann::json availableFonts = loader::fontNamesOf(UnboundPlatformFonts());
-        return loader::makePreloadPayload(UnboundSettingsStore(), UnboundAddonState(),
-                                          availableFonts,
-                                          toStdString([Utilities getCurrentDylibName]));
+        return loader::makePreloadPayload(UnboundAddonState(), availableFonts,
+                                          toStdString([Utilities getCurrentDylibName]),
+                                          runtimeBytecodeVersion());
     }
 
     void installNativeModules(jsi::Runtime &runtime) override
@@ -233,6 +234,7 @@ static void enqueueBundle(id instance)
     loader::setNativePluginFabricHost(self);
     id hostInstance = instance;
     prepareLoading(hostInstance);
+    gHostPreparedRuntime = YES;
     %orig;
     if ([hostInstance respondsToSelector:@selector(callFunctionOnBufferedRuntimeExecutor:)])
     {
@@ -272,7 +274,14 @@ static BOOL                    gRCTInstanceHooksInstalled    = NO;
 
 static void loadJSBundle(id self, SEL selector, NSURL *sourceURL)
 {
-    prepareLoading(self);
+    if (gHostPreparedRuntime)
+    {
+        gHostPreparedRuntime = NO;
+    }
+    else
+    {
+        prepareLoading(self);
+    }
     if (gOriginalLoadJSBundle)
     {
         gOriginalLoadJSBundle(self, selector, sourceURL);

@@ -31,7 +31,7 @@ type KindEvent<K extends ModerationEventKind> = KindTag<K> & { data: KindData<K>
 
 type SubmissionData = KindData<'submission.cancelled'>;
 
-type FirstPartyBuild = NonNullable<KindData<'review.decided'>['build']>;
+export type FirstPartyBuild = NonNullable<KindData<'review.decided'>['build']>;
 
 const DECISIONS = {
 	approved: { verb: 'Approved', colour: COLOURS.positive },
@@ -55,16 +55,25 @@ function submissionDetails(data: SubmissionData) {
 	];
 }
 
-// A first-party deploy is CI publishing a build commit without review, so it reads unlike a review.
-function deployed(data: SubmissionData, build: FirstPartyBuild): KindEmbed {
+/**
+ * @description Links a first-party build's commit, shown as its short sha.
+ * @param build The CI build.
+ * @returns The markdown link.
+ */
+export function buildLink(build: FirstPartyBuild): string {
 	const commit = `https://github.com/${build.repository}/commit/${build.commitSha}`;
 
+	return `[${code(build.commitSha.slice(0, 7))}](${commit})`;
+}
+
+// A first-party deploy is CI publishing a build commit without review, so it reads unlike a review.
+function deployed(data: SubmissionData, build: FirstPartyBuild): KindEmbed {
 	return {
 		verb: '🚀 Deployed',
 		suffix: data.version,
 		colour: COLOURS.deploy,
 		details: [
-			`First-party ${SUBMISSION_KINDS[data.submissionKind].toLowerCase()} · Build [${code(build.commitSha.slice(0, 7))}](${commit})`,
+			`First-party ${SUBMISSION_KINDS[data.submissionKind].toLowerCase()} · Build ${buildLink(build)}`,
 		],
 		omitReason: true,
 	};
@@ -208,4 +217,19 @@ export function renderKind(kind: string, data: unknown): KindEmbed | undefined {
 	return parsed.success ? renderEvent(parsed.data) : undefined;
 }
 
-export default { renderKind };
+/**
+ * @description Reads the CI build behind a first-party deploy, validated by the contract's schema.
+ * @param kind The event's kind.
+ * @param data The event's stored `data`.
+ * @returns The build, or `undefined` when the event is not a first-party deploy.
+ */
+// UNKNOWN: `data` is the stored per-kind JSON; the contract schema parses it here.
+export function deployBuild(kind: string, data: unknown): FirstPartyBuild | undefined {
+	const parsed = moderationEventDataSchema.safeParse({ kind, data });
+
+	if (!parsed.success || parsed.data.kind !== 'review.decided') return;
+
+	return parsed.data.data.build ?? undefined;
+}
+
+export default { buildLink, renderKind, deployBuild };

@@ -5,15 +5,15 @@ import Animated, { withSpring } from 'react-native-reanimated';
 import { View, Pressable } from 'react-native';
 import { memo, useCallback } from 'react';
 
-import { BackdropFilters } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
-import { TintedIcon } from '~/ui/components';
-import useToastStore from '~/stores/toasts';
-import { Icons } from '~/api/assets';
+import { useUnboundSettings } from '~/settings/unbound';
+import TintedIcon from '~/metro/fallbacks/tinted-icon';
+import { BackdropFilters } from '~/metro/components';
+import toastDuration from '~/toasts/duration';
+import useToastStore from '~/toasts/state';
+import { icons } from '~/assets/api';
 
 import { unitToHex, withoutOpacity } from './color';
 import useToastState from './use-toast-state';
-import toastDuration from './toast-duration';
 import ToastProgress from './toast-progress';
 import ToastButtons from './toast-buttons';
 import ToastContent from './toast-content';
@@ -49,11 +49,11 @@ function Toast({ id }: ToastProps) {
 		leave,
 		properties: { scale, height, width, translateY },
 	} = useToastState(options ?? { id });
-	const settings = useSettingsStore('unbound', ({ key }) => key?.startsWith('toasts'));
+	const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 	const styles = useStyles();
 
-	const opacity = settings.get('toasts.opacity', 0.8);
-	const animations = settings.get('toasts.animations', true);
+	const opacity = settings.get('toasts.opacity');
+	const animations = settings.get('toasts.animations');
 
 	const onGestureEvent = useCallback(
 		(event: GestureEvent<PanGestureHandlerEventPayload>) => {
@@ -78,7 +78,7 @@ function Toast({ id }: ToastProps) {
 	// The store entry is gone the instant this toast is removed; skip a final empty render.
 	if (!options) return null;
 
-	const duration = toastDuration(options.duration, settings.get('toasts.duration', 5000));
+	const duration = toastDuration(options.duration, settings.get('toasts.duration'));
 	const background = withoutOpacity(styles.container.backgroundColor) + unitToHex(opacity);
 
 	return (
@@ -96,7 +96,7 @@ function Toast({ id }: ToastProps) {
 				>
 					{opacity !== 1 ? (
 						<BackdropFilters.BackgroundBlurFill
-							blurAmount={settings.get('toasts.blur', 0.15)}
+							blurAmount={settings.get('toasts.blur')}
 						/>
 					) : null}
 					<View style={styles.wrapper}>
@@ -110,7 +110,7 @@ function Toast({ id }: ToastProps) {
 							onPress={leave}
 							onLongPress={dismissAll}
 						>
-							<TintedIcon source={Icons['ic_close'] ?? 0} />
+							<TintedIcon source={icons['ic_close'] ?? 0} />
 						</Pressable>
 					</View>
 					{Array.isArray(options.buttons) && options.buttons.length ? (

@@ -1,0 +1,6 @@
+rules:
+    dangerous-triggers:
+        ignore:
+            - dependabot-title.yml
+            - pr-builds-cleanup.yml
+            - pr-builds-publish.yml

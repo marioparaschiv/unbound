@@ -1,5 +1,7 @@
 package app.unbound.android
 
+import android.os.Looper
+import android.view.View
 import org.json.JSONArray
 import org.json.JSONObject
 import java.lang.reflect.Field
@@ -14,6 +16,7 @@ object NativeJava {
     private var nextAssociation = 1L
     private val objectsByHandle = HashMap<String, Any>()
     private val handlesByIdentity = HashMap<IdentityKey, String>()
+    private val issuesByHandle = HashMap<String, Long>()
     private var nextHandle = 1L
 
     private class IdentityKey(val target: Any) {
@@ -22,6 +25,12 @@ object NativeJava {
     }
 
     private var pluginClassLoader: ClassLoader? = null
+
+    private val methodsByName = java.util.concurrent.ConcurrentHashMap<Class<*>, Map<String, List<Method>>>()
+    private val resolvedMethods = java.util.concurrent.ConcurrentHashMap<MethodKey, Method>()
+    private val resolvedFields = java.util.concurrent.ConcurrentHashMap<Pair<Class<*>, String>, Field>()
+
+    private data class MethodKey(val owner: Class<*>, val static: Boolean, val name: String, val arguments: List<String>)
 
     fun useClassLoader(classLoader: ClassLoader) {
         synchronized(this) { pluginClassLoader = classLoader }
@@ -77,8 +86,8 @@ object NativeJava {
         val target = loadClass(name)
         val arguments = parseArguments(argumentsJSON)
         val constructor = target.declaredConstructors
-            .filter { it.parameterCount == arguments.size }
-            .firstOrNull { matches(it.parameterTypes, arguments) }
+            .filter { it.parameterCount == arguments.size && matches(it.parameterTypes, arguments) }
+            .minByOrNull { specificity(it.parameterTypes, arguments) }
             ?: throw IllegalArgumentException(
                 "No constructor of $name accepts these arguments; it has ${signatures(
                     target.declaredConstructors.map {
@@ -109,6 +118,10 @@ object NativeJava {
 
         if (receiver == null && target !is Class<*>) {
             throw IllegalArgumentException("$name is static but was called on an instance")
+        }
+
+        if (receiver is View && !Looper.getMainLooper().isCurrentThread) {
+            NativeBridge.nativeWarnOffMainViewCall("${receiver.javaClass.name}.$name()")
         }
 
         method.isAccessible = true
@@ -161,6 +174,7 @@ object NativeJava {
             }
 
             val result = outcome.getOrElse {
+                releaseIssuedHandles(results)
                 throw IllegalStateException(
                     "Java batch operation $index failed: ${it.message ?: it.toString()}",
                     it,
@@ -170,6 +184,32 @@ object NativeJava {
         }
 
         return results.toString()
+    }
+
+    fun findViews(handleJSON: String, className: String, optionsJSON: String): String {
+        val root = resolve(parseHandle(handleJSON)) as? View
+            ?: throw IllegalArgumentException("findViews needs a view to start from")
+        val target = loadHostClass(className)
+        val search = ViewSearch.from(JSONObject(optionsJSON))
+        val results = JSONArray()
+
+        for (view in search.run(root, target)) results.put(JSONObject(serialize(view)))
+
+        return results.toString()
+    }
+
+    private fun releaseIssuedHandles(value: Any?) {
+        when (value) {
+            is JSONArray -> (0 until value.length()).forEach { releaseIssuedHandles(value.opt(it)) }
+
+            is JSONObject -> {
+                if (value.optString("type") == "handle" && value.opt("value") is String) {
+                    release(JSONObject().put("id", value.getString("value")).put("issues", 1).toString())
+                    return
+                }
+                value.keys().forEach { releaseIssuedHandles(value.opt(it)) }
+            }
+        }
     }
 
     fun createAssociationKey(): String {
@@ -205,17 +245,28 @@ object NativeJava {
     }
 
     fun release(handleJSON: String) {
-        val id = parseHandle(handleJSON)
+        val request = JSONObject(handleJSON)
+        val id = request.getString("id")
+        val released = request.optLong("issues", -1L)
         synchronized(this) {
+            val remaining = if (released < 0) 0L else (issuesByHandle[id] ?: 0L) - released
+            if (remaining > 0) {
+                issuesByHandle[id] = remaining
+                return
+            }
+            issuesByHandle.remove(id)
             val target = objectsByHandle.remove(id) ?: return
             handlesByIdentity.remove(IdentityKey(target))
         }
     }
 
+    fun liveHandles(): Int = synchronized(this) { objectsByHandle.size }
+
     fun releaseAll() {
         synchronized(this) {
             objectsByHandle.clear()
             handlesByIdentity.clear()
+            issuesByHandle.clear()
             associations.clear()
             nextHandle = 1L
             nextAssociation = 1L
@@ -256,18 +307,33 @@ object NativeJava {
 
     private fun findMethod(target: Any, name: String, arguments: List<Argument>): Method {
         val owner = if (target is Class<*>) target else target.javaClass
+        val key = MethodKey(owner, target is Class<*>, name, arguments.map(::argumentKey))
+        resolvedMethods[key]?.let { return it }
+
         val searched = if (target is Class<*>) listOf(owner, Class::class.java) else listOf(owner)
         val candidates = searched
-            .flatMap(::methods)
-            .filter { it.name == name && it.parameterCount == arguments.size }
+            .flatMap { methodsNamed(it, name) }
+            .filter { it.parameterCount == arguments.size }
         require(candidates.isNotEmpty()) { "No method $name on ${owner.name} takes ${arguments.size} arguments" }
 
-        return candidates.filter { matches(it.parameterTypes, arguments) }
+        val method = candidates.filter { matches(it.parameterTypes, arguments) }
             .minByOrNull { specificity(it.parameterTypes, arguments) }
             ?: throw IllegalArgumentException(
                 "No overload of $name on ${owner.name} accepts these arguments; it has ${signatures(candidates.map { it.parameterTypes })}",
             )
+        method.isAccessible = true
+        resolvedMethods[key] = method
+        return method
     }
+
+    private fun argumentKey(argument: Argument): String = when (argument) {
+        is Absent -> "null:${argument.declaredType?.name}"
+        is Reference -> "object:${argument.target.javaClass.name}"
+        is Scalar -> "value:${argument.declaredType?.name}:${argument.value?.javaClass?.name}"
+    }
+
+    private fun methodsNamed(owner: Class<*>, name: String): List<Method> =
+        methodsByName.getOrPut(owner) { methods(owner).groupBy { it.name } }[name].orEmpty()
 
     private fun methods(owner: Class<*>): List<Method> {
         val collected = ArrayList<Method>()
@@ -282,6 +348,12 @@ object NativeJava {
 
     private fun findField(target: Any, name: String): Field {
         val owner = if (target is Class<*>) target else target.javaClass
+        return resolvedFields.getOrPut(owner to name) {
+            declaredField(owner, name).also { it.isAccessible = true }
+        }
+    }
+
+    private fun declaredField(owner: Class<*>, name: String): Field {
         var current: Class<*>? = owner
         while (current != null) {
             runCatching { return current!!.getDeclaredField(name) }
@@ -521,11 +593,11 @@ object NativeJava {
 
     private fun handle(target: Any): String = synchronized(this) {
         val key = IdentityKey(target)
-        handlesByIdentity[key]?.let { return it }
-
-        val id = "java-${nextHandle++}"
-        objectsByHandle[id] = target
-        handlesByIdentity[key] = id
+        val id = handlesByIdentity[key] ?: "java-${nextHandle++}".also {
+            objectsByHandle[it] = target
+            handlesByIdentity[key] = it
+        }
+        issuesByHandle[id] = (issuesByHandle[id] ?: 0L) + 1
         return id
     }
 }

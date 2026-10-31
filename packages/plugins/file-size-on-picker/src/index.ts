@@ -1,37 +1,21 @@
-import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest, recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import type { PluginContext } from '@unbound-app/api/native';
 
-import { createAndroidFileSizes } from '~/android/file-sizes';
 import { patchMediaKeyboardItem } from '~/patches/media-keyboard-item';
-import { PLUGIN_NAME } from '~/constants';
-import type { FileSizeLookup } from '~/badges';
+import { createFileSizes } from '~/file-sizes/platform';
 
-let dispose = () => {};
-
-function androidLookup(context: PluginContext): { lookup?: FileSizeLookup; dispose: () => void } {
-	if (
-		context.platform !== 'android' ||
-		!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)
-	) {
-		return { dispose: () => {} };
-	}
-
-	return createAndroidFileSizes(context.native.java);
-}
+let releaseFileSizes = () => {};
 
 function start(context: PluginContext) {
-	const sizes = androidLookup(context);
+	const sizes = createFileSizes(context);
 
-	dispose = applyFeatures(PLUGIN_NAME, [
-		() => sizes.dispose,
-		() => patchMediaKeyboardItem(sizes.lookup),
-	]);
+	releaseFileSizes = sizes.release;
+	patchMediaKeyboardItem(sizes.lookup);
+	recordApplied(1);
 }
 
 function stop() {
-	dispose();
-	dispose = () => {};
+	releaseFileSizes();
 }
 
-export default { start, stop };
+export default { start, stop, selfTest: featureSelfTest };

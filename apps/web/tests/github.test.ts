@@ -3,14 +3,17 @@ import {
 	pushableRepositoriesResponseSchema,
 } from '@unbound-app/contracts/source';
 import { afterAll, describe, expect, spyOn, test } from 'bun:test';
+import { APIError } from 'better-auth/api';
 
 import listGitHubRepositoriesEndpoint from '~/endpoints/list-github-repositories';
 import listRepositoryAddonsEndpoint from '~/endpoints/list-repository-addons';
+import { connectGitHubIfLinked } from '~/lib/github';
 import type { AppContext } from '~/lib/context';
 import { createApiClient } from '~/api/client';
 import type { Api } from '~/api';
 
 import { createTestContext, linkGitHub, signInWithDiscord } from './helpers/context';
+import { manifest, seedApprovedAddon } from './helpers/addons';
 import { failure, serveEndpoints } from './helpers/server';
 import { serveGitHub } from './helpers/github';
 
@@ -259,16 +262,46 @@ describe('GET /api/v1/github/addons', () => {
 			issues: [],
 		});
 		expect(byId.get('acme.nodist')?.issues).toEqual([
-			expect.stringContaining('plugins/nodist/dist/index.js is not committed'),
+			{
+				code: 'artifact_missing',
+				message: expect.stringContaining('plugins/nodist/dist/index.js'),
+			},
 		]);
 		expect(byId.get('acme.broken')).toMatchObject({ name: null, version: null });
 		expect(byId.get('acme.broken')?.issues).toEqual([
-			expect.stringContaining('plugins/broken/manifest.json is not a valid manifest'),
+			{
+				code: 'invalid_manifest',
+				message: expect.stringContaining('plugins/broken/manifest.json'),
+			},
 		]);
 		expect(listing.skipped.map((entry) => entry.path).sort()).toEqual([
 			'plugins/wip',
 			'scratch',
 		]);
+	});
+
+	test('marks the addons whose version is already published as up to date', async () => {
+		const { userId } = await signInWithDiscord(ctx, {
+			id: '80351110224679999',
+			name: 'Publisher',
+			email: 'publisher@example.com',
+		});
+
+		await seedApprovedAddon(ctx, userId, manifest('acme.hello', '1.0.0'));
+		await seedApprovedAddon(ctx, userId, manifest('acme.dark', '0.9.0'));
+
+		const listing = await listAddons(await signIn(), MONOREPO);
+		const upToDate = Object.fromEntries(
+			listing.addons.map((addon) => [addon.id, addon.upToDate]),
+		);
+
+		expect(upToDate).toEqual({
+			'acme.inner': false,
+			'acme.broken': false,
+			'acme.hello': true,
+			'acme.nodist': false,
+			'acme.dark': false,
+		});
 	});
 
 	test('snapshots the repository details', async () => {
@@ -308,9 +341,40 @@ describe('GET /api/v1/github/addons', () => {
 				hasAddonMd: false,
 				hasChangelog: false,
 				issues: [],
+				upToDate: false,
 			},
 		]);
 		expect(listing.details).toMatchObject({ homepage: null, license: null, readmeUrl: null });
+	});
+
+	test('does not list a committed built manifest as an addon of its own', async () => {
+		const headers = await signIn();
+		const fixture = github.repository(MONOREPO);
+		const built = {
+			'plugins/hello/manifest.json': manifestJson('acme.hello', 'src/index.ts'),
+			'plugins/hello/package.json': BUILD,
+			'plugins/hello/dist/index.js': 'module.exports = {};',
+			'plugins/hello/dist/manifest.json': manifestJson('acme.hello', 'index.js', '2.0.0'),
+		};
+
+		const patterns = [['plugins/*', 'themes/*'], ['**'], ['plugins/**']];
+
+		for (const [index, addons] of patterns.entries()) {
+			const branch = `built-${index}`;
+
+			fixture.commit(
+				{ ...built, 'unbound.config.json': JSON.stringify({ addons }) },
+				{ branch },
+			);
+
+			const listing = await listAddons(headers, MONOREPO, branch);
+
+			expect({
+				addons,
+				listed: listing.addons.map((addon) => [addon.path, addon.version, addon.issues]),
+				skipped: listing.skipped,
+			}).toEqual({ addons, listed: [['plugins/hello', '2.0.0', []]], skipped: [] });
+		}
 	});
 
 	test('resolves branches, annotated tags and SHAs on the default branch', async () => {
@@ -432,6 +496,72 @@ describe('GET /api/v1/github/addons', () => {
 		} finally {
 			await limitedServer.stop(true);
 			await limited.close();
+		}
+	});
+});
+
+describe('connectGitHubIfLinked', () => {
+	async function linkedUser(token: string | null, expiring?: Parameters<typeof linkGitHub>[3]) {
+		users += 1;
+
+		const { userId } = await signInWithDiscord(ctx, {
+			id: String(80351110224678912n + BigInt(users)),
+			name: `Author ${users}`,
+			email: `author${users}@example.com`,
+		});
+
+		if (token) {
+			await linkGitHub(ctx, userId, token, expiring);
+		}
+
+		return userId;
+	}
+
+	test("reads with the user's token when GitHub is linked", async () => {
+		const github = await connectGitHubIfLinked(ctx, await linkedUser('owner'));
+		const pushable = await github.listPushable();
+
+		expect(pushable.map((entry) => entry.repository)).toContain(MONOREPO);
+	});
+
+	test('falls back to anonymous reads when nothing is linked', async () => {
+		const github = await connectGitHubIfLinked(ctx, await linkedUser(null));
+
+		expect((await github.getRepository(MONOREPO)).defaultBranch).toBe('main');
+	});
+
+	test('falls back to anonymous reads when Better Auth refuses the token', async () => {
+		const userId = await linkedUser('owner');
+		const refused = new APIError('UNAUTHORIZED', { message: 'Failed to refresh' });
+		const getAccessToken = spyOn(ctx.auth.api, 'getAccessToken').mockRejectedValue(refused);
+
+		try {
+			const github = await connectGitHubIfLinked(ctx, userId);
+
+			expect((await github.getRepository(MONOREPO)).defaultBranch).toBe('main');
+			expect(await github.listPushable()).toEqual([]);
+		} finally {
+			getAccessToken.mockRestore();
+		}
+	});
+
+	test('rethrows a failure that is not an expired link', async () => {
+		const userId = await linkedUser('owner');
+		const outage = new Error('database unavailable');
+		const getAccessToken = spyOn(ctx.auth.api, 'getAccessToken').mockRejectedValue(outage);
+
+		try {
+			let thrown;
+
+			try {
+				await connectGitHubIfLinked(ctx, userId);
+			} catch (error) {
+				thrown = error;
+			}
+
+			expect(thrown).toBe(outage);
+		} finally {
+			getAccessToken.mockRestore();
 		}
 	});
 });

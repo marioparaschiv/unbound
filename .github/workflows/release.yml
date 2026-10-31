@@ -9,10 +9,7 @@ on:
     workflow_dispatch:
 
 permissions:
-    contents: write
-    issues: write
-    pull-requests: write
-    id-token: write
+    contents: read
 
 concurrency:
     group: release
@@ -21,15 +18,21 @@ concurrency:
 jobs:
     release:
         runs-on: ubuntu-26.04
+        permissions:
+            contents: write
+            issues: write
+            pull-requests: write
         timeout-minutes: 10
         outputs:
             releases-created: ${{ steps.release.outputs.releases_created }}
             client-released: ${{ steps.release.outputs['packages/client--release_created'] }}
             client-version: ${{ steps.release.outputs['packages/client--version'] }}
+            devtools-released: ${{ steps.release.outputs['apps/devtools--release_created'] }}
+            devtools-version: ${{ steps.release.outputs['apps/devtools--version'] }}
         steps:
             - name: Run release-please
               id: release
-              uses: googleapis/release-please-action@v5
+              uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7
 
             # release-please bumps package.json versions but only knows npm lockfiles, so the
             # workspace versions recorded in bun.lock are refreshed on the release PR branch.
@@ -37,6 +40,7 @@ jobs:
               if: steps.release.outputs.prs_created == 'true'
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
 
             # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
@@ -46,11 +50,13 @@ jobs:
               if: steps.release.outputs.prs_created == 'true'
               uses: ./.github/actions/setup-bun-deps
               with:
-                  bun-version: canary
                   install: 'false'
 
             - name: Sync bun.lock with the release versions
               if: steps.release.outputs.prs_created == 'true'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
               run: |
                   bun install
                   git diff --quiet -- bun.lock && exit 0
@@ -58,11 +64,14 @@ jobs:
                   git config user.name 'github-actions[bot]'
                   git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
                   git commit -m 'chore: sync bun.lock with the release versions' -- bun.lock
-                  git push
+                  git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:$BRANCH"
 
     publish:
         needs: release
         if: needs.release.outputs.releases-created == 'true'
+        permissions:
+            contents: read
+            id-token: write
         runs-on: ubuntu-26.04
         timeout-minutes: 15
         steps:
@@ -73,8 +82,6 @@ jobs:
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
 
             # Publishing uses npm trusted publishing (OIDC), which needs npm >= 11.5.1; the runner's
             # preinstalled npm is older.
@@ -88,7 +95,21 @@ jobs:
     bundle:
         needs: release
         if: needs.release.outputs.client-released == 'true'
+        permissions:
+            contents: write
         uses: ./.github/workflows/build-bundle.yml
         with:
             version: ${{ needs.release.outputs.client-version }}
-        secrets: inherit
+        secrets:
+            ASTRAL_BUNDLE_SIGNING_KEY: ${{ secrets.ASTRAL_BUNDLE_SIGNING_KEY }}
+            S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+            S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+
+    devtools:
+        needs: release
+        if: needs.release.outputs.devtools-released == 'true'
+        permissions:
+            contents: write
+        uses: ./.github/workflows/devtools.yml
+        with:
+            version: ${{ needs.release.outputs.devtools-version }}

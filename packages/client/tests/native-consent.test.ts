@@ -1,23 +1,27 @@
-import type { Addon, AddonManifest } from '@unbound-app/types';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
+import type { AddonManifest } from '@unbound-app/types';
+
+import type { Addon } from '~/addons/addon';
 
 const { FakeAddons, makeManifest } = await import('./helpers/addons');
-const { setConsentPrompt, NativeConsentRequiredError } = await import('~/managers/addons');
+const { setConsentPrompt, NativeConsentRequiredError } = await import('~/native/consent');
 
 class ConsentAddons extends FakeAddons {
 	consents: Record<string, string> = {};
 
-	protected validateManifest() {}
+	protected validateManifest(manifest: AddonManifest) {
+		return manifest;
+	}
 
 	protected getConsents() {
 		return this.consents;
 	}
 
-	protected async requestConsent(entity: Addon & { data: AddonManifest }) {
+	protected async requestConsent(entity: Addon) {
 		const granted = await super.requestConsent(entity);
 
 		if (granted) {
-			this.consents[entity.id] = (entity.data.capabilities ?? []).join(',');
+			this.consents[entity.id] = (entity.manifest.capabilities ?? []).join(',');
 		}
 
 		return granted;
@@ -79,6 +83,22 @@ describe('native consent', () => {
 
 		expect(asked).toBe(1);
 		expect(addons.getEntity('ffi.allowed')?.started).toBe(true);
+		setConsentPrompt(undefined);
+	});
+
+	test('logs a crashing prompt and keeps the plugin disabled', async () => {
+		const addons = new ConsentAddons();
+		const logged = spyOn(Reflect.get(addons, 'logger'), 'error');
+
+		setConsentPrompt(async () => {
+			throw new Error('prompt blew up');
+		});
+		addons.load('bundle', ffiManifest('ffi.crashed'));
+		await addons.enable('ffi.crashed');
+
+		expect(addons.getEntity('ffi.crashed')?.started).toBe(false);
+		expect(addons.errors.get('ffi.crashed')).toBeInstanceOf(NativeConsentRequiredError);
+		expect(logged).toHaveBeenCalledTimes(1);
 		setConsentPrompt(undefined);
 	});
 

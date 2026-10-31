@@ -267,3 +267,27 @@ func TestPublishLoaderReleasesRejectsConfigurationAndAPIErrors(t *testing.T) {
 		t.Fatalf("expected API authorization failure, got %v", err)
 	}
 }
+
+func TestPublishLoaderReleasesDryRunPostsNothing(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodGet {
+			t.Fatalf("a dry run sent %s %s", request.Method, request.URL.Path)
+		}
+		fmt.Fprint(writer, "{\"update\":{\"version\":\"1.0.0\"}}")
+	}))
+	defer server.Close()
+
+	result, err := publishLoaderReleases(context.Background(), loaderReleaseBatchConfig{
+		endpoint:   server.URL + "/api/v1/loader/releases",
+		version:    "1.0.1",
+		iosURL:     "https://example.com/loader.deb",
+		androidURL: "https://example.com/loader.apk",
+		dryRun:     true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(result.published, ",") != "ios,android" {
+		t.Fatalf("published = %v, want both platforms listed", result.published)
+	}
+}

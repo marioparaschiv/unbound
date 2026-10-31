@@ -6,8 +6,8 @@ import {
 	reactionBaseViewWidth,
 	reflowReactionItems,
 	type LayoutFrame,
-} from './layout';
-import { reactionAvatarReservedExtraWidth } from './avatars';
+} from '~/layout';
+import { reactionAvatarReservedExtraWidth } from '~/avatars';
 
 describe('framesMatch', () => {
 	test('detects when native layout replaces an expanded reaction cell frame', () => {
@@ -25,6 +25,11 @@ describe('reactionBaseViewWidth', () => {
 		expect(reactionBaseViewWidth(47.5, 47.5, 43.5)).toBe(43.5);
 		expect(reactionBaseViewWidth(47.5, 65.5, 61.5)).toBe(43.5);
 		expect(reactionBaseViewWidth(47.5, 83.5, 79.5)).toBe(43.5);
+	});
+
+	test('keeps a restored reaction view whose cell is still widened', () => {
+		expect(reactionBaseViewWidth(47.5, 65.5, 43.5)).toBe(43.5);
+		expect(reactionBaseViewWidth(38, 65.5, 34)).toBe(34);
 	});
 });
 

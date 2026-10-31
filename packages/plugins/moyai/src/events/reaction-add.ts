@@ -1,11 +1,12 @@
-import { metro } from '@unbound-app/api';
+import type { FluxAction } from '@unbound-app/api/flux';
+import { flux } from '@unbound-app/api';
 
 import { REACTION_DEDUPE_WINDOW } from '~/constants';
 import { SelectedChannelStore } from '~/modules';
 import { isMoyaiReaction } from '~/matchers';
 import type { Player } from '~/sound';
 
-type ReactionAdd = {
+type ReactionAdd = FluxAction & {
 	channelId?: string;
 	channel_id?: string;
 	messageId?: string;
@@ -16,10 +17,10 @@ type ReactionAdd = {
 /**
  * @description Plays the sound when a Moyai reaction lands in the selected channel, once per message and emoji.
  * @param player The plugin's sound player.
- * @returns A function that unsubscribes and forgets recent reactions.
+ * @returns A function that unsubscribes.
  */
 export function subscribeReactions(player: Player): () => void {
-	const recent = new Map<string, ReturnType<typeof setTimeout>>();
+	const recent = new Set<string>();
 
 	function onReactionAdd({ channelId, channel_id, messageId, message_id, emoji }: ReactionAdd) {
 		const name = emoji?.name;
@@ -32,21 +33,11 @@ export function subscribeReactions(player: Player): () => void {
 
 		if (recent.has(key)) return;
 
-		recent.set(
-			key,
-			setTimeout(() => recent.delete(key), REACTION_DEDUPE_WINDOW),
-		);
+		recent.add(key);
+		setTimeout(() => recent.delete(key), REACTION_DEDUPE_WINDOW);
 
 		void player.play();
 	}
 
-	metro.common.Dispatcher.subscribe('MESSAGE_REACTION_ADD', onReactionAdd);
-
-	return () => {
-		metro.common.Dispatcher.unsubscribe('MESSAGE_REACTION_ADD', onReactionAdd);
-
-		for (const timer of recent.values()) clearTimeout(timer);
-
-		recent.clear();
-	};
+	return flux.onAction('MESSAGE_REACTION_ADD', onReactionAdd);
 }

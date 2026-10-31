@@ -1,0 +1,20 @@
+name: Documentation
+description: Something in the docs is wrong, unclear or missing.
+title: 'docs: '
+labels: [Documentation]
+body:
+    - type: input
+      id: page
+      attributes:
+          label: Page
+          description: The link to the docs page, if there is one.
+    - type: textarea
+      id: problem
+      attributes:
+          label: What's wrong or missing?
+      validations:
+          required: true
+    - type: textarea
+      id: suggestion
+      attributes:
+          label: Suggested fix

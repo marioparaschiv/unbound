@@ -5,10 +5,12 @@ import inspectCommand from '~/commands/inspect';
 import installCommand from '~/commands/install';
 import modulesCommand from '~/commands/modules';
 import publishCommand from '~/commands/publish';
+import bridgeCommand from '~/commands/bridge';
 import createCommand from '~/commands/create';
 import deviceCommand from '~/commands/device';
 import logoutCommand from '~/commands/logout';
 import reloadCommand from '~/commands/reload';
+import statusCommand from '~/commands/status';
 import timingCommand from '~/commands/timing';
 import buildCommand from '~/commands/build';
 import loginCommand from '~/commands/login';
@@ -23,15 +25,24 @@ import openCommand from '~/commands/open';
 import pushCommand from '~/commands/push';
 import devCommand from '~/commands/dev';
 
+// The menu lists commands in this order, so the most-reached-for come first.
 /**
  * Every command defined once, from which both surfaces derive: the CLI adapter builds a cleye
  * command per entry, the MCP adapter registers a tool for each entry opted into `surfaces.mcp`.
  */
 export const commands: CommandDefinition<z.ZodObject<z.ZodRawShape>>[] = [
+	createCommand,
+	devCommand,
+	buildCommand,
+	publishCommand,
+	loginCommand,
+	logoutCommand,
 	evalCommand,
 	openCommand,
 	routeCommand,
 	reloadCommand,
+	statusCommand,
+	bridgeCommand,
 	pushCommand,
 	installCommand,
 	deviceCommand,
@@ -43,12 +54,6 @@ export const commands: CommandDefinition<z.ZodObject<z.ZodRawShape>>[] = [
 	hookCommand,
 	traceCommand,
 	timingCommand,
-	buildCommand,
-	devCommand,
-	createCommand,
-	loginCommand,
-	logoutCommand,
-	publishCommand,
 ];
 
 export default commands;

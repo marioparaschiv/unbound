@@ -1,6 +1,13 @@
+import { CONTROLLER_ENDPOINT_MARKER, DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import type { CommandContext } from '@unbound-app/debugger-protocol/registry';
 import { ControllerClient } from '@unbound-app/debugger-protocol/controller';
-import { CONTROLLER_ENDPOINT_MARKER } from '@unbound-app/debugger-protocol';
+import { z } from 'zod';
+
+/** The `port` field of every command that talks to the bridge; the CLI adapter dials the port it holds. */
+export const bridgePortField = z
+	.number()
+	.default(DEFAULT_BRIDGE_PORT)
+	.describe('The port the debugger bridge listens on.');
 
 /** How long a one-shot command waits for the bridge to report a device before giving up. */
 const DEVICE_WAIT_TIMEOUT_MS = 2_000;
@@ -81,4 +88,4 @@ export function waitForDevice(
 	});
 }
 
-export default createContext;
+export default { bridgePortField, createContext, waitForDevice };

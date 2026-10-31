@@ -4,9 +4,9 @@ import { eq } from 'drizzle-orm';
 import { getDeveloper, listDevelopers } from '~/lib/developers';
 import type { ManifestAuthor } from '~/lib/authors/resolve';
 import type { TeamRoleIds } from '~/lib/team/roles';
+import { addon, teamMember } from '~/db/schema';
 import { ApiError } from '~/lib/api/errors';
 import { syncTeam } from '~/lib/team/sync';
-import { addon } from '~/db/schema';
 
 import { createTestContext, signInWithDiscord } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
@@ -30,12 +30,16 @@ const DANA = '100000000000000004';
 const ZED = '100000000000000005';
 const CARL = '100000000000000006';
 const ADA = '100000000000000007';
+const AARON = '100000000000000008';
+const ZOE = '100000000000000009';
 
 const discord = serveDiscord(
 	{
-		[ALICE]: { username: 'alice', global_name: 'Alice' },
-		[ZED]: { username: 'zed', global_name: 'Zed', avatar: 'z1' },
+		[ALICE]: { username: 'alice', global_name: 'Alice', banner: 'a1', member_banner: 'ag1' },
+		[ZED]: { username: 'zed', global_name: 'Zed', avatar: 'z1', banner: 'a_z2' },
 		[CARL]: { username: 'carl' },
+		[AARON]: { username: 'aaron', global_name: 'Aaron' },
+		[ZOE]: { username: 'zoe', global_name: 'Zoe' },
 		[ADA]: { username: 'ada', global_name: 'Ada' },
 	},
 	{
@@ -191,6 +195,26 @@ describe('listDevelopers', () => {
 	});
 });
 
+describe('staff order', () => {
+	test('lists admins before moderators, then by manual position', async () => {
+		discord.guilds.get(GUILD)?.set(AARON, [IDS.staff]);
+		discord.guilds.get(GUILD)?.set(ZOE, [IDS.staff, IDS.admin]);
+		await addTeamMembers(ctx, [AARON, ZOE]);
+		await syncTeam(ctx, IDS);
+		await ctx.db.update(teamMember).set({ position: 0 }).where(eq(teamMember.discordId, ZOE));
+
+		try {
+			const staff = (await listAll()).flat().filter(([, group]) => group === 'staff');
+
+			expect(staff.map(([name]) => name)).toEqual(['Zoe', 'Alice', 'Aaron']);
+		} finally {
+			discord.guilds.get(GUILD)?.delete(AARON);
+			discord.guilds.get(GUILD)?.delete(ZOE);
+			await syncTeam(ctx, IDS);
+		}
+	});
+});
+
 describe('getDeveloper', () => {
 	test('loads the listed addons that credit an id', async () => {
 		const developer = await getDeveloper(ctx, ALICE);
@@ -211,5 +235,15 @@ describe('getDeveloper', () => {
 	test('finds nothing for an id only a delisted addon credits, or for 0', async () => {
 		expect(await getDeveloper(ctx, DANA)).toBeUndefined();
 		expect(await getDeveloper(ctx, '0')).toBeUndefined();
+	});
+
+	test('shows the guild banner, else the profile banner, else none', async () => {
+		expect((await getDeveloper(ctx, ALICE))?.bannerUrl).toBe(
+			`https://cdn.discordapp.com/guilds/${GUILD}/users/${ALICE}/banners/ag1.png?size=1024`,
+		);
+		expect((await getDeveloper(ctx, ZED))?.bannerUrl).toBe(
+			`https://cdn.discordapp.com/banners/${ZED}/a_z2.gif?size=1024`,
+		);
+		expect((await getDeveloper(ctx, CARL))?.bannerUrl).toBeNull();
 	});
 });

@@ -1,6 +1,6 @@
 import { metro } from '@unbound-app/api';
 
-import useStyles from './view-icon.style';
+import useStyles from '~/components/view-icon.style';
 
 function ViewIcon() {
 	const styles = useStyles();

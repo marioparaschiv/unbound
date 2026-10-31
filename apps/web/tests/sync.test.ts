@@ -1,5 +1,7 @@
 import {
 	emptySyncDocument,
+	SYNC_CORE_STORE,
+	SYNC_KINDS,
 	syncDeleteResponseSchema,
 	syncOAuthConfigSchema,
 	syncSignInResponseSchema,
@@ -257,7 +259,7 @@ describe('/api/v1/sync', () => {
 					applied: 'cat.theme',
 				},
 			},
-			settings: { unbound: { 'staff-mode': true }, 'cat.plugin': { volume: 3 } },
+			settings: { [SYNC_CORE_STORE]: { 'staff-mode': true }, 'cat.plugin': { volume: 3 } },
 		});
 
 		const saved = await put(headers, 0, document);
@@ -267,7 +269,7 @@ describe('/api/v1/sync', () => {
 		expect(await getState(headers)).toEqual(saved);
 		expect(saved.document.addons.themes.applied).toBe('cat.theme');
 		expect(saved.document.settings).toEqual({
-			unbound: { 'staff-mode': true },
+			[SYNC_CORE_STORE]: { 'staff-mode': true },
 			'cat.plugin': { volume: 3 },
 		});
 	});
@@ -327,7 +329,7 @@ describe('stripping', () => {
 			documentWith({
 				addons: plugins('kept.plugin'),
 				settings: {
-					unbound: {
+					[SYNC_CORE_STORE]: {
 						recovery: true,
 						debugger: { enabled: true },
 						loader: { update: { url: 'http://evil.example/unbound.bundle' } },
@@ -343,7 +345,7 @@ describe('stripping', () => {
 		);
 
 		expect(settings).toEqual({
-			unbound: { toasts: { enabled: false } },
+			[SYNC_CORE_STORE]: { toasts: { enabled: false } },
 			'kept.plugin': { a: 1 },
 		});
 	});
@@ -397,8 +399,10 @@ describe('stripping', () => {
 		});
 		const state = syncStateSchema.parse(await response.json());
 
-		expect(Object.keys(state.document)).toEqual(['addons', 'settings']);
-		expect(Object.keys(state.document.addons)).toEqual(['plugins', 'themes', 'icons', 'fonts']);
+		expect(Object.keys(state.document).toSorted()).toEqual(
+			Object.keys(emptySyncDocument()).toSorted(),
+		);
+		expect(Object.keys(state.document.addons).toSorted()).toEqual([...SYNC_KINDS].toSorted());
 	});
 
 	test('keeps applied only when it names a kept install or the default icon pack', async () => {

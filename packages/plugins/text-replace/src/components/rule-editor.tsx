@@ -1,6 +1,6 @@
 import type { TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
-import Page from '@unbound-plugins/shared/components/page';
 import { Discord } from '@unbound-app/api/metro/components';
+import { ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import { RuleKinds, type RuleKind } from '~/constants';
@@ -34,7 +34,7 @@ function RuleEditor({ kind, rule, isNew, onClose }: RuleEditorProps) {
 	}
 
 	return (
-		<Page>
+		<ui.Page>
 			<Discord.Stack spacing={8} align='start'>
 				<Discord.Button
 					text='‹ Back to rules'
@@ -50,7 +50,7 @@ function RuleEditor({ kind, rule, isNew, onClose }: RuleEditorProps) {
 				</Discord.Text>
 			</Discord.Stack>
 			<Discord.TextInput
-				title={findLabel}
+				label={findLabel}
 				placeholder={findPlaceholder}
 				autoCapitalize='none'
 				autoCorrect={false}
@@ -58,7 +58,7 @@ function RuleEditor({ kind, rule, isNew, onClose }: RuleEditorProps) {
 				onChange={(value) => update('find', value)}
 			/>
 			<Discord.TextInput
-				title='Replace with'
+				label='Replace with'
 				placeholder='What should it become? Use \\n for a new line.'
 				autoCapitalize='none'
 				autoCorrect={false}
@@ -67,9 +67,9 @@ function RuleEditor({ kind, rule, isNew, onClose }: RuleEditorProps) {
 				onChange={(value) => update('replace', value)}
 			/>
 			<Discord.TextInput
-				title='Only when the message contains'
+				label='Only when the message contains'
 				placeholder='Optional condition'
-				helpText='Leave this blank to apply the rule everywhere.'
+				description='Leave this blank to apply the rule everywhere.'
 				autoCapitalize='none'
 				autoCorrect={false}
 				value={draft.onlyIfIncludes}
@@ -81,7 +81,7 @@ function RuleEditor({ kind, rule, isNew, onClose }: RuleEditorProps) {
 					<Discord.Button text='Delete rule' variant='destructive' onPress={remove} />
 				)}
 			</Discord.Stack>
-		</Page>
+		</ui.Page>
 	);
 }
 

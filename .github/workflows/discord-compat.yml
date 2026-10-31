@@ -44,39 +44,44 @@ jobs:
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-
-            - name: Setup Go
-              uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
               with:
-                  cache: false
-                  go-version-file: packages/loader/go.mod
+                  persist-credentials: false
 
-            - name: Cache Go builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: |
-                      ~/.cache/go-build
-                      ~/Library/Caches/go-build
-                      ~/go/pkg/mod
-                  key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/tools/**/*.go') }}
-                  restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
 
-            - name: Cache Discord builds
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+            - name: Restore the cached Discord builds
+              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
               with:
                   path: ~/.cache/unbound-discord
-                  key: discord-builds-${{ matrix.channel }}-${{ github.run_id }}
+                  key: discord-builds-${{ matrix.channel }}-
                   restore-keys: discord-builds-${{ matrix.channel }}-
 
             - name: Download Discord for iOS
+              id: ios
               if: env.IOS_SOURCE != 'none'
-              uses: castdrian/dkrypt@v1.1.1
+              continue-on-error: true
+              timeout-minutes: 12
+              uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
               with:
                   api-url: ${{ env.DKRYPT_BASE_URL }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}
                   bundle-id: com.hammerandchisel.discord
                   channel: ${{ env.IOS_SOURCE }}
                   output: packages/loader/discord.ipa
+
+            - name: Keep or reuse the last decrypted iOS build
+              if: env.IOS_SOURCE != 'none'
+              run: |
+                  set -euo pipefail
+                  kept="$HOME/.cache/unbound-discord/last-ipa/$IOS_SOURCE.ipa"
+                  if [ -f discord.ipa ]; then
+                      mkdir -p "${kept%/*}"
+                      cp discord.ipa "$kept"
+                  elif [ -f "$kept" ]; then
+                      cp "$kept" discord.ipa
+                      echo "::warning title=Older iOS build::dkrypt did not decrypt a new iOS $IOS_SOURCE build, so this scan uses the last one it did."
+                  fi
 
             - name: Find the platform SDKs
               id: sdks
@@ -115,9 +120,28 @@ jobs:
                     --report report.md
                     --source-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/$GITHUB_SHA"
                   )
-                  if [ "$IOS_SOURCE" != none ]; then scan_args+=(--ipa discord.ipa); fi
+                  if [ "$IOS_SOURCE" != none ] && [ -f discord.ipa ]; then
+                    scan_args+=(--ipa discord.ipa)
+                  elif [ "$IOS_SOURCE" != none ]; then
+                    echo "::warning title=No new iOS build::dkrypt did not decrypt the iOS $IOS_SOURCE build in time, so this scan uses its latest cached iOS build or Android only."
+                  fi
                   go run ./tools compat-scan "${scan_args[@]}"
                   cat report.md >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Name the Discord builds cache
+              id: builds
+              run: |
+                  set -euo pipefail
+                  cache="$HOME/.cache/unbound-discord"
+                  contents=$(find "$cache" -type f 2>/dev/null | sort | while read -r file; do echo "${file#"$cache"/} $(wc -c < "$file")"; done | shasum -a 256 | cut -c1-16)
+                  echo "key=discord-builds-$CHANNEL-$contents" >> "$GITHUB_OUTPUT"
+
+            - name: Save the Discord builds when they changed
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              continue-on-error: true
+              with:
+                  path: ~/.cache/unbound-discord
+                  key: ${{ steps.builds.outputs.key }}
 
             - name: Upload the scan
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9

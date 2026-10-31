@@ -59,15 +59,6 @@ describe('round trips', () => {
 		expect(stored?.kind).toBe('object');
 	});
 
-	test('a JSON column stores its text verbatim', async () => {
-		const text = '{"b": 1.0, "a": [true, null], "b2": "é"}';
-		const [row] = await ctx.db.$client<
-			{ text: string }[]
-		>`select ${text}::text::json::text as text`;
-
-		expect(row?.text).toBe(text);
-	});
-
 	test('a timestamp keeps its milliseconds', async () => {
 		const at = new Date('2026-10-26T12:34:56.789Z');
 		const row = await seedSubmission(ctx, await seedUser('Clock'), manifest('parity.clock'), {

@@ -33,7 +33,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
-                  token: ${{ secrets.HERMES_SYNC_TOKEN || secrets.GITHUB_TOKEN }}
+                  persist-credentials: false
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
               with:
@@ -58,7 +58,7 @@ jobs:
                   git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
                   git switch -c "$branch"
                   git commit -am "build(client): compile Hermes bytecode ${versions//-/, }"
-                  git push origin "$branch"
+                  git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$branch"
                   gh pr create --base main --head "$branch" \
                       --title "build(client): compile Hermes bytecode ${versions//-/, }" \
                       --body "hermesc now publishes bytecode ${versions//-/, }. This updates \`hermes.json\` so the bundle build and the compatibility scan match the versions that ship."

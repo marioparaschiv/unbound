@@ -1,0 +1,19 @@
+{
+	"id": "unbound.chat-bubbles",
+	"name": "Chat Bubbles",
+	"description": "Draws a rounded bubble behind each message.",
+	"authors": [
+		{
+			"name": "Rosie<3",
+			"id": "581573474296791211"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.1.1",
+	"icon": "PaintPaletteIcon",
+	"minNativePluginApi": "1.0.0",
+	"main": "index.tsx"
+}

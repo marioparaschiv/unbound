@@ -4,7 +4,7 @@ import { randomBytes } from 'node:crypto';
 import postgres from 'postgres';
 
 import { createDatabase, type Database } from '~/db/database';
-import type { NotifyChannel } from '~/dispatchers/types';
+import { NOTIFY_CHANNELS } from '~/dispatchers/types';
 import { migrateDatabase } from '~/db/migrate';
 import { SITE_URL } from '~/lib/constants';
 
@@ -29,12 +29,6 @@ export type NotificationLog = {
 	stop: () => Promise<void>;
 };
 
-const NOTIFY_CHANNELS: NotifyChannel[] = [
-	'addon_changed',
-	'audit_event',
-	'loader_release',
-	'member_changed',
-];
 const FLUSH_CHANNEL = 'test_flush';
 
 /** The sponsor grace period the test read model judges standing with, the web's default. */

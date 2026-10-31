@@ -8,13 +8,13 @@ This page lists every key the native loader reads from or writes to `settings.js
 
 ### File location
 
-`settings.json` is in the `Unbound` folder inside the app's documents directory. On iOS, open it in the Files app at `On My iPhone` -> `<App Name>` -> `Unbound`, as described on the [iOS page](/loader/ios).
+`settings.json` is in the `Unbound` folder inside the app's documents directory. On iOS, open it in the Files app at `On My iPhone` -> `<App Name>` -> `Unbound`, as described on the [iOS page](/loader/ios). On Android it is in `files/Unbound` inside Discord's data directory, as described on the [Android page](/loader/android).
 
 If the file doesn't exist when the loader starts, the loader creates it with the contents `{}`.
 
 ### Structure
 
-The root of the file is an object of **stores**. Each store is a namespace. The loader reads only from the store named `unbound`.
+The root of the file is an object of **stores**. Each store is a namespace. The loader reads from the store named `unbound`, and the applied theme's id from `applied` in the `themes` store.
 
 Each addon gets its own store, keyed by its id, so an addon's storage can never collide with the loader's keys. See [storage](/modules/storage) for how addons use the same file.
 
@@ -54,13 +54,13 @@ All keys below are inside the `unbound` store.
 	Controls where the JavaScript bundle is downloaded from and when it is refetched.
 
 	<Expandable title="properties">
-		<ParamField path="loader.update.url" type="string" default="https://raw.githubusercontent.com/unbound-app/builds/refs/heads/main/">
-			The base URL the bundle is downloaded from.
+		<ParamField path="loader.update.url" type="string" default="https://builds.unbound.rip/">
+			The URL the bundle is downloaded from. When it is empty, the loader uses the default its build was made with, which is `https://builds.unbound.rip/` for releases. On a simulator or emulator, a dev server running on the host's port 3000 is used instead of that default.
 
-			- If the value ends in `.bundle` or `.js`, it is used as a direct file URL.
-			- Otherwise it is treated as a directory, and the filename is appended.
+			- If the value ends in `.bundle` or `.js`, it names the bundle file directly, and its folder is the source.
+			- Otherwise it is treated as the source folder.
 
-			The downloaded file is saved next to `settings.json` as `unbound.bundle` or `unbound.js`, matching the URL's extension. When the extension changes, the old file with the other extension is deleted.
+			The loader fetches the folder's `manifest.json` and its signature, `manifest.json.sig`, then downloads `unbound.<bytecode version>.bundle` when the manifest lists the app's Hermes bytecode version, or `unbound.js` otherwise. The download must match the SHA-512 in the signed manifest. A new bundle is saved as a candidate and only replaces the active `unbound.bundle` or `unbound.js` once it has run. See [bundle updates](/loader/android#bundle-updates) for every check.
 
 			This value also sets the hot reload target. The loader opens its hot reload stream to this URL's origin (scheme and host).
 		</ParamField>
@@ -70,7 +70,15 @@ All keys below are inside the `unbound` store.
 		</ParamField>
 
 		<ParamField path="loader.update.hmr" type="boolean" default="false">
-			Opens a hot reload connection to the origin of `loader.update.url`. No connection is made if that key is empty or doesn't parse into a URL with both a scheme and a host.
+			Opens a hot reload connection to the origin of `loader.update.url`. No connection is made if that key is empty or doesn't parse into a URL with both a scheme and a host. While it is on, the loader waits for a fresh bundle download on launch instead of running the cached bundle first.
+		</ParamField>
+
+		<ParamField path="loader.update.unsigned" type="boolean" default="false">
+			Skips the bundle signature check, so the loader accepts a bundle from any source. Leave it off unless you are loading your own build from a server that isn't on your local network. Bundles from `localhost`, `*.localhost`, `*.local`, `::1`, or a private IPv4 address skip the check without it.
+		</ParamField>
+
+		<ParamField path="loader.update.baseline" type="string" default="">
+			Set by the loader. Don't edit it by hand. It records the source, channel, and build time of the active signed bundle, so the loader can refuse an update that is on another channel or was built earlier.
 		</ParamField>
 
 		<ParamField path="loader.update.etag" type="string" default="">
@@ -82,7 +90,7 @@ All keys below are inside the `unbound` store.
 <ParamField path="recovery" type="boolean" default="false">
 	Turns on recovery mode. When it is on:
 
-	- The loader skips swizzling semantic colors, so themes stop being applied.
+	- The loader skips applying the theme natively.
 	- The client starts addons with an empty no-op instance instead of evaluating their bundles.
 	- Addon cards still appear in the UI, but you can't interact with them.
 
@@ -95,17 +103,23 @@ All keys below are inside the `unbound` store.
 	Unbound's font settings normally manage this key for you. See [theme types](/themes/types) and the [addon manifest](/addons/manifest) for how fonts are declared.
 </ParamField>
 
-<Warning>
-	**Three toggles are not in `settings.json` at all.** The toolbox's own switches are stored in `NSUserDefaults`, so editing `settings.json` never changes them:
+<ParamField path="toolbox.shake" type="boolean" default="true">
+	Opens the toolbox when you shake the device.
+</ParamField>
 
-	- `UnboundShakeGestureEnabled` (default on) opens the toolbox on a shake
-	- `UnboundThreeFingerGestureEnabled` (default on) opens the toolbox on a three finger long press
-	- `UnboundAppIconEnabled` swaps the app icon, and is only offered on non-App Store and non-TestFlight installs
+<ParamField path="toolbox.three-finger" type="boolean" default="true">
+	Opens the toolbox when you hold three fingers on the screen.
 
 	The two gesture toggles protect each other. Turning one off turns the other back on, so you can't lock yourself out of the toolbox.
+</ParamField>
 
-	`NSUserDefaults` also holds `UnboundDevOverlayButtonRelativeX` and `UnboundDevOverlayButtonRelativeY`. They save where you dragged the dev overlay button, as a fraction of the screen size.
-</Warning>
+<ParamField path="dev-overlay.position" type="object">
+	Set by the loader. It saves where you dragged the dev overlay button, as `x` and `y` fractions of the screen size.
+</ParamField>
+
+<Note>
+	The toolbox's **Use Unbound Icon** switch on iOS isn't stored in `settings.json`. It sets the app's alternate icon directly.
+</Note>
 
 ### External edits apply without a restart
 

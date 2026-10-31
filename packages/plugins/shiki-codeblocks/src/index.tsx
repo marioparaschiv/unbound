@@ -1,18 +1,18 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
-import ensureClasses from '@unbound-plugins/shared/native/ensure-classes';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
-import { messageTextViewClass } from '@unbound-plugins/shared/native/text-attachments';
 
 import SettingsPanel from '~/components/settings-panel';
 import { MessageStore, SelectedChannelStore } from '~/modules';
-import { createAndroidCards } from '~/android/cards';
-import { createNativeCards } from '~/android/native-cards';
-import { startRenderer } from '~/native/renderer';
+import { createHighlighter } from '~/highlighter';
+import { readPreferences } from '~/preferences';
 import { PLUGIN_NAME } from '~/constants';
+import { startCards } from '~/platform';
+import type { Cards } from '~/types';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
+let cards: Cards | undefined;
 
 function start(context: PluginContext) {
 	if (
@@ -22,36 +22,50 @@ function start(context: PluginContext) {
 		return;
 	}
 
-	if (context.platform === 'android') {
-		const cards = createNativeCards(context.native) ?? createAndroidCards(context.native);
+	cards = startCards(context.native);
 
-		if (cards) dispose = applyFeatures(PLUGIN_NAME, [() => cards.dispose]);
-
-		return;
+	if (cards) {
+		dispose = applyFeatures(PLUGIN_NAME, [cards.feature]);
 	}
-
-	if (
-		!ensureClasses(PLUGIN_NAME, context.native.objc, [
-			messageTextViewClass(context.native.objc),
-			'DCDMessageTableViewCell',
-		])
-	) {
-		return;
-	}
-
-	dispose = applyFeatures(PLUGIN_NAME, [() => startRenderer(context.native.objc)]);
 }
 
 function stop() {
 	const finished = dispose();
 
 	dispose = () => undefined;
+	cards = undefined;
 
 	return finished;
+}
+
+async function selfTest() {
+	const { theme, hljs } = readPreferences();
+	const tokens = await createHighlighter()
+		.tokenize({ code: 'const answer: number = 42;', language: 'typescript' }, theme, hljs)
+		.catch(() => null);
+	const colors = new Set(tokens?.flat().map((token) => token.color)).size;
+	const misplaced = (await cards?.misplaced()) ?? [];
+
+	if (misplaced.length) {
+		return {
+			ok: false,
+			detail: `${misplaced.length} cards are on the wrong message: ${misplaced.slice(0, 2).join('; ')}`,
+		};
+	}
+
+	const { drawn, settling } = cards?.progress() ?? { drawn: 0, settling: false };
+
+	return {
+		ok: Boolean(cards) && colors > 1,
+		detail: `${cards ? `${drawn} cards drawn` : 'cards not running'}, sample TypeScript in ${theme} used ${colors} colors`,
+		...(drawn ? {} : { nothingDrawn: true }),
+		...(settling ? { settling: true } : {}),
+	};
 }
 
 export default {
 	start,
 	stop,
+	selfTest,
 	getSettingsPanel: () => <SettingsPanel />,
 };

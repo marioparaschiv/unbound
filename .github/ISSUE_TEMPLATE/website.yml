@@ -1,0 +1,38 @@
+name: Website or marketplace
+description: A problem with the website, your account, addon submissions or reviews.
+title: 'web: '
+labels: [Web, needs-triage]
+body:
+    - type: dropdown
+      id: area
+      attributes:
+          label: Area
+          options:
+              - Signing in or my account
+              - Submitting or updating an addon
+              - Addon review
+              - Browsing or installing addons
+              - Something else
+      validations:
+          required: true
+    - type: input
+      id: page
+      attributes:
+          label: Page
+          description: The link to the page where it happened.
+    - type: textarea
+      id: description
+      attributes:
+          label: What happened?
+          description: What did you expect, and what happened instead?
+      validations:
+          required: true
+    - type: textarea
+      id: steps
+      attributes:
+          label: Steps to reproduce
+    - type: input
+      id: browser
+      attributes:
+          label: Browser and device
+          placeholder: Safari on iOS 26, Firefox 150 on Windows

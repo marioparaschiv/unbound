@@ -8,16 +8,19 @@ import type { ReviewDecision, SubmissionKind } from '@unbound-app/contracts/publ
 import { submissionKindSchema } from '@unbound-app/contracts/publish';
 import { and, eq } from 'drizzle-orm';
 
+import { toAddonVersion, writeArtifact, writeStorePage, type StorePage } from '~/lib/artifacts';
+import { applySubmissionMaintainers, describeMaintainerChanges } from '~/lib/maintainers';
 import { addon, addonMaintainer, addonVersion, submission, user } from '~/db/schema';
 import { LATEST_VERSION, refreshAddonSummary, toAddonSummary } from '~/lib/addons';
 import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
-import { createGitHubClient, getGitHubToken } from '~/lib/github';
 import { requireSourced, toSubmission } from '~/lib/submissions';
-import { toAddonVersion, writeArtifact } from '~/lib/artifacts';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { recordReviewDecision } from '~/lib/moderation-events';
+import { readTags, replaceAddonTags } from '~/lib/addon-tags';
+import { readPageMedia } from '~/lib/addon-page-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
+import { connectGitHubIfLinked } from '~/lib/github';
 import { hasPermission } from '~/lib/auth/access';
 import type { Transaction } from '~/db/database';
 import { toVersionKey } from '~/lib/version-key';
@@ -104,7 +107,11 @@ export async function listReviewQueue(
 	}
 
 	const updated = rows.filter((row) => row.kind === 'update').map((row) => row.addonId);
-	const [addons, memberships] = await Promise.all([
+	const chosen = [...new Set(rows.flatMap((row) => row.tags ?? []))];
+	const naming = rows.flatMap(({ id, addonId, maintainers }) =>
+		maintainers ? [{ id, addonId, maintainers }] : [],
+	);
+	const [addons, memberships, tags, maintainerChanges] = await Promise.all([
 		ctx.db.query.addon.findMany({
 			where: { id: { in: updated } },
 			with: LATEST_VERSION,
@@ -113,6 +120,8 @@ export async function listReviewQueue(
 			where: { userId: caller.user.id, addonId: { in: rows.map((row) => row.addonId) } },
 			columns: { addonId: true },
 		}),
+		readTags(ctx, chosen),
+		describeMaintainerChanges(ctx, naming),
 	]);
 
 	const previous = new Map(addons.map((entry) => [entry.id, entry.versions[0]]));
@@ -138,10 +147,14 @@ export async function listReviewQueue(
 			bundleSize: row.bundleSize,
 			sha256,
 			addonMd: source.addonMd,
+			page: source.page,
 			changelog: source.changelog,
 			details: source.details,
 			submittedAt: submittedAt.toISOString(),
 			submitter: { id: author.id, name: author.name, image: author.image ?? null },
+			tags: row.tags ? tags.filter((entry) => row.tags?.includes(entry.id)) : null,
+			maintainers: maintainerChanges.get(row.id) ?? null,
+			icon: row.icon,
 			selfReview: author.id === caller.user.id || maintained.has(row.addonId),
 			previousVersion: version ? toAddonVersion(ctx.env, version, version.submission) : null,
 			previousAddonMd: version?.submission?.source?.addonMd ?? null,
@@ -192,15 +205,38 @@ async function requirePendingReview(
 // instead of failing.
 async function refetchBundle(ctx: AppContext, row: SourcedSubmissionRow): Promise<Uint8Array> {
 	// The repository is public, so an author whose GitHub link lapsed must not block the approval.
-	const token = await getGitHubToken(ctx, row.authorId).catch(() => undefined);
-	const github = createGitHubClient(ctx.env, token ?? null);
+	const github = await connectGitHubIfLinked(ctx, row.authorId);
 
 	return github.readBlob(row.repository, row.source.bundleBlobSha);
 }
 
-async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<string> {
+async function readBundle(ctx: AppContext, row: SourcedSubmissionRow): Promise<Uint8Array> {
 	const staged = ctx.storage.staging.file(row.stagingKey);
-	const bundle = (await staged.exists()) ? await staged.bytes() : await refetchBundle(ctx, row);
+
+	return (await staged.exists()) ? staged.bytes() : refetchBundle(ctx, row);
+}
+
+async function readPinnedStorePage(
+	ctx: AppContext,
+	row: SourcedSubmissionRow,
+): Promise<StorePage | undefined> {
+	const { addonMd, page, commitSha, path } = row.source;
+
+	if (addonMd === null) return;
+
+	if (!page) {
+		return { addonMd, measured: null, media: new Map() };
+	}
+
+	const github = await connectGitHubIfLinked(ctx, row.authorId);
+	const tree = await github.getTree(row.repository, commitSha);
+	const location = { repository: row.repository, tree, commitSha, addonDir: path };
+
+	return { addonMd, measured: page, media: await readPageMedia(ctx.env, github, location, page) };
+}
+
+async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<string> {
+	const [bundle, page] = await Promise.all([readBundle(ctx, row), readPinnedStorePage(ctx, row)]);
 	const sha256 = new Bun.CryptoHasher('sha256').update(bundle).digest('hex');
 
 	if (
@@ -214,15 +250,42 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
 		);
 	}
 
-	await writeArtifact(ctx, row, bundle);
+	await Promise.all([
+		writeArtifact(ctx, row, bundle),
+		page ? writeStorePage(ctx, row, page) : undefined,
+	]);
 
 	return sha256;
 }
 
 /**
+ * @description Replaces a live version in place with a rebuild of the same version, as first-party CI
+ * publishes before release: the row takes the new submission, manifest and bundle digest.
+ * @param tx The transaction.
+ * @param row The approved submission carrying the rebuild.
+ * @param sha256 The new bundle's SHA-256.
+ * @param publishedAt When the rebuild went live.
+ */
+export async function replaceVersion(
+	tx: Transaction,
+	row: SubmissionRow,
+	sha256: string,
+	publishedAt: Date,
+): Promise<void> {
+	const { addonId, version, ...values } = toVersionRow(row, sha256, publishedAt);
+
+	await tx
+		.update(addonVersion)
+		.set(values)
+		.where(and(eq(addonVersion.addonId, addonId), eq(addonVersion.version, version)));
+	await refreshAddonSummary(tx, addonId);
+}
+
+/**
  * @description Makes an approved submission's version live, inside the approval's transaction: a
  * listing creates the addon with the author as owner, an update moves the addon to the submitted
- * repository and refreshes its summary.
+ * repository and refreshes its summary. The submission's chosen tags and maintainers replace the
+ * addon's, when it chose any.
  * @param tx The approval's transaction.
  * @param row The approved submission.
  * @param sha256 The verified SHA-256 of the published bundle.
@@ -241,6 +304,7 @@ export async function publishVersion(
 			repository: row.repository,
 			createdAt: publishedAt,
 			...toAddonSummary(row.manifest, publishedAt),
+			icon: row.icon,
 		});
 		await tx.insert(addonMaintainer).values({
 			addonId: row.addonId,
@@ -251,6 +315,17 @@ export async function publishVersion(
 	}
 
 	await tx.insert(addonVersion).values(toVersionRow(row, sha256, publishedAt));
+
+	if (row.tags) {
+		await replaceAddonTags(tx, row.addonId, row.tags);
+	}
+
+	if (row.maintainers) {
+		await applySubmissionMaintainers(tx, row.addonId, row.maintainers, {
+			actorId: row.authorId,
+			at: publishedAt,
+		});
+	}
 
 	if (row.kind !== 'update') return;
 
@@ -355,4 +430,4 @@ export async function reviewSubmission(
 	};
 }
 
-export default { toVersionRow, publishVersion, listReviewQueue, reviewSubmission };
+export default { toVersionRow, publishVersion, replaceVersion, listReviewQueue, reviewSubmission };

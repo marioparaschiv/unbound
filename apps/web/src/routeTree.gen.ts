@@ -23,10 +23,13 @@ import { Route as SitePrivacyRouteImport } from './routes/_site/privacy'
 import { Route as SiteSubmitRouteImport } from './routes/_site/submit'
 import { Route as SiteTermsRouteImport } from './routes/_site/terms'
 import { Route as SiteThemesRouteImport } from './routes/_site/themes'
+import { Route as AuthErrorRouteImport } from './routes/auth/error'
+import { Route as DevelopersSplatRouteImport } from './routes/developers/$'
 import { Route as SiteStaffReviewRouteImport } from './routes/_site/_staff/review'
 import { Route as SiteAddonsIdRouteImport } from './routes/_site/addons/$id'
-import { Route as SiteDevelopersIndexRouteImport } from './routes/_site/developers/index'
-import { Route as SiteDevelopersDiscordIdRouteImport } from './routes/_site/developers/$discordId'
+import { Route as SiteProfilesDiscordIdRouteImport } from './routes/_site/profiles/$discordId'
+import { Route as SiteSubmitPreviewRouteImport } from './routes/_site/submit_/preview'
+import { Route as SiteTeamIndexRouteImport } from './routes/_site/team/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1AddonsRouteImport } from './routes/api/v1/addons'
 import { Route as ApiV1CatalogRouteImport } from './routes/api/v1/catalog'
@@ -53,9 +56,11 @@ import { Route as SiteStaffAdminAddonsIdRouteImport } from './routes/_site/_staf
 import { Route as SiteStaffAdminUsersIndexRouteImport } from './routes/_site/_staff/admin/users/index'
 import { Route as SiteStaffAdminUsersIdRouteImport } from './routes/_site/_staff/admin/users/$id'
 import { Route as ApiV1AddonsIdDelistRouteImport } from './routes/api/v1/addons/$id/delist'
+import { Route as ApiV1AddonsIdIconRouteImport } from './routes/api/v1/addons/$id/icon'
 import { Route as ApiV1AddonsIdMaintainersRouteImport } from './routes/api/v1/addons/$id/maintainers'
 import { Route as ApiV1AddonsIdRelistRouteImport } from './routes/api/v1/addons/$id/relist'
 import { Route as ApiV1AddonsIdTransferRouteImport } from './routes/api/v1/addons/$id/transfer'
+import { Route as ApiV1AddonsIdVersionsRouteImport } from './routes/api/v1/addons/$id/versions'
 import { Route as ApiV1SubmissionsIdReviewRouteImport } from './routes/api/v1/submissions/$id/review'
 import { Route as ApiV1UsersIdBadgesRouteImport } from './routes/api/v1/users/$id/badges'
 import { Route as ApiV1AddonsIdMaintainersUserIdRouteImport } from './routes/api/v1/addons/$id/maintainers/$userId'
@@ -130,6 +135,16 @@ const SiteThemesRoute = SiteThemesRouteImport.update({
   path: '/themes',
   getParentRoute: () => SiteRouteRoute,
 } as any)
+const AuthErrorRoute = AuthErrorRouteImport.update({
+  id: '/auth/error',
+  path: '/auth/error',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevelopersSplatRoute = DevelopersSplatRouteImport.update({
+  id: '/developers/$',
+  path: '/developers/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SiteStaffReviewRoute = SiteStaffReviewRouteImport.update({
   id: '/review',
   path: '/review',
@@ -140,14 +155,19 @@ const SiteAddonsIdRoute = SiteAddonsIdRouteImport.update({
   path: '/addons/$id',
   getParentRoute: () => SiteRouteRoute,
 } as any)
-const SiteDevelopersIndexRoute = SiteDevelopersIndexRouteImport.update({
-  id: '/developers/',
-  path: '/developers/',
+const SiteProfilesDiscordIdRoute = SiteProfilesDiscordIdRouteImport.update({
+  id: '/profiles/$discordId',
+  path: '/profiles/$discordId',
   getParentRoute: () => SiteRouteRoute,
 } as any)
-const SiteDevelopersDiscordIdRoute = SiteDevelopersDiscordIdRouteImport.update({
-  id: '/developers/$discordId',
-  path: '/developers/$discordId',
+const SiteSubmitPreviewRoute = SiteSubmitPreviewRouteImport.update({
+  id: '/submit_/preview',
+  path: '/submit/preview',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
+const SiteTeamIndexRoute = SiteTeamIndexRouteImport.update({
+  id: '/team/',
+  path: '/team/',
   getParentRoute: () => SiteRouteRoute,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -283,6 +303,11 @@ const ApiV1AddonsIdDelistRoute = ApiV1AddonsIdDelistRouteImport.update({
   path: '/$id/delist',
   getParentRoute: () => ApiV1AddonsRoute,
 } as any)
+const ApiV1AddonsIdIconRoute = ApiV1AddonsIdIconRouteImport.update({
+  id: '/$id/icon',
+  path: '/$id/icon',
+  getParentRoute: () => ApiV1AddonsRoute,
+} as any)
 const ApiV1AddonsIdMaintainersRoute =
   ApiV1AddonsIdMaintainersRouteImport.update({
     id: '/$id/maintainers',
@@ -297,6 +322,11 @@ const ApiV1AddonsIdRelistRoute = ApiV1AddonsIdRelistRouteImport.update({
 const ApiV1AddonsIdTransferRoute = ApiV1AddonsIdTransferRouteImport.update({
   id: '/$id/transfer',
   path: '/$id/transfer',
+  getParentRoute: () => ApiV1AddonsRoute,
+} as any)
+const ApiV1AddonsIdVersionsRoute = ApiV1AddonsIdVersionsRouteImport.update({
+  id: '/$id/versions',
+  path: '/$id/versions',
   getParentRoute: () => ApiV1AddonsRoute,
 } as any)
 const ApiV1SubmissionsIdReviewRoute =
@@ -341,9 +371,12 @@ export interface FileRoutesByFullPath {
   '/submit': typeof SiteSubmitRoute
   '/terms': typeof SiteTermsRoute
   '/themes': typeof SiteThemesRoute
+  '/auth/error': typeof AuthErrorRoute
+  '/developers/$': typeof DevelopersSplatRoute
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
-  '/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
+  '/profiles/$discordId': typeof SiteProfilesDiscordIdRoute
+  '/submit/preview': typeof SiteSubmitPreviewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -353,7 +386,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
-  '/developers/': typeof SiteDevelopersIndexRoute
+  '/team/': typeof SiteTeamIndexRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -369,9 +402,11 @@ export interface FileRoutesByFullPath {
   '/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
   '/admin/users/$id': typeof SiteStaffAdminUsersIdRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
+  '/api/v1/addons/$id/icon': typeof ApiV1AddonsIdIconRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
+  '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/admin/addons/': typeof SiteStaffAdminAddonsIndexRoute
@@ -393,9 +428,12 @@ export interface FileRoutesByTo {
   '/submit': typeof SiteSubmitRoute
   '/terms': typeof SiteTermsRoute
   '/themes': typeof SiteThemesRoute
+  '/auth/error': typeof AuthErrorRoute
+  '/developers/$': typeof DevelopersSplatRoute
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
-  '/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
+  '/profiles/$discordId': typeof SiteProfilesDiscordIdRoute
+  '/submit/preview': typeof SiteSubmitPreviewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -405,7 +443,7 @@ export interface FileRoutesByTo {
   '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
-  '/developers': typeof SiteDevelopersIndexRoute
+  '/team': typeof SiteTeamIndexRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -421,9 +459,11 @@ export interface FileRoutesByTo {
   '/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
   '/admin/users/$id': typeof SiteStaffAdminUsersIdRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
+  '/api/v1/addons/$id/icon': typeof ApiV1AddonsIdIconRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
+  '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/admin/addons': typeof SiteStaffAdminAddonsIndexRoute
@@ -447,10 +487,13 @@ export interface FileRoutesById {
   '/_site/submit': typeof SiteSubmitRoute
   '/_site/terms': typeof SiteTermsRoute
   '/_site/themes': typeof SiteThemesRoute
+  '/auth/error': typeof AuthErrorRoute
+  '/developers/$': typeof DevelopersSplatRoute
   '/_site/': typeof SiteIndexRoute
   '/_site/_staff/review': typeof SiteStaffReviewRoute
   '/_site/addons/$id': typeof SiteAddonsIdRoute
-  '/_site/developers/$discordId': typeof SiteDevelopersDiscordIdRoute
+  '/_site/profiles/$discordId': typeof SiteProfilesDiscordIdRoute
+  '/_site/submit_/preview': typeof SiteSubmitPreviewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -460,7 +503,7 @@ export interface FileRoutesById {
   '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
-  '/_site/developers/': typeof SiteDevelopersIndexRoute
+  '/_site/team/': typeof SiteTeamIndexRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -476,9 +519,11 @@ export interface FileRoutesById {
   '/_site/_staff/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
   '/_site/_staff/admin/users/$id': typeof SiteStaffAdminUsersIdRoute
   '/api/v1/addons/$id/delist': typeof ApiV1AddonsIdDelistRoute
+  '/api/v1/addons/$id/icon': typeof ApiV1AddonsIdIconRoute
   '/api/v1/addons/$id/maintainers': typeof ApiV1AddonsIdMaintainersRouteWithChildren
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
+  '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/_site/_staff/admin/addons/': typeof SiteStaffAdminAddonsIndexRoute
@@ -502,9 +547,12 @@ export interface FileRouteTypes {
     | '/submit'
     | '/terms'
     | '/themes'
+    | '/auth/error'
+    | '/developers/$'
     | '/review'
     | '/addons/$id'
-    | '/developers/$discordId'
+    | '/profiles/$discordId'
+    | '/submit/preview'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -514,7 +562,7 @@ export interface FileRouteTypes {
     | '/api/v1/sync'
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
-    | '/developers/'
+    | '/team/'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -530,9 +578,11 @@ export interface FileRouteTypes {
     | '/admin/addons/$id'
     | '/admin/users/$id'
     | '/api/v1/addons/$id/delist'
+    | '/api/v1/addons/$id/icon'
     | '/api/v1/addons/$id/maintainers'
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
+    | '/api/v1/addons/$id/versions'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/admin/addons/'
@@ -554,9 +604,12 @@ export interface FileRouteTypes {
     | '/submit'
     | '/terms'
     | '/themes'
+    | '/auth/error'
+    | '/developers/$'
     | '/review'
     | '/addons/$id'
-    | '/developers/$discordId'
+    | '/profiles/$discordId'
+    | '/submit/preview'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -566,7 +619,7 @@ export interface FileRouteTypes {
     | '/api/v1/sync'
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
-    | '/developers'
+    | '/team'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -582,9 +635,11 @@ export interface FileRouteTypes {
     | '/admin/addons/$id'
     | '/admin/users/$id'
     | '/api/v1/addons/$id/delist'
+    | '/api/v1/addons/$id/icon'
     | '/api/v1/addons/$id/maintainers'
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
+    | '/api/v1/addons/$id/versions'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/admin/addons'
@@ -607,10 +662,13 @@ export interface FileRouteTypes {
     | '/_site/submit'
     | '/_site/terms'
     | '/_site/themes'
+    | '/auth/error'
+    | '/developers/$'
     | '/_site/'
     | '/_site/_staff/review'
     | '/_site/addons/$id'
-    | '/_site/developers/$discordId'
+    | '/_site/profiles/$discordId'
+    | '/_site/submit_/preview'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -620,7 +678,7 @@ export interface FileRouteTypes {
     | '/api/v1/sync'
     | '/api/v1/updates'
     | '/api/webhooks/github-sponsors'
-    | '/_site/developers/'
+    | '/_site/team/'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -636,9 +694,11 @@ export interface FileRouteTypes {
     | '/_site/_staff/admin/addons/$id'
     | '/_site/_staff/admin/users/$id'
     | '/api/v1/addons/$id/delist'
+    | '/api/v1/addons/$id/icon'
     | '/api/v1/addons/$id/maintainers'
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
+    | '/api/v1/addons/$id/versions'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/_site/_staff/admin/addons/'
@@ -652,6 +712,8 @@ export interface RootRouteChildren {
   SiteRouteRoute: typeof SiteRouteRouteWithChildren
   DeviceRoute: typeof DeviceRoute
   LoginRoute: typeof LoginRoute
+  AuthErrorRoute: typeof AuthErrorRoute
+  DevelopersSplatRoute: typeof DevelopersSplatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiV1AddonsRoute: typeof ApiV1AddonsRouteWithChildren
   ApiV1CatalogRoute: typeof ApiV1CatalogRoute
@@ -772,6 +834,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteThemesRouteImport
       parentRoute: typeof SiteRouteRoute
     }
+    '/auth/error': {
+      id: '/auth/error'
+      path: '/auth/error'
+      fullPath: '/auth/error'
+      preLoaderRoute: typeof AuthErrorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/developers/$': {
+      id: '/developers/$'
+      path: '/developers/$'
+      fullPath: '/developers/$'
+      preLoaderRoute: typeof DevelopersSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_site/_staff/review': {
       id: '/_site/_staff/review'
       path: '/review'
@@ -786,18 +862,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteAddonsIdRouteImport
       parentRoute: typeof SiteRouteRoute
     }
-    '/_site/developers/': {
-      id: '/_site/developers/'
-      path: '/developers'
-      fullPath: '/developers/'
-      preLoaderRoute: typeof SiteDevelopersIndexRouteImport
+    '/_site/profiles/$discordId': {
+      id: '/_site/profiles/$discordId'
+      path: '/profiles/$discordId'
+      fullPath: '/profiles/$discordId'
+      preLoaderRoute: typeof SiteProfilesDiscordIdRouteImport
       parentRoute: typeof SiteRouteRoute
     }
-    '/_site/developers/$discordId': {
-      id: '/_site/developers/$discordId'
-      path: '/developers/$discordId'
-      fullPath: '/developers/$discordId'
-      preLoaderRoute: typeof SiteDevelopersDiscordIdRouteImport
+    '/_site/submit_/preview': {
+      id: '/_site/submit_/preview'
+      path: '/submit/preview'
+      fullPath: '/submit/preview'
+      preLoaderRoute: typeof SiteSubmitPreviewRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
+    '/_site/team/': {
+      id: '/_site/team/'
+      path: '/team'
+      fullPath: '/team/'
+      preLoaderRoute: typeof SiteTeamIndexRouteImport
       parentRoute: typeof SiteRouteRoute
     }
     '/api/auth/$': {
@@ -982,6 +1065,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1AddonsIdDelistRouteImport
       parentRoute: typeof ApiV1AddonsRoute
     }
+    '/api/v1/addons/$id/icon': {
+      id: '/api/v1/addons/$id/icon'
+      path: '/$id/icon'
+      fullPath: '/api/v1/addons/$id/icon'
+      preLoaderRoute: typeof ApiV1AddonsIdIconRouteImport
+      parentRoute: typeof ApiV1AddonsRoute
+    }
     '/api/v1/addons/$id/maintainers': {
       id: '/api/v1/addons/$id/maintainers'
       path: '/$id/maintainers'
@@ -1001,6 +1091,13 @@ declare module '@tanstack/react-router' {
       path: '/$id/transfer'
       fullPath: '/api/v1/addons/$id/transfer'
       preLoaderRoute: typeof ApiV1AddonsIdTransferRouteImport
+      parentRoute: typeof ApiV1AddonsRoute
+    }
+    '/api/v1/addons/$id/versions': {
+      id: '/api/v1/addons/$id/versions'
+      path: '/$id/versions'
+      fullPath: '/api/v1/addons/$id/versions'
+      preLoaderRoute: typeof ApiV1AddonsIdVersionsRouteImport
       parentRoute: typeof ApiV1AddonsRoute
     }
     '/api/v1/submissions/$id/review': {
@@ -1076,8 +1173,9 @@ interface SiteRouteRouteChildren {
   SiteThemesRoute: typeof SiteThemesRoute
   SiteIndexRoute: typeof SiteIndexRoute
   SiteAddonsIdRoute: typeof SiteAddonsIdRoute
-  SiteDevelopersDiscordIdRoute: typeof SiteDevelopersDiscordIdRoute
-  SiteDevelopersIndexRoute: typeof SiteDevelopersIndexRoute
+  SiteProfilesDiscordIdRoute: typeof SiteProfilesDiscordIdRoute
+  SiteSubmitPreviewRoute: typeof SiteSubmitPreviewRoute
+  SiteTeamIndexRoute: typeof SiteTeamIndexRoute
 }
 
 const SiteRouteRouteChildren: SiteRouteRouteChildren = {
@@ -1093,8 +1191,9 @@ const SiteRouteRouteChildren: SiteRouteRouteChildren = {
   SiteThemesRoute: SiteThemesRoute,
   SiteIndexRoute: SiteIndexRoute,
   SiteAddonsIdRoute: SiteAddonsIdRoute,
-  SiteDevelopersDiscordIdRoute: SiteDevelopersDiscordIdRoute,
-  SiteDevelopersIndexRoute: SiteDevelopersIndexRoute,
+  SiteProfilesDiscordIdRoute: SiteProfilesDiscordIdRoute,
+  SiteSubmitPreviewRoute: SiteSubmitPreviewRoute,
+  SiteTeamIndexRoute: SiteTeamIndexRoute,
 }
 
 const SiteRouteRouteWithChildren = SiteRouteRoute._addFileChildren(
@@ -1117,16 +1216,20 @@ const ApiV1AddonsIdMaintainersRouteWithChildren =
 
 interface ApiV1AddonsRouteChildren {
   ApiV1AddonsIdDelistRoute: typeof ApiV1AddonsIdDelistRoute
+  ApiV1AddonsIdIconRoute: typeof ApiV1AddonsIdIconRoute
   ApiV1AddonsIdMaintainersRoute: typeof ApiV1AddonsIdMaintainersRouteWithChildren
   ApiV1AddonsIdRelistRoute: typeof ApiV1AddonsIdRelistRoute
   ApiV1AddonsIdTransferRoute: typeof ApiV1AddonsIdTransferRoute
+  ApiV1AddonsIdVersionsRoute: typeof ApiV1AddonsIdVersionsRoute
 }
 
 const ApiV1AddonsRouteChildren: ApiV1AddonsRouteChildren = {
   ApiV1AddonsIdDelistRoute: ApiV1AddonsIdDelistRoute,
+  ApiV1AddonsIdIconRoute: ApiV1AddonsIdIconRoute,
   ApiV1AddonsIdMaintainersRoute: ApiV1AddonsIdMaintainersRouteWithChildren,
   ApiV1AddonsIdRelistRoute: ApiV1AddonsIdRelistRoute,
   ApiV1AddonsIdTransferRoute: ApiV1AddonsIdTransferRoute,
+  ApiV1AddonsIdVersionsRoute: ApiV1AddonsIdVersionsRoute,
 }
 
 const ApiV1AddonsRouteWithChildren = ApiV1AddonsRoute._addFileChildren(
@@ -1187,6 +1290,8 @@ const rootRouteChildren: RootRouteChildren = {
   SiteRouteRoute: SiteRouteRouteWithChildren,
   DeviceRoute: DeviceRoute,
   LoginRoute: LoginRoute,
+  AuthErrorRoute: AuthErrorRoute,
+  DevelopersSplatRoute: DevelopersSplatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiV1AddonsRoute: ApiV1AddonsRouteWithChildren,
   ApiV1CatalogRoute: ApiV1CatalogRoute,

@@ -7,16 +7,13 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)installLogging;
 + (void)openLogFile;
 
-+ (NSString *)documentsName;
++ (NSString *)documentsIn:(NSString *)parent;
 
 + (uint32_t)mainBundleBytecodeVersion;
 
 + (nullable UIColor *)colorFromString:(NSString *)value;
 + (BOOL)isDarkColor:(UIColor *)color;
 
-+ (CGFloat)messageBubbleRadius;
-+ (CGSize)messageBubblePadding;
-+ (UIColor *)messageBubbleColorForDarkTheme:(BOOL)dark;
 + (nullable NSDictionary *)themeColorsForId:(NSString *)themeId;
 + (BOOL)hasTheme:(NSString *)themeId;
 

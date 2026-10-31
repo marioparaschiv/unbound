@@ -1,4 +1,5 @@
 import type { NativePluginBridge, NativePluginCapability } from '@unbound-app/api/native';
+import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
 
 /**
  * @description Checks that the loader offers every native capability a feature uses, since a missing bridge is a stand-in whose methods throw.
@@ -18,6 +19,7 @@ export function ensureCapabilities(
 		return true;
 	}
 
+	recordSkip(`${plugin}: native capabilities not available: ${missing.join(', ')}`);
 	console.error(`[${plugin}] Skipped, native capabilities not available: ${missing.join(', ')}.`);
 
 	return false;

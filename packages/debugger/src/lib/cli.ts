@@ -1,3 +1,4 @@
+import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import { cli } from 'cleye';
 
 const argv = cli({
@@ -6,7 +7,7 @@ const argv = cli({
 		port: {
 			type: Number,
 			description: 'The port number to host the debugger on.',
-			default: 9090,
+			default: DEFAULT_BRIDGE_PORT,
 		},
 	},
 });

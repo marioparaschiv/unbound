@@ -1,22 +1,19 @@
-import Page from '@unbound-plugins/shared/components/page';
-import { Discord } from '@unbound-app/api/metro/components';
-
-import { settings } from '~/modules';
+import { storage, ui } from '@unbound-app/api';
 
 function SettingsPanel() {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(addon.id);
 
 	return (
-		<Page>
-			<Discord.TableRowGroup title='General'>
-				<Discord.TableSwitchRow
+		<ui.Page>
+			<ui.Section title='General'>
+				<ui.SwitchRow
 					label='Play on reactions'
 					subLabel='Play the sound when someone reacts with Moyai.'
 					value={store.get('allowReactions', true)}
 					onValueChange={(value) => store.set('allowReactions', value)}
 				/>
-			</Discord.TableRowGroup>
-		</Page>
+			</ui.Section>
+		</ui.Page>
 	);
 }
 

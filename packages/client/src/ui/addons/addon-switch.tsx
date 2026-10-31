@@ -1,14 +1,13 @@
-import type { Addon } from '@unbound-app/types';
 import { useState, memo } from 'react';
 
-import type { ManagerKind } from '~/lib/constants';
-import { Discord } from '~/api/metro/components';
-import { getManager } from '~/managers/utils';
-import { useAddonState } from '~/ui/hooks';
+import useAddonState from '~/ui/hooks/use-addon-state';
+import { Discord } from '~/metro/components';
+import type { Addon } from '~/addons/addon';
+import { Manager } from '~/addons/manager';
 
 type AddonSwitchProps = {
 	addon: Addon;
-	kind: ManagerKind.Plugins;
+	kind: 'plugin';
 	disabled?: boolean;
 };
 
@@ -19,7 +18,7 @@ type AddonSwitchProps = {
 function AddonSwitch({ addon, kind, disabled }: AddonSwitchProps) {
 	const { enabled } = useAddonState(kind, addon.id);
 	const [transitioning, setTransitioning] = useState(false);
-	const manager = getManager(kind);
+	const manager = Manager.for(kind);
 
 	async function handleValueChange() {
 		setTransitioning(true);
@@ -36,7 +35,7 @@ function AddonSwitch({ addon, kind, disabled }: AddonSwitchProps) {
 		<Discord.FormSwitch
 			value={enabled}
 			disabled={disabled || transitioning}
-			accessibilityLabel={`${addon.data.name} enabled`}
+			accessibilityLabel={`${addon.name} enabled`}
 			onValueChange={handleValueChange}
 		/>
 	);

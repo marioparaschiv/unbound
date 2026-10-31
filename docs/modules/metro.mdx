@@ -4,16 +4,20 @@ description: 'The module finder. Locate the Discord module you need before you p
 icon: 'box-taped'
 ---
 
+import Deprecated from '/snippets/deprecated.mdx';
+
 ### What is Metro?
 
 `metro` finds Discord's internal modules for you. It walks the module registry and returns the module that matches the description you give it.
 
 Discord's mobile app is a React Native bundle: thousands of [Metro](https://metrobundler.dev) modules packed into one file. Nothing is global. Every store, component, and helper sits behind an opaque numeric module id, so before you can change a behavior you have to find the module that owns it.
 
-Other parts of the API depend on Metro too. `assets`, `i18n`, the common handles, flux stores, and your own addons all use it to locate modules.
+Other parts of the API depend on Metro too. `assets`, `i18n`, the common handles, [flux](/modules/flux) stores, and your own addons all use it to locate modules.
 
 ```ts
 import { metro } from '@unbound-app/api';
+// equivalent: import * as metro from '@unbound-app/api/metro';
+// runtime global: unbound.metro
 
 // Find the module that owns message sending by the props it exposes.
 const Messages = metro.findByProps('sendMessage', 'receiveMessage');
@@ -43,15 +47,16 @@ Each `findBy*` helper matches a module by one kind of identifying trait, such as
 		const Button = metro.findByName('Button');
 		```
 	</Tab>
-	<Tab title='By store'>
-		Match a flux store by name. `Store` is appended for you.
+	<Tab title='By file path'>
+		Match a module by the source file it was bundled from.
 
 		```ts
-		const UserStore = metro.findStore('User');
-		const me = UserStore.getCurrentUser();
+		const ActionSheet = metro.findByFilePath('modules/user_profile/native/UserProfileActionSheet.tsx');
 		```
 	</Tab>
 </Tabs>
+
+To find a Flux store, use [`flux.getStore`](/modules/flux#reading-a-store).
 
 All search helpers:
 
@@ -59,13 +64,13 @@ All search helpers:
 | --- | --- |
 | `findByProps(...names)` | Properties present on the export |
 | `findByName(name)` | The name of the default export |
-| `findByDisplayName(name)` | The export's `displayName` |
 | `findByFilePath(path)` | The source file a module was imported from |
 | `findByPrototypes(...names)` | Methods present on the export's prototype |
-| `findStore(name)` | A flux store's registered name |
+| `find(filter)` | Any [filter](#filters) |
+| `findLazy(filter)` | Any filter, waiting for the module to load if it hasn't yet |
 
 <Note>
-	On mobile, use `findByName` for components, since most are identified by their `name`. `findByDisplayName` covers components that set a `displayName`, which is less common on mobile than on desktop.
+	On mobile, use `findByName` for components, since most are identified by their `name`. For a component that sets a `displayName`, pass `metro.filters.byDisplayName(name)` to `find`. This is less common on mobile than on desktop.
 </Note>
 
 <Warning>
@@ -92,23 +97,49 @@ const Messages = metro.find(filter);
 
 ### Lazy resolution & caching
 
-Metro keeps startup fast in two ways: it caches search results, and it can defer a search until you use the result.
+Metro keeps startup fast in two ways: it caches search results, and it defers a search until you use the result.
 
 Every filter has a cache key, so Metro remembers a successful search. The next search for the same shape resolves from the cache instead of walking the registry.
 
-To defer a search, pass `{ lazy: true }`. You get a proxy back, and the search runs the _first time you access it_. A module referenced at the top of a file but used only inside a rarely called function costs nothing until that function runs.
+The `findBy*` helpers are lazy. You get a proxy back, and the search runs the _first time you access it_. A module referenced at the top of a file but used only inside a rarely called function costs nothing until that function runs.
 
 ```ts
 // Deferred: the search runs the first time you touch `Clipboard`.
-const Clipboard = metro.findByProps('setString', 'getString', { lazy: true });
+const Clipboard = metro.findByProps('setString', 'getString');
 
 // ...later, on demand:
 Clipboard.setString('copied!');
 ```
 
+Pass `{ lazy: false }` when you need the real module right away: a class you construct, a component you render directly, or a result you test with `??` or `if`. A proxy is always truthy, so it can't tell you that the search found nothing.
+
+```ts
+const Button = metro.findByName('Button', { lazy: false });
+```
+
 <Note>
-	Use lazy resolution for module handles declared at module scope. This is how Unbound references dozens of modules without paying for all of them at launch.
+	`find` and searches with `{ all: true }` are not lazy. Declare module handles at module scope with the lazy helpers. This is how Unbound references dozens of modules without paying for all of them at launch.
 </Note>
+
+### Waiting for a module
+
+Some modules load only when the user opens a screen. `findLazy(filter)` returns the module if it's already loaded, or a promise that resolves when it loads. Pass a `signal` to stop waiting. In a plugin, a wait that's still pending is abandoned when the plugin stops.
+
+```ts
+const ActionSheet = await metro.findLazy(
+	metro.filters.byFilePath('modules/user_profile/native/UserProfileActionSheet.tsx'),
+);
+```
+
+To see every module as it loads, use `onModuleLoad`. It returns a function that removes the listener. In a plugin, the listener is also removed when the plugin stops.
+
+```ts
+const stopListening = metro.onModuleLoad((mdl, id) => {
+	if (mdl?.TooltipArrowDirections) {
+		stopListening();
+	}
+});
+```
 
 ### Caching custom filters
 
@@ -132,26 +163,38 @@ const handler = metro.find(byActionHandler('MESSAGE_CREATE'));
 	The key must fully describe the filter's inputs. If two searches should return different modules, they need different keys. Otherwise they collide in the cache.
 </Tip>
 
-### Common modules & stores
+### Common modules
 
-Metro pre-resolves the modules most addons need: React, React Native, the dispatcher, constants, and the main flux stores. Use these instead of searching for them again.
+Metro pre-resolves the modules most addons need: React, React Native, constants, and more. Use these instead of searching for them again. For Discord's state and its dispatcher, use [flux](/modules/flux).
 
 <AccordionGroup>
 	<Accordion title='metro.common: shared modules' icon='cubes'>
-		Framework and app-level handles you would otherwise look up with `findByProps` again and again: `React`, `ReactNative`, `Dispatcher`, `Constants`, `Clipboard`, `Theme`, `Flux`, `Assets`, `i18n`, and more.
+		Framework and app-level handles you would otherwise look up with `findByProps` again and again: `React`, `ReactNative`, `Constants`, `Clipboard`, `Assets`, `MarkdownParser`, `Moment`, and more.
 
 		```ts
-		const { React, Dispatcher } = metro.common;
+		const { React, Constants } = metro.common;
 		```
 	</Accordion>
-	<Accordion title='metro.stores: flux stores' icon='database'>
-		Pre-resolved flux stores such as `Users`, `Guilds`, and `Theme`.
-
-		```ts
-		const me = metro.stores.Users.getCurrentUser();
-		```
+	<Accordion title='metro.components: UI components' icon='shapes'>
+		Discord's design system and other components. See [Components](/modules/components).
 	</Accordion>
 	<Accordion title='metro.api: request helpers' icon='cloud'>
 		Action-creator modules such as `Messages`, `Linking`, and `Profiles`, used to trigger actions in the app.
 	</Accordion>
 </AccordionGroup>
+
+### Deprecated names
+
+<Deprecated />
+
+These names still work in published plugins until 1.0. New code uses the replacement.
+
+| Deprecated | Use |
+| --- | --- |
+| `metro.findStore(name)` | `flux.getStore(name)` |
+| `metro.addListener`, `metro.on` | `metro.onModuleLoad` |
+| `metro.removeListener`, `metro.off` | The function `onModuleLoad` returns |
+| `metro.filters.byStore` | `metro.filters.byFluxStore` |
+| `metro.common.Dispatcher` | `flux.dispatch`, `flux.onAction`, `flux.interceptAction` |
+| `metro.common.Flux` | The [flux](/modules/flux) namespace |
+| `metro.common.FluxHooks` | `flux.useStore` |

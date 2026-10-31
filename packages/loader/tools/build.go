@@ -19,6 +19,7 @@ import (
 const (
 	cyanRepository     = "https://github.com/asdfzxcvbn/pyzule-rw"
 	cyanCommit         = "740d3716dcd98c20c000f12cdb88f1f0b2a533a4"
+	linkRelayAppName   = "UnboundLink.app"
 	pillowVersion      = "11.3.0"
 	simforgeRepository = "https://github.com/EthanArbuckle/simforge"
 	simforgeCommit     = "c1de4439aa00a6057d497f6097fecda530800a29"
@@ -272,6 +273,9 @@ func buildIPA(options buildOptions, runner commandRunner) error {
 		return err
 	}
 	if err := validateIPAExtensions(sourceEntries, finalEntries); err != nil {
+		return err
+	}
+	if err := rejectLinkRelayApp(finalEntries); err != nil {
 		return err
 	}
 	if err := validateIPAExtensionExecutables(options.output); err != nil {
@@ -631,6 +635,17 @@ func validateIPAExtensions(sourceEntries, finalEntries []string) error {
 	return fmt.Errorf("final IPA is missing required extensions: %s", strings.Join(missing, ", "))
 }
 
+func rejectLinkRelayApp(entries []string) error {
+	for _, entry := range entries {
+		for _, part := range strings.Split(entry, "/") {
+			if part == linkRelayAppName {
+				return fmt.Errorf("final IPA must not contain %s (Discord itself claims unbound:// in a sideloaded IPA): %s", linkRelayAppName, entry)
+			}
+		}
+	}
+	return nil
+}
+
 func validateIPAExtensionExecutables(path string) error {
 	archive, err := zip.OpenReader(path)
 	if err != nil {
@@ -741,11 +756,19 @@ func verifyIPA(ipa, work string, runner commandRunner) error {
 }
 
 func plistExecutable(path string) (string, error) {
-	output, err := exec.Command("/usr/libexec/PlistBuddy", "-c", "Print :CFBundleExecutable", path).CombinedOutput()
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return "", fmt.Errorf("could not read IPA executable name: %s", strings.TrimSpace(string(output)))
+		return "", fmt.Errorf("could not read IPA executable name: %w", err)
 	}
-	return strings.TrimSpace(string(output)), nil
+	info, err := readPlist(data)
+	if err != nil {
+		return "", fmt.Errorf("could not read IPA executable name: %w", err)
+	}
+	executable := info.get("CFBundleExecutable")
+	if executable == nil || strings.TrimSpace(executable.text) == "" {
+		return "", fmt.Errorf("could not read IPA executable name: %s has no CFBundleExecutable", path)
+	}
+	return strings.TrimSpace(executable.text), nil
 }
 
 func unzip(path, destination string, runner commandRunner, root string) error {

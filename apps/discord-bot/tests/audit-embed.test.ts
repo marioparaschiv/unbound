@@ -2,7 +2,7 @@ import type { AuditEvent } from '@unbound-app/web/bot';
 import { describe, expect, test } from 'bun:test';
 import type { APIEmbed } from 'discord.js';
 
-import { buildAuditEmbed } from '~/dispatchers/audit-embed';
+import { buildAuditEmbed, buildDeployEmbed } from '~/dispatchers/audit-embed';
 import { COLOURS } from '~/lib/constants';
 
 type Json = string | number | boolean | null | Json[] | { [key: string]: Json };
@@ -142,6 +142,37 @@ describe('buildAuditEmbed', () => {
 			color: COLOURS.deploy,
 			description: `-# First-party update · Build [\`481d827\`](https://github.com/owner/repo/commit/${sha})`,
 		});
+	});
+
+	test('deploys of one build list each addon on its own line in one embed', () => {
+		const sha = '481d82722e7733bf41f214d9222303b58881bb4b';
+		const deploy = (id: number, subjectId: string, subjectName: string) =>
+			event(
+				'review.decided',
+				{
+					...SUBMISSION,
+					decision: 'approved',
+					build: { repository: 'owner/repo', commitSha: sha, ref: 'plugin-builds/abc' },
+				},
+				{ id, subjectId, subjectName, createdAt: new Date(id * 1000) },
+			);
+		const lone = deploy(7, 'addon-1', 'Silent Typing');
+		const embed = buildDeployEmbed([lone, deploy(8, 'addon-2', 'Shiki [Codeblocks]')]);
+
+		expect(buildDeployEmbed([lone])).toEqual(buildAuditEmbed(lone));
+		expect(embed).toMatchObject({
+			author: { name: 'Mario' },
+			title: '🚀 Deployed 2 first-party addons',
+			color: COLOURS.deploy,
+			description: [
+				'[Silent Typing](https://unbound.rip/admin/addons/addon-1) 1.2.0',
+				'[Shiki Codeblocks](https://unbound.rip/admin/addons/addon-2) 1.2.0',
+				`-# First-party build [\`481d827\`](https://github.com/owner/repo/commit/${sha})`,
+			].join('\n'),
+			footer: { text: 'Events #7–#8 · review.decided' },
+			timestamp: new Date(8000).toISOString(),
+		});
+		expect(embed.url).toBeUndefined();
 	});
 
 	test('a system action without an actor reads as System, and a user links to its admin page', () => {

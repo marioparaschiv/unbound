@@ -1,3 +1,4 @@
+import { MEDIA_MAX_BYTES, MEDIA_TOTAL_MAX_BYTES } from '@unbound-app/contracts/addon-page';
 import { z } from 'zod';
 
 import { DEFAULT_PERK_GRACE_DAYS } from '~/lib/sponsors/standing';
@@ -72,6 +73,9 @@ export const envSchema = z.object({
 	ADDON_MAX_BYTES: positiveInt.default(25 * 1024 * 1024),
 	/** The largest ADDON.md and CHANGELOG.md read from a repository. */
 	ADDON_TEXT_MAX_BYTES: positiveInt.default(100 * 1024),
+	/** The largest media file ADDON.md shows, and all of an addon's media together; `ubd build` reads the same names. */
+	ADDON_MEDIA_MAX_BYTES: positiveInt.default(MEDIA_MAX_BYTES),
+	ADDON_MEDIA_TOTAL_MAX_BYTES: positiveInt.default(MEDIA_TOTAL_MAX_BYTES),
 	/** Per user, across the endpoints that read GitHub with the user's token. */
 	GITHUB_RATE_LIMIT_WINDOW_SECONDS: positiveInt.default(600),
 	GITHUB_RATE_LIMIT_MAX: positiveInt.default(60),

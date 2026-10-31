@@ -22,7 +22,7 @@ function getToken(): string {
 }
 
 function showToast(content: string) {
-	toasts.showToast({ title: 'ReviewDB', content });
+	toasts.show({ title: 'ReviewDB', content });
 }
 
 /**

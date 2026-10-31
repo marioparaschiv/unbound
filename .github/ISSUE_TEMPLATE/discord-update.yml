@@ -1,0 +1,47 @@
+name: Broke after a Discord update
+description: Something stopped working after Discord updated.
+title: 'discord update: '
+labels: [Bug, discord-update, needs-triage]
+body:
+    - type: markdown
+      attributes:
+          value: Check the [open Discord compatibility issues](https://github.com/marioparaschiv/unbound/issues?q=is%3Aissue+is%3Aopen+label%3Adiscord-compat) first. Each Discord release is scanned automatically, and what it breaks is listed there.
+    - type: dropdown
+      id: platform
+      attributes:
+          label: Platform
+          options:
+              - iOS
+              - Android
+      validations:
+          required: true
+    - type: input
+      id: discord-version
+      attributes:
+          label: Discord version
+          description: Shown at the bottom of Discord's settings, for example 352.14.
+      validations:
+          required: true
+    - type: dropdown
+      id: install
+      attributes:
+          label: How Unbound is installed
+          options:
+              - Sideloaded IPA
+              - Jailbreak package (.deb)
+              - Patched Discord APK
+              - Xposed module (rooted)
+              - Not sure
+      validations:
+          required: true
+    - type: textarea
+      id: broken
+      attributes:
+          label: What stopped working?
+      validations:
+          required: true
+    - type: textarea
+      id: environment
+      attributes:
+          label: Environment
+          description: Optional. Paste the debug info from **Settings → Unbound → General → Debug Info**.

@@ -1,9 +1,9 @@
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import { cloneElement, type ReactElement } from 'react';
+import { patcher } from '@unbound-app/api';
 
 import { sizeBadgesForRow, type FileSizeLookup, type MediaItemElement } from '~/badges';
 import SizeBadge from '~/components/size-badge';
-import { Patcher } from '~/modules';
 
 type MediaRow = ReactElement<{
 	children?: (MediaItemElement | null)[];
@@ -15,14 +15,14 @@ type MediaKeyboardItemModule = {
 	SEPARATOR_SIZE?: number;
 };
 
-function patchRow(module: MediaKeyboardItemModule, lookup?: FileSizeLookup): () => void {
+function patchRow(module: MediaKeyboardItemModule, lookup?: FileSizeLookup) {
 	if (typeof module.default?.type !== 'function') {
 		console.error('[File Size On Picker] Skipped, MediaKeyboardItem has no row component.');
 
-		return () => {};
+		return;
 	}
 
-	return Patcher.after(module.default, 'type', ({ result }) => {
+	patcher.after(module.default, 'type', ({ result }) => {
 		const children = result?.props?.children;
 
 		if (!Array.isArray(children) || !children.length) return;
@@ -48,10 +48,9 @@ function patchRow(module: MediaKeyboardItemModule, lookup?: FileSizeLookup): () 
 /**
  * @description Overlays each media picker thumbnail with its file size, once the picker's row module loads.
  * @param lookup Finds the size of a thumbnail Discord reports without one.
- * @returns A function that stops waiting for the module, or removes the patch.
  */
-export function patchMediaKeyboardItem(lookup?: FileSizeLookup): () => void {
-	return whenLoaded(
+export function patchMediaKeyboardItem(lookup?: FileSizeLookup): void {
+	whenLoaded(
 		'modules/media_keyboard/native/components/MediaKeyboardItem.tsx',
 		(module: MediaKeyboardItemModule) => patchRow(module, lookup),
 	);

@@ -1,3 +1,5 @@
+import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeJavaBridge,
@@ -16,26 +18,41 @@ import {
 	javaFlag,
 	javaNumber,
 	javaReference,
+	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
-import { readViewText } from '@unbound-plugins/shared/native/android/spans';
+import { readViewTextAsync } from '@unbound-plugins/shared/native/android/spans';
 import {
 	currentDecorView,
+	displayDensity,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	readCalls,
+	runOnMain,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
+import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
+
 import { createBlockBackgroundFinder } from '~/android/block-backgrounds';
-import { codeSlots, placeholderOffsets, sourceBlock, type CodeSlot } from '~/android/code-ranges';
+import {
+	codeSlots,
+	placeholderOffsets,
+	placeholderTexts,
+	renderedText,
+	sourceBlock,
+	type CodeSlot,
+} from '~/android/code-ranges';
 import { registerCodeCardSurface, type CardContent } from '~/components/code-card';
-import { MessageStore, SelectedChannelStore, settings } from '~/modules';
+import { channelBlocks } from '~/android/channel-blocks';
+import { storage } from '@unbound-app/api';
 import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
+import { createFlatRecovery } from '~/flat-recovery';
+import { onAppForeground } from '~/foreground';
 import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';
-import { parseFencedCodeBlocks, type CodeBlock } from '~/fences';
+import type { CodeBlock } from '~/fences';
 import { codeBlockLayout } from '~/layout';
 
 const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
-const PLACEHOLDER = '￼';
 const TOP_GAP = 2;
 const MIN_WIDTH = 80;
 const SIZE_PARAMETERS = ['int', 'int', 'int', 'int'];
@@ -45,10 +62,6 @@ type Native = {
 	java: NativeJavaBridge;
 	hooks: NativeJavaHooksBridge;
 	fabric: NativeFabricBridge;
-};
-
-type Message = {
-	content?: unknown;
 };
 
 type Card = CardContent & {
@@ -66,31 +79,6 @@ type Layout = {
 	width: number;
 };
 
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
-function channelBlocks(): CodeBlock[] {
-	const channelId = SelectedChannelStore.getChannelId();
-	const messages: Message[] = MessageStore.getMessages(channelId)?._array ?? [];
-
-	return messages.flatMap((message) =>
-		typeof message.content === 'string' && message.content.includes('```')
-			? parseFencedCodeBlocks(message.content)
-			: [],
-	);
-}
-
-function renderedText(original: string, slots: CodeSlot[]): string {
-	let text = original;
-
-	for (const slot of slots.slice().reverse()) {
-		text = text.slice(0, slot.start) + PLACEHOLDER + text.slice(slot.end);
-	}
-
-	return text;
-}
-
 /**
  * @description Replaces the code blocks in Discord's Android message text with Shiki cards through the loader's native text rewrites, so cards stay in place while the chat scrolls.
  * @param native The plugin's Java, hook and Fabric bridges.
@@ -102,13 +90,16 @@ export function createNativeCards(native: Native) {
 	if (!connectTextRewrites(java, MESSAGE_CONTENT_VIEW)) return undefined;
 
 	const highlighter = createHighlighter();
+
+	highlighter.warm(readPreferences().theme);
 	const cards = new Map<string, Card>();
-	const listeners = new Map<string, Set<() => void>>();
+	const listeners = createSurfaceListeners();
 	const layouts = new Map<string, Layout>();
 	const contentCache = new Map<string, Promise<CardContent>>();
 	const pending = new Set<string>();
 	const awaitingSize = new Map<string, NativeJavaReference>();
 	const renderedByView = new Map<string, string>();
+	const retries = createRewriteRetry();
 	const blockBackgrounds = createBlockBackgroundFinder(java);
 	let nextSurface = 0;
 	let disposed = false;
@@ -116,18 +107,7 @@ export function createNativeCards(native: Native) {
 	const surfaceModule = registerCodeCardSurface({
 		card: (surfaceId) => cards.get(surfaceId),
 		revision: (surfaceId) => cards.get(surfaceId)?.revision ?? -1,
-		subscribe(surfaceId, listener) {
-			const set = listeners.get(surfaceId) ?? new Set();
-
-			set.add(listener);
-			listeners.set(surfaceId, set);
-
-			return () => {
-				set.delete(listener);
-
-				if (!set.size) listeners.delete(surfaceId);
-			};
-		},
+		subscribe: listeners.subscribe,
 	});
 
 	if (!surfaceModule) return undefined;
@@ -142,26 +122,22 @@ export function createNativeCards(native: Native) {
 
 	const inline = surfaces;
 
-	function publish(surfaceId: string) {
-		for (const listener of listeners.get(surfaceId) ?? []) listener();
-	}
-
-	function displayDensity(textView: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(textView, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
-	}
-
-	function textWidth(textView: NativeJavaReference, density: number): number {
-		return (
-			((javaNumber(java.invoke(textView, 'getWidth', [])) ?? 0) -
-				(javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0) -
-				(javaNumber(java.invoke(textView, 'getTotalPaddingRight', [])) ?? 0)) /
-			density
+	async function textGeometry(textView: NativeJavaReference) {
+		const [width, left, right, attached] = await runOnMain(
+			java,
+			readCalls(textView, [
+				'getWidth',
+				'getTotalPaddingLeft',
+				'getTotalPaddingRight',
+				'isAttachedToWindow',
+			]),
 		);
+
+		return {
+			contentWidth:
+				(javaNumber(width) ?? 0) - (javaNumber(left) ?? 0) - (javaNumber(right) ?? 0),
+			attached: javaFlag(attached),
+		};
 	}
 
 	function cardContent(block: CodeBlock, width: number): Promise<CardContent> {
@@ -196,6 +172,9 @@ export function createNativeCards(native: Native) {
 			contentCache.delete(contentCache.keys().next().value!);
 
 		contentCache.set(key, content);
+		void content.then(({ tokens }) => {
+			if (!tokens && contentCache.get(key) === content) contentCache.delete(key);
+		});
 
 		return content;
 	}
@@ -217,7 +196,13 @@ export function createNativeCards(native: Native) {
 
 		if (disposed) return;
 
+		recovery.mark(
+			rendered,
+			contents.some((content) => !content.tokens),
+		);
+
 		const offsets = placeholderOffsets(layout.slots);
+		const placeholders = placeholderTexts(layout.original, layout.slots);
 		const heights = contents.map(
 			(content) => codeBlockLayout(content.code, layout.width, content.overflow).height,
 		);
@@ -231,19 +216,19 @@ export function createNativeCards(native: Native) {
 				block: layout.blocks[index]!,
 				revision: (previous?.revision ?? -1) + 1,
 			});
-			publish(surfaceId);
+			listeners.notify(surfaceId);
 		});
 
 		const px = (value: number) => Math.round(value * layout.density);
 
-		inline.define({
+		const defined = inline.define({
 			original: layout.original,
 			rendered,
 			textView: layout.textView,
 			edits: layout.slots.map((slot, index) => ({
 				start: slot.start,
 				end: slot.end,
-				text: PLACEHOLDER,
+				text: placeholders[index]!,
 				spacerOffset: 0,
 				width: px(layout.width),
 				height: px(heights[index]! + TOP_GAP),
@@ -260,11 +245,20 @@ export function createNativeCards(native: Native) {
 				offsetY: px(TOP_GAP),
 			})),
 		});
+		const key = javaViewKey(layout.textView as NativeJavaValue);
+
+		if (!key) return;
+
+		if (defined) {
+			retries.succeeded(key);
+		} else {
+			retries.retry(key, () => schedule(layout.textView));
+		}
 	}
 
 	async function render(textView: NativeJavaReference) {
-		const key = viewKey(textView as NativeJavaValue);
-		const content = readViewText(java, textView);
+		const key = javaViewKey(textView as NativeJavaValue);
+		const content = await readViewTextAsync(java, textView);
 
 		if (!key || !content || inline.isDefined(content.string)) return;
 
@@ -280,11 +274,12 @@ export function createNativeCards(native: Native) {
 			return;
 		}
 
-		const density = displayDensity(textView);
+		const density = await displayDensity(java, textView);
 		const rendered = renderedText(content.string, slots);
 		const previous = layouts.get(rendered);
-		const detached = !javaFlag(java.invoke(textView, 'isAttachedToWindow', []));
-		const width = previous && detached ? previous.width : textWidth(textView, density);
+		const geometry = await textGeometry(textView);
+		const width =
+			previous && !geometry.attached ? previous.width : geometry.contentWidth / density;
 
 		if (width < MIN_WIDTH) {
 			awaitingSize.set(key, textView);
@@ -308,16 +303,16 @@ export function createNativeCards(native: Native) {
 	}
 
 	async function resize(textView: NativeJavaReference) {
-		const key = viewKey(textView as NativeJavaValue);
+		const key = javaViewKey(textView as NativeJavaValue);
 		const rendered = key ? renderedByView.get(key) : undefined;
 		const layout = rendered ? layouts.get(rendered) : undefined;
-		const shown = readViewText(java, textView)?.string;
+		const shown = (await readViewTextAsync(java, textView))?.string;
 
 		if (disposed || !rendered || !layout || (shown !== rendered && shown !== layout.original)) {
 			return;
 		}
 
-		const width = textWidth(textView, layout.density);
+		const width = (await textGeometry(textView)).contentWidth / layout.density;
 
 		if (width < MIN_WIDTH || Math.abs(width - layout.width) < 1) return;
 
@@ -327,7 +322,7 @@ export function createNativeCards(native: Native) {
 	}
 
 	function schedule(textView: NativeJavaReference) {
-		const key = viewKey(textView as NativeJavaValue);
+		const key = javaViewKey(textView as NativeJavaValue);
 
 		if (disposed || !key || pending.has(key)) return;
 
@@ -338,10 +333,28 @@ export function createNativeCards(native: Native) {
 			if (disposed) return;
 
 			render(textView).catch((error) => {
-				console.error(`[${PLUGIN_NAME}] Failed to draw an Android code card:`, error);
+				if (!isCancellation(error)) {
+					console.error(`[${PLUGIN_NAME}] Failed to draw an Android code card:`, error);
+				}
 			});
 		}, 0);
 	}
+
+	const recovery = createFlatRecovery((rendered: string) => {
+		const layout = layouts.get(rendered);
+
+		if (!layout) {
+			recovery.mark(rendered, false);
+
+			return;
+		}
+
+		define(rendered, layout).catch((error) => {
+			if (!isCancellation(error)) {
+				console.error(`[${PLUGIN_NAME}] Failed to repaint an Android code card:`, error);
+			}
+		});
+	}, onAppForeground);
 
 	const token = hooks.hook(
 		DRAWEE_TEXT_VIEW,
@@ -361,7 +374,7 @@ export function createNativeCards(native: Native) {
 		SIZE_PARAMETERS,
 		{ notify: true },
 		({ self }) => {
-			const key = viewKey(self);
+			const key = javaViewKey(self);
 			const textView = key ? awaitingSize.get(key) : undefined;
 
 			if (key && textView) {
@@ -375,39 +388,50 @@ export function createNativeCards(native: Native) {
 
 			if (resized) {
 				resize(resized).catch((error) => {
-					console.error(`[${PLUGIN_NAME}] Failed to resize an Android code card:`, error);
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}] Failed to resize an Android code card:`,
+							error,
+						);
+					}
 				});
 			}
 		},
 	);
 
-	const unsubscribe = settings.addListener(
-		({ key }) => CARD_SETTINGS.includes(key ?? ''),
+	const unsubscribe = storage.onChange(
+		({ store, key }) => store === addon.id && CARD_SETTINGS.includes(key ?? ''),
 		() => {
 			for (const [rendered, layout] of layouts) {
 				define(rendered, layout).catch((error) => {
-					console.error(
-						`[${PLUGIN_NAME}] Failed to repaint an Android code card:`,
-						error,
-					);
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}] Failed to repaint an Android code card:`,
+							error,
+						);
+					}
 				});
 			}
 		},
 	);
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || disposed) return;
 
-		for (const textView of findViewsOfClass(java, decor, MESSAGE_CONTENT_VIEW)) {
+		for (const textView of await findViewsOfClass(java, decor, MESSAGE_CONTENT_VIEW)) {
 			schedule(textView);
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	const scans = scheduleStartupScans('Shiki Codeblocks', scanVisible);
 
 	return {
+		progress: () => ({
+			drawn: renderedByView.size,
+			settling: pending.size > 0 || awaitingSize.size > 0,
+		}),
 		dispose() {
 			for (const scan of scans) clearTimeout(scan);
 
@@ -416,6 +440,8 @@ export function createNativeCards(native: Native) {
 			hooks.remove(sizeToken);
 			awaitingSize.clear();
 			renderedByView.clear();
+			retries.clear();
+			recovery.dispose();
 			unsubscribe();
 			layouts.clear();
 			listeners.clear();

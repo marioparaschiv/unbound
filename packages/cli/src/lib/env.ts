@@ -1,3 +1,4 @@
+import { MEDIA_MAX_BYTES, MEDIA_TOTAL_MAX_BYTES } from '@unbound-app/contracts/addon-page';
 import { apiUrlSchema } from '@unbound-app/contracts/api';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -11,8 +12,18 @@ const schema = z.object({
 	XDG_CONFIG_HOME: z.string().min(1).optional(),
 });
 
+const mediaLimitsSchema = z.object({
+	/** The largest media file ADDON.md may reference, in bytes. */
+	ADDON_MEDIA_MAX_BYTES: z.coerce.number().int().positive().default(MEDIA_MAX_BYTES),
+	/** The most bytes all of an addon's media may take together. */
+	ADDON_MEDIA_TOTAL_MAX_BYTES: z.coerce.number().int().positive().default(MEDIA_TOTAL_MAX_BYTES),
+});
+
 /** The validated environment the account commands read. */
 export type Env = z.infer<typeof schema>;
+
+/** The media size limits `ubd build` enforces. */
+export type MediaLimits = z.infer<typeof mediaLimitsSchema>;
 
 /** Environment variables as `process.env` provides them. */
 export type EnvSource = Record<string, string | undefined>;
@@ -34,6 +45,21 @@ export function parseEnv(source: EnvSource = process.env): Env {
 }
 
 /**
+ * @description Parses the media size limits, falling back to the store's defaults.
+ * @param source The variables to parse.
+ * @returns The per-file and per-addon limits in bytes.
+ */
+export function parseMediaLimits(source: EnvSource = process.env): MediaLimits {
+	const parsed = mediaLimitsSchema.safeParse(source);
+
+	if (!parsed.success) {
+		throw new Error(`Invalid environment:\n${z.prettifyError(parsed.error)}`);
+	}
+
+	return parsed.data;
+}
+
+/**
  * @description Resolves where `ubd login` stores credentials, following the XDG base directory spec.
  * @param env The validated environment.
  * @returns The absolute path of `unbound/credentials.json` in the user's config directory.
@@ -44,4 +70,4 @@ export function getCredentialsPath(env: Env): string {
 	return join(configHome, 'unbound', 'credentials.json');
 }
 
-export default { parseEnv, getCredentialsPath };
+export default { parseEnv, parseMediaLimits, getCredentialsPath };

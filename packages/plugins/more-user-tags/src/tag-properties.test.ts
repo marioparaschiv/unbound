@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { combineTagText, toRendererColor, withTag } from './tag-properties';
+import { toRendererColor as androidColor } from '~/android/renderer-color';
+import { combineTagText, withTag } from '~/tag-properties';
+import { toRendererColor as iosColor } from '~/ios/renderer-color';
 
 const colors = { background: '#248046', text: '#ffffff' };
 
@@ -53,11 +55,11 @@ describe('withTag', () => {
 
 describe('toRendererColor', () => {
 	test('keeps Android colors inside the signed 32-bit range', () => {
-		expect(toRendererColor(0xff248046, 'android')).toBe(0xff248046 | 0);
-		expect(toRendererColor(0xffffffff, 'android')).toBe(-1);
+		expect(androidColor(0xff248046)).toBe(0xff248046 | 0);
+		expect(androidColor(0xffffffff)).toBe(-1);
 	});
 
 	test('leaves iOS colors untouched', () => {
-		expect(toRendererColor(0xff248046, 'ios')).toBe(0xff248046);
+		expect(iosColor(0xff248046)).toBe(0xff248046);
 	});
 });

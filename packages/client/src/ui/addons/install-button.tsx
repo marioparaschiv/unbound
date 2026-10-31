@@ -1,17 +1,24 @@
+import type { AddonKind } from '@unbound-app/types/addons';
 import { View } from 'react-native';
 
-import type { ManagerKind } from '~/lib/constants';
-import { Discord } from '~/api/metro/components';
-import { Screens } from '~/lib/constants';
-import { Icons } from '~/api/assets';
-import { format } from '~/api/i18n';
+import { Discord } from '~/metro/components';
+import { Screens } from '~/core/constants';
+import { icons } from '~/assets/api';
+import { format } from '~/i18n/api';
 
 import InstallUrlModal from './install-url-modal';
 import useStyles from './install-button.style';
 
 type InstallButtonProps = {
-	kind: ManagerKind;
+	kind: AddonKind;
 };
+
+function openInstallUrlModal(kind: AddonKind) {
+	Discord.openAlert(
+		'unbound-install',
+		<InstallUrlModal kind={kind} onClose={() => Discord.dismissAlert('unbound-install')} />,
+	);
+}
 
 /**
  * @description A floating action button that offers to install one addon kind by URL or to browse the
@@ -31,19 +38,12 @@ function InstallButton({ kind }: InstallButtonProps) {
 			options: [
 				{
 					label: format('UNBOUND_INSTALL_FROM_URL'),
-					icon: Icons['LinkIcon'],
-					onPress: () =>
-						Discord.openAlert(
-							'unbound-install',
-							<InstallUrlModal
-								kind={kind}
-								onClose={() => Discord.dismissAlert('unbound-install')}
-							/>,
-						),
+					icon: icons['LinkIcon'],
+					onPress: () => openInstallUrlModal(kind),
 				},
 				{
 					label: format('UNBOUND_BROWSE_MARKETPLACE'),
-					icon: Icons['ShopIcon'],
+					icon: icons['ShopIcon'],
 					onPress: () => navigation.push(Screens.Marketplace, { kind }),
 				},
 			],
@@ -52,7 +52,7 @@ function InstallButton({ kind }: InstallButtonProps) {
 
 	return (
 		<View style={styles.container} pointerEvents='box-none'>
-			<Discord.FloatingActionButton icon={Icons['PlusLargeIcon'] ?? 0} onPress={open} />
+			<Discord.FloatingActionButton icon={icons['PlusLargeIcon'] ?? 0} onPress={open} />
 		</View>
 	);
 }

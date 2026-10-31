@@ -1,6 +1,6 @@
-import { Avatars, BottomSheets } from '~/api/metro/components';
-import { UserProfiles } from '~/api/metro/api';
-import { format } from '~/api/i18n';
+import { Avatars, BottomSheets } from '~/metro/components';
+import { UserProfiles } from '~/metro/api';
+import { format } from '~/i18n/api';
 
 import type { AuthorUser } from './use-author-users';
 

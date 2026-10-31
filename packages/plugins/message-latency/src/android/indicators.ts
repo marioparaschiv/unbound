@@ -1,3 +1,5 @@
+import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
@@ -19,18 +21,22 @@ import {
 	javaNumber,
 	javaReference,
 	javaText,
+	javaViewKey,
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
 import {
 	MESSAGE_VIEW,
 	messageBindMethod,
 	messageIdField,
-	viewByIdName,
+	viewByIdNameAsync,
 } from '@unbound-plugins/shared/native/android/discord-views';
 import {
 	currentDecorView,
+	displayDensity,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	readCalls,
+	runOnMain,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
 import { registerLatencyIconSurface } from '~/components/latency-icon';
@@ -63,10 +69,6 @@ type Indicator = {
 	disposed: boolean;
 };
 
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
 /**
  * @description Draws the latency indicator in front of the author name of Discord's Android message rows, like the iOS one, and opens its tooltip on tap.
  * @param native The plugin's Java, hook and Fabric bridges.
@@ -82,7 +84,7 @@ export function createAndroidIndicators(
 	const indicators = new Map<string, Indicator>();
 	const byId = new Map<string, Indicator>();
 	const bound = new Map<string, { messageView: NativeJavaReference; messageId: string }>();
-	const listeners = new Map<string, Set<() => void>>();
+	const listeners = createSurfaceListeners();
 	const queues = new Map<string, Promise<void>>();
 	let nextId = 0;
 	let disposed = false;
@@ -90,18 +92,7 @@ export function createAndroidIndicators(
 	const iconModule = registerLatencyIconSurface({
 		record: (surfaceId) => byId.get(surfaceId)?.record,
 		revision: (surfaceId) => byId.get(surfaceId)?.revision ?? -1,
-		subscribe(surfaceId, listener) {
-			const set = listeners.get(surfaceId) ?? new Set();
-
-			set.add(listener);
-			listeners.set(surfaceId, set);
-
-			return () => {
-				set.delete(listener);
-
-				if (!set.size) listeners.delete(surfaceId);
-			};
-		},
+		subscribe: listeners.subscribe,
 		press(surfaceId) {
 			const indicator = byId.get(surfaceId);
 
@@ -119,29 +110,21 @@ export function createAndroidIndicators(
 
 	function publish(indicator: Indicator) {
 		indicator.revision++;
-
-		for (const listener of listeners.get(indicator.id) ?? []) listener();
+		listeners.notify(indicator.id);
 	}
 
-	function density(view: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(view, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
-	}
-
-	function startDrawable(authorName: NativeJavaReference): NativeJavaReference | null {
-		const drawables = java.invoke(authorName, 'getCompoundDrawablesRelative', []);
+	async function startDrawable(
+		authorName: NativeJavaReference,
+	): Promise<NativeJavaReference | null> {
+		const drawables = await java.invokeAsync(authorName, 'getCompoundDrawablesRelative', []);
 
 		return javaReference(
 			java.invoke(java.getClass('java.lang.reflect.Array'), 'get', [drawables, javaInt(0)]),
 		);
 	}
 
-	function createSpacer(authorName: NativeJavaReference): NativeJavaHandle {
-		const scale = density(authorName);
+	async function createSpacer(authorName: NativeJavaReference): Promise<NativeJavaHandle> {
+		const scale = await displayDensity(java, authorName);
 		const spacer = java.construct('android.graphics.drawable.ColorDrawable', [javaInt(0)]);
 
 		java.invoke(spacer, 'setBounds', [
@@ -162,7 +145,7 @@ export function createAndroidIndicators(
 	async function remove(indicator: Indicator) {
 		indicator.disposed = true;
 		byId.delete(indicator.id);
-		indicators.delete(viewKey(indicator.messageView as NativeJavaValue) ?? '');
+		indicators.delete(javaViewKey(indicator.messageView as NativeJavaValue) ?? '');
 		tooltips?.dismissFor(indicator.id);
 
 		const mounted = await indicator.mounting?.catch(() => null);
@@ -171,7 +154,7 @@ export function createAndroidIndicators(
 
 		await removeHost(java, indicator.host).catch(() => undefined);
 
-		if (sameJavaReference(startDrawable(indicator.authorName), indicator.spacer)) {
+		if (sameJavaReference(await startDrawable(indicator.authorName), indicator.spacer)) {
 			await java.invokeAsync(indicator.authorName, 'setCompoundDrawablesRelative', [
 				NO_DRAWABLE,
 				NO_DRAWABLE,
@@ -185,16 +168,16 @@ export function createAndroidIndicators(
 	async function place(indicator: Indicator) {
 		if (indicator.disposed) return;
 
-		const scale = density(indicator.authorName);
-		const container = hostContainer(java, indicator.authorName);
+		const scale = await displayDensity(java, indicator.authorName);
+		const container = await hostContainer(java, indicator.authorName);
 
 		if (!container) return;
 
 		const width = Icon.controlWidth * scale;
 		const height = Icon.controlHeight * scale;
-		const nameHeight = javaNumber(java.invoke(indicator.authorName, 'getHeight', [])) ?? 0;
-		const paddingStart =
-			javaNumber(java.invoke(indicator.authorName, 'getPaddingStart', [])) ?? 0;
+		const [nameHeight, paddingStart] = (
+			await runOnMain(java, readCalls(indicator.authorName, ['getHeight', 'getPaddingStart']))
+		).map((value) => javaNumber(value) ?? 0) as [number, number];
 
 		await placeHost(
 			java,
@@ -232,26 +215,32 @@ export function createAndroidIndicators(
 		for (const delay of SETTLE_DELAYS) {
 			setTimeout(() => {
 				place(indicator).catch((error) => {
-					console.error('[Message Latency] Failed to place an Android indicator:', error);
+					if (!isCancellation(error)) {
+						console.error(
+							'[Message Latency] Failed to place an Android indicator:',
+							error,
+						);
+					}
 				});
 			}, delay);
 		}
 	}
 
-	function isVisible(view: NativeJavaReference): boolean {
-		return javaNumber(java.invoke(view, 'getVisibility', [])) === VISIBLE;
+	async function isVisible(view: NativeJavaReference): Promise<boolean> {
+		return javaNumber(await java.invokeAsync(view, 'getVisibility', [])) === VISIBLE;
 	}
 
 	async function render(messageView: NativeJavaReference, messageId: string) {
-		const key = viewKey(messageView as NativeJavaValue);
+		const key = javaViewKey(messageView as NativeJavaValue);
 
 		if (!key || disposed) return;
 
 		const record = records.get(messageId);
 		const existing = indicators.get(key);
-		const header = viewByIdName(java, messageView, 'header');
-		const authorName = viewByIdName(java, messageView, 'author_name');
-		const shown = header && authorName && isVisible(header) && isVisible(authorName);
+		const header = await viewByIdNameAsync(java, messageView, 'header');
+		const authorName = await viewByIdNameAsync(java, messageView, 'author_name');
+		const shown =
+			header && authorName && (await isVisible(header)) && (await isVisible(authorName));
 
 		if (!record || !shown) {
 			if (existing) await remove(existing);
@@ -259,7 +248,7 @@ export function createAndroidIndicators(
 			return;
 		}
 
-		const current = startDrawable(authorName);
+		const current = await startDrawable(authorName);
 
 		if (existing && !existing.disposed && sameJavaReference(existing.authorName, authorName)) {
 			existing.messageId = messageId;
@@ -289,8 +278,8 @@ export function createAndroidIndicators(
 			id: `message-latency-android-${nextId++}`,
 			messageView,
 			authorName,
-			host: createHost(java, authorName),
-			spacer: createSpacer(authorName),
+			host: await createHost(java, authorName),
+			spacer: await createSpacer(authorName),
 			mounting: null,
 			messageId,
 			record,
@@ -311,7 +300,7 @@ export function createAndroidIndicators(
 	}
 
 	function schedule(messageView: NativeJavaReference, messageId: string) {
-		const key = viewKey(messageView as NativeJavaValue);
+		const key = javaViewKey(messageView as NativeJavaValue);
 
 		if (!key || disposed) return;
 
@@ -324,7 +313,9 @@ export function createAndroidIndicators(
 					: undefined,
 			)
 			.catch((error) => {
-				console.error('[Message Latency] Failed to draw an Android indicator:', error);
+				if (!isCancellation(error)) {
+					console.error('[Message Latency] Failed to draw an Android indicator:', error);
+				}
 			})
 			.finally(() => {
 				if (queues.get(key) === next) queues.delete(key);
@@ -361,24 +352,22 @@ export function createAndroidIndicators(
 		for (const indicator of indicators.values()) publish(indicator);
 	});
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || disposed) return;
 
-		for (const messageView of findViewsOfClass(java, decor, MESSAGE_VIEW)) {
+		for (const messageView of await findViewsOfClass(java, decor, MESSAGE_VIEW)) {
 			const messageId = javaText(java.getField(messageView, idField));
 
 			if (messageId) schedule(messageView, messageId);
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	scheduleStartupScans('Message Latency', scanVisible);
 
 	return {
 		async dispose() {
-			for (const scan of scans) clearTimeout(scan);
-
 			disposed = true;
 			hooks.remove(token);
 			unsubscribeRecords();

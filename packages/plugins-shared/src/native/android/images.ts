@@ -1,6 +1,11 @@
+import {
+	javaBoolean,
+	javaFloat,
+	javaInt,
+	javaReference,
+	javaString,
+} from '@unbound-plugins/shared/native/android/java-values';
 import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
-
-import { javaBoolean, javaFloat, javaInt, javaReference, javaString } from './java-values';
 
 const ANTI_ALIAS_FLAG = 1;
 

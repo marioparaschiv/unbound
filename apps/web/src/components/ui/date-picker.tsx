@@ -1,5 +1,5 @@
-import { IconCalendar } from '@tabler/icons-react';
 import type { DateRange } from 'react-day-picker';
+import { IconCalendar } from 'nucleo-micro-bold';
 import { useId, useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -102,7 +102,7 @@ function DatePicker({ id, placeholder, className, ...props }: DatePickerProps) {
 				aria-describedby={valueId}
 				className={cn(selectTriggerVariants(), className)}
 			>
-				<IconCalendar className='text-muted-foreground -ml-1' />
+				<IconCalendar size={24} className='text-muted-foreground -ml-1' />
 				<span id={valueId} className='single-line min-w-0 flex-1 text-left'>
 					{view.label}
 				</span>

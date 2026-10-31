@@ -1,3 +1,5 @@
+import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
@@ -29,22 +31,25 @@ import {
 	javaReference,
 	javaString,
 	javaText,
+	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
 import { readViewText, spansOf } from '@unbound-plugins/shared/native/android/spans';
 import {
 	currentDecorView,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	resourceDensity,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
 import { createBlockBackgroundFinder } from '~/android/block-backgrounds';
 import { codeSlots, placeholderOffsets, sourceBlock, type CodeSlot } from '~/android/code-ranges';
 import { registerCodeCardSurface, type CardContent } from '~/components/code-card';
-import { MessageStore, SelectedChannelStore, settings } from '~/modules';
+import { channelBlocks } from '~/android/channel-blocks';
+import { storage } from '@unbound-app/api';
 import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
 import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';
-import { parseFencedCodeBlocks, type CodeBlock } from '~/fences';
+import type { CodeBlock } from '~/fences';
 import { codeBlockLayout } from '~/layout';
 
 const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
@@ -62,10 +67,6 @@ type Native = {
 	java: NativeJavaBridge;
 	hooks: NativeJavaHooksBridge;
 	fabric: NativeFabricBridge;
-};
-
-type Message = {
-	content?: unknown;
 };
 
 type Card = CardContent & {
@@ -87,21 +88,6 @@ type ViewCards = {
 	cards: Card[];
 };
 
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
-function channelBlocks(): CodeBlock[] {
-	const channelId = SelectedChannelStore.getChannelId();
-	const messages: Message[] = MessageStore.getMessages(channelId)?._array ?? [];
-
-	return messages.flatMap((message) =>
-		typeof message.content === 'string' && message.content.includes('```')
-			? parseFencedCodeBlocks(message.content)
-			: [],
-	);
-}
-
 /**
  * @description Replaces the code blocks in Discord's Android message text with Shiki cards drawn like the iOS ones.
  * @param native The plugin's Java, hook and Fabric bridges.
@@ -118,37 +104,17 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 	let nextId = 0;
 	let disposed = false;
 
-	const listeners = new Map<string, Set<() => void>>();
+	const listeners = createSurfaceListeners();
 	const surfaceModule = registerCodeCardSurface({
 		card: (surfaceId) => byId.get(surfaceId),
 		revision: (surfaceId) => byId.get(surfaceId)?.revision ?? -1,
-		subscribe(surfaceId, listener) {
-			const set = listeners.get(surfaceId) ?? new Set();
-
-			set.add(listener);
-			listeners.set(surfaceId, set);
-
-			return () => {
-				set.delete(listener);
-
-				if (!set.size) listeners.delete(surfaceId);
-			};
-		},
+		subscribe: listeners.subscribe,
 	});
-
-	function publish(card: Card) {
-		for (const listener of listeners.get(card.id) ?? []) listener();
-	}
 
 	if (!surfaceModule) return undefined;
 
 	function displayDensity(textView: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(textView, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
+		return resourceDensity(java, javaReference(java.invoke(textView, 'getResources', [])));
 	}
 
 	function textWidth(textView: NativeJavaReference, density: number): number {
@@ -234,7 +200,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 	function isCurrent(entry: ViewCards, card: Card): boolean {
 		return (
 			!card.disposed &&
-			views.get(viewKey(entry.textView as NativeJavaValue) ?? '') === entry &&
+			views.get(javaViewKey(entry.textView as NativeJavaValue) ?? '') === entry &&
 			entry.cards.includes(card) &&
 			readViewText(java, entry.textView)?.string === entry.renderedText
 		);
@@ -244,8 +210,8 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		if (!isCurrent(entry, card)) return;
 
 		const height = card.height * entry.density;
-		const container = hostContainer(java, entry.textView);
-		const position = reservedTop(java, entry.textView, card.placeholder);
+		const container = await hostContainer(java, entry.textView);
+		const position = await reservedTop(java, entry.textView, card.placeholder);
 
 		if (!container || !position) return;
 
@@ -271,7 +237,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		if (card.mounting && !card.disposed) {
 			const mounted = await card.mounting.catch(() => null);
 
-			if (!hostHasContent(java, card.host)) {
+			if (!(await hostHasContent(java, card.host))) {
 				card.mounting = null;
 
 				if (mounted) await fabric.unmountAsync(mounted).catch(() => undefined);
@@ -292,10 +258,12 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 			setTimeout(() => {
 				for (const card of entry.cards) {
 					place(entry, card).catch((error) => {
-						console.error(
-							`[${PLUGIN_NAME}] Failed to place an Android code card:`,
-							error,
-						);
+						if (!isCancellation(error)) {
+							console.error(
+								`[${PLUGIN_NAME}] Failed to place an Android code card:`,
+								error,
+							);
+						}
 					});
 				}
 			}, delay);
@@ -317,7 +285,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 	}
 
 	async function render(textView: NativeJavaReference) {
-		const key = viewKey(textView as NativeJavaValue);
+		const key = javaViewKey(textView as NativeJavaValue);
 		const content = readViewText(java, textView);
 
 		if (!key || !content) return;
@@ -362,28 +330,30 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 
 		const reusable = existing?.cards ?? [];
 		const offsets = placeholderOffsets(slots);
-		const cards = contents.map((cardContent, index): Card => {
-			const previous = reusable[index];
-			const fields = {
-				...cardContent,
-				block: blocks[index]!,
-				placeholder: offsets[index]!,
-				height: codeBlockLayout(cardContent.code, width, cardContent.overflow).height,
-			};
+		const cards = await Promise.all(
+			contents.map(async (cardContent, index): Promise<Card> => {
+				const previous = reusable[index];
+				const fields = {
+					...cardContent,
+					block: blocks[index]!,
+					placeholder: offsets[index]!,
+					height: codeBlockLayout(cardContent.code, width, cardContent.overflow).height,
+				};
 
-			if (previous && !previous.disposed && previous.code === cardContent.code) {
-				return Object.assign(previous, fields, { revision: previous.revision + 1 });
-			}
+				if (previous && !previous.disposed && previous.code === cardContent.code) {
+					return Object.assign(previous, fields, { revision: previous.revision + 1 });
+				}
 
-			return {
-				...fields,
-				id: `shiki-card-android-${nextId++}`,
-				host: createHost(java, textView),
-				mounting: null,
-				revision: 0,
-				disposed: false,
-			};
-		});
+				return {
+					...fields,
+					id: `shiki-card-android-${nextId++}`,
+					host: await createHost(java, textView),
+					mounting: null,
+					revision: 0,
+					disposed: false,
+				};
+			}),
+		);
 
 		for (const card of reusable) {
 			if (!cards.includes(card)) void teardown(card);
@@ -419,7 +389,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 			byId.set(card.id, card);
 			setSpacer(builder, entry, card);
 			collapseLineEnd(builder, entry, card);
-			publish(card);
+			listeners.notify(card.id);
 		}
 
 		views.set(key, entry);
@@ -449,7 +419,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 
 		for (const card of entry.cards) {
 			setSpacer(builder, entry, card);
-			publish(card);
+			listeners.notify(card.id);
 		}
 
 		await commit(entry, builder);
@@ -457,7 +427,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 	}
 
 	function schedule(textView: NativeJavaReference) {
-		const key = viewKey(textView as NativeJavaValue);
+		const key = javaViewKey(textView as NativeJavaValue);
 
 		if (disposed || !key || pending.has(key)) return;
 
@@ -471,7 +441,12 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 			const next = previous
 				.then(() => render(textView))
 				.catch((error) => {
-					console.error(`[${PLUGIN_NAME}] Failed to draw an Android code card:`, error);
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}] Failed to draw an Android code card:`,
+							error,
+						);
+					}
 				})
 				.finally(() => {
 					if (renders.get(key) === next) renders.delete(key);
@@ -500,7 +475,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		SIZE_PARAMETERS,
 		{ notify: true },
 		({ self }) => {
-			const key = viewKey(self);
+			const key = javaViewKey(self);
 			const textView = key ? awaitingSize.get(key) : undefined;
 
 			if (!key || !textView) return;
@@ -510,33 +485,39 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		},
 	);
 
-	const unsubscribe = settings.addListener(
-		({ key }) => CARD_SETTINGS.includes(key ?? ''),
+	const unsubscribe = storage.onChange(
+		({ store, key }) => store === addon.id && CARD_SETTINGS.includes(key ?? ''),
 		() => {
 			for (const entry of views.values()) {
 				repaint(entry).catch((error) => {
-					console.error(
-						`[${PLUGIN_NAME}] Failed to repaint an Android code card:`,
-						error,
-					);
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}] Failed to repaint an Android code card:`,
+							error,
+						);
+					}
 				});
 			}
 		},
 	);
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || disposed) return;
 
-		for (const textView of findViewsOfClass(java, decor, MESSAGE_CONTENT_VIEW)) {
+		for (const textView of await findViewsOfClass(java, decor, MESSAGE_CONTENT_VIEW)) {
 			schedule(textView);
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	const scans = scheduleStartupScans('Shiki Codeblocks', scanVisible);
 
 	return {
+		progress: () => ({
+			drawn: views.size,
+			settling: pending.size > 0 || awaitingSize.size > 0,
+		}),
 		dispose() {
 			for (const scan of scans) clearTimeout(scan);
 

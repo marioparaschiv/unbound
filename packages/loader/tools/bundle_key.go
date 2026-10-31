@@ -248,21 +248,10 @@ func verifySignedBuild(directory string, public ed25519.PublicKey, pullRequest u
 	if len(files) == 0 {
 		return nil, fmt.Errorf("%s has no client bundles", directory)
 	}
-	var problems []string
-	for _, path := range files {
-		problem, _, err := verifySignature(path, public, pullRequest)
-		if err != nil {
-			return nil, err
-		}
-		if problem != "" {
-			problems = append(problems, problem)
-		}
-	}
-	manifest, err := manifestProblems(directory, files, public, pullRequest)
+	problems, err := manifestProblems(directory, files, public, pullRequest)
 	if err != nil {
 		return nil, err
 	}
-	problems = append(problems, manifest...)
 	if len(problems) > 0 {
 		return nil, fmt.Errorf("bundle signatures failed:\n  %s", strings.Join(problems, "\n  "))
 	}
@@ -271,7 +260,7 @@ func verifySignedBuild(directory string, public ed25519.PublicKey, pullRequest u
 
 func bundleKeyVerifyCommand(args []string, output io.Writer) error {
 	set := flag.NewFlagSet("bundle-key verify", flag.ContinueOnError)
-	directory := set.String("dir", "", "client build directory holding the bundles, manifest.json and their .sig files")
+	directory := set.String("dir", "", "client build directory holding the bundles, manifest.json and manifest.json.sig")
 	publicKeyPath := set.String("public-key", "", "base64 Ed25519 public key file; defaults to the committed key for the build kind")
 	pullRequest := set.Uint64("pr", 0, "pull request number the build was signed for with the PR key")
 	if err := set.Parse(args); err != nil {

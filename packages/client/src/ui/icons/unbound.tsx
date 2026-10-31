@@ -1,4 +1,4 @@
-import { SVG } from '~/api/metro/common';
+import { SVG } from '~/metro/common';
 
 type UnboundIconProps = {
 	width?: number | string;

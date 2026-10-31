@@ -1,0 +1,163 @@
+import { z } from '@unbound-app/contracts/zod';
+
+import type { DeviceCheck } from './device-matrix';
+
+export type CheckMetrics = {
+	stopMs: number;
+	startMs: number;
+	drawnMs?: number;
+	leakedHooks: number;
+};
+
+export type MeasuredCheck = DeviceCheck & {
+	metrics?: CheckMetrics;
+	offMainCalls?: string[];
+	errors?: string[];
+	skippedHooks?: string[];
+	memoryDeltaMB?: number;
+	redrawMs?: number;
+	leakPerCycleMB?: number;
+	bundleHash?: string;
+	visualProblems?: string[];
+};
+
+const result = z.enum(['pass', 'fail']);
+
+/** A matrix run's `results.json`, or a baseline given on the command line. */
+export const measuredChecksSchema: z.ZodMiniType<MeasuredCheck[]> = z.array(
+	z.object({
+		id: z.string(),
+		behavior: result,
+		lifecycle: result,
+		evidence: z.array(z.string()),
+		note: z.optional(z.string()),
+		metrics: z.optional(
+			z.object({
+				stopMs: z.number(),
+				startMs: z.number(),
+				drawnMs: z.optional(z.number()),
+				leakedHooks: z.number(),
+			}),
+		),
+		offMainCalls: z.optional(z.array(z.string())),
+		errors: z.optional(z.array(z.string())),
+		skippedHooks: z.optional(z.array(z.string())),
+		memoryDeltaMB: z.optional(z.number()),
+		redrawMs: z.optional(z.number()),
+		leakPerCycleMB: z.optional(z.number()),
+		bundleHash: z.optional(z.string()),
+		visualProblems: z.optional(z.array(z.string())),
+	}),
+);
+
+const SLOWER_FACTOR = 2;
+const SLOWER_MARGIN_MS = 200;
+
+function passed(check: DeviceCheck): boolean {
+	return check.behavior === 'pass' && check.lifecycle === 'pass';
+}
+
+function isSlower(previous: number, current: number): boolean {
+	return current > previous * SLOWER_FACTOR && current - previous > SLOWER_MARGIN_MS;
+}
+
+function metricChanges(id: string, previous?: CheckMetrics, current?: CheckMetrics): string[] {
+	if (!previous || !current) return [];
+
+	const changes: string[] = [];
+
+	if (isSlower(previous.stopMs, current.stopMs)) {
+		changes.push(`${id} stops slower: ${previous.stopMs} ms → ${current.stopMs} ms`);
+	}
+
+	if (isSlower(previous.startMs, current.startMs)) {
+		changes.push(`${id} starts slower: ${previous.startMs} ms → ${current.startMs} ms`);
+	}
+
+	if (
+		previous.drawnMs !== undefined &&
+		current.drawnMs !== undefined &&
+		isSlower(previous.drawnMs, current.drawnMs)
+	) {
+		changes.push(`${id} draws slower: ${previous.drawnMs} ms → ${current.drawnMs} ms`);
+	}
+
+	if (current.leakedHooks > previous.leakedHooks) {
+		changes.push(
+			`${id} leaves more native hooks behind: ${previous.leakedHooks} → ${current.leakedHooks}`,
+		);
+	}
+
+	return changes;
+}
+
+/**
+ * @description Compares a device matrix run with the previous one, so a run reports what changed instead of only what holds.
+ * @param previous The previous run's checks.
+ * @param current This run's checks.
+ * @returns One line per change: plugins that newly fail or were fixed, stop or start times that more than doubled, more leaked hooks, and plugins added or removed.
+ */
+export function compareRuns(previous: MeasuredCheck[], current: MeasuredCheck[]): string[] {
+	const before = new Map(previous.map((check) => [check.id, check]));
+	const after = new Map(current.map((check) => [check.id, check]));
+	const changes: string[] = [];
+
+	for (const check of current) {
+		const earlier = before.get(check.id);
+
+		if (!earlier) {
+			changes.push(`${check.id} is new and ${passed(check) ? 'passes' : 'fails'}`);
+			continue;
+		}
+
+		if (passed(earlier) && !passed(check)) {
+			changes.push(`${check.id} now fails: ${check.note ?? 'no note'}`);
+		} else if (!passed(earlier) && passed(check)) {
+			changes.push(`${check.id} passes again`);
+		}
+
+		changes.push(...metricChanges(check.id, earlier.metrics, check.metrics));
+
+		if (
+			earlier.redrawMs !== undefined &&
+			check.redrawMs !== undefined &&
+			isSlower(earlier.redrawMs, check.redrawMs)
+		) {
+			changes.push(
+				`${check.id} redraws slower after scrolling: ${earlier.redrawMs} ms → ${check.redrawMs} ms`,
+			);
+		}
+
+		const known = new Set(earlier.offMainCalls ?? []);
+		const added = (check.offMainCalls ?? []).filter((call) => !known.has(call));
+
+		if (added.length)
+			changes.push(`${check.id} makes new off-main view calls: ${added.join(', ')}`);
+
+		const knownErrors = new Set(earlier.errors ?? []);
+		const newErrors = (check.errors ?? []).filter((error) => !knownErrors.has(error));
+
+		if (newErrors.length) changes.push(`${check.id} logs new errors: ${newErrors.join('; ')}`);
+	}
+
+	for (const check of previous) {
+		if (!after.has(check.id)) changes.push(`${check.id} was not checked this run`);
+	}
+
+	return changes;
+}
+
+/**
+ * @description Renders the changes between two runs as Markdown.
+ * @param changes The lines from {@link compareRuns}.
+ * @returns The Markdown, saying so when nothing changed.
+ */
+export function renderChanges(changes: string[]): string {
+	return [
+		'# Changes since the previous run',
+		'',
+		...(changes.length ? changes.map((change) => `- ${change}`) : ['Nothing changed.']),
+	].join('\n');
+}
+
+export default { compareRuns, renderChanges };

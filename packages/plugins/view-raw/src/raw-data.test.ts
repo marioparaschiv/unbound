@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { cleanMessage, sortKeys } from './raw-data';
+import { cleanMessage, sortKeys } from '~/raw-data';
 
 describe('sortKeys', () => {
 	test('orders keys alphabetically at every depth and keeps array order', () => {

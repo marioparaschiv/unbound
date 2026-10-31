@@ -3,6 +3,7 @@ import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import type { EvalResult } from '@unbound-app/debugger-protocol';
 import type { UnboundGlobal } from '@unbound-app/api/global';
 
+import { lowerForHermes } from '~/lib/hermes-code';
 import { waitForDevice } from '~/lib/context';
 import { formatResult } from '~/lib/format';
 
@@ -48,7 +49,7 @@ export async function evaluateOnDevice(
 
 	if (!client.isDeviceConnected) return;
 
-	return client.evaluate(code, timeout);
+	return client.evaluate(lowerForHermes(code), timeout);
 }
 
 /**

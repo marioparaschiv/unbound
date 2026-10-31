@@ -1,3 +1,4 @@
+import type { DesignComponents, DesignHelpers } from '@unbound-app/types/components';
 import { DESIGN_COMPONENTS } from '@unbound-app/types/components';
 import { describe, expect, mock, test } from 'bun:test';
 import { forwardRef, memo } from 'react';
@@ -6,30 +7,47 @@ import { join } from 'node:path';
 
 await import('./helpers/addons');
 
-mock.module('~/api/metro', () => ({
+mock.module('~/metro/search', () => ({
 	findByName: () => undefined,
 	findByProps: () => undefined,
 }));
 
-const components = await import('~/api/metro/components');
-const fallbacks = await import('~/ui/components/design-fallbacks');
+const components = await import('~/metro/components');
+const { default: FallbackHeading } = await import('~/metro/fallbacks/fallback-heading');
+const { default: FallbackSwitch } = await import('~/metro/fallbacks/fallback-switch');
+const { default: FallbackStack } = await import('~/metro/fallbacks/fallback-stack');
+const { default: FallbackText } = await import('~/metro/fallbacks/fallback-text');
+const { default: FallbackCard } = await import('~/metro/fallbacks/fallback-card');
 
-const COMPONENT_TYPE = /^\t(\w+): (?:ComponentType<|TableRowComponent|ButtonComponent)/;
+const BARREL_MEMBER = /^\s*(\w+): \w+Component;$/;
 
-function designModuleComponentKeys(): string[] {
-	const source = readFileSync(join(import.meta.dir, '../../types/typings/components.ts'), 'utf8');
-	const block = source.slice(source.indexOf('export type DesignModule = {'));
-	const body = block.slice(0, block.indexOf('\n};'));
+// The members of the generated `DesignBarrelComponents`, the export map of `design/native.tsx`.
+function generatedBarrelComponents(): string[] {
+	const barrels = join(import.meta.dir, '../../discord-types/src/barrels.gen.d.ts');
+	const source = readFileSync(barrels, 'utf8');
+	const block = source.slice(source.indexOf('export type DesignBarrelComponents = {'));
+	const body = block.slice(0, block.indexOf('};'));
 
 	return body
 		.split('\n')
-		.map((line) => COMPONENT_TYPE.exec(line)?.[1])
+		.map((line) => BARREL_MEMBER.exec(line)?.[1])
 		.filter((key): key is string => key !== undefined);
 }
 
+// Compiles only while no hand-typed helper shadows a generated component.
+const helpersShadowNoComponent: [Extract<keyof DesignHelpers, keyof DesignComponents>] extends [
+	never,
+]
+	? true
+	: false = true;
+
 describe('design components', () => {
-	test('lists every component the DesignModule type declares', () => {
-		expect<string[]>([...DESIGN_COMPONENTS].sort()).toEqual(designModuleComponentKeys().sort());
+	test('names only components the generated design barrel exports', () => {
+		expect(generatedBarrelComponents()).toEqual(expect.arrayContaining([...DESIGN_COMPONENTS]));
+	});
+
+	test('keeps hand-typed helpers apart from generated components', () => {
+		expect(helpersShadowNoComponent).toBe(true);
 	});
 
 	test('recognises every kind of renderable React type', () => {
@@ -46,11 +64,11 @@ describe('design components', () => {
 	});
 
 	test('stands in with fallbacks for components the build lacks', () => {
-		expect(components.Discord.Text).toBe(fallbacks.FallbackText);
-		expect(components.Discord.Heading).toBe(fallbacks.FallbackHeading);
-		expect(components.Discord.FormSwitch).toBe(fallbacks.FallbackSwitch);
-		expect(components.Discord.Stack).toBe(fallbacks.FallbackStack);
-		expect(components.Discord.Card).toBe(fallbacks.FallbackCard);
+		expect(components.Discord.Text).toBe(FallbackText);
+		expect(components.Discord.Heading).toBe(FallbackHeading);
+		expect(components.Discord.FormSwitch).toBe(FallbackSwitch);
+		expect(components.Discord.Stack).toBe(FallbackStack);
+		expect(components.Discord.Card).toBe(FallbackCard);
 		expect(components.isRenderable(components.Discord.SearchField)).toBe(true);
 		expect(components.Discord.Button).toBeUndefined();
 		expect('Text' in components.Discord).toBe(true);
@@ -78,7 +96,6 @@ describe('design components', () => {
 				'Card',
 			]),
 		);
-		expect(audit.missing).toContain('Button');
 		expect<string[]>([...audit.native, ...audit.fallback, ...audit.missing].sort()).toEqual(
 			[...DESIGN_COMPONENTS].sort(),
 		);

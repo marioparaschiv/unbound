@@ -1,4 +1,4 @@
-import type { AddonManifest } from '@unbound-app/types';
+import type { AuthoredAddonManifest } from '@unbound-app/types';
 import { describe, expect, test } from 'bun:test';
 
 import {
@@ -9,18 +9,13 @@ import {
 	type PluginPushResult,
 } from '../src/index';
 
-const manifest: AddonManifest = {
+const manifest: AuthoredAddonManifest = {
 	id: 'com.example.plugin',
 	name: 'Example',
 	description: 'An example plugin.',
 	authors: [{ name: 'Mario', id: '1' }],
-	icon: '',
-	updates: '',
 	main: 'index.js',
 	version: '1.0.0',
-	folder: '',
-	path: '',
-	url: '',
 };
 
 describe('plugin-push round-trip', () => {
@@ -34,6 +29,21 @@ describe('plugin-push round-trip', () => {
 		};
 
 		expect(parseMessage(serializeMessage(message))).toEqual(message);
+	});
+
+	test('a plugin-push carrying bytecode survives intact, and malformed bytecode is rejected', () => {
+		const message: PluginPushRequest = {
+			type: 'plugin-push',
+			id: 'push-1',
+			addonId: manifest.id,
+			bundle: 'module.exports = {};',
+			manifest,
+			bytecode: { '98': 'xh+8Aw==' },
+		};
+
+		expect(parseMessage(serializeMessage(message))).toEqual(message);
+		expect(parseMessage(JSON.stringify({ ...message, bytecode: { '98': 1 } }))).toBeUndefined();
+		expect(parseMessage(JSON.stringify({ ...message, bytecode: ['x'] }))).toBeUndefined();
 	});
 
 	test('a valid plugin-push-result survives serialize → parse intact', () => {
@@ -79,8 +89,31 @@ describe('parseMessage rejection', () => {
 		expect(parseMessage(JSON.stringify(['log']))).toBeUndefined();
 	});
 
+	test('rejects results whose payload does not match their outcome', () => {
+		const evalResult = { type: 'eval-result', id: 'a' } as const;
+		const pushResult = { type: 'plugin-push-result', id: 'a' } as const;
+
+		expect(
+			parseMessage(JSON.stringify({ ...evalResult, ok: true, error: 'x' })),
+		).toBeUndefined();
+		expect(
+			parseMessage(JSON.stringify({ ...evalResult, ok: false, value: 'x' })),
+		).toBeUndefined();
+		expect(parseMessage(JSON.stringify({ ...pushResult, ok: false }))).toBeUndefined();
+		expect(parseMessage(JSON.stringify({ ...evalResult, ok: true, value: '1' }))).toEqual({
+			...evalResult,
+			ok: true,
+			value: '1',
+		});
+		expect(parseMessage(JSON.stringify({ ...evalResult, ok: false, error: 'x' }))).toEqual({
+			...evalResult,
+			ok: false,
+			error: 'x',
+		});
+	});
+
 	test('accepts a well-formed log line', () => {
-		const log = { type: 'log', level: 2, message: 'hi' };
+		const log = { type: 'log', level: 2, message: 'hi' } as const;
 
 		expect(parseMessage(JSON.stringify(log))).toEqual(log);
 	});
@@ -103,5 +136,37 @@ describe('eval round-trip', () => {
 		const message: EvalRequest = { type: 'eval', id: 'eval-1', code: '1', timeout: 30_000 };
 
 		expect(parseMessage(serializeMessage(message))).toEqual(message);
+	});
+});
+
+describe('hello', () => {
+	const device = {
+		platform: 'ios',
+		discordVersion: '351.0',
+		loaderVersion: '1.0.0',
+		clientVersion: '0.9.0',
+	};
+
+	test('a device hello and a status carrying it parse intact', () => {
+		const hello = { type: 'hello', device } as const;
+		const status = { type: 'device-status', connected: true, device } as const;
+
+		expect(parseMessage(JSON.stringify(hello))).toEqual(hello);
+		expect(parseMessage(JSON.stringify(status))).toEqual(status);
+		expect(parseMessage(JSON.stringify({ type: 'device-status', connected: false }))).toEqual({
+			type: 'device-status',
+			connected: false,
+		});
+	});
+
+	test('a hello missing a version is rejected', () => {
+		const { clientVersion: _, ...partial } = device;
+
+		expect(parseMessage(JSON.stringify({ type: 'hello', device: partial }))).toBeUndefined();
+		expect(
+			parseMessage(
+				JSON.stringify({ type: 'device-status', connected: true, device: partial }),
+			),
+		).toBeUndefined();
 	});
 });

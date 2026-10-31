@@ -1,6 +1,10 @@
+import {
+	javaInt,
+	javaNumber,
+	javaReference,
+	javaText,
+} from '@unbound-plugins/shared/native/android/java-values';
 import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
-
-import { javaInt, javaNumber, javaReference, javaText } from './java-values';
 
 export type SpanBridge = Pick<NativeJavaBridge, 'getClass' | 'invoke'>;
 
@@ -27,6 +31,22 @@ export type SpanHit = SpanRange & {
  */
 export function readViewText(java: SpanBridge, view: NativeJavaReference): ViewText | null {
 	const text = javaReference(java.invoke(view, 'getText', []));
+	const string = text ? javaText(java.invoke(text, 'toString', [])) : undefined;
+
+	return text && string !== undefined ? { text, string } : null;
+}
+
+/**
+ * @description Reads a text view's text on the main thread.
+ * @param java The plugin's Java bridge.
+ * @param view The text view.
+ * @returns The text and its string, or `null` when the view has no text.
+ */
+export async function readViewTextAsync(
+	java: SpanBridge & Pick<NativeJavaBridge, 'invokeAsync'>,
+	view: NativeJavaReference,
+): Promise<ViewText | null> {
+	const text = javaReference(await java.invokeAsync(view, 'getText', []));
 	const string = text ? javaText(java.invoke(text, 'toString', [])) : undefined;
 
 	return text && string !== undefined ? { text, string } : null;

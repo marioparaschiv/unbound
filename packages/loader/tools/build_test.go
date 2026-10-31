@@ -35,6 +35,21 @@ func TestValidateIPAExtensionsRequiresOriginalAndBuiltExtensions(t *testing.T) {
 	}
 }
 
+func TestRejectLinkRelayAppKeepsTheJailbreakRelayOutOfIPAs(t *testing.T) {
+	clean := []string{"Payload/Discord.app/Info.plist", "Payload/Discord.app/PlugIns/Share.appex/Info.plist"}
+	if err := rejectLinkRelayApp(clean); err != nil {
+		t.Fatalf("IPA without the relay rejected: %v", err)
+	}
+	for _, entry := range []string{
+		"Payload/UnboundLink.app/Info.plist",
+		"Payload/Discord.app/UnboundLink.app/UnboundLink",
+	} {
+		if err := rejectLinkRelayApp(append(append([]string{}, clean...), entry)); err == nil {
+			t.Fatalf("relay at %s was not rejected", entry)
+		}
+	}
+}
+
 func TestValidateIPAExtensionExecutables(t *testing.T) {
 	for _, test := range []struct {
 		name       string

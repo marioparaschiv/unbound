@@ -1,6 +1,5 @@
+import { findRenderTarget } from '@unbound-plugins/shared/react/render-target';
 import { expect, test } from 'bun:test';
-
-import { findRenderTarget } from './render-target';
 
 function Component() {
 	return null;

@@ -8,8 +8,9 @@ import type {
 import type { UnboundGlobal } from '@unbound-app/api/global';
 
 type PluginEntity = { started?: boolean; context?: PluginContext };
-type PluginEntities = Map<string, PluginEntity>;
-type PluginManager = { entities: PluginEntities };
+
+/** The slice of Unbound's plugin manager the device probes borrow a running plugin's native bridge from. */
+export type PluginManager = { entities: Map<string, PluginEntity> };
 type ModuleRecord = {
 	isInitialized?: boolean;
 	__filePath?: string;
@@ -41,7 +42,7 @@ export async function viewTree(
 	maxDepth: number,
 	maxNodes: number,
 ): Promise<string> {
-	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
+	const manager = Reflect.get(unbound, 'plugins') as UnboundGlobal['plugins'] & PluginManager;
 	const holder = (platform: string, capabilities: NativePluginCapability[]) =>
 		[...manager.entities.values()].find(
 			(entity) =>
@@ -235,7 +236,7 @@ export async function viewTree(
  * @returns Each matching view's escaped text and its spans with their ranges.
  */
 export function textSpans(unbound: UnboundGlobal, match: string, maxViews: number): string {
-	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
+	const manager = Reflect.get(unbound, 'plugins') as UnboundGlobal['plugins'] & PluginManager;
 	const context = [...manager.entities.values()].find(
 		(entity) =>
 			entity.started &&
@@ -400,7 +401,7 @@ export async function captureNativeHook(
 	duration: number,
 	samples: number,
 ): Promise<string> {
-	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
+	const manager = Reflect.get(unbound, 'plugins') as UnboundGlobal['plugins'] & PluginManager;
 	const holder = (platform: string, capability: NativePluginCapability) =>
 		[...manager.entities.values()].find(
 			(entity) =>
@@ -528,7 +529,7 @@ export async function traceFunction(
  * @returns The timer delay and main-thread round trip of each sample, in milliseconds.
  */
 export async function measureTiming(unbound: UnboundGlobal, rounds: number): Promise<string> {
-	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
+	const manager = Reflect.get(unbound, 'plugins') as UnboundGlobal['plugins'] & PluginManager;
 	const context = [...manager.entities.values()].find(
 		(entity) =>
 			entity.started &&

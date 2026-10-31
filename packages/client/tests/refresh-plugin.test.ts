@@ -28,20 +28,18 @@ export default Page;
 
 describe('refresh transform', () => {
 	test("creates elements with the global React, never bundling React's own JSX runtime", () => {
-		const code = transformModule(source, id, root, '~/lib/hot/runtime');
+		const code = transformModule(source, id, root, '~/hot-refresh/runtime');
 
-		expect(code).toContain('React.createElement(Row');
+		expect(code).toMatch(/React\.createElement\(\s*Row\b/);
 		expect(code).not.toContain('jsx-runtime');
 	});
 
 	test('rebinds each component to its stable forwarder before the module exports it', () => {
-		const code = transformModule(source, id, root, '~/lib/hot/runtime');
-		const rebind = code.indexOf(
-			'Page = __hotCanonical(Page, "src/ui/settings/example.tsx Page")',
-		);
+		const code = transformModule(source, id, root, '~/hot-refresh/runtime');
+		const rebind = code.search(/Page = \w+\(Page, "src\/ui\/settings\/example\.tsx Page"\)/);
 
 		expect(rebind).toBeGreaterThan(-1);
 		expect(code.indexOf('export default Page', rebind)).toBeGreaterThan(rebind);
-		expect(code).toContain('Row = __hotCanonical(Row, "src/ui/settings/example.tsx Row")');
+		expect(code).toMatch(/Row = \w+\(Row, "src\/ui\/settings\/example\.tsx Row"\)/);
 	});
 });

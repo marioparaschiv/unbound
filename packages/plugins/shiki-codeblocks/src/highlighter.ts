@@ -1,33 +1,15 @@
 import { createJavaScriptRegexEngine } from 'shiki/engine/javascript';
 import type { HighlighterCore, ThemedToken } from 'shiki';
-import typescript from '@shikijs/langs/typescript';
-import javascript from '@shikijs/langs/javascript';
 import { createHighlighterCore } from 'shiki/core';
-import lightPlus from '@shikijs/themes/light-plus';
-import darkPlus from '@shikijs/themes/dark-plus';
-import markdown from '@shikijs/langs/markdown';
-import python from '@shikijs/langs/python';
-import kotlin from '@shikijs/langs/kotlin';
-import swift from '@shikijs/langs/swift';
-import jsonc from '@shikijs/langs/jsonc';
-import java from '@shikijs/langs/java';
-import html from '@shikijs/langs/html';
-import rust from '@shikijs/langs/rust';
-import yaml from '@shikijs/langs/yaml';
-import bash from '@shikijs/langs/bash';
-import json from '@shikijs/langs/json';
-import css from '@shikijs/langs/css';
-import cpp from '@shikijs/langs/cpp';
-import sql from '@shikijs/langs/sql';
-import tsx from '@shikijs/langs/tsx';
-import go from '@shikijs/langs/go';
-import c from '@shikijs/langs/c';
 
 import { getLanguageMetadata, grammarUrl } from '~/catalog';
+import { loadBundledGrammar, type RegistrationSource } from '~/grammar-files';
+import { bundledThemes } from '~/bundled';
 import { highlightCodeToTokens, shouldUseHighlightJs } from '~/highlight-js';
 import { isLightTheme, loadThemeDefinition, themeUrl } from '~/themes';
 import { Limits, Palette, PLUGIN_NAME } from '~/constants';
-import type { CodeBlock } from '~/fences';
+import { expandTabs, type CodeBlock } from '~/fences';
+import { sharedTokenStore, type TokenStore } from '~/token-store';
 
 type ThemeInput = Parameters<HighlighterCore['loadTheme']>[0];
 type GrammarInput = Parameters<HighlighterCore['loadLanguage']>[0];
@@ -41,6 +23,26 @@ export type ThemeAppearance = {
 };
 
 export type Highlighter = ReturnType<typeof createHighlighter>;
+
+const LOAD_RETRY_DELAYS_MS = [1_000, 3_000, 9_000];
+
+function wait(ms: number): Promise<void> {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRetries<T>(load: () => Promise<T>, delays: number[]): Promise<T> {
+	for (let attempt = 0; ; attempt++) {
+		try {
+			return await load();
+		} catch (error) {
+			const delay = delays[attempt];
+
+			if (delay === undefined) throw error;
+
+			await wait(delay);
+		}
+	}
+}
 
 function isLightColor(hex: string): boolean | undefined {
 	const rgb = hex.replace('#', '').slice(0, 6);
@@ -56,48 +58,26 @@ function isLightColor(hex: string): boolean | undefined {
 
 /**
  * @description Creates a Shiki highlighter that loads grammars and themes on demand and caches recent tokens.
- * @returns `appearance` reads a theme's card colors, `tokenize` highlights a code block.
+ * @param registrations Where bundled languages' registrations come from.
+ * @param retryDelays How long to wait before each retry of a grammar or theme that failed to load.
+ * @param store Where results are kept across restarts.
+ * @returns `appearance` reads a theme's card colors, `tokenize` highlights a code block, and `warm` starts Shiki and loads a theme ahead of the first block.
  */
-export function createHighlighter() {
-	const bundledGrammars = new Map<string, GrammarInput>();
+export function createHighlighter(
+	registrations?: RegistrationSource,
+	retryDelays: number[] = LOAD_RETRY_DELAYS_MS,
+	store: TokenStore | undefined = sharedTokenStore(),
+) {
 	const pendingGrammars = new Map<string, Promise<void>>();
 	const pendingThemes = new Map<string, Promise<void>>();
 	const tokenCache = new Map<string, TokenLines>();
 	let core: Promise<HighlighterCore | null> | null = null;
 	let loaded: HighlighterCore | null = null;
 
-	for (const grammar of [
-		bash,
-		c,
-		cpp,
-		css,
-		go,
-		html,
-		java,
-		javascript,
-		json,
-		jsonc,
-		kotlin,
-		markdown,
-		python,
-		rust,
-		sql,
-		swift,
-		tsx,
-		typescript,
-		yaml,
-	]) {
-		for (const language of grammar) {
-			for (const name of [language.name, ...(language.aliases ?? [])]) {
-				bundledGrammars.set(name, grammar);
-			}
-		}
-	}
-
 	function getCore() {
 		core ??= createHighlighterCore({
 			langs: [],
-			themes: [darkPlus, lightPlus],
+			themes: bundledThemes(),
 			engine: createJavaScriptRegexEngine({ target: 'ES2018', forgiving: true }),
 		})
 			.then((highlighter) => (loaded = highlighter))
@@ -106,6 +86,7 @@ export function createHighlighter() {
 					`[${PLUGIN_NAME}] Failed to initialize the Shiki highlighter:`,
 					error,
 				);
+				core = null;
 
 				return null;
 			});
@@ -146,9 +127,13 @@ export function createHighlighter() {
 		let pending = pendingGrammars.get(language);
 
 		if (!pending) {
-			const grammar = bundledGrammars.get(language) ?? fetchGrammar(language);
-
-			pending = Promise.resolve(grammar)
+			pending = withRetries(
+				() =>
+					loadBundledGrammar(language, registrations).then(
+						(bundled) => bundled ?? fetchGrammar(language),
+					),
+				retryDelays,
+			)
 				.then((input) => highlighter.loadLanguage(input))
 				.finally(() => pendingGrammars.delete(language));
 
@@ -164,7 +149,7 @@ export function createHighlighter() {
 		let pending = pendingThemes.get(theme);
 
 		if (!pending) {
-			pending = loadThemeDefinition(themeUrl(theme))
+			pending = withRetries(() => loadThemeDefinition(themeUrl(theme)), retryDelays)
 				.then((definition) =>
 					highlighter.loadTheme({ ...definition, name: theme } as ThemeInput),
 				)
@@ -210,6 +195,18 @@ export function createHighlighter() {
 			return tokens;
 		}
 
+		if (store) {
+			await store.ready;
+
+			const stored = store.get(key);
+
+			if (stored) {
+				remember(key, stored);
+
+				return stored;
+			}
+		}
+
 		const highlighter = await getCore();
 
 		if (!highlighter) return null;
@@ -219,6 +216,7 @@ export function createHighlighter() {
 		const tokens = highlighter.codeToTokensBase(code, { lang: language, theme });
 
 		remember(key, tokens);
+		store?.set(key, tokens);
 
 		return tokens;
 	}
@@ -229,25 +227,32 @@ export function createHighlighter() {
 		hljsPreference: string,
 	): Promise<TokenLines | null> {
 		const language = block.sourceLanguage ?? (block.language === 'plain' ? '' : block.language);
+		const code = expandTabs(block.code);
 
 		if (!shouldUseHighlightJs(language, block.language !== 'plain', hljsPreference)) {
-			return shikiTokens(block.code, block.language, theme);
+			return shikiTokens(code, block.language, theme);
 		}
 
 		const { light } = appearance(theme);
-		const key = `${light ? 'light' : 'dark'}\u0000hljs:${language}\u0000${block.code}`;
+		const key = `${light ? 'light' : 'dark'}\u0000hljs:${language}\u0000${code}`;
 		const cached = tokenCache.get(key);
 
 		if (cached) return cached;
 
-		const tokens = highlightCodeToTokens(block.code, language, light);
+		const tokens = highlightCodeToTokens(code, language, light);
 
 		remember(key, tokens);
 
 		return tokens;
 	}
 
-	return { appearance, tokenize };
+	function warm(theme: string) {
+		void getCore()
+			.then((highlighter) => (highlighter ? loadTheme(highlighter, theme) : undefined))
+			.catch(() => undefined);
+	}
+
+	return { appearance, tokenize, warm };
 }
 
 export default { createHighlighter };

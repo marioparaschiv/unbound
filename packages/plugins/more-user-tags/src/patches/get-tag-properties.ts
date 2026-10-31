@@ -1,46 +1,37 @@
 import { getContrastingTextColor } from '@unbound-plugins/shared/colors/role-colors';
-import type { PluginContext } from '@unbound-app/api/native';
+import { patcher } from '@unbound-app/api';
 import { processColor } from 'react-native';
 
-import {
-	ChannelStore,
-	GuildMemberStore,
-	GuildStore,
-	Patcher,
-	settings,
-	TagProperties,
-} from '~/modules';
-import { combineTagText, toRendererColor, withTag, type TagColors } from '~/tag-properties';
+import { ChannelStore, GuildMemberStore, GuildStore, settings, TagProperties } from '~/modules';
+import { combineTagText, withTag, type TagColors } from '~/tag-properties';
 import { resolveTag, type Guild, type Message } from '~/tags';
 import type { LabelAppearances } from '~/label-appearances';
 import { resolveTagColors } from '~/tag-colors';
+import { noteTag, tagProblem } from '~/tag-problems';
+import { toRendererColor } from '~/platform';
 
-function toTagColors(colors: string[], platform: PluginContext['platform']): TagColors | undefined {
+function toTagColors(colors: string[]): TagColors | undefined {
 	if (!colors.length) return;
 
 	return {
-		background: toRendererColor(processColor(colors[0]), platform),
-		text: toRendererColor(processColor(getContrastingTextColor(colors)), platform),
+		background: toRendererColor(processColor(colors[0])),
+		text: toRendererColor(processColor(getContrastingTextColor(colors))),
 	};
 }
 
 /**
  * @description Adds the plugin's tag to every message header Discord builds tag properties for.
- * @param platform The platform the plugin runs on.
  * @param appearances Receives each tag's colors for the native gradient renderer.
  * @returns A function that removes the patch.
  */
-export function patchGetTagProperties(
-	platform: PluginContext['platform'],
-	appearances: LabelAppearances,
-): () => void {
+export function patchGetTagProperties(appearances: LabelAppearances): () => void {
 	if (typeof TagProperties.default !== 'function') {
 		console.error('[More User Tags] Skipped, getTagProperties is not a function.');
 
 		return () => {};
 	}
 
-	return Patcher.after(TagProperties, 'default', ({ args, result }) => {
+	return patcher.after(TagProperties, 'default', ({ args, result }) => {
 		const message: Message | undefined = args[0]?.message;
 		const user = message?.author;
 
@@ -55,7 +46,9 @@ export function patchGetTagProperties(
 		if (!tag) return;
 
 		// The member store is optional: without it a tag keeps its own color.
-		const member = guild ? GuildMemberStore.getMember?.(guild.id, user.id) : undefined;
+		const member = guild
+			? (GuildMemberStore.getMember?.(guild.id, user.id) ?? undefined)
+			: undefined;
 		const appearance = resolveTagColors(tag.color, [member, message], {
 			useRoleColor: settings.get('useRoleColor', true),
 			useEnhancedRoleColors: settings.get('useEnhancedRoleColors', true),
@@ -63,15 +56,12 @@ export function patchGetTagProperties(
 		});
 		const text = combineTagText(result.opTagText, tag.displayName);
 
-		// Only the iOS gradient renderer reads the appearances.
-		if (platform === 'ios') appearances.set(text, appearance);
+		const colors = toTagColors(appearance.colors);
 
-		return withTag(
-			result,
-			text,
-			toTagColors(appearance.colors, platform),
-			settings.get('useOpTagStyle', false),
-		);
+		appearances.set(text, appearance);
+		noteTag(message.id ?? `${message.channel_id}:${user.id}`, tagProblem(text, colors));
+
+		return withTag(result, text, colors, settings.get('useOpTagStyle', false));
 	});
 }
 

@@ -5,7 +5,7 @@ import { toasts } from '@unbound-app/api';
 import { endpoint, saveSession, type TokenPayload } from '~/session';
 
 function notify(content: string) {
-	toasts.showToast({ title: 'Translate', content });
+	toasts.show({ title: 'Translate', content });
 }
 
 async function finishLogin(location: string, redirectUri: string) {

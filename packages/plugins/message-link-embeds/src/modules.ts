@@ -1,6 +1,7 @@
 import type { MetroFunction } from '@unbound-app/api/metro';
+import type { FluxStore } from '@unbound-app/api/flux';
 import type { ComponentType } from 'react';
-import { metro, patcher } from '@unbound-app/api';
+import { metro, flux } from '@unbound-app/api';
 
 import type { LinkTarget } from '~/link-targets';
 
@@ -29,6 +30,11 @@ export type Renderers = {
 	ChatItem: ComponentType<ChatItemProps>;
 };
 
+export type Embeds = {
+	drawn: () => number;
+	dispose: () => Promise<void> | undefined;
+};
+
 type RowInput = {
 	message: Message;
 	rowType: number;
@@ -50,21 +56,10 @@ type Row = {
 	separatorBefore?: boolean;
 };
 
-type MessageStoreType = {
+type MessageStoreType = FluxStore & {
 	getMessage: (channelId: string, messageId: string) => Message | undefined;
 	getMessages: (channelId: string) => { _array: Message[] } | undefined;
 	getLastMessage: (channelId: string) => Message | undefined;
-	addChangeListener: (listener: () => void) => void;
-	removeChangeListener: (listener: () => void) => void;
-};
-
-type ChannelStoreType = {
-	getChannel: (channelId: string) => { name?: string } | undefined;
-};
-
-type SelectedChannelStoreType = {
-	getChannelId: () => string | undefined;
-	getLastSelectedChannelId: () => string | undefined;
 };
 
 type MessageActionsType = {
@@ -77,17 +72,13 @@ type ComponentHolder = {
 	render?: unknown;
 };
 
-export const MessageStore = metro.findStore('Message', { lazy: true }) as MessageStoreType;
-export const ChannelStore = metro.findStore('Channel', { lazy: true }) as ChannelStoreType;
-export const SelectedChannelStore = metro.findStore('SelectedChannel', {
-	lazy: true,
-}) as SelectedChannelStoreType;
+export const MessageStore = flux.getStore('Message', { lazy: true }) as MessageStoreType;
+export const ChannelStore = flux.getStore('Channel', { lazy: true });
+export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
 
 export const MessageActions = metro.api.Messages as MessageActionsType;
 
 export const MessageRowData = metro.findByProps('generateMessageRowData', { lazy: true });
-
-export const Patcher = patcher.createPatcher('unbound.message-link-embeds');
 
 // The media components patched to play inside embeds, loaded when Discord first shows media.
 export const FastImageSource = 'components_native/common/FastImage.tsx';
@@ -114,17 +105,20 @@ function unwrapComponent(
 export function findRenderers(): Partial<Renderers> {
 	// A build that moves ChatItem's file still exports these message views beside it.
 	const chatItemModule =
-		metro.findByFilePath('components_native/chat/ChatItem.tsx', { interop: false }) ??
+		metro.findByFilePath('components_native/chat/ChatItem.tsx', {
+			interop: false,
+			lazy: false,
+		}) ??
 		metro.findByProps(
 			'DCDMessageView',
 			'DCDSystemMessageView',
 			'DCDAutoModerationSystemMessageView',
-			{ interop: false },
+			{ interop: false, lazy: false },
 		);
 
 	return {
-		MessageRecord: metro.findByName('MessageRecord'),
-		RowManager: metro.findByName('RowManager'),
+		MessageRecord: metro.findByName('MessageRecord', { lazy: false }),
+		RowManager: metro.findByName('RowManager', { lazy: false }),
 		ChatItem: unwrapComponent(chatItemModule?.default) ?? unwrapComponent(chatItemModule),
 	};
 }

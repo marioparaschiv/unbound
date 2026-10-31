@@ -1,12 +1,11 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
-import type { ButtonSize } from '@unbound-app/types';
 
-import { Discord } from '~/api/metro/components';
-import { Messages, format } from '~/api/i18n';
-import { Linking } from '~/api/metro/api';
-import { Screens } from '~/lib/constants';
-import { Icons } from '~/api/assets';
+import { messages, format } from '~/i18n/api';
+import { Discord } from '~/metro/components';
+import { Screens } from '~/core/constants';
+import { icons } from '~/assets/api';
 
+import DownloadButton from './download-button';
 import Changelog from './changelog';
 import { headline } from './format';
 
@@ -14,47 +13,28 @@ type LoaderUpdateRowProps = {
 	update: LoaderUpdate;
 };
 
-type DownloadButtonProps = {
-	url: string;
-	text: string;
-	size?: ButtonSize;
-	grow?: boolean;
-};
-
-function DownloadButton({ url, text, size = 'sm', grow }: DownloadButtonProps) {
-	return (
-		<Discord.Button
-			size={size}
-			grow={grow}
-			variant='primary'
-			text={text}
-			onPress={() => void Linking.openURL(url)}
-		/>
-	);
-}
-
 /** A newer native loader release: the version jump and what changed; pressing it opens the changelog. */
 function LoaderUpdateRow({ update }: LoaderUpdateRowProps) {
 	const navigation = Discord.useNavigation();
 	const from = globalThis.UNBOUND_LOADER.version;
 	const summary = headline(update.changelogs[0]?.changelog ?? update.changelog);
 	const jump = `${from} → ${update.version}`;
-	const icon = Icons.WrenchIcon;
+	const icon = icons.WrenchIcon;
 
 	return (
 		<Discord.TableRow
-			label={Messages.UNBOUND_UPDATES_LOADER}
+			label={messages.UNBOUND_UPDATES_LOADER}
 			subLabel={summary ? `${jump}\n${summary}` : jump}
 			labelLineClamp={1}
 			subLabelLineClamp={2}
 			icon={<Discord.TableRowIcon source={icon} />}
-			trailing={<DownloadButton url={update.url} text={Messages.UNBOUND_UPDATES_DOWNLOAD} />}
+			trailing={<DownloadButton url={update.url} text={messages.UNBOUND_UPDATES_DOWNLOAD} />}
 			onPress={() =>
-				navigation.push(Screens.Custom, {
-					title: Messages.UNBOUND_UPDATES_LOADER,
+				navigation.push(Screens.PanelHost, {
+					title: messages.UNBOUND_UPDATES_LOADER,
 					render: () => (
 						<Changelog
-							name={Messages.UNBOUND_UPDATES_LOADER}
+							name={messages.UNBOUND_UPDATES_LOADER}
 							icon={icon}
 							installed={from}
 							offered={update.version}

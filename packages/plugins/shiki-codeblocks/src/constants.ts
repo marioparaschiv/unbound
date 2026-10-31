@@ -12,6 +12,8 @@ export const CARD_SETTINGS = [
 	'useDevIcon',
 ];
 
+export const SHIKI_LANGS_VERSION = '4.5.0';
+
 export const SHIKI_ASSET_COMMIT = 'bc5436518111d87ea58eb56d97b3f9bec30e6b83';
 
 export const LANGUAGE_CATALOG_URL =

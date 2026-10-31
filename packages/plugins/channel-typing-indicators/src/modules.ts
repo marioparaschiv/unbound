@@ -1,17 +1,17 @@
 import createRunningFlag from '@unbound-plugins/shared/react/running-flag';
-import { metro, patcher, storage } from '@unbound-app/api';
+import { metro, flux } from '@unbound-app/api';
 
-export const TypingStore = metro.findStore('Typing', { lazy: true });
-export const UserStore = metro.stores.Users;
+export const TypingStore = flux.getStore('Typing', { lazy: true });
+export const UserStore = flux.getStore('User', { lazy: true });
 
 // Optional: without them, the indicator skips the filter or detail they provide.
-export const RelationshipStore = metro.findStore('Relationship', { lazy: true });
-export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
-export const UserGuildSettingsStore = metro.findStore('UserGuildSettings', { lazy: true });
-export const GuildMemberStore = metro.findStore('GuildMember', { lazy: true });
+export const RelationshipStore = flux.getStore('Relationship', { lazy: true });
+export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
+export const UserGuildSettingsStore = flux.getStore('UserGuildSettings', { lazy: true });
+export const GuildMemberStore = flux.getStore('GuildMember', { lazy: true });
 
-export const TypingStoreFilter = metro.filters.byStore('Typing');
-export const UserStoreFilter = metro.filters.byStore('User');
+export const TypingStoreFilter = metro.filters.byFluxStore('Typing');
+export const UserStoreFilter = metro.filters.byFluxStore('User');
 
 export const TextChannelPath = 'modules/channel_list_v2/native/items/TextChannel.tsx';
 export const ThreadChannelPath = 'modules/channel_list_v2/native/items/ThreadChannel.tsx';
@@ -42,6 +42,4 @@ export const ActionSheets = metro.api.ActionSheets;
 // The same module as `metro.common.Theme`, which its typings do not declare yet.
 export const Theme = metro.findByProps('colors', 'internal', { lazy: true });
 
-export const settings = storage.getStore('unbound.channel-typing-indicators');
-export const Patcher = patcher.createPatcher('unbound.channel-typing-indicators');
-export const IndicatorsRunning = createRunningFlag('unbound.channel-typing-indicators');
+export const IndicatorsRunning = createRunningFlag(addon.id);

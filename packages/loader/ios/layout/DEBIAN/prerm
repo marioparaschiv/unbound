@@ -1,0 +1,3 @@
+#!/bin/sh
+uicache -u /var/jb/Applications/UnboundLink.app || true
+exit 0

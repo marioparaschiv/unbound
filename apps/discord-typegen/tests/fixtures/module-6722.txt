@@ -1,0 +1,212 @@
+    r10 = r7.__d;
+    r0 = 6722;
+    r9 = [19, 21, 560, 578, 6723, 6724, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun6723: for(var _fun6723_ip = 0; ; ) switch(_fun6723_ip) {
+case 0:
+            r4 = a1;
+            var _closure0_slot0 = r4;
+            r2 = a5;
+            r3 = a6;
+            var _closure0_slot1 = r3;
+            r1 = global;
+            r8 = r1.Object;
+            r6 = r8.defineProperty;
+            r5 = '__esModule';
+            r1 = {'value': true};
+            r1 = r6.bind(r8)(r2, r5, r1);
+            r5 = r3[r0];
+            r0 = undefined;
+            r1 = a3;
+            r6 = r1.bind(r0)(r5);
+            r1 = r3[r1];
+            r1 = r4.bind(r0)(r1);
+            r1 = r1.jsxs;
+            var _closure0_slot2 = r1;
+            r5 = r6.memo;
+            r1 = r3[r2];
+            r8 = r4.bind(r0)(r1);
+            r1 = r8.isReactCompilerEnabled;
+            r1 = r1.bind(r8)();
+            if(r1) { _fun6723_ip = 120; continue _fun6723 }
+case 113:
+            r1 = function(a0) { // Original name: NavigatorScreen, environment: r7
+                _fun39321: for(var _fun39321_ip = 0; ; ) switch(_fun39321_ip) {
+case 0:
+                    r2 = a0;
+                    r9 = r2.screen;
+                    r6 = r2.route;
+                    r8 = r2.navigation;
+                    r5 = r2.viewStyle;
+                    r10 = r9.customNavbar;
+                    r3 = _closure0_slot0;
+                    r2 = _closure0_slot1;
+                    r7 = r2[r4];
+                    r0 = undefined;
+                    r7 = r3.bind(r0)(r7);
+                    r11 = r7.designConfig;
+                    r7 = r11.useTrackNavigatorScreenImpression;
+                    r7 = r7.bind(r11)(r9, r6);
+                    r7 = null;
+                    r1 = r7 != r10;
+                    if(!r1) { _fun39321_ip = 86; continue _fun39321 }
+case 82:
+                    r7 = r10.bind(r0)();
+case 86:
+                    r4 = _closure0_slot2;
+                    r2 = r2[r5];
+                    r2 = r3.bind(r0)(r2);
+                    r3 = r2.PostponeRender;
+                    r2 = {'postpone': null, 'ignoreKeyboard': null, 'viewStyle': null, 'children': null};
+                    r10 = r9.postponeRender;
+                    r2[0] = r10;
+                    r10 = r9.ignoreKeyboard;
+                    r2[1] = r10;
+                    r2[2] = r5;
+                    r5 = new Array(2);
+                    r5[0] = r7;
+                    r7 = r9.render;
+                    r6 = r6.params;
+                    r6 = r7.bind(r9)(r6, r8);
+                    r5[1] = r6;
+                    r2[3] = r5;
+                    r2 = r4.bind(r0)(r3, r2);
+                    return r2;
+                }
+            };
+            _fun6723_ip = 125; continue _fun6723;
+case 120:
+            r1 = function(a0) { // Original name: NavigatorScreen, environment: r7
+                _fun39320: for(var _fun39320_ip = 0; ; ) switch(_fun39320_ip) {
+case 0:
+                    r3 = a0;
+                    r10 = _closure0_slot0;
+                    r4 = _closure0_slot1;
+                    r5 = r4[r3];
+                    r1 = undefined;
+                    r6 = r10.bind(r1)(r5);
+                    r5 = r6.c;
+                    r0 = 12;
+                    r5 = r5.bind(r6)(r0);
+                    r8 = r3.screen;
+                    r14 = r3.route;
+                    r15 = r3.navigation;
+                    r6 = r3.viewStyle;
+                    r12 = r8.customNavbar;
+                    r3 = r4[r4];
+                    r3 = r10.bind(r1)(r3);
+                    r7 = r3.designConfig;
+                    r3 = r7.useTrackNavigatorScreenImpression;
+                    r3 = r3.bind(r7)(r8, r14);
+                    r9 = null;
+                    r2 = r9 != r12;
+                    if(!r2) { _fun39320_ip = 141; continue _fun39320 }
+case 104:
+                    r3 = r5[r0];
+                    if(!(r3 === r12)) { _fun39320_ip = 118; continue _fun39320 }
+case 112:
+                    r3 = r5[r1];
+                    _fun39320_ip = 138; continue _fun39320;
+case 118:
+                    r7 = r12.bind(r1)();
+                    r0 = 0;
+                    r5[r0] = r12;
+                    r0 = 1;
+                    r5[r0] = r7;
+                    r3 = r7;
+case 138:
+                    r9 = r3;
+case 141:
+                    r13 = r8.postponeRender;
+                    r12 = r8.ignoreKeyboard;
+                    r3 = r5[r2];
+                    if(!(r3 === r15)) { _fun39320_ip = 189; continue _fun39320 }
+case 161:
+                    r7 = r5[r3];
+                    r3 = r14.params;
+                    if(!(r7 === r3)) { _fun39320_ip = 189; continue _fun39320 }
+case 175:
+                    r3 = r5[r4];
+                    if(!(r3 === r8)) { _fun39320_ip = 189; continue _fun39320 }
+case 183:
+                    r7 = r5[r5];
+                    _fun39320_ip = 244; continue _fun39320;
+case 189:
+                    r16 = r8.render;
+                    r3 = r14.params;
+                    r3 = r16.bind(r8)(r3, r15);
+                    r0 = 2;
+                    r5[r0] = r15;
+                    r14 = r14.params;
+                    r0 = 3;
+                    r5[r0] = r14;
+                    r0 = 4;
+                    r5[r0] = r8;
+                    r0 = 5;
+                    r5[r0] = r3;
+                    r7 = r3;
+case 244:
+                    r3 = r5[r6];
+                    if(!(r3 === r9)) { _fun39320_ip = 302; continue _fun39320 }
+case 252:
+                    r14 = r5[r7];
+                    r3 = r8.ignoreKeyboard;
+                    if(!(r14 === r3)) { _fun39320_ip = 302; continue _fun39320 }
+case 266:
+                    r14 = r5[r8];
+                    r3 = r8.postponeRender;
+                    if(!(r14 === r3)) { _fun39320_ip = 302; continue _fun39320 }
+case 280:
+                    r3 = r5[r9];
+                    if(!(r3 === r7)) { _fun39320_ip = 302; continue _fun39320 }
+case 288:
+                    r3 = r5[r10];
+                    if(!(r3 === r6)) { _fun39320_ip = 302; continue _fun39320 }
+case 296:
+                    r3 = r5[r11];
+                    _fun39320_ip = 422; continue _fun39320;
+case 302:
+                    r11 = _closure0_slot2;
+                    r4 = r4[r5];
+                    r4 = r10.bind(r1)(r4);
+                    r10 = r4.PostponeRender;
+                    r4 = {'postpone': null, 'ignoreKeyboard': null, 'viewStyle': null, 'children': null};
+                    r4[0] = r13;
+                    r4[1] = r12;
+                    r4[2] = r6;
+                    r12 = new Array(2);
+                    r12[0] = r9;
+                    r12[1] = r7;
+                    r4[3] = r12;
+                    r4 = r11.bind(r1)(r10, r4);
+                    r0 = 6;
+                    r5[r0] = r9;
+                    r9 = r8.ignoreKeyboard;
+                    r0 = 7;
+                    r5[r0] = r9;
+                    r8 = r8.postponeRender;
+                    r0 = 8;
+                    r5[r0] = r8;
+                    r0 = 9;
+                    r5[r0] = r7;
+                    r0 = 10;
+                    r5[r0] = r6;
+                    r0 = 11;
+                    r5[r0] = r4;
+                    r3 = r4;
+case 422:
+                    return r3;
+                }
+            };
+case 125:
+            r1 = r5.bind(r6)(r1);
+            r3 = r3[r6];
+            r5 = r4.bind(r0)(r3);
+            r4 = r5.fileFinishedImporting;
+            r3 = 'design/components/Navigator/native/NavigatorScreen.native.tsx';
+            r3 = r4.bind(r5)(r3);
+            r2['NavigatorScreen'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

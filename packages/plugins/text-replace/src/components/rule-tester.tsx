@@ -1,5 +1,6 @@
 import { applyRules } from '@unbound-plugins/shared/text-replace/rules';
 import { Discord } from '@unbound-app/api/metro/components';
+import { ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import type { Ruleset } from '~/ruleset';
@@ -14,17 +15,17 @@ function RuleTester({ ruleset }: RuleTesterProps) {
 
 	return (
 		<Discord.Stack spacing={12}>
-			<Discord.TableRowGroup title='Try your rules'>
-				<Discord.TableRow
+			<ui.Section title='Try your rules'>
+				<ui.Row
 					label='Test your rules'
 					trailing={<Discord.TableRow.TrailingText text={shown ? '⌃' : '⌄'} />}
 					onPress={() => setShown((value) => !value)}
 				/>
-			</Discord.TableRowGroup>
+			</ui.Section>
 			{shown ? (
 				<>
 					<Discord.TextInput
-						title='Example message'
+						label='Example message'
 						placeholder='Type a message to test'
 						autoCapitalize='none'
 						autoCorrect={false}
@@ -32,14 +33,14 @@ function RuleTester({ ruleset }: RuleTesterProps) {
 						value={example}
 						onChange={setExample}
 					/>
-					<Discord.TableRowGroup title='Result'>
-						<Discord.TableRow
+					<ui.Section title='Result'>
+						<ui.Row
 							label={
 								applyRules(example, ruleset.stringRules, ruleset.regexRules) ||
 								'Your transformed message will appear here.'
 							}
 						/>
-					</Discord.TableRowGroup>
+					</ui.Section>
 				</>
 			) : null}
 		</Discord.Stack>

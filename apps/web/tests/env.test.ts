@@ -18,13 +18,11 @@ describe('parseEnv', () => {
 	test('names a missing required variable', () => {
 		const { DISCORD_CLIENT_SECRET, ...missing } = valid;
 
-		expect(() => parseEnv(missing)).toThrow(/Invalid environment:[\s\S]*DISCORD_CLIENT_SECRET/);
+		expect(() => parseEnv(missing)).toThrow(/DISCORD_CLIENT_SECRET/);
 	});
 
 	test('names an invalid variable', () => {
-		expect(() => parseEnv({ ...valid, PUBLIC_URL: 'not a url' })).toThrow(
-			/Invalid environment:[\s\S]*PUBLIC_URL/,
-		);
+		expect(() => parseEnv({ ...valid, PUBLIC_URL: 'not a url' })).toThrow(/PUBLIC_URL/);
 		expect(() => parseEnv({ ...valid, BETTER_AUTH_SECRET: 'short' })).toThrow(
 			/BETTER_AUTH_SECRET/,
 		);

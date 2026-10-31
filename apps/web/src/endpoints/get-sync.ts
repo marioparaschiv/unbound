@@ -1,15 +1,12 @@
 import { syncStateSchema } from '@unbound-app/contracts/sync';
 import { z } from 'zod';
 
+import { callerEndpoint } from '~/lib/api/endpoint';
 import { getSyncState } from '~/lib/sync-documents';
-import { requireCaller } from '~/lib/api/caller';
-import endpoint from '~/lib/api/endpoint';
 
-const getSyncEndpoint = endpoint(
+const getSyncEndpoint = callerEndpoint(
 	{ body: z.undefined(), query: z.undefined(), response: syncStateSchema },
-	async ({ ctx, request }) => {
-		const { user } = await requireCaller(ctx, request.headers);
-
+	async ({ ctx, caller: { user } }) => {
 		return getSyncState(ctx, user.id);
 	},
 );

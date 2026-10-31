@@ -1,13 +1,13 @@
 # Design System
 
-This documents the Discord design-system primitives Unbound composes for its UI. It is the reference for anyone building settings pages, addon views, or toasts. The rule from `CLAUDE.md` still applies: compose these primitives directly and verify live on device.
+This documents the Discord design-system primitives Unbound composes for its UI. It is the reference for anyone building settings pages, addon views, or toasts. Compose these primitives directly and verify live on device (the `client-ui` and `unbound-dev` skills).
 
 ## The barrel
 
 Discord ships its entire mobile design system as **one metro module**, keyed by `createStyles`, `dismissAlerts`, and `ContextMenu`. Unbound resolves it once and re-exports it as `Discord`:
 
 ```ts
-// ~/api/metro/components.ts
+// ~/metro/components.ts
 export const Discord: DesignModule = findByPropsLazy(
 	'createStyles',
 	'dismissAlerts',
@@ -15,16 +15,16 @@ export const Discord: DesignModule = findByPropsLazy(
 );
 ```
 
-The export is typed as `DesignModule` (`packages/types/typings/components.ts`). That interface names and types the primitives listed below, but keeps a `[key: PropertyKey]: any` index signature so unlisted members, and anything Discord adds in a future build, stay accessible without a type change. Add a precise type there when a member earns one; you never need to widen the barrel to use something new.
+The export is typed as `DesignModule` (`packages/types/typings/components.ts`): the generated components plus the hand-typed helpers. Every component the barrel exports (`Text`, `TableRow`, `Menu`, `BottomSheet`, `Modal`, ...) is typed only by the generator, as `DesignBarrelComponents` in `packages/discord-types/src/barrels.gen.d.ts` (published as `@unbound-app/discord-types/design`). Regenerate it with `bun run generate-discord-types` after a Discord update, and fix a wrong component type in the generator, never by hand. Take a component's props with `ComponentProps<DesignModule['Text']>`. The barrel's non-component exports (`createStyles`, `useToken`, `openAlert`, `useNavigation`, the colour helpers, runtime enums, ...) are not generated; they are hand-typed in `DesignHelpers`, whose keys never overlap a generated component.
 
 On the v3 branch this same module was aliased `Design` (see `src/built-ins/registry.ts`, `types/discord/components.d.ts` typed it as `ComponentsModule`). It is the same module; only the name changed. There is no separate barrel to find. Everything below lives on `Discord.*`.
 
-Adjacent module barrels (not part of this design-system module) live in `~/api/metro/common.ts`: `Theme` (color tokens), `Constants` (`Fonts`, `Endpoints`), `Radius`, `Reanimated`, `Gestures`, `SVG`, `Flux`, `Dispatcher`. Reach for those for tokens and platform APIs; reach for `Discord` for components.
+Adjacent module barrels (not part of this design-system module) live in `~/metro/common.ts`: `Theme` (color tokens), `Constants` (`Fonts`, `Endpoints`), `Radius`, `Reanimated`, `Gestures`, `SVG`, `Flux`, `Dispatcher`. Reach for those for tokens and platform APIs; reach for `Discord` for components.
 
 ## How to use a primitive
 
 ```tsx
-import { Discord } from '~/api/metro/components';
+import { Discord } from '~/metro/components';
 
 <Discord.TableRowGroup title={Messages.UNBOUND_GENERAL}>
 	<Discord.TableRow
@@ -37,7 +37,7 @@ import { Discord } from '~/api/metro/components';
 </Discord.TableRowGroup>;
 ```
 
-Styles come from `Discord.createStyles({ … })` in a sibling `*.style.ts`; reference tokens through `Theme.colors.*` and `Constants.Fonts.*`, never hard-coded values (see `CLAUDE.md` §8.4).
+Styles come from `Discord.createStyles({ … })` in a sibling `*.style.ts`; reference tokens through `Theme.colors.*` and `Constants.Fonts.*`, never hard-coded values (see the `client-ui` skill).
 
 ---
 

@@ -577,7 +577,7 @@ func installLatestDiscord(serial, channel, staging string) error {
 	sources := discordAPKSources{
 		sniffURL:   strings.TrimRight(envOr("DISCORD_SNIFF_URL", defaultSniffURL), "/"),
 		trackerURL: strings.TrimRight(envOr("DISCORD_TRACKER", defaultAndroidTracker), "/"),
-		client:     &http.Client{Timeout: discordAPKLookupLimit},
+		client:     lookupClient(discordAPKLookupLimit),
 	}
 	code, err := sources.latestCode(ctx, channel)
 	if err != nil {

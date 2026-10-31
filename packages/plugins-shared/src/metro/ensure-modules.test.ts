@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 
 mock.module('@unbound-app/api', () => ({}));
 
-const { ensureModules } = await import('./ensure-modules');
+const { ensureModules } = await import('@unbound-plugins/shared/metro/ensure-modules');
 
 function lazy(module: { value: number } | undefined) {
 	return new Proxy(

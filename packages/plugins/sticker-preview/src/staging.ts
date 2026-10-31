@@ -185,9 +185,9 @@ export function createStaging() {
 	function dispose() {
 		disposed = true;
 
-		for (const channelId of new Set([...stickers.channels(), ...pending])) clear(channelId);
+		for (const channelId of [...sendHooks.keys()].reverse()) unhookSend(channelId);
 
-		for (const channelId of [...sendHooks.keys()]) unhookSend(channelId);
+		for (const channelId of new Set([...stickers.channels(), ...pending])) clear(channelId);
 
 		pending.clear();
 		sendButtons.clear();

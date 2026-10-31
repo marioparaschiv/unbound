@@ -1,3 +1,4 @@
+import { patcher } from '@unbound-app/api';
 import {
 	getRoleColorAppearance,
 	type RoleColorAppearance,
@@ -7,7 +8,7 @@ import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import { cloneElement } from 'react';
 import { Text } from 'react-native';
 
-import { GuildMemberStore, GuildRoleStore, Patcher, USERS_FAST_LIST_PATH } from '~/modules';
+import { GuildMemberStore, GuildRoleStore, USERS_FAST_LIST_PATH } from '~/modules';
 import { PLUGIN_NAME } from '~/constants';
 import { paintRoleText } from '~/role-text';
 import type { Rendered } from '~/types';
@@ -50,6 +51,18 @@ type UsersFastListModule = {
 	UsersFastList?: ListRender | { render?: ListRender };
 };
 
+type FunctionListModule = { UsersFastList: ListRender };
+
+type ForwardRefList = { render: ListRender };
+
+function isFunctionList(module: UsersFastListModule): module is FunctionListModule {
+	return typeof module.UsersFastList === 'function';
+}
+
+function isForwardRef(list: UsersFastListModule['UsersFastList']): list is ForwardRefList {
+	return typeof list === 'object' && typeof list.render === 'function';
+}
+
 function paintSectionHeaders(props: UserListProps, result: Rendered): Rendered | undefined {
 	const renderHeader = result?.props?.renderSectionHeader;
 
@@ -76,14 +89,14 @@ function patchLoadedUsersFastList(module: UsersFastListModule): () => void {
 
 	if (!ensureModules(feature, { GuildRoleStore })) return () => {};
 
-	if (typeof list === 'function') {
-		return Patcher.after(module, 'UsersFastList', ({ args: [props], result }) =>
+	if (isFunctionList(module)) {
+		return patcher.after(module, 'UsersFastList', ({ args: [props], result }) =>
 			paintSectionHeaders(props as UserListProps, result),
 		);
 	}
 
-	if (typeof list?.render === 'function') {
-		return Patcher.after(list, 'render', ({ args: [props], result }) =>
+	if (isForwardRef(list)) {
+		return patcher.after(list, 'render', ({ args: [props], result }) =>
 			paintSectionHeaders(props as UserListProps, result),
 		);
 	}

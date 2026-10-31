@@ -1,6 +1,8 @@
 import { appendFileSync, readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
+import { workflowFileProblems } from './workflow-files';
+
 export type ConfigKind = 'secret' | 'var';
 
 export type ConfigRequirement = {
@@ -64,9 +66,33 @@ export function referencedConfig(
  * @returns The requirements keyed by name.
  */
 export function loadRequirements(): ConfigRequirements {
-	return JSON.parse(
-		readFileSync(join(root, '.github/config-requirements.json'), 'utf8'),
-	) as ConfigRequirements;
+	const path = join(root, '.github/config-requirements.json');
+	const value: unknown = JSON.parse(readFileSync(path, 'utf8'));
+
+	if (!isRequirements(value)) {
+		throw new Error(`${path} must map each name to { kind, required, purpose }.`);
+	}
+
+	return value;
+}
+
+// UNKNOWN: one entry of the parsed requirements file.
+function isRequirement(value: unknown): value is ConfigRequirement {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'kind' in value &&
+		(value.kind === 'secret' || value.kind === 'var') &&
+		'required' in value &&
+		typeof value.required === 'boolean' &&
+		'purpose' in value &&
+		typeof value.purpose === 'string'
+	);
+}
+
+// UNKNOWN: the parsed requirements file.
+function isRequirements(value: unknown): value is ConfigRequirements {
+	return typeof value === 'object' && value !== null && Object.values(value).every(isRequirement);
 }
 
 /**
@@ -139,7 +165,13 @@ if (import.meta.main) {
 		appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
 	}
 
-	if (statuses.some((status) => status.required && !status.present)) {
+	const problems = workflowFileProblems(root);
+
+	for (const problem of problems) {
+		console.error(problem);
+	}
+
+	if (problems.length || statuses.some((status) => status.required && !status.present)) {
 		process.exit(1);
 	}
 }

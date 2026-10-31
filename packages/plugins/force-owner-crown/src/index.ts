@@ -1,20 +1,14 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest, recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import { patchOwnerCrown } from '~/patches/message-row-data';
 import { GuildStore, MessageRowData } from '~/modules';
 
-let dispose = () => {};
-
 function start() {
 	if (!ensureModules('Force Owner Crown', { MessageRowData, GuildStore })) return;
 
-	dispose = applyFeatures('Force Owner Crown', [patchOwnerCrown]);
+	patchOwnerCrown();
+	recordApplied(1);
 }
 
-function stop() {
-	dispose();
-	dispose = () => {};
-}
-
-export default { start, stop };
+export default { start, selfTest: featureSelfTest };

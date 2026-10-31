@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
 import { discoverAddons, type DiscoveredAddon } from '~/lib/discovery';
+import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
 import { buildAddon } from '~/lib/build-addon';
 import { loadConfig } from '~/lib/config';
 
@@ -19,6 +20,11 @@ export async function resolveAddonTarget(
 	buildTimeoutMs?: number,
 ): Promise<AddonTarget> {
 	const resolved = loadConfig();
+
+	if ('error' in resolved) {
+		return resolved;
+	}
+
 	const addons = await discoverAddons(resolved);
 	const directory = resolve(target);
 	const addon = addons.find((entry) => entry.id === target || resolve(entry.dir) === directory);
@@ -27,7 +33,15 @@ export async function resolveAddonTarget(
 		return { error: `No addon in this workspace has the id or directory ${target}.` };
 	}
 
-	if (build && !(await buildAddon(addon, resolved.config.build, {}, buildTimeoutMs))) {
+	if (!build) {
+		return { addon };
+	}
+
+	const built =
+		(await buildAddon(addon, resolved.config.build, {}, buildTimeoutMs)) &&
+		(await runBuildChecks(addon, DEV_BUILD_CHECKS));
+
+	if (!built) {
 		return { error: `Building ${addon.id} failed.` };
 	}
 

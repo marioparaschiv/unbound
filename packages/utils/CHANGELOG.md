@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.9.2](https://github.com/marioparaschiv/unbound/compare/utils-v0.9.1...utils-v0.9.2) (2026-10-31)
+
+
+### Code Refactoring
+
+* fix architecture smells and enforce them with oxlint rules ([#574](https://github.com/marioparaschiv/unbound/issues/574)) ([577a2af](https://github.com/marioparaschiv/unbound/commit/577a2af9ca4f479a805765481927b1ff9302c1ec))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 0.11.0
+
+## [0.9.1](https://github.com/marioparaschiv/unbound/compare/utils-v0.9.0...utils-v0.9.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **client:** fall back to the Forms module Discord 353 still ships ([6f25cae](https://github.com/marioparaschiv/unbound/commit/6f25cae07c15d3579927b5e3d3d97ab7bad05456))
+
+
+### Continuous Integration
+
+* **loader:** reuse IPAs, typecheck PRs and fix the Forms fallback ([ffc6658](https://github.com/marioparaschiv/unbound/commit/ffc6658c13366c3abebff9b4ff1aac5bbeb672de))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 0.10.0
+
 ## [0.9.0](https://github.com/marioparaschiv/unbound/compare/utils-v0.8.4...utils-v0.9.0) (2026-10-25)
 
 

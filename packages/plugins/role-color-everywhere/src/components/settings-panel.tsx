@@ -1,8 +1,6 @@
-import Page from '@unbound-plugins/shared/components/page';
 import { Discord } from '@unbound-app/api/metro/components';
+import { storage, ui } from '@unbound-app/api';
 import { View } from 'react-native';
-
-import { settings } from '~/modules';
 
 type SwitchProps = {
 	setting: string;
@@ -12,10 +10,10 @@ type SwitchProps = {
 };
 
 function SettingSwitch({ setting, label, subLabel, fallback }: SwitchProps) {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(addon.id);
 
 	return (
-		<Discord.TableSwitchRow
+		<ui.SwitchRow
 			label={label}
 			subLabel={subLabel}
 			value={store.get(setting, fallback)}
@@ -25,12 +23,12 @@ function SettingSwitch({ setting, label, subLabel, fallback }: SwitchProps) {
 }
 
 function SettingsPanel() {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(addon.id);
 	const saturation = store.get('messageSaturation', 30);
 
 	return (
-		<Page>
-			<Discord.TableRowGroup title='Chat'>
+		<ui.Page>
+			<ui.Section title='Chat'>
 				<SettingSwitch
 					setting='chatMentions'
 					label='Color Mentions'
@@ -44,7 +42,7 @@ function SettingsPanel() {
 					fallback={false}
 				/>
 				{Discord.Slider ? (
-					<Discord.TableRow
+					<ui.Row
 						label={
 							<View
 								style={{
@@ -72,18 +70,23 @@ function SettingsPanel() {
 						}
 						subLabel={
 							<Discord.Slider
+								minValue={0}
+								maxValue={100}
 								minimumValue={0}
 								maximumValue={100}
 								value={saturation}
-								onValueChange={(value) =>
+								onChange={(value: number) =>
+									store.set('messageSaturation', Math.round(value / 10) * 10)
+								}
+								onValueChange={(value: number) =>
 									store.set('messageSaturation', Math.round(value / 10) * 10)
 								}
 							/>
 						}
 					/>
 				) : null}
-			</Discord.TableRowGroup>
-			<Discord.TableRowGroup title='People and Roles'>
+			</ui.Section>
+			<ui.Section title='People and Roles'>
 				<SettingSwitch
 					setting='typingUsers'
 					label='Typing Names'
@@ -114,8 +117,8 @@ function SettingsPanel() {
 					subLabel='Color members’ names in voice user lists'
 					fallback
 				/>
-			</Discord.TableRowGroup>
-		</Page>
+			</ui.Section>
+		</ui.Page>
 	);
 }
 

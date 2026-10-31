@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { languageLabel, searchLanguages } from './languages';
+import { LANGUAGES } from '~/constants';
+
+import { languageLabel, searchLanguages } from '~/languages';
 
 describe('languageLabel', () => {
 	test('adds the native name when it differs', () => {
@@ -19,7 +21,7 @@ describe('searchLanguages', () => {
 	test('lists every language for a blank query, sorted by name', () => {
 		const names = searchLanguages('  ').map(({ name }) => name);
 
-		expect(names.length).toBe(35);
+		expect(names).toHaveLength(LANGUAGES.length);
 		expect(names).toEqual(names.toSorted((left, right) => left.localeCompare(right)));
 	});
 

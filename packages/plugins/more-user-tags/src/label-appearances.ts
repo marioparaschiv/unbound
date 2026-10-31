@@ -15,6 +15,14 @@ export type LabelAppearances = ReturnType<typeof createLabelAppearances>;
  */
 export function createLabelAppearances() {
 	const entries = new Map<string, RoleColorAppearance>();
+	const listeners = new Set<() => void>();
+	let revision = 0;
+
+	function changed() {
+		revision++;
+
+		for (const listener of listeners) listener();
+	}
 
 	function set(label: string, appearance: RoleColorAppearance) {
 		if (!label.trim()) return;
@@ -30,10 +38,13 @@ export function createLabelAppearances() {
 				if (key.startsWith(prefix)) entries.delete(key);
 			}
 
+			changed();
+
 			return;
 		}
 
 		entries.set(getRoleGradientKey(label, colors[0]), { colors, style: appearance.style });
+		changed();
 	}
 
 	// A native label's background tells us its primary color; without one, only an unambiguous match counts.
@@ -61,10 +72,31 @@ export function createLabelAppearances() {
 		return unique.size === 1 ? [...unique.values()][0] : null;
 	}
 
+	function has(label: string): boolean {
+		const prefix = getRoleGradientKey(label, '');
+
+		for (const key of entries.keys()) {
+			if (key.startsWith(prefix)) return true;
+		}
+
+		return false;
+	}
+
 	return {
 		set,
 		find,
-		clear: () => entries.clear(),
+		has,
+		clear: () => {
+			entries.clear();
+			changed();
+		},
+		snapshot: (): Record<string, RoleColorAppearance> => Object.fromEntries(entries),
+		subscribe(listener: () => void) {
+			listeners.add(listener);
+
+			return () => void listeners.delete(listener);
+		},
+		revision: () => revision,
 		isEmpty: () => entries.size === 0,
 	};
 }

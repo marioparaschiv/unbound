@@ -1,10 +1,30 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
 
-import type { AddonAttribution } from '~/api/crash-guard';
+import type { AddonAttribution } from '~/addons/crash-guard';
+import type { CrashEvent } from '~/diagnostics/crash-report';
+
+type RecordedToast = { content?: unknown };
+
+const toasts: RecordedToast[] = [];
+const crashes: CrashEvent[] = [];
+
+mock.module('~/diagnostics/crash-reports', () => ({
+	reportCrash: async (event: CrashEvent) => {
+		crashes.push(event);
+	},
+}));
+const actualToasts = await import('~/toasts/api');
+
+mock.module('~/toasts/api', () => ({
+	...actualToasts,
+	show: (toast: RecordedToast) => {
+		toasts.push(toast);
+	},
+}));
 
 const { FakeAddons, makeManifest } = await import('./helpers/addons');
-const { currentAddonAttribution, withAddonAttribution } = await import('~/api/crash-guard');
-const { before } = await import('~/api/patcher');
+const { currentAddonAttribution, withAddonAttribution } = await import('~/addons/crash-guard');
+const { before } = await import('~/patcher/api');
 
 type Counter = {
 	value: number;
@@ -36,6 +56,26 @@ describe('freeze handling', () => {
 		addons.handleFreeze({ id: 'plugins:freeze.once', name: 'freeze.once', seconds: 7 });
 
 		expect(addons.disabled).toEqual([]);
+	});
+
+	test('tells the user where the frozen addon was stuck when the loader knows', () => {
+		const addons = new FreezeAddons();
+
+		toasts.length = 0;
+		addons.load('bundle', makeManifest('freeze.detail'));
+		addons.handleFreeze({
+			id: 'plugins:freeze.detail',
+			name: 'freeze.detail',
+			seconds: 7,
+			detail: 'It has been inside the native call invoke(sleep) for 6686 ms.',
+		});
+
+		expect(crashes.at(-1)?.message).toBe(
+			'It has been inside the native call invoke(sleep) for 6686 ms.',
+		);
+		expect(toasts.at(-1)?.content).toBe(
+			'freeze.detail froze Discord for 7 seconds. It has been inside the native call invoke(sleep) for 6686 ms.',
+		);
 	});
 
 	test('disables an addon on its second freeze in a session', () => {

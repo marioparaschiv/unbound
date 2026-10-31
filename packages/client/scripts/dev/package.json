@@ -5,7 +5,7 @@
 	"type": "module",
 	"module": "index.ts",
 	"scripts": {
-		"start": "bun index.ts"
+		"start": "bun index.ts --dev"
 	},
 	"dependencies": {
 		"@unbound-app/logger": "workspace:*"

@@ -77,6 +77,19 @@ func (target *iosSmokeTarget) hostAddress() string {
 	return "127.0.0.1"
 }
 
+const simctlListAttempts = 3
+
+func retrySmokeCommand(attempts int, run func() (string, error)) (string, error) {
+	var output string
+	var err error
+	for attempt := 0; attempt < attempts; attempt++ {
+		if output, err = run(); err == nil {
+			return output, nil
+		}
+	}
+	return output, err
+}
+
 func (target *iosSmokeTarget) simctl(ctx context.Context, timeout time.Duration, args ...string) (string, error) {
 	return runSmokeCommand(ctx, timeout, "xcrun", append([]string{"simctl"}, args...)...)
 }
@@ -123,7 +136,9 @@ func (target *iosSmokeTarget) prepare(ctx context.Context, plugins []smokePlugin
 }
 
 func (target *iosSmokeTarget) createDevice(ctx context.Context) error {
-	output, err := target.simctl(ctx, time.Minute, "list", "runtimes", "-j")
+	output, err := retrySmokeCommand(simctlListAttempts, func() (string, error) {
+		return target.simctl(ctx, 3*time.Minute, "list", "runtimes", "-j")
+	})
 	if err != nil {
 		return err
 	}
@@ -253,6 +268,10 @@ func simulatorProcessListed(listing string, pid int) bool {
 
 func (target *iosSmokeTarget) isLoaderLine(line string) bool {
 	return strings.Contains(line, "app.unbound")
+}
+
+func (target *iosSmokeTarget) consoleEntry(line string) (smokeConsoleEntry, bool) {
+	return iosConsoleEntry(line)
 }
 
 func (target *iosSmokeTarget) isCrashLine(string) bool {

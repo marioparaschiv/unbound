@@ -8,8 +8,10 @@
 			"packages/debugger",
 			"packages/debugger-protocol",
 			"packages/types",
+			"packages/discord-types",
 			"packages/api",
 			"apps/sdk-generator",
+			"apps/discord-typegen",
 			"apps/web",
 			"apps/discord-bot",
 			"packages/contracts",
@@ -21,7 +23,6 @@
 			"packages/client/scripts/dev",
 			"packages/plugins",
 			"packages/plugins/*",
-			"packages/plugins/shared/*",
 			"packages/plugins-shared",
 			"packages/plugin-scripts"
 		],
@@ -29,7 +30,7 @@
 			"typescript": "^5.9.3",
 			"possess": "^1.1.0",
 			"@types/bun": "latest",
-			"better-auth": "1.7.12"
+			"better-auth": "1.7.14"
 		},
 		"catalogs": {
 			"react": {
@@ -44,12 +45,14 @@
 	"scripts": {
 		"prepare": "lefthook install --reset-hooks-path",
 		"generate-sdk": "bun apps/sdk-generator/src/index.ts",
+		"generate-discord-types": "bun apps/discord-typegen/src/index.ts",
+		"rename-api": "bun scripts/rename-api.ts",
 		"test:s3": "bun scripts/test-s3.ts",
 		"lint": "bun run lint:js && bun run loader:lint",
-		"lint:js": "bun run lint:rules && bun run --filter @unbound-app/web build:types && oxlint --config .oxlintrc.json --type-aware apps packages && bun run plugins:lint",
-		"typecheck": "bun run --cwd apps/web typecheck && bun run --cwd apps/discord-bot typecheck && bun run --cwd packages/cli typecheck && bun run --cwd packages/client typecheck && bun run --cwd packages/plugin-scripts typecheck",
-		"lint:fix": "bun run lint:rules && bun run --filter @unbound-app/web build:types && oxlint --config .oxlintrc.json --type-aware --fix-dangerously apps packages",
-		"lint:rules": "oxc-config-check .oxlintrc.json",
+		"lint:js": "bun run lint:rules && bun run --filter @unbound-app/web build:types && oxlint --config .oxlintrc.json --type-aware apps packages scripts && bun run plugins:lint && bun run plugins:typecheck && bun scripts/typecheck.ts --web-types-built",
+		"typecheck": "bun scripts/typecheck.ts",
+		"lint:fix": "bun run lint:rules && bun run --filter @unbound-app/web build:types && oxlint --config .oxlintrc.json --type-aware --fix-dangerously apps packages scripts",
+		"lint:rules": "oxc-config-check .oxlintrc.json packages/plugins/.oxlintrc.json",
 		"fmt": "bun run fmt:js && bun run loader:fmt",
 		"fmt:js": "oxfmt --config .oxfmtrc.json apps packages",
 		"fmt:check": "bun run fmt:js:check && bun run loader:fmt:check",
@@ -63,10 +66,13 @@
 		"loader:test": "go -C packages/loader test -count=1 ./tools && go -C packages/loader/workflow-tests test -count=1 ./...",
 		"plugins:test": "bun test --isolate packages/plugins packages/plugins-shared packages/plugin-scripts",
 		"plugins:lint": "bun run --filter @unbound-app/plugins --filter @unbound-app/plugin-scripts lint",
+		"plugins:typecheck": "bun packages/plugin-scripts/src/typecheck-plugins.ts",
 		"plugins:build": "cd packages/plugins && bun run build",
 		"plugins:catalog": "bun packages/plugin-scripts/src/generate-plugins-readme.ts",
 		"plugins:sync-icons": "bun packages/plugin-scripts/src/sync-plugin-icons.ts",
 		"plugins:device-matrix": "bun packages/plugin-scripts/src/device-matrix.ts",
+		"plugins:collect-device-matrix": "bun packages/plugin-scripts/src/collect-device-matrix.ts",
+		"plugins:run-device-matrix": "bun packages/plugin-scripts/src/run-device-matrix.ts",
 		"release": "semantic-release"
 	},
 	"devDependencies": {
@@ -75,19 +81,23 @@
 		"@semantic-release/exec": "^7.1.0",
 		"@semantic-release/git": "^11.0.1",
 		"@stylistic/eslint-plugin": "^5.10.0",
+		"@types/bun": "catalog:",
 		"dts-bundle-generator": "^9.5.1",
 		"eslint-plugin-jsdoc": "^65.4.2",
 		"eslint-plugin-perfectionist": "^5.9.1",
 		"eslint-plugin-unicorn": "^79.0.0",
 		"lefthook": "^2.1.9",
-		"oxfmt": "^0.74.0",
-		"oxlint": "^1.86.0",
+		"oxfmt": "^0.75.0",
+		"oxlint": "^1.90.0",
 		"oxlint-tsgolint": "^7.0.2003",
 		"semantic-release": "^25.0.8",
 		"ts-morph": "^28.0.0"
 	},
 	"overrides": {
 		"typescript": "5.9.3"
+	},
+	"patchedDependencies": {
+		"possess@1.1.0": "patches/possess@1.1.0.patch"
 	},
 	"trustedDependencies": [
 		"lefthook"

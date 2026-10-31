@@ -1,13 +1,12 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 import { useEffect } from 'react';
 
-import type { InstallStatus } from '~/lib/catalog';
-import { getInstallStatus } from '~/lib/catalog';
-import { ManagerKind } from '~/lib/constants';
-import { getManager } from '~/managers/utils';
-import { useForceUpdate } from '~/ui/hooks';
-
-import { getInstalledVersion, INSTALL_EVENTS } from './targets';
+import { getInstalledVersion } from '~/marketplace/install';
+import type { InstallStatus } from '~/marketplace/catalog';
+import { getInstallStatus } from '~/marketplace/catalog';
+import useForceUpdate from '~/ui/hooks/use-force-update';
+import { Manager } from '~/addons/manager';
 
 /**
  * @description Compares a listed addon with the installed copy, re-rendering when the manager changes.
@@ -15,30 +14,10 @@ import { getInstalledVersion, INSTALL_EVENTS } from './targets';
  * @param addon The listed addon.
  * @returns Whether the card offers an install, an update, or neither.
  */
-function useInstallStatus(kind: ManagerKind, addon: ListedAddon): InstallStatus {
+function useInstallStatus(kind: AddonKind, addon: ListedAddon): InstallStatus {
 	const forceUpdate = useForceUpdate();
 
-	useEffect(() => {
-		if (kind === ManagerKind.Fonts) {
-			const fonts = getManager(kind);
-
-			fonts.on('changed', forceUpdate);
-
-			return () => void fonts.off('changed', forceUpdate);
-		}
-
-		const manager = getManager(kind);
-
-		for (const event of INSTALL_EVENTS) {
-			manager.on(event, forceUpdate);
-		}
-
-		return () => {
-			for (const event of INSTALL_EVENTS) {
-				manager.off(event, forceUpdate);
-			}
-		};
-	}, [kind]);
+	useEffect(() => Manager.for(kind).onInstalledChange(forceUpdate), [kind]);
 
 	return getInstallStatus(addon.latestVersion.version, getInstalledVersion(kind, addon));
 }

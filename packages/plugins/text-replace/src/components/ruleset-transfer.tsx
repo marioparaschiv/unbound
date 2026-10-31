@@ -1,5 +1,5 @@
 import { Discord } from '@unbound-app/api/metro/components';
-import { toasts } from '@unbound-app/api';
+import { toasts, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import { readClipboard, shareRuleset } from '~/transfer';
@@ -13,11 +13,11 @@ type RulesetTransferProps = {
 function importRuleset(value: string): boolean {
 	try {
 		saveRuleset(parseRuleset(value));
-		toasts.showToast({ title: 'Text Replace', content: 'Ruleset imported.' });
+		toasts.show({ title: 'Text Replace', content: 'Ruleset imported.' });
 
 		return true;
 	} catch (error) {
-		toasts.showToast({
+		toasts.show({
 			title: 'Text Replace',
 			content: error instanceof Error ? error.message : 'Could not import ruleset.',
 		});
@@ -39,7 +39,7 @@ function RulesetTransfer({ ruleset }: RulesetTransferProps) {
 		const value = await readClipboard();
 
 		if (!value.trim()) {
-			toasts.showToast({
+			toasts.show({
 				title: 'Text Replace',
 				content: 'Your clipboard does not contain a ruleset.',
 			});
@@ -52,18 +52,15 @@ function RulesetTransfer({ ruleset }: RulesetTransferProps) {
 
 	return (
 		<Discord.Stack spacing={12}>
-			<Discord.TableRowGroup
+			<ui.Section
 				title='Share rules'
 				description='Export or import both rule lists as portable JSON.'
 			>
-				<Discord.TableRow
-					label='Export & share'
-					onPress={() => void shareRuleset(ruleset)}
-				/>
-				<Discord.TableRow label='Import clipboard' onPress={() => void importClipboard()} />
-			</Discord.TableRowGroup>
+				<ui.Row label='Export & share' onPress={() => void shareRuleset(ruleset)} />
+				<ui.Row label='Import clipboard' onPress={() => void importClipboard()} />
+			</ui.Section>
 			<Discord.TextInput
-				title='Paste JSON'
+				label='Paste JSON'
 				placeholder='Paste exported Text Replace JSON here'
 				autoCapitalize='none'
 				autoCorrect={false}

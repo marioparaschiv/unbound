@@ -1,15 +1,13 @@
 import { createLogger } from '@unbound-app/logger';
 import { Platform } from 'react-native';
 
-import { isOlderThanSupported, shouldWarnAboutDiscordVersion } from '~/lib/discord-support';
-import { MINIMUM_DISCORD_VERSIONS } from '~/lib/constants';
-import { BundleInfo } from '~/api/native';
-import { showToast } from '~/api/toasts';
-import storage from '~/api/storage';
+import { isOlderThanSupported, shouldWarnAboutDiscordVersion } from '~/core/discord-support';
+import { MINIMUM_DISCORD_VERSIONS } from '~/core/constants';
+import { getSetting, setSetting } from '~/settings/unbound';
+import { BundleInfo } from '~/native/native';
+import { show } from '~/toasts/api';
 
 const Logger = createLogger('DiscordSupport');
-const Settings = storage.getStore('unbound');
-const WARNED_KEY = 'discord-support.warned';
 
 /**
  * @description Warns when Discord is older than the oldest version Unbound supports, with a toast once per version.
@@ -26,12 +24,12 @@ export function start() {
 		`Discord ${version} is older than ${minimum}, the oldest version Unbound supports.`,
 	);
 
-	if (!shouldWarnAboutDiscordVersion(version, minimum, Settings.get(WARNED_KEY, ''))) {
+	if (!shouldWarnAboutDiscordVersion(version, minimum, getSetting('discord-support.warned'))) {
 		return;
 	}
 
-	Settings.set(WARNED_KEY, version);
-	showToast({
+	setSetting('discord-support.warned', version);
+	show({
 		id: 'discord-support',
 		title: 'Unsupported Discord',
 		content: 'This Discord version is older than Unbound supports.',

@@ -1,6 +1,5 @@
+import { isActionSheetRowGroup } from '@unbound-plugins/shared/action-sheets/row-group';
 import { expect, test } from 'bun:test';
-
-import { isActionSheetRowGroup } from './row-group';
 
 function row(label: string) {
 	return { type: {}, props: { label, onPress: () => undefined } };

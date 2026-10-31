@@ -2,9 +2,9 @@ import type { PressableStateCallbackType } from 'react-native';
 import { Pressable } from 'react-native';
 import { memo } from 'react';
 
-import { TintedIcon } from '~/ui/components';
-import { Theme } from '~/api/metro/common';
-import { Icons } from '~/api/assets';
+import TintedIcon from '~/metro/fallbacks/tinted-icon';
+import { Theme } from '~/metro/common';
+import { icons } from '~/assets/api';
 
 import useStyles from './round-button.style';
 
@@ -36,7 +36,7 @@ function RoundButton({ icon, label, disabled, onPress }: RoundButtonProps) {
 			]}
 		>
 			<TintedIcon
-				source={Icons[icon] ?? 0}
+				source={icons[icon] ?? 0}
 				size={16}
 				tint={Theme.colors.CONTROL_SECONDARY_TEXT_DEFAULT}
 			/>

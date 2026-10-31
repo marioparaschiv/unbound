@@ -9,8 +9,10 @@ import { apiKey } from '@better-auth/api-key';
 import { betterAuth } from 'better-auth';
 
 import { deleteUserWithRecord, recordAuthAdminAction } from '~/lib/moderation-events';
+import { guardAdminEndpoint, guardOwnRoleChange } from '~/lib/auth/admin-guard';
 import { API_KEY_HEADER, CLI_CLIENT_ID } from '~/api/client';
 import { DEFAULT_ROLE, ac, roles } from '~/lib/auth/access';
+import { AUTH_ERROR_PATH } from '~/lib/auth/auth-errors';
 import { grantTeamRole } from '~/lib/team/site-roles';
 import type { FileRoutesByTo } from '~/routeTree.gen';
 import { purgeUserSubmissions } from '~/lib/staging';
@@ -50,7 +52,7 @@ export type Session = Auth['$Infer']['Session'];
  * linked to an existing session, and the CLI authenticates through device authorization or API keys.
  * Banning a user cancels their open submissions and deletes their staged files, and bans, unbans and
  * role changes are recorded as moderation events. Linking Discord grants the staff role the team
- * snapshot names.
+ * snapshot names. Only the admin plugin endpoints the site uses are open, and no one sets their own role.
  * @param db The database the auth tables live in.
  * @param env The validated environment.
  * @param storage The object storage, for purging a banned user's staged files.
@@ -95,6 +97,9 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 			window: env.AUTH_RATE_LIMIT_WINDOW_SECONDS,
 			max: env.AUTH_RATE_LIMIT_MAX,
 		},
+		onAPIError: {
+			errorURL: new URL(AUTH_ERROR_PATH, env.PUBLIC_URL).toString(),
+		},
 		advanced: {
 			ipAddress: {
 				ipAddressHeaders: [env.IP_ADDRESS_HEADER],
@@ -121,6 +126,7 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 			},
 			user: {
 				update: {
+					before: async (data, context) => guardOwnRoleChange(data, context),
 					// The admin plugin's ban is a user update; purging here also covers bans made outside it.
 					after: async (updated) => {
 						if (updated.banned !== true) return;
@@ -158,6 +164,8 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 							'The request must not contain NUL (U+0000) or an unpaired surrogate.',
 					});
 				}
+
+				guardAdminEndpoint(ctx.path);
 
 				if (ctx.path !== '/sign-in/social' || ctx.body?.provider !== 'github') return;
 

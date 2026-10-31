@@ -19,6 +19,7 @@ import app.unbound.android.TextEdits.Placement
 import app.unbound.android.TextEdits.covers
 import app.unbound.android.TextEdits.fits
 import app.unbound.android.TextEdits.isA
+import app.unbound.android.TextEdits.mapThrough
 import app.unbound.android.TextEdits.overlapsStretch
 import app.unbound.android.TextEdits.parseAnchor
 import app.unbound.android.TextEdits.parseEdits
@@ -63,6 +64,7 @@ object TextRewrites {
     private val watched = mutableSetOf<String>()
     private val originals = WeakHashMap<TextView, CharSequence>()
     private val shown = WeakHashMap<TextView, Set<String>>()
+    private val chains = WeakHashMap<TextView, List<Rule>>()
     private val groups = HashMap<String, MutableList<Group>>()
     private val groupsById = HashMap<String, Group>()
     private val pendingLayout = WeakHashMap<TextView, Boolean>()
@@ -109,12 +111,15 @@ object TextRewrites {
         synchronized(lock) { watched.add(className) }
     }
 
-    fun put(original: String, rendered: String, editsJSON: String) {
+    fun put(original: String, rendered: String, editsJSON: String): Boolean {
         val edits = parseEdits(editsJSON).sortedByDescending { it.start }
         synchronized(lock) {
+            val existing = rules[original]
+            if (existing != null && existing.rendered != rendered) return false
             rules[original] = Rule(rendered, edits)
             renderedTexts.add(rendered)
         }
+        return true
     }
 
     fun putImage(key: String, bitmap: Bitmap) {
@@ -271,21 +276,27 @@ object TextRewrites {
 
     private fun rewrite(view: TextView, text: CharSequence?, stages: MutableSet<String>): CharSequence? {
         if (text == null) {
-            synchronized(lock) { originals.remove(view) }
+            synchronized(lock) {
+                originals.remove(view)
+                chains.remove(view)
+            }
             return null
         }
         var current: CharSequence = text
         stages.add(current.toString())
+        val applied = mutableListOf<Rule>()
 
         var steps = 0
         while (steps++ < MAX_CHAIN) {
             val rule = synchronized(lock) { rules[current.toString()] } ?: break
             current = apply(current, rule) ?: break
+            applied.add(rule)
             stages.add(current.toString())
         }
 
         synchronized(lock) {
             if (current !== text) originals[view] = text else originals.remove(view)
+            chains[view] = applied
         }
         return current
     }
@@ -486,10 +497,12 @@ object TextRewrites {
         val owned = synchronized(lock) {
             groupsById.values.filter { it.owner?.get() === view && shown[view]?.contains(it.rendered) == true }
         }
+        val chain = synchronized(lock) { chains[view].orEmpty() }
         var empty = false
         for (group in owned) {
+            val later = laterEdits(chain, group.rendered)
             for (slot in group.slots) {
-                if (position(view, slot) && slot.host.visibility != View.VISIBLE) {
+                if (position(view, slot, later) && slot.host.visibility != View.VISIBLE) {
                     slot.host.visibility = View.VISIBLE
                 }
                 empty = empty || hasEmptyContent(slot.host)
@@ -510,11 +523,16 @@ object TextRewrites {
         view.postDelayed({ if (view.isAttachedToWindow) positionAll(view) }, CONTENT_RETRY_DELAY_MS)
     }
 
-    private fun position(view: TextView, slot: Slot): Boolean {
+    private fun laterEdits(chain: List<Rule>, rendered: String): List<List<Edit>> {
+        val stage = chain.indexOfFirst { it.rendered == rendered }
+        return if (stage < 0) emptyList() else chain.drop(stage + 1).map { it.edits }
+    }
+
+    private fun position(view: TextView, slot: Slot, later: List<List<Edit>>): Boolean {
         val layout = view.layout ?: return false
         val host = slot.host
         val container = host.parent as? ViewGroup ?: return false
-        val anchor = slot.anchor
+        val anchor = slot.anchor.copy(placeholder = later.fold(slot.anchor.placeholder, ::mapThrough))
         if (anchor.placeholder >= view.text.length) return false
 
         var x = 0f
@@ -589,6 +607,17 @@ internal object TextEdits {
     }
 
     fun fits(edit: Edit, length: Int): Boolean = edit.end <= length && edit.start <= edit.end
+
+    fun mapThrough(position: Int, edits: List<Edit>): Int {
+        var shift = 0
+        for (edit in edits.sortedBy { it.start }) {
+            when {
+                position >= edit.end -> shift += edit.text.length - (edit.end - edit.start)
+                position >= edit.start -> return edit.start + shift
+            }
+        }
+        return position + shift
+    }
 
     fun stretches(edit: Edit): Boolean = edit.stretchClasses.isNotEmpty() && edit.stretchTo > edit.stretchFrom
 

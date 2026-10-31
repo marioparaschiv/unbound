@@ -5,9 +5,9 @@ import { ButtonStyle, ComponentType } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
 import { and, eq } from 'drizzle-orm';
 
-import { COLOURS, RELEASES_CHANNEL_ID, RELEASES_ROLE_ID } from '~/lib/constants';
 import { listOwnMessages, postMessage } from '~/lib/discord-messages';
 import type { Dispatcher, Stores } from '~/dispatchers/types';
+import { COLOURS, requireId } from '~/lib/constants';
 import type { Database } from '~/db/database';
 import { releasePost } from '~/db/schema';
 
@@ -18,14 +18,14 @@ export type ReleaseTarget = {
 
 const logger = createLogger('Bot', 'Releases');
 
-export const RELEASE_TARGET: ReleaseTarget = {
-	channelId: RELEASES_CHANNEL_ID,
-	roleId: RELEASES_ROLE_ID,
-};
-
 const PLATFORM_NAMES: Record<LoaderPlatform, string> = { ios: 'iOS', android: 'Android' };
 // An older release is never announced, or a first deploy would ping the role once per historic release.
 const RELEASE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+// Read per call: the role id may still be unset, and the runtime then never starts this dispatcher.
+function releaseTarget(): ReleaseTarget {
+	return { channelId: requireId('RELEASES_CHANNEL_ID'), roleId: requireId('RELEASES_ROLE_ID') };
+}
 
 function isPlatform(value: string): value is LoaderPlatform {
 	return Object.hasOwn(PLATFORM_NAMES, value);
@@ -144,7 +144,7 @@ export async function announceRelease(
 	{ db, web }: Stores,
 	rest: REST,
 	payload: string,
-	target: ReleaseTarget = RELEASE_TARGET,
+	target: ReleaseTarget = releaseTarget(),
 	now: number = Date.now(),
 ): Promise<void> {
 	const key = parseKey(payload);
@@ -179,7 +179,7 @@ export async function reconcileReleases(
 	{ db, web }: Stores,
 	rest: REST,
 	selfId: string,
-	target: ReleaseTarget = RELEASE_TARGET,
+	target: ReleaseTarget = releaseTarget(),
 	now: number = Date.now(),
 ): Promise<void> {
 	const [fresh, posts] = await Promise.all([
@@ -226,7 +226,6 @@ export const releasesDispatcher: Dispatcher = {
 };
 
 export default {
-	RELEASE_TARGET,
 	renderRelease,
 	announceRelease,
 	reconcileReleases,

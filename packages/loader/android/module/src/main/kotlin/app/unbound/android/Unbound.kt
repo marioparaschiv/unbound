@@ -28,6 +28,9 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to initialize Unbound", it) }
     }
 
+    private fun frameworkLabel(appInfo: ApplicationInfo, classLoader: ClassLoader): String =
+        Platform.frameworkLabel(frameworkName, frameworkVersion, Platform.isLSPatched(appInfo, classLoader))
+
     private fun initialize(param: PackageReadyParam) {
         val moduleInfo = moduleApplicationInfo
         val appInfo = param.applicationInfo
@@ -38,7 +41,7 @@ class Unbound : XposedModule() {
         System.load(nativeLibraryPath(moduleInfo, appInfo))
         Logger.nativeReady = true
 
-        val documents = File(File(appInfo.dataDir, "files"), NativeBridge.nativeDocumentsName()).absolutePath
+        val documents = NativeBridge.nativeDocumentsDirectory(File(appInfo.dataDir, "files").absolutePath)
         NativeBridge.documents = documents
         val bytecodeVersion = Platform.mainBundleBytecodeVersion(appInfo.sourceDir)
 
@@ -47,7 +50,7 @@ class Unbound : XposedModule() {
             readBootstrapScripts(moduleInfo.sourceDir).toString(),
             NATIVE_LIBRARY,
             bytecodeVersion,
-            Platform.describe(appInfo, frameworkName).toString(),
+            Platform.describe(appInfo, frameworkLabel(appInfo, param.classLoader)).toString(),
         )
 
         Logger.info(LogCategory.DEFAULT, "Hermes bytecode version $bytecodeVersion, documents at $documents")
@@ -55,6 +58,7 @@ class Unbound : XposedModule() {
         SettingsWatcher.start(documents)
         SettingsWatcher.onChange(::onSettingsChanged)
         hookActivityLifecycle()
+        if (BuildConfig.ATTESTATION_ENABLED && !attestationVerified()) return
         val hooked = runCatching { hookBundleLoading(param.classLoader) }
             .onFailure { Logger.error(LogCategory.RUNTIME, "Failed to hook the ReactInstance bundle loader", it) }
         if (hooked.isFailure) {
@@ -70,15 +74,23 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to install the Recovery Mode shortcut", it) }
         runCatching { Toolbox.install(this) }
             .onFailure { Logger.error(LogCategory.DEFAULT, "Failed to install the toolbox gestures", it) }
-        runCatching { ChatUI.install(this, param.classLoader) }
-            .onFailure { Logger.error(LogCategory.CHATUI, "Failed to hook the chat UI", it) }
         runCatching { TextRewrites.install(this) }
             .onFailure { Logger.error(LogCategory.PLUGINS, "Failed to hook text rewrites", it) }
     }
 
+    private fun attestationVerified(): Boolean {
+        val attestation = Attestation.current()
+        if (attestation.verified) {
+            Logger.info(LogCategory.DEFAULT, "Embedded attestation verified, ${attestation.detail}")
+            return true
+        }
+        Logger.error(LogCategory.DEFAULT, "Embedded attestation failed: ${attestation.detail}")
+        StartupAlert.report(attestation.warningMessage, attestation.warningTitle)
+        return false
+    }
+
     private fun onSettingsChanged() {
         HotReload.sync()
-        ChatUI.reload()
         ActivityTracker.currentActivity()?.let(DevOverlay::onResumed)
     }
 

@@ -1,4 +1,5 @@
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
+import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import type { Changelog } from '@unbound-app/contracts/changelog';
 import { pgTable, text, bigint, json } from 'drizzle-orm/pg-core';
 import { defineRelationsPart } from 'drizzle-orm';
@@ -26,6 +27,8 @@ export const submissionSource = pgTable('submission_source', {
 	bundleBlobSha: text('bundle_blob_sha').notNull(),
 	/** ADDON.md as submitted, or `null` when the addon has none. */
 	addonMd: text('addon_md'),
+	/** The measured `{output}/page.json`, checked against the media at `commitSha`, or `null` when none is committed. */
+	page: json('page').$type<AddonPage>(),
 	/** This version's CHANGELOG.md entry, or `null` when the addon has no CHANGELOG.md. */
 	changelog: json('changelog').$type<Changelog>(),
 	/** GitHub's repository details as submitted, with the author's overrides applied. */

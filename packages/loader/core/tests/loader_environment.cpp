@@ -145,8 +145,34 @@ static void checkRoutingTable()
     assert(!gateway({}));
 }
 
+static void checkHookFrameworks()
+{
+    assert(hookFrameworkForImage("/var/jb/usr/lib/libellekit.dylib", true)->name == "ElleKit");
+    assert(
+        hookFrameworkForImage("/Library/Frameworks/CydiaSubstrate.framework/CydiaSubstrate", false)
+            ->name == "Substrate");
+    assert(hookFrameworkForImage("/usr/lib/libsubstitute.dylib", false)->package ==
+           "com.ex.substitute");
+    assert(hookFrameworkForImage("/var/jb/usr/lib/libhooker.dylib", true)->name == "libhooker");
+    assert(!hookFrameworkForImage("/usr/lib/libobjc.A.dylib", false));
+    assert(hookFrameworkForImage(
+               "/x/Discord.app/Frameworks/CydiaSubstrate.framework/CydiaSubstrate", true)
+               ->name == "ElleKit");
+
+    std::string status = "Package: mobilesubstrate\nVersion: 0.9.7\n\nPackage: ellekit\r\n"
+                         "Status: install ok installed\r\nVersion: 1.1.3\r\n";
+    assert(dpkgPackageVersion(status, "ellekit") == "1.1.3");
+    assert(dpkgPackageVersion(status, "mobilesubstrate") == "0.9.7");
+    assert(!dpkgPackageVersion(status, "com.ex.substitute"));
+
+    assert(frameworkLabel("Vector", "2.0") == "Vector 2.0");
+    assert(frameworkLabel("ElleKit", "") == "ElleKit");
+    assert(frameworkLabel("", "1.0").empty());
+}
+
 int main()
 {
+    checkHookFrameworks();
     checkInstallSources();
     checkRoutingTable();
     return 0;

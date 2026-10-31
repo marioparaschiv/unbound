@@ -7,12 +7,12 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { eq } from 'drizzle-orm';
 
+import { getArtifactKeys, getCdnUrl, getVersionDirectory } from '~/lib/artifacts';
 import listFirstPartyAddonsEndpoint from '~/endpoints/list-first-party-addons';
 import publishFirstPartyEndpoint from '~/endpoints/publish-first-party';
 import { API_KEY_HEADER, createApiClient } from '~/api/client';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createSubmission } from '~/lib/submissions';
-import { getArtifactKeys } from '~/lib/artifacts';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
 import type { Caller } from '~/lib/api/caller';
@@ -20,7 +20,7 @@ import { delistAddon } from '~/lib/addons';
 import { addon, user } from '~/db/schema';
 import type { Api } from '~/api';
 
-import type { GitFixture } from './helpers/github';
+import type { FixtureFiles, GitFixture } from './helpers/github';
 
 import {
 	authRequest,
@@ -29,6 +29,7 @@ import {
 	signInWithDiscord,
 	snowflakeAt,
 } from './helpers/context';
+import { COMMITTED_ADDON_MD, committedPage, committedPageFiles, png } from './helpers/addon-page';
 import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
 import { failure, serveEndpoints } from './helpers/server';
 import { serveMemoryS3 } from './helpers/memory-s3';
@@ -105,12 +106,27 @@ async function apiKey(target: AppContext, member: Member): Promise<Headers> {
 	return new Headers({ [API_KEY_HEADER]: key });
 }
 
+type BuildOutput = {
+	bundle?: string;
+	/** Compiled bundles by bytecode version, committed beside the bundle. */
+	bytecode?: Record<string, string>;
+	/** The digests the build's manifest lists, when they should differ from the committed files. */
+	digests?: Record<string, string>;
+	/** More files of the build commit, relative to the plugin's directory. */
+	files?: FixtureFiles;
+};
+
+function sha512(text: string): string {
+	return new Bun.CryptoHasher('sha512').update(text).digest('hex');
+}
+
 /** Commits the plugin's source to main, then its build output on a commit tagged `plugin-builds/<main sha>`. */
 function buildTag(
 	target: GitFixture,
 	id: string,
 	version: string = '1.0.0',
 	repository: string = FIRST_PARTY,
+	output: BuildOutput = {},
 ): PublishFirstPartyRequest {
 	const path = `plugins/${id}`;
 	const main = target.commit({
@@ -121,10 +137,37 @@ function buildTag(
 		}),
 		[`${path}/package.json`]: JSON.stringify({ scripts: { build: 'bun build' } }),
 	});
+	const compiled = Object.entries(output.bytecode ?? {});
+	const digests =
+		output.digests ??
+		Object.fromEntries(
+			compiled.map(([bytecodeVersion, bytes]) => [bytecodeVersion, sha512(bytes)]),
+		);
 	const build = target.commit(
 		{
-			[`${path}/dist/index.js`]: `export default '${id} ${version}';`,
+			[`${path}/dist/index.js`]: output.bundle ?? `export default '${id} ${version}';`,
 			[`${path}/CHANGELOG.md`]: `## [${version}]\n\n### Added\n\n- Hello.\n`,
+			...Object.fromEntries(
+				Object.entries(output.files ?? {}).map(([name, content]) => [
+					`${path}/${name}`,
+					content,
+				]),
+			),
+			...Object.fromEntries(
+				compiled.map(([bytecodeVersion, bytes]) => [
+					`${path}/dist/index.${bytecodeVersion}.hbc`,
+					bytes,
+				]),
+			),
+			...(Object.keys(digests).length > 0
+				? {
+						[`${path}/manifest.json`]: JSON.stringify({
+							...manifest(id, version),
+							main: 'src/index.ts',
+							bytecode: digests,
+						}),
+					}
+				: {}),
 		},
 		{ branch: null, parent: main },
 	);
@@ -244,6 +287,32 @@ describe('POST /api/v1/first-party/publish', () => {
 		expect((await ctx.db.query.user.findFirst({ where: { id: ci.userId } }))?.role).toBe('ci');
 	});
 
+	test('publishes the store page where the catalog points', async () => {
+		const files = committedPageFiles();
+
+		await publish(ciKey, buildTag(fixture, 'fp.page', '1.0.0', FIRST_PARTY, { files }));
+
+		const { addons } = await client('GET /api/v1/catalog', { response: catalogResponseSchema });
+		const directory = getVersionDirectory('fp.page', '1.0.0');
+		const pageUrl = addons.find((entry) => entry.id === 'fp.page')?.latestVersion.pageUrl;
+
+		expect(pageUrl).toBe(getCdnUrl(ctx.env, `${directory}/ADDON.md`));
+
+		const addonMd = await ctx.storage.public.file(`${directory}/ADDON.md`).text();
+
+		expect(addonMd).toBe(COMMITTED_ADDON_MD);
+
+		for (const name of ['media/banner.png', 'media/shot.png', 'media/inline.png']) {
+			const published = await ctx.storage.public.file(`${directory}/${name}`).bytes();
+
+			expect(published).toEqual(new Uint8Array(png(64)));
+		}
+
+		const measured = await ctx.storage.public.file(`${directory}/page.json`).json();
+
+		expect(measured).toEqual(committedPage(64));
+	});
+
 	test('publishing the same version again answers unchanged and writes nothing', async () => {
 		const request = buildTag(fixture, 'fp.again');
 		const first = await publish(ciKey, request);
@@ -260,6 +329,71 @@ describe('POST /api/v1/first-party/publish', () => {
 		expect(await ctx.storage.public.file(keys.bundle).exists()).toBe(false);
 		expect(await countWrites('fp.again')).toEqual(before);
 		expect(before).toEqual([1, 1]);
+	});
+
+	test('replaces a rebuilt version in place, with its compiled bundles, and keeps the version', async () => {
+		const first = await publish(ciKey, buildTag(fixture, 'fp.rebuilt'));
+		const rebuild = buildTag(fixture, 'fp.rebuilt', '1.0.0', FIRST_PARTY, {
+			bundle: `export default 'fp.rebuilt again';`,
+			bytecode: { 98: 'hermes 98 bytes' },
+		});
+		const replaced = await publish(ciKey, rebuild);
+
+		expect(replaced).toMatchObject({
+			status: 'replaced',
+			addonId: 'fp.rebuilt',
+			version: '1.0.0',
+		});
+		expect(replaced.sha256).not.toBe(first.sha256);
+		expect(await liveSha256(ctx, 'fp.rebuilt', '1.0.0')).toBe(replaced.sha256);
+
+		const [bundle, manifestBytes] = await readPublic(ctx, 'fp.rebuilt', '1.0.0');
+		const compiled = await ctx.storage.public
+			.file('addons/fp.rebuilt/1.0.0/index.98.hbc')
+			.bytes();
+
+		expect(new TextDecoder().decode(bundle)).toBe(`export default 'fp.rebuilt again';`);
+		expect(new TextDecoder().decode(compiled)).toBe('hermes 98 bytes');
+		expect(JSON.parse(new TextDecoder().decode(manifestBytes)).bytecode).toEqual({
+			98: sha512('hermes 98 bytes'),
+		});
+		expect(await countWrites('fp.rebuilt')).toEqual([2, 2]);
+
+		const { addons } = await client('GET /api/v1/first-party/addons', {
+			headers: ciKey,
+			response: listFirstPartyAddonsResponseSchema,
+		});
+
+		expect(addons.find((entry) => entry.id === 'fp.rebuilt')).toMatchObject({
+			version: '1.0.0',
+			sha256: replaced.sha256,
+			bytecode: { 98: sha512('hermes 98 bytes') },
+		});
+		expect(await publish(ciKey, rebuild)).toEqual({ ...replaced, status: 'unchanged' });
+	});
+
+	test('refuses compiled bundles that are missing or do not match their digest', async () => {
+		const missing = await failure(
+			publish(
+				ciKey,
+				buildTag(fixture, 'fp.compiled', '1.0.0', FIRST_PARTY, {
+					digests: { 98: sha512('x') },
+				}),
+			),
+		);
+		const mismatched = await failure(
+			publish(
+				ciKey,
+				buildTag(fixture, 'fp.compiled', '1.0.0', FIRST_PARTY, {
+					bytecode: { 98: 'real bytes' },
+					digests: { 98: sha512('other bytes') },
+				}),
+			),
+		);
+
+		expect(missing).toMatchObject({ code: 'artifact_missing' });
+		expect(mismatched).toMatchObject({ code: 'artifact_mismatch' });
+		expect(await liveSha256(ctx, 'fp.compiled', '1.0.0')).toBeUndefined();
 	});
 
 	test('publishes the same bytes a reviewed approval of the same commit does', async () => {
@@ -310,6 +444,7 @@ describe('GET /api/v1/first-party/addons', () => {
 			id: 'fp.delisted',
 			version: '1.0.0',
 			commitSha: request.commitSha,
+			sha256: await liveSha256(ctx, 'fp.delisted', '1.0.0'),
 		});
 		expect(addons.map(({ id }) => id)).not.toContain('fp.elsewhere');
 	});

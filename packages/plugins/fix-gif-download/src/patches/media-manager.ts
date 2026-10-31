@@ -1,6 +1,7 @@
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import { patcher } from '@unbound-app/api';
 
-import { MediaManagerFilters, MediaTypes, MediaTypesFile, Patcher } from '~/modules';
+import { MediaManagerFilters, MediaTypes, MediaTypesFile } from '~/modules';
 import { getPreferredGifUrl, isGifSource } from '~/gif-url';
 import type { MediaManager } from '~/modules';
 import { resolveKlipyGifUrl } from '~/klipy';
@@ -31,7 +32,7 @@ function patchDownload(manager: MediaManager, method: DownloadMethod) {
 		return rewritten;
 	}
 
-	return Patcher.instead(manager, method, ({ args, original, this: self }) => {
+	patcher.instead(manager, method, ({ args, original, this: self }) => {
 		const [source, , contentType] = args;
 		const gifUrl = getPreferredGifUrl(source);
 
@@ -45,9 +46,7 @@ function patchDownload(manager: MediaManager, method: DownloadMethod) {
 	});
 }
 
-function patchManager(manager: MediaManager): () => void {
-	const unpatches: (() => void)[] = [];
-
+function patchManager(manager: MediaManager) {
 	// Resolving Klipy GIFs while media is shown keeps the later download instant.
 	for (const method of [
 		'extractMediaSourcesFromMessage',
@@ -60,37 +59,28 @@ function patchManager(manager: MediaManager): () => void {
 			continue;
 		}
 
-		unpatches.push(
-			Patcher.after(manager, method, ({ args, result }) => {
-				void resolveKlipyGifUrl(args[0]);
-				void resolveKlipyGifUrl(result);
-			}),
-		);
+		patcher.after(manager, method, ({ args, result }) => {
+			void resolveKlipyGifUrl(args[0]);
+			void resolveKlipyGifUrl(result);
+		});
 	}
 
 	if (typeof manager.isGIFSource === 'function') {
-		unpatches.push(
-			Patcher.after(manager, 'isGIFSource', ({ args }) => {
-				if (isGifSource(args[0], args[1])) return true;
-			}),
-		);
+		patcher.after(manager, 'isGIFSource', ({ args }) => {
+			if (isGifSource(args[0], args[1])) return true;
+		});
 	}
 
 	for (const method of ['downloadMediaAsset', 'downloadMediaAssetWithContentType'] as const) {
 		if (typeof manager[method] === 'function') {
-			unpatches.push(patchDownload(manager, method));
+			patchDownload(manager, method);
 		}
 	}
-
-	return () => {
-		for (const unpatch of unpatches) unpatch();
-	};
 }
 
 /**
  * @description Makes Discord treat GIF provider media as GIFs and save them as GIF files instead of videos, once its media manager loads.
- * @returns A function that stops waiting for the media manager, or removes every patch.
  */
-export function patchMediaManager(): () => void {
-	return whenLoaded(MediaManagerFilters, patchManager);
+export function patchMediaManager(): void {
+	whenLoaded(MediaManagerFilters, patchManager);
 }

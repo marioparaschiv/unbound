@@ -3,7 +3,8 @@ import { join } from 'node:path';
 
 import type { ModuleEntry } from '../src/paths';
 
-import { buildRoot, normalizeForHash } from '../src/emit';
+import { buildExports, buildGlobal, buildRoot, normalizeForHash } from '../src/emit';
+import { readNamespaceAliases } from '../src/entries';
 import { API_SRC } from '../src/paths';
 
 describe('normalizeForHash', () => {
@@ -56,6 +57,69 @@ describe('buildRoot', () => {
 
 		expect(buildRoot(entries)).toBe(
 			"export * as assets from './assets';\nexport * as metro from './metro/index';\n",
+		);
+	});
+});
+
+describe('buildGlobal', () => {
+	test('declares the Addon scope globals that lib and React do not', () => {
+		const text = buildGlobal([], new Set<string>(), new Map<string, string>());
+
+		for (const name of ['unbound', 'addon', 'patcher', 'logger', 'commands']) {
+			expect(text).toContain(`const ${name}: AddonScope['${name}'];`);
+		}
+
+		for (const name of [
+			'React',
+			'setTimeout',
+			'setInterval',
+			'clearTimeout',
+			'clearInterval',
+		]) {
+			expect(text).not.toContain(`const ${name}:`);
+		}
+	}, 120_000);
+});
+
+describe('buildExports', () => {
+	test('keeps the testing kit beside the generated modules', () => {
+		const entries: ModuleEntry[] = [
+			{ name: 'assets', source: '', out: join(API_SRC, 'assets.d.ts'), topLevel: true },
+		];
+
+		expect(buildExports(entries)).toEqual({
+			'.': './src/index.d.ts',
+			'./assets': './src/assets.d.ts',
+			'./global': './src/global.d.ts',
+			'./testing': './testing/index.ts',
+		});
+	});
+
+	test('rejects a module named like the testing kit', () => {
+		const entries: ModuleEntry[] = [
+			{ name: 'testing', source: '', out: join(API_SRC, 'testing.d.ts'), topLevel: true },
+		];
+
+		expect(() => buildExports(entries)).toThrow('collides');
+	});
+});
+
+describe('namespace aliases', () => {
+	test('reads a barrel alias of a re-exported module with its JSDoc', () => {
+		expect(
+			readNamespaceAliases(join(import.meta.dirname, 'fixtures', 'namespace-aliases.ts')),
+		).toEqual([{ name: 'old', target: 'next', doc: '@deprecated Use next' }]);
+	});
+
+	test('declares each alias after the re-exports', () => {
+		const entries: ModuleEntry[] = [
+			{ name: 'next', source: '', out: join(API_SRC, 'next.d.ts'), topLevel: true },
+		];
+
+		expect(
+			buildRoot(entries, [{ name: 'old', target: 'next', doc: '@deprecated Use next' }]),
+		).toBe(
+			"export * as next from './next';\n/** @deprecated Use next */\nexport declare const old: typeof import('./next');\n",
 		);
 	});
 });

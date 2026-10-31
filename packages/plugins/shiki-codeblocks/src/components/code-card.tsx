@@ -5,7 +5,7 @@ import type { ThemedToken } from 'shiki';
 
 import type { IconMode, LineOverflow } from '~/preferences';
 import type { ThemeAppearance, TokenLines } from '~/highlighter';
-import { CODE_LINE_HEIGHT, codeBlockLayout } from '~/layout';
+import { CODE_LINE_HEIGHT, CODE_SIDE_PADDING, codeBlockLayout } from '~/layout';
 import { languageLabel } from '~/languages';
 import devicons from '~/devicons.json';
 import { cssColor } from '~/card-colors';
@@ -36,7 +36,7 @@ type CodeCardProps = {
 
 const HEADER_HEIGHT = 34;
 const CODE_TOP = 42;
-const SIDE_PADDING = 12;
+const SIDE_PADDING = CODE_SIDE_PADDING;
 const COPY_WIDTH = 58;
 const deviconLanguages: Record<string, string> = devicons.languages;
 const deviconImages: Record<string, string> = devicons.images;

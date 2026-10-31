@@ -1,9 +1,3 @@
-import type {
-	NativeJavaBridge,
-	NativeJavaHandle,
-	NativeJavaReference,
-} from '@unbound-app/api/native';
-
 import {
 	javaFlag,
 	javaFloat,
@@ -12,11 +6,17 @@ import {
 	javaReference,
 	javaText,
 	sameJavaReference,
-} from './java-values';
+} from '@unbound-plugins/shared/native/android/java-values';
+import type {
+	NativeJavaBridge,
+	NativeJavaHandle,
+	NativeJavaReference,
+} from '@unbound-app/api/native';
+import { readCalls, runOnMain } from '@unbound-plugins/shared/native/android/views';
 
 export type InlineHostBridge = Pick<
 	NativeJavaBridge,
-	'getClass' | 'invoke' | 'invokeAsync' | 'construct' | 'className'
+	'getClass' | 'invoke' | 'invokeAsync' | 'construct' | 'className' | 'batch' | 'batchAsync'
 >;
 
 export type InlinePosition = {
@@ -82,23 +82,24 @@ function hostsFreely(java: InlineHostBridge, view: NativeJavaReference): boolean
  * @param textView The text view the reserved room is in.
  * @returns The ancestor and the text view's offset inside it, or `null` when none was found.
  */
-export function hostContainer(
+export async function hostContainer(
 	java: InlineHostBridge,
 	textView: NativeJavaReference,
-): HostContainer | null {
+): Promise<HostContainer | null> {
 	let x = 0;
 	let y = 0;
 	let current: NativeJavaReference | null = textView;
 
 	for (let depth = 0; current && depth < MAX_ANCESTOR_DEPTH; depth++) {
-		x +=
-			(javaNumber(java.invoke(current, 'getLeft', [])) ?? 0) -
-			(javaNumber(java.invoke(current, 'getScrollX', [])) ?? 0);
-		y +=
-			(javaNumber(java.invoke(current, 'getTop', [])) ?? 0) -
-			(javaNumber(java.invoke(current, 'getScrollY', [])) ?? 0);
+		const [left, scrollX, top, scrollY, parentValue] = await runOnMain(
+			java,
+			readCalls(current, ['getLeft', 'getScrollX', 'getTop', 'getScrollY', 'getParent']),
+		);
 
-		const parent = javaReference(java.invoke(current, 'getParent', []));
+		x += (javaNumber(left) ?? 0) - (javaNumber(scrollX) ?? 0);
+		y += (javaNumber(top) ?? 0) - (javaNumber(scrollY) ?? 0);
+
+		const parent = javaReference(parentValue);
 
 		if (!parent) return null;
 
@@ -120,13 +121,17 @@ export function hostContainer(
  * @param height The reserved room's height, in pixels.
  * @returns The room's top-left corner inside the text view, or `null` before the text is laid out.
  */
-export function reservedPosition(
+export async function reservedPosition(
 	java: InlineHostBridge,
 	textView: NativeJavaReference,
 	index: number,
 	height: number,
-): InlinePosition | null {
-	const layout = javaReference(java.invoke(textView, 'getLayout', []));
+): Promise<InlinePosition | null> {
+	const [layoutValue, paddingLeft, paddingTop] = await runOnMain(
+		java,
+		readCalls(textView, ['getLayout', 'getTotalPaddingLeft', 'getTotalPaddingTop']),
+	);
+	const layout = javaReference(layoutValue);
 
 	if (!layout) return null;
 
@@ -135,8 +140,8 @@ export function reservedPosition(
 	const left = javaNumber(java.invoke(layout, 'getPrimaryHorizontal', [javaInt(index)])) ?? 0;
 
 	return {
-		x: left + (javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0),
-		y: bottom - height + (javaNumber(java.invoke(textView, 'getTotalPaddingTop', [])) ?? 0),
+		x: left + (javaNumber(paddingLeft) ?? 0),
+		y: bottom - height + (javaNumber(paddingTop) ?? 0),
 	};
 }
 
@@ -147,12 +152,16 @@ export function reservedPosition(
  * @param index The index of the placeholder character carrying the spacer span.
  * @returns The line's top-left corner at the placeholder inside the text view, or `null` before the text is laid out.
  */
-export function reservedTop(
+export async function reservedTop(
 	java: InlineHostBridge,
 	textView: NativeJavaReference,
 	index: number,
-): InlinePosition | null {
-	const layout = javaReference(java.invoke(textView, 'getLayout', []));
+): Promise<InlinePosition | null> {
+	const [layoutValue, paddingLeft, paddingTop] = await runOnMain(
+		java,
+		readCalls(textView, ['getLayout', 'getTotalPaddingLeft', 'getTotalPaddingTop']),
+	);
+	const layout = javaReference(layoutValue);
 
 	if (!layout) return null;
 
@@ -161,8 +170,8 @@ export function reservedTop(
 	const left = javaNumber(java.invoke(layout, 'getPrimaryHorizontal', [javaInt(index)])) ?? 0;
 
 	return {
-		x: left + (javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0),
-		y: top + (javaNumber(java.invoke(textView, 'getTotalPaddingTop', [])) ?? 0),
+		x: left + (javaNumber(paddingLeft) ?? 0),
+		y: top + (javaNumber(paddingTop) ?? 0),
 	};
 }
 
@@ -172,21 +181,28 @@ export function reservedTop(
  * @param textView A view whose context the host shares.
  * @returns The host view.
  */
-export function createHost(
+export async function createHost(
 	java: InlineHostBridge,
 	textView: NativeJavaReference,
-): NativeJavaHandle {
-	const context = javaReference(java.invoke(textView, 'getContext', []));
+): Promise<NativeJavaHandle> {
+	const context = javaReference(await java.invokeAsync(textView, 'getContext', []));
 
 	return java.construct('android.widget.FrameLayout', context ? [context] : []);
 }
 
-function layoutParamsClass(java: InlineHostBridge, container: NativeJavaReference): string {
-	const count = javaNumber(java.invoke(container, 'getChildCount', [])) ?? 0;
+async function layoutParamsClass(
+	java: InlineHostBridge,
+	container: NativeJavaReference,
+): Promise<string> {
+	const count = javaNumber(await java.invokeAsync(container, 'getChildCount', [])) ?? 0;
 
 	for (let index = 0; index < count; index++) {
-		const child = javaReference(java.invoke(container, 'getChildAt', [javaInt(index)]));
-		const params = child ? javaReference(java.invoke(child, 'getLayoutParams', [])) : null;
+		const child = javaReference(
+			await java.invokeAsync(container, 'getChildAt', [javaInt(index)]),
+		);
+		const params = child
+			? javaReference(await java.invokeAsync(child, 'getLayoutParams', []))
+			: null;
 		const name = params ? javaText(java.className(params)) : undefined;
 
 		if (name) {
@@ -203,10 +219,10 @@ async function fillHost(
 	width: number,
 	height: number,
 ): Promise<void> {
-	const count = javaNumber(java.invoke(host, 'getChildCount', [])) ?? 0;
+	const count = javaNumber(await java.invokeAsync(host, 'getChildCount', [])) ?? 0;
 
 	for (let index = 0; index < count; index++) {
-		const child = javaReference(java.invoke(host, 'getChildAt', [javaInt(index)]));
+		const child = javaReference(await java.invokeAsync(host, 'getChildAt', [javaInt(index)]));
 
 		if (!child) {
 			continue;
@@ -241,11 +257,11 @@ export async function placeHost(
 	position: InlinePosition,
 	size: HostSize,
 ): Promise<void> {
-	const params = java.construct(layoutParamsClass(java, container), [
+	const params = java.construct(await layoutParamsClass(java, container), [
 		javaInt(Math.round(size.width)),
 		javaInt(Math.round(size.height)),
 	]);
-	const parent = javaReference(java.invoke(host, 'getParent', []));
+	const parent = javaReference(await java.invokeAsync(host, 'getParent', []));
 
 	const inContainer = sameJavaReference(parent, container);
 
@@ -288,17 +304,20 @@ export async function layoutHostingList(
 	view: NativeJavaReference,
 ): Promise<void> {
 	const recycler = java.getClass('androidx.recyclerview.widget.RecyclerView');
-	let current = javaReference(java.invoke(view, 'getParent', []));
+	let current = javaReference(await java.invokeAsync(view, 'getParent', []));
 
 	for (let depth = 0; current && depth < MAX_ANCESTOR_DEPTH; depth++) {
-		const parent = javaReference(java.invoke(current, 'getParent', []));
+		const parent = javaReference(await java.invokeAsync(current, 'getParent', []));
 		const isList = javaFlag(java.invoke(recycler, 'isInstance', [current]));
 
 		if (isList && parent && !javaFlag(java.invoke(recycler, 'isInstance', [parent]))) {
-			const left = javaNumber(java.invoke(current, 'getLeft', [])) ?? 0;
-			const top = javaNumber(java.invoke(current, 'getTop', [])) ?? 0;
-			const width = javaNumber(java.invoke(current, 'getWidth', [])) ?? 0;
-			const height = javaNumber(java.invoke(current, 'getHeight', [])) ?? 0;
+			const [left, top, width, height] = (
+				await Promise.all(
+					['getLeft', 'getTop', 'getWidth', 'getHeight'].map((name) =>
+						java.invokeAsync(current!, name, []),
+					),
+				)
+			).map((value) => javaNumber(value) ?? 0) as [number, number, number, number];
 
 			await java.invokeAsync(current, 'measure', [
 				javaInt(width | MEASURE_EXACTLY),
@@ -324,8 +343,11 @@ export async function layoutHostingList(
  * @param host The host view.
  * @returns Whether the host has at least one child view.
  */
-export function hostHasContent(java: InlineHostBridge, host: NativeJavaReference): boolean {
-	return (javaNumber(java.invoke(host, 'getChildCount', [])) ?? 0) > 0;
+export async function hostHasContent(
+	java: InlineHostBridge,
+	host: NativeJavaReference,
+): Promise<boolean> {
+	return (javaNumber(await java.invokeAsync(host, 'getChildCount', [])) ?? 0) > 0;
 }
 
 /**
@@ -335,7 +357,7 @@ export function hostHasContent(java: InlineHostBridge, host: NativeJavaReference
  * @returns Resolves once it is removed.
  */
 export async function removeHost(java: InlineHostBridge, host: NativeJavaReference): Promise<void> {
-	const parent = javaReference(java.invoke(host, 'getParent', []));
+	const parent = javaReference(await java.invokeAsync(host, 'getParent', []));
 
 	if (parent) {
 		await java.invokeAsync(parent, 'removeView', [host]);

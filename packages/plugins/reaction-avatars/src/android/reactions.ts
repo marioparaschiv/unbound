@@ -1,3 +1,4 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
@@ -13,7 +14,7 @@ import {
 	MESSAGE_VIEW,
 	messageBindMethod,
 	messageIdField,
-	viewByIdName,
+	viewByIdNameAsync,
 } from '@unbound-plugins/shared/native/android/discord-views';
 import {
 	javaFlag,
@@ -21,14 +22,19 @@ import {
 	javaNumber,
 	javaReference,
 	javaText,
+	javaViewKey,
+	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
 import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-classes';
 import {
 	currentDecorView,
+	displayDensity,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	readCalls,
+	runOnMain,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
-import { metro } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
 import {
 	reactionAvatarReservedSlotCount,
@@ -40,6 +46,7 @@ import { reactionContext, type Reaction, type ReactionContext } from '~/reaction
 import { Avatar, REACTION_ACTIONS } from '~/constants';
 import { ChannelStore, MessageStore } from '~/modules';
 import { selectedChannelId } from '~/selected-channel';
+import type { ReactionChange } from '~/types';
 import { surfaceStates } from '~/surface-states';
 import ReactionUserCache from '~/reactor-cache';
 import { fetchReactors } from '~/reactors';
@@ -55,6 +62,7 @@ const AVATAR_GAP = 4;
 const MAX_SEARCH_DEPTH = 6;
 const SIZE_PARAMETERS = ['int', 'int', 'int', 'int'];
 const UNMOUNT_WAIT_MS = 1000;
+const DISPOSE_WAIT_MS = 3000;
 
 function settledWithin<T>(pending: Promise<T> | null, timeout: number): Promise<T | null> {
 	if (!pending) return Promise.resolve(null);
@@ -81,14 +89,6 @@ type Pill = {
 	disposed: boolean;
 };
 
-type Message = {
-	reactions?: Reaction[];
-};
-
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
 function emojiKey(reaction: Reaction): string | undefined {
 	if (typeof reaction.emoji === 'string') return reaction.emoji;
 
@@ -114,12 +114,17 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		return javaFlag(java.invoke(java.getClass(className), 'isInstance', [view]));
 	}
 
-	function children(view: NativeJavaReference): NativeJavaReference[] {
-		const count = javaNumber(java.invoke(view, 'getChildCount', [])) ?? 0;
+	async function children(view: NativeJavaReference): Promise<NativeJavaReference[]> {
+		const found = await java.findViews!(view, 'android.view.View', {
+			maxDepth: 1,
+			maxResults: 256,
+		});
 
-		return Array.from({ length: count }, (_, index) =>
-			javaReference(java.invoke(view, 'getChildAt', [javaInt(index)])),
-		).filter((child): child is NativeJavaReference => child !== null);
+		return found
+			.map((child) => javaReference(child))
+			.filter(
+				(child): child is NativeJavaReference => !!child && !sameJavaReference(child, view),
+			);
 	}
 
 	const reactionViewNamed = (() => {
@@ -159,35 +164,25 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		return field.name;
 	}
 
-	function reactionRow(messageView: NativeJavaReference): NativeJavaReference | null {
-		const accessories = viewByIdName(java, messageView, 'accessories_view');
-		let level = accessories ? [accessories] : [];
+	async function reactionRow(
+		messageView: NativeJavaReference,
+	): Promise<NativeJavaReference | null> {
+		const accessories = await viewByIdNameAsync(java, messageView, 'accessories_view');
 
-		for (let depth = 0; depth < MAX_SEARCH_DEPTH && level.length; depth++) {
-			const row = level.find((view) => isA(REACTION_ROW, view));
+		if (!accessories) return null;
 
-			if (row) return row;
+		const [row] = await java.findViews!(accessories, REACTION_ROW, {
+			maxDepth: MAX_SEARCH_DEPTH,
+			maxResults: 1,
+			stopAtMatch: true,
+		});
 
-			level = level
-				.filter((view) => isA('android.view.ViewGroup', view))
-				.flatMap((view) => children(view));
-		}
-
-		return null;
-	}
-
-	function density(view: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(view, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
+		return javaReference(row);
 	}
 
 	async function removePill(pill: Pill) {
 		pill.disposed = true;
-		pills.delete(viewKey(pill.reactionView as NativeJavaValue) ?? '');
+		pills.delete(javaViewKey(pill.reactionView as NativeJavaValue) ?? '');
 		surfaceStates.delete(pill.id);
 
 		const mounted = await settledWithin(pill.mounting, UNMOUNT_WAIT_MS);
@@ -199,7 +194,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 
 	function describe(pill: Pill, context: ReactionContext, users: Reactor[]) {
 		surfaceStates.set(pill.id, {
-			guildId: ChannelStore.getChannel(context.channelId)?.guild_id,
+			guildId: ChannelStore.getChannel(context.channelId)?.guild_id ?? undefined,
 			height: HOST_HEIGHT,
 			measured: true,
 			onWidth: () => undefined,
@@ -218,10 +213,10 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		context: ReactionContext,
 		users: Reactor[],
 	): Promise<Pill> {
-		const scale = density(reactionView);
+		const scale = await displayDensity(java, reactionView);
 		const total = reactionAvatarSelection(context.reaction, context.reactionType).count;
 		const width = reactionAvatarStackWidth(reactionAvatarReservedSlotCount(total));
-		const viewContext = javaReference(java.invoke(reactionView, 'getContext', []));
+		const viewContext = javaReference(await java.invokeAsync(reactionView, 'getContext', []));
 		const host = java.construct('android.widget.FrameLayout', viewContext ? [viewContext] : []);
 		const params = java.construct(LINEAR_PARAMS, [
 			javaInt(Math.round(width * scale)),
@@ -245,7 +240,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		]);
 		java.setField(params, 'gravity', javaInt(CENTER_VERTICAL));
 		describe(pill, context, users);
-		pills.set(viewKey(reactionView as NativeJavaValue) ?? '', pill);
+		pills.set(javaViewKey(reactionView as NativeJavaValue) ?? '', pill);
 		await java.invokeAsync(reactionView, 'addView', [host, params]);
 
 		return pill;
@@ -277,19 +272,21 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 
 	async function render(messageView: NativeJavaReference, messageId: string) {
 		const channelId = selectedChannelId();
-		const message: Message | undefined = channelId
-			? MessageStore.getMessage(channelId, messageId)
-			: undefined;
-		const row = reactionRow(messageView);
-		const views = row ? children(row).filter(isReactionView) : [];
+		const message = channelId ? MessageStore.getMessage(channelId, messageId) : undefined;
+		const row = await reactionRow(messageView);
+		const views = row ? (await children(row)).filter(isReactionView) : [];
+		const visibility = await runOnMain(
+			java,
+			views.flatMap((view) => readCalls(view, ['getVisibility'])),
+		);
 		const reactions = message?.reactions ?? [];
 		const used = new Set<number>();
 		const changed: Pill[] = [];
 
-		for (const reactionView of views) {
-			const key = viewKey(reactionView as NativeJavaValue) ?? '';
+		for (const [position, reactionView] of views.entries()) {
+			const key = javaViewKey(reactionView as NativeJavaValue) ?? '';
 			const existing = pills.get(key);
-			const shown = javaNumber(java.invoke(reactionView, 'getVisibility', [])) === VISIBLE;
+			const shown = javaNumber(visibility[position]) === VISIBLE;
 			const field = shown ? emojiField(reactionView) : undefined;
 			const emoji = field ? javaText(java.getField(reactionView, field)) : undefined;
 			const index = reactions.findIndex(
@@ -341,7 +338,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 			changed.push(await addPill(reactionView, context, users));
 		}
 
-		const messageKey = viewKey(messageView as NativeJavaValue) ?? '';
+		const messageKey = javaViewKey(messageView as NativeJavaValue) ?? '';
 
 		if (reactions.length && !used.size) {
 			awaitingSize.set(messageKey, { messageView, messageId });
@@ -360,7 +357,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 	}
 
 	function schedule(messageView: NativeJavaReference, messageId: string) {
-		const key = viewKey(messageView as NativeJavaValue);
+		const key = javaViewKey(messageView as NativeJavaValue);
 
 		if (!key || disposed) return;
 
@@ -373,7 +370,9 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 					: undefined,
 			)
 			.catch((error) => {
-				console.error('[Reaction Avatars] Failed to draw Android reactors:', error);
+				if (!isCancellation(error)) {
+					console.error('[Reaction Avatars] Failed to draw Android reactors:', error);
+				}
 			})
 			.finally(() => {
 				if (queues.get(key) === next) queues.delete(key);
@@ -406,7 +405,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		SIZE_PARAMETERS,
 		{ notify: true },
 		({ self }) => {
-			const key = viewKey(self);
+			const key = javaViewKey(self);
 			const pending = key ? awaitingSize.get(key) : undefined;
 
 			if (!key || !pending) return;
@@ -416,11 +415,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		},
 	);
 
-	function onReactionChange(event: {
-		messageId?: string;
-		message_id?: string;
-		channelId?: string;
-	}) {
+	function onReactionChange(event: ReactionChange) {
 		const messageId = event.messageId ?? event.message_id;
 
 		if (!messageId) return;
@@ -434,23 +429,23 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		}
 	}
 
-	for (const action of REACTION_ACTIONS) {
-		metro.common.Dispatcher.subscribe(action, onReactionChange);
-	}
+	const removeReactionListeners = REACTION_ACTIONS.map((action) =>
+		flux.onAction(action, onReactionChange),
+	);
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || disposed) return;
 
-		for (const messageView of findViewsOfClass(java, decor, MESSAGE_VIEW)) {
+		for (const messageView of await findViewsOfClass(java, decor, MESSAGE_VIEW)) {
 			const messageId = javaText(java.getField(messageView, idField));
 
 			if (messageId) schedule(messageView, messageId);
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	const scans = scheduleStartupScans('Reaction Avatars', scanVisible);
 
 	return {
 		async dispose() {
@@ -461,17 +456,16 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 			hooks.remove(sizeToken);
 			awaitingSize.clear();
 
-			for (const action of REACTION_ACTIONS) {
-				metro.common.Dispatcher.unsubscribe(action, onReactionChange);
-			}
+			for (const remove of removeReactionListeners) remove();
 
 			const views = [...bound.values()];
 
-			await Promise.all([...pills.values()].map(removePill));
-
 			const [first] = views;
+			const removed = Promise.all([...pills.values()].map(removePill)).then(async () => {
+				if (first) await layoutHostingList(java, first.messageView).catch(() => undefined);
+			});
 
-			if (first) await layoutHostingList(java, first.messageView).catch(() => undefined);
+			await settledWithin(removed, DISPOSE_WAIT_MS);
 
 			bound.clear();
 		},

@@ -1,11 +1,13 @@
+import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
+
 import { callerSchema } from './account';
 import { z } from './zod';
 
-/** The addon managers whose installs sync, named after their settings stores. */
+/** The addon managers whose installs sync, named after their settings buckets. */
 export const SYNC_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
 
 /** The core settings store; addon settings stores are named after the addon id. */
-export const SYNC_CORE_STORE = 'unbound';
+export const SYNC_CORE_STORE = CORE_SETTINGS_STORE;
 
 /** Stores under this prefix hold caches and session state, and never sync. */
 export const SYNC_LOCAL_STORE_PREFIX = 'unbound::';

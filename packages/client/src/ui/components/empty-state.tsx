@@ -1,8 +1,8 @@
 import { View, Image } from 'react-native';
 
-import { Discord } from '~/api/metro/components';
-import { Theme } from '~/api/metro/common';
-import { Icons } from '~/api/assets';
+import { Discord } from '~/metro/components';
+import { Theme } from '~/metro/common';
+import { icons } from '~/assets/api';
 
 import useStyles from './empty-state.style';
 
@@ -20,7 +20,7 @@ function Empty({ children, image = 'empty_state_image' }: EmptyProps) {
 
 	return (
 		<View style={styles.container}>
-			<Image source={Icons[image] ?? 0} resizeMode='contain' style={styles.image} />
+			<Image source={icons[image] ?? 0} resizeMode='contain' style={styles.image} />
 			<Discord.Text
 				variant='text-md/medium'
 				style={[styles.text, { color: Theme.colors.TEXT_MUTED }]}

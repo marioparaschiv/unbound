@@ -1,5 +1,3 @@
-import { describe, expect, test } from 'bun:test';
-
 import {
 	colorComponentsToHex,
 	getContrastingTextColor,
@@ -9,7 +7,8 @@ import {
 	parseNativeColorDescription,
 	roleColorAt,
 	roleColorRuns,
-} from './role-colors';
+} from '@unbound-plugins/shared/colors/role-colors';
+import { describe, expect, test } from 'bun:test';
 
 const holographic = {
 	primaryColor: '#112233',

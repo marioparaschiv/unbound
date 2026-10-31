@@ -224,6 +224,60 @@ describe('editAddon', () => {
 		expect(await getAddonDetails(ctx, 'edit.events')).toBeUndefined();
 	});
 
+	test('staff set and clear the website icon, and each change is recorded unpinned', async () => {
+		await seedApprovedAddon(ctx, owner.userId, release('edit.icon', '1.0.0'));
+
+		const picked = await editAddon(ctx, admin.caller, 'edit.icon', {
+			...(await formOf('edit.icon')),
+			icon: 'IconRocket',
+			reason: 'Brand refresh',
+		});
+
+		expect(picked.addon).toMatchObject({ icon: 'IconRocket' });
+		expect(picked.addon.iconSvg).toStartWith('<svg');
+		expect(picked.form.icon).toBe('IconRocket');
+		expect((await getAddonDetails(ctx, 'edit.icon'))?.icon).toBe('IconRocket');
+
+		const cleared = await editAddon(ctx, admin.caller, 'edit.icon', {
+			...picked.form,
+			icon: null,
+		});
+
+		expect(cleared.addon).toMatchObject({ icon: null, iconSvg: null });
+		expect(
+			(await eventsOf('edit.icon')).map((event) => [event.kind, event.data, event.reason]),
+		).toEqual([
+			[
+				'addon.edited',
+				{ changes: [{ field: 'icon', from: null, to: 'IconRocket', pinned: false }] },
+				'Brand refresh',
+			],
+			[
+				'addon.edited',
+				{ changes: [{ field: 'icon', from: 'IconRocket', to: null, pinned: false }] },
+				null,
+			],
+		]);
+	});
+
+	test('an icon name that is not in the set is rejected and writes nothing', async () => {
+		await seedApprovedAddon(ctx, owner.userId, release('edit.icon-bad', '1.0.0'));
+
+		const form = await formOf('edit.icon-bad');
+
+		expect(
+			await rejection(
+				editAddon(ctx, admin.caller, 'edit.icon-bad', {
+					...form,
+					name: 'Greeter',
+					icon: 'IconDoesNotExist',
+				}),
+			),
+		).toMatchObject({ code: 'invalid_request' });
+		expect(await eventsOf('edit.icon-bad')).toEqual([]);
+		expect(await formOf('edit.icon-bad')).toMatchObject({ icon: null, name: null });
+	});
+
 	test('maintainer edits keep at least one owner and name only existing users', async () => {
 		await seedApprovedAddon(ctx, owner.userId, release('edit.owners', '1.0.0'));
 
@@ -260,6 +314,11 @@ describe('editAddon', () => {
 		expect(
 			await rejection(
 				editAddon(ctx, moderator.caller, 'edit.moderator', { ...form, name: 'Greeter' }),
+			),
+		).toMatchObject({ code: 'forbidden' });
+		expect(
+			await rejection(
+				editAddon(ctx, moderator.caller, 'edit.moderator', { ...form, icon: 'IconRocket' }),
 			),
 		).toMatchObject({ code: 'forbidden' });
 		expect(

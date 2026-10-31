@@ -44,6 +44,34 @@ export function fieldToFlag(field: z.ZodType): CleyeFlag {
 	return { type, description: field.description, default: defaultValue };
 }
 
+export type NegatedFlags = { off: string[]; unmatched: string[] };
+
+/**
+ * @description Sorts the flags cleye did not recognise into negated boolean flags, such as `--no-build` for `build`, and flags that are really unknown.
+ * @param unknown cleye's unknown flags, by the name they were written with.
+ * @param booleans The names of the command's boolean flags, in camelCase.
+ * @returns The boolean flags turned off, and the names nothing matched.
+ */
+export function negatedFlags(unknown: Record<string, unknown[]>, booleans: string[]): NegatedFlags {
+	const off: string[] = [];
+	const unmatched: string[] = [];
+
+	for (const written of Object.keys(unknown)) {
+		const name = written
+			.replace(/^no-?/, '')
+			.replace(/-([a-z])/g, (_, letter: string) => letter.toUpperCase());
+		const flag = booleans.find((candidate) => candidate.toLowerCase() === name.toLowerCase());
+
+		if (written.startsWith('no') && flag) {
+			off.push(flag);
+		} else {
+			unmatched.push(written);
+		}
+	}
+
+	return { off, unmatched };
+}
+
 /**
  * @description Tells whether a zod field holds a list, so the CLI can take it as a repeatable flag or a variadic positional.
  * @param field The zod field for a single schema property.

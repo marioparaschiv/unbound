@@ -93,6 +93,7 @@ declare global {
 	type UnboundLoaderInfo = {
 		origin: string;
 		version: string;
+		bytecodeVersion?: number;
 	};
 
 	/**

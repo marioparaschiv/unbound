@@ -2,7 +2,7 @@ import { Events, Listener, type StoreRegistryValue } from '@sapphire/framework';
 import { ApplyOptions } from '@sapphire/decorators';
 import { blue, gray, yellow } from 'colorette';
 
-const dev = process.env.NODE_ENV !== 'production';
+const dev = process.env.NODE_ENV === 'development';
 
 const BANNER = String.raw`
 

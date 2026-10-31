@@ -2,11 +2,12 @@ import {
 	addonPathSchema,
 	commitShaSchema,
 	gitRefSchema,
-	repositoryDetailsSchema,
 	repositoryInputSchema,
 	sourcePinSchema,
 } from './source';
-import { addonIdSchema } from './manifest';
+import { addonIdSchema, bytecodeDigestsSchema } from './manifest';
+import { submissionTagsSchema } from './tags';
+import { addonIconSchema } from './icons';
 import { z } from './zod';
 
 /** `listing` claims a new addon id; `update` publishes a new version of an addon the caller maintains. */
@@ -58,10 +59,25 @@ export const submissionSchema = z.object({
 
 export const MAX_CHANGELOG_LENGTH = 10_000;
 
-/** The details an author may override; omitted fields keep what GitHub says. */
-export const submissionDetailsOverridesSchema = z.object({
-	homepage: z.optional(repositoryDetailsSchema.shape.homepage),
-	tags: z.optional(repositoryDetailsSchema.shape.tags),
+/** How many maintainers besides its owners one submission may give an addon. */
+export const MAX_SUBMISSION_MAINTAINERS = 20;
+
+/** The users an owner makes an addon's maintainers, by user id. */
+export const submissionMaintainersSchema = z
+	.array(z.string().check(z.minLength(1), z.maxLength(64)))
+	.check(
+		z.maxLength(MAX_SUBMISSION_MAINTAINERS),
+		z.refine((ids) => new Set(ids).size === ids.length, 'User ids must be unique.'),
+	);
+
+/** What the author chose for the listing; an omitted field keeps what the addon has. */
+export const submissionDetailsSchema = z.object({
+	/** Replaces the addon's tags on approval; `[]` clears them. */
+	tags: z.optional(submissionTagsSchema),
+	/** Replaces the addon's maintainers other than its owners on approval; `[]` removes them. Owners only. */
+	maintainers: z.optional(submissionMaintainersSchema),
+	/** The website icon a new listing starts with; updates change it from the dashboard. */
+	icon: z.optional(addonIconSchema),
 });
 
 /**
@@ -74,7 +90,7 @@ export const createSubmissionRequestSchema = z.object({
 	/** The branch, tag or SHA the author named; it must still resolve to `commitSha`. */
 	ref: gitRefSchema,
 	commitSha: commitShaSchema,
-	details: z.optional(submissionDetailsOverridesSchema),
+	details: z.optional(submissionDetailsSchema),
 });
 
 export const createSubmissionResponseSchema = z.object({
@@ -94,7 +110,7 @@ export const publishFirstPartyRequestSchema = z.object({
 });
 
 /** `unchanged` when that version was already published, so a re-run is a no-op. */
-export const firstPartyPublishStatusSchema = z.enum(['published', 'unchanged']);
+export const firstPartyPublishStatusSchema = z.enum(['published', 'replaced', 'unchanged']);
 
 export const publishFirstPartyResponseSchema = z.object({
 	status: firstPartyPublishStatusSchema,
@@ -111,6 +127,10 @@ export const firstPartyAddonSchema = z.object({
 	version: z.string(),
 	/** The commit that version was read from, or `null` for a legacy upload. */
 	commitSha: z.nullable(z.string()),
+	/** The SHA-256 of that version's published bundle. */
+	sha256: z.optional(z.string()),
+	/** That version's `manifest.bytecode`, when it ships compiled bundles. */
+	bytecode: z.optional(bytecodeDigestsSchema),
 });
 
 export const listFirstPartyAddonsResponseSchema = z.object({
@@ -123,7 +143,7 @@ export type OpenSubmissionStatus = z.infer<typeof openSubmissionStatusSchema>;
 export type ReviewDecision = z.infer<typeof reviewDecisionSchema>;
 export type SubmissionReview = z.infer<typeof submissionReviewSchema>;
 export type Submission = z.infer<typeof submissionSchema>;
-export type SubmissionDetailsOverrides = z.infer<typeof submissionDetailsOverridesSchema>;
+export type SubmissionDetails = z.infer<typeof submissionDetailsSchema>;
 export type CreateSubmissionRequest = z.infer<typeof createSubmissionRequestSchema>;
 export type CreateSubmissionResponse = z.infer<typeof createSubmissionResponseSchema>;
 export type PublishFirstPartyRequest = z.infer<typeof publishFirstPartyRequestSchema>;
@@ -134,13 +154,15 @@ export type ListFirstPartyAddonsResponse = z.infer<typeof listFirstPartyAddonsRe
 
 export default {
 	MAX_CHANGELOG_LENGTH,
+	MAX_SUBMISSION_MAINTAINERS,
+	submissionMaintainersSchema,
 	submissionKindSchema,
 	submissionStatusSchema,
 	openSubmissionStatusSchema,
 	reviewDecisionSchema,
 	submissionReviewSchema,
 	submissionSchema,
-	submissionDetailsOverridesSchema,
+	submissionDetailsSchema,
 	createSubmissionRequestSchema,
 	createSubmissionResponseSchema,
 	publishFirstPartyRequestSchema,

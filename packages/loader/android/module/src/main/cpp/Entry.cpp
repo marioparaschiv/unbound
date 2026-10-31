@@ -2,7 +2,9 @@
 #include <jni.h>
 #include <mutex>
 
+#include "AndroidAttestation.h"
 #include "AndroidFileWatcher.h"
+#include "AndroidHermesSampler.h"
 #include "AndroidHotReload.h"
 #include "AndroidLoader.h"
 #include "HermesBytecodeHeader.h"
@@ -10,11 +12,13 @@
 #include "LoaderColor.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderDiagnostics.h"
+#include "LoaderDocuments.h"
 #include "LoaderJSI.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
 #include "LoaderPreload.h"
+#include "LoaderThreadWarnings.h"
 #include "LoaderToolboxGestures.h"
 #include "NativePluginBridge.h"
 
@@ -191,6 +195,22 @@ static jstring nativeToolbox(JNIEnv *env, jclass, jstring action, jstring argume
                                         argument ? toStdString(env, argument) : std::string()));
 }
 
+static void nativeWarnOffMainViewCall(JNIEnv *env, jclass, jstring call)
+{
+    static loader::threading::OffMainViewWarnings warnings([] {
+        auto loader = currentLoader();
+        return loader && loader::preferences::developerMode(loader->settings());
+    });
+    if (!call || !warnings.enabled())
+    {
+        return;
+    }
+    if (auto warning = warnings.warning(loader::currentAddon(), toStdString(env, call)))
+    {
+        loader::log(loader::LogLevel::Warning, LOG_CATEGORY_PLUGINS, *warning);
+    }
+}
+
 static jstring nativePreference(JNIEnv *env, jclass, jstring action, jstring argument)
 {
     auto loader = currentLoader();
@@ -257,40 +277,15 @@ static jstring nativeThreeFingerEvent(JNIEnv *env, jclass, jstring event, jint p
     return toJavaString(env, loader::toolbox::gestureActionName(action));
 }
 
-static jlong nativeParseColor(JNIEnv *env, jclass, jstring value)
-{
-    if (!value)
-    {
-        return -1;
-    }
-    const auto color = loader::parseColor(toStdString(env, value));
-    return color ? static_cast<jlong>(loader::toARGB(*color)) : -1;
-}
-
-static jdoubleArray nativeMessageBubbleStyle(JNIEnv *env, jclass)
-{
-    const auto   &style    = loader::preferences::kMessageBubbleStyle;
-    const jdouble values[] = {
-        style.radius, style.horizontalPadding, style.verticalPadding,
-        static_cast<jdouble>(loader::toARGB(loader::preferences::messageBubbleColor(true))),
-        static_cast<jdouble>(loader::toARGB(loader::preferences::messageBubbleColor(false)))};
-    jdoubleArray result = env->NewDoubleArray(5);
-    if (result)
-    {
-        env->SetDoubleArrayRegion(result, 0, 5, values);
-    }
-    return result;
-}
-
 static jstring nativeResolveFont(JNIEnv *env, jclass, jstring family)
 {
     auto loader = currentLoader();
     return toJavaString(env, loader ? loader->resolveFont(toStdString(env, family)) : "{}");
 }
 
-static jstring nativeDocumentsName(JNIEnv *env, jclass)
+static jstring nativeDocumentsDirectory(JNIEnv *env, jclass, jstring parent)
 {
-    return toJavaString(env, loader::preferences::kDocumentsName);
+    return toJavaString(env, loader::documentsDirectory(toStdString(env, parent)));
 }
 
 static jstring nativeSettingsFileName(JNIEnv *env, jclass)
@@ -404,20 +399,6 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.scheduleRuntime = env->GetStaticMethodID(bridge, "scheduleRuntimeWork", "()V");
     gCallbacks.scheduleMain    = env->GetStaticMethodID(bridge, "scheduleMainWork", "()V");
     gCallbacks.isMainThread    = env->GetStaticMethodID(bridge, "isMainThread", "()Z");
-    gCallbacks.lookupViews =
-        env->GetStaticMethodID(bridge, "lookupViews", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.snapshotViews =
-        env->GetStaticMethodID(bridge, "snapshotViews", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.measureView =
-        env->GetStaticMethodID(bridge, "measureView", "(Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.setViewFrame =
-        env->GetStaticMethodID(bridge, "setViewFrame", "(Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.mountView = env->GetStaticMethodID(
-        bridge, "mountView",
-        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
-    gCallbacks.updateView =
-        env->GetStaticMethodID(bridge, "updateView", "(Ljava/lang/String;Ljava/lang/String;)V");
-    gCallbacks.unmountView = env->GetStaticMethodID(bridge, "unmountView", "(Ljava/lang/String;)V");
     gCallbacks.javaGetClass =
         env->GetStaticMethodID(bridge, "javaGetClass", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaClassName =
@@ -445,6 +426,9 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.runtimeReplaced = env->GetStaticMethodID(bridge, "runtimeReplaced", "()V");
     gCallbacks.javaBatch =
         env->GetStaticMethodID(bridge, "javaBatch", "(Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.javaFindViews = env->GetStaticMethodID(
+        bridge, "javaFindViews",
+        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaCreateAssociationKey =
         env->GetStaticMethodID(bridge, "javaCreateAssociationKey", "()Ljava/lang/String;");
     gCallbacks.javaGetAssociatedObject =
@@ -484,13 +468,11 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.onBundleExecuted = env->GetStaticMethodID(bridge, "onBundleExecuted", "()V");
 
     return !clearPendingException(env) && gCallbacks.scheduleRuntime && gCallbacks.scheduleMain &&
-           gCallbacks.isMainThread && gCallbacks.lookupViews && gCallbacks.snapshotViews &&
-           gCallbacks.measureView && gCallbacks.setViewFrame && gCallbacks.mountView &&
-           gCallbacks.updateView && gCallbacks.unmountView && gCallbacks.javaGetClass &&
-           gCallbacks.javaClassName && gCallbacks.javaDescribe && gCallbacks.javaConstruct &&
-           gCallbacks.javaRespondsTo && gCallbacks.javaInvoke && gCallbacks.javaGetField &&
-           gCallbacks.javaSetField && gCallbacks.javaRelease && gCallbacks.hooksInstall &&
-           gCallbacks.hooksRemove && gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
+           gCallbacks.isMainThread && gCallbacks.javaGetClass && gCallbacks.javaClassName &&
+           gCallbacks.javaDescribe && gCallbacks.javaConstruct && gCallbacks.javaRespondsTo &&
+           gCallbacks.javaInvoke && gCallbacks.javaGetField && gCallbacks.javaSetField &&
+           gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
+           gCallbacks.runtimeReplaced && gCallbacks.javaBatch && gCallbacks.javaFindViews &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
            gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
            gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&
@@ -542,12 +524,10 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativeShakeSample", "(FFFJ)Z", reinterpret_cast<void *>(nativeShakeSample)},
         {"nativeThreeFingerEvent", "(Ljava/lang/String;I)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeThreeFingerEvent)},
-        {"nativeParseColor", "(Ljava/lang/String;)J", reinterpret_cast<void *>(nativeParseColor)},
-        {"nativeMessageBubbleStyle", "()[D", reinterpret_cast<void *>(nativeMessageBubbleStyle)},
         {"nativeResolveFont", "(Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeResolveFont)},
-        {"nativeDocumentsName", "()Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeDocumentsName)},
+        {"nativeDocumentsDirectory", "(Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeDocumentsDirectory)},
         {"nativeSettingsFileName", "()Ljava/lang/String;",
          reinterpret_cast<void *>(nativeSettingsFileName)},
         {"nativeThemeColorsJSON", "(Ljava/lang/String;)Ljava/lang/String;",
@@ -558,6 +538,9 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativeAppendLogFile", "(ILjava/lang/String;Ljava/lang/String;)V",
          reinterpret_cast<void *>(nativeAppendLogFile)},
         {"nativeDevOverlayButtonSide", "()D", reinterpret_cast<void *>(nativeDevOverlayButtonSide)},
+        {"nativeAttestation", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeAttestation)},
+        {"nativeWarnOffMainViewCall", "(Ljava/lang/String;)V",
+         reinterpret_cast<void *>(nativeWarnOffMainViewCall)},
         {"nativeIncompatibleHostMessage", "()Ljava/lang/String;",
          reinterpret_cast<void *>(nativeIncompatibleHostMessage)},
         {"nativeDevelopmentBuildBanner",
@@ -575,7 +558,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
     if (env->RegisterNatives(bridge.get(), methods, sizeof(methods) / sizeof(methods[0])) !=
             JNI_OK ||
         !cacheCallbacks(env, bridge.get()) || !registerHotReloadNatives(env) ||
-        !registerFileWatcherNatives(env))
+        !registerFileWatcherNatives(env) || !registerHermesSampler(env))
     {
         clearPendingException(env);
         return JNI_ERR;

@@ -27,7 +27,9 @@ const (
 )
 
 var compatEnvironmentClasses = map[string]string{
-	"LCSharedUtils": "LiveContainer's own class, present only when Discord runs inside LiveContainer, so its absence is expected",
+	"LCSharedUtils":                             "LiveContainer's own class, present only when Discord runs inside LiveContainer, so its absence is expected",
+	"android.os.SystemProperties":               "a hidden Android platform class that the public SDK stubs leave out; it exists on every device, and the loader falls back to `Build` values when reading it fails",
+	"org.lsposed.lspatch.loader.LSPApplication": "LSPatch's own class, present only when Discord was patched with LSPatch, so its absence is expected",
 }
 
 type compatTarget struct {
@@ -100,10 +102,10 @@ func runCompatScan(args []string) error {
 	if err := set.Parse(args); err != nil {
 		return err
 	}
-	if *ipa == "" && len(apks) == 0 && *channel == "" {
+	if *ipa == "" && len(apks) == 0 && discordAndroidChannelRank(*channel) < 0 {
 		return errNoCompatTarget
 	}
-	if *channel != "" && (*ipa == "" || len(apks) == 0) {
+	if discordAndroidChannelRank(*channel) >= 0 && (*ipa == "" || len(apks) == 0) {
 		builds, err := fetchCompatBuilds(context.Background(), *channel, *cache, compatFetch{android: len(apks) == 0, ios: *ipa == ""})
 		if err != nil {
 			return err

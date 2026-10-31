@@ -1,16 +1,10 @@
-import { metro } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
-import { scheduleLayoutRefresh } from '~/native/collections';
-import { reloadReactors } from '~/native/reaction-surfaces';
-import type { Session } from '~/native/session';
+import { scheduleLayoutRefresh } from '~/ios/collections';
+import { reloadReactors } from '~/ios/reaction-surfaces';
+import type { Session } from '~/ios/session';
 import { REACTION_ACTIONS } from '~/constants';
-
-type ReactionChange = {
-	channelId?: string;
-	channel_id?: string;
-	messageId?: string;
-	message_id?: string;
-};
+import type { ReactionChange } from '~/types';
 
 /**
  * @description Refetches a message's reactors and reflows its pills whenever its reactions change, for every `MESSAGE_REACTION_*` action.
@@ -34,13 +28,9 @@ export function subscribeReactionChanges(session: Session): () => void {
 		);
 	}
 
-	for (const action of REACTION_ACTIONS) {
-		metro.common.Dispatcher.subscribe(action, onReactionChange);
-	}
+	const removers = REACTION_ACTIONS.map((action) => flux.onAction(action, onReactionChange));
 
 	return () => {
-		for (const action of REACTION_ACTIONS) {
-			metro.common.Dispatcher.unsubscribe(action, onReactionChange);
-		}
+		for (const remove of removers) remove();
 	};
 }

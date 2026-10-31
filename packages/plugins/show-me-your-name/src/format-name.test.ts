@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { formatName } from './format-name';
+import { formatName } from '~/format-name';
 
 describe('formatName', () => {
 	test('formats each mode', () => {

@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/debugger",
-	"version": "0.8.1",
+	"version": "0.9.1",
 	"description": "A REPL debugger for @unbound-app/client runtime instances.",
 	"author": {
 		"name": "Mario P.",
@@ -21,7 +21,8 @@
 	"type": "module",
 	"module": "src/index.ts",
 	"scripts": {
-		"build": "tsdown"
+		"build": "tsdown",
+		"typecheck": "tsc --noEmit -p ."
 	},
 	"dependencies": {
 		"@unbound-app/debugger-protocol": "workspace:*",

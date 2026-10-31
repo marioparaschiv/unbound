@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/logger",
-	"version": "0.7.0",
+	"version": "0.7.2",
 	"private": true,
 	"author": {
 		"name": "Mario P.",
@@ -9,6 +9,9 @@
 	},
 	"exports": {
 		".": "./src/index.ts"
+	},
+	"scripts": {
+		"typecheck": "tsc --noEmit -p ."
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:"

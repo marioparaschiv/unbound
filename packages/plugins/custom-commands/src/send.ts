@@ -1,4 +1,6 @@
-import { CloudUploader, Dispatcher, Messages, PendingReplyStore } from '~/modules';
+import { flux } from '@unbound-app/api';
+
+import { CloudUploader, Messages, PendingReplyStore } from '~/modules';
 import { getOptionValue, renderTagMessage } from '~/tags';
 import type { CommandOption, TagMedia } from '~/tags';
 import type { CommandContext } from '~/commands';
@@ -95,7 +97,7 @@ export async function sendTag(
 		}
 
 		if (pendingReply) {
-			Dispatcher.dispatch({ type: 'DELETE_PENDING_REPLY', channelId });
+			void flux.dispatch({ type: 'DELETE_PENDING_REPLY', channelId });
 		}
 	} catch (error) {
 		notifyError(error, 'The command could not be sent.');

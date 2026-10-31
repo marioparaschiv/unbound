@@ -1,9 +1,10 @@
-import { cancelVisibleScans, scanVisibleCells } from '~/native/visible-cells';
-import { cancelLayoutRefreshes } from '~/native/collections';
-import { clearRenderedCells } from '~/native/renderer';
+import { scanVisibleCells } from '~/ios/visible-cells';
+import { cancelLayoutRefreshes } from '~/ios/collections';
+import { clearRenderedCells } from '~/ios/renderer';
 import { selectedChannelId } from '~/selected-channel';
-import type { Session } from '~/native/session';
+import type { Session } from '~/ios/session';
 import { SelectedChannelStore } from '~/modules';
+import { flux } from '@unbound-app/api';
 
 /**
  * @description Drops every avatar when the user switches channel, then renders the new channel's cells as they settle.
@@ -27,7 +28,8 @@ export function subscribeChannelChanges(session: Session): () => void {
 		if (!next || next === channelId) return;
 
 		channelId = next;
-		cancelVisibleScans(session);
+		// Abandons any visible-cell scan in progress.
+		session.scanRevision++;
 		cancelScans();
 		cancelLayoutRefreshes(session);
 		clearRenderedCells(session);
@@ -45,10 +47,10 @@ export function subscribeChannelChanges(session: Session): () => void {
 		}
 	}
 
-	SelectedChannelStore.addChangeListener(onChange);
+	const removeListener = flux.onStoreChange(SelectedChannelStore, onChange);
 
 	return () => {
-		SelectedChannelStore.removeChangeListener(onChange);
+		removeListener();
 		cancelScans();
 	};
 }

@@ -6,17 +6,25 @@
 #include <iterator>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <string>
+#include <sys/types.h>
+#include <unistd.h>
 #include <unordered_map>
 #include <vector>
 
 #include "JniEnvironment.h"
 #include "LoaderAddonActivity.h"
+#include "LoaderBootstrap.h"
+#include "LoaderLog.h"
+#include "LoaderThreadWarnings.h"
 #include "NativeBoundedValue.h"
 #include "NativeEvaluations.h"
 #include "NativeFFI.h"
+#include "NativeFabric.h"
 #include "NativeGeometry.h"
+#include "NativeHandleLeases.h"
 #include "NativeHookReturnCache.h"
 #include "NativeLimits.h"
 #include "NativePlatformBridge.h"
@@ -26,446 +34,6 @@
 
 namespace unbound::android {
 namespace jsi = facebook::jsi;
-
-static constexpr size_t kMaximumQueryBytes       = 8192;
-static constexpr size_t kMaximumQueryAttributes  = 32;
-static constexpr size_t kMaximumQueryStringBytes = 256;
-
-static nlohmann::json scalarAttributes(jsi::Runtime &runtime, const jsi::Object &query)
-{
-    jsi::Value value = query.getProperty(runtime, "attributes");
-    if (!value.isObject() || value.isNull())
-    {
-        return nlohmann::json::object();
-    }
-
-    jsi::Object object = value.asObject(runtime);
-    if (object.isArray(runtime))
-    {
-        throw std::invalid_argument("attributes must be a plain object");
-    }
-
-    jsi::Array names = object.getPropertyNames(runtime);
-    if (names.size(runtime) > kMaximumQueryAttributes)
-    {
-        throw std::invalid_argument("attributes exceeds the maximum number of entries");
-    }
-
-    nlohmann::json result = nlohmann::json::object();
-    for (size_t index = 0; index < names.size(runtime); index++)
-    {
-        jsi::Value nameValue = names.getValueAtIndex(runtime, index);
-        if (!nameValue.isString())
-        {
-            throw std::invalid_argument("attribute names must be strings");
-        }
-
-        std::string name = nameValue.getString(runtime).utf8(runtime);
-        if (name.empty() || name.size() > 64)
-        {
-            throw std::invalid_argument("attribute names must be 1 to 64 bytes");
-        }
-
-        jsi::Value attribute = object.getProperty(runtime, name.c_str());
-        if (attribute.isString())
-        {
-            std::string text = attribute.getString(runtime).utf8(runtime);
-            if (text.size() > kMaximumQueryStringBytes)
-            {
-                throw std::invalid_argument("attribute strings exceed 256 bytes");
-            }
-            result[name] = std::move(text);
-        }
-        else if (attribute.isBool())
-        {
-            result[name] = attribute.getBool();
-        }
-        else if (attribute.isNumber() && std::isfinite(attribute.getNumber()))
-        {
-            result[name] = attribute.getNumber();
-        }
-        else if (attribute.isNull())
-        {
-            result[name] = nullptr;
-        }
-        else
-        {
-            throw std::invalid_argument("attribute values must be scalar");
-        }
-    }
-
-    return result;
-}
-
-static std::string serializeQuery(jsi::Runtime &runtime, const jsi::Value &value)
-{
-    if (!value.isObject() || value.isNull())
-    {
-        throw std::invalid_argument("a native UI query object is required");
-    }
-
-    jsi::Object input = value.asObject(runtime);
-    if (input.isArray(runtime))
-    {
-        throw std::invalid_argument("a native UI query must be a plain object");
-    }
-
-    jsi::Value roleValue = input.getProperty(runtime, "role");
-    if (!roleValue.isString())
-    {
-        throw std::invalid_argument("a native UI query requires a role string");
-    }
-
-    std::string role = loader::native::parseName(
-        runtime, roleValue, loader::native::kMaximumQueryRoleBytes, "The native UI query role");
-
-    loader::native::TraversalOptions limits = loader::native::parseTraversalOptions(
-        runtime, value, loader::native::TraversalProfile::Query);
-    nlohmann::json query = nlohmann::json::object();
-    query["role"]        = std::move(role);
-    query["attributes"]  = scalarAttributes(runtime, input);
-    query["maxDepth"]    = limits.maxDepth;
-    query["maxNodes"]    = limits.maxNodes;
-    query["maxResults"]  = limits.maxResults;
-
-    jsi::Value rootValue = input.getProperty(runtime, "root");
-    if (rootValue.isObject())
-    {
-        query["root"] = {
-            {"id", loader::native::parseHandleId(runtime, rootValue, "A native UI root handle")}};
-    }
-
-    std::string serialized = query.dump();
-    if (serialized.size() > kMaximumQueryBytes)
-    {
-        throw std::invalid_argument("the native UI query exceeds 8192 bytes");
-    }
-
-    return serialized;
-}
-
-static std::string serializeHandle(jsi::Runtime &runtime, const jsi::Value &value)
-{
-    return loader::native::handleJSON(
-        loader::native::parseHandleId(runtime, value, "A native UI handle"));
-}
-
-static std::string serializeFrame(jsi::Runtime &runtime, const jsi::Value &value)
-{
-    return loader::native::toJSON(loader::native::parseFrame(runtime, value)).dump();
-}
-
-static std::string serializeSize(jsi::Runtime &runtime, const jsi::Value &value)
-{
-    return loader::native::toJSON(loader::native::parseSize(runtime, value)).dump();
-}
-
-static std::string serializeNativeProperties(jsi::Runtime &runtime, const jsi::Value &value)
-{
-    return loader::native::serializeBoundedObject(runtime, value, kNativePropertiesConversion);
-}
-
-static std::string callQuery(const JavaCallbacks &callbacks, jmethodID method,
-                             const std::string &query)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !method)
-    {
-        throw std::runtime_error("The Android native UI adapter is unavailable");
-    }
-
-    jstring input = toJavaString(env, query);
-    auto    output =
-        static_cast<jstring>(env->CallStaticObjectMethod(callbacks.bridgeClass, method, input));
-    bool failed = clearPendingException(env);
-    env->DeleteLocalRef(input);
-    if (failed || !output)
-    {
-        if (output)
-        {
-            env->DeleteLocalRef(output);
-        }
-        throw std::runtime_error("The Android native UI query failed");
-    }
-
-    std::string result = toStdString(env, output);
-    env->DeleteLocalRef(output);
-    return result;
-}
-
-static std::string callMeasure(const JavaCallbacks &callbacks, jmethodID method,
-                               const std::string &handle)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !method)
-    {
-        throw std::runtime_error("The Android native UI adapter is unavailable");
-    }
-
-    jstring input = toJavaString(env, handle);
-    auto    output =
-        static_cast<jstring>(env->CallStaticObjectMethod(callbacks.bridgeClass, method, input));
-    bool failed = clearPendingException(env);
-    env->DeleteLocalRef(input);
-    if (failed || !output)
-    {
-        if (output)
-        {
-            env->DeleteLocalRef(output);
-        }
-        throw std::runtime_error("The Android native UI measurement failed");
-    }
-
-    std::string result = toStdString(env, output);
-    env->DeleteLocalRef(output);
-    return result;
-}
-
-static void callSetFrame(const JavaCallbacks &callbacks, jmethodID method,
-                         const std::string &handle, const std::string &frame)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !method)
-    {
-        throw std::runtime_error("The Android native UI adapter is unavailable");
-    }
-
-    jstring inputHandle = toJavaString(env, handle);
-    jstring inputFrame  = toJavaString(env, frame);
-    env->CallStaticVoidMethod(callbacks.bridgeClass, method, inputHandle, inputFrame);
-    bool failed = clearPendingException(env);
-    env->DeleteLocalRef(inputFrame);
-    env->DeleteLocalRef(inputHandle);
-    if (failed)
-    {
-        throw std::runtime_error("The Android native UI frame update failed");
-    }
-}
-
-static std::string callMount(const JavaCallbacks &callbacks, const std::string &container,
-                             const std::string &moduleName, const std::string &properties)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !callbacks.mountView)
-    {
-        throw std::runtime_error("The Android native UI adapter is unavailable");
-    }
-
-    jstring inputContainer  = toJavaString(env, container);
-    jstring inputModule     = toJavaString(env, moduleName);
-    jstring inputProperties = toJavaString(env, properties);
-    auto    output          = static_cast<jstring>(env->CallStaticObjectMethod(
-        callbacks.bridgeClass, callbacks.mountView, inputContainer, inputModule, inputProperties));
-    bool    failed          = clearPendingException(env);
-    env->DeleteLocalRef(inputProperties);
-    env->DeleteLocalRef(inputModule);
-    env->DeleteLocalRef(inputContainer);
-    if (failed || !output)
-    {
-        if (output)
-        {
-            env->DeleteLocalRef(output);
-        }
-        throw std::runtime_error("The Android native UI mount failed");
-    }
-
-    std::string result = toStdString(env, output);
-    env->DeleteLocalRef(output);
-    return result;
-}
-
-static void callUpdate(const JavaCallbacks &callbacks, const std::string &handle,
-                       const std::string &properties)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !callbacks.updateView)
-    {
-        throw std::runtime_error("The Android native UI adapter is unavailable");
-    }
-
-    jstring inputHandle     = toJavaString(env, handle);
-    jstring inputProperties = toJavaString(env, properties);
-    env->CallStaticVoidMethod(callbacks.bridgeClass, callbacks.updateView, inputHandle,
-                              inputProperties);
-    bool failed = clearPendingException(env);
-    env->DeleteLocalRef(inputProperties);
-    env->DeleteLocalRef(inputHandle);
-    if (failed)
-    {
-        throw std::runtime_error("The Android native UI update failed");
-    }
-}
-
-static void callUnmount(const JavaCallbacks &callbacks, const std::string &handle)
-{
-    JNIEnv *env = currentEnvironment();
-    if (!env || !callbacks.bridgeClass || !callbacks.unmountView)
-    {
-        throw std::runtime_error("The Android native UI adapter is unavailable");
-    }
-
-    jstring inputHandle = toJavaString(env, handle);
-    env->CallStaticVoidMethod(callbacks.bridgeClass, callbacks.unmountView, inputHandle);
-    bool failed = clearPendingException(env);
-    env->DeleteLocalRef(inputHandle);
-    if (failed)
-    {
-        throw std::runtime_error("The Android native UI unmount failed");
-    }
-}
-
-static jsi::Value queryUI(jsi::Runtime &runtime, const jsi::Value *args, size_t count,
-                          const JavaCallbacks &callbacks, jmethodID method)
-{
-    if (count != 1)
-    {
-        loader::native::throwCoded(runtime, "NATIVE_BRIDGE_ERROR",
-                                   "Native UI queries require exactly one argument");
-    }
-
-    std::string query    = serializeQuery(runtime, args[0]);
-    auto        response = std::make_shared<std::string>();
-    return loader::native::executeMainAsynchronously(
-        runtime,
-        [callbacks, method, query = std::move(query), response]() {
-            *response = callQuery(callbacks, method, query);
-        },
-        [response](jsi::Runtime &completion) -> jsi::Value {
-            nlohmann::json result = nlohmann::json::parse(*response, nullptr, false);
-            if (result.is_discarded())
-            {
-                throw std::runtime_error("The Android native UI adapter returned invalid data");
-            }
-            return loader::toJSIValue(completion, result);
-        });
-}
-
-static jsi::Value measureUI(jsi::Runtime &runtime, const jsi::Value *args, size_t count,
-                            const JavaCallbacks &callbacks)
-{
-    if (count != 1)
-    {
-        loader::native::throwCoded(runtime, "NATIVE_BRIDGE_ERROR",
-                                   "Native UI measurement requires exactly one argument");
-    }
-
-    std::string handle   = serializeHandle(runtime, args[0]);
-    auto        response = std::make_shared<std::string>();
-    return loader::native::executeMainAsynchronously(
-        runtime,
-        [callbacks, handle = std::move(handle), response]() {
-            *response = callMeasure(callbacks, callbacks.measureView, handle);
-        },
-        [response](jsi::Runtime &completion) -> jsi::Value {
-            nlohmann::json result = nlohmann::json::parse(*response, nullptr, false);
-            if (result.is_discarded() || !result.is_object())
-            {
-                throw std::runtime_error("The Android native UI adapter returned invalid data");
-            }
-            return loader::toJSIValue(completion, result);
-        });
-}
-
-static jsi::Value setFrameUI(jsi::Runtime &runtime, const jsi::Value *args, size_t count,
-                             const JavaCallbacks &callbacks)
-{
-    if (count != 2)
-    {
-        loader::native::throwCoded(runtime, "NATIVE_BRIDGE_ERROR",
-                                   "Native UI frame updates require exactly two arguments");
-    }
-
-    std::string handle = serializeHandle(runtime, args[0]);
-    std::string frame  = serializeFrame(runtime, args[1]);
-    return loader::native::executeMainAsynchronously(
-        runtime,
-        [callbacks, handle = std::move(handle), frame = std::move(frame)]() {
-            callSetFrame(callbacks, callbacks.setViewFrame, handle, frame);
-        },
-        [](jsi::Runtime &) -> jsi::Value {
-            return jsi::Value::undefined();
-        });
-}
-
-static jsi::Value mountUI(jsi::Runtime &runtime, const jsi::Value *args, size_t count,
-                          const JavaCallbacks &callbacks)
-{
-    if (count < 2 || count > 3 || !args[1].isString())
-    {
-        loader::native::throwCoded(
-            runtime, "NATIVE_BRIDGE_ERROR",
-            "Native UI mounting requires a container, module name and optional properties");
-    }
-
-    std::string container  = args[0].isNull() || args[0].isUndefined()
-                                 ? std::string()
-                                 : serializeHandle(runtime, args[0]);
-    std::string moduleName = loader::native::parseName(
-        runtime, args[1], loader::native::kMaximumNativeNameBytes, "A native UI module name");
-    std::string properties = "{}";
-    if (count == 3)
-    {
-        properties = serializeNativeProperties(runtime, args[2]);
-    }
-    auto response = std::make_shared<std::string>();
-    return loader::native::executeMainAsynchronously(
-        runtime,
-        [callbacks, container = std::move(container), moduleName = std::move(moduleName),
-         properties = std::move(properties), response]() {
-            *response = callMount(callbacks, container, moduleName, properties);
-        },
-        [response](jsi::Runtime &completion) -> jsi::Value {
-            nlohmann::json handle = nlohmann::json::parse(*response, nullptr, false);
-            if (handle.is_discarded() || !handle.is_object() || !handle.contains("id") ||
-                !handle["id"].is_string())
-            {
-                throw std::runtime_error(
-                    "The Android native UI adapter returned an invalid handle");
-            }
-            return loader::toJSIValue(completion, handle);
-        });
-}
-
-static jsi::Value updateUI(jsi::Runtime &runtime, const jsi::Value *args, size_t count,
-                           const JavaCallbacks &callbacks)
-{
-    if (count != 2)
-    {
-        loader::native::throwCoded(runtime, "NATIVE_BRIDGE_ERROR",
-                                   "Native UI updates require a handle and properties");
-    }
-
-    std::string handle     = serializeHandle(runtime, args[0]);
-    std::string properties = serializeNativeProperties(runtime, args[1]);
-    return loader::native::executeMainAsynchronously(
-        runtime,
-        [callbacks, handle = std::move(handle), properties = std::move(properties)]() {
-            callUpdate(callbacks, handle, properties);
-        },
-        [](jsi::Runtime &) -> jsi::Value {
-            return jsi::Value::undefined();
-        });
-}
-
-static jsi::Value unmountUI(jsi::Runtime &runtime, const jsi::Value *args, size_t count,
-                            const JavaCallbacks &callbacks)
-{
-    if (count != 1)
-    {
-        loader::native::throwCoded(runtime, "NATIVE_BRIDGE_ERROR",
-                                   "Native UI unmounting requires exactly one handle");
-    }
-
-    std::string handle = serializeHandle(runtime, args[0]);
-    return loader::native::executeMainAsynchronously(
-        runtime,
-        [callbacks, handle = std::move(handle)]() {
-            callUnmount(callbacks, handle);
-        },
-        [](jsi::Runtime &) -> jsi::Value {
-            return jsi::Value::undefined();
-        });
-}
 
 static std::string takeJavaFailure(JNIEnv *env, const char *fallback)
 {
@@ -757,6 +325,47 @@ static std::string serializeJavaValue(jsi::Runtime &runtime, const jsi::Value &v
     return loader::native::serializeBounded(runtime, value, kNativeArgumentsConversion);
 }
 
+static std::optional<std::string> javaHandleId(const nlohmann::json &value)
+{
+    auto type   = value.find("type");
+    auto id     = value.find(type == value.end() ? "id" : "value");
+    bool tagged = type != value.end() && type->is_string() && *type == "handle";
+    bool bare   = type == value.end() && value.size() == 1;
+    if ((tagged || bare) && id != value.end() && id->is_string() &&
+        id->get<std::string>().rfind("java-", 0) == 0)
+    {
+        return id->get<std::string>();
+    }
+    return std::nullopt;
+}
+
+static std::mutex                                    gJavaLeasesMutex;
+static std::shared_ptr<loader::native::HandleLeases> gJavaLeases;
+
+static void leaseJavaHandles(const JavaCallbacks &callbacks)
+{
+    std::lock_guard<std::mutex> lock(gJavaLeasesMutex);
+    if (gJavaLeases)
+    {
+        return;
+    }
+    gJavaLeases = std::make_shared<loader::native::HandleLeases>(
+        javaHandleId, [callbacks](const std::string &id, uint64_t issues) {
+            callJavaVoid(callbacks, callbacks.javaRelease,
+                         {nlohmann::json{{"id", id}, {"issues", issues}}.dump()});
+        });
+}
+
+static jsi::Value adoptJavaValue(jsi::Runtime &runtime, const nlohmann::json &value)
+{
+    std::shared_ptr<loader::native::HandleLeases> leases;
+    {
+        std::lock_guard<std::mutex> lock(gJavaLeasesMutex);
+        leases = gJavaLeases;
+    }
+    return leases ? leases->adopt(runtime, value) : loader::toJSIValue(runtime, value);
+}
+
 static jsi::Value parseJavaResult(jsi::Runtime &runtime, const std::string &response)
 {
     nlohmann::json result = nlohmann::json::parse(response, nullptr, false);
@@ -765,7 +374,7 @@ static jsi::Value parseJavaResult(jsi::Runtime &runtime, const std::string &resp
         throw std::runtime_error("The Android Java adapter returned invalid data");
     }
 
-    return loader::toJSIValue(runtime, result);
+    return adoptJavaValue(runtime, result);
 }
 
 static jsi::Value javaAsynchronously(jsi::Runtime &runtime, std::function<std::string()> work)
@@ -791,10 +400,38 @@ static jsi::Value javaSynchronously(jsi::Runtime &runtime, const JavaCallbacks &
     return parseJavaResult(runtime, callJavaString(callbacks, method, arguments));
 }
 
+static constexpr const char *kCatchingCallName = "__unboundCatchingCall";
+
+static jsi::Function catchingCall(jsi::Runtime &runtime)
+{
+    jsi::Object global = runtime.global();
+    jsi::Value  cached = global.getProperty(runtime, kCatchingCallName);
+    if (cached.isObject() && cached.asObject(runtime).isFunction(runtime))
+    {
+        return cached.asObject(runtime).asFunction(runtime);
+    }
+    std::optional<jsi::Function> created =
+        loader::bootstrap::function(runtime, loader::bootstrap::kCatchingCall);
+    if (!created)
+    {
+        throw jsi::JSError(runtime, "The catching-call bootstrap script is unavailable.");
+    }
+    global.setProperty(runtime, kCatchingCallName, *created);
+    return std::move(*created);
+}
+
 struct HookListener {
     std::shared_ptr<jsi::Function> callback;
-    loader::AddonSlot              addon = loader::kNoAddon;
+    loader::AddonSlot              addon         = loader::kNoAddon;
+    jsi::Runtime                  *inlineRuntime = nullptr;
 };
+
+static thread_local jsi::Runtime *gUIScopeRuntime = nullptr;
+
+static bool onMainThread()
+{
+    return gettid() == getpid();
+}
 
 static std::mutex                                    gHookMutex;
 static std::unordered_map<std::string, HookListener> gHookListeners;
@@ -812,17 +449,59 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
         listener = found->second;
     }
 
-    loader::AddonScope scope(listener.addon);
-    loader::native::executeRuntimeAsynchronously(
-        [listener = listener.callback, payload](jsi::Runtime &runtime) {
-            nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
-            if (parsed.is_discarded())
-            {
-                return;
-            }
+    loader::AddonScope                  scope(listener.addon);
+    std::function<void(jsi::Runtime &)> deliver = [callback = listener.callback,
+                                                   addon    = listener.addon,
+                                                   payload](jsi::Runtime &runtime) {
+        nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
+        if (parsed.is_discarded())
+        {
+            return;
+        }
 
-            listener->call(runtime, loader::toJSIValue(runtime, parsed));
+        loader::AddonScope runtimeScope(addon);
+        jsi::Value failure = catchingCall(runtime).call(runtime, jsi::Value(runtime, *callback),
+                                                        adoptJavaValue(runtime, parsed));
+        if (!failure.isString())
+        {
+            return;
+        }
+        std::optional<std::string> message =
+            loader::threading::throttledHookFailure(addon, failure.asString(runtime).utf8(runtime));
+        if (message)
+        {
+            loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS, *message);
+        }
+    };
+
+    if (!listener.inlineRuntime)
+    {
+        loader::native::executeRuntimeAsynchronously(std::move(deliver));
+        return;
+    }
+    if (onMainThread())
+    {
+        deliver(*listener.inlineRuntime);
+        return;
+    }
+    if (auto target = loader::native::executor())
+    {
+        target->runOnMain([token, deliver = std::move(deliver)]() {
+            jsi::Runtime *runtime = nullptr;
+            {
+                std::lock_guard<std::mutex> lock(gHookMutex);
+                auto                        found = gHookListeners.find(token);
+                if (found != gHookListeners.end())
+                {
+                    runtime = found->second.inlineRuntime;
+                }
+            }
+            if (runtime)
+            {
+                deliver(*runtime);
+            }
         });
+    }
 }
 
 static void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
@@ -835,7 +514,7 @@ static void rememberHookListener(jsi::Runtime &runtime, const std::string &token
 
     HookListener stored{
         std::make_shared<jsi::Function>(listener.asObject(runtime).asFunction(runtime)),
-        loader::currentAddon()};
+        loader::currentAddon(), gUIScopeRuntime};
     std::lock_guard<std::mutex> lock(gHookMutex);
     gHookListeners[token] = std::move(stored);
 }
@@ -865,12 +544,6 @@ static std::string hookTokenId(jsi::Runtime &runtime, const jsi::Value &value)
 static loader::native::NativeResourceRegistry &installedHooks()
 {
     static loader::native::NativeResourceRegistry registry(loader::native::nativeHookBudget());
-    return registry;
-}
-
-static loader::native::NativeResourceRegistry &mountedSurfaces()
-{
-    static loader::native::NativeResourceRegistry registry(loader::native::nativeSurfaceBudget());
     return registry;
 }
 
@@ -935,7 +608,6 @@ static void watchRuntimeGenerations(const JavaCallbacks &callbacks)
             retireHookListeners();
             hookReturnValues().clearAll();
             installedHooks().releaseAll();
-            mountedSurfaces().releaseAll();
             callBridgeVoid(callbacks, callbacks.runtimeReplaced);
         });
     });
@@ -977,40 +649,6 @@ static std::string surfaceContainer(jsi::Runtime &runtime, const jsi::Value &val
         return serializeJavaHandle(runtime, value);
     }
     return "{}";
-}
-
-static jsi::Object makeUINamespace(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
-{
-    jsi::Object ui(runtime);
-    define(runtime, ui, "lookup", 1,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               return queryUI(rt, args, count, callbacks, callbacks.lookupViews);
-           });
-    define(runtime, ui, "snapshot", 1,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               return queryUI(rt, args, count, callbacks, callbacks.snapshotViews);
-           });
-    define(runtime, ui, "measure", 1,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               return measureUI(rt, args, count, callbacks);
-           });
-    define(runtime, ui, "setFrame", 2,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               return setFrameUI(rt, args, count, callbacks);
-           });
-    define(runtime, ui, "mount", 3,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               return mountUI(rt, args, count, callbacks);
-           });
-    define(runtime, ui, "update", 2,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               return updateUI(rt, args, count, callbacks);
-           });
-    define(runtime, ui, "unmount", 1,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               return unmountUI(rt, args, count, callbacks);
-           });
-    return ui;
 }
 
 static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
@@ -1092,6 +730,36 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
                return parseJavaResult(rt, callJavaString(callbacks, callbacks.javaBatch,
                                                          {serializeJavaBatch(rt, args[0])}));
            });
+    define(runtime, java, "batchAsync", 1,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 1, "A Java batch requires an operation list");
+               std::vector<std::string> arguments{serializeJavaBatch(rt, args[0])};
+               return javaAsynchronously(rt, [callbacks, arguments = std::move(arguments)]() {
+                   return callJavaString(callbacks, callbacks.javaBatch, arguments);
+               });
+           });
+    define(runtime, java, "findViews", 3,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 2, "A Java view search requires a view and a class name");
+               const jsi::Value none;
+               const auto       options = loader::native::parseTraversalOptions(
+                   rt, count > 2 ? args[2] : none, loader::native::TraversalProfile::Search);
+               nlohmann::json normalized = {
+                   {"maxDepth", options.maxDepth},
+                   {"maxNodes", options.maxNodes},
+                   {"maxResults", options.maxResults},
+                   {"attachedOnly", options.attachedOnly},
+                   {"stopAtMatch", options.stopAtMatch},
+                   {"direction", options.direction == loader::native::TraversalDirection::Ancestors
+                                     ? "ancestors"
+                                     : "descendants"},
+               };
+               std::vector<std::string> arguments{serializeJavaHandle(rt, args[0]),
+                                                  javaName(rt, args[1]), normalized.dump()};
+               return javaAsynchronously(rt, [callbacks, arguments = std::move(arguments)]() {
+                   return callJavaString(callbacks, callbacks.javaFindViews, arguments);
+               });
+           });
     define(runtime, java, "createAssociationKey", 0,
            [callbacks](jsi::Runtime &rt, const jsi::Value *, size_t) {
                return parseJavaResult(
@@ -1129,6 +797,14 @@ static jsi::Object makeFFINamespace(jsi::Runtime &runtime)
     return ffi;
 }
 
+static void removeHook(const JavaCallbacks &callbacks, const std::string &token)
+{
+    forgetHookListener(token);
+    hookReturnValues().clear(token);
+    installedHooks().release(token);
+    callJavaVoid(callbacks, callbacks.hooksRemove, {loader::native::handleJSON(token)});
+}
+
 static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
 {
     jsi::Object hooks(runtime);
@@ -1161,11 +837,7 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
     define(runtime, hooks, "remove", 1,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 1, "Removing a hook requires its token");
-               std::string token = hookTokenId(rt, args[0]);
-               forgetHookListener(token);
-               hookReturnValues().clear(token);
-               installedHooks().release(token);
-               callJavaVoid(callbacks, callbacks.hooksRemove, {loader::native::handleJSON(token)});
+               removeHook(callbacks, hookTokenId(rt, args[0]));
                return jsi::Value::undefined();
            });
     define(runtime, hooks, "setReturnValue", 4,
@@ -1207,110 +879,274 @@ static jsi::Object makeDebugNamespace(jsi::Runtime &runtime, const JavaCallbacks
     return debug;
 }
 
-static jsi::Object makeFabricNamespace(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
+class AndroidFabricView final : public loader::native::FabricView
 {
-    jsi::Object fabric(runtime);
-    define(runtime, fabric, "mountAsync", 3,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 2,
-                                "Mounting a React surface requires a container and a module name");
-               std::string container  = surfaceContainer(rt, args[0]);
-               std::string moduleName = javaName(rt, args[1]);
-               std::string properties = count > 2 && !args[2].isUndefined() && !args[2].isNull()
-                                            ? serializeNativeProperties(rt, args[2])
-                                            : std::string("{}");
-               auto reservation       = std::make_shared<loader::native::NativeResourceReservation>(
-                   loader::native::nativeSurfaceBudget(), "Too many React surfaces are mounted");
-               return javaAsynchronously(rt, [callbacks, container = std::move(container),
-                                              moduleName = std::move(moduleName),
-                                              properties = std::move(properties), reservation]() {
-                   std::string    handle = callJavaString(callbacks, callbacks.fabricMount,
-                                                          {container, moduleName, properties});
-                   nlohmann::json parsed = nlohmann::json::parse(handle, nullptr, false);
-                   if (parsed.is_discarded() || !parsed.contains("id") || !parsed["id"].is_string())
-                   {
-                       throw std::runtime_error(
-                           "The Android surface adapter returned an invalid handle");
-                   }
-                   mountedSurfaces().adopt(parsed["id"].get<std::string>(), *reservation);
-                   return handle;
-               });
+public:
+    explicit AndroidFabricView(std::string handle) : handle(std::move(handle)) {}
+
+    std::string handle;
+};
+
+class AndroidFabricAdapter final : public loader::native::FabricAdapter
+{
+public:
+    explicit AndroidFabricAdapter(const JavaCallbacks &callbacks) : callbacks_(callbacks) {}
+
+    std::shared_ptr<loader::native::FabricView> view(jsi::Runtime     &runtime,
+                                                     const jsi::Value &handle) override
+    {
+        return std::make_shared<AndroidFabricView>(surfaceContainer(runtime, handle));
+    }
+
+    std::string mount(const loader::native::FabricView &container, const std::string &moduleName,
+                      const nlohmann::json &properties) override
+    {
+        std::string handle =
+            callJavaString(callbacks_, callbacks_.fabricMount,
+                           {static_cast<const AndroidFabricView &>(container).handle, moduleName,
+                            properties.dump()});
+        nlohmann::json parsed = nlohmann::json::parse(handle, nullptr, false);
+        if (parsed.is_discarded() || !parsed.contains("id") || !parsed["id"].is_string())
+        {
+            throw std::runtime_error("The Android surface adapter returned an invalid handle");
+        }
+        return parsed["id"].get<std::string>();
+    }
+
+    void update(const std::string &surface, const nlohmann::json &properties) override
+    {
+        callJavaVoid(callbacks_, callbacks_.fabricUpdate,
+                     {loader::native::handleJSON(surface), properties.dump()});
+    }
+
+    void setSize(const std::string &surface, const loader::native::NativeSize &minimum,
+                 const loader::native::NativeSize &maximum) override
+    {
+        callJavaVoid(callbacks_, callbacks_.fabricSetSize,
+                     {loader::native::handleJSON(surface), loader::native::toJSON(minimum).dump(),
+                      loader::native::toJSON(maximum).dump()});
+    }
+
+    void setFrame(const std::string &surface, const loader::native::NativeFrame &frame) override
+    {
+        callJavaVoid(callbacks_, callbacks_.fabricSetFrame,
+                     {loader::native::handleJSON(surface), loader::native::toJSON(frame).dump()});
+    }
+
+    loader::native::NativeFrame measure(const loader::native::FabricView &view) override
+    {
+        return measureHandle(static_cast<const AndroidFabricView &>(view).handle);
+    }
+
+    loader::native::NativeFrame measureSurface(const std::string &surface) override
+    {
+        return measureHandle(loader::native::handleJSON(surface));
+    }
+
+    void unmount(const std::string &surface) override
+    {
+        callJavaBoolean(callbacks_, callbacks_.fabricUnmount, loader::native::handleJSON(surface));
+    }
+
+private:
+    loader::native::NativeFrame measureHandle(const std::string &handle)
+    {
+        return loader::native::parseFrame(
+            nlohmann::json::parse(callJavaString(callbacks_, callbacks_.fabricMeasure, {handle})));
+    }
+
+    JavaCallbacks callbacks_;
+};
+
+struct UIScopeState {
+    JavaCallbacks            callbacks;
+    loader::AddonSlot        addon = loader::kNoAddon;
+    std::vector<std::string> allowed;
+    std::mutex               mutex;
+    std::vector<std::string> hooks;
+    bool                     disposed = false;
+};
+
+static void disposeUIScope(UIScopeState &scope)
+{
+    std::vector<std::string> tokens;
+    {
+        std::lock_guard<std::mutex> lock(scope.mutex);
+        if (scope.disposed)
+        {
+            return;
+        }
+        scope.disposed = true;
+        tokens.swap(scope.hooks);
+    }
+    for (const std::string &token : tokens)
+    {
+        if (installedHooks().contains(token))
+        {
+            removeHook(scope.callbacks, token);
+        }
+    }
+}
+
+static bool scopeAllows(const UIScopeState &scope, const std::string &path)
+{
+    if (path.size() > 5 && path.compare(path.size() - 5, 5, "Async") == 0)
+    {
+        return false;
+    }
+    return std::find(scope.allowed.begin(), scope.allowed.end(), path) != scope.allowed.end();
+}
+
+static jsi::Object filterNamespace(jsi::Runtime &runtime, jsi::Object source,
+                                   const UIScopeState &scope, const std::string &prefix)
+{
+    jsi::Object filtered(runtime);
+    jsi::Array  names = source.getPropertyNames(runtime);
+    for (size_t index = 0; index < names.size(runtime); index++)
+    {
+        std::string name = names.getValueAtIndex(runtime, index).getString(runtime).utf8(runtime);
+        if (scopeAllows(scope, prefix + name))
+        {
+            filtered.setProperty(runtime, name.c_str(), source.getProperty(runtime, name.c_str()));
+        }
+    }
+    return filtered;
+}
+
+static jsi::Value scopedHook(jsi::Runtime &runtime, const std::shared_ptr<UIScopeState> &scope,
+                             const jsi::Function &install, const jsi::Value *args, size_t count)
+{
+    {
+        std::lock_guard<std::mutex> lock(scope->mutex);
+        if (scope->disposed)
+        {
+            throw jsi::JSError(runtime, "The UI scope has been disposed");
+        }
+    }
+    loader::AddonScope addonScope(scope->addon);
+    jsi::Runtime      *previousRuntime = gUIScopeRuntime;
+    gUIScopeRuntime                    = &runtime;
+    jsi::Value token;
+    try
+    {
+        token = install.call(runtime, args, count);
+    }
+    catch (...)
+    {
+        gUIScopeRuntime = previousRuntime;
+        throw;
+    }
+    gUIScopeRuntime                = previousRuntime;
+    std::string                 id = hookTokenId(runtime, token);
+    std::lock_guard<std::mutex> lock(scope->mutex);
+    scope->hooks.push_back(id);
+    return token;
+}
+
+static jsi::Object makeScopedHooks(jsi::Runtime                        &runtime,
+                                   const std::shared_ptr<UIScopeState> &scope)
+{
+    jsi::Object hooks =
+        filterNamespace(runtime, makeHooksNamespace(runtime, scope->callbacks), *scope, "hooks.");
+    if (!hooks.hasProperty(runtime, "hook"))
+    {
+        return hooks;
+    }
+    auto install = std::make_shared<jsi::Function>(hooks.getPropertyAsFunction(runtime, "hook"));
+    define(runtime, hooks, "hook", 5,
+           [scope, install](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               return scopedHook(rt, scope, *install, args, count);
            });
-    define(runtime, fabric, "updateAsync", 2,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 2,
-                                "Updating a React surface requires a handle and properties");
-               std::string handle     = serializeJavaHandle(rt, args[0]);
-               std::string properties = serializeNativeProperties(rt, args[1]);
-               return javaAsynchronously(rt, [callbacks, handle = std::move(handle),
-                                              properties = std::move(properties)]() {
-                   callJavaVoid(callbacks, callbacks.fabricUpdate, {handle, properties});
-                   return std::string();
-               });
-           });
-    define(runtime, fabric, "setSizeAsync", 3,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(
-                   count, 3,
-                   "Sizing a React surface requires a handle, a minimum size and a maximum size");
-               std::string handle  = serializeJavaHandle(rt, args[0]);
-               std::string minimum = serializeSize(rt, args[1]);
-               std::string maximum = serializeSize(rt, args[2]);
-               return javaAsynchronously(rt, [callbacks, handle = std::move(handle),
-                                              minimum = std::move(minimum),
-                                              maximum = std::move(maximum)]() {
-                   callJavaVoid(callbacks, callbacks.fabricSetSize, {handle, minimum, maximum});
-                   return std::string();
-               });
-           });
-    define(runtime, fabric, "setFrameAsync", 2,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 2, "Framing a React surface requires a handle and a frame");
-               std::string handle = serializeJavaHandle(rt, args[0]);
-               std::string frame  = serializeFrame(rt, args[1]);
-               return javaAsynchronously(
-                   rt, [callbacks, handle = std::move(handle), frame = std::move(frame)]() {
-                       callJavaVoid(callbacks, callbacks.fabricSetFrame, {handle, frame});
-                       return std::string();
-                   });
-           });
-    define(runtime, fabric, "measureAsync", 1,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 1, "Measuring a view requires a handle");
-               std::string handle = serializeJavaHandle(rt, args[0]);
-               return javaAsynchronously(rt, [callbacks, handle = std::move(handle)]() {
-                   return callJavaString(callbacks, callbacks.fabricMeasure, {handle});
-               });
-           });
-    define(runtime, fabric, "unmountAsync", 1,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 1, "Unmounting a React surface requires a handle");
-               std::string id =
-                   loader::native::parseHandleId(rt, args[0], "A React surface handle");
-               return javaAsynchronously(rt, [callbacks, id = std::move(id)]() {
-                   if (callJavaBoolean(callbacks, callbacks.fabricUnmount,
-                                       loader::native::handleJSON(id)))
-                   {
-                       mountedSurfaces().release(id);
-                   }
-                   return std::string();
-               });
-           });
-    return fabric;
+    return hooks;
+}
+
+class UIScopeHost final : public jsi::HostObject
+{
+public:
+    explicit UIScopeHost(std::shared_ptr<UIScopeState> scope) : scope_(std::move(scope)) {}
+
+    ~UIScopeHost() override
+    {
+        disposeUIScope(*scope_);
+    }
+
+    jsi::Value get(jsi::Runtime &runtime, const jsi::PropNameID &property) override
+    {
+        std::string name = property.utf8(runtime);
+        if (name == "dispose")
+        {
+            auto scope = scope_;
+            return jsi::Function::createFromHostFunction(
+                runtime, property, 0,
+                [scope](jsi::Runtime &, const jsi::Value &, const jsi::Value *, size_t) {
+                    disposeUIScope(*scope);
+                    return jsi::Value::undefined();
+                });
+        }
+        if (name == "java")
+        {
+            loader::AddonScope addonScope(scope_->addon);
+            return filterNamespace(runtime, makeJavaNamespace(runtime, scope_->callbacks), *scope_,
+                                   "java.");
+        }
+        if (name == "hooks")
+        {
+            return makeScopedHooks(runtime, scope_);
+        }
+        return jsi::Value::undefined();
+    }
+
+    std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &runtime) override
+    {
+        return jsi::PropNameID::names(runtime, "dispose", "java", "hooks");
+    }
+
+private:
+    std::shared_ptr<UIScopeState> scope_;
+};
+
+static jsi::Value createUIScope(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
+                                const jsi::Value *args, size_t count)
+{
+    if (count < 1 || !args[0].isObject() || !args[0].asObject(runtime).isArray(runtime))
+    {
+        throw jsi::JSError(runtime,
+                           "java.createUIScope expects the method paths the scope may use");
+    }
+    auto scope       = std::make_shared<UIScopeState>();
+    scope->callbacks = callbacks;
+    scope->addon     = loader::currentAddon();
+    jsi::Array paths = args[0].asObject(runtime).asArray(runtime);
+    for (size_t index = 0; index < paths.size(runtime); index++)
+    {
+        jsi::Value path = paths.getValueAtIndex(runtime, index);
+        if (path.isString())
+        {
+            scope->allowed.push_back(path.getString(runtime).utf8(runtime));
+        }
+    }
+    return jsi::Object::createFromHostObject(runtime, std::make_shared<UIScopeHost>(scope));
 }
 
 void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
 {
     watchRuntimeGenerations(callbacks);
+    leaseJavaHandles(callbacks);
 
     loader::native::NativePluginRootBuilder bridge(runtime,
                                                    loader::native::NativePluginPlatform::Android);
-    bridge.addNamespace("ui", makeUINamespace(runtime, callbacks));
-    bridge.addNamespace("java", makeJavaNamespace(runtime, callbacks));
+    jsi::Object                             java = makeJavaNamespace(runtime, callbacks);
+    define(runtime, java, "createUIScope", 1,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               return createUIScope(rt, callbacks, args, count);
+           });
+    bridge.addNamespace("java", std::move(java));
     bridge.addNamespace("ffi", makeFFINamespace(runtime));
     bridge.addNamespace("hooks", makeHooksNamespace(runtime, callbacks));
     bridge.addNamespace("debug", makeDebugNamespace(runtime, callbacks));
-    bridge.addNamespace("fabric", makeFabricNamespace(runtime, callbacks));
+    bridge.addNamespace("fabric", loader::native::makeFabricNamespace(
+                                      runtime, std::make_shared<AndroidFabricAdapter>(callbacks),
+                                      loader::native::FabricCalls::AsyncOnly));
     bridge.install();
 }
 }

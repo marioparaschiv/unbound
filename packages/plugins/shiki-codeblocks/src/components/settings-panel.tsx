@@ -1,19 +1,32 @@
-import Page from '@unbound-plugins/shared/components/page';
 import { Discord } from '@unbound-app/api/metro/components';
+import { storage, ui } from '@unbound-app/api';
 import { View } from 'react-native';
 import { useState } from 'react';
 
 import { DEFAULT_THEME, HLJS_PREFERENCES, ICON_MODES, THEME_IDS } from '~/constants';
 import { isThemeUrl, themeLabel } from '~/themes';
-import { settings } from '~/modules';
+
+const DEFAULT_OPACITY = 100;
+
+const DEFAULT_SETTINGS = {
+	theme: DEFAULT_THEME,
+	customTheme: '',
+	bgOpacity: DEFAULT_OPACITY,
+	useDevIcon: 'greyscale',
+	lineOverflow: 'wrap',
+	tryHljs: 'secondary',
+};
 
 function SettingsPanel() {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(addon.id);
 	const [themePickerOpen, setThemePickerOpen] = useState(false);
 	const [hljsPickerOpen, setHljsPickerOpen] = useState(false);
 	const [themeQuery, setThemeQuery] = useState('');
 	const [customTheme, setCustomTheme] = useState(String(store.get('customTheme', '')));
-	const [opacity, setOpacity] = useState(String(store.get('bgOpacity', 100)));
+	const storedOpacity = Number(store.get('bgOpacity', DEFAULT_OPACITY));
+	const opacity = Number.isFinite(storedOpacity)
+		? Math.max(0, Math.min(100, Math.round(storedOpacity)))
+		: DEFAULT_OPACITY;
 	const theme = String(store.get('theme', DEFAULT_THEME));
 	const iconMode = String(store.get('useDevIcon', 'greyscale'));
 	const overflow = store.get('lineOverflow', 'wrap');
@@ -30,21 +43,10 @@ function SettingsPanel() {
 		store.set('customTheme', url);
 	}
 
-	function saveOpacity() {
-		const value = Number(opacity);
-
-		if (!Number.isFinite(value)) return;
-
-		const clamped = Math.max(0, Math.min(100, Math.round(value)));
-
-		store.set('bgOpacity', clamped);
-		setOpacity(String(clamped));
-	}
-
 	return (
-		<Page>
-			<Discord.TableRowGroup title='Appearance'>
-				<Discord.TableRow
+		<ui.Page>
+			<ui.Section title='Appearance'>
+				<ui.Row
 					label='Language icons'
 					subLabel='Show Devicon language marks in the code-block header.'
 					trailing={<Discord.TableRow.TrailingText text={iconMode} />}
@@ -55,13 +57,13 @@ function SettingsPanel() {
 						)
 					}
 				/>
-				<Discord.TableRow
+				<ui.Row
 					label='Theme'
 					subLabel='Choose a VS Code theme for syntax colors.'
 					trailing={<Discord.TableRow.TrailingText text={themeLabel(theme)} />}
 					onPress={() => setThemePickerOpen(!themePickerOpen)}
 				/>
-			</Discord.TableRowGroup>
+			</ui.Section>
 			{themePickerOpen ? (
 				<View style={{ gap: 12 }}>
 					<Discord.TextInput
@@ -84,8 +86,8 @@ function SettingsPanel() {
 				</View>
 			) : null}
 			<Discord.TextInput
-				title='Custom theme URL'
-				helpText='An HTTPS link to a VS Code theme JSON file overrides the selected theme.'
+				label='Custom theme URL'
+				description='An HTTPS link to a VS Code theme JSON file overrides the selected theme.'
 				value={customTheme}
 				onChange={setCustomTheme}
 				onEndEditing={saveCustomTheme}
@@ -93,16 +95,19 @@ function SettingsPanel() {
 				autoCapitalize='none'
 				placeholder='https://example.com/theme.json'
 			/>
-			<Discord.TextInput
-				title='Background opacity (%)'
-				value={opacity}
-				onChange={setOpacity}
-				onEndEditing={saveOpacity}
-				onSubmitEditing={saveOpacity}
-				keyboardType='number-pad'
-			/>
-			<Discord.TableRowGroup title='Highlighting'>
-				<Discord.TableRow
+			<ui.Section title='Card'>
+				<ui.SliderRow
+					label='Background opacity'
+					value={opacity}
+					defaultValue={DEFAULT_OPACITY}
+					minimum={0}
+					maximum={100}
+					unit='%'
+					onChange={(value) => store.set('bgOpacity', value)}
+				/>
+			</ui.Section>
+			<ui.Section title='Highlighting'>
+				<ui.Row
 					label='Long lines'
 					subLabel='Choose between wrapping code and scrolling horizontally.'
 					trailing={
@@ -114,7 +119,7 @@ function SettingsPanel() {
 						store.set('lineOverflow', overflow === 'scroll' ? 'wrap' : 'scroll')
 					}
 				/>
-				<Discord.TableRow
+				<ui.Row
 					label='Highlighting preference'
 					subLabel='Choose when Highlight.js takes priority over Shiki.'
 					trailing={
@@ -124,7 +129,7 @@ function SettingsPanel() {
 					}
 					onPress={() => setHljsPickerOpen(!hljsPickerOpen)}
 				/>
-			</Discord.TableRowGroup>
+			</ui.Section>
 			{hljsPickerOpen ? (
 				<Discord.TableRadioGroup
 					title='Highlighting preference'
@@ -139,7 +144,15 @@ function SettingsPanel() {
 					))}
 				</Discord.TableRadioGroup>
 			) : null}
-		</Page>
+			<ui.ResetRow
+				onReset={() => {
+					for (const [key, value] of Object.entries(DEFAULT_SETTINGS))
+						store.set(key, value);
+
+					setCustomTheme('');
+				}}
+			/>
+		</ui.Page>
 	);
 }
 

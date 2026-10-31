@@ -9,10 +9,9 @@ import type { InternalToastOptions } from '@unbound-app/types/toasts';
 import { useEffect, useState } from 'react';
 import { Dimensions } from 'react-native';
 
-import { useSettingsStore } from '~/api/storage';
-import useToastStore from '~/stores/toasts';
-
-import toastDuration from './toast-duration';
+import { useUnboundSettings } from '~/settings/unbound';
+import toastDuration from '~/toasts/duration';
+import useToastStore from '~/toasts/state';
 
 function useToastState(options: InternalToastOptions) {
 	const [closing, setClosing] = useState(options.closing);
@@ -25,8 +24,8 @@ function useToastState(options: InternalToastOptions) {
 		easing: Easing.inOut(Easing.cubic),
 	};
 
-	const settings = useSettingsStore('unbound', ({ key }) => key?.startsWith('toasts'));
-	const animations = settings.get('toasts.animations', true);
+	const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
+	const animations = settings.get('toasts.animations');
 
 	const opacity = useSharedValue(0);
 	const marginVertical = useSharedValue(0);
@@ -73,7 +72,7 @@ function useToastState(options: InternalToastOptions) {
 			marginVertical.value = 5;
 		}
 
-		const duration = toastDuration(options.duration, settings.get('toasts.duration', 5000));
+		const duration = toastDuration(options.duration, settings.get('toasts.duration'));
 
 		if (duration !== 0) {
 			width.value = withTiming(0, { duration, easing: Easing.linear }, () => {

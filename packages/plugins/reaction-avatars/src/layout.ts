@@ -94,7 +94,7 @@ export function reflowReactionItems(items: LayoutItem[], containerWidth: number)
 }
 
 /**
- * @description Recovers a reaction view's original width after native cell reuse left it widened.
+ * @description Recovers a reaction view's original width after native cell reuse left it, its cell, or both widened.
  * @param layoutWidth The pill's width in the collection layout.
  * @param cellWidth The collection cell's current width.
  * @param viewWidth The reaction view's current width.
@@ -105,6 +105,12 @@ export function reactionBaseViewWidth(
 	cellWidth: number,
 	viewWidth: number,
 ): number {
+	const cellExtra = cellWidth - layoutWidth;
+
+	if (cellExtra > 0.5) {
+		return Math.max(0, viewWidth >= layoutWidth ? viewWidth - cellExtra : viewWidth);
+	}
+
 	const inset = Math.max(0, cellWidth - viewWidth);
 
 	return Math.max(0, Math.min(viewWidth, layoutWidth - inset));

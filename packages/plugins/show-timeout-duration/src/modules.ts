@@ -1,7 +1,5 @@
-import { metro, patcher } from '@unbound-app/api';
+import { metro, flux } from '@unbound-app/api';
 
 export const MessageRowData = metro.findByProps('generateMessageRowData', { lazy: true });
-export const GuildMemberStore = metro.findStore('GuildMember', { lazy: true });
-export const ChannelStore = metro.findStore('Channel', { lazy: true });
-
-export const Patcher = patcher.createPatcher('unbound.show-timeout-duration');
+export const GuildMemberStore = flux.getStore('GuildMember', { lazy: true });
+export const ChannelStore = flux.getStore('Channel', { lazy: true });

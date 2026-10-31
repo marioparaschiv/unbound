@@ -1,7 +1,7 @@
 import { FadeInDown, FadeOutDown, LinearTransition, ReduceMotion } from 'react-native-reanimated';
 import { useMemo } from 'react';
 
-import { useReducedMotion } from '~/ui/hooks';
+import useReducedMotion from '~/ui/hooks/use-reduced-motion';
 
 /** Shorter than Discord's 300ms default, so a leaving card is gone before survivors slide past it. */
 const EXIT_DURATION = 150;

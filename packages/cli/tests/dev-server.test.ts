@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { describe, expect, test, afterEach } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import type { ReloadTransport, BuiltAddon } from '../src/lib/reload-transport';
 
 import { DevServer } from '../src/lib/dev-server';
-import { loadConfig } from '../src/lib/config';
+import { loadWorkspace } from './helpers/config';
 
 const roots: string[] = [];
 
@@ -61,7 +61,7 @@ function recordingTransport(): ReloadTransport & { calls: BuiltAddon[] } {
 
 describe('DevServer build-failure isolation', () => {
 	test('a failing build never reaches the transport', async () => {
-		const resolved = loadConfig(workspace('exit 1'));
+		const resolved = loadWorkspace(workspace('exit 1'));
 		const transport = recordingTransport();
 		const server = new DevServer(resolved, transport);
 
@@ -72,7 +72,7 @@ describe('DevServer build-failure isolation', () => {
 	});
 
 	test('a passing build reaches the transport once per addon', async () => {
-		const resolved = loadConfig(workspace('true'));
+		const resolved = loadWorkspace(workspace('true'));
 		const transport = recordingTransport();
 		const server = new DevServer(resolved, transport);
 
@@ -83,18 +83,55 @@ describe('DevServer build-failure isolation', () => {
 	});
 });
 
-describe('DevServer rebuild debounce', () => {
-	test('the initial pass rebuilds each addon exactly once', async () => {
-		const resolved = loadConfig(workspace('true'));
-		const transport = recordingTransport();
-		const server = new DevServer(resolved, transport);
+describe('DevServer capabilities', () => {
+	test('the manifest it reloads carries the generated platforms and Capabilities', async () => {
+		const root = workspace('true');
+		const pluginDir = join(root, 'plugins', 'sample');
+		const apiTypes = join(import.meta.dir, '..', '..', 'api', 'src');
+
+		writeFileSync(
+			join(pluginDir, 'tsconfig.json'),
+			JSON.stringify({
+				compilerOptions: {
+					module: 'esnext',
+					moduleResolution: 'bundler',
+					target: 'esnext',
+					paths: { '@unbound-app/api/*': [`${apiTypes}/*`] },
+				},
+			}),
+		);
+		writeFileSync(
+			join(pluginDir, 'index.tsx'),
+			`import { definePlatform } from '@unbound-app/api/native';
+import { start as ios } from './ios/start';
+export const start = definePlatform({ ios });`,
+		);
+		mkdirSync(join(pluginDir, 'ios'));
+		writeFileSync(
+			join(pluginDir, 'ios', 'start.ts'),
+			`import type { PluginContext } from '@unbound-app/api/native';
+export function start(context: PluginContext) {
+	context.native.objc.getClass('UIView');
+}`,
+		);
+
+		const manifests: unknown[] = [];
+		const server = new DevServer(loadWorkspace(root), {
+			async reload(addon) {
+				manifests.push(
+					JSON.parse(readFileSync(join(addon.output, 'manifest.json'), 'utf8')),
+				);
+			},
+		});
 
 		await server.start();
 		server.stop();
 
-		const ids = transport.calls.map((addon) => addon.id);
-
-		expect(ids).toEqual(['com.example.sample']);
-		expect(new Set(ids).size).toBe(ids.length);
+		expect(manifests).toEqual([
+			expect.objectContaining({
+				platforms: ['ios'],
+				platformCapabilities: { ios: ['native.objc.classes'] },
+			}),
+		]);
 	});
 });

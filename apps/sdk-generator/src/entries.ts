@@ -1,8 +1,17 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 
-import { ALIAS_ROOT, BARREL, API_SRC, logger, type ModuleEntry } from './paths';
-import { config } from '../../../packages/api/sdk.config.ts';
+import {
+	ADDITIONAL_SUBPATHS,
+	EXCLUDE_SUBPATHS,
+	ALIAS_ROOT,
+	BARREL,
+	API_SRC,
+	logger,
+	type NamespaceAlias,
+	type ModuleEntry,
+	type SdkEntries,
+} from './paths';
 import { isInternal } from './transform';
 import { parseSource } from './project';
 
@@ -19,8 +28,10 @@ export function resolveSource(specifier: string, fromDir: string): string | unde
 		? join(ALIAS_ROOT, specifier.slice(2))
 		: resolve(fromDir, specifier);
 
-	if (existsSync(`${base}.ts`)) {
-		return `${base}.ts`;
+	for (const extension of ['.ts', '.tsx']) {
+		if (existsSync(`${base}${extension}`)) {
+			return `${base}${extension}`;
+		}
 	}
 
 	if (existsSync(join(base, 'index.ts'))) {
@@ -32,8 +43,7 @@ export function resolveSource(specifier: string, fromDir: string): string | unde
 
 /**
  * @description Reads a barrel's `export * as <name> from '<specifier>'` re-exports, skipping any tagged
- * `@internal`. This is the single source of truth for the public module surface - the managers line
- * uses `export { … }` (not `export * as`) and is excluded automatically.
+ * `@internal`. This is the single source of truth for the public module surface.
  * @param barrel The absolute path to the barrel file to parse.
  * @returns The namespace name and resolved source for each surviving re-export.
  */
@@ -82,14 +92,14 @@ export function readNamespaceExports(barrel: string): { name: string; source: st
  * @description Builds the ordered entry list by parsing the api barrel and recursing into folder
  * modules for their nested `export * as` sub-namespaces (e.g. `metro/filters`). A module is a folder
  * when its source resolves to an `index.ts`; each nested namespace becomes a `<parent>/<child>`
- * subpath entry. Auto-derived subpaths in `config.excludeSubpaths` are skipped; `config.additionalSubpaths`
+ * subpath entry. Auto-derived subpaths in `EXCLUDE_SUBPATHS` are skipped; `ADDITIONAL_SUBPATHS`
  * are appended. Stale excludeSubpaths entries are reported; an unresolvable additional subpath fails
  * generation.
- * @returns The entry descriptors (root first) sorted so the output is deterministic across runs.
+ * @returns The root barrel and the module entries, sorted so the output is deterministic across runs.
  */
-export function buildEntries(): ModuleEntry[] {
+export function buildEntries(): SdkEntries {
 	const entries: ModuleEntry[] = [];
-	const unusedExcludes = new Set(config.excludeSubpaths);
+	const unusedExcludes = new Set(EXCLUDE_SUBPATHS);
 
 	const outFor = (name: string) => join(API_SRC, ...name.split('/')) + '.d.ts';
 
@@ -108,7 +118,7 @@ export function buildEntries(): ModuleEntry[] {
 		for (const { name, source } of readNamespaceExports(barrel)) {
 			const subpath = prefix ? `${prefix}/${name}` : name;
 
-			if (config.excludeSubpaths.includes(subpath)) {
+			if (EXCLUDE_SUBPATHS.includes(subpath)) {
 				unusedExcludes.delete(subpath);
 				continue;
 			}
@@ -119,8 +129,8 @@ export function buildEntries(): ModuleEntry[] {
 
 	walk(BARREL, '', true);
 
-	for (const extra of config.additionalSubpaths) {
-		if (config.excludeSubpaths.includes(extra.name)) {
+	for (const extra of ADDITIONAL_SUBPATHS) {
+		if (EXCLUDE_SUBPATHS.includes(extra.name)) {
 			unusedExcludes.delete(extra.name);
 			continue;
 		}
@@ -142,14 +152,68 @@ export function buildEntries(): ModuleEntry[] {
 		);
 	}
 
-	const root: ModuleEntry = {
-		name: '.',
-		source: BARREL,
-		out: join(API_SRC, 'index.d.ts'),
-		topLevel: false,
-	};
-
 	entries.sort((a, b) => a.name.localeCompare(b.name));
 
-	return [root, ...entries.filter((entry) => entry.name !== '.')];
+	return {
+		root: { source: BARREL, out: join(API_SRC, 'index.d.ts') },
+		modules: entries,
+		aliases: readNamespaceAliases(BARREL),
+	};
+}
+
+/**
+ * @description Reads a barrel's `export const old = Next;` aliases, where `Next` is an `import * as`
+ * of a module the barrel also exports with `export * as next`, so the SDK can declare the old name.
+ * @param barrel The absolute path to the barrel file to parse.
+ * @returns Each alias with the module name it points at and its JSDoc body, sorted by name.
+ */
+export function readNamespaceAliases(barrel: string): NamespaceAlias[] {
+	const sourceFile = parseSource('barrel.ts', readFileSync(barrel, 'utf8'));
+	const specifierOf = new Map<string, string>();
+	const moduleOf = new Map<string, string>();
+
+	for (const declaration of sourceFile.getImportDeclarations()) {
+		const namespace = declaration.getNamespaceImport();
+
+		if (namespace) {
+			specifierOf.set(namespace.getText(), declaration.getModuleSpecifierValue());
+		}
+	}
+
+	for (const declaration of sourceFile.getExportDeclarations()) {
+		const alias = declaration.getNamespaceExport()?.getName();
+		const specifier = declaration.getModuleSpecifierValue();
+
+		if (alias && specifier) {
+			moduleOf.set(specifier, alias);
+		}
+	}
+
+	const aliases: NamespaceAlias[] = [];
+
+	for (const statement of sourceFile.getVariableStatements()) {
+		if (!statement.isExported()) {
+			continue;
+		}
+
+		const doc = statement
+			.getJsDocs()
+			.map((jsDoc) => jsDoc.getInnerText().trim())
+			.join('\n');
+
+		for (const declaration of statement.getDeclarations()) {
+			const specifier = specifierOf.get(declaration.getInitializer()?.getText() ?? '');
+			const target = specifier ? moduleOf.get(specifier) : undefined;
+
+			if (!target) {
+				throw new Error(
+					`Barrel export '${declaration.getName()}' must alias an \`export * as\` module.`,
+				);
+			}
+
+			aliases.push({ name: declaration.getName(), target, doc });
+		}
+	}
+
+	return aliases.sort((a, b) => a.name.localeCompare(b.name));
 }

@@ -16,6 +16,90 @@ static NSString *recoveryShortcutType(void)
     return type;
 }
 
+static NSString *const kDiscordShortcutItemsKey = @"UnboundDiscordShortcutItems";
+
+static NSDictionary *shortcutRecord(UIApplicationShortcutItem *item)
+{
+    NSMutableDictionary *record = [NSMutableDictionary dictionaryWithObject:item.type ?: @""
+                                                                     forKey:@"type"];
+    record[@"title"]            = item.localizedTitle ?: @"";
+    record[@"subtitle"]         = item.localizedSubtitle;
+    if (item.userInfo && [NSPropertyListSerialization propertyList:item.userInfo
+                                                  isValidForFormat:NSPropertyListBinaryFormat_v1_0])
+    {
+        record[@"userInfo"] = item.userInfo;
+    }
+    if ([item.icon respondsToSelector:NSSelectorFromString(@"systemImageName")])
+    {
+        id iconName = [item.icon valueForKey:@"systemImageName"];
+        if ([iconName isKindOfClass:[NSString class]])
+        {
+            record[@"systemImageName"] = iconName;
+        }
+    }
+    return record;
+}
+
+static UIApplicationShortcutItem *shortcutFromRecord(NSDictionary *record)
+{
+    NSString *type  = record[@"type"];
+    NSString *title = record[@"title"];
+    if (![type isKindOfClass:[NSString class]] || ![title isKindOfClass:[NSString class]])
+    {
+        return nil;
+    }
+    NSString                  *subtitle = record[@"subtitle"];
+    NSString                  *iconName = record[@"systemImageName"];
+    NSDictionary              *userInfo = record[@"userInfo"];
+    UIApplicationShortcutIcon *icon =
+        [iconName isKindOfClass:[NSString class]]
+            ? [UIApplicationShortcutIcon iconWithSystemImageName:iconName]
+            : nil;
+    return [[UIApplicationShortcutItem alloc]
+             initWithType:type
+           localizedTitle:title
+        localizedSubtitle:[subtitle isKindOfClass:[NSString class]] ? subtitle : nil
+                     icon:icon
+                 userInfo:[userInfo isKindOfClass:[NSDictionary class]] ? userInfo : nil];
+}
+
+static NSArray<UIApplicationShortcutItem *> *savedDiscordShortcutItems(void)
+{
+    NSArray *records = [[NSUserDefaults standardUserDefaults] arrayForKey:kDiscordShortcutItemsKey];
+    NSMutableArray<UIApplicationShortcutItem *> *items = [NSMutableArray array];
+    for (NSDictionary *record in records)
+    {
+        UIApplicationShortcutItem *item =
+            [record isKindOfClass:[NSDictionary class]] ? shortcutFromRecord(record) : nil;
+        if (item)
+        {
+            [items addObject:item];
+        }
+    }
+    return items;
+}
+
+static void saveDiscordShortcutItems(NSArray<UIApplicationShortcutItem *> *items)
+{
+    NSMutableArray *records = [NSMutableArray arrayWithCapacity:items.count];
+    for (UIApplicationShortcutItem *item in items)
+    {
+        [records addObject:shortcutRecord(item)];
+    }
+    [[NSUserDefaults standardUserDefaults] setObject:records forKey:kDiscordShortcutItemsKey];
+}
+
+static NSArray<UIApplicationShortcutItem *> *currentDiscordShortcutItems = nil;
+
+static NSArray<UIApplicationShortcutItem *> *discordShortcutItems(void)
+{
+    if (!currentDiscordShortcutItems)
+    {
+        currentDiscordShortcutItems = savedDiscordShortcutItems();
+    }
+    return currentDiscordShortcutItems;
+}
+
 static void showRecoveryStatus(NSString *status)
 {
     UIAlertAction *okay = [UIAlertAction actionWithTitle:@"Okay"
@@ -86,8 +170,7 @@ static void showRecoveryStatus(NSString *status)
 
 + (void)refresh
 {
-    UIApplication *application = [UIApplication sharedApplication];
-    application.shortcutItems  = application.shortcutItems ?: @[];
+    [UIApplication sharedApplication].shortcutItems = discordShortcutItems();
 }
 
 @end
@@ -96,7 +179,14 @@ static void showRecoveryStatus(NSString *status)
 
 - (void)setShortcutItems:(NSArray<UIApplicationShortcutItem *> *)shortcutItems
 {
-    %orig([RecoveryQuickAction itemsWithRecoveryAction:shortcutItems]);
+    NSArray<UIApplicationShortcutItem *> *items =
+        [shortcutItems isKindOfClass:[NSArray class]] ? shortcutItems : @[];
+    if (![items isEqualToArray:currentDiscordShortcutItems])
+    {
+        currentDiscordShortcutItems = [items copy];
+        saveDiscordShortcutItems(currentDiscordShortcutItems);
+    }
+    %orig([RecoveryQuickAction itemsWithRecoveryAction:currentDiscordShortcutItems]);
 }
 
 %end

@@ -4,14 +4,15 @@ A moderator or admin sees pending listings and updates at `/review`, inspects th
 
 ## Sub-features
 
-- `review-list` shows each pending submission with its source line (`owner/repo@sha · path · ref`, linked to the tree), its manifest table, its changelog lists, a `Download staged bundle` link and a `Bundle at <sha>` link to the file on GitHub.
+- `review-list` shows each pending submission as a card with `Review details`, `Preview page` and the three decisions. `Review details` opens an accordion, one section at a time: `Changelog`, `Manifest details` (a listing) or `Manifest changes` (an update, changed fields only), `ADDON.md`, and `Source and bundle` with `Download staged bundle` and `Bundle at <sha>`.
+- `review-preview` opens `/addons/<id>?submission=<id>` in the same tab: the public page as published, behind a `Previewing the submitted v…` bar whose `Exit preview` goes back. Only reviewers get it; anyone else sees the live page or a 404.
 - `review-filter` uses the `All`, `New listings` and `Updates` links (`/review?kind=listing|update`).
 - `review-approve` approves the submission. The queue empties, the row becomes `approved`, the CDN serves `addons/<id>/<version>/manifest.json`, and the author becomes `developer`.
 - `review-reject` and `review-changes` open a dialog that needs a reason and moves the row out of the queue.
 
 ## How to get to it (user POV)
 
-- Sign in as a moderator or admin, open the account menu or the `Staff` sidebar, and choose `Review Queue`.
+- Sign in as a moderator or admin, open the account menu or the staff tabs, and choose `Review Queue`.
 - Go to `/review` directly. A signed-out user is redirected to `/login`, and a plain user to `/`.
 
 ## Driving it with preview tools

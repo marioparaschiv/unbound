@@ -3,15 +3,23 @@ import { join, relative } from 'node:path';
 import { writeFileSync } from 'node:fs';
 
 import {
+	API_MANIFEST,
 	API_SRC,
 	INTERNAL_OUT,
 	TYPES_INDEX,
-	ROOT,
 	readJson,
 	relativeSpecifier,
+	type NamespaceAlias,
 	type ModuleEntry,
 } from './paths';
-import { stripInternal, declaredNames, collectReferencedNames } from './transform';
+import {
+	stripInternal,
+	declaredNames,
+	collectReferencedNames,
+	groupByOwner,
+	typeOnlyStatements,
+} from './transform';
+import { addonScopeGlobals } from './addon-scope';
 import { parseSource } from './project';
 import { bundle } from './bundle';
 
@@ -37,41 +45,52 @@ export function normalizeForHash(text: string): string {
 /**
  * @description Builds the root `index.d.ts` as pure re-exports of the top-level capability modules
  * (`export * as <name> from './<name>'`), so the barrel references the already-emitted, already-stripped
- * per-module files instead of re-flattening every declaration. Managers and other `@internal` barrel
- * members are absent because they never appear as `export * as` (they use `export { … }`), so the
- * top-level entry list never includes them.
+ * per-module files instead of re-flattening every declaration, then declares the barrel's aliases of
+ * those modules.
  * @param entries The emitted module entries; only top-level capability modules are re-exported.
+ * @param aliases The barrel's old names for top-level modules, declared after the re-exports.
  * @returns The root `index.d.ts` text (unformatted, no banner).
  */
-export function buildRoot(entries: ModuleEntry[]): string {
-	const lines = entries
-		.filter((entry) => entry.topLevel)
-		.map((entry) => {
-			const specifier = relativeSpecifier(join(API_SRC, 'index.d.ts'), entry.out);
-
-			return `export * as ${entry.name} from '${specifier}';`;
-		})
+export function buildRoot(entries: ModuleEntry[], aliases: NamespaceAlias[] = []): string {
+	const out = join(API_SRC, 'index.d.ts');
+	const specifierOf = new Map(
+		entries
+			.filter((entry) => entry.topLevel)
+			.map((entry) => [entry.name, relativeSpecifier(out, entry.out)]),
+	);
+	const lines = [...specifierOf]
+		.map(([name, specifier]) => `export * as ${name} from '${specifier}';`)
 		.sort();
+	const declarations = aliases.map(
+		(alias) =>
+			`${docComment(alias.doc)}export declare const ${alias.name}: typeof import('${specifierOf.get(alias.target)}');`,
+	);
 
-	return `${lines.join('\n')}\n`;
+	return `${[...lines, ...declarations].join('\n')}\n`;
+}
+
+function docComment(doc: string): string {
+	return doc ? `/** ${doc} */\n` : '';
 }
 
 /**
  * @description Emits the SDK's `global.d.ts`: the addon-facing ambient globals (`$$DEV$$`,
  * `NativePlugin`, `React`, …) from the `@unbound-app/types` `declare global` block, a re-export of the
  * shared types (so `@unbound-app/api/global` stays their public home even though `_internal.d.ts` is
- * unlisted), and the `UnboundGlobal` interface that types `window.unbound` and the ambient `unbound`
- * const. Shared types are never re-declared here - they are imported from `_internal.d.ts`.
+ * unlisted), the `UnboundGlobal` interface that types `window.unbound`, and the `AddonScope` type with
+ * an ambient const per Addon scope global. Shared types are never re-declared here - they are imported from `_internal.d.ts`.
  * @param entries The emitted module entries; only top-level capability modules appear on `unbound.*`.
  * @param internalExports The names the `_internal.d.ts` hoist file exports, re-exported for public access.
  * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file, used
  * to import names the ambient block references.
+ * @param aliases The barrel's old names for top-level modules, added to `UnboundGlobal` with their JSDoc.
  * @returns The `global.d.ts` file text (unformatted, no banner).
  */
 export function buildGlobal(
 	entries: ModuleEntry[],
 	internalExports: Set<string>,
 	ownerByName: Map<string, string>,
+	aliases: NamespaceAlias[] = [],
 ): string {
 	const outPath = join(API_SRC, 'global.d.ts');
 	const sourceFile = parseSource('global.d.ts', bundle(TYPES_INDEX, true));
@@ -95,8 +114,18 @@ export function buildGlobal(
 	}
 
 	const ambient = sourceFile.getStatements().filter(Node.isModuleDeclaration);
+	const scopeGlobals = addonScopeGlobals();
 
-	const referenced = collectReferencedNames(ambient);
+	const scope = sourceFile.addTypeAlias({
+		isExported: true,
+		name: 'AddonScope',
+		type: `{ ${scopeGlobals.map(([name, global]) => `${name}: ${global.sdkType};`).join(' ')} }`,
+		docs: [
+			'The globals a plugin runs with, keyed by name. Plugin code reads them without an import.',
+		],
+	});
+
+	const referenced = collectReferencedNames([...ambient, scope]);
 	const declaredInAmbient = new Set<string>();
 
 	for (const statement of ambient) {
@@ -149,32 +178,13 @@ export function buildGlobal(
 		}
 	}
 
-	const importsByOwner = new Map<string, Set<string>>();
+	const unbound = [...referenced].filter(
+		(name) => !declaredInAmbient.has(name) && !bound.has(name),
+	);
+	const imports = typeOnlyStatements('import', groupByOwner(unbound, ownerByName), outPath);
 
-	for (const name of referenced) {
-		if (declaredInAmbient.has(name) || bound.has(name)) {
-			continue;
-		}
-
-		const owner = ownerByName.get(name);
-
-		if (owner === void 0) {
-			continue;
-		}
-
-		const bucket = importsByOwner.get(owner) ?? new Set<string>();
-
-		bucket.add(name);
-		importsByOwner.set(owner, bucket);
-	}
-
-	for (const [owner, names] of importsByOwner) {
-		const specifier = relativeSpecifier(outPath, owner);
-
-		sourceFile.insertStatements(
-			0,
-			`import type { ${[...names].sort().join(', ')} } from '${specifier}';`,
-		);
+	if (imports.length > 0) {
+		sourceFile.insertStatements(0, imports.join('\n'));
 	}
 
 	const reexport = sourceFile.addExportDeclaration({
@@ -186,16 +196,26 @@ export function buildGlobal(
 	// Sort ahead of the ambient block kept from the bundle.
 	reexport.setOrder(0);
 
+	const pathOf = new Map(
+		entries
+			.filter((entry) => entry.topLevel)
+			.map((entry) => [
+				entry.name,
+				'./' + relative(API_SRC, entry.out).split('\\').join('/'),
+			]),
+	);
+
 	sourceFile.addInterface({
 		isExported: true,
 		name: 'UnboundGlobal',
-		properties: entries
-			.filter((entry) => entry.topLevel)
-			.map((entry) => {
-				const path = './' + relative(API_SRC, entry.out).split('\\').join('/');
-
-				return { name: entry.name, type: `typeof import('${path}')` };
-			}),
+		properties: [
+			...[...pathOf].map(([name, path]) => ({ name, type: `typeof import('${path}')` })),
+			...aliases.map((alias) => ({
+				name: alias.name,
+				type: `typeof import('${pathOf.get(alias.target)}')`,
+				docs: alias.doc ? [alias.doc] : [],
+			})),
+		],
 	});
 
 	const global = sourceFile.addModule({
@@ -209,12 +229,46 @@ export function buildGlobal(
 		properties: [{ name: 'unbound', type: 'UnboundGlobal' }],
 	});
 
-	global.addVariableStatement({
-		declarationKind: VariableDeclarationKind.Const,
-		declarations: [{ name: 'unbound', type: "Window['unbound']" }],
-	});
+	global.addVariableStatements(
+		scopeGlobals
+			.filter(([, global]) => global.declare)
+			.map(([name]) => ({
+				declarationKind: VariableDeclarationKind.Const,
+				declarations: [{ name, type: `AddonScope['${name}']` }],
+			})),
+	);
 
 	return `${sourceFile.getFullText().trim()}\n`;
+}
+
+/**
+ * @description Builds the `@unbound-app/api` `exports` map: the root, the globals, each module, and the
+ * hand-written testing kit in `packages/api/testing`, which lives outside the generated `src`.
+ * @param entries The emitted module entries.
+ * @returns The map, sorted by subpath.
+ */
+export function buildExports(entries: ModuleEntry[]): Record<string, string> {
+	const exports: Record<string, string> = {
+		'.': './src/index.d.ts',
+		'./global': './src/global.d.ts',
+		'./testing': './testing/index.ts',
+	};
+
+	for (const entry of entries) {
+		if (Object.hasOwn(exports, `./${entry.name}`)) {
+			throw new Error(
+				`Module '${entry.name}' collides with a reserved @unbound-app/api subpath.`,
+			);
+		}
+
+		exports[`./${entry.name}`] = './src/' + relative(API_SRC, entry.out).split('\\').join('/');
+	}
+
+	const ordered: Record<string, string> = {};
+
+	for (const key of Object.keys(exports).sort()) ordered[key] = exports[key];
+
+	return ordered;
 }
 
 /**
@@ -224,30 +278,11 @@ export function buildGlobal(
  * @param entries The emitted module entries used to build the `exports` map.
  */
 export function writeManifest(version: string, entries: ModuleEntry[]) {
-	const manifestPath = join(ROOT, 'packages', 'api', 'package.json');
-	const manifest = readJson(manifestPath);
-
-	const exports: Record<string, string> = {
-		'.': './src/index.d.ts',
-		'./global': './src/global.d.ts',
-	};
-
-	for (const entry of entries) {
-		if (entry.name === '.') {
-			continue;
-		}
-
-		const target = './src/' + relative(API_SRC, entry.out).split('\\').join('/');
-
-		exports[`./${entry.name}`] = target;
-	}
-
-	const ordered: Record<string, string> = {};
-
-	for (const key of Object.keys(exports).sort()) ordered[key] = exports[key];
+	const manifest = readJson(API_MANIFEST);
 
 	manifest.version = version;
-	manifest.exports = ordered;
+	manifest.exports = buildExports(entries);
+	manifest.files = ['src', 'testing'];
 
-	writeFileSync(manifestPath, JSON.stringify(manifest, null, '\t') + '\n');
+	writeFileSync(API_MANIFEST, JSON.stringify(manifest, null, '\t') + '\n');
 }

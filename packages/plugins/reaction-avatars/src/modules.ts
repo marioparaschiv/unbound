@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { metro } from '@unbound-app/api';
+import { metro, flux } from '@unbound-app/api';
 
 import type { UserSummaryItemProps } from '~/components/reaction-avatar-surface';
 
@@ -13,10 +13,10 @@ const UserSummaryItemModule = metro.findByFilePath('components_native/common/Use
 	lazy: true,
 });
 
-export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
-export const MessageStore = metro.findStore('Message', { lazy: true });
-export const ChannelStore = metro.findStore('Channel', { lazy: true });
-export const UserStore = metro.stores.Users;
+export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
+export const MessageStore = flux.getStore('Message', { lazy: true });
+export const ChannelStore = flux.getStore('Channel', { lazy: true });
+export const UserStore = flux.getStore('User', { lazy: true });
 
 type SummaryComponent = ComponentType<UserSummaryItemProps>;
 
@@ -27,7 +27,9 @@ type SummaryComponent = ComponentType<UserSummaryItemProps>;
 export function findUserSummaryItem(): SummaryComponent | undefined {
 	const exported = UserSummaryItemModule.default ?? UserSummaryItemModule.module;
 	const component =
-		typeof exported === 'function' ? exported : metro.findByName('UserSummaryItem');
+		typeof exported === 'function'
+			? exported
+			: metro.findByName('UserSummaryItem', { lazy: false });
 
 	return typeof component === 'function' ? (component as SummaryComponent) : undefined;
 }

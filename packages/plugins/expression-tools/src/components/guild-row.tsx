@@ -2,7 +2,7 @@ import { Image, Pressable, Text, View } from 'react-native';
 
 import { getGuildIconUrl, type Guild } from '~/guilds';
 
-import styles from './guild-row.style';
+import styles from '~/components/guild-row.style';
 
 type GuildIconProps = {
 	guild: Guild;

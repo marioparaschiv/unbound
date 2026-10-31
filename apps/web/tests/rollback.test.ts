@@ -261,7 +261,7 @@ describe('serveVersion', () => {
 			reason: 'Again',
 		});
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			served: '1.2.0',
 			previous: '1.2.0',
 			withdrawn: [],

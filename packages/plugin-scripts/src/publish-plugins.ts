@@ -2,8 +2,9 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node
 import type { PublishFirstPartyRequest } from '@unbound-app/contracts/publish';
 import type { WorkspaceFiles } from '@unbound-app/contracts/workspace';
 import type { KeyObject } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
 
 import {
@@ -28,9 +29,11 @@ import type { LocalPlugin, PluginDecision, PublishedVersions } from './select-pl
 import type { PluginCommit } from './plugin-changelog';
 import { createRelease, mergeRelease, renderRelease } from './plugin-changelog';
 import { getSelected, selectPlugins } from './select-plugins';
+import { readPluginManifest } from './plugin-manifests';
 import {
 	parsePluginSigningKey,
 	PLUGIN_SIGNING_KEY_VARIABLE,
+	bytecodeDigests,
 	signPlugin,
 	withSignature,
 } from './sign-plugin';
@@ -47,10 +50,6 @@ type Options = {
 	dryRun: boolean;
 	apiUrl: string;
 	apiKey: string;
-};
-
-type ManifestVersion = {
-	version?: unknown;
 };
 
 type GitOptions = {
@@ -152,6 +151,21 @@ function readOptions(): Options {
 	};
 }
 
+function builtContent(root: string, bundle: string): Pick<LocalPlugin, 'sha256' | 'bytecode'> {
+	const path = join(root, WORKSPACE_DIR, bundle);
+
+	if (!existsSync(path)) return {};
+
+	const compiled = findCompiledBundles(root, `${WORKSPACE_DIR}/${bundle}`);
+
+	return {
+		sha256: createHash('sha256').update(readFileSync(path)).digest('hex'),
+		bytecode: bytecodeDigests(
+			new Map([...compiled].map(([version, file]) => [version, file.contents])),
+		),
+	};
+}
+
 function discoverPlugins(root: string): LocalPlugin[] {
 	const workspace = join(root, WORKSPACE_DIR);
 	const config = workspaceConfigSchema.parse(
@@ -180,13 +194,13 @@ function discoverPlugins(root: string): LocalPlugin[] {
 			continue;
 		}
 
-		const manifest: ManifestVersion = JSON.parse(files.read(`${dir}/manifest.json`) ?? '{}');
-
-		if (typeof manifest.version !== 'string') {
-			throw new Error(`${addon.id}: manifest.json has no string "version".`);
-		}
-
-		plugins.push({ id: addon.id, dir, version: manifest.version, bundle: addon.bundle });
+		plugins.push({
+			id: addon.id,
+			dir,
+			version: readPluginManifest(join(workspace, dir, 'manifest.json')).version,
+			bundle: addon.bundle,
+			...builtContent(root, addon.bundle),
+		});
 	}
 
 	return plugins;
@@ -209,7 +223,12 @@ async function fetchPublished(options: Options): Promise<PublishedVersions> {
 
 	const { addons } = listFirstPartyAddonsResponseSchema.parse(body);
 
-	return new Map(addons.map(({ id, version, commitSha }) => [id, { version, commitSha }]));
+	return new Map(
+		addons.map(({ id, version, commitSha, sha256, bytecode }) => [
+			id,
+			{ version, commitSha, sha256, bytecode },
+		]),
+	);
 }
 
 // The published build commit's parent is the main commit it was built from; failing that, the commit that set the published version.
@@ -271,6 +290,18 @@ function prepareRelease(options: Options, decision: SelectedDecision, date: stri
 	const { plugin } = decision;
 	const path = `${WORKSPACE_DIR}/${plugin.dir}/CHANGELOG.md`;
 	const existing = tryGit(root, ['show', `HEAD:${path}`]);
+	const current = existing.ok
+		? selectRelease(parseChangelog(existing.stdout), plugin.version)
+		: undefined;
+
+	if (decision.reason === 'rebuilt' && existing.ok && current) {
+		return {
+			plugin,
+			changelog: existing.stdout,
+			entry: renderRelease(plugin.version, current).trimEnd(),
+		};
+	}
+
 	const release = createRelease({
 		commits: listCommits(root, plugin.dir, findChangelogBase(options, decision)),
 		date,
@@ -307,6 +338,60 @@ function readSigningKey(): KeyObject | undefined {
 	return parsePluginSigningKey(pem);
 }
 
+const GENERATED_MANIFEST_FIELDS = ['platforms', 'platformCapabilities', 'capabilities'] as const;
+
+/**
+ * @description Builds the manifest to publish: the source manifest with the platforms and Capabilities `ubd build` generated into `dist/manifest.json`, which the source never holds.
+ * @param root The repository root.
+ * @param dir The plugin's folder.
+ * @returns The manifest's JSON text.
+ */
+export function publishedManifest(root: string, dir: string): string {
+	const source = JSON.parse(
+		readFileSync(join(root, WORKSPACE_DIR, dir, 'manifest.json'), 'utf8'),
+	) as Record<string, unknown>;
+	const builtPath = join(root, WORKSPACE_DIR, dir, 'dist', 'manifest.json');
+
+	if (!existsSync(builtPath)) return JSON.stringify(source);
+
+	const built = JSON.parse(readFileSync(builtPath, 'utf8')) as Record<string, unknown>;
+
+	for (const field of GENERATED_MANIFEST_FIELDS) {
+		if (built[field] !== undefined) source[field] = built[field];
+	}
+
+	return JSON.stringify(source);
+}
+
+/**
+ * @description Finds the bundles a plugin build compiled to Hermes bytecode beside its source bundle.
+ * @param root The repository root.
+ * @param bundle The source bundle's path from the root, such as `packages/plugins/x/dist/index.js`.
+ * @returns Each compiled bundle as a build file, by Hermes bytecode version.
+ */
+export function findCompiledBundles(root: string, bundle: string): Map<number, BuildFile> {
+	const directory = dirname(bundle);
+	const stem = basename(bundle).replace(/\.[^.]+$/, '');
+	const prefix = `${stem}.`;
+	const compiled = new Map<number, BuildFile>();
+
+	for (const name of readdirSync(join(root, directory)).sort()) {
+		const version =
+			name.startsWith(prefix) && name.endsWith('.hbc')
+				? name.slice(prefix.length, -'.hbc'.length)
+				: '';
+
+		if (/^\d{1,10}$/.test(version)) {
+			compiled.set(Number(version), {
+				path: `${directory}/${name}`,
+				contents: readFileSync(join(root, directory, name)),
+			});
+		}
+	}
+
+	return compiled;
+}
+
 function collectFiles(root: string, releases: PluginRelease[], key?: KeyObject): BuildFile[] {
 	const files: BuildFile[] = [];
 
@@ -325,12 +410,17 @@ function collectFiles(root: string, releases: PluginRelease[], key?: KeyObject):
 
 		if (key) {
 			const manifest = `${WORKSPACE_DIR}/${plugin.dir}/manifest.json`;
-			const signature = signPlugin(key, plugin.id, plugin.version, contents);
+			const compiled = findCompiledBundles(root, bundle);
+			const digests = bytecodeDigests(
+				new Map([...compiled].map(([version, file]) => [version, file.contents])),
+			);
+			const signature = signPlugin(key, plugin.id, plugin.version, contents, digests);
 
+			files.push(...compiled.values());
 			files.push({
 				path: manifest,
 				contents: new TextEncoder().encode(
-					withSignature(readFileSync(join(root, manifest), 'utf8'), signature),
+					withSignature(publishedManifest(root, plugin.dir), signature, digests),
 				),
 			});
 		}
@@ -479,6 +569,8 @@ function describeDecision(decision: PluginDecision): string {
 			return `publish ${label} (unpublished)`;
 		case 'newer':
 			return `publish ${label} (live: ${decision.published.version})`;
+		case 'rebuilt':
+			return `publish ${label} (rebuilt: its output differs from the live build)`;
 		case 'already-published':
 			return `skip    ${label} (already published)`;
 		case 'behind-published':

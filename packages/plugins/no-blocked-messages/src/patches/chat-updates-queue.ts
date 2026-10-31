@@ -1,4 +1,5 @@
-import { ChatUpdatesQueue, Patcher } from '~/modules';
+import { patcher } from '@unbound-app/api';
+import { ChatUpdatesQueue } from '~/modules';
 import { chat } from '~/chat';
 
 /**
@@ -12,7 +13,7 @@ export function patchChatUpdatesQueue(): () => void {
 		return () => {};
 	}
 
-	return Patcher.before(ChatUpdatesQueue.prototype, 'add', ({ this: self }) => {
+	return patcher.before(ChatUpdatesQueue.prototype, 'add', ({ this: self }) => {
 		chat.updatesQueue = self;
 	});
 }

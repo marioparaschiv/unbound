@@ -8,7 +8,6 @@ enum class LogCategory(val id: String) {
     UPDATER("updater"),
     THEMES("themes"),
     FONTS("fonts"),
-    CHATUI("chatui"),
     PLUGINS("plugins"),
     SETTINGS("settings"),
     TOOLBOX("toolbox"),

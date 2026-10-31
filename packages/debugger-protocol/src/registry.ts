@@ -23,6 +23,8 @@ export type CommandSurfaces = { cli: 'root'; mcp: boolean } | { cli: 'mcp'; mcp:
 export type CommandDefinition<S extends z.ZodObject<z.ZodRawShape>> = {
 	name: string;
 	description: string;
+	/** A one-line summary for the CLI's menu, where the description is too long. */
+	summary?: string;
 	surfaces: CommandSurfaces;
 	/** Used directly as the MCP inputSchema; the CLI adapter derives flags from its fields. */
 	schema: S;

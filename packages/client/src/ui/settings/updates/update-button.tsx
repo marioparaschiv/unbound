@@ -1,13 +1,14 @@
-import type { ButtonSize } from '@unbound-app/types';
+import type { DesignModule } from '@unbound-app/types/components';
+import type { ComponentProps } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import UpdatesStore from '~/stores/updates';
-import { Messages } from '~/api/i18n';
+import { Discord } from '~/metro/components';
+import UpdatesStore from '~/updates/state';
+import { messages } from '~/i18n/api';
 
 type UpdateButtonProps = {
 	id: string;
 	text: string;
-	size?: ButtonSize;
+	size?: ComponentProps<DesignModule['Button']>['size'];
 	grow?: boolean;
 	onUpdated?: () => void;
 };
@@ -28,7 +29,7 @@ function UpdateButton({ id, text, size = 'sm', grow, onUpdated }: UpdateButtonPr
 			size={size}
 			grow={grow}
 			variant={status === 'failed' ? 'destructive' : 'primary'}
-			text={status === 'failed' ? Messages.UNBOUND_UPDATES_RETRY : text}
+			text={status === 'failed' ? messages.UNBOUND_UPDATES_RETRY : text}
 			loading={status === 'updating'}
 			onPress={() => void update()}
 		/>

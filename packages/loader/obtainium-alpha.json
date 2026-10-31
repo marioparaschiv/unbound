@@ -3,5 +3,5 @@
 	"url": "https://github.com/marioparaschiv/unbound",
 	"author": "unbound-app",
 	"name": "Unbound (Discord alpha)",
-	"additionalSettings": "{\"apkFilterRegEx\":\"^Unbound-alpha\\\\.apks$\",\"filterReleaseTitlesByRegEx\":\"^loader-v[0-9]+\\\\.[0-9]+-android-alpha$\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\",\"includePrereleases\":true}"
+	"additionalSettings": "{\"apkFilterRegEx\":\"^Unbound-alpha\\\\.apks$\",\"filterReleaseTitlesByRegEx\":\"^Unbound .+ for Discord [0-9]+\\\\.[0-9]+, Android alpha$\",\"fallbackToOlderReleases\":true,\"sortMethodChoice\":\"date\",\"includePrereleases\":true}"
 }

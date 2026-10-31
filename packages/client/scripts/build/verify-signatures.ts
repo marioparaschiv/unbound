@@ -92,7 +92,7 @@ if (import.meta.main) {
 
 	logger.success(
 		options.pullRequest
-			? `Every bundle and the manifest are signed for pull request #${options.pullRequest}.`
-			: 'Every bundle and the manifest are signed with the committed key.',
+			? `The manifest is signed for pull request #${options.pullRequest} and lists every bundle.`
+			: 'The manifest is signed with the committed key and lists every bundle.',
 	);
 }

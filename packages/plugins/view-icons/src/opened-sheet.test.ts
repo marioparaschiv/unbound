@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { toOpenedSheet } from './opened-sheet';
+import { toOpenedSheet } from '~/opened-sheet';
 
 test('recognizes a user profile sheet with its guild', () => {
 	expect(toOpenedSheet('UserProfileActionSheet', { userId: '1', guildId: '2' })).toEqual({

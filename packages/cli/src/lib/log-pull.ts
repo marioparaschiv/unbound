@@ -3,23 +3,27 @@ import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import { join, resolve } from 'node:path';
 
 import {
-	DISCORD_BUNDLE_ID,
+	ERROR_MARKER,
 	IOS_TIMEOUTS,
-	parseShellResult,
 	pickDevice,
+	pilotShell,
+	readMarker,
 	resolvePilot,
-} from '~/lib/ios-install';
+} from '~/lib/pilot';
+import {
+	ANDROID_FILES_DIRECTORY,
+	DISCORD_BUNDLE_ID,
+	IOS_CONTAINERS_DIRECTORY,
+} from '~/lib/device-paths';
 import type { CommandResult, CommandRunner } from '~/lib/run-command';
 import { ANDROID_TIMEOUTS } from '~/lib/android-install';
 import { runCommand } from '~/lib/run-command';
 
-export const ANDROID_LOGS_DIRECTORY = '/data/data/com.discord/files/Unbound/Logs';
+export const ANDROID_LOGS_DIRECTORY = `${ANDROID_FILES_DIRECTORY}/Unbound/Logs`;
 
 const ANDROID_STAGING_DIRECTORY = '/data/local/tmp/ubd-logs';
 const IOS_STAGING_DIRECTORY = '/var/tmp/ubd-logs';
-const CONTAINERS_DIRECTORY = '/var/mobile/Containers/Data/Application';
 const FILE_MARKER = 'UBD_LOG_FILE=';
-const ERROR_MARKER = 'UBD_ERROR=';
 
 export type LogPullOptions = {
 	out: string;
@@ -97,12 +101,8 @@ export async function pullIOSLogs(options: IOSLogPullOptions): Promise<CommandOu
 	}
 
 	const device = picked;
-	const staged = parseShellResult(
-		await pilotCommand(
-			['shell_exec', '--device', device, '--command', iosStageScript()],
-			IOS_TIMEOUTS.shell,
-		),
-	);
+	const target = { udid: device, pilot, run };
+	const staged = await pilotShell(target, iosStageScript());
 	const output = staged.ok ? staged.output : staged.error;
 	const files = listMarked(output, FILE_MARKER);
 
@@ -138,10 +138,7 @@ export async function pullIOSLogs(options: IOSLogPullOptions): Promise<CommandOu
 		}
 	}
 
-	await pilotCommand(
-		['shell_exec', '--device', device, '--command', `rm -rf ${IOS_STAGING_DIRECTORY}`],
-		IOS_TIMEOUTS.shell,
-	);
+	await pilotShell(target, `rm -rf ${IOS_STAGING_DIRECTORY}`);
 
 	return describePulled(directory);
 }
@@ -167,7 +164,7 @@ export function androidStageScript(): string {
 export function iosStageScript(): string {
 	return [
 		`root=''`,
-		`for plist in $(grep -l '${DISCORD_BUNDLE_ID}' ${CONTAINERS_DIRECTORY}/*/.com.apple.mobile_container_manager.metadata.plist 2>/dev/null); do`,
+		`for plist in $(grep -l '${DISCORD_BUNDLE_ID}' ${IOS_CONTAINERS_DIRECTORY}/*/.com.apple.mobile_container_manager.metadata.plist 2>/dev/null); do`,
 		`if [ -d "\${plist%/*}/Documents/Unbound/Logs" ]; then root="\${plist%/*}/Documents/Unbound/Logs"; break; fi`,
 		'done',
 		`if [ -z "$root" ]; then echo '${ERROR_MARKER}Discord has no Unbound log files yet. Launch Discord with this loader once, then retry.'; exit 1; fi`,
@@ -241,10 +238,6 @@ function describePulled(directory: string): CommandOutput {
 				data: { directory, files },
 			}
 		: { ok: false, text: `No log files arrived in ${directory}.` };
-}
-
-function readMarker(output: string, marker: string): string | undefined {
-	return listMarked(output, marker)[0];
 }
 
 function listMarked(output: string, marker: string): string[] {

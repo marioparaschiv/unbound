@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { locateCodeBlocks, parseFencedCodeBlocks } from './fences';
+import { locateCodeBlocks, parseFencedCodeBlocks } from '~/fences';
 
 describe('parseFencedCodeBlocks', () => {
 	test('parses supported blocks and preserves indentation', () => {
@@ -119,5 +119,17 @@ describe('locateCodeBlocks', () => {
 
 		expect(locateCodeBlocks(blocks, 'const value = 1;\nconst value = 1;')).toEqual([]);
 		expect(locateCodeBlocks([...blocks, ...blocks], '\nconst value = 1;\n')).toEqual([]);
+	});
+
+	test('finds a block whose tabs Discord rendered as spaces', () => {
+		const [block] = parseFencedCodeBlocks(
+			'```ts\nfunction double(value: number) {\n\treturn value * 2;\n}\n```',
+		);
+		const rendered = '\n\nfunction double(value: number) {\n    return value * 2;\n}\n\n';
+		const placements = locateCodeBlocks([block!], rendered);
+
+		expect(placements).toHaveLength(1);
+		expect(placements[0]!.block.code).toContain('\treturn');
+		expect(rendered.slice(placements[0]!.start, placements[0]!.end)).toContain('    return');
 	});
 });

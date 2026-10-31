@@ -1,4 +1,4 @@
-import { metro, patcher } from '@unbound-app/api';
+import { metro } from '@unbound-app/api';
 
 type MediaMethod = (...args: unknown[]) => unknown;
 
@@ -34,8 +34,6 @@ export const MediaTypesFile: MediaTypesModule = metro.findByFilePath(
 	'modules/media/MediaTypes.tsx',
 	{ lazy: true, interop: false },
 );
-
-export const Patcher = patcher.createPatcher('unbound.fix-gif-download');
 
 // Discord's media manager, which saves media to the photo library, preferring the module with both download methods.
 export const MediaManagerFilters = [

@@ -2,7 +2,7 @@ import findRenderTarget from '@unbound-plugins/shared/react/render-target';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 
-import { Patcher } from '~/modules';
+import { patcher } from '@unbound-app/api';
 
 /**
  * @description Renders the composer's gift-or-thread button with the gift hidden, and hides it outright when it cannot.
@@ -20,7 +20,7 @@ export function patchGiftOrThreadButton(): () => void {
 				return () => {};
 			}
 
-			return Patcher.instead(
+			return patcher.instead(
 				target.holder,
 				target.key,
 				({ args: [props, ...rest], original }) =>

@@ -12,6 +12,7 @@
 #include "LoaderAddons.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderDiagnostics.h"
+#include "LoaderDocuments.h"
 #include "LoaderFonts.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
@@ -58,9 +59,9 @@ static LogLevel iosLogLevel(loader::LogLevel level)
 
 @implementation CoreBridge
 
-+ (NSString *)documentsName
++ (NSString *)documentsIn:(NSString *)parent
 {
-    return @(loader::preferences::kDocumentsName);
+    return @(loader::documentsDirectory(toStdString(parent)).c_str());
 }
 
 + (uint32_t)mainBundleBytecodeVersion
@@ -105,22 +106,6 @@ uiColors(const std::map<std::string, loader::RGBAColor> &colors)
     CGFloat red = 0, green = 0, blue = 0, alpha = 0;
     [color getRed:&red green:&green blue:&blue alpha:&alpha];
     return loader::isDarkColor({red, green, blue, alpha});
-}
-
-+ (CGFloat)messageBubbleRadius
-{
-    return loader::preferences::kMessageBubbleStyle.radius;
-}
-
-+ (CGSize)messageBubblePadding
-{
-    return CGSizeMake(loader::preferences::kMessageBubbleStyle.horizontalPadding,
-                      loader::preferences::kMessageBubbleStyle.verticalPadding);
-}
-
-+ (UIColor *)messageBubbleColorForDarkTheme:(BOOL)dark
-{
-    return uiColor(loader::preferences::messageBubbleColor(dark));
 }
 
 static std::string fontAttribute(CTFontDescriptorRef descriptor, CFStringRef attribute)

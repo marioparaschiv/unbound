@@ -1,5 +1,6 @@
 import picomatch from 'picomatch';
 
+import { MANIFEST_FILENAME } from './manifest';
 import { z } from './zod';
 
 /** The workspace config's filename; the directory holding one is a workspace root. */
@@ -40,14 +41,11 @@ export type WorkspaceFiles = {
 	read(path: string): string | undefined;
 };
 
-type ManifestFields = {
-	id?: unknown;
-	main?: unknown;
-};
+const manifestFieldsSchema = z.object({ id: z.string(), main: z.string() });
 
-type PackageFields = {
-	scripts?: Record<string, string>;
-};
+const packageScriptsSchema = z.object({
+	scripts: z.optional(z.looseObject({ build: z.optional(z.string()) })),
+});
 
 /**
  * @description Picks, out of the directories holding a `manifest.json`, the ones the workspace registers.
@@ -91,23 +89,30 @@ export function readAddon(
 	files: WorkspaceFiles,
 	config: WorkspaceConfig,
 ): WorkspaceAddon | SkippedDirectory {
-	const text = files.read(joinPath(dir, 'manifest.json'));
+	const text = files.read(joinPath(dir, MANIFEST_FILENAME));
 
 	if (text === undefined) {
-		return { path: dir, reason: 'it has no manifest.json' };
+		return { path: dir, reason: `it has no ${MANIFEST_FILENAME}` };
 	}
 
-	let manifest: ManifestFields | null;
+	let json: unknown;
 
 	try {
-		manifest = JSON.parse(text);
+		json = JSON.parse(text);
 	} catch (error) {
-		return { path: dir, reason: `its manifest.json could not be read: ${String(error)}` };
+		return {
+			path: dir,
+			reason: `its ${MANIFEST_FILENAME} could not be read: ${String(error)}`,
+		};
 	}
 
-	if (typeof manifest?.id !== 'string' || typeof manifest.main !== 'string') {
-		return { path: dir, reason: 'its manifest.json has no string "id" and "main"' };
+	const parsed = manifestFieldsSchema.safeParse(json);
+
+	if (!parsed.success) {
+		return { path: dir, reason: `its ${MANIFEST_FILENAME} has no string "id" and "main"` };
 	}
+
+	const manifest = parsed.data;
 
 	const isStatic = !hasBuildScript(files.read(joinPath(dir, 'package.json')));
 	const bundleName = getBundleName(isStatic, manifest.main);
@@ -117,8 +122,20 @@ export function readAddon(
 		kind: manifest.main.endsWith('.json') ? 'theme' : 'plugin',
 		path: dir,
 		static: isStatic,
-		bundle: isStatic ? joinPath(dir, bundleName) : joinPath(dir, config.output, bundleName),
+		bundle: isStatic
+			? joinPath(dir, bundleName)
+			: joinPath(getOutputDir(dir, config), bundleName),
 	};
+}
+
+/**
+ * @description Names the directory a built addon's build writes its bundle and manifest into.
+ * @param dir The addon's directory, `/`-separated; `''` is the root.
+ * @param config The workspace config, for `output`.
+ * @returns The output directory, `/`-separated.
+ */
+export function getOutputDir(dir: string, config: WorkspaceConfig): string {
+	return joinPath(dir, config.output);
 }
 
 /**
@@ -214,13 +231,17 @@ function hasBuildScript(text: string | undefined): boolean {
 		return false;
 	}
 
-	try {
-		const pkg: PackageFields | null = JSON.parse(text);
+	let json: unknown;
 
-		return Boolean(pkg?.scripts?.build);
+	try {
+		json = JSON.parse(text);
 	} catch {
 		return false;
 	}
+
+	const parsed = packageScriptsSchema.safeParse(json);
+
+	return parsed.success && Boolean(parsed.data.scripts?.build);
 }
 
 export default {
@@ -229,6 +250,7 @@ export default {
 	matchAddonDirs,
 	readAddon,
 	isWorkspaceAddon,
+	getOutputDir,
 	getBundleName,
 	findWorkspaceRoot,
 };

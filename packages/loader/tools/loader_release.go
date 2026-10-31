@@ -35,6 +35,7 @@ type loaderReleaseBatchConfig struct {
 	androidURL string
 	changelog  string
 	client     *http.Client
+	dryRun     bool
 }
 
 type loaderReleaseBatchResult struct {
@@ -70,6 +71,7 @@ func runPublishLoaderReleases(args []string) error {
 	androidURL := set.String("android-url", "", "public Android release asset URL")
 	changelog := set.String("changelog", "", "optional release changelog")
 	changelogFile := set.String("changelog-file", "", "path to release changelog")
+	dryRun := set.Bool("dry-run", false, "check the release against the published versions and print what would be published, without publishing")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -88,7 +90,8 @@ func runPublishLoaderReleases(args []string) error {
 		iosURL:     *iosURL,
 		androidURL: *androidURL,
 		changelog:  *changelog,
-		client:     &http.Client{Timeout: 30 * time.Second},
+		client:     lookupClient(30 * time.Second),
+		dryRun:     *dryRun,
 	})
 	if err != nil {
 		return err
@@ -101,14 +104,18 @@ func runPublishLoaderReleases(args []string) error {
 		fmt.Printf("Skipped loader release %s because that semver is already published\n", *version)
 		return nil
 	}
+	action := "Published"
+	if *dryRun {
+		action = "Would publish"
+	}
 	for _, platform := range result.published {
-		fmt.Printf("Published %s loader release %s\n", platform, *version)
+		fmt.Printf("%s %s loader release %s\n", action, platform, *version)
 	}
 	return nil
 }
 
 func publishLoaderReleases(ctx context.Context, config loaderReleaseBatchConfig) (loaderReleaseBatchResult, error) {
-	if config.apiKey == "" {
+	if config.apiKey == "" && !config.dryRun {
 		return loaderReleaseBatchResult{}, errors.New("UNBOUND_API_KEY is required")
 	}
 	if config.version == "" {
@@ -129,7 +136,7 @@ func publishLoaderReleases(ctx context.Context, config loaderReleaseBatchConfig)
 
 	client := config.client
 	if client == nil {
-		client = &http.Client{Timeout: 30 * time.Second}
+		client = lookupClient(30 * time.Second)
 	}
 	platforms := []struct {
 		name string
@@ -188,6 +195,10 @@ func publishLoaderReleases(ctx context.Context, config loaderReleaseBatchConfig)
 
 	result := loaderReleaseBatchResult{published: make([]string, 0, len(pending))}
 	for _, platform := range pending {
+		if config.dryRun {
+			result.published = append(result.published, platform.platform)
+			continue
+		}
 		if _, err := postLoaderRelease(ctx, platform, client); err != nil {
 			return loaderReleaseBatchResult{}, err
 		}

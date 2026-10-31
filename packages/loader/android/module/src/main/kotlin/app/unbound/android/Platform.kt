@@ -48,12 +48,23 @@ object Platform {
         "/data/adb/ap",
     )
 
+    private const val LSPATCH_LOADER = "org.lsposed.lspatch.loader.LSPApplication"
+
+    fun frameworkLabel(name: String, version: String, patched: Boolean): String =
+        listOf(if (patched) "LSPatch" else name, version).filter { it.isNotBlank() }.joinToString(" ")
+
+    fun isLSPatched(appInfo: ApplicationInfo, classLoader: ClassLoader): Boolean =
+        appInfo.appComponentFactory?.contains("lspatch", ignoreCase = true) == true ||
+            runCatching { Class.forName(LSPATCH_LOADER, false, classLoader) }.isSuccess
+
     fun describe(appInfo: ApplicationInfo, frameworkName: String): JSONObject = JSONObject()
-        .put("deviceModel", "${Build.MANUFACTURER} ${Build.MODEL}".trim())
+        .put("deviceModel", DeviceName.current(application()))
         .put("osVersion", Build.VERSION.RELEASE)
         .put("isRooted", SU_PATHS.any { File(it).exists() })
         .put("isSystemApp", appInfo.flags and ApplicationInfo.FLAG_SYSTEM != 0)
-        .put("appSource", frameworkName)
+        .put("appSource", InstallSource.current(application()))
+        .put("framework", frameworkName)
+        .put("isVerifiedBuild", Attestation.current().verified)
         .put("isVirtualDevice", isEmulator())
         .put("virtualDeviceHost", emulatorHostAddress() ?: JSONObject.NULL)
 

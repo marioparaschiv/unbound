@@ -1,9 +1,9 @@
 import { notInArray, sql } from 'drizzle-orm';
 
-import type { DiscordTeamGroup, TeamStanding } from '~/lib/team/roles';
-import type { DiscordId } from '~/lib/authors/discord-users';
+import type { DiscordId, DiscordTeamGroup, StaffRole } from '~/db/schema';
 import type { GuildMember } from '~/lib/team/guild-members';
 import { discordProfile, teamMember } from '~/db/schema';
+import type { TeamStanding } from '~/lib/team/roles';
 import type { AppContext } from '~/lib/context';
 
 /** A guild member holding a team role, with what their roles make them. */
@@ -12,22 +12,34 @@ export type TeamEntry = {
 	standing: TeamStanding;
 };
 
+/** A team member as the snapshot stores them, without their id. */
+export type TeamMemberRow = {
+	group: DiscordTeamGroup;
+	staffRole: StaffRole | null;
+	position: number | null;
+};
+
 /**
- * @description Reads the team group of everyone in the last team snapshot.
+ * @description Reads everyone in the last team snapshot.
  * @param ctx The application context.
- * @returns Each member's group by Discord id.
+ * @returns Each member by Discord id.
  */
-export async function readTeamGroups(ctx: AppContext): Promise<Map<DiscordId, DiscordTeamGroup>> {
+export async function readTeamMembers(ctx: AppContext): Promise<Map<DiscordId, TeamMemberRow>> {
 	const rows = await ctx.db
-		.select({ discordId: teamMember.discordId, group: teamMember.group })
+		.select({
+			discordId: teamMember.discordId,
+			group: teamMember.group,
+			staffRole: teamMember.staffRole,
+			position: teamMember.position,
+		})
 		.from(teamMember);
 
-	return new Map(rows.map((row) => [row.discordId, row.group]));
+	return new Map(rows.map(({ discordId, ...row }) => [discordId, row]));
 }
 
 /**
  * @description Replaces the team snapshot with the looked-up candidates' team, and caches each
- * member's Discord profile so they resolve a name and avatar without a site account.
+ * member's Discord profile so they resolve a name, avatar and banners without a site account.
  * @param ctx The application context.
  * @param team Every looked-up guild member holding a team role.
  * @returns Resolves once the snapshot and profiles are written together.
@@ -65,11 +77,13 @@ export async function writeTeamSnapshot(ctx: AppContext, team: TeamEntry[]): Pro
 		await tx
 			.insert(discordProfile)
 			.values(
-				team.map(({ member: { user } }) => ({
-					discordId: user.id,
-					username: user.username,
-					globalName: user.globalName,
-					avatarHash: user.avatarHash,
+				team.map(({ member }) => ({
+					discordId: member.user.id,
+					username: member.user.username,
+					globalName: member.user.globalName,
+					avatarHash: member.user.avatarHash,
+					bannerHash: member.user.bannerHash,
+					guildBannerHash: member.bannerHash,
 					fetchedAt: now,
 				})),
 			)
@@ -79,10 +93,12 @@ export async function writeTeamSnapshot(ctx: AppContext, team: TeamEntry[]): Pro
 					username: sql`excluded.username`,
 					globalName: sql`excluded.global_name`,
 					avatarHash: sql`excluded.avatar_hash`,
+					bannerHash: sql`excluded.banner_hash`,
+					guildBannerHash: sql`excluded.guild_banner_hash`,
 					fetchedAt: sql`excluded.fetched_at`,
 				},
 			});
 	});
 }
 
-export default { readTeamGroups, writeTeamSnapshot };
+export default { readTeamMembers, writeTeamSnapshot };

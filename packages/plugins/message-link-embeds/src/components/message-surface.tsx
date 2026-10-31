@@ -20,6 +20,16 @@ export type SurfaceSource = {
 	subscribe?(surfaceId: string, listener: () => void): () => void;
 };
 
+const emptySurfaces = new Set<string>();
+
+/**
+ * @description Lists the embeds whose message never laid out, even after every remount.
+ * @returns Their surface ids.
+ */
+export function emptyEmbeds(): string[] {
+	return [...emptySurfaces];
+}
+
 function staticSubscription() {
 	return () => {};
 }
@@ -43,9 +53,16 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 		const surface = source.surface(surfaceId);
 		const { ChatItem } = source.renderers;
 		const [mountAttempt, setMountAttempt] = useState(0);
+		const [laidOut, setLaidOut] = useState(false);
 		const remount = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-		useEffect(() => () => clearTimeout(remount.current), []);
+		useEffect(
+			() => () => {
+				clearTimeout(remount.current);
+				emptySurfaces.delete(surfaceId);
+			},
+			[surfaceId],
+		);
 
 		if (!surface) return <View style={{ height: 1 }} />;
 
@@ -53,6 +70,10 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 			const collapsed = event.nativeEvent.layout.height < CollapsedRemount.minHeight;
 
 			clearTimeout(remount.current);
+			setLaidOut(!collapsed || mountAttempt >= CollapsedRemount.limit);
+
+			if (collapsed && mountAttempt >= CollapsedRemount.limit) emptySurfaces.add(surfaceId);
+			else emptySurfaces.delete(surfaceId);
 
 			if (!collapsed || mountAttempt >= CollapsedRemount.limit) return;
 
@@ -75,6 +96,7 @@ export function registerMessageSurface(source: SurfaceSource): string | undefine
 						borderRadius: 8,
 						overflow: 'hidden',
 						minHeight: Surface.minHeight,
+						opacity: laidOut ? 1 : 0,
 						paddingBottom: 0,
 						paddingTop: 6,
 						width: surface.width,

@@ -41,21 +41,22 @@ export type KeysetPage<T> = {
 
 /**
  * @description Serializes a row's position as an opaque cursor.
- * @param key The row's sort value and id.
+ * @param key The row's sort values, ending with its id.
  * @returns The base64url cursor.
  */
-export function encodeCursor(key: CursorKey): string {
+export function encodeCursor(key: readonly CursorKey[number][]): string {
 	return Buffer.from(JSON.stringify(key)).toString('base64url');
 }
 
 /**
  * @description Parses a cursor from {@link encodeCursor}, failing with `invalid_request` on anything
  * that is not one or belongs to a list with another key shape.
+ * @template T The list's decoded key.
  * @param cursor The cursor from the request.
  * @param schema The list's key shape.
  * @returns The row position.
  */
-export function decodeCursor<T extends CursorPosition>(cursor: string, schema: z.ZodType<T>): T {
+export function decodeCursor<T>(cursor: string, schema: z.ZodType<T>): T {
 	try {
 		const key = JSON.parse(Buffer.from(cursor, 'base64url').toString());
 

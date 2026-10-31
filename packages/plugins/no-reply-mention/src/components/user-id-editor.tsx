@@ -13,7 +13,7 @@ function UserIdEditor({ initialValue, onCancel, onSave }: UserIdEditorProps) {
 	return (
 		<Discord.Stack spacing={12}>
 			<Discord.TextInput
-				title={initialValue ? 'Edit user ID' : 'Add user ID'}
+				label={initialValue ? 'Edit user ID' : 'Add user ID'}
 				placeholder='Discord user ID'
 				keyboardType='number-pad'
 				autoCapitalize='none'

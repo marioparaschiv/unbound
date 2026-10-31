@@ -1,80 +1,18 @@
-import { useMemo, useState, useRef, memo } from 'react';
-import type { UnboundAsset } from '@unbound-app/types';
-import { Image, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { View } from 'react-native';
 
-import { Discord, FlashList, Media } from '~/api/metro/components';
-import { getAll, getIDByName, Icons } from '~/api/assets';
-import { Messages, format } from '~/api/i18n';
-import { findByProps } from '~/api/metro';
-import { Empty } from '~/ui/components';
+import { Discord, FlashList } from '~/metro/components';
+import SearchIcon from '~/ui/components/search-icon';
+import { getAll, getIdByName } from '~/assets/api';
+import Empty from '~/ui/components/empty-state';
+import { messages, format } from '~/i18n/api';
+
+import type { IndexedAsset } from './asset-row';
 
 import useStyles from './assets.style';
-
-/** An asset paired with its resolved id and a pre-lowercased name, computed once for the whole list. */
-type IndexedAsset = {
-	asset: UnboundAsset;
-	id: number;
-	query: string;
-};
+import AssetRow from './asset-row';
 
 type AssetRowInfo = { item: IndexedAsset; index: number };
-
-const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
-
-/**
- * @description Opens an asset in Discord's fullscreen media viewer (pinch-to-zoom). The viewer grows
- * out of `originLayout`, so a real on-screen rect is passed as the origin; a zero-size origin makes the
- * viewer appear to open from the whole screen instead.
- */
-function openAsset(id: number, x: number, y: number, size: number) {
-	const uri = AssetHandler.getAssetUriForEmbed(id);
-
-	Image.getSize(uri, (width, height) => {
-		Media.openMediaModal({
-			originLayout: { x, y, width: size, height: size, resizeMode: 'cover' },
-			initialIndex: 0,
-			initialSources: [{ uri, sourceURI: uri, width, height }],
-		});
-	});
-}
-
-type AssetRowProps = {
-	item: IndexedAsset;
-	index: number;
-	total: number;
-};
-
-/**
- * @description One asset row, memoized so a keystroke only re-renders rows whose props changed. Tapping
- * anywhere on the row measures the thumbnail's on-screen position and opens the media viewer anchored to
- * it, so the open animation grows from the thumbnail.
- */
-function AssetRow({ item, index, total }: AssetRowProps) {
-	const styles = useStyles();
-	const ref = useRef<View>(null);
-	const { asset, id } = item;
-
-	function open() {
-		ref.current?.measureInWindow((x, y, width) => openAsset(id, x, y, width));
-	}
-
-	return (
-		<Discord.TableRow
-			label={asset.name}
-			start={index === 0}
-			end={index === total - 1}
-			onPress={open}
-			trailing={<Discord.TableRow.TrailingText text={`${asset.width}×${asset.height}`} />}
-			icon={
-				<View ref={ref} collapsable={false}>
-					<Image source={id} style={styles.thumbnail} />
-				</View>
-			}
-		/>
-	);
-}
-
-const MemoAssetRow = memo(AssetRow);
 
 /**
  * @description Searchable browser over registered PNG assets, previewing each as a thumbnail.
@@ -93,7 +31,7 @@ function AssetsPage() {
 				continue;
 			}
 
-			const id = getIDByName(asset.name);
+			const id = getIdByName(asset.name);
 
 			if (!id) {
 				continue;
@@ -126,8 +64,8 @@ function AssetsPage() {
 					onChange={setSearch}
 					isClearable
 					isRound
-					placeholder={format('UNBOUND_SEARCH', { type: Messages.UNBOUND_ASSETS })}
-					leadingIcon={() => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon} />}
+					placeholder={format('UNBOUND_SEARCH', { type: messages.UNBOUND_ASSETS })}
+					leadingIcon={SearchIcon}
 				/>
 			</View>
 			{total ? (
@@ -136,12 +74,12 @@ function AssetsPage() {
 					keyExtractor={(entry: IndexedAsset) => entry.asset.name}
 					estimatedItemSize={48}
 					renderItem={({ item, index }: AssetRowInfo) => (
-						<MemoAssetRow item={item} index={index} total={total} />
+						<AssetRow item={item} index={index} total={total} />
 					)}
 				/>
 			) : (
 				<Empty image={search ? 'sticker_search_empty' : 'empty_permission'}>
-					{search ? Messages.UNBOUND_EMPTY_RESULTS : Messages.UNBOUND_NO_ASSETS}
+					{search ? messages.UNBOUND_EMPTY_RESULTS : messages.UNBOUND_NO_ASSETS}
 				</Empty>
 			)}
 		</View>

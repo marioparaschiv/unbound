@@ -1,4 +1,9 @@
-import { IconAlertCircle, IconCircleCheck, IconCircleX, IconInfoCircle } from '@tabler/icons-react';
+import {
+	IconCircleCheck,
+	IconCircleInfo,
+	IconCircleWarning,
+	IconCircleXmark,
+} from 'nucleo-micro-bold';
 import { Toaster as Sonner } from 'sonner';
 import type { ToasterProps } from 'sonner';
 
@@ -14,9 +19,9 @@ const TOASTER_STYLE: CssVariables = {
 
 const TOASTER_ICONS: ToasterProps['icons'] = {
 	success: <IconCircleCheck className='size-4' />,
-	info: <IconInfoCircle className='size-4' />,
-	warning: <IconAlertCircle className='size-4' />,
-	error: <IconCircleX className='size-4' />,
+	info: <IconCircleInfo className='size-4' />,
+	warning: <IconCircleWarning className='size-4' />,
+	error: <IconCircleXmark className='size-4' />,
 	loading: <Spinner className='size-4' />,
 };
 

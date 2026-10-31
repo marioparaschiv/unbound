@@ -1,10 +1,10 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import toError from '@unbound-app/utils/to-error';
 import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
 import type { ScreenParams } from '~/lib/navigation';
+import { bridgePortField } from '~/lib/context';
 import { openScreen } from '~/lib/navigation';
 
 const schema = z.object({
@@ -19,10 +19,7 @@ const schema = z.object({
 		.string()
 		.default('{}')
 		.describe('Route parameters for the screen, as a JSON object, e.g. `{"kind":"theme"}`.'),
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 });
 
 const paramsSchema = z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]));

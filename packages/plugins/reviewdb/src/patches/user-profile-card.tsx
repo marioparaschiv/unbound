@@ -1,7 +1,8 @@
+import { patcher } from '@unbound-app/api';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { ReactNode } from 'react';
 
-import { Patcher, UserProfileCard, UserProfileCardByName } from '~/modules';
+import { UserProfileCard, UserProfileCardByName } from '~/modules';
 import ReviewsButton from '~/components/reviews-button';
 
 type ProfileCardProps = {
@@ -35,7 +36,7 @@ export function patchUserProfileCard(): () => void {
 
 	if (!ensureModules('ReviewDB', { UserProfileCard: card }) || !card) return () => {};
 
-	return Patcher.after(card, 'default', ({ args: [props], result }: PatchContext) => {
+	return patcher.after(card, 'default', ({ args: [props], result }: PatchContext) => {
 		const userId = findUserId(props);
 
 		if (!userId) return;

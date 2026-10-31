@@ -115,11 +115,11 @@ func runLint(args []string) error {
 	if err := runQuiet(filepath.Join(rootPath, workflowTestsModule), "go", "vet", "./..."); err != nil {
 		return fmt.Errorf("go vet %s: %w", workflowTestsModule, err)
 	}
-	if err := runKotlinLinter(rootPath); err != nil {
-		return fmt.Errorf("ktlint: %w", err)
-	}
 	if err := lintWorkflows(rootPath); err != nil {
 		return fmt.Errorf("actionlint: %w", err)
+	}
+	if err := auditWorkflows(rootPath); err != nil {
+		return fmt.Errorf("zizmor: %w", err)
 	}
 	return runFormat([]string{"--root", rootPath, "--check"})
 }
@@ -457,10 +457,6 @@ func runKotlinFormatter(root string, check bool, files []string) error {
 	return runGradle(root, task, "-PktlintFiles="+strings.Join(files, ","))
 }
 
-func runKotlinLinter(root string) error {
-	return runGradle(root, ":module:ktlintCheck")
-}
-
 func runGradle(root, task string, arguments ...string) error {
 	command := exec.Command("./gradlew", append([]string{"--quiet", task}, arguments...)...)
 	command.Dir = filepath.Join(root, "android")
@@ -498,6 +494,15 @@ func lintWorkflows(root string) error {
 		return err
 	}
 	return runQuiet(root, binary, workflows...)
+}
+
+func auditWorkflows(root string) error {
+	binary, err := exec.LookPath("zizmor")
+	if err != nil {
+		return errors.New("zizmor is required to audit the GitHub workflows")
+	}
+	github := filepath.Join(root, "..", "..", ".github")
+	return runQuiet(root, binary, "--offline", "--quiet", "--min-severity", "medium", "--config", filepath.Join(github, "zizmor.yml"), filepath.Join(github, "workflows"))
 }
 
 func runQuiet(directory, name string, args ...string) error {

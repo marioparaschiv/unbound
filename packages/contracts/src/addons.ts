@@ -3,7 +3,12 @@ import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
 import { submissionSchema } from './publish';
 import { sourcePinSchema } from './source';
+import { addonIconSchema } from './icons';
 import { z } from './zod';
+
+// Lives in icons.ts so publish.ts can use it without importing this module back.
+export { addonIconSchema };
+export type { AddonIcon } from './icons';
 
 export const sha256Schema = z
 	.string()
@@ -27,6 +32,11 @@ export const addonVersionSchema = z.object({
 	publishedAt: z.iso.datetime(),
 	manifestUrl: z.url(),
 	bundleUrl: z.url(),
+	/**
+	 * The version's ADDON.md store page on the CDN; its `media/` paths resolve against this URL. `null`
+	 * when the version has no ADDON.md. Optional so catalogs stored before it still parse.
+	 */
+	pageUrl: z.optional(z.nullable(z.url())),
 });
 
 export const addonSchema = z.object({
@@ -47,6 +57,16 @@ export const addonSortSchema = z.enum(['name', 'created', 'updated']);
 
 export const sortOrderSchema = z.enum(['asc', 'desc']);
 
+/** How a filter's values combine: has any of them, has all of them, or has none of them. */
+export const filterMatchSchema = z.enum(['any', 'all', 'none']);
+
+/** A filter that compares one value per addon, which can match one of the values or none of them. */
+export const singleMatchSchema = z.enum(['any', 'none']);
+
+const TAG_LIST = /^[a-z\d]+(?:-[a-z\d]+)*(?:,[a-z\d]+(?:-[a-z\d]+)*)*$/;
+
+const SNOWFLAKE_LIST = /^[1-9]\d{0,19}(?:,[1-9]\d{0,19})*$/;
+
 export const listAddonsQuerySchema = z.optional(
 	z.object({
 		type: z.optional(addonTypeSchema),
@@ -56,6 +76,31 @@ export const listAddonsQuerySchema = z.optional(
 		sort: z.optional(addonSortSchema),
 		/** Defaults to `asc`. */
 		order: z.optional(sortOrderSchema),
+		/** Comma-separated tag ids, compared by `tagMatch`. */
+		tags: z.optional(
+			z
+				.string()
+				.check(z.regex(TAG_LIST, 'Must be comma-separated tag ids.'), z.maxLength(512)),
+		),
+		/** Defaults to `any`: the addon has at least one of `tags`. */
+		tagMatch: z.optional(filterMatchSchema),
+		/** Comma-separated Discord ids, matched against the newest version's manifest `authors[].id`. */
+		authors: z.optional(
+			z
+				.string()
+				.check(
+					z.regex(SNOWFLAKE_LIST, 'Must be comma-separated Discord ids.'),
+					z.maxLength(512),
+				),
+		),
+		/** Defaults to `any`: one of `authors` is credited. `none` keeps addons crediting none of them. */
+		authorMatch: z.optional(singleMatchSchema),
+		/** A number of days, compared with when the newest version was approved by `updatedMatch`. */
+		updated: z.optional(
+			z.string().check(z.regex(/^[1-9]\d{0,3}$/, 'Must be a number of days up to 9999.')),
+		),
+		/** Defaults to `any`: updated within `updated` days. `none` keeps addons updated before then. */
+		updatedMatch: z.optional(singleMatchSchema),
 		/** The previous page's `nextCursor`, requested with the same filters and sort. */
 		cursor: z.optional(z.string().check(z.maxLength(512))),
 	}),
@@ -64,6 +109,8 @@ export const listAddonsQuerySchema = z.optional(
 export const listedAddonSchema = z.object({
 	id: addonIdSchema,
 	type: addonTypeSchema,
+	/** The website icon a maintainer picked; `null` for the type's default. Optional so catalogs stored before it still parse. */
+	icon: z.optional(z.nullable(addonIconSchema)),
 	/** The display name: the served version's, unless staff pinned another. Optional so catalogs stored before it still parse. */
 	name: z.optional(z.string()),
 	/** The display description: the served version's, unless staff pinned another. Optional like `name`. */
@@ -84,6 +131,20 @@ export const listAddonsResponseSchema = z.object({
 export const catalogResponseSchema = z.object({
 	revision: z.string().check(z.minLength(1)),
 	addons: z.array(listedAddonSchema),
+});
+
+/** Every live version of one listed addon, newest first. */
+export const addonVersionsResponseSchema = z.object({
+	versions: z.array(addonVersionSchema),
+});
+
+/** `null` resets the addon to its type's default icon. */
+export const setAddonIconRequestSchema = z.object({
+	icon: z.nullable(addonIconSchema),
+});
+
+export const addonIconResponseSchema = z.object({
+	icon: z.nullable(addonIconSchema),
 });
 
 export const maintainerSchema = z.extend(userSummarySchema, {
@@ -125,10 +186,15 @@ export type AddonResponse = z.infer<typeof addonResponseSchema>;
 export type AddonType = z.infer<typeof addonTypeSchema>;
 export type AddonSort = z.infer<typeof addonSortSchema>;
 export type SortOrder = z.infer<typeof sortOrderSchema>;
+export type FilterMatch = z.infer<typeof filterMatchSchema>;
+export type SingleMatch = z.infer<typeof singleMatchSchema>;
 export type ListAddonsQuery = z.infer<typeof listAddonsQuerySchema>;
 export type ListedAddon = z.infer<typeof listedAddonSchema>;
+export type SetAddonIconRequest = z.infer<typeof setAddonIconRequestSchema>;
+export type AddonIconResponse = z.infer<typeof addonIconResponseSchema>;
 export type ListAddonsResponse = z.infer<typeof listAddonsResponseSchema>;
 export type CatalogResponse = z.infer<typeof catalogResponseSchema>;
+export type AddonVersionsResponse = z.infer<typeof addonVersionsResponseSchema>;
 export type Maintainer = z.infer<typeof maintainerSchema>;
 export type AddMaintainerRequest = z.infer<typeof addMaintainerRequestSchema>;
 export type MaintainersResponse = z.infer<typeof maintainersResponseSchema>;
@@ -145,10 +211,16 @@ export default {
 	addonTypeSchema,
 	addonSortSchema,
 	sortOrderSchema,
+	filterMatchSchema,
+	singleMatchSchema,
 	listAddonsQuerySchema,
+	addonIconSchema,
 	listedAddonSchema,
 	listAddonsResponseSchema,
 	catalogResponseSchema,
+	addonVersionsResponseSchema,
+	setAddonIconRequestSchema,
+	addonIconResponseSchema,
 	maintainerSchema,
 	addMaintainerRequestSchema,
 	maintainersResponseSchema,

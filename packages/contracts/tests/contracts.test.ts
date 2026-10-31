@@ -1,10 +1,14 @@
+import type { AddonPlatforms } from '@unbound-app/types/addons';
 import { describe, expect, test } from 'bun:test';
+import { join } from 'node:path';
+import { Glob } from 'bun';
 
 import { createSubmissionRequestSchema, createSubmissionResponseSchema } from '../src/publish';
 import { updatesRequestSchema, updatesResponseSchema } from '../src/updates';
 import { addonManifestSchema, semverSchema } from '../src/manifest';
 import { reviewSubmissionRequestSchema } from '../src/review';
 import { apiErrorResponseSchema } from '../src/errors';
+import { catalogResponseSchema } from '../src/addons';
 import { isPostgresSafe } from '../src/text';
 import { apiUrlSchema } from '../src/api';
 
@@ -87,6 +91,73 @@ describe('addonManifestSchema', () => {
 		).toBe(false);
 		expect(addonManifestSchema.safeParse({ ...manifest, authors: [] }).success).toBe(false);
 	});
+
+	test('accepts platforms with per-platform capabilities, or none at all', () => {
+		const valid: AddonPlatforms[] = [
+			{ ios: { capabilities: ['native.objc.invoke', 'native.ffi.call'] }, android: {} },
+			{ android: { capabilities: ['native.java.invoke'] } },
+			{ ios: {} },
+		];
+
+		for (const platforms of valid) {
+			expect(addonManifestSchema.parse({ ...manifest, platforms }).platforms).toEqual(
+				platforms,
+			);
+		}
+
+		expect(addonManifestSchema.parse(manifest).platforms).toBeUndefined();
+	});
+
+	test('rejects platforms that are empty, unknown, carry extra keys or borrow capabilities', () => {
+		const invalid = [
+			{},
+			{ web: {} },
+			{ ios: { capabilities: ['native.objc.invoke'], hooks: true } },
+			{ ios: { capabilities: ['native.java.invoke'] } },
+			{ android: { capabilities: ['native.objc.invoke'] } },
+			{ ios: { capabilities: ['native.unknown'] } },
+			{ ios: { capabilities: 'native.objc.invoke' } },
+			{ ios: [] },
+			[],
+			['web'],
+			'ios',
+		];
+
+		for (const platforms of invalid) {
+			expect(addonManifestSchema.safeParse({ ...manifest, platforms }).success).toBe(false);
+		}
+	});
+
+	test('still accepts the deprecated platform list and platformCapabilities', () => {
+		const parsed = addonManifestSchema.parse({
+			...manifest,
+			platforms: ['ios', 'android'],
+			capabilities: [],
+			platformCapabilities: { ios: ['native.objc.invoke'] },
+		});
+
+		expect(parsed.platforms).toEqual(['ios', 'android']);
+		expect(parsed.platformCapabilities).toEqual({ ios: ['native.objc.invoke'] });
+		expect(
+			addonManifestSchema.safeParse({
+				...manifest,
+				platformCapabilities: { web: ['native.objc.invoke'] },
+			}).success,
+		).toBe(false);
+	});
+
+	test('accepts every first-party plugin manifest', async () => {
+		const root = join(import.meta.dir, '../../plugins');
+		const paths = await Array.fromAsync(new Glob('*/manifest.json').scan({ cwd: root }));
+
+		expect(paths.length).toBeGreaterThan(0);
+
+		for (const path of paths) {
+			const result = addonManifestSchema.safeParse(await Bun.file(join(root, path)).json());
+
+			expect({ path, issues: result.error?.issues }).toEqual({ path, issues: undefined });
+		}
+	});
 });
 
 describe('updatesRequestSchema', () => {
@@ -156,10 +227,17 @@ describe('updatesResponseSchema', () => {
 		changelog: null,
 		changes: null,
 		changelogs: [],
+		reason: 'withdrawn' as const,
 	};
 
 	test('parses an update entry', () => {
 		expect(updatesResponseSchema.parse({ updates: [update] })).toEqual({ updates: [update] });
+	});
+
+	test('reads an update without a reason as newer', () => {
+		const { reason: _, ...legacy } = update;
+
+		expect(updatesResponseSchema.parse({ updates: [legacy] }).updates[0]?.reason).toBe('newer');
 	});
 
 	test('rejects an uppercase or short digest', () => {
@@ -169,6 +247,52 @@ describe('updatesResponseSchema', () => {
 					.success,
 			).toBe(false);
 		}
+	});
+});
+
+describe('catalogResponseSchema', () => {
+	const folder = 'https://cdn.example.test/addons/a/1.1.0';
+	const latestVersion = {
+		version: '1.1.0',
+		manifest,
+		changelog: null,
+		changes: null,
+		source: null,
+		bundleSize: 1024,
+		sha256,
+		publishedAt: '2026-01-01T00:00:00.000Z',
+		manifestUrl: `${folder}/manifest.json`,
+		bundleUrl: `${folder}/index.js`,
+		pageUrl: `${folder}/ADDON.md`,
+	};
+
+	type VersionEntry = Omit<typeof latestVersion, 'pageUrl'> & { pageUrl?: string | null };
+
+	function catalogOf(version: VersionEntry) {
+		return { revision: 'r1', addons: [{ id: 'a', type: 'plugin', latestVersion: version }] };
+	}
+
+	test('carries the store page URL, or null for a version without one', () => {
+		for (const pageUrl of [latestVersion.pageUrl, null]) {
+			const parsed = catalogResponseSchema.parse(catalogOf({ ...latestVersion, pageUrl }));
+
+			expect(parsed.addons[0]?.latestVersion.pageUrl).toBe(pageUrl);
+		}
+	});
+
+	test('parses a catalog stored before the page URL existed', () => {
+		const { pageUrl: _, ...stored } = latestVersion;
+
+		expect(
+			catalogResponseSchema.parse(catalogOf(stored)).addons[0]?.latestVersion.pageUrl,
+		).toBe(undefined);
+	});
+
+	test('rejects a page URL that is not a URL', () => {
+		expect(
+			catalogResponseSchema.safeParse(catalogOf({ ...latestVersion, pageUrl: 'ADDON.md' }))
+				.success,
+		).toBe(false);
 	});
 });
 

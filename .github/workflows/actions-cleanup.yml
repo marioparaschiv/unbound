@@ -1,0 +1,39 @@
+name: Actions storage cleanup
+
+on:
+    schedule:
+        - cron: '41 4 * * *'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: actions-cleanup
+    cancel-in-progress: false
+
+jobs:
+    cleanup:
+        name: Delete stale caches and artifacts
+        if: github.repository == 'marioparaschiv/unbound'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 30
+        permissions:
+            actions: write
+            contents: read
+            pull-requests: read
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
+
+            - name: Delete them
+              working-directory: packages/loader
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: go run ./tools actions-cleanup

@@ -1,6 +1,8 @@
+import {
+	createStagedStickers,
+	sharedStagedStickers,
+} from '@unbound-plugins/shared/stickers/staged-stickers';
 import { describe, expect, test } from 'bun:test';
-
-import { createStagedStickers, sharedStagedStickers } from './staged-stickers';
 
 describe('createStagedStickers', () => {
 	test('stages each sticker once per channel, matching ids of either type', () => {

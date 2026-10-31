@@ -1,7 +1,17 @@
-import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
-import { ADDON_TYPES } from '@unbound-app/types/addons';
+import {
+	NATIVE_PLUGIN_CAPABILITIES,
+	NATIVE_PLUGIN_PLATFORM_CAPABILITIES,
+	NATIVE_PLUGIN_PLATFORMS,
+} from '@unbound-app/types/native';
+import { ADDON_KINDS } from '@unbound-app/types/addons';
 
 import { z } from './zod';
+
+/** The file in an addon's directory that holds its manifest. */
+export const MANIFEST_FILENAME = 'manifest.json';
+
+/** The file `ubd install` leaves in an installed addon's folder so the client treats it as a development copy. */
+export const DEVELOPMENT_MARKER = 'development';
 
 /**
  * A strict SemVer 2.0.0 version (the specification's own pattern): no `v` prefix, no leading zeros.
@@ -31,6 +41,39 @@ export const addonIdSchema = z
 		),
 	);
 
+// The bundle is published next to the manifest at `addons/{id}/{version}/{main}` and resolved
+// relative to the manifest URL, so `main` may not leave that directory.
+export const addonMainSchema = z
+	.string()
+	.check(
+		z.regex(/^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*$/, 'Must be a relative path inside the addon.'),
+	);
+
+/** Maps each Hermes bytecode version an addon ships to the SHA-512 of that compiled bundle. */
+export const bytecodeDigestsSchema = z.record(
+	z.string().check(z.regex(/^\d{1,10}$/, 'Must be a Hermes bytecode version.')),
+	z.string().check(z.regex(/^[\da-f]{128}$/, 'Must be a lowercase SHA-512 digest.')),
+);
+
+export const addonPlatformsSchema = z
+	.strictObject({
+		ios: z.optional(
+			z.strictObject({
+				capabilities: z.optional(z.array(z.enum(NATIVE_PLUGIN_PLATFORM_CAPABILITIES.ios))),
+			}),
+		),
+		android: z.optional(
+			z.strictObject({
+				capabilities: z.optional(
+					z.array(z.enum(NATIVE_PLUGIN_PLATFORM_CAPABILITIES.android)),
+				),
+			}),
+		),
+	})
+	.check(z.refine((platforms) => Object.keys(platforms).length > 0, 'Must list a platform.'));
+
+const legacyPlatformListSchema = z.array(z.enum(NATIVE_PLUGIN_PLATFORMS)).check(z.minLength(1));
+
 export const addonAuthorSchema = z.object({
 	name: z.string().check(z.minLength(1)),
 	id: z.templateLiteral([z.int().check(z.nonnegative())]),
@@ -42,32 +85,42 @@ export const addonAuthorSchema = z.object({
  */
 export const addonManifestSchema = z.looseObject({
 	id: addonIdSchema,
-	type: z.optional(z.enum(ADDON_TYPES)),
+	type: z.optional(z.enum(ADDON_KINDS)),
 	name: z.string().check(z.minLength(1)),
 	description: z.string(),
 	authors: z.array(addonAuthorSchema).check(z.minLength(1)),
 	icon: z.optional(z.union([z.string(), z.object({ uri: z.string() })])),
-	// The bundle is published next to the manifest at `addons/{id}/{version}/{main}` and resolved
-	// relative to the manifest URL, so `main` may not leave that directory.
-	main: z
-		.string()
-		.check(
-			z.regex(
-				/^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*$/,
-				'Must be a relative path inside the addon.',
-			),
-		),
+	main: addonMainSchema,
 	version: semverSchema,
+	/** The platforms the addon runs on, each with its capabilities; absent means every platform. */
+	platforms: z.optional(z.union([addonPlatformsSchema, legacyPlatformListSchema])),
 	capabilities: z.optional(z.array(z.enum(NATIVE_PLUGIN_CAPABILITIES))),
+	/** @deprecated Use `platforms.<platform>.capabilities`. Still accepted for published addons. */
+	platformCapabilities: z.optional(
+		z.partialRecord(
+			z.enum(NATIVE_PLUGIN_PLATFORMS),
+			z.array(z.enum(NATIVE_PLUGIN_CAPABILITIES)),
+		),
+	),
 	minNativePluginApi: z.optional(z.string()),
 	unbound: z.optional(z.object({ min: z.optional(semverSchema) })),
+	bytecode: z.optional(bytecodeDigestsSchema),
+	/** Marks a plugin other plugins build on, which the plugin list hides by default. */
+	library: z.optional(z.boolean()),
+	/** The addons this one needs, by id, each with the semver range it accepts. */
+	dependencies: z.optional(z.record(addonIdSchema, z.string().check(z.minLength(1)))),
 });
 
 export type PublishedManifest = z.infer<typeof addonManifestSchema>;
 
 export default {
+	MANIFEST_FILENAME,
+	DEVELOPMENT_MARKER,
 	semverSchema,
 	addonIdSchema,
+	addonMainSchema,
+	bytecodeDigestsSchema,
+	addonPlatformsSchema,
 	addonAuthorSchema,
 	addonManifestSchema,
 };

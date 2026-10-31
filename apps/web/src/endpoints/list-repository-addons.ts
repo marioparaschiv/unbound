@@ -5,21 +5,20 @@ import {
 import { z } from 'zod';
 
 import { listRepositoryAddons } from '~/lib/addon-source';
-import { requireCaller } from '~/lib/api/caller';
+import { callerEndpoint } from '~/lib/api/endpoint';
+import { markUpToDate } from '~/lib/submissions';
 import { connectGitHub } from '~/lib/github';
-import endpoint from '~/lib/api/endpoint';
 
-const listRepositoryAddonsEndpoint = endpoint(
+const listRepositoryAddonsEndpoint = callerEndpoint(
 	{
 		body: z.undefined(),
 		query: listRepositoryAddonsQuerySchema,
 		response: listRepositoryAddonsResponseSchema,
 	},
-	async ({ ctx, request, query }) => {
-		const { user } = await requireCaller(ctx, request.headers);
+	async ({ ctx, query, caller: { user } }) => {
 		const github = await connectGitHub(ctx, user.id);
 
-		return listRepositoryAddons(ctx, github, query);
+		return markUpToDate(ctx, await listRepositoryAddons(ctx, github, query));
 	},
 );
 

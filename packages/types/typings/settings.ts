@@ -1,5 +1,8 @@
 import type { ComponentType } from 'react';
 
+/** The core settings store; each addon's settings store is named after the addon id. */
+export const CORE_SETTINGS_STORE = 'unbound';
+
 /** The screen descriptor a settings route entry renders. */
 export type SettingsScreen = {
 	route: string;

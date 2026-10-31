@@ -3,7 +3,7 @@ import { Pressable, View } from 'react-native';
 import { useSyncExternalStore, type ComponentType } from 'react';
 
 import { PREVIEW_SIZE, STICKER_SIZE } from '~/constants';
-import { ChannelStore, type StickerProps } from '~/modules';
+import { ChannelStore, type SlowmodeChannel, type StickerProps } from '~/modules';
 import { selectedChannelId } from '~/selected-channel';
 import type { Staging } from '~/staging';
 
@@ -20,8 +20,9 @@ function StickerPreview({ channelId, staging, Sticker }: StickerPreviewProps) {
 	);
 	const selectedId = selectedChannelId();
 	const shown = Boolean(sticker) && (!selectedId || selectedId === channelId);
+	const channel: SlowmodeChannel | undefined = ChannelStore.getChannel?.(channelId);
 	const top = useComposerRow({
-		channel: ChannelStore.getChannel?.(channelId),
+		channel,
 		channelId,
 		id: 'sticker-preview',
 		order: 1,

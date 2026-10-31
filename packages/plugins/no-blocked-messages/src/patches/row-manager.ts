@@ -1,4 +1,5 @@
-import { Patcher, RowManager } from '~/modules';
+import { patcher } from '@unbound-app/api';
+import { RowManager } from '~/modules';
 import { chat } from '~/chat';
 
 /**
@@ -12,7 +13,7 @@ export function patchRowManager(): () => void {
 		return () => {};
 	}
 
-	return Patcher.before(RowManager.prototype, 'generate', ({ this: self }) => {
+	return patcher.before(RowManager.prototype, 'generate', ({ this: self }) => {
 		chat.rowManager = self;
 	});
 }

@@ -6,12 +6,12 @@ import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
-import { auditTelemetry } from '~/lib/audit-telemetry';
+import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { GUILD_ID, SITE_URL } from '~/lib/constants';
 import { startDispatchers } from '~/runtime/start';
+import { createDispatchers } from '~/dispatchers';
 import { checkTriggers } from '~/db/triggers';
 import { setDatabase } from '~/db/instance';
-import { dispatchers } from '~/dispatchers';
 import { checkConfig } from '~/lib/config';
 
 const logger = createLogger('Bot');
@@ -22,7 +22,9 @@ if (!config.ok) {
 	process.exit(1);
 }
 
-const { env } = config;
+const { env, guildId } = config;
+const auditTelemetry = createAuditTelemetry({ env });
+const dispatchers = createDispatchers({ env, guildId, telemetry: auditTelemetry });
 const db = createDatabase(env.DATABASE_URL, POOLED_OPTIONS);
 // One pool for both: the bot's schema through `db`, the web's tables, read only, through `web`.
 const web = createBotReads(db.$client, {

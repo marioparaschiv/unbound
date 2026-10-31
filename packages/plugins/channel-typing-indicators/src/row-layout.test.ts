@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { findTextChannelSlot, findThreadChannelSlot, type RenderNode } from './row-layout';
-import { INDICATOR_KEY } from './constants';
+import { findTextChannelSlot, findThreadChannelSlot, type RenderNode } from '~/row-layout';
+import { INDICATOR_KEY } from '~/constants';
 
 function textRow(channelId: string, parts: RenderNode[] = []) {
 	const info = { props: { channel: { id: channelId } } };

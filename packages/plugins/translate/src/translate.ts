@@ -25,7 +25,7 @@ function readTranslation({ translatedText, translations }: TranslationResponse) 
  * @param text The text to translate.
  * @returns The translated text.
  */
-export async function translateText(text: string): Promise<string> {
+async function translateText(text: string): Promise<string> {
 	const body = JSON.stringify({
 		q: text,
 		source: settings.get('sourceLanguage', 'auto'),
@@ -71,9 +71,9 @@ export async function copyTranslation(content: string): Promise<void> {
 		const translated = await translateText(content);
 
 		await metro.common.Clipboard.setString(translated);
-		toasts.showToast({ title: 'Translated', content: translated });
+		toasts.show({ title: 'Translated', content: translated });
 	} catch (error) {
-		toasts.showToast({
+		toasts.show({
 			title: 'Translate Error',
 			content: error instanceof Error ? error.message : String(error),
 		});

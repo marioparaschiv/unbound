@@ -3,18 +3,15 @@ import { createSubmissionRequestSchema } from '@unbound-app/contracts/publish';
 import { z } from 'zod';
 
 import { previewSubmission } from '~/lib/submissions';
-import { requireCaller } from '~/lib/api/caller';
-import endpoint from '~/lib/api/endpoint';
+import { callerEndpoint } from '~/lib/api/endpoint';
 
-const previewSubmissionEndpoint = endpoint(
+const previewSubmissionEndpoint = callerEndpoint(
 	{
 		body: createSubmissionRequestSchema,
 		query: z.undefined(),
 		response: submissionPreviewResponseSchema,
 	},
-	async ({ ctx, request, body }) => {
-		const caller = await requireCaller(ctx, request.headers);
-
+	async ({ ctx, body, caller }) => {
 		return previewSubmission(ctx, caller, body);
 	},
 );

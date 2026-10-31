@@ -20,7 +20,7 @@ const CURRENT_YEAR = new Date().getFullYear();
 const PRODUCT_LINKS: FooterLink[] = [
 	{ label: 'Plugins', href: '/plugins' },
 	{ label: 'Themes', href: '/themes' },
-	{ label: 'Developers', href: '/developers' },
+	{ label: 'Developers', href: '/team' },
 ];
 
 const SUPPORT_LINKS: FooterLink[] = [
@@ -62,8 +62,8 @@ function FooterColumn({ title, links }: FooterColumnProps) {
 
 function Footer() {
 	return (
-		<footer className='mt-auto bg-background border-t'>
-			<div className='mx-auto px-6 pt-6 pb-10 md:px-4 md:py-12 container'>
+		<footer className='relative mt-auto bg-background border-t'>
+			<div className='pt-16 pb-10 md:pb-12 page-frame'>
 				<div className='flex flex-col lg:flex-row gap-8'>
 					<div className='lg:flex-1'>
 						<Link to='/' className='inline-block'>

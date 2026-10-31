@@ -7,7 +7,10 @@
 		"catalog": "bun src/generate-plugins-readme.ts",
 		"sync-icons": "bun src/sync-plugin-icons.ts",
 		"device-matrix": "bun src/device-matrix.ts",
+		"collect-device-matrix": "bun src/collect-device-matrix.ts",
+		"run-device-matrix": "bun src/run-device-matrix.ts",
 		"publish": "bun src/publish-plugins.ts",
+		"verify-published": "bun src/verify-published.ts",
 		"lint": "oxlint --config .oxlintrc.json .",
 		"test": "bun test --isolate",
 		"typecheck": "tsc --noEmit -p ."

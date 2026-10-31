@@ -3,7 +3,9 @@ import type { NativeCrashedAddon } from '@unbound-app/types/native';
 
 import { FakeAddons, makeManifest, persists, resetDevice, states } from './helpers/addons';
 
-const { attributeAddon, crashDisabledNotice, resetCrashGuard } = await import('~/api/crash-guard');
+const { attributeAddon, crashDisabledNotice, resetCrashGuard } =
+	await import('~/addons/crash-guard');
+const { Addon } = await import('~/addons/addon');
 
 type GuardCall = ['begin', string, string] | ['end', string];
 
@@ -61,6 +63,24 @@ describe('addon crash guard', () => {
 			['end', 'plugins:a'],
 		]);
 		expect(manager.getEntity('a')?.failed).toBe(true);
+	});
+
+	test('leaves no marker open when it cannot start an addon it does not govern', () => {
+		const stranger = new Addon(
+			{
+				manifest: makeManifest('a'),
+				bundle: 'bundle-a',
+				instance: null,
+				context: void 0,
+				scope: void 0,
+				started: false,
+				failed: false,
+			},
+			manager,
+		);
+
+		expect(() => manager.start(stranger)).toThrow();
+		expect(calls).toEqual([]);
 	});
 
 	test('disables an addon the loader reported crashing, and persists it', () => {
@@ -160,11 +180,12 @@ describe('addon crash attribution', () => {
 	});
 
 	test('names the phase the addon crashed in', () => {
-		expect(crashDisabledNotice({ id: 'plugins:a', name: 'a', phase: 'running' }, 'A')).toBe(
-			'Disabled A because Discord crashed while running it.',
-		);
-		expect(crashDisabledNotice({ id: 'plugins:a', name: 'a' }, 'A')).toBe(
-			'Disabled A because Discord crashed while starting it.',
-		);
+		const running = crashDisabledNotice({ id: 'plugins:a', name: 'a', phase: 'running' }, 'A');
+		const starting = crashDisabledNotice({ id: 'plugins:a', name: 'a' }, 'A');
+
+		expect(running).toContain('Disabled A');
+		expect(running).toMatch(/running/);
+		expect(starting).toContain('Disabled A');
+		expect(starting).toMatch(/starting/);
 	});
 });

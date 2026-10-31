@@ -1,12 +1,12 @@
 import type { DateRange } from 'react-day-picker';
 
+import { DAY_MS } from '~/lib/calendar-date';
+
 const DAY_FORMAT = new Intl.DateTimeFormat('en-GB', {
 	day: 'numeric',
 	month: 'short',
 	year: 'numeric',
 });
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const EMPTY_RANGE: DateRange = { from: undefined, to: undefined };
 

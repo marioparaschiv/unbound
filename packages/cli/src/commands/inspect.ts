@@ -1,10 +1,13 @@
 import type { CommandDefinition, CommandOutput } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT, MAX_EVAL_TIMEOUT_MS } from '@unbound-app/debugger-protocol';
+import { MAX_EVAL_TIMEOUT_MS } from '@unbound-app/debugger-protocol';
 import { z } from 'zod';
 
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode, type DeviceClient } from '~/lib/device';
-import { inspectNative, type InspectReport, type InspectRequest } from '~/lib/inspect-probe';
 import { formatClassReport, formatFoundViews, formatViewTree } from '~/lib/inspect-format';
+import { inspectReportSchema, type InspectReport } from '~/lib/inspect-report';
+import { inspectNative, type InspectRequest } from '~/lib/inspect-probe';
+import { bridgePortField } from '~/lib/context';
+import { parseJson } from '~/lib/parse-json';
 
 const WALK_TIMEOUT_MS = 60_000;
 const CHUNK_SIZE = 100;
@@ -24,10 +27,7 @@ const schema = z.object({
 		.describe(
 			'For class: keep only constructors, methods and fields whose name contains this.',
 		),
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 	timeout: z
 		.number()
 		.int()
@@ -81,10 +81,14 @@ export async function runInspect(
 	}
 
 	if (!result.ok) {
-		return { ok: false, text: result.error ?? 'The device failed to inspect.', data: result };
+		return { ok: false, text: result.error, data: result };
 	}
 
-	return render(request, JSON.parse(result.value ?? '{}') as InspectReport, filter);
+	const report = parseJson(result.value, inspectReportSchema, 'The device');
+
+	return report.ok
+		? render(request, report.value, filter)
+		: { ok: false, text: report.error, data: result };
 }
 
 function toRequest(

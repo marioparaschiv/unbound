@@ -9,11 +9,13 @@ import {
 	createAndroidLogSource,
 	createIOSLogSource,
 	createLogPrinter,
+	parseLoaderLogLine,
 	parseLogLevel,
 	parseSince,
 	parseSyslogLine,
 	unquoteConsoleArguments,
 } from '../src/lib/log-lines';
+import { followLoaderLogFile, readLoaderLogHistory } from '../src/lib/loader-log-file';
 import { createFrameRewriter, listBundles } from '../src/lib/log-symbolicator';
 import { parseArchiveEvent, tailAndroid } from '../src/lib/log-tail';
 
@@ -378,8 +380,200 @@ describe('tailAndroid', () => {
 			'Unbound Loading bundle',
 			"ReactNativeJS '»', '[Core]', 'Failed'",
 		]);
-		expect(await Bun.file(calls).text()).toContain(
-			'-s emulator-5554 logcat -v threadtime -v epoch -b main,system,crash -T 1793049800.000 -d',
-		);
+		const commands = await Bun.file(calls).text();
+
+		expect(commands).toContain('-s emulator-5554 logcat -v threadtime -v epoch');
+		expect(commands).toContain('-T 1793049800.000 -d');
+	});
+});
+
+describe('parseLoaderLogLine', () => {
+	test('reads the time, level and category of a loader log line', () => {
+		expect(
+			parseLoaderLogLine('2026-10-29T17:38:51.031Z W [plugins] Chat Bubbles called x'),
+		).toEqual({
+			kind: 'entry',
+			epochMs: Date.parse('2026-10-29T17:38:51.031Z'),
+			level: 'warn',
+			tag: 'plugins',
+			pid: 0,
+			message: 'Chat Bubbles called x',
+		});
+		expect(parseLoaderLogLine('not a log line')).toBeUndefined();
+	});
+});
+
+describe('followLoaderLogFile', () => {
+	test('prints the lines appended to the log file after it starts', async () => {
+		const file = ['2026-10-29T17:00:00.000Z I [default] old\n'];
+		const appended =
+			'2026-10-29T17:00:01.000Z I [console] hello\n2026-10-29T17:00:02.000Z E [plu';
+		const rest = 'gins] broke\n';
+		const events: LogEvent[] = [];
+		let polls = 0;
+
+		await followLoaderLogFile({
+			udid: 'phone',
+			pilot: 'jb-p1lot',
+			polls: 3,
+			intervalMs: 0,
+			emit: (event) => events.push(event),
+			run: async (_command, args) => {
+				if (args[0] === 'app_container') {
+					return { ok: true, stdout: JSON.stringify({ dataContainer: '/data' }) };
+				}
+
+				if (args[0] === 'file_read') {
+					return { ok: false, error: 'unknown parameter offset' };
+				}
+
+				const command = args.at(-1)!;
+
+				if (command.startsWith('wc')) {
+					polls++;
+
+					if (polls === 2) {
+						file.push(appended);
+					}
+
+					if (polls === 3) {
+						file.push(rest);
+					}
+
+					return {
+						ok: true,
+						stdout: JSON.stringify({
+							exitCode: 0,
+							output: `${file.join('').length}\n`,
+						}),
+					};
+				}
+
+				const from = Number(/tail -c \+(\d+)/.exec(command)![1]) - 1;
+
+				return {
+					ok: true,
+					stdout: JSON.stringify({ exitCode: 0, output: file.join('').slice(from) }),
+				};
+			},
+		});
+
+		expect(
+			events.map((event) =>
+				event.kind === 'entry' ? `${event.tag}: ${event.message}` : event.message,
+			),
+		).toEqual(['console: hello', 'plugins: broke']);
+	});
+});
+
+describe('readLoaderLogHistory', () => {
+	const files = [
+		'2026-10-29T16:00:00.000Z I [default] rotated',
+		'2026-10-29T17:00:00.000Z I [console] current',
+		'2026-10-29T17:30:00.000Z W [plugins] latest',
+	].join('\n');
+	const commands: string[] = [];
+	const target = {
+		udid: 'phone',
+		pilot: 'jb-p1lot',
+		run: async (_command: string, args: string[]) => {
+			if (args[0] === 'app_container') {
+				return { ok: true as const, stdout: JSON.stringify({ dataContainer: '/data' }) };
+			}
+
+			commands.push(args.at(-1)!);
+
+			return { ok: true as const, stdout: JSON.stringify({ exitCode: 0, output: files }) };
+		},
+	};
+
+	test('reads the rotated and current files from a start time', async () => {
+		const entries = await readLoaderLogHistory(target, Date.parse('2026-10-29T16:30:00.000Z'));
+
+		expect('error' in entries ? entries : entries.map((entry) => entry.message)).toEqual([
+			'current',
+			'latest',
+		]);
+		expect(commands.at(-1)).toContain("'/data/Documents/Unbound/Logs/unbound.1.log'");
+	});
+
+	test('reads the last lines without a start time', async () => {
+		const entries = await readLoaderLogHistory(target);
+
+		expect(entries).toHaveLength(3);
+		expect(commands.at(-1)).toStartWith('tail -n 200');
+	});
+
+	test('reports output jb-p1lot garbled instead of reading it as no log', async () => {
+		const garbled = await readLoaderLogHistory({
+			...target,
+			run: async (_command, args) =>
+				args[0] === 'app_container'
+					? { ok: true, stdout: JSON.stringify({ dataContainer: '/data' }) }
+					: { ok: true, stdout: 'invalid_frame' },
+		});
+		const noContainer = await readLoaderLogHistory({
+			...target,
+			run: async () => ({ ok: true, stdout: 'invalid_frame' }),
+		});
+
+		expect(garbled).toEqual({
+			error: 'jb-p1lot answered with something other than JSON: invalid_frame',
+		});
+		expect(noContainer).toEqual({
+			error: 'jb-p1lot answered with something other than JSON: invalid_frame',
+		});
+	});
+});
+
+describe('followLoaderLogFile with ranged reads', () => {
+	test('reads only the bytes appended since the last poll, across a split line', async () => {
+		let file = '2026-10-29T17:00:00.000Z I [default] old\n';
+		const appended = [
+			'2026-10-29T17:00:01.000Z I [console] héllo\n2026-10-29T17:00:02.000Z E [plu',
+			'gins] broke\n',
+		];
+		const events: LogEvent[] = [];
+		const offsets: number[] = [];
+		let polls = 0;
+
+		await followLoaderLogFile({
+			udid: 'phone',
+			pilot: 'jb-p1lot',
+			polls: 3,
+			intervalMs: 0,
+			emit: (event) => events.push(event),
+			run: async (_command, args) => {
+				if (args[0] === 'app_container') {
+					return { ok: true, stdout: JSON.stringify({ dataContainer: '/data' }) };
+				}
+
+				const offset = Number(args[args.indexOf('--offset') + 1]);
+				const bytes = Buffer.from(file);
+
+				if (offset !== Number.MAX_SAFE_INTEGER) {
+					offsets.push(offset);
+					polls++;
+				}
+
+				const data = bytes.subarray(Math.min(offset, bytes.length));
+
+				if (offset !== Number.MAX_SAFE_INTEGER && polls <= appended.length) {
+					file += appended[polls - 1];
+				}
+
+				return {
+					ok: true,
+					stdout: JSON.stringify({ data: data.toString('base64'), size: bytes.length }),
+				};
+			},
+		});
+
+		expect(
+			events.map((event) =>
+				event.kind === 'entry' ? `${event.tag}: ${event.message}` : event.message,
+			),
+		).toEqual(['console: héllo', 'plugins: broke']);
+		expect(offsets[0]).toBe(Buffer.byteLength('2026-10-29T17:00:00.000Z I [default] old\n'));
 	});
 });

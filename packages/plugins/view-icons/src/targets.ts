@@ -1,3 +1,5 @@
+import type { FluxGuildMember } from '@unbound-app/api/flux';
+
 import { GuildMemberStore, IconUtils, UserProfileStore, UserStore } from '~/modules';
 import type { OpenedSheet } from '~/opened-sheet';
 import { AVATAR_SIZE, BANNER_SIZE } from '~/constants';
@@ -17,6 +19,10 @@ export type Guild = {
 export type Channel = {
 	id: string;
 	icon?: string | null;
+};
+
+type Member = FluxGuildMember & {
+	avatar?: string | null;
 };
 
 type ImageSize = {
@@ -56,7 +62,8 @@ export function getUserTargets(userId: string, guildId?: string): ImageTarget[] 
 		(guildId ? UserProfileStore.getGuildMemberProfile(userId, guildId) : null) ??
 		UserProfileStore.getUserProfile(userId);
 	const merged = profile ? { ...user, ...profile } : user;
-	const memberAvatar = guildId ? GuildMemberStore.getMember(guildId, userId)?.avatar : null;
+	const member: Member | null = guildId ? GuildMemberStore.getMember(guildId, userId) : null;
+	const memberAvatar = member?.avatar;
 	const serverAvatar =
 		guildId && memberAvatar
 			? IconUtils.getGuildMemberAvatarURLSimple({

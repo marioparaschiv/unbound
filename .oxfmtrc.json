@@ -11,9 +11,11 @@
 	"ignorePatterns": [
 		"*.gen.ts",
 		"drizzle",
+		"packages/discord-types/src/**",
 		"packages/cli/templates/**",
 		"CHANGELOG.md",
 		"packages/loader/bootstrap/devtools.js",
+		"apps/devtools/target/**",
 		"packages/loader/vendor/**",
 		"packages/loader/apt-repo/**",
 		"packages/loader/ios/.theos/**",

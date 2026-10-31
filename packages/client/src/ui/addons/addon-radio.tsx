@@ -1,19 +1,18 @@
-import type { Addon } from '@unbound-app/types';
 import { Pressable } from 'react-native';
 import { memo } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import { ManagerKind } from '~/lib/constants';
-import { getManager } from '~/managers/utils';
-import { TintedIcon } from '~/ui/components';
-import { useAddonState } from '~/ui/hooks';
-import { Messages } from '~/api/i18n';
-import { reload } from '~/api/native';
-import { Icons } from '~/api/assets';
+import TintedIcon from '~/metro/fallbacks/tinted-icon';
+import useAddonState from '~/ui/hooks/use-addon-state';
+import { Discord } from '~/metro/components';
+import type { Addon } from '~/addons/addon';
+import { Manager } from '~/addons/manager';
+import { reload } from '~/native/native';
+import { messages } from '~/i18n/api';
+import { icons } from '~/assets/api';
 
 type AddonRadioProps = {
 	addon: Addon;
-	kind: ManagerKind.Themes | ManagerKind.Icons;
+	kind: 'theme' | 'icon-pack';
 	disabled?: boolean;
 };
 
@@ -25,7 +24,7 @@ type AddonRadioProps = {
  */
 function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 	const { enabled } = useAddonState(kind, addon.id);
-	const manager = getManager(kind);
+	const manager = Manager.for(kind);
 
 	function toggle() {
 		if (enabled) {
@@ -34,13 +33,13 @@ function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 			manager.enable(addon.id);
 		}
 
-		if (kind !== ManagerKind.Themes) return;
+		if (kind !== 'theme') return;
 
 		Discord.showConfirmModal({
-			title: Messages.UNBOUND_RESTART,
-			content: Messages.UNBOUND_THEME_RESTART_CONFIRM,
-			confirmText: Messages.UNBOUND_RESTART,
-			cancelText: Messages.UNBOUND_CANCEL,
+			title: messages.UNBOUND_RESTART,
+			content: messages.UNBOUND_THEME_RESTART_CONFIRM,
+			confirmText: messages.UNBOUND_RESTART,
+			cancelText: messages.UNBOUND_CANCEL,
 			onConfirm: reload,
 		});
 	}
@@ -52,7 +51,7 @@ function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 			style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}
 			onPress={toggle}
 		>
-			{enabled ? <TintedIcon source={Icons['CircleCheckIcon'] ?? 0} size={20} /> : null}
+			{enabled ? <TintedIcon source={icons['CircleCheckIcon'] ?? 0} size={20} /> : null}
 		</Pressable>
 	);
 }

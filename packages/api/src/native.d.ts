@@ -53,11 +53,9 @@ export type {
 	NativeSerializableObject,
 	NativeStruct,
 	NativeThreadPolicy,
+	NativeUIArgument,
 	NativeUIBridge,
-	NativeUIHandle,
-	NativeUIQuery,
-	NativeUISnapshot,
-	NativeUISnapshotNode,
+	NativeUIScope,
 	NativeViewSearchOptions,
 	NativeViewSnapshotNode,
 	NativeViewSnapshotOptions,
@@ -67,7 +65,10 @@ import type {
 	NativePlatformBridge,
 	NativePluginCapability,
 	NativePluginPlatform,
+	NativeResourceCounts,
 } from './_internal';
+import * as React$1 from 'react';
+import { ReactNode } from 'react';
 declare const NativePlatform$1: NativePlatformBridge | undefined;
 
 export declare class NativePluginCapabilityError extends Error {
@@ -104,6 +105,13 @@ export declare const BundleManager: DCDBundleManagerType;
 /** The resolved native device module, exposing hardware and OS details. */
 export declare const DeviceInfo: DeviceInfoType;
 /**
+ * @description Selects the Platform handler for the host platform, so an addon branches on the platform in one place.
+ * @template Handler What each platform's handler provides.
+ * @param handlers The handler for each platform the addon runs on.
+ * @returns The host platform's handler.
+ */
+export declare function definePlatform<Handler>(handlers: PlatformHandlers<Handler>): Handler;
+/**
  * @description Resolves the first available native module matching any of the given names, checking both `NativeModules` and the `TurboModuleRegistry`.
  * @template T The type of the resolved native module.
  * @param names The candidate native module names to look up, in priority order.
@@ -111,10 +119,22 @@ export declare const DeviceInfo: DeviceInfoType;
  */
 export declare function getNativeModule<T>(...names: string[]): T;
 /**
+ * @description Reads how many native resources the loader holds: installed hooks, mounted surfaces, cached hook return values and Java handles still referenced from JavaScript.
+ * @returns The counts, or `undefined` when the loader does not report them.
+ */
+export declare function getNativeResources(): NativeResourceCounts | undefined;
+/**
  * @description Reads Hermes' runtime metadata, such as the bytecode version, GC, and build channel.
  * @returns The runtime property map, or an empty object when Hermes internals are unavailable.
  */
 export declare function getRuntimeProperties(): HermesRuntimeProperties;
+/**
+ * @description Checks whether the native bridge on this device provides a capability, so an addon can
+ * fall back when an older loader or the other platform lacks it.
+ * @param capability The capability to look for.
+ * @returns Whether the bridge provides it.
+ */
+export declare function has(capability: NativePluginCapability): boolean;
 /**
  * @description Persists pending settings to storage, then reloads the native bundle.
  */
@@ -184,8 +204,9 @@ export type DeviceInfoType = {
 	device: string;
 };
 export type HermesRuntimeProperties = ReturnType<HermesInternalObject['getRuntimeProperties']>;
+/** One Platform handler per platform an addon runs on. */
+export type PlatformHandlers<Handler> = Partial<Record<NativePluginPlatform, Handler>>;
 export type UndocumentedNativeMethod = () => Promise<unknown>;
-
 export { NativePlatform$1 as NativePlatform };
 
 export {};

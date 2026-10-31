@@ -1,0 +1,1 @@
+ALTER TABLE "submission_source" ADD COLUMN "page" json;

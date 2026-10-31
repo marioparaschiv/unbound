@@ -2,7 +2,7 @@ import type { ToastButton } from '@unbound-app/types/toasts';
 import { View } from 'react-native';
 import { memo } from 'react';
 
-import { Discord } from '~/api/metro/components';
+import { Discord } from '~/metro/components';
 
 import useStyles from './toast.style';
 

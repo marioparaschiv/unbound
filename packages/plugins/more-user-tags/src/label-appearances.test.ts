@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createLabelAppearances } from './label-appearances';
+import { createLabelAppearances } from '~/label-appearances';
 
 const green = { colors: ['#248046', '#ABCDEF'], style: 'gradient' as const };
 const red = { colors: ['#da373c'], style: 'solid' as const };
@@ -45,4 +45,25 @@ describe('createLabelAppearances', () => {
 
 		expect(appearances.isEmpty()).toBe(true);
 	});
+});
+
+test('reports whether any color is known for a tag text and bumps its revision on change', () => {
+	const appearances = createLabelAppearances();
+	const start = appearances.revision();
+
+	expect(appearances.has('Staff')).toBe(false);
+
+	appearances.set('Staff', { colors: ['#248046'], style: 'solid' });
+
+	expect(appearances.has('Staff')).toBe(true);
+	expect(appearances.has(' staff ')).toBe(true);
+	expect(appearances.has('Mod')).toBe(false);
+	expect(appearances.revision()).toBeGreaterThan(start);
+
+	const afterSet = appearances.revision();
+
+	appearances.clear();
+
+	expect(appearances.has('Staff')).toBe(false);
+	expect(appearances.revision()).toBeGreaterThan(afterSet);
 });

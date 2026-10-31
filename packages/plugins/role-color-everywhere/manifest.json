@@ -11,20 +11,8 @@
 		{ "name": "fres", "id": "843448897737064448" },
 		{ "name": "adrian", "id": "224617799434108928" }
 	],
-	"version": "1.0.0",
+	"version": "1.1.1",
 	"icon": "PaintPaletteIcon",
-	"capabilities": [],
-	"platformCapabilities": {
-		"ios": [
-			"native.objc.classes",
-			"native.objc.invoke",
-			"native.objc.invokeAsync",
-			"native.objc.snapshot",
-			"native.objc.ivars",
-			"native.objc.hooks"
-		],
-		"android": []
-	},
 	"minNativePluginApi": "1.0.0",
 	"main": "index.tsx"
 }

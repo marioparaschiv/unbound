@@ -17,7 +17,7 @@ object NativeBridge {
     }
 
     @JvmStatic
-    external fun nativeDocumentsName(): String
+    external fun nativeDocumentsDirectory(parent: String): String
 
     @JvmStatic
     external fun nativeSettingsFileName(): String
@@ -66,13 +66,6 @@ object NativeBridge {
 
     external fun nativeThreeFingerEvent(event: String, pointers: Int): String
 
-    external fun nativeParseColor(value: String): Long
-
-    fun parseColor(value: String): Int? = nativeParseColor(value).takeIf { it >= 0 }?.toInt()
-
-    @JvmStatic
-    external fun nativeMessageBubbleStyle(): DoubleArray
-
     @JvmStatic
     external fun nativeResolveFont(family: String): String
 
@@ -90,6 +83,12 @@ object NativeBridge {
 
     @JvmStatic
     external fun nativeDevOverlayButtonSide(): Double
+
+    @JvmStatic
+    external fun nativeAttestation(): String
+
+    @JvmStatic
+    external fun nativeWarnOffMainViewCall(call: String)
 
     @JvmStatic
     external fun nativeIncompatibleHostMessage(): String
@@ -126,30 +125,6 @@ object NativeBridge {
 
     @JvmStatic
     fun isMainThread(): Boolean = Looper.myLooper() == Looper.getMainLooper()
-
-    @JvmStatic
-    fun lookupViews(queryJSON: String): String = NativeUI.lookup(queryJSON)
-
-    @JvmStatic
-    fun snapshotViews(queryJSON: String): String = NativeUI.snapshot(queryJSON)
-
-    @JvmStatic
-    fun measureView(handleJSON: String): String = NativeUI.measureView(handleJSON)
-
-    @JvmStatic
-    fun setViewFrame(handleJSON: String, frameJSON: String) =
-        NativeUI.setViewFrame(handleJSON, frameJSON)
-
-    @JvmStatic
-    fun mountView(containerHandleJSON: String, moduleName: String, propertiesJSON: String): String =
-        NativeUI.mountView(containerHandleJSON, moduleName, propertiesJSON)
-
-    @JvmStatic
-    fun updateView(handleJSON: String, propertiesJSON: String) =
-        NativeUI.updateView(handleJSON, propertiesJSON)
-
-    @JvmStatic
-    fun unmountView(handleJSON: String) = NativeUI.unmountView(handleJSON)
 
     @JvmStatic
     external fun nativeDispatchHookEvent(token: String, payloadJSON: String)
@@ -193,7 +168,6 @@ object NativeBridge {
         NativeJava.releaseAll()
         Handler(Looper.getMainLooper()).post {
             NativeFabric.unmountAll()
-            NativeUI.unmountAll()
         }
     }
 
@@ -231,6 +205,10 @@ object NativeBridge {
 
     @JvmStatic
     fun javaBatch(operationsJSON: String): String = NativeJava.batch(operationsJSON)
+
+    @JvmStatic
+    fun javaFindViews(handleJSON: String, className: String, optionsJSON: String): String =
+        NativeJava.findViews(handleJSON, className, optionsJSON)
 
     @JvmStatic
     fun javaCreateAssociationKey(): String = NativeJava.createAssociationKey()
@@ -283,6 +261,7 @@ object NativeBridge {
                 connection.inputStream.use { input -> staging.outputStream().use { input.copyTo(it) } }
                 if (!staging.renameTo(target)) {
                     staging.delete()
+                    Logger.info(LogCategory.UPDATER, "Downloading $url failed: the bundle could not be saved to $destination")
                     return null
                 }
             }
@@ -291,7 +270,10 @@ object NativeBridge {
             deadline.cancel(false)
             connection.disconnect()
         }
-    }.onFailure { Logger.error(LogCategory.UPDATER, "Bundle download failed: $it") }.getOrNull()
+    }.onFailure { Logger.info(LogCategory.UPDATER, "Downloading $url failed: ${downloadFailureReason(it)}") }.getOrNull()
+
+    fun downloadFailureReason(error: Throwable): String =
+        listOfNotNull(error::class.java.simpleName, error.message).joinToString(": ")
 
     @JvmStatic
     fun devServerHost(): String? = Platform.emulatorHostAddress()

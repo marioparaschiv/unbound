@@ -6,23 +6,73 @@ icon: 'folder-tree'
 
 The **Developer API** is the set of modules Unbound provides for building addons. They cover finding Discord's internals, persisting settings, localizing strings, showing toasts, and more.
 
-Every module is published in the `@unbound-app/api` package. Import modules by name from the package root, or import each one from its own subpath. At runtime, the same modules are available on the `unbound` global.
+Every module is published in the `@unbound-app/api` package as a namespace. Import the namespace by name from the package root, or import it from its own subpath, and call its members through it. At runtime, the same namespaces are available on the `unbound` global.
 
 ```ts
 import { metro, storage } from '@unbound-app/api';
-// equivalent: import metro from '@unbound-app/api/metro';
+// equivalent: import * as metro from '@unbound-app/api/metro';
 // runtime global: unbound.metro
+
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
 ```
 
 <Note>
-	If you're new, start with [Metro](/modules/metro). Almost everything else, including assets, i18n, stores, and your own addons, uses it to locate Discord's modules.
+	If you're new, start with [Metro](/modules/metro). Almost everything else, including assets, i18n, Flux stores, and your own addons, uses it to locate Discord's modules.
 </Note>
+
+### The Addon scope
+
+Each plugin's bundle runs with its own **Addon scope**: a set of globals that belong to that plugin. Everything a plugin registers through them is removed in reverse order after its `stop` returns. A plugin's `stop` only has to undo what the scope can't see.
+
+| Global | What it is |
+| --- | --- |
+| `unbound` | The API. `patcher`, `commands`, `metro`, `storage` and `flux` on it are the plugin's own versions below |
+| `addon` | The plugin's handle: `id`, `name`, `version`, `manifest` and its state |
+| `logger` | A logger that prefixes every line with the plugin's name |
+| `patcher` | Patches that carry the plugin's id and are removed on stop |
+| `commands` | Slash commands owned by the plugin and removed on stop |
+| `setTimeout`, `setInterval`, `clearTimeout`, `clearInterval` | Timers that are cleared on stop |
+| `React` | React |
+
+Imports from `@unbound-app/api` read from the scoped `unbound`, so `import { patcher } from '@unbound-app/api'` gives the plugin's own patcher. The plugin's own versions also remove these on stop:
+
+- Module listeners from `metro.onModuleLoad`, and `metro.findLazy` waits that haven't resolved.
+- Listeners from `storage.onChange`. `storage.getBucket()` with no name returns the plugin's own Bucket, named after its `id`.
+- Listeners and interceptors from `flux.onStoreChange`, `flux.onAction` and `flux.interceptAction`.
+
+```ts
+import { flux, metro, patcher, storage } from '@unbound-app/api';
+
+const settings = storage.getBucket();
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+
+export default {
+	start() {
+		patcher.before(Messages, 'sendMessage', () => {
+			settings.set('sent', settings.get('sent', 0) + 1);
+		});
+
+		flux.onAction('CHANNEL_SELECT', ({ channelId }) => logger.log('Selected', channelId));
+	},
+};
+```
+
+Themes, icon packs and fonts ship no code, so they have no scope.
 
 ### Modules
 
 <CardGroup cols={2}>
 	<Card title='Metro' icon='box-taped' href='/modules/metro'>
 		Find the Discord module you need before you patch it.
+	</Card>
+	<Card title='Flux' icon='box' href='/modules/flux'>
+		Read Discord's stores and react to its actions.
+	</Card>
+	<Card title='Patcher' icon='object-subtract' href='/modules/patcher'>
+		Run your code before, after, or instead of any function.
+	</Card>
+	<Card title='Commands' icon='square-terminal' href='/modules/commands'>
+		Add slash commands to Discord's chat input.
 	</Card>
 	<Card title='Storage' icon='database' href='/modules/storage'>
 		Reactive, persisted settings: read, write, and re-render on change.
@@ -46,6 +96,6 @@ import { metro, storage } from '@unbound-app/api';
 		Read, write, and check files against the documents directory.
 	</Card>
 	<Card title='Managers' icon='layer-group' href='/modules/managers'>
-		How plugins and themes are loaded, started, and persisted.
+		Installed addons, updates, the marketplace, and Sync.
 	</Card>
 </CardGroup>

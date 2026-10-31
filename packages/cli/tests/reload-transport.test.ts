@@ -1,14 +1,16 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, utimesSync } from 'node:fs';
 import type { PluginPushResult } from '@unbound-app/debugger-protocol';
 import { describe, expect, test, afterEach, spyOn } from 'bun:test';
+import type { PushedManifest } from '@unbound-app/types';
+import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import type { ReloadContext, BuiltAddon } from '../src/lib/reload-transport';
 
-import { createReloadTransport } from '../src/lib/reload-transport';
+import { createReloadTransport, readBuiltAddon } from '../src/lib/reload-transport';
 
-type RecordedPush = { addonId: string; bundle: string };
+type RecordedPush = { addonId: string; bundle: string; manifest: PushedManifest };
 
 const roots: string[] = [];
 
@@ -42,6 +44,13 @@ function builtPlugin(): BuiltAddon {
 	return { id: 'com.example.sample', kind: 'plugin', dir, output, static: false };
 }
 
+function writeBuiltManifest(plugin: BuiltAddon, extra: Record<string, string[]>) {
+	writeFileSync(
+		join(plugin.output, 'manifest.json'),
+		JSON.stringify({ id: 'com.example.sample', main: 'index.js', ...extra }),
+	);
+}
+
 type FakeClient = {
 	isDeviceConnected: boolean;
 	pushes: RecordedPush[];
@@ -55,7 +64,11 @@ function fakeContext(client: FakeClient): ReloadContext {
 				return client.isDeviceConnected;
 			},
 			async pushPlugin(push) {
-				client.pushes.push({ addonId: push.addonId, bundle: push.bundle });
+				client.pushes.push({
+					addonId: push.addonId,
+					bundle: push.bundle,
+					manifest: push.manifest,
+				});
 
 				return client.result;
 			},
@@ -76,6 +89,29 @@ describe('createReloadTransport', () => {
 		expect(client.pushes).toHaveLength(1);
 		expect(client.pushes[0]!.addonId).toBe('com.example.sample');
 		expect(client.pushes[0]!.bundle).toBe('module.exports = {};');
+	});
+
+	test('pushes the manifest the build wrote into the output', async () => {
+		const client: FakeClient = { isDeviceConnected: true, pushes: [], result: ok };
+		const plugin = builtPlugin();
+
+		writeBuiltManifest(plugin, { capabilities: ['native.objc.invoke'] });
+
+		await createReloadTransport(fakeContext(client)).reload(plugin);
+
+		expect(client.pushes[0]!.manifest).toMatchObject({
+			main: 'index.js',
+			capabilities: ['native.objc.invoke'],
+		});
+	});
+
+	test('pushes the source manifest when the build wrote none', async () => {
+		const client: FakeClient = { isDeviceConnected: true, pushes: [], result: ok };
+
+		await createReloadTransport(fakeContext(client)).reload(builtPlugin());
+
+		expect(client.pushes[0]!.manifest).toMatchObject({ main: 'index.tsx' });
+		expect(client.pushes[0]!.manifest).not.toHaveProperty('capabilities');
 	});
 
 	test('reconnecting inside the wait window still pushes', async () => {
@@ -148,5 +184,106 @@ describe('createReloadTransport', () => {
 
 		expect(client.pushes).toEqual([]);
 		expect(errors).toContain(join(plugin.output, 'index.js'));
+	});
+
+	test('an invalid manifest is reported and never pushed', async () => {
+		const client: FakeClient = { isDeviceConnected: true, pushes: [], result: ok };
+		const plugin = builtPlugin();
+
+		writeFileSync(
+			join(plugin.dir, 'manifest.json'),
+			JSON.stringify({ id: 'com.example.sample' }),
+		);
+
+		const write = spyOn(process.stderr, 'write').mockImplementation(() => true);
+		let errors = '';
+
+		try {
+			await createReloadTransport(fakeContext(client)).reload(plugin);
+
+			errors = write.mock.calls.map(([chunk]) => String(chunk)).join('');
+		} finally {
+			write.mockRestore();
+		}
+
+		expect(client.pushes).toEqual([]);
+		expect(errors).toContain(`Invalid ${join(plugin.dir, 'manifest.json')}`);
+	});
+});
+
+describe('readBuiltAddon', () => {
+	test('reads the manifest the build wrote into the output', () => {
+		const plugin = builtPlugin();
+
+		writeBuiltManifest(plugin, { capabilities: ['native.objc.invoke'] });
+
+		expect(readBuiltAddon(plugin).manifest).toMatchObject({
+			id: 'com.example.sample',
+			main: 'index.js',
+			capabilities: ['native.objc.invoke'],
+		});
+	});
+
+	test('falls back to the source manifest when the build wrote none', () => {
+		const plugin = builtPlugin();
+		const { manifest, bundle } = readBuiltAddon(plugin);
+
+		expect(manifest).toMatchObject({ id: 'com.example.sample', main: 'index.tsx' });
+		expect(bundle).toBe('module.exports = {};');
+	});
+
+	test('names the built manifest when it is invalid', () => {
+		const plugin = builtPlugin();
+
+		writeFileSync(join(plugin.output, 'manifest.json'), JSON.stringify({ id: 'x' }));
+
+		expect(() => readBuiltAddon(plugin)).toThrow(
+			`Invalid ${join(plugin.output, 'manifest.json')}`,
+		);
+	});
+
+	test('reads a dev manifest the publish rules would refuse, keeping every field', () => {
+		const plugin = builtPlugin();
+		const manifest = {
+			id: 'com.example.sample',
+			main: 'index.tsx',
+			version: '1.0',
+			authors: [{ name: 'Mario', id: 'mario' }],
+		};
+
+		writeFileSync(join(plugin.dir, 'manifest.json'), JSON.stringify(manifest));
+
+		expect(readBuiltAddon(plugin).manifest).toMatchObject(manifest);
+	});
+
+	test('sends the bytecode built with the bundle and lists its digests in the manifest', () => {
+		const plugin = builtPlugin();
+		const compiled = Buffer.from([0xc6, 0x1f, 0xbc, 0x03, 0x01]);
+		const bytecode = join(plugin.output, 'index.98.hbc');
+		const bundle = join(plugin.output, 'index.js');
+
+		writeFileSync(bytecode, compiled);
+		utimesSync(bytecode, new Date(1_000_000), new Date(1_000_000));
+		utimesSync(bundle, new Date(1_000_500), new Date(1_000_500));
+
+		const built = readBuiltAddon(plugin);
+
+		expect(built.bytecode).toEqual({ '98': compiled.toString('base64') });
+		expect(built.manifest.bytecode).toEqual({
+			'98': createHash('sha512').update(compiled).digest('hex'),
+		});
+	});
+
+	test('leaves out bytecode from an earlier build', () => {
+		const plugin = builtPlugin();
+		const stale = join(plugin.output, 'index.98.hbc');
+
+		writeFileSync(stale, 'old');
+		utimesSync(stale, new Date(0), new Date(0));
+
+		const built = readBuiltAddon(plugin);
+
+		expect(built.bytecode).toBeUndefined();
+		expect(built.manifest.bytecode).toBeUndefined();
 	});
 });
