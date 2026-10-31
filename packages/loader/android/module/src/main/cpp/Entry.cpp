@@ -12,6 +12,7 @@
 #include "LoaderColor.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderDiagnostics.h"
+#include "LoaderDocuments.h"
 #include "LoaderJSI.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
@@ -282,9 +283,9 @@ static jstring nativeResolveFont(JNIEnv *env, jclass, jstring family)
     return toJavaString(env, loader ? loader->resolveFont(toStdString(env, family)) : "{}");
 }
 
-static jstring nativeDocumentsName(JNIEnv *env, jclass)
+static jstring nativeDocumentsDirectory(JNIEnv *env, jclass, jstring parent)
 {
-    return toJavaString(env, loader::preferences::kDocumentsName);
+    return toJavaString(env, loader::documentsDirectory(toStdString(env, parent)));
 }
 
 static jstring nativeSettingsFileName(JNIEnv *env, jclass)
@@ -525,8 +526,8 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeThreeFingerEvent)},
         {"nativeResolveFont", "(Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeResolveFont)},
-        {"nativeDocumentsName", "()Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeDocumentsName)},
+        {"nativeDocumentsDirectory", "(Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeDocumentsDirectory)},
         {"nativeSettingsFileName", "()Ljava/lang/String;",
          reinterpret_cast<void *>(nativeSettingsFileName)},
         {"nativeThemeColorsJSON", "(Ljava/lang/String;)Ljava/lang/String;",

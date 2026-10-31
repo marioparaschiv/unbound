@@ -12,6 +12,7 @@
 #include "LoaderAddons.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderDiagnostics.h"
+#include "LoaderDocuments.h"
 #include "LoaderFonts.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
@@ -58,9 +59,9 @@ static LogLevel iosLogLevel(loader::LogLevel level)
 
 @implementation CoreBridge
 
-+ (NSString *)documentsName
++ (NSString *)documentsIn:(NSString *)parent
 {
-    return @(loader::preferences::kDocumentsName);
+    return @(loader::documentsDirectory(toStdString(parent)).c_str());
 }
 
 + (uint32_t)mainBundleBytecodeVersion

@@ -7,7 +7,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)installLogging;
 + (void)openLogFile;
 
-+ (NSString *)documentsName;
++ (NSString *)documentsIn:(NSString *)parent;
 
 + (uint32_t)mainBundleBytecodeVersion;
 

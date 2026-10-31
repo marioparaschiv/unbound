@@ -41,7 +41,7 @@ class Unbound : XposedModule() {
         System.load(nativeLibraryPath(moduleInfo, appInfo))
         Logger.nativeReady = true
 
-        val documents = File(File(appInfo.dataDir, "files"), NativeBridge.nativeDocumentsName()).absolutePath
+        val documents = NativeBridge.nativeDocumentsDirectory(File(appInfo.dataDir, "files").absolutePath)
         NativeBridge.documents = documents
         val bytecodeVersion = Platform.mainBundleBytecodeVersion(appInfo.sourceDir)
 

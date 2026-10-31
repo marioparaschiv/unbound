@@ -17,7 +17,7 @@ object NativeBridge {
     }
 
     @JvmStatic
-    external fun nativeDocumentsName(): String
+    external fun nativeDocumentsDirectory(parent: String): String
 
     @JvmStatic
     external fun nativeSettingsFileName(): String
