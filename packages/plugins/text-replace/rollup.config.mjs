@@ -1,3 +1,3 @@
-import { createPluginConfig } from '@unbound-plugins/rollup-config';
+import { unbound } from '@unbound-app/cli/rollup';
 
-export default createPluginConfig(import.meta.url, { settingsPanel: true });
+export default unbound(import.meta.url, { settingsPanel: true });

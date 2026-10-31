@@ -3,6 +3,7 @@ import { IconExternalLink } from 'nucleo-micro-bold';
 import { DetailRow, ExternalLink, SidebarCard } from '~/components/addon/sidebar-card';
 import { directoryUrl, formatBytes, formatDate } from '~/components/addon/format';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import { PLATFORM_LABELS } from '~/lib/addon-platforms';
 import GitHubIcon from '~/components/icons/github';
 import Text from '~/components/ui/text';
 
@@ -24,9 +25,16 @@ function AboutCard({ addon }: AboutCardProps) {
 			<DetailRow label='Requires'>
 				{addon.minClientVersion ? `Unbound ${addon.minClientVersion}+` : 'Any Unbound'}
 			</DetailRow>
-			{addon.capabilities.length > 0 ? (
-				<DetailRow label='Native access'>{addon.capabilities.join(', ')}</DetailRow>
-			) : null}
+			<DetailRow label='Platforms'>
+				{addon.platforms.map(({ platform }) => PLATFORM_LABELS[platform]).join(', ')}
+			</DetailRow>
+			{addon.platforms.map(({ platform, capabilities }) =>
+				capabilities.length > 0 ? (
+					<DetailRow key={platform} label={`${PLATFORM_LABELS[platform]} access`}>
+						{capabilities.join(', ')}
+					</DetailRow>
+				) : null,
+			)}
 			{pin ? (
 				<ExternalLink
 					href={directoryUrl(pin)}
