@@ -5,15 +5,18 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"build": "rollup -c"
+		"build": "rollup -c",
+		"lint": "oxlint",
+		"test": "bun test"
 	},
 	"devDependencies": {
-		"@unbound-app/api": "latest",
-		"@rollup/plugin-json": "^6.1.0",
-		"@rollup/plugin-node-resolve": "^16.0.3",
+		"@types/bun": "latest",
 		"@types/react": "^19.2.7",
-		"react-native": "^0.83.0",
-		"rollup": "^4.62.2",
-		"rollup-plugin-swc3": "^0.12.1"
+		"@unbound-app/api": "latest",
+		"@unbound-app/cli": "latest",
+		"oxlint": "^1.90.0",
+		"react-native": "^0.86.0",
+		"rollup": "^4.65.1",
+		"typescript": "^5.9.3"
 	}
 }
