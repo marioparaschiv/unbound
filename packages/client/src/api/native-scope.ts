@@ -17,6 +17,7 @@ import type {
 	NativeObjectHandle,
 	NativePluginBridge,
 	NativePluginCapability,
+	NativePluginMethod,
 	NativePluginPlatform,
 	NativeRuntimeBridge,
 	NativeRuntimeEventName,
@@ -25,14 +26,7 @@ import type {
 } from '@unbound-app/types';
 
 import {
-	debugCapabilities,
-	fabricCapabilities,
-	ffiCapabilities,
-	hooksCapabilities,
-	javaCapabilities,
-	objcCapabilities,
 	requireCapability,
-	runtimeCapabilities,
 	scopedMethod,
 	unavailableNativePlugin,
 } from '~/api/native-capabilities';
@@ -185,14 +179,14 @@ export function createScopedNativePlugin(
 
 	function scopeMethod<A extends unknown[], R>(
 		method: (...args: A) => R,
-		capability: NativePluginCapability,
+		path: NativePluginMethod,
 	) {
-		return scopedMethod(method, capabilities, capability, () => !disposed);
+		return scopedMethod(method, capabilities, path, () => !disposed);
 	}
 
 	function scopeAsyncMethod<A extends unknown[], R>(
 		method: ((...args: A) => NativeCancelablePromise<R>) | undefined,
-		capability: NativePluginCapability,
+		path: NativePluginMethod,
 		unavailableMessage: string,
 	): (...args: A) => NativeCancelablePromise<R> {
 		return (...args: A) => {
@@ -200,7 +194,7 @@ export function createScopedNativePlugin(
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, capability);
+			requireCapability(capabilities, path);
 
 			if (!method) {
 				throw new NativePluginUnavailableError(unavailableMessage);
@@ -211,59 +205,53 @@ export function createScopedNativePlugin(
 	}
 
 	const objc: NativeObjCBridge = {
-		getClass: scopeMethod(objcBridge.getClass.bind(objcBridge), objcCapabilities.getClass),
-		alloc: scopeMethod(objcBridge.alloc.bind(objcBridge), objcCapabilities.alloc),
-		className: scopeMethod(objcBridge.className.bind(objcBridge), objcCapabilities.className),
-		respondsTo: scopeMethod(
-			objcBridge.respondsTo.bind(objcBridge),
-			objcCapabilities.respondsTo,
-		),
-		call: scopeMethod(objcBridge.call.bind(objcBridge), objcCapabilities.call),
-		callSuper: scopeMethod(objcBridge.callSuper.bind(objcBridge), objcCapabilities.callSuper),
-		invoke: scopeMethod(objcBridge.invoke.bind(objcBridge), objcCapabilities.invoke),
+		getClass: scopeMethod(objcBridge.getClass.bind(objcBridge), 'objc.getClass'),
+		alloc: scopeMethod(objcBridge.alloc.bind(objcBridge), 'objc.alloc'),
+		className: scopeMethod(objcBridge.className.bind(objcBridge), 'objc.className'),
+		respondsTo: scopeMethod(objcBridge.respondsTo.bind(objcBridge), 'objc.respondsTo'),
+		call: scopeMethod(objcBridge.call.bind(objcBridge), 'objc.call'),
+		callSuper: scopeMethod(objcBridge.callSuper.bind(objcBridge), 'objc.callSuper'),
+		invoke: scopeMethod(objcBridge.invoke.bind(objcBridge), 'objc.invoke'),
 		invokeAsync: scopeAsyncMethod(
 			objcBridge.invokeAsync?.bind(objcBridge),
-			objcCapabilities.invokeAsync,
+			'objc.invokeAsync',
 			'Async native invocation is unavailable.',
 		),
 		batch: scopeAsyncMethod(
 			objcBridge.batch?.bind(objcBridge),
-			objcCapabilities.batch,
+			'objc.batch',
 			'Native batch is unavailable.',
 		),
 		snapshot: scopeAsyncMethod(
 			objcBridge.snapshot?.bind(objcBridge),
-			objcCapabilities.snapshot,
+			'objc.snapshot',
 			'Native UI snapshot is unavailable.',
 		),
 		findViews: scopeAsyncMethod(
 			objcBridge.findViews?.bind(objcBridge),
-			objcCapabilities.findViews,
+			'objc.findViews',
 			'Native view search is unavailable.',
 		),
-		invokeSuper: scopeMethod(
-			objcBridge.invokeSuper.bind(objcBridge),
-			objcCapabilities.invokeSuper,
-		),
+		invokeSuper: scopeMethod(objcBridge.invokeSuper.bind(objcBridge), 'objc.invokeSuper'),
 		invokeSuperAsync: scopeAsyncMethod(
 			objcBridge.invokeSuperAsync?.bind(objcBridge),
-			objcCapabilities.invokeSuperAsync,
+			'objc.invokeSuperAsync',
 			'Async native super invocation is unavailable.',
 		),
-		getIvar: scopeMethod(objcBridge.getIvar.bind(objcBridge), objcCapabilities.getIvar),
-		setIvar: scopeMethod(objcBridge.setIvar.bind(objcBridge), objcCapabilities.setIvar),
+		getIvar: scopeMethod(objcBridge.getIvar.bind(objcBridge), 'objc.getIvar'),
+		setIvar: scopeMethod(objcBridge.setIvar.bind(objcBridge), 'objc.setIvar'),
 		createAssociationKey: scopeMethod(
 			objcBridge.createAssociationKey.bind(objcBridge),
-			objcCapabilities.createAssociationKey,
+			'objc.createAssociationKey',
 		),
 		getAssociatedObject: scopeMethod(
 			objcBridge.getAssociatedObject.bind(objcBridge),
-			objcCapabilities.getAssociatedObject,
+			'objc.getAssociatedObject',
 		),
 		setAssociatedObject: (handle, key, value, policy) => {
 			scopeMethod(
 				objcBridge.setAssociatedObject.bind(objcBridge),
-				objcCapabilities.setAssociatedObject,
+				'objc.setAssociatedObject',
 			)(handle, key, value, policy);
 			const index = associations.findIndex(
 				(binding) => binding.handle === handle && binding.key === key,
@@ -281,9 +269,9 @@ export function createScopedNativePlugin(
 				associations.push({ handle, key });
 			}
 		},
-		struct: scopeMethod(objcBridge.struct.bind(objcBridge), objcCapabilities.struct),
-		array: scopeMethod(objcBridge.array.bind(objcBridge), objcCapabilities.array),
-		data: scopeMethod(objcBridge.data.bind(objcBridge), objcCapabilities.data),
+		struct: scopeMethod(objcBridge.struct.bind(objcBridge), 'objc.struct'),
+		array: scopeMethod(objcBridge.array.bind(objcBridge), 'objc.array'),
+		data: scopeMethod(objcBridge.data.bind(objcBridge), 'objc.data'),
 		hook: (
 			className: string,
 			selector: string,
@@ -294,7 +282,7 @@ export function createScopedNativePlugin(
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, objcCapabilities.hook);
+			requireCapability(capabilities, 'objc.hook');
 			const token = objcBridge.hook(className, selector, handlers, options);
 
 			tokens.add(token);
@@ -333,8 +321,8 @@ export function createScopedNativePlugin(
 	};
 
 	const ffi: NativeFFIBridge = {
-		symbol: scopeMethod(ffiBridge.symbol.bind(ffiBridge), ffiCapabilities.symbol),
-		call: scopeMethod(ffiBridge.call.bind(ffiBridge), ffiCapabilities.call),
+		symbol: scopeMethod(ffiBridge.symbol.bind(ffiBridge), 'ffi.symbol'),
+		call: scopeMethod(ffiBridge.call.bind(ffiBridge), 'ffi.call'),
 	};
 
 	const fabric: NativeFabricBridge = {
@@ -343,7 +331,7 @@ export function createScopedNativePlugin(
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, fabricCapabilities.mount);
+			requireCapability(capabilities, 'fabric.mount');
 			const surface = fabricBridge.mount(container, moduleName, properties);
 
 			surfaces.add(surface);
@@ -355,7 +343,7 @@ export function createScopedNativePlugin(
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, fabricCapabilities.mountAsync);
+			requireCapability(capabilities, 'fabric.mountAsync');
 
 			if (!mountAsync) {
 				throw new NativePluginUnavailableError('Async Fabric mounting is unavailable.');
@@ -376,31 +364,28 @@ export function createScopedNativePlugin(
 
 			return pending;
 		},
-		update: scopeMethod(fabricBridge.update.bind(fabricBridge), fabricCapabilities.update),
+		update: scopeMethod(fabricBridge.update.bind(fabricBridge), 'fabric.update'),
 		updateAsync: scopeAsyncMethod(
 			fabricBridge.updateAsync?.bind(fabricBridge),
-			fabricCapabilities.updateAsync,
+			'fabric.updateAsync',
 			'Async Fabric updates are unavailable.',
 		),
-		setSize: scopeMethod(fabricBridge.setSize.bind(fabricBridge), fabricCapabilities.setSize),
+		setSize: scopeMethod(fabricBridge.setSize.bind(fabricBridge), 'fabric.setSize'),
 		setSizeAsync: scopeAsyncMethod(
 			fabricBridge.setSizeAsync?.bind(fabricBridge),
-			fabricCapabilities.setSizeAsync,
+			'fabric.setSizeAsync',
 			'Async Fabric sizing is unavailable.',
 		),
-		setFrame: scopeMethod(
-			fabricBridge.setFrame.bind(fabricBridge),
-			fabricCapabilities.setFrame,
-		),
+		setFrame: scopeMethod(fabricBridge.setFrame.bind(fabricBridge), 'fabric.setFrame'),
 		setFrameAsync: scopeAsyncMethod(
 			fabricBridge.setFrameAsync?.bind(fabricBridge),
-			fabricCapabilities.setFrameAsync,
+			'fabric.setFrameAsync',
 			'Async Fabric frame updates are unavailable.',
 		),
-		measure: scopeMethod(fabricBridge.measure.bind(fabricBridge), fabricCapabilities.measure),
+		measure: scopeMethod(fabricBridge.measure.bind(fabricBridge), 'fabric.measure'),
 		measureAsync: scopeAsyncMethod(
 			fabricBridge.measureAsync?.bind(fabricBridge),
-			fabricCapabilities.measureAsync,
+			'fabric.measureAsync',
 			'Async Fabric measurement is unavailable.',
 		),
 		unmount: (surface) => {
@@ -408,7 +393,7 @@ export function createScopedNativePlugin(
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, fabricCapabilities.unmount);
+			requireCapability(capabilities, 'fabric.unmount');
 			fabricBridge.unmount(surface);
 			surfaces.delete(surface);
 		},
@@ -417,7 +402,7 @@ export function createScopedNativePlugin(
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, fabricCapabilities.unmountAsync);
+			requireCapability(capabilities, 'fabric.unmountAsync');
 
 			if (!unmountAsync) {
 				throw new NativePluginUnavailableError('Async Fabric unmounting is unavailable.');
@@ -443,7 +428,7 @@ export function createScopedNativePlugin(
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, runtimeCapabilities.subscribe);
+			requireCapability(capabilities, 'runtime.subscribe');
 			const token = runtimeBridge.subscribe(event, listener);
 
 			runtimeTokens.add(token);
@@ -503,25 +488,25 @@ export function createScopedNativePlugin(
 	const java: NativeJavaBridge = {
 		getClass: (name) =>
 			trackJavaHandle(
-				scopeMethod(javaBridge.getClass.bind(javaBridge), javaCapabilities.getClass)(name),
+				scopeMethod(javaBridge.getClass.bind(javaBridge), 'java.getClass')(name),
 			),
-		className: scopeMethod(javaBridge.className.bind(javaBridge), javaCapabilities.className),
-		describe: scopeMethod(javaBridge.describe.bind(javaBridge), javaCapabilities.describe),
+		className: scopeMethod(javaBridge.className.bind(javaBridge), 'java.className'),
+		describe: scopeMethod(javaBridge.describe.bind(javaBridge), 'java.describe'),
 		construct: (name, args) =>
 			trackJavaHandle(
-				scopeMethod(javaBridge.construct.bind(javaBridge), javaCapabilities.construct)(
+				scopeMethod(javaBridge.construct.bind(javaBridge), 'java.construct')(
 					name,
 					args ?? [],
 				),
 			),
 		respondsTo: (handle, name, args) =>
-			scopeMethod(javaBridge.respondsTo.bind(javaBridge), javaCapabilities.respondsTo)(
+			scopeMethod(javaBridge.respondsTo.bind(javaBridge), 'java.respondsTo')(
 				handle,
 				name,
 				args ?? [],
 			),
 		invoke: (handle, name, args) =>
-			scopeMethod(javaBridge.invoke.bind(javaBridge), javaCapabilities.invoke)(
+			scopeMethod(javaBridge.invoke.bind(javaBridge), 'java.invoke')(
 				handle,
 				name,
 				args ?? [],
@@ -529,40 +514,37 @@ export function createScopedNativePlugin(
 		invokeAsync: (handle, name, args) =>
 			scopeAsyncMethod(
 				javaBridge.invokeAsync?.bind(javaBridge),
-				javaCapabilities.invokeAsync,
+				'java.invokeAsync',
 				'Asynchronous Java invocation is unavailable.',
 			)(handle, name, args ?? []),
-		getField: scopeMethod(javaBridge.getField.bind(javaBridge), javaCapabilities.getField),
-		setField: scopeMethod(javaBridge.setField.bind(javaBridge), javaCapabilities.setField),
-		batch: scopeMethod(javaBridge.batch.bind(javaBridge), javaCapabilities.batch),
+		getField: scopeMethod(javaBridge.getField.bind(javaBridge), 'java.getField'),
+		setField: scopeMethod(javaBridge.setField.bind(javaBridge), 'java.setField'),
+		batch: scopeMethod(javaBridge.batch.bind(javaBridge), 'java.batch'),
 		batchAsync: scopeAsyncMethod(
 			javaBridge.batchAsync?.bind(javaBridge),
-			javaCapabilities.batchAsync,
+			'java.batchAsync',
 			'Asynchronous Java batches are unavailable.',
 		),
 		findViews: (root, className, options) =>
 			scopeAsyncMethod(
 				javaBridge.findViews?.bind(javaBridge),
-				javaCapabilities.findViews,
+				'java.findViews',
 				'Java view searches are unavailable.',
 			)(root, className, options),
 		createAssociationKey: scopeMethod(
 			javaBridge.createAssociationKey.bind(javaBridge),
-			javaCapabilities.createAssociationKey,
+			'java.createAssociationKey',
 		),
 		getAssociatedObject: scopeMethod(
 			javaBridge.getAssociatedObject.bind(javaBridge),
-			javaCapabilities.getAssociatedObject,
+			'java.getAssociatedObject',
 		),
 		setAssociatedObject: scopeMethod(
 			javaBridge.setAssociatedObject.bind(javaBridge),
-			javaCapabilities.setAssociatedObject,
+			'java.setAssociatedObject',
 		),
 		release: (handle) => {
-			const release = scopeMethod(
-				javaBridge.release.bind(javaBridge),
-				javaCapabilities.release,
-			);
+			const release = scopeMethod(javaBridge.release.bind(javaBridge), 'java.release');
 			const held = untrackJavaHandle(handle);
 
 			if (held ? dropJavaHandle(handle) : !javaHandleHolders.has(handle)) {
@@ -574,17 +556,14 @@ export function createScopedNativePlugin(
 	const debug: NativeDebugBridge = {
 		recordEvaluation: scopeMethod(
 			debugBridge.recordEvaluation.bind(debugBridge),
-			debugCapabilities.recordEvaluation,
+			'debug.recordEvaluation',
 		),
-		environment: scopeMethod(
-			debugBridge.environment.bind(debugBridge),
-			debugCapabilities.environment,
-		),
+		environment: scopeMethod(debugBridge.environment.bind(debugBridge), 'debug.environment'),
 	};
 
 	const hooks: NativeJavaHooksBridge = {
 		hook: (className, methodName, parameterTypes, options, listener) => {
-			const token = scopeMethod(hooksBridge.hook.bind(hooksBridge), hooksCapabilities.hook)(
+			const token = scopeMethod(hooksBridge.hook.bind(hooksBridge), 'hooks.hook')(
 				className,
 				methodName,
 				parameterTypes,
@@ -598,19 +577,19 @@ export function createScopedNativePlugin(
 		},
 		setReturnValue: scopeMethod(
 			hooksBridge.setReturnValue.bind(hooksBridge),
-			hooksCapabilities.setReturnValue,
+			'hooks.setReturnValue',
 		),
 		removeReturnValue: scopeMethod(
 			hooksBridge.removeReturnValue.bind(hooksBridge),
-			hooksCapabilities.removeReturnValue,
+			'hooks.removeReturnValue',
 		),
 		clearReturnValues: scopeMethod(
 			hooksBridge.clearReturnValues.bind(hooksBridge),
-			hooksCapabilities.clearReturnValues,
+			'hooks.clearReturnValues',
 		),
 		remove: (token) => {
 			javaHookTokens.delete(token);
-			scopeMethod(hooksBridge.remove.bind(hooksBridge), hooksCapabilities.remove)(token);
+			scopeMethod(hooksBridge.remove.bind(hooksBridge), 'hooks.remove')(token);
 		},
 	};
 

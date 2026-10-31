@@ -82,6 +82,69 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.debug.evaluations',
 	'native.debug.environment',
 ];
+/** The Capability each native bridge method needs. */
+export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
+	readonly 'objc.getClass': 'native.objc.classes';
+	readonly 'objc.alloc': 'native.objc.classes';
+	readonly 'objc.className': 'native.objc.classes';
+	readonly 'objc.respondsTo': 'native.objc.classes';
+	readonly 'objc.call': 'native.objc.invoke';
+	readonly 'objc.callSuper': 'native.objc.invoke';
+	readonly 'objc.invoke': 'native.objc.invoke';
+	readonly 'objc.invokeAsync': 'native.objc.invokeAsync';
+	readonly 'objc.batch': 'native.objc.batch';
+	readonly 'objc.snapshot': 'native.objc.snapshot';
+	readonly 'objc.findViews': 'native.objc.snapshot';
+	readonly 'objc.invokeSuper': 'native.objc.invoke';
+	readonly 'objc.invokeSuperAsync': 'native.objc.invokeAsync';
+	readonly 'objc.getIvar': 'native.objc.ivars';
+	readonly 'objc.setIvar': 'native.objc.ivars';
+	readonly 'objc.createAssociationKey': 'native.objc.associations';
+	readonly 'objc.getAssociatedObject': 'native.objc.associations';
+	readonly 'objc.setAssociatedObject': 'native.objc.associations';
+	readonly 'objc.struct': 'native.objc.classes';
+	readonly 'objc.array': 'native.objc.classes';
+	readonly 'objc.data': 'native.objc.classes';
+	readonly 'objc.hook': 'native.objc.hooks';
+	readonly 'ffi.symbol': 'native.ffi.symbols';
+	readonly 'ffi.call': 'native.ffi.call';
+	readonly 'fabric.mount': 'native.fabric.mount';
+	readonly 'fabric.update': 'native.fabric.mount';
+	readonly 'fabric.setSize': 'native.fabric.mount';
+	readonly 'fabric.setFrame': 'native.fabric.mount';
+	readonly 'fabric.measure': 'native.fabric.mount';
+	readonly 'fabric.unmount': 'native.fabric.mount';
+	readonly 'fabric.mountAsync': 'native.fabric.async';
+	readonly 'fabric.updateAsync': 'native.fabric.async';
+	readonly 'fabric.setSizeAsync': 'native.fabric.async';
+	readonly 'fabric.setFrameAsync': 'native.fabric.async';
+	readonly 'fabric.measureAsync': 'native.fabric.async';
+	readonly 'fabric.unmountAsync': 'native.fabric.async';
+	readonly 'runtime.subscribe': 'native.runtime.events';
+	readonly 'java.getClass': 'native.java.classes';
+	readonly 'java.className': 'native.java.classes';
+	readonly 'java.describe': 'native.java.classes';
+	readonly 'java.construct': 'native.java.construct';
+	readonly 'java.respondsTo': 'native.java.classes';
+	readonly 'java.invoke': 'native.java.invoke';
+	readonly 'java.invokeAsync': 'native.java.invokeAsync';
+	readonly 'java.getField': 'native.java.fields';
+	readonly 'java.setField': 'native.java.fields';
+	readonly 'java.release': 'native.java.classes';
+	readonly 'java.batch': 'native.java.batch';
+	readonly 'java.batchAsync': 'native.java.batch';
+	readonly 'java.findViews': 'native.java.invoke';
+	readonly 'java.createAssociationKey': 'native.java.associations';
+	readonly 'java.getAssociatedObject': 'native.java.associations';
+	readonly 'java.setAssociatedObject': 'native.java.associations';
+	readonly 'debug.recordEvaluation': 'native.debug.evaluations';
+	readonly 'debug.environment': 'native.debug.environment';
+	readonly 'hooks.hook': 'native.java.hooks';
+	readonly 'hooks.setReturnValue': 'native.java.hooks';
+	readonly 'hooks.removeReturnValue': 'native.java.hooks';
+	readonly 'hooks.clearReturnValues': 'native.java.hooks';
+	readonly 'hooks.remove': 'native.java.hooks';
+};
 export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 	readonly android: readonly [
 		'native.java.classes',
@@ -2406,6 +2469,14 @@ export type NativePluginErrorCode =
 	| 'NATIVE_PLUGIN_CAPABILITY_DENIED'
 	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
 	| 'NATIVE_PLUGIN_UNAVAILABLE';
+/** A native bridge method by the path a plugin calls it through, such as `objc.invoke`. */
+export type NativePluginMethod = {
+	[N in NativePluginNamespace]: `${N}.${keyof NativePluginBridge[N] & string}`;
+}[NativePluginNamespace];
+export type NativePluginNamespace = Exclude<
+	keyof NativePluginBridge,
+	'apiVersion' | 'abiVersion' | 'capabilities'
+>;
 export type NativePluginPlatform = 'ios' | 'android';
 export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,

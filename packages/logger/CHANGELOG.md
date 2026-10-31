@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.2](https://github.com/marioparaschiv/unbound/compare/logger-v0.7.1...logger-v0.7.2) (2026-10-31)
+
+
+### Code Refactoring
+
+* fix architecture smells and enforce them with oxlint rules ([#574](https://github.com/marioparaschiv/unbound/issues/574)) ([577a2af](https://github.com/marioparaschiv/unbound/commit/577a2af9ca4f479a805765481927b1ff9302c1ec))
+
 ## [0.7.1](https://github.com/marioparaschiv/unbound/compare/logger-v0.7.0...logger-v0.7.1) (2026-10-29)
 
 

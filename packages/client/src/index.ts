@@ -6,10 +6,26 @@ import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import { askForNativeConsent } from '~/ui/addons/native-consent';
+import discordSupport from '~/builtins/discord-support';
 import { setConsentPrompt } from '~/lib/native-consent';
+import type { BuiltInEntry } from '~/managers/builtins';
+import errorBoundary from '~/builtins/error-boundary';
+import coreCommands from '~/builtins/core-commands';
+import hotRefresh from '~/builtins/hot-refresh';
 import { builtins } from '~/managers/builtins';
 import { Manager } from '~/managers/base';
+import cloudSync from '~/builtins/cloud-sync';
+import staffMode from '~/builtins/staff-mode';
+import commands from '~/builtins/commands';
+import settings from '~/builtins/settings';
+import tracking from '~/builtins/tracking';
+import updater from '~/builtins/updater';
+import debug from '~/builtins/debugger';
+import themes from '~/builtins/themes';
+import toasts from '~/builtins/toasts';
+import links from '~/builtins/links';
 import storage from '~/api/storage';
+import i18n from '~/builtins/i18n';
 import * as api from '~/api';
 
 /** The lifecycle entry points, all the global `unbound` object keeps after {@link shutdown}. */
@@ -26,6 +42,24 @@ declare global {
 }
 
 const Logger = createLogger('Core');
+
+const BUILT_INS: BuiltInEntry[] = [
+	['cloudSync', cloudSync],
+	['commands', commands],
+	['coreCommands', coreCommands],
+	['debug', debug],
+	['discordSupport', discordSupport],
+	['errorBoundary', errorBoundary],
+	['hotRefresh', hotRefresh],
+	['i18n', i18n],
+	['links', links],
+	['settings', settings],
+	['staffMode', staffMode],
+	['themes', themes],
+	['toasts', toasts],
+	['tracking', tracking],
+	['updater', updater],
+];
 
 let initialized = false;
 
@@ -44,7 +78,7 @@ export function initialize() {
 	Logger.info('Initializing Unbound...');
 
 	setConsentPrompt(askForNativeConsent);
-	builtins.initialize();
+	builtins.initialize(BUILT_INS);
 
 	for (const kind of ADDON_KINDS) {
 		Manager.for(kind).initialize();
