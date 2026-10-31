@@ -7,7 +7,6 @@ type Interceptor = (action: FluxAction) => boolean;
 
 const ID = 'scope.wiring';
 
-// Mirrors Discord's dispatcher: interceptors run first and a truthy one drops the action.
 const dispatcher = {
 	subscriptions: new Map<string, Set<Listener>>(),
 	interceptors: [] as Interceptor[],
@@ -154,6 +153,7 @@ describe('addon scope wiring', () => {
 				unbound.metro.findLazy(() => false).then((mdl) => seen.push('lazy:' + mdl));
 				unbound.storage.getBucket().addListener(() => true, () => seen.push('bucket'));
 				unbound.storage.onChange(() => true, () => seen.push('change'));
+				unbound.storage.on('changed', () => seen.push('event'));
 				unbound.flux.onAction('WIRING', () => seen.push('action'));
 				unbound.flux.interceptAction('WIRING', () => true);
 				unbound.flux.onStoreChange(globalThis.__wiringStore, () => {});
@@ -175,7 +175,7 @@ describe('addon scope wiring', () => {
 		storage.set(ID, 'key', 1);
 
 		expect(dispatcher.handled).toEqual([]);
-		expect(seen).toEqual(['bucket', 'change']);
+		expect(seen).toEqual(['bucket', 'change', 'event']);
 
 		await plugins.stop(ID);
 		Reflect.apply(Reflect.get(globalThis, '__wiringLate'), undefined, []);
@@ -189,7 +189,7 @@ describe('addon scope wiring', () => {
 			commands: [],
 		});
 		expect(dispatcher.handled).toEqual([{ type: 'WIRING' }]);
-		expect(seen).toEqual(['bucket', 'change', 'lazy:undefined']);
+		expect(seen).toEqual(['bucket', 'change', 'event', 'lazy:undefined']);
 	});
 
 	test('a listener the plugin removes by reference stays removed', async () => {

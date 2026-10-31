@@ -22,7 +22,6 @@ type ChangePredicate = Parameters<Bucket['addListener']>[0];
 
 type ChangeCallback = (payload: SettingsPayload) => void;
 
-/** The `commands` namespace of one plugin, whose commands are its own, and the `dispose` that removes them. */
 export type ScopedCommands = {
 	namespace: Overlay<'commands', CommandsHandle>;
 	dispose: () => void;
@@ -84,10 +83,15 @@ export function scopeMetro(subscriptions: Subscriptions): Api['metro'] {
 			signal: controller.signal,
 		});
 
-		if (result instanceof Promise) {
-			void result.finally(release);
-		} else {
+		function settle() {
+			signal?.removeEventListener('abort', abort);
 			release();
+		}
+
+		if (result instanceof Promise) {
+			void result.finally(settle);
+		} else {
+			settle();
 		}
 
 		return result;
@@ -137,6 +141,15 @@ export function scopeStorage(subscriptions: Subscriptions, owner: string): Api['
 		liveNamespace('storage').removeListener(callback);
 	}
 
+	function on(...args: Parameters<Api['storage']['on']>) {
+		const storage = liveNamespace('storage');
+		const emitter = storage.on(...args);
+
+		subscriptions.add(() => void storage.off(...args));
+
+		return emitter;
+	}
+
 	return overlay('storage', {
 		getBucket,
 		getStore: getBucket,
@@ -145,6 +158,7 @@ export function scopeStorage(subscriptions: Subscriptions, owner: string): Api['
 		onChange,
 		addListener: onChange,
 		removeListener,
+		on,
 	});
 }
 
