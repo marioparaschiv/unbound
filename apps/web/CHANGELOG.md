@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.13.0](https://github.com/marioparaschiv/unbound/compare/web-v0.12.0...web-v0.13.0) (2026-10-31)
+
+
+### Features
+
+* **web,cli:** read the built manifest for publish and ubd dev ([#696](https://github.com/marioparaschiv/unbound/issues/696)) ([f417abc](https://github.com/marioparaschiv/unbound/commit/f417abc0d88f19f2144dc9a2dc5b7f8dde9b7cdd))
+* **web:** catalog versions carry their store page URL ([#718](https://github.com/marioparaschiv/unbound/issues/718)) ([5f1f0f3](https://github.com/marioparaschiv/unbound/commit/5f1f0f31402ce2b4d9890f63a55b454f410f2d2e))
+* **web:** custom Better Auth error page and 404 route ([#747](https://github.com/marioparaschiv/unbound/issues/747)) ([e023dea](https://github.com/marioparaschiv/unbound/commit/e023deacf17fa35adfbea49622edab6ec9d79b3e))
+* **web:** publish copies the ADDON.md store page and media ([#710](https://github.com/marioparaschiv/unbound/issues/710)) ([fdaa4cf](https://github.com/marioparaschiv/unbound/commit/fdaa4cf5ab901faf80791e76795681099c3955a9))
+* **web:** read the measured ADDON.md page on submission ([#706](https://github.com/marioparaschiv/unbound/issues/706)) ([29627b6](https://github.com/marioparaschiv/unbound/commit/29627b6b13831e2ab949a4cfa6216f51b20ff096))
+* **web:** redesign the GitHub submit flow ([#715](https://github.com/marioparaschiv/unbound/issues/715)) ([d582e06](https://github.com/marioparaschiv/unbound/commit/d582e067b9fb5839e6503e686e4e36b38744d7da))
+* **web:** render ADDON.md banner, gallery and media ([#701](https://github.com/marioparaschiv/unbound/issues/701)) ([04dc235](https://github.com/marioparaschiv/unbound/commit/04dc23591c22ddebfb97154c982d8cf06f86d2e2))
+* **web:** show Capabilities per platform ([#700](https://github.com/marioparaschiv/unbound/issues/700)) ([73f4262](https://github.com/marioparaschiv/unbound/commit/73f4262f467f3df3e56d62ed4c7ee5113a48ff53))
+
+
+### Code Refactoring
+
+* rename astral back to unbound ([#751](https://github.com/marioparaschiv/unbound/issues/751)) ([05faca1](https://github.com/marioparaschiv/unbound/commit/05faca1a9fef48992fd80f981f009d02da943b40))
+* **web:** drop the status page icon, keep the logo ([#748](https://github.com/marioparaschiv/unbound/issues/748)) ([43a7cee](https://github.com/marioparaschiv/unbound/commit/43a7cee9cc0965dfa93be2c6bbf2a4f61b2b744e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 0.13.0
+    * @unbound-app/utils bumped to 0.9.3
+
 ## [0.12.0](https://github.com/marioparaschiv/unbound/compare/web-v0.11.0...web-v0.12.0) (2026-10-31)
 
 

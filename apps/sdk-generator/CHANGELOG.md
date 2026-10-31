@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.11.0](https://github.com/marioparaschiv/unbound/compare/sdk-generator-v0.10.0...sdk-generator-v0.11.0) (2026-10-31)
+
+
+### Features
+
+* **client:** add addon, updates, sync and builtins namespaces ([#727](https://github.com/marioparaschiv/unbound/issues/727)) ([edbbc37](https://github.com/marioparaschiv/unbound/commit/edbbc3791ab8e2681c44b49297b892d936d776a4))
+* **client:** add metro.onModuleLoad and hide internal members ([#695](https://github.com/marioparaschiv/unbound/issues/695)) ([ad49b36](https://github.com/marioparaschiv/unbound/commit/ad49b36ed1988770143efc97c2009459cab784ac))
+* **sdk:** add the @unbound-app/api/testing kit ([#738](https://github.com/marioparaschiv/unbound/issues/738)) ([2ebe700](https://github.com/marioparaschiv/unbound/commit/2ebe70055d7801dfdaeb1b2c26bcfa822734a510))
+* **sdk:** type the Addon scope globals in global.d.ts ([#737](https://github.com/marioparaschiv/unbound/issues/737)) ([5fde80b](https://github.com/marioparaschiv/unbound/commit/5fde80ba20afc9a06b6a0cc2f59cf58ca14bf057))
+
+
+### Code Refactoring
+
+* **client:** move client modules into domain folders ([#707](https://github.com/marioparaschiv/unbound/issues/707)) ([6aa56a9](https://github.com/marioparaschiv/unbound/commit/6aa56a930028d426a3d5b3e46be5a0c2a47ccff7))
+
 ## [0.10.0](https://github.com/marioparaschiv/unbound/compare/sdk-generator-v0.9.0...sdk-generator-v0.10.0) (2026-10-31)
 
 

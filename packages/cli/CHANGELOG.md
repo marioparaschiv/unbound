@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.13.0](https://github.com/marioparaschiv/unbound/compare/cli-v0.12.0...cli-v0.13.0) (2026-10-31)
+
+
+### Features
+
+* **cli:** add the unbound rollup preset for plugins ([#683](https://github.com/marioparaschiv/unbound/issues/683)) ([1b7b007](https://github.com/marioparaschiv/unbound/commit/1b7b0070ea2b8aac74349053d6bdaf0c506cb19f))
+* **client:** add addon, updates, sync and builtins namespaces ([#727](https://github.com/marioparaschiv/unbound/issues/727)) ([edbbc37](https://github.com/marioparaschiv/unbound/commit/edbbc3791ab8e2681c44b49297b892d936d776a4))
+* **client:** evaluate plugins with a per-plugin Addon scope ([#721](https://github.com/marioparaschiv/unbound/issues/721)) ([a58fe1c](https://github.com/marioparaschiv/unbound/commit/a58fe1ce39a303ef5edec93e21175914c1a738c2))
+* **cli:** generate platforms and Capabilities in ubd build ([#729](https://github.com/marioparaschiv/unbound/issues/729)) ([7deb4b2](https://github.com/marioparaschiv/unbound/commit/7deb4b23cb810fa7643557613ed4d763aded3b5f))
+* **cli:** measure ADDON.md media in ubd build ([#704](https://github.com/marioparaschiv/unbound/issues/704)) ([efe25d9](https://github.com/marioparaschiv/unbound/commit/efe25d92051183c8d39f4847ac71264e3702961e))
+* **cli:** run post-build checks in ubd build ([#685](https://github.com/marioparaschiv/unbound/issues/685)) ([88e2f4e](https://github.com/marioparaschiv/unbound/commit/88e2f4e8080a92d0bebdc39f4864d9d3885f7ca6))
+* **cli:** scaffold the standard plugin tree with ubd create ([#733](https://github.com/marioparaschiv/unbound/issues/733)) ([63d3fc8](https://github.com/marioparaschiv/unbound/commit/63d3fc8b66b8f0a75359ac172a9b1e993b6ba6ef))
+* **cli:** validate addon naming, Capabilities and layout ([#699](https://github.com/marioparaschiv/unbound/issues/699)) ([a8f2704](https://github.com/marioparaschiv/unbound/commit/a8f2704b743e08a306607bd18d5717756edf09b4))
+* **web,cli:** read the built manifest for publish and ubd dev ([#696](https://github.com/marioparaschiv/unbound/issues/696)) ([f417abc](https://github.com/marioparaschiv/unbound/commit/f417abc0d88f19f2144dc9a2dc5b7f8dde9b7cdd))
+* **web:** read the measured ADDON.md page on submission ([#706](https://github.com/marioparaschiv/unbound/issues/706)) ([29627b6](https://github.com/marioparaschiv/unbound/commit/29627b6b13831e2ab949a4cfa6216f51b20ff096))
+
+
+### Code Refactoring
+
+* rename astral back to unbound ([#751](https://github.com/marioparaschiv/unbound/issues/751)) ([05faca1](https://github.com/marioparaschiv/unbound/commit/05faca1a9fef48992fd80f981f009d02da943b40))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger-protocol bumped to 0.9.2
+  * devDependencies
+    * @unbound-app/api bumped to 0.13.0
+    * @unbound-app/contracts bumped to 0.13.0
+    * @unbound-app/types bumped to 0.12.0
+    * @unbound-app/utils bumped to 0.9.3
+    * @unbound-app/web bumped to 0.13.0
+
 ## [0.12.0](https://github.com/marioparaschiv/unbound/compare/cli-v0.11.0...cli-v0.12.0) (2026-10-31)
 
 
