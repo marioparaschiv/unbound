@@ -120,26 +120,29 @@ function listsExactly(page: AddonPage, paths: string[]): boolean {
 	return measured.size === paths.length && paths.every((path) => measured.has(path));
 }
 
-async function checkFormats(github: GitHubClient, repository: string, media: CommittedMedia[]) {
-	// The workers share one iterator, so each file is read once and at most this many reads overlap.
-	const queue = media.values();
+async function forEachAtMost<T>(items: T[], limit: number, fn: (item: T) => Promise<void>) {
+	const queue = items.values();
 
 	async function worker() {
-		for (const { path, entry } of queue) {
-			const data = await github.readBlob(repository, entry.sha);
-
-			if (!matchesMediaFormat(path, data)) {
-				throw new ApiError(
-					'artifact_mismatch',
-					`${path} is not the format its extension names.`,
-				);
-			}
+		for (const item of queue) {
+			await fn(item);
 		}
 	}
 
-	await Promise.all(
-		Array.from({ length: Math.min(MEDIA_READ_CONCURRENCY, media.length) }, worker),
-	);
+	await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+}
+
+async function checkFormats(github: GitHubClient, repository: string, media: CommittedMedia[]) {
+	await forEachAtMost(media, MEDIA_READ_CONCURRENCY, async ({ path, entry }) => {
+		const data = await github.readBlob(repository, entry.sha);
+
+		if (!matchesMediaFormat(path, data)) {
+			throw new ApiError(
+				'artifact_mismatch',
+				`${path} is not the format its extension names.`,
+			);
+		}
+	});
 }
 
 /**
