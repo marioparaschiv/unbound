@@ -1,3 +1,4 @@
+export { default as useDevelopmentCopy } from './use-development-copy';
 export { default as useReducedMotion } from './use-reduced-motion';
 export { default as useForceUpdate } from './use-force-update';
 export { default as useAddonState } from './use-addon-state';

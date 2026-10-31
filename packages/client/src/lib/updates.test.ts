@@ -9,7 +9,7 @@ import { autoApplies, automaticUpdates, buildUpdatesRequest, toPendingUpdates } 
 function entry(
 	id: string,
 	version: string = '1.0.0',
-	kind: UpdatableKind = 'plugins',
+	kind: UpdatableKind = 'plugin',
 	name: string = id,
 ): InstalledEntry {
 	return { kind, id, name, version };
@@ -41,10 +41,10 @@ describe('buildUpdatesRequest', () => {
 		const request = buildUpdatesRequest(
 			[
 				entry('dev.alpha'),
-				entry('dev.alpha', '2.0.0', 'themes'),
+				entry('dev.alpha', '2.0.0', 'theme'),
 				entry('local plugin'),
 				entry('dev.beta', 'next'),
-				entry('dev.gamma', '0.3.1', 'themes'),
+				entry('dev.gamma', '0.3.1', 'theme'),
 			],
 			'1.4.0',
 		);
@@ -84,16 +84,16 @@ describe('toPendingUpdates', () => {
 
 		const pending = toPendingUpdates(
 			[
-				entry('dev.zeta', '1.0.0', 'themes', 'Zeta'),
-				entry('dev.alpha', '1.0.0', 'plugins', 'Alpha'),
-				entry('dev.alpha', '9.0.0', 'themes', 'Shadowed'),
+				entry('dev.zeta', '1.0.0', 'theme', 'Zeta'),
+				entry('dev.alpha', '1.0.0', 'plugin', 'Alpha'),
+				entry('dev.alpha', '9.0.0', 'theme', 'Shadowed'),
 			],
 			{ updates: [zeta, alpha] },
 		);
 
 		expect(pending).toEqual([
-			{ kind: 'plugins', id: 'dev.alpha', name: 'Alpha', from: '1.0.0', update: alpha },
-			{ kind: 'themes', id: 'dev.zeta', name: 'Zeta', from: '1.0.0', update: zeta },
+			{ kind: 'plugin', id: 'dev.alpha', name: 'Alpha', from: '1.0.0', update: alpha },
+			{ kind: 'theme', id: 'dev.zeta', name: 'Zeta', from: '1.0.0', update: zeta },
 		]);
 	});
 

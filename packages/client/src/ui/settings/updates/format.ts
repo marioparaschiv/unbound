@@ -1,6 +1,6 @@
-import { MARKETPLACE_TABS } from '~/ui/marketplace';
 import type { UpdatableKind } from '~/lib/updates';
 import { Moment } from '~/api/metro/common';
+import { Manager } from '~/managers/base';
 import { Icons } from '~/api/assets';
 
 /**
@@ -9,7 +9,7 @@ import { Icons } from '~/api/assets';
  * @returns The asset id.
  */
 export function kindIcon(kind: UpdatableKind): number | undefined {
-	return Icons[MARKETPLACE_TABS.find((tab) => tab.kind === kind)?.icon ?? 'PuzzlePieceIcon'];
+	return Icons[Manager.for(kind).icon];
 }
 
 /**

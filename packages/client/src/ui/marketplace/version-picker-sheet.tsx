@@ -6,8 +6,8 @@ import { BottomSheets } from '~/api/metro/components';
 import type { UpdatableKind } from '~/lib/updates';
 import { CLIENT_VERSION } from '~/lib/constants';
 import { Messages, format } from '~/api/i18n';
-import { getManager } from '~/managers/utils';
 import { Moment } from '~/api/metro/common';
+import { Manager } from '~/managers/base';
 
 import useAddonVersions from './use-addon-versions';
 import { getInstalledVersion } from './targets';
@@ -61,7 +61,7 @@ function VersionPickerSheet({ kind, addon, onPick, onClose }: VersionPickerSheet
 	const { ActionSheet, ActionSheetRow, BottomSheetTitleHeader } = BottomSheets;
 	const { state, retry } = useAddonVersions(addon.id);
 	const { name } = addon.latestVersion.manifest;
-	const held = getManager(kind).getHeldVersion(addon.id);
+	const held = Manager.for(kind).getHeldVersion(addon.id);
 	const installed = getInstalledVersion(kind, addon);
 
 	function pick(choice: AvailableChoice) {
