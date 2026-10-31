@@ -46,8 +46,9 @@ function atlasStyle(name: string, size: number): CSSProperties {
 	const y = (Math.floor(index / columns) * pitch + 1) * scale;
 	const mask = `url(${atlasUrl}) -${x}px -${y}px / ${columns * pitch * scale}px ${ROWS * pitch * scale}px no-repeat`;
 
-	// The atlas is greyscale coverage, white where an icon is drawn.
-	return { width: size, height: size, mask, WebkitMask: mask, maskMode: 'luminance' };
+	// The atlas is greyscale coverage, white where an icon is drawn, so it masks by luminance. The mode
+	// rides in the unprefixed shorthand, set last: re-setting either shorthand on an update resets it.
+	return { width: size, height: size, WebkitMask: mask, mask: `${mask} luminance` };
 }
 
 // One plain element per icon over a bitmap: an SVG `<use>` per cell clones a tree each, and an SVG

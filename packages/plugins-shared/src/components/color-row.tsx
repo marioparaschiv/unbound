@@ -35,8 +35,10 @@ function toHex(color: number): string {
 }
 
 function openPicker(color: string, onSelect: (color: string) => void): boolean {
-	const picker = metro.findByName('CustomColorPickerActionSheet');
-	const sheets = metro.findByProps('openLazy', 'hideActionSheet') as ActionSheets | undefined;
+	const picker = metro.findByName('CustomColorPickerActionSheet', { lazy: false });
+	const sheets = metro.findByProps('openLazy', 'hideActionSheet', { lazy: false }) as
+		| ActionSheets
+		| undefined;
 
 	if (!picker || !sheets) {
 		return false;

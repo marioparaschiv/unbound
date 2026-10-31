@@ -1835,6 +1835,7 @@ export type LayerScopeProps = {
 	children?: React$1.ReactNode;
 	zIndex?: number;
 };
+export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'>;
 /**
  * Props of `LoadingButtonPill` (function). Exports: LoadingButtonPill.
  * @see design/components/Button/native/ButtonPill.native.tsx
@@ -2551,8 +2552,7 @@ export type NativePluginRuntimeBridge = Pick<
 	'apiVersion' | 'abiVersion' | 'capabilities'
 > &
 	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities' | 'objc'>> & {
-		/** The loader has no `create`; the client builds it from `alloc` and `invoke`. */
-		readonly objc?: Omit<NativeObjCBridge, 'create'>;
+		readonly objc?: LoaderObjCBridge;
 	};
 export type NativePointer = NativeHandle;
 export type NativeResourceCounts = {

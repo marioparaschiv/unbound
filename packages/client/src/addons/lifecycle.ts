@@ -8,6 +8,7 @@ import {
 	crashGuardKey,
 	finishAddonStart,
 	withAddonAttribution,
+	withAddonScope,
 } from '~/addons/crash-guard';
 import {
 	consentKey,
@@ -15,25 +16,22 @@ import {
 	NativeConsentRequiredError,
 	promptForConsent,
 } from '~/native/consent';
+import type { AddonAttribution, AddonFreeze, AddonScope } from '~/addons/crash-guard';
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
-import type { AddonAttribution, AddonFreeze } from '~/addons/crash-guard';
 import { validateNativePluginRequirements } from '~/native/capabilities';
+import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import type { NativeConsents } from '~/native/consent';
 import { currentPlatform } from '~/native/platform';
 import { unpatchAllByCaller } from '~/patcher/api';
+import type { PluginScope } from '~/addons/scope';
 import { isSafeAddonMain } from '~/addons/paths';
-import type { AddonScope } from '~/addons/scope';
 import { getSetting } from '~/settings/unbound';
 import { Manager } from '~/addons/manager';
 import { Addon } from '~/addons/addon';
 import storage from '~/storage/api';
-import { show } from '~/toasts/api';
-
-/** A single freeze at least this long disables the addon at once. */
-const LONG_FREEZE_SECONDS = 20;
 
 function monotonicNow(): number {
 	return globalThis.performance?.now?.() ?? Date.now();
@@ -79,7 +77,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	protected abstract handleBundle(
 		bundle: string,
 		id: string,
-		scope: AddonScope | undefined,
+		scope: PluginScope | undefined,
 	): (Plugin & I) | null;
 
 	protected createAddon(manifest: AddonManifest, bundle: string): Addon<I> {
@@ -120,7 +118,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		return undefined;
 	}
 
-	protected createScope(_entity: Addon<I>): AddonScope | undefined {
+	protected createScope(_entity: Addon<I>): PluginScope | undefined {
 		return undefined;
 	}
 
@@ -253,21 +251,25 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		}
 
 		try {
-			const attribution = this.attribution(resolved);
+			const scope: AddonScope = {
+				attribution: this.attribution(resolved),
+				recordDeferredFailure: (failure) =>
+					this.recordStartFailure(resolved, failure, 'running'),
+			};
 
 			state.scope = this.createScope(resolved);
-			const scope = state.scope;
+			const pluginScope = state.scope;
 
 			state.instance = recoveryMode
 				? null
-				: withAddonAttribution(attribution, () =>
-						this.handleBundle(state.bundle, resolved.id, scope),
+				: withAddonScope(scope, () =>
+						this.handleBundle(state.bundle, resolved.id, pluginScope),
 					);
 
 			state.context = this.createContext(resolved);
 			const context = state.context;
 
-			withAddonAttribution(attribution, () => state.instance?.start?.(context));
+			withAddonScope(scope, () => state.instance?.start?.(context));
 			state.started = true;
 			this.startDurations.set(resolved.id, monotonicNow() - startedAt);
 
@@ -277,18 +279,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			state.context = undefined;
 			state.scope?.dispose();
 			state.scope = undefined;
-			this.logger.error(`Failed to start addon ${resolved.id}:`, error);
-			const failure = toError(error);
-
-			this.errors.set(resolved.id, failure);
-			state.failed = true;
-			void reportCrash({
-				kind: 'start-failure',
-				phase: 'starting',
-				addon: crashReportAddon(resolved),
-				message: failure.message,
-				stack: failure.stack,
-			});
+			this.recordStartFailure(resolved, toError(error), 'starting');
 		} finally {
 			if (!recoveryMode) {
 				finishAddonStart(guardKey);
@@ -298,7 +289,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 	/**
 	 * @description Handles a freeze the loader attributed to an addon: tells the user, and disables the
-	 * addon after its second freeze this session or after one that lasted {@link LONG_FREEZE_SECONDS}.
+	 * addon when {@link freezeDisables} says so.
 	 * @param freeze The freeze the loader reported.
 	 */
 	handleFreeze(freeze: AddonFreeze): void {
@@ -309,34 +300,31 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		if (!entity) return;
 
 		const count = (this.freezes.get(entity.id) ?? 0) + 1;
-		const seconds = Math.round(freeze.seconds);
-		const disable = count >= 2 || freeze.seconds >= LONG_FREEZE_SECONDS;
+		const disable = freezeDisables(count, freeze);
 
 		this.freezes.set(entity.id, count);
-		void reportCrash({
-			kind: 'freeze',
-			phase: 'frozen',
-			addon: crashReportAddon(entity),
-			seconds: freeze.seconds,
-			...(freeze.detail ? { message: freeze.detail } : {}),
-			...(freeze.stack ? { stack: freeze.stack } : {}),
-		});
-		const detail = freeze.detail ? ` ${freeze.detail}` : '';
-		const stack = freeze.stack ? `\n${freeze.stack}` : '';
-
-		this.logger.warn(
-			`${entity.name} froze Discord for ${seconds} seconds (freeze ${count} this session).${detail}${stack}`,
-		);
 
 		if (disable) {
 			this.disable(entity);
 		}
 
-		show({
-			title: entity.name,
-			content: disable
-				? `Disabled ${entity.name} because it froze Discord for ${seconds} seconds.${detail}`
-				: `${entity.name} froze Discord for ${seconds} seconds.${detail}`,
+		announceFreeze(entity, freeze, count, disable, this.logger);
+	}
+
+	private recordStartFailure(
+		resolved: Addon<I>,
+		failure: Error,
+		phase: 'starting' | 'running',
+	): void {
+		this.logger.error(`Failed to start addon ${resolved.id}:`, failure);
+		this.errors.set(resolved.id, failure);
+		this.stateOf(resolved).failed = true;
+		void reportCrash({
+			kind: 'start-failure',
+			phase,
+			addon: crashReportAddon(resolved),
+			message: failure.message,
+			stack: failure.stack,
 		});
 	}
 
@@ -455,7 +443,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	private finishStop(
 		resolved: Addon<I>,
 		context: PluginContext | undefined,
-		scope: AddonScope | undefined,
+		scope: PluginScope | undefined,
 		error?: Error,
 	): boolean {
 		const newestFirst = [context, scope];
