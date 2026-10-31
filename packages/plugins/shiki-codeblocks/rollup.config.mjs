@@ -1,8 +1,8 @@
-import { createPluginConfig } from '@unbound-plugins/rollup-config';
+import { unbound } from '@unbound-app/cli/rollup';
 
 import { lazyBundled } from './rollup/lazy-bundled.mjs';
 
-const config = createPluginConfig(import.meta.url, {
+const config = unbound(import.meta.url, {
 	settingsPanel: true,
 	lazyModules: [
 		'highlight.js/lib/common',
