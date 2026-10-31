@@ -1,6 +1,7 @@
 import { View, ScrollView } from 'react-native';
 
-import { AddonList, InstallButton } from '~/ui/addons';
+import InstallButton from '~/ui/addons/install-button';
+import AddonList from '~/ui/addons/addon-list';
 import { SafeArea } from '~/metro/components';
 
 /**

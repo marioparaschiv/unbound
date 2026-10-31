@@ -2,8 +2,8 @@ import { memo } from 'react';
 
 import { useUnboundSettings } from '~/settings/unbound';
 import { Discord } from '~/metro/components';
+import { findByProps } from '~/metro/search';
 import { Manager } from '~/addons/manager';
-import { findByProps } from '~/metro';
 import { format } from '~/i18n/api';
 
 import FontPickerSheet from './font-picker-sheet';
