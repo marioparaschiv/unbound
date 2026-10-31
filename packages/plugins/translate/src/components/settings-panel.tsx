@@ -1,13 +1,11 @@
-import Page from '@unbound-plugins/shared/components/page';
-import { Discord } from '@unbound-app/api/metro/components';
+import { storage, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import { openLanguagePicker } from '~/components/language-picker-sheet';
 import { connectDiscord } from '~/login';
-import { settings } from '~/modules';
 
 function SettingsPanel() {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(addon.id);
 	const [connecting, setConnecting] = useState(false);
 	const signedIn = Boolean(store.get('refreshToken', ''));
 	const sourceLanguage = store.get('sourceLanguage', 'auto');
@@ -19,9 +17,9 @@ function SettingsPanel() {
 	}
 
 	return (
-		<Page>
-			<Discord.TableRowGroup title='Translate API'>
-				<Discord.TableRow
+		<ui.Page>
+			<ui.Section title='Translate API'>
+				<ui.Row
 					label={
 						connecting
 							? 'Connecting Discord account…'
@@ -39,9 +37,9 @@ function SettingsPanel() {
 					disabled={connecting}
 					onPress={connect}
 				/>
-			</Discord.TableRowGroup>
-			<Discord.TableRowGroup title='Languages'>
-				<Discord.TableRow
+			</ui.Section>
+			<ui.Section title='Languages'>
+				<ui.Row
 					label='Source Language'
 					subLabel={sourceLanguage}
 					arrow
@@ -55,7 +53,7 @@ function SettingsPanel() {
 						})
 					}
 				/>
-				<Discord.TableRow
+				<ui.Row
 					label='Target Language'
 					subLabel={targetLanguage}
 					arrow
@@ -68,8 +66,8 @@ function SettingsPanel() {
 						})
 					}
 				/>
-			</Discord.TableRowGroup>
-		</Page>
+			</ui.Section>
+		</ui.Page>
 	);
 }
 

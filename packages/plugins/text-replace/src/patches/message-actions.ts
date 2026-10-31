@@ -1,8 +1,9 @@
 import { applyRules } from '@unbound-plugins/shared/text-replace/rules';
+import { patcher } from '@unbound-app/api';
 
 import { RULES_CHANNEL_ID } from '~/constants';
 import { readRules } from '~/stored-rules';
-import { Messages, Patcher } from '~/modules';
+import { Messages } from '~/modules';
 
 type Message = { content: string };
 type MessageArgument = Partial<Message> | string | null | undefined;
@@ -26,7 +27,7 @@ export function isPatched(): boolean {
  * @returns A function that removes the patch.
  */
 export function patchMessageActions(): () => void {
-	const unpatch = Patcher.before(Messages, 'sendMessage', ({ args }) => {
+	const unpatch = patcher.before(Messages, 'sendMessage', ({ args }) => {
 		if (args[0] === RULES_CHANNEL_ID) return;
 
 		const message = (args as MessageArgument[]).find(isMessage);

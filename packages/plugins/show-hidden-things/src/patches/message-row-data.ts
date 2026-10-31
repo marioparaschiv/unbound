@@ -1,7 +1,9 @@
 import getTimeoutDeadline from '@unbound-plugins/shared/members/timeout-deadline';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import type { FluxGuildMember } from '@unbound-app/api/flux';
+import { patcher } from '@unbound-app/api';
 
-import { ChannelStore, GuildMemberStore, MessageRowData, Patcher } from '~/modules';
+import { ChannelStore, GuildMemberStore, MessageRowData } from '~/modules';
 
 type Message = {
 	guild_id?: string;
@@ -10,6 +12,10 @@ type Message = {
 	channelId?: string;
 	author?: { id?: string };
 	authorId?: string;
+};
+
+type Member = FluxGuildMember & {
+	communicationDisabledUntil?: string | null;
 };
 
 type Row = {
@@ -32,21 +38,22 @@ export function patchTimeoutIcons(): () => void {
 		return () => {};
 	}
 
-	return Patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+	return patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const row: Row | undefined = result?.message;
 		const message: Message | undefined = args[0]?.message;
 
 		if (!row || !message) return;
 
+		const channelId = message.channel_id ?? message.channelId;
 		const guildId =
 			message.guild_id ??
 			message.guildId ??
-			ChannelStore.getChannel(message.channel_id ?? message.channelId)?.guild_id;
+			(channelId ? ChannelStore.getChannel(channelId)?.guild_id : undefined);
 		const userId = message.author?.id ?? message.authorId ?? row.authorId;
 
 		if (!guildId || !userId) return;
 
-		const member = GuildMemberStore.getMember(guildId, userId);
+		const member: Member | null = GuildMemberStore.getMember(guildId, userId);
 
 		if (getTimeoutDeadline(member?.communicationDisabledUntil))
 			row.communicationDisabled = true;

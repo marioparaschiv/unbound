@@ -11,10 +11,10 @@ import {
 import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-sheet-row';
 import { findRenderTarget } from '@unbound-plugins/shared/react/render-target';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
-import { assets } from '@unbound-app/api';
+import { assets, patcher } from '@unbound-app/api';
 
 import { toOpenedSheet, type SheetProps, type SheetRef } from '~/opened-sheet';
-import { ActionSheetsFilter, Patcher } from '~/modules';
+import { ActionSheetsFilter } from '~/modules';
 import { SHEET_SECTIONS } from '~/constants';
 import { getSheetTargets } from '~/targets';
 import { openImage } from '~/open-image';
@@ -44,7 +44,7 @@ export function patchActionSheets(opened: SheetRef): Cleanup {
 			if (!Array.isArray(rows)) return;
 
 			const ActionSheetRow = getActionSheetRow();
-			const iconId = assets.getIDByName('ImageIcon');
+			const iconId = assets.getIdByName('ImageIcon');
 			const added = [];
 
 			for (const target of getSheetTargets(opened.current)) {
@@ -101,7 +101,7 @@ export function patchActionSheets(opened: SheetRef): Cleanup {
 
 				patchedHolders.add(target.holder);
 				unpatches.push(
-					Patcher.after(target.holder, target.key, ({ result }) =>
+					patcher.after(target.holder, target.key, ({ result }) =>
 						render(result, depth + 1),
 					),
 				);
@@ -135,7 +135,7 @@ export function patchActionSheets(opened: SheetRef): Cleanup {
 			return render;
 		}
 
-		const unpatchSheets = patchLazySheets(Patcher, ActionSheets, (key, props) => {
+		const unpatchSheets = patchLazySheets(patcher, ActionSheets, (key, props) => {
 			const sheet = toOpenedSheet(key, props);
 
 			if (sheet === undefined) return;

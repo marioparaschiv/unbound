@@ -1,9 +1,9 @@
 import type { RenderTarget } from '@unbound-plugins/shared/react/render-target';
+import { patcher } from '@unbound-app/api';
 
 import { selectedChannelId } from '~/selected-channel';
 import type { Sticker } from '@unbound-plugins/shared/stickers/staged-stickers';
 import type { Staging } from '~/staging';
-import { Patcher } from '~/modules';
 
 type PickerRowProps = {
 	channel?: { id?: string };
@@ -17,7 +17,7 @@ type PickerRowProps = {
  * @returns A function that removes the patch.
  */
 export function patchStickerPickerListRow(target: RenderTarget, staging: Staging): () => void {
-	return Patcher.before(target.holder, target.key, ({ args }) => {
+	return patcher.before(target.holder, target.key, ({ args }) => {
 		const props = args[0] as PickerRowProps | undefined;
 		const onPressSticker = props?.onPressSticker;
 

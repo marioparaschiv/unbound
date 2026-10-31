@@ -1,15 +1,32 @@
-import { metro, patcher } from '@unbound-app/api';
+import type * as Flux from '@unbound-app/api/flux';
+import { metro, flux } from '@unbound-app/api';
 
 import type { Sticker } from '@unbound-plugins/shared/stickers/staged-stickers';
 
 export type StickerProps = { animated: boolean; opaque: boolean; size: number; sticker: Sticker };
 
+export type SlowmodeChannel = Flux.FluxChannel & { rateLimitPerUser?: number };
+
+type DraftStore = Flux.FluxStore & {
+	getDraft(channelId: string, type: number): string | undefined;
+};
+
+type SelectedChannels = Flux.SelectedChannelStore & {
+	getCurrentlySelectedChannelId(): string | undefined;
+};
+
+declare module '@unbound-app/api/flux' {
+	interface FluxStores {
+		Draft: DraftStore;
+	}
+}
+
 // What the plugin waits for before it starts: every module below, by file path or else by name.
 export const RequiredModules = [
 	metro.filters.byProps('getBestActiveInputForChannelId'),
-	metro.filters.byStore('Draft'),
+	metro.filters.byFluxStore('Draft'),
 	metro.filters.byProps('sendMessage', 'receiveMessage'),
-	metro.filters.byStore('SelectedChannel'),
+	metro.filters.byFluxStore('SelectedChannel'),
 	['modules/stickers/native/Sticker.tsx', metro.filters.byName('Sticker')],
 	[
 		'modules/stickers/native/StickerPickerListRow.tsx',
@@ -20,9 +37,11 @@ export const RequiredModules = [
 ];
 
 export const ChatInputs = metro.findByProps('getBestActiveInputForChannelId', { lazy: true });
-export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
-export const DraftStore = metro.findStore('Draft', { lazy: true });
-export const ChannelStore = metro.findStore('Channel', { lazy: true });
+export const SelectedChannelStore = flux.getStore('SelectedChannel', {
+	lazy: true,
+}) as SelectedChannels;
+export const DraftStore = flux.getStore('Draft', { lazy: true });
+export const ChannelStore = flux.getStore('Channel', { lazy: true });
 export const MessageActions = metro.api.Messages;
 
 // Components are found with `interop: false`, by file path first, then by name.
@@ -45,5 +64,3 @@ export const FloatingChatInputContainer = metro.findByFilePath(
 	'modules/chat_input/native/FloatingChatInputContainer.tsx',
 	{ lazy: true, interop: false },
 );
-
-export const Patcher = patcher.createPatcher('astral.sticker-preview');
