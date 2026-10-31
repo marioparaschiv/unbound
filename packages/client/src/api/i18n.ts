@@ -18,6 +18,8 @@ type FormatVars = Record<string, string | number | boolean | Date>;
 type I18nLoadSuccess = { locale: string };
 
 type Localizations = {
+	messages: Record<string, string>;
+	/** @deprecated Use messages */
 	Messages: Record<string, string>;
 	format: (key: string, vars?: FormatVars) => string;
 };
@@ -233,8 +235,11 @@ async function ensureLocale(locale: string): Promise<void> {
 	}
 }
 
-/** The core `Messages` proxy, resolving Unbound's own UI strings against the active Discord locale. */
-export const Messages = createMessages(strings, () => currentLocale, enUS);
+/** The core messages proxy, resolving Unbound's own UI strings against the active Discord locale. */
+export const messages = createMessages(strings, () => currentLocale, enUS);
+
+/** @deprecated Use messages */
+export const Messages = messages;
 
 /**
  * @description Formats a localized string, interpolating ICU `MessageFormat` placeholders.
@@ -246,34 +251,38 @@ export function format(key: string, vars?: FormatVars): string {
 	const MessageFormat = getMessageFormat();
 
 	if (!MessageFormat) {
-		return Messages[key];
+		return messages[key];
 	}
 
-	return new MessageFormat(Messages[key]).format(vars);
+	return new MessageFormat(messages[key]).format(vars);
 }
 
 /**
- * @description Creates an isolated, in-memory `Messages`/`format` pair over an addon-supplied string table, sharing the active locale with core.
+ * @description Creates an isolated, in-memory `messages`/`format` pair over an addon-supplied string table, sharing the active locale with core.
  * @param table The addon's string store, keyed by locale then message key.
- * @returns A `Messages` proxy and `format` function scoped to the supplied table.
+ * @returns A `messages` proxy and `format` function scoped to the supplied table.
  */
-export function defineLocalizations(table: StringStore): Localizations {
-	const Messages = createMessages(table, () => currentLocale);
+export function defineMessages(table: StringStore): Localizations {
+	const messages = createMessages(table, () => currentLocale);
 
 	function format(key: string, vars?: FormatVars): string {
 		const MessageFormat = getMessageFormat();
 
 		if (!MessageFormat) {
-			return Messages[key];
+			return messages[key];
 		}
 
-		return new MessageFormat(Messages[key]).format(vars);
+		return new MessageFormat(messages[key]).format(vars);
 	}
 
-	return { Messages, format };
+	return { messages, Messages: messages, format };
 }
 
+/** @deprecated Use defineMessages */
+export const defineLocalizations = defineMessages;
+
 /**
+ * @internal
  * @description Loads the fallback and active locales, then subscribes to Discord locale changes. Fire-and-forget; never blocks startup. Twin of {@link destroy}.
  * @returns A promise that resolves once the initial locales have been ensured and the subscription is wired.
  */
@@ -310,6 +319,7 @@ export async function init(): Promise<void> {
 }
 
 /**
+ * @internal
  * @description Drains every active locale-change subscription. Idempotent. Twin of {@link init}.
  */
 export function destroy() {
@@ -362,4 +372,12 @@ export function destroy() {
 	wrappedMomentDefineLocale = null;
 }
 
-export default { Messages, format, defineLocalizations, init, destroy };
+export default {
+	messages,
+	Messages,
+	format,
+	defineMessages,
+	defineLocalizations,
+	init,
+	destroy,
+};
