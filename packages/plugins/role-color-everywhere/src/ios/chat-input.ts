@@ -1,31 +1,55 @@
-import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
-import { safeCall, safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
-import type { NativeHookToken, NativeObjCBridge } from '@unbound-app/api/native';
-import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
+import { getRoleColorAppearance, roleColorRuns } from '@unbound-plugins/shared/colors/role-colors';
 import findVisibleCells from '@unbound-plugins/shared/native/ios/visible-cells';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
-import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
+import type { NativePluginBridge } from '@unbound-app/api/native';
 
-import { currentGuildId, guildAliases, type GuildAliases } from '~/composer-aliases';
+import {
+	installComposerHooks,
+	restoreComposer,
+	setComposerMentions,
+	type ComposerMentions,
+} from '~/ios/ui-chat-input';
 import { ChannelStore, GuildMemberStore, SelectedChannelStore, UserStore } from '~/modules';
-import { createMentionPainter } from '~/ios/mention-painter';
-import { matchMention } from '~/mentions';
+import { currentGuildId, guildAliases } from '~/composer-aliases';
 import { PLUGIN_NAME } from '~/constants';
-import type { NativeValue } from '~/types';
 
-type TextViewState = {
-	applied: NativeValue;
-	original: NativeValue;
-	view: NativeValue;
-};
+const REFRESH_DELAY_MS = 250;
+
+function composerMentions(): ComposerMentions {
+	const guildId = currentGuildId();
+
+	if (!guildId) {
+		return { names: [], runs: {} };
+	}
+
+	const { names, owners } = guildAliases(guildId);
+	const runs: ComposerMentions['runs'] = {};
+
+	for (const name of names) {
+		const userId = owners.get(name);
+		const member = userId ? GuildMemberStore.getMember(guildId, userId) : null;
+		const { colors } = getRoleColorAppearance(member?.colorStrings, member?.colorString);
+
+		if (colors.length) {
+			runs[name] = roleColorRuns(`@${name}`, colors).map((run) => ({
+				length: run.text.length,
+				color: run.color,
+			}));
+		}
+	}
+
+	return { names: names.filter((name) => name in runs), runs };
+}
 
 /**
- * @description Paints mentions typed in the native chat input with the mentioned member's role colors.
- * @param objc The Objective-C bridge from `context.native`.
+ * @description Paints mentions typed in the native chat input with the mentioned member's role colors, from UI-thread hooks fed with the current guild's colored names.
+ * @param native The plugin's native bridge.
  * @returns A function that removes the hooks and restores the input's text and selection.
  */
-export function colorChatInputMentions(objc: NativeObjCBridge): () => Promise<void> {
+export function colorChatInputMentions(native: NativePluginBridge): () => Promise<void> {
+	const { objc, ui } = native;
 	const feature = `${PLUGIN_NAME}: composer mentions`;
 
 	if (
@@ -35,201 +59,26 @@ export function colorChatInputMentions(objc: NativeObjCBridge): () => Promise<vo
 		return async () => {};
 	}
 
-	const painter = createMentionPainter(objc);
-	const states = new Map<string, TextViewState>();
-	const pending = new Map<string, ReturnType<typeof setTimeout>>();
-	const updating = new Set<string>();
-	const dirty = new Set<string>();
-	const aliases = new Map<string, GuildAliases>();
-	let stopped = false;
+	const scope = ui.createScope();
+	let timer: ReturnType<typeof setTimeout> | undefined;
 
-	function aliasesFor(guildId: string): GuildAliases {
-		const cached = aliases.get(guildId) ?? guildAliases(guildId);
-
-		aliases.set(guildId, cached);
-
-		return cached;
+	function refresh() {
+		timer = undefined;
+		ui.run(setComposerMentions, composerMentions());
 	}
 
-	async function paint(view: NativeValue, key: string): Promise<void> {
-		if (!(await safeInvokeAsync(objc, view, 'window')) || stopped) return;
-
-		const guildId = currentGuildId();
-
-		if (!guildId) return;
-
-		const original: NativeValue = await safeInvokeAsync(objc, view, 'attributedText');
-
-		if (!original) return;
-
-		const state = states.get(key);
-
-		if (state && safeCall(objc, original, 'isEqual:', state.applied)) return;
-
-		if (state) states.delete(key);
-
-		const text = safeCall(objc, original, 'string');
-
-		if (typeof text !== 'string' || !text.includes('@')) return;
-
-		const painted = objc.alloc('NSMutableAttributedString');
-
-		if (!safeCall(objc, painted, 'initWithAttributedString:', original)) return;
-
-		let known = aliasesFor(guildId);
-		let refreshed = false;
-		let changed = false;
-
-		for (let at = text.indexOf('@'); at >= 0; at = text.indexOf('@', at + 1)) {
-			const attributes: NativeValue = safeCall(
-				objc,
-				original,
-				'attributesAtIndex:effectiveRange:',
-				at,
-				null,
-			);
-			const fontName = safeCall(objc, attributes?.NSFont, 'fontName');
-
-			// The composer bolds a completed mention; unbolded "@text" is still being typed.
-			if (typeof fontName !== 'string' || !/bold|semibold/i.test(fontName)) {
-				continue;
-			}
-
-			let name = matchMention(text, at, known.names, /[\s,.!?;:]/u);
-
-			if (!name && !refreshed) {
-				aliases.delete(guildId);
-				known = aliasesFor(guildId);
-				refreshed = true;
-				name = matchMention(text, at, known.names, /[\s,.!?;:]/u);
-			}
-
-			if (!name) {
-				continue;
-			}
-
-			const userId = known.owners.get(name);
-			const member = userId ? GuildMemberStore.getMember(guildId, userId) : null;
-			const appearance = getRoleColorAppearance(member?.colorStrings, member?.colorString);
-
-			if (!appearance.colors.length) {
-				continue;
-			}
-
-			await painter.paint(painted, `@${name}`, at, appearance.colors);
-			at += name.length;
-			changed = true;
-		}
-
-		if (!changed || stopped) return;
-
-		const selection = await safeInvokeAsync(objc, view, 'selectedRange');
-		const latest: NativeValue = await safeInvokeAsync(objc, view, 'attributedText');
-
-		if (!latest || !safeCall(objc, latest, 'isEqual:', original)) {
-			dirty.add(key);
-
-			return;
-		}
-
-		if (stopped || guildId !== currentGuildId()) return;
-
-		states.set(key, { applied: painted, original, view });
-		await safeInvokeAsync(objc, view, 'setAttributedText:', painted);
-
-		if (stopped) return;
-
-		if (selection) await safeInvokeAsync(objc, view, 'setSelectedRange:', selection);
+	function scheduleRefresh() {
+		timer ??= setTimeout(refresh, REFRESH_DELAY_MS);
 	}
 
-	async function update(view: NativeValue): Promise<void> {
-		if (stopped) return;
-
-		const key = viewKey(objc, view);
-
-		if (!key) return;
-
-		if (updating.has(key)) {
-			dirty.add(key);
-
-			return;
-		}
-
-		updating.add(key);
-
-		try {
-			await paint(view, key);
-		} finally {
-			updating.delete(key);
-
-			if (dirty.delete(key) && !stopped) schedule(view);
-		}
-	}
-
-	function schedule(view: NativeValue): void {
-		if (stopped) return;
-
-		const key = viewKey(objc, view);
-
-		if (!key || pending.has(key)) return;
-
-		const timer = setTimeout(() => {
-			pending.delete(key);
-
-			void update(view).catch((error) => {
-				if (!isCancellation(error)) {
-					console.error(`[${PLUGIN_NAME}] Failed to paint composer mentions:`, error);
-				}
-			});
-		}, 0);
-
-		pending.set(key, timer);
-	}
-
-	async function restore(key: string, state: TextViewState): Promise<void> {
-		const current: NativeValue = await safeInvokeAsync(objc, state.view, 'attributedText');
-
-		if (!safeCall(objc, current, 'isEqual:', state.applied)) return;
-
-		const selection = await safeInvokeAsync(objc, state.view, 'selectedRange');
-
-		updating.add(key);
-
-		try {
-			await safeInvokeAsync(objc, state.view, 'setAttributedText:', state.original);
-
-			if (selection) await safeInvokeAsync(objc, state.view, 'setSelectedRange:', selection);
-		} finally {
-			updating.delete(key);
-		}
-	}
-
-	const hooks: NativeHookToken[] = [];
-
-	try {
-		for (const selector of [
-			'setAttributedText:',
-			'setText:',
-			'textViewDidChange:',
-			'layoutSubviews',
-			'didMoveToWindow',
-		]) {
-			hooks.push(
-				objc.hook('DCDChatInputComponentView', selector, {
-					after: ({ self }) => schedule(self),
-				}),
-			);
-		}
-	} catch (error) {
-		for (const hook of hooks) hook.remove();
-
-		throw error;
-	}
+	ui.run(installComposerHooks, scope, composerMentions());
+	SelectedChannelStore.addChangeListener(scheduleRefresh);
+	GuildMemberStore.addChangeListener(scheduleRefresh);
 
 	void findVisibleCells(objc, 'DCDChatInputComponentView')
-		.then((views) => {
-			for (const view of views) schedule(view);
-		})
+		.then((views) =>
+			Promise.all(views.map((view) => objc.invokeAsync(view, 'setNeedsLayout', []))),
+		)
 		.catch((error) => {
 			if (!isCancellation(error)) {
 				console.error(`[${PLUGIN_NAME}] Failed to scan the composer:`, error);
@@ -237,20 +86,11 @@ export function colorChatInputMentions(objc: NativeObjCBridge): () => Promise<vo
 		});
 
 	return async () => {
-		stopped = true;
-
-		for (const hook of hooks) hook.remove();
-
-		for (const timer of pending.values()) clearTimeout(timer);
-
-		const painted = [...states];
-
-		states.clear();
-		await Promise.all(painted.map(([key, state]) => restore(key, state)));
-		pending.clear();
-		dirty.clear();
-		aliases.clear();
-		painter.clear();
+		SelectedChannelStore.removeChangeListener(scheduleRefresh);
+		GuildMemberStore.removeChangeListener(scheduleRefresh);
+		clearTimeout(timer);
+		ui.run(restoreComposer);
+		scope.dispose();
 	};
 }
 

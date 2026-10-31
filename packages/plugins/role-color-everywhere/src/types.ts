@@ -35,6 +35,8 @@ export type Channel = {
 export type MemberStore = {
 	getMember(guildId: string, userId: string): Member | null | undefined;
 	getMembers(guildId: string): Member[] | null | undefined;
+	addChangeListener(listener: () => void): void;
+	removeChangeListener(listener: () => void): void;
 };
 
 // Discord's render output has no published shape, so patches read it structurally and bail when it differs.
