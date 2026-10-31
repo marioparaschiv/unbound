@@ -14,6 +14,8 @@ type smokeFaultResult struct {
 	Observed string `json:"observed"`
 }
 
+const smokePluginSettings = `function pluginSettings() { return unbound.storage.getBucket('plugins'); }`
+
 const smokeFaultFixture = `function smokeFixture(id, name, bundle, capabilities) {
 	var manifest = { id: id, name: name, description: 'A smoke test fault fixture.', version: '1.0.0', main: 'index.js', authors: [{ name: 'Unbound smoke', id: '0' }] };
 	if (capabilities) manifest.capabilities = capabilities;
@@ -22,7 +24,8 @@ const smokeFaultFixture = `function smokeFixture(id, name, bundle, capabilities)
 function startedOthers(manager, id) {
 	return manager.getEntities().filter(function (entity) { return entity.id !== id && entity.started; }).length;
 }
-function settle(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }`
+function settle(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
+` + smokePluginSettings
 
 const smokeThrowExpression = `(async function () {
 	` + smokeFaultFixture + `
@@ -56,14 +59,14 @@ const smokeFreezeExpression = `(async function () {
 	await manager.start(id);
 	await settle(2500);
 	var entity = manager.getEntity(id);
-	var enabled = manager.settings.get('states', {})[id] === true;
-	var freezes = manager.freezes ? manager.freezes.get(id) || 0 : 0;
+	var enabled = pluginSettings().get('states', {})[id] === true;
+	var freezes = manager.freezes ? manager.freezes.get(id) || 0 : undefined;
 	var problem = '';
-	if (freezes < 2) problem = 'the watchdog attributed ' + freezes + ' of 2 freezes to the plugin that froze Discord';
+	if (freezes !== undefined && freezes < 2) problem = 'the watchdog attributed ' + freezes + ' of 2 freezes to the plugin that froze Discord';
 	else if (enabled || (entity && entity.started)) problem = 'a plugin that froze Discord twice was not disabled';
 	else if (startedOthers(manager, id) !== before) problem = 'other plugins stopped after one froze Discord';
 	await manager.delete(id);
-	return JSON.stringify({ name: 'freeze on start', problem: problem, observed: freezes + ' freezes attributed, ' + (enabled ? 'still enabled' : 'disabled') });
+	return JSON.stringify({ name: 'freeze on start', problem: problem, observed: (freezes === undefined ? 'freeze count not exposed' : freezes + ' freezes attributed') + ', ' + (enabled ? 'still enabled' : 'disabled') });
 })()`
 
 const smokeCrashFixtureID = "smoke.fault.crashes"
@@ -74,26 +77,27 @@ const smokeCrashArmExpression = `(async function () {
 	var id = '` + smokeCrashFixtureID + `';
 	var capabilities = ['native.ffi.call', 'native.ffi.symbols'];
 	var fixture = smokeFixture(id, 'Smoke fault: crashes', "({ start(context) { var ffi = context.native.ffi; ffi.call(ffi.symbol('abort'), { returnType: 'void', args: [] }); }, stop() {} })", capabilities);
-	var states = manager.settings.get('states', {});
+	var states = pluginSettings().get('states', {});
 	states[id] = false;
-	manager.settings.set('states', states);
+	pluginSettings().set('states', states);
 	await manager.reload(id, fixture.bundle, fixture.manifest);
-	var consents = manager.settings.get('consents', {});
+	var consents = pluginSettings().get('consents', {});
 	consents[id] = capabilities.slice().sort().join(',');
-	manager.settings.set('consents', consents);
-	states = manager.settings.get('states', {});
+	pluginSettings().set('consents', consents);
+	states = pluginSettings().get('states', {});
 	states[id] = true;
-	manager.settings.set('states', states);
+	pluginSettings().set('states', states);
 	await unbound.storage.persist();
 	setTimeout(function () { manager.start(id); }, 200);
 	return 'armed';
 })()`
 
 const smokeCrashCheckExpression = `(async function () {
+	` + smokePluginSettings + `
 	var manager = unbound.plugins;
 	var id = '` + smokeCrashFixtureID + `';
 	var entity = manager.getEntity(id);
-	var enabled = manager.settings.get('states', {})[id] === true;
+	var enabled = pluginSettings().get('states', {})[id] === true;
 	var others = manager.getEntities().filter(function (candidate) { return candidate.id !== id && candidate.started; }).length;
 	var problem = '';
 	if (!entity) problem = 'the plugin that crashed Discord was not loaded again after the relaunch';
