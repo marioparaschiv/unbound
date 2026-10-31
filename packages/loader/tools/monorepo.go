@@ -333,7 +333,7 @@ func runGoAndCoreTests(root string, runner commandRunner) error {
 
 func runCoreTests(root string, runner commandRunner) error {
 	buildPath := filepath.Join(root, "build", "shared-core")
-	configureArgs := []string{"-S", "core", "-B", buildPath, "-DUNBOUND_CORE_TESTS=ON", "-DCMAKE_BUILD_TYPE=Debug"}
+	configureArgs := []string{"-S", "core", "-B", buildPath, "-DASTRAL_CORE_TESTS=ON", "-DCMAKE_BUILD_TYPE=Debug"}
 	if runtime.GOOS != "windows" {
 		configureArgs = append(configureArgs, "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined")
 	}

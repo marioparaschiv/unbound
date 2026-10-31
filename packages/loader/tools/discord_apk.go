@@ -17,7 +17,7 @@ import (
 const (
 	discordAndroidPackage   = "com.discord"
 	defaultSniffURL         = "https://sniff.xhyrom.dev"
-	discordAPKUserAgent     = "unbound-loader-discord-apk/1.0 (+https://github.com/marioparaschiv/unbound)"
+	discordAPKUserAgent     = "astral-loader-discord-apk/1.0 (+https://github.com/marioparaschiv/unbound)"
 	discordAPKLookupLimit   = 45 * time.Second
 	discordAPKDownloadLimit = 30 * time.Minute
 )
@@ -306,7 +306,7 @@ func runDiscordAPK(args []string) error {
 	sources := discordAPKSources{
 		sniffURL:   strings.TrimRight(*sniffURL, "/"),
 		trackerURL: strings.TrimRight(*trackerURL, "/"),
-		client:     &http.Client{Timeout: discordAPKLookupLimit},
+		client:     lookupClient(discordAPKLookupLimit),
 	}
 	if *code == 0 {
 		latest, err := sources.latestCode(ctx, *channel)

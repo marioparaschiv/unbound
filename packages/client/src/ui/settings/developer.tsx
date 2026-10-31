@@ -1,5 +1,5 @@
+import { useUnboundSettings } from '~/lib/unbound-settings';
 import { Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
 import { Screens } from '~/lib/constants';
 import { Page } from '~/ui/components';
 import { Messages } from '~/api/i18n';
@@ -10,8 +10,7 @@ import { Icons } from '~/api/assets';
  */
 function DeveloperPage() {
 	const navigation = Discord.useNavigation();
-	const settings = useSettingsStore(
-		'unbound',
+	const settings = useUnboundSettings(
 		({ key }) => key?.startsWith('debugger') || key === 'error-boundary.enabled',
 	);
 
@@ -21,15 +20,15 @@ function DeveloperPage() {
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_DEBUGGER_ENABLED}
 					icon={<Discord.TableRowIcon source={Icons.BugIcon} />}
-					value={settings.get('debugger.enabled', false)}
-					onValueChange={() => settings.toggle('debugger.enabled', false)}
+					value={settings.get('debugger.enabled')}
+					onValueChange={() => settings.toggle('debugger.enabled')}
 				/>
 				<Discord.TableRow
 					label={Messages.UNBOUND_DEBUGGER_ADDRESS}
 					icon={<Discord.TableRowIcon source={Icons.LinkIcon} />}
 				>
 					<Discord.TextInput
-						value={settings.get('debugger.address', '')}
+						value={settings.get('debugger.address')}
 						placeholder={Messages.UNBOUND_DEBUGGER_ADDRESS_PLACEHOLDER}
 						onChange={(value: string) => settings.set('debugger.address', value)}
 					/>
@@ -40,8 +39,8 @@ function DeveloperPage() {
 				<Discord.TableSwitchRow
 					label={Messages.UNBOUND_ERROR_BOUNDARY}
 					icon={<Discord.TableRowIcon source={Icons.WarningIcon} />}
-					value={settings.get('error-boundary.enabled', true)}
-					onValueChange={() => settings.toggle('error-boundary.enabled', true)}
+					value={settings.get('error-boundary.enabled')}
+					onValueChange={() => settings.toggle('error-boundary.enabled')}
 				/>
 			</Discord.TableRowGroup>
 

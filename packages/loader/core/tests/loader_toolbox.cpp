@@ -48,9 +48,9 @@ int main()
     assert(!loader::toolbox::useCustomBundle(settings, "file:///sdcard/unbound.js"));
     assert(!loader::toolbox::useCustomBundle(settings, "https://"));
     assert(loader::toolbox::useCustomBundle(settings, "https://example.com/unbound.bundle"));
-    assert(settings.getString("unbound", "loader.update.url", "") ==
+    assert(settings.getString("astral", "loader.update.url", "") ==
            "https://example.com/unbound.bundle");
-    assert(settings.getBoolean("unbound", "loader.update.force", false));
+    assert(settings.getBoolean("astral", "loader.update.force", false));
 
     loader::BundleUpdater updater(
         root.string(), loader::updaterSettings(settings),
@@ -62,30 +62,32 @@ int main()
             return std::nullopt;
         });
 
-    touch(root / "unbound.bundle");
-    touch(root / "unbound.bundle.trust");
+    touch(root / "astral.bundle");
+    touch(root / "astral.bundle.trust");
     loader::toolbox::deleteBundle(settings, updater, root.string());
-    assert(!std::filesystem::exists(root / "unbound.bundle"));
-    assert(!std::filesystem::exists(root / "unbound.bundle.trust"));
-    assert(settings.getString("unbound", "loader.update.url", "none") == "none");
+    assert(!std::filesystem::exists(root / "astral.bundle"));
+    assert(!std::filesystem::exists(root / "astral.bundle.trust"));
+    assert(settings.getString("astral", "loader.update.url", "none") == "none");
 
     assert(loader::toolbox::toggleRecovery(settings));
-    assert(settings.getBoolean("unbound", "recovery", false));
+    assert(settings.getBoolean("astral", "recovery", false));
     assert(!loader::toolbox::toggleRecovery(settings));
 
     loader::toolbox::IssueReport report{
         "Android", {{"Device", "Pixel 9"}, {"Android Version", "16"}}, {{"Logs", "line"}}};
     const std::string body = loader::toolbox::issueBody(report);
-    assert(body.find("- **Device**: Pixel 9\n") != std::string::npos);
+    assert(body.find("- **Device:** Pixel 9\n") != std::string::npos);
     assert(body.find("### Logs\n```\nline\n```") != std::string::npos);
 
     const std::string url = loader::toolbox::issueURL(report);
-    assert(url.rfind("https://github.com/marioparaschiv/unbound/issues/new?title=bug%28Android%29",
-                     0) == 0);
+    assert(
+        url.rfind("https://github.com/marioparaschiv/unbound/issues/new?template=crash-report.yml",
+                  0) == 0);
+    assert(url.find("&platform=Android&environment=") != std::string::npos);
     assert(url.find(' ') == std::string::npos);
 
     assert(loader::toolbox::useCustomBundle(settings, "  https://example.com/padded.bundle \n"));
-    assert(settings.getString("unbound", "loader.update.url", "") ==
+    assert(settings.getString("astral", "loader.update.url", "") ==
            "https://example.com/padded.bundle");
 
     loader::BundleUpdater failing(
@@ -117,9 +119,9 @@ int main()
     assert(loader::toolbox::perform(context, "unknown", "").empty());
     const auto rows = loader::toolbox::issueEnvironment(
         {"Android", "Pixel", "16", "350.8", "1.0.0", "", "", true});
-    assert(rows.size() == 5);
-    assert(rows[1].first == "Android Version");
-    assert(rows.back().first == "Virtual Device" && rows.back().second == "Yes");
+    assert(rows.size() == 4);
+    assert(rows[0].first == "astral" && rows[2].second == "Pixel on Android 16");
+    assert(rows.back().first == "State" && rows.back().second == "stock, emulator");
 
     assert(loader::toolbox::factoryReset(root.string()));
     assert(loader::listDirectory(root.string()).empty());

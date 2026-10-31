@@ -1,7 +1,7 @@
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createServerFn } from '@tanstack/react-start';
 
-import { requireCaller } from '~/lib/api/caller';
+import requestCaller from '~/lib/api/request-caller';
 import type { Dashboard } from '~/lib/dashboard';
 import { loadDashboard } from '~/lib/dashboard';
 import app from '~/lib/app';
@@ -32,10 +32,9 @@ export const getSubmitOverview = createServerFn({ method: 'GET' }).handler(
  */
 export const getDashboard = createServerFn({ method: 'GET' }).handler(
 	async (): Promise<Dashboard> => {
-		const headers = getRequestHeaders();
 		const [caller, githubLinked] = await Promise.all([
-			requireCaller(app, headers),
-			isGitHubLinked(headers),
+			requestCaller(),
+			isGitHubLinked(getRequestHeaders()),
 		]);
 
 		return loadDashboard(app, caller, githubLinked);

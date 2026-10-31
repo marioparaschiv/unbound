@@ -1,3 +1,4 @@
+import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { watch, type FSWatcher } from 'node:fs';
 import { resolve, join, sep } from 'node:path';
 
@@ -144,7 +145,7 @@ function isInside(changedPath: string, dir: string): boolean {
 }
 
 function isManifestPath(changedPath: string): boolean {
-	return changedPath.endsWith(join(sep, 'manifest.json'));
+	return changedPath.endsWith(join(sep, MANIFEST_FILENAME));
 }
 
 function toBuiltAddon(addon: DiscoveredAddon): BuiltAddon {

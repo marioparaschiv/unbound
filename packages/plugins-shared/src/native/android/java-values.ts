@@ -63,6 +63,15 @@ export function javaReference(
 }
 
 /**
+ * @description Keys a Java view by its handle, for maps of per-view state.
+ * @param view The view.
+ * @returns The handle's id, or `undefined` when the value is not a handle.
+ */
+export function javaViewKey(view: NativeJavaValue): string | undefined {
+	return view.type === 'handle' ? view.value : undefined;
+}
+
+/**
  * @description Reads a Java result as a string.
  * @param value The result.
  * @returns The string, or `undefined` when the result is not a `String` or `char`.
@@ -130,4 +139,5 @@ export default {
 	javaReference,
 	javaString,
 	javaText,
+	javaViewKey,
 };

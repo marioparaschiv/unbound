@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Usage: launch.sh [--name N] [--port N] [--no-s3]
+# Usage: launch.sh [--name N] [--port N] [--no-s3] [--tags]
 # Starts a throwaway apps/web instance: fake OAuth, fake GitHub, fake Discord, throwaway Postgres database, local MinIO, seeded users.
 set -euo pipefail
 
@@ -7,12 +7,14 @@ set -euo pipefail
 
 PORT=""
 S3=1
+TAGS=0
 ARGS=("$@")
 
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--port) PORT="$2"; shift 2 ;;
 		--no-s3) S3=0; shift ;;
+		--tags) TAGS=1; shift ;;
 		--name) shift 2 ;;
 		*) echo "unknown argument: $1" >&2; exit 2 ;;
 	esac
@@ -133,6 +135,10 @@ bun "$SKILL_DIR/scripts/database.ts" create "$INSTANCE" "$DIR/web.env" || fail "
 	bun scripts/migrate.ts >"$DIR/migrate.log" 2>&1 || { cat "$DIR/migrate.log" >&2; exit 1; }
 	VERIFY_WEB_S3="$S3" VERIFY_WEB_GITHUB_TOKEN="$GITHUB_TOKEN" \
 		bun "$SKILL_DIR/scripts/seed.ts" "$DIR/sessions.json"
+
+	if [ "$TAGS" = 1 ]; then
+		bun "$SKILL_DIR/scripts/seed-tags.ts" "$DIR/sessions.json"
+	fi
 ) || fail "migrate or seed failed"
 
 # An already-running tmux server keeps its own PATH, so pass ours or `bun` may not resolve.

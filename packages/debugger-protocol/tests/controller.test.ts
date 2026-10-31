@@ -61,8 +61,7 @@ describe('ControllerClient.evaluate', () => {
 		const client = await connectedClient(bridge);
 		const result = await client.evaluate('slow()', 60_000);
 
-		expect(result.ok).toBe(true);
-		expect(result.value).toBe('42');
+		expect(result).toMatchObject({ ok: true, value: '42' });
 		expect(bridge.requests[0]).toMatchObject({ type: 'eval', code: 'slow()', timeout: 60_000 });
 	});
 

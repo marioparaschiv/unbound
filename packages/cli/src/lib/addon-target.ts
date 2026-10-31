@@ -19,6 +19,11 @@ export async function resolveAddonTarget(
 	buildTimeoutMs?: number,
 ): Promise<AddonTarget> {
 	const resolved = loadConfig();
+
+	if ('error' in resolved) {
+		return resolved;
+	}
+
 	const addons = await discoverAddons(resolved);
 	const directory = resolve(target);
 	const addon = addons.find((entry) => entry.id === target || resolve(entry.dir) === directory);

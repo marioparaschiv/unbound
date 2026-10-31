@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { highlightCodeToTokens, shouldUseHighlightJs } from './highlight-js';
+import { highlightCodeToTokens, shouldUseHighlightJs } from '~/highlight-js';
 
 describe('highlightCodeToTokens', () => {
 	test('colors keywords and splits lines', () => {

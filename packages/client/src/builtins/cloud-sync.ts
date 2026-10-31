@@ -1,7 +1,7 @@
 import { SYNC_LOCAL_STORE_PREFIX } from '@unbound-app/contracts/sync';
 import debounce from '@unbound-app/utils/debounce';
 
-import { getMode, isApplying, isEnabled, sync } from '~/lib/cloud-sync';
+import { getMode, isApplying, isEnabled, sync } from '~/managers/cloud-sync';
 import storage from '~/api/storage';
 
 /** How long local changes settle before they are synced. */

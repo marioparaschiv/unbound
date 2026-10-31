@@ -1,0 +1,265 @@
+    r10 = r7.__d;
+    r0 = 6290;
+    r9 = [19, 21, 560, 578, 4421, 4759, 6291, 5085, 5378, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun6291: for(var _fun6291_ip = 0; ; ) switch(_fun6291_ip) {
+case 0:
+            r4 = a1;
+            var _closure0_slot0 = r4;
+            r2 = a5;
+            r3 = a6;
+            var _closure0_slot1 = r3;
+            r1 = global;
+            r8 = r1.Object;
+            r7 = r8.defineProperty;
+            r6 = '__esModule';
+            r1 = {'value': true};
+            r1 = r7.bind(r8)(r2, r6, r1);
+            r6 = r3[r0];
+            r0 = undefined;
+            r1 = a3;
+            r1 = r1.bind(r0)(r6);
+            var _closure0_slot2 = r1;
+            r1 = r3[r1];
+            r1 = r4.bind(r0)(r1);
+            r6 = r1.jsx;
+            var _closure0_slot3 = r6;
+            r1 = r1.jsxs;
+            var _closure0_slot4 = r1;
+            r1 = r3[r2];
+            r6 = r4.bind(r0)(r1);
+            r1 = r6.isReactCompilerEnabled;
+            r1 = r1.bind(r6)();
+            if(r1) { _fun6291_ip = 127; continue _fun6291 }
+case 120:
+            r1 = function(a0) { // Original name: ErrorText, environment: r5
+                r2 = a0;
+                r8 = r2.children;
+                r7 = r2.style;
+                r0 = undefined;
+                var _closure1_slot0 = r0;
+                r6 = _closure0_slot0;
+                r5 = _closure0_slot1;
+                r2 = r5[r4];
+                r3 = r6.bind(r0)(r2);
+                r2 = r3.getNodeText;
+                r10 = r2.bind(r3)(r8);
+                _closure1_slot0 = r10;
+                r9 = _closure0_slot2;
+                r3 = r9.useEffect;
+                r2 = new Array(1);
+                r2[0] = r10;
+                r1 = function() { // Environment: r1
+                    _fun93227: for(var _fun93227_ip = 0; ; ) switch(_fun93227_ip) {
+case 0:
+                        r4 = _closure1_slot0;
+                        r0 = null;
+                        r0 = r0 != r4;
+                        if(!r0) { _fun93227_ip = 24; continue _fun93227 }
+case 16:
+                        r2 = '';
+                        r0 = r2 !== r4;
+case 24:
+                        if(!r0) { _fun93227_ip = 66; continue _fun93227 }
+case 27:
+                        r3 = _closure0_slot0;
+                        r2 = _closure0_slot1;
+                        r2 = r2[r5];
+                        r0 = undefined;
+                        r2 = r3.bind(r0)(r2);
+                        r3 = r2.AccessibilityAnnouncer;
+                        r2 = r3.announce;
+                        r2 = r2.bind(r3)(r4);
+case 66:
+                        r0 = undefined;
+                        return r0;
+                    }
+                };
+                r1 = r3.bind(r9)(r1, r2);
+                r3 = _closure0_slot4;
+                r1 = r5[r8];
+                r1 = r6.bind(r0)(r1);
+                r2 = r1.Stack;
+                r1 = {'direction': 'horizontal', 'spacing': 4, 'align': 'flex-start', 'style': null, 'children': null};
+                r1[3] = r7;
+                r7 = _closure0_slot3;
+                r4 = r5[r6];
+                r4 = r6.bind(r0)(r4);
+                r9 = r4.CircleErrorIcon;
+                r4 = {'size': 'xs', 'color': 'text-feedback-critical'};
+                r9 = r7.bind(r0)(r9, r4);
+                r4 = new Array(2);
+                r4[0] = r9;
+                r5 = r5[r7];
+                r5 = r6.bind(r0)(r5);
+                r6 = r5.Text;
+                r5 = {'variant': 'text-xs/medium', 'color': 'text-feedback-critical', 'children': null};
+                r5[2] = r8;
+                r5 = r7.bind(r0)(r6, r5);
+                r4[1] = r5;
+                r1[4] = r4;
+                r1 = r3.bind(r0)(r2, r1);
+                return r1;
+            };
+            _fun6291_ip = 132; continue _fun6291;
+case 127:
+            r1 = function(a0) { // Original name: ErrorText, environment: r5
+                _fun38741: for(var _fun38741_ip = 0; ; ) switch(_fun38741_ip) {
+case 0:
+                    r2 = a0;
+                    r7 = _closure0_slot0;
+                    r3 = _closure0_slot1;
+                    r4 = r3[r3];
+                    r1 = undefined;
+                    r5 = r7.bind(r1)(r4);
+                    r4 = r5.c;
+                    r0 = 11;
+                    r4 = r4.bind(r5)(r0);
+                    r9 = r2.children;
+                    r6 = r2.style;
+                    r2 = r4[r0];
+                    if(!(r2 === r9)) { _fun38741_ip = 62; continue _fun38741 }
+case 56:
+                    r12 = r4[r1];
+                    _fun38741_ip = 98; continue _fun38741;
+case 62:
+                    r2 = r3[r4];
+                    r5 = r7.bind(r1)(r2);
+                    r2 = r5.getNodeText;
+                    r2 = r2.bind(r5)(r9);
+                    r0 = 0;
+                    r4[r0] = r9;
+                    r0 = 1;
+                    r4[r0] = r2;
+                    r12 = r2;
+case 98:
+                    var _closure1_slot0 = r12;
+                    r5 = r4[r2];
+                    if(!(r5 === r12)) { _fun38741_ip = 123; continue _fun38741 }
+case 113:
+                    r11 = r4[r3];
+                    r10 = r4[r4];
+                    _fun38741_ip = 165; continue _fun38741;
+case 123:
+                    r2 = function() { // Original name: f, environment: r2
+                        _fun93226: for(var _fun93226_ip = 0; ; ) switch(_fun93226_ip) {
+case 0:
+                            r4 = _closure1_slot0;
+                            r0 = null;
+                            r0 = r0 != r4;
+                            if(!r0) { _fun93226_ip = 24; continue _fun93226 }
+case 16:
+                            r2 = '';
+                            r0 = r2 !== r4;
+case 24:
+                            if(!r0) { _fun93226_ip = 66; continue _fun93226 }
+case 27:
+                            r3 = _closure0_slot0;
+                            r2 = _closure0_slot1;
+                            r2 = r2[r5];
+                            r0 = undefined;
+                            r2 = r3.bind(r0)(r2);
+                            r3 = r2.AccessibilityAnnouncer;
+                            r2 = r3.announce;
+                            r2 = r2.bind(r3)(r4);
+case 66:
+                            r0 = undefined;
+                            return r0;
+                        }
+                    };
+                    r5 = new Array(1);
+                    r5[0] = r12;
+                    r0 = 2;
+                    r4[r0] = r12;
+                    r0 = 3;
+                    r4[r0] = r2;
+                    r0 = 4;
+                    r4[r0] = r5;
+                    r10 = r5;
+                    r11 = r2;
+case 165:
+                    r5 = _closure0_slot2;
+                    r2 = r5.useEffect;
+                    r2 = r2.bind(r5)(r11, r10);
+                    r5 = r4[r5];
+                    r2 = global;
+                    r11 = r2.Symbol;
+                    r10 = r11.for;
+                    r2 = 'react.memo_cache_sentinel';
+                    r2 = r10.bind(r11)(r2);
+                    if(!(r5 !== r2)) { _fun38741_ip = 218; continue _fun38741 }
+case 212:
+                    r10 = r4[r5];
+                    _fun38741_ip = 263; continue _fun38741;
+case 218:
+                    r11 = _closure0_slot3;
+                    r2 = r3[r6];
+                    r2 = r7.bind(r1)(r2);
+                    r5 = r2.CircleErrorIcon;
+                    r2 = {'size': 'xs', 'color': 'text-feedback-critical'};
+                    r2 = r11.bind(r1)(r5, r2);
+                    r0 = 5;
+                    r4[r0] = r2;
+                    r10 = r2;
+case 263:
+                    r2 = r4[r6];
+                    if(!(r2 === r9)) { _fun38741_ip = 277; continue _fun38741 }
+case 271:
+                    r5 = r4[r7];
+                    _fun38741_ip = 332; continue _fun38741;
+case 277:
+                    r12 = _closure0_slot3;
+                    r2 = r3[r7];
+                    r2 = r7.bind(r1)(r2);
+                    r11 = r2.Text;
+                    r2 = {'variant': 'text-xs/medium', 'color': 'text-feedback-critical', 'children': null};
+                    r2[2] = r9;
+                    r2 = r12.bind(r1)(r11, r2);
+                    r0 = 6;
+                    r4[r0] = r9;
+                    r0 = 7;
+                    r4[r0] = r2;
+                    r5 = r2;
+case 332:
+                    r2 = r4[r8];
+                    if(!(r2 === r6)) { _fun38741_ip = 354; continue _fun38741 }
+case 340:
+                    r2 = r4[r9];
+                    if(!(r2 === r5)) { _fun38741_ip = 354; continue _fun38741 }
+case 348:
+                    r2 = r4[r10];
+                    _fun38741_ip = 433; continue _fun38741;
+case 354:
+                    r8 = _closure0_slot4;
+                    r3 = r3[r8];
+                    r3 = r7.bind(r1)(r3);
+                    r7 = r3.Stack;
+                    r3 = {'direction': 'horizontal', 'spacing': 4, 'align': 'flex-start', 'style': null, 'children': null};
+                    r3[3] = r6;
+                    r9 = new Array(2);
+                    r9[0] = r10;
+                    r9[1] = r5;
+                    r3[4] = r9;
+                    r3 = r8.bind(r1)(r7, r3);
+                    r0 = 8;
+                    r4[r0] = r6;
+                    r0 = 9;
+                    r4[r0] = r5;
+                    r0 = 10;
+                    r4[r0] = r3;
+                    r2 = r3;
+case 433:
+                    return r2;
+                }
+            };
+case 132:
+            r3 = r3[r9];
+            r5 = r4.bind(r0)(r3);
+            r4 = r5.fileFinishedImporting;
+            r3 = 'design/components/ErrorText/native/ErrorText.native.tsx';
+            r3 = r4.bind(r5)(r3);
+            r2['ErrorText'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

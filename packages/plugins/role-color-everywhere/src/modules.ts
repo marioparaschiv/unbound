@@ -69,6 +69,6 @@ export const VoiceUserNameItem = metro.findByFilePath(
 	{ interop: false, lazy: true },
 );
 
-export const settings = storage.getStore('unbound.role-color-everywhere');
+export const settings = storage.getStore('astral.role-color-everywhere');
 
-export const Patcher = patcher.createPatcher('unbound.role-color-everywhere');
+export const Patcher = patcher.createPatcher('astral.role-color-everywhere');

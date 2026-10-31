@@ -1,0 +1,190 @@
+name: Loader Core
+
+on:
+    workflow_call:
+    workflow_dispatch:
+
+concurrency:
+    group: core-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+    cancel-in-progress: true
+
+permissions:
+    contents: read
+
+defaults:
+    run:
+        working-directory: packages/loader
+
+jobs:
+    core-tests:
+        name: Shared core tests
+        runs-on: ubuntu-26.04
+        timeout-minutes: 12
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Setup ccache
+              uses: ./.github/actions/setup-ccache
+              with:
+                  key: core-tests
+
+            - name: Configure core
+              run: cmake -S core -B build/core -DASTRAL_CORE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
+
+            - name: Build core
+              run: cmake --build build/core -j"$(nproc)"
+
+            - name: Run core tests
+              run: ctest --test-dir build/core --output-on-failure --timeout 120 -j"$(nproc)"
+
+            - name: Report the compiler cache
+              if: ${{ !cancelled() }}
+              run: |
+                  {
+                      echo "### Compiler cache"
+                      echo
+                      echo '```'
+                      ccache --show-stats
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Save the compiler cache
+              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ${{ runner.temp }}/ccache
+                  key: ccache-${{ runner.os }}-core-tests-${{ github.sha }}
+
+    native-jsi-fuzz:
+        name: Host Hermes bridge tests and fuzzing
+        runs-on: ubuntu-26.04
+        timeout-minutes: 40
+        env:
+            HERMES_TAG: hermes-v250829098.0.14
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Fetch Hermes
+              run: git clone --depth 1 --branch "$HERMES_TAG" https://github.com/facebook/hermes.git build/hermes-src
+
+            - name: Check Hermes matches the vendored JSI
+              run: cmp vendor/react/jsi/jsi.h build/hermes-src/API/jsi/jsi/jsi.h
+
+            - name: Pin Hermes and vendored source times
+              run: find build/hermes-src vendor -exec touch -h -d '2000-01-01T00:00:00Z' {} +
+
+            - name: Cache the Hermes build
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: packages/loader/build/jsi-fuzz
+                  key: jsi-fuzz-ninja-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}
+
+            - name: Install libffi, Ninja and lld
+              run: |
+                  sudo apt-get update -qq
+                  sudo apt-get install -y -qq libffi-dev ninja-build lld
+
+            - name: Setup ccache
+              uses: ./.github/actions/setup-ccache
+              with:
+                  key: hermes-bridge
+
+            - name: Configure the fuzzer
+              run: cmake -S core -B build/jsi-fuzz -G Ninja -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DASTRAL_CORE_TESTS=ON -DASTRAL_CORE_JSI_FUZZ=ON -DASTRAL_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all"
+
+            - name: Build the Hermes tests and fuzzer
+              run: cmake --build build/jsi-fuzz --target native_platform_hermes native_runtime_hermes native_preload_hermes native_fabric_hermes native_handle_leases_hermes native_struct_layouts_hermes native_jsi_fuzz -j"$(nproc)"
+
+            - name: Report the compiler cache
+              if: ${{ !cancelled() }}
+              run: |
+                  {
+                      echo "### Compiler cache"
+                      echo
+                      echo '```'
+                      ccache --show-stats
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Save the compiler cache
+              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ${{ runner.temp }}/ccache
+                  key: ccache-${{ runner.os }}-hermes-bridge-${{ github.sha }}
+
+            - name: Test the native bridge on Hermes
+              run: |
+                  build/jsi-fuzz/native_platform_hermes
+                  build/jsi-fuzz/native_preload_hermes
+                  build/jsi-fuzz/native_fabric_hermes
+                  build/jsi-fuzz/native_handle_leases_hermes
+                  build/jsi-fuzz/native_struct_layouts_hermes
+                  build/jsi-fuzz/native_runtime_hermes | tee runtime.log
+                  grep -q "FFI included" runtime.log
+
+            - name: Fuzz
+              env:
+                  ASTRAL_FUZZ_ITERATIONS: '20000'
+              run: build/jsi-fuzz/native_jsi_fuzz
+
+    native-bridge-fuzz:
+        name: Fuzz the native bridge
+        runs-on: ubuntu-26.04
+        timeout-minutes: 8
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Setup ccache
+              uses: ./.github/actions/setup-ccache
+              with:
+                  key: bridge-fuzz
+
+            - name: Configure the fuzzer
+              run: cmake -S core -B build/fuzz -DASTRAL_CORE_FUZZ=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
+
+            - name: Build the fuzzer
+              run: cmake --build build/fuzz --target native_bridge_libfuzzer -j"$(nproc)"
+
+            - name: Report the compiler cache
+              if: ${{ !cancelled() }}
+              run: |
+                  {
+                      echo "### Compiler cache"
+                      echo
+                      echo '```'
+                      ccache --show-stats
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Save the compiler cache
+              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ${{ runner.temp }}/ccache
+                  key: ccache-${{ runner.os }}-bridge-fuzz-${{ github.sha }}
+
+            - name: Fuzz for a minute
+              run: |
+                  mkdir -p build/fuzz/corpus
+                  build/fuzz/native_bridge_libfuzzer -max_total_time=60 -max_len=4096 -artifact_prefix=build/fuzz/ build/fuzz/corpus core/tests/fuzz/corpus
+
+            - name: Upload crashing inputs
+              if: failure()
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: native bridge fuzz crashes
+                  path: packages/loader/build/fuzz/crash-*
+                  retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}

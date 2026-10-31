@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isThemeUrl, loadThemeDefinition } from './themes';
+import { isThemeUrl, loadThemeDefinition } from '~/themes';
 
 function serve(themes: Record<string, string>, fetched: string[] = []) {
 	return async (url: string) => {

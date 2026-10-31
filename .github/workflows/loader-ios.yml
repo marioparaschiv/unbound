@@ -2,6 +2,13 @@ name: Loader Build iOS
 
 on:
     workflow_call:
+        secrets:
+            ATTESTATION_PK:
+                required: false
+            DKRYPT_API_KEY:
+                required: false
+            GPG_KEY:
+                required: false
         inputs:
             version:
                 default: ''
@@ -33,6 +40,9 @@ on:
             pr_number:
                 default: ''
                 type: string
+            skip_smoke:
+                default: false
+                type: boolean
             source_ipa_artifact:
                 default: ''
                 type: string
@@ -59,7 +69,7 @@ on:
 permissions: {}
 
 concurrency:
-    group: ios-${{ github.workflow }}-${{ github.ref }}
+    group: ios-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
     cancel-in-progress: false
 
 env:
@@ -84,7 +94,7 @@ jobs:
             deb_filename: ${{ steps.set-deb-filename.outputs.filename }}
         env:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
+            ASTRAL_PR_NUMBER: ${{ inputs.pr_number || '' }}
             HOMEBREW_NO_AUTO_UPDATE: 1
             HOMEBREW_NO_INSTALL_CLEANUP: 1
 
@@ -92,16 +102,11 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   submodules: recursive
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
-
-            - name: Test tools
-              run: go test -count=1 ./...
-
-            - name: Test workflows
-              run: go -C workflow-tests test -count=1 ./...
 
             - name: Check cache
               run: printf 'upstream_heads=%s-%s\n' "$(git ls-remote https://github.com/theos/theos | awk 'NR == 1 { print $1 }')" "$(git ls-remote https://github.com/theos/sdks | awk 'NR == 1 { print $1 }')" >> "$GITHUB_ENV"
@@ -157,18 +162,49 @@ jobs:
                   CDN_URL: ${{ vars.CDN_URL }}
               run: |
                   if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then
-                    echo "UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
+                    echo "ASTRAL_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
                   fi
 
+            - name: Setup ccache
+              uses: ./.github/actions/setup-ccache
+              with:
+                  key: ios-tweak
+
             - name: Build package
-              run: go run ./tools build tweak --configuration release --non-interactive
+              env:
+                  CCACHE_DEPEND: 'true'
+                  CCACHE_SLOPPINESS: modules,time_macros,include_file_mtime,include_file_ctime
+              run: |
+                  set -euo pipefail
+                  TARGET_CC="ccache $(xcrun -sdk iphoneos -f clang)"
+                  TARGET_CXX="ccache $(xcrun -sdk iphoneos -f clang++)"
+                  export TARGET_CC TARGET_CXX
+                  go run ./tools build tweak --configuration release --non-interactive
+
+            - name: Report the compiler cache
+              if: ${{ !cancelled() }}
+              run: |
+                  {
+                      echo "### Compiler cache"
+                      echo
+                      echo '```'
+                      ccache --show-stats
+                      echo '```'
+                  } >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Save the compiler cache
+              if: ${{ !cancelled() && github.ref == 'refs/heads/main' }}
+              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              with:
+                  path: ${{ runner.temp }}/ccache
+                  key: ccache-${{ runner.os }}-ios-tweak-${{ github.sha }}
 
             - name: Collect tweak symbols and UUIDs
               run: |
                   set -euo pipefail
                   mkdir -p symbols
                   for architecture in arm64 arm64e; do
-                    binary="ios/.theos/obj/${architecture}/Unbound.dylib"
+                    binary="ios/.theos/obj/${architecture}/astral.dylib"
                     bundle="${binary}.dSYM"
                     test -f "$binary"
                     test -d "$bundle"
@@ -176,7 +212,7 @@ jobs:
                     symbols_uuid=$(dwarfdump --uuid "$bundle" | awk '{print $2}')
                     test -n "$binary_uuid"
                     test "$binary_uuid" = "$symbols_uuid"
-                    cp -R "$bundle" "symbols/${architecture}-Unbound.dylib.dSYM"
+                    cp -R "$bundle" "symbols/${architecture}-astral.dylib.dSYM"
                     printf '%s %s\n' "$architecture" "$binary_uuid" >> symbols/uuids.txt
                   done
                   test -s symbols/uuids.txt
@@ -223,6 +259,8 @@ jobs:
         steps:
             - name: Checkout resolver
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
@@ -255,7 +293,7 @@ jobs:
             - name: Decrypt the source ipa
               id: dkrypt
               if: inputs.source_ipa_artifact == '' && inputs.ipa_url == ''
-              uses: castdrian/dkrypt@v1.1.1
+              uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
               with:
                   api-url: ${{ inputs.dkrypt_base_url }}
                   api-key: ${{ secrets.DKRYPT_API_KEY }}
@@ -323,6 +361,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   submodules: recursive
 
             - name: Select Xcode Version
@@ -388,7 +427,7 @@ jobs:
 
             - name: Set ipa filename
               id: set-ipa-filename
-              run: echo "filename=${{ env.APP_NAME }}.ipa" >> "$GITHUB_OUTPUT"
+              run: echo "filename=$APP_NAME.ipa" >> "$GITHUB_OUTPUT"
 
     build-simulator:
         if: *only_build_check
@@ -402,7 +441,7 @@ jobs:
         needs: build-ipa
         env:
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
+            ASTRAL_PR_NUMBER: ${{ inputs.pr_number || '' }}
         outputs:
             simulator_url: ${{ steps.upload-simulator.outputs.artifact-url }}
             simulator_filename: ${{ steps.set-simulator-filename.outputs.filename }}
@@ -410,6 +449,8 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
@@ -433,38 +474,40 @@ jobs:
                   restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
 
             - name: Build simulator
-              run: go run ./tools build simulator --ipa "${APP_NAME}.ipa" --output unbound-ios-simulator.zip --configuration release --non-interactive
+              run: go run ./tools build simulator --ipa "${APP_NAME}.ipa" --output astral-ios-simulator.zip --configuration release --non-interactive
 
             - name: Upload iOS Simulator artifact
               id: upload-simulator
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: ios-simulator
-                  path: packages/loader/unbound-ios-simulator.zip
+                  path: packages/loader/astral-ios-simulator.zip
                   retention-days: ${{ github.event_name == 'pull_request' && 14 || 0 }}
 
             - name: Attest iOS Simulator artifact
               if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
               uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
               with:
-                  subject-path: packages/loader/unbound-ios-simulator.zip
+                  subject-path: packages/loader/astral-ios-simulator.zip
 
             - name: Set simulator filename
               id: set-simulator-filename
-              run: echo "filename=unbound-ios-simulator.zip" >> "$GITHUB_OUTPUT"
+              run: echo "filename=astral-ios-simulator.zip" >> "$GITHUB_OUTPUT"
 
     smoke-simulator:
         name: Smoke test the simulator build
-        if: *only_build_check
+        if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
         needs: build-simulator
         runs-on: macos-26
-        timeout-minutes: 45
+        timeout-minutes: 30
         permissions:
             contents: read
+            actions: read
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   fetch-depth: 1
 
             - name: Setup Go tools
@@ -472,8 +515,6 @@ jobs:
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
 
             - name: Build the client and the plugins
               working-directory: .
@@ -494,7 +535,7 @@ jobs:
               id: app
               run: |
                   set -euo pipefail
-                  unzip -q smoke/package/unbound-ios-simulator.zip -d smoke/app
+                  unzip -q smoke/package/astral-ios-simulator.zip -d smoke/app
                   app=$(find smoke/app -maxdepth 2 -type d -name Discord.app -print -quit)
                   test -n "$app"
                   echo "path=$app" >> "$GITHUB_OUTPUT"
@@ -502,10 +543,17 @@ jobs:
             - name: Run the smoke test
               env:
                   APP_PATH: ${{ steps.app.outputs.path }}
-              run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --timeout 25m --bundle-budget 8m --plugins-budget 8m
+              run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
+
+            - name: Compare startup and the console with main
+              if: success() && github.event_name == 'pull_request'
+              continue-on-error: true
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: go run ./tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY" --artifact "ios smoke test" --report smoke/artifacts/comparison.md
 
             - name: Upload smoke test logs
-              if: always()
+              if: ${{ !cancelled() }}
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
                   name: ios smoke test
@@ -515,7 +563,7 @@ jobs:
 
     deploy-pages:
         if: |
-            always() &&
+            !cancelled() &&
             (
               inputs.only_app_repo == true ||
               inputs.only_apt_repo == true
@@ -536,6 +584,8 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
@@ -551,7 +601,7 @@ jobs:
               if: inputs.only_apt_repo == true
               run: |
                   mkdir -p apt-repo/repo/debs
-                  LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("loader-v")) and (.isPrerelease | not))][0].tagName')
+                  LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("discord-")) and (.tagName | endswith("-ios")) and (.isPrerelease | not))][0].tagName')
                   gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*arm64.deb' --dir apt-repo/repo/debs --clobber
 
             - name: Capture new deb filename
@@ -574,26 +624,18 @@ jobs:
               run: |
                   set -euo pipefail
                   if [ -z "$VERSION_SELECTOR" ]; then
-                    LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("loader-v")) and (.isPrerelease | not))][0].tagName')
+                    LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("discord-")) and (.tagName | endswith("-ios")) and (.isPrerelease | not))][0].tagName')
                     gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
                   else
                     selector="${VERSION_SELECTOR#v}"
-                    tag="loader-v$selector"
-                    if ! gh release download "$tag" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber; then
-                      if [[ "$selector" == *_* ]]; then
-                        train="${selector%%_*}"
-                        build="${selector#*_}"
-                        if [[ "$train" != *.* ]]; then
-                          gh release download "loader-v${train}.0_${build}" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
-                        else
-                          exit 1
-                        fi
-                      elif [[ "$selector" != *.* ]]; then
-                        gh release download "${tag}.0" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
-                      else
-                        exit 1
-                      fi
-                    fi
+                    selector="${selector%-ios-testflight}"
+                    train="${selector%%_*}"
+                    build=""
+                    if [[ "$selector" == *_* ]]; then build="_${selector#*_}"; fi
+                    if [[ "$train" != *.* ]]; then train="${train}.0"; fi
+                    platform=ios
+                    if [ -n "$build" ]; then platform=ios-testflight; fi
+                    gh release download "discord-${train}${build}-${platform}" --repo "${{ github.repository }}" --pattern '*.ipa' --clobber
                   fi
 
             - name: Restore live site state
@@ -629,6 +671,7 @@ jobs:
             - name: Update app-repo.json
               if: inputs.only_apt_repo != true
               env:
+                  SOURCE_IS_TESTFLIGHT: ${{ needs.resolve-source-ipa.outputs.is_testflight }}
                   VERSION_SELECTOR: ${{ inputs.version }}
               run: |
                   set -euo pipefail
@@ -643,7 +686,7 @@ jobs:
                       IS_TESTFLIGHT=false
                     fi
                   else
-                    IS_TESTFLIGHT="${{ needs.resolve-source-ipa.outputs.is_testflight }}"
+                    IS_TESTFLIGHT="$SOURCE_IS_TESTFLIGHT"
                   fi
 
                   if [[ "$IS_TESTFLIGHT" == true ]]; then
@@ -657,7 +700,9 @@ jobs:
                   NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
                   DATE=$(date -u +"%Y-%m-%d")
                   IPA_SIZE=$(stat -c%s "$APP_FILE")
-                  DOWNLOAD_URL=https://github.com/${{ github.repository }}/releases/download/loader-v$VERSION/$NAME.ipa
+                  RELEASE_TAG="discord-$VERSION-ios"
+                  if [[ "$IS_TESTFLIGHT" == true ]]; then RELEASE_TAG="discord-$VERSION-ios-testflight"; fi
+                  DOWNLOAD_URL=https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/$NAME.ipa
                   NEW_ENTRY=$(jq -n --arg version "$VERSION" --arg date "$DATE" --arg size "$IPA_SIZE" --arg downloadURL "$DOWNLOAD_URL" '{version: $version, date: $date, size: ($size | tonumber), downloadURL: $downloadURL, localizedDescription: "Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience."}')
 
                   VERSION_EXISTS=$(jq --arg version "$VERSION" --argjson index "$APP_INDEX" '.apps[$index].versions | map(select(.version == $version)) | length' apt-repo/repo/app-repo.json)
@@ -671,7 +716,7 @@ jobs:
             - name: Update depiction version
               if: inputs.only_app_repo != true
               run: |
-                  DEB_FILE="apt-repo/repo/debs/${{ env.NEW_DEB_FILENAME }}"
+                  DEB_FILE="apt-repo/repo/debs/$NEW_DEB_FILENAME"
                   VERSION=$(dpkg-deb -f "$DEB_FILE" Version)
                   PACKAGE_ID=$(dpkg-deb -f "$DEB_FILE" Package)
 

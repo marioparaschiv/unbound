@@ -21,12 +21,12 @@
 #include "LoaderToolbox.h"
 #import "Logger.h"
 #import "SettingsCore.h"
-#import "Unbound.h"
 #import "UpdaterCore.h"
+#import "astral.h"
 
-using unbound::ios::jsonFromObject;
-using unbound::ios::objectFromJSON;
-using unbound::ios::toStdString;
+using astral::ios::jsonFromObject;
+using astral::ios::objectFromJSON;
+using astral::ios::toStdString;
 
 static NSArray *arrayFromJSON(const nlohmann::json &value)
 {
@@ -34,7 +34,7 @@ static NSArray *arrayFromJSON(const nlohmann::json &value)
     return [converted isKindOfClass:[NSArray class]] ? converted : @[];
 }
 
-loader::AddonState &UnboundAddonState()
+loader::AddonState &AstralAddonState()
 {
     static loader::AddonState state;
     return state;
@@ -107,22 +107,6 @@ uiColors(const std::map<std::string, loader::RGBAColor> &colors)
     return loader::isDarkColor({red, green, blue, alpha});
 }
 
-+ (CGFloat)messageBubbleRadius
-{
-    return loader::preferences::kMessageBubbleStyle.radius;
-}
-
-+ (CGSize)messageBubblePadding
-{
-    return CGSizeMake(loader::preferences::kMessageBubbleStyle.horizontalPadding,
-                      loader::preferences::kMessageBubbleStyle.verticalPadding);
-}
-
-+ (UIColor *)messageBubbleColorForDarkTheme:(BOOL)dark
-{
-    return uiColor(loader::preferences::messageBubbleColor(dark));
-}
-
 static std::string fontAttribute(CTFontDescriptorRef descriptor, CFStringRef attribute)
 {
     NSString *value = CFBridgingRelease(CTFontDescriptorCopyAttribute(descriptor, attribute));
@@ -162,7 +146,7 @@ static nlohmann::json platformFontEntry(NSString *postScriptName, NSString *appP
     return entry;
 }
 
-const nlohmann::json &UnboundPlatformFonts()
+const nlohmann::json &AstralPlatformFonts()
 {
     static nlohmann::json  fonts;
     static dispatch_once_t onceToken;
@@ -179,14 +163,14 @@ const nlohmann::json &UnboundPlatformFonts()
     return fonts;
 }
 
-nlohmann::json UnboundFontCatalog()
+nlohmann::json AstralFontCatalog()
 {
-    return loader::fontCatalog(UnboundAddonState().fonts(), UnboundPlatformFonts());
+    return loader::fontCatalog(AstralAddonState().fonts(), AstralPlatformFonts());
 }
 
 + (NSDictionary *)themeColorsForId:(NSString *)themeId
 {
-    std::optional<nlohmann::json> theme = UnboundAddonState().theme(toStdString(themeId));
+    std::optional<nlohmann::json> theme = AstralAddonState().theme(toStdString(themeId));
     if (!theme)
     {
         return nil;
@@ -210,7 +194,7 @@ nlohmann::json UnboundFontCatalog()
 
 + (BOOL)hasTheme:(NSString *)themeId
 {
-    return UnboundAddonState().theme(toStdString(themeId)).has_value();
+    return AstralAddonState().theme(toStdString(themeId)).has_value();
 }
 
 + (void)installLogging
@@ -230,15 +214,15 @@ nlohmann::json UnboundFontCatalog()
 
 + (void)scanAddons
 {
-    UnboundAddonState().scan(toStdString(FileSystem.documents));
+    AstralAddonState().scan(toStdString(FileSystem.documents));
 }
 
 + (NSArray *)themes
 {
-    return arrayFromJSON(UnboundAddonState().themes());
+    return arrayFromJSON(AstralAddonState().themes());
 }
 
-static loader::FontOverrideRegistry &UnboundFontOverrides()
+static loader::FontOverrideRegistry &AstralFontOverrides()
 {
     static loader::FontOverrideRegistry registry;
     return registry;
@@ -247,10 +231,10 @@ static loader::FontOverrideRegistry &UnboundFontOverrides()
 + (NSDictionary *)fontOverridePlan
 {
     nlohmann::json targets =
-        loader::fontOverrideTargets(loader::preferences::fontOverrides(UnboundSettingsStore()),
-                                    UnboundAddonState().fonts(), UnboundPlatformFonts());
+        loader::fontOverrideTargets(loader::preferences::fontOverrides(AstralSettingsStore()),
+                                    AstralAddonState().fonts(), AstralPlatformFonts());
     id converted =
-        objectFromJSON(loader::fontOverridePlanJSON(UnboundFontOverrides().plan(targets)));
+        objectFromJSON(loader::fontOverridePlanJSON(AstralFontOverrides().plan(targets)));
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};
 }
 
@@ -261,23 +245,23 @@ static loader::FontOverrideRegistry &UnboundFontOverrides()
 
 + (NSArray<NSDictionary *> *)fonts
 {
-    return arrayFromJSON(UnboundAddonState().fonts());
+    return arrayFromJSON(AstralAddonState().fonts());
 }
 
 + (NSString *)toolbox:(NSString *)action argument:(NSString *)argument
 {
-    loader::toolbox::ToolboxContext context{UnboundSettingsStore(),
-                                            UnboundBundleUpdater(),
+    loader::toolbox::ToolboxContext context{AstralSettingsStore(),
+                                            AstralBundleUpdater(),
                                             toStdString(FileSystem.documents),
                                             "iOS",
                                             [] {
-                                                return UnboundUpdateURL();
+                                                return AstralUpdateURL();
                                             },
                                             [] {
                                                 return [CoreBridge mainBundleBytecodeVersion];
                                             },
                                             [] {
-                                                return static_cast<bool>(UnboundBundleIsReady());
+                                                return static_cast<bool>(AstralBundleIsReady());
                                             }};
     std::string                     result =
         loader::toolbox::perform(context, toStdString(action), toStdString(argument));
@@ -286,7 +270,7 @@ static loader::FontOverrideRegistry &UnboundFontOverrides()
 
 + (NSString *)preference:(NSString *)action argument:(NSString *)argument
 {
-    std::string result = loader::preferences::perform(UnboundSettingsStore(), toStdString(action),
+    std::string result = loader::preferences::perform(AstralSettingsStore(), toStdString(action),
                                                       toStdString(argument));
     return [NSString stringWithUTF8String:result.c_str()] ?: @"";
 }
@@ -338,7 +322,7 @@ static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
 + (CGPoint)devOverlayCenterInBounds:(CGSize)bounds insets:(UIEdgeInsets)insets
 {
     loader::devoverlay::Point center = loader::devoverlay::buttonCenter(
-        UnboundSettingsStore(), coreSize(bounds), coreInsets(insets));
+        AstralSettingsStore(), coreSize(bounds), coreInsets(insets));
     return CGPointMake(center.x, center.y);
 }
 
@@ -351,7 +335,7 @@ static loader::devoverlay::Insets coreInsets(UIEdgeInsets insets)
 
 + (void)saveDevOverlayCenter:(CGPoint)center bounds:(CGSize)bounds
 {
-    loader::devoverlay::saveButtonCenter(UnboundSettingsStore(), {center.x, center.y},
+    loader::devoverlay::saveButtonCenter(AstralSettingsStore(), {center.x, center.y},
                                          coreSize(bounds));
 }
 
@@ -374,8 +358,7 @@ static CGRect cgRect(const loader::devoverlay::Frame &frame)
 
 + (BOOL)devOverlayVisibleOnVirtualDevice:(BOOL)virtualDevice debugBuild:(BOOL)debugBuild
 {
-    return loader::preferences::devOverlayVisible(UnboundSettingsStore(), virtualDevice,
-                                                  debugBuild);
+    return loader::preferences::devOverlayVisible(AstralSettingsStore(), virtualDevice, debugBuild);
 }
 
 + (NSString *)incompatibleHostMessage
@@ -387,7 +370,7 @@ static CGRect cgRect(const loader::devoverlay::Frame &frame)
 {
     loader::diagnostics::BuildInfo info{toStdString(COMMIT_SHORT_HASH), toStdString(COMMIT_SUBJECT),
                                         toStdString(COMMIT_BRANCH), toStdString(BUILD_TIMESTAMP)};
-    return unbound::ios::toNSString(loader::diagnostics::developmentBuildBanner(info));
+    return astral::ios::toNSString(loader::diagnostics::developmentBuildBanner(info));
 }
 
 + (NSTimeInterval)developmentBuildBannerDuration

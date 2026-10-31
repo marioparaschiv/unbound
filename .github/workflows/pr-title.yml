@@ -1,0 +1,33 @@
+name: Pull request title
+
+on:
+    pull_request:
+        types: [opened, edited, reopened, synchronize]
+
+permissions:
+    contents: read
+
+concurrency:
+    group: pr-title-${{ github.event.pull_request.number }}
+    cancel-in-progress: true
+
+jobs:
+    commitlint:
+        name: Conventional title
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 1
+
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
+
+            - name: Lint the title the squash merge will commit
+              env:
+                  TITLE: ${{ github.event.pull_request.title }}
+                  NUMBER: ${{ github.event.pull_request.number }}
+              run: printf '%s (#%s)\n' "$TITLE" "$NUMBER" | ./node_modules/.bin/commitlint

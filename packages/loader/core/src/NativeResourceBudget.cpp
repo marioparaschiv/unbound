@@ -1,5 +1,6 @@
 #include "NativeResourceBudget.h"
 
+#include "NativeHandleLeases.h"
 #include "NativeLimits.h"
 #include "NativePluginRuntime.h"
 
@@ -116,5 +117,37 @@ NativeResourceBudget &nativeCachedReturnBudget()
 {
     static NativeResourceBudget budget(kMaximumNativeCachedReturnValues);
     return budget;
+}
+
+static std::mutex &platformHandleCounterMutex()
+{
+    static std::mutex mutex;
+    return mutex;
+}
+
+static std::function<size_t()> &platformHandleCounter()
+{
+    static std::function<size_t()> counter;
+    return counter;
+}
+
+void setPlatformHandleCounter(std::function<size_t()> counter)
+{
+    std::lock_guard<std::mutex> lock(platformHandleCounterMutex());
+    platformHandleCounter() = std::move(counter);
+}
+
+static size_t platformHandleCount()
+{
+    std::lock_guard<std::mutex> lock(platformHandleCounterMutex());
+    return platformHandleCounter() ? platformHandleCounter()() : 0;
+}
+
+nlohmann::json nativeResourceCounts()
+{
+    return {{"hooks", nativeHookBudget().used()},
+            {"surfaces", nativeSurfaceBudget().used()},
+            {"cachedReturns", nativeCachedReturnBudget().used()},
+            {"handles", leasedHandleCount() + platformHandleCount()}};
 }
 }

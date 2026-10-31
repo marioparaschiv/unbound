@@ -16,7 +16,7 @@
 #include "NativePlatformBridge.h"
 #include "NativePluginBridge.h"
 
-namespace unbound::android {
+namespace astral::android {
 namespace jsi = facebook::jsi;
 
 static constexpr const char *kAssetFontPrefix = "asset:";
@@ -69,6 +69,8 @@ platformProvider(const LoaderConfiguration &configuration, loader::SettingsStore
     provider->isRooted          = flag("isRooted");
     provider->isSystemApp       = flag("isSystemApp");
     provider->appSource         = text("appSource");
+    provider->framework         = text("framework");
+    provider->isVerifiedBuild   = flag("isVerifiedBuild");
     provider->isVirtualDevice   = flag("isVirtualDevice");
     provider->virtualDeviceHost = [info]() -> std::optional<std::string> {
         const auto host = info.find("virtualDeviceHost");
@@ -336,7 +338,8 @@ uint32_t AndroidLoader::runtimeBytecodeVersion()
 
 loader::PreloadPayload AndroidLoader::preloadPayload()
 {
-    return loader::makePreloadPayload(settings_, addons_, availableFonts(), configuration_.origin);
+    return loader::makePreloadPayload(settings_, addons_, availableFonts(), configuration_.origin,
+                                      runtimeBytecodeVersion());
 }
 
 void AndroidLoader::installNativeModules(jsi::Runtime &runtime)

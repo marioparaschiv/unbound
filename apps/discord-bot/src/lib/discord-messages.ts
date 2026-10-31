@@ -15,11 +15,27 @@ function oldestFirst(a: APIMessage, b: APIMessage) {
 /**
  * @description Shortens text to a Discord length limit, marking the cut with an ellipsis.
  * @param text The text to fit.
- * @param max The limit in characters.
- * @returns The text, or its first `max - 1` characters and an ellipsis.
+ * @param max The limit in UTF-16 code units, as Discord counts.
+ * @returns The text unchanged when it fits, otherwise its start ending in `…`, never splitting a surrogate pair.
  */
 export function truncate(text: string, max: number): string {
-	return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+	if (text.length <= max) {
+		return text;
+	}
+
+	if (max <= 0) {
+		return '';
+	}
+
+	let end = max - 1;
+	const last = text.charCodeAt(end - 1);
+
+	// Never keep half of a surrogate pair; Discord rejects or mangles a lone surrogate.
+	if (last >= 0xd8_00 && last <= 0xdb_ff) {
+		end--;
+	}
+
+	return `${text.slice(0, end)}…`;
 }
 
 /**

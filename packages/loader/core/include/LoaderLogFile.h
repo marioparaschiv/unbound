@@ -15,7 +15,7 @@ class Runtime;
 
 namespace loader {
 constexpr const char *kLogDirectoryName   = "Logs";
-constexpr const char *kLogFileName        = "unbound.log";
+constexpr const char *kLogFileName        = "astral.log";
 constexpr std::size_t kLogFileMaximumSize = 1024 * 1024;
 constexpr std::size_t kLogFilesKept       = 3;
 constexpr std::size_t kLogLinesBuffered   = 512;
@@ -53,7 +53,7 @@ void        installConsoleCapture(facebook::jsi::Runtime &runtime);
 extern "C" {
 #endif
 
-void UnboundAppendLogFile(int level, const char *category, const char *message);
+void AstralAppendLogFile(int level, const char *category, const char *message);
 
 #ifdef __cplusplus
 }

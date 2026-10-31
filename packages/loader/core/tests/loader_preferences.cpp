@@ -16,7 +16,7 @@ int main()
     const auto path = (std::filesystem::path(templatePath) / kSettingsFile).string();
     assert(loader::writeTextFileAtomically(
         path,
-        R"({"unbound":{"recovery":true,"font-states":{"*":"Ginto"}},"themes":{"applied":"adrian.theme"}})"));
+        R"({"astral":{"recovery":true,"font-states":{"*":"Ginto"}},"themes":{"applied":"adrian.theme"}})"));
 
     loader::SettingsStore settings(path);
     settings.load();
@@ -44,23 +44,11 @@ int main()
     assert(perform(settings, "set-gesture", "three-finger=true") == "true");
     assert(perform(settings, "gesture", "nope").empty());
 
-    assert(!messageBubbles(settings));
-    assert(setMessageBubbles(settings, true));
-    assert(perform(settings, "message-bubbles", "") == "true");
-
-    assert(!avatarRadius(settings));
-    assert(perform(settings, "bubble-style", "").empty());
-    assert(loader::toARGB(messageBubbleColor(true)) == 0x66000000);
-    assert(loader::toARGB(messageBubbleColor(false)) == 0x66FFFFFF);
-    settings.set("unbound", "chat.avatar-radius", 8.0);
-    assert(avatarRadius(settings) == 8.0);
-    assert(perform(settings, "avatar-radius", "") == "8");
-    settings.set("unbound", "chat.avatar-radius", nlohmann::json());
-    assert(!avatarRadius(settings));
+    assert(perform(settings, "message-bubbles", "").empty());
+    assert(perform(settings, "avatar-radius", "").empty());
 
     loader::SettingsStore reread(path);
     reread.load();
-    assert(messageBubbles(reread));
     assert(gestureEnabled(reread, ToolboxGesture::ThreeFinger));
 
     std::filesystem::remove_all(templatePath);

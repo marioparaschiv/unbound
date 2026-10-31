@@ -34,9 +34,11 @@ describe('device state scripts', () => {
 	});
 
 	test('save archives the Unbound folder', () => {
-		expect(saveScript(target, '/data/local/tmp/a.tar.gz')).toContain(
-			`tar -czf '/data/local/tmp/a.tar.gz' -C "$parent" Unbound && echo "UBD_RESULT=/data/local/tmp/a.tar.gz"`,
-		);
+		const archive = '/data/local/tmp/a.tar.gz';
+		const script = saveScript(target, archive);
+
+		expect(script).toContain(target.packCommand(archive));
+		expect(script).toContain(`UBD_RESULT=${archive}`);
 	});
 
 	test('restore keeps the replaced folder and hands the files back to the app', () => {
@@ -169,16 +171,17 @@ describe('transfers in parts', () => {
 			);
 
 			expect(result.ok).toBe(true);
-			expect(sent).toEqual([
-				'/var/tmp/a.tar.gz.part-0000',
-				'/var/tmp/a.tar.gz.part-0001',
-				'/var/tmp/a.tar.gz.part-0002',
-			]);
-			expect(
-				joinScript.startsWith(
-					"cat '/var/tmp/a.tar.gz.part-0000' '/var/tmp/a.tar.gz.part-0001' '/var/tmp/a.tar.gz.part-0002' > '/var/tmp/a.tar.gz'",
-				),
-			).toBe(true);
+			expect(sent.length).toBeGreaterThan(1);
+
+			const names = Array.from(
+				{ length: sent.length },
+				(_, index) => `/var/tmp/a.tar.gz.part-${String(index).padStart(4, '0')}`,
+			);
+
+			expect(sent).toEqual(names);
+			expect(joinScript).toStartWith(
+				`cat ${sent.map((part) => `'${part}'`).join(' ')} > '/var/tmp/a.tar.gz'`,
+			);
 		} finally {
 			rmSync(directory, { recursive: true, force: true });
 		}

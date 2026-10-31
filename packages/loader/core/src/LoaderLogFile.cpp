@@ -25,7 +25,7 @@ std::string RotatingLogFile::path(std::size_t generation) const
     {
         return directory_ + "/" + kLogFileName;
     }
-    return directory_ + "/unbound." + std::to_string(generation) + ".log";
+    return directory_ + "/astral." + std::to_string(generation) + ".log";
 }
 
 void RotatingLogFile::open(const std::string &directory)
@@ -164,7 +164,7 @@ void installConsoleCapture(jsi::Runtime &runtime)
 {
     jsi::Object global   = runtime.global();
     jsi::Value  original = global.getProperty(runtime, "nativeLoggingHook");
-    if (global.hasProperty(runtime, "__unboundConsoleCaptured"))
+    if (global.hasProperty(runtime, "__astralConsoleCaptured"))
     {
         return;
     }
@@ -186,11 +186,11 @@ void installConsoleCapture(jsi::Runtime &runtime)
             return jsi::Value::undefined();
         });
     global.setProperty(runtime, "nativeLoggingHook", std::move(capture));
-    global.setProperty(runtime, "__unboundConsoleCaptured", true);
+    global.setProperty(runtime, "__astralConsoleCaptured", true);
 }
 }
 
-extern "C" void UnboundAppendLogFile(int level, const char *category, const char *message)
+extern "C" void AstralAppendLogFile(int level, const char *category, const char *message)
 {
     loader::appendLogFile(loader::logLevelFromIndex(level),
                           category ? category : LOG_CATEGORY_DEFAULT, message ? message : "");

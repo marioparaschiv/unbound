@@ -1,16 +1,7 @@
+import type { DiscordTeamGroup, StaffRole, TeamGroup } from '~/db/schema';
+import { TEAM_GROUPS } from '~/db/team-groups';
 import type { Role } from '~/lib/auth/access';
 import type { Env } from '~/lib/env';
-
-/** Team page sections, in display order. A person appears once, in their highest group. */
-export const TEAM_GROUPS = ['development-team', 'staff', 'contributor', 'addon-developer'] as const;
-
-export type TeamGroup = (typeof TEAM_GROUPS)[number];
-
-/** The groups a Discord role can grant; anyone else a listed addon credits is `addon-developer` too. */
-export type DiscordTeamGroup = TeamGroup;
-
-/** The site roles a Discord role can grant, and the only ones the sync ever takes away. */
-export type StaffRole = Extract<Role, 'admin' | 'moderator'>;
 
 export type DiscordTeamRole =
 	| 'admin'
@@ -50,7 +41,7 @@ const STAFF_ROLE_GRANTS: Grant<StaffRole>[] = [
 	['staff', 'moderator'],
 ];
 
-export const STAFF_ROLES: StaffRole[] = ['admin', 'moderator'];
+export const STAFF_ROLES: StaffRole[] = ['admin', 'moderator'] satisfies Role[];
 
 /**
  * @description Reads the team role ids from the environment.
@@ -122,7 +113,6 @@ export function compareGroups(a: TeamGroup, b: TeamGroup): number {
 }
 
 export default {
-	TEAM_GROUPS,
 	STAFF_ROLES,
 	readTeamSyncConfig,
 	deriveStanding,

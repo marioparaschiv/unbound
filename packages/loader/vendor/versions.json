@@ -1,0 +1,47 @@
+[
+	{
+		"path": "vendor/bearssl",
+		"name": "BearSSL",
+		"version": "0.6",
+		"license": "MIT",
+		"url": "https://bearssl.org"
+	},
+	{
+		"path": "vendor/libffi",
+		"name": "libffi",
+		"license": "MIT",
+		"url": "https://github.com/libffi/libffi"
+	},
+	{
+		"path": "vendor/monocypher",
+		"name": "Monocypher",
+		"license": "BSD-2-Clause OR CC0-1.0",
+		"url": "https://monocypher.org"
+	},
+	{
+		"path": "vendor/nlohmann",
+		"name": "nlohmann/json",
+		"version": "3.11.3",
+		"license": "MIT",
+		"url": "https://github.com/nlohmann/json"
+	},
+	{
+		"path": "vendor/react",
+		"name": "React Native JSI headers",
+		"version": "hermes-v250829098.0.14",
+		"license": "MIT",
+		"url": "https://github.com/facebook/hermes"
+	},
+	{
+		"path": "ios/extensions/OpenInDiscord",
+		"name": "OpenInDiscord",
+		"license": "NOASSERTION",
+		"url": "https://github.com/castdrian/OpenInDiscord"
+	},
+	{
+		"path": "ios/extensions/ShareToDiscord",
+		"name": "ShareToDiscord",
+		"license": "NOASSERTION",
+		"url": "https://github.com/castdrian/ShareToDiscord"
+	}
+]

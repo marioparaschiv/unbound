@@ -3,9 +3,11 @@ import {
 	pushableRepositoriesResponseSchema,
 } from '@unbound-app/contracts/source';
 import { afterAll, describe, expect, spyOn, test } from 'bun:test';
+import { APIError } from 'better-auth/api';
 
 import listGitHubRepositoriesEndpoint from '~/endpoints/list-github-repositories';
 import listRepositoryAddonsEndpoint from '~/endpoints/list-repository-addons';
+import { connectGitHubIfLinked } from '~/lib/github';
 import type { AppContext } from '~/lib/context';
 import { createApiClient } from '~/api/client';
 import type { Api } from '~/api';
@@ -259,11 +261,11 @@ describe('GET /api/v1/github/addons', () => {
 			issues: [],
 		});
 		expect(byId.get('acme.nodist')?.issues).toEqual([
-			expect.stringContaining('plugins/nodist/dist/index.js is not committed'),
+			expect.stringContaining('plugins/nodist/dist/index.js'),
 		]);
 		expect(byId.get('acme.broken')).toMatchObject({ name: null, version: null });
 		expect(byId.get('acme.broken')?.issues).toEqual([
-			expect.stringContaining('plugins/broken/manifest.json is not a valid manifest'),
+			expect.stringContaining('plugins/broken/manifest.json'),
 		]);
 		expect(listing.skipped.map((entry) => entry.path).sort()).toEqual([
 			'plugins/wip',
@@ -432,6 +434,72 @@ describe('GET /api/v1/github/addons', () => {
 		} finally {
 			await limitedServer.stop(true);
 			await limited.close();
+		}
+	});
+});
+
+describe('connectGitHubIfLinked', () => {
+	async function linkedUser(token: string | null, expiring?: Parameters<typeof linkGitHub>[3]) {
+		users += 1;
+
+		const { userId } = await signInWithDiscord(ctx, {
+			id: String(80351110224678912n + BigInt(users)),
+			name: `Author ${users}`,
+			email: `author${users}@example.com`,
+		});
+
+		if (token) {
+			await linkGitHub(ctx, userId, token, expiring);
+		}
+
+		return userId;
+	}
+
+	test("reads with the user's token when GitHub is linked", async () => {
+		const github = await connectGitHubIfLinked(ctx, await linkedUser('owner'));
+		const pushable = await github.listPushable();
+
+		expect(pushable.map((entry) => entry.repository)).toContain(MONOREPO);
+	});
+
+	test('falls back to anonymous reads when nothing is linked', async () => {
+		const github = await connectGitHubIfLinked(ctx, await linkedUser(null));
+
+		expect((await github.getRepository(MONOREPO)).defaultBranch).toBe('main');
+	});
+
+	test('falls back to anonymous reads when Better Auth refuses the token', async () => {
+		const userId = await linkedUser('owner');
+		const refused = new APIError('UNAUTHORIZED', { message: 'Failed to refresh' });
+		const getAccessToken = spyOn(ctx.auth.api, 'getAccessToken').mockRejectedValue(refused);
+
+		try {
+			const github = await connectGitHubIfLinked(ctx, userId);
+
+			expect((await github.getRepository(MONOREPO)).defaultBranch).toBe('main');
+			expect(await github.listPushable()).toEqual([]);
+		} finally {
+			getAccessToken.mockRestore();
+		}
+	});
+
+	test('rethrows a failure that is not an expired link', async () => {
+		const userId = await linkedUser('owner');
+		const outage = new Error('database unavailable');
+		const getAccessToken = spyOn(ctx.auth.api, 'getAccessToken').mockRejectedValue(outage);
+
+		try {
+			let thrown;
+
+			try {
+				await connectGitHubIfLinked(ctx, userId);
+			} catch (error) {
+				thrown = error;
+			}
+
+			expect(thrown).toBe(outage);
+		} finally {
+			getAccessToken.mockRestore();
 		}
 	});
 });

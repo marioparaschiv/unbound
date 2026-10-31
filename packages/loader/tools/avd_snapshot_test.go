@@ -36,7 +36,7 @@ func TestEnsureNoDiscordTokenRefusesTokenShapedContent(t *testing.T) {
 	directory := t.TempDir()
 	clean := filepath.Join(directory, "clean.tgz")
 	leaked := filepath.Join(directory, "leaked.tgz")
-	writeGzipTar(t, clean, map[string]string{"Unbound/Plugins/a/bundle.js": "console.log('plugin')"})
+	writeGzipTar(t, clean, map[string]string{"astral/Plugins/a/bundle.js": "console.log('plugin')"})
 	writeGzipTar(t, leaked, map[string]string{"adb/magisk.db": "token=" + strings.Repeat("M", 26) + "." + strings.Repeat("G", 6) + "." + strings.Repeat("x", 38)})
 	if err := ensureNoDiscordToken(clean); err != nil {
 		t.Fatalf("clean archive was refused: %v", err)
@@ -51,20 +51,20 @@ func TestContainsDiscordTokenMatchesMFATokens(t *testing.T) {
 	if !containsDiscordToken([]byte("mfa." + strings.Repeat("a", 84))) {
 		t.Fatal("mfa token was not detected")
 	}
-	if containsDiscordToken([]byte("unbound.bundle.trust sha256 0123456789abcdef")) {
+	if containsDiscordToken([]byte("astral.bundle.trust sha256 0123456789abcdef")) {
 		t.Fatal("ordinary content was flagged")
 	}
 }
 
-func TestUnboundArchiveCommandLeavesSettingsOutByDefault(t *testing.T) {
-	if strings.Contains(unboundArchiveCommand(false), "settings.json") {
+func TestAstralArchiveCommandLeavesSettingsOutByDefault(t *testing.T) {
+	if strings.Contains(astralArchiveCommand(false), "settings.json") {
 		t.Fatal("settings.json must be opt-in")
 	}
-	if !strings.Contains(unboundArchiveCommand(true), "Unbound/settings.json") {
+	if !strings.Contains(astralArchiveCommand(true), "astral/settings.json") {
 		t.Fatal("--with-settings should include settings.json")
 	}
 	for _, store := range []string{"mmkv", "kv-storage", "shared_prefs", "databases"} {
-		if strings.Contains(unboundArchiveCommand(true), store) {
+		if strings.Contains(astralArchiveCommand(true), store) {
 			t.Fatalf("snapshot must never read Discord's %s", store)
 		}
 	}
@@ -135,7 +135,7 @@ func TestPublishableSnapshotsLeaveDiscordOut(t *testing.T) {
 	if len(names) != len(avdSnapshotPackages)-1 || len(snapshotPackageNames(false)) != len(avdSnapshotPackages) {
 		t.Fatalf("unexpected package lists %v", names)
 	}
-	without := avdSnapshotManifest{Packages: map[string][]string{"app.unbound.android": {"base.apk"}}}
+	without := avdSnapshotManifest{Packages: map[string][]string{"app.astral.android": {"base.apk"}}}
 	if !strings.Contains(describeSnapshotDiscord(without), "restore downloads") {
 		t.Fatalf("unexpected description %q", describeSnapshotDiscord(without))
 	}

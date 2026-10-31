@@ -1,5 +1,5 @@
 {
-	"id": "unbound.force-owner-crown",
+	"id": "astral.force-owner-crown",
 	"name": "Force Owner Crown",
 	"description": "Always show the owner crown on the server owner's messages.",
 	"authors": [
@@ -16,7 +16,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "CrownIcon",
 	"main": "index.ts"
 }

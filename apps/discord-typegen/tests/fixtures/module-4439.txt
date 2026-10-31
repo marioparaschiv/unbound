@@ -1,0 +1,574 @@
+    r10 = r7.__d;
+    r0 = 4439;
+    r9 = [31, 19, 21, 560, 578, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun4440: for(var _fun4440_ip = 0; ; ) switch(_fun4440_ip) {
+case 0:
+            r7 = a1;
+            var _closure0_slot0 = r7;
+            r3 = a5;
+            r6 = a6;
+            var _closure0_slot1 = r6;
+            r1 = undefined;
+            r2 = function(a0) { // Original name: wrapChildrenDefault
+                r0 = a0;
+                return r0;
+            };
+            var _closure0_slot7 = r2;
+            r4 = function(a0) { // Original name: TransitionGroup, environment: r8
+                _fun31398: for(var _fun31398_ip = 0; ; ) switch(_fun31398_ip) {
+case 0:
+                    r0 = a0;
+                    r4 = r0.items;
+                    var _closure1_slot0 = r4;
+                    r11 = r0.renderItem;
+                    var _closure1_slot1 = r11;
+                    r12 = r0.getItemKey;
+                    var _closure1_slot2 = r12;
+                    r3 = r0.wrapChildren;
+                    r2 = undefined;
+                    if(!(r3 === r2)) { _fun31398_ip = 54; continue _fun31398 }
+case 50:
+                    r3 = _closure0_slot7;
+case 54:
+                    r5 = r0.lazyCleanUpDelay;
+                    var _closure1_slot3 = r5;
+                    var _closure1_slot4 = r2;
+                    var _closure1_slot5 = r2;
+                    var _closure1_slot6 = r2;
+                    var _closure1_slot7 = r2;
+                    r10 = _closure0_slot3;
+                    r6 = r10.useRef;
+                    r0 = -1;
+                    r0 = r6.bind(r10)(r0);
+                    _closure1_slot4 = r0;
+                    r7 = r10.useLayoutEffect;
+                    r6 = new Array(0);
+                    r0 = function() { // Environment: r1
+                        _fun89615: for(var _fun89615_ip = 0; ; ) switch(_fun89615_ip) {
+case 0:
+                            r2 = _closure1_slot4;
+                            r3 = r2.current;
+                            r0 = -1;
+                            if(!(r0 !== r3)) { _fun89615_ip = 42; continue _fun89615 }
+case 22:
+                            r3 = global;
+                            r3 = r3.clearTimeout;
+                            r2 = r2.current;
+                            r1 = undefined;
+                            r2 = r3.bind(r1)(r2);
+case 42:
+                            r1 = undefined;
+                            return r1;
+                        }
+                    };
+                    r0 = r7.bind(r10)(r0, r6);
+                    r6 = r10.useState;
+                    r0 = _closure0_slot6;
+                    r6 = r6.bind(r10)(r0);
+                    r0 = _closure0_slot2;
+                    r7 = 2;
+                    r0 = r0.bind(r2)(r6, r7);
+                    r0 = r0[r1];
+                    _closure1_slot5 = r0;
+                    r6 = r10.useRef;
+                    r0 = null;
+                    r6 = r6.bind(r10)(r0);
+                    _closure1_slot6 = r6;
+                    r9 = r10.useMemo;
+                    r6 = new Array(4);
+                    r6[0] = r4;
+                    r6[1] = r12;
+                    r6[2] = r11;
+                    r6[3] = r5;
+                    r5 = function() { // Environment: r1
+                        _fun89616: for(var _fun89616_ip = 0; ; ) switch(_fun89616_ip) {
+case 0:
+                            r5 = undefined;
+                            r7 = undefined;
+                            r6 = undefined;
+                            r2 = global;
+                            r9 = r2.Set;
+                            r0 = _closure1_slot6;
+                            r10 = r0.current;
+                            r4 = null;
+                            r3 = r10 == r4;
+                            r1 = undefined;
+                            if(r3) { _fun89616_ip = 46; continue _fun89616 }
+case 37:
+                            r3 = r10.keys;
+                            r1 = r3.bind(r10)();
+case 46:
+                            r3 = Object.create(r9.prototype);
+                            r21 = r3;
+                            r20 = r1;
+                            r1 = new r22[r9](r21, r20);
+                            r1 = r1 instanceof Object ? r1 : r3;
+                            var _closure2_slot0 = r1;
+                            r3 = r2.Map;
+                            r20 = r0.current;
+                            r2 = Object.create(r3.prototype);
+                            r21 = r2;
+                            r0 = new r22[r3](r21, r20);
+                            r0 = r0 instanceof Object ? r0 : r2;
+                            var _closure2_slot1 = r0;
+                            r10 = function() { // Original name: _loop, environment: r11
+                                _fun138268: for(var _fun138268_ip = 0; ; ) switch(_fun138268_ip) {
+case 0:
+                                    r4 = _closure1_slot2;
+                                    r11 = _closure2_slot2;
+                                    r0 = undefined;
+                                    r4 = r4.bind(r0)(r11);
+                                    var _closure2_slot0 = r4;
+                                    r6 = _closure2_slot1;
+                                    r5 = r6.get;
+                                    r8 = r5.bind(r6)(r4);
+                                    r1 = null;
+                                    if(!(r1 != r8)) { _fun138268_ip = 211; continue _fun138268 }
+case 55:
+                                    r5 = r8.item;
+                                    if(!(r5 === r11)) { _fun138268_ip = 106; continue _fun138268 }
+case 64:
+                                    r9 = r8.renderItem;
+                                    r5 = _closure1_slot1;
+                                    if(!(r9 === r5)) { _fun138268_ip = 106; continue _fun138268 }
+case 78:
+                                    r10 = r8.state;
+                                    r5 = _closure0_slot5;
+                                    r9 = r5.YEETED;
+                                    r5 = r8;
+                                    if(!(r10 === r9)) { _fun138268_ip = 314; continue _fun138268 }
+case 106:
+                                    r10 = r8.cleanUp;
+                                    r13 = r8.state;
+                                    r12 = _closure0_slot5;
+                                    r12 = r12.YEETED;
+                                    if(!(r13 !== r12)) { _fun138268_ip = 141; continue _fun138268 }
+case 134:
+                                    r12 = r8.state;
+                                    _fun138268_ip = 151; continue _fun138268;
+case 141:
+                                    r9 = _closure0_slot5;
+                                    r12 = r9.ENTERED;
+case 151:
+                                    r9 = _closure1_slot1;
+                                    r14 = r8.cleanUp;
+                                    r18 = undefined;
+                                    r17 = r4;
+                                    r16 = r11;
+                                    r15 = r12;
+                                    r13 = r19[r9](r18, r17, r16, r15, r14);
+                                    r8 = {'item': null, 'children': null, 'state': null, 'cleanUp': null, 'renderItem': null};
+                                    r8[0] = r11;
+                                    r8[1] = r13;
+                                    r8[2] = r12;
+                                    r8[3] = r10;
+                                    r8[4] = r9;
+                                    r5 = r8;
+                                    _fun138268_ip = 314; continue _fun138268;
+case 211:
+                                    r8 = _closure1_slot6;
+                                    r8 = r8.current;
+                                    if(!(r1 == r8)) { _fun138268_ip = 239; continue _fun138268 }
+case 224:
+                                    r8 = _closure0_slot5;
+                                    r9 = r8.MOUNTED;
+                                    _fun138268_ip = 252; continue _fun138268;
+case 239:
+                                    r8 = _closure0_slot5;
+                                    r9 = r8.ENTERED;
+case 252:
+                                    r8 = function() { // Original name: _cleanUp, environment: r7
+                                        _fun153222: for(var _fun153222_ip = 0; ; ) switch(_fun153222_ip) {
+case 0:
+                                            r5 = _closure1_slot6;
+                                            r9 = r5.current;
+                                            r1 = null;
+                                            r2 = r9 == r1;
+                                            r0 = undefined;
+                                            r6 = undefined;
+                                            if(r2) { _fun153222_ip = 42; continue _fun153222 }
+case 28:
+                                            r8 = r9.get;
+                                            r7 = _closure2_slot0;
+                                            r6 = r8.bind(r9)(r7);
+case 42:
+                                            if(!(r1 != r6)) { _fun153222_ip = 159; continue _fun153222 }
+case 46:
+                                            r7 = r6.state;
+                                            r6 = _closure0_slot5;
+                                            r6 = r6.YEETED;
+                                            if(!(r7 === r6)) { _fun153222_ip = 159; continue _fun153222 }
+case 68:
+                                            r6 = r5.current;
+                                            if(!(r6 != r1)) { _fun153222_ip = 91; continue _fun153222 }
+case 77:
+                                            r5 = r6.delete;
+                                            r4 = _closure2_slot0;
+                                            r4 = r5.bind(r6)(r4);
+case 91:
+                                            r6 = _closure1_slot3;
+                                            if(!(r1 == r6)) { _fun153222_ip = 112; continue _fun153222 }
+case 99:
+                                            r5 = _closure1_slot5;
+                                            r4 = {};
+                                            r4 = r5.bind(r0)(r4);
+                                            _fun153222_ip = 159; continue _fun153222;
+case 112:
+                                            r5 = global;
+                                            r8 = r5.clearTimeout;
+                                            r4 = _closure1_slot4;
+                                            r7 = r4.current;
+                                            r7 = r8.bind(r0)(r7);
+                                            r5 = r5.setTimeout;
+                                            r3 = function() { // Environment: r3
+                                                r2 = _closure1_slot5;
+                                                r0 = undefined;
+                                                r1 = {};
+                                                r1 = r2.bind(r0)(r1);
+                                                return r1;
+                                            };
+                                            r3 = r5.bind(r0)(r3, r6);
+                                            r4['current'] = r3;
+case 159:
+                                            return r0;
+                                        }
+                                    };
+                                    r7 = _closure1_slot1;
+                                    r18 = undefined;
+                                    r17 = r4;
+                                    r16 = r11;
+                                    r15 = r9;
+                                    r14 = r8;
+                                    r10 = r19[r7](r18, r17, r16, r15, r14);
+                                    r3 = {'item': null, 'children': null, 'state': null, 'cleanUp': null, 'renderItem': null};
+                                    r3[0] = r11;
+                                    r3[1] = r10;
+                                    r3[2] = r9;
+                                    r3[3] = r8;
+                                    r3[4] = r7;
+                                    r5 = r3;
+case 314:
+                                    r3 = r6.set;
+                                    r3 = r3.bind(r6)(r4, r5);
+                                    r3 = _closure2_slot0;
+                                    r2 = r3.delete;
+                                    r2 = r2.bind(r3)(r4);
+                                    return r0;
+                                }
+                            };
+                            r2 = _closure1_slot0;
+                            r9 = r2;
+                            r3 = r9[Symbol.iterator];
+                            r9 = r3().next;
+                            r2 = 0;
+case 120:
+                            r12 = r9;
+                            r12 = r12().value;
+                            r13 = r3;
+                            if(!(r13 !== r5)) { _fun89616_ip = 151; continue _fun89616 }
+case 134:
+                            var _closure2_slot2 = r12;
+                            r12 = r10.bind(r2)();
+                            _fun89616_ip = 120; continue _fun89616;
+case 144:
+                            CatchBlockStart(arg_register=2);
+                            r3.return();
+                            throw r2;
+case 151:
+                            r3 = r1;
+                            r2 = r3[Symbol.iterator];
+                            r3 = r2().next;
+case 160:
+                            r9 = r3;
+                            r10 = r9().value;
+                            r9 = r2;
+                            if(!(r9 !== r5)) { _fun89616_ip = 397; continue _fun89616 }
+case 177:
+                            r7 = r10;
+                            r9 = r0.get;
+                            r9 = r9.bind(r0)(r10);
+                            r6 = r9;
+                            if(!(r4 != r9)) { _fun89616_ip = 385; continue _fun89616 }
+case 200:
+                            r9 = r6;
+                            r10 = r9.state;
+                            r12 = _closure0_slot5;
+                            r9 = r12.YEETED;
+                            if(!(r10 === r9)) { _fun89616_ip = 261; continue _fun89616 }
+case 222:
+                            r9 = r6;
+                            r10 = r9.renderItem;
+                            r9 = _closure1_slot1;
+                            if(!(r10 === r9)) { _fun89616_ip = 261; continue _fun89616 }
+case 239:
+                            r11 = r0.set;
+                            r10 = r7;
+                            r9 = r6;
+                            r9 = r11.bind(r0)(r10, r9);
+                            _fun89616_ip = 385; continue _fun89616;
+case 261:
+                            r13 = r6;
+                            r10 = r13.item;
+                            r11 = r13.cleanUp;
+                            r9 = {'item': null, 'children': null, 'state': null, 'cleanUp': null, 'renderItem': null};
+                            r9[0] = r10;
+                            r10 = _closure1_slot1;
+                            r20 = r7;
+                            r19 = r13.item;
+                            r18 = r12.YEETED;
+                            r17 = r13.cleanUp;
+                            r21 = undefined;
+                            r13 = r22[r10](r21, r20, r19, r18, r17);
+                            r9[1] = r13;
+                            r12 = r12.YEETED;
+                            r9[2] = r12;
+                            r9[3] = r11;
+                            r9[4] = r10;
+                            r6 = r9;
+                            r9 = r9.children;
+                            if(!(r4 == r9)) { _fun89616_ip = 368; continue _fun89616 }
+case 353:
+                            r10 = r0.delete;
+                            r9 = r7;
+                            r9 = r10.bind(r0)(r9);
+                            _fun89616_ip = 385; continue _fun89616;
+case 368:
+                            r11 = r0.set;
+                            r10 = r7;
+                            r9 = r6;
+                            r9 = r11.bind(r0)(r10, r9);
+case 385:
+                            _fun89616_ip = 160; continue _fun89616;
+case 390:
+                            CatchBlockStart(arg_register=1);
+                            r2.return();
+                            throw r1;
+case 397:
+                            return r0;
+                        }
+                    };
+                    r9 = r9.bind(r10)(r5, r6);
+                    _closure1_slot7 = r9;
+                    r6 = r10.useInsertionEffect;
+                    r5 = new Array(1);
+                    r5[0] = r9;
+                    r1 = function() { // Environment: r1
+                        r2 = _closure1_slot6;
+                        r1 = _closure1_slot7;
+                        r2['current'] = r1;
+                        r0 = function() { // Environment: r0
+                            _fun138269: for(var _fun138269_ip = 0; ; ) switch(_fun138269_ip) {
+case 0:
+                                r1 = _closure1_slot6;
+                                r3 = r1.current;
+                                r0 = null;
+                                r0 = r3 == r0;
+                                r1 = undefined;
+                                if(r0) { _fun138269_ip = 33; continue _fun138269 }
+case 23:
+                                r2 = r3.clear;
+                                r1 = r2.bind(r3)();
+case 33:
+                                return r1;
+                            }
+                        };
+                        return r0;
+                    };
+                    r1 = r6.bind(r10)(r1, r5);
+                    r1 = new Array(0);
+                    r5 = r9;
+                    r6 = r5[Symbol.iterator];
+                    r5 = r6().next;
+case 257:
+                    r9 = r5;
+                    r10 = r9().value;
+                    r9 = r6;
+                    if(!(r9 !== r2)) { _fun31398_ip = 309; continue _fun31398 }
+case 271:
+                    r9 = _closure0_slot2;
+                    r9 = r9.bind(r2)(r10, r7);
+                    r9 = r9[r1];
+                    r10 = r1.push;
+                    r9 = r9.children;
+                    r9 = r10.bind(r1)(r9);
+                    _fun31398_ip = 257; continue _fun31398;
+case 302:
+                    CatchBlockStart(arg_register=5);
+                    r6.return();
+                    throw r5;
+case 309:
+                    r6 = r1.length;
+                    r5 = 0;
+                    r5 = r6 > r5;
+                    r0 = null;
+                    if(!r5) { _fun31398_ip = 331; continue _fun31398 }
+case 325:
+                    r0 = r3.bind(r2)(r1, r4);
+case 331:
+                    return r0;
+                }
+            };
+            var _closure0_slot8 = r4;
+            r2 = function() { // Original name: getSingleItemKey
+                r0 = 'key';
+                return r0;
+            };
+            var _closure0_slot9 = r2;
+            r2 = global;
+            r10 = r2.Object;
+            r9 = r10.defineProperty;
+            r5 = '__esModule';
+            r2 = {'value': true};
+            r2 = r9.bind(r10)(r3, r5, r2);
+            r5 = r6[r0];
+            r2 = a2;
+            r2 = r2.bind(r1)(r5);
+            var _closure0_slot2 = r2;
+            r5 = r6[r1];
+            r2 = a3;
+            r2 = r2.bind(r1)(r5);
+            var _closure0_slot3 = r2;
+            r2 = r6[r2];
+            r2 = r7.bind(r1)(r2);
+            r2 = r2.jsx;
+            var _closure0_slot4 = r2;
+            r5 = {};
+            r0 = 0;
+            r5['MOUNTED'] = r0;
+            r2 = 'MOUNTED';
+            r5[r0] = r2;
+            r0 = 1;
+            r5['ENTERED'] = r0;
+            r2 = 'ENTERED';
+            r5[r0] = r2;
+            r0 = 2;
+            r5['YEETED'] = r0;
+            r2 = 'YEETED';
+            r5[r0] = r2;
+            var _closure0_slot5 = r5;
+            r2 = {};
+            var _closure0_slot6 = r2;
+            r2 = r6[r3];
+            r9 = r7.bind(r1)(r2);
+            r2 = r9.isReactCompilerEnabled;
+            r2 = r2.bind(r9)();
+            if(r2) { _fun4440_ip = 223; continue _fun4440 }
+case 216:
+            r2 = function(a0) { // Original name: TransitionItem, environment: r8
+                r2 = a0;
+                r7 = r2.item;
+                var _closure1_slot0 = r7;
+                r5 = r2.renderItem;
+                r6 = _closure0_slot3;
+                r3 = r6.useMemo;
+                r2 = new Array(1);
+                r2[0] = r7;
+                r1 = function() { // Environment: r1
+                    _fun89618: for(var _fun89618_ip = 0; ; ) switch(_fun89618_ip) {
+case 0:
+                        r3 = _closure1_slot0;
+                        r0 = null;
+                        if(!(r0 == r3)) { _fun89618_ip = 19; continue _fun89618 }
+case 13:
+                        r1 = new Array(0);
+                        _fun89618_ip = 30; continue _fun89618;
+case 19:
+                        r2 = new Array(1);
+                        r2[0] = r3;
+                        r1 = r2;
+case 30:
+                        return r1;
+                    }
+                };
+                r6 = r3.bind(r6)(r1, r2);
+                r3 = _closure0_slot4;
+                r2 = _closure0_slot8;
+                r1 = {'items': null, 'renderItem': null, 'getItemKey': null};
+                r1[0] = r6;
+                r1[1] = r5;
+                r4 = _closure0_slot9;
+                r1[2] = r4;
+                r0 = undefined;
+                r1 = r3.bind(r0)(r2, r1);
+                return r1;
+            };
+            _fun4440_ip = 228; continue _fun4440;
+case 223:
+            r2 = function(a0) { // Original name: TransitionItem, environment: r8
+                _fun31400: for(var _fun31400_ip = 0; ; ) switch(_fun31400_ip) {
+case 0:
+                    r3 = a0;
+                    r5 = _closure0_slot0;
+                    r4 = _closure0_slot1;
+                    r4 = r4[r4];
+                    r1 = undefined;
+                    r5 = r5.bind(r1)(r4);
+                    r4 = r5.c;
+                    r0 = 5;
+                    r5 = r4.bind(r5)(r0);
+                    r4 = r3.item;
+                    r6 = r3.renderItem;
+                    r3 = r5[r0];
+                    if(!(r3 === r4)) { _fun31400_ip = 63; continue _fun31400 }
+case 57:
+                    r7 = r5[r1];
+                    _fun31400_ip = 102; continue _fun31400;
+case 63:
+                    r2 = null;
+                    if(!(r2 == r4)) { _fun31400_ip = 75; continue _fun31400 }
+case 69:
+                    r3 = new Array(0);
+                    _fun31400_ip = 86; continue _fun31400;
+case 75:
+                    r8 = new Array(1);
+                    r8[0] = r4;
+                    r3 = r8;
+case 86:
+                    r0 = 0;
+                    r5[r0] = r4;
+                    r0 = 1;
+                    r5[r0] = r3;
+                    r7 = r3;
+case 102:
+                    r3 = r5[r2];
+                    if(!(r3 === r7)) { _fun31400_ip = 124; continue _fun31400 }
+case 110:
+                    r3 = r5[r3];
+                    if(!(r3 === r6)) { _fun31400_ip = 124; continue _fun31400 }
+case 118:
+                    r3 = r5[r4];
+                    _fun31400_ip = 188; continue _fun31400;
+case 124:
+                    r9 = _closure0_slot4;
+                    r8 = _closure0_slot8;
+                    r4 = {'items': null, 'renderItem': null, 'getItemKey': null};
+                    r4[0] = r7;
+                    r4[1] = r6;
+                    r10 = _closure0_slot9;
+                    r4[2] = r10;
+                    r4 = r9.bind(r1)(r8, r4);
+                    r0 = 2;
+                    r5[r0] = r7;
+                    r0 = 3;
+                    r5[r0] = r6;
+                    r0 = 4;
+                    r5[r0] = r4;
+                    r3 = r4;
+case 188:
+                    return r3;
+                }
+            };
+case 228:
+            r6 = r6[r5];
+            r8 = r7.bind(r1)(r6);
+            r7 = r8.fileFinishedImporting;
+            r6 = '../discord_common/js/packages/design/components/TransitionGroup/TransitionGroup.tsx';
+            r6 = r7.bind(r8)(r6);
+            r3['TransitionStates'] = r5;
+            r3['TransitionGroup'] = r4;
+            r3['TransitionItem'] = r2;
+            return r1;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

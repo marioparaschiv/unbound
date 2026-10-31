@@ -1,14 +1,16 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
-import hookMessageCells from '@unbound-plugins/shared/native/message-cell-hooks';
+import hookMessageCells from '@unbound-plugins/shared/native/ios/message-cell-hooks';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { drawnSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { createAndroidRenderer } from '~/android/renderer';
-import { createVisibleCellScanner } from '~/native/visible-cells';
+import { createVisibleCellScanner } from '~/ios/visible-cells';
 import { subscribeSelectedChannel } from '~/events/selected-channel';
+import { subscribeMentionSources } from '~/events/mention-sources';
 import { patchRowGenerator } from '~/patches/row-generator';
-import { createRenderer } from '~/native/renderer';
+import { createRenderer } from '~/ios/renderer';
 import { createMentionIndex } from '~/mention-index';
 import {
 	MessageStore,
@@ -20,6 +22,9 @@ import {
 } from '~/modules';
 
 let dispose = () => {};
+let rendered: (() => number) | undefined;
+let failed: (() => string[]) | undefined;
+let settling: (() => boolean) | undefined;
 
 function start(context: PluginContext) {
 	const { objc } = context.native;
@@ -45,9 +50,13 @@ function start(context: PluginContext) {
 	if (context.platform === 'android') {
 		const android = createAndroidRenderer(context.native, index, showAtSymbol);
 
+		rendered = android.rendered;
+		failed = android.failed;
+		settling = android.settling;
 		dispose = applyFeatures('Mention Avatars', [
 			() => android.dispose,
 			() => patchRowGenerator(index),
+			() => subscribeMentionSources(android.retryWaiting),
 		]);
 
 		return;
@@ -55,6 +64,10 @@ function start(context: PluginContext) {
 
 	const renderer = createRenderer(objc, index, showAtSymbol);
 	const scanner = createVisibleCellScanner(objc, renderer.schedule);
+
+	rendered = renderer.rendered;
+	failed = renderer.failed;
+	settling = renderer.settling;
 
 	dispose = applyFeatures('Mention Avatars', [
 		() => renderer.dispose,
@@ -67,12 +80,30 @@ function start(context: PluginContext) {
 				textChanged: renderer.schedule,
 			}),
 		() => subscribeSelectedChannel(renderer, scanner),
+		() => subscribeMentionSources(renderer.retryWaiting),
 	]);
 }
 
 function stop() {
 	dispose();
 	dispose = () => {};
+	rendered = undefined;
+	failed = undefined;
+	settling = undefined;
 }
 
-export default { start, stop };
+function selfTest() {
+	const missing = failed?.() ?? [];
+
+	if (missing.length) {
+		return { ok: false, detail: `${missing.length} mention avatars failed to load` };
+	}
+
+	return drawnSelfTest(rendered, 'mention avatars', settling);
+}
+
+export default {
+	start,
+	stop,
+	selfTest,
+};

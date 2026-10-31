@@ -41,13 +41,13 @@ type compatBuilds struct {
 var unsafeCacheName = regexp.MustCompile(`[^A-Za-z0-9._-]+`)
 
 func defaultCompatCache() string {
-	if directory := os.Getenv("UNBOUND_DISCORD_CACHE"); directory != "" {
+	if directory := os.Getenv("ASTRAL_DISCORD_CACHE"); directory != "" {
 		return directory
 	}
 	if directory, err := os.UserCacheDir(); err == nil {
-		return filepath.Join(directory, "unbound", "discord")
+		return filepath.Join(directory, "astral", "discord")
 	}
-	return filepath.Join(os.TempDir(), "unbound-discord")
+	return filepath.Join(os.TempDir(), "astral-discord")
 }
 
 func iosSourceForChannel(channel string) string {
@@ -88,7 +88,8 @@ func fetchCompatBuilds(ctx context.Context, channel, cache string, wanted compat
 	}
 	ipa, err := cachedIOSBuild(ctx, envOr("DKRYPT_BASE_URL", defaultDkryptURL), apiKey, source, filepath.Join(cache, "ios", source))
 	if err != nil {
-		return compatBuilds{}, fmt.Errorf("iOS %s build: %w", source, err)
+		fmt.Fprintf(os.Stderr, "compat-scan: dkrypt could not provide the iOS %s build (%v), scanning Android only\n", source, err)
+		return builds, nil
 	}
 	builds.ipa = ipa
 	return builds, nil
@@ -98,7 +99,7 @@ func cachedAndroidBuild(ctx context.Context, channel, cache string) (string, str
 	sources := discordAPKSources{
 		sniffURL:   strings.TrimRight(envOr("DISCORD_SNIFF_URL", defaultSniffURL), "/"),
 		trackerURL: strings.TrimRight(envOr("DISCORD_TRACKER", defaultAndroidTracker), "/"),
-		client:     &http.Client{Timeout: discordAPKLookupLimit},
+		client:     lookupClient(discordAPKLookupLimit),
 	}
 	code, err := sources.latestCode(ctx, channel)
 	if err != nil {
@@ -145,7 +146,7 @@ func pruneCacheExcept(directory, keep string) {
 
 func cachedIOSBuild(ctx context.Context, baseURL, apiKey, source, cache string) (string, error) {
 	base := strings.TrimRight(baseURL, "/")
-	body, status, err := fetchResponse(ctx, &http.Client{Timeout: discordAPKLookupLimit}, base+"/v1/artifacts", apiKey, nil)
+	body, status, err := fetchResponse(ctx, lookupClient(discordAPKLookupLimit), base+"/v1/artifacts", apiKey, nil)
 	if err != nil {
 		return "", fmt.Errorf("list dkrypt artifacts: %w", err)
 	}

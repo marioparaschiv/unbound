@@ -1,7 +1,5 @@
+import { getSetting } from '~/lib/unbound-settings';
 import UpdatesStore from '~/stores/updates';
-import { getStore } from '~/api/storage';
-
-const Storage = getStore('unbound');
 
 let pending: ReturnType<typeof setTimeout> | undefined;
 
@@ -10,7 +8,7 @@ async function update() {
 
 	await check();
 
-	if (Storage.get('updater.auto', true)) {
+	if (getSetting('updater.auto')) {
 		await applyAll();
 	}
 }

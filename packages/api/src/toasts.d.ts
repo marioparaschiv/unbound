@@ -2,7 +2,7 @@
 
 export type { ToastHandle, ToastOptions } from './_internal';
 import type { ToastHandle, ToastOptions } from './_internal';
-import * as ReactModule from 'react';
+import * as React$1 from 'react';
 import { ComponentType } from 'react';
 import { ImageSourcePropType } from 'react-native';
 

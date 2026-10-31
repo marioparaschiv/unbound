@@ -1,6 +1,6 @@
+import type { ManagerKind } from '@unbound-app/types/addons';
 import { useState } from 'react';
 
-import type { ManagerKind } from '~/lib/constants';
 import { Discord } from '~/api/metro/components';
 import { getManager } from '~/managers/utils';
 import { format } from '~/api/i18n';

@@ -1,9 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { CONFIG_FILENAME } from '@unbound-app/contracts/workspace';
 import { command, type Command } from 'cleye';
 import { z } from 'zod';
 
-import { fieldToFlag, isArrayField } from '~/lib/zod-flags';
+import { fieldToFlag, isArrayField, negatedFlags } from '~/lib/zod-flags';
 import { readStdin, isStdinPiped } from '~/lib/stdin';
 import { createContext } from '~/lib/context';
 
@@ -66,6 +65,14 @@ export function toCleyeCommand(definition: CommandDefinition<z.ZodObject<z.ZodRa
 		(parsed) => {
 			const { json, ...flagInput } = parsed.flags;
 			const input: CommandInput = { ...flagInput };
+			const booleans = Object.keys(flags).filter((name) => flags[name]!.type === Boolean);
+			const { off, unmatched } = negatedFlags(parsed.unknownFlags, booleans);
+
+			for (const name of off) input[name] = false;
+
+			for (const name of unmatched) {
+				process.stderr.write(`Ignoring unknown flag --${name}.\n`);
+			}
 
 			for (const name of positionalNames) {
 				input[name] = parsed._[name as keyof typeof parsed._];
@@ -102,8 +109,9 @@ async function run(
 		process.exit(2);
 	}
 
-	const port = (parsed.data as { port?: number }).port;
-	const context = createContext(port ?? Number.NaN);
+	// Commands that never dial the bridge have no `port`; their context is never connected.
+	const { port } = parsed.data;
+	const context = createContext(typeof port === 'number' ? port : Number.NaN);
 
 	try {
 		const output = await definition.handler(parsed.data, context);
@@ -123,13 +131,6 @@ async function run(
 		const connectionError = context.connected && !context.client.isDeviceConnected;
 
 		process.exit(connectionError ? 2 : 1);
-	} catch (error) {
-		if (error instanceof z.ZodError) {
-			process.stderr.write(`Invalid ${CONFIG_FILENAME}:\n${z.prettifyError(error)}\n`);
-			process.exit(2);
-		}
-
-		throw error;
 	} finally {
 		context.close();
 	}

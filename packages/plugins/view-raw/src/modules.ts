@@ -1,6 +1,6 @@
 import { metro, patcher } from '@unbound-app/api';
 
-export const Patcher = patcher.createPatcher('unbound.view-raw');
+export const Patcher = patcher.createPatcher('astral.view-raw');
 
 export const { ActionSheets } = metro.api;
 export const ContextMenusFilter = metro.filters.byProps('showContextMenu', 'hideContextMenu');

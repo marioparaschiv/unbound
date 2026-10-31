@@ -58,3 +58,28 @@ test('getSelected keeps only the selected plugins, in order', () => {
 		'unbound.c',
 	]);
 });
+
+test('an equal version whose build differs from the live one is selected as rebuilt', () => {
+	const built: LocalPlugin = {
+		...plugin('1.0.0'),
+		sha256: 'a'.repeat(64),
+		bytecode: { 98: 'b'.repeat(128) },
+	};
+	const reasons = (published: PublishedVersion) =>
+		selectPlugins([built], new Map([['unbound.example', published]])).map((d) => d.reason);
+
+	expect(
+		reasons({ ...live('1.0.0'), sha256: 'a'.repeat(64), bytecode: { 98: 'b'.repeat(128) } }),
+	).toEqual(['already-published']);
+	expect(
+		reasons({ ...live('1.0.0'), sha256: 'c'.repeat(64), bytecode: { 98: 'b'.repeat(128) } }),
+	).toEqual(['rebuilt']);
+	expect(reasons({ ...live('1.0.0'), sha256: 'a'.repeat(64) })).toEqual(['rebuilt']);
+	expect(reasons(live('1.0.0'))).toEqual(['already-published']);
+	expect(
+		selectPlugins(
+			[plugin('1.0.0')],
+			new Map([['unbound.example', { ...live('1.0.0'), sha256: 'c'.repeat(64) }]]),
+		).map((d) => d.reason),
+	).toEqual(['already-published']);
+});

@@ -28,6 +28,7 @@ const reportCrashEndpoint = endpoint(
 			discordVersion: body.discordVersion,
 			osVersion: body.osVersion,
 			deviceModel: body.deviceModel,
+			verifiedBuild: body.verifiedBuild ?? null,
 			addonId: body.addon?.id ?? null,
 			addonVersion: body.addon?.version ?? null,
 			addonTrust: body.addon?.trust ?? null,

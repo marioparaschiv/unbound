@@ -1,6 +1,9 @@
+import {
+	findElement,
+	getElementName,
+	type ElementNode,
+} from '@unbound-plugins/shared/react/find-element';
 import { describe, expect, test } from 'bun:test';
-
-import { findElement, getElementName, type ElementNode } from './find-element';
 
 function Target() {
 	return null;

@@ -1,5 +1,5 @@
-// Real `GET /api/v1/catalog` endpoint over a seeded throwaway Postgres database, plus a CDN for the
-// seeded files. The database is dropped on SIGINT, SIGTERM or SIGHUP (`tmux kill-session`).
+// Real catalog, versions and updates endpoints over a seeded throwaway Postgres database, plus a CDN
+// for the seeded files. The database is dropped on SIGINT, SIGTERM or SIGHUP (`tmux kill-session`).
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 
 import {
@@ -8,7 +8,9 @@ import {
 	seedVersion,
 	signInWithDiscord,
 } from '../../../../apps/web/tests/helpers/index';
+import listAddonVersionsEndpoint from '../../../../apps/web/src/endpoints/list-addon-versions';
 import { createTestDatabase, dropDatabase } from '../../../../apps/web/tests/helpers/database';
+import checkUpdatesEndpoint from '../../../../apps/web/src/endpoints/check-updates';
 import getCatalogEndpoint from '../../../../apps/web/src/endpoints/get-catalog';
 import { resolveDevHost } from '../../../../packages/client/scripts/dev-host';
 import { eq } from '../../../../apps/web/node_modules/drizzle-orm/index.js';
@@ -158,10 +160,17 @@ Bun.serve({
 	port: PORT,
 	async fetch(request) {
 		const url = new URL(request.url);
+		const versions = /^\/api\/v1\/addons\/([^/]+)\/versions$/.exec(url.pathname);
 		let response: Response;
 
 		if (url.pathname === '/api/v1/catalog') {
 			response = await getCatalogEndpoint.handle(ctx, request);
+		} else if (versions) {
+			response = await listAddonVersionsEndpoint.handle(ctx, request, {
+				id: versions[1] ?? '',
+			});
+		} else if (url.pathname === '/api/v1/updates' && request.method === 'POST') {
+			response = await checkUpdatesEndpoint.handle(ctx, request);
 		} else if (url.pathname.startsWith('/cdn/addons/')) {
 			const [, , , id = '', version = '', file = ''] = url.pathname.split('/');
 			const row = await ctx.db.query.addonVersion.findFirst({

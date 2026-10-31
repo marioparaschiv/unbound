@@ -1,5 +1,3 @@
-#import "Updater.h"
-
 #include <istream>
 #include <ostream>
 #include <streambuf>
@@ -10,9 +8,10 @@
 #include "LoaderUpdater.h"
 #import "SettingsCore.h"
 #import "UpdaterCore.h"
+#import "astral.h"
 
-using unbound::ios::toNSString;
-using unbound::ios::toStdString;
+using astral::ios::toNSString;
+using astral::ios::toStdString;
 
 static bool isServingBundle(NSURL *url, NSTimeInterval timeout)
 {
@@ -45,7 +44,7 @@ static bool isServingBundle(NSURL *url, NSTimeInterval timeout)
 
 static loader::UpdaterSettings iosUpdaterSettings()
 {
-    return loader::updaterSettings(UnboundSettingsStore());
+    return loader::updaterSettings(AstralSettingsStore());
 }
 
 static std::optional<std::string> fetchText(const std::string &url, double timeout)
@@ -83,8 +82,8 @@ download(const std::string &url, const std::string &destination,
     }
     @catch (NSException *exception)
     {
-        [Logger error:LOG_CATEGORY_UPDATER
-               format:@"Bundle download failed. (%@)", exception.reason];
+        [Logger info:LOG_CATEGORY_UPDATER
+              format:@"Downloading %@ failed: %@", toNSString(url), exception.reason];
         return std::nullopt;
     }
 }
@@ -101,93 +100,28 @@ static loader::BundleUpdater &bundleUpdater()
     return *updater;
 }
 
-static NSException *updaterException(const std::exception &error)
-{
-    return [[NSException alloc] initWithName:@"BundleUpdateFailed"
-                                      reason:toNSString(error.what())
-                                    userInfo:nil];
-}
-
 static std::optional<std::string> optionalUpdateURL()
 {
-    NSString *updateURL = [Updater resolveUpdateURL];
-    return updateURL ? std::optional<std::string>(toStdString(updateURL)) : std::nullopt;
-}
-
-loader::BundleUpdater &UnboundBundleUpdater()
-{
-    return bundleUpdater();
-}
-
-loader::UpdaterSettings UnboundUpdaterSettings()
-{
-    return iosUpdaterSettings();
-}
-
-std::optional<std::string> UnboundUpdateURL()
-{
-    return optionalUpdateURL();
-}
-
-@implementation Updater
-
-+ (NSString *)resolveUpdateURL
-{
-    NSString                  *hostAddress = [Utilities getVirtualDeviceHostAddress];
-    std::optional<std::string> url         = loader::resolveUpdateURL(
+    NSString *hostAddress = [Utilities getVirtualDeviceHostAddress];
+    return loader::resolveUpdateURL(
         iosUpdaterSettings(),
         hostAddress ? std::optional<std::string>(toStdString(hostAddress)) : std::nullopt,
         [](const std::string &probe, double timeout) {
             return isServingBundle([NSURL URLWithString:toNSString(probe)], timeout);
         });
-    return url ? toNSString(*url) : nil;
 }
 
-+ (NSString *)resolveBundlePath
+loader::BundleUpdater &AstralBundleUpdater()
 {
-    try
-    {
-        return toNSString(bundleUpdater().resolveBundlePath());
-    }
-    catch (const std::exception &error)
-    {
-        @throw updaterException(error);
-    }
+    return bundleUpdater();
 }
 
-+ (NSString *)downloadBundle:(NSString *)preferredPath
+loader::UpdaterSettings AstralUpdaterSettings()
 {
-    try
-    {
-        return toNSString(bundleUpdater().downloadBundle(toStdString(preferredPath),
-                                                         optionalUpdateURL(),
-                                                         [CoreBridge mainBundleBytecodeVersion]));
-    }
-    catch (const std::exception &error)
-    {
-        @throw updaterException(error);
-    }
+    return iosUpdaterSettings();
 }
 
-+ (BOOL)markBundleAttempted:(NSString *)path
+std::optional<std::string> AstralUpdateURL()
 {
-    return bundleUpdater().markBundleAttempted(toStdString(path));
+    return optionalUpdateURL();
 }
-
-+ (BOOL)acceptBundle:(NSString *)path
-{
-    return bundleUpdater().acceptBundle(toStdString(path));
-}
-
-+ (void)rejectBundle:(NSString *)path
-{
-    bundleUpdater().rejectBundle(toStdString(path));
-}
-
-+ (NSURL *)getDownloadURL
-{
-    return [NSURL URLWithString:toNSString(bundleUpdater().downloadURL(
-                                    optionalUpdateURL(), [CoreBridge mainBundleBytecodeVersion]))];
-}
-
-@end

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { languageLabel, resolveLanguage } from './languages';
+import { languageLabel, resolveLanguage } from '~/languages';
 
 describe('resolveLanguage', () => {
 	test('resolves aliases case-insensitively', () => {

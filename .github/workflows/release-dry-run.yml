@@ -1,0 +1,70 @@
+name: Weekly release dry run
+
+on:
+    schedule:
+        - cron: '13 6 * * 2'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: release-dry-run
+    cancel-in-progress: true
+
+jobs:
+    stable:
+        name: Stable release
+        if: github.repository == 'marioparaschiv/unbound'
+        permissions:
+            contents: write
+            id-token: write
+            attestations: write
+            artifact-metadata: write
+            actions: read
+        uses: ./.github/workflows/loader-build.yml
+        with:
+            release: true
+            release_dry_run: true
+            is_testflight: false
+        secrets:
+            ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
+            ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
+            ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
+            ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
+            ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY }}
+            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+            DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
+            GPG_KEY: ${{ secrets.GPG_KEY }}
+            GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+
+    report:
+        name: Report the result
+        needs: stable
+        if: always() && github.repository == 'marioparaschiv/unbound' && needs.stable.result != 'cancelled'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 5
+        permissions:
+            issues: write
+        steps:
+            - name: Open, update or close the tracking issue
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  RESULT: ${{ needs.stable.result }}
+                  RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+              run: |
+                  set -euo pipefail
+                  gh label create release-dry-run --repo "$GITHUB_REPOSITORY" --color B60205 --description "The weekly stable release dry run failed" --force >/dev/null
+                  existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label release-dry-run --state open --json number --jq '.[0].number // empty')
+                  if [ "$RESULT" = success ]; then
+                    if [ -n "$existing" ]; then
+                      gh issue close "$existing" --repo "$GITHUB_REPOSITORY" --comment "The stable release dry run passed again in $RUN_URL."
+                    fi
+                    exit 0
+                  fi
+                  body="The stable release dry run ended with \`$RESULT\` in $RUN_URL. A real stable release would fail the same way."
+                  if [ -n "$existing" ]; then
+                    gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
+                  else
+                    gh issue create --repo "$GITHUB_REPOSITORY" --label release-dry-run --title "The stable release dry run is failing" --body "$body"
+                  fi

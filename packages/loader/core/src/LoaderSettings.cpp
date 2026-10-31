@@ -5,6 +5,7 @@
 #include <system_error>
 
 #include "LoaderFiles.h"
+#include "LoaderJSON.h"
 #include "LoaderLog.h"
 
 namespace loader {
@@ -57,8 +58,7 @@ void SettingsStore::refreshLocked() const
         return;
     }
     std::optional<std::string> contents = readTextFile(path_);
-    nlohmann::json             parsed =
-        contents ? nlohmann::json::parse(*contents, nullptr, false) : nlohmann::json();
+    nlohmann::json             parsed   = contents ? parseBoundedJSON(*contents) : nlohmann::json();
     if (parsed.is_object())
     {
         data_ = std::move(parsed);
@@ -78,7 +78,7 @@ void SettingsStore::load()
         return;
     }
 
-    nlohmann::json parsed = nlohmann::json::parse(*contents, nullptr, false);
+    nlohmann::json parsed = parseBoundedJSON(*contents);
     if (parsed.is_discarded() || !parsed.is_object())
     {
         log(LogLevel::Error, LOG_CATEGORY_SETTINGS,
@@ -122,7 +122,7 @@ std::string SettingsStore::serialize() const
 
 bool SettingsStore::replace(const std::string &json)
 {
-    nlohmann::json parsed = nlohmann::json::parse(json, nullptr, false);
+    nlohmann::json parsed = parseBoundedJSON(json);
     if (parsed.is_discarded() || !parsed.is_object())
     {
         return false;
@@ -226,7 +226,7 @@ void SettingsStore::remove(const std::string &store, const std::string &key)
 
 bool SettingsStore::apply(const nlohmann::json &changes)
 {
-    if (!changes.is_array())
+    if (!changes.is_array() || jsonNestsTooDeeply(changes))
     {
         return false;
     }
@@ -240,7 +240,8 @@ bool SettingsStore::apply(const nlohmann::json &changes)
             {
                 continue;
             }
-            if (change.value("clear", false))
+            if (change.contains("clear") && change["clear"].is_boolean() &&
+                change["clear"].get<bool>())
             {
                 dirty_ = data_.erase(change["store"].get<std::string>()) > 0 || dirty_;
                 continue;
@@ -252,7 +253,8 @@ bool SettingsStore::apply(const nlohmann::json &changes)
 
             const std::string store = change["store"].get<std::string>();
             const std::string key   = change["key"].get<std::string>();
-            if (change.value("remove", false))
+            if (change.contains("remove") && change["remove"].is_boolean() &&
+                change["remove"].get<bool>())
             {
                 removeLocked(store, key);
             }

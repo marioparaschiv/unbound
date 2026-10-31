@@ -1,6 +1,5 @@
+import { getTimeoutDeadline } from '@unbound-plugins/shared/members/timeout-deadline';
 import { expect, test } from 'bun:test';
-
-import { getTimeoutDeadline } from './timeout-deadline';
 
 const now = Date.parse('2024-01-01T00:00:00.000Z');
 

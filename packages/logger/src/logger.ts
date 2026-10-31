@@ -34,6 +34,22 @@ type LoggedValue =
 	| LoggedValue[]
 	| { [key: string]: LoggedValue };
 
+type ConsoleMethod = 'log' | 'error' | 'info' | 'warn' | 'debug';
+
+type LevelStyle = { color: Color; write: ConsoleMethod };
+
+// Each level's color and the console method it writes through; `success` writes as `info`.
+const LEVELS = {
+	log: { color: 'gray', write: 'log' },
+	error: { color: 'red', write: 'error' },
+	success: { color: 'green', write: 'info' },
+	warn: { color: 'yellow', write: 'warn' },
+	debug: { color: 'gray', write: 'debug' },
+	info: { color: 'cyan', write: 'info' },
+} satisfies Record<string, LevelStyle>;
+
+type LogLevel = keyof typeof LEVELS;
+
 function revealErrors(_key: string, value: LoggedValue) {
 	return value instanceof Error ? describeError(value) : value;
 }
@@ -110,11 +126,7 @@ class Logger {
 	 * @param args The values to log.
 	 */
 	log(...args: unknown[]) {
-		console.log(
-			'»',
-			this._getPrefix('log'),
-			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('log'))),
-		);
+		this._write('log', args);
 	}
 
 	/**
@@ -122,11 +134,7 @@ class Logger {
 	 * @param args The values to log.
 	 */
 	error(...args: unknown[]) {
-		console.error(
-			'»',
-			this._getPrefix('error'),
-			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('error'))),
-		);
+		this._write('error', args);
 	}
 
 	/**
@@ -134,11 +142,7 @@ class Logger {
 	 * @param args The values to log.
 	 */
 	success(...args: unknown[]) {
-		console.info(
-			'»',
-			this._getPrefix('success'),
-			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('success'))),
-		);
+		this._write('success', args);
 	}
 
 	/**
@@ -146,11 +150,7 @@ class Logger {
 	 * @param args The values to log.
 	 */
 	warn(...args: unknown[]) {
-		console.warn(
-			'»',
-			this._getPrefix('warn'),
-			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('warn'))),
-		);
+		this._write('warn', args);
 	}
 
 	/**
@@ -158,11 +158,7 @@ class Logger {
 	 * @param args The values to log.
 	 */
 	debug(...args: unknown[]) {
-		console.debug(
-			'»',
-			this._getPrefix('debug'),
-			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('debug'))),
-		);
+		this._write('debug', args);
 	}
 
 	/**
@@ -170,10 +166,17 @@ class Logger {
 	 * @param args The values to log.
 	 */
 	info(...args: unknown[]) {
-		console.info(
+		this._write('info', args);
+	}
+
+	// UNKNOWN: log arguments are arbitrary caller values.
+	private _write(level: LogLevel, args: unknown[]) {
+		const { color, write } = LEVELS[level];
+
+		console[write](
 			'»',
-			this._getPrefix('info'),
-			...args.map((arg) => this._paint(this._inspect(arg), this._getColor('info'))),
+			this._getPrefix(level),
+			...args.map((arg) => this._paint(this._inspect(arg), color)),
 		);
 	}
 
@@ -182,7 +185,7 @@ class Logger {
 	 * @param type The log level whose color to apply.
 	 * @returns The prefix string.
 	 */
-	_getPrefix(type: 'log' | 'error' | 'success' | 'warn' | 'debug' | 'info') {
+	_getPrefix(type: LogLevel) {
 		return this._paint(
 			this._paint(`[${this.caller.join(' → ')}]`, this._getColor(type)),
 			'bold',
@@ -194,21 +197,8 @@ class Logger {
 	 * @param type The log level.
 	 * @returns The ANSI color name for the level.
 	 */
-	_getColor(type: 'log' | 'error' | 'success' | 'warn' | 'debug' | 'info'): Color {
-		switch (type) {
-			case 'log':
-				return 'gray';
-			case 'error':
-				return 'red';
-			case 'success':
-				return 'green';
-			case 'warn':
-				return 'yellow';
-			case 'debug':
-				return 'gray';
-			case 'info':
-				return 'cyan';
-		}
+	_getColor(type: LogLevel): Color {
+		return LEVELS[type].color;
 	}
 }
 

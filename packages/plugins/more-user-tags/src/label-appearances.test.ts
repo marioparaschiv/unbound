@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createLabelAppearances } from './label-appearances';
+import { createLabelAppearances } from '~/label-appearances';
 
 const green = { colors: ['#248046', '#ABCDEF'], style: 'gradient' as const };
 const red = { colors: ['#da373c'], style: 'solid' as const };

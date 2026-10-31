@@ -7,7 +7,7 @@ using namespace loader::alerts;
 
 static void formatsTitles()
 {
-    assert(countdownTitle("Unbound", 5) == "Unbound (5)");
+    assert(countdownTitle("astral", 5) == "astral (5)");
     assert(countdownTitle("", 1) == " (1)");
 }
 

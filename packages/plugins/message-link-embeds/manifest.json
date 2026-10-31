@@ -1,5 +1,5 @@
 {
-	"id": "unbound.message-link-embeds",
+	"id": "astral.message-link-embeds",
 	"name": "Message Link Embeds",
 	"description": "Adds previews to messages that link to other Discord messages.",
 	"authors": [
@@ -36,6 +36,7 @@
 		"android": [
 			"native.java.classes",
 			"native.java.invoke",
+			"native.java.batch",
 			"native.java.invokeAsync",
 			"native.java.construct",
 			"native.java.fields",
@@ -43,7 +44,7 @@
 			"native.fabric.async"
 		]
 	},
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minNativePluginApi": "1.0.0",
 	"icon": "LinkIcon",
 	"main": "index.ts"

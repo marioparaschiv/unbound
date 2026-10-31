@@ -4,6 +4,9 @@ import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import { searchText, timestampMs, trigramIndex } from './columns';
 
+/** The `socialProviders` Better Auth signs in or links with; it writes no other account rows. */
+export type AuthProvider = 'discord' | 'github';
+
 export const user = pgTable(
 	'user',
 	{
@@ -62,7 +65,7 @@ export const account = pgTable(
 	{
 		id: text('id').primaryKey(),
 		accountId: text('account_id').notNull(),
-		providerId: text('provider_id').notNull(),
+		providerId: text('provider_id').$type<AuthProvider>().notNull(),
 		userId: text('user_id')
 			.notNull()
 			.references(() => user.id, { onDelete: 'cascade' }),

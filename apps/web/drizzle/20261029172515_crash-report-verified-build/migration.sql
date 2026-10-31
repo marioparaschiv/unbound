@@ -1,0 +1,1 @@
+ALTER TABLE "crash_report" ADD COLUMN "verified_build" boolean;

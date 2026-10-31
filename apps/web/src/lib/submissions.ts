@@ -16,10 +16,12 @@ import type { AddonSource } from '~/lib/addon-source';
 import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
+import { readReview } from '~/lib/submission-review';
 import type { Transaction } from '~/db/database';
 import { getSnowflakeDate } from '~/lib/discord';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
+import { DAY_MS } from '~/lib/calendar-date';
 import { connectGitHub } from '~/lib/github';
 import { ApiError } from '~/lib/api/errors';
 import { pinSource } from '~/lib/artifacts';
@@ -56,8 +58,6 @@ type Reservation = {
 	replaced: SubmissionRow | undefined;
 };
 
-const DAY_MS = 86_400_000;
-
 export const OPEN_SUBMISSION_STATUSES = openSubmissionStatusSchema.options;
 
 /** The caller's own open submission in one of these states is superseded by submitting the addon again. */
@@ -87,6 +87,8 @@ export function requireSourced<T extends SubmissionWithSource>(row: T): T & Sour
  * @returns The submission as API responses carry it.
  */
 export function toSubmission(row: SourcedSubmissionRow): Submission {
+	const review = readReview(row);
+
 	return {
 		id: row.id,
 		addonId: row.addonId,
@@ -94,14 +96,7 @@ export function toSubmission(row: SourcedSubmissionRow): Submission {
 		kind: row.kind,
 		status: row.status,
 		source: pinSource(row.repository, row.source),
-		review:
-			row.reviewDecision && row.reviewedAt
-				? {
-						decision: row.reviewDecision,
-						note: row.reviewNote,
-						reviewedAt: row.reviewedAt.toISOString(),
-					}
-				: null,
+		review: review ? { ...review, reviewedAt: review.reviewedAt.toISOString() } : null,
 	};
 }
 

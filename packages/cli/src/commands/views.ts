@@ -1,8 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { bridgePortField } from '~/lib/context';
 import { viewTree } from '~/lib/probes';
 
 const schema = z.object({
@@ -15,10 +15,7 @@ const schema = z.object({
 		.default(40)
 		.describe('How deep to print below each view; iOS caps this at 12 levels.'),
 	max: z.number().default(1500).describe('How many views to visit at most.'),
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 });
 
 const viewsCommand: CommandDefinition<typeof schema> = {

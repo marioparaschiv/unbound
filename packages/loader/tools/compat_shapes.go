@@ -13,7 +13,10 @@ import (
 	"strings"
 )
 
-const discordShapesPath = "packages/plugins-shared/src/native/android/discord-shapes.json"
+var discordShapesPaths = []string{
+	"packages/loader/android/discord-shapes.json",
+	"packages/plugins-shared/src/native/android/discord-shapes.json",
+}
 
 const (
 	shapeMethod      = "method"
@@ -47,21 +50,30 @@ type discordShape struct {
 }
 
 func loadDiscordShapes(root string) (map[string]discordShape, error) {
-	data, err := os.ReadFile(filepath.Join(root, discordShapesPath))
-	if errors.Is(err, fs.ErrNotExist) {
-		return map[string]discordShape{}, nil
+	merged := map[string]discordShape{}
+	for _, path := range discordShapesPaths {
+		data, err := os.ReadFile(filepath.Join(root, path))
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return nil, err
+		}
+		var shapes map[string]discordShape
+		if err := json.Unmarshal(data, &shapes); err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+		if err := validateDiscordShapes(shapes); err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+		for name, shape := range shapes {
+			if _, taken := merged[name]; taken {
+				return nil, fmt.Errorf("%s: shape %q is already defined in another shapes file", path, name)
+			}
+			merged[name] = shape
+		}
 	}
-	if err != nil {
-		return nil, err
-	}
-	var shapes map[string]discordShape
-	if err := json.Unmarshal(data, &shapes); err != nil {
-		return nil, fmt.Errorf("%s: %w", discordShapesPath, err)
-	}
-	if err := validateDiscordShapes(shapes); err != nil {
-		return nil, fmt.Errorf("%s: %w", discordShapesPath, err)
-	}
-	return shapes, nil
+	return merged, nil
 }
 
 func validateDiscordShapes(shapes map[string]discordShape) error {
@@ -280,7 +292,7 @@ func describeShapeMembers(members []dexMember) string {
 func evaluateShapeReference(reference *compatReference, target *compatTarget) (string, string) {
 	shape, ok := target.shapes[reference.Name]
 	if !ok {
-		return compatBroken, "`" + discordShapesPath + "` has no shape `" + reference.Name + "`"
+		return compatBroken, "`discord-shapes.json` has no shape `" + reference.Name + "`"
 	}
 	status, reason := evaluateShape(shape, target)
 	if status == compatBroken && shape.UnlessClass != "" && target.dex.Classes[shape.UnlessClass] != nil {

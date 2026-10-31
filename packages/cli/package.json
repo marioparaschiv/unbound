@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/cli",
-	"version": "0.10.0",
+	"version": "0.11.0",
 	"description": "The `ubd` command line for the Unbound client: evaluate on-device code and serve the debugger as an MCP.",
 	"author": {
 		"name": "Mario P.",
@@ -26,6 +26,8 @@
 		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p ."
 	},
 	"dependencies": {
+		"@babel/core": "^7.29.7",
+		"@babel/plugin-transform-block-scoping": "^8.0.8",
 		"@clack/prompts": "^1.7.0",
 		"@modelcontextprotocol/sdk": "^1.29.0",
 		"@unbound-app/debugger-protocol": "workspace:*",

@@ -1,5 +1,5 @@
 {
-	"id": "unbound.file-size-on-picker",
+	"id": "astral.file-size-on-picker",
 	"name": "File Size On Picker",
 	"description": "Shows file sizes on media picker thumbnails.",
 	"authors": [
@@ -12,7 +12,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "ImageIcon",
 	"platforms": ["ios", "android"],
 	"capabilities": [],

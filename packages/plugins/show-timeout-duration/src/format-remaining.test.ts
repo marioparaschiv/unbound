@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { formatRemaining } from './format-remaining';
+import { formatRemaining } from '~/format-remaining';
 
 const minute = 60_000;
 

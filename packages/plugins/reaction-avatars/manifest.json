@@ -1,5 +1,5 @@
 {
-	"id": "unbound.reaction-avatars",
+	"id": "astral.reaction-avatars",
 	"name": "Reaction Avatars",
 	"description": "Shows the people who reacted beside each message reaction.",
 	"authors": [
@@ -40,6 +40,7 @@
 		"android": [
 			"native.java.classes",
 			"native.java.invoke",
+			"native.java.batch",
 			"native.java.invokeAsync",
 			"native.java.construct",
 			"native.java.fields",
@@ -48,7 +49,7 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "ReactionIcon",
 	"main": "index.ts"
 }

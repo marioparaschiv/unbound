@@ -3,15 +3,21 @@ import { join, relative } from 'node:path';
 import { writeFileSync } from 'node:fs';
 
 import {
+	API_MANIFEST,
 	API_SRC,
 	INTERNAL_OUT,
 	TYPES_INDEX,
-	ROOT,
 	readJson,
 	relativeSpecifier,
 	type ModuleEntry,
 } from './paths';
-import { stripInternal, declaredNames, collectReferencedNames } from './transform';
+import {
+	stripInternal,
+	declaredNames,
+	collectReferencedNames,
+	groupByOwner,
+	typeOnlyStatements,
+} from './transform';
 import { parseSource } from './project';
 import { bundle } from './bundle';
 
@@ -149,32 +155,13 @@ export function buildGlobal(
 		}
 	}
 
-	const importsByOwner = new Map<string, Set<string>>();
+	const unbound = [...referenced].filter(
+		(name) => !declaredInAmbient.has(name) && !bound.has(name),
+	);
+	const imports = typeOnlyStatements('import', groupByOwner(unbound, ownerByName), outPath);
 
-	for (const name of referenced) {
-		if (declaredInAmbient.has(name) || bound.has(name)) {
-			continue;
-		}
-
-		const owner = ownerByName.get(name);
-
-		if (owner === void 0) {
-			continue;
-		}
-
-		const bucket = importsByOwner.get(owner) ?? new Set<string>();
-
-		bucket.add(name);
-		importsByOwner.set(owner, bucket);
-	}
-
-	for (const [owner, names] of importsByOwner) {
-		const specifier = relativeSpecifier(outPath, owner);
-
-		sourceFile.insertStatements(
-			0,
-			`import type { ${[...names].sort().join(', ')} } from '${specifier}';`,
-		);
+	if (imports.length > 0) {
+		sourceFile.insertStatements(0, imports.join('\n'));
 	}
 
 	const reexport = sourceFile.addExportDeclaration({
@@ -224,8 +211,7 @@ export function buildGlobal(
  * @param entries The emitted module entries used to build the `exports` map.
  */
 export function writeManifest(version: string, entries: ModuleEntry[]) {
-	const manifestPath = join(ROOT, 'packages', 'api', 'package.json');
-	const manifest = readJson(manifestPath);
+	const manifest = readJson(API_MANIFEST);
 
 	const exports: Record<string, string> = {
 		'.': './src/index.d.ts',
@@ -233,10 +219,6 @@ export function writeManifest(version: string, entries: ModuleEntry[]) {
 	};
 
 	for (const entry of entries) {
-		if (entry.name === '.') {
-			continue;
-		}
-
 		const target = './src/' + relative(API_SRC, entry.out).split('\\').join('/');
 
 		exports[`./${entry.name}`] = target;
@@ -249,5 +231,5 @@ export function writeManifest(version: string, entries: ModuleEntry[]) {
 	manifest.version = version;
 	manifest.exports = ordered;
 
-	writeFileSync(manifestPath, JSON.stringify(manifest, null, '\t') + '\n');
+	writeFileSync(API_MANIFEST, JSON.stringify(manifest, null, '\t') + '\n');
 }

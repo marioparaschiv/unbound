@@ -6,6 +6,7 @@ import { mock } from 'bun:test';
 export const writes: string[] = [];
 export const states: Record<string, boolean> = {};
 export const persists: number[] = [];
+export const existingFiles = new Set<string>();
 
 mock.module('~/api/fs', () => ({
 	default: {
@@ -13,14 +14,21 @@ mock.module('~/api/fs', () => ({
 		write: async (path: string) => void writes.push(path),
 		read: async () => '',
 		rm: async () => true,
-		exists: async () => false,
+		exists: async (path: string) => existingFiles.has(path),
 	},
 }));
 
+export const storedSettings = new Map<string, unknown>();
+
 mock.module('~/api/storage', () => {
 	const store = {
-		get: <T>(key: string, fallback: T) => (key === 'states' ? states : fallback),
-		set: () => {},
+		get: <T>(key: string, fallback: T) =>
+			key === 'states' ? states : ((storedSettings.get(key) as T | undefined) ?? fallback),
+		set: <T>(key: string, value: T) => {
+			if (key !== 'states') {
+				storedSettings.set(key, value);
+			}
+		},
 	};
 
 	return {
@@ -34,6 +42,7 @@ mock.module('~/api/storage', () => {
 });
 
 mock.module('react-native', () => ({
+	Alert: { alert: () => undefined },
 	NativeModules: {},
 	TurboModuleRegistry: { get: () => undefined },
 	Switch: 'Switch',
@@ -43,9 +52,9 @@ mock.module('react-native', () => ({
 
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.
-export const { Manager, ManagerType } = await import('~/managers/base');
-export const { Addons } = await import('~/managers/addons');
-export const { createPluginContext } = await import('~/api/native-runtime');
+export const { Addons } = require('~/managers/addons') as typeof import('~/managers/addons');
+export const { createPluginContext } =
+	require('~/api/native-runtime') as typeof import('~/api/native-runtime');
 
 /**
  * @description Builds a valid manifest for tests.
@@ -59,13 +68,8 @@ export function makeManifest(id: string, version: string = '1.0.0'): AddonManife
 		name: id,
 		description: 'test',
 		authors: [{ name: 'Mario', id: '1' }],
-		icon: '',
-		updates: '',
 		main: 'index.js',
 		version,
-		folder: '',
-		path: '',
-		url: '',
 	};
 }
 
@@ -97,7 +101,7 @@ export class FakeAddons extends Addons<Addon> {
 	nextInstanceStartFails = false;
 
 	constructor() {
-		super(ManagerType.PLUGINS);
+		super('plugins');
 	}
 
 	initialize() {}
@@ -143,6 +147,8 @@ export class FakeAddons extends Addons<Addon> {
 export function resetDevice() {
 	writes.length = 0;
 	persists.length = 0;
+	storedSettings.clear();
+	existingFiles.clear();
 
 	for (const key of Object.keys(states)) {
 		delete states[key];

@@ -16,7 +16,7 @@ import (
 )
 
 func runLibFFIBuild(args []string) error {
-	releaseBuildLock, err := acquireLibFFIBuildLock("/tmp/unbound-loader-libffi-build.lock")
+	releaseBuildLock, err := acquireLibFFIBuildLock("/tmp/astral-loader-libffi-build.lock")
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func runLibFFIBuild(args []string) error {
 		fmt.Println("libffi is up to date")
 		return nil
 	}
-	buildPath, err := os.MkdirTemp("", "unbound-libffi-")
+	buildPath, err := os.MkdirTemp("", "astral-libffi-")
 	if err != nil {
 		return err
 	}

@@ -1,11 +1,13 @@
 import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
+import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest';
 
+import { ANDROID_FILES_DIRECTORY, DISCORD_PACKAGE } from '~/lib/device-paths';
 import type { InstallOptions, PluginPayload } from '~/lib/plugin-install';
 import { formatDuration, runCommand } from '~/lib/run-command';
 import type { CommandResult } from '~/lib/run-command';
 import { logToStderr } from '~/lib/plugin-install';
 
-export const ANDROID_PLUGINS_DIRECTORY = '/data/data/com.discord/files/Unbound/Plugins';
+export const ANDROID_PLUGINS_DIRECTORY = `${ANDROID_FILES_DIRECTORY}/Unbound/Plugins`;
 
 export const ANDROID_TIMEOUTS = {
 	state: 15_000,
@@ -15,7 +17,6 @@ export const ANDROID_TIMEOUTS = {
 };
 
 const STAGING_DIRECTORY = '/data/local/tmp';
-const DISCORD_PACKAGE = 'com.discord';
 
 export type AndroidInstallOptions = InstallOptions & { serial?: string };
 
@@ -115,7 +116,7 @@ function copyIntoPlaceScript(plugin: PluginPayload, destination: string): string
 		.map((file, index) => `cp ${staged[index]} ${destination}/${file.name}`)
 		.join(' && ');
 
-	return `mkdir -p ${destination} && ${copies} && chown -R $(stat -c %u:%g ${ANDROID_PLUGINS_DIRECTORY}) ${destination} && chmod 600 ${destination}/* && rm -f ${staged.join(' ')}`;
+	return `mkdir -p ${destination} && ${copies} && touch ${destination}/${DEVELOPMENT_MARKER} && chown -R $(stat -c %u:%g ${ANDROID_PLUGINS_DIRECTORY}) ${destination} && chmod 600 ${destination}/* && rm -f ${staged.join(' ')}`;
 }
 
 export default installOnAndroid;

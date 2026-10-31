@@ -1,37 +1,30 @@
-import { ManagerKind } from '~/lib/constants';
+import type { ManagerKind } from '@unbound-app/types/addons';
+
+import type { Manager } from '~/managers/base';
 import { plugins } from '~/managers/plugins';
 import { themes } from '~/managers/themes';
 import { fonts } from '~/managers/fonts';
 import { icons } from '~/managers/icons';
 
 /**
- * @description Resolves the addon manager singleton for a given {@link ManagerKind}. Imports the leaf
- * manager modules directly (not the `~/managers` barrel) to avoid the builtins import cycle.
+ * The addon manager singleton of every {@link ManagerKind}, in start order. Imports the leaf manager
+ * modules directly (not the `~/managers` barrel) to avoid the builtins import cycle.
+ */
+export const managers = {
+	plugins,
+	themes,
+	icons,
+	fonts,
+} satisfies Record<ManagerKind, Pick<Manager<never>, 'type' | 'initialize' | 'shutdown'>>;
+
+/**
+ * @description Resolves the addon manager singleton for a given {@link ManagerKind}.
+ * @template K The manager kind.
  * @param kind The manager kind to resolve.
  * @returns The matching manager singleton.
  */
-export function getManager(
-	kind: ManagerKind.Plugins | ManagerKind.Themes,
-): typeof plugins | typeof themes;
-export function getManager(
-	kind: ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons,
-): typeof plugins | typeof themes | typeof icons;
-export function getManager(kind: ManagerKind.Icons): typeof icons;
-export function getManager(kind: ManagerKind.Fonts): typeof fonts;
-export function getManager(
-	kind: ManagerKind,
-): typeof plugins | typeof themes | typeof icons | typeof fonts;
-export function getManager(kind: ManagerKind) {
-	switch (kind) {
-		case ManagerKind.Themes:
-			return themes;
-		case ManagerKind.Icons:
-			return icons;
-		case ManagerKind.Fonts:
-			return fonts;
-		default:
-			return plugins;
-	}
+export function getManager<K extends ManagerKind>(kind: K): (typeof managers)[K] {
+	return managers[kind];
 }
 
-export default { getManager };
+export default { managers, getManager };

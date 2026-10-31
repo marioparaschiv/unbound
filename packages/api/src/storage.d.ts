@@ -101,6 +101,7 @@ declare const _default: {
 	remove: typeof remove;
 	removeListener: typeof removeListener;
 	set: typeof set;
+	toggle: typeof toggle;
 	useSettingsStore: typeof useSettingsStore;
 };
 export declare const off: <EventKey extends keyof EventMap = string>(
@@ -141,10 +142,6 @@ export declare function get<T>(store: string, key: string, def: T): Widen<T>;
  * @returns An object exposing `get`, `set`, `toggle`, `remove`, `clear`, `useSettingsStore`, and `addListener` bound to the store.
  */
 export declare function getStore(store: string): {
-	set: (key: string, value: SettingsValue) => void;
-	get: <T>(key: string, def: T) => Widen<T>;
-	toggle: (key: string, def: boolean) => void;
-	remove: (key: string) => void;
 	clear: () => void;
 	useSettingsStore: (predicate?: (payload: SettingsPayload) => PredicateResult) => {
 		set: (key: string, value: SettingsValue) => void;
@@ -156,6 +153,10 @@ export declare function getStore(store: string): {
 		predicate: (payload: SettingsPayload) => PredicateResult,
 		callback: (payload: SettingsPayload) => void,
 	) => () => EventEmitter<EventMap>;
+	set: (key: string, value: SettingsValue) => void;
+	get: <T>(key: string, def: T) => Widen<T>;
+	toggle: (key: string, def: boolean) => void;
+	remove: (key: string) => void;
 };
 /**
  * @description Hands the settings changed since the last call to the loader, which merges them into the
@@ -164,9 +165,9 @@ export declare function getStore(store: string): {
  */
 export declare function persist(): Promise<void>;
 /**
- * @description Deletes a top-level key from a store, dropping the store entirely if it becomes empty, and emits `changed` and `removed`.
+ * @description Deletes a value at a dot-separated key path, pruning objects the deletion leaves empty and the store itself when it becomes empty, and emits `changed` and `removed`.
  * @param store The store to remove the key from.
- * @param key The key to delete.
+ * @param key The dot-separated key path to delete.
  */
 export declare function remove(store: string, key: string): void;
 /**

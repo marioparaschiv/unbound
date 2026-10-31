@@ -14,6 +14,7 @@ import { combineTagText, toRendererColor, withTag, type TagColors } from '~/tag-
 import { resolveTag, type Guild, type Message } from '~/tags';
 import type { LabelAppearances } from '~/label-appearances';
 import { resolveTagColors } from '~/tag-colors';
+import { noteTag, tagProblem } from '~/tag-problems';
 
 function toTagColors(colors: string[], platform: PluginContext['platform']): TagColors | undefined {
 	if (!colors.length) return;
@@ -63,15 +64,12 @@ export function patchGetTagProperties(
 		});
 		const text = combineTagText(result.opTagText, tag.displayName);
 
-		// Only the iOS gradient renderer reads the appearances.
-		if (platform === 'ios') appearances.set(text, appearance);
+		const colors = toTagColors(appearance.colors, platform);
 
-		return withTag(
-			result,
-			text,
-			toTagColors(appearance.colors, platform),
-			settings.get('useOpTagStyle', false),
-		);
+		appearances.set(text, appearance);
+		noteTag(message.id ?? `${message.channel_id}:${user.id}`, tagProblem(text, colors));
+
+		return withTag(result, text, colors, settings.get('useOpTagStyle', false));
 	});
 }
 

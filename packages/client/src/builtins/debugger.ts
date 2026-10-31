@@ -1,4 +1,5 @@
 import type {
+	DeviceHello,
 	PluginPushRequest,
 	PluginPushResult,
 	EvalResult,
@@ -8,7 +9,10 @@ import { parseMessage } from '@unbound-app/debugger-protocol';
 import type { PluginEntity } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 
-import { DEBUGGER_ADDRESS } from '~/lib/constants';
+import { getSetting, isSettingChange } from '~/lib/unbound-settings';
+import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/lib/constants';
+import { currentEnvironment } from '~/lib/environment';
+import { reloadSummary } from '~/lib/reload-summary';
 import { createPatcher } from '~/api/patcher';
 import { plugins } from '~/managers/plugins';
 import { showToast } from '~/api/toasts';
@@ -16,11 +20,11 @@ import storage from '~/api/storage';
 
 const Patcher = createPatcher('Debugger');
 const Logger = createLogger('Debugger');
-const Settings = storage.getStore('unbound');
 
 // How long to wait before re-dialling the bridge after a drop or failed attempt, so a reloaded app
 // or a restarted bridge reconnects on its own without waiting for the next AppState transition.
 const RECONNECT_DELAY_MS = 2000;
+const RELOAD_BATCH_MS = 4000;
 
 let ws: WebSocket | null = null;
 let sending = false;
@@ -68,7 +72,7 @@ export function stop() {
  * @returns `true` when `debugger.enabled` is set.
  */
 export function shouldStart() {
-	return Settings.get('debugger.enabled', false);
+	return getSetting('debugger.enabled');
 }
 
 function connect(isReconnect = false) {
@@ -91,6 +95,7 @@ function connect(isReconnect = false) {
 	ws = new WebSocket(`ws://${address}`);
 
 	ws.addEventListener('open', () => {
+		sayHello();
 		Logger.success(isReconnect ? 'Reconnected' : 'Connected');
 	});
 
@@ -116,7 +121,7 @@ function connect(isReconnect = false) {
 // Read per attempt so an address edited in settings applies on the next reconnect. The build-time
 // fallback tracks the dev host and is empty in production builds.
 function resolveAddress() {
-	return Settings.get('debugger.address', '') || DEBUGGER_ADDRESS;
+	return getSetting('debugger.address') || DEBUGGER_ADDRESS;
 }
 
 function scheduleReconnect() {
@@ -175,18 +180,59 @@ async function handleEvalRequest(id: string, code: string) {
 
 // A thin transport caller: the reload lifecycle lives on the Plugins manager. Report the manager's
 // own returned outcome straight back over the wire so the CLI stages the reload result.
+function runtimeBytecode(request: PluginPushRequest): string | undefined {
+	const version = window.UNBOUND_LOADER?.bytecodeVersion;
+
+	return version ? request.bytecode?.[String(version)] : void 0;
+}
+
 async function handlePluginPush(request: PluginPushRequest) {
 	try {
-		const result = await plugins.reload(request.addonId, request.bundle, request.manifest);
+		const result = await plugins.reload(
+			request.addonId,
+			request.bundle,
+			request.manifest,
+			runtimeBytecode(request),
+		);
 
-		reply({
-			type: 'plugin-push-result',
-			id: request.id,
-			ok: result.ok,
-			error: result.ok ? void 0 : inspect(result.error),
-		});
+		if (result.ok) {
+			plugins.markDevelopmentCopy(request.addonId);
+		}
+
+		reply(
+			result.ok
+				? { type: 'plugin-push-result', id: request.id, ok: true }
+				: {
+						type: 'plugin-push-result',
+						id: request.id,
+						ok: false,
+						error: inspect(result.error),
+					},
+		);
 	} catch (error) {
 		reply({ type: 'plugin-push-result', id: request.id, ok: false, error: inspect(error) });
+	}
+}
+
+function sayHello() {
+	const environment = currentEnvironment(CLIENT_VERSION);
+
+	if (!environment || ws?.readyState !== WebSocket.OPEN) return;
+
+	const hello: DeviceHello = {
+		type: 'hello',
+		device: {
+			platform: environment.platform,
+			discordVersion: environment.discordVersion,
+			loaderVersion: environment.loaderVersion,
+			clientVersion: environment.clientVersion,
+		},
+	};
+
+	try {
+		ws.send(JSON.stringify(hello));
+	} catch {
+		return;
 	}
 }
 
@@ -238,7 +284,7 @@ function inspect(value: unknown): string {
  * @returns A frame the bridge accepts: string text and a level of 1, 2 or 3.
  */
 // UNKNOWN: nativeLoggingHook is called by native code and other patches with whatever they pass.
-export function logFrame(message: unknown, level: unknown): LogMessage {
+function logFrame(message: unknown, level: unknown): LogMessage {
 	return {
 		type: 'log',
 		level: level === 2 || level === 3 ? level : 1,
@@ -293,10 +339,12 @@ function listenToAppState() {
 }
 
 function listenToSettings() {
-	return Settings.addListener(
-		(payload) => Boolean(payload.key?.startsWith('debugger.')),
+	return storage.addListener(
+		(payload) =>
+			isSettingChange(payload, 'debugger.enabled') ||
+			isSettingChange(payload, 'debugger.address'),
 		(payload) => {
-			if (payload.key === 'debugger.enabled') {
+			if (isSettingChange(payload, 'debugger.enabled')) {
 				if (payload.value) {
 					start();
 				} else {
@@ -306,7 +354,7 @@ function listenToSettings() {
 				return;
 			}
 
-			if (payload.key !== 'debugger.address' || ws?.readyState !== WebSocket.OPEN) return;
+			if (ws?.readyState !== WebSocket.OPEN) return;
 
 			Logger.info('Address changed, reconnecting...');
 			// The close handler clears `ws` and schedules the retry; dialling here would hit the
@@ -319,11 +367,19 @@ function listenToSettings() {
 // Toast hot reloads on the device. This builtin only runs with the debugger enabled, so it is
 // dev-gated by construction.
 function listenToReloads() {
+	let reloaded: string[] = [];
+	let reset: ReturnType<typeof setTimeout> | undefined;
+
 	function onReloaded(entity: PluginEntity) {
+		reloaded.push(entity.data.name);
+		clearTimeout(reset);
+		reset = setTimeout(() => {
+			reloaded = [];
+		}, RELOAD_BATCH_MS);
 		showToast({
-			id: `reload:${entity.id}`,
+			id: 'hot-reload',
 			title: 'Hot reload',
-			content: `Reloaded ${entity.data.name}.`,
+			content: reloadSummary(reloaded),
 		});
 	}
 
@@ -339,6 +395,7 @@ function listenToReloads() {
 	plugins.on('reload-error', onReloadError);
 
 	return [
+		() => clearTimeout(reset),
 		() => void plugins.off('reloaded', onReloaded),
 		() => void plugins.off('reload-error', onReloadError),
 	];

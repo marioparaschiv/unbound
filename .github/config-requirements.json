@@ -1,10 +1,10 @@
 {
-	"UNBOUND_BUNDLE_SIGNING_KEY": {
+	"ASTRAL_BUNDLE_SIGNING_KEY": {
 		"kind": "secret",
 		"required": true,
 		"purpose": "Signs client bundles, their manifest and first-party plugins."
 	},
-	"UNBOUND_PR_BUNDLE_SIGNING_KEY": {
+	"ASTRAL_PR_BUNDLE_SIGNING_KEY": {
 		"kind": "secret",
 		"required": true,
 		"purpose": "Signs pull request test bundles that PR loader builds trust."
@@ -32,7 +32,7 @@
 	"ATTESTATION_PK": {
 		"kind": "secret",
 		"required": true,
-		"purpose": "Signs the iOS loader's build attestation."
+		"purpose": "Signs the build attestation embedded in the iOS and Android loaders."
 	},
 	"GPG_KEY": {
 		"kind": "secret",
@@ -44,15 +44,20 @@
 		"required": true,
 		"purpose": "Downloads decrypted Discord IPAs for iOS builds and compatibility scans."
 	},
-	"UNBOUND_API_KEY": {
+	"HERMES_SYNC_TOKEN": {
+		"kind": "secret",
+		"required": false,
+		"purpose": "Lets the hermesc sync open its pull request as a user, so the pull request's own CI runs; without it the sync uses GITHUB_TOKEN."
+	},
+	"ASTRAL_API_KEY": {
 		"kind": "secret",
 		"required": true,
-		"purpose": "Publishes first-party plugins and loader releases to the Unbound API."
+		"purpose": "Publishes first-party plugins and loader releases to the astral API."
 	},
-	"UNBOUND_API_URL": {
+	"ASTRAL_API_URL": {
 		"kind": "var",
 		"required": true,
-		"purpose": "Origin of the Unbound API that plugins and loader releases are published to."
+		"purpose": "Origin of the astral API that plugins and loader releases are published to."
 	},
 	"S3_ENDPOINT": {
 		"kind": "var",
@@ -88,5 +93,10 @@
 		"kind": "var",
 		"required": false,
 		"purpose": "dkrypt API origin; defaults to https://ipa.dylib.dev."
+	},
+	"GRADLE_ENCRYPTION_KEY": {
+		"kind": "secret",
+		"required": false,
+		"purpose": "Encrypts Gradle's configuration cache so loader builds can reuse it between runs; without it Gradle reconfigures each time."
 	}
 }

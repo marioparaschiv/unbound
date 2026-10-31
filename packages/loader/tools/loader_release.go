@@ -35,6 +35,7 @@ type loaderReleaseBatchConfig struct {
 	androidURL string
 	changelog  string
 	client     *http.Client
+	dryRun     bool
 }
 
 type loaderReleaseBatchResult struct {
@@ -64,12 +65,13 @@ type loaderLatestUpdateResponse struct {
 
 func runPublishLoaderReleases(args []string) error {
 	set := flag.NewFlagSet("publish-loader-releases", flag.ContinueOnError)
-	endpoint := set.String("api-url", envOr("UNBOUND_API_URL", defaultLoaderReleaseEndpoint), "loader release publication endpoint")
+	endpoint := set.String("api-url", envOr("ASTRAL_API_URL", defaultLoaderReleaseEndpoint), "loader release publication endpoint")
 	version := set.String("version", "", "semantic loader version")
 	iosURL := set.String("ios-url", "", "public iOS release asset URL")
 	androidURL := set.String("android-url", "", "public Android release asset URL")
 	changelog := set.String("changelog", "", "optional release changelog")
 	changelogFile := set.String("changelog-file", "", "path to release changelog")
+	dryRun := set.Bool("dry-run", false, "check the release against the published versions and print what would be published, without publishing")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -83,12 +85,13 @@ func runPublishLoaderReleases(args []string) error {
 
 	result, err := publishLoaderReleases(context.Background(), loaderReleaseBatchConfig{
 		endpoint:   *endpoint,
-		apiKey:     os.Getenv("UNBOUND_API_KEY"),
+		apiKey:     os.Getenv("ASTRAL_API_KEY"),
 		version:    *version,
 		iosURL:     *iosURL,
 		androidURL: *androidURL,
 		changelog:  *changelog,
-		client:     &http.Client{Timeout: 30 * time.Second},
+		client:     lookupClient(30 * time.Second),
+		dryRun:     *dryRun,
 	})
 	if err != nil {
 		return err
@@ -101,15 +104,19 @@ func runPublishLoaderReleases(args []string) error {
 		fmt.Printf("Skipped loader release %s because that semver is already published\n", *version)
 		return nil
 	}
+	action := "Published"
+	if *dryRun {
+		action = "Would publish"
+	}
 	for _, platform := range result.published {
-		fmt.Printf("Published %s loader release %s\n", platform, *version)
+		fmt.Printf("%s %s loader release %s\n", action, platform, *version)
 	}
 	return nil
 }
 
 func publishLoaderReleases(ctx context.Context, config loaderReleaseBatchConfig) (loaderReleaseBatchResult, error) {
-	if config.apiKey == "" {
-		return loaderReleaseBatchResult{}, errors.New("UNBOUND_API_KEY is required")
+	if config.apiKey == "" && !config.dryRun {
+		return loaderReleaseBatchResult{}, errors.New("ASTRAL_API_KEY is required")
 	}
 	if config.version == "" {
 		return loaderReleaseBatchResult{}, errors.New("loader release version is required")
@@ -129,7 +136,7 @@ func publishLoaderReleases(ctx context.Context, config loaderReleaseBatchConfig)
 
 	client := config.client
 	if client == nil {
-		client = &http.Client{Timeout: 30 * time.Second}
+		client = lookupClient(30 * time.Second)
 	}
 	platforms := []struct {
 		name string
@@ -188,6 +195,10 @@ func publishLoaderReleases(ctx context.Context, config loaderReleaseBatchConfig)
 
 	result := loaderReleaseBatchResult{published: make([]string, 0, len(pending))}
 	for _, platform := range pending {
+		if config.dryRun {
+			result.published = append(result.published, platform.platform)
+			continue
+		}
 		if _, err := postLoaderRelease(ctx, platform, client); err != nil {
 			return loaderReleaseBatchResult{}, err
 		}
@@ -214,7 +225,7 @@ func postLoaderRelease(ctx context.Context, config loaderReleasePublishConfig, c
 		return false, fmt.Errorf("create loader release request: %w", err)
 	}
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("User-Agent", "unbound-loader-release-publisher/1.0")
+	request.Header.Set("User-Agent", "astral-loader-release-publisher/1.0")
 	request.Header.Set("X-API-Key", config.apiKey)
 
 	response, err := client.Do(request)
@@ -258,7 +269,7 @@ func latestLoaderReleaseVersion(ctx context.Context, endpoint string, platform s
 	if err != nil {
 		return "", false, fmt.Errorf("create latest loader release request: %w", err)
 	}
-	request.Header.Set("User-Agent", "unbound-loader-release-publisher/1.0")
+	request.Header.Set("User-Agent", "astral-loader-release-publisher/1.0")
 	response, err := client.Do(request)
 	if err != nil {
 		return "", false, fmt.Errorf("read latest %s loader release: %w", platform, err)

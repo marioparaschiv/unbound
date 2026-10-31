@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { pluginIcon, readPluginManifests } from './plugin-manifests';
 import { PLUGIN_ICONS_DIR, PLUGINS_DIR } from './paths';
 
 const pluginsDir = PLUGINS_DIR;
@@ -12,29 +13,8 @@ const iconRoots = [
 ];
 const iconScales = ['@3x.png', '@2x.png', '.png'];
 
-interface PluginManifest {
-	id: string;
-	icon?: string;
-}
-
 function readPluginIcons(): Set<string> {
-	const icons = new Set<string>();
-
-	for (const entry of readdirSync(pluginsDir, { withFileTypes: true })) {
-		if (!entry.isDirectory()) continue;
-
-		const manifestPath = resolve(pluginsDir, entry.name, 'manifest.json');
-		if (!existsSync(manifestPath)) continue;
-
-		const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as PluginManifest;
-		if (!manifest.icon) throw new Error(`Plugin ${manifest.id} is missing a manifest icon.`);
-		if (!/^[A-Za-z0-9_-]+$/.test(manifest.icon))
-			throw new Error(`Plugin ${manifest.id} has an invalid icon name: ${manifest.icon}.`);
-
-		icons.add(manifest.icon);
-	}
-
-	return icons;
+	return new Set(readPluginManifests(pluginsDir).map(({ manifest }) => pluginIcon(manifest)));
 }
 
 function findIconPath(icon: string, entries: Set<string>): string {

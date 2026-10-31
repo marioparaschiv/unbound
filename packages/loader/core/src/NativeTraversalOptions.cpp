@@ -15,8 +15,8 @@ static constexpr TraversalLimits kSnapshotLimits = {
 };
 
 static constexpr TraversalLimits kSearchLimits = {
-    {"maxDepth", 24, 0, 40},
-    {"maxVisited", 512, 1, 2048},
+    {"maxDepth", 24, 0, 128},
+    {"maxVisited", 512, 1, 8192},
     {"maxResults", 64, 1, 256},
     true,
 };

@@ -42,7 +42,7 @@ function isChannelPart(node: RenderNode | null | undefined, channelId: string): 
  * @param node A rendered element.
  * @returns Whether the element carries the plugin's key.
  */
-export function isIndicator(node: RenderNode | null | undefined): boolean {
+function isIndicator(node: RenderNode | null | undefined): boolean {
 	return node?.key === INDICATOR_KEY;
 }
 

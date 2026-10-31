@@ -41,11 +41,11 @@ struct UpdaterSettings {
 
 UpdaterSettings updaterSettings(SettingsStore &store);
 
-#ifndef UNBOUND_DEFAULT_BUNDLE_URL
-#define UNBOUND_DEFAULT_BUNDLE_URL "https://builds.unbound.rip/"
+#ifndef ASTRAL_DEFAULT_BUNDLE_URL
+#define ASTRAL_DEFAULT_BUNDLE_URL "https://builds.unbound.rip/"
 #endif
 
-constexpr const char *kDefaultBundleBaseURL  = UNBOUND_DEFAULT_BUNDLE_URL;
+constexpr const char *kDefaultBundleBaseURL  = ASTRAL_DEFAULT_BUNDLE_URL;
 constexpr const char *kBundleTrustSuffix     = ".trust";
 constexpr const char *kBundleBaselineSetting = "loader.update.baseline";
 
@@ -80,7 +80,6 @@ private:
         std::string manifestText;
         std::string manifestSignature;
         std::string expectedSha512;
-        bool        bundleSignatureOnly = false;
     };
 
     std::string                bundlePath(const std::string &extension) const;

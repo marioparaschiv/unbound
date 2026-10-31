@@ -1,5 +1,3 @@
-import { describe, expect, test } from 'bun:test';
-
 import {
 	COMPOSER_ROW_BOTTOM,
 	COMPOSER_ROW_GAP,
@@ -8,7 +6,8 @@ import {
 	showComposerRow,
 	slowmodeInset,
 	spaceBelow,
-} from './overlay-rows';
+} from '@unbound-plugins/shared/composer/overlay-rows';
+import { describe, expect, test } from 'bun:test';
 
 describe('composerRowTop', () => {
 	test('sits the lowest row right above the composer', () => {

@@ -2,7 +2,7 @@
 
 #include <pthread.h>
 
-namespace unbound::android {
+namespace astral::android {
 static JavaVM        *gJavaVM = nullptr;
 static pthread_key_t  gDetachKey;
 static pthread_once_t gDetachKeyOnce = PTHREAD_ONCE_INIT;

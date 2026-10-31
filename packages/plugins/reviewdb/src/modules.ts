@@ -14,5 +14,5 @@ export const UserProfileCardByName = metro.findByName('UserProfileCard', {
 export const Theme = metro.findByProps('colors', 'internal', { lazy: true });
 export const RelationshipStore = metro.findStore('Relationship', { lazy: true });
 
-export const settings = storage.getStore('unbound.reviewdb');
-export const Patcher = patcher.createPatcher('unbound.reviewdb');
+export const settings = storage.getStore('astral.reviewdb');
+export const Patcher = patcher.createPatcher('astral.reviewdb');

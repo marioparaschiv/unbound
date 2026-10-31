@@ -1,6 +1,6 @@
 (token) => {
 	function apply() {
-		const metro = globalThis.unbound?.metro;
+		const metro = globalThis.astral?.metro;
 
 		if (!metro || typeof metro.findByProps !== 'function') {
 			throw new Error('Metro API unavailable');
@@ -16,7 +16,7 @@
 
 		auth.setToken(token);
 
-		const reload = globalThis.unbound?.native?.reload;
+		const reload = globalThis.astral?.native?.reload;
 
 		if (typeof reload !== 'function') {
 			throw new Error('Reload API unavailable');

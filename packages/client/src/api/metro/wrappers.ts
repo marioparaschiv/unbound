@@ -1,9 +1,6 @@
 import lazy from '@unbound-app/utils/lazy';
 
-import type { MetroStoreOptions } from '~/api/metro';
-
-/** A search term, or a trailing search-options bag accepted by the `findBy*` family. */
-type TermOrOptions = string | MetroStoreOptions;
+import { finder, type TermOrOptions } from '~/api/metro/finders';
 
 /**
  * @description Lazily finds a module by its properties. The metro search is deferred until the
@@ -12,7 +9,7 @@ type TermOrOptions = string | MetroStoreOptions;
  * @returns A lazy proxy that resolves to the matching module on first property access.
  */
 export function findByPropsLazy(...args: TermOrOptions[]) {
-	return lazy(() => require('~/api/metro').findByProps(...args));
+	return lazy(() => finder('findByProps')(...args));
 }
 
 /**
@@ -21,7 +18,7 @@ export function findByPropsLazy(...args: TermOrOptions[]) {
  * @returns A lazy proxy that resolves to the matching module on first property access.
  */
 export function findByNameLazy(...args: TermOrOptions[]) {
-	return lazy(() => require('~/api/metro').findByName(...args));
+	return lazy(() => finder('findByName')(...args));
 }
 
 /**
@@ -30,7 +27,7 @@ export function findByNameLazy(...args: TermOrOptions[]) {
  * @returns A lazy proxy that resolves to the matching module on first property access.
  */
 export function findByFilePathLazy(...args: TermOrOptions[]) {
-	return lazy(() => require('~/api/metro').findByFilePath(...args));
+	return lazy(() => finder('findByFilePath')(...args));
 }
 
 /**
@@ -39,7 +36,7 @@ export function findByFilePathLazy(...args: TermOrOptions[]) {
  * @returns A lazy proxy that resolves to the matching module on first property access.
  */
 export function findByPrototypesLazy(...args: TermOrOptions[]) {
-	return lazy(() => require('~/api/metro').findByPrototypes(...args));
+	return lazy(() => finder('findByPrototypes')(...args));
 }
 
 /**
@@ -48,7 +45,7 @@ export function findByPrototypesLazy(...args: TermOrOptions[]) {
  * @returns A lazy proxy that resolves to the matching store on first property access.
  */
 export function findStoreLazy(...args: TermOrOptions[]) {
-	return lazy(() => require('~/api/metro').findStore(...args));
+	return lazy(() => finder('findStore')(...args));
 }
 
 export default {

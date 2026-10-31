@@ -5,8 +5,8 @@
 	"banners": [
 		{
 			"url": "https://builds.unbound.rip/repo/assets/repo/Banners/RepoHeader.png",
-			"title": "Unbound",
-			"package": "app.unbound.ios",
+			"title": "astral",
+			"package": "app.astral.ios",
 			"hideShadow": false
 		}
 	]

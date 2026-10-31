@@ -15,7 +15,7 @@ int main()
     setNativeErrorDelivery(NativeErrorDelivery::Throw);
     assert(nativeErrorDelivery() == NativeErrorDelivery::Throw);
 
-    std::ifstream      file(std::string(UNBOUND_BOOTSTRAP_DIR) + "/native-failure-guard.js");
+    std::ifstream      file(std::string(ASTRAL_BOOTSTRAP_DIR) + "/native-failure-guard.js");
     std::ostringstream contents;
     contents << file.rdbuf();
     std::string source = contents.str();

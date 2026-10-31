@@ -81,3 +81,53 @@ describe('evaluateForController', () => {
 		]);
 	});
 });
+
+describe('attachDevice', () => {
+	test('lets a reconnecting device replace one that never closed', async () => {
+		let closed = false;
+		const stale = { ...recordingSocket(), close: () => void (closed = true) };
+
+		attachDevice(stale);
+		attachController(controller);
+		evaluateForController(controller, { type: 'eval', id: 'stuck', code: 'x', timeout: 1_000 });
+
+		attachDevice(device);
+		evaluateForController(controller, { type: 'eval', id: 'fresh', code: 'y', timeout: 200 });
+		handleDeviceMessage({ type: 'eval-result', id: 'fresh', ok: true, value: '1' });
+		await Bun.sleep(10);
+
+		expect(closed).toBe(true);
+		expect(device.frames).toEqual([{ type: 'eval', id: 'fresh', code: 'y' }]);
+		expect(evalResults(controller)).toEqual([
+			{
+				type: 'eval-result',
+				id: 'stuck',
+				ok: false,
+				error: 'Device disconnected before the evaluation completed.',
+			},
+			{ type: 'eval-result', id: 'fresh', ok: true, value: '1' },
+		]);
+	});
+});
+
+describe('device hello', () => {
+	test('reports the device to controllers until it disconnects', () => {
+		const info = {
+			platform: 'android',
+			discordVersion: '352.10',
+			loaderVersion: '1.0.0',
+			clientVersion: '0.9.0',
+		};
+
+		attachDevice(device);
+		attachController(controller);
+		handleDeviceMessage({ type: 'hello', device: info });
+		detachDevice(device);
+
+		expect(controller.frames).toEqual([
+			{ type: 'device-status', connected: true },
+			{ type: 'device-status', connected: true, device: info },
+			{ type: 'device-status', connected: false },
+		]);
+	});
+});

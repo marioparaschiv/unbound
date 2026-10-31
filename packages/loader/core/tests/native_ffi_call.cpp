@@ -29,26 +29,26 @@ struct TestRect {
     TestPoint size;
 };
 
-extern "C" TestRect unboundTestOffsetRect(TestRect rect, double distance)
+extern "C" TestRect astralTestOffsetRect(TestRect rect, double distance)
 {
     rect.origin.x += distance;
     rect.origin.y += distance;
     return rect;
 }
 
-extern "C" int32_t unboundTestIsNull(const char *value)
+extern "C" int32_t astralTestIsNull(const char *value)
 {
     return value == nullptr ? 1 : 0;
 }
 
-extern "C" int64_t unboundTestSum(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f,
-                                  int32_t g, int32_t h, int32_t i, int32_t j, int32_t k, int32_t l,
-                                  int32_t m, int32_t n, int32_t o, int32_t p)
+extern "C" int64_t astralTestSum(int32_t a, int32_t b, int32_t c, int32_t d, int32_t e, int32_t f,
+                                 int32_t g, int32_t h, int32_t i, int32_t j, int32_t k, int32_t l,
+                                 int32_t m, int32_t n, int32_t o, int32_t p)
 {
     return static_cast<int64_t>(a) + b + c + d + e + f + g + h + i + j + k + l + m + n + o + p;
 }
 
-static int unboundTestData = 7;
+static int astralTestData = 7;
 
 class MarkerCodec final : public loader::ffi::TypeCodec
 {
@@ -105,7 +105,7 @@ static void structsTravelByValue()
                      NativeValue{NativeFields{NativeValue{30.0}, NativeValue{40.0}}}}};
     loader::ffi::encodeValue(rect, value, frame.argument(0), frame.storage());
     loader::ffi::encodeValue(type("double"), NativeValue{0.5}, frame.argument(1), frame.storage());
-    frame.invoke(reinterpret_cast<void *>(&unboundTestOffsetRect));
+    frame.invoke(reinterpret_cast<void *>(&astralTestOffsetRect));
 
     NativeFields result =
         std::get<NativeFields>(loader::ffi::decodeValue(rect, frame.result()).data);
@@ -120,13 +120,13 @@ static void nullCStringsReachNativeCode()
 {
     CallFrame frame(loader::ffi::callInterface(type("i32"), {type("cstring")}));
     loader::ffi::encodeValue(type("cstring"), NativeValue{}, frame.argument(0), frame.storage());
-    frame.invoke(reinterpret_cast<void *>(&unboundTestIsNull));
+    frame.invoke(reinterpret_cast<void *>(&astralTestIsNull));
     assert(std::get<double>(loader::ffi::decodeValue(type("i32"), frame.result()).data) == 1);
 
     CallFrame text(loader::ffi::callInterface(type("i32"), {type("cstring")}));
     loader::ffi::encodeValue(type("cstring"), NativeValue{std::string("")}, text.argument(0),
                              text.storage());
-    text.invoke(reinterpret_cast<void *>(&unboundTestIsNull));
+    text.invoke(reinterpret_cast<void *>(&astralTestIsNull));
     assert(std::get<double>(loader::ffi::decodeValue(type("i32"), text.result()).data) == 0);
 }
 
@@ -140,7 +140,7 @@ static void sixteenArgumentsAreSupported()
         loader::ffi::encodeValue(arguments[index], NativeValue{static_cast<double>(index + 1)},
                                  frame.argument(index), frame.storage());
     }
-    frame.invoke(reinterpret_cast<void *>(&unboundTestSum));
+    frame.invoke(reinterpret_cast<void *>(&astralTestSum));
     assert(std::get<std::int64_t>(loader::ffi::decodeValue(type("i64"), frame.result()).data) ==
            136);
 }
@@ -205,15 +205,15 @@ static void extensionTypesResolveThroughTheirCodec()
 
 static void onlyInstructionsAreCallable()
 {
-    assert(isCallableSymbolAddress(reinterpret_cast<void *>(&unboundTestIsNull)));
+    assert(isCallableSymbolAddress(reinterpret_cast<void *>(&astralTestIsNull)));
     assert(isCallableSymbolAddress(reinterpret_cast<void *>(&std::strlen)));
-    assert(!isCallableSymbolAddress(&unboundTestData));
+    assert(!isCallableSymbolAddress(&astralTestData));
     assert(!isCallableSymbolAddress(nullptr));
 
     std::unique_ptr<int> heap = std::make_unique<int>(3);
     assert(!isCallableSymbolAddress(heap.get()));
     assert(!isExecutableAddress(heap.get()));
-    assert(isExecutableAddress(reinterpret_cast<void *>(&unboundTestIsNull)));
+    assert(isExecutableAddress(reinterpret_cast<void *>(&astralTestIsNull)));
 }
 
 int main()

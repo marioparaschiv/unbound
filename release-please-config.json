@@ -21,6 +21,7 @@
 		"packages/cli": { "component": "cli" },
 		"packages/debugger": { "component": "debugger" },
 		"packages/debugger-protocol": { "component": "debugger-protocol" },
+		"packages/discord-types": { "component": "discord-types" },
 		"packages/contracts": {
 			"component": "contracts",
 			"draft": true,

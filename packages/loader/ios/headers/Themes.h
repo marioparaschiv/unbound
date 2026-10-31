@@ -4,7 +4,7 @@
 #import "CoreBridge.h"
 #import "Discord.h"
 #import "LoaderShared.h"
-#import "Unbound.h"
+#import "astral.h"
 
 @interface Themes : NSObject
 {

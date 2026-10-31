@@ -13,9 +13,14 @@ export function normalizeImageUrl(source: string, size: number): string {
 		/\/a_[^/]+\.(?:png|jpe?g|webp|gif)$/i.test(url.pathname);
 
 	url.searchParams.set('size', String(size));
-	url.pathname = url.pathname.replace(/\.(?:png|jpe?g|webp|gif)$/i, animated ? '.gif' : '.webp');
 
-	return url.toString();
+	const extension = animated ? '.gif' : '.webp';
+	const resized = new URL(
+		`${url.pathname.replace(/\.(?:png|jpe?g|webp|gif)$/i, extension)}${url.search}${url.hash}`,
+		url.origin,
+	);
+
+	return resized.toString();
 }
 
 export default normalizeImageUrl;

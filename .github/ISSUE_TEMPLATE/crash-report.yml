@@ -1,0 +1,83 @@
+name: Crash or won't start
+description: Discord crashes, shows an error screen, or won't open with Unbound.
+title: 'crash: '
+labels: [Bug, Crash, needs-triage]
+body:
+    - type: markdown
+      attributes:
+          value: |
+              The error screen's **Report** button and the iOS recovery menu (toolbox) open this form with the details filled in. To open the toolbox, hold three fingers on the screen for half a second. See [Troubleshooting](https://docs.unbound.rip/user-guide/troubleshooting).
+    - type: dropdown
+      id: platform
+      attributes:
+          label: Platform
+          options:
+              - iOS
+              - Android
+      validations:
+          required: true
+    - type: dropdown
+      id: install
+      attributes:
+          label: How Unbound is installed
+          options:
+              - Sideloaded IPA
+              - Jailbreak package (.deb)
+              - Patched Discord APK
+              - Xposed module (rooted)
+              - Not sure
+      validations:
+          required: true
+    - type: dropdown
+      id: when
+      attributes:
+          label: When does it happen?
+          options:
+              - As soon as Discord opens
+              - When I open a specific screen
+              - After I enabled a plugin or theme
+              - After an update
+              - Randomly
+      validations:
+          required: true
+    - type: dropdown
+      id: recovery
+      attributes:
+          label: Does recovery mode or disabling plugins help?
+          options:
+              - Yes, it stops crashing
+              - No, it still crashes
+              - I couldn't get there
+              - I haven't tried
+      validations:
+          required: true
+    - type: textarea
+      id: environment
+      attributes:
+          label: Environment
+          description: The Discord, Unbound and loader versions and your device. Filled in for you when you report from the app.
+      validations:
+          required: true
+    - type: textarea
+      id: error
+      attributes:
+          label: Error
+          description: The error message and stack from the error screen, or a crash log.
+          render: text
+    - type: textarea
+      id: description
+      attributes:
+          label: What were you doing when it crashed?
+      validations:
+          required: true
+    - type: checkboxes
+      id: checks
+      attributes:
+          label: Before you submit
+          options:
+              - label: I'm on the latest Unbound and loader version.
+                required: true
+              - label: I searched the existing issues and this hasn't been reported.
+                required: true
+              - label: This is about Unbound or a first-party plugin, not a plugin or theme from someone else.
+                required: true

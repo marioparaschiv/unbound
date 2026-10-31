@@ -50,8 +50,8 @@ enum class NativeErrorDelivery
     Envelope,
 };
 
-inline constexpr const char *kNativeFailureEnvelopeKey = "__unboundNativeFailure";
-inline constexpr const char *kNativeFailureGuardName   = "__unboundGuardNativeFunction";
+inline constexpr const char *kNativeFailureEnvelopeKey = "__astralNativeFailure";
+inline constexpr const char *kNativeFailureGuardName   = "__astralGuardNativeFunction";
 
 NativeErrorDelivery nativeErrorDelivery();
 void                setNativeErrorDelivery(NativeErrorDelivery delivery);
@@ -61,7 +61,7 @@ using RuntimeGenerationListener = std::function<void(uint64_t generation)>;
 class RuntimeGenerationTracker
 {
 public:
-    std::optional<uint64_t> advance(const void *runtime);
+    std::optional<uint64_t> advance(const void *runtime, bool alreadyRegistered = true);
     uint64_t                generation() const;
     void                    addListener(RuntimeGenerationListener listener);
     void                    notify(uint64_t generation) const;

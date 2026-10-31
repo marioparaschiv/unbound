@@ -70,13 +70,13 @@ UpdaterSettings updaterSettings(SettingsStore &store)
 {
     UpdaterSettings settings;
     settings.getString = [&store](const std::string &key, const std::string &fallback) {
-        return store.getString("unbound", key, fallback);
+        return store.getString("astral", key, fallback);
     };
     settings.getBoolean = [&store](const std::string &key, bool fallback) {
-        return store.getBoolean("unbound", key, fallback);
+        return store.getBoolean("astral", key, fallback);
     };
     settings.setString = [&store](const std::string &key, const std::string &value) {
-        store.set("unbound", key, value);
+        store.set("astral", key, value);
         store.save();
     };
     return settings;
@@ -163,7 +163,7 @@ bool BundleUpdater::isExemptionCurrent(const std::string &reason, const std::str
 
 std::string BundleUpdater::bundlePath(const std::string &extension) const
 {
-    return joinPath(documents_, "unbound." + extension);
+    return joinPath(documents_, "astral." + extension);
 }
 
 std::optional<std::string> BundleUpdater::candidateProblem(const std::string &candidatePath) const
@@ -202,17 +202,7 @@ std::optional<std::string> BundleUpdater::candidateProblem(const std::string &ca
     std::string signature = recordField(record, "signature");
     if (kind == "bundle")
     {
-        if (verifyTrustedSignature(*bundle, signature, trust_) == TrustedSigner::None)
-        {
-            return std::string("its stored signature does not match");
-        }
-        std::optional<BundleBaseline> active = baseline();
-        if (active && active->source == source)
-        {
-            return std::string("it has no signed manifest, but the active bundle from ") + source +
-                   " does";
-        }
-        return std::nullopt;
+        return std::string("it was verified by its own signature, without a signed manifest");
     }
 
     if (kind != "manifest")
@@ -332,9 +322,11 @@ std::string BundleUpdater::selectURL(const BundleSource                  &source
 {
     if (!manifest)
     {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Failed to fetch manifest; falling back to JavaScript bundle");
-        return source.directURL.value_or(source.baseURL + "unbound.js");
+        std::string fallback = source.directURL.value_or(source.baseURL + "unbound.js");
+        log(LogLevel::Warning, LOG_CATEGORY_UPDATER,
+            "No usable manifest at " + source.baseURL + kBundleManifestName + "; falling back to " +
+                fallback);
+        return fallback;
     }
 
     std::string versions;
@@ -388,17 +380,9 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
 
     if (signer == TrustedSigner::None)
     {
-        if (active && active->source == plan.source)
-        {
-            log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-                "Refused the update: " + manifestURL +
-                    " has no valid signature, but the active bundle came from a signed manifest.");
-            throw std::runtime_error("Bundle manifest failed signature verification");
-        }
-        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-            manifestURL + " has no valid signature; checking the bundle's own signature instead.");
-        plan.bundleSignatureOnly = true;
-        return plan;
+        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
+            "Refused the update: " + manifestURL + " has no valid signature.");
+        throw std::runtime_error("Bundle manifest failed signature verification");
     }
 
     if (!manifest->isSignable())
@@ -463,44 +447,17 @@ std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &pla
         return std::nullopt;
     }
 
-    if (!plan.bundleSignatureOnly)
-    {
-        if (sha512Hex(*bundle) != plan.expectedSha512)
-        {
-            log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-                "Rejected the downloaded bundle: its SHA-512 does not match the signed manifest.");
-            return std::nullopt;
-        }
-        log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-            "Bundle signature verified: " + urlFileName(plan.url) +
-                " matches the signed manifest.");
-        record["kind"]      = "manifest";
-        record["manifest"]  = plan.manifestText;
-        record["signature"] = plan.manifestSignature;
-        return record.dump();
-    }
-
-    std::optional<std::string> signature = fetch(plan.url + kBundleSignatureSuffix);
-    if (!signature)
+    if (sha512Hex(*bundle) != plan.expectedSha512)
     {
         log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Rejected the downloaded bundle: " + plan.url + kBundleSignatureSuffix +
-                " could not be fetched.");
+            "Rejected the downloaded bundle: its SHA-512 does not match the signed manifest.");
         return std::nullopt;
     }
-
-    TrustedSigner signer = verifyTrustedSignature(*bundle, *signature, trust_);
-    if (signer == TrustedSigner::None)
-    {
-        log(LogLevel::Error, LOG_CATEGORY_UPDATER,
-            "Rejected the downloaded bundle: its signature does not match.");
-        return std::nullopt;
-    }
-
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-        "Bundle signature verified with " + describeSigner(signer, trust_) + ".");
-    record["kind"]      = "bundle";
-    record["signature"] = *signature;
+        "Bundle signature verified: " + urlFileName(plan.url) + " matches the signed manifest.");
+    record["kind"]      = "manifest";
+    record["manifest"]  = plan.manifestText;
+    record["signature"] = plan.manifestSignature;
     return record.dump();
 }
 
@@ -572,7 +529,7 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         download_ ? download_(url, candidatePath, headers, kBundleDownloadPolicy) : std::nullopt;
     if (!response)
     {
-        throw std::runtime_error("Bundle download failed");
+        throw std::runtime_error("Could not download " + url);
     }
 
     if (!isAcceptedDownloadStatus(response->status))

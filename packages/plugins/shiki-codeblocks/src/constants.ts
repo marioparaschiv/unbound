@@ -1,5 +1,7 @@
 export const PLUGIN_NAME = 'Shiki Codeblocks';
 
+export const PLUGIN_ID = 'astral.shiki-codeblocks';
+
 export const DEFAULT_THEME = 'dark-plus';
 
 /** Settings that change how mounted cards look, so the renderer repaints or rebuilds them. */
@@ -11,6 +13,8 @@ export const CARD_SETTINGS = [
 	'tryHljs',
 	'useDevIcon',
 ];
+
+export const SHIKI_LANGS_VERSION = '4.5.0';
 
 export const SHIKI_ASSET_COMMIT = 'bc5436518111d87ea58eb56d97b3f9bec30e6b83';
 

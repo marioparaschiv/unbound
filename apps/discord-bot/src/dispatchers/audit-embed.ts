@@ -3,6 +3,7 @@ import type { APIEmbed } from 'discord.js';
 
 import { renderKind, type KindEmbed } from '~/dispatchers/audit-kinds';
 import { COLOURS, SITE_URL } from '~/lib/constants';
+import { truncate } from '~/lib/discord-messages';
 
 export const EMBED_LIMITS = {
 	title: 256,
@@ -14,32 +15,6 @@ export const EMBED_LIMITS = {
 
 const SUBJECT_PATHS: Record<string, string> = { addon: 'admin/addons', user: 'admin/users' };
 const CODE_FENCE = { open: '```json\n', close: '\n```' } as const;
-
-/**
- * @description Shortens a string to at most `max` characters, marking a cut with an ellipsis.
- * @param value The string to shorten.
- * @param max The largest length allowed.
- * @returns `value` unchanged when it fits, otherwise its start ending in `…`.
- */
-export function truncate(value: string, max: number): string {
-	if (value.length <= max) {
-		return value;
-	}
-
-	if (max <= 0) {
-		return '';
-	}
-
-	let end = max - 1;
-	const last = value.charCodeAt(end - 1);
-
-	// Never keep half of a surrogate pair; Discord rejects or mangles a lone surrogate.
-	if (last >= 0xd8_00 && last <= 0xdb_ff) {
-		end--;
-	}
-
-	return `${value.slice(0, end)}…`;
-}
 
 // Discord rejects a blank author name or title with a 400, which would stall every later event.
 function present(text: string) {
@@ -145,4 +120,4 @@ export function buildFallbackEmbed(event: AuditEvent): APIEmbed {
 	};
 }
 
-export default { EMBED_LIMITS, truncate, buildAuditEmbed, buildFallbackEmbed };
+export default { EMBED_LIMITS, buildAuditEmbed, buildFallbackEmbed };

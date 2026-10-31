@@ -1,8 +1,16 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 
-import { ALIAS_ROOT, BARREL, API_SRC, logger, type ModuleEntry } from './paths';
-import { config } from '../../../packages/api/sdk.config.ts';
+import {
+	ADDITIONAL_SUBPATHS,
+	EXCLUDE_SUBPATHS,
+	ALIAS_ROOT,
+	BARREL,
+	API_SRC,
+	logger,
+	type ModuleEntry,
+	type SdkEntries,
+} from './paths';
 import { isInternal } from './transform';
 import { parseSource } from './project';
 
@@ -19,8 +27,10 @@ export function resolveSource(specifier: string, fromDir: string): string | unde
 		? join(ALIAS_ROOT, specifier.slice(2))
 		: resolve(fromDir, specifier);
 
-	if (existsSync(`${base}.ts`)) {
-		return `${base}.ts`;
+	for (const extension of ['.ts', '.tsx']) {
+		if (existsSync(`${base}${extension}`)) {
+			return `${base}${extension}`;
+		}
 	}
 
 	if (existsSync(join(base, 'index.ts'))) {
@@ -82,14 +92,14 @@ export function readNamespaceExports(barrel: string): { name: string; source: st
  * @description Builds the ordered entry list by parsing the api barrel and recursing into folder
  * modules for their nested `export * as` sub-namespaces (e.g. `metro/filters`). A module is a folder
  * when its source resolves to an `index.ts`; each nested namespace becomes a `<parent>/<child>`
- * subpath entry. Auto-derived subpaths in `config.excludeSubpaths` are skipped; `config.additionalSubpaths`
+ * subpath entry. Auto-derived subpaths in `EXCLUDE_SUBPATHS` are skipped; `ADDITIONAL_SUBPATHS`
  * are appended. Stale excludeSubpaths entries are reported; an unresolvable additional subpath fails
  * generation.
- * @returns The entry descriptors (root first) sorted so the output is deterministic across runs.
+ * @returns The root barrel and the module entries, sorted so the output is deterministic across runs.
  */
-export function buildEntries(): ModuleEntry[] {
+export function buildEntries(): SdkEntries {
 	const entries: ModuleEntry[] = [];
-	const unusedExcludes = new Set(config.excludeSubpaths);
+	const unusedExcludes = new Set(EXCLUDE_SUBPATHS);
 
 	const outFor = (name: string) => join(API_SRC, ...name.split('/')) + '.d.ts';
 
@@ -108,7 +118,7 @@ export function buildEntries(): ModuleEntry[] {
 		for (const { name, source } of readNamespaceExports(barrel)) {
 			const subpath = prefix ? `${prefix}/${name}` : name;
 
-			if (config.excludeSubpaths.includes(subpath)) {
+			if (EXCLUDE_SUBPATHS.includes(subpath)) {
 				unusedExcludes.delete(subpath);
 				continue;
 			}
@@ -119,8 +129,8 @@ export function buildEntries(): ModuleEntry[] {
 
 	walk(BARREL, '', true);
 
-	for (const extra of config.additionalSubpaths) {
-		if (config.excludeSubpaths.includes(extra.name)) {
+	for (const extra of ADDITIONAL_SUBPATHS) {
+		if (EXCLUDE_SUBPATHS.includes(extra.name)) {
 			unusedExcludes.delete(extra.name);
 			continue;
 		}
@@ -142,14 +152,7 @@ export function buildEntries(): ModuleEntry[] {
 		);
 	}
 
-	const root: ModuleEntry = {
-		name: '.',
-		source: BARREL,
-		out: join(API_SRC, 'index.d.ts'),
-		topLevel: false,
-	};
-
 	entries.sort((a, b) => a.name.localeCompare(b.name));
 
-	return [root, ...entries.filter((entry) => entry.name !== '.')];
+	return { root: { source: BARREL, out: join(API_SRC, 'index.d.ts') }, modules: entries };
 }

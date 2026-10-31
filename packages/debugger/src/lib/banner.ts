@@ -62,37 +62,37 @@ function printBox(title: string, lines: Line[], inner: number) {
 	const pad = ' '.repeat(PADDING);
 	const horizontal = '─'.repeat(inner + PADDING * 2);
 
-	rgb(PINK, `╭${horizontal}╮\n`);
+	terminal.colorRgbHex(PINK, `╭${horizontal}╮\n`);
 
 	// Title row: bold pink, centred.
-	rgb(PINK, `│${pad}`);
-	boldRgb(PINK, center(title, inner));
-	rgb(PINK, `${pad}│\n`);
+	terminal.colorRgbHex(PINK, `│${pad}`);
+	terminal.bold.colorRgbHex(PINK, center(title, inner));
+	terminal.colorRgbHex(PINK, `${pad}│\n`);
 
 	// Separator.
-	rgb(PINK, `├${horizontal}┤\n`);
+	terminal.colorRgbHex(PINK, `├${horizontal}┤\n`);
 
 	// One row per connection target: pink label, grey value, left-aligned and padded to width.
 	for (const line of lines) {
 		const label = line.label.padEnd(8);
 		const filler = ' '.repeat(Math.max(inner - rowText(line).length, 0));
 
-		rgb(PINK, `│${pad}`);
-		boldRgb(PINK, label);
-		rgb(GREY, line.value);
+		terminal.colorRgbHex(PINK, `│${pad}`);
+		terminal.bold.colorRgbHex(PINK, label);
+		terminal.colorRgbHex(GREY, line.value);
 		terminal(filler);
-		rgb(PINK, `${pad}│\n`);
+		terminal.colorRgbHex(PINK, `${pad}│\n`);
 	}
 
-	rgb(PINK, `╰${horizontal}╯\n`);
+	terminal.colorRgbHex(PINK, `╰${horizontal}╯\n`);
 }
 
 function printFallback(title: string, lines: Line[]) {
-	boldRgb(PINK, `✦ ${title}\n`);
+	terminal.bold.colorRgbHex(PINK, `✦ ${title}\n`);
 
 	for (const line of lines) {
-		rgb(PINK, `  ${line.label.padEnd(8)}`);
-		rgb(GREY, `${line.value}\n`);
+		terminal.colorRgbHex(PINK, `  ${line.label.padEnd(8)}`);
+		terminal.colorRgbHex(GREY, `${line.value}\n`);
 	}
 }
 
@@ -118,12 +118,4 @@ function center(text: string, width: number): string {
 	const left = Math.floor(total / 2);
 
 	return ' '.repeat(left) + text + ' '.repeat(total - left);
-}
-
-function rgb(hex: string, text: string) {
-	terminal.colorRgbHex(hex, text);
-}
-
-function boldRgb(hex: string, text: string) {
-	terminal.bold.colorRgbHex(hex, text);
 }

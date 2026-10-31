@@ -65,7 +65,7 @@ export class IncompleteVersionError extends Error {
  * @param target The channel and version.
  * @returns `unbound/{channel}/{version}/`.
  */
-export function versionPrefix(target: UploadTarget): string {
+export function versionPrefix(target: Pick<UploadTarget, 'channel' | 'version'>): string {
 	return `unbound/${target.channel}/${target.version}/`;
 }
 
@@ -75,7 +75,10 @@ export function versionPrefix(target: UploadTarget): string {
  * @param prefix The key prefix.
  * @returns The keys under the prefix.
  */
-export async function listKeys(bucket: PublicBucket, prefix: string): Promise<string[]> {
+export async function listKeys(
+	bucket: Pick<PublicBucket, 'list'>,
+	prefix: string,
+): Promise<string[]> {
 	const keys: string[] = [];
 	let continuationToken: string | undefined;
 

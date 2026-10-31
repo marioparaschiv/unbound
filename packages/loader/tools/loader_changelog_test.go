@@ -90,7 +90,7 @@ func TestRenderLoaderChangelogGroupsBreakingAndMaintenanceChanges(t *testing.T) 
 
 func writeLoaderControl(t *testing.T, path string, version string) {
 	t.Helper()
-	contents := "Name: Unbound\nVersion: " + version + "\nPackage: app.unbound.ios\n"
+	contents := "Name: astral\nVersion: " + version + "\nPackage: app.astral.ios\n"
 	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
 		t.Fatal(err)
 	}

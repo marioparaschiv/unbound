@@ -11,10 +11,16 @@ const buildCommand: CommandDefinition<typeof schema> = {
 	name: 'build',
 	description:
 		'Build every addon in the workspace once, reporting per-addon success and failure.',
+	summary: 'Build every addon in the workspace.',
 	surfaces: { cli: 'root', mcp: false },
 	schema,
 	async handler() {
 		const resolved = loadConfig();
+
+		if ('error' in resolved) {
+			return { ok: false, text: resolved.error };
+		}
+
 		const addons = await discoverAddons(resolved);
 
 		if (addons.length === 0) {

@@ -2,18 +2,20 @@ import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { z } from 'zod';
 
 import {
 	createAndroidLogSource,
 	createIOSLogSource,
-	DISCORD_PACKAGE,
 	parseSince,
 	type LogEvent,
 	type LogLevel,
 	type SyslogRecord,
 } from '~/lib/log-lines';
+import { followLoaderLogFile, readLoaderLogHistory } from '~/lib/loader-log-file';
 import { runCommand, spawnGroup, type CommandRunner } from '~/lib/run-command';
-import { pickDevice, resolvePilot } from '~/lib/ios-install';
+import { pickDevice, resolvePilot } from '~/lib/pilot';
+import { DISCORD_PACKAGE } from '~/lib/device-paths';
 
 export type TailOptions = {
 	since?: string;
@@ -31,15 +33,15 @@ export type IOSTailOptions = TailOptions & {
 	logTool?: string;
 };
 
-type ArchiveEvent = {
-	eventType?: string;
-	timestamp?: string;
-	messageType?: string;
-	processImagePath?: string;
-	senderImagePath?: string;
-	processID?: number;
-	eventMessage?: string;
-};
+const archiveEventSchema = z.object({
+	eventType: z.literal('logEvent'),
+	timestamp: z.string(),
+	messageType: z.string().optional(),
+	processImagePath: z.string().optional(),
+	senderImagePath: z.string().optional(),
+	processID: z.number().optional(),
+	eventMessage: z.string().optional(),
+});
 
 type StreamEnd = { code: number | null; stderr: string } | { error: string };
 
@@ -52,6 +54,7 @@ const LOGCAT_BUFFERS = 'main,system,crash';
 const LOGCAT_EPOCH = /^\s*(\d+)\.(\d{3})\s/;
 const MACOS_LOG_TOOL = '/usr/bin/log';
 const IDEVICESYSLOG = 'idevicesyslog';
+const SYSLOG_SILENCE_MS = 6_000;
 const IOS_HISTORY_PREDICATE = [
 	'(process == "Discord" AND (senderImagePath ENDSWITH "/Discord" OR senderImagePath CONTAINS[c] "unbound"))',
 	'((process == "ReportCrash" OR process == "osanalyticshelper" OR process == "ReportMemoryException") AND eventMessage CONTAINS "Discord")',
@@ -212,24 +215,62 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
 		});
 
 		const history = await readIOSHistory(udid, start, run, syslog, options.logTool);
+		const records = 'error' in history ? [] : history.records;
 
-		if ('error' in history) {
-			return { ok: false, text: history.error };
-		}
-
-		for (const record of history.records) {
+		for (const record of records) {
 			emitAll(source.pushRecord(record), emit);
 		}
 
-		historyEnd = history.records.at(-1)?.epochMs ?? historyEnd;
+		historyEnd = records.at(-1)?.epochMs ?? historyEnd;
+
+		if (!records.length) {
+			emit({
+				kind: 'notice',
+				message: `${'error' in history ? `The log archive could not be read (${history.error})` : 'The log archive held nothing'}; reading Unbound's log files instead.`,
+			});
+
+			const entries = await readLoaderLogHistory({ udid, pilot, run }, start);
+
+			if ('error' in entries) {
+				return {
+					ok: false,
+					text: `Unbound's log files could not be read either: ${entries.error}`,
+				};
+			}
+
+			emitAll(entries, emit);
+			historyEnd = entries.at(-1)?.epochMs ?? historyEnd;
+		}
 	}
 
 	if (!live) {
+		if (start === void 0) {
+			const entries = await readLoaderLogHistory({ udid, pilot, run });
+
+			if ('error' in entries) {
+				return {
+					ok: false,
+					text: `Unbound's log files could not be read: ${entries.error}`,
+				};
+			}
+
+			emitAll(entries, emit);
+		}
+
 		return { ok: true, text: '-- End of the log. --' };
 	}
 
+	let usingFile = false;
+	let heardSyslog = false;
+
 	function forward(line: string) {
+		if (usingFile) {
+			return;
+		}
+
 		for (const event of source.push(line)) {
+			heardSyslog ||= event.kind === 'entry';
+
 			if (event.kind === 'notice' || historyEnd === void 0 || event.epochMs > historyEnd) {
 				emit(event);
 			}
@@ -243,6 +284,20 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
 	}
 
 	onLive = forward;
+
+	void Bun.sleep(SYSLOG_SILENCE_MS).then(() => {
+		if (heardSyslog) {
+			return;
+		}
+
+		usingFile = true;
+		emit({
+			kind: 'notice',
+			message:
+				"The iPhone's unified log is not streaming; following Unbound's log file instead.",
+		});
+		void followLoaderLogFile({ udid, pilot, run, emit, since: historyEnd });
+	});
 
 	for (;;) {
 		const ended = await live;
@@ -272,17 +327,21 @@ export async function tailIOS(options: IOSTailOptions): Promise<CommandOutput> {
  * @returns The record, or `undefined` for a line that is not a log event.
  */
 export function parseArchiveEvent(line: string): SyslogRecord | undefined {
-	let event: ArchiveEvent;
+	let json: unknown;
 
 	try {
-		event = JSON.parse(line) as ArchiveEvent;
+		json = JSON.parse(line);
 	} catch {
 		return;
 	}
 
-	if (event.eventType !== 'logEvent' || typeof event.timestamp !== 'string') {
+	const parsed = archiveEventSchema.safeParse(json);
+
+	if (!parsed.success) {
 		return;
 	}
+
+	const event = parsed.data;
 
 	const process = fileName(event.processImagePath);
 	const image = fileName(event.senderImagePath);

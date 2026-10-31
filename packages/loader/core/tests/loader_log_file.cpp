@@ -30,7 +30,7 @@ static void formatsLinesWithUTCMillisecondsLevelAndCategory()
 
 static void buffersLinesUntilOpened()
 {
-    std::string             directory = scratchDirectory("unbound-log-buffer");
+    std::string             directory = scratchDirectory("astral-log-buffer");
     loader::RotatingLogFile file(1024, 3, 2);
     file.append("first\n");
     file.append("second\n");
@@ -42,7 +42,7 @@ static void buffersLinesUntilOpened()
 
 static void rotatesAndKeepsOnlyTheNewestFiles()
 {
-    std::string             directory = scratchDirectory("unbound-log-rotate");
+    std::string             directory = scratchDirectory("astral-log-rotate");
     loader::RotatingLogFile file(10, 3, 8);
     file.open(directory);
     for (const char *line : {"aaaaaaaa\n", "bbbbbbbb\n", "cccccccc\n", "dddddddd\n"})
@@ -57,7 +57,7 @@ static void rotatesAndKeepsOnlyTheNewestFiles()
 
 static void appendsToAnExistingFileAcrossLaunches()
 {
-    std::string directory = scratchDirectory("unbound-log-reopen");
+    std::string directory = scratchDirectory("astral-log-reopen");
     {
         loader::RotatingLogFile file(1024, 3, 8);
         file.open(directory);
@@ -69,10 +69,10 @@ static void appendsToAnExistingFileAcrossLaunches()
     assert(read(file.path(0)) == "launch one\nlaunch two\n");
 }
 
-static void placesLogsBesideTheOtherUnboundFiles()
+static void placesLogsBesideTheOtherAstralFiles()
 {
-    assert(loader::logFileDirectory("/var/mobile/Documents/Unbound") ==
-           "/var/mobile/Documents/Unbound/Logs");
+    assert(loader::logFileDirectory("/var/mobile/Documents/astral") ==
+           "/var/mobile/Documents/astral/Logs");
 }
 
 int main()
@@ -81,6 +81,6 @@ int main()
     buffersLinesUntilOpened();
     rotatesAndKeepsOnlyTheNewestFiles();
     appendsToAnExistingFileAcrossLaunches();
-    placesLogsBesideTheOtherUnboundFiles();
+    placesLogsBesideTheOtherAstralFiles();
     return 0;
 }

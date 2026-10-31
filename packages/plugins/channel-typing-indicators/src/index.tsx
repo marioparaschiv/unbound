@@ -1,4 +1,5 @@
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { whenAllLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 
@@ -36,5 +37,6 @@ function stop() {
 export default {
 	start,
 	stop,
+	selfTest: featureSelfTest,
 	getSettingsPanel: () => <SettingsPanel />,
 };

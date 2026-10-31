@@ -10,8 +10,8 @@ import (
 )
 
 var compiledIPAIcons = map[string]string{
-	"AppIcon60x60@2x.png":      "UnboundIcon60x60@2x.png",
-	"AppIcon76x76@2x~ipad.png": "UnboundIcon76x76@2x~ipad.png",
+	"AppIcon60x60@2x.png":      "AstralIcon60x60@2x.png",
+	"AppIcon76x76@2x~ipad.png": "AstralIcon76x76@2x~ipad.png",
 }
 
 func runIPAIcons(args []string) error {

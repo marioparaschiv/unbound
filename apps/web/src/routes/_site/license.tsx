@@ -14,7 +14,7 @@ function ExternalLink({ href }: ExternalLinkProps) {
 			href={href}
 			target='_blank'
 			rel='noopener noreferrer'
-			className='text-primary text-sm hover:underline'
+			className='text-link text-sm underline-offset-4 hover:underline'
 		>
 			{href}
 		</a>

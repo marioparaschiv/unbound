@@ -1,0 +1,317 @@
+    r10 = r7.__d;
+    r0 = 11732;
+    r9 = [9291, 11733, 11735, 11736, 560, 1642, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun11733: for(var _fun11733_ip = 0; ; ) switch(_fun11733_ip) {
+case 0:
+            r7 = a1;
+            var _closure0_slot0 = r7;
+            r2 = a5;
+            r6 = a6;
+            var _closure0_slot1 = r6;
+            r5 = function(a0) { // Original name: getLayoutStyles, environment: r1
+                _fun58332: for(var _fun58332_ip = 0; ; ) switch(_fun58332_ip) {
+case 0:
+                    r4 = arguments[1];
+                    r0 = undefined;
+                    if(!(r4 === r0)) { _fun58332_ip = 11; continue _fun58332 }
+case 9:
+                    r4 = false;
+case 11:
+                    r6 = a0;
+                    r3 = _closure0_slot0;
+                    r2 = _closure0_slot1;
+                    r5 = r2[r0];
+                    r5 = r3.bind(r0)(r5);
+                    r5 = r5.ChannelListLayoutTypes;
+                    r5 = r5.COZY_DRAWER;
+                    if(!(r5 !== r6)) { _fun58332_ip = 233; continue _fun58332 }
+case 53:
+                    r5 = r2[r0];
+                    r5 = r3.bind(r0)(r5);
+                    r5 = r5.ChannelListLayoutTypes;
+                    r5 = r5.COZY_DRAWER_SMOL;
+                    if(!(r5 !== r6)) { _fun58332_ip = 214; continue _fun58332 }
+case 81:
+                    r5 = r2[r0];
+                    r5 = r3.bind(r0)(r5);
+                    r5 = r5.ChannelListLayoutTypes;
+                    r5 = r5.COMPACT;
+                    if(!(r5 !== r6)) { _fun58332_ip = 184; continue _fun58332 }
+case 106:
+                    r5 = r2[r0];
+                    r5 = r3.bind(r0)(r5);
+                    r5 = r5.ChannelListLayoutTypes;
+                    r5 = r5.MINIMAL;
+                    if(!(r5 !== r6)) { _fun58332_ip = 152; continue _fun58332 }
+case 131:
+                    r5 = r2[r0];
+                    r5 = r3.bind(r0)(r5);
+                    r5 = r5.ChannelListLayoutTypes;
+                    r5 = r5.COZY;
+case 152:
+                    r5 = r2[r3];
+                    r6 = r3.bind(r0)(r5);
+                    if(r4) { _fun58332_ip = 174; continue _fun58332 }
+case 164:
+                    r5 = r6.CHANNEL_LIST_STYLES_COZY;
+                    _fun58332_ip = 182; continue _fun58332;
+case 174:
+                    r5 = r6.CHANNEL_LIST_STYLES_COZY_LAUNCHPAD;
+case 182:
+                    return r5;
+case 184:
+                    r5 = r2[r2];
+                    r5 = r3.bind(r0)(r5);
+                    if(r4) { _fun58332_ip = 204; continue _fun58332 }
+case 196:
+                    r4 = r5.CHANNEL_LIST_STYLES_COMPACT;
+                    _fun58332_ip = 212; continue _fun58332;
+case 204:
+                    r4 = r5.CHANNEL_LIST_STYLES_COMPACT_LAUNCHPAD;
+case 212:
+                    return r4;
+case 214:
+                    r4 = r2[r1];
+                    r4 = r3.bind(r0)(r4);
+                    r4 = r4.CHANNEL_LIST_STYLES_COZY_DRAWER_SMOL;
+                    return r4;
+case 233:
+                    r2 = r2[r1];
+                    r2 = r3.bind(r0)(r2);
+                    r2 = r2.CHANNEL_LIST_STYLES_COZY_DRAWER;
+                    return r2;
+                }
+            };
+            var _closure0_slot2 = r5;
+            r3 = global;
+            r9 = r3.Object;
+            r8 = r9.defineProperty;
+            r4 = '__esModule';
+            r3 = {'value': true};
+            r3 = r8.bind(r9)(r2, r4, r3);
+            r3 = r6[r4];
+            r0 = undefined;
+            r4 = r7.bind(r0)(r3);
+            r3 = r4.isReactCompilerEnabled;
+            r3 = r3.bind(r4)();
+            if(r3) { _fun11733_ip = 93; continue _fun11733 }
+case 86:
+            r3 = function(a0) { // Original name: useMessagesTabLayout, environment: r1
+                _fun58335: for(var _fun58335_ip = 0; ; ) switch(_fun58335_ip) {
+case 0:
+                    r4 = _closure0_slot0;
+                    r3 = _closure0_slot1;
+                    r1 = r3[r5];
+                    r0 = undefined;
+                    r1 = r4.bind(r0)(r1);
+                    r2 = r1.ChannelListLayoutSetting;
+                    r1 = r2.useSetting;
+                    r5 = r1.bind(r2)();
+                    r1 = r3[r0];
+                    r1 = r4.bind(r0)(r1);
+                    r2 = r1.ChannelListLayoutTypes;
+                    r1 = a0;
+                    if(r1) { _fun58335_ip = 115; continue _fun58335 }
+case 59:
+                    r1 = r2.COMPACT;
+                    if(!(r5 !== r1)) { _fun58335_ip = 92; continue _fun58335 }
+case 69:
+                    r1 = r3[r0];
+                    r1 = r4.bind(r0)(r1);
+                    r1 = r1.ChannelListLayoutTypes;
+                    r1 = r1.COZY;
+                    _fun58335_ip = 113; continue _fun58335;
+case 92:
+                    r3 = r3[r0];
+                    r3 = r4.bind(r0)(r3);
+                    r3 = r3.ChannelListLayoutTypes;
+                    r1 = r3.COMPACT;
+case 113:
+                    _fun58335_ip = 121; continue _fun58335;
+case 115:
+                    r1 = r2.COZY_DRAWER_SMOL;
+case 121:
+                    return r1;
+                }
+            };
+            _fun11733_ip = 98; continue _fun11733;
+case 93:
+            r3 = function(a0) { // Original name: useMessagesTabLayout, environment: r1
+                _fun58334: for(var _fun58334_ip = 0; ; ) switch(_fun58334_ip) {
+case 0:
+                    r4 = _closure0_slot0;
+                    r3 = _closure0_slot1;
+                    r1 = r3[r5];
+                    r0 = undefined;
+                    r1 = r4.bind(r0)(r1);
+                    r2 = r1.ChannelListLayoutSetting;
+                    r1 = r2.useSetting;
+                    r5 = r1.bind(r2)();
+                    r1 = r3[r0];
+                    r1 = r4.bind(r0)(r1);
+                    r2 = r1.ChannelListLayoutTypes;
+                    r1 = a0;
+                    if(r1) { _fun58334_ip = 115; continue _fun58334 }
+case 59:
+                    r1 = r2.COMPACT;
+                    if(!(r5 !== r1)) { _fun58334_ip = 92; continue _fun58334 }
+case 69:
+                    r1 = r3[r0];
+                    r1 = r4.bind(r0)(r1);
+                    r1 = r1.ChannelListLayoutTypes;
+                    r1 = r1.COZY;
+                    _fun58334_ip = 113; continue _fun58334;
+case 92:
+                    r3 = r3[r0];
+                    r3 = r4.bind(r0)(r3);
+                    r3 = r3.ChannelListLayoutTypes;
+                    r1 = r3.COMPACT;
+case 113:
+                    _fun58334_ip = 121; continue _fun58334;
+case 115:
+                    r1 = r2.COZY_DRAWER_SMOL;
+case 121:
+                    return r1;
+                }
+            };
+case 98:
+            r4 = function(a0) { // Original name: isLayoutCompact, environment: r1
+                r2 = _closure0_slot0;
+                r1 = _closure0_slot1;
+                r1 = r1[r0];
+                r0 = undefined;
+                r1 = r2.bind(r0)(r1);
+                r1 = r1.ChannelListLayoutTypes;
+                r2 = r1.COMPACT;
+                r1 = a0;
+                r0 = r1 === r2;
+                return r0;
+            };
+            r6 = r6[r6];
+            r8 = r7.bind(r0)(r6);
+            r7 = r8.fileFinishedImporting;
+            r6 = 'modules/main_tabs_v2/native/shared_components/guild_channels/layouts/ChannelListLayout.tsx';
+            r6 = r7.bind(r8)(r6);
+            r2['getLayoutStyles'] = r5;
+            r5 = function(a0) { // Original name: makeSizeStyle
+                r1 = a0;
+                r0 = {'width': null, 'height': null};
+                r0[0] = r1;
+                r0[1] = r1;
+                return r0;
+            };
+            r2['makeSizeStyle'] = r5;
+            r2['isLayoutCompact'] = r4;
+            r4 = function(a0) { // Original name: isLayoutCozy, environment: r1
+                _fun58337: for(var _fun58337_ip = 0; ; ) switch(_fun58337_ip) {
+case 0:
+                    r4 = a0;
+                    r5 = _closure0_slot0;
+                    r3 = _closure0_slot1;
+                    r6 = r3[r0];
+                    r1 = undefined;
+                    r6 = r5.bind(r1)(r6);
+                    r6 = r6.ChannelListLayoutTypes;
+                    r6 = r6.COZY;
+                    r0 = r4 === r6;
+                    if(r0) { _fun58337_ip = 69; continue _fun58337 }
+case 44:
+                    r6 = r3[r0];
+                    r6 = r5.bind(r1)(r6);
+                    r6 = r6.ChannelListLayoutTypes;
+                    r6 = r6.COZY_DRAWER;
+                    r0 = r4 === r6;
+case 69:
+                    if(r0) { _fun58337_ip = 97; continue _fun58337 }
+case 72:
+                    r3 = r3[r0];
+                    r3 = r5.bind(r1)(r3);
+                    r3 = r3.ChannelListLayoutTypes;
+                    r3 = r3.COZY_DRAWER_SMOL;
+                    r0 = r4 === r3;
+case 97:
+                    return r0;
+                }
+            };
+            r2['isLayoutCozy'] = r4;
+            r2['useMessagesTabLayout'] = r3;
+            r1 = function(a0, a1) { // Original name: getScaledChannelRowHeight, environment: r1
+                _fun58338: for(var _fun58338_ip = 0; ; ) switch(_fun58338_ip) {
+case 0:
+                    r8 = arguments[2];
+                    r3 = undefined;
+                    if(!(r8 === r3)) { _fun58338_ip = 11; continue _fun58338 }
+case 9:
+                    r8 = false;
+case 11:
+                    r13 = a0;
+                    r7 = a1;
+                    r5 = _closure0_slot2;
+                    r9 = r5.bind(r3)(r7);
+                    r5 = global;
+                    r12 = r5.Math;
+                    r11 = r12.max;
+                    r10 = r5.Math;
+                    r5 = r10.max;
+                    r0 = 1;
+                    r10 = r5.bind(r10)(r13, r0);
+                    r5 = r9.channelName;
+                    r13 = r5.height;
+                    r5 = r9.messagePreview;
+                    r5 = r5.margin;
+                    r14 = r5.marginTop;
+                    r5 = r9.messagePreview;
+                    r5 = r5.height;
+                    r5 = r14 + r5;
+                    r5 = r13 + r5;
+                    r10 = r10 * r5;
+                    r5 = r9.icon;
+                    r5 = r5.wrapper;
+                    r5 = r5.size;
+                    r5 = r11.bind(r12)(r10, r5);
+                    r11 = r9.container;
+                    if(r8) { _fun58338_ip = 157; continue _fun58338 }
+case 143:
+                    r10 = r11.padding;
+                    r10 = r10.paddingVertical;
+                    _fun58338_ip = 169; continue _fun58338;
+case 157:
+                    r11 = r11.paddingThread;
+                    r10 = r11.paddingVertical;
+case 169:
+                    r0 = 2;
+                    r1 = r0 * r10;
+                    r5 = r5 + r1;
+                    r9 = r9.layout;
+                    if(r8) { _fun58338_ip = 203; continue _fun58338 }
+case 189:
+                    r8 = r9.margin;
+                    r8 = r8.marginVertical;
+                    _fun58338_ip = 215; continue _fun58338;
+case 203:
+                    r9 = r9.marginThread;
+                    r8 = r9.marginVertical;
+case 215:
+                    r1 = r0 * r8;
+                    r8 = _closure0_slot0;
+                    r6 = _closure0_slot1;
+                    r6 = r6[r0];
+                    r6 = r8.bind(r3)(r6);
+                    r6 = r6.ChannelListLayoutTypes;
+                    r6 = r6.COMPACT;
+                    r0 = 0;
+                    if(!(r7 === r6)) { _fun58338_ip = 257; continue _fun58338 }
+case 254:
+                    r0 = 4;
+case 257:
+                    r5 = r5 + r1;
+                    r5 = r5 + r0;
+                    return r5;
+                }
+            };
+            r2['getScaledChannelRowHeight'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

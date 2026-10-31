@@ -51,31 +51,19 @@ export type {
 	NativeSerializableObject,
 	NativeStruct,
 	NativeThreadPolicy,
-	NativeUIBridge,
-	NativeUIHandle,
-	NativeUIQuery,
-	NativeUISnapshot,
-	NativeUISnapshotNode,
 	NativeViewSearchOptions,
 	NativeViewSnapshotNode,
 	NativeViewSnapshotOptions,
 	PluginContext,
 } from '@unbound-app/types/native';
 export {
-	BundleInfo,
-	BundleManager,
-	DeviceInfo,
-	NativePlatform,
 	NativePluginCapabilityError,
 	NativePluginDisposedError,
 	NativePluginPlatformError,
 	NativePluginUnavailableError,
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
-	getNativeModule,
-	getRuntimeProperties,
-	reload,
-} from '~/api/native-runtime';
+} from '~/api/native-errors';
 export type {
 	BundleInfoType,
 	DCDBundleManagerType,
@@ -83,4 +71,14 @@ export type {
 	DCDFileManagerEncoding,
 	DCDFileManagerType,
 	DeviceInfoType,
+} from '~/api/native-runtime';
+export {
+	BundleInfo,
+	BundleManager,
+	DeviceInfo,
+	NativePlatform,
+	getNativeModule,
+	getNativeResources,
+	getRuntimeProperties,
+	reload,
 } from '~/api/native-runtime';

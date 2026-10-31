@@ -1,14 +1,17 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import type { Submission } from '@unbound-app/contracts/publish';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
+import { submitOverviewQuery } from '~/queries/submissions/submissions';
 import SubmitForm from '~/components/submit/submit-form';
-import { getSubmitOverview } from '~/lib/publishing';
-import Text from '~/components/ui/text';
+import PageHeader from '~/components/page-header';
 
 function SubmitAddonPage() {
-	const { githubLinked } = Route.useLoaderData();
+	const {
+		data: { githubLinked },
+	} = useSuspenseQuery(submitOverviewQuery());
 	const navigate = useNavigate();
 
 	async function handleSubmitted(submission: Submission) {
@@ -17,15 +20,11 @@ function SubmitAddonPage() {
 	}
 
 	return (
-		<div className='flex flex-col gap-6 md:mx-auto mb-12 px-2 container'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>Submit Addon</Text>
-				<Text variant='text-md' color='muted'>
-					Submit a new theme or plugin, or an update to one you maintain, for review. This
-					is the same flow as ubd publish: reviewers see exactly the files at the commit
-					you pick.
-				</Text>
-			</div>
+		<div className='flex flex-col gap-6 page-frame'>
+			<PageHeader
+				title='Submit Addon'
+				description='Submit a new theme or plugin, or an update to one you maintain, for review. This is the same flow as ubd publish: reviewers see exactly the files at the commit you pick.'
+			/>
 
 			<Card>
 				<CardHeader>
@@ -50,6 +49,8 @@ export const Route = createFileRoute('/_site/submit')({
 			throw redirect({ to: '/login' });
 		}
 	},
-	loader: () => getSubmitOverview(),
+	loader: async ({ context }) => {
+		await context.queryClient.ensureQueryData(submitOverviewQuery());
+	},
 	component: SubmitAddonPage,
 });

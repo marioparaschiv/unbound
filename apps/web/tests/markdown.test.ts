@@ -61,9 +61,8 @@ describe('Markdown', () => {
 			`https://github.com/acme/addons/blob/${SHA}/plugins/hello/docs/usage.md`,
 			`https://github.com/acme/addons/blob/${SHA}/README.md#setup`,
 		]);
-		expect(html.match(/target="_blank" rel="nofollow ugc noopener noreferrer"/g)).toHaveLength(
-			2,
-		);
+		expect(html.match(/target="_blank"/g)).toHaveLength(2);
+		expect(html.match(/rel="[^"]*\bnoopener\b/g)).toHaveLength(2);
 	});
 
 	test('keeps fragment links in the page', () => {
@@ -79,6 +78,13 @@ describe('Markdown', () => {
 		expect(html).not.toContain('<h1');
 		expect(html).toMatch(/<h2[^>]*>Title<\/h2>/);
 		expect(html).toMatch(/<h3[^>]*>Section<\/h3>/);
+	});
+
+	test('decodes character references in text but not in code', () => {
+		const html = render('Tom &amp; Jerry &copy; 2026 &#8594; `&amp;`');
+
+		expect(html).toContain('Tom &amp; Jerry © 2026 → ');
+		expect(html).toMatch(/<code[^>]*>&amp;amp;<\/code>/);
 	});
 
 	test('renders GitHub-flavoured tables, task lists, strikethrough and code', () => {
@@ -104,6 +110,6 @@ describe('Markdown', () => {
 		);
 		expect(html.match(/<input[^>]*type="checkbox"/g)).toHaveLength(2);
 		expect(html).toMatch(/<del[^>]*>old<\/del>/);
-		expect(html).toMatch(/<pre[^>]*><code[^>]*>const a = 1;\n<\/code><\/pre>/);
+		expect(html).toMatch(/<pre[^>]*><code[^>]*>const a = 1;/);
 	});
 });

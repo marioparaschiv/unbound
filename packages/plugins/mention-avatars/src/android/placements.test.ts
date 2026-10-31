@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import type { Mention } from '~/mentions';
 
-import { IMAGE_CHARACTER, IMAGE_PADDING, planPlacements } from './placements';
+import { IMAGE_CHARACTER, IMAGE_PADDING, planPlacements } from '~/android/placements';
 
 const adrian: Mention = { labels: ['adrián'], type: 'user', avatarURL: 'https://cdn/a.png' };
 const mods: Mention = { labels: ['Mods'], type: 'role', avatarURL: 'https://cdn/r.png' };

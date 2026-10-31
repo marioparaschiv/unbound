@@ -93,8 +93,8 @@ func TestCachedIOSBuildDownloadsOnceAndVerifies(t *testing.T) {
 }
 
 func TestDefaultCompatCacheHonoursOverride(t *testing.T) {
-	t.Setenv("UNBOUND_DISCORD_CACHE", "/tmp/unbound-cache-test")
-	if got := defaultCompatCache(); got != "/tmp/unbound-cache-test" {
+	t.Setenv("ASTRAL_DISCORD_CACHE", "/tmp/astral-cache-test")
+	if got := defaultCompatCache(); got != "/tmp/astral-cache-test" {
 		t.Fatalf("unexpected cache %q", got)
 	}
 }

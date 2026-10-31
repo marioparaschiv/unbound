@@ -5,7 +5,7 @@
 #import "CoreConversions.h"
 #include "LoaderDiagnostics.h"
 
-using unbound::ios::toStdString;
+using astral::ios::toStdString;
 
 static std::string stringValue(id value)
 {

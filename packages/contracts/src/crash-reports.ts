@@ -16,6 +16,7 @@ export const crashReportSchema = z.object({
 	discordVersion: z.string().check(z.maxLength(64)),
 	osVersion: z.string().check(z.maxLength(64)),
 	deviceModel: z.string().check(z.maxLength(64)),
+	verifiedBuild: z.optional(z.boolean()),
 	addon: z.optional(
 		z.object({
 			id: addonIdSchema,

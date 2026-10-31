@@ -118,3 +118,5 @@ dist
 # TernJS port file
 .tern-port
 /_packages
+
+.device-matrix.json

@@ -5,6 +5,6 @@
 
 #include "LoaderUpdater.h"
 
-loader::BundleUpdater     &UnboundBundleUpdater();
-loader::UpdaterSettings    UnboundUpdaterSettings();
-std::optional<std::string> UnboundUpdateURL();
+loader::BundleUpdater     &AstralBundleUpdater();
+loader::UpdaterSettings    AstralUpdaterSettings();
+std::optional<std::string> AstralUpdateURL();

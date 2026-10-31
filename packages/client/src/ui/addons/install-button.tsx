@@ -1,6 +1,6 @@
+import type { ManagerKind } from '@unbound-app/types/addons';
 import { View } from 'react-native';
 
-import type { ManagerKind } from '~/lib/constants';
 import { Discord } from '~/api/metro/components';
 import { Screens } from '~/lib/constants';
 import { Icons } from '~/api/assets';

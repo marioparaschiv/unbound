@@ -8,8 +8,10 @@ function SiteLayout() {
 		<>
 			<div className='flex flex-col flex-1 overflow-clip dotted-bg'>
 				<Header />
-				<div className='mb-4' />
-				<Outlet />
+				{/* The page rhythm: 48px below the header bar, 96px above the footer. */}
+				<div className='flex flex-col flex-1 pt-12 pb-24'>
+					<Outlet />
+				</div>
 			</div>
 			<Footer />
 		</>

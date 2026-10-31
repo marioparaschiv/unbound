@@ -8,5 +8,5 @@ export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: t
 export const RoleStore = metro.findByProps('getRole', 'getSortedRoles', { lazy: true });
 export const RowGenerator = metro.findByProps('generateMessageRowData', { lazy: true });
 
-export const settings = storage.getStore('unbound.mention-avatars');
-export const Patcher = patcher.createPatcher('unbound.mention-avatars');
+export const settings = storage.getStore('astral.mention-avatars');
+export const Patcher = patcher.createPatcher('astral.mention-avatars');

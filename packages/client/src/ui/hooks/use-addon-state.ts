@@ -1,4 +1,3 @@
-import { ManagerKind, ManagerNames } from '~/lib/constants';
 import { useSettingsStore } from '~/api/storage';
 import { getManager } from '~/managers/utils';
 
@@ -10,31 +9,17 @@ export type AddonState = {
 
 /**
  * @description Reads one addon's enabled/failed slice, re-rendering only this addon when it changes.
- * Plugins/Themes read the `states` map; Icons are single-select and read the applied pack.
+ * The manager decides what enabled means: plugins and themes read their states, icons the applied pack.
  * @param kind The addon's manager kind.
  * @param id The addon id.
  * @returns The addon's current enabled and failed flags.
  */
-function useAddonState(
-	kind: ManagerKind.Plugins | ManagerKind.Themes | ManagerKind.Icons,
-	id: string,
-): AddonState {
+function useAddonState(kind: 'plugins' | 'themes' | 'icons', id: string): AddonState {
 	const manager = getManager(kind);
-	const storeName = ManagerNames[kind].toLowerCase();
 
-	const settings = useSettingsStore(
-		storeName,
-		({ key }) => key === 'states' || key === 'applied',
-	);
+	useSettingsStore(kind, ({ key }) => key === 'states' || key === 'applied');
 
-	const enabled =
-		kind === ManagerKind.Icons
-			? settings.get('applied', { manifest: { id: 'default' } }).manifest.id === id
-			: Boolean(settings.get<Record<string, boolean>>('states', {})[id]);
-
-	const failed = manager.errors.has(id);
-
-	return { enabled, failed };
+	return { enabled: manager.isEnabled(id), failed: manager.errors.has(id) };
 }
 
 export default useAddonState;

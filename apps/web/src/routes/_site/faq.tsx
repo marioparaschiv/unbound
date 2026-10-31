@@ -8,7 +8,7 @@ import {
 	AccordionTrigger,
 } from '~/components/ui/accordion';
 import { ProseItem, ProseList } from '~/components/prose';
-import BlurReveal from '~/components/motion/blur-reveal';
+import PageHeader from '~/components/page-header';
 import Text from '~/components/ui/text';
 
 type FaqLinkProps = {
@@ -27,7 +27,7 @@ function FaqLink({ href, children }: FaqLinkProps) {
 			href={href}
 			target='_blank'
 			rel='noopener noreferrer'
-			className='text-primary hover:underline'
+			className='text-link underline-offset-4 hover:underline'
 		>
 			{children}
 		</a>
@@ -44,15 +44,11 @@ function FaqAnswer({ children, className }: FaqAnswerProps) {
 
 function FaqPage() {
 	return (
-		<div className='flex flex-col flex-1 gap-4 md:mx-auto mb-12 px-4 w-full container'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>
-					<BlurReveal text='Frequently Asked Questions' />
-				</Text>
-				<Text variant='text-md' color='muted'>
-					Find answers to common questions about Unbound.
-				</Text>
-			</div>
+		<div className='flex flex-col flex-1 gap-6 page-frame'>
+			<PageHeader
+				title='Frequently Asked Questions'
+				description='Find answers to common questions about Unbound.'
+			/>
 
 			<Accordion type='multiple'>
 				<AccordionItem value='what-is'>

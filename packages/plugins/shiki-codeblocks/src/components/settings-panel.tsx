@@ -1,4 +1,6 @@
 import Page from '@unbound-plugins/shared/components/page';
+import SliderRow from '@unbound-plugins/shared/components/slider-row';
+import ResetRow from '@unbound-plugins/shared/components/reset-row';
 import { Discord } from '@unbound-app/api/metro/components';
 import { View } from 'react-native';
 import { useState } from 'react';
@@ -7,13 +9,27 @@ import { DEFAULT_THEME, HLJS_PREFERENCES, ICON_MODES, THEME_IDS } from '~/consta
 import { isThemeUrl, themeLabel } from '~/themes';
 import { settings } from '~/modules';
 
+const DEFAULT_OPACITY = 100;
+
+const DEFAULT_SETTINGS = {
+	theme: DEFAULT_THEME,
+	customTheme: '',
+	bgOpacity: DEFAULT_OPACITY,
+	useDevIcon: 'greyscale',
+	lineOverflow: 'wrap',
+	tryHljs: 'secondary',
+};
+
 function SettingsPanel() {
 	const store = settings.useSettingsStore();
 	const [themePickerOpen, setThemePickerOpen] = useState(false);
 	const [hljsPickerOpen, setHljsPickerOpen] = useState(false);
 	const [themeQuery, setThemeQuery] = useState('');
 	const [customTheme, setCustomTheme] = useState(String(store.get('customTheme', '')));
-	const [opacity, setOpacity] = useState(String(store.get('bgOpacity', 100)));
+	const storedOpacity = Number(store.get('bgOpacity', DEFAULT_OPACITY));
+	const opacity = Number.isFinite(storedOpacity)
+		? Math.max(0, Math.min(100, Math.round(storedOpacity)))
+		: DEFAULT_OPACITY;
 	const theme = String(store.get('theme', DEFAULT_THEME));
 	const iconMode = String(store.get('useDevIcon', 'greyscale'));
 	const overflow = store.get('lineOverflow', 'wrap');
@@ -28,17 +44,6 @@ function SettingsPanel() {
 		if (url && !isThemeUrl(url)) return;
 
 		store.set('customTheme', url);
-	}
-
-	function saveOpacity() {
-		const value = Number(opacity);
-
-		if (!Number.isFinite(value)) return;
-
-		const clamped = Math.max(0, Math.min(100, Math.round(value)));
-
-		store.set('bgOpacity', clamped);
-		setOpacity(String(clamped));
 	}
 
 	return (
@@ -84,8 +89,8 @@ function SettingsPanel() {
 				</View>
 			) : null}
 			<Discord.TextInput
-				title='Custom theme URL'
-				helpText='An HTTPS link to a VS Code theme JSON file overrides the selected theme.'
+				label='Custom theme URL'
+				description='An HTTPS link to a VS Code theme JSON file overrides the selected theme.'
 				value={customTheme}
 				onChange={setCustomTheme}
 				onEndEditing={saveCustomTheme}
@@ -93,14 +98,17 @@ function SettingsPanel() {
 				autoCapitalize='none'
 				placeholder='https://example.com/theme.json'
 			/>
-			<Discord.TextInput
-				title='Background opacity (%)'
-				value={opacity}
-				onChange={setOpacity}
-				onEndEditing={saveOpacity}
-				onSubmitEditing={saveOpacity}
-				keyboardType='number-pad'
-			/>
+			<Discord.TableRowGroup title='Card'>
+				<SliderRow
+					label='Background opacity'
+					value={opacity}
+					defaultValue={DEFAULT_OPACITY}
+					minimum={0}
+					maximum={100}
+					unit='%'
+					onChange={(value) => store.set('bgOpacity', value)}
+				/>
+			</Discord.TableRowGroup>
 			<Discord.TableRowGroup title='Highlighting'>
 				<Discord.TableRow
 					label='Long lines'
@@ -139,6 +147,14 @@ function SettingsPanel() {
 					))}
 				</Discord.TableRadioGroup>
 			) : null}
+			<ResetRow
+				onReset={() => {
+					for (const [key, value] of Object.entries(DEFAULT_SETTINGS))
+						store.set(key, value);
+
+					setCustomTheme('');
+				}}
+			/>
 		</Page>
 	);
 }

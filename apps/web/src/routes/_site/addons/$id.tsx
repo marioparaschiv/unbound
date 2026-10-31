@@ -1,5 +1,7 @@
-import { createFileRoute, Link, notFound } from '@tanstack/react-router';
-import { IconMoodEmpty } from '@tabler/icons-react';
+import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
+import { IconEye, IconFaceNeutral } from 'nucleo-micro-bold';
+import { useSuspenseQuery } from '@tanstack/react-query';
+import { z } from 'zod/mini';
 
 import {
 	Empty,
@@ -9,53 +11,114 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from '~/components/ui/empty';
+import { addonQuery, submissionPreviewQuery } from '~/queries/marketplace/addon';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import ContributorsCard from '~/components/addon/contributors-card';
 import VersionHistory from '~/components/addon/version-history';
+import { staggerStyle } from '~/components/motion/reveal-style';
 import AddonHeader from '~/components/addon/addon-header';
 import AuthorsCard from '~/components/addon/authors-card';
-import DetailsCard from '~/components/addon/details-card';
-import { fetchMarketplaceAddon } from '~/lib/marketplace';
-import SourceCard from '~/components/addon/source-card';
+import ScrollShadow from '~/components/ui/scroll-shadow';
+import AboutCard from '~/components/addon/about-card';
 import { Button } from '~/components/ui/button';
 import Markdown from '~/components/markdown';
+import Text from '~/components/ui/text';
 
-function AddonPage() {
-	const addon = Route.useLoaderData();
-	const { source } = addon;
+/** `?submission=<id>` shows a pending submission as if published; only its reviewers get the preview. */
+const addonSearchSchema = z.object({
+	submission: z.catch(z.optional(z.uuid()), undefined),
+});
+
+type ExitPreviewProps = {
+	id: string;
+};
+
+/** Goes back to the page that opened the preview, restored from the back/forward cache; else the live page. */
+function ExitPreview({ id }: ExitPreviewProps) {
+	const navigate = useNavigate();
+
+	function exit() {
+		const referrer = document.referrer ? new URL(document.referrer) : null;
+
+		if (referrer?.origin === location.origin && history.length > 1) {
+			history.back();
+
+			return;
+		}
+
+		void navigate({ to: '/addons/$id', params: { id }, search: {} });
+	}
 
 	return (
-		<div className='flex flex-col flex-1 gap-8 md:mx-auto mb-12 px-4 w-full container'>
+		<Button variant='outline' size='sm' onClick={exit}>
+			Exit preview
+		</Button>
+	);
+}
+
+function AddonPage() {
+	const { id } = Route.useParams();
+	const { submission } = Route.useSearch();
+	const { data: preview } = useSuspenseQuery(submissionPreviewQuery(id, submission));
+	const { data: live } = useSuspenseQuery(addonQuery(id));
+	const addon = preview ?? live;
+
+	// A refetch can find the addon delisted since the page loaded.
+	if (!addon) {
+		throw notFound();
+	}
+
+	const { source } = addon;
+	const sidebar = [
+		<AuthorsCard key='authors' authors={addon.authors} />,
+		<Card key='changelog' className='gap-4'>
+			<CardHeader>
+				<CardTitle>What's New</CardTitle>
+			</CardHeader>
+			<CardContent>
+				<ScrollShadow
+					contentClassName='max-h-96 overflow-y-auto overscroll-contain [scrollbar-width:thin]'
+					shadowClassName='inset-x-0 h-10'
+					fromClassName='from-card'
+				>
+					<VersionHistory versions={addon.versions} />
+				</ScrollShadow>
+			</CardContent>
+		</Card>,
+		<AboutCard key='about' addon={addon} />,
+	].map((card, index) => (
+		<div key={card.key} className='min-w-0 animate-reveal' style={staggerStyle(4 + index)}>
+			{card}
+		</div>
+	));
+
+	return (
+		<div className='flex flex-col flex-1 gap-8 page-frame'>
+			{preview ? (
+				<Card className='flex-row items-center gap-3 px-(--card-pad) py-3'>
+					<IconEye className='size-5 text-muted-foreground shrink-0' />
+					<Text variant='text-sm' className='flex-1'>
+						Previewing the submitted v{preview.version}. Only reviewers see this; it is
+						not published.
+					</Text>
+					<ExitPreview id={id} />
+				</Card>
+			) : null}
 			<AddonHeader addon={addon} />
 
 			<div className='items-start gap-6 grid grid-cols-1 lg:grid-cols-3'>
-				<div className='flex flex-col gap-6 lg:col-span-2 min-w-0'>
-					{source?.addonMd ? (
-						<Card>
-							<CardContent>
-								<Markdown source={source.addonMd} pin={source.pin} />
-							</CardContent>
-						</Card>
-					) : null}
-
-					<Card>
-						<CardHeader>
-							<CardTitle>Version History</CardTitle>
-						</CardHeader>
-						<CardContent>
-							<VersionHistory versions={addon.versions} />
-						</CardContent>
-					</Card>
-				</div>
-
-				<aside className='flex flex-col gap-6 min-w-0'>
-					{source ? <SourceCard source={source} /> : null}
-					{source && source.details.contributors.length > 0 ? (
-						<ContributorsCard contributors={source.details.contributors} />
-					) : null}
-					<DetailsCard addon={addon} />
-					<AuthorsCard authors={addon.authors} />
-				</aside>
+				<Card className='lg:col-span-2 min-w-0 animate-reveal' style={staggerStyle(4)}>
+					<CardContent>
+						{/* Without an ADDON.md the manifest description stands in, as review and submit tell authors. */}
+						{source?.addonMd ? (
+							<Markdown source={source.addonMd} pin={source.pin} />
+						) : (
+							<Text variant='text-md' color='muted'>
+								{addon.description}
+							</Text>
+						)}
+					</CardContent>
+				</Card>
+				<aside className='flex flex-col gap-6 min-w-0'>{sidebar}</aside>
 			</div>
 		</div>
 	);
@@ -66,7 +129,7 @@ function AddonNotFound() {
 		<Empty className='flex-1 my-auto'>
 			<EmptyHeader>
 				<EmptyMedia variant='icon'>
-					<IconMoodEmpty />
+					<IconFaceNeutral size={24} />
 				</EmptyMedia>
 				<EmptyTitle>Addon Not Found</EmptyTitle>
 				<EmptyDescription>
@@ -83,9 +146,15 @@ function AddonNotFound() {
 }
 
 export const Route = createFileRoute('/_site/addons/$id')({
+	validateSearch: addonSearchSchema,
+	loaderDeps: ({ search }) => ({ submission: search.submission }),
 	// `loader` comes before `head` so `head` can infer the loader data's type.
-	loader: async ({ params }) => {
-		const addon = await fetchMarketplaceAddon({ data: params.id });
+	loader: async ({ context, params, deps }) => {
+		const [preview, live] = await Promise.all([
+			context.queryClient.ensureQueryData(submissionPreviewQuery(params.id, deps.submission)),
+			context.queryClient.ensureQueryData(addonQuery(params.id)),
+		]);
+		const addon = preview ?? live;
 
 		if (!addon) {
 			throw notFound();

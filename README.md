@@ -37,7 +37,7 @@ Add-ons have direct access to the modules, state, and UI that Discord itself use
 
 Unbound runs on iOS and Android through a single native bridge. iOS is the primary platform, and Android support is at an early stage.
 
-This repository contains the client, the plugins and the native loaders that install Unbound on a device. The loaders live in [`packages/loader`](packages/loader): a shared C++ core, the iOS tweak and the Android LSPosed module, built and released by the `loader-*` workflows.
+This repository contains the client, the plugins and the native loaders that install Unbound on a device. The loaders live in [`packages/loader`](packages/loader): a shared C++ core, the iOS tweak and the Android Xposed module, built and released by the `loader-*` workflows.
 
 ### Features
 

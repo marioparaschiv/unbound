@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm';
 
-import type { DiscordId } from '~/lib/authors/discord-users';
 import { account, teamMember } from '~/db/schema';
 import { listListedAddons } from '~/lib/addons';
 import type { AppContext } from '~/lib/context';
+import type { DiscordId } from '~/db/schema';
 
 /**
  * @description Collects the Discord ids the team sync looks up: the team snapshot (where staff add

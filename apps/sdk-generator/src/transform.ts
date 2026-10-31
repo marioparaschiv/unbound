@@ -366,51 +366,80 @@ export function hoistLibraries(
 	if (hoisted.length === 0) return;
 
 	const referenced = collectReferencedNames(survivors);
-	const importsByOwner = new Map<string, Set<string>>();
-	const exportsByOwner = new Map<string, Set<string>>();
+	const names = hoisted.flatMap((statement) => declaredNames(statement));
+	// Owned types are always re-exported so the public surface is stable. A re-export binds nothing
+	// locally, so any referenced name (owned or not) is imported as well.
+	const exportsByOwner = groupByOwner(
+		names.filter((name) => owned.has(name)),
+		ownerByName,
+	);
+	const importsByOwner = groupByOwner(
+		names.filter((name) => referenced.has(name)),
+		ownerByName,
+	);
+
+	for (const owner of [...exportsByOwner.keys(), ...importsByOwner.keys()]) {
+		usedOwners.add(owner);
+	}
 
 	for (const statement of hoisted) {
-		for (const name of declaredNames(statement)) {
-			const owner = ownerByName.get(name)!;
-
-			// Owned types are always re-exported so the public surface is stable. A re-export binds
-			// nothing locally, so any referenced name (owned or not) is imported as well.
-			if (owned.has(name)) {
-				const exports = exportsByOwner.get(owner) ?? new Set<string>();
-
-				exports.add(name);
-				exportsByOwner.set(owner, exports);
-				usedOwners.add(owner);
-			}
-
-			if (referenced.has(name)) {
-				const imports = importsByOwner.get(owner) ?? new Set<string>();
-
-				imports.add(name);
-				importsByOwner.set(owner, imports);
-				usedOwners.add(owner);
-			}
-		}
-
 		statement.remove();
 	}
 
 	const lines = [
-		...[...importsByOwner.entries()].map(([owner, names]) => {
-			const specifier = relativeSpecifier(outPath, owner);
-
-			return `import type { ${[...names].sort().join(', ')} } from '${specifier}';`;
-		}),
-		...[...exportsByOwner.entries()].map(([owner, names]) => {
-			const specifier = relativeSpecifier(outPath, owner);
-
-			return `export type { ${[...names].sort().join(', ')} } from '${specifier}';`;
-		}),
+		...typeOnlyStatements('import', importsByOwner, outPath),
+		...typeOnlyStatements('export', exportsByOwner, outPath),
 	].sort();
 
 	if (lines.length > 0) {
 		sourceFile.insertStatements(0, lines.join('\n'));
 	}
+}
+
+/**
+ * @description Groups names by the hoist file that owns them, dropping names no hoist file owns.
+ * @param names The names to attribute.
+ * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file.
+ * @returns Each owning hoist file's path and the names it owns, in first-seen order.
+ */
+export function groupByOwner(
+	names: Iterable<string>,
+	ownerByName: Map<string, string>,
+): Map<string, Set<string>> {
+	const byOwner = new Map<string, Set<string>>();
+
+	for (const name of names) {
+		const owner = ownerByName.get(name);
+
+		if (owner === void 0) {
+			continue;
+		}
+
+		byOwner.set(owner, (byOwner.get(owner) ?? new Set<string>()).add(name));
+	}
+
+	return byOwner;
+}
+
+/**
+ * @description Prints one `import type` or `export type` statement per owning hoist file.
+ * @param keyword Whether the statements import the names or re-export them.
+ * @param byOwner Each owning hoist file's path and the names to take from it.
+ * @param outPath The absolute output path of the file the statements go in.
+ * @returns The statements, each with its names sorted, sorted by text.
+ */
+export function typeOnlyStatements(
+	keyword: 'import' | 'export',
+	byOwner: Map<string, Set<string>>,
+	outPath: string,
+): string[] {
+	return [...byOwner]
+		.map(([owner, names]) => {
+			const specifier = relativeSpecifier(outPath, owner);
+
+			return `${keyword} type { ${[...names].sort().join(', ')} } from '${specifier}';`;
+		})
+		.sort();
 }
 
 /**

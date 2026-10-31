@@ -1,7 +1,7 @@
-import { expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 import { z } from 'zod';
 
-import { fieldToFlag, isArrayField } from '../src/lib/zod-flags';
+import { fieldToFlag, isArrayField, negatedFlags } from '../src/lib/zod-flags';
 
 test('maps array fields to repeatable string flags', () => {
 	const field = z.array(z.string()).default([]);
@@ -15,4 +15,18 @@ test('keeps scalar fields as single-value flags', () => {
 
 	expect(isArrayField(field)).toBe(false);
 	expect(fieldToFlag(field)).toEqual({ type: Number, description: 'rounds', default: 3 });
+});
+
+describe('negatedFlags', () => {
+	test('turns --no-<flag> off for boolean flags and reports the rest', () => {
+		expect(
+			negatedFlags({ 'no-build': [true], 'no-dryRun': [true], buidl: [true] }, [
+				'build',
+				'dryRun',
+			]),
+		).toEqual({
+			off: ['build', 'dryRun'],
+			unmatched: ['buidl'],
+		});
+	});
 });

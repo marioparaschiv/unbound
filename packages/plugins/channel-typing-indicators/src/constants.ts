@@ -10,4 +10,4 @@ export const MAX_AVATARS = 3;
 export const TYPING_MESSAGE_IDS = ['lJ9sZX', 'rB0CUa', 'StKThj', 'uVDhqZ'];
 
 // The key of every element the plugin inserts, which also marks a row as already patched.
-export const INDICATOR_KEY = 'unbound.channel-typing-indicators';
+export const INDICATOR_KEY = 'astral.channel-typing-indicators';

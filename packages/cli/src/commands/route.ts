@@ -1,15 +1,12 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { bridgePortField } from '~/lib/context';
 import { currentRoute } from '~/lib/navigation';
 
 const schema = z.object({
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 });
 
 const routeCommand: CommandDefinition<typeof schema> = {

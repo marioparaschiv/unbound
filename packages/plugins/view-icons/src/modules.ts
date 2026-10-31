@@ -2,7 +2,7 @@ import { metro, patcher } from '@unbound-app/api';
 
 export { Media } from '@unbound-app/api/metro/components';
 
-export const Patcher = patcher.createPatcher('unbound.view-icons');
+export const Patcher = patcher.createPatcher('astral.view-icons');
 
 export const IconUtils = metro.findByProps('getUserAvatarURL', 'getGuildIconURL', { lazy: true });
 export const ActionSheetsFilter = metro.filters.byProps('openLazy', 'hideActionSheet');

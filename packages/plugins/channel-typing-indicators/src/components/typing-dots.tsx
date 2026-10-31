@@ -1,7 +1,7 @@
 import { Animated, Easing, View } from 'react-native';
 import { useEffect, useMemo, useRef } from 'react';
 
-import useStyles from './typing-dots.style';
+import useStyles from '~/components/typing-dots.style';
 
 // Discord's staggered three-dot wave: each dot pulses in size and opacity on a 2.4-second cycle.
 function TypingDots() {

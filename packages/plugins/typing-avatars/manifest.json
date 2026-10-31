@@ -1,5 +1,5 @@
 {
-	"id": "unbound.typing-avatars",
+	"id": "astral.typing-avatars",
 	"name": "Typing Avatars",
 	"description": "Shows the avatars of people typing in the channel.",
 	"authors": [
@@ -16,7 +16,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "KeyboardIcon",
 	"main": "index.ts"
 }

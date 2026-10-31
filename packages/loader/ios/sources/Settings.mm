@@ -9,13 +9,13 @@
 #include "LoaderPreferences.h"
 #import "SettingsCore.h"
 
-using unbound::ios::toStdString;
+using astral::ios::toStdString;
 
 NSString *const SettingsDidChangeNotification = @"SettingsDidChange";
 
 static std::unique_ptr<loader::SettingsStore> gStore;
 
-loader::SettingsStore &UnboundSettingsStore()
+loader::SettingsStore &AstralSettingsStore()
 {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
@@ -31,7 +31,7 @@ loader::SettingsStore &UnboundSettingsStore()
 
 + (void)init
 {
-    loader::SettingsStore &store = UnboundSettingsStore();
+    loader::SettingsStore &store = AstralSettingsStore();
     NSString              *path  = @(store.path().c_str());
 
     [FileSystem monitor:path
@@ -46,7 +46,7 @@ loader::SettingsStore &UnboundSettingsStore()
 
 + (void)loadSettings
 {
-    UnboundSettingsStore().load();
+    AstralSettingsStore().load();
 }
 
 @end

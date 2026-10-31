@@ -112,7 +112,7 @@ func TestPublishLoaderReleasesReadsChangelogFile(t *testing.T) {
 		fmt.Fprintf(writer, "{\"platform\":%q,\"version\":%q,\"url\":%q}", body.Platform, body.Version, body.URL)
 	}))
 	defer server.Close()
-	t.Setenv("UNBOUND_API_KEY", "ci-key")
+	t.Setenv("ASTRAL_API_KEY", "ci-key")
 
 	if err := runPublishLoaderReleases([]string{
 		"--api-url", server.URL + "/api/v1/loader/releases",
@@ -235,7 +235,7 @@ func TestPublishLoaderReleasesRejectsConfigurationAndAPIErrors(t *testing.T) {
 		iosURL:     "https://example.com/Unbound.deb",
 		androidURL: "https://example.com/Unbound.apk",
 	}
-	if _, err := publishLoaderReleases(context.Background(), config); err == nil || !strings.Contains(err.Error(), "UNBOUND_API_KEY") {
+	if _, err := publishLoaderReleases(context.Background(), config); err == nil || !strings.Contains(err.Error(), "ASTRAL_API_KEY") {
 		t.Fatalf("expected a missing-key error, got %v", err)
 	}
 
@@ -265,5 +265,29 @@ func TestPublishLoaderReleasesRejectsConfigurationAndAPIErrors(t *testing.T) {
 	config.androidURL = "https://example.com/Unbound.apk"
 	if _, err := publishLoaderReleases(context.Background(), config); err == nil || !strings.Contains(err.Error(), "HTTP 403") {
 		t.Fatalf("expected API authorization failure, got %v", err)
+	}
+}
+
+func TestPublishLoaderReleasesDryRunPostsNothing(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if request.Method != http.MethodGet {
+			t.Fatalf("a dry run sent %s %s", request.Method, request.URL.Path)
+		}
+		fmt.Fprint(writer, "{\"update\":{\"version\":\"1.0.0\"}}")
+	}))
+	defer server.Close()
+
+	result, err := publishLoaderReleases(context.Background(), loaderReleaseBatchConfig{
+		endpoint:   server.URL + "/api/v1/loader/releases",
+		version:    "1.0.1",
+		iosURL:     "https://example.com/loader.deb",
+		androidURL: "https://example.com/loader.apk",
+		dryRun:     true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(result.published, ",") != "ios,android" {
+		t.Fatalf("published = %v, want both platforms listed", result.published)
 	}
 }

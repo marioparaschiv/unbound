@@ -87,7 +87,7 @@ export const MessageActions = metro.api.Messages as MessageActionsType;
 
 export const MessageRowData = metro.findByProps('generateMessageRowData', { lazy: true });
 
-export const Patcher = patcher.createPatcher('unbound.message-link-embeds');
+export const Patcher = patcher.createPatcher('astral.message-link-embeds');
 
 // The media components patched to play inside embeds, loaded when Discord first shows media.
 export const FastImageSource = 'components_native/common/FastImage.tsx';

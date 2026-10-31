@@ -4,19 +4,16 @@ import {
 } from '@unbound-app/contracts/review';
 import { z } from 'zod';
 
-import endpoint, { requireParam } from '~/lib/api/endpoint';
-import { requireCaller } from '~/lib/api/caller';
+import { callerEndpoint, requireParam } from '~/lib/api/endpoint';
 import { reviewSubmission } from '~/lib/review';
 
-const reviewSubmissionEndpoint = endpoint(
+const reviewSubmissionEndpoint = callerEndpoint(
 	{
 		body: reviewSubmissionRequestSchema,
 		query: z.undefined(),
 		response: reviewSubmissionResponseSchema,
 	},
-	async ({ ctx, request, params, body }) => {
-		const caller = await requireCaller(ctx, request.headers);
-
+	async ({ ctx, params, body, caller }) => {
 		return reviewSubmission(ctx, caller, requireParam(params, 'id'), body);
 	},
 );

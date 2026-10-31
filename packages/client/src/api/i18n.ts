@@ -1,4 +1,5 @@
 import { createLogger } from '@unbound-app/logger';
+import enUS from '@i18n/en-US.json';
 
 import { Dispatcher, i18n as Discord, Moment } from '~/api/metro/common';
 import { DEV, I18N_BASE_URL } from '~/lib/constants';
@@ -10,7 +11,6 @@ import createMomentCalendarLocale from './create-moment-calendar-locale';
 import createMomentLocaleDefiner from './create-moment-locale-definer';
 import createMomentLocaleSetter from './create-moment-locale-setter';
 import resolveMomentLocale from './resolve-moment-locale';
-import enUS from '../../../../i18n/en-US.json';
 
 type LocaleStrings = Record<string, string>;
 type StringStore = Record<string, LocaleStrings>;
@@ -149,6 +149,31 @@ function createMessages(
 }
 
 /**
+ * @description Parses a locale's string table, as served or cached.
+ * @param text The table's JSON.
+ * @returns The table, mapping each key to its string.
+ */
+function parseLocaleStrings(text: string): LocaleStrings {
+	const value: unknown = JSON.parse(text);
+
+	if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+		throw new Error('A locale table must be a JSON object.');
+	}
+
+	const table: LocaleStrings = {};
+
+	for (const [key, string] of Object.entries(value)) {
+		if (typeof string !== 'string') {
+			throw new Error(`Locale string ${key} is not a string.`);
+		}
+
+		table[key] = string;
+	}
+
+	return table;
+}
+
+/**
  * @description Loads a locale's string table into the core store. In dev builds it always fetches fresh from the dev server, bypassing the disk + ETag cache so local edits show on every reload; in production it reads any cached copy first, then revalidates against the source via ETag.
  * @param locale The Discord locale code to ensure is loaded.
  * @returns A promise that resolves once the cache read and revalidation attempt complete. Never throws.
@@ -160,7 +185,7 @@ async function ensureLocale(locale: string): Promise<void> {
 
 			if (!res.ok) return;
 
-			strings[locale] = await res.json();
+			strings[locale] = parseLocaleStrings(await res.text());
 		} catch (error) {
 			logger.error(`Failed to fetch locale ${locale}:`, error);
 		}
@@ -172,7 +197,7 @@ async function ensureLocale(locale: string): Promise<void> {
 
 	if (await fs.exists(path)) {
 		try {
-			strings[locale] = JSON.parse(await fs.read(path));
+			strings[locale] = parseLocaleStrings(await fs.read(path));
 		} catch (error) {
 			logger.error(`Failed to parse cached locale ${locale}:`, error);
 		}
@@ -194,7 +219,7 @@ async function ensureLocale(locale: string): Promise<void> {
 
 		const text = await res.text();
 
-		strings[locale] = JSON.parse(text);
+		strings[locale] = parseLocaleStrings(text);
 
 		await fs.write(path, text);
 

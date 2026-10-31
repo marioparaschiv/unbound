@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import type { RenderNode } from '~/row-layout';
 import type { Channel } from '~/types';
 
-import ChannelTypingIndicator from './channel-typing-indicator';
+import ChannelTypingIndicator from '~/components/channel-typing-indicator';
 
 type ThreadChannelInfoProps = {
 	info: RenderNode | null | undefined;

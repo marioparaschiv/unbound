@@ -1,3 +1,5 @@
+import { createSurfaceListeners } from '@unbound-plugins/shared/native/surface-listeners';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type {
 	NativeFabricBridge,
 	NativeJavaBridge,
@@ -12,18 +14,21 @@ import {
 	messageIdField,
 } from '@unbound-plugins/shared/native/android/discord-views';
 import {
-	javaFlag,
-	javaInt,
 	javaNumber,
 	javaReference,
 	javaText,
+	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
-import { readViewText } from '@unbound-plugins/shared/native/android/spans';
+import { readViewTextAsync, type ViewText } from '@unbound-plugins/shared/native/android/spans';
 import { connectTextRewrites } from '@unbound-plugins/shared/native/android/text-rewrites';
+import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 import {
 	currentDecorView,
+	displayDensity,
 	findViewsOfClass,
-	STARTUP_SCAN_DELAYS,
+	readCalls,
+	runOnMain,
+	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
 import { registerMessageSurface, type SurfaceContent } from '~/components/message-surface';
@@ -61,10 +66,6 @@ type WaitingView = {
 	messageId: string;
 };
 
-function viewKey(view: NativeJavaValue): string | undefined {
-	return view.type === 'handle' ? view.value : undefined;
-}
-
 /**
  * @description Embeds the message each Android message links to as a real chat row through the loader's native text rewrites, so embeds stay in place while the chat scrolls.
  * @param native The plugin's Java, hook and Fabric bridges.
@@ -77,9 +78,10 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 	if (!connectTextRewrites(java, MESSAGE_CONTENT_VIEW)) return undefined;
 
 	const embeds = new Map<string, Embed>();
+	const retries = createRewriteRetry();
 	const bySurface = new Map<string, Embed>();
 	const heights = new Map<string, number>();
-	const listeners = new Map<string, Set<() => void>>();
+	const listeners = createSurfaceListeners();
 	const waiting = new Map<string, Map<string, WaitingView>>();
 	const awaitingSize = new Map<string, WaitingView>();
 	const controller = new AbortController();
@@ -99,18 +101,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		surface: (surfaceId) => bySurface.get(surfaceId),
 		reportLayout: (surfaceId, height) => reportLayout(surfaceId, height),
 		revision: (surfaceId) => bySurface.get(surfaceId)?.revision ?? -1,
-		subscribe(surfaceId, listener) {
-			const set = listeners.get(surfaceId) ?? new Set();
-
-			set.add(listener);
-			listeners.set(surfaceId, set);
-
-			return () => {
-				set.delete(listener);
-
-				if (!set.size) listeners.delete(surfaceId);
-			};
-		},
+		subscribe: listeners.subscribe,
 	});
 
 	if (!surfaceModule) return undefined;
@@ -127,19 +118,18 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 
 	function publish(embed: Embed) {
 		embed.revision++;
-
-		for (const listener of listeners.get(embed.surfaceId) ?? []) listener();
+		listeners.notify(embed.surfaceId);
 	}
 
 	function heightFor(target: LinkTarget): number {
 		return heights.get(targetKey(target)) ?? Surface.minHeight;
 	}
 
-	function define(embed: Embed) {
+	function define(embed: Embed): boolean {
 		const px = (value: number) => Math.round(value * embed.density);
 		const height = heightFor(embed.target);
 
-		inline.define({
+		return inline.define({
 			original: embed.original,
 			rendered: embed.rendered,
 			textView: embed.textView,
@@ -186,59 +176,41 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		define(embed);
 	}
 
-	function contentTextView(
+	async function contentTextView(
 		messageView: NativeJavaReference,
 		channelName: string,
-	): NativeJavaReference | null {
-		const stack: NativeJavaReference[] = [messageView];
-		const contentClass = java.getClass(MESSAGE_CONTENT_VIEW);
-		const groupClass = java.getClass('android.view.ViewGroup');
+	): Promise<{ view: NativeJavaReference; text: ViewText } | null> {
+		const views = await java.findViews!(messageView, MESSAGE_CONTENT_VIEW, {
+			maxDepth: 64,
+			maxVisited: 2_000,
+			maxResults: 32,
+			stopAtMatch: true,
+		});
 
-		while (stack.length) {
-			const view = stack.pop()!;
+		for (const value of views) {
+			const view = javaReference(value);
+			const text = view ? await readViewTextAsync(java, view) : null;
 
-			if (javaFlag(java.invoke(contentClass, 'isInstance', [view]))) {
-				const text = readViewText(java, view)?.string ?? '';
-
-				if (findRenderedLinkRange(text, channelName)) return view;
-
-				continue;
-			}
-
-			if (!javaFlag(java.invoke(groupClass, 'isInstance', [view]))) continue;
-
-			const count = javaNumber(java.invoke(view, 'getChildCount', [])) ?? 0;
-
-			for (let index = count - 1; index >= 0; index--) {
-				const child = javaReference(java.invoke(view, 'getChildAt', [javaInt(index)]));
-
-				if (child) stack.push(child);
-			}
+			if (view && text && findRenderedLinkRange(text.string, channelName))
+				return { view, text };
 		}
 
 		return null;
 	}
 
-	function textWidth(textView: NativeJavaReference, density: number): number {
-		return (
-			((javaNumber(java.invoke(textView, 'getWidth', [])) ?? 0) -
-				(javaNumber(java.invoke(textView, 'getTotalPaddingLeft', [])) ?? 0) -
-				(javaNumber(java.invoke(textView, 'getTotalPaddingRight', [])) ?? 0)) /
-			density
-		);
+	async function textWidth(textView: NativeJavaReference, density: number): Promise<number> {
+		const [width, left, right] = (
+			await runOnMain(
+				java,
+				readCalls(textView, ['getWidth', 'getTotalPaddingLeft', 'getTotalPaddingRight']),
+			)
+		).map((value) => javaNumber(value) ?? 0) as [number, number, number];
+
+		return (width - left - right) / density;
 	}
 
-	function displayDensity(textView: NativeJavaReference): number {
-		const resources = javaReference(java.invoke(textView, 'getResources', []));
-		const metrics = resources
-			? javaReference(java.invoke(resources, 'getDisplayMetrics', []))
-			: null;
-
-		return metrics ? (javaNumber(java.getField(metrics, 'density')) ?? 1) : 1;
-	}
-
-	function render(messageView: NativeJavaReference, messageId: string) {
-		const key = viewKey(messageView as NativeJavaValue);
+	async function render(messageView: NativeJavaReference, messageId: string) {
+		const key = javaViewKey(messageView as NativeJavaValue);
 		const channelId = currentChannelId();
 		const source: Message | undefined = channelId
 			? MessageStore.getMessage(channelId, messageId)
@@ -260,15 +232,18 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		}
 
 		const channelName = linkedChannelName(target, linkedMessage);
-		const textView = channelName ? contentTextView(messageView, channelName) : null;
-		const content = textView ? readViewText(java, textView) : null;
+		const found = channelName ? await contentTextView(messageView, channelName) : null;
+		const textView = found?.view;
+		const content = found?.text;
 
-		if (!channelName || !textView || !content || inline.isDefined(content.string)) return;
+		if (disposed || !channelName || !textView || !content || inline.isDefined(content.string)) {
+			return;
+		}
 
 		const range = findRenderedLinkRange(content.string, channelName);
 		const built = buildEmbeddedContent(renderers, linkedMessage, target.channelId);
-		const density = displayDensity(textView);
-		const width = textWidth(textView, density);
+		const density = await displayDensity(java, textView);
+		const width = await textWidth(textView, density);
 
 		if (!range || !built) return;
 
@@ -300,19 +275,24 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		embeds.set(rendered, embed);
 		bySurface.set(embed.surfaceId, embed);
 		publish(embed);
-		define(embed);
+
+		if (define(embed)) {
+			retries.succeeded(key);
+		} else {
+			retries.retry(key, () => schedule(messageView, messageId));
+		}
 	}
 
 	function schedule(messageView: NativeJavaReference, messageId: string) {
 		setTimeout(() => {
-			try {
-				render(messageView, messageId);
-			} catch (error) {
-				console.error(
-					'[Message Link Embeds] Failed to embed a linked message on Android:',
-					error,
-				);
-			}
+			render(messageView, messageId).catch((error) => {
+				if (!isCancellation(error)) {
+					console.error(
+						'[Message Link Embeds] Failed to embed a linked message on Android:',
+						error,
+					);
+				}
+			});
 		}, 0);
 	}
 
@@ -339,7 +319,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		SIZE_PARAMETERS,
 		{ notify: true },
 		({ self }) => {
-			const key = viewKey(self);
+			const key = javaViewKey(self);
 			const pending = key ? awaitingSize.get(key) : undefined;
 
 			if (!key || !pending) return;
@@ -349,25 +329,27 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		},
 	);
 
-	function scanVisible() {
+	async function scanVisible() {
 		const decor = currentDecorView(java);
 
 		if (!decor || disposed) return;
 
-		for (const messageView of findViewsOfClass(java, decor, MESSAGE_VIEW)) {
+		for (const messageView of await findViewsOfClass(java, decor, MESSAGE_VIEW)) {
 			const messageId = javaText(java.getField(messageView, messageIdField(java)));
 
 			if (messageId) schedule(messageView, messageId);
 		}
 	}
 
-	const scans = STARTUP_SCAN_DELAYS.map((delay) => setTimeout(scanVisible, delay));
+	const scans = scheduleStartupScans('Message Link Embeds', scanVisible);
 
 	return {
+		drawn: () => embeds.size,
 		dispose() {
 			for (const scan of scans) clearTimeout(scan);
 
 			disposed = true;
+			retries.clear();
 			controller.abort();
 			hooks.remove(token);
 			hooks.remove(sizeToken);

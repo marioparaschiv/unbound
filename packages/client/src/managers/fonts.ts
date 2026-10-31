@@ -1,8 +1,9 @@
 import type { FontEntity } from '@unbound-app/types';
 
-import { Manager, ManagerType } from '~/managers/base';
+import { getSetting, setSetting } from '~/lib/unbound-settings';
+import { safeFontFileName } from '~/lib/addon-paths';
 import { Constants } from '~/api/metro/common';
-import storage from '~/api/storage';
+import { Manager } from '~/managers/base';
 import fs from '~/api/fs';
 
 type FontsEvents = {
@@ -22,7 +23,7 @@ export type FontTarget = {
  */
 export class Fonts extends Manager<FontEntity, FontsEvents> {
 	constructor() {
-		super(ManagerType.FONTS);
+		super('fonts');
 	}
 
 	initialize() {
@@ -67,7 +68,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 
 	/** @returns The current override map (`{ [family]: overrideName }`). */
 	getOverrides(): Record<string, string> {
-		return storage.get<Record<string, string>>('unbound', 'font-states', {});
+		return getSetting('font-states');
 	}
 
 	/**
@@ -76,10 +77,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	 * @param name The custom or system font name to use instead.
 	 */
 	setOverride(family: string, name: string) {
-		const states = this.getOverrides();
-
-		states[family] = name;
-		storage.set('unbound', 'font-states', states);
+		setSetting('font-states', { ...this.getOverrides(), [family]: name });
 		this.emit('changed');
 	}
 
@@ -88,10 +86,9 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	 * @param family The Discord font family to reset.
 	 */
 	clearOverride(family: string) {
-		const states = this.getOverrides();
+		const { [family]: removed, ...states } = this.getOverrides();
 
-		delete states[family];
-		storage.set('unbound', 'font-states', states);
+		setSetting('font-states', states);
 		this.emit('changed');
 	}
 
@@ -116,7 +113,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	 */
 	async install(url: string): Promise<string | undefined> {
 		try {
-			const file = url.split('/').pop() ?? `font-${Date.now()}.ttf`;
+			const file = safeFontFileName(url, `font-${Date.now()}.ttf`);
 
 			const data = await fetch(url, { cache: 'no-cache' }).then((res) => {
 				if (!res.ok) {

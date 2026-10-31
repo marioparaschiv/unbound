@@ -8,23 +8,23 @@
 
 #include "LoaderCrypto.h"
 
-#ifndef UNBOUND_BUNDLE_SIGNING_KEY
-#define UNBOUND_BUNDLE_SIGNING_KEY ""
+#ifndef ASTRAL_BUNDLE_SIGNING_KEY
+#define ASTRAL_BUNDLE_SIGNING_KEY ""
 #endif
 
-#ifndef UNBOUND_PR_BUNDLE_SIGNING_KEY
-#define UNBOUND_PR_BUNDLE_SIGNING_KEY ""
+#ifndef ASTRAL_PR_BUNDLE_SIGNING_KEY
+#define ASTRAL_PR_BUNDLE_SIGNING_KEY ""
 #endif
 
-#ifndef UNBOUND_PR_NUMBER
-#define UNBOUND_PR_NUMBER 0
+#ifndef ASTRAL_PR_NUMBER
+#define ASTRAL_PR_NUMBER 0
 #endif
 
 namespace loader {
 static constexpr size_t kSha512Size = 64;
 
-static_assert(UNBOUND_PR_NUMBER >= 0 && UNBOUND_PR_NUMBER <= UINT32_MAX,
-              "UNBOUND_PR_NUMBER must be a pull request number");
+static_assert(ASTRAL_PR_NUMBER >= 0 && ASTRAL_PR_NUMBER <= UINT32_MAX,
+              "ASTRAL_PR_NUMBER must be a pull request number");
 
 bool BundleTrust::isEnabled() const
 {
@@ -117,24 +117,24 @@ std::optional<std::string> decodeBase64(std::string_view encoded)
 
 std::string compiledBundleSigningKey()
 {
-    return UNBOUND_BUNDLE_SIGNING_KEY;
+    return ASTRAL_BUNDLE_SIGNING_KEY;
 }
 
 BundleTrust compiledBundleTrust()
 {
     BundleTrust trust;
-    trust.productionKey     = UNBOUND_BUNDLE_SIGNING_KEY;
-    trust.pullRequestNumber = static_cast<uint32_t>(UNBOUND_PR_NUMBER);
+    trust.productionKey     = ASTRAL_BUNDLE_SIGNING_KEY;
+    trust.pullRequestNumber = static_cast<uint32_t>(ASTRAL_PR_NUMBER);
     if (trust.pullRequestNumber > 0)
     {
-        trust.pullRequestKey = UNBOUND_PR_BUNDLE_SIGNING_KEY;
+        trust.pullRequestKey = ASTRAL_PR_BUNDLE_SIGNING_KEY;
     }
     return trust;
 }
 
 std::string pullRequestSigningContext(uint32_t pullRequestNumber)
 {
-    return "unbound-pr-bundle/v1/" + std::to_string(pullRequestNumber) + "/";
+    return "astral-pr-bundle/v1/" + std::to_string(pullRequestNumber) + "/";
 }
 
 std::string sha512Hex(std::string_view data)

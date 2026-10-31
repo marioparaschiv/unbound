@@ -1,3 +1,4 @@
+import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join } from 'node:path';
 
@@ -28,7 +29,7 @@ export function readPluginPayload(addon: DiscoveredAddon): PluginPayload | { err
 	}
 
 	const { manifest } = readBuiltAddon(addon);
-	const names = ['manifest.json', getBundleName(addon.static, manifest.main)];
+	const names = [MANIFEST_FILENAME, getBundleName(addon.static, manifest.main)];
 
 	return { id: addon.id, files: names.map((name) => ({ name, path: join(addon.output, name) })) };
 }

@@ -1,5 +1,5 @@
 {
-	"id": "unbound.shiki-codeblocks",
+	"id": "astral.shiki-codeblocks",
 	"name": "Shiki Codeblocks",
 	"description": "Highlights code blocks with VS Code-style syntax colors.",
 	"authors": [
@@ -27,6 +27,7 @@
 		"android": [
 			"native.java.classes",
 			"native.java.invoke",
+			"native.java.batch",
 			"native.java.invokeAsync",
 			"native.java.construct",
 			"native.java.hooks",
@@ -35,7 +36,7 @@
 		]
 	},
 	"minNativePluginApi": "1.0.0",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "TextIcon",
 	"main": "index.tsx"
 }

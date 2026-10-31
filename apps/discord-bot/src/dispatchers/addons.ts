@@ -12,13 +12,8 @@ import {
 	postMessage,
 	truncate,
 } from '~/lib/discord-messages';
-import {
-	COLOURS,
-	ICON_PACKS_CHANNEL_ID,
-	PLUGINS_CHANNEL_ID,
-	THEMES_CHANNEL_ID,
-} from '~/lib/constants';
 import type { Dispatcher, Stores } from '~/dispatchers/types';
+import { COLOURS, DISCORD_IDS } from '~/lib/constants';
 import { contentHash } from '~/lib/content-hash';
 import type { Database } from '~/db/database';
 import { addonMessage } from '~/db/schema';
@@ -29,9 +24,9 @@ const logger = createLogger('Bot', 'Addons');
 
 // Fonts have no channel, so they are never posted.
 export const ADDON_CHANNELS: AddonChannels = {
-	plugin: PLUGINS_CHANNEL_ID,
-	theme: THEMES_CHANNEL_ID,
-	'icon-pack': ICON_PACKS_CHANNEL_ID,
+	plugin: DISCORD_IDS.PLUGINS_CHANNEL_ID,
+	theme: DISCORD_IDS.THEMES_CHANNEL_ID,
+	'icon-pack': DISCORD_IDS.ICON_PACKS_CHANNEL_ID,
 };
 
 // Discord rejects a longer value or an embed over 6000 characters in all, failing every retry.
@@ -39,7 +34,13 @@ const TITLE_LIMIT = 256;
 const DESCRIPTION_LIMIT = 2048;
 const FIELD_LIMIT = 1024;
 
-function desiredChannel(addon: PublicAddon, channels: AddonChannels) {
+/**
+ * @description Names the channel an addon's message belongs in.
+ * @param addon The addon's public listing.
+ * @param channels The channel each addon type posts to.
+ * @returns Its type's channel while listed, otherwise undefined: it has no message.
+ */
+export function desiredChannel(addon: PublicAddon, channels: AddonChannels): string | undefined {
 	return addon.listed ? channels[addon.type] : undefined;
 }
 
@@ -271,4 +272,11 @@ export const addonsDispatcher: Dispatcher = {
 	handle: (id, context) => syncAddon(context, context.client.rest, id),
 };
 
-export default { ADDON_CHANNELS, renderAddon, syncAddon, reconcileAddons, addonsDispatcher };
+export default {
+	ADDON_CHANNELS,
+	desiredChannel,
+	renderAddon,
+	syncAddon,
+	reconcileAddons,
+	addonsDispatcher,
+};

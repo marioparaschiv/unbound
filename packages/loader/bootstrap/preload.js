@@ -1,8 +1,8 @@
 (payload) => {
-	globalThis.UNBOUND_SETTINGS = payload.settings;
-	globalThis.UNBOUND_PLUGINS = payload.plugins;
-	globalThis.UNBOUND_THEMES = payload.themes;
-	globalThis.UNBOUND_FONTS = payload.fonts;
-	globalThis.UNBOUND_AVAILABLE_FONTS = payload.availableFonts;
-	globalThis.UNBOUND_LOADER = payload.loader;
+	globalThis.ASTRAL_SETTINGS = payload.settings;
+	globalThis.ASTRAL_PLUGINS = payload.plugins;
+	globalThis.ASTRAL_THEMES = payload.themes;
+	globalThis.ASTRAL_FONTS = payload.fonts;
+	globalThis.ASTRAL_AVAILABLE_FONTS = payload.availableFonts;
+	globalThis.ASTRAL_LOADER = payload.loader;
 };

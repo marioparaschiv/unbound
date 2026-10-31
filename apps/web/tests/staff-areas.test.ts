@@ -1,15 +1,17 @@
 import { describe, expect, test } from 'bun:test';
 
-import { getStaffAreas, getStaffSections } from '~/lib/auth/staff-areas';
+import { getStaffArea, getStaffSections } from '~/lib/auth/staff-areas';
 import type { Role } from '~/lib/auth/access';
 
 type Case = [role: Role, ids: string[]];
 
-const areaCases: Case[] = [
-	['user', []],
-	['developer', []],
-	['moderator', ['review', 'admin']],
-	['admin', ['review', 'admin']],
+type AreaCase = [role: Role, id: string | undefined];
+
+const areaCases: AreaCase[] = [
+	['user', undefined],
+	['developer', undefined],
+	['moderator', 'admin'],
+	['admin', 'admin'],
 ];
 
 const sectionCases: Case[] = [
@@ -19,26 +21,26 @@ const sectionCases: Case[] = [
 	['admin', ['review', 'users', 'addons']],
 ];
 
-function areaIds(role: string | null | undefined): string[] {
-	return getStaffAreas(role).map((area) => area.id);
+function areaId(role: string | null | undefined): string | undefined {
+	return getStaffArea(role)?.id;
 }
 
 function sectionIds(role: string | null | undefined): string[] {
 	return getStaffSections(role).map((section) => section.id);
 }
 
-describe('getStaffAreas', () => {
-	test.each(areaCases)('%s sees %o', (role, areas) => {
-		expect(areaIds(role)).toEqual(areas);
+describe('getStaffArea', () => {
+	test.each(areaCases)('%s sees %o', (role, area) => {
+		expect(areaId(role)).toBe(area);
 	});
 
-	test('a comma-separated role sees every area any one of its roles grants', () => {
-		expect(areaIds('developer,moderator')).toEqual(['review', 'admin']);
+	test('a comma-separated role sees the highest area any one of its roles grants', () => {
+		expect(areaId('developer,moderator')).toBe('admin');
 	});
 
 	test('an unset or unknown role sees nothing', () => {
-		expect(areaIds(null)).toEqual([]);
-		expect(areaIds('owner')).toEqual([]);
+		expect(areaId(null)).toBeUndefined();
+		expect(areaId('owner')).toBeUndefined();
 	});
 });
 

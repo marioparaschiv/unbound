@@ -1,5 +1,5 @@
+import { IconAscendingSorting, IconDescendingSorting, IconXmark } from 'nucleo-micro-bold';
 import type { AdminAddonStatus, AdminAddonsSearch } from '@unbound-app/contracts/admin';
-import { IconSortAscending, IconSortDescending, IconX } from '@tabler/icons-react';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import type { AddonType } from '@unbound-app/contracts/addons';
 import type { ReactNode } from 'react';
@@ -120,7 +120,7 @@ function MaintainerPicker({ id, selected, maintainer, onChange }: MaintainerPick
 		return (
 			<div
 				className={cn(
-					'border-input dark:bg-input/30 flex h-9 items-center gap-2 rounded-md border pr-1 pl-2 text-sm shadow-xs',
+					'field flex h-11 items-center gap-2 pr-1.5 pl-2 text-sm',
 					MAINTAINER_WIDTH,
 				)}
 			>
@@ -135,7 +135,7 @@ function MaintainerPicker({ id, selected, maintainer, onChange }: MaintainerPick
 					aria-label='Clear the maintainer filter'
 					onClick={() => onChange(undefined)}
 				>
-					<IconX className='size-4' />
+					<IconXmark className='size-4' />
 				</Button>
 			</div>
 		);
@@ -214,7 +214,11 @@ function AddonFilters({ filters, maintainer, onChange }: AddonFiltersProps) {
 						onChange({ ...filters, order: order === 'desc' ? 'asc' : undefined })
 					}
 				>
-					{order === 'desc' ? <IconSortDescending /> : <IconSortAscending />}
+					{order === 'desc' ? (
+						<IconDescendingSorting size={24} />
+					) : (
+						<IconAscendingSorting size={24} />
+					)}
 					{order === 'desc' ? 'Newest first' : 'Oldest first'}
 				</Button>
 			</div>

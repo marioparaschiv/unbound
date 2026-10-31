@@ -28,7 +28,7 @@ var (
 	nativeFramePattern  = regexp.MustCompile(`#(\d+)\s+pc\s+(?:0x)?([0-9a-fA-F]+)\s+(\S+)`)
 	frameBuildIDPattern = regexp.MustCompile(`\(BuildId: ([0-9a-fA-F]+)\)`)
 	tombstoneABIPattern = regexp.MustCompile(`ABI: '([^']+)'`)
-	loaderLibraryName   = regexp.MustCompile(`^libunbound[^/]*\.so$`)
+	loaderLibraryName   = regexp.MustCompile(`^libastral[^/]*\.so$`)
 )
 
 var tombstoneABIs = map[string]string{
@@ -66,7 +66,7 @@ type symbolizeFunc func(object string, addresses []uint64) ([][]sourceLocation, 
 
 func runSymbolicateAndroid(args []string) error {
 	set := flag.NewFlagSet("symbolicate-android", flag.ContinueOnError)
-	symbols := set.String("symbols", "", "directory or zip of the release's Android symbols, laid out as <abi>/libunbound.so[.dbg]")
+	symbols := set.String("symbols", "", "directory or zip of the release's Android symbols, laid out as <abi>/libastral.so[.dbg]")
 	abi := set.String("abi", "", "ABI of the crashed process when the backtrace does not name one")
 	symbolizer := set.String("symbolizer", "", "path to llvm-symbolizer; defaults to the one in the Android NDK")
 	input := set.String("input", "", "tombstone or logcat file; defaults to stdin")
@@ -102,7 +102,7 @@ func runSymbolicateAndroid(args []string) error {
 	}
 	fmt.Print(output)
 	if count == 0 {
-		return errors.New("the input has no libunbound frames to symbolicate")
+		return errors.New("the input has no libastral frames to symbolicate")
 	}
 	return nil
 }
@@ -308,7 +308,7 @@ func openSymbolDirectory(source string) (string, func(), error) {
 	if info.IsDir() {
 		return source, func() {}, nil
 	}
-	directory, err := os.MkdirTemp("", "unbound-android-symbols-")
+	directory, err := os.MkdirTemp("", "astral-android-symbols-")
 	if err != nil {
 		return "", nil, err
 	}
@@ -388,7 +388,7 @@ func loadSymbolFiles(directory string) (map[string]symbolFile, error) {
 		return nil, err
 	}
 	if len(files) == 0 {
-		return nil, fmt.Errorf("%s has no <abi>/libunbound.so or <abi>/libunbound.so.dbg symbols", directory)
+		return nil, fmt.Errorf("%s has no <abi>/libastral.so or <abi>/libastral.so.dbg symbols", directory)
 	}
 	return files, nil
 }

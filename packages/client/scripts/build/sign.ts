@@ -146,7 +146,7 @@ function writeSignature(dir: string, file: string, key: KeyObject, pullRequest: 
 }
 
 /**
- * @description Signs a build: records every bundle's SHA-512 in `manifest.json`, then writes a base64 Ed25519 signature next to every bundle and the manifest, after removing stale ones. Without a key the build stays unsigned.
+ * @description Signs a build: records every bundle's SHA-512 in `manifest.json`, then writes its base64 Ed25519 signature to `manifest.json.sig`, after removing stale signatures. Without a key the build stays unsigned.
  * @param dir The build output directory.
  * @param pem The PEM private key, read from {@link SIGNING_KEY_VARIABLE} by default.
  * @param options The pull request the signatures are bound to, for the pull request key.
@@ -179,11 +179,9 @@ export function signBundles(
 	manifest.sha512 = bundleHashes(dir);
 	writeFileSync(join(dir, MANIFEST_FILE), JSON.stringify(manifest, null, 2));
 
-	const files = [...signableBundles(dir), MANIFEST_FILE];
+	const files = [MANIFEST_FILE];
 
-	for (const file of files) {
-		writeSignature(dir, file, key, pullRequest);
-	}
+	writeSignature(dir, MANIFEST_FILE, key, pullRequest);
 
 	const signer = pullRequest ? `the key for pull request #${pullRequest}` : 'the production key';
 
@@ -274,17 +272,12 @@ export function findUnsignedBundles(
 	pullRequest = 0,
 ): string[] {
 	const key = parsePublicKey(publicKeyBase64);
-	const bundles = signableBundles(dir);
 
-	if (!bundles.length) {
+	if (!signableBundles(dir).length) {
 		return [`${dir} has no bundles.`];
 	}
 
-	const signatures = bundles.flatMap(
-		(file) => signatureProblem(dir, file, key, pullRequest) ?? [],
-	);
-
-	return [...signatures, ...manifestProblems(dir, key, pullRequest)];
+	return manifestProblems(dir, key, pullRequest);
 }
 
 export type SignArguments = {

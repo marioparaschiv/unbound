@@ -30,6 +30,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   fetch-depth: 0
                   fetch-tags: true
             - name: Setup Bun dependencies
@@ -48,7 +49,17 @@ jobs:
                   git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
             - name: Publish plugins
               env:
-                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
-                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
-                  UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
+                  UNBOUND_API_KEY: ${{ secrets.ASTRAL_API_KEY }}
+                  UNBOUND_API_URL: ${{ vars.ASTRAL_API_URL }}
+                  UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.ASTRAL_BUNDLE_SIGNING_KEY }}
               run: bun packages/plugin-scripts/src/publish-plugins.ts
+
+            - name: Verify the published plugins
+              env:
+                  UNBOUND_API_URL: ${{ vars.ASTRAL_API_URL }}
+              run: |
+                  for _ in 1 2 3; do
+                    bun packages/plugin-scripts/src/verify-published.ts && exit 0
+                    sleep 60
+                  done
+                  exit 1

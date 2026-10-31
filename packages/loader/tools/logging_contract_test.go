@@ -22,7 +22,7 @@ func TestKotlinLogCategoriesAreCoreCategories(t *testing.T) {
 		t.Fatal("core declares no log categories")
 	}
 
-	directory := filepath.Join(root, "android", "module", "src", "main", "kotlin", "app", "unbound", "android")
+	directory := filepath.Join(root, "android", "module", "src", "main", "kotlin", "app", "astral", "android")
 	logger, err := os.ReadFile(filepath.Join(directory, "Logger.kt"))
 	if err != nil {
 		t.Fatal(err)

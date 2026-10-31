@@ -8,9 +8,9 @@ import {
 	startProfileRefresher,
 } from '~/lib/authors/profiles';
 import { fetchDiscordUser } from '~/lib/authors/discord-users';
-import type { DiscordId } from '~/lib/authors/discord-users';
 import { addon, discordProfile } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
+import type { DiscordId } from '~/db/schema';
 import { parseEnv } from '~/lib/env';
 
 import {
@@ -103,7 +103,12 @@ async function waitFor(predicate: () => boolean | Promise<boolean>, timeoutMs: n
 describe('refreshDiscordProfiles', () => {
 	test('fetches missing and stale profiles, never fresh ones, unknown ids or delisted authors', async () => {
 		discord.users.set('101', { username: 'fresh-new' });
-		discord.users.set('102', { username: 'stale-new', global_name: 'Stale', avatar: 'a_hash' });
+		discord.users.set('102', {
+			username: 'stale-new',
+			global_name: 'Stale',
+			avatar: 'a_hash',
+			banner: 'b_hash',
+		});
 		discord.users.set('103', { username: 'missing-new' });
 		await cache('101', 'fresh-old', HOUR_MS);
 		await cache('102', 'stale-old', 25 * HOUR_MS);
@@ -118,11 +123,20 @@ describe('refreshDiscordProfiles', () => {
 			kind: 'found',
 			user: { username: 'fresh-old' },
 		});
-		expect(profiles.get('102')).toEqual({
+		const refreshed = profiles.get('102');
+
+		expect(refreshed).toMatchObject({
 			kind: 'found',
-			user: { id: '102', username: 'stale-new', globalName: 'Stale', avatarHash: 'a_hash' },
-			fetchedAt: clock,
+			user: {
+				id: '102',
+				username: 'stale-new',
+				globalName: 'Stale',
+				avatarHash: 'a_hash',
+				bannerHash: 'b_hash',
+			},
 		});
+		// toMatchObject ignores Date values, so the fetch time is pinned on its own.
+		expect(refreshed?.fetchedAt).toEqual(clock);
 		expect(profiles.get('103')).toMatchObject({
 			kind: 'found',
 			user: { username: 'missing-new' },
@@ -169,7 +183,14 @@ describe('refreshDiscordProfiles', () => {
 		expect(fetchedIds()).toContain('301');
 		expect((await readProfiles(ctx, ['301'])).get('301')).toEqual({
 			kind: 'found',
-			user: { id: '301', username: 'kept', globalName: null, avatarHash: null },
+			user: {
+				id: '301',
+				username: 'kept',
+				globalName: null,
+				avatarHash: null,
+				bannerHash: null,
+			},
+			guildBannerHash: null,
 			fetchedAt: new Date(clock.getTime() - 30 * HOUR_MS),
 		});
 	});

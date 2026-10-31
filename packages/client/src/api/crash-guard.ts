@@ -103,6 +103,10 @@ export type AddonFreeze = {
 	id: string;
 	name: string;
 	seconds: number;
+	/** Where the JavaScript thread was stuck, such as the native call it was inside, when the loader knows. */
+	detail?: string;
+	/** The JavaScript frames the thread was sampled in, one `at` line each, when the loader could sample them. */
+	stack?: string;
 };
 
 type FreezeListenerGlobal = typeof globalThis & {

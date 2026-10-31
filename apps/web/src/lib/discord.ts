@@ -40,6 +40,31 @@ export function getAvatarUrl(id: string, hash: string): string {
 }
 
 /**
+ * @description Builds the URL of a Discord user's profile banner, animated when the hash says so.
+ * @param id The user's id.
+ * @param hash The banner hash.
+ * @returns The CDN URL.
+ */
+export function getBannerUrl(id: string, hash: string): string {
+	const format = hash.startsWith('a_') ? 'gif' : 'png';
+
+	return `https://cdn.discordapp.com/banners/${id}/${hash}.${format}?size=1024`;
+}
+
+/**
+ * @description Builds the URL of the banner a member set for one guild alone, animated when the hash says so.
+ * @param guildId The guild's id.
+ * @param id The member's user id.
+ * @param hash The guild banner hash.
+ * @returns The CDN URL.
+ */
+export function getGuildBannerUrl(guildId: string, id: string, hash: string): string {
+	const format = hash.startsWith('a_') ? 'gif' : 'png';
+
+	return `https://cdn.discordapp.com/guilds/${guildId}/users/${id}/banners/${hash}.${format}?size=1024`;
+}
+
+/**
  * @description Builds the URL of the default avatar Discord shows for a user without one.
  * @param id The user's id; `'0'` gives the first default avatar.
  * @returns The CDN URL.
@@ -67,6 +92,8 @@ export default {
 	getSnowflakeDate,
 	isDiscordId,
 	getAvatarUrl,
+	getBannerUrl,
+	getGuildBannerUrl,
 	getDefaultAvatarUrl,
 	isBotTokenHost,
 };

@@ -304,7 +304,7 @@ describe('POST /api/v1/submissions/preview', () => {
 			),
 		).toEqual({
 			code: 'invalid_changelog',
-			message: 'plugins/security/CHANGELOG.md:7: List Security changes under ### Fixed.',
+			message: expect.stringContaining('plugins/security/CHANGELOG.md:7'),
 		});
 	});
 

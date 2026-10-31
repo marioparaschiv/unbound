@@ -1,3 +1,10 @@
+import {
+	connectTextRewrites,
+	TEXT_REWRITES_CLASS,
+	type TextRewriteAnchor,
+	type TextRewriteEdit,
+	type TextRewrites,
+} from '@unbound-plugins/shared/native/android/text-rewrites';
 import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
@@ -6,20 +13,18 @@ import type {
 	NativeJavaHooksBridge,
 	NativeJavaReference,
 } from '@unbound-app/api/native';
-
 import {
-	connectTextRewrites,
-	TEXT_REWRITES_CLASS,
-	type TextRewriteAnchor,
-	type TextRewriteEdit,
-	type TextRewrites,
-} from './text-rewrites';
-import { javaReference, javaText } from './java-values';
+	javaInt,
+	javaNumber,
+	javaReference,
+	javaText,
+} from '@unbound-plugins/shared/native/android/java-values';
 
 const NEEDS_HOST_PARAMETERS = ['android.widget.TextView', 'java.lang.String'];
 const MAX_GROUPS_PER_TEXT = 4;
 const INITIAL_GROUPS = 2;
 const MAX_DEFINITIONS = 48;
+const BLANK_SURFACE_CHECKS_MS = [1_000, 1_500, 2_500];
 
 export type InlineSlot = TextRewriteAnchor & {
 	surfaceId: string;
@@ -41,10 +46,11 @@ type Group = {
 
 type Entry = InlineDefinition & {
 	groups: Group[];
+	context?: Promise<NativeJavaReference | null>;
 };
 
 export type InlineSurfaces = {
-	define(definition: InlineDefinition): void;
+	define(definition: InlineDefinition): boolean;
 	isDefined(rendered: string): boolean;
 	definitions(): InlineDefinition[];
 	dispose(): Promise<void>;
@@ -99,30 +105,97 @@ export function createInlineSurfaces(
 	let nextGroup = 0;
 	let disposed = false;
 
+	function contextOf(entry: Entry): Promise<NativeJavaReference | null> {
+		entry.context ??= java
+			.invokeAsync(entry.textView, 'getContext', [])
+			.then((value) => javaReference(value))
+			.catch(() => null);
+
+		return entry.context;
+	}
+
 	function createGroup(entry: Entry) {
 		if (disposed || entry.groups.length >= MAX_GROUPS_PER_TEXT) return;
 
-		const context = javaReference(java.invoke(entry.textView, 'getContext', []));
 		const group: Group = { id: `${options.groupPrefix}-${nextGroup++}`, hosts: [], mounts: [] };
 
+		entry.groups.push(group);
+		void contextOf(entry).then((context) => {
+			if (!disposed && entry.groups.includes(group)) {
+				fillGroup(entry, group, context);
+			}
+		});
+	}
+
+	function fillGroup(entry: Entry, group: Group, context: NativeJavaReference | null) {
 		for (const [index, slot] of entry.slots.entries()) {
 			const host = java.construct('android.widget.FrameLayout', context ? [context] : []);
-			const mount = fabric
-				.mountAsync(host, options.surfaceModule, { surfaceId: slot.surfaceId })
-				.catch(() => null);
+			const mount = mountSurface(host, slot.surfaceId);
 
 			group.hosts.push(host);
 			group.mounts.push(mount);
 			void mount.then(() => {
 				const current = entry.slots[index];
 
-				if (!disposed && current && entry.groups.includes(group)) {
-					active.addHost(group.id, entry.rendered, host, anchorOf(current));
+				if (!(!disposed && current && entry.groups.includes(group))) {
+					return;
 				}
+
+				active.addHost(group.id, entry.rendered, host, anchorOf(current));
+				watchForBlank(entry, group, index, 0);
 			});
 		}
+	}
 
-		entry.groups.push(group);
+	function mountSurface(host: NativeJavaHandle, surfaceId: string) {
+		return fabric.mountAsync(host, options.surfaceModule, { surfaceId }).catch(() => null);
+	}
+
+	async function isBlank(host: NativeJavaHandle): Promise<boolean> {
+		try {
+			const root = javaReference(await java.invokeAsync(host, 'getChildAt', [javaInt(0)]));
+
+			return !root || javaNumber(await java.invokeAsync(root, 'getChildCount', [])) === 0;
+		} catch {
+			return false;
+		}
+	}
+
+	function watchForBlank(entry: Entry, group: Group, index: number, attempt: number) {
+		const delay = BLANK_SURFACE_CHECKS_MS[attempt];
+
+		if (delay === undefined) return;
+
+		setTimeout(() => void recheck(entry, group, index, attempt), delay);
+	}
+
+	async function recheck(entry: Entry, group: Group, index: number, attempt: number) {
+		const host = group.hosts[index];
+		const slot = entry.slots[index];
+
+		if (disposed || !host || !slot || !entry.groups.includes(group) || !(await isBlank(host))) {
+			return;
+		}
+
+		await remount(group, index, host, slot.surfaceId);
+
+		if (disposed || !entry.groups.includes(group)) return;
+
+		active.refresh(entry.rendered);
+		watchForBlank(entry, group, index, attempt + 1);
+	}
+
+	async function remount(group: Group, index: number, host: NativeJavaHandle, surfaceId: string) {
+		const stale = await group.mounts[index];
+
+		if (stale) {
+			await fabric.unmountAsync(stale).catch(() => undefined);
+		}
+
+		const mount = mountSurface(host, surfaceId);
+
+		group.mounts[index] = mount;
+		await mount;
 	}
 
 	async function removeGroup(group: Group) {
@@ -161,11 +234,17 @@ export function createInlineSurfaces(
 
 	return {
 		define(definition) {
-			if (disposed) return;
+			if (disposed) {
+				return false;
+			}
 
 			const existing = entries.get(definition.rendered);
 
-			active.put(definition.original, definition.rendered, definition.edits);
+			if (!active.put(definition.original, definition.rendered, definition.edits)) {
+				active.reapply(definition.textView);
+
+				return false;
+			}
 
 			if (existing) {
 				const resized = !sameAnchors(existing.slots, definition.slots);
@@ -190,7 +269,7 @@ export function createInlineSurfaces(
 
 				active.reapply(definition.textView);
 
-				return;
+				return true;
 			}
 
 			const entry: Entry = { ...definition, groups: [] };
@@ -204,6 +283,8 @@ export function createInlineSurfaces(
 			for (let index = 0; index < INITIAL_GROUPS; index++) createGroup(entry);
 
 			active.reapply(definition.textView);
+
+			return true;
 		},
 		isDefined: (rendered) => entries.has(rendered),
 		definitions: () => [...entries.values()],

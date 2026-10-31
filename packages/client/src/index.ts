@@ -4,9 +4,10 @@ import '~/api/metro';
 
 import { createLogger } from '@unbound-app/logger';
 
-import { BuiltIns, Plugins, Themes, Icons, Fonts } from '~/managers';
 import { askForNativeConsent } from '~/ui/addons/native-consent';
-import { setConsentPrompt } from '~/managers/addons';
+import { setConsentPrompt } from '~/lib/native-consent';
+import { builtins } from '~/managers/builtins';
+import { managers } from '~/managers/utils';
 import storage from '~/api/storage';
 import * as api from '~/api';
 
@@ -42,11 +43,11 @@ export function initialize() {
 	Logger.info('Initializing Unbound...');
 
 	setConsentPrompt(askForNativeConsent);
-	BuiltIns.initialize();
-	Plugins.initialize();
-	Themes.initialize();
-	Icons.initialize();
-	Fonts.initialize();
+	builtins.initialize();
+
+	for (const manager of Object.values(managers)) {
+		manager.initialize();
+	}
 
 	initialized = true;
 	Logger.info('Unbound initialized');
@@ -66,11 +67,11 @@ export async function shutdown() {
 
 	Logger.info('Shutting down Unbound...');
 
-	BuiltIns.shutdown();
-	await Plugins.shutdown();
-	await Themes.shutdown();
-	Icons.shutdown();
-	Fonts.shutdown();
+	builtins.shutdown();
+
+	for (const manager of Object.values(managers)) {
+		await manager.shutdown();
+	}
 
 	await storage.persist();
 

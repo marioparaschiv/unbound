@@ -1,5 +1,4 @@
-import type { DiscordId } from '~/lib/authors/discord-users';
-import type { DiscordTeamGroup } from '~/lib/team/roles';
+import type { DiscordId, DiscordTeamGroup } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import { teamMember } from '~/db/schema';
 

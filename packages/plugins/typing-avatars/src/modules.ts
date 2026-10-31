@@ -6,4 +6,4 @@ export const Avatars = metro.findByProps('SummarizedIconRow', 'Avatar', 'AvatarS
 
 export const UserStore = metro.stores.Users;
 
-export const Patcher = patcher.createPatcher('unbound.typing-avatars');
+export const Patcher = patcher.createPatcher('astral.typing-avatars');

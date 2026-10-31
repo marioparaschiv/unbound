@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/types",
-	"version": "0.9.0",
+	"version": "0.10.0",
 	"private": true,
 	"author": {
 		"name": "Mario P.",
@@ -20,7 +20,11 @@
 			"default": "./typings/*.ts"
 		}
 	},
+	"scripts": {
+		"typecheck": "tsc --noEmit -p ."
+	},
 	"dependencies": {
+		"@unbound-app/discord-types": "workspace:*",
 		"possess": "catalog:"
 	},
 	"peerDependencies": {

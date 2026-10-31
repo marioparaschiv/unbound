@@ -9,13 +9,8 @@ function manifest(overrides: Partial<AddonManifest> = {}): AddonManifest {
 		name: 'Example',
 		description: '',
 		authors: [{ name: 'Author', id: '1' }],
-		icon: '',
-		updates: '',
 		main: 'index.js',
 		version: '1.0.0',
-		folder: '',
-		path: '',
-		url: '',
 		...overrides,
 	};
 }

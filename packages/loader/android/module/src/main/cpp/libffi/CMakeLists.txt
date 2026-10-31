@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22.1)
-project(unbound_ffi C ASM)
+project(astral_ffi C ASM)
 
 set(LIBFFI_SOURCE ${CMAKE_CURRENT_LIST_DIR}/../../../../../../vendor/libffi)
 
@@ -29,7 +29,7 @@ set(LIBFFI_GENERATED ${CMAKE_CURRENT_BINARY_DIR}/include)
 configure_file(${LIBFFI_SOURCE}/include/ffi.h.in ${LIBFFI_GENERATED}/ffi.h @ONLY)
 configure_file(${LIBFFI_SOURCE}/src/${LIBFFI_ARCH}/ffitarget.h ${LIBFFI_GENERATED}/ffitarget.h COPYONLY)
 
-add_library(unbound_ffi STATIC
+add_library(astral_ffi STATIC
     ${LIBFFI_SOURCE}/src/prep_cif.c
     ${LIBFFI_SOURCE}/src/types.c
     ${LIBFFI_SOURCE}/src/raw_api.c
@@ -37,7 +37,7 @@ add_library(unbound_ffi STATIC
     ${LIBFFI_SOURCE}/src/closures.c
     ${LIBFFI_SOURCE}/src/tramp.c
     ${LIBFFI_ARCH_SOURCES})
-target_include_directories(unbound_ffi
+target_include_directories(astral_ffi
     PUBLIC ${LIBFFI_GENERATED}
     PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${LIBFFI_SOURCE}/include ${LIBFFI_SOURCE}/src/${LIBFFI_ARCH})
-target_compile_options(unbound_ffi PRIVATE -fvisibility=hidden -Wno-deprecated-declarations)
+target_compile_options(astral_ffi PRIVATE -fvisibility=hidden -Wno-deprecated-declarations)

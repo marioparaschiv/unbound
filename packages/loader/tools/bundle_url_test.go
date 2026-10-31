@@ -16,21 +16,21 @@ func TestDefaultBundleURLCanBeOverriddenAtBuildTime(t *testing.T) {
 	root := filepath.Dir(filepath.Dir(filename))
 	for path, required := range map[string][]string{
 		"core/include/LoaderUpdater.h": {
-			"#ifndef UNBOUND_DEFAULT_BUNDLE_URL\n#define UNBOUND_DEFAULT_BUNDLE_URL \"https://builds.unbound.rip/\"\n#endif",
-			"constexpr const char *kDefaultBundleBaseURL  = UNBOUND_DEFAULT_BUNDLE_URL;",
+			"#ifndef ASTRAL_DEFAULT_BUNDLE_URL\n#define ASTRAL_DEFAULT_BUNDLE_URL \"https://builds.unbound.rip/\"\n#endif",
+			"constexpr const char *kDefaultBundleBaseURL  = ASTRAL_DEFAULT_BUNDLE_URL;",
 		},
 		"ios/Makefile": {
-			"ifneq ($(strip $(UNBOUND_BUNDLE_URL)),)",
-			`COMMON_FLAGS += -DUNBOUND_DEFAULT_BUNDLE_URL='"$(UNBOUND_BUNDLE_URL)"'`,
+			"ifneq ($(strip $(ASTRAL_BUNDLE_URL)),)",
+			`COMMON_FLAGS += -DASTRAL_DEFAULT_BUNDLE_URL='"$(ASTRAL_BUNDLE_URL)"'`,
 		},
 		"android/module/src/main/cpp/CMakeLists.txt": {
-			"if(UNBOUND_BUNDLE_URL)",
-			`add_compile_definitions(UNBOUND_DEFAULT_BUNDLE_URL="${UNBOUND_BUNDLE_URL}")`,
+			"if(ASTRAL_BUNDLE_URL)",
+			`add_compile_definitions(ASTRAL_DEFAULT_BUNDLE_URL="${ASTRAL_BUNDLE_URL}")`,
 		},
 		"android/module/build.gradle.kts": {
-			`providers.gradleProperty("unboundBundleURL")`,
-			`"-DUNBOUND_BUNDLE_URL=${bundleURL.orEmpty()}"`,
-			"unboundBundleURL must be an https URL ending in /",
+			`providers.gradleProperty("astralBundleURL")`,
+			`"-DASTRAL_BUNDLE_URL=${bundleURL.orEmpty()}"`,
+			"astralBundleURL must be an https URL ending in /",
 		},
 	} {
 		data, err := os.ReadFile(filepath.Join(root, path))
@@ -47,8 +47,8 @@ func TestDefaultBundleURLCanBeOverriddenAtBuildTime(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	definition := strings.Index(string(cmake), "add_compile_definitions(UNBOUND_DEFAULT_BUNDLE_URL")
-	core := strings.Index(string(cmake), "add_subdirectory(${UNBOUND_REPOSITORY_ROOT}/core")
+	definition := strings.Index(string(cmake), "add_compile_definitions(ASTRAL_DEFAULT_BUNDLE_URL")
+	core := strings.Index(string(cmake), "add_subdirectory(${ASTRAL_REPOSITORY_ROOT}/core")
 	if definition < 0 || core < definition {
 		t.Fatal("the bundle URL must be defined before the shared core is added")
 	}

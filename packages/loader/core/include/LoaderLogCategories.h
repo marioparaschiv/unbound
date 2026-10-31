@@ -5,7 +5,6 @@
 #define LOG_CATEGORY_UPDATER    "updater"
 #define LOG_CATEGORY_THEMES     "themes"
 #define LOG_CATEGORY_FONTS      "fonts"
-#define LOG_CATEGORY_CHATUI     "chatui"
 #define LOG_CATEGORY_PLUGINS    "plugins"
 #define LOG_CATEGORY_SETTINGS   "settings"
 #define LOG_CATEGORY_TOOLBOX    "toolbox"

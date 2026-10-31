@@ -34,20 +34,25 @@ nlohmann::json preloadData(const PreloadPayload &payload)
         {"fonts", payload.fonts.is_array() ? payload.fonts : nlohmann::json::array()},
         {"availableFonts",
          payload.availableFonts.is_array() ? payload.availableFonts : nlohmann::json::array()},
-        {"loader", {{"origin", payload.origin}, {"version", payload.version}}}};
+        {"loader",
+         {{"origin", payload.origin},
+          {"version", payload.version},
+          {"bytecodeVersion", payload.bytecodeVersion}}}};
 }
 
 PreloadPayload makePreloadPayload(const SettingsStore &settings, const AddonState &addons,
-                                  const nlohmann::json &availableFonts, std::string origin)
+                                  const nlohmann::json &availableFonts, std::string origin,
+                                  uint32_t bytecodeVersion)
 {
     PreloadPayload payload;
-    payload.settings       = settings.snapshot();
-    payload.plugins        = addons.plugins();
-    payload.themes         = addons.themes();
-    payload.fonts          = addons.fonts();
-    payload.availableFonts = availableFonts;
-    payload.origin         = std::move(origin);
-    payload.version        = loaderVersion();
+    payload.settings        = settings.snapshot();
+    payload.plugins         = addons.plugins();
+    payload.themes          = addons.themes();
+    payload.fonts           = addons.fonts();
+    payload.availableFonts  = availableFonts;
+    payload.origin          = std::move(origin);
+    payload.version         = loaderVersion();
+    payload.bytecodeVersion = bytecodeVersion;
     return payload;
 }
 }

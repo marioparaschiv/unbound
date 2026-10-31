@@ -4,7 +4,8 @@ import type {
 	ContextMenuCommandSuccessPayload,
 	MessageCommandSuccessPayload,
 } from '@sapphire/framework';
-import { container } from '@sapphire/framework';
+import { container, LogLevel } from '@sapphire/framework';
+import type { Logger } from '@sapphire/plugin-logger';
 import type { Guild, User } from 'discord.js';
 import { cyan } from 'colorette';
 
@@ -41,4 +42,12 @@ export function logSuccessCommand(payload: CommandSuccessPayload): void {
 	container.logger.debug(line);
 }
 
-export default { logSuccessCommand };
+/**
+ * @description Tells whether the logger prints debug lines, the only level a command success is logged at.
+ * @returns Whether the success listeners should be enabled.
+ */
+export function isDebugLogging(): boolean {
+	return (container.logger as Logger).level <= LogLevel.Debug;
+}
+
+export default { logSuccessCommand, isDebugLogging };

@@ -1,12 +1,12 @@
 {
-  "name": "Unbound App Repo",
-  "identifier": "app.unbound.ios.repo",
+  "name": "astral App Repo",
+  "identifier": "app.astral.ios.repo",
   "iconURL": "https://assets.unbound.rip/logo/logo.png",
   "apps": [
     {
-      "name": "Unbound",
+      "name": "astral",
       "bundleIdentifier": "com.hammerandchisel.discord",
-      "developerName": "Unbound Team",
+      "developerName": "astral Team",
       "iconURL": "https://assets.unbound.rip/logo/logo.png",
       "localizedDescription": "A client mod for Discord",
       "subtitle": "A client mod for Discord",
@@ -15,9 +15,9 @@
       "versions": []
     },
     {
-      "name": "Unbound (TestFlight)",
+      "name": "astral (TestFlight)",
       "bundleIdentifier": "com.hammerandchisel.discord.testflight",
-      "developerName": "Unbound Team",
+      "developerName": "astral Team",
       "beta": true,
       "iconURL": "https://assets.unbound.rip/logo/logo.png",
       "localizedDescription": "A client mod for Discord (TestFlight builds)",

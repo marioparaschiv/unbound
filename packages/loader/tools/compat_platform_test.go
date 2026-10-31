@@ -149,7 +149,7 @@ func TestJavaClassFileReader(t *testing.T) {
 }
 
 func TestKotlinOwnClasses(t *testing.T) {
-	classes := parseKotlinClasses(`package app.unbound.android
+	classes := parseKotlinClasses(`package app.astral.android
 
 import android.app.Activity
 
@@ -175,11 +175,11 @@ object ActivityTracker : Application.ActivityLifecycleCallbacks {
 	for _, class := range classes {
 		byName[class.Name] = class
 	}
-	tracker := byName["app.unbound.android.ActivityTracker"]
+	tracker := byName["app.astral.android.ActivityTracker"]
 	if tracker == nil || !tracker.Fields["INSTANCE"] || tracker.Methods["currentActivity"] == nil || tracker.Methods["getGeneration"] == nil || tracker.Methods["setGeneration"] == nil || tracker.Methods["helper"] == nil {
 		t.Fatalf("object members were not read: %+v", tracker)
 	}
-	if entry := byName["app.unbound.android.ActivityTracker$Entry"]; entry == nil || entry.Methods["describe"] == nil {
+	if entry := byName["app.astral.android.ActivityTracker$Entry"]; entry == nil || entry.Methods["describe"] == nil {
 		t.Fatalf("nested class was not read: %+v", byName)
 	}
 	if tracker.Methods["describe"] != nil {
@@ -205,7 +205,7 @@ func TestEvaluateCompatAgainstSDKs(t *testing.T) {
 	framework.add(view)
 	targets[1].framework = framework
 	own := newJavaFrameworkIndex()
-	for _, class := range parseKotlinClasses("package app.unbound.android\nobject ActivityTracker {\n    fun currentActivity() = null\n}\n") {
+	for _, class := range parseKotlinClasses("package app.astral.android\nobject ActivityTracker {\n    fun currentActivity() = null\n}\n") {
 		own.add(class)
 	}
 	targets[1].own = own
@@ -219,10 +219,12 @@ func TestEvaluateCompatAgainstSDKs(t *testing.T) {
 		{Kind: referenceObjCClass, Name: "LCSharedUtils", Component: "loader-ios", Locations: location},
 		{Kind: referenceObjCMethod, Class: "UIView", Name: "layoutSubviews", Component: "plugin:demo", Locations: location},
 		{Kind: referenceJavaMethod, Class: "com.discord.View", Name: "onSizeChanged", Parameters: []string{"int", "int", "int", "int"}, Component: "plugin:demo", Locations: location},
-		{Kind: referenceJavaClass, Name: "app.unbound.android.ActivityTracker", Component: "plugin:demo", Locations: location},
-		{Kind: referenceJavaClass, Name: "app.unbound.android.Gone", Component: "plugin:demo", Locations: location},
+		{Kind: referenceJavaClass, Name: "app.astral.android.ActivityTracker", Component: "plugin:demo", Locations: location},
+		{Kind: referenceJavaClass, Name: "app.astral.android.Gone", Component: "plugin:demo", Locations: location},
 		{Kind: referenceJavaMethod, Name: "currentActivity", Component: "plugin:demo", Locations: location},
 		{Kind: referenceJavaClass, Name: "android.app.ActivityThread", Component: "plugin:demo", Locations: location},
+		{Kind: referenceJavaClass, Name: "android.os.SystemProperties", Component: "loader-android", Locations: location},
+		{Kind: referenceJavaClass, Name: "org.lsposed.lspatch.loader.LSPApplication", Component: "loader-android", Locations: location},
 	}
 	results := evaluateCompat(references, targets, nil)
 	expect := func(platform, kind, name, status string) {
@@ -237,13 +239,15 @@ func TestEvaluateCompatAgainstSDKs(t *testing.T) {
 	expect("ios", referenceObjCClass, "UIAccessibility", compatBroken)
 	expect("ios", referenceObjCClass, "LCSharedUtils", compatExternal)
 	expect("android", referenceJavaMethod, "onSizeChanged", compatOK)
-	expect("android", referenceJavaClass, "app.unbound.android.ActivityTracker", compatOK)
-	expect("android", referenceJavaClass, "app.unbound.android.Gone", compatBroken)
+	expect("android", referenceJavaClass, "app.astral.android.ActivityTracker", compatOK)
+	expect("android", referenceJavaClass, "app.astral.android.Gone", compatBroken)
 	expect("android", referenceJavaMethod, "currentActivity", compatOK)
 	expect("android", referenceJavaClass, "android.app.ActivityThread", compatBroken)
+	expect("android", referenceJavaClass, "android.os.SystemProperties", compatExternal)
+	expect("android", referenceJavaClass, "org.lsposed.lspatch.loader.LSPApplication", compatExternal)
 
 	report := renderCompatReport(results)
-	if !strings.Contains(report, "Outside Discord and the SDKs (1)") {
+	if !strings.Contains(report, "Outside Discord and the SDKs (3)") {
 		t.Fatalf("environment-only classes must be listed:\n%s", report)
 	}
 }

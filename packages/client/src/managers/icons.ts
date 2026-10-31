@@ -2,8 +2,9 @@ import type { Addon, IconPack, IconPackManifest, UnboundAsset } from '@unbound-a
 import toError from '@unbound-app/utils/to-error';
 import type { ImageProps } from 'react-native';
 
+import { safeRelativePath, isSafeIconPackMain } from '~/lib/addon-paths';
 import { Assets, ReactNative as RN } from '~/api/metro/common';
-import { ManagerType } from '~/managers/base';
+import { downloadManifest } from '~/lib/addon-download';
 import { Addons } from '~/managers/addons';
 import fs from '~/api/fs';
 
@@ -13,25 +14,46 @@ type GitTreeNode = {
 	type: string;
 };
 
+// UNKNOWN: one entry of GitHub's tree response.
+function isTreeNode(value: unknown): value is GitTreeNode {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'path' in value &&
+		typeof value.path === 'string' &&
+		'type' in value &&
+		typeof value.type === 'string'
+	);
+}
+
+// UNKNOWN: GitHub's `git/trees` response body.
+function treeNodes(body: unknown): GitTreeNode[] {
+	if (
+		typeof body !== 'object' ||
+		body === null ||
+		!('tree' in body) ||
+		!Array.isArray(body.tree)
+	) {
+		throw new Error('GitHub answered the tree request in an unexpected shape.');
+	}
+
+	return body.tree.filter(isTreeNode);
+}
+
 /** The patch context of `Image.render`, whose props the icon pack rewrites in place. */
 type ImageRenderContext = {
 	this: { props: ImageProps };
 };
 
 /** The built-in pack: a no-op passthrough that renders Discord's own icons. */
-export const defaultPack: IconPack = {
+const defaultPack: IconPack = {
 	bundle: 'Default',
 	manifest: {
 		id: 'default',
 		name: 'Default',
 		description: "Discord's default icons.",
 		authors: [{ name: 'Discord', id: '263689920210534400' }],
-		icon: '',
-		updates: '',
 		main: '',
-		folder: '',
-		path: '',
-		url: '',
 		version: '1.0.0',
 		type: 'icon-pack',
 		source: 'other',
@@ -46,11 +68,20 @@ export class Icons extends Addons<Addon> {
 	extension = 'png';
 
 	constructor() {
-		super(ManagerType.ICONS);
+		super('icons');
 	}
 
 	protected get entityType() {
 		return 'icon-pack' as const;
+	}
+
+	/**
+	 * @description Accepts the built-in pack's empty `main`, a GitHub tree URL to download from, or a relative path.
+	 * @param main The manifest's `main`.
+	 * @returns Whether an icon pack may use it.
+	 */
+	protected isAcceptableMain(main: unknown): main is string {
+		return isSafeIconPackMain(main);
 	}
 
 	get applied(): IconPack {
@@ -151,7 +182,7 @@ export class Icons extends Addons<Addon> {
 			);
 
 			this.unload(resolved);
-			await fs.rm(`Unbound/Icons/${resolved.id}`);
+			await fs.rm(this.directoryOf(resolved.id));
 			this.forgetSource(resolved.id);
 
 			this.emit('deleted', resolved);
@@ -215,7 +246,7 @@ export class Icons extends Addons<Addon> {
 
 		for (const scale of scales) {
 			const relative = this.relativeAssetPath(asset, scale);
-			const path = `Unbound/Icons/${id}/${relative}`;
+			const path = `${this.directoryOf(id)}/${relative}`;
 
 			if (await fs.exists(path)) {
 				asset.iconPackPath = `${fs.Documents}/${path}`;
@@ -245,26 +276,25 @@ export class Icons extends Addons<Addon> {
 	 */
 	async install(url: string): Promise<Addon | undefined> {
 		try {
-			const manifest: IconPackManifest = await fetch(url, { cache: 'no-cache' }).then(
-				(res) => {
-					if (!res.ok) {
-						throw new Error(`Failed to fetch manifest (${res.status}).`);
-					}
+			const parsed = await downloadManifest(url, (raw) => this.validateManifest(raw));
 
-					return res.json();
-				},
-			);
-
-			this.validateManifest(manifest);
-
-			if (manifest.type && manifest.type !== this.entityType) {
-				// The fetched manifest is unvalidated, so its type can differ from the static one.
-				throw new Error(`Expected a icon-pack manifest, got ${String(manifest.type)}.`);
+			if (parsed.type && parsed.type !== this.entityType) {
+				throw new Error(`Expected a icon-pack manifest, got ${parsed.type}.`);
 			}
 
-			manifest.source ??= /^https?:\/\/(www\.)?github\.com/.test(manifest.main)
-				? 'github'
-				: 'other';
+			const declared: unknown = Reflect.get(parsed, 'source');
+			const manifest: IconPackManifest = {
+				...parsed,
+				type: this.entityType,
+				source:
+					declared === undefined || declared === null
+						? /^https?:\/\/(www\.)?github\.com/.test(parsed.main)
+							? 'github'
+							: 'other'
+						: declared === 'github'
+							? 'github'
+							: 'other',
+			};
 
 			if (manifest.source !== 'github') {
 				return super.install(url);
@@ -314,9 +344,7 @@ export class Icons extends Addons<Addon> {
 		const sub = path ?? '';
 
 		const api = `https://api.github.com/repos/${user}/${repo}/git/trees/${ref}?recursive=1`;
-		const tree: GitTreeNode[] = await fetch(api)
-			.then((res) => res.json())
-			.then((json) => json.tree ?? []);
+		const tree = treeNodes(await fetch(api).then((res) => res.json()));
 
 		const blobs = tree.filter(
 			(node) => node.type === 'blob' && (!sub || node.path.startsWith(`${sub}/`)),
@@ -328,11 +356,20 @@ export class Icons extends Addons<Addon> {
 			await Promise.all(
 				batch.map(async (node) => {
 					const raw = `https://raw.githubusercontent.com/${user}/${repo}/${ref}/${node.path}`;
-					const relative = sub ? node.path.slice(sub.length + 1) : node.path;
+					const relative = safeRelativePath(
+						sub ? node.path.slice(sub.length + 1) : node.path,
+					);
+
+					if (!relative) {
+						this.logger.warn(`Skipping icon ${node.path}: its path leaves the pack.`);
+
+						return;
+					}
+
 					const buf = await fetch(raw).then((res) => res.arrayBuffer());
 					const data = Buffer.from(buf).toString('base64');
 
-					await fs.write(`Unbound/Icons/${manifest.id}/${relative}`, data, 'base64');
+					await fs.write(`${this.directoryOf(manifest.id)}/${relative}`, data, 'base64');
 				}),
 			);
 		}

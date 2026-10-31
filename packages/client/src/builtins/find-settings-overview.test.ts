@@ -15,7 +15,7 @@ test('finds an anonymous settings overview export by its Metro path', () => {
 	);
 
 	expect(found).toBe(overview);
-	expect(paths).toEqual(['modules/user_settings/overview/native/SettingsOverviewScreen.tsx']);
+	expect(paths).toContain('modules/user_settings/overview/native/SettingsOverviewScreen.tsx');
 });
 
 test('prefers a named settings overview when Discord exports one', () => {

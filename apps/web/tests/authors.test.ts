@@ -2,11 +2,11 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import { refreshDiscordProfiles, startProfileRefresher } from '~/lib/authors/profiles';
-import type { DiscordId } from '~/lib/authors/discord-users';
 import type { ManifestAuthor } from '~/lib/authors/resolve';
 import { loadAuthors } from '~/lib/authors/resolve';
 import { discordProfile, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
+import type { DiscordId } from '~/db/schema';
 
 import { createTestContext, signInWithDiscord } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
@@ -55,7 +55,7 @@ async function resolveOne(name: string, id: DiscordId) {
 }
 
 describe('loadAuthors', () => {
-	test('prefers a linked user, then the Discord profile, then the manifest', async () => {
+	test('prefers a linked user, then the Discord profile, then the manifest, naming each from Discord', async () => {
 		const owner = await signInWithDiscord(ctx, {
 			id: LINKED,
 			name: 'Unbound Name',
@@ -75,12 +75,12 @@ describe('loadAuthors', () => {
 		);
 		await refreshDiscordProfiles(ctx);
 
-		expect(await resolve(AUTHORS)).toEqual([
+		expect(await resolve(AUTHORS)).toMatchObject([
 			{
 				kind: 'user',
 				discordId: LINKED,
 				userId: owner.userId,
-				name: 'Unbound Name',
+				name: 'Linked On Discord',
 				avatarUrl: `https://cdn.discordapp.com/avatars/${LINKED}/abc.png`,
 				role: 'developer',
 				badge: null,
@@ -137,7 +137,27 @@ describe('loadAuthors', () => {
 		expect(await resolveOne('Manifest Late', LATE)).toMatchObject({
 			kind: 'user',
 			userId: late.userId,
-			name: 'Signed Up Later',
+			name: 'late',
+		});
+	});
+
+	test('a linked user keeps their account name and image until Discord is fetched', async () => {
+		const id = '666666666666666666';
+		const fresh = await signInWithDiscord(ctx, {
+			id,
+			name: 'Account Name',
+			email: 'fresh@example.com',
+		});
+
+		await ctx.db
+			.update(user)
+			.set({ image: 'https://cdn.discordapp.com/avatars/666666666666666666/old.png' })
+			.where(eq(user.id, fresh.userId));
+
+		expect(await resolveOne('Manifest Fresh', id)).toMatchObject({
+			kind: 'user',
+			name: 'Account Name',
+			avatarUrl: 'https://cdn.discordapp.com/avatars/666666666666666666/old.png',
 		});
 	});
 

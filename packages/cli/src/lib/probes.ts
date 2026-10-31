@@ -8,8 +8,9 @@ import type {
 import type { UnboundGlobal } from '@unbound-app/api/global';
 
 type PluginEntity = { started?: boolean; context?: PluginContext };
-type PluginEntities = Map<string, PluginEntity>;
-type PluginManager = { entities: PluginEntities };
+
+/** The slice of Unbound's plugin manager the device probes borrow a running plugin's native bridge from. */
+export type PluginManager = { entities: Map<string, PluginEntity> };
 type ModuleRecord = {
 	isInitialized?: boolean;
 	__filePath?: string;
@@ -67,7 +68,7 @@ export async function viewTree(
 			'value' in value && typeof value.value === 'number' ? value.value : 0;
 		const string = (value: NativeJavaValue) => (value.type === 'string' ? value.value : '');
 		const tracker = handle(
-			java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
+			java.getField(java.getClass('app.astral.android.ActivityTracker'), 'INSTANCE'),
 		);
 		const activity = tracker ? handle(java.invoke(tracker, 'currentActivity')) : null;
 		const window = activity ? handle(java.invoke(activity, 'getWindow')) : null;
@@ -259,7 +260,7 @@ export function textSpans(unbound: UnboundGlobal, match: string, maxViews: numbe
 	const int = (value: number): NativeJavaValue => ({ type: 'int', value });
 	const isTrue = (value: NativeJavaValue) => 'value' in value && value.value === true;
 	const tracker = handle(
-		java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
+		java.getField(java.getClass('app.astral.android.ActivityTracker'), 'INSTANCE'),
 	);
 	const activity = tracker ? handle(java.invoke(tracker, 'currentActivity')) : null;
 	const window = activity ? handle(java.invoke(activity, 'getWindow')) : null;

@@ -8,11 +8,11 @@ import type { Channel, User } from '~/types';
 import { IndicatorMode } from '~/constants';
 import { typingLabel } from '~/typing-label';
 
-import useStyles from './typing-indicator.style';
-import TypingTooltip from './typing-tooltip';
-import TypingAvatars from './typing-avatars';
-import useTypingIds from './use-typing-ids';
-import TypingDots from './typing-dots';
+import useStyles from '~/components/typing-indicator.style';
+import TypingTooltip from '~/components/typing-tooltip';
+import TypingAvatars from '~/components/typing-avatars';
+import useTypingIds from '~/components/use-typing-ids';
+import TypingDots from '~/components/typing-dots';
 
 type TypingIndicatorProps = {
 	channel: Channel;

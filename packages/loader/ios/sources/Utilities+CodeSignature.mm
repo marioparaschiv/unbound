@@ -4,7 +4,7 @@
 #include "LoaderEnvironment.h"
 #import "Utilities+CodeSignature.h"
 
-using unbound::ios::toStdString;
+using astral::ios::toStdString;
 
 @implementation Utilities (CodeSignature)
 
@@ -74,7 +74,7 @@ using unbound::ios::toStdString;
 #if ATTESTATION_ENABLED
     return VerifyEmbeddedAttestation() ? YES : NO;
 #else
-    return YES;
+    return NO;
 #endif
 }
 

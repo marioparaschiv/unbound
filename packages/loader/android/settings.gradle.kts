@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "unbound-android"
+rootProject.name = "astral-android"
 include(":module")

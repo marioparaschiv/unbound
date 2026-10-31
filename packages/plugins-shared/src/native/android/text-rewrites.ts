@@ -1,8 +1,11 @@
+import {
+	javaFlag,
+	javaReference,
+	javaString,
+} from '@unbound-plugins/shared/native/android/java-values';
 import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
 
-import { javaFlag, javaReference, javaString } from './java-values';
-
-export const TEXT_REWRITES_CLASS = 'app.unbound.android.TextRewrites';
+export const TEXT_REWRITES_CLASS = 'app.astral.android.TextRewrites';
 
 export type TextRewriteEdit = {
 	start: number;
@@ -31,7 +34,7 @@ export type TextRewriteAnchor = {
 };
 
 export type TextRewrites = {
-	put(original: string, rendered: string, edits: TextRewriteEdit[]): void;
+	put(original: string, rendered: string, edits: TextRewriteEdit[]): boolean;
 	remove(original: string): void;
 	putImage(key: string, bitmap: NativeJavaReference): void;
 	hasImage(key: string): boolean;
@@ -78,11 +81,13 @@ export function connectTextRewrites(
 
 	return {
 		put: (original, rendered, edits) =>
-			call('put', [
-				javaString(original),
-				javaString(rendered),
-				javaString(JSON.stringify(edits)),
-			]),
+			javaFlag(
+				java.invoke(target, 'put', [
+					javaString(original),
+					javaString(rendered),
+					javaString(JSON.stringify(edits)),
+				]),
+			),
 		remove: (original) => call('remove', [javaString(original)]),
 		putImage: (key, bitmap) => call('putImage', [javaString(key), bitmap]),
 		hasImage: (key) => javaFlag(java.invoke(target, 'hasImage', [javaString(key)])),

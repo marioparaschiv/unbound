@@ -4,18 +4,23 @@ import {
 	updatesResponseSchema,
 } from '@unbound-app/contracts/updates';
 import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
+import type { ManagerKind } from '@unbound-app/types/addons';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Addon } from '@unbound-app/types';
 import type { Api } from '@unbound-app/web/api';
+import sha256 from '@unbound-app/utils/sha256';
 
-import type { ManagerKind } from '~/lib/constants';
 import type { Addons } from '~/managers/addons';
 
 /** Managers whose addons carry a marketplace id and version; fonts have neither. */
-export type UpdatableKind = Exclude<ManagerKind, ManagerKind.Fonts>;
+export type UpdatableKind = Exclude<ManagerKind, 'fonts'>;
 
 /** The part of an addon manager the updater drives; each manager narrows the entity type. */
-export type UpdatableManager = Pick<Addons<Addon>, 'getEntities' | 'getEntity' | 'update'>;
+export type UpdatableManager = Pick<
+	Addons<Addon>,
+	'getEntities' | 'getEntity' | 'update' | 'getHeldVersion'
+> &
+	Partial<Pick<Addons<Addon>, 'isDevelopmentCopy' | 'clearDevelopmentCopy'>>;
 
 export type UpdateCheckOptions = {
 	/** Origin of the Unbound web API. */
@@ -29,6 +34,8 @@ export type InstalledEntry = {
 	id: string;
 	name: string;
 	version: string;
+	/** The installed bundle's SHA-256, so a version rebuilt in place is offered again. */
+	sha256?: string;
 };
 
 /** An update waiting to be applied: the installed addon and the release it moves to. */
@@ -67,7 +74,9 @@ export function buildUpdatesRequest(
 	entries: InstalledEntry[],
 	clientVersion: string,
 ): UpdatesRequest | undefined {
-	const addons = [...checkable(entries).values()].map(({ id, version }) => ({ id, version }));
+	const addons = [...checkable(entries).values()].map(({ id, version, sha256 }) =>
+		sha256 ? { id, version, sha256 } : { id, version },
+	);
 
 	if (!addons.length) return;
 
@@ -105,6 +114,30 @@ export function toPendingUpdates(
 		.sort((a, b) => a.name.localeCompare(b.name));
 }
 
+type BundleDigest = {
+	bundle: string;
+	digest: string;
+};
+
+const bundleDigests = new Map<string, BundleDigest>();
+
+function digestOf(id: string, bundle: string): string {
+	const cached = bundleDigests.get(id);
+
+	if (cached?.bundle === bundle) {
+		return cached.digest;
+	}
+
+	const digest = sha256(bundle);
+
+	bundleDigests.set(id, { bundle, digest });
+
+	return digest;
+}
+
+/**
+ *
+ */
 /**
  * @description Lists a manager's installed addons for an update check.
  * @param kind The manager's kind, carried onto each entry.
@@ -112,12 +145,18 @@ export function toPendingUpdates(
  * @returns One entry per installed addon.
  */
 export function listInstalled(kind: UpdatableKind, manager: UpdatableManager): InstalledEntry[] {
-	return manager.getEntities().map((entity) => ({
-		kind,
-		id: entity.id,
-		name: entity.data.name,
-		version: entity.data.version,
-	}));
+	return manager
+		.getEntities()
+		.filter((entity) => !manager.isDevelopmentCopy?.(entity.id))
+		.map((entity) => ({
+			kind,
+			id: entity.id,
+			name: entity.data.name,
+			version: entity.data.version,
+			...(typeof entity.bundle === 'string' && entity.bundle
+				? { sha256: digestOf(entity.id, entity.bundle) }
+				: {}),
+		}));
 }
 
 /**
@@ -147,6 +186,32 @@ export async function fetchUpdates(
 }
 
 /**
+ * @description Whether the updater applies an update on its own. A held addon only takes the ones that
+ * replace a withdrawn or rebuilt install, never a newer version.
+ * @param update The update the server offered.
+ * @param held Whether the user holds the addon at its installed version.
+ * @returns Whether to apply it without asking.
+ */
+export function autoApplies(update: AddonUpdate, held: boolean): boolean {
+	return !held || update.reason !== 'newer';
+}
+
+/**
+ * @description Picks the pending updates the updater applies on its own, reading each hold now.
+ * @param updates The pending updates.
+ * @param managerOf Returns the manager of an addon kind.
+ * @returns The updates `autoApplies` lets through.
+ */
+export function automaticUpdates(
+	updates: PendingUpdate[],
+	managerOf: (kind: UpdatableKind) => UpdatableManager,
+): PendingUpdate[] {
+	return updates.filter((entry) =>
+		autoApplies(entry.update, managerOf(entry.kind).getHeldVersion(entry.id) !== void 0),
+	);
+}
+
+/**
  * @description Has the owning manager apply a pending update.
  * @param manager The manager the addon belongs to.
  * @param pending The update.
@@ -161,4 +226,35 @@ export async function applyUpdate(
 	return manager.getEntity(pending.id)?.data.version === pending.update.version;
 }
 
-export default { buildUpdatesRequest, toPendingUpdates, listInstalled, fetchUpdates, applyUpdate };
+/**
+ * @description Replaces a development copy with the store's published build: clears its development mark, then checks just that addon and applies the update the store returns.
+ * @param kind The manager's kind.
+ * @param manager The manager the addon belongs to.
+ * @param id The addon's id.
+ * @param options The API origin and this client's version.
+ * @returns Whether the store's build was applied; `false` when the installed bundle already matches the store or the store does not publish it.
+ */
+export async function reinstallFromStore(
+	kind: UpdatableKind,
+	manager: UpdatableManager,
+	id: string,
+	options: UpdateCheckOptions,
+): Promise<boolean> {
+	manager.clearDevelopmentCopy?.(id);
+
+	const entries = listInstalled(kind, manager).filter((entry) => entry.id === id);
+	const [pending] = await fetchUpdates(entries, options);
+
+	return pending ? applyUpdate(manager, pending) : false;
+}
+
+export default {
+	buildUpdatesRequest,
+	toPendingUpdates,
+	listInstalled,
+	fetchUpdates,
+	autoApplies,
+	automaticUpdates,
+	applyUpdate,
+	reinstallFromStore,
+};

@@ -108,7 +108,7 @@ static void refusesUnsignedManifestsOnceABaselineExists()
     assert(server.activeContents() == "current");
 }
 
-static void fallsBackToBundleSignaturesWithoutABaseline()
+static void refusesBundleSignaturesWithoutASignedManifest()
 {
     Server server;
     server.files[kBase + "manifest.json"]  = R"({"bytecodeVersions":[98]})";
@@ -116,15 +116,20 @@ static void fallsBackToBundleSignaturesWithoutABaseline()
     server.files[kBase + kBundle + ".sig"] = bundle_test::productionKey().sign("legacy");
     loader::BundleUpdater updater          = server.updater(bundle_test::productionTrust());
 
-    assert(server.install(updater, std::nullopt));
-    assert(trustRecord(server.active())["kind"] == "bundle");
-    assert(!updater.baseline());
+    assert(!server.download(updater, std::nullopt));
+    assert(!loader::fileExists(server.candidate()));
 
-    server.files[kBase + kBundle]          = "unsigned";
-    server.files[kBase + kBundle + ".sig"] = bundle_test::foreignKey().sign("unsigned");
-    assert(!server.download(updater, std::nullopt));
-    server.files.erase(kBase + kBundle + ".sig");
-    assert(!server.download(updater, std::nullopt));
+    assert(loader::writeTextFileAtomically(server.candidate(), "legacy"));
+    assert(loader::writeTextFileAtomically(
+        server.candidate() + loader::kBundleTrustSuffix,
+        nlohmann::json{{"kind", "bundle"},
+                       {"url", kBase + kBundle},
+                       {"source", kBase},
+                       {"file", kBundle},
+                       {"signature", bundle_test::productionKey().sign("legacy")}}
+            .dump()));
+    assert(updater.resolveBundlePath() != server.candidate());
+    assert(!loader::fileExists(server.candidate()));
 }
 
 static void resetsTheBaselineWhenTheURLChanges()
@@ -160,7 +165,7 @@ static void exemptSourcesSkipTheChecks()
     server.publish(kBase, kCurrent, {{kBundle, "current"}});
     assert(server.install(updater, std::nullopt));
     server.publish(kBase, kOlder, {{kBundle, "unsigned"}}, Signer{&bundle_test::foreignKey()});
-    server.settings.set("unbound", "loader.update.unsigned", true);
+    server.settings.set("astral", "loader.update.unsigned", true);
     assert(server.install(updater, std::nullopt));
     assert(server.activeContents() == "unsigned");
     assert(trustRecord(server.active())["exemption"] == "unsigned");
@@ -182,16 +187,15 @@ static void bindsPullRequestBuildsToTheirNumber()
         };
 
         assert(accepts("pr 5", Signer{&bundle_test::pullRequestKey(), 5}) == (build == 5));
-        assert(!accepts("unbound pr key", Signer{&bundle_test::pullRequestKey(), 0}));
+        assert(!accepts("astral pr key", Signer{&bundle_test::pullRequestKey(), 0}));
         assert(!accepts("production key with context", Signer{&bundle_test::productionKey(), 5}));
         assert(accepts("production", Signer{}));
     }
 
     Server server;
-    server.files[kOther + "manifest.json"]  = R"({"bytecodeVersions":[98]})";
-    server.files[kOther + kBundle]          = "legacy pr";
-    server.files[kOther + kBundle + ".sig"] = bundle_test::pullRequestKey().sign("legacy pr", 5);
-    loader::BundleUpdater pr6               = server.updater(bundle_test::pullRequestTrust(6));
+    server.publish(kOther, kCurrent, {{kBundle, "pr build"}},
+                   Signer{&bundle_test::pullRequestKey(), 5});
+    loader::BundleUpdater pr6 = server.updater(bundle_test::pullRequestTrust(6));
     assert(!server.download(pr6, kOther));
     loader::BundleUpdater pr5 = server.updater(bundle_test::pullRequestTrust(5));
     assert(server.download(pr5, kOther));
@@ -237,10 +241,10 @@ static void reverifiesCandidatesBeforeRunningAndPromoting()
     assert(!loader::fileExists(server.candidate()));
     assert(server.activeContents() == "current");
 
-    server.settings.set("unbound", "loader.update.unsigned", true);
+    server.settings.set("astral", "loader.update.unsigned", true);
     server.files[kBase + kBundle] = "unsigned";
     assert(server.download(updater, std::nullopt));
-    server.settings.set("unbound", "loader.update.unsigned", false);
+    server.settings.set("astral", "loader.update.unsigned", false);
     assert(updater.resolveBundlePath() == server.active());
     assert(!loader::fileExists(server.candidate()));
 }
@@ -263,7 +267,7 @@ static void replacesAPreSigningActiveBundle()
     assert(loader::writeTextFileAtomically(server.active(), "pre-signing"));
     server.publish(kBase, kCurrent, {{kBundle, "verified"}});
     std::string etag = "\"" + loader::sha512Hex("verified").substr(0, 16) + "\"";
-    server.settings.set("unbound", "loader.update.etag", etag);
+    server.settings.set("astral", "loader.update.etag", etag);
 
     loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
     assert(updater.resolveBundlePath() == server.active());
@@ -318,7 +322,7 @@ int main()
     rejectsManifestsSignedByOtherKeys();
     refusesOlderManifests();
     refusesUnsignedManifestsOnceABaselineExists();
-    fallsBackToBundleSignaturesWithoutABaseline();
+    refusesBundleSignaturesWithoutASignedManifest();
     resetsTheBaselineWhenTheURLChanges();
     exemptSourcesSkipTheChecks();
     bindsPullRequestBuildsToTheirNumber();

@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { resolvePickedMedia } from './picked-media';
+import { resolvePickedMedia } from '~/picked-media';
 
 test('accepts local image metadata supplied by the platform picker', () => {
 	expect(

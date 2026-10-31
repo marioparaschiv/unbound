@@ -1,0 +1,847 @@
+    r10 = r7.__d;
+    r0 = 9432;
+    r9 = [19, 21, 560, 578, 4451, 4428, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun9433: for(var _fun9433_ip = 0; ; ) switch(_fun9433_ip) {
+case 0:
+            r4 = a1;
+            var _closure0_slot0 = r4;
+            r2 = a5;
+            r3 = a6;
+            var _closure0_slot1 = r3;
+            r1 = function(a0, a1, a2, a3) { // Original name: renderAnimatedItem, environment: r5
+                r3 = _closure0_slot5;
+                r2 = _closure0_slot12;
+                r1 = {};
+                r5 = a1;
+                r6 = r1;
+                r4 = copyDataProperties(r7, r6);
+                r4 = a0;
+                r1['key'] = r4;
+                r4 = a2;
+                r1['state'] = r4;
+                r4 = a3;
+                r1['cleanUp'] = r4;
+                r0 = undefined;
+                r1 = r3.bind(r0)(r2, r1);
+                return r1;
+            };
+            var _closure0_slot13 = r1;
+            r1 = global;
+            r8 = r1.Object;
+            r7 = r8.defineProperty;
+            r6 = '__esModule';
+            r1 = {'value': true};
+            r1 = r7.bind(r8)(r2, r6, r1);
+            r6 = r3[r0];
+            r0 = undefined;
+            r1 = a3;
+            r1 = r1.bind(r0)(r6);
+            var _closure0_slot2 = r1;
+            r1 = r3[r1];
+            r1 = r4.bind(r0)(r1);
+            r6 = r1.Fragment;
+            var _closure0_slot3 = r6;
+            r1 = r1.jsx;
+            var _closure0_slot4 = r1;
+            r1 = r3[r0];
+            r1 = r4.bind(r0)(r1);
+            r1 = r1.createElement;
+            var _closure0_slot5 = r1;
+            r1 = {'code': 'function AnimatedEnterExitItemTsx1(){const{useReducedMotion,shouldAnimate,state,TransitionStates,exiting,visible,runOnJS,cleanUp,entering}=this.__closure;var _shouldAnimate;if(useReducedMotion){return{};}if(((_shouldAnimate=shouldAnimate)===null||_shouldAnimate===void 0?void 0:_shouldAnimate.get())===false){return{};}if(state===TransitionStates.YEETED&&exiting!=null){return exiting(visible.get(),function(finished){if(finished){runOnJS(cleanUp)();}});}if(entering!=null){return entering(visible.get());}return{};}'};
+            var _closure0_slot6 = r1;
+            r1 = {'code': 'function AnimatedEnterExitItemTsx2(){const{state,TransitionStates,visible,hasExiting,useReducedMotion}=this.__closure;return state===TransitionStates.YEETED&&visible.get()===0&&(!hasExiting||useReducedMotion);}'};
+            var _closure0_slot7 = r1;
+            r1 = {'code': 'function AnimatedEnterExitItemTsx3(hasExited,previous){const{runOnJS,cleanUp}=this.__closure;if(!hasExited||hasExited===previous){return;}runOnJS(cleanUp)();}'};
+            var _closure0_slot8 = r1;
+            r1 = {'code': 'function AnimatedEnterExitItemTsx4(){const{useReducedMotion,shouldAnimate,state,TransitionStates,exiting,visible,runOnJS,cleanUp,entering}=this.__closure;var _shouldAnimate;if(useReducedMotion)return{};if(((_shouldAnimate=shouldAnimate)===null||_shouldAnimate===void 0?void 0:_shouldAnimate.get())===false)return{};if(state===TransitionStates.YEETED&&exiting!=null){return exiting(visible.get(),function(finished){if(finished){runOnJS(cleanUp)();}});}if(entering!=null){return entering(visible.get());}return{};}'};
+            var _closure0_slot9 = r1;
+            r1 = {'code': 'function AnimatedEnterExitItemTsx5(){const{state,TransitionStates,visible,hasExiting,useReducedMotion}=this.__closure;return state===TransitionStates.YEETED&&visible.get()===0&&(!hasExiting||useReducedMotion);}'};
+            var _closure0_slot10 = r1;
+            r1 = {'code': 'function AnimatedEnterExitItemTsx6(hasExited,previous){const{runOnJS,cleanUp}=this.__closure;if(!hasExited||hasExited===previous)return;runOnJS(cleanUp)();}'};
+            var _closure0_slot11 = r1;
+            r1 = r3[r2];
+            r6 = r4.bind(r0)(r1);
+            r1 = r6.isReactCompilerEnabled;
+            r1 = r1.bind(r6)();
+            if(r1) { _fun9433_ip = 240; continue _fun9433 }
+case 233:
+            r1 = function(a0) { // Original name: AnimatedRenderItem, environment: r5
+                _fun51471: for(var _fun51471_ip = 0; ; ) switch(_fun51471_ip) {
+case 0:
+                    r7 = a0;
+                    r9 = r7.renderItem;
+                    r8 = r7.item;
+                    r20 = r7.shouldAnimate;
+                    var _closure1_slot0 = r20;
+                    r19 = r7.entering;
+                    var _closure1_slot1 = r19;
+                    r6 = r7.exiting;
+                    var _closure1_slot2 = r6;
+                    r18 = r7.state;
+                    var _closure1_slot3 = r18;
+                    r13 = r7.cleanUp;
+                    var _closure1_slot4 = r13;
+                    r16 = r7.useReducedMotion;
+                    var _closure1_slot5 = r16;
+                    r2 = undefined;
+                    var _closure1_slot6 = r2;
+                    var _closure1_slot7 = r2;
+                    r15 = _closure0_slot0;
+                    r14 = _closure0_slot1;
+                    r7 = r14[r4];
+                    r10 = r15.bind(r2)(r7);
+                    r7 = r10.useSharedValue;
+                    r11 = r14[r5];
+                    r11 = r15.bind(r2)(r11);
+                    r11 = r11.TransitionStates;
+                    r11 = r11.MOUNTED;
+                    r0 = 0;
+                    if(!(r18 === r11)) { _fun51471_ip = 141; continue _fun51471 }
+case 138:
+                    r0 = 1;
+case 141:
+                    r17 = r7.bind(r10)(r0);
+                    _closure1_slot6 = r17;
+                    r12 = _closure0_slot2;
+                    r11 = r12.useEffect;
+                    r10 = new Array(2);
+                    r10[0] = r18;
+                    r10[1] = r17;
+                    r7 = function() { // Environment: r5
+                        _fun101502: for(var _fun101502_ip = 0; ; ) switch(_fun101502_ip) {
+case 0:
+                            r4 = _closure1_slot3;
+                            r5 = _closure0_slot0;
+                            r3 = _closure0_slot1;
+                            r3 = r3[r5];
+                            r1 = undefined;
+                            r3 = r5.bind(r1)(r3);
+                            r3 = r3.TransitionStates;
+                            r3 = r3.YEETED;
+                            if(!(r4 !== r3)) { _fun101502_ip = 64; continue _fun101502 }
+case 45:
+                            r4 = _closure1_slot6;
+                            r3 = r4.set;
+                            r0 = 1;
+                            r3 = r3.bind(r4)(r0);
+                            _fun101502_ip = 80; continue _fun101502;
+case 64:
+                            r3 = _closure1_slot6;
+                            r2 = r3.set;
+                            r0 = 0;
+                            r2 = r2.bind(r3)(r0);
+case 80:
+                            return r1;
+                        }
+                    };
+                    r7 = r11.bind(r12)(r7, r10);
+                    r7 = r14[r4];
+                    r11 = r15.bind(r2)(r7);
+                    r10 = r11.useAnimatedStyle;
+                    r7 = function() { // Original name: A, environment: r5
+                        _fun101503: for(var _fun101503_ip = 0; ; ) switch(_fun101503_ip) {
+case 0:
+                            r3 = _closure1_slot5;
+                            if(r3) { _fun101503_ip = 153; continue _fun101503 }
+case 13:
+                            r6 = _closure1_slot0;
+                            r2 = null;
+                            r1 = r6 == r2;
+                            r0 = undefined;
+                            r3 = undefined;
+                            if(r1) { _fun101503_ip = 39; continue _fun101503 }
+case 30:
+                            r5 = r6.get;
+                            r3 = r5.bind(r6)();
+case 39:
+                            r1 = false;
+                            if(!(r1 !== r3)) { _fun101503_ip = 153; continue _fun101503 }
+case 45:
+                            r5 = _closure1_slot3;
+                            r6 = _closure0_slot0;
+                            r3 = _closure0_slot1;
+                            r3 = r3[r5];
+                            r3 = r6.bind(r0)(r3);
+                            r3 = r3.TransitionStates;
+                            r3 = r3.YEETED;
+                            if(!(r5 === r3)) { _fun101503_ip = 93; continue _fun101503 }
+case 85:
+                            r6 = _closure1_slot2;
+                            if(!(r2 == r6)) { _fun101503_ip = 125; continue _fun101503 }
+case 93:
+                            r7 = _closure1_slot1;
+                            if(!(r2 == r7)) { _fun101503_ip = 105; continue _fun101503 }
+case 101:
+                            r3 = {};
+                            _fun101503_ip = 123; continue _fun101503;
+case 105:
+                            r8 = _closure1_slot6;
+                            r5 = r8.get;
+                            r5 = r5.bind(r8)();
+                            r3 = r7.bind(r0)(r5);
+case 123:
+                            _fun101503_ip = 151; continue _fun101503;
+case 125:
+                            r7 = _closure1_slot6;
+                            r5 = r7.get;
+                            r5 = r5.bind(r7)();
+                            r4 = function(a0) { // Environment: r4
+                                _fun142031: for(var _fun142031_ip = 0; ; ) switch(_fun142031_ip) {
+case 0:
+                                    r1 = a0;
+                                    if(!r1) { _fun142031_ip = 49; continue _fun142031 }
+case 6:
+                                    r3 = _closure0_slot0;
+                                    r2 = _closure0_slot1;
+                                    r2 = r2[r4];
+                                    r0 = undefined;
+                                    r3 = r3.bind(r0)(r2);
+                                    r2 = r3.runOnJS;
+                                    r1 = _closure1_slot4;
+                                    r1 = r2.bind(r3)(r1);
+                                    r1 = r1.bind(r0)();
+case 49:
+                                    r0 = undefined;
+                                    return r0;
+                                }
+                            };
+                            r3 = r6.bind(r0)(r5, r4);
+case 151:
+                            _fun101503_ip = 155; continue _fun101503;
+case 153:
+                            r3 = {};
+case 155:
+                            return r3;
+                        }
+                    };
+                    r12 = {'useReducedMotion': null, 'shouldAnimate': null, 'state': null, 'TransitionStates': null, 'exiting': null, 'visible': null, 'runOnJS': null, 'cleanUp': null, 'entering': null};
+                    r12[0] = r16;
+                    r12[1] = r20;
+                    r12[2] = r18;
+                    r20 = r14[r5];
+                    r20 = r15.bind(r2)(r20);
+                    r20 = r20.TransitionStates;
+                    r12[3] = r20;
+                    r12[4] = r6;
+                    r12[5] = r17;
+                    r20 = r14[r4];
+                    r20 = r15.bind(r2)(r20);
+                    r20 = r20.runOnJS;
+                    r12[6] = r20;
+                    r12[7] = r13;
+                    r12[8] = r19;
+                    r7['__closure'] = r12;
+                    r0 = 15718564228231.0;
+                    r7['__workletHash'] = r0;
+                    r12 = _closure0_slot9;
+                    r7['__initData'] = r12;
+                    r7 = r10.bind(r11)(r7);
+                    r3 = null;
+                    r3 = r3 != r6;
+                    _closure1_slot7 = r3;
+                    r6 = r14[r4];
+                    r11 = r15.bind(r2)(r6);
+                    r10 = r11.useAnimatedReaction;
+                    r6 = function() { // Original name: I, environment: r5
+                        _fun101504: for(var _fun101504_ip = 0; ; ) switch(_fun101504_ip) {
+case 0:
+                            r3 = _closure1_slot3;
+                            r5 = _closure0_slot0;
+                            r2 = _closure0_slot1;
+                            r2 = r2[r5];
+                            r1 = undefined;
+                            r2 = r5.bind(r1)(r2);
+                            r2 = r2.TransitionStates;
+                            r2 = r2.YEETED;
+                            r2 = r3 === r2;
+                            if(!r2) { _fun101504_ip = 67; continue _fun101504 }
+case 48:
+                            r5 = _closure1_slot6;
+                            r3 = r5.get;
+                            r3 = r3.bind(r5)();
+                            r0 = 0;
+                            r2 = r0 === r3;
+case 67:
+                            if(!r2) { _fun101504_ip = 87; continue _fun101504 }
+case 70:
+                            r1 = _closure1_slot7;
+                            r3 = !r1;
+                            if(!r1) { _fun101504_ip = 84; continue _fun101504 }
+case 80:
+                            r3 = _closure1_slot5;
+case 84:
+                            r2 = r3;
+case 87:
+                            return r2;
+                        }
+                    };
+                    r12 = {'state': null, 'TransitionStates': null, 'visible': null, 'hasExiting': null, 'useReducedMotion': null};
+                    r12[0] = r18;
+                    r18 = r14[r5];
+                    r18 = r15.bind(r2)(r18);
+                    r18 = r18.TransitionStates;
+                    r12[1] = r18;
+                    r12[2] = r17;
+                    r12[3] = r3;
+                    r12[4] = r16;
+                    r6['__closure'] = r12;
+                    r0 = 10212721541996.0;
+                    r6['__workletHash'] = r0;
+                    r12 = _closure0_slot10;
+                    r6['__initData'] = r12;
+                    r5 = function(a0, a1) { // Original name: v, environment: r5
+                        _fun101505: for(var _fun101505_ip = 0; ; ) switch(_fun101505_ip) {
+case 0:
+                            r3 = a0;
+                            r1 = r3;
+                            if(!r1) { _fun101505_ip = 16; continue _fun101505 }
+case 9:
+                            r2 = a1;
+                            r1 = r3 !== r2;
+case 16:
+                            if(!r1) { _fun101505_ip = 62; continue _fun101505 }
+case 19:
+                            r3 = _closure0_slot0;
+                            r2 = _closure0_slot1;
+                            r2 = r2[r4];
+                            r0 = undefined;
+                            r3 = r3.bind(r0)(r2);
+                            r2 = r3.runOnJS;
+                            r1 = _closure1_slot4;
+                            r1 = r2.bind(r3)(r1);
+                            r1 = r1.bind(r0)();
+case 62:
+                            r0 = undefined;
+                            return r0;
+                        }
+                    };
+                    r12 = {'runOnJS': null, 'cleanUp': null};
+                    r14 = r14[r4];
+                    r14 = r15.bind(r2)(r14);
+                    r14 = r14.runOnJS;
+                    r12[0] = r14;
+                    r12[1] = r13;
+                    r5['__closure'] = r12;
+                    r0 = 16078328777782.0;
+                    r5['__workletHash'] = r0;
+                    r12 = _closure0_slot11;
+                    r5['__initData'] = r12;
+                    r5 = r10.bind(r11)(r6, r5);
+                    r6 = _closure0_slot4;
+                    r5 = _closure0_slot3;
+                    r4 = {'children': null};
+                    r7 = r9.bind(r2)(r8, r7);
+                    r4[0] = r7;
+                    r4 = r6.bind(r2)(r5, r4);
+                    return r4;
+                }
+            };
+            _fun9433_ip = 245; continue _fun9433;
+case 240:
+            r1 = function(a0) { // Original name: AnimatedRenderItem, environment: r5
+                _fun51470: for(var _fun51470_ip = 0; ; ) switch(_fun51470_ip) {
+case 0:
+                    r11 = a0;
+                    r17 = _closure0_slot0;
+                    r16 = _closure0_slot1;
+                    r7 = r16[r3];
+                    r3 = undefined;
+                    r8 = r17.bind(r3)(r7);
+                    r7 = r8.c;
+                    r0 = 10;
+                    r7 = r7.bind(r8)(r0);
+                    r9 = r11.renderItem;
+                    r10 = r11.item;
+                    r22 = r11.shouldAnimate;
+                    var _closure1_slot0 = r22;
+                    r21 = r11.entering;
+                    var _closure1_slot1 = r21;
+                    r8 = r11.exiting;
+                    var _closure1_slot2 = r8;
+                    r20 = r11.state;
+                    var _closure1_slot3 = r20;
+                    r15 = r11.cleanUp;
+                    var _closure1_slot4 = r15;
+                    r18 = r11.useReducedMotion;
+                    var _closure1_slot5 = r18;
+                    r11 = r16[r4];
+                    r12 = r17.bind(r3)(r11);
+                    r11 = r12.useSharedValue;
+                    r13 = r16[r5];
+                    r13 = r17.bind(r3)(r13);
+                    r13 = r13.TransitionStates;
+                    r13 = r13.MOUNTED;
+                    r0 = 0;
+                    r1 = 0;
+                    if(!(r20 === r13)) { _fun51470_ip = 157; continue _fun51470 }
+case 154:
+                    r1 = 1;
+case 157:
+                    r19 = r11.bind(r12)(r1);
+                    var _closure1_slot6 = r19;
+                    r11 = r7[r0];
+                    if(!(r11 === r20)) { _fun51470_ip = 192; continue _fun51470 }
+case 174:
+                    r11 = r7[r1];
+                    if(!(r11 === r19)) { _fun51470_ip = 192; continue _fun51470 }
+case 182:
+                    r14 = r7[r2];
+                    r13 = r7[r3];
+                    _fun51470_ip = 242; continue _fun51470;
+case 192:
+                    r11 = function() { // Original name: u, environment: r5
+                        _fun101498: for(var _fun101498_ip = 0; ; ) switch(_fun101498_ip) {
+case 0:
+                            r4 = _closure1_slot3;
+                            r5 = _closure0_slot0;
+                            r3 = _closure0_slot1;
+                            r3 = r3[r5];
+                            r1 = undefined;
+                            r3 = r5.bind(r1)(r3);
+                            r3 = r3.TransitionStates;
+                            r3 = r3.YEETED;
+                            if(!(r4 !== r3)) { _fun101498_ip = 64; continue _fun101498 }
+case 45:
+                            r4 = _closure1_slot6;
+                            r3 = r4.set;
+                            r0 = 1;
+                            r3 = r3.bind(r4)(r0);
+                            _fun101498_ip = 80; continue _fun101498;
+case 64:
+                            r3 = _closure1_slot6;
+                            r2 = r3.set;
+                            r0 = 0;
+                            r2 = r2.bind(r3)(r0);
+case 80:
+                            return r1;
+                        }
+                    };
+                    r12 = new Array(2);
+                    r12[0] = r20;
+                    r12[1] = r19;
+                    r7[r0] = r20;
+                    r0 = 1;
+                    r7[r0] = r19;
+                    r0 = 2;
+                    r7[r0] = r11;
+                    r0 = 3;
+                    r7[r0] = r12;
+                    r13 = r12;
+                    r14 = r11;
+case 242:
+                    r12 = _closure0_slot2;
+                    r11 = r12.useEffect;
+                    r11 = r11.bind(r12)(r14, r13);
+                    r11 = r16[r4];
+                    r13 = r17.bind(r3)(r11);
+                    r12 = r13.useAnimatedStyle;
+                    r11 = function() { // Original name: p, environment: r5
+                        _fun101499: for(var _fun101499_ip = 0; ; ) switch(_fun101499_ip) {
+case 0:
+                            r3 = _closure1_slot5;
+                            if(r3) { _fun101499_ip = 153; continue _fun101499 }
+case 13:
+                            r6 = _closure1_slot0;
+                            r2 = null;
+                            r1 = r6 == r2;
+                            r0 = undefined;
+                            r3 = undefined;
+                            if(r1) { _fun101499_ip = 39; continue _fun101499 }
+case 30:
+                            r5 = r6.get;
+                            r3 = r5.bind(r6)();
+case 39:
+                            r1 = false;
+                            if(!(r1 !== r3)) { _fun101499_ip = 153; continue _fun101499 }
+case 45:
+                            r5 = _closure1_slot3;
+                            r6 = _closure0_slot0;
+                            r3 = _closure0_slot1;
+                            r3 = r3[r5];
+                            r3 = r6.bind(r0)(r3);
+                            r3 = r3.TransitionStates;
+                            r3 = r3.YEETED;
+                            if(!(r5 === r3)) { _fun101499_ip = 93; continue _fun101499 }
+case 85:
+                            r6 = _closure1_slot2;
+                            if(!(r2 == r6)) { _fun101499_ip = 125; continue _fun101499 }
+case 93:
+                            r7 = _closure1_slot1;
+                            if(!(r2 == r7)) { _fun101499_ip = 105; continue _fun101499 }
+case 101:
+                            r3 = {};
+                            _fun101499_ip = 123; continue _fun101499;
+case 105:
+                            r8 = _closure1_slot6;
+                            r5 = r8.get;
+                            r5 = r5.bind(r8)();
+                            r3 = r7.bind(r0)(r5);
+case 123:
+                            _fun101499_ip = 151; continue _fun101499;
+case 125:
+                            r7 = _closure1_slot6;
+                            r5 = r7.get;
+                            r5 = r5.bind(r7)();
+                            r4 = function(a0) { // Environment: r4
+                                _fun142030: for(var _fun142030_ip = 0; ; ) switch(_fun142030_ip) {
+case 0:
+                                    r1 = a0;
+                                    if(!r1) { _fun142030_ip = 49; continue _fun142030 }
+case 6:
+                                    r3 = _closure0_slot0;
+                                    r2 = _closure0_slot1;
+                                    r2 = r2[r4];
+                                    r0 = undefined;
+                                    r3 = r3.bind(r0)(r2);
+                                    r2 = r3.runOnJS;
+                                    r1 = _closure1_slot4;
+                                    r1 = r2.bind(r3)(r1);
+                                    r1 = r1.bind(r0)();
+case 49:
+                                    r0 = undefined;
+                                    return r0;
+                                }
+                            };
+                            r3 = r6.bind(r0)(r5, r4);
+case 151:
+                            _fun101499_ip = 155; continue _fun101499;
+case 153:
+                            r3 = {};
+case 155:
+                            return r3;
+                        }
+                    };
+                    r14 = {'useReducedMotion': null, 'shouldAnimate': null, 'state': null, 'TransitionStates': null, 'exiting': null, 'visible': null, 'runOnJS': null, 'cleanUp': null, 'entering': null};
+                    r14[0] = r18;
+                    r14[1] = r22;
+                    r14[2] = r20;
+                    r22 = r16[r5];
+                    r22 = r17.bind(r3)(r22);
+                    r22 = r22.TransitionStates;
+                    r14[3] = r22;
+                    r14[4] = r8;
+                    r14[5] = r19;
+                    r22 = r16[r4];
+                    r22 = r17.bind(r3)(r22);
+                    r22 = r22.runOnJS;
+                    r14[6] = r22;
+                    r14[7] = r15;
+                    r14[8] = r21;
+                    r11['__closure'] = r14;
+                    r0 = 14013247946914.0;
+                    r11['__workletHash'] = r0;
+                    r14 = _closure0_slot6;
+                    r11['__initData'] = r14;
+                    r11 = r12.bind(r13)(r11);
+                    r4 = null;
+                    r4 = r4 != r8;
+                    var _closure1_slot7 = r4;
+                    r8 = r16[r4];
+                    r13 = r17.bind(r3)(r8);
+                    r12 = r13.useAnimatedReaction;
+                    r8 = function() { // Original name: O, environment: r5
+                        _fun101500: for(var _fun101500_ip = 0; ; ) switch(_fun101500_ip) {
+case 0:
+                            r3 = _closure1_slot3;
+                            r5 = _closure0_slot0;
+                            r2 = _closure0_slot1;
+                            r2 = r2[r5];
+                            r1 = undefined;
+                            r2 = r5.bind(r1)(r2);
+                            r2 = r2.TransitionStates;
+                            r2 = r2.YEETED;
+                            r2 = r3 === r2;
+                            if(!r2) { _fun101500_ip = 67; continue _fun101500 }
+case 48:
+                            r5 = _closure1_slot6;
+                            r3 = r5.get;
+                            r3 = r3.bind(r5)();
+                            r0 = 0;
+                            r2 = r0 === r3;
+case 67:
+                            if(!r2) { _fun101500_ip = 87; continue _fun101500 }
+case 70:
+                            r1 = _closure1_slot7;
+                            r3 = !r1;
+                            if(!r1) { _fun101500_ip = 84; continue _fun101500 }
+case 80:
+                            r3 = _closure1_slot5;
+case 84:
+                            r2 = r3;
+case 87:
+                            return r2;
+                        }
+                    };
+                    r14 = {'state': null, 'TransitionStates': null, 'visible': null, 'hasExiting': null, 'useReducedMotion': null};
+                    r14[0] = r20;
+                    r20 = r16[r5];
+                    r20 = r17.bind(r3)(r20);
+                    r20 = r20.TransitionStates;
+                    r14[1] = r20;
+                    r14[2] = r19;
+                    r14[3] = r4;
+                    r14[4] = r18;
+                    r8['__closure'] = r14;
+                    r0 = 11984384474891.0;
+                    r8['__workletHash'] = r0;
+                    r14 = _closure0_slot7;
+                    r8['__initData'] = r14;
+                    r5 = function(a0, a1) { // Original name: R, environment: r5
+                        _fun101501: for(var _fun101501_ip = 0; ; ) switch(_fun101501_ip) {
+case 0:
+                            r3 = a0;
+                            r1 = r3;
+                            if(!r1) { _fun101501_ip = 16; continue _fun101501 }
+case 9:
+                            r2 = a1;
+                            r1 = r3 !== r2;
+case 16:
+                            if(!r1) { _fun101501_ip = 62; continue _fun101501 }
+case 19:
+                            r3 = _closure0_slot0;
+                            r2 = _closure0_slot1;
+                            r2 = r2[r4];
+                            r0 = undefined;
+                            r3 = r3.bind(r0)(r2);
+                            r2 = r3.runOnJS;
+                            r1 = _closure1_slot4;
+                            r1 = r2.bind(r3)(r1);
+                            r1 = r1.bind(r0)();
+case 62:
+                            r0 = undefined;
+                            return r0;
+                        }
+                    };
+                    r14 = {'runOnJS': null, 'cleanUp': null};
+                    r16 = r16[r4];
+                    r16 = r17.bind(r3)(r16);
+                    r16 = r16.runOnJS;
+                    r14[0] = r16;
+                    r14[1] = r15;
+                    r5['__closure'] = r14;
+                    r0 = 13577925153461.0;
+                    r5['__workletHash'] = r0;
+                    r14 = _closure0_slot8;
+                    r5['__initData'] = r14;
+                    r5 = r12.bind(r13)(r8, r5);
+                    r5 = r7[r4];
+                    if(!(r5 === r11)) { _fun51470_ip = 606; continue _fun51470 }
+case 584:
+                    r5 = r7[r5];
+                    if(!(r5 === r10)) { _fun51470_ip = 606; continue _fun51470 }
+case 592:
+                    r5 = r7[r6];
+                    if(!(r5 === r9)) { _fun51470_ip = 606; continue _fun51470 }
+case 600:
+                    r8 = r7[r7];
+                    _fun51470_ip = 643; continue _fun51470;
+case 606:
+                    r5 = r9.bind(r3)(r10, r11);
+                    r0 = 4;
+                    r7[r0] = r11;
+                    r0 = 5;
+                    r7[r0] = r10;
+                    r0 = 6;
+                    r7[r0] = r9;
+                    r0 = 7;
+                    r7[r0] = r5;
+                    r8 = r5;
+case 643:
+                    r5 = r7[r8];
+                    if(!(r5 === r8)) { _fun51470_ip = 657; continue _fun51470 }
+case 651:
+                    r5 = r7[r9];
+                    _fun51470_ip = 698; continue _fun51470;
+case 657:
+                    r10 = _closure0_slot4;
+                    r9 = _closure0_slot3;
+                    r6 = {'children': null};
+                    r6[0] = r8;
+                    r6 = r10.bind(r3)(r9, r6);
+                    r0 = 8;
+                    r7[r0] = r8;
+                    r0 = 9;
+                    r7[r0] = r6;
+                    r5 = r6;
+case 698:
+                    return r5;
+                }
+            };
+case 245:
+            var _closure0_slot12 = r1;
+            r1 = r3[r2];
+            r6 = r4.bind(r0)(r1);
+            r1 = r6.isReactCompilerEnabled;
+            r1 = r1.bind(r6)();
+            if(r1) { _fun9433_ip = 277; continue _fun9433 }
+case 270:
+            r1 = function(a0) { // Original name: AnimatedEnterExitItem, environment: r5
+                r2 = a0;
+                r6 = r2.useReducedMotion;
+                var _closure1_slot0 = r6;
+                r10 = r2.shouldAnimate;
+                var _closure1_slot1 = r10;
+                r9 = r2.entering;
+                var _closure1_slot2 = r9;
+                r8 = r2.exiting;
+                var _closure1_slot3 = r8;
+                r11 = r2.item;
+                var _closure1_slot4 = r11;
+                r7 = r2.renderItem;
+                var _closure1_slot5 = r7;
+                r5 = _closure0_slot2;
+                r3 = r5.useMemo;
+                r2 = new Array(6);
+                r2[0] = r11;
+                r2[1] = r10;
+                r2[2] = r9;
+                r2[3] = r8;
+                r2[4] = r7;
+                r2[5] = r6;
+                r1 = function() { // Environment: r1
+                    _fun101506: for(var _fun101506_ip = 0; ; ) switch(_fun101506_ip) {
+case 0:
+                        r3 = _closure1_slot4;
+                        r0 = null;
+                        if(!(r0 == r3)) { _fun101506_ip = 17; continue _fun101506 }
+case 13:
+                        r0 = undefined;
+                        return r0;
+case 17:
+                        r1 = {'shouldAnimate': null, 'entering': null, 'exiting': null, 'renderItem': null, 'item': null, 'useReducedMotion': null};
+                        r4 = _closure1_slot1;
+                        r1[0] = r4;
+                        r4 = _closure1_slot2;
+                        r1[1] = r4;
+                        r4 = _closure1_slot3;
+                        r1[2] = r4;
+                        r4 = _closure1_slot5;
+                        r1[3] = r4;
+                        r1[4] = r3;
+                        r2 = _closure1_slot0;
+                        r1[5] = r2;
+                        return r1;
+                    }
+                };
+                r5 = r3.bind(r5)(r1, r2);
+                r3 = _closure0_slot4;
+                r2 = _closure0_slot0;
+                r1 = _closure0_slot1;
+                r1 = r1[r5];
+                r0 = undefined;
+                r1 = r2.bind(r0)(r1);
+                r2 = r1.TransitionItem;
+                r1 = {'item': null, 'renderItem': null};
+                r1[0] = r5;
+                r4 = _closure0_slot13;
+                r1[1] = r4;
+                r1 = r3.bind(r0)(r2, r1);
+                return r1;
+            };
+            _fun9433_ip = 282; continue _fun9433;
+case 277:
+            r1 = function(a0) { // Original name: AnimatedEnterExitItem, environment: r5
+                _fun51472: for(var _fun51472_ip = 0; ; ) switch(_fun51472_ip) {
+case 0:
+                    r3 = a0;
+                    r7 = _closure0_slot0;
+                    r4 = _closure0_slot1;
+                    r5 = r4[r3];
+                    r1 = undefined;
+                    r6 = r7.bind(r1)(r5);
+                    r5 = r6.c;
+                    r0 = 9;
+                    r5 = r5.bind(r6)(r0);
+                    r10 = r3.useReducedMotion;
+                    r11 = r3.shouldAnimate;
+                    r15 = r3.entering;
+                    r14 = r3.exiting;
+                    r13 = r3.item;
+                    r12 = r3.renderItem;
+                    r2 = null;
+                    r2 = r2 != r13;
+                    r6 = undefined;
+                    if(!r2) { _fun51472_ip = 229; continue _fun51472 }
+case 87:
+                    r3 = r5[r0];
+                    if(!(r3 === r15)) { _fun51472_ip = 141; continue _fun51472 }
+case 95:
+                    r3 = r5[r1];
+                    if(!(r3 === r14)) { _fun51472_ip = 141; continue _fun51472 }
+case 103:
+                    r3 = r5[r2];
+                    if(!(r3 === r13)) { _fun51472_ip = 141; continue _fun51472 }
+case 111:
+                    r3 = r5[r3];
+                    if(!(r3 === r12)) { _fun51472_ip = 141; continue _fun51472 }
+case 119:
+                    r3 = r5[r4];
+                    if(!(r3 === r11)) { _fun51472_ip = 141; continue _fun51472 }
+case 127:
+                    r3 = r5[r5];
+                    if(!(r3 === r10)) { _fun51472_ip = 141; continue _fun51472 }
+case 135:
+                    r3 = r5[r6];
+                    _fun51472_ip = 226; continue _fun51472;
+case 141:
+                    r8 = {'shouldAnimate': null, 'entering': null, 'exiting': null, 'renderItem': null, 'item': null, 'useReducedMotion': null};
+                    r8[0] = r11;
+                    r8[1] = r15;
+                    r8[2] = r14;
+                    r8[3] = r12;
+                    r8[4] = r13;
+                    r8[5] = r10;
+                    r0 = 0;
+                    r5[r0] = r15;
+                    r0 = 1;
+                    r5[r0] = r14;
+                    r0 = 2;
+                    r5[r0] = r13;
+                    r0 = 3;
+                    r5[r0] = r12;
+                    r0 = 4;
+                    r5[r0] = r11;
+                    r0 = 5;
+                    r5[r0] = r10;
+                    r0 = 6;
+                    r5[r0] = r8;
+                    r3 = r8;
+case 226:
+                    r6 = r3;
+case 229:
+                    r3 = r5[r7];
+                    if(!(r3 === r6)) { _fun51472_ip = 243; continue _fun51472 }
+case 237:
+                    r3 = r5[r8];
+                    _fun51472_ip = 307; continue _fun51472;
+case 243:
+                    r8 = _closure0_slot4;
+                    r4 = r4[r5];
+                    r4 = r7.bind(r1)(r4);
+                    r7 = r4.TransitionItem;
+                    r4 = {'item': null, 'renderItem': null};
+                    r4[0] = r6;
+                    r9 = _closure0_slot13;
+                    r4[1] = r9;
+                    r4 = r8.bind(r1)(r7, r4);
+                    r0 = 7;
+                    r5[r0] = r6;
+                    r0 = 8;
+                    r5[r0] = r4;
+                    r3 = r4;
+case 307:
+                    return r3;
+                }
+            };
+case 282:
+            r3 = r3[r6];
+            r5 = r4.bind(r0)(r3);
+            r4 = r5.fileFinishedImporting;
+            r3 = 'design/components/AnimatedEnterExitItem/native/AnimatedEnterExitItem.tsx';
+            r3 = r4.bind(r5)(r3);
+            r2['default'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

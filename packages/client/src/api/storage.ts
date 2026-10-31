@@ -10,7 +10,6 @@ import isEmpty from '@unbound-app/utils/is-empty';
 import { useEffect, useState } from 'react';
 
 import { EventEmitter } from '~/lib/event-emitter';
-import { NativePlatform } from '~/api/native';
 
 /** Payload describing a settings change, passed to `changed` listeners and predicates. */
 export type SettingsPayload = {
@@ -146,16 +145,45 @@ export function toggle(store: string, key: string, def: boolean) {
 }
 
 /**
- * @description Deletes a top-level key from a store, dropping the store entirely if it becomes empty, and emits `changed` and `removed`.
+ * @description Deletes a value at a dot-separated key path, pruning objects the deletion leaves empty and the store itself when it becomes empty, and emits `changed` and `removed`.
  * @param store The store to remove the key from.
- * @param key The key to delete.
+ * @param key The dot-separated key path to delete.
  */
 export function remove(store: string, key: string) {
-	if (!settings[store][key]) return;
+	const keys = key.split('.');
+	const last = keys.pop() ?? key;
+	const parents: SettingsObject[] = [];
+	let current: SettingsValue | undefined = settings[store];
 
-	delete settings[store][key];
+	for (const segment of keys) {
+		if (!isSettingsObject(current)) return;
 
-	if (isEmpty(settings[store])) {
+		parents.push(current);
+		current = current[segment];
+	}
+
+	if (!isSettingsObject(current) || current[last] === undefined) return;
+
+	delete current[last];
+
+	for (let index = keys.length - 1; index >= 0; index--) {
+		const parent = parents[index];
+		const segment = keys[index];
+
+		if (!parent || segment === undefined) {
+			break;
+		}
+
+		const child = parent[segment];
+
+		if (!isSettingsObject(child) || !isEmpty(child)) {
+			break;
+		}
+
+		delete parent[segment];
+	}
+
+	if (settings[store] && isEmpty(settings[store])) {
 		delete settings[store];
 	}
 
@@ -176,6 +204,15 @@ export function clear(store: string) {
 	Events.emit('cleared', { store });
 }
 
+function bindStore(store: string) {
+	return {
+		set: (key: string, value: SettingsValue) => set(store, key, value),
+		get: <T>(key: string, def: T): Widen<T> => get(store, key, def),
+		toggle: (key: string, def: boolean) => toggle(store, key, def),
+		remove: (key: string) => remove(store, key),
+	};
+}
+
 /**
  * @description Builds a store-scoped facade binding every settings operation to a single store name.
  * @param store The store name to scope every operation to.
@@ -183,10 +220,7 @@ export function clear(store: string) {
  */
 export function getStore(store: string) {
 	return {
-		set: (key: string, value: SettingsValue) => set(store, key, value),
-		get: <T>(key: string, def: T): Widen<T> => get(store, key, def),
-		toggle: (key: string, def: boolean) => toggle(store, key, def),
-		remove: (key: string) => remove(store, key),
+		...bindStore(store),
 		clear: () => clear(store),
 		useSettingsStore: (predicate?: (payload: SettingsPayload) => PredicateResult) =>
 			useSettingsStore(store, predicate),
@@ -235,12 +269,7 @@ export function useSettingsStore(
 		return () => void Events.off('changed', handler);
 	}, []);
 
-	return {
-		set: (key: string, value: SettingsValue) => set(store, key, value),
-		get: <T>(key: string, def: T): Widen<T> => get(store, key, def),
-		toggle: (key: string, def: boolean) => toggle(store, key, def),
-		remove: (key: string) => remove(store, key),
-	};
+	return bindStore(store);
 }
 
 const pending: NativeSettingsChange[] = [];
@@ -261,7 +290,7 @@ function record({ store, key, value }: SettingsPayload) {
  * @returns A promise that resolves once the loader has stored the changes.
  */
 export async function persist() {
-	const settingsBridge = NativePlatform?.settings;
+	const settingsBridge = globalThis.NativePlatform?.settings;
 
 	if (!settingsBridge || !pending.length) return;
 
@@ -284,5 +313,6 @@ export default {
 	remove,
 	removeListener,
 	set,
+	toggle,
 	useSettingsStore,
 };

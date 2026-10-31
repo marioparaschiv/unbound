@@ -47,6 +47,8 @@ export const addon = pgTable(
 		pinnedFields: integer('pinned_fields').default(0).notNull(),
 		/** The GitHub `owner/name` of the addon's source. Addon-level, never copied from a manifest. */
 		repository: text('repository'),
+		/** The website icon a maintainer picked, a Nucleo Micro Bold export name; `null` for the type's default. */
+		icon: text('icon'),
 	},
 	(table) => [
 		...LISTING_SORTS.flatMap((key) => [
@@ -89,6 +91,34 @@ export const addonMaintainer = pgTable(
 	(table) => [
 		primaryKey({ columns: [table.addonId, table.userId] }),
 		index('addon_maintainer_userId_idx').on(table.userId),
+	],
+);
+
+/** A label addons are filed under. Tags and their addons are added in the database; there is no UI for it yet. */
+export const tag = pgTable('tag', {
+	/** A slug, such as `privacy`. */
+	id: text('id').primaryKey(),
+	label: text('label').notNull(),
+	/** A CSS color, painted as the tag's dot. */
+	color: text('color').notNull(),
+	/** Menus list tags by this, lowest first. */
+	position: integer('position').notNull(),
+	createdAt: timestampMs('created_at').defaultNow().notNull(),
+});
+
+export const addonTag = pgTable(
+	'addon_tag',
+	{
+		addonId: text('addon_id')
+			.notNull()
+			.references(() => addon.id, { onDelete: 'cascade' }),
+		tagId: text('tag_id')
+			.notNull()
+			.references(() => tag.id, { onDelete: 'cascade' }),
+	},
+	(table) => [
+		primaryKey({ columns: [table.addonId, table.tagId] }),
+		index('addon_tag_tagId_idx').on(table.tagId),
 	],
 );
 

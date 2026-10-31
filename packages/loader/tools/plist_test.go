@@ -56,15 +56,15 @@ func TestPlistEdits(t *testing.T) {
 		t.Fatalf("unexpected name %q", got)
 	}
 	root.remove("UISupportedDevices")
-	root.set("CFBundleName", plistText("Unbound"))
-	root.dict("CFBundleIcons").dict("CFBundleAlternateIcons").set("UnboundIcon", plistStrings("A", "B"))
+	root.set("CFBundleName", plistText("astral"))
+	root.dict("CFBundleIcons").dict("CFBundleAlternateIcons").set("AstralIcon", plistStrings("A", "B"))
 
 	output, err := writePlist(root)
 	if err != nil {
 		t.Fatal(err)
 	}
 	text := string(output)
-	for _, want := range []string{"<string>Unbound</string>", "<key>CFBundleAlternateIcons</key>", "<string>B</string>"} {
+	for _, want := range []string{"<string>astral</string>", "<key>CFBundleAlternateIcons</key>", "<string>B</string>"} {
 		if !strings.Contains(text, want) {
 			t.Fatalf("missing %s in:\n%s", want, text)
 		}

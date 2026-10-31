@@ -63,7 +63,7 @@ function RulesetTransfer({ ruleset }: RulesetTransferProps) {
 				<Discord.TableRow label='Import clipboard' onPress={() => void importClipboard()} />
 			</Discord.TableRowGroup>
 			<Discord.TextInput
-				title='Paste JSON'
+				label='Paste JSON'
 				placeholder='Paste exported Text Replace JSON here'
 				autoCapitalize='none'
 				autoCorrect={false}

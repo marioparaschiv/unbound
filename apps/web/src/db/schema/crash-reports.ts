@@ -1,4 +1,4 @@
-import { pgTable, text, index, doublePrecision } from 'drizzle-orm/pg-core';
+import { boolean, pgTable, text, index, doublePrecision } from 'drizzle-orm/pg-core';
 
 import { timestampMs } from './columns';
 
@@ -13,6 +13,7 @@ export const crashReport = pgTable(
 		discordVersion: text('discord_version').notNull(),
 		osVersion: text('os_version').notNull(),
 		deviceModel: text('device_model').notNull(),
+		verifiedBuild: boolean('verified_build'),
 		addonId: text('addon_id'),
 		addonVersion: text('addon_version'),
 		addonTrust: text('addon_trust'),

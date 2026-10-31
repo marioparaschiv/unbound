@@ -1,7 +1,7 @@
 import type { Theme, ThemeEntity } from '@unbound-app/types';
 import toError from '@unbound-app/utils/to-error';
 
-import { ManagerType } from '~/managers/base';
+import { parseThemeBundle } from '~/lib/theme-bundle';
 import { Addons } from '~/managers/addons';
 import ThemeStore from '~/stores/themes';
 
@@ -11,10 +11,10 @@ import ThemeStore from '~/stores/themes';
  */
 export class Themes extends Addons<ThemeEntity> {
 	/**
-	 * @description Creates the themes manager bound to the {@link ManagerType.THEMES} type.
+	 * @description Creates the themes manager bound to the {@link 'themes'} type.
 	 */
 	constructor() {
-		super(ManagerType.THEMES);
+		super('themes');
 	}
 
 	/**
@@ -25,7 +25,7 @@ export class Themes extends Addons<ThemeEntity> {
 			this.load(bundle, manifest);
 		}
 
-		const appliedId = this.settings.get('applied', null);
+		const appliedId = this.getAppliedId();
 		const applied = appliedId ? this.getEntity(appliedId) : undefined;
 
 		if (applied?.started) {
@@ -41,11 +41,19 @@ export class Themes extends Addons<ThemeEntity> {
 	 * @returns The parsed theme.
 	 */
 	protected handleBundle(bundle: string): Theme {
-		return JSON.parse(bundle);
+		return parseThemeBundle(bundle);
 	}
 
 	protected get entityType() {
 		return 'theme' as const;
+	}
+
+	/**
+	 * @description Reads which theme is applied.
+	 * @returns The applied theme's id, or `null` when Discord's own theme is in use.
+	 */
+	getAppliedId(): string | null {
+		return this.settings.get<string | null>('applied', null);
 	}
 
 	/**
@@ -59,7 +67,7 @@ export class Themes extends Addons<ThemeEntity> {
 		if (!resolved) return;
 
 		try {
-			const prev = this.settings.get('applied', null);
+			const prev = this.getAppliedId();
 
 			if (prev && prev !== resolved.id) {
 				const prevEntity = this.getEntity(prev);

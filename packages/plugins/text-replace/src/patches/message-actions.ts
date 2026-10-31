@@ -11,12 +11,22 @@ function isMessage(argument: MessageArgument): argument is Message {
 	return typeof argument === 'object' && typeof argument?.content === 'string';
 }
 
+let patched = false;
+
+/**
+ * @description Tells whether outgoing messages are being rewritten.
+ * @returns `true` while the patch is installed.
+ */
+export function isPatched(): boolean {
+	return patched;
+}
+
 /**
  * @description Rewrites each outgoing message with the stored rules before Discord sends it.
  * @returns A function that removes the patch.
  */
 export function patchMessageActions(): () => void {
-	return Patcher.before(Messages, 'sendMessage', ({ args }) => {
+	const unpatch = Patcher.before(Messages, 'sendMessage', ({ args }) => {
 		if (args[0] === RULES_CHANNEL_ID) return;
 
 		const message = (args as MessageArgument[]).find(isMessage);
@@ -29,4 +39,11 @@ export function patchMessageActions(): () => void {
 			readRules('regexRules'),
 		);
 	});
+
+	patched = true;
+
+	return () => {
+		unpatch();
+		patched = false;
+	};
 }

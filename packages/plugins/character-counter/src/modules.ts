@@ -8,5 +8,5 @@ export const UserStore = metro.stores.Users;
 // The same module as `metro.common.Theme`, which the generated typings do not declare yet.
 export const Theme = metro.findByProps('colors', 'internal', { lazy: true });
 
-export const settings = storage.getStore('unbound.character-counter');
-export const Patcher = patcher.createPatcher('unbound.character-counter');
+export const settings = storage.getStore('astral.character-counter');
+export const Patcher = patcher.createPatcher('astral.character-counter');

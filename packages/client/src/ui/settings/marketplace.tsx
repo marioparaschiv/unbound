@@ -1,3 +1,4 @@
+import type { ManagerKind } from '@unbound-app/types/addons';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Dimensions, View } from 'react-native';
 
@@ -9,13 +10,12 @@ import {
 } from '~/ui/marketplace';
 import { Discord, SafeArea } from '~/api/metro/components';
 import MarketplaceStore from '~/stores/marketplace';
-import type { ManagerKind } from '~/lib/constants';
 import { Messages, format } from '~/api/i18n';
 
 type MarketplaceParams = {
 	/** Opens on the tab of this manager, e.g. the page the install menu was opened from. */
 	kind?: ManagerKind;
-	/** Narrows the search to this addon and offers to install it, e.g. from an `unbound://` link. */
+	/** Narrows the search to this addon and offers to install it, e.g. from an `astral://` link. */
 	id?: string;
 	/** Tells one open of `id` from the next, so opening the same link again asks again. */
 	request?: number;

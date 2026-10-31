@@ -36,6 +36,8 @@ type workflowStep struct {
 	Run  string            `yaml:"run"`
 	With map[string]string `yaml:"with"`
 	Env  map[string]string `yaml:"env"`
+
+	ContinueOnError string `yaml:"continue-on-error"`
 }
 
 type workflowJob struct {
@@ -110,8 +112,8 @@ func TestParsedReleaseBuildsWaitForTheGate(t *testing.T) {
 	build := loadWorkflow(t, "loader-build.yml")
 	gate := build.job(t, "compat-gate")
 	requireNeeds(t, "compat-gate", gate, "resolve-source")
-	if gate.If != "inputs.release == true && needs.resolve-source.result == 'success'" {
-		t.Fatalf("the gate must run for every successful release resolution, runs if %q", gate.If)
+	if gate.If != "inputs.release == true && needs.resolve-source.result == 'success' && (inputs.is_testflight != true || needs.resolve-source.outputs.ipa_available != 'false')" {
+		t.Fatalf("the gate must run for every successful release resolution that has something to scan, runs if %q", gate.If)
 	}
 	if !strings.Contains(gate.step(t, "Check the release for breakages").Run, "--fail-on-breakage") {
 		t.Fatal("the gate must fail on breakages")
@@ -134,10 +136,25 @@ func TestParsedReleaseBuildsWaitForTheGate(t *testing.T) {
 func TestParsedIOSBuildReusesTheResolvedIPA(t *testing.T) {
 	build := loadWorkflow(t, "loader-build.yml")
 	keep := build.job(t, "resolve-source").step(t, "Keep the source IPA for the gate and the iOS build")
-	if keep.With["name"] != "discord-source-ipa" || keep.If != "steps.select.outputs.platform == 'ios'" {
-		t.Fatalf("resolve-source must keep every iOS source IPA as discord-source-ipa, got %+v", keep)
+	if keep.With["name"] != "discord-source-ipa" || keep.If != "steps.select.outputs.platform == 'ios' && steps.source.outputs.missing != 'true'" {
+		t.Fatalf("resolve-source must keep every iOS source IPA it obtained as discord-source-ipa, got %+v", keep)
+	}
+	decrypt := build.job(t, "resolve-source").step(t, "Decrypt the source IPA")
+	if decrypt.ID != "decrypt" || decrypt.ContinueOnError != "true" {
+		t.Fatalf("the IPA download must fail softly so the job can decide, got %+v", decrypt)
+	}
+	require := build.job(t, "resolve-source").step(t, "Require the iOS source for a release")
+	if require.If != "steps.source.outputs.missing == 'true' && (inputs.release == true || inputs.release == 'true') && inputs.is_testflight != true" || !strings.Contains(require.Run, "exit 1") {
+		t.Fatalf("a stable release must fail without the iOS source, got %+v", require)
+	}
+	skip := build.job(t, "resolve-source").step(t, "Skip the TestFlight release without a source IPA")
+	if skip.If != "steps.source.outputs.missing == 'true' && inputs.is_testflight == true" || strings.Contains(skip.Run, "exit 1") {
+		t.Fatalf("a TestFlight release without its IPA must be skipped, not failed, got %+v", skip)
 	}
 	ios := build.job(t, "ios")
+	if !strings.Contains(ios.If, "needs.resolve-source.outputs.ipa_available != 'false'") {
+		t.Fatalf("the iOS build must skip without a source IPA, runs if %q", ios.If)
+	}
 	if ios.Uses != "./.github/workflows/loader-ios.yml" || ios.With["source_ipa_artifact"] != "${{ needs.resolve-source.result == 'success' && 'discord-source-ipa' || '' }}" {
 		t.Fatalf("the iOS build must receive the resolved IPA, got %+v", ios.With)
 	}
@@ -176,7 +193,7 @@ func TestParsedDkryptStepsShareOnePinnedRelease(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pinned := regexp.MustCompile(`^castdrian/dkrypt@v[0-9]+\.[0-9]+\.[0-9]+$`)
+	pinned := regexp.MustCompile(`^castdrian/dkrypt@[0-9a-f]{40}$`)
 	refs := map[string]bool{}
 	for _, entry := range entries {
 		if filepath.Ext(entry.Name()) != ".yml" {
@@ -188,7 +205,7 @@ func TestParsedDkryptStepsShareOnePinnedRelease(t *testing.T) {
 					continue
 				}
 				if !pinned.MatchString(step.Uses) {
-					t.Fatalf("%s %s %q must use a released version of the dkrypt action, uses %q", entry.Name(), jobName, step.Name, step.Uses)
+					t.Fatalf("%s %s %q must pin the dkrypt action to a commit, uses %q", entry.Name(), jobName, step.Name, step.Uses)
 				}
 				if step.With["api-key"] != "${{ secrets.DKRYPT_API_KEY }}" {
 					t.Fatalf("%s %s %q must authenticate with the DKRYPT_API_KEY secret", entry.Name(), jobName, step.Name)
@@ -349,6 +366,24 @@ func TestParsedEveryJobHasATimeout(t *testing.T) {
 	}
 }
 
+func TestParsedSmokeTestsTimeOutQuickly(t *testing.T) {
+	smokeJobs := 0
+	for _, name := range workflowFiles(t) {
+		for jobName, job := range loadWorkflow(t, name).Jobs {
+			if job.Uses != "" || !strings.Contains(strings.ToLower(job.Name), "smoke") {
+				continue
+			}
+			smokeJobs++
+			if job.TimeoutMinutes > 30 {
+				t.Errorf("%s %s is a smoke test and must time out within 30 minutes, has %d", name, jobName, job.TimeoutMinutes)
+			}
+		}
+	}
+	if smokeJobs < 2 {
+		t.Fatalf("found %d smoke jobs, want the Android and iOS ones", smokeJobs)
+	}
+}
+
 func TestParsedSharedSetupActionsRunAfterCheckout(t *testing.T) {
 	sharedSetups := map[string]int{}
 	for _, name := range workflowFiles(t) {
@@ -388,7 +423,7 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 		t.Fatalf("setup-go-tools must install Go and restore its cache, got %+v", goTools.Runs.Steps)
 	}
 	bun := loadCompositeAction(t, "setup-bun-deps")
-	for input, value := range map[string]string{"bun-version": "", "install": "true", "frozen-lockfile": "false"} {
+	for input, value := range map[string]string{"bun-version": "canary", "install": "true", "frozen-lockfile": "false"} {
 		if declared, ok := bun.Inputs[input]; !ok || declared.Default != value {
 			t.Fatalf("setup-bun-deps input %s must default to %q, got %+v", input, value, bun.Inputs)
 		}
@@ -404,7 +439,7 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 		}
 	}
 	syncLock := loadWorkflow(t, "release.yml").job(t, "release").stepUsing(t, "./.github/actions/setup-bun-deps")
-	if syncLock.With["install"] != "false" || syncLock.With["bun-version"] != "canary" {
+	if syncLock.With["install"] != "false" {
 		t.Fatalf("the release PR job installs while it syncs bun.lock, got %+v", syncLock.With)
 	}
 }
@@ -422,7 +457,7 @@ func TestParsedLoaderArtifactsExpireOnlyOnPullRequests(t *testing.T) {
 				artifact, retention := step.With["name"], step.With["retention-days"]
 				uploaded[artifact] = retention
 				if diagnostics[artifact] {
-					if retention != "14" || step.If != "always()" {
+					if retention != "14" || step.If != "${{ !cancelled() }}" {
 						t.Errorf("%s %s must keep the %s logs of every run for 14 days, got %q if %q", name, jobName, artifact, retention, step.If)
 					}
 					continue
@@ -464,12 +499,13 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 			t.Fatalf("the release must download %s into its own directory, got %+v", artifact, download.With)
 		}
 	}
-	if !strings.Contains(release.step(t, "Package native symbols").Run, `zip -qr "../unbound-$platform-symbols.zip" .`) {
+	if !strings.Contains(release.step(t, "Package native symbols").Run, `zip -qr "../astral-$platform-symbols.zip" .`) {
 		t.Fatal("the release must zip each platform's symbols")
 	}
 	for step, archives := range map[string][]string{
-		"Publish stable release":        {"unbound-ios-symbols.zip", "unbound-android-symbols.zip"},
-		"Publish TestFlight prerelease": {"unbound-ios-symbols.zip"},
+		"Publish stable iOS release":     {"astral-ios-symbols.zip"},
+		"Publish stable Android release": {"astral-android-symbols.zip"},
+		"Publish TestFlight prerelease":  {"astral-ios-symbols.zip"},
 	} {
 		files := release.step(t, step).With["files"]
 		for _, archive := range archives {
@@ -478,11 +514,16 @@ func TestParsedReleasesAttachNativeSymbols(t *testing.T) {
 			}
 		}
 	}
-	if strings.Contains(release.step(t, "Publish TestFlight prerelease").With["files"], "android-symbols") {
-		t.Fatal("a TestFlight prerelease has no Android build to attach symbols for")
+	for _, step := range []string{"Publish TestFlight prerelease", "Publish stable iOS release"} {
+		if strings.Contains(release.step(t, step).With["files"], "android") {
+			t.Fatalf("%s must attach only iOS assets", step)
+		}
+	}
+	if strings.Contains(release.step(t, "Publish stable Android release").With["files"], "ios") {
+		t.Fatal("the stable Android release must attach only Android assets")
 	}
 	prerelease := build.job(t, "android-prerelease")
-	if prerelease.step(t, "Download Android native symbols").With["name"] != "android symbols" || !strings.Contains(prerelease.step(t, "Publish Android prerelease").With["files"], "release-assets/unbound-android-symbols.zip") {
+	if prerelease.step(t, "Download Android native symbols").With["name"] != "android symbols" || !strings.Contains(prerelease.step(t, "Publish Android prerelease").With["files"], "release-assets/astral-android-symbols.zip") {
 		t.Fatal("Android prereleases must attach their native symbols")
 	}
 	module := loadWorkflow(t, "loader-android.yml").job(t, "build-module")
@@ -499,8 +540,9 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 	}
 	smoke := android.job(t, "smoke")
 	requireNeeds(t, "smoke", smoke, "patch-discord")
-	if smoke.If != "" || smoke.ContinueOnError {
-		t.Fatalf("the Android smoke test must run and fail the build every time, runs if %q", smoke.If)
+	requireNeeds(t, "smoke", smoke, "build-module")
+	if smoke.If != "needs.build-module.outputs.attested == 'true'" || smoke.ContinueOnError {
+		t.Fatalf("the Android smoke test must fail the build whenever the module is attested, runs if %q", smoke.If)
 	}
 	runner := smoke.stepUsing(t, "reactivecircus/android-emulator-runner@")
 	if !regexp.MustCompile(`@[0-9a-f]{40}$`).MatchString(runner.Uses) {
@@ -526,8 +568,8 @@ func TestParsedIOSSmokeTestGatesTheIOSBuild(t *testing.T) {
 	ios := loadWorkflow(t, "loader-ios.yml")
 	smoke := ios.job(t, "smoke-simulator")
 	requireNeeds(t, "smoke-simulator", smoke, "build-simulator")
-	if smoke.If != ios.job(t, "build-simulator").If || smoke.ContinueOnError {
-		t.Fatalf("the iOS smoke test must run whenever the simulator is built, runs if %q", smoke.If)
+	if smoke.If != "inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true" || smoke.ContinueOnError {
+		t.Fatalf("the iOS smoke test must run whenever the simulator is built, unless a pull request touches nothing it covers, runs if %q", smoke.If)
 	}
 	if smoke.step(t, "Download the simulator build").With["name"] != "ios-simulator" {
 		t.Fatal("the smoke test must install this run's simulator build")
@@ -594,14 +636,14 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 		"IS_FORK":                           "${{ github.event.pull_request.head.repo.full_name != github.repository }}",
 		"HAS_S3_ACCESS_KEY_ID":              "${{ secrets.S3_ACCESS_KEY_ID != '' }}",
 		"HAS_S3_SECRET_ACCESS_KEY":          "${{ secrets.S3_SECRET_ACCESS_KEY != '' }}",
-		"HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY": "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}",
+		"HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY": "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY != '' }}",
 		"CDN_URL":                           "${{ vars.CDN_URL }}",
 	} {
 		if planStep.Env[name] != value {
 			t.Fatalf("the plan must see %s as %q, got %q", name, value, planStep.Env[name])
 		}
 	}
-	for _, name := range []string{"S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "UNBOUND_PR_BUNDLE_SIGNING_KEY"} {
+	for _, name := range []string{"S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY", "ASTRAL_PR_BUNDLE_SIGNING_KEY"} {
 		if _, ok := planStep.Env[name]; ok {
 			t.Fatalf("the plan must only learn whether %s is set, never its value", name)
 		}
@@ -620,11 +662,11 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 	if clientBuild.Env["TMPDIR"] != "${{ runner.temp }}" || clientBuild.Env["UNBOUND_CHANNEL"] != "pr-${{ github.event.pull_request.number }}" {
 		t.Fatalf("the uploaded bundles must be compiled to bytecode on the pull request's own channel, got %+v", clientBuild.Env)
 	}
-	if _, ok := clientBuild.Env["UNBOUND_BUNDLE_SIGNING_KEY"]; ok {
+	if _, ok := clientBuild.Env["ASTRAL_BUNDLE_SIGNING_KEY"]; ok {
 		t.Fatal("pull request bundles must never be signed with the production key")
 	}
 	sign := upload.step(t, "Sign the bundles with the pull request key")
-	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || sign.Run != `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"` {
+	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY }}" || sign.Run != `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"` {
 		t.Fatalf("pull request bundles must be signed with the pull request key, got %+v", sign)
 	}
 	if upload.step(t, "Check every bundle is signed").Run != `bun run --cwd packages/client verify-signatures --dir dist --pr "$PR_NUMBER"` {
@@ -651,7 +693,7 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 
 	comment := ci.job(t, "comment-pr")
 	requireNeeds(t, "comment-pr", comment, "build", "pr-builds", "upload-pr-builds")
-	if !strings.HasPrefix(comment.If, "always() && needs.build.result == 'success'") {
+	if !strings.HasPrefix(comment.If, "${{ !cancelled() && needs.build.result == 'success'") {
 		t.Fatalf("the comment must still post when uploads are off, runs if %q", comment.If)
 	}
 	if comment.step(t, "Describe the S3 builds").Run != "bun scripts/pr-builds-plan.ts comment" || !strings.Contains(comment.step(t, "Comment on current PR").With["message"], "${{ steps.s3.outputs.section }}") {
@@ -668,7 +710,7 @@ func TestParsedLoaderBuildsDeriveThePullRequestBundleURL(t *testing.T) {
 		if derive.Env["PR_NUMBER"] != "${{ inputs.pr_number || '' }}" || derive.Env["CDN_URL"] != "${{ vars.CDN_URL }}" {
 			t.Fatalf("%s must derive the bundle URL from the pull request number it already gets, got %+v", name, derive.Env)
 		}
-		if !strings.Contains(derive.Run, `if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then`) || !strings.Contains(derive.Run, `UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/`) {
+		if !strings.Contains(derive.Run, `if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then`) || !strings.Contains(derive.Run, `ASTRAL_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/`) {
 			t.Fatalf("%s must only set a bundle URL for pull request builds, runs %q", name, derive.Run)
 		}
 	}
@@ -718,7 +760,7 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 	if stage.If != "needs.pr-builds.outputs.stage == 'true'" {
 		t.Fatalf("only planned fork builds are staged, runs if %q", stage.If)
 	}
-	if _, signed := stage.step(t, "Build the client").Env["UNBOUND_BUNDLE_SIGNING_KEY"]; signed {
+	if _, signed := stage.step(t, "Build the client").Env["ASTRAL_BUNDLE_SIGNING_KEY"]; signed {
 		t.Fatal("the untrusted fork build must stay secret-free")
 	}
 	staged := map[string]bool{}
@@ -763,7 +805,7 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 		t.Fatalf("the claimed pull request must be checked against the run's head, got %+v", confirm)
 	}
 	plan := publish.step(t, "Plan the uploads")
-	if plan.Env["PR_NUMBER"] != "${{ steps.pull-request.outputs.number }}" || plan.Env["HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}" {
+	if plan.Env["PR_NUMBER"] != "${{ steps.pull-request.outputs.number }}" || plan.Env["HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY != '' }}" {
 		t.Fatalf("the publisher must plan with the confirmed number and the pull request key, got %+v", plan.Env)
 	}
 	for _, step := range publish.Steps {
@@ -775,10 +817,10 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 		}
 	}
 	sign := publish.step(t, "Sign the bundles with the pull request key")
-	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || !strings.Contains(sign.Run, `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"`) || !strings.Contains(sign.Run, `verify-signatures --dir dist --pr "$PR_NUMBER"`) {
+	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY }}" || !strings.Contains(sign.Run, `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"`) || !strings.Contains(sign.Run, `verify-signatures --dir dist --pr "$PR_NUMBER"`) {
 		t.Fatalf("fork bundles must be signed with the pull request key, got %+v", sign)
 	}
-	if _, ok := sign.Env["UNBOUND_BUNDLE_SIGNING_KEY"]; ok {
+	if _, ok := sign.Env["ASTRAL_BUNDLE_SIGNING_KEY"]; ok {
 		t.Fatal("fork bundles must never be signed with the production key")
 	}
 	if check := publish.step(t, "Check the fork's manifest"); check.Run != "bun scripts/pr-builds-fork.ts check-manifest" {
@@ -789,27 +831,51 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 	}
 }
 
-func TestParsedBackfillSignsOnlyOnDemand(t *testing.T) {
-	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "backfill-signatures.yml"))
+func TestParsedManualBuildIsNotARelease(t *testing.T) {
+	data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "loader-build.yml"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	var trigger struct {
-		On map[string]any `yaml:"on"`
+	var workflow struct {
+		On struct {
+			WorkflowDispatch struct {
+				Inputs map[string]struct {
+					Default any `yaml:"default"`
+				} `yaml:"inputs"`
+			} `yaml:"workflow_dispatch"`
+		} `yaml:"on"`
 	}
-	if err := yaml.Unmarshal(data, &trigger); err != nil {
+	if err := yaml.Unmarshal(data, &workflow); err != nil {
 		t.Fatal(err)
 	}
-	if _, ok := trigger.On["workflow_dispatch"]; !ok || len(trigger.On) != 1 {
-		t.Fatalf("the backfill must only run when dispatched, triggers %v", trigger.On)
+	if release, ok := workflow.On.WorkflowDispatch.Inputs["release"]; !ok || release.Default != false {
+		t.Fatalf("a manual loader build must not default to a release, release input %+v", release)
 	}
-	job := loadWorkflow(t, "backfill-signatures.yml").job(t, "backfill")
-	backfill := job.step(t, "Sign unsigned stable and beta bundles")
-	if backfill.If != "steps.config.outputs.enabled == 'true'" || !strings.HasPrefix(backfill.Run, "bun run --cwd packages/client backfill-signatures") {
-		t.Fatalf("the backfill must stay inert without credentials, got %+v", backfill)
+}
+
+func TestToolchainVersionsLiveInOnePlace(t *testing.T) {
+	gradle, err := os.ReadFile(filepath.Join(workflowsDirectory(t), "..", "..", "packages", "loader", "android", "module", "build.gradle.kts"))
+	if err != nil {
+		t.Fatal(err)
 	}
-	s3 := loadWorkflow(t, "ci.yml").job(t, "s3")
-	if run := s3.step(t, "Run the S3 tests against MinIO").Run; !strings.Contains(run, "bun run test:s3") || !strings.Contains(run, "backfill-signatures.s3.ts") {
-		t.Fatalf("CI must prove the backfill against MinIO, runs %q", run)
+	ndk := regexp.MustCompile(`ndkVersion\s*=\s*"([^"]+)"`).FindSubmatch(gradle)
+	if ndk == nil {
+		t.Fatal("the module build pins no NDK version")
+	}
+	pins := map[string]*regexp.Regexp{
+		"a Bun version, which belongs in the setup-bun-deps default":                     regexp.MustCompile(`(?m)^\s*bun-version:`),
+		"a literal Java version, which belongs in packages/loader/android/.java-version": regexp.MustCompile(`(?m)^\s*java-version:\s*['"]?\d`),
+		"the NDK version, which belongs in build.gradle.kts":                             regexp.MustCompile(regexp.QuoteMeta(string(ndk[1]))),
+	}
+	for _, name := range workflowFiles(t) {
+		data, err := os.ReadFile(filepath.Join(workflowsDirectory(t), name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for description, pattern := range pins {
+			if pattern.Match(data) {
+				t.Errorf("%s pins %s", name, description)
+			}
+		}
 	}
 }

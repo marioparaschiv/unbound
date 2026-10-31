@@ -123,6 +123,9 @@ func evaluateJavaReference(reference *compatReference, target *compatTarget, unl
 		if dex.Classes[reference.Name] != nil || framework != nil && framework.Classes[reference.Name] != nil {
 			return compatOK, "", true
 		}
+		if reason, ok := compatEnvironmentClasses[reference.Name]; ok {
+			return compatExternal, reason, true
+		}
 		if framework != nil && isSystemJavaClass(reference.Name) {
 			return compatBroken, "class `" + reference.Name + "` is not in the public Android SDK or Discord's dex", true
 		}

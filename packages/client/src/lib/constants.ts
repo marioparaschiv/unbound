@@ -1,3 +1,5 @@
+import { REPOSITORY } from '~/lib/repository';
+
 /** Build-time token replaced with a boolean literal by the `replace` plugin. */
 declare const $$DEV$$: boolean;
 
@@ -55,26 +57,12 @@ export const Screens = {
 } as const;
 
 /** External links surfaced on the General settings page. */
+export { REPOSITORY };
+
 export const SOCIAL_LINKS = {
-	GitHub: 'https://github.com/unbound-mod',
+	GitHub: `https://github.com/${REPOSITORY}`,
 	Docs: 'https://docs.unbound.rip/',
 } as const;
 
 /** Discord invite code for the support server, opened as a deep link from the General page. */
 export const DISCORD_INVITE = 'rMdzhWUaGTx';
-
-/** Discriminates which addon manager a UI surface (addon card/list) is bound to. */
-export enum ManagerKind {
-	Plugins,
-	Themes,
-	Icons,
-	Fonts,
-}
-
-/** Maps a {@link ManagerKind} to its manager export name on `~/managers`. */
-export const ManagerNames: Record<ManagerKind, 'Plugins' | 'Themes' | 'Icons' | 'Fonts'> = {
-	[ManagerKind.Plugins]: 'Plugins',
-	[ManagerKind.Themes]: 'Themes',
-	[ManagerKind.Icons]: 'Icons',
-	[ManagerKind.Fonts]: 'Fonts',
-};

@@ -1,5 +1,6 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { getSetting, isSettingChange } from '~/lib/unbound-settings';
 import { Guilds, Users } from '~/api/metro/stores';
 import { createPatcher } from '~/api/patcher';
 import { findStore } from '~/api/metro';
@@ -7,7 +8,6 @@ import storage from '~/api/storage';
 
 const Patcher = createPatcher('unbound::staff-mode');
 const Logger = createLogger('StaffMode');
-const Settings = storage.getStore('unbound');
 
 let unsubscribe: (() => void) | null = null;
 
@@ -33,14 +33,14 @@ export function start() {
 		Object.defineProperties(self, {
 			isDeveloper: {
 				configurable: false,
-				get: () => Settings.get('staff-mode', false),
+				get: () => getSetting('staff-mode'),
 				set: () => {},
 			},
 		});
 	});
 
 	unsubscribe = storage.addListener(
-		(payload) => payload.store === 'unbound' && payload.key === 'staff-mode',
+		(payload) => isSettingChange(payload, 'staff-mode'),
 		() => Store.emitChange(),
 	);
 }

@@ -10,7 +10,7 @@
 
 int main()
 {
-    const char *iterationsVariable = std::getenv("UNBOUND_FUZZ_ITERATIONS");
+    const char *iterationsVariable = std::getenv("ASTRAL_FUZZ_ITERATIONS");
     const long  iterations =
         iterationsVariable ? std::strtol(iterationsVariable, nullptr, 10) : 3000;
     std::mt19937 random(0x15eed);

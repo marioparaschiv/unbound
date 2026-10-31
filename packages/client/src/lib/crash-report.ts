@@ -13,7 +13,13 @@ export type CrashEvent = Pick<
 /** The app, loader and device details every report carries. */
 export type CrashEnvironment = Pick<
 	CrashReport,
-	'platform' | 'clientVersion' | 'loaderVersion' | 'discordVersion' | 'osVersion' | 'deviceModel'
+	| 'platform'
+	| 'clientVersion'
+	| 'loaderVersion'
+	| 'discordVersion'
+	| 'osVersion'
+	| 'deviceModel'
+	| 'verifiedBuild'
 >;
 
 const LOG_LINE_LIMIT = 500;

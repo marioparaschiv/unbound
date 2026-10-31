@@ -4,19 +4,17 @@ import toError from '@unbound-app/utils/to-error';
 import { Platform } from 'react-native';
 import { create } from 'zustand';
 
-import type { PendingUpdate, UpdatableKind, UpdatableManager } from '~/lib/updates';
-import { applyUpdate, fetchUpdates, listInstalled } from '~/lib/updates';
-import { API_URL, CLIENT_VERSION, ManagerKind } from '~/lib/constants';
+import { applyUpdate, automaticUpdates, fetchUpdates, listInstalled } from '~/lib/updates';
+import type { PendingUpdate, UpdatableKind } from '~/lib/updates';
+import { API_URL, CLIENT_VERSION } from '~/lib/constants';
 import { fetchLoaderUpdate } from '~/lib/loader-updates';
-import { getManager } from '~/managers/utils';
+import { getManager, managers } from '~/managers/utils';
 
 const logger = createLogger('Updater');
 
-const UPDATABLE_KINDS: UpdatableKind[] = [
-	ManagerKind.Plugins,
-	ManagerKind.Themes,
-	ManagerKind.Icons,
-];
+const UPDATABLE_KINDS = Object.keys(managers).filter(
+	(kind): kind is UpdatableKind => kind !== 'fonts',
+);
 
 /** The last update check. `ready` and `error` keep when it finished, for the status line. */
 export type UpdatesState =
@@ -34,17 +32,14 @@ type UpdatesStore = {
 	check: () => Promise<void>;
 	/** Applies one pending update. Resolves whether the addon now runs the new version. */
 	apply: (id: string) => Promise<boolean>;
+	/** Applies every pending update except newer versions of held addons. */
 	applyAll: () => Promise<void>;
 };
 
 let pending: Promise<void> | undefined;
 
-function manager(kind: UpdatableKind): UpdatableManager {
-	return getManager(kind);
-}
-
 function checkInstalled(): Promise<PendingUpdate[]> {
-	const entries = UPDATABLE_KINDS.flatMap((kind) => listInstalled(kind, manager(kind)));
+	const entries = UPDATABLE_KINDS.flatMap((kind) => listInstalled(kind, getManager(kind)));
 
 	return fetchUpdates(entries, { baseUrl: API_URL, clientVersion: CLIENT_VERSION });
 }
@@ -124,7 +119,7 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 
 			setApplying(id, 'updating');
 
-			const updated = await applyUpdate(manager(target.kind), target);
+			const updated = await applyUpdate(getManager(target.kind), target);
 
 			setApplying(id, updated ? undefined : 'failed');
 
@@ -148,7 +143,10 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 
 			if (state.status !== 'ready') return;
 
-			await Promise.all(state.updates.map((entry) => apply(entry.id)));
+			// Read at apply time, so a version the user picked since the check stays held.
+			await Promise.all(
+				automaticUpdates(state.updates, getManager).map((entry) => apply(entry.id)),
+			);
 		},
 	};
 });

@@ -3,7 +3,6 @@ import { Pressable } from 'react-native';
 import { memo } from 'react';
 
 import { Discord } from '~/api/metro/components';
-import { ManagerKind } from '~/lib/constants';
 import { getManager } from '~/managers/utils';
 import { TintedIcon } from '~/ui/components';
 import { useAddonState } from '~/ui/hooks';
@@ -13,7 +12,7 @@ import { Icons } from '~/api/assets';
 
 type AddonRadioProps = {
 	addon: Addon;
-	kind: ManagerKind.Themes | ManagerKind.Icons;
+	kind: 'themes' | 'icons';
 	disabled?: boolean;
 };
 
@@ -34,7 +33,7 @@ function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 			manager.enable(addon.id);
 		}
 
-		if (kind !== ManagerKind.Themes) return;
+		if (kind !== 'themes') return;
 
 		Discord.showConfirmModal({
 			title: Messages.UNBOUND_RESTART,

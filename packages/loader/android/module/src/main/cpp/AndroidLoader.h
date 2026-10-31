@@ -16,19 +16,12 @@
 #include "LoaderUpdater.h"
 #include "NativePluginRuntime.h"
 
-namespace unbound::android {
+namespace astral::android {
 struct JavaCallbacks {
     jclass    bridgeClass              = nullptr;
     jmethodID scheduleRuntime          = nullptr;
     jmethodID scheduleMain             = nullptr;
     jmethodID isMainThread             = nullptr;
-    jmethodID lookupViews              = nullptr;
-    jmethodID snapshotViews            = nullptr;
-    jmethodID measureView              = nullptr;
-    jmethodID setViewFrame             = nullptr;
-    jmethodID mountView                = nullptr;
-    jmethodID updateView               = nullptr;
-    jmethodID unmountView              = nullptr;
     jmethodID javaGetClass             = nullptr;
     jmethodID javaClassName            = nullptr;
     jmethodID javaDescribe             = nullptr;
@@ -42,6 +35,7 @@ struct JavaCallbacks {
     jmethodID hooksRemove              = nullptr;
     jmethodID runtimeReplaced          = nullptr;
     jmethodID javaBatch                = nullptr;
+    jmethodID javaFindViews            = nullptr;
     jmethodID javaCreateAssociationKey = nullptr;
     jmethodID javaGetAssociatedObject  = nullptr;
     jmethodID javaSetAssociatedObject  = nullptr;

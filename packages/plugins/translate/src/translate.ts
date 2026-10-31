@@ -25,7 +25,7 @@ function readTranslation({ translatedText, translations }: TranslationResponse) 
  * @param text The text to translate.
  * @returns The translated text.
  */
-export async function translateText(text: string): Promise<string> {
+async function translateText(text: string): Promise<string> {
 	const body = JSON.stringify({
 		q: text,
 		source: settings.get('sourceLanguage', 'auto'),

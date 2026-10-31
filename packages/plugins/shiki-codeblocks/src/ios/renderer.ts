@@ -1,0 +1,389 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
+import type {
+	NativeHookContext,
+	NativeHookHandlers,
+	NativeHookToken,
+	NativeObjCBridge,
+	NativeObjectHandle,
+} from '@unbound-app/api/native';
+import findVisibleCells from '@unbound-plugins/shared/native/ios/visible-cells';
+import {
+	attributeRun,
+	CODE_BLOCK_ATTRIBUTE,
+	MESSAGE_TEXT_VIEW_CLASSES,
+	ownedAttachments,
+	textAttachmentBridge,
+	textEngine,
+} from '@unbound-plugins/shared/native/ios/text-attachments';
+
+import { CARD_SETTINGS, Limits, PLUGIN_ID, PLUGIN_NAME } from '~/constants';
+import { locateCodeBlocks, parseFencedCodeBlocks, type CodeBlockPlacement } from '~/fences';
+import { getLanguageMetadata, loadLanguageCatalog } from '~/catalog';
+import { MessageStore, settings } from '~/modules';
+import { createFlatRecovery } from '~/flat-recovery';
+import { onAppForeground } from '~/foreground';
+import { createHighlighter } from '~/highlighter';
+import { readPreferences } from '~/preferences';
+import { changesCardLayout } from '~/preferences';
+
+import {
+	adoptRenderedText,
+	applyTheme,
+	mountSurface,
+	rebuildSurface,
+	restoreSurface,
+} from '~/ios/surfaces';
+import { detachSurface, surfaceMatchesCell, visibleChannelId } from '~/ios/session';
+import { cellForLabel, messageIdentity } from '~/ios/cells';
+import type { Session, Surface } from '~/ios/session';
+import { createNativeUI } from '~/ios/ui';
+import { CARD_TAG, removeStrayCards } from '~/ios/code-host';
+
+type HookSpec = [className: string, selector: string, handlers: NativeHookHandlers];
+
+function forgetLabel(session: Session, labelKey: string, label?: NativeObjectHandle): void {
+	const surface = session.surfaces.get(labelKey);
+
+	if (surface) detachSurface(session, surface);
+
+	if (label) removeStrayCards(session.ui, label);
+}
+
+function expandToCodeRuns(
+	session: Session,
+	original: NativeObjectHandle,
+	placements: CodeBlockPlacement[],
+): CodeBlockPlacement[] {
+	return placements.map((placement) => ({
+		...placement,
+		...attributeRun(session.text, original, placement, CODE_BLOCK_ATTRIBUTE),
+	}));
+}
+
+function textViewClasses(objc: NativeObjCBridge): string[] {
+	return MESSAGE_TEXT_VIEW_CLASSES.filter((name) => objc.getClass(name));
+}
+
+function renderLabel(session: Session, label: NativeObjectHandle, original: NativeObjectHandle) {
+	const { ui, surfaces } = session;
+	const labelKey = ui.key(label);
+
+	if (session.applying.has(labelKey)) return;
+
+	const rendered = ui.string(ui.call(original, 'string'));
+
+	if (rendered === undefined) return;
+
+	const cell = cellForLabel(ui, label);
+
+	if (!cell) {
+		forgetLabel(session, labelKey);
+
+		return;
+	}
+
+	const identity = messageIdentity(ui, cell);
+	const channelId = visibleChannelId();
+	const previous = surfaces.get(labelKey);
+	const sameMessage =
+		!!previous &&
+		!!identity &&
+		!!channelId &&
+		surfaceMatchesCell(previous, channelId, identity.messageId, ui.key(cell));
+
+	const known = !!identity && !!channelId;
+
+	if (previous && !sameMessage && (known || rendered !== previous.renderedText)) {
+		detachSurface(session, previous);
+	}
+
+	if (!identity || !channelId) return;
+
+	const { messageId, sourceChannelId } = identity;
+
+	// Our own cards coming back through `setAttributedText:` after a reuse.
+	if (rendered === surfaces.get(labelKey)?.renderedText) return;
+
+	const current = surfaces.get(labelKey);
+
+	if (
+		current &&
+		adoptRenderedText(
+			session,
+			current,
+			rendered,
+			ownedAttachments(session.text, original, rendered, PLUGIN_ID),
+		)
+	) {
+		return;
+	}
+
+	const content = MessageStore.getMessage(sourceChannelId ?? channelId, messageId)?.content;
+
+	if (typeof content !== 'string') return;
+
+	const engine = textEngine(session.text, label);
+	const located = locateCodeBlocks(parseFencedCodeBlocks(content), rendered);
+	const placements =
+		engine === 'textkit' ? expandToCodeRuns(session, original, located) : located;
+
+	if (
+		!placements.length ||
+		placements.some(({ block }) => block.code.length > Limits.codeLength)
+	) {
+		forgetLabel(session, labelKey, label);
+
+		return;
+	}
+
+	mountSurface(session, { label, cell, engine, original, placements, channelId, messageId });
+}
+
+// Labels already on screen at start never call `setAttributedText:` again, so find them once.
+async function renderVisibleLabels(session: Session): Promise<void> {
+	const { objc } = session.ui;
+	const channelId = visibleChannelId();
+
+	if (!channelId) return;
+
+	function isStale() {
+		return session.signal.aborted || channelId !== visibleChannelId();
+	}
+
+	const labels: NativeObjectHandle[] = [];
+
+	for (const className of textViewClasses(objc)) {
+		labels.push(...(await findVisibleCells(objc, className, session.signal)));
+
+		if (isStale()) return;
+	}
+
+	for (let index = 0; index < labels.length; index += 64) {
+		const chunk = labels.slice(index, index + 64);
+		const texts = await objc.batch(
+			chunk.map((label) => ({ target: label, selector: 'attributedText', args: [] })),
+		);
+
+		if (isStale()) return;
+
+		for (const [offset, label] of chunk.entries()) {
+			const text = texts[offset] as NativeObjectHandle | null;
+
+			if (text) renderLabel(session, label, text);
+		}
+	}
+}
+
+function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>): HookSpec[] {
+	const { objc } = session.ui;
+
+	function onMove(label: NativeObjectHandle) {
+		const channelId = visibleChannelId();
+
+		if (session.signal.aborted || !channelId) return;
+
+		void objc
+			.batch([
+				{ target: label, selector: 'window', args: [] },
+				{ target: label, selector: 'attributedText', args: [] },
+			])
+			.then(([window, text]) => {
+				if (session.signal.aborted || channelId !== visibleChannelId()) return;
+
+				if (window && text) renderLabel(session, label, text as NativeObjectHandle);
+			})
+			.catch(() => {
+				// The label was deallocated before the batch ran.
+			});
+	}
+
+	function onSetText({ self, args }: NativeHookContext) {
+		const text = args[0] as NativeObjectHandle | undefined;
+
+		if (text) renderLabel(session, self, text);
+	}
+
+	function onMoveToWindow({ self }: NativeHookContext) {
+		const timer = setTimeout(() => {
+			timers.delete(timer);
+			onMove(self);
+		}, 16);
+
+		timers.add(timer);
+	}
+
+	function onReuse({ self }: NativeHookContext) {
+		const cellKey = session.ui.key(self);
+
+		for (const surface of [...session.surfaces.values()]) {
+			if (surface.cellKey === cellKey) detachSurface(session, surface);
+		}
+
+		removeStrayCards(session.ui, self);
+	}
+
+	const classes = textViewClasses(objc);
+
+	return [
+		...classes.map((name): HookSpec => [name, 'setAttributedText:', { after: onSetText }]),
+		...classes.map((name): HookSpec => [name, 'didMoveToWindow', { after: onMoveToWindow }]),
+		['DCDMessageTableViewCell', 'prepareForReuse', { after: onReuse }],
+	];
+}
+
+function subscribeSettings(session: Session): () => void {
+	return settings.addListener(
+		({ key }) => CARD_SETTINGS.includes(key ?? ''),
+		({ key }) => {
+			const rebuild = changesCardLayout(key ?? '');
+
+			for (const surface of [...session.surfaces.values()]) {
+				if (rebuild) {
+					rebuildSurface(session, surface);
+				} else {
+					applyTheme(session, surface);
+				}
+			}
+		},
+	);
+}
+
+function labelLanguages(session: Session): void {
+	loadLanguageCatalog()
+		.then(() => {
+			for (const { parts } of session.surfaces.values()) {
+				for (const { placement, host } of parts) {
+					const name = getLanguageMetadata(placement.block.language)?.displayName;
+
+					if (name) session.ui.call(host.languageLabel, 'setText:', name);
+				}
+			}
+		})
+		.catch((error) => {
+			if (!isCancellation(error)) {
+				console.error(`[${PLUGIN_NAME}] Failed to load the language catalog:`, error);
+			}
+		});
+}
+
+/**
+ * @description Replaces code blocks in Discord's native message labels with highlighted code cards.
+ * @param objc The plugin's scoped Objective-C bridge.
+ * @returns A function that removes every hook, timer and card and restores Discord's text.
+ * @throws When the label's `setAttributedText:` cannot be hooked.
+ */
+let active: Session | undefined;
+let activeTimers: Set<ReturnType<typeof setTimeout>> | undefined;
+
+/**
+ * @description Counts the cards on screen and says whether any are still being placed.
+ * @returns The number of mounted cards and whether rendering or row correction is pending.
+ */
+export function cardProgress(): { drawn: number; settling: boolean } {
+	const surfaces = active ? [...active.surfaces.values()] : [];
+
+	return {
+		drawn: surfaces.length,
+		settling:
+			Boolean(activeTimers?.size) ||
+			surfaces.some(
+				(surface) => surface.placing || surface.rowTimer || surface.rowCorrectionPending,
+			),
+	};
+}
+
+/**
+ * @description Lists the cards drawn on a message other than the one they were made for, which happens when a reused cell keeps an old card.
+ * @returns Each misplaced card's message and the message its cell shows now.
+ */
+export async function misplacedCards(): Promise<string[]> {
+	const session = active;
+
+	if (!session) return [];
+
+	const misplaced = [...session.surfaces.values()].flatMap((surface) => {
+		const identity = messageIdentity(session.ui, surface.cell);
+
+		return identity && identity.messageId !== surface.messageId
+			? [`the card for ${surface.messageId} is on ${identity.messageId}`]
+			: [];
+	});
+	const owned = new Set([...session.surfaces.values()].map((surface) => surface.cellKey));
+
+	for (const cell of await findVisibleCells(session.ui.objc, 'DCDMessageTableViewCell')) {
+		const card = session.ui.view(cell, 'viewWithTag:', CARD_TAG);
+
+		if (!card || owned.has(session.ui.key(cell))) continue;
+
+		const identity = messageIdentity(session.ui, cell);
+
+		misplaced.push(`a card no message owns is left on ${identity?.messageId ?? 'a cell'}`);
+	}
+
+	return misplaced;
+}
+
+export function startRenderer(objc: NativeObjCBridge): () => void {
+	const controller = new AbortController();
+	const session: Session = {
+		ui: createNativeUI(objc),
+		text: textAttachmentBridge(objc),
+		highlighter: createHighlighter(),
+		recovery: createFlatRecovery<Surface>((surface) => {
+			if (session.surfaces.get(surface.labelKey) === surface) {
+				applyTheme(session, surface);
+			} else {
+				session.recovery.mark(surface, false);
+			}
+		}, onAppForeground),
+		surfaces: new Map(),
+		applying: new Set(),
+		signal: controller.signal,
+	};
+	const timers = new Set<ReturnType<typeof setTimeout>>();
+
+	active = session;
+	activeTimers = timers;
+	session.highlighter.warm(readPreferences().theme);
+
+	const [required, ...optional] = labelHooks(session, timers);
+	const hooks: NativeHookToken[] = [objc.hook(...required)];
+
+	for (const spec of optional) {
+		try {
+			hooks.push(objc.hook(...spec));
+		} catch {
+			// Cards still render through `setAttributedText:`; they only miss moves and cell reuse.
+		}
+	}
+
+	const unsubscribe = subscribeSettings(session);
+
+	labelLanguages(session);
+	const firstRender = setTimeout(() => {
+		timers.delete(firstRender);
+		void renderVisibleLabels(session).catch(() => undefined);
+	}, 300);
+
+	timers.add(firstRender);
+
+	return () => {
+		if (active === session) {
+			active = undefined;
+			activeTimers = undefined;
+		}
+
+		controller.abort();
+		session.recovery.dispose();
+
+		for (const hook of hooks) hook.remove();
+
+		for (const timer of timers) clearTimeout(timer);
+
+		unsubscribe();
+
+		for (const surface of [...session.surfaces.values()]) restoreSurface(session, surface);
+	};
+}
+
+export default { startRenderer };

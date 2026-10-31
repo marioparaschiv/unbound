@@ -1,14 +1,13 @@
 import type { Addon } from '@unbound-app/types';
 import { useState, memo } from 'react';
 
-import type { ManagerKind } from '~/lib/constants';
 import { Discord } from '~/api/metro/components';
 import { getManager } from '~/managers/utils';
 import { useAddonState } from '~/ui/hooks';
 
 type AddonSwitchProps = {
 	addon: Addon;
-	kind: ManagerKind.Plugins;
+	kind: 'plugins';
 	disabled?: boolean;
 };
 

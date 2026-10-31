@@ -22,6 +22,10 @@ static constexpr size_t      kFatArchSize          = 20;
 static constexpr size_t      kFatArch64Size        = 32;
 static constexpr size_t      kNameLength           = 16;
 static constexpr size_t      kPublicKeyPointBytes  = 65;
+static constexpr size_t      kELFHeaderSize        = 64;
+static constexpr size_t      kELFSectionHeaderSize = 64;
+static constexpr uint8_t     kELFClass64           = 2;
+static constexpr uint8_t     kELFLittleEndian      = 1;
 static constexpr const char *kPinnedPublicKey =
     "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEQPX4NgN7w+oQW/t31KTzr45C8edXjinWB2pgvXhOqipWKRJ1wfnlfZmh4PwVtT9C/ng0bDA2RjvzxhHC6z0leA==";
 
@@ -300,8 +304,109 @@ static Evaluation failed(const char *reason)
     return evaluation;
 }
 
+static bool isELF(std::string_view file)
+{
+    return file.size() >= 4 && file.substr(0, 4) == std::string_view("\x7f"
+                                                                     "ELF",
+                                                                     4);
+}
+
+static std::optional<std::string_view> sectionName(std::string_view file, size_t tableOffset,
+                                                   size_t tableSize, uint32_t nameOffset)
+{
+    if (nameOffset >= tableSize || !fits(file, tableOffset, tableSize))
+    {
+        return std::nullopt;
+    }
+    std::string_view names = file.substr(tableOffset + nameOffset, tableSize - nameOffset);
+    return names.substr(0, names.find('\0'));
+}
+
+std::optional<SliceLayout> parseELF(std::string_view file)
+{
+    if (!isELF(file) || file.size() < kELFHeaderSize ||
+        static_cast<uint8_t>(file[4]) != kELFClass64 ||
+        static_cast<uint8_t>(file[5]) != kELFLittleEndian)
+    {
+        return std::nullopt;
+    }
+    const auto machine     = readLittle<uint16_t>(file, 18);
+    const auto tableOffset = readLittle<uint64_t>(file, 40);
+    const auto entrySize   = readLittle<uint16_t>(file, 58);
+    const auto count       = readLittle<uint16_t>(file, 60);
+    const auto namesIndex  = readLittle<uint16_t>(file, 62);
+    if (!machine || !tableOffset || !entrySize || !count || !namesIndex ||
+        *entrySize != kELFSectionHeaderSize || *namesIndex >= *count ||
+        !fits(file, *tableOffset, static_cast<size_t>(*count) * kELFSectionHeaderSize))
+    {
+        return std::nullopt;
+    }
+    auto header = [&](size_t index) {
+        return *tableOffset + index * kELFSectionHeaderSize;
+    };
+    const auto namesOffset = readLittle<uint64_t>(file, header(*namesIndex) + 24);
+    const auto namesSize   = readLittle<uint64_t>(file, header(*namesIndex) + 32);
+    if (!namesOffset || !namesSize)
+    {
+        return std::nullopt;
+    }
+
+    SliceLayout layout;
+    layout.size     = file.size();
+    layout.boundary = file.size();
+    layout.cpuType  = *machine;
+    for (size_t index = 0; index < *count; index++)
+    {
+        const auto nameOffset = readLittle<uint32_t>(file, header(index));
+        const auto name =
+            nameOffset ? sectionName(file, *namesOffset, *namesSize, *nameOffset) : std::nullopt;
+        if (name && *name == kELFSectionName)
+        {
+            layout.sectionOffset = *readLittle<uint64_t>(file, header(index) + 24);
+            layout.sectionSize   = *readLittle<uint64_t>(file, header(index) + 32);
+        }
+    }
+    if (layout.sectionSize != kSectionSize || !fits(file, layout.sectionOffset, kSectionSize))
+    {
+        return std::nullopt;
+    }
+    return layout;
+}
+
+static Evaluation evaluateSlice(std::string_view slice, const SliceLayout &layout,
+                                const char *mismatch)
+{
+    Evaluation evaluation;
+    evaluation.record = readRecord(slice, layout);
+    if (!hasValidMetadata(evaluation.record, layout))
+    {
+        return failed("attestation metadata is invalid");
+    }
+    const std::optional<std::string> digest = canonicalDigest(slice, layout);
+    if (!digest || !crypto::constantTimeEqual(*digest, evaluation.record.digest))
+    {
+        return failed(mismatch);
+    }
+    evaluation.digest = *digest;
+    return evaluation;
+}
+
 Evaluation evaluate(std::string_view file, int32_t loadedCpuType, int32_t loadedCpuSubtype)
 {
+    if (isELF(file))
+    {
+        const std::optional<SliceLayout> layout = parseELF(file);
+        if (!layout)
+        {
+            return failed("invalid ELF attestation layout");
+        }
+        if (layout->cpuType != loadedCpuType)
+        {
+            return failed("the library was built for another architecture");
+        }
+        return evaluateSlice(file, *layout, "ELF digest mismatch");
+    }
+
     const std::optional<std::string_view> slice =
         loadedSlice(file, loadedCpuType, loadedCpuSubtype);
     if (!slice)
@@ -313,19 +418,7 @@ Evaluation evaluate(std::string_view file, int32_t loadedCpuType, int32_t loaded
     {
         return failed("invalid Mach-O attestation layout");
     }
-    Evaluation evaluation;
-    evaluation.record = readRecord(*slice, *layout);
-    if (!hasValidMetadata(evaluation.record, *layout))
-    {
-        return failed("attestation metadata is invalid");
-    }
-    const std::optional<std::string> digest = canonicalDigest(*slice, *layout);
-    if (!digest || !crypto::constantTimeEqual(*digest, evaluation.record.digest))
-    {
-        return failed("Mach-O digest mismatch");
-    }
-    evaluation.digest = *digest;
-    return evaluation;
+    return evaluateSlice(*slice, *layout, "Mach-O digest mismatch");
 }
 
 std::optional<std::string> publicKeyPoint()

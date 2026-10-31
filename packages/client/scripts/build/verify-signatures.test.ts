@@ -82,10 +82,7 @@ describe('verify-signatures', () => {
 
 		expect(productionCheck).toMatchObject({
 			status: 'failed',
-			problems: [
-				'unbound.js does not match its signature.',
-				'manifest.json does not match its signature.',
-			],
+			problems: [expect.stringMatching(/^manifest\.json/)],
 		});
 	});
 

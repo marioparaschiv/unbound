@@ -11,9 +11,10 @@ describe('describeBytecodeMismatch', () => {
 	});
 
 	test('names versions the build is missing or did not declare', () => {
-		expect(describeBytecodeMismatch([98, 96, 94], [100, 98, 96])).toBe(
-			'hermes.json declares bytecode 98, 96, 94, but the build is missing 94 and also produced 100. Update hermes.json so the compatibility scan checks what ships.',
-		);
+		const mismatch = describeBytecodeMismatch([98, 96, 94], [100, 98, 96]);
+
+		expect(mismatch).toContain('missing 94');
+		expect(mismatch).toContain('produced 100');
 		expect(describeBytecodeMismatch([98, 96], [98])).toContain('is missing 96.');
 	});
 

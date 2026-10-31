@@ -3,6 +3,7 @@ import { createLogger } from '@unbound-app/logger';
 import { useState, useEffect } from 'react';
 
 import { findByProps, findByName, findByFilePath } from '~/api/metro';
+import { useUnboundSettings } from '~/lib/unbound-settings';
 import MarketplacePage from '~/ui/settings/marketplace';
 import { Screens, CLIENT_NAME } from '~/lib/constants';
 import CloudSyncPage from '~/ui/settings/cloud-sync';
@@ -18,14 +19,12 @@ import AssetsPage from '~/ui/settings/assets';
 import DesignPage from '~/ui/settings/design';
 import ToastsPage from '~/ui/settings/toasts';
 import { getIDByName } from '~/api/assets';
-import { getStore } from '~/api/storage';
 import { Messages } from '~/api/i18n';
 
 import findSettingsOverview from './find-settings-overview';
 
 const Patcher = createPatcher('unbound::settings');
 const Logger = createLogger('Core', 'Settings');
-const Storage = getStore('unbound');
 
 const unpatches: Array<() => void> = [];
 
@@ -95,10 +94,7 @@ const builtInEntries: Record<string, SettingsEntry> = {
 		useTitle: () => Messages.UNBOUND_DEVELOPER,
 		getComponent: () => DeveloperPage,
 		usePredicate: () =>
-			Storage.useSettingsStore(({ key }) => key === 'developer-mode').get(
-				'developer-mode',
-				false,
-			),
+			useUnboundSettings(({ key }) => key === 'developer-mode').get('developer-mode'),
 		icon: 'WrenchIcon',
 	}),
 	[Screens.Marketplace]: route({

@@ -74,7 +74,7 @@ func androidVersion(results *compatResults) string {
 func renderCompatLegacyIssue(names []compatLegacyName, version, minimum, sourceURL string) string {
 	var builder strings.Builder
 	builder.WriteString("## " + compatLegacyTitle + "\n\n")
-	builder.WriteString("Unbound supports Discord Android " + minimum + " and newer, as `" + compatPolicyPath + "` sets. A legacy name can go once the oldest supported build no longer has it, because no newer build has it either.\n\n")
+	builder.WriteString("astral supports Discord Android " + minimum + " and newer, as `" + compatPolicyPath + "` sets. A legacy name can go once the oldest supported build no longer has it, because no newer build has it either.\n\n")
 	builder.WriteString("The stable scan checked Android " + version + ", and no supported build is older than it, so these names are gone from every supported build. The code that handles them can go along with their `HostClass.legacy` or `legacyJavaClass` marks.\n\n")
 	builder.WriteString("Once stable moves past the oldest supported build, the scan cannot tell what that build still has, so the list stays as it is until the minimum is raised. The `" + compatSupportLabel + "` issue proposes raising it.\n\n")
 	for _, name := range names {

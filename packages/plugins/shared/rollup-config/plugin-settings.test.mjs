@@ -6,8 +6,10 @@ import { expect, test } from 'bun:test';
 
 const pluginDirectory = resolve(import.meta.dir, '..', '..');
 const settingsPlugins = [
+	'avatar-radius',
 	'channel-typing-indicators',
 	'character-counter',
+	'chat-bubbles',
 	'custom-commands',
 	'message-latency',
 	'more-user-tags',

@@ -11,8 +11,8 @@ import {
 	signIn,
 	signOut,
 	sync,
-} from '~/lib/cloud-sync';
-import type { SyncMode, SyncSession } from '~/lib/cloud-sync';
+} from '~/managers/cloud-sync';
+import type { SyncMode, SyncSession } from '~/managers/cloud-sync';
 import { Discord } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
 import type { SyncStrategy } from '~/lib/sync';

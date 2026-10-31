@@ -21,13 +21,13 @@ export const maintainerEntrySchema = z.object({
 /** Summary fields a staff edit can pin; unpinned ones follow the served version's manifest. */
 export const pinnableFieldSchema = z.enum(['name', 'description', 'type']);
 
-export const editableFieldSchema = z.enum([...pinnableFieldSchema.options, 'repository']);
+export const editableFieldSchema = z.enum([...pinnableFieldSchema.options, 'repository', 'icon']);
 
 export const fieldChangeSchema = z.object({
 	field: editableFieldSchema,
 	from: z.nullable(z.string()),
 	to: z.nullable(z.string()),
-	/** Whether `to` is a staff value (pinned) or follows the manifest. Always false for `repository`. */
+	/** Whether `to` is a staff value (pinned) or follows the manifest. Always false for `repository` and `icon`. */
 	pinned: z.boolean(),
 });
 
@@ -240,6 +240,8 @@ export const editAddonRequestSchema = z.object({
 	),
 	type: z.nullable(addonTypeSchema),
 	repository: z.nullable(repositorySchema),
+	/** The website icon, a Nucleo Micro Bold export name; `null` is the type's default. The server checks the name. */
+	icon: z.nullable(z.string().check(z.minLength(1), z.maxLength(100))),
 	delisted: z.boolean(),
 	maintainers: z.array(maintainerEntrySchema).check(
 		z.refine(

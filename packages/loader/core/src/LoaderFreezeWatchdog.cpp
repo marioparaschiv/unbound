@@ -7,10 +7,12 @@
 #include <nlohmann/json.hpp>
 #include <thread>
 
+#include "HermesSampling.h"
 #include "LoaderAddonActivity.h"
 #include "LoaderCrashGuard.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
+#include "NativeCallActivity.h"
 #include "NativePluginRuntime.h"
 
 namespace loader {
@@ -104,17 +106,28 @@ static void watch(const std::shared_ptr<FreezeWatchdog::State> &state)
         {
             continue;
         }
-        current = {parsed.value("id", ""), parsed.value("name", ""),
-                   static_cast<double>(now - sentAt) / 1000.0, false};
+        auto textOf = [&parsed](const char *key) {
+            auto field = parsed.find(key);
+            return field != parsed.end() && field->is_string() ? field->get<std::string>()
+                                                               : std::string();
+        };
+        current = {
+            textOf("id"), textOf("name"), static_cast<double>(now - sentAt) / 1000.0, false, {}};
         if (current.id.empty())
         {
             continue;
         }
         createDirectories(state->directory);
         writeTextFileAtomically(frozenPath(state->directory), record);
+        auto call                        = nativeCallOnThread(state->runtimeThread.load());
+        current.detail                   = describeNativeCall(call, nativeCallClock());
+        std::vector<std::string> frames  = native::sampleJavaScriptStack(state->options.sampling);
+        std::string              sampled = native::describeSampledStack(frames, call.has_value());
+        current.stack                    = native::formatSampledStack(frames);
         log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
             "Discord's JavaScript thread has been frozen in " + current.name + " for " +
-                std::to_string(now - sentAt) + " ms.");
+                std::to_string(now - sentAt) + " ms. " + current.detail +
+                (sampled.empty() ? "" : " " + sampled));
         reported = true;
     }
 }
@@ -146,7 +159,7 @@ FreezeWatchdog::~FreezeWatchdog()
     }
 }
 
-static constexpr const char *kFreezeListener = "__UnboundFreezeListener";
+static constexpr const char *kFreezeListener = "__AstralFreezeListener";
 
 void startFreezeWatchdog(const std::string &directory)
 {
@@ -178,6 +191,13 @@ void startFreezeWatchdog(const std::string &directory)
                     event.setProperty(runtime, "name",
                                       jsi::String::createFromUtf8(runtime, report.name));
                     event.setProperty(runtime, "seconds", report.seconds);
+                    event.setProperty(runtime, "detail",
+                                      jsi::String::createFromUtf8(runtime, report.detail));
+                    if (!report.stack.empty())
+                    {
+                        event.setProperty(runtime, "stack",
+                                          jsi::String::createFromUtf8(runtime, report.stack));
+                    }
                     listener.asObject(runtime).asFunction(runtime).call(runtime, event);
                 });
             });

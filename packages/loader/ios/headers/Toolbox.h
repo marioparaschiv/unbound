@@ -9,7 +9,6 @@
 #import "FileSystem.h"
 #import "MobileGestalt.h"
 #import "Settings.h"
-#import "Updater.h"
 #import "Utilities.h"
 
 #ifdef __cplusplus

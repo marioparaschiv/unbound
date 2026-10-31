@@ -70,7 +70,7 @@ bool VerifyEmbeddedAttestation(void)
         loadedHeader->cputype, loadedHeader->cpusubtype);
     if (evaluation.failure)
     {
-        return failVerification(unbound::ios::toNSString(*evaluation.failure));
+        return failVerification(astral::ios::toNSString(*evaluation.failure));
     }
 
     CFErrorRef keyError  = NULL;

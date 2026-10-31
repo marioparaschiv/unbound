@@ -1,0 +1,1 @@
+ALTER TABLE "addon" ADD COLUMN "icon" text;

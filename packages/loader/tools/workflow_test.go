@@ -96,7 +96,7 @@ func TestAndroidBuildArchivesMatchingNativeSymbols(t *testing.T) {
 		"unzip -q android/module/build/outputs/native-debug-symbols/release/native-debug-symbols.zip -d android-symbols",
 		"for abi in arm64-v8a x86_64; do",
 		"grep -q '\\.debug_info' <<< \"$sections\"",
-		`unzip -p "$module" "lib/$abi/libunbound.so" > "$library"`,
+		`unzip -p "$module" "lib/$abi/libastral.so" > "$library"`,
 		`test "$library_id" = "$symbols_id"`,
 		"git rev-parse HEAD > android-symbols/commit.txt",
 		"name: android symbols",
@@ -184,13 +184,15 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		"require_matching_version: ${{ inputs.release == true && inputs.is_testflight != true }}",
 		"version: ${{ needs.resolve-source.outputs.release_version || inputs.version }}",
 		"android_code=$(curl -fsSL \"$INPUT_ANDROID_TRACKER/index\" | jq -er '.latest.stable | tonumber')",
-		"go run ./tools discord-version --android-code \"$android_code\"",
-		"The iOS IPA is $version but the requested matching release is $REQUESTED_VERSION",
-		"secrets: inherit",
+		"go run ./tools release-pairing \"${pairing_args[@]}\"",
+		"--android-code \"$ANDROID_STABLE_CODE\"",
+		"ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}",
 		"value: ${{ jobs.android.outputs.module_filename }}",
 		"value: ${{ jobs.android.outputs.patched_filename }}",
 		"name: ios-simulator",
-		"name: Publish stable release",
+		"name: Publish stable iOS release",
+		"name: Publish stable Android release",
+		"go run ./tools release-names --release-version",
 		"name: Publish TestFlight prerelease",
 		"if: inputs.is_testflight != true",
 	} {
@@ -227,14 +229,13 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		t.Fatal("Android should be built through the cross-platform coordinator on push")
 	}
 	for _, required := range []string{
-		"name=\"app.unbound.android.lsposed.apk\"",
-		`if [[ "$IOS_VERSION" =~ ^([0-9]+)\.([0-9]+)(\.|_|$) ]]; then`,
-		"candidate=\"${BASH_REMATCH[1]}$(printf '%03d' \"${BASH_REMATCH[2]}\")\"",
-		"version=\"${version:-$latest_version}\"",
+		"name=\"app.astral.android.xposed.apk\"",
+		`go run ./tools android-version "${args[@]}"`,
+		`if [ "$REQUIRE_MATCHING_VERSION" = true ]; then args+=(--require-matching); fi`,
 		"REQUIRE_MATCHING_VERSION: ${{ inputs.require_matching_version }}",
 		`apk_version_code=$("$build_tools/aapt" dump badging discord/base.apk`,
 		`"$apk_version_code" != "$version"`,
-		"name=\"Unbound.apks\"",
+		"name=\"astral.apks\"",
 	} {
 		if !strings.Contains(string(android), required) {
 			t.Fatalf("Android workflow is missing matching version or artifact detail %q", required)
@@ -252,7 +253,7 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		"uses: ./.github/workflows/loader-build.yml",
 		"is_testflight: true",
 		"needs: [testflight-candidate, stable-release]",
-		"if: always() && needs.testflight-candidate.outputs.version != ''",
+		"if: ${{ !cancelled() && needs.testflight-candidate.outputs.version != ''",
 	} {
 		if !strings.Contains(string(pollWorkflow), required) {
 			t.Fatalf("scheduled release polling is missing %q", required)
@@ -281,7 +282,7 @@ func TestObtainiumConfigTracksTheRootedAndroidModule(t *testing.T) {
 	if err := json.Unmarshal(configBytes, &config); err != nil {
 		t.Fatal(err)
 	}
-	if config.ID != "app.unbound.android" || config.URL != "https://github.com/marioparaschiv/unbound" {
+	if config.ID != "app.astral.android" || config.URL != "https://github.com/marioparaschiv/unbound" {
 		t.Fatalf("Obtainium config targets an unexpected app: %#v", config)
 	}
 	var settings struct {
@@ -291,12 +292,17 @@ func TestObtainiumConfigTracksTheRootedAndroidModule(t *testing.T) {
 	if err := json.Unmarshal([]byte(config.AdditionalSettings), &settings); err != nil {
 		t.Fatal(err)
 	}
-	for title, wanted := range map[string]bool{"loader-v350.8": true, "v0.9.0": false} {
+	for title, wanted := range map[string]bool{
+		"astral 1.0.1 for Discord 350.8, Android":       true,
+		"astral 1.0.1 for Discord 351.12, Android beta": true,
+		"astral 1.0.1 for Discord 350.8, iOS":           false,
+		"v0.9.0":                                        false,
+	} {
 		if matched, err := regexp.MatchString(settings.FilterReleaseTitlesByRegEx, title); err != nil || matched != wanted {
 			t.Fatalf("Obtainium release filter %q on %q matched %v, want %v", settings.FilterReleaseTitlesByRegEx, title, matched, wanted)
 		}
 	}
-	matches, err := regexp.MatchString(settings.APKFilterRegEx, "app.unbound.android.lsposed.apk")
+	matches, err := regexp.MatchString(settings.APKFilterRegEx, "app.astral.android.xposed.apk")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -308,7 +314,7 @@ func TestObtainiumConfigTracksTheRootedAndroidModule(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, required := range []string{
-		"name=\"app.unbound.android.lsposed.apk\"",
+		"name=\"app.astral.android.xposed.apk\"",
 		"ANDROID_SIGNING_KEYSTORE_BASE64",
 		"ANDROID_SIGNING_STORE_PASSWORD",
 		"ANDROID_SIGNING_KEY_ALIAS",
@@ -377,11 +383,11 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 	contents := string(workflow)
 	for _, required := range []string{
 		"name: Publish loader update records",
-		"UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}",
-		"UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}",
-		"UNBOUND_API_KEY is required for stable release publication",
-		"UNBOUND_API_URL is required for stable release publication",
-		"api_url=\"${UNBOUND_API_URL%/}/api/v1/loader/releases\"",
+		"ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY }}",
+		"ASTRAL_API_URL: ${{ vars.ASTRAL_API_URL }}",
+		"ASTRAL_API_KEY is required for stable release publication",
+		"ASTRAL_API_URL is required for stable release publication",
+		"api_url=\"${ASTRAL_API_URL%/}/api/v1/loader/releases\"",
 		"--api-url \"$api_url\"",
 		"dpkg-deb -f \"$deb_path\" Version",
 		"fetch-depth: 0",
@@ -391,8 +397,8 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 		"go run ./tools publish-loader-releases",
 		"loader-release",
 		"loader-release",
-		"--ios-url \"$release_url/$IOS_DEB_FILENAME\"",
-		"--android-url \"$release_url/$ANDROID_MODULE_FILENAME\"",
+		"--ios-url \"$release_url/$IOS_RELEASE_TAG/$IOS_DEB_FILENAME\"",
+		"--android-url \"$release_url/$ANDROID_RELEASE_TAG/$ANDROID_MODULE_FILENAME\"",
 		"needs.resolve-source.outputs.is_testflight != 'true'",
 	} {
 		if !strings.Contains(contents, required) {
@@ -465,7 +471,7 @@ func TestMetroRegistryIsCapturedBeforeBundleWithoutLegacyPatch(t *testing.T) {
 	}
 	for _, path := range []string{
 		filepath.Join(root, "core", "src", "LoaderPipeline.cpp"),
-		filepath.Join(root, "ios", "sources", "Unbound.xm"),
+		filepath.Join(root, "ios", "sources", "Astral.xm"),
 		filepath.Join(root, "android", "module", "src", "main", "cpp", "AndroidLoader.cpp"),
 	} {
 		contents, err := os.ReadFile(path)
@@ -522,8 +528,9 @@ func TestLoaderReleasesUseTheirOwnTagNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(build), "tag_name: v") || !strings.Contains(string(build), "tag_name: loader-v") {
-		t.Fatal("loader releases must be tagged loader-v<version> so they never collide with client tags")
+	if strings.Contains(string(build), "tag_name: v") || strings.Contains(string(build), "tag_name: loader-v") ||
+		strings.Count(string(build), "tag_name: ${{ needs.resolve-source.outputs.") != 4 {
+		t.Fatal("loader releases must take the discord-<version>-<platform> tags release-names chose, so they never collide with client tags")
 	}
 	ios, err := os.ReadFile(filepath.Join(workflows, "loader-ios.yml"))
 	if err != nil {
@@ -536,8 +543,8 @@ func TestLoaderReleasesUseTheirOwnTagNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(poll), `tag := "loader-v" + version`) {
-		t.Fatal("the release poll must look for loader-v<version> releases")
+	if !strings.Contains(string(poll), `return "discord-" + version`) {
+		t.Fatal("the release poll must look for discord-<version>-<platform> releases")
 	}
 }
 
@@ -629,14 +636,14 @@ func TestCompatScanCoversEveryDiscordChannel(t *testing.T) {
 		`'["stable","beta","alpha"]'`,
 		"IOS_SOURCE: ${{ matrix.channel == 'stable' && 'appstore' || matrix.channel == 'beta' && 'testflight' || 'none' }}",
 		"DISCORD_SNIFF_URL: https://sniff.xhyrom.dev",
-		"path: ~/.cache/unbound-discord",
+		"path: ~/.cache/astral-discord",
 		"restore-keys: discord-builds-${{ matrix.channel }}-",
-		`--cache "$HOME/.cache/unbound-discord"`,
+		`--cache "$HOME/.cache/astral-discord"`,
 		"if: env.IOS_SOURCE != 'none'",
 		"uses: castdrian/dkrypt@",
 		"channel: ${{ env.IOS_SOURCE }}",
 		"output: packages/loader/discord.ipa",
-		`if [ "$IOS_SOURCE" != none ]; then scan_args+=(--ipa discord.ipa); fi`,
+		`if [ "$IOS_SOURCE" != none ] && [ -f discord.ipa ]; then`,
 		"name: compat-${{ matrix.channel }}",
 		`--name "compat-$CHANNEL"`,
 		`go run ./tools compat-issue --repo "$GITHUB_REPOSITORY" --channel "$CHANNEL"`,
@@ -692,12 +699,12 @@ func readObtainiumConfig(t *testing.T, name string) obtainiumTestConfig {
 
 func TestObtainiumConfigsTrackOneDiscordChannelEach(t *testing.T) {
 	releases := map[string]string{
-		"stable": "loader-v350.8",
-		"beta":   "loader-v351.12-android-beta",
-		"alpha":  "loader-v352.8-android-alpha",
+		"stable": "astral 1.0.1 for Discord 350.8, Android",
+		"beta":   "astral 1.0.1 for Discord 351.12, Android beta",
+		"alpha":  "astral 1.0.1 for Discord 352.8, Android alpha",
 	}
-	others := []string{"loader-v351.0_118370", "loader-latest", "Unbound loader (latest)", "v0.9.0"}
-	assets := map[string]string{"stable": "Unbound.apks", "beta": "Unbound-beta.apks", "alpha": "Unbound-alpha.apks"}
+	others := []string{"astral 1.0.1 for Discord 350.8, iOS", "astral 1.0.1 for Discord 351.0 (118370), iOS TestFlight", "loader-latest", "astral loader (latest)", "v0.9.0"}
+	assets := map[string]string{"stable": "astral.apks", "beta": "astral-beta.apks", "alpha": "astral-alpha.apks"}
 	for channel := range releases {
 		config := readObtainiumConfig(t, "obtainium-"+channel+".json")
 		if config.ID != "com.discord" || config.URL != "https://github.com/marioparaschiv/unbound" {
@@ -724,8 +731,8 @@ func TestObtainiumConfigsTrackOneDiscordChannelEach(t *testing.T) {
 				t.Fatalf("the %s Obtainium release filter matched %q", channel, release)
 			}
 		}
-		if apks.MatchString("app.unbound.android.lsposed.apk") {
-			t.Fatalf("the %s Obtainium config would install the LSPosed module", channel)
+		if apks.MatchString("app.astral.android.xposed.apk") {
+			t.Fatalf("the %s Obtainium config would install the Xposed module", channel)
 		}
 	}
 	module := readObtainiumConfig(t, "obtainium.json")
@@ -797,8 +804,8 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"android_code: ${{ steps.candidate.outputs.android_code }}",
 		"needs: [android-beta-candidate, testflight-release]",
 		"needs: [android-alpha-candidate, android-beta-release]",
-		"if: always() && needs.android-beta-candidate.outputs.version != ''",
-		"if: always() && needs.android-alpha-candidate.outputs.version != ''",
+		"if: ${{ !cancelled() && needs.android-beta-candidate.outputs.version != ''",
+		"if: ${{ !cancelled() && needs.android-alpha-candidate.outputs.version != ''",
 		"android_channel: beta",
 		"android_channel: alpha",
 		"android_code: ${{ needs.android-beta-candidate.outputs.android_code }}",
@@ -814,12 +821,12 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"      android_code:\n",
 		"beta|alpha) ;;",
 		`release=$(go run ./tools discord-apk "${apk_args[@]}")`,
-		"android_code: ${{ steps.select.outputs.code }}",
+		"android_code: ${{ steps.select.outputs.code || steps.resolve.outputs.android_code }}",
 		"discord_channel: ${{ inputs.android_channel || 'stable' }}",
 		"android_code: ${{ needs.resolve-source.outputs.android_code }}",
-		"if: always() && inputs.android_channel == '' && (inputs.only_app_repo == true",
-		"if: always() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true",
-		"if: always() && inputs.release == true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'",
+		"if: ${{ !cancelled() && inputs.android_channel == '' && (inputs.only_app_repo == true",
+		"if: ${{ !cancelled() && inputs.release == true && inputs.android_channel == '' && inputs.only_app_repo != true",
+		"if: ${{ !cancelled() && inputs.release == true && inputs.release_dry_run != true && inputs.android_channel != '' && needs.resolve-source.result == 'success' && needs.android.result == 'success'",
 		"name: Publish Android prerelease",
 	} {
 		if !strings.Contains(build, required) {
@@ -832,7 +839,7 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		t.Fatal("the Android prerelease job could not be located")
 	}
 	prerelease := build[prereleaseStart:appRepoStart]
-	for _, required := range []string{"tag_name: loader-v${{ needs.resolve-source.outputs.release_version }}", "prerelease: true", "make_latest: false", "needs.android.outputs.patched_filename", "needs.android.outputs.module_filename"} {
+	for _, required := range []string{"tag_name: ${{ needs.resolve-source.outputs.android_release_tag }}", "name: ${{ needs.resolve-source.outputs.android_release_title }}", "prerelease: true", "make_latest: false", "needs.android.outputs.patched_filename", "needs.android.outputs.module_filename"} {
 		if !strings.Contains(prerelease, required) {
 			t.Fatalf("the Android prerelease is missing %q", required)
 		}
@@ -847,8 +854,8 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"options: [stable, beta, alpha]",
 		"DISCORD_CHANNEL: ${{ inputs.discord_channel || 'stable' }}",
 		"ANDROID_CODE: ${{ inputs.android_code }}",
-		`env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$version" --output-dir discord "${split_args[@]}"`,
-		`if [ "$DISCORD_CHANNEL" != stable ]; then name="Unbound-$DISCORD_CHANNEL.apks"; fi`,
+		`env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$VERSION" --output-dir discord "${split_args[@]}"`,
+		`if [ "$DISCORD_CHANNEL" != stable ]; then name="astral-$DISCORD_CHANNEL.apks"; fi`,
 	} {
 		if !strings.Contains(android, required) {
 			t.Fatalf("the Android workflow is missing channel detail %q", required)

@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import type { ReloadTransport, BuiltAddon } from '../src/lib/reload-transport';
 
 import { DevServer } from '../src/lib/dev-server';
-import { loadConfig } from '../src/lib/config';
+import { loadWorkspace } from './helpers/config';
 
 const roots: string[] = [];
 
@@ -61,7 +61,7 @@ function recordingTransport(): ReloadTransport & { calls: BuiltAddon[] } {
 
 describe('DevServer build-failure isolation', () => {
 	test('a failing build never reaches the transport', async () => {
-		const resolved = loadConfig(workspace('exit 1'));
+		const resolved = loadWorkspace(workspace('exit 1'));
 		const transport = recordingTransport();
 		const server = new DevServer(resolved, transport);
 
@@ -72,7 +72,7 @@ describe('DevServer build-failure isolation', () => {
 	});
 
 	test('a passing build reaches the transport once per addon', async () => {
-		const resolved = loadConfig(workspace('true'));
+		const resolved = loadWorkspace(workspace('true'));
 		const transport = recordingTransport();
 		const server = new DevServer(resolved, transport);
 
@@ -80,21 +80,5 @@ describe('DevServer build-failure isolation', () => {
 		server.stop();
 
 		expect(transport.calls.map((addon) => addon.id)).toEqual(['com.example.sample']);
-	});
-});
-
-describe('DevServer rebuild debounce', () => {
-	test('the initial pass rebuilds each addon exactly once', async () => {
-		const resolved = loadConfig(workspace('true'));
-		const transport = recordingTransport();
-		const server = new DevServer(resolved, transport);
-
-		await server.start();
-		server.stop();
-
-		const ids = transport.calls.map((addon) => addon.id);
-
-		expect(ids).toEqual(['com.example.sample']);
-		expect(new Set(ids).size).toBe(ids.length);
 	});
 });

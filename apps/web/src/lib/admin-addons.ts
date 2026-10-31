@@ -15,6 +15,7 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
 import type { Database } from '~/db/database';
+import { DAY_MS } from '~/lib/calendar-date';
 import type { addon } from '~/db/schema';
 import { toAddon } from '~/lib/addons';
 
@@ -34,8 +35,6 @@ type StatusFilter = (db: Database, table: typeof addon) => SQL;
 const ADDON_CURSOR = z.tuple([cursorTime, addonIdSchema]);
 
 type AddonPosition = z.output<typeof ADDON_CURSOR>;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 function withOpenUpdate(db: Database, table: typeof addon, status: OpenUpdateStatus): SQL {
 	const open = db

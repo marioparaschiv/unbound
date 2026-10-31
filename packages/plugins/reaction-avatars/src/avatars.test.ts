@@ -11,7 +11,7 @@ import {
 	reactionAvatarStackPositions,
 	reactionAvatarStackWidth,
 	shouldMeasureReactionAvatarWidth,
-} from './avatars';
+} from '~/avatars';
 
 function users(count: number) {
 	return Array.from({ length: count }, (_, index) => ({ id: String(index) }));

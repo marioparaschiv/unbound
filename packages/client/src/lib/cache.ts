@@ -38,7 +38,7 @@ if (!isValidCache()) {
 /**
  * @description Resets the cache to a clean slate, clearing all cached module ids, flags, and assets, then persists it.
  */
-export function invalidateCache() {
+function invalidateCache() {
 	state.info = CurrentCacheInfo;
 	state.modules = {};
 	state.moduleFlags = {};
@@ -68,7 +68,7 @@ export function addAssetToCache(moduleId: number) {
  * @description Removes an asset module id from the cache and persists it. Twin of {@link addAssetToCache}.
  * @param moduleId The id of the asset module to uncache.
  */
-export function removeAssetFromCache(moduleId: number) {
+function removeAssetFromCache(moduleId: number) {
 	const idx = state.assets.indexOf(moduleId);
 
 	if (~idx) {
@@ -110,7 +110,7 @@ export function addCachedIDForKey(key: string, item: number) {
  * @param item The module id to uncache.
  * @returns Always `true`.
  */
-export function removeCachedIDForKey(key: string, item: number) {
+function removeCachedIDForKey(key: string, item: number) {
 	const store = state.modules[key];
 
 	if (!store) {
@@ -148,7 +148,7 @@ export function addModuleFlag(id: number, flag: ModuleFlags) {
  * @param flag The flag bit to clear.
  * @returns `true` if the module had no flags set, otherwise `undefined`.
  */
-export function removeModuleFlag(id: number, flag: ModuleFlags) {
+function removeModuleFlag(id: number, flag: ModuleFlags) {
 	if (!state.moduleFlags[id]) {
 		return true;
 	}

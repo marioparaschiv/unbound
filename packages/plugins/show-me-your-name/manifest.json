@@ -1,5 +1,5 @@
 {
-	"id": "unbound.show-me-your-name",
+	"id": "astral.show-me-your-name",
 	"name": "Show Me Your Name",
 	"description": "Display usernames next to display names, or show usernames only.",
 	"authors": [
@@ -20,7 +20,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "TextIcon",
 	"main": "index.tsx"
 }

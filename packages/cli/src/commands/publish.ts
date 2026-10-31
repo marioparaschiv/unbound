@@ -31,12 +31,19 @@ const publishCommand: CommandDefinition<typeof schema> = {
 	description:
 		'Submit the committed and pushed addon for review on Unbound; its build output must be ' +
 		'committed. Authenticates with UNBOUND_API_KEY when set, otherwise with the `ubd login` session.',
+	summary: 'Build an addon and submit it for review.',
 	surfaces: { cli: 'root', mcp: false },
 	schema,
 	async handler({ addon: id, ref, repository }) {
 		try {
 			const env = parseEnv();
-			const addon = selectAddon(await discoverAddons(loadConfig()), id);
+			const resolved = loadConfig();
+
+			if ('error' in resolved) {
+				return { ok: false, text: resolved.error };
+			}
+
+			const addon = selectAddon(await discoverAddons(resolved), id);
 			const submission = await publish({ env, addon, repository, ref });
 			const { source } = submission;
 

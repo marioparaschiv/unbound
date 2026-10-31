@@ -23,22 +23,20 @@ function ChangelogSections({ changelog }: ChangelogSectionsProps) {
 		<div className='flex flex-col gap-3'>
 			{changelog.sections.map((section) => (
 				<div key={section.type} className='flex flex-col gap-1.5'>
-					<div className='flex items-center gap-2'>
-						<span
-							className={cn(
-								'rounded-full size-1.5 shrink-0',
-								TONES[CHANGE_TONES[section.type]].dot,
-							)}
-						/>
-						<Text variant='text-xs' className='font-medium uppercase tracking-wide'>
-							{CHANGE_LABELS[section.type]}
-						</Text>
-					</div>
+					{/* Small and tinted by change type: the entries under it are what a reader came for. */}
+					<Text
+						variant='text-xs'
+						className={cn(
+							'font-medium text-[11px] uppercase tracking-wider',
+							TONES[CHANGE_TONES[section.type]].text,
+						)}
+					>
+						{CHANGE_LABELS[section.type]}
+					</Text>
 					<Text
 						as='ul'
 						variant='text-sm'
-						color='muted'
-						className='flex flex-col gap-1 pl-5 marker:text-muted-foreground/50 list-disc'
+						className='flex flex-col gap-1 pl-5 text-foreground/85 marker:text-muted-foreground/50 list-disc'
 					>
 						{section.items.map((item, index) => (
 							<li key={index}>{item}</li>

@@ -32,7 +32,7 @@ on:
                 required: true
             S3_SECRET_ACCESS_KEY:
                 required: true
-            UNBOUND_BUNDLE_SIGNING_KEY:
+            ASTRAL_BUNDLE_SIGNING_KEY:
                 required: true
 
 permissions:
@@ -50,24 +50,22 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   ref: ${{ inputs.version && format('client-v{0}', inputs.version) || '' }}
                   fetch-depth: 0
-                  persist-credentials: false
 
             # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
             # canary's frozen-lockfile check fails on a self-generated lockfile (round-trip bug),
             # so install without it until stable 1.4 lands.
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-              with:
-                  bun-version: canary
 
             - name: Build the client
               run: bun run --cwd packages/client build
               env:
                   TMPDIR: ${{ runner.temp }}
                   UNBOUND_CHANNEL: ${{ inputs.version && 'stable' || 'beta' }}
-                  UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.UNBOUND_BUNDLE_SIGNING_KEY }}
+                  UNBOUND_BUNDLE_SIGNING_KEY: ${{ secrets.ASTRAL_BUNDLE_SIGNING_KEY }}
 
             - name: Check every bundle and the manifest are signed
               run: bun run --cwd packages/client verify-signatures

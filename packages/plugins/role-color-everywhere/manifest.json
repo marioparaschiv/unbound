@@ -1,5 +1,5 @@
 {
-	"id": "unbound.role-color-everywhere",
+	"id": "astral.role-color-everywhere",
 	"name": "Role Color Everywhere",
 	"description": "Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.",
 	"authors": [
@@ -11,7 +11,7 @@
 		{ "name": "fres", "id": "843448897737064448" },
 		{ "name": "adrian", "id": "224617799434108928" }
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "PaintPaletteIcon",
 	"capabilities": [],
 	"platformCapabilities": {
@@ -23,7 +23,14 @@
 			"native.objc.ivars",
 			"native.objc.hooks"
 		],
-		"android": []
+		"android": [
+			"native.java.classes",
+			"native.java.invoke",
+			"native.java.invokeAsync",
+			"native.java.construct",
+			"native.java.fields",
+			"native.java.hooks"
+		]
 	},
 	"minNativePluginApi": "1.0.0",
 	"main": "index.tsx"

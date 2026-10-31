@@ -84,8 +84,25 @@ function countOccurrences(text: string, search: string): number {
 	return count;
 }
 
+const TAB_WIDTH = 4;
+
 /**
- * @description Finds where each code block sits in the text Discord rendered for a message.
+ * @description Expands tabs the way Discord renders them in a message, four spaces each.
+ * @param code The code as written.
+ * @returns The code as Discord shows it.
+ */
+export function expandTabs(code: string): string {
+	return code.replaceAll('\t', ' '.repeat(TAB_WIDTH));
+}
+
+function renderedForm(code: string, rendered: string): string {
+	if (rendered.includes(code) || !code.includes('\t')) return code;
+
+	return expandTabs(code);
+}
+
+/**
+ * @description Finds where each code block sits in the text Discord rendered for a message, allowing for Discord expanding tabs to spaces when it renders.
  * @param blocks The message's fenced blocks, in order.
  * @param rendered The label's plain text.
  * @returns Each block's range, widened over its surrounding newlines, or `[]` when any block is missing, ambiguous or split.
@@ -94,8 +111,9 @@ export function locateCodeBlocks(blocks: CodeBlock[], rendered: string): CodeBlo
 	if (!blocks.length || blocks.some((block) => !block.code)) return [];
 
 	const expected = new Map<string, number>();
+	const shown = blocks.map((block) => renderedForm(block.code, rendered));
 
-	for (const { code } of blocks) expected.set(code, (expected.get(code) ?? 0) + 1);
+	for (const code of shown) expected.set(code, (expected.get(code) ?? 0) + 1);
 
 	for (const [code, count] of expected) {
 		if (countOccurrences(rendered, code) !== count) return [];
@@ -104,12 +122,13 @@ export function locateCodeBlocks(blocks: CodeBlock[], rendered: string): CodeBlo
 	const placements: CodeBlockPlacement[] = [];
 	let cursor = 0;
 
-	for (const block of blocks) {
-		const codeStart = rendered.indexOf(block.code, cursor);
+	for (const [index, block] of blocks.entries()) {
+		const code = shown[index]!;
+		const codeStart = rendered.indexOf(code, cursor);
 
 		if (codeStart < 0) return [];
 
-		const codeEnd = codeStart + block.code.length;
+		const codeEnd = codeStart + code.length;
 
 		if (codeStart > 0 && rendered[codeStart - 1] !== '\n') return [];
 
@@ -129,4 +148,4 @@ export function locateCodeBlocks(blocks: CodeBlock[], rendered: string): CodeBlo
 	return placements;
 }
 
-export default { parseFencedCodeBlocks, locateCodeBlocks };
+export default { expandTabs, parseFencedCodeBlocks, locateCodeBlocks };

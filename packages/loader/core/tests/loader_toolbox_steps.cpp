@@ -44,7 +44,7 @@ static void checkMenuSteps(const nlohmann::json &menu)
     assert(menuStep(menuItem(menu, "open-issue"), false) == MenuStep::Platform);
     assert(menuStep(menuItem(menu, "open-app-folder"), true) == MenuStep::Platform);
     assert(menuStep(menuItem(menu, "gesture-shake"), false) == MenuStep::None);
-    assert(menuStep(menuItem(menu, "unbound-icon"), true) == MenuStep::None);
+    assert(menuStep(menuItem(menu, "astral-icon"), true) == MenuStep::None);
 }
 
 static void checkMenuOutcomes(const nlohmann::json &menu)
@@ -67,15 +67,14 @@ int main()
     settings.load();
 
     const nlohmann::json menu = loader::toolbox::menuJSON(
-        settings, loader::toolbox::menuOptions(R"({"openAppFolder":true,"unboundIcon":true})"));
+        settings, loader::toolbox::menuOptions(R"({"openAppFolder":true,"astralIcon":true})"));
     checkMenuSteps(menu);
     checkMenuOutcomes(menu);
 
-    const auto numeric = loader::toolbox::menuOptions(R"({"openAppFolder":1,"unboundIcon":0})");
-    assert(numeric.openAppFolder && !numeric.unboundIcon && !numeric.copyAppFolderPath);
-    const auto mixed =
-        loader::toolbox::menuOptions(R"({"openAppFolder":"yes","unboundIcon":true})");
-    assert(!mixed.openAppFolder && mixed.unboundIcon);
+    const auto numeric = loader::toolbox::menuOptions(R"({"openAppFolder":1,"astralIcon":0})");
+    assert(numeric.openAppFolder && !numeric.astralIcon && !numeric.copyAppFolderPath);
+    const auto mixed = loader::toolbox::menuOptions(R"({"openAppFolder":"yes","astralIcon":true})");
+    assert(!mixed.openAppFolder && mixed.astralIcon);
 
     assert(loader::toolbox::menuStep(nullptr, false) == MenuStep::None);
     assert(loader::toolbox::menuStep(nlohmann::json::object(), false) == MenuStep::Run);
@@ -132,11 +131,11 @@ int main()
     assert(loader::toolbox::discordVersionLabel("352.0", "") == "352.0 ()");
     assert(loader::toolbox::discordVersionLabel(std::nullopt, "86457").empty());
 
-    assert((loader::toolbox::appFolderURLs("/var/mobile/Documents/Unbound", true) ==
-            std::vector<std::string>{"filza://view/var/mobile/Documents/Unbound",
-                                     "shareddocuments:///var/mobile/Documents/Unbound"}));
-    assert((loader::toolbox::appFolderURLs("/private/Documents/Unbound", false) ==
-            std::vector<std::string>{"shareddocuments:///private/Documents/Unbound"}));
+    assert((loader::toolbox::appFolderURLs("/var/mobile/Documents/astral", true) ==
+            std::vector<std::string>{"filza://view/var/mobile/Documents/astral",
+                                     "shareddocuments:///var/mobile/Documents/astral"}));
+    assert((loader::toolbox::appFolderURLs("/private/Documents/astral", false) ==
+            std::vector<std::string>{"shareddocuments:///private/Documents/astral"}));
 
     std::filesystem::remove_all(root);
     return 0;

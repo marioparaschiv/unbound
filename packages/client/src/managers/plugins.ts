@@ -1,23 +1,45 @@
-import type { Addon, AddonManifest, Plugin, PluginContext, PluginEntity } from '@unbound-app/types';
+import type {
+	Addon,
+	PushedManifest,
+	Plugin,
+	PluginContext,
+	PluginEntity,
+} from '@unbound-app/types';
 
 import { createScopedReact, performRefresh, withRefreshScope } from '~/lib/hot/runtime';
 import { attributeAddon, setFreezeListener } from '~/api/crash-guard';
 import { createPluginContext } from '~/api/native-runtime';
 import type { AddonAttribution } from '~/api/crash-guard';
+import { setOwnerCheck } from '~/lib/commands/owners';
 import type { ReloadResult } from '~/managers/addons';
 import { reload as reloadApp } from '~/api/native';
-import { ManagerType } from '~/managers/base';
+import { registry } from '~/lib/commands/registry';
 import { Addons } from '~/managers/addons';
 
 /**
  * @description Manages plugins, building on the base {@link Addons} manager to load and evaluate plugin bundles.
  */
+type PluginFactory = (react: ReturnType<typeof createScopedReact>) => ReturnType<typeof JSON.parse>;
+
+type ScannedPlugin = {
+	bundle: string;
+	folder: string;
+};
+
+type EvaluatedPlugin = {
+	bundle: string;
+	factory: PluginFactory;
+};
+
 export class Plugins extends Addons<PluginEntity> {
+	private scanned = new Map<string, ScannedPlugin>();
+	private evaluated = new Map<string, EvaluatedPlugin>();
+
 	/**
-	 * @description Creates the plugins manager bound to the {@link ManagerType.PLUGINS} type.
+	 * @description Creates the plugins manager bound to the {@link 'plugins'} type.
 	 */
 	constructor() {
-		super(ManagerType.PLUGINS);
+		super('plugins');
 	}
 
 	/**
@@ -25,8 +47,13 @@ export class Plugins extends Addons<PluginEntity> {
 	 */
 	initialize() {
 		setFreezeListener((freeze) => this.handleFreeze(freeze));
+		setOwnerCheck((owner) => Boolean(this.getEntity(owner)));
 
 		for (const { bundle, manifest } of window.UNBOUND_PLUGINS ?? []) {
+			if ('folder' in manifest && typeof manifest.folder === 'string') {
+				this.scanned.set(manifest.id, { bundle, folder: manifest.folder });
+			}
+
 			this.load(bundle, manifest);
 		}
 
@@ -34,19 +61,46 @@ export class Plugins extends Addons<PluginEntity> {
 	}
 
 	/**
+	 * @description Unloads a plugin and forgets its evaluated bundle, so a deleted plugin's code is not kept.
+	 * @param entity The plugin to unload, as its id or the entity itself.
+	 */
+	unload(entity: string | Addon): void | Promise<void> {
+		this.evaluated.delete(typeof entity === 'string' ? entity : entity.id);
+
+		return super.unload(entity);
+	}
+
+	/**
 	 * @description Restarts a plugin on its new bundle, then re-renders its mounted components in place.
 	 * A component whose hooks changed can't keep its state, so the app reloads instead.
 	 * @param entity The plugin to reload, as its id or the entity itself.
 	 * @param bundle The freshly built bundle source.
-	 * @param manifest The freshly built, validated manifest.
+	 * @param manifest The freshly built manifest, as received; {@link Addons.reload} validates it.
+	 * @param bytecode The bundle compiled for this runtime, base64-encoded, which then runs instead of the source.
 	 * @returns The reload outcome.
 	 */
 	async reload(
 		entity: string | Addon,
 		bundle: string,
-		manifest: AddonManifest,
+		manifest: PushedManifest,
+		bytecode?: string,
 	): Promise<ReloadResult> {
-		const result = await super.reload(entity, bundle, manifest);
+		// The bytecode lookup during the reload reads this entry; a rejected push puts the old one back.
+		const previous = this.scanned.get(manifest.id);
+
+		if (bytecode) {
+			this.scanned.set(manifest.id, { bundle, folder: manifest.id });
+		}
+
+		const result = await super.reload(entity, bundle, manifest, bytecode);
+
+		if (!result.ok && bytecode) {
+			if (previous) {
+				this.scanned.set(manifest.id, previous);
+			} else {
+				this.scanned.delete(manifest.id);
+			}
+		}
 
 		if (result.ok && performRefresh().needsRemount) {
 			this.logger.info(`${manifest.id} changed a component's hooks; reloading.`);
@@ -64,8 +118,7 @@ export class Plugins extends Addons<PluginEntity> {
 	 * @returns The resolved plugin instance.
 	 */
 	protected handleBundle(bundle: string, id: string): Plugin {
-		// oxlint-disable-next-line no-eval
-		const iife = eval(`((React) => { return ${bundle} })`);
+		const iife = this.factoryFor(bundle, id);
 
 		return withRefreshScope(id, () => {
 			const payload = iife(createScopedReact());
@@ -75,12 +128,69 @@ export class Plugins extends Addons<PluginEntity> {
 		});
 	}
 
+	private factoryFor(bundle: string, id: string): PluginFactory {
+		const cached = this.evaluated.get(id);
+
+		if (cached?.bundle === bundle) {
+			return cached.factory;
+		}
+
+		const factory = this.compiledFactory(bundle, id) ?? this.sourceFactory(bundle);
+
+		this.evaluated.set(id, { bundle, factory });
+
+		return factory;
+	}
+
+	private sourceFactory(bundle: string): PluginFactory {
+		// oxlint-disable-next-line no-eval
+		return eval(`((React) => { return ${bundle} })`);
+	}
+
+	/**
+	 * @description Evaluates the bytecode compiled for this runtime, when the bundle being started is the
+	 * one the loader scanned at launch or one reloaded with its bytecode, so any other bundle runs from source.
+	 * @param bundle The bundle about to start.
+	 * @param id The plugin's id.
+	 * @returns The compiled plugin factory, or `undefined` to evaluate the source.
+	 */
+	private compiledFactory(bundle: string, id: string): PluginFactory | undefined {
+		const scanned = this.scanned.get(id);
+		const bytecodeVersion = window.UNBOUND_LOADER?.bytecodeVersion;
+		const addons = globalThis.NativePlatform?.addons;
+
+		if (!scanned || scanned.bundle !== bundle || !bytecodeVersion || !addons?.evaluateBytecode)
+			return;
+
+		try {
+			const factory = addons.evaluateBytecode(scanned.folder, bytecodeVersion);
+
+			return typeof factory === 'function' ? (factory as PluginFactory) : undefined;
+		} catch (error) {
+			this.logger.warn(`Failed to evaluate the bytecode of ${id}, using its source:`, error);
+
+			return undefined;
+		}
+	}
+
 	protected get entityType() {
 		return 'plugin' as const;
 	}
 
 	protected createContext(entity: PluginEntity): PluginContext {
-		return createPluginContext(entity.data, this.attribution(entity));
+		const context = createPluginContext(entity.data, this.attribution(entity));
+
+		return {
+			...context,
+			dispose() {
+				try {
+					context.dispose();
+				} finally {
+					// Every way a plugin ends disposes its context, a failed start and a throwing stop included.
+					registry.release(entity.id);
+				}
+			},
+		};
 	}
 
 	protected attribution(entity: PluginEntity): AddonAttribution | undefined {

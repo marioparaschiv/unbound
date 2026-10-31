@@ -50,6 +50,18 @@ type UsersFastListModule = {
 	UsersFastList?: ListRender | { render?: ListRender };
 };
 
+type FunctionListModule = { UsersFastList: ListRender };
+
+type ForwardRefList = { render: ListRender };
+
+function isFunctionList(module: UsersFastListModule): module is FunctionListModule {
+	return typeof module.UsersFastList === 'function';
+}
+
+function isForwardRef(list: UsersFastListModule['UsersFastList']): list is ForwardRefList {
+	return typeof list === 'object' && typeof list.render === 'function';
+}
+
 function paintSectionHeaders(props: UserListProps, result: Rendered): Rendered | undefined {
 	const renderHeader = result?.props?.renderSectionHeader;
 
@@ -76,13 +88,13 @@ function patchLoadedUsersFastList(module: UsersFastListModule): () => void {
 
 	if (!ensureModules(feature, { GuildRoleStore })) return () => {};
 
-	if (typeof list === 'function') {
+	if (isFunctionList(module)) {
 		return Patcher.after(module, 'UsersFastList', ({ args: [props], result }) =>
 			paintSectionHeaders(props as UserListProps, result),
 		);
 	}
 
-	if (typeof list?.render === 'function') {
+	if (isForwardRef(list)) {
 		return Patcher.after(list, 'render', ({ args: [props], result }) =>
 			paintSectionHeaders(props as UserListProps, result),
 		);

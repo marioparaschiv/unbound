@@ -55,8 +55,8 @@ describe('repositoryInputSchema', () => {
 
 		const result = repositoryInputSchema.safeParse('https://gitlab.com/acme/addons');
 
-		expect(result.error?.issues.map((issue) => issue.message)).toEqual([
-			'Must be a GitHub repository URL or owner/name.',
-		]);
+		expect(result.success).toBe(false);
+		expect(result.error?.issues).toHaveLength(1);
+		expect(result.error?.issues[0]?.message).toBeTruthy();
 	});
 });

@@ -10,7 +10,7 @@ const EVENT: AuditEvent = {
 	id: 33,
 	kind: 'review.decided',
 	subjectType: 'addon',
-	subjectId: 'unbound.message-link-embeds',
+	subjectId: 'astral.message-link-embeds',
 	subjectName: 'Message Link Embeds',
 	actor: { id: 'staff-1', name: 'Mario', image: null },
 	data: { decision: 'approved', version: '1.0.0' },
@@ -68,7 +68,7 @@ describe('createAuditTelemetry', () => {
 			'audit.actor.id': 'staff-1',
 			'audit.actor.name': 'Mario',
 			'audit.subject.type': 'addon',
-			'audit.subject.id': 'unbound.message-link-embeds',
+			'audit.subject.id': 'astral.message-link-embeds',
 			'audit.subject.name': 'Message Link Embeds',
 			'audit.reason': 'Looks good.',
 			'audit.data': '{"decision":"approved","version":"1.0.0"}',
@@ -86,6 +86,31 @@ describe('createAuditTelemetry', () => {
 		expect(exporter.records[0]?.resource.attributes).toMatchObject({
 			'service.name': 'bot-dev',
 			'deployment.environment.name': 'development',
+		});
+	});
+
+	test('the startup setup leaves NODE_ENV unset, so the bot files as production', async () => {
+		const saved = process.env.NODE_ENV;
+		const exporter = new RecordingExporter();
+
+		delete process.env.NODE_ENV;
+
+		try {
+			await import('~/lib/setup');
+			expect(process.env.NODE_ENV).toBeUndefined();
+
+			const env = otelEnvSchema.parse({ ...process.env });
+			const telemetry = createAuditTelemetry({ env, exporter });
+
+			telemetry.emit(EVENT, 'x');
+			await telemetry.shutdown();
+		} finally {
+			process.env.NODE_ENV = saved;
+		}
+
+		expect(exporter.records[0]?.resource.attributes).toMatchObject({
+			'service.name': 'unbound-discord-bot',
+			'deployment.environment.name': 'production',
 		});
 	});
 

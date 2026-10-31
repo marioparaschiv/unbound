@@ -1,17 +1,28 @@
+import type { ManagerKind } from '@unbound-app/types/addons';
 import { Dimensions, View } from 'react-native';
+import type { ComponentType } from 'react';
 import { useMemo, useState } from 'react';
 
 import { Discord, SafeArea } from '~/api/metro/components';
 import InstallButton from '~/ui/addons/install-button';
-import { ManagerKind } from '~/lib/constants';
 import storage from '~/api/storage';
 
 import ThemesTab from './themes';
 import FontsTab from './fonts';
 import IconsTab from './icons';
 
-/** Maps the active segmented tab index to the manager kind the install button should target. */
-const TAB_KINDS = [ManagerKind.Themes, ManagerKind.Icons, ManagerKind.Fonts];
+type DesignTab = {
+	id: ManagerKind;
+	label: string;
+	Page: ComponentType;
+};
+
+/** The segmented tabs in order; each tab's id is the manager kind its install button targets. */
+const TABS: DesignTab[] = [
+	{ id: 'themes', label: 'Themes', Page: ThemesTab },
+	{ id: 'icons', label: 'Icons', Page: IconsTab },
+	{ id: 'fonts', label: 'Fonts', Page: FontsTab },
+];
 
 /**
  * @description The Design settings page: a segmented Themes / Icons / Fonts control over swipeable
@@ -21,13 +32,10 @@ function DesignPage() {
 	const [tab, setTab] = useState(storage.get('design', 'tab', 0));
 
 	const items = useMemo(
-		() => [
-			{ id: 'themes', label: 'Themes', page: <ThemesTab /> },
-			{ id: 'icons', label: 'Icons', page: <IconsTab /> },
-			{ id: 'fonts', label: 'Fonts', page: <FontsTab /> },
-		],
+		() => TABS.map(({ id, label, Page }) => ({ id, label, page: <Page /> })),
 		[],
 	);
+	const kind = TABS[tab]?.id;
 
 	const state = Discord.useSegmentedControlState({
 		items,
@@ -47,7 +55,7 @@ function DesignPage() {
 				</View>
 				<View style={{ flex: 1 }}>
 					<Discord.SegmentedControlPages state={state} />
-					{tab === 2 ? null : <InstallButton kind={TAB_KINDS[tab]} />}
+					{!kind || kind === 'fonts' ? null : <InstallButton kind={kind} />}
 				</View>
 			</View>
 		</SafeArea.SafeAreaPaddingView>

@@ -1,0 +1,598 @@
+    r10 = r7.__d;
+    r0 = 6304;
+    r9 = [108, 19, 21, 1383, 560, 578, 6302, 4425, 6305, 6616, 4424, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun6305: for(var _fun6305_ip = 0; ; ) switch(_fun6305_ip) {
+case 0:
+            r4 = a1;
+            var _closure0_slot0 = r4;
+            r2 = a5;
+            r3 = a6;
+            var _closure0_slot1 = r3;
+            r1 = ['ref', 'onChangeText'];
+            var _closure0_slot2 = r1;
+            r1 = global;
+            r8 = r1.Object;
+            r7 = r8.defineProperty;
+            r6 = '__esModule';
+            r1 = {'value': true};
+            r1 = r7.bind(r8)(r2, r6, r1);
+            r6 = r3[r0];
+            r0 = undefined;
+            r1 = a2;
+            r1 = r1.bind(r0)(r6);
+            var _closure0_slot3 = r1;
+            r6 = r3[r1];
+            r1 = a3;
+            r1 = r1.bind(r0)(r6);
+            var _closure0_slot4 = r1;
+            r1 = r3[r2];
+            r1 = r4.bind(r0)(r1);
+            r6 = r1.jsx;
+            var _closure0_slot5 = r6;
+            r1 = r1.jsxs;
+            var _closure0_slot6 = r1;
+            r1 = r3[r4];
+            r6 = r4.bind(r0)(r1);
+            r1 = r6.isReactCompilerEnabled;
+            r1 = r1.bind(r6)();
+            if(r1) { _fun6305_ip = 157; continue _fun6305 }
+case 150:
+            r1 = function(a0) { // Original name: BaseTextField, environment: r5
+                _fun38769: for(var _fun38769_ip = 0; ; ) switch(_fun38769_ip) {
+case 0:
+                    r6 = a0;
+                    r15 = r6.ref;
+                    r10 = r6.onChangeText;
+                    var _closure1_slot0 = r10;
+                    r24 = {};
+                    r1 = null;
+                    r22 = Object.assign(Object.create(r1), {'ref': 0, 'onChangeText': 0});
+                    r23 = r6;
+                    r7 = copyDataProperties(r25, r24, r23);
+                    r0 = undefined;
+                    var _closure1_slot1 = r0;
+                    r13 = _closure0_slot0;
+                    r12 = _closure0_slot1;
+                    r4 = r12[r6];
+                    r6 = r13.bind(r0)(r4);
+                    r5 = r6.useInputStyles;
+                    r4 = {'size': null, 'round': null, 'hasLeadingIcon': null};
+                    r9 = r7.size;
+                    r4[0] = r9;
+                    r9 = r7.round;
+                    r4[1] = r9;
+                    r9 = r7.leadingIcon;
+                    r2 = r1 != r9;
+                    r4[2] = r2;
+                    r11 = r5.bind(r6)(r4);
+                    r4 = r12[r7];
+                    r5 = r13.bind(r0)(r4);
+                    r4 = r5.useFocus;
+                    r4 = r4.bind(r5)();
+                    r21 = r4.focusProps;
+                    r6 = r4.isFocused;
+                    r9 = _closure0_slot4;
+                    r4 = r9.useRef;
+                    r14 = r4.bind(r9)(r1);
+                    _closure1_slot1 = r14;
+                    r4 = r7.enableAndroidSanitizedInputWorkaround;
+                    r17 = null;
+                    if(!r4) { _fun38769_ip = 342; continue _fun38769 }
+case 188:
+                    r18 = r7.secureTextEntry;
+                    r16 = r7.keyboardType;
+                    r4 = r7.autoComplete;
+                    if(!(r18 === r0)) { _fun38769_ip = 212; continue _fun38769 }
+case 210:
+                    r18 = false;
+case 212:
+                    if(!(r16 === r0)) { _fun38769_ip = 220; continue _fun38769 }
+case 216:
+                    r16 = 'default';
+case 220:
+                    if(!(r4 === r0)) { _fun38769_ip = 226; continue _fun38769 }
+case 224:
+                    r4 = undefined;
+case 226:
+                    r5 = r12[r3];
+                    r19 = r13.bind(r0)(r5);
+                    r5 = r19.isAndroid;
+                    r19 = r5.bind(r19)();
+                    r5 = 'off';
+                    if(r19) { _fun38769_ip = 255; continue _fun38769 }
+case 252:
+                    r5 = r4;
+case 255:
+                    r4 = {'autoComplete': null, 'secureTextEntry': null, 'keyboardType': null};
+                    r4[0] = r5;
+                    r5 = r12[r3];
+                    r19 = r13.bind(r0)(r5);
+                    r5 = r19.isAndroid;
+                    r5 = r5.bind(r19)();
+                    r2 = !r5;
+                    r5 = !r2;
+                    if(r5) { _fun38769_ip = 300; continue _fun38769 }
+case 297:
+                    r5 = r18;
+case 300:
+                    r4[1] = r5;
+                    r5 = r12[r3];
+                    r18 = r13.bind(r0)(r5);
+                    r5 = r18.isAndroid;
+                    r18 = r5.bind(r18)();
+                    r5 = 'visible-password';
+                    if(r18) { _fun38769_ip = 335; continue _fun38769 }
+case 332:
+                    r5 = r16;
+case 335:
+                    r4[2] = r5;
+                    r17 = r4;
+case 342:
+                    r5 = r9.useCallback;
+                    r4 = new Array(1);
+                    r4[0] = r10;
+                    r3 = function(a0) { // Environment: r3
+                        _fun93249: for(var _fun93249_ip = 0; ; ) switch(_fun93249_ip) {
+case 0:
+                            r3 = a0;
+                            r0 = null;
+                            r2 = r3;
+                            if(!(r0 != r2)) { _fun93249_ip = 43; continue _fun93249 }
+case 12:
+                            r5 = r3.replace;
+                            r4 = ' ';
+                            r1 = /\r\n?|\n/g;
+                            r2 = r5.bind(r3)(r1, r4);
+case 43:
+                            if(!(r2 !== r3)) { _fun93249_ip = 84; continue _fun93249 }
+case 50:
+                            r3 = _closure1_slot1;
+                            r5 = r3.current;
+                            if(!(r5 != r0)) { _fun93249_ip = 84; continue _fun93249 }
+case 63:
+                            r4 = r5.setNativeProps;
+                            r3 = {'text': null};
+                            r3[0] = r2;
+                            r3 = r4.bind(r5)(r3);
+case 84:
+                            r1 = _closure1_slot0;
+                            if(!(r1 != r0)) { _fun93249_ip = 99; continue _fun93249 }
+case 92:
+                            r0 = undefined;
+                            r1 = r1.bind(r0)(r2);
+case 99:
+                            r0 = undefined;
+                            return r0;
+                        }
+                    };
+                    r16 = r5.bind(r9)(r3, r4);
+                    r5 = _closure0_slot6;
+                    r3 = r12[r6];
+                    r3 = r13.bind(r0)(r3);
+                    r4 = r3.InputFieldContainer;
+                    r3 = {};
+                    r24 = r3;
+                    r23 = r7;
+                    r9 = copyDataProperties(r25, r24);
+                    r3['isFocused'] = r6;
+                    r9 = r7.leading;
+                    r6 = new Array(3);
+                    r6[0] = r9;
+                    r10 = _closure0_slot5;
+                    r8 = r12[r8];
+                    r8 = r13.bind(r0)(r8);
+                    r9 = r8.NativeTextInput;
+                    r8 = {};
+                    r24 = r8;
+                    r23 = r17;
+                    r17 = copyDataProperties(r25, r24);
+                    r17 = r12[r9];
+                    r19 = r13.bind(r0)(r17);
+                    r18 = r19.propsForNativeTextInput;
+                    r17 = r12[r10];
+                    r20 = r13.bind(r0)(r17);
+                    r17 = r20.mergeProps;
+                    r17 = r17.bind(r20)(r7, r21);
+                    r23 = r18.bind(r19)(r17);
+                    r24 = r8;
+                    r17 = copyDataProperties(r25, r24);
+                    r21 = r7.value;
+                    r17 = r21;
+                    if(!(r1 != r17)) { _fun38769_ip = 541; continue _fun38769 }
+case 510:
+                    r20 = r21.replace;
+                    r19 = ' ';
+                    r18 = /\r\n?|\n/g;
+                    r17 = r20.bind(r21)(r18, r19);
+case 541:
+                    r8['value'] = r17;
+                    r21 = r7.defaultValue;
+                    r17 = r21;
+                    if(!(r1 != r17)) { _fun38769_ip = 591; continue _fun38769 }
+case 560:
+                    r20 = r21.replace;
+                    r19 = ' ';
+                    r18 = /\r\n?|\n/g;
+                    r17 = r20.bind(r21)(r18, r19);
+case 591:
+                    r8['defaultValue'] = r17;
+                    r8['onChangeText'] = r16;
+                    r12 = r12[r10];
+                    r13 = r13.bind(r0)(r12);
+                    r12 = r13.mergeRefs;
+                    r12 = r12.bind(r13)(r14, r15);
+                    r8['ref'] = r12;
+                    r13 = r11.padding;
+                    r12 = new Array(3);
+                    r12[0] = r13;
+                    r13 = r11.text;
+                    r12[1] = r13;
+                    r13 = r7.inputStyle;
+                    r12[2] = r13;
+                    r8['style'] = r12;
+                    r11 = r11.placeholderText;
+                    r11 = r11.color;
+                    r8['placeholderTextColor'] = r11;
+                    r8 = r10.bind(r0)(r9, r8);
+                    r6[1] = r8;
+                    r7 = r7.trailing;
+                    r6[2] = r7;
+                    r3['children'] = r6;
+                    r3 = r5.bind(r0)(r4, r3);
+                    return r3;
+                }
+            };
+            _fun6305_ip = 162; continue _fun6305;
+case 157:
+            r1 = function(a0) { // Original name: BaseTextField, environment: r5
+                _fun38768: for(var _fun38768_ip = 0; ; ) switch(_fun38768_ip) {
+case 0:
+                    r13 = a0;
+                    r11 = _closure0_slot0;
+                    r4 = _closure0_slot1;
+                    r6 = r4[r5];
+                    r1 = undefined;
+                    r7 = r11.bind(r1)(r6);
+                    r6 = r7.c;
+                    r0 = 23;
+                    r6 = r6.bind(r7)(r0);
+                    r7 = r13.ref;
+                    r12 = r13.onChangeText;
+                    var _closure1_slot0 = r12;
+                    r9 = _closure0_slot3;
+                    r8 = _closure0_slot2;
+                    r8 = r9.bind(r1)(r13, r8);
+                    r9 = r4[r6];
+                    r14 = r11.bind(r1)(r9);
+                    r13 = r14.useInputStyles;
+                    r9 = {'size': null, 'round': null, 'hasLeadingIcon': null};
+                    r15 = r8.size;
+                    r9[0] = r15;
+                    r15 = r8.round;
+                    r9[1] = r15;
+                    r15 = r8.leadingIcon;
+                    r2 = null;
+                    r3 = r2 != r15;
+                    r9[2] = r3;
+                    r17 = r13.bind(r14)(r9);
+                    r9 = r4[r7];
+                    r13 = r11.bind(r1)(r9);
+                    r9 = r13.useFocus;
+                    r9 = r9.bind(r13)();
+                    r22 = r9.focusProps;
+                    r9 = r9.isFocused;
+                    r14 = _closure0_slot4;
+                    r13 = r14.useRef;
+                    r21 = r13.bind(r14)(r2);
+                    var _closure1_slot1 = r21;
+                    r13 = r8.enableAndroidSanitizedInputWorkaround;
+                    r18 = null;
+                    if(!r13) { _fun38768_ip = 354; continue _fun38768 }
+case 200:
+                    r16 = r8.secureTextEntry;
+                    r15 = r8.keyboardType;
+                    r13 = r8.autoComplete;
+                    if(!(r16 === r1)) { _fun38768_ip = 224; continue _fun38768 }
+case 222:
+                    r16 = false;
+case 224:
+                    if(!(r15 === r1)) { _fun38768_ip = 232; continue _fun38768 }
+case 228:
+                    r15 = 'default';
+case 232:
+                    if(!(r13 === r1)) { _fun38768_ip = 238; continue _fun38768 }
+case 236:
+                    r13 = undefined;
+case 238:
+                    r14 = r4[r3];
+                    r19 = r11.bind(r1)(r14);
+                    r14 = r19.isAndroid;
+                    r19 = r14.bind(r19)();
+                    r14 = 'off';
+                    if(r19) { _fun38768_ip = 267; continue _fun38768 }
+case 264:
+                    r14 = r13;
+case 267:
+                    r13 = {'autoComplete': null, 'secureTextEntry': null, 'keyboardType': null};
+                    r13[0] = r14;
+                    r14 = r4[r3];
+                    r19 = r11.bind(r1)(r14);
+                    r14 = r19.isAndroid;
+                    r14 = r14.bind(r19)();
+                    r3 = !r14;
+                    r14 = !r3;
+                    if(r14) { _fun38768_ip = 312; continue _fun38768 }
+case 309:
+                    r14 = r16;
+case 312:
+                    r13[1] = r14;
+                    r14 = r4[r3];
+                    r16 = r11.bind(r1)(r14);
+                    r14 = r16.isAndroid;
+                    r16 = r14.bind(r16)();
+                    r14 = 'visible-password';
+                    if(r16) { _fun38768_ip = 347; continue _fun38768 }
+case 344:
+                    r14 = r15;
+case 347:
+                    r13[2] = r14;
+                    r18 = r13;
+case 354:
+                    r13 = r6[r0];
+                    if(!(r13 === r12)) { _fun38768_ip = 368; continue _fun38768 }
+case 362:
+                    r19 = r6[r1];
+                    _fun38768_ip = 391; continue _fun38768;
+case 368:
+                    r10 = function(a0) { // Original name: p, environment: r10
+                        _fun93248: for(var _fun93248_ip = 0; ; ) switch(_fun93248_ip) {
+case 0:
+                            r3 = a0;
+                            r0 = null;
+                            r2 = r3;
+                            if(!(r0 != r2)) { _fun93248_ip = 43; continue _fun93248 }
+case 12:
+                            r5 = r3.replace;
+                            r4 = ' ';
+                            r1 = /\r\n?|\n/g;
+                            r2 = r5.bind(r3)(r1, r4);
+case 43:
+                            if(!(r2 !== r3)) { _fun93248_ip = 84; continue _fun93248 }
+case 50:
+                            r3 = _closure1_slot1;
+                            r5 = r3.current;
+                            if(!(r5 != r0)) { _fun93248_ip = 84; continue _fun93248 }
+case 63:
+                            r4 = r5.setNativeProps;
+                            r3 = {'text': null};
+                            r3[0] = r2;
+                            r3 = r4.bind(r5)(r3);
+case 84:
+                            r1 = _closure1_slot0;
+                            if(!(r1 != r0)) { _fun93248_ip = 99; continue _fun93248 }
+case 92:
+                            r0 = undefined;
+                            r1 = r1.bind(r0)(r2);
+case 99:
+                            r0 = undefined;
+                            return r0;
+                        }
+                    };
+                    r0 = 0;
+                    r6[r0] = r12;
+                    r0 = 1;
+                    r6[r0] = r10;
+                    r19 = r10;
+case 391:
+                    r10 = r4[r6];
+                    r10 = r11.bind(r1)(r10);
+                    r10 = r10.InputFieldContainer;
+                    r13 = r8.leading;
+                    r12 = r4[r8];
+                    r12 = r11.bind(r1)(r12);
+                    r20 = r12.NativeTextInput;
+                    r12 = r4[r9];
+                    r15 = r11.bind(r1)(r12);
+                    r14 = r15.propsForNativeTextInput;
+                    r12 = r4[r10];
+                    r16 = r11.bind(r1)(r12);
+                    r12 = r16.mergeProps;
+                    r12 = r12.bind(r16)(r8, r22);
+                    r16 = r14.bind(r15)(r12);
+                    r23 = r8.value;
+                    r15 = r23;
+                    if(!(r2 != r15)) { _fun38768_ip = 511; continue _fun38768 }
+case 480:
+                    r22 = r23.replace;
+                    r14 = ' ';
+                    r12 = /\r\n?|\n/g;
+                    r15 = r22.bind(r23)(r12, r14);
+case 511:
+                    r24 = r8.defaultValue;
+                    r14 = r24;
+                    if(!(r2 != r14)) { _fun38768_ip = 555; continue _fun38768 }
+case 524:
+                    r23 = r24.replace;
+                    r22 = ' ';
+                    r12 = /\r\n?|\n/g;
+                    r14 = r23.bind(r24)(r12, r22);
+case 555:
+                    r12 = r6[r2];
+                    if(!(r12 === r7)) { _fun38768_ip = 569; continue _fun38768 }
+case 563:
+                    r12 = r6[r3];
+                    _fun38768_ip = 607; continue _fun38768;
+case 569:
+                    r4 = r4[r10];
+                    r11 = r11.bind(r1)(r4);
+                    r4 = r11.mergeRefs;
+                    r4 = r4.bind(r11)(r21, r7);
+                    r0 = 2;
+                    r6[r0] = r7;
+                    r0 = 3;
+                    r6[r0] = r4;
+                    r12 = r4;
+case 607:
+                    r7 = r6[r4];
+                    r4 = r8.inputStyle;
+                    if(!(r7 === r4)) { _fun38768_ip = 654; continue _fun38768 }
+case 621:
+                    r7 = r6[r5];
+                    r4 = r17.padding;
+                    if(!(r7 === r4)) { _fun38768_ip = 654; continue _fun38768 }
+case 635:
+                    r7 = r6[r6];
+                    r4 = r17.text;
+                    if(!(r7 === r4)) { _fun38768_ip = 654; continue _fun38768 }
+case 648:
+                    r11 = r6[r7];
+                    _fun38768_ip = 735; continue _fun38768;
+case 654:
+                    r7 = r17.padding;
+                    r4 = new Array(3);
+                    r4[0] = r7;
+                    r7 = r17.text;
+                    r4[1] = r7;
+                    r7 = r8.inputStyle;
+                    r4[2] = r7;
+                    r7 = r8.inputStyle;
+                    r0 = 4;
+                    r6[r0] = r7;
+                    r7 = r17.padding;
+                    r0 = 5;
+                    r6[r0] = r7;
+                    r7 = r17.text;
+                    r0 = 6;
+                    r6[r0] = r7;
+                    r0 = 7;
+                    r6[r0] = r4;
+                    r11 = r4;
+case 735:
+                    r4 = r6[r8];
+                    if(!(r4 === r20)) { _fun38768_ip = 827; continue _fun38768 }
+case 743:
+                    r4 = r6[r9];
+                    if(!(r4 === r19)) { _fun38768_ip = 827; continue _fun38768 }
+case 751:
+                    r4 = r6[r10];
+                    if(!(r4 === r18)) { _fun38768_ip = 827; continue _fun38768 }
+case 759:
+                    r7 = r6[r11];
+                    r4 = r17.placeholderText;
+                    r4 = r4.color;
+                    if(!(r7 === r4)) { _fun38768_ip = 827; continue _fun38768 }
+case 778:
+                    r4 = r6[r12];
+                    if(!(r4 === r16)) { _fun38768_ip = 827; continue _fun38768 }
+case 786:
+                    r4 = r6[r13];
+                    if(!(r4 === r15)) { _fun38768_ip = 827; continue _fun38768 }
+case 794:
+                    r4 = r6[r14];
+                    if(!(r4 === r14)) { _fun38768_ip = 827; continue _fun38768 }
+case 802:
+                    r4 = r6[r15];
+                    if(!(r4 === r12)) { _fun38768_ip = 827; continue _fun38768 }
+case 810:
+                    r4 = r6[r16];
+                    if(!(r4 === r11)) { _fun38768_ip = 827; continue _fun38768 }
+case 818:
+                    r7 = r6[r17];
+                    _fun38768_ip = 990; continue _fun38768;
+case 827:
+                    r21 = _closure0_slot5;
+                    r4 = {};
+                    r26 = r4;
+                    r25 = r18;
+                    r22 = copyDataProperties(r27, r26);
+                    r26 = r4;
+                    r25 = r16;
+                    r22 = copyDataProperties(r27, r26);
+                    r4['value'] = r15;
+                    r4['defaultValue'] = r14;
+                    r4['onChangeText'] = r19;
+                    r4['ref'] = r12;
+                    r4['style'] = r11;
+                    r22 = r17.placeholderText;
+                    r22 = r22.color;
+                    r4['placeholderTextColor'] = r22;
+                    r4 = r21.bind(r1)(r20, r4);
+                    r0 = 8;
+                    r6[r0] = r20;
+                    r0 = 9;
+                    r6[r0] = r19;
+                    r0 = 10;
+                    r6[r0] = r18;
+                    r17 = r17.placeholderText;
+                    r17 = r17.color;
+                    r0 = 11;
+                    r6[r0] = r17;
+                    r0 = 12;
+                    r6[r0] = r16;
+                    r0 = 13;
+                    r6[r0] = r15;
+                    r0 = 14;
+                    r6[r0] = r14;
+                    r0 = 15;
+                    r6[r0] = r12;
+                    r0 = 16;
+                    r6[r0] = r11;
+                    r0 = 17;
+                    r6[r0] = r4;
+                    r7 = r4;
+case 990:
+                    r4 = r6[r18];
+                    if(!(r4 === r10)) { _fun38768_ip = 1028; continue _fun38768 }
+case 998:
+                    r4 = r6[r19];
+                    if(!(r4 === r9)) { _fun38768_ip = 1028; continue _fun38768 }
+case 1006:
+                    r4 = r6[r20];
+                    if(!(r4 === r8)) { _fun38768_ip = 1028; continue _fun38768 }
+case 1014:
+                    r4 = r6[r21];
+                    if(!(r4 === r7)) { _fun38768_ip = 1028; continue _fun38768 }
+case 1022:
+                    r4 = r6[r22];
+                    _fun38768_ip = 1122; continue _fun38768;
+case 1028:
+                    r11 = _closure0_slot6;
+                    r5 = {};
+                    r26 = r5;
+                    r25 = r8;
+                    r12 = copyDataProperties(r27, r26);
+                    r5['isFocused'] = r9;
+                    r12 = new Array(3);
+                    r12[0] = r13;
+                    r12[1] = r7;
+                    r13 = r8.trailing;
+                    r12[2] = r13;
+                    r5['children'] = r12;
+                    r5 = r11.bind(r1)(r10, r5);
+                    r0 = 18;
+                    r6[r0] = r10;
+                    r0 = 19;
+                    r6[r0] = r9;
+                    r0 = 20;
+                    r6[r0] = r8;
+                    r0 = 21;
+                    r6[r0] = r7;
+                    r0 = 22;
+                    r6[r0] = r5;
+                    r4 = r5;
+case 1122:
+                    return r4;
+                }
+            };
+case 162:
+            r3 = r3[r11];
+            r5 = r4.bind(r0)(r3);
+            r4 = r5.fileFinishedImporting;
+            r3 = 'design/components/TextField/native/BaseTextField.native.tsx';
+            r3 = r4.bind(r5)(r3);
+            r2['BaseTextField'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { cssColor } from './card-colors';
+import { cssColor } from '~/card-colors';
 
 describe('card colors', () => {
 	test('scales a color by the background opacity', () => {

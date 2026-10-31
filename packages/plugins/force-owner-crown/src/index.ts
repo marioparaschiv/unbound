@@ -1,4 +1,5 @@
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import { patchOwnerCrown } from '~/patches/message-row-data';
@@ -17,4 +18,4 @@ function stop() {
 	dispose = () => {};
 }
 
-export default { start, stop };
+export default { start, stop, selfTest: featureSelfTest };

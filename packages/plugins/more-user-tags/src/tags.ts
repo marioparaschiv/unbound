@@ -20,6 +20,7 @@ export type User = { id: string; bot?: boolean };
 export type Guild = { id: string; ownerId: string };
 export type Channel = { guild_id?: string; permissionOverwrites?: object };
 export type Message = {
+	id?: string;
 	author?: User;
 	channel_id: string;
 	webhookId?: string;

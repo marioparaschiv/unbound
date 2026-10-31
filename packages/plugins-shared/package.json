@@ -6,10 +6,12 @@
 	"type": "module",
 	"exports": {
 		"./components/*": "./src/components/*.tsx",
+		"./*.json": "./src/*.json",
 		"./*": "./src/*.ts"
 	},
 	"scripts": {
-		"test": "bun test"
+		"test": "bun test",
+		"typecheck": "tsc --noEmit -p ."
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",

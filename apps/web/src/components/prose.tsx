@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 
+import PageHeader from '~/components/page-header';
 import Text from '~/components/ui/text';
 
 type ProsePageProps = {
@@ -21,13 +22,8 @@ type ProseChildrenProps = {
 /** A long-form page (terms, privacy, license): a title block, then sections, then a footnote. */
 function ProsePage({ title, description, footer, children }: ProsePageProps) {
 	return (
-		<div className='flex flex-col flex-1 gap-4 md:mx-auto mb-12 px-2 container'>
-			<div className='flex flex-col gap-2'>
-				<Text variant='heading-lg'>{title}</Text>
-				<Text variant='text-md' color='muted'>
-					{description}
-				</Text>
-			</div>
+		<div className='flex flex-col flex-1 gap-6 page-frame'>
+			<PageHeader title={title} description={description} />
 
 			<div className='flex flex-col gap-6 max-w-4xl'>
 				{children}

@@ -1,5 +1,5 @@
 {
-	"id": "unbound.view-icons",
+	"id": "astral.view-icons",
 	"name": "View Icons",
 	"description": "View user avatars, banners, server icons, server banners, and group DM icons.",
 	"authors": [
@@ -24,7 +24,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "ImageIcon",
 	"main": "index.ts"
 }

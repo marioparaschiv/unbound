@@ -29,7 +29,7 @@ inline std::string fromHex(const std::string &encoded)
 
 inline std::vector<Vector> load()
 {
-    std::ifstream file(UNBOUND_CORE_TEST_VECTORS_DIR "/crypto-cross-check.txt");
+    std::ifstream file(ASTRAL_CORE_TEST_VECTORS_DIR "/crypto-cross-check.txt");
     assert(file);
     std::vector<Vector> vectors;
     std::string         line;

@@ -11,13 +11,13 @@ import { and, eq } from 'drizzle-orm';
 import { addon, addonMaintainer, addonVersion, submission, user } from '~/db/schema';
 import { LATEST_VERSION, refreshAddonSummary, toAddonSummary } from '~/lib/addons';
 import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
-import { createGitHubClient, getGitHubToken } from '~/lib/github';
 import { requireSourced, toSubmission } from '~/lib/submissions';
 import { toAddonVersion, writeArtifact } from '~/lib/artifacts';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { recordReviewDecision } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
+import { connectGitHubIfLinked } from '~/lib/github';
 import { hasPermission } from '~/lib/auth/access';
 import type { Transaction } from '~/db/database';
 import { toVersionKey } from '~/lib/version-key';
@@ -192,8 +192,7 @@ async function requirePendingReview(
 // instead of failing.
 async function refetchBundle(ctx: AppContext, row: SourcedSubmissionRow): Promise<Uint8Array> {
 	// The repository is public, so an author whose GitHub link lapsed must not block the approval.
-	const token = await getGitHubToken(ctx, row.authorId).catch(() => undefined);
-	const github = createGitHubClient(ctx.env, token ?? null);
+	const github = await connectGitHubIfLinked(ctx, row.authorId);
 
 	return github.readBlob(row.repository, row.source.bundleBlobSha);
 }
@@ -228,6 +227,32 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
  * @param sha256 The verified SHA-256 of the published bundle.
  * @param publishedAt The approval time.
  * @returns Resolves once the version is live.
+ */
+/**
+ * @description Replaces a live version in place with a rebuild of the same version, as first-party CI
+ * publishes before release: the row takes the new submission, manifest and bundle digest.
+ * @param tx The transaction.
+ * @param row The approved submission carrying the rebuild.
+ * @param sha256 The new bundle's SHA-256.
+ * @param publishedAt When the rebuild went live.
+ */
+export async function replaceVersion(
+	tx: Transaction,
+	row: SubmissionRow,
+	sha256: string,
+	publishedAt: Date,
+): Promise<void> {
+	const { addonId, version, ...values } = toVersionRow(row, sha256, publishedAt);
+
+	await tx
+		.update(addonVersion)
+		.set(values)
+		.where(and(eq(addonVersion.addonId, addonId), eq(addonVersion.version, version)));
+	await refreshAddonSummary(tx, addonId);
+}
+
+/**
+ *
  */
 export async function publishVersion(
 	tx: Transaction,
@@ -355,4 +380,4 @@ export async function reviewSubmission(
 	};
 }
 
-export default { toVersionRow, publishVersion, listReviewQueue, reviewSubmission };
+export default { toVersionRow, publishVersion, replaceVersion, listReviewQueue, reviewSubmission };

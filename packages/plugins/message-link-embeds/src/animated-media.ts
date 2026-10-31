@@ -38,10 +38,11 @@ function animatedGifSource(source: string): string | undefined {
 			return;
 		}
 
-		url.pathname = url.pathname.replace(/\.webp$/, '.gif');
 		url.searchParams.delete('animated');
 
-		return url.toString();
+		const query = url.searchParams.toString();
+
+		return `${url.origin}${url.pathname.replace(/\.webp$/, '.gif')}${query ? `?${query}` : ''}`;
 	} catch {
 		return;
 	}

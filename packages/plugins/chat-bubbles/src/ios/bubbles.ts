@@ -1,0 +1,406 @@
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
+import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
+import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
+import { readRect } from '@unbound-plugins/shared/native/ios/rect';
+import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
+import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
+
+import { messageLayout, type SnapshotNode } from '~/message-layout';
+import { IOSClass, PLUGIN_NAME } from '~/constants';
+import { bubbleFrame, bubbleProblem, frameDrift } from '~/geometry';
+import type { BubbleColor } from '~/style';
+import { currentAppearance } from '~/theme';
+import { messageOwnership } from '~/author';
+
+const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
+const BUBBLE_TAG = 0x0b0b1e;
+const FRAME_TOLERANCE = 2;
+
+function describeBox({
+	x,
+	y,
+	width,
+	height,
+}: {
+	x: number;
+	y: number;
+	width: number;
+	height: number;
+}) {
+	return [x, y, width, height].map((value) => Math.round(value)).join(',');
+}
+const REUSE_SETTLE_MS = 150;
+const MAX_STALE_BUBBLES = 8;
+const TEXT_MEASURE_HEIGHT = 100_000;
+const USES_LINE_FRAGMENT_ORIGIN = 1;
+
+function clearColor(objc: NativeObjCBridge) {
+	return objc.call(objc.getClass('UIColor')!, 'clearColor') as NativeObjectHandle;
+}
+
+async function textWidth(
+	objc: NativeObjCBridge,
+	view: NativeObjectHandle,
+	limit: number,
+): Promise<number> {
+	const text = (await objc.invokeAsync(view, 'attributedText', [])) as NativeObjectHandle | null;
+
+	if (!text) return 0;
+
+	const measured = await objc.invokeAsync(text, 'boundingRectWithSize:options:context:', [
+		objc.struct('CGSize', { width: limit, height: TEXT_MEASURE_HEIGHT }),
+		USES_LINE_FRAGMENT_ORIGIN,
+		null,
+	]);
+
+	return Math.ceil(readRect(measured).width);
+}
+
+type PendingCell = { cell: NativeObjectHandle; onlyWhenResized: boolean };
+
+/**
+ * @description Draws a rounded bubble behind each iOS message, sized to its text and media.
+ * @param objc The Objective-C bridge.
+ * @returns `refresh`, which repaints the bubbles on screen, and `dispose`, which removes them.
+ */
+export function drawIOSBubbles(objc: NativeObjCBridge) {
+	const bubbles = new Map<string, { cell: NativeObjectHandle; bubble: NativeObjectHandle }>();
+	const pending = new Map<string, PendingCell>();
+	const placedSizes = new Map<string, string>();
+	const ownership = new Map<string, boolean>();
+	const problems = new Map<string, string>();
+	const clear = clearColor(objc);
+	let flushing = false;
+	let disposed = false;
+
+	function color({ red, green, blue, alpha }: BubbleColor) {
+		return objc.call(
+			objc.getClass('UIColor')!,
+			'colorWithRed:green:blue:alpha:',
+			red,
+			green,
+			blue,
+			alpha,
+		) as NativeObjectHandle;
+	}
+
+	async function bubbleFor(key: string, cell: NativeObjectHandle): Promise<NativeObjectHandle> {
+		const existing = bubbles.get(key);
+
+		if (existing) return existing.bubble;
+
+		await removeStaleBubbles(cell);
+
+		const bubble = objc.alloc('UIView');
+		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
+
+		bubbles.set(key, { cell, bubble });
+		await objc.invokeAsync(bubble, 'setTag:', [BUBBLE_TAG]);
+		await objc.invokeAsync(layer, 'setMasksToBounds:', [true]);
+		await objc.invokeAsync(bubble, 'setUserInteractionEnabled:', [false]);
+		await objc.invokeAsync(cell, 'insertSubview:atIndex:', [bubble, 0]);
+
+		if (disposed) await objc.invokeAsync(bubble, 'removeFromSuperview', []);
+
+		return bubble;
+	}
+
+	async function removeStaleBubbles(cell: NativeObjectHandle) {
+		for (let removed = 0; removed < MAX_STALE_BUBBLES; removed++) {
+			const stale = (await objc.invokeAsync(cell, 'viewWithTag:', [
+				BUBBLE_TAG,
+			])) as NativeObjectHandle | null;
+
+			if (!stale) return;
+
+			await objc.invokeAsync(stale, 'removeFromSuperview', []);
+		}
+	}
+
+	async function isNested(cell: NativeObjectHandle): Promise<boolean> {
+		const parent = (await objc.invokeAsync(cell, 'superview', [])) as NativeObjectHandle | null;
+
+		if (!parent) return false;
+
+		const [outer] = await objc.findViews(parent, IOSClass.messageCell, {
+			direction: 'ancestors',
+			maxDepth: 24,
+			maxResults: 1,
+			stopAtMatch: true,
+		});
+
+		return Boolean(outer);
+	}
+
+	async function sizeOf(cell: NativeObjectHandle): Promise<string> {
+		const { width, height } = readRect(await objc.invokeAsync(cell, 'bounds', []));
+
+		return `${Math.round(width)}x${Math.round(height)}`;
+	}
+
+	async function isOwn(key: string, cell: NativeObjectHandle): Promise<boolean> {
+		const known = ownership.get(key);
+
+		if (known !== undefined) return known;
+
+		const info = await readNativeMessageInfo(cell, objc).catch(() => undefined);
+
+		const own = messageOwnership(info?.messageId, info?.channelId);
+
+		if (own !== undefined) ownership.set(key, own);
+
+		return own ?? false;
+	}
+
+	async function measure(cell: NativeObjectHandle) {
+		const nodes = (await objc.snapshot(cell, SNAPSHOT)) as SnapshotNode[];
+		const layout = messageLayout(nodes);
+
+		if (!layout) return;
+
+		const textView = layout.text ? nodes[layout.text.index]?.view : undefined;
+		const text = textView
+			? layout.text!.offset + (await textWidth(objc, textView, layout.body.width))
+			: 0;
+		const contentWidth = Math.max(text, layout.footerRight ?? 0, layout.mediaRight);
+		const style = currentAppearance();
+		const frame = bubbleFrame(
+			layout.body,
+			contentWidth,
+			{ horizontal: style.horizontalPadding, vertical: style.verticalPadding },
+			layout.headerBottom,
+		);
+
+		return { frame, contentWidth };
+	}
+
+	async function missingBubbles(): Promise<string[]> {
+		const found: string[] = [];
+
+		for (const cell of await findVisibleCells(objc, IOSClass.messageCell)) {
+			const key = viewKey(objc, cell);
+
+			if (key === undefined || pending.has(key) || (await isNested(cell))) continue;
+
+			const bubble = bubbles.get(key)?.bubble;
+			const shown = bubble && !(await objc.invokeAsync(bubble, 'isHidden', []));
+
+			if (!shown && (await measure(cell).catch(() => undefined))) {
+				found.push(`${key} has no bubble`);
+			}
+		}
+
+		return found;
+	}
+
+	async function staleBubbles(): Promise<string[]> {
+		const found: string[] = [];
+
+		for (const [key, { cell, bubble }] of bubbles) {
+			if (pending.has(key) || (await objc.invokeAsync(bubble, 'isHidden', []))) continue;
+
+			const measured = await measure(cell).catch(() => undefined);
+
+			if (!measured) continue;
+
+			const drawn = readRect(await objc.invokeAsync(bubble, 'frame', []));
+
+			if (frameDrift(drawn, measured.frame) > FRAME_TOLERANCE) {
+				found.push(
+					`${key} does not match its message (drawn ${describeBox(drawn)}, needed ${describeBox(measured.frame)})`,
+				);
+			}
+		}
+
+		return found;
+	}
+
+	async function place(key: string, { cell, onlyWhenResized }: PendingCell) {
+		const size = await sizeOf(cell);
+
+		if (onlyWhenResized && bubbles.has(key) && placedSizes.get(key) === size) return;
+
+		placedSizes.set(key, size);
+		await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]);
+
+		if (await isNested(cell)) return;
+
+		const measured = await measure(cell);
+
+		if (disposed) return;
+
+		if (!measured) {
+			const existing = bubbles.get(key);
+
+			if (existing) await objc.invokeAsync(existing.bubble, 'setHidden:', [true]);
+
+			return;
+		}
+
+		const { frame, contentWidth } = measured;
+		const style = currentAppearance();
+		const problem = bubbleProblem(frame, Number(size.split('x')[0]), contentWidth);
+
+		if (problem) problems.set(key, problem);
+		else problems.delete(key);
+
+		const bubble = await bubbleFor(key, cell);
+		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
+
+		await objc.invokeAsync(layer, 'setCornerRadius:', [style.radius]);
+		const own = await isOwn(key, cell);
+
+		await objc.invokeAsync(bubble, 'setBackgroundColor:', [
+			color(own ? style.ownColor : style.color),
+		]);
+		await objc.invokeAsync(bubble, 'setFrame:', [
+			objc.struct('CGRect', {
+				origin: { x: frame.x, y: frame.y },
+				size: { width: frame.width, height: frame.height },
+			}),
+		]);
+		await objc.invokeAsync(bubble, 'setHidden:', [false]);
+	}
+
+	async function flush() {
+		flushing = true;
+
+		try {
+			while (pending.size && !disposed) {
+				const [key, queued] = pending.entries().next().value!;
+
+				pending.delete(key);
+				await place(key, queued).catch((error) => {
+					if (!isCancellation(error)) {
+						console.error(`[${PLUGIN_NAME}] Failed to place a bubble:`, error);
+					}
+				});
+			}
+		} finally {
+			flushing = false;
+		}
+	}
+
+	function schedule(cell: NativeObjectHandle, onlyWhenResized = false) {
+		const key = viewKey(objc, cell);
+
+		if (disposed || key === undefined) return;
+
+		const queued = pending.get(key);
+
+		pending.set(key, {
+			cell,
+			onlyWhenResized: onlyWhenResized && (queued?.onlyWhenResized ?? true),
+		});
+
+		if (!flushing) setTimeout(() => void flush(), 0);
+	}
+
+	async function clearSeparator(cell: NativeObjectHandle) {
+		if (!disposed)
+			await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]).catch(() => undefined);
+	}
+
+	const hooks = [
+		objc.hook(IOSClass.messageCell, 'setBackgroundColor:', {
+			before: (context) => context.replaceObjectArgument(0, clear),
+		}),
+		objc.hook(IOSClass.separatorCell, 'setBackgroundColor:', {
+			before: (context) => context.replaceObjectArgument(0, clear),
+		}),
+		objc.hook(IOSClass.separatorCell, 'layoutSubviews', {
+			after: ({ self }) => void clearSeparator(self),
+		}),
+		objc.hook(IOSClass.messageCell, 'layoutSubviews', {
+			after: ({ self }) => schedule(self, true),
+		}),
+		...textChangeHooks(),
+		objc.hook(IOSClass.messageCell, 'prepareForReuse', {
+			after: ({ self }) => {
+				const key = viewKey(objc, self);
+
+				if (key === undefined) return;
+
+				placedSizes.delete(key);
+				ownership.delete(key);
+				problems.delete(key);
+				pending.delete(key);
+
+				const bubble = bubbles.get(key)?.bubble;
+
+				if (bubble)
+					void objc.invokeAsync(bubble, 'setHidden:', [true]).catch(() => undefined);
+
+				setTimeout(() => {
+					if (!disposed) schedule(self);
+				}, REUSE_SETTLE_MS);
+			},
+		}),
+	];
+
+	function textChangeHooks() {
+		try {
+			return [
+				objc.hook(IOSClass.attributedText, 'setAttributedText:', {
+					after: ({ self }) => void scheduleOwningCell(self).catch(() => undefined),
+				}),
+			];
+		} catch {
+			return [];
+		}
+	}
+
+	async function scheduleOwningCell(view: NativeObjectHandle) {
+		if (disposed) return;
+
+		const [cell] = await objc.findViews(view, IOSClass.messageCell, {
+			direction: 'ancestors',
+			maxDepth: 24,
+			maxResults: 1,
+			stopAtMatch: true,
+		});
+
+		if (cell) schedule(cell as NativeObjectHandle);
+	}
+
+	async function refresh() {
+		for (const className of [IOSClass.messageCell, IOSClass.separatorCell]) {
+			for (const cell of await findVisibleCells(objc, className)) {
+				await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]);
+
+				if (className === IOSClass.messageCell) schedule(cell);
+			}
+		}
+	}
+
+	void refresh();
+
+	return {
+		placed: () => bubbles.size,
+		settling: () => flushing || pending.size > 0,
+		problems: async () => [
+			...[...problems].map(([key, problem]) => `${key} ${problem}`),
+			...(await staleBubbles()),
+			...(await missingBubbles()),
+		],
+		refresh: () => void refresh(),
+		async dispose() {
+			disposed = true;
+
+			for (const hook of hooks) hook.remove();
+
+			pending.clear();
+			placedSizes.clear();
+			ownership.clear();
+			problems.clear();
+			await Promise.all(
+				[...bubbles.values()].map(({ bubble }) =>
+					objc.invokeAsync(bubble, 'removeFromSuperview', []).catch(() => undefined),
+				),
+			);
+			bubbles.clear();
+		},
+	};
+}
+
+export default { drawIOSBubbles };

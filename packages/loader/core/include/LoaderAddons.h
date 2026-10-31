@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -7,9 +8,11 @@
 #include <string>
 
 namespace loader {
-nlohmann::json scanPlugins(const std::string &documents);
-nlohmann::json scanThemes(const std::string &documents);
-nlohmann::json scanFonts(const std::string &documents);
+nlohmann::json             scanPlugins(const std::string &documents);
+nlohmann::json             scanThemes(const std::string &documents);
+nlohmann::json             scanFonts(const std::string &documents);
+std::optional<std::string> readPluginBytecode(const std::string &documents,
+                                              const std::string &folder, uint32_t bytecodeVersion);
 
 class AddonState
 {

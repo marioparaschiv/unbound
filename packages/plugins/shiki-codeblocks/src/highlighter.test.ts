@@ -1,6 +1,22 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, mock, test } from 'bun:test';
+import type { LanguageRegistration } from 'shiki';
 
-import { createHighlighter } from './highlighter';
+mock.module('@unbound-app/api', () => ({ fs: {} }));
+
+const { createHighlighter: createWithSource } = await import('~/highlighter');
+
+async function localRegistration(name: string): Promise<LanguageRegistration> {
+	const grammar: LanguageRegistration[] = (await import(`@shikijs/langs/${name}`)).default;
+	const registration = grammar.find((language) => language.name === name);
+
+	if (!registration) throw new Error(`${name} is not a local registration`);
+
+	return registration;
+}
+
+function createHighlighter() {
+	return createWithSource(localRegistration);
+}
 
 function text(tokens: { content: string }[] | undefined) {
 	return tokens?.map((token) => token.content).join('');
@@ -49,5 +65,48 @@ describe('createHighlighter', () => {
 			foreground: '#d4d4d4',
 			light: false,
 		});
+	});
+	test('retries a grammar that failed to download before highlighting', async () => {
+		let failures = 1;
+		const flaky = async (name: string) => {
+			if (failures-- > 0) throw new TypeError('Network request failed');
+
+			return localRegistration(name);
+		};
+		const tokens = await createWithSource(flaky, [0]).tokenize(
+			{ code: 'const answer = 42;', language: 'typescript' },
+			'dark-plus',
+			'secondary',
+		);
+		const colors = new Set(tokens?.[0].map((token) => token.color));
+
+		expect(colors.size).toBeGreaterThan(1);
+	});
+
+	test('gives up once its retries run out, so the next block tries again', async () => {
+		let attempts = 0;
+		const offline = async () => {
+			attempts++;
+			throw new TypeError('Network request failed');
+		};
+		const highlighter = createWithSource(offline, [0]);
+		const block = { code: 'const answer = 42;', language: 'typescript' };
+
+		await expect(highlighter.tokenize(block, 'dark-plus', 'secondary')).rejects.toThrow();
+		await expect(highlighter.tokenize(block, 'dark-plus', 'secondary')).rejects.toThrow();
+		expect(attempts).toBe(4);
+	});
+
+	test('shows tabs as four spaces so indentation survives the card', async () => {
+		const tokens = await createHighlighter().tokenize(
+			{
+				code: 'function double(value: number) {\n\treturn value * 2;\n}',
+				language: 'typescript',
+			},
+			'dark-plus',
+			'secondary',
+		);
+
+		expect(text(tokens?.[1])).toBe('    return value * 2;');
 	});
 });

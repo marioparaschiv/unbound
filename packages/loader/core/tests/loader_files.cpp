@@ -23,7 +23,7 @@ static void touch(const std::filesystem::path &path)
 int main()
 {
     const auto parent = makeTemporaryDirectory();
-    const auto root   = parent / "Unbound";
+    const auto root   = parent / "astral";
 
     touch(root / "Themes" / "a" / "manifest.json");
     touch(root / "Themes" / "a" / "nested" / "bundle.json");

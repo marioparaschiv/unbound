@@ -44,7 +44,7 @@ std::optional<std::string> script(const std::string &name)
 jsi::Value evaluate(jsi::Runtime &runtime, const std::string &name)
 {
     const auto source = script(name);
-    return source ? evaluateSource(runtime, *source, "unbound:" + name) : jsi::Value();
+    return source ? evaluateSource(runtime, *source, "astral:" + name) : jsi::Value();
 }
 
 std::optional<jsi::Function> function(jsi::Runtime &runtime, const std::string &name)

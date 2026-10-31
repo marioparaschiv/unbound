@@ -1,5 +1,5 @@
 {
-	"id": "unbound.mention-avatars",
+	"id": "astral.mention-avatars",
 	"name": "Mention Avatars",
 	"description": "Shows user avatars and role icons inside mentions.",
 	"authors": [
@@ -16,7 +16,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "UserCircleIcon",
 	"platforms": ["ios", "android"],
 	"capabilities": [],
@@ -33,6 +33,7 @@
 		"android": [
 			"native.java.classes",
 			"native.java.invoke",
+			"native.java.batch",
 			"native.java.invokeAsync",
 			"native.java.construct",
 			"native.java.fields",

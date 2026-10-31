@@ -24,7 +24,7 @@ function RuleTester({ ruleset }: RuleTesterProps) {
 			{shown ? (
 				<>
 					<Discord.TextInput
-						title='Example message'
+						label='Example message'
 						placeholder='Type a message to test'
 						autoCapitalize='none'
 						autoCorrect={false}

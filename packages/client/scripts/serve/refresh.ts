@@ -17,6 +17,33 @@ type ClientMessage = { type: 'applied'; filename: string } | { type: 'rejected' 
 
 const logger = Logger.create('Serve', 'Refresh');
 
+function isClientMessage(value: unknown): value is ClientMessage {
+	if (typeof value !== 'object' || value === null || !('type' in value)) {
+		return false;
+	}
+
+	if (value.type === 'rejected') {
+		return true;
+	}
+
+	return value.type === 'applied' && 'filename' in value && typeof value.filename === 'string';
+}
+
+/**
+ * @description Parses a device's message.
+ * @param raw The message as received off the socket.
+ * @returns The message, or `undefined` when it is not valid JSON or not a known message.
+ */
+function parseClientMessage(raw: string | Buffer): ClientMessage | undefined {
+	try {
+		const value: unknown = JSON.parse(String(raw));
+
+		return isClientMessage(value) ? value : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 const sockets = new Map<string, ServerWebSocket<SocketData>>();
 
 let tracker: ClientTracker | null = null;
@@ -81,7 +108,13 @@ export const websocket: WebSocketHandler<SocketData> = {
 	 * @param raw The device's message.
 	 */
 	async message(socket, raw) {
-		const message: ClientMessage = JSON.parse(String(raw));
+		const message = parseClientMessage(raw);
+
+		if (!message) {
+			logger.warn('Ignored a malformed message from a device.');
+
+			return;
+		}
 
 		if (message.type === 'applied') {
 			await tracker?.notifyPayloadDelivered(message.filename);

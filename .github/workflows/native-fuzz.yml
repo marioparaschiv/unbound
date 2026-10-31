@@ -28,6 +28,7 @@ jobs:
         permissions:
             contents: read
             issues: write
+            actions: read
         env:
             HERMES_TAG: hermes-v250829098.0.14
             JSI_MINUTES: ${{ (inputs.minutes || '20') }}
@@ -35,6 +36,7 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
+                  persist-credentials: false
                   fetch-depth: 1
 
             - name: Fetch Hermes
@@ -43,22 +45,28 @@ jobs:
             - name: Check Hermes matches the vendored JSI
               run: cmp vendor/react/jsi/jsi.h build/hermes-src/API/jsi/jsi/jsi.h
 
+            - name: Pin Hermes and vendored source times
+              run: find build/hermes-src vendor -exec touch -h -d '2000-01-01T00:00:00Z' {} +
+
             - name: Cache the fuzzer build
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
               with:
                   path: packages/loader/build/libfuzzer
-                  key: native-libfuzzer-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/core/**') }}
-                  restore-keys: native-libfuzzer-${{ runner.os }}-${{ env.HERMES_TAG }}-
+                  key: native-libfuzzer-${{ runner.os }}-${{ env.HERMES_TAG }}-${{ hashFiles('packages/loader/vendor/**') }}
 
-            - name: Restore the corpus
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: packages/loader/build/fuzz-corpus
-                  key: native-fuzz-corpus-${{ github.run_id }}
-                  restore-keys: native-fuzz-corpus-
+            - name: Restore the corpus from the last nightly run
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: |
+                  set -euo pipefail
+                  mkdir -p build/fuzz-corpus
+                  previous=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow native-fuzz.yml --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+                  if [ -z "$previous" ] || ! gh run download "$previous" --repo "$GITHUB_REPOSITORY" --name 'native fuzz corpus' --dir build/fuzz-corpus; then
+                      echo "::notice::No earlier corpus to restore; fuzzing starts from the seeds."
+                  fi
 
             - name: Configure the fuzzers
-              run: cmake -S core -B build/libfuzzer -DUNBOUND_CORE_TESTS=ON -DUNBOUND_CORE_FUZZ=ON -DUNBOUND_CORE_JSI_FUZZ=ON -DUNBOUND_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
+              run: cmake -S core -B build/libfuzzer -DASTRAL_CORE_TESTS=ON -DASTRAL_CORE_FUZZ=ON -DASTRAL_CORE_JSI_FUZZ=ON -DASTRAL_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
 
             - name: Build the fuzzers
               run: cmake --build build/libfuzzer --target native_jsi_libfuzzer native_bridge_libfuzzer -j"$(nproc)"
@@ -66,12 +74,12 @@ jobs:
             - name: Fuzz JS-to-native conversion
               run: |
                   mkdir -p build/fuzz-corpus/jsi build/fuzz-crashes
-                  build/libfuzzer/native_jsi_libfuzzer build/fuzz-corpus/jsi -max_total_time=$(( JSI_MINUTES * 60 )) -max_len=512 -timeout=10 -rss_limit_mb=4096 -artifact_prefix=build/fuzz-crashes/jsi-
+                  build/libfuzzer/native_jsi_libfuzzer build/fuzz-corpus/jsi -max_total_time=$(( JSI_MINUTES * 60 )) -max_len=512 -timeout=10 -rss_limit_mb=4096 -detect_leaks=0 -artifact_prefix=build/fuzz-crashes/jsi-
 
             - name: Fuzz the native parsers
               run: |
                   mkdir -p build/fuzz-corpus/bridge build/fuzz-crashes
-                  build/libfuzzer/native_bridge_libfuzzer build/fuzz-corpus/bridge -max_total_time=600 -max_len=4096 -artifact_prefix=build/fuzz-crashes/bridge-
+                  build/libfuzzer/native_bridge_libfuzzer build/fuzz-corpus/bridge core/tests/fuzz/corpus -max_total_time=600 -max_len=4096 -artifact_prefix=build/fuzz-crashes/bridge-
 
             - name: Minimise the corpus
               run: |
@@ -81,6 +89,14 @@ jobs:
                     rm -rf "build/fuzz-corpus/$corpus" && mv "build/fuzz-corpus/$corpus-min" "build/fuzz-corpus/$corpus"
                   done
                   du -sh build/fuzz-corpus/* | tee -a "$GITHUB_STEP_SUMMARY"
+
+            - name: Keep the corpus for the next run
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: native fuzz corpus
+                  path: packages/loader/build/fuzz-corpus/
+                  if-no-files-found: ignore
+                  retention-days: 30
 
             - name: Upload crashing inputs
               if: failure()

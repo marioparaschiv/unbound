@@ -36,7 +36,7 @@ export const { Users } = metro.stores;
 
 export const Plugins = (api as UnboundRuntime).plugins;
 
-export const textReplaceSettings = storage.getStore('unbound.text-replace');
+export const textReplaceSettings = storage.getStore('astral.text-replace');
 
-export const Patcher = patcher.createPatcher('unbound.preview-message');
-export const PreviewRunning = createRunningFlag('unbound.preview-message');
+export const Patcher = patcher.createPatcher('astral.preview-message');
+export const PreviewRunning = createRunningFlag('astral.preview-message');

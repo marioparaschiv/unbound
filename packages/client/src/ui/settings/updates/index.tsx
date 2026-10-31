@@ -1,8 +1,10 @@
+import { useUnboundSettings } from '~/lib/unbound-settings';
 import type { UpdatesState } from '~/stores/updates';
 import type { PendingUpdate } from '~/lib/updates';
 import { Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
+import { automaticUpdates } from '~/lib/updates';
 import { Messages, format } from '~/api/i18n';
+import { getManager } from '~/managers/utils';
 import UpdatesStore from '~/stores/updates';
 import { Screens } from '~/lib/constants';
 import { Page } from '~/ui/components';
@@ -35,7 +37,11 @@ function UpdateRow({ entry }: UpdateRowProps) {
 	const navigation = Discord.useNavigation();
 	const { update } = entry;
 	const summary = headline(update.changelogs[0]?.changelog ?? update.changelog);
-	const jump = `${entry.from} → ${update.version}`;
+	const held = getManager(entry.kind).getHeldVersion(entry.id);
+	const versions = `${entry.from} → ${update.version}`;
+	const jump = held
+		? `${versions} · ${format('UNBOUND_UPDATES_HELD', { version: held })}`
+		: versions;
 
 	return (
 		<Discord.TableRow
@@ -75,12 +81,14 @@ function UpdateRow({ entry }: UpdateRowProps) {
 
 /** @description Addon and loader updates: check, apply one or all, and read each update's changelog. */
 function UpdatesPage() {
-	const settings = useSettingsStore('unbound');
+	const settings = useUnboundSettings();
 	const state = UpdatesStore((store) => store.state);
 	const { check, applyAll } = UpdatesStore.getState();
 	const updates = state.status === 'ready' ? state.updates : [];
 	const loader = state.status === 'ready' ? state.loader : null;
 	const pending = updates.length > 0 || loader !== null;
+	// Held addons keep their own Update button but sit out Update all.
+	const automatic = automaticUpdates(updates, getManager);
 
 	return (
 		<Page>
@@ -91,9 +99,9 @@ function UpdatesPage() {
 					disabled={state.status === 'checking'}
 					onPress={() => void check()}
 				/>
-				{updates.length ? (
+				{automatic.length ? (
 					<Discord.TableRow
-						label={format('UNBOUND_UPDATES_ALL', { count: updates.length })}
+						label={format('UNBOUND_UPDATES_ALL', { count: automatic.length })}
 						icon={<Discord.TableRowIcon source={Icons.DownloadIcon} />}
 						onPress={() => void applyAll()}
 					/>
@@ -102,7 +110,7 @@ function UpdatesPage() {
 					label={Messages.UNBOUND_UPDATES_AUTO}
 					subLabel={Messages.UNBOUND_UPDATES_AUTO_DESC}
 					icon={<Discord.TableRowIcon source={Icons.ClockIcon} />}
-					value={settings.get('updater.auto', true)}
+					value={settings.get('updater.auto')}
 					onValueChange={(value) => settings.set('updater.auto', value)}
 				/>
 			</Discord.TableRowGroup>

@@ -1,5 +1,5 @@
 {
-	"id": "unbound.expression-tools",
+	"id": "astral.expression-tools",
 	"name": "Expression Tools",
 	"description": "Useful tools for custom emojis and stickers.",
 	"authors": [
@@ -20,7 +20,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "ReactionIcon",
 	"main": "index.ts"
 }

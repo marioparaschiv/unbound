@@ -1,0 +1,724 @@
+    r10 = r7.__d;
+    r0 = 6305;
+    r9 = [19, 17, 6306, 1087, 21, 560, 578, 6307, 5397, 5364, 6308, 4428, 4421, 2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        _fun6306: for(var _fun6306_ip = 0; ; ) switch(_fun6306_ip) {
+case 0:
+            r5 = a1;
+            var _closure0_slot0 = r5;
+            r6 = a2;
+            var _closure0_slot1 = r6;
+            r2 = a5;
+            r4 = a6;
+            var _closure0_slot2 = r4;
+            r3 = global;
+            r9 = r3.Object;
+            r8 = r9.defineProperty;
+            r7 = '__esModule';
+            r3 = {'value': true};
+            r3 = r8.bind(r9)(r2, r7, r3);
+            r7 = r4[r0];
+            r0 = undefined;
+            r3 = a3;
+            r3 = r3.bind(r0)(r7);
+            var _closure0_slot3 = r3;
+            r3 = r4[r1];
+            r3 = r5.bind(r0)(r3);
+            r7 = r3.Pressable;
+            var _closure0_slot4 = r7;
+            r7 = r3.TextInput;
+            var _closure0_slot5 = r7;
+            r7 = r3.StyleSheet;
+            var _closure0_slot6 = r7;
+            r3 = r3.View;
+            var _closure0_slot7 = r3;
+            r3 = r4[r2];
+            r3 = r6.bind(r0)(r3);
+            var _closure0_slot8 = r3;
+            r3 = r4[r3];
+            r3 = r5.bind(r0)(r3);
+            r3 = r3.KeyboardThemes;
+            var _closure0_slot9 = r3;
+            r3 = r4[r4];
+            r3 = r5.bind(r0)(r3);
+            r6 = r3.jsx;
+            var _closure0_slot10 = r6;
+            r3 = r3.jsxs;
+            var _closure0_slot11 = r3;
+            r3 = r4[r5];
+            r6 = r5.bind(r0)(r3);
+            r3 = r6.isReactCompilerEnabled;
+            r3 = r3.bind(r6)();
+            if(r3) { _fun6306_ip = 214; continue _fun6306 }
+case 207:
+            r3 = function(a0) { // Original name: useKeyboardBlurring, environment: r1
+                r5 = a0;
+                var _closure1_slot0 = r5;
+                r4 = _closure0_slot3;
+                r3 = r4.useEffect;
+                r2 = new Array(1);
+                r2[0] = r5;
+                r1 = function() { // Environment: r1
+                    r4 = _closure0_slot0;
+                    r3 = _closure0_slot2;
+                    r3 = r3[r7];
+                    r0 = undefined;
+                    r4 = r4.bind(r0)(r3);
+                    r3 = r4.getKeyboardIsOpen;
+                    r3 = r3.bind(r4)();
+                    var _closure2_slot0 = r3;
+                    r2 = _closure0_slot8;
+                    r1 = function(a0) { // Environment: r1
+                        _fun139577: for(var _fun139577_ip = 0; ; ) switch(_fun139577_ip) {
+case 0:
+                            r1 = a0;
+                            r1 = r1.systemKeyboardOpen;
+                            r3 = _closure2_slot0;
+                            r3 = r1 === r3;
+                            if(r3) { _fun139577_ip = 26; continue _fun139577 }
+case 23:
+                            r3 = r1;
+case 26:
+                            if(r3) { _fun139577_ip = 57; continue _fun139577 }
+case 29:
+                            r3 = _closure1_slot0;
+                            r4 = r3.current;
+                            r0 = null;
+                            if(!(r4 != r0)) { _fun139577_ip = 57; continue _fun139577 }
+case 47:
+                            r3 = r4.blur;
+                            r3 = r3.bind(r4)();
+case 57:
+                            _closure2_slot0 = r1;
+                            r0 = undefined;
+                            return r0;
+                        }
+                    };
+                    r1 = r2.bind(r0)(r1);
+                    return r1;
+                };
+                r1 = r3.bind(r4)(r1, r2);
+                r0 = undefined;
+                return r0;
+            };
+            _fun6306_ip = 219; continue _fun6306;
+case 214:
+            r3 = function(a0) { // Original name: useKeyboardBlurring, environment: r1
+                _fun38770: for(var _fun38770_ip = 0; ; ) switch(_fun38770_ip) {
+case 0:
+                    r8 = a0;
+                    var _closure1_slot0 = r8;
+                    r5 = _closure0_slot0;
+                    r4 = _closure0_slot2;
+                    r4 = r4[r6];
+                    r1 = undefined;
+                    r5 = r5.bind(r1)(r4);
+                    r4 = r5.c;
+                    r0 = 3;
+                    r7 = r4.bind(r5)(r0);
+                    r4 = r7[r0];
+                    if(!(r4 === r8)) { _fun38770_ip = 63; continue _fun38770 }
+case 53:
+                    r5 = r7[r1];
+                    r4 = r7[r2];
+                    _fun38770_ip = 104; continue _fun38770;
+case 63:
+                    r3 = function() { // Original name: u, environment: r3
+                        r4 = _closure0_slot0;
+                        r3 = _closure0_slot2;
+                        r3 = r3[r7];
+                        r0 = undefined;
+                        r4 = r4.bind(r0)(r3);
+                        r3 = r4.getKeyboardIsOpen;
+                        r3 = r3.bind(r4)();
+                        var _closure2_slot0 = r3;
+                        r2 = _closure0_slot8;
+                        r1 = function(a0) { // Environment: r1
+                            _fun139576: for(var _fun139576_ip = 0; ; ) switch(_fun139576_ip) {
+case 0:
+                                r1 = a0;
+                                r1 = r1.systemKeyboardOpen;
+                                r3 = _closure2_slot0;
+                                r3 = r1 === r3;
+                                if(r3) { _fun139576_ip = 26; continue _fun139576 }
+case 23:
+                                r3 = r1;
+case 26:
+                                if(r3) { _fun139576_ip = 57; continue _fun139576 }
+case 29:
+                                r3 = _closure1_slot0;
+                                r4 = r3.current;
+                                r0 = null;
+                                if(!(r4 != r0)) { _fun139576_ip = 57; continue _fun139576 }
+case 47:
+                                r3 = r4.blur;
+                                r3 = r3.bind(r4)();
+case 57:
+                                _closure2_slot0 = r1;
+                                r0 = undefined;
+                                return r0;
+                            }
+                        };
+                        r1 = r2.bind(r0)(r1);
+                        return r1;
+                    };
+                    r6 = new Array(1);
+                    r6[0] = r8;
+                    r0 = 0;
+                    r7[r0] = r8;
+                    r0 = 1;
+                    r7[r0] = r3;
+                    r0 = 2;
+                    r7[r0] = r6;
+                    r4 = r6;
+                    r5 = r3;
+case 104:
+                    r3 = _closure0_slot3;
+                    r2 = r3.useEffect;
+                    r2 = r2.bind(r3)(r5, r4);
+                    return r1;
+                }
+            };
+case 219:
+            var _closure0_slot12 = r3;
+            r6 = r4[r5];
+            r7 = r5.bind(r0)(r6);
+            r6 = r7.isReactCompilerEnabled;
+            r6 = r6.bind(r7)();
+            if(r6) { _fun6306_ip = 251; continue _fun6306 }
+case 244:
+            r6 = function(a0, a1) { // Original name: useControlledValueProps, environment: r1
+                r3 = a0;
+                r8 = a1;
+                var _closure1_slot0 = r8;
+                r7 = r3.value;
+                var _closure1_slot1 = r7;
+                r3 = r3.defaultValue;
+                var _closure1_slot2 = r3;
+                r6 = _closure0_slot3;
+                r5 = r6.useEffect;
+                r4 = new Array(3);
+                r4[0] = r8;
+                r4[1] = r7;
+                r4[2] = r3;
+                r3 = function() { // Environment: r1
+                    _fun93254: for(var _fun93254_ip = 0; ; ) switch(_fun93254_ip) {
+case 0:
+                        r2 = _closure1_slot0;
+                        r3 = r2.current;
+                        r0 = null;
+                        if(!(r3 != r0)) { _fun93254_ip = 51; continue _fun93254 }
+case 18:
+                        r2 = r3.setNativeProps;
+                        r4 = _closure1_slot1;
+                        if(!(r4 == r0)) { _fun93254_ip = 36; continue _fun93254 }
+case 32:
+                        r4 = _closure1_slot2;
+case 36:
+                        r1 = {'text': null};
+                        r1[0] = r4;
+                        r1 = r2.bind(r3)(r1);
+case 51:
+                        r0 = undefined;
+                        return r0;
+                    }
+                };
+                r3 = r5.bind(r6)(r3, r4);
+                r3 = _closure0_slot0;
+                r2 = _closure0_slot2;
+                r2 = r2[r8];
+                r0 = undefined;
+                r3 = r3.bind(r0)(r2);
+                r2 = r3.useMountLayoutEffect;
+                r1 = function() { // Environment: r1
+                    _fun93255: for(var _fun93255_ip = 0; ; ) switch(_fun93255_ip) {
+case 0:
+                        r1 = _closure1_slot0;
+                        r3 = r1.current;
+                        r0 = null;
+                        if(!(r3 != r0)) { _fun93255_ip = 43; continue _fun93255 }
+case 18:
+                        r2 = r3.setNativeProps;
+                        r1 = {'text': null};
+                        r4 = _closure1_slot1;
+                        r1[0] = r4;
+                        r1 = r2.bind(r3)(r1);
+case 43:
+                        r0 = undefined;
+                        return r0;
+                    }
+                };
+                r1 = r2.bind(r3)(r1);
+                r1 = {'value': undefined, 'defaultValue': undefined};
+                return r1;
+            };
+            _fun6306_ip = 256; continue _fun6306;
+case 251:
+            r6 = function(a0, a1) { // Original name: useControlledValueProps, environment: r1
+                _fun38772: for(var _fun38772_ip = 0; ; ) switch(_fun38772_ip) {
+case 0:
+                    r9 = a0;
+                    r8 = a1;
+                    var _closure1_slot0 = r8;
+                    r3 = _closure0_slot0;
+                    r2 = _closure0_slot2;
+                    r4 = r2[r6];
+                    r1 = undefined;
+                    r7 = r3.bind(r1)(r4);
+                    r4 = r7.c;
+                    r0 = 9;
+                    r4 = r4.bind(r7)(r0);
+                    r7 = r9.value;
+                    var _closure1_slot1 = r7;
+                    r13 = r9.defaultValue;
+                    var _closure1_slot2 = r13;
+                    r9 = r4[r0];
+                    if(!(r9 === r13)) { _fun38772_ip = 104; continue _fun38772 }
+case 78:
+                    r9 = r4[r1];
+                    if(!(r9 === r8)) { _fun38772_ip = 104; continue _fun38772 }
+case 86:
+                    r9 = r4[r2];
+                    if(!(r9 === r7)) { _fun38772_ip = 104; continue _fun38772 }
+case 94:
+                    r11 = r4[r3];
+                    r10 = r4[r4];
+                    _fun38772_ip = 167; continue _fun38772;
+case 104:
+                    r9 = function() { // Original name: s, environment: r6
+                        _fun93252: for(var _fun93252_ip = 0; ; ) switch(_fun93252_ip) {
+case 0:
+                            r2 = _closure1_slot0;
+                            r3 = r2.current;
+                            r0 = null;
+                            if(!(r3 != r0)) { _fun93252_ip = 51; continue _fun93252 }
+case 18:
+                            r2 = r3.setNativeProps;
+                            r4 = _closure1_slot1;
+                            if(!(r4 == r0)) { _fun93252_ip = 36; continue _fun93252 }
+case 32:
+                            r4 = _closure1_slot2;
+case 36:
+                            r1 = {'text': null};
+                            r1[0] = r4;
+                            r1 = r2.bind(r3)(r1);
+case 51:
+                            r0 = undefined;
+                            return r0;
+                        }
+                    };
+                    r12 = new Array(3);
+                    r12[0] = r8;
+                    r12[1] = r7;
+                    r12[2] = r13;
+                    r0 = 0;
+                    r4[r0] = r13;
+                    r0 = 1;
+                    r4[r0] = r8;
+                    r0 = 2;
+                    r4[r0] = r7;
+                    r0 = 3;
+                    r4[r0] = r9;
+                    r0 = 4;
+                    r4[r0] = r12;
+                    r10 = r12;
+                    r11 = r9;
+case 167:
+                    r9 = _closure0_slot3;
+                    r5 = r9.useEffect;
+                    r5 = r5.bind(r9)(r11, r10);
+                    r5 = r4[r5];
+                    if(!(r5 === r8)) { _fun38772_ip = 204; continue _fun38772 }
+case 190:
+                    r5 = r4[r6];
+                    if(!(r5 === r7)) { _fun38772_ip = 204; continue _fun38772 }
+case 198:
+                    r5 = r4[r7];
+                    _fun38772_ip = 235; continue _fun38772;
+case 204:
+                    r6 = function() { // Original name: l, environment: r6
+                        _fun93253: for(var _fun93253_ip = 0; ; ) switch(_fun93253_ip) {
+case 0:
+                            r1 = _closure1_slot0;
+                            r3 = r1.current;
+                            r0 = null;
+                            if(!(r3 != r0)) { _fun93253_ip = 43; continue _fun93253 }
+case 18:
+                            r2 = r3.setNativeProps;
+                            r1 = {'text': null};
+                            r4 = _closure1_slot1;
+                            r1[0] = r4;
+                            r1 = r2.bind(r3)(r1);
+case 43:
+                            r0 = undefined;
+                            return r0;
+                        }
+                    };
+                    r0 = 5;
+                    r4[r0] = r8;
+                    r0 = 6;
+                    r4[r0] = r7;
+                    r0 = 7;
+                    r4[r0] = r6;
+                    r5 = r6;
+case 235:
+                    r2 = r2[r8];
+                    r3 = r3.bind(r1)(r2);
+                    r2 = r3.useMountLayoutEffect;
+                    r2 = r2.bind(r3)(r5);
+                    r3 = r4[r8];
+                    r2 = global;
+                    r6 = r2.Symbol;
+                    r5 = r6.for;
+                    r2 = 'react.memo_cache_sentinel';
+                    r2 = r5.bind(r6)(r2);
+                    if(!(r3 !== r2)) { _fun38772_ip = 293; continue _fun38772 }
+case 287:
+                    r2 = r4[r8];
+                    _fun38772_ip = 313; continue _fun38772;
+case 293:
+                    r3 = {'value': undefined, 'defaultValue': undefined};
+                    r0 = 8;
+                    r4[r0] = r3;
+                    r2 = r3;
+case 313:
+                    return r2;
+                }
+            };
+case 256:
+            var _closure0_slot13 = r6;
+            r6 = r4[r5];
+            r7 = r5.bind(r0)(r6);
+            r6 = r7.isReactCompilerEnabled;
+            r6 = r6.bind(r7)();
+            if(r6) { _fun6306_ip = 288; continue _fun6306 }
+case 281:
+            r6 = function(a0) { // Original name: usePanGestureWrapper, environment: r1
+                r3 = a0;
+                var _closure1_slot0 = r3;
+                r5 = _closure0_slot0;
+                r1 = _closure0_slot2;
+                r1 = r1[r9];
+                r0 = undefined;
+                r5 = r5.bind(r0)(r1);
+                r1 = r5.useIsScreenReaderEnabled;
+                r1 = r1.bind(r5)();
+                var _closure1_slot1 = r1;
+                r5 = _closure0_slot3;
+                r6 = r5.useCallback;
+                r4 = new Array(1);
+                r4[0] = r3;
+                r3 = function() { // Environment: r2
+                    _fun93258: for(var _fun93258_ip = 0; ; ) switch(_fun93258_ip) {
+case 0:
+                        r1 = _closure1_slot0;
+                        r3 = r1.current;
+                        r0 = null;
+                        r0 = r3 == r0;
+                        r1 = undefined;
+                        if(r0) { _fun93258_ip = 33; continue _fun93258 }
+case 23:
+                        r2 = r3.focus;
+                        r1 = r2.bind(r3)();
+case 33:
+                        return r1;
+                    }
+                };
+                r3 = r6.bind(r5)(r3, r4);
+                var _closure1_slot2 = r3;
+                r4 = r5.useMemo;
+                r3 = new Array(1);
+                r3[0] = r1;
+                r1 = function() { // Environment: r2
+                    _fun93259: for(var _fun93259_ip = 0; ; ) switch(_fun93259_ip) {
+case 0:
+                        r0 = {};
+                        r1 = _closure0_slot6;
+                        r3 = r1.absoluteFillObject;
+                        r4 = r0;
+                        r1 = copyDataProperties(r5, r4);
+                        r2 = _closure1_slot1;
+                        r1 = 'flex';
+                        if(!r2) { _fun93259_ip = 40; continue _fun93259 }
+case 36:
+                        r1 = 'none';
+case 40:
+                        r0['display'] = r1;
+                        return r0;
+                    }
+                };
+                r1 = r4.bind(r5)(r1, r3);
+                var _closure1_slot3 = r1;
+                r1 = {'panGestureWrapper': null};
+                r2 = function(a0) { // Original name: panGestureWrapper, environment: r2
+                    _fun93260: for(var _fun93260_ip = 0; ; ) switch(_fun93260_ip) {
+case 0:
+                        r4 = _closure0_slot11;
+                        r3 = _closure0_slot7;
+                        r2 = {'style': null, 'children': null};
+                        r5 = {'flexBasis': 0, 'flexGrow': 1};
+                        r2[0] = r5;
+                        r5 = new Array(2);
+                        r7 = a0;
+                        r5[0] = r7;
+                        r8 = _closure0_slot10;
+                        r7 = _closure0_slot4;
+                        r6 = _closure1_slot0;
+                        r11 = r6.current;
+                        r0 = null;
+                        r1 = r11 == r0;
+                        r0 = undefined;
+                        r6 = undefined;
+                        if(r1) { _fun93260_ip = 89; continue _fun93260 }
+case 79:
+                        r10 = r11.isFocused;
+                        r6 = r10.bind(r11)();
+case 89:
+                        r10 = 'auto';
+                        if(!r6) { _fun93260_ip = 100; continue _fun93260 }
+case 96:
+                        r10 = 'none';
+case 100:
+                        r6 = {'pointerEvents': null, 'onPress': null, 'style': null};
+                        r6[0] = r10;
+                        r10 = _closure1_slot2;
+                        r6[1] = r10;
+                        r9 = _closure1_slot3;
+                        r6[2] = r9;
+                        r6 = r8.bind(r0)(r7, r6);
+                        r5[1] = r6;
+                        r2[1] = r5;
+                        r2 = r4.bind(r0)(r3, r2);
+                        return r2;
+                    }
+                };
+                r1[0] = r2;
+                return r1;
+            };
+            _fun6306_ip = 293; continue _fun6306;
+case 288:
+            r6 = function(a0) { // Original name: usePanGestureWrapper, environment: r1
+                _fun38774: for(var _fun38774_ip = 0; ; ) switch(_fun38774_ip) {
+case 0:
+                    r7 = a0;
+                    var _closure1_slot0 = r7;
+                    r3 = _closure0_slot0;
+                    r2 = _closure0_slot2;
+                    r4 = r2[r6];
+                    r1 = undefined;
+                    r5 = r3.bind(r1)(r4);
+                    r4 = r5.c;
+                    r0 = 8;
+                    r4 = r4.bind(r5)(r0);
+                    r2 = r2[r9];
+                    r3 = r3.bind(r1)(r2);
+                    r2 = r3.useIsScreenReaderEnabled;
+                    r2 = r2.bind(r3)();
+                    r3 = r4[r0];
+                    if(!(r3 === r7)) { _fun38774_ip = 78; continue _fun38774 }
+case 72:
+                    r6 = r4[r1];
+                    _fun38774_ip = 101; continue _fun38774;
+case 78:
+                    r3 = function() { // Original name: n, environment: r8
+                        _fun93256: for(var _fun93256_ip = 0; ; ) switch(_fun93256_ip) {
+case 0:
+                            r1 = _closure1_slot0;
+                            r3 = r1.current;
+                            r0 = null;
+                            r0 = r3 == r0;
+                            r1 = undefined;
+                            if(r0) { _fun93256_ip = 33; continue _fun93256 }
+case 23:
+                            r2 = r3.focus;
+                            r1 = r2.bind(r3)();
+case 33:
+                            return r1;
+                        }
+                    };
+                    r0 = 0;
+                    r4[r0] = r7;
+                    r0 = 1;
+                    r4[r0] = r3;
+                    r6 = r3;
+case 101:
+                    var _closure1_slot1 = r6;
+                    r3 = 'flex';
+                    if(!r2) { _fun38774_ip = 116; continue _fun38774 }
+case 112:
+                    r3 = 'none';
+case 116:
+                    r2 = r4[r2];
+                    if(!(r2 === r3)) { _fun38774_ip = 130; continue _fun38774 }
+case 124:
+                    r5 = r4[r3];
+                    _fun38774_ip = 172; continue _fun38774;
+case 130:
+                    r2 = {};
+                    r9 = _closure0_slot6;
+                    r10 = r9.absoluteFillObject;
+                    r11 = r2;
+                    r9 = copyDataProperties(r12, r11);
+                    r2['display'] = r3;
+                    r0 = 2;
+                    r4[r0] = r3;
+                    r0 = 3;
+                    r4[r0] = r2;
+                    r5 = r2;
+case 172:
+                    var _closure1_slot2 = r5;
+                    r2 = r4[r4];
+                    if(!(r2 === r7)) { _fun38774_ip = 206; continue _fun38774 }
+case 184:
+                    r2 = r4[r5];
+                    if(!(r2 === r6)) { _fun38774_ip = 206; continue _fun38774 }
+case 192:
+                    r2 = r4[r6];
+                    if(!(r2 === r5)) { _fun38774_ip = 206; continue _fun38774 }
+case 200:
+                    r2 = r4[r7];
+                    _fun38774_ip = 254; continue _fun38774;
+case 206:
+                    r3 = {'panGestureWrapper': null};
+                    r8 = function(a0) { // Original name: panGestureWrapper, environment: r8
+                        _fun93257: for(var _fun93257_ip = 0; ; ) switch(_fun93257_ip) {
+case 0:
+                            r4 = _closure0_slot11;
+                            r3 = _closure0_slot7;
+                            r2 = {'style': null, 'children': null};
+                            r5 = {'flexBasis': 0, 'flexGrow': 1};
+                            r2[0] = r5;
+                            r5 = new Array(2);
+                            r7 = a0;
+                            r5[0] = r7;
+                            r8 = _closure0_slot10;
+                            r7 = _closure0_slot4;
+                            r6 = _closure1_slot0;
+                            r11 = r6.current;
+                            r0 = null;
+                            r1 = r11 == r0;
+                            r0 = undefined;
+                            r6 = undefined;
+                            if(r1) { _fun93257_ip = 89; continue _fun93257 }
+case 79:
+                            r10 = r11.isFocused;
+                            r6 = r10.bind(r11)();
+case 89:
+                            r10 = 'auto';
+                            if(!r6) { _fun93257_ip = 100; continue _fun93257 }
+case 96:
+                            r10 = 'none';
+case 100:
+                            r6 = {'pointerEvents': null, 'onPress': null, 'style': null};
+                            r6[0] = r10;
+                            r10 = _closure1_slot1;
+                            r6[1] = r10;
+                            r9 = _closure1_slot2;
+                            r6[2] = r9;
+                            r6 = r8.bind(r0)(r7, r6);
+                            r5[1] = r6;
+                            r2[1] = r5;
+                            r2 = r4.bind(r0)(r3, r2);
+                            return r2;
+                        }
+                    };
+                    r3[0] = r8;
+                    r0 = 4;
+                    r4[r0] = r7;
+                    r0 = 5;
+                    r4[r0] = r6;
+                    r0 = 6;
+                    r4[r0] = r5;
+                    r0 = 7;
+                    r4[r0] = r3;
+                    r2 = r3;
+case 254:
+                    return r2;
+                }
+            };
+case 293:
+            var _closure0_slot14 = r6;
+            r4 = r4[r13];
+            r6 = r5.bind(r0)(r4);
+            r5 = r6.fileFinishedImporting;
+            r4 = 'design/components/Input/native/NativeTextInput.native.tsx';
+            r4 = r5.bind(r6)(r4);
+            r2['useKeyboardBlurring'] = r3;
+            r1 = function(a0) { // Original name: TextInput, environment: r1
+                _fun38776: for(var _fun38776_ip = 0; ; ) switch(_fun38776_ip) {
+case 0:
+                    r5 = a0;
+                    r10 = r5.ref;
+                    r17 = {};
+                    r1 = null;
+                    r15 = Object.assign(Object.create(r1), {'ref': 0});
+                    r16 = r5;
+                    r2 = copyDataProperties(r18, r17, r16);
+                    r5 = _closure0_slot3;
+                    r4 = r5.useRef;
+                    r9 = r4.bind(r5)(r1);
+                    r4 = _closure0_slot12;
+                    r0 = undefined;
+                    r4 = r4.bind(r0)(r9);
+                    r5 = _closure0_slot1;
+                    r7 = _closure0_slot2;
+                    r4 = r7[r10];
+                    r4 = r5.bind(r0)(r4);
+                    r14 = r4.bind(r0)(r2);
+                    r4 = _closure0_slot13;
+                    r13 = r4.bind(r0)(r2, r9);
+                    r4 = _closure0_slot14;
+                    r4 = r4.bind(r0)(r9);
+                    r4 = r4.panGestureWrapper;
+                    r8 = _closure0_slot0;
+                    r5 = r7[r11];
+                    r6 = r8.bind(r0)(r5);
+                    r5 = r6.useThemeContext;
+                    r5 = r5.bind(r6)();
+                    r11 = r5.theme;
+                    r5 = r2.keyboardAppearance;
+                    if(!(r1 == r5)) { _fun38776_ip = 191; continue _fun38776 }
+case 144:
+                    r5 = r7[r12];
+                    r6 = r8.bind(r0)(r5);
+                    r5 = r6.isThemeDark;
+                    r5 = r5.bind(r6)(r11);
+                    r6 = _closure0_slot9;
+                    if(r5) { _fun38776_ip = 179; continue _fun38776 }
+case 171:
+                    r5 = r6.LIGHT;
+                    _fun38776_ip = 185; continue _fun38776;
+case 179:
+                    r5 = r6.DARK;
+case 185:
+                    r2['keyboardAppearance'] = r5;
+case 191:
+                    r6 = _closure0_slot10;
+                    r5 = _closure0_slot5;
+                    r3 = {};
+                    r11 = r7[r12];
+                    r12 = r8.bind(r0)(r11);
+                    r11 = r12.mergeProps;
+                    r16 = r11.bind(r12)(r2, r14, r13);
+                    r17 = r3;
+                    r11 = copyDataProperties(r18, r17);
+                    r7 = r7[r12];
+                    r8 = r8.bind(r0)(r7);
+                    r7 = r8.mergeRefs;
+                    r7 = r7.bind(r8)(r9, r10);
+                    r3['ref'] = r7;
+                    r3 = r6.bind(r0)(r5, r3);
+                    r5 = r2.multiline;
+                    r2 = r3;
+                    if(r5) { _fun38776_ip = 280; continue _fun38776 }
+case 275:
+                    r2 = r4.bind(r0)(r3);
+case 280:
+                    return r2;
+                }
+            };
+            r2['NativeTextInput'] = r1;
+            return r0;
+        }
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

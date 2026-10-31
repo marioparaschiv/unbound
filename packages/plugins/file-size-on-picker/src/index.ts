@@ -1,5 +1,6 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { createAndroidFileSizes } from '~/android/file-sizes';
@@ -34,4 +35,4 @@ function stop() {
 	dispose = () => {};
 }
 
-export default { start, stop };
+export default { start, stop, selfTest: featureSelfTest };

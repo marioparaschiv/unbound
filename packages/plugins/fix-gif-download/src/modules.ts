@@ -35,7 +35,7 @@ export const MediaTypesFile: MediaTypesModule = metro.findByFilePath(
 	{ lazy: true, interop: false },
 );
 
-export const Patcher = patcher.createPatcher('unbound.fix-gif-download');
+export const Patcher = patcher.createPatcher('astral.fix-gif-download');
 
 // Discord's media manager, which saves media to the photo library, preferring the module with both download methods.
 export const MediaManagerFilters = [

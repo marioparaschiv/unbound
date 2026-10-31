@@ -1,8 +1,8 @@
 import type { AddonType, ListedAddon } from '@unbound-app/contracts/addons';
 import type { UnboundLink } from '@unbound-app/contracts/links';
+import type { ManagerKind } from '@unbound-app/types/addons';
 
 import type { MarketplaceState } from '~/lib/catalog';
-import type { ManagerKind } from '~/lib/constants';
 import { getInstallStatus } from '~/lib/catalog';
 
 export type LinkTargets = {

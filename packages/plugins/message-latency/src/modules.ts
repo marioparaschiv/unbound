@@ -10,5 +10,5 @@ export const Tooltips = metro.findByProps('TooltipArrowDirections', 'TooltipArro
 
 export const MessageRowDataFilter = metro.filters.byProps('generateMessageRowData');
 
-export const settings = storage.getStore('unbound.message-latency');
-export const Patcher = patcher.createPatcher('unbound.message-latency');
+export const settings = storage.getStore('astral.message-latency');
+export const Patcher = patcher.createPatcher('astral.message-latency');

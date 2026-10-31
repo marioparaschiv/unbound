@@ -1,4 +1,8 @@
-import { parseMessage } from '@unbound-app/debugger-protocol';
+import {
+	CONTROLLER_ENDPOINT_MARKER,
+	parseMessage,
+	type DeviceInfo,
+} from '@unbound-app/debugger-protocol';
 import { terminal, stripEscapeSequences } from 'terminal-kit';
 import os from 'node:os';
 
@@ -14,7 +18,7 @@ export const state: {
 	isInitialized: false,
 };
 
-export const MESSAGE_LEVELS = {
+const MESSAGE_LEVELS = {
 	1: terminal.gray,
 	2: terminal.yellow,
 	3: terminal.red,
@@ -37,7 +41,27 @@ const SYSTEM_COLORS = {
  * @param text The line to print (the glyph is prepended and a trailing newline added).
  */
 function system(color: keyof typeof SYSTEM_COLORS, text: string) {
-	terminal.bold.colorRgbHex(SYSTEM_COLORS[color], `${SYSTEM_GLYPH} ${text}\n`);
+	terminal.bold.colorRgbHex(SYSTEM_COLORS[color], `${timestamp()} ${SYSTEM_GLYPH} ${text}\n`);
+}
+
+/**
+ * @description Formats the current local time for the start of a bridge log line.
+ * @param now The moment to format.
+ * @returns The time as `HH:MM:SS.mmm`.
+ */
+export function timestamp(now = new Date()): string {
+	const pad = (value: number, width = 2) => String(value).padStart(width, '0');
+
+	return `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(now.getMilliseconds(), 3)}`;
+}
+
+/**
+ * @description Describes a device from its hello for the bridge log.
+ * @param device What the device reported.
+ * @returns A one-line summary such as `ios, Discord 351.0, loader 1.0.0, client 0.9.0`.
+ */
+export function describeDevice(device: DeviceInfo): string {
+	return `${device.platform}, Discord ${device.discordVersion}, loader ${device.loaderVersion}, client ${device.clientVersion}`;
 }
 
 /**
@@ -65,17 +89,10 @@ export function setupWebSocket() {
 
 			// Controllers (the MCP server, and any future tooling) attach with `?mcp`. Any number may
 			// share the one device, so they're never rejected for being "busy".
-			if (url.searchParams.has('mcp')) {
+			if (url.searchParams.has(CONTROLLER_ENDPOINT_MARKER)) {
 				server.upgrade(request, { data: { role: 'controller' } });
 
 				return;
-			}
-
-			// The device is single: a second one would make eval routing ambiguous.
-			if (session.state.device) {
-				return new Response(JSON.stringify({ error: 'A device is already connected.' }), {
-					status: 503,
-				});
 			}
 
 			server.upgrade(request, { data: { role: 'device' } });
@@ -105,7 +122,9 @@ export function setupWebSocket() {
 					return;
 				}
 
-				handleDeviceMessage(message);
+				if (ws === session.state.device) {
+					handleDeviceMessage(message);
+				}
 			},
 			close(ws) {
 				if (ws.data.role === 'controller') {
@@ -128,7 +147,9 @@ export function setupWebSocket() {
 		abortCurrentReplInput({ deletePrompt: true });
 		// The client colours its own log lines, so strip the embedded ANSI — the level colour below is
 		// the terminal's, and the raw escapes would otherwise render as literal `[...` noise.
-		MESSAGE_LEVELS[log.level](`« ${formatLog(stripEscapeSequences(log.message))}\n`);
+		MESSAGE_LEVELS[log.level](
+			`${timestamp()} « ${formatLog(stripEscapeSequences(log.message))}\n`,
+		);
 		takeReplInput();
 	});
 
@@ -136,7 +157,7 @@ export function setupWebSocket() {
 	// `[mcp]`: results come from the device and logs are ambient, so neither is MCP-originated.
 	session.onControllerEval((code) => {
 		abortCurrentReplInput({ deletePrompt: true });
-		terminal.magenta(`» [mcp] ${code}\n`);
+		terminal.magenta(`${timestamp()} » [mcp] ${code}\n`);
 		takeReplInput();
 	});
 
@@ -144,11 +165,19 @@ export function setupWebSocket() {
 		abortCurrentReplInput({ deletePrompt: true });
 
 		if (result.ok) {
-			terminal.gray(`« ${result.value}\n`);
+			terminal.gray(`${timestamp()} « ${result.value}\n`);
 		} else {
-			terminal.red(`« ${result.error}\n`);
+			terminal.red(`${timestamp()} « ${result.error}\n`);
 		}
 
+		takeReplInput();
+	});
+
+	session.onDevice((connected, device) => {
+		if (!connected || !device) return;
+
+		abortCurrentReplInput({ deletePrompt: true });
+		system('green', `Device identified: ${describeDevice(device)}`);
 		takeReplInput();
 	});
 
@@ -168,14 +197,20 @@ export function setupWebSocket() {
 
 	const localAddress = getLocalAddress();
 
-	printBanner(`${localAddress}:${argv.flags.port}`, `ws://127.0.0.1:${argv.flags.port}?mcp`);
+	printBanner(
+		`${localAddress}:${argv.flags.port}`,
+		`ws://127.0.0.1:${argv.flags.port}?${CONTROLLER_ENDPOINT_MARKER}`,
+	);
 }
 
 function handleDeviceMessage(raw: string) {
 	const message = parseMessage(raw);
 
 	if (!message) {
-		system('red', 'Parsing failed on message from device');
+		system(
+			'red',
+			`Parsing failed on message from device: ${JSON.stringify(raw.slice(0, 200))}`,
+		);
 
 		return;
 	}
@@ -203,7 +238,7 @@ function handleControllerMessage(ws: session.SocketLike, raw: string) {
  * @description Finds the machine's first external IPv4 address, for devices on the LAN to dial.
  * @returns The address, or `undefined` if the machine has none.
  */
-export function getLocalAddress(): string | undefined {
+function getLocalAddress(): string | undefined {
 	const interfaces = os.networkInterfaces();
 
 	for (const ifaces of Object.values(interfaces)) {

@@ -7,7 +7,7 @@ import (
 
 func TestUpdateAVDConfigAppliesProfileAndPreservesOtherValues(t *testing.T) {
 	profile := avdProfile{
-		Name:                 "unbound_root",
+		Name:                 "astral_root",
 		Device:               "pixel_7",
 		SystemImage:          "system-images;android-35;google_apis;arm64-v8a",
 		SystemImageDirectory: "system-images/android-35/google_apis/arm64-v8a/",
@@ -21,7 +21,7 @@ func TestUpdateAVDConfigAppliesProfileAndPreservesOtherValues(t *testing.T) {
 		DataPartition:        "6G",
 		HeapMiB:              512,
 	}
-	initial := "AvdId=unbound_root\nhw.gpu.mode=auto\nhw.ramSize=2048\ncustom.setting=keep\n"
+	initial := "AvdId=astral_root\nhw.gpu.mode=auto\nhw.ramSize=2048\ncustom.setting=keep\n"
 	updated := updateAVDConfig(initial, avdConfigValues(profile))
 	values := parseAVDConfig(updated)
 	if values["hw.gpu.mode"] != "host" || values["hw.ramSize"] != "4096" || values["hw.cpu.ncore"] != "4" {
@@ -36,15 +36,15 @@ func TestUpdateAVDConfigAppliesProfileAndPreservesOtherValues(t *testing.T) {
 }
 
 func TestConfigStatusReportsMismatch(t *testing.T) {
-	profile := avdProfile{Name: "unbound_root", CPUCores: 4, RAMMiB: 4096, GPU: "host"}
+	profile := avdProfile{Name: "astral_root", CPUCores: 4, RAMMiB: 4096, GPU: "host"}
 	if got := configStatus(map[string]string{"hw.cpu.ncore": "2"}, profile); !strings.Contains(got, "differs") {
 		t.Fatalf("expected mismatched AVD configuration to be reported, got %q", got)
 	}
 }
 
 func TestParseAVDConfigIgnoresNonEntries(t *testing.T) {
-	values := parseAVDConfig("\nAvdId=unbound_root\nnot-an-entry\nhw.gpu.mode=host\n")
-	if len(values) != 2 || values["AvdId"] != "unbound_root" || values["hw.gpu.mode"] != "host" {
+	values := parseAVDConfig("\nAvdId=astral_root\nnot-an-entry\nhw.gpu.mode=host\n")
+	if len(values) != 2 || values["AvdId"] != "astral_root" || values["hw.gpu.mode"] != "host" {
 		t.Fatalf("unexpected parsed config: %#v", values)
 	}
 }

@@ -1,17 +1,14 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
 import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { bridgePortField } from '~/lib/context';
 import { textSpans } from '~/lib/probes';
 
 const schema = z.object({
 	match: z.string().describe('Text the text views must contain.'),
 	max: z.number().default(5).describe('How many matching text views to print.'),
-	port: z
-		.number()
-		.default(DEFAULT_BRIDGE_PORT)
-		.describe('The port the debugger bridge listens on.'),
+	port: bridgePortField,
 });
 
 const spansCommand: CommandDefinition<typeof schema> = {

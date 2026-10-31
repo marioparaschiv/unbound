@@ -1,6 +1,6 @@
 import { createUnboundLink } from '@unbound-app/contracts/links';
 import type { AddonType } from '@unbound-app/contracts/addons';
-import { IconDownload } from '@tabler/icons-react';
+import { IconDownload } from 'nucleo-micro-bold';
 import { useEffect, useRef } from 'react';
 import type { MouseEvent } from 'react';
 import { toast } from 'sonner';
@@ -98,7 +98,7 @@ function InstallAddonButton({
 				href={createUnboundLink({ action: 'install', id })}
 				onClick={onClick}
 			>
-				<IconDownload />
+				<IconDownload size={24} />
 				{iconOnly ? null : 'Install'}
 			</a>
 		</Button>

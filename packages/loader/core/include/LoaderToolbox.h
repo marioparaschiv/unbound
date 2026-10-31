@@ -59,7 +59,7 @@ struct MenuSection {
 struct MenuOptions {
     bool openAppFolder     = false;
     bool copyAppFolderPath = false;
-    bool unboundIcon       = false;
+    bool astralIcon        = false;
 };
 
 struct IssueReport {
@@ -73,10 +73,12 @@ struct IssueFacts {
     std::string device;
     std::string osVersion;
     std::string discordVersion;
-    std::string unboundVersion;
+    std::string astralVersion;
     std::string appSource;
     std::string registration;
     bool        virtualDevice = false;
+    std::string framework;
+    bool        rooted = false;
 };
 
 struct ToolboxContext {
@@ -112,8 +114,8 @@ struct RecoveryToggle {
 };
 
 constexpr const char *kIssueRepository        = "marioparaschiv/unbound";
-constexpr const char *kRecoveryShortcutAction = "app.unbound.recovery.toggle";
-constexpr const char *kToolboxTitle           = "Unbound Toolbox";
+constexpr const char *kRecoveryShortcutAction = "app.astral.recovery.toggle";
+constexpr const char *kToolboxTitle           = "astral Toolbox";
 constexpr const char *kCloseText              = "Close";
 constexpr const char *kConfirmText            = "Confirm";
 constexpr const char *kCancelText             = "Cancel";
@@ -151,8 +153,9 @@ IssueFacts  issueFacts(const NativePlatformProvider &provider, const std::string
 IssueReport issueReport(const NativePlatformProvider &provider, const std::string &platform,
                         const std::string &discordVersion);
 std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFacts &facts);
-std::string                                      issueBody(const IssueReport &report);
-std::string                                      issueURL(const IssueReport &report);
+std::string discordLine(const std::string &label, const std::string &appSource);
+std::string issueBody(const IssueReport &report);
+std::string issueURL(const IssueReport &report);
 
 MenuStep                 menuStep(const nlohmann::json &item, bool confirmed);
 MenuOutcome              menuOutcome(const nlohmann::json &item, const std::string &result);
