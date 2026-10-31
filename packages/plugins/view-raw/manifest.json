@@ -26,5 +26,12 @@
 	],
 	"version": "1.0.2",
 	"icon": "ChevronLargeRightIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "02edaff6295bd2494d3d563aa28b481eaac1679ec265c0e2ccf49f997b7fdc78ac2c518a05ee9f2561dd66296d47b90e350f82a2e26d000710961af6fecb8f37"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "Yu4J0cssL4lf9f9/HDJLEmEvqyFjc/FBE5wBGsZI9ID54+IsvTZBv/4Y+SaC9VamaAju/gjV2j3dkRqF2H8MDw=="
+	}
 }
