@@ -5,20 +5,25 @@ import type {
 	Submission,
 	SubmissionKind,
 } from '@unbound-app/contracts/publish';
+import type { ListRepositoryAddonsResponse } from '@unbound-app/contracts/source';
 import type { SubmissionPreviewResponse } from '@unbound-app/contracts/review';
 import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
+import { MAX_SUBMISSION_TAGS } from '@unbound-app/contracts/tags';
 import { and, count, eq, gte, inArray, ne } from 'drizzle-orm';
 
 import { addon, addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
+import { readSubmissionMaintainers, requireSubmissionMaintainers } from '~/lib/maintainers';
+import type { AddonSource, RepositoryListing } from '~/lib/addon-source';
+import { readAddonTags, readTags, requireTags } from '~/lib/addon-tags';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
-import type { AddonSource } from '~/lib/addon-source';
 import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
 import { readReview } from '~/lib/submission-review';
 import type { Transaction } from '~/db/database';
 import { getSnowflakeDate } from '~/lib/discord';
+import { isAddonIcon } from '~/lib/addon-icons';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { DAY_MS } from '~/lib/calendar-date';
@@ -51,6 +56,14 @@ type Claim = {
 type Staged = {
 	id: string;
 	stagingKey: string;
+};
+
+/** What a submission stores: the source read from GitHub and the author's choices, `null` for none. */
+type Submitted = {
+	source: AddonSource;
+	tags: string[] | null;
+	maintainers: string[] | null;
+	icon: string | null;
 };
 
 type Reservation = {
@@ -273,13 +286,20 @@ function reserve(
 	ctx: AppContext,
 	caller: Caller,
 	staged: Staged,
-	source: AddonSource,
+	{ source, tags, maintainers, icon }: Submitted,
 	now: Date,
 ): Promise<Reservation> {
 	const { manifest, pin } = source;
 
 	return ctx.db.transaction(async (tx) => {
 		const { kind, replaced } = await checkClaim(ctx, tx, caller, manifest);
+
+		if (icon && kind === 'update') {
+			throw new ApiError(
+				'invalid_request',
+				`Change ${manifest.id}'s icon from your dashboard, not with an update.`,
+			);
+		}
 
 		if (replaced) {
 			await tx
@@ -303,6 +323,9 @@ function reserve(
 					bundleSize: source.bundleSize,
 					stagingKey: staged.stagingKey,
 					sha256: source.sha256,
+					tags,
+					maintainers,
+					icon,
 					createdAt: now,
 					submittedAt: now,
 				})
@@ -339,17 +362,17 @@ function reserve(
 async function stageAndReserve(
 	ctx: AppContext,
 	caller: Caller,
-	source: AddonSource,
+	submitted: Submitted,
 	now: Date,
 ): Promise<Reservation> {
 	const id = Bun.randomUUIDv7();
 	const staged = { id, stagingKey: `submissions/${id}/bundle` };
 
 	// Until the row exists, only STAGING_ORPHAN_GRACE_SECONDS keeps the sweeper off this object.
-	await ctx.storage.staging.write(staged.stagingKey, source.bundle);
+	await ctx.storage.staging.write(staged.stagingKey, submitted.source.bundle);
 
 	try {
-		return await reserve(ctx, caller, staged, source, now);
+		return await reserve(ctx, caller, staged, submitted, now);
 	} catch (error) {
 		await ctx.storage.staging.delete(staged.stagingKey);
 
@@ -362,7 +385,7 @@ async function stageAndReserve(
  * submission with changes requested.
  * @param ctx The application context.
  * @param caller The submitting user.
- * @param request The repository, addon path, ref, commit and detail overrides.
+ * @param request The repository, addon path, ref, commit and the author's chosen tags and maintainers.
  * @returns The submission, pending review.
  */
 export async function createSubmission(
@@ -371,13 +394,35 @@ export async function createSubmission(
 	request: CreateSubmissionRequest,
 ): Promise<CreateSubmissionResponse> {
 	const now = ctx.now();
+	const tags = request.details?.tags ?? null;
+	const maintainers = request.details?.maintainers ?? null;
+	const icon = request.details?.icon ?? null;
 
 	await checkRateLimit(ctx, caller.user.id, now);
 	await checkAccountAge(ctx, caller.user.id, now);
+	await requireTags(ctx, tags ?? []);
+	requireIcon(icon);
 
 	const github = await connectGitHub(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request);
-	const { created, replaced } = await stageAndReserve(ctx, caller, source, now);
+
+	if (maintainers) {
+		const { id } = source.manifest;
+
+		await requireSubmissionMaintainers(
+			ctx,
+			id,
+			await readSubmissionMaintainers(ctx, caller, id),
+			maintainers,
+		);
+	}
+
+	const { created, replaced } = await stageAndReserve(
+		ctx,
+		caller,
+		{ source, tags, maintainers, icon },
+		now,
+	);
 
 	if (replaced) {
 		await ctx.storage.staging.delete(replaced.stagingKey);
@@ -386,13 +431,34 @@ export async function createSubmission(
 	return { submission: toSubmission(created) };
 }
 
+function requireIcon(icon: string | null) {
+	if (icon !== null && !isAddonIcon(icon)) {
+		throw new ApiError('invalid_request', `${icon} is not an icon you can pick.`);
+	}
+}
+
+async function suggestTags(
+	ctx: AppContext,
+	kind: SubmissionKind,
+	source: AddonSource,
+): Promise<string[]> {
+	const { id } = source.manifest;
+	const tags =
+		kind === 'update'
+			? ((await readAddonTags(ctx, [id])).get(id) ?? [])
+			: await readTags(ctx, source.details.tags);
+
+	return tags.slice(0, MAX_SUBMISSION_TAGS).map((entry) => entry.id);
+}
+
 /**
  * @description Shows what submitting from GitHub would create, writing nothing: the Discord account
  * age gate, every GitHub read and check of a submission, then the claim and cap checks.
  * @param ctx The application context.
  * @param caller The author.
- * @param request The repository, addon path, ref, commit and detail overrides.
- * @returns The kind, the source pin and the content reviewers would see.
+ * @param request The repository, addon path, ref, commit and the author's chosen tags and maintainers.
+ * @returns The kind, the source pin, the content reviewers would see, and the tags and maintainers to
+ * preselect.
  */
 export async function previewSubmission(
 	ctx: AppContext,
@@ -400,10 +466,18 @@ export async function previewSubmission(
 	request: CreateSubmissionRequest,
 ): Promise<SubmissionPreviewResponse> {
 	await checkAccountAge(ctx, caller.user.id, ctx.now());
+	await requireTags(ctx, request.details?.tags ?? []);
+	requireIcon(request.details?.icon ?? null);
 
 	const github = await connectGitHub(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request);
 	const { kind } = await ctx.db.transaction((tx) => checkClaim(ctx, tx, caller, source.manifest));
+	const { id } = source.manifest;
+	const access = await readSubmissionMaintainers(ctx, caller, id);
+
+	if (request.details?.maintainers) {
+		await requireSubmissionMaintainers(ctx, id, access, request.details.maintainers);
+	}
 
 	return {
 		preview: {
@@ -416,7 +490,40 @@ export async function previewSubmission(
 			page: source.page,
 			changelog: source.changelog,
 			details: source.details,
+			suggestedTags: await suggestTags(ctx, kind, source),
+			suggestedMaintainers: access.current,
+			canEditMaintainers: access.editable,
 		},
+	};
+}
+
+/**
+ * @description Marks the listed addons whose version is already published, which submitting would
+ * refuse with `version_exists`, so the picker shows them as up to date instead.
+ * @param ctx The application context.
+ * @param listing The repository listing read from GitHub.
+ * @returns The listing, each addon with `upToDate`.
+ */
+export async function markUpToDate(
+	ctx: AppContext,
+	listing: RepositoryListing,
+): Promise<ListRepositoryAddonsResponse> {
+	const ids = listing.addons.map((entry) => entry.id);
+	const rows =
+		ids.length > 0
+			? await ctx.db
+					.select({ addonId: addonVersion.addonId, version: addonVersion.version })
+					.from(addonVersion)
+					.where(inArray(addonVersion.addonId, ids))
+			: [];
+	const published = new Set(rows.map((row) => `${row.addonId}@${row.version}`));
+
+	return {
+		...listing,
+		addons: listing.addons.map((entry) => ({
+			...entry,
+			upToDate: published.has(`${entry.id}@${entry.version}`),
+		})),
 	};
 }
 
@@ -428,4 +535,5 @@ export default {
 	insertSubmissionSource,
 	createSubmission,
 	previewSubmission,
+	markUpToDate,
 };

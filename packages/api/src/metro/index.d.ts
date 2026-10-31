@@ -45,7 +45,7 @@ declare function bulk(...items: MetroBulkItem[]): any[];
  */
 export declare function find(filter: MetroFilter, options?: MetroSearchOptions): any;
 /**
- * @description Finds a module by a segment of its file path.
+ * @description Finds a module by a segment of its file path. Lazy unless `{ lazy: false }` is passed: the search runs on first access.
  * @template U The union of requested path segments.
  * @template T The argument tuple, optionally ending in search options or a bulk marker.
  * @param args The file path segment(s) to search for, optionally followed by options.
@@ -56,7 +56,7 @@ export declare function findByFilePath<
 	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
 >(...args: T): AnyProps;
 /**
- * @description Finds a module by the name of its default export.
+ * @description Finds a module by the name of its default export. Lazy unless `{ lazy: false }` is passed: the search runs on first access.
  * @template U The union of requested names.
  * @template T The argument tuple, optionally ending in search options or a bulk marker.
  * @param args The name(s) to search for, optionally followed by options.
@@ -67,7 +67,7 @@ export declare function findByName<
 	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
 >(...args: T): MetroFunctionSignatureOrArray<T, U>;
 /**
- * @description Finds a module exposing all of the given property names.
+ * @description Finds a module exposing all of the given property names. Lazy unless `{ lazy: false }` is passed: the search runs on first access.
  * @template U The union of requested property names.
  * @template T The argument tuple, optionally ending in search options or a bulk marker.
  * @param args The property names to search for, optionally followed by options.
@@ -78,7 +78,7 @@ export declare function findByProps<
 	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
 >(...args: T): MetroPropertyRecordOrArray<T, U> & {};
 /**
- * @description Finds a module whose prototype exposes all of the given method names.
+ * @description Finds a module whose prototype exposes all of the given method names. Lazy unless `{ lazy: false }` is passed: the search runs on first access.
  * @template U The union of requested prototype method names.
  * @template T The argument tuple, optionally ending in search options or a bulk marker.
  * @param args The prototype method names to search for, optionally followed by options.

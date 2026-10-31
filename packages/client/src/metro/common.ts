@@ -1,3 +1,5 @@
+import type { MarkdownParserModule } from '@unbound-app/types/markdown';
+
 import { findByPropsLazy } from '~/metro/wrappers';
 import * as FluxModules from '~/flux/modules';
 
@@ -7,7 +9,11 @@ export const React = window.React;
 export const Reanimated = findByPropsLazy('useAnimatedStyle', 'useSharedValue');
 export const Gestures = findByPropsLazy('PanGestureHandler');
 export const Clipboard = findByPropsLazy('setString', 'getString', 'setImage', 'getImage');
-export const MarkdownParser = findByPropsLazy('parse', 'parseToAST', 'reactParserFor');
+export const MarkdownParser: MarkdownParserModule = findByPropsLazy(
+	'parse',
+	'parseToAST',
+	'reactParserFor',
+);
 export const Screens = findByPropsLazy('FullWindowOverlay');
 export const SVG = findByPropsLazy('Svg', 'Path');
 export const Commands = findByPropsLazy('getBuiltInCommands');

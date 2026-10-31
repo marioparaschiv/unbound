@@ -1,11 +1,13 @@
 import { createSubmissionResponseSchema } from '@unbound-app/contracts/publish';
 import { reviewSubmissionResponseSchema } from '@unbound-app/contracts/review';
 import type { ReviewSubmissionRequest } from '@unbound-app/contracts/review';
+import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import createSubmissionEndpoint from '~/endpoints/create-submission';
 import reviewSubmissionEndpoint from '~/endpoints/review-submission';
+import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createApiClient } from '~/api/client';
 import { submission, user } from '~/db/schema';
 import type { Role } from '~/lib/auth/access';
@@ -28,11 +30,16 @@ const github = serveGitHub({
 const fixture = github.repository(REPOSITORY);
 
 // The real clock: MinIO checks presigned URLs against it.
-const { ctx, close } = await createTestContext({ ...S3_TEST_ENV, GITHUB_API_URL: github.url.href });
+const { ctx, close } = await createTestContext({
+	...S3_TEST_ENV,
+	GITHUB_API_URL: github.url.href,
+	CDN_URL: `${S3_TEST_ENV.S3_ENDPOINT}/${S3_TEST_ENV.S3_PUBLIC_BUCKET}/`,
+});
 
 const server = serveEndpoints(ctx, {
 	'POST /api/v1/submissions': createSubmissionEndpoint,
 	'POST /api/v1/submissions/$id/review': reviewSubmissionEndpoint,
+	'GET /api/v1/catalog': getCatalogEndpoint,
 });
 
 afterAll(async () => {
@@ -122,6 +129,33 @@ describe('publishing the store page', () => {
 			expect(await ctx.storage.public.file(`${base}/${path}`).bytes()).toEqual(
 				new Uint8Array(png(64)),
 			);
+		}
+	});
+
+	test('the catalog’s page URL loads the page, and its media resolve beside it', async () => {
+		const [author, moderator] = await Promise.all([signUp(), signUp('moderator')]);
+		const id = await submitPage(author, 'review-media.catalogued');
+
+		await review(moderator, id, { decision: 'approved' });
+
+		const catalog = await author('GET /api/v1/catalog', { response: catalogResponseSchema });
+		const entry = catalog.addons.find((addon) => addon.id === 'review-media.catalogued');
+		const pageUrl = entry?.latestVersion.pageUrl;
+
+		if (!pageUrl) {
+			throw new Error('The catalog has no page URL for the approved version.');
+		}
+
+		const page = await fetch(pageUrl);
+
+		expect(page.status).toBe(200);
+		expect(await page.text()).toBe(COMMITTED_ADDON_MD);
+
+		for (const path of MEDIA) {
+			const media = await fetch(new URL(path, pageUrl));
+
+			expect(media.status).toBe(200);
+			expect(new Uint8Array(await media.arrayBuffer())).toEqual(new Uint8Array(png(64)));
 		}
 	});
 

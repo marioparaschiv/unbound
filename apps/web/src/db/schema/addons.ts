@@ -139,6 +139,12 @@ export const submission = pgTable(
 		bundleSize: integer('bundle_size').notNull(),
 		stagingKey: text('staging_key').notNull().unique(),
 		sha256: text('sha256'),
+		/** The tag ids approval gives the addon; `null` keeps its current tags. */
+		tags: json('tags').$type<string[]>(),
+		/** The user ids approval makes the addon's maintainers besides its owners; `null` keeps the current ones. */
+		maintainers: json('maintainers').$type<string[]>(),
+		/** The website icon a new listing starts with; `null` for the type's default. */
+		icon: text('icon'),
 		createdAt: timestampMs('created_at').notNull(),
 		submittedAt: timestampMs('submitted_at'),
 		reviewerId: text('reviewer_id').references(() => user.id, { onDelete: 'set null' }),

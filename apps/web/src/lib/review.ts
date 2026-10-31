@@ -9,12 +9,14 @@ import { submissionKindSchema } from '@unbound-app/contracts/publish';
 import { and, eq } from 'drizzle-orm';
 
 import { toAddonVersion, writeArtifact, writeStorePage, type StorePage } from '~/lib/artifacts';
+import { applySubmissionMaintainers, describeMaintainerChanges } from '~/lib/maintainers';
 import { addon, addonMaintainer, addonVersion, submission, user } from '~/db/schema';
 import { LATEST_VERSION, refreshAddonSummary, toAddonSummary } from '~/lib/addons';
 import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
 import { requireSourced, toSubmission } from '~/lib/submissions';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { recordReviewDecision } from '~/lib/moderation-events';
+import { readTags, replaceAddonTags } from '~/lib/addon-tags';
 import { readPageMedia } from '~/lib/addon-page-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
@@ -105,7 +107,11 @@ export async function listReviewQueue(
 	}
 
 	const updated = rows.filter((row) => row.kind === 'update').map((row) => row.addonId);
-	const [addons, memberships] = await Promise.all([
+	const chosen = [...new Set(rows.flatMap((row) => row.tags ?? []))];
+	const naming = rows.flatMap(({ id, addonId, maintainers }) =>
+		maintainers ? [{ id, addonId, maintainers }] : [],
+	);
+	const [addons, memberships, tags, maintainerChanges] = await Promise.all([
 		ctx.db.query.addon.findMany({
 			where: { id: { in: updated } },
 			with: LATEST_VERSION,
@@ -114,6 +120,8 @@ export async function listReviewQueue(
 			where: { userId: caller.user.id, addonId: { in: rows.map((row) => row.addonId) } },
 			columns: { addonId: true },
 		}),
+		readTags(ctx, chosen),
+		describeMaintainerChanges(ctx, naming),
 	]);
 
 	const previous = new Map(addons.map((entry) => [entry.id, entry.versions[0]]));
@@ -144,6 +152,9 @@ export async function listReviewQueue(
 			details: source.details,
 			submittedAt: submittedAt.toISOString(),
 			submitter: { id: author.id, name: author.name, image: author.image ?? null },
+			tags: row.tags ? tags.filter((entry) => row.tags?.includes(entry.id)) : null,
+			maintainers: maintainerChanges.get(row.id) ?? null,
+			icon: row.icon,
 			selfReview: author.id === caller.user.id || maintained.has(row.addonId),
 			previousVersion: version ? toAddonVersion(ctx.env, version, version.submission) : null,
 			previousAddonMd: version?.submission?.source?.addonMd ?? null,
@@ -248,16 +259,6 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
 }
 
 /**
- * @description Makes an approved submission's version live, inside the approval's transaction: a
- * listing creates the addon with the author as owner, an update moves the addon to the submitted
- * repository and refreshes its summary.
- * @param tx The approval's transaction.
- * @param row The approved submission.
- * @param sha256 The verified SHA-256 of the published bundle.
- * @param publishedAt The approval time.
- * @returns Resolves once the version is live.
- */
-/**
  * @description Replaces a live version in place with a rebuild of the same version, as first-party CI
  * publishes before release: the row takes the new submission, manifest and bundle digest.
  * @param tx The transaction.
@@ -281,7 +282,15 @@ export async function replaceVersion(
 }
 
 /**
- *
+ * @description Makes an approved submission's version live, inside the approval's transaction: a
+ * listing creates the addon with the author as owner, an update moves the addon to the submitted
+ * repository and refreshes its summary. The submission's chosen tags and maintainers replace the
+ * addon's, when it chose any.
+ * @param tx The approval's transaction.
+ * @param row The approved submission.
+ * @param sha256 The verified SHA-256 of the published bundle.
+ * @param publishedAt The approval time.
+ * @returns Resolves once the version is live.
  */
 export async function publishVersion(
 	tx: Transaction,
@@ -295,6 +304,7 @@ export async function publishVersion(
 			repository: row.repository,
 			createdAt: publishedAt,
 			...toAddonSummary(row.manifest, publishedAt),
+			icon: row.icon,
 		});
 		await tx.insert(addonMaintainer).values({
 			addonId: row.addonId,
@@ -305,6 +315,17 @@ export async function publishVersion(
 	}
 
 	await tx.insert(addonVersion).values(toVersionRow(row, sha256, publishedAt));
+
+	if (row.tags) {
+		await replaceAddonTags(tx, row.addonId, row.tags);
+	}
+
+	if (row.maintainers) {
+		await applySubmissionMaintainers(tx, row.addonId, row.maintainers, {
+			actorId: row.authorId,
+			at: publishedAt,
+		});
+	}
 
 	if (row.kind !== 'update') return;
 

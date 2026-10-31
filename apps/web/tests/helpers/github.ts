@@ -239,6 +239,7 @@ function toRepositoryJson(repository: Repository, push: boolean) {
 		stargazers_count: options.stars ?? 0,
 		default_branch: options.defaultBranch ?? 'main',
 		pushed_at: PUSHED_AT,
+		owner: { avatar_url: `https://github.com/${name.split('/')[0]}.png` },
 		permissions: { admin: false, maintain: false, push, triage: true, pull: true },
 	};
 }

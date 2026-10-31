@@ -62,6 +62,8 @@ export type MarketplaceAddonDetails = MarketplaceAddon & {
 	versions: MarketplaceVersion[];
 	/** `null` when the newest version predates GitHub sources. */
 	source: MarketplaceSource | null;
+	/** The site's tags it is filed under, in menu order. */
+	tags: AddonTag[];
 };
 
 /**
@@ -125,7 +127,10 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 
 		if (!details || !latest) return null;
 
-		const resolve = await loadAuthors(app, [latest.manifest.authors]);
+		const [resolve, tags] = await Promise.all([
+			loadAuthors(app, [latest.manifest.authors]),
+			readAddonTags(app, [data]),
+		]);
 
 		return {
 			...toMarketplaceAddon(details, latest, resolve),
@@ -144,6 +149,7 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 							approvedAt: latest.publishedAt,
 						}
 					: null,
+			tags: tags.get(data) ?? [],
 		};
 	});
 
