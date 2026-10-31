@@ -1,4 +1,8 @@
-import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
+import {
+	NATIVE_PLUGIN_CAPABILITIES,
+	NATIVE_PLUGIN_PLATFORM_CAPABILITIES,
+	NATIVE_PLUGIN_PLATFORMS,
+} from '@unbound-app/types/native';
 import { ADDON_TYPES } from '@unbound-app/types/addons';
 
 import { z } from './zod';
@@ -51,6 +55,24 @@ export const bytecodeDigestsSchema = z.record(
 	z.string().check(z.regex(/^[\da-f]{128}$/, 'Must be a lowercase SHA-512 digest.')),
 );
 
+// Each platform may only list the capabilities that platform's native bridge provides.
+export const addonPlatformsSchema = z
+	.strictObject({
+		ios: z.optional(
+			z.strictObject({
+				capabilities: z.optional(z.array(z.enum(NATIVE_PLUGIN_PLATFORM_CAPABILITIES.ios))),
+			}),
+		),
+		android: z.optional(
+			z.strictObject({
+				capabilities: z.optional(
+					z.array(z.enum(NATIVE_PLUGIN_PLATFORM_CAPABILITIES.android)),
+				),
+			}),
+		),
+	})
+	.check(z.refine((platforms) => Object.keys(platforms).length > 0, 'Must list a platform.'));
+
 export const addonAuthorSchema = z.object({
 	name: z.string().check(z.minLength(1)),
 	id: z.templateLiteral([z.int().check(z.nonnegative())]),
@@ -69,7 +91,22 @@ export const addonManifestSchema = z.looseObject({
 	icon: z.optional(z.union([z.string(), z.object({ uri: z.string() })])),
 	main: addonMainSchema,
 	version: semverSchema,
+	/** The platforms the addon runs on, each with its capabilities; absent means every platform. */
+	platforms: z.optional(
+		z.union([
+			addonPlatformsSchema,
+			// Deprecated: the array of platform names published addons still carry.
+			z.array(z.enum(NATIVE_PLUGIN_PLATFORMS)).check(z.minLength(1)),
+		]),
+	),
 	capabilities: z.optional(z.array(z.enum(NATIVE_PLUGIN_CAPABILITIES))),
+	/** @deprecated Use `platforms.<platform>.capabilities`. Still accepted for published addons. */
+	platformCapabilities: z.optional(
+		z.partialRecord(
+			z.enum(NATIVE_PLUGIN_PLATFORMS),
+			z.array(z.enum(NATIVE_PLUGIN_CAPABILITIES)),
+		),
+	),
 	minNativePluginApi: z.optional(z.string()),
 	unbound: z.optional(z.object({ min: z.optional(semverSchema) })),
 	bytecode: z.optional(bytecodeDigestsSchema),
@@ -88,6 +125,7 @@ export default {
 	addonIdSchema,
 	addonMainSchema,
 	bytecodeDigestsSchema,
+	addonPlatformsSchema,
 	addonAuthorSchema,
 	addonManifestSchema,
 };

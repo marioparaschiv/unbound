@@ -1,4 +1,7 @@
+import type { AddonPlatforms } from '@unbound-app/types/addons';
 import { describe, expect, test } from 'bun:test';
+import { join } from 'node:path';
+import { Glob } from 'bun';
 
 import { createSubmissionRequestSchema, createSubmissionResponseSchema } from '../src/publish';
 import { updatesRequestSchema, updatesResponseSchema } from '../src/updates';
@@ -86,6 +89,73 @@ describe('addonManifestSchema', () => {
 				.success,
 		).toBe(false);
 		expect(addonManifestSchema.safeParse({ ...manifest, authors: [] }).success).toBe(false);
+	});
+
+	test('accepts platforms with per-platform capabilities, or none at all', () => {
+		const valid: AddonPlatforms[] = [
+			{ ios: { capabilities: ['native.objc.invoke', 'native.ffi.call'] }, android: {} },
+			{ android: { capabilities: ['native.java.invoke'] } },
+			{ ios: {} },
+		];
+
+		for (const platforms of valid) {
+			expect(addonManifestSchema.parse({ ...manifest, platforms }).platforms).toEqual(
+				platforms,
+			);
+		}
+
+		expect(addonManifestSchema.parse(manifest).platforms).toBeUndefined();
+	});
+
+	test('rejects platforms that are empty, unknown, carry extra keys or borrow capabilities', () => {
+		const invalid = [
+			{},
+			{ web: {} },
+			{ ios: { capabilities: ['native.objc.invoke'], hooks: true } },
+			{ ios: { capabilities: ['native.java.invoke'] } },
+			{ android: { capabilities: ['native.objc.invoke'] } },
+			{ ios: { capabilities: ['native.unknown'] } },
+			{ ios: { capabilities: 'native.objc.invoke' } },
+			{ ios: [] },
+			[],
+			['web'],
+			'ios',
+		];
+
+		for (const platforms of invalid) {
+			expect(addonManifestSchema.safeParse({ ...manifest, platforms }).success).toBe(false);
+		}
+	});
+
+	test('still accepts the deprecated platform list and platformCapabilities', () => {
+		const parsed = addonManifestSchema.parse({
+			...manifest,
+			platforms: ['ios', 'android'],
+			capabilities: [],
+			platformCapabilities: { ios: ['native.objc.invoke'] },
+		});
+
+		expect(parsed.platforms).toEqual(['ios', 'android']);
+		expect(parsed.platformCapabilities).toEqual({ ios: ['native.objc.invoke'] });
+		expect(
+			addonManifestSchema.safeParse({
+				...manifest,
+				platformCapabilities: { web: ['native.objc.invoke'] },
+			}).success,
+		).toBe(false);
+	});
+
+	test('accepts every first-party plugin manifest', async () => {
+		const root = join(import.meta.dir, '../../plugins');
+		const paths = await Array.fromAsync(new Glob('*/manifest.json').scan({ cwd: root }));
+
+		expect(paths.length).toBeGreaterThan(0);
+
+		for (const path of paths) {
+			const result = addonManifestSchema.safeParse(await Bun.file(join(root, path)).json());
+
+			expect({ path, issues: result.error?.issues }).toEqual({ path, issues: undefined });
+		}
 	});
 });
 

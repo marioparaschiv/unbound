@@ -147,8 +147,11 @@ export function resolveManifestCapabilities(
 ): readonly NativePluginCapability[] {
 	const known = isKnownPlatform(platform) ? platform : undefined;
 
-	if (manifest.platforms?.length && (!known || !manifest.platforms.includes(known))) {
-		throw new NativePluginUnsupportedPlatformError(manifest.platforms, String(platform));
+	// parseAddonManifest accepts only the array form of `platforms` for now.
+	const platforms = Array.isArray(manifest.platforms) ? manifest.platforms : undefined;
+
+	if (platforms?.length && (!known || !platforms.includes(known))) {
+		throw new NativePluginUnsupportedPlatformError(platforms, String(platform));
 	}
 
 	const platformCapabilities = manifest.platformCapabilities ?? {};

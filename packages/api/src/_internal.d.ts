@@ -84,6 +84,7 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.debug.evaluations',
 	'native.debug.environment',
 ];
+export declare const NATIVE_PLUGIN_PLATFORMS: readonly ['ios', 'android'];
 export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 	readonly android: readonly [
 		'native.java.classes',
@@ -340,6 +341,14 @@ export type AddonManifest = AuthoredAddonManifest & {
 	/** Set by the loader and installer: whether the bundle carries a valid Unbound signature. */
 	trust?: AddonTrust;
 };
+/** What an addon declares for one platform it runs on: the capabilities that platform provides which it needs. */
+export type AddonPlatform<P extends NativePluginPlatform = NativePluginPlatform> = {
+	capabilities?: NativePluginPlatformCapability<P>[];
+};
+/** The platforms an addon runs on, keyed by platform. */
+export type AddonPlatforms = {
+	[P in NativePluginPlatform]?: AddonPlatform<P>;
+};
 /** An addon referenced either by its id string or the {@link Addon} entity itself. */
 export type AddonResolveable = string | Addon;
 /** Whether an addon's bundle carries a valid Unbound signature. */
@@ -401,8 +410,13 @@ export type AuthoredAddonManifest = {
 		  };
 	main: string;
 	version: string;
-	platforms?: NativePluginPlatform[];
+	/**
+	 * The platforms the addon runs on, each with the capabilities it needs there; absent means every platform.
+	 * Published addons may still carry the older array of platform names.
+	 */
+	platforms?: AddonPlatforms | NativePluginPlatform[];
 	capabilities?: NativePluginCapability[];
+	/** @deprecated Use `platforms.<platform>.capabilities`. Still read for published addons. */
 	platformCapabilities?: Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
@@ -2409,7 +2423,10 @@ export type NativePluginErrorCode =
 	| 'NATIVE_PLUGIN_CAPABILITY_DENIED'
 	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
 	| 'NATIVE_PLUGIN_UNAVAILABLE';
-export type NativePluginPlatform = 'ios' | 'android';
+export type NativePluginPlatform = (typeof NATIVE_PLUGIN_PLATFORMS)[number];
+/** A capability the native bridge on platform `P` provides. */
+export type NativePluginPlatformCapability<P extends NativePluginPlatform> =
+	(typeof NATIVE_PLUGIN_PLATFORM_CAPABILITIES)[P][number];
 export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities'
