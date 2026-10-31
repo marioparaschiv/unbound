@@ -43,6 +43,8 @@ export async function update(id: string): Promise<boolean> {
 /** @internal */
 export const entities: ReadonlyMap<PropertyKey, AddonHandle> = plugins.entities;
 /** @internal */
+export const errors: ReadonlyMap<PropertyKey, Error> = plugins.errors;
+/** @internal */
 export const start: (id: string) => void | Promise<void> = plugins.start.bind(plugins);
 /** @internal */
 export const stop: (id: string) => void | Promise<void> = plugins.stop.bind(plugins);
@@ -52,4 +54,6 @@ export const getEntities = getAll;
 /** @deprecated Use get */
 export const getEntity = get;
 /** @deprecated Use uninstall */
-export { uninstall as delete };
+const deprecatedDelete = uninstall;
+
+export { deprecatedDelete as delete };

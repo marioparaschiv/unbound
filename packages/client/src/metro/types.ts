@@ -50,7 +50,7 @@ export type MetroStringFindWithOptions<T extends string, Options = MetroSearchOp
 /** An object of shape `T` widened with an arbitrary property index. */
 export type AnyProps<T = unknown> = T & Record<PropertyKey, MetroExport>;
 
-/** The signature of the deprecated `findStore`, untyped by store name so existing callers keep compiling. */
+/** The signature of the deprecated `findStore`. */
 export type MetroFindStore = (name: string, options?: MetroStoreOptions) => AnyProps;
 
 /** A function or class exported by a Discord module, whose signature Discord does not document. */

@@ -1,5 +1,6 @@
 import hermesManifest from '@unbound-app/rollup-plugin-hermes/dist/manifest.js';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 import { execFile } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -13,13 +14,25 @@ type BytecodeOptions = { versions: number[] };
 const run = promisify(execFile);
 const { fetchManifest, resolveHermesTargets } = hermesManifest;
 
+const FALL_BACK_TO_GLOBAL = new Set([
+	'unbound',
+	'setTimeout',
+	'setInterval',
+	'clearTimeout',
+	'clearInterval',
+]);
+
+const parameters = ADDON_SCOPE_GLOBALS.map((name) =>
+	FALL_BACK_TO_GLOBAL.has(name) ? `${name} = globalThis.${name}` : name,
+).join(', ');
+
 /**
  * @description Wraps a plugin bundle the way the client evaluates its source, so the compiled program's completion value is the same factory.
  * @param code The plugin's final bundle expression.
  * @returns The wrapped source.
  */
 export function bytecodeSource(code: string): string {
-	return `((React) => { return ${code} })`;
+	return `((${parameters}) => { return ${code} })`;
 }
 
 /**

@@ -45,4 +45,6 @@ export const getEntities = getAll;
 /** @deprecated Use get */
 export const getEntity = get;
 /** @deprecated Use uninstall */
-export { uninstall as delete };
+const deprecatedDelete = uninstall;
+
+export { deprecatedDelete as delete };

@@ -3,6 +3,8 @@
 import type { AddonHandle, PushedManifest } from './_internal';
 import * as React$1 from 'react';
 import { ReactNode } from 'react';
+/** @deprecated Use uninstall */
+declare const deprecatedDelete: (id: string) => Promise<void>;
 /** Disables a plugin and stops it. */
 export declare const disable: (id: string) => void;
 /** Enables a plugin and starts it. */
@@ -45,6 +47,6 @@ export type ReloadResult =
 			ok: false;
 			error: Error;
 	  };
-export { uninstall as delete };
+export { deprecatedDelete as delete };
 
 export {};
