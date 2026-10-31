@@ -498,7 +498,23 @@ export type AddonScope = {
 		UnboundGlobal['commands'];
 };
 
-export interface UnboundGlobal {
+/** The lifecycle entry points, all the global `unbound` object keeps after {@link shutdown}. */
+export interface UnboundLifecycle {
+	/**
+	 * @description Brings up the client, initialising the built-ins, plugins, and themes managers in turn. Twin of
+	 * {@link shutdown}.
+	 */
+	initialize(): void;
+	/**
+	 * @description Tears the client back down, shutting down the built-ins, plugins, and themes managers and persisting
+	 * settings before clearing the global down to the lifecycle entry points. Twin of {@link initialize}.
+	 * @returns A promise that resolves once settings have been persisted and shutdown is complete.
+	 */
+	shutdown(): Promise<void>;
+}
+
+/** The global `unbound` object while the client is initialized: the API plus the lifecycle. */
+export interface UnboundGlobal extends UnboundLifecycle {
 	assets: typeof import('./assets.d.ts');
 	builtins: typeof import('./builtins.d.ts');
 	commands: typeof import('./commands.d.ts');
@@ -528,7 +544,7 @@ export interface UnboundGlobal {
 
 declare global {
 	interface Window {
-		unbound: UnboundGlobal;
+		unbound: UnboundGlobal | UnboundLifecycle;
 	}
 
 	const unbound: AddonScope['unbound'];

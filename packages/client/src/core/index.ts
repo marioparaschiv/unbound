@@ -90,7 +90,7 @@ let initialized = false;
  * @description Brings up the client, initialising the built-ins, plugins, and themes managers in turn. Twin of
  * {@link shutdown}.
  */
-export function initialize() {
+export function initialize(): void {
 	if (initialized) {
 		Logger.warn('Unbound already initialized');
 
@@ -115,7 +115,7 @@ export function initialize() {
  * settings before clearing the global down to the lifecycle entry points. Twin of {@link initialize}.
  * @returns A promise that resolves once settings have been persisted and shutdown is complete.
  */
-export async function shutdown() {
+export async function shutdown(): Promise<void> {
 	if (!initialized) {
 		Logger.warn('Unbound not initialized');
 

@@ -64,6 +64,20 @@ export type NamespaceAlias = {
 	doc: string;
 };
 
+/** A lifecycle function the global `unbound` object carries, read from the client entry. */
+export type LifecycleMember = {
+	name: string;
+	parameters: { name: string; type: string; optional: boolean }[];
+	returnType: string;
+	doc: string;
+};
+
+/** The client's `UnboundLifecycle` type: what the global `unbound` object keeps after shutdown. */
+export type Lifecycle = {
+	doc: string;
+	members: LifecycleMember[];
+};
+
 export type SdkEntries = {
 	root: RootEntry;
 	/** Every module and nested subpath, sorted by name. */
