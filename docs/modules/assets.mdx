@@ -4,6 +4,8 @@ description: "Discover Discord's bundled images and icons by name instead of har
 icon: 'face-smile'
 ---
 
+import Deprecated from '/snippets/deprecated.mdx';
+
 ### What are assets?
 
 `assets` lets you look up Discord's bundled images and icons by name. At startup it indexes every bundled asset by name, so you can ask for `'ChatIcon'` and get the correct id for the current build.
@@ -16,31 +18,43 @@ Look up an asset by name and type (`png` or `svg`). The type defaults to `png`.
 
 ```ts
 import { assets } from '@unbound-app/api';
+// equivalent: import * as assets from '@unbound-app/api/assets';
+// runtime global: unbound.assets
 
 const icon = assets.getByName('ChatIcon');     // full asset record
-const id = assets.getIDByName('ChatIcon');     // just the id
-const byId = assets.getByID(id);               // back the other way
+const id = assets.getIdByName('ChatIcon');     // just the id
+const byId = assets.getById(id);               // back the other way
 ```
 
 | Function | Returns |
 | --- | --- |
 | `getByName(name, type?)` | The asset record |
-| `getIDByName(name, type?)` | The asset's numeric id |
-| `getByID(id)` | The asset record for an id |
+| `getIdByName(name, type?)` | The asset's numeric id |
+| `getById(id)` | The asset record for an id |
 | `getAll()` | Every indexed asset |
 | `find(predicate)` | The first asset matching a predicate |
 
-### The Icons proxy
+### The icons proxy
 
-`assets.Icons` is a shortcut for the common case of turning a name into an id. Reading any property on it returns the id for that name.
+`assets.icons` is a shortcut for the common case of turning a name into an id. Reading any property on it returns the id for that name.
 
 ```tsx
-import { Icons } from '@unbound-app/api/assets';
+import { assets } from '@unbound-app/api';
 
-// Icons.ChatIcon === assets.getIDByName('ChatIcon')
-<Image source={Icons.ChatIcon} />
+// assets.icons.ChatIcon === assets.getIdByName('ChatIcon')
+<Image source={assets.icons.ChatIcon} />
 ```
 
 <Tip>
-	`Icons` is shorthand for `getIDByName`. Use it when you want an id inline. Use `getByName` when you need the full record (name, type, dimensions).
+	`icons` is shorthand for `getIdByName`. Use it when you want an id inline. Use `getByName` when you need the full record (name, type, dimensions).
 </Tip>
+
+### Deprecated names
+
+<Deprecated />
+
+| Deprecated | Use |
+| --- | --- |
+| `assets.getByID` | `assets.getById` |
+| `assets.getIDByName` | `assets.getIdByName` |
+| `assets.Icons` | `assets.icons` |
