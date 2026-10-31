@@ -13,8 +13,9 @@ import type { FieldDiff, ReviewEntry } from '~/lib/review-entry';
 import ChangelogSections from '~/components/changelog-sections';
 import { getBundleUrl, shortSha } from '~/lib/github-urls';
 import SourcePinLink from '~/components/source-pin-link';
+import { getPinnedMediaBase } from '~/lib/markdown-url';
 import { Button } from '~/components/ui/button';
-import Markdown from '~/components/markdown';
+import AddonMd from '~/components/addon-md';
 import Text from '~/components/ui/text';
 
 type ReviewDetailsProps = {
@@ -93,7 +94,7 @@ function ChangedFields({ rows, previousVersion }: ChangedFieldsProps) {
  * @returns The sections, in reading order.
  */
 function buildSections(entry: ReviewEntry): Section[] {
-	const { previousVersion, addonMd, addonMdDiff: diff, changelog, source } = entry;
+	const { previousVersion, addonMd, addonMdDiff: diff, changelog, source, page } = entry;
 	const sections: Section[] = [];
 
 	if (changelog) {
@@ -142,7 +143,12 @@ function buildSections(entry: ReviewEntry): Section[] {
 			summary: 'added',
 			body: (
 				<div className='p-4 border rounded-control max-h-[32rem] overflow-auto'>
-					<Markdown source={addonMd} pin={source} />
+					<AddonMd
+						source={addonMd}
+						pin={source}
+						mediaBase={getPinnedMediaBase(source)}
+						page={page}
+					/>
 				</div>
 			),
 		});
@@ -153,7 +159,12 @@ function buildSections(entry: ReviewEntry): Section[] {
 			summary: addonMd ? 'included' : 'none, the description is shown',
 			body: addonMd ? (
 				<div className='p-4 border rounded-control max-h-[32rem] overflow-auto'>
-					<Markdown source={addonMd} pin={source} />
+					<AddonMd
+						source={addonMd}
+						pin={source}
+						mediaBase={getPinnedMediaBase(source)}
+						page={page}
+					/>
 				</div>
 			) : (
 				<Text variant='text-sm' color='muted'>

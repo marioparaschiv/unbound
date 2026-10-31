@@ -28,6 +28,13 @@ describe('pre-push checks', () => {
 		]);
 	});
 
+	test('checks every plugin, isolated, when the plugins root changes', () => {
+		expect(labels(['packages/plugins/package.json'])).toEqual([
+			'plugin tests',
+			'plugin type-check',
+		]);
+	});
+
 	test('runs a workspace package once however many files changed', () => {
 		expect(
 			labels(['packages/plugin-scripts/src/a.ts', 'packages/plugin-scripts/src/b.ts']),
@@ -35,7 +42,7 @@ describe('pre-push checks', () => {
 	});
 
 	test('runs the client tests in isolation', () => {
-		const [check] = checksFor(['packages/client/src/index.ts'], exists);
+		const [check] = checksFor(['packages/client/src/core/index.ts'], exists);
 
 		expect(check?.command).toEqual(['bun', 'test', '--isolate']);
 	});

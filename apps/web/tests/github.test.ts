@@ -347,6 +347,36 @@ describe('GET /api/v1/github/addons', () => {
 		expect(listing.details).toMatchObject({ homepage: null, license: null, readmeUrl: null });
 	});
 
+	test('does not list a committed built manifest as an addon of its own', async () => {
+		const headers = await signIn();
+		const fixture = github.repository(MONOREPO);
+		const built = {
+			'plugins/hello/manifest.json': manifestJson('acme.hello', 'src/index.ts'),
+			'plugins/hello/package.json': BUILD,
+			'plugins/hello/dist/index.js': 'module.exports = {};',
+			'plugins/hello/dist/manifest.json': manifestJson('acme.hello', 'index.js', '2.0.0'),
+		};
+
+		const patterns = [['plugins/*', 'themes/*'], ['**'], ['plugins/**']];
+
+		for (const [index, addons] of patterns.entries()) {
+			const branch = `built-${index}`;
+
+			fixture.commit(
+				{ ...built, 'unbound.config.json': JSON.stringify({ addons }) },
+				{ branch },
+			);
+
+			const listing = await listAddons(headers, MONOREPO, branch);
+
+			expect({
+				addons,
+				listed: listing.addons.map((addon) => [addon.path, addon.version, addon.issues]),
+				skipped: listing.skipped,
+			}).toEqual({ addons, listed: [['plugins/hello', '2.0.0', []]], skipped: [] });
+		}
+	});
+
 	test('resolves branches, annotated tags and SHAs on the default branch', async () => {
 		const headers = await signIn();
 		const fixture = github.repository(BARE);

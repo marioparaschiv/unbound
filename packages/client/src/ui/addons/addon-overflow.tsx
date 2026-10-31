@@ -1,24 +1,24 @@
 import type { PressableProps } from 'react-native';
-import type { Addon } from '@unbound-app/types';
 import { Pressable } from 'react-native';
 import { useMemo, memo } from 'react';
 
-import { API_URL, CLIENT_VERSION } from '~/lib/constants';
-import { reinstallFromStore } from '~/lib/updates';
-import { Discord } from '~/api/metro/components';
-import { getManager } from '~/managers/utils';
-import { TintedIcon } from '~/ui/components';
-import { Theme } from '~/api/metro/common';
-import { showToast } from '~/api/toasts';
-import { Icons } from '~/api/assets';
-import { format } from '~/api/i18n';
+import { reinstallFromStore } from '~/updates/addon-updates';
+import { API_URL, CLIENT_VERSION } from '~/core/constants';
+import TintedIcon from '~/metro/fallbacks/tinted-icon';
+import { Discord } from '~/metro/components';
+import type { Addon } from '~/addons/addon';
+import { Manager } from '~/addons/manager';
+import { Theme } from '~/metro/common';
+import { icons } from '~/assets/api';
+import { format } from '~/i18n/api';
+import { show } from '~/toasts/api';
 
 import useRoundStyles from './round-button.style';
 import confirmDelete from './confirm-delete';
 
 type AddonOverflowProps = {
 	addon: Addon;
-	kind: 'plugins' | 'themes' | 'icons';
+	kind: 'plugin' | 'theme' | 'icon-pack';
 	developmentCopy?: boolean;
 };
 
@@ -28,7 +28,7 @@ type AddonOverflowProps = {
  */
 function AddonOverflow({ addon, kind, developmentCopy }: AddonOverflowProps) {
 	const styles = useRoundStyles();
-	const manager = getManager(kind);
+	const manager = Manager.for(kind);
 
 	const items = useMemo(
 		() => [
@@ -51,11 +51,11 @@ function AddonOverflow({ addon, kind, developmentCopy }: AddonOverflowProps) {
 
 	// The menu anchors to the Pressable it renders; wrapping the trigger in a component breaks it.
 	return (
-		<Discord.ContextMenu title={addon.data.name} items={items} triggerOnTap>
+		<Discord.ContextMenu title={addon.name} items={items} triggerOnTap>
 			{(props: PressableProps) => (
 				<Pressable {...props} hitSlop={6} style={styles.button}>
 					<TintedIcon
-						source={Icons['MoreHorizontalIcon'] ?? 0}
+						source={icons['MoreHorizontalIcon'] ?? 0}
 						size={16}
 						tint={Theme.colors.CONTROL_SECONDARY_TEXT_DEFAULT}
 					/>
@@ -66,11 +66,11 @@ function AddonOverflow({ addon, kind, developmentCopy }: AddonOverflowProps) {
 }
 
 async function reinstall(kind: AddonOverflowProps['kind'], addon: Addon) {
-	const name = addon.data.name;
+	const name = addon.name;
 	let applied = false;
 
 	try {
-		applied = await reinstallFromStore(kind, getManager(kind), addon.id, {
+		applied = await reinstallFromStore(Manager.for(kind), addon.id, {
 			baseUrl: API_URL,
 			clientVersion: CLIENT_VERSION,
 		});
@@ -78,7 +78,7 @@ async function reinstall(kind: AddonOverflowProps['kind'], addon: Addon) {
 		applied = false;
 	}
 
-	showToast({
+	show({
 		title: name,
 		content: format(applied ? 'UNBOUND_REINSTALLED' : 'UNBOUND_REINSTALL_UNCHANGED', { name }),
 		icon: applied ? 'CircleCheckIcon' : 'PuzzlePieceIcon',

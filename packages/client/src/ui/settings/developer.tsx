@@ -1,9 +1,9 @@
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { Discord } from '~/api/metro/components';
-import { Screens } from '~/lib/constants';
-import { Page } from '~/ui/components';
-import { Messages } from '~/api/i18n';
-import { Icons } from '~/api/assets';
+import { useUnboundSettings } from '~/settings/unbound';
+import { Discord } from '~/metro/components';
+import { Screens } from '~/core/constants';
+import Page from '~/ui/components/page';
+import { messages } from '~/i18n/api';
+import { icons } from '~/assets/api';
 
 /**
  * @description Developer settings: debugger connection, error boundary, and links to developer subpages.
@@ -16,38 +16,38 @@ function DeveloperPage() {
 
 	return (
 		<Page>
-			<Discord.TableRowGroup title={Messages.UNBOUND_DEBUGGER}>
+			<Discord.TableRowGroup title={messages.UNBOUND_DEBUGGER}>
 				<Discord.TableSwitchRow
-					label={Messages.UNBOUND_DEBUGGER_ENABLED}
-					icon={<Discord.TableRowIcon source={Icons.BugIcon} />}
+					label={messages.UNBOUND_DEBUGGER_ENABLED}
+					icon={<Discord.TableRowIcon source={icons.BugIcon} />}
 					value={settings.get('debugger.enabled')}
 					onValueChange={() => settings.toggle('debugger.enabled')}
 				/>
 				<Discord.TableRow
-					label={Messages.UNBOUND_DEBUGGER_ADDRESS}
-					icon={<Discord.TableRowIcon source={Icons.LinkIcon} />}
+					label={messages.UNBOUND_DEBUGGER_ADDRESS}
+					icon={<Discord.TableRowIcon source={icons.LinkIcon} />}
 				>
 					<Discord.TextInput
 						value={settings.get('debugger.address')}
-						placeholder={Messages.UNBOUND_DEBUGGER_ADDRESS_PLACEHOLDER}
+						placeholder={messages.UNBOUND_DEBUGGER_ADDRESS_PLACEHOLDER}
 						onChange={(value: string) => settings.set('debugger.address', value)}
 					/>
 				</Discord.TableRow>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup title={Messages.UNBOUND_ERROR_BOUNDARY}>
+			<Discord.TableRowGroup title={messages.UNBOUND_ERROR_BOUNDARY}>
 				<Discord.TableSwitchRow
-					label={Messages.UNBOUND_ERROR_BOUNDARY}
-					icon={<Discord.TableRowIcon source={Icons.WarningIcon} />}
+					label={messages.UNBOUND_ERROR_BOUNDARY}
+					icon={<Discord.TableRowIcon source={icons.WarningIcon} />}
 					value={settings.get('error-boundary.enabled')}
 					onValueChange={() => settings.toggle('error-boundary.enabled')}
 				/>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup title={Messages.UNBOUND_ASSET_BROWSER}>
+			<Discord.TableRowGroup title={messages.UNBOUND_ASSET_BROWSER}>
 				<Discord.TableRow
-					label={Messages.UNBOUND_ASSET_BROWSER}
-					icon={<Discord.TableRowIcon source={Icons.ImageIcon} />}
+					label={messages.UNBOUND_ASSET_BROWSER}
+					icon={<Discord.TableRowIcon source={icons.ImageIcon} />}
 					arrow
 					onPress={() => navigation.push(Screens.Assets)}
 				/>

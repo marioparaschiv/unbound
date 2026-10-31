@@ -1,13 +1,13 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
-import type { AvailableChoice, VersionChoice } from '~/lib/addon-versions';
-import { toVersionChoices } from '~/lib/addon-versions';
-import { BottomSheets } from '~/api/metro/components';
-import type { UpdatableKind } from '~/lib/updates';
-import { CLIENT_VERSION } from '~/lib/constants';
-import { Messages, format } from '~/api/i18n';
-import { getManager } from '~/managers/utils';
-import { Moment } from '~/api/metro/common';
+import type { AvailableChoice, VersionChoice } from '~/addons/versions';
+import type { UpdatableKind } from '~/addons/manager-of';
+import { toVersionChoices } from '~/addons/versions';
+import { CLIENT_VERSION } from '~/core/constants';
+import { BottomSheets } from '~/metro/components';
+import { messages, format } from '~/i18n/api';
+import { Manager } from '~/addons/manager';
+import { Moment } from '~/metro/common';
 
 import useAddonVersions from './use-addon-versions';
 import { getInstalledVersion } from './targets';
@@ -30,11 +30,11 @@ function describeChoice(choice: VersionChoice): string {
 
 	switch (choice.type) {
 		case 'available':
-			return choice.latest ? `${published} · ${Messages.UNBOUND_VERSION_LATEST}` : published;
+			return choice.latest ? `${published} · ${messages.UNBOUND_VERSION_LATEST}` : published;
 		case 'installed':
 			return choice.latest
-				? `${published} · ${Messages.UNBOUND_VERSION_LATEST} · ${Messages.UNBOUND_INSTALLED}`
-				: `${published} · ${Messages.UNBOUND_INSTALLED}`;
+				? `${published} · ${messages.UNBOUND_VERSION_LATEST} · ${messages.UNBOUND_INSTALLED}`
+				: `${published} · ${messages.UNBOUND_INSTALLED}`;
 		case 'incompatible':
 			return `${published} · ${format('UNBOUND_VERSION_NEEDS_CLIENT', { version: choice.requires })}`;
 	}
@@ -61,7 +61,7 @@ function VersionPickerSheet({ kind, addon, onPick, onClose }: VersionPickerSheet
 	const { ActionSheet, ActionSheetRow, BottomSheetTitleHeader } = BottomSheets;
 	const { state, retry } = useAddonVersions(addon.id);
 	const { name } = addon.latestVersion.manifest;
-	const held = getManager(kind).getHeldVersion(addon.id);
+	const held = Manager.for(kind).getHeldVersion(addon.id);
 	const installed = getInstalledVersion(kind, addon);
 
 	function pick(choice: AvailableChoice) {
@@ -77,12 +77,12 @@ function VersionPickerSheet({ kind, addon, onPick, onClose }: VersionPickerSheet
 			/>
 			<ActionSheetRow.Group>
 				{state.status === 'loading' ? (
-					<ActionSheetRow label={Messages.UNBOUND_VERSIONS_LOADING} disabled />
+					<ActionSheetRow label={messages.UNBOUND_VERSIONS_LOADING} disabled />
 				) : null}
 				{state.status === 'failed' ? (
 					<ActionSheetRow
-						label={Messages.UNBOUND_VERSIONS_FAILED}
-						subLabel={Messages.UNBOUND_VERSIONS_RETRY}
+						label={messages.UNBOUND_VERSIONS_FAILED}
+						subLabel={messages.UNBOUND_VERSIONS_RETRY}
 						onPress={retry}
 					/>
 				) : null}

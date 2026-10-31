@@ -1,17 +1,17 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 
-import { Screens, SOCIAL_LINKS, DISCORD_INVITE, VERSION, REPOSITORY } from '~/lib/constants';
-import { readDebugInfo, readEntitlements } from '~/lib/debug-report/debug-report';
-import { BundleInfo, reload, getRuntimeProperties } from '~/api/native';
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { issueURL } from '~/lib/debug-report/issue-report';
-import { Linking, Invites } from '~/api/metro/api';
-import { Discord } from '~/api/metro/components';
+import { Screens, SOCIAL_LINKS, DISCORD_INVITE, VERSION, REPOSITORY } from '~/core/constants';
+import { readDebugInfo, readEntitlements } from '~/diagnostics/debug-report';
+import { BundleInfo, reload, getRuntimeProperties } from '~/native/native';
+import { useUnboundSettings } from '~/settings/unbound';
+import { issueURL } from '~/diagnostics/issue-report';
+import { Linking, Invites } from '~/metro/api';
+import { Discord } from '~/metro/components';
 import Unbound from '~/ui/icons/unbound';
-import { Page } from '~/ui/components';
-import { Messages } from '~/api/i18n';
-import { Icons } from '~/api/assets';
+import Page from '~/ui/components/page';
+import { messages } from '~/i18n/api';
+import { icons } from '~/assets/api';
 
 type InfoRowProps = {
 	label: string;
@@ -42,10 +42,10 @@ function GeneralPage() {
 
 	function confirmRestart() {
 		Discord.showConfirmModal({
-			title: Messages.UNBOUND_RESTART,
-			content: Messages.UNBOUND_RESTART_CONFIRM,
-			confirmText: Messages.UNBOUND_RESTART,
-			cancelText: Messages.UNBOUND_CANCEL,
+			title: messages.UNBOUND_RESTART,
+			content: messages.UNBOUND_RESTART_CONFIRM,
+			confirmText: messages.UNBOUND_RESTART,
+			cancelText: messages.UNBOUND_CANCEL,
 			onConfirm: reload,
 		});
 	}
@@ -59,75 +59,75 @@ function GeneralPage() {
 		<Page>
 			<Discord.TableRowGroup>
 				<Discord.TableSwitchRow
-					label={Messages.UNBOUND_RECOVERY_MODE}
-					subLabel={Messages.UNBOUND_RECOVERY_MODE_DESC}
-					icon={<Discord.TableRowIcon source={Icons.WrenchIcon} />}
+					label={messages.UNBOUND_RECOVERY_MODE}
+					subLabel={messages.UNBOUND_RECOVERY_MODE_DESC}
+					icon={<Discord.TableRowIcon source={icons.WrenchIcon} />}
 					value={settings.get('recovery')}
 					onValueChange={setRecoveryMode}
 				/>
 				<Discord.TableRow
-					label={Messages.UNBOUND_RESTART}
-					icon={<Discord.TableRowIcon source={Icons.RetryIcon} />}
+					label={messages.UNBOUND_RESTART}
+					icon={<Discord.TableRowIcon source={icons.RetryIcon} />}
 					onPress={confirmRestart}
 				/>
 			</Discord.TableRowGroup>
 
 			<Discord.TableRowGroup>
 				<Discord.TableRow
-					label={Messages.UNBOUND_TOASTS}
-					icon={<Discord.TableRowIcon source={Icons.BellIcon} />}
+					label={messages.UNBOUND_TOASTS}
+					icon={<Discord.TableRowIcon source={icons.BellIcon} />}
 					arrow
 					onPress={() => navigation.push(Screens.Toasts)}
 				/>
 				<Discord.TableRow
-					label={Messages.UNBOUND_CLOUD_SYNC}
-					icon={<Discord.TableRowIcon source={Icons.CloudIcon} />}
+					label={messages.UNBOUND_CLOUD_SYNC}
+					icon={<Discord.TableRowIcon source={icons.CloudIcon} />}
 					arrow
 					onPress={() => navigation.push(Screens.CloudSync)}
 				/>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup title={Messages.UNBOUND_ADVANCED}>
+			<Discord.TableRowGroup title={messages.UNBOUND_ADVANCED}>
 				<Discord.TableSwitchRow
-					label={Messages.UNBOUND_CRASH_REPORTS}
-					subLabel={Messages.UNBOUND_CRASH_REPORTS_DESCRIPTION}
-					icon={<Discord.TableRowIcon source={Icons.BugIcon ?? Icons.WarningIcon} />}
+					label={messages.UNBOUND_CRASH_REPORTS}
+					subLabel={messages.UNBOUND_CRASH_REPORTS_DESCRIPTION}
+					icon={<Discord.TableRowIcon source={icons.BugIcon ?? icons.WarningIcon} />}
 					value={settings.get('crash-reports')}
 					onValueChange={() => settings.toggle('crash-reports')}
 				/>
 				<Discord.TableSwitchRow
-					label={Messages.UNBOUND_STAFF_MODE}
-					icon={<Discord.TableRowIcon source={Icons.EyeIcon} />}
+					label={messages.UNBOUND_STAFF_MODE}
+					icon={<Discord.TableRowIcon source={icons.EyeIcon} />}
 					value={settings.get('staff-mode')}
 					onValueChange={() => settings.toggle('staff-mode')}
 				/>
 				<Discord.TableSwitchRow
-					label={Messages.UNBOUND_DEVELOPER_MODE}
-					icon={<Discord.TableRowIcon source={Icons.WrenchIcon} />}
+					label={messages.UNBOUND_DEVELOPER_MODE}
+					icon={<Discord.TableRowIcon source={icons.WrenchIcon} />}
 					value={settings.get('developer-mode')}
 					onValueChange={() => settings.toggle('developer-mode')}
 				/>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup title={Messages.UNBOUND_LINKS}>
+			<Discord.TableRowGroup title={messages.UNBOUND_LINKS}>
 				<Discord.TableRow
-					label={Messages.UNBOUND_GITHUB}
-					icon={<Discord.TableRowIcon source={Icons['img_account_sync_github_white']} />}
+					label={messages.UNBOUND_GITHUB}
+					icon={<Discord.TableRowIcon source={icons['img_account_sync_github_white']} />}
 					onPress={() => Linking.openURL(SOCIAL_LINKS.GitHub)}
 				/>
 				<Discord.TableRow
-					label={Messages.UNBOUND_DOCS}
-					icon={<Discord.TableRowIcon source={Icons.BookCheckIcon} />}
+					label={messages.UNBOUND_DOCS}
+					icon={<Discord.TableRowIcon source={icons.BookCheckIcon} />}
 					onPress={() => Linking.openURL(SOCIAL_LINKS.Docs)}
 				/>
 				<Discord.TableRow
-					label={Messages.UNBOUND_REPORT_ISSUE}
-					icon={<Discord.TableRowIcon source={Icons.BugIcon ?? Icons.WarningIcon} />}
+					label={messages.UNBOUND_REPORT_ISSUE}
+					icon={<Discord.TableRowIcon source={icons.BugIcon ?? icons.WarningIcon} />}
 					onPress={() => Linking.openURL(issueURL(readDebugInfo(), readEntitlements()))}
 				/>
 				<Discord.TableRow
-					label={Messages.UNBOUND_SUPPORT_SERVER}
-					icon={<Discord.TableRowIcon source={Icons.ClydeIcon} />}
+					label={messages.UNBOUND_SUPPORT_SERVER}
+					icon={<Discord.TableRowIcon source={icons.ClydeIcon} />}
 					onPress={() =>
 						Invites.acceptInviteAndTransitionToInviteChannel({
 							inviteKey: DISCORD_INVITE,
@@ -137,9 +137,9 @@ function GeneralPage() {
 				/>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup title={Messages.UNBOUND_VERSION_INFO}>
+			<Discord.TableRowGroup title={messages.UNBOUND_VERSION_INFO}>
 				<InfoRow
-					label={Messages.UNBOUND_UNBOUND_VERSION}
+					label={messages.UNBOUND_UNBOUND_VERSION}
 					value={VERSION}
 					icon={<Discord.TableRowIcon IconComponent={Unbound} />}
 					onPress={() =>
@@ -147,14 +147,14 @@ function GeneralPage() {
 					}
 				/>
 				<InfoRow
-					label={Messages.UNBOUND_DISCORD_VERSION}
+					label={messages.UNBOUND_DISCORD_VERSION}
 					value={`${BundleInfo.Version} (${BundleInfo.Build})`}
-					icon={<Discord.TableRowIcon source={Icons.ClydeIcon} />}
+					icon={<Discord.TableRowIcon source={icons.ClydeIcon} />}
 				/>
 				<InfoRow
-					label={Messages.UNBOUND_BYTECODE_VERSION}
+					label={messages.UNBOUND_BYTECODE_VERSION}
 					value={String(bytecode)}
-					icon={<Discord.TableRowIcon source={Icons['ic_information_24px']} />}
+					icon={<Discord.TableRowIcon source={icons['ic_information_24px']} />}
 				/>
 			</Discord.TableRowGroup>
 		</Page>

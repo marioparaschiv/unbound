@@ -1,27 +1,28 @@
-import type { ManagerKind } from '@unbound-app/types/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 import { Dimensions, View } from 'react-native';
 import type { ComponentType } from 'react';
 import { useMemo, useState } from 'react';
 
-import { Discord, SafeArea } from '~/api/metro/components';
+import { installsFromManifest } from '~/addons/addons';
+import { Discord, SafeArea } from '~/metro/components';
 import InstallButton from '~/ui/addons/install-button';
-import storage from '~/api/storage';
+import storage from '~/storage/api';
 
 import ThemesTab from './themes';
 import FontsTab from './fonts';
 import IconsTab from './icons';
 
 type DesignTab = {
-	id: ManagerKind;
+	id: AddonKind;
 	label: string;
 	Page: ComponentType;
 };
 
 /** The segmented tabs in order; each tab's id is the manager kind its install button targets. */
 const TABS: DesignTab[] = [
-	{ id: 'themes', label: 'Themes', Page: ThemesTab },
-	{ id: 'icons', label: 'Icons', Page: IconsTab },
-	{ id: 'fonts', label: 'Fonts', Page: FontsTab },
+	{ id: 'theme', label: 'Themes', Page: ThemesTab },
+	{ id: 'icon-pack', label: 'Icons', Page: IconsTab },
+	{ id: 'font', label: 'Fonts', Page: FontsTab },
 ];
 
 /**
@@ -55,7 +56,7 @@ function DesignPage() {
 				</View>
 				<View style={{ flex: 1 }}>
 					<Discord.SegmentedControlPages state={state} />
-					{!kind || kind === 'fonts' ? null : <InstallButton kind={kind} />}
+					{kind && installsFromManifest(kind) ? <InstallButton kind={kind} /> : null}
 				</View>
 			</View>
 		</SafeArea.SafeAreaPaddingView>

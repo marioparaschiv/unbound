@@ -2,6 +2,8 @@ import type * as React from 'react';
 
 import type { AddonManifest, Plugin } from './addons';
 
+export * from './native-methods';
+
 export const NATIVE_PLUGIN_CAPABILITIES = [
 	'native.objc.classes',
 	'native.objc.invoke',
@@ -30,7 +32,9 @@ export const NATIVE_PLUGIN_CAPABILITIES = [
 
 export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
 
-export type NativePluginPlatform = 'ios' | 'android';
+export const NATIVE_PLUGIN_PLATFORMS = ['ios', 'android'] as const;
+
+export type NativePluginPlatform = (typeof NATIVE_PLUGIN_PLATFORMS)[number];
 
 export const NATIVE_PLUGIN_PLATFORM_CAPABILITIES = {
 	android: [
@@ -67,6 +71,10 @@ export const NATIVE_PLUGIN_PLATFORM_CAPABILITIES = {
 		'native.runtime.events',
 	],
 } as const satisfies Record<NativePluginPlatform, readonly NativePluginCapability[]>;
+
+/** A capability the native bridge on platform `P` provides. */
+export type NativePluginPlatformCapability<P extends NativePluginPlatform> =
+	(typeof NATIVE_PLUGIN_PLATFORM_CAPABILITIES)[P][number];
 
 declare const nativeHandle: unique symbol;
 

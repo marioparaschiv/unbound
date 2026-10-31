@@ -3,12 +3,15 @@ import { createSubmissionRequestSchema } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { SubmissionKind } from '@unbound-app/contracts/publish';
 import type { Changelog } from '@unbound-app/contracts/changelog';
+import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod/mini';
 
 import { getArtifactKeys, getCdnUrl, pinSource, toVersionChangelog } from '~/lib/artifacts';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import { resolvePlatforms } from '~/lib/addon-platforms';
+import { getPinnedMediaBase } from '~/lib/markdown-url';
 import { previewSubmission } from '~/lib/submissions';
 import type { Permissions } from '~/lib/auth/access';
 import { renderAddonIcon } from '~/lib/addon-icons';
@@ -27,6 +30,7 @@ type PendingVersion = {
 	pin: SourcePin;
 	details: RepositoryDetails;
 	addonMd: string | null;
+	page: AddonPage | null;
 	bundleSize: number;
 	sha256: string;
 	/** When it was submitted, or now for a source not yet submitted. */
@@ -88,13 +92,20 @@ async function toPreviewPage(pending: PendingVersion): Promise<MarketplaceAddonD
 		version: manifest.version,
 		manifestUrl: version.manifestUrl,
 		createdAt: published?.createdAt ?? at,
-		capabilities: manifest.capabilities ?? [],
+		platforms: resolvePlatforms(manifest),
 		minClientVersion: manifest.unbound?.min ?? null,
 		versions: [
 			version,
 			...(published?.versions ?? []).map(({ manifest: _manifest, ...entry }) => entry),
 		],
-		source: { pin, details: pending.details, addonMd: pending.addonMd, approvedAt: at },
+		source: {
+			pin,
+			details: pending.details,
+			addonMd: pending.addonMd,
+			page: pending.page,
+			mediaBase: getPinnedMediaBase(pin),
+			approvedAt: at,
+		},
 		tags,
 	};
 }
@@ -126,6 +137,7 @@ export const fetchSubmissionPreview = createServerFn({ method: 'GET' })
 			pin: pinSource(row.repository, row.source),
 			details: row.source.details,
 			addonMd: row.source.addonMd,
+			page: row.source.page,
 			bundleSize: row.bundleSize,
 			sha256: row.sha256,
 			at: (row.submittedAt ?? row.createdAt).toISOString(),
@@ -159,6 +171,7 @@ export const fetchSourcePreview = createServerFn({ method: 'GET' })
 			pin: preview.source,
 			details: preview.details,
 			addonMd: preview.addonMd,
+			page: preview.page,
 			bundleSize: preview.bundleSize,
 			sha256: preview.sha256,
 			at: new Date().toISOString(),

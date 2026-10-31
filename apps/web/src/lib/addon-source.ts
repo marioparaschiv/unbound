@@ -2,6 +2,7 @@ import {
 	CONFIG_FILENAME,
 	findWorkspaceRoot,
 	getBundleName,
+	getOutputDir,
 	isWorkspaceAddon,
 	matchAddonDirs,
 	readAddon,
@@ -15,10 +16,11 @@ import type {
 	SourcePin,
 } from '@unbound-app/contracts/source';
 import { formatChangelogIssues, parseChangelog } from '@unbound-app/contracts/changelog';
+import { addonManifestSchema, MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import type { WorkspaceAddon, WorkspaceConfig } from '@unbound-app/contracts/workspace';
 import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
-import { addonManifestSchema } from '@unbound-app/contracts/manifest';
+import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import type { Changelog } from '@unbound-app/contracts/changelog';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
 import { z } from 'zod';
@@ -30,6 +32,8 @@ import type {
 	RepositoryExtras,
 	TreeEntry,
 } from '~/lib/github';
+import { readAddonPage } from '~/lib/addon-page-source';
+import { readBytecode } from '~/lib/addon-bytecode';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
 import type { Env } from '~/lib/env';
@@ -45,7 +49,7 @@ export type RepositoryListing = Omit<ListRepositoryAddonsResponse, 'addons'> & {
 /** Everything a submission needs from one addon at one commit, each file verified against git. */
 export type AddonSource = {
 	pin: SourcePin;
-	/** The manifest at the commit, `main` rewritten to the published bundle's name. */
+	/** The built `{output}/manifest.json` at the commit, else the source manifest; `main` names the published bundle. */
 	manifest: PublishedManifest;
 	bundle: Uint8Array;
 	/** The bundle compiled to Hermes bytecode, by bytecode version, as `manifest.bytecode` lists it. */
@@ -53,6 +57,8 @@ export type AddonSource = {
 	bundleSize: number;
 	sha256: string;
 	addonMd: string | null;
+	/** The measured `{output}/page.json`, checked against the commit, or `null` when none is committed. */
+	page: AddonPage | null;
 	/** The entry for `manifest.version`, or `null` when the addon has no CHANGELOG.md. */
 	changelog: Changelog | null;
 	details: RepositoryDetails;
@@ -65,6 +71,22 @@ type OpenedCommit = {
 };
 
 type Texts = Map<string, string>;
+
+type ShippedManifest = {
+	addon: WorkspaceAddon;
+	path: string;
+	text: string;
+};
+
+type ConfiguredAddon = {
+	addon: WorkspaceAddon;
+	config: WorkspaceConfig;
+};
+
+type Candidate = {
+	dir: string;
+	root: string | undefined;
+};
 
 type WorkspaceMembership =
 	| { kind: 'bare'; config: WorkspaceConfig }
@@ -225,6 +247,25 @@ async function readConfigs(
 	);
 }
 
+function getOutputDirs(
+	candidates: Candidate[],
+	configs: Map<string, WorkspaceConfig | string>,
+): Set<string> {
+	const outputs = new Set<string>();
+
+	for (const { dir, root } of candidates) {
+		const config = root === undefined ? DEFAULT_CONFIG : configs.get(root);
+
+		if (config === undefined || typeof config === 'string') {
+			continue;
+		}
+
+		outputs.add(getOutputDir(dir, config));
+	}
+
+	return outputs;
+}
+
 function readAddonFiles(
 	github: GitHubClient,
 	repository: string,
@@ -232,11 +273,42 @@ function readAddonFiles(
 	dirs: string[],
 ): Promise<Texts> {
 	const paths = dirs.flatMap((dir) => [
-		childPath(dir, 'manifest.json'),
+		childPath(dir, MANIFEST_FILENAME),
 		childPath(dir, 'package.json'),
 	]);
 
 	return readTexts(github, repository, tree, paths);
+}
+
+function outputDirOf({ addon, config }: ConfiguredAddon): string {
+	return addon.static ? addon.path : getOutputDir(addon.path, config);
+}
+
+function shippedManifestPath(tree: GitTree, configured: ConfiguredAddon): string {
+	const { addon } = configured;
+	const source = childPath(addon.path, MANIFEST_FILENAME);
+
+	if (addon.static) {
+		return source;
+	}
+
+	const built = childPath(outputDirOf(configured), MANIFEST_FILENAME);
+
+	return tree.has(built) ? built : source;
+}
+
+async function readShippedManifest(
+	github: GitHubClient,
+	repository: string,
+	tree: GitTree,
+	configured: ConfiguredAddon,
+	texts: Texts,
+): Promise<ShippedManifest> {
+	const { addon } = configured;
+	const path = shippedManifestPath(tree, configured);
+	const text = texts.get(path) ?? (await readTexts(github, repository, tree, [path])).get(path);
+
+	return { addon, path, text: text ?? '' };
 }
 
 function checkTextSize(env: Env, tree: GitTree, path: string): ApiError | undefined {
@@ -250,14 +322,21 @@ function checkTextSize(env: Env, tree: GitTree, path: string): ApiError | undefi
 	);
 }
 
-function parseManifest(addon: WorkspaceAddon, manifestText: string): PublishedManifest | ApiError {
-	const json = JSON.parse(manifestText);
+function parseManifest(shipped: ShippedManifest): PublishedManifest | ApiError {
+	const { addon } = shipped;
+	let json: unknown;
+
+	try {
+		json = JSON.parse(shipped.text);
+	} catch {
+		return new ApiError('invalid_manifest', `${shipped.path} is not valid JSON.`);
+	}
 
 	// An escape such as `\u0000` or a lone `\ud800` gets past the file's own check.
 	if (!isPostgresSafe(json)) {
 		return new ApiError(
 			'invalid_manifest',
-			`${childPath(addon.path, 'manifest.json')} must not contain NUL (U+0000) or an unpaired surrogate.`,
+			`${shipped.path} must not contain NUL (U+0000) or an unpaired surrogate.`,
 		);
 	}
 
@@ -266,7 +345,14 @@ function parseManifest(addon: WorkspaceAddon, manifestText: string): PublishedMa
 	if (!parsed.success) {
 		return new ApiError(
 			'invalid_manifest',
-			`${childPath(addon.path, 'manifest.json')} is not a valid manifest:\n${z.prettifyError(parsed.error)}`,
+			`${shipped.path} is not a valid manifest:\n${z.prettifyError(parsed.error)}`,
+		);
+	}
+
+	if (parsed.data.id !== addon.id) {
+		return new ApiError(
+			'invalid_manifest',
+			`${shipped.path} has id ${parsed.data.id}, but ${childPath(addon.path, MANIFEST_FILENAME)} has ${addon.id}. Rebuild and commit the output.`,
 		);
 	}
 
@@ -318,11 +404,11 @@ function blocked(
 function checkAddon(
 	env: Env,
 	tree: GitTree,
-	addon: WorkspaceAddon,
-	manifestText: string,
+	shipped: ShippedManifest,
 	commitSha: string,
 ): CheckedAddon {
-	const manifest = parseManifest(addon, manifestText);
+	const { addon } = shipped;
+	const manifest = parseManifest(shipped);
 	const bundle = checkBundle(env, tree, addon, commitSha);
 	const [textIssue, ...textIssues] = [ADDON_MD, CHANGELOG_MD]
 		.map((name) => checkTextSize(env, tree, childPath(addon.path, name)))
@@ -387,11 +473,11 @@ function toDetails(
 function toRepositoryAddon(
 	env: Env,
 	tree: GitTree,
-	addon: WorkspaceAddon,
-	manifestText: string,
+	shipped: ShippedManifest,
 	commitSha: string,
 ): ListedAddon {
-	const { manifest, issues } = checkAddon(env, tree, addon, manifestText, commitSha);
+	const { addon } = shipped;
+	const { manifest, issues } = checkAddon(env, tree, shipped, commitSha);
 
 	return {
 		id: addon.id,
@@ -428,7 +514,7 @@ export async function listRepositoryAddons(
 		github.getExtras(repository),
 	]);
 
-	const candidates = [...tree.keys()]
+	const candidates: Candidate[] = [...tree.keys()]
 		.filter((path) => path === 'manifest.json' || path.endsWith('/manifest.json'))
 		.map(parentDir)
 		.map((dir) => ({ dir, root: workspaceRootOf(tree, dir) }))
@@ -441,10 +527,15 @@ export async function listRepositoryAddons(
 		candidates.map(({ root }) => root),
 	);
 
+	const outputDirs = getOutputDirs(candidates, configs);
 	const skipped: RepositoryListing['skipped'] = [];
 	const located: { dir: string; config: WorkspaceConfig }[] = [];
 
 	for (const { dir, root } of candidates) {
+		if (outputDirs.has(dir)) {
+			continue;
+		}
+
 		const membership = findNearestWorkspaceConfig(dir, root, configs);
 
 		if (membership.kind === 'excluded') {
@@ -472,7 +563,7 @@ export async function listRepositoryAddons(
 	);
 
 	const files = { read: (path: string) => texts.get(path) };
-	const addons: ListedAddon[] = [];
+	const found: ConfiguredAddon[] = [];
 
 	for (const { dir, config } of listed) {
 		const result = readAddon(dir, files, config);
@@ -482,10 +573,13 @@ export async function listRepositoryAddons(
 			continue;
 		}
 
-		const manifestText = texts.get(childPath(dir, 'manifest.json')) ?? '';
-
-		addons.push(toRepositoryAddon(ctx.env, tree, result, manifestText, commitSha));
+		found.push({ addon: result, config });
 	}
+
+	const manifests = await Promise.all(
+		found.map((entry) => readShippedManifest(github, repository, tree, entry, texts)),
+	);
+	const addons = manifests.map((shipped) => toRepositoryAddon(ctx.env, tree, shipped, commitSha));
 
 	return {
 		repository,
@@ -498,66 +592,13 @@ export async function listRepositoryAddons(
 }
 
 /**
- * @description Names the compiled bundle beside a bundle, as the loader and client look it up.
- * @param bundlePath The bundle's path, such as `dist/index.js`.
- * @param bytecodeVersion The Hermes bytecode version.
- * @returns The compiled bundle's path, such as `dist/index.98.hbc`.
- */
-export function compiledBundlePath(bundlePath: string, bytecodeVersion: string): string {
-	return `${bundlePath.replace(/\.[^./]+$/, '')}.${bytecodeVersion}.hbc`;
-}
-
-async function readBytecode(
-	env: Env,
-	github: GitHubClient,
-	repository: string,
-	tree: GitTree,
-	bundlePath: string,
-	manifest: PublishedManifest,
-	commitSha: string,
-): Promise<Map<string, Uint8Array>> {
-	const compiled = new Map<string, Uint8Array>();
-
-	for (const [bytecodeVersion, digest] of Object.entries(manifest.bytecode ?? {})) {
-		const path = compiledBundlePath(bundlePath, bytecodeVersion);
-		const entry = tree.get(path);
-
-		if (!entry || entry.size === 0) {
-			throw new ApiError(
-				'artifact_missing',
-				`manifest.bytecode lists ${bytecodeVersion}, but ${path} is not committed at ${shortSha(commitSha)}.`,
-			);
-		}
-
-		if (entry.size > env.ADDON_MAX_BYTES) {
-			throw new ApiError(
-				'artifact_too_large',
-				`${path} is ${entry.size} bytes; bundles may be at most ${env.ADDON_MAX_BYTES} bytes.`,
-			);
-		}
-
-		const bytes = await github.readBlob(repository, entry.sha);
-
-		if (new Bun.CryptoHasher('sha512').update(bytes).digest('hex') !== digest) {
-			throw new ApiError(
-				'artifact_mismatch',
-				`${path} does not match its SHA-512 in manifest.bytecode.`,
-			);
-		}
-
-		compiled.set(bytecodeVersion, bytes);
-	}
-
-	return compiled;
-}
-
-/**
  *
  */
 /**
  * @description Reads one addon at the commit the author previewed. Refuses, in order: no push access,
  * a ref that moved (`source_changed`), a path that is not a registered addon (`addon_not_found`), an
- * invalid manifest, a missing or oversize bundle, oversize texts and an invalid changelog.
+ * invalid manifest, a missing or oversize bundle, oversize texts, a `page.json` that does not match the
+ * commit and an invalid changelog.
  * @param ctx The application context.
  * @param github The caller's GitHub client.
  * @param request The repository, addon path, ref, commit and detail overrides.
@@ -611,8 +652,9 @@ export async function readAddonSource(
 		throw notFound(addon.reason);
 	}
 
-	const manifestText = texts.get(childPath(path, 'manifest.json')) ?? '';
-	const checked = checkAddon(ctx.env, tree, addon, manifestText, commitSha);
+	const configured = { addon, config: membership.config };
+	const shipped = await readShippedManifest(github, repository, tree, configured, texts);
+	const checked = checkAddon(ctx.env, tree, shipped, commitSha);
 
 	if (checked.blocker) {
 		throw checked.blocker;
@@ -627,6 +669,15 @@ export async function readAddonSource(
 		readBytecode(ctx.env, github, repository, tree, addon.bundle, manifest, commitSha),
 		readTexts(github, repository, tree, [addonMdPath, changelogPath]),
 	]);
+	const addonMd = extraTexts.get(addonMdPath) ?? null;
+	const page = await readAddonPage(ctx.env, github, {
+		repository,
+		tree,
+		commitSha,
+		addonDir: path,
+		outputDir: outputDirOf(configured),
+		addonMd,
+	});
 
 	return {
 		pin: {
@@ -643,7 +694,8 @@ export async function readAddonSource(
 		bytecode,
 		bundleSize: bundle.length,
 		sha256: new Bun.CryptoHasher('sha256').update(bundle).digest('hex'),
-		addonMd: extraTexts.get(addonMdPath) ?? null,
+		addonMd,
+		page,
 		changelog: readChangelog(changelogPath, extraTexts.get(changelogPath), manifest.version),
 		details: toDetails(repo, extras, tree),
 	};

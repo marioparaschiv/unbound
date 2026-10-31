@@ -9,10 +9,9 @@ import type { InternalToastOptions } from '@unbound-app/types/toasts';
 import { useEffect, useState } from 'react';
 import { Dimensions } from 'react-native';
 
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import useToastStore from '~/stores/toasts';
-
-import toastDuration from './toast-duration';
+import { useUnboundSettings } from '~/settings/unbound';
+import toastDuration from '~/toasts/duration';
+import useToastStore from '~/toasts/state';
 
 function useToastState(options: InternalToastOptions) {
 	const [closing, setClosing] = useState(options.closing);

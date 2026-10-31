@@ -1,0 +1,68 @@
+import { REPOSITORY } from '~/core/repository';
+
+/** Build-time token replaced with a boolean literal by the `replace` plugin. */
+declare const $$DEV$$: boolean;
+
+/** @internal */
+export const CACHE_KEY = Symbol.for('metro.cache');
+export const CACHE_VERSION = 1;
+
+/** Whether this is a development build. Replaced at build time by the build's `transform.define`. */
+export const DEV: boolean = $$DEV$$;
+
+/**
+ * Base URL the i18n locale tables are fetched from. Replaced at build time: the GitHub raw URL in
+ * production, the local dev server (`UNBOUND_DEV=1`) otherwise.
+ */
+export const I18N_BASE_URL = '$$I18N_BASE_URL$$';
+
+/**
+ * `host:port` of the REPL/MCP debugger server, replaced at build time with the dev host. Empty in
+ * production. Override the host with `DEV_HOST` / `--host`, or the whole value with `DEBUGGER_ADDRESS`.
+ */
+export const DEBUGGER_ADDRESS = '$$DEBUGGER_ADDRESS$$';
+
+/** Origin of the dev server the bundle was built by, replaced at build time. Empty in production. */
+export const DEV_SERVER_URL = '$$DEV_SERVER_URL$$';
+
+/** Display name of the client, used as the settings section label. */
+export const CLIENT_NAME = 'Unbound';
+
+/** Short git revision this bundle was built from. Replaced at build time; `N/A` when git is unavailable. */
+export const VERSION = '$$VERSION$$';
+
+/** Semantic version of this client, sent to the addon updater. Replaced at build time from `package.json`. */
+export const CLIENT_VERSION = '$$CLIENT_VERSION$$';
+
+/** Origin of the Unbound web API. Replaced at build time from `UNBOUND_API_URL`, defaulting to production. */
+export const API_URL = '$$API_URL$$';
+
+export const MINIMUM_DISCORD_VERSIONS: Record<'android' | 'ios', string> = {
+	android: '$$MINIMUM_DISCORD_ANDROID$$',
+	ios: '$$MINIMUM_DISCORD_IOS$$',
+};
+
+/** Route keys for every built-in Unbound settings screen. Values double as `SETTING_RENDERER_CONFIG` keys. */
+export const Screens = {
+	General: 'UNBOUND_GENERAL',
+	Plugins: 'UNBOUND_PLUGINS',
+	Design: 'UNBOUND_DESIGN',
+	Developer: 'UNBOUND_DEVELOPER',
+	Assets: 'UNBOUND_ASSETS',
+	Toasts: 'UNBOUND_TOASTS',
+	CloudSync: 'UNBOUND_CLOUD_SYNC',
+	Marketplace: 'UNBOUND_MARKETPLACE',
+	Updates: 'UNBOUND_UPDATES',
+	Custom: 'UNBOUND_CUSTOM',
+} as const;
+
+/** External links surfaced on the General settings page. */
+export { REPOSITORY };
+
+export const SOCIAL_LINKS = {
+	GitHub: `https://github.com/${REPOSITORY}`,
+	Docs: 'https://docs.unbound.rip/',
+} as const;
+
+/** Discord invite code for the support server, opened as a deep link from the General page. */
+export const DISCORD_INVITE = 'rMdzhWUaGTx';

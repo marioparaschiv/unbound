@@ -1,13 +1,13 @@
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
-import { dependentsOf, planDependencies, type ListedDependency } from '~/lib/addon-dependencies';
-import { confirm, showDialog } from '~/api/dialogs';
-import MarketplaceStore from '~/stores/marketplace';
-import { toRelease } from '~/lib/addon-versions';
-import { Messages, format } from '~/api/i18n';
-import { getManager } from '~/managers/utils';
-import { showToast } from '~/api/toasts';
+import { dependentsOf, planDependencies, type ListedDependency } from '~/addons/dependencies';
+import { confirm, showDialog } from '~/dialogs/api';
+import MarketplaceStore from '~/marketplace/state';
+import { toRelease } from '~/addons/versions';
+import { messages, format } from '~/i18n/api';
+import { Manager } from '~/addons/manager';
+import { show } from '~/toasts/api';
 
 function listedPlugins(): Map<string, ListedAddon> {
 	const { state } = MarketplaceStore.getState();
@@ -30,7 +30,7 @@ function asDependency(listed: ListedAddon): ListedDependency {
 }
 
 function describePlan(install: ListedDependency[], update: ListedDependency[]): string {
-	const plugins = getManager('plugins').getEntities();
+	const plugins = Manager.for('plugin').getEntities();
 	const lines = [
 		...install.map((dependency) =>
 			format('UNBOUND_DEPENDENCY_INSTALL', { name: dependency.name }),
@@ -57,11 +57,9 @@ function describePlan(install: ListedDependency[], update: ListedDependency[]): 
  * @returns Whether its dependencies are in place, so the plugin itself can install.
  */
 export async function installDependencies(manifest: PublishedManifest): Promise<boolean> {
-	const manager = getManager('plugins');
+	const manager = Manager.for('plugin');
 	const listed = listedPlugins();
-	const installed = new Map(
-		manager.getEntities().map((entity) => [entity.id, entity.data.version]),
-	);
+	const installed = new Map(manager.getEntities().map((entity) => [entity.id, entity.version]));
 	const plan = planDependencies(
 		manifest.dependencies,
 		installed,
@@ -75,7 +73,7 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 			body: format('UNBOUND_DEPENDENCIES_UNAVAILABLE', {
 				names: plan.unavailable.join(', '),
 			}),
-			cancel: Messages.UNBOUND_OK,
+			cancel: messages.UNBOUND_OK,
 		});
 
 		return false;
@@ -88,8 +86,8 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 	const approved = await confirm({
 		title: format('UNBOUND_DEPENDENCIES_TITLE', { name }),
 		body: `${format('UNBOUND_DEPENDENCIES_BODY', { count: plan.ordered.length })}\n\n${describePlan(plan.install, plan.update)}`,
-		confirmLabel: Messages.UNBOUND_DEPENDENCIES_CONFIRM,
-		cancelLabel: Messages.UNBOUND_CANCEL,
+		confirmLabel: messages.UNBOUND_DEPENDENCIES_CONFIRM,
+		cancelLabel: messages.UNBOUND_CANCEL,
 	});
 
 	if (!approved) {
@@ -99,20 +97,12 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 	for (const dependency of plan.ordered) {
 		const entry = listed.get(dependency.id);
 		const done = entry
-			? installed.has(dependency.id)
-				? await manager
-						.update(dependency.id, toRelease(entry.id, entry.latestVersion))
-						.then(
-							() =>
-								manager.getEntity(dependency.id)?.data.version ===
-								dependency.version,
-						)
-				: Boolean(await manager.install(entry.latestVersion.manifestUrl))
+			? await manager.applyRelease(dependency.id, toRelease(entry.id, entry.latestVersion))
 			: false;
 
 		if (!done) {
-			showToast({
-				title: Messages.UNBOUND_MARKETPLACE,
+			show({
+				title: messages.UNBOUND_MARKETPLACE,
 				content: format('UNBOUND_DEPENDENCY_FAILED', { name: dependency.name }),
 				icon: 'CircleXIcon',
 			});

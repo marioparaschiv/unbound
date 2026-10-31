@@ -1,4 +1,4 @@
-import { Theme } from '~/api/metro/common';
+import { Theme } from '~/metro/common';
 
 const colors = Theme?.colors ?? {};
 

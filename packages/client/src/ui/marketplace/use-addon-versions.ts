@@ -2,8 +2,8 @@ import type { AddonVersion } from '@unbound-app/contracts/addons';
 import { createLogger } from '@unbound-app/logger';
 import { useEffect, useState } from 'react';
 
-import { fetchAddonVersions } from '~/lib/addon-versions';
-import { API_URL } from '~/lib/constants';
+import { fetchAddonVersions } from '~/addons/versions';
+import { API_URL } from '~/core/constants';
 
 /** The version list's lifecycle: fetching, fetched, or failed until the user retries. */
 export type AddonVersionsState =

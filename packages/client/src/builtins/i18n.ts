@@ -1,13 +1,2 @@
-import { init, destroy } from '~/api/i18n';
-
-/** Loads Unbound's translations for the active locale and follows locale changes. */
-export function start() {
-	void init();
-}
-
-/** Stops following locale changes. */
-export function stop() {
-	destroy();
-}
-
-export default { start, stop };
+export { default } from '~/i18n/builtin';
+export * from '~/i18n/builtin';

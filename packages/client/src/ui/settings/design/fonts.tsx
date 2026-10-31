@@ -1,9 +1,9 @@
 import { ScrollView } from 'react-native';
 import { useMemo } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import { getManager } from '~/managers/utils';
-import { format } from '~/api/i18n';
+import { Discord } from '~/metro/components';
+import { Manager } from '~/addons/manager';
+import { format } from '~/i18n/api';
 
 import FontOverrideRow from './font-override-row';
 
@@ -12,7 +12,7 @@ import FontOverrideRow from './font-override-row';
  * font swap is applied by the native layer and takes effect on next launch, noted by a hint here.
  */
 function FontsTab() {
-	const fonts = getManager('fonts');
+	const fonts = Manager.for('font');
 	const targets = useMemo(() => fonts.getTargets(), [fonts]);
 
 	return (

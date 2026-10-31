@@ -1,12 +1,12 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
-import type { ManagerKind } from '@unbound-app/types/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 
-import { Discord } from '~/api/metro/components';
-import { getInstallStatus } from '~/lib/catalog';
-import { showToast } from '~/api/toasts';
-import { format } from '~/api/i18n';
+import { getInstallStatus } from '~/marketplace/catalog';
+import { Discord } from '~/metro/components';
+import { format } from '~/i18n/api';
+import { show } from '~/toasts/api';
 
-import { getInstalledVersion, installFont, installVersion } from './targets';
+import { getInstalledVersion, installVersion } from './targets';
 
 const ALERT_KEY = 'unbound-offer-listed-install';
 
@@ -60,7 +60,7 @@ function confirm(addon: ListedAddon, update: boolean): Promise<boolean> {
  * @param addon The listed addon; its name, version, authors and description are shown.
  * @returns Whether the addon was installed or updated.
  */
-export async function offerListedInstall(kind: ManagerKind, addon: ListedAddon): Promise<boolean> {
+export async function offerListedInstall(kind: AddonKind, addon: ListedAddon): Promise<boolean> {
 	const { name } = addon.latestVersion.manifest;
 	const status = getInstallStatus(addon.latestVersion.version, getInstalledVersion(kind, addon));
 
@@ -68,13 +68,10 @@ export async function offerListedInstall(kind: ManagerKind, addon: ListedAddon):
 		return false;
 	}
 
-	const ok =
-		kind === 'fonts'
-			? await installFont(addon)
-			: await installVersion(kind, addon, addon.latestVersion);
+	const ok = await installVersion(kind, addon, addon.latestVersion);
 
 	if (!ok) {
-		showToast({
+		show({
 			title: name,
 			content: format('UNBOUND_INSTALL_FAILED', { name }),
 			icon: 'CircleXIcon',

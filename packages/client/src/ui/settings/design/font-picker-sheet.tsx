@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import { getManager } from '~/managers/utils';
-import { Icons } from '~/api/assets';
-import { format } from '~/api/i18n';
+import { Discord } from '~/metro/components';
+import { Manager } from '~/addons/manager';
+import { icons } from '~/assets/api';
+import { format } from '~/i18n/api';
 
 type FontPickerSheetProps = {
 	family: string;
@@ -15,7 +15,7 @@ type FontPickerSheetProps = {
  * system fonts, and a reset entry; selecting one writes the override through the Fonts manager.
  */
 function FontPickerSheet({ family, onClose }: FontPickerSheetProps) {
-	const fonts = getManager('fonts');
+	const fonts = Manager.for('font');
 	const [query, setQuery] = useState('');
 
 	const names = useMemo(() => {
@@ -44,7 +44,7 @@ function FontPickerSheet({ family, onClose }: FontPickerSheetProps) {
 				isClearable
 				isRound
 				placeholder={format('UNBOUND_SEARCH', { type: format('UNBOUND_FONTS') })}
-				leadingIcon={() => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon ?? 0} />}
+				leadingIcon={() => <Discord.TableRowIcon source={icons.MagnifyingGlassIcon ?? 0} />}
 			/>
 			<Discord.ActionSheetRow label={format('UNBOUND_RESET')} onPress={reset} />
 			{names.map((name) => (

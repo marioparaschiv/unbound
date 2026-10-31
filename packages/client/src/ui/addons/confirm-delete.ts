@@ -1,9 +1,8 @@
-import type { Addon } from '@unbound-app/types';
-
-import { dependentsOf } from '~/lib/addon-dependencies';
-import { Messages, format } from '~/api/i18n';
-import { showDialog } from '~/api/dialogs';
-import { showToast } from '~/api/toasts';
+import { dependentsOf } from '~/addons/dependencies';
+import { messages, format } from '~/i18n/api';
+import type { Addon } from '~/addons/addon';
+import { showDialog } from '~/dialogs/api';
+import { show } from '~/toasts/api';
 
 type DeletingManager = {
 	getEntities: () => Addon[];
@@ -24,26 +23,26 @@ async function deleteInOrder(manager: DeletingManager, addons: Addon[]) {
  */
 export function confirmDelete(manager: DeletingManager, addon: Addon) {
 	const dependents = dependentsOf(addon.id, manager.getEntities()) as Addon[];
-	const name = addon.data.name;
+	const name = addon.name;
 
 	if (dependents.length === 0) {
 		showDialog({
 			title: format('UNBOUND_DELETE_TITLE', { name }),
-			body: Messages.UNBOUND_DELETE_BODY,
+			body: messages.UNBOUND_DELETE_BODY,
 			buttons: [
 				{
-					label: Messages.UNBOUND_DELETE,
+					label: messages.UNBOUND_DELETE,
 					variant: 'destructive',
 					onPress: () => void manager.delete(addon.id),
 				},
 			],
-			cancel: Messages.UNBOUND_CANCEL,
+			cancel: messages.UNBOUND_CANCEL,
 		});
 
 		return;
 	}
 
-	const names = dependents.map((dependent) => dependent.data.name).join(', ');
+	const names = dependents.map((dependent) => dependent.name).join(', ');
 
 	showDialog({
 		title: format('UNBOUND_DELETE_TITLE', { name }),
@@ -56,8 +55,8 @@ export function confirmDelete(manager: DeletingManager, addon: Addon) {
 				variant: 'destructive',
 				onPress: () =>
 					void deleteInOrder(manager, [...dependents, addon]).then(() =>
-						showToast({
-							title: Messages.UNBOUND_DELETE,
+						show({
+							title: messages.UNBOUND_DELETE,
 							content: format('UNBOUND_DELETED_WITH_DEPENDENTS', {
 								name,
 								count: dependents.length,
@@ -67,12 +66,12 @@ export function confirmDelete(manager: DeletingManager, addon: Addon) {
 					),
 			},
 			{
-				label: Messages.UNBOUND_DELETE_LIBRARY_ONLY,
+				label: messages.UNBOUND_DELETE_LIBRARY_ONLY,
 				variant: 'secondary',
 				onPress: () => void manager.delete(addon.id),
 			},
 		],
-		cancel: Messages.UNBOUND_CANCEL,
+		cancel: messages.UNBOUND_CANCEL,
 	});
 }
 

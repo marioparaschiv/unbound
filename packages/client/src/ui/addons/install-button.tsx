@@ -1,16 +1,16 @@
-import type { ManagerKind } from '@unbound-app/types/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 import { View } from 'react-native';
 
-import { Discord } from '~/api/metro/components';
-import { Screens } from '~/lib/constants';
-import { Icons } from '~/api/assets';
-import { format } from '~/api/i18n';
+import { Discord } from '~/metro/components';
+import { Screens } from '~/core/constants';
+import { icons } from '~/assets/api';
+import { format } from '~/i18n/api';
 
 import InstallUrlModal from './install-url-modal';
 import useStyles from './install-button.style';
 
 type InstallButtonProps = {
-	kind: ManagerKind;
+	kind: AddonKind;
 };
 
 /**
@@ -31,7 +31,7 @@ function InstallButton({ kind }: InstallButtonProps) {
 			options: [
 				{
 					label: format('UNBOUND_INSTALL_FROM_URL'),
-					icon: Icons['LinkIcon'],
+					icon: icons['LinkIcon'],
 					onPress: () =>
 						Discord.openAlert(
 							'unbound-install',
@@ -43,7 +43,7 @@ function InstallButton({ kind }: InstallButtonProps) {
 				},
 				{
 					label: format('UNBOUND_BROWSE_MARKETPLACE'),
-					icon: Icons['ShopIcon'],
+					icon: icons['ShopIcon'],
 					onPress: () => navigation.push(Screens.Marketplace, { kind }),
 				},
 			],
@@ -52,7 +52,7 @@ function InstallButton({ kind }: InstallButtonProps) {
 
 	return (
 		<View style={styles.container} pointerEvents='box-none'>
-			<Discord.FloatingActionButton icon={Icons['PlusLargeIcon'] ?? 0} onPress={open} />
+			<Discord.FloatingActionButton icon={icons['PlusLargeIcon'] ?? 0} onPress={open} />
 		</View>
 	);
 }

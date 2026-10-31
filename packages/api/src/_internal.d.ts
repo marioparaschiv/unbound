@@ -15,7 +15,9 @@ declare const THEME_FLAG_KEYS: readonly [
 ];
 declare const TRANSITION_STATE_KEYS: readonly ['MOUNTED', 'ENTERED', 'YEETED'];
 declare const nativeHandle: unique symbol;
-/** The kinds of addon a manifest can declare. */
+/** The kinds of addon, as a manifest's `type` declares them. One manager governs each, in this start order. */
+export declare const ADDON_KINDS: readonly ['plugin', 'theme', 'icon-pack', 'font'];
+/** @deprecated Use ADDON_KINDS */
 export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'font'];
 /** The core settings store; each addon's settings store is named after the addon id. */
 export declare const CORE_SETTINGS_STORE = 'astral';
@@ -57,7 +59,7 @@ export declare const DESIGN_COMPONENTS: readonly [
 	'ActionSheetRow',
 	'ContextMenu',
 ];
-/** The addon managers. Each names its settings store and its Cloud Sync section. */
+/** @deprecated Use ADDON_KINDS */
 export declare const MANAGER_KINDS: readonly ['plugins', 'themes', 'icons', 'fonts'];
 export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.objc.classes',
@@ -84,6 +86,70 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.debug.evaluations',
 	'native.debug.environment',
 ];
+/** The Capability each native bridge method needs. */
+export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
+	readonly 'objc.getClass': 'native.objc.classes';
+	readonly 'objc.alloc': 'native.objc.classes';
+	readonly 'objc.className': 'native.objc.classes';
+	readonly 'objc.respondsTo': 'native.objc.classes';
+	readonly 'objc.call': 'native.objc.invoke';
+	readonly 'objc.callSuper': 'native.objc.invoke';
+	readonly 'objc.invoke': 'native.objc.invoke';
+	readonly 'objc.invokeAsync': 'native.objc.invokeAsync';
+	readonly 'objc.batch': 'native.objc.batch';
+	readonly 'objc.snapshot': 'native.objc.snapshot';
+	readonly 'objc.findViews': 'native.objc.snapshot';
+	readonly 'objc.invokeSuper': 'native.objc.invoke';
+	readonly 'objc.invokeSuperAsync': 'native.objc.invokeAsync';
+	readonly 'objc.getIvar': 'native.objc.ivars';
+	readonly 'objc.setIvar': 'native.objc.ivars';
+	readonly 'objc.createAssociationKey': 'native.objc.associations';
+	readonly 'objc.getAssociatedObject': 'native.objc.associations';
+	readonly 'objc.setAssociatedObject': 'native.objc.associations';
+	readonly 'objc.struct': 'native.objc.classes';
+	readonly 'objc.array': 'native.objc.classes';
+	readonly 'objc.data': 'native.objc.classes';
+	readonly 'objc.hook': 'native.objc.hooks';
+	readonly 'ffi.symbol': 'native.ffi.symbols';
+	readonly 'ffi.call': 'native.ffi.call';
+	readonly 'fabric.mount': 'native.fabric.mount';
+	readonly 'fabric.update': 'native.fabric.mount';
+	readonly 'fabric.setSize': 'native.fabric.mount';
+	readonly 'fabric.setFrame': 'native.fabric.mount';
+	readonly 'fabric.measure': 'native.fabric.mount';
+	readonly 'fabric.unmount': 'native.fabric.mount';
+	readonly 'fabric.mountAsync': 'native.fabric.async';
+	readonly 'fabric.updateAsync': 'native.fabric.async';
+	readonly 'fabric.setSizeAsync': 'native.fabric.async';
+	readonly 'fabric.setFrameAsync': 'native.fabric.async';
+	readonly 'fabric.measureAsync': 'native.fabric.async';
+	readonly 'fabric.unmountAsync': 'native.fabric.async';
+	readonly 'runtime.subscribe': 'native.runtime.events';
+	readonly 'java.getClass': 'native.java.classes';
+	readonly 'java.className': 'native.java.classes';
+	readonly 'java.describe': 'native.java.classes';
+	readonly 'java.construct': 'native.java.construct';
+	readonly 'java.respondsTo': 'native.java.classes';
+	readonly 'java.invoke': 'native.java.invoke';
+	readonly 'java.invokeAsync': 'native.java.invokeAsync';
+	readonly 'java.getField': 'native.java.fields';
+	readonly 'java.setField': 'native.java.fields';
+	readonly 'java.release': 'native.java.classes';
+	readonly 'java.batch': 'native.java.batch';
+	readonly 'java.batchAsync': 'native.java.batch';
+	readonly 'java.findViews': 'native.java.invoke';
+	readonly 'java.createAssociationKey': 'native.java.associations';
+	readonly 'java.getAssociatedObject': 'native.java.associations';
+	readonly 'java.setAssociatedObject': 'native.java.associations';
+	readonly 'debug.recordEvaluation': 'native.debug.evaluations';
+	readonly 'debug.environment': 'native.debug.environment';
+	readonly 'hooks.hook': 'native.java.hooks';
+	readonly 'hooks.setReturnValue': 'native.java.hooks';
+	readonly 'hooks.removeReturnValue': 'native.java.hooks';
+	readonly 'hooks.clearReturnValues': 'native.java.hooks';
+	readonly 'hooks.remove': 'native.java.hooks';
+};
+export declare const NATIVE_PLUGIN_PLATFORMS: readonly ['ios', 'android'];
 export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 	readonly android: readonly [
 		'native.java.classes',
@@ -315,22 +381,43 @@ export type ActionSheetSwitchRowComponent = React$1.ComponentType<
  * @see design/components/Sheet/native/ActionSheetRow.native.tsx
  */
 export type ActionSheetSwitchRowProps = TableSwitchRowProps;
-/** A loaded addon entity: its runtime state, instance, source bundle, and {@link AddonManifest}. */
-export type Addon = {
-	started: boolean;
-	/** What the bundle evaluated to. Every addon kind may implement the {@link Plugin} lifecycle hooks. */
-	instance: Plugin$1 | null;
-	context?: PluginContext;
-	id: string;
-	failed: boolean;
-	data: AddonManifest;
-	bundle: string;
-};
+/** @deprecated Use AddonHandle */
+export type Addon = AddonHandle;
 /** The author of an addon: a display name and a numeric user id. */
 export type AddonAuthor = {
 	name: string;
 	id: `${number}`;
 };
+/**
+ * A loaded plugin, theme or icon pack its manager governs: its manifest and state, and what its manager
+ * does to it. Stringifies to its {@link AddonManifest}.
+ */
+export type AddonHandle<I extends object = object> = {
+	readonly id: string;
+	readonly name: string;
+	readonly version: string;
+	readonly authors: AddonAuthor[];
+	readonly manifest: AddonManifest;
+	/** Whether the addon is running. */
+	readonly started: boolean;
+	/** Whether the addon failed to start. */
+	readonly failed: boolean;
+	/** @deprecated Use manifest */
+	readonly data: AddonManifest;
+	/** @deprecated What the bundle evaluated to; readable until 1.0. */
+	readonly instance: (Plugin$1 & I) | null;
+	/** @deprecated The bundle source; readable until 1.0. */
+	readonly bundle: string;
+	/** @deprecated The running plugin's native bridge; readable until 1.0. */
+	readonly context?: PluginContext;
+	isEnabled(): boolean;
+	isPlugin(): boolean;
+	enable(): void | Promise<void>;
+	disable(): void;
+	reload(): Promise<void>;
+	toJSON(): AddonManifest;
+};
+export type AddonKind = (typeof ADDON_KINDS)[number];
 /** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what the loader and installer record. */
 export type AddonManifest = AuthoredAddonManifest & {
 	/** Set by the loader for an addon it read from disk: the addon's folder name. */
@@ -340,11 +427,20 @@ export type AddonManifest = AuthoredAddonManifest & {
 	/** Set by the loader and installer: whether the bundle carries a valid Unbound signature. */
 	trust?: AddonTrust;
 };
-/** An addon referenced either by its id string or the {@link Addon} entity itself. */
-export type AddonResolveable = string | Addon;
+/** What an addon declares for one platform it runs on: the capabilities that platform provides which it needs. */
+export type AddonPlatform<P extends NativePluginPlatform = NativePluginPlatform> = {
+	capabilities?: NativePluginPlatformCapability<P>[];
+};
+/** The platforms an addon runs on, keyed by platform. */
+export type AddonPlatforms = {
+	[P in NativePluginPlatform]?: AddonPlatform<P>;
+};
+/** @deprecated Use AddonHandle */
+export type AddonResolveable = string | AddonHandle;
 /** Whether an addon's bundle carries a valid Unbound signature. */
 export type AddonTrust = 'signed' | 'unsigned';
-export type AddonType = (typeof ADDON_TYPES)[number];
+/** @deprecated Use AddonKind */
+export type AddonType = AddonKind;
 export type AlertActionButtonComponent = React$1.ComponentType<
 	AlertActionButtonProps & Record<string, unknown>
 >;
@@ -390,7 +486,7 @@ export type AssetsModule = {
 export type AuthoredAddonManifest = {
 	id: string;
 	/** The addon kind this manifest describes; used to validate installs. */
-	type?: AddonType;
+	type?: AddonKind;
 	name: string;
 	description: string;
 	authors: AddonAuthor[];
@@ -401,8 +497,13 @@ export type AuthoredAddonManifest = {
 		  };
 	main: string;
 	version: string;
-	platforms?: NativePluginPlatform[];
+	/**
+	 * The platforms the addon runs on, each with the capabilities it needs there; absent means every platform.
+	 * Published addons may still carry the older array of platform names.
+	 */
+	platforms?: AddonPlatforms | NativePluginPlatform[];
 	capabilities?: NativePluginCapability[];
+	/** @deprecated Use `platforms.<platform>.capabilities`. Still read for published addons. */
 	platformCapabilities?: Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
@@ -1769,6 +1870,7 @@ export type ManaContextProviderProps = {
 	children?: React$1.ReactNode;
 	value?: unknown;
 };
+/** @deprecated Use AddonKind */
 export type ManagerKind = (typeof MANAGER_KINDS)[number];
 export type MenuComponent = React$1.ComponentType<MenuProps>;
 export type MenuGroupComponent = React$1.ComponentType<MenuGroupProps>;
@@ -2409,7 +2511,18 @@ export type NativePluginErrorCode =
 	| 'NATIVE_PLUGIN_CAPABILITY_DENIED'
 	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
 	| 'NATIVE_PLUGIN_UNAVAILABLE';
-export type NativePluginPlatform = 'ios' | 'android';
+/** A native bridge method by the path a plugin calls it through, such as `objc.invoke`. */
+export type NativePluginMethod = {
+	[N in NativePluginNamespace]: `${N}.${keyof NativePluginBridge[N] & string}`;
+}[NativePluginNamespace];
+export type NativePluginNamespace = Exclude<
+	keyof NativePluginBridge,
+	'apiVersion' | 'abiVersion' | 'capabilities'
+>;
+export type NativePluginPlatform = (typeof NATIVE_PLUGIN_PLATFORMS)[number];
+/** A capability the native bridge on platform `P` provides. */
+export type NativePluginPlatformCapability<P extends NativePluginPlatform> =
+	(typeof NATIVE_PLUGIN_PLATFORM_CAPABILITIES)[P][number];
 export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities'
@@ -2782,10 +2895,8 @@ export type PluginContext = {
 	readonly native: NativePluginBridge;
 	dispose(): void;
 };
-/** An {@link Addon} whose instance is a {@link Plugin}. */
-export type PluginEntity = Addon & {
-	instance: Plugin$1 | null;
-};
+/** @deprecated Use AddonHandle */
+export type PluginEntity = AddonHandle<Plugin$1>;
 /** What a plugin's self-test found: whether the plugin works on this device, and why. */
 export type PluginSelfTestResult = {
 	ok: boolean;
@@ -3762,11 +3873,8 @@ export type ThemeContextProviderRootThemeContextProviderProps = {
 	secondaryColor?: unknown;
 	theme?: unknown;
 };
-/** An {@link Addon} whose instance is a {@link Theme}, tracking its registration state. */
-export type ThemeEntity = Addon & {
-	registered: boolean;
-	instance: Theme | null;
-};
+/** @deprecated Use AddonHandle */
+export type ThemeEntity = AddonHandle<Theme>;
 /**
  * Props of `ThemeProvider` (function). Exports: ThemeProvider.
  * @see module 4804 (no source path)

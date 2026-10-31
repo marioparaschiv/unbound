@@ -1,31 +1,31 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 import { memo, useState } from 'react';
 import { View } from 'react-native';
 
-import { brokenDependents } from '~/lib/addon-dependencies';
-import type { AvailableChoice } from '~/lib/addon-versions';
-import AddonCardHeader from '~/ui/addons/addon-card-header';
-import type { InstallStatus } from '~/lib/catalog';
-import type { UpdatableKind } from '~/lib/updates';
-import { Discord } from '~/api/metro/components';
-import { compareVersions } from '~/lib/versions';
-import { ActionSheets } from '~/api/metro/api';
-import { Messages, format } from '~/api/i18n';
-import { getManager } from '~/managers/utils';
-import { showToast } from '~/api/toasts';
-import { confirm } from '~/api/dialogs';
-import { Icons } from '~/api/assets';
+import AddonCardHeader from '~/ui/components/addon-card-header';
+import type { InstallStatus } from '~/marketplace/catalog';
+import { brokenDependents } from '~/addons/dependencies';
+import type { UpdatableKind } from '~/addons/manager-of';
+import type { AvailableChoice } from '~/addons/versions';
+import { installsFromManifest } from '~/addons/addons';
+import { compareVersions } from '~/core/versions';
+import { messages, format } from '~/i18n/api';
+import { Discord } from '~/metro/components';
+import { Manager } from '~/addons/manager';
+import { ActionSheets } from '~/metro/api';
+import { confirm } from '~/dialogs/api';
+import { icons } from '~/assets/api';
+import { show } from '~/toasts/api';
 
-import type { MarketplaceTab } from './targets';
-
-import { getInstalledVersion, installFont, installVersion } from './targets';
+import { getInstalledVersion, installVersion } from './targets';
 import VersionPickerSheet from './version-picker-sheet';
 import useInstallStatus from './use-install-status';
 import useStyles from './marketplace-card.style';
 
 type MarketplaceCardProps = {
 	addon: ListedAddon;
-	tab: MarketplaceTab;
+	kind: AddonKind;
 };
 
 type StatusAction = {
@@ -37,16 +37,16 @@ type StatusAction = {
 
 const ACTIONS: Record<InstallStatus, StatusAction> = {
 	install: {
-		label: () => Messages.UNBOUND_INSTALL,
+		label: () => messages.UNBOUND_INSTALL,
 		variant: 'primary',
 		offer: (version) => format('UNBOUND_INSTALL_VERSION', { version }),
 	},
 	update: {
-		label: () => Messages.UNBOUND_UPDATE,
+		label: () => messages.UNBOUND_UPDATE,
 		variant: 'primary',
 		offer: (version) => format('UNBOUND_UPDATE_TO_VERSION', { version }),
 	},
-	installed: { label: () => Messages.UNBOUND_INSTALLED, variant: 'secondary' },
+	installed: { label: () => messages.UNBOUND_INSTALLED, variant: 'secondary' },
 };
 
 const SHEET_KEY = 'unbound-addon-versions';
@@ -60,7 +60,7 @@ function confirmChoice(
 	const { name } = addon.latestVersion.manifest;
 	const { version } = choice.version;
 	const installed = getInstalledVersion(kind, addon);
-	const broken = brokenDependents(addon.id, version, getManager(kind).getEntities());
+	const broken = brokenDependents(addon.id, version, Manager.for(kind).getEntities());
 	const downgrade = installed !== void 0 && compareVersions(version, installed) < 0;
 
 	if (!choice.holds && !downgrade && broken.length === 0) {
@@ -72,7 +72,7 @@ function confirmChoice(
 		downgrade ? format('UNBOUND_VERSION_CONFIRM_DOWNGRADE', { installed }) : null,
 		broken.length > 0
 			? format('UNBOUND_VERSION_CONFIRM_BROKEN', {
-					names: broken.map((dependent) => dependent.data.name).join(', '),
+					names: broken.map((dependent) => dependent.manifest.name).join(', '),
 				})
 			: null,
 	];
@@ -80,8 +80,8 @@ function confirmChoice(
 	return confirm({
 		title: format('UNBOUND_VERSION_CONFIRM_TITLE', { name, version }),
 		body: lines.filter(Boolean).join('\n\n'),
-		confirmLabel: Messages.UNBOUND_INSTALL,
-		cancelLabel: Messages.UNBOUND_CANCEL,
+		confirmLabel: messages.UNBOUND_INSTALL,
+		cancelLabel: messages.UNBOUND_CANCEL,
 	});
 }
 
@@ -90,14 +90,14 @@ function confirmChoice(
  * or Installed button judged against the installed copy at its top right. Holding the button offers
  * the newest version or a picker of every version, except for fonts.
  */
-function MarketplaceCard({ addon, tab }: MarketplaceCardProps) {
+function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	const styles = useStyles();
-	const status = useInstallStatus(tab.kind, addon);
+	const status = useInstallStatus(kind, addon);
 	// Holds the pressed action until it settles, so the label doesn't flip while the button spins.
 	const [pending, setPending] = useState<InstallStatus | null>(null);
 	const { manifest, version: latest } = addon.latestVersion;
 	const action = ACTIONS[pending ?? status];
-	const updatable = tab.kind === 'fonts' ? undefined : tab.kind;
+	const updatable = installsFromManifest(kind) ? kind : undefined;
 
 	async function run(install: () => Promise<boolean>): Promise<boolean> {
 		setPending(status);
@@ -110,17 +110,13 @@ function MarketplaceCard({ addon, tab }: MarketplaceCardProps) {
 	}
 
 	function fail(content: string) {
-		showToast({ title: manifest.name, content, icon: 'CircleXIcon' });
+		show({ title: manifest.name, content, icon: 'CircleXIcon' });
 	}
 
 	async function press() {
 		if (!action.offer || pending) return;
 
-		const ok = await run(() =>
-			updatable === undefined
-				? installFont(addon)
-				: installVersion(updatable, addon, addon.latestVersion),
-		);
+		const ok = await run(() => installVersion(kind, addon, addon.latestVersion));
 
 		if (!ok) {
 			fail(format('UNBOUND_INSTALL_FAILED', { name: manifest.name }));
@@ -140,7 +136,7 @@ function MarketplaceCard({ addon, tab }: MarketplaceCardProps) {
 		}
 
 		if (choice.holds) {
-			showToast({
+			show({
 				title: manifest.name,
 				content: format('UNBOUND_VERSION_HELD_TOAST', vars),
 				icon: 'CircleCheckIcon',
@@ -173,12 +169,12 @@ function MarketplaceCard({ addon, tab }: MarketplaceCardProps) {
 			options: [
 				{
 					label: action.offer(latest),
-					icon: Icons['DownloadIcon'],
+					icon: icons['DownloadIcon'],
 					onPress: () => void press(),
 				},
 				{
-					label: Messages.UNBOUND_CHOOSE_VERSION,
-					icon: Icons['ClockIcon'],
+					label: messages.UNBOUND_CHOOSE_VERSION,
+					icon: icons['ClockIcon'],
 					onPress: () => openPicker(kind),
 				},
 			],
@@ -189,7 +185,7 @@ function MarketplaceCard({ addon, tab }: MarketplaceCardProps) {
 		<Discord.Card variant='primary' border='subtle' shadow='low' style={styles.card}>
 			<View style={styles.row}>
 				<View style={styles.body}>
-					<AddonCardHeader manifest={manifest} icon={tab.icon} />
+					<AddonCardHeader manifest={manifest} icon={Manager.for(kind).icon} />
 				</View>
 				<Discord.Button
 					size='sm'

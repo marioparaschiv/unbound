@@ -1,5 +1,5 @@
-import { Discord } from '~/api/metro/components';
-import { Theme } from '~/api/metro/common';
+import { Discord } from '~/metro/components';
+import { Theme } from '~/metro/common';
 
 // Shapes and tokens follow Discord's own placeholders (app launcher rows, shop skeleton cards).
 export default Discord.createStyles({

@@ -1,5 +1,11 @@
 {
 	"$schema": "../../node_modules/oxlint/configuration_schema.json",
+	"jsPlugins": [
+		{
+			"name": "unbound",
+			"specifier": "../../scripts/oxlint/plugin.ts"
+		}
+	],
 	"ignorePatterns": ["**/dist/**", "**/node_modules/**"],
 	"rules": {
 		"eslint/no-control-regex": "off",
@@ -11,6 +17,43 @@
 				"caughtErrors": "none",
 				"argsIgnorePattern": "^_"
 			}
-		]
-	}
+		],
+		"unbound/no-window-unbound": "error",
+		"unbound/platform-check-only-in-platform-file": "error",
+		// Lookups stay eager by default until slice 36 (UB-142) makes addon lookups lazy; flip this then.
+		"unbound/no-module-scope-lookup": ["error", { "lazyByDefault": false }]
+	},
+	"overrides": [
+		{
+			// The `window.unbound` globals tables go when slices 20 and 21 (UB-126, UB-127) move the configs onto the rollup preset.
+			"files": ["shared/rollup-config/**", "*/rollup.config.mjs"],
+			"rules": {
+				"unbound/no-window-unbound": "off"
+			}
+		},
+		{
+			// These plugins check the platform before `definePlatform` exists (slice 39, UB-145); the plugin migrations move each check into `platform.ts`.
+			"files": [
+				"avatar-radius/src/index.tsx",
+				"chat-bubbles/src/index.tsx",
+				"file-size-on-picker/src/index.ts",
+				"force-owner-crown/src/patches/message-row-data.ts",
+				"mention-avatars/src/index.ts",
+				"message-latency/src/index.tsx",
+				"message-link-embeds/src/index.ts",
+				"more-user-tags/src/index.tsx",
+				"more-user-tags/src/ios/tag-gradient-renderer.ts",
+				"moyai/src/index.tsx",
+				"preview-message/src/components/preview-button.tsx",
+				"preview-message/src/index.ts",
+				"reaction-avatars/src/index.ts",
+				"role-color-everywhere/src/ios/mentions.ts",
+				"role-color-everywhere/src/patches/row-manager.ts",
+				"shiki-codeblocks/src/index.tsx"
+			],
+			"rules": {
+				"unbound/platform-check-only-in-platform-file": "off"
+			}
+		}
+	]
 }

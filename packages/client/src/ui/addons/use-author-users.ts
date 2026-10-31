@@ -1,9 +1,9 @@
 import type { AddonAuthor } from '@unbound-app/types';
 import { useEffect, useState } from 'react';
 
-import { DefaultAvatars } from '~/api/metro/components';
-import { AsyncUsers } from '~/api/metro/api';
-import { Users } from '~/api/metro/stores';
+import { DefaultAvatars } from '~/metro/components';
+import { AsyncUsers } from '~/metro/api';
+import { Users } from '~/metro/stores';
 
 /** The fields of Discord's user record that the author line reads. */
 export type DiscordUser = {

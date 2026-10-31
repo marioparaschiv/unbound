@@ -86,31 +86,31 @@ declare class TaskCollection<Func extends Listener = Listener> {
 	tasksAsArray(): Func[];
 }
 
+/** @deprecated Use onChange */
+export declare const addListener: typeof onChange;
+/** @deprecated Use getBucket */
+export declare const getStore: typeof getBucket;
+/** @deprecated Use the function onChange returns */
 export declare const off: <EventKey extends keyof EventMap = string>(
 	event: EventKey,
 	listener: EventMap[EventKey],
 ) => EventEmitter<EventMap>;
+/** @deprecated Use onChange */
 export declare const on: <EventKey extends keyof EventMap = string>(
 	event: EventKey,
 	listener: EventMap[EventKey],
 ) => EventEmitter<EventMap>;
-/**
- * @description Registers a callback invoked on every settings change matching the predicate.
- * @param predicate Decides whether a given change should fire the callback.
- * @param callback Invoked with the payload of each matching change.
- * @returns A function that removes the listener.
- */
-export declare function addListener(
-	predicate: (payload: SettingsPayload) => PredicateResult,
-	callback: (payload: SettingsPayload) => void,
-): () => void;
+/** @deprecated Use useBucket */
+export declare const useSettingsStore: typeof useBucket;
 /**
  * @description Removes an entire store and all of its keys, and emits `changed` and `cleared`.
+ * @deprecated Use getBucket(store).clear
  * @param store The store to clear.
  */
 export declare function clear(store: string): void;
 /**
  * @description Reads a value from a store by dot-separated key path, falling back to a default when absent.
+ * @deprecated Use getBucket(store).get
  * @template T The type of the default value.
  * @param store The store to read from.
  * @param key The dot-separated key path within the store.
@@ -119,27 +119,21 @@ export declare function clear(store: string): void;
  */
 export declare function get<T>(store: string, key: string, def: T): Widen<T>;
 /**
- * @description Builds a store-scoped facade binding every settings operation to a single store name.
- * @param store The store name to scope every operation to.
- * @returns An object exposing `get`, `set`, `toggle`, `remove`, `clear`, `useSettingsStore`, and `addListener` bound to the store.
+ * @description Returns the Bucket with the given name. The name is the key the Bucket is saved under on disk.
+ * @param name The Bucket name, usually the addon id.
+ * @returns The Bucket, with every operation bound to `name`.
  */
-export declare function getStore(store: string): {
-	clear: () => void;
-	useSettingsStore: (predicate?: (payload: SettingsPayload) => PredicateResult) => {
-		set: (key: string, value: SettingsValue) => void;
-		get: <T>(key: string, def: T) => Widen<T>;
-		toggle: (key: string, def: boolean) => void;
-		remove: (key: string) => void;
-	};
-	addListener: (
-		predicate: (payload: SettingsPayload) => PredicateResult,
-		callback: (payload: SettingsPayload) => void,
-	) => () => EventEmitter<EventMap>;
-	set: (key: string, value: SettingsValue) => void;
-	get: <T>(key: string, def: T) => Widen<T>;
-	toggle: (key: string, def: boolean) => void;
-	remove: (key: string) => void;
-};
+export declare function getBucket(name: string): Bucket;
+/**
+ * @description Registers a callback invoked on every settings change matching the predicate.
+ * @param predicate Decides whether a given change should fire the callback. The payload names the Bucket in `store`.
+ * @param callback Invoked with the payload of each matching change.
+ * @returns A function that removes the listener.
+ */
+export declare function onChange(
+	predicate: (payload: SettingsPayload) => PredicateResult,
+	callback: (payload: SettingsPayload) => void,
+): () => void;
 /**
  * @description Hands the settings changed since the last call to the loader, which merges them into the
  * settings file key by key, so values the loader wrote in the meantime are kept.
@@ -148,17 +142,20 @@ export declare function getStore(store: string): {
 export declare function persist(): Promise<void>;
 /**
  * @description Deletes a value at a dot-separated key path, pruning objects the deletion leaves empty and the store itself when it becomes empty, and emits `changed` and `removed`.
+ * @deprecated Use getBucket(store).remove
  * @param store The store to remove the key from.
  * @param key The dot-separated key path to delete.
  */
 export declare function remove(store: string, key: string): void;
 /**
  * @description Removes a previously registered settings change listener.
+ * @deprecated Call the function onChange returns.
  * @param callback The listener to remove.
  */
 export declare function removeListener(callback: (payload: SettingsPayload) => void): void;
 /**
  * @description Writes a value into a store at a dot-separated key path, creating intermediate objects, and emits `changed` and `set`.
+ * @deprecated Use getBucket(store).set
  * @param store The store to write to.
  * @param key The dot-separated key path within the store.
  * @param value The value to store.
@@ -166,28 +163,44 @@ export declare function removeListener(callback: (payload: SettingsPayload) => v
 export declare function set(store: string, key: string, value: SettingsValue): void;
 /**
  * @description Flips a boolean value at a key path against its current (or default) value, and emits `toggled`.
+ * @deprecated Use getBucket(store).toggle
  * @param store The store to write to.
  * @param key The dot-separated key path within the store.
  * @param def The value to assume when the key is not yet set.
  */
 export declare function toggle(store: string, key: string, def: boolean): void;
 /**
- * @description React hook that re-renders the component whenever a matching change occurs in the store.
- * @param store The store to subscribe to.
+ * @description React hook that re-renders the component whenever a matching change occurs in the Bucket.
+ * @param name The Bucket to subscribe to.
  * @param predicate Optional filter deciding which changes trigger a re-render.
- * @returns An object exposing `get`, `set`, `toggle`, and `remove` bound to the store.
+ * @returns The Bucket, with every operation bound to `name`.
  */
-export declare function useSettingsStore(
-	store: string,
+export declare function useBucket(
+	name: string,
 	predicate?: (payload: SettingsPayload) => PredicateResult,
-): {
-	set: (key: string, value: SettingsValue) => void;
-	get: <T>(key: string, def: T) => Widen<T>;
-	toggle: (key: string, def: boolean) => void;
-	remove: (key: string) => void;
-};
+): Bucket;
 /** The declared parameter count of a listener. */
 export type ArgsNum<T extends Listener> = Parameters<T>['length'];
+/** A Bucket: a named, persisted group of settings. Keys are dot-separated paths. */
+export type Bucket = {
+	/** Reads a value, falling back to `def` when the key is not set. */
+	get: <T>(key: string, def: T) => Widen<T>;
+	/** Writes a value, creating intermediate objects. */
+	set: (key: string, value: SettingsValue) => void;
+	/** Flips a boolean against its current value, or `def` when the key is not set. */
+	toggle: (key: string, def: boolean) => void;
+	/** Deletes a value and prunes the objects it leaves empty. */
+	remove: (key: string) => void;
+	/** Deletes every setting in the Bucket. */
+	clear: () => void;
+	/** @deprecated Use storage.useBucket(name) */
+	useSettingsStore: (predicate?: (payload: SettingsPayload) => PredicateResult) => Bucket;
+	/** @deprecated Use storage.onChange */
+	addListener: (
+		predicate: (payload: SettingsPayload) => PredicateResult,
+		callback: (payload: SettingsPayload) => void,
+	) => () => void;
+};
 export type ClearedPayload = {
 	store: string;
 };

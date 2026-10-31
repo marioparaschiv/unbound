@@ -1,8 +1,8 @@
-import type { Addon } from '@unbound-app/types';
 import { memo } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import { Screens } from '~/lib/constants';
+import { Discord } from '~/metro/components';
+import type { Addon } from '~/addons/addon';
+import { Screens } from '~/core/constants';
 
 import RoundButton from './round-button';
 
@@ -17,22 +17,19 @@ type AddonSettingsProps = {
  */
 function AddonSettings({ addon, disabled }: AddonSettingsProps) {
 	const navigation = Discord.useNavigation();
-	const { instance } = addon;
+	const panel = addon.settingsPanel;
 
 	function handlePress() {
-		if (!instance?.getSettingsPanel) return;
+		if (!panel) return;
 
-		navigation.push(Screens.Custom, {
-			title: addon.data.name,
-			render: () => instance.getSettingsPanel?.(),
-		});
+		navigation.push(Screens.Custom, { title: addon.name, render: panel });
 	}
 
 	return (
 		<RoundButton
 			icon='SettingsIcon'
-			label={`${addon.data.name} settings`}
-			disabled={disabled || !instance?.getSettingsPanel}
+			label={`${addon.name} settings`}
+			disabled={disabled || !panel}
 			onPress={handlePress}
 		/>
 	);

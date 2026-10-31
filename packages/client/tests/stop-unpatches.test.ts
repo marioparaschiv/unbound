@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { FakeAddons, makeManifest, resetDevice, states } from './helpers/addons';
 
-const { createPatcher, unpatchAllByCaller } = await import('~/api/patcher');
+const { createPatcher, unpatchAllByCaller } = await import('~/patcher/api');
 
 type Greeter = {
 	greet: (name: string) => string;

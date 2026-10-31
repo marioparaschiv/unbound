@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "7dbf1061-17f9-4ee8-8eda-96ac62982f9c",
+  "prevIds": [
+    "7fd6c30b-b195-4bfb-9768-0b575d5a3e4c"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "submission_source",
+        "page"
+      ],
+      "writes": [
+        "s|col|public.submission_source.page",
+        "n|col|public.submission_source.page",
+        "e|col|public.submission_source.page"
+      ],
+      "reads": [
+        "n|tbl|public.submission_source",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "submission_source",
+        "name": "page",
+        "type": "json",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

@@ -27,7 +27,10 @@ export default function refresh(root: string, runtime: string): Plugin {
 		name: 'refresh',
 		transform: {
 			filter: {
-				id: { include: /\/src\/.*\.[jt]sx?$/, exclude: /node_modules|\/src\/lib\/hot\// },
+				id: {
+					include: /\/src\/.*\.[jt]sx?$/,
+					exclude: /node_modules|\/src\/hot-refresh\/(?!(?:builtin\.ts)$)/,
+				},
 			},
 			handler(source, id) {
 				return { code: transformModule(source, id, root, runtime), moduleType: 'js' };

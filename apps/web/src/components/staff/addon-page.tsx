@@ -26,7 +26,7 @@ import Activity from '~/components/staff/activity';
 import { hasPermission } from '~/lib/auth/access';
 import AddonIcon from '~/components/addon-icon';
 import { Button } from '~/components/ui/button';
-import Markdown from '~/components/markdown';
+import AddonMd from '~/components/addon-md';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 import cn from '~/lib/cn';
@@ -165,7 +165,12 @@ function StorePage({ store }: StorePageProps) {
 	return (
 		<Card className='relative gap-0 overflow-hidden'>
 			<CardContent className={cn(!expanded && 'max-h-96 overflow-hidden')}>
-				<Markdown source={source.addonMd} pin={source.pin} />
+				<AddonMd
+					source={source.addonMd}
+					pin={source.pin}
+					mediaBase={source.mediaBase}
+					page={source.page}
+				/>
 			</CardContent>
 			{expanded ? null : (
 				<div className='right-0 bottom-0 left-0 absolute flex justify-center bg-linear-to-t from-card via-card/90 to-transparent pt-16 pb-4'>

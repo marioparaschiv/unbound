@@ -2,8 +2,8 @@ import type { ImageSourcePropType } from 'react-native';
 import { View, Image } from 'react-native';
 import { memo } from 'react';
 
-import { TintedIcon } from '~/ui/components';
-import { Icons } from '~/api/assets';
+import TintedIcon from '~/metro/fallbacks/tinted-icon';
+import { icons } from '~/assets/api';
 
 import useStyles from './toast.style';
 
@@ -14,7 +14,7 @@ type ToastIconProps = {
 
 function resolveIcon(icon: string | number): number {
 	if (typeof icon === 'string') {
-		return Icons[icon] ?? 0;
+		return icons[icon] ?? 0;
 	}
 
 	return icon;

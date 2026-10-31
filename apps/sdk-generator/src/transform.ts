@@ -67,7 +67,11 @@ export function stripInternal(
 		}
 	}
 
-	const referenced = collectReferencedNames(survivors);
+	dropInternalExportSpecifiers(survivors, new Set([...candidates.values()].flat()));
+
+	const referenced = collectReferencedNames(
+		survivors.filter((statement) => !statement.wasForgotten()),
+	);
 
 	for (const [statement, names] of candidates) {
 		if (names.some((name) => referenced.has(name))) {
@@ -85,6 +89,21 @@ export function stripInternal(
 		for (const name of names) internalNames.add(name);
 
 		statement.remove();
+	}
+}
+
+// A bundler that renames a colliding declaration exports it through a list (`export { a$1 as a }`).
+function dropInternalExportSpecifiers(statements: Statement[], internal: Set<string>) {
+	for (const statement of statements) {
+		if (!Node.isExportDeclaration(statement) || statement.hasModuleSpecifier()) {
+			continue;
+		}
+
+		for (const specifier of statement.getNamedExports()) {
+			if (internal.has(specifier.getName())) {
+				specifier.remove();
+			}
+		}
 	}
 }
 

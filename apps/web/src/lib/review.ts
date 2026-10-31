@@ -146,6 +146,7 @@ export async function listReviewQueue(
 			bundleSize: row.bundleSize,
 			sha256,
 			addonMd: source.addonMd,
+			page: source.page,
 			changelog: source.changelog,
 			details: source.details,
 			submittedAt: submittedAt.toISOString(),

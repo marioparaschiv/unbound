@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
+import {
+	getPinnedMediaBase,
+	getPublishedMediaBase,
+	resolveMarkdownUrl,
+	resolveMediaUrl,
+} from '~/lib/markdown-url';
 import type { MarkdownPin, MarkdownUrl, MarkdownUrlKind } from '~/lib/markdown-url';
-import { resolveMarkdownUrl } from '~/lib/markdown-url';
 
 type Case = [url: string, expected: MarkdownUrl | undefined];
 
@@ -113,6 +118,47 @@ describe('resolveMarkdownUrl', () => {
 
 			expect(once).toBeDefined();
 			expect(resolveMarkdownUrl(once?.href ?? '', PIN, 'link')).toEqual(once);
+		}
+	});
+});
+
+describe('resolveMediaUrl', () => {
+	const RAW = `https://raw.githubusercontent.com/acme/addons/${SHA}`;
+
+	test('loads media from the addon directory at the pinned commit before publish', () => {
+		expect(getPinnedMediaBase(PIN)).toBe(`${RAW}/plugins/hello/`);
+		expect(getPinnedMediaBase(ROOT_PIN)).toBe(`${RAW}/`);
+		expect(resolveMediaUrl('media/a/shot.png', getPinnedMediaBase(PIN))).toBe(
+			`${RAW}/plugins/hello/media/a/shot.png`,
+		);
+	});
+
+	test('loads media from the CDN version folder after publish', () => {
+		const base = getPublishedMediaBase(
+			'https://cdn.example/addons/acme.hello/1.2.0/manifest.json',
+		);
+
+		expect(base).toBe('https://cdn.example/addons/acme.hello/1.2.0/');
+		expect(resolveMediaUrl('media/clip.mp4', base)).toBe(
+			'https://cdn.example/addons/acme.hello/1.2.0/media/clip.mp4',
+		);
+	});
+
+	test('resolves only files inside media/', () => {
+		const base = getPinnedMediaBase(PIN);
+
+		for (const path of [
+			'./media/shot.png',
+			'media/../shot.png',
+			'../media/shot.png',
+			'/media/shot.png',
+			'shot.png',
+			'media/shot.svg',
+			'media/.hidden.png',
+			'https://evil.example/media/shot.png',
+			'//evil.example/media/shot.png',
+		]) {
+			expect([path, resolveMediaUrl(path, base)]).toEqual([path, undefined]);
 		}
 	});
 });

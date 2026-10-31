@@ -1,10 +1,10 @@
 import { memo } from 'react';
 
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { Discord } from '~/api/metro/components';
-import { getManager } from '~/managers/utils';
-import { findByProps } from '~/api/metro';
-import { format } from '~/api/i18n';
+import { useUnboundSettings } from '~/settings/unbound';
+import { Discord } from '~/metro/components';
+import { findByProps } from '~/metro/search';
+import { Manager } from '~/addons/manager';
+import { format } from '~/i18n/api';
 
 import FontPickerSheet from './font-picker-sheet';
 
@@ -18,7 +18,7 @@ type FontOverrideRowProps = {
  * default), and opens the picker on press. Reads its override from the Fonts manager.
  */
 function FontOverrideRow({ group, families }: FontOverrideRowProps) {
-	const fonts = getManager('fonts');
+	const fonts = Manager.for('font');
 
 	useUnboundSettings(({ key }) => key === 'font-states');
 	const overrides = fonts.getOverrides();

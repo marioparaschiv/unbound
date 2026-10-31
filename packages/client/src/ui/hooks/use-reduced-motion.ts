@@ -1,5 +1,5 @@
-import { Accessibility } from '~/api/metro/stores';
-import { FluxHooks } from '~/api/metro/common';
+import { Accessibility } from '~/metro/stores';
+import { FluxHooks } from '~/metro/common';
 
 /**
  * @description Reads Discord's reduced-motion preference, re-rendering when it changes.

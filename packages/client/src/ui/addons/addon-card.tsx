@@ -1,15 +1,16 @@
-import type { Addon } from '@unbound-app/types';
 import { View } from 'react-native';
 import { memo } from 'react';
 
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
-import { getManager } from '~/managers/utils';
-import { TintedIcon } from '~/ui/components';
-import { Theme } from '~/api/metro/common';
-import { Messages } from '~/api/i18n';
-import { Icons } from '~/api/assets';
+import useDevelopmentCopy from '~/ui/hooks/use-development-copy';
+import { useUnboundSettings } from '~/settings/unbound';
+import TintedIcon from '~/metro/fallbacks/tinted-icon';
+import AddonTitle from '~/ui/components/addon-title';
+import { Discord } from '~/metro/components';
+import type { Addon } from '~/addons/addon';
+import { Manager } from '~/addons/manager';
+import { Theme } from '~/metro/common';
+import { messages } from '~/i18n/api';
+import { icons } from '~/assets/api';
 
 import AddonOverflow from './addon-overflow';
 import AddonSettings from './addon-settings';
@@ -17,11 +18,10 @@ import AddonAuthors from './addon-authors';
 import useStyles from './addon-card.style';
 import AddonSwitch from './addon-switch';
 import AddonRadio from './addon-radio';
-import AddonTitle from './addon-title';
 
 type AddonCardProps = {
 	addon: Addon;
-	kind: 'plugins' | 'themes' | 'icons';
+	kind: 'plugin' | 'theme' | 'icon-pack';
 	/** Whether the plugin is a library other plugins build on. */
 	library?: boolean;
 };
@@ -32,23 +32,21 @@ type AddonCardProps = {
  */
 function AddonCard({ addon, kind, library }: AddonCardProps) {
 	const styles = useStyles();
-	const manager = getManager(kind);
-	const { name, version, authors, description } = addon.data;
+	const manager = Manager.for(kind);
+	const { name, version, authors, description } = addon.manifest;
 
 	const recovery = useUnboundSettings(({ key }) => key === 'recovery').get('recovery');
 	const disabled = addon.failed || recovery;
 
-	useSettingsStore(kind, ({ key }) => key === 'development');
-
-	const developmentCopy = manager.isDevelopmentCopy(addon.id);
+	const developmentCopy = useDevelopmentCopy(kind, addon.id);
 	const tag = library
-		? Messages.UNBOUND_LIBRARY
+		? messages.UNBOUND_LIBRARY
 		: developmentCopy
-			? Messages.UNBOUND_DEVELOPMENT_COPY
+			? messages.UNBOUND_DEVELOPMENT_COPY
 			: void 0;
 
 	const trailing =
-		kind === 'plugins' ? (
+		kind === 'plugin' ? (
 			<AddonSwitch addon={addon} kind={kind} disabled={disabled} />
 		) : (
 			<AddonRadio addon={addon} kind={kind} disabled={disabled} />
@@ -69,9 +67,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 					{authors?.length ? <AddonAuthors authors={authors} /> : null}
 				</View>
 				<View style={styles.actions}>
-					{kind === 'plugins' ? (
-						<AddonSettings addon={addon} disabled={disabled} />
-					) : null}
+					{kind === 'plugin' ? <AddonSettings addon={addon} disabled={disabled} /> : null}
 					<AddonOverflow addon={addon} kind={kind} developmentCopy={developmentCopy} />
 					{trailing}
 				</View>
@@ -89,7 +85,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 				)}
 				<View style={styles.icon}>
 					<TintedIcon
-						source={Icons['PuzzlePieceIcon'] ?? 0}
+						source={icons['PuzzlePieceIcon'] ?? 0}
 						size={18}
 						tint={Theme.colors.TEXT_STRONG}
 					/>

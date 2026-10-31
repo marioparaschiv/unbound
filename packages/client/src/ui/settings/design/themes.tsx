@@ -1,12 +1,12 @@
 import { ScrollView } from 'react-native';
 
-import { AddonList } from '~/ui/addons';
+import AddonList from '~/ui/addons/addon-list';
 
 /** The Themes tab: the shared addon list bound to the Themes manager. */
 function ThemesTab() {
 	return (
 		<ScrollView contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 12 }}>
-			<AddonList kind={'themes'} />
+			<AddonList kind={'theme'} />
 		</ScrollView>
 	);
 }

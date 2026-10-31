@@ -1,10 +1,10 @@
 import { createLogger } from '@unbound-app/logger';
 
-import { getSetting, isSettingChange } from '~/lib/unbound-settings';
-import { Guilds, Users } from '~/api/metro/stores';
-import { createPatcher } from '~/api/patcher';
-import { findStore } from '~/api/metro';
-import storage from '~/api/storage';
+import { getSetting, isSettingChange } from '~/settings/unbound';
+import { Guilds, Users } from '~/metro/stores';
+import { createPatcher } from '~/patcher/api';
+import { findStore } from '~/metro';
+import storage from '~/storage/api';
 
 const Patcher = createPatcher('unbound::staff-mode');
 const Logger = createLogger('StaffMode');
