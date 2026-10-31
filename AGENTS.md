@@ -5,7 +5,7 @@ This is the canonical style guide for this repository, and the `AGENTS.md` that 
 The hierarchy of authority, highest first:
 
 1. **`oxfmt`** - owns all whitespace, quoting, and line-wrapping. Never fight it; never hand-format. Run it.
-2. **`oxlint`** (`.oxlintrc.json`, run `--type-aware`) - correctness, structural bans (the custom `oxc-config/*` rules), JSDoc shape, statement padding, and import/export ordering via `perfectionist`. Every rule is an `error`. The rules and the commitlint config come from `@marioparaschiv/oxc-config`; `.oxlintrc.json` extends its `base`, `react` and `jsdoc` presets; change a shared rule in that package, not here. Locally it adds the `react` and `import` plugins and a few repo rules (`eqeqeq`, `switch-exhaustiveness-check`, `no-misused-promises`, and `consistent-import-paths` for the `~/` alias in §3.3). Its overrides allow `any` in the metro layer and the Discord design-module typings (§4), and turn on stricter React and import-cycle rules for `packages/client/src` (§8.1). `bun run lint` also runs `oxc-config-check`, which fails on unknown rule names. Repo-specific architecture rules live in a local plugin, `scripts/oxlint/` (`unbound/*`, each with a fixture test): `max-file-bytes` (20 KB per file), `no-upward-imports` (the layer table in `.oxlintrc.json`), `no-import-outside-package`, `no-asserted-external-data` (parse `JSON.parse`/`.json()` output with a schema), `no-pass-through-wrapper`, `no-env-mutation` and `prefer-discriminated-union`.
+2. **`oxlint`** (`.oxlintrc.json`, run `--type-aware`) - correctness, structural bans (the custom `oxc-config/*` rules), JSDoc shape, statement padding, and import/export ordering via `perfectionist`. Every rule is an `error`. The rules and the commitlint config come from `@marioparaschiv/oxc-config`; `.oxlintrc.json` extends its `base`, `react` and `jsdoc` presets; change a shared rule in that package, not here. Locally it adds the `react` and `import` plugins and a few repo rules (`eqeqeq`, `switch-exhaustiveness-check`, `no-misused-promises`, and `consistent-import-paths` for the `~/` alias in §3.3). Its overrides allow `any` in the metro layer and the Discord design-module typings (§4), turn off `no-unused-expressions` in `packages/loader/bootstrap/*.js` and `no-implied-eval` in `packages/plugins-shared/src/native/app-surface.ts`, and turn on stricter React and import-cycle rules for `packages/client/src` (§8.1). `bun run lint` also runs `oxc-config-check`, which fails on unknown rule names. Repo-specific architecture rules live in a local plugin, `scripts/oxlint/` (`unbound/*`, each with a fixture test): `max-file-bytes` (20 KB per file), `no-upward-imports` (the layer table in `.oxlintrc.json`), `no-import-outside-package`, `no-asserted-external-data` (parse `JSON.parse`/`.json()` output with a schema), `no-pass-through-wrapper`, `no-env-mutation` and `prefer-discriminated-union`.
 3. **This document** - the conventions the tools can't encode: naming, file shape, module structure, the _feel_ of the code.
 
 Fix a lint finding in the code. Don't silence it with a disable comment, a cast, or a config override.
@@ -91,7 +91,7 @@ One blank line between groups. None within a group.
 
 ### 2.5 API modules export a namespace
 
-A domain's public API is one module, usually `<domain>/api.ts` (`native/native.ts`, `native/fs.ts` and `metro/index.ts` are the exceptions). **Export each member individually as a named export.** `core/api.ts` re-exports the module as a namespace (`export * as toasts from '~/toasts/api'`), so the module's named exports are exactly what `window.unbound.toasts` and the generated SDK's `toasts` hold. Consumers import a member (`import { show } from '~/toasts/api'`) or the namespace (`import * as toasts from '~/toasts/api'`).
+A domain's public API is one module, usually `<domain>/api.ts`. The exceptions are `native/native.ts`, `native/fs.ts` and `metro/index.ts`, plus the manager instances (`plugins`, `themes`, `icons`, `fonts`) that `core/api.ts` re-exports from `~/addons/managers`. **Export each member individually as a named export.** `core/api.ts` re-exports the module as a namespace (`export * as toasts from '~/toasts/api'`). The generated SDK's `toasts` holds exactly the module's named exports; `window.unbound.toasts` also carries the module's `default` when it has one. Consumers import a member (`import { show } from '~/toasts/api'`) or the namespace (`import * as toasts from '~/toasts/api'`).
 
 ```ts
 export function show(options: ToastOptions): ToastHandle {
@@ -309,7 +309,7 @@ Most of these are lint rules (some auto-fixed by `bun run lint:fix`) - write the
 
 ## 7. Classes
 
-Used for stateful, identity-bearing things: managers, the `Logger`. Plain functions/objects for everything else. Conventions, from `addons/manager.ts` and `logger.ts`:
+Used for stateful, identity-bearing things: managers, the `Logger`. Plain functions/objects for everything else. Conventions, from `addons/manager.ts`, `addons/lifecycle.ts` and `logger.ts`:
 
 - **`abstract class` with abstract methods** to define a contract for subclasses: `abstract initialize(): void;`.
 - **Field declarations with initialisers at the top**, before the constructor:
@@ -322,11 +322,11 @@ Used for stateful, identity-bearing things: managers, the `Logger`. Plain functi
     protected logger: ReturnType<typeof createLogger>;
     ```
 
-- **`ReturnType<typeof factory>`** to type a field whose value comes from a factory function (`createLogger`, `createPatcher`, `storage.getStore`) instead of importing/declaring the type.
-- **Parameter properties** for constructor-injected readonly config: `constructor(public readonly type: AddonKind)`.
-- **Visibility is explicit and minimal**: `protected` for subclass-only internals (`resolve`, `getByName`, `getStates`, `validateManifest`), `private` for class-only (`Logger.inspectFn`), public (no modifier) for the API surface.
+- **`ReturnType<typeof factory>`** to type a field whose value comes from a factory function (`createLogger`, `createPatcher`, `storage.getBucket`) instead of importing/declaring the type.
+- **Parameter properties** for constructor-injected readonly fields: `constructor(public readonly owner: string, public readonly path: string, reason: string)` on `CommandDefinitionError` (`commands/normalize.ts`).
+- **Visibility is explicit and minimal**: `protected` for subclass-only internals (`resolve`, `getByName`, `getStates`, `validateManifest` in `addons/lifecycle.ts`), `private` for class-only (`Logger.inspector`, `Logger._write`), public (no modifier) for the API surface.
 - **`static` factory + `static` helpers** pattern on `Logger` (`static create(…)`, `static setInspector()`), alongside an exported free function wrapper (`export function createLogger(...)`).
-- **A leading-underscore prefix** marks methods that are public-by-necessity but conceptually internal (`Logger._getPrefix`, `_getColor`, `_inspect`). New code prefers `private`/`protected`; the underscore convention persists where TS visibility can't be used.
+- **A leading-underscore prefix** marks methods that are public-by-necessity but conceptually internal (`Logger._getPrefix`, `_getColor`). New code prefers `private`/`protected`; the underscore convention persists where TS visibility can't be used.
 
 ### 7.1 The Manager pattern (read before touching `addons/` or a `<kind>/manager.ts`)
 
@@ -377,7 +377,6 @@ In `packages/client/src` the shape is linted: `react/no-multi-comp`, `react/no-u
     	condition ? <Thing /> : null;
     }
     ```
-    _(You will see existing `options.icon && (…)` in `toast.tsx`; that pattern is exactly what the rule now flags - write the ternary in new code.)_
 - **No nested `<a>`** (`oxc-config/no-nested-links`) - N/A in RN but enforced for any web JSX.
 - Single quotes in JSX attributes (`variant='text-sm/semibold'`, `pointerEvents='box-none'`).
 - `style={[base, conditional, { inline }]}` array form for composing RN styles.
