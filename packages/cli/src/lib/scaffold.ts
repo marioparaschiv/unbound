@@ -1,4 +1,5 @@
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { isUtf8 } from 'node:buffer';
 import { join } from 'node:path';
 
 import type { Tokens } from '~/lib/templates';
@@ -21,8 +22,8 @@ function substitute(input: string, tokens: Tokens): string {
 
 /**
  * @description Recursively copies a template directory into a destination, substituting tokens across
- * both file contents and file/directory names and renaming the undotted `gitignore` to `.gitignore`
- * so it survives publishing yet lands as a real dotfile.
+ * both text file contents and file/directory names, copying binary files such as images byte for byte,
+ * and renaming the undotted `gitignore` to `.gitignore` so it survives publishing yet lands as a real dotfile.
  * @param from The template directory to copy.
  * @param to The destination directory (created if absent).
  * @param tokens The token values to inject.
@@ -42,7 +43,12 @@ export function scaffoldTemplate(from: string, to: string, tokens: Tokens): void
 			continue;
 		}
 
-		writeFileSync(target, substitute(readFileSync(source, 'utf8'), tokens));
+		const contents = readFileSync(source);
+
+		writeFileSync(
+			target,
+			isUtf8(contents) ? substitute(contents.toString('utf8'), tokens) : contents,
+		);
 	}
 }
 
