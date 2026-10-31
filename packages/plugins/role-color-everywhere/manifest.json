@@ -3,16 +3,62 @@
 	"name": "Role Color Everywhere",
 	"description": "Colors mentions, typing names, voice users, reaction users, poll voters, and role headers.",
 	"authors": [
-		{ "name": "King Fish", "id": "499400512559382538" },
-		{ "name": "lewisakura", "id": "96269247411400704" },
-		{ "name": "AutumnVN", "id": "393694671383166998" },
-		{ "name": "Kyuuhachi", "id": "236588665420251137" },
-		{ "name": "jamesbt365", "id": "158567567487795200" },
-		{ "name": "fres", "id": "843448897737064448" },
-		{ "name": "adrian", "id": "224617799434108928" }
+		{
+			"name": "King Fish",
+			"id": "499400512559382538"
+		},
+		{
+			"name": "lewisakura",
+			"id": "96269247411400704"
+		},
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "Kyuuhachi",
+			"id": "236588665420251137"
+		},
+		{
+			"name": "jamesbt365",
+			"id": "158567567487795200"
+		},
+		{
+			"name": "fres",
+			"id": "843448897737064448"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
 	],
 	"version": "1.0.2",
 	"icon": "PaintPaletteIcon",
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platformCapabilities": {
+		"ios": [
+			"native.objc.batch",
+			"native.objc.classes",
+			"native.objc.hooks",
+			"native.objc.invoke",
+			"native.objc.invokeAsync",
+			"native.objc.ivars",
+			"native.objc.snapshot"
+		],
+		"android": [
+			"native.java.classes",
+			"native.java.fields",
+			"native.java.hooks",
+			"native.java.invoke",
+			"native.java.invokeAsync"
+		]
+	},
+	"bytecode": {
+		"98": "a0dc544c86ffc79ce082d490ad0a5c5b5b37d871e86568d2e49f2c9c08280a890c336ea5df54b7ba87ff6471e442190e321c7674a74f0113d66e79d0369b8c96"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "3vK0aO/irOeV1rD6IK0zqe04WEqt8tK+on3QljyiKtwXyZeTVfMxcIUi6X+edaw147P0ALVUjmSQGCqEXOacBw=="
+	}
 }
