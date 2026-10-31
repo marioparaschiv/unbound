@@ -27,5 +27,12 @@
 	"minNativePluginApi": "1.0.0",
 	"version": "1.0.3",
 	"icon": "ReactionIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "a59a2557aefb9f319b4f8676fcfc78b1ccc5406e6d54b757b97ed935a3fd1ba133bc10021d333533211d85a34240a2e9b92c62313eb84f53b55ef26c71475843"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "xoJgHbf6Z5Zw56SvWRIu2BKZZvEaYEXRNBv/LzQxnwZINGBixjgRP3kcvWfEtOH59nssFDAu5mGvuXVyEhbICg=="
+	}
 }
