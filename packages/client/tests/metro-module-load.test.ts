@@ -22,8 +22,7 @@ mock.module('~/lib/cache', () => ({
 
 const metro = await import('~/api/metro/search');
 
-// Runs the module's wrapped factory, as Metro's `require` does the first time a module loads.
-function load() {
+function requireModuleOnce() {
 	record.factory?.(globalThis, () => void 0, null, null, { id: MODULE_ID, exports: {} });
 }
 
@@ -32,9 +31,9 @@ describe('metro.onModuleLoad', () => {
 		const calls: [unknown, number][] = [];
 		const remove = metro.onModuleLoad((mdl, id) => void calls.push([mdl, id]));
 
-		load();
+		requireModuleOnce();
 		remove();
-		load();
+		requireModuleOnce();
 
 		expect(calls).toEqual([[exported, MODULE_ID]]);
 	});
@@ -48,9 +47,9 @@ describe('metro.onModuleLoad', () => {
 
 		metro.addListener(listener);
 		metro.on(listener);
-		load();
+		requireModuleOnce();
 		metro.off(listener);
-		load();
+		requireModuleOnce();
 
 		expect(metro.addListener).toBe(metro.onModuleLoad);
 		expect(metro.on).toBe(metro.onModuleLoad);
