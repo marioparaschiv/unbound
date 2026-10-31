@@ -2,8 +2,9 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { capabilitiesCheck, declaredCapabilitiesCheck } from '../src/lib/checks/capabilities';
 import type { BuildCheck } from '../src/lib/build-checks';
+
+import { capabilitiesCheck, declaredCapabilitiesCheck } from '../src/lib/checks/capabilities';
 import { createTempDir, type TempDir } from './helpers/ubd';
 import { discoverAddons } from '../src/lib/discovery';
 import { loadWorkspace } from './helpers/config';
