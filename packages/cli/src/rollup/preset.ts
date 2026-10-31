@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import json from '@rollup/plugin-json';
 import { readFileSync } from 'node:fs';
 import iife from 'rollup-plugin-iife';
-import { z } from 'zod';
+import hermes from '@unbound-app/client-build/hermes.json' with { type: 'json' };
 
 import type { Globals } from './globals.ts';
 
@@ -23,25 +23,12 @@ export type PluginConfigOptions = {
 	bytecode?: boolean;
 };
 
-const hermesConfigSchema = z.object({ bytecodeVersions: z.array(z.number()) });
-
-// The client's build owns the bytecode versions it loads; plugins compile for exactly those.
-const hermesConfigPath = resolve(
-	dirname(fileURLToPath(import.meta.url)),
-	'../../../client/scripts/build/hermes.json',
-);
-
 const minifyOptions = {
 	compress: { keep_classnames: true, keep_fnames: true },
 	mangle: false,
 	keep_classnames: true,
 	keep_fnames: true,
 };
-
-function bytecodeVersions() {
-	return hermesConfigSchema.parse(JSON.parse(readFileSync(hermesConfigPath, 'utf8')))
-		.bytecodeVersions;
-}
 
 function manifestToDist(pluginRoot: string): Plugin {
 	return {
@@ -92,7 +79,7 @@ export function pluginConfig(
 			iife(),
 			minify(minifyOptions),
 			hermesExpressionEntrypoint({ hasSettingsPanel: settingsPanel }),
-			...(bytecode ? [hermesBytecode({ versions: bytecodeVersions() })] : []),
+			...(bytecode ? [hermesBytecode({ versions: hermes.bytecodeVersions })] : []),
 			manifestToDist(pluginRoot),
 		],
 		output: {

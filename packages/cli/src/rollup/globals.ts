@@ -2,8 +2,7 @@ export type Globals = (id: string) => string;
 
 const API = '@unbound-app/api';
 
-// Bare names, not `window.*`, so the names an Addon scope passes the bundle shadow the real globals.
-const shared: Record<string, string> = {
+const scopeGlobals: Record<string, string> = {
 	[API]: 'unbound',
 	react: 'React',
 	'react-native': 'ReactNative',
@@ -22,7 +21,7 @@ export function unboundGlobals(id: string): string {
 		return `unbound.${id.slice(API.length + 1).replaceAll('/', '.')}`;
 	}
 
-	return shared[id] ?? '';
+	return scopeGlobals[id] ?? '';
 }
 
 /**
