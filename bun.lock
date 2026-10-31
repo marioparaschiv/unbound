@@ -146,7 +146,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.12.0-5a500092ee82fc6ce78d661098c5522c65a349b77f61430d01937982668d5fc3",
+      "version": "0.12.0-7115c85ecd3550690bf1b08c9edd50b06ad61a4372e859b3dfd7abf74c78fd5c",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
