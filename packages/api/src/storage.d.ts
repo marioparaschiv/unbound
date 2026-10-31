@@ -120,10 +120,11 @@ export declare function clear(store: string): void;
 export declare function get<T>(store: string, key: string, def: T): Widen<T>;
 /**
  * @description Returns the Bucket with the given name. The name is the key the Bucket is saved under on disk.
- * @param name The Bucket name, usually the addon id.
+ * @param name The Bucket name. A plugin may omit it to get its own Bucket, named after its id.
  * @returns The Bucket, with every operation bound to `name`.
+ * @throws When `name` is omitted outside a plugin.
  */
-export declare function getBucket(name: string): Bucket;
+export declare function getBucket(name?: string): Bucket;
 /**
  * @description Registers a callback invoked on every settings change matching the predicate.
  * @param predicate Decides whether a given change should fire the callback. The payload names the Bucket in `store`.

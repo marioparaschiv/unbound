@@ -1,4 +1,5 @@
-import type { AddonType, CatalogResponse, ListedAddon } from '@unbound-app/contracts/addons';
+import type { CatalogResponse, ListedAddon } from '@unbound-app/contracts/addons';
+import type { AddonAuthor, AddonType } from '@unbound-app/types/addons';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 
 import { compareVersions } from '~/core/versions';
@@ -9,6 +10,7 @@ export type Catalog = CatalogResponse;
 /** `name` sorts alphabetically, `updated` puts the most recently published versions first. */
 export type CatalogSort = 'name' | 'updated';
 
+/** What `marketplace.search` filters the catalog by. */
 export type CatalogQuery = {
 	type: AddonType;
 	/** Matches the name, description, authors or id, case-insensitively. */
@@ -32,6 +34,17 @@ export type MarketplaceEvent =
 	| { type: 'fetched'; catalog: Catalog }
 	| { type: 'not-modified' }
 	| { type: 'failed'; error: string };
+
+/** One addon the marketplace lists, at its newest version. */
+export type MarketplaceListing = {
+	id: string;
+	type: AddonType;
+	name: string;
+	description: string;
+	authors: AddonAuthor[];
+	version: string;
+	publishedAt: string;
+};
 
 /** What a marketplace card offers for an addon, judged against the installed copy. */
 export type InstallStatus = 'install' | 'installed' | 'update';

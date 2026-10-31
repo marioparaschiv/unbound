@@ -1,7 +1,7 @@
 import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 
-import { installDependencies } from '~/ui/marketplace/install-dependencies';
+import { installDependencies } from '~/marketplace/install-dependencies';
 import { Manager } from '~/addons/manager';
 
 /**

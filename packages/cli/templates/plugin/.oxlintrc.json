@@ -1,0 +1,9 @@
+{
+	"jsPlugins": [{ "name": "unbound", "specifier": "@unbound-app/cli/oxlint" }],
+	"ignorePatterns": ["dist"],
+	"rules": {
+		"unbound/no-window-unbound": "error",
+		"unbound/platform-check-only-in-platform-file": "error",
+		"unbound/no-module-scope-lookup": ["error", { "lazyByDefault": true }]
+	}
+}

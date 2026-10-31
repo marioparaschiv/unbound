@@ -108,12 +108,17 @@ describe('domain move table', () => {
 		expect(builtins.toSorted()).toEqual(kept.toSorted());
 	});
 
-	test('moves no ui/ import into a domain file other than its builtin (D14)', () => {
+	test('moves no ui/ import into a domain file other than its builtin or the public barrel (D14, D16)', () => {
 		const offenders = sourceFiles().flatMap((path) => {
 			const destination = destinationOf(path) ?? path;
 			const domain = destination.split('/')[0] ?? '';
 
-			if (!DOMAINS.has(domain) || BUILTIN.test(destination) || kept.includes(destination)) {
+			if (
+				!DOMAINS.has(domain) ||
+				BUILTIN.test(destination) ||
+				kept.includes(destination) ||
+				destination === 'core/api.ts'
+			) {
 				return [];
 			}
 

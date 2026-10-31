@@ -9,6 +9,7 @@ import {
 	TYPES_INDEX,
 	readJson,
 	relativeSpecifier,
+	type NamespaceAlias,
 	type ModuleEntry,
 } from './paths';
 import {
@@ -43,23 +44,32 @@ export function normalizeForHash(text: string): string {
 /**
  * @description Builds the root `index.d.ts` as pure re-exports of the top-level capability modules
  * (`export * as <name> from './<name>'`), so the barrel references the already-emitted, already-stripped
- * per-module files instead of re-flattening every declaration. Managers and other `@internal` barrel
- * members are absent because they never appear as `export * as` (they use `export { … }`), so the
- * top-level entry list never includes them.
+ * per-module files instead of re-flattening every declaration, then declares the barrel's aliases of
+ * those modules.
  * @param entries The emitted module entries; only top-level capability modules are re-exported.
+ * @param aliases The barrel's old names for top-level modules, declared after the re-exports.
  * @returns The root `index.d.ts` text (unformatted, no banner).
  */
-export function buildRoot(entries: ModuleEntry[]): string {
-	const lines = entries
-		.filter((entry) => entry.topLevel)
-		.map((entry) => {
-			const specifier = relativeSpecifier(join(API_SRC, 'index.d.ts'), entry.out);
-
-			return `export * as ${entry.name} from '${specifier}';`;
-		})
+export function buildRoot(entries: ModuleEntry[], aliases: NamespaceAlias[] = []): string {
+	const out = join(API_SRC, 'index.d.ts');
+	const specifierOf = new Map(
+		entries
+			.filter((entry) => entry.topLevel)
+			.map((entry) => [entry.name, relativeSpecifier(out, entry.out)]),
+	);
+	const lines = [...specifierOf]
+		.map(([name, specifier]) => `export * as ${name} from '${specifier}';`)
 		.sort();
+	const declarations = aliases.map(
+		(alias) =>
+			`${docComment(alias.doc)}export declare const ${alias.name}: typeof import('${specifierOf.get(alias.target)}');`,
+	);
 
-	return `${lines.join('\n')}\n`;
+	return `${[...lines, ...declarations].join('\n')}\n`;
+}
+
+function docComment(doc: string): string {
+	return doc ? `/** ${doc} */\n` : '';
 }
 
 /**
@@ -72,12 +82,14 @@ export function buildRoot(entries: ModuleEntry[]): string {
  * @param internalExports The names the `_internal.d.ts` hoist file exports, re-exported for public access.
  * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file, used
  * to import names the ambient block references.
+ * @param aliases The barrel's old names for top-level modules, added to `UnboundGlobal` with their JSDoc.
  * @returns The `global.d.ts` file text (unformatted, no banner).
  */
 export function buildGlobal(
 	entries: ModuleEntry[],
 	internalExports: Set<string>,
 	ownerByName: Map<string, string>,
+	aliases: NamespaceAlias[] = [],
 ): string {
 	const outPath = join(API_SRC, 'global.d.ts');
 	const sourceFile = parseSource('global.d.ts', bundle(TYPES_INDEX, true));
@@ -173,16 +185,26 @@ export function buildGlobal(
 	// Sort ahead of the ambient block kept from the bundle.
 	reexport.setOrder(0);
 
+	const pathOf = new Map(
+		entries
+			.filter((entry) => entry.topLevel)
+			.map((entry) => [
+				entry.name,
+				'./' + relative(API_SRC, entry.out).split('\\').join('/'),
+			]),
+	);
+
 	sourceFile.addInterface({
 		isExported: true,
 		name: 'UnboundGlobal',
-		properties: entries
-			.filter((entry) => entry.topLevel)
-			.map((entry) => {
-				const path = './' + relative(API_SRC, entry.out).split('\\').join('/');
-
-				return { name: entry.name, type: `typeof import('${path}')` };
-			}),
+		properties: [
+			...[...pathOf].map(([name, path]) => ({ name, type: `typeof import('${path}')` })),
+			...aliases.map((alias) => ({
+				name: alias.name,
+				type: `typeof import('${pathOf.get(alias.target)}')`,
+				docs: alias.doc ? [alias.doc] : [],
+			})),
+		],
 	});
 
 	const global = sourceFile.addModule({

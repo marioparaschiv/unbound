@@ -123,6 +123,36 @@ describe('validateAddonCapabilities', () => {
 		).toEqual([]);
 	});
 
+	test('accepts the object form of platforms', () => {
+		expect(
+			validateAddonCapabilities({
+				platforms: {
+					ios: { capabilities: ['native.objc.invoke'] },
+					android: { capabilities: ['native.java.invoke'] },
+				},
+			}),
+		).toEqual([]);
+	});
+
+	test('rejects an object-form Capability its platform cannot provide', () => {
+		expect(
+			validateAddonCapabilities({
+				platforms: { android: { capabilities: [iosOnlyCapability] } },
+			}),
+		).toEqual([`platforms.android cannot provide ${iosOnlyCapability}`]);
+	});
+
+	test('rejects platformCapabilities for a platform missing from the object form', () => {
+		const errors = validateAddonCapabilities({
+			platforms: { ios: {} },
+			platformCapabilities: { android: ['native.java.classes'] },
+		});
+
+		expect(errors).toEqual([
+			'platformCapabilities declares android, which is not in platforms',
+		]);
+	});
+
 	test('rejects platforms that are not supported targets', () => {
 		expect(validateAddonCapabilities({ platforms: ['web'] }).join('\n')).toContain('web');
 	});

@@ -62,6 +62,15 @@ describe('the page media rule', () => {
 		expect(createPageMediaRule(page, rules).order).toBeLessThan(3);
 	});
 
+	test('gets a finite order when other rules have none, as on Discord 349', () => {
+		const unordered: MarkdownRules = {
+			...rules,
+			highlight: { match: noop, parse: () => ({ type: 'highlight' }) },
+		};
+
+		expect(createPageMediaRule(page, unordered).order).toBeLessThan(3);
+	});
+
 	test('renders a measured image from the version folder', () => {
 		const element = render('![The settings](media/shot.png) and more');
 

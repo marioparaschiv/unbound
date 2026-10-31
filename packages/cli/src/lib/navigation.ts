@@ -15,7 +15,7 @@ export type CurrentRoute = { name: string; params: ScreenParams; path: string[] 
 /**
  * @description Opens a settings screen from anywhere in the app, through Discord's root navigation ref.
  * @param unbound Unbound's global on the device.
- * @param name A route key, or a name matching one ignoring case, underscores and `UNBOUND_` (`Marketplace` → `UNBOUND_MARKETPLACE`).
+ * @param name A route key, or a name matching one ignoring case, underscores and `UNBOUND_` (`Marketplace` → `UNBOUND_MARKETPLACE`), or the end of an Unbound one (`Sync` → `UNBOUND_CLOUD_SYNC`).
  * @param params Route parameters for the screen.
  * @returns The route key it opened. Throws, listing Unbound's screens, when nothing matches.
  */
@@ -36,6 +36,7 @@ export function openScreen(unbound: UnboundGlobal, name: string, params: ScreenP
 	const route = keys.includes(name)
 		? name
 		: (own.find((key) => normalize(key) === wanted) ??
+			own.find((key) => normalize(key).endsWith(wanted)) ??
 			keys.find((key) => normalize(key) === wanted));
 
 	if (!route) {
