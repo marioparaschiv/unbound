@@ -174,7 +174,7 @@ export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) &
 	[CACHE_KEY]?: string;
 	isRaw?: boolean;
 };
-/** The signature of the deprecated `findStore`, untyped by store name so existing callers keep compiling. */
+/** The signature of the deprecated `findStore`. */
 export type MetroFindStore = (name: string, options?: MetroStoreOptions) => AnyProps;
 /** A function or class exported by a Discord module, whose signature Discord does not document. */
 export type MetroFunction = DiscordFunction & (new (...args: any[]) => any);
