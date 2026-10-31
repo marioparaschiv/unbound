@@ -4,20 +4,23 @@ import type { SettingsPayload } from './storage';
 
 type Effect = () => (() => void) | void;
 
-let renders = 0;
+let stateUpdates = 0;
 const cleanups: Array<(() => void) | void> = [];
 
-// Runs effects at once and counts state updates, so the Bucket hooks can be called outside a renderer.
-mock.module('react', () => ({
-	useState: () => [{}, () => void renders++],
-	useEffect: (effect: Effect) => void cleanups.push(effect()),
-}));
+function rendererlessReact() {
+	return {
+		useState: () => [{}, () => void stateUpdates++],
+		useEffect: (effect: Effect) => void cleanups.push(effect()),
+	};
+}
+
+mock.module('react', rendererlessReact);
 
 const storage = await import('./storage');
 const { get, on, remove, set, settings } = storage;
 
 beforeEach(() => {
-	renders = 0;
+	stateUpdates = 0;
 
 	for (const cleanup of cleanups.splice(0)) {
 		cleanup?.();
@@ -140,15 +143,15 @@ test('re-renders useBucket and useSettingsStore only for changes to their Bucket
 
 	bucket.set('value', 1);
 
-	expect(renders).toBe(2);
+	expect(stateUpdates).toBe(2);
 	expect(store.get('value', 0)).toBe(1);
 
 	storage.getBucket('storage-hook-other').set('value', 1);
 	nested.set('watched', true);
 
-	expect(renders).toBe(5);
+	expect(stateUpdates).toBe(5);
 
 	storage.set('storage-hook', 'unwatched', true);
 
-	expect(renders).toBe(7);
+	expect(stateUpdates).toBe(7);
 });
