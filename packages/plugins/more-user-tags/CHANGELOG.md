@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0]
+
+### Changed
+
+- On Android, tag gradients are painted on the UI thread right after Discord binds each tag, so a tag is never drawn with its flat color first.
+
 ## [1.1.1]
 
 ### Fixed
