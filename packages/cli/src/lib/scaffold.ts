@@ -21,9 +21,7 @@ function substitute(input: string, tokens: Tokens): string {
 }
 
 /**
- * @description Recursively copies a template directory into a destination, substituting tokens across
- * both text file contents and file/directory names, copying binary files such as images byte for byte,
- * and renaming the undotted `gitignore` to `.gitignore` so it survives publishing yet lands as a real dotfile.
+ * @description Copies a template directory into a destination, substituting tokens.
  * @param from The template directory to copy.
  * @param to The destination directory (created if absent).
  * @param tokens The token values to inject.
