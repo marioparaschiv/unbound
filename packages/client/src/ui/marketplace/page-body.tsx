@@ -13,6 +13,8 @@ type PageBodyProps = {
 	page: StorePage;
 };
 
+// Inline, as Discord parses messages: its `strong` and `em` rules are inline-only, and block parsing hands
+// `**` to the any-scope `text` rule. Its heading and list rules check only the `allow*` flags.
 const STATE: MarkdownState = { allowLinks: true, allowHeading: true, allowList: true };
 
 /**
@@ -36,7 +38,7 @@ function PageBody({ page }: PageBodyProps) {
 				if (block.kind === 'markdown') {
 					return (
 						<Discord.Text key={index} variant='text-md/normal'>
-							{render(block.source, false, STATE)}
+							{render(block.source, true, STATE)}
 						</Discord.Text>
 					);
 				}
