@@ -35,9 +35,76 @@ describe('strip', () => {
 		expect(text).toContain('export declare function next(): string;');
 		expect(text).not.toContain('default');
 	});
+
+	test('strips an @internal declaration that only the default object referenced', () => {
+		const text = strip(
+			[
+				'/** @internal */',
+				'declare function secret(): void;',
+				'export declare function open(): void;',
+				'declare const _default: { secret: typeof secret; open: typeof open; };',
+				'export { _default as default };',
+			].join('\n'),
+			'/api/src/internal-default.d.ts',
+			new Map<string, ModuleEntry>(),
+			new Map<string, string>(),
+			new Set<string>(),
+			new Set<string>(),
+		);
+
+		expect(text).not.toContain('secret');
+		expect(text).toContain('export declare function open(): void;');
+	});
 });
 
 describe('dropDefaultExport', () => {
+	for (const exportForm of ['export default foo;', 'export { foo as default };']) {
+		test(`keeps the named export behind \`${exportForm}\``, () => {
+			const sourceFile = parseSource(
+				't-default-named.d.ts',
+				['export declare function foo(): void;', exportForm].join('\n'),
+			);
+
+			dropDefaultExport(sourceFile);
+
+			expect(sourceFile.getFullText().trim()).toBe('export declare function foo(): void;');
+		});
+	}
+
+	test('drops `export default function` and `export default class` declarations', () => {
+		const sourceFile = parseSource(
+			't-default-declaration.d.ts',
+			[
+				'export default function foo(): void;',
+				'export default class Foo { x: number; }',
+				'export declare function bar(): void;',
+			].join('\n'),
+		);
+
+		dropDefaultExport(sourceFile);
+
+		expect(sourceFile.getFullText().trim()).toBe('export declare function bar(): void;');
+	});
+
+	test('keeps a default-exported declaration unexported when a survivor references it', () => {
+		const sourceFile = parseSource(
+			't-default-declaration-used.d.ts',
+			[
+				'export default class Foo { x: number; }',
+				'export declare function make(): Foo;',
+			].join('\n'),
+		);
+
+		dropDefaultExport(sourceFile);
+
+		const text = sourceFile.getFullText();
+
+		expect(text).not.toContain('default');
+		expect(text).toContain('class Foo');
+		expect(text).not.toContain('export class Foo');
+		expect(text).toContain('export declare function make(): Foo;');
+	});
+
 	test('drops the default specifier and its backing object, keeping sibling specifiers', () => {
 		const sourceFile = parseSource(
 			't-default.d.ts',
