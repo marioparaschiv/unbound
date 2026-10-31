@@ -44,8 +44,18 @@ export function getDocsManifestKey(pkg: DocsPackage): string {
 	return `docs/${pkg}/versions.json`;
 }
 
+/**
+ * @description Picks the version `/docs` opens: the newest release, else `main`.
+ * @param manifest The package's manifest, ordered as {@link docsManifestSchema} describes.
+ * @returns The version.
+ */
+export function getLatestDocsVersion(manifest: DocsManifest): DocsVersion {
+	return manifest.versions.find((version) => version !== MAIN_DOCS_VERSION) ?? MAIN_DOCS_VERSION;
+}
+
 export default {
 	MAIN_DOCS_VERSION,
+	getLatestDocsVersion,
 	docsPackageSchema,
 	docsVersionSchema,
 	docsManifestSchema,
