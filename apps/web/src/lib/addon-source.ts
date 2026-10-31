@@ -32,7 +32,7 @@ import type {
 	RepositoryExtras,
 	TreeEntry,
 } from '~/lib/github';
-import { readAddonPage } from '~/lib/addon-page-source';
+import { readAddonPage, type PageMediaFiles } from '~/lib/addon-page-source';
 import { readBytecode } from '~/lib/addon-bytecode';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
@@ -51,6 +51,8 @@ export type AddonSource = {
 	addonMd: string | null;
 	/** The measured `{output}/page.json`, checked against the commit, or `null` when none is committed. */
 	page: AddonPage | null;
+	/** The bytes of the page's media, by the path ADDON.md writes each as; empty without a page. */
+	media: PageMediaFiles;
 	/** The entry for `manifest.version`, or `null` when the addon has no CHANGELOG.md. */
 	changelog: Changelog | null;
 	details: RepositoryDetails;
@@ -663,7 +665,7 @@ export async function readAddonSource(
 		readTexts(github, repository, tree, [addonMdPath, changelogPath]),
 	]);
 	const addonMd = extraTexts.get(addonMdPath) ?? null;
-	const page = await readAddonPage(ctx.env, github, {
+	const committed = await readAddonPage(ctx.env, github, {
 		repository,
 		tree,
 		commitSha,
@@ -688,7 +690,8 @@ export async function readAddonSource(
 		bundleSize: bundle.length,
 		sha256: new Bun.CryptoHasher('sha256').update(bundle).digest('hex'),
 		addonMd,
-		page,
+		page: committed?.page ?? null,
+		media: committed?.media ?? new Map(),
 		changelog: readChangelog(changelogPath, extraTexts.get(changelogPath), manifest.version),
 		details: toDetails(repo, extras, tree, request.details),
 	};

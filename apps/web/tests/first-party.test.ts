@@ -12,7 +12,7 @@ import publishFirstPartyEndpoint from '~/endpoints/publish-first-party';
 import { API_KEY_HEADER, createApiClient } from '~/api/client';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
 import { createSubmission } from '~/lib/submissions';
-import { getArtifactKeys } from '~/lib/artifacts';
+import { getArtifactKeys, getCdnUrl, getVersionDirectory } from '~/lib/artifacts';
 import type { AppContext } from '~/lib/context';
 import { reviewSubmission } from '~/lib/review';
 import type { Caller } from '~/lib/api/caller';
@@ -20,7 +20,7 @@ import { delistAddon } from '~/lib/addons';
 import { addon, user } from '~/db/schema';
 import type { Api } from '~/api';
 
-import type { GitFixture } from './helpers/github';
+import type { FixtureFiles, GitFixture } from './helpers/github';
 
 import {
 	authRequest,
@@ -30,6 +30,7 @@ import {
 	snowflakeAt,
 } from './helpers/context';
 import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
+import { committedPage, committedPageFiles } from './helpers/addon-page';
 import { failure, serveEndpoints } from './helpers/server';
 import { serveMemoryS3 } from './helpers/memory-s3';
 import { serveGitHub } from './helpers/github';
@@ -111,6 +112,8 @@ type BuildOutput = {
 	bytecode?: Record<string, string>;
 	/** The digests the build's manifest lists, when they should differ from the committed files. */
 	digests?: Record<string, string>;
+	/** More files of the build commit, relative to the plugin's directory. */
+	files?: FixtureFiles;
 };
 
 function sha512(text: string): string {
@@ -144,6 +147,12 @@ function buildTag(
 		{
 			[`${path}/dist/index.js`]: output.bundle ?? `export default '${id} ${version}';`,
 			[`${path}/CHANGELOG.md`]: `## [${version}]\n\n### Added\n\n- Hello.\n`,
+			...Object.fromEntries(
+				Object.entries(output.files ?? {}).map(([name, content]) => [
+					`${path}/${name}`,
+					content,
+				]),
+			),
 			...Object.fromEntries(
 				compiled.map(([bytecodeVersion, bytes]) => [
 					`${path}/dist/index.${bytecodeVersion}.hbc`,
@@ -276,6 +285,31 @@ describe('POST /api/v1/first-party/publish', () => {
 			),
 		);
 		expect((await ctx.db.query.user.findFirst({ where: { id: ci.userId } }))?.role).toBe('ci');
+	});
+
+	test('publishes the store page where the catalog points', async () => {
+		const files = committedPageFiles();
+
+		await publish(ciKey, buildTag(fixture, 'fp.page', '1.0.0', FIRST_PARTY, { files }));
+
+		const { addons } = await client('GET /api/v1/catalog', { response: catalogResponseSchema });
+		const directory = getVersionDirectory('fp.page', '1.0.0');
+		const pageUrl = addons.find((entry) => entry.id === 'fp.page')?.latestVersion.pageUrl;
+
+		expect(pageUrl).toBe(getCdnUrl(ctx.env, `${directory}/ADDON.md`));
+
+		for (const name of ['ADDON.md', 'media/banner.png', 'media/shot.png', 'media/inline.png']) {
+			const published = await ctx.storage.public.file(`${directory}/${name}`).bytes();
+			const committed = files[name];
+
+			expect(published).toEqual(
+				typeof committed === 'string' ? new TextEncoder().encode(committed) : committed,
+			);
+		}
+
+		const measured = await ctx.storage.public.file(`${directory}/page.json`).json();
+
+		expect(measured).toEqual(committedPage(64));
 	});
 
 	test('publishing the same version again answers unchanged and writes nothing', async () => {
