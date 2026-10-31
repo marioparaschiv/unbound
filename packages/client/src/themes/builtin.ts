@@ -1,8 +1,8 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { findByProps, findStore } from '~/metro/search';
 import type { SectionEntry } from '~/settings/section';
 import { resolveThemeColor } from '~/themes/colors';
-import { findByProps, findStore } from '~/metro/search';
 import { createPatcher } from '~/patcher/api';
 import DesignPage from '~/ui/settings/design';
 import { Screens } from '~/core/constants';
