@@ -41,7 +41,6 @@ const java = {
 	},
 };
 
-// getClass returns a branded handle a test cannot build, so the typed bridge leaves it out.
 const bridge: FakeContext['native']['java'] = java;
 const context: FakeContext = { capabilities: [], native: { capabilities: [], java: bridge } };
 

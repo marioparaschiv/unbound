@@ -89,7 +89,6 @@ export function createFileSizes(context: PluginContext): FileSizes {
 		return sizes.get(uri);
 	}
 
-	// The scoped bridge releases only handles from getClass and construct, not these invoke results.
 	function release() {
 		for (const handle of [resolver, application]) {
 			if (handle) java.release(handle);
