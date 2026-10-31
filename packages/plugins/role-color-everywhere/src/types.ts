@@ -1,5 +1,5 @@
 import type { RoleColorStops } from '@unbound-plugins/shared/colors/role-colors';
-import type { FluxStore } from '@unbound-app/api/flux';
+import type { FluxMessage, FluxStore } from '@unbound-app/api/flux';
 
 export type Member = {
 	userId: string;
@@ -23,8 +23,7 @@ export type User = {
 	discriminator?: string | null;
 };
 
-export type Message = {
-	content?: string;
+export type Message = FluxMessage & {
 	guildId?: string;
 };
 

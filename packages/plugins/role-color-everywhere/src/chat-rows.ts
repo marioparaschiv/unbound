@@ -66,11 +66,12 @@ function colorMentions(
 	members: Members,
 	defaultGuildId: string | undefined,
 	asRoleMention: boolean,
-): void {
-	if (!Array.isArray(content)) return;
+): boolean {
+	if (!Array.isArray(content)) return false;
 
 	const pending: unknown[] = [...content];
 	const visited = new Set<object>();
+	let colored = false;
 
 	while (pending.length && visited.size < 400) {
 		const value = pending.pop();
@@ -102,6 +103,7 @@ function colorMentions(
 					...(secondary === undefined ? {} : { secondaryColor: secondary }),
 					...(tertiary === undefined ? {} : { tertiaryColor: tertiary }),
 				};
+				colored = true;
 			}
 		}
 
@@ -109,6 +111,8 @@ function colorMentions(
 
 		if (Array.isArray(node.items)) pending.push(...node.items);
 	}
+
+	return colored;
 }
 
 function roleTextColor(message: ChatMessage, members: Members, options: ChatColorOptions) {
@@ -121,8 +125,8 @@ function roleTextColor(message: ChatMessage, members: Members, options: ChatColo
 	return memberArgbColors(members.getMember(guildId, authorId))[0];
 }
 
-function tintMessage(message: ChatMessage, members: Members, options: ChatColorOptions): void {
-	if (typeof message.textColor !== 'number') return;
+function tintMessage(message: ChatMessage, members: Members, options: ChatColorOptions): boolean {
+	if (typeof message.textColor !== 'number') return false;
 
 	const previous = tints.get(message);
 	const unchanged = previous?.applied === message.textColor;
@@ -133,17 +137,19 @@ function tintMessage(message: ChatMessage, members: Members, options: ChatColorO
 		message.textColor = base;
 		tints.delete(message);
 
-		return;
+		return false;
 	}
 
 	if (unchanged && previous.role === role && previous.saturation === options.messageSaturation) {
-		return;
+		return true;
 	}
 
 	const applied = blendArgb(base, role, options.messageSaturation);
 
 	message.textColor = applied;
 	tints.set(message, { base, applied, role, saturation: options.messageSaturation });
+
+	return true;
 }
 
 /**
@@ -151,33 +157,40 @@ function tintMessage(message: ChatMessage, members: Members, options: ChatColorO
  * @param row The row Discord's `RowManager` generated.
  * @param members Looks up the guild members whose colors to use.
  * @param options The user's chat settings.
+ * @returns Whether the row now shows any role color.
  */
 export function applyChatRoleColors(
 	row: ChatRow,
 	members: Members,
 	options: ChatColorOptions,
-): void {
+): boolean {
 	const { message } = row;
 
-	if (!message) return;
+	if (!message) return false;
+
+	let colored = false;
 
 	if (options.chatMentions) {
 		const asRoleMention = options.roleMentionColors ?? false;
 
-		colorMentions(message.content, members, message.guildId, asRoleMention);
+		colored = colorMentions(message.content, members, message.guildId, asRoleMention);
 
 		for (const embed of message.embeds ?? []) {
-			colorMentions(embed.description, members, message.guildId, asRoleMention);
+			colored =
+				colorMentions(embed.description, members, message.guildId, asRoleMention) ||
+				colored;
 		}
 
 		const referenced = message.referencedMessage?.message;
 
 		if (referenced) {
-			colorMentions(referenced.content, members, referenced.guildId, asRoleMention);
+			colored =
+				colorMentions(referenced.content, members, referenced.guildId, asRoleMention) ||
+				colored;
 		}
 	}
 
-	tintMessage(message, members, options);
+	return tintMessage(message, members, options) || colored;
 }
 
 export default applyChatRoleColors;
