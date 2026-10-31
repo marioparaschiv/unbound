@@ -219,6 +219,32 @@ describe('addon scope wiring', () => {
 		expect(data.listeners.size).toBe(0);
 	});
 
+	test('stop leaves alone a lone storage listener of another owner after the plugin removed its own', async () => {
+		function other() {
+			seen.push('other');
+		}
+
+		const plugins = startPlugin(`({
+			start() {
+				function byNamespace() {}
+
+				function byEmitter() {}
+
+				unbound.storage.on('set', byNamespace);
+				unbound.storage.off('set', byNamespace);
+				unbound.storage.on('set', byEmitter).off('set', byEmitter);
+			},
+			stop() {},
+		})`);
+
+		storage.on('set', other);
+		await plugins.stop(ID);
+		storage.set(ID, 'key', 1);
+		storage.off('set', other);
+
+		expect(seen).toEqual(['other']);
+	});
+
 	test("getBucket with no name returns the plugin's own Bucket, and named Buckets stay reachable", async () => {
 		const plugins = startPlugin(`({
 			start() {
