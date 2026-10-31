@@ -10,7 +10,7 @@ export type NativePluginMethod = {
 	[N in NativePluginNamespace]: `${N}.${keyof NativePluginBridge[N] & string}`;
 }[NativePluginNamespace];
 
-/** The Capability each native bridge method needs. The client enforces it and the build reads it. */
+/** The Capability each native bridge method needs. */
 export const NATIVE_PLUGIN_METHOD_CAPABILITIES = {
 	'objc.getClass': 'native.objc.classes',
 	'objc.alloc': 'native.objc.classes',
