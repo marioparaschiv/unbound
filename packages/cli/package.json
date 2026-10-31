@@ -23,7 +23,8 @@
 	"module": "src/index.ts",
 	"exports": {
 		".": "./src/index.ts",
-		"./rollup": "./src/rollup/index.ts"
+		"./rollup": "./src/rollup/index.ts",
+		"./oxlint": "./src/oxlint/plugin.ts"
 	},
 	"scripts": {
 		"build": "tsdown",
