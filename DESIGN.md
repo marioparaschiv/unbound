@@ -7,7 +7,7 @@ This documents the Discord design-system primitives Unbound composes for its UI.
 Discord ships its entire mobile design system as **one metro module**, keyed by `createStyles`, `dismissAlerts`, and `ContextMenu`. Unbound resolves it once and re-exports it as `Discord`:
 
 ```ts
-// ~/api/metro/components.ts
+// ~/metro/components.ts
 export const Discord: DesignModule = findByPropsLazy(
 	'createStyles',
 	'dismissAlerts',
@@ -19,12 +19,12 @@ The export is typed as `DesignModule` (`packages/types/typings/components.ts`): 
 
 On the v3 branch this same module was aliased `Design` (see `src/built-ins/registry.ts`, `types/discord/components.d.ts` typed it as `ComponentsModule`). It is the same module; only the name changed. There is no separate barrel to find. Everything below lives on `Discord.*`.
 
-Adjacent module barrels (not part of this design-system module) live in `~/api/metro/common.ts`: `Theme` (color tokens), `Constants` (`Fonts`, `Endpoints`), `Radius`, `Reanimated`, `Gestures`, `SVG`, `Flux`, `Dispatcher`. Reach for those for tokens and platform APIs; reach for `Discord` for components.
+Adjacent module barrels (not part of this design-system module) live in `~/metro/common.ts`: `Theme` (color tokens), `Constants` (`Fonts`, `Endpoints`), `Radius`, `Reanimated`, `Gestures`, `SVG`, `Flux`, `Dispatcher`. Reach for those for tokens and platform APIs; reach for `Discord` for components.
 
 ## How to use a primitive
 
 ```tsx
-import { Discord } from '~/api/metro/components';
+import { Discord } from '~/metro/components';
 
 <Discord.TableRowGroup title={Messages.UNBOUND_GENERAL}>
 	<Discord.TableRow

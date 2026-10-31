@@ -3,7 +3,7 @@ import { createLogger } from '@unbound-app/logger';
 import { getSetting, isSettingChange } from '~/settings/unbound';
 import { Guilds, Users } from '~/metro/stores';
 import { createPatcher } from '~/patcher/api';
-import { findStore } from '~/metro';
+import { findStore } from '~/metro/search';
 import storage from '~/storage/api';
 
 const Patcher = createPatcher('unbound::staff-mode');

@@ -3,7 +3,12 @@ import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
 import { submissionSchema } from './publish';
 import { sourcePinSchema } from './source';
+import { addonIconSchema } from './icons';
 import { z } from './zod';
+
+// Lives in icons.ts so publish.ts can use it without importing this module back.
+export { addonIconSchema };
+export type { AddonIcon } from './icons';
 
 export const sha256Schema = z
 	.string()
@@ -53,9 +58,6 @@ export const filterMatchSchema = z.enum(['any', 'all', 'none']);
 /** A filter that compares one value per addon, which can match one of the values or none of them. */
 export const singleMatchSchema = z.enum(['any', 'none']);
 
-/** A tag's id: a lowercase slug. */
-export const tagIdSchema = z.string().check(z.regex(/^[a-z\d]+(?:-[a-z\d]+)*$/), z.maxLength(64));
-
 const TAG_LIST = /^[a-z\d]+(?:-[a-z\d]+)*(?:,[a-z\d]+(?:-[a-z\d]+)*)*$/;
 
 const SNOWFLAKE_LIST = /^[1-9]\d{0,19}(?:,[1-9]\d{0,19})*$/;
@@ -98,9 +100,6 @@ export const listAddonsQuerySchema = z.optional(
 		cursor: z.optional(z.string().check(z.maxLength(512))),
 	}),
 );
-
-/** An icon the website shows for an addon: a Nucleo Micro Bold export name, such as `IconPlug`. */
-export const addonIconSchema = z.string().check(z.regex(/^Icon[A-Z][A-Za-z\d]*$/), z.maxLength(64));
 
 export const listedAddonSchema = z.object({
 	id: addonIdSchema,
@@ -186,7 +185,6 @@ export type FilterMatch = z.infer<typeof filterMatchSchema>;
 export type SingleMatch = z.infer<typeof singleMatchSchema>;
 export type ListAddonsQuery = z.infer<typeof listAddonsQuerySchema>;
 export type ListedAddon = z.infer<typeof listedAddonSchema>;
-export type AddonIcon = z.infer<typeof addonIconSchema>;
 export type SetAddonIconRequest = z.infer<typeof setAddonIconRequestSchema>;
 export type AddonIconResponse = z.infer<typeof addonIconResponseSchema>;
 export type ListAddonsResponse = z.infer<typeof listAddonsResponseSchema>;
@@ -210,7 +208,6 @@ export default {
 	sortOrderSchema,
 	filterMatchSchema,
 	singleMatchSchema,
-	tagIdSchema,
 	listAddonsQuerySchema,
 	addonIconSchema,
 	listedAddonSchema,

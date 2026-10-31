@@ -3,7 +3,7 @@ import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 
 import { attributeAddon, crashGuardKey, setFreezeListener } from '~/addons/crash-guard';
 import { performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
-import type { AddonGlobals, AddonScope } from '~/addons/scope';
+import type { AddonGlobals, PluginScope } from '~/addons/scope';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
@@ -117,7 +117,7 @@ export class Plugins extends Addons<Plugin> {
 		return result;
 	}
 
-	protected createScope(entity: Addon<Plugin>): AddonScope {
+	protected createScope(entity: Addon<Plugin>): PluginScope {
 		return createAddonScope(entity);
 	}
 
@@ -129,7 +129,7 @@ export class Plugins extends Addons<Plugin> {
 	 * @param scope The globals {@link createScope} made for this start.
 	 * @returns The resolved plugin instance.
 	 */
-	protected handleBundle(bundle: string, id: string, scope: AddonScope): Plugin {
+	protected handleBundle(bundle: string, id: string, scope: PluginScope): Plugin {
 		const iife = this.factoryFor(bundle, id);
 		const globals = ADDON_SCOPE_GLOBALS.map((name) => scope.globals[name]);
 

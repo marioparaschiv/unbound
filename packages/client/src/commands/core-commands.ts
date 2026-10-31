@@ -2,11 +2,11 @@ import { sendDebugReport } from '~/diagnostics/debug-report';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { createCommands, option } from '~/commands/api';
 import { Discord } from '~/metro/components';
+import { findByProps } from '~/metro/search';
 import { Screens } from '~/core/constants';
 import { reload } from '~/native/native';
 import debug from '~/debugger/builtin';
 import { messages } from '~/i18n/api';
-import { findByProps } from '~/metro';
 import { Util } from '~/metro/common';
 import storage from '~/storage/api';
 
