@@ -30,7 +30,7 @@ export type ReactionViewTarget = {
 
 function renderSurface(session: Session, state: ReactionViewState): void {
 	surfaceStates.set(state.surfaceId, {
-		guildId: ChannelStore.getChannel(state.context.channelId)?.guild_id,
+		guildId: ChannelStore.getChannel(state.context.channelId)?.guild_id ?? undefined,
 		height: state.baseFrame.height || SURFACE_HEIGHT,
 		measured: state.widthMeasured,
 		onWidth: (width) => updateAvatarWidth(session, state, width),

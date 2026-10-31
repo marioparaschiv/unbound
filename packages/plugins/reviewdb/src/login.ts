@@ -11,7 +11,7 @@ type AuthPayload = {
 };
 
 function notify(content: string) {
-	toasts.showToast({ title: 'ReviewDB', content });
+	toasts.show({ title: 'ReviewDB', content });
 }
 
 async function finishLogin(location: string): Promise<boolean> {

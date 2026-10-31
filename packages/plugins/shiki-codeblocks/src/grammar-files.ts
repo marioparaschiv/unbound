@@ -34,7 +34,7 @@ export function registrationFromModule(source: string): LanguageRegistration {
 
 async function readCached(path: string): Promise<LanguageRegistration | undefined> {
 	try {
-		return (await fs.exists(path)) ? JSON.parse(await fs.read(path)) : undefined;
+		return (await fs.exists(path)) ? JSON.parse(await fs.readFile(path)) : undefined;
 	} catch {
 		return undefined;
 	}
@@ -63,7 +63,7 @@ export async function cachedRegistration(name: string): Promise<LanguageRegistra
 
 	const registration = await download(name);
 
-	await fs.write(path, JSON.stringify(registration)).catch(() => undefined);
+	await fs.writeFile(path, JSON.stringify(registration)).catch(() => undefined);
 
 	return registration;
 }

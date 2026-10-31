@@ -13,25 +13,6 @@
 	],
 	"version": "1.0.1",
 	"icon": "PaintPaletteIcon",
-	"capabilities": [],
-	"platformCapabilities": {
-		"ios": [
-			"native.objc.classes",
-			"native.objc.invoke",
-			"native.objc.invokeAsync",
-			"native.objc.snapshot",
-			"native.objc.ivars",
-			"native.objc.hooks"
-		],
-		"android": [
-			"native.java.classes",
-			"native.java.invoke",
-			"native.java.invokeAsync",
-			"native.java.construct",
-			"native.java.fields",
-			"native.java.hooks"
-		]
-	},
 	"minNativePluginApi": "1.0.0",
 	"main": "index.tsx"
 }

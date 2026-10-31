@@ -1,6 +1,12 @@
+import { installAddonGlobals } from '@unbound-app/api/testing';
 import { describe, expect, mock, test } from 'bun:test';
 
-mock.module('@unbound-app/api', () => ({ fs: {} }));
+const scope = installAddonGlobals({
+	manifest: { id: 'astral.shiki-codeblocks' },
+	unbound: { fs: {} },
+});
+
+mock.module('@unbound-app/api', () => scope.unbound);
 
 const { createTokenStore } = await import('~/token-store');
 
@@ -10,8 +16,8 @@ function memoryFiles(initial: Record<string, string> = {}) {
 	return {
 		files,
 		exists: async (path: string) => files.has(path),
-		read: async (path: string) => files.get(path) ?? '',
-		write: async (path: string, contents: string) => {
+		readFile: async (path: string) => files.get(path) ?? '',
+		writeFile: async (path: string, contents: string) => {
 			files.set(path, contents);
 		},
 	};

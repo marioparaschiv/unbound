@@ -4,7 +4,7 @@ import { viewAttachment } from '@unbound-plugins/shared/native/ios/text-attachme
 import type { LineOverflow } from '~/preferences';
 import type { TokenLines } from '~/highlighter';
 import { buildCodeMarkup } from '~/markup';
-import { Palette, PLUGIN_ID } from '~/constants';
+import { Palette } from '~/constants';
 
 import type { Session, Surface } from '~/ios/session';
 import type { NativeUI } from '~/ios/ui';
@@ -150,7 +150,7 @@ export function textWithCards(
 				view: part.host.host,
 				width: surface.width,
 				height: part.height,
-				owner: PLUGIN_ID,
+				owner: addon.id,
 			});
 
 			if (!attachment) return null;

@@ -1,4 +1,5 @@
 import type { RoleColorStops } from '@unbound-plugins/shared/colors/role-colors';
+import type { FluxStore } from '@unbound-app/api/flux';
 
 export type Member = {
 	userId: string;
@@ -41,3 +42,19 @@ export type Rendered = any;
 
 // Values bridged from Objective-C carry no static type; each caller checks the shape it reads.
 export type NativeValue = any;
+
+type GuildRoleStore = FluxStore & {
+	getRole(guildId: string, roleId: string): Role | null | undefined;
+};
+
+type MessageStore = FluxStore & {
+	getMessage(channelId: string, messageId: string): Message | null | undefined;
+};
+
+declare module '@unbound-app/api/flux' {
+	// oxlint-disable-next-line typescript/consistent-type-definitions -- declaration merging needs an interface
+	interface FluxStores {
+		GuildRole: GuildRoleStore;
+		Message: MessageStore;
+	}
+}

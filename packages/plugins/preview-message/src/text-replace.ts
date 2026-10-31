@@ -1,6 +1,8 @@
 import { applyRules, normalizeRules } from '@unbound-plugins/shared/text-replace/rules';
 
-import { Plugins, textReplaceSettings } from '~/modules';
+import { plugins } from '@unbound-app/api';
+
+import { textReplaceSettings } from '~/modules';
 
 /**
  * @description Rewrites a draft the way Text Replace will rewrite it on send.
@@ -8,7 +10,7 @@ import { Plugins, textReplaceSettings } from '~/modules';
  * @returns The draft with the user's Text Replace rules applied, or unchanged when that plugin is not running.
  */
 export function applyTextReplace(content: string): string {
-	if (!Plugins.getEntity('astral.text-replace')?.started) return content;
+	if (!plugins.get('astral.text-replace')?.started) return content;
 
 	return applyRules(
 		content,

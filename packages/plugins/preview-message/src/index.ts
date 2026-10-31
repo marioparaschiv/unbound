@@ -3,10 +3,8 @@ import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { Portal } from '@unbound-app/api/metro/components';
 import { assets } from '@unbound-app/api';
-import { Platform } from 'react-native';
 
-import { patchChatInputRightActions } from '~/patches/chat-input-right-actions';
-import { patchChatInputSendButton } from '~/patches/chat-input-send-button';
+import { patchPreviewButton } from '~/patches/platform';
 import {
 	ChatItem,
 	DraftStore,
@@ -21,7 +19,7 @@ import {
 let dispose = () => {};
 
 function start() {
-	const EyeIcon = assets.getIDByName('EyeIcon');
+	const EyeIcon = assets.getIdByName('EyeIcon');
 
 	const ready = ensureModules('Preview Message', {
 		ChatItem,
@@ -44,10 +42,7 @@ function start() {
 
 	dispose = applyFeatures('Preview Message', [
 		PreviewRunning.markRunning,
-		() =>
-			Platform.OS === 'android'
-				? patchChatInputSendButton(EyeIcon)
-				: patchChatInputRightActions(EyeIcon),
+		() => patchPreviewButton(EyeIcon),
 	]);
 }
 

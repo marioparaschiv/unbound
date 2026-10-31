@@ -1,22 +1,18 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
-import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
-import { messageTextViewClass } from '@unbound-plugins/shared/native/ios/text-attachments';
 
 import SettingsPanel from '~/components/settings-panel';
 import { MessageStore, SelectedChannelStore } from '~/modules';
-import { createAndroidCards } from '~/android/cards';
-import { createNativeCards } from '~/android/native-cards';
-import { cardProgress, misplacedCards, startRenderer } from '~/ios/renderer';
-import { PLUGIN_NAME } from '~/constants';
 import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';
+import { PLUGIN_NAME } from '~/constants';
+import { startCards } from '~/platform';
+import type { Cards } from '~/types';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
-let running = false;
-let progress: () => { drawn: number; settling: boolean } = () => ({ drawn: 0, settling: false });
+let cards: Cards | undefined;
 
 function start(context: PluginContext) {
 	if (
@@ -26,38 +22,18 @@ function start(context: PluginContext) {
 		return;
 	}
 
-	if (context.platform === 'android') {
-		const cards = createNativeCards(context.native) ?? createAndroidCards(context.native);
+	cards = startCards(context.native);
 
-		if (cards) {
-			dispose = applyFeatures(PLUGIN_NAME, [() => cards.dispose]);
-			progress = cards.progress;
-			running = true;
-		}
-
-		return;
+	if (cards) {
+		dispose = applyFeatures(PLUGIN_NAME, [cards.feature]);
 	}
-
-	if (
-		!ensureClasses(PLUGIN_NAME, context.native.objc, [
-			messageTextViewClass(context.native.objc),
-			'DCDMessageTableViewCell',
-		])
-	) {
-		return;
-	}
-
-	dispose = applyFeatures(PLUGIN_NAME, [() => startRenderer(context.native.objc)]);
-	progress = cardProgress;
-	running = true;
 }
 
 function stop() {
 	const finished = dispose();
 
 	dispose = () => undefined;
-	running = false;
-	progress = () => ({ drawn: 0, settling: false });
+	cards = undefined;
 
 	return finished;
 }
@@ -68,7 +44,7 @@ async function selfTest() {
 		.tokenize({ code: 'const answer: number = 42;', language: 'typescript' }, theme, hljs)
 		.catch(() => null);
 	const colors = new Set(tokens?.flat().map((token) => token.color)).size;
-	const misplaced = await misplacedCards();
+	const misplaced = (await cards?.misplaced()) ?? [];
 
 	if (misplaced.length) {
 		return {
@@ -77,11 +53,11 @@ async function selfTest() {
 		};
 	}
 
-	const { drawn, settling } = progress();
+	const { drawn, settling } = cards?.progress() ?? { drawn: 0, settling: false };
 
 	return {
-		ok: running && colors > 1,
-		detail: `${running ? `${drawn} cards drawn` : 'cards not running'}, sample TypeScript in ${theme} used ${colors} colors`,
+		ok: Boolean(cards) && colors > 1,
+		detail: `${cards ? `${drawn} cards drawn` : 'cards not running'}, sample TypeScript in ${theme} used ${colors} colors`,
 		...(drawn ? {} : { nothingDrawn: true }),
 		...(settling ? { settling: true } : {}),
 	};

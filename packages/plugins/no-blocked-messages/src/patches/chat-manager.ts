@@ -1,4 +1,5 @@
-import { ChatManager, Patcher } from '~/modules';
+import { patcher } from '@unbound-app/api';
+import { ChatManager } from '~/modules';
 import { chat, refreshChat } from '~/chat';
 
 /**
@@ -14,12 +15,12 @@ export function patchChatManager(): () => void {
 		return () => {};
 	}
 
-	const unpatchSetup = Patcher.before(prototype, 'setup', ({ args, this: self }) => {
+	const unpatchSetup = patcher.before(prototype, 'setup', ({ args, this: self }) => {
 		chat.chatManager = self;
 		chat.messages = args[0];
 	});
 
-	const unpatchCreateRow = Patcher.instead(prototype, 'createRow', ({ args, original }) => {
+	const unpatchCreateRow = patcher.instead(prototype, 'createRow', ({ args, original }) => {
 		// Row type 2 stands in for a blocked message.
 		if (args[0]?.type === 2) return;
 

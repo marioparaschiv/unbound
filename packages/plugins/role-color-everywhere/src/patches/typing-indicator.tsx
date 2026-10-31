@@ -1,3 +1,4 @@
+import { patcher } from '@unbound-app/api';
 import {
 	getRoleColorAppearance,
 	type RoleColorAppearance,
@@ -9,7 +10,6 @@ import { cloneElement } from 'react';
 import {
 	ChannelStore,
 	GuildMemberStore,
-	Patcher,
 	RelationshipStore,
 	SelectedChannelStore,
 	TYPING_INDICATOR_PATH,
@@ -80,7 +80,7 @@ function patchLoadedTypingIndicator(TypingIndicator: TypingIndicatorModule): () 
 	// A list rendered while patched keeps calling this `renderItem` after the patch is removed.
 	let active = true;
 
-	const unpatch = Patcher.after(memo, 'type', ({ result }) => {
+	const unpatch = patcher.after(memo, 'type', ({ result }) => {
 		const renderItem = result?.props?.renderItem;
 
 		if (typeof renderItem !== 'function') return;
