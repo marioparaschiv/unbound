@@ -42,13 +42,12 @@ export function getMediaKind(path: string): MediaKind | undefined {
 	return MEDIA_EXTENSIONS[path.slice(dot + 1).toLowerCase()];
 }
 
-// Media are repository files under `media/`; segments may not start with a dot, so `..` cannot escape it.
+const UNDOTTED_SEGMENT = String.raw`[\w-][\w.-]*`;
+const MEDIA_PATH = new RegExp(String.raw`^media/(?:${UNDOTTED_SEGMENT}/)*${UNDOTTED_SEGMENT}$`);
+
 export const mediaPathSchema = z.string().check(
 	z.maxLength(200),
-	z.regex(
-		/^media\/(?:[\w-][\w.-]*\/)*[\w-][\w.-]*$/,
-		'Must be a relative path inside the media/ folder.',
-	),
+	z.regex(MEDIA_PATH, 'Must be a relative path inside the media/ folder.'),
 	z.refine((path) => getMediaKind(path) !== undefined, {
 		message: `Must end in ${Object.keys(MEDIA_EXTENSIONS).join(', ')}.`,
 		abort: true,
