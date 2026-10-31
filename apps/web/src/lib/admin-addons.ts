@@ -1,6 +1,6 @@
 import type { AdminAddonStatus, AdminAddonsSearch } from '@unbound-app/contracts/admin';
-import { and, eq, gte, inArray, isNotNull, isNull, lt, sql } from 'drizzle-orm';
 import type { SortOrder, AddonType, Addon } from '@unbound-app/contracts/addons';
+import { and, eq, gte, inArray, isNotNull, isNull, lt, sql } from 'drizzle-orm';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import type { SQL } from 'drizzle-orm';
@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
 import { requirePermission } from '~/lib/api/caller';
+import { renderAddonIcon } from '~/lib/addon-icons';
 import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { matchesSearch } from '~/lib/admin-search';
 import type { AppContext } from '~/lib/context';
@@ -17,7 +18,6 @@ import type { KeysetPage } from '~/lib/keyset';
 import type { Database } from '~/db/database';
 import { DAY_MS } from '~/lib/calendar-date';
 import type { addon } from '~/db/schema';
-import { renderAddonIcon } from '~/lib/addon-icons';
 import { toAddon } from '~/lib/addons';
 
 export type AdminAddon = Addon & {
