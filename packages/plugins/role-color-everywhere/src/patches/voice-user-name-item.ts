@@ -1,26 +1,25 @@
 import { patcher } from '@unbound-app/api';
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import type { DiscordFunction } from '@unbound-app/api/metro';
 import { cloneElement } from 'react';
 import { Text } from 'react-native';
 
-import { GuildMemberStore, VoiceUserNameItem } from '~/modules';
+import { GuildMemberStore, VOICE_USER_NAME_ITEM_PATH } from '~/modules';
 import { PLUGIN_NAME } from '~/constants';
 import { paintRoleText } from '~/role-text';
 
-/**
- * @description Paints members' names in voice channel user lists with their role colors.
- * @returns A function that removes the patch.
- */
-export function patchVoiceUserNameItem(): () => void {
-	const feature = `${PLUGIN_NAME}: voice users`;
+type VoiceUserNameItemModule = {
+	default: DiscordFunction;
+};
 
-	if (!ensureModules(feature, { VoiceUserNameItem })) return () => {};
-
+function patchLoadedVoiceUserNameItem(VoiceUserNameItem: VoiceUserNameItemModule) {
 	if (typeof VoiceUserNameItem.default !== 'function') {
-		console.error(`[${feature}] Skipped, VoiceUserNameItem is not a function.`);
+		console.error(
+			`[${PLUGIN_NAME}: voice users] Skipped, VoiceUserNameItem is not a function.`,
+		);
 
-		return () => {};
+		return;
 	}
 
 	return patcher.after(VoiceUserNameItem, 'default', ({ args: [props], result }) => {
@@ -47,6 +46,14 @@ export function patchVoiceUserNameItem(): () => void {
 
 		return cloneElement(result, { children: [styledName, ...rest] });
 	});
+}
+
+/**
+ * @description Paints members' names in voice channel user lists with their role colors, once the list item's module loads.
+ * @returns A function that stops waiting or removes the patch.
+ */
+export function patchVoiceUserNameItem(): () => void {
+	return whenLoaded(VOICE_USER_NAME_ITEM_PATH, patchLoadedVoiceUserNameItem);
 }
 
 export default patchVoiceUserNameItem;
