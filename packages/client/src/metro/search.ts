@@ -508,7 +508,7 @@ export function findStore<
 >(...args: T): AnyProps {
 	const [[name], { short = true, ...options }] = parseOptions<MetroStoreOptions>(args);
 
-	return searchWithOptions([name, short], options, 'byStore');
+	return searchWithOptions([name, short], options, 'byFluxStore');
 }
 
 /**

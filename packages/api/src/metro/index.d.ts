@@ -18,10 +18,13 @@ declare const HelpMessageTypes: {
 	readonly SUCCESS: 3;
 };
 declare const React$1: typeof import('react');
+declare function byFluxStore(name: string, short?: boolean): MetroFilter;
 /** @internal */
 declare const CACHE_KEY: unique symbol;
 /** @deprecated Use onModuleLoad */
 export declare const addListener: typeof onModuleLoad;
+/** @deprecated Use flux.getStore */
+export declare const findStore: MetroFindStore;
 /** @deprecated Call the function onModuleLoad returns. */
 export declare const off: typeof removeListener;
 /** @deprecated Use onModuleLoad */
@@ -94,17 +97,6 @@ export declare function findByPrototypes<
  */
 export declare function findLazy(filter: MetroFilter, options?: MetroLazySearchOptions): any;
 /**
- * @description Finds a flux store by name.
- * @template U The union of requested store names.
- * @template T The argument tuple, optionally ending in store search options.
- * @param args The store name(s) to search for, optionally followed by options (`short` defaults to `true`).
- * @returns The matched store.
- */
-export declare function findStore<
-	U extends string,
-	T extends U[] | MetroStringFindWithOptions<U, MetroStoreOptions>,
->(...args: T): AnyProps;
-/**
  * @description Registers a listener invoked with every module as it loads.
  * @param listener Callback receiving the module exports and its id.
  * @returns A function that removes the listener.
@@ -171,6 +163,8 @@ export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) &
 	[CACHE_KEY]?: string;
 	isRaw?: boolean;
 };
+/** The signature of the deprecated `findStore`, untyped by store name so existing callers keep compiling. */
+export type MetroFindStore = (name: string, options?: MetroStoreOptions) => AnyProps;
 /** A function or class exported by a Discord module, whose signature Discord does not document. */
 export type MetroFunction = DiscordFunction & (new (...args: any[]) => any);
 /** Dispatches to the bulk or single by-name result shape based on the argument tuple. */

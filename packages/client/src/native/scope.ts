@@ -27,7 +27,7 @@ import type {
 
 import { requireCapability, scopedMethod, unavailableNativePlugin } from '~/native/capabilities';
 import { NativePluginDisposedError, NativePluginUnavailableError } from '~/native/errors';
-import { createFluxRuntimeBridge } from '~/native/flux-bridge';
+import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { getNativePlugin } from '~/native/plugin-bridge';
 

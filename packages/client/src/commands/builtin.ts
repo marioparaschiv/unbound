@@ -10,14 +10,15 @@ import {
 } from '~/commands/discord';
 import type { CommandEnums, DiscordCommand, IndexSection, IndexState } from '~/commands/discord';
 import type { CommandRecord, Section } from '~/commands/normalize';
-import { Clyde, Commands, Dispatcher } from '~/metro/common';
+import { findByProps, findStore } from '~/metro/search';
 import { UNBOUND_ICON } from '~/commands/unbound-icon';
 import type { CommandEffects } from '~/commands/run';
 import { commandId } from '~/commands/normalize';
-import { findByProps, findStore } from '~/metro';
+import { Clyde, Commands } from '~/metro/common';
 import { registry } from '~/commands/registry';
 import { createExecute } from '~/commands/run';
 import { createPatcher } from '~/patcher/api';
+import { Dispatcher } from '~/flux/modules';
 import { getIdByName } from '~/assets/api';
 import { Messages } from '~/metro/api';
 import { Users } from '~/metro/stores';

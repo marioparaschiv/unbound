@@ -1,2 +1,2 @@
-export { default } from '~/native/flux-bridge';
-export * from '~/native/flux-bridge';
+export { default } from '~/flux/runtime-bridge';
+export * from '~/flux/runtime-bridge';

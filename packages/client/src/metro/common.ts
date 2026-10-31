@@ -1,4 +1,5 @@
 import { findByPropsLazy } from '~/metro/wrappers';
+import * as FluxModules from '~/flux/modules';
 
 export const ReactNative = window.ReactNative;
 export const React = window.React;
@@ -13,11 +14,14 @@ export const Commands = findByPropsLazy('getBuiltInCommands');
 export const Moment = findByPropsLazy('isMoment');
 
 export const Util = findByPropsLazy('inspect');
-export const Flux = findByPropsLazy('Store', 'connectStores');
-export const FluxHooks = findByPropsLazy('useStateFromStores');
+/** @deprecated Use the flux namespace */
+export const Flux = FluxModules.Flux;
+/** @deprecated Use flux.useStore */
+export const FluxHooks = FluxModules.FluxHooks;
 export const Assets = findByPropsLazy('registerAsset');
 export const Clyde = findByPropsLazy('createBotMessage');
-export const Dispatcher = findByPropsLazy('dispatch', 'subscribe');
+/** @deprecated Use flux.dispatch, flux.onAction and flux.interceptAction */
+export const Dispatcher = FluxModules.Dispatcher;
 export const Constants = findByPropsLazy('Fonts', 'Endpoints');
 export const Radius = findByPropsLazy('Radius');
 export const Theme = findByPropsLazy('colors', 'internal');
