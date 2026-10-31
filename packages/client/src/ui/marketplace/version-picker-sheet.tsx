@@ -1,5 +1,6 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
+import { getInstalledVersion } from '~/marketplace/install';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
 import { toVersionChoices } from '~/addons/versions';
@@ -9,7 +10,6 @@ import { messages, format } from '~/i18n/api';
 import { Manager } from '~/addons/manager';
 
 import useAddonVersions from './use-addon-versions';
-import { getInstalledVersion } from './targets';
 import VersionRow from './version-row';
 
 type VersionPickerSheetProps = {

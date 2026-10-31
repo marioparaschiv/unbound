@@ -1,12 +1,11 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 
+import { getInstalledVersion, installVersion } from '~/marketplace/install';
 import { getInstallStatus } from '~/marketplace/catalog';
 import { Discord } from '~/metro/components';
 import { format } from '~/i18n/api';
 import { show } from '~/toasts/api';
-
-import { getInstalledVersion, installVersion } from './targets';
 
 const ALERT_KEY = 'unbound-offer-listed-install';
 
