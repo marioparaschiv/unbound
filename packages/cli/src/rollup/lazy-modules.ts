@@ -1,14 +1,24 @@
+import type { Plugin } from 'rollup';
 import { rollup } from 'rollup';
+
+import type { Globals } from './globals.ts';
+
+export type LazyModuleBuild = {
+	plugins: () => Plugin[];
+	external: (id: string) => boolean;
+	globals: Globals;
+};
 
 const virtualPrefix = '\0lazy-module:';
 const namespaceName = '__unboundLazyModule';
 
 /**
- * Generates a module whose exports load the wrapped bundle the first time one is used.
- * @param {string} code The wrapped module, built as an IIFE assigned to `__unboundLazyModule`.
- * @param {string[]} exportNames The wrapped module's export names.
+ * @description Generates a module whose exports load the wrapped bundle the first time one is used.
+ * @param code The wrapped module, built as an IIFE assigned to `__unboundLazyModule`.
+ * @param exportNames The wrapped module's export names.
+ * @returns The generated module's source.
  */
-export function lazyModuleSource(code, exportNames) {
+export function lazyModuleSource(code: string, exportNames: string[]): string {
 	const exports = exportNames.map((name) =>
 		name === 'default'
 			? 'export default binding("default");'
@@ -32,11 +42,12 @@ export function lazyModuleSource(code, exportNames) {
 }
 
 /**
- * Builds the listed modules apart and evaluates each only when the plugin first uses one of its exports.
- * @param {string[]} specifiers Import specifiers to defer, such as `highlight.js/lib/common`.
- * @param {{ plugins: () => import('rollup').Plugin[], external: (id: string) => boolean, globals: (id: string) => string | undefined }} build How to build each deferred module.
+ * @description Builds the listed modules apart and evaluates each only when the plugin first uses one of its exports.
+ * @param specifiers Import specifiers to defer, such as `highlight.js/lib/common`.
+ * @param build How to build each deferred module.
+ * @returns The rollup plugin.
  */
-export function lazyModules(specifiers, build) {
+export function lazyModules(specifiers: string[], build: LazyModuleBuild): Plugin {
 	const deferred = new Set(specifiers);
 
 	return {
@@ -67,10 +78,15 @@ export function lazyModules(specifiers, build) {
 				exports: 'named',
 			});
 
-			for (const file of bundle.watchFiles) this.addWatchFile(file);
+			for (const file of bundle.watchFiles) {
+				this.addWatchFile(file);
+			}
+
 			await bundle.close();
 
 			return lazyModuleSource(chunk.code, chunk.exports);
 		},
 	};
 }
+
+export default { lazyModuleSource, lazyModules };
