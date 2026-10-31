@@ -1,7 +1,7 @@
 import type { RenderTarget } from '@unbound-plugins/shared/react/render-target';
+import { patcher } from '@unbound-app/api';
 
 import type { SendButtonRef, Staging } from '~/staging';
-import { Patcher } from '~/modules';
 
 type SendButtonProps = { channel?: { id?: string }; ref?: SendButtonRef };
 
@@ -12,7 +12,7 @@ type SendButtonProps = { channel?: { id?: string }; ref?: SendButtonRef };
  * @returns A function that removes the patch.
  */
 export function patchChatInputSendButton(target: RenderTarget, staging: Staging): () => void {
-	return Patcher.before(target.holder, target.key, ({ args }) => {
+	return patcher.before(target.holder, target.key, ({ args }) => {
 		const props = args[0] as SendButtonProps | undefined;
 		const ref = props?.ref ?? (args[1] as SendButtonRef | undefined);
 		const channelId = props?.channel?.id;

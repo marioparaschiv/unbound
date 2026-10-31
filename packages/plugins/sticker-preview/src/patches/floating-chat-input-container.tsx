@@ -1,9 +1,10 @@
 import type { RenderTarget } from '@unbound-plugins/shared/react/render-target';
+import { patcher } from '@unbound-app/api';
 import { cloneElement, type ComponentType, type ReactElement, type ReactNode } from 'react';
 
 import StickerPreview from '~/components/sticker-preview';
 import { selectedChannelId } from '~/selected-channel';
-import { Patcher, type StickerProps } from '~/modules';
+import type { StickerProps } from '~/modules';
 import type { Staging } from '~/staging';
 
 type ContainerProps = { channel?: { id?: string } };
@@ -21,7 +22,7 @@ export function patchFloatingChatInputContainer(
 	staging: Staging,
 	Sticker: ComponentType<StickerProps>,
 ): () => void {
-	return Patcher.after(target.holder, target.key, ({ args, result }) => {
+	return patcher.after(target.holder, target.key, ({ args, result }) => {
 		const props = args[0] as ContainerProps | undefined;
 		const container: Container | null = result;
 		const channelId = props?.channel?.id ?? selectedChannelId();

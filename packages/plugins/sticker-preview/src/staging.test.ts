@@ -1,3 +1,4 @@
+import { installAddonGlobals } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 type SentMessage = { channelId: string; content: string; stickerIds: string[] };
@@ -18,26 +19,37 @@ type FakeInput = {
 	openSystemKeyboard: () => void;
 };
 
-mock.module('~/modules', () => ({
-	ChatInputs: { getBestActiveInputForChannelId: () => activeInput },
-	DraftStore: { getDraft: (channelId: string) => drafts.get(channelId) ?? '' },
-	MessageActions: {
-		_sendMessage(
-			channelId: string,
-			message: { content: string },
-			options: { stickerIds: string[] },
-		) {
-			sent.push({ channelId, content: message.content, stickerIds: options.stickerIds });
+const DraftStore = { getDraft: (channelId: string) => drafts.get(channelId) ?? '' };
+const Messages = {
+	_sendMessage(
+		channelId: string,
+		message: { content: string },
+		options: { stickerIds: string[] },
+	) {
+		sent.push({ channelId, content: message.content, stickerIds: options.stickerIds });
 
-			return sendResult();
-		},
-		sendStickers(channelId: string, stickerIds: string[]) {
-			stickerSends.push({ channelId, stickerIds });
-
-			return sendResult();
-		},
+		return sendResult();
 	},
-}));
+	sendStickers(channelId: string, stickerIds: string[]) {
+		stickerSends.push({ channelId, stickerIds });
+
+		return sendResult();
+	},
+};
+
+const scope = installAddonGlobals({
+	manifest: { id: 'astral.sticker-preview' },
+	unbound: { flux: { getStore: (name: string) => (name === 'Draft' ? DraftStore : {}) } },
+});
+
+Object.assign(scope.metro, {
+	api: { Messages },
+	findByFilePath: () => undefined,
+	filters: { ...scope.metro.filters, byFluxStore: scope.metro.filters.byName },
+});
+scope.metro.register({ getBestActiveInputForChannelId: () => activeInput });
+
+mock.module('@unbound-app/api', () => scope.unbound);
 
 const { createStaging } = await import('~/staging');
 
