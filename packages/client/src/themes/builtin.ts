@@ -1,7 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { findByProps, findStore } from '~/metro/search';
 import { resolveThemeColor } from '~/themes/colors';
-import { findByProps, findStore } from '~/metro';
 import { createPatcher } from '~/patcher/api';
 import ThemeStore from '~/themes/state';
 

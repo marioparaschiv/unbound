@@ -11,10 +11,10 @@ import {
 import type { CommandEnums, DiscordCommand, IndexSection, IndexState } from '~/commands/discord';
 import type { CommandRecord, Section } from '~/commands/normalize';
 import { Clyde, Commands, Dispatcher } from '~/metro/common';
+import { findByProps, findStore } from '~/metro/search';
 import { UNBOUND_ICON } from '~/commands/unbound-icon';
 import type { CommandEffects } from '~/commands/run';
 import { commandId } from '~/commands/normalize';
-import { findByProps, findStore } from '~/metro';
 import { registry } from '~/commands/registry';
 import { createExecute } from '~/commands/run';
 import { createPatcher } from '~/patcher/api';

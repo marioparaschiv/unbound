@@ -5,8 +5,8 @@ import { Image, View } from 'react-native';
 import { Discord, FlashList, Media } from '~/metro/components';
 import { getAll, getIDByName, Icons } from '~/assets/api';
 import { Messages, format } from '~/i18n/api';
+import { findByProps } from '~/metro/search';
 import { Empty } from '~/ui/components';
-import { findByProps } from '~/metro';
 
 import useStyles from './assets.style';
 
