@@ -27,7 +27,6 @@ function start(context: PluginContext) {
 	]);
 }
 
-// The rows' native views and constraints must be restored before the scope closes the bridge, which cancels pending native calls.
 async function stop() {
 	const finished = dispose();
 

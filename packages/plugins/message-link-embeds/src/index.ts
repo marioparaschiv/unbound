@@ -17,7 +17,6 @@ import { startEmbeds } from '~/platform';
 
 let embeds: Embeds | undefined;
 
-// `context.native` is the only way to reach the native bridge, so `start` still takes the context.
 function start(context: PluginContext) {
 	const renderers = findRenderers();
 	const modules = {
@@ -39,7 +38,6 @@ function start(context: PluginContext) {
 	embeds = startEmbeds(context.native, renderers as Renderers);
 }
 
-// The scope cannot undo the embeds: they restore Discord's media components and labels, and remove native views.
 function stop() {
 	const finished = embeds?.dispose();
 

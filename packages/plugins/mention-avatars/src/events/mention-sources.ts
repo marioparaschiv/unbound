@@ -5,7 +5,6 @@ import { GuildMemberStore, MessageStore, RoleStore, UserStore } from '~/modules'
 
 type ChangeSource = Partial<FluxStore> | undefined;
 
-// A lazy store that was never found has no listener methods.
 function isStore(source: ChangeSource): source is FluxStore {
 	return typeof source?.addChangeListener === 'function';
 }

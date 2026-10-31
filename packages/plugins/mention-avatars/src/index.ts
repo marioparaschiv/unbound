@@ -38,7 +38,6 @@ function start(context: PluginContext) {
 	renderer = startMentions(context.native, index, () => settings.get('showAtSymbol', true));
 }
 
-// The scope cannot restore the text views and native text rewrites the renderer changed.
 function stop() {
 	void renderer?.dispose();
 	renderer = undefined;

@@ -57,7 +57,6 @@ type Row = {
 	separatorBefore?: boolean;
 };
 
-// The SDK does not type Discord's `MessageStore`.
 type MessageStoreType = FluxStore & {
 	getMessage: (channelId: string, messageId: string) => Message | undefined;
 	getMessages: (channelId: string) => { _array: Message[] } | undefined;
