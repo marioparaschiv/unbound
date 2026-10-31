@@ -30,7 +30,7 @@ function LoaderUpdateRow({ update }: LoaderUpdateRowProps) {
 			icon={<Discord.TableRowIcon source={icon} />}
 			trailing={<DownloadButton url={update.url} text={messages.UNBOUND_UPDATES_DOWNLOAD} />}
 			onPress={() =>
-				navigation.push(Screens.Custom, {
+				navigation.push(Screens.PanelHost, {
 					title: messages.UNBOUND_UPDATES_LOADER,
 					render: () => (
 						<Changelog

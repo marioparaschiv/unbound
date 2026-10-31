@@ -289,7 +289,11 @@ export const {
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
 } = require('~/native/native') as typeof import('~/native/native');
-export const { createPluginContext, validateNativePluginRequirements, withNativeConstants } =
+export const { validateNativePluginRequirements } =
+	require('~/native/capabilities') as typeof import('~/native/capabilities');
+export const { createPluginContext } =
+	require('~/native/plugin-context') as typeof import('~/native/plugin-context');
+export const { withNativeConstants } =
 	require('~/native/runtime') as typeof import('~/native/runtime');
 
 /**
