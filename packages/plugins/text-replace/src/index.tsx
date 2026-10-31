@@ -7,19 +7,12 @@ import SettingsPanel from '~/components/settings-panel';
 import { normalizeStoredRules } from '~/stored-rules';
 import { Messages } from '~/modules';
 
-let dispose = () => {};
-
 function start() {
 	normalizeStoredRules();
 
 	if (!ensureModules('Text Replace', { Messages })) return;
 
-	dispose = applyFeatures('Text Replace', [patchMessageActions]);
-}
-
-function stop() {
-	dispose();
-	dispose = () => {};
+	applyFeatures('Text Replace', [patchMessageActions]);
 }
 
 const SAMPLE_RULE = { id: 'self-test', find: 'teh', replace: 'the', onlyIfIncludes: '' };
@@ -36,7 +29,6 @@ function selfTest() {
 
 export default {
 	start,
-	stop,
 	selfTest,
 	getSettingsPanel: () => <SettingsPanel />,
 };

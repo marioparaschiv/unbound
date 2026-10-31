@@ -1,6 +1,6 @@
 import { createRule, type TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
-import Page from '@unbound-plugins/shared/components/page';
 import { Discord } from '@unbound-app/api/metro/components';
+import { storage, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import RulesetTransfer from '~/components/ruleset-transfer';
@@ -9,7 +9,6 @@ import RuleEditor from '~/components/rule-editor';
 import RuleTester from '~/components/rule-tester';
 import { readRuleset } from '~/stored-rules';
 import RuleList from '~/components/rule-list';
-import { settings } from '~/modules';
 
 type Editing = {
 	kind: RuleKind;
@@ -18,7 +17,7 @@ type Editing = {
 };
 
 function SettingsPanel() {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(addon.id);
 	const [kind, setKind] = useState<RuleKind>('stringRules');
 	const [editing, setEditing] = useState<Editing | null>(null);
 	const ruleset = readRuleset(store);
@@ -28,7 +27,7 @@ function SettingsPanel() {
 	}
 
 	return (
-		<Page>
+		<ui.Page>
 			<Discord.Stack spacing={8}>
 				<Discord.Text variant='heading-xl/bold'>Text Replace</Discord.Text>
 				<Discord.Text variant='text-md/normal' color='text-muted'>
@@ -47,7 +46,7 @@ function SettingsPanel() {
 				onAdd={() => setEditing({ kind, rule: createRule(), isNew: true })}
 				onEdit={(rule) => setEditing({ kind, rule, isNew: false })}
 			/>
-		</Page>
+		</ui.Page>
 	);
 }
 

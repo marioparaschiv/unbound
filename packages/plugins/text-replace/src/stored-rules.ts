@@ -22,7 +22,7 @@ export function normalizeStoredRules(): void {
 /**
  * @description Reads one stored rule list, without blank rules.
  * @param kind Which list to read.
- * @param store The store to read through; pass the `useSettingsStore` result to re-render on changes.
+ * @param store The store to read through; pass the `storage.useBucket` result to re-render on changes.
  * @returns The rules.
  */
 export function readRules(kind: RuleKind, store: SettingsReader = settings): TextReplaceRule[] {
@@ -31,7 +31,7 @@ export function readRules(kind: RuleKind, store: SettingsReader = settings): Tex
 
 /**
  * @description Reads both stored rule lists, without blank rules.
- * @param store The store to read through; pass the `useSettingsStore` result to re-render on changes.
+ * @param store The store to read through; pass the `storage.useBucket` result to re-render on changes.
  * @returns The text and regex rules.
  */
 export function readRuleset(store: SettingsReader = settings): Ruleset {

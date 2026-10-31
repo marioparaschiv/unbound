@@ -33,7 +33,7 @@ export async function shareRuleset(ruleset: Ruleset): Promise<void> {
 			: 'Sharing is unavailable on this client build.';
 	}
 
-	toasts.showToast({ title: 'Text Replace', content });
+	toasts.show({ title: 'Text Replace', content });
 }
 
 /**
