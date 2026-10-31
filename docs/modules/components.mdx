@@ -14,7 +14,6 @@ Each handle is found through [Metro](/modules/metro). Most are lazy: the search 
 import { metro } from '@unbound-app/api';
 
 const { Discord } = metro.components;
-// equivalent: import { Discord } from '@unbound-app/api/metro/components';
 // runtime global: unbound.metro.components
 ```
 
@@ -46,17 +45,16 @@ Build most addon UI from `Discord`. It is Discord's mobile design system: a sing
 import { metro, storage, assets } from '@unbound-app/api';
 
 const { Discord } = metro.components;
-const store = storage.getStore('my-plugin');
 
 function SettingsPanel() {
-	const settings = store.useSettingsStore();
+	const settings = storage.useBucket('my-plugin');
 
 	return (
 		<Discord.TableRowGroup title='General'>
 			<Discord.TableSwitchRow
 				label='Enabled'
 				subLabel='Turn the plugin on or off.'
-				icon={<Discord.TableRowIcon source={assets.getIDByName('WrenchIcon')} />}
+				icon={<Discord.TableRowIcon source={assets.getIdByName('WrenchIcon')} />}
 				value={settings.get('enabled', true)}
 				onValueChange={() => settings.toggle('enabled', true)}
 			/>

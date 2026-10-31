@@ -26,6 +26,7 @@ export const ADDON_SCOPE_GLOBALS = [
 	'setInterval',
 	'clearTimeout',
 	'clearInterval',
+	'commands',
 ] as const;
 
 /** @deprecated Use ADDON_KINDS */

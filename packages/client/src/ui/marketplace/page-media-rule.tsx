@@ -1,6 +1,6 @@
 import type { MarkdownNode, MarkdownRule, MarkdownRules } from '@unbound-app/types/markdown';
 
-import { findPageMedia, type StorePage } from '~/marketplace/store-page';
+import { findPageMedia, type PageMediaFile, type StorePage } from '~/marketplace/store-page';
 
 import PageMedia from './page-media';
 
@@ -10,6 +10,13 @@ type PageMediaNode = MarkdownNode & {
 };
 
 const MEDIA = /^!\[([^\]\n]*)\]\(\s*([^)\s]+)\s*\)/;
+const INLINE_SIZE = 200;
+
+function inlineSize({ width, height }: PageMediaFile) {
+	const scale = Math.min(1, INLINE_SIZE / Math.max(width, height));
+
+	return { width: width * scale, height: height * scale };
+}
 
 /**
  * @description Builds the Markdown rule for `![alt](media/…)`: a file the page measured renders as an
@@ -22,7 +29,7 @@ export function createPageMediaRule(
 	page: StorePage,
 	rules: MarkdownRules,
 ): MarkdownRule<PageMediaNode> {
-	const orders = Object.values(rules).map((rule) => rule.order);
+	const orders = Object.values(rules).flatMap(({ order }) => order ?? []);
 
 	return {
 		order: Math.min(0, ...orders) - 1,
@@ -31,7 +38,13 @@ export function createPageMediaRule(
 		react(node, _output, state) {
 			const media = findPageMedia(page, node.path);
 
-			return media ? <PageMedia key={state.key} media={media} alt={node.alt} /> : node.alt;
+			if (!media) {
+				return node.alt;
+			}
+
+			return (
+				<PageMedia key={state.key} media={media} alt={node.alt} style={inlineSize(media)} />
+			);
 		},
 	};
 }

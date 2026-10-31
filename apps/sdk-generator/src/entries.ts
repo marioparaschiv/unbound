@@ -8,6 +8,7 @@ import {
 	BARREL,
 	API_SRC,
 	logger,
+	type NamespaceAlias,
 	type ModuleEntry,
 	type SdkEntries,
 } from './paths';
@@ -42,8 +43,7 @@ export function resolveSource(specifier: string, fromDir: string): string | unde
 
 /**
  * @description Reads a barrel's `export * as <name> from '<specifier>'` re-exports, skipping any tagged
- * `@internal`. This is the single source of truth for the public module surface - the managers line
- * uses `export { … }` (not `export * as`) and is excluded automatically.
+ * `@internal`. This is the single source of truth for the public module surface.
  * @param barrel The absolute path to the barrel file to parse.
  * @returns The namespace name and resolved source for each surviving re-export.
  */
@@ -154,5 +154,66 @@ export function buildEntries(): SdkEntries {
 
 	entries.sort((a, b) => a.name.localeCompare(b.name));
 
-	return { root: { source: BARREL, out: join(API_SRC, 'index.d.ts') }, modules: entries };
+	return {
+		root: { source: BARREL, out: join(API_SRC, 'index.d.ts') },
+		modules: entries,
+		aliases: readNamespaceAliases(BARREL),
+	};
+}
+
+/**
+ * @description Reads a barrel's `export const old = Next;` aliases, where `Next` is an `import * as`
+ * of a module the barrel also exports with `export * as next`, so the SDK can declare the old name.
+ * @param barrel The absolute path to the barrel file to parse.
+ * @returns Each alias with the module name it points at and its JSDoc body, sorted by name.
+ */
+export function readNamespaceAliases(barrel: string): NamespaceAlias[] {
+	const sourceFile = parseSource('barrel.ts', readFileSync(barrel, 'utf8'));
+	const specifierOf = new Map<string, string>();
+	const moduleOf = new Map<string, string>();
+
+	for (const declaration of sourceFile.getImportDeclarations()) {
+		const namespace = declaration.getNamespaceImport();
+
+		if (namespace) {
+			specifierOf.set(namespace.getText(), declaration.getModuleSpecifierValue());
+		}
+	}
+
+	for (const declaration of sourceFile.getExportDeclarations()) {
+		const alias = declaration.getNamespaceExport()?.getName();
+		const specifier = declaration.getModuleSpecifierValue();
+
+		if (alias && specifier) {
+			moduleOf.set(specifier, alias);
+		}
+	}
+
+	const aliases: NamespaceAlias[] = [];
+
+	for (const statement of sourceFile.getVariableStatements()) {
+		if (!statement.isExported()) {
+			continue;
+		}
+
+		const doc = statement
+			.getJsDocs()
+			.map((jsDoc) => jsDoc.getInnerText().trim())
+			.join('\n');
+
+		for (const declaration of statement.getDeclarations()) {
+			const specifier = specifierOf.get(declaration.getInitializer()?.getText() ?? '');
+			const target = specifier ? moduleOf.get(specifier) : undefined;
+
+			if (!target) {
+				throw new Error(
+					`Barrel export '${declaration.getName()}' must alias an \`export * as\` module.`,
+				);
+			}
+
+			aliases.push({ name: declaration.getName(), target, doc });
+		}
+	}
+
+	return aliases.sort((a, b) => a.name.localeCompare(b.name));
 }

@@ -21,7 +21,7 @@ import { plugins } from '~/plugins/manager';
 import { themes } from '~/themes/manager';
 import { fonts } from '~/fonts/manager';
 
-const logger = createLogger('Cloud Sync');
+const logger = createLogger('Sync');
 
 /** How this device reads and changes one kind of synced install. */
 type KindAdapter = {
@@ -130,7 +130,7 @@ function clone(store: SyncSettingsStore): SyncSettingsStore {
 }
 
 /**
- * @description Reads this device's side of Cloud Sync: the URL, enabled and applied state of every
+ * @description Reads this device's side of Sync: the URL, enabled and applied state of every
  * addon installed from a URL, the core settings minus device-local keys, and those addons' settings.
  * @returns The document, detached from the live settings.
  */

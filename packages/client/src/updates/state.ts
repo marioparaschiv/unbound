@@ -44,7 +44,11 @@ function checkInstalled(): Promise<PendingUpdate[]> {
 	return fetchUpdates(entries, { baseUrl: API_URL, clientVersion: CLIENT_VERSION });
 }
 
-async function checkLoaderOrNull(): Promise<LoaderUpdate | null> {
+/**
+ * @description Asks the update server whether a newer loader is available for this device.
+ * @returns The loader update, or `null` when there is none or the check failed.
+ */
+export async function findLoaderUpdate(): Promise<LoaderUpdate | null> {
 	try {
 		return await fetchLoaderUpdate({
 			baseUrl: API_URL,
@@ -79,7 +83,7 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 				try {
 					const [updates, loader] = await Promise.all([
 						checkInstalled(),
-						checkLoaderOrNull(),
+						findLoaderUpdate(),
 					]);
 
 					set({
