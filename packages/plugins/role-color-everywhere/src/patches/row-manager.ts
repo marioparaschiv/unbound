@@ -3,17 +3,39 @@ import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { MetroFunction } from '@unbound-app/api/metro';
 import { patcher } from '@unbound-app/api';
 
-import { byRowManager, GuildMemberStore, MessageStore, settings } from '~/modules';
+import {
+	byRowManager,
+	GuildMemberStore,
+	MessageStore,
+	ReferencedMessageStore,
+	settings,
+} from '~/modules';
 import { applyChatRoleColors } from '~/chat-rows';
 import { PLUGIN_NAME } from '~/constants';
 import { roleMentionColors } from '~/platform';
+import type { Message } from '~/types';
+
+function isLoaded(channelId: string, id: string) {
+	return Boolean(
+		MessageStore.getMessage(channelId, id) ??
+		ReferencedMessageStore.getMessage(channelId, id)?.message,
+	);
+}
+
+function repliedTo(message: Message | undefined) {
+	const reference = message?.messageReference;
+
+	if (!reference) return;
+
+	return { id: reference.message_id, channel_id: reference.channel_id };
+}
 
 /**
  * @description Colors mentions and, when enabled, message text in every chat row Discord generates, once `RowManager` loads.
  * @returns A function that stops waiting for `RowManager`, removes the patch and has Discord rebuild the rows it colored.
  */
 export function patchRowManager(): () => void {
-	const colored = trackChangedRows((channelId, id) => MessageStore.getMessage?.(channelId, id));
+	const colored = trackChangedRows(PLUGIN_NAME, isLoaded);
 
 	return whenLoaded(byRowManager, (RowManager: MetroFunction) => {
 		if (typeof RowManager.prototype?.generate !== 'function') {
@@ -31,7 +53,13 @@ export function patchRowManager(): () => void {
 				messageSaturation: settings.get('messageSaturation', 30),
 			});
 
-			if (painted) colored.add(args[0]?.message);
+			if (!painted) return;
+
+			const message: Message | undefined = args[0]?.message;
+
+			colored.add(message);
+			// The reply preview shows the replied-to message's parsed content, which keeps its colors until that record changes too.
+			colored.add(repliedTo(message));
 		});
 
 		return () => {

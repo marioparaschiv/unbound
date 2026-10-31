@@ -1,47 +1,67 @@
-import type { FluxMessage } from '@unbound-app/api/flux';
 import { flux } from '@unbound-app/api';
 
-type MessageIds = {
+type MessageKey = {
 	id?: string;
 	channel_id?: string;
 };
 
-type GetMessage = (channelId: string, messageId: string) => FluxMessage | null | undefined;
+type IsLoaded = (channelId: string, messageId: string) => boolean;
 
 export type ChangedRows = {
-	add: (message: MessageIds | undefined) => void;
+	add: (message: MessageKey | undefined) => void;
 	rebuild: () => void;
 };
 
+export const CHANGED_ROWS_LIMIT = 1000;
+
+// FluxActions types MESSAGE_UPDATE as a whole message, but Discord also applies the partial updates its gateway sends.
+const MESSAGE_UPDATE: string = 'MESSAGE_UPDATE';
+
 /**
  * @description Remembers the messages whose chat rows a plugin changed, so it can have Discord build those rows again once it stops changing them.
- * @param getMessage Reads a message's current record from Discord's `MessageStore`.
- * @returns `add` records a message whose row was changed, `rebuild` updates each recorded message that is still loaded and forgets them all.
+ * @param plugin The plugin's display name, used in the log lines.
+ * @param isLoaded Whether one of Discord's message stores still holds the message.
+ * @returns `add` records a message, keeping the most recent {@link CHANGED_ROWS_LIMIT}; `rebuild` updates each recorded message that is still loaded and forgets them all.
  */
-export function trackChangedRows(getMessage: GetMessage): ChangedRows {
-	const channels = new Map<string, string>();
+export function trackChangedRows(plugin: string, isLoaded: IsLoaded): ChangedRows {
+	const messages = new Map<string, string>();
+
+	// UNKNOWN: a caught error or rejection reason.
+	function report(id: string, error: unknown) {
+		console.error(`[${plugin}] Failed to rebuild the row of message ${id}:`, error);
+	}
 
 	return {
 		add(message) {
-			if (message?.id && message.channel_id) {
-				channels.set(message.id, message.channel_id);
+			if (!message?.id || !message.channel_id) return;
+
+			messages.delete(message.id);
+			messages.set(message.id, message.channel_id);
+
+			const oldest = messages.keys().next().value;
+
+			if (messages.size > CHANGED_ROWS_LIMIT && oldest !== undefined) {
+				messages.delete(oldest);
 			}
 		},
 		rebuild() {
-			// Discord keeps a built row, and its parsed content, until the message updates.
-			for (const [id, channelId] of channels) {
-				const message = getMessage(channelId, id);
+			for (const [id, channelId] of messages) {
+				try {
+					if (!isLoaded(channelId, id)) {
+						continue;
+					}
 
-				if (message) {
-					void flux.dispatch({
-						type: 'MESSAGE_UPDATE',
-						message: { ...message },
-						log_edit: false,
-					});
+					// Discord keeps a built row and its parsed content until the message record changes. An id-only update replaces the record without changing its data.
+					flux.dispatch({
+						type: MESSAGE_UPDATE,
+						message: { id, channel_id: channelId },
+					}).catch((error) => report(id, error));
+				} catch (error) {
+					report(id, error);
 				}
 			}
 
-			channels.clear();
+			messages.clear();
 		},
 	};
 }

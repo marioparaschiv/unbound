@@ -1,5 +1,5 @@
 import type { RoleColorStops } from '@unbound-plugins/shared/colors/role-colors';
-import type { FluxMessage, FluxStore } from '@unbound-app/api/flux';
+import type { FluxStore } from '@unbound-app/api/flux';
 
 export type Member = {
 	userId: string;
@@ -23,8 +23,17 @@ export type User = {
 	discriminator?: string | null;
 };
 
-export type Message = FluxMessage & {
+export type Message = {
+	id?: string;
+	channel_id?: string;
+	content?: string;
 	guildId?: string;
+	messageReference?: MessageReference | null;
+};
+
+export type MessageReference = {
+	channel_id: string;
+	message_id: string;
 };
 
 export type Channel = {
@@ -50,9 +59,19 @@ type MessageStore = FluxStore & {
 	getMessage(channelId: string, messageId: string): Message | null | undefined;
 };
 
+// A message the store does not hold comes back as `{ state }`, with no `message`.
+type ReferencedMessage = {
+	message?: Message | null;
+};
+
+type ReferencedMessageStore = FluxStore & {
+	getMessage(channelId: string, messageId: string): ReferencedMessage;
+};
+
 declare module '@unbound-app/api/flux' {
 	interface FluxStores {
 		GuildRole: GuildRoleStore;
 		Message: MessageStore;
+		ReferencedMessage: ReferencedMessageStore;
 	}
 }
