@@ -32,7 +32,7 @@ async function generate() {
 	rmSync(API_SRC, { recursive: true, force: true });
 	mkdirSync(API_SRC, { recursive: true });
 
-	const { root, modules: entries } = buildEntries();
+	const { root, modules: entries, aliases } = buildEntries();
 
 	const ownedByModule = buildOwnership(entries);
 
@@ -93,7 +93,7 @@ async function generate() {
 		);
 	}
 
-	outputs.set(root.out, buildRoot(entries));
+	outputs.set(root.out, buildRoot(entries, aliases));
 
 	// `_internal` is always emitted because `global.d.ts` re-exports it. Other hoist files are kept
 	// only when a module or an emitted hoist file imports from them.
@@ -126,7 +126,7 @@ async function generate() {
 
 	outputs.set(
 		join(API_SRC, 'global.d.ts'),
-		buildGlobal(entries, internal.exportedNames, ownerByName),
+		buildGlobal(entries, internal.exportedNames, ownerByName, aliases),
 	);
 
 	for (const [path, text] of outputs) {

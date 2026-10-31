@@ -3,16 +3,17 @@ import { useState } from 'react';
 
 import {
 	SYNC_STORE,
-	deleteCloudData,
+	deleteData,
 	getMode,
+	getSession,
 	resolveFirstSync,
 	setEnabled,
 	setMode,
 	signIn,
 	signOut,
-	sync,
+	now,
 } from '~/sync/api';
-import type { SyncMode, SyncSession } from '~/sync/api';
+import type { SyncMode } from '~/sync/api';
 import type { SyncStrategy } from '~/sync/merge';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
@@ -94,7 +95,7 @@ function CloudSyncPage() {
 	const styles = useStyles();
 	const settings = useBucket(SYNC_STORE);
 	const [busy, setBusy] = useState(false);
-	const session = settings.get<SyncSession | null>('session', null);
+	const session = getSession();
 
 	function track(task: Promise<boolean>) {
 		setBusy(true);
@@ -107,7 +108,7 @@ function CloudSyncPage() {
 			content: messages.UNBOUND_CLOUD_SYNC_DELETE_CONFIRM,
 			confirmText: messages.UNBOUND_DELETE,
 			cancelText: messages.UNBOUND_CANCEL,
-			onConfirm: () => void deleteCloudData(),
+			onConfirm: () => void deleteData(),
 		});
 	}
 
@@ -179,7 +180,7 @@ function CloudSyncPage() {
 					label={messages.UNBOUND_CLOUD_SYNC_NOW}
 					icon={<Discord.TableRowIcon source={icons.RetryIcon} />}
 					disabled={busy}
-					onPress={() => track(sync())}
+					onPress={() => track(now())}
 				/>
 			</Discord.TableRowGroup>
 

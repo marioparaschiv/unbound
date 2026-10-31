@@ -5,7 +5,7 @@ import { createLogger } from '@unbound-app/logger';
 
 import ShareDestinationSheet, { type ShareDestination } from '~/ui/share/share-destination-sheet';
 import { findByPropsLazy, findStoreLazy } from '~/metro/wrappers';
-import { getInstalledVersion } from '~/ui/marketplace/targets';
+import { getInstalledVersion } from '~/marketplace/install';
 import { navigationReady } from '~/core/navigation-ready';
 import { ActionSheets, Linking } from '~/metro/api';
 import MarketplaceStore from '~/marketplace/state';
