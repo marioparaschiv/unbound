@@ -9,13 +9,11 @@ type PlatformFields = Pick<
 	'platforms' | 'platformCapabilities' | 'capabilities'
 >;
 
-/** One platform an addon runs on and the Capabilities it needs there. */
 export type PlatformSupport = {
 	platform: AddonPlatform;
 	capabilities: AddonCapability[];
 };
 
-/** The name the site shows for each platform. */
 export const PLATFORM_LABELS: Record<AddonPlatform, string> = {
 	ios: 'iOS',
 	android: 'Android',
