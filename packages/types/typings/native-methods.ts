@@ -14,6 +14,7 @@ export type NativePluginMethod = {
 export const NATIVE_PLUGIN_METHOD_CAPABILITIES = {
 	'objc.getClass': 'native.objc.classes',
 	'objc.alloc': 'native.objc.classes',
+	'objc.create': 'native.objc.invoke',
 	'objc.className': 'native.objc.classes',
 	'objc.respondsTo': 'native.objc.classes',
 	'objc.call': 'native.objc.invoke',
