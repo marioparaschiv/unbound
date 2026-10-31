@@ -1,4 +1,9 @@
-import { isWorkspaceAddon, matchAddonDirs, readAddon } from '@unbound-app/contracts/workspace';
+import {
+	getOutputDir,
+	isWorkspaceAddon,
+	matchAddonDirs,
+	readAddon,
+} from '@unbound-app/contracts/workspace';
 import type { WorkspaceAddon, WorkspaceFiles } from '@unbound-app/contracts/workspace';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { existsSync, readFileSync } from 'node:fs';
@@ -35,9 +40,15 @@ export async function discoverAddons(resolved: ResolvedConfig): Promise<Discover
 	};
 
 	const candidates = bare ? listBareCandidates(root) : await listManifestDirs(root);
+	const dirs = matchAddonDirs(config, bare, candidates);
+	const outputDirs = new Set(dirs.map((path) => getOutputDir(path, config)));
 	const addons: DiscoveredAddon[] = [];
 
-	for (const path of matchAddonDirs(config, bare, candidates)) {
+	for (const path of dirs) {
+		if (outputDirs.has(path)) {
+			continue;
+		}
+
 		const result = readAddon(path, files, config);
 		const dir = join(root, path);
 

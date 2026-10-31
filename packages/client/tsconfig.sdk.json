@@ -2,6 +2,7 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"composite": false,
+		"types": ["@unbound-app/types", "./src/hot-refresh/react-refresh.d.ts"],
 		"paths": {
 			"~/*": ["./src/*"],
 			"@i18n/*": ["../../i18n/*"],
@@ -9,6 +10,7 @@
 			"@unbound-app/types/*": ["../types/typings/*.ts"],
 			"@unbound-app/discord-types": ["../discord-types/src/index.gen.d.ts"],
 			"@unbound-app/discord-types/design": ["../discord-types/src/barrels.gen.d.ts"],
+			"@unbound-app/contracts/*": ["../contracts/src/*.ts"],
 			"@unbound-app/logger": ["../logger/src/index.ts"],
 			"@unbound-app/utils/*": ["../utils/src/*.ts"]
 		}

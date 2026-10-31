@@ -65,7 +65,7 @@ function GeneralPage() {
 					label={messages.UNBOUND_CLOUD_SYNC}
 					icon={<Discord.TableRowIcon source={icons.CloudIcon} />}
 					arrow
-					onPress={() => navigation.push(Screens.CloudSync)}
+					onPress={() => navigation.push(Screens.Sync)}
 				/>
 			</Discord.TableRowGroup>
 

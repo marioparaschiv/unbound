@@ -481,17 +481,30 @@ declare global {
 
 export interface UnboundGlobal {
 	assets: typeof import('./assets.d.ts');
+	builtins: typeof import('./builtins.d.ts');
 	commands: typeof import('./commands.d.ts');
 	dialogs: typeof import('./dialogs.d.ts');
 	flux: typeof import('./flux.d.ts');
+	fonts: typeof import('./fonts.d.ts');
 	fs: typeof import('./fs.d.ts');
 	i18n: typeof import('./i18n.d.ts');
+	iconPacks: typeof import('./iconPacks.d.ts');
+	marketplace: typeof import('./marketplace.d.ts');
 	metro: typeof import('./metro/index.d.ts');
 	native: typeof import('./native.d.ts');
 	patcher: typeof import('./patcher.d.ts');
+	plugins: typeof import('./plugins.d.ts');
 	settings: typeof import('./settings.d.ts');
 	storage: typeof import('./storage.d.ts');
+	sync: typeof import('./sync.d.ts');
+	themes: typeof import('./themes.d.ts');
 	toasts: typeof import('./toasts.d.ts');
+	ui: typeof import('./ui.d.ts');
+	updates: typeof import('./updates.d.ts');
+	/** @deprecated Use sync */
+	cloudSync: typeof import('./sync.d.ts');
+	/** @deprecated Use iconPacks */
+	icons: typeof import('./iconPacks.d.ts');
 }
 
 declare global {

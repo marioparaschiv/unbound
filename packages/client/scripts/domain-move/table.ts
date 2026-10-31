@@ -162,6 +162,7 @@ export const removals: string[] = [
 
 /** Files under the old layer folders that the plan keeps in place. */
 export const kept: string[] = [
+	'builtins/api.ts',
 	'builtins/discord-support.ts',
 	'builtins/error-boundary.tsx',
 	'builtins/staff-mode.ts',
