@@ -1,5 +1,42 @@
 # Changelog
 
+## [0.12.0](https://github.com/marioparaschiv/unbound/compare/contracts-v0.11.0...contracts-v0.12.0) (2026-10-31)
+
+
+### Features
+
+* choose and downgrade addon versions from the marketplace ([#443](https://github.com/marioparaschiv/unbound/issues/443)) ([7190ac2](https://github.com/marioparaschiv/unbound/commit/7190ac2e53ecb0d49976898dee8c61bf19705ae3))
+* report the verified build on both platforms ([#499](https://github.com/marioparaschiv/unbound/issues/499)) ([eda9405](https://github.com/marioparaschiv/unbound/commit/eda9405ec5a3ed911aecbe4c34be67b24537d8ca))
+* **web:** redesign addon pages and let maintainers pick a website icon ([#444](https://github.com/marioparaschiv/unbound/issues/444)) ([b61e42b](https://github.com/marioparaschiv/unbound/commit/b61e42bd1166479927229b9d136247558b2fa874))
+* **web:** redesign the staff area and let staff set addon icons ([#447](https://github.com/marioparaschiv/unbound/issues/447)) ([f9f764f](https://github.com/marioparaschiv/unbound/commit/f9f764f78213c53d785208ced8351ad513dc7851))
+
+
+### Bug Fixes
+
+* use one link scheme across the loader, client and site ([260d1e1](https://github.com/marioparaschiv/unbound/commit/260d1e1d70b36185d780a202052f577c0ac5fe9a))
+
+
+### Code Refactoring
+
+* fix architecture smells and enforce them with oxlint rules ([#574](https://github.com/marioparaschiv/unbound/issues/574)) ([577a2af](https://github.com/marioparaschiv/unbound/commit/577a2af9ca4f479a805765481927b1ff9302c1ec))
+
+
+### Documentation
+
+* match the Android install steps to the release assets ([260d1e1](https://github.com/marioparaschiv/unbound/commit/260d1e1d70b36185d780a202052f577c0ac5fe9a))
+
+
+### Tests
+
+* remove tautological tests and stop pinning brittle details ([#437](https://github.com/marioparaschiv/unbound/issues/437)) ([b69ca6c](https://github.com/marioparaschiv/unbound/commit/b69ca6c97c6470ac6cb1b0fa515c6e2f79639ba7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 0.11.0
+
 ## [0.11.0](https://github.com/marioparaschiv/unbound/compare/contracts-v0.10.0...contracts-v0.11.0) (2026-10-29)
 
 

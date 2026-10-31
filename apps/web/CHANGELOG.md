@@ -1,5 +1,70 @@
 # Changelog
 
+## [0.12.0](https://github.com/marioparaschiv/unbound/compare/web-v0.11.0...web-v0.12.0) (2026-10-31)
+
+
+### Features
+
+* choose and downgrade addon versions from the marketplace ([#443](https://github.com/marioparaschiv/unbound/issues/443)) ([7190ac2](https://github.com/marioparaschiv/unbound/commit/7190ac2e53ecb0d49976898dee8c61bf19705ae3))
+* report the verified build on both platforms ([#499](https://github.com/marioparaschiv/unbound/issues/499)) ([eda9405](https://github.com/marioparaschiv/unbound/commit/eda9405ec5a3ed911aecbe4c34be67b24537d8ca))
+* **web:** frosted team cards and blurred profile banners ([#440](https://github.com/marioparaschiv/unbound/issues/440)) ([0f3b75b](https://github.com/marioparaschiv/unbound/commit/0f3b75ba5d13969cf5f866cf226946bf4cee82cd))
+* **web:** give every first-party addon a website icon ([#449](https://github.com/marioparaschiv/unbound/issues/449)) ([3b22e55](https://github.com/marioparaschiv/unbound/commit/3b22e55c155e5388d4b4fba93cdb34ea361324f4))
+* **web:** one staff link in the menu, no single-tab switcher ([#450](https://github.com/marioparaschiv/unbound/issues/450)) ([450eb78](https://github.com/marioparaschiv/unbound/commit/450eb78cb75132bdf67e2c77af7f4620f7828b1b))
+* **web:** redesign addon pages and let maintainers pick a website icon ([#444](https://github.com/marioparaschiv/unbound/issues/444)) ([b61e42b](https://github.com/marioparaschiv/unbound/commit/b61e42bd1166479927229b9d136247558b2fa874))
+* **web:** redesign the staff area and let staff set addon icons ([#447](https://github.com/marioparaschiv/unbound/issues/447)) ([f9f764f](https://github.com/marioparaschiv/unbound/commit/f9f764f78213c53d785208ced8351ad513dc7851))
+* **web:** sync Discord banners, names and avatars to the team pages ([#442](https://github.com/marioparaschiv/unbound/issues/442)) ([2d9697f](https://github.com/marioparaschiv/unbound/commit/2d9697f13018616e904009a8d02a8312d6842574))
+
+
+### Bug Fixes
+
+* **client:** read core settings from the loader's store ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **plugins:** reach the Android module's current class names ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* use one link scheme across the loader, client and site ([260d1e1](https://github.com/marioparaschiv/unbound/commit/260d1e1d70b36185d780a202052f577c0ac5fe9a))
+* **web:** drop saturate-300 from team card avatar glow ([#446](https://github.com/marioparaschiv/unbound/issues/446)) ([e3316cc](https://github.com/marioparaschiv/unbound/commit/e3316cc9f664fb3d4c7a79483aadc83608cc81f6))
+
+
+### Code Refactoring
+
+* fix architecture smells and enforce them with oxlint rules ([#574](https://github.com/marioparaschiv/unbound/issues/574)) ([577a2af](https://github.com/marioparaschiv/unbound/commit/577a2af9ca4f479a805765481927b1ff9302c1ec))
+* **loader:** choose the Android build in a tested command ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **plugins:** move first-party plugin ids to the new namespace ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Build System
+
+* **deps:** bump the minor-and-patch group with 7 updates ([#607](https://github.com/marioparaschiv/unbound/issues/607)) ([e5b7afa](https://github.com/marioparaschiv/unbound/commit/e5b7afaa780f5ad6143b6f18bb71bcad712953be))
+* treat Bun's empty test runs as passing in the pre-push hook ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Documentation
+
+* match the Android install steps to the release assets ([260d1e1](https://github.com/marioparaschiv/unbound/commit/260d1e1d70b36185d780a202052f577c0ac5fe9a))
+
+
+### Tests
+
+* **core:** keep sanitizer reports out of the crash attribution children ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* remove tautological tests and stop pinning brittle details ([#437](https://github.com/marioparaschiv/unbound/issues/437)) ([b69ca6c](https://github.com/marioparaschiv/unbound/commit/b69ca6c97c6470ac6cb1b0fa515c6e2f79639ba7))
+* **web:** key the sync tests' core store by SYNC_CORE_STORE ([#679](https://github.com/marioparaschiv/unbound/issues/679)) ([d45b176](https://github.com/marioparaschiv/unbound/commit/d45b176f1c4fede17cc22eeb44f005823bf3fa21))
+
+
+### Continuous Integration
+
+* **deps:** fit Dependabot titles to the commit header limit ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** build PRs against the current App Store Discord ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** let main builds finish instead of cancelling each other ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** show smoke failures and the first crash in the PR comment ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** skip the Android smoke test for unattested builds ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 0.12.0
+    * @unbound-app/logger bumped to 0.7.2
+    * @unbound-app/utils bumped to 0.9.2
+
 ## [0.11.0](https://github.com/marioparaschiv/unbound/compare/web-v0.10.0...web-v0.11.0) (2026-10-29)
 
 
