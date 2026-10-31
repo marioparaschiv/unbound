@@ -188,6 +188,31 @@ describe('new listings', () => {
 		expect(new TextDecoder().decode(staging.objects.get(row?.stagingKey ?? ''))).toBe(bundle);
 	});
 
+	test('records the built manifest, or the source manifest when none is committed', async () => {
+		const { headers } = await signUp();
+		const built = commitPlugin(fixture, REPOSITORY, 'listing.built', '1.0.0', {
+			'dist/manifest.json': JSON.stringify({
+				...manifest('listing.built'),
+				main: 'index.js',
+				capabilities: ['native.objc.invoke'],
+			}),
+		});
+		const source = commitAddon('listing.source');
+
+		async function storedManifest(request: CreateSubmissionRequest) {
+			const { submission: created } = await accepted(await submit(headers, request));
+			const row = await ctx.db.query.submission.findFirst({ where: { id: created.id } });
+
+			return row?.manifest;
+		}
+
+		expect(await storedManifest(built.request)).toMatchObject({
+			id: 'listing.built',
+			capabilities: ['native.objc.invoke'],
+		});
+		expect(await storedManifest(source.request)).not.toHaveProperty('capabilities');
+	});
+
 	test('refuses an id another user has claimed and deletes what it staged', async () => {
 		const first = await signUp();
 		const second = await signUp();
