@@ -298,13 +298,17 @@ describe('admin addons list', () => {
 		},
 	);
 
-	test('lists each addon with its newest version and owners', async () => {
+	test('lists each addon with its icon, newest version and owners', async () => {
+		await ctx.db.update(addon).set({ icon: 'IconRocket' }).where(eq(addon.id, 'walk.alpha'));
+
 		const { items } = await listAdminAddons(ctx, moderator, { q: 'walk.alpha' });
 
 		expect(items).toMatchObject([
 			{
 				id: 'walk.alpha',
 				name: 'Night Owl',
+				type: 'plugin',
+				iconSvg: expect.stringContaining('<svg'),
 				latestVersion: '1.0.0',
 				delistedAt: null,
 				owners: [{ id: owner, name: 'Lists Owner' }],

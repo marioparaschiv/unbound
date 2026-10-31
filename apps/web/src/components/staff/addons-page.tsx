@@ -2,7 +2,6 @@ import {
 	IconAscendingSorting,
 	IconChevronRight,
 	IconDescendingSorting,
-	IconPlug,
 	IconXmark,
 } from 'nucleo-micro-bold';
 import { getRouteApi, Link, useNavigate } from '@tanstack/react-router';
@@ -24,6 +23,7 @@ import DatePicker from '~/components/ui/date-picker';
 import type { AdminAddon } from '~/lib/admin-addons';
 import PageHeader from '~/components/page-header';
 import UserAvatar from '~/components/user-avatar';
+import AddonIcon from '~/components/addon-icon';
 import cn from '~/lib/cn';
 
 type StaffAddonRowProps = {
@@ -61,7 +61,7 @@ function StaffAddonRow({ addon }: StaffAddonRowProps) {
 			<td className='px-4 py-3'>
 				<div className='flex items-center gap-3 min-w-0'>
 					<div className='flex justify-center items-center bg-accent rounded-control size-8 shrink-0'>
-						<IconPlug className='size-4' />
+						<AddonIcon type={addon.type} svg={addon.iconSvg} className='size-4' />
 					</div>
 					<div className='flex flex-col min-w-0'>
 						<Link
