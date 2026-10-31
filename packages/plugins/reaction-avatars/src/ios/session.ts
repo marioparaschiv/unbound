@@ -4,6 +4,7 @@ import type {
 	NativeObjCBridge,
 	NativeObjectHandle,
 	NativePluginBridge,
+	NativeUIScope,
 } from '@unbound-app/api/native';
 
 import type { ReactionViewState } from '~/ios/reaction-views';
@@ -49,6 +50,8 @@ export type Session = {
 	tables: Map<string, TableLayout>;
 	tableHooks: NativeHookToken[];
 	cellHeights: Map<string, CellHeight>;
+	ui: NativePluginBridge['ui'];
+	scope: NativeUIScope;
 	/** Bumped to abandon a visible-cell scan that is still walking the windows. */
 	scanRevision: number;
 	disposing: boolean;
@@ -84,6 +87,8 @@ export function createSession(
 		tables: new Map(),
 		tableHooks: [],
 		cellHeights: new Map(),
+		ui: native.ui,
+		scope: native.ui.createScope(),
 		scanRevision: 0,
 		disposing: false,
 	};

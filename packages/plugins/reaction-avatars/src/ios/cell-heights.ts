@@ -1,18 +1,17 @@
-import type { NativeHookToken, NativeObjectHandle } from '@unbound-app/api/native';
+import type { NativeObjectHandle } from '@unbound-app/api/native';
 import { safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
-import { parseSize } from '@unbound-plugins/shared/native/ios/rect';
+
+import { clearCellFloor, clearCellFloors, setCellFloor } from '~/ios/ui-cell-heights';
 
 import type { LayoutEntry } from '~/ios/collections';
 import type { Session } from '~/ios/session';
 import { frameOf, key } from '~/ios/views';
-import { NativeClass } from '~/constants';
 
 // A message cell keeps the tallest height any of its reaction collections asks for.
 export type CellHeight = {
 	cell: NativeObjectHandle;
 	contributions: Map<string, number>;
 	floor: number;
-	hook: NativeHookToken | null;
 	messageKey: string;
 	width: number;
 };
@@ -21,57 +20,16 @@ function highest(contributions: Map<string, number>): number {
 	return Math.max(0, ...contributions.values());
 }
 
-function removeHook(height: CellHeight): void {
-	const hook = height.hook;
-
-	height.hook = null;
-
-	try {
-		hook?.remove();
-	} catch {
-		return;
-	}
-}
-
-function forget(session: Session, cellKey: string, height: CellHeight): void {
-	removeHook(height);
+function forget(session: Session, cellKey: string): void {
+	session.ui.run(clearCellFloor, cellKey);
 	session.cellHeights.delete(cellKey);
 }
 
-function hookCellSize(session: Session, height: CellHeight): NativeHookToken {
-	return session.objc.hook(
-		NativeClass.messageCell,
-		'sizeThatFits:',
-		{
-			replace(context) {
-				const size = context.original(...context.args);
-				const natural = parseSize(size);
-
-				if (!natural || natural.height >= height.floor) {
-					return size;
-				}
-
-				return session.objc.struct('CGSize', {
-					width: natural.width,
-					height: height.floor,
-				});
-			},
-		},
-		{ instance: height.cell, thread: 'main' },
-	);
-}
-
 function setFloor(session: Session, cellKey: string, height: CellHeight, floor: number) {
-	try {
-		height.floor = floor;
-		height.hook ??= hookCellSize(session, height);
+	height.floor = floor;
+	session.ui.run(setCellFloor, cellKey, floor);
 
-		return true;
-	} catch {
-		forget(session, cellKey, height);
-
-		return false;
-	}
+	return true;
 }
 
 // The collection's planned bottom edge in the message cell's coordinates, plus a 2pt margin.
@@ -108,7 +66,7 @@ export function clearCellHeight(session: Session, entry: LayoutEntry): boolean {
 	if (!height.contributions.delete(key(session.objc, entry.collection))) return false;
 
 	if (height.contributions.size === 0) {
-		forget(session, entry.ownerCellKey, height);
+		forget(session, entry.ownerCellKey);
 
 		return true;
 	}
@@ -149,7 +107,7 @@ export function updateCellHeight(session: Session, entry: LayoutEntry): boolean 
 		(height.messageKey !== entry.ownerMessageKey ||
 			Math.abs(height.width - cellFrame.width) >= 0.5)
 	) {
-		forget(session, entry.ownerCellKey, height);
+		forget(session, entry.ownerCellKey);
 		height = undefined;
 	}
 
@@ -158,7 +116,6 @@ export function updateCellHeight(session: Session, entry: LayoutEntry): boolean 
 			cell: entry.ownerCell,
 			contributions: new Map(),
 			floor: 0,
-			hook: null,
 			messageKey: entry.ownerMessageKey,
 			width: cellFrame.width,
 		};
@@ -175,11 +132,10 @@ export function updateCellHeight(session: Session, entry: LayoutEntry): boolean 
 }
 
 /**
- * @description Removes every cell's `sizeThatFits:` hook.
+ * @description Lets every message cell be measured at its natural height again.
  * @param session The running session.
  */
 export function clearCellHeights(session: Session): void {
-	for (const height of session.cellHeights.values()) removeHook(height);
-
+	session.ui.run(clearCellFloors);
 	session.cellHeights.clear();
 }
