@@ -1,55 +1,43 @@
 ---
 name: client-ui
-description: 'Rules for writing React Native UI in packages/client/src: components, hooks, JSX and .style.ts files. Use when adding or editing a .tsx component, a use-*.ts hook, or a style sheet in the Unbound client.'
+description: 'Rules for React Native UI in packages/client/src: components, hooks, JSX and .style.ts files. Use when adding or editing a client .tsx component, use-*.ts hook or style sheet.'
 ---
 
 # Client UI
 
-**Component files render; hooks hold the logic; styles read theme tokens.** `DESIGN.md` at the repo root documents the Discord design-system primitives to compose. Prove the result on device with the `unbound-dev` skill.
+**Components render, hooks hold logic, styles read theme tokens.** Compose primitives from `DESIGN.md`; prove on device with `unbound-dev`.
 
-## Where it goes
+## Placement
 
-- Components live in `ui/`, one subfolder per domain (`ui/addons`, `ui/settings`, `ui/toasts`) plus shared `ui/components` and `ui/hooks`.
-- `ui/` imports domains. A domain reaches `ui/` only through its `builtin.ts(x)`; the `client-domains` skill has the layer table.
-- Import each component from its own file: `import ToastIcon from './toast-icon'`, `import Page from '~/ui/components/page'`.
-
-The test: `unbound/no-upward-imports` and `import/no-cycle` pass.
+- `ui/<domain>/` per domain, plus shared `ui/components` and `ui/hooks`.
+- `ui/` imports domains; domains reach `ui/` only via `builtin.ts(x)` (`client-domains`).
+- Import each component from its own file.
 
 ## Components
 
-**One component per file, declared by name, default-exported on the last line.**
+**One component per file: `function Name()`, `export default Name;` last.**
 
-```tsx
-type TintedIconProps = { source: number; size?: number };
+- Destructure props in the signature with inline defaults; props type is a named `type`.
+- Sub-components and helpers get sibling files (`toast-icon.tsx`, `./color`).
+- Logic goes in a sibling `use-*.ts` hook.
+- One `variant: 'primary' | 'secondary'` prop over several booleans.
+- Derive values during render.
+- Read stores through a selector: `ThemeStore((state) => state.applied)`.
 
-function TintedIcon({ source, size = 24 }: TintedIconProps) {
-	/* … */
-}
-
-export default TintedIcon;
-```
-
-- Destructure props in the signature, with defaults inline and the props shape as a named `type`.
-- Give a sub-component its own sibling file (`toast-icon.tsx` beside `toast.tsx`) and a plain helper its own module (`./color`).
-- Move logic into a sibling `use-*.ts` hook: `toast.tsx` ↔ `use-toast-state.ts`.
-- Model a choice as one `variant: 'primary' | 'secondary'` prop, so options stay mutually exclusive.
-- Derive values from props and state during render.
-- Subscribe to a store with a selector for the slice you read: `useToastStore((state) => state.toasts)`.
-
-The test: the file renders one component, and every value it shows comes from props, a hook, or a store selector.
+Test: everything rendered comes from props, a hook, or a selector.
 
 ## Hooks
 
-- One hook per `use-name.ts`, `useName` default-exported.
-- Let `useState` infer from its initial value; add a type argument when the initial value is `null` or `undefined` and the real type is wider.
-- Subscribe in `useEffect` with `[]`: declare a named `function handler()` inside and return the cleanup, `return () => void Events.off('changed', handler);`.
-- Memoise derived collections with `useMemo` and an explicit dependency array.
+- One per `use-name.ts`, `useName` default-exported.
+- `useState` infers from its initial value; type it only when that value is `null` or `undefined`.
+- Subscribe in `useEffect(…, [])` with a named `handler`, returning `() => void Events.off('changed', handler)`.
+- `useMemo` with explicit deps for derived collections.
 
 ## JSX and styles
 
-- Render a conditional as `condition ? <Thing /> : null`.
-- Compose styles as an array: `style={[styles.base, active ? styles.active : null, { opacity }]}`.
-- Put styles in a sibling `<component>.style.ts` that default-exports `Discord.createStyles({ … })`, with camelCase keys.
-- Take every colour, shadow and font from the metro `Theme` and `Constants` namespaces: `Theme.colors.BACKGROUND_SURFACE_HIGH`, `Constants.Fonts.PRIMARY_SEMIBOLD`.
+- Conditionals: `cond ? <Thing /> : null`.
+- Compose styles as arrays: `style={[styles.base, active ? styles.active : null]}`.
+- `<component>.style.ts` default-exports `Discord.createStyles({ … })`, camelCase keys.
+- Colours, shadows and fonts come from `Theme` and `Constants` in `~/metro/common`.
 
-The test: the style file holds only theme tokens and layout numbers, so the component follows the user's Discord theme.
+Test: style files hold only theme tokens and layout numbers.

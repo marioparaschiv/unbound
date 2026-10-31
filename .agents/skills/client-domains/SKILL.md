@@ -1,78 +1,57 @@
 ---
 name: client-domains
-description: 'Where code lives in packages/client/src and how a domain exposes its public API, store and events. Use when adding, moving or importing client code, adding a domain, a builtin, a store or an api.ts member, renaming a public API member, or editing packages/client/src/metro.'
+description: 'Where code lives in packages/client/src and how a domain exposes its API, store and events. Use when adding, moving or importing client code, adding a domain, builtin, store or api.ts member, renaming public API, or editing packages/client/src/metro.'
 ---
 
 # Client domains
 
-**One folder per domain holds everything for that domain except components.** The domain folders are the directories of `packages/client/src` other than `ui/`. Components live in `ui/` (the `client-ui` skill).
+**Each `packages/client/src` folder is a domain holding everything but components, which live in `ui/` (`client-ui`).**
 
-## Files in a domain
+## Layout
 
-| File                     | Holds                                                                                                                       |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `<domain>/api.ts`        | The domain's public API. `core/api.ts` re-exports it as a namespace.                                                        |
-| `<domain>/state.ts`      | The domain's zustand store.                                                                                                 |
-| `<domain>/manager.ts`    | The manager of one addon kind (the `addon-managers` skill).                                                                 |
-| `<domain>/builtin.ts(x)` | The domain's built-in feature or settings section, started by `core/index.ts`. The one domain file that imports `~/ui`.     |
-| `core/`                  | Boot (`index.ts`, `loader.ts`), the public barrel `api.ts`, and shared infrastructure (`constants.ts`, `event-emitter.ts`). |
-| `builtins/`              | The built-ins registry and the built-ins that belong to no other domain.                                                    |
+| File                     | Holds                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------ |
+| `<domain>/api.ts`        | Public API, re-exported as a namespace by `core/api.ts`                        |
+| `<domain>/state.ts`      | The zustand store                                                              |
+| `<domain>/manager.ts`    | An addon-kind manager (`addon-managers`)                                       |
+| `<domain>/builtin.ts(x)` | Built-in feature or settings section; the only domain file that imports `~/ui` |
+| `core/`                  | Boot, the `api.ts` barrel, `constants.ts`, `event-emitter.ts`                  |
+| `builtins/`              | Built-ins registry and built-ins with no other domain                          |
 
-- Imports flow one way: `ui/` imports domains, and a domain reaches `ui/` through its `builtin.ts(x)`. `unbound/no-upward-imports` checks this against the layer table in `.oxlintrc.json`.
-- When you add a domain folder or a `builtin` file, add it to those layers in the same change. `scripts/oxlint/client-layers.test.ts` fails until you do.
-- `utils`, `logger` and `types` are separate workspace packages, each with one job.
+- `ui/` imports domains; domains reach `ui/` only through `builtin.ts(x)`.
+- In `.oxlintrc.json`'s `unbound/no-upward-imports` layers, add a new domain folder to the domain layer's `from`, and a new `builtin` file to that layer's `except` and the `ui` layer's `deny`.
 
-The test: `bun test scripts/oxlint` and `turn-check` pass.
+Test: `bun test scripts/oxlint` passes.
 
 ## Public API
 
-**A domain's public API is the named exports of one module, usually `<domain>/api.ts`.** The exceptions are `native/native.ts`, `native/fs.ts`, `metro/index.ts`, and the manager instances `core/api.ts` re-exports from `~/addons/managers`.
+**Public API is the named exports of `<domain>/api.ts`** (also `native/native.ts`, `native/fs.ts`, `metro/index.ts`, and the managers from `~/addons/managers`).
 
-```ts
-export function show(options: ToastOptions): ToastHandle {
-	/* … */
-}
+- Add the module to `core/api.ts`: `export * as toasts from '~/toasts/api'`.
+- New modules: named exports only. The SDK drops `default`; an existing `default` object stays and gets each new member.
+- Rename: keep each old name until 1.0 as `/** @deprecated Use show */ export const showToast = show;`, pointing at the newest name. Add `{ from, to }` to `scripts/api-renames.ts` and repoint earlier entries to the newest name. `bun run rename-api` migrates callers.
+- Barrels hold only re-exports: `core/api.ts` and `metro/index.ts`. Everything else imports its file.
 
-/** @deprecated Use show */
-export const showToast = show;
-```
-
-- Export each member as a named export. `core/api.ts` adds the module as a namespace: `export * as toasts from '~/toasts/api'`.
-- Consumers import a member (`import { show } from '~/toasts/api'`) or the namespace (`import * as toasts from '~/toasts/api'`).
-- Keep a renamed member's old name until 1.0 as a named `const` alias with a `@deprecated` tag, so the generated SDK carries the tag. Record the rename in `scripts/api-renames.ts` (`{ from: 'toasts.showToast', to: 'toasts.show' }`); `bun run rename-api` migrates callers from it.
-- The SDK generator drops a module's `default` export, so the named exports are the whole public API. Write a new module with named exports only. An existing module's `default` object stays for the client callers that import it; add a new member to it when you add one to the module.
-- A barrel holds only re-exports. `core/api.ts` is the client's public barrel and `metro/index.ts` assembles the `metro` namespace; every other import names its file.
-
-The test: `core/api.ts` re-exports the module as a namespace, and every renamed member keeps its old name as a `@deprecated` alias.
+Test: the namespace is in `core/api.ts`, and every old name is a `@deprecated` alias.
 
 ## Stores
 
-**A domain's store is its `<domain>/state.ts`: one zustand store, a PascalCase name, default-exported.**
+**`<domain>/state.ts`: one zustand store, PascalCase, default-exported.**
 
-```ts
-const ThemeStore = create<ThemeStore>((set) => ({
-	applied: null,
-	data: null,
-	setApplied: (id, theme) => set({ applied: id, data: theme }),
-}));
-
-export default ThemeStore;
-```
-
-- Keep actions in the store: method shorthand (`addToast(options) { … }`) for ones that call `get()`, arrows for one-line setters.
-- Update immutably with spread: `set((prev) => ({ toasts: { ...prev.toasts, [id]: options } }))`.
+- Actions live in the store: method shorthand when they call `get()`, arrows for setters.
+- Update by spread: `set((prev) => ({ toasts: { ...prev.toasts, [id]: options } }))`.
 
 ## Events
 
-- Build events on the `EventEmitter` from `~/core/event-emitter` with a typed event map: `new EventEmitter<EventMap>()`.
-- Expose `on` and `off` by binding: `export const on = Events.on.bind(Events);`.
-- Pass each event one object payload.
+- `new EventEmitter<EventMap>()` from `~/core/event-emitter`.
+- Expose `export const on = Events.on.bind(Events);` and `off` the same way.
+- One object payload per event.
 
-## Metro (`packages/client/src/metro`)
+## Metro
 
-**Metro code runs on every module lookup, so it is written for speed and for Discord's unknown shapes.**
+**Metro runs on every module lookup: write for speed and Discord's unknown shapes.**
 
-- `any` is allowed in the metro files listed in the `.oxlintrc.json` override (every file but `cache.ts`), because Discord's module shapes are unknown.
-- Loop with an indexed `for` and a cached length: `for (let i = 0, len = ids.length; i < len; i++)`.
-- Store flags as bits (`BLACKLISTED = 1 << 0`): set with `|=`, clear with `&= ~flag`, test with `& flag`, and check an `indexOf` hit with `~idx`.
-- When a module throws during a search, add its id to `blacklist` and continue the search.
+- `any` is allowed in metro (except `cache.ts`).
+- Indexed loops with a cached length: `for (let i = 0, len = ids.length; i < len; i++)`.
+- Flags as bits: `|=` set, `&= ~flag` clear, `& flag` test, `~idx` for an `indexOf` hit.
+- A module that throws during search goes into `blacklist`; the search continues.
