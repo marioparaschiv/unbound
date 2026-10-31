@@ -8,6 +8,8 @@ This guide builds a small working plugin that finds a Discord module, patches it
 
 Plugins have the most features of any addon kind, so they make the best example. Themes and icon packs use the same manifest and lifecycle, with different content.
 
+`ubd create` scaffolds a plugin in the standard layout. This guide builds one file by hand to show the API. Before you publish, follow the [authoring standards](/addons/standards).
+
 <Steps>
 	<Step title='Describe it with a manifest' icon='circle-info'>
 		Create a `manifest.json` with at least the required fields. The [manifest](/addons/manifest) is the metadata Unbound uses to list, attribute, and validate your addon.
@@ -116,6 +118,9 @@ export default {
 ### Where to go next
 
 <CardGroup cols={2}>
+	<Card title='Authoring Standards' icon='ruler' href='/addons/standards'>
+		The layout and loading rules, and the check that enforces each one.
+	</Card>
 	<Card title='Patcher' icon='object-subtract' href='/modules/patcher'>
 		The full patcher API: before, after, instead, and typing.
 	</Card>
