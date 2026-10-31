@@ -18,17 +18,15 @@ type SubmissionDetailsFormProps = {
 };
 
 type DetailsDraft = {
-	homepage: string;
 	tags: string;
 };
 
 function toDraft(preview: SubmissionPreview): DetailsDraft {
-	return { homepage: preview.details.homepage ?? '', tags: preview.details.tags.join(', ') };
+	return { tags: preview.details.tags.join(', ') };
 }
 
 function toOverrides(draft: DetailsDraft): SubmissionDetailsOverrides {
 	return {
-		homepage: draft.homepage.trim() || null,
 		tags: draft.tags
 			.split(',')
 			.map((tag) => tag.trim())
@@ -62,22 +60,6 @@ function SubmissionDetailsForm({ preview, error, disabled, onSubmit }: Submissio
 				}
 			>
 				<FieldGroup className='gap-6'>
-					<form.Field name='homepage'>
-						{(field) => (
-							<Field>
-								<FieldLabel htmlFor={`${id}-homepage`}>Homepage</FieldLabel>
-								<Input
-									id={`${id}-homepage`}
-									type='url'
-									value={field.state.value}
-									onChange={(event) => field.handleChange(event.target.value)}
-									onBlur={field.handleBlur}
-									placeholder='https://'
-									disabled={disabled}
-								/>
-							</Field>
-						)}
-					</form.Field>
 					<form.Field name='tags'>
 						{(field) => (
 							<Field>
