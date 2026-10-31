@@ -7,8 +7,8 @@ import type {
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { and, eq, inArray, ne, sql } from 'drizzle-orm';
 
+import { VERSION_SOURCE, writeArtifact, writeStorePage, type StorePage } from '~/lib/artifacts';
 import { OPEN_SUBMISSION_STATUSES, insertSubmissionSource } from '~/lib/submissions';
-import { VERSION_SOURCE, writeArtifact } from '~/lib/artifacts';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
 import { recordReviewDecision } from '~/lib/moderation-events';
 import { addon, addonVersion, submission } from '~/db/schema';
@@ -123,6 +123,12 @@ async function checkClaim(
 	return { kind: 'unchanged', sha256: live.sha256 };
 }
 
+function toStorePage({ addonMd, page, media }: AddonSource): StorePage | undefined {
+	if (addonMd === null) return;
+
+	return { addonMd, measured: page, media };
+}
+
 // Mirrors an approval: the files are public before this commits, and the claim is checked again.
 function commitApproved(
 	ctx: AppContext,
@@ -227,7 +233,13 @@ export async function publishFirstParty(
 		return { status: 'unchanged', ...published, sha256: claim.sha256 };
 	}
 
-	await writeArtifact(ctx, { ...published, manifest }, source.bundle, source.bytecode);
+	const target = { ...published, manifest };
+	const page = toStorePage(source);
+
+	await Promise.all([
+		writeArtifact(ctx, target, source.bundle, source.bytecode),
+		page ? writeStorePage(ctx, target, page) : undefined,
+	]);
 
 	const committed = await commitApproved(ctx, caller, repository, source, ctx.now());
 

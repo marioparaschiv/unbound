@@ -11,9 +11,9 @@ import {
 	generalSection,
 	panelHostSection,
 } from '~/settings/builtin';
+import { marketplaceSection, storePageSection } from '~/marketplace/builtin';
 import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
-import { marketplaceSection } from '~/marketplace/builtin';
 import themes, { designSection } from '~/themes/builtin';
 import toasts, { toastsSection } from '~/toasts/builtin';
 import discordSupport from '~/builtins/discord-support';
@@ -62,6 +62,7 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	cloudSyncSection,
 	assetsSection,
 	panelHostSection,
+	storePageSection,
 ];
 
 const BUILT_INS: BuiltInEntry[] = [

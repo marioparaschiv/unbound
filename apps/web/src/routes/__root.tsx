@@ -36,8 +36,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		],
 		links: [
 			{ rel: 'stylesheet', href: stylesheet },
-			{ rel: 'icon', href: '/favicon-light.ico', media: '(prefers-color-scheme: light)' },
-			{ rel: 'icon', href: '/favicon-dark.ico', media: '(prefers-color-scheme: dark)' },
+			// Browsers take the last icon they support: the logo SVG as drawn, scanlines included, else the ICO.
+			{ rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+			{ rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+			{ rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
 			{
 				rel: 'stylesheet',
 				href: 'https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Manrope:wght@600..700&display=swap',

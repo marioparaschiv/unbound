@@ -16,7 +16,7 @@ const renderer: RendererConfig = {
 
 const Page = () => null;
 
-mock.module('~/metro', () => ({
+mock.module('~/metro/search', () => ({
 	findByProps: (prop: string) => (prop === 'SETTING_RENDERER_CONFIG' ? renderer : undefined),
 	findByName: () => undefined,
 	findByFilePath: () => undefined,
