@@ -57,16 +57,21 @@ const SCRIPTS = new URL('../../loader/tools/smoke_scripts/', import.meta.url);
 
 Reflect.set(globalThis, 'unbound', { plugins, storage });
 
-async function runSmokeScript(name: string): Promise<unknown> {
+const AsyncFunction: new (body: string) => () => Promise<string> = Object.getPrototypeOf(
+	async () => '',
+).constructor;
+
+async function runSmokeScript(name: string): Promise<string> {
 	const helpers = await Bun.file(new URL('fault-helpers.js', SCRIPTS)).text();
 	const script = await Bun.file(new URL(name, SCRIPTS)).text();
+	const run = new AsyncFunction(`return ${script.replace('__FAULT_HELPERS__', helpers.trim())}`);
 
-	return await (0, eval)(script.replace('__FAULT_HELPERS__', helpers.trim()));
+	return String(await run());
 }
 
 describe('the smoke test fault scripts', () => {
 	test('find a plugin that throws on start marked failed with its error', async () => {
-		const result = JSON.parse(String(await runSmokeScript('throw-on-start.js')));
+		const result = JSON.parse(await runSmokeScript('throw-on-start.js'));
 
 		expect(result).toMatchObject({ name: 'throw on start', problem: '' });
 	});
@@ -76,7 +81,7 @@ describe('the smoke test fault scripts', () => {
 
 		await Bun.sleep(400);
 
-		const result = JSON.parse(String(await runSmokeScript('check-crash.js')));
+		const result = JSON.parse(await runSmokeScript('check-crash.js'));
 
 		expect(result.name).toBe('native crash on start');
 		expect(result.observed).toContain('after the relaunch');
