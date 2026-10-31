@@ -25,13 +25,6 @@
 	},
 	"overrides": [
 		{
-			// The `window.unbound` globals tables go when slices 20 and 21 (UB-126, UB-127) move the configs onto the rollup preset.
-			"files": ["shared/rollup-config/**", "*/rollup.config.mjs"],
-			"rules": {
-				"unbound/no-window-unbound": "off"
-			}
-		},
-		{
 			// These plugins check the platform before `definePlatform` exists (slice 39, UB-145); the plugin migrations move each check into `platform.ts`.
 			"files": [
 				"avatar-radius/src/index.tsx",

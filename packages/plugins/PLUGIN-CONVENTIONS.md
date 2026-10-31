@@ -22,7 +22,7 @@ The pre-commit hook validates every plugin folder, manifest, naming collision, a
 my-plugin/
 ├── manifest.json
 ├── package.json
-├── rollup.config.mjs     # createPluginConfig(import.meta.url, { settingsPanel })
+├── rollup.config.mjs     # unbound(import.meta.url, { settingsPanel })
 ├── tsconfig.json         # maps ~/* to ./src/*
 └── src/
     ├── index.ts(x)       # start, stop, getSettingsPanel. Nothing else.
@@ -117,7 +117,7 @@ Code that uses the Objective-C ABI (`context.native.objc`, `ffi`, `fabric`) live
 
 ## Settings
 
-- The settings panel is `src/components/settings-panel.tsx`. Build it from `Page` (`@unbound-plugins/shared/components/page`) and Discord's own rows: `Discord.TableRowGroup`, `TableSwitchRow`, `TableRow`, `TextInput`, and the rest of `metro.components.Discord`.
+- The settings panel is `src/components/settings-panel.tsx`. Build it from the SDK's `ui` namespace (`ui.Page`, `ui.Section`, `ui.Row`, `ui.SwitchRow`, `ui.SliderRow`, `ui.ColorRow`, `ui.ResetRow`) and the rest of `metro.components.Discord`.
 - Read and write values with the `settings` store from `modules.ts`. In React, call `settings.useSettingsStore()`.
 - Set `settingsPanel: true` in `rollup.config.mjs` exactly when the plugin exports `getSettingsPanel`.
 

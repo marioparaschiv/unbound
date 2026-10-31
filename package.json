@@ -23,7 +23,6 @@
 			"packages/client/scripts/dev",
 			"packages/plugins",
 			"packages/plugins/*",
-			"packages/plugins/shared/*",
 			"packages/plugins-shared",
 			"packages/plugin-scripts"
 		],

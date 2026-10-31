@@ -129,8 +129,8 @@ function createEntry(config: string, entry: string): string {
 	return directory;
 }
 
-const panelConfig = 'export default createPluginConfig(import.meta.url, { settingsPanel: true });';
-const plainConfig = 'export default createPluginConfig(import.meta.url);';
+const panelConfig = 'export default unbound(import.meta.url, { settingsPanel: true });';
+const plainConfig = 'export default unbound(import.meta.url);';
 const panelEntry = 'export default { start, stop, getSettingsPanel: () => <SettingsPanel /> };';
 const plainEntry = 'export default { start, stop };';
 

@@ -12,5 +12,5 @@
 		"allowImportingTsExtensions": true,
 		"noEmit": true
 	},
-	"include": ["*", "shared"]
+	"include": ["*"]
 }

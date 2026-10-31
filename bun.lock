@@ -363,7 +363,6 @@
         "@unbound-app/cli": "workspace:*",
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/types": "workspace:*",
-        "@unbound-plugins/rollup-config": "workspace:*",
         "react": "catalog:react",
       },
     },
@@ -388,7 +387,7 @@
         "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-config": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
         "rollup": "^4.65.1",
       },
     },
@@ -432,7 +431,7 @@
         "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-config": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
         "rollup": "^4.65.1",
       },
     },
@@ -638,7 +637,7 @@
         "@types/bun": "latest",
         "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
-        "@unbound-plugins/rollup-config": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
         "react-native": "^0.86.0",
         "rollup": "^4.65.1",
       },
@@ -745,13 +744,6 @@
         "@unbound-app/cli": "workspace:*",
         "react-native": "^0.86.0",
         "rollup": "^4.65.1",
-      },
-    },
-    "packages/plugins/shared/rollup-config": {
-      "name": "@unbound-plugins/rollup-config",
-      "version": "1.0.0",
-      "dependencies": {
-        "@unbound-app/cli": "workspace:*",
       },
     },
     "packages/plugins/shiki-codeblocks": {
@@ -2020,8 +2012,6 @@
     "@unbound-app/utils": ["@unbound-app/utils@workspace:packages/utils"],
 
     "@unbound-app/web": ["@unbound-app/web@workspace:apps/web"],
-
-    "@unbound-plugins/rollup-config": ["@unbound-plugins/rollup-config@workspace:packages/plugins/shared/rollup-config"],
 
     "@unbound-plugins/shared": ["@unbound-plugins/shared@workspace:packages/plugins-shared"],
 
