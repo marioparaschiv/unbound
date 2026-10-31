@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/api",
-	"version": "0.12.0-29be352ee5197a1a16043d065afda77545bc69b24001e59a18e31e7ba1587ffb",
+	"version": "0.12.0-e1d03133ebaf06dfd845844b561cadcf6c9f33c2bc9e12ff93b732545ea1d550",
 	"author": {
 		"name": "Mario P.",
 		"email": "contact@marioparaschiv.com",
@@ -20,6 +20,7 @@
 		"./assets": "./src/assets.d.ts",
 		"./commands": "./src/commands.d.ts",
 		"./dialogs": "./src/dialogs.d.ts",
+		"./flux": "./src/flux.d.ts",
 		"./fs": "./src/fs.d.ts",
 		"./global": "./src/global.d.ts",
 		"./i18n": "./src/i18n.d.ts",

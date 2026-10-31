@@ -13,8 +13,11 @@ export declare const Assets: any;
 export declare const Clyde: any;
 export declare const Commands: any;
 export declare const Constants: any;
+/** @deprecated Use flux.dispatch, flux.onAction and flux.interceptAction */
 export declare const Dispatcher: any;
+/** @deprecated Use the flux namespace */
 export declare const Flux: any;
+/** @deprecated Use flux.useStore */
 export declare const FluxHooks: any;
 export declare const Gestures: any;
 export declare const ImageSources: ImageSourcesModule;
