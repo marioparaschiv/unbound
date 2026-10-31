@@ -222,6 +222,62 @@ export function exportedNames(container: Node): Set<string> {
 }
 
 /**
+ * @description Removes a module's `default` export so each public name is declared once, as its named
+ * export. Drops the `export { _default as default }` specifier (or `export default X;`) and the backing
+ * declaration it bound, once no surviving statement references it.
+ * @param sourceFile The parsed module bundle to rewrite.
+ */
+export function dropDefaultExport(sourceFile: Node) {
+	if (!Node.isStatemented(sourceFile)) return;
+
+	const locals = new Set<string>();
+
+	for (const statement of sourceFile.getStatements()) {
+		if (Node.isExportAssignment(statement) && !statement.isExportEquals()) {
+			locals.add(statement.getExpression().getText());
+			statement.remove();
+			continue;
+		}
+
+		if (!Node.isExportDeclaration(statement) || statement.getModuleSpecifier()) {
+			continue;
+		}
+
+		const specifier = statement
+			.getNamedExports()
+			.find((named) => named.getAliasNode()?.getText() === 'default');
+
+		if (!specifier) {
+			continue;
+		}
+
+		locals.add(specifier.getName());
+		specifier.remove();
+
+		if (statement.getNamedExports().length === 0) {
+			statement.remove();
+		}
+	}
+
+	if (locals.size === 0) return;
+
+	const backing = sourceFile
+		.getStatements()
+		.filter((statement) => declaredNames(statement).some((name) => locals.has(name)));
+	const referenced = collectReferencedNames(
+		sourceFile.getStatements().filter((statement) => !backing.includes(statement)),
+	);
+
+	for (const statement of backing) {
+		if (declaredNames(statement).some((name) => referenced.has(name))) {
+			continue;
+		}
+
+		statement.remove();
+	}
+}
+
+/**
  * @description Collapses the flattened `declare namespace X { export { ... } }` blocks that
  * `dts-bundle-generator` emits for a folder module's nested `export * as X` re-exports back into
  * `export * as X from './X'` re-exports of the already-emitted child files. The block's backing
@@ -443,7 +499,7 @@ export function typeOnlyStatements(
 }
 
 /**
- * @description Parses a per-module bundle, strips its `@internal` declarations, collapses nested
+ * @description Parses a per-module bundle, drops its `default` export, strips its `@internal` declarations, collapses nested
  * namespace re-exports into imports of their child files, hoists inlined library declarations into
  * per-library imports, and returns the cleaned text.
  * @param text The raw bundle text.
@@ -464,6 +520,8 @@ export function strip(
 ): string {
 	const sourceFile = parseSource('bundle.d.ts', text);
 
+	// Before `stripInternal`, so the default object cannot keep an `@internal` declaration alive.
+	dropDefaultExport(sourceFile);
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 	collapseNamespaces(sourceFile, outPath, children);
 	hoistLibraries(sourceFile, outPath, ownerByName, usedOwners, owned);

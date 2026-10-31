@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { join } from 'node:path';
 
 import type { ModuleEntry } from '../src/paths';
 
@@ -6,11 +7,76 @@ import {
 	collapseNamespaces,
 	collectReferencedNames,
 	declaredNames,
+	dropDefaultExport,
 	exportedNames,
 	hoistLibraries,
 	stripInternal,
+	strip,
 } from '../src/transform';
 import { parseSource } from '../src/project';
+import { bundle } from '../src/bundle';
+
+const FIXTURES = join(import.meta.dirname, 'fixtures');
+
+describe('strip', () => {
+	test('keeps the @deprecated tag on a `export const old = next` alias and emits no default', () => {
+		const text = strip(
+			bundle(join(FIXTURES, 'deprecated-alias.ts')),
+			'/api/src/deprecated-alias.d.ts',
+			new Map<string, ModuleEntry>(),
+			new Map<string, string>(),
+			new Set<string>(),
+			new Set<string>(),
+		);
+
+		expect(text).toMatch(
+			/\/\*\* @deprecated Use next \*\/\s*export declare const old: typeof next;/,
+		);
+		expect(text).toContain('export declare function next(): string;');
+		expect(text).not.toContain('default');
+	});
+});
+
+describe('dropDefaultExport', () => {
+	test('drops the default specifier and its backing object, keeping sibling specifiers', () => {
+		const sourceFile = parseSource(
+			't-default.d.ts',
+			[
+				'declare const _default: { confirm: typeof confirm$1; };',
+				'declare function confirm$1(): void;',
+				'export { _default as default, confirm$1 as confirm };',
+				'export {};',
+			].join('\n'),
+		);
+
+		dropDefaultExport(sourceFile);
+
+		const text = sourceFile.getFullText();
+
+		expect(text).not.toContain('default');
+		expect(text).toContain('declare function confirm$1(): void;');
+		expect(text).toContain('export { confirm$1 as confirm };');
+		expect(text).toContain('export {};');
+	});
+
+	test('drops `export default X` and keeps X when another statement references it', () => {
+		const sourceFile = parseSource(
+			't-default-assignment.d.ts',
+			[
+				'declare const api: { a: string; };',
+				'export declare function get(): typeof api;',
+				'export default api;',
+			].join('\n'),
+		);
+
+		dropDefaultExport(sourceFile);
+
+		const text = sourceFile.getFullText();
+
+		expect(text).not.toContain('export default');
+		expect(text).toContain('declare const api');
+	});
+});
 
 describe('exportedNames', () => {
 	test('collects export-modifier declarations and aliased export specifiers', () => {
