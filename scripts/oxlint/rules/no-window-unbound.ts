@@ -4,8 +4,7 @@ import propertyName from '../property-name.ts';
 
 const GLOBAL_OBJECTS = new Set(['window', 'globalThis']);
 
-// Rollup `globals` tables name the API as a string, such as `'window.unbound.metro'`.
-const GLOBAL_PATH = /^(window|globalThis)\.unbound(\.|$)/;
+const STRING_GLOBAL_PATH = /^(window|globalThis)\.unbound(\.|$)/;
 
 const noWindowUnbound: Rule = {
 	meta: {
@@ -25,14 +24,14 @@ const noWindowUnbound: Rule = {
 				}
 			},
 			Literal(node) {
-				if (typeof node.value === 'string' && GLOBAL_PATH.test(node.value)) {
+				if (typeof node.value === 'string' && STRING_GLOBAL_PATH.test(node.value)) {
 					context.report({ node, messageId: 'global' });
 				}
 			},
 			TemplateLiteral(node) {
 				const [head] = node.quasis;
 
-				if (head && GLOBAL_PATH.test(head.value.cooked ?? head.value.raw)) {
+				if (head && STRING_GLOBAL_PATH.test(head.value.cooked ?? head.value.raw)) {
 					context.report({ node, messageId: 'global' });
 				}
 			},

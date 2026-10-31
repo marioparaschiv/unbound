@@ -6,8 +6,7 @@ type CallNode = NodeOf<'CallExpression'>;
 
 type Options = { lazyByDefault?: boolean };
 
-// The calls that search Discord's modules, keyed by the API namespace that owns them.
-const LOOKUPS = new Map([
+const LOOKUPS_BY_NAMESPACE = new Map([
 	[
 		'metro',
 		new Set([
@@ -40,11 +39,10 @@ function isInFunction(call: CallNode): boolean {
 }
 
 function isLookup(namespace: string | undefined, name: string | undefined): boolean {
-	return Boolean(namespace && name && LOOKUPS.get(namespace)?.has(name));
+	return Boolean(namespace && name && LOOKUPS_BY_NAMESPACE.get(namespace)?.has(name));
 }
 
-// `metro`, or the `metro` key of another object such as `unbound.metro`.
-function namespaceOf(node: CallNode['callee']): string | undefined {
+function identifierOrLastKey(node: CallNode['callee']): string | undefined {
 	if (node.type === 'Identifier') {
 		return node.name;
 	}
@@ -52,7 +50,6 @@ function namespaceOf(node: CallNode['callee']): string | undefined {
 	return node.type === 'MemberExpression' ? propertyName(node) : undefined;
 }
 
-// `{ lazy: true }` as the last argument makes the lookup lazy; a missing `lazy` key falls back to the default.
 function isLazy(call: CallNode, lazyByDefault: boolean): boolean {
 	const last = call.arguments.at(-1);
 
@@ -93,8 +90,7 @@ const noModuleScopeLookup: Rule = {
 		const [options] = context.options as [Options | undefined];
 		const lazyByDefault = options?.lazyByDefault ?? false;
 
-		// Local names of lookups imported from an API subpath, such as `import { findByProps } from '@unbound-app/api/metro'`.
-		const imported = new Map<string, string>();
+		const importedLookups = new Map<string, string>();
 
 		return {
 			Program(program) {
@@ -114,7 +110,7 @@ const noModuleScopeLookup: Rule = {
 						const name = source.type === 'Identifier' ? source.name : source.value;
 
 						if (isLookup(namespace, name)) {
-							imported.set(specifier.local.name, name);
+							importedLookups.set(specifier.local.name, name);
 						}
 					}
 				}
@@ -123,10 +119,10 @@ const noModuleScopeLookup: Rule = {
 				const { callee } = node;
 				let call: string | undefined;
 
-				if (callee.type === 'Identifier' && imported.has(callee.name)) {
+				if (callee.type === 'Identifier' && importedLookups.has(callee.name)) {
 					call = callee.name;
 				} else if (callee.type === 'MemberExpression') {
-					const namespace = namespaceOf(callee.object);
+					const namespace = identifierOrLastKey(callee.object);
 					const name = propertyName(callee);
 
 					if (isLookup(namespace, name)) {

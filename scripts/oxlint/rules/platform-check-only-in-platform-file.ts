@@ -4,8 +4,7 @@ import propertyName from '../property-name.ts';
 
 const PLATFORM_FILE = /(^|\/)platform\.[cm]?[jt]sx?$/;
 
-// Each entry is an object name and the key that reads the running platform from it.
-const PLATFORM_READS = new Map([
+const PLATFORM_KEY_BY_OBJECT = new Map([
 	['Platform', 'OS'],
 	['context', 'platform'],
 ]);
@@ -26,7 +25,7 @@ const platformCheckOnlyInPlatformFile: Rule = {
 			MemberExpression(node) {
 				if (node.object.type !== 'Identifier') return;
 
-				const key = PLATFORM_READS.get(node.object.name);
+				const key = PLATFORM_KEY_BY_OBJECT.get(node.object.name);
 
 				if (!key || propertyName(node) !== key) return;
 
