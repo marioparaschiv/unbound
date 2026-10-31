@@ -83,6 +83,7 @@ function SubmitDialog({
 				</DialogHeader>
 				<SubmitForm
 					githubLinked={githubLinked}
+					variant='dialog'
 					lockedAddonId={addonId}
 					pendingSource={source ?? undefined}
 					onSubmitted={handleSubmitted}
