@@ -1,20 +1,12 @@
-import { trackChangedRows } from '@unbound-plugins/shared/messages/changed-rows';
-import { flux, metro, patcher } from '@unbound-app/api';
+import { metro, patcher } from '@unbound-app/api';
 
-import {
-	ChannelStore,
-	MessageRowData,
-	MessageStore,
-	settings,
-	UserProfileStore,
-	UserStore,
-} from '~/modules';
+import { ChannelStore, MessageRowData, settings, UserProfileStore, UserStore } from '~/modules';
 import { cleanProfilePronouns, pickPronouns } from '~/pronouns';
 import type { PronounLookup } from '~/lookup';
 import { addPronouns } from '~/header';
 
 type Author = { id?: string; bot?: boolean; system?: boolean; username?: string };
-type Message = { id?: string; author?: Author; channel_id?: string; type?: number };
+type Message = { author?: Author; channel_id?: string; type?: number };
 
 // Default (0) and reply (19) messages; other types, such as poll results, have no author header.
 function isChatMessage(message: Message) {
@@ -42,15 +34,10 @@ function isShownFor(author: Author | undefined): author is Author & { id: string
 /**
  * @description Shows each message author's pronouns after the message timestamp.
  * @param lookup The PronounDB lookup that caches pronouns for the session.
- * @returns A function that removes the patch and has Discord rebuild the headers it labelled.
+ * @returns A function that removes the patch.
  */
 export function patchMessageRowData(lookup: PronounLookup): () => void {
-	const labelled = trackChangedRows('PronounDB', {
-		isLoaded: (channelId, id) => Boolean(MessageStore.getMessage(channelId, id)),
-		dispatch: flux.dispatch,
-	});
-
-	const unpatch = patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+	return patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const message: Message | undefined = args[0]?.message;
 
 		if (!message || !isChatMessage(message) || !isShownFor(message.author)) return;
@@ -71,11 +58,5 @@ export function patchMessageRowData(lookup: PronounLookup): () => void {
 			username,
 			metro.common.ReactNative.Dimensions.get('window').width,
 		);
-		labelled.add(message);
 	});
-
-	return () => {
-		unpatch();
-		labelled.rebuild();
-	};
 }

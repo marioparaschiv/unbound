@@ -24,16 +24,8 @@ export type User = {
 };
 
 export type Message = {
-	id?: string;
-	channel_id?: string;
 	content?: string;
 	guildId?: string;
-	messageReference?: MessageReference | null;
-};
-
-export type MessageReference = {
-	channel_id: string;
-	message_id: string;
 };
 
 export type Channel = {
@@ -59,19 +51,9 @@ type MessageStore = FluxStore & {
 	getMessage(channelId: string, messageId: string): Message | null | undefined;
 };
 
-// A message the store does not hold comes back as `{ state }`, with no `message`.
-type ReferencedMessage = {
-	message?: Message | null;
-};
-
-type ReferencedMessageStore = FluxStore & {
-	getMessage(channelId: string, messageId: string): ReferencedMessage;
-};
-
 declare module '@unbound-app/api/flux' {
 	interface FluxStores {
 		GuildRole: GuildRoleStore;
 		Message: MessageStore;
-		ReferencedMessage: ReferencedMessageStore;
 	}
 }

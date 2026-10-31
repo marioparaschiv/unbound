@@ -7,7 +7,6 @@ export const GuildRoleStore = flux.getStore('GuildRole', { lazy: true });
 export const UserStore = flux.getStore('User', { lazy: true });
 export const ChannelStore = flux.getStore('Channel', { lazy: true });
 export const MessageStore = flux.getStore('Message', { lazy: true });
-export const ReferencedMessageStore = flux.getStore('ReferencedMessage', { lazy: true });
 export const TypingStore = flux.getStore('Typing', { lazy: true });
 export const RelationshipStore = flux.getStore('Relationship', { lazy: true });
 export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
