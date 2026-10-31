@@ -489,6 +489,7 @@ export interface UnboundGlobal {
 	sync: typeof import('./sync.d.ts');
 	themes: typeof import('./themes.d.ts');
 	toasts: typeof import('./toasts.d.ts');
+	ui: typeof import('./ui.d.ts');
 	updates: typeof import('./updates.d.ts');
 	/** @deprecated Use sync */
 	cloudSync: typeof import('./sync.d.ts');
