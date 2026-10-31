@@ -10,6 +10,7 @@ import { DEFAULT_ROLE, hasPermission } from '~/lib/auth/access';
 import type { AdminSubmission } from '~/lib/admin-submissions';
 import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
+import { isDevelopmentTeam } from '~/lib/team/development-team';
 import { requirePermission } from '~/lib/api/caller';
 import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { matchesSearch } from '~/lib/admin-search';
@@ -18,13 +19,15 @@ import { listStaffNotes } from '~/lib/staff-notes';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
+import { searchText } from '~/db/schema/columns';
 import { userSearchText } from '~/db/schema';
 import type { user } from '~/db/schema';
 
 export type AdminUser = {
 	id: string;
 	name: string;
-	email: string;
+	/** Shown only to the development team; `null` for everyone else. */
+	email: string | null;
 	image: string | null;
 	role: string;
 	banned: boolean;
@@ -66,11 +69,11 @@ type UserRow = typeof user.$inferSelect;
 
 const USER_CURSOR = z.tuple([cursorTime, z.string().min(1)]);
 
-function toAdminUser(row: UserRow): AdminUser {
+function toAdminUser(row: UserRow, showEmail: boolean): AdminUser {
 	return {
 		id: row.id,
 		name: row.name,
-		email: row.email,
+		email: showEmail ? row.email : null,
 		image: row.image ?? null,
 		role: row.role ?? DEFAULT_ROLE,
 		banned: row.banned ?? false,
@@ -84,9 +87,14 @@ function toAdminUser(row: UserRow): AdminUser {
  * newest first by `(created_at, id)`.
  * @param ctx The application context.
  * @param search The search text and the cursor to page from.
+ * @param byEmail Whether the search text may match an email, for the development team only.
  * @returns The unexecuted relational query.
  */
-export function queryAdminUsers(ctx: AppContext, search: AdminUsersSearch = {}) {
+export function queryAdminUsers(
+	ctx: AppContext,
+	search: AdminUsersSearch = {},
+	byEmail: boolean = false,
+) {
 	const { q, cursor, dir } = search;
 	const after = cursor ? decodeCursor(cursor, USER_CURSOR) : undefined;
 	const order = scanOrder('desc', dir);
@@ -96,6 +104,10 @@ export function queryAdminUsers(ctx: AppContext, search: AdminUsersSearch = {}) 
 			RAW: (table) =>
 				and(
 					q ? matchesSearch(userSearchText(table), q) : undefined,
+					// The indexed text includes the email; matching the id and name alone keeps it from being probed.
+					q && !byEmail
+						? matchesSearch(searchText([table.id, table.name]), q)
+						: undefined,
 					after ? afterKey([table.createdAt, table.id], after, 'desc', dir) : undefined,
 				) ?? sql`true`,
 		},
@@ -108,8 +120,8 @@ export function queryAdminUsers(ctx: AppContext, search: AdminUsersSearch = {}) 
 }
 
 /**
- * @description Lists one page of users, newest first, optionally only those whose id, name or email
- * contains the search text. Requires `user:list`.
+ * @description Lists one page of users, newest first, optionally only those whose id or name contains
+ * the search text. The development team also sees and searches emails. Requires `user:list`.
  * @param ctx The application context.
  * @param caller The moderator.
  * @param search The search text and the cursor to page from.
@@ -122,13 +134,14 @@ export async function listAdminUsers(
 ): Promise<AdminUsersPage> {
 	requirePermission(caller, { user: ['list'] });
 
-	const rows = await queryAdminUsers(ctx, search);
+	const showEmail = await isDevelopmentTeam(ctx.db, caller.user.id);
+	const rows = await queryAdminUsers(ctx, search, showEmail);
 	const page = toKeysetPage(rows, ctx.env.USER_LIST_PAGE_SIZE, search, (row) => [
 		row.createdAt.getTime(),
 		row.id,
 	]);
 
-	return { ...page, items: page.items.map(toAdminUser) };
+	return { ...page, items: page.items.map((row) => toAdminUser(row, showEmail)) };
 }
 
 function queryMaintainedAddons(ctx: AppContext, userId: string) {
@@ -154,7 +167,8 @@ function queryMaintainedAddons(ctx: AppContext, userId: string) {
 
 /**
  * @description Loads everything the admin user page shows: the profile, role and ban state, the
- * addons they maintain, their submissions and the moderation events about them. Requires `user:get`.
+ * addons they maintain, their submissions and the moderation events about them. The email shows only
+ * to the development team. Requires `user:get`.
  * @param ctx The application context.
  * @param caller The moderator.
  * @param id The user id.
@@ -167,7 +181,7 @@ export async function getAdminUser(
 ): Promise<AdminUserView | undefined> {
 	requirePermission(caller, { user: ['get'] });
 
-	const [row, maintained, submissions, events, notes] = await Promise.all([
+	const [row, maintained, submissions, events, notes, showEmail] = await Promise.all([
 		ctx.db.query.user.findFirst({ where: { id } }),
 		queryMaintainedAddons(ctx, id),
 		listSubmissionHistory(ctx, { authorId: id }),
@@ -175,12 +189,13 @@ export async function getAdminUser(
 		hasPermission(caller.user.role, { note: ['read'] })
 			? listStaffNotes(ctx, caller, { type: 'user', id })
 			: [],
+		isDevelopmentTeam(ctx.db, caller.user.id),
 	]);
 
 	if (!row) return;
 
 	return {
-		user: { ...toAdminUser(row), banExpires: row.banExpires ?? null },
+		user: { ...toAdminUser(row, showEmail), banExpires: row.banExpires ?? null },
 		addons: maintained.flatMap(({ role, addon }) =>
 			addon
 				? [
