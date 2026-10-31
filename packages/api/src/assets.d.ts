@@ -2,15 +2,6 @@
 
 export type { UnboundAsset } from './_internal';
 import type { UnboundAsset } from './_internal';
-declare const _default: {
-	assets: Map<number, UnboundAsset>;
-	find: typeof find;
-	getByName: typeof getByName;
-	getByID: typeof getByID;
-	getIDByName: typeof getIDByName;
-	getAll: typeof getAll;
-	Icons: Record<string, number | undefined>;
-};
 /** Proxy resolving any property name to its asset id via {@link getIDByName}. */
 export declare const Icons: Record<string, number | undefined>;
 /** Map of discovered asset ids to their resolved {@link UnboundAsset} record. */
@@ -46,6 +37,4 @@ export declare function getByName(name: string, type?: 'svg' | 'png'): UnboundAs
  * @returns The matched asset's id, or `undefined` if none match.
  */
 export declare function getIDByName(name: string, type?: 'svg' | 'png'): number | undefined;
-export { _default as default };
-
 export {};

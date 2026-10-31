@@ -2,14 +2,6 @@
 
 import * as React$1 from 'react';
 import { ComponentType } from 'react';
-
-declare const _default: {
-	showDialog: typeof showDialog;
-	confirm: typeof confirm$1;
-	dismissAll: typeof dismissAll;
-	start: typeof start;
-	stop: typeof stop$1;
-};
 /**
  * @description Asks a yes-or-no question with a confirm and a cancel button.
  * @param options The question and the confirm button's label.
@@ -64,6 +56,6 @@ export type DialogHandle = {
 	dismiss: () => void;
 };
 
-export { _default as default, confirm$1 as confirm, stop$1 as stop };
+export { confirm$1 as confirm, stop$1 as stop };
 
 export {};
