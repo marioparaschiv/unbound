@@ -15,8 +15,6 @@ import { patchContextMenus } from '~/patches/context-menus';
 import { patchActionSheets } from '~/patches/action-sheets';
 import type { SheetRef } from '~/opened-sheet';
 
-let dispose = () => {};
-
 function start() {
 	const ready = ensureModules('View Icons', {
 		IconUtils,
@@ -32,15 +30,7 @@ function start() {
 
 	const opened: SheetRef = { current: null };
 
-	dispose = applyFeatures('View Icons', [
-		() => patchActionSheets(opened),
-		() => patchContextMenus(opened),
-	]);
+	applyFeatures('View Icons', [() => patchActionSheets(opened), () => patchContextMenus(opened)]);
 }
 
-function stop() {
-	dispose();
-	dispose = () => {};
-}
-
-export default { start, stop, selfTest: featureSelfTest };
+export default { start, selfTest: featureSelfTest };

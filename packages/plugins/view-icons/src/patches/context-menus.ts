@@ -1,5 +1,6 @@
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import { patcher } from '@unbound-app/api';
 
 import {
 	getChannelTargets,
@@ -10,7 +11,7 @@ import {
 	type ImageTarget,
 	type User,
 } from '~/targets';
-import { ChannelStore, ContextMenusFilter, GuildStore, Patcher, Theme, UserStore } from '~/modules';
+import { ChannelStore, ContextMenusFilter, GuildStore, Theme, UserStore } from '~/modules';
 import { asId, type OpenedSheet, type SheetRef } from '~/opened-sheet';
 import ViewIcon from '~/components/view-icon';
 import { openImage } from '~/open-image';
@@ -83,7 +84,7 @@ export function patchContextMenus(opened: SheetRef): () => void {
 	if (!ensureModules('View Icons: context menus', { Theme })) return () => {};
 
 	return whenLoaded<ContextMenuHost>(ContextMenusFilter, (ContextMenus) =>
-		Patcher.before(ContextMenus, 'showContextMenu', ({ args: [menu] }) => {
+		patcher.before(ContextMenus, 'showContextMenu', ({ args: [menu] }) => {
 			const items = menu?.items;
 
 			if (!menu || !items) return;

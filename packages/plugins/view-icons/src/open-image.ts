@@ -19,7 +19,7 @@ export function openImage(target: ImageTarget): void {
 				initialSources: [{ uri, sourceURI: uri, width, height }],
 			});
 		} catch {
-			toasts.showToast({
+			toasts.show({
 				title: 'View Icons',
 				content: `Unable to open ${target.label.toLowerCase()}.`,
 			});
