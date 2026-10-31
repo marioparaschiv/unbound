@@ -19,7 +19,7 @@ import {
 	groupByOwner,
 	typeOnlyStatements,
 } from './transform';
-import { ADDON_SCOPE } from './addon-scope';
+import { addonScopeGlobals } from './addon-scope';
 import { parseSource } from './project';
 import { bundle } from './bundle';
 
@@ -114,13 +114,12 @@ export function buildGlobal(
 	}
 
 	const ambient = sourceFile.getStatements().filter(Node.isModuleDeclaration);
+	const scopeGlobals = addonScopeGlobals();
 
 	const scope = sourceFile.addTypeAlias({
 		isExported: true,
 		name: 'AddonScope',
-		type: `{ ${Object.entries(ADDON_SCOPE)
-			.map(([name, global]) => `${name}: ${global.type};`)
-			.join(' ')} }`,
+		type: `{ ${scopeGlobals.map(([name, global]) => `${name}: ${global.type};`).join(' ')} }`,
 		docs: [
 			'The globals a plugin runs with, keyed by name. Plugin code reads them without an import.',
 		],
@@ -231,7 +230,7 @@ export function buildGlobal(
 	});
 
 	global.addVariableStatements(
-		Object.entries(ADDON_SCOPE)
+		scopeGlobals
 			.filter(([, global]) => global.declare)
 			.map(([name]) => ({
 				declarationKind: VariableDeclarationKind.Const,

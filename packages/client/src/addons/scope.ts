@@ -1,5 +1,5 @@
-import { createLogger } from '@unbound-app/logger';
 import type { AddonLogger, Plugin } from '@unbound-app/types';
+import { createLogger } from '@unbound-app/logger';
 
 import { scopeCommands, scopeFlux, scopeMetro, scopeStorage } from '~/addons/scoped-namespaces';
 import { createSubscriptions, disposeInReverse } from '~/addons/subscriptions';
