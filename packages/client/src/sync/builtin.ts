@@ -2,6 +2,9 @@ import { SYNC_LOCAL_STORE_PREFIX } from '@unbound-app/contracts/sync';
 import debounce from '@unbound-app/utils/debounce';
 
 import { getMode, isApplying, isEnabled, sync } from '~/sync/api';
+import type { SectionEntry } from '~/settings/section';
+import CloudSyncPage from '~/ui/settings/cloud-sync';
+import { Screens } from '~/core/constants';
 import storage from '~/storage/api';
 
 /** How long local changes settle before they are synced. */
@@ -45,4 +48,12 @@ export function stop() {
 	unsubscribe = null;
 }
 
-export default { start, stop };
+/** The Cloud Sync page. */
+export const cloudSyncSection: SectionEntry = {
+	key: Screens.CloudSync,
+	title: 'UNBOUND_CLOUD_SYNC',
+	component: CloudSyncPage,
+	icon: 'CloudIcon',
+};
+
+export default { start, stop, cloudSyncSection };

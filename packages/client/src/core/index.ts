@@ -5,10 +5,24 @@ import '~/metro';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
+import {
+	createSettings,
+	customSection,
+	developerSection,
+	generalSection,
+} from '~/settings/builtin';
+import cloudSync, { cloudSyncSection } from '~/sync/builtin';
+import updater, { updatesSection } from '~/updates/builtin';
+import { marketplaceSection } from '~/marketplace/builtin';
+import themes, { designSection } from '~/themes/builtin';
+import toasts, { toastsSection } from '~/toasts/builtin';
 import discordSupport from '~/builtins/discord-support';
 import type { BuiltInEntry } from '~/builtins/registry';
+import type { SectionEntry } from '~/settings/section';
 import errorBoundary from '~/builtins/error-boundary';
 import coreCommands from '~/commands/core-commands';
+import { pluginsSection } from '~/plugins/builtin';
+import { assetsSection } from '~/assets/builtin';
 import { builtins } from '~/builtins/registry';
 import hotRefresh from '~/hot-refresh/builtin';
 import staffMode from '~/builtins/staff-mode';
@@ -16,12 +30,7 @@ import nativeConsent from '~/native/builtin';
 import { Manager } from '~/addons/manager';
 import tracking from '~/builtins/tracking';
 import commands from '~/commands/builtin';
-import settings from '~/settings/builtin';
-import updater from '~/updates/builtin';
 import debug from '~/debugger/builtin';
-import cloudSync from '~/sync/builtin';
-import themes from '~/themes/builtin';
-import toasts from '~/toasts/builtin';
 import links from '~/links/builtin';
 import storage from '~/storage/api';
 import * as api from '~/core/api';
@@ -42,6 +51,20 @@ declare global {
 
 const Logger = createLogger('Core');
 
+/** Every domain's Settings section, in the order Discord's settings overview lists them. */
+const SETTINGS_SECTIONS: SectionEntry[] = [
+	generalSection,
+	pluginsSection,
+	designSection,
+	developerSection,
+	marketplaceSection,
+	updatesSection,
+	toastsSection,
+	cloudSyncSection,
+	assetsSection,
+	customSection,
+];
+
 const BUILT_INS: BuiltInEntry[] = [
 	['cloudSync', cloudSync],
 	['commands', commands],
@@ -53,7 +76,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['i18n', i18n],
 	['links', links],
 	['nativeConsent', nativeConsent],
-	['settings', settings],
+	['settings', createSettings(SETTINGS_SECTIONS)],
 	['staffMode', staffMode],
 	['themes', themes],
 	['toasts', toasts],
