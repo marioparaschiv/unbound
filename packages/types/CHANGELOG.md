@@ -1,5 +1,48 @@
 # Changelog
 
+## [0.11.0](https://github.com/marioparaschiv/unbound/compare/types-v0.10.0...types-v0.11.0) (2026-10-31)
+
+
+### Features
+
+* **android:** search plugin views on the main thread ([#509](https://github.com/marioparaschiv/unbound/issues/509)) ([4616a75](https://github.com/marioparaschiv/unbound/commit/4616a75e2f79abd325146e7cc1f49cf0bb856317))
+* give /debug the same shape on Android and iOS ([#476](https://github.com/marioparaschiv/unbound/issues/476)) ([73d89f4](https://github.com/marioparaschiv/unbound/commit/73d89f4962a43dff91bb91aef6f85e13d1a72afa))
+* **loader:** log the JavaScript stack of a plugin that freezes Discord ([#478](https://github.com/marioparaschiv/unbound/issues/478)) ([ca61ca2](https://github.com/marioparaschiv/unbound/commit/ca61ca2a431de41d9b0e5cd5d977b28c5e2cc67a))
+* **plugins:** let plugins check themselves for the device matrix ([#464](https://github.com/marioparaschiv/unbound/issues/464)) ([fa74c7f](https://github.com/marioparaschiv/unbound/commit/fa74c7f70d40d29abadb22e4a5234950ec162d2f))
+* report the verified build on both platforms ([#499](https://github.com/marioparaschiv/unbound/issues/499)) ([eda9405](https://github.com/marioparaschiv/unbound/commit/eda9405ec5a3ed911aecbe4c34be67b24537d8ca))
+
+
+### Bug Fixes
+
+* **client:** read core settings from the loader's store ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **plugins:** reach the Android module's current class names ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Code Refactoring
+
+* fix architecture smells and enforce them with oxlint rules ([#574](https://github.com/marioparaschiv/unbound/issues/574)) ([577a2af](https://github.com/marioparaschiv/unbound/commit/577a2af9ca4f479a805765481927b1ff9302c1ec))
+* **loader:** choose the Android build in a tested command ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **plugins:** move first-party plugin ids to the new namespace ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Build System
+
+* treat Bun's empty test runs as passing in the pre-push hook ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Tests
+
+* **core:** keep sanitizer reports out of the crash attribution children ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Continuous Integration
+
+* **deps:** fit Dependabot titles to the commit header limit ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** build PRs against the current App Store Discord ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** let main builds finish instead of cancelling each other ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** show smoke failures and the first crash in the PR comment ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** skip the Android smoke test for unattested builds ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
 ## [0.10.0](https://github.com/marioparaschiv/unbound/compare/types-v0.9.0...types-v0.10.0) (2026-10-29)
 
 

@@ -1,5 +1,88 @@
 # Changelog
 
+## [0.12.0](https://github.com/marioparaschiv/unbound/compare/client-v0.11.0...client-v0.12.0) (2026-10-31)
+
+
+### Features
+
+* **android:** search plugin views on the main thread ([#509](https://github.com/marioparaschiv/unbound/issues/509)) ([4616a75](https://github.com/marioparaschiv/unbound/commit/4616a75e2f79abd325146e7cc1f49cf0bb856317))
+* choose and downgrade addon versions from the marketplace ([#443](https://github.com/marioparaschiv/unbound/issues/443)) ([7190ac2](https://github.com/marioparaschiv/unbound/commit/7190ac2e53ecb0d49976898dee8c61bf19705ae3))
+* **client:** give the loader file and framework their own parentheses ([#505](https://github.com/marioparaschiv/unbound/issues/505)) ([b2da5fb](https://github.com/marioparaschiv/unbound/commit/b2da5fbe8c00cbf36e0e6e3eb8d98486de8a38de))
+* **client:** name every /debug state and source the same way ([#477](https://github.com/marioparaschiv/unbound/issues/477)) ([18ca42a](https://github.com/marioparaschiv/unbound/commit/18ca42ab6dad7945347982bc44a4f8d44fa2cdf3))
+* **client:** name the Discord channel in /debug ([#483](https://github.com/marioparaschiv/unbound/issues/483)) ([5726d1b](https://github.com/marioparaschiv/unbound/commit/5726d1b9b7d707ebf011e1484a04399e9e762b04))
+* **client:** open a prefilled GitHub issue from Unbound's settings ([#480](https://github.com/marioparaschiv/unbound/issues/480)) ([84b69a3](https://github.com/marioparaschiv/unbound/commit/84b69a3984a3aaf4b00faf602f9251ad5e6d473e))
+* **client:** say when /debug could not attach entitlements ([#489](https://github.com/marioparaschiv/unbound/issues/489)) ([415f5df](https://github.com/marioparaschiv/unbound/commit/415f5dff6111c40e03e688264feba3c2f827658c))
+* **client:** send a fuller /debug report with iOS entitlements ([#472](https://github.com/marioparaschiv/unbound/issues/472)) ([699c8f2](https://github.com/marioparaschiv/unbound/commit/699c8f2913ad1cfa02288e385b26ea4acb89410b))
+* **client:** send where a plugin froze with its crash report ([#485](https://github.com/marioparaschiv/unbound/issues/485)) ([4760beb](https://github.com/marioparaschiv/unbound/commit/4760beb5cf7b6a0dc44333684b0f8dddf58f6061))
+* **client:** show one toast for plugins that hot reload together ([#482](https://github.com/marioparaschiv/unbound/issues/482)) ([cd34edf](https://github.com/marioparaschiv/unbound/commit/cd34edf1c869581aa3b15a95453587aa116c22a3))
+* **client:** show where a frozen plugin was stuck ([#467](https://github.com/marioparaschiv/unbound/issues/467)) ([10d4cab](https://github.com/marioparaschiv/unbound/commit/10d4cabb812a39b83d41a13e7bb04ff12680f9c6))
+* give /debug the same shape on Android and iOS ([#476](https://github.com/marioparaschiv/unbound/issues/476)) ([73d89f4](https://github.com/marioparaschiv/unbound/commit/73d89f4962a43dff91bb91aef6f85e13d1a72afa))
+* lowercase the Discord channel in debug and issue reports ([#506](https://github.com/marioparaschiv/unbound/issues/506)) ([6874a72](https://github.com/marioparaschiv/unbound/commit/6874a723cee17922d617845015b755c9d1f5426e))
+* open the issue forms prefilled from the app and toolbox ([6d53912](https://github.com/marioparaschiv/unbound/commit/6d5391293ad2e7d2e886eab16dedbe80e657a29c))
+* **plugin-scripts:** fail the matrix on any empty toast ([#547](https://github.com/marioparaschiv/unbound/issues/547)) ([0c257d1](https://github.com/marioparaschiv/unbound/commit/0c257d1a77576c9e9595b59a3a2127833b80864a))
+* **plugin-scripts:** stress-scroll every device in the matrix ([#543](https://github.com/marioparaschiv/unbound/issues/543)) ([a5c9461](https://github.com/marioparaschiv/unbound/commit/a5c946112954ad3e2e52d26c66931050c7a7b3b8))
+* polish /debug and name Android devices properly ([#475](https://github.com/marioparaschiv/unbound/issues/475)) ([44d27e7](https://github.com/marioparaschiv/unbound/commit/44d27e7741628664bac2affbba80bf1f1dd06851))
+* report the verified build on both platforms ([#499](https://github.com/marioparaschiv/unbound/issues/499)) ([eda9405](https://github.com/marioparaschiv/unbound/commit/eda9405ec5a3ed911aecbe4c34be67b24537d8ca))
+* send the sampled freeze stack as the report stack ([#490](https://github.com/marioparaschiv/unbound/issues/490)) ([0fc8e1e](https://github.com/marioparaschiv/unbound/commit/0fc8e1e043b25712311c5fa1bc98c9deda205e4d))
+
+
+### Bug Fixes
+
+* **client:** read core settings from the loader's store ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **client:** remove settings at nested key paths ([#581](https://github.com/marioparaschiv/unbound/issues/581)) ([b1f1f6e](https://github.com/marioparaschiv/unbound/commit/b1f1f6e615401b638ed798b8eae597790bc32d4a))
+* **client:** render Android toasts without FullWindowOverlay ([#536](https://github.com/marioparaschiv/unbound/issues/536)) ([e9b6e53](https://github.com/marioparaschiv/unbound/commit/e9b6e535d2a6f0e81ac365bcbdc0546d21bdc7eb))
+* **client:** show the install source in /debug as plain text ([#481](https://github.com/marioparaschiv/unbound/issues/481)) ([c72496e](https://github.com/marioparaschiv/unbound/commit/c72496e90bec47cfa569c170d4af1a58b1a19d29))
+* **client:** stop showing empty toasts ([#529](https://github.com/marioparaschiv/unbound/issues/529)) ([dc34876](https://github.com/marioparaschiv/unbound/commit/dc3487688646e5d65efbb7dc822a1aa7df7c3431))
+* **plugins:** reach the Android module's current class names ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* settings controls, bubble layout and compat scan cleanup ([#582](https://github.com/marioparaschiv/unbound/issues/582)) ([d685226](https://github.com/marioparaschiv/unbound/commit/d6852266f2ea8ee6301bc43e4cc4e6f1dfa686ec))
+* use one link scheme across the loader, client and site ([260d1e1](https://github.com/marioparaschiv/unbound/commit/260d1e1d70b36185d780a202052f577c0ac5fe9a))
+
+
+### Code Refactoring
+
+* fix architecture smells and enforce them with oxlint rules ([#574](https://github.com/marioparaschiv/unbound/issues/574)) ([577a2af](https://github.com/marioparaschiv/unbound/commit/577a2af9ca4f479a805765481927b1ff9302c1ec))
+* **loader:** choose the Android build in a tested command ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **plugins:** move first-party plugin ids to the new namespace ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Build System
+
+* treat Bun's empty test runs as passing in the pre-push hook ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Documentation
+
+* match the Android install steps to the release assets ([260d1e1](https://github.com/marioparaschiv/unbound/commit/260d1e1d70b36185d780a202052f577c0ac5fe9a))
+
+
+### Tests
+
+* **core:** keep sanitizer reports out of the crash attribution children ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* remove tautological tests and stop pinning brittle details ([#437](https://github.com/marioparaschiv/unbound/issues/437)) ([b69ca6c](https://github.com/marioparaschiv/unbound/commit/b69ca6c97c6470ac6cb1b0fa515c6e2f79639ba7))
+
+
+### Continuous Integration
+
+* **deps:** fit Dependabot titles to the commit header limit ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* label new issues and ask for missing details ([6d53912](https://github.com/marioparaschiv/unbound/commit/6d5391293ad2e7d2e886eab16dedbe80e657a29c))
+* **loader:** build PRs against the current App Store Discord ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** let main builds finish instead of cancelling each other ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** scan and release sensibly when dkrypt stalls ([6d53912](https://github.com/marioparaschiv/unbound/commit/6d5391293ad2e7d2e886eab16dedbe80e657a29c))
+* **loader:** show smoke failures and the first crash in the PR comment ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+* **loader:** skip the Android smoke test for unattested builds ([e655fc4](https://github.com/marioparaschiv/unbound/commit/e655fc49a4f8e46797a51d6add44a439f3271414))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 0.12.0
+    * @unbound-app/debugger-protocol bumped to 0.9.1
+    * @unbound-app/logger bumped to 0.7.2
+    * @unbound-app/types bumped to 0.11.0
+    * @unbound-app/utils bumped to 0.9.2
+    * @unbound-app/web bumped to 0.12.0
+
 ## [0.11.0](https://github.com/marioparaschiv/unbound/compare/client-v0.10.0...client-v0.11.0) (2026-10-29)
 
 
