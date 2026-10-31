@@ -1,25 +1,25 @@
-import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import {
 	javaNumber,
 	javaReference,
 	javaString,
 } from '@unbound-plugins/shared/native/android/java-values';
+import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
+import type { NativeJavaReference, PluginContext } from '@unbound-app/api/native';
 import { currentActivity } from '@unbound-plugins/shared/native/android/views';
-import type { NativeJavaBridge, NativeJavaReference } from '@unbound-app/api/native';
+import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 
 import type { FileSizeLookup } from '~/badges';
-
-export type AndroidFileSizes = {
-	lookup: FileSizeLookup;
-	dispose: () => void;
-};
+import { PLUGIN_NAME } from '~/constants';
 
 /**
  * @description Reads media file sizes from Android's content resolver, which Discord's picker leaves out, and remembers each answer.
- * @param java The plugin's Java bridge.
- * @returns A lookup for content URIs and a function that releases the resolver.
+ * @param context The plugin's context, whose Java bridge reads the sizes.
+ * @returns A lookup for content URIs, or `undefined` when the loader lacks a capability it needs.
  */
-export function createAndroidFileSizes(java: NativeJavaBridge): AndroidFileSizes {
+export function createFileSizeLookup(context: PluginContext): FileSizeLookup | undefined {
+	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
+
+	const { java } = context.native;
 	const sizes = new Map<string, number | undefined>();
 	let resolver: NativeJavaReference | null = null;
 	let application: NativeJavaReference | null = null;
@@ -87,18 +87,7 @@ export function createAndroidFileSizes(java: NativeJavaBridge): AndroidFileSizes
 		return sizes.get(uri);
 	}
 
-	function dispose() {
-		sizes.clear();
-
-		for (const handle of [resolver, application]) {
-			if (handle) java.release(handle);
-		}
-
-		resolver = null;
-		application = null;
-	}
-
-	return { lookup, dispose };
+	return lookup;
 }
 
-export default createAndroidFileSizes;
+export default createFileSizeLookup;
