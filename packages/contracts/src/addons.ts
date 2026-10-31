@@ -27,6 +27,11 @@ export const addonVersionSchema = z.object({
 	publishedAt: z.iso.datetime(),
 	manifestUrl: z.url(),
 	bundleUrl: z.url(),
+	/**
+	 * The version's ADDON.md store page on the CDN; its `media/` paths resolve against this URL. `null`
+	 * when the version has no ADDON.md. Optional so catalogs stored before it still parse.
+	 */
+	pageUrl: z.optional(z.nullable(z.url())),
 });
 
 export const addonSchema = z.object({

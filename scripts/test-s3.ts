@@ -51,6 +51,15 @@ function run(tests: string[]): number {
 			'mb',
 			...Object.values(BUCKETS).map((name) => `local/${name}`),
 		);
+		podman(
+			'exec',
+			CONTAINER,
+			'mc',
+			'anonymous',
+			'set',
+			'download',
+			`local/${BUCKETS.S3_PUBLIC_BUCKET}`,
+		);
 
 		const address = podman('port', CONTAINER, '9000/tcp');
 
