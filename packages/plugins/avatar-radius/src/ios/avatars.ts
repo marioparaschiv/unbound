@@ -1,4 +1,8 @@
-import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
+import type {
+	NativePluginBridge,
+	NativeObjCBridge,
+	NativeObjectHandle,
+} from '@unbound-app/api/native';
 import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 import { readRect } from '@unbound-plugins/shared/native/ios/rect';
@@ -133,7 +137,7 @@ async function roundVisible(objc: NativeObjCBridge, radius: number): Promise<voi
  * @param radius Reads the chosen radius.
  * @returns `refresh`, which re-rounds the avatars on screen, and `dispose`, which brings back the circles.
  */
-export function roundIOSAvatars(objc: NativeObjCBridge, radius: () => number) {
+export function roundIOSAvatars({ objc }: NativePluginBridge, radius: () => number) {
 	const fastImages = new Map<string, FastImage>();
 
 	function track(key: string, image: FastImage) {
