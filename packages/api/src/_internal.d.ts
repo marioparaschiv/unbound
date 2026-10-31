@@ -84,7 +84,7 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.debug.evaluations',
 	'native.debug.environment',
 ];
-/** The Capability each native bridge method needs. The client enforces it and the build reads it. */
+/** The Capability each native bridge method needs. */
 export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'objc.getClass': 'native.objc.classes';
 	readonly 'objc.alloc': 'native.objc.classes';
