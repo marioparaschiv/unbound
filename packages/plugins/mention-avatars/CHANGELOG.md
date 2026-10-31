@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3]
+
+### Fixed
+
+- Scrolling the chat on iOS stalls less: a message cell's text views are found with one native search, and only text that can hold a mention is read on the main thread.
+
 ## [1.0.2]
 
 ### Fixed
