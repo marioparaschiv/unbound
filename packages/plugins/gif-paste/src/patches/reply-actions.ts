@@ -1,5 +1,7 @@
+import { patcher } from '@unbound-app/api';
+
 import type { KeptReplies } from '~/kept-replies';
-import { Patcher, ReplyActions } from '~/modules';
+import { ReplyActions } from '~/modules';
 
 /**
  * @description Skips clearing a pending reply that `keptReplies` marked during a GIF paste.
@@ -7,7 +9,7 @@ import { Patcher, ReplyActions } from '~/modules';
  * @returns A function that removes the patch.
  */
 export function patchReplyActions(keptReplies: KeptReplies): () => void {
-	return Patcher.instead(ReplyActions, 'deletePendingReply', ({ args, original, this: self }) => {
+	return patcher.instead(ReplyActions, 'deletePendingReply', ({ args, original, this: self }) => {
 		if (keptReplies.release(args[0])) return;
 
 		return original.apply(self, args);

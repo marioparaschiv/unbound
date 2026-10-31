@@ -1,5 +1,6 @@
 import type { TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
 import { Discord } from '@unbound-app/api/metro/components';
+import { ui } from '@unbound-app/api';
 import { View } from 'react-native';
 
 import { RuleKinds, type RuleKind } from '~/constants';
@@ -38,10 +39,10 @@ function RuleList({ kind, rules, onAdd, onEdit }: RuleListProps) {
 	const { noun, title, description, tag } = RuleKinds[kind];
 
 	return (
-		<Discord.TableRowGroup title={`${title} · ${rules.length}`} description={description}>
+		<ui.Section title={`${title} · ${rules.length}`} description={description}>
 			{rules.length ? (
 				rules.map((rule) => (
-					<Discord.TableRow
+					<ui.Row
 						key={rule.id}
 						label={rule.find}
 						subLabel={<RuleSummary rule={rule} tag={tag} />}
@@ -51,10 +52,10 @@ function RuleList({ kind, rules, onAdd, onEdit }: RuleListProps) {
 					/>
 				))
 			) : (
-				<Discord.TableRow label='No rules yet' subLabel='Add one when you are ready.' />
+				<ui.Row label='No rules yet' subLabel='Add one when you are ready.' />
 			)}
-			<Discord.TableRow label={`Add ${noun} rule`} onPress={onAdd} />
-		</Discord.TableRowGroup>
+			<ui.Row label={`Add ${noun} rule`} onPress={onAdd} />
+		</ui.Section>
 	);
 }
 

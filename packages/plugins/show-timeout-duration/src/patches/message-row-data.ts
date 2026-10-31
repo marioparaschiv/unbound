@@ -1,13 +1,12 @@
 import getTimeoutDeadline from '@unbound-plugins/shared/members/timeout-deadline';
-import { metro } from '@unbound-app/api';
+import type { FluxGuildMember, FluxMessage } from '@unbound-app/api/flux';
+import { flux, patcher } from '@unbound-app/api';
 
-import { ChannelStore, GuildMemberStore, MessageRowData, Patcher } from '~/modules';
+import { ChannelStore, GuildMemberStore, MessageRowData } from '~/modules';
 import { formatRemaining } from '~/format-remaining';
 
-type Message = {
-	id?: string;
-	channel_id?: string;
-	author?: { id?: string };
+type Member = FluxGuildMember & {
+	communicationDisabledUntil?: string | null;
 };
 
 type Row = {
@@ -15,14 +14,14 @@ type Row = {
 	timestampAccessibilityLabel?: string;
 };
 
-function getDeadline({ channel_id, author }: Message): number | null {
+function getDeadline({ channel_id, author }: FluxMessage): number | null {
 	const guildId = channel_id ? ChannelStore.getChannel(channel_id)?.guild_id : undefined;
 
 	if (!guildId || !author?.id) return null;
 
-	return getTimeoutDeadline(
-		GuildMemberStore.getMember(guildId, author.id)?.communicationDisabledUntil,
-	);
+	const member: Member | null = GuildMemberStore.getMember(guildId, author.id);
+
+	return getTimeoutDeadline(member?.communicationDisabledUntil);
 }
 
 /**
@@ -30,10 +29,10 @@ function getDeadline({ channel_id, author }: Message): number | null {
  * @returns A function that removes the patch and stops refreshing the countdown.
  */
 export function patchTimeoutDurations(): () => void {
-	const timedOut = new Map<string, Message>();
+	const timedOut = new Map<string, FluxMessage>();
 
-	const unpatch = Patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
-		const message: Message | undefined = args[0]?.message;
+	const unpatch = patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+		const message: FluxMessage | undefined = args[0]?.message;
 
 		if (!message?.id) return;
 
@@ -64,7 +63,7 @@ export function patchTimeoutDurations(): () => void {
 	// Rows are only regenerated on an update, so re-dispatch each timed-out message to tick its countdown.
 	const refresh = setInterval(() => {
 		for (const message of timedOut.values()) {
-			metro.common.Dispatcher.dispatch({
+			void flux.dispatch({
 				type: 'MESSAGE_UPDATE',
 				message: { ...message },
 				log_edit: false,

@@ -28,9 +28,9 @@ function LanguagePickerSheet({
 	const [query, setQuery] = useState('');
 	const ActionSheetRow = getActionSheetRow();
 	const checkIcon =
-		assets.getIDByName('CheckmarkLargeIcon') ??
-		assets.getIDByName('CheckIcon') ??
-		assets.getIDByName('CheckmarkIcon');
+		assets.getIdByName('CheckmarkLargeIcon') ??
+		assets.getIdByName('CheckIcon') ??
+		assets.getIdByName('CheckmarkIcon');
 	const rows = searchLanguages(query, includeAuto);
 
 	return (

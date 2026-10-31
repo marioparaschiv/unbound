@@ -366,7 +366,7 @@ export function createAndroidRenderer(
 		for (const view of await findViewsOfClass(java, decor, TEXT_VIEW)) schedule(view);
 	}
 
-	const scans = scheduleStartupScans('Mention Avatars', scanVisible);
+	scheduleStartupScans('Mention Avatars', scanVisible);
 
 	return {
 		retryWaiting,
@@ -375,8 +375,6 @@ export function createAndroidRenderer(
 		failed: () =>
 			[...images].flatMap(([url, entry]) => (!entry.pending && !entry.bitmap ? [url] : [])),
 		dispose() {
-			for (const scan of scans) clearTimeout(scan);
-
 			disposed = true;
 			waiting.clear();
 			retries.clear();

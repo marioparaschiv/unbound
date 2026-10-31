@@ -1,18 +1,22 @@
 import { COMPOSER_ROW_RIGHT, useComposerRow } from '@unbound-plugins/shared/composer/overlay-rows';
+import type { FluxChannel } from '@unbound-app/api/flux';
 import { Text, View } from 'react-native';
+import { storage } from '@unbound-app/api';
 
 import useMessageCount from '~/components/use-message-count';
 import { counterSurface, toneColor } from '~/colors';
+import { ChannelStore, Theme } from '~/modules';
 import { counterTone } from '~/counter';
 import { COUNTER_HEIGHT } from '~/constants';
-import { ChannelStore, settings, Theme } from '~/modules';
 
 type CharacterCounterProps = { channelId: string };
 
+type SlowmodeChannel = FluxChannel & { rateLimitPerUser?: number };
+
 function CharacterCounter({ channelId }: CharacterCounterProps) {
 	const { length, limit } = useMessageCount(channelId);
-	const store = settings.useSettingsStore();
-	const channel = ChannelStore.getChannel?.(channelId);
+	const store = storage.useBucket(addon.id);
+	const channel: SlowmodeChannel | undefined = ChannelStore.getChannel(channelId);
 	const top = useComposerRow({
 		channel,
 		channelId,

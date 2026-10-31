@@ -1,5 +1,4 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { featureSelfTest, recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import { createExpressionSheetPatches, patchActionSheets } from '~/patches/action-sheets';
@@ -7,23 +6,18 @@ import { patchStickerDetailActionSheet } from '~/patches/sticker-detail-action-s
 import { PLUGIN_NAME } from '~/constants';
 import { ActionSheets } from '~/modules';
 
-let dispose = () => {};
+const sheets = createExpressionSheetPatches();
 
 function start() {
 	if (!ensureModules(PLUGIN_NAME, { ActionSheets })) return;
 
-	const sheets = createExpressionSheetPatches();
-
-	dispose = applyFeatures(PLUGIN_NAME, [
-		() => sheets.dispose,
-		() => patchActionSheets(sheets),
-		() => patchStickerDetailActionSheet(sheets),
-	]);
+	patchActionSheets(sheets);
+	patchStickerDetailActionSheet(sheets);
+	recordApplied(2);
 }
 
 function stop() {
-	dispose();
-	dispose = () => {};
+	sheets.stop();
 }
 
 export default { start, stop, selfTest: featureSelfTest };

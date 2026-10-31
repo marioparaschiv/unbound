@@ -1,8 +1,9 @@
-import { metro, patcher } from '@unbound-app/api';
+import { flux, metro } from '@unbound-app/api';
 
 export const { ActionSheets } = metro.api;
-export const { Clipboard, Dispatcher } = metro.common;
-export const { Guilds, Users } = metro.stores;
+export const { Clipboard } = metro.common;
+export const Guilds = flux.getStore('Guild', { lazy: true });
+export const Users = flux.getStore('User', { lazy: true });
 
 export const StickerDetailActionSheet = metro.findByFilePath(
 	'modules/stickers/native/StickerDetailActionSheet.tsx',
@@ -17,5 +18,3 @@ export const StickerActions = metro.findByProps('favoriteSticker', 'unfavoriteSt
 export const StickerFavorites = metro.findByProps('isFavoriteSticker', { lazy: true });
 export const EmojiActions = metro.findByProps('uploadEmoji', { lazy: true });
 export const Auth = metro.findByProps('getToken', { lazy: true });
-
-export const Patcher = patcher.createPatcher('astral.expression-tools');

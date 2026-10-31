@@ -2,9 +2,9 @@ import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-
 import patchLazySheets from '@unbound-plugins/shared/action-sheets/patch-lazy-sheets';
 import { isActionSheetRowGroup } from '@unbound-plugins/shared/action-sheets/row-group';
 import { findElement } from '@unbound-plugins/shared/react/find-element';
-import { assets } from '@unbound-app/api';
+import { assets, patcher } from '@unbound-app/api';
 
-import { ActionSheets, Patcher } from '~/modules';
+import { ActionSheets } from '~/modules';
 import { copyTranslation } from '~/translate';
 
 type Message = {
@@ -33,7 +33,7 @@ export function patchActionSheets(): () => void {
 
 		const ActionSheetRow = getActionSheetRow();
 		const { content } = message;
-		const icon = assets.getIDByName('LanguageIcon');
+		const icon = assets.getIdByName('LanguageIcon');
 
 		function onPress() {
 			if (sheetKey) ActionSheets.hideActionSheet(sheetKey);
@@ -55,7 +55,7 @@ export function patchActionSheets(): () => void {
 		return result;
 	}
 
-	return patchLazySheets<SheetProps>(Patcher, ActionSheets, (key, props) => {
+	return patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
 		if (!key.endsWith('MessageLongPressActionSheet')) return;
 
 		if (props.message) message = props.message;

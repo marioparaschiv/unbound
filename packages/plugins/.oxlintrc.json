@@ -36,8 +36,6 @@
 			"files": [
 				"avatar-radius/src/index.tsx",
 				"chat-bubbles/src/index.tsx",
-				"file-size-on-picker/src/index.ts",
-				"force-owner-crown/src/patches/message-row-data.ts",
 				"mention-avatars/src/index.ts",
 				"message-latency/src/index.tsx",
 				"message-link-embeds/src/index.ts",

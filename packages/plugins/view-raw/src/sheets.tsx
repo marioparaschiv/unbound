@@ -6,7 +6,7 @@ import type { RawItem } from '~/raw-items';
 
 function copy(value: string, label: string) {
 	void Promise.resolve(Clipboard.setString(value)).then(() =>
-		toasts.showToast({ title: 'View Raw', content: `${label} copied to clipboard.` }),
+		toasts.show({ title: 'View Raw', content: `${label} copied to clipboard.` }),
 	);
 }
 

@@ -1,4 +1,4 @@
-import { metro, patcher } from '@unbound-app/api';
+import { metro } from '@unbound-app/api';
 
 export const MessageActions = metro.api.Messages;
 export const ReplyActions = metro.findByProps('deletePendingReply', { lazy: true });
@@ -6,5 +6,3 @@ export const PendingReplyStore = metro.findByProps('getPendingReply', { lazy: tr
 export const ChatInputRegistry = metro.findByProps('getBestActiveInputForChannelId', {
 	lazy: true,
 });
-
-export const Patcher = patcher.createPatcher('astral.gif-paste');

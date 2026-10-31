@@ -3,11 +3,11 @@ import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
-import { createTagGradients } from '~/ios/tag-gradient-renderer';
 import { patchGetTagProperties } from '~/patches/get-tag-properties';
 import { createLabelAppearances } from '~/label-appearances';
 import { clearTagProblems, tagProblems } from '~/tag-problems';
 import SettingsPanel from '~/components/settings-panel';
+import { createTagGradients } from '~/platform';
 import {
 	ChannelStore,
 	DiscordConstants,
@@ -34,7 +34,7 @@ function start(context: PluginContext) {
 	gradientsDrawn = gradients.drawn;
 	dispose = applyFeatures('More User Tags', [
 		() => gradients.start(),
-		() => patchGetTagProperties(context.platform, appearances),
+		() => patchGetTagProperties(appearances),
 	]);
 }
 

@@ -1,3 +1,4 @@
+import type { FluxUser } from '@unbound-app/api/flux';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
@@ -50,7 +51,9 @@ function TypingAvatars({ users, guildId }: TypingAvatarsProps) {
  * @returns The row with avatars, or the row unchanged when none of the users are cached.
  */
 export function withTypingAvatars(row: ReactNode, userIds: string[], guildId?: string): ReactNode {
-	const users: User[] = userIds.map((id) => UserStore.getUser(id)).filter(Boolean);
+	const users = userIds
+		.map((id) => UserStore.getUser(id))
+		.filter((user): user is FluxUser => Boolean(user));
 
 	if (!users.length) return row;
 

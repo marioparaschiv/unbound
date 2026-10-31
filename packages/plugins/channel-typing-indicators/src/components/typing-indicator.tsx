@@ -1,12 +1,14 @@
-import { Pressable, View } from 'react-native';
 import { useRef, useState, type RefObject } from 'react';
+import type { FluxUser } from '@unbound-app/api/flux';
+import { Pressable, View } from 'react-native';
+import { storage } from '@unbound-app/api';
 
 import type { TooltipAnchor } from '~/tooltip-placement';
-import { GuildMemberStore, settings, Tooltips, UserStore } from '~/modules';
+import { GuildMemberStore, Tooltips, UserStore } from '~/modules';
 import { formatDiscordMessage } from '~/i18n';
-import type { Channel, User } from '~/types';
 import { IndicatorMode } from '~/constants';
 import { typingLabel } from '~/typing-label';
+import type { Channel } from '~/types';
 
 import useStyles from '~/components/typing-indicator.style';
 import TypingTooltip from '~/components/typing-tooltip';
@@ -19,7 +21,7 @@ type TypingIndicatorProps = {
 	muted: boolean;
 };
 
-function displayName(user: User, guildId: string | undefined): string {
+function displayName(user: FluxUser, guildId: string | undefined): string {
 	return (
 		(guildId ? GuildMemberStore.getNick?.(guildId, user.id) : undefined) ??
 		user.globalName ??
@@ -33,14 +35,14 @@ function TypingIndicator({ channel, muted }: TypingIndicatorProps) {
 	const avatarsRef = useRef<View>(null);
 	const dotsRef = useRef<View>(null);
 	const [anchor, setAnchor] = useState<TooltipAnchor | null>(null);
-	const mode = settings
-		.useSettingsStore()
+	const mode = storage
+		.useBucket(addon.id)
 		.get('indicatorMode', IndicatorMode.Dots | IndicatorMode.Avatars);
 	const typingIds = useTypingIds(channel, muted);
 
 	if (!typingIds.length) return null;
 
-	const users: (User | null)[] = typingIds.map((id) => UserStore.getUser(id) ?? null);
+	const users: (FluxUser | null)[] = typingIds.map((id) => UserStore.getUser(id) ?? null);
 	const names = users.map((user) => (user ? displayName(user, channel.guild_id) : 'Someone'));
 	const label = typingLabel(names, formatDiscordMessage);
 
