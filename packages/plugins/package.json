@@ -6,6 +6,7 @@
 		"dev": "bun ../../packages/cli/src/index.ts dev",
 		"build": "bun ../../packages/cli/src/index.ts build",
 		"test": "bun test --isolate",
+		"typecheck": "bun ../plugin-scripts/src/typecheck-plugins.ts",
 		"lint": "oxlint --config .oxlintrc.json ."
 	},
 	"devDependencies": {
