@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3]
+
+### Fixed
+
+- Scrolling the chat on iOS no longer stalls in channels with code blocks: message text is checked for code on the JavaScript thread, so only text that can show a code block waits on the main thread.
+
 ## [1.0.2]
 
 ### Fixed
