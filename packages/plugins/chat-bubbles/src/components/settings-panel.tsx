@@ -1,8 +1,4 @@
-import Page from '@unbound-plugins/shared/components/page';
-import SliderRow from '@unbound-plugins/shared/components/slider-row';
-import ColorRow from '@unbound-plugins/shared/components/color-row';
-import ResetRow from '@unbound-plugins/shared/components/reset-row';
-import { Discord } from '@unbound-app/api/metro/components';
+import { ui } from '@unbound-app/api';
 
 import { BubbleLimits, BubbleStyle } from '~/constants';
 import { parseHexColor } from '~/style';
@@ -69,10 +65,10 @@ function SettingsPanel() {
 	const ownColor = storedColor(store.get('ownColor', ''));
 
 	return (
-		<Page>
-			<Discord.TableRowGroup title='Shape'>
+		<ui.Page>
+			<ui.Section title='Shape'>
 				{NUMBER_SETTINGS.map((setting) => (
-					<SliderRow
+					<ui.SliderRow
 						key={setting.key}
 						label={setting.title}
 						value={storedNumber(store.get(setting.key, setting.fallback), setting)}
@@ -83,24 +79,24 @@ function SettingsPanel() {
 						onChange={(value) => store.set(setting.key, value)}
 					/>
 				))}
-			</Discord.TableRowGroup>
-			<Discord.TableRowGroup title='Colors'>
-				<ColorRow
+			</ui.Section>
+			<ui.Section title='Colors'>
+				<ui.ColorRow
 					label='Bubble color'
 					color={color}
 					fallbackColor={themeColor()}
 					fallbackLabel='Follows the theme: black on dark themes, white on the light theme'
 					onChange={(value) => store.set('color', value ?? '')}
 				/>
-				<ColorRow
+				<ui.ColorRow
 					label='Your messages'
 					color={ownColor}
 					fallbackColor={color ?? themeColor()}
 					fallbackLabel='Same as the bubble color'
 					onChange={(value) => store.set('ownColor', value ?? '')}
 				/>
-			</Discord.TableRowGroup>
-			<ResetRow
+			</ui.Section>
+			<ui.ResetRow
 				onReset={() => {
 					for (const setting of NUMBER_SETTINGS) store.set(setting.key, setting.fallback);
 
@@ -108,7 +104,7 @@ function SettingsPanel() {
 					store.set('ownColor', '');
 				}}
 			/>
-		</Page>
+		</ui.Page>
 	);
 }
 

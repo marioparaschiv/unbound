@@ -15,7 +15,6 @@
 		"@unbound-app/cli": "workspace:*",
 		"@unbound-app/contracts": "workspace:*",
 		"@unbound-app/types": "workspace:*",
-		"@unbound-plugins/rollup-config": "workspace:*",
 		"react": "catalog:react"
 	}
 }
