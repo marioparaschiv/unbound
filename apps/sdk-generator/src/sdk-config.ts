@@ -16,6 +16,11 @@ type SdkConfig = {
 	inlinedLibraries: string[];
 	/** The public-surface root, relative to the repo root. Every `export * as` here becomes a module. */
 	barrelPath: string;
+	/**
+	 * The client entry that assigns `window.unbound`, relative to the repo root. Its `UnboundLifecycle`
+	 * type and the functions it names type the lifecycle members.
+	 */
+	entryPath: string;
 	/** The directory the generated `.d.ts` tree is written to, relative to the repo root. */
 	outDir: string;
 	/**
@@ -39,6 +44,7 @@ export const config: SdkConfig = {
 		'possess',
 	],
 	barrelPath: 'packages/client/src/core/api.ts',
+	entryPath: 'packages/client/src/core/index.ts',
 	outDir: 'packages/api/src',
 	excludeSubpaths: [],
 	additionalSubpaths: [],

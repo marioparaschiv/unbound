@@ -5,7 +5,8 @@
 	"type": "module",
 	"module": "src/index.ts",
 	"scripts": {
-		"generate": "bun src/index.ts"
+		"generate": "bun src/index.ts",
+		"check-surface": "bun src/surface.ts"
 	},
 	"dependencies": {
 		"@unbound-app/logger": "workspace:*"

@@ -11,6 +11,7 @@ export const CLIENT = join(ROOT, 'packages', 'client');
 export const API_SRC = resolveOutDir(ROOT, config.outDir);
 export const SDK_TSCONFIG = join(CLIENT, 'tsconfig.sdk.json');
 export const BARREL = resolve(ROOT, config.barrelPath);
+export const ENTRY = resolve(ROOT, config.entryPath);
 
 /** The `~/` path alias maps to the client package's `src/` directory. */
 export const ALIAS_ROOT = join(CLIENT, 'src');
