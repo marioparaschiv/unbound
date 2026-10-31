@@ -67,6 +67,19 @@ function writePlugin(dir: string, version: string) {
 	);
 	write(`packages/plugins/${dir}/package.json`, '{ "scripts": { "build": "rollup" } }\n');
 	write(`packages/plugins/${dir}/dist/index.js`, `export default '${dir} ${version}';\n`);
+	write(
+		`packages/plugins/${dir}/dist/manifest.json`,
+		`${JSON.stringify({
+			id: `unbound.${dir}`,
+			main: 'index.js',
+			version,
+			platforms: ['ios', 'android'],
+			platformCapabilities: {
+				ios: ['native.objc.classes'],
+				android: ['native.java.classes'],
+			},
+		})}\n`,
+	);
 }
 
 function commit(message: string): string {
@@ -305,6 +318,11 @@ test('signs each published bundle into its manifest when the signing key is set'
 
 		expect(manifest.version).toBe('1.1.0');
 		expect(manifest.main).toBe('index.tsx');
+		expect(manifest.platforms).toEqual(['ios', 'android']);
+		expect(manifest.platformCapabilities).toEqual({
+			ios: ['native.objc.classes'],
+			android: ['native.java.classes'],
+		});
 		expect(
 			verifyPluginSignature(
 				rawPublicKey,
