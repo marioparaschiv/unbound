@@ -19,6 +19,8 @@ mock.module('~/api/fs', () => ({
 }));
 
 export const storedSettings = new Map<string, unknown>();
+/** The bucket names managers opened their settings with, in construction order. */
+export const openedBuckets: string[] = [];
 
 mock.module('~/api/storage', () => {
 	const store = {
@@ -31,13 +33,19 @@ mock.module('~/api/storage', () => {
 		},
 	};
 
+	function getStore(bucket: string) {
+		openedBuckets.push(bucket);
+
+		return store;
+	}
+
 	return {
 		default: {
-			getStore: () => store,
+			getStore,
 			get: <T>(_s: string, _k: string, d: T) => d,
 			persist: async () => void persists.push(Date.now()),
 		},
-		getStore: () => store,
+		getStore,
 	};
 });
 
@@ -101,7 +109,14 @@ export class FakeAddons extends Addons<Addon> {
 	nextInstanceStartFails = false;
 
 	constructor() {
-		super('plugins');
+		super({
+			kind: 'plugin',
+			name: 'Plugins',
+			directory: 'Unbound/Plugins',
+			bucket: 'plugins',
+			label: 'UNBOUND_PLUGINS',
+			icon: 'PuzzlePieceIcon',
+		});
 	}
 
 	initialize() {}
@@ -121,10 +136,6 @@ export class FakeAddons extends Addons<Addon> {
 				}
 			},
 		};
-	}
-
-	protected get entityType() {
-		return 'plugin' as const;
 	}
 
 	protected createContext(): PluginContext {

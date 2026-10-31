@@ -15,7 +15,6 @@ import type {
 import { createLogger } from '@unbound-app/logger';
 
 import storage, { settings } from '~/api/storage';
-import { getManager } from '~/managers/utils';
 import type { SyncAction } from '~/lib/sync';
 import { plugins } from '~/managers/plugins';
 import { themes } from '~/managers/themes';
@@ -33,6 +32,7 @@ type KindAdapter = {
 	delete: (id: string) => Promise<void>;
 	setEnabled: (id: string, enabled: boolean) => void;
 	apply: (id: string | null) => void | Promise<void>;
+	getSources: () => Record<string, string>;
 	recordSource: (id: string, url: string) => void;
 	forgetSource: (id: string) => void;
 };
@@ -59,6 +59,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		delete: (id) => plugins.delete(id),
 		setEnabled: (id, enabled) => void (enabled ? plugins.enable(id) : plugins.disable(id)),
 		apply: () => undefined,
+		getSources: () => plugins.getSources(),
 		recordSource: (id, url) => plugins.recordSource(id, url),
 		forgetSource: (id) => plugins.forgetSource(id),
 	},
@@ -79,6 +80,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 				themes.disable(current);
 			}
 		},
+		getSources: () => themes.getSources(),
 		recordSource: (id, url) => themes.recordSource(id, url),
 		forgetSource: (id) => themes.forgetSource(id),
 	},
@@ -90,6 +92,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		delete: (id) => icons.delete(id),
 		setEnabled: () => undefined,
 		apply: (id) => icons.enable(id ?? SYNC_DEFAULT_ICON_PACK),
+		getSources: () => icons.getSources(),
 		recordSource: (id, url) => icons.recordSource(id, url),
 		forgetSource: (id) => icons.forgetSource(id),
 	},
@@ -103,6 +106,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		delete: (id) => fonts.delete(id),
 		setEnabled: () => undefined,
 		apply: () => undefined,
+		getSources: () => fonts.getSources(),
 		recordSource: (id, url) => fonts.recordSource(id, url),
 		forgetSource: (id) => fonts.forgetSource(id),
 	},
@@ -110,7 +114,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 
 function collectKind(kind: SyncKind): SyncKindDocument {
 	const adapter = adapters[kind];
-	const installs = Object.entries(getManager(kind).getSources())
+	const installs = Object.entries(adapter.getSources())
 		.filter(([id]) => SYNC_ID_PATTERN.test(id))
 		.map(([id, url]) => ({ id, url, enabled: adapter.isEnabled(id) }));
 	const applied = adapter.getApplied();

@@ -6,6 +6,7 @@ import { safeRelativePath, isSafeIconPackMain } from '~/lib/addon-paths';
 import { Assets, ReactNative as RN } from '~/api/metro/common';
 import { downloadManifest } from '~/lib/addon-download';
 import { Addons } from '~/managers/addons';
+import { Manager } from '~/managers/base';
 import fs from '~/api/fs';
 
 /** A single entry in a GitHub repo's recursive tree listing. */
@@ -68,11 +69,16 @@ export class Icons extends Addons<Addon> {
 	extension = 'png';
 
 	constructor() {
-		super('icons');
-	}
+		super({
+			kind: 'icon-pack',
+			name: 'Icons',
+			directory: 'Unbound/Icons',
+			bucket: 'icons',
+			label: 'UNBOUND_ICONS',
+			icon: 'ImageIcon',
+		});
 
-	protected get entityType() {
-		return 'icon-pack' as const;
+		Manager.register('icon-pack', this);
 	}
 
 	/**
@@ -278,14 +284,14 @@ export class Icons extends Addons<Addon> {
 		try {
 			const parsed = await downloadManifest(url, (raw) => this.validateManifest(raw));
 
-			if (parsed.type && parsed.type !== this.entityType) {
+			if (parsed.type && parsed.type !== this.kind) {
 				throw new Error(`Expected a icon-pack manifest, got ${parsed.type}.`);
 			}
 
 			const declared: unknown = Reflect.get(parsed, 'source');
 			const manifest: IconPackManifest = {
 				...parsed,
-				type: this.entityType,
+				type: 'icon-pack',
 				source:
 					declared === undefined || declared === null
 						? /^https?:\/\/(www\.)?github\.com/.test(parsed.main)

@@ -23,9 +23,6 @@ export type ReloadResult = { ok: true } | { ok: false; error: Error };
  * @template T The addon entity type this manager governs.
  */
 export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
-	/** The manifest `type` value this manager installs; used to reject mismatched installs. */
-	protected abstract get entityType(): NonNullable<AddonManifest['type']>;
-
 	protected registered(id: string): void {
 		void this.adoptDevelopmentMarker(id);
 	}
@@ -283,8 +280,8 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 	private async fetchManifest(url: string): Promise<AddonManifest> {
 		const manifest = await downloadManifest(url, (raw) => this.validateManifest(raw));
 
-		if (manifest.type && manifest.type !== this.entityType) {
-			throw new Error(`Expected a ${this.entityType} manifest, got ${manifest.type}.`);
+		if (manifest.type && manifest.type !== this.kind) {
+			throw new Error(`Expected a ${this.kind} manifest, got ${manifest.type}.`);
 		}
 
 		return manifest;
@@ -308,14 +305,12 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 	}
 
 	/**
-	 * @description Names an addon's on-disk folder, matching the case the loader scans on case-sensitive file systems.
+	 * @description Names an addon's on-disk folder, inside the manager's directory.
 	 * @param id The addon's id.
 	 * @returns The folder path relative to the documents directory.
 	 */
 	protected directoryOf(id: string): string {
-		const folder = `${this.type.charAt(0).toUpperCase()}${this.type.slice(1)}`;
-
-		return `Unbound/${folder}/${id}`;
+		return `${this.directory}/${id}`;
 	}
 
 	/**

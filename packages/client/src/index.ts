@@ -2,12 +2,13 @@ import '~/api/metro/state';
 import '~/lib/cache';
 import '~/api/metro';
 
+import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import { askForNativeConsent } from '~/ui/addons/native-consent';
 import { setConsentPrompt } from '~/lib/native-consent';
 import { builtins } from '~/managers/builtins';
-import { managers } from '~/managers/utils';
+import { Manager } from '~/managers/base';
 import storage from '~/api/storage';
 import * as api from '~/api';
 
@@ -45,8 +46,8 @@ export function initialize() {
 	setConsentPrompt(askForNativeConsent);
 	builtins.initialize();
 
-	for (const manager of Object.values(managers)) {
-		manager.initialize();
+	for (const kind of ADDON_KINDS) {
+		Manager.for(kind).initialize();
 	}
 
 	initialized = true;
@@ -69,8 +70,8 @@ export async function shutdown() {
 
 	builtins.shutdown();
 
-	for (const manager of Object.values(managers)) {
-		await manager.shutdown();
+	for (const kind of ADDON_KINDS) {
+		await Manager.for(kind).shutdown();
 	}
 
 	await storage.persist();

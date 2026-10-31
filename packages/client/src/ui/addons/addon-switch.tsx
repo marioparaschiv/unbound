@@ -2,12 +2,12 @@ import type { Addon } from '@unbound-app/types';
 import { useState, memo } from 'react';
 
 import { Discord } from '~/api/metro/components';
-import { getManager } from '~/managers/utils';
 import { useAddonState } from '~/ui/hooks';
+import { Manager } from '~/managers/base';
 
 type AddonSwitchProps = {
 	addon: Addon;
-	kind: 'plugins';
+	kind: 'plugin';
 	disabled?: boolean;
 };
 
@@ -18,7 +18,7 @@ type AddonSwitchProps = {
 function AddonSwitch({ addon, kind, disabled }: AddonSwitchProps) {
 	const { enabled } = useAddonState(kind, addon.id);
 	const [transitioning, setTransitioning] = useState(false);
-	const manager = getManager(kind);
+	const manager = Manager.for(kind);
 
 	async function handleValueChange() {
 		setTransitioning(true);

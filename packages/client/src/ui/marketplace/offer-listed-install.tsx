@@ -1,5 +1,5 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
-import type { ManagerKind } from '@unbound-app/types/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 
 import { Discord } from '~/api/metro/components';
 import { getInstallStatus } from '~/lib/catalog';
@@ -60,7 +60,7 @@ function confirm(addon: ListedAddon, update: boolean): Promise<boolean> {
  * @param addon The listed addon; its name, version, authors and description are shown.
  * @returns Whether the addon was installed or updated.
  */
-export async function offerListedInstall(kind: ManagerKind, addon: ListedAddon): Promise<boolean> {
+export async function offerListedInstall(kind: AddonKind, addon: ListedAddon): Promise<boolean> {
 	const { name } = addon.latestVersion.manifest;
 	const status = getInstallStatus(addon.latestVersion.version, getInstalledVersion(kind, addon));
 
@@ -69,7 +69,7 @@ export async function offerListedInstall(kind: ManagerKind, addon: ListedAddon):
 	}
 
 	const ok =
-		kind === 'fonts'
+		kind === 'font'
 			? await installFont(addon)
 			: await installVersion(kind, addon, addon.latestVersion);
 

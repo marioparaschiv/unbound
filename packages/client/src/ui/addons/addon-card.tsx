@@ -5,9 +5,9 @@ import { memo } from 'react';
 import { useUnboundSettings } from '~/lib/unbound-settings';
 import { Discord } from '~/api/metro/components';
 import { useSettingsStore } from '~/api/storage';
-import { getManager } from '~/managers/utils';
 import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';
+import { Manager } from '~/managers/base';
 import { Messages } from '~/api/i18n';
 import { Icons } from '~/api/assets';
 
@@ -21,7 +21,7 @@ import AddonTitle from './addon-title';
 
 type AddonCardProps = {
 	addon: Addon;
-	kind: 'plugins' | 'themes' | 'icons';
+	kind: 'plugin' | 'theme' | 'icon-pack';
 	/** Whether the plugin is a library other plugins build on. */
 	library?: boolean;
 };
@@ -32,7 +32,7 @@ type AddonCardProps = {
  */
 function AddonCard({ addon, kind, library }: AddonCardProps) {
 	const styles = useStyles();
-	const manager = getManager(kind);
+	const manager = Manager.for(kind);
 	const { name, version, authors, description } = addon.data;
 
 	const recovery = useUnboundSettings(({ key }) => key === 'recovery').get('recovery');
@@ -48,7 +48,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 			: void 0;
 
 	const trailing =
-		kind === 'plugins' ? (
+		kind === 'plugin' ? (
 			<AddonSwitch addon={addon} kind={kind} disabled={disabled} />
 		) : (
 			<AddonRadio addon={addon} kind={kind} disabled={disabled} />
@@ -69,9 +69,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 					{authors?.length ? <AddonAuthors authors={authors} /> : null}
 				</View>
 				<View style={styles.actions}>
-					{kind === 'plugins' ? (
-						<AddonSettings addon={addon} disabled={disabled} />
-					) : null}
+					{kind === 'plugin' ? <AddonSettings addon={addon} disabled={disabled} /> : null}
 					<AddonOverflow addon={addon} kind={kind} developmentCopy={developmentCopy} />
 					{trailing}
 				</View>

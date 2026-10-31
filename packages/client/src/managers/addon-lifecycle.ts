@@ -344,7 +344,8 @@ export abstract class AddonLifecycle<T extends Addon> extends Manager<T, AddonEv
 	 * @returns The crash guard key.
 	 */
 	protected crashGuardKey(id: string): string {
-		return `${this.type}:${id}`;
+		// The loader persists this key across launches, so it uses the bucket name, which never changes.
+		return `${this.bucket}:${id}`;
 	}
 
 	/**

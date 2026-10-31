@@ -1,4 +1,5 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 import { memo, useState } from 'react';
 import { View } from 'react-native';
 
@@ -11,12 +12,10 @@ import { Discord } from '~/api/metro/components';
 import { compareVersions } from '~/lib/versions';
 import { ActionSheets } from '~/api/metro/api';
 import { Messages, format } from '~/api/i18n';
-import { getManager } from '~/managers/utils';
+import { Manager } from '~/managers/base';
 import { showToast } from '~/api/toasts';
 import { confirm } from '~/api/dialogs';
 import { Icons } from '~/api/assets';
-
-import type { MarketplaceTab } from './targets';
 
 import { getInstalledVersion, installFont, installVersion } from './targets';
 import VersionPickerSheet from './version-picker-sheet';
@@ -25,7 +24,7 @@ import useStyles from './marketplace-card.style';
 
 type MarketplaceCardProps = {
 	addon: ListedAddon;
-	tab: MarketplaceTab;
+	kind: AddonKind;
 };
 
 type StatusAction = {
@@ -60,7 +59,7 @@ function confirmChoice(
 	const { name } = addon.latestVersion.manifest;
 	const { version } = choice.version;
 	const installed = getInstalledVersion(kind, addon);
-	const broken = brokenDependents(addon.id, version, getManager(kind).getEntities());
+	const broken = brokenDependents(addon.id, version, Manager.for(kind).getEntities());
 	const downgrade = installed !== void 0 && compareVersions(version, installed) < 0;
 
 	if (!choice.holds && !downgrade && broken.length === 0) {
@@ -90,14 +89,14 @@ function confirmChoice(
  * or Installed button judged against the installed copy at its top right. Holding the button offers
  * the newest version or a picker of every version, except for fonts.
  */
-function MarketplaceCard({ addon, tab }: MarketplaceCardProps) {
+function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	const styles = useStyles();
-	const status = useInstallStatus(tab.kind, addon);
+	const status = useInstallStatus(kind, addon);
 	// Holds the pressed action until it settles, so the label doesn't flip while the button spins.
 	const [pending, setPending] = useState<InstallStatus | null>(null);
 	const { manifest, version: latest } = addon.latestVersion;
 	const action = ACTIONS[pending ?? status];
-	const updatable = tab.kind === 'fonts' ? undefined : tab.kind;
+	const updatable = kind === 'font' ? undefined : kind;
 
 	async function run(install: () => Promise<boolean>): Promise<boolean> {
 		setPending(status);
@@ -189,7 +188,7 @@ function MarketplaceCard({ addon, tab }: MarketplaceCardProps) {
 		<Discord.Card variant='primary' border='subtle' shadow='low' style={styles.card}>
 			<View style={styles.row}>
 				<View style={styles.body}>
-					<AddonCardHeader manifest={manifest} icon={tab.icon} />
+					<AddonCardHeader manifest={manifest} icon={Manager.for(kind).icon} />
 				</View>
 				<Discord.Button
 					size='sm'

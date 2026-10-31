@@ -1,11 +1,11 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
-import type { ManagerKind } from '@unbound-app/types/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 import { useEffect } from 'react';
 
 import type { InstallStatus } from '~/lib/catalog';
 import { getInstallStatus } from '~/lib/catalog';
-import { getManager } from '~/managers/utils';
 import { useForceUpdate } from '~/ui/hooks';
+import { Manager } from '~/managers/base';
 
 import { getInstalledVersion, INSTALL_EVENTS } from './targets';
 
@@ -15,19 +15,19 @@ import { getInstalledVersion, INSTALL_EVENTS } from './targets';
  * @param addon The listed addon.
  * @returns Whether the card offers an install, an update, or neither.
  */
-function useInstallStatus(kind: ManagerKind, addon: ListedAddon): InstallStatus {
+function useInstallStatus(kind: AddonKind, addon: ListedAddon): InstallStatus {
 	const forceUpdate = useForceUpdate();
 
 	useEffect(() => {
-		if (kind === 'fonts') {
-			const fonts = getManager(kind);
+		if (kind === 'font') {
+			const fonts = Manager.for(kind);
 
 			fonts.on('changed', forceUpdate);
 
 			return () => void fonts.off('changed', forceUpdate);
 		}
 
-		const manager = getManager(kind);
+		const manager = Manager.for(kind);
 
 		for (const event of INSTALL_EVENTS) {
 			manager.on(event, forceUpdate);

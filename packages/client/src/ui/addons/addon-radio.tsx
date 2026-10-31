@@ -3,16 +3,16 @@ import { Pressable } from 'react-native';
 import { memo } from 'react';
 
 import { Discord } from '~/api/metro/components';
-import { getManager } from '~/managers/utils';
 import { TintedIcon } from '~/ui/components';
 import { useAddonState } from '~/ui/hooks';
+import { Manager } from '~/managers/base';
 import { Messages } from '~/api/i18n';
 import { reload } from '~/api/native';
 import { Icons } from '~/api/assets';
 
 type AddonRadioProps = {
 	addon: Addon;
-	kind: 'themes' | 'icons';
+	kind: 'theme' | 'icon-pack';
 	disabled?: boolean;
 };
 
@@ -24,7 +24,7 @@ type AddonRadioProps = {
  */
 function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 	const { enabled } = useAddonState(kind, addon.id);
-	const manager = getManager(kind);
+	const manager = Manager.for(kind);
 
 	function toggle() {
 		if (enabled) {
@@ -33,7 +33,7 @@ function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 			manager.enable(addon.id);
 		}
 
-		if (kind !== 'themes') return;
+		if (kind !== 'theme') return;
 
 		Discord.showConfirmModal({
 			title: Messages.UNBOUND_RESTART,

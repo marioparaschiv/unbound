@@ -321,7 +321,7 @@ Used for stateful, identity-bearing things: managers, the `Logger`. Plain functi
     ```
 
 - **`ReturnType<typeof factory>`** to type a field whose value comes from a factory function (`createLogger`, `createPatcher`, `storage.getStore`) instead of importing/declaring the type.
-- **Parameter properties** for constructor-injected readonly config: `constructor(public readonly type: ManagerKind)`.
+- **Parameter properties** for constructor-injected readonly config: `constructor(public readonly type: AddonKind)`.
 - **Visibility is explicit and minimal**: `protected` for subclass-only internals (`resolve`, `getByName`, `getStates`, `validateManifest`), `private` for class-only (`Logger.inspectFn`), public (no modifier) for the API surface.
 - **`static` factory + `static` helpers** pattern on `Logger` (`static create(…)`, `static setInspector()`), alongside an exported free function wrapper (`export function createLogger(...)`).
 - **A leading-underscore prefix** marks methods that are public-by-necessity but conceptually internal (`Logger._getPrefix`, `_getColor`, `_inspect`). New code prefers `private`/`protected`; the underscore convention persists where TS visibility can't be used.

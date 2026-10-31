@@ -23,7 +23,16 @@ export type FontTarget = {
  */
 export class Fonts extends Manager<FontEntity, FontsEvents> {
 	constructor() {
-		super('fonts');
+		super({
+			kind: 'font',
+			name: 'Fonts',
+			directory: 'Unbound/Fonts',
+			bucket: 'fonts',
+			label: 'UNBOUND_FONTS',
+			icon: 'LettersIcon',
+		});
+
+		Manager.register('font', this);
 	}
 
 	initialize() {
@@ -125,7 +134,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 
 			const base64 = Buffer.from(data).toString('base64');
 
-			await fs.write(`Unbound/Fonts/${file}`, base64, 'base64');
+			await fs.write(`${this.directory}/${file}`, base64, 'base64');
 
 			this.recordSource(file, url);
 			this.emit('changed');
@@ -145,7 +154,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	 */
 	async delete(file: string): Promise<void> {
 		try {
-			await fs.rm(`Unbound/Fonts/${file}`);
+			await fs.rm(`${this.directory}/${file}`);
 
 			for (const font of this.getEntities()) {
 				if (font.file === file) {

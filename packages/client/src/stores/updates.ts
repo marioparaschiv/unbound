@@ -1,4 +1,5 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
+import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
 import { Platform } from 'react-native';
@@ -8,13 +9,11 @@ import { applyUpdate, automaticUpdates, fetchUpdates, listInstalled } from '~/li
 import type { PendingUpdate, UpdatableKind } from '~/lib/updates';
 import { API_URL, CLIENT_VERSION } from '~/lib/constants';
 import { fetchLoaderUpdate } from '~/lib/loader-updates';
-import { getManager, managers } from '~/managers/utils';
+import { Manager } from '~/managers/base';
 
 const logger = createLogger('Updater');
 
-const UPDATABLE_KINDS = Object.keys(managers).filter(
-	(kind): kind is UpdatableKind => kind !== 'fonts',
-);
+const UPDATABLE_KINDS = ADDON_KINDS.filter((kind): kind is UpdatableKind => kind !== 'font');
 
 /** The last update check. `ready` and `error` keep when it finished, for the status line. */
 export type UpdatesState =
@@ -39,7 +38,7 @@ type UpdatesStore = {
 let pending: Promise<void> | undefined;
 
 function checkInstalled(): Promise<PendingUpdate[]> {
-	const entries = UPDATABLE_KINDS.flatMap((kind) => listInstalled(kind, getManager(kind)));
+	const entries = UPDATABLE_KINDS.flatMap((kind) => listInstalled(kind, Manager.for(kind)));
 
 	return fetchUpdates(entries, { baseUrl: API_URL, clientVersion: CLIENT_VERSION });
 }
@@ -119,7 +118,7 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 
 			setApplying(id, 'updating');
 
-			const updated = await applyUpdate(getManager(target.kind), target);
+			const updated = await applyUpdate(Manager.for(target.kind), target);
 
 			setApplying(id, updated ? undefined : 'failed');
 
@@ -145,7 +144,9 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 
 			// Read at apply time, so a version the user picked since the check stays held.
 			await Promise.all(
-				automaticUpdates(state.updates, getManager).map((entry) => apply(entry.id)),
+				automaticUpdates(state.updates, (kind) => Manager.for(kind)).map((entry) =>
+					apply(entry.id),
+				),
 			);
 		},
 	};

@@ -15,6 +15,7 @@ import type { ReloadResult } from '~/managers/addons';
 import { reload as reloadApp } from '~/api/native';
 import { registry } from '~/lib/commands/registry';
 import { Addons } from '~/managers/addons';
+import { Manager } from '~/managers/base';
 
 /**
  * @description Manages plugins, building on the base {@link Addons} manager to load and evaluate plugin bundles.
@@ -35,11 +36,17 @@ export class Plugins extends Addons<PluginEntity> {
 	private scanned = new Map<string, ScannedPlugin>();
 	private evaluated = new Map<string, EvaluatedPlugin>();
 
-	/**
-	 * @description Creates the plugins manager bound to the {@link 'plugins'} type.
-	 */
 	constructor() {
-		super('plugins');
+		super({
+			kind: 'plugin',
+			name: 'Plugins',
+			directory: 'Unbound/Plugins',
+			bucket: 'plugins',
+			label: 'UNBOUND_PLUGINS',
+			icon: 'PuzzlePieceIcon',
+		});
+
+		Manager.register('plugin', this);
 	}
 
 	/**
@@ -171,10 +178,6 @@ export class Plugins extends Addons<PluginEntity> {
 
 			return undefined;
 		}
-	}
-
-	protected get entityType() {
-		return 'plugin' as const;
 	}
 
 	protected createContext(entity: PluginEntity): PluginContext {

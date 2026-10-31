@@ -6,7 +6,7 @@ import { AddonList } from '~/ui/addons';
 function IconsTab() {
 	return (
 		<ScrollView contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 12 }}>
-			<AddonList kind={'icons'} />
+			<AddonList kind={'icon-pack'} />
 		</ScrollView>
 	);
 }

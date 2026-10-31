@@ -1,5 +1,5 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
-import type { ManagerKind } from '@unbound-app/types/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 import { describe, expect, test } from 'bun:test';
 
 import type { MarketplaceState } from '~/lib/catalog';
@@ -45,7 +45,7 @@ type Fixture = {
 };
 
 function targets({ afterEachFetch, installed = {} }: Fixture) {
-	const opened: [ManagerKind, string][] = [];
+	const opened: [AddonKind, string][] = [];
 	let current: MarketplaceState = { status: 'idle' };
 	let next = 0;
 
@@ -59,7 +59,6 @@ function targets({ afterEachFetch, installed = {} }: Fixture) {
 		load: advance,
 		refresh: advance,
 		state: () => current,
-		kindOf: (type) => (type === 'plugin' ? 'plugins' : undefined),
 		installedVersion: (_kind, addon) => installed[addon.id],
 		open: (kind, id) => {
 			opened.push([kind, id]);
@@ -81,9 +80,9 @@ describe('resolveUnboundLink', () => {
 		expect(await resolveUnboundLink(LINK, stub)).toEqual({
 			type: 'opened',
 			addon,
-			kind: 'plugins',
+			kind: 'plugin',
 		});
-		expect(opened).toEqual([['plugins', 'acme.hello']]);
+		expect(opened).toEqual([['plugin', 'acme.hello']]);
 	});
 
 	test('opens the Marketplace to update an older installed copy', async () => {
@@ -94,7 +93,7 @@ describe('resolveUnboundLink', () => {
 		});
 
 		expect((await resolveUnboundLink(LINK, stub)).type).toBe('opened');
-		expect(opened).toEqual([['plugins', 'acme.hello']]);
+		expect(opened).toEqual([['plugin', 'acme.hello']]);
 	});
 
 	test('finds an addon published after the stored catalog by refreshing once', async () => {
@@ -102,7 +101,7 @@ describe('resolveUnboundLink', () => {
 		const { stub, opened } = targets({ afterEachFetch: [ready([]), ready([addon])] });
 
 		expect((await resolveUnboundLink(LINK, stub)).type).toBe('opened');
-		expect(opened).toEqual([['plugins', 'acme.hello']]);
+		expect(opened).toEqual([['plugin', 'acme.hello']]);
 	});
 
 	test('reports an addon the catalog does not list, without navigating', async () => {

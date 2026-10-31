@@ -1,5 +1,5 @@
 import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
-import { ADDON_TYPES } from '@unbound-app/types/addons';
+import { ADDON_KINDS } from '@unbound-app/types/addons';
 
 import { z } from './zod';
 
@@ -62,7 +62,7 @@ export const addonAuthorSchema = z.object({
  */
 export const addonManifestSchema = z.looseObject({
 	id: addonIdSchema,
-	type: z.optional(z.enum(ADDON_TYPES)),
+	type: z.optional(z.enum(ADDON_KINDS)),
 	name: z.string().check(z.minLength(1)),
 	description: z.string(),
 	authors: z.array(addonAuthorSchema).check(z.minLength(1)),

@@ -2,15 +2,10 @@ import type { ReactNode } from 'react';
 
 import type { NativePluginCapability, NativePluginPlatform, PluginContext } from './native';
 
-/** The kinds of addon a manifest can declare. */
-export const ADDON_TYPES = ['plugin', 'theme', 'icon-pack', 'font'] as const;
+/** The kinds of addon, as a manifest's `type` declares them. One manager governs each, in this start order. */
+export const ADDON_KINDS = ['plugin', 'theme', 'icon-pack', 'font'] as const;
 
-export type AddonType = (typeof ADDON_TYPES)[number];
-
-/** The addon managers. Each names its settings store and its Cloud Sync section. */
-export const MANAGER_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
-
-export type ManagerKind = (typeof MANAGER_KINDS)[number];
+export type AddonKind = (typeof ADDON_KINDS)[number];
 
 /** The author of an addon: a display name and a numeric user id. */
 export type AddonAuthor = {
@@ -22,7 +17,7 @@ export type AddonAuthor = {
 export type AuthoredAddonManifest = {
 	id: string;
 	/** The addon kind this manifest describes; used to validate installs. */
-	type?: AddonType;
+	type?: AddonKind;
 	name: string;
 	description: string;
 	authors: AddonAuthor[];
