@@ -1,7 +1,4 @@
-import Page from '@unbound-plugins/shared/components/page';
-import SliderRow from '@unbound-plugins/shared/components/slider-row';
-import ResetRow from '@unbound-plugins/shared/components/reset-row';
-import { Discord } from '@unbound-app/api/metro/components';
+import { ui } from '@unbound-app/api';
 
 import { DEFAULT_RADIUS, MAXIMUM_RADIUS } from '~/constants';
 import { storedRadius } from '~/radius';
@@ -11,12 +8,12 @@ function SettingsPanel() {
 	const store = settings.useSettingsStore();
 
 	return (
-		<Page>
-			<Discord.TableRowGroup
+		<ui.Page>
+			<ui.Section
 				title='Avatars'
 				description={`From 0 for square to ${MAXIMUM_RADIUS}. A radius past half an avatar's size keeps it a circle.`}
 			>
-				<SliderRow
+				<ui.SliderRow
 					label='Corner radius'
 					value={storedRadius(store.get('radius', undefined))}
 					defaultValue={DEFAULT_RADIUS}
@@ -25,9 +22,9 @@ function SettingsPanel() {
 					unit=' pt'
 					onChange={(value) => store.set('radius', value)}
 				/>
-			</Discord.TableRowGroup>
-			<ResetRow onReset={() => store.set('radius', DEFAULT_RADIUS)} />
-		</Page>
+			</ui.Section>
+			<ui.ResetRow onReset={() => store.set('radius', DEFAULT_RADIUS)} />
+		</ui.Page>
 	);
 }
 
