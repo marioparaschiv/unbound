@@ -167,6 +167,7 @@ export type {
 	InternalToastOptions,
 	LayerScopeComponent,
 	LayerScopeProps,
+	LoaderObjCBridge,
 	LoadingButtonPillProps,
 	LottieIconProps,
 	MANAGER_KINDS,

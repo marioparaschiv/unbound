@@ -215,6 +215,13 @@ export type NativeHookToken = {
 export type NativeObjCBridge = {
 	getClass(name: string): NativeClassHandle | null;
 	alloc(classOrName: string | NativeClassHandle): NativeObjectHandle;
+	/** Allocates an instance and returns what `initSelector` initializes; throws when that is nil. */
+	create(
+		classOrName: string | NativeClassHandle,
+		initSelector: string,
+		args?: unknown[],
+		options?: NativeCallOptions,
+	): NativeObjectHandle;
 	className(handle: NativeHandle): string | null;
 	respondsTo(handle: NativeHandle, selector: string): boolean;
 	// UNKNOWN: returns whatever the Objective-C method returns, bridged to JS.
@@ -289,6 +296,8 @@ export type NativeObjCBridge = {
 		options?: NativeHookOptions,
 	): NativeHookToken;
 };
+
+export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'>;
 
 export type NativeFFIBridge = {
 	symbol(name: string, image?: string): NativePointer | null;
@@ -641,7 +650,9 @@ export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities'
 > &
-	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities'>>;
+	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities' | 'objc'>> & {
+		readonly objc?: LoaderObjCBridge;
+	};
 
 export type NativePluginErrorCode =
 	| 'NATIVE_BRIDGE_ERROR'
