@@ -3,9 +3,10 @@ import { patchLazySheets } from '@unbound-plugins/shared/action-sheets/patch-laz
 import { findElement, isElementNode } from '@unbound-plugins/shared/react/find-element';
 import { findRenderTarget } from '@unbound-plugins/shared/react/render-target';
 import { isActionSheetRowGroup } from '@unbound-plugins/shared/action-sheets/row-group';
+import { patcher } from '@unbound-app/api';
 
 import { getRawItem, type RawItem, type SheetProps } from '~/raw-items';
-import { ActionSheets, Patcher } from '~/modules';
+import { ActionSheets } from '~/modules';
 import RawIcon from '~/components/raw-icon';
 import { openRawSheet } from '~/sheets';
 
@@ -101,7 +102,7 @@ export function patchActionSheets(state: SheetState): Cleanup {
 
 			patchedOwners.add(target.holder);
 			unpatches.push(
-				Patcher.after(target.holder, target.key, (ctx) => render(ctx.result, depth + 1)),
+				patcher.after(target.holder, target.key, (ctx) => render(ctx.result, depth + 1)),
 			);
 
 			return result;
@@ -110,7 +111,7 @@ export function patchActionSheets(state: SheetState): Cleanup {
 		return render;
 	}
 
-	const unpatchSheets = patchLazySheets<SheetProps>(Patcher, ActionSheets, (key, props) => {
+	const unpatchSheets = patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
 		if (key.startsWith('UserProfile') && typeof props.userId === 'string') {
 			state.profileUserId = props.userId;
 		}

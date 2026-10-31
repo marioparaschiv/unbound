@@ -71,8 +71,9 @@ export function getRawItem(key: string, props: SheetProps): RawItem | null {
 
 	if (!/profile/i.test(key) || !userId) return { type: 'User', data: sortKeys(user) };
 
+	const guildId = asString(props.guildId);
 	const userProfile =
-		UserProfileStore.getGuildMemberProfile?.(userId, asString(props.guildId)) ??
+		(guildId ? UserProfileStore.getGuildMemberProfile?.(userId, guildId) : undefined) ??
 		UserProfileStore.getUserProfile?.(userId);
 
 	return userProfile

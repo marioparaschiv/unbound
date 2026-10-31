@@ -1,6 +1,7 @@
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import { patcher } from '@unbound-app/api';
 
-import { ContextMenusFilter, GuildStore, Patcher } from '~/modules';
+import { ContextMenusFilter, GuildStore } from '~/modules';
 import { getRawItem, type RawItem } from '~/raw-items';
 import { openRawSheet } from '~/sheets';
 import type { SheetState } from '~/patches/action-sheets';
@@ -48,7 +49,7 @@ export function patchContextMenus(state: SheetState): () => void {
 			ContextMenus.hideContextMenu();
 		}
 
-		return Patcher.before(ContextMenus, 'showContextMenu', ({ args: [menu] }) => {
+		return patcher.before(ContextMenus, 'showContextMenu', ({ args: [menu] }) => {
 			if (!menu) return;
 
 			const guild = typeof menu.key === 'string' ? GuildStore.getGuild(menu.key) : undefined;
