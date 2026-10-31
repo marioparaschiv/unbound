@@ -1,7 +1,7 @@
 import type { NativeFabricSurface, NativeObjectHandle } from '@unbound-app/api/native';
 
 import type { ReactionContext } from '~/reaction-context';
-import { frameOf, setFrame } from '~/ios/views';
+import { frameOf, restoreFrame, setFrame } from '~/ios/views';
 import type { Session } from '~/ios/session';
 import { surfaceStates } from '~/surface-states';
 import type { Reactor } from '~/avatars';
@@ -51,7 +51,7 @@ export function unmountSurface(session: Session, state: ReactionViewState): void
 
 	state.surface = null;
 	state.surfaceFrame = null;
-	setFrame(session.objc, state.view, state.baseFrame);
+	restoreFrame(session.objc, state.view, state.baseFrame);
 }
 
 /**

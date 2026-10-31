@@ -92,18 +92,31 @@ function updateAvatarWidth(session: Session, state: ReactionViewState, width: nu
 	state.revision++;
 	renderSurface(session, state);
 
-	if (state.surface) {
-		try {
-			session.fabric.update(state.surface, {
-				revision: state.revision,
-				surfaceId: state.surfaceId,
-			});
-		} catch {
-			return;
-		}
-	}
+	sendRevision(session, state);
 
 	if (extraWidthChanged) invalidateLayout(session, state.layoutKey);
+}
+
+function sendRevision(
+	session: Session,
+	state: ReactionViewState,
+	onFailure: () => void = () => undefined,
+): void {
+	const { surface } = state;
+
+	if (!surface) return;
+
+	function failed() {
+		if (state.surface === surface) onFailure();
+	}
+
+	try {
+		void session.fabric
+			.updateAsync(surface, { revision: state.revision, surfaceId: state.surfaceId })
+			.catch(failed);
+	} catch {
+		failed();
+	}
 }
 
 function removeSurface(session: Session, state: ReactionViewState): void {
@@ -147,16 +160,7 @@ function updateSurface(session: Session, state: ReactionViewState): void {
 	if (!state.surface) {
 		createSurface(session, state);
 	} else {
-		try {
-			session.fabric.update(state.surface, {
-				revision: state.revision,
-				surfaceId: state.surfaceId,
-			});
-		} catch {
-			removeSurface(session, state);
-
-			return;
-		}
+		sendRevision(session, state, () => removeSurface(session, state));
 	}
 
 	updateSurfaceFrame(session, state);

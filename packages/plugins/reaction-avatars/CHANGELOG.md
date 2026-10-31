@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3]
+
+### Fixed
+
+- Scrolling the chat on iOS no longer stalls when a cell with reaction avatars is reused: its reaction layout is restored and its avatar surfaces are updated without waiting on the main thread.
+
 ## [1.0.2]
 
 ### Fixed
