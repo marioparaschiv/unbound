@@ -364,12 +364,10 @@ export function createAndroidIndicators(
 		}
 	}
 
-	const scans = scheduleStartupScans('Message Latency', scanVisible);
+	scheduleStartupScans('Message Latency', scanVisible);
 
 	return {
 		async dispose() {
-			for (const scan of scans) clearTimeout(scan);
-
 			disposed = true;
 			hooks.remove(token);
 			unsubscribeRecords();

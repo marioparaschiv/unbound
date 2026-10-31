@@ -27,10 +27,7 @@ type LatencyView = {
 };
 
 export type MessageCells = {
-	/** Installs the cell hooks and returns the function that removes them and starts restoring every header. */
-	hook(): () => void;
-	/** Resolves once the headers are restored after the hooks were removed. */
-	settled(): Promise<void>;
+	hook(): () => Promise<void>;
 };
 
 type Cell = {
@@ -60,7 +57,6 @@ export function createMessageCells(
 	const tasks = new Set<Promise<void>>();
 	let nextRevision = 0;
 	let disposed = false;
-	let teardown = Promise.resolve();
 
 	function isCurrent(view: LatencyView) {
 		return !disposed && cells.get(view.cellKey)?.view === view;
@@ -323,11 +319,12 @@ export function createMessageCells(
 			unsubscribeRecords();
 			unsubscribeTheme();
 			disposed = true;
-			teardown = restoreAll();
+
+			return restoreAll();
 		};
 	}
 
-	return { hook, settled: () => teardown };
+	return { hook };
 }
 
 export default { createMessageCells };

@@ -1,81 +1,28 @@
-import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
-import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { patchMessageRowData } from '~/patches/message-row-data';
 import { subscribeMessageCreate } from '~/events/message-create';
-import { createAndroidIndicators } from '~/android/indicators';
-import { createMessageCells } from '~/ios/message-cells';
-import { createAndroidTooltips } from '~/android/tooltip';
 import SettingsPanel from '~/components/settings-panel';
-import { createTooltips } from '~/ios/tooltip';
 import { createLatencyRecords } from '~/records';
+import { createIndicators } from '~/platform';
 import { Theme, UserStore } from '~/modules';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
-let settled = () => Promise.resolve();
-
-function startAndroid(context: PluginContext) {
-	if (
-		!ensureCapabilities('Message Latency', context.native, context.capabilities) ||
-		!ensureModules('Message Latency', { UserStore, Theme })
-	) {
-		return;
-	}
-
-	const records = createLatencyRecords();
-	const indicators = createAndroidIndicators(
-		context.native,
-		records,
-		createAndroidTooltips(context.native),
-	);
-
-	if (!indicators) {
-		console.error('[Message Latency] Skipped, the indicator surface did not register.');
-
-		return;
-	}
-
-	dispose = applyFeatures('Message Latency', [
-		() => records.clear,
-		() => indicators.dispose,
-		() => subscribeMessageCreate(records, context),
-		() => patchMessageRowData(records),
-	]);
-}
 
 function start(context: PluginContext) {
-	if (context.platform === 'android') {
-		startAndroid(context);
-
-		return;
-	}
-
-	const { objc, fabric } = context.native;
-
-	if (
-		!ensureModules('Message Latency', { UserStore, Theme }) ||
-		!ensureClasses('Message Latency', objc, [
-			'DCDMessageTableViewCell',
-			'NSLayoutConstraint',
-			'UIColor',
-			'UIFont',
-		])
-	) {
-		return;
-	}
+	if (!ensureModules('Message Latency', { UserStore, Theme })) return;
 
 	const records = createLatencyRecords();
-	const cells = createMessageCells(objc, records, createTooltips(objc, fabric));
+	const indicators = createIndicators(context, records);
 
-	settled = cells.settled;
+	if (!indicators) return;
+
 	dispose = applyFeatures('Message Latency', [
-		() => records.clear,
-		() => cells.hook(),
-		() => subscribeMessageCreate(records, context),
+		indicators,
+		() => subscribeMessageCreate(records, context.native.runtime),
 		() => patchMessageRowData(records),
 	]);
 }
@@ -85,7 +32,6 @@ async function stop() {
 
 	dispose = () => undefined;
 	await finished;
-	await settled();
 }
 
 export default {

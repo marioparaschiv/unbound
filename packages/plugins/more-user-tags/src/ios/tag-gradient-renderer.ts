@@ -10,25 +10,14 @@ import {
 
 import { createGradientPainter, type TagLayer } from '~/ios/gradient-layer';
 import type { LabelAppearances } from '~/label-appearances';
-import { startAndroidTagGradients } from '~/android/tag-gradients';
+import type { TagGradients } from '~/tag-gradients';
 import { createNativeColors } from '~/ios/colors';
 
 type PendingUpdate = { label: NativeObjectHandle; timer: ReturnType<typeof setTimeout> };
 type QueuedView = { view: NativeObjectHandle; depth: number };
 
-export type TagGradients = {
-	/** Installs the hooks and returns the function that removes them and starts the teardown. */
-	start(): () => void;
-	/** Resolves once every gradient layer is removed after `start`'s cleanup ran. */
-	settled(): Promise<void>;
-	/** Reads back the gradients drawn on screen and lists the tags whose gradient is gone, colorless or empty. */
-	problems(): Promise<string[]>;
-	/** How many gradients are drawn on screen. */
-	drawn(): number;
-};
-
 /**
- * @description Draws role-color gradients behind Discord's native message tags.
+ * @description Draws role-color gradients behind Discord's native message tags on iOS.
  * @param context The plugin context, whose Objective-C bridge draws the gradients.
  * @param appearances The colors the tag patch chose for each tag text.
  * @returns The gradients feature; when a class or capability is missing, `start` applies nothing.
@@ -42,14 +31,6 @@ export function createTagGradients(
 	let count = () => 0;
 
 	function start(): () => void {
-		if (context.platform === 'android') {
-			const stop = startAndroidTagGradients(context, appearances);
-
-			return () => {
-				teardown = stop();
-			};
-		}
-
 		if (
 			!ensureCapabilities('More User Tags: gradients', context.native, context.capabilities)
 		) {

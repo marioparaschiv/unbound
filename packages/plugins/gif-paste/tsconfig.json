@@ -1,7 +1,7 @@
 {
 	"extends": "../tsconfig.json",
 	"compilerOptions": {
-		"types": ["bun"],
+		"types": ["bun", "@unbound-app/api/global"],
 		"paths": {
 			"~/*": ["./src/*"]
 		}

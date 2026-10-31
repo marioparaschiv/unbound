@@ -498,13 +498,11 @@ export function createAndroidEmbeds({ java, hooks, fabric }: Native, renderers: 
 		}
 	}
 
-	const scans = scheduleStartupScans('Message Link Embeds', scanVisible);
+	scheduleStartupScans('Message Link Embeds', scanVisible);
 
 	return {
 		drawn: () => embeds.size,
 		dispose() {
-			for (const scan of scans) clearTimeout(scan);
-
 			controller.abort();
 			hooks.remove(token);
 			hooks.remove(sizeToken);

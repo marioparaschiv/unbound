@@ -3,7 +3,7 @@ import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 
 import { withoutGiftItem } from '~/gift-item';
-import { Patcher } from '~/modules';
+import { patcher } from '@unbound-app/api';
 
 /**
  * @description Removes the gift button's slot from the composer's right-hand actions.
@@ -21,7 +21,7 @@ export function patchChatInputRightActions(): () => void {
 				return () => {};
 			}
 
-			return Patcher.after(target.holder, target.key, ({ args: [props], result }) => {
+			return patcher.after(target.holder, target.key, ({ args: [props], result }) => {
 				if (!props?.shouldShowGiftButton || !result?.props) return;
 
 				return withoutGiftItem(result);

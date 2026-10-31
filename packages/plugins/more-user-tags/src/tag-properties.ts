@@ -1,7 +1,5 @@
-import type { PluginContext } from '@unbound-app/api/native';
-
 /** A color already passed through React Native's `processColor`. */
-type NativeColor = unknown;
+export type NativeColor = unknown;
 
 export type TagColors = { background: NativeColor; text: NativeColor };
 
@@ -27,19 +25,6 @@ export type TagProperties = {
  */
 export function combineTagText(opTagText: string | null | undefined, tagName: string): string {
 	return opTagText ? `${opTagText} · ${tagName}` : tagName;
-}
-
-/**
- * @description Android's tag renderer reads colors as signed 32-bit integers, but `processColor` returns unsigned ones.
- * @param color A color returned by `processColor`.
- * @param platform The platform the plugin runs on.
- * @returns The color in the form the platform's renderer accepts.
- */
-export function toRendererColor(
-	color: NativeColor,
-	platform: PluginContext['platform'],
-): NativeColor {
-	return platform === 'android' && typeof color === 'number' ? color | 0 : color;
 }
 
 /**
@@ -85,4 +70,4 @@ export function withTag(
 	};
 }
 
-export default { combineTagText, toRendererColor, withTag };
+export default { combineTagText, withTag };

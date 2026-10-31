@@ -17,7 +17,6 @@ export type LatencyRecords = {
 	get(messageId: string): LatencyRecord | undefined;
 	update(message: LatencyMessage, username?: string): void;
 	subscribe(listener: (messageId: string) => void): () => void;
-	clear: () => void;
 };
 
 function readOptions() {
@@ -78,7 +77,6 @@ export function createLatencyRecords(): LatencyRecords {
 
 			return () => void listeners.delete(listener);
 		},
-		clear: () => records.clear(),
 	};
 }
 

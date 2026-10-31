@@ -1,4 +1,6 @@
-import { ChatInputRegistry, MessageActions, PendingReplyStore, Patcher } from '~/modules';
+import { patcher } from '@unbound-app/api';
+
+import { ChatInputRegistry, MessageActions, PendingReplyStore } from '~/modules';
 import type { KeptReplies } from '~/kept-replies';
 
 type ChatInput = {
@@ -26,7 +28,7 @@ function isGifSelection(args: unknown[]): args is GifSelection {
  * @returns A function that removes the patch.
  */
 export function patchMessageActions(keptReplies: KeptReplies): () => void {
-	return Patcher.instead(MessageActions, 'sendMessage', ({ args, original, this: self }) => {
+	return patcher.instead(MessageActions, 'sendMessage', ({ args, original, this: self }) => {
 		if (!isGifSelection(args)) return original.apply(self, args);
 
 		const [channelId, message] = args;
