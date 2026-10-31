@@ -4,12 +4,6 @@ export type { SettingsEntry } from './_internal';
 import type { SettingsEntry } from './_internal';
 import * as React$1 from 'react';
 import { ComponentType } from 'react';
-
-declare const _default: {
-	registerSettings: typeof registerSettings;
-	removeSettings: typeof removeSettings;
-	sections: typeof sections;
-};
 /**
  * @description Registers one or more settings entries into the section registry, warning on key collisions.
  * @param entries The settings entries to register.
@@ -25,6 +19,4 @@ export declare function removeSettings(...keys: string[]): void;
  * @returns A record of entry key to its {@link SettingsEntry}.
  */
 export declare function sections(): Record<string, SettingsEntry>;
-export { _default as default };
-
 export {};
