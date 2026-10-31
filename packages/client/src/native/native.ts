@@ -76,9 +76,9 @@ export {
 	BundleInfo,
 	BundleManager,
 	DeviceInfo,
-	NativePlatform,
 	getNativeModule,
 	getNativeResources,
 	getRuntimeProperties,
 	reload,
 } from '~/native/runtime';
+export { NativePlatform } from '~/native/platform';

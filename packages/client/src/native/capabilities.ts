@@ -10,13 +10,19 @@ import type {
 	NativePluginMethod,
 	NativeRuntimeBridge,
 } from '@unbound-app/types';
-import { NATIVE_PLUGIN_METHOD_CAPABILITIES } from '@unbound-app/types/native';
+import {
+	NATIVE_PLUGIN_CAPABILITIES,
+	NATIVE_PLUGIN_METHOD_CAPABILITIES,
+} from '@unbound-app/types/native';
 
 import {
 	NativePluginCapabilityError,
 	NativePluginDisposedError,
 	NativePluginUnavailableError,
+	NativePluginVersionError,
 } from '~/native/errors';
+import { getNativePlugin, requireNativePlugin } from '~/native/plugin-bridge';
+import { compareVersions } from '~/core/versions';
 
 /**
  * @description Throws unless a scope declares the capability a bridge method needs.
@@ -31,6 +37,43 @@ export function requireCapability(
 
 	if (!capabilities.includes(capability)) {
 		throw new NativePluginCapabilityError(capability);
+	}
+}
+
+/**
+ * @description Throws unless the native plugin bridge grants every capability and meets the API version.
+ * @param capabilities The capabilities the plugin declares.
+ * @param minimumApi The lowest native plugin API version the plugin supports.
+ */
+export function validateNativePluginRequirements(
+	capabilities: readonly NativePluginCapability[] = [],
+	minimumApi?: string,
+): void {
+	const nativePlugin = getNativePlugin();
+	const invalidCapability = capabilities.find(
+		(capability) => !NATIVE_PLUGIN_CAPABILITIES.includes(capability),
+	);
+
+	if (invalidCapability) {
+		throw new NativePluginCapabilityError(invalidCapability);
+	}
+
+	if ((capabilities.length > 0 || minimumApi) && !nativePlugin) {
+		requireNativePlugin();
+	}
+
+	if (!nativePlugin) return;
+
+	const unknown = capabilities.find(
+		(capability) => !nativePlugin.capabilities.includes(capability),
+	);
+
+	if (unknown) {
+		throw new NativePluginCapabilityError(unknown);
+	}
+
+	if (minimumApi && compareVersions(nativePlugin.apiVersion, minimumApi) < 0) {
+		throw new NativePluginVersionError(minimumApi, nativePlugin.apiVersion);
 	}
 }
 
@@ -100,6 +143,7 @@ export function unavailableNativePlugin(): NativePluginBridge {
 
 export default {
 	requireCapability,
+	validateNativePluginRequirements,
 	scopedMethod,
 	unavailableNativePlugin,
 };

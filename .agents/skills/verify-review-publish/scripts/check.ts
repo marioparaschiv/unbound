@@ -84,11 +84,12 @@ const LABELS: Record<string, string> = {
 	ReadStaged: 'publishArtifact reads (or refetches from the pin) and re-hashes the bundle',
 	WriteBundle: 'publishArtifact writes the public bundle',
 	WriteManifest: 'publishArtifact writes the public manifest.json',
+	WritePage: 'publishArtifact writes the public ADDON.md, page.json and media/',
 	Decide: 'decide() transaction',
 	Cleanup: 'staging.delete(row.stagingKey)',
 };
 
-const HIDDEN = new Set(['rowSha', 'wroteB', 'wroteM']);
+const HIDDEN = new Set(['rowSha', 'wroteB', 'wroteM', 'wroteP']);
 
 async function ensureJar() {
 	if (!existsSync(JAR)) {

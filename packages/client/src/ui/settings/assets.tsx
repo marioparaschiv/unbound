@@ -3,10 +3,10 @@ import type { UnboundAsset } from '@unbound-app/types';
 import { Image, View } from 'react-native';
 
 import { Discord, FlashList, Media } from '~/metro/components';
-import { getAll, getIDByName, Icons } from '~/assets/api';
-import { Messages, format } from '~/i18n/api';
+import { getAll, getIdByName, icons } from '~/assets/api';
+import Empty from '~/ui/components/empty-state';
+import { messages, format } from '~/i18n/api';
 import { findByProps } from '~/metro/search';
-import { Empty } from '~/ui/components';
 
 import useStyles from './assets.style';
 
@@ -93,7 +93,7 @@ function AssetsPage() {
 				continue;
 			}
 
-			const id = getIDByName(asset.name);
+			const id = getIdByName(asset.name);
 
 			if (!id) {
 				continue;
@@ -126,8 +126,8 @@ function AssetsPage() {
 					onChange={setSearch}
 					isClearable
 					isRound
-					placeholder={format('UNBOUND_SEARCH', { type: Messages.UNBOUND_ASSETS })}
-					leadingIcon={() => <Discord.TableRowIcon source={Icons.MagnifyingGlassIcon} />}
+					placeholder={format('UNBOUND_SEARCH', { type: messages.UNBOUND_ASSETS })}
+					leadingIcon={() => <Discord.TableRowIcon source={icons.MagnifyingGlassIcon} />}
 				/>
 			</View>
 			{total ? (
@@ -141,7 +141,7 @@ function AssetsPage() {
 				/>
 			) : (
 				<Empty image={search ? 'sticker_search_empty' : 'empty_permission'}>
-					{search ? Messages.UNBOUND_EMPTY_RESULTS : Messages.UNBOUND_NO_ASSETS}
+					{search ? messages.UNBOUND_EMPTY_RESULTS : messages.UNBOUND_NO_ASSETS}
 				</Empty>
 			)}
 		</View>

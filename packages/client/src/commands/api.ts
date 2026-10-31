@@ -1,8 +1,3 @@
-/**
- * @description Slash commands for plugins and built-ins. `createCommands(owner)` returns a handle that registers
- * commands in Discord's `/` picker; `option` builds their typed options. This is the public surface behind
- * `unbound.commands` and `@unbound-app/api/commands`.
- */
 import type {
 	CommandsHandle,
 	CommandsOptions,
@@ -21,6 +16,7 @@ export type * from '@unbound-app/types/commands';
 
 const Logger = createLogger('Commands');
 const BUILT_IN_OWNER = 'unbound';
+const NAMESPACE_OWNER = 'unbound::namespace';
 const warned = new Set<string>();
 
 /** Option builders, one per kind: `option.string({ required: true })`, `option.user()`, `option.choice([...])`. */
@@ -46,15 +42,47 @@ export function createCommands(owner: string, options: CommandsOptions = {}): Co
 		return registry.add(owner, normalize({ owner, section, tree: tree as ErasedTree }));
 	}
 
+	function unregister(name: string) {
+		registry.remove(owner, name);
+	}
+
 	function unregisterAll() {
 		registry.release(owner);
 	}
 
-	return { register, unregisterAll };
+	return { register, unregister, unregisterAll };
+}
+
+const namespaceCommands = createCommands(NAMESPACE_OWNER);
+
+/**
+ * @description Adds commands to the shared Unbound section of the `/` picker. Registering a root name again
+ * replaces that whole command; a root name another owner has throws `CommandDefinitionError`.
+ * @template T The command tree, inferred from it.
+ * @param commands The commands, keyed by root name.
+ * @returns A function that removes this call's commands; it is safe to call twice.
+ */
+export function register<T>(commands: CommandTree<T>): () => void {
+	return namespaceCommands.register(commands);
+}
+
+/**
+ * @description Removes a root command added with `register`, with its subcommands. Does nothing when there is none.
+ * @param name The root command's name.
+ */
+export function unregister(name: string): void {
+	namespaceCommands.unregister(name);
 }
 
 function warnIfUnowned(owner: string) {
-	if (owner === BUILT_IN_OWNER || warned.has(owner) || isKnownOwner(owner)) return;
+	if (
+		owner === BUILT_IN_OWNER ||
+		owner === NAMESPACE_OWNER ||
+		warned.has(owner) ||
+		isKnownOwner(owner)
+	) {
+		return;
+	}
 
 	warned.add(owner);
 	Logger.warn(
@@ -62,4 +90,4 @@ function warnIfUnowned(owner: string) {
 	);
 }
 
-export default { createCommands, option };
+export default { option, createCommands, register, unregister };

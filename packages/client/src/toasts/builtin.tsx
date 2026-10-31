@@ -2,8 +2,11 @@ import { createLogger } from '@unbound-app/logger';
 
 import { getSetting, useUnboundSettings } from '~/settings/unbound';
 import { find, findByFilePath, findByProps } from '~/metro/search';
+import type { SectionEntry } from '~/settings/section';
 import { createPatcher } from '~/patcher/api';
+import ToastsPage from '~/ui/settings/toasts';
 import { ToastContainer } from '~/ui/toasts';
+import { Screens } from '~/core/constants';
 import { show } from '~/toasts/api';
 
 import discordToastOptions, { type DiscordToastOptions } from './discord-toast-options';
@@ -76,4 +79,11 @@ function patchToastAPI() {
 	});
 }
 
-export default { start, stop };
+export const toastsSection: SectionEntry = {
+	key: Screens.Toasts,
+	titleKey: 'UNBOUND_TOAST_SETTINGS',
+	component: ToastsPage,
+	hidden: true,
+};
+
+export default { start, stop, toastsSection };

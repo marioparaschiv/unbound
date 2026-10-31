@@ -53,7 +53,7 @@ export const Screens = {
 	CloudSync: 'UNBOUND_CLOUD_SYNC',
 	Marketplace: 'UNBOUND_MARKETPLACE',
 	Updates: 'UNBOUND_UPDATES',
-	Custom: 'UNBOUND_CUSTOM',
+	PanelHost: 'UNBOUND_CUSTOM',
 } as const;
 
 /** External links surfaced on the General settings page. */

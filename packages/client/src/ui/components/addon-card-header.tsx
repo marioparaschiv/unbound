@@ -2,10 +2,10 @@ import type { AddonManifest } from '@unbound-app/types';
 import { View } from 'react-native';
 import { memo } from 'react';
 
+import TintedIcon from '~/metro/fallbacks/tinted-icon';
 import { Discord } from '~/metro/components';
-import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/metro/common';
-import { Icons } from '~/assets/api';
+import { icons } from '~/assets/api';
 
 import useStyles from './addon-card-header.style';
 import AddonTitle from './addon-title';
@@ -31,7 +31,7 @@ function AddonCardHeader({ manifest, icon = 'PuzzlePieceIcon' }: AddonCardHeader
 	return (
 		<View style={styles.container}>
 			<View style={styles.iconContainer}>
-				<TintedIcon source={Icons[icon] ?? 0} size={22} tint={Theme.colors.TEXT_STRONG} />
+				<TintedIcon source={icons[icon] ?? 0} size={22} tint={Theme.colors.TEXT_STRONG} />
 			</View>
 			<View style={styles.content}>
 				<AddonTitle name={name} version={version} />

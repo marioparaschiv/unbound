@@ -15,13 +15,14 @@ import {
 	NativeConsentRequiredError,
 	promptForConsent,
 } from '~/native/consent';
-import { currentPlatform, validateNativePluginRequirements } from '~/native/runtime';
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
 import type { AddonAttribution, AddonFreeze } from '~/addons/crash-guard';
+import { validateNativePluginRequirements } from '~/native/capabilities';
 import type { CrashReportAddon } from '~/diagnostics/crash-reports';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import type { NativeConsents } from '~/native/consent';
+import { currentPlatform } from '~/native/platform';
 import { unpatchAllByCaller } from '~/patcher/api';
 import { isSafeAddonMain } from '~/addons/paths';
 import { getSetting } from '~/settings/unbound';

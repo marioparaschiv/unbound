@@ -97,7 +97,7 @@ mock.module('react-native', () => ({
 export const { Addons } = require('~/addons/addons') as typeof import('~/addons/addons');
 
 export const { createPluginContext } =
-	require('~/native/runtime') as typeof import('~/native/runtime');
+	require('~/native/plugin-context') as typeof import('~/native/plugin-context');
 
 /**
  * @description Loads the four addon managers, which read Discord's modules off `window` while they load.

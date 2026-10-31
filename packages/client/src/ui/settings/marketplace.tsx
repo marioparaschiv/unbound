@@ -3,10 +3,12 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { Dimensions, View } from 'react-native';
 
-import { MarketplaceList, SearchContext, offerListedInstall } from '~/ui/marketplace';
+import { offerListedInstall } from '~/ui/marketplace/offer-listed-install';
+import MarketplaceList from '~/ui/marketplace/marketplace-list';
+import SearchContext from '~/ui/marketplace/search-context';
 import { Discord, SafeArea } from '~/metro/components';
 import MarketplaceStore from '~/marketplace/state';
-import { Messages, format } from '~/i18n/api';
+import { messages, format } from '~/i18n/api';
 import { Manager } from '~/addons/manager';
 
 type MarketplaceParams = {
@@ -40,7 +42,7 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 		() =>
 			ADDON_KINDS.map((tab) => ({
 				id: tab,
-				label: Messages[Manager.for(tab).label],
+				label: messages[Manager.for(tab).label],
 				page: <MarketplaceList kind={tab} />,
 			})),
 		[],
@@ -92,7 +94,7 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 					value={search}
 					onChange={setSearch}
 					isClearable
-					placeholder={format('UNBOUND_SEARCH', { type: Messages.UNBOUND_MARKETPLACE })}
+					placeholder={format('UNBOUND_SEARCH', { type: messages.UNBOUND_MARKETPLACE })}
 				/>
 				<Discord.SegmentedControl state={state} />
 			</View>

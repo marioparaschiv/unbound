@@ -1,5 +1,6 @@
 import type { AppContext } from '../../../../apps/web/tests/helpers/index.ts';
 import type { Caller } from '../../../../apps/web/src/lib/api/caller.ts';
+import type { SourceSeed } from '../../../../apps/web/tests/helpers/addons.ts';
 import type { EnvSource } from '../../../../apps/web/src/lib/env.ts';
 
 import {
@@ -11,6 +12,11 @@ import {
 	serveGitHub,
 	signInWithDiscord,
 } from '../../../../apps/web/tests/helpers/index.ts';
+import {
+	COMMITTED_ADDON_MD,
+	committedPage,
+	committedPageFiles,
+} from '../../../../apps/web/tests/helpers/addon-page.ts';
 import { reviewSubmission } from '../../../../apps/web/src/lib/review.ts';
 import { gitBlobSha } from '../../../../apps/web/src/lib/github.ts';
 
@@ -34,6 +40,8 @@ type Seeded = {
 };
 
 const ADDON = 'replay.addon';
+const REPOSITORY = 'acme/addons';
+const PAGE_DIR = 'plugins/replay';
 
 class MemoryBucket {
 	objects = new Map<string, Uint8Array>();
@@ -111,12 +119,20 @@ async function setup(env: EnvSource = {}): Promise<Seeded> {
 	return { ctx, staging, public: bucket, author, reviewers, close };
 }
 
-async function stage(seeded: Seeded, version: string, bundle: string, kind: 'listing' | 'update') {
-	const row = await seedSubmission(seeded.ctx, seeded.author, manifest(ADDON, version), {
-		kind,
-		bundleSize: Buffer.byteLength(bundle),
-		sha256: sha256(bundle),
-	});
+async function stage(
+	seeded: Seeded,
+	version: string,
+	bundle: string,
+	kind: 'listing' | 'update',
+	source: SourceSeed = {},
+) {
+	const row = await seedSubmission(
+		seeded.ctx,
+		seeded.author,
+		manifest(ADDON, version),
+		{ kind, bundleSize: Buffer.byteLength(bundle), sha256: sha256(bundle) },
+		source,
+	);
 
 	seeded.staging.objects.set(row.stagingKey, new TextEncoder().encode(bundle));
 
@@ -136,11 +152,23 @@ async function settle(promise: Promise<unknown>): Promise<string> {
 // current.cfg RejectedNeverPublic: an approval is held inside publishArtifact's writes while a
 // rejection of the same submission commits.
 async function approveRacesReject(): Promise<Checks> {
-	const seeded = await setup();
+	const github = serveGitHub({ repositories: { [REPOSITORY]: {} }, tokens: {} });
+	const seeded = await setup({ GITHUB_API_URL: github.url.href });
 	const [a, b] = seeded.reviewers;
+	const files = Object.entries(committedPageFiles()).map(([name, content]) => [
+		`${PAGE_DIR}/${name}`,
+		content,
+	]);
 
 	try {
-		const row = await stage(seeded, '1.0.0', 'export default 1;', 'listing');
+		const commitSha = github.repository(REPOSITORY).commit(Object.fromEntries(files));
+		const row = await stage(seeded, '1.0.0', 'export default 1;', 'listing', {
+			repository: REPOSITORY,
+			commitSha,
+			path: PAGE_DIR,
+			addonMd: COMMITTED_ADDON_MD,
+			page: committedPage(64),
+		});
 		let release = () => {};
 
 		seeded.public.held = new Promise((resolve) => (release = resolve));
@@ -161,11 +189,13 @@ async function approveRacesReject(): Promise<Checks> {
 			?.status;
 		const versions = await seeded.ctx.db.select().from(schema.addonVersion);
 		const keys = [...seeded.public.objects.keys()];
+		const media = keys.filter((key) => key.includes('/media/'));
 
 		console.log(`    approve (A): ${approved}`);
 		console.log(`    reject (B):  ${rejected}`);
 		console.log(`    submission.status = ${status}, addon_version rows = ${versions.length}`);
 		console.log(`    public bucket = ${keys.join(', ') || '(empty)'}`);
+		console.log(`    of which store page media = ${media.length}`);
 
 		return {
 			DecidedOnce: [approved, rejected].filter((result) => result === 'ok').length <= 1,
@@ -174,6 +204,7 @@ async function approveRacesReject(): Promise<Checks> {
 		};
 	} finally {
 		await seeded.close();
+		await github.stop();
 	}
 }
 
