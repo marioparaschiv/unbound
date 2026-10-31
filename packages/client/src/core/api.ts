@@ -13,6 +13,7 @@ export * as patcher from '~/patcher/api';
 export * as storage from '~/storage/api';
 export * as assets from '~/assets/api';
 export * as toasts from '~/toasts/api';
+export * as flux from '~/flux/api';
 export * as i18n from '~/i18n/api';
 export * as fs from '~/native/fs';
 export * as metro from '~/metro';

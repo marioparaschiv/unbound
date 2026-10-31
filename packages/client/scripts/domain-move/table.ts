@@ -41,7 +41,7 @@ export const moves: Record<string, string> = {
 	'api/native-runtime.ts': 'native/runtime.ts',
 	'api/native-capabilities.ts': 'native/capabilities.ts',
 	'api/native-errors.ts': 'native/errors.ts',
-	'api/native-flux-bridge.ts': 'native/flux-bridge.ts',
+	'api/native-flux-bridge.ts': 'flux/runtime-bridge.ts',
 	'api/native-plugin-bridge.ts': 'native/plugin-bridge.ts',
 	'api/native-scope.ts': 'native/scope.ts',
 	'lib/native-consent.ts': 'native/consent.ts',

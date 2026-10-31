@@ -104,7 +104,7 @@ export function byName(name: string): MetroFilter {
  * @param short Whether to append `Store` to `name` before matching.
  * @returns A {@link MetroFilter} matching the flux store with that name.
  */
-export function byStore(name: string, short: boolean = true): MetroFilter {
+export function byFluxStore(name: string, short: boolean = true): MetroFilter {
 	const named = short ? name + 'Store' : name;
 	const filter = (mdl: any) => mdl._dispatcher && mdl.getName?.() === named;
 
@@ -113,4 +113,7 @@ export function byStore(name: string, short: boolean = true): MetroFilter {
 	return filter;
 }
 
-export default { byProps, byDisplayName, byPrototypes, byName, byStore, byFilePath };
+/** @deprecated Use byFluxStore */
+export const byStore = byFluxStore;
+
+export default { byProps, byDisplayName, byPrototypes, byName, byFluxStore, byFilePath };
