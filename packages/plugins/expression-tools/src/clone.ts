@@ -1,3 +1,5 @@
+import { flux } from '@unbound-app/api';
+
 import {
 	getAssetUrl,
 	getStickerFile,
@@ -5,7 +7,7 @@ import {
 	type Expression,
 	type Sticker,
 } from '~/expression';
-import { Auth, Dispatcher, EmojiActions, Users } from '~/modules';
+import { Auth, EmojiActions, Users } from '~/modules';
 import { getErrorMessage } from '~/errors';
 import type { Guild } from '~/guilds';
 import { notify } from '~/notify';
@@ -101,7 +103,7 @@ async function uploadSticker(sticker: Sticker, guild: Guild, name: string): Prom
 
 	const body = await postSticker(guild, form, token);
 
-	Dispatcher.dispatch({
+	void flux.dispatch({
 		type: 'GUILD_STICKERS_CREATE_SUCCESS',
 		guildId: guild.id,
 		sticker: { ...body, user: Users.getCurrentUser() },
