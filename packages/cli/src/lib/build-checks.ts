@@ -1,5 +1,4 @@
 import type { DiscoveredAddon } from '~/lib/discovery';
-
 import { buildAddon } from '~/lib/build-addon';
 
 export type BuildCheckIssue = {

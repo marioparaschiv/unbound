@@ -1,8 +1,8 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 import { z } from 'zod';
 
-import { discoverAddons } from '~/lib/discovery';
 import { buildWithChecks } from '~/lib/build-checks';
+import { discoverAddons } from '~/lib/discovery';
 import { loadConfig } from '~/lib/config';
 
 const schema = z.object({});
