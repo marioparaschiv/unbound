@@ -114,6 +114,7 @@ function AddonPage() {
 								source={source.addonMd}
 								pin={source.pin}
 								mediaBase={source.mediaBase}
+								page={source.page}
 							/>
 						) : (
 							<Text variant='text-md' color='muted'>

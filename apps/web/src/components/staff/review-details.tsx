@@ -94,7 +94,7 @@ function ChangedFields({ rows, previousVersion }: ChangedFieldsProps) {
  * @returns The sections, in reading order.
  */
 function buildSections(entry: ReviewEntry): Section[] {
-	const { previousVersion, addonMd, addonMdDiff: diff, changelog, source } = entry;
+	const { previousVersion, addonMd, addonMdDiff: diff, changelog, source, page } = entry;
 	const sections: Section[] = [];
 
 	if (changelog) {
@@ -143,7 +143,12 @@ function buildSections(entry: ReviewEntry): Section[] {
 			summary: 'added',
 			body: (
 				<div className='p-4 border rounded-control max-h-[32rem] overflow-auto'>
-					<AddonMd source={addonMd} pin={source} mediaBase={getPinnedMediaBase(source)} />
+					<AddonMd
+						source={addonMd}
+						pin={source}
+						mediaBase={getPinnedMediaBase(source)}
+						page={page}
+					/>
 				</div>
 			),
 		});
@@ -154,7 +159,12 @@ function buildSections(entry: ReviewEntry): Section[] {
 			summary: addonMd ? 'included' : 'none, the description is shown',
 			body: addonMd ? (
 				<div className='p-4 border rounded-control max-h-[32rem] overflow-auto'>
-					<AddonMd source={addonMd} pin={source} mediaBase={getPinnedMediaBase(source)} />
+					<AddonMd
+						source={addonMd}
+						pin={source}
+						mediaBase={getPinnedMediaBase(source)}
+						page={page}
+					/>
 				</div>
 			) : (
 				<Text variant='text-sm' color='muted'>

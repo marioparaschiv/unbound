@@ -94,6 +94,7 @@ function SubmissionPreview({ preview }: SubmissionPreviewProps) {
 							source={preview.addonMd}
 							pin={source}
 							mediaBase={getPinnedMediaBase(source)}
+							page={preview.page}
 						/>
 					</div>
 				) : (

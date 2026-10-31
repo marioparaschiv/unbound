@@ -4,6 +4,7 @@ import { repositoryDetailsSchema, sourcePinSchema } from './source';
 import { submissionKindSchema, submissionSchema } from './publish';
 import { addonVersionSchema, sha256Schema } from './addons';
 import { addonManifestSchema } from './manifest';
+import { addonPageSchema } from './addon-page';
 import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
 import { z } from './zod';
@@ -23,6 +24,8 @@ export const submissionContentSchema = z.object({
 	bundleSize: z.int().check(z.positive()),
 	sha256: sha256Schema,
 	addonMd: z.nullable(z.string()),
+	/** The measured `{output}/page.json`, its media checked against the commit; `null` when none is committed. */
+	page: z.nullable(addonPageSchema),
 	/** The entry for `manifest.version`, or `null` when the addon has no CHANGELOG.md. */
 	changelog: z.nullable(changelogSchema),
 	details: repositoryDetailsSchema,

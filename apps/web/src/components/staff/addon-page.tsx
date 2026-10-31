@@ -165,7 +165,12 @@ function StorePage({ store }: StorePageProps) {
 	return (
 		<Card className='relative gap-0 overflow-hidden'>
 			<CardContent className={cn(!expanded && 'max-h-96 overflow-hidden')}>
-				<AddonMd source={source.addonMd} pin={source.pin} mediaBase={source.mediaBase} />
+				<AddonMd
+					source={source.addonMd}
+					pin={source.pin}
+					mediaBase={source.mediaBase}
+					page={source.page}
+				/>
 			</CardContent>
 			{expanded ? null : (
 				<div className='right-0 bottom-0 left-0 absolute flex justify-center bg-linear-to-t from-card via-card/90 to-transparent pt-16 pb-4'>

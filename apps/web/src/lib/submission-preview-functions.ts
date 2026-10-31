@@ -85,6 +85,7 @@ export const fetchSubmissionPreview = createServerFn({ method: 'GET' })
 				pin,
 				details: row.source.details,
 				addonMd: row.source.addonMd,
+				page: row.source.page,
 				mediaBase: getPinnedMediaBase(pin),
 				approvedAt: submittedAt,
 			},
