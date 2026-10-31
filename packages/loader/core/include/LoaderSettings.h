@@ -26,6 +26,8 @@ public:
     void        set(const std::string &store, const std::string &key, nlohmann::json value);
     void        remove(const std::string &store, const std::string &key);
     bool        apply(const nlohmann::json &changes);
+    bool        stage(const nlohmann::json &changes);
+    bool        flush();
 
     const std::string &path() const;
 
@@ -43,6 +45,7 @@ private:
     void      refreshLocked() const;
     void      setLocked(const std::string &store, const std::string &key, nlohmann::json value);
     void      removeLocked(const std::string &store, const std::string &key);
+    void      applyLocked(const nlohmann::json &changes);
 
     std::string            path_;
     mutable nlohmann::json data_ = nlohmann::json::object();

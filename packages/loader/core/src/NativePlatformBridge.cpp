@@ -301,6 +301,46 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                     }
                     return jsi::Value(store->apply(fromJSIValue(rt, args[0])));
                 }));
+        settings.setProperty(
+            runtime, "stage",
+            native::makeFunction(
+                runtime, "stage", 1,
+                [store](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
+                        size_t count) -> jsi::Value {
+                    if (count == 0 || !args[0].isObject() || !args[0].asObject(rt).isArray(rt))
+                    {
+                        throw jsi::JSError(rt, "settings.stage expects an array of changes");
+                    }
+                    return jsi::Value(store->stage(fromJSIValue(rt, args[0])));
+                }));
+        settings.setProperty(
+            runtime, "flush",
+            native::makeFunction(runtime, "flush", 0,
+                                 [store](jsi::Runtime &, const jsi::Value &, const jsi::Value *,
+                                         size_t) -> jsi::Value {
+                                     return jsi::Value(store->flush());
+                                 }));
+        settings.setProperty(
+            runtime, "get",
+            native::makeFunction(
+                runtime, "get", 2,
+                [store](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
+                        size_t count) -> jsi::Value {
+                    if (count == 0 || args[0].isUndefined())
+                    {
+                        return toJSIValue(rt, store->snapshot());
+                    }
+                    if (!args[0].isString() ||
+                        (count > 1 && !args[1].isUndefined() && !args[1].isString()))
+                    {
+                        throw jsi::JSError(rt, "settings.get expects a store name and a key path");
+                    }
+                    const std::string key =
+                        count > 1 && args[1].isString() ? args[1].getString(rt).utf8(rt) : "";
+                    std::optional<nlohmann::json> value =
+                        store->get(args[0].getString(rt).utf8(rt), key);
+                    return value ? toJSIValue(rt, *value) : jsi::Value::undefined();
+                }));
         platform.setProperty(runtime, "settings", std::move(settings));
     }
 

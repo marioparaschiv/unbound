@@ -89,8 +89,10 @@ static const char *const kPreloadChecks = R"JS((function () {
 	check(byId['a.large'].bundle.length === 3 * 1024 * 1024, 'a 3 MiB bundle arrives whole');
 	check(byId['a.plain'].manifest.trust === 'unsigned' && typeof byId['a.plain'].manifest.entry === 'string', 'the loader adds trust and entry');
 	check(Array.isArray(globalThis.UNBOUND_THEMES) && globalThis.UNBOUND_THEMES.length === 1, 'the valid theme arrives');
-	check(typeof globalThis.UNBOUND_SETTINGS === 'object' && globalThis.UNBOUND_SETTINGS.unbound.answer === 42, 'settings arrive');
-	check(globalThis.UNBOUND_SETTINGS['名前'] && globalThis.UNBOUND_SETTINGS['名前']['ü'] === 1, 'unicode settings keys arrive intact, got ' + JSON.stringify(Object.keys(globalThis.UNBOUND_SETTINGS)));
+	check(typeof Object.getOwnPropertyDescriptor(globalThis, 'UNBOUND_SETTINGS').get === 'function', 'settings stay in native code until an older client reads them');
+	check(globalThis.UNBOUND_SETTINGS.unbound.answer === 42, 'an older client still reads every setting');
+	check(NativePlatform.settings.get('unbound', 'answer') === 42, 'a setting is read lazily');
+	check(NativePlatform.settings.get('名前', 'ü') === 1, 'unicode settings keys are read intact');
 	check(Array.isArray(globalThis.UNBOUND_FONTS), 'UNBOUND_FONTS is an array');
 	check(Array.isArray(globalThis.UNBOUND_AVAILABLE_FONTS) && globalThis.UNBOUND_AVAILABLE_FONTS[0] === 'System', 'available fonts arrive');
 	check(globalThis.UNBOUND_LOADER.origin === 'https://example.invalid' && typeof globalThis.UNBOUND_LOADER.version === 'string', 'loader info arrives');
@@ -154,12 +156,13 @@ int main()
     loader::AddonState addons;
     addons.scan(documents.string());
     loader::PreloadPayload payload = loader::makePreloadPayload(
-        settings, addons, nlohmann::json::array({"System"}), "https://example.invalid", version);
+        addons, nlohmann::json::array({"System"}), "https://example.invalid", version);
 
     auto runtime        = facebook::hermes::makeHermesRuntime();
     auto provider       = std::make_shared<loader::NativePlatformProvider>();
     provider->platform  = "host";
     provider->documents = documents.string();
+    provider->settings  = &settings;
     loader::installNativePlatform(*runtime, provider);
     auto preload = loader::bootstrap::function(*runtime, loader::bootstrap::kPreload);
     require(preload.has_value(), "the preload bootstrap evaluates to a function");

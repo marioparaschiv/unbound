@@ -617,6 +617,9 @@ export type NativePlatformFonts = {
 
 export type NativePlatformSettings = {
 	apply(changes: readonly NativeSettingsChange[]): boolean;
+	stage?(changes: readonly NativeSettingsChange[]): boolean;
+	flush?(): boolean;
+	get?(store?: string, key?: string): NativeSerializable | undefined;
 };
 
 export type NativePlatformBridge = {
