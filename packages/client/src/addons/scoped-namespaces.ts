@@ -29,9 +29,9 @@ export type ScopedCommands = {
 };
 
 function liveNamespace<K extends keyof Api>(key: K): Api[K] {
-	const unbound: Api = Reflect.get(globalThis, 'unbound');
+	const unbound: object = Reflect.get(globalThis, 'unbound');
 
-	return unbound[key];
+	return Reflect.get(unbound, key);
 }
 
 function overlay<K extends keyof Api, O extends Partial<Api[K]>>(
