@@ -9,21 +9,12 @@ export declare const Messages: Record<string, string>;
  */
 export declare function defineLocalizations(table: StringStore): Localizations;
 /**
- * @description Drains every active locale-change subscription. Idempotent. Twin of {@link init}.
- */
-export declare function destroy(): void;
-/**
  * @description Formats a localized string, interpolating ICU `MessageFormat` placeholders.
  * @param key The message key to resolve and format.
  * @param vars The variables to interpolate into the message.
  * @returns The formatted string.
  */
 export declare function format(key: string, vars?: FormatVars): string;
-/**
- * @description Loads the fallback and active locales, then subscribes to Discord locale changes. Fire-and-forget; never blocks startup. Twin of {@link destroy}.
- * @returns A promise that resolves once the initial locales have been ensured and the subscription is wired.
- */
-export declare function init(): Promise<void>;
 export type FormatVars = Record<string, string | number | boolean | Date>;
 export type LocaleStrings = Record<string, string>;
 export type Localizations = {
