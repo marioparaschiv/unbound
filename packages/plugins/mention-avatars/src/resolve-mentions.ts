@@ -1,8 +1,13 @@
+import type { FluxChannel } from '@unbound-app/api/flux';
 import { metro } from '@unbound-app/api';
 
 import { avatarPngURL, extractMentionTokens, roleImageSource } from '~/mentions';
 import { ChannelStore, GuildMemberStore, RoleStore, UserStore } from '~/modules';
 import type { Mention, Role } from '~/mentions';
+
+type Channel = FluxChannel & {
+	guildId?: string;
+};
 
 type User = {
 	avatar?: string | null;
@@ -78,7 +83,9 @@ function guildIdForMessage(message: Message): string | undefined {
 	if (guildId) return guildId;
 
 	const channelId = message.channel_id ?? message.channelId;
-	const channel = channelId ? ChannelStore.getChannel?.(channelId) : undefined;
+	const channel: Channel | undefined = channelId
+		? ChannelStore.getChannel?.(channelId)
+		: undefined;
 
 	return channel?.guild_id ?? channel?.guildId;
 }

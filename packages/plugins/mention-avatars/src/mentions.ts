@@ -1,5 +1,4 @@
 import { MENTION_PLACEHOLDER } from '~/constants';
-import { isTextBoundary } from '@unbound-plugins/shared/native/ios/text-attachments';
 
 export type MentionType = 'role' | 'user';
 
@@ -24,9 +23,11 @@ export type Role = {
 
 export type RoleImage = Pick<Mention, 'avatarURL' | 'roleColor'>;
 
-// Discord wraps mention labels in first-strong isolate marks (U+2068, U+2069).
+// Discord's invisible formatting characters; it wraps mention labels in first-strong isolate marks (U+2068, U+2069).
+const INVISIBLE_FORMATTING = new Set(['\u200B', '\u2060', '\u2068', '\u2069', '\uFEFF']);
+
 function endsMention(next: string | undefined): boolean {
-	return isTextBoundary(next);
+	return !next || INVISIBLE_FORMATTING.has(next) || /\s/u.test(next);
 }
 
 /**
