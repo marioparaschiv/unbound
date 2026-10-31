@@ -2,6 +2,8 @@
 
 import type { PredicateResult } from '../utils';
 declare const CACHE_KEY: unique symbol;
+/** @deprecated Use byFluxStore */
+export declare const byStore: typeof byFluxStore;
 /**
  * @description Builds a filter matching a module whose `displayName` equals the given name.
  * @param name The `displayName` the module must have.
@@ -14,6 +16,13 @@ export declare function byDisplayName(name: string): MetroFilter;
  * @returns A {@link MetroFilter} matching the module loaded from that file path.
  */
 export declare function byFilePath(path: string): MetroFilter;
+/**
+ * @description Builds a filter matching a flux store by name, appending `Store` when `short` is set.
+ * @param name The store name to match against.
+ * @param short Whether to append `Store` to `name` before matching.
+ * @returns A {@link MetroFilter} matching the flux store with that name.
+ */
+export declare function byFluxStore(name: string, short?: boolean): MetroFilter;
 /**
  * @description Builds a filter matching a module whose `name` equals the given name.
  * @param name The `name` the module must have.
@@ -32,13 +41,6 @@ export declare function byProps(...props: string[]): MetroFilter;
  * @returns A {@link MetroFilter} matching modules whose prototype exposes every given method.
  */
 export declare function byPrototypes(...prototypes: string[]): MetroFilter;
-/**
- * @description Builds a filter matching a flux store by name, appending `Store` when `short` is set.
- * @param name The store name to match against.
- * @param short Whether to append `Store` to `name` before matching.
- * @returns A {@link MetroFilter} matching the flux store with that name.
- */
-export declare function byStore(name: string, short?: boolean): MetroFilter;
 /** A module predicate, carrying its cache key and a `raw` flag, produced by every `by*` helper. */
 export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) & {
 	[CACHE_KEY]?: string;

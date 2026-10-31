@@ -4,6 +4,7 @@
 import './global';
 
 export * from './typings/components';
+export * from './typings/markdown';
 export * from './typings/settings';
 export * from './typings/addons';
 export * from './typings/assets';

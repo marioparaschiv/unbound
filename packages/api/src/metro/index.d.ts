@@ -6,7 +6,14 @@ import type { PredicateResult } from '../utils';
 import * as React$1 from 'react';
 import { ComponentProps, ComponentType, ElementType, ReactNode } from 'react';
 import * as RN from 'react-native';
-import { ColorValue, ImageStyle, TextStyle, ViewStyle } from 'react-native';
+import {
+	ColorValue,
+	ImageProps,
+	ImageStyle,
+	ImageURISource,
+	TextStyle,
+	ViewStyle,
+} from 'react-native';
 declare const HelpMessageTypes: {
 	readonly 0: 'WARNING';
 	readonly 1: 'INFO';
@@ -18,10 +25,13 @@ declare const HelpMessageTypes: {
 	readonly SUCCESS: 3;
 };
 declare const React$1: typeof import('react');
+declare function byFluxStore(name: string, short?: boolean): MetroFilter;
 /** @internal */
 declare const CACHE_KEY: unique symbol;
 /** @deprecated Use onModuleLoad */
 export declare const addListener: typeof onModuleLoad;
+/** @deprecated Use flux.getStore */
+export declare const findStore: MetroFindStore;
 /** @deprecated Call the function onModuleLoad returns. */
 export declare const off: typeof removeListener;
 /** @deprecated Use onModuleLoad */
@@ -94,17 +104,6 @@ export declare function findByPrototypes<
  */
 export declare function findLazy(filter: MetroFilter, options?: MetroLazySearchOptions): any;
 /**
- * @description Finds a flux store by name. Lazy unless `{ lazy: false }` is passed: the search runs on first access.
- * @template U The union of requested store names.
- * @template T The argument tuple, optionally ending in store search options.
- * @param args The store name(s) to search for, optionally followed by options (`short` defaults to `true`).
- * @returns The matched store.
- */
-export declare function findStore<
-	U extends string,
-	T extends U[] | MetroStringFindWithOptions<U, MetroStoreOptions>,
->(...args: T): AnyProps;
-/**
  * @description Registers a listener invoked with every module as it loads.
  * @param listener Callback receiving the module exports and its id.
  * @returns A function that removes the listener.
@@ -133,6 +132,10 @@ export type HelpMessageProps = {
 	button?: React$1.ReactNode;
 };
 export type HelpMessageType = (typeof HelpMessageTypes)[keyof typeof HelpMessageTypes & string];
+/** React Native's `ImageSourceUtils`, which every `Image` render resolves its source through. */
+export type ImageSourcesModule = {
+	getImageSourcesFromImageProps: (props: ImageProps) => ImageURISource | ImageURISource[] | null;
+};
 /** Widens a single result to an array when the search was made with `all: true`. */
 export type MetroAllValues<T extends MetroSearchOptions, U> = T extends {
 	all: true;
@@ -171,6 +174,8 @@ export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) &
 	[CACHE_KEY]?: string;
 	isRaw?: boolean;
 };
+/** The signature of the deprecated `findStore`. */
+export type MetroFindStore = (name: string, options?: MetroStoreOptions) => AnyProps;
 /** A function or class exported by a Discord module, whose signature Discord does not document. */
 export type MetroFunction = DiscordFunction & (new (...args: any[]) => any);
 /** Dispatches to the bulk or single by-name result shape based on the argument tuple. */

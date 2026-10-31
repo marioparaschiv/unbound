@@ -57,7 +57,7 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number, drawnPo
 	const settle = () => new Promise((resolve) => setTimeout(resolve, settleMs));
 	const message = (failure: unknown) =>
 		String(failure && (failure as Error).message ? (failure as Error).message : failure);
-	let entity = manager.getEntity(id);
+	let entity = manager.get(id);
 	const result: CycleResult = {
 		id,
 		installed: Boolean(entity),
@@ -125,7 +125,7 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number, drawnPo
 
 		if (!result.error && after && after !== before) result.error = message(after);
 
-		entity = manager.getEntity(id);
+		entity = manager.get(id);
 		result.restarted = Boolean(entity?.started);
 		result.hooksAfter = hooks();
 
@@ -133,7 +133,7 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number, drawnPo
 
 		async function watchDrawn(since: number) {
 			while (watching) {
-				const instance = manager.getEntity(id)?.instance;
+				const instance = manager.get(id)?.instance;
 
 				try {
 					const report = (await instance?.selfTest?.()) as {
@@ -172,7 +172,7 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number, drawnPo
 			await settle();
 		}
 
-		const updated = manager.getEntity(id);
+		const updated = manager.get(id);
 
 		result.updated = Boolean(updated?.started);
 		result.hooksUpdated = hooks();
@@ -381,7 +381,7 @@ export const settingsProbeSchema = z.object({
 export type SettingsProbe = z.infer<typeof settingsProbeSchema>;
 
 function openSettingsScreen(id: string) {
-	const entity = unbound.plugins.getEntity(id);
+	const entity = unbound.plugins.get(id);
 	const instance = entity?.instance;
 
 	if (!entity || !instance || typeof instance.getSettingsPanel !== 'function') return 'none';

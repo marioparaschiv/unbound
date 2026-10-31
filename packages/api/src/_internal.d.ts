@@ -1889,6 +1889,50 @@ export type ManaContextProviderProps = {
 };
 /** @deprecated Use AddonKind */
 export type ManagerKind = (typeof MANAGER_KINDS)[number];
+/** Parses nested Markdown, as a rule's `parse` receives it. */
+export type MarkdownNestedParse = (source: string, state: MarkdownState) => MarkdownNode[];
+/** One node of a parsed Markdown tree; `type` names the rule that parsed it. */
+export type MarkdownNode = {
+	type: string;
+	content?: MarkdownNode[] | string;
+};
+/** Renders a node or a list of nodes, as a rule's `react` receives it. */
+export type MarkdownOutput = (
+	node: MarkdownNode | MarkdownNode[],
+	state: MarkdownState,
+) => React$1.ReactNode;
+/** Discord's Markdown module (`MarkupUtils`), found by `parse`, `parseToAST` and `reactParserFor`. */
+export type MarkdownParserModule = {
+	/** The rules Discord renders messages with. */
+	defaultRules: MarkdownRules;
+	reactParserFor(rules: MarkdownRules): MarkdownReactParser;
+	parse: MarkdownReactParser;
+	parseToAST(source?: string, inline?: boolean, state?: MarkdownState): MarkdownNode[];
+};
+/** Renders Markdown source to React Native elements; `inline` defaults to `true`. */
+export type MarkdownReactParser = (
+	source?: string,
+	inline?: boolean,
+	state?: MarkdownState,
+) => React$1.ReactNode;
+/** A simple-markdown rule: `match` finds it at the start of the source, `parse` builds its node, `react` renders it. */
+export type MarkdownRule<TNode extends MarkdownNode = MarkdownNode> = {
+	/** Discord 349 ships `highlight`, `guild` and `channel` without one; the parser never calls those. */
+	order?: number;
+	match(source: string, state: MarkdownState, previous: string): RegExpExecArray | null;
+	parse(capture: RegExpExecArray, parse: MarkdownNestedParse, state: MarkdownState): TNode;
+	react?(node: TNode, output: MarkdownOutput, state: MarkdownState): React$1.ReactNode;
+};
+/** A rule set by rule name, the shape `reactParserFor` takes. */
+export type MarkdownRules = Record<string, MarkdownRule>;
+/** The parse state Discord's rules read; the `allow*` flags turn links, headings and lists on. */
+export type MarkdownState = {
+	key?: string | number;
+	inline?: boolean;
+	allowLinks?: boolean;
+	allowHeading?: boolean;
+	allowList?: boolean;
+};
 export type MenuComponent = React$1.ComponentType<MenuProps>;
 export type MenuGroupComponent = React$1.ComponentType<MenuGroupProps>;
 /**

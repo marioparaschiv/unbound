@@ -215,6 +215,8 @@ export function toAddonVersion(
 	submission: VersionSubmission | null,
 ): AddonVersion {
 	const keys = getArtifactKeys(row.addonId, row.version, row.manifest.main);
+	const pageKey = `${getVersionDirectory(row.addonId, row.version)}/${ADDON_PAGE_FILENAME}`;
+	const addonMd = submission?.source?.addonMd ?? null;
 
 	return {
 		version: row.version,
@@ -226,6 +228,7 @@ export function toAddonVersion(
 		publishedAt: row.publishedAt.toISOString(),
 		manifestUrl: getCdnUrl(env, keys.manifest),
 		bundleUrl: getCdnUrl(env, keys.bundle),
+		pageUrl: addonMd === null ? null : getCdnUrl(env, pageKey),
 	};
 }
 

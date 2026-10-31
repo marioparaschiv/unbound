@@ -68,11 +68,11 @@ type DeviceMessage = {
 
 type DeviceUnbound = {
 	plugins: {
-		entities: Map<string, DeviceEntity>;
-		errors: Map<string, unknown>;
-		getEntity(id: string): DeviceEntity | undefined;
-		start(id: string): Promise<void>;
-		stop(id: string): Promise<void>;
+		entities: ReadonlyMap<string, DeviceEntity>;
+		errors: ReadonlyMap<string, Error>;
+		get(id: string): DeviceEntity | undefined;
+		start(id: string): void | Promise<void>;
+		stop(id: string): void | Promise<void>;
 		reload(
 			id: string,
 			bundle: unknown,

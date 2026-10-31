@@ -1,8 +1,9 @@
 import { createLogger } from '@unbound-app/logger';
 import enUS from '@i18n/en-US.json';
 
-import { Dispatcher, i18n as Discord, Moment } from '~/metro/common';
+import { i18n as Discord, Moment } from '~/metro/common';
 import { DEV, I18N_BASE_URL } from '~/core/constants';
+import { Dispatcher } from '~/flux/modules';
 import { findByName } from '~/metro/search';
 import { getBucket } from '~/storage/api';
 import fs from '~/native/fs';
