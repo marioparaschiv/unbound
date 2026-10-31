@@ -35,6 +35,23 @@
 			"component": "sdk-generator",
 			"draft": true,
 			"force-tag-creation": true
+		},
+		"apps/devtools": {
+			"component": "devtools",
+			"release-type": "simple",
+			"initial-version": "0.1.0",
+			"extra-files": [
+				{
+					"type": "toml",
+					"path": "Cargo.toml",
+					"jsonpath": "$.workspace.package.version"
+				},
+				{
+					"type": "toml",
+					"path": "Cargo.lock",
+					"jsonpath": "$.package[?(@.name.value==='unbound-devtools' || @.name.value==='unbound-devtools-core')].version"
+				}
+			]
 		}
 	},
 	"plugins": [
