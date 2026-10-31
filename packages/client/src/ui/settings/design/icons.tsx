@@ -1,6 +1,6 @@
 import { ScrollView } from 'react-native';
 
-import { AddonList } from '~/ui/addons';
+import AddonList from '~/ui/addons/addon-list';
 
 /** The Icons tab: the shared addon list bound to the Icons manager. */
 function IconsTab() {

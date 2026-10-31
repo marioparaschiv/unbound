@@ -13,16 +13,16 @@ import {
 	sync,
 } from '~/sync/api';
 import type { SyncMode, SyncSession } from '~/sync/api';
-import { useSettingsStore } from '~/storage/api';
 import type { SyncStrategy } from '~/sync/merge';
-import { Messages, format } from '~/i18n/api';
+import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
-import { Page } from '~/ui/components';
-import { Icons } from '~/assets/api';
+import { useBucket } from '~/storage/api';
+import Page from '~/ui/components/page';
+import { icons } from '~/assets/api';
 
 import useStyles from './cloud-sync.style';
 
-type SyncSettings = ReturnType<typeof useSettingsStore>;
+type SyncSettings = ReturnType<typeof useBucket>;
 
 /** A choice row; `label` and `description` are message keys, resolved at render for the current locale. */
 type Option<T> = {
@@ -83,7 +83,7 @@ function describeStatus(settings: SyncSettings): string {
 	}
 
 	if (!syncedAt) {
-		return Messages.UNBOUND_CLOUD_SYNC_NEVER_SYNCED;
+		return messages.UNBOUND_CLOUD_SYNC_NEVER_SYNCED;
 	}
 
 	return format('UNBOUND_CLOUD_SYNC_LAST_SYNCED', { date: new Date(syncedAt).toLocaleString() });
@@ -92,7 +92,7 @@ function describeStatus(settings: SyncSettings): string {
 /** @description Cloud Sync settings, laid out like Discord's own settings pages. */
 function CloudSyncPage() {
 	const styles = useStyles();
-	const settings = useSettingsStore(SYNC_STORE);
+	const settings = useBucket(SYNC_STORE);
 	const [busy, setBusy] = useState(false);
 	const session = settings.get<SyncSession | null>('session', null);
 
@@ -103,10 +103,10 @@ function CloudSyncPage() {
 
 	function confirmDelete() {
 		Discord.showConfirmModal({
-			title: Messages.UNBOUND_CLOUD_SYNC_DELETE,
-			content: Messages.UNBOUND_CLOUD_SYNC_DELETE_CONFIRM,
-			confirmText: Messages.UNBOUND_DELETE,
-			cancelText: Messages.UNBOUND_CANCEL,
+			title: messages.UNBOUND_CLOUD_SYNC_DELETE,
+			content: messages.UNBOUND_CLOUD_SYNC_DELETE_CONFIRM,
+			confirmText: messages.UNBOUND_DELETE,
+			cancelText: messages.UNBOUND_CANCEL,
 			onConfirm: () => void deleteCloudData(),
 		});
 	}
@@ -117,12 +117,12 @@ function CloudSyncPage() {
 				<Discord.TableRowGroup
 					helperText={
 						settings.get<string | null>('lastError', null) ??
-						Messages.UNBOUND_CLOUD_SYNC_SIGN_IN_DESC
+						messages.UNBOUND_CLOUD_SYNC_SIGN_IN_DESC
 					}
 				>
 					<Discord.TableRow
-						label={Messages.UNBOUND_CLOUD_SYNC_SIGN_IN}
-						icon={<Discord.TableRowIcon source={Icons.CloudIcon} />}
+						label={messages.UNBOUND_CLOUD_SYNC_SIGN_IN}
+						icon={<Discord.TableRowIcon source={icons.CloudIcon} />}
 						arrow
 						disabled={busy}
 						onPress={() => track(signIn())}
@@ -135,8 +135,8 @@ function CloudSyncPage() {
 	const signOutGroup = (
 		<Discord.TableRowGroup>
 			<Discord.TableRow
-				label={Messages.UNBOUND_CLOUD_SYNC_SIGN_OUT}
-				icon={<Discord.TableRowIcon source={Icons.DoorExitIcon} />}
+				label={messages.UNBOUND_CLOUD_SYNC_SIGN_OUT}
+				icon={<Discord.TableRowIcon source={icons.DoorExitIcon} />}
 				onPress={signOut}
 			/>
 		</Discord.TableRowGroup>
@@ -146,15 +146,15 @@ function CloudSyncPage() {
 		return (
 			<Page>
 				<Discord.TableRowGroup
-					title={Messages.UNBOUND_CLOUD_SYNC_CHOICE}
-					helperText={Messages.UNBOUND_CLOUD_SYNC_CHOICE_DESC}
+					title={messages.UNBOUND_CLOUD_SYNC_CHOICE}
+					helperText={messages.UNBOUND_CLOUD_SYNC_CHOICE_DESC}
 				>
 					{FIRST_SYNC_CHOICES.map((choice) => (
 						<Discord.TableRow
 							key={choice.value}
-							label={Messages[choice.label]}
-							subLabel={Messages[choice.description]}
-							icon={<Discord.TableRowIcon source={Icons[choice.icon]} />}
+							label={messages[choice.label]}
+							subLabel={messages[choice.description]}
+							icon={<Discord.TableRowIcon source={icons[choice.icon]} />}
 							arrow
 							disabled={busy}
 							onPress={() => track(resolveFirstSync(choice.value))}
@@ -170,21 +170,21 @@ function CloudSyncPage() {
 		<Page>
 			<Discord.TableRowGroup helperText={describeStatus(settings)}>
 				<Discord.TableSwitchRow
-					label={Messages.UNBOUND_CLOUD_SYNC_ENABLED}
-					icon={<Discord.TableRowIcon source={Icons.CloudIcon} />}
+					label={messages.UNBOUND_CLOUD_SYNC_ENABLED}
+					icon={<Discord.TableRowIcon source={icons.CloudIcon} />}
 					value={settings.get('enabled', false)}
 					onValueChange={setEnabled}
 				/>
 				<Discord.TableRow
-					label={Messages.UNBOUND_CLOUD_SYNC_NOW}
-					icon={<Discord.TableRowIcon source={Icons.RetryIcon} />}
+					label={messages.UNBOUND_CLOUD_SYNC_NOW}
+					icon={<Discord.TableRowIcon source={icons.RetryIcon} />}
 					disabled={busy}
 					onPress={() => track(sync())}
 				/>
 			</Discord.TableRowGroup>
 
 			<Discord.TableRadioGroup
-				title={Messages.UNBOUND_CLOUD_SYNC_MODE}
+				title={messages.UNBOUND_CLOUD_SYNC_MODE}
 				hasIcons
 				value={getMode()}
 				onChange={(mode: SyncMode) => setMode(mode)}
@@ -193,9 +193,9 @@ function CloudSyncPage() {
 					<Discord.TableRadioRow
 						key={mode.value}
 						value={mode.value}
-						label={Messages[mode.label]}
-						subLabel={Messages[mode.description]}
-						icon={<Discord.TableRowIcon source={Icons[mode.icon]} />}
+						label={messages[mode.label]}
+						subLabel={messages[mode.description]}
+						icon={<Discord.TableRowIcon source={icons[mode.icon]} />}
 					/>
 				))}
 			</Discord.TableRadioGroup>
@@ -204,9 +204,9 @@ function CloudSyncPage() {
 
 			<Discord.TableRowGroup>
 				<Discord.TableRow
-					label={Messages.UNBOUND_CLOUD_SYNC_DELETE}
+					label={messages.UNBOUND_CLOUD_SYNC_DELETE}
 					variant='danger'
-					icon={<Image source={Icons.TrashIcon} style={styles.dangerIcon} />}
+					icon={<Image source={icons.TrashIcon} style={styles.dangerIcon} />}
 					onPress={confirmDelete}
 				/>
 			</Discord.TableRowGroup>

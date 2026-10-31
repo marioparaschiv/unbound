@@ -3,9 +3,9 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { Discord } from '~/metro/components';
-import { Page } from '~/ui/components';
-import { Messages } from '~/i18n/api';
-import { Icons } from '~/assets/api';
+import Page from '~/ui/components/page';
+import { messages } from '~/i18n/api';
+import { icons } from '~/assets/api';
 
 import { shortDate } from './format';
 
@@ -33,13 +33,13 @@ function Changelog({ name, icon, installed, offered, changelogs, children }: Cha
 				/>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup title={Messages.UNBOUND_UPDATES_CHANGELOG}>
+			<Discord.TableRowGroup title={messages.UNBOUND_UPDATES_CHANGELOG}>
 				{changelogs.map((version) => (
 					<Discord.TableRow
 						key={version.version}
 						label={version.version}
-						subLabel={version.changelog ?? Messages.UNBOUND_UPDATES_NO_CHANGELOG}
-						icon={<Discord.TableRowIcon source={Icons.TagIcon} />}
+						subLabel={version.changelog ?? messages.UNBOUND_UPDATES_NO_CHANGELOG}
+						icon={<Discord.TableRowIcon source={icons.TagIcon} />}
 						trailing={
 							<Discord.TableRow.TrailingText text={shortDate(version.publishedAt)} />
 						}

@@ -1,7 +1,7 @@
 import type { UpdatableKind } from '~/addons/manager-of';
 import { Manager } from '~/addons/manager';
 import { Moment } from '~/metro/common';
-import { Icons } from '~/assets/api';
+import { icons } from '~/assets/api';
 
 /**
  * @description Resolves the asset that stands in for an addon's own icon, by its kind.
@@ -9,7 +9,7 @@ import { Icons } from '~/assets/api';
  * @returns The asset id.
  */
 export function kindIcon(kind: UpdatableKind): number | undefined {
-	return Icons[Manager.for(kind).icon];
+	return icons[Manager.for(kind).icon];
 }
 
 /**

@@ -2,14 +2,14 @@ import { View } from 'react-native';
 
 import { useUnboundSettings } from '~/settings/unbound';
 import { Discord } from '~/metro/components';
-import { Page } from '~/ui/components';
-import { Messages } from '~/i18n/api';
-import { Icons } from '~/assets/api';
+import Page from '~/ui/components/page';
+import { messages } from '~/i18n/api';
+import { icons } from '~/assets/api';
 
 /** @description Formats a toast duration for its settings row. */
 function formatDuration(duration: number): string {
 	if (duration === 0) {
-		return Messages.UNBOUND_INDEFINITE;
+		return messages.UNBOUND_INDEFINITE;
 	}
 
 	return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 }).format(duration / 1000)}s`;
@@ -23,22 +23,22 @@ function ToastsPage() {
 
 	return (
 		<Page>
-			<Discord.TableRowGroup title={Messages.UNBOUND_TOAST_SETTINGS}>
+			<Discord.TableRowGroup title={messages.UNBOUND_TOAST_SETTINGS}>
 				<Discord.TableSwitchRow
-					label={Messages.UNBOUND_TOASTS_ENABLED}
-					icon={<Discord.TableRowIcon source={Icons.BellIcon} />}
+					label={messages.UNBOUND_TOASTS_ENABLED}
+					icon={<Discord.TableRowIcon source={icons.BellIcon} />}
 					value={settings.get('toasts.enabled')}
 					onValueChange={() => settings.toggle('toasts.enabled')}
 				/>
 				<Discord.TableSwitchRow
-					label={Messages.UNBOUND_TOASTS_ANIMATIONS}
-					icon={<Discord.TableRowIcon source={Icons.EyeIcon} />}
+					label={messages.UNBOUND_TOASTS_ANIMATIONS}
+					icon={<Discord.TableRowIcon source={icons.EyeIcon} />}
 					value={settings.get('toasts.animations')}
 					onValueChange={() => settings.toggle('toasts.animations')}
 				/>
 			</Discord.TableRowGroup>
 
-			<Discord.TableRowGroup title={Messages.UNBOUND_TOASTS_BEHAVIOR}>
+			<Discord.TableRowGroup title={messages.UNBOUND_TOASTS_BEHAVIOR}>
 				<Discord.TableRow
 					label={
 						<View style={{ width: '100%', flexDirection: 'row', alignItems: 'center' }}>
@@ -46,7 +46,7 @@ function ToastsPage() {
 								variant='text-md/semibold'
 								color='mobile-text-heading-primary'
 							>
-								{Messages.UNBOUND_TOASTS_MAX_ON_SCREEN}
+								{messages.UNBOUND_TOASTS_MAX_ON_SCREEN}
 							</Discord.Text>
 							<Discord.Text
 								variant='text-sm/medium'
@@ -79,7 +79,7 @@ function ToastsPage() {
 								variant='text-md/semibold'
 								color='mobile-text-heading-primary'
 							>
-								{Messages.UNBOUND_TOASTS_DURATION}
+								{messages.UNBOUND_TOASTS_DURATION}
 							</Discord.Text>
 							<Discord.Text
 								variant='text-sm/medium'
