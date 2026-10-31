@@ -1,6 +1,8 @@
 import type {
 	NativeAssociationKey,
+	NativeCallOptions,
 	NativeCancelablePromise,
+	NativeClassHandle,
 	NativeFabricBridge,
 	NativeFabricSurface,
 	NativeFFIBridge,
@@ -61,6 +63,10 @@ type ScopedNativePlugin = {
 	bridge: NativePluginBridge;
 	dispose: () => void;
 };
+
+function isObjectHandle(value: unknown): value is NativeObjectHandle {
+	return typeof value === 'object' && value !== null;
+}
 
 function withFallback<T extends object>(bridge: Partial<T> | undefined, fallback: T): T {
 	return new Proxy(fallback, {
@@ -203,6 +209,24 @@ export function createScopedNativePlugin(
 	const objc: NativeObjCBridge = {
 		getClass: scopeMethod(objcBridge.getClass.bind(objcBridge), 'objc.getClass'),
 		alloc: scopeMethod(objcBridge.alloc.bind(objcBridge), 'objc.alloc'),
+		create: scopeMethod(
+			(
+				classOrName: string | NativeClassHandle,
+				initSelector: string,
+				args: unknown[] = [],
+				options?: NativeCallOptions,
+			) => {
+				const instance = objcBridge.alloc(classOrName);
+				const initialized = objcBridge.invoke(instance, initSelector, args, options);
+
+				if (!isObjectHandle(initialized)) {
+					throw new Error(`${initSelector} returned nil.`);
+				}
+
+				return initialized;
+			},
+			'objc.create',
+		),
 		className: scopeMethod(objcBridge.className.bind(objcBridge), 'objc.className'),
 		respondsTo: scopeMethod(objcBridge.respondsTo.bind(objcBridge), 'objc.respondsTo'),
 		call: scopeMethod(objcBridge.call.bind(objcBridge), 'objc.call'),
