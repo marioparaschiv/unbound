@@ -15,5 +15,12 @@
 	"version": "1.0.1",
 	"icon": "PaintPaletteIcon",
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "806f03379ad1692a45daddea9efaab8af7753482b84d2abbf45f6ef6379cf2d81d89cff2c2e013b13dfe2f57eb8ee6edcafe11a88840caf77f041f8525fce51a"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "TgCPnIbd0CosRg6eXDuPwkx5Y0g1B3a4tFUTye4MgyBPmEH7wQIP9e8iPLRubniKRvL325gf5KQAgMUp+HIDDA=="
+	}
 }

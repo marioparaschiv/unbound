@@ -15,5 +15,12 @@
 	"version": "1.0.1",
 	"icon": "UserSquareIcon",
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "abcfbbd692037b8da5d1d5a3ad93c666ffe0deb1e0cb45cba40f60e3fc1f2d79703a17d3c64a0941f2ff6e5400be0922fa3c20bc7dccb4c4af68b3f28b6aedf3"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "b142s+l2euHHsfkyc3XcOqhzEMn436seNlluds2QEgdGhsRpUaYBGy9hEgZzNYHc7Y7fFBkyrJmMBnNlNcTGDQ=="
+	}
 }
