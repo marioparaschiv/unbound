@@ -3,6 +3,7 @@ import * as Sync from '~/sync/api';
 
 export * as marketplace from '~/marketplace/api';
 export * as iconPacks from '~/icon-packs/api';
+export * as ui from '~/ui/settings-kit/api';
 export * as builtins from '~/builtins/api';
 export * as commands from '~/commands/api';
 export * as settings from '~/settings/api';

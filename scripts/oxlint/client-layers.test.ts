@@ -37,11 +37,12 @@ function clientLayers() {
 
 const { domains, ui } = clientLayers();
 
-test('only the domain builtin files on disk may import ui/', () => {
+test('only the domain builtin files on disk and the public barrel may import ui/', () => {
 	expect([...domains.except].sort()).toEqual(
 		[
 			...builtins.map((file) => `${CLIENT}/${file}`),
 			`${CLIENT}/builtins/error-boundary.tsx`,
+			`${CLIENT}/core/api.ts`,
 		].sort(),
 	);
 });
