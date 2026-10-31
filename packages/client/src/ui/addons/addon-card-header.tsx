@@ -2,10 +2,10 @@ import type { AddonManifest } from '@unbound-app/types';
 import { View } from 'react-native';
 import { memo } from 'react';
 
-import { Discord } from '~/api/metro/components';
+import { Discord } from '~/metro/components';
 import { TintedIcon } from '~/ui/components';
-import { Theme } from '~/api/metro/common';
-import { Icons } from '~/api/assets';
+import { Theme } from '~/metro/common';
+import { Icons } from '~/assets/api';
 
 import useStyles from './addon-card-header.style';
 import AddonTitle from './addon-title';

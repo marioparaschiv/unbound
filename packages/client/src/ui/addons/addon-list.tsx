@@ -1,15 +1,15 @@
 import { Pressable } from 'react-native';
 import { memo } from 'react';
 
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { isLibrary } from '~/lib/addon-dependencies';
-import { Discord } from '~/api/metro/components';
-import { Messages, format } from '~/api/i18n';
+import { useUnboundSettings } from '~/settings/unbound';
+import sampleAddons from '~/plugins/sample-addons';
+import { isLibrary } from '~/addons/dependencies';
+import { Messages, format } from '~/i18n/api';
+import { Discord } from '~/metro/components';
 import { Empty } from '~/ui/components';
+import { DEV } from '~/core/constants';
 import { useAddons } from '~/ui/hooks';
-import { DEV } from '~/lib/constants';
 
-import sampleAddons from './sample-addons';
 import AddonCard from './addon-card';
 
 type AddonListProps = {

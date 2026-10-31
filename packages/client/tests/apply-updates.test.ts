@@ -6,7 +6,7 @@ import { FakeAddons, loadManagers, makeManifest, resetDevice, writes } from './h
 Reflect.set(globalThis, '$$DEV$$', false);
 
 const Manager = await loadManagers();
-const { default: UpdatesStore } = await import('~/stores/updates');
+const { default: UpdatesStore } = await import('~/updates/state');
 
 const ID = 'dev.updated';
 const BUNDLE = 'module.exports = {};';

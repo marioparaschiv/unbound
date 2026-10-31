@@ -3,7 +3,7 @@ import { View, Image } from 'react-native';
 import { memo } from 'react';
 
 import { TintedIcon } from '~/ui/components';
-import { Icons } from '~/api/assets';
+import { Icons } from '~/assets/api';
 
 import useStyles from './toast.style';
 

@@ -31,7 +31,7 @@ afterEach(resetNativeFixtures);
 
 describe('native plugin capability scopes', () => {
 	test('hides the raw bridge after capturing it for scoped access', async () => {
-		const nativeApi = await import('~/api/native');
+		const nativeApi = await import('~/native/native');
 
 		expect((globalThis as NativePluginGlobal).NativePlugin).toBeUndefined();
 		expect(nativeApi).not.toHaveProperty('NativePlugin');

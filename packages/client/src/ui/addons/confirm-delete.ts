@@ -1,8 +1,8 @@
-import { dependentsOf } from '~/lib/addon-dependencies';
-import { Messages, format } from '~/api/i18n';
-import type { Addon } from '~/managers/addon';
-import { showDialog } from '~/api/dialogs';
-import { showToast } from '~/api/toasts';
+import { dependentsOf } from '~/addons/dependencies';
+import { Messages, format } from '~/i18n/api';
+import type { Addon } from '~/addons/addon';
+import { showDialog } from '~/dialogs/api';
+import { showToast } from '~/toasts/api';
 
 type DeletingManager = {
 	getEntities: () => Addon[];

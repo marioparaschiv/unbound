@@ -1,7 +1,7 @@
 import { View, ScrollView } from 'react-native';
 
 import { AddonList, InstallButton } from '~/ui/addons';
-import { SafeArea } from '~/api/metro/components';
+import { SafeArea } from '~/metro/components';
 
 /**
  * @description The Plugins settings page: the shared addon list bound to the Plugins manager, with a

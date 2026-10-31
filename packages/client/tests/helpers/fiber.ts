@@ -1,4 +1,4 @@
-import type { Fiber, Hook } from '~/lib/hot/refresh';
+import type { Fiber, Hook } from '~/hot-refresh/refresh';
 
 /**
  * @description Creates a detached function-component fiber holding a hook list.

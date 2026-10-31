@@ -1,8 +1,8 @@
 import { createLogger } from '@unbound-app/logger';
 import noop from '@unbound-app/utils/noop';
 
-import { createPatcher } from '~/api/patcher';
-import { findByProps } from '~/api/metro';
+import { createPatcher } from '~/patcher/api';
+import { findByProps } from '~/metro';
 
 const Patcher = createPatcher('unbound::tracking');
 const Logger = createLogger('Tracking');

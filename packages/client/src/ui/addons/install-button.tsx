@@ -1,10 +1,10 @@
 import type { AddonKind } from '@unbound-app/types/addons';
 import { View } from 'react-native';
 
-import { Discord } from '~/api/metro/components';
-import { Screens } from '~/lib/constants';
-import { Icons } from '~/api/assets';
-import { format } from '~/api/i18n';
+import { Discord } from '~/metro/components';
+import { Screens } from '~/core/constants';
+import { Icons } from '~/assets/api';
+import { format } from '~/i18n/api';
 
 import InstallUrlModal from './install-url-modal';
 import useStyles from './install-button.style';

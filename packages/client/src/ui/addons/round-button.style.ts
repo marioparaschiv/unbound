@@ -1,5 +1,5 @@
-import { Discord } from '~/api/metro/components';
-import { Theme } from '~/api/metro/common';
+import { Discord } from '~/metro/components';
+import { Theme } from '~/metro/common';
 
 // Background colours only render on device when they come through createStyles, not inline.
 export default Discord.createStyles({

@@ -1,10 +1,10 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import type { AddonManifest } from '@unbound-app/types';
 
-import type { Addon } from '~/managers/addon';
+import type { Addon } from '~/addons/addon';
 
 const { FakeAddons, makeManifest } = await import('./helpers/addons');
-const { setConsentPrompt, NativeConsentRequiredError } = await import('~/lib/native-consent');
+const { setConsentPrompt, NativeConsentRequiredError } = await import('~/native/consent');
 
 class ConsentAddons extends FakeAddons {
 	consents: Record<string, string> = {};

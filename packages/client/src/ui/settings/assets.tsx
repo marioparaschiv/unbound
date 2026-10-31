@@ -2,11 +2,11 @@ import { useMemo, useState, useRef, memo } from 'react';
 import type { UnboundAsset } from '@unbound-app/types';
 import { Image, View } from 'react-native';
 
-import { Discord, FlashList, Media } from '~/api/metro/components';
-import { getAll, getIDByName, Icons } from '~/api/assets';
-import { Messages, format } from '~/api/i18n';
-import { findByProps } from '~/api/metro';
+import { Discord, FlashList, Media } from '~/metro/components';
+import { getAll, getIDByName, Icons } from '~/assets/api';
+import { Messages, format } from '~/i18n/api';
 import { Empty } from '~/ui/components';
+import { findByProps } from '~/metro';
 
 import useStyles from './assets.style';
 

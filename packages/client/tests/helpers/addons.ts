@@ -1,7 +1,7 @@
 import type { AddonManifest, Plugin, PluginContext } from '@unbound-app/types';
 import { mock } from 'bun:test';
 
-import type { Addon, AddonState } from '~/managers/addon';
+import type { Addon, AddonState } from '~/addons/addon';
 
 // The base Addons manager reaches native FS and storage through these modules, which pull in
 // react-native. Stub both so the pure lifecycle logic loads under bun with no device harness.
@@ -10,12 +10,12 @@ export const states: Record<string, boolean> = {};
 export const persists: number[] = [];
 export const existingFiles = new Set<string>();
 
-mock.module('~/api/fs', () => ({
+mock.module('~/native/fs', () => ({
 	default: {
-		Documents: '/docs',
-		write: async (path: string) => void writes.push(path),
-		read: async () => '',
-		rm: async () => true,
+		documentsPath: '/docs',
+		writeFile: async (path: string) => void writes.push(path),
+		readFile: async () => '',
+		removeFile: async () => true,
 		exists: async (path: string) => existingFiles.has(path),
 	},
 }));
@@ -32,11 +32,11 @@ type Subscription = {
 	predicate?: (change: SettingsChange) => boolean;
 };
 
-/** What each `useSettingsStore` call subscribed to, in call order. */
+/** What each `useBucket` call subscribed to, in call order. */
 export const subscriptions: Subscription[] = [];
 
 /**
- * @description Whether any recorded `useSettingsStore` subscription re-renders on a change.
+ * @description Whether any recorded `useBucket` subscription re-renders on a change.
  * @param change The bucket and key written.
  * @returns Whether a subscriber would re-render.
  */
@@ -46,7 +46,7 @@ export function rerendersOn(change: SettingsChange): boolean {
 	);
 }
 
-mock.module('~/api/storage', () => {
+mock.module('~/storage/api', () => {
 	const store = {
 		get: <T>(key: string, fallback: T) =>
 			key === 'states' ? states : ((storedSettings.get(key) as T | undefined) ?? fallback),
@@ -57,13 +57,13 @@ mock.module('~/api/storage', () => {
 		},
 	};
 
-	function getStore(bucket: string) {
+	function getBucket(bucket: string) {
 		openedBuckets.push(bucket);
 
 		return store;
 	}
 
-	function useSettingsStore(bucket: string, predicate?: Subscription['predicate']) {
+	function useBucket(bucket: string, predicate?: Subscription['predicate']) {
 		subscriptions.push({ store: bucket, predicate });
 
 		return store;
@@ -71,12 +71,14 @@ mock.module('~/api/storage', () => {
 
 	return {
 		default: {
-			getStore,
+			getBucket,
 			get: <T>(_s: string, _k: string, d: T) => d,
 			persist: async () => void persists.push(Date.now()),
 		},
-		getStore,
-		useSettingsStore,
+		getBucket,
+		useBucket,
+		getStore: getBucket,
+		useSettingsStore: useBucket,
 	};
 });
 
@@ -92,10 +94,10 @@ mock.module('react-native', () => ({
 
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.
-export const { Addons } = require('~/managers/addons') as typeof import('~/managers/addons');
+export const { Addons } = require('~/addons/addons') as typeof import('~/addons/addons');
 
 export const { createPluginContext } =
-	require('~/api/native-runtime') as typeof import('~/api/native-runtime');
+	require('~/native/runtime') as typeof import('~/native/runtime');
 
 /**
  * @description Loads the four addon managers, which read Discord's modules off `window` while they load.
@@ -104,12 +106,12 @@ export const { createPluginContext } =
 export async function loadManagers() {
 	Reflect.set(globalThis, 'window', globalThis);
 
-	const { Manager } = await import('~/managers/base');
+	const { Manager } = await import('~/addons/manager');
 
-	await import('~/managers/plugins');
-	await import('~/managers/themes');
-	await import('~/managers/icons');
-	await import('~/managers/fonts');
+	await import('~/plugins/manager');
+	await import('~/themes/manager');
+	await import('~/icon-packs/manager');
+	await import('~/fonts/manager');
 
 	return Manager;
 }

@@ -1,5 +1,5 @@
-import { Constants, Theme } from '~/api/metro/common';
-import { Discord } from '~/api/metro/components';
+import { Constants, Theme } from '~/metro/common';
+import { Discord } from '~/metro/components';
 
 export default Discord.createStyles({
 	toastShadow: Theme.shadows.SHADOW_MEDIUM,

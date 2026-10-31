@@ -2,10 +2,10 @@ import type { VersionChangelog } from '@unbound-app/contracts/updates';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
-import { Discord } from '~/api/metro/components';
+import { Discord } from '~/metro/components';
 import { Page } from '~/ui/components';
-import { Messages } from '~/api/i18n';
-import { Icons } from '~/api/assets';
+import { Messages } from '~/i18n/api';
+import { Icons } from '~/assets/api';
 
 import { shortDate } from './format';
 

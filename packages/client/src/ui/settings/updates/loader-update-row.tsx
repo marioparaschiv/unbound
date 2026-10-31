@@ -2,11 +2,11 @@ import type { LoaderUpdate } from '@unbound-app/contracts/loader';
 import type { DesignModule } from '@unbound-app/types/components';
 import type { ComponentProps } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import { Messages, format } from '~/api/i18n';
-import { Linking } from '~/api/metro/api';
-import { Screens } from '~/lib/constants';
-import { Icons } from '~/api/assets';
+import { Messages, format } from '~/i18n/api';
+import { Discord } from '~/metro/components';
+import { Screens } from '~/core/constants';
+import { Linking } from '~/metro/api';
+import { Icons } from '~/assets/api';
 
 import Changelog from './changelog';
 import { headline } from './format';

@@ -5,8 +5,8 @@ import {
 	NativePluginCapabilityError,
 	NativePluginPlatformError,
 	NativePluginUnsupportedPlatformError,
-} from '~/api/native-errors';
-import { parseAddonManifest, resolveManifestCapabilities } from '~/lib/addon-manifest';
+} from '~/native/errors';
+import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 
 const base: AddonManifest = {
 	id: 'unbound.example',

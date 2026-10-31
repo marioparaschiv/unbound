@@ -5,15 +5,15 @@ import Animated, { withSpring } from 'react-native-reanimated';
 import { View, Pressable } from 'react-native';
 import { memo, useCallback } from 'react';
 
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { BackdropFilters } from '~/api/metro/components';
+import { useUnboundSettings } from '~/settings/unbound';
+import { BackdropFilters } from '~/metro/components';
+import toastDuration from '~/toasts/duration';
 import { TintedIcon } from '~/ui/components';
-import useToastStore from '~/stores/toasts';
-import { Icons } from '~/api/assets';
+import useToastStore from '~/toasts/state';
+import { Icons } from '~/assets/api';
 
 import { unitToHex, withoutOpacity } from './color';
 import useToastState from './use-toast-state';
-import toastDuration from './toast-duration';
 import ToastProgress from './toast-progress';
 import ToastButtons from './toast-buttons';
 import ToastContent from './toast-content';

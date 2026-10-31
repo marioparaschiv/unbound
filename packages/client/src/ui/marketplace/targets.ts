@@ -2,7 +2,7 @@ import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 
 import { installDependencies } from '~/ui/marketplace/install-dependencies';
-import { Manager } from '~/managers/base';
+import { Manager } from '~/addons/manager';
 
 /**
  * @description Reads the version of a listed addon that is installed on this device.

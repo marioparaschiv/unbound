@@ -21,7 +21,7 @@ Object.defineProperty(globalThis, 'NativePlatform', {
 });
 
 const { makeManifest } = await import('./helpers/addons');
-const { verifySignature } = await import('~/lib/addon-download');
+const { verifySignature } = await import('~/addons/download');
 
 const signature = { version: 1 as const, ed25519: 'c2lnbmF0dXJl' };
 

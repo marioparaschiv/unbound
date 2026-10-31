@@ -1,4 +1,4 @@
-import { Discord } from '~/api/metro/components';
+import { Discord } from '~/metro/components';
 
 export default Discord.createStyles({
 	container: {

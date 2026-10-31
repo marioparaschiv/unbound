@@ -1,17 +1,17 @@
 import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 
-import { Screens, SOCIAL_LINKS, DISCORD_INVITE, VERSION, REPOSITORY } from '~/lib/constants';
-import { readDebugInfo, readEntitlements } from '~/lib/debug-report/debug-report';
-import { BundleInfo, reload, getRuntimeProperties } from '~/api/native';
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import { issueURL } from '~/lib/debug-report/issue-report';
-import { Linking, Invites } from '~/api/metro/api';
-import { Discord } from '~/api/metro/components';
+import { Screens, SOCIAL_LINKS, DISCORD_INVITE, VERSION, REPOSITORY } from '~/core/constants';
+import { readDebugInfo, readEntitlements } from '~/diagnostics/debug-report';
+import { BundleInfo, reload, getRuntimeProperties } from '~/native/native';
+import { useUnboundSettings } from '~/settings/unbound';
+import { issueURL } from '~/diagnostics/issue-report';
+import { Linking, Invites } from '~/metro/api';
+import { Discord } from '~/metro/components';
 import Unbound from '~/ui/icons/unbound';
 import { Page } from '~/ui/components';
-import { Messages } from '~/api/i18n';
-import { Icons } from '~/api/assets';
+import { Messages } from '~/i18n/api';
+import { Icons } from '~/assets/api';
 
 type InfoRowProps = {
 	label: string;

@@ -1,5 +1,5 @@
-import { useSettingsStore } from '~/api/storage';
-import { Manager } from '~/managers/base';
+import { useSettingsStore } from '~/storage/api';
+import { Manager } from '~/addons/manager';
 
 /**
  * @description Reads whether an addon is a development copy, re-rendering when its manager's development markers change.

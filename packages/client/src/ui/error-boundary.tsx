@@ -4,9 +4,9 @@ import { useState } from 'react';
 
 import { bugReportURL, describeError } from '~/ui/error-fallback';
 import type { CaughtError } from '~/ui/error-fallback';
-import { Clipboard } from '~/api/metro/common';
-import { Linking } from '~/api/metro/api';
-import { Messages } from '~/api/i18n';
+import { Clipboard } from '~/metro/common';
+import { Messages } from '~/i18n/api';
+import { Linking } from '~/metro/api';
 
 import styles from './error-boundary.style';
 

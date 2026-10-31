@@ -46,6 +46,7 @@ export const moves: Record<string, string> = {
 	'api/native-scope.ts': 'native/scope.ts',
 	'lib/native-consent.ts': 'native/consent.ts',
 	'lib/native-consent.test.ts': 'native/consent.test.ts',
+	'builtins/native-consent.ts': 'native/builtin.ts',
 	'lib/unbound-path.ts': 'native/unbound-path.ts',
 	'lib/unbound-path.test.ts': 'native/unbound-path.test.ts',
 

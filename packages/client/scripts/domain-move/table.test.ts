@@ -8,7 +8,6 @@ import { isStub } from './index';
 const SOURCE = join(import.meta.dir, '../../src');
 const SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)['"]([^'"]+)['"]/g;
 const BUILTIN = /^[^/]+\/builtin\.tsx?$/;
-const UI_IMPORTS_LEFT_FOR_SLICE_28 = ['core/index.ts'];
 
 const DOMAINS = new Set([
 	'core',
@@ -121,7 +120,7 @@ describe('domain move table', () => {
 			return importsUi(path) ? [destination] : [];
 		});
 
-		expect(offenders).toEqual(UI_IMPORTS_LEFT_FOR_SLICE_28);
+		expect(offenders).toEqual([]);
 	});
 
 	test('deletes exactly the plan §1 files in contract mode', () => {

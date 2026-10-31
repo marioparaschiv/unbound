@@ -1,5 +1,5 @@
-import { BottomSheets } from '~/api/metro/components';
-import { format } from '~/api/i18n';
+import { BottomSheets } from '~/metro/components';
+import { format } from '~/i18n/api';
 
 export type ShareDestination = {
 	channelId: string;

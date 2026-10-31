@@ -3,9 +3,9 @@ import type { AddonAuthor } from '@unbound-app/types';
 import { Pressable } from 'react-native';
 import { memo } from 'react';
 
-import { AvatarPiles, Discord, Avatars } from '~/api/metro/components';
-import { ActionSheets, UserProfiles } from '~/api/metro/api';
-import { Theme } from '~/api/metro/common';
+import { AvatarPiles, Discord, Avatars } from '~/metro/components';
+import { ActionSheets, UserProfiles } from '~/metro/api';
+import { Theme } from '~/metro/common';
 
 import AddonAuthorsSheet from './addon-authors-sheet';
 import useAuthorUsers from './use-author-users';

@@ -1,8 +1,8 @@
 import type { NativePluginCapability } from '@unbound-app/types';
 
-import { Discord } from '~/api/metro/components';
-import type { Addon } from '~/managers/addon';
-import { format } from '~/api/i18n';
+import { Discord } from '~/metro/components';
+import type { Addon } from '~/addons/addon';
+import { format } from '~/i18n/api';
 
 const ALERT_KEY = 'unbound-native-consent';
 

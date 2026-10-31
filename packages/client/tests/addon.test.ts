@@ -3,7 +3,7 @@ import type { AddonHandle } from '@unbound-app/types';
 
 import { FakeAddons, makeManifest, persists, resetDevice, states } from './helpers/addons';
 
-const { default: sampleAddons } = await import('~/ui/addons/sample-addons');
+const { default: sampleAddons } = await import('~/plugins/sample-addons');
 
 let manager: FakeAddons;
 

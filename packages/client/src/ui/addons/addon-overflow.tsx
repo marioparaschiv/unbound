@@ -2,16 +2,16 @@ import type { PressableProps } from 'react-native';
 import { Pressable } from 'react-native';
 import { useMemo, memo } from 'react';
 
-import { API_URL, CLIENT_VERSION } from '~/lib/constants';
-import { reinstallFromStore } from '~/lib/updates';
-import { Discord } from '~/api/metro/components';
-import type { Addon } from '~/managers/addon';
+import { reinstallFromStore } from '~/updates/addon-updates';
+import { API_URL, CLIENT_VERSION } from '~/core/constants';
+import { Discord } from '~/metro/components';
 import { TintedIcon } from '~/ui/components';
-import { Theme } from '~/api/metro/common';
-import { Manager } from '~/managers/base';
-import { showToast } from '~/api/toasts';
-import { Icons } from '~/api/assets';
-import { format } from '~/api/i18n';
+import type { Addon } from '~/addons/addon';
+import { Manager } from '~/addons/manager';
+import { showToast } from '~/toasts/api';
+import { Theme } from '~/metro/common';
+import { Icons } from '~/assets/api';
+import { format } from '~/i18n/api';
 
 import useRoundStyles from './round-button.style';
 import confirmDelete from './confirm-delete';

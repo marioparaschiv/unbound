@@ -7,7 +7,7 @@ const Manager = await loadManagers();
 
 const { default: useDevelopmentCopy } = await import('~/ui/hooks/use-development-copy');
 const { default: useAddonState } = await import('~/ui/hooks/use-addon-state');
-const { installsFromManifest } = await import('~/managers/addons');
+const { installsFromManifest } = await import('~/addons/addons');
 
 type ListedKind = 'plugin' | 'theme' | 'icon-pack';
 

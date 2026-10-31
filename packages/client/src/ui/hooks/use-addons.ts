@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
-import type { Addon } from '~/managers/addon';
-import { Manager } from '~/managers/base';
+import type { Addon } from '~/addons/addon';
+import { Manager } from '~/addons/manager';
 
 import useForceUpdate from './use-force-update';
 

@@ -14,7 +14,7 @@ afterEach(resetNativeFixtures);
 
 describe('native crash attribution', () => {
 	test('marks the plugin active while its scoped native calls run', async () => {
-		const { attributeAddon, resetCrashGuard } = await import('~/api/crash-guard');
+		const { attributeAddon, resetCrashGuard } = await import('~/addons/crash-guard');
 		const buffer = new ArrayBuffer(4);
 		const cell = new Uint32Array(buffer);
 		const observed: number[] = [];

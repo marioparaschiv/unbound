@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { ORIGINAL, commit, cut, offsetOf } from '~/lib/hot/instances';
-import type { Instance, Layout } from '~/lib/hot/instances';
+import { ORIGINAL, commit, cut, offsetOf } from '~/hot-refresh/instances';
+import type { Instance, Layout } from '~/hot-refresh/instances';
 
 import { createFiber } from './helpers/fiber';
 

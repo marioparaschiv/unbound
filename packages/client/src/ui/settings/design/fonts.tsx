@@ -1,9 +1,9 @@
 import { ScrollView } from 'react-native';
 import { useMemo } from 'react';
 
-import { Discord } from '~/api/metro/components';
-import { Manager } from '~/managers/base';
-import { format } from '~/api/i18n';
+import { Discord } from '~/metro/components';
+import { Manager } from '~/addons/manager';
+import { format } from '~/i18n/api';
 
 import FontOverrideRow from './font-override-row';
 

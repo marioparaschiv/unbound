@@ -3,9 +3,9 @@ import type { Plugin } from '@unbound-app/types';
 
 import { makeManifest, resetDevice } from './helpers/addons';
 
-const { Plugins } = await import('~/managers/plugins');
-const { createCommands } = await import('~/api/commands');
-const { registry } = await import('~/lib/commands/registry');
+const { Plugins } = await import('~/plugins/manager');
+const { createCommands } = await import('~/commands/api');
+const { registry } = await import('~/commands/registry');
 
 type Behaviour = {
 	startThrows?: boolean;

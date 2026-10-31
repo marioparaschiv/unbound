@@ -1,5 +1,5 @@
-import { Discord } from '~/api/metro/components';
-import { Theme } from '~/api/metro/common';
+import { Discord } from '~/metro/components';
+import { Theme } from '~/metro/common';
 
 export default Discord.createStyles({
 	// `TableRowIcon`'s danger variant shrinks the icon into a 16px badge, so tint a full-size one instead.

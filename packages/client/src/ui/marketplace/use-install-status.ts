@@ -2,10 +2,10 @@ import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useEffect } from 'react';
 
-import type { InstallStatus } from '~/lib/catalog';
-import { getInstallStatus } from '~/lib/catalog';
+import type { InstallStatus } from '~/marketplace/catalog';
+import { getInstallStatus } from '~/marketplace/catalog';
 import { useForceUpdate } from '~/ui/hooks';
-import { Manager } from '~/managers/base';
+import { Manager } from '~/addons/manager';
 
 import { getInstalledVersion } from './targets';
 

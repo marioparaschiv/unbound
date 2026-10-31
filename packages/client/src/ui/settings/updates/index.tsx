@@ -1,14 +1,14 @@
-import { useUnboundSettings } from '~/lib/unbound-settings';
-import type { UpdatesState } from '~/stores/updates';
-import type { PendingUpdate } from '~/lib/updates';
-import { Discord } from '~/api/metro/components';
-import { automaticUpdates } from '~/lib/updates';
-import { Messages, format } from '~/api/i18n';
-import UpdatesStore from '~/stores/updates';
-import { Screens } from '~/lib/constants';
-import { Manager } from '~/managers/base';
+import type { PendingUpdate } from '~/updates/addon-updates';
+import { automaticUpdates } from '~/updates/addon-updates';
+import { useUnboundSettings } from '~/settings/unbound';
+import type { UpdatesState } from '~/updates/state';
+import { Messages, format } from '~/i18n/api';
+import { Discord } from '~/metro/components';
+import { Manager } from '~/addons/manager';
+import { Screens } from '~/core/constants';
+import UpdatesStore from '~/updates/state';
 import { Page } from '~/ui/components';
-import { Icons } from '~/api/assets';
+import { Icons } from '~/assets/api';
 
 import { fromNow, headline, kindIcon } from './format';
 import LoaderUpdateRow from './loader-update-row';

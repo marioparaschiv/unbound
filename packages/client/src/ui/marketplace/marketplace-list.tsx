@@ -3,13 +3,13 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { RefreshControl, ScrollView } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import MarketplaceStore from '~/stores/marketplace';
-import { Messages, format } from '~/api/i18n';
-import { queryCatalog } from '~/lib/catalog';
-import { Theme } from '~/api/metro/common';
-import { Manager } from '~/managers/base';
-import { showToast } from '~/api/toasts';
+import { queryCatalog } from '~/marketplace/catalog';
+import MarketplaceStore from '~/marketplace/state';
+import { Messages, format } from '~/i18n/api';
+import { Manager } from '~/addons/manager';
+import { showToast } from '~/toasts/api';
 import { Empty } from '~/ui/components';
+import { Theme } from '~/metro/common';
 
 import MarketplaceSkeleton from './marketplace-skeleton';
 import MarketplaceCard from './marketplace-card';
