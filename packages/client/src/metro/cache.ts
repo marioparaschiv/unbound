@@ -21,14 +21,18 @@ type CacheState = {
 	info: typeof CurrentCacheInfo;
 	modules: Record<string, number[]>;
 	moduleFlags: Record<number, number>;
-	assets: number[];
+	// `name.type` of an asset to the id of the module that registers it.
+	assets: Record<string, number>;
+	// Every asset module of this build has registered once, so `assets` names every asset.
+	assetsComplete: boolean;
 };
 
 export const state: CacheState = {
 	info: storage.get('info', CurrentCacheInfo),
 	modules: storage.get('modules', {}),
 	moduleFlags: storage.get('moduleFlags', {}),
-	assets: storage.get('assets', []),
+	assets: storage.get('assets', {}),
+	assetsComplete: storage.get('assetsComplete', false),
 };
 
 if (!isValidCache()) {
@@ -42,39 +46,55 @@ function invalidateCache() {
 	state.info = CurrentCacheInfo;
 	state.modules = {};
 	state.moduleFlags = {};
-	state.assets = [];
+	state.assets = {};
+	state.assetsComplete = false;
 
 	save();
 }
 
 /**
- * @description Returns the list of cached asset module ids.
- * @returns The cached asset module ids.
+ * @description Records that every asset module of this build has registered, so a name missing from the cache does not exist.
  */
-export function getCachedAssets() {
-	return state.assets;
-}
-
-/**
- * @description Adds an asset module id to the cache and persists it. Twin of {@link removeAssetFromCache}.
- * @param moduleId The id of the asset module to cache.
- */
-export function addAssetToCache(moduleId: number) {
-	state.assets.push(moduleId);
+export function markAssetsComplete() {
+	state.assetsComplete = true;
 	save();
 }
 
 /**
- * @description Removes an asset module id from the cache and persists it. Twin of {@link addAssetToCache}.
- * @param moduleId The id of the asset module to uncache.
+ * @description Returns the id of the module that registers an asset.
+ * @param key The asset's `name.type`.
+ * @returns The asset module's id, or `undefined` if none is cached.
  */
-function removeAssetFromCache(moduleId: number) {
-	const idx = state.assets.indexOf(moduleId);
+export function getCachedAssetModule(key: string): number | undefined {
+	return state.assets[key];
+}
 
-	if (~idx) {
-		state.assets.splice(idx, 1);
+/**
+ * @description Records the module that registers an asset, persisting if it changed. Twin of {@link removeAssetFromCache}.
+ * @param key The asset's `name.type`.
+ * @param moduleId The id of the asset module that registers it.
+ * @returns `true` if that module was already cached for the asset, otherwise `undefined`.
+ */
+export function addAssetToCache(key: string, moduleId: number) {
+	if (state.assets[key] === moduleId) {
+		return true;
 	}
 
+	state.assets[key] = moduleId;
+	save();
+}
+
+/**
+ * @description Forgets the module that registers an asset, persisting if it was cached. Twin of {@link addAssetToCache}.
+ * @param key The asset's `name.type`.
+ * @returns `true` if no module was cached for the asset, otherwise `undefined`.
+ */
+export function removeAssetFromCache(key: string) {
+	if (state.assets[key] === void 0) {
+		return true;
+	}
+
+	delete state.assets[key];
 	save();
 }
 
@@ -201,14 +221,16 @@ function save() {
 	storage.set('modules', state.modules);
 	storage.set('moduleFlags', state.moduleFlags);
 	storage.set('assets', state.assets);
+	storage.set('assetsComplete', state.assetsComplete);
 }
 
 export default {
 	state,
 	moduleIds,
-	getCachedAssets,
+	getCachedAssetModule,
 	addAssetToCache,
 	removeAssetFromCache,
+	markAssetsComplete,
 	getModuleCacheForKey,
 	addCachedIDForKey,
 	markKeyMissing,
