@@ -13,6 +13,13 @@ type InstallButtonProps = {
 	kind: AddonKind;
 };
 
+function openInstallUrlModal(kind: AddonKind) {
+	Discord.openAlert(
+		'unbound-install',
+		<InstallUrlModal kind={kind} onClose={() => Discord.dismissAlert('unbound-install')} />,
+	);
+}
+
 /**
  * @description A floating action button that offers to install one addon kind by URL or to browse the
  * marketplace on that kind's tab. It always takes an explicit `kind`; the Design page computes it from
@@ -32,14 +39,7 @@ function InstallButton({ kind }: InstallButtonProps) {
 				{
 					label: format('UNBOUND_INSTALL_FROM_URL'),
 					icon: icons['LinkIcon'],
-					onPress: () =>
-						Discord.openAlert(
-							'unbound-install',
-							<InstallUrlModal
-								kind={kind}
-								onClose={() => Discord.dismissAlert('unbound-install')}
-							/>,
-						),
+					onPress: () => openInstallUrlModal(kind),
 				},
 				{
 					label: format('UNBOUND_BROWSE_MARKETPLACE'),

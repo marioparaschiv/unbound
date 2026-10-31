@@ -4,17 +4,15 @@ import firstOf from '@unbound-app/utils/first-of';
 import lazy from '@unbound-app/utils/lazy';
 import { createElement } from 'react';
 
-import {
-	FallbackCard,
-	FallbackHeading,
-	FallbackStack,
-	FallbackSwitch,
-	FallbackText,
-} from '~/metro/fallbacks/design-fallbacks';
 import { Discord, isRenderable, registerDesignFallback } from '~/metro/design';
 import type { HelpMessageProps } from '~/metro/fallbacks/help-message';
+import FallbackHeading from '~/metro/fallbacks/fallback-heading';
+import FallbackSwitch from '~/metro/fallbacks/fallback-switch';
+import FallbackStack from '~/metro/fallbacks/fallback-stack';
+import FallbackCard from '~/metro/fallbacks/fallback-card';
+import FallbackText from '~/metro/fallbacks/fallback-text';
+import { findByName, findByProps } from '~/metro/search';
 import { findByPropsLazy } from '~/metro/wrappers';
-import { findByName } from '~/metro/search';
 
 type SwitchProps = ComponentProps<DesignModule['FormSwitch']>;
 type SearchFieldProps = ComponentProps<DesignModule['SearchField']>;
@@ -53,7 +51,7 @@ export function HelpMessage(props: HelpMessageProps) {
 export const HelpMessageTypes = lazy(
 	() =>
 		firstOf(
-			() => require('~/metro').findByProps('HelpMessageTypes')?.HelpMessageTypes,
+			() => findByProps('HelpMessageTypes')?.HelpMessageTypes,
 			() => require('~/metro/fallbacks/help-message').HelpMessageTypes,
 		) ?? {},
 );
@@ -77,11 +75,11 @@ export function Switch(props: SwitchProps) {
 
 	return createElement(component, props);
 }
-export const Forms = lazy(
+export const Forms = lazy<any>(
 	() =>
 		firstOf(
-			() => require('~/metro').findByProps('FormSliderRow'),
-			() => require('~/metro').findByProps('FormSection', 'FormRow'),
+			() => findByProps('FormSliderRow'),
+			() => findByProps('FormSection', 'FormRow'),
 		) ?? {},
 );
 export const Avatars = findByPropsLazy('AvatarSizes', 'Avatar');
