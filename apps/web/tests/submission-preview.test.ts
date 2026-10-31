@@ -48,6 +48,15 @@ function manifestJson(id: string, version: string = '1.0.0') {
 	});
 }
 
+function builtManifestJson(id: string) {
+	return JSON.stringify({
+		...JSON.parse(manifestJson(id)),
+		main: 'index.js',
+		description: 'Built.',
+		capabilities: ['native.objc.invoke'],
+	});
+}
+
 function commitAddon(branch: string, id: string, files: Record<string, string | null> = {}) {
 	const dir = `plugins/${branch}`;
 
@@ -175,6 +184,66 @@ describe('POST /api/v1/submissions/preview', () => {
 			homepage: 'https://acme.example/',
 			tags: ['hello'],
 		});
+	});
+
+	test('carries the manifest the build wrote into the output', async () => {
+		const { headers } = await signIn();
+		const { path, commitSha } = commitAddon('built', 'acme.built', {
+			'dist/manifest.json': builtManifestJson('acme.built'),
+		});
+		const { preview: result } = await preview(headers, {
+			repository: REPOSITORY,
+			path,
+			ref: 'built',
+			commitSha,
+		});
+
+		expect(result.manifest).toMatchObject({
+			id: 'acme.built',
+			main: 'index.js',
+			description: 'Built.',
+			capabilities: ['native.objc.invoke'],
+		});
+	});
+
+	test('falls back to the source manifest when no built manifest is committed', async () => {
+		const { headers } = await signIn();
+		const { path, commitSha } = commitAddon('unbuilt', 'acme.unbuilt');
+		const { preview: result } = await preview(headers, {
+			repository: REPOSITORY,
+			path,
+			ref: 'unbuilt',
+			commitSha,
+		});
+
+		expect(result.manifest).toMatchObject({ id: 'acme.unbuilt', description: 'Says hello.' });
+		expect(result.manifest).not.toHaveProperty('capabilities');
+	});
+
+	test('refuses a built manifest that is invalid or names another addon', async () => {
+		const { headers } = await signIn();
+		const cases = [
+			['badbuilt', '{"id":"acme.badbuilt","main":"index.js"}', 'is not a valid manifest'],
+			['notjsonbuilt', '{', 'is not valid JSON'],
+			['otherbuilt', builtManifestJson('acme.other'), 'has id acme.other'],
+		] as const;
+
+		for (const [branch, built, message] of cases) {
+			const { path, commitSha } = commitAddon(branch, `acme.${branch}`, {
+				'dist/manifest.json': built,
+			});
+
+			expect(
+				await refusal(
+					preview(headers, { repository: REPOSITORY, path, ref: branch, commitSha }),
+				),
+			).toEqual({
+				code: 'invalid_manifest',
+				message: expect.stringMatching(
+					new RegExp(`^plugins/${branch}/dist/manifest\\.json ${message}`),
+				),
+			});
+		}
 	});
 
 	test('writes nothing', async () => {
