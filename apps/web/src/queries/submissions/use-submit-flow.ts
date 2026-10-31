@@ -21,6 +21,8 @@ import getApiErrorMessage from '~/lib/api/error-message';
 import type { PendingSource } from '~/lib/dashboard';
 
 type SubmitFlowOptions = {
+	/** Picked in every listing that has it, until the author picks an addon. */
+	lockedAddonId?: string;
 	/** Where the addon's last submission came from; read and previewed at once. */
 	pendingSource?: PendingSource;
 	onSubmitted: (submission: Submission) => void;
@@ -46,14 +48,20 @@ const SHORTCUT_LIMIT = 12;
  * @param options The source to start from and what to do once submitted.
  * @returns The listing, the picked addon's preview, the latest error and the action for each step.
  */
-function useSubmitFlow({ pendingSource, onSubmitted }: SubmitFlowOptions): SubmitFlow {
+function useSubmitFlow({
+	lockedAddonId,
+	pendingSource,
+	onSubmitted,
+}: SubmitFlowOptions): SubmitFlow {
 	const queryClient = useQueryClient();
 	const [source, setSource] = useState<ListRepositoryAddonsQuery | null>(
 		pendingSource ? { repository: pendingSource.repository } : null,
 	);
-	const [path, setPath] = useState(pendingSource?.path ?? null);
+	const [picked, setPath] = useState(pendingSource?.path ?? null);
 	const repositories = useQuery(pushableRepositoriesQuery());
 	const listing = useQuery(repositoryAddonsQuery(source));
+	const locked = listing.data?.addons.find((addon) => addon.id === lockedAddonId);
+	const path = picked ?? locked?.path ?? null;
 	const request = toPreviewRequest(listing.data, path);
 	const preview = useQuery(submissionPreviewQuery(request));
 	const submission = useMutation(createSubmissionMutation());

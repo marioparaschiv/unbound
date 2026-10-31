@@ -23,12 +23,14 @@ export const submissionsKey = ['submissions'] as const;
 
 /**
  * @description What `/submit` needs before the form renders.
- * @returns Options for `useSuspenseQuery` and `ensureQueryData`, resolving to whether GitHub is linked.
+ * @param addonId The addon `?addon=` names, to submit an update or republish for.
+ * @returns Options for `useSuspenseQuery` and `ensureQueryData`, resolving to whether GitHub is linked
+ * and the addon to submit for.
  */
-export function submitOverviewQuery() {
+export function submitOverviewQuery(addonId?: string) {
 	return queryOptions({
-		queryKey: [...submissionsKey, 'overview'],
-		queryFn: () => getSubmitOverview(),
+		queryKey: [...submissionsKey, 'overview', addonId ?? null],
+		queryFn: () => getSubmitOverview({ data: { addonId } }),
 	});
 }
 
