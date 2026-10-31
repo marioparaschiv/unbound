@@ -1,0 +1,42 @@
+{
+	"id": "unbound.message-logger",
+	"name": "Message Logger",
+	"description": "Keeps deleted and edited messages in the chat, with deleted ones shown in red.",
+	"authors": [
+		{
+			"name": "rushii",
+			"id": "295190422244950017"
+		},
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "Nickyux",
+			"id": "427146305651998721"
+		},
+		{
+			"name": "Kyuuhachi",
+			"id": "236588665420251137"
+		},
+		{
+			"name": "sadan",
+			"id": "521819891141967883"
+		},
+		{
+			"name": "f3tch",
+			"id": "1016388460929626174"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "EyeIcon",
+	"main": "index.tsx"
+}
