@@ -1,22 +1,19 @@
-import Page from '@unbound-plugins/shared/components/page';
-import { Discord } from '@unbound-app/api/metro/components';
-
-import { settings } from '~/modules';
+import { storage, ui } from '@unbound-app/api';
 
 function SettingsPanel() {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(addon.id);
 
 	return (
-		<Page>
-			<Discord.TableRowGroup title='Appearance'>
-				<Discord.TableSwitchRow
+		<ui.Page>
+			<ui.Section title='Appearance'>
+				<ui.SwitchRow
 					label='Color thresholds'
 					subLabel='Warn as the message approaches Discord’s character limit.'
 					value={store.get('colorEffects', true)}
 					onValueChange={(value) => store.set('colorEffects', value)}
 				/>
-			</Discord.TableRowGroup>
-		</Page>
+			</ui.Section>
+		</ui.Page>
 	);
 }
 
