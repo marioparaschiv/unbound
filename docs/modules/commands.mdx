@@ -38,7 +38,7 @@ Without a section of their own, your commands go in the shared **Unbound** secti
 
 ### A section of your own
 
-`createCommands(owner, options)` returns a handle with the same `register`, `unregister` and `unregisterAll` as `commands`, with options of its own.
+`createCommands(owner, options)` returns a handle with the same `register` and `unregister` as `commands`, with options of its own. The handle also has `unregisterAll()`, which removes every command of that owner.
 
 <ParamField path='owner' type='string' required>
 	The id that owns the commands. In a plugin, pass `addon.id`, your plugin's `id` from
@@ -167,7 +167,7 @@ const unregister = commands.register({ ping: { description: 'Ping', execute: () 
 unregister();
 ```
 
-`commands.unregister(name)` removes one root command with its subcommands. `commands.unregisterAll()` removes every command of your plugin.
+`commands.unregister(name)` removes one root command with its subcommands.
 
 ### Built-in commands
 
