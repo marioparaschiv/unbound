@@ -16,9 +16,9 @@ import {
 	NativeConsentRequiredError,
 	promptForConsent,
 } from '~/native/consent';
+import type { AddonAttribution, AddonFreeze, AddonScope } from '~/addons/crash-guard';
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
-import type { AddonAttribution, AddonFreeze, AddonScope } from '~/addons/crash-guard';
 import { validateNativePluginRequirements } from '~/native/capabilities';
 import type { CrashReportAddon } from '~/diagnostics/crash-reports';
 import { reportCrash } from '~/diagnostics/crash-reports';

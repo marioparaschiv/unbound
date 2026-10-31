@@ -1,5 +1,5 @@
-import type { Plugin } from '@unbound-app/types';
 import { afterEach, describe, expect, mock, test } from 'bun:test';
+import type { Plugin } from '@unbound-app/types';
 
 import type { AddonAttribution } from '~/addons/crash-guard';
 import type { CrashEvent } from '~/diagnostics/crash-report';

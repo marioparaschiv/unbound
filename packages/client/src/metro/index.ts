@@ -1,4 +1,15 @@
 export {
+	initializeModule,
+	removeListener,
+	onModuleLoad,
+	addListener,
+	findLazy,
+	bulk,
+	find,
+	off,
+	on,
+} from '~/metro/search';
+export {
 	findByPrototypes,
 	findByFilePath,
 	findByProps,
@@ -14,14 +25,3 @@ export * as common from '~/metro/common';
 export * as stores from '~/metro/stores';
 export * as api from '~/metro/api';
 export type * from '~/metro/types';
-export {
-	initializeModule,
-	removeListener,
-	onModuleLoad,
-	addListener,
-	findLazy,
-	bulk,
-	find,
-	off,
-	on,
-} from '~/metro/search';
