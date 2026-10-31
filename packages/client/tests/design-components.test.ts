@@ -13,7 +13,11 @@ mock.module('~/metro/search', () => ({
 }));
 
 const components = await import('~/metro/components');
-const fallbacks = await import('~/metro/fallbacks/design-fallbacks');
+const { default: FallbackHeading } = await import('~/metro/fallbacks/fallback-heading');
+const { default: FallbackSwitch } = await import('~/metro/fallbacks/fallback-switch');
+const { default: FallbackStack } = await import('~/metro/fallbacks/fallback-stack');
+const { default: FallbackText } = await import('~/metro/fallbacks/fallback-text');
+const { default: FallbackCard } = await import('~/metro/fallbacks/fallback-card');
 
 const BARREL_MEMBER = /^\s*(\w+): \w+Component;$/;
 
@@ -60,11 +64,11 @@ describe('design components', () => {
 	});
 
 	test('stands in with fallbacks for components the build lacks', () => {
-		expect(components.Discord.Text).toBe(fallbacks.FallbackText);
-		expect(components.Discord.Heading).toBe(fallbacks.FallbackHeading);
-		expect(components.Discord.FormSwitch).toBe(fallbacks.FallbackSwitch);
-		expect(components.Discord.Stack).toBe(fallbacks.FallbackStack);
-		expect(components.Discord.Card).toBe(fallbacks.FallbackCard);
+		expect(components.Discord.Text).toBe(FallbackText);
+		expect(components.Discord.Heading).toBe(FallbackHeading);
+		expect(components.Discord.FormSwitch).toBe(FallbackSwitch);
+		expect(components.Discord.Stack).toBe(FallbackStack);
+		expect(components.Discord.Card).toBe(FallbackCard);
 		expect(components.isRenderable(components.Discord.SearchField)).toBe(true);
 		expect(components.Discord.Button).toBeUndefined();
 		expect('Text' in components.Discord).toBe(true);
