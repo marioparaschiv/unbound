@@ -1,7 +1,7 @@
 {
 	"id": "unbound.message-logger",
 	"name": "Message Logger",
-	"description": "Keeps deleted and edited messages in the chat, with deleted ones shown in red.",
+	"description": "Keeps deleted and edited messages in the chat.",
 	"authors": [
 		{
 			"name": "rushii",
