@@ -3,9 +3,9 @@ import { watch, type FSWatcher } from 'node:fs';
 import { resolve, join, sep } from 'node:path';
 
 import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
+import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import type { ResolvedConfig } from '~/lib/config';
-import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
 import { discoverAddons } from '~/lib/discovery';
 import { buildAddon } from '~/lib/build-addon';
 

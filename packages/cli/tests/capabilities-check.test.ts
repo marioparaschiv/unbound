@@ -72,11 +72,16 @@ async function check(dir: TempDir, buildCheck: BuildCheck = capabilitiesCheck) {
 const KNOWN_PLATFORMS: unknown[] = ['ios', 'android'];
 const KNOWN_CAPABILITIES: unknown[] = [...NATIVE_PLUGIN_CAPABILITIES];
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
+type PlatformFields = {
+	capabilities?: unknown;
+	platforms?: unknown;
+	platformCapabilities?: unknown;
+};
+
+function isPlainObject(value: unknown): value is PlatformFields {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-// Mirrors the platform rules of assertAddonManifest in packages/client/src/addons/manifest.ts on main before #723.
 // UNKNOWN: a built manifest is JSON read back from disk.
 function legacyManifestErrors(manifest: unknown): string[] {
 	if (!isPlainObject(manifest)) {

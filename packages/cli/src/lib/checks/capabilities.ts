@@ -1,11 +1,10 @@
+import type { NativePluginCapability, NativePluginPlatform } from '@unbound-app/types/native';
 import { validateAddonCapabilities } from '@unbound-app/contracts/addon-conventions';
 import { existsSync, mkdirSync, renameSync, writeFileSync } from 'node:fs';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
+import { NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join } from 'node:path';
-
-import type { NativePluginCapability, NativePluginPlatform } from '@unbound-app/types/native';
-import { NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
 
 import type { PlatformCapabilities } from '~/lib/capabilities/analyze';
 import type { BuildCheck, BuildCheckIssue } from '~/lib/build-checks';
@@ -31,7 +30,6 @@ function findEntry(dir: string, main: string): string | null {
 	return findFile(join(dir, 'src', 'index')) ?? findFile(join(dir, main));
 }
 
-// Clients before the object form of `platforms` reject it, so the build writes the legacy fields.
 function toLegacyFields(platforms: PlatformCapabilities): LegacyPlatformFields {
 	const listed = NATIVE_PLUGIN_PLATFORMS.filter((platform) => platforms[platform]);
 	const needed = listed.flatMap(

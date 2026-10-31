@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 
-import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
 import { discoverAddons, type DiscoveredAddon } from '~/lib/discovery';
+import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
 import { buildAddon } from '~/lib/build-addon';
 import { loadConfig } from '~/lib/config';
 
