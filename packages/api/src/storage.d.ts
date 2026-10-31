@@ -85,25 +85,7 @@ declare class TaskCollection<Func extends Listener = Listener> {
 	rebuild(): void;
 	tasksAsArray(): Func[];
 }
-declare const _default: {
-	addListener: typeof addListener;
-	get: typeof get;
-	getStore: typeof getStore;
-	off: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => EventEmitter<EventMap>;
-	on: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => EventEmitter<EventMap>;
-	persist: typeof persist;
-	remove: typeof remove;
-	removeListener: typeof removeListener;
-	set: typeof set;
-	toggle: typeof toggle;
-	useSettingsStore: typeof useSettingsStore;
-};
+
 export declare const off: <EventKey extends keyof EventMap = string>(
 	event: EventKey,
 	listener: EventMap[EventKey],
@@ -250,6 +232,4 @@ export type ToggledPayload = {
 	prev: boolean;
 	value: boolean;
 };
-export { _default as default };
-
 export {};

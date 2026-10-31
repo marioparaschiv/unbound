@@ -1,0 +1,17 @@
+{
+	"name": "unbound-devtools-harness",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build-backend": "bun build-backend.mjs",
+		"device": "bun device.mjs",
+		"record": "bun record.mjs"
+	},
+	"dependencies": {
+		"@swc/core": "^1.16.20",
+		"react": "19.2.3",
+		"react-devtools-core": "8.0.0",
+		"react-test-renderer": "19.2.3",
+		"ws": "^8.22.0"
+	}
+}
