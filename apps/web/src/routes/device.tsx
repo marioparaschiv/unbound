@@ -147,7 +147,7 @@ function DevicePage() {
 		<div className='flex flex-col items-center justify-center flex-1 dotted-bg px-4'>
 			<div className='flex flex-col items-center gap-8 w-full max-w-sm'>
 				<Link to='/' className='transition-transform hover:scale-110 duration-300'>
-					<Logo className='size-20 text-foreground' />
+					<Logo className='size-20' />
 				</Link>
 				{session ? (
 					<DeviceApproval user={session.user} initialCode={initialCode} />

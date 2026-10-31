@@ -31,7 +31,9 @@ function findRegistry(): Registry | undefined {
 	return (
 		AppRegistry ??
 		(globalThis as SurfaceGlobal).RN$AppRegistry ??
-		(metro.findByProps('registerComponent', 'runApplication') as Registry | undefined)
+		(metro.findByProps('registerComponent', 'runApplication', { lazy: false }) as
+			| Registry
+			| undefined)
 	);
 }
 

@@ -8,6 +8,7 @@ import {
 	crashGuardKey,
 	finishAddonStart,
 	withAddonAttribution,
+	withAddonScope,
 } from '~/addons/crash-guard';
 import {
 	consentKey,
@@ -15,9 +16,9 @@ import {
 	NativeConsentRequiredError,
 	promptForConsent,
 } from '~/native/consent';
+import type { AddonAttribution, AddonFreeze, AddonScope } from '~/addons/crash-guard';
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
-import type { AddonAttribution, AddonFreeze } from '~/addons/crash-guard';
 import { validateNativePluginRequirements } from '~/native/capabilities';
 import type { CrashReportAddon } from '~/diagnostics/crash-reports';
 import { reportCrash } from '~/diagnostics/crash-reports';
@@ -242,18 +243,20 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		}
 
 		try {
-			const attribution = this.attribution(resolved);
+			const scope: AddonScope = {
+				attribution: this.attribution(resolved),
+				recordDeferredFailure: (failure) =>
+					this.recordStartFailure(resolved, failure, 'running'),
+			};
 
 			state.instance = recoveryMode
 				? null
-				: withAddonAttribution(attribution, () =>
-						this.handleBundle(state.bundle, resolved.id),
-					);
+				: withAddonScope(scope, () => this.handleBundle(state.bundle, resolved.id));
 
 			state.context = this.createContext(resolved);
 			const context = state.context;
 
-			withAddonAttribution(attribution, () => state.instance?.start?.(context));
+			withAddonScope(scope, () => state.instance?.start?.(context));
 			state.started = true;
 			this.startDurations.set(resolved.id, monotonicNow() - startedAt);
 
@@ -261,18 +264,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		} catch (error) {
 			state.context?.dispose();
 			state.context = undefined;
-			this.logger.error(`Failed to start addon ${resolved.id}:`, error);
-			const failure = toError(error);
-
-			this.errors.set(resolved.id, failure);
-			state.failed = true;
-			void reportCrash({
-				kind: 'start-failure',
-				phase: 'starting',
-				addon: this.reportedAddon(resolved),
-				message: failure.message,
-				stack: failure.stack,
-			});
+			this.recordStartFailure(resolved, toError(error), 'starting');
 		} finally {
 			if (!recoveryMode) {
 				finishAddonStart(guardKey);
@@ -335,6 +327,23 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			version: entity.version,
 			trust: entity.manifest.trust === 'signed' ? 'signed' : 'unsigned',
 		};
+	}
+
+	private recordStartFailure(
+		resolved: Addon<I>,
+		failure: Error,
+		phase: 'starting' | 'running',
+	): void {
+		this.logger.error(`Failed to start addon ${resolved.id}:`, failure);
+		this.errors.set(resolved.id, failure);
+		this.stateOf(resolved).failed = true;
+		void reportCrash({
+			kind: 'start-failure',
+			phase,
+			addon: this.reportedAddon(resolved),
+			message: failure.message,
+			stack: failure.stack,
+		});
 	}
 
 	/**

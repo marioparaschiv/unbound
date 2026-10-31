@@ -1,9 +1,12 @@
 import { IconChevronDown, IconEye, IconLock, IconPalette, IconPlug } from 'nucleo-micro-bold';
+import type { UserSummary } from '@unbound-app/contracts/account';
 import { Link } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { savePreviewReturn, usePreviewReturn } from '~/components/staff/use-preview-return';
 import ReviewDecisionDialog from '~/components/review/review-decision-dialog';
+import { TagList } from '~/components/addon-filters/filter-parts';
+import AtlasIcon from '~/components/addon-icon-picker/atlas-icon';
 import { formatDateTime } from '~/components/admin/format-date';
 import ReviewDetails from '~/components/staff/review-details';
 import type { ReviewEntry } from '~/lib/review-entry';
@@ -18,8 +21,35 @@ type ReviewCardProps = {
 	entry: ReviewEntry;
 };
 
+type MaintainerChangesProps = {
+	change: ReviewEntry['maintainers'];
+};
+
 function fieldValue(entry: ReviewEntry, field: string): string | null {
 	return entry.fields.find((row) => row.field === field)?.next ?? null;
+}
+
+function names(users: UserSummary[]): string {
+	return users.map((entry) => entry.name).join(', ');
+}
+
+/** Who approving adds to and removes from the addon's maintainers besides its owners. */
+function MaintainerChanges({ change }: MaintainerChangesProps) {
+	if (!change || (change.added.length === 0 && change.removed.length === 0)) {
+		return (
+			<Text as='span' variant='text-xs' className='font-medium'>
+				Unchanged
+			</Text>
+		);
+	}
+
+	return (
+		<Text as='span' variant='text-xs' className='font-medium truncate'>
+			{change.added.length > 0 ? `Adds ${names(change.added)}` : null}
+			{change.added.length > 0 && change.removed.length > 0 ? ' · ' : null}
+			{change.removed.length > 0 ? `Removes ${names(change.removed)}` : null}
+		</Text>
+	);
 }
 
 /** A queued submission drawn as the store card it would become, opening in place to the full review. */
@@ -67,13 +97,37 @@ function ReviewCard({ entry }: ReviewCardProps) {
 					{submission.version}
 				</Text>
 			</div>
-			<Text
-				variant='text-sm'
-				color='muted'
-				className='px-(--card-pad) pt-3 pb-(--card-pad) line-clamp-2'
-			>
+			<Text variant='text-sm' color='muted' className='px-(--card-pad) pt-3 line-clamp-2'>
 				{description ?? 'No description.'}
 			</Text>
+			<div className='flex flex-col gap-1.5 px-(--card-pad) pt-2 pb-(--card-pad) min-w-0'>
+				<div className='flex items-center gap-2 min-w-0'>
+					<Text as='span' variant='text-xs' color='muted' className='shrink-0'>
+						Tags
+					</Text>
+					{entry.tags && entry.tags.length > 0 ? (
+						<TagList tags={entry.tags} />
+					) : (
+						<Text as='span' variant='text-xs' className='font-medium'>
+							{entry.tags ? 'None' : 'Unchanged'}
+						</Text>
+					)}
+				</div>
+				<div className='flex items-center gap-2 min-w-0'>
+					<Text as='span' variant='text-xs' color='muted' className='shrink-0'>
+						Maintainers
+					</Text>
+					<MaintainerChanges change={entry.maintainers} />
+				</div>
+				{entry.icon ? (
+					<div className='flex items-center gap-2 min-w-0'>
+						<Text as='span' variant='text-xs' color='muted' className='shrink-0'>
+							Icon
+						</Text>
+						<AtlasIcon name={entry.icon} size={14} />
+					</div>
+				) : null}
+			</div>
 
 			<div className='flex flex-wrap items-center gap-2 px-(--card-pad) py-3 border-t'>
 				<Button
