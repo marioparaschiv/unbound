@@ -347,7 +347,8 @@ function AddonPicker({
 										disabled={disabled}
 										required
 									/>
-									<InputGroupAddon align='inline-end'>
+									{/* Phones get the action as a full-width button under the field instead. */}
+									<InputGroupAddon align='inline-end' className='hidden sm:flex'>
 										<InputGroupButton
 											type='submit'
 											size='sm'
@@ -362,6 +363,15 @@ function AddonPicker({
 										</InputGroupButton>
 									</InputGroupAddon>
 								</InputGroup>
+								<Button
+									type='submit'
+									variant='outline'
+									className='sm:hidden'
+									disabled={disabled}
+								>
+									{busy === 'ref' ? <Spinner /> : <IconRefresh size={24} />}
+									Read
+								</Button>
 							</Field>
 						)}
 					</form.Field>

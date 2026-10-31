@@ -16,6 +16,7 @@ import type { ApiErrorDetails } from '~/lib/api/error-details';
 import { Field, FieldError, FieldLabel } from '~/components/ui/field';
 import GitHubIcon from '~/components/icons/github';
 import RepositoryShortcuts from '~/components/submit/repository-shortcuts';
+import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
 
 type RepositoryPickerProps = {
@@ -81,7 +82,8 @@ function RepositoryPicker({
 									disabled={disabled}
 									required
 								/>
-								<InputGroupAddon align='inline-end'>
+								{/* Phones get the action as a full-width button under the field instead. */}
+								<InputGroupAddon align='inline-end' className='hidden sm:flex'>
 									<InputGroupButton
 										type='submit'
 										size='sm'
@@ -92,6 +94,15 @@ function RepositoryPicker({
 									</InputGroupButton>
 								</InputGroupAddon>
 							</InputGroup>
+							<Button
+								type='submit'
+								variant='outline'
+								className='sm:hidden'
+								disabled={disabled || !field.state.value.trim()}
+							>
+								{busy ? <Spinner /> : <IconMagnifier size={24} />}
+								Find addons
+							</Button>
 							<FieldError errors={field.state.meta.errors} />
 							<SubmitCallout error={error} />
 						</Field>

@@ -1,6 +1,5 @@
 import type { SubmissionPreview } from '@unbound-app/contracts/review';
-import { IconExternalLink, IconEye } from 'nucleo-micro-bold';
-import { Link } from '@tanstack/react-router';
+import { IconExternalLink } from 'nucleo-micro-bold';
 
 import { DetailRow, ExternalLink } from '~/components/addon/sidebar-card';
 import { directoryUrl, formatBytes } from '~/components/addon/format';
@@ -11,7 +10,7 @@ import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 import cn from '~/lib/cn';
 
-// The link tiles under the facts, as the addon page's About card draws its View source link.
+// The link tile under the facts, as the addon page's About card draws its View source link.
 const TILE =
 	'flex items-center gap-2.5 bg-muted/50 hover:bg-muted px-3 py-2 border rounded-control min-w-0 press-flat';
 
@@ -55,25 +54,7 @@ function SubmissionSummary({ preview }: SubmissionSummaryProps) {
 			</DetailRow>
 			<DetailRow label='License'>{details.license ?? 'None detected'}</DetailRow>
 			<DetailRow label='Stars'>{details.stars.toLocaleString('en-US')}</DetailRow>
-			<Link
-				to='/submit/preview'
-				search={{
-					repository: source.repository,
-					path: source.path,
-					ref: source.ref,
-					commitSha: source.commitSha,
-				}}
-				target='_blank'
-				rel='noopener'
-				className={cn(TILE, 'mt-1.5')}
-			>
-				<IconEye className='size-4 text-muted-foreground shrink-0' />
-				<Text as='span' variant='text-sm' className='font-medium truncate'>
-					Preview addon page
-				</Text>
-				<IconExternalLink className='ml-auto size-3.5 text-muted-foreground shrink-0' />
-			</Link>
-			<ExternalLink href={directoryUrl(source)} className={TILE}>
+			<ExternalLink href={directoryUrl(source)} className={cn(TILE, 'mt-1.5')}>
 				<GitHubIcon className='size-4 text-muted-foreground shrink-0' />
 				<Text as='span' variant='text-sm' className='font-medium truncate'>
 					View source

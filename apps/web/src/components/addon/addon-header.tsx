@@ -1,4 +1,5 @@
 import InstallAddonButton from '~/components/install-addon-button';
+import { TagDot } from '~/components/addon-filters/filter-parts';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import BlurReveal from '~/components/motion/blur-reveal';
@@ -11,9 +12,9 @@ type AddonHeaderProps = {
 	addon: MarketplaceAddonDetails;
 };
 
-/** The addon's identity, install button and repository tags. */
+/** The addon's identity, install button and tags: the site's when it has any, else the repository's topics. */
 function AddonHeader({ addon }: AddonHeaderProps) {
-	const tags = addon.source?.details.tags ?? [];
+	const topics = addon.tags.length > 0 ? [] : (addon.source?.details.tags ?? []);
 	const [latest] = addon.versions;
 
 	return (
@@ -60,15 +61,23 @@ function AddonHeader({ addon }: AddonHeaderProps) {
 					{addon.description}
 				</Text>
 			) : null}
-			{tags.length > 0 ? (
+			{addon.tags.length > 0 || topics.length > 0 ? (
 				<ul
 					className='flex flex-wrap gap-1.5 animate-reveal'
 					style={staggerStyle(3)}
 					aria-label='Tags'
 				>
-					{tags.map((tag) => (
-						<li key={tag}>
-							<Tag className='px-2 py-1 text-xs capitalize'>{tag}</Tag>
+					{addon.tags.map((tag) => (
+						<li key={tag.id}>
+							<Tag className='gap-1.5 px-2 py-1 text-xs'>
+								<TagDot color={tag.color} className='size-1.5' />
+								{tag.label}
+							</Tag>
+						</li>
+					))}
+					{topics.map((topic) => (
+						<li key={topic}>
+							<Tag className='px-2 py-1 text-xs capitalize'>{topic}</Tag>
 						</li>
 					))}
 				</ul>

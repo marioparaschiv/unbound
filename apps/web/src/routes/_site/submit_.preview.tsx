@@ -12,7 +12,9 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from '~/components/ui/empty';
+import type { SourcePreviewPage } from '~/queries/submissions/submissions';
 import { sourcePreviewPageQuery } from '~/queries/submissions/submissions';
+import { splitList } from '~/lib/addon-filters';
 import PreviewBanner from '~/components/addon/preview-banner';
 import AddonPageView from '~/components/addon/addon-page';
 import { shortSha } from '~/lib/github-urls';
@@ -24,7 +26,17 @@ const previewSearchSchema = z.object({
 	path: z.string(),
 	ref: z.string(),
 	commitSha: z.string(),
+	/** The icon picked on the form, not saved yet. */
+	icon: z.catch(z.optional(z.string()), undefined),
+	/** The tag ids picked on the form, not saved yet, comma-separated like the listing filters. */
+	tags: z.catch(z.optional(z.string()), undefined),
 });
+
+type PreviewSearch = z.infer<typeof previewSearchSchema>;
+
+function toPreviewPage({ tags, ...search }: PreviewSearch): SourcePreviewPage {
+	return { ...search, tags: tags === undefined ? undefined : splitList(tags) };
+}
 
 // The submit form opens this page in a new tab, so closing the tab returns to the form as it was.
 function ClosePreview() {
@@ -36,8 +48,8 @@ function ClosePreview() {
 }
 
 function SourcePreviewPage() {
-	const request = Route.useSearch();
-	const { data: addon } = useSuspenseQuery(sourcePreviewPageQuery(request));
+	const search = Route.useSearch();
+	const { data: addon } = useSuspenseQuery(sourcePreviewPageQuery(toPreviewPage(search)));
 
 	if (!addon) {
 		throw redirect({ to: '/login' });
@@ -48,8 +60,8 @@ function SourcePreviewPage() {
 			addon={addon}
 			banner={
 				<PreviewBanner action={<ClosePreview />}>
-					Previewing {addon.name} v{addon.version} from {request.repository} at{' '}
-					<span className='font-mono'>{shortSha(request.commitSha)}</span>. Nothing is
+					Previewing {addon.name} v{addon.version} from {search.repository} at{' '}
+					<span className='font-mono'>{shortSha(search.commitSha)}</span>. Nothing is
 					submitted yet.
 				</PreviewBanner>
 			}
@@ -87,7 +99,9 @@ export const Route = createFileRoute('/_site/submit_/preview')({
 	},
 	loaderDeps: ({ search }) => search,
 	loader: async ({ context, deps }) => {
-		const addon = await context.queryClient.ensureQueryData(sourcePreviewPageQuery(deps));
+		const addon = await context.queryClient.ensureQueryData(
+			sourcePreviewPageQuery(toPreviewPage(deps)),
+		);
 
 		return addon;
 	},

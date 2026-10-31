@@ -19,6 +19,12 @@ import { invalidate } from '~/queries/invalidate';
 /** The pinned addon directory a preview reads and a submission publishes. */
 export type PreviewRequest = Omit<CreateSubmissionRequest, 'details'>;
 
+/** What `/submit/preview` shows: a pinned addon directory and the choices the form has not saved. */
+export type SourcePreviewPage = PreviewRequest & {
+	icon?: string;
+	tags?: string[];
+};
+
 /** Every submit-flow query key starts with this. */
 export const submissionsKey = ['submissions'] as const;
 
@@ -110,10 +116,10 @@ export function toPreviewRequest(
 
 /**
  * @description The addon page as submitting this source would publish it, for `/submit/preview`.
- * @param request The pinned addon directory.
+ * @param request The pinned addon directory and the form's unsaved icon and tags.
  * @returns Options for `useSuspenseQuery` and `ensureQueryData`; `null` data when signed out.
  */
-export function sourcePreviewPageQuery(request: PreviewRequest) {
+export function sourcePreviewPageQuery(request: SourcePreviewPage) {
 	return queryOptions({
 		queryKey: [...submissionsKey, 'preview-page', request],
 		queryFn: ({ signal }) => fetchSourcePreview({ data: request, signal }),
