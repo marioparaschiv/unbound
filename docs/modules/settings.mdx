@@ -4,6 +4,8 @@ description: "Register your own screens in Discord's settings navigation."
 icon: 'sliders'
 ---
 
+import Deprecated from '/snippets/deprecated.mdx';
+
 ### What is Settings?
 
 `settings` is a registry of settings screens. Each entry you register becomes a real route in Discord's settings navigation, listed in the Unbound section next to the built-in General, Plugins, Design, and Developer pages.
@@ -17,19 +19,19 @@ import { settings } from '@unbound-app/api';
 ```
 
 <Note>
-	Most plugins don't need this module. If a plugin exports `getSettingsPanel`, its card in the Plugins list already gets a settings button, and Unbound renders the returned node on a screen for you. Use `registerSettings` when you want a top-level entry of your own in the settings list, separate from your plugin's card.
+	Most plugins don't need this module. If a plugin exports `getSettingsPanel`, its card in the Plugins list already gets a settings button, and Unbound renders the returned node on a screen for you. Use `registerSection` when you want a top-level entry of your own in the settings list, separate from your plugin's card.
 </Note>
 
 ### Registering a screen
 
-`registerSettings` adds one or more entries to the registry. Entries are keyed: registering the same key again overwrites the previous entry and logs a warning.
+`registerSection` adds one or more entries to the registry. Entries are keyed: registering the same key again overwrites the previous entry and logs a warning.
 
 ```tsx
 import { settings } from '@unbound-app/api';
 
 import MyScreen from './my-screen';
 
-settings.registerSettings({
+settings.registerSection({
 	type: 'route',
 	key: 'MY_PLUGIN_SETTINGS',
 	useTitle: () => 'My Plugin',
@@ -45,8 +47,8 @@ settings.registerSettings({
 <Warning>
 	Entries are not cleaned up for you. To avoid leaving a dead route behind when your plugin is disabled:
 
-	1. Call `registerSettings` in your plugin's `start`.
-	2. Call `removeSettings` with the same key in `stop`.
+	1. Call `registerSection` in your plugin's `start`.
+	2. Call `removeSection` with the same key in `stop`.
 </Warning>
 
 ### The entry shape
@@ -58,7 +60,7 @@ An entry uses the same shape as a route in Discord's `SETTING_RENDERER_CONFIG`.
 </ParamField>
 
 <ParamField path="key" type="string" required>
-	Unique identifier for the entry. `removeSettings` deletes entries by this key. Built-ins use screaming snake case (`UNBOUND_GENERAL`). Namespace your keys so they can't collide.
+	Unique identifier for the entry. `removeSection` deletes entries by this key. Built-ins use screaming snake case (`UNBOUND_GENERAL`). Namespace your keys so they can't collide.
 </ParamField>
 
 <ParamField path="useTitle" type="() => string" required>
@@ -104,17 +106,17 @@ An entry uses the same shape as a route in Discord's `SETTING_RENDERER_CONFIG`.
 `usePredicate` is a hook, so it can subscribe to storage and show or hide the entry as settings change. The built-in Developer page uses this to appear only after developer mode is enabled.
 
 ```tsx
-import { settings, storage, assets } from '@unbound-app/api';
-import { Discord } from '@unbound-app/api/metro/components';
+import { assets, metro, settings, storage } from '@unbound-app/api';
 
-const store = storage.getStore('my-plugin');
+const { Discord } = metro.components;
 
-settings.registerSettings({
+settings.registerSection({
 	type: 'route',
 	key: 'MY_PLUGIN_ADVANCED',
 	useTitle: () => 'Advanced',
-	usePredicate: () => store.useSettingsStore(({ key }) => key === 'advanced').get('advanced', false),
-	IconComponent: () => <Discord.TableRowIcon source={assets.getIDByName('WrenchIcon')} />,
+	usePredicate: () =>
+		storage.useBucket('my-plugin', ({ key }) => key === 'advanced').get('advanced', false),
+	IconComponent: () => <Discord.TableRowIcon source={assets.getIdByName('WrenchIcon')} />,
 	parent: null,
 	section: 'Unbound',
 	screen: {
@@ -127,19 +129,19 @@ settings.registerSettings({
 ### Removing and inspecting
 
 <CodeGroup>
-```ts removeSettings
+```ts removeSection
 // Accepts any number of keys.
-settings.removeSettings('MY_PLUGIN_SETTINGS', 'MY_PLUGIN_ADVANCED');
+settings.removeSection('MY_PLUGIN_SETTINGS', 'MY_PLUGIN_ADVANCED');
 ```
 
-```ts sections
+```ts getSections
 // The current registry, keyed by entry key.
-const registered = settings.sections();
+const registered = settings.getSections();
 ```
 </CodeGroup>
 
 <Note>
-	`sections()` returns only entries registered through this API. Unbound's built-in screens are merged in separately when the navigation config is read, so they aren't in the result.
+	`getSections()` returns only entries registered through this API. Unbound's built-in screens are merged in separately when the navigation config is read, so they aren't in the result.
 </Note>
 
 ### Settings vs storage
@@ -150,10 +152,20 @@ The two modules do different jobs:
 | --- | --- | --- |
 | Owns | Screens in the settings navigation | Persisted values |
 | Written to disk | No | Yes, to `settings.json` |
-| Reactive | Via `useTitle` / `usePredicate` hooks | Via `useSettingsStore` and change events |
+| Reactive | Via `useTitle` / `usePredicate` hooks | Via `useBucket` and `onChange` |
 
 A settings screen almost always uses both. `settings` puts the screen in the list, and `storage` holds the values its controls read and write.
 
 Build the screen itself from [components](/modules/components). See [creating an addon](/addons/creating) for where the registration goes in a plugin's lifecycle.
 
 Addon enabled-state is persisted by the [managers](/modules/managers), not by this module.
+
+### Deprecated names
+
+<Deprecated />
+
+| Deprecated | Use |
+| --- | --- |
+| `settings.registerSettings` | `settings.registerSection` |
+| `settings.removeSettings` | `settings.removeSection` |
+| `settings.sections` | `settings.getSections` |

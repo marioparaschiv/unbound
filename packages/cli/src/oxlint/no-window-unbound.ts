@@ -1,6 +1,6 @@
-import type { Rule } from '../rule';
+import type { Rule } from './rule';
 
-import propertyName from '../property-name.ts';
+import propertyName from './property-name.ts';
 
 const GLOBAL_OBJECTS = new Set(['window', 'globalThis']);
 

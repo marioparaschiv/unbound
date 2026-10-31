@@ -92,7 +92,7 @@ describe('a store page body on Discord 349', () => {
 		expect(strong?.props.children).toEqual(['bold']);
 	});
 
-	test('draws a mid-paragraph image at a non-zero size', () => {
+	test('draws a mid-paragraph image at its computed size, outside the line box of any Text', () => {
 		const body = PageBody({ page: page('A ![yellow](media/mid.png) inline image') });
 		const media = elements(body).find(
 			(element): element is ReactElement<PageMediaProps & Props> =>
@@ -104,10 +104,11 @@ describe('a store page body on Discord 349', () => {
 		}
 
 		const frame = PageMedia(media.props);
-		const { width, height } = frameSize(frame.props.style);
+		const lines = elements(body).filter((element) => element.type === 'Text');
 
-		expect(width).toBeGreaterThan(0);
-		expect(height).toBeGreaterThan(0);
+		expect(frameSize(frame.props.style)).toMatchObject({ width: 200, height: 150 });
+		expect(lines.flatMap((line) => elements(line.props.children))).not.toContain(media);
+		expect(lines.map((line) => text(line)).join('|')).toBe('A | inline image');
 	});
 
 	test('shows the alt text of a mid-paragraph image the page did not measure', () => {
