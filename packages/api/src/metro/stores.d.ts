@@ -2,6 +2,7 @@
 
 export declare const Accessibility: any;
 export declare const Guilds: any;
+export declare const Theme: any;
 export declare const Users: any;
 
 export {};

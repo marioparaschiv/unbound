@@ -117,13 +117,13 @@ export type PatcherInstance = {
 
 const pendingPatchCallers = new Map<() => void, string | undefined>();
 
-/** @internal */
+/** Every module the patcher has patched, with its live patches. Patch and unpatch through the functions below. */
 export const patches = Possess.patches;
 
-/** @internal */
+/** The symbol a patched method carries, pointing at its patch state. */
 export const PATCH_SYMBOL = Possess.PATCH_SYMBOL;
 
-/** @internal */
+/** The kinds of patch: before, instead and after. */
 export const PatchType = Possess.PatchType;
 
 /**
@@ -338,7 +338,6 @@ export function unpatchAll(): void {
 /**
  * @description Removes every patch made with a caller id.
  * @param caller The caller id.
- * @internal
  */
 export function unpatchAllByCaller(caller: string): void {
 	for (const [drop, owner] of pendingPatchCallers) {

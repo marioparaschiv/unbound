@@ -12,6 +12,13 @@ const SOURCES = {
 };
 
 describe('checkSurface', () => {
+	test('the committed SDK types everything window.unbound exposes', () => {
+		expect(checkSurface()).toEqual({
+			live: { missing: [], extra: [] },
+			shutdown: { missing: [], extra: [] },
+		});
+	});
+
 	test('reads value exports and public class members, without types, default or private members', () => {
 		const { surfaces } = readRuntimeSurfaces(SOURCES);
 

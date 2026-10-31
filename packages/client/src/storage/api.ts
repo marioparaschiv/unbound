@@ -55,7 +55,7 @@ type EventMap = {
 const Events = new EventEmitter<EventMap>();
 const handlers = new Map<(payload: SettingsPayload) => void, (payload: SettingsPayload) => void>();
 
-/** @internal */
+/** Every settings store, keyed by store name, as loaded at startup. Read and write through getBucket. */
 export const settings: Record<string, SettingsObject> = globalThis.UNBOUND_SETTINGS ?? {};
 
 /** @deprecated Use onChange */

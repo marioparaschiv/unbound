@@ -40,13 +40,13 @@ export async function update(id: string): Promise<boolean> {
 	return apply(id);
 }
 
-/** @internal */
+/** Every installed plugin, keyed by id. */
 export const entities: ReadonlyMap<PropertyKey, AddonHandle> = plugins.entities;
-/** @internal */
+/** The error each plugin that failed to load or start threw, keyed by id. */
 export const errors: ReadonlyMap<PropertyKey, Error> = plugins.errors;
-/** @internal */
+/** Starts a plugin without changing its enabled state. */
 export const start: (id: string) => void | Promise<void> = plugins.start.bind(plugins);
-/** @internal */
+/** Stops a running plugin without changing its enabled state. */
 export const stop: (id: string) => void | Promise<void> = plugins.stop.bind(plugins);
 
 /** @deprecated Use getAll */
