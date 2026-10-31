@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { describe, expect, test, afterEach } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -80,5 +80,58 @@ describe('DevServer build-failure isolation', () => {
 		server.stop();
 
 		expect(transport.calls.map((addon) => addon.id)).toEqual(['com.example.sample']);
+	});
+});
+
+describe('DevServer capabilities', () => {
+	test('the manifest it reloads carries the generated platforms and Capabilities', async () => {
+		const root = workspace('true');
+		const pluginDir = join(root, 'plugins', 'sample');
+		const apiTypes = join(import.meta.dir, '..', '..', 'api', 'src');
+
+		writeFileSync(
+			join(pluginDir, 'tsconfig.json'),
+			JSON.stringify({
+				compilerOptions: {
+					module: 'esnext',
+					moduleResolution: 'bundler',
+					target: 'esnext',
+					paths: { '@unbound-app/api/*': [`${apiTypes}/*`] },
+				},
+			}),
+		);
+		writeFileSync(
+			join(pluginDir, 'index.tsx'),
+			`import { definePlatform } from '@unbound-app/api/native';
+import { start as ios } from './ios/start';
+export const start = definePlatform({ ios });`,
+		);
+		mkdirSync(join(pluginDir, 'ios'));
+		writeFileSync(
+			join(pluginDir, 'ios', 'start.ts'),
+			`import type { PluginContext } from '@unbound-app/api/native';
+export function start(context: PluginContext) {
+	context.native.objc.getClass('UIView');
+}`,
+		);
+
+		const manifests: unknown[] = [];
+		const server = new DevServer(loadWorkspace(root), {
+			async reload(addon) {
+				manifests.push(
+					JSON.parse(readFileSync(join(addon.output, 'manifest.json'), 'utf8')),
+				);
+			},
+		});
+
+		await server.start();
+		server.stop();
+
+		expect(manifests).toEqual([
+			expect.objectContaining({
+				platforms: ['ios'],
+				platformCapabilities: { ios: ['native.objc.classes'] },
+			}),
+		]);
 	});
 });

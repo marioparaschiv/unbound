@@ -2,8 +2,28 @@ import {
 	readNativeMessageInfo,
 	type NativeMessageCellBridge,
 } from '@unbound-plugins/shared/native/ios/message-info';
-import type { NativeObjectHandle } from '@unbound-app/api/native';
+import type { NativeCancelablePromise, NativeObjectHandle } from '@unbound-app/api/native';
 import { describe, expect, test } from 'bun:test';
+
+type CellBridgeMethod = 'batch' | 'invokeAsync';
+
+type FakeCellBridge = Omit<NativeMessageCellBridge, CellBridgeMethod> & {
+	[Method in CellBridgeMethod]: (
+		...args: Parameters<NativeMessageCellBridge[Method]>
+	) => Promise<Awaited<ReturnType<NativeMessageCellBridge[Method]>>>;
+};
+
+function cancelable<T>(promise: Promise<T>): NativeCancelablePromise<T> {
+	return Object.assign(promise, { cancel() {} });
+}
+
+function fakeBridge(fake: FakeCellBridge): NativeMessageCellBridge {
+	return {
+		...fake,
+		batch: (...args) => cancelable(fake.batch(...args)),
+		invokeAsync: (...args) => cancelable(fake.invokeAsync(...args)),
+	};
+}
 
 // Each call is a distinct opaque object, like the handles the bridge returns.
 function handle(): NativeObjectHandle {
@@ -16,7 +36,7 @@ describe('native message cell lookup', () => {
 		const viewModel = handle();
 		const message = handle();
 		let batchSteps = 0;
-		const bridge: NativeMessageCellBridge = {
+		const bridge = fakeBridge({
 			batch: async (steps) => {
 				batchSteps = steps.length;
 				expect(steps[1].target).toEqual({ $nativeBatchResult: 0 });
@@ -38,7 +58,7 @@ describe('native message cell lookup', () => {
 			respondsTo: (handle, selector) =>
 				(handle === viewModel && selector === 'message') ||
 				(handle === message && selector === 'channelId'),
-		};
+		});
 
 		expect(await readNativeMessageInfo(cell, bridge, () => 'other-channel')).toEqual({
 			channelId: 'channel-1',
@@ -53,7 +73,7 @@ describe('native message cell lookup', () => {
 		const replacement = handle();
 		const message = handle();
 		let currentViewModel = viewModel;
-		const bridge: NativeMessageCellBridge = {
+		const bridge = fakeBridge({
 			batch: async () => {
 				currentViewModel = replacement;
 
@@ -63,7 +83,7 @@ describe('native message cell lookup', () => {
 			invokeAsync: async (handle, selector, args) =>
 				handle === viewModel && selector === 'isEqual:' ? args[0] === viewModel : null,
 			respondsTo: (handle, selector) => handle === viewModel && selector === 'message',
-		};
+		});
 
 		expect(await readNativeMessageInfo(cell, bridge, () => 'channel-1')).toBeUndefined();
 	});
@@ -73,7 +93,7 @@ describe('native message cell lookup', () => {
 		const viewModel = handle();
 		const message = handle();
 		let selected = 'original-channel';
-		const bridge: NativeMessageCellBridge = {
+		const bridge = fakeBridge({
 			batch: async () => {
 				selected = 'next-channel';
 
@@ -82,7 +102,7 @@ describe('native message cell lookup', () => {
 			getIvar: () => viewModel,
 			invokeAsync: async (_handle, selector) => selector === 'isEqual:',
 			respondsTo: (handle, selector) => handle === viewModel && selector === 'message',
-		};
+		});
 
 		expect(await readNativeMessageInfo(cell, bridge, () => selected)).toEqual({
 			channelId: 'original-channel',
@@ -94,12 +114,12 @@ describe('native message cell lookup', () => {
 		const cell = handle();
 		const viewModel = handle();
 		const message = handle();
-		const bridge: NativeMessageCellBridge = {
+		const bridge = fakeBridge({
 			batch: async () => [message, 'message-1'],
 			getIvar: () => viewModel,
 			invokeAsync: async (_handle, selector) => selector === 'isEqual:',
 			respondsTo: (handle, selector) => handle === viewModel && selector === 'message',
-		};
+		});
 
 		expect(await readNativeMessageInfo(cell, bridge)).toEqual({
 			channelId: undefined,
