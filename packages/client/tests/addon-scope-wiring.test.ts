@@ -7,7 +7,6 @@ type Interceptor = (action: FluxAction) => boolean;
 
 const ID = 'scope.wiring';
 
-// Mirrors Discord's dispatcher: interceptors run first and a truthy one drops the action.
 const dispatcher = {
 	subscriptions: new Map<string, Set<Listener>>(),
 	interceptors: [] as Interceptor[],
@@ -154,6 +153,7 @@ describe('addon scope wiring', () => {
 				unbound.metro.findLazy(() => false).then((mdl) => seen.push('lazy:' + mdl));
 				unbound.storage.getBucket().addListener(() => true, () => seen.push('bucket'));
 				unbound.storage.onChange(() => true, () => seen.push('change'));
+				unbound.storage.on('changed', () => seen.push('event'));
 				unbound.flux.onAction('WIRING', () => seen.push('action'));
 				unbound.flux.interceptAction('WIRING', () => true);
 				unbound.flux.onStoreChange(globalThis.__wiringStore, () => {});
@@ -175,7 +175,7 @@ describe('addon scope wiring', () => {
 		storage.set(ID, 'key', 1);
 
 		expect(dispatcher.handled).toEqual([]);
-		expect(seen).toEqual(['bucket', 'change']);
+		expect(seen).toEqual(['bucket', 'change', 'event']);
 
 		await plugins.stop(ID);
 		Reflect.apply(Reflect.get(globalThis, '__wiringLate'), undefined, []);
@@ -189,7 +189,7 @@ describe('addon scope wiring', () => {
 			commands: [],
 		});
 		expect(dispatcher.handled).toEqual([{ type: 'WIRING' }]);
-		expect(seen).toEqual(['bucket', 'change', 'lazy:undefined']);
+		expect(seen).toEqual(['bucket', 'change', 'event', 'lazy:undefined']);
 	});
 
 	test('a listener the plugin removes by reference stays removed', async () => {
@@ -217,6 +217,32 @@ describe('addon scope wiring', () => {
 		await plugins.stop(ID);
 
 		expect(data.listeners.size).toBe(0);
+	});
+
+	test('stop leaves alone a lone storage listener of another owner after the plugin removed its own', async () => {
+		function other() {
+			seen.push('other');
+		}
+
+		const plugins = startPlugin(`({
+			start() {
+				function byNamespace() {}
+
+				function byEmitter() {}
+
+				unbound.storage.on('set', byNamespace);
+				unbound.storage.off('set', byNamespace);
+				unbound.storage.on('set', byEmitter).off('set', byEmitter);
+			},
+			stop() {},
+		})`);
+
+		storage.on('set', other);
+		await plugins.stop(ID);
+		storage.set(ID, 'key', 1);
+		storage.off('set', other);
+
+		expect(seen).toEqual(['other']);
 	});
 
 	test("getBucket with no name returns the plugin's own Bucket, and named Buckets stay reachable", async () => {
