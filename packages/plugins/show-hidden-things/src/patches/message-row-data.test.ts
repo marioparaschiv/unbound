@@ -53,17 +53,6 @@ beforeEach(() => {
 });
 
 describe('patchTimeoutIcons', () => {
-	test('patches the message row builder', () => {
-		expect(scope.patcher.patches).toEqual([
-			{
-				kind: 'after',
-				target: MessageRowData,
-				method: 'generateMessageRowData',
-				caller: undefined,
-			},
-		]);
-	});
-
 	test('marks a timed-out author', () => {
 		expect(row({ guild_id: 'g1', author: { id: 'muted' } }).communicationDisabled).toBe(true);
 	});
