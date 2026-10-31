@@ -1,11 +1,11 @@
-import type { FileSizeLookup } from '~/badges';
+import type { FileSizes } from '~/badges';
 
 /**
  * @description Discord's picker already reports file sizes on iOS, so no lookup is needed.
- * @returns Always `undefined`.
+ * @returns No lookup, and nothing to release.
  */
-export function createFileSizeLookup(): FileSizeLookup | undefined {
-	return undefined;
+export function createFileSizes(): FileSizes {
+	return { release: () => {} };
 }
 
-export default createFileSizeLookup;
+export default createFileSizes;

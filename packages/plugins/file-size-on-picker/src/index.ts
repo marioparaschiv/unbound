@@ -2,11 +2,20 @@ import { featureSelfTest, recordApplied } from '@unbound-plugins/shared/lifecycl
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { patchMediaKeyboardItem } from '~/patches/media-keyboard-item';
-import { createFileSizeLookup } from '~/file-sizes/platform';
+import { createFileSizes } from '~/file-sizes/platform';
+
+let releaseFileSizes = () => {};
 
 function start(context: PluginContext) {
-	patchMediaKeyboardItem(createFileSizeLookup(context));
+	const sizes = createFileSizes(context);
+
+	releaseFileSizes = sizes.release;
+	patchMediaKeyboardItem(sizes.lookup);
 	recordApplied(1);
 }
 
-export default { start, selfTest: featureSelfTest };
+function stop() {
+	releaseFileSizes();
+}
+
+export default { start, stop, selfTest: featureSelfTest };

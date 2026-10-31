@@ -8,16 +8,18 @@ import type { NativeJavaReference, PluginContext } from '@unbound-app/api/native
 import { currentActivity } from '@unbound-plugins/shared/native/android/views';
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 
-import type { FileSizeLookup } from '~/badges';
+import type { FileSizes } from '~/badges';
 import { PLUGIN_NAME } from '~/constants';
 
 /**
  * @description Reads media file sizes from Android's content resolver, which Discord's picker leaves out, and remembers each answer.
  * @param context The plugin's context, whose Java bridge reads the sizes.
- * @returns A lookup for content URIs, or `undefined` when the loader lacks a capability it needs.
+ * @returns A lookup for content URIs, with no lookup when the loader lacks a capability it needs, and a function that releases the resolver.
  */
-export function createFileSizeLookup(context: PluginContext): FileSizeLookup | undefined {
-	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
+export function createFileSizes(context: PluginContext): FileSizes {
+	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) {
+		return { release: () => {} };
+	}
 
 	const { java } = context.native;
 	const sizes = new Map<string, number | undefined>();
@@ -87,7 +89,17 @@ export function createFileSizeLookup(context: PluginContext): FileSizeLookup | u
 		return sizes.get(uri);
 	}
 
-	return lookup;
+	// The scoped bridge releases only handles from getClass and construct, not these invoke results.
+	function release() {
+		for (const handle of [resolver, application]) {
+			if (handle) java.release(handle);
+		}
+
+		resolver = null;
+		application = null;
+	}
+
+	return { lookup, release };
 }
 
-export default createFileSizeLookup;
+export default createFileSizes;
