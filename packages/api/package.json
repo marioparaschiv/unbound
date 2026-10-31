@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/api",
-	"version": "0.12.0-1db1fcd97bef574ddb396c9c3ea5afdaed7f7b544226a7bb921cd4aa08ba8c84",
+	"version": "0.12.0-508b066c46686d23133f6c59fe77243006a85e2cb70a23e34b976c4167a60799",
 	"author": {
 		"name": "Mario P.",
 		"email": "contact@marioparaschiv.com",
@@ -18,12 +18,16 @@
 	"exports": {
 		".": "./src/index.d.ts",
 		"./assets": "./src/assets.d.ts",
+		"./builtins": "./src/builtins.d.ts",
 		"./commands": "./src/commands.d.ts",
 		"./dialogs": "./src/dialogs.d.ts",
 		"./flux": "./src/flux.d.ts",
+		"./fonts": "./src/fonts.d.ts",
 		"./fs": "./src/fs.d.ts",
 		"./global": "./src/global.d.ts",
 		"./i18n": "./src/i18n.d.ts",
+		"./iconPacks": "./src/iconPacks.d.ts",
+		"./marketplace": "./src/marketplace.d.ts",
 		"./metro": "./src/metro/index.d.ts",
 		"./metro/api": "./src/metro/api.d.ts",
 		"./metro/common": "./src/metro/common.d.ts",
@@ -32,9 +36,13 @@
 		"./metro/stores": "./src/metro/stores.d.ts",
 		"./native": "./src/native.d.ts",
 		"./patcher": "./src/patcher.d.ts",
+		"./plugins": "./src/plugins.d.ts",
 		"./settings": "./src/settings.d.ts",
 		"./storage": "./src/storage.d.ts",
-		"./toasts": "./src/toasts.d.ts"
+		"./sync": "./src/sync.d.ts",
+		"./themes": "./src/themes.d.ts",
+		"./toasts": "./src/toasts.d.ts",
+		"./updates": "./src/updates.d.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit -p ."

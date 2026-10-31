@@ -1,7 +1,7 @@
 import { SYNC_LOCAL_STORE_PREFIX } from '@unbound-app/contracts/sync';
 import debounce from '@unbound-app/utils/debounce';
 
-import { getMode, isApplying, isEnabled, sync } from '~/sync/api';
+import { getMode, isApplying, isEnabled, now } from '~/sync/api';
 import type { SectionEntry } from '~/settings/section';
 import CloudSyncPage from '~/ui/settings/cloud-sync';
 import { Screens } from '~/core/constants';
@@ -19,7 +19,7 @@ let stopped = false;
 const scheduleSync = debounce(() => {
 	if (stopped || !isEnabled() || getMode() === 'download') return;
 
-	void sync();
+	void now();
 }, SYNC_DELAY_MS);
 
 /** Syncs once addons have loaded, then after local changes settle. */
@@ -29,7 +29,7 @@ export function start() {
 	// Built-ins start before the addon managers load their entities.
 	pending = setTimeout(() => {
 		if (isEnabled()) {
-			void sync();
+			void now();
 		}
 	});
 
@@ -49,7 +49,7 @@ export function stop() {
 }
 
 export const cloudSyncSection: SectionEntry = {
-	key: Screens.CloudSync,
+	key: Screens.Sync,
 	titleKey: 'UNBOUND_CLOUD_SYNC',
 	component: CloudSyncPage,
 	icon: 'CloudIcon',

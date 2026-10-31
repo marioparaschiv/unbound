@@ -54,10 +54,21 @@ export type RootEntry = {
 	out: string;
 };
 
+/** A barrel `export const old = next;` naming a top-level module under an old name. */
+export type NamespaceAlias = {
+	name: string;
+	/** The top-level module the alias points at. */
+	target: string;
+	/** The alias's JSDoc body, such as `@deprecated Use iconPacks`. */
+	doc: string;
+};
+
 export type SdkEntries = {
 	root: RootEntry;
 	/** Every module and nested subpath, sorted by name. */
 	modules: ModuleEntry[];
+	/** The barrel's aliases of top-level modules, sorted by name. */
+	aliases: NamespaceAlias[];
 };
 
 /**
