@@ -1,5 +1,5 @@
 {
-	"id": "astral.show-timeout-duration",
+	"id": "unbound.show-timeout-duration",
 	"name": "Show Timeout Duration",
 	"description": "Shows how much longer a user's timeout will last.",
 	"authors": [

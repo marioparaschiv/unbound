@@ -1,5 +1,5 @@
 (() => {
-	if (globalThis.__astralModuleCaptureInstalled) {
+	if (globalThis.__unboundModuleCaptureInstalled) {
 		return true;
 	}
 
@@ -23,7 +23,7 @@
 		},
 	});
 
-	globalThis.__astralModuleCaptureInstalled = true;
+	globalThis.__unboundModuleCaptureInstalled = true;
 
 	return true;
 })();

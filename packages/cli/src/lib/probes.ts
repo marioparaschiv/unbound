@@ -68,7 +68,7 @@ export async function viewTree(
 			'value' in value && typeof value.value === 'number' ? value.value : 0;
 		const string = (value: NativeJavaValue) => (value.type === 'string' ? value.value : '');
 		const tracker = handle(
-			java.getField(java.getClass('app.astral.android.ActivityTracker'), 'INSTANCE'),
+			java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
 		);
 		const activity = tracker ? handle(java.invoke(tracker, 'currentActivity')) : null;
 		const window = activity ? handle(java.invoke(activity, 'getWindow')) : null;
@@ -260,7 +260,7 @@ export function textSpans(unbound: UnboundGlobal, match: string, maxViews: numbe
 	const int = (value: number): NativeJavaValue => ({ type: 'int', value });
 	const isTrue = (value: NativeJavaValue) => 'value' in value && value.value === true;
 	const tracker = handle(
-		java.getField(java.getClass('app.astral.android.ActivityTracker'), 'INSTANCE'),
+		java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
 	);
 	const activity = tracker ? handle(java.invoke(tracker, 'currentActivity')) : null;
 	const window = activity ? handle(java.invoke(activity, 'getWindow')) : null;

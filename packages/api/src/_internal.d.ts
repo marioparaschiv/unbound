@@ -36,7 +36,7 @@ export declare const ADDON_SCOPE_GLOBALS: readonly [
 /** @deprecated Use ADDON_KINDS */
 export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'font'];
 /** The core settings store; each addon's settings store is named after the addon id. */
-export declare const CORE_SETTINGS_STORE = 'astral';
+export declare const CORE_SETTINGS_STORE = 'unbound';
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
 export declare const DESIGN_COMPONENTS: readonly [
 	'Text',

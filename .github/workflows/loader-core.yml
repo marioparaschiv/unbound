@@ -33,7 +33,7 @@ jobs:
                   key: core-tests
 
             - name: Configure core
-              run: cmake -S core -B build/core -DASTRAL_CORE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
+              run: cmake -S core -B build/core -DUNBOUND_CORE_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined"
 
             - name: Build core
               run: cmake --build build/core -j"$(nproc)"
@@ -98,7 +98,7 @@ jobs:
                   key: hermes-bridge
 
             - name: Configure the fuzzer
-              run: cmake -S core -B build/jsi-fuzz -G Ninja -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DASTRAL_CORE_TESTS=ON -DASTRAL_CORE_JSI_FUZZ=ON -DASTRAL_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all"
+              run: cmake -S core -B build/jsi-fuzz -G Ninja -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DUNBOUND_CORE_TESTS=ON -DUNBOUND_CORE_JSI_FUZZ=ON -DUNBOUND_HERMES_SOURCE_DIR="$PWD/build/hermes-src" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-sanitize-recover=all"
 
             - name: Build the Hermes tests and fuzzer
               run: cmake --build build/jsi-fuzz --target native_platform_hermes native_runtime_hermes native_preload_hermes native_fabric_hermes native_handle_leases_hermes native_struct_layouts_hermes native_jsi_fuzz -j"$(nproc)"
@@ -133,7 +133,7 @@ jobs:
 
             - name: Fuzz
               env:
-                  ASTRAL_FUZZ_ITERATIONS: '20000'
+                  UNBOUND_FUZZ_ITERATIONS: '20000'
               run: build/jsi-fuzz/native_jsi_fuzz
 
     native-bridge-fuzz:
@@ -153,7 +153,7 @@ jobs:
                   key: bridge-fuzz
 
             - name: Configure the fuzzer
-              run: cmake -S core -B build/fuzz -DASTRAL_CORE_FUZZ=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
+              run: cmake -S core -B build/fuzz -DUNBOUND_CORE_FUZZ=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="-fsanitize=fuzzer-no-link,address,undefined" -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all"
 
             - name: Build the fuzzer
               run: cmake --build build/fuzz --target native_bridge_libfuzzer -j"$(nproc)"

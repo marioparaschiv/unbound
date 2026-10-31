@@ -86,7 +86,7 @@ int main()
            loader::AddonSignatureStatus::Invalid);
 
     nlohmann::json renamed = manifest;
-    renamed["id"]          = "astral.other";
+    renamed["id"]          = "unbound.other";
     assert(loader::verifyAddonSignature(renamed, bundle, trust).status ==
            loader::AddonSignatureStatus::Invalid);
 

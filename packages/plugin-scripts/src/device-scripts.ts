@@ -360,7 +360,7 @@ export function fixtureScript(guild: string, channel: string): string {
 }
 
 function setDeveloperMode(enabled: boolean) {
-	const store = unbound.storage.getStore('astral');
+	const store = unbound.storage.getStore('unbound');
 	const previous = store.get('developer-mode', false);
 
 	store.set('developer-mode', enabled);
@@ -602,7 +602,7 @@ export const MATRIX_TOAST_MS = 300;
  * @returns A script whose result is the previous value as JSON, `null` when unset.
  */
 function setToastDuration(milliseconds: number | null) {
-	const store = unbound.storage.getStore('astral');
+	const store = unbound.storage.getStore('unbound');
 	const previous = store.get('toasts.duration', null);
 
 	if (milliseconds === null) store.remove('toasts.duration');

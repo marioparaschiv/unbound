@@ -8,4 +8,4 @@ export const UserStore = metro.findStore('User', { lazy: true });
 
 export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
 
-export const settings = storage.getStore('astral.chat-bubbles');
+export const settings = storage.getStore('unbound.chat-bubbles');

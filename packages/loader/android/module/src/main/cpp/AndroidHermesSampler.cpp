@@ -3,8 +3,8 @@
 #include "HermesSampling.h"
 #include "JniEnvironment.h"
 
-namespace astral::android {
-static constexpr const char *kSamplerClass = "app/astral/android/HermesSampler";
+namespace unbound::android {
+static constexpr const char *kSamplerClass = "app/unbound/android/HermesSampler";
 
 static jclass    gSamplerClass = nullptr;
 static jmethodID gSample       = nullptr;

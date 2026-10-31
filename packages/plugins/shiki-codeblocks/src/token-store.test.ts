@@ -2,7 +2,7 @@ import { installAddonGlobals } from '@unbound-app/api/testing';
 import { describe, expect, mock, test } from 'bun:test';
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.shiki-codeblocks' },
+	manifest: { id: 'unbound.shiki-codeblocks' },
 	unbound: { fs: {} },
 });
 

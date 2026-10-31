@@ -113,7 +113,7 @@ jobs:
 
             - name: Run the release commands without building
               env:
-                  ASTRAL_API_URL: ${{ vars.ASTRAL_API_URL }}
+                  UNBOUND_API_URL: ${{ vars.ASTRAL_API_URL }}
               run: |
                   set -euo pipefail
                   out="$RUNNER_TEMP/release"
@@ -127,9 +127,9 @@ jobs:
                   jq -e '.spdxVersion and (.packages | length > 0)' "$out/sbom.spdx.json" > /dev/null
                   go run ./tools generate-loader-changelog --version "$version" --output "$out/changelog.md"
                   test -s "$out/changelog.md"
-                  if [ -n "$ASTRAL_API_URL" ]; then
+                  if [ -n "$UNBOUND_API_URL" ]; then
                       go run ./tools publish-loader-releases --dry-run \
-                        --api-url "${ASTRAL_API_URL%/}/api/v1/loader/releases" \
+                        --api-url "${UNBOUND_API_URL%/}/api/v1/loader/releases" \
                         --version "$version" \
                         --ios-url "https://example.invalid/ios.deb" \
                         --android-url "https://example.invalid/android.apk" \
@@ -237,7 +237,7 @@ jobs:
               run: bun scripts/pr-builds-plan.ts plan
 
     build:
-        name: Build astral
+        name: Build Unbound
         needs: changes
         permissions:
             contents: write

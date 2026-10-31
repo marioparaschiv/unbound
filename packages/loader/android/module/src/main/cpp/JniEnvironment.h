@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace astral::android {
+namespace unbound::android {
 void    setJavaVM(JavaVM *vm);
 JNIEnv *currentEnvironment();
 

@@ -1,7 +1,7 @@
 export type NavigatorLike = { userAgent: string; platform: string; maxTouchPoints: number };
 
 /**
- * @description Whether this browser can hand an `astral://` link to the client: only iOS and iPadOS register it.
+ * @description Whether this browser can hand an `unbound://` link to the client: only iOS and iPadOS register it.
  * @param nav The browser's navigator.
  * @returns True on iPhone, iPod and iPad, including iPadOS reporting itself as a Mac.
  */

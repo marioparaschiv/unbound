@@ -111,7 +111,7 @@ jobs:
             ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
             ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-            ASTRAL_PR_NUMBER: ${{ inputs.pr_number || '' }}
+            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
         outputs:
             module_filename: ${{ steps.collect.outputs.module_filename }}
             module_url: ${{ steps.upload-module.outputs.artifact-url }}
@@ -177,7 +177,7 @@ jobs:
                       fi
                       exit 0
                   fi
-                  keystore="$RUNNER_TEMP/astral-android-release.keystore"
+                  keystore="$RUNNER_TEMP/unbound-android-release.keystore"
                   printf '%s' "$ANDROID_SIGNING_KEYSTORE_BASE64" | base64 --decode > "$keystore"
                   echo "ANDROID_SIGNING_STORE_FILE=$keystore" >> "$GITHUB_ENV"
 
@@ -187,12 +187,12 @@ jobs:
                   CDN_URL: ${{ vars.CDN_URL }}
               run: |
                   if [ -n "$PR_NUMBER" ] && [ -n "$CDN_URL" ]; then
-                    echo "ASTRAL_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
+                    echo "UNBOUND_BUNDLE_URL=${CDN_URL%/}/unbound/pr/$PR_NUMBER/" >> "$GITHUB_ENV"
                   fi
 
             - name: Build module
               working-directory: packages/loader/android
-              run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PastralBuildNumber="${GITHUB_RUN_NUMBER}"
+              run: ./gradlew :module:assembleRelease --build-cache --quiet --console=plain -PunboundBuildNumber="${GITHUB_RUN_NUMBER}"
 
             - name: Report the compiler cache
               if: ${{ !cancelled() }}
@@ -220,7 +220,7 @@ jobs:
               id: collect
               run: |
                   set -euo pipefail
-                  name="app.astral.android.xposed.apk"
+                  name="app.unbound.android.xposed.apk"
                   cp android/module/build/outputs/apk/release/module-release.apk "$name"
                   echo "module_filename=$name" >> "$GITHUB_OUTPUT"
 
@@ -233,12 +233,12 @@ jobs:
                   mkdir -p android-symbols
                   unzip -q android/module/build/outputs/native-debug-symbols/release/native-debug-symbols.zip -d android-symbols
                   for abi in arm64-v8a x86_64; do
-                    symbols="android-symbols/$abi/libastral.so.dbg"
-                    library="$RUNNER_TEMP/$abi-libastral.so"
+                    symbols="android-symbols/$abi/libunbound.so.dbg"
+                    library="$RUNNER_TEMP/$abi-libunbound.so"
                     test -f "$symbols"
                     sections=$("$readelf" -S "$symbols" 2>/dev/null)
                     grep -q '\.debug_info' <<< "$sections"
-                    unzip -p "$module" "lib/$abi/libastral.so" > "$library"
+                    unzip -p "$module" "lib/$abi/libunbound.so" > "$library"
                     library_id=$("$readelf" -n "$library" | awk '/Build ID:/ { print $3 }')
                     symbols_id=$("$readelf" -n "$symbols" 2>/dev/null | awk '/Build ID:/ { print $3 }')
                     test -n "$library_id"
@@ -382,8 +382,8 @@ jobs:
                   java -jar "$LSPATCH_JAR" discord/*.apk -m module/*.apk -l 2 -o patched -f
                   mkdir emulator
                   mv patched/config.x86_64*.apk emulator/
-                  name="astral.apks"
-                  if [ "$DISCORD_CHANNEL" != stable ]; then name="astral-$DISCORD_CHANNEL.apks"; fi
+                  name="Unbound.apks"
+                  if [ "$DISCORD_CHANNEL" != stable ]; then name="Unbound-$DISCORD_CHANNEL.apks"; fi
                   (cd patched && zip -q "../$name" ./*.apk)
                   echo "patched_filename=$name" >> "$GITHUB_OUTPUT"
 

@@ -2,4 +2,4 @@
 
 #include "LoaderSettings.h"
 
-loader::SettingsStore &AstralSettingsStore();
+loader::SettingsStore &UnboundSettingsStore();

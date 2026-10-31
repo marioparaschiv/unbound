@@ -96,7 +96,7 @@ func TestAndroidBuildArchivesMatchingNativeSymbols(t *testing.T) {
 		"unzip -q android/module/build/outputs/native-debug-symbols/release/native-debug-symbols.zip -d android-symbols",
 		"for abi in arm64-v8a x86_64; do",
 		"grep -q '\\.debug_info' <<< \"$sections\"",
-		`unzip -p "$module" "lib/$abi/libastral.so" > "$library"`,
+		`unzip -p "$module" "lib/$abi/libunbound.so" > "$library"`,
 		`test "$library_id" = "$symbols_id"`,
 		"git rev-parse HEAD > android-symbols/commit.txt",
 		"name: android symbols",
@@ -229,13 +229,13 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		t.Fatal("Android should be built through the cross-platform coordinator on push")
 	}
 	for _, required := range []string{
-		"name=\"app.astral.android.xposed.apk\"",
+		"name=\"app.unbound.android.xposed.apk\"",
 		`go run ./tools android-version "${args[@]}"`,
 		`if [ "$REQUIRE_MATCHING_VERSION" = true ]; then args+=(--require-matching); fi`,
 		"REQUIRE_MATCHING_VERSION: ${{ inputs.require_matching_version }}",
 		`apk_version_code=$("$build_tools/aapt" dump badging discord/base.apk`,
 		`"$apk_version_code" != "$version"`,
-		"name=\"astral.apks\"",
+		"name=\"Unbound.apks\"",
 	} {
 		if !strings.Contains(string(android), required) {
 			t.Fatalf("Android workflow is missing matching version or artifact detail %q", required)
@@ -282,7 +282,7 @@ func TestObtainiumConfigTracksTheRootedAndroidModule(t *testing.T) {
 	if err := json.Unmarshal(configBytes, &config); err != nil {
 		t.Fatal(err)
 	}
-	if config.ID != "app.astral.android" || config.URL != "https://github.com/marioparaschiv/unbound" {
+	if config.ID != "app.unbound.android" || config.URL != "https://github.com/marioparaschiv/unbound" {
 		t.Fatalf("Obtainium config targets an unexpected app: %#v", config)
 	}
 	var settings struct {
@@ -293,16 +293,16 @@ func TestObtainiumConfigTracksTheRootedAndroidModule(t *testing.T) {
 		t.Fatal(err)
 	}
 	for title, wanted := range map[string]bool{
-		"astral 1.0.1 for Discord 350.8, Android":       true,
-		"astral 1.0.1 for Discord 351.12, Android beta": true,
-		"astral 1.0.1 for Discord 350.8, iOS":           false,
-		"v0.9.0":                                        false,
+		"Unbound 1.0.1 for Discord 350.8, Android":       true,
+		"Unbound 1.0.1 for Discord 351.12, Android beta": true,
+		"Unbound 1.0.1 for Discord 350.8, iOS":           false,
+		"v0.9.0":                                         false,
 	} {
 		if matched, err := regexp.MatchString(settings.FilterReleaseTitlesByRegEx, title); err != nil || matched != wanted {
 			t.Fatalf("Obtainium release filter %q on %q matched %v, want %v", settings.FilterReleaseTitlesByRegEx, title, matched, wanted)
 		}
 	}
-	matches, err := regexp.MatchString(settings.APKFilterRegEx, "app.astral.android.xposed.apk")
+	matches, err := regexp.MatchString(settings.APKFilterRegEx, "app.unbound.android.xposed.apk")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -314,7 +314,7 @@ func TestObtainiumConfigTracksTheRootedAndroidModule(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, required := range []string{
-		"name=\"app.astral.android.xposed.apk\"",
+		"name=\"app.unbound.android.xposed.apk\"",
 		"ANDROID_SIGNING_KEYSTORE_BASE64",
 		"ANDROID_SIGNING_STORE_PASSWORD",
 		"ANDROID_SIGNING_KEY_ALIAS",
@@ -383,11 +383,11 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 	contents := string(workflow)
 	for _, required := range []string{
 		"name: Publish loader update records",
-		"ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY }}",
-		"ASTRAL_API_URL: ${{ vars.ASTRAL_API_URL }}",
-		"ASTRAL_API_KEY is required for stable release publication",
-		"ASTRAL_API_URL is required for stable release publication",
-		"api_url=\"${ASTRAL_API_URL%/}/api/v1/loader/releases\"",
+		"UNBOUND_API_KEY: ${{ secrets.ASTRAL_API_KEY }}",
+		"UNBOUND_API_URL: ${{ vars.ASTRAL_API_URL }}",
+		"UNBOUND_API_KEY is required for stable release publication",
+		"UNBOUND_API_URL is required for stable release publication",
+		"api_url=\"${UNBOUND_API_URL%/}/api/v1/loader/releases\"",
 		"--api-url \"$api_url\"",
 		"dpkg-deb -f \"$deb_path\" Version",
 		"fetch-depth: 0",
@@ -471,7 +471,7 @@ func TestMetroRegistryIsCapturedBeforeBundleWithoutLegacyPatch(t *testing.T) {
 	}
 	for _, path := range []string{
 		filepath.Join(root, "core", "src", "LoaderPipeline.cpp"),
-		filepath.Join(root, "ios", "sources", "Astral.xm"),
+		filepath.Join(root, "ios", "sources", "Unbound.xm"),
 		filepath.Join(root, "android", "module", "src", "main", "cpp", "AndroidLoader.cpp"),
 	} {
 		contents, err := os.ReadFile(path)
@@ -636,9 +636,9 @@ func TestCompatScanCoversEveryDiscordChannel(t *testing.T) {
 		`'["stable","beta","alpha"]'`,
 		"IOS_SOURCE: ${{ matrix.channel == 'stable' && 'appstore' || matrix.channel == 'beta' && 'testflight' || 'none' }}",
 		"DISCORD_SNIFF_URL: https://sniff.xhyrom.dev",
-		"path: ~/.cache/astral-discord",
+		"path: ~/.cache/unbound-discord",
 		"restore-keys: discord-builds-${{ matrix.channel }}-",
-		`--cache "$HOME/.cache/astral-discord"`,
+		`--cache "$HOME/.cache/unbound-discord"`,
 		"if: env.IOS_SOURCE != 'none'",
 		"uses: castdrian/dkrypt@",
 		"channel: ${{ env.IOS_SOURCE }}",
@@ -699,12 +699,12 @@ func readObtainiumConfig(t *testing.T, name string) obtainiumTestConfig {
 
 func TestObtainiumConfigsTrackOneDiscordChannelEach(t *testing.T) {
 	releases := map[string]string{
-		"stable": "astral 1.0.1 for Discord 350.8, Android",
-		"beta":   "astral 1.0.1 for Discord 351.12, Android beta",
-		"alpha":  "astral 1.0.1 for Discord 352.8, Android alpha",
+		"stable": "Unbound 1.0.1 for Discord 350.8, Android",
+		"beta":   "Unbound 1.0.1 for Discord 351.12, Android beta",
+		"alpha":  "Unbound 1.0.1 for Discord 352.8, Android alpha",
 	}
-	others := []string{"astral 1.0.1 for Discord 350.8, iOS", "astral 1.0.1 for Discord 351.0 (118370), iOS TestFlight", "loader-latest", "astral loader (latest)", "v0.9.0"}
-	assets := map[string]string{"stable": "astral.apks", "beta": "astral-beta.apks", "alpha": "astral-alpha.apks"}
+	others := []string{"Unbound 1.0.1 for Discord 350.8, iOS", "Unbound 1.0.1 for Discord 351.0 (118370), iOS TestFlight", "loader-latest", "Unbound loader (latest)", "v0.9.0"}
+	assets := map[string]string{"stable": "Unbound.apks", "beta": "Unbound-beta.apks", "alpha": "Unbound-alpha.apks"}
 	for channel := range releases {
 		config := readObtainiumConfig(t, "obtainium-"+channel+".json")
 		if config.ID != "com.discord" || config.URL != "https://github.com/marioparaschiv/unbound" {
@@ -731,7 +731,7 @@ func TestObtainiumConfigsTrackOneDiscordChannelEach(t *testing.T) {
 				t.Fatalf("the %s Obtainium release filter matched %q", channel, release)
 			}
 		}
-		if apks.MatchString("app.astral.android.xposed.apk") {
+		if apks.MatchString("app.unbound.android.xposed.apk") {
 			t.Fatalf("the %s Obtainium config would install the Xposed module", channel)
 		}
 	}
@@ -855,7 +855,7 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"DISCORD_CHANNEL: ${{ inputs.discord_channel || 'stable' }}",
 		"ANDROID_CODE: ${{ inputs.android_code }}",
 		`env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$VERSION" --output-dir discord "${split_args[@]}"`,
-		`if [ "$DISCORD_CHANNEL" != stable ]; then name="astral-$DISCORD_CHANNEL.apks"; fi`,
+		`if [ "$DISCORD_CHANNEL" != stable ]; then name="Unbound-$DISCORD_CHANNEL.apks"; fi`,
 	} {
 		if !strings.Contains(android, required) {
 			t.Fatalf("the Android workflow is missing channel detail %q", required)

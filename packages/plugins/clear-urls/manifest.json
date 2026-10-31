@@ -1,5 +1,5 @@
 {
-	"id": "astral.clear-urls",
+	"id": "unbound.clear-urls",
 	"name": "Clear URLs",
 	"description": "Removes tracking garbage from URLs before you send them.",
 	"authors": [

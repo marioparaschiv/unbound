@@ -19,6 +19,6 @@ export const RowManager = metro.findByName('RowManager', { interop: false, lazy:
 
 export const Users = flux.getStore('User', { lazy: true });
 
-export const textReplaceSettings = storage.getBucket('astral.text-replace');
+export const textReplaceSettings = storage.getBucket('unbound.text-replace');
 
 export const PreviewRunning = createRunningFlag(addon.id);

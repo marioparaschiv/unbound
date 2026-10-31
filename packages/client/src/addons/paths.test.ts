@@ -11,7 +11,7 @@ import {
 
 describe('addon paths', () => {
 	test('addon ids must be plain folder names', () => {
-		expect(isSafeAddonId('astral.moyai')).toBe(true);
+		expect(isSafeAddonId('unbound.moyai')).toBe(true);
 
 		for (const id of ['../settings', 'a/b', '', '.hidden', 'a..b', 'x'.repeat(101), 7]) {
 			expect(isSafeAddonId(id)).toBe(false);

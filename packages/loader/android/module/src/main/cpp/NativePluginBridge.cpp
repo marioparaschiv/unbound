@@ -30,7 +30,7 @@
 #include "NativeResourceBudget.h"
 #include "NativeTraversalOptions.h"
 
-namespace astral::android {
+namespace unbound::android {
 namespace jsi = facebook::jsi;
 
 static std::string takeJavaFailure(JNIEnv *env, const char *fallback)
@@ -398,7 +398,7 @@ static jsi::Value javaSynchronously(jsi::Runtime &runtime, const JavaCallbacks &
     return parseJavaResult(runtime, callJavaString(callbacks, method, arguments));
 }
 
-static constexpr const char *kCatchingCallName = "__astralCatchingCall";
+static constexpr const char *kCatchingCallName = "__unboundCatchingCall";
 
 static jsi::Function catchingCall(jsi::Runtime &runtime)
 {

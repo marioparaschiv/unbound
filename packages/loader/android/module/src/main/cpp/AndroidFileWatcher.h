@@ -2,6 +2,6 @@
 
 #include <jni.h>
 
-namespace astral::android {
+namespace unbound::android {
 bool registerFileWatcherNatives(JNIEnv *env);
 }
