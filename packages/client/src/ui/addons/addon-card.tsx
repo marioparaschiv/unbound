@@ -4,7 +4,7 @@ import { memo } from 'react';
 
 import { useUnboundSettings } from '~/lib/unbound-settings';
 import { Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
+import { useDevelopmentCopy } from '~/ui/hooks';
 import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';
 import { Manager } from '~/managers/base';
@@ -38,9 +38,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 	const recovery = useUnboundSettings(({ key }) => key === 'recovery').get('recovery');
 	const disabled = addon.failed || recovery;
 
-	useSettingsStore(kind, ({ key }) => key === 'development');
-
-	const developmentCopy = manager.isDevelopmentCopy(addon.id);
+	const developmentCopy = useDevelopmentCopy(kind, addon.id);
 	const tag = library
 		? Messages.UNBOUND_LIBRARY
 		: developmentCopy

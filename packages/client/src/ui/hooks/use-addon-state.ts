@@ -17,7 +17,7 @@ export type AddonState = {
 function useAddonState(kind: 'plugin' | 'theme' | 'icon-pack', id: string): AddonState {
 	const manager = Manager.for(kind);
 
-	useSettingsStore(kind, ({ key }) => key === 'states' || key === 'applied');
+	useSettingsStore(manager.bucket, ({ key }) => key === 'states' || key === 'applied');
 
 	return { enabled: manager.isEnabled(id), failed: manager.errors.has(id) };
 }
