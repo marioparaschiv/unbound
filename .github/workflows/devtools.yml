@@ -1,32 +1,55 @@
 name: DevTools
 
+# Pull requests that touch the devtools run the checks. Release binaries are built only when
+# release.yml releases the devtools component (or by hand for an existing tag): they are attached
+# to devtools-v{version} and to the rolling devtools-latest release the README links to.
+#
+# Caching: rust-cache keys each job by target, rustc version, Cargo.lock and the manifests, and
+# keeps only dependency artifacts (workspace crates rebuild anyway).
 on:
     pull_request:
         paths:
             - 'apps/devtools/**'
             - 'packages/loader/bootstrap/devtools.js'
             - '.github/workflows/devtools.yml'
-    push:
-        branches: [main]
-        paths:
-            - 'apps/devtools/**'
-            - 'packages/loader/bootstrap/devtools.js'
-            - '.github/workflows/devtools.yml'
+    workflow_call:
+        inputs:
+            version:
+                description: The devtools release version to build and attach binaries to.
+                type: string
+                required: true
+    workflow_dispatch:
+        inputs:
+            version:
+                description: An existing devtools release version (without the devtools-v prefix).
+                type: string
+                required: true
 
 permissions:
     contents: read
 
+# A newer push cancels a pull request's checks; a release build is never cancelled.
 concurrency:
-    group: devtools-${{ github.ref }}
-    cancel-in-progress: true
+    group: devtools-${{ inputs.version || github.ref }}
+    cancel-in-progress: ${{ !inputs.version }}
+
+env:
+    CARGO_TERM_COLOR: always
+    CARGO_NET_RETRY: 10
+    # Incremental artifacts are large, rarely reused on a fresh runner, and bloat the cache.
+    CARGO_INCREMENTAL: 0
+    LINUX_BUILD_DEPS: >-
+        pkg-config libfontconfig-dev libfreetype-dev libxkbcommon-dev libxkbcommon-x11-dev
+        libxcb1-dev libx11-xcb-dev libwayland-dev
 
 defaults:
     run:
         working-directory: apps/devtools
 
 jobs:
-    build:
-        name: Build (${{ matrix.os }})
+    check:
+        name: Check (${{ matrix.os }})
+        if: ${{ !inputs.version }}
         runs-on: ${{ matrix.os }}
         timeout-minutes: 40
         strategy:
@@ -41,22 +64,19 @@ jobs:
 
             - name: Install Linux build dependencies
               if: runner.os == 'Linux'
-              run: >
-                  sudo apt-get update && sudo apt-get install -y pkg-config libfontconfig-dev
-                  libfreetype-dev libxkbcommon-dev libxkbcommon-x11-dev libxcb1-dev libx11-xcb-dev
-                  libwayland-dev
+              run: sudo apt-get update && sudo apt-get install -y $LINUX_BUILD_DEPS
 
             - name: Install Rust
-              run: rustup toolchain install stable --profile minimal --component clippy --component rustfmt && rustup default stable
+              uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+              with:
+                  toolchain: stable
+                  components: clippy, rustfmt
 
             - name: Cache cargo
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+              uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
               with:
-                  path: |
-                      ~/.cargo/registry
-                      ~/.cargo/git
-                      apps/devtools/target
-                  key: devtools-${{ runner.os }}-${{ hashFiles('apps/devtools/Cargo.lock') }}
+                  workspaces: apps/devtools -> target
+                  key: check
 
             - name: Set up Bun
               if: runner.os == 'Linux'
@@ -70,22 +90,124 @@ jobs:
               run: bun install --frozen-lockfile
 
             - name: Format
+              if: runner.os == 'Linux'
               run: cargo fmt --check
 
+            # clippy and test share the debug profile, so test reuses clippy's dependency builds.
             - name: Clippy
-              run: cargo clippy --workspace --all-targets -- -D warnings
+              run: cargo clippy --locked --workspace --all-targets -- -D warnings
 
             - name: Test
-              run: cargo test --workspace
+              run: cargo test --locked --workspace
+
+    build:
+        name: Build (${{ matrix.target }})
+        if: ${{ inputs.version }}
+        runs-on: ${{ matrix.os }}
+        timeout-minutes: 40
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    # Linux builds on 22.04 so the binary needs only glibc 2.35 and runs on older distros.
+                    - os: ubuntu-22.04
+                      target: x86_64-unknown-linux-gnu
+                      asset: unbound-devtools-linux-x64.tar.gz
+                    - os: ubuntu-22.04-arm
+                      target: aarch64-unknown-linux-gnu
+                      asset: unbound-devtools-linux-arm64.tar.gz
+                    - os: macos-26
+                      target: aarch64-apple-darwin
+                      asset: unbound-devtools-macos-arm64.tar.gz
+                    - os: windows-2025
+                      target: x86_64-pc-windows-msvc
+                      asset: unbound-devtools-windows-x64.zip
+                    - os: windows-11-arm
+                      target: aarch64-pc-windows-msvc
+                      asset: unbound-devtools-windows-arm64.zip
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  ref: devtools-v${{ inputs.version }}
+                  fetch-depth: 1
+                  persist-credentials: false
+
+            - name: Install Linux build dependencies
+              if: runner.os == 'Linux'
+              run: sudo apt-get update && sudo apt-get install -y $LINUX_BUILD_DEPS
+
+            - name: Install Rust
+              uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+              with:
+                  toolchain: stable
+                  targets: ${{ matrix.target }}
+
+            - name: Cache cargo
+              uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0
+              with:
+                  workspaces: apps/devtools -> target
+                  key: release-${{ matrix.target }}
 
             - name: Build release
-              run: cargo build --release -p unbound-devtools
+              run: cargo build --locked --release -p unbound-devtools --target ${{ matrix.target }}
+
+            # tar keeps the executable bit on Linux and macOS; Windows users expect a zip.
+            - name: Package binary (Unix)
+              if: runner.os != 'Windows'
+              working-directory: apps/devtools/target/${{ matrix.target }}/release
+              run: tar -czf '${{ matrix.asset }}' unbound-devtools
+
+            - name: Package binary (Windows)
+              if: runner.os == 'Windows'
+              shell: pwsh
+              working-directory: apps/devtools/target/${{ matrix.target }}/release
+              run: Compress-Archive -Path unbound-devtools.exe -DestinationPath '${{ matrix.asset }}'
 
             - name: Upload binary
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
               with:
-                  name: unbound-devtools-${{ runner.os }}
-                  path: |
-                      apps/devtools/target/release/unbound-devtools
-                      apps/devtools/target/release/unbound-devtools.exe
+                  name: ${{ matrix.asset }}
+                  path: apps/devtools/target/${{ matrix.target }}/release/${{ matrix.asset }}
                   if-no-files-found: error
+
+    publish:
+        name: Publish v${{ inputs.version }}
+        needs: build
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        permissions:
+            contents: write
+        defaults:
+            run:
+                working-directory: .
+        steps:
+            - name: Download binaries
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+              with:
+                  path: release-assets
+                  merge-multiple: true
+
+            - name: Attach binaries to the release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  VERSION: ${{ inputs.version }}
+              run: gh release upload "devtools-v$VERSION" release-assets/* --repo "$GITHUB_REPOSITORY" --clobber
+
+            # The repository's "latest" release is whichever package released last, so the README
+            # links to a devtools-only alias instead, as loader-latest does for the loader.
+            - name: Refresh the rolling devtools-latest release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  VERSION: ${{ inputs.version }}
+              run: |
+                  set -euo pipefail
+                  sha=$(gh api "repos/$GITHUB_REPOSITORY/commits/devtools-v$VERSION" --jq .sha)
+                  gh release delete devtools-latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+                  gh release create devtools-latest \
+                    --repo "$GITHUB_REPOSITORY" \
+                    --target "$sha" \
+                    --title 'Unbound DevTools (latest)' \
+                    --notes "The most recent devtools release, currently devtools-v$VERSION." \
+                    --latest=false \
+                    release-assets/*

@@ -4,6 +4,18 @@ A native React DevTools for Discord running Unbound, built in Rust with [gpui-fa
 
 It runs on macOS, Windows and Linux.
 
+## Download
+
+The latest release. Older versions are on the [releases page](https://github.com/marioparaschiv/unbound/releases?q=devtools-v&expanded=true).
+
+| Platform | ARM64                                                                                                                            | x64                                                                                                                  |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| macOS    | [Apple silicon](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-macos-arm64.tar.gz) |                                                                                                                      |
+| Windows  | [ARM64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-windows-arm64.zip)          | [x64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-windows-x64.zip)  |
+| Linux    | [ARM64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-linux-arm64.tar.gz)         | [x64](https://github.com/marioparaschiv/unbound/releases/download/devtools-latest/unbound-devtools-linux-x64.tar.gz) |
+
+Linux builds need glibc 2.35 or newer (Ubuntu 22.04, Debian 12). The builds are unsigned. On macOS, run `xattr -d com.apple.quarantine unbound-devtools` once after extracting.
+
 ## How it connects
 
 1. The loader evaluates `packages/loader/bootstrap/devtools.js` before Discord's bundle when `loader.devtools` is `true`. That file is react-devtools-core 8's backend. It supports React 19, which Discord uses.

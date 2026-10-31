@@ -26,6 +26,8 @@ jobs:
             releases-created: ${{ steps.release.outputs.releases_created }}
             client-released: ${{ steps.release.outputs['packages/client--release_created'] }}
             client-version: ${{ steps.release.outputs['packages/client--version'] }}
+            devtools-released: ${{ steps.release.outputs['apps/devtools--release_created'] }}
+            devtools-version: ${{ steps.release.outputs['apps/devtools--version'] }}
         steps:
             - name: Run release-please
               id: release
@@ -92,3 +94,12 @@ jobs:
         with:
             version: ${{ needs.release.outputs.client-version }}
         secrets: inherit
+
+    devtools:
+        needs: release
+        if: needs.release.outputs.devtools-released == 'true'
+        permissions:
+            contents: write
+        uses: ./.github/workflows/devtools.yml
+        with:
+            version: ${{ needs.release.outputs.devtools-version }}
