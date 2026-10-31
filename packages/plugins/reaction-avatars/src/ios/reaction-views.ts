@@ -51,7 +51,10 @@ export function unmountSurface(session: Session, state: ReactionViewState): void
 
 	state.surface = null;
 	state.surfaceFrame = null;
-	restoreFrame(session.objc, state.view, state.baseFrame);
+	if (state.baseFrame.width < 1) return;
+
+	if (session.disposing) setFrame(session.objc, state.view, state.baseFrame);
+	else restoreFrame(session.objc, state.view, state.baseFrame);
 }
 
 /**

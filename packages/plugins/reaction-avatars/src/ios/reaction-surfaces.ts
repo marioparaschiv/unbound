@@ -13,7 +13,7 @@ import { baseItemWidth, invalidateLayout, setExtraWidth } from '~/ios/collection
 import { framesMatch, reactionAvatarFrame, reactionBaseViewWidth } from '~/layout';
 import type { ReactionContext } from '~/reaction-context';
 import { rescheduleCell } from '~/ios/cell-queue';
-import { Avatar, SURFACE_HEIGHT } from '~/constants';
+import { Avatar, REACTION_VIEW_TRAILING_INSET, SURFACE_HEIGHT } from '~/constants';
 import type { Session } from '~/ios/session';
 import { surfaceStates } from '~/surface-states';
 import { fetchReactors } from '~/reactors';
@@ -237,25 +237,40 @@ function loadReactors(session: Session, state: ReactionViewState): void {
 		});
 }
 
+function baseViewWidth(
+	session: Session,
+	target: ReactionViewTarget,
+	viewWidth: number,
+	layoutWidth: number | undefined,
+): number {
+	if (layoutWidth === undefined) return viewWidth;
+
+	if (viewWidth < 1) return Math.max(0, layoutWidth - REACTION_VIEW_TRAILING_INSET);
+
+	return reactionBaseViewWidth(
+		layoutWidth,
+		session.fabric.measure(target.collectionCell).width,
+		viewWidth,
+	);
+}
+
 function createState(
 	session: Session,
 	target: ReactionViewTarget,
 	context: ReactionContext,
-): ReactionViewState {
+): ReactionViewState | null {
 	const { fabric } = session;
 	const measured = fabric.measure(target.view);
 	const layoutWidth = baseItemWidth(session, target.layoutKey, target.itemIndex);
+
+	if (measured.width < 1 && layoutWidth === undefined) return null;
+
 	const baseFrame = {
 		...measured,
-		width:
-			layoutWidth === undefined
-				? measured.width
-				: reactionBaseViewWidth(
-						layoutWidth,
-						fabric.measure(target.collectionCell).width,
-						measured.width,
-					),
+		width: baseViewWidth(session, target, measured.width, layoutWidth),
 	};
+
+	if (baseFrame.width < 1) return null;
 	const state: ReactionViewState = {
 		...target,
 		avatarWidth: 0,
@@ -297,12 +312,13 @@ export function disposeState(session: Session, viewKey: string, state: ReactionV
  * @param session The running session.
  * @param target The pill's views and position.
  * @param context The reaction, or `null` to stop showing avatars on the pill.
+ * @returns `false` when the pill has not been laid out yet and should be synced again later.
  */
 export function syncReactionView(
 	session: Session,
 	target: ReactionViewTarget,
 	context: ReactionContext | null,
-): void {
+): boolean {
 	const { objc, reactions, reactors } = session;
 	const viewKey = key(objc, target.view);
 	const existing = reactions.get(viewKey);
@@ -310,7 +326,7 @@ export function syncReactionView(
 	if (!context) {
 		if (existing) disposeState(session, viewKey, existing);
 
-		return;
+		return true;
 	}
 
 	if (
@@ -322,6 +338,8 @@ export function syncReactionView(
 
 		const state = createState(session, target, context);
 
+		if (!state) return false;
+
 		reactions.set(viewKey, state);
 		setExtraWidth(session, state.layoutKey, state.itemIndex, state.extraWidth);
 
@@ -330,7 +348,7 @@ export function syncReactionView(
 		if (cached === undefined) {
 			loadReactors(session, state);
 
-			return;
+			return true;
 		}
 
 		state.users = cached;
@@ -338,7 +356,7 @@ export function syncReactionView(
 
 		if (cached.length === 0) scheduleEmptyRetry(session, state);
 
-		return;
+		return true;
 	}
 
 	if (existing.layoutKey !== target.layoutKey || existing.itemIndex !== target.itemIndex) {
@@ -361,20 +379,22 @@ export function syncReactionView(
 		else renderSurface(session, existing);
 	}
 
-	if (existing.loading || existing.users.length > 0) return;
+	if (existing.loading || existing.users.length > 0) return true;
 
 	const cached = reactors.get(context.key);
 
 	if (cached === undefined) {
 		loadReactors(session, existing);
 
-		return;
+		return true;
 	}
 
 	existing.users = cached;
 
 	if (cached.length > 0) updateSurface(session, existing);
 	else scheduleEmptyRetry(session, existing);
+
+	return true;
 }
 
 /**

@@ -11,6 +11,12 @@ export const Avatar = {
 
 export const SURFACE_HEIGHT = 36;
 
+export const UNMEASURED_RETRY_MS = 120;
+
+export const MAX_UNMEASURED_RETRIES = 5;
+
+export const REACTION_VIEW_TRAILING_INSET = 4;
+
 export const NativeClass = {
 	messageCell: 'DCDMessageTableViewCell',
 	table: 'DCDTableView',
