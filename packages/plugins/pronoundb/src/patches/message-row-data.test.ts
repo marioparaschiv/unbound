@@ -12,7 +12,7 @@ const stores: Record<string, object> = {
 };
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.pronoundb' },
+	manifest: { id: 'unbound.pronoundb' },
 	unbound: { flux: { getStore: (name: string) => stores[name] } },
 });
 

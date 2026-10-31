@@ -24,7 +24,7 @@ const GuildMemberStore = {
 };
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.role-color-everywhere' },
+	manifest: { id: 'unbound.role-color-everywhere' },
 	unbound: {
 		flux: { getStore: (name: string) => (name === 'GuildMember' ? GuildMemberStore : {}) },
 		native: { definePlatform: (handlers: { ios: object }) => handlers.ios },
