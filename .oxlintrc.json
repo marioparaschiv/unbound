@@ -193,6 +193,7 @@
 		"packages/plugins/**",
 		"packages/plugin-scripts/**",
 		"packages/loader/bootstrap/devtools.js",
+		"packages/loader/tools/smoke_scripts/**",
 		"apps/devtools/harness/**",
 		"apps/devtools/target/**",
 		"packages/loader/vendor/**",
