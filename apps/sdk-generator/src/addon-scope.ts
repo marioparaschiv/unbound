@@ -6,13 +6,11 @@ import { parseSource } from './project';
 import { ROOT } from './paths';
 
 type ScopeGlobal = {
-	/** The member's type in the SDK's `AddonScope`, written against the names `global.d.ts` has in scope. */
-	type: string;
+	sdkType: string;
 	/** Whether `global.d.ts` declares the global; lib declares the timers and `@unbound-app/types` declares `React`. */
 	declare: boolean;
 };
 
-/** The typings that hold `ADDON_SCOPE_GLOBALS`, the parameter list a plugin bundle is evaluated with. */
 const ADDONS_TYPINGS = join(ROOT, 'packages', 'types', 'typings', 'addons.ts');
 
 /**
@@ -20,18 +18,19 @@ const ADDONS_TYPINGS = join(ROOT, 'packages', 'types', 'typings', 'addons.ts');
  * which dts-bundle-generator cannot bundle, so the SDK names them through `UnboundGlobal` instead.
  */
 const ADDON_SCOPE: Record<string, ScopeGlobal> = {
-	React: { type: 'typeof React', declare: false },
-	unbound: { type: 'UnboundGlobal', declare: true },
+	React: { sdkType: 'typeof React', declare: false },
+	unbound: { sdkType: 'UnboundGlobal', declare: true },
 	// Not `AddonHandle<Plugin>`: `_internal.d.ts` declares `Plugin` as `Plugin$1`, and the bare name is lib.dom's.
-	addon: { type: 'AddonHandle', declare: true },
-	patcher: { type: "UnboundGlobal['patcher']", declare: true },
-	logger: { type: 'AddonLogger', declare: true },
-	setTimeout: { type: 'typeof setTimeout', declare: false },
-	setInterval: { type: 'typeof setInterval', declare: false },
-	clearTimeout: { type: 'typeof clearTimeout', declare: false },
-	clearInterval: { type: 'typeof clearInterval', declare: false },
+	addon: { sdkType: 'AddonHandle', declare: true },
+	patcher: { sdkType: "UnboundGlobal['patcher']", declare: true },
+	logger: { sdkType: 'AddonLogger', declare: true },
+	setTimeout: { sdkType: 'typeof setTimeout', declare: false },
+	setInterval: { sdkType: 'typeof setInterval', declare: false },
+	clearTimeout: { sdkType: 'typeof clearTimeout', declare: false },
+	clearInterval: { sdkType: 'typeof clearInterval', declare: false },
 	commands: {
-		type: "Omit<ReturnType<UnboundGlobal['commands']['createCommands']>, keyof UnboundGlobal['commands']> & UnboundGlobal['commands']",
+		sdkType:
+			"Omit<ReturnType<UnboundGlobal['commands']['createCommands']>, keyof UnboundGlobal['commands']> & UnboundGlobal['commands']",
 		declare: true,
 	},
 };
