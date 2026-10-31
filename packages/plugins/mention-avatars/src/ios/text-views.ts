@@ -235,6 +235,7 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 		forgetCell(key: string) {
 			cellViews.delete(key);
 		},
+		knownViews: (key: string): Handle[] => cellViews.get(key)?.views ?? [],
 		clear() {
 			states.clear();
 			cellViews.clear();

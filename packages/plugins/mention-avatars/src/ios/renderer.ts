@@ -118,11 +118,11 @@ export function createRenderer(
 
 	// Drops a reused cell's state without restoring its text, which Discord is about to replace.
 	function reuse(cell: Handle) {
-		for (const view of findTextViews(bridge, cell)) textViews.forget(view);
-
 		const key = viewKey(objc, cell);
 
 		if (key) {
+			for (const view of textViews.knownViews(key)) textViews.forget(view);
+
 			activeCells.delete(key);
 			pendingCells.delete(key);
 			waitingCells.delete(key);
