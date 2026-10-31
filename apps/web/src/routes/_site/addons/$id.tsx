@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
-import { IconFaceNeutral } from 'nucleo-micro-bold';
 import { useSuspenseQuery } from '@tanstack/react-query';
+import { IconFaceNeutral } from 'nucleo-micro-bold';
 import { z } from 'zod/mini';
 
 import {

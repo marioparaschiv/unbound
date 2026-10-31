@@ -8,15 +8,15 @@ import type { ReviewDecision, SubmissionKind } from '@unbound-app/contracts/publ
 import { submissionKindSchema } from '@unbound-app/contracts/publish';
 import { and, eq } from 'drizzle-orm';
 
+import { applySubmissionMaintainers, describeMaintainerChanges } from '~/lib/maintainers';
 import { addon, addonMaintainer, addonVersion, submission, user } from '~/db/schema';
 import { LATEST_VERSION, refreshAddonSummary, toAddonSummary } from '~/lib/addons';
 import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
 import { requireSourced, toSubmission } from '~/lib/submissions';
 import { toAddonVersion, writeArtifact } from '~/lib/artifacts';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
-import { applySubmissionMaintainers, describeMaintainerChanges } from '~/lib/maintainers';
-import { readTags, replaceAddonTags } from '~/lib/addon-tags';
 import { recordReviewDecision } from '~/lib/moderation-events';
+import { readTags, replaceAddonTags } from '~/lib/addon-tags';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
 import { connectGitHubIfLinked } from '~/lib/github';

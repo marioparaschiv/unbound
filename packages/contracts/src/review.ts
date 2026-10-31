@@ -3,12 +3,12 @@ import type { reviewDecisionSchema } from './publish';
 import { repositoryDetailsSchema, sourcePinSchema } from './source';
 import { submissionKindSchema, submissionSchema } from './publish';
 import { addonVersionSchema, sha256Schema } from './addons';
-import { tagIdSchema, tagSchema } from './tags';
-import { addonIconSchema } from './icons';
 import { addonManifestSchema } from './manifest';
+import { tagIdSchema, tagSchema } from './tags';
 import { addonPageSchema } from './addon-page';
 import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
+import { addonIconSchema } from './icons';
 import { z } from './zod';
 
 const noteSchema = z.string().check(z.trim(), z.minLength(1), z.maxLength(10_000));

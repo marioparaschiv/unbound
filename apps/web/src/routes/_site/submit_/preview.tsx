@@ -1,5 +1,5 @@
-import type { ErrorComponentProps } from '@tanstack/react-router';
 import { createFileRoute, Link, redirect } from '@tanstack/react-router';
+import type { ErrorComponentProps } from '@tanstack/react-router';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { IconFaceNeutral } from 'nucleo-micro-bold';
 import { z } from 'zod/mini';
@@ -14,11 +14,11 @@ import {
 } from '~/components/ui/empty';
 import type { SourcePreviewPage } from '~/queries/submissions/submissions';
 import { sourcePreviewPageQuery } from '~/queries/submissions/submissions';
-import { splitList } from '~/lib/addon-filters';
 import PreviewBanner from '~/components/addon/preview-banner';
 import AddonPageView from '~/components/addon/addon-page';
-import { shortSha } from '~/lib/github-urls';
 import { Button } from '~/components/ui/button';
+import { splitList } from '~/lib/addon-filters';
+import { shortSha } from '~/lib/github-urls';
 
 /** The addon directory the submit form previews, pinned to the commit it read. */
 const previewSearchSchema = z.object({

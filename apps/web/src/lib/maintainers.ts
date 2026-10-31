@@ -11,10 +11,10 @@ import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
+import { addonMaintainer, user } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
-import { addonMaintainer, user } from '~/db/schema';
 import { ApiError } from '~/lib/api/errors';
 
 type MaintainerRow = Pick<typeof addonMaintainer.$inferSelect, 'role' | 'createdAt'> & {

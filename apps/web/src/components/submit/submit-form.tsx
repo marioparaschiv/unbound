@@ -10,13 +10,13 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from '~/components/ui/empty';
-import type { SubmitActivity } from '~/components/submit/submit-step';
 import SubmissionDetailsForm from '~/components/submit/submission-details-form';
 import SubmissionSummary from '~/components/submit/submission-summary';
+import type { SubmitActivity } from '~/components/submit/submit-step';
 import RepositoryPicker from '~/components/submit/repository-picker';
 import useSubmitFlow from '~/queries/submissions/use-submit-flow';
-import { SidebarCard } from '~/components/addon/sidebar-card';
 import { getSubmitStep } from '~/components/submit/submit-step';
+import { SidebarCard } from '~/components/addon/sidebar-card';
 import AddonPicker from '~/components/submit/addon-picker';
 import SubmitSteps from '~/components/submit/submit-steps';
 import type { PendingSource } from '~/lib/dashboard';

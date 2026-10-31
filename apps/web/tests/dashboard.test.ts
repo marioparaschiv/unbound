@@ -1,8 +1,8 @@
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
-import type { Dashboard, DashboardAddon, SubmitTarget } from '~/lib/dashboard';
 import { TIMELINE_LIMIT, loadDashboard, loadSubmitTarget } from '~/lib/dashboard';
+import type { Dashboard, DashboardAddon, SubmitTarget } from '~/lib/dashboard';
 import { addon, addonMaintainer, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';

@@ -1,5 +1,5 @@
-import type { AddonType } from '@unbound-app/contracts/addons';
 import { IconChevronExpandY, IconPen } from 'nucleo-micro-bold';
+import type { AddonType } from '@unbound-app/contracts/addons';
 import { useState } from 'react';
 
 import AtlasIcon, { warmAddonIconAtlas } from '~/components/addon-icon-picker/atlas-icon';

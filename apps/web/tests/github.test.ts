@@ -13,8 +13,8 @@ import { createApiClient } from '~/api/client';
 import type { Api } from '~/api';
 
 import { createTestContext, linkGitHub, signInWithDiscord } from './helpers/context';
-import { failure, serveEndpoints } from './helpers/server';
 import { manifest, seedApprovedAddon } from './helpers/addons';
+import { failure, serveEndpoints } from './helpers/server';
 import { serveGitHub } from './helpers/github';
 
 const MONOREPO = 'acme/addons';

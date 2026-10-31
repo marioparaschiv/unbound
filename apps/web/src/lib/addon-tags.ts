@@ -2,8 +2,8 @@ import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
 import type { AddonType } from '@unbound-app/contracts/addons';
 
 import { addon, addonTag, tag } from '~/db/schema';
-import type { AppContext } from '~/lib/context';
 import type { Transaction } from '~/db/database';
+import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
 
 /** A tag as cards and menus show it. */

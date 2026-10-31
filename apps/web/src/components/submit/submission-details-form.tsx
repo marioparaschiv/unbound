@@ -1,18 +1,18 @@
+import { IconCircleInfo, IconEye, IconPaperPlane2 } from 'nucleo-micro-bold';
 import type { SubmissionDetails } from '@unbound-app/contracts/publish';
 import type { SubmissionPreview } from '@unbound-app/contracts/review';
 import type { UserSummary } from '@unbound-app/contracts/account';
-import { IconCircleInfo, IconEye, IconPaperPlane2 } from 'nucleo-micro-bold';
-import { Link } from '@tanstack/react-router';
 import { useForm } from '@tanstack/react-form';
+import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 import { useId } from 'react';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
 import { Field, FieldGroup, FieldLabel } from '~/components/ui/field';
-import { SubmitCallout } from '~/components/submit/submit-callout';
-import type { ApiErrorDetails } from '~/lib/api/error-details';
 import MaintainerPicker from '~/components/submit/maintainer-picker';
+import { SubmitCallout } from '~/components/submit/submit-callout';
 import { SubmitSection } from '~/components/submit/submit-section';
+import type { ApiErrorDetails } from '~/lib/api/error-details';
 import IconField from '~/components/submit/icon-field';
 import TagSelect from '~/components/submit/tag-select';
 import { Button } from '~/components/ui/button';

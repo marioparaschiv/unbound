@@ -10,12 +10,12 @@ import {
 	InputGroupButton,
 	InputGroupInput,
 } from '~/components/ui/input-group';
+import RepositoryShortcuts from '~/components/submit/repository-shortcuts';
+import { Field, FieldError, FieldLabel } from '~/components/ui/field';
 import { SubmitCallout } from '~/components/submit/submit-callout';
 import { SubmitSection } from '~/components/submit/submit-section';
 import type { ApiErrorDetails } from '~/lib/api/error-details';
-import { Field, FieldError, FieldLabel } from '~/components/ui/field';
 import GitHubIcon from '~/components/icons/github';
-import RepositoryShortcuts from '~/components/submit/repository-shortcuts';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
 

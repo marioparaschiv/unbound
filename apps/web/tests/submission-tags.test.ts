@@ -3,8 +3,8 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { asc, eq } from 'drizzle-orm';
 
 import { createSubmission, previewSubmission } from '~/lib/submissions';
-import { addonTag, submission, tag, user } from '~/db/schema';
 import { listReviewQueue, reviewSubmission } from '~/lib/review';
+import { addonTag, submission, tag, user } from '~/db/schema';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
 

@@ -5,8 +5,8 @@ import {
 import { z } from 'zod';
 
 import { listRepositoryAddons } from '~/lib/addon-source';
-import { markUpToDate } from '~/lib/submissions';
 import { callerEndpoint } from '~/lib/api/endpoint';
+import { markUpToDate } from '~/lib/submissions';
 import { connectGitHub } from '~/lib/github';
 
 const listRepositoryAddonsEndpoint = callerEndpoint(

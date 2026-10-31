@@ -1,4 +1,3 @@
-import type { ListRepositoryAddonsResponse, RepositoryAddon } from '@unbound-app/contracts/source';
 import {
 	IconBox,
 	IconCheck,
@@ -6,16 +5,15 @@ import {
 	IconCodeBranch,
 	IconRefresh,
 } from 'nucleo-micro-bold';
+import type { ListRepositoryAddonsResponse, RepositoryAddon } from '@unbound-app/contracts/source';
 import { useForm } from '@tanstack/react-form';
 import { useId } from 'react';
 
 import {
-	Empty,
-	EmptyDescription,
-	EmptyHeader,
-	EmptyMedia,
-	EmptyTitle,
-} from '~/components/ui/empty';
+	repositoryAddonsQuery,
+	submissionPreviewQuery,
+	toPreviewRequest,
+} from '~/queries/submissions/submissions';
 import {
 	InputGroup,
 	InputGroupAddon,
@@ -29,17 +27,19 @@ import {
 	AccordionTrigger,
 } from '~/components/ui/accordion';
 import {
-	repositoryAddonsQuery,
-	submissionPreviewQuery,
-	toPreviewRequest,
-} from '~/queries/submissions/submissions';
+	Empty,
+	EmptyDescription,
+	EmptyHeader,
+	EmptyMedia,
+	EmptyTitle,
+} from '~/components/ui/empty';
 import { SubmitCallout, SubmitIssue } from '~/components/submit/submit-callout';
-import { SubmitSection } from '~/components/submit/submit-section';
 import type { PreviewRequest } from '~/queries/submissions/submissions';
-import usePrefetchIntent from '~/queries/use-prefetch-intent';
+import { SubmitSection } from '~/components/submit/submit-section';
 import type { ApiErrorDetails } from '~/lib/api/error-details';
-import { getTreeUrl, shortSha } from '~/lib/github-urls';
+import usePrefetchIntent from '~/queries/use-prefetch-intent';
 import { Field, FieldLabel } from '~/components/ui/field';
+import { getTreeUrl, shortSha } from '~/lib/github-urls';
 import { TONES } from '~/components/dashboard/status';
 import AddonIcon from '~/components/addon-icon';
 import { Button } from '~/components/ui/button';

@@ -5,9 +5,9 @@ import {
 	repositoryInputSchema,
 	sourcePinSchema,
 } from './source';
+import { addonIdSchema, bytecodeDigestsSchema } from './manifest';
 import { submissionTagsSchema } from './tags';
 import { addonIconSchema } from './icons';
-import { addonIdSchema, bytecodeDigestsSchema } from './manifest';
 import { z } from './zod';
 
 /** `listing` claims a new addon id; `update` publishes a new version of an addon the caller maintains. */

@@ -2,8 +2,8 @@ import { addonIdSchema, addonManifestSchema, semverSchema } from './manifest';
 import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
 import { submissionSchema } from './publish';
-import { addonIconSchema } from './icons';
 import { sourcePinSchema } from './source';
+import { addonIconSchema } from './icons';
 import { z } from './zod';
 
 // Lives in icons.ts so publish.ts can use it without importing this module back.

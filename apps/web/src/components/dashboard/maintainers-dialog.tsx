@@ -4,12 +4,6 @@ import { useForm } from '@tanstack/react-form';
 import { toast } from 'sonner';
 
 import {
-	InputGroup,
-	InputGroupAddon,
-	InputGroupButton,
-	InputGroupInput,
-} from '~/components/ui/input-group';
-import {
 	addMaintainerMutation,
 	maintainersQuery,
 	removeMaintainerMutation,
@@ -21,6 +15,12 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from '~/components/ui/dialog';
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+} from '~/components/ui/input-group';
 import getApiErrorMessage from '~/lib/api/error-message';
 import MaintainerRow from '~/components/maintainer-row';
 import RoleTag from '~/components/dashboard/role-tag';

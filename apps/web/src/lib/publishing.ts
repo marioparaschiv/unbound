@@ -1,11 +1,10 @@
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createServerFn } from '@tanstack/react-start';
-
 import { z } from 'zod/mini';
 
-import type { Dashboard, SubmitTarget } from '~/lib/dashboard';
 import { loadDashboard, loadSubmitTarget } from '~/lib/dashboard';
+import type { Dashboard, SubmitTarget } from '~/lib/dashboard';
 import requestCaller from '~/lib/api/request-caller';
 import app from '~/lib/app';
 

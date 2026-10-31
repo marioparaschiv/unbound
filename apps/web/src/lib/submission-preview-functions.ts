@@ -2,14 +2,15 @@ import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source
 import { createSubmissionRequestSchema } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { SubmissionKind } from '@unbound-app/contracts/publish';
-import type { Changelog } from '@unbound-app/contracts/changelog';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
+import type { Changelog } from '@unbound-app/contracts/changelog';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod/mini';
 
 import { getArtifactKeys, getCdnUrl, pinSource, toVersionChangelog } from '~/lib/artifacts';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import { readAddonTags, readTags } from '~/lib/addon-tags';
 import { resolvePlatforms } from '~/lib/addon-platforms';
 import { getPinnedMediaBase } from '~/lib/markdown-url';
 import { previewSubmission } from '~/lib/submissions';
@@ -18,7 +19,6 @@ import { renderAddonIcon } from '~/lib/addon-icons';
 import { loadAuthors } from '~/lib/authors/resolve';
 import { hasPermission } from '~/lib/auth/access';
 import { resolveCaller } from '~/lib/api/caller';
-import { readAddonTags, readTags } from '~/lib/addon-tags';
 import { getAddonDetails } from '~/lib/addons';
 import app from '~/lib/app';
 

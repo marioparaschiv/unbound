@@ -10,8 +10,8 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from '~/components/ui/dropdown-menu';
-import { repositoryAddonsQuery } from '~/queries/submissions/submissions';
 import MorphHeight, { MORPH_EXPO } from '~/components/addon-filters/morph-height';
+import { repositoryAddonsQuery } from '~/queries/submissions/submissions';
 import usePrefetchIntent from '~/queries/use-prefetch-intent';
 import { Button } from '~/components/ui/button';
 import Avatar from '~/components/ui/avatar';
