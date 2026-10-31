@@ -3,7 +3,6 @@ import noop from '@unbound-app/utils/noop';
 
 type Remove = () => void;
 
-/** The listeners one addon registered, each kept as the function that removes it. */
 export type Subscriptions = {
 	add: (remove: Remove, listener?: WeakKey) => Remove;
 	release: (listener: WeakKey) => void;
