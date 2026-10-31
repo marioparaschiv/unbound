@@ -47,6 +47,18 @@ export function createNativeUI(objc: NativeObjCBridge) {
 		return typeof description === 'string' ? description : undefined;
 	}
 
+	function ownString(handle: NativeObjectHandle): string | undefined {
+		try {
+			const value = objc.call(handle, 'string');
+
+			if (typeof value === 'string') return value;
+		} catch {
+			return string(call(handle, 'string'));
+		}
+
+		return string(call(handle, 'string'));
+	}
+
 	function key(handle: NativeObjectHandle): string {
 		return viewKey(objc, handle) ?? 'unknown';
 	}
@@ -141,7 +153,21 @@ export function createNativeUI(objc: NativeObjCBridge) {
 		});
 	}
 
-	return { objc, call, view, string, key, rect, size, range, frameOf, color, font, devicon };
+	return {
+		objc,
+		call,
+		ownString,
+		view,
+		string,
+		key,
+		rect,
+		size,
+		range,
+		frameOf,
+		color,
+		font,
+		devicon,
+	};
 }
 
 export default { createNativeUI };

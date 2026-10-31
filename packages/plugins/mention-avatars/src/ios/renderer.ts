@@ -59,7 +59,11 @@ export function createRenderer(
 
 		let changed = false;
 
-		for (const view of textViews.forCell(cell, key, id)) {
+		const views = await textViews.candidates(await textViews.forCell(cell, key, id));
+
+		if (disposed) return false;
+
+		for (const view of views) {
 			if (textViews.update(view, id, mentions)) changed = true;
 		}
 

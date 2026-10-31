@@ -305,13 +305,19 @@ export function drawIOSBubbles({ objc }: NativePluginBridge) {
 			await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]).catch(() => undefined);
 	}
 
+	const clearKey = viewKey(objc, clear);
+
+	function keepClear({ self, args }: { self: NativeObjectHandle; args: unknown[] }) {
+		const color = args[0] as NativeObjectHandle | null;
+
+		if (disposed || (color && viewKey(objc, color) === clearKey)) return;
+
+		void objc.invokeAsync(self, 'setBackgroundColor:', [clear]).catch(() => undefined);
+	}
+
 	const hooks = [
-		objc.hook(IOSClass.messageCell, 'setBackgroundColor:', {
-			before: (context) => context.replaceObjectArgument(0, clear),
-		}),
-		objc.hook(IOSClass.separatorCell, 'setBackgroundColor:', {
-			before: (context) => context.replaceObjectArgument(0, clear),
-		}),
+		objc.hook(IOSClass.messageCell, 'setBackgroundColor:', { after: keepClear }),
+		objc.hook(IOSClass.separatorCell, 'setBackgroundColor:', { after: keepClear }),
 		objc.hook(IOSClass.separatorCell, 'layoutSubviews', {
 			after: ({ self }) => void clearSeparator(self),
 		}),

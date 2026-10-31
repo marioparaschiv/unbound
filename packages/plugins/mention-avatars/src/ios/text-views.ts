@@ -49,12 +49,7 @@ export function findTextViews(bridge: Bridge, root: Handle): Handle[] {
 
 		visited++;
 
-		if (
-			objc.respondsTo(view, 'setAttributedText:') &&
-			objc.respondsTo(view, 'attributedText')
-		) {
-			views.push(view);
-		}
+		if (isTextView(bridge, view)) views.push(view);
 
 		// Reaction pills hold their own text views, and never a mention.
 		if (
@@ -81,6 +76,33 @@ export function findTextViews(bridge: Bridge, root: Handle): Handle[] {
 	return views;
 }
 
+function isTextView(bridge: Bridge, view: Handle): boolean {
+	return (
+		bridge.objc.respondsTo(view, 'setAttributedText:') &&
+		bridge.objc.respondsTo(view, 'attributedText')
+	);
+}
+
+/**
+ * @description Collects the text views under a view with one native search, at most 40 levels and 256 views deep.
+ * @param bridge The plugin's native bridge.
+ * @param root The view to search.
+ * @returns Every view with settable attributed text, or an empty list when the search failed.
+ */
+export async function searchTextViews(bridge: Bridge, root: Handle): Promise<Handle[]> {
+	try {
+		const views = await bridge.objc.findViews(root, 'UIView', {
+			maxDepth: 40,
+			maxVisited: 1_600,
+			maxResults: 256,
+		});
+
+		return views.filter((view) => isTextView(bridge, view));
+	} catch {
+		return [];
+	}
+}
+
 /**
  * @description Tracks the message text views the plugin rewrote, so they can be updated and restored.
  * @param bridge The plugin's native bridge.
@@ -98,25 +120,20 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 		return { text, string: text ? bridge.string(text, 'string') : undefined };
 	}
 
-	function forCell(
+	async function forCell(
 		cell: Handle,
 		key: string | undefined,
 		messageID: string | undefined,
-	): Handle[] {
-		if (!key) return findTextViews(bridge, cell);
+	): Promise<Handle[]> {
+		if (!key) return searchTextViews(bridge, cell);
 
 		const cached = cellViews.get(key);
 
-		if (
-			cached &&
-			cached.messageID === messageID &&
-			cached.expiresAt > Date.now() &&
-			cached.views.every((view) => Boolean(bridge.call(view, 'window')))
-		) {
+		if (cached && cached.messageID === messageID && cached.expiresAt > Date.now()) {
 			return cached.views;
 		}
 
-		const views = findTextViews(bridge, cell);
+		const views = await searchTextViews(bridge, cell);
 
 		// An empty result is retried soon, since the cell may not have laid out its text yet.
 		cellViews.set(key, {
@@ -126,6 +143,49 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 		});
 
 		return views;
+	}
+
+	function jsThreadString(text: Handle): string | undefined {
+		try {
+			const value = bridge.objc.call(text, 'string');
+
+			return typeof value === 'string' ? value : undefined;
+		} catch {
+			return undefined;
+		}
+	}
+
+	function mayHoldMention(view: Handle, text: Handle | null): boolean {
+		const key = viewKey(bridge.objc, view);
+
+		if (key && states.has(key)) return true;
+
+		if (!text) return false;
+
+		const string = jsThreadString(text);
+
+		return string === undefined || string.includes('@');
+	}
+
+	async function candidates(views: Handle[]): Promise<Handle[]> {
+		const found: Handle[] = [];
+
+		for (let index = 0; index < views.length; index += 64) {
+			const chunk = views.slice(index, index + 64);
+			const texts = await bridge.objc
+				.batch(
+					chunk.map((view) => ({ target: view, selector: 'attributedText', args: [] })),
+				)
+				.catch(() => null);
+
+			for (const [offset, view] of chunk.entries()) {
+				const text = texts ? ((texts[offset] ?? null) as Handle | null) : null;
+
+				if (!texts || mayHoldMention(view, text)) found.push(view);
+			}
+		}
+
+		return found;
 	}
 
 	function restore(view: Handle) {
@@ -227,6 +287,7 @@ export function createTextViews(bridge: Bridge, images: ImageCache, showAtSymbol
 
 	return {
 		forCell,
+		candidates,
 		update,
 		restore,
 		forget,

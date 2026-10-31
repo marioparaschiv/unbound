@@ -1,3 +1,4 @@
+import type { NativeObjectHandle } from '@unbound-app/api/native';
 import { shouldCorrectRow } from '~/layout';
 import { Limits } from '~/constants';
 
@@ -12,8 +13,39 @@ function isCurrent(session: Session, surface: Surface): boolean {
 	return isMounted(session, surface) && visibleChannelId() === surface.channelId;
 }
 
+const pendingTables = new WeakMap<Session, Map<string, NativeObjectHandle>>();
+
+function flushTableUpdates(session: Session): void {
+	const tables = pendingTables.get(session);
+
+	pendingTables.delete(session);
+
+	if (!tables || session.signal.aborted) return;
+
+	for (const table of tables.values()) {
+		void session.ui.objc
+			.batch([
+				{ target: table, selector: 'beginUpdates', args: [] },
+				{ target: table, selector: 'endUpdates', args: [] },
+			])
+			.catch(() => undefined);
+	}
+}
+
+function requestTableUpdate(session: Session, table: NativeObjectHandle): void {
+	let tables = pendingTables.get(session);
+
+	if (!tables) {
+		tables = new Map();
+		pendingTables.set(session, tables);
+		setTimeout(() => flushTableUpdates(session), 0);
+	}
+
+	tables.set(session.ui.key(table), table);
+}
+
 /**
- * @description Asks the message table to re-measure a surface's row after its text changed.
+ * @description Asks the message table to re-measure a surface's row after its text changed, sharing one table update with every other row changed in the same tick.
  * @param session The renderer session.
  * @param surface The surface.
  */
@@ -22,18 +54,21 @@ export function updateRow(session: Session, surface: Surface): void {
 
 	if (!isOnScreen(session, surface)) return;
 
-	ui.call(surface.label, 'invalidateIntrinsicContentSize');
-	ui.call(surface.label, 'setNeedsLayout');
-	ui.call(surface.cell, 'setNeedsUpdateConstraints');
-	ui.call(surface.cell, 'setNeedsLayout');
+	void ui.objc
+		.batch([
+			{ target: surface.label, selector: 'invalidateIntrinsicContentSize', args: [] },
+			{ target: surface.label, selector: 'setNeedsLayout', args: [] },
+			{ target: surface.cell, selector: 'setNeedsUpdateConstraints', args: [] },
+			{ target: surface.cell, selector: 'setNeedsLayout', args: [] },
+		])
+		.catch(() => undefined);
 
-	const table = tableForCell(ui, surface.cell);
+	const table = surface.table ?? tableForCell(ui, surface.cell);
 
 	if (!table) return;
 
 	surface.table = table;
-	ui.call(table, 'beginUpdates');
-	ui.call(table, 'endUpdates');
+	requestTableUpdate(session, table);
 	scheduleRowCorrection(session, surface, 32);
 }
 

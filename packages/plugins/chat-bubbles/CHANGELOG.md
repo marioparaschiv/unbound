@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2]
+
+### Fixed
+
+- Scrolling the chat on iOS no longer stalls alongside other plugins: message and separator cells are kept transparent after UIKit sets their background, so UIKit never waits on JavaScript.
+
 ## [1.0.1]
 
 ### Changed
