@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, mock, test } from 'bun:test';
-import type { DiscordAsset } from '@unbound-app/types';
+import type { DiscordAsset, UnboundAsset } from '@unbound-app/types';
 import type { ImageProps } from 'react-native';
+
+type Listener = (asset: UnboundAsset, id: number) => void;
 
 const PACK = 'acme.icons';
 
@@ -21,16 +23,56 @@ const ImageSources = {
 
 const functionComponentImage = () => null;
 
+// Discord's asset registry: assets register over the session, not all before a pack applies.
+const registered: UnboundAsset[] = [star];
+const listeners = new Set<Listener>();
+
+mock.module('~/assets/api', () => ({
+	getById: (id: number) => registered[id - 1],
+	onAssetRegistered(listener: Listener) {
+		listeners.add(listener);
+
+		return () => void listeners.delete(listener);
+	},
+}));
+
 mock.module('~/metro/common', () => ({
-	Assets: { getAssetByID: (id: number) => (id === 1 ? star : null) },
 	ReactNative: { Image: functionComponentImage },
 	ImageSources,
 }));
 
+function register(name: string) {
+	const asset: UnboundAsset = {
+		httpServerLocation: star.httpServerLocation,
+		width: 24,
+		height: 24,
+		scales: [1, 2],
+		hash: name,
+		name,
+		type: 'png',
+	};
+
+	registered.push(asset);
+
+	for (const listener of listeners) {
+		listener(asset, registered.length);
+	}
+
+	return asset;
+}
+
+function packFile(name: string) {
+	return `Unbound/Icons/${PACK}/images/native/icons/${name}@2x.png`;
+}
+
+function settle() {
+	return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 const { existingFiles, makeManifest } = await import('./helpers/addons');
 const { icons } = await import('~/icon-packs/manager');
 
-existingFiles.add(`Unbound/Icons/${PACK}/images/native/icons/ic_star@2x.png`);
+existingFiles.add(packFile('ic_star'));
 icons.load(PACK, { ...makeManifest(PACK), main: '', type: 'icon-pack' });
 
 afterEach(() => icons.disable(PACK));
@@ -60,5 +102,24 @@ describe('an enabled icon pack', () => {
 		icons.disable(PACK);
 
 		expect(ImageSources.getImageSourcesFromImageProps({ source: 1 })).toBe(1);
+	});
+
+	test('stamps assets that register after it applies, until it is disabled', async () => {
+		existingFiles.add(packFile('late'));
+		existingFiles.add(packFile('removed'));
+
+		await icons.enable(PACK);
+
+		const late = register('late');
+
+		await settle();
+		icons.disable(PACK);
+
+		const removed = register('removed');
+
+		await settle();
+
+		expect(late.iconPackPath).toBe(`/docs/${packFile('late')}`);
+		expect(removed.iconPackPath).toBeUndefined();
 	});
 });
