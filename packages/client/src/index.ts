@@ -42,7 +42,6 @@ declare global {
 
 const Logger = createLogger('Core');
 
-/** Every built-in under its registered name, in start order. Shutdown stops them in reverse. */
 const BUILT_INS: BuiltInEntry[] = [
 	['cloudSync', cloudSync],
 	['commands', commands],
