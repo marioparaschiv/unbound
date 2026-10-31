@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4]
+
+### Fixed
+
+- Scrolling the chat on iOS stalls less when a code card appears: the row is re-measured with one asynchronous table update per tick instead of synchronous calls for every card.
+
 ## [1.0.3]
 
 ### Fixed

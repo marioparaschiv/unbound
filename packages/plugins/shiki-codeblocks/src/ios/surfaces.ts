@@ -88,7 +88,7 @@ function applySurface(session: Session, surface: Surface, relayout: boolean = tr
 
 	if (!text) return false;
 
-	surface.renderedText = ui.string(ui.call(text, 'string')) ?? null;
+	surface.renderedText = ui.ownString(text) ?? null;
 
 	return whileApplying(session, surface, () => {
 		ui.call(surface.label, 'setAttributedText:', text);
@@ -215,7 +215,7 @@ export function restoreSurface(session: Session, surface: Surface): void {
 	if (isOnScreen(session, surface)) {
 		const current = ui.view(surface.label, 'attributedText');
 
-		if (current && ui.string(ui.call(current, 'string')) === surface.renderedText) {
+		if (current && ui.ownString(current) === surface.renderedText) {
 			whileApplying(session, surface, () =>
 				ui.call(surface.label, 'setAttributedText:', surface.original),
 			);
