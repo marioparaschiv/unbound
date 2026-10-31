@@ -1,4 +1,5 @@
 import {
+	IconBook,
 	IconBookmark,
 	IconHouse,
 	IconMenu2,
@@ -32,11 +33,16 @@ const ROUTES: NavRoute[] = [
 	{ path: '/plugins', title: 'Plugins', icon: IconPlug },
 	{ path: '/themes', title: 'Themes', icon: IconPalette },
 	{ path: '/team', title: 'Team', icon: IconUsers },
+	{ path: '/docs', title: 'Docs', icon: IconBook },
 	{ path: '/faq', title: 'FAQ', icon: IconBookmark },
 ];
 
 function Header() {
-	const pathname = useLocation({ select: (location) => location.pathname });
+	// Every docs page lights up the one Docs entry.
+	const pathname = useLocation({
+		select: (location) =>
+			location.pathname.startsWith('/docs/') ? '/docs' : location.pathname,
+	});
 	const [drawerOpen, setDrawerOpen] = useState(false);
 
 	return (
