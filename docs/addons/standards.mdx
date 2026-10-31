@@ -35,7 +35,7 @@ const UserStore = flux.getStore('User');
 const Button = metro.findByName('Button', { lazy: false });
 ```
 
-**Enforced by** the lint rule `unbound/no-module-scope-lookup`. It reports a `metro.find`, `findByProps`, `findByName`, `findByFilePath`, `findByPrototypes` or `flux.getStore` call made outside a function, unless the call is lazy. The scaffold turns it on with `{ "lazyByDefault": true }`, so only a call with `{ lazy: false }` and `metro.find` are reported.
+**Enforced by** the lint rule `unbound/no-module-scope-lookup`. It reports a `metro.find`, `findByProps`, `findByName`, `findByFilePath`, `findByPrototypes` or `flux.getStore` call made outside a function, unless the call is lazy. The scaffold turns it on with `{ "lazyByDefault": true }`, so only a call with `{ lazy: false }` is reported.
 
 ### Each feature loads itself and patches only what it needs
 
