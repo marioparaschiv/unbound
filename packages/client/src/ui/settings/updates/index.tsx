@@ -52,7 +52,7 @@ function UpdateRow({ entry }: UpdateRowProps) {
 			icon={<Discord.TableRowIcon source={kindIcon(entry.kind)} />}
 			trailing={<UpdateButton id={entry.id} text={messages.UNBOUND_UPDATE} />}
 			onPress={() =>
-				navigation.push(Screens.Custom, {
+				navigation.push(Screens.PanelHost, {
 					title: entry.name,
 					render: () => (
 						<Changelog

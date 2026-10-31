@@ -1,9 +1,15 @@
+import {
+	ADDON_PAGE_FILENAME,
+	MEASURED_PAGE_FILENAME,
+	type AddonPage,
+} from '@unbound-app/contracts/addon-page';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { formatChangelogText } from '@unbound-app/contracts/changelog';
 import type { AddonVersion } from '@unbound-app/contracts/addons';
 import type { SourcePin } from '@unbound-app/contracts/source';
 
 import type { addonVersion, submissionSource } from '~/db/schema';
+import type { PageMediaFiles } from '~/lib/addon-page-source';
 import type { AppContext } from '~/lib/context';
 import type { Env } from '~/lib/env';
 
@@ -39,12 +45,30 @@ export function getBytecodeKey(bundleKey: string, bytecodeVersion: string): stri
 	return `${bundleKey.replace(/\.[^./]+$/, '')}.${bytecodeVersion}.hbc`;
 }
 
+/** A version's store page as approval publishes it. */
+export type StorePage = {
+	addonMd: string;
+	/** The measured page, or `null` when the commit has no `page.json`. */
+	measured: AddonPage | null;
+	media: PageMediaFiles;
+};
+
 /** The version an artifact is published as. */
 export type ArtifactVersion = {
 	addonId: string;
 	version: string;
 	manifest: PublishedManifest;
 };
+
+/**
+ * @description Builds the public bucket folder an approved version's files sit in.
+ * @param addonId The addon id.
+ * @param version The approved version.
+ * @returns The folder, without a trailing slash.
+ */
+export function getVersionDirectory(addonId: string, version: string): string {
+	return `addons/${addonId}/${version}`;
+}
 
 /**
  * @description Builds the public bucket keys an approved version is published under. The bundle sits
@@ -55,7 +79,7 @@ export type ArtifactVersion = {
  * @returns The manifest and bundle keys.
  */
 export function getArtifactKeys(addonId: string, version: string, main: string): ArtifactKeys {
-	const directory = `addons/${addonId}/${version}`;
+	const directory = getVersionDirectory(addonId, version);
 
 	return { manifest: `${directory}/manifest.json`, bundle: `${directory}/${main}` };
 }
@@ -83,6 +107,37 @@ export async function writeArtifact(
 		ctx.storage.public.write(keys.manifest, JSON.stringify(target.manifest), {
 			type: 'application/json',
 		}),
+	]);
+}
+
+/**
+ * @description Writes a version's store page to its folder: ADDON.md, the measured `page.json`, and each
+ * media file at the path ADDON.md writes it as, so `media/` lands under the version folder.
+ * @param ctx The application context.
+ * @param target The addon id and version the page is published as.
+ * @param page ADDON.md, the measured page and its verified media bytes.
+ */
+export async function writeStorePage(
+	ctx: AppContext,
+	target: ArtifactVersion,
+	page: StorePage,
+): Promise<void> {
+	const directory = getVersionDirectory(target.addonId, target.version);
+
+	await Promise.all([
+		...[...page.media].map(([path, bytes]) =>
+			ctx.storage.public.write(`${directory}/${path}`, bytes),
+		),
+		ctx.storage.public.write(`${directory}/${ADDON_PAGE_FILENAME}`, page.addonMd, {
+			type: 'text/markdown; charset=utf-8',
+		}),
+		page.measured
+			? ctx.storage.public.write(
+					`${directory}/${MEASURED_PAGE_FILENAME}`,
+					JSON.stringify(page.measured),
+					{ type: 'application/json' },
+				)
+			: undefined,
 	]);
 }
 
@@ -176,8 +231,10 @@ export function toAddonVersion(
 
 export default {
 	VERSION_SOURCE,
+	getVersionDirectory,
 	getArtifactKeys,
 	writeArtifact,
+	writeStorePage,
 	getCdnUrl,
 	toVersionChangelog,
 	pinSource,
