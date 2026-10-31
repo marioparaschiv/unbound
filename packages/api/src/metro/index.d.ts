@@ -6,7 +6,14 @@ import type { PredicateResult } from '../utils';
 import * as React$1 from 'react';
 import { ComponentProps, ComponentType, ElementType, ReactNode } from 'react';
 import * as RN from 'react-native';
-import { ColorValue, ImageStyle, TextStyle, ViewStyle } from 'react-native';
+import {
+	ColorValue,
+	ImageProps,
+	ImageStyle,
+	ImageURISource,
+	TextStyle,
+	ViewStyle,
+} from 'react-native';
 declare const HelpMessageTypes: {
 	readonly 0: 'WARNING';
 	readonly 1: 'INFO';
@@ -125,6 +132,10 @@ export type HelpMessageProps = {
 	button?: React$1.ReactNode;
 };
 export type HelpMessageType = (typeof HelpMessageTypes)[keyof typeof HelpMessageTypes & string];
+/** React Native's `ImageSourceUtils`, which every `Image` render resolves its source through. */
+export type ImageSourcesModule = {
+	getImageSourcesFromImageProps: (props: ImageProps) => ImageURISource | ImageURISource[] | null;
+};
 /** Widens a single result to an array when the search was made with `all: true`. */
 export type MetroAllValues<T extends MetroSearchOptions, U> = T extends {
 	all: true;
