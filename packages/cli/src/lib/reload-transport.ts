@@ -1,5 +1,6 @@
 import type { ControllerClient } from '@unbound-app/debugger-protocol/controller';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import type { PushedManifest } from '@unbound-app/types';
 import { basename, dirname, join } from 'node:path';
@@ -103,14 +104,16 @@ export function createReloadTransport(
 }
 
 /**
- * @description Reads a built addon's manifest and bundle off disk. A static addon ships its files
- * as-is, so its bundle is the file named by `main` in its directory; a built addon's bundle is the
- * JavaScript the build emitted into the output directory, named after `main` with a `.js` extension.
+ * @description Reads a built addon's manifest and bundle off disk. The manifest is the build's
+ * `{output}/manifest.json`, or the source manifest when the build wrote none. A static addon's bundle
+ * is the file named by `main` in its directory; a built addon's is the JavaScript the build emitted
+ * into the output directory, named after `main` with a `.js` extension.
  * @param addon The freshly built addon.
  * @returns The validated manifest and the bundle source; throws naming the manifest when it is invalid.
  */
 export function readBuiltAddon(addon: BuiltAddon): ReadAddon {
-	const manifest = readDevManifest(addon.dir);
+	const hasBuiltManifest = existsSync(join(addon.output, MANIFEST_FILENAME));
+	const manifest = readDevManifest(hasBuiltManifest ? addon.output : addon.dir);
 
 	const bundleName = getBundleName(addon.static, manifest.main);
 	const bundlePath = join(addon.output, bundleName);

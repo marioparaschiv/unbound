@@ -122,8 +122,20 @@ export function readAddon(
 		kind: manifest.main.endsWith('.json') ? 'theme' : 'plugin',
 		path: dir,
 		static: isStatic,
-		bundle: isStatic ? joinPath(dir, bundleName) : joinPath(dir, config.output, bundleName),
+		bundle: isStatic
+			? joinPath(dir, bundleName)
+			: joinPath(getOutputDir(dir, config), bundleName),
 	};
+}
+
+/**
+ * @description Names the directory a built addon's build writes its bundle and manifest into.
+ * @param dir The addon's directory, `/`-separated; `''` is the root.
+ * @param config The workspace config, for `output`.
+ * @returns The output directory, `/`-separated.
+ */
+export function getOutputDir(dir: string, config: WorkspaceConfig): string {
+	return joinPath(dir, config.output);
 }
 
 /**
@@ -238,6 +250,7 @@ export default {
 	matchAddonDirs,
 	readAddon,
 	isWorkspaceAddon,
+	getOutputDir,
 	getBundleName,
 	findWorkspaceRoot,
 };
