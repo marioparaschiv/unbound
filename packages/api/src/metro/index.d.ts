@@ -96,11 +96,10 @@ export declare function findByPrototypes<
 	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
 >(...args: T): AnyProps;
 /**
- * @description Resolves a module matching `filter`, waiting for it to load if it is not yet present.
+ * @description Resolves a module matching `filter` once it loads, without ever loading it.
  * @param filter The filter to match against.
- * @param options Search options, excluding `lazy` and `all`, plus an optional `signal` to abort the wait.
- * @returns The matched module, or a promise that resolves once a matching module is required, or
- * `undefined` if the supplied signal aborts first.
+ * @param options Whether to also match the `default` export, as in {@link onModuleLoaded}, plus a `signal` that abandons the wait.
+ * @returns The loaded module, or a promise of the module once Discord loads it, or of `undefined` if `signal` aborts first.
  */
 export declare function findLazy(filter: MetroFilter, options?: MetroLazySearchOptions): any;
 /**
@@ -109,6 +108,19 @@ export declare function findLazy(filter: MetroFilter, options?: MetroLazySearchO
  * @returns A function that removes the listener.
  */
 export declare function onModuleLoad(listener: MetroModuleLoadListener): () => void;
+/**
+ * @description Calls `onLoad` with the module matching `filter` once it initializes, without ever initializing it.
+ * A loaded module is passed at once; otherwise `onLoad` runs inside the module's factory, before its importer reads it.
+ * @param filter The filter to match against.
+ * @param onLoad Receives the matched module, once.
+ * @param options Whether to also match the `default` export (`esModules`) and return it on such a match (`interop`).
+ * @returns A function that stops waiting; it does nothing once `onLoad` has run.
+ */
+export declare function onModuleLoaded(
+	filter: MetroFilter,
+	onLoad: (mdl: MetroExport) => void,
+	options?: MetroModuleLoadedOptions,
+): () => void;
 /**
  * @description Removes a module listener registered with {@link onModuleLoad}.
  * @deprecated Call the function onModuleLoad returns.
@@ -186,14 +198,16 @@ export type MetroInternalOptions = {
 	bulk?: boolean;
 	lazy?: boolean;
 };
-/** Search options for {@link findLazy}, adding a `signal` that abandons the wait when aborted. */
+/** Options for {@link findLazy}, adding a `signal` that abandons the wait when aborted. */
 export type MetroLazySearchOptions = {
 	signal?: AbortSignal;
-} & Omit<MetroSearchOptions, 'lazy' | 'all'>;
+} & MetroModuleLoadedOptions;
 /** Convenience alias for a by-property result derived from a union of prop names. */
 export type MetroModule<TProps extends string> = MetroPropertyRecordOrArray<TProps[], TProps>;
 /** Called with each module's exports and id as the module loads. */
 export type MetroModuleLoadListener = (mdl: any, id: number) => void;
+/** Options for {@link onModuleLoaded}: whether to also match a module's `default` export, and to return it on such a match. */
+export type MetroModuleLoadedOptions = Pick<MetroSearchOptions, 'esModules' | 'interop'>;
 /** A bag carrying a `params` array of prop names. */
 export type MetroParamsBag<T extends string> = {
 	params: T[];

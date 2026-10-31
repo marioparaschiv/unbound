@@ -23,6 +23,7 @@ import { createLazyModule } from '~/metro/lazy-registry';
 import Cache, { ModuleFlags } from '~/metro/cache';
 import { provideFinders } from '~/metro/finders';
 import { blacklist, data } from '~/metro/state';
+import { onModuleLoaded } from '~/metro/wait';
 import { CACHE_KEY } from '~/core/constants';
 
 const Logger = createLogger('Metro');
@@ -193,85 +194,41 @@ export const on = onModuleLoad;
 export const off = removeListener;
 
 /**
- * @description Resolves a module matching `filter`, waiting for it to load if it is not yet present.
+ * @description Resolves a module matching `filter` once it loads, without ever loading it.
  * @param filter The filter to match against.
- * @param options Search options, excluding `lazy` and `all`, plus an optional `signal` to abort the wait.
- * @returns The matched module, or a promise that resolves once a matching module is required, or
- * `undefined` if the supplied signal aborts first.
+ * @param options Whether to also match the `default` export, as in {@link onModuleLoaded}, plus a `signal` that abandons the wait.
+ * @returns The loaded module, or a promise of the module once Discord loads it, or of `undefined` if `signal` aborts first.
  */
 export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = {}) {
-	const existing = find(filter, options);
+	const { signal, ...rest } = options;
+	const existing = find(filter, { ...rest, initialize: false });
 
 	// `find` reports a miss as `null`.
 	if (existing !== null && existing !== void 0) {
 		return existing;
 	}
 
-	const { signal } = options;
-
 	if (signal?.aborted) {
 		return Promise.resolve(void 0);
 	}
 
 	return new Promise((resolve) => {
-		function settle(mdl: any) {
-			remove();
-			signal?.removeEventListener('abort', abort);
-			resolve(mdl);
-		}
-
 		function abort() {
-			settle(void 0);
+			cancel();
+			resolve(void 0);
 		}
 
-		function callback(mdl, id) {
-			// A raw filter, such as `byFilePath`, reads the module record, as `find` does.
-			if (filter.isRaw) {
-				const record = window.modules.get(id);
-
-				return record && filter(record, id) ? settle(mdl) : void 0;
-			}
-
-			if (filter(mdl, id)) {
-				return settle(mdl);
-			}
-
-			if (mdl.default && filter(mdl.default, id)) {
-				return settle((options.interop ?? true) ? mdl.default : mdl);
-			}
-		}
-
-		const remove = onModuleLoad(callback);
+		const cancel = onModuleLoaded(
+			filter,
+			(mdl) => {
+				signal?.removeEventListener('abort', abort);
+				resolve(mdl);
+			},
+			rest,
+		);
 
 		signal?.addEventListener('abort', abort, { once: true });
 	});
-}
-
-function onceLoaded(
-	filter: MetroFilter,
-	options: MetroSearchOptions,
-	callback: (mdl: any) => void,
-) {
-	const loaded = find(filter, { ...options, initialize: false });
-
-	if (loaded !== null && loaded !== void 0) {
-		callback(loaded);
-
-		return noop;
-	}
-
-	const { esModules = true, interop = true, raw = false } = options;
-	const remove = onModuleLoad((_, id) => {
-		const record = window.modules.get(id);
-		const found = record && searchExports(filter, record, id, esModules, interop, raw);
-
-		if (!found) return;
-
-		remove();
-		callback(found);
-	});
-
-	return remove;
 }
 
 /**
@@ -665,12 +622,16 @@ function searchWithOptions(
 		const search = () =>
 			searchWithOptions(args, Object.assign(options, { lazy: false }), filter);
 
-		if (options.bulk || options.all) {
+		// A bulk or `all` search stands for several modules, and a `raw` one for a module record, so a
+		// patch on such a proxy resolves it instead of waiting.
+		if (options.bulk || options.all || options.raw) {
 			return createLazyModule(search);
 		}
 
+		const { esModules, interop } = options;
+
 		return createLazyModule(search, (callback) =>
-			onceLoaded(create(...args), options, callback),
+			onModuleLoaded(create(...args), callback, { esModules, interop }),
 		);
 	}
 
@@ -718,4 +679,4 @@ function parseOptions<O, A extends any[] = string[]>(
 	return [args as A, filter(args[args.length - 1]) ? args.pop() : fallback];
 }
 
-provideFinders({ findByProps, findByName, findByFilePath, findByPrototypes, findStore });
+provideFinders({ findByProps, findByName, findByFilePath, findByPrototypes, findStore, find });

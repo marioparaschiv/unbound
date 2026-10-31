@@ -28,10 +28,13 @@ export type MetroStoreOptions = {
 	short?: boolean;
 } & MetroSearchOptions;
 
-/** Search options for {@link findLazy}, adding a `signal` that abandons the wait when aborted. */
+/** Options for {@link onModuleLoaded}: whether to also match a module's `default` export, and to return it on such a match. */
+export type MetroModuleLoadedOptions = Pick<MetroSearchOptions, 'esModules' | 'interop'>;
+
+/** Options for {@link findLazy}, adding a `signal` that abandons the wait when aborted. */
 export type MetroLazySearchOptions = {
 	signal?: AbortSignal;
-} & Omit<MetroSearchOptions, 'lazy' | 'all'>;
+} & MetroModuleLoadedOptions;
 
 /** A single entry in a {@link bulk} search: a filter plus its per-item options. */
 export type MetroBulkItem = {

@@ -16,6 +16,7 @@ export { findByPrototypes, findByFilePath, findByProps, findByName } from '~/met
 export type { DiscordFunction } from '@unbound-app/types/components';
 export * as components from '~/metro/components';
 export { blacklist, data } from '~/metro/state';
+export { onModuleLoaded } from '~/metro/wait';
 export { CACHE_KEY } from '~/core/constants';
 export * as filters from '~/metro/filters';
 export * as common from '~/metro/common';

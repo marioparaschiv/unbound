@@ -6,8 +6,13 @@ import type {
 	FluxStore,
 } from '@unbound-app/types/flux';
 import type { CommandsHandle } from '@unbound-app/types/commands';
+import noop from '@unbound-app/utils/noop';
 
-import type { MetroLazySearchOptions, MetroModuleLoadListener } from '~/metro/types';
+import type {
+	MetroModuleLoadedOptions,
+	MetroLazySearchOptions,
+	MetroModuleLoadListener,
+} from '~/metro/types';
 import type { Bucket, SettingsPayload } from '~/storage/api';
 import type { Subscriptions } from '~/addons/subscriptions';
 import type { MetroFilter } from '~/metro/filters';
@@ -49,7 +54,7 @@ function overlay<K extends keyof Api, O extends Partial<Api[K]>>(
 }
 
 /**
- * @description Creates a plugin's `metro` namespace, whose module listeners and pending `findLazy` waits end on dispose.
+ * @description Creates a plugin's `metro` namespace, whose module listeners and pending `findLazy` and `onModuleLoaded` waits end on dispose.
  * @param subscriptions The plugin's subscription tracker.
  * @returns The namespace.
  */
@@ -97,7 +102,35 @@ export function scopeMetro(subscriptions: Subscriptions): Api['metro'] {
 		return result;
 	}
 
+	function onModuleLoaded(
+		filter: MetroFilter,
+		onLoad: (mdl: MetroExport) => void,
+		options?: MetroModuleLoadedOptions,
+	) {
+		let settled = false;
+		let release = noop;
+		const stop = liveNamespace('metro').onModuleLoaded(
+			filter,
+			(mdl) => {
+				settled = true;
+				release();
+				onLoad(mdl);
+			},
+			options,
+		);
+
+		// A module that already loaded calls back before there is anything to track.
+		if (settled) {
+			return noop;
+		}
+
+		release = subscriptions.add(stop);
+
+		return release;
+	}
+
 	return overlay('metro', {
+		onModuleLoaded,
 		onModuleLoad,
 		addListener: onModuleLoad,
 		on: onModuleLoad,

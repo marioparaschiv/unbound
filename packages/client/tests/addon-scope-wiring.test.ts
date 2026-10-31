@@ -84,6 +84,9 @@ const { registry } = await import('~/commands/registry');
 const { data } = await import('~/metro/state');
 const { Plugins } = await import('~/plugins/manager');
 
+// Metro's own listeners, such as the one serving module waits, are not the plugin's.
+const metroListeners = data.listeners.size;
+
 const seen: string[] = [];
 
 function startPlugin(bundle: string) {
@@ -118,7 +121,7 @@ function commandsOf(owner: string) {
 
 function registered() {
 	return {
-		moduleListeners: data.listeners.size,
+		moduleListeners: data.listeners.size - metroListeners,
 		actionListeners: dispatcher.subscriptions.get('WIRING')?.size ?? 0,
 		storeListeners: store.listeners.size,
 		commands: commandsOf(ID),
@@ -165,7 +168,7 @@ describe('addon scope wiring', () => {
 		})`);
 
 		expect(registered()).toEqual({
-			moduleListeners: 3,
+			moduleListeners: 2,
 			actionListeners: 1,
 			storeListeners: 1,
 			commands: ['shared', 'wired'],
@@ -211,12 +214,12 @@ describe('addon scope wiring', () => {
 
 		storage.set(ID, 'key', 1);
 
-		expect(data.listeners.size).toBe(0);
+		expect(data.listeners.size).toBe(metroListeners);
 		expect(seen).toEqual([]);
 
 		await plugins.stop(ID);
 
-		expect(data.listeners.size).toBe(0);
+		expect(data.listeners.size).toBe(metroListeners);
 	});
 
 	test('stop leaves alone a lone storage listener of another owner after the plugin removed its own', async () => {
