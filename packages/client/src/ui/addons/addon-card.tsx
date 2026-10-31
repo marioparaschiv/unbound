@@ -1,15 +1,16 @@
 import { View } from 'react-native';
 import { memo } from 'react';
 
+import useDevelopmentCopy from '~/ui/hooks/use-development-copy';
 import { useUnboundSettings } from '~/settings/unbound';
-import { useDevelopmentCopy } from '~/ui/hooks';
+import TintedIcon from '~/metro/fallbacks/tinted-icon';
+import AddonTitle from '~/ui/components/addon-title';
 import { Discord } from '~/metro/components';
-import { TintedIcon } from '~/ui/components';
 import type { Addon } from '~/addons/addon';
 import { Manager } from '~/addons/manager';
 import { Theme } from '~/metro/common';
-import { Messages } from '~/i18n/api';
-import { Icons } from '~/assets/api';
+import { messages } from '~/i18n/api';
+import { icons } from '~/assets/api';
 
 import AddonOverflow from './addon-overflow';
 import AddonSettings from './addon-settings';
@@ -17,7 +18,6 @@ import AddonAuthors from './addon-authors';
 import useStyles from './addon-card.style';
 import AddonSwitch from './addon-switch';
 import AddonRadio from './addon-radio';
-import AddonTitle from './addon-title';
 
 type AddonCardProps = {
 	addon: Addon;
@@ -40,9 +40,9 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 
 	const developmentCopy = useDevelopmentCopy(kind, addon.id);
 	const tag = library
-		? Messages.UNBOUND_LIBRARY
+		? messages.UNBOUND_LIBRARY
 		: developmentCopy
-			? Messages.UNBOUND_DEVELOPMENT_COPY
+			? messages.UNBOUND_DEVELOPMENT_COPY
 			: void 0;
 
 	const trailing =
@@ -85,7 +85,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 				)}
 				<View style={styles.icon}>
 					<TintedIcon
-						source={Icons['PuzzlePieceIcon'] ?? 0}
+						source={icons['PuzzlePieceIcon'] ?? 0}
 						size={18}
 						tint={Theme.colors.TEXT_STRONG}
 					/>

@@ -3,8 +3,8 @@ import type { AddonKind } from '@unbound-app/types/addons';
 
 import { getInstallStatus } from '~/marketplace/catalog';
 import { Discord } from '~/metro/components';
-import { showToast } from '~/toasts/api';
 import { format } from '~/i18n/api';
+import { show } from '~/toasts/api';
 
 import { getInstalledVersion, installVersion } from './targets';
 
@@ -71,7 +71,7 @@ export async function offerListedInstall(kind: AddonKind, addon: ListedAddon): P
 	const ok = await installVersion(kind, addon, addon.latestVersion);
 
 	if (!ok) {
-		showToast({
+		show({
 			title: name,
 			content: format('UNBOUND_INSTALL_FAILED', { name }),
 			icon: 'CircleXIcon',

@@ -2,7 +2,7 @@ import Animated, { FadeOut, useSharedValue, withRepeat, withTiming } from 'react
 import { View } from 'react-native';
 import { useEffect } from 'react';
 
-import { useReducedMotion } from '~/ui/hooks';
+import useReducedMotion from '~/ui/hooks/use-reduced-motion';
 import { Discord } from '~/metro/components';
 
 import useStyles from './marketplace-skeleton.style';

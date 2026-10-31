@@ -17,6 +17,8 @@ export type RegistrySnapshot = {
 export type Registry = {
 	/** Adds records under an owner, replacing whole roots it already has. Returns a remover for this call. */
 	add(owner: string, records: readonly CommandRecord[]): () => void;
+	/** Removes one root command of an owner, with its subcommands. Idempotent. */
+	remove(owner: string, root: string): void;
 	/** Removes every record of an owner. Idempotent. */
 	release(owner: string): void;
 	snapshot(): RegistrySnapshot;
@@ -126,6 +128,18 @@ export function createRegistry(): Registry {
 		};
 	}
 
+	function remove(owner: string, root: string) {
+		const entries = owners.get(owner);
+
+		if (!entries?.delete(root)) return;
+
+		if (!entries.size) {
+			owners.delete(owner);
+		}
+
+		bump();
+	}
+
 	function release(owner: string) {
 		if (owners.delete(owner)) {
 			bump();
@@ -144,7 +158,7 @@ export function createRegistry(): Registry {
 		return () => void listeners.delete(listener);
 	}
 
-	return { add, release, snapshot, subscribe };
+	return { add, remove, release, snapshot, subscribe };
 }
 
 function build(version: number, owners: Map<string, Map<string, RootEntry>>): RegistrySnapshot {

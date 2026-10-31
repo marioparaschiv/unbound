@@ -89,6 +89,23 @@ describe('registry', () => {
 		expect(registry.snapshot().version).toBe(version);
 	});
 
+	test('remove drops one root of one owner and is harmless twice', () => {
+		const registry = createRegistry();
+		const removeTag = registry.add('demo', records('demo', leaves('add', 'remove')));
+
+		registry.add('demo', records('demo', { ping: { description: 'Ping', execute: run } }));
+		registry.add('other', records('other', { pong: { description: 'Pong', execute: run } }));
+		registry.remove('demo', 'tag');
+		const version = registry.snapshot().version;
+
+		registry.remove('demo', 'tag');
+		registry.remove('demo', 'pong');
+		removeTag();
+
+		expect(listed(registry)).toEqual([['unbound', ['ping', 'pong']]]);
+		expect(registry.snapshot().version).toBe(version);
+	});
+
 	test('a root another owner has throws and changes nothing', () => {
 		const registry = createRegistry();
 
