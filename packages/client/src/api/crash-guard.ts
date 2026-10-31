@@ -8,6 +8,19 @@ export type AddonAttribution = <A extends unknown[], R>(
 	method: (...args: A) => R,
 ) => (...args: A) => R;
 
+/** How the loader names an addon in its crash guard, persisted across launches: `<settings bucket>:<addon id>`. */
+export type CrashGuardKey = `${string}:${string}`;
+
+/**
+ * @description Names an addon in the loader's crash guard, unique across addon kinds.
+ * @param bucket The settings bucket of the addon's manager.
+ * @param id The addon's id.
+ * @returns The crash guard key.
+ */
+export function crashGuardKey(bucket: string, id: string): CrashGuardKey {
+	return `${bucket}:${id}`;
+}
+
 function bridge(): NativePlatformCrashGuard | undefined {
 	return globalThis.NativePlatform?.crashGuard;
 }
@@ -27,7 +40,7 @@ function sharedActivityCell(guard: NativePlatformCrashGuard): Uint32Array | null
  * @param key The addon's crash guard key.
  * @param name The addon's display name.
  */
-export function beginAddonStart(key: string, name: string): void {
+export function beginAddonStart(key: CrashGuardKey, name: string): void {
 	bridge()?.begin(key, name);
 }
 
@@ -35,7 +48,7 @@ export function beginAddonStart(key: string, name: string): void {
  * @description Clears the native start marker once an addon's start has returned.
  * @param key The addon's crash guard key.
  */
-export function finishAddonStart(key: string): void {
+export function finishAddonStart(key: CrashGuardKey): void {
 	bridge()?.end(key);
 }
 
@@ -46,7 +59,7 @@ export function finishAddonStart(key: string): void {
  * @param name The addon's display name.
  * @returns The wrapper, or `undefined` when the loader cannot attribute crashes.
  */
-export function attributeAddon(key: string, name: string): AddonAttribution | undefined {
+export function attributeAddon(key: CrashGuardKey, name: string): AddonAttribution | undefined {
 	const guard = bridge();
 	const slot = guard?.register?.(key, name) ?? 0;
 	const cell = guard && slot > 0 ? sharedActivityCell(guard) : null;
@@ -75,7 +88,7 @@ export function attributeAddon(key: string, name: string): AddonAttribution | un
  * @param key The addon's crash guard key.
  * @returns The crashed addon reported by the loader, or `undefined`.
  */
-export function crashedAddon(key: string): NativeCrashedAddon | undefined {
+export function crashedAddon(key: CrashGuardKey): NativeCrashedAddon | undefined {
 	disabledAfterCrash ??= new Map((bridge()?.disabled() ?? []).map((addon) => [addon.id, addon]));
 
 	return disabledAfterCrash.get(key);

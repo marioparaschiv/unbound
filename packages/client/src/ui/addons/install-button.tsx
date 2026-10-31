@@ -1,4 +1,4 @@
-import type { ManagerKind } from '@unbound-app/types/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 import { View } from 'react-native';
 
 import { Discord } from '~/api/metro/components';
@@ -10,7 +10,7 @@ import InstallUrlModal from './install-url-modal';
 import useStyles from './install-button.style';
 
 type InstallButtonProps = {
-	kind: ManagerKind;
+	kind: AddonKind;
 };
 
 /**

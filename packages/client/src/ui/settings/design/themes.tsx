@@ -6,7 +6,7 @@ import { AddonList } from '~/ui/addons';
 function ThemesTab() {
 	return (
 		<ScrollView contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 12 }}>
-			<AddonList kind={'themes'} />
+			<AddonList kind={'theme'} />
 		</ScrollView>
 	);
 }

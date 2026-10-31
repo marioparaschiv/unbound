@@ -1,20 +1,17 @@
-import type { ManagerKind } from '@unbound-app/types/addons';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { AddonKind } from '@unbound-app/types/addons';
+import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { Dimensions, View } from 'react-native';
 
-import {
-	MARKETPLACE_TABS,
-	MarketplaceList,
-	SearchContext,
-	offerListedInstall,
-} from '~/ui/marketplace';
+import { MarketplaceList, SearchContext, offerListedInstall } from '~/ui/marketplace';
 import { Discord, SafeArea } from '~/api/metro/components';
 import MarketplaceStore from '~/stores/marketplace';
 import { Messages, format } from '~/api/i18n';
+import { Manager } from '~/managers/base';
 
 type MarketplaceParams = {
 	/** Opens on the tab of this manager, e.g. the page the install menu was opened from. */
-	kind?: ManagerKind;
+	kind?: AddonKind;
 	/** Narrows the search to this addon and offers to install it, e.g. from an `astral://` link. */
 	id?: string;
 	/** Tells one open of `id` from the next, so opening the same link again asks again. */
@@ -41,10 +38,10 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 
 	const items = useMemo(
 		() =>
-			MARKETPLACE_TABS.map((tab) => ({
-				id: tab.type,
-				label: tab.label(),
-				page: <MarketplaceList tab={tab} />,
+			ADDON_KINDS.map((tab) => ({
+				id: tab,
+				label: Messages[Manager.for(tab).label],
+				page: <MarketplaceList kind={tab} />,
 			})),
 		[],
 	);
@@ -52,10 +49,7 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 	const state = Discord.useSegmentedControlState({
 		items,
 		pageWidth: Dimensions.get('window').width,
-		defaultIndex: Math.max(
-			0,
-			MARKETPLACE_TABS.findIndex((tab) => tab.kind === kind),
-		),
+		defaultIndex: kind ? ADDON_KINDS.indexOf(kind) : 0,
 	});
 
 	// A link opened while the page is mounted only changes its params.
@@ -64,10 +58,8 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 
 		setSearch(id);
 
-		const index = MARKETPLACE_TABS.findIndex((tab) => tab.kind === kind);
-
-		if (~index) {
-			state.setActiveIndex(index);
+		if (kind) {
+			state.setActiveIndex(ADDON_KINDS.indexOf(kind));
 		}
 	}, [id, kind, request]);
 
@@ -77,12 +69,11 @@ function MarketplacePage({ route }: MarketplacePageProps) {
 		if (!id || lastOfferedOpen.current === key || catalog.status !== 'ready') return;
 
 		const addon = catalog.catalog.addons.find((listed) => listed.id === id);
-		const tab = MARKETPLACE_TABS.find((candidate) => candidate.type === addon?.type);
 
-		if (!addon || !tab) return;
+		if (!addon) return;
 
 		lastOfferedOpen.current = key;
-		void offerListedInstall(tab.kind, addon);
+		void offerListedInstall(addon.type, addon);
 	}, [id, request, catalog]);
 
 	return (

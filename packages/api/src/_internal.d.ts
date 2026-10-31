@@ -15,7 +15,9 @@ declare const THEME_FLAG_KEYS: readonly [
 ];
 declare const TRANSITION_STATE_KEYS: readonly ['MOUNTED', 'ENTERED', 'YEETED'];
 declare const nativeHandle: unique symbol;
-/** The kinds of addon a manifest can declare. */
+/** The kinds of addon, as a manifest's `type` declares them. One manager governs each, in this start order. */
+export declare const ADDON_KINDS: readonly ['plugin', 'theme', 'icon-pack', 'font'];
+/** @deprecated Use ADDON_KINDS */
 export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'font'];
 /** The core settings store; each addon's settings store is named after the addon id. */
 export declare const CORE_SETTINGS_STORE = 'astral';
@@ -57,7 +59,7 @@ export declare const DESIGN_COMPONENTS: readonly [
 	'ActionSheetRow',
 	'ContextMenu',
 ];
-/** The addon managers. Each names its settings store and its Cloud Sync section. */
+/** @deprecated Use ADDON_KINDS */
 export declare const MANAGER_KINDS: readonly ['plugins', 'themes', 'icons', 'fonts'];
 export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.objc.classes',
@@ -395,6 +397,7 @@ export type AddonAuthor = {
 	name: string;
 	id: `${number}`;
 };
+export type AddonKind = (typeof ADDON_KINDS)[number];
 /** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what the loader and installer record. */
 export type AddonManifest = AuthoredAddonManifest & {
 	/** Set by the loader for an addon it read from disk: the addon's folder name. */
@@ -416,7 +419,8 @@ export type AddonPlatforms = {
 export type AddonResolveable = string | Addon;
 /** Whether an addon's bundle carries a valid Unbound signature. */
 export type AddonTrust = 'signed' | 'unsigned';
-export type AddonType = (typeof ADDON_TYPES)[number];
+/** @deprecated Use AddonKind */
+export type AddonType = AddonKind;
 export type AlertActionButtonComponent = React$1.ComponentType<
 	AlertActionButtonProps & Record<string, unknown>
 >;
@@ -462,7 +466,7 @@ export type AssetsModule = {
 export type AuthoredAddonManifest = {
 	id: string;
 	/** The addon kind this manifest describes; used to validate installs. */
-	type?: AddonType;
+	type?: AddonKind;
 	name: string;
 	description: string;
 	authors: AddonAuthor[];
@@ -1846,6 +1850,7 @@ export type ManaContextProviderProps = {
 	children?: React$1.ReactNode;
 	value?: unknown;
 };
+/** @deprecated Use AddonKind */
 export type ManagerKind = (typeof MANAGER_KINDS)[number];
 export type MenuComponent = React$1.ComponentType<MenuProps>;
 export type MenuGroupComponent = React$1.ComponentType<MenuGroupProps>;

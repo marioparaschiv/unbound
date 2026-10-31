@@ -19,6 +19,30 @@ mock.module('~/api/fs', () => ({
 }));
 
 export const storedSettings = new Map<string, unknown>();
+/** The bucket names managers opened their settings with, in construction order. */
+export const openedBuckets: string[] = [];
+
+/** A settings change a component re-renders on: one key written to one bucket. */
+export type SettingsChange = { store: string; key: string };
+
+type Subscription = {
+	store: string;
+	predicate?: (change: SettingsChange) => boolean;
+};
+
+/** What each `useSettingsStore` call subscribed to, in call order. */
+export const subscriptions: Subscription[] = [];
+
+/**
+ * @description Whether any recorded `useSettingsStore` subscription re-renders on a change.
+ * @param change The bucket and key written.
+ * @returns Whether a subscriber would re-render.
+ */
+export function rerendersOn(change: SettingsChange): boolean {
+	return subscriptions.some(
+		({ store, predicate }) => store === change.store && (!predicate || predicate(change)),
+	);
+}
 
 mock.module('~/api/storage', () => {
 	const store = {
@@ -31,13 +55,26 @@ mock.module('~/api/storage', () => {
 		},
 	};
 
+	function getStore(bucket: string) {
+		openedBuckets.push(bucket);
+
+		return store;
+	}
+
+	function useSettingsStore(bucket: string, predicate?: Subscription['predicate']) {
+		subscriptions.push({ store: bucket, predicate });
+
+		return store;
+	}
+
 	return {
 		default: {
-			getStore: () => store,
+			getStore,
 			get: <T>(_s: string, _k: string, d: T) => d,
 			persist: async () => void persists.push(Date.now()),
 		},
-		getStore: () => store,
+		getStore,
+		useSettingsStore,
 	};
 });
 
@@ -55,6 +92,23 @@ mock.module('react-native', () => ({
 export const { Addons } = require('~/managers/addons') as typeof import('~/managers/addons');
 export const { createPluginContext } =
 	require('~/api/native-runtime') as typeof import('~/api/native-runtime');
+
+/**
+ * @description Loads the four addon managers, which read Discord's modules off `window` while they load.
+ * @returns The base class, with every kind's manager registered.
+ */
+export async function loadManagers() {
+	Reflect.set(globalThis, 'window', globalThis);
+
+	const { Manager } = await import('~/managers/base');
+
+	await import('~/managers/plugins');
+	await import('~/managers/themes');
+	await import('~/managers/icons');
+	await import('~/managers/fonts');
+
+	return Manager;
+}
 
 /**
  * @description Builds a valid manifest for tests.
@@ -101,7 +155,14 @@ export class FakeAddons extends Addons<Addon> {
 	nextInstanceStartFails = false;
 
 	constructor() {
-		super('plugins');
+		super({
+			kind: 'plugin',
+			name: 'Plugins',
+			directory: 'Unbound/Plugins',
+			bucket: 'plugins',
+			label: 'UNBOUND_PLUGINS',
+			icon: 'PuzzlePieceIcon',
+		});
 	}
 
 	initialize() {}
@@ -121,10 +182,6 @@ export class FakeAddons extends Addons<Addon> {
 				}
 			},
 		};
-	}
-
-	protected get entityType() {
-		return 'plugin' as const;
 	}
 
 	protected createContext(): PluginContext {

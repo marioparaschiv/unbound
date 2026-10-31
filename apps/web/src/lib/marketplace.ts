@@ -10,8 +10,10 @@ import { z } from 'zod/mini';
 
 import { listTags, readAddonTags, type AddonTag, type TagOption } from '~/lib/addon-tags';
 import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
+import { resolvePlatforms, type PlatformSupport } from '~/lib/addon-platforms';
 import { searchAuthors, type AuthorPage } from '~/lib/authors/directory';
 import { getAddonDetails, listAddons } from '~/lib/addons';
+import { getPublishedMediaBase } from '~/lib/markdown-url';
 import { loadAuthors } from '~/lib/authors/resolve';
 import { splitList } from '~/lib/addon-filters';
 import app from '~/lib/app';
@@ -41,13 +43,16 @@ export type MarketplaceSource = {
 	pin: SourcePin;
 	details: RepositoryDetails;
 	addonMd: string | null;
+	/** The directory URL ADDON.md's `media/` paths load from. */
+	mediaBase: string;
 	/** When the version was approved, which dates the `details` snapshot. */
 	approvedAt: string;
 };
 
 export type MarketplaceAddonDetails = MarketplaceAddon & {
 	createdAt: string;
-	capabilities: string[];
+	/** The platforms the newest version runs on, each with the Capabilities it needs there. */
+	platforms: PlatformSupport[];
 	/** The oldest Unbound version the newest version runs on. */
 	minClientVersion: string | null;
 	/** Newest first; the first is the one installs get. */
@@ -122,7 +127,7 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 		return {
 			...toMarketplaceAddon(details, latest, resolve),
 			createdAt: details.createdAt,
-			capabilities: latest.manifest.capabilities ?? [],
+			platforms: resolvePlatforms(latest.manifest),
 			minClientVersion: latest.manifest.unbound?.min ?? null,
 			versions: details.versions.map(({ manifest: _manifest, ...version }) => version),
 			source:
@@ -131,6 +136,7 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 							pin: latest.source,
 							details: details.details,
 							addonMd: details.addonMd,
+							mediaBase: getPublishedMediaBase(latest.manifestUrl),
 							approvedAt: latest.publishedAt,
 						}
 					: null,

@@ -4,9 +4,9 @@ import type { PendingUpdate } from '~/lib/updates';
 import { Discord } from '~/api/metro/components';
 import { automaticUpdates } from '~/lib/updates';
 import { Messages, format } from '~/api/i18n';
-import { getManager } from '~/managers/utils';
 import UpdatesStore from '~/stores/updates';
 import { Screens } from '~/lib/constants';
+import { Manager } from '~/managers/base';
 import { Page } from '~/ui/components';
 import { Icons } from '~/api/assets';
 
@@ -37,7 +37,7 @@ function UpdateRow({ entry }: UpdateRowProps) {
 	const navigation = Discord.useNavigation();
 	const { update } = entry;
 	const summary = headline(update.changelogs[0]?.changelog ?? update.changelog);
-	const held = getManager(entry.kind).getHeldVersion(entry.id);
+	const held = Manager.for(entry.kind).getHeldVersion(entry.id);
 	const versions = `${entry.from} → ${update.version}`;
 	const jump = held
 		? `${versions} · ${format('UNBOUND_UPDATES_HELD', { version: held })}`
@@ -88,7 +88,7 @@ function UpdatesPage() {
 	const loader = state.status === 'ready' ? state.loader : null;
 	const pending = updates.length > 0 || loader !== null;
 	// Held addons keep their own Update button but sit out Update all.
-	const automatic = automaticUpdates(updates, getManager);
+	const automatic = automaticUpdates(updates, (kind) => Manager.for(kind));
 
 	return (
 		<Page>

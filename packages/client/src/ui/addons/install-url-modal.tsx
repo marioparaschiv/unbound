@@ -1,12 +1,12 @@
-import type { ManagerKind } from '@unbound-app/types/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 import { useState } from 'react';
 
 import { Discord } from '~/api/metro/components';
-import { getManager } from '~/managers/utils';
+import { Manager } from '~/managers/base';
 import { format } from '~/api/i18n';
 
 type InstallUrlModalProps = {
-	kind: ManagerKind;
+	kind: AddonKind;
 	onClose: () => void;
 };
 
@@ -17,7 +17,7 @@ type InstallUrlModalProps = {
 function InstallUrlModal({ kind, onClose }: InstallUrlModalProps) {
 	const [url, setUrl] = useState('');
 	const [busy, setBusy] = useState(false);
-	const manager = getManager(kind);
+	const manager = Manager.for(kind);
 
 	function install() {
 		if (!url || busy) return;

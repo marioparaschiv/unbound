@@ -14,9 +14,9 @@ function PluginsPage() {
 		<SafeArea.SafeAreaPaddingView bottom style={{ flex: 1 }}>
 			<View style={{ flex: 1 }}>
 				<ScrollView contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 12 }}>
-					<AddonList kind={'plugins'} />
+					<AddonList kind={'plugin'} />
 				</ScrollView>
-				<InstallButton kind={'plugins'} />
+				<InstallButton kind={'plugin'} />
 			</View>
 		</SafeArea.SafeAreaPaddingView>
 	);

@@ -1,5 +1,5 @@
 import { useSettingsStore } from '~/api/storage';
-import { getManager } from '~/managers/utils';
+import { Manager } from '~/managers/base';
 
 /** A single addon's live state slice, so one toggle re-renders only that card's control. */
 export type AddonState = {
@@ -14,10 +14,10 @@ export type AddonState = {
  * @param id The addon id.
  * @returns The addon's current enabled and failed flags.
  */
-function useAddonState(kind: 'plugins' | 'themes' | 'icons', id: string): AddonState {
-	const manager = getManager(kind);
+function useAddonState(kind: 'plugin' | 'theme' | 'icon-pack', id: string): AddonState {
+	const manager = Manager.for(kind);
 
-	useSettingsStore(kind, ({ key }) => key === 'states' || key === 'applied');
+	useSettingsStore(manager.bucket, ({ key }) => key === 'states' || key === 'applied');
 
 	return { enabled: manager.isEnabled(id), failed: manager.errors.has(id) };
 }
