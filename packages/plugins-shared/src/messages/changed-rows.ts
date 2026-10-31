@@ -23,7 +23,9 @@ export function trackChangedRows(getMessage: GetMessage): ChangedRows {
 
 	return {
 		add(message) {
-			if (message?.id && message.channel_id) channels.set(message.id, message.channel_id);
+			if (message?.id && message.channel_id) {
+				channels.set(message.id, message.channel_id);
+			}
 		},
 		rebuild() {
 			// Discord keeps a built row, and its parsed content, until the message updates.
