@@ -17,6 +17,8 @@ declare const TRANSITION_STATE_KEYS: readonly ['MOUNTED', 'ENTERED', 'YEETED'];
 declare const nativeHandle: unique symbol;
 /** The kinds of addon, as a manifest's `type` declares them. One manager governs each, in this start order. */
 export declare const ADDON_KINDS: readonly ['plugin', 'theme', 'icon-pack', 'font'];
+/** @deprecated Use ADDON_KINDS */
+export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'font'];
 /** The core settings store; each addon's settings store is named after the addon id. */
 export declare const CORE_SETTINGS_STORE = 'astral';
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
@@ -57,6 +59,8 @@ export declare const DESIGN_COMPONENTS: readonly [
 	'ActionSheetRow',
 	'ContextMenu',
 ];
+/** @deprecated Use ADDON_KINDS */
+export declare const MANAGER_KINDS: readonly ['plugins', 'themes', 'icons', 'fonts'];
 export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.objc.classes',
 	'native.objc.invoke',
@@ -406,6 +410,8 @@ export type AddonManifest = AuthoredAddonManifest & {
 export type AddonResolveable = string | Addon;
 /** Whether an addon's bundle carries a valid Unbound signature. */
 export type AddonTrust = 'signed' | 'unsigned';
+/** @deprecated Use AddonKind */
+export type AddonType = AddonKind;
 export type AlertActionButtonComponent = React$1.ComponentType<
 	AlertActionButtonProps & Record<string, unknown>
 >;
@@ -1830,6 +1836,8 @@ export type ManaContextProviderProps = {
 	children?: React$1.ReactNode;
 	value?: unknown;
 };
+/** @deprecated Use AddonKind */
+export type ManagerKind = (typeof MANAGER_KINDS)[number];
 export type MenuComponent = React$1.ComponentType<MenuProps>;
 export type MenuGroupComponent = React$1.ComponentType<MenuGroupProps>;
 /**

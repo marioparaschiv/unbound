@@ -2,6 +2,7 @@
 
 export type {
 	ADDON_KINDS,
+	ADDON_TYPES,
 	AIGlyphTextProps,
 	AILoaderComponent,
 	AILoaderProps,
@@ -39,6 +40,7 @@ export type {
 	AddonManifest,
 	AddonResolveable,
 	AddonTrust,
+	AddonType,
 	AlertActionButtonComponent,
 	AlertActionButtonProps,
 	AlertActionsProps,
@@ -163,8 +165,10 @@ export type {
 	LayerScopeProps,
 	LoadingButtonPillProps,
 	LottieIconProps,
+	MANAGER_KINDS,
 	ManaContextProviderComponent,
 	ManaContextProviderProps,
+	ManagerKind,
 	MenuComponent,
 	MenuGroupComponent,
 	MenuGroupProps,

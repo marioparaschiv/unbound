@@ -7,6 +7,18 @@ export const ADDON_KINDS = ['plugin', 'theme', 'icon-pack', 'font'] as const;
 
 export type AddonKind = (typeof ADDON_KINDS)[number];
 
+/** @deprecated Use ADDON_KINDS */
+export const ADDON_TYPES = ADDON_KINDS;
+
+/** @deprecated Use AddonKind */
+export type AddonType = AddonKind;
+
+/** @deprecated Use ADDON_KINDS */
+export const MANAGER_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
+
+/** @deprecated Use AddonKind */
+export type ManagerKind = (typeof MANAGER_KINDS)[number];
+
 /** The author of an addon: a display name and a numeric user id. */
 export type AddonAuthor = {
 	name: string;
