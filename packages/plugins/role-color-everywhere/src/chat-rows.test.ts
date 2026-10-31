@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
 	applyChatRoleColors,
 	type ChatColorOptions,
+	type ChatMessage,
 	type ChatRow,
 	type MentionNode,
 } from '~/chat-rows';
@@ -35,9 +36,22 @@ function messageRow(): ChatRow {
 	return { message: { authorId: 'user', guildId: 'guild', textColor: 0xffeeeeee } };
 }
 
+function messageOf(row: ChatRow): ChatMessage {
+	if (!row.message) {
+		throw new Error('Expected the row to carry a message.');
+	}
+
+	return row.message;
+}
+
 function firstMention(row: ChatRow) {
-	const [paragraph] = row.message?.content as MentionNode[];
-	const [mention] = paragraph?.content as MentionNode[];
+	const [paragraph] = messageOf(row).content as MentionNode[];
+
+	if (!paragraph) {
+		throw new Error('Expected the message to carry a paragraph.');
+	}
+
+	const [mention] = paragraph.content as MentionNode[];
 
 	return mention;
 }
@@ -138,7 +152,7 @@ describe('applyChatRoleColors', () => {
 			roleMentionColors: true,
 		});
 
-		const [marked, owned] = markedRow.message?.content as MentionNode[];
+		const [marked, owned] = messageOf(markedRow).content as MentionNode[];
 
 		expect(plainRow.message?.content).not.toMatchObject([{ roleId: 'role' }]);
 		expect(marked).toMatchObject({ roleId: 'role', userId: 'user' });
