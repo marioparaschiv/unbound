@@ -39,8 +39,8 @@ export const showToast = show;
 
 - Export each member as a named export. `core/api.ts` adds the module as a namespace: `export * as toasts from '~/toasts/api'`.
 - Consumers import a member (`import { show } from '~/toasts/api'`) or the namespace (`import * as toasts from '~/toasts/api'`).
-- Keep a renamed member's old name until 1.0 as a named `const` alias with a `@deprecated` tag, so the generated SDK carries the tag.
-- The SDK generator drops a module's `default` export, so the named exports are the whole public API. Write a new module with named exports only.
+- Keep a renamed member's old name until 1.0 as a named `const` alias with a `@deprecated` tag, so the generated SDK carries the tag. Record the rename in `scripts/api-renames.ts` (`{ from: 'toasts.showToast', to: 'toasts.show' }`); `bun run rename-api` migrates callers from it.
+- The SDK generator drops a module's `default` export, so the named exports are the whole public API. Write a new module with named exports only. An existing module's `default` object stays for the client callers that import it; add a new member to it when you add one to the module.
 - A barrel holds only re-exports. `core/api.ts` is the client's public barrel and `metro/index.ts` assembles the `metro` namespace; every other import names its file.
 
 The test: `core/api.ts` re-exports the module as a namespace, and every renamed member keeps its old name as a `@deprecated` alias.
