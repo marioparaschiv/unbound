@@ -42,7 +42,8 @@ export type AddonEvents<T> = {
 	'consent-required': (entity: T) => void;
 };
 
-type ManagerActions = Pick<
+/** The manager calls an {@link Addon} forwards to. */
+export type ManagerActions = Pick<
 	AddonLifecycle<object>,
 	'kind' | 'isEnabled' | 'enable' | 'disable' | 'restart'
 >;

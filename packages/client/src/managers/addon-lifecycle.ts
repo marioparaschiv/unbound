@@ -234,12 +234,11 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		const recoveryMode = getSetting('recovery');
 		const guardKey = crashGuardKey(this.bucket, resolved.id);
 		const startedAt = monotonicNow();
+		const state = this.stateOf(resolved);
 
 		if (!recoveryMode) {
 			beginAddonStart(guardKey, resolved.name);
 		}
-
-		const state = this.stateOf(resolved);
 
 		try {
 			const attribution = this.attribution(resolved);

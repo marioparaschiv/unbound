@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import type { AddonHandle } from '@unbound-app/types';
 
-import { FakeAddons, makeManifest, resetDevice } from './helpers/addons';
+import { FakeAddons, makeManifest, persists, resetDevice, states } from './helpers/addons';
+
+const { default: sampleAddons } = await import('~/ui/addons/sample-addons');
 
 let manager: FakeAddons;
 
@@ -103,6 +105,20 @@ describe('Addon', () => {
 
 		expect(addon.started).toBe(false);
 		expect(manager.log).toEqual([]);
+	});
+
+	test('toggles a development sample without starting or persisting it', async () => {
+		for (const sample of sampleAddons) {
+			sample.enable();
+			sample.disable();
+			await sample.reload();
+
+			expect(sample.isEnabled()).toBe(false);
+			expect(sample.started).toBe(false);
+		}
+
+		expect(states).toEqual({});
+		expect(persists).toEqual([]);
 	});
 
 	test('reports a failed restart through its failed flag', async () => {

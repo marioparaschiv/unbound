@@ -11,8 +11,7 @@ const { default: UpdatesStore } = await import('~/stores/updates');
 const ID = 'dev.updated';
 const BUNDLE = 'module.exports = {};';
 
-// Serves the release, so a path that wrongly installs it succeeds instead of failing on the network.
-const cdn = Bun.serve({
+const releaseServer = Bun.serve({
 	port: 0,
 	fetch(request) {
 		const { pathname } = new URL(request.url);
@@ -26,7 +25,7 @@ const cdn = Bun.serve({
 });
 
 afterAll(() => {
-	cdn.stop(true);
+	releaseServer.stop(true);
 });
 
 function release(sha256: string): AddonUpdate {
@@ -34,8 +33,8 @@ function release(sha256: string): AddonUpdate {
 		id: ID,
 		version: '1.1.0',
 		reason: 'newer',
-		manifestUrl: `${cdn.url.origin}/${ID}/1.1.0/manifest.json`,
-		bundleUrl: `${cdn.url.origin}/${ID}/1.1.0/index.js`,
+		manifestUrl: `${releaseServer.url.origin}/${ID}/1.1.0/manifest.json`,
+		bundleUrl: `${releaseServer.url.origin}/${ID}/1.1.0/index.js`,
 		sha256,
 		changelog: null,
 		changes: null,

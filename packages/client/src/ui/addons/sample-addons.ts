@@ -1,5 +1,15 @@
-import { plugins } from '~/managers/plugins';
+import noop from '@unbound-app/utils/noop';
+
+import type { ManagerActions } from '~/managers/addon';
 import { Addon } from '~/managers/addon';
+
+const inertManager: ManagerActions = {
+	kind: 'plugin',
+	isEnabled: () => false,
+	enable: noop,
+	disable: noop,
+	restart: () => Promise.resolve(),
+};
 
 /** Development-only addon manifests used to review addon-card layout without installed plugins. */
 const sampleAddons: Addon[] = [
@@ -24,7 +34,7 @@ const sampleAddons: Addon[] = [
 			started: false,
 			failed: false,
 		},
-		plugins,
+		inertManager,
 	),
 	new Addon(
 		{
@@ -44,7 +54,7 @@ const sampleAddons: Addon[] = [
 			started: false,
 			failed: false,
 		},
-		plugins,
+		inertManager,
 	),
 ];
 

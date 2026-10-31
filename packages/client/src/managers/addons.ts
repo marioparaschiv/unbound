@@ -47,9 +47,7 @@ function cachedDigest(id: string, bundle: string): string {
 	return digest;
 }
 
-// `downloadBundle` decodes the body as UTF-8; re-encoding gives back the served bytes for any valid
-// UTF-8 bundle, and anything else fails closed as a mismatch.
-function assertDigest(bundle: string, expected: string): void {
+function assertTextDigest(bundle: string, expected: string): void {
 	const digest = sha256(bundle);
 
 	if (digest !== expected) {
@@ -220,7 +218,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			]);
 
 			if (digest) {
-				assertDigest(bundle, digest);
+				assertTextDigest(bundle, digest);
 			}
 
 			const installedTrust = this.getEntity(manifest.id)?.manifest.trust;
@@ -270,7 +268,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			]);
 			const bytecode = await this.fetchBytecode(manifest, update.bundleUrl);
 
-			assertDigest(bundle, update.sha256);
+			assertTextDigest(bundle, update.sha256);
 
 			const result = await this.reload(
 				resolved,
@@ -301,8 +299,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	}
 
 	/**
-	 * @description Moves an addon to a release: updates it when installed, installs it otherwise. The
-	 * updater calls {@link update} instead, which never installs.
+	 * @description Moves an addon to a release: updates it when installed, installs it otherwise.
 	 * @param id The addon's id.
 	 * @param release The release to move it to.
 	 * @returns Whether the addon now runs the release's version; the manager records why when it doesn't.
