@@ -1,8 +1,25 @@
 import { CRASH_REPORT_LOG_LIMIT, crashReportSchema } from '@unbound-app/contracts/crash-reports';
 import type { CrashReport } from '@unbound-app/contracts/crash-reports';
 
+import type { Addon } from '~/addons/addon';
+
 /** The addon a report is about. */
 export type CrashReportAddon = NonNullable<CrashReport['addon']>;
+
+/**
+ * @description Describes an addon in a crash report.
+ * @param addon The addon.
+ * @returns Its id, version and whether it is signed.
+ */
+export function crashReportAddon(
+	addon: Pick<Addon, 'id' | 'version' | 'manifest'>,
+): CrashReportAddon {
+	return {
+		id: addon.id,
+		version: addon.version,
+		trust: addon.manifest.trust === 'signed' ? 'signed' : 'unsigned',
+	};
+}
 
 /** What an addon manager knows about a failure; the reporter adds the app, loader and device details. */
 export type CrashEvent = Pick<

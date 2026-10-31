@@ -6,8 +6,7 @@ type Interceptor = (action: FluxAction) => boolean;
 type StoreSearch = { name: string; options: Record<string, boolean | undefined> };
 type HookCall = { stores: FluxStore[]; deps: readonly string[] | undefined };
 
-// Mirrors Discord's dispatcher: interceptors run first and a truthy one drops the action.
-function createDispatcher() {
+function createDiscordDispatcher() {
 	const subscriptions = new Map<string, Set<Listener>>();
 	const interceptors: Interceptor[] = [];
 	const handled: FluxAction[] = [];
@@ -58,7 +57,7 @@ function createStore(name: string) {
 	};
 }
 
-const dispatcher = createDispatcher();
+const dispatcher = createDiscordDispatcher();
 const searches: StoreSearch[] = [];
 const hookCalls: HookCall[] = [];
 const userStore = createStore('UserStore');

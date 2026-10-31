@@ -12,6 +12,22 @@ export const ADDON_KINDS = ['plugin', 'theme', 'icon-pack', 'font'] as const;
 
 export type AddonKind = (typeof ADDON_KINDS)[number];
 
+/**
+ * The globals a plugin bundle is evaluated with, in parameter order. Bytecode compiled against an earlier
+ * list receives them by position, so new globals are only ever appended.
+ */
+export const ADDON_SCOPE_GLOBALS = [
+	'React',
+	'unbound',
+	'addon',
+	'patcher',
+	'logger',
+	'setTimeout',
+	'setInterval',
+	'clearTimeout',
+	'clearInterval',
+] as const;
+
 /** @deprecated Use ADDON_KINDS */
 export const ADDON_TYPES = ADDON_KINDS;
 

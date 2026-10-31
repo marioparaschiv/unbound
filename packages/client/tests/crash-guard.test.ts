@@ -72,6 +72,7 @@ describe('addon crash guard', () => {
 				bundle: 'bundle-a',
 				instance: null,
 				context: void 0,
+				scope: void 0,
 				started: false,
 				failed: false,
 			},
