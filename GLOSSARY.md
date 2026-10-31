@@ -29,7 +29,7 @@ An addon's `manifest.json`, the source of truth for its id, name, version and au
 _Avoid_: Metadata, addon info
 
 **Feature**:
-One independently loaded part of an addon, such as a patch and the setting that turns it on.
+One independently loaded part of an addon, such as a patch, often with a setting that turns it on.
 _Avoid_: Submodule, sub-plugin
 
 **Command**:
@@ -37,7 +37,7 @@ A slash command an addon registers in Discord's chat input.
 _Avoid_: Chat command, application command
 
 **Addon scope**:
-The globals object a plugin bundle is evaluated with, such as its own `patcher`, `logger` and timers, undone when the plugin stops.
+The globals object a plugin bundle is evaluated with, such as its own `patcher`, `logger` and timers; everything registered through it is disposed when the plugin stops.
 _Avoid_: Sandbox, plugin environment
 
 **Capability**:
