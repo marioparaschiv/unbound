@@ -1,5 +1,5 @@
 {
-	"id": "astral.channel-typing-indicators",
+	"id": "unbound.channel-typing-indicators",
 	"name": "Channel Typing Indicators",
 	"description": "Shows animated typing dots and avatars beside channels where people are typing.",
 	"authors": [

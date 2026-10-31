@@ -112,13 +112,13 @@ bool factoryReset(const std::string &documents)
 
 void deleteBundle(SettingsStore &settings, BundleUpdater &updater, const std::string &documents)
 {
-    settings.set("astral", "loader.update.url", nullptr);
-    settings.set("astral", "loader.update.force", nullptr);
+    settings.set("unbound", "loader.update.url", nullptr);
+    settings.set("unbound", "loader.update.force", nullptr);
     settings.save();
 
     for (const char *extension : {"bundle", "js"})
     {
-        const std::string path = joinPath(documents, std::string("astral.") + extension);
+        const std::string path = joinPath(documents, std::string("unbound.") + extension);
 
         removeFile(path);
         removeFile(path + kBundleTrustSuffix);
@@ -148,8 +148,8 @@ bool useCustomBundle(SettingsStore &settings, const std::string &input)
         return false;
     }
 
-    settings.set("astral", "loader.update.url", url);
-    settings.set("astral", "loader.update.force", true);
+    settings.set("unbound", "loader.update.url", url);
+    settings.set("unbound", "loader.update.force", true);
     return settings.save();
 }
 
@@ -247,7 +247,7 @@ std::string discordLine(const std::string &label, const std::string &appSource)
 
 static std::string loaderFile(const std::string &platform)
 {
-    return platform == "iOS" ? "astral.dylib" : "libastral.so";
+    return platform == "iOS" ? "Unbound.dylib" : "libunbound.so";
 }
 
 std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFacts &facts)
@@ -257,7 +257,7 @@ std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFac
     };
     const bool  android = facts.platform == "Android";
     std::string loader =
-        "loader " + known(facts.astralVersion) + " (`" + loaderFile(facts.platform) + "`";
+        "loader " + known(facts.unboundVersion) + " (`" + loaderFile(facts.platform) + "`";
     if (!facts.framework.empty())
     {
         loader += ", `" + facts.framework + "`";
@@ -276,7 +276,7 @@ std::vector<std::pair<std::string, std::string>> issueEnvironment(const IssueFac
     }
 
     return {
-        {"astral", loader},
+        {"Unbound", loader},
         {"Discord", discordLine(facts.discordVersion, facts.appSource)},
         {"Device", known(facts.device) + " on " + facts.platform + " " + known(facts.osVersion)},
         {"State", state},
@@ -378,10 +378,10 @@ static MenuSection settingsSection(const SettingsStore &settings, const MenuOpti
         {gestureToggle(settings, preferences::ToolboxGesture::Shake, "Enable Shake Motion"),
          gestureToggle(settings, preferences::ToolboxGesture::ThreeFinger,
                        "Enable Three Finger Press")}};
-    if (options.astralIcon)
+    if (options.unboundIcon)
     {
         section.items.push_back(
-            platformItem("astral-icon", "Use astral Icon", MenuItemKind::Toggle));
+            platformItem("unbound-icon", "Use Unbound Icon", MenuItemKind::Toggle));
     }
     return section;
 }
@@ -414,7 +414,7 @@ MenuOptions menuOptions(const std::string &json)
         return {};
     }
     return {menuOption(input, "openAppFolder"), menuOption(input, "copyAppFolderPath"),
-            menuOption(input, "astralIcon")};
+            menuOption(input, "unboundIcon")};
 }
 
 static const char *kindName(MenuItemKind kind)

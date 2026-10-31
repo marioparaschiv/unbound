@@ -115,7 +115,7 @@ test('fails a device that showed toasts while scrolling and lists them', () => {
 
 test('lists skipped hooks without failing the run', () => {
 	const check: MeasuredCheck = {
-		id: 'astral.chat-bubbles',
+		id: 'unbound.chat-bubbles',
 		behavior: 'pass',
 		lifecycle: 'pass',
 		evidence: [],
@@ -126,7 +126,7 @@ test('lists skipped hooks without failing the run', () => {
 
 	expect(runFailed(run)).toBe(false);
 	expect(summary).toContain(
-		'### Hooks skipped while JavaScript was busy\n\n- iPhone SE, astral.chat-bubbles: `setBackgroundColor:`',
+		'### Hooks skipped while JavaScript was busy\n\n- iPhone SE, unbound.chat-bubbles: `setBackgroundColor:`',
 	);
 });
 
@@ -209,7 +209,7 @@ test('lists what the self-tests and settings checks saw wrong under their own he
 			device: phone,
 			checks: [
 				{
-					id: 'astral.chat-bubbles',
+					id: 'unbound.chat-bubbles',
 					behavior: 'fail',
 					lifecycle: 'pass',
 					evidence: [],
@@ -222,7 +222,7 @@ test('lists what the self-tests and settings checks saw wrong under their own he
 	]);
 
 	expect(summary).toContain(
-		'### Visual problems\n\n- iPhone SE, astral.chat-bubbles: 1 bubbles look wrong: 9 reaches the left edge of the screen',
+		'### Visual problems\n\n- iPhone SE, unbound.chat-bubbles: 1 bubbles look wrong: 9 reaches the left edge of the screen',
 	);
 });
 

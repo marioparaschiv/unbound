@@ -104,7 +104,7 @@ export async function inspectNative(
 		}
 
 		const tracker = handle(
-			java.getField(java.getClass('app.astral.android.ActivityTracker'), 'INSTANCE'),
+			java.getField(java.getClass('app.unbound.android.ActivityTracker'), 'INSTANCE'),
 		);
 		const activity = tracker ? handle(java.invoke(tracker, 'currentActivity')) : null;
 		const window = activity ? handle(java.invoke(activity, 'getWindow')) : null;

@@ -19,10 +19,10 @@ var ipaIcons embed.FS
 
 const (
 	ipaIconDirectory        = "assets/ipa-icons"
-	astralAppName           = "astral"
-	astralAlternateIcon     = "AstralIcon"
-	astralURLScheme         = "astral"
-	astralURLName           = "app.unbound.rip"
+	unboundAppName          = "Unbound"
+	unboundAlternateIcon    = "UnboundIcon"
+	unboundURLScheme        = "unbound"
+	unboundURLName          = "app.unbound.rip"
 	reactNavigationElements = "@react-navigation+elements"
 	patchedReactNavigation  = "@react-navigation+elements@patched"
 	pnpmModules             = "assets/_node_modules/.pnpm/"
@@ -263,12 +263,12 @@ func patchInfoPlist(data []byte) ([]byte, error) {
 		return nil, errors.New("Info.plist is not a dictionary")
 	}
 	root.remove("UISupportedDevices")
-	root.set("CFBundleName", plistText(astralAppName))
-	root.set("CFBundleDisplayName", plistText(astralAppName))
+	root.set("CFBundleName", plistText(unboundAppName))
+	root.set("CFBundleDisplayName", plistText(unboundAppName))
 	root.set("UISupportsDocumentBrowser", plistBool(true))
 	root.set("UIFileSharingEnabled", plistBool(true))
-	setAlternateIcon(root, "CFBundleIcons", "AstralIcon60x60")
-	setAlternateIcon(root, "CFBundleIcons~ipad", "AstralIcon60x60", "AstralIcon76x76")
+	setAlternateIcon(root, "CFBundleIcons", "UnboundIcon60x60")
+	setAlternateIcon(root, "CFBundleIcons~ipad", "UnboundIcon60x60", "UnboundIcon76x76")
 	addURLScheme(root)
 	return writePlist(root)
 }
@@ -276,7 +276,7 @@ func patchInfoPlist(data []byte) ([]byte, error) {
 func setAlternateIcon(root *plistNode, key string, files ...string) {
 	icon := newPlistDict()
 	icon.set("CFBundleIconFiles", plistStrings(files...))
-	root.dict(key).dict("CFBundleAlternateIcons").set(astralAlternateIcon, icon)
+	root.dict(key).dict("CFBundleAlternateIcons").set(unboundAlternateIcon, icon)
 }
 
 func addURLScheme(root *plistNode) {
@@ -287,15 +287,15 @@ func addURLScheme(root *plistNode) {
 	}
 	for _, entry := range types.values {
 		for _, scheme := range entry.get("CFBundleURLSchemes").valuesOrNil() {
-			if scheme.text == astralURLScheme {
+			if scheme.text == unboundURLScheme {
 				return
 			}
 		}
 	}
 	scheme := newPlistDict()
 	scheme.set("CFBundleTypeRole", plistText("Editor"))
-	scheme.set("CFBundleURLName", plistText(astralURLName))
-	scheme.set("CFBundleURLSchemes", plistStrings(astralURLScheme))
+	scheme.set("CFBundleURLName", plistText(unboundURLName))
+	scheme.set("CFBundleURLSchemes", plistStrings(unboundURLScheme))
 	types.values = append(types.values, scheme)
 }
 

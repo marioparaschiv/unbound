@@ -4,6 +4,6 @@
 
 #include "LoaderAddons.h"
 
-loader::AddonState   &AstralAddonState();
-const nlohmann::json &AstralPlatformFonts();
-nlohmann::json        AstralFontCatalog();
+loader::AddonState   &UnboundAddonState();
+const nlohmann::json &UnboundPlatformFonts();
+nlohmann::json        UnboundFontCatalog();

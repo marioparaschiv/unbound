@@ -16,7 +16,7 @@
 #include "LoaderUpdater.h"
 #include "NativePluginRuntime.h"
 
-namespace astral::android {
+namespace unbound::android {
 struct JavaCallbacks {
     jclass    bridgeClass              = nullptr;
     jmethodID scheduleRuntime          = nullptr;

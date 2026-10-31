@@ -14,7 +14,7 @@ import { Manager } from '~/addons/manager';
 type MarketplaceParams = {
 	/** Opens on the tab of this manager, e.g. the page the install menu was opened from. */
 	kind?: AddonKind;
-	/** Narrows the search to this addon and offers to install it, e.g. from an `astral://` link. */
+	/** Narrows the search to this addon and offers to install it, e.g. from an `unbound://` link. */
 	id?: string;
 	/** Tells one open of `id` from the next, so opening the same link again asks again. */
 	request?: number;

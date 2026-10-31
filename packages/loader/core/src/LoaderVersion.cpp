@@ -3,6 +3,6 @@
 namespace loader {
 const char *loaderVersion()
 {
-    return ASTRAL_VERSION;
+    return UNBOUND_VERSION;
 }
 }

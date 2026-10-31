@@ -7,8 +7,8 @@
 #include "AndroidLoader.h"
 #include "JniEnvironment.h"
 
-namespace astral::android {
-static const char *const kHotReloadClass = "app/astral/android/HotReload";
+namespace unbound::android {
+static const char *const kHotReloadClass = "app/unbound/android/HotReload";
 
 struct HotReloadCallbacks {
     jclass    hotReloadClass = nullptr;

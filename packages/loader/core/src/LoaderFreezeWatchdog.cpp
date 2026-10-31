@@ -159,7 +159,7 @@ FreezeWatchdog::~FreezeWatchdog()
     }
 }
 
-static constexpr const char *kFreezeListener = "__AstralFreezeListener";
+static constexpr const char *kFreezeListener = "__UnboundFreezeListener";
 
 void startFreezeWatchdog(const std::string &directory)
 {

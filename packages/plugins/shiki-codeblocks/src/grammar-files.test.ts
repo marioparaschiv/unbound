@@ -7,7 +7,7 @@ import { dirname, join } from 'node:path';
 const files = new Map<string, string>();
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.shiki-codeblocks' },
+	manifest: { id: 'unbound.shiki-codeblocks' },
 	unbound: {
 		fs: {
 			exists: async (path: string) => files.has(path),

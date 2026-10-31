@@ -1,5 +1,5 @@
 {
-	"id": "astral.view-raw",
+	"id": "unbound.view-raw",
 	"name": "View Raw",
 	"description": "View and copy raw data for messages, channels, guilds, and user profiles.",
 	"authors": [

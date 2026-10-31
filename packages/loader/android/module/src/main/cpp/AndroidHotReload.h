@@ -5,7 +5,7 @@
 
 #include "LoaderHotReload.h"
 
-namespace astral::android {
+namespace unbound::android {
 bool registerHotReloadNatives(JNIEnv *env);
 
 std::shared_ptr<loader::HotReloadController>

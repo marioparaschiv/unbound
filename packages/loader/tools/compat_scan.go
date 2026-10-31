@@ -610,7 +610,7 @@ func resolveFallbacks(findings []compatFinding) {
 			covering = append(covering, describeCompatReference(findings[member].Reference))
 		}
 		if len(covering) == 0 {
-			covering = append(covering, "astral's own implementation in the same lookup")
+			covering = append(covering, "Unbound's own implementation in the same lookup")
 		}
 		for _, members := range alternatives[group] {
 			for _, member := range members {

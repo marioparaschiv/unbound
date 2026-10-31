@@ -3,7 +3,7 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { LanguageRegistration } from 'shiki';
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.shiki-codeblocks' },
+	manifest: { id: 'unbound.shiki-codeblocks' },
 	unbound: { fs: {} },
 });
 

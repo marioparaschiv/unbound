@@ -19,18 +19,19 @@ You don't need to do anything. Each time Discord starts, the loader checks for a
 	<Tab title='iOS'>
 		If the check or download fails, Unbound loads the bundle that's already on your device. No message appears, so you just keep the version you had.
 
-		If there is no bundle on the device at all, for example on the first launch without internet, Discord shows **Failed to load Unbound's bundle. Please report this to the developers.** and opens without Unbound. Connect to the internet and open Discord again.
-	</Tab>
-	<Tab title='Android'>
-		If the check fails, Discord shows a dialog titled **Unbound** that reads **[Updater] Failed to check for updates, bundle may be out of date. Please report this to the developers.** Tap **Okay**. Unbound keeps running the bundle it already has.
+    	If there is no bundle on the device at all, for example on the first launch without internet, Discord shows **Failed to load Unbound's bundle. Please report this to the developers.** and opens without Unbound. Connect to the internet and open Discord again.
+    </Tab>
+    <Tab title='Android'>
+    	If the check fails, Discord shows a dialog titled **Unbound** that reads **[Updater] Failed to check for updates, bundle may be out of date. Please report this to the developers.** Tap **Okay**. Unbound keeps running the bundle it already has.
 
-		If a download fails, the dialog depends on whether an older bundle is on the device:
+    	If a download fails, the dialog depends on whether an older bundle is on the device:
 
-		- **Bundle failed to update, loading out of date bundle.** means Unbound loads the older bundle.
-		- **Bundle failed to download, please report this to the developers.** means there is no bundle yet, and Discord opens without Unbound.
+    	- **Bundle failed to update, loading out of date bundle.** means Unbound loads the older bundle.
+    	- **Bundle failed to download, please report this to the developers.** means there is no bundle yet, and Discord opens without Unbound.
 
-		These dialogs also show up when you open Discord without internet. See [Troubleshooting](/user-guide/troubleshooting#android-shows-an-unbound-error-dialog) for every message.
-	</Tab>
+    	These dialogs also show up when you open Discord without internet. See [Troubleshooting](/user-guide/troubleshooting#android-shows-an-unbound-error-dialog) for every message.
+    </Tab>
+
 </Tabs>
 
 ### Check for an update right away on iOS
@@ -43,21 +44,26 @@ This is only on iOS, through the toolbox. The Android loader doesn't have a tool
 
 <Steps>
 	<Step title='Open the Toolbox'>
-		Shake your device for half a second to two seconds, or hold three fingers on the screen for half a second.
+		Shake your device for half a second to two seconds, or hold three fingers on the screen for
+		half a second.
 	</Step>
 	<Step title='Tap Switch Bundle Version'>
-		It's in the **Bundle** section. Unbound looks up the available builds on GitHub, which needs an internet connection.
+		It's in the **Bundle** section. Unbound looks up the available builds on GitHub, which needs
+		an internet connection.
 	</Step>
 	<Step title='Pick a Branch'>
-		If there is more than one branch, pick one under **Select Branch**. With only one branch, this step is skipped.
+		If there is more than one branch, pick one under **Select Branch**. With only one branch,
+		this step is skipped.
 	</Step>
 	<Step title='Pick a Version'>
-		**Select Version** lists the branch's last 10 builds, each shown as a short code and a date, for example `a1b2c3d (Mar 4, 2026)`. Tap one. The app restarts on that build.
+		**Select Version** lists the branch's last 10 builds, each shown as a short code and a date,
+		for example `a1b2c3d (Mar 4, 2026)`. Tap one. The app restarts on that build.
 	</Step>
 </Steps>
 
 <Warning>
-	A picked version stays pinned. Unbound downloads that same build on every launch and stops updating on its own until you go back to the official bundle.
+	A picked version stays pinned. Unbound downloads that same build on every launch and stops
+	updating on its own until you go back to the official bundle.
 </Warning>
 
 If the list doesn't load, you see **Failed to fetch branches** or **Failed to fetch commits**. Check your connection and try again.
@@ -67,9 +73,7 @@ If the list doesn't load, you see **Failed to fetch branches** or **Failed to fe
 Use this to undo **Switch Bundle Version** or **Load Custom Bundle**.
 
 <Steps>
-	<Step title='Open the Toolbox'>
-		Shake your device or hold three fingers on the screen.
-	</Step>
+	<Step title='Open the Toolbox'>Shake your device or hold three fingers on the screen.</Step>
 	<Step title='Tap Delete Bundle'>
 		It's in the **Bundle** section and shown in red. Tap **Confirm**.
 	</Step>
@@ -85,41 +89,42 @@ When a new version of the app or tweak comes out, install it the same way you in
 	<Tab title='iOS'>
 		#### Sideloaded from the source
 
-		If you added Unbound's source to SideStore, Feather, AltStore, or another sideloading tool, the tool lists new versions of **Unbound** from that source. Refresh the source and install the update from there.
+    	If you added Unbound's source to SideStore, Feather, AltStore, or another sideloading tool, the tool lists new versions of **Unbound** from that source. Refresh the source and install the update from there.
 
-		#### Sideloaded from the app file
+    	#### Sideloaded from the app file
 
-		Download the latest [astral.ipa](https://github.com/marioparaschiv/unbound/releases/download/loader-latest/astral.ipa) again and install it with your sideloading tool, the same way you did the first time.
+    	Download the latest [unbound.ipa](https://github.com/marioparaschiv/unbound/releases/download/loader-latest/unbound.ipa) again and install it with your sideloading tool, the same way you did the first time.
 
-		#### Jailbroken
+    	#### Jailbroken
 
-		<Steps>
-			<Step title='Refresh Your Package Manager'>
-				Open Sileo or your other package manager and refresh its sources.
-			</Step>
-			<Step title='Upgrade Unbound'>
-				Install the update to the **Unbound** package when it shows up.
-			</Step>
-			<Step title='Restart Discord'>
-				Close Discord if it was running, then open it again.
-			</Step>
-		</Steps>
+    	<Steps>
+    		<Step title='Refresh Your Package Manager'>
+    			Open Sileo or your other package manager and refresh its sources.
+    		</Step>
+    		<Step title='Upgrade Unbound'>
+    			Install the update to the **Unbound** package when it shows up.
+    		</Step>
+    		<Step title='Restart Discord'>
+    			Close Discord if it was running, then open it again.
+    		</Step>
+    	</Steps>
 
-		If you installed the package file instead of using the repo, download the newer `.deb` from the [latest loader release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest) and open it in your package manager.
+    	If you installed the package file instead of using the repo, download the newer `.deb` from the [latest loader release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest) and open it in your package manager.
 
-		If Discord shows **This version of Discord is incompatible with this version of the Tweak.**, your Discord app is too old for the installed tweak. Update Discord from the App Store, then open it again.
-	</Tab>
-	<Tab title='Android'>
-		#### Patched Discord
+    	If Discord shows **This version of Discord is incompatible with this version of the Tweak.**, your Discord app is too old for the installed tweak. Update Discord from the App Store, then open it again.
+    </Tab>
+    <Tab title='Android'>
+    	#### Patched Discord
 
-		If you added Unbound to [Obtainium](/user-guide/installing), it shows an update when a new build for your channel is out. Tap **Update**. Stable, beta and alpha each get their own builds, so you only see updates for the channel you picked.
+    	If you added Unbound to [Obtainium](/user-guide/installing), it shows an update when a new build for your channel is out. Tap **Update**. Stable, beta and alpha each get their own builds, so you only see updates for the channel you picked.
 
-		If you installed a bundle from GitHub by hand, download the newer one for the same channel from the [GitHub releases](https://github.com/marioparaschiv/unbound/releases) and install it over the old one with your split-APK installer.
+    	If you installed a bundle from GitHub by hand, download the newer one for the same channel from the [GitHub releases](https://github.com/marioparaschiv/unbound/releases) and install it over the old one with your split-APK installer.
 
-		#### Xposed module
+    	#### Xposed module
 
-		If you added the module to Obtainium, update it there. Otherwise download the newer `app.astral.android.xposed.apk` from the [latest release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest) and install it over the old one like any other Android app update.
+    	If you added the module to Obtainium, update it there. Otherwise download the newer `app.unbound.android.xposed.apk` from the [latest release](https://github.com/marioparaschiv/unbound/releases/tag/loader-latest) and install it over the old one like any other Android app update.
 
-		Then force stop Discord from Android's app settings and open it again, so the new module loads.
-	</Tab>
+    	Then force stop Discord from Android's app settings and open it again, so the new module loads.
+    </Tab>
+
 </Tabs>

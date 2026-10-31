@@ -1,5 +1,5 @@
 {
-	"id": "astral.message-latency",
+	"id": "unbound.message-latency",
 	"name": "Message Latency",
 	"description": "Marks messages that took at least the selected threshold to send.",
 	"authors": [

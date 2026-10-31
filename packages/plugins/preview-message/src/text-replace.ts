@@ -10,7 +10,7 @@ import { textReplaceSettings } from '~/modules';
  * @returns The draft with the user's Text Replace rules applied, or unchanged when that plugin is not running.
  */
 export function applyTextReplace(content: string): string {
-	if (!plugins.get('astral.text-replace')?.started) return content;
+	if (!plugins.get('unbound.text-replace')?.started) return content;
 
 	return applyRules(
 		content,
