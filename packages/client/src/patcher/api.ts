@@ -12,10 +12,12 @@ import type {
 	PatchParent,
 	PropOf,
 } from 'possess';
+import toError from '@unbound-app/utils/to-error';
 import noop from '@unbound-app/utils/noop';
 import uuid from '@unbound-app/utils/uuid';
 import * as Possess from 'possess';
 
+import { currentAddonScope, withAddonScope } from '~/addons/crash-guard';
 import { patch, recordRemovals } from '~/hot-refresh/live-patch';
 import { whenModuleLoads } from '~/metro/lazy-registry';
 
@@ -113,8 +115,7 @@ export type PatcherInstance = {
 	unpatchAll: () => void;
 };
 
-// Patches on a lazy module proxy whose module has not loaded yet, each with its caller id.
-const waiting = new Map<() => void, string | undefined>();
+const pendingPatchCallers = new Map<() => void, string | undefined>();
 
 /** @internal */
 export const patches = Possess.patches;
@@ -206,31 +207,42 @@ export function after(
 	);
 }
 
-/**
- * @description Applies a patch now, or when a lazy module proxy's module first loads, so a patch never forces a metro search.
- * @param parent The object holding the method, or a lazy module proxy standing for it.
- * @param caller The caller id, so a patch still waiting is dropped with the caller's other patches.
- * @param apply Patches the loaded module and returns a function removing the patch.
- * @returns A function removing the patch, or dropping it while it waits.
- */
 function patchWhenLoaded(
 	parent: PatchParent,
 	caller: string | undefined,
 	apply: (target: PatchParent) => () => void,
 ): () => void {
+	const scope = currentAddonScope();
+	let deferred = false;
 	let unpatch = noop;
 	let stopWaiting = noop;
 
 	function drop() {
-		waiting.delete(drop);
+		pendingPatchCallers.delete(drop);
 		stopWaiting();
 	}
 
-	waiting.set(drop, caller);
+	pendingPatchCallers.set(drop, caller);
 	stopWaiting = whenModuleLoads(parent, (target) => {
-		waiting.delete(drop);
-		unpatch = apply(target);
+		pendingPatchCallers.delete(drop);
+
+		if (!deferred) {
+			unpatch = apply(target);
+
+			return;
+		}
+
+		try {
+			unpatch = withAddonScope(scope, () => apply(target));
+		} catch (error) {
+			if (!scope?.fail) {
+				throw error;
+			}
+
+			scope.fail(toError(error));
+		}
 	});
+	deferred = true;
 
 	return () => {
 		drop();
@@ -239,8 +251,7 @@ function patchWhenLoaded(
 	};
 }
 
-// A replacement installed over the patched method after the patch survives its removal.
-function keepReplacement(parent: PatchParent, key: PropertyKey, unpatch: () => void) {
+function unpatchKeepingReplacement(parent: PatchParent, key: PropertyKey, unpatch: () => void) {
 	const installed = Reflect.get(parent, key);
 
 	return () => {
@@ -286,7 +297,11 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 		): () => void {
 			const merged = { ...defaults, ...options };
 			const unpatch = patchWhenLoaded(parent, merged.caller, (target) =>
-				keepReplacement(target, method, patch(type, target, method, callback, merged)),
+				unpatchKeepingReplacement(
+					target,
+					method,
+					patch(type, target, method, callback, merged),
+				),
 			);
 
 			function remove() {
@@ -314,7 +329,7 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
  * @description Removes every patch.
  */
 export function unpatchAll(): void {
-	for (const drop of waiting.keys()) drop();
+	for (const drop of pendingPatchCallers.keys()) drop();
 
 	recordRemovals(() => true);
 	Possess.unpatchAll();
@@ -326,7 +341,7 @@ export function unpatchAll(): void {
  * @internal
  */
 export function unpatchAllByCaller(caller: string): void {
-	for (const [drop, owner] of waiting) {
+	for (const [drop, owner] of pendingPatchCallers) {
 		if (owner === caller) {
 			drop();
 		}

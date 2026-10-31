@@ -134,7 +134,14 @@ export function setFreezeListener(listener: ((freeze: AddonFreeze) => void) | un
 	(globalThis as FreezeListenerGlobal).__UnboundFreezeListener = listener;
 }
 
-let activeAttribution: AddonAttribution | undefined;
+/** The addon whose code is running: how the loader attributes it, and where a later failure in it is reported. */
+export type AddonScope = {
+	attribution?: AddonAttribution;
+	/** Records a failure in code the addon registered that runs after its start, such as a deferred patch. */
+	fail?: (error: Error) => void;
+};
+
+let activeScope: AddonScope | undefined;
 
 /**
  * @description Runs addon code with the loader attributing it to the addon, so a crash or freeze inside it
@@ -151,15 +158,33 @@ export function withAddonAttribution<R>(
 		return run();
 	}
 
-	const previous = activeAttribution;
+	return withAddonScope({ attribution }, run);
+}
 
-	activeAttribution = attribution;
+/**
+ * @description Runs code as an addon's, or as no addon's when `scope` is `undefined`, restoring the previous scope after.
+ * @param scope The addon's scope, as {@link currentAddonScope} returned it.
+ * @param run The code to run.
+ * @returns What `run` returned.
+ */
+export function withAddonScope<R>(scope: AddonScope | undefined, run: () => R): R {
+	const previous = activeScope;
+
+	activeScope = scope;
 
 	try {
-		return attribution(run)();
+		return scope?.attribution ? scope.attribution(run)() : run();
 	} finally {
-		activeAttribution = previous;
+		activeScope = previous;
 	}
+}
+
+/**
+ * @description Returns the scope of the addon whose code is running.
+ * @returns The active scope, or `undefined` outside addon code.
+ */
+export function currentAddonScope(): AddonScope | undefined {
+	return activeScope;
 }
 
 /**
@@ -167,7 +192,7 @@ export function withAddonAttribution<R>(
  * @returns The active attribution, or `undefined` outside addon code.
  */
 export function currentAddonAttribution(): AddonAttribution | undefined {
-	return activeAttribution;
+	return activeScope?.attribution;
 }
 
 /**

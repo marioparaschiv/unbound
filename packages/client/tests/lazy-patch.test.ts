@@ -1,11 +1,16 @@
+import type { Plugin } from '@unbound-app/types';
 import { afterEach, describe, expect, mock, test } from 'bun:test';
+
+import type { AddonAttribution } from '~/addons/crash-guard';
+import type { CrashEvent } from '~/diagnostics/crash-report';
+import type { Addon } from '~/addons/addon';
 
 const LOADED_ID = 1;
 const loadedExports = { loaded: (value: number) => value };
 const records = new Map<number, MetroModuleRecord>([
 	[LOADED_ID, { isInitialized: true, publicModule: { id: LOADED_ID, exports: loadedExports } }],
 ]);
-const methods = ['first', 'second', 'third', 'fourth', 'fifth'];
+const methods = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];
 
 for (const [index, method] of methods.entries()) {
 	const id = index + 2;
@@ -56,12 +61,19 @@ mock.module('~/metro/cache', () => ({
 	ModuleFlags: { BLACKLISTED: 1 },
 }));
 
-// No React surface is mounted under bun, so the renderer finds no roots.
 mock.module('~/metro/wrappers', () => ({
 	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
 }));
 
-const { after, createPatcher, unpatchAll, unpatchAllByCaller } = await import('~/patcher/api');
+const crashes: CrashEvent[] = [];
+
+mock.module('~/diagnostics/crash-reports', () => ({
+	reportCrash: async (event: CrashEvent) => void crashes.push(event),
+}));
+
+const { FakeAddons, makeManifest, resetDevice, states } = await import('./helpers/addons');
+const { after, createPatcher, instead, unpatchAll, unpatchAllByCaller } =
+	await import('~/patcher/api');
 const { findByProps } = await import('~/metro/lookups');
 const { data } = await import('~/metro/state');
 
@@ -130,6 +142,56 @@ describe('lazy patch targets', () => {
 		load(idOf('third'));
 
 		expect(exportsOf('third').third(3)).toBe(3);
+	});
+});
+
+class AttributedAddons extends FakeAddons {
+	attributed: string[] = [];
+	starts = new Map<string, () => void>();
+
+	protected handleBundle(bundle: string) {
+		return { start: () => this.starts.get(bundle)?.(), stop: () => {} };
+	}
+
+	protected attribution(entity: Addon<Plugin>): AddonAttribution {
+		return (method) =>
+			(...args) => {
+				this.attributed.push(entity.id);
+
+				return method(...args);
+			};
+	}
+}
+
+describe('deferred patches', () => {
+	test('stay attributed to the addon that registered them and report its failures', () => {
+		const manager = new AttributedAddons();
+
+		resetDevice();
+		states['addon.a'] = true;
+		states['addon.b'] = true;
+		manager.starts.set('addon.a', () => {
+			after(findByProps('sixth'), 'sixth', (ctx) => ctx.result * 10);
+			instead(findByProps('seventh'), 'missing' as 'seventh', () => 0);
+		});
+		manager.starts.set('addon.b', () => {
+			load(idOf('sixth'));
+			load(idOf('seventh'));
+		});
+
+		manager.load('addon.a', makeManifest('addon.a'));
+		manager.load('addon.b', makeManifest('addon.b'));
+		manager.attributed.length = 0;
+
+		expect(exportsOf('sixth').sixth(2)).toBe(20);
+		expect(manager.attributed).toEqual(['addon.a']);
+		expect(manager.errors.get('addon.a')?.message).toContain('does not exist');
+		expect(manager.getEntity('addon.a')?.failed).toBe(true);
+		expect(manager.errors.has('addon.b')).toBe(false);
+		expect(manager.getEntity('addon.b')?.started).toBe(true);
+		expect(crashes.map((crash) => [crash.addon?.id, crash.kind, crash.phase])).toEqual([
+			['addon.a', 'start-failure', 'running'],
+		]);
 	});
 });
 
