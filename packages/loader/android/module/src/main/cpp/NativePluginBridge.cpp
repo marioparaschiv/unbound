@@ -9,6 +9,8 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <sys/types.h>
+#include <unistd.h>
 #include <unordered_map>
 #include <vector>
 
@@ -420,8 +422,16 @@ static jsi::Function catchingCall(jsi::Runtime &runtime)
 
 struct HookListener {
     std::shared_ptr<jsi::Function> callback;
-    loader::AddonSlot              addon = loader::kNoAddon;
+    loader::AddonSlot              addon         = loader::kNoAddon;
+    jsi::Runtime                  *inlineRuntime = nullptr;
 };
+
+static thread_local jsi::Runtime *gUIScopeRuntime = nullptr;
+
+static bool onMainThread()
+{
+    return gettid() == getpid();
+}
 
 static std::mutex                                    gHookMutex;
 static std::unordered_map<std::string, HookListener> gHookListeners;
@@ -439,29 +449,59 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
         listener = found->second;
     }
 
-    loader::AddonScope scope(listener.addon);
-    loader::native::executeRuntimeAsynchronously(
-        [callback = listener.callback, addon = listener.addon, payload](jsi::Runtime &runtime) {
-            nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
-            if (parsed.is_discarded())
-            {
-                return;
-            }
+    loader::AddonScope                  scope(listener.addon);
+    std::function<void(jsi::Runtime &)> deliver = [callback = listener.callback,
+                                                   addon    = listener.addon,
+                                                   payload](jsi::Runtime &runtime) {
+        nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
+        if (parsed.is_discarded())
+        {
+            return;
+        }
 
-            loader::AddonScope runtimeScope(addon);
-            jsi::Value failure = catchingCall(runtime).call(runtime, jsi::Value(runtime, *callback),
-                                                            adoptJavaValue(runtime, parsed));
-            if (!failure.isString())
+        loader::AddonScope runtimeScope(addon);
+        jsi::Value failure = catchingCall(runtime).call(runtime, jsi::Value(runtime, *callback),
+                                                        adoptJavaValue(runtime, parsed));
+        if (!failure.isString())
+        {
+            return;
+        }
+        std::optional<std::string> message =
+            loader::threading::throttledHookFailure(addon, failure.asString(runtime).utf8(runtime));
+        if (message)
+        {
+            loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS, *message);
+        }
+    };
+
+    if (!listener.inlineRuntime)
+    {
+        loader::native::executeRuntimeAsynchronously(std::move(deliver));
+        return;
+    }
+    if (onMainThread())
+    {
+        deliver(*listener.inlineRuntime);
+        return;
+    }
+    if (auto target = loader::native::executor())
+    {
+        target->runOnMain([token, deliver = std::move(deliver)]() {
+            jsi::Runtime *runtime = nullptr;
             {
-                return;
+                std::lock_guard<std::mutex> lock(gHookMutex);
+                auto                        found = gHookListeners.find(token);
+                if (found != gHookListeners.end())
+                {
+                    runtime = found->second.inlineRuntime;
+                }
             }
-            std::optional<std::string> message = loader::threading::throttledHookFailure(
-                addon, failure.asString(runtime).utf8(runtime));
-            if (message)
+            if (runtime)
             {
-                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS, *message);
+                deliver(*runtime);
             }
         });
+    }
 }
 
 static void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
@@ -474,7 +514,7 @@ static void rememberHookListener(jsi::Runtime &runtime, const std::string &token
 
     HookListener stored{
         std::make_shared<jsi::Function>(listener.asObject(runtime).asFunction(runtime)),
-        loader::currentAddon()};
+        loader::currentAddon(), gUIScopeRuntime};
     std::lock_guard<std::mutex> lock(gHookMutex);
     gHookListeners[token] = std::move(stored);
 }
@@ -757,6 +797,14 @@ static jsi::Object makeFFINamespace(jsi::Runtime &runtime)
     return ffi;
 }
 
+static void removeHook(const JavaCallbacks &callbacks, const std::string &token)
+{
+    forgetHookListener(token);
+    hookReturnValues().clear(token);
+    installedHooks().release(token);
+    callJavaVoid(callbacks, callbacks.hooksRemove, {loader::native::handleJSON(token)});
+}
+
 static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
 {
     jsi::Object hooks(runtime);
@@ -789,11 +837,7 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
     define(runtime, hooks, "remove", 1,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 1, "Removing a hook requires its token");
-               std::string token = hookTokenId(rt, args[0]);
-               forgetHookListener(token);
-               hookReturnValues().clear(token);
-               installedHooks().release(token);
-               callJavaVoid(callbacks, callbacks.hooksRemove, {loader::native::handleJSON(token)});
+               removeHook(callbacks, hookTokenId(rt, args[0]));
                return jsi::Value::undefined();
            });
     define(runtime, hooks, "setReturnValue", 4,
@@ -914,6 +958,176 @@ private:
     JavaCallbacks callbacks_;
 };
 
+struct UIScopeState {
+    JavaCallbacks            callbacks;
+    loader::AddonSlot        addon = loader::kNoAddon;
+    std::vector<std::string> allowed;
+    std::mutex               mutex;
+    std::vector<std::string> hooks;
+    bool                     disposed = false;
+};
+
+static void disposeUIScope(UIScopeState &scope)
+{
+    std::vector<std::string> tokens;
+    {
+        std::lock_guard<std::mutex> lock(scope.mutex);
+        if (scope.disposed)
+        {
+            return;
+        }
+        scope.disposed = true;
+        tokens.swap(scope.hooks);
+    }
+    for (const std::string &token : tokens)
+    {
+        if (installedHooks().contains(token))
+        {
+            removeHook(scope.callbacks, token);
+        }
+    }
+}
+
+static bool scopeAllows(const UIScopeState &scope, const std::string &path)
+{
+    if (path.size() > 5 && path.compare(path.size() - 5, 5, "Async") == 0)
+    {
+        return false;
+    }
+    return std::find(scope.allowed.begin(), scope.allowed.end(), path) != scope.allowed.end();
+}
+
+static jsi::Object filterNamespace(jsi::Runtime &runtime, jsi::Object source,
+                                   const UIScopeState &scope, const std::string &prefix)
+{
+    jsi::Object filtered(runtime);
+    jsi::Array  names = source.getPropertyNames(runtime);
+    for (size_t index = 0; index < names.size(runtime); index++)
+    {
+        std::string name = names.getValueAtIndex(runtime, index).getString(runtime).utf8(runtime);
+        if (scopeAllows(scope, prefix + name))
+        {
+            filtered.setProperty(runtime, name.c_str(), source.getProperty(runtime, name.c_str()));
+        }
+    }
+    return filtered;
+}
+
+static jsi::Value scopedHook(jsi::Runtime &runtime, const std::shared_ptr<UIScopeState> &scope,
+                             const jsi::Function &install, const jsi::Value *args, size_t count)
+{
+    {
+        std::lock_guard<std::mutex> lock(scope->mutex);
+        if (scope->disposed)
+        {
+            throw jsi::JSError(runtime, "The UI scope has been disposed");
+        }
+    }
+    loader::AddonScope addonScope(scope->addon);
+    jsi::Runtime      *previousRuntime = gUIScopeRuntime;
+    gUIScopeRuntime                    = &runtime;
+    jsi::Value token;
+    try
+    {
+        token = install.call(runtime, args, count);
+    }
+    catch (...)
+    {
+        gUIScopeRuntime = previousRuntime;
+        throw;
+    }
+    gUIScopeRuntime                = previousRuntime;
+    std::string                 id = hookTokenId(runtime, token);
+    std::lock_guard<std::mutex> lock(scope->mutex);
+    scope->hooks.push_back(id);
+    return token;
+}
+
+static jsi::Object makeScopedHooks(jsi::Runtime                        &runtime,
+                                   const std::shared_ptr<UIScopeState> &scope)
+{
+    jsi::Object hooks =
+        filterNamespace(runtime, makeHooksNamespace(runtime, scope->callbacks), *scope, "hooks.");
+    if (!hooks.hasProperty(runtime, "hook"))
+    {
+        return hooks;
+    }
+    auto install = std::make_shared<jsi::Function>(hooks.getPropertyAsFunction(runtime, "hook"));
+    define(runtime, hooks, "hook", 5,
+           [scope, install](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               return scopedHook(rt, scope, *install, args, count);
+           });
+    return hooks;
+}
+
+class UIScopeHost final : public jsi::HostObject
+{
+public:
+    explicit UIScopeHost(std::shared_ptr<UIScopeState> scope) : scope_(std::move(scope)) {}
+
+    ~UIScopeHost() override
+    {
+        disposeUIScope(*scope_);
+    }
+
+    jsi::Value get(jsi::Runtime &runtime, const jsi::PropNameID &property) override
+    {
+        std::string name = property.utf8(runtime);
+        if (name == "dispose")
+        {
+            auto scope = scope_;
+            return jsi::Function::createFromHostFunction(
+                runtime, property, 0,
+                [scope](jsi::Runtime &, const jsi::Value &, const jsi::Value *, size_t) {
+                    disposeUIScope(*scope);
+                    return jsi::Value::undefined();
+                });
+        }
+        if (name == "java")
+        {
+            loader::AddonScope addonScope(scope_->addon);
+            return filterNamespace(runtime, makeJavaNamespace(runtime, scope_->callbacks), *scope_,
+                                   "java.");
+        }
+        if (name == "hooks")
+        {
+            return makeScopedHooks(runtime, scope_);
+        }
+        return jsi::Value::undefined();
+    }
+
+    std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &runtime) override
+    {
+        return jsi::PropNameID::names(runtime, "dispose", "java", "hooks");
+    }
+
+private:
+    std::shared_ptr<UIScopeState> scope_;
+};
+
+static jsi::Value createUIScope(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
+                                const jsi::Value *args, size_t count)
+{
+    if (count < 1 || !args[0].isObject() || !args[0].asObject(runtime).isArray(runtime))
+    {
+        throw jsi::JSError(runtime,
+                           "java.createUIScope expects the method paths the scope may use");
+    }
+    auto scope       = std::make_shared<UIScopeState>();
+    scope->callbacks = callbacks;
+    scope->addon     = loader::currentAddon();
+    jsi::Array paths = args[0].asObject(runtime).asArray(runtime);
+    for (size_t index = 0; index < paths.size(runtime); index++)
+    {
+        jsi::Value path = paths.getValueAtIndex(runtime, index);
+        if (path.isString())
+        {
+            scope->allowed.push_back(path.getString(runtime).utf8(runtime));
+        }
+    }
+    return jsi::Object::createFromHostObject(runtime, std::make_shared<UIScopeHost>(scope));
+}
+
 void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
 {
     watchRuntimeGenerations(callbacks);
@@ -921,7 +1135,12 @@ void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &call
 
     loader::native::NativePluginRootBuilder bridge(runtime,
                                                    loader::native::NativePluginPlatform::Android);
-    bridge.addNamespace("java", makeJavaNamespace(runtime, callbacks));
+    jsi::Object                             java = makeJavaNamespace(runtime, callbacks);
+    define(runtime, java, "createUIScope", 1,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               return createUIScope(rt, callbacks, args, count);
+           });
+    bridge.addNamespace("java", std::move(java));
     bridge.addNamespace("ffi", makeFFINamespace(runtime));
     bridge.addNamespace("hooks", makeHooksNamespace(runtime, callbacks));
     bridge.addNamespace("debug", makeDebugNamespace(runtime, callbacks));

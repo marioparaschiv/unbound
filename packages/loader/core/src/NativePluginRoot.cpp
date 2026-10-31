@@ -41,8 +41,14 @@ std::vector<std::string> missingNativeCapabilityMethods(const NativeCapabilityBi
     return missing;
 }
 
+static constexpr std::string_view kUIScopeFactory = "createUIScope";
+
 static bool isBoundMethod(std::string_view nameSpace, std::string_view method)
 {
+    if (method == kUIScopeFactory)
+    {
+        return true;
+    }
     return std::any_of(kNativeCapabilityBindings.begin(), kNativeCapabilityBindings.end(),
                        [&](const NativeCapabilityBinding &binding) {
                            return binding.nameSpace == nameSpace &&

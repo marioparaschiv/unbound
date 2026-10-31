@@ -122,7 +122,7 @@ export function cancellable<T>(promise: Promise<T>, name: string) {
 	return Object.assign(promise, { cancel: () => cancelled.push(name) });
 }
 
-type LoaderBridge = Omit<NativePluginBridge, 'objc'> & { objc: LoaderObjCBridge };
+type LoaderBridge = Omit<NativePluginBridge, 'objc' | 'ui'> & { objc: LoaderObjCBridge };
 
 const fakeBridge: LoaderBridge = {
 	abiVersion: '1.0.0',

@@ -9,6 +9,7 @@ import type {
 	NativePluginCapability,
 	NativePluginMethod,
 	NativeRuntimeBridge,
+	NativeUIBridge,
 } from '@unbound-app/types';
 import {
 	NATIVE_PLUGIN_CAPABILITIES,
@@ -136,6 +137,7 @@ export function unavailableNativePlugin(): NativePluginBridge {
 		{ get: () => unavailableMethod },
 	) as NativeJavaHooksBridge;
 	const unavailableDebug = new Proxy({}, { get: () => unavailableMethod }) as NativeDebugBridge;
+	const unavailableUI = new Proxy({}, { get: () => unavailableMethod }) as NativeUIBridge;
 
 	return {
 		apiVersion: '0.0.0',
@@ -148,6 +150,7 @@ export function unavailableNativePlugin(): NativePluginBridge {
 		java: unavailableJava,
 		hooks: unavailableHooks,
 		debug: unavailableDebug,
+		ui: unavailableUI,
 	};
 }
 

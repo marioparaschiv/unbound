@@ -241,9 +241,10 @@ struct HookState {
     std::mutex                     returnCacheMutex;
     __strong NSMutableDictionary<NSArray *, NSData *> *returnCache =
         [NSMutableDictionary dictionary];
-    bool              cacheOnly = false;
-    bool              once      = false;
-    loader::AddonSlot addon     = loader::kNoAddon;
+    bool              cacheOnly     = false;
+    bool              once          = false;
+    Runtime          *inlineRuntime = nullptr;
+    loader::AddonSlot addon         = loader::kNoAddon;
     std::atomic_bool  active{true};
     std::atomic_bool  afterOncePending{false};
 };
@@ -2665,11 +2666,19 @@ static void logDroppedHookCall(loader::AddonSlot addon, SEL selector, const std:
 
 static bool executeRuntimeSynchronously(std::function<void(Runtime &)> callback);
 
+static thread_local Runtime *gUIScopeRuntime = nullptr;
+
 static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selector,
                             std::function<void(Runtime &)> callback)
 {
-    bool        completed = executeRuntimeSynchronously(std::move(callback));
-    std::string name      = sel_getName(selector);
+    if (state->inlineRuntime && [NSThread isMainThread])
+    {
+        callback(*state->inlineRuntime);
+        return true;
+    }
+
+    bool completed   = !state->inlineRuntime && executeRuntimeSynchronously(std::move(callback));
+    std::string name = sel_getName(selector);
     if (!completed && firstHookWarning(state->addon, name, "skipped"))
     {
         [Logger warning:LOG_CATEGORY_PLUGINS
@@ -3311,10 +3320,10 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             continue;
         }
 
-        loader::AddonScope addonScope(state->addon);
-        __strong id        retainedObject = object;
-        executeRuntimeAsynchronously([invocation, retainedObject, selector,
-                                      state](Runtime &runtime) {
+        loader::AddonScope             addonScope(state->addon);
+        __strong id                    retainedObject = object;
+        std::function<void(Runtime &)> afterWork      = [invocation, retainedObject, selector,
+                                                         state](Runtime &runtime) {
             bool pending = state->afterOncePending.exchange(false);
             if (!state->active.load() && !pending)
             {
@@ -3338,7 +3347,24 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             {
                 state->ownedCallbacks.reset();
             }
-        });
+        };
+        if (!state->inlineRuntime)
+        {
+            executeRuntimeAsynchronously(std::move(afterWork));
+        }
+        else if ([NSThread isMainThread])
+        {
+            afterWork(*state->inlineRuntime);
+        }
+        else
+        {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (state->active.load() && state->inlineRuntime)
+                {
+                    afterWork(*state->inlineRuntime);
+                }
+            });
+        }
     }
 
     {
@@ -3687,6 +3713,7 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     state->once              = once;
     state->instanceTarget    = instanceTarget;
     state->dispatcher        = dispatcher;
+    state->inlineRuntime     = gUIScopeRuntime;
     state->addon             = loader::currentAddon();
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
@@ -4028,6 +4055,146 @@ static objc_AssociationPolicy associationPolicy(Runtime &runtime, const Value *v
     return objcAssociationPolicy(*policy);
 }
 
+static void installObjC(Runtime &runtime, Object &objc);
+
+struct ObjCUIScopeState {
+    loader::AddonSlot                       addon = loader::kNoAddon;
+    std::vector<std::string>                allowed;
+    std::mutex                              mutex;
+    std::vector<std::shared_ptr<HookState>> hooks;
+    bool                                    disposed = false;
+};
+
+static void disposeUIScope(const std::shared_ptr<ObjCUIScopeState> &scope)
+{
+    std::vector<std::shared_ptr<HookState>> hooks;
+    {
+        std::lock_guard<std::mutex> lock(scope->mutex);
+        scope->disposed = true;
+        hooks.swap(scope->hooks);
+    }
+    for (const std::shared_ptr<HookState> &state : hooks)
+    {
+        removeHook(state);
+    }
+}
+
+static Value makeUIScopeHook(Runtime &runtime, const std::shared_ptr<ObjCUIScopeState> &scope,
+                             const Value *args, size_t count)
+{
+    {
+        std::lock_guard<std::mutex> lock(scope->mutex);
+        if (scope->disposed)
+        {
+            throw JSError(runtime, "The plugin's UI thread scope was disposed");
+        }
+    }
+
+    loader::AddonScope addonScope(scope->addon);
+    Runtime           *previousRuntime = gUIScopeRuntime;
+    gUIScopeRuntime                    = &runtime;
+    Value token;
+    try
+    {
+        token = makeHook(runtime, args, count);
+    }
+    catch (...)
+    {
+        gUIScopeRuntime = previousRuntime;
+        throw;
+    }
+    gUIScopeRuntime = previousRuntime;
+    if (token.isObject() && token.asObject(runtime).isHostObject<HookTokenHost>(runtime))
+    {
+        std::shared_ptr<HookState> state =
+            token.asObject(runtime).getHostObject<HookTokenHost>(runtime)->state();
+        std::lock_guard<std::mutex> lock(scope->mutex);
+        scope->hooks.push_back(state);
+    }
+    return token;
+}
+
+class ObjCUIScopeHost final : public HostObject
+{
+public:
+    explicit ObjCUIScopeHost(std::shared_ptr<ObjCUIScopeState> scope) : scope_(std::move(scope)) {}
+
+    ~ObjCUIScopeHost() override
+    {
+        disposeUIScope(scope_);
+    }
+
+    Value get(Runtime &runtime, const PropNameID &name) override
+    {
+        std::string property = name.utf8(runtime);
+        if (property == "dispose")
+        {
+            auto scope = scope_;
+            return makeFunction("dispose", 0, runtime,
+                                [scope](Runtime &, const Value &, const Value *, size_t) -> Value {
+                                    disposeUIScope(scope);
+                                    return Value::undefined();
+                                });
+        }
+        if (property != "objc")
+        {
+            return Value::undefined();
+        }
+
+        Object full(runtime);
+        installObjC(runtime, full);
+        Object scoped(runtime);
+        for (const std::string &allowed : scope_->allowed)
+        {
+            if (allowed == "hook")
+            {
+                auto scope = scope_;
+                scoped.setProperty(runtime, "hook",
+                                   makeFunction("hook", 3, runtime,
+                                                [scope](Runtime     &rt, const Value &,
+                                                        const Value *args, size_t count) -> Value {
+                                                    return makeUIScopeHook(rt, scope, args, count);
+                                                }));
+                continue;
+            }
+            Value value = full.getProperty(runtime, allowed.c_str());
+            if (!value.isUndefined())
+            {
+                scoped.setProperty(runtime, allowed.c_str(), std::move(value));
+            }
+        }
+        return scoped;
+    }
+
+private:
+    std::shared_ptr<ObjCUIScopeState> scope_;
+};
+
+static Value createUIScope(Runtime &runtime, const Value *args, size_t count)
+{
+    if (count == 0 || !args[0].isObject() || !args[0].asObject(runtime).isArray(runtime))
+    {
+        throw JSError(runtime, "objc.createUIScope expects the method paths the scope may use");
+    }
+    auto  scope = std::make_shared<ObjCUIScopeState>();
+    Array names = args[0].asObject(runtime).asArray(runtime);
+    for (size_t index = 0; index < names.size(runtime); index++)
+    {
+        Value value = names.getValueAtIndex(runtime, index);
+        if (!value.isString())
+        {
+            continue;
+        }
+        std::string path = value.getString(runtime).utf8(runtime);
+        if (path.rfind("objc.", 0) == 0)
+        {
+            scope->allowed.push_back(path.substr(5));
+        }
+    }
+    scope->addon = loader::currentAddon();
+    return Object::createFromHostObject(runtime, std::make_shared<ObjCUIScopeHost>(scope));
+}
+
 static void installObjC(Runtime &runtime, Object &objc)
 {
     objc.setProperty(
@@ -4294,6 +4461,8 @@ static void installObjC(Runtime &runtime, Object &objc)
                      }));
 
     objc.setProperty(runtime, "hook", makeFunction("hook", 3, runtime, makeHook));
+    objc.setProperty(runtime, "createUIScope",
+                     makeFunction("createUIScope", 1, runtime, createUIScope));
 }
 
 class ObjectFFICodec final : public loader::ffi::TypeCodec

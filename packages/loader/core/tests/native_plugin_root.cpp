@@ -60,6 +60,7 @@ int main()
     InstalledNativeMethods ios = installedFor(NativePluginPlatform::IOS);
     ios["fabric"].erase("setSize");
     ios["objc"].insert("teleport");
+    ios["objc"].insert("createUIScope");
     NativeCapabilityReport partial =
         resolveNativePluginCapabilities(NativePluginPlatform::IOS, ios);
     assert(!contains(partial.advertised, "native.fabric.mount"));
@@ -67,6 +68,7 @@ int main()
     assert(mentions(partial.diagnostics,
                     "native.fabric.mount is withheld because it lacks fabric.setSize"));
     assert(mentions(partial.diagnostics, "objc.teleport is not bound to any capability"));
+    assert(!mentions(partial.diagnostics, "objc.createUIScope is not bound to any capability"));
 
     InstalledNativeMethods empty;
     NativeCapabilityReport bare =

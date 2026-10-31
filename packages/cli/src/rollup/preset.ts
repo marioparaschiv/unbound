@@ -16,6 +16,7 @@ import { externalFor, unboundGlobals } from './globals.ts';
 import { findFile, sourceAlias } from './source-alias.ts';
 import { hermesBytecode } from './hermes-bytecode.ts';
 import { lazyModules } from './lazy-modules.ts';
+import { worklets } from './worklets.ts';
 
 export type PluginConfigOptions = {
 	settingsPanel?: boolean;
@@ -68,6 +69,7 @@ export function pluginConfig(
 		commonjs(),
 		json(),
 		swc({ tsconfig: false }),
+		worklets(),
 	];
 
 	return {

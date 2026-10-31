@@ -3,9 +3,9 @@ import { expect, test } from 'bun:test';
 
 import { snapshot } from '~/storage/api';
 
-const settings = snapshot();
-
 import { getSetting, isSettingChange, setSetting, toggleSetting } from './unbound';
+
+const settings = snapshot();
 
 test('falls back to the default until a value is stored', () => {
 	delete settings[CORE_SETTINGS_STORE];

@@ -59,6 +59,7 @@
 		"@unbound-app/types": "workspace:*",
 		"@unbound-app/utils": "workspace:*",
 		"@unbound-app/web": "workspace:*",
+		"reanimated-worklets-plugin": "npm:react-native-reanimated@3.19.4",
 		"tsdown": "^0.23.2"
 	},
 	"peerDependencies": {
