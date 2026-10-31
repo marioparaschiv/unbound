@@ -36,8 +36,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		],
 		links: [
 			{ rel: 'stylesheet', href: stylesheet },
+			// The mark drawn one pixel per tile at 16px, so it stays sharp; white for dark tabs, near-black for light.
 			{ rel: 'icon', href: '/favicon-light.ico', media: '(prefers-color-scheme: light)' },
 			{ rel: 'icon', href: '/favicon-dark.ico', media: '(prefers-color-scheme: dark)' },
+			{ rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
 			{
 				rel: 'stylesheet',
 				href: 'https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Manrope:wght@600..700&display=swap',
