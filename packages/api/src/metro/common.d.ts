@@ -4,6 +4,7 @@ export type { MarkdownParserModule } from '../_internal';
 import type { MarkdownParserModule } from '../_internal';
 import * as React$1 from 'react';
 import { ReactNode } from 'react';
+import { ImageProps, ImageURISource } from 'react-native';
 
 declare const Clipboard$1: any;
 declare const React$1: typeof import('react');
@@ -16,6 +17,7 @@ export declare const Dispatcher: any;
 export declare const Flux: any;
 export declare const FluxHooks: any;
 export declare const Gestures: any;
+export declare const ImageSources: ImageSourcesModule;
 export declare const MarkdownParser: MarkdownParserModule;
 export declare const Moment: any;
 export declare const REST: any;
@@ -25,6 +27,10 @@ export declare const SVG: any;
 export declare const Screens: any;
 export declare const Util: any;
 export declare const i18n: any;
+/** React Native's `ImageSourceUtils`, which every `Image` render resolves its source through. */
+export type ImageSourcesModule = {
+	getImageSourcesFromImageProps: (props: ImageProps) => ImageURISource | ImageURISource[] | null;
+};
 export { Clipboard$1 as Clipboard, React$1 as React, ReactNative$1 as ReactNative };
 
 export {};
