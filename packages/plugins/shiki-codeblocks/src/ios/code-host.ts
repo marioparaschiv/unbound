@@ -64,6 +64,27 @@ export function removeStrayCards(ui: NativeUI, root: NativeObjectHandle): number
 	return removed;
 }
 
+export async function removeStrayCardsAsync(
+	ui: NativeUI,
+	root: NativeObjectHandle,
+): Promise<number> {
+	const rootKey = ui.key(root);
+	let removed = 0;
+
+	while (removed < MAX_STRAY_CARDS) {
+		const card = (await ui.objc.invokeAsync(root, 'viewWithTag:', [
+			CARD_TAG,
+		])) as NativeObjectHandle | null;
+
+		if (!card || ui.key(card) === rootKey) break;
+
+		await ui.objc.invokeAsync(card, 'removeFromSuperview', []);
+		removed++;
+	}
+
+	return removed;
+}
+
 export function createCodeHost(ui: NativeUI, options: CodeHostOptions): CodeHost | null {
 	const { code, language, width, layout, light, opacity, overflow, iconMode } = options;
 	const { call, objc } = ui;

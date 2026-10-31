@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2]
+
+### Fixed
+
+- Scrolling the chat on iOS no longer stalls in channels without code blocks: message text is skipped unless a loaded message in the channel has a code block, and leftover cards in a reused cell are removed asynchronously.
+
 ## [1.0.1]
 
 ### Changed

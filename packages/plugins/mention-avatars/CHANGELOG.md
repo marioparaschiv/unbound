@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2]
+
+### Fixed
+
+- Scrolling the chat on iOS no longer stalls: a reused message cell drops only the text views the plugin already knows instead of searching the whole cell on the main thread.
+
 ## [1.0.1]
 
 ### Changed

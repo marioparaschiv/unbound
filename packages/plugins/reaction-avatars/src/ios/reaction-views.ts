@@ -43,7 +43,7 @@ export function unmountSurface(session: Session, state: ReactionViewState): void
 
 	if (state.surface) {
 		try {
-			session.fabric.unmount(state.surface);
+			void session.fabric.unmountAsync(state.surface).catch(() => undefined);
 		} catch {
 			// The surface already went away with its container.
 		}
