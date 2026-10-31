@@ -11,6 +11,11 @@ const DIRECT_SHEETS: readonly (readonly [path: string, key: string])[] = [
 		'modules/messages/native/long_press/LongPressMessageActionSheet.tsx',
 		'MessageLongPressActionSheet',
 	],
+	['modules/channel/native/ChannelLongPressActionSheet.tsx', 'ChannelLongPressActionSheet'],
+	[
+		'modules/threads/native/components/ThreadLongPressActionSheet.tsx',
+		'ThreadLongPressActionSheet',
+	],
 ];
 
 // UNKNOWN: an action sheet may render any node.
