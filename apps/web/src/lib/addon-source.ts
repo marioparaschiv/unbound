@@ -2,6 +2,7 @@ import {
 	CONFIG_FILENAME,
 	findWorkspaceRoot,
 	getBundleName,
+	getOutputDir,
 	isWorkspaceAddon,
 	matchAddonDirs,
 	readAddon,
@@ -59,11 +60,20 @@ type OpenedCommit = {
 
 type Texts = Map<string, string>;
 
-/** The manifest an addon ships, read from the commit. */
 type ShippedManifest = {
 	addon: WorkspaceAddon;
 	path: string;
 	text: string;
+};
+
+type ConfiguredAddon = {
+	addon: WorkspaceAddon;
+	config: WorkspaceConfig;
+};
+
+type Candidate = {
+	dir: string;
+	root: string | undefined;
 };
 
 type WorkspaceMembership =
@@ -225,6 +235,25 @@ async function readConfigs(
 	);
 }
 
+function getOutputDirs(
+	candidates: Candidate[],
+	configs: Map<string, WorkspaceConfig | string>,
+): Set<string> {
+	const outputs = new Set<string>();
+
+	for (const { dir, root } of candidates) {
+		const config = root === undefined ? DEFAULT_CONFIG : configs.get(root);
+
+		if (config === undefined || typeof config === 'string') {
+			continue;
+		}
+
+		outputs.add(getOutputDir(dir, config));
+	}
+
+	return outputs;
+}
+
 function readAddonFiles(
 	github: GitHubClient,
 	repository: string,
@@ -239,22 +268,15 @@ function readAddonFiles(
 	return readTexts(github, repository, tree, paths);
 }
 
-/**
- * @description Picks the manifest that ships: the build's `{output}/manifest.json` when it is
- * committed, the source manifest otherwise.
- * @param tree The commit's tree.
- * @param addon The addon.
- * @returns The manifest's path in the tree.
- */
-function shippedManifestPath(tree: GitTree, addon: WorkspaceAddon): string {
+function shippedManifestPath(tree: GitTree, configured: ConfiguredAddon): string {
+	const { addon, config } = configured;
 	const source = childPath(addon.path, MANIFEST_FILENAME);
 
 	if (addon.static) {
 		return source;
 	}
 
-	// A built bundle's name has no directory, so it sits directly in the output directory.
-	const built = childPath(parentDir(addon.bundle), MANIFEST_FILENAME);
+	const built = childPath(getOutputDir(addon.path, config), MANIFEST_FILENAME);
 
 	return tree.has(built) ? built : source;
 }
@@ -263,10 +285,11 @@ async function readShippedManifest(
 	github: GitHubClient,
 	repository: string,
 	tree: GitTree,
-	addon: WorkspaceAddon,
+	configured: ConfiguredAddon,
 	texts: Texts,
 ): Promise<ShippedManifest> {
-	const path = shippedManifestPath(tree, addon);
+	const { addon } = configured;
+	const path = shippedManifestPath(tree, configured);
 	const text = texts.get(path) ?? (await readTexts(github, repository, tree, [path])).get(path);
 
 	return { addon, path, text: text ?? '' };
@@ -476,7 +499,7 @@ export async function listRepositoryAddons(
 		github.getExtras(repository),
 	]);
 
-	const candidates = [...tree.keys()]
+	const candidates: Candidate[] = [...tree.keys()]
 		.filter((path) => path === 'manifest.json' || path.endsWith('/manifest.json'))
 		.map(parentDir)
 		.map((dir) => ({ dir, root: workspaceRootOf(tree, dir) }))
@@ -489,10 +512,15 @@ export async function listRepositoryAddons(
 		candidates.map(({ root }) => root),
 	);
 
+	const outputDirs = getOutputDirs(candidates, configs);
 	const skipped: ListRepositoryAddonsResponse['skipped'] = [];
 	const located: { dir: string; config: WorkspaceConfig }[] = [];
 
 	for (const { dir, root } of candidates) {
+		if (outputDirs.has(dir)) {
+			continue;
+		}
+
 		const membership = findNearestWorkspaceConfig(dir, root, configs);
 
 		if (membership.kind === 'excluded') {
@@ -520,7 +548,7 @@ export async function listRepositoryAddons(
 	);
 
 	const files = { read: (path: string) => texts.get(path) };
-	const found: WorkspaceAddon[] = [];
+	const found: ConfiguredAddon[] = [];
 
 	for (const { dir, config } of listed) {
 		const result = readAddon(dir, files, config);
@@ -530,11 +558,11 @@ export async function listRepositoryAddons(
 			continue;
 		}
 
-		found.push(result);
+		found.push({ addon: result, config });
 	}
 
 	const manifests = await Promise.all(
-		found.map((addon) => readShippedManifest(github, repository, tree, addon, texts)),
+		found.map((entry) => readShippedManifest(github, repository, tree, entry, texts)),
 	);
 	const addons = manifests.map((shipped) => toRepositoryAddon(ctx.env, tree, shipped, commitSha));
 
@@ -608,7 +636,13 @@ export async function readAddonSource(
 		throw notFound(addon.reason);
 	}
 
-	const shipped = await readShippedManifest(github, repository, tree, addon, texts);
+	const shipped = await readShippedManifest(
+		github,
+		repository,
+		tree,
+		{ addon, config: membership.config },
+		texts,
+	);
 	const checked = checkAddon(ctx.env, tree, shipped, commitSha);
 
 	if (checked.blocker) {
