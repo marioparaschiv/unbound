@@ -173,7 +173,7 @@ export function scopeFlux(subscriptions: Subscriptions): Api['flux'] {
 export function scopeCommands(owner: string): ScopedCommands {
 	const handle = createCommands(owner);
 
-	return { namespace: overlay('commands', handle), dispose: handle.unregisterAll };
+	return { namespace: overlay('commands', handle), dispose: () => handle.unregisterAll() };
 }
 
 export default { scopeMetro, scopeStorage, scopeFlux, scopeCommands };

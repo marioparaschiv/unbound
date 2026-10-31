@@ -1,6 +1,6 @@
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import type { FluxAction, FluxChangeListener } from '@unbound-app/types/flux';
 import type { AddonManifest } from '@unbound-app/types';
-import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 
 type Listener = (action: FluxAction) => void;
 type Interceptor = (action: FluxAction) => boolean;
