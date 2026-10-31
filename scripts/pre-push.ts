@@ -66,6 +66,13 @@ export function checksFor(files: string[], exists: (path: string) => boolean): C
 			for (const check of ALL_PLUGINS) add(check);
 		}
 
+		// A bare `bun test` in the plugins root runs every plugin's tests in one process, where mocks leak.
+		if (project === 'packages/plugins') {
+			for (const check of ALL_PLUGINS) add(check);
+
+			continue;
+		}
+
 		if (project.startsWith('packages/plugins/')) {
 			if (!exists(`${project}/package.json`)) {
 				continue;

@@ -20,6 +20,26 @@ _Avoid_: Settings, settings page
 
 ### Addons
 
+**Addon**:
+A plugin, theme, icon pack or font a user installs into Unbound.
+_Avoid_: Extension, add-on
+
+**Manifest**:
+An addon's `manifest.json`, the source of truth for its id, name, version and authors.
+_Avoid_: Metadata, addon info
+
+**Feature**:
+One independently loaded part of an addon, such as a patch, often with a setting that turns it on.
+_Avoid_: Submodule, sub-plugin
+
+**Command**:
+A slash command an addon registers in Discord's chat input.
+_Avoid_: Chat command, application command
+
+**Addon scope**:
+The globals object a plugin bundle is evaluated with, such as its own `patcher`, `logger` and timers; everything registered through it is disposed when the plugin stops.
+_Avoid_: Sandbox, plugin environment
+
 **Capability**:
 A named permission to use one part of the native bridge, such as `native.objc.invoke`, granted to an addon per platform.
 _Avoid_: Permission, entitlement
