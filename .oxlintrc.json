@@ -215,6 +215,17 @@
 			}
 		},
 		{
+			"files": ["packages/client/src/**"],
+			"rules": {
+				"react/no-multi-comp": "error",
+				"react/no-unstable-nested-components": "error",
+				"react/jsx-no-constructed-context-values": "error",
+				"react/no-object-type-as-default-prop": "error",
+				"react/function-component-definition": "error",
+				"import/no-cycle": "error"
+			}
+		},
+		{
 			"files": ["packages/loader/bootstrap/*.js"],
 			"rules": {
 				"eslint/no-unused-expressions": "off"

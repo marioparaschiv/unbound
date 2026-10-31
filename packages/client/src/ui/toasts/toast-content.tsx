@@ -1,10 +1,8 @@
-import type { DesignModule } from '@unbound-app/types/components';
-import type { ComponentProps, ComponentType } from 'react';
-import { createElement, memo } from 'react';
+import type { ComponentType } from 'react';
 import { View } from 'react-native';
+import { memo } from 'react';
 
-import { Discord } from '~/metro/components';
-
+import ToastField from './toast-field';
 import useStyles from './toast.style';
 
 type ToastContentProps = {
@@ -12,26 +10,14 @@ type ToastContentProps = {
 	content?: string;
 };
 
-type FieldProps = {
-	value: string | ComponentType;
-} & Omit<ComponentProps<DesignModule['Text']>, 'children'>;
-
-function Field({ value, ...props }: FieldProps) {
-	if (typeof value === 'function') {
-		return createElement(value);
-	}
-
-	return <Discord.Text {...props}>{value}</Discord.Text>;
-}
-
 function ToastContent({ title, content }: ToastContentProps) {
 	const styles = useStyles();
 
 	return (
 		<View style={styles.contentContainer}>
-			{title ? <Field value={title} variant='text-sm/semibold' /> : null}
+			{title ? <ToastField value={title} variant='text-sm/semibold' /> : null}
 			{content ? (
-				<Field
+				<ToastField
 					value={content}
 					style={styles.content}
 					variant='text-sm/normal'
