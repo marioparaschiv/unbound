@@ -13,14 +13,10 @@ import {
 import { SubmitCallout } from '~/components/submit/submit-callout';
 import { SubmitSection } from '~/components/submit/submit-section';
 import type { ApiErrorDetails } from '~/lib/api/error-details';
-import { repositoryAddonsQuery } from '~/queries/submissions/submissions';
 import { Field, FieldError, FieldLabel } from '~/components/ui/field';
-import usePrefetchIntent from '~/queries/use-prefetch-intent';
 import GitHubIcon from '~/components/icons/github';
-import Avatar from '~/components/ui/avatar';
-import { Button } from '~/components/ui/button';
+import RepositoryShortcuts from '~/components/submit/repository-shortcuts';
 import Spinner from '~/components/ui/spinner';
-import Text from '~/components/ui/text';
 
 type RepositoryPickerProps = {
 	defaultValue: string;
@@ -33,36 +29,6 @@ type RepositoryPickerProps = {
 	/** Called with the repository as `owner/name`. */
 	onPick: (repository: string) => void;
 };
-
-type RepositoryShortcutProps = {
-	entry: PushableRepository;
-	disabled: boolean;
-	onPick: () => void;
-};
-
-function RepositoryShortcut({ entry, disabled, onPick }: RepositoryShortcutProps) {
-	const { repository, ownerAvatarUrl } = entry;
-	const prefetch = usePrefetchIntent(repositoryAddonsQuery({ repository }));
-
-	return (
-		<Button
-			type='button'
-			variant='outline'
-			size='sm'
-			disabled={disabled}
-			onClick={onPick}
-			{...prefetch}
-		>
-			<Avatar
-				src={ownerAvatarUrl}
-				fallback={repository.charAt(0).toUpperCase()}
-				alt=''
-				className='rounded-[5px] size-4.5 font-semibold text-[10px]'
-			/>
-			{repository}
-		</Button>
-	);
-}
 
 function RepositoryPicker({
 	defaultValue,
@@ -133,21 +99,16 @@ function RepositoryPicker({
 				</form.Field>
 
 				{repositories.length > 0 ? (
-					<div className='flex flex-col gap-2'>
-						<Text variant='text-xs' color='muted'>
-							Repositories you can push to
-						</Text>
-						<div className='flex flex-wrap gap-2'>
-							{repositories.map((entry) => (
-								<RepositoryShortcut
-									key={entry.repository}
-									entry={entry}
-									disabled={disabled}
-									onPick={() => pick(entry.repository)}
-								/>
-							))}
-						</div>
-					</div>
+					<form.Subscribe selector={(state) => state.values.repository}>
+						{(query) => (
+							<RepositoryShortcuts
+								repositories={repositories}
+								query={query}
+								disabled={disabled}
+								onPick={pick}
+							/>
+						)}
+					</form.Subscribe>
 				) : null}
 			</form>
 		</SubmitSection>

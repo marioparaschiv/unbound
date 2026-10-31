@@ -42,8 +42,6 @@ type SubmitFlow = {
 	submit: (details: SubmissionDetails) => void;
 };
 
-const SHORTCUT_LIMIT = 12;
-
 /**
  * @description Drives the submit flow: read a repository at a ref, preview one of its addons, submit it.
  * @param options The source to start from and what to do once submitted.
@@ -101,7 +99,7 @@ function useSubmitFlow({
 	}
 
 	return {
-		repositories: repositories.data?.repositories.slice(0, SHORTCUT_LIMIT) ?? [],
+		repositories: repositories.data?.repositories ?? [],
 		listing: listing.data,
 		path,
 		request,
