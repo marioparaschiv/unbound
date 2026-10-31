@@ -19,5 +19,12 @@
 	"version": "1.0.2",
 	"icon": "UserCircleIcon",
 	"minNativePluginApi": "1.0.0",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "f101a30f5d718c17e198f545fed09740a522e6e353c4011b756ab616bf0c74791e4a6b93d5a0998fd5f7c1c28008ab76f4cf2f92bcff31462fa57505e9ce07ad"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "oAWhzR1NYBLOsDgJ6nc/68i3hafF3fUxDNWMku6e3qjIn2q4kVbSwS8MvS/Srjg6ZbyNH0+RmrQcMnZR3htrBw=="
+	}
 }
