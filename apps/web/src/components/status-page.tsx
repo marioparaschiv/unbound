@@ -1,15 +1,10 @@
-import type { ComponentType, ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
+import type { ReactNode } from 'react';
 
 import Logo from '~/components/icons/logo';
 import Text from '~/components/ui/text';
 
-type IconProps = {
-	size?: number;
-};
-
 type StatusPageProps = {
-	icon: ComponentType<IconProps>;
 	title: string;
 	description: string;
 	/** A short machine code shown under the description, e.g. "404". */
@@ -17,7 +12,7 @@ type StatusPageProps = {
 	actions?: ReactNode;
 };
 
-function StatusPage({ icon: Icon, title, description, code, actions }: StatusPageProps) {
+function StatusPage({ title, description, code, actions }: StatusPageProps) {
 	return (
 		<div className='flex flex-col items-center justify-center flex-1 dotted-bg px-4'>
 			<div className='flex flex-col items-center gap-8 w-full max-w-sm'>
@@ -25,9 +20,6 @@ function StatusPage({ icon: Icon, title, description, code, actions }: StatusPag
 					<Logo className='size-20' />
 				</Link>
 				<div className='flex flex-col items-center gap-3 text-center'>
-					<div className='flex justify-center items-center bg-muted rounded-control size-10 text-muted-foreground'>
-						<Icon size={20} />
-					</div>
 					<div className='flex flex-col items-center gap-1'>
 						<h1 className='text-2xl font-bold tracking-tight'>{title}</h1>
 						<p className='text-sm text-muted-foreground text-balance'>{description}</p>

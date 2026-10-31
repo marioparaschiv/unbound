@@ -1,7 +1,6 @@
-import { IconAlertWarning, IconBan, IconClock, IconHourglass, IconLock } from 'nucleo-micro-bold';
 import { Link, createFileRoute } from '@tanstack/react-router';
-import type { ComponentType, ReactNode } from 'react';
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { z } from 'zod/mini';
 
 import type { AuthErrorKind } from '~/lib/auth/auth-errors';
@@ -9,14 +8,9 @@ import { getAuthErrorKind } from '~/lib/auth/auth-errors';
 import StatusPage from '~/components/status-page';
 import { Button } from '~/components/ui/button';
 
-type IconProps = {
-	size?: number;
-};
-
 type ErrorCopy = {
 	title: string;
 	description: string;
-	icon: ComponentType<IconProps>;
 };
 
 type RetryButtonProps = {
@@ -30,31 +24,26 @@ const COPY: Record<AuthErrorKind, ErrorCopy> = {
 		title: 'Too Many Attempts',
 		description:
 			'You tried to sign in too many times in a short period. Wait a moment, then try again.',
-		icon: IconClock,
 	},
 	banned: {
 		title: 'Account Suspended',
 		description:
 			'This account has been suspended from Unbound. If you believe this is a mistake, contact us on Discord.',
-		icon: IconBan,
 	},
 	denied: {
 		title: 'Sign-in Not Completed',
 		description:
 			'Discord did not confirm your identity. Make sure you approve the request and use the account you signed up with.',
-		icon: IconLock,
 	},
 	expired: {
 		title: 'Sign-in Session Expired',
 		description:
 			'Your sign-in took too long or was opened in another tab. Start again to continue.',
-		icon: IconHourglass,
 	},
 	unknown: {
 		title: 'Something Went Wrong',
 		description:
 			'We could not sign you in. Try again, and reach out on Discord if it keeps happening.',
-		icon: IconAlertWarning,
 	},
 };
 
@@ -117,7 +106,6 @@ function AuthErrorPage() {
 
 	return (
 		<StatusPage
-			icon={copy.icon}
 			title={copy.title}
 			description={copy.description}
 			code={error}
