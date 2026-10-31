@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3]
+
+### Fixed
+
+- Painting tag gradients on iOS reuses colors instead of creating them again for every label.
+
 ## [1.0.2]
 
 ### Fixed

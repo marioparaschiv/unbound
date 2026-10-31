@@ -25,7 +25,25 @@ export function createNativeColors(
 		.invokeAsync(UIColor, 'clearColor', [])
 		.catch(() => null) as Promise<NativeObjectHandle | null>;
 
-	async function cgColor(hex: string, alpha: number = 1): Promise<NativeObjectHandle | null> {
+	const cgColors = new Map<string, Promise<NativeObjectHandle | null>>();
+
+	function cgColor(hex: string, alpha: number = 1): Promise<NativeObjectHandle | null> {
+		const key = `${hex.toLowerCase()}:${alpha}`;
+		const cached = cgColors.get(key);
+
+		if (cached) return cached;
+
+		const created = createCgColor(hex, alpha);
+
+		cgColors.set(key, created);
+		void created.then((color) => {
+			if (!color) cgColors.delete(key);
+		});
+
+		return created;
+	}
+
+	async function createCgColor(hex: string, alpha: number): Promise<NativeObjectHandle | null> {
 		if (!HEX_COLOR.test(hex)) return null;
 
 		const value = Number.parseInt(hex.slice(1), 16);
