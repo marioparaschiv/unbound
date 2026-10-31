@@ -25,7 +25,7 @@ export async function inspectNative(
 	unbound: UnboundGlobal,
 	request: InspectRequest,
 ): Promise<InspectReport> {
-	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
+	const manager = Reflect.get(unbound, 'plugins') as UnboundGlobal['plugins'] & PluginManager;
 	const holder = (platform: string, capabilities: NativePluginCapability[]) =>
 		[...manager.entities.values()].find(
 			(entity) =>

@@ -56,6 +56,10 @@ const config: RolldownOptions = {
 			$$DEV$$: JSON.stringify(IS_DEV_BUILD),
 		},
 	},
+	// The store page imports the ADDON.md contract but never parses YAML; yaml declares no `sideEffects`.
+	treeshake: {
+		moduleSideEffects: [{ test: /[\\/]node_modules[\\/]yaml[\\/]/, sideEffects: false }],
+	},
 	output: [
 		{
 			postBanner: 'var global = globalThis;',

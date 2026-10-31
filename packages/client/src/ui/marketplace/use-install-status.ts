@@ -2,12 +2,11 @@ import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useEffect } from 'react';
 
+import { getInstalledVersion } from '~/marketplace/install';
 import type { InstallStatus } from '~/marketplace/catalog';
 import { getInstallStatus } from '~/marketplace/catalog';
 import useForceUpdate from '~/ui/hooks/use-force-update';
 import { Manager } from '~/addons/manager';
-
-import { getInstalledVersion } from './targets';
 
 /**
  * @description Compares a listed addon with the installed copy, re-rendering when the manager changes.

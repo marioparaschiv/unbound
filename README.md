@@ -10,10 +10,10 @@ Install plugins, themes, fonts, and icon packs on the official Discord app, on b
 
 <br />
 
-[![Stars](https://img.shields.io/github/stars/marioparaschiv/unbound?style=for-the-badge&labelColor=0c0c0c&color=c74050)](https://github.com/marioparaschiv/unbound/stargazers)
-[![Release](https://img.shields.io/github/v/release/marioparaschiv/unbound?style=for-the-badge&labelColor=0c0c0c&color=c74050)](https://github.com/marioparaschiv/unbound/releases)
-[![Discord](https://img.shields.io/discord/950850315601711176?style=for-the-badge&label=discord&labelColor=0c0c0c&color=c74050)](https://discord.gg/unbound)
-[![License](https://img.shields.io/badge/license-GPL--3.0-c74050?style=for-the-badge&labelColor=0c0c0c)](./LICENSE)
+[![Stars](https://img.shields.io/github/stars/marioparaschiv/unbound?style=for-the-badge&labelColor=0c0c0c&color=c03f4e)](https://github.com/marioparaschiv/unbound/stargazers)
+[![Release](https://img.shields.io/github/v/release/marioparaschiv/unbound?style=for-the-badge&labelColor=0c0c0c&color=c03f4e)](https://github.com/marioparaschiv/unbound/releases)
+[![Discord](https://img.shields.io/discord/950850315601711176?style=for-the-badge&label=discord&labelColor=0c0c0c&color=c03f4e)](https://discord.gg/unbound)
+[![License](https://img.shields.io/badge/license-GPL--3.0-c03f4e?style=for-the-badge&labelColor=0c0c0c)](./LICENSE)
 
 **[Documentation](https://docs.unbound.rip)** · [Install](https://docs.unbound.rip/user-guide/installing) · [Discord](https://discord.gg/unbound)
 

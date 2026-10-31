@@ -1,18 +1,28 @@
-/** @internal */
-export {
-	Plugins as plugins,
-	Themes as themes,
-	Icons as icons,
-	Fonts as fonts,
-} from '~/addons/managers';
+import * as IconPacks from '~/icon-packs/api';
+import * as Sync from '~/sync/api';
+
+export * as marketplace from '~/marketplace/api';
+export * as iconPacks from '~/icon-packs/api';
+export * as builtins from '~/builtins/api';
 export * as commands from '~/commands/api';
 export * as settings from '~/settings/api';
 export * as native from '~/native/native';
 export * as dialogs from '~/dialogs/api';
 export * as patcher from '~/patcher/api';
+export * as plugins from '~/plugins/api';
 export * as storage from '~/storage/api';
+export * as updates from '~/updates/api';
 export * as assets from '~/assets/api';
+export * as themes from '~/themes/api';
 export * as toasts from '~/toasts/api';
+export * as fonts from '~/fonts/api';
+export * as flux from '~/flux/api';
 export * as i18n from '~/i18n/api';
+export * as sync from '~/sync/api';
 export * as fs from '~/native/fs';
 export * as metro from '~/metro';
+
+/** @deprecated Use iconPacks */
+export const icons = IconPacks;
+/** @deprecated Use sync */
+export const cloudSync = Sync;

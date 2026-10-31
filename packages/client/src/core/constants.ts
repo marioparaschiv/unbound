@@ -50,8 +50,9 @@ export const Screens = {
 	Developer: 'UNBOUND_DEVELOPER',
 	Assets: 'UNBOUND_ASSETS',
 	Toasts: 'UNBOUND_TOASTS',
-	CloudSync: 'UNBOUND_CLOUD_SYNC',
+	Sync: 'UNBOUND_CLOUD_SYNC',
 	Marketplace: 'UNBOUND_MARKETPLACE',
+	StorePage: 'UNBOUND_STORE_PAGE',
 	Updates: 'UNBOUND_UPDATES',
 	PanelHost: 'UNBOUND_CUSTOM',
 } as const;

@@ -3,9 +3,11 @@ import type {
 	NativeRuntimeEventName,
 	NativeSerializableObject,
 } from '@unbound-app/types';
+import type { FluxAction } from '@unbound-app/types/flux';
 
 import { NativePluginUnavailableError } from '~/native/errors';
-import { findByPropsLazy } from '~/metro/wrappers';
+import { Dispatcher } from '~/flux/modules';
+import { onAction } from '~/flux/api';
 
 type FluxMessage = {
 	author?: { bot?: boolean; id?: string; username?: string };
@@ -20,7 +22,7 @@ type FluxEmoji = {
 	name?: string;
 };
 
-type FluxRuntimeEvent = {
+type FluxRuntimeEvent = FluxAction & {
 	channelId?: string;
 	channel_id?: string;
 	emoji?: FluxEmoji | null;
@@ -32,11 +34,6 @@ type FluxRuntimeEvent = {
 	message_id?: string;
 	userId?: string;
 	user_id?: string;
-};
-
-type FluxDispatcher = {
-	subscribe?: (event: string, listener: (event: FluxRuntimeEvent) => void) => void;
-	unsubscribe?: (event: string, listener: (event: FluxRuntimeEvent) => void) => void;
 };
 
 const runtimeEventActions: Record<NativeRuntimeEventName, readonly string[]> = {
@@ -62,8 +59,6 @@ const runtimeEventActions: Record<NativeRuntimeEventName, readonly string[]> = {
 		'MESSAGE_REACTION_REMOVE_EMOJI',
 	],
 };
-
-const fluxDispatcher = findByPropsLazy('dispatch', 'subscribe') as FluxDispatcher;
 
 function createRuntimeEventPayload(
 	eventName: NativeRuntimeEventName,
@@ -118,30 +113,20 @@ function createRuntimeEventPayload(
 export function createFluxRuntimeBridge(): NativeRuntimeBridge {
 	return {
 		subscribe(eventName, listener) {
-			const dispatcher = fluxDispatcher;
-
-			if (!dispatcher?.subscribe || !dispatcher.unsubscribe) {
+			if (!Dispatcher?.subscribe || !Dispatcher.unsubscribe) {
 				throw new NativePluginUnavailableError(
 					'The Discord runtime event dispatcher is unavailable.',
 				);
 			}
 
 			let active = true;
-			const subscriptions = runtimeEventActions[eventName].map((action) => {
-				function callback(event: FluxRuntimeEvent): void {
+			const removers = runtimeEventActions[eventName].map((action) =>
+				onAction(action, (event: FluxRuntimeEvent) => {
 					if (!active) return;
 
-					try {
-						listener(createRuntimeEventPayload(eventName, action, event));
-					} catch (error) {
-						console.error('Native runtime event listener failed:', error);
-					}
-				}
-
-				dispatcher.subscribe?.(action, callback);
-
-				return { action, callback };
-			});
+					listener(createRuntimeEventPayload(eventName, action, event));
+				}),
+			);
 
 			return {
 				get active() {
@@ -152,8 +137,8 @@ export function createFluxRuntimeBridge(): NativeRuntimeBridge {
 
 					active = false;
 
-					for (const { action, callback } of subscriptions) {
-						dispatcher.unsubscribe?.(action, callback);
+					for (const remove of removers) {
+						remove();
 					}
 				},
 			};

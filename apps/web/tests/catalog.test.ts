@@ -151,4 +151,29 @@ describe('GET /api/v1/catalog', () => {
 
 		expect((await get(before)).status).toBe(304);
 	});
+
+	test('points a version with ADDON.md at the page in its CDN folder, and others at none', async () => {
+		const themed = manifest('cat.theme', '1.1.0', { type: 'theme', main: 'theme.json' });
+
+		await seedVersion(ctx, ownerId, themed, undefined, { addonMd: 'A theme.' });
+
+		const catalog = await client('GET /api/v1/catalog', { response: catalogResponseSchema });
+		const pages = catalog.addons.map((entry) => [entry.id, entry.latestVersion.pageUrl]);
+
+		expect(pages).toEqual([
+			['cat.plugin', null],
+			['cat.theme', 'http://cdn.localhost:3000/addons/cat.theme/1.1.0/ADDON.md'],
+		]);
+	});
+
+	test('points a sourced version without ADDON.md at no page', async () => {
+		await seedVersion(ctx, ownerId, manifest('cat.plugin', '1.2.0'), undefined, {
+			addonMd: null,
+		});
+
+		const catalog = await client('GET /api/v1/catalog', { response: catalogResponseSchema });
+		const plugin = catalog.addons.find((entry) => entry.id === 'cat.plugin');
+
+		expect(plugin?.latestVersion).toMatchObject({ version: '1.2.0', pageUrl: null });
+	});
 });

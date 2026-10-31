@@ -2,7 +2,6 @@ import type {
 	MetroFunctionSignatureOrArray,
 	MetroPropertyRecordOrArray,
 	MetroStringFindWithOptions,
-	MetroStoreOptions,
 	MetroInternalOptions,
 	MetroSearchOptions,
 	MetroBulkFind,
@@ -68,20 +67,6 @@ export function findByPrototypes<
 	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
 >(...args: T): AnyProps {
 	return Search.findByPrototypes<U, T>(...lazyByDefault(args));
-}
-
-/**
- * @description Finds a flux store by name. Lazy unless `{ lazy: false }` is passed: the search runs on first access.
- * @template U The union of requested store names.
- * @template T The argument tuple, optionally ending in store search options.
- * @param args The store name(s) to search for, optionally followed by options (`short` defaults to `true`).
- * @returns The matched store.
- */
-export function findStore<
-	U extends string,
-	T extends U[] | MetroStringFindWithOptions<U, MetroStoreOptions>,
->(...args: T): AnyProps {
-	return Search.findStore<U, T>(...lazyByDefault(args));
 }
 
 /**

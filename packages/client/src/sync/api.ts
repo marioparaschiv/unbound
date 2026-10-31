@@ -19,13 +19,22 @@ import type { SyncStrategy } from '~/sync/merge';
 import { API_URL } from '~/core/constants';
 import { getBucket } from '~/storage/api';
 
-/** The settings store Cloud Sync keeps its session and last agreed document in. Never synced. */
+/**
+ * The settings store Sync keeps its session and last agreed document in. Never synced.
+ * @internal
+ */
 export const SYNC_STORE = 'unbound::sync';
 
-/** A signed-in Cloud Sync account. */
-export type SyncSession = {
+type SyncSession = {
 	token: string;
 	user: Caller;
+};
+
+/** The account signed in to Sync. */
+export type SyncAccount = {
+	id: string;
+	name: string;
+	image: string | null;
 };
 
 /** Which way automatic syncs move changes on this device. */
@@ -39,21 +48,27 @@ const MODE_STRATEGIES: Record<SyncMode, SyncStrategy> = {
 
 type ApiRequest = ReturnType<typeof createApiClient<Api>>;
 
-const logger = createLogger('Cloud Sync');
+const logger = createLogger('Sync');
 const Store = getBucket(SYNC_STORE);
 
 let running: Promise<boolean> | undefined;
 let rerun = false;
 let applying = false;
 
-/** @returns The signed-in account, or `null`. */
-export function getSession(): SyncSession | null {
+function readSession(): SyncSession | null {
 	return Store.get<SyncSession | null>('session', null);
+}
+
+/** @returns The signed-in account, or `null`. */
+export function getSession(): SyncAccount | null {
+	const user = readSession()?.user;
+
+	return user ? { id: user.id, name: user.name, image: user.image } : null;
 }
 
 /** @returns Whether this device syncs automatically. */
 export function isEnabled(): boolean {
-	return Boolean(getSession()) && Store.get('enabled', false) && !needsFirstSyncChoice();
+	return Boolean(readSession()) && Store.get('enabled', false) && !needsFirstSyncChoice();
 }
 
 /** @returns Which way automatic syncs move changes on this device. */
@@ -72,12 +87,15 @@ function needsFirstSyncChoice(): boolean {
 	return Store.get('pendingChoice', false);
 }
 
-/** @returns Whether a sync is applying remote changes right now, so the changes it makes can be told apart. */
+/**
+ * @returns Whether a sync is applying remote changes right now, so the changes it makes can be told apart.
+ * @internal
+ */
 export function isApplying(): boolean {
 	return applying;
 }
 
-function client(session: SyncSession | null = getSession()): ApiRequest {
+function client(session: SyncSession | null = readSession()): ApiRequest {
 	const headers = session ? { authorization: `Bearer ${session.token}` } : undefined;
 
 	return createApiClient<Api>({ baseUrl: API_URL, headers });
@@ -129,7 +147,7 @@ function isConflict(error: Error): boolean {
 }
 
 async function run(strategy: SyncStrategy): Promise<boolean> {
-	const session = getSession();
+	const session = readSession();
 
 	if (!session) {
 		return false;
@@ -169,7 +187,7 @@ async function run(strategy: SyncStrategy): Promise<boolean> {
  * @param strategy How to reconcile the two sides; this device's mode by default.
  * @returns Whether the sync succeeded. Failures are recorded as `lastError` in {@link SYNC_STORE}.
  */
-export function sync(strategy: SyncStrategy = MODE_STRATEGIES[getMode()]): Promise<boolean> {
+export function now(strategy: SyncStrategy = MODE_STRATEGIES[getMode()]): Promise<boolean> {
 	if (running) {
 		rerun = true;
 
@@ -223,7 +241,7 @@ export async function signIn(): Promise<boolean> {
 		Store.set('pendingChoice', remote.revision > 0);
 
 		if (remote.revision === 0) {
-			void sync('push');
+			void now('push');
 		}
 
 		return true;
@@ -253,7 +271,7 @@ export function setEnabled(enabled: boolean) {
 	Store.set('enabled', enabled);
 
 	if (isEnabled()) {
-		void sync();
+		void now();
 	}
 }
 
@@ -265,7 +283,7 @@ export function setMode(mode: SyncMode) {
 	Store.set('mode', mode);
 
 	if (isEnabled()) {
-		void sync();
+		void now();
 	}
 }
 
@@ -278,7 +296,7 @@ export function setMode(mode: SyncMode) {
 export function resolveFirstSync(strategy: SyncStrategy): Promise<boolean> {
 	Store.set('pendingChoice', false);
 
-	return sync(strategy);
+	return now(strategy);
 }
 
 /**
@@ -286,7 +304,7 @@ export function resolveFirstSync(strategy: SyncStrategy): Promise<boolean> {
  * uploaded again. Other devices keep what they have installed.
  * @returns Whether the document was deleted. Failures are recorded as `lastError`.
  */
-export async function deleteCloudData(): Promise<boolean> {
+export async function deleteData(): Promise<boolean> {
 	try {
 		await client()('DELETE /api/v1/sync', { response: syncDeleteResponseSchema });
 
@@ -297,7 +315,7 @@ export async function deleteCloudData(): Promise<boolean> {
 
 		return true;
 	} catch (error) {
-		logger.error('Failed to delete the Cloud Sync data:', error);
+		logger.error('Failed to delete the Sync data:', error);
 		Store.set('lastError', toError(error).message);
 
 		return false;
@@ -313,9 +331,9 @@ export default {
 	needsFirstSyncChoice,
 	setMode,
 	resolveFirstSync,
-	sync,
+	now,
 	signIn,
 	signOut,
 	setEnabled,
-	deleteCloudData,
+	deleteData,
 };
