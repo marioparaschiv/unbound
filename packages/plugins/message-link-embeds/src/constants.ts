@@ -40,4 +40,6 @@ export const TABLE_METRICS = [
 export const SCROLL_STATE = ['isTracking', 'isDragging', 'isDecelerating'];
 
 export const INITIAL_SCAN_DELAYS = [0, 300, 1_500];
+
+export const EMBED_HOST_TAG = 0x11e4b3d;
 export const WINDOW_SCAN_DELAY = 150;
