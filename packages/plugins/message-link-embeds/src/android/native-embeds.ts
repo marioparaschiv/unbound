@@ -341,13 +341,11 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		}
 	}
 
-	const scans = scheduleStartupScans('Message Link Embeds', scanVisible);
+	scheduleStartupScans('Message Link Embeds', scanVisible);
 
 	return {
 		drawn: () => embeds.size,
 		dispose() {
-			for (const scan of scans) clearTimeout(scan);
-
 			disposed = true;
 			retries.clear();
 			controller.abort();

@@ -5,7 +5,6 @@ import { createLinkedMessages, type LinkedMessages } from '~/linked-messages';
 import { reportSurfaceLayout, teardownSurface, type EmbeddedSurface } from '~/ios/surfaces';
 import { registerMessageSurface } from '~/components/message-surface';
 import { SurfaceHeightCache } from '~/surface-layout';
-import { createTimers, type Timers } from '~/timers';
 import type { Renderers } from '~/modules';
 
 /** Everything one run of the plugin owns, from `start` to `stop`. */
@@ -14,7 +13,6 @@ export type Session = {
 	fabric: NativeFabricBridge;
 	renderers: Renderers;
 	signal: AbortSignal;
-	timers: Timers;
 	surfaceModule: string;
 	linked: LinkedMessages;
 	cells: Map<string, TrackedCell>;
@@ -42,7 +40,6 @@ export function createSession(
 		fabric,
 		renderers,
 		signal: controller.signal,
-		timers: createTimers(),
 		surfaceModule: '',
 		linked: createLinkedMessages(controller.signal, (key) => wakeWaitingCells(session, key)),
 		cells: new Map(),
@@ -64,7 +61,6 @@ export function createSession(
 	// The registered surface keeps this session alive after `stop`, so it lets go of every handle and message.
 	function dispose() {
 		controller.abort();
-		session.timers.clear();
 
 		for (const cell of session.cells.values()) removeLabelHooks(cell);
 

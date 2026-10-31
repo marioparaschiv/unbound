@@ -107,7 +107,7 @@ function clearCell(session: Session, key: string) {
 	const tracked = session.cells.get(key);
 
 	if (tracked) {
-		session.timers.cancel(tracked.retryTimer);
+		clearTimeout(tracked.retryTimer);
 		removeLabelHooks(tracked);
 		session.cells.delete(key);
 	}
@@ -197,7 +197,7 @@ async function processCell(
 	}
 
 	tracked.phase = 'retrying';
-	tracked.retryTimer = session.timers.later(() => {
+	tracked.retryTimer = setTimeout(() => {
 		tracked.retryTimer = undefined;
 		tracked.phase = undefined;
 		scheduleCell(session, cell);
@@ -226,7 +226,7 @@ export function scheduleCell(session: Session, cell: NativeObjectHandle) {
 	// A cleared or rescheduled cell gets a new version, which retires this lookup.
 	const isCurrent = () => !session.signal.aborted && session.cells.get(key)?.version === version;
 
-	session.timers.later(() => void processCell(session, key, cell, isCurrent));
+	setTimeout(() => void processCell(session, key, cell, isCurrent));
 }
 
 /**
@@ -341,13 +341,13 @@ export function hookMessageCells(session: Session): () => void {
 				if (!key) return;
 
 				clearCell(session, key);
-				session.timers.later(() => scheduleCell(session, self));
+				setTimeout(() => scheduleCell(session, self));
 			},
 		}),
 	];
 
 	for (const delay of INITIAL_SCAN_DELAYS) {
-		session.timers.later(() => void scanVisibleCells(session), delay);
+		setTimeout(() => void scanVisibleCells(session), delay);
 	}
 
 	return () => {

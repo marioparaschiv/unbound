@@ -1,3 +1,5 @@
+import { flux } from '@unbound-app/api';
+
 import { captureBottomAnchor, scheduleReactionScrollCorrection } from '~/ios/scroll-anchor';
 import { reconcileSurfaceText, type EmbeddedSurface } from '~/ios/surfaces';
 import { reactionSnapshot } from '~/reaction-state';
@@ -13,7 +15,6 @@ import { MessageStore } from '~/modules';
  * @returns A function that stops listening.
  */
 export function subscribeMessageStore(session: Session): () => void {
-	const { timers } = session;
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	let scanTimer: ReturnType<typeof setTimeout> | undefined;
 	let windowSignature = '';
@@ -51,8 +52,8 @@ export function subscribeMessageStore(session: Session): () => void {
 		if (signature === windowSignature) return;
 
 		windowSignature = signature;
-		timers.cancel(scanTimer);
-		scanTimer = timers.later(() => {
+		clearTimeout(scanTimer);
+		scanTimer = setTimeout(() => {
 			scanTimer = undefined;
 			void scanVisibleCells(session);
 		}, WINDOW_SCAN_DELAY);
@@ -66,18 +67,12 @@ export function subscribeMessageStore(session: Session): () => void {
 			}
 		}
 
-		syncTimer ??= timers.later(() => {
+		syncTimer ??= setTimeout(() => {
 			syncTimer = undefined;
 			syncReactions();
 		});
 		scheduleWindowScan();
 	}
 
-	MessageStore.addChangeListener(onChange);
-
-	return () => {
-		MessageStore.removeChangeListener(onChange);
-		timers.cancel(syncTimer);
-		timers.cancel(scanTimer);
-	};
+	return flux.onStoreChange(MessageStore, onChange);
 }

@@ -9,7 +9,7 @@ import {
 
 import { nativeString } from '~/ios/objc';
 import type { TextRange } from '~/link-targets';
-import { PLUGIN_ID, Surface } from '~/constants';
+import { Surface } from '~/constants';
 
 type FontRun = { NSFont?: NativeObjectHandle };
 
@@ -88,7 +88,7 @@ export function surfaceInsertion(
 		view: host,
 		width,
 		height,
-		owner: PLUGIN_ID,
+		owner: addon.id,
 	});
 
 	if (!attachment) return null;

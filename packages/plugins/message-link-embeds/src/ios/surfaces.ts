@@ -22,7 +22,7 @@ import { linkFont, surfaceInsertion } from '~/ios/attachment';
 import type { EmbeddedContent } from '~/embedded-content';
 import type { Message, RowGenerator } from '~/modules';
 import type { Session } from '~/ios/session';
-import { PLUGIN_ID, Surface } from '~/constants';
+import { Surface } from '~/constants';
 
 type Timer = ReturnType<typeof setTimeout>;
 
@@ -183,7 +183,7 @@ export function updateSurface(
 	const [owned] =
 		text === undefined
 			? []
-			: ownedAttachments(textAttachmentBridge(session.objc), attributedText, text, PLUGIN_ID);
+			: ownedAttachments(textAttachmentBridge(session.objc), attributedText, text, addon.id);
 
 	if (text !== undefined && owned !== undefined) {
 		surface.rendered = attributedText;
@@ -235,8 +235,8 @@ export async function reconcileSurfaceText(session: Session, surface: EmbeddedSu
 }
 
 function clearSurfaceTimers(session: Session, surface: EmbeddedSurface) {
-	session.timers.cancel(surface.layoutTimer);
-	session.timers.cancel(surface.bottomScrollTimer);
+	clearTimeout(surface.layoutTimer);
+	clearTimeout(surface.bottomScrollTimer);
 	clearReactionLayout(session, surface);
 	surface.layoutTimer = undefined;
 	surface.bottomScrollTimer = undefined;
@@ -372,7 +372,7 @@ export async function createSurface(
 				after: () => {
 					if (surface.applying) return;
 
-					session.timers.later(() => void reconcileSurfaceText(session, surface));
+					setTimeout(() => void reconcileSurfaceText(session, surface));
 				},
 			},
 			{ instance: label },
@@ -435,8 +435,8 @@ export function reportSurfaceLayout(session: Session, surfaceId: string, height:
 	if (Math.abs((surface.pendingHeight ?? surface.height) - fittedHeight) < 2) return;
 
 	surface.pendingHeight = fittedHeight;
-	session.timers.cancel(surface.layoutTimer);
-	surface.layoutTimer = session.timers.later(() => {
+	clearTimeout(surface.layoutTimer);
+	surface.layoutTimer = setTimeout(() => {
 		const settledHeight = surface.pendingHeight;
 
 		surface.layoutTimer = undefined;

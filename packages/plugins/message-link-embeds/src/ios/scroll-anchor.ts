@@ -39,7 +39,7 @@ function scheduleBottomScrollCorrection(
 	surface: EmbeddedSurface,
 	table: NativeObjectHandle,
 ) {
-	const { objc, timers } = session;
+	const { objc } = session;
 
 	if (!surface.bottomAnchor.pending || surface.bottomScrollTimer || surface.bottomScrollPending) {
 		return;
@@ -99,7 +99,7 @@ function scheduleBottomScrollCorrection(
 			// The row has not published its new height yet; look again next frame.
 			if (surface.bottomAnchor.pending && attempts < BottomScroll.attempts) {
 				attempts++;
-				surface.bottomScrollTimer = timers.later(() => void correct(), BottomScroll.frame);
+				surface.bottomScrollTimer = setTimeout(() => void correct(), BottomScroll.frame);
 
 				return;
 			}
@@ -112,7 +112,7 @@ function scheduleBottomScrollCorrection(
 		}
 	}
 
-	surface.bottomScrollTimer = timers.later(() => void correct(), BottomScroll.frame);
+	surface.bottomScrollTimer = setTimeout(() => void correct(), BottomScroll.frame);
 }
 
 /**
@@ -121,7 +121,7 @@ function scheduleBottomScrollCorrection(
  * @param surface The embed.
  */
 export function clearReactionLayout(session: Session, surface: EmbeddedSurface) {
-	session.timers.cancel(surface.reactionLayoutTimer);
+	clearTimeout(surface.reactionLayoutTimer);
 	surface.reactionLayoutTimer = undefined;
 }
 
@@ -132,7 +132,7 @@ export function clearReactionLayout(session: Session, surface: EmbeddedSurface) 
  */
 export function scheduleReactionScrollCorrection(session: Session, surface: EmbeddedSurface) {
 	clearReactionLayout(session, surface);
-	surface.reactionLayoutTimer = session.timers.later(() => {
+	surface.reactionLayoutTimer = setTimeout(() => {
 		surface.reactionLayoutTimer = undefined;
 
 		if (surface.disposed) return;
