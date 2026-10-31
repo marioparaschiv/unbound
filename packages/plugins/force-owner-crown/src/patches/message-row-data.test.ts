@@ -1,11 +1,31 @@
+import { installAddonGlobals } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
-type AfterContext = { args: unknown[]; result: { message?: Record<string, unknown> } };
-type AfterCallback = (context: AfterContext) => void;
+type Row = { message: Record<string, unknown> };
 
-let after: AfterCallback = () => {};
 let platform = 'ios';
 const guilds = new Map<string, { ownerId: string }>();
+
+const scope = installAddonGlobals({
+	manifest: { id: 'astral.force-owner-crown' },
+	unbound: {
+		assets: {
+			getIDByName: (name: string) => (name === 'ic_crown_16px' ? 42 : undefined),
+			getByID: () => ({
+				httpServerLocation: '/assets/images/native/icons',
+				name: 'ic_crown_16px',
+			}),
+		},
+	},
+});
+
+const MessageRowData = { generateMessageRowData: (message: Row['message']): Row => ({ message }) };
+
+scope.metro.register(MessageRowData);
+scope.metro.register({ getAssetUriForEmbed: (id: number) => `embed://${id}` });
+scope.metro.stores.Guilds = { getGuild: (id: string) => guilds.get(id) };
+
+mock.module('@unbound-app/api', () => scope.unbound);
 
 mock.module('react-native', () => ({
 	Image: { resolveAssetSource: () => ({ uri: 'resolved://crown' }) },
@@ -16,47 +36,32 @@ mock.module('react-native', () => ({
 	},
 }));
 
-mock.module('@unbound-app/api', () => ({
-	assets: {
-		getIDByName: (name: string) => (name === 'ic_crown_16px' ? 42 : undefined),
-		getByID: () => ({
-			httpServerLocation: '/assets/images/native/icons',
-			name: 'ic_crown_16px',
-		}),
-	},
-}));
-
-mock.module('~/modules', () => ({
-	AssetUris: { getAssetUriForEmbed: (id: number) => `embed://${id}` },
-	GuildStore: { getGuild: (id: string) => guilds.get(id) },
-	MessageRowData: {},
-	Patcher: {
-		after: (_target: object, _name: string, callback: AfterCallback) => {
-			after = callback;
-
-			return () => {};
-		},
-	},
-}));
-
 const { patchOwnerCrown } = await import('~/patches/message-row-data');
 
 function row(message: Record<string, unknown>) {
-	const result = { message: { ...message } };
-
-	after({ args: [], result });
-
-	return result.message;
+	return MessageRowData.generateMessageRowData({ ...message }).message;
 }
 
 beforeEach(() => {
 	platform = 'ios';
 	guilds.clear();
 	guilds.set('g1', { ownerId: 'owner' });
+	scope.patcher.unpatchAll();
 	patchOwnerCrown();
 });
 
 describe('patchOwnerCrown', () => {
+	test('patches the message row builder under the plugin id', () => {
+		expect(scope.patcher.patches).toEqual([
+			{
+				kind: 'after',
+				target: MessageRowData,
+				method: 'generateMessageRowData',
+				caller: 'astral.force-owner-crown',
+			},
+		]);
+	});
+
 	test("gives the owner's messages the crown", () => {
 		expect(row({ guildId: 'g1', authorId: 'owner' }).roleIcon).toEqual({
 			source: 'embed://42',
@@ -83,6 +88,7 @@ describe('patchOwnerCrown', () => {
 
 	test("uses the APK's drawable on Android", () => {
 		platform = 'android';
+		scope.patcher.unpatchAll();
 		patchOwnerCrown();
 
 		const source = row({ guildId: 'g1', authorId: 'owner' }).roleIcon as { source: string };

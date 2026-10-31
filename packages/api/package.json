@@ -12,7 +12,8 @@
 		"directory": "packages/api"
 	},
 	"files": [
-		"src"
+		"src",
+		"testing"
 	],
 	"types": "./src/index.d.ts",
 	"exports": {
@@ -40,6 +41,7 @@
 		"./settings": "./src/settings.d.ts",
 		"./storage": "./src/storage.d.ts",
 		"./sync": "./src/sync.d.ts",
+		"./testing": "./testing/index.ts",
 		"./themes": "./src/themes.d.ts",
 		"./toasts": "./src/toasts.d.ts",
 		"./ui": "./src/ui.d.ts",

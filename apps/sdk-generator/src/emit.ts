@@ -242,6 +242,36 @@ export function buildGlobal(
 }
 
 /**
+ * @description Builds the `@unbound-app/api` `exports` map: the root, the globals, each module, and the
+ * hand-written testing kit in `packages/api/testing`, which lives outside the generated `src`.
+ * @param entries The emitted module entries.
+ * @returns The map, sorted by subpath.
+ */
+export function buildExports(entries: ModuleEntry[]): Record<string, string> {
+	const exports: Record<string, string> = {
+		'.': './src/index.d.ts',
+		'./global': './src/global.d.ts',
+		'./testing': './testing/index.ts',
+	};
+
+	for (const entry of entries) {
+		if (Object.hasOwn(exports, `./${entry.name}`)) {
+			throw new Error(
+				`Module '${entry.name}' collides with a reserved @unbound-app/api subpath.`,
+			);
+		}
+
+		exports[`./${entry.name}`] = './src/' + relative(API_SRC, entry.out).split('\\').join('/');
+	}
+
+	const ordered: Record<string, string> = {};
+
+	for (const key of Object.keys(exports).sort()) ordered[key] = exports[key];
+
+	return ordered;
+}
+
+/**
  * @description Rewrites `packages/api/package.json` with the derived version and the regenerated
  * `exports` map, preserving every other field.
  * @param version The `<client version>-<hash>` string to write.
@@ -250,23 +280,9 @@ export function buildGlobal(
 export function writeManifest(version: string, entries: ModuleEntry[]) {
 	const manifest = readJson(API_MANIFEST);
 
-	const exports: Record<string, string> = {
-		'.': './src/index.d.ts',
-		'./global': './src/global.d.ts',
-	};
-
-	for (const entry of entries) {
-		const target = './src/' + relative(API_SRC, entry.out).split('\\').join('/');
-
-		exports[`./${entry.name}`] = target;
-	}
-
-	const ordered: Record<string, string> = {};
-
-	for (const key of Object.keys(exports).sort()) ordered[key] = exports[key];
-
 	manifest.version = version;
-	manifest.exports = ordered;
+	manifest.exports = buildExports(entries);
+	manifest.files = ['src', 'testing'];
 
 	writeFileSync(API_MANIFEST, JSON.stringify(manifest, null, '\t') + '\n');
 }
