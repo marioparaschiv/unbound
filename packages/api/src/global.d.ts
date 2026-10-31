@@ -2,6 +2,7 @@
 
 export type {
 	ADDON_KINDS,
+	ADDON_SCOPE_GLOBALS,
 	ADDON_TYPES,
 	AIGlyphTextProps,
 	AILoaderComponent,

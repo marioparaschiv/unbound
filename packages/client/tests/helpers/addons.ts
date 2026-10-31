@@ -153,7 +153,7 @@ export function makeInstance(id: string, log: string[], stopThrows: boolean = fa
 	};
 }
 
-export type SeededAddon = Omit<AddonState<Plugin>, 'context'> & { id: string };
+export type SeededAddon = Omit<AddonState<Plugin>, 'context' | 'scope'> & { id: string };
 
 /** A plugin manager whose bundles evaluate to logging instances named after their source. */
 export class FakeAddons extends Addons<Plugin> {
