@@ -435,6 +435,11 @@ export type AddonHandle<I extends object = object> = {
 	toJSON(): AddonManifest;
 };
 export type AddonKind = (typeof ADDON_KINDS)[number];
+/** The `logger` global a plugin runs with: console levels prefixed with the plugin's name. */
+export type AddonLogger = Record<
+	'log' | 'info' | 'success' | 'warn' | 'error' | 'debug',
+	(...args: unknown[]) => void
+>;
 /** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what the loader and installer record. */
 export type AddonManifest = AuthoredAddonManifest & {
 	/** Set by the loader for an addon it read from disk: the addon's folder name. */

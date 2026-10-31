@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import type { ModuleEntry } from '../src/paths';
 
-import { buildRoot, normalizeForHash } from '../src/emit';
+import { buildGlobal, buildRoot, normalizeForHash } from '../src/emit';
 import { readNamespaceAliases } from '../src/entries';
 import { API_SRC } from '../src/paths';
 
@@ -59,6 +59,26 @@ describe('buildRoot', () => {
 			"export * as assets from './assets';\nexport * as metro from './metro/index';\n",
 		);
 	});
+});
+
+describe('buildGlobal', () => {
+	test('declares the Addon scope globals that lib and React do not', () => {
+		const text = buildGlobal([], new Set<string>(), new Map<string, string>());
+
+		for (const name of ['unbound', 'addon', 'patcher', 'logger', 'commands']) {
+			expect(text).toContain(`const ${name}: AddonScope['${name}'];`);
+		}
+
+		for (const name of [
+			'React',
+			'setTimeout',
+			'setInterval',
+			'clearTimeout',
+			'clearInterval',
+		]) {
+			expect(text).not.toContain(`const ${name}:`);
+		}
+	}, 120_000);
 });
 
 describe('namespace aliases', () => {

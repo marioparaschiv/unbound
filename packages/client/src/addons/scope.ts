@@ -1,5 +1,5 @@
+import type { AddonLogger, Plugin } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
-import type { Plugin } from '@unbound-app/types';
 
 import { scopeCommands, scopeFlux, scopeMetro, scopeStorage } from '~/addons/scoped-namespaces';
 import { createSubscriptions, disposeInReverse } from '~/addons/subscriptions';
@@ -22,7 +22,7 @@ export type AddonGlobals = {
 	unbound: Omit<typeof api, 'default'>;
 	addon: Addon<Plugin>;
 	patcher: typeof patcherApi;
-	logger: ReturnType<typeof createLogger>;
+	logger: AddonLogger;
 	commands: ScopedCommands['namespace'];
 	setTimeout: ScopedTimers['setTimeout'];
 	setInterval: ScopedTimers['setInterval'];

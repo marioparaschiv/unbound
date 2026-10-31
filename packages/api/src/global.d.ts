@@ -39,6 +39,7 @@ export type {
 	AddonAuthor,
 	AddonHandle,
 	AddonKind,
+	AddonLogger,
 	AddonManifest,
 	AddonPlatform,
 	AddonPlatforms,
@@ -464,7 +465,7 @@ export type {
 	YouTabLottieComponent,
 	YouTabLottieProps,
 } from './_internal';
-import type { NativePlatformBridge } from './_internal';
+import type { AddonHandle, AddonLogger, NativePlatformBridge } from './_internal';
 import * as React$1 from 'react';
 import * as RN from 'react-native';
 
@@ -478,6 +479,24 @@ declare global {
 	var React: typeof React$1;
 	var ReactNative: typeof RN;
 }
+
+/** The globals a plugin runs with, keyed by name. Plugin code reads them without an import. */
+export type AddonScope = {
+	React: typeof React;
+	unbound: UnboundGlobal;
+	addon: AddonHandle;
+	patcher: UnboundGlobal['patcher'];
+	logger: AddonLogger;
+	setTimeout: typeof setTimeout;
+	setInterval: typeof setInterval;
+	clearTimeout: typeof clearTimeout;
+	clearInterval: typeof clearInterval;
+	commands: Omit<
+		ReturnType<UnboundGlobal['commands']['createCommands']>,
+		keyof UnboundGlobal['commands']
+	> &
+		UnboundGlobal['commands'];
+};
 
 export interface UnboundGlobal {
 	assets: typeof import('./assets.d.ts');
@@ -512,5 +531,9 @@ declare global {
 		unbound: UnboundGlobal;
 	}
 
-	const unbound: Window['unbound'];
+	const unbound: AddonScope['unbound'];
+	const addon: AddonScope['addon'];
+	const patcher: AddonScope['patcher'];
+	const logger: AddonScope['logger'];
+	const commands: AddonScope['commands'];
 }

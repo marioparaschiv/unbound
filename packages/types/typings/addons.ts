@@ -29,6 +29,12 @@ export const ADDON_SCOPE_GLOBALS = [
 	'commands',
 ] as const;
 
+/** The `logger` global a plugin runs with: console levels prefixed with the plugin's name. */
+export type AddonLogger = Record<
+	'log' | 'info' | 'success' | 'warn' | 'error' | 'debug',
+	(...args: unknown[]) => void
+>;
+
 /** @deprecated Use ADDON_KINDS */
 export const ADDON_TYPES = ADDON_KINDS;
 
