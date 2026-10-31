@@ -7,6 +7,7 @@ import { commitShaSchema } from '@unbound-app/contracts/source';
 import { APIError } from 'better-auth/api';
 import { z } from 'zod';
 
+import { rankAddonRepositories } from '~/lib/addon-repository-rank';
 import { consumeRateLimit } from '~/lib/rate-limit';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
@@ -102,6 +103,7 @@ const userRepositoriesResponseSchema = z.array(
 		description: z.string().nullable(),
 		pushed_at: z.iso.datetime().nullable(),
 		permissions: z.object({ push: z.boolean() }).optional(),
+		owner: z.object({ avatar_url: z.string() }).optional(),
 	}),
 );
 
@@ -442,13 +444,16 @@ export function createGitHubClient(env: Env, token: string | null) {
 				userRepositoriesResponseSchema,
 			);
 
-			return (found ?? [])
-				.filter((entry) => !entry.private && entry.permissions?.push)
-				.map((entry) => ({
-					repository: entry.full_name,
-					description: entry.description,
-					pushedAt: entry.pushed_at,
-				}));
+			return rankAddonRepositories(
+				(found ?? [])
+					.filter((entry) => !entry.private && entry.permissions?.push)
+					.map((entry) => ({
+						repository: entry.full_name,
+						description: entry.description,
+						pushedAt: entry.pushed_at,
+						ownerAvatarUrl: entry.owner?.avatar_url ?? null,
+					})),
+			);
 		},
 	};
 }

@@ -17,6 +17,7 @@ import { repositoryAddonsQuery } from '~/queries/submissions/submissions';
 import { Field, FieldError, FieldLabel } from '~/components/ui/field';
 import usePrefetchIntent from '~/queries/use-prefetch-intent';
 import GitHubIcon from '~/components/icons/github';
+import Avatar from '~/components/ui/avatar';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
 import Text from '~/components/ui/text';
@@ -34,12 +35,13 @@ type RepositoryPickerProps = {
 };
 
 type RepositoryShortcutProps = {
-	repository: string;
+	entry: PushableRepository;
 	disabled: boolean;
 	onPick: () => void;
 };
 
-function RepositoryShortcut({ repository, disabled, onPick }: RepositoryShortcutProps) {
+function RepositoryShortcut({ entry, disabled, onPick }: RepositoryShortcutProps) {
+	const { repository, ownerAvatarUrl } = entry;
 	const prefetch = usePrefetchIntent(repositoryAddonsQuery({ repository }));
 
 	return (
@@ -51,7 +53,12 @@ function RepositoryShortcut({ repository, disabled, onPick }: RepositoryShortcut
 			onClick={onPick}
 			{...prefetch}
 		>
-			<GitHubIcon />
+			<Avatar
+				src={ownerAvatarUrl}
+				fallback={repository.charAt(0).toUpperCase()}
+				alt=''
+				className='rounded-[5px] size-4.5 font-semibold text-[10px]'
+			/>
 			{repository}
 		</Button>
 	);
@@ -134,7 +141,7 @@ function RepositoryPicker({
 							{repositories.map((entry) => (
 								<RepositoryShortcut
 									key={entry.repository}
-									repository={entry.repository}
+									entry={entry}
 									disabled={disabled}
 									onPick={() => pick(entry.repository)}
 								/>

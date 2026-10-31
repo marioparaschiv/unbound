@@ -202,6 +202,8 @@ export const pushableRepositorySchema = z.object({
 	repository: repositorySchema,
 	description: z.nullable(z.string()),
 	pushedAt: z.nullable(z.iso.datetime()),
+	/** The owning user's or organization's GitHub avatar. */
+	ownerAvatarUrl: z.nullable(z.string()),
 });
 
 export const pushableRepositoriesResponseSchema = z.object({
