@@ -59,8 +59,8 @@ describe('patcher types', () => {
 	});
 
 	test('pass an untyped target through untyped', () => {
-		// `JSON.parse` returns `any`, like a metro lookup.
-		const target = { untyped: JSON.parse('null') ?? ((value: string) => value) };
+		const metroLookupResult: MetroExport = (value: string) => value;
+		const target = { untyped: metroLookupResult };
 
 		after(target, 'untyped', (ctx) => {
 			const asNumber: number = ctx.args[0];

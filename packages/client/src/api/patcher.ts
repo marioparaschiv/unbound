@@ -17,11 +17,10 @@ import * as Possess from 'possess';
 
 import { patch, recordRemovals } from '~/lib/hot/live-patch';
 
-// An untyped (`any`) target stays untyped instead of collapsing to `unknown`.
-type IsAny<T> = 0 extends 1 & T ? true : false;
+type IsUntyped<T> = 0 extends 1 & T ? true : false;
 
 type ArgsOf<F> =
-	IsAny<F> extends true
+	IsUntyped<F> extends true
 		? F[]
 		: F extends AnyFunction
 			? Parameters<F>
@@ -30,7 +29,7 @@ type ArgsOf<F> =
 				: never;
 
 type ResultOf<F> =
-	IsAny<F> extends true
+	IsUntyped<F> extends true
 		? F
 		: F extends AnyFunction
 			? ReturnType<F>
