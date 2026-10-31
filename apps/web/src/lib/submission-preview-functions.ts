@@ -5,6 +5,7 @@ import { z } from 'zod/mini';
 
 import { getArtifactKeys, getCdnUrl, pinSource, toVersionChangelog } from '~/lib/artifacts';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
+import { resolvePlatforms } from '~/lib/addon-platforms';
 import type { Permissions } from '~/lib/auth/access';
 import { renderAddonIcon } from '~/lib/addon-icons';
 import { loadAuthors } from '~/lib/authors/resolve';
@@ -71,7 +72,7 @@ export const fetchSubmissionPreview = createServerFn({ method: 'GET' })
 			version: row.version,
 			manifestUrl: pending.manifestUrl,
 			createdAt: published?.createdAt ?? submittedAt,
-			capabilities: row.manifest.capabilities ?? [],
+			platforms: resolvePlatforms(row.manifest),
 			minClientVersion: row.manifest.unbound?.min ?? null,
 			versions: [
 				pending,
