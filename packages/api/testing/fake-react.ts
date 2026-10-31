@@ -1,13 +1,17 @@
+import type { AnyObject } from '../src/patcher';
+
 /** What `createElement` returns: the element's type and its props with `children`. */
 export type FakeElement = {
 	type: string | ((props: FakeProps) => FakeElement | null);
 	props: FakeProps;
 };
 
-type FakeProps = {
-	// UNKNOWN: a component's props are whatever the test passes.
-	[prop: string]: unknown;
+type FakeProps = AnyObject & {
 	children?: FakeChild[];
+};
+
+type Ref<T> = {
+	current: T;
 };
 
 type FakeChild = FakeElement | string | number | boolean | null | undefined;
@@ -25,7 +29,7 @@ export type FakeReact = {
 	useState: <T>(initial: T | (() => T)) => [T, SetState<T>];
 	useMemo: <T>(factory: () => T) => T;
 	useCallback: <T>(callback: T) => T;
-	useRef: <T>(initial: T) => { current: T };
+	useRef: <T>(initial: T) => Ref<T>;
 	useEffect: (effect: () => void | (() => void)) => void;
 };
 

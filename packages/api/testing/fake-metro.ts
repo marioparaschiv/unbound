@@ -1,5 +1,7 @@
+import type { AnyObject } from '../src/patcher';
+
 /** A module the fake metro serves: the exports a plugin finds. */
-export type FakeModule = object;
+export type FakeModule = AnyObject;
 
 /** A fake metro filter. `path` marks a file-path filter, which matches the path a module was registered under. */
 export type FakeFilter = ((module: FakeModule) => boolean) & { path?: string };
@@ -21,7 +23,7 @@ type Wait = {
 export type FakeMetro = {
 	/** Adds a module, settling any `findLazy` waiting for it and calling `onModuleLoad` listeners. */
 	register: (module: FakeModule, path?: string) => void;
-	stores: Record<string, object>;
+	stores: Record<string, FakeModule>;
 	filters: {
 		byProps: (...props: string[]) => FakeFilter;
 		byName: (name: string) => FakeFilter;

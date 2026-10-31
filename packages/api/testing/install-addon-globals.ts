@@ -2,8 +2,8 @@ import type { AddonHandle, AddonLogger, AddonManifest } from '../src/global';
 import type { CommandTree } from '../src/commands';
 
 import { createRecordingPatcher, type RecordingPatcher } from './recording-patcher';
+import { createFakeMetro, type FakeMetro, type FakeModule } from './fake-metro';
 import { createMemoryStorage, type MemoryStorage } from './memory-storage';
-import { createFakeMetro, type FakeMetro } from './fake-metro';
 import { createFakeReact, type FakeReact } from './fake-react';
 
 type LogLevel = keyof AddonLogger;
@@ -30,7 +30,7 @@ export type FakeUnbound = {
 	patcher: RecordingPatcher;
 	metro: FakeMetro;
 	commands: FakeCommands;
-	[namespace: string]: object;
+	[namespace: string]: FakeModule;
 };
 
 type InstallOptions = {

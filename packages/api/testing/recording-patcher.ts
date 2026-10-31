@@ -1,11 +1,11 @@
-import type { PatchOptions, PatcherInstance } from '../src/patcher';
+import type { PatchOptions, PatchParent, PatcherInstance } from '../src/patcher';
 
 type PatchKind = 'before' | 'instead' | 'after';
 
 /** One patch a recording patcher applied, kept until it is removed. */
 export type PatchRecord = {
 	kind: PatchKind;
-	target: object;
+	target: PatchParent;
 	method: string;
 	caller: string | undefined;
 };
@@ -16,15 +16,17 @@ export type RecordingPatcher = PatcherInstance & {
 	createPatcher: (defaultOptions: string | PatchOptions) => PatcherInstance;
 };
 
+// UNKNOWN: a patched method returns whatever the code under test returns.
 type Method = (...args: never[]) => unknown;
 
 type Context = {
 	args: never[];
-	this: object;
+	this: PatchParent;
 	original: Method;
 	result?: unknown;
 };
 
+// UNKNOWN: a patch callback returns whatever the test's patch returns.
 type Callback = (context: Context) => unknown;
 
 /**
@@ -36,11 +38,11 @@ export function createRecordingPatcher(): RecordingPatcher {
 	const unpatches = new Map<PatchRecord, () => void>();
 
 	function patch(kind: PatchKind, caller: string | undefined) {
-		return (target: object, method: string, callback: Callback) => {
+		return (target: PatchParent, method: string, callback: Callback) => {
 			const original: Method = Reflect.get(target, method);
 			const record: PatchRecord = { kind, target, method, caller };
 
-			function patched(this: object, ...args: never[]) {
+			function patched(this: PatchParent, ...args: never[]) {
 				const context: Context = { args, this: this, original };
 
 				if (kind === 'before') {
