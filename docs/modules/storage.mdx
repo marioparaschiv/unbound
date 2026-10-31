@@ -4,32 +4,37 @@ description: 'Reactive, persisted settings: read, write, and re-render on change
 icon: 'database'
 ---
 
+import Deprecated from '/snippets/deprecated.mdx';
+
 ### What is Storage?
 
-`storage` is Unbound's settings store. Values you write are held in memory, broadcast as an event, and saved to disk, so your addon's configuration survives a reload without any file handling on your part.
+`storage` holds your addon's settings. Values you write are held in memory, broadcast as a change, and saved to disk, so your addon's configuration survives a reload without any file handling on your part.
 
-Writes are debounced and serialized to `Unbound/settings.json` in the documents directory, using the [fs](/modules/fs) module. You don't call `read` or `write` yourself. Use `get` and `set`.
+Writes are debounced and handed to the loader, which saves them to `Unbound/settings.json` in the documents directory. You don't read or write that file yourself.
 
 ```ts
 import { storage } from '@unbound-app/api';
+// equivalent: import * as storage from '@unbound-app/api/storage';
+// runtime global: unbound.storage
 
-storage.set('my-plugin', 'enabled', true);
-storage.get('my-plugin', 'enabled', false); // → true
+const settings = storage.getBucket();
+
+settings.set('enabled', true);
+settings.get('enabled', false); // → true
 ```
 
-### Stores & keys
+### Buckets & keys
 
-Settings are grouped into stores, one per addon. You pick each store's name, usually your plugin's id.
+A setting is one key and its value. Settings are grouped into **Buckets**: named groups saved under their name.
 
-Keys inside a store are dot-paths. `set('appearance.compact', true)` writes `{ appearance: { compact: true } }` and creates the intermediate objects for you.
+In a plugin, `storage.getBucket()` with no name returns your plugin's own Bucket, named after its `id`. Pass a name to read another Bucket. Outside a plugin, the name is required.
 
-To avoid repeating the store name on every call, use `getStore` to get a facade scoped to one store. Then call `get`, `set`, `toggle`, or `remove` on it directly.
+Keys inside a Bucket are dot-paths. `set('appearance.compact', true)` writes `{ appearance: { compact: true } }` and creates the intermediate objects for you.
 
 ```ts
 import { storage } from '@unbound-app/api';
 
-// Scope every call to one store so you never repeat its name.
-const settings = storage.getStore('my-plugin');
+const settings = storage.getBucket();
 settings.set('appearance.compact', true);   // dot-path key
 settings.get('appearance.compact', false);  // with a default
 ```
@@ -40,7 +45,7 @@ Every read takes a default value, which is returned when the key isn't set yet. 
 
 <CodeGroup>
 ```ts get & set
-const settings = storage.getStore('my-plugin');
+const settings = storage.getBucket();
 
 settings.set('volume', 0.8);
 const volume = settings.get('volume', 1); // default 1 if unset
@@ -53,41 +58,64 @@ settings.toggle('muted', false);
 
 ```ts remove & clear
 settings.remove('volume'); // delete one key
-settings.clear();          // drop the whole store
+settings.clear();          // drop the whole Bucket
 ```
 </CodeGroup>
 
 <Note>
-	`get` requires a default as its last argument. This keeps the store predictable and keeps `undefined` out of your UI.
+	`get` requires a default as its last argument. This keeps the Bucket predictable and keeps `undefined` out of your UI.
 </Note>
 
 ### Reactivity
 
-In React, `useSettingsStore` subscribes a component to a store and re-renders it whenever a matching change happens. Pass an optional predicate to narrow _which_ changes trigger a re-render.
-
-Every change emits a `changed` event. Stores also emit `set`, `toggled`, `removed`, and `cleared`.
+In React, `storage.useBucket(name)` returns a Bucket and re-renders the component whenever that Bucket changes. Pass an optional predicate to narrow _which_ changes trigger a re-render.
 
 ```tsx
 import { storage } from '@unbound-app/api';
 
-// Re-renders the component whenever this store changes.
+// Re-renders the component whenever this Bucket changes.
 function Toggle() {
-	const store = storage.useSettingsStore('my-plugin');
-	const compact = store.get('appearance.compact', false);
+	const settings = storage.useBucket('my-plugin');
+	const compact = settings.get('appearance.compact', false);
 
 	return (
 		<Switch
 			value={compact}
-			onValueChange={(v) => store.set('appearance.compact', v)}
+			onValueChange={(v) => settings.set('appearance.compact', v)}
 		/>
 	);
 }
 ```
 
-<Tip>
-	Outside React, subscribe with `storage.addListener(predicate, callback)`. It returns an unsubscribe function. Call it when your addon stops.
-</Tip>
+Outside React, `storage.onChange(predicate, callback)` runs `callback` for each change that `predicate` accepts. The payload names the Bucket in `store` and the key in `key`. `onChange` returns a function that removes the listener. In a plugin, the listener is also removed when the plugin stops.
+
+```ts
+import { storage } from '@unbound-app/api';
+
+storage.onChange(
+	({ store, key }) => store === 'my-plugin' && key === 'volume',
+	({ value }) => logger.log('Volume is now', value),
+);
+```
+
+`storage.persist()` saves pending changes right away instead of waiting for the debounce.
 
 <Note>
 	This module owns the values. To give your addon its own screen in Discord's settings list, see [settings](/modules/settings). The keys the loader reads from the same file are listed in the [settings reference](/loader/settings).
 </Note>
+
+### Deprecated names
+
+<Deprecated />
+
+These names still work in published plugins until 1.0. New code uses the replacement.
+
+| Deprecated | Use |
+| --- | --- |
+| `storage.getStore(name)` | `storage.getBucket(name)` |
+| `storage.useSettingsStore(name)` | `storage.useBucket(name)` |
+| `storage.get`, `set`, `toggle`, `remove`, `clear` with a store name | The same method on `storage.getBucket(name)` |
+| `storage.addListener`, `storage.on` | `storage.onChange` |
+| `storage.removeListener`, `storage.off` | The function `onChange` returns |
+| `bucket.useSettingsStore(predicate)` | `storage.useBucket(name, predicate)` |
+| `bucket.addListener(predicate, callback)` | `storage.onChange` |
