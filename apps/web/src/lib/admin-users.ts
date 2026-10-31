@@ -5,12 +5,13 @@ import { and, sql } from 'drizzle-orm';
 import { z } from 'zod';
 
 import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
+import { userNameSearchText, userSearchText } from '~/db/schema';
 import { listSubmissionHistory } from '~/lib/admin-submissions';
 import { DEFAULT_ROLE, hasPermission } from '~/lib/auth/access';
+import { isDevelopmentTeam } from '~/lib/team/development-team';
 import type { AdminSubmission } from '~/lib/admin-submissions';
 import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
-import { isDevelopmentTeam } from '~/lib/team/development-team';
 import { requirePermission } from '~/lib/api/caller';
 import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { matchesSearch } from '~/lib/admin-search';
@@ -19,8 +20,6 @@ import { listStaffNotes } from '~/lib/staff-notes';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import type { KeysetPage } from '~/lib/keyset';
-import { searchText } from '~/db/schema/columns';
-import { userSearchText } from '~/db/schema';
 import type { user } from '~/db/schema';
 
 export type AdminUser = {
@@ -105,9 +104,7 @@ export function queryAdminUsers(
 				and(
 					q ? matchesSearch(userSearchText(table), q) : undefined,
 					// The indexed text includes the email; matching the id and name alone keeps it from being probed.
-					q && !byEmail
-						? matchesSearch(searchText([table.id, table.name]), q)
-						: undefined,
+					q && !byEmail ? matchesSearch(userNameSearchText(table), q) : undefined,
 					after ? afterKey([table.createdAt, table.id], after, 'desc', dir) : undefined,
 				) ?? sql`true`,
 		},

@@ -2,10 +2,10 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import { getAdminUser, listAdminUsers } from '~/lib/admin-users';
-import type { DiscordId } from '~/db/schema';
 import { teamMember, user } from '~/db/schema';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
+import type { DiscordId } from '~/db/schema';
 
 import { authRequest, createTestContext, signInWithDiscord } from './helpers/context';
 
@@ -41,6 +41,8 @@ async function signUp(role: Role = 'user') {
 
 type Member = Awaited<ReturnType<typeof signUp>>;
 
+type AuthBody = { [key: string]: string | AuthBody };
+
 async function joinDevelopmentTeam(member: Member) {
 	await ctx.db.insert(teamMember).values({
 		discordId: member.discordId,
@@ -52,7 +54,7 @@ async function joinDevelopmentTeam(member: Member) {
 	return member;
 }
 
-function post(member: Member, path: string, body: object) {
+function post(member: Member, path: string, body: AuthBody) {
 	return authRequest(ctx, path, {
 		method: 'POST',
 		headers: member.headers,
@@ -157,7 +159,7 @@ describe('role changes', () => {
 		const admin = await signUp('admin');
 		const target = await signUp();
 		const developer = await joinDevelopmentTeam(await signUp('admin'));
-		const attempts: [string, object][] = [
+		const attempts: [string, AuthBody][] = [
 			['/admin/update-user', { userId: admin.userId, data: { role: 'admin,ci' } }],
 			['/admin/update-user', { userId: target.userId, data: { role: 'admin' } }],
 			['/admin/create-user', { email: 'sock@example.com', name: 'Sock', role: 'admin' }],

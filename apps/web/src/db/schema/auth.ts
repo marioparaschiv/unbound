@@ -40,6 +40,15 @@ export function userSearchText(table: Record<'id' | 'name' | 'email', AnyPgColum
 	return searchText([table.id, table.name, table.email]);
 }
 
+/**
+ * @description Builds a user's search text without the email, for staff who may not search by it.
+ * @param table The user table or an alias of it.
+ * @returns The search text of the row's id and name.
+ */
+export function userNameSearchText(table: Record<'id' | 'name', AnyPgColumn>): SQL {
+	return searchText([table.id, table.name]);
+}
+
 export const session = pgTable(
 	'session',
 	{
