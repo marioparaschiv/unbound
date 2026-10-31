@@ -30,3 +30,18 @@ test('finds addons without descending into node_modules or .git', async () => {
 
 	expect(addons.map((addon) => addon.id)).toEqual(['com.example.first', 'com.example.second']);
 });
+
+test('does not discover a built manifest as an addon of its own', async () => {
+	const workspace = createTempDir({
+		'unbound.config.json': JSON.stringify({ addons: ['**'], build: 'true', output: 'dist' }),
+		'plugins/first/manifest.json': manifest('com.example.first'),
+		'plugins/first/package.json': JSON.stringify({ scripts: { build: 'true' } }),
+		'plugins/first/dist/manifest.json': manifest('com.example.first'),
+	});
+
+	dirs.push(workspace);
+
+	const addons = await discoverAddons(loadWorkspace(workspace.path));
+
+	expect(addons.map((addon) => addon.path)).toEqual(['plugins/first']);
+});
