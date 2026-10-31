@@ -11,7 +11,6 @@ type LogLevel = keyof AddonLogger;
 /** A line the fake `logger` received. */
 export type LogEntry = {
 	level: LogLevel;
-	// UNKNOWN: a plugin logs whatever values it likes.
 	args: unknown[];
 };
 
@@ -58,7 +57,6 @@ export type InstalledAddonGlobals = {
 const LOG_LEVELS: LogLevel[] = ['log', 'info', 'success', 'warn', 'error', 'debug'];
 
 function createLogger(logs: LogEntry[]): AddonLogger {
-	// UNKNOWN: a plugin logs whatever values it likes.
 	const entries = LOG_LEVELS.map((level) => [
 		level,
 		(...args: unknown[]) => void logs.push({ level, args }),
