@@ -19,6 +19,8 @@ export type FakeDiscord = {
 	botUser: APIUser;
 	/** Every message create request body that reached the fake, 429s included. */
 	requests: PostedBody[];
+	/** Every message edit request body that reached the fake. */
+	edits: PostedBody[];
 	/** Messages in the channel, oldest first. */
 	messages: APIMessage[];
 	/** How many requests were answered with a 429. */
@@ -71,6 +73,7 @@ export function createFakeDiscord(): FakeDiscord {
 	const channelId = '100';
 	const botUser = user('900', 'unbound-bot', true);
 	const requests: PostedBody[] = [];
+	const edits: PostedBody[] = [];
 	const messages: APIMessage[] = [];
 	const byNonce = new Map<string, APIMessage>();
 	let nextId = 1000n;
@@ -130,6 +133,22 @@ export function createFakeDiscord(): FakeDiscord {
 		return Response.json(message);
 	}
 
+	async function editMessage(request: Request, messageId: string) {
+		const body = (await request.json()) as PostedBody;
+		const message = messages.find((entry) => entry.id === messageId);
+
+		edits.push(body);
+
+		if (!message) {
+			return Response.json({ message: 'Unknown Message', code: 10_008 }, { status: 404 });
+		}
+
+		message.embeds = body.embeds ?? message.embeds;
+		message.edited_timestamp = new Date().toISOString();
+
+		return Response.json(message);
+	}
+
 	function listMessages(url: URL) {
 		const limit = Number(url.searchParams.get('limit') ?? 50);
 
@@ -159,6 +178,12 @@ export function createFakeDiscord(): FakeDiscord {
 				return listMessages(url);
 			}
 
+			const messagePath = `/channels/${channelId}/messages/`;
+
+			if (path.startsWith(messagePath) && request.method === 'PATCH') {
+				return editMessage(request, path.slice(messagePath.length));
+			}
+
 			return Response.json({ message: 'Unknown route', code: 0 }, { status: 404 });
 		},
 	});
@@ -168,6 +193,7 @@ export function createFakeDiscord(): FakeDiscord {
 		channelId,
 		botUser,
 		requests,
+		edits,
 		messages,
 		rateLimited: () => limited,
 		rateLimitAt(positions) {
