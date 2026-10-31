@@ -1,4 +1,4 @@
-import type { NativeBatchStep, NativeHandle, NativeObjectHandle } from '@unbound-app/api/native';
+import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
 
 export type NativeMessageInfo = {
 	channelId?: string;
@@ -6,14 +6,10 @@ export type NativeMessageInfo = {
 };
 
 /** The part of the Objective-C bridge that reading a message cell needs. */
-export type NativeMessageCellBridge = {
-	batch(steps: readonly NativeBatchStep[]): Promise<unknown[]>;
-	// UNKNOWN: an ivar or selector result can be any Objective-C value.
-	getIvar(handle: NativeObjectHandle, name: string): unknown;
-	// UNKNOWN: an ivar or selector result can be any Objective-C value.
-	invokeAsync(handle: NativeObjectHandle, selector: string, args: unknown[]): Promise<unknown>;
-	respondsTo(handle: NativeHandle, selector: string): boolean;
-};
+export type NativeMessageCellBridge = Pick<
+	NativeObjCBridge,
+	'batch' | 'getIvar' | 'invokeAsync' | 'respondsTo'
+>;
 
 // UNKNOWN: a value returned by the bridge, which may be a string, a number, or an object handle.
 function stringValue(value: unknown): string | undefined {
