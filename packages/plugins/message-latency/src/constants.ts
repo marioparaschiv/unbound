@@ -9,6 +9,8 @@ export const Defaults: LatencyOptions = {
 
 export const LATENCY_OPTIONS = [1, 2, 3, 5, 10];
 
+export const ICON_TAG = 0x1a7e9c;
+
 export const DISCORD_EPOCH = 1_420_070_400_000;
 
 // 2^22: a snowflake's timestamp is its value shifted right by 22 bits.

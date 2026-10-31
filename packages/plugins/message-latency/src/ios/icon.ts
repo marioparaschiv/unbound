@@ -2,7 +2,7 @@ import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/nati
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 
 import { currentTheme, resolveColor } from '~/theme';
-import { FILL_TOKENS, Icon } from '~/constants';
+import { FILL_TOKENS, ICON_TAG, Icon } from '~/constants';
 import type { LatencyRecord } from '~/records';
 import type { LatencyFill } from '~/latency';
 import { getSubviews, setFrame } from '~/ios/views';
@@ -75,6 +75,7 @@ export async function createIcon(
 ): Promise<NativeObjectHandle | null> {
 	const icon = objc.alloc('UIButton');
 
+	await safeInvokeAsync(objc, icon, 'setTag:', ICON_TAG);
 	await safeInvokeAsync(objc, icon, 'setUserInteractionEnabled:', true);
 	await safeInvokeAsync(objc, icon, 'setExclusiveTouch:', true);
 	await safeInvokeAsync(objc, icon, 'setIsAccessibilityElement:', true);

@@ -2,6 +2,7 @@ import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { createMessageCells } from '~/ios/message-cells';
+import { installReuseGuard } from '~/ios/reuse-guard';
 import type { LatencyRecords } from '~/records';
 import { createTooltips } from '~/ios/tooltip';
 
@@ -15,7 +16,7 @@ export function createIndicators(
 	context: PluginContext,
 	records: LatencyRecords,
 ): (() => () => Promise<void>) | null {
-	const { objc, fabric } = context.native;
+	const { objc, fabric, ui } = context.native;
 
 	if (
 		!ensureClasses('Message Latency', objc, [
@@ -30,7 +31,19 @@ export function createIndicators(
 
 	const cells = createMessageCells(objc, records, createTooltips(objc, fabric));
 
-	return () => cells.hook();
+	return () => {
+		const scope = ui.createScope();
+
+		ui.run(installReuseGuard, scope);
+
+		const unhook = cells.hook();
+
+		return () => {
+			scope.dispose();
+
+			return unhook();
+		};
+	};
 }
 
 export default { createIndicators };

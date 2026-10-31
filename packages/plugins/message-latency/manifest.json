@@ -12,7 +12,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.2",
+	"version": "1.1.0",
 	"icon": "TimerIcon",
 	"minNativePluginApi": "1.0.0",
 	"main": "index.tsx"
