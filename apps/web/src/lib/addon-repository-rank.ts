@@ -22,7 +22,9 @@ const ADDON_NAMES = new Set(
 export function scoreAddonRepository(repository: string): number {
 	const name = (repository.split('/')[1] ?? '').toLowerCase();
 
-	if (ADDON_NAMES.has(name)) return 3;
+	if (ADDON_NAMES.has(name)) {
+		return 3;
+	}
 
 	const words = name.split(/[-_.]/);
 	const product = words.some((word) => PRODUCT_WORDS.includes(word));

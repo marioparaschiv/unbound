@@ -11,6 +11,7 @@ import type { Role } from '~/lib/auth/access';
 import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { commitPlugin, serveGitHub } from './helpers/github';
 import { serveMemoryS3 } from './helpers/memory-s3';
+import { rejection } from './helpers/server';
 
 const REPOSITORY = 'acme/addons';
 
@@ -82,10 +83,10 @@ describe('a new listing picking its icon', () => {
 		const author = await signUp();
 		const bad = request('icon.bad', '1.0.0', 'IconNotARealIcon');
 
-		await expect(previewSubmission(ctx, author, bad)).rejects.toMatchObject({
+		expect(await rejection(previewSubmission(ctx, author, bad))).toMatchObject({
 			code: 'invalid_request',
 		});
-		await expect(createSubmission(ctx, author, bad)).rejects.toMatchObject({
+		expect(await rejection(createSubmission(ctx, author, bad))).toMatchObject({
 			code: 'invalid_request',
 		});
 		expect(
@@ -123,7 +124,7 @@ describe('a new listing picking its icon', () => {
 			request('icon.update', '1.1.0', 'IconApple'),
 		);
 
-		await expect(update).rejects.toMatchObject({ code: 'invalid_request' });
+		expect(await rejection(update)).toMatchObject({ code: 'invalid_request' });
 		expect(await iconOf('icon.update')).toBeNull();
 		expect(
 			await ctx.db.select({ id: addon.id }).from(addon).where(eq(addon.id, 'icon.update')),

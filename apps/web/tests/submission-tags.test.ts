@@ -11,6 +11,7 @@ import type { Role } from '~/lib/auth/access';
 import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { commitPlugin, serveGitHub } from './helpers/github';
 import { serveMemoryS3 } from './helpers/memory-s3';
+import { rejection } from './helpers/server';
 
 const REPOSITORY = 'acme/addons';
 
@@ -113,7 +114,7 @@ describe('choosing tags', () => {
 			request('tags.unknown', '1.0.0', ['privacy', 'nope']),
 		);
 
-		await expect(attempt).rejects.toMatchObject({
+		expect(await rejection(attempt)).toMatchObject({
 			code: 'invalid_request',
 			message: 'Unknown tags: nope.',
 		});
@@ -246,8 +247,10 @@ describe('suggested tags', () => {
 	test('a preview refuses unknown tag ids too', async () => {
 		const author = await signUp();
 
-		await expect(
-			previewSubmission(ctx, author, request('tags.suggest-bad', '1.0.0', ['nope'])),
-		).rejects.toMatchObject({ code: 'invalid_request' });
+		expect(
+			await rejection(
+				previewSubmission(ctx, author, request('tags.suggest-bad', '1.0.0', ['nope'])),
+			),
+		).toMatchObject({ code: 'invalid_request' });
 	});
 });

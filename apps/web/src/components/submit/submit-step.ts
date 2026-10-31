@@ -27,9 +27,13 @@ export const SUBMIT_STEPS: SubmitStepEntry[] = [
  * @returns `repository` before a listing loads, `addon` until a preview loads, then `details`.
  */
 export function getSubmitStep(flow: SubmitFlowState): SubmitStep {
-	if (!flow.listing) return 'repository';
+	if (!flow.listing) {
+		return 'repository';
+	}
 
-	if (!flow.request || !flow.preview) return 'addon';
+	if (!flow.request || !flow.preview) {
+		return 'addon';
+	}
 
 	return 'details';
 }

@@ -149,7 +149,9 @@ function toSummary({ id, name, image }: UserSummary): UserSummary {
 }
 
 async function readUsers(db: Pick<Transaction, 'select'>, ids: string[]): Promise<UserSummary[]> {
-	if (ids.length === 0) return [];
+	if (ids.length === 0) {
+		return [];
+	}
 
 	const rows = await db
 		.select({ id: user.id, name: user.name, image: user.image })
@@ -415,7 +417,9 @@ export async function describeMaintainerChanges(
 	ctx: AppContext,
 	submissions: NamedMaintainers[],
 ): Promise<Map<string, MaintainerChange>> {
-	if (submissions.length === 0) return new Map();
+	if (submissions.length === 0) {
+		return new Map();
+	}
 
 	const [rows, named] = await Promise.all([
 		ctx.db.query.addonMaintainer.findMany({

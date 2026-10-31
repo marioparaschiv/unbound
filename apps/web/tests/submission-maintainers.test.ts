@@ -11,6 +11,7 @@ import type { Role } from '~/lib/auth/access';
 import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { commitPlugin, serveGitHub } from './helpers/github';
 import { serveMemoryS3 } from './helpers/memory-s3';
+import { rejection } from './helpers/server';
 
 const REPOSITORY = 'acme/team';
 
@@ -106,15 +107,21 @@ describe('naming maintainers', () => {
 		const author = await signUp();
 		const { author: owner } = await listed('team.owned');
 
-		await expect(
-			createSubmission(ctx, author, request('team.unknown', '1.0.0', ['nobody'])),
-		).rejects.toMatchObject({ code: 'not_found', message: 'User nobody does not exist.' });
-		await expect(
-			createSubmission(ctx, author, request('team.self', '1.0.0', [author.user.id])),
-		).rejects.toMatchObject({ code: 'invalid_request' });
-		await expect(
-			createSubmission(ctx, owner, request('team.owned', '1.1.0', [owner.user.id])),
-		).rejects.toMatchObject({ code: 'invalid_request' });
+		expect(
+			await rejection(
+				createSubmission(ctx, author, request('team.unknown', '1.0.0', ['nobody'])),
+			),
+		).toMatchObject({ code: 'not_found', message: 'User nobody does not exist.' });
+		expect(
+			await rejection(
+				createSubmission(ctx, author, request('team.self', '1.0.0', [author.user.id])),
+			),
+		).toMatchObject({ code: 'invalid_request' });
+		expect(
+			await rejection(
+				createSubmission(ctx, owner, request('team.owned', '1.1.0', [owner.user.id])),
+			),
+		).toMatchObject({ code: 'invalid_request' });
 
 		const rows = await ctx.db.query.submission.findMany({
 			where: { addonId: { in: ['team.unknown', 'team.self'] } },
@@ -130,12 +137,14 @@ describe('naming maintainers', () => {
 		const helper = await signUp('developer');
 		const { author } = await listed('team.helped', [helper.user.id]);
 
-		await expect(
-			createSubmission(ctx, helper, request('team.helped', '1.1.0', [author.user.id])),
-		).rejects.toMatchObject({ code: 'forbidden' });
-		await expect(
-			previewSubmission(ctx, helper, request('team.helped', '1.1.0', [])),
-		).rejects.toMatchObject({ code: 'forbidden' });
+		expect(
+			await rejection(
+				createSubmission(ctx, helper, request('team.helped', '1.1.0', [author.user.id])),
+			),
+		).toMatchObject({ code: 'forbidden' });
+		expect(
+			await rejection(previewSubmission(ctx, helper, request('team.helped', '1.1.0', []))),
+		).toMatchObject({ code: 'forbidden' });
 
 		// Leaving maintainers out is fine.
 		expect(await submit(helper, 'team.helped', '1.1.0')).toBeString();
