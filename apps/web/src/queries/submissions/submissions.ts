@@ -12,7 +12,7 @@ import { submissionPreviewResponseSchema } from '@unbound-app/contracts/review';
 import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 
 import { createBrowserClient } from '~/lib/api/browser-client';
-import { getSubmitOverview } from '~/lib/publishing';
+import { findUser, getSubmitOverview } from '~/lib/publishing';
 import { invalidate } from '~/queries/invalidate';
 
 /** The pinned addon directory a preview reads and a submission publishes. */
@@ -31,6 +31,18 @@ export function submitOverviewQuery(addonId?: string) {
 	return queryOptions({
 		queryKey: [...submissionsKey, 'overview', addonId ?? null],
 		queryFn: () => getSubmitOverview({ data: { addonId } }),
+	});
+}
+
+/**
+ * @description A user by id, as the maintainers picker adds them.
+ * @param id The user id.
+ * @returns Options for `fetchQuery`, resolving to the user's name and avatar, or `null` for no such user.
+ */
+export function userQuery(id: string) {
+	return queryOptions({
+		queryKey: [...submissionsKey, 'user', id],
+		queryFn: () => findUser({ data: { id } }),
 	});
 }
 
@@ -140,6 +152,7 @@ export function createSubmissionMutation() {
 export default {
 	submissionsKey,
 	submitOverviewQuery,
+	userQuery,
 	pushableRepositoriesQuery,
 	repositoryAddonsQuery,
 	toPreviewRequest,

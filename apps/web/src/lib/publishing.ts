@@ -1,3 +1,4 @@
+import type { UserSummary } from '@unbound-app/contracts/account';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createServerFn } from '@tanstack/react-start';
 
@@ -16,6 +17,10 @@ export type SubmitOverview = {
 
 const submitOverviewRequestSchema = z.object({
 	addonId: z.optional(z.string().check(z.maxLength(100))),
+});
+
+const findUserRequestSchema = z.object({
+	id: z.string().check(z.minLength(1), z.maxLength(64)),
 });
 
 async function isGitHubLinked(headers: Headers): Promise<boolean> {
@@ -57,4 +62,21 @@ export const getDashboard = createServerFn({ method: 'GET' }).handler(
 	},
 );
 
-export default { getSubmitOverview, getDashboard };
+/**
+ * @description Looks a user up by id for the signed-in user, as the submit form's maintainers picker adds them.
+ * @returns The user's name and avatar, or `null` when no user has that id.
+ */
+export const findUser = createServerFn({ method: 'GET' })
+	.validator(findUserRequestSchema)
+	.handler(async ({ data }): Promise<UserSummary | null> => {
+		await requestCaller();
+
+		const row = await app.db.query.user.findFirst({
+			where: { id: data.id },
+			columns: { id: true, name: true, image: true },
+		});
+
+		return row ? { ...row, image: row.image ?? null } : null;
+	});
+
+export default { getSubmitOverview, getDashboard, findUser };

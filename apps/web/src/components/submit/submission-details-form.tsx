@@ -6,12 +6,13 @@ import { useId } from 'react';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '~/components/ui/tooltip';
 import { Field, FieldError, FieldGroup, FieldLabel } from '~/components/ui/field';
+import MaintainerPicker from '~/components/submit/maintainer-picker';
 import { SubmitSection } from '~/components/submit/submit-section';
 import TagSelect from '~/components/submit/tag-select';
 import { Button } from '~/components/ui/button';
 
 type SubmissionDetailsFormProps = {
-	/** Its suggested tags are the form's starting values. */
+	/** Its suggested tags and maintainers are the form's starting values. */
 	preview: SubmissionPreview;
 	error: string | null;
 	disabled: boolean;
@@ -19,6 +20,12 @@ type SubmissionDetailsFormProps = {
 };
 
 const DISCORD_INVITE = 'https://discord.gg/rMdzhWUaGT';
+
+function sameIds(a: string[], b: string[]): boolean {
+	const set = new Set(a);
+
+	return a.length === b.length && b.every((id) => set.has(id));
+}
 
 function TagsHint() {
 	return (
@@ -51,8 +58,18 @@ function TagsHint() {
 function SubmissionDetailsForm({ preview, error, disabled, onSubmit }: SubmissionDetailsFormProps) {
 	const id = useId();
 	const form = useForm({
-		defaultValues: { tags: preview.suggestedTags },
-		onSubmit: ({ value }) => onSubmit(value),
+		defaultValues: { tags: preview.suggestedTags, maintainers: preview.suggestedMaintainers },
+		onSubmit: ({ value }) => {
+			const maintainers = value.maintainers.map((maintainer) => maintainer.id);
+			const current = preview.suggestedMaintainers.map((maintainer) => maintainer.id);
+
+			// Sending the set rewrites the addon's maintainers on approval, so only send one the author changed.
+			onSubmit(
+				sameIds(maintainers, current)
+					? { tags: value.tags }
+					: { tags: value.tags, maintainers },
+			);
+		},
 	});
 
 	return (
@@ -86,6 +103,20 @@ function SubmissionDetailsForm({ preview, error, disabled, onSubmit }: Submissio
 									type={preview.manifest.type ?? 'plugin'}
 									value={field.state.value}
 									onChange={field.handleChange}
+									disabled={disabled}
+								/>
+							</Field>
+						)}
+					</form.Field>
+					<form.Field name='maintainers'>
+						{(field) => (
+							<Field>
+								<FieldLabel htmlFor={`${id}-maintainers`}>Maintainers</FieldLabel>
+								<MaintainerPicker
+									id={`${id}-maintainers`}
+									value={field.state.value}
+									onChange={field.handleChange}
+									editable={preview.canEditMaintainers}
 									disabled={disabled}
 								/>
 							</Field>
