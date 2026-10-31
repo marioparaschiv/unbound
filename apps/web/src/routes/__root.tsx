@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import PressSprings from '~/components/motion/press-springs';
 import type { RouterContext } from '~/queries/query-client';
 import { sessionQuery } from '~/queries/account/session';
+import NotFound from '~/components/not-found';
 import Toaster from '~/components/ui/sonner';
 import stylesheet from '~/styles.css?url';
 
@@ -50,4 +51,5 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		session: await context.queryClient.fetchQuery(sessionQuery()),
 	}),
 	shellComponent: RootDocument,
+	notFoundComponent: NotFound,
 });

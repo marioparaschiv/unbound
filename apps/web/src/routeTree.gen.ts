@@ -23,6 +23,7 @@ import { Route as SitePrivacyRouteImport } from './routes/_site/privacy'
 import { Route as SiteSubmitRouteImport } from './routes/_site/submit'
 import { Route as SiteTermsRouteImport } from './routes/_site/terms'
 import { Route as SiteThemesRouteImport } from './routes/_site/themes'
+import { Route as AuthErrorRouteImport } from './routes/auth/error'
 import { Route as DevelopersSplatRouteImport } from './routes/developers/$'
 import { Route as SiteStaffReviewRouteImport } from './routes/_site/_staff/review'
 import { Route as SiteAddonsIdRouteImport } from './routes/_site/addons/$id'
@@ -133,6 +134,11 @@ const SiteThemesRoute = SiteThemesRouteImport.update({
   id: '/themes',
   path: '/themes',
   getParentRoute: () => SiteRouteRoute,
+} as any)
+const AuthErrorRoute = AuthErrorRouteImport.update({
+  id: '/auth/error',
+  path: '/auth/error',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DevelopersSplatRoute = DevelopersSplatRouteImport.update({
   id: '/developers/$',
@@ -365,6 +371,7 @@ export interface FileRoutesByFullPath {
   '/submit': typeof SiteSubmitRoute
   '/terms': typeof SiteTermsRoute
   '/themes': typeof SiteThemesRoute
+  '/auth/error': typeof AuthErrorRoute
   '/developers/$': typeof DevelopersSplatRoute
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
@@ -421,6 +428,7 @@ export interface FileRoutesByTo {
   '/submit': typeof SiteSubmitRoute
   '/terms': typeof SiteTermsRoute
   '/themes': typeof SiteThemesRoute
+  '/auth/error': typeof AuthErrorRoute
   '/developers/$': typeof DevelopersSplatRoute
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
@@ -479,6 +487,7 @@ export interface FileRoutesById {
   '/_site/submit': typeof SiteSubmitRoute
   '/_site/terms': typeof SiteTermsRoute
   '/_site/themes': typeof SiteThemesRoute
+  '/auth/error': typeof AuthErrorRoute
   '/developers/$': typeof DevelopersSplatRoute
   '/_site/': typeof SiteIndexRoute
   '/_site/_staff/review': typeof SiteStaffReviewRoute
@@ -538,6 +547,7 @@ export interface FileRouteTypes {
     | '/submit'
     | '/terms'
     | '/themes'
+    | '/auth/error'
     | '/developers/$'
     | '/review'
     | '/addons/$id'
@@ -594,6 +604,7 @@ export interface FileRouteTypes {
     | '/submit'
     | '/terms'
     | '/themes'
+    | '/auth/error'
     | '/developers/$'
     | '/review'
     | '/addons/$id'
@@ -651,6 +662,7 @@ export interface FileRouteTypes {
     | '/_site/submit'
     | '/_site/terms'
     | '/_site/themes'
+    | '/auth/error'
     | '/developers/$'
     | '/_site/'
     | '/_site/_staff/review'
@@ -700,6 +712,7 @@ export interface RootRouteChildren {
   SiteRouteRoute: typeof SiteRouteRouteWithChildren
   DeviceRoute: typeof DeviceRoute
   LoginRoute: typeof LoginRoute
+  AuthErrorRoute: typeof AuthErrorRoute
   DevelopersSplatRoute: typeof DevelopersSplatRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiV1AddonsRoute: typeof ApiV1AddonsRouteWithChildren
@@ -820,6 +833,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/themes'
       preLoaderRoute: typeof SiteThemesRouteImport
       parentRoute: typeof SiteRouteRoute
+    }
+    '/auth/error': {
+      id: '/auth/error'
+      path: '/auth/error'
+      fullPath: '/auth/error'
+      preLoaderRoute: typeof AuthErrorRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/developers/$': {
       id: '/developers/$'
@@ -1270,6 +1290,7 @@ const rootRouteChildren: RootRouteChildren = {
   SiteRouteRoute: SiteRouteRouteWithChildren,
   DeviceRoute: DeviceRoute,
   LoginRoute: LoginRoute,
+  AuthErrorRoute: AuthErrorRoute,
   DevelopersSplatRoute: DevelopersSplatRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiV1AddonsRoute: ApiV1AddonsRouteWithChildren,

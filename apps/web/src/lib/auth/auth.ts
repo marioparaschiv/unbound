@@ -11,6 +11,7 @@ import { betterAuth } from 'better-auth';
 import { deleteUserWithRecord, recordAuthAdminAction } from '~/lib/moderation-events';
 import { API_KEY_HEADER, CLI_CLIENT_ID } from '~/api/client';
 import { DEFAULT_ROLE, ac, roles } from '~/lib/auth/access';
+import { AUTH_ERROR_PATH } from '~/lib/auth/auth-errors';
 import { grantTeamRole } from '~/lib/team/site-roles';
 import type { FileRoutesByTo } from '~/routeTree.gen';
 import { purgeUserSubmissions } from '~/lib/staging';
@@ -94,6 +95,9 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 			storage: 'database',
 			window: env.AUTH_RATE_LIMIT_WINDOW_SECONDS,
 			max: env.AUTH_RATE_LIMIT_MAX,
+		},
+		onAPIError: {
+			errorURL: new URL(AUTH_ERROR_PATH, env.PUBLIC_URL).toString(),
 		},
 		advanced: {
 			ipAddress: {
