@@ -14,13 +14,26 @@ type BytecodeOptions = { versions: number[] };
 const run = promisify(execFile);
 const { fetchManifest, resolveHermesTargets } = hermesManifest;
 
+// A client older than these parameters passes only React, so each falls back to the global it shadows.
+const SHADOWED_GLOBALS = new Set([
+	'unbound',
+	'setTimeout',
+	'setInterval',
+	'clearTimeout',
+	'clearInterval',
+]);
+
+const parameters = ADDON_SCOPE_GLOBALS.map((name) =>
+	SHADOWED_GLOBALS.has(name) ? `${name} = globalThis.${name}` : name,
+).join(', ');
+
 /**
  * @description Wraps a plugin bundle the way the client evaluates its source, so the compiled program's completion value is the same factory.
  * @param code The plugin's final bundle expression.
  * @returns The wrapped source.
  */
 export function bytecodeSource(code: string): string {
-	return `((${ADDON_SCOPE_GLOBALS.join(', ')}) => { return ${code} })`;
+	return `((${parameters}) => { return ${code} })`;
 }
 
 /**
