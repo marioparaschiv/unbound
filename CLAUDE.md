@@ -225,7 +225,7 @@ A block-body arrow assigned to a `const` is a lint error (`oxc-config/no-const-a
 
 - Inline callbacks (`.map`, `.find`, event handlers, predicates).
 - Short factory one-liners: `const find = (...args: string[]) => lazy(() => findByProps(...args));`.
-- Object-literal methods where the surrounding object is a config (zustand `set => ({ … })`, `getStore`'s returned object).
+- Object-literal methods where the surrounding object is a config (zustand `set => ({ … })`, the Bucket `getBucket` returns).
 
 ### 5.2 Default parameter values, not `options ?? default` inside
 
@@ -330,7 +330,7 @@ Used for stateful, identity-bearing things: managers, the `Logger`. Plain functi
 
 ### 7.1 The Manager pattern (read before touching `addons/` or a `<kind>/manager.ts`)
 
-`Manager<T, EventMap>` (`addons/manager.ts`) extends `EventEmitter` (from `~/core/event-emitter`, a port of `tseep`) and intersects a `BaseManagerEvents<T>` map onto the subclass's event map. Subclasses (`Addons` in `addons/addons.ts`, then `Plugins`/`Themes` in `plugins/manager.ts`/`themes/manager.ts`) layer on more events and methods. Every state-changing method:
+`Manager<T, EventMap>` (`addons/manager.ts`) extends `EventEmitter` (from `~/core/event-emitter`, a port of `tseep`) and intersects a `BaseManagerEvents<T>` map onto the subclass's event map. Subclasses (`AddonLifecycle` in `addons/lifecycle.ts`, then `Addons` in `addons/addons.ts`, then `Plugins`/`Themes` in `plugins/manager.ts`/`themes/manager.ts`) layer on more events and methods. Every state-changing method:
 
 1. Resolves its input via `resolve()` (accepts an id string _or_ the entity).
 2. Guards (`if (!resolved) return;`).
@@ -448,7 +448,7 @@ When in doubt, optimise for these, in order:
 2. **One file, one job.** If a file is doing two things, it's two files.
 3. **Small, total functions.** Most functions fit on a screen. Lookups return `T | undefined` and never throw for "not found".
 4. **Symmetry.** Paired operations (`enable`/`disable`, `load`/`unload`, `addCachedIDForKey`/`removeCachedIDForKey`, mount/leave animations) are written to mirror each other line-for-line. If you change one, change its twin identically.
-5. **The dual export shape.** Named exports for tree-shaking + a `default` aggregate for ergonomics.
+5. **The namespace export shape.** Each member is a named export, and `core/api.ts` re-exports the module as a namespace (§2.5).
 6. **Let the tooling carry the mechanical load.** Never hand-format, never hand-sort imports. Write the logic; run the formatter and linter.
 
 When adding code, the test is: _would this diff be invisible if dropped into the file blind?_ If a reviewer can tell which lines are new from style alone, it's not done.

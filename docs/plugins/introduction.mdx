@@ -10,31 +10,29 @@ A plugin is a bundle of JavaScript that Unbound loads, evaluates, and runs insid
 
 A plugin is an object with optional lifecycle hooks. Unbound calls `start` when the plugin is enabled and `stop` when it's disabled.
 
-Set up everything the plugin does (patches, listeners, subscriptions) in `start`, and tear all of it down in `stop`.
+Set up everything the plugin does (patches, listeners, commands) in `start`.
 
 ```ts
 export default {
 	start() {
-		// set up patches, listeners, subscriptions
+		// set up patches, listeners, commands
 	},
 	stop() {
-		// undo everything start() did
+		// undo what the Addon scope can't see
 	},
 };
 ```
 
 <Note>
-	Whatever you create in `start`, undo in `stop`. A disabled plugin should leave nothing running. Leftover patches and listeners are the most common source of bugs after a plugin is disabled.
+	A disabled plugin should leave nothing running. The plugin's [Addon scope](/modules/introduction#the-addon-scope) removes its patches, commands, timers, and Metro, Flux and storage listeners after `stop` returns. Whatever else you create in `start`, undo in `stop`.
 </Note>
 
 ### How plugins are loaded
 
-**Unbound loads and evaluates every installed plugin's bundle at startup, whether or not the plugin is enabled.** For a disabled plugin, Unbound never calls `start`, but the bundle's top-level code still runs.
-
-This means anything at the top level of your bundle runs for every user on every launch, even when your plugin is turned off.
+Each time a plugin starts, Unbound evaluates its bundle with a fresh Addon scope, then calls `start`. The bundle's top-level code runs during that evaluation, before `start`, so it delays the plugin's start and, at launch, Discord's.
 
 <Warning>
-	Do not run [Metro](/modules/metro) searches at the top level of your plugin. `findByProps`, `findByName`, and the other search functions walk the module registry. Running them at import time, for a plugin that may be disabled, slows down startup for every user.
+	Do not run eager [Metro](/modules/metro) searches at the top level of your plugin. A search with `{ lazy: false }` and `find` walk the module registry right away. The `findBy*` helpers and `flux.getStore` are lazy by default, so they're safe at the top level.
 </Warning>
 
 ### Writing a fast plugin
@@ -42,14 +40,14 @@ This means anything at the top level of your bundle runs for every user on every
 Two techniques keep a plugin's startup cost near zero until it's enabled and used.
 
 <Steps>
-	<Step title='Defer module lookups with lazy' icon='clock'>
-		Pass the `{ lazy: true }` search option to top-level Metro lookups. The search then runs the first time you *access* the result (inside `start`, or later inside a handler) instead of at import.
+	<Step title='Keep module lookups lazy' icon='clock'>
+		Declare top-level Metro lookups with the lazy `findBy*` helpers. The search runs the first time you *access* the result (inside `start`, or later inside a handler) instead of at evaluation.
 
 		```ts
 		import { metro } from '@unbound-app/api';
 
-		// Deferred: resolves on first access, not at import.
-		const Messages = metro.findByProps('sendMessage', 'receiveMessage', { lazy: true });
+		// Deferred: resolves on first access, not at evaluation.
+		const Messages = metro.findByProps('sendMessage', 'receiveMessage');
 		```
 	</Step>
 	<Step title='Split heavy work behind a dynamic import' icon='code-branch'>
@@ -83,7 +81,7 @@ Two techniques keep a plugin's startup cost near zero until it's enabled and use
 		Change what Discord's components render.
 	</Card>
 	<Card title='Flux Stores' icon='box' href='/plugins/flux'>
-		React to Discord's internal events and stores.
+		React to Discord's actions and read its stores.
 	</Card>
 	<Card title='Debugging' icon='bug' href='/development/debugging'>
 		Tools for developing and inspecting your plugin.
