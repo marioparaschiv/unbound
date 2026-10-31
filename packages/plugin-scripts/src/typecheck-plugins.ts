@@ -18,13 +18,17 @@ async function typecheck(plugin: string): Promise<PluginTypeErrors> {
 		stdout: 'pipe',
 		stderr: 'pipe',
 	});
-	const [stdout, stderr] = await Promise.all([
+	const [stdout, stderr, code] = await Promise.all([
 		new Response(child.stdout).text(),
 		new Response(child.stderr).text(),
 		child.exited,
 	]);
+	const errors = typeErrors(stdout + stderr);
 
-	return { plugin, errors: typeErrors(stdout + stderr) };
+	return {
+		plugin,
+		errors: code !== 0 && !errors.length ? [(stdout + stderr).trim()] : errors,
+	};
 }
 
 async function main(): Promise<void> {

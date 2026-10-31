@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { join } from 'node:path';
 
 import type { ModuleEntry } from '../src/paths';
 
@@ -6,11 +7,143 @@ import {
 	collapseNamespaces,
 	collectReferencedNames,
 	declaredNames,
+	dropDefaultExport,
 	exportedNames,
 	hoistLibraries,
 	stripInternal,
+	strip,
 } from '../src/transform';
 import { parseSource } from '../src/project';
+import { bundle } from '../src/bundle';
+
+const FIXTURES = join(import.meta.dirname, 'fixtures');
+
+describe('strip', () => {
+	test('keeps the @deprecated tag on a `export const old = next` alias and emits no default', () => {
+		const text = strip(
+			bundle(join(FIXTURES, 'deprecated-alias.ts')),
+			'/api/src/deprecated-alias.d.ts',
+			new Map<string, ModuleEntry>(),
+			new Map<string, string>(),
+			new Set<string>(),
+			new Set<string>(),
+		);
+
+		expect(text).toMatch(
+			/\/\*\* @deprecated Use next \*\/\s*export declare const old: typeof next;/,
+		);
+		expect(text).toContain('export declare function next(): string;');
+		expect(text).not.toContain('default');
+	});
+
+	test('strips an @internal declaration that only the default object referenced', () => {
+		const text = strip(
+			[
+				'/** @internal */',
+				'declare function secret(): void;',
+				'export declare function open(): void;',
+				'declare const _default: { secret: typeof secret; open: typeof open; };',
+				'export { _default as default };',
+			].join('\n'),
+			'/api/src/internal-default.d.ts',
+			new Map<string, ModuleEntry>(),
+			new Map<string, string>(),
+			new Set<string>(),
+			new Set<string>(),
+		);
+
+		expect(text).not.toContain('secret');
+		expect(text).toContain('export declare function open(): void;');
+	});
+});
+
+describe('dropDefaultExport', () => {
+	for (const exportForm of ['export default foo;', 'export { foo as default };']) {
+		test(`keeps the named export behind \`${exportForm}\``, () => {
+			const sourceFile = parseSource(
+				't-default-named.d.ts',
+				['export declare function foo(): void;', exportForm].join('\n'),
+			);
+
+			dropDefaultExport(sourceFile);
+
+			expect(sourceFile.getFullText().trim()).toBe('export declare function foo(): void;');
+		});
+	}
+
+	test('drops `export default function` and `export default class` declarations', () => {
+		const sourceFile = parseSource(
+			't-default-declaration.d.ts',
+			[
+				'export default function foo(): void;',
+				'export default class Foo { x: number; }',
+				'export declare function bar(): void;',
+			].join('\n'),
+		);
+
+		dropDefaultExport(sourceFile);
+
+		expect(sourceFile.getFullText().trim()).toBe('export declare function bar(): void;');
+	});
+
+	test('keeps a default-exported declaration unexported when a survivor references it', () => {
+		const sourceFile = parseSource(
+			't-default-declaration-used.d.ts',
+			[
+				'export default class Foo { x: number; }',
+				'export declare function make(): Foo;',
+			].join('\n'),
+		);
+
+		dropDefaultExport(sourceFile);
+
+		const text = sourceFile.getFullText();
+
+		expect(text).not.toContain('default');
+		expect(text).toContain('class Foo');
+		expect(text).not.toContain('export class Foo');
+		expect(text).toContain('export declare function make(): Foo;');
+	});
+
+	test('drops the default specifier and its backing object, keeping sibling specifiers', () => {
+		const sourceFile = parseSource(
+			't-default.d.ts',
+			[
+				'declare const _default: { confirm: typeof confirm$1; };',
+				'declare function confirm$1(): void;',
+				'export { _default as default, confirm$1 as confirm };',
+				'export {};',
+			].join('\n'),
+		);
+
+		dropDefaultExport(sourceFile);
+
+		const text = sourceFile.getFullText();
+
+		expect(text).not.toContain('default');
+		expect(text).toContain('declare function confirm$1(): void;');
+		expect(text).toContain('export { confirm$1 as confirm };');
+		expect(text).toContain('export {};');
+	});
+
+	test('drops `export default X` and keeps X when another statement references it', () => {
+		const sourceFile = parseSource(
+			't-default-assignment.d.ts',
+			[
+				'declare const api: { a: string; };',
+				'export declare function get(): typeof api;',
+				'export default api;',
+			].join('\n'),
+		);
+
+		dropDefaultExport(sourceFile);
+
+		const text = sourceFile.getFullText();
+
+		expect(text).not.toContain('export default');
+		expect(text).toContain('declare const api');
+	});
+});
 
 describe('exportedNames', () => {
 	test('collects export-modifier declarations and aliased export specifiers', () => {

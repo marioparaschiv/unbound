@@ -47,6 +47,7 @@
 		"prepare": "lefthook install --reset-hooks-path",
 		"generate-sdk": "bun apps/sdk-generator/src/index.ts",
 		"generate-discord-types": "bun apps/discord-typegen/src/index.ts",
+		"rename-api": "bun scripts/rename-api.ts",
 		"test:s3": "bun scripts/test-s3.ts",
 		"lint": "bun run lint:js && bun run loader:lint",
 		"lint:js": "bun run lint:rules && bun run --filter @unbound-app/web build:types && oxlint --config .oxlintrc.json --type-aware apps packages scripts && bun run plugins:lint && bun run plugins:typecheck && bun scripts/typecheck.ts --web-types-built",
