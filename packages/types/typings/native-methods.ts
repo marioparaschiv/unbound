@@ -1,0 +1,75 @@
+import type { NativePluginBridge, NativePluginCapability } from './native';
+
+type NativePluginNamespace = Exclude<
+	keyof NativePluginBridge,
+	'apiVersion' | 'abiVersion' | 'capabilities'
+>;
+
+/** A native bridge method by the path a plugin calls it through, such as `objc.invoke`. */
+export type NativePluginMethod = {
+	[N in NativePluginNamespace]: `${N}.${keyof NativePluginBridge[N] & string}`;
+}[NativePluginNamespace];
+
+/** The Capability each native bridge method needs. The client enforces it and the build reads it. */
+export const NATIVE_PLUGIN_METHOD_CAPABILITIES = {
+	'objc.getClass': 'native.objc.classes',
+	'objc.alloc': 'native.objc.classes',
+	'objc.className': 'native.objc.classes',
+	'objc.respondsTo': 'native.objc.classes',
+	'objc.call': 'native.objc.invoke',
+	'objc.callSuper': 'native.objc.invoke',
+	'objc.invoke': 'native.objc.invoke',
+	'objc.invokeAsync': 'native.objc.invokeAsync',
+	'objc.batch': 'native.objc.batch',
+	'objc.snapshot': 'native.objc.snapshot',
+	'objc.findViews': 'native.objc.snapshot',
+	'objc.invokeSuper': 'native.objc.invoke',
+	'objc.invokeSuperAsync': 'native.objc.invokeAsync',
+	'objc.getIvar': 'native.objc.ivars',
+	'objc.setIvar': 'native.objc.ivars',
+	'objc.createAssociationKey': 'native.objc.associations',
+	'objc.getAssociatedObject': 'native.objc.associations',
+	'objc.setAssociatedObject': 'native.objc.associations',
+	'objc.struct': 'native.objc.classes',
+	'objc.array': 'native.objc.classes',
+	'objc.data': 'native.objc.classes',
+	'objc.hook': 'native.objc.hooks',
+	'ffi.symbol': 'native.ffi.symbols',
+	'ffi.call': 'native.ffi.call',
+	'fabric.mount': 'native.fabric.mount',
+	'fabric.update': 'native.fabric.mount',
+	'fabric.setSize': 'native.fabric.mount',
+	'fabric.setFrame': 'native.fabric.mount',
+	'fabric.measure': 'native.fabric.mount',
+	'fabric.unmount': 'native.fabric.mount',
+	'fabric.mountAsync': 'native.fabric.async',
+	'fabric.updateAsync': 'native.fabric.async',
+	'fabric.setSizeAsync': 'native.fabric.async',
+	'fabric.setFrameAsync': 'native.fabric.async',
+	'fabric.measureAsync': 'native.fabric.async',
+	'fabric.unmountAsync': 'native.fabric.async',
+	'runtime.subscribe': 'native.runtime.events',
+	'java.getClass': 'native.java.classes',
+	'java.className': 'native.java.classes',
+	'java.describe': 'native.java.classes',
+	'java.construct': 'native.java.construct',
+	'java.respondsTo': 'native.java.classes',
+	'java.invoke': 'native.java.invoke',
+	'java.invokeAsync': 'native.java.invokeAsync',
+	'java.getField': 'native.java.fields',
+	'java.setField': 'native.java.fields',
+	'java.release': 'native.java.classes',
+	'java.batch': 'native.java.batch',
+	'java.batchAsync': 'native.java.batch',
+	'java.findViews': 'native.java.invoke',
+	'java.createAssociationKey': 'native.java.associations',
+	'java.getAssociatedObject': 'native.java.associations',
+	'java.setAssociatedObject': 'native.java.associations',
+	'debug.recordEvaluation': 'native.debug.evaluations',
+	'debug.environment': 'native.debug.environment',
+	'hooks.hook': 'native.java.hooks',
+	'hooks.setReturnValue': 'native.java.hooks',
+	'hooks.removeReturnValue': 'native.java.hooks',
+	'hooks.clearReturnValues': 'native.java.hooks',
+	'hooks.remove': 'native.java.hooks',
+} as const satisfies Record<NativePluginMethod, NativePluginCapability>;

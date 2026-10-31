@@ -2,6 +2,8 @@ import type * as React from 'react';
 
 import type { AddonManifest, Plugin } from './addons';
 
+export * from './native-methods';
+
 export const NATIVE_PLUGIN_CAPABILITIES = [
 	'native.objc.classes',
 	'native.objc.invoke',
