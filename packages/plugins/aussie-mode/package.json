@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"build": "rollup -c",
-		"test": "bun test --isolate"
+		"test": "bun test"
 	},
 	"dependencies": {
 		"@unbound-plugins/shared": "workspace:*"

@@ -39,7 +39,7 @@ mock.module('@unbound-plugins/shared/metro/when-loaded', () => ({
 		return () => installed.delete(`waiting:${file}`);
 	},
 }));
-mock.module('react-native', () => ({ View: 'View' }));
+mock.module('react-native', () => ({ NativeModules: {}, View: 'View' }));
 
 const { startRotation } = await import('~/rotation');
 
