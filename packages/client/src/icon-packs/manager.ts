@@ -1,10 +1,9 @@
 import type { IconPack, IconPackManifest, Plugin, UnboundAsset } from '@unbound-app/types';
 import toError from '@unbound-app/utils/to-error';
-import type { ImageProps } from 'react-native';
 
 import { safeRelativePath, isSafeIconPackMain } from '~/addons/paths';
 import type { Addon, AddonResolveable } from '~/addons/addon';
-import { Assets, ReactNative as RN } from '~/metro/common';
+import { Assets, ImageSources } from '~/metro/common';
 import { downloadManifest } from '~/addons/download';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
@@ -41,11 +40,6 @@ function treeNodes(body: unknown): GitTreeNode[] {
 
 	return body.tree.filter(isTreeNode);
 }
-
-/** The patch context of `Image.render`, whose props the icon pack rewrites in place. */
-type ImageRenderContext = {
-	this: { props: ImageProps };
-};
 
 /** The built-in pack: a no-op passthrough that renders Discord's own icons. */
 const defaultPack: IconPack = {
@@ -219,8 +213,8 @@ export class Icons extends Addons<Plugin> {
 
 	/**
 	 * @description Applies a pack: stamps every registered asset with its on-disk override path, then
-	 * patches `Image.render` to swap numeric sources for the pack's files. Stamps are awaited before
-	 * the patch installs, so no image renders against an un-stamped asset.
+	 * patches the source resolution of every `Image` render to swap numeric sources for the pack's files.
+	 * Stamps are awaited before the patch installs, so no image renders against an un-stamped asset.
 	 * @param id The pack id to apply. The `default` pack is a no-op.
 	 */
 	async applyPack(id: string) {
@@ -240,21 +234,23 @@ export class Icons extends Addons<Plugin> {
 
 		await Promise.all(stamps);
 
-		this.patcher.before(RN.Image.prototype, 'render', ({ this: self }: ImageRenderContext) => {
-			const props = self.props;
-
+		// `Image` is a function component on Discord 349, so there is no `render` to patch. Every `Image`
+		// render resolves its source through this helper, which it reads off the module at call time.
+		this.patcher.before(ImageSources, 'getImageSourcesFromImageProps', ({ args: [props] }) => {
 			if (typeof props?.source !== 'number') return;
 
 			const asset = Assets.getAssetByID(props.source);
 
-			if (asset?.iconPackPath && asset.iconPackScale) {
-				props.source = {
-					uri: `file://${asset.iconPackPath}`,
-					width: asset.width,
-					height: asset.height,
-					scale: asset.iconPackScale,
-				};
-			}
+			if (!asset?.iconPackPath || !asset.iconPackScale) return;
+
+			const source = {
+				uri: `file://${asset.iconPackPath}`,
+				width: asset.width,
+				height: asset.height,
+				scale: asset.iconPackScale,
+			};
+
+			return [{ ...props, source }];
 		});
 	}
 
