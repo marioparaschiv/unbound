@@ -235,11 +235,11 @@ function patchWhenLoaded(
 		try {
 			unpatch = withAddonScope(scope, () => apply(target));
 		} catch (error) {
-			if (!scope?.fail) {
+			if (!scope?.recordDeferredFailure) {
 				throw error;
 			}
 
-			scope.fail(toError(error));
+			scope.recordDeferredFailure(toError(error));
 		}
 	});
 	deferred = true;

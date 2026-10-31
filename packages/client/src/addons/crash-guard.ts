@@ -134,11 +134,9 @@ export function setFreezeListener(listener: ((freeze: AddonFreeze) => void) | un
 	(globalThis as FreezeListenerGlobal).__UnboundFreezeListener = listener;
 }
 
-/** The addon whose code is running: how the loader attributes it, and where a later failure in it is reported. */
 export type AddonScope = {
 	attribution?: AddonAttribution;
-	/** Records a failure in code the addon registered that runs after its start, such as a deferred patch. */
-	fail?: (error: Error) => void;
+	recordDeferredFailure?: (error: Error) => void;
 };
 
 let activeScope: AddonScope | undefined;

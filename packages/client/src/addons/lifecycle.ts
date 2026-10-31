@@ -245,7 +245,8 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		try {
 			const scope: AddonScope = {
 				attribution: this.attribution(resolved),
-				fail: (failure) => this.recordStartFailure(resolved, failure, 'running'),
+				recordDeferredFailure: (failure) =>
+					this.recordStartFailure(resolved, failure, 'running'),
 			};
 
 			state.instance = recoveryMode
