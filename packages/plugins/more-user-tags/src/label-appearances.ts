@@ -15,12 +15,17 @@ export type LabelAppearances = ReturnType<typeof createLabelAppearances>;
  */
 export function createLabelAppearances() {
 	const entries = new Map<string, RoleColorAppearance>();
+	const listeners = new Set<() => void>();
 	let revision = 0;
+
+	function changed() {
+		revision++;
+
+		for (const listener of listeners) listener();
+	}
 
 	function set(label: string, appearance: RoleColorAppearance) {
 		if (!label.trim()) return;
-
-		revision++;
 
 		const colors = appearance.colors
 			.filter((color) => HEX_COLOR.test(color))
@@ -33,10 +38,13 @@ export function createLabelAppearances() {
 				if (key.startsWith(prefix)) entries.delete(key);
 			}
 
+			changed();
+
 			return;
 		}
 
 		entries.set(getRoleGradientKey(label, colors[0]), { colors, style: appearance.style });
+		changed();
 	}
 
 	// A native label's background tells us its primary color; without one, only an unambiguous match counts.
@@ -79,8 +87,14 @@ export function createLabelAppearances() {
 		find,
 		has,
 		clear: () => {
-			revision++;
 			entries.clear();
+			changed();
+		},
+		snapshot: (): Record<string, RoleColorAppearance> => Object.fromEntries(entries),
+		subscribe(listener: () => void) {
+			listeners.add(listener);
+
+			return () => void listeners.delete(listener);
 		},
 		revision: () => revision,
 		isEmpty: () => entries.size === 0,

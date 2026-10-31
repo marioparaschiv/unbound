@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0]
+
+### Changed
+
+- On iOS, tag gradients are painted on the UI thread in the same pass that sets the tag's text or color, so a tag is never drawn flat first.
+
 ## [1.0.4]
 
 ### Fixed
