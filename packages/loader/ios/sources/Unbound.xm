@@ -161,9 +161,9 @@ public:
     loader::PreloadPayload preloadPayload() override
     {
         nlohmann::json availableFonts = loader::fontNamesOf(UnboundPlatformFonts());
-        return loader::makePreloadPayload(
-            UnboundSettingsStore(), UnboundAddonState(), availableFonts,
-            toStdString([Utilities getCurrentDylibName]), runtimeBytecodeVersion());
+        return loader::makePreloadPayload(UnboundAddonState(), availableFonts,
+                                          toStdString([Utilities getCurrentDylibName]),
+                                          runtimeBytecodeVersion());
     }
 
     void installNativeModules(jsi::Runtime &runtime) override

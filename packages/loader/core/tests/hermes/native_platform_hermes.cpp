@@ -43,6 +43,13 @@ static const char *const kBridgeChecks = R"JS((function () {
 	check(platform.settings.apply([{ store: 'unbound', key: 'answer', value: { nested: [1, 'two', null] } }]) === true, 'settings apply');
 	check(platform.settings.apply([{ store: 'unbound', key: 'answer', remove: true }, { store: 'other', key: 'kept', value: true }]) === true, 'settings remove');
 	check(throws(function () { platform.settings.apply('not changes'); }), 'settings apply rejects a non-array');
+	check(platform.settings.stage([{ store: 'staged', key: 'a.b', value: 3 }]) === true, 'settings stage');
+	check(platform.settings.get('staged', 'a.b') === 3, 'a staged setting reads back before it is saved');
+	check(platform.settings.get('staged', '').a.b === 3, 'an empty key reads the whole store');
+	check(platform.settings.get('staged', 'missing') === undefined, 'a missing setting reads as undefined');
+	check(platform.settings.get().staged.a.b === 3, 'no store reads every store');
+	check(platform.settings.flush() === true, 'settings flush');
+	check(throws(function () { platform.settings.get(7); }), 'settings get rejects a non-string store');
 	check(platform.settings.apply([{ key: 'no store' }, 7, null]) === true, 'settings apply skips malformed changes');
 	var cyclic = { name: 'loop' };
 	cyclic.self = cyclic;
@@ -146,6 +153,8 @@ int main()
             "a reloaded runtime sees the launch URL as claimed");
     require(!settings.get("unbound", "answer").has_value(), "a removed setting is gone natively");
     require(settings.getBoolean("other", "kept", false), "an applied setting is stored natively");
+    require(settings.get("staged", "a.b") == nlohmann::json(3),
+            "a staged setting is flushed natively");
     require(!std::filesystem::exists(documents / "Plugins" / "doomed"),
             "the removed folder is gone");
     require(std::filesystem::exists(outside), "nothing outside the documents folder was removed");

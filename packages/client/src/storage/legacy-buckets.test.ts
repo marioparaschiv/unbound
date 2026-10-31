@@ -1,7 +1,9 @@
 import type { NativeSettingsChange } from '@unbound-app/types/native';
 import { beforeEach, expect, test } from 'bun:test';
 
-import { persist, settings } from '~/storage/api';
+import { persist, snapshot } from '~/storage/api';
+
+const settings = snapshot();
 
 import { renameLegacyBuckets } from './legacy-buckets';
 
