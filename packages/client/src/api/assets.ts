@@ -75,9 +75,12 @@ export function getByName(name: string, type: 'svg' | 'png' = 'png'): UnboundAss
  * @param id The asset id to look up.
  * @returns The matched {@link UnboundAsset}, or `undefined` if none is registered for that id.
  */
-export function getByID(id: number): UnboundAsset | undefined {
+export function getById(id: number): UnboundAsset | undefined {
 	return assets.get(id);
 }
+
+/** @deprecated Use getById */
+export const getByID = getById;
 
 /**
  * @description Looks up a known asset's id by its name and type.
@@ -85,12 +88,15 @@ export function getByID(id: number): UnboundAsset | undefined {
  * @param type The asset type to match.
  * @returns The matched asset's id, or `undefined` if none match.
  */
-export function getIDByName(name: string, type: 'svg' | 'png' = 'png'): number | undefined {
+export function getIdByName(name: string, type: 'svg' | 'png' = 'png'): number | undefined {
 	const [id] =
 		[...assets.entries()].find(([, asset]) => asset.name === name && asset.type === type) ?? [];
 
 	return id;
 }
+
+/** @deprecated Use getIdByName */
+export const getIDByName = getIdByName;
 
 /**
  * @description Returns every known asset.
@@ -100,14 +106,28 @@ export function getAll(): UnboundAsset[] {
 	return [...assets.values()];
 }
 
-/** Proxy resolving any property name to its asset id via {@link getIDByName}. */
-export const Icons: Record<string, number | undefined> = new Proxy(
+/** Proxy resolving any property name to its asset id via {@link getIdByName}. */
+export const icons: Record<string, number | undefined> = new Proxy(
 	{},
 	{
 		get: (_, name: string) => {
-			return getIDByName(name);
+			return getIdByName(name);
 		},
 	},
 );
 
-export default { assets, find, getByName, getByID, getIDByName, getAll, Icons };
+/** @deprecated Use icons */
+export const Icons = icons;
+
+export default {
+	assets,
+	find,
+	getByName,
+	getById,
+	getByID,
+	getIdByName,
+	getIDByName,
+	getAll,
+	icons,
+	Icons,
+};
