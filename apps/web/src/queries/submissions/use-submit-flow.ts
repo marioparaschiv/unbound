@@ -4,7 +4,7 @@ import type {
 	ListRepositoryAddonsQuery,
 	RepositoryAddon,
 } from '@unbound-app/contracts/source';
-import type { Submission, SubmissionDetailsOverrides } from '@unbound-app/contracts/publish';
+import type { Submission, SubmissionDetails } from '@unbound-app/contracts/publish';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SubmissionPreview } from '@unbound-app/contracts/review';
 import { useState } from 'react';
@@ -17,10 +17,13 @@ import {
 	toPreviewRequest,
 } from '~/queries/submissions/submissions';
 import type { PreviewRequest } from '~/queries/submissions/submissions';
-import getApiErrorMessage from '~/lib/api/error-message';
+import type { ApiErrorDetails } from '~/lib/api/error-details';
+import getApiErrorDetails from '~/lib/api/error-details';
 import type { PendingSource } from '~/lib/dashboard';
 
 type SubmitFlowOptions = {
+	/** Picked in every listing that has it, unless it is up to date, until the author picks an addon. */
+	lockedAddonId?: string;
 	/** Where the addon's last submission came from; read and previewed at once. */
 	pendingSource?: PendingSource;
 	onSubmitted: (submission: Submission) => void;
@@ -32,28 +35,34 @@ type SubmitFlow = {
 	path: string | null;
 	request: PreviewRequest | null;
 	preview: SubmissionPreview | undefined;
-	error: string | null;
+	error: ApiErrorDetails | null;
 	isPending: boolean;
 	read: (source: ListRepositoryAddonsQuery) => void;
 	pick: (addon: RepositoryAddon) => void;
-	submit: (details: SubmissionDetailsOverrides) => void;
+	submit: (details: SubmissionDetails) => void;
 };
-
-const SHORTCUT_LIMIT = 12;
 
 /**
  * @description Drives the submit flow: read a repository at a ref, preview one of its addons, submit it.
  * @param options The source to start from and what to do once submitted.
  * @returns The listing, the picked addon's preview, the latest error and the action for each step.
  */
-function useSubmitFlow({ pendingSource, onSubmitted }: SubmitFlowOptions): SubmitFlow {
+function useSubmitFlow({
+	lockedAddonId,
+	pendingSource,
+	onSubmitted,
+}: SubmitFlowOptions): SubmitFlow {
 	const queryClient = useQueryClient();
 	const [source, setSource] = useState<ListRepositoryAddonsQuery | null>(
 		pendingSource ? { repository: pendingSource.repository } : null,
 	);
-	const [path, setPath] = useState(pendingSource?.path ?? null);
+	const [picked, setPath] = useState(pendingSource?.path ?? null);
 	const repositories = useQuery(pushableRepositoriesQuery());
 	const listing = useQuery(repositoryAddonsQuery(source));
+	const locked = listing.data?.addons.find(
+		(addon) => addon.id === lockedAddonId && !addon.upToDate,
+	);
+	const path = picked ?? locked?.path ?? null;
 	const request = toPreviewRequest(listing.data, path);
 	const preview = useQuery(submissionPreviewQuery(request));
 	const submission = useMutation(createSubmissionMutation());
@@ -83,19 +92,19 @@ function useSubmitFlow({ pendingSource, onSubmitted }: SubmitFlowOptions): Submi
 		}
 	}
 
-	function submit(details: SubmissionDetailsOverrides) {
+	function submit(details: SubmissionDetails) {
 		if (!request) return;
 
 		submission.mutate({ ...request, details }, { onSuccess: onSubmitted });
 	}
 
 	return {
-		repositories: repositories.data?.repositories.slice(0, SHORTCUT_LIMIT) ?? [],
+		repositories: repositories.data?.repositories ?? [],
 		listing: listing.data,
 		path,
 		request,
 		preview: preview.data,
-		error: error ? getApiErrorMessage(error) : null,
+		error: error ? getApiErrorDetails(error) : null,
 		isPending,
 		read,
 		pick,

@@ -54,3 +54,18 @@ export async function failure(request: Promise<object>): Promise<ApiFailure> {
 
 	return { status: error.status, code: error.code };
 }
+
+/**
+ * @description Awaits a call expected to throw and returns what it threw, for a library call with no HTTP status.
+ * @param pending The pending call.
+ * @returns The thrown value.
+ */
+// UNKNOWN: whatever the call rejects with; the test asserts its shape.
+export async function rejection(pending: Promise<unknown>): Promise<unknown> {
+	return pending.then(
+		() => {
+			throw new Error('Expected the call to fail.');
+		},
+		(cause: unknown) => cause,
+	);
+}

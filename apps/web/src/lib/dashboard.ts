@@ -6,6 +6,7 @@ import type {
 } from '@unbound-app/contracts/publish';
 import type { AddonType, MaintainerRole } from '@unbound-app/contracts/addons';
 import { and, desc, eq, inArray, isNotNull, or, sql } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
 
 import { LATEST_VERSION, getManifestType } from '~/lib/addons';
 import { OPEN_SUBMISSION_STATUSES } from '~/lib/submissions';
@@ -101,6 +102,14 @@ export type TimelineEntry = {
 	at: string;
 	note: string | null;
 	repository: string | null;
+};
+
+/** The addon `/submit?addon=` submits for, and where to read it from. */
+export type SubmitTarget = {
+	addonId: string;
+	intent: SubmitIntent;
+	/** The open submission's source, else the live version's; `null` when neither was read from GitHub. */
+	source: PendingSource | null;
 };
 
 export type Dashboard = {
@@ -199,20 +208,32 @@ function isOpen(record: SubmissionRecord): record is OpenRecord {
 	return Object.hasOwn(URGENCY, record.status);
 }
 
-async function querySubmissions(ctx: AppContext, userId: string, addonIds: string[]) {
+// Updates to the addons the user maintains, and the user's own new listings.
+function submissionScope(userId: string, addonIds: string[]): SQL | undefined {
 	const maintainedUpdates = and(
 		inArray(submission.addonId, addonIds),
 		eq(submission.kind, 'update'),
 	);
 	const ownListings = and(eq(submission.authorId, userId), eq(submission.kind, 'listing'));
-	const scope = or(maintainedUpdates, ownListings);
+
+	return or(maintainedUpdates, ownListings);
+}
+
+async function queryOpen(ctx: AppContext, scope: SQL | undefined): Promise<OpenRecord[]> {
+	const rows = await ctx.db
+		.select(RECORD_COLUMNS)
+		.from(submission)
+		.leftJoin(submissionSource, eq(submissionSource.submissionId, submission.id))
+		.where(and(scope, inArray(submission.status, OPEN_SUBMISSION_STATUSES)));
+
+	return rows.map(toRecord).filter(isOpen);
+}
+
+async function querySubmissions(ctx: AppContext, userId: string, addonIds: string[]) {
+	const scope = submissionScope(userId, addonIds);
 
 	const [open, recent] = await Promise.all([
-		ctx.db
-			.select(RECORD_COLUMNS)
-			.from(submission)
-			.leftJoin(submissionSource, eq(submissionSource.submissionId, submission.id))
-			.where(and(scope, inArray(submission.status, OPEN_SUBMISSION_STATUSES))),
+		queryOpen(ctx, scope),
 		ctx.db
 			.select(RECORD_COLUMNS)
 			.from(submission)
@@ -222,7 +243,7 @@ async function querySubmissions(ctx: AppContext, userId: string, addonIds: strin
 			.limit(TIMELINE_LIMIT),
 	]);
 
-	return { open: open.map(toRecord).filter(isOpen), recent: recent.map(toRecord) };
+	return { open, recent: recent.map(toRecord) };
 }
 
 function toPending(record: OpenRecord, viewer: CallerUser): PendingSubmission {
@@ -389,4 +410,44 @@ export async function loadDashboard(
 	};
 }
 
-export default { TIMELINE_LIMIT, loadDashboard };
+/**
+ * @description Resolves the addon `/submit?addon=` submits for, by the dashboard's rules for its submit button.
+ * @param ctx The application context.
+ * @param caller The signed-in user.
+ * @param addonId The addon id from the URL.
+ * @returns The intent and the source to read, or `null` when the caller cannot submit for that addon now.
+ */
+export async function loadSubmitTarget(
+	ctx: AppContext,
+	caller: Caller,
+	addonId: string,
+): Promise<SubmitTarget | null> {
+	const viewer = caller.user;
+	const [membership, open] = await Promise.all([
+		ctx.db.query.addonMaintainer.findFirst({
+			where: { userId: viewer.id, addonId },
+			with: { addon: { with: LATEST_VERSION } },
+		}),
+		queryOpen(ctx, and(eq(submission.addonId, addonId), submissionScope(viewer.id, [addonId]))),
+	]);
+
+	const published = membership?.addon;
+	const listing = open.find((record) => record.kind === 'listing');
+	const row = published
+		? toPublishedAddon(viewer, published, membership.role, open)
+		: listing
+			? toListingAddon(viewer, listing)
+			: null;
+
+	if (!row?.actions.submit) return null;
+
+	const live = published?.versions[0]?.submission;
+	const liveSource =
+		live?.repository && live.source
+			? { repository: live.repository, path: live.source.path }
+			: null;
+
+	return { addonId, intent: row.actions.submit, source: row.pending?.source ?? liveSource };
+}
+
+export default { TIMELINE_LIMIT, loadDashboard, loadSubmitTarget };

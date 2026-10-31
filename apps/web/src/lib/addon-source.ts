@@ -38,6 +38,14 @@ import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
 import type { Env } from '~/lib/env';
 
+/** An addon as GitHub alone describes it; whether its version is published comes from the database. */
+export type ListedAddon = Omit<RepositoryAddon, 'upToDate'>;
+
+/** A repository listing read from GitHub, before its addons are checked against published versions. */
+export type RepositoryListing = Omit<ListRepositoryAddonsResponse, 'addons'> & {
+	addons: ListedAddon[];
+};
+
 /** Everything a submission needs from one addon at one commit, each file verified against git. */
 export type AddonSource = {
 	pin: SourcePin;
@@ -445,14 +453,13 @@ function toDetails(
 	repo: GitHubRepository,
 	extras: RepositoryExtras,
 	tree: GitTree,
-	overrides: CreateSubmissionRequest['details'] = {},
 ): RepositoryDetails {
 	const hasReadme = [...tree.keys()].some((path) => !path.includes('/') && README.test(path));
 
 	return {
 		description: repo.description,
-		homepage: overrides.homepage === undefined ? repo.homepage : overrides.homepage,
-		tags: overrides.tags ?? repo.topics,
+		homepage: repo.homepage,
+		tags: repo.topics,
 		license: repo.license,
 		stars: repo.stars,
 		defaultBranch: repo.defaultBranch,
@@ -468,7 +475,7 @@ function toRepositoryAddon(
 	tree: GitTree,
 	shipped: ShippedManifest,
 	commitSha: string,
-): RepositoryAddon {
+): ListedAddon {
 	const { addon } = shipped;
 	const { manifest, issues } = checkAddon(env, tree, shipped, commitSha);
 
@@ -482,7 +489,7 @@ function toRepositoryAddon(
 		bundle: addon.bundle,
 		hasAddonMd: tree.has(childPath(addon.path, ADDON_MD)),
 		hasChangelog: tree.has(childPath(addon.path, CHANGELOG_MD)),
-		issues: issues.map((issue) => issue.message),
+		issues: issues.map(({ code, message }) => ({ code, message })),
 	};
 }
 
@@ -499,7 +506,7 @@ export async function listRepositoryAddons(
 	ctx: AppContext,
 	github: GitHubClient,
 	query: ListRepositoryAddonsQuery,
-): Promise<ListRepositoryAddonsResponse> {
+): Promise<RepositoryListing> {
 	const { repo, ref, commitSha } = await openCommit(github, query.repository, query.ref);
 	const { repository } = repo;
 	const [tree, extras] = await Promise.all([
@@ -521,7 +528,7 @@ export async function listRepositoryAddons(
 	);
 
 	const outputDirs = getOutputDirs(candidates, configs);
-	const skipped: ListRepositoryAddonsResponse['skipped'] = [];
+	const skipped: RepositoryListing['skipped'] = [];
 	const located: { dir: string; config: WorkspaceConfig }[] = [];
 
 	for (const { dir, root } of candidates) {
@@ -690,7 +697,7 @@ export async function readAddonSource(
 		addonMd,
 		page,
 		changelog: readChangelog(changelogPath, extraTexts.get(changelogPath), manifest.version),
-		details: toDetails(repo, extras, tree, request.details),
+		details: toDetails(repo, extras, tree),
 	};
 }
 

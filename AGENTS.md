@@ -5,7 +5,7 @@ This is the canonical style guide for this repository, and the `AGENTS.md` that 
 The hierarchy of authority, highest first:
 
 1. **`oxfmt`** - owns all whitespace, quoting, and line-wrapping. Never fight it; never hand-format. Run it.
-2. **`oxlint`** (`.oxlintrc.json`, run `--type-aware`) - correctness, structural bans (the custom `oxc-config/*` rules), JSDoc shape, statement padding, and import/export ordering via `perfectionist`. Every rule is an `error`. The rules and the commitlint config come from `@marioparaschiv/oxc-config`; `.oxlintrc.json` extends its `base`, `react` and `jsdoc` presets; change a shared rule in that package, not here. Locally it adds the `react` and `import` plugins and a few repo rules (`eqeqeq`, `switch-exhaustiveness-check`, `no-misused-promises`, and `consistent-import-paths` for the `~/` alias in §3.3). The one local relaxation allows `any` in the metro layer and the Discord design-module typings (§4). `bun run lint` also runs `oxc-config-check`, which fails on unknown rule names. Repo-specific architecture rules live in a local plugin, `scripts/oxlint/` (`unbound/*`, each with a fixture test): `max-file-bytes` (20 KB per file), `no-upward-imports` (the layer table in `.oxlintrc.json`), `no-import-outside-package`, `no-asserted-external-data` (parse `JSON.parse`/`.json()` output with a schema), `no-pass-through-wrapper`, `no-env-mutation` and `prefer-discriminated-union`.
+2. **`oxlint`** (`.oxlintrc.json`, run `--type-aware`) - correctness, structural bans (the custom `oxc-config/*` rules), JSDoc shape, statement padding, and import/export ordering via `perfectionist`. Every rule is an `error`. The rules and the commitlint config come from `@marioparaschiv/oxc-config`; `.oxlintrc.json` extends its `base`, `react` and `jsdoc` presets; change a shared rule in that package, not here. Locally it adds the `react` and `import` plugins and a few repo rules (`eqeqeq`, `switch-exhaustiveness-check`, `no-misused-promises`, and `consistent-import-paths` for the `~/` alias in §3.3). Its overrides allow `any` in the metro layer and the Discord design-module typings (§4), turn off `no-unused-expressions` in `packages/loader/bootstrap/*.js` and `no-implied-eval` in `packages/plugins-shared/src/native/app-surface.ts`, and turn on stricter React and import-cycle rules for `packages/client/src` (§8.1). `bun run lint` also runs `oxc-config-check`, which fails on unknown rule names. Repo-specific architecture rules live in a local plugin, `scripts/oxlint/` (`unbound/*`, each with a fixture test): `max-file-bytes` (20 KB per file), `no-upward-imports` (the layer table in `.oxlintrc.json`), `no-import-outside-package`, `no-asserted-external-data` (parse `JSON.parse`/`.json()` output with a schema), `no-pass-through-wrapper`, `no-env-mutation` and `prefer-discriminated-union`.
 3. **This document** - the conventions the tools can't encode: naming, file shape, module structure, the _feel_ of the code.
 
 Fix a lint finding in the code. Don't silence it with a disable comment, a cast, or a config override.
@@ -41,13 +41,13 @@ import type { GestureEvent, PanGestureHandlerEventPayload } from 'react-native-g
 import type { InternalToastOptions } from '@unbound-app/types/toasts';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, { withSpring } from 'react-native-reanimated';
-import { View, Image, Pressable } from 'react-native';
-import { createElement, useState } from 'react';
+import { View, Pressable } from 'react-native';
+import { memo, useCallback } from 'react';
 
-import { BackdropFilters, Discord } from '~/api/metro/components';
-import { useSettingsStore } from '~/api/storage';
-import ToastStore from '~/stores/toasts';
-import { Icons } from '~/api/assets';
+import { useUnboundSettings } from '~/settings/unbound';
+import { BackdropFilters } from '~/metro/components';
+import useToastStore from '~/toasts/state';
+import { icons } from '~/assets/api';
 
 import useToastState from './use-toast-state';
 import useStyles from './toast.style';
@@ -72,11 +72,11 @@ One blank line between groups. None within a group.
 
 ### 2.4 Exports
 
-- **A barrel `index.ts` re-exports; it contains no logic.** See `ui/toasts/index.ts`, `api/index.ts`, `logger/src/index.ts`:
+- **A barrel re-exports; it contains no logic.** In the client, `core/api.ts` is the public barrel and `metro/index.ts` assembles the `metro` namespace it re-exports. No other client folder has a barrel, and `ui/` has none (§8.1). See `metro/index.ts` and `logger/src/index.ts`:
     ```ts
-    export { default as ToastContainer } from './toast-container';
-    export { default as useToastState } from './use-toast-state';
-    export { default as Toast } from './toast';
+    export * as components from '~/metro/components';
+    export * as filters from '~/metro/filters';
+    export * from '~/metro/search';
     ```
     ```ts
     export { default } from './logger';
@@ -84,30 +84,27 @@ One blank line between groups. None within a group.
     ```
 - Namespace re-exports use `export * as name`:
     ```ts
-    export * as storage from '~/api/storage';
-    export * as metro from '~/api/metro';
+    export * as storage from '~/storage/api';
+    export * as metro from '~/metro';
     ```
 - `perfectionist/sort-exports` also sorts by line length descending. Same staircase.
 
-### 2.5 The default-export-plus-named-exports module shape
+### 2.5 API modules export a namespace
 
-This is the backbone pattern of every API/lib module. **Export each function individually as a named export, then provide a `default` object that bundles them all.** Consumers can do either `import fs from '~/api/fs'` or `import { read } from '~/api/fs'`.
+A domain's public API is one module, usually `<domain>/api.ts`. The exceptions are `native/native.ts`, `native/fs.ts` and `metro/index.ts`, plus the manager instances (`plugins`, `themes`, `icons`, `fonts`) that `core/api.ts` re-exports from `~/addons/managers`. **Export each member individually as a named export.** `core/api.ts` re-exports the module as a namespace (`export * as toasts from '~/toasts/api'`). The generated SDK's `toasts` holds exactly the module's named exports; `window.unbound.toasts` also carries the module's `default` when it has one. Consumers import a member (`import { show } from '~/toasts/api'`) or the namespace (`import * as toasts from '~/toasts/api'`).
 
 ```ts
-export function read(/* … */) {
-	/* … */
-}
-export function write(/* … */) {
-	/* … */
-}
-export function rm(/* … */) {
+export function show(options: ToastOptions): ToastHandle {
 	/* … */
 }
 
-export default { Documents, read, write, rm, exists };
+/** @deprecated Use show */
+export const showToast = show;
 ```
 
-The default object lists members roughly in definition order (constants first, then functions). `storage.ts`, `cache.ts`, `assets.ts`, `toasts.ts`, `filters.ts` all follow this. Do not omit the named exports in favour of only a default, and do not omit the default in favour of only named - modules expose both.
+A renamed member keeps its old name as a deprecated alias until 1.0, declared once as a named `const` with a `@deprecated` tag. Never write `export { next as old }`: the generated SDK drops the tag.
+
+The SDK generator strips a module's `default` export, so a `default` object is not public API. Some modules still end with one (`export default { show, showToast }`) for client callers that import it (`import storage from '~/storage/api'`). A new module needs none.
 
 ---
 
@@ -122,20 +119,25 @@ The default object lists members roughly in definition order (constants first, t
 
 ### 3.2 Directory roles (in `packages/client/src`)
 
-| Dir         | Holds                                                                                                                     |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `api/`      | Public-facing capability modules (`fs`, `storage`, `toasts`, `assets`, `native`, `metro/`). Default + named export shape. |
-| `managers/` | Stateful singletons / classes (`base`, `addons`, `plugins`, `themes`).                                                    |
-| `stores/`   | Zustand stores. One store per file, `PascalCase` store name, default-exported.                                            |
-| `ui/`       | React Native components, grouped in a folder with their `.style.ts` and a barrel `index.ts`.                              |
-| `lib/`      | Internal infrastructure not meant as public API (`cache`, `constants`).                                                   |
-| `builtins/` | Built-in features wired in at startup.                                                                                    |
+The client has one folder per domain, plus `ui/` for components. The domains are `core`, `metro`, `patcher`, `commands`, `storage`, `native`, `assets`, `i18n`, `toasts`, `settings`, `addons`, `plugins`, `themes`, `icon-packs`, `fonts`, `marketplace`, `updates`, `sync`, `builtins`, `debugger`, `hot-refresh`, `dialogs`, `diagnostics` and `links`. A domain folder holds everything for its domain except components.
+
+| Path                     | Holds                                                                                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<domain>/api.ts`        | The domain's public API, re-exported as a namespace by `core/api.ts` (§2.5).                                                                 |
+| `<domain>/state.ts`      | The domain's zustand store (§8.5).                                                                                                           |
+| `<domain>/manager.ts`    | The manager of one addon kind (`plugins`, `themes`, `icon-packs`, `fonts`). The base classes they extend live in `addons/` (§7.1).           |
+| `<domain>/builtin.ts(x)` | The domain's built-in feature or settings section, started by `core/index.ts`. The only domain file that may import `ui/`.                   |
+| `core/`                  | Boot (`index.ts`, `loader.ts`), the public barrel `api.ts`, and shared infrastructure (`constants.ts`, `event-emitter.ts`).                  |
+| `builtins/`              | The built-ins registry and the built-ins that belong to no other domain (`discord-support`, `error-boundary`, `staff-mode`, `tracking`).     |
+| `ui/`                    | React Native components, one subfolder per domain (`ui/addons`, `ui/settings`, `ui/toasts`, ...) plus shared `ui/components` and `ui/hooks`. |
+
+`ui/` imports domains, never the reverse. `unbound/no-upward-imports` enforces it with the client layers in `.oxlintrc.json`: a domain file may import `~/ui` only from its `builtin.ts(x)` (or `builtins/error-boundary.tsx`), and `ui/` never imports `~/builtins` or a `~/<domain>/builtin`. `scripts/oxlint/client-layers.test.ts` fails when a domain folder or `builtin` file is missing from those layers, so add a new one there in the same change.
 
 `utils/`, `logger/`, `types/` are separate workspace packages, each with `src/` and a single responsibility.
 
 ### 3.3 Path aliases
 
-- `~/` → the package's `src/`. Always use it for intra-package imports across directories (`~/api/storage`, `~/managers/base`, `~/stores/toasts`).
+- `~/` → the package's `src/`. Always use it for intra-package imports across directories (`~/storage/api`, `~/addons/manager`, `~/toasts/state`).
 - Relative `./` only for siblings inside the same feature folder (a component importing its own `./toast.style`).
 - Workspace packages are imported by name: `@unbound-app/logger`, `@unbound-app/utils/noop`, `@unbound-app/types/toasts`. Note `utils` exports per-file (`@unbound-app/utils/noop`), not a barrel - import the specific file.
 
@@ -149,7 +151,7 @@ The default object lists members roughly in definition order (constants first, t
 
 The base config is `strict: true` but relaxes the _unused_ and _implicit-any_ family (`noUnusedLocals: false`, `noImplicitAny: false`, `noImplicitThis: false`, `noPropertyAccessFromIndexSignature: false`). Lint is stricter than the compiler here:
 
-- **Explicit `any` is a lint error** (`typescript/no-explicit-any`) everywhere except the metro layer (`packages/client/src/api/metro/**`) and the Discord design-module typings (`packages/types/typings/components.ts`), where the shapes are Discord internals that can't be known.
+- **Explicit `any` is a lint error** (`typescript/no-explicit-any`) everywhere except the metro layer (the `packages/client/src/metro/` files listed in the `.oxlintrc.json` override, which is every file but `cache.ts`) and the Discord design-module typings (`packages/types/typings/components.ts`), where the shapes are Discord internals that can't be known.
 - **`unknown` needs a reason.** An `unknown` parameter or return type is an error (`oxc-config/no-unknown-parameters`, `oxc-config/no-unknown-returns`) unless the function is a type predicate (`value is T`) or carries a `// UNKNOWN: <reason>` comment on the function or the parameter. Narrow with a type predicate rather than casting.
 - **No unsafe dictionaries** - `Record<string, unknown | any | object | {}>` is banned (`oxc-config/no-unsafe-dictionary-type`); give the value a real type.
 
@@ -222,7 +224,7 @@ export default noop;
 A block-body arrow assigned to a `const` is a lint error (`oxc-config/no-const-arrow-function`). Arrow functions are reserved for:
 
 - Inline callbacks (`.map`, `.find`, event handlers, predicates).
-- Short factory one-liners: `const find = (...args: string[]) => lazy(() => require('~/api/metro').findByProps(...args));`.
+- Short factory one-liners: `const find = (...args: string[]) => lazy(() => findByProps(...args));`.
 - Object-literal methods where the surrounding object is a config (zustand `set => ({ … })`, `getStore`'s returned object).
 
 ### 5.2 Default parameter values, not `options ?? default` inside
@@ -307,7 +309,7 @@ Most of these are lint rules (some auto-fixed by `bun run lint:fix`) - write the
 
 ## 7. Classes
 
-Used for stateful, identity-bearing things: managers, the `Logger`. Plain functions/objects for everything else. Conventions, from `managers/base.ts` and `logger.ts`:
+Used for stateful, identity-bearing things: managers, the `Logger`. Plain functions/objects for everything else. Conventions, from `addons/manager.ts`, `addons/lifecycle.ts` and `logger.ts`:
 
 - **`abstract class` with abstract methods** to define a contract for subclasses: `abstract initialize(): void;`.
 - **Field declarations with initialisers at the top**, before the constructor:
@@ -320,15 +322,15 @@ Used for stateful, identity-bearing things: managers, the `Logger`. Plain functi
     protected logger: ReturnType<typeof createLogger>;
     ```
 
-- **`ReturnType<typeof factory>`** to type a field whose value comes from a factory function (`createLogger`, `createPatcher`, `storage.getStore`) instead of importing/declaring the type.
-- **Parameter properties** for constructor-injected readonly config: `constructor(public readonly type: AddonKind)`.
-- **Visibility is explicit and minimal**: `protected` for subclass-only internals (`resolve`, `getByName`, `getStates`, `validateManifest`), `private` for class-only (`Logger.inspectFn`), public (no modifier) for the API surface.
+- **`ReturnType<typeof factory>`** to type a field whose value comes from a factory function (`createLogger`, `createPatcher`, `storage.getBucket`) instead of importing/declaring the type.
+- **Parameter properties** for constructor-injected readonly fields: `constructor(public readonly owner: string, public readonly path: string, reason: string)` on `CommandDefinitionError` (`commands/normalize.ts`).
+- **Visibility is explicit and minimal**: `protected` for subclass-only internals (`resolve`, `getByName`, `getStates`, `validateManifest` in `addons/lifecycle.ts`), `private` for class-only (`Logger.inspector`, `Logger._write`), public (no modifier) for the API surface.
 - **`static` factory + `static` helpers** pattern on `Logger` (`static create(…)`, `static setInspector()`), alongside an exported free function wrapper (`export function createLogger(...)`).
-- **A leading-underscore prefix** marks methods that are public-by-necessity but conceptually internal (`Logger._getPrefix`, `_getColor`, `_inspect`). New code prefers `private`/`protected`; the underscore convention persists where TS visibility can't be used.
+- **A leading-underscore prefix** marks methods that are public-by-necessity but conceptually internal (`Logger._getPrefix`, `_getColor`). New code prefers `private`/`protected`; the underscore convention persists where TS visibility can't be used.
 
-### 7.1 The Manager pattern (read before touching `managers/`)
+### 7.1 The Manager pattern (read before touching `addons/` or a `<kind>/manager.ts`)
 
-`Manager<T, EventMap>` extends `EventEmitter` (from `~/lib/event-emitter`, a port of `tseep`) and intersects a `BaseManagerEvents<T>` map onto the subclass's event map. Subclasses (`Addons`, then `Plugins`/`Themes`) layer on more events and methods. Every state-changing method:
+`Manager<T, EventMap>` (`addons/manager.ts`) extends `EventEmitter` (from `~/core/event-emitter`, a port of `tseep`) and intersects a `BaseManagerEvents<T>` map onto the subclass's event map. Subclasses (`Addons` in `addons/addons.ts`, then `Plugins`/`Themes` in `plugins/manager.ts`/`themes/manager.ts`) layer on more events and methods. Every state-changing method:
 
 1. Resolves its input via `resolve()` (accepts an id string _or_ the entity).
 2. Guards (`if (!resolved) return;`).
@@ -351,7 +353,14 @@ Event names are past-tense verbs: `loaded`, `unloaded`, `started`, `stopped`, `e
     export default ToastContainer;
     ```
 - **Props are a destructured object in the signature**, with defaults inline and the props shape as a named `type` (an inline literal prop type is banned by §4.1): `function TintedIcon({ source, size = 24 }: TintedIconProps)`.
-- Small private sub-components live in the same file above the main one (`TintedIcon`, `unitToHex`, `withoutOpacity` in `toast.tsx`).
+- **One component per file.** A sub-component gets its own sibling file (`toast-icon.tsx`, `toast-progress.tsx` beside `toast.tsx`). Plain helpers can sit in a sibling module (`unitToHex` and `withoutOpacity` in `./color`).
+- **Import a component from its own file** (`import ToastIcon from './toast-icon'`, `import Page from '~/ui/components/page'`). `ui/` has no barrels.
+- **`ui/` imports domains, never the reverse** (§3.2). A domain reaches `ui/` only through its `builtin.ts(x)`.
+- **Component files render; logic lives in a sibling `use-*.ts` hook** (`toast.tsx` ↔ `use-toast-state.ts`, `marketplace-card.tsx` ↔ `use-card-motion.ts`).
+- **Explicit variants over boolean props.** Take `variant: 'primary' | 'secondary'`, not a set of `isPrimary`/`isMuted` flags that can contradict each other.
+- **Derive in render; narrow subscriptions.** Compute values from props and state while rendering instead of copying them into `useState` through an effect. Subscribe to a store with a selector for the slice you read (`useToastStore((state) => state.toasts[id])`), not the whole store.
+
+In `packages/client/src` the shape is linted: `react/no-multi-comp`, `react/no-unstable-nested-components`, `react/jsx-no-constructed-context-values`, `react/no-object-type-as-default-prop`, `react/function-component-definition` and `import/no-cycle` are errors there.
 
 ### 8.2 Hooks
 
@@ -368,7 +377,6 @@ Event names are past-tense verbs: `loaded`, `unloaded`, `started`, `stopped`, `e
     	condition ? <Thing /> : null;
     }
     ```
-    _(You will see existing `options.icon && (…)` in `toast.tsx`; that pattern is exactly what the rule now flags - write the ternary in new code.)_
 - **No nested `<a>`** (`oxc-config/no-nested-links`) - N/A in RN but enforced for any web JSX.
 - Single quotes in JSX attributes (`variant='text-sm/semibold'`, `pointerEvents='box-none'`).
 - `style={[base, conditional, { inline }]}` array form for composing RN styles.
@@ -381,7 +389,7 @@ Event names are past-tense verbs: `loaded`, `unloaded`, `started`, `stopped`, `e
 
 ### 8.5 Stores (zustand)
 
-One store per file in `stores/`. `PascalCase` name matching the file's concept, default-exported:
+A domain's store is its `<domain>/state.ts` (`themes/state.ts`, `toasts/state.ts`), one per domain. `PascalCase` name matching the domain, default-exported:
 
 ```ts
 type ThemeStore = {
@@ -409,7 +417,7 @@ Actions live _in_ the store (method shorthand `addToast(options) { … }` for on
 - **Error messages name the thing and the id**: `` `Failed to load addon ${manifest.id}:` `` then the error object as a second arg.
 - **try/catch around fallible mutations**, recording rather than throwing where the system should degrade gracefully (managers record to `this.errors`; metro blacklists the offending module and continues). Throw only for programmer errors / contract violations (`throw new Error('You must provide a filter to search by.')`, manifest validation).
 - **`catch (error)`**, left as the compiler's `unknown` - an `any` annotation is a lint error outside the metro layer (§4). An unused catch binding is allowed (`caughtErrors: "none"`). Empty catch bodies carry an explanatory comment (`// Not in Node environment`).
-- **Events use the `EventEmitter` from `~/lib/event-emitter`** (a port of `tseep`) with a typed event map (`new EventEmitter<EventMap>()`). Expose `on`/`off` by binding (`export const on = Events.on.bind(Events)`). Provide an `addListener(predicate, callback)` that returns an unsubscribe function. Event payloads are a single object argument.
+- **Events use the `EventEmitter` from `~/core/event-emitter`** (a port of `tseep`) with a typed event map (`new EventEmitter<EventMap>()`). Expose `on`/`off` by binding (`export const on = Events.on.bind(Events)`). Provide an `addListener(predicate, callback)` that returns an unsubscribe function. Event payloads are a single object argument.
 
 ---
 
