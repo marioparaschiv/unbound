@@ -1,12 +1,13 @@
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import { safeCall, safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
-import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
+import { getRoleColorAppearance, roleColorRuns } from '@unbound-plugins/shared/colors/role-colors';
+import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/ios/text-attachments';
 import hookMessageCells from '@unbound-plugins/shared/native/ios/message-cell-hooks';
 import findVisibleCells from '@unbound-plugins/shared/native/ios/visible-cells';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
-import type { NativeObjCBridge } from '@unbound-app/api/native';
+import type { NativePluginBridge } from '@unbound-app/api/native';
 import { flux } from '@unbound-app/api';
 
 import {
@@ -18,6 +19,12 @@ import {
 } from '~/modules';
 import { longestFirst, matchMention, mentionedUserIds } from '~/mentions';
 import { createMentionPainter } from '~/ios/mention-painter';
+import {
+	installMessageMentionHooks,
+	restoreMessageMentions,
+	setMessageMentions,
+	type ChannelMentions,
+} from '~/ios/ui-message-cells';
 import { CELL_SCAN_DELAYS, PLUGIN_NAME } from '~/constants';
 import type { Message, NativeValue } from '~/types';
 import { presentNames } from '~/names';
@@ -65,12 +72,44 @@ function mentionsIn(message: Message, guildId: string): Mention[] {
 	return mentions;
 }
 
+const PUSH_DELAY_MS = 100;
+
+function channelMentions(channelId: string | undefined): ChannelMentions {
+	const messages: ChannelMentions = {};
+	const loaded = channelId ? (MessageStore.getMessages(channelId)?._array ?? []) : [];
+
+	for (const message of loaded) {
+		const guildId = message.guildId ?? ChannelStore.getChannel(channelId ?? '')?.guild_id;
+		const mentions = guildId && message.id ? mentionsIn(message, guildId) : [];
+
+		if (!mentions.length || !message.id) {
+			continue;
+		}
+
+		const runs: ChannelMentions[string]['runs'] = {};
+
+		for (const mention of mentions) {
+			for (const name of mention.names) {
+				runs[name] = roleColorRuns(`@${name}`, mention.colors).map((run) => ({
+					length: run.text.length,
+					color: run.color,
+				}));
+			}
+		}
+
+		messages[message.id] = { names: longestFirst(Object.keys(runs)), runs };
+	}
+
+	return messages;
+}
+
 /**
  * @description Paints mentions in native chat message cells with the mentioned member's role colors.
  * @param objc The Objective-C bridge from `context.native`.
  * @returns A function that removes the hooks and restores every painted text view.
  */
-export function colorMessageMentions(objc: NativeObjCBridge): () => Promise<void> {
+export function colorMessageMentions(native: NativePluginBridge): () => Promise<void> {
+	const { objc, ui } = native;
 	const feature = `${PLUGIN_NAME}: chat mentions`;
 	const modules = { MessageStore, ChannelStore, UserStore, SelectedChannelStore };
 
@@ -351,19 +390,45 @@ export function colorMessageMentions(objc: NativeObjCBridge): () => Promise<void
 		}
 	}
 
+	const scope = ui.createScope();
+	let pushTimer: ReturnType<typeof setTimeout> | undefined;
+
+	function pushMentions() {
+		pushTimer = undefined;
+		ui.run(setMessageMentions, channelMentions(currentChannelId));
+	}
+
+	function schedulePush() {
+		pushTimer ??= setTimeout(pushMentions, PUSH_DELAY_MS);
+	}
+
+	ui.run(
+		installMessageMentionHooks,
+		scope,
+		[...MESSAGE_TEXT_VIEW_CLASSES],
+		channelMentions(currentChannelId),
+	);
+
 	const unhook = hookMessageCells(objc, {
 		shown: scheduleCell,
-		laidOut: scheduleCell,
 		reused: forgetCell,
 	});
 
-	const removeChannelListener = flux.onStoreChange(SelectedChannelStore, onChannelChange);
+	const removeChannelListener = flux.onStoreChange(SelectedChannelStore, () => {
+		onChannelChange();
+		schedulePush();
+	});
+	const removeMessageListener = flux.onStoreChange(MessageStore, schedulePush);
 
 	scheduleScans();
 
 	return async () => {
 		stopped = true;
 		removeChannelListener();
+		removeMessageListener();
+		clearTimeout(pushTimer);
+		ui.run(restoreMessageMentions);
+		scope.dispose();
 
 		unhook();
 

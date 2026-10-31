@@ -24,6 +24,7 @@ export type User = {
 };
 
 export type Message = {
+	id?: string;
 	content?: string;
 	guildId?: string;
 };
@@ -51,6 +52,7 @@ type GuildRoleStore = FluxStore & {
 
 type MessageStore = FluxStore & {
 	getMessage(channelId: string, messageId: string): Message | null | undefined;
+	getMessages(channelId: string): { _array?: Message[] } | null | undefined;
 };
 
 declare module '@unbound-app/api/flux' {

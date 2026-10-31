@@ -17,7 +17,7 @@ export function enableMentions(native: NativePluginBridge, enqueue: Enqueue): ()
 
 	enqueue(() => {
 		for (const apply of [
-			() => colorMessageMentions(native.objc),
+			() => colorMessageMentions(native),
 			() => colorChatInputMentions(native),
 		]) {
 			try {

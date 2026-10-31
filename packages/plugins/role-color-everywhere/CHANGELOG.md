@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0]
+
+### Changed
+
+- On iOS, mentions in messages are painted on the UI thread in the same pass that sets the message text, so they no longer flash in the default color while scrolling.
+
 ## [1.1.1]
 
 ### Fixed
