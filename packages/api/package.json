@@ -44,6 +44,7 @@
 		"./testing": "./testing/index.ts",
 		"./themes": "./src/themes.d.ts",
 		"./toasts": "./src/toasts.d.ts",
+		"./ui": "./src/ui.d.ts",
 		"./updates": "./src/updates.d.ts"
 	},
 	"scripts": {
