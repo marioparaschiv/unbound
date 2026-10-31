@@ -21,6 +21,20 @@ type EventColumns = Partial<AuditEvent>;
 const OTEL_OFF = otelEnvSchema.parse({});
 const NO_TELEMETRY = createAuditTelemetry({ env: OTEL_OFF });
 
+function deployOf(commitSha: string): EventColumns {
+	return {
+		kind: 'review.decided',
+		subjectType: 'addon',
+		data: {
+			submissionId: 'submission-1',
+			submissionKind: 'update',
+			version: '1.0.1',
+			decision: 'approved',
+			build: { repository: 'owner/repo', commitSha, ref: 'plugin-builds/abc' },
+		},
+	};
+}
+
 function footers(fake: FakeDiscord) {
 	return fake.messages.map((message) => message.embeds[0]?.footer?.text);
 }
@@ -313,6 +327,62 @@ describe.skipIf(!DATABASE_URL)('audit dispatcher', () => {
 				description: '```json\n{\n  "expiresAt": 42\n}\n```',
 			},
 		]);
+	});
+
+	test('deploys of one build arriving one by one share one post', async () => {
+		const audit = await enabled();
+
+		for (const id of [1, 2, 3]) {
+			seed(id, deployOf('a'.repeat(40)));
+			await audit.handle(String(id), context());
+		}
+
+		seed(4, deployOf('b'.repeat(40)));
+		seed(5);
+		seed(6, deployOf('b'.repeat(40)));
+		await audit.handle('6', context());
+		await audit.reconcile(context());
+
+		expect(footers(fake)).toEqual([
+			'Events #1–#3 · review.decided',
+			'Event #4 · review.decided',
+			'Event #5 · user.unbanned',
+			'Event #6 · review.decided',
+		]);
+		expect(fake.messages[0]?.embeds[0]?.description?.split('\n')).toHaveLength(4);
+		expect(fake.edits).toHaveLength(2);
+		expect((await rows()).map((row) => row.messageId)).toEqual(
+			[0, 0, 0, 1, 2, 3].map((index) => fake.messages[index]?.id ?? null),
+		);
+	});
+
+	test('a deploy whose batch post was edited before a crash is adopted, not posted', async () => {
+		const audit = await enabled();
+
+		seed(1, deployOf('a'.repeat(40)));
+		seed(2, deployOf('a'.repeat(40)));
+		await audit.handle('2', context());
+		await database.db.delete(auditPost).where(eq(auditPost.eventId, 2));
+		await audit.reconcile(context());
+
+		expect(fake.requests).toHaveLength(1);
+		expect(fake.edits).toHaveLength(1);
+		expect(await rows()).toMatchObject([
+			{ id: 1, messageId: fake.messages[0]?.id },
+			{ id: 2, messageId: fake.messages[0]?.id },
+		]);
+	});
+
+	test('a deploy whose batch post was deleted gets a post of its own', async () => {
+		const audit = await enabled();
+
+		seed(1, deployOf('a'.repeat(40)));
+		await audit.handle('1', context());
+		fake.messages.splice(0);
+		seed(2, deployOf('a'.repeat(40)));
+		await audit.handle('2', context());
+
+		expect(footers(fake)).toEqual(['Event #2 · review.decided']);
 	});
 
 	test('a note full of mentions can ping no one', async () => {
