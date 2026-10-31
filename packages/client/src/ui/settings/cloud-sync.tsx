@@ -13,10 +13,10 @@ import {
 	signOut,
 	now,
 } from '~/sync/api';
-import type { SyncMode } from '~/sync/api';
 import type { SyncStrategy } from '~/sync/merge';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
+import type { SyncMode } from '~/sync/api';
 import { useBucket } from '~/storage/api';
 import Page from '~/ui/components/page';
 import { icons } from '~/assets/api';
