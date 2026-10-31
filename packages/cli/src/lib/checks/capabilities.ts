@@ -3,7 +3,6 @@ import { validateAddonCapabilities } from '@unbound-app/contracts/addon-conventi
 import type { BuildCheck } from '~/lib/build-checks';
 import { readDevManifest } from '~/lib/manifest';
 
-/** Fails the build when the manifest declares a Capability or platform the client cannot grant. */
 export const capabilitiesCheck: BuildCheck = {
 	name: 'capabilities',
 	/**

@@ -56,7 +56,7 @@ export function validateAddonFolder(folder: string): string[] {
 export function validateAddonNaming(manifest: ConventionManifest, folder?: string): string[] {
 	const errors = folder === void 0 ? [] : validateAddonFolder(folder);
 
-	validateText(manifest.name, 'name', ADDON_NAME_MAX_LENGTH, errors);
+	validateText(manifest, 'name', ADDON_NAME_MAX_LENGTH, errors);
 
 	if (
 		typeof manifest.name === 'string' &&
@@ -67,7 +67,7 @@ export function validateAddonNaming(manifest: ConventionManifest, folder?: strin
 		errors.push('name must use title-case words separated by spaces');
 	}
 
-	validateText(manifest.description, 'description', ADDON_DESCRIPTION_MAX_LENGTH, errors);
+	validateText(manifest, 'description', ADDON_DESCRIPTION_MAX_LENGTH, errors);
 
 	if (typeof manifest.id !== 'string' || !ID_PATTERN.test(manifest.id)) {
 		errors.push('id must use a lowercase namespace and kebab-case suffix');
@@ -86,21 +86,22 @@ export function validateAddonNaming(manifest: ConventionManifest, folder?: strin
  */
 export function validateAddonCapabilities(manifest: ConventionManifest): string[] {
 	const errors: string[] = [];
-	const platforms = validatePlatforms(manifest.platforms, errors);
+	const platforms = validatePlatforms(manifest, errors);
 
-	validateFlatCapabilities(manifest.capabilities, platforms, errors);
-	validatePlatformCapabilities(
-		manifest.platformCapabilities,
-		platforms,
-		manifest.platforms !== void 0,
-		errors,
-	);
+	validateFlatCapabilities(manifest, platforms, errors);
+	validatePlatformCapabilities(manifest, platforms, errors);
 
 	return errors;
 }
 
-// UNKNOWN: a manifest field read before any validation.
-function validateText(value: unknown, label: string, maxLength: number, errors: string[]) {
+function validateText(
+	manifest: ConventionManifest,
+	label: 'name' | 'description',
+	maxLength: number,
+	errors: string[],
+) {
+	const value = manifest[label];
+
 	if (typeof value !== 'string' || !value.trim()) {
 		errors.push(`${label} must be a non-empty string`);
 
@@ -138,8 +139,9 @@ function providingPlatforms(capability: string) {
 	);
 }
 
-// UNKNOWN: a manifest field read before any validation.
-function validatePlatforms(value: unknown, errors: string[]): string[] {
+function validatePlatforms(manifest: ConventionManifest, errors: string[]): string[] {
+	const value = manifest.platforms;
+
 	if (value === void 0) {
 		return SUPPORTED_PLATFORMS;
 	}
@@ -175,8 +177,13 @@ function validatePlatforms(value: unknown, errors: string[]): string[] {
 	return seen.length > 0 ? seen.sort() : SUPPORTED_PLATFORMS;
 }
 
-// UNKNOWN: a manifest field read before any validation.
-function validateFlatCapabilities(value: unknown, platforms: string[], errors: string[]) {
+function validateFlatCapabilities(
+	manifest: ConventionManifest,
+	platforms: string[],
+	errors: string[],
+) {
+	const value = manifest.capabilities;
+
 	if (value === void 0) return;
 
 	if (!Array.isArray(value)) {
@@ -211,13 +218,14 @@ function validateFlatCapabilities(value: unknown, platforms: string[], errors: s
 	}
 }
 
-// UNKNOWN: a manifest field read before any validation.
 function validatePlatformCapabilities(
-	value: unknown,
+	manifest: ConventionManifest,
 	platforms: string[],
-	declaredPlatforms: boolean,
 	errors: string[],
 ) {
+	const value = manifest.platformCapabilities;
+	const declaredPlatforms = manifest.platforms !== void 0;
+
 	if (value === void 0) return;
 
 	if (typeof value !== 'object' || value === null || Array.isArray(value)) {

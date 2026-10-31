@@ -4,7 +4,6 @@ import { basename } from 'node:path';
 import type { BuildCheck } from '~/lib/build-checks';
 import { readDevManifest } from '~/lib/manifest';
 
-/** Warns when an addon's folder, id, name or description breaks the naming conventions. */
 export const namingCheck: BuildCheck = {
 	name: 'naming',
 	/**
@@ -13,8 +12,8 @@ export const namingCheck: BuildCheck = {
 	 * @returns One warning per naming problem.
 	 */
 	run(addon) {
-		// A bare repository's folder is wherever it was cloned, so only a workspace folder is checked.
-		const folder = addon.path ? basename(addon.dir) : void 0;
+		const isBareRepository = addon.path === '';
+		const folder = isBareRepository ? void 0 : basename(addon.dir);
 
 		return validateAddonNaming(readDevManifest(addon.dir), folder).map((message) => ({
 			severity: 'warning',

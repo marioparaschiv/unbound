@@ -85,7 +85,6 @@ function listEntries(dir: string) {
 		.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Warns when a built plugin's `src/` departs from the standard addon layout. */
 export const layoutCheck: BuildCheck = {
 	name: 'layout',
 	/**
