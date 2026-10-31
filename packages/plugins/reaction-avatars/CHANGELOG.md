@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0]
+
+### Changed
+
+- On iOS, message cells are measured with the height their reactions need on the UI thread, so measuring a cell no longer waits on the JavaScript thread.
+
 ## [1.0.5]
 
 ### Fixed
