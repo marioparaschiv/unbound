@@ -1,4 +1,5 @@
 import { Pressable, Text, View, type GestureResponderEvent } from 'react-native';
+import type { FluxUser } from '@unbound-app/api/flux';
 import type { RefObject } from 'react';
 
 import {
@@ -8,13 +9,11 @@ import {
 	UserSummaryItem,
 	UserSummaryItemByName,
 } from '~/modules';
-import { MAX_AVATARS } from '~/constants';
-import type { User } from '~/types';
-
 import useStyles from '~/components/typing-avatars.style';
+import { MAX_AVATARS } from '~/constants';
 
 type TypingAvatarsProps = {
-	users: (User | null)[];
+	users: (FluxUser | null)[];
 	guildId: string | undefined;
 	channelId: string;
 	containerRef: RefObject<View | null>;

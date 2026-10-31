@@ -119,7 +119,7 @@ export function buildGlobal(
 	const scope = sourceFile.addTypeAlias({
 		isExported: true,
 		name: 'AddonScope',
-		type: `{ ${scopeGlobals.map(([name, global]) => `${name}: ${global.type};`).join(' ')} }`,
+		type: `{ ${scopeGlobals.map(([name, global]) => `${name}: ${global.sdkType};`).join(' ')} }`,
 		docs: [
 			'The globals a plugin runs with, keyed by name. Plugin code reads them without an import.',
 		],

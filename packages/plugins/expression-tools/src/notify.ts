@@ -8,7 +8,7 @@ import { PLUGIN_NAME } from '~/constants';
  * @param content The toast's text.
  */
 export function notify(content: string): void {
-	toasts.showToast({ title: PLUGIN_NAME, content });
+	toasts.show({ title: PLUGIN_NAME, content });
 }
 
 /**

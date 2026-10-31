@@ -1,6 +1,6 @@
-import type { NodeOf, Rule } from '../rule';
+import type { NodeOf, Rule } from './rule';
 
-import propertyName from '../property-name.ts';
+import propertyName from './property-name.ts';
 
 type CallNode = NodeOf<'CallExpression'>;
 

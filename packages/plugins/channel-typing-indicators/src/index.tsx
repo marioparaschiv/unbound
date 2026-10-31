@@ -1,5 +1,4 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
-import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { featureSelfTest, recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { whenAllLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 
@@ -15,23 +14,21 @@ import {
 	UserStoreFilter,
 } from '~/modules';
 
-let dispose = () => {};
+let markStopped = () => {};
 
 function start() {
 	if (!ensureModules('Channel Typing Indicators', { Theme })) return;
 
 	const stores = [TypingStoreFilter, UserStoreFilter];
 
-	dispose = applyFeatures('Channel Typing Indicators', [
-		IndicatorsRunning.markRunning,
-		() => whenAllLoaded([...stores, TextChannelPath], patchTextChannel),
-		() => whenAllLoaded([...stores, ThreadChannelPath], patchThreadChannel),
-	]);
+	markStopped = IndicatorsRunning.markRunning();
+	whenAllLoaded([...stores, TextChannelPath], patchTextChannel);
+	whenAllLoaded([...stores, ThreadChannelPath], patchThreadChannel);
+	recordApplied(3);
 }
 
 function stop() {
-	dispose();
-	dispose = () => {};
+	markStopped();
 }
 
 export default {

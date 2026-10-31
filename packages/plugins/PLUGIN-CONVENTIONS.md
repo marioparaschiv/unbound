@@ -2,6 +2,8 @@
 
 Every first-party plugin follows the same layout, so a contributor who has read one plugin can find their way around all of them. `moyai` is the reference implementation. The repository [code style](../../AGENTS.md) applies to plugin code too.
 
+The [addon authoring standards](../../docs/addons/standards.mdx) apply to every plugin, first-party ones included. They set the layout, the loading rules, and the lint rules and `ubd build` checks that enforce them. Where this file and the standards differ, follow the standards. First-party plugins move to the standard layout one plugin at a time.
+
 ## Naming
 
 Plugin folders use lowercase kebab-case, such as `message-link-embeds`. They are limited to 48 characters and must contain only lowercase letters, numbers, and single hyphens.

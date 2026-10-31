@@ -1,0 +1,147 @@
+---
+title: 'Flux'
+description: "Read Discord's Flux stores, react to Flux actions, and send your own."
+icon: 'box'
+---
+
+### What is Flux?
+
+Flux is how Discord manages its state. Its dispatcher sends **Flux actions**, such as `MESSAGE_CREATE` when a message arrives. **Flux stores**, such as `UserStore`, handle those actions and hold the resulting state.
+
+The `flux` namespace reads stores, listens for actions, and sends actions. Each listener function returns a function that removes the listener. In a plugin, every listener is also removed when the plugin stops, so `stop` doesn't have to remove them.
+
+```ts
+import { flux } from '@unbound-app/api';
+// equivalent: import * as flux from '@unbound-app/api/flux';
+// runtime global: unbound.flux
+```
+
+For a walkthrough, see [Flux Stores](/plugins/flux).
+
+### Reading a store
+
+`getStore(name)` finds a store by its name without the `Store` suffix. It's lazy: the search runs the first time you read from the store, so it's safe at the top of a file.
+
+```ts
+import { flux } from '@unbound-app/api';
+
+const UserStore = flux.getStore('User');
+
+// later, in a handler:
+const me = UserStore.getCurrentUser();
+```
+
+<ParamField path='name' type='string' required>
+	The store name, such as `'User'` or `'SelectedChannel'`.
+</ParamField>
+<ParamField path='options.lazy' type='boolean' default='true'>
+	Pass `false` to search right away and get the real store instead of a proxy.
+</ParamField>
+<ParamField path='options.short' type='boolean' default='true'>
+	Appends `Store` to the name before matching. Pass `false` to match the full name.
+</ParamField>
+
+These stores are typed: `User`, `Guild`, `GuildMember`, `Channel`, `SelectedChannel`, `Typing`, `Relationship`, `UserProfile` and `GuildSettings`. Any other name returns the base `FluxStore` type, which has `getName`, `addChangeListener`, `removeChangeListener` and `emitChange`. To type another store, see [Typing your own stores and actions](#typing-your-own-stores-and-actions).
+
+### Reading a store in a component
+
+`useStore(stores, getter, deps?)` runs `getter` and re-renders the component when any of the stores changes.
+
+```tsx
+import { flux } from '@unbound-app/api';
+
+const SelectedChannelStore = flux.getStore('SelectedChannel');
+
+function ChannelId() {
+	const channelId = flux.useStore(SelectedChannelStore, () => SelectedChannelStore.getChannelId());
+
+	return <Text>{channelId}</Text>;
+}
+```
+
+### Watching a store
+
+`onStoreChange(store, listener)` runs `listener` after each change to a store.
+
+```ts
+import { flux } from '@unbound-app/api';
+
+const TypingStore = flux.getStore('Typing');
+
+flux.onStoreChange(TypingStore, () => {
+	logger.log('Someone started or stopped typing.');
+});
+```
+
+### Listening for actions
+
+`onAction(type, listener)` runs `listener` for each action of one type, after Discord's stores have handled it. The action's payload is typed for the known action types.
+
+```ts
+import { flux } from '@unbound-app/api';
+
+flux.onAction('CHANNEL_SELECT', ({ channelId }) => {
+	logger.log('Channel selected:', channelId);
+});
+```
+
+If a listener throws, Unbound logs the error and the next listener still runs.
+
+### Intercepting actions
+
+`interceptAction(type, interceptor)` runs `interceptor` before Discord handles each action of one type. The interceptor can change the action in place. Return `true` to drop the action, so no store sees it.
+
+```ts
+import { flux } from '@unbound-app/api';
+
+flux.interceptAction('TYPING_START', ({ userId }) => userId === blockedUserId);
+```
+
+If an interceptor throws, Unbound logs the error and the action continues.
+
+<Warning>
+	A dropped action never reaches Discord's stores. Drop only the actions you mean to hide, and keep the interceptor fast: it runs for every action of that type.
+</Warning>
+
+### Sending an action
+
+`dispatch(action)` sends an action through Discord's dispatcher. It returns a promise that settles once Discord's stores have handled the action. For a known type, the payload is type-checked.
+
+```ts
+import { flux } from '@unbound-app/api';
+
+await flux.dispatch({ type: 'CHANNEL_SELECT', channelId, guildId });
+```
+
+### Typing your own stores and actions
+
+`FluxStores` and `FluxActions` are interfaces, so you can add your own entries with a `declare module` block. `getStore`, `onAction`, `interceptAction` and `dispatch` then use your types.
+
+```ts
+import type { FluxStore } from '@unbound-app/api/flux';
+
+type MessageStore = FluxStore & {
+	getMessage(channelId: string, messageId: string): { content: string } | undefined;
+};
+
+declare module '@unbound-app/api/flux' {
+	interface FluxStores {
+		Message: MessageStore;
+	}
+
+	interface FluxActions {
+		MY_PLUGIN_REFRESH: { id: string };
+	}
+}
+```
+
+### Reference
+
+| Function | Returns |
+| --- | --- |
+| `getStore(name, options?)` | The store, typed from `FluxStores` |
+| `useStore(stores, getter, deps?)` | The getter's latest value |
+| `onStoreChange(store, listener)` | A function that removes the listener |
+| `onAction(type, listener)` | A function that removes the listener |
+| `interceptAction(type, interceptor)` | A function that removes the interceptor |
+| `dispatch(action)` | A promise that settles once the stores handled the action |

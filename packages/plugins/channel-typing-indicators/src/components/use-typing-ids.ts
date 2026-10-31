@@ -1,11 +1,11 @@
-import { metro } from '@unbound-app/api';
+import { flux, storage } from '@unbound-app/api';
+import { useRef } from 'react';
 
 import { sameIds, visibleTypingIds } from '~/typing-users';
 import type { Channel } from '~/types';
 import {
 	RelationshipStore,
 	SelectedChannelStore,
-	settings,
 	TypingStore,
 	UserGuildSettingsStore,
 	UserStore,
@@ -18,14 +18,15 @@ import {
  * @returns The IDs of the typing users to show.
  */
 function useTypingIds(channel: Channel, muted: boolean): string[] {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(addon.id);
+	const previousIds = useRef<string[]>([]);
 	const includeCurrent = store.get('includeCurrentChannel', true);
 	const includeMuted = store.get('includeMutedChannels', false);
 	const includeBlocked = store.get('includeBlockedUsers', false);
 	const includeIgnored = store.get('includeIgnoredUsers', false);
 
 	// The optional stores are called with `?.`: a missing one reads as no filter.
-	function read(): string[] {
+	function visible(): string[] {
 		if (!includeCurrent && SelectedChannelStore.getChannelId?.() === channel.id) return [];
 
 		if (
@@ -44,27 +45,32 @@ function useTypingIds(channel: Channel, muted: boolean): string[] {
 		});
 	}
 
+	function readKeepingPreviousWhenSame(): string[] {
+		const next = visible();
+
+		if (!sameIds(previousIds.current, next)) {
+			previousIds.current = next;
+		}
+
+		return previousIds.current;
+	}
+
 	const stores = [
 		TypingStore,
 		RelationshipStore,
 		UserGuildSettingsStore,
 		SelectedChannelStore,
-	].filter((store) => store.module);
+	].filter((store) => Reflect.get(store, 'module'));
 
-	return metro.common.FluxHooks.useStateFromStores(
-		stores,
-		read,
-		[
-			channel.id,
-			channel.guild_id,
-			muted,
-			includeCurrent,
-			includeMuted,
-			includeBlocked,
-			includeIgnored,
-		],
-		sameIds,
-	);
+	return flux.useStore(stores, readKeepingPreviousWhenSame, [
+		channel.id,
+		channel.guild_id,
+		muted,
+		includeCurrent,
+		includeMuted,
+		includeBlocked,
+		includeIgnored,
+	]);
 }
 
 export default useTypingIds;

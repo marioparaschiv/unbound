@@ -10,7 +10,6 @@ type PageMediaNode = MarkdownNode & {
 };
 
 const MEDIA = /^!\[([^\]\n]*)\]\(\s*([^)\s]+)\s*\)/;
-// Inside Text a view lays out as an attachment with no width of its own, so it needs an explicit size.
 const INLINE_SIZE = 200;
 
 function inlineSize({ width, height }: PageMediaFile) {
