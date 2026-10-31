@@ -36,7 +36,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 		],
 		links: [
 			{ rel: 'stylesheet', href: stylesheet },
-			// The mark drawn one pixel per tile at 16px, so it stays sharp; white for dark tabs, near-black for light.
+			// The logo as drawn; browsers without SVG favicons fall back to the pixel-sharp ICOs.
+			{ rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml', sizes: 'any' },
 			{ rel: 'icon', href: '/favicon-light.ico', media: '(prefers-color-scheme: light)' },
 			{ rel: 'icon', href: '/favicon-dark.ico', media: '(prefers-color-scheme: dark)' },
 			{ rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
