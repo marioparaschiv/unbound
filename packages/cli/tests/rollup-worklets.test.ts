@@ -37,4 +37,15 @@ describe('worklets', () => {
 		expect(code).toContain('version: "3.19.4"');
 		expect(code).toContain('const{scope}=this.__closure');
 	});
+
+	test('compiles TypeScript worklets before swc can add helpers they cannot call', async () => {
+		const code = await transform(
+			"export function kind(value: unknown): string { 'worklet'; const [first] = [value]; return typeof first; }",
+			'/plugin/src/index.ts',
+		);
+
+		expect(code).toContain('typeof first');
+		expect(code).not.toContain('this.__closure');
+		expect(code).not.toContain(': unknown');
+	});
 });
