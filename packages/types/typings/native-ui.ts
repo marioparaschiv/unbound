@@ -1,15 +1,15 @@
 import type {
-	LoaderObjCBridge,
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
+	NativeObjCBridge,
 	NativeSerializable,
 } from './native';
 
 /** The bridge methods a plugin may call from the UI runtime, synchronously and on the main thread. */
 export type NativeUIScope = {
-	readonly objc?: Partial<LoaderObjCBridge>;
-	readonly java?: Partial<NativeJavaBridge>;
-	readonly hooks?: Partial<NativeJavaHooksBridge>;
+	readonly objc?: NativeObjCBridge;
+	readonly java?: NativeJavaBridge;
+	readonly hooks?: NativeJavaHooksBridge;
 	/** Removes every hook the scope installed. */
 	dispose(): void;
 };
@@ -19,12 +19,18 @@ export type NativeUIScopeFactory = {
 	createUIScope?(paths: readonly string[]): NativeUIScope;
 };
 
+/** A value a worklet can take from the JS runtime: a serializable value or a UI scope, which is shared as is. */
+export type NativeUIArgument = NativeSerializable | NativeUIScope;
+
 /** Runs plugin worklets on the UI runtime, where native views live, so hooks there act before the next frame. */
 export type NativeUIBridge = {
 	/** Opens a scope with every synchronous method the plugin's capabilities allow; capture it in a worklet. */
 	createScope(): NativeUIScope;
-	/** Runs a worklet on the UI runtime and waits for its result. */
-	runSync<A extends NativeSerializable[], R>(worklet: (...args: A) => R, ...args: A): R;
+	/** Runs a worklet on the UI runtime and resolves with what it returns, which must be serializable. */
+	call<A extends NativeUIArgument[], R extends NativeSerializable | void>(
+		worklet: (...args: A) => R,
+		...args: A
+	): Promise<R>;
 	/** Queues a worklet on the UI runtime. */
-	run<A extends NativeSerializable[]>(worklet: (...args: A) => void, ...args: A): void;
+	run<A extends NativeUIArgument[]>(worklet: (...args: A) => void, ...args: A): void;
 };

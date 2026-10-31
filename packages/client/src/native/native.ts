@@ -54,6 +54,9 @@ export type {
 	NativeViewSearchOptions,
 	NativeViewSnapshotNode,
 	NativeViewSnapshotOptions,
+	NativeUIArgument,
+	NativeUIBridge,
+	NativeUIScope,
 	PluginContext,
 } from '@unbound-app/types/native';
 export {

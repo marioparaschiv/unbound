@@ -2,7 +2,7 @@ import type {
 	NativePluginCapability,
 	NativePluginMethod,
 	NativePluginPlatform,
-	NativeSerializable,
+	NativeUIArgument,
 	NativeUIBridge,
 	NativeUIScope,
 } from '@unbound-app/types';
@@ -12,19 +12,25 @@ import { NativePluginDisposedError, NativePluginUnavailableError } from '~/nativ
 import { getNativePlugin } from '~/native/plugin-bridge';
 import { findByPropsLazy } from '~/metro/wrappers';
 
-type UIWorklet<A extends NativeSerializable[], R> = (...args: A) => R;
+type UIWorklet<A extends NativeUIArgument[], R> = (...args: A) => R;
+
+type Settle = (result: GuardedResult) => void;
 
 type UIRuntime = {
-	executeOnUIRuntimeSync?: <A extends NativeSerializable[], R>(
-		worklet: UIWorklet<A, R>,
-	) => (...args: A) => R;
-	runOnUI?: <A extends NativeSerializable[]>(worklet: UIWorklet<A, void>) => (...args: A) => void;
+	runOnJS?: (callback: Settle) => Settle;
+	runOnUI?: <A extends NativeUIArgument[]>(worklet: UIWorklet<A, void>) => (...args: A) => void;
 };
 
 type GuardedResult = { ok: true; value: unknown } | { ok: false; error: string };
 
 // UNKNOWN: a plugin worklet may return any value the UI runtime can share back.
 type PluginWorklet = (...args: never[]) => unknown;
+
+type WorkletClosure = {
+	worklet: PluginWorklet;
+	runOnJS?: (callback: Settle) => Settle;
+	settle?: Settle;
+};
 
 type WorkletGuard = {
 	hash: number;
@@ -36,7 +42,7 @@ type ScopedUIBridge = {
 	dispose: () => void;
 };
 
-const Reanimated = findByPropsLazy('executeOnUIRuntimeSync', 'runOnUI');
+const Reanimated = findByPropsLazy('runOnJS', 'runOnUI');
 
 const REANIMATED_VERSION = '3.19.4';
 
@@ -45,9 +51,9 @@ const GUARDED_RUN = {
 	code: "function unboundGuardedRun(){const{worklet}=this.__closure;try{worklet.apply(undefined,arguments);}catch(error){console.error('[Unbound] A UI worklet failed: '+String(error));}}",
 };
 
-const GUARDED_SYNC = {
-	hash: 0x75_6e_62_02,
-	code: 'function unboundGuardedSync(){const{worklet}=this.__closure;try{return{ok:true,value:worklet.apply(undefined,arguments)};}catch(error){return{ok:false,error:String(error)};}}',
+const GUARDED_CALL = {
+	hash: 0x75_6e_62_03,
+	code: 'function unboundGuardedCall(){const{worklet,runOnJS,settle}=this.__closure;let result;try{result={ok:true,value:worklet.apply(undefined,arguments)};}catch(error){result={ok:false,error:String(error)};}runOnJS(settle)(result);}',
 };
 
 const PROMISE_METHODS: ReadonlySet<NativePluginMethod> = new Set([
@@ -90,19 +96,19 @@ function createNativeScope(
 function uiRuntime(): Required<UIRuntime> {
 	const runtime = Reanimated as UIRuntime | undefined;
 
-	if (!runtime?.executeOnUIRuntimeSync || !runtime.runOnUI) {
+	if (!runtime?.runOnJS || !runtime.runOnUI) {
 		throw new NativePluginUnavailableError('The UI runtime is unavailable.');
 	}
 
 	return runtime as Required<UIRuntime>;
 }
 
-function guardWorklet<A extends NativeSerializable[], R>(
+function guardWorklet<A extends NativeUIArgument[]>(
 	guard: WorkletGuard,
-	worklet: PluginWorklet,
-): UIWorklet<A, R> {
-	return Object.assign(() => undefined as R, {
-		__closure: { worklet },
+	closure: WorkletClosure,
+): UIWorklet<A, void> {
+	return Object.assign(() => undefined, {
+		__closure: closure,
 		__workletHash: guard.hash,
 		__initData: {
 			code: guard.code,
@@ -141,21 +147,30 @@ export function createScopedUIBridge(
 
 				return scope;
 			},
-			runSync(worklet, ...args) {
+			call(worklet, ...args) {
 				requireActive();
+				const runtime = uiRuntime();
 
-				const guarded = guardWorklet<typeof args, GuardedResult>(GUARDED_SYNC, worklet);
-				const result = uiRuntime().executeOnUIRuntimeSync(guarded)(...args);
+				return new Promise((resolve, reject) => {
+					const settle: Settle = (result) => {
+						if (result.ok) {
+							resolve(result.value as ReturnType<typeof worklet>);
+						} else {
+							reject(new Error(result.error));
+						}
+					};
+					const guarded = guardWorklet<typeof args>(GUARDED_CALL, {
+						worklet,
+						runOnJS: runtime.runOnJS,
+						settle,
+					});
 
-				if (!result.ok) {
-					throw new Error(result.error);
-				}
-
-				return result.value as ReturnType<typeof worklet>;
+					runtime.runOnUI(guarded)(...args);
+				});
 			},
 			run(worklet, ...args) {
 				requireActive();
-				const guarded = guardWorklet<typeof args, void>(GUARDED_RUN, worklet);
+				const guarded = guardWorklet<typeof args>(GUARDED_RUN, { worklet });
 
 				uiRuntime().runOnUI(guarded)(...args);
 			},

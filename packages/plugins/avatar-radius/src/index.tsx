@@ -10,7 +10,7 @@ import { settings } from '~/modules';
 let dispose: () => void | Promise<void> = () => {};
 
 const radiusSetting = () => storedRadius(settings.get('radius', undefined));
-let rounded: (() => number) | null = null;
+let rounded: (() => number | Promise<number>) | null = null;
 let unrounded: (() => Promise<number>) | null = null;
 
 function start(context: PluginContext) {
@@ -56,7 +56,7 @@ async function selfTest() {
 		};
 	}
 
-	return { ok: true, detail: `${rounded()} avatars rounded to ${radiusSetting()} points` };
+	return { ok: true, detail: `${await rounded()} avatars rounded to ${radiusSetting()} points` };
 }
 
 export default {
