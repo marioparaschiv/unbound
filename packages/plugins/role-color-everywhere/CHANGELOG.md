@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0]
+
+### Changed
+
+- Mentions in the chat input are painted in the same pass that changes the text, on the UI thread, so they no longer flash in the default color first.
+
 ## [1.0.2]
 
 ### Fixed
