@@ -35,7 +35,7 @@ async function readStored(): Promise<Catalog | undefined> {
 				continue;
 			}
 
-			const catalog = parseCatalog(await fs.read(path));
+			const catalog = parseCatalog(await fs.readFile(path));
 
 			if (catalog) {
 				return catalog;
@@ -52,8 +52,8 @@ async function store(catalog: Catalog) {
 	const text = JSON.stringify(catalog);
 
 	try {
-		await fs.write(CATALOG_NEXT_PATH, text);
-		await fs.write(CATALOG_PATH, text);
+		await fs.writeFile(CATALOG_NEXT_PATH, text);
+		await fs.writeFile(CATALOG_PATH, text);
 	} catch (error) {
 		logger.error('Failed to store the catalog:', error);
 	}

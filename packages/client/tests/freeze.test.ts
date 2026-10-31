@@ -17,7 +17,7 @@ const actualToasts = await import('~/toasts/api');
 
 mock.module('~/toasts/api', () => ({
 	...actualToasts,
-	showToast: (toast: RecordedToast) => {
+	show: (toast: RecordedToast) => {
 		toasts.push(toast);
 	},
 }));

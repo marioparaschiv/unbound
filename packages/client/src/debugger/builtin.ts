@@ -15,8 +15,8 @@ import { currentEnvironment } from '~/core/environment';
 import { createPatcher } from '~/patcher/api';
 import type { Addon } from '~/addons/addon';
 import { plugins } from '~/plugins/manager';
-import { showToast } from '~/toasts/api';
 import storage from '~/storage/api';
+import { show } from '~/toasts/api';
 
 const Patcher = createPatcher('Debugger');
 const Logger = createLogger('Debugger');
@@ -376,7 +376,7 @@ function listenToReloads() {
 		reset = setTimeout(() => {
 			reloaded = [];
 		}, RELOAD_BATCH_MS);
-		showToast({
+		show({
 			id: 'hot-reload',
 			title: 'Hot reload',
 			content: reloadSummary(reloaded),
@@ -384,7 +384,7 @@ function listenToReloads() {
 	}
 
 	function onReloadError(entity: Addon, error: Error) {
-		showToast({
+		show({
 			id: `reload:${entity.id}`,
 			title: 'Hot reload failed',
 			content: `${entity.name} failed to reload: ${error.message}`,

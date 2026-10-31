@@ -207,7 +207,7 @@ export class Icons extends Addons<Plugin> {
 			);
 
 			this.unload(resolved);
-			await fs.rm(this.directoryOf(resolved.id));
+			await fs.removeFile(this.directoryOf(resolved.id));
 			this.forgetSource(resolved.id);
 
 			this.emit('deleted', resolved);
@@ -274,7 +274,7 @@ export class Icons extends Addons<Plugin> {
 			const path = `${this.directoryOf(id)}/${relative}`;
 
 			if (await fs.exists(path)) {
-				asset.iconPackPath = `${fs.Documents}/${path}`;
+				asset.iconPackPath = `${fs.documentsPath}/${path}`;
 				asset.iconPackScale = scale;
 				break;
 			}
@@ -395,7 +395,11 @@ export class Icons extends Addons<Plugin> {
 					const buf = await fetch(raw).then((res) => res.arrayBuffer());
 					const data = Buffer.from(buf).toString('base64');
 
-					await fs.write(`${this.directoryOf(manifest.id)}/${relative}`, data, 'base64');
+					await fs.writeFile(
+						`${this.directoryOf(manifest.id)}/${relative}`,
+						data,
+						'base64',
+					);
 				}),
 			);
 		}

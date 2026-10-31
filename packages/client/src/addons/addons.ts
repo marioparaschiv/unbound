@@ -397,7 +397,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 
 		try {
 			await this.unload(resolved);
-			await fs.rm(this.directoryOf(resolved.id));
+			await fs.removeFile(this.directoryOf(resolved.id));
 			this.forgetSource(resolved.id);
 			this.clearDevelopmentCopy(resolved.id);
 			this.releaseHold(resolved.id);
@@ -458,8 +458,8 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	protected async persist(bundle: string, manifest: AddonManifest): Promise<void> {
 		const dir = this.directoryOf(manifest.id);
 
-		await fs.write(`${dir}/manifest.json`, JSON.stringify(manifest));
-		await fs.write(`${dir}/${manifest.main}`, bundle);
+		await fs.writeFile(`${dir}/manifest.json`, JSON.stringify(manifest));
+		await fs.writeFile(`${dir}/${manifest.main}`, bundle);
 	}
 
 	/**
@@ -477,7 +477,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 
 		const path = `${this.directoryOf(manifest.id)}/${compiledBundlePath(manifest.main, bytecodeVersion)}`;
 
-		await fs.write(path, bytecode, 'base64');
+		await fs.writeFile(path, bytecode, 'base64');
 	}
 
 	/**
@@ -506,7 +506,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @param id The addon's id.
 	 */
 	clearDevelopmentCopy(id: string): void {
-		void fs.rm(this.developmentMarkerOf(id)).catch(() => undefined);
+		void fs.removeFile(this.developmentMarkerOf(id)).catch(() => undefined);
 
 		const copies = this.getDevelopmentCopies();
 

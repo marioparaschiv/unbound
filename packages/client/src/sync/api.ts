@@ -17,7 +17,7 @@ import { isJsonEqual, plan, reconcileBase } from '~/sync/merge';
 import { authorizeWithDiscord } from '~/sync/discord-oauth';
 import type { SyncStrategy } from '~/sync/merge';
 import { API_URL } from '~/core/constants';
-import { getStore } from '~/storage/api';
+import { getBucket } from '~/storage/api';
 
 /** The settings store Cloud Sync keeps its session and last agreed document in. Never synced. */
 export const SYNC_STORE = 'unbound::sync';
@@ -40,7 +40,7 @@ const MODE_STRATEGIES: Record<SyncMode, SyncStrategy> = {
 type ApiRequest = ReturnType<typeof createApiClient<Api>>;
 
 const logger = createLogger('Cloud Sync');
-const Store = getStore(SYNC_STORE);
+const Store = getBucket(SYNC_STORE);
 
 let running: Promise<boolean> | undefined;
 let rerun = false;

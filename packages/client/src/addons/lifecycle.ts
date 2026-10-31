@@ -26,9 +26,9 @@ import { unpatchAllByCaller } from '~/patcher/api';
 import { isSafeAddonMain } from '~/addons/paths';
 import { getSetting } from '~/settings/unbound';
 import { Manager } from '~/addons/manager';
-import { showToast } from '~/toasts/api';
 import { Addon } from '~/addons/addon';
 import storage from '~/storage/api';
+import { show } from '~/toasts/api';
 
 /** A single freeze at least this long disables the addon at once. */
 const LONG_FREEZE_SECONDS = 20;
@@ -315,7 +315,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			this.disable(entity);
 		}
 
-		showToast({
+		show({
 			title: entity.name,
 			content: disable
 				? `Disabled ${entity.name} because it froze Discord for ${seconds} seconds.${detail}`

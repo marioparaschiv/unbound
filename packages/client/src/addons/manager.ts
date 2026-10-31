@@ -54,7 +54,7 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 	readonly icon: string;
 
 	protected logger: ReturnType<typeof createLogger>;
-	protected settings: ReturnType<typeof storage.getStore>;
+	protected settings: ReturnType<typeof storage.getBucket>;
 	protected patcher: ReturnType<typeof createPatcher>;
 
 	/**
@@ -72,7 +72,7 @@ export abstract class Manager<T, EventMap extends DefaultEventMap = {}> extends 
 		this.icon = info.icon;
 
 		this.logger = createLogger(info.name);
-		this.settings = storage.getStore(info.bucket);
+		this.settings = storage.getBucket(info.bucket);
 		this.patcher = createPatcher(info.name);
 	}
 

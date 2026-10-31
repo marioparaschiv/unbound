@@ -5,7 +5,7 @@ import { Discord } from '~/metro/components';
 import { Screens } from '~/core/constants';
 import { reload } from '~/native/native';
 import debug from '~/debugger/builtin';
-import { Messages } from '~/i18n/api';
+import { messages } from '~/i18n/api';
 import { findByProps } from '~/metro';
 import { Util } from '~/metro/common';
 import storage from '~/storage/api';
@@ -102,10 +102,10 @@ function confirmRecovery() {
 	const enabled = !getSetting('recovery');
 
 	Discord.showConfirmModal({
-		title: Messages.UNBOUND_RECOVERY_MODE,
-		content: `${Messages.UNBOUND_RECOVERY_MODE_DESC} ${enabled ? 'Turn it on' : 'Turn it off'} and restart?`,
-		confirmText: Messages.UNBOUND_RESTART,
-		cancelText: Messages.UNBOUND_CANCEL,
+		title: messages.UNBOUND_RECOVERY_MODE,
+		content: `${messages.UNBOUND_RECOVERY_MODE_DESC} ${enabled ? 'Turn it on' : 'Turn it off'} and restart?`,
+		confirmText: messages.UNBOUND_RESTART,
+		cancelText: messages.UNBOUND_CANCEL,
 		onConfirm() {
 			setSetting('recovery', enabled);
 			void reload();

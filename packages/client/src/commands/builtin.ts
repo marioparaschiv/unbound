@@ -18,7 +18,7 @@ import { findByProps, findStore } from '~/metro';
 import { registry } from '~/commands/registry';
 import { createExecute } from '~/commands/run';
 import { createPatcher } from '~/patcher/api';
-import { getIDByName } from '~/assets/api';
+import { getIdByName } from '~/assets/api';
 import { Messages } from '~/metro/api';
 import { Users } from '~/metro/stores';
 
@@ -176,7 +176,7 @@ function getIndex(): DiscordIndex {
 			commands.push(command);
 		}
 
-		const icon = section.icon ?? getIDByName(DEFAULT_ICON);
+		const icon = section.icon ?? getIdByName(DEFAULT_ICON);
 
 		sections[section.id] = { descriptor: toDescriptor(section, enums), commands: byId };
 

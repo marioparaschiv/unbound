@@ -1,6 +1,6 @@
 import { CACHE_VERSION } from '~/core/constants';
 import { BundleInfo } from '~/native/native';
-import { getStore } from '~/storage/api';
+import { getBucket } from '~/storage/api';
 
 /** Bitwise flags tracking per-module state; `BLACKLISTED` marks a module that must never be returned from a search. */
 export enum ModuleFlags {
@@ -15,7 +15,7 @@ const CurrentCacheInfo = {
 	moduleCount: moduleIds.length,
 };
 
-const storage = getStore('unbound::cache');
+const storage = getBucket('unbound::cache');
 
 type CacheState = {
 	info: typeof CurrentCacheInfo;

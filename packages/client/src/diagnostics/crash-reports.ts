@@ -25,7 +25,7 @@ function crashReportsEnabled(): boolean {
 
 async function readLoaderLog(): Promise<string | undefined> {
 	try {
-		return (await fs.exists(LOG_FILE)) ? await fs.read(LOG_FILE) : undefined;
+		return (await fs.exists(LOG_FILE)) ? await fs.readFile(LOG_FILE) : undefined;
 	} catch {
 		return undefined;
 	}

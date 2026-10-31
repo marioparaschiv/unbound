@@ -5,8 +5,8 @@ import { Messages as MessageActions } from '~/metro/api';
 import { discordChannel } from '~/core/discord-support';
 import type { BundleInfoType } from '~/native/native';
 import { React, ReactNative } from '~/metro/common';
-import { showToast } from '~/toasts/api';
-import { Messages } from '~/i18n/api';
+import { messages } from '~/i18n/api';
+import { show } from '~/toasts/api';
 import fs from '~/native/fs';
 
 import formatDebugInfo, { type DebugInfo } from './format-debug-info';
@@ -111,9 +111,9 @@ export function readEntitlements(): string {
 }
 
 function warnTextOnly() {
-	showToast({
-		title: Messages.UNBOUND_DEBUG_INFO,
-		content: Messages.UNBOUND_DEBUG_ENTITLEMENTS_FAILED,
+	show({
+		title: messages.UNBOUND_DEBUG_INFO,
+		content: messages.UNBOUND_DEBUG_ENTITLEMENTS_FAILED,
 		icon: 'WarningIcon',
 	});
 }
@@ -125,9 +125,9 @@ async function uploadEntitlements(channelId: string): Promise<CloudUpload | unde
 		return undefined;
 	}
 
-	await fs.write(ENTITLEMENTS_PATH, plist);
+	await fs.writeFile(ENTITLEMENTS_PATH, plist);
 
-	const uri = `file://${fs.Documents}/${ENTITLEMENTS_PATH}`;
+	const uri = `file://${fs.documentsPath}/${ENTITLEMENTS_PATH}`;
 	const upload: CloudUpload = new CloudUploader.CloudUpload(
 		{
 			id: `unbound-debug-${Date.now()}`,

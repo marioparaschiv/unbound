@@ -83,7 +83,7 @@ export function isSettingChange(payload: SettingsPayload, key: UnboundSettingKey
  * @returns The typed core setting accessors.
  */
 export function useUnboundSettings(predicate?: (payload: SettingsPayload) => PredicateResult) {
-	storage.useSettingsStore(CORE_SETTINGS_STORE, predicate);
+	storage.useBucket(CORE_SETTINGS_STORE, predicate);
 
 	return { get: getSetting, set: setSetting, toggle: toggleSetting };
 }

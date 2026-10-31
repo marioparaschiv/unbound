@@ -12,10 +12,10 @@ export const existingFiles = new Set<string>();
 
 mock.module('~/native/fs', () => ({
 	default: {
-		Documents: '/docs',
-		write: async (path: string) => void writes.push(path),
-		read: async () => '',
-		rm: async () => true,
+		documentsPath: '/docs',
+		writeFile: async (path: string) => void writes.push(path),
+		readFile: async () => '',
+		removeFile: async () => true,
 		exists: async (path: string) => existingFiles.has(path),
 	},
 }));
@@ -32,11 +32,11 @@ type Subscription = {
 	predicate?: (change: SettingsChange) => boolean;
 };
 
-/** What each `useSettingsStore` call subscribed to, in call order. */
+/** What each `useBucket` call subscribed to, in call order. */
 export const subscriptions: Subscription[] = [];
 
 /**
- * @description Whether any recorded `useSettingsStore` subscription re-renders on a change.
+ * @description Whether any recorded `useBucket` subscription re-renders on a change.
  * @param change The bucket and key written.
  * @returns Whether a subscriber would re-render.
  */
@@ -57,13 +57,13 @@ mock.module('~/storage/api', () => {
 		},
 	};
 
-	function getStore(bucket: string) {
+	function getBucket(bucket: string) {
 		openedBuckets.push(bucket);
 
 		return store;
 	}
 
-	function useSettingsStore(bucket: string, predicate?: Subscription['predicate']) {
+	function useBucket(bucket: string, predicate?: Subscription['predicate']) {
 		subscriptions.push({ store: bucket, predicate });
 
 		return store;
@@ -71,12 +71,14 @@ mock.module('~/storage/api', () => {
 
 	return {
 		default: {
-			getStore,
+			getBucket,
 			get: <T>(_s: string, _k: string, d: T) => d,
 			persist: async () => void persists.push(Date.now()),
 		},
-		getStore,
-		useSettingsStore,
+		getBucket,
+		useBucket,
+		getStore: getBucket,
+		useSettingsStore: useBucket,
 	};
 });
 

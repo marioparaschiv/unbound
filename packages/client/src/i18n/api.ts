@@ -3,7 +3,7 @@ import enUS from '@i18n/en-US.json';
 
 import { Dispatcher, i18n as Discord, Moment } from '~/metro/common';
 import { DEV, I18N_BASE_URL } from '~/core/constants';
-import { getStore } from '~/storage/api';
+import { getBucket } from '~/storage/api';
 import { findByName } from '~/metro';
 import fs from '~/native/fs';
 
@@ -36,7 +36,7 @@ type MomentMethod = (this: unknown, ...args: unknown[]) => unknown;
 let currentLocale: string | null = null;
 
 const strings: StringStore = { 'en-US': enUS };
-const storage = getStore('unbound::i18n');
+const storage = getBucket('unbound::i18n');
 const logger = createLogger('i18n');
 let previousMomentLocale: string | null = null;
 let originalMomentLocaleSetter: MomentMethod | null = null;
@@ -199,7 +199,7 @@ async function ensureLocale(locale: string): Promise<void> {
 
 	if (await fs.exists(path)) {
 		try {
-			strings[locale] = parseLocaleStrings(await fs.read(path));
+			strings[locale] = parseLocaleStrings(await fs.readFile(path));
 		} catch (error) {
 			logger.error(`Failed to parse cached locale ${locale}:`, error);
 		}
@@ -223,7 +223,7 @@ async function ensureLocale(locale: string): Promise<void> {
 
 		strings[locale] = parseLocaleStrings(text);
 
-		await fs.write(path, text);
+		await fs.writeFile(path, text);
 
 		const etag = res.headers.get('etag');
 

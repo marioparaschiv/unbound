@@ -18,8 +18,8 @@ import DesignPage from '~/ui/settings/design';
 import ToastsPage from '~/ui/settings/toasts';
 import { Discord } from '~/metro/components';
 import SettingsStore from '~/settings/state';
-import { getIDByName } from '~/assets/api';
-import { Messages } from '~/i18n/api';
+import { getIdByName } from '~/assets/api';
+import { messages } from '~/i18n/api';
 
 import findSettingsOverview from './find-overview';
 
@@ -64,7 +64,7 @@ function route({
 		parent: null,
 		section: hidden ? undefined : CLIENT_NAME,
 		excludeFromDisplay: hidden,
-		IconComponent: icon ? () => <Discord.TableRowIcon source={getIDByName(icon)} /> : undefined,
+		IconComponent: icon ? () => <Discord.TableRowIcon source={getIdByName(icon)} /> : undefined,
 		screen: { route: key, getComponent },
 	};
 }
@@ -73,25 +73,25 @@ function route({
 const builtInEntries: Record<string, SettingsEntry> = {
 	[Screens.General]: route({
 		key: Screens.General,
-		useTitle: () => Messages.UNBOUND_GENERAL,
+		useTitle: () => messages.UNBOUND_GENERAL,
 		getComponent: () => GeneralPage,
 		icon: 'SettingsIcon',
 	}),
 	[Screens.Plugins]: route({
 		key: Screens.Plugins,
-		useTitle: () => Messages.UNBOUND_PLUGINS,
+		useTitle: () => messages.UNBOUND_PLUGINS,
 		getComponent: () => PluginsPage,
 		icon: 'PuzzlePieceIcon',
 	}),
 	[Screens.Design]: route({
 		key: Screens.Design,
-		useTitle: () => Messages.UNBOUND_DESIGN,
+		useTitle: () => messages.UNBOUND_DESIGN,
 		getComponent: () => DesignPage,
 		icon: 'PaintPaletteIcon',
 	}),
 	[Screens.Developer]: route({
 		key: Screens.Developer,
-		useTitle: () => Messages.UNBOUND_DEVELOPER,
+		useTitle: () => messages.UNBOUND_DEVELOPER,
 		getComponent: () => DeveloperPage,
 		usePredicate: () =>
 			useUnboundSettings(({ key }) => key === 'developer-mode').get('developer-mode'),
@@ -99,37 +99,37 @@ const builtInEntries: Record<string, SettingsEntry> = {
 	}),
 	[Screens.Marketplace]: route({
 		key: Screens.Marketplace,
-		useTitle: () => Messages.UNBOUND_MARKETPLACE,
+		useTitle: () => messages.UNBOUND_MARKETPLACE,
 		getComponent: () => MarketplacePage,
 		icon: 'img_collectibles_shop',
 	}),
 	[Screens.Updates]: route({
 		key: Screens.Updates,
-		useTitle: () => Messages.UNBOUND_UPDATES,
+		useTitle: () => messages.UNBOUND_UPDATES,
 		getComponent: () => UpdatesPage,
 		icon: 'DownloadIcon',
 	}),
 	[Screens.Toasts]: route({
 		key: Screens.Toasts,
-		useTitle: () => Messages.UNBOUND_TOAST_SETTINGS,
+		useTitle: () => messages.UNBOUND_TOAST_SETTINGS,
 		getComponent: () => ToastsPage,
 		hidden: true,
 	}),
 	[Screens.CloudSync]: route({
 		key: Screens.CloudSync,
-		useTitle: () => Messages.UNBOUND_CLOUD_SYNC,
+		useTitle: () => messages.UNBOUND_CLOUD_SYNC,
 		getComponent: () => CloudSyncPage,
 		icon: 'CloudIcon',
 	}),
 	[Screens.Assets]: route({
 		key: Screens.Assets,
-		useTitle: () => Messages.UNBOUND_ASSET_BROWSER,
+		useTitle: () => messages.UNBOUND_ASSET_BROWSER,
 		getComponent: () => AssetsPage,
 		hidden: true,
 	}),
 	[Screens.Custom]: route({
 		key: Screens.Custom,
-		useTitle: () => Messages.UNBOUND_CUSTOM,
+		useTitle: () => messages.UNBOUND_CUSTOM,
 		getComponent: () => CustomScreen,
 		hidden: true,
 	}),

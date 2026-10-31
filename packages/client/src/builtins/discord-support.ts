@@ -5,7 +5,7 @@ import { isOlderThanSupported, shouldWarnAboutDiscordVersion } from '~/core/disc
 import { MINIMUM_DISCORD_VERSIONS } from '~/core/constants';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { BundleInfo } from '~/native/native';
-import { showToast } from '~/toasts/api';
+import { show } from '~/toasts/api';
 
 const Logger = createLogger('DiscordSupport');
 
@@ -29,7 +29,7 @@ export function start() {
 	}
 
 	setSetting('discord-support.warned', version);
-	showToast({
+	show({
 		id: 'discord-support',
 		title: 'Unsupported Discord',
 		content: 'This Discord version is older than Unbound supports.',

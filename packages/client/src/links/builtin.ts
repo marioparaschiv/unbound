@@ -10,9 +10,9 @@ import { navigationReady } from '~/core/navigation-ready';
 import { ActionSheets, Linking } from '~/metro/api';
 import MarketplaceStore from '~/marketplace/state';
 import { getNativeModule } from '~/native/runtime';
-import { Messages, format } from '~/i18n/api';
+import { messages, format } from '~/i18n/api';
 import { Screens } from '~/core/constants';
-import { showToast } from '~/toasts/api';
+import { show } from '~/toasts/api';
 import fs from '~/native/fs';
 
 import type { LinkOutcome, LinkTargets } from './resolve-unbound-link';
@@ -111,7 +111,7 @@ function describe(channel: ChannelRecord): ShareDestination {
 			channelId: channel.id,
 			guildId: '@me',
 			label: name,
-			subLabel: Messages.UNBOUND_SHARE_DIRECT_MESSAGE,
+			subLabel: messages.UNBOUND_SHARE_DIRECT_MESSAGE,
 		};
 	}
 
@@ -177,8 +177,8 @@ async function stage(destination: ShareDestination, files: SharedFile[]) {
 			mimeType,
 		})),
 	});
-	showToast({
-		title: Messages.UNBOUND_SHARE_TITLE,
+	show({
+		title: messages.UNBOUND_SHARE_TITLE,
 		content: format('UNBOUND_SHARE_ADDED', {
 			count: files.length,
 			destination: destination.label,
@@ -188,7 +188,7 @@ async function stage(destination: ShareDestination, files: SharedFile[]) {
 }
 
 function failed(content: string) {
-	showToast({ title: Messages.UNBOUND_SHARE_TITLE, content, icon: 'CircleXIcon' });
+	show({ title: messages.UNBOUND_SHARE_TITLE, content, icon: 'CircleXIcon' });
 }
 
 async function receiveShare(files: SharedFile[]) {
@@ -206,7 +206,7 @@ async function receiveShare(files: SharedFile[]) {
 		const usable = await readable(files);
 
 		if (usable.length === 0) {
-			failed(Messages.UNBOUND_SHARE_UNREADABLE);
+			failed(messages.UNBOUND_SHARE_UNREADABLE);
 
 			return;
 		}
@@ -220,7 +220,7 @@ async function receiveShare(files: SharedFile[]) {
 		const choices = destinations();
 
 		if (choices.length === 0) {
-			failed(Messages.UNBOUND_SHARE_NO_DESTINATIONS);
+			failed(messages.UNBOUND_SHARE_NO_DESTINATIONS);
 
 			return;
 		}
@@ -232,13 +232,13 @@ async function receiveShare(files: SharedFile[]) {
 				ActionSheets.hideActionSheet(SHEET_KEY);
 				stage(destination, usable).catch((error) => {
 					ShareLogger.error('Failed to attach the shared files:', error);
-					failed(Messages.UNBOUND_SHARE_FAILED);
+					failed(messages.UNBOUND_SHARE_FAILED);
 				});
 			},
 		});
 	} catch (error) {
 		ShareLogger.error('Failed to receive shared files:', error);
-		failed(Messages.UNBOUND_SHARE_FAILED);
+		failed(messages.UNBOUND_SHARE_FAILED);
 	} finally {
 		sharing = false;
 	}
@@ -266,8 +266,8 @@ function report(outcome: LinkOutcome) {
 		case 'opened':
 			return;
 		case 'current':
-			showToast({
-				title: Messages.UNBOUND_MARKETPLACE,
+			show({
+				title: messages.UNBOUND_MARKETPLACE,
 				content: format('UNBOUND_LINK_ALREADY_INSTALLED', {
 					name: outcome.addon.latestVersion.manifest.name,
 				}),
@@ -276,16 +276,16 @@ function report(outcome: LinkOutcome) {
 
 			return;
 		case 'missing':
-			showToast({
-				title: Messages.UNBOUND_MARKETPLACE,
+			show({
+				title: messages.UNBOUND_MARKETPLACE,
 				content: format('UNBOUND_LINK_NOT_FOUND', { id: outcome.id }),
 				icon: 'CircleXIcon',
 			});
 
 			return;
 		case 'offline':
-			showToast({
-				title: Messages.UNBOUND_MARKETPLACE,
+			show({
+				title: messages.UNBOUND_MARKETPLACE,
 				content: format('UNBOUND_LINK_OFFLINE', { id: outcome.id }),
 				icon: 'CircleXIcon',
 			});

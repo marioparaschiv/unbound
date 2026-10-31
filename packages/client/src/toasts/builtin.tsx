@@ -4,7 +4,7 @@ import { getSetting, useUnboundSettings } from '~/settings/unbound';
 import { find, findByFilePath, findByProps } from '~/metro';
 import { createPatcher } from '~/patcher/api';
 import { ToastContainer } from '~/ui/toasts';
-import { showToast } from '~/toasts/api';
+import { show } from '~/toasts/api';
 
 import discordToastOptions, { type DiscordToastOptions } from './discord-toast-options';
 import findToastContainers from './find-toast-containers';
@@ -72,7 +72,7 @@ function patchToastAPI() {
 			return;
 		}
 
-		return showToast(mapped);
+		return show(mapped);
 	});
 }
 

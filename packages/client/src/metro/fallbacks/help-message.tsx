@@ -4,7 +4,7 @@ import { View } from 'react-native';
 
 import { Discord } from '~/metro/design';
 import { Theme } from '~/metro/common';
-import { Icons } from '~/assets/api';
+import { icons } from '~/assets/api';
 
 import useStyles from './help-message.style';
 import TintedIcon from './tinted-icon';
@@ -69,7 +69,7 @@ function HelpMessage({
 				},
 			]}
 		>
-			<TintedIcon source={Icons[icon] ?? 0} size={20} tint={tint} />
+			<TintedIcon source={icons[icon] ?? 0} size={20} tint={tint} />
 			<View style={styles.text}>
 				{typeof children === 'string' || typeof children === 'number' ? (
 					<Discord.Text variant={textVariant} style={{ color: textColor ?? text }}>
