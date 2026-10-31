@@ -1,7 +1,7 @@
 import type { APIEmbed, Client, Message, SendableChannels } from 'discord.js';
 import type { AuditEvent } from '@unbound-app/web/bot';
-import { DiscordAPIError } from 'discord.js';
 import { asc, desc, eq, max } from 'drizzle-orm';
+import { DiscordAPIError } from 'discord.js';
 
 import {
 	buildAuditEmbed,
