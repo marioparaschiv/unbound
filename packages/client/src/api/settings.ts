@@ -10,17 +10,20 @@ const Logger = createLogger('API', 'Settings');
  * @description Registers one or more settings entries into the section registry, warning on key collisions.
  * @param entries The settings entries to register.
  */
-export function registerSettings(...entries: SettingsEntry[]) {
-	const { sections, registerSection } = SettingsStore.getState();
+export function registerSection(...entries: SettingsEntry[]) {
+	const state = SettingsStore.getState();
 
 	for (const entry of entries) {
-		if (sections[entry.key]) {
+		if (state.sections[entry.key]) {
 			Logger.warn(`Overwriting existing settings entry: ${entry.key}`);
 		}
 
-		registerSection(withStableScreen(entry));
+		state.registerSection(withStableScreen(entry));
 	}
 }
+
+/** @deprecated Use registerSection */
+export const registerSettings = registerSection;
 
 function withStableScreen(entry: SettingsEntry): SettingsEntry {
 	const { getComponent } = entry.screen;
@@ -35,20 +38,33 @@ function withStableScreen(entry: SettingsEntry): SettingsEntry {
  * @description Removes one or more settings entries from the section registry by key.
  * @param keys The entry keys to remove.
  */
-export function removeSettings(...keys: string[]) {
-	const { removeSection } = SettingsStore.getState();
+export function removeSection(...keys: string[]) {
+	const state = SettingsStore.getState();
 
 	for (const key of keys) {
-		removeSection(key);
+		state.removeSection(key);
 	}
 }
+
+/** @deprecated Use removeSection */
+export const removeSettings = removeSection;
 
 /**
  * @description Returns the current registry of settings entries.
  * @returns A record of entry key to its {@link SettingsEntry}.
  */
-export function sections(): Record<string, SettingsEntry> {
+export function getSections(): Record<string, SettingsEntry> {
 	return SettingsStore.getState().sections;
 }
 
-export default { registerSettings, removeSettings, sections };
+/** @deprecated Use getSections */
+export const sections = getSections;
+
+export default {
+	registerSection,
+	registerSettings,
+	removeSection,
+	removeSettings,
+	getSections,
+	sections,
+};

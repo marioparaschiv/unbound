@@ -2,10 +2,16 @@
 
 export type { UnboundAsset } from './_internal';
 import type { UnboundAsset } from './_internal';
-/** Proxy resolving any property name to its asset id via {@link getIDByName}. */
+/** @deprecated Use icons */
 export declare const Icons: Record<string, number | undefined>;
 /** Map of discovered asset ids to their resolved {@link UnboundAsset} record. */
 export declare const assets: Map<number, UnboundAsset>;
+/** @deprecated Use getById */
+export declare const getByID: typeof getById;
+/** @deprecated Use getIdByName */
+export declare const getIDByName: typeof getIdByName;
+/** Proxy resolving any property name to its asset id via {@link getIdByName}. */
+export declare const icons: Record<string, number | undefined>;
 /**
  * @description Finds the first known asset matching the given predicate.
  * @param filter Predicate run against each asset.
@@ -22,7 +28,7 @@ export declare function getAll(): UnboundAsset[];
  * @param id The asset id to look up.
  * @returns The matched {@link UnboundAsset}, or `undefined` if none is registered for that id.
  */
-export declare function getByID(id: number): UnboundAsset | undefined;
+export declare function getById(id: number): UnboundAsset | undefined;
 /**
  * @description Finds a known asset by its name and type.
  * @param name The asset name to match.
@@ -36,5 +42,5 @@ export declare function getByName(name: string, type?: 'svg' | 'png'): UnboundAs
  * @param type The asset type to match.
  * @returns The matched asset's id, or `undefined` if none match.
  */
-export declare function getIDByName(name: string, type?: 'svg' | 'png'): number | undefined;
+export declare function getIdByName(name: string, type?: 'svg' | 'png'): number | undefined;
 export {};
