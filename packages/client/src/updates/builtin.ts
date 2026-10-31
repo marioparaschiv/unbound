@@ -27,10 +27,9 @@ export function stop() {
 	clearTimeout(pending);
 }
 
-/** The Updates page. */
 export const updatesSection: SectionEntry = {
 	key: Screens.Updates,
-	title: 'UNBOUND_UPDATES',
+	titleKey: 'UNBOUND_UPDATES',
 	component: UpdatesPage,
 	icon: 'DownloadIcon',
 };

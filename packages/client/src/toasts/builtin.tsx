@@ -79,10 +79,9 @@ function patchToastAPI() {
 	});
 }
 
-/** The hidden toast settings page, opened from the General page. */
 export const toastsSection: SectionEntry = {
 	key: Screens.Toasts,
-	title: 'UNBOUND_TOAST_SETTINGS',
+	titleKey: 'UNBOUND_TOAST_SETTINGS',
 	component: ToastsPage,
 	hidden: true,
 };

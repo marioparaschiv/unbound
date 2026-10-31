@@ -7,9 +7,9 @@ import { createLogger } from '@unbound-app/logger';
 
 import {
 	createSettings,
-	customSection,
 	developerSection,
 	generalSection,
+	panelHostSection,
 } from '~/settings/builtin';
 import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
@@ -51,8 +51,7 @@ declare global {
 
 const Logger = createLogger('Core');
 
-/** Every domain's Settings section, in the order Discord's settings overview lists them. */
-const SETTINGS_SECTIONS: SectionEntry[] = [
+const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	generalSection,
 	pluginsSection,
 	designSection,
@@ -62,7 +61,7 @@ const SETTINGS_SECTIONS: SectionEntry[] = [
 	toastsSection,
 	cloudSyncSection,
 	assetsSection,
-	customSection,
+	panelHostSection,
 ];
 
 const BUILT_INS: BuiltInEntry[] = [
@@ -76,7 +75,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['i18n', i18n],
 	['links', links],
 	['nativeConsent', nativeConsent],
-	['settings', createSettings(SETTINGS_SECTIONS)],
+	['settings', createSettings(SECTIONS_IN_OVERVIEW_ORDER)],
 	['staffMode', staffMode],
 	['themes', themes],
 	['toasts', toasts],

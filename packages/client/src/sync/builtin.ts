@@ -48,10 +48,9 @@ export function stop() {
 	unsubscribe = null;
 }
 
-/** The Cloud Sync page. */
 export const cloudSyncSection: SectionEntry = {
 	key: Screens.CloudSync,
-	title: 'UNBOUND_CLOUD_SYNC',
+	titleKey: 'UNBOUND_CLOUD_SYNC',
 	component: CloudSyncPage,
 	icon: 'CloudIcon',
 };

@@ -35,8 +35,8 @@ mock.module('~/ui/settings/custom', () => ({ default: Page }));
 const { createSettings } = await import('~/settings/builtin');
 const { registerSection, removeSection } = await import('~/settings/api');
 
-function section(key: string, title: SectionEntry['title'], hidden?: boolean): SectionEntry {
-	return { key, title, component: Page, icon: hidden ? undefined : 'Icon', hidden };
+function section(key: string, titleKey: SectionEntry['titleKey'], hidden?: boolean): SectionEntry {
+	return { key, titleKey, component: Page, icon: hidden ? undefined : 'Icon', hidden };
 }
 
 function config(): Record<string, SettingsEntry> {

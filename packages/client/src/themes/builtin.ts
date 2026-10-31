@@ -90,10 +90,9 @@ export function stop() {
 	Patcher.unpatchAll();
 }
 
-/** The Design page: themes, icon packs and fonts. */
 export const designSection: SectionEntry = {
 	key: Screens.Design,
-	title: 'UNBOUND_DESIGN',
+	titleKey: 'UNBOUND_DESIGN',
 	component: DesignPage,
 	icon: 'PaintPaletteIcon',
 };

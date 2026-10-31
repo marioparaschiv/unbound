@@ -8,7 +8,7 @@ import { useUnboundSettings } from '~/settings/unbound';
 import type { SectionEntry } from '~/settings/section';
 import DeveloperPage from '~/ui/settings/developer';
 import type { BuiltIn } from '~/builtins/registry';
-import CustomScreen from '~/ui/settings/custom';
+import PanelHostScreen from '~/ui/settings/custom';
 import GeneralPage from '~/ui/settings/general';
 import { createPatcher } from '~/patcher/api';
 import { Discord } from '~/metro/components';
@@ -31,49 +31,49 @@ type SettingsSection = {
 
 type EntryMap = Record<string, SettingsEntry>;
 
-/**
- * @description React hook reporting whether developer mode is on, re-rendering when it changes.
- * @returns `true` while the `developer-mode` setting is on.
- */
 function useDeveloperMode(): boolean {
 	return useUnboundSettings(({ key }) => key === 'developer-mode').get('developer-mode');
 }
 
-/** Unbound's own settings page. */
 export const generalSection: SectionEntry = {
 	key: Screens.General,
-	title: 'UNBOUND_GENERAL',
+	titleKey: 'UNBOUND_GENERAL',
 	component: GeneralPage,
 	icon: 'SettingsIcon',
 };
 
-/** The developer page, listed only while developer mode is on. */
 export const developerSection: SectionEntry = {
 	key: Screens.Developer,
-	title: 'UNBOUND_DEVELOPER',
+	titleKey: 'UNBOUND_DEVELOPER',
 	component: DeveloperPage,
 	usePredicate: useDeveloperMode,
 	icon: 'WrenchIcon',
 };
 
-/** The hidden screen other pages navigate to with their own content. */
-export const customSection: SectionEntry = {
-	key: Screens.Custom,
-	title: 'UNBOUND_CUSTOM',
-	component: CustomScreen,
+export const panelHostSection: SectionEntry = {
+	key: Screens.PanelHost,
+	titleKey: 'UNBOUND_CUSTOM',
+	component: PanelHostScreen,
 	hidden: true,
 };
 
 /**
  * @description Builds a settings route entry in Discord's `SETTING_RENDERER_CONFIG` shape.
- * @param section The section's key, title, component, and optional icon/visibility.
+ * @param section The section's key, title key, component, and optional icon/visibility.
  * @returns A {@link SettingsEntry} ready to register.
  */
-function route({ key, title, component, usePredicate, icon, hidden }: SectionEntry): SettingsEntry {
+function route({
+	key,
+	titleKey,
+	component,
+	usePredicate,
+	icon,
+	hidden,
+}: SectionEntry): SettingsEntry {
 	return {
 		type: 'route',
 		key,
-		useTitle: () => messages[title],
+		useTitle: () => messages[titleKey],
 		usePredicate,
 		parent: null,
 		section: hidden ? undefined : CLIENT_NAME,
@@ -178,4 +178,4 @@ function patchOverview(builtIn: EntryMap) {
 	});
 }
 
-export default { generalSection, developerSection, customSection, createSettings };
+export default { generalSection, developerSection, panelHostSection, createSettings };
