@@ -68,8 +68,8 @@ export function pluginConfig(
 		nodeResolve(),
 		commonjs(),
 		json(),
-		swc({ tsconfig: false }),
 		worklets(),
+		swc({ tsconfig: false }),
 	];
 
 	return {

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1]
+
+### Fixed
+
+- Code that runs on the UI thread no longer fails on type checks and destructuring, which left some views unpainted.
+
 ## [1.1.0]
 
 ### Changed
