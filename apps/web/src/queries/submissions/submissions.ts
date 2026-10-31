@@ -12,6 +12,7 @@ import { submissionPreviewResponseSchema } from '@unbound-app/contracts/review';
 import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 
 import { createBrowserClient } from '~/lib/api/browser-client';
+import { fetchSourcePreview } from '~/lib/submission-preview-functions';
 import { findUser, getSubmitOverview } from '~/lib/publishing';
 import { invalidate } from '~/queries/invalidate';
 
@@ -108,6 +109,18 @@ export function toPreviewRequest(
 }
 
 /**
+ * @description The addon page as submitting this source would publish it, for `/submit/preview`.
+ * @param request The pinned addon directory.
+ * @returns Options for `useSuspenseQuery` and `ensureQueryData`; `null` data when signed out.
+ */
+export function sourcePreviewPageQuery(request: PreviewRequest) {
+	return queryOptions({
+		queryKey: [...submissionsKey, 'preview-page', request],
+		queryFn: ({ signal }) => fetchSourcePreview({ data: request, signal }),
+	});
+}
+
+/**
  * @description What submitting an addon directory at a commit would publish.
  * @param request The pinned addon directory, or `null` before the user picks one.
  * @returns Options for `useQuery` and `prefetchQuery`, resolving to the preview.
@@ -158,5 +171,6 @@ export default {
 	repositoryAddonsQuery,
 	toPreviewRequest,
 	submissionPreviewQuery,
+	sourcePreviewPageQuery,
 	createSubmissionMutation,
 };

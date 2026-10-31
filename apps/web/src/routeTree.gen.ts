@@ -27,6 +27,7 @@ import { Route as DevelopersSplatRouteImport } from './routes/developers/$'
 import { Route as SiteStaffReviewRouteImport } from './routes/_site/_staff/review'
 import { Route as SiteAddonsIdRouteImport } from './routes/_site/addons/$id'
 import { Route as SiteProfilesDiscordIdRouteImport } from './routes/_site/profiles/$discordId'
+import { Route as SiteSubmitPreviewRouteImport } from './routes/_site/submit_.preview'
 import { Route as SiteTeamIndexRouteImport } from './routes/_site/team/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiV1AddonsRouteImport } from './routes/api/v1/addons'
@@ -151,6 +152,11 @@ const SiteAddonsIdRoute = SiteAddonsIdRouteImport.update({
 const SiteProfilesDiscordIdRoute = SiteProfilesDiscordIdRouteImport.update({
   id: '/profiles/$discordId',
   path: '/profiles/$discordId',
+  getParentRoute: () => SiteRouteRoute,
+} as any)
+const SiteSubmitPreviewRoute = SiteSubmitPreviewRouteImport.update({
+  id: '/submit_/preview',
+  path: '/submit/preview',
   getParentRoute: () => SiteRouteRoute,
 } as any)
 const SiteTeamIndexRoute = SiteTeamIndexRouteImport.update({
@@ -363,6 +369,7 @@ export interface FileRoutesByFullPath {
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
   '/profiles/$discordId': typeof SiteProfilesDiscordIdRoute
+  '/submit/preview': typeof SiteSubmitPreviewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -418,6 +425,7 @@ export interface FileRoutesByTo {
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
   '/profiles/$discordId': typeof SiteProfilesDiscordIdRoute
+  '/submit/preview': typeof SiteSubmitPreviewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -476,6 +484,7 @@ export interface FileRoutesById {
   '/_site/_staff/review': typeof SiteStaffReviewRoute
   '/_site/addons/$id': typeof SiteAddonsIdRoute
   '/_site/profiles/$discordId': typeof SiteProfilesDiscordIdRoute
+  '/_site/submit_/preview': typeof SiteSubmitPreviewRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/v1/addons': typeof ApiV1AddonsRouteWithChildren
   '/api/v1/catalog': typeof ApiV1CatalogRoute
@@ -533,6 +542,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/addons/$id'
     | '/profiles/$discordId'
+    | '/submit/preview'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -588,6 +598,7 @@ export interface FileRouteTypes {
     | '/review'
     | '/addons/$id'
     | '/profiles/$discordId'
+    | '/submit/preview'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -645,6 +656,7 @@ export interface FileRouteTypes {
     | '/_site/_staff/review'
     | '/_site/addons/$id'
     | '/_site/profiles/$discordId'
+    | '/_site/submit_/preview'
     | '/api/auth/$'
     | '/api/v1/addons'
     | '/api/v1/catalog'
@@ -835,6 +847,13 @@ declare module '@tanstack/react-router' {
       path: '/profiles/$discordId'
       fullPath: '/profiles/$discordId'
       preLoaderRoute: typeof SiteProfilesDiscordIdRouteImport
+      parentRoute: typeof SiteRouteRoute
+    }
+    '/_site/submit_/preview': {
+      id: '/_site/submit_/preview'
+      path: '/submit/preview'
+      fullPath: '/submit/preview'
+      preLoaderRoute: typeof SiteSubmitPreviewRouteImport
       parentRoute: typeof SiteRouteRoute
     }
     '/_site/team/': {
@@ -1135,6 +1154,7 @@ interface SiteRouteRouteChildren {
   SiteIndexRoute: typeof SiteIndexRoute
   SiteAddonsIdRoute: typeof SiteAddonsIdRoute
   SiteProfilesDiscordIdRoute: typeof SiteProfilesDiscordIdRoute
+  SiteSubmitPreviewRoute: typeof SiteSubmitPreviewRoute
   SiteTeamIndexRoute: typeof SiteTeamIndexRoute
 }
 
@@ -1152,6 +1172,7 @@ const SiteRouteRouteChildren: SiteRouteRouteChildren = {
   SiteIndexRoute: SiteIndexRoute,
   SiteAddonsIdRoute: SiteAddonsIdRoute,
   SiteProfilesDiscordIdRoute: SiteProfilesDiscordIdRoute,
+  SiteSubmitPreviewRoute: SiteSubmitPreviewRoute,
   SiteTeamIndexRoute: SiteTeamIndexRoute,
 }
 

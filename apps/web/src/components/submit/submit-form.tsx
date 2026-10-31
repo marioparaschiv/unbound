@@ -13,7 +13,6 @@ import {
 import type { SubmitActivity } from '~/components/submit/submit-step';
 import SubmissionDetailsForm from '~/components/submit/submission-details-form';
 import SubmissionSummary from '~/components/submit/submission-summary';
-import SubmissionPreview from '~/components/submit/submission-preview';
 import RepositoryPicker from '~/components/submit/repository-picker';
 import useSubmitFlow from '~/queries/submissions/use-submit-flow';
 import { SidebarCard } from '~/components/addon/sidebar-card';
@@ -79,19 +78,16 @@ function SubmitFlow({ lockedAddonId, pendingSource, onSubmitted }: SubmitFlowPro
 				) : null}
 
 				{request && preview ? (
-					<>
-						<SubmissionPreview preview={preview} />
-						<SubmissionDetailsForm
-							key={`${request.repository}@${request.commitSha}/${request.path}`}
-							preview={preview}
-							error={flow.error}
-							disabled={isPending}
-							onSubmit={(details) => {
-								setActivity('submit');
-								flow.submit(details);
-							}}
-						/>
-					</>
+					<SubmissionDetailsForm
+						key={`${request.repository}@${request.commitSha}/${request.path}`}
+						preview={preview}
+						error={flow.error}
+						disabled={isPending}
+						onSubmit={(details) => {
+							setActivity('submit');
+							flow.submit(details);
+						}}
+					/>
 				) : null}
 			</div>
 			<aside className='lg:top-6 lg:sticky flex flex-col gap-6 min-w-0'>
