@@ -381,21 +381,41 @@ export type ActionSheetSwitchRowComponent = React$1.ComponentType<
  * @see design/components/Sheet/native/ActionSheetRow.native.tsx
  */
 export type ActionSheetSwitchRowProps = TableSwitchRowProps;
-/** A loaded addon entity: its runtime state, instance, source bundle, and {@link AddonManifest}. */
-export type Addon = {
-	started: boolean;
-	/** What the bundle evaluated to. Every addon kind may implement the {@link Plugin} lifecycle hooks. */
-	instance: Plugin$1 | null;
-	context?: PluginContext;
-	id: string;
-	failed: boolean;
-	data: AddonManifest;
-	bundle: string;
-};
+/** @deprecated Use AddonHandle */
+export type Addon = AddonHandle;
 /** The author of an addon: a display name and a numeric user id. */
 export type AddonAuthor = {
 	name: string;
 	id: `${number}`;
+};
+/**
+ * A loaded plugin, theme or icon pack its manager governs: its manifest and state, and what its manager
+ * does to it. Stringifies to its {@link AddonManifest}.
+ */
+export type AddonHandle<I extends object = object> = {
+	readonly id: string;
+	readonly name: string;
+	readonly version: string;
+	readonly authors: AddonAuthor[];
+	readonly manifest: AddonManifest;
+	/** Whether the addon is running. */
+	readonly started: boolean;
+	/** Whether the addon failed to start. */
+	readonly failed: boolean;
+	/** @deprecated Use manifest */
+	readonly data: AddonManifest;
+	/** @deprecated What the bundle evaluated to; readable until 1.0. */
+	readonly instance: (Plugin$1 & I) | null;
+	/** @deprecated The bundle source; readable until 1.0. */
+	readonly bundle: string;
+	/** @deprecated The running plugin's native bridge; readable until 1.0. */
+	readonly context?: PluginContext;
+	isEnabled(): boolean;
+	isPlugin(): boolean;
+	enable(): void | Promise<void>;
+	disable(): void;
+	reload(): Promise<void>;
+	toJSON(): AddonManifest;
 };
 export type AddonKind = (typeof ADDON_KINDS)[number];
 /** A loaded addon's manifest: the {@link AuthoredAddonManifest} plus what the loader and installer record. */
@@ -415,8 +435,8 @@ export type AddonPlatform<P extends NativePluginPlatform = NativePluginPlatform>
 export type AddonPlatforms = {
 	[P in NativePluginPlatform]?: AddonPlatform<P>;
 };
-/** An addon referenced either by its id string or the {@link Addon} entity itself. */
-export type AddonResolveable = string | Addon;
+/** @deprecated Use AddonHandle */
+export type AddonResolveable = string | AddonHandle;
 /** Whether an addon's bundle carries a valid Unbound signature. */
 export type AddonTrust = 'signed' | 'unsigned';
 /** @deprecated Use AddonKind */
@@ -2875,10 +2895,8 @@ export type PluginContext = {
 	readonly native: NativePluginBridge;
 	dispose(): void;
 };
-/** An {@link Addon} whose instance is a {@link Plugin}. */
-export type PluginEntity = Addon & {
-	instance: Plugin$1 | null;
-};
+/** @deprecated Use AddonHandle */
+export type PluginEntity = AddonHandle<Plugin$1>;
 /** What a plugin's self-test found: whether the plugin works on this device, and why. */
 export type PluginSelfTestResult = {
 	ok: boolean;
@@ -3855,11 +3873,8 @@ export type ThemeContextProviderRootThemeContextProviderProps = {
 	secondaryColor?: unknown;
 	theme?: unknown;
 };
-/** An {@link Addon} whose instance is a {@link Theme}, tracking its registration state. */
-export type ThemeEntity = Addon & {
-	registered: boolean;
-	instance: Theme | null;
-};
+/** @deprecated Use AddonHandle */
+export type ThemeEntity = AddonHandle<Theme>;
 /**
  * Props of `ThemeProvider` (function). Exports: ThemeProvider.
  * @see module 4804 (no source path)

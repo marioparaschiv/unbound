@@ -1,6 +1,8 @@
-import type { Addon, AddonManifest, AddonResolveable, PushedManifest } from '@unbound-app/types';
+import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
+import type { AddonManifest, PushedManifest } from '@unbound-app/types';
 import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
+import type { AddonKind } from '@unbound-app/types/addons';
 import toError from '@unbound-app/utils/to-error';
 import sha256 from '@unbound-app/utils/sha256';
 
@@ -10,19 +12,57 @@ import {
 	downloadManifest,
 	verifySignature,
 } from '~/lib/addon-download';
+import type { Addon, AddonResolveable } from '~/managers/addon';
 import { AddonLifecycle } from '~/managers/addon-lifecycle';
+import type { UpdatableKind } from '~/managers/manager-of';
 import { compiledBundlePath } from '~/lib/addon-paths';
+import type { InstalledEntry } from '~/lib/updates';
+import { toRelease } from '~/lib/addon-versions';
+import { Manager } from '~/managers/base';
 import fs from '~/api/fs';
 
 /** The outcome of {@link Addons.reload}: success, or failure carrying the recorded error. */
 export type ReloadResult = { ok: true } | { ok: false; error: Error };
 
+const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'deleted'] as const;
+
+type BundleDigest = {
+	bundle: string;
+	digest: string;
+};
+
+const bundleDigests = new Map<string, BundleDigest>();
+
+function cachedDigest(id: string, bundle: string): string {
+	const cached = bundleDigests.get(id);
+
+	if (cached?.bundle === bundle) {
+		return cached.digest;
+	}
+
+	const digest = sha256(bundle);
+
+	bundleDigests.set(id, { bundle, digest });
+
+	return digest;
+}
+
+function assertTextDigest(bundle: string, expected: string): void {
+	const digest = sha256(bundle);
+
+	if (digest !== expected) {
+		throw new Error(`Bundle SHA-256 ${digest} does not match ${expected}.`);
+	}
+}
+
 /**
  * @description Addon distribution on top of {@link AddonLifecycle}: install, update, hot reload and
  * delete, the on-disk layout, development copies and version holds.
- * @template T The addon entity type this manager governs.
+ * @template I What the bundles of the addons this manager governs evaluate to.
  */
-export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
+export abstract class Addons<I extends object> extends AddonLifecycle<I> {
+	declare readonly kind: UpdatableKind;
+
 	protected registered(id: string): void {
 		void this.adoptDevelopmentMarker(id);
 	}
@@ -42,7 +82,7 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 	 * @returns The reload outcome: `{ ok: true }`, or `{ ok: false, error }` on failure.
 	 */
 	async reload(
-		entity: AddonResolveable,
+		entity: AddonResolveable<I>,
 		bundle: string,
 		pushed: PushedManifest,
 		bytecode?: string,
@@ -118,13 +158,13 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 
 			// A throwing stop() leaves `started`/`instance` set, wedging start()'s guard. Force a stopped
 			// state and clear the stop error so start()'s own failure is detected cleanly.
-			resolved.started = false;
-			resolved.instance = null;
+			const state = this.stateOf(resolved);
 
-			resolved.bundle = bundle;
-			resolved.data = manifest;
-			resolved.failed = false;
-			this.errors.delete(resolved.id);
+			state.started = false;
+			state.instance = null;
+			state.bundle = bundle;
+			state.manifest = manifest;
+			this.clearFailure(resolved);
 
 			if (wasStarted) {
 				this.start(resolved);
@@ -149,7 +189,7 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 	}
 
 	// Only a loaded addon gets a `reload-error` emit; an absent one has no entity to report against.
-	private reloadFailed(id: string, resolved: T | undefined, error: Error): ReloadResult {
+	private reloadFailed(id: string, resolved: Addon<I> | undefined, error: Error): ReloadResult {
 		this.logger.error(`Failed to reload addon ${id}:`, error);
 		this.errors.set(id, error);
 
@@ -164,9 +204,10 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 	 * @description Installs an addon from a manifest URL: fetches and validates the manifest, downloads
 	 * the bundle, loads it, and emits `installed`. Twin of {@link delete}.
 	 * @param url The manifest URL to install from.
+	 * @param digest The SHA-256 the bundle must have, when the release lists one.
 	 * @returns The loaded addon, or `undefined` on failure.
 	 */
-	async install(url: string): Promise<T | undefined> {
+	async install(url: string, digest?: string): Promise<Addon<I> | undefined> {
 		try {
 			const manifest = await this.fetchManifest(url);
 			const origin = url.split('/').slice(0, -1).join('/');
@@ -175,7 +216,12 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 				downloadBundle(bundleUrl),
 				this.fetchBytecode(manifest, bundleUrl),
 			]);
-			const installedTrust = this.getEntity(manifest.id)?.data.trust;
+
+			if (digest) {
+				assertTextDigest(bundle, digest);
+			}
+
+			const installedTrust = this.getEntity(manifest.id)?.manifest.trust;
 			const trusted = verifySignature(manifest, bundle, installedTrust);
 
 			await this.persist(bundle, trusted);
@@ -202,14 +248,18 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 
 	/**
 	 * @description Applies an updater release to an installed addon: downloads its manifest and bundle,
-	 * verifies the bundle's SHA-256, then swaps it in through {@link reload} and emits `updated`.
-	 * @param entity The addon to update, as its id or the entity itself.
+	 * verifies the bundle's SHA-256, then swaps it in through {@link reload} and emits `updated`. An
+	 * addon that is not installed stays absent.
+	 * @param id The addon's id.
 	 * @param update The release the updater returned for this addon.
+	 * @returns Whether the addon now runs the release's version; the manager records why when it doesn't.
 	 */
-	async update(entity: AddonResolveable, update: AddonRelease): Promise<void> {
-		const resolved = this.resolve(entity);
+	async update(id: string, update: AddonRelease): Promise<boolean> {
+		const resolved = this.resolve(id);
 
-		if (!resolved) return;
+		if (!resolved) {
+			return false;
+		}
 
 		try {
 			const [manifest, bundle] = await Promise.all([
@@ -218,43 +268,129 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 			]);
 			const bytecode = await this.fetchBytecode(manifest, update.bundleUrl);
 
-			// `fetchBundle` decodes the body as UTF-8; re-encoding gives back the served bytes for
-			// any valid UTF-8 bundle, and anything else fails closed as a mismatch.
-			const digest = sha256(bundle);
-
-			if (digest !== update.sha256) {
-				throw new Error(`Bundle SHA-256 ${digest} does not match ${update.sha256}.`);
-			}
+			assertTextDigest(bundle, update.sha256);
 
 			const result = await this.reload(
 				resolved,
 				bundle,
-				verifySignature(manifest, bundle, resolved.data.trust),
+				verifySignature(manifest, bundle, resolved.manifest.trust),
 				bytecode,
 			);
 
 			if (!result.ok) {
 				this.emit('update-error', resolved, result.error);
 
-				return;
+				return false;
 			}
 
 			this.releaseStaleHold(resolved.id);
 			this.emit('updated', resolved);
+
+			return resolved.version === update.version;
 		} catch (error) {
 			const failure = toError(error);
 
 			this.logger.error(`Failed to update addon ${resolved.id}:`, failure);
 			this.errors.set(resolved.id, failure);
 			this.emit('update-error', resolved, failure);
+
+			return false;
 		}
+	}
+
+	/**
+	 * @description Moves an addon to a release: updates it when installed, installs it otherwise.
+	 * @param id The addon's id.
+	 * @param release The release to move it to.
+	 * @returns Whether the addon now runs the release's version; the manager records why when it doesn't.
+	 */
+	async applyRelease(id: string, release: AddonRelease): Promise<boolean> {
+		if (this.getEntity(id)) {
+			return this.update(id, release);
+		}
+
+		await this.install(release.manifestUrl, release.sha256);
+
+		return this.getEntity(id)?.version === release.version;
+	}
+
+	/**
+	 * @description Installs one version of a listed addon, newer or older than the installed one, then
+	 * holds it there or lets automatic updates move it on.
+	 * @param listed The listed addon.
+	 * @param version The version to install.
+	 * @param hold Whether automatic updates should leave the addon on this version.
+	 * @returns Whether the addon now runs the version.
+	 */
+	async installListed(
+		listed: ListedAddon,
+		version: AddonVersion,
+		hold: boolean = false,
+	): Promise<boolean> {
+		if (!(await this.applyRelease(listed.id, toRelease(listed.id, version)))) {
+			return false;
+		}
+
+		if (hold) {
+			this.holdVersion(listed.id, version.version);
+		} else {
+			this.releaseHold(listed.id);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @description Reads the version of a listed addon that is installed on this device.
+	 * @param listed The listed addon.
+	 * @returns The installed version, or `undefined` if absent.
+	 */
+	getInstalledVersion(listed: ListedAddon): string | undefined {
+		return this.getEntity(listed.id)?.version;
+	}
+
+	/**
+	 * @description Calls a listener whenever an addon's installed version may have changed.
+	 * @param listener The listener.
+	 * @returns A function that removes the listener.
+	 */
+	onInstalledChange(listener: () => void): () => void {
+		for (const event of INSTALL_EVENTS) {
+			this.on(event, listener);
+		}
+
+		return () => {
+			for (const event of INSTALL_EVENTS) {
+				this.off(event, listener);
+			}
+		};
+	}
+
+	/**
+	 * @description Lists the installed addons for an update check, leaving out development copies.
+	 * @returns One entry per installed addon.
+	 */
+	listInstalled(): InstalledEntry[] {
+		return this.getEntities()
+			.filter((entity) => !this.isDevelopmentCopy(entity.id))
+			.map((entity) => {
+				const { bundle } = this.stateOf(entity);
+
+				return {
+					kind: this.kind,
+					id: entity.id,
+					name: entity.name,
+					version: entity.version,
+					...(bundle ? { sha256: cachedDigest(entity.id, bundle) } : {}),
+				};
+			});
 	}
 
 	/**
 	 * @description Deletes an installed addon: unloads it and removes its folder from disk, emitting `deleted`.
 	 * @param entity The addon to delete, as its id or the entity itself.
 	 */
-	async delete(entity: AddonResolveable): Promise<void> {
+	async delete(entity: AddonResolveable<I>): Promise<void> {
 		const resolved = this.resolve(entity);
 
 		if (!resolved) return;
@@ -397,7 +533,7 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 	getHeldVersion(id: string): string | undefined {
 		const held = this.getHolds()[id];
 
-		return held !== void 0 && held === this.getEntity(id)?.data.version ? held : void 0;
+		return held !== void 0 && held === this.getEntity(id)?.version ? held : void 0;
 	}
 
 	private getHolds(): Record<string, string> {
@@ -437,4 +573,13 @@ export abstract class Addons<T extends Addon> extends AddonLifecycle<T> {
 			return;
 		}
 	}
+}
+
+/**
+ * @description Whether an addon kind installs from a manifest URL, which also makes it updatable and holdable.
+ * @param kind The addon kind.
+ * @returns Whether the kind's manager is an {@link Addons} manager.
+ */
+export function installsFromManifest(kind: AddonKind): kind is UpdatableKind {
+	return Manager.for(kind) instanceof Addons;
 }

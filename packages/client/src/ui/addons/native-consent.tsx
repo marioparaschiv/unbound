@@ -1,6 +1,7 @@
-import type { Addon, NativePluginCapability } from '@unbound-app/types';
+import type { NativePluginCapability } from '@unbound-app/types';
 
 import { Discord } from '~/api/metro/components';
+import type { Addon } from '~/managers/addon';
 import { format } from '~/api/i18n';
 
 const ALERT_KEY = 'unbound-native-consent';
@@ -30,7 +31,7 @@ export function askForNativeConsent(
 			ALERT_KEY,
 			<Discord.AlertModal
 				title={format('UNBOUND_FFI_CONSENT_TITLE')}
-				content={format('UNBOUND_FFI_CONSENT_BODY', { name: addon.data.name })}
+				content={format('UNBOUND_FFI_CONSENT_BODY', { name: addon.name })}
 				actions={
 					<>
 						<Discord.AlertActionButton

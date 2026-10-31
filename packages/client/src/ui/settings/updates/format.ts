@@ -1,4 +1,4 @@
-import type { UpdatableKind } from '~/lib/updates';
+import type { UpdatableKind } from '~/managers/manager-of';
 import { Moment } from '~/api/metro/common';
 import { Manager } from '~/managers/base';
 import { Icons } from '~/api/assets';

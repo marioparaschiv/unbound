@@ -1,8 +1,8 @@
-import type { Addon } from '@unbound-app/types';
 import { Pressable } from 'react-native';
 import { memo } from 'react';
 
 import { Discord } from '~/api/metro/components';
+import type { Addon } from '~/managers/addon';
 import { TintedIcon } from '~/ui/components';
 import { useAddonState } from '~/ui/hooks';
 import { Manager } from '~/managers/base';

@@ -6,7 +6,7 @@ import { getInstallStatus } from '~/lib/catalog';
 import { showToast } from '~/api/toasts';
 import { format } from '~/api/i18n';
 
-import { getInstalledVersion, installFont, installVersion } from './targets';
+import { getInstalledVersion, installVersion } from './targets';
 
 const ALERT_KEY = 'unbound-offer-listed-install';
 
@@ -68,10 +68,7 @@ export async function offerListedInstall(kind: AddonKind, addon: ListedAddon): P
 		return false;
 	}
 
-	const ok =
-		kind === 'font'
-			? await installFont(addon)
-			: await installVersion(kind, addon, addon.latestVersion);
+	const ok = await installVersion(kind, addon, addon.latestVersion);
 
 	if (!ok) {
 		showToast({

@@ -1,7 +1,6 @@
-import type { Addon } from '@unbound-app/types';
-
 import { dependentsOf } from '~/lib/addon-dependencies';
 import { Messages, format } from '~/api/i18n';
+import type { Addon } from '~/managers/addon';
 import { showDialog } from '~/api/dialogs';
 import { showToast } from '~/api/toasts';
 
@@ -24,7 +23,7 @@ async function deleteInOrder(manager: DeletingManager, addons: Addon[]) {
  */
 export function confirmDelete(manager: DeletingManager, addon: Addon) {
 	const dependents = dependentsOf(addon.id, manager.getEntities()) as Addon[];
-	const name = addon.data.name;
+	const name = addon.name;
 
 	if (dependents.length === 0) {
 		showDialog({
@@ -43,7 +42,7 @@ export function confirmDelete(manager: DeletingManager, addon: Addon) {
 		return;
 	}
 
-	const names = dependents.map((dependent) => dependent.data.name).join(', ');
+	const names = dependents.map((dependent) => dependent.name).join(', ');
 
 	showDialog({
 		title: format('UNBOUND_DELETE_TITLE', { name }),

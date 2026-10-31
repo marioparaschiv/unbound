@@ -1,6 +1,6 @@
-import type { Addon } from '@unbound-app/types';
 import { useEffect } from 'react';
 
+import type { Addon } from '~/managers/addon';
 import { Manager } from '~/managers/base';
 
 import useForceUpdate from './use-force-update';

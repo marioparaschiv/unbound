@@ -1,5 +1,5 @@
-import type { Plugin, PluginEntity } from '@unbound-app/types';
 import { describe, expect, test } from 'bun:test';
+import type { Plugin } from '@unbound-app/types';
 
 import { makeManifest, resetDevice } from './helpers/addons';
 
@@ -38,16 +38,7 @@ class CommandPlugins extends Plugins {
 	}
 
 	seed(id: string) {
-		const entity: PluginEntity = {
-			id,
-			data: makeManifest(id),
-			bundle: 'bundle',
-			instance: null,
-			started: false,
-			failed: false,
-		};
-
-		this.entities.set(id, entity);
+		this.entities.set(id, this.createAddon(makeManifest(id), 'bundle'));
 	}
 }
 

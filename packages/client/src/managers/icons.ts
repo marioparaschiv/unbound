@@ -1,8 +1,9 @@
-import type { Addon, IconPack, IconPackManifest, UnboundAsset } from '@unbound-app/types';
+import type { IconPack, IconPackManifest, Plugin, UnboundAsset } from '@unbound-app/types';
 import toError from '@unbound-app/utils/to-error';
 import type { ImageProps } from 'react-native';
 
 import { safeRelativePath, isSafeIconPackMain } from '~/lib/addon-paths';
+import type { Addon, AddonResolveable } from '~/managers/addon';
 import { Assets, ReactNative as RN } from '~/api/metro/common';
 import { downloadManifest } from '~/lib/addon-download';
 import { Addons } from '~/managers/addons';
@@ -65,7 +66,7 @@ const defaultPack: IconPack = {
  * @description Manages icon packs. A pack is a folder of image files mirroring Discord's asset tree;
  * the applied pack rewrites `Image` sources to the on-disk files. Single-select, like themes.
  */
-export class Icons extends Addons<Addon> {
+export class Icons extends Addons<Plugin> {
 	extension = 'png';
 
 	constructor() {
@@ -119,7 +120,7 @@ export class Icons extends Addons<Addon> {
 	 * {@link isEnabled} decides the direction here.
 	 * @param entity The pack to toggle, as its id or the entity itself.
 	 */
-	toggle(entity: string | Addon) {
+	toggle(entity: AddonResolveable) {
 		const resolved = this.resolve(entity);
 
 		if (!resolved) return;
@@ -133,7 +134,7 @@ export class Icons extends Addons<Addon> {
 		this.emit('toggled', resolved);
 	}
 
-	async enable(entity: string | Addon) {
+	async enable(entity: AddonResolveable) {
 		const resolved = this.resolve(entity);
 
 		if (!resolved) return;
@@ -154,7 +155,7 @@ export class Icons extends Addons<Addon> {
 		}
 	}
 
-	disable(entity: string | Addon) {
+	disable(entity: AddonResolveable) {
 		const resolved = this.resolve(entity);
 
 		if (!resolved) return;
@@ -170,7 +171,25 @@ export class Icons extends Addons<Addon> {
 		}
 	}
 
-	async delete(entity: string | Addon): Promise<void> {
+	/**
+	 * @description Re-applies the pack if it is the applied one, re-reading its files from disk.
+	 * @param entity The pack to restart, as its id or the entity itself.
+	 */
+	async restart(entity: AddonResolveable): Promise<void> {
+		const resolved = this.resolve(entity);
+
+		if (!resolved || !this.isEnabled(resolved.id)) return;
+
+		try {
+			this.patcher.unpatchAll();
+			await this.applyPack(resolved.id);
+		} catch (error) {
+			this.logger.error(`Failed to restart icon pack ${resolved.id}:`, error);
+			this.errors.set(resolved.id, toError(error));
+		}
+	}
+
+	async delete(entity: AddonResolveable): Promise<void> {
 		const resolved = this.resolve(entity);
 
 		if (!resolved) return;
@@ -278,9 +297,10 @@ export class Icons extends Addons<Addon> {
 	 * @description Installs an icon pack. GitHub manifests download the repo's image tree into the pack
 	 * folder; other manifests fall back to the shared bundle install.
 	 * @param url The manifest URL.
+	 * @param digest The SHA-256 a bundle-based pack's bundle must have, when the release lists one.
 	 * @returns The loaded pack entity, or `undefined` on failure.
 	 */
-	async install(url: string): Promise<Addon | undefined> {
+	async install(url: string, digest?: string): Promise<Addon | undefined> {
 		try {
 			const parsed = await downloadManifest(url, (raw) => this.validateManifest(raw));
 
@@ -303,7 +323,7 @@ export class Icons extends Addons<Addon> {
 			};
 
 			if (manifest.source !== 'github') {
-				return super.install(url);
+				return super.install(url, digest);
 			}
 
 			await this.downloadTree(manifest);

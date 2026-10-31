@@ -102,25 +102,47 @@ export type PushedManifest = {
 /** Whether an addon's bundle carries a valid Unbound signature. */
 export type AddonTrust = 'signed' | 'unsigned';
 
-/** A loaded addon entity: its runtime state, instance, source bundle, and {@link AddonManifest}. */
-export type Addon = {
-	started: boolean;
-	/** What the bundle evaluated to. Every addon kind may implement the {@link Plugin} lifecycle hooks. */
-	instance: Plugin | null;
-	context?: PluginContext;
-	id: string;
-	failed: boolean;
-	data: AddonManifest;
-	bundle: string;
+/**
+ * A loaded plugin, theme or icon pack its manager governs: its manifest and state, and what its manager
+ * does to it. Stringifies to its {@link AddonManifest}.
+ */
+export type AddonHandle<I extends object = object> = {
+	readonly id: string;
+	readonly name: string;
+	readonly version: string;
+	readonly authors: AddonAuthor[];
+	readonly manifest: AddonManifest;
+	/** Whether the addon is running. */
+	readonly started: boolean;
+	/** Whether the addon failed to start. */
+	readonly failed: boolean;
+	/** @deprecated Use manifest */
+	readonly data: AddonManifest;
+	/** @deprecated What the bundle evaluated to; readable until 1.0. */
+	readonly instance: (Plugin & I) | null;
+	/** @deprecated The bundle source; readable until 1.0. */
+	readonly bundle: string;
+	/** @deprecated The running plugin's native bridge; readable until 1.0. */
+	readonly context?: PluginContext;
+	isEnabled(): boolean;
+	isPlugin(): boolean;
+	enable(): void | Promise<void>;
+	disable(): void;
+	reload(): Promise<void>;
+	toJSON(): AddonManifest;
 };
 
-/** An addon referenced either by its id string or the {@link Addon} entity itself. */
-export type AddonResolveable = string | Addon;
+/** @deprecated Use AddonHandle */
+export type Addon = AddonHandle;
 
-/** An {@link Addon} whose instance is a {@link Plugin}. */
-export type PluginEntity = Addon & {
-	instance: Plugin | null;
-};
+/** @deprecated Use AddonHandle */
+export type AddonResolveable = string | AddonHandle;
+
+/** @deprecated Use AddonHandle */
+export type PluginEntity = AddonHandle<Plugin>;
+
+/** @deprecated Use AddonHandle */
+export type ThemeEntity = AddonHandle<Theme>;
 
 /** What a plugin's self-test found: whether the plugin works on this device, and why. */
 export type PluginSelfTestResult = {
@@ -135,12 +157,6 @@ export type Plugin = {
 	getSettingsPanel?(): ReactNode;
 	/** Checks, without side effects, that the running plugin works on this device; the device matrix calls it after a restart. */
 	selfTest?(): PluginSelfTestResult | Promise<PluginSelfTestResult>;
-};
-
-/** An {@link Addon} whose instance is a {@link Theme}, tracking its registration state. */
-export type ThemeEntity = Addon & {
-	registered: boolean;
-	instance: Theme | null;
 };
 
 /** A single semantic colour definition in a {@link Theme}. */

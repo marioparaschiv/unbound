@@ -6,8 +6,9 @@ import { View } from 'react-native';
 import { brokenDependents } from '~/lib/addon-dependencies';
 import type { AvailableChoice } from '~/lib/addon-versions';
 import AddonCardHeader from '~/ui/addons/addon-card-header';
+import type { UpdatableKind } from '~/managers/manager-of';
+import { installsFromManifest } from '~/managers/addons';
 import type { InstallStatus } from '~/lib/catalog';
-import type { UpdatableKind } from '~/lib/updates';
 import { Discord } from '~/api/metro/components';
 import { compareVersions } from '~/lib/versions';
 import { ActionSheets } from '~/api/metro/api';
@@ -17,7 +18,7 @@ import { showToast } from '~/api/toasts';
 import { confirm } from '~/api/dialogs';
 import { Icons } from '~/api/assets';
 
-import { getInstalledVersion, installFont, installVersion } from './targets';
+import { getInstalledVersion, installVersion } from './targets';
 import VersionPickerSheet from './version-picker-sheet';
 import useInstallStatus from './use-install-status';
 import useStyles from './marketplace-card.style';
@@ -71,7 +72,7 @@ function confirmChoice(
 		downgrade ? format('UNBOUND_VERSION_CONFIRM_DOWNGRADE', { installed }) : null,
 		broken.length > 0
 			? format('UNBOUND_VERSION_CONFIRM_BROKEN', {
-					names: broken.map((dependent) => dependent.data.name).join(', '),
+					names: broken.map((dependent) => dependent.manifest.name).join(', '),
 				})
 			: null,
 	];
@@ -96,7 +97,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	const [pending, setPending] = useState<InstallStatus | null>(null);
 	const { manifest, version: latest } = addon.latestVersion;
 	const action = ACTIONS[pending ?? status];
-	const updatable = kind === 'font' ? undefined : kind;
+	const updatable = installsFromManifest(kind) ? kind : undefined;
 
 	async function run(install: () => Promise<boolean>): Promise<boolean> {
 		setPending(status);
@@ -115,11 +116,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	async function press() {
 		if (!action.offer || pending) return;
 
-		const ok = await run(() =>
-			updatable === undefined
-				? installFont(addon)
-				: installVersion(updatable, addon, addon.latestVersion),
-		);
+		const ok = await run(() => installVersion(kind, addon, addon.latestVersion));
 
 		if (!ok) {
 			fail(format('UNBOUND_INSTALL_FAILED', { name: manifest.name }));

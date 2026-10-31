@@ -2,7 +2,9 @@ import type { AddonUpdate, UpdateReason } from '@unbound-app/contracts/updates';
 import { addonUpdateSchema } from '@unbound-app/contracts/updates';
 import { describe, expect, test } from 'bun:test';
 
-import type { InstalledEntry, UpdatableKind, UpdatableManager } from './updates';
+import type { UpdatableKind } from '~/managers/manager-of';
+
+import type { InstalledEntry, UpdatableManager } from './updates';
 
 import { autoApplies, automaticUpdates, buildUpdatesRequest, toPendingUpdates } from './updates';
 
@@ -133,9 +135,9 @@ describe('automaticUpdates', () => {
 	test('leaves out newer versions of held addons and keeps the rest', () => {
 		const held = new Map([['dev.held', '1.0.0']]);
 		const manager: UpdatableManager = {
-			getEntities: () => [],
-			getEntity: () => undefined,
-			update: async () => {},
+			listInstalled: () => [],
+			update: async () => false,
+			clearDevelopmentCopy: () => {},
 			getHeldVersion: (id) => held.get(id),
 		};
 		const pending = toPendingUpdates([entry('dev.held'), entry('dev.free')], {

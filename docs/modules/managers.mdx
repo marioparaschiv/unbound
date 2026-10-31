@@ -65,7 +65,7 @@ Enabled-state is persisted through [storage](/modules/storage), which is how it'
 import { plugins } from '@unbound-app/api';
 
 plugins.on('enabled', (plugin) => {
-	console.log(`${plugin.data.name} is now enabled`);
+	console.log(`${plugin.name} is now enabled`);
 });
 
 plugins.toggle('my-plugin');

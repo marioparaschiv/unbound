@@ -1,13 +1,8 @@
-import type {
-	Addon,
-	PushedManifest,
-	Plugin,
-	PluginContext,
-	PluginEntity,
-} from '@unbound-app/types';
+import type { PushedManifest, Plugin, PluginContext } from '@unbound-app/types';
 
 import { createScopedReact, performRefresh, withRefreshScope } from '~/lib/hot/runtime';
 import { attributeAddon, crashGuardKey, setFreezeListener } from '~/api/crash-guard';
+import type { Addon, AddonResolveable } from '~/managers/addon';
 import { createPluginContext } from '~/api/native-runtime';
 import type { AddonAttribution } from '~/api/crash-guard';
 import { setOwnerCheck } from '~/lib/commands/owners';
@@ -32,7 +27,7 @@ type EvaluatedPlugin = {
 	factory: PluginFactory;
 };
 
-export class Plugins extends Addons<PluginEntity> {
+export class Plugins extends Addons<Plugin> {
 	private scanned = new Map<string, ScannedPlugin>();
 	private evaluated = new Map<string, EvaluatedPlugin>();
 
@@ -71,7 +66,7 @@ export class Plugins extends Addons<PluginEntity> {
 	 * @description Unloads a plugin and forgets its evaluated bundle, so a deleted plugin's code is not kept.
 	 * @param entity The plugin to unload, as its id or the entity itself.
 	 */
-	unload(entity: string | Addon): void | Promise<void> {
+	unload(entity: AddonResolveable): void | Promise<void> {
 		this.evaluated.delete(typeof entity === 'string' ? entity : entity.id);
 
 		return super.unload(entity);
@@ -87,7 +82,7 @@ export class Plugins extends Addons<PluginEntity> {
 	 * @returns The reload outcome.
 	 */
 	async reload(
-		entity: string | Addon,
+		entity: AddonResolveable,
 		bundle: string,
 		manifest: PushedManifest,
 		bytecode?: string,
@@ -180,8 +175,8 @@ export class Plugins extends Addons<PluginEntity> {
 		}
 	}
 
-	protected createContext(entity: PluginEntity): PluginContext {
-		const context = createPluginContext(entity.data, this.attribution(entity));
+	protected createContext(entity: Addon): PluginContext {
+		const context = createPluginContext(entity.manifest, this.attribution(entity));
 
 		return {
 			...context,
@@ -196,8 +191,8 @@ export class Plugins extends Addons<PluginEntity> {
 		};
 	}
 
-	protected attribution(entity: PluginEntity): AddonAttribution | undefined {
-		return attributeAddon(crashGuardKey(this.bucket, entity.id), entity.data.name);
+	protected attribution(entity: Addon): AddonAttribution | undefined {
+		return attributeAddon(crashGuardKey(this.bucket, entity.id), entity.name);
 	}
 }
 

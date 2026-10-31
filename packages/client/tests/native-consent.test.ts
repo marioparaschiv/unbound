@@ -1,5 +1,7 @@
-import type { Addon, AddonManifest } from '@unbound-app/types';
 import { describe, expect, spyOn, test } from 'bun:test';
+import type { AddonManifest } from '@unbound-app/types';
+
+import type { Addon } from '~/managers/addon';
 
 const { FakeAddons, makeManifest } = await import('./helpers/addons');
 const { setConsentPrompt, NativeConsentRequiredError } = await import('~/lib/native-consent');
@@ -15,11 +17,11 @@ class ConsentAddons extends FakeAddons {
 		return this.consents;
 	}
 
-	protected async requestConsent(entity: Addon & { data: AddonManifest }) {
+	protected async requestConsent(entity: Addon) {
 		const granted = await super.requestConsent(entity);
 
 		if (granted) {
-			this.consents[entity.id] = (entity.data.capabilities ?? []).join(',');
+			this.consents[entity.id] = (entity.manifest.capabilities ?? []).join(',');
 		}
 
 		return granted;

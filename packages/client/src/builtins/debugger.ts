@@ -6,7 +6,6 @@ import type {
 	LogMessage,
 } from '@unbound-app/debugger-protocol';
 import { parseMessage } from '@unbound-app/debugger-protocol';
-import type { PluginEntity } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 
 import { getSetting, isSettingChange } from '~/lib/unbound-settings';
@@ -14,6 +13,7 @@ import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/lib/constants';
 import { currentEnvironment } from '~/lib/environment';
 import { reloadSummary } from '~/lib/reload-summary';
 import { createPatcher } from '~/api/patcher';
+import type { Addon } from '~/managers/addon';
 import { plugins } from '~/managers/plugins';
 import { showToast } from '~/api/toasts';
 import storage from '~/api/storage';
@@ -370,8 +370,8 @@ function listenToReloads() {
 	let reloaded: string[] = [];
 	let reset: ReturnType<typeof setTimeout> | undefined;
 
-	function onReloaded(entity: PluginEntity) {
-		reloaded.push(entity.data.name);
+	function onReloaded(entity: Addon) {
+		reloaded.push(entity.name);
 		clearTimeout(reset);
 		reset = setTimeout(() => {
 			reloaded = [];
@@ -383,11 +383,11 @@ function listenToReloads() {
 		});
 	}
 
-	function onReloadError(entity: PluginEntity, error: Error) {
+	function onReloadError(entity: Addon, error: Error) {
 		showToast({
 			id: `reload:${entity.id}`,
 			title: 'Hot reload failed',
-			content: `${entity.data.name} failed to reload: ${error.message}`,
+			content: `${entity.name} failed to reload: ${error.message}`,
 		});
 	}
 

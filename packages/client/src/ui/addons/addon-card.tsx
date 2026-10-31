@@ -1,10 +1,10 @@
-import type { Addon } from '@unbound-app/types';
 import { View } from 'react-native';
 import { memo } from 'react';
 
 import { useUnboundSettings } from '~/lib/unbound-settings';
 import { Discord } from '~/api/metro/components';
 import { useDevelopmentCopy } from '~/ui/hooks';
+import type { Addon } from '~/managers/addon';
 import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';
 import { Manager } from '~/managers/base';
@@ -33,7 +33,7 @@ type AddonCardProps = {
 function AddonCard({ addon, kind, library }: AddonCardProps) {
 	const styles = useStyles();
 	const manager = Manager.for(kind);
-	const { name, version, authors, description } = addon.data;
+	const { name, version, authors, description } = addon.manifest;
 
 	const recovery = useUnboundSettings(({ key }) => key === 'recovery').get('recovery');
 	const disabled = addon.failed || recovery;

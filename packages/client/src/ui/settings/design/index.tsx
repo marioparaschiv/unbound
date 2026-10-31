@@ -4,6 +4,7 @@ import type { ComponentType } from 'react';
 import { useMemo, useState } from 'react';
 
 import { Discord, SafeArea } from '~/api/metro/components';
+import { installsFromManifest } from '~/managers/addons';
 import InstallButton from '~/ui/addons/install-button';
 import storage from '~/api/storage';
 
@@ -55,7 +56,7 @@ function DesignPage() {
 				</View>
 				<View style={{ flex: 1 }}>
 					<Discord.SegmentedControlPages state={state} />
-					{!kind || kind === 'font' ? null : <InstallButton kind={kind} />}
+					{kind && installsFromManifest(kind) ? <InstallButton kind={kind} /> : null}
 				</View>
 			</View>
 		</SafeArea.SafeAreaPaddingView>

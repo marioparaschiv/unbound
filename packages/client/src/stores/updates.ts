@@ -5,15 +5,14 @@ import toError from '@unbound-app/utils/to-error';
 import { Platform } from 'react-native';
 import { create } from 'zustand';
 
-import { applyUpdate, automaticUpdates, fetchUpdates, listInstalled } from '~/lib/updates';
-import type { PendingUpdate, UpdatableKind } from '~/lib/updates';
+import { automaticUpdates, fetchUpdates } from '~/lib/updates';
 import { API_URL, CLIENT_VERSION } from '~/lib/constants';
 import { fetchLoaderUpdate } from '~/lib/loader-updates';
+import { installsFromManifest } from '~/managers/addons';
+import type { PendingUpdate } from '~/lib/updates';
 import { Manager } from '~/managers/base';
 
 const logger = createLogger('Updater');
-
-const UPDATABLE_KINDS = ADDON_KINDS.filter((kind): kind is UpdatableKind => kind !== 'font');
 
 /** The last update check. `ready` and `error` keep when it finished, for the status line. */
 export type UpdatesState =
@@ -38,7 +37,9 @@ type UpdatesStore = {
 let pending: Promise<void> | undefined;
 
 function checkInstalled(): Promise<PendingUpdate[]> {
-	const entries = UPDATABLE_KINDS.flatMap((kind) => listInstalled(kind, Manager.for(kind)));
+	const entries = ADDON_KINDS.filter(installsFromManifest).flatMap((kind) =>
+		Manager.for(kind).listInstalled(),
+	);
 
 	return fetchUpdates(entries, { baseUrl: API_URL, clientVersion: CLIENT_VERSION });
 }
@@ -118,7 +119,7 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 
 			setApplying(id, 'updating');
 
-			const updated = await applyUpdate(Manager.for(target.kind), target);
+			const updated = await Manager.for(target.kind).update(target.id, target.update);
 
 			setApplying(id, updated ? undefined : 'failed');
 
