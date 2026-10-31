@@ -102,6 +102,48 @@ export type PushedManifest = {
 /** Whether an addon's bundle carries a valid Unbound signature. */
 export type AddonTrust = 'signed' | 'unsigned';
 
+/**
+ * A loaded plugin, theme or icon pack its manager governs: its manifest and state, and what its manager
+ * does to it. Stringifies to its {@link AddonManifest}.
+ */
+export type AddonHandle<I extends object = object> = {
+	readonly id: string;
+	readonly name: string;
+	readonly version: string;
+	readonly authors: AddonAuthor[];
+	readonly manifest: AddonManifest;
+	/** Whether the addon is running. */
+	readonly started: boolean;
+	/** Whether the addon failed to start. */
+	readonly failed: boolean;
+	/** @deprecated Use manifest */
+	readonly data: AddonManifest;
+	/** @deprecated What the bundle evaluated to; readable until 1.0. */
+	readonly instance: (Plugin & I) | null;
+	/** @deprecated The bundle source; readable until 1.0. */
+	readonly bundle: string;
+	/** @deprecated The running plugin's native bridge; readable until 1.0. */
+	readonly context?: PluginContext;
+	isEnabled(): boolean;
+	isPlugin(): boolean;
+	enable(): void | Promise<void>;
+	disable(): void;
+	reload(): Promise<void>;
+	toJSON(): AddonManifest;
+};
+
+/** @deprecated Use AddonHandle */
+export type Addon = AddonHandle;
+
+/** @deprecated Use AddonHandle */
+export type AddonResolveable = string | AddonHandle;
+
+/** @deprecated Use AddonHandle */
+export type PluginEntity = AddonHandle<Plugin>;
+
+/** @deprecated Use AddonHandle */
+export type ThemeEntity = AddonHandle<Theme>;
+
 /** What a plugin's self-test found: whether the plugin works on this device, and why. */
 export type PluginSelfTestResult = {
 	ok: boolean;

@@ -20,7 +20,7 @@ import { parseAddonManifest, resolveManifestCapabilities } from '~/lib/addon-man
 import type { AddonAttribution, AddonFreeze } from '~/api/crash-guard';
 import type { CrashReportAddon } from '~/lib/crash-reports';
 import type { NativeConsents } from '~/lib/native-consent';
-import type { AddonResolveable } from '~/managers/addon';
+import type { AddonEvents, AddonResolveable, AddonState } from '~/managers/addon';
 import { isSafeAddonMain } from '~/lib/addon-paths';
 import { getSetting } from '~/lib/unbound-settings';
 import { unpatchAllByCaller } from '~/api/patcher';
@@ -32,25 +32,6 @@ import storage from '~/api/storage';
 
 /** A single freeze at least this long disables the addon at once. */
 const LONG_FREEZE_SECONDS = 20;
-
-/** Every event an addon manager emits, across its lifecycle and its distribution. */
-export type AddonEvents<T> = {
-	loaded: (entity: T) => void;
-	unloaded: (entity: T) => void;
-	started: (entity: T) => void;
-	stopped: (entity: T) => void;
-	enabled: (entity: T) => void;
-	disabled: (entity: T) => void;
-	toggled: (entity: T) => void;
-	reloaded: (entity: T) => void;
-	'reload-error': (entity: T, error: Error) => void;
-	installed: (entity: T) => void;
-	'install-error': (error: Error) => void;
-	updated: (entity: T) => void;
-	'update-error': (entity: T, error: Error) => void;
-	deleted: (entity: T) => void;
-	'consent-required': (entity: T) => void;
-};
 
 function monotonicNow(): number {
 	return globalThis.performance?.now?.() ?? Date.now();
@@ -70,6 +51,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	protected pendingStops = new Map<string, Promise<void>>();
 	protected pendingStarts = new Set<string>();
 	protected stopTimeoutMs = 5000;
+	private readonly records = new WeakMap<Addon<I>, AddonState<I>>();
 
 	async shutdown(): Promise<void> {
 		this.pendingStarts.clear();
@@ -92,6 +74,37 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 * @returns The addon's instance.
 	 */
 	protected abstract handleBundle(bundle: string, id: string): (Plugin & I) | null;
+
+	protected createAddon(manifest: AddonManifest, bundle: string): Addon<I> {
+		const state: AddonState<I> = {
+			manifest,
+			bundle,
+			instance: null,
+			context: void 0,
+			started: false,
+			failed: false,
+		};
+		const addon = new Addon<I>(state, this);
+
+		this.records.set(addon, state);
+
+		return addon;
+	}
+
+	protected stateOf(addon: Addon<I>): AddonState<I> {
+		const state = this.records.get(addon);
+
+		if (!state) {
+			throw new Error(`Addon ${addon.id} is not governed by ${this.name}.`);
+		}
+
+		return state;
+	}
+
+	protected clearFailure(addon: Addon<I>): void {
+		this.stateOf(addon).failed = false;
+		this.errors.delete(addon.id);
+	}
 
 	protected createContext(entity: Addon<I>): PluginContext | undefined {
 		void entity;
@@ -125,7 +138,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 */
 	protected register(bundle: string, manifest: AddonManifest) {
 		try {
-			const entity = new Addon<I>(manifest, bundle, this);
+			const entity = this.createAddon(manifest, bundle);
 
 			this.entities.set(manifest.id, entity);
 			this.registered(manifest.id);
@@ -226,32 +239,33 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			beginAddonStart(guardKey, resolved.name);
 		}
 
+		const state = this.stateOf(resolved);
+
 		try {
 			const attribution = this.attribution(resolved);
 
-			// Recovery mode runs no addon code: the addon counts as started with nothing evaluated.
-			resolved.state.instance = recoveryMode
+			state.instance = recoveryMode
 				? null
 				: withAddonAttribution(attribution, () =>
-						this.handleBundle(resolved.state.bundle, resolved.id),
+						this.handleBundle(state.bundle, resolved.id),
 					);
 
-			resolved.state.context = this.createContext(resolved);
-			const context = resolved.state.context;
+			state.context = this.createContext(resolved);
+			const context = state.context;
 
-			withAddonAttribution(attribution, () => resolved.state.instance?.start?.(context));
-			resolved.state.started = true;
+			withAddonAttribution(attribution, () => state.instance?.start?.(context));
+			state.started = true;
 			this.startDurations.set(resolved.id, monotonicNow() - startedAt);
 
 			this.emit('started', resolved);
 		} catch (error) {
-			resolved.state.context?.dispose();
-			resolved.state.context = undefined;
+			state.context?.dispose();
+			state.context = undefined;
 			this.logger.error(`Failed to start addon ${resolved.id}:`, error);
 			const failure = toError(error);
 
 			this.errors.set(resolved.id, failure);
-			resolved.state.failed = true;
+			state.failed = true;
 			void reportCrash({
 				kind: 'start-failure',
 				phase: 'starting',
@@ -376,11 +390,12 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			return this.pendingStops.get(resolved.id);
 		}
 
-		const { instance, context } = resolved.state;
+		const state = this.stateOf(resolved);
+		const { instance, context } = state;
 
-		resolved.state.instance = null;
-		resolved.state.context = undefined;
-		resolved.state.started = false;
+		state.instance = null;
+		state.context = undefined;
+		state.started = false;
 
 		try {
 			const result = withAddonAttribution(this.attribution(resolved), () =>
@@ -483,10 +498,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		if (!resolved?.started) return;
 
 		await this.stop(resolved);
-
-		// A throwing stop() is recorded, not fatal: the fresh start decides whether the addon failed.
-		resolved.state.failed = false;
-		this.errors.delete(resolved.id);
+		this.clearFailure(resolved);
 		this.start(resolved);
 	}
 

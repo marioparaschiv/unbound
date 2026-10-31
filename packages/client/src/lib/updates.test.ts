@@ -136,7 +136,7 @@ describe('automaticUpdates', () => {
 		const held = new Map([['dev.held', '1.0.0']]);
 		const manager: UpdatableManager = {
 			listInstalled: () => [],
-			applyRelease: async () => false,
+			update: async () => false,
 			clearDevelopmentCopy: () => {},
 			getHeldVersion: (id) => held.get(id),
 		};

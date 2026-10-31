@@ -13,5 +13,5 @@ export type ManagerOf = {
 	font: Fonts;
 };
 
-/** The kinds whose addons carry a marketplace id and version; fonts have neither. */
+/** The kinds installed from a manifest, so their addons update and hold by version. */
 export type UpdatableKind = Exclude<AddonKind, 'font'>;

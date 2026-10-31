@@ -10,7 +10,7 @@ import type { UpdatableKind } from '~/managers/manager-of';
 import type { InstallStatus } from '~/lib/catalog';
 import { Discord } from '~/api/metro/components';
 import { compareVersions } from '~/lib/versions';
-import { isUpdatable } from '~/managers/addons';
+import { installsFromManifest } from '~/managers/addons';
 import { ActionSheets } from '~/api/metro/api';
 import { Messages, format } from '~/api/i18n';
 import { Manager } from '~/managers/base';
@@ -97,7 +97,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	const [pending, setPending] = useState<InstallStatus | null>(null);
 	const { manifest, version: latest } = addon.latestVersion;
 	const action = ACTIONS[pending ?? status];
-	const updatable = isUpdatable(kind) ? kind : undefined;
+	const updatable = installsFromManifest(kind) ? kind : undefined;
 
 	async function run(install: () => Promise<boolean>): Promise<boolean> {
 		setPending(status);

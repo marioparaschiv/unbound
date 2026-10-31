@@ -14,7 +14,7 @@ import type { Addons } from '~/managers/addons';
 /** The part of an addon manager the updater drives. */
 export type UpdatableManager = Pick<
 	Addons<Plugin>,
-	'listInstalled' | 'applyRelease' | 'getHeldVersion' | 'clearDevelopmentCopy'
+	'listInstalled' | 'update' | 'getHeldVersion' | 'clearDevelopmentCopy'
 >;
 
 export type UpdateCheckOptions = {
@@ -178,7 +178,7 @@ export async function reinstallFromStore(
 	const entries = manager.listInstalled().filter((entry) => entry.id === id);
 	const [pending] = await fetchUpdates(entries, options);
 
-	return pending ? manager.applyRelease(pending.id, pending.update) : false;
+	return pending ? manager.update(pending.id, pending.update) : false;
 }
 
 export default {

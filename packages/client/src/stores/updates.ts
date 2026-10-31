@@ -9,7 +9,7 @@ import { automaticUpdates, fetchUpdates } from '~/lib/updates';
 import { API_URL, CLIENT_VERSION } from '~/lib/constants';
 import { fetchLoaderUpdate } from '~/lib/loader-updates';
 import type { PendingUpdate } from '~/lib/updates';
-import { isUpdatable } from '~/managers/addons';
+import { installsFromManifest } from '~/managers/addons';
 import { Manager } from '~/managers/base';
 
 const logger = createLogger('Updater');
@@ -37,7 +37,7 @@ type UpdatesStore = {
 let pending: Promise<void> | undefined;
 
 function checkInstalled(): Promise<PendingUpdate[]> {
-	const entries = ADDON_KINDS.filter(isUpdatable).flatMap((kind) =>
+	const entries = ADDON_KINDS.filter(installsFromManifest).flatMap((kind) =>
 		Manager.for(kind).listInstalled(),
 	);
 
@@ -119,7 +119,7 @@ const UpdatesStore = create<UpdatesStore>((set, get) => {
 
 			setApplying(id, 'updating');
 
-			const updated = await Manager.for(target.kind).applyRelease(target.id, target.update);
+			const updated = await Manager.for(target.kind).update(target.id, target.update);
 
 			setApplying(id, updated ? undefined : 'failed');
 

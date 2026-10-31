@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 
 import { Discord, SafeArea } from '~/api/metro/components';
 import InstallButton from '~/ui/addons/install-button';
-import { isUpdatable } from '~/managers/addons';
+import { installsFromManifest } from '~/managers/addons';
 import storage from '~/api/storage';
 
 import ThemesTab from './themes';
@@ -56,8 +56,7 @@ function DesignPage() {
 				</View>
 				<View style={{ flex: 1 }}>
 					<Discord.SegmentedControlPages state={state} />
-					{/* The button installs from a manifest URL, which only manifest-based kinds have. */}
-					{kind && isUpdatable(kind) ? <InstallButton kind={kind} /> : null}
+					{kind && installsFromManifest(kind) ? <InstallButton kind={kind} /> : null}
 				</View>
 			</View>
 		</SafeArea.SafeAreaPaddingView>

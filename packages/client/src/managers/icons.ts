@@ -297,9 +297,10 @@ export class Icons extends Addons<Plugin> {
 	 * @description Installs an icon pack. GitHub manifests download the repo's image tree into the pack
 	 * folder; other manifests fall back to the shared bundle install.
 	 * @param url The manifest URL.
+	 * @param digest The SHA-256 a bundle-based pack's bundle must have, when the release lists one.
 	 * @returns The loaded pack entity, or `undefined` on failure.
 	 */
-	async install(url: string): Promise<Addon | undefined> {
+	async install(url: string, digest?: string): Promise<Addon | undefined> {
 		try {
 			const parsed = await downloadManifest(url, (raw) => this.validateManifest(raw));
 
@@ -322,7 +323,7 @@ export class Icons extends Addons<Plugin> {
 			};
 
 			if (manifest.source !== 'github') {
-				return super.install(url);
+				return super.install(url, digest);
 			}
 
 			await this.downloadTree(manifest);

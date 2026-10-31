@@ -73,7 +73,7 @@ describe('Addons.reload', () => {
 		expect(result.ok).toBe(true);
 		expect(manager.log).toEqual(['stop:old', 'start:new']);
 		expect(reloaded?.id).toBe('a');
-		expect(manager.getEntity('a')?.state.bundle).toBe('new');
+		expect(manager.bundleOf('a')).toBe('new');
 	});
 
 	test('an absent addon takes the load path and persists to disk', async () => {
@@ -111,7 +111,7 @@ describe('Addons.reload', () => {
 		expect(result.ok).toBe(true);
 		expect(manager.log).toEqual([]);
 		expect(manager.getEntity('e')?.started).toBe(false);
-		expect(manager.getEntity('e')?.state.bundle).toBe('new');
+		expect(manager.bundleOf('e')).toBe('new');
 	});
 
 	test('a throwing stop() still completes the swap, leaving a healthy addon', async () => {
@@ -130,7 +130,7 @@ describe('Addons.reload', () => {
 
 		expect(result.ok).toBe(true);
 		expect(manager.log).toContain('start:new');
-		expect(manager.getEntity('c')?.state.bundle).toBe('new');
+		expect(manager.bundleOf('c')).toBe('new');
 		expect(manager.errors.get('c')).toBeUndefined();
 	});
 
@@ -201,7 +201,7 @@ describe('Addons.reload', () => {
 			finishCleanup = resolve;
 		});
 
-		entity.state.instance = { stop: () => cleanup };
+		manager.setInstance(entity, { stop: () => cleanup });
 
 		const stopping = manager.stop(entity);
 
@@ -233,7 +233,7 @@ describe('Addons.reload', () => {
 			finishCleanup = resolve;
 		});
 
-		entity.state.instance = { stop: () => cleanup };
+		manager.setInstance(entity, { stop: () => cleanup });
 
 		const stopping = manager.stop(entity);
 
@@ -265,7 +265,7 @@ describe('Addons.reload', () => {
 			finishCleanup = resolve;
 		});
 
-		entity.state.instance = { stop: () => cleanup };
+		manager.setInstance(entity, { stop: () => cleanup });
 
 		const stopping = manager.stop(entity);
 
@@ -314,7 +314,7 @@ describe('Addons.reload', () => {
 
 		expect(result.ok).toBe(false);
 		expect(manager.log).toEqual([]);
-		expect(manager.getEntity('a')?.state.bundle).toBe('old');
+		expect(manager.bundleOf('a')).toBe('old');
 		expect(manager.getEntity('renamed')).toBeUndefined();
 	});
 
@@ -350,7 +350,7 @@ describe('Addons.reload', () => {
 		expect(manager.errors.get('i')).toBe(failures[0]);
 		expect(manager.log).toEqual([]);
 		expect(writes).toEqual([]);
-		expect(manager.getEntity('i')?.state.bundle).toBe('old');
+		expect(manager.bundleOf('i')).toBe('old');
 	});
 
 	test('an invalid pushed manifest for an absent addon is recorded without loading it', async () => {

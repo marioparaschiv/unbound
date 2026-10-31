@@ -7,7 +7,7 @@ const Manager = await loadManagers();
 
 const { default: useDevelopmentCopy } = await import('~/ui/hooks/use-development-copy');
 const { default: useAddonState } = await import('~/ui/hooks/use-addon-state');
-const { isUpdatable } = await import('~/managers/addons');
+const { installsFromManifest } = await import('~/managers/addons');
 
 type ListedKind = 'plugin' | 'theme' | 'icon-pack';
 
@@ -24,7 +24,7 @@ test('resolves the manager of every addon kind', () => {
 });
 
 test('updates every kind installed from a manifest, and not fonts', () => {
-	expect(ADDON_KINDS.filter(isUpdatable)).toEqual(['plugin', 'theme', 'icon-pack']);
+	expect(ADDON_KINDS.filter(installsFromManifest)).toEqual(['plugin', 'theme', 'icon-pack']);
 });
 
 test('keeps each manager on the bucket name it has always persisted to', () => {

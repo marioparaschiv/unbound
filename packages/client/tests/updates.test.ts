@@ -125,7 +125,7 @@ async function check(
 			pending.map(async (update) => {
 				const owner = owners.get(update.id);
 
-				return owner ? owner.applyRelease(update.id, update.update) : false;
+				return owner ? owner.update(update.id, update.update) : false;
 			}),
 		);
 
@@ -145,7 +145,7 @@ async function sentBodies(calls: Parameters<typeof fetch>[]) {
 	);
 }
 
-describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyRelease', () => {
+describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and update', () => {
 	afterAll(async () => {
 		api.stop(true);
 		cdn.stop(true);
@@ -188,7 +188,7 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyRelease', () => {
 				addons: [{ id: 'up.current', version: '1.0.0', sha256: INSTALLED_SHA256 }],
 			},
 		]);
-		expect(manager.getEntity('up.current')?.state.bundle).toBe(INSTALLED);
+		expect(manager.bundleOf('up.current')).toBe(INSTALLED);
 		expect(manager.log).toEqual([]);
 		expect(writes).toEqual([]);
 		expect(events).toEqual([]);
@@ -234,19 +234,19 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyRelease', () => {
 		const updated = plugins.getEntity('up.applied');
 
 		expect(updated?.version).toBe('1.1.0');
-		expect(updated?.state.bundle).toBe('applied-1.1.0');
+		expect(plugins.bundleOf('up.applied')).toBe('applied-1.1.0');
 		expect(updated?.started).toBe(true);
 		expect(plugins.log).toEqual(['stop:old', 'start:applied-1.1.0']);
 
 		const disabled = others.getEntity('up.disabled');
 
 		expect(disabled?.version).toBe('1.1.0');
-		expect(disabled?.state.bundle).toBe('disabled-1.1.0');
+		expect(others.bundleOf('up.disabled')).toBe('disabled-1.1.0');
 		expect(disabled?.started).toBe(false);
 		expect(others.log).toEqual([]);
 
-		expect(plugins.getEntity('local.addon')?.state.bundle).toBe(INSTALLED);
-		expect(others.getEntity('local.unversioned')?.state.bundle).toBe('dev');
+		expect(plugins.bundleOf('local.addon')).toBe(INSTALLED);
+		expect(others.bundleOf('local.unversioned')).toBe('dev');
 		expect(writes.toSorted()).toEqual([
 			'Unbound/Plugins/up.applied/index.js',
 			'Unbound/Plugins/up.applied/manifest.json',
@@ -268,7 +268,7 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyRelease', () => {
 		const tampered = manager.getEntity('up.tampered');
 
 		expect(tampered?.version).toBe('1.0.0');
-		expect(tampered?.state.bundle).toBe(INSTALLED);
+		expect(manager.bundleOf('up.tampered')).toBe(INSTALLED);
 		expect(tampered?.started).toBe(true);
 		expect(manager.log).toEqual([]);
 		expect(writes).toEqual([]);
@@ -289,7 +289,7 @@ describe.skipIf(!MAINTENANCE_URL)('fetchUpdates and applyRelease', () => {
 			Error,
 		);
 
-		expect(manager.getEntity('up.applied')?.state.bundle).toBe(INSTALLED);
+		expect(manager.bundleOf('up.applied')).toBe(INSTALLED);
 		expect(manager.log).toEqual([]);
 		expect(writes).toEqual([]);
 		expect(events).toEqual([]);

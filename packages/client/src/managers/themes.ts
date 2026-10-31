@@ -37,7 +37,7 @@ export class Themes extends Addons<Theme> {
 		const applied = appliedId ? this.getEntity(appliedId) : undefined;
 
 		if (applied?.started) {
-			ThemeStore.getState().setApplied(applied.id, applied.state.instance);
+			ThemeStore.getState().setApplied(applied.id, this.stateOf(applied).instance);
 		}
 
 		this.initialized = true;
@@ -92,7 +92,7 @@ export class Themes extends Addons<Theme> {
 				this.start(resolved);
 			}
 
-			ThemeStore.getState().setApplied(resolved.id, resolved.state.instance);
+			ThemeStore.getState().setApplied(resolved.id, this.stateOf(resolved).instance);
 			this.emit('enabled', resolved);
 		} catch (error) {
 			this.logger.error(`Failed to enable theme ${resolved.id}:`, error);
@@ -141,7 +141,7 @@ export class Themes extends Addons<Theme> {
 
 		if (!resolved?.started || this.getAppliedId() !== resolved.id) return;
 
-		ThemeStore.getState().setApplied(resolved.id, resolved.state.instance);
+		ThemeStore.getState().setApplied(resolved.id, this.stateOf(resolved).instance);
 	}
 }
 

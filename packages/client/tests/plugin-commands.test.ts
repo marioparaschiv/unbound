@@ -4,7 +4,6 @@ import type { Plugin } from '@unbound-app/types';
 import { makeManifest, resetDevice } from './helpers/addons';
 
 const { Plugins } = await import('~/managers/plugins');
-const { Addon } = await import('~/managers/addon');
 const { createCommands } = await import('~/api/commands');
 const { registry } = await import('~/lib/commands/registry');
 
@@ -39,7 +38,7 @@ class CommandPlugins extends Plugins {
 	}
 
 	seed(id: string) {
-		this.entities.set(id, new Addon(makeManifest(id), 'bundle', this));
+		this.entities.set(id, this.createAddon(makeManifest(id), 'bundle'));
 	}
 }
 
