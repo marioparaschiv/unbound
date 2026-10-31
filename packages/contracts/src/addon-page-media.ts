@@ -1,8 +1,6 @@
-import type { Tokens } from 'marked';
-import { Lexer, walkTokens } from 'marked';
+import { Lexer, walkTokens, type Tokens } from 'marked';
 
-import type { AddonPageFrontmatter } from './addon-page';
-import { mediaPathSchema } from './addon-page';
+import { mediaPathSchema, type AddonPageFrontmatter } from './addon-page';
 
 /**
  * @description Lists every media file ADDON.md shows, the set `ubd build` measures into `page.json`.

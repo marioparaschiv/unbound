@@ -238,7 +238,8 @@ describe('the store page', () => {
 		let inFlight = 0;
 		let peak = 0;
 		let reads = 0;
-		const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
+
+		async function countBlobReads(input: RequestInfo | URL, init?: RequestInit) {
 			const url = input instanceof Request ? input.url : String(input);
 
 			if (!url.includes('/git/blobs/')) {
@@ -256,7 +257,11 @@ describe('the store page', () => {
 			} finally {
 				inFlight -= 1;
 			}
-		});
+		}
+
+		const fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(
+			Object.assign(countBlobReads, { preconnect: original.preconnect }),
+		);
 
 		try {
 			await accepted(await submit(headers, request));
