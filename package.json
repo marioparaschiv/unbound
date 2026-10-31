@@ -52,7 +52,7 @@
 		"lint:js": "bun run lint:rules && bun run --filter @unbound-app/web build:types && oxlint --config .oxlintrc.json --type-aware apps packages scripts && bun run plugins:lint && bun run plugins:typecheck && bun scripts/typecheck.ts --web-types-built",
 		"typecheck": "bun scripts/typecheck.ts",
 		"lint:fix": "bun run lint:rules && bun run --filter @unbound-app/web build:types && oxlint --config .oxlintrc.json --type-aware --fix-dangerously apps packages scripts",
-		"lint:rules": "oxc-config-check .oxlintrc.json",
+		"lint:rules": "oxc-config-check .oxlintrc.json packages/plugins/.oxlintrc.json",
 		"fmt": "bun run fmt:js && bun run loader:fmt",
 		"fmt:js": "oxfmt --config .oxfmtrc.json apps packages",
 		"fmt:check": "bun run fmt:js:check && bun run loader:fmt:check",
