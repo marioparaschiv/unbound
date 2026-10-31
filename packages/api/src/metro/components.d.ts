@@ -30,6 +30,7 @@ export declare const Forms: any;
 export declare const Media: any;
 export declare const Portal: any;
 export declare const SafeArea: any;
+export declare const Video: any;
 /**
  * @description Discord's help message, or Unbound's own on Discord builds that no longer ship one, picked on first render.
  * @param props The message, its type, text styling, corner radius and an optional trailing button.

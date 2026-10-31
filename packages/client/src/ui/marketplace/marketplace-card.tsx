@@ -13,10 +13,13 @@ import { compareVersions } from '~/core/versions';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
+import { Screens } from '~/core/constants';
 import { ActionSheets } from '~/metro/api';
 import { confirm } from '~/dialogs/api';
 import { icons } from '~/assets/api';
 import { show } from '~/toasts/api';
+
+import type { StorePageParams } from './store-page';
 
 import { getInstalledVersion, installVersion } from './targets';
 import VersionPickerSheet from './version-picker-sheet';
@@ -88,14 +91,15 @@ function confirmChoice(
 /**
  * @description One listed addon: the same header as an installed addon's card, with an Install, Update
  * or Installed button judged against the installed copy at its top right. Holding the button offers
- * the newest version or a picker of every version, except for fonts.
+ * the newest version or a picker of every version, except for fonts. Tapping the card opens the store page.
  */
 function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	const styles = useStyles();
+	const navigation = Discord.useNavigation();
 	const status = useInstallStatus(kind, addon);
 	// Holds the pressed action until it settles, so the label doesn't flip while the button spins.
 	const [pending, setPending] = useState<InstallStatus | null>(null);
-	const { manifest, version: latest } = addon.latestVersion;
+	const { manifest, version: latest, pageUrl } = addon.latestVersion;
 	const action = ACTIONS[pending ?? status];
 	const updatable = installsFromManifest(kind) ? kind : undefined;
 
@@ -107,6 +111,12 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 		setPending(null);
 
 		return ok;
+	}
+
+	function openPage() {
+		const params: StorePageParams = { addon, kind };
+
+		navigation.push(Screens.StorePage, params);
 	}
 
 	function fail(content: string) {
@@ -182,7 +192,13 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	}
 
 	return (
-		<Discord.Card variant='primary' border='subtle' shadow='low' style={styles.card}>
+		<Discord.Card
+			variant='primary'
+			border='subtle'
+			shadow='low'
+			style={styles.card}
+			onPress={pageUrl ? openPage : void 0}
+		>
 			<View style={styles.row}>
 				<View style={styles.body}>
 					<AddonCardHeader manifest={manifest} icon={Manager.for(kind).icon} />
