@@ -14,8 +14,7 @@ type BytecodeOptions = { versions: number[] };
 const run = promisify(execFile);
 const { fetchManifest, resolveHermesTargets } = hermesManifest;
 
-// A client older than these parameters passes only React, so each falls back to the global it shadows.
-const SHADOWED_GLOBALS = new Set([
+const FALL_BACK_TO_GLOBAL = new Set([
 	'unbound',
 	'setTimeout',
 	'setInterval',
@@ -24,7 +23,7 @@ const SHADOWED_GLOBALS = new Set([
 ]);
 
 const parameters = ADDON_SCOPE_GLOBALS.map((name) =>
-	SHADOWED_GLOBALS.has(name) ? `${name} = globalThis.${name}` : name,
+	FALL_BACK_TO_GLOBAL.has(name) ? `${name} = globalThis.${name}` : name,
 ).join(', ');
 
 /**
