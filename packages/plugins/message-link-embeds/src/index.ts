@@ -5,12 +5,13 @@ import type { PluginContext } from '@unbound-app/api/native';
 
 import {
 	ChannelStore,
-	findRenderers,
 	MessageActions,
+	MessageRecord,
 	MessageStore,
+	renderers,
+	RowManager,
 	SelectedChannelStore,
 	type Embeds,
-	type Renderers,
 } from '~/modules';
 import { emptyEmbeds } from '~/components/message-surface';
 import { startEmbeds } from '~/platform';
@@ -18,13 +19,14 @@ import { startEmbeds } from '~/platform';
 let embeds: Embeds | undefined;
 
 function start(context: PluginContext) {
-	const renderers = findRenderers();
+	// `ChatItem` has a fallback search, so it is checked when an embed renders.
 	const modules = {
 		ChannelStore,
 		MessageStore,
 		SelectedChannelStore,
-		fetchMessage: MessageActions.fetchMessage,
-		...renderers,
+		MessageActions,
+		MessageRecord,
+		RowManager,
 	};
 
 	if (
@@ -34,8 +36,7 @@ function start(context: PluginContext) {
 		return;
 	}
 
-	// `ensureModules` found every renderer.
-	embeds = startEmbeds(context.native, renderers as Renderers);
+	embeds = startEmbeds(context.native, renderers);
 }
 
 function stop() {
