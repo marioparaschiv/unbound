@@ -408,7 +408,7 @@ export type NativeJavaHookEvent = {
 
 export type NativeJavaHookOptions = {
 	replace?: boolean;
-	notify?: boolean;
+	notify?: boolean | 'after';
 };
 
 export type NativeJavaHookToken = {

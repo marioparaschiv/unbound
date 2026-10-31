@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0]
+
+### Changed
+
+- On Android, a reused row gives back its own background on the UI thread as soon as it shows a different message, so the old bubble is never drawn behind it.
+
 ## [1.1.1]
 
 ### Fixed
