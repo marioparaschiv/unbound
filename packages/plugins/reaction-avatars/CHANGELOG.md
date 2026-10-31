@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2]
+
+### Fixed
+
+- Scrolling the chat on iOS stalls less: avatar surfaces of a reused cell are unmounted asynchronously.
+
 ## [1.0.1]
 
 ### Changed
