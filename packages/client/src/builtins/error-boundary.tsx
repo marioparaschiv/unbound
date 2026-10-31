@@ -5,8 +5,8 @@ import { getSetting, setSetting } from '~/settings/unbound';
 import { CLIENT_VERSION } from '~/core/constants';
 import ErrorFallback from '~/ui/error-boundary';
 import { createPatcher } from '~/patcher/api';
+import { findByName } from '~/metro/search';
 import { reload } from '~/native/native';
-import { findByName } from '~/metro';
 
 type BoundaryState = {
 	error?: Error | null;

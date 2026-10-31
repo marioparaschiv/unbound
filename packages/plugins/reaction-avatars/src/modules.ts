@@ -27,7 +27,9 @@ type SummaryComponent = ComponentType<UserSummaryItemProps>;
 export function findUserSummaryItem(): SummaryComponent | undefined {
 	const exported = UserSummaryItemModule.default ?? UserSummaryItemModule.module;
 	const component =
-		typeof exported === 'function' ? exported : metro.findByName('UserSummaryItem');
+		typeof exported === 'function'
+			? exported
+			: metro.findByName('UserSummaryItem', { lazy: false });
 
 	return typeof component === 'function' ? (component as SummaryComponent) : undefined;
 }

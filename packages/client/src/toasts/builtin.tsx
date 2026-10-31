@@ -1,7 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 
 import { getSetting, useUnboundSettings } from '~/settings/unbound';
-import { find, findByFilePath, findByProps } from '~/metro';
+import { find, findByFilePath, findByProps } from '~/metro/search';
 import ToastContainer from '~/ui/toasts/toast-container';
 import type { SectionEntry } from '~/settings/section';
 import { createPatcher } from '~/patcher/api';
