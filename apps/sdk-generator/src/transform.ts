@@ -67,7 +67,25 @@ export function stripInternal(
 		}
 	}
 
-	const referenced = collectReferencedNames(survivors);
+	// A bundler that renames a colliding declaration exports it through a list (`export { a$1 as a }`).
+	// That specifier is not a reason to keep the declaration public, so drop it before counting references.
+	const candidateNames = new Set([...candidates.values()].flat());
+
+	for (const statement of survivors) {
+		if (!Node.isExportDeclaration(statement) || statement.hasModuleSpecifier()) {
+			continue;
+		}
+
+		for (const specifier of statement.getNamedExports()) {
+			if (candidateNames.has(specifier.getName())) {
+				specifier.remove();
+			}
+		}
+	}
+
+	const referenced = collectReferencedNames(
+		survivors.filter((statement) => !statement.wasForgotten()),
+	);
 
 	for (const [statement, names] of candidates) {
 		if (names.some((name) => referenced.has(name))) {

@@ -55,6 +55,29 @@ describe('strip', () => {
 		expect(text).not.toContain('secret');
 		expect(text).toContain('export declare function open(): void;');
 	});
+
+	test('strips an @internal declaration exported through a renamed export list', () => {
+		const text = strip(
+			[
+				'declare enum Kind { A = 0 }',
+				'/** @internal */',
+				'declare const Kind$1: typeof Kind;',
+				'/** @internal */',
+				'declare function hidden(): void;',
+				'declare function open(): void;',
+				'export { Kind$1 as Kind, hidden, open };',
+			].join('\n'),
+			'/api/src/internal-list.d.ts',
+			new Map<string, ModuleEntry>(),
+			new Map<string, string>(),
+			new Set<string>(),
+			new Set<string>(),
+		);
+
+		expect(text).not.toContain('Kind$1');
+		expect(text).not.toContain('hidden');
+		expect(text).toMatch(/export \{\s*open\s*\};/);
+	});
 });
 
 describe('dropDefaultExport', () => {
