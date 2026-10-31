@@ -74,7 +74,7 @@ function SubmitDialog({
 					{copy.label}
 				</Button>
 			</DialogTrigger>
-			<DialogContent className='max-w-xl'>
+			<DialogContent className='max-w-xl max-h-[calc(100dvh-2rem)] overflow-y-auto'>
 				<DialogHeader>
 					<DialogTitle>
 						{copy.label}: {addonId}
