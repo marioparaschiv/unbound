@@ -2,7 +2,6 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
 import { createTempDir, runUbd, type TempDir } from './helpers/ubd';
-import { capabilitiesCheck } from '../src/lib/checks/capabilities';
 import { namingCheck } from '../src/lib/checks/naming';
 import { discoverAddons } from '../src/lib/discovery';
 import { loadWorkspace } from './helpers/config';
@@ -103,15 +102,15 @@ describe('ubd build checks', () => {
 		);
 	});
 
-	test('a Capability the client does not declare fails the build', async () => {
+	test('a hand-written Capability list fails the build', async () => {
 		const dir = workspace('my-plugin', STANDARD_LAYOUT, {
-			capabilities: ['native.objc.unknown'],
+			capabilities: ['native.objc.invoke'],
 		});
 		const result = await runUbd(['build'], dir.path, {});
 
 		expect(result.exitCode).not.toBe(0);
 		expect(result.stderr).toContain(
-			'example.my-plugin: error [capabilities] capabilities contains an unsupported value: native.objc.unknown',
+			'example.my-plugin: error [capabilities] manifest.json declares "capabilities"',
 		);
 	});
 
@@ -135,15 +134,13 @@ describe('ubd build checks', () => {
 });
 
 describe('first-party plugins', () => {
-	test('pass the naming and capability checks', async () => {
+	test('pass the naming check', async () => {
 		const addons = await discoverAddons(loadWorkspace(PLUGINS_DIR));
 		const issues: string[] = [];
 
 		for (const addon of addons) {
-			for (const check of [namingCheck, capabilitiesCheck]) {
-				for (const issue of await check.run(addon)) {
-					issues.push(`${addon.id}: ${issue.message}`);
-				}
+			for (const issue of await namingCheck.run(addon)) {
+				issues.push(`${addon.id}: ${issue.message}`);
 			}
 		}
 

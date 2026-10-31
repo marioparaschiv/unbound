@@ -146,8 +146,12 @@ function validatePlatforms(manifest: ConventionManifest, errors: string[]): stri
 		return SUPPORTED_PLATFORMS;
 	}
 
+	if (isPlainObject(value)) {
+		return validatePlatformEntries(Object.entries(value), errors);
+	}
+
 	if (!Array.isArray(value)) {
-		errors.push('platforms must be an array');
+		errors.push('platforms must be an array or an object');
 
 		return SUPPORTED_PLATFORMS;
 	}
@@ -175,6 +179,67 @@ function validatePlatforms(manifest: ConventionManifest, errors: string[]): stri
 	}
 
 	return seen.length > 0 ? seen.sort() : SUPPORTED_PLATFORMS;
+}
+
+function isPlainObject(value: unknown): value is object {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+// UNKNOWN: each platform's entry is an unvalidated manifest field.
+function validatePlatformEntries(entries: [string, unknown][], errors: string[]): string[] {
+	const values = new Map(entries);
+	const platforms = [...values.keys()].filter((platform) => {
+		if (!SUPPORTED_PLATFORMS.includes(platform)) {
+			errors.push(`platforms contains an unsupported platform: ${platform}`);
+
+			return false;
+		}
+
+		return true;
+	});
+
+	if (!platforms.length) {
+		errors.push('platforms must not be empty');
+
+		return SUPPORTED_PLATFORMS;
+	}
+
+	for (const platform of platforms) {
+		const entry = values.get(platform);
+
+		if (!isPlainObject(entry)) {
+			errors.push(`platforms.${platform} must be an object`);
+
+			continue;
+		}
+
+		if ('capabilities' in entry) {
+			validateCapabilityList(entry.capabilities, platform, `platforms.${platform}`, errors);
+		}
+	}
+
+	return platforms.sort();
+}
+
+// UNKNOWN: an unvalidated manifest field.
+function validateCapabilityList(value: unknown, platform: string, label: string, errors: string[]) {
+	if (!Array.isArray(value)) {
+		errors.push(`${label} must be an array`);
+
+		return;
+	}
+
+	for (const capability of value) {
+		if (typeof capability !== 'string' || !SUPPORTED_CAPABILITIES.includes(capability)) {
+			errors.push(`${label} contains an unsupported value: ${String(capability)}`);
+
+			continue;
+		}
+
+		if (!PLATFORM_CAPABILITIES[platform]?.includes(capability)) {
+			errors.push(`${label} cannot provide ${capability}`);
+		}
+	}
 }
 
 function validateFlatCapabilities(
@@ -247,25 +312,7 @@ function validatePlatformCapabilities(
 			continue;
 		}
 
-		if (!Array.isArray(requirements)) {
-			errors.push(`platformCapabilities.${platform} must be an array`);
-
-			continue;
-		}
-
-		for (const capability of requirements) {
-			if (typeof capability !== 'string' || !SUPPORTED_CAPABILITIES.includes(capability)) {
-				errors.push(
-					`platformCapabilities.${platform} contains an unsupported value: ${String(capability)}`,
-				);
-
-				continue;
-			}
-
-			if (!PLATFORM_CAPABILITIES[platform]?.includes(capability)) {
-				errors.push(`platformCapabilities.${platform} cannot provide ${capability}`);
-			}
-		}
+		validateCapabilityList(requirements, platform, `platformCapabilities.${platform}`, errors);
 	}
 }
 
