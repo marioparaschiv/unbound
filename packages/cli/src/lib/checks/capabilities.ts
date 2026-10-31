@@ -4,6 +4,9 @@ import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join } from 'node:path';
 
+import type { NativePluginCapability, NativePluginPlatform } from '@unbound-app/types/native';
+import { NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
+
 import type { PlatformCapabilities } from '~/lib/capabilities/analyze';
 import type { BuildCheck, BuildCheckIssue } from '~/lib/build-checks';
 import { analyzeCapabilities } from '~/lib/capabilities/analyze';
@@ -12,6 +15,11 @@ import { readDevManifest } from '~/lib/manifest';
 import { findFile } from '~/rollup/source-alias';
 
 type DevManifest = ReturnType<typeof readDevManifest>;
+
+type LegacyPlatformFields = {
+	platforms?: NativePluginPlatform[];
+	platformCapabilities?: PlatformCapabilities;
+};
 
 const GENERATED_FIELDS = ['capabilities', 'platforms', 'platformCapabilities'] as const;
 
@@ -23,24 +31,39 @@ function findEntry(dir: string, main: string): string | null {
 	return findFile(join(dir, 'src', 'index')) ?? findFile(join(dir, main));
 }
 
+// Clients before the object form of `platforms` reject it, so the build writes the legacy fields.
+function toLegacyFields(platforms: PlatformCapabilities): LegacyPlatformFields {
+	const listed = NATIVE_PLUGIN_PLATFORMS.filter((platform) => platforms[platform]);
+	const needed = listed.flatMap(
+		(platform): [NativePluginPlatform, NativePluginCapability[]][] => {
+			const capabilities = platforms[platform] ?? [];
+
+			return capabilities.length ? [[platform, capabilities]] : [];
+		},
+	);
+
+	return {
+		platforms: listed.length < NATIVE_PLUGIN_PLATFORMS.length ? listed : void 0,
+		platformCapabilities: needed.length ? Object.fromEntries(needed) : void 0,
+	};
+}
+
 function writeBuiltManifest(
 	addon: DiscoveredAddon,
 	manifest: DevManifest,
-	platforms: PlatformCapabilities,
+	generated: PlatformCapabilities,
 ) {
 	const target = join(addon.output, MANIFEST_FILENAME);
 	const temporary = `${target}.tmp`;
 	const built = existsSync(target)
 		? readDevManifest(addon.output)
 		: { ...manifest, main: getBundleName(false, manifest.main) };
-	const generated = Object.fromEntries(
-		Object.entries(platforms).map(([platform, capabilities]) => [platform, { capabilities }]),
-	);
+	const { capabilities, platforms, platformCapabilities, ...rest } = built;
 
 	mkdirSync(addon.output, { recursive: true });
 	writeFileSync(
 		temporary,
-		`${JSON.stringify({ ...built, id: manifest.id, platforms: generated }, null, '\t')}\n`,
+		`${JSON.stringify({ ...rest, id: manifest.id, ...toLegacyFields(generated) }, null, '\t')}\n`,
 	);
 	renameSync(temporary, target);
 }
@@ -49,8 +72,7 @@ export const capabilitiesCheck: BuildCheck = {
 	name: 'capabilities',
 	/**
 	 * @description Generates a built plugin's platforms and Capabilities from its code into
-	 * `{output}/manifest.json`. A static addon or a theme has no code to read, so its declared
-	 * platforms and Capabilities are checked instead.
+	 * `{output}/manifest.json`.
 	 * @param addon The addon to check.
 	 * @returns One error per hand-written field, dynamic or misplaced bridge access, or undeclarable Capability.
 	 */
