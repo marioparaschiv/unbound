@@ -25,7 +25,6 @@ import { getBucket } from '~/storage/api';
  */
 export const SYNC_STORE = 'unbound::sync';
 
-/** A signed-in Sync session, with the token the server accepts. */
 type SyncSession = {
 	token: string;
 	user: Caller;
