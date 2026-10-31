@@ -1,0 +1,54 @@
+{
+	"id": "astral.more-user-tags",
+	"name": "More User Tags",
+	"description": "Adds tags for webhooks and moderative roles.",
+	"authors": [
+		{
+			"name": "Cynosphere",
+			"id": "150745989836308480"
+		},
+		{
+			"name": "sunnie",
+			"id": "406028027768733696"
+		},
+		{
+			"name": "RyanCaoDev",
+			"id": "952235800110694471"
+		},
+		{
+			"name": "LordElias",
+			"id": "319460781567639554"
+		},
+		{
+			"name": "AutumnVN",
+			"id": "393694671383166998"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.1",
+	"icon": "UserPlusIcon",
+	"capabilities": [],
+	"platformCapabilities": {
+		"ios": [
+			"native.objc.classes",
+			"native.objc.invoke",
+			"native.objc.invokeAsync",
+			"native.objc.associations",
+			"native.objc.hooks"
+		],
+		"android": [
+			"native.java.classes",
+			"native.java.invoke",
+			"native.java.batch",
+			"native.java.invokeAsync",
+			"native.java.construct",
+			"native.java.fields",
+			"native.java.hooks"
+		]
+	},
+	"minNativePluginApi": "1.0.0",
+	"main": "index.tsx"
+}

@@ -1,0 +1,110 @@
+
+# astral.role-color-everywhere  (44 runtime files, 847 ms: program 523, analysis 321)
+hand-written ios:     native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot
+hand-written android: native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync
+
+## A whole graph
+  ios: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch]
+  android: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [native.java.construct] extra [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+
+## B whole graph filtered by platform table
+  ios: [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.objc.batch]
+  android: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+    vs hand-written: missing [native.java.construct] extra []
+
+## C graph pruned at ios/ and android/ folders
+  ios: [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.objc.batch]
+  android: []
+    vs hand-written: missing [native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync] extra []
+
+## D graph per definePlatform handler
+  ios: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch]
+  android: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [native.java.construct] extra [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+
+## call sites
+  native.java.classes (2): scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:45 java.getClass | scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:46 java.getClass
+  native.java.fields (3): scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:90 java.getField | scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:98 java.setField | scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:177 java.setField
+  native.java.hooks (2): scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:155 hooks.hook | scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:169 hooks.remove
+  native.java.invoke (8): scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:71 java.invoke | scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:74 java.invoke | scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:79 java.invoke | ...
+  native.java.invokeAsync (3): scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:111 java.invokeAsync | scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:116 java.invokeAsync | scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:188 java.invokeAsync
+  native.objc.batch (1): packages/plugins-shared/src/native/ios/visible-cells.ts:55 objc.batch
+  native.objc.classes (16): scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/message-cells.ts:129 objc.respondsTo | scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/message-cells.ts:130 objc.respondsTo | scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/message-cells.ts:158 objc.alloc | ...
+  native.objc.hooks (5): scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/chat-input.ts:218 objc.hook | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:39 objc.hook | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:52 objc.hook | ...
+  native.objc.invoke (3): packages/plugins-shared/src/native/ios/safe-invoke.ts:19 objc.invoke | packages/plugins-shared/src/native/ios/safe-invoke.ts:63 objc.call | packages/plugins-shared/src/native/ios/view-key.ts:27 objc.call
+  native.objc.invokeAsync (3): packages/plugins-shared/src/native/ios/safe-invoke.ts:41 objc.invokeAsync | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:42 objc.invokeAsync | packages/plugins-shared/src/native/ios/text-attachments.ts:115 objc.invokeAsync
+  native.objc.ivars (1): scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/message-cells.ts:97 objc.getIvar
+  native.objc.snapshot (3): scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/message-cells.ts:120 objc.snapshot | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:69 objc.findViews | packages/plugins-shared/src/native/ios/visible-cells.ts:79 objc.findViews
+
+## C ios: edges pruned
+  scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/mentions.ts -> scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts
+## C ios: reachable calls the platform cannot have
+
+## C android: edges pruned
+  scratch/capability-analyzer/fixtures/unsplit-role-color/src/platform.ts -> scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/mentions.ts
+## C android: reachable calls the platform cannot have
+
+## D platforms: ios, android
+  handler ios: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/mentions.ts
+  handler android: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/mentions.ts
+  BUILD ERROR ios handler reaches java.getClass: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:45
+  BUILD ERROR ios handler reaches java.getClass: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:46
+  BUILD ERROR ios handler reaches java.invoke: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:71
+  BUILD ERROR ios handler reaches java.invoke: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:74
+  BUILD ERROR ios handler reaches java.invoke: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:79
+  BUILD ERROR ios handler reaches java.invoke: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:81
+  BUILD ERROR ios handler reaches java.getField: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:90
+  BUILD ERROR ios handler reaches java.setField: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:98
+  BUILD ERROR ios handler reaches java.invoke: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:105
+  BUILD ERROR ios handler reaches java.invoke: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:106
+  BUILD ERROR ios handler reaches java.invoke: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:107
+  BUILD ERROR ios handler reaches java.invokeAsync: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:111
+  BUILD ERROR ios handler reaches java.invokeAsync: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:116
+  BUILD ERROR ios handler reaches java.invoke: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:117
+  BUILD ERROR ios handler reaches hooks.hook: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:155
+  BUILD ERROR ios handler reaches hooks.remove: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:169
+  BUILD ERROR ios handler reaches java.setField: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:177
+  BUILD ERROR ios handler reaches java.invokeAsync: scratch/capability-analyzer/fixtures/unsplit-role-color/src/android/chat-input.ts:188
+  BUILD ERROR android handler reaches objc.getIvar: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/message-cells.ts:97
+  BUILD ERROR android handler reaches objc.snapshot: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/message-cells.ts:120
+  BUILD ERROR android handler reaches objc.respondsTo: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/message-cells.ts:129
+  BUILD ERROR android handler reaches objc.respondsTo: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/message-cells.ts:130
+  BUILD ERROR android handler reaches objc.alloc: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/message-cells.ts:158
+  BUILD ERROR android handler reaches objc.alloc: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/chat-input.ts:75
+  BUILD ERROR android handler reaches objc.hook: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/chat-input.ts:218
+  BUILD ERROR android handler reaches objc.invoke: packages/plugins-shared/src/native/ios/safe-invoke.ts:19
+  BUILD ERROR android handler reaches objc.invokeAsync: packages/plugins-shared/src/native/ios/safe-invoke.ts:41
+  BUILD ERROR android handler reaches objc.call: packages/plugins-shared/src/native/ios/safe-invoke.ts:63
+  BUILD ERROR android handler reaches objc.hook: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:39
+  BUILD ERROR android handler reaches objc.invokeAsync: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:42
+  BUILD ERROR android handler reaches objc.hook: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:52
+  BUILD ERROR android handler reaches objc.hook: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:55
+  BUILD ERROR android handler reaches objc.getClass: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:62
+  BUILD ERROR android handler reaches objc.hook: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:67
+  BUILD ERROR android handler reaches objc.findViews: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:69
+  BUILD ERROR android handler reaches objc.array: packages/plugins-shared/src/native/ios/visible-cells.ts:14
+  BUILD ERROR android handler reaches objc.getClass: packages/plugins-shared/src/native/ios/visible-cells.ts:48
+  BUILD ERROR android handler reaches objc.batch: packages/plugins-shared/src/native/ios/visible-cells.ts:55
+  BUILD ERROR android handler reaches objc.findViews: packages/plugins-shared/src/native/ios/visible-cells.ts:79
+  BUILD ERROR android handler reaches objc.getClass: packages/plugins-shared/src/native/ios/ensure-classes.ts:12
+  BUILD ERROR android handler reaches objc.className: packages/plugins-shared/src/native/ios/view-key.ts:22
+  BUILD ERROR android handler reaches objc.call: packages/plugins-shared/src/native/ios/view-key.ts:27
+  BUILD ERROR android handler reaches objc.getClass: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/mention-painter.ts:20
+  BUILD ERROR android handler reaches objc.struct: scratch/capability-analyzer/fixtures/unsplit-role-color/src/ios/mention-painter.ts:54
+  BUILD ERROR android handler reaches objc.getClass: packages/plugins-shared/src/native/ios/text-attachments.ts:22
+  BUILD ERROR android handler reaches objc.getClass: packages/plugins-shared/src/native/ios/text-attachments.ts:110
+  BUILD ERROR android handler reaches objc.alloc: packages/plugins-shared/src/native/ios/text-attachments.ts:111
+  BUILD ERROR android handler reaches objc.struct: packages/plugins-shared/src/native/ios/text-attachments.ts:112
+  BUILD ERROR android handler reaches objc.invokeAsync: packages/plugins-shared/src/native/ios/text-attachments.ts:115
+  BUILD ERROR android handler reaches objc.struct: packages/plugins-shared/src/native/ios/rect.ts:100
+
+## text baseline: 48 text sites, 50 typed sites
+  only typed: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:42 objc.invokeAsync
+  only typed: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:69 objc.findViews
+
+## dynamic access

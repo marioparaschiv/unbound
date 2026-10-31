@@ -1,0 +1,11 @@
+{
+	"extends": "../../../../packages/plugins/tsconfig.json",
+	"compilerOptions": {
+		"paths": {
+			"~/*": ["./src/*"],
+			"@unbound-app/api/*": ["../../../../packages/api/src/*.d.ts"],
+			"@unbound-plugins/shared/*": ["../../../../packages/plugins-shared/src/*"]
+		}
+	},
+	"include": ["src/**/*"]
+}

@@ -1,0 +1,5 @@
+{
+	"id": "fixture.dynamic",
+	"main": "index.ts",
+	"capabilities": []
+}

@@ -1,0 +1,55 @@
+DYN message-latency bridge passed as non-SDK type NativeMessageCellBridge packages/plugins/message-latency/src/ios/message-cells.ts:162 objc
+DIFF message-latency ios missing native.fabric.mount,native.objc.batch,native.objc.ivars extra 
+DYN message-link-embeds bridge passed as non-SDK type NativeMessageCellBridge packages/plugins/message-link-embeds/src/ios/cells.ts:139 objc
+DYN message-link-embeds bridge passed as non-SDK type NativeMessageCellBridge packages/plugins/message-link-embeds/src/ios/cells.ts:288 objc
+DIFF message-link-embeds ios missing native.objc.ivars extra native.fabric.async
+DYN mention-avatars bridge passed as non-SDK type NativeMessageCellBridge packages/plugins/mention-avatars/src/ios/renderer.ts:43 objc
+DIFF mention-avatars ios missing native.objc.ivars extra 
+DIFF role-color-everywhere ios missing  extra native.objc.batch
+DIFF role-color-everywhere android missing native.java.construct extra 
+DYN reaction-avatars bridge passed as non-SDK type NativeMessageCellBridge packages/plugins/reaction-avatars/src/ios/cell-queue.ts:12 objc
+DIFF reaction-avatars ios missing  extra native.fabric.async
+DYN chat-bubbles bridge passed as non-SDK type NativeMessageCellBridge packages/plugins/chat-bubbles/src/ios/bubbles.ts:146 objc
+DIFF chat-bubbles ios missing native.objc.ivars extra 
+DIFF shiki-codeblocks ios missing  extra native.fabric.async
+DIFF file-size-on-picker android missing  extra native.java.batch,native.java.fields,native.java.invokeAsync
+┌────┬───────────────────────────┬───────┬───────┬─────┬─────────┬──────┬─────┬─────┬──────┐
+│    │ name                      │ files │ calls │ ios │ android │ hand │ dyn │ ms  │ prog │
+├────┼───────────────────────────┼───────┼───────┼─────┼─────────┼──────┼─────┼─────┼──────┤
+│  0 │ hide-gift-button          │ 9     │ 0     │ 0   │ 0       │ 0    │ 0   │ 612 │ 514  │
+│  1 │ message-latency           │ 43    │ 136   │ 7   │ 9       │ 19   │ 1   │ 695 │ 400  │
+│  2 │ message-link-embeds       │ 53    │ 173   │ 8   │ 8       │ 16   │ 2   │ 663 │ 354  │
+│  3 │ gif-paste                 │ 8     │ 0     │ 0   │ 0       │ 0    │ 0   │ 398 │ 376  │
+│  4 │ reviewdb                  │ 27    │ 0     │ 0   │ 0       │ 0    │ 0   │ 477 │ 321  │
+│  5 │ expression-tools          │ 22    │ 0     │ 0   │ 0       │ 0    │ 0   │ 470 │ 337  │
+│  6 │ mention-avatars           │ 40    │ 118   │ 6   │ 7       │ 14   │ 1   │ 465 │ 309  │
+│  7 │ moyai                     │ 13    │ 0     │ 0   │ 0       │ 0    │ 0   │ 372 │ 337  │
+│  8 │ force-owner-crown         │ 7     │ 0     │ 0   │ 0       │ 0    │ 0   │ 331 │ 312  │
+│  9 │ view-raw                  │ 19    │ 0     │ 0   │ 0       │ 0    │ 0   │ 464 │ 340  │
+│ 10 │ avatar-radius             │ 20    │ 105   │ 6   │ 8       │ 14   │ 0   │ 458 │ 352  │
+│ 11 │ translate                 │ 23    │ 0     │ 0   │ 0       │ 0    │ 0   │ 380 │ 303  │
+│ 12 │ role-color-everywhere     │ 43    │ 50    │ 7   │ 5       │ 12   │ 0   │ 614 │ 365  │
+│ 13 │ custom-commands           │ 19    │ 0     │ 0   │ 0       │ 0    │ 0   │ 553 │ 449  │
+│ 14 │ preview-message           │ 19    │ 0     │ 0   │ 0       │ 0    │ 0   │ 517 │ 390  │
+│ 15 │ channel-typing-indicators │ 30    │ 0     │ 0   │ 0       │ 0    │ 0   │ 465 │ 321  │
+│ 16 │ clear-urls                │ 8     │ 0     │ 0   │ 0       │ 0    │ 0   │ 336 │ 320  │
+│ 17 │ pronoundb                 │ 12    │ 0     │ 0   │ 0       │ 0    │ 0   │ 382 │ 320  │
+│ 18 │ show-timeout-duration     │ 8     │ 0     │ 0   │ 0       │ 0    │ 0   │ 323 │ 308  │
+│ 19 │ show-hidden-things        │ 11    │ 0     │ 0   │ 0       │ 0    │ 0   │ 362 │ 328  │
+│ 20 │ reaction-avatars          │ 48    │ 140   │ 9   │ 8       │ 16   │ 1   │ 545 │ 352  │
+│ 21 │ fix-gif-download          │ 12    │ 0     │ 0   │ 0       │ 0    │ 0   │ 382 │ 343  │
+│ 22 │ sticker-preview           │ 17    │ 0     │ 0   │ 0       │ 0    │ 0   │ 418 │ 343  │
+│ 23 │ multi-account             │ 6     │ 0     │ 0   │ 0       │ 0    │ 0   │ 363 │ 352  │
+│ 24 │ character-counter         │ 16    │ 0     │ 0   │ 0       │ 0    │ 0   │ 410 │ 342  │
+│ 25 │ chat-bubbles              │ 30    │ 115   │ 6   │ 8       │ 15   │ 1   │ 513 │ 352  │
+│ 26 │ show-me-your-name         │ 11    │ 0     │ 0   │ 0       │ 0    │ 0   │ 406 │ 362  │
+│ 27 │ shiki-codeblocks          │ 64    │ 181   │ 8   │ 8       │ 15   │ 0   │ 849 │ 495  │
+│ 28 │ more-user-tags            │ 30    │ 127   │ 5   │ 7       │ 12   │ 0   │ 462 │ 375  │
+│ 29 │ text-replace              │ 17    │ 0     │ 0   │ 0       │ 0    │ 0   │ 408 │ 333  │
+│ 30 │ no-reply-mention          │ 10    │ 0     │ 0   │ 0       │ 0    │ 0   │ 344 │ 306  │
+│ 31 │ no-blocked-messages       │ 9     │ 0     │ 0   │ 0       │ 0    │ 0   │ 320 │ 305  │
+│ 32 │ view-icons                │ 19    │ 0     │ 0   │ 0       │ 0    │ 0   │ 423 │ 369  │
+│ 33 │ file-size-on-picker       │ 14    │ 29    │ 0   │ 5       │ 2    │ 0   │ 370 │ 322  │
+│ 34 │ typing-avatars            │ 10    │ 0     │ 0   │ 0       │ 0    │ 0   │ 363 │ 311  │
+└────┴───────────────────────────┴───────┴───────┴─────┴─────────┴──────┴─────┴─────┴──────┘
+total ms 15913

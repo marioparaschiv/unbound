@@ -1,0 +1,63 @@
+
+# fixture.dynamic  (2 runtime files, 507 ms: program 484, analysis 23)
+hand-written ios:     
+hand-written android: 
+
+## A whole graph
+  ios: [native.java.classes, native.objc.hooks, native.objc.invoke, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.java.classes, native.objc.hooks, native.objc.invoke, native.objc.ivars, native.objc.snapshot]
+  android: [native.java.classes, native.objc.hooks, native.objc.invoke, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.java.classes, native.objc.hooks, native.objc.invoke, native.objc.ivars, native.objc.snapshot]
+
+## B whole graph filtered by platform table
+  ios: [native.objc.hooks, native.objc.invoke, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.objc.hooks, native.objc.invoke, native.objc.ivars, native.objc.snapshot]
+  android: [native.java.classes]
+    vs hand-written: missing [] extra [native.java.classes]
+
+## C graph pruned at ios/ and android/ folders
+  ios: [native.java.classes, native.objc.hooks, native.objc.invoke, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.java.classes, native.objc.hooks, native.objc.invoke, native.objc.ivars, native.objc.snapshot]
+  android: [native.objc.hooks, native.objc.invoke, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.objc.hooks, native.objc.invoke, native.objc.ivars, native.objc.snapshot]
+
+## call sites
+  native.java.classes (1): scratch/capability-analyzer/fixtures/dynamic/src/ios/paint.ts:5 java.getClass
+  native.objc.hooks (1): scratch/capability-analyzer/fixtures/dynamic/src/index.ts:24 objc.hook
+  native.objc.invoke (3): scratch/capability-analyzer/fixtures/dynamic/src/index.ts:8 objc.invoke | scratch/capability-analyzer/fixtures/dynamic/src/index.ts:19 objc.invoke | scratch/capability-analyzer/fixtures/dynamic/src/index.ts:32 objc.invoke
+  native.objc.ivars (1): scratch/capability-analyzer/fixtures/dynamic/src/index.ts:21 objc.getIvar
+  native.objc.snapshot (1): scratch/capability-analyzer/fixtures/dynamic/src/index.ts:22 objc.snapshot
+
+## C ios: edges pruned
+## C ios: reachable calls the platform cannot have
+  scratch/capability-analyzer/fixtures/dynamic/src/ios/paint.ts:5 java.getClass
+
+## C android: edges pruned
+  scratch/capability-analyzer/fixtures/dynamic/src/index.ts -> scratch/capability-analyzer/fixtures/dynamic/src/ios/paint.ts
+## C android: reachable calls the platform cannot have
+  scratch/capability-analyzer/fixtures/dynamic/src/index.ts:8 objc.invoke
+  scratch/capability-analyzer/fixtures/dynamic/src/index.ts:19 objc.invoke
+  scratch/capability-analyzer/fixtures/dynamic/src/index.ts:21 objc.getIvar
+  scratch/capability-analyzer/fixtures/dynamic/src/index.ts:22 objc.snapshot
+  scratch/capability-analyzer/fixtures/dynamic/src/index.ts:24 objc.hook
+  scratch/capability-analyzer/fixtures/dynamic/src/index.ts:32 objc.invoke
+
+## text baseline: 2 text sites, 7 typed sites
+  only typed: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:8 objc.invoke
+  only typed: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:21 objc.getIvar
+  only typed: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:22 objc.snapshot
+  only typed: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:24 objc.hook
+  only typed: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:32 objc.invoke
+
+## dynamic access
+  computed member: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:29 objc[name as 'invoke']
+  bridge widened to any/unknown/object: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:30 objc
+  rest destructuring: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:32 ...rest
+  spread: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:35 ...objc
+  bridge widened to any/unknown/object: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:36 objc
+  bridge widened to any/unknown/object: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:37 objc
+  bridge widened to any/unknown/object: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:38 objc
+  bridge widened to any/unknown/object: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:40 objc
+  for...in: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:41 objc
+  computed member: scratch/capability-analyzer/fixtures/dynamic/src/index.ts:42 context.native[name as 'objc']
+  non-literal import(): scratch/capability-analyzer/fixtures/dynamic/src/index.ts:43 import(`./ios/${name}`)

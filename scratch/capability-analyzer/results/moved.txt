@@ -1,0 +1,120 @@
+
+# astral.more-user-tags  (31 runtime files, 881 ms: program 547, analysis 332)
+hand-written ios:     native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync
+hand-written android: native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync
+
+## A whole graph
+  ios: [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+    vs hand-written: missing [] extra [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+  android: [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+    vs hand-written: missing [] extra [native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+
+## B whole graph filtered by platform table
+  ios: [native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+    vs hand-written: missing [] extra []
+  android: [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+    vs hand-written: missing [] extra []
+
+## C graph pruned at ios/ and android/ folders
+  ios: [native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+    vs hand-written: missing [] extra []
+  android: [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+    vs hand-written: missing [] extra []
+
+## D graph per definePlatform handler
+  ios: [native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+    vs hand-written: missing [] extra []
+  android: [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+    vs hand-written: missing [] extra []
+
+## call sites
+  native.java.batch (2): packages/plugins-shared/src/native/android/views.ts:108 java.batchAsync | packages/plugins-shared/src/native/android/views.ts:108 java.batch
+  native.java.classes (6): scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:53 java.getClass | scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:76 java.getClass | packages/plugins-shared/src/native/android/views.ts:65 java.getClass | ...
+  native.java.construct (1): scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:112 java.construct
+  native.java.fields (4): scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:52 java.getField | scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:78 java.getField | packages/plugins-shared/src/native/android/views.ts:42 java.getField | ...
+  native.java.hooks (2): scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:125 hooks.hook | scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:172 hooks.remove
+  native.java.invoke (18): scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:45 java.invoke | scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:47 java.invoke | scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:51 java.invoke | ...
+  native.java.invokeAsync (7): scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:91 java.invokeAsync | scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:93 java.invokeAsync | scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts:121 java.invokeAsync | ...
+  native.objc.associations (4): scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:78 objc.createAssociationKey | scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:148 objc.setAssociatedObject | scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:219 objc.setAssociatedObject | ...
+  native.objc.classes (16): scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:51 objc.getClass | scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:52 objc.getClass | scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:53 objc.getClass | ...
+  native.objc.hooks (1): scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:403 objc.hook
+  native.objc.invoke (9): scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:95 objc.call | scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:332 objc.call | scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:353 objc.call | ...
+  native.objc.invokeAsync (56): scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:102 objc.invokeAsync | scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:143 objc.invokeAsync | scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:173 objc.invokeAsync | ...
+
+## C ios: edges pruned
+  scratch/capability-analyzer/moved/more-user-tags/src/platform.ts -> scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts
+## C ios: reachable calls the platform cannot have
+
+## C android: edges pruned
+  scratch/capability-analyzer/moved/more-user-tags/src/platform.ts -> scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts
+## C android: reachable calls the platform cannot have
+
+## D platforms: ios, android
+  handler ios: scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts
+  handler android: scratch/capability-analyzer/moved/more-user-tags/src/android/tag-gradients.ts
+
+## text baseline: 124 text sites, 126 typed sites
+  only typed: scratch/capability-analyzer/moved/more-user-tags/src/ios/tag-gradient-renderer.ts:109 objc.array
+  only typed: scratch/capability-analyzer/moved/more-user-tags/src/ios/colors.ts:24 objc.invokeAsync
+
+## dynamic access
+
+# astral.role-color-everywhere  (45 runtime files, 629 ms: program 363, analysis 263)
+hand-written ios:     native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot
+hand-written android: native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync
+
+## A whole graph
+  ios: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch]
+  android: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [native.java.construct] extra [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+
+## B whole graph filtered by platform table
+  ios: [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.objc.batch]
+  android: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+    vs hand-written: missing [native.java.construct] extra []
+
+## C graph pruned at ios/ and android/ folders
+  ios: [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.objc.batch]
+  android: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+    vs hand-written: missing [native.java.construct] extra []
+
+## D graph per definePlatform handler
+  ios: [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.objc.batch]
+  android: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+    vs hand-written: missing [native.java.construct] extra []
+
+## call sites
+  native.java.classes (2): scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:45 java.getClass | scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:46 java.getClass
+  native.java.fields (3): scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:90 java.getField | scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:98 java.setField | scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:177 java.setField
+  native.java.hooks (2): scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:155 hooks.hook | scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:169 hooks.remove
+  native.java.invoke (8): scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:71 java.invoke | scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:74 java.invoke | scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:79 java.invoke | ...
+  native.java.invokeAsync (3): scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:111 java.invokeAsync | scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:116 java.invokeAsync | scratch/capability-analyzer/moved/role-color-everywhere/src/android/chat-input.ts:188 java.invokeAsync
+  native.objc.batch (1): packages/plugins-shared/src/native/ios/visible-cells.ts:55 objc.batch
+  native.objc.classes (16): scratch/capability-analyzer/moved/role-color-everywhere/src/ios/message-cells.ts:129 objc.respondsTo | scratch/capability-analyzer/moved/role-color-everywhere/src/ios/message-cells.ts:130 objc.respondsTo | scratch/capability-analyzer/moved/role-color-everywhere/src/ios/message-cells.ts:158 objc.alloc | ...
+  native.objc.hooks (5): scratch/capability-analyzer/moved/role-color-everywhere/src/ios/chat-input.ts:218 objc.hook | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:39 objc.hook | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:52 objc.hook | ...
+  native.objc.invoke (3): packages/plugins-shared/src/native/ios/safe-invoke.ts:19 objc.invoke | packages/plugins-shared/src/native/ios/safe-invoke.ts:63 objc.call | packages/plugins-shared/src/native/ios/view-key.ts:27 objc.call
+  native.objc.invokeAsync (3): packages/plugins-shared/src/native/ios/safe-invoke.ts:41 objc.invokeAsync | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:42 objc.invokeAsync | packages/plugins-shared/src/native/ios/text-attachments.ts:115 objc.invokeAsync
+  native.objc.ivars (1): scratch/capability-analyzer/moved/role-color-everywhere/src/ios/message-cells.ts:97 objc.getIvar
+  native.objc.snapshot (3): scratch/capability-analyzer/moved/role-color-everywhere/src/ios/message-cells.ts:120 objc.snapshot | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:69 objc.findViews | packages/plugins-shared/src/native/ios/visible-cells.ts:79 objc.findViews
+
+## C ios: edges pruned
+  scratch/capability-analyzer/moved/role-color-everywhere/src/platform.ts -> scratch/capability-analyzer/moved/role-color-everywhere/src/android/mentions.ts
+## C ios: reachable calls the platform cannot have
+
+## C android: edges pruned
+  scratch/capability-analyzer/moved/role-color-everywhere/src/platform.ts -> scratch/capability-analyzer/moved/role-color-everywhere/src/ios/mentions.ts
+## C android: reachable calls the platform cannot have
+
+## D platforms: ios, android
+  handler ios: scratch/capability-analyzer/moved/role-color-everywhere/src/ios/mentions.ts
+  handler android: scratch/capability-analyzer/moved/role-color-everywhere/src/android/mentions.ts
+
+## text baseline: 48 text sites, 50 typed sites
+  only typed: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:42 objc.invokeAsync
+  only typed: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:69 objc.findViews
+
+## dynamic access

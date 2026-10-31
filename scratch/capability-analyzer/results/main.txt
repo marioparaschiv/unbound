@@ -1,0 +1,100 @@
+
+# astral.more-user-tags  (30 runtime files, 817 ms: program 539, analysis 276)
+hand-written ios:     native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync
+hand-written android: native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync
+
+## A whole graph
+  ios: [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+    vs hand-written: missing [] extra [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+  android: [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+    vs hand-written: missing [] extra [native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+
+## B whole graph filtered by platform table
+  ios: [native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+    vs hand-written: missing [] extra []
+  android: [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+    vs hand-written: missing [] extra []
+
+## C graph pruned at ios/ and android/ folders
+  ios: [native.objc.associations, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync]
+    vs hand-written: missing [] extra []
+  android: []
+    vs hand-written: missing [native.java.batch, native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync] extra []
+
+## call sites
+  native.java.batch (2): packages/plugins-shared/src/native/android/views.ts:108 java.batchAsync | packages/plugins-shared/src/native/android/views.ts:108 java.batch
+  native.java.classes (6): packages/plugins/more-user-tags/src/android/tag-gradients.ts:53 java.getClass | packages/plugins/more-user-tags/src/android/tag-gradients.ts:76 java.getClass | packages/plugins-shared/src/native/android/views.ts:65 java.getClass | ...
+  native.java.construct (1): packages/plugins/more-user-tags/src/android/tag-gradients.ts:112 java.construct
+  native.java.fields (4): packages/plugins/more-user-tags/src/android/tag-gradients.ts:52 java.getField | packages/plugins/more-user-tags/src/android/tag-gradients.ts:78 java.getField | packages/plugins-shared/src/native/android/views.ts:42 java.getField | ...
+  native.java.hooks (2): packages/plugins/more-user-tags/src/android/tag-gradients.ts:125 hooks.hook | packages/plugins/more-user-tags/src/android/tag-gradients.ts:172 hooks.remove
+  native.java.invoke (18): packages/plugins/more-user-tags/src/android/tag-gradients.ts:45 java.invoke | packages/plugins/more-user-tags/src/android/tag-gradients.ts:47 java.invoke | packages/plugins/more-user-tags/src/android/tag-gradients.ts:51 java.invoke | ...
+  native.java.invokeAsync (7): packages/plugins/more-user-tags/src/android/tag-gradients.ts:91 java.invokeAsync | packages/plugins/more-user-tags/src/android/tag-gradients.ts:93 java.invokeAsync | packages/plugins/more-user-tags/src/android/tag-gradients.ts:121 java.invokeAsync | ...
+  native.objc.associations (4): packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:87 objc.createAssociationKey | packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:157 objc.setAssociatedObject | packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:228 objc.setAssociatedObject | ...
+  native.objc.classes (16): packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:60 objc.getClass | packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:61 objc.getClass | packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:62 objc.getClass | ...
+  native.objc.hooks (1): packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:412 objc.hook
+  native.objc.invoke (9): packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:104 objc.call | packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:341 objc.call | packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:362 objc.call | ...
+  native.objc.invokeAsync (56): packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:111 objc.invokeAsync | packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:152 objc.invokeAsync | packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:182 objc.invokeAsync | ...
+
+## C ios: edges pruned
+  packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts -> packages/plugins/more-user-tags/src/android/tag-gradients.ts
+## C ios: reachable calls the platform cannot have
+
+## C android: edges pruned
+  packages/plugins/more-user-tags/src/index.tsx -> packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts
+## C android: reachable calls the platform cannot have
+
+## text baseline: 124 text sites, 126 typed sites
+  only typed: packages/plugins/more-user-tags/src/ios/tag-gradient-renderer.ts:118 objc.array
+  only typed: packages/plugins/more-user-tags/src/ios/colors.ts:24 objc.invokeAsync
+
+## dynamic access
+
+# astral.role-color-everywhere  (43 runtime files, 836 ms: program 460, analysis 375)
+hand-written ios:     native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot
+hand-written android: native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync
+
+## A whole graph
+  ios: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch]
+  android: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync, native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [native.java.construct] extra [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+
+## B whole graph filtered by platform table
+  ios: [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.objc.batch]
+  android: [native.java.classes, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync]
+    vs hand-written: missing [native.java.construct] extra []
+
+## C graph pruned at ios/ and android/ folders
+  ios: [native.objc.batch, native.objc.classes, native.objc.hooks, native.objc.invoke, native.objc.invokeAsync, native.objc.ivars, native.objc.snapshot]
+    vs hand-written: missing [] extra [native.objc.batch]
+  android: []
+    vs hand-written: missing [native.java.classes, native.java.construct, native.java.fields, native.java.hooks, native.java.invoke, native.java.invokeAsync] extra []
+
+## call sites
+  native.java.classes (2): packages/plugins/role-color-everywhere/src/android/chat-input.ts:45 java.getClass | packages/plugins/role-color-everywhere/src/android/chat-input.ts:46 java.getClass
+  native.java.fields (3): packages/plugins/role-color-everywhere/src/android/chat-input.ts:90 java.getField | packages/plugins/role-color-everywhere/src/android/chat-input.ts:98 java.setField | packages/plugins/role-color-everywhere/src/android/chat-input.ts:177 java.setField
+  native.java.hooks (2): packages/plugins/role-color-everywhere/src/android/chat-input.ts:155 hooks.hook | packages/plugins/role-color-everywhere/src/android/chat-input.ts:169 hooks.remove
+  native.java.invoke (8): packages/plugins/role-color-everywhere/src/android/chat-input.ts:71 java.invoke | packages/plugins/role-color-everywhere/src/android/chat-input.ts:74 java.invoke | packages/plugins/role-color-everywhere/src/android/chat-input.ts:79 java.invoke | ...
+  native.java.invokeAsync (3): packages/plugins/role-color-everywhere/src/android/chat-input.ts:111 java.invokeAsync | packages/plugins/role-color-everywhere/src/android/chat-input.ts:116 java.invokeAsync | packages/plugins/role-color-everywhere/src/android/chat-input.ts:188 java.invokeAsync
+  native.objc.batch (1): packages/plugins-shared/src/native/ios/visible-cells.ts:55 objc.batch
+  native.objc.classes (16): packages/plugins/role-color-everywhere/src/ios/message-cells.ts:129 objc.respondsTo | packages/plugins/role-color-everywhere/src/ios/message-cells.ts:130 objc.respondsTo | packages/plugins/role-color-everywhere/src/ios/message-cells.ts:158 objc.alloc | ...
+  native.objc.hooks (5): packages/plugins/role-color-everywhere/src/ios/chat-input.ts:218 objc.hook | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:39 objc.hook | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:52 objc.hook | ...
+  native.objc.invoke (3): packages/plugins-shared/src/native/ios/safe-invoke.ts:19 objc.invoke | packages/plugins-shared/src/native/ios/safe-invoke.ts:63 objc.call | packages/plugins-shared/src/native/ios/view-key.ts:27 objc.call
+  native.objc.invokeAsync (3): packages/plugins-shared/src/native/ios/safe-invoke.ts:41 objc.invokeAsync | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:42 objc.invokeAsync | packages/plugins-shared/src/native/ios/text-attachments.ts:115 objc.invokeAsync
+  native.objc.ivars (1): packages/plugins/role-color-everywhere/src/ios/message-cells.ts:97 objc.getIvar
+  native.objc.snapshot (3): packages/plugins/role-color-everywhere/src/ios/message-cells.ts:120 objc.snapshot | packages/plugins-shared/src/native/ios/message-cell-hooks.ts:69 objc.findViews | packages/plugins-shared/src/native/ios/visible-cells.ts:79 objc.findViews
+
+## C ios: edges pruned
+  packages/plugins/role-color-everywhere/src/ios/mentions.ts -> packages/plugins/role-color-everywhere/src/android/chat-input.ts
+## C ios: reachable calls the platform cannot have
+
+## C android: edges pruned
+  packages/plugins/role-color-everywhere/src/index.tsx -> packages/plugins/role-color-everywhere/src/ios/mentions.ts
+## C android: reachable calls the platform cannot have
+
+## text baseline: 48 text sites, 50 typed sites
+  only typed: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:42 objc.invokeAsync
+  only typed: packages/plugins-shared/src/native/ios/message-cell-hooks.ts:69 objc.findViews
+
+## dynamic access
