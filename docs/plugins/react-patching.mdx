@@ -23,7 +23,7 @@ A patch hooks a function at one of three points.
 		Runs *after* the original and receives its `result`. Return a new value to replace the original's output. This is the usual choice for editing what a component renders.
 
 		```ts
-		Patcher.after(Component, 'type', ({ result }) => {
+		patcher.after(Component, 'type', ({ result }) => {
 			// inspect or replace result
 			return result;
 		});
@@ -33,7 +33,7 @@ A patch hooks a function at one of three points.
 		Runs *before* the original and receives its `args`. Mutate the arguments or block the call. Use it to change inputs.
 
 		```ts
-		Patcher.before(Component, 'type', ({ args }) => {
+		patcher.before(Component, 'type', ({ args }) => {
 			// adjust args in place
 		});
 		```
@@ -42,7 +42,7 @@ A patch hooks a function at one of three points.
 		Replaces the original. You get `args`, `original`, and `this`. Call `original` yourself if and when you want the default behavior.
 
 		```ts
-		Patcher.instead(target, 'method', ({ args, original, this: self }) => {
+		patcher.instead(target, 'method', ({ args, original, this: self }) => {
 			return original.apply(self, args);
 		});
 		```
@@ -60,19 +60,17 @@ A React component renders through its `type` (or `render`) function. To patch it
 ```tsx
 import { metro, patcher } from '@unbound-app/api';
 
-const Patcher = patcher.createPatcher('my-plugin');
-
 export default {
 	start() {
 		const Components = metro.findByProps('ToastContainer');
 
-		Patcher.after(Components.ToastContainer, 'type', ({ result }) => {
+		patcher.after(Components.ToastContainer, 'type', ({ result }) => {
 			// wrap, replace, or return the original render
 			return result;
 		});
 	},
 	stop() {
-		Patcher.unpatchAll();
+		patcher.unpatchAll();
 	},
 };
 ```
@@ -93,7 +91,7 @@ Each kind of component keeps its render function in a different place, so where 
 		const Component = metro.findByProps('SomeMemoComponent').SomeMemoComponent;
 
 		// The inner component lives on .type for a memo.
-		Patcher.after(Component, 'type', ({ result }) => {
+		patcher.after(Component, 'type', ({ result }) => {
 			return result;
 		});
 		```
@@ -104,7 +102,7 @@ Each kind of component keeps its render function in a different place, so where 
 		```tsx
 		const Component = metro.findByName('SomeClassComponent');
 
-		Patcher.after(Component.prototype, 'render', ({ this: self, result }) => {
+		patcher.after(Component.prototype, 'render', ({ this: self, result }) => {
 			// self.props and self.state are available here
 			return result;
 		});
@@ -157,7 +155,7 @@ function findInTree(node, predicate) {
 ```
 
 ```tsx
-Patcher.after(Parent, 'type', ({ result }) => {
+patcher.after(Parent, 'type', ({ result }) => {
 	const row = findInTree(result, (n) => n?.type?.name === 'Row');
 	if (row) {
 		// edit the child element's props, or wrap it
@@ -184,12 +182,12 @@ This is needed when the child is created fresh on each parent render. A patch le
 Every patch call returns an unpatch function, and the patcher (built on `possess`) accepts a `{ once: true }` option that reverts the patch automatically after it fires once.
 
 ```tsx
-Patcher.after(Parent, 'type', ({ result }) => {
+patcher.after(Parent, 'type', ({ result }) => {
 	const child = findInTree(result, (n) => n?.type?.name === 'Child');
 	if (!child) return result;
 
 	// Patch the child's render for this one render, then auto-revert.
-	Patcher.after(child.type, 'type', ({ result: childResult }) => {
+	patcher.after(child.type, 'type', ({ result: childResult }) => {
 		// modify the child's output
 		return childResult;
 	}, { once: true });
@@ -202,7 +200,7 @@ Patcher.after(Parent, 'type', ({ result }) => {
 	`{ once: true }` is what makes this safe. The child reference is new on every parent render, so the patch must not outlive the render that created it. For finer control, keep the unpatch function the patch call returns and call it yourself.
 
 	```tsx
-	const unpatch = Patcher.after(child.type, 'type', cb);
+	const unpatch = patcher.after(child.type, 'type', cb);
 	// ...later:
 	unpatch();
 	```
@@ -224,7 +222,7 @@ How you force the re-render depends on the kind of component you patched.
 		A class component instance has a built-in `forceUpdate` method. If your patch captured the instance through `this`, call `self.forceUpdate()` to re-render it.
 
 		```tsx
-		Patcher.after(Component.prototype, 'render', ({ this: self, result }) => {
+		patcher.after(Component.prototype, 'render', ({ this: self, result }) => {
 			instance = self; // keep a reference to the mounted instance
 			return result;
 		});
@@ -244,7 +242,7 @@ How you force the re-render depends on the kind of component you patched.
 		A new key makes React unmount the old element and mount a fresh one, which avoids the hook-count mismatch.
 
 		```tsx
-		Patcher.after(Component, 'type', ({ result }) => {
+		patcher.after(Component, 'type', ({ result }) => {
 			const [version, setVersion] = React.useState(0);
 
 			React.useEffect(() => {
