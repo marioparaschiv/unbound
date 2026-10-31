@@ -1,22 +1,23 @@
+import {
+	createChatModel,
+	createMessageStoreModel,
+	type MessageStoreModel,
+	type ModelMessage,
+} from '@unbound-plugins/shared/messages/message-store-model';
 import { installAddonGlobals } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
-type Message = {
-	id: string;
-	channel_id: string;
-	type: number;
-	content: string;
-	author: { id: string; username: string };
-};
+type Action = Parameters<MessageStoreModel['dispatch']>[0];
+type Author = { id: string; username: string };
+type Message = ModelMessage & { type: number; author: Author };
 type Row = { message: { timestamp: string; timestampAccessibilityLabel: string } };
-type Action = { type: string; message?: Message };
 
-const stored = new Map<string, Message>();
+let store = createMessageStoreModel('me');
 const dispatched: Action[] = [];
 
 const stores: Record<string, object> = {
 	Channel: { getChannel: () => undefined },
-	Message: { getMessage: (_channelId: string, id: string) => stored.get(id) },
+	Message: { getMessage: (channelId: string, id: string) => store.getMessage(channelId, id) },
 	User: { getCurrentUser: () => ({ id: 'me' }) },
 	UserProfile: { getUserProfile: () => undefined, getGuildMemberProfile: () => undefined },
 };
@@ -26,7 +27,11 @@ const scope = installAddonGlobals({
 	unbound: {
 		flux: {
 			getStore: (name: string) => stores[name],
-			dispatch: async (action: Action) => void dispatched.push(action),
+			dispatch: (action: Action) => {
+				dispatched.push(action);
+
+				return store.dispatch(action);
+			},
 		},
 	},
 });
@@ -49,18 +54,20 @@ const { patchMessageRowData } = await import('~/patches/message-row-data');
 
 const lookup = { get: () => 'he/him', dispose: () => {} };
 
-function message(id: string, authorId: string): Message {
-	return {
-		id,
-		channel_id: 'c1',
-		type: 0,
-		content: 'hi',
-		author: { id: authorId, username: authorId },
-	};
+function chat(id: string, authorId: string, type = 0) {
+	const author = { id: authorId, username: authorId };
+
+	return createChatModel(store, [['c1', id]], (message) =>
+		MessageRowData.generateMessageRowData({ message: { ...message, type, author } }),
+	);
+}
+
+function flush() {
+	return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
 beforeEach(() => {
-	stored.clear();
+	store = createMessageStoreModel('me');
 	dispatched.length = 0;
 	scope.patcher.unpatchAll();
 });
@@ -68,32 +75,40 @@ beforeEach(() => {
 describe('patchMessageRowData', () => {
 	test('adds the pronouns to the header while applied', () => {
 		patchMessageRowData(lookup);
+		store.add({ id: 'm1', channel_id: 'c1', content: 'hi' });
 
-		const row = MessageRowData.generateMessageRowData({ message: message('m1', 'u1') });
-
-		expect(row.message.timestamp).toBe('21:02 • he/him');
+		expect(chat('m1', 'u1').rows()[0]?.message.timestamp).toBe('21:02 • he/him');
 	});
 
-	test('removing it has Discord rebuild each labelled row from the stored message', () => {
+	test('removing it has Discord build the header without pronouns, and keeps the message as it was', async () => {
 		const remove = patchMessageRowData(lookup);
-		const edited = { ...message('m1', 'u1'), content: 'hi (edited)' };
+		const before = store.add({
+			id: 'm1',
+			channel_id: 'c1',
+			content: '<@me> hi',
+			mentions: [{ id: 'me' }],
+			embeds: [{ title: 'Title', description: 'Text' }],
+		});
+		const view = chat('m1', 'u1');
 
-		MessageRowData.generateMessageRowData({ message: message('m1', 'u1') });
-		stored.set('m1', edited);
+		expect(view.rows()[0]?.message.timestamp).toBe('21:02 • he/him');
+
 		remove();
+		await flush();
 
-		expect(dispatched).toMatchObject([{ type: 'MESSAGE_UPDATE', message: edited }]);
-		expect(MessageRowData.generateMessageRowData({ message: edited }).message.timestamp).toBe(
-			'21:02',
-		);
+		const after = store.getMessage('c1', 'm1');
+
+		expect(view.rows()[0]?.message.timestamp).toBe('21:02');
+		expect(after).toEqual(before);
+		expect(after?.mentioned).toBe(true);
+		expect(after?.embeds).toEqual([{ rawTitle: 'Title', rawDescription: 'Text' }]);
 	});
 
 	test('removing it leaves rows it did not label alone', () => {
 		const remove = patchMessageRowData(lookup);
-		const joined = message('m2', 'me');
 
-		stored.set('m2', joined);
-		MessageRowData.generateMessageRowData({ message: { ...joined, type: 7 } });
+		store.add({ id: 'm2', channel_id: 'c1', content: 'joined' });
+		chat('m2', 'me', 7).rows();
 		remove();
 
 		expect(dispatched).toEqual([]);
