@@ -36,6 +36,7 @@ export type {
 	ActionSheetSwitchRowProps,
 	Addon,
 	AddonAuthor,
+	AddonHandle,
 	AddonKind,
 	AddonManifest,
 	AddonPlatform,
