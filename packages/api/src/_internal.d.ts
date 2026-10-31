@@ -17,6 +17,21 @@ declare const TRANSITION_STATE_KEYS: readonly ['MOUNTED', 'ENTERED', 'YEETED'];
 declare const nativeHandle: unique symbol;
 /** The kinds of addon, as a manifest's `type` declares them. One manager governs each, in this start order. */
 export declare const ADDON_KINDS: readonly ['plugin', 'theme', 'icon-pack', 'font'];
+/**
+ * The globals a plugin bundle is evaluated with, in parameter order. Bytecode compiled against an earlier
+ * list receives them by position, so new globals are only ever appended.
+ */
+export declare const ADDON_SCOPE_GLOBALS: readonly [
+	'React',
+	'unbound',
+	'addon',
+	'patcher',
+	'logger',
+	'setTimeout',
+	'setInterval',
+	'clearTimeout',
+	'clearInterval',
+];
 /** @deprecated Use ADDON_KINDS */
 export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'font'];
 /** The core settings store; each addon's settings store is named after the addon id. */

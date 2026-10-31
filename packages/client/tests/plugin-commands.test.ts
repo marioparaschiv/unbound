@@ -60,6 +60,7 @@ describe("a plugin's commands", () => {
 		['throws in stop', { stopThrows: true }],
 	])('are removed when the plugin %s', async (name, behaviour) => {
 		resetDevice();
+		Reflect.set(globalThis, 'React', {});
 
 		const plugins = new CommandPlugins();
 		const id = `commands.${name.replaceAll(' ', '-')}`;

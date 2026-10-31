@@ -3,6 +3,7 @@ import type { Plugin } from '@unbound-app/types';
 
 import type { AddonAttribution } from '~/addons/crash-guard';
 import type { CrashEvent } from '~/diagnostics/crash-report';
+import type { PluginScope } from '~/addons/scope';
 import type { Addon } from '~/addons/addon';
 
 const LOADED_ID = 1;
@@ -10,7 +11,7 @@ const loadedExports = { loaded: (value: number) => value };
 const records = new Map<number, MetroModuleRecord>([
 	[LOADED_ID, { isInitialized: true, publicModule: { id: LOADED_ID, exports: loadedExports } }],
 ]);
-const methods = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];
+const methods = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'];
 
 for (const [index, method] of methods.entries()) {
 	const id = index + 2;
@@ -40,6 +41,7 @@ function load(id: number) {
 
 Object.assign(globalThis, {
 	window: globalThis,
+	React: { createElement: () => null },
 	modules: records,
 	$$DEV$$: false,
 	ErrorUtils: { getGlobalHandler: () => void 0, setGlobalHandler: () => void 0 },
@@ -75,6 +77,7 @@ const { FakeAddons, makeManifest, resetDevice, states } = await import('./helper
 const { after, createPatcher, instead, unpatchAll, unpatchAllByCaller } =
 	await import('~/patcher/api');
 const { findByProps } = await import('~/metro/lookups');
+const { createAddonScope } = await import('~/addons/scope');
 const { data } = await import('~/metro/state');
 
 function idOf(method: string) {
@@ -147,10 +150,14 @@ describe('lazy patch targets', () => {
 
 class AttributedAddons extends FakeAddons {
 	attributed: string[] = [];
-	starts = new Map<string, () => void>();
+	starts = new Map<string, (scope?: PluginScope) => void>();
 
-	protected handleBundle(bundle: string) {
-		return { start: () => this.starts.get(bundle)?.(), stop: () => {} };
+	protected createScope(entity: Addon<Plugin>): PluginScope {
+		return createAddonScope(entity);
+	}
+
+	protected handleBundle(bundle: string, _id?: string, scope?: PluginScope) {
+		return { start: () => this.starts.get(bundle)?.(scope), stop: () => {} };
 	}
 
 	protected attribution(entity: Addon<Plugin>): AddonAttribution {
@@ -192,6 +199,23 @@ describe('deferred patches', () => {
 		expect(crashes.map((crash) => [crash.addon?.id, crash.kind, crash.phase])).toEqual([
 			['addon.a', 'start-failure', 'running'],
 		]);
+	});
+
+	test('made through a scoped patcher stay attributed to its addon', () => {
+		const manager = new AttributedAddons();
+
+		resetDevice();
+		states['addon.c'] = true;
+		manager.starts.set('addon.c', (scope) => {
+			scope?.globals.patcher.after(findByProps('eighth'), 'eighth', (ctx) => ctx.result * 10);
+		});
+
+		manager.load('addon.c', makeManifest('addon.c'));
+		manager.attributed.length = 0;
+		load(idOf('eighth'));
+
+		expect(manager.attributed).toEqual(['addon.c']);
+		expect(exportsOf('eighth').eighth(2)).toBe(20);
 	});
 });
 

@@ -1,7 +1,13 @@
 import type { MarkdownParserModule } from '@unbound-app/types/markdown';
+import type { ImageProps, ImageURISource } from 'react-native';
 
 import { findByPropsLazy } from '~/metro/wrappers';
 import * as FluxModules from '~/flux/modules';
+
+/** React Native's `ImageSourceUtils`, which every `Image` render resolves its source through. */
+type ImageSourcesModule = {
+	getImageSourcesFromImageProps: (props: ImageProps) => ImageURISource | ImageURISource[] | null;
+};
 
 export const ReactNative = window.ReactNative;
 export const React = window.React;
@@ -25,6 +31,7 @@ export const Flux = FluxModules.Flux;
 /** @deprecated Use flux.useStore */
 export const FluxHooks = FluxModules.FluxHooks;
 export const Assets = findByPropsLazy('registerAsset');
+export const ImageSources: ImageSourcesModule = findByPropsLazy('getImageSourcesFromImageProps');
 export const Clyde = findByPropsLazy('createBotMessage');
 /** @deprecated Use flux.dispatch, flux.onAction and flux.interceptAction */
 export const Dispatcher = FluxModules.Dispatcher;
