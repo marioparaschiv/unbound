@@ -1,5 +1,6 @@
 import type { AddonManifest, NativePluginCapability } from '@unbound-app/types';
 
+import { resolveManifestPlatforms } from '~/addons/manifest';
 import type { Addon } from '~/addons/addon';
 
 /** Capabilities that reach native code without the bridge's type and object checks. */
@@ -54,12 +55,9 @@ export class NativeConsentRequiredError extends Error {
  * @returns The sorted, de-duplicated capabilities that need the user's consent.
  */
 export function consentCapabilities(manifest: AddonManifest): NativePluginCapability[] {
-	const requested = [
-		...(manifest.capabilities ?? []),
-		...Object.values(manifest.platformCapabilities ?? {}).flatMap(
-			(capabilities) => capabilities ?? [],
-		),
-	];
+	const requested = Object.values(resolveManifestPlatforms(manifest).capabilities).flatMap(
+		(capabilities) => capabilities ?? [],
+	);
 
 	return [
 		...new Set(requested.filter((capability) => CONSENT_CAPABILITIES.includes(capability))),

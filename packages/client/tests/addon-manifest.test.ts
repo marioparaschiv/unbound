@@ -6,7 +6,11 @@ import {
 	NativePluginPlatformError,
 	NativePluginUnsupportedPlatformError,
 } from '~/native/errors';
-import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
+import {
+	parseAddonManifest,
+	resolveManifestCapabilities,
+	resolveManifestPlatforms,
+} from '~/addons/manifest';
 
 const base: AddonManifest = {
 	id: 'unbound.example',
@@ -41,6 +45,71 @@ describe('parseAddonManifest', () => {
 		expect(() =>
 			parseAddonManifest({ ...base, platformCapabilities: { ios: ['native.unknown'] } }),
 		).toThrow(NativePluginCapabilityError);
+		expect(() =>
+			parseAddonManifest({
+				...base,
+				platforms: { ios: { capabilities: ['native.unknown'] } },
+			}),
+		).toThrow(NativePluginCapabilityError);
+	});
+
+	test('accepts the platforms object and checks its shape', () => {
+		const manifest: AddonManifest = {
+			...base,
+			platforms: { ios: { capabilities: ['native.objc.classes'] } },
+		};
+
+		expect(parseAddonManifest(manifest)).toBe(manifest);
+		expect(() => parseAddonManifest({ ...base, platforms: {} })).toThrow('must not be empty');
+		expect(() => parseAddonManifest({ ...base, platforms: { web: {} } })).toThrow(
+			'unsupported platform: web',
+		);
+		expect(() => parseAddonManifest({ ...base, platforms: { ios: true } })).toThrow(
+			'Manifest platforms.ios must be an object',
+		);
+	});
+});
+
+describe('resolveManifestPlatforms', () => {
+	test('reads the platforms object', () => {
+		expect(
+			resolveManifestPlatforms({
+				...base,
+				capabilities: ['native.runtime.events'],
+				platforms: { ios: { capabilities: ['native.objc.classes'] } },
+			}),
+		).toEqual({
+			platforms: ['ios'],
+			capabilities: { ios: ['native.runtime.events', 'native.objc.classes'] },
+		});
+	});
+
+	test('reads the older platforms list with platformCapabilities', () => {
+		expect(
+			resolveManifestPlatforms({
+				...base,
+				platforms: ['android'],
+				platformCapabilities: {
+					ios: ['native.objc.classes'],
+					android: ['native.java.classes'],
+				},
+			}),
+		).toEqual({
+			platforms: ['android'],
+			capabilities: { android: ['native.java.classes'] },
+		});
+	});
+
+	test('runs flat capabilities on every platform', () => {
+		expect(
+			resolveManifestPlatforms({ ...base, capabilities: ['native.runtime.events'] }),
+		).toEqual({
+			platforms: ['ios', 'android'],
+			capabilities: {
+				ios: ['native.runtime.events'],
+				android: ['native.runtime.events'],
+			},
+		});
 	});
 });
 
@@ -70,6 +139,9 @@ describe('resolveManifestCapabilities', () => {
 	test('refuses a host the manifest does not support', () => {
 		expect(() =>
 			resolveManifestCapabilities({ ...base, platforms: ['ios'] }, 'android'),
+		).toThrow(NativePluginUnsupportedPlatformError);
+		expect(() =>
+			resolveManifestCapabilities({ ...base, platforms: { ios: {} } }, 'android'),
 		).toThrow(NativePluginUnsupportedPlatformError);
 		expect(() =>
 			resolveManifestCapabilities({ ...base, platforms: ['ios'] }, undefined),
