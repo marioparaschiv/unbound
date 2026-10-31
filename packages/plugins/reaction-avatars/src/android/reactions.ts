@@ -7,6 +7,7 @@ import type {
 	NativeJavaHooksBridge,
 	NativeJavaReference,
 	NativeJavaValue,
+	NativeUIBridge,
 } from '@unbound-app/api/native';
 import { layoutHostingList, removeHost } from '@unbound-plugins/shared/native/android/inline-hosts';
 import { shapeField } from '@unbound-plugins/shared/native/android/discord-shapes';
@@ -21,10 +22,12 @@ import {
 	javaInt,
 	javaNumber,
 	javaReference,
+	javaString,
 	javaText,
 	javaViewKey,
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
+import { installRebindGuard } from '~/android/rebind-guard';
 import { legacyJavaClass } from '@unbound-plugins/shared/native/android/legacy-classes';
 import {
 	currentDecorView,
@@ -77,6 +80,7 @@ type Native = {
 	java: NativeJavaBridge;
 	hooks: NativeJavaHooksBridge;
 	fabric: NativeFabricBridge;
+	ui: NativeUIBridge;
 };
 
 type Pill = {
@@ -101,8 +105,10 @@ function emojiKey(reaction: Reaction): string | undefined {
  * @param surfaceName The registered avatar surface to mount in each pill.
  * @returns `dispose`, which removes every avatar stack and resolves once the pills are restored.
  */
-export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceName: string) {
+export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surfaceName: string) {
 	const reactors = new ReactionUserCache<Reactor>();
+	const hostsKey = java.createAssociationKey();
+	const drawnForKey = java.createAssociationKey();
 	const pills = new Map<string, Pill>();
 	const bound = new Map<string, { messageView: NativeJavaReference; messageId: string }>();
 	const queues = new Map<string, Promise<void>>();
@@ -270,6 +276,23 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 		}
 	}
 
+	function markHosts(
+		messageView: NativeJavaReference,
+		messageId: string,
+		views: NativeJavaReference[],
+	) {
+		const hosts = java.construct('java.util.ArrayList', []);
+
+		for (const view of views) {
+			const pill = pills.get(javaViewKey(view as NativeJavaValue) ?? '');
+
+			if (pill && !pill.disposed) java.invoke(hosts, 'add', [pill.host]);
+		}
+
+		java.setAssociatedObject(messageView, hostsKey, hosts);
+		java.setAssociatedObject(messageView, drawnForKey, javaString(messageId));
+	}
+
 	async function render(messageView: NativeJavaReference, messageId: string) {
 		const channelId = selectedChannelId();
 		const message = channelId ? MessageStore.getMessage(channelId, messageId) : undefined;
@@ -338,6 +361,8 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 			changed.push(await addPill(reactionView, context, users));
 		}
 
+		markHosts(messageView, messageId, views);
+
 		const messageKey = javaViewKey(messageView as NativeJavaValue) ?? '';
 
 		if (reactions.length && !used.size) {
@@ -383,6 +408,17 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 
 	const bindMessage = messageBindMethod(java);
 	const idField = messageIdField(java);
+	const scope = ui.createScope();
+
+	ui.run(installRebindGuard, scope, {
+		messageView: MESSAGE_VIEW,
+		bindName: bindMessage.name,
+		bindParameters: bindMessage.parameters,
+		idField,
+		hosts: hostsKey,
+		drawnFor: drawnForKey,
+	});
+
 	const token = hooks.hook(
 		MESSAGE_VIEW,
 		bindMessage.name,
@@ -452,6 +488,7 @@ export function createAndroidReactions({ java, hooks, fabric }: Native, surfaceN
 			for (const scan of scans) clearTimeout(scan);
 
 			disposed = true;
+			scope.dispose();
 			hooks.remove(token);
 			hooks.remove(sizeToken);
 			awaitingSize.clear();
