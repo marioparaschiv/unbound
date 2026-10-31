@@ -17,10 +17,10 @@ import {
 } from '~/lib/native-consent';
 import { currentPlatform, validateNativePluginRequirements } from '~/api/native-runtime';
 import { parseAddonManifest, resolveManifestCapabilities } from '~/lib/addon-manifest';
+import type { AddonEvents, AddonResolveable, AddonState } from '~/managers/addon';
 import type { AddonAttribution, AddonFreeze } from '~/api/crash-guard';
 import type { CrashReportAddon } from '~/lib/crash-reports';
 import type { NativeConsents } from '~/lib/native-consent';
-import type { AddonEvents, AddonResolveable, AddonState } from '~/managers/addon';
 import { isSafeAddonMain } from '~/lib/addon-paths';
 import { getSetting } from '~/lib/unbound-settings';
 import { unpatchAllByCaller } from '~/api/patcher';

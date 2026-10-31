@@ -8,8 +8,8 @@ import { create } from 'zustand';
 import { automaticUpdates, fetchUpdates } from '~/lib/updates';
 import { API_URL, CLIENT_VERSION } from '~/lib/constants';
 import { fetchLoaderUpdate } from '~/lib/loader-updates';
-import type { PendingUpdate } from '~/lib/updates';
 import { installsFromManifest } from '~/managers/addons';
+import type { PendingUpdate } from '~/lib/updates';
 import { Manager } from '~/managers/base';
 
 const logger = createLogger('Updater');

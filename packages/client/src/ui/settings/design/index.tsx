@@ -4,8 +4,8 @@ import type { ComponentType } from 'react';
 import { useMemo, useState } from 'react';
 
 import { Discord, SafeArea } from '~/api/metro/components';
-import InstallButton from '~/ui/addons/install-button';
 import { installsFromManifest } from '~/managers/addons';
+import InstallButton from '~/ui/addons/install-button';
 import storage from '~/api/storage';
 
 import ThemesTab from './themes';
