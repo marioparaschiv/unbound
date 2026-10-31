@@ -1,3 +1,4 @@
+import hermes from '@unbound-app/client-build/hermes.json' with { type: 'json' };
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import type { Plugin, RollupOptions } from 'rollup';
 import { minify, swc } from 'rollup-plugin-swc3';
@@ -7,7 +8,6 @@ import { fileURLToPath } from 'node:url';
 import json from '@rollup/plugin-json';
 import { readFileSync } from 'node:fs';
 import iife from 'rollup-plugin-iife';
-import hermes from '@unbound-app/client-build/hermes.json' with { type: 'json' };
 
 import type { Globals } from './globals.ts';
 
