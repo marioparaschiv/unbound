@@ -5,7 +5,6 @@ import type { Reaction } from '~/reaction-context';
 
 export type Feature = Parameters<typeof applyFeatures>[1][number];
 
-/** What every `MESSAGE_REACTION_*` action carries about its message, in either casing. */
 export type ReactionChange = {
 	channelId?: string;
 	channel_id?: string;

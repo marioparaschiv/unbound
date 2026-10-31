@@ -6,7 +6,6 @@ export type CardProgress = {
 	settling: boolean;
 };
 
-/** The running code cards on one platform, as the self-test reads them. */
 export type Cards = {
 	feature: Parameters<typeof applyFeatures>[1][number];
 	progress: () => CardProgress;

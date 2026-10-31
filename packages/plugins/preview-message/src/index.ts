@@ -8,7 +8,6 @@ import { patchPreviewButton } from '~/patches/platform';
 import {
 	ChatItem,
 	DraftStore,
-	FluxHooks,
 	MessageRecord,
 	PreviewRunning,
 	RowManager,
@@ -27,7 +26,6 @@ function start() {
 		RowManager,
 		DraftStore,
 		SelectedChannelStore,
-		FluxHooks,
 		Portal,
 		Users,
 	});
