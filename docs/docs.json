@@ -50,7 +50,12 @@
 					{
 						"group": "Addons",
 						"icon": "puzzle-piece",
-						"pages": ["addons/introduction", "addons/creating", "addons/manifest"]
+						"pages": [
+							"addons/introduction",
+							"addons/creating",
+							"addons/manifest",
+							"addons/store-page"
+						]
 					},
 					{
 						"group": "Plugins",
