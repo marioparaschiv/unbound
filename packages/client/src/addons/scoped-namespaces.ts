@@ -10,11 +10,11 @@ import type { CommandsHandle } from '@unbound-app/types/commands';
 import type { MetroLazySearchOptions, MetroModuleLoadListener } from '~/metro/types';
 import type { Bucket, SettingsPayload } from '~/storage/api';
 import type { Subscriptions } from '~/addons/subscriptions';
-import type { UnboundWindowObject } from '~/core/index';
 import type { MetroFilter } from '~/metro/filters';
 import { createCommands } from '~/commands/api';
+import type * as api from '~/core/api';
 
-type Api = UnboundWindowObject;
+type Api = Omit<typeof api, 'default'>;
 
 type Overlay<K extends keyof Api, O> = Omit<O, keyof Api[K]> & Api[K];
 
@@ -29,7 +29,9 @@ export type ScopedCommands = {
 };
 
 function liveNamespace<K extends keyof Api>(key: K): Api[K] {
-	return (window.unbound as Api)[key];
+	const unbound: object = Reflect.get(globalThis, 'unbound');
+
+	return Reflect.get(unbound, key);
 }
 
 function overlay<K extends keyof Api, O extends Partial<Api[K]>>(
