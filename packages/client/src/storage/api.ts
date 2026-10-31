@@ -238,10 +238,15 @@ export function clear(store: string) {
 
 /**
  * @description Returns the Bucket with the given name. The name is the key the Bucket is saved under on disk.
- * @param name The Bucket name, usually the addon id.
+ * @param name The Bucket name. A plugin may omit it to get its own Bucket, named after its id.
  * @returns The Bucket, with every operation bound to `name`.
+ * @throws When `name` is omitted outside a plugin.
  */
-export function getBucket(name: string): Bucket {
+export function getBucket(name?: string): Bucket {
+	if (name === undefined) {
+		throw new Error('getBucket needs a Bucket name outside a plugin.');
+	}
+
 	return {
 		get: <T>(key: string, def: T): Widen<T> => get(name, key, def),
 		set: (key, value) => set(name, key, value),
