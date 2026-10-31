@@ -1,8 +1,8 @@
-import { androidResourceUri } from '@unbound-plugins/shared/assets/android-resource';
-import { assets } from '@unbound-app/api';
-import { Image, Platform } from 'react-native';
+import { assets, patcher } from '@unbound-app/api';
+import { Image } from 'react-native';
 
-import { AssetUris, GuildStore, MessageRowData, Patcher } from '~/modules';
+import { AssetUris, GuildStore, MessageRowData } from '~/modules';
+import { platformCrownSource } from '~/patches/platform';
 
 type RoleIcon = {
 	source: string | number;
@@ -18,27 +18,25 @@ type Row = {
 };
 
 function getCrownSource(): string | number | undefined {
-	const id = assets.getIDByName('ic_crown_16px');
+	const id = assets.getIdByName('ic_crown_16px');
 
 	if (id === undefined) return;
 
-	const asset = assets.getByID(id);
-
-	if (Platform.OS === 'android' && asset?.httpServerLocation) return androidResourceUri(asset);
-
 	// Discord's embed URI stays valid where the native asset's may not.
-	return AssetUris.getAssetUriForEmbed?.(id) || Image.resolveAssetSource(id)?.uri || id;
+	return (
+		platformCrownSource(assets.getById(id)) ??
+		(AssetUris.getAssetUriForEmbed?.(id) || Image.resolveAssetSource(id)?.uri || id)
+	);
 }
 
 /**
  * @description Shows the owner crown as the role icon on the server owner's messages that have none.
- * @returns A function that removes the patch.
  */
-export function patchOwnerCrown(): () => void {
+export function patchOwnerCrown(): void {
 	// Resolved on the first owner row rather than at start, since the asset may register later.
 	let source: string | number | undefined;
 
-	return Patcher.after(MessageRowData, 'generateMessageRowData', ({ result }) => {
+	patcher.after(MessageRowData, 'generateMessageRowData', ({ result }) => {
 		const row: Row | undefined = result?.message;
 
 		if (!row?.guildId || !row.authorId || row.roleIcon) return;
