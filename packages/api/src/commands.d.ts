@@ -11,6 +11,19 @@ export declare const option: OptionBuilders;
  * @returns The handle.
  */
 export declare function createCommands(owner: string, options?: CommandsOptions): CommandsHandle;
+/**
+ * @description Adds commands to the shared Unbound section of the `/` picker. Registering a root name again
+ * replaces that whole command; a root name another owner has throws `CommandDefinitionError`.
+ * @template T The command tree, inferred from it.
+ * @param commands The commands, keyed by root name.
+ * @returns A function that removes this call's commands; it is safe to call twice.
+ */
+export declare function register<T>(commands: CommandTree<T>): () => void;
+/**
+ * @description Removes a root command added with `register`, with its subcommands. Does nothing when there is none.
+ * @param name The root command's name.
+ */
+export declare function unregister(name: string): void;
 /** Suggests values for an option while the user types. At most 25 are shown. */
 export type Autocomplete<V extends string | number> = (
 	query: string,
@@ -101,6 +114,8 @@ export type CommandsHandle = {
 	 * Returns a function that removes this call's commands; it is safe to call twice or after a sweep.
 	 */
 	register<T>(commands: CommandTree<T>): () => void;
+	/** Removes this owner's root command `name` with its subcommands. Does nothing when there is none. */
+	unregister(name: string): void;
 	/** Removes every command of this owner. */
 	unregisterAll(): void;
 };
