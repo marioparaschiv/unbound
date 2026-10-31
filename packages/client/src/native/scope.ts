@@ -29,6 +29,7 @@ import type {
 
 import { requireCapability, scopedMethod, unavailableNativePlugin } from '~/native/capabilities';
 import { NativePluginDisposedError, NativePluginUnavailableError } from '~/native/errors';
+import { createMainThreadAlloc } from '~/native/main-thread-alloc';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { getNativePlugin } from '~/native/plugin-bridge';
@@ -206,9 +207,11 @@ export function createScopedNativePlugin(
 		};
 	}
 
+	const allocObject = createMainThreadAlloc(objcBridge);
+
 	const objc: NativeObjCBridge = {
 		getClass: scopeMethod(objcBridge.getClass.bind(objcBridge), 'objc.getClass'),
-		alloc: scopeMethod(objcBridge.alloc.bind(objcBridge), 'objc.alloc'),
+		alloc: scopeMethod(allocObject, 'objc.alloc'),
 		create: scopeMethod(
 			(
 				classOrName: string | NativeClassHandle,
@@ -216,7 +219,7 @@ export function createScopedNativePlugin(
 				args: unknown[] = [],
 				options?: NativeCallOptions,
 			) => {
-				const instance = objcBridge.alloc(classOrName);
+				const instance = allocObject(classOrName);
 				const initialized = objcBridge.invoke(instance, initSelector, args, options);
 
 				if (!isObjectHandle(initialized)) {
