@@ -187,6 +187,8 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 
 		if (session.signal.aborted || !channelId) return;
 
+		if (session.surfaces.size === 0 && channelCodeLines(channelId)?.length === 0) return;
+
 		void objc
 			.batch([
 				{ target: label, selector: 'window', args: [] },
@@ -195,11 +197,31 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 			.then(([window, text]) => {
 				if (session.signal.aborted || channelId !== visibleChannelId()) return;
 
-				if (window && text) renderLabel(session, label, text as NativeObjectHandle);
+				if (!window || !text) return;
+
+				const handle = text as NativeObjectHandle;
+
+				if (!session.surfaces.has(session.ui.key(label)) && !mayRenderText(handle)) return;
+
+				renderLabel(session, label, handle);
 			})
 			.catch(() => {
 				// The label was deallocated before the batch ran.
 			});
+	}
+
+	function mayRenderText(text: NativeObjectHandle): boolean {
+		const lines = channelCodeLines(visibleChannelId());
+
+		if (lines?.length === 0) return false;
+
+		try {
+			const value = session.ui.objc.call(text, 'string');
+
+			return typeof value !== 'string' || mayShowCode(value, lines);
+		} catch {
+			return true;
+		}
 	}
 
 	function onSetText({ self, args }: NativeHookContext) {
@@ -207,8 +229,7 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 
 		if (!text) return;
 
-		if (session.surfaces.size === 0 && channelCodeLines(visibleChannelId())?.length === 0)
-			return;
+		if (!session.surfaces.has(session.ui.key(self)) && !mayRenderText(text)) return;
 
 		renderLabel(session, self, text);
 	}
