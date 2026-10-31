@@ -32,7 +32,7 @@
 							"user-guide/marketplace",
 							"user-guide/settings",
 							"user-guide/fonts",
-							"user-guide/cloud-sync",
+							"user-guide/sync",
 							"user-guide/ios-extensions"
 						]
 					},
@@ -89,7 +89,12 @@
 							{
 								"group": "Modifying Discord",
 								"icon": "discord",
-								"pages": ["modules/metro", "modules/components", "modules/patcher"]
+								"pages": [
+									"modules/metro",
+									"modules/flux",
+									"modules/components",
+									"modules/patcher"
+								]
 							},
 							{
 								"group": "Data & Files",
@@ -158,6 +163,10 @@
 		{
 			"source": "/plugins/patching",
 			"destination": "/modules/patcher"
+		},
+		{
+			"source": "/user-guide/cloud-sync",
+			"destination": "/user-guide/sync"
 		}
 	],
 	"logo": {
