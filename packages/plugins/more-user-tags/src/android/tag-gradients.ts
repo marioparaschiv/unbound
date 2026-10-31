@@ -23,6 +23,7 @@ import { androidColor, hexColor } from '@unbound-plugins/shared/colors/android-c
 import { shapeMethod } from '@unbound-plugins/shared/native/android/discord-shapes';
 
 import type { LabelAppearances } from '~/label-appearances';
+import type { TagGradients } from '~/tag-gradients';
 import { HEX_COLOR } from '~/constants';
 
 const TAG_VIEW = 'com.discord.chat.presentation.message.MessageTagView';
@@ -165,13 +166,11 @@ export function startAndroidTagGradients(
 		}
 	}
 
-	const scans = scheduleStartupScans('More User Tags', scanVisible);
+	scheduleStartupScans('More User Tags', scanVisible);
 
 	return async () => {
 		stopped = true;
 		hooks.remove(token);
-
-		for (const scan of scans) clearTimeout(scan);
 
 		for (const { layout, original, gradient } of painted.values()) {
 			const current = javaReference(
@@ -186,3 +185,33 @@ export function startAndroidTagGradients(
 		painted.clear();
 	};
 }
+
+/**
+ * @description Draws role-color gradients behind Discord's native message tags on Android.
+ * @param context The plugin context, whose Java bridge draws the gradients.
+ * @param appearances The colors the tag patch chose for each tag text.
+ * @returns The gradients feature; Android does not read its gradients back, so `problems` and `drawn` report none.
+ */
+export function createTagGradients(
+	context: PluginContext,
+	appearances: LabelAppearances,
+): TagGradients {
+	let teardown = Promise.resolve();
+
+	function start(): () => void {
+		const stop = startAndroidTagGradients(context, appearances);
+
+		return () => {
+			teardown = stop();
+		};
+	}
+
+	return {
+		start,
+		settled: () => teardown,
+		problems: () => Promise.resolve([]),
+		drawn: () => 0,
+	};
+}
+
+export default { createTagGradients };

@@ -1,5 +1,7 @@
+import { patcher } from '@unbound-app/api';
+
 import type { MentionIndex } from '~/mention-index';
-import { Patcher, RowGenerator } from '~/modules';
+import { RowGenerator } from '~/modules';
 
 /**
  * @description Indexes each message's mentions as Discord builds its chat row.
@@ -7,7 +9,7 @@ import { Patcher, RowGenerator } from '~/modules';
  * @returns A function that removes the patch.
  */
 export function patchRowGenerator(index: MentionIndex): () => void {
-	return Patcher.after(RowGenerator, 'generateMessageRowData', ({ args }) => {
+	return patcher.after(RowGenerator, 'generateMessageRowData', ({ args }) => {
 		index.add(args[0]?.message);
 	});
 }
