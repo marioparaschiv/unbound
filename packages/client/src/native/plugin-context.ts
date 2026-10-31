@@ -7,6 +7,18 @@ import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedNativePlugin } from '~/native/scope';
 import { currentPlatform } from '~/native/platform';
 
+const stoppers = new WeakMap<object, () => void>();
+
+/**
+ * @description Lets the native calls a plugin makes from now on, during its `stop`, finish after its context is disposed.
+ * @param context The context of the plugin about to stop.
+ */
+export function beginNativeStop(context: PluginContext | undefined): void {
+	if (context) {
+		stoppers.get(context.native)?.();
+	}
+}
+
 /**
  * @description Builds a plugin's context, with a native bridge scoped to its declared capabilities.
  * @param manifest The plugin's manifest.
@@ -23,6 +35,8 @@ export function createPluginContext(
 	validateNativePluginRequirements(capabilities, manifest.minNativePluginApi);
 	const scoped = createScopedNativePlugin(capabilities, platform, attribute);
 
+	stoppers.set(scoped.bridge, scoped.beginStop);
+
 	return {
 		manifest,
 		id: manifest.id,
@@ -33,4 +47,4 @@ export function createPluginContext(
 	};
 }
 
-export default { createPluginContext };
+export default { beginNativeStop, createPluginContext };
