@@ -17,6 +17,7 @@ import type { SubmissionSourceRow } from '~/lib/artifacts';
 import type { AddonSource, RepositoryListing } from '~/lib/addon-source';
 import { readSubmissionMaintainers, requireSubmissionMaintainers } from '~/lib/maintainers';
 import { readAddonTags, readTags, requireTags } from '~/lib/addon-tags';
+import { isAddonIcon } from '~/lib/addon-icons';
 import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
@@ -62,6 +63,7 @@ type Submitted = {
 	source: AddonSource;
 	tags: string[] | null;
 	maintainers: string[] | null;
+	icon: string | null;
 };
 
 type Reservation = {
@@ -283,13 +285,20 @@ function reserve(
 	ctx: AppContext,
 	caller: Caller,
 	staged: Staged,
-	{ source, tags, maintainers }: Submitted,
+	{ source, tags, maintainers, icon }: Submitted,
 	now: Date,
 ): Promise<Reservation> {
 	const { manifest, pin } = source;
 
 	return ctx.db.transaction(async (tx) => {
 		const { kind, replaced } = await checkClaim(ctx, tx, caller, manifest);
+
+		if (icon && kind === 'update') {
+			throw new ApiError(
+				'invalid_request',
+				`Change ${manifest.id}'s icon from your dashboard, not with an update.`,
+			);
+		}
 
 		if (replaced) {
 			await tx
@@ -315,6 +324,7 @@ function reserve(
 					sha256: source.sha256,
 					tags,
 					maintainers,
+					icon,
 					createdAt: now,
 					submittedAt: now,
 				})
@@ -385,10 +395,12 @@ export async function createSubmission(
 	const now = ctx.now();
 	const tags = request.details?.tags ?? null;
 	const maintainers = request.details?.maintainers ?? null;
+	const icon = request.details?.icon ?? null;
 
 	await checkRateLimit(ctx, caller.user.id, now);
 	await checkAccountAge(ctx, caller.user.id, now);
 	await requireTags(ctx, tags ?? []);
+	requireIcon(icon);
 
 	const github = await connectGitHub(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request);
@@ -407,7 +419,7 @@ export async function createSubmission(
 	const { created, replaced } = await stageAndReserve(
 		ctx,
 		caller,
-		{ source, tags, maintainers },
+		{ source, tags, maintainers, icon },
 		now,
 	);
 
@@ -416,6 +428,12 @@ export async function createSubmission(
 	}
 
 	return { submission: toSubmission(created) };
+}
+
+function requireIcon(icon: string | null) {
+	if (icon !== null && !isAddonIcon(icon)) {
+		throw new ApiError('invalid_request', `${icon} is not an icon you can pick.`);
+	}
 }
 
 async function suggestTags(
@@ -448,6 +466,7 @@ export async function previewSubmission(
 ): Promise<SubmissionPreviewResponse> {
 	await checkAccountAge(ctx, caller.user.id, ctx.now());
 	await requireTags(ctx, request.details?.tags ?? []);
+	requireIcon(request.details?.icon ?? null);
 
 	const github = await connectGitHub(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request);

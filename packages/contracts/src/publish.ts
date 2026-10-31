@@ -6,6 +6,7 @@ import {
 	sourcePinSchema,
 } from './source';
 import { submissionTagsSchema } from './tags';
+import { addonIconSchema } from './icons';
 import { addonIdSchema, bytecodeDigestsSchema } from './manifest';
 import { z } from './zod';
 
@@ -75,6 +76,8 @@ export const submissionDetailsSchema = z.object({
 	tags: z.optional(submissionTagsSchema),
 	/** Replaces the addon's maintainers other than its owners on approval; `[]` removes them. Owners only. */
 	maintainers: z.optional(submissionMaintainersSchema),
+	/** The website icon a new listing starts with; updates change it from the dashboard. */
+	icon: z.optional(addonIconSchema),
 });
 
 /**

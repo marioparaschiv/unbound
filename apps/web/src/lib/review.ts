@@ -152,6 +152,7 @@ export async function listReviewQueue(
 			submitter: { id: author.id, name: author.name, image: author.image ?? null },
 			tags: row.tags ? tags.filter((entry) => row.tags?.includes(entry.id)) : null,
 			maintainers: maintainerChanges.get(row.id) ?? null,
+			icon: row.icon,
 			selfReview: author.id === caller.user.id || maintained.has(row.addonId),
 			previousVersion: version ? toAddonVersion(ctx.env, version, version.submission) : null,
 			previousAddonMd: version?.submission?.source?.addonMd ?? null,
@@ -274,6 +275,7 @@ export async function publishVersion(
 			repository: row.repository,
 			createdAt: publishedAt,
 			...toAddonSummary(row.manifest, publishedAt),
+			icon: row.icon,
 		});
 		await tx.insert(addonMaintainer).values({
 			addonId: row.addonId,

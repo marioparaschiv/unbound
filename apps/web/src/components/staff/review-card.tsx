@@ -7,6 +7,7 @@ import { savePreviewReturn, usePreviewReturn } from '~/components/staff/use-prev
 import ReviewDecisionDialog from '~/components/review/review-decision-dialog';
 import { formatDateTime } from '~/components/admin/format-date';
 import ReviewDetails from '~/components/staff/review-details';
+import AtlasIcon from '~/components/addon-icon-picker/atlas-icon';
 import { TagList } from '~/components/addon-filters/filter-parts';
 import type { ReviewEntry } from '~/lib/review-entry';
 import UserAvatar from '~/components/user-avatar';
@@ -118,6 +119,14 @@ function ReviewCard({ entry }: ReviewCardProps) {
 					</Text>
 					<MaintainerChanges change={entry.maintainers} />
 				</div>
+				{entry.icon ? (
+					<div className='flex items-center gap-2 min-w-0'>
+						<Text as='span' variant='text-xs' color='muted' className='shrink-0'>
+							Icon
+						</Text>
+						<AtlasIcon name={entry.icon} size={14} />
+					</div>
+				) : null}
 			</div>
 
 			<div className='flex flex-wrap items-center gap-2 px-(--card-pad) py-3 border-t'>

@@ -4,6 +4,7 @@ import { repositoryDetailsSchema, sourcePinSchema } from './source';
 import { submissionKindSchema, submissionSchema } from './publish';
 import { addonVersionSchema, sha256Schema } from './addons';
 import { tagIdSchema, tagSchema } from './tags';
+import { addonIconSchema } from './icons';
 import { addonManifestSchema } from './manifest';
 import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
@@ -44,6 +45,8 @@ export const reviewQueueItemSchema = z.extend(submissionContentSchema, {
 	tags: z.nullable(z.array(tagSchema)),
 	/** The maintainers approval adds and removes, or `null` to keep the current ones. */
 	maintainers: z.nullable(maintainerChangeSchema),
+	/** The website icon a new listing starts with, or `null` for the type's default. */
+	icon: z.nullable(addonIconSchema),
 	/** The viewer authored it or maintains the addon, so the server refuses their review with `self_review`. */
 	selfReview: z.boolean(),
 	/** The addon's newest approved version, for updates. */

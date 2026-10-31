@@ -2,8 +2,13 @@ import { addonIdSchema, addonManifestSchema, semverSchema } from './manifest';
 import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
 import { submissionSchema } from './publish';
+import { addonIconSchema } from './icons';
 import { sourcePinSchema } from './source';
 import { z } from './zod';
+
+// Lives in icons.ts so publish.ts can use it without importing this module back.
+export { addonIconSchema };
+export type { AddonIcon } from './icons';
 
 export const sha256Schema = z
 	.string()
@@ -96,9 +101,6 @@ export const listAddonsQuerySchema = z.optional(
 	}),
 );
 
-/** An icon the website shows for an addon: a Nucleo Micro Bold export name, such as `IconPlug`. */
-export const addonIconSchema = z.string().check(z.regex(/^Icon[A-Z][A-Za-z\d]*$/), z.maxLength(64));
-
 export const listedAddonSchema = z.object({
 	id: addonIdSchema,
 	type: addonTypeSchema,
@@ -183,7 +185,6 @@ export type FilterMatch = z.infer<typeof filterMatchSchema>;
 export type SingleMatch = z.infer<typeof singleMatchSchema>;
 export type ListAddonsQuery = z.infer<typeof listAddonsQuerySchema>;
 export type ListedAddon = z.infer<typeof listedAddonSchema>;
-export type AddonIcon = z.infer<typeof addonIconSchema>;
 export type SetAddonIconRequest = z.infer<typeof setAddonIconRequestSchema>;
 export type AddonIconResponse = z.infer<typeof addonIconResponseSchema>;
 export type ListAddonsResponse = z.infer<typeof listAddonsResponseSchema>;
