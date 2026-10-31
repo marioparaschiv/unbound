@@ -16,12 +16,6 @@ function isOptions(value: unknown): value is LookupOptions {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-/**
- * @description Makes a lookup lazy unless its options set `lazy`, `all` or `bulk`.
- * @template T The argument tuple.
- * @param args The search terms, optionally followed by options.
- * @returns The arguments, ending in options with `lazy` set.
- */
 function lazyByDefault<T extends unknown[]>(args: T): T {
 	const last = args[args.length - 1];
 

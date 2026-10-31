@@ -1,4 +1,3 @@
-// Addons get lazy lookups by default; client code imports the eager ones from `~/metro/search`.
 export {
 	findByPrototypes,
 	findByFilePath,
@@ -15,4 +14,14 @@ export * as common from '~/metro/common';
 export * as stores from '~/metro/stores';
 export * as api from '~/metro/api';
 export type * from '~/metro/types';
-export * from '~/metro/search';
+export {
+	initializeModule,
+	removeListener,
+	onModuleLoad,
+	addListener,
+	findLazy,
+	bulk,
+	find,
+	off,
+	on,
+} from '~/metro/search';

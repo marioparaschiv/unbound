@@ -247,13 +247,6 @@ export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = 
 	});
 }
 
-/**
- * @description Calls back with the module matching `filter` once it has loaded, without loading any module.
- * @param filter The filter to match against.
- * @param options Search options; `initialize` is ignored.
- * @param callback Receives the matched module, at once if it has already loaded.
- * @returns A function that stops waiting.
- */
 function onceLoaded(
 	filter: MetroFilter,
 	options: MetroSearchOptions,
@@ -672,7 +665,6 @@ function searchWithOptions(
 		const search = () =>
 			searchWithOptions(args, Object.assign(options, { lazy: false }), filter);
 
-		// A bulk or `all` search stands for several modules, so there is no one module to wait for.
 		if (options.bulk || options.all) {
 			return createLazyModule(search);
 		}
