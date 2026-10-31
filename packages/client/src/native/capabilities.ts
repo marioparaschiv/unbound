@@ -78,6 +78,16 @@ export function validateNativePluginRequirements(
 }
 
 /**
+ * @description Checks whether the native bridge on this device provides a capability, so an addon can
+ * fall back when an older loader or the other platform lacks it.
+ * @param capability The capability to look for.
+ * @returns Whether the bridge provides it.
+ */
+export function has(capability: NativePluginCapability): boolean {
+	return Boolean(getNativePlugin()?.capabilities.includes(capability));
+}
+
+/**
  * @description Wraps a bridge method so it runs only while its scope is active and declares the method's capability.
  * @template A The method's parameters.
  * @template R The method's return type.
@@ -144,6 +154,7 @@ export function unavailableNativePlugin(): NativePluginBridge {
 export default {
 	requireCapability,
 	validateNativePluginRequirements,
+	has,
 	scopedMethod,
 	unavailableNativePlugin,
 };

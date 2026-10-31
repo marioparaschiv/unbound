@@ -81,4 +81,6 @@ export {
 	getRuntimeProperties,
 	reload,
 } from '~/native/runtime';
-export { NativePlatform } from '~/native/platform';
+export { NativePlatform, definePlatform } from '~/native/platform';
+export type { PlatformHandlers } from '~/native/platform';
+export { has } from '~/native/capabilities';
