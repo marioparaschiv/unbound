@@ -30,7 +30,6 @@ export type Renderers = {
 	ChatItem: ComponentType<ChatItemProps>;
 };
 
-/** A running platform's embeds: how many are drawn, and the cleanup `stop` returns. */
 export type Embeds = {
 	drawn: () => number;
 	dispose: () => Promise<void> | undefined;

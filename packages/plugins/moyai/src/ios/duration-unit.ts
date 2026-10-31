@@ -1,2 +1,2 @@
 /** Discord's iOS sound manager reports durations in seconds. */
-export const durationUnit = 1000;
+export const msPerDurationUnit = 1000;

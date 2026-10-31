@@ -27,7 +27,6 @@ type LatencyView = {
 };
 
 export type MessageCells = {
-	/** Installs the cell hooks and returns the function that removes them and resolves once every header is restored. */
 	hook(): () => Promise<void>;
 };
 

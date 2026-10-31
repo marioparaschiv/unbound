@@ -27,10 +27,10 @@ export function soundDuration(duration: number | undefined, unit: number): numbe
 /**
  * @description Prepares the Moyai sound with Discord's native sound manager and plays it on demand.
  * @param manager Discord's `DCDSoundManager` native module.
- * @param durationUnit How many milliseconds one unit of the manager's reported duration is.
+ * @param msPerDurationUnit The platform's milliseconds per reported duration unit.
  * @returns `play` restarts the sound, `dispose` stops it and cancels pending work.
  */
-export function createPlayer(manager: SoundManager, durationUnit: number) {
+export function createPlayer(manager: SoundManager, msPerDurationUnit: number) {
 	let duration: number | null = null;
 	let preparing = false;
 	let disposed = false;
@@ -68,7 +68,7 @@ export function createPlayer(manager: SoundManager, durationUnit: number) {
 				}
 
 				duration =
-					soundDuration(metadata?.duration, durationUnit) ?? Sound.fallbackDuration;
+					soundDuration(metadata?.duration, msPerDurationUnit) ?? Sound.fallbackDuration;
 			});
 		} catch (error) {
 			preparing = false;

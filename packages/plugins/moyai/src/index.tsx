@@ -9,7 +9,7 @@ import { subscribeMessages } from '~/events/message-create';
 import { subscribeReactions } from '~/events/reaction-add';
 import { createPlayer, type SoundManager } from '~/sound';
 import { SelectedChannelStore, settings } from '~/modules';
-import { durationUnit } from '~/platform';
+import { msPerDurationUnit } from '~/platform';
 
 let disposePlayer = () => {};
 
@@ -18,7 +18,7 @@ function start() {
 
 	if (!ensureModules('Moyai', { DCDSoundManager, SelectedChannelStore })) return;
 
-	const player = createPlayer(DCDSoundManager, durationUnit);
+	const player = createPlayer(DCDSoundManager, msPerDurationUnit);
 
 	disposePlayer = player.dispose;
 
