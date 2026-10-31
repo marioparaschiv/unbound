@@ -104,8 +104,8 @@ unpatch();
 <ParamField path='method' type='PropOf<parent>' required>
 	The property name of the method on `parent`. The type only accepts keys whose values are functions or constructors.
 </ParamField>
-<ParamField path='callback' type='PatchCallback' required>
-	Called with a [`PatchContext`](#the-patch-context) each time the patched method runs. It is also called with the same `this` as the patched method.
+<ParamField path='callback' type='BeforeCallback | InsteadCallback | AfterCallback' required>
+	Called with the [patch context](#the-patch-context) each time the patched method runs. It is also called with the same `this` as the patched method.
 </ParamField>
 <ParamField path='options' type='PatchOptions'>
 	Per-patch [options](#patch-options).
@@ -127,8 +127,8 @@ Every callback receives a context object. All callbacks on the same call share o
 <ResponseField name='this' type='Self'>
 	The `this` value the method was called with.
 </ResponseField>
-<ResponseField name='result' type='Res | null'>
-	The return value so far. It is `null` until the original or an `instead` patch produces a value, so read it in `after` patches.
+<ResponseField name='result' type='Res'>
+	The return value so far. Only `after` callbacks have it, because it is `null` until the original or an `instead` patch produces a value.
 </ResponseField>
 <ResponseField name='original' type='(...args) => Res'>
 	Calls the unpatched method. It always uses the `this` of the current call, so `original(...args)` keeps the right context. When the patched function is called with `new`, `original` constructs with `new` too.
@@ -212,18 +212,18 @@ The patcher infers `Args`, `Res`, and `Self` from the target function. If the mo
 Patcher.after(Module, 'getUser', (ctx) => {
 	ctx.args;   // [id: number]
 	ctx.this;   // typeof Module
-	ctx.result; // { name: string; age: number } | null
+	ctx.result; // { name: string; age: number }
 });
 ```
 
-If you define a callback outside the patch call, type it with `PatchContext<Args, Result, Self>`. All three type parameters are optional and default to `any`, so pass only the ones you need.
+If you define a callback outside the patch call, type it with the context of its patch kind: `BeforeContext<Args, Res, Self>`, `InsteadContext<Args, Res, Self>` or `AfterContext<Args, Res, Self>`. Only `AfterContext` has `result`.
 
 ```ts
-import { patcher, type PatchContext } from '@unbound-app/api/patcher';
+import { patcher, type AfterContext } from '@unbound-app/api/patcher';
 
-function logUser(ctx: PatchContext<[id: number], { name: string }>) {
+function logUser(ctx: AfterContext<[id: number], { name: string }, typeof Module>) {
 	console.log(ctx.args[0]);   // number
-	console.log(ctx.result);    // { name: string } | null
+	console.log(ctx.result);    // { name: string }
 }
 
 Patcher.after(Module, 'getUser', logUser);
@@ -355,15 +355,18 @@ const isPatched = Boolean(Module.method[patcher.PATCH_SYMBOL]);
 Import types from the patcher entry point:
 
 ```ts
-import type { PatchContext, PatchCallback, PatchOptions } from '@unbound-app/api/patcher';
+import type { AfterCallback, AfterContext, PatchOptions } from '@unbound-app/api/patcher';
 ```
 
 | Type | Describes |
 | --- | --- |
-| `PatchContext<Args, Res, Self>` | The context object passed to callbacks |
-| `PatchCallback<Args, Res, Self>` | A callback: `(ctx: PatchContext) => any` |
+| `BeforeContext<Args, Res, Self>` | The context a `before` callback receives: `args`, `this` and `original` |
+| `InsteadContext<Args, Res, Self>` | The context an `instead` callback receives, the same fields as `BeforeContext` |
+| `AfterContext<Args, Res, Self>` | The context an `after` callback receives: `BeforeContext` plus `result` |
+| `BeforeCallback<Args, Res, Self>` | A `before` callback: returns new arguments or nothing |
+| `InsteadCallback<Args, Res, Self>` | An `instead` callback: returns the result or nothing |
+| `AfterCallback<Args, Res, Self>` | An `after` callback: returns a new result or nothing |
 | `PatchOptions` | `{ once?: boolean; caller?: string }` |
-| `Patch<Args, Res, Self>` | A stored patch: `PatchOptions` plus its `callback` |
 | `PatcherInstance` | The object returned by `createPatcher` |
 | `PatchedModule` | An entry in `patches` |
 | `PatchParent` | Anything that can own a patched method: a function or an object |
