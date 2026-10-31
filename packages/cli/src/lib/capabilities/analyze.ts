@@ -36,9 +36,7 @@ const DEFAULT_OPTIONS: ts.CompilerOptions = {
 
 /**
  * @description Works out the platforms an addon runs on and the Capabilities each needs from its
- * code. Platforms are the keys passed to `definePlatform`; each platform's Capabilities come from the
- * bridge calls reachable from the entry and that platform's handlers. An addon without
- * `definePlatform` runs on every platform, so every platform must provide what it reaches.
+ * code.
  * @param dir The addon's directory; the nearest `tsconfig.json` from here sets the compiler options.
  * @param entry The absolute path of the addon's entry file.
  * @returns The platforms with their Capabilities, and one error per dynamic or misplaced access.
