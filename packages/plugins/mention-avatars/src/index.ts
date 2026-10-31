@@ -21,7 +21,7 @@ function start(context: PluginContext) {
 		MessageStore,
 		SelectedChannelStore,
 		UserStore,
-		generateMessageRowData: RowGenerator.generateMessageRowData,
+		RowGenerator,
 	};
 
 	if (
