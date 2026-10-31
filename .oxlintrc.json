@@ -83,19 +83,45 @@
 							"packages/client/src/hot-refresh",
 							"packages/client/src/dialogs",
 							"packages/client/src/diagnostics",
-							"packages/client/src/links"
+							"packages/client/src/links",
+							"packages/client/src/api",
+							"packages/client/src/lib",
+							"packages/client/src/managers",
+							"packages/client/src/stores"
 						],
 						"deny": ["~/ui"],
 						"except": [
-							"/builtin.ts",
-							"/builtin.tsx",
+							"packages/client/src/commands/builtin.ts",
+							"packages/client/src/debugger/builtin.ts",
+							"packages/client/src/hot-refresh/builtin.ts",
+							"packages/client/src/i18n/builtin.ts",
+							"packages/client/src/links/builtin.ts",
+							"packages/client/src/native/builtin.ts",
+							"packages/client/src/settings/builtin.tsx",
+							"packages/client/src/sync/builtin.ts",
+							"packages/client/src/themes/builtin.ts",
+							"packages/client/src/toasts/builtin.tsx",
+							"packages/client/src/updates/builtin.ts",
 							"packages/client/src/builtins/error-boundary.tsx"
 						],
 						"because": "only a domain's `builtin.ts(x)` may import `ui/`; `ui/` imports domains, never the reverse (D14)"
 					},
 					{
 						"from": ["packages/client/src/ui"],
-						"deny": ["~/builtins"],
+						"deny": [
+							"~/builtins",
+							"~/commands/builtin",
+							"~/debugger/builtin",
+							"~/hot-refresh/builtin",
+							"~/i18n/builtin",
+							"~/links/builtin",
+							"~/native/builtin",
+							"~/settings/builtin",
+							"~/sync/builtin",
+							"~/themes/builtin",
+							"~/toasts/builtin",
+							"~/updates/builtin"
+						],
 						"because": "`ui/` components must not depend on builtins wired in at startup"
 					},
 					{
