@@ -14,6 +14,7 @@ import { DEFAULT_ROLE, ac, roles } from '~/lib/auth/access';
 import { grantTeamRole } from '~/lib/team/site-roles';
 import type { FileRoutesByTo } from '~/routeTree.gen';
 import { purgeUserSubmissions } from '~/lib/staging';
+import { AUTH_ERROR_PATH } from '~/lib/auth/auth-errors';
 import type { Database } from '~/db/database';
 import type { Storage } from '~/lib/storage';
 import * as schema from '~/db/schema';
@@ -94,6 +95,9 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 			storage: 'database',
 			window: env.AUTH_RATE_LIMIT_WINDOW_SECONDS,
 			max: env.AUTH_RATE_LIMIT_MAX,
+		},
+		onAPIError: {
+			errorURL: new URL(AUTH_ERROR_PATH, env.PUBLIC_URL).toString(),
 		},
 		advanced: {
 			ipAddress: {
