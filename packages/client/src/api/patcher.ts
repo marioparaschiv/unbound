@@ -4,15 +4,116 @@
  * updates its mounted instances in place, keeping their state, including when a callback calls hooks.
  * This is the public surface behind `unbound.patcher` and `@unbound-app/api/patcher`.
  */
-import type { PatchCallback, PatchOptions, PatchParent, PatcherInstance, PropOf } from 'possess';
+import type {
+	AnyConstructor,
+	PatchCallback,
+	PatchOptions,
+	AnyFunction,
+	PatchParent,
+	PropOf,
+} from 'possess';
 import uuid from '@unbound-app/utils/uuid';
 import * as Possess from 'possess';
 
 import { patch, recordRemovals } from '~/lib/hot/live-patch';
 
+// An untyped (`any`) target stays untyped instead of collapsing to `unknown`.
+type IsAny<T> = 0 extends 1 & T ? true : false;
+
+type ArgsOf<F> =
+	IsAny<F> extends true
+		? F[]
+		: F extends AnyFunction
+			? Parameters<F>
+			: F extends AnyConstructor
+				? ConstructorParameters<F>
+				: never;
+
+type ResultOf<F> =
+	IsAny<F> extends true
+		? F
+		: F extends AnyFunction
+			? ReturnType<F>
+			: F extends AnyConstructor
+				? InstanceType<F>
+				: never;
+
+type SelfOf<M, F> = unknown extends ThisParameterType<F> ? M : ThisParameterType<F>;
+
 type ScopedPatcher = Pick<PatcherInstance, 'before' | 'instead' | 'after'>;
 
-export * from 'possess';
+export type { PatchOptions, PatchParent, PropOf } from 'possess';
+export { PATCH_SYMBOL, PatchType, patches } from 'possess';
+
+/**
+ * The context a `before` callback receives.
+ * @template Args The method's arguments.
+ * @template Res The method's result.
+ * @template Self The method's `this`.
+ */
+export type BeforeContext<Args extends unknown[], Res, Self> = {
+	args: Args;
+	this: Self;
+	original: (...args: Args) => Res;
+};
+
+/**
+ * The context an `instead` callback receives.
+ * @template Args The method's arguments.
+ * @template Res The method's result.
+ * @template Self The method's `this`.
+ */
+export type InsteadContext<Args extends unknown[], Res, Self> = BeforeContext<Args, Res, Self>;
+
+/**
+ * The context an `after` callback receives, with the result so far.
+ * @template Args The method's arguments.
+ * @template Res The method's result.
+ * @template Self The method's `this`.
+ */
+export type AfterContext<Args extends unknown[], Res, Self> = BeforeContext<Args, Res, Self> & {
+	result: Res;
+};
+
+/**
+ * A `before` callback, which can replace the arguments by returning an array.
+ * @template Args The method's arguments.
+ * @template Res The method's result.
+ * @template Self The method's `this`.
+ */
+export type BeforeCallback<Args extends unknown[], Res, Self> = (
+	ctx: BeforeContext<Args, Res, Self>,
+) => [...Args] | void;
+
+/**
+ * An `instead` callback, whose return value becomes the result unless it is `undefined`.
+ * @template Args The method's arguments.
+ * @template Res The method's result.
+ * @template Self The method's `this`.
+ */
+export type InsteadCallback<Args extends unknown[], Res, Self> = (
+	ctx: InsteadContext<Args, Res, Self>,
+) => Res | void;
+
+/**
+ * An `after` callback, whose return value replaces the result unless it is `undefined`.
+ * @template Args The method's arguments.
+ * @template Res The method's result.
+ * @template Self The method's `this`.
+ */
+export type AfterCallback<Args extends unknown[], Res, Self> = (
+	ctx: AfterContext<Args, Res, Self>,
+) => Res | void;
+
+/**
+ * The patcher `createPatcher` returns.
+ */
+export type PatcherInstance = {
+	before: typeof before;
+	instead: typeof instead;
+	after: typeof after;
+	unpatchAll: () => void;
+};
 
 /**
  * @description Runs a callback before a method, which can replace its arguments by returning an array.
@@ -27,10 +128,16 @@ export * from 'possess';
 export function before<M extends PatchParent, P extends PropOf<M>>(
 	parent: M,
 	method: P,
-	callback: Parameters<typeof Possess.before<M, P>>[2],
+	callback: BeforeCallback<ArgsOf<M[P]>, ResultOf<M[P]>, SelfOf<M, M[P]>>,
+	options?: PatchOptions,
+): () => void;
+export function before(
+	parent: PatchParent,
+	method: string,
+	callback: PatchCallback,
 	options?: PatchOptions,
 ): () => void {
-	return patch(Possess.PatchType.Before, parent, method, callback as PatchCallback, options);
+	return patch(Possess.PatchType.Before, parent, method, callback, options);
 }
 
 /**
@@ -46,10 +153,16 @@ export function before<M extends PatchParent, P extends PropOf<M>>(
 export function instead<M extends PatchParent, P extends PropOf<M>>(
 	parent: M,
 	method: P,
-	callback: Parameters<typeof Possess.before<M, P>>[2],
+	callback: InsteadCallback<ArgsOf<M[P]>, ResultOf<M[P]>, SelfOf<M, M[P]>>,
+	options?: PatchOptions,
+): () => void;
+export function instead(
+	parent: PatchParent,
+	method: string,
+	callback: PatchCallback,
 	options?: PatchOptions,
 ): () => void {
-	return patch(Possess.PatchType.Instead, parent, method, callback as PatchCallback, options);
+	return patch(Possess.PatchType.Instead, parent, method, callback, options);
 }
 
 /**
@@ -65,10 +178,16 @@ export function instead<M extends PatchParent, P extends PropOf<M>>(
 export function after<M extends PatchParent, P extends PropOf<M>>(
 	parent: M,
 	method: P,
-	callback: Parameters<typeof Possess.before<M, P>>[2],
+	callback: AfterCallback<ArgsOf<M[P]>, ResultOf<M[P]>, SelfOf<M, M[P]>>,
+	options?: PatchOptions,
+): () => void;
+export function after(
+	parent: PatchParent,
+	method: string,
+	callback: PatchCallback,
 	options?: PatchOptions,
 ): () => void {
-	return patch(Possess.PatchType.After, parent, method, callback as PatchCallback, options);
+	return patch(Possess.PatchType.After, parent, method, callback, options);
 }
 
 function trackPatches<T extends (...args: never[]) => () => void>(
@@ -127,28 +246,13 @@ export function createPatcher(defaultOptions: string | PatchOptions): PatcherIns
 	defaults.caller ??= uuid();
 	const unpatches = new Set<() => void>();
 	const scoped: ScopedPatcher = {
-		before<M extends PatchParent, P extends PropOf<M>>(
-			parent: M,
-			method: P,
-			callback: Parameters<typeof Possess.before<M, P>>[2],
-			options: PatchOptions = {},
-		) {
+		before(parent, method, callback, options = {}) {
 			return before(parent, method, callback, { ...defaults, ...options });
 		},
-		instead<M extends PatchParent, P extends PropOf<M>>(
-			parent: M,
-			method: P,
-			callback: Parameters<typeof Possess.before<M, P>>[2],
-			options: PatchOptions = {},
-		) {
+		instead(parent, method, callback, options = {}) {
 			return instead(parent, method, callback, { ...defaults, ...options });
 		},
-		after<M extends PatchParent, P extends PropOf<M>>(
-			parent: M,
-			method: P,
-			callback: Parameters<typeof Possess.before<M, P>>[2],
-			options: PatchOptions = {},
-		) {
+		after(parent, method, callback, options = {}) {
 			return after(parent, method, callback, { ...defaults, ...options });
 		},
 	};
