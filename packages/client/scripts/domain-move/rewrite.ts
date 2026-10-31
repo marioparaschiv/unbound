@@ -4,6 +4,8 @@ export const PACKAGE_ROOT = 'packages/client';
 export const SOURCE_ROOT = 'packages/client/src';
 
 const EXTENSIONS = ['.ts', '.tsx', '.js', '.mjs', '.json'];
+const UNAFFECTED: Outcome = { type: 'unaffected' };
+const REMOVED: Outcome = { type: 'removed' };
 
 const ALIAS = /(['"`])~\/([^'"`\s]*)\1/g;
 const RELATIVE =
@@ -11,13 +13,14 @@ const RELATIVE =
 const PACKAGE_PATH = /(['"`])(\.\/)?src\/([^'"`\s]*)\1/g;
 const REPO_PATH = /(['"`])packages\/client\/src\/([^'"`\s]*)\1/g;
 
-/** How a specifier named its module, kept so the rewritten specifier reads the same way. */
 type SpecifierForm = 'file' | 'bare' | 'directory';
 
 type Resolved = {
 	path: string;
 	form: SpecifierForm;
 };
+
+type Outcome = { type: 'unaffected' } | { type: 'removed' } | { type: 'moved'; path: string };
 
 /** The move in repo-relative paths. `known` holds every file that exists or existed before the move. */
 export type Layout = {
@@ -112,65 +115,106 @@ function relativeSpecifier(importer: string, target: string): string {
 	return `./${path}`;
 }
 
-/**
- * @description Rewrites a path relative to `packages/client/src` that names a moved file or folder.
- * @param rest The path after `src/`, possibly a glob such as `api/metro/**`.
- * @param layout The move.
- * @param folders Whether `rest` may name a folder's `index` file, as a `~/` specifier does.
- * @returns The path after the move, `null` for a removed file, or `undefined` when it is unaffected.
- */
-function rewriteSourcePath(
-	rest: string,
-	layout: Layout,
-	folders: boolean = false,
-): string | null | undefined {
-	const resolved = resolveModule(posix.join(SOURCE_ROOT, rest), layout.known, folders);
+function moved(path: string): Outcome {
+	return { type: 'moved', path };
+}
 
-	if (resolved) {
-		if (layout.removed.has(resolved.path)) return null;
+function withPrefix(outcome: Outcome, prefix: string): Outcome {
+	return outcome.type === 'moved' ? moved(prefix + outcome.path) : outcome;
+}
 
-		const target = layout.files.get(resolved.path);
+function incoming(layout: Layout, from: string, to: string): string[] {
+	const names: string[] = [];
 
-		if (!target) return;
-
-		return posix.relative(SOURCE_ROOT, formatPath(target, resolved.form));
-	}
-
-	for (const [from, to] of layout.directories) {
-		const folder = posix.relative(SOURCE_ROOT, from);
-
-		if (isInside(rest, folder)) {
-			return posix.relative(SOURCE_ROOT, to) + rest.slice(folder.length);
+	for (const [source, target] of layout.files) {
+		if (isInside(target, to) && !isInside(source, from)) {
+			names.push(posix.relative(to, target));
 		}
 	}
 
-	return void 0;
+	return names.toSorted();
 }
 
-function rewriteRelative(
-	specifier: string,
-	from: string,
-	to: string,
-	layout: Layout,
-): string | null | undefined {
+function entries(layout: Layout, folder: string): string[] {
+	const names = new Set<string>();
+
+	for (const path of layout.files.keys()) {
+		if (!isInside(path, folder)) {
+			continue;
+		}
+
+		const name = posix.relative(folder, path);
+		const [head] = name.split('/');
+
+		names.add(head === name ? name : `${head}/**`);
+	}
+
+	return [...names].toSorted();
+}
+
+function rewriteFolder(rest: string, from: string, to: string, layout: Layout): Outcome {
+	const folder = posix.relative(SOURCE_ROOT, from);
+	const target = posix.relative(SOURCE_ROOT, to);
+	const suffix = rest.slice(folder.length);
+
+	if (suffix !== '/**' || !incoming(layout, from, to).length) {
+		return moved(target + suffix);
+	}
+
+	return moved(`${target}/{${entries(layout, from).join(',')}}`);
+}
+
+function rewriteSourcePath(rest: string, layout: Layout, folders: boolean = false): Outcome {
+	const resolved = resolveModule(posix.join(SOURCE_ROOT, rest), layout.known, folders);
+
+	if (resolved) {
+		if (layout.removed.has(resolved.path)) {
+			return REMOVED;
+		}
+
+		const target = layout.files.get(resolved.path);
+
+		if (!target) {
+			return UNAFFECTED;
+		}
+
+		return moved(posix.relative(SOURCE_ROOT, formatPath(target, resolved.form)));
+	}
+
+	for (const [from, to] of layout.directories) {
+		if (isInside(rest, posix.relative(SOURCE_ROOT, from))) {
+			return rewriteFolder(rest, from, to, layout);
+		}
+	}
+
+	return UNAFFECTED;
+}
+
+function rewriteRelative(specifier: string, from: string, to: string, layout: Layout): Outcome {
 	const resolved = resolveModule(posix.join(posix.dirname(from), specifier), layout.known);
 
-	if (!resolved) return;
+	if (!resolved) {
+		return UNAFFECTED;
+	}
 
-	if (layout.removed.has(resolved.path)) return null;
+	if (layout.removed.has(resolved.path)) {
+		return REMOVED;
+	}
 
 	const target = layout.files.get(resolved.path) ?? resolved.path;
 
-	if (target === resolved.path && to === from) return;
+	if (target === resolved.path && to === from) {
+		return UNAFFECTED;
+	}
 
 	const path = formatPath(target, resolved.form);
 	const next = relativeSpecifier(to, path);
 
 	if (next.startsWith('..') && isInside(to, SOURCE_ROOT) && isInside(path, SOURCE_ROOT)) {
-		return `~/${posix.relative(SOURCE_ROOT, path)}`;
+		return moved(`~/${posix.relative(SOURCE_ROOT, path)}`);
 	}
 
-	return next;
+	return moved(next);
 }
 
 /**
@@ -186,20 +230,18 @@ export function rewriteSource(text: string, from: string, to: string, layout: La
 	const inPackage = isInside(from, PACKAGE_ROOT);
 	const inSource = isInside(from, SOURCE_ROOT);
 
-	function record(before: string, after: string | null | undefined, quote: string) {
-		if (after === undefined || after === before) {
-			return quote + before + quote;
-		}
-
-		if (after === null) {
+	function record(before: string, outcome: Outcome, quote: string) {
+		if (outcome.type === 'removed') {
 			changes.push({ before });
+		}
 
+		if (outcome.type !== 'moved' || outcome.path === before) {
 			return quote + before + quote;
 		}
 
-		changes.push({ before, after });
+		changes.push({ before, after: outcome.path });
 
-		return quote + after + quote;
+		return quote + outcome.path + quote;
 	}
 
 	let next = text.replace(RELATIVE, (match, lead: string, quote: string, specifier: string) => {
@@ -215,9 +257,7 @@ export function rewriteSource(text: string, from: string, to: string, layout: La
 			return match;
 		}
 
-		const after = rewriteSourcePath(rest, layout, true);
-
-		return record(`~/${rest}`, after && `~/${after}`, quote);
+		return record(`~/${rest}`, withPrefix(rewriteSourcePath(rest, layout, true), '~/'), quote);
 	});
 
 	next = next.replace(PACKAGE_PATH, (match, quote: string, dot = '', rest: string) => {
@@ -225,16 +265,15 @@ export function rewriteSource(text: string, from: string, to: string, layout: La
 			return match;
 		}
 
-		const after = rewriteSourcePath(rest, layout);
+		const outcome = withPrefix(rewriteSourcePath(rest, layout), `${dot}src/`);
 
-		return record(`${dot}src/${rest}`, after && `${dot}src/${after}`, quote);
+		return record(`${dot}src/${rest}`, outcome, quote);
 	});
 
 	next = next.replace(REPO_PATH, (_, quote: string, rest: string) => {
-		const after = rewriteSourcePath(rest, layout);
 		const prefix = `${SOURCE_ROOT}/`;
 
-		return record(prefix + rest, after && prefix + after, quote);
+		return record(prefix + rest, withPrefix(rewriteSourcePath(rest, layout), prefix), quote);
 	});
 
 	if (!inPackage) {
@@ -248,9 +287,11 @@ export function rewriteSource(text: string, from: string, to: string, layout: La
 			continue;
 		}
 
-		const after = escapeSlashes(`/src/${posix.relative(SOURCE_ROOT, target)}/`);
+		const after =
+			escapeSlashes(`/src/${posix.relative(SOURCE_ROOT, target)}/`) +
+			excluding(incoming(layout, folder, target));
 
-		next = next.replaceAll(before, after);
+		next = next.replaceAll(before, () => after);
 		changes.push({ before, after });
 	}
 
@@ -259,6 +300,16 @@ export function rewriteSource(text: string, from: string, to: string, layout: La
 
 function escapeSlashes(path: string): string {
 	return path.replaceAll('/', '\\/');
+}
+
+function excluding(names: string[]): string {
+	if (!names.length) {
+		return '';
+	}
+
+	const escaped = names.map((name) => name.replaceAll(/[.*+?^${}()|[\]\\/]/g, '\\$&'));
+
+	return `(?!(?:${escaped.join('|')})$)`;
 }
 
 export default { PACKAGE_ROOT, SOURCE_ROOT, resolveModule, aliasFor, rewriteSource };

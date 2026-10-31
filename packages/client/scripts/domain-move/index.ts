@@ -13,8 +13,6 @@ import { parseArgs } from 'node:util';
 import { SOURCE_ROOT, aliasFor, rewriteSource, type Layout } from './rewrite';
 import table from './table';
 
-// bun packages/client/scripts/domain-move/index.ts [--stubs] [--contract] [--check] [--only <old path prefix>]...
-
 export type Table = {
 	moves: Record<string, string>;
 	removals: string[];
@@ -173,11 +171,6 @@ function scannedFiles(root: string, files: string[], layout: Layout): string[] {
 	});
 }
 
-/**
- * @description Sorts imports and reformats the files the move wrote, since new specifiers change line lengths.
- * @param root The repo root.
- * @param paths The repo-relative files to tidy.
- */
 function tidy(root: string, paths: string[]) {
 	const code = paths.filter(
 		(path) => /\.(?:ts|tsx|js|mjs)$/.test(path) && existsSync(join(root, path)),

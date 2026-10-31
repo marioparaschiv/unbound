@@ -1,13 +1,15 @@
 import { describe, expect, test } from 'bun:test';
+import { join, posix } from 'node:path';
 import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 
 import { kept, moves, removals } from './table';
 import { isStub } from './index';
 
 const SOURCE = join(import.meta.dir, '../../src');
+const SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)['"]([^'"]+)['"]/g;
+const BUILTIN = /^[^/]+\/builtin\.tsx?$/;
+const UI_IMPORTS_LEFT_FOR_SLICE_28 = ['index.ts'];
 
-/** The plan §1 domains, plus the three folders for modules the plan does not name. */
 const DOMAINS = new Set([
 	'core',
 	'metro',
@@ -40,6 +42,36 @@ function sourceFiles(): string[] {
 	const files = new Bun.Glob('**/*').scanSync({ cwd: SOURCE });
 
 	return [...files].filter((path) => !isStub(readFileSync(join(SOURCE, path), 'utf8')));
+}
+
+function destinationOf(path: string): string | undefined {
+	for (const [from, to] of Object.entries(moves)) {
+		if (path === from) {
+			return to;
+		}
+
+		if (from.endsWith('/') && path.startsWith(from)) {
+			return to + path.slice(from.length);
+		}
+	}
+
+	return void 0;
+}
+
+function importsUi(path: string): boolean {
+	const text = readFileSync(join(SOURCE, path), 'utf8');
+
+	return [...text.matchAll(SPECIFIER)].some(([, specifier = '']) => {
+		const named = specifier.startsWith('.')
+			? posix.join(posix.dirname(path), specifier)
+			: specifier.replace(/^~\//, '');
+
+		const moving = ['', '.ts', '.tsx', '/index.ts'].some((extension) =>
+			destinationOf(named + extension),
+		);
+
+		return !moving && (named === 'ui' || named.startsWith('ui/'));
+	});
 }
 
 describe('domain move table', () => {
@@ -75,6 +107,16 @@ describe('domain move table', () => {
 		);
 
 		expect(builtins.toSorted()).toEqual(kept.toSorted());
+	});
+
+	test('moves no ui/ import into a domain file other than its builtin (D14)', () => {
+		const offenders = sourceFiles().filter((path) => {
+			const destination = destinationOf(path);
+
+			return destination !== undefined && !BUILTIN.test(destination) && importsUi(path);
+		});
+
+		expect(offenders).toEqual(UI_IMPORTS_LEFT_FOR_SLICE_28);
 	});
 
 	test('deletes exactly the plan §1 files in contract mode', () => {

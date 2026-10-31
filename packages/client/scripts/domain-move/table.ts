@@ -3,7 +3,6 @@
  * A key ending in `/` moves every file under that folder. Files not listed here stay where they are.
  */
 export const moves: Record<string, string> = {
-	// core
 	'entry.ts': 'core/entry.ts',
 	'index.ts': 'core/index.ts',
 	'preinitialize.ts': 'core/preinitialize.ts',
@@ -22,14 +21,11 @@ export const moves: Record<string, string> = {
 	'lib/discord-support.ts': 'core/discord-support.ts',
 	'lib/discord-support.test.ts': 'core/discord-support.test.ts',
 
-	// metro
 	'api/metro/': 'metro/',
 	'lib/cache.ts': 'metro/cache.ts',
 
-	// patcher
 	'api/patcher.ts': 'patcher/api.ts',
 
-	// commands
 	'api/commands.ts': 'commands/api.ts',
 	'lib/commands/': 'commands/',
 	'builtins/commands.ts': 'commands/builtin.ts',
@@ -37,11 +33,9 @@ export const moves: Record<string, string> = {
 	'builtins/format-code-block.ts': 'commands/format-code-block.ts',
 	'builtins/format-code-block.test.ts': 'commands/format-code-block.test.ts',
 
-	// storage
 	'api/storage.ts': 'storage/api.ts',
 	'api/storage.test.ts': 'storage/api.test.ts',
 
-	// native
 	'api/native.ts': 'native/native.ts',
 	'api/fs.ts': 'native/fs.ts',
 	'api/native-runtime.ts': 'native/runtime.ts',
@@ -55,10 +49,8 @@ export const moves: Record<string, string> = {
 	'lib/unbound-path.ts': 'native/unbound-path.ts',
 	'lib/unbound-path.test.ts': 'native/unbound-path.test.ts',
 
-	// assets
 	'api/assets.ts': 'assets/api.ts',
 
-	// i18n
 	'api/i18n.ts': 'i18n/api.ts',
 	'api/create-moment-calendar-locale.ts': 'i18n/create-moment-calendar-locale.ts',
 	'api/create-moment-calendar-locale.test.ts': 'i18n/create-moment-calendar-locale.test.ts',
@@ -70,7 +62,6 @@ export const moves: Record<string, string> = {
 	'api/resolve-moment-locale.test.ts': 'i18n/resolve-moment-locale.test.ts',
 	'builtins/i18n.ts': 'i18n/builtin.ts',
 
-	// toasts
 	'api/toasts.ts': 'toasts/api.ts',
 	'stores/toasts.ts': 'toasts/state.ts',
 	'lib/toast-content.ts': 'toasts/content.ts',
@@ -82,7 +73,6 @@ export const moves: Record<string, string> = {
 	'builtins/find-toast-containers.ts': 'toasts/find-toast-containers.ts',
 	'builtins/find-toast-containers.test.ts': 'toasts/find-toast-containers.test.ts',
 
-	// settings
 	'api/settings.ts': 'settings/api.ts',
 	'stores/settings.ts': 'settings/state.ts',
 	'lib/unbound-settings.ts': 'settings/unbound.ts',
@@ -91,7 +81,6 @@ export const moves: Record<string, string> = {
 	'builtins/find-settings-overview.ts': 'settings/find-overview.ts',
 	'builtins/find-settings-overview.test.ts': 'settings/find-overview.test.ts',
 
-	// addons
 	'managers/base.ts': 'addons/manager.ts',
 	'managers/addons.ts': 'addons/addons.ts',
 	'managers/addon-lifecycle.ts': 'addons/lifecycle.ts',
@@ -106,7 +95,6 @@ export const moves: Record<string, string> = {
 	'lib/addon-versions.ts': 'addons/versions.ts',
 	'lib/addon-versions.test.ts': 'addons/versions.test.ts',
 
-	// plugins, themes, icon packs, fonts
 	'managers/plugins.ts': 'plugins/manager.ts',
 	'ui/addons/sample-addons.ts': 'plugins/sample-addons.ts',
 	'managers/themes.ts': 'themes/manager.ts',
@@ -118,12 +106,10 @@ export const moves: Record<string, string> = {
 	'managers/icons.ts': 'icon-packs/manager.ts',
 	'managers/fonts.ts': 'fonts/manager.ts',
 
-	// marketplace
 	'lib/catalog.ts': 'marketplace/catalog.ts',
 	'lib/catalog.test.ts': 'marketplace/catalog.test.ts',
 	'stores/marketplace.ts': 'marketplace/state.ts',
 
-	// updates
 	'lib/updates.ts': 'updates/addon-updates.ts',
 	'lib/updates.test.ts': 'updates/addon-updates.test.ts',
 	'lib/loader-updates.ts': 'updates/loader-updates.ts',
@@ -131,7 +117,6 @@ export const moves: Record<string, string> = {
 	'stores/updates.ts': 'updates/state.ts',
 	'builtins/updater.ts': 'updates/builtin.ts',
 
-	// sync
 	'managers/cloud-sync.ts': 'sync/api.ts',
 	'lib/sync.ts': 'sync/merge.ts',
 	'lib/sync.test.ts': 'sync/merge.test.ts',
@@ -139,26 +124,22 @@ export const moves: Record<string, string> = {
 	'lib/discord-oauth.ts': 'sync/discord-oauth.ts',
 	'builtins/cloud-sync.ts': 'sync/builtin.ts',
 
-	// builtins (error-boundary, staff-mode, tracking and discord-support stay)
 	'managers/builtins.ts': 'builtins/registry.ts',
+	'managers/builtins.test.ts': 'builtins/registry.test.ts',
 
-	// debugger
 	'builtins/debugger.ts': 'debugger/builtin.ts',
 	'lib/reload-summary.ts': 'debugger/reload-summary.ts',
 	'lib/reload-summary.test.ts': 'debugger/reload-summary.test.ts',
 
-	// hot-refresh
 	'lib/hot/': 'hot-refresh/',
 	'builtins/hot-refresh.ts': 'hot-refresh/builtin.ts',
 
-	// Not named by plan §1: the dialogs namespace, crash and debug reports, and deep links.
 	'api/dialogs.tsx': 'dialogs/api.tsx',
 	'lib/crash-reports.ts': 'diagnostics/crash-reports.ts',
 	'lib/crash-report.ts': 'diagnostics/crash-report.ts',
 	'lib/crash-report.test.ts': 'diagnostics/crash-report.test.ts',
 	'lib/debug-report/': 'diagnostics/',
 	'builtins/links.ts': 'links/builtin.ts',
-	'builtins/share.tsx': 'links/share.tsx',
 	'builtins/share-link.ts': 'links/share-link.ts',
 	'builtins/share-link.test.ts': 'links/share-link.test.ts',
 	'builtins/resolve-unbound-link.ts': 'links/resolve-unbound-link.ts',
