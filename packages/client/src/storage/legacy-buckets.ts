@@ -75,34 +75,37 @@ function renameBucket(name: string, target: string) {
 	clear(name);
 }
 
+// Unlike a Bucket, a legacy state wins: an `astral.*` id only existed after the rename, so its state is the newer one.
 function renameStates(bucket: string) {
 	const states = get<SettingsValue | undefined>(bucket, 'states', undefined);
 
 	if (!isSettingsObject(states)) return;
 
 	const renamed: SettingsObject = {};
-	let changed = false;
+	const legacy: [string, SettingsValue][] = [];
 
 	for (const [id, state] of Object.entries(states)) {
 		const target = renamedId(id);
 
-		if (!target) {
+		if (target) {
+			legacy.push([target, state]);
+		} else {
 			renamed[id] = state;
-			continue;
 		}
-
-		changed = true;
-		renamed[target] = states[target] ?? state;
 	}
 
-	if (changed) {
-		set(bucket, 'states', renamed);
+	if (!legacy.length) return;
+
+	for (const [target, state] of legacy) {
+		renamed[target] = state;
 	}
+
+	set(bucket, 'states', renamed);
 }
 
 /**
  * @description Moves settings saved under the legacy `astral` names to the `unbound` names, once, before anything reads them.
- * A value already saved under the new name is kept: the loader kept writing its own keys to `unbound` throughout.
+ * A Bucket value already saved under the new name is kept: the loader kept writing its own keys to `unbound` throughout.
  */
 export function renameLegacyBuckets(): void {
 	for (const name of Object.keys(settings)) {

@@ -77,7 +77,7 @@ test('keeps every value already saved under the unbound names and fills only wha
 	});
 });
 
-test('renames plugin states keyed by a legacy id, keeping a state the new id already has', () => {
+test('renames plugin states keyed by a legacy id, replacing the older state of the new id', () => {
 	settings.plugins = {
 		states: {
 			'astral.moyai': true,
@@ -91,7 +91,7 @@ test('renames plugin states keyed by a legacy id, keeping a state the new id alr
 	renameLegacyBuckets();
 
 	expect(settings.plugins).toEqual({
-		states: { 'unbound.moyai': true, 'unbound.translate': false, 'mp.clean-embeds': true },
+		states: { 'unbound.moyai': true, 'unbound.translate': true, 'mp.clean-embeds': true },
 		held: { 'mp.message-timestamps': '2.2.0' },
 	});
 });
