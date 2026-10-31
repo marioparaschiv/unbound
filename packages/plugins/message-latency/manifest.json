@@ -15,5 +15,36 @@
 	"version": "1.1.1",
 	"icon": "TimerIcon",
 	"minNativePluginApi": "1.0.0",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"platformCapabilities": {
+		"ios": [
+			"native.fabric.async",
+			"native.objc.batch",
+			"native.objc.classes",
+			"native.objc.hooks",
+			"native.objc.invoke",
+			"native.objc.invokeAsync",
+			"native.objc.ivars",
+			"native.objc.snapshot",
+			"native.runtime.events"
+		],
+		"android": [
+			"native.fabric.async",
+			"native.java.batch",
+			"native.java.classes",
+			"native.java.construct",
+			"native.java.fields",
+			"native.java.hooks",
+			"native.java.invoke",
+			"native.java.invokeAsync",
+			"native.runtime.events"
+		]
+	},
+	"bytecode": {
+		"98": "cd693fd2565cb904869a5d0775cdc0d1c82baec2ac6a9d6d81065355f415ebe6958c2a9187d1d30601c852a1cc4d53372fc2fd6e9a3f3cb42625725dcc1a37e1"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "qyk/ZdrfyPg8mT/rX7geKEmuvAEsKYzdSPrqIaGCa3l31IsoTEjMxTObuv9Ryy61LyYc7px2EM1r6nKCZuepCg=="
+	}
 }

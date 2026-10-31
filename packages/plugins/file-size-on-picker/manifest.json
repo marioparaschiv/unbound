@@ -15,5 +15,21 @@
 	"version": "1.0.2",
 	"icon": "ImageIcon",
 	"minNativePluginApi": "1.0.0",
-	"main": "index.ts"
+	"main": "index.ts",
+	"platformCapabilities": {
+		"android": [
+			"native.java.batch",
+			"native.java.classes",
+			"native.java.fields",
+			"native.java.invoke",
+			"native.java.invokeAsync"
+		]
+	},
+	"bytecode": {
+		"98": "4b12d73553b908d0fd5d3d7461abc0c7e1037eba906b2cb191a6dbad86572060813b4f8c276c7c096138f30596fe2e6ba03bddba724390dadf965dd68c89e222"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "C4qzRZ9shtcCX9DEdD0c0C8bCZnrs6jDZnE6CSKddbwZfcVo+Ym2eoGdkoJOHOPMVM2E0W4oCH+GKeoM/5uGBA=="
+	}
 }
