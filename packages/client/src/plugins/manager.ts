@@ -1,12 +1,15 @@
 import type { PushedManifest, Plugin, PluginContext } from '@unbound-app/types';
+import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 
-import { createScopedReact, performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
 import { attributeAddon, crashGuardKey, setFreezeListener } from '~/addons/crash-guard';
+import { performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
+import type { AddonGlobals, AddonScope } from '~/addons/scope';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { reload as reloadApp } from '~/native/native';
 import type { ReloadResult } from '~/addons/addons';
+import { createAddonScope } from '~/addons/scope';
 import { setOwnerCheck } from '~/commands/owners';
 import { registry } from '~/commands/registry';
 import { Manager } from '~/addons/manager';
@@ -15,7 +18,9 @@ import { Addons } from '~/addons/addons';
 /**
  * @description Manages plugins, building on the base {@link Addons} manager to load and evaluate plugin bundles.
  */
-type PluginFactory = (react: ReturnType<typeof createScopedReact>) => ReturnType<typeof JSON.parse>;
+type PluginFactory = (
+	...globals: AddonGlobals[keyof AddonGlobals][]
+) => ReturnType<typeof JSON.parse>;
 
 type ScannedPlugin = {
 	bundle: string;
@@ -112,18 +117,24 @@ export class Plugins extends Addons<Plugin> {
 		return result;
 	}
 
+	protected createScope(entity: Addon<Plugin>): AddonScope {
+		return createAddonScope(entity);
+	}
+
 	/**
-	 * @description Evaluates a plugin bundle's IIFE and resolves it to the plugin instance. A bundle built
-	 * by `ubd dev` registers its components for hot refresh under the plugin's id.
+	 * @description Evaluates a plugin bundle's IIFE with its scope's globals and resolves it to the plugin
+	 * instance. A bundle built by `ubd dev` registers its components for hot refresh under the plugin's id.
 	 * @param bundle The raw plugin bundle to evaluate.
 	 * @param id The plugin's id.
+	 * @param scope The globals {@link createScope} made for this start.
 	 * @returns The resolved plugin instance.
 	 */
-	protected handleBundle(bundle: string, id: string): Plugin {
+	protected handleBundle(bundle: string, id: string, scope: AddonScope): Plugin {
 		const iife = this.factoryFor(bundle, id);
+		const globals = ADDON_SCOPE_GLOBALS.map((name) => scope.globals[name]);
 
 		return withRefreshScope(id, () => {
-			const payload = iife(createScopedReact());
+			const payload = iife(...globals);
 			const instance = typeof payload === 'function' ? payload() : payload;
 
 			return instance?.default ?? instance;
@@ -145,8 +156,8 @@ export class Plugins extends Addons<Plugin> {
 	}
 
 	private sourceFactory(bundle: string): PluginFactory {
-		// oxlint-disable-next-line no-eval
-		return eval(`((React) => { return ${bundle} })`);
+		// oxlint-disable-next-line typescript/no-implied-eval
+		return new Function(...ADDON_SCOPE_GLOBALS, `return ${bundle}`) as PluginFactory;
 	}
 
 	/**

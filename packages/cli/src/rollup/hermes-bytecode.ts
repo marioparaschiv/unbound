@@ -1,5 +1,6 @@
 import hermesManifest from '@unbound-app/rollup-plugin-hermes/dist/manifest.js';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 import { execFile } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -19,7 +20,7 @@ const { fetchManifest, resolveHermesTargets } = hermesManifest;
  * @returns The wrapped source.
  */
 export function bytecodeSource(code: string): string {
-	return `((React) => { return ${code} })`;
+	return `((${ADDON_SCOPE_GLOBALS.join(', ')}) => { return ${code} })`;
 }
 
 /**
