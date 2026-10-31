@@ -27,14 +27,14 @@ function MediaRow({ media, onRemove }: MediaRowProps) {
 				mimeType.startsWith('image/') ? (
 					<Image source={{ uri }} style={{ borderRadius: 8, height: 48, width: 48 }} />
 				) : (
-					<Discord.TableRow.Icon source={assets.getIDByName('VideoIcon')} />
+					<Discord.TableRow.Icon source={assets.getIdByName('VideoIcon')} />
 				)
 			}
 			trailing={
 				<Discord.IconButton
 					size='sm'
 					variant='secondary'
-					icon={assets.getIDByName('XSmallIcon')}
+					icon={assets.getIdByName('XSmallIcon')}
 					accessibilityLabel={`Remove ${media.fileName}`}
 					onPress={onRemove}
 				/>

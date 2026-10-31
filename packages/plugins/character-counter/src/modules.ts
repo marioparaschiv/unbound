@@ -1,12 +1,9 @@
-import { metro, patcher, storage } from '@unbound-app/api';
+import { metro, flux } from '@unbound-app/api';
 
 export const ChatInputs = metro.findByProps('getBestActiveInputForChannelId', { lazy: true });
-export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
-export const ChannelStore = metro.findStore('Channel', { lazy: true });
-export const UserStore = metro.stores.Users;
+export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
+export const ChannelStore = flux.getStore('Channel', { lazy: true });
+export const UserStore = flux.getStore('User', { lazy: true });
 
 // The same module as `metro.common.Theme`, which the generated typings do not declare yet.
 export const Theme = metro.findByProps('colors', 'internal', { lazy: true });
-
-export const settings = storage.getStore('astral.character-counter');
-export const Patcher = patcher.createPatcher('astral.character-counter');

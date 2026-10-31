@@ -5,7 +5,7 @@ import { toasts } from '@unbound-app/api';
  * @param content The toast's text.
  */
 export function notify(content: string): void {
-	toasts.showToast({ title: 'Custom Commands', content });
+	toasts.show({ title: 'Custom Commands', content });
 }
 
 // UNKNOWN: a caught error can be any thrown value.

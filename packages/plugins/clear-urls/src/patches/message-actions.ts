@@ -1,6 +1,8 @@
-import { MessageActions, Patcher } from '~/modules';
+import { patcher } from '@unbound-app/api';
+
 import { cleanUrls, compileRules } from '~/clean-urls';
 import { DEFAULT_RULES } from '~/constants';
+import { MessageActions } from '~/modules';
 
 type Draft = {
 	content: string;
@@ -23,27 +25,21 @@ export function patchedMethods(): string[] {
 
 /**
  * @description Removes tracking parameters from links in messages as they are sent or edited.
- * @returns A function that removes the patches.
  */
-export function patchMessageActions(): () => void {
+export function patchMessageActions(): void {
 	const rules = compileRules(DEFAULT_RULES);
 
 	const methods = ['sendMessage', 'editMessage'].filter(
 		(method) => typeof MessageActions[method] === 'function',
 	);
-	const unpatches = methods.map((method) =>
-		Patcher.before(MessageActions, method, ({ args }) => {
+
+	for (const method of methods) {
+		patcher.before(MessageActions, method, ({ args }) => {
 			const draft = args.find(isDraft);
 
 			if (draft) draft.content = cleanUrls(draft.content, rules);
-		}),
-	);
+		});
+	}
 
 	patched = methods;
-
-	return () => {
-		for (const unpatch of unpatches) unpatch();
-
-		patched = [];
-	};
 }

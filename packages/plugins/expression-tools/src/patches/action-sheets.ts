@@ -4,11 +4,12 @@ import {
 	type ElementNode,
 } from '@unbound-plugins/shared/react/find-element';
 import type { AnyProps } from '@unbound-app/api/metro';
+import { patcher } from '@unbound-app/api';
 import { createElement } from 'react';
 
 import { getSheetKind, parseExpression, type Expression, type ExpressionKind } from '~/expression';
 import ExpressionActionBar from '~/components/expression-action-bar';
-import { ActionSheets, Patcher } from '~/modules';
+import { ActionSheets } from '~/modules';
 
 export type ExpressionSheetPatches = ReturnType<typeof createExpressionSheetPatches>;
 
@@ -54,22 +55,21 @@ function isDetailSheet({ props }: ElementNode): boolean {
 
 /**
  * @description Creates the patches that add the action bar to emoji and sticker detail sheets. Discord creates these components lazily, so each one is patched when it first appears.
- * @returns Functions that patch a sheet module or a detail element once, and `dispose`, which removes every patch and ignores sheets that load later.
+ * @returns Functions that patch a sheet module or a detail element once, and `stop`, which ignores sheets that load after the plugin stops.
  */
 export function createExpressionSheetPatches() {
 	const patched = new WeakSet<object>();
-	const unpatches: (() => void)[] = [];
-	let disposed = false;
+	let stopped = false;
 
 	function afterOnce(
 		owner: AnyProps,
 		method: string,
-		callback: Parameters<typeof Patcher.after<AnyProps, string>>[2],
+		callback: Parameters<typeof patcher.after<AnyProps, string>>[2],
 	) {
-		if (disposed || patched.has(owner) || typeof owner[method] !== 'function') return;
+		if (stopped || patched.has(owner) || typeof owner[method] !== 'function') return;
 
 		patched.add(owner);
-		unpatches.push(Patcher.after(owner, method, callback));
+		patcher.after(owner, method, callback);
 	}
 
 	function patchDetailSheet(detail: AnyProps, expression: Expression, sheetKey: string) {
@@ -93,22 +93,19 @@ export function createExpressionSheetPatches() {
 		});
 	}
 
-	function dispose() {
-		disposed = true;
-
-		for (const unpatch of unpatches.splice(0)) unpatch();
+	function stop() {
+		stopped = true;
 	}
 
-	return { patchExpressionSheet, patchDetailSheet, dispose };
+	return { patchExpressionSheet, patchDetailSheet, stop };
 }
 
 /**
  * @description Watches `openLazy` for emoji and sticker sheets, and patches each sheet's component once it loads.
  * @param sheets The patches that add the action bar to a loaded sheet.
- * @returns A function that removes the patch.
  */
-export function patchActionSheets(sheets: ExpressionSheetPatches): () => void {
-	return Patcher.before(ActionSheets, 'openLazy', ({ args: [load, key] }) => {
+export function patchActionSheets(sheets: ExpressionSheetPatches): void {
+	patcher.before(ActionSheets, 'openLazy', ({ args: [load, key] }) => {
 		if (typeof key !== 'string' || !load?.then) return;
 
 		const kind = getSheetKind(key);

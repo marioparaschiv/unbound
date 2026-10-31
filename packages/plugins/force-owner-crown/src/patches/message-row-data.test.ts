@@ -10,11 +10,21 @@ const scope = installAddonGlobals({
 	manifest: { id: 'astral.force-owner-crown' },
 	unbound: {
 		assets: {
-			getIDByName: (name: string) => (name === 'ic_crown_16px' ? 42 : undefined),
-			getByID: () => ({
+			getIdByName: (name: string) => (name === 'ic_crown_16px' ? 42 : undefined),
+			getById: () => ({
 				httpServerLocation: '/assets/images/native/icons',
 				name: 'ic_crown_16px',
 			}),
+		},
+		flux: {
+			getStore: (name: string) =>
+				name === 'Guild' ? { getGuild: (id: string) => guilds.get(id) } : undefined,
+		},
+		native: {
+			definePlatform:
+				(handlers: Record<string, (...args: never[]) => unknown>) =>
+				(...args: never[]) =>
+					handlers[platform](...args),
 		},
 	},
 });
@@ -23,17 +33,11 @@ const MessageRowData = { generateMessageRowData: (message: Row['message']): Row 
 
 scope.metro.register(MessageRowData);
 scope.metro.register({ getAssetUriForEmbed: (id: number) => `embed://${id}` });
-scope.metro.stores.Guilds = { getGuild: (id: string) => guilds.get(id) };
 
 mock.module('@unbound-app/api', () => scope.unbound);
 
 mock.module('react-native', () => ({
 	Image: { resolveAssetSource: () => ({ uri: 'resolved://crown' }) },
-	Platform: {
-		get OS() {
-			return platform;
-		},
-	},
 }));
 
 const { patchOwnerCrown } = await import('~/patches/message-row-data');
@@ -51,14 +55,9 @@ beforeEach(() => {
 });
 
 describe('patchOwnerCrown', () => {
-	test('patches the message row builder under the plugin id', () => {
-		expect(scope.patcher.patches).toEqual([
-			{
-				kind: 'after',
-				target: MessageRowData,
-				method: 'generateMessageRowData',
-				caller: 'astral.force-owner-crown',
-			},
+	test('patches the message row builder through the scoped patcher', () => {
+		expect(scope.patcher.patches).toMatchObject([
+			{ kind: 'after', target: MessageRowData, method: 'generateMessageRowData' },
 		]);
 	});
 

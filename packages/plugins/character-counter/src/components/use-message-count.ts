@@ -1,3 +1,4 @@
+import type { FluxUser } from '@unbound-app/api/flux';
 import { useEffect, useState } from 'react';
 
 import { ChatInputs, UserStore } from '~/modules';
@@ -5,12 +6,15 @@ import { characterLimit } from '~/counter';
 
 type MessageCount = { length: number; limit: number };
 
+type PremiumUser = FluxUser & { premiumType?: number };
+
 function readCount(channelId: string): MessageCount {
 	const text = ChatInputs.getBestActiveInputForChannelId(channelId)?.getText?.();
+	const user: PremiumUser | undefined = UserStore.getCurrentUser();
 
 	return {
 		length: typeof text === 'string' ? text.length : 0,
-		limit: characterLimit(UserStore.getCurrentUser()?.premiumType),
+		limit: characterLimit(user?.premiumType),
 	};
 }
 
