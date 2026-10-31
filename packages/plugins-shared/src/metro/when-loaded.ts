@@ -1,4 +1,4 @@
-import type { MetroFilter, MetroLazySearchOptions } from '@unbound-app/api/metro';
+import type { MetroFilter, MetroModuleLoadedOptions } from '@unbound-app/api/metro';
 import { metro } from '@unbound-app/api';
 
 type Cleanup = () => void;
@@ -6,38 +6,19 @@ type Cleanup = () => void;
 /** A metro filter, or a module's source file path such as `modules/chat/native/TypingIndicator.tsx`. */
 export type ModuleSource = MetroFilter | string;
 
-export type WhenLoadedOptions = Omit<MetroLazySearchOptions, 'signal'>;
+export type WhenLoadedOptions = MetroModuleLoadedOptions;
 
 function toFilter(source: ModuleSource): MetroFilter {
 	return typeof source === 'string' ? metro.filters.byFilePath(source) : source;
 }
 
-function findFirst<T>(
-	sources: ModuleSource[],
-	options: WhenLoadedOptions,
-	signal: AbortSignal,
-): T | Promise<T | undefined> {
-	const waits: Promise<T | undefined>[] = [];
-
-	for (const source of sources) {
-		const found = metro.findLazy(toFilter(source), { ...options, signal });
-
-		if (!(found instanceof Promise)) {
-			return found;
-		}
-
-		waits.push(found);
-	}
-
-	return Promise.race(waits);
-}
-
 /**
- * @description Applies a feature to a module once it loads, now or later, so `stop` can cancel the wait or remove the feature.
+ * @description Applies a feature to a module once it loads, without loading it, so `stop` can cancel the wait or remove the feature.
+ * A loaded module gets the feature at once; otherwise it is applied while the module initializes, before Discord reads it.
  * @template T The module's type.
  * @param source The module's filter or file path, or several in order of preference: the first loaded wins, else the first to load.
  * @param apply Applies the feature and returns the function that removes it, or nothing when it did not apply.
- * @param options Metro search options, such as `interop`; a file path always yields the module's exports.
+ * @param options Metro wait options, such as `interop`; a file path always yields the module's exports.
  * @returns A function that stops waiting and removes the feature if it was applied; call it in `stop`.
  */
 export function whenLoaded<T extends object>(
@@ -45,30 +26,40 @@ export function whenLoaded<T extends object>(
 	apply: (module: T) => Cleanup | void,
 	options: WhenLoadedOptions = {},
 ): Cleanup {
-	const controller = new AbortController();
 	const sources = Array.isArray(source) ? source : [source];
+	const waits: Cleanup[] = [];
+	let loaded = false;
 	let remove: Cleanup | void;
 
-	void Promise.resolve(findFirst<T>(sources, options, controller.signal)).then((module) => {
-		if (controller.signal.aborted) return;
+	function stopWaiting() {
+		for (const stop of waits) stop();
+	}
 
-		// Ends the waits on the other sources.
-		controller.abort();
+	function load(module: T) {
+		if (loaded) return;
 
-		if (module) {
-			remove = apply(module);
+		loaded = true;
+		stopWaiting();
+		remove = apply(module);
+	}
+
+	for (const candidate of sources) {
+		if (loaded) {
+			break;
 		}
-	});
+
+		waits.push(metro.onModuleLoaded(toFilter(candidate), load, options));
+	}
 
 	return () => {
-		controller.abort();
+		stopWaiting();
 		remove?.();
 		remove = undefined;
 	};
 }
 
 /**
- * @description Applies a feature once every module it needs has loaded, now or later, for features that read their modules through lazy handles.
+ * @description Applies a feature once every module it needs has loaded, without loading any, for features that read their modules through lazy handles.
  * @param sources One entry per module, each a filter, a file path, or candidates as `whenLoaded` takes them.
  * @param apply Applies the feature and returns the function that removes it, or nothing when it did not apply.
  * @returns A function that stops waiting and removes the feature if it was applied; call it in `stop`.
