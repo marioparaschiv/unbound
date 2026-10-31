@@ -19,6 +19,7 @@ import {
 	groupByOwner,
 	typeOnlyStatements,
 } from './transform';
+import { ADDON_SCOPE } from './addon-scope';
 import { parseSource } from './project';
 import { bundle } from './bundle';
 
@@ -76,8 +77,8 @@ function docComment(doc: string): string {
  * @description Emits the SDK's `global.d.ts`: the addon-facing ambient globals (`$$DEV$$`,
  * `NativePlugin`, `React`, …) from the `@unbound-app/types` `declare global` block, a re-export of the
  * shared types (so `@unbound-app/api/global` stays their public home even though `_internal.d.ts` is
- * unlisted), and the `UnboundGlobal` interface that types `window.unbound` and the ambient `unbound`
- * const. Shared types are never re-declared here - they are imported from `_internal.d.ts`.
+ * unlisted), the `UnboundGlobal` interface that types `window.unbound`, and the `AddonScope` type with
+ * an ambient const per Addon scope global. Shared types are never re-declared here - they are imported from `_internal.d.ts`.
  * @param entries The emitted module entries; only top-level capability modules appear on `unbound.*`.
  * @param internalExports The names the `_internal.d.ts` hoist file exports, re-exported for public access.
  * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file, used
@@ -114,7 +115,18 @@ export function buildGlobal(
 
 	const ambient = sourceFile.getStatements().filter(Node.isModuleDeclaration);
 
-	const referenced = collectReferencedNames(ambient);
+	const scope = sourceFile.addTypeAlias({
+		isExported: true,
+		name: 'AddonScope',
+		type: `{ ${Object.entries(ADDON_SCOPE)
+			.map(([name, global]) => `${name}: ${global.type};`)
+			.join(' ')} }`,
+		docs: [
+			'The globals a plugin runs with, keyed by name. Plugin code reads them without an import.',
+		],
+	});
+
+	const referenced = collectReferencedNames([...ambient, scope]);
 	const declaredInAmbient = new Set<string>();
 
 	for (const statement of ambient) {
@@ -218,10 +230,14 @@ export function buildGlobal(
 		properties: [{ name: 'unbound', type: 'UnboundGlobal' }],
 	});
 
-	global.addVariableStatement({
-		declarationKind: VariableDeclarationKind.Const,
-		declarations: [{ name: 'unbound', type: "Window['unbound']" }],
-	});
+	global.addVariableStatements(
+		Object.entries(ADDON_SCOPE)
+			.filter(([, global]) => global.declare)
+			.map(([name]) => ({
+				declarationKind: VariableDeclarationKind.Const,
+				declarations: [{ name, type: `AddonScope['${name}']` }],
+			})),
+	);
 
 	return `${sourceFile.getFullText().trim()}\n`;
 }
