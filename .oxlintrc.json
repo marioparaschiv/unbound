@@ -83,11 +83,7 @@
 							"packages/client/src/hot-refresh",
 							"packages/client/src/dialogs",
 							"packages/client/src/diagnostics",
-							"packages/client/src/links",
-							"packages/client/src/api",
-							"packages/client/src/lib",
-							"packages/client/src/managers",
-							"packages/client/src/stores"
+							"packages/client/src/links"
 						],
 						"deny": ["~/ui"],
 						"except": [

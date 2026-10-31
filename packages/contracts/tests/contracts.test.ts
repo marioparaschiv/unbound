@@ -8,6 +8,7 @@ import { updatesRequestSchema, updatesResponseSchema } from '../src/updates';
 import { addonManifestSchema, semverSchema } from '../src/manifest';
 import { reviewSubmissionRequestSchema } from '../src/review';
 import { apiErrorResponseSchema } from '../src/errors';
+import { catalogResponseSchema } from '../src/addons';
 import { isPostgresSafe } from '../src/text';
 import { apiUrlSchema } from '../src/api';
 
@@ -246,6 +247,52 @@ describe('updatesResponseSchema', () => {
 					.success,
 			).toBe(false);
 		}
+	});
+});
+
+describe('catalogResponseSchema', () => {
+	const folder = 'https://cdn.example.test/addons/a/1.1.0';
+	const latestVersion = {
+		version: '1.1.0',
+		manifest,
+		changelog: null,
+		changes: null,
+		source: null,
+		bundleSize: 1024,
+		sha256,
+		publishedAt: '2026-01-01T00:00:00.000Z',
+		manifestUrl: `${folder}/manifest.json`,
+		bundleUrl: `${folder}/index.js`,
+		pageUrl: `${folder}/ADDON.md`,
+	};
+
+	type VersionEntry = Omit<typeof latestVersion, 'pageUrl'> & { pageUrl?: string | null };
+
+	function catalogOf(version: VersionEntry) {
+		return { revision: 'r1', addons: [{ id: 'a', type: 'plugin', latestVersion: version }] };
+	}
+
+	test('carries the store page URL, or null for a version without one', () => {
+		for (const pageUrl of [latestVersion.pageUrl, null]) {
+			const parsed = catalogResponseSchema.parse(catalogOf({ ...latestVersion, pageUrl }));
+
+			expect(parsed.addons[0]?.latestVersion.pageUrl).toBe(pageUrl);
+		}
+	});
+
+	test('parses a catalog stored before the page URL existed', () => {
+		const { pageUrl: _, ...stored } = latestVersion;
+
+		expect(
+			catalogResponseSchema.parse(catalogOf(stored)).addons[0]?.latestVersion.pageUrl,
+		).toBe(undefined);
+	});
+
+	test('rejects a page URL that is not a URL', () => {
+		expect(
+			catalogResponseSchema.safeParse(catalogOf({ ...latestVersion, pageUrl: 'ADDON.md' }))
+				.success,
+		).toBe(false);
 	});
 });
 

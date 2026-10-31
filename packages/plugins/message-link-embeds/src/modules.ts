@@ -114,17 +114,20 @@ function unwrapComponent(
 export function findRenderers(): Partial<Renderers> {
 	// A build that moves ChatItem's file still exports these message views beside it.
 	const chatItemModule =
-		metro.findByFilePath('components_native/chat/ChatItem.tsx', { interop: false }) ??
+		metro.findByFilePath('components_native/chat/ChatItem.tsx', {
+			interop: false,
+			lazy: false,
+		}) ??
 		metro.findByProps(
 			'DCDMessageView',
 			'DCDSystemMessageView',
 			'DCDAutoModerationSystemMessageView',
-			{ interop: false },
+			{ interop: false, lazy: false },
 		);
 
 	return {
-		MessageRecord: metro.findByName('MessageRecord'),
-		RowManager: metro.findByName('RowManager'),
+		MessageRecord: metro.findByName('MessageRecord', { lazy: false }),
+		RowManager: metro.findByName('RowManager', { lazy: false }),
 		ChatItem: unwrapComponent(chatItemModule?.default) ?? unwrapComponent(chatItemModule),
 	};
 }

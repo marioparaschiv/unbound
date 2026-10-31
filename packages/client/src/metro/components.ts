@@ -30,6 +30,7 @@ export const BackdropFilters = findByPropsLazy('BackgroundBlurFill');
 export const SafeArea = findByPropsLazy('SafeAreaPaddingView');
 export const Portal = findByPropsLazy('PortalHost', 'Portal');
 export const Media = findByPropsLazy('openMediaModal');
+export const Video = findByPropsLazy('VideoComponent', 'createVideoControls');
 export const FlashList = findByPropsLazy('FlashList');
 let helpMessage: ComponentType<HelpMessageProps> | undefined;
 

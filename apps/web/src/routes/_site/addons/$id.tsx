@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
-import { IconEye, IconFaceNeutral } from 'nucleo-micro-bold';
 import { useSuspenseQuery } from '@tanstack/react-query';
+import { IconFaceNeutral } from 'nucleo-micro-bold';
 import { z } from 'zod/mini';
 
 import {
@@ -12,16 +12,9 @@ import {
 	EmptyTitle,
 } from '~/components/ui/empty';
 import { addonQuery, submissionPreviewQuery } from '~/queries/marketplace/addon';
-import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
-import VersionHistory from '~/components/addon/version-history';
-import { staggerStyle } from '~/components/motion/reveal-style';
-import AddonHeader from '~/components/addon/addon-header';
-import AuthorsCard from '~/components/addon/authors-card';
-import ScrollShadow from '~/components/ui/scroll-shadow';
-import AboutCard from '~/components/addon/about-card';
+import PreviewBanner from '~/components/addon/preview-banner';
+import AddonPageView from '~/components/addon/addon-page';
 import { Button } from '~/components/ui/button';
-import AddonMd from '~/components/addon-md';
-import Text from '~/components/ui/text';
 
 /** `?submission=<id>` shows a pending submission as if published; only its reviewers get the preview. */
 const addonSearchSchema = z.object({
@@ -67,65 +60,18 @@ function AddonPage() {
 		throw notFound();
 	}
 
-	const { source } = addon;
-	const sidebar = [
-		<AuthorsCard key='authors' authors={addon.authors} />,
-		<Card key='changelog' className='gap-4'>
-			<CardHeader>
-				<CardTitle>What's New</CardTitle>
-			</CardHeader>
-			<CardContent>
-				<ScrollShadow
-					contentClassName='max-h-96 overflow-y-auto overscroll-contain [scrollbar-width:thin]'
-					shadowClassName='inset-x-0 h-10'
-					fromClassName='from-card'
-				>
-					<VersionHistory versions={addon.versions} />
-				</ScrollShadow>
-			</CardContent>
-		</Card>,
-		<AboutCard key='about' addon={addon} />,
-	].map((card, index) => (
-		<div key={card.key} className='min-w-0 animate-reveal' style={staggerStyle(4 + index)}>
-			{card}
-		</div>
-	));
-
 	return (
-		<div className='flex flex-col flex-1 gap-8 page-frame'>
-			{preview ? (
-				<Card className='flex-row items-center gap-3 px-(--card-pad) py-3'>
-					<IconEye className='size-5 text-muted-foreground shrink-0' />
-					<Text variant='text-sm' className='flex-1'>
+		<AddonPageView
+			addon={addon}
+			banner={
+				preview ? (
+					<PreviewBanner action={<ExitPreview id={id} />}>
 						Previewing the submitted v{preview.version}. Only reviewers see this; it is
 						not published.
-					</Text>
-					<ExitPreview id={id} />
-				</Card>
-			) : null}
-			<AddonHeader addon={addon} />
-
-			<div className='items-start gap-6 grid grid-cols-1 lg:grid-cols-3'>
-				<Card className='lg:col-span-2 min-w-0 animate-reveal' style={staggerStyle(4)}>
-					<CardContent>
-						{/* Without an ADDON.md the manifest description stands in, as review and submit tell authors. */}
-						{source?.addonMd ? (
-							<AddonMd
-								source={source.addonMd}
-								pin={source.pin}
-								mediaBase={source.mediaBase}
-								page={source.page}
-							/>
-						) : (
-							<Text variant='text-md' color='muted'>
-								{addon.description}
-							</Text>
-						)}
-					</CardContent>
-				</Card>
-				<aside className='flex flex-col gap-6 min-w-0'>{sidebar}</aside>
-			</div>
-		</div>
+					</PreviewBanner>
+				) : null
+			}
+		/>
 	);
 }
 

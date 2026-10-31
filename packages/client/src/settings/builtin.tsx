@@ -2,7 +2,7 @@ import type { SettingsEntry } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
 import { useState, useEffect } from 'react';
 
-import { findByProps, findByName, findByFilePath } from '~/metro';
+import { findByProps, findByName, findByFilePath } from '~/metro/search';
 import { Screens, CLIENT_NAME } from '~/core/constants';
 import { useUnboundSettings } from '~/settings/unbound';
 import type { SectionEntry } from '~/settings/section';

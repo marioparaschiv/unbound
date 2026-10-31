@@ -18,8 +18,8 @@ import type {
 	MetroModuleLoadListener,
 } from '~/metro/types';
 import Filters, { type MetroFilter } from '~/metro/filters';
-import { registerLazyModule } from '~/metro/lazy-registry';
 import { isInvalidExport } from '~/metro/invalid-exports';
+import { createLazyModule } from '~/metro/lazy-registry';
 import Cache, { ModuleFlags } from '~/metro/cache';
 import { provideFinders } from '~/metro/finders';
 import { blacklist, data } from '~/metro/state';
@@ -245,6 +245,33 @@ export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = 
 
 		signal?.addEventListener('abort', abort, { once: true });
 	});
+}
+
+function onceLoaded(
+	filter: MetroFilter,
+	options: MetroSearchOptions,
+	callback: (mdl: any) => void,
+) {
+	const loaded = find(filter, { ...options, initialize: false });
+
+	if (loaded !== null && loaded !== void 0) {
+		callback(loaded);
+
+		return noop;
+	}
+
+	const { esModules = true, interop = true, raw = false } = options;
+	const remove = onModuleLoad((_, id) => {
+		const record = window.modules.get(id);
+		const found = record && searchExports(filter, record, id, esModules, interop, raw);
+
+		if (!found) return;
+
+		remove();
+		callback(found);
+	});
+
+	return remove;
 }
 
 /**
@@ -630,56 +657,21 @@ function searchExports(
  */
 function searchWithOptions(
 	args: any[],
-	options: MetroInternalOptions,
+	options: MetroInternalOptions & MetroSearchOptions,
 	filter: DiscordFunction | string,
 ) {
 	if (options.lazy) {
-		let cache;
+		const create = typeof filter === 'string' ? Filters[filter] : filter;
+		const search = () =>
+			searchWithOptions(args, Object.assign(options, { lazy: false }), filter);
 
-		function resolve() {
-			cache ??= searchWithOptions(args, Object.assign(options, { lazy: false }), filter);
-
-			return cache;
+		if (options.bulk || options.all) {
+			return createLazyModule(search);
 		}
 
-		const proxy = new Proxy(
-			{
-				__METRO_LAZY__: true,
-				get module() {
-					return cache;
-				},
-			},
-			{
-				get(_, prop) {
-					if (!prop || typeof prop !== 'string') return;
-
-					resolve();
-
-					if (prop === 'module') {
-						return cache;
-					}
-
-					return cache?.[prop];
-				},
-				set(_, prop, value) {
-					return Object.defineProperty(resolve() ?? {}, prop, {
-						value,
-						writable: true,
-						configurable: true,
-					});
-				},
-				// The patcher installs its wrapper with `Object.defineProperty`, which must reach the real module.
-				defineProperty(_, prop, descriptor) {
-					const module = resolve();
-
-					return Boolean(module) && Reflect.defineProperty(module, prop, descriptor);
-				},
-			},
+		return createLazyModule(search, (callback) =>
+			onceLoaded(create(...args), options, callback),
 		);
-
-		registerLazyModule(proxy, resolve);
-
-		return proxy;
 	}
 
 	if (typeof filter === 'string') {
