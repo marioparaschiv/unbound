@@ -25,7 +25,6 @@ type AddonMdProps = {
 const FRONTMATTER_KEYS = new Set(Object.keys(addonPageFrontmatterSchema.shape));
 const TOP_LEVEL_KEY = /^([^\s#:-][^:]*):(?:\s|$)/;
 
-// A legacy page may open with a `---` rule; only a block of page keys is frontmatter.
 function isPageFrontmatter(frontmatter: string): boolean {
 	const topLevel = frontmatter
 		.split(/\r?\n/)
