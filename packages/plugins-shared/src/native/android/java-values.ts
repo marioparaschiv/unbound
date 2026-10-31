@@ -10,6 +10,8 @@ import type {
  * @returns The tagged value.
  */
 export function javaInt(value: number): NativeJavaValue {
+	'worklet';
+
 	return { type: 'int', value: Math.trunc(value) };
 }
 
@@ -19,6 +21,8 @@ export function javaInt(value: number): NativeJavaValue {
  * @returns The tagged value.
  */
 export function javaFloat(value: number): NativeJavaValue {
+	'worklet';
+
 	return { type: 'float', value };
 }
 
@@ -28,6 +32,8 @@ export function javaFloat(value: number): NativeJavaValue {
  * @returns The tagged value.
  */
 export function javaString(value: string): NativeJavaValue {
+	'worklet';
+
 	return { type: 'string', value };
 }
 
@@ -37,6 +43,8 @@ export function javaString(value: string): NativeJavaValue {
  * @returns The tagged value.
  */
 export function javaBoolean(value: boolean): NativeJavaValue {
+	'worklet';
+
 	return { type: 'boolean', value };
 }
 
@@ -48,6 +56,8 @@ export function javaBoolean(value: boolean): NativeJavaValue {
 export function isJavaHandle(
 	value: NativeJavaValue | null | undefined,
 ): value is NativeJavaHandleValue {
+	'worklet';
+
 	return value?.type === 'handle';
 }
 
@@ -59,6 +69,8 @@ export function isJavaHandle(
 export function javaReference(
 	value: NativeJavaValue | null | undefined,
 ): NativeJavaReference | null {
+	'worklet';
+
 	return isJavaHandle(value) ? value : null;
 }
 
@@ -77,6 +89,8 @@ export function javaViewKey(view: NativeJavaValue): string | undefined {
  * @returns The string, or `undefined` when the result is not a `String` or `char`.
  */
 export function javaText(value: NativeJavaValue | null | undefined): string | undefined {
+	'worklet';
+
 	return value?.type === 'string' || value?.type === 'char' ? value.value : undefined;
 }
 
@@ -86,6 +100,8 @@ export function javaText(value: NativeJavaValue | null | undefined): string | un
  * @returns `true` only for a Java `true`.
  */
 export function javaFlag(value: NativeJavaValue | null | undefined): boolean {
+	'worklet';
+
 	return value?.type === 'boolean' && value.value;
 }
 
@@ -115,6 +131,8 @@ export function sameJavaReference(
  * @returns The number, or `undefined` when the result is not numeric.
  */
 export function javaNumber(value: NativeJavaValue | null | undefined): number | undefined {
+	'worklet';
+
 	switch (value?.type) {
 		case 'byte':
 		case 'short':

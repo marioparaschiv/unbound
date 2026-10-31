@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0]
+
+### Changed
+
+- Avatars are rounded as they are laid out, on the UI thread, so none is drawn as a circle first and scrolling no longer waits on the JavaScript thread.
+
 ## [1.0.2]
 
 ### Fixed
