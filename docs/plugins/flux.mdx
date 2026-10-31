@@ -9,51 +9,42 @@ icon: 'box'
 Flux is how Discord manages its state. A central dispatcher broadcasts actions, such as a message arriving, a channel being selected, or the user's settings changing. Stores listen for those actions and hold the resulting state.
 
 - To get *what* Discord currently knows (the current user, a guild, the selected channel), read a store.
-- To run code *when* something happens, subscribe to the dispatcher.
+- To run code *when* something happens, listen for an action.
 
-Both come from [Metro](/modules/metro). Find stores with `findStore`. The dispatcher and common stores are already resolved on `metro.common` and `metro.stores`.
+Both go through the [flux](/modules/flux) namespace.
 
 ### Reading stores
 
-A store is a singleton with getters for Discord's state. Find it once, lazily so the search doesn't run at import, then read from it whenever you need to.
+A store is a singleton with getters for Discord's state. `flux.getStore` is lazy, so you can declare the store at the top of a file. The search runs the first time you read from it.
 
 ```ts
-import { metro } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
-const UserStore = metro.findStore('User', { lazy: true });
+const UserStore = flux.getStore('User');
 
 // later, inside start() or a handler:
 const me = UserStore.getCurrentUser();
 ```
 
-<Tip>
-	The most commonly used stores (`Users`, `Guilds`, `Theme`) are already resolved on `metro.stores`, so you don't need to search for them.
-</Tip>
+In a component, read the store with `flux.useStore` so the component re-renders when the store changes. See [Reading a store in a component](/modules/flux#reading-a-store-in-a-component).
 
-### Subscribing to events
+### Listening for actions
 
-The dispatcher emits typed actions. Subscribe to an action type to run code each time Discord dispatches it, and unsubscribe when your plugin stops.
+Listen for an action type to run code each time Discord dispatches it.
 
 ```ts
-import { metro } from '@unbound-app/api';
+import { flux } from '@unbound-app/api';
 
 export default {
 	start() {
-		this.handler = ({ channelId }) => {
-			console.log('Channel selected:', channelId);
-		};
-
-		metro.common.Dispatcher.subscribe('CHANNEL_SELECT', this.handler);
-	},
-	stop() {
-		metro.common.Dispatcher.unsubscribe('CHANNEL_SELECT', this.handler);
+		flux.onAction('CHANNEL_SELECT', ({ channelId }) => {
+			logger.log('Channel selected:', channelId);
+		});
 	},
 };
 ```
 
-<Warning>
-	Always `unsubscribe` in `stop`, passing the *same* handler reference you subscribed with. A subscription that outlives a disabled plugin keeps firing, so your plugin's code keeps running after the plugin is turned off.
-</Warning>
+You don't need a `stop` for this. Unbound removes the plugin's Flux listeners and interceptors when the plugin stops. To remove a listener earlier, call the function `onAction` returns.
 
 ### Common action types
 
@@ -70,3 +61,5 @@ Discord dispatches hundreds of action types. These are some you'll see often:
 		`CONNECTION_OPEN`, fired once the client is connected and stores are populated. Use it for setup that needs live state.
 	</Accordion>
 </AccordionGroup>
+
+`MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE`, `CHANNEL_SELECT`, `TYPING_START`, `TYPING_STOP` and `CONNECTION_OPEN` have typed payloads. To type another action, see [Typing your own stores and actions](/modules/flux#typing-your-own-stores-and-actions).

@@ -26,8 +26,60 @@ describe('createMemoryStorage', () => {
 		expect(bucket.get('colors.accent', 'blue')).toBe('blue');
 
 		bucket.clear();
-		expect(storage.data.get('my-plugin')).toEqual({});
+		expect(storage.data.has('my-plugin')).toBe(false);
 		expect(storage.getBucket('other').get('enabled', true)).toBe(false);
+	});
+
+	test('calls a Bucket listener for each change to that Bucket the predicate accepts', () => {
+		const storage = createMemoryStorage();
+		const bucket = storage.getBucket('plugin');
+		const seen: (string | null)[] = [];
+		const stop = bucket.addListener(
+			({ key }) => key !== 'ignored',
+			({ key }) => seen.push(key),
+		);
+
+		bucket.set('enabled', true);
+		bucket.set('ignored', true);
+		bucket.toggle('enabled', false);
+		storage.getBucket('other').set('enabled', true);
+		bucket.remove('enabled');
+		bucket.clear();
+		stop();
+		bucket.set('enabled', true);
+
+		expect(seen).toEqual(['enabled', 'enabled', 'enabled', null]);
+	});
+
+	test('prunes the objects a remove leaves empty, and the Bucket with them', () => {
+		const storage = createMemoryStorage();
+		const bucket = storage.getBucket('plugin');
+
+		bucket.set('a.b.c', 1);
+		bucket.set('a.d', 2);
+		bucket.remove('a.b.c');
+		expect(storage.data.get('plugin')).toEqual({ a: { d: 2 } });
+
+		bucket.remove('a.d');
+		expect(storage.data.has('plugin')).toBe(false);
+	});
+
+	test('returns a stored null instead of the default', () => {
+		const bucket = createMemoryStorage().getBucket('plugin');
+
+		bucket.set('value', null);
+
+		expect(bucket.get('value', 'default')).toBeNull();
+	});
+
+	test('throws when a set passes through a value that is not an object', () => {
+		const storage = createMemoryStorage();
+		const bucket = storage.getBucket('plugin');
+
+		bucket.set('a', 1);
+
+		expect(() => bucket.set('a.b', 2)).toThrow(TypeError);
+		expect(storage.data.get('plugin')).toEqual({ a: 1 });
 	});
 });
 
@@ -48,6 +100,36 @@ describe('createRecordingPatcher', () => {
 
 		expect(math.double).toBe(original);
 		expect(patcher.patches).toEqual([]);
+	});
+
+	test('keeps the rest of a stack when its patches are removed in any order', () => {
+		const patcher = createRecordingPatcher();
+		const counter = { value: () => 1 };
+		const original = counter.value;
+
+		const untimes = patcher.after(counter, 'value', ({ result }) => result * 10);
+		const unplus = patcher.after(counter, 'value', ({ result }) => result + 1);
+
+		expect(counter.value()).toBe(11);
+
+		untimes();
+		expect(counter.value()).toBe(2);
+
+		unplus();
+		expect(counter.value()).toBe(1);
+		expect(counter.value).toBe(original);
+	});
+
+	test('keeps other callers’ patches on a method when one tagged patcher unpatches', () => {
+		const patcher = createRecordingPatcher();
+		const tagged = patcher.createPatcher('plugin');
+		const greeter = { greet: () => 'hi' };
+
+		tagged.after(greeter, 'greet', ({ result }) => `${result}!`);
+		patcher.after(greeter, 'greet', ({ result }) => `${result}?`);
+		tagged.unpatchAll();
+
+		expect(greeter.greet()).toBe('hi?');
 	});
 
 	test('removes only a tagged patcher’s patches with its unpatchAll', () => {
