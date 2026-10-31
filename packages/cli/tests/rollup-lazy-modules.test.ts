@@ -1,17 +1,22 @@
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { afterAll, beforeAll, expect, test } from 'bun:test';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { runInThisContext } from 'node:vm';
+import { pathToFileURL } from 'node:url';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pathToFileURL } from 'node:url';
 
-import { rollup } from 'rollup';
+import { buildBundle } from './helpers/rollup';
 
-import { createPluginConfig } from './index.mjs';
+type LazyEntry = { use: () => (string | number)[] };
 
-let pluginRoot;
+type LazyPlugin = { __load: () => { default?: LazyEntry } & LazyEntry };
+
+const RUNS = '__lazyModuleRuns';
+
+let pluginRoot = '';
 
 const heavyModule = `
-globalThis.__lazyModuleRuns = (globalThis.__lazyModuleRuns ?? 0) + 1;
+globalThis.${RUNS} = (globalThis.${RUNS} ?? 0) + 1;
 export function greet(name) { return 'hello ' + name; }
 export class Box { constructor(value) { this.value = value; } }
 export default { base: 3, add(value) { return this.base + value; } };
@@ -35,37 +40,36 @@ beforeAll(async () => {
 
 afterAll(async () => {
 	await rm(pluginRoot, { recursive: true, force: true });
-	delete globalThis.__lazyModuleRuns;
+	Reflect.deleteProperty(globalThis, RUNS);
 });
 
-async function buildPlugin(lazyModules) {
-	const config = createPluginConfig(pathToFileURL(join(pluginRoot, 'rollup.config.mjs')).href, {
-		lazyModules,
-		bytecode: false,
-	});
-	const bundle = await rollup(config);
-	const { output } = await bundle.generate(config.output);
-	await bundle.close();
+async function loadPlugin(lazyModules: string[]) {
+	const url = pathToFileURL(join(pluginRoot, 'rollup.config.mjs')).href;
+	const plugin: LazyPlugin = runInThisContext(`(${await buildBundle(url, { lazyModules })})`);
+	const module = plugin.__load();
 
-	return output.find((file) => file.type === 'chunk').code;
+	return module.default ?? module;
+}
+
+function runs() {
+	return Reflect.get(globalThis, RUNS);
 }
 
 test('runs a lazy module only when the plugin first uses it', async () => {
-	globalThis.__lazyModuleRuns = 0;
-	const plugin = Function(`return ${await buildPlugin(['~/heavy'])}`)();
-	const module = plugin.__load();
-	const entry = module.default ?? module;
+	Reflect.set(globalThis, RUNS, 0);
 
-	expect(globalThis.__lazyModuleRuns).toBe(0);
+	const entry = await loadPlugin(['~/heavy']);
+
+	expect(runs()).toBe(0);
 	expect(entry.use()).toEqual(['hello hermes', 2, 7, 3]);
 	expect(entry.use()).toEqual(['hello hermes', 2, 7, 3]);
-	expect(globalThis.__lazyModuleRuns).toBe(1);
+	expect(runs()).toBe(1);
 });
 
 test('leaves modules that are not listed eager', async () => {
-	globalThis.__lazyModuleRuns = 0;
-	const plugin = Function(`return ${await buildPlugin([])}`)();
-	plugin.__load();
+	Reflect.set(globalThis, RUNS, 0);
 
-	expect(globalThis.__lazyModuleRuns).toBe(1);
+	await loadPlugin([]);
+
+	expect(runs()).toBe(1);
 });

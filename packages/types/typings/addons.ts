@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 
-import type { NativePluginCapability, NativePluginPlatform, PluginContext } from './native';
+import type {
+	NativePluginPlatformCapability,
+	NativePluginCapability,
+	NativePluginPlatform,
+	PluginContext,
+} from './native';
 
 /** The kinds of addon, as a manifest's `type` declares them. One manager governs each, in this start order. */
 export const ADDON_KINDS = ['plugin', 'theme', 'icon-pack', 'font'] as const;
@@ -25,6 +30,16 @@ export type AddonAuthor = {
 	id: `${number}`;
 };
 
+/** What an addon declares for one platform it runs on: the capabilities that platform provides which it needs. */
+export type AddonPlatform<P extends NativePluginPlatform = NativePluginPlatform> = {
+	capabilities?: NativePluginPlatformCapability<P>[];
+};
+
+/** The platforms an addon runs on, keyed by platform. */
+export type AddonPlatforms = {
+	[P in NativePluginPlatform]?: AddonPlatform<P>;
+};
+
 /** The manifest an author ships in an addon's `manifest.json`: its metadata and entry point. */
 export type AuthoredAddonManifest = {
 	id: string;
@@ -36,8 +51,13 @@ export type AuthoredAddonManifest = {
 	icon?: string | { uri: string };
 	main: string;
 	version: string;
-	platforms?: NativePluginPlatform[];
+	/**
+	 * The platforms the addon runs on, each with the capabilities it needs there; absent means every platform.
+	 * Published addons may still carry the older array of platform names.
+	 */
+	platforms?: AddonPlatforms | NativePluginPlatform[];
 	capabilities?: NativePluginCapability[];
+	/** @deprecated Use `platforms.<platform>.capabilities`. Still read for published addons. */
 	platformCapabilities?: Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
