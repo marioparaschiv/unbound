@@ -1,14 +1,14 @@
 import { Pressable } from 'react-native';
 import { memo } from 'react';
 
+import TintedIcon from '~/metro/fallbacks/tinted-icon';
+import useAddonState from '~/ui/hooks/use-addon-state';
 import { Discord } from '~/metro/components';
-import { TintedIcon } from '~/ui/components';
 import type { Addon } from '~/addons/addon';
 import { Manager } from '~/addons/manager';
-import { useAddonState } from '~/ui/hooks';
 import { reload } from '~/native/native';
-import { Messages } from '~/i18n/api';
-import { Icons } from '~/assets/api';
+import { messages } from '~/i18n/api';
+import { icons } from '~/assets/api';
 
 type AddonRadioProps = {
 	addon: Addon;
@@ -36,10 +36,10 @@ function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 		if (kind !== 'theme') return;
 
 		Discord.showConfirmModal({
-			title: Messages.UNBOUND_RESTART,
-			content: Messages.UNBOUND_THEME_RESTART_CONFIRM,
-			confirmText: Messages.UNBOUND_RESTART,
-			cancelText: Messages.UNBOUND_CANCEL,
+			title: messages.UNBOUND_RESTART,
+			content: messages.UNBOUND_THEME_RESTART_CONFIRM,
+			confirmText: messages.UNBOUND_RESTART,
+			cancelText: messages.UNBOUND_CANCEL,
 			onConfirm: reload,
 		});
 	}
@@ -51,7 +51,7 @@ function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 			style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}
 			onPress={toggle}
 		>
-			{enabled ? <TintedIcon source={Icons['CircleCheckIcon'] ?? 0} size={20} /> : null}
+			{enabled ? <TintedIcon source={icons['CircleCheckIcon'] ?? 0} size={20} /> : null}
 		</Pressable>
 	);
 }

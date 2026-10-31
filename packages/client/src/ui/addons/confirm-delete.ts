@@ -1,8 +1,8 @@
 import { dependentsOf } from '~/addons/dependencies';
-import { Messages, format } from '~/i18n/api';
+import { messages, format } from '~/i18n/api';
 import type { Addon } from '~/addons/addon';
 import { showDialog } from '~/dialogs/api';
-import { showToast } from '~/toasts/api';
+import { show } from '~/toasts/api';
 
 type DeletingManager = {
 	getEntities: () => Addon[];
@@ -28,15 +28,15 @@ export function confirmDelete(manager: DeletingManager, addon: Addon) {
 	if (dependents.length === 0) {
 		showDialog({
 			title: format('UNBOUND_DELETE_TITLE', { name }),
-			body: Messages.UNBOUND_DELETE_BODY,
+			body: messages.UNBOUND_DELETE_BODY,
 			buttons: [
 				{
-					label: Messages.UNBOUND_DELETE,
+					label: messages.UNBOUND_DELETE,
 					variant: 'destructive',
 					onPress: () => void manager.delete(addon.id),
 				},
 			],
-			cancel: Messages.UNBOUND_CANCEL,
+			cancel: messages.UNBOUND_CANCEL,
 		});
 
 		return;
@@ -55,8 +55,8 @@ export function confirmDelete(manager: DeletingManager, addon: Addon) {
 				variant: 'destructive',
 				onPress: () =>
 					void deleteInOrder(manager, [...dependents, addon]).then(() =>
-						showToast({
-							title: Messages.UNBOUND_DELETE,
+						show({
+							title: messages.UNBOUND_DELETE,
 							content: format('UNBOUND_DELETED_WITH_DEPENDENTS', {
 								name,
 								count: dependents.length,
@@ -66,12 +66,12 @@ export function confirmDelete(manager: DeletingManager, addon: Addon) {
 					),
 			},
 			{
-				label: Messages.UNBOUND_DELETE_LIBRARY_ONLY,
+				label: messages.UNBOUND_DELETE_LIBRARY_ONLY,
 				variant: 'secondary',
 				onPress: () => void manager.delete(addon.id),
 			},
 		],
-		cancel: Messages.UNBOUND_CANCEL,
+		cancel: messages.UNBOUND_CANCEL,
 	});
 }
 

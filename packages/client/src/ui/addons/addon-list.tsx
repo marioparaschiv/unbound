@@ -4,11 +4,11 @@ import { memo } from 'react';
 import { useUnboundSettings } from '~/settings/unbound';
 import sampleAddons from '~/plugins/sample-addons';
 import { isLibrary } from '~/addons/dependencies';
-import { Messages, format } from '~/i18n/api';
+import Empty from '~/ui/components/empty-state';
+import { messages, format } from '~/i18n/api';
+import useAddons from '~/ui/hooks/use-addons';
 import { Discord } from '~/metro/components';
-import { Empty } from '~/ui/components';
 import { DEV } from '~/core/constants';
-import { useAddons } from '~/ui/hooks';
 
 import AddonCard from './addon-card';
 
@@ -40,7 +40,7 @@ function AddonList({ kind }: AddonListProps) {
 		>
 			<Discord.Text variant='text-sm/semibold' color='text-muted'>
 				{showLibraries
-					? Messages.UNBOUND_HIDE_LIBRARIES
+					? messages.UNBOUND_HIDE_LIBRARIES
 					: format('UNBOUND_SHOW_LIBRARIES', { count: libraries.size })}
 			</Discord.Text>
 		</Pressable>

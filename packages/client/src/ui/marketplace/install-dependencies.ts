@@ -5,9 +5,9 @@ import { dependentsOf, planDependencies, type ListedDependency } from '~/addons/
 import { confirm, showDialog } from '~/dialogs/api';
 import MarketplaceStore from '~/marketplace/state';
 import { toRelease } from '~/addons/versions';
-import { Messages, format } from '~/i18n/api';
+import { messages, format } from '~/i18n/api';
 import { Manager } from '~/addons/manager';
-import { showToast } from '~/toasts/api';
+import { show } from '~/toasts/api';
 
 function listedPlugins(): Map<string, ListedAddon> {
 	const { state } = MarketplaceStore.getState();
@@ -73,7 +73,7 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 			body: format('UNBOUND_DEPENDENCIES_UNAVAILABLE', {
 				names: plan.unavailable.join(', '),
 			}),
-			cancel: Messages.UNBOUND_OK,
+			cancel: messages.UNBOUND_OK,
 		});
 
 		return false;
@@ -86,8 +86,8 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 	const approved = await confirm({
 		title: format('UNBOUND_DEPENDENCIES_TITLE', { name }),
 		body: `${format('UNBOUND_DEPENDENCIES_BODY', { count: plan.ordered.length })}\n\n${describePlan(plan.install, plan.update)}`,
-		confirmLabel: Messages.UNBOUND_DEPENDENCIES_CONFIRM,
-		cancelLabel: Messages.UNBOUND_CANCEL,
+		confirmLabel: messages.UNBOUND_DEPENDENCIES_CONFIRM,
+		cancelLabel: messages.UNBOUND_CANCEL,
 	});
 
 	if (!approved) {
@@ -101,8 +101,8 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 			: false;
 
 		if (!done) {
-			showToast({
-				title: Messages.UNBOUND_MARKETPLACE,
+			show({
+				title: messages.UNBOUND_MARKETPLACE,
 				content: format('UNBOUND_DEPENDENCY_FAILED', { name: dependency.name }),
 				icon: 'CircleXIcon',
 			});
