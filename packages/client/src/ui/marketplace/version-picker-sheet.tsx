@@ -5,7 +5,7 @@ import type { UpdatableKind } from '~/addons/manager-of';
 import { toVersionChoices } from '~/addons/versions';
 import { CLIENT_VERSION } from '~/core/constants';
 import { BottomSheets } from '~/metro/components';
-import { Messages, format } from '~/i18n/api';
+import { messages, format } from '~/i18n/api';
 import { Manager } from '~/addons/manager';
 import { Moment } from '~/metro/common';
 
@@ -30,11 +30,11 @@ function describeChoice(choice: VersionChoice): string {
 
 	switch (choice.type) {
 		case 'available':
-			return choice.latest ? `${published} · ${Messages.UNBOUND_VERSION_LATEST}` : published;
+			return choice.latest ? `${published} · ${messages.UNBOUND_VERSION_LATEST}` : published;
 		case 'installed':
 			return choice.latest
-				? `${published} · ${Messages.UNBOUND_VERSION_LATEST} · ${Messages.UNBOUND_INSTALLED}`
-				: `${published} · ${Messages.UNBOUND_INSTALLED}`;
+				? `${published} · ${messages.UNBOUND_VERSION_LATEST} · ${messages.UNBOUND_INSTALLED}`
+				: `${published} · ${messages.UNBOUND_INSTALLED}`;
 		case 'incompatible':
 			return `${published} · ${format('UNBOUND_VERSION_NEEDS_CLIENT', { version: choice.requires })}`;
 	}
@@ -77,12 +77,12 @@ function VersionPickerSheet({ kind, addon, onPick, onClose }: VersionPickerSheet
 			/>
 			<ActionSheetRow.Group>
 				{state.status === 'loading' ? (
-					<ActionSheetRow label={Messages.UNBOUND_VERSIONS_LOADING} disabled />
+					<ActionSheetRow label={messages.UNBOUND_VERSIONS_LOADING} disabled />
 				) : null}
 				{state.status === 'failed' ? (
 					<ActionSheetRow
-						label={Messages.UNBOUND_VERSIONS_FAILED}
-						subLabel={Messages.UNBOUND_VERSIONS_RETRY}
+						label={messages.UNBOUND_VERSIONS_FAILED}
+						subLabel={messages.UNBOUND_VERSIONS_RETRY}
 						onPress={retry}
 					/>
 				) : null}

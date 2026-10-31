@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 import type { InstallStatus } from '~/marketplace/catalog';
 import { getInstallStatus } from '~/marketplace/catalog';
-import { useForceUpdate } from '~/ui/hooks';
+import useForceUpdate from '~/ui/hooks/use-force-update';
 import { Manager } from '~/addons/manager';
 
 import { getInstalledVersion } from './targets';

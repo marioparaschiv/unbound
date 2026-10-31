@@ -3,20 +3,20 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { memo, useState } from 'react';
 import { View } from 'react-native';
 
-import AddonCardHeader from '~/ui/addons/addon-card-header';
+import AddonCardHeader from '~/ui/components/addon-card-header';
 import type { InstallStatus } from '~/marketplace/catalog';
 import { brokenDependents } from '~/addons/dependencies';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
 import { installsFromManifest } from '~/addons/addons';
 import { compareVersions } from '~/core/versions';
-import { Messages, format } from '~/i18n/api';
+import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
 import { ActionSheets } from '~/metro/api';
-import { showToast } from '~/toasts/api';
 import { confirm } from '~/dialogs/api';
-import { Icons } from '~/assets/api';
+import { icons } from '~/assets/api';
+import { show } from '~/toasts/api';
 
 import { getInstalledVersion, installVersion } from './targets';
 import VersionPickerSheet from './version-picker-sheet';
@@ -37,16 +37,16 @@ type StatusAction = {
 
 const ACTIONS: Record<InstallStatus, StatusAction> = {
 	install: {
-		label: () => Messages.UNBOUND_INSTALL,
+		label: () => messages.UNBOUND_INSTALL,
 		variant: 'primary',
 		offer: (version) => format('UNBOUND_INSTALL_VERSION', { version }),
 	},
 	update: {
-		label: () => Messages.UNBOUND_UPDATE,
+		label: () => messages.UNBOUND_UPDATE,
 		variant: 'primary',
 		offer: (version) => format('UNBOUND_UPDATE_TO_VERSION', { version }),
 	},
-	installed: { label: () => Messages.UNBOUND_INSTALLED, variant: 'secondary' },
+	installed: { label: () => messages.UNBOUND_INSTALLED, variant: 'secondary' },
 };
 
 const SHEET_KEY = 'unbound-addon-versions';
@@ -80,8 +80,8 @@ function confirmChoice(
 	return confirm({
 		title: format('UNBOUND_VERSION_CONFIRM_TITLE', { name, version }),
 		body: lines.filter(Boolean).join('\n\n'),
-		confirmLabel: Messages.UNBOUND_INSTALL,
-		cancelLabel: Messages.UNBOUND_CANCEL,
+		confirmLabel: messages.UNBOUND_INSTALL,
+		cancelLabel: messages.UNBOUND_CANCEL,
 	});
 }
 
@@ -110,7 +110,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 	}
 
 	function fail(content: string) {
-		showToast({ title: manifest.name, content, icon: 'CircleXIcon' });
+		show({ title: manifest.name, content, icon: 'CircleXIcon' });
 	}
 
 	async function press() {
@@ -136,7 +136,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 		}
 
 		if (choice.holds) {
-			showToast({
+			show({
 				title: manifest.name,
 				content: format('UNBOUND_VERSION_HELD_TOAST', vars),
 				icon: 'CircleCheckIcon',
@@ -169,12 +169,12 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 			options: [
 				{
 					label: action.offer(latest),
-					icon: Icons['DownloadIcon'],
+					icon: icons['DownloadIcon'],
 					onPress: () => void press(),
 				},
 				{
-					label: Messages.UNBOUND_CHOOSE_VERSION,
-					icon: Icons['ClockIcon'],
+					label: messages.UNBOUND_CHOOSE_VERSION,
+					icon: icons['ClockIcon'],
 					onPress: () => openPicker(kind),
 				},
 			],

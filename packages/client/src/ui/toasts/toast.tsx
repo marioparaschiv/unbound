@@ -6,11 +6,11 @@ import { View, Pressable } from 'react-native';
 import { memo, useCallback } from 'react';
 
 import { useUnboundSettings } from '~/settings/unbound';
+import TintedIcon from '~/metro/fallbacks/tinted-icon';
 import { BackdropFilters } from '~/metro/components';
 import toastDuration from '~/toasts/duration';
-import { TintedIcon } from '~/ui/components';
 import useToastStore from '~/toasts/state';
-import { Icons } from '~/assets/api';
+import { icons } from '~/assets/api';
 
 import { unitToHex, withoutOpacity } from './color';
 import useToastState from './use-toast-state';
@@ -110,7 +110,7 @@ function Toast({ id }: ToastProps) {
 							onPress={leave}
 							onLongPress={dismissAll}
 						>
-							<TintedIcon source={Icons['ic_close'] ?? 0} />
+							<TintedIcon source={icons['ic_close'] ?? 0} />
 						</Pressable>
 					</View>
 					{Array.isArray(options.buttons) && options.buttons.length ? (

@@ -5,11 +5,11 @@ import Animated from 'react-native-reanimated';
 
 import { queryCatalog } from '~/marketplace/catalog';
 import MarketplaceStore from '~/marketplace/state';
-import { Messages, format } from '~/i18n/api';
+import Empty from '~/ui/components/empty-state';
+import { messages, format } from '~/i18n/api';
 import { Manager } from '~/addons/manager';
-import { showToast } from '~/toasts/api';
-import { Empty } from '~/ui/components';
 import { Theme } from '~/metro/common';
+import { show } from '~/toasts/api';
 
 import MarketplaceSkeleton from './marketplace-skeleton';
 import MarketplaceCard from './marketplace-card';
@@ -47,22 +47,22 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 		setPulling(false);
 
 		if (!ok && MarketplaceStore.getState().state.status === 'ready') {
-			showToast({
-				title: Messages.UNBOUND_MARKETPLACE,
-				content: Messages.UNBOUND_MARKETPLACE_REFRESH_FAILED,
+			show({
+				title: messages.UNBOUND_MARKETPLACE,
+				content: messages.UNBOUND_MARKETPLACE_REFRESH_FAILED,
 				icon: 'CircleXIcon',
 			});
 		}
 	}
 
-	const label = Messages[Manager.for(kind).label].toLowerCase();
+	const label = messages[Manager.for(kind).label].toLowerCase();
 	const empty =
 		state.status === 'failed' ? (
-			<Empty image='empty_permission'>{Messages.UNBOUND_MARKETPLACE_ERROR}</Empty>
+			<Empty image='empty_permission'>{messages.UNBOUND_MARKETPLACE_ERROR}</Empty>
 		) : state.status === 'ready' ? (
 			<Empty image={search ? 'sticker_search_empty' : 'empty_permission'}>
 				{search
-					? Messages.UNBOUND_EMPTY_RESULTS
+					? messages.UNBOUND_EMPTY_RESULTS
 					: format('UNBOUND_MARKETPLACE_EMPTY', { type: label })}
 			</Empty>
 		) : (
