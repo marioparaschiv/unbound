@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0]
+
+### Changed
+
+- On Android, a reused row's latency icon is hidden on the UI thread as soon as the row shows a different message, so the old message's latency never shows on the new one.
+
 ## [1.1.1]
 
 ### Fixed
