@@ -101,9 +101,10 @@
 							"packages/client/src/themes/builtin.ts",
 							"packages/client/src/toasts/builtin.tsx",
 							"packages/client/src/updates/builtin.ts",
-							"packages/client/src/builtins/error-boundary.tsx"
+							"packages/client/src/builtins/error-boundary.tsx",
+							"packages/client/src/core/api.ts"
 						],
-						"because": "only a domain's `builtin.ts(x)` may import `ui/`; `ui/` imports domains, never the reverse (D14)"
+						"because": "only a domain's `builtin.ts(x)`, and the public barrel for the `ui` namespace, may import `ui/`; `ui/` imports domains, never the reverse (D14)"
 					},
 					{
 						"from": ["packages/client/src/ui"],
