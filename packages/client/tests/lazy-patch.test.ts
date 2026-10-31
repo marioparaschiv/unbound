@@ -2,8 +2,8 @@ import { afterEach, describe, expect, mock, test } from 'bun:test';
 import type { Plugin } from '@unbound-app/types';
 
 import type { AddonAttribution } from '~/addons/crash-guard';
-import type { PluginScope } from '~/addons/scope';
 import type { CrashEvent } from '~/diagnostics/crash-report';
+import type { PluginScope } from '~/addons/scope';
 import type { Addon } from '~/addons/addon';
 
 const LOADED_ID = 1;
@@ -150,13 +150,13 @@ describe('lazy patch targets', () => {
 
 class AttributedAddons extends FakeAddons {
 	attributed: string[] = [];
-	starts = new Map<string, (scope: PluginScope) => void>();
+	starts = new Map<string, (scope?: PluginScope) => void>();
 
 	protected createScope(entity: Addon<Plugin>): PluginScope {
 		return createAddonScope(entity);
 	}
 
-	protected handleBundle(bundle: string, _id: string, scope: PluginScope) {
+	protected handleBundle(bundle: string, _id?: string, scope?: PluginScope) {
 		return { start: () => this.starts.get(bundle)?.(scope), stop: () => {} };
 	}
 
@@ -206,8 +206,8 @@ describe('deferred patches', () => {
 
 		resetDevice();
 		states['addon.c'] = true;
-		manager.starts.set('addon.c', ({ globals }) => {
-			globals.patcher.after(findByProps('eighth'), 'eighth', (ctx) => ctx.result * 10);
+		manager.starts.set('addon.c', (scope) => {
+			scope?.globals.patcher.after(findByProps('eighth'), 'eighth', (ctx) => ctx.result * 10);
 		});
 
 		manager.load('addon.c', makeManifest('addon.c'));

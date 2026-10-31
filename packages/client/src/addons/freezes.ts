@@ -1,8 +1,8 @@
 import type { createLogger } from '@unbound-app/logger';
 
 import { crashReportAddon } from '~/diagnostics/crash-report';
-import type { AddonFreeze } from '~/addons/crash-guard';
 import { reportCrash } from '~/diagnostics/crash-reports';
+import type { AddonFreeze } from '~/addons/crash-guard';
 import type { Addon } from '~/addons/addon';
 import { show } from '~/toasts/api';
 

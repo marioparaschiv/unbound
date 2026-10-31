@@ -20,14 +20,14 @@ import type { AddonAttribution, AddonFreeze, AddonScope } from '~/addons/crash-g
 import { parseAddonManifest, resolveManifestCapabilities } from '~/addons/manifest';
 import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
 import { validateNativePluginRequirements } from '~/native/capabilities';
+import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import type { NativeConsents } from '~/native/consent';
 import { currentPlatform } from '~/native/platform';
 import { unpatchAllByCaller } from '~/patcher/api';
-import { isSafeAddonMain } from '~/addons/paths';
-import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import type { PluginScope } from '~/addons/scope';
+import { isSafeAddonMain } from '~/addons/paths';
 import { getSetting } from '~/settings/unbound';
 import { Manager } from '~/addons/manager';
 import { Addon } from '~/addons/addon';
