@@ -87,6 +87,8 @@ Every banner, gallery entry, poster, and body image is a file in your repository
 
 `ubd build` reads `ADDON.md`, opens every media file it references, and measures each one: its width, its height, its size in bytes, the length of a video, and a small placeholder the store shows while the file loads. It writes the result to `page.json` in the build output, next to the bundle and the built `manifest.json`. Commit `page.json` with the bundle. When you publish, the server checks the sizes and formats again against the files in your repository.
 
+Measuring a video needs [FFmpeg](https://ffmpeg.org/download.html): `ffmpeg` and `ffprobe` must be on your `PATH`. Images need nothing extra. To change the size limits for a build, set `ADDON_MEDIA_MAX_BYTES` (one file) or `ADDON_MEDIA_TOTAL_MAX_BYTES` (all media) in bytes.
+
 The build fails when the page has any of these problems:
 
 - The frontmatter is not valid YAML, has a key twice, or has a key not listed under [Frontmatter](#frontmatter).
@@ -94,6 +96,7 @@ The build fails when the page has any of these problems:
 - A gallery entry is outside 9:16 to 21:9, or has no `alt`.
 - A media path is outside `media/`, points at another site, or has an extension not listed under [Media](#media).
 - A referenced media file does not exist, or is larger than the size limits.
+- A media file's contents do not match its extension, or a video uses a codec other than H.264, HEVC, or AV1 (`.mp4`) or VP8, VP9, or AV1 (`.webm`).
 - The body starts with a `#` heading.
 - The body contains a table. Use a list instead.
 

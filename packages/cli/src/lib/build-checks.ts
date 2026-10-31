@@ -3,6 +3,7 @@ import type { DiscoveredAddon } from '~/lib/discovery';
 import { layoutCheck } from '~/lib/checks/layout';
 import { namingCheck } from '~/lib/checks/naming';
 import { buildAddon } from '~/lib/build-addon';
+import { pageCheck } from '~/lib/checks/page';
 
 export type BuildCheckIssue = {
 	severity: 'error' | 'warning';
@@ -14,7 +15,12 @@ export type BuildCheck = {
 	run: (addon: DiscoveredAddon) => BuildCheckIssue[] | Promise<BuildCheckIssue[]>;
 };
 
-export const BUILD_CHECKS: readonly BuildCheck[] = [namingCheck, capabilitiesCheck, layoutCheck];
+export const BUILD_CHECKS: readonly BuildCheck[] = [
+	namingCheck,
+	capabilitiesCheck,
+	layoutCheck,
+	pageCheck,
+];
 
 /**
  * @description Runs each check against an addon in order and prints every issue, scoped to the addon.
