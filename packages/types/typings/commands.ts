@@ -210,6 +210,8 @@ export type CommandsHandle = {
 	 * Returns a function that removes this call's commands; it is safe to call twice or after a sweep.
 	 */
 	register<T>(commands: CommandTree<T>): () => void;
+	/** Removes this owner's root command `name` with its subcommands. Does nothing when there is none. */
+	unregister(name: string): void;
 	/** Removes every command of this owner. */
 	unregisterAll(): void;
 };
