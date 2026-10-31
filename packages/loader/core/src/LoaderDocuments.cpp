@@ -16,8 +16,7 @@ static constexpr const char *kLegacyDocumentsName = "astral";
 static constexpr const char *kLegacyFilePrefix    = "astral.";
 static constexpr const char *kFilePrefix          = "unbound.";
 
-// The bundle and its .trust and .candidate files sat at the root as `astral.*`.
-static std::string currentRootName(const std::string &name)
+static std::string renamedRootFile(const std::string &name)
 {
     const std::string prefix = kLegacyFilePrefix;
     return name.rfind(prefix, 0) == 0 ? kFilePrefix + name.substr(prefix.size()) : name;
@@ -60,38 +59,54 @@ static bool mergeSettings(const fs::path &legacy, const fs::path &current)
 
 static bool moveInto(const fs::path &from, const fs::path &to, bool root)
 {
-    std::error_code error;
-    bool            moved = true;
-    for (const auto &entry : fs::directory_iterator(from, error))
+    std::error_code        error;
+    fs::directory_iterator entries(from, error);
+    bool                   moved = true;
+    for (; !error && entries != fs::directory_iterator(); entries.increment(error))
     {
-        const std::string name   = entry.path().filename().string();
-        const fs::path    target = to / (root ? currentRootName(name) : name);
+        const fs::path    source = entries->path();
+        const std::string name   = source.filename().string();
+        const fs::path    target = to / (root ? renamedRootFile(name) : name);
+        std::error_code   entryError;
 
-        if (!fs::exists(target, error))
+        const bool targetExists = fs::exists(target, entryError);
+        if (!entryError && !targetExists)
         {
-            fs::rename(entry.path(), target, error);
+            fs::rename(source, target, entryError);
         }
-        else if (entry.is_directory(error) && fs::is_directory(target, error))
+        else if (!entryError && fs::is_directory(source, entryError) &&
+                 fs::is_directory(target, entryError))
         {
-            error.clear();
-            moved = moveInto(entry.path(), target, false) && moved;
+            moved = moveInto(source, target, false) && moved;
             continue;
         }
-        else if (root && name == preferences::kSettingsFile)
+        else if (!entryError && root && name == preferences::kSettingsFile)
         {
-            moved = mergeSettings(entry.path(), target) && moved;
+            moved = mergeSettings(source, target) && moved;
+            continue;
+        }
+        else if (!entryError)
+        {
+            log(LogLevel::Warning, LOG_CATEGORY_FILESYSTEM,
+                "Kept " + target.string() + ", dropping " + source.string());
             continue;
         }
 
-        if (error)
+        if (entryError)
         {
             log(LogLevel::Error, LOG_CATEGORY_FILESYSTEM,
-                "Failed to move " + entry.path().string() + ": " + error.message());
+                "Failed to move " + source.string() + ": " + entryError.message());
             moved = false;
-            error.clear();
         }
     }
-    return moved && !error;
+
+    if (error)
+    {
+        log(LogLevel::Error, LOG_CATEGORY_FILESYSTEM,
+            "Failed to read " + from.string() + ": " + error.message());
+        return false;
+    }
+    return moved;
 }
 
 std::string documentsDirectory(const std::string &parent)

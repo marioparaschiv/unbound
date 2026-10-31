@@ -3,9 +3,11 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <unistd.h>
+#include <vector>
 
 #include "LoaderDocuments.h"
 #include "LoaderFiles.h"
+#include "LoaderLog.h"
 
 namespace fs = std::filesystem;
 
@@ -70,7 +72,30 @@ static void keepsWhatTheCurrentFolderHasAndMovesTheRest()
     write(parent / "astral" / "Plugins" / "mp.clean-embeds" / "manifest.json", "legacy");
     write(parent / "astral" / "Plugins" / "astral.translate" / "manifest.json", "legacy");
 
+    std::vector<std::string> warnings;
+    loader::setLogSink([&](loader::LogLevel level, const std::string &, const std::string &text) {
+        if (level == loader::LogLevel::Warning)
+        {
+            warnings.push_back(text);
+        }
+    });
     loader::documentsDirectory(parent.string());
+    loader::setLogSink(nullptr);
+
+    const auto kept = [&](const std::string &file) {
+        for (const auto &warning : warnings)
+        {
+            if (warning.find((parent / "Unbound" / file).string()) != std::string::npos &&
+                warning.find("dropping") != std::string::npos)
+            {
+                return true;
+            }
+        }
+        return false;
+    };
+    assert(warnings.size() == 2);
+    assert(kept("unbound.bundle"));
+    assert(kept("Plugins/mp.clean-embeds/manifest.json"));
 
     const auto settings = nlohmann::json::parse(read(parent / "Unbound" / "settings.json"));
     assert(settings == nlohmann::json::parse(R"({
