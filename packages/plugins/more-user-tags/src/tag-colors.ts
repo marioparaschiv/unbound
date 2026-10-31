@@ -4,7 +4,7 @@ import {
 	type RoleColorStops,
 } from '@unbound-plugins/shared/colors/role-colors';
 
-export type ColorSource = { colorString?: string; colorStrings?: RoleColorStops };
+export type ColorSource = { colorString?: string | null; colorStrings?: RoleColorStops };
 
 export type TagColorOptions = {
 	useRoleColor: boolean;
