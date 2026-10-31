@@ -14,7 +14,6 @@ import type { TagGradients } from '~/tag-gradients';
 import { createNativeColors } from '~/ios/colors';
 
 type PendingUpdate = { label: NativeObjectHandle; timer: ReturnType<typeof setTimeout> };
-type QueuedView = { view: NativeObjectHandle; depth: number };
 
 /**
  * @description Draws role-color gradients behind Discord's native message tags on iOS.
@@ -22,6 +21,8 @@ type QueuedView = { view: NativeObjectHandle; depth: number };
  * @param appearances The colors the tag patch chose for each tag text.
  * @returns The gradients feature; when a class or capability is missing, `start` applies nothing.
  */
+const MAX_PLAIN_LABELS = 4_000;
+
 export function createTagGradients(
 	context: PluginContext,
 	appearances: LabelAppearances,
@@ -312,6 +313,42 @@ export function createTagGradients(
 		}
 
 		// Native hooks fire many times per layout; batch them into one update per label per tick.
+		const plainLabels = new Set<string>();
+		let plainRevision = appearances.revision();
+
+		function currentPlainLabels(): Set<string> {
+			if (plainRevision !== appearances.revision() || plainLabels.size > MAX_PLAIN_LABELS) {
+				plainLabels.clear();
+				plainRevision = appearances.revision();
+			}
+
+			return plainLabels;
+		}
+
+		function isPlainLabel(label: NativeObjectHandle): boolean {
+			const id = viewKey(objc, label);
+			const plainLabels = currentPlainLabels();
+
+			return !!id && plainLabels.has(id);
+		}
+
+		function skipsPlainText(label: NativeObjectHandle, text: unknown): boolean {
+			const id = viewKey(objc, label);
+			const plainLabels = currentPlainLabels();
+
+			if (!id || typeof text !== 'string') return false;
+
+			if (appearances.has(text) || records.has(id)) {
+				plainLabels.delete(id);
+
+				return false;
+			}
+
+			plainLabels.add(id);
+
+			return true;
+		}
+
 		async function scheduleLabelUpdate(label: NativeObjectHandle) {
 			if (stopped || appearances.isEmpty() || objc.className(label) !== 'DCDLabel') return;
 
@@ -353,28 +390,23 @@ export function createTagGradients(
 
 		// A recycled message cell keeps its labels, so drop their gradients before the cell shows another message.
 		async function clearReusedCell(cell: NativeObjectHandle) {
+			if (!records.size) return;
+
 			const retained = objc.call(cell, 'retain') as NativeObjectHandle;
-			const queue: QueuedView[] = [{ view: retained, depth: 0 }];
 
 			try {
-				for (let current = queue.pop(); current && !stopped; current = queue.pop()) {
-					if (objc.className(current.view) === 'DCDLabel') {
-						const record = records.get(viewKey(objc, current.view) ?? '');
+				const labels = await objc.findViews(retained, 'DCDLabel', {
+					maxDepth: 8,
+					maxVisited: 400,
+					maxResults: 64,
+				});
 
-						if (record) await removeRecord(record);
+				for (const label of labels) {
+					if (stopped) return;
 
-						continue;
-					}
+					const record = records.get(viewKey(objc, label) ?? '');
 
-					if (current.depth >= 8) {
-						continue;
-					}
-
-					const children = await subviews(current.view);
-
-					for (const child of children.slice(0, 20)) {
-						queue.push({ view: child, depth: current.depth + 1 });
-					}
+					if (record) await removeRecord(record);
 				}
 			} catch {
 				// A label left behind is cleared on its next update.
@@ -386,11 +418,17 @@ export function createTagGradients(
 		function hook(
 			className: string,
 			selector: string,
-			handler: (view: NativeObjectHandle) => Promise<void>,
+			handler: (view: NativeObjectHandle, args: unknown[]) => Promise<void> | void,
 		): boolean {
 			try {
 				hooks.push(
-					objc.hook(className, selector, { after: ({ self }) => track(handler(self)) }),
+					objc.hook(className, selector, {
+						after: ({ self, args }) => {
+							const result = handler(self, args);
+
+							if (result) track(result);
+						},
+					}),
 				);
 
 				return true;
@@ -400,8 +438,12 @@ export function createTagGradients(
 		}
 
 		const installed = [
-			hook('DCDLabel', 'setBackgroundColor:', scheduleLabelUpdate),
-			hook('DCDLabel', 'setText:', scheduleLabelUpdate),
+			hook('DCDLabel', 'setBackgroundColor:', (label) => {
+				if (!isPlainLabel(label)) return scheduleLabelUpdate(label);
+			}),
+			hook('DCDLabel', 'setText:', (label, [text]) => {
+				if (!skipsPlainText(label, text)) return scheduleLabelUpdate(label);
+			}),
 			hook('DiscordChat.MessageTagView', 'layoutSubviews', updateTagView),
 		];
 

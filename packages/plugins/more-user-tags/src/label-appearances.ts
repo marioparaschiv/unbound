@@ -15,9 +15,12 @@ export type LabelAppearances = ReturnType<typeof createLabelAppearances>;
  */
 export function createLabelAppearances() {
 	const entries = new Map<string, RoleColorAppearance>();
+	let revision = 0;
 
 	function set(label: string, appearance: RoleColorAppearance) {
 		if (!label.trim()) return;
+
+		revision++;
 
 		const colors = appearance.colors
 			.filter((color) => HEX_COLOR.test(color))
@@ -61,10 +64,25 @@ export function createLabelAppearances() {
 		return unique.size === 1 ? [...unique.values()][0] : null;
 	}
 
+	function has(label: string): boolean {
+		const prefix = getRoleGradientKey(label, '');
+
+		for (const key of entries.keys()) {
+			if (key.startsWith(prefix)) return true;
+		}
+
+		return false;
+	}
+
 	return {
 		set,
 		find,
-		clear: () => entries.clear(),
+		has,
+		clear: () => {
+			revision++;
+			entries.clear();
+		},
+		revision: () => revision,
 		isEmpty: () => entries.size === 0,
 	};
 }
