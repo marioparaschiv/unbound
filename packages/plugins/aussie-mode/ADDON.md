@@ -1,8 +1,7 @@
-Aussie Mode turns Discord upside down for anyone whose device is set to Australian English (en-AU). The app's main screens, the You and Settings tabs, the chat list and the action sheets all render rotated 180 degrees.
+Aussie Mode turns Discord upside down for anyone whose device is set to Australian English (en-AU). The whole app turns, menus, sheets and pop-ups included, and taps and scrolling turn with it, so dragging the chat moves it the way your finger goes.
 
 On any other device language the plugin does nothing.
 
 ## Known issues
 
-- Discord reloads once when you turn the plugin on, so the rotation covers screens that were already open, and once more when you turn it off.
-- Screens Discord adds or renames in an update may stay the right way up until the plugin is updated.
+- The status bar and the keyboard belong to the system, so they stay the right way up.
