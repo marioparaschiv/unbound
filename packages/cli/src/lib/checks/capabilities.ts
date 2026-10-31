@@ -55,38 +55,54 @@ export const capabilitiesCheck: BuildCheck = {
 	 * @returns One error per hand-written field, dynamic or misplaced bridge access, or undeclarable Capability.
 	 */
 	run(addon) {
-		const manifest = readDevManifest(addon.dir);
-
-		if (addon.static || addon.kind !== 'plugin') {
-			return validateAddonCapabilities(manifest).map(error);
-		}
-
-		const issues = GENERATED_FIELDS.filter((field) => manifest[field] !== void 0).map((field) =>
-			error(
-				`${MANIFEST_FILENAME} declares "${field}"; ubd build generates platforms and Capabilities from the code, so remove it.`,
-			),
-		);
-		const entry = findEntry(addon.dir, manifest.main);
-
-		if (!entry) {
-			return [
-				...issues,
-				error(
-					`Found neither src/index nor ${manifest.main} to read the native calls from.`,
-				),
-			];
-		}
-
-		const analysis = analyzeCapabilities(addon.dir, entry);
-
-		issues.push(...analysis.errors.map(error));
-
-		if (!issues.length) {
-			writeBuiltManifest(addon, manifest, analysis.platforms);
-		}
-
-		return issues;
+		return checkCapabilities(addon, false);
 	},
 };
 
-export default capabilitiesCheck;
+export const declaredCapabilitiesCheck: BuildCheck = {
+	name: 'capabilities',
+	/**
+	 * @description Like the capabilities check, but a plugin that still hand-writes its platforms and
+	 * Capabilities keeps them, checked against what each platform provides, instead of failing.
+	 * @param addon The addon to check.
+	 * @returns One error per problem in the hand-written fields, or what the capabilities check returns.
+	 */
+	run(addon) {
+		return checkCapabilities(addon, true);
+	},
+};
+
+function checkCapabilities(addon: DiscoveredAddon, acceptDeclared: boolean): BuildCheckIssue[] {
+	const manifest = readDevManifest(addon.dir);
+	const declared = GENERATED_FIELDS.filter((field) => manifest[field] !== void 0);
+
+	if (addon.static || addon.kind !== 'plugin' || (acceptDeclared && declared.length)) {
+		return validateAddonCapabilities(manifest).map(error);
+	}
+
+	const issues = declared.map((field) =>
+		error(
+			`${MANIFEST_FILENAME} declares "${field}"; ubd build generates platforms and Capabilities from the code, so remove it.`,
+		),
+	);
+	const entry = findEntry(addon.dir, manifest.main);
+
+	if (!entry) {
+		return [
+			...issues,
+			error(`Found neither src/index nor ${manifest.main} to read the native calls from.`),
+		];
+	}
+
+	const analysis = analyzeCapabilities(addon.dir, entry);
+
+	issues.push(...analysis.errors.map(error));
+
+	if (!issues.length) {
+		writeBuiltManifest(addon, manifest, analysis.platforms);
+	}
+
+	return issues;
+}
+
+export default { capabilitiesCheck, declaredCapabilitiesCheck };

@@ -2,7 +2,8 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { capabilitiesCheck } from '../src/lib/checks/capabilities';
+import { capabilitiesCheck, declaredCapabilitiesCheck } from '../src/lib/checks/capabilities';
+import type { BuildCheck } from '../src/lib/build-checks';
 import { createTempDir, type TempDir } from './helpers/ubd';
 import { discoverAddons } from '../src/lib/discovery';
 import { loadWorkspace } from './helpers/config';
@@ -56,14 +57,14 @@ function plugin(files: Files, fields: Record<string, string[]> = {}): TempDir {
 	return dir;
 }
 
-async function check(dir: TempDir) {
+async function check(dir: TempDir, buildCheck: BuildCheck = capabilitiesCheck) {
 	const [addon] = await discoverAddons(loadWorkspace(dir.path));
 
 	if (!addon) {
 		throw new Error('The fixture plugin was not discovered.');
 	}
 
-	return (await capabilitiesCheck.run(addon)).map((issue) => issue.message);
+	return (await buildCheck.run(addon)).map((issue) => issue.message);
 }
 
 function builtManifest(dir: TempDir) {
@@ -150,6 +151,23 @@ export const start = definePlatform({ ios });`,
 			expect(existsSync(join(dir.path, 'dist', 'manifest.json'))).toBe(false);
 		},
 	);
+
+	test('the declared variant keeps a valid hand-written list and checks an invalid one', async () => {
+		const valid = plugin(
+			{ 'src/index.ts': IOS_HANDLER },
+			{ platforms: ['ios'], capabilities: ['native.objc.invoke'] },
+		);
+		const invalid = plugin(
+			{ 'src/index.ts': IOS_HANDLER },
+			{ capabilities: ['native.objc.unknown'] },
+		);
+
+		expect(await check(valid, declaredCapabilitiesCheck)).toEqual([]);
+		expect(existsSync(join(valid.path, 'dist', 'manifest.json'))).toBe(false);
+		expect(await check(invalid, declaredCapabilitiesCheck)).toEqual([
+			'capabilities contains an unsupported value: native.objc.unknown',
+		]);
+	});
 
 	test('dynamic bridge access fails the build', async () => {
 		const dir = plugin({

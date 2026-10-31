@@ -4,7 +4,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "bun ../../packages/cli/src/index.ts dev",
-		"build": "bun ../../packages/cli/src/index.ts build",
+		"build": "bun ../../packages/cli/src/index.ts build --declared-capabilities",
 		"test": "bun test --isolate",
 		"typecheck": "bun ../plugin-scripts/src/typecheck-plugins.ts",
 		"lint": "oxlint --config .oxlintrc.json ."

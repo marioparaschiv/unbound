@@ -1,4 +1,4 @@
-import { capabilitiesCheck } from '~/lib/checks/capabilities';
+import { capabilitiesCheck, declaredCapabilitiesCheck } from '~/lib/checks/capabilities';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import { layoutCheck } from '~/lib/checks/layout';
 import { namingCheck } from '~/lib/checks/naming';
@@ -18,6 +18,14 @@ export type BuildCheck = {
 export const BUILD_CHECKS: readonly BuildCheck[] = [
 	namingCheck,
 	capabilitiesCheck,
+	layoutCheck,
+	pageCheck,
+];
+
+/** The build checks for a workspace whose plugins may still hand-write platforms and Capabilities. */
+export const DECLARED_CAPABILITY_CHECKS: readonly BuildCheck[] = [
+	namingCheck,
+	declaredCapabilitiesCheck,
 	layoutCheck,
 	pageCheck,
 ];
@@ -82,4 +90,4 @@ async function collectIssues(
 	}
 }
 
-export default { BUILD_CHECKS, runBuildChecks, buildWithChecks };
+export default { BUILD_CHECKS, DECLARED_CAPABILITY_CHECKS, runBuildChecks, buildWithChecks };
