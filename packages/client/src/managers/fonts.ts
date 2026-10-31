@@ -1,3 +1,4 @@
+import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
 import type { FontEntity } from '@unbound-app/types';
 
 import { getSetting, setSetting } from '~/lib/unbound-settings';
@@ -145,6 +146,39 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 
 			return undefined;
 		}
+	}
+
+	/**
+	 * @description Reads whether a listed font is installed. A font installs as its bare file, named after the bundle, with no manifest to version it.
+	 * @param listed The listed font.
+	 * @returns The listed version when its file is installed, otherwise `undefined`.
+	 */
+	getInstalledVersion(listed: ListedAddon): string | undefined {
+		const file = listed.latestVersion.bundleUrl.split('/').pop() ?? '';
+		const installed = this.getEntities().some((font) => font.file === file);
+
+		return installed ? listed.latestVersion.version : undefined;
+	}
+
+	/**
+	 * @description Installs a listed font as its bare file; fonts carry no manifest, and no version to hold.
+	 * @param _listed The listed font.
+	 * @param version The version whose file to install.
+	 * @returns Whether the install succeeded.
+	 */
+	async installListed(_listed: ListedAddon, version: AddonVersion): Promise<boolean> {
+		return Boolean(await this.install(version.bundleUrl));
+	}
+
+	/**
+	 * @description Calls a listener whenever a font is installed or deleted.
+	 * @param listener The listener.
+	 * @returns A function that removes the listener.
+	 */
+	onInstalledChange(listener: () => void): () => void {
+		this.on('changed', listener);
+
+		return () => void this.off('changed', listener);
 	}
 
 	/**

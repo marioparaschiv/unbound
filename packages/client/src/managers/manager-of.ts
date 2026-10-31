@@ -1,3 +1,5 @@
+import type { AddonKind } from '@unbound-app/types/addons';
+
 import type { Plugins } from '~/managers/plugins';
 import type { Themes } from '~/managers/themes';
 import type { Fonts } from '~/managers/fonts';
@@ -10,3 +12,6 @@ export type ManagerOf = {
 	'icon-pack': Icons;
 	font: Fonts;
 };
+
+/** The kinds whose addons carry a marketplace id and version; fonts have neither. */
+export type UpdatableKind = Exclude<AddonKind, 'font'>;

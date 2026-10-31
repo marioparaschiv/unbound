@@ -1,5 +1,7 @@
-import type { Addon, AddonManifest, PluginContext } from '@unbound-app/types';
+import type { AddonManifest, Plugin, PluginContext } from '@unbound-app/types';
 import { mock } from 'bun:test';
+
+import type { Addon, AddonState } from '~/managers/addon';
 
 // The base Addons manager reaches native FS and storage through these modules, which pull in
 // react-native. Stub both so the pure lifecycle logic loads under bun with no device harness.
@@ -90,6 +92,8 @@ mock.module('react-native', () => ({
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.
 export const { Addons } = require('~/managers/addons') as typeof import('~/managers/addons');
+const { Addon: AddonClass } = require('~/managers/addon') as typeof import('~/managers/addon');
+
 export const { createPluginContext } =
 	require('~/api/native-runtime') as typeof import('~/api/native-runtime');
 
@@ -147,8 +151,11 @@ export function makeInstance(id: string, log: string[], stopThrows: boolean = fa
 	};
 }
 
+/** An addon to put straight into a manager, in whatever state the test needs. */
+export type SeededAddon = Omit<AddonState<Plugin>, 'context'> & { id: string };
+
 /** A plugin manager whose bundles evaluate to logging instances named after their source. */
-export class FakeAddons extends Addons<Addon> {
+export class FakeAddons extends Addons<Plugin> {
 	log: string[] = [];
 	contexts: { disposed: boolean }[] = [];
 	nextStartFails = false;
@@ -195,8 +202,13 @@ export class FakeAddons extends Addons<Addon> {
 		};
 	}
 
-	seed(entity: Addon) {
-		this.entities.set(entity.id, entity);
+	seed({ id, manifest, bundle, ...state }: SeededAddon): Addon<Plugin> {
+		const entity = new AddonClass(manifest, bundle, this);
+
+		Object.assign(entity.state, state);
+		this.entities.set(id, entity);
+
+		return entity;
 	}
 }
 

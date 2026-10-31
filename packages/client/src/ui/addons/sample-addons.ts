@@ -1,14 +1,10 @@
-import type { Addon } from '@unbound-app/types';
+import { plugins } from '~/managers/plugins';
+import { Addon } from '~/managers/addon';
 
 /** Development-only addon manifests used to review addon-card layout without installed plugins. */
 const sampleAddons: Addon[] = [
-	{
-		id: 'unbound-preview-better-embeds',
-		started: false,
-		failed: false,
-		instance: null,
-		bundle: '',
-		data: {
+	new Addon(
+		{
 			id: 'unbound-preview-better-embeds',
 			type: 'plugin',
 			name: 'Better Embeds',
@@ -21,14 +17,11 @@ const sampleAddons: Addon[] = [
 			version: '2.4.1',
 			main: 'index.js',
 		},
-	},
-	{
-		id: 'unbound-preview-quiet-typing',
-		started: false,
-		failed: false,
-		instance: null,
-		bundle: '',
-		data: {
+		'',
+		plugins,
+	),
+	new Addon(
+		{
 			id: 'unbound-preview-quiet-typing',
 			type: 'plugin',
 			name: 'Quiet Typing',
@@ -37,7 +30,9 @@ const sampleAddons: Addon[] = [
 			version: '1.0.0',
 			main: 'index.js',
 		},
-	},
+		'',
+		plugins,
+	),
 ];
 
 export default sampleAddons;

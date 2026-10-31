@@ -1,11 +1,11 @@
 import type { PressableProps } from 'react-native';
-import type { Addon } from '@unbound-app/types';
 import { Pressable } from 'react-native';
 import { useMemo, memo } from 'react';
 
 import { API_URL, CLIENT_VERSION } from '~/lib/constants';
 import { reinstallFromStore } from '~/lib/updates';
 import { Discord } from '~/api/metro/components';
+import type { Addon } from '~/managers/addon';
 import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';
 import { Manager } from '~/managers/base';
@@ -51,7 +51,7 @@ function AddonOverflow({ addon, kind, developmentCopy }: AddonOverflowProps) {
 
 	// The menu anchors to the Pressable it renders; wrapping the trigger in a component breaks it.
 	return (
-		<Discord.ContextMenu title={addon.data.name} items={items} triggerOnTap>
+		<Discord.ContextMenu title={addon.name} items={items} triggerOnTap>
 			{(props: PressableProps) => (
 				<Pressable {...props} hitSlop={6} style={styles.button}>
 					<TintedIcon
@@ -66,11 +66,11 @@ function AddonOverflow({ addon, kind, developmentCopy }: AddonOverflowProps) {
 }
 
 async function reinstall(kind: AddonOverflowProps['kind'], addon: Addon) {
-	const name = addon.data.name;
+	const name = addon.name;
 	let applied = false;
 
 	try {
-		applied = await reinstallFromStore(kind, Manager.for(kind), addon.id, {
+		applied = await reinstallFromStore(Manager.for(kind), addon.id, {
 			baseUrl: API_URL,
 			clientVersion: CLIENT_VERSION,
 		});

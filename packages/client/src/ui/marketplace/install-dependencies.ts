@@ -59,9 +59,7 @@ function describePlan(install: ListedDependency[], update: ListedDependency[]): 
 export async function installDependencies(manifest: PublishedManifest): Promise<boolean> {
 	const manager = Manager.for('plugin');
 	const listed = listedPlugins();
-	const installed = new Map(
-		manager.getEntities().map((entity) => [entity.id, entity.data.version]),
-	);
+	const installed = new Map(manager.getEntities().map((entity) => [entity.id, entity.version]));
 	const plan = planDependencies(
 		manifest.dependencies,
 		installed,
@@ -99,15 +97,7 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 	for (const dependency of plan.ordered) {
 		const entry = listed.get(dependency.id);
 		const done = entry
-			? installed.has(dependency.id)
-				? await manager
-						.update(dependency.id, toRelease(entry.id, entry.latestVersion))
-						.then(
-							() =>
-								manager.getEntity(dependency.id)?.data.version ===
-								dependency.version,
-						)
-				: Boolean(await manager.install(entry.latestVersion.manifestUrl))
+			? await manager.applyRelease(dependency.id, toRelease(entry.id, entry.latestVersion))
 			: false;
 
 		if (!done) {

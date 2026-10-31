@@ -83,6 +83,7 @@ export const moves: Record<string, string> = {
 
 	'managers/base.ts': 'addons/manager.ts',
 	'managers/manager-of.ts': 'addons/manager-of.ts',
+	'managers/addon.ts': 'addons/addon.ts',
 	'managers/addons.ts': 'addons/addons.ts',
 	'managers/addon-lifecycle.ts': 'addons/lifecycle.ts',
 	'managers/index.ts': 'addons/managers.ts',

@@ -15,7 +15,7 @@ function addon(
 	dependencies?: Record<string, string>,
 	library?: boolean,
 ): DependentAddon {
-	return { id, data: { name: id, version: '1.0.0', dependencies, library } };
+	return { id, manifest: { name: id, version: '1.0.0', dependencies, library } };
 }
 
 function listed(

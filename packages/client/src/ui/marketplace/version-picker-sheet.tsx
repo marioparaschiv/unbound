@@ -1,9 +1,9 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
 import type { AvailableChoice, VersionChoice } from '~/lib/addon-versions';
+import type { UpdatableKind } from '~/managers/manager-of';
 import { toVersionChoices } from '~/lib/addon-versions';
 import { BottomSheets } from '~/api/metro/components';
-import type { UpdatableKind } from '~/lib/updates';
 import { CLIENT_VERSION } from '~/lib/constants';
 import { Messages, format } from '~/api/i18n';
 import { Moment } from '~/api/metro/common';

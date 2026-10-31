@@ -1,4 +1,6 @@
-import type { Addon, AddonManifest, NativePluginCapability } from '@unbound-app/types';
+import type { AddonManifest, NativePluginCapability } from '@unbound-app/types';
+
+import type { Addon } from '~/managers/addon';
 
 /** Capabilities that reach native code without the bridge's type and object checks. */
 const CONSENT_CAPABILITIES: readonly NativePluginCapability[] = [
@@ -35,7 +37,7 @@ export function promptForConsent(addon: Addon): Promise<boolean> {
 		return Promise.resolve(false);
 	}
 
-	return consentPrompt(addon, consentCapabilities(addon.data));
+	return consentPrompt(addon, consentCapabilities(addon.manifest));
 }
 
 /** Thrown when an addon asks for direct native access the user has not allowed. */

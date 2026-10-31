@@ -1,6 +1,7 @@
-import type { Theme, ThemeEntity } from '@unbound-app/types';
 import toError from '@unbound-app/utils/to-error';
+import type { Theme } from '@unbound-app/types';
 
+import type { AddonResolveable } from '~/managers/addon';
 import { parseThemeBundle } from '~/lib/theme-bundle';
 import { Addons } from '~/managers/addons';
 import { Manager } from '~/managers/base';
@@ -10,7 +11,7 @@ import ThemeStore from '~/stores/themes';
  * @description Manages user themes, layering theme-specific application on top of the base {@link Addons} manager.
  * Loads bundled themes at startup and applies the selected one through {@link ThemeStore} and the `applied` setting.
  */
-export class Themes extends Addons<ThemeEntity> {
+export class Themes extends Addons<Theme> {
 	constructor() {
 		super({
 			kind: 'theme',
@@ -36,7 +37,7 @@ export class Themes extends Addons<ThemeEntity> {
 		const applied = appliedId ? this.getEntity(appliedId) : undefined;
 
 		if (applied?.started) {
-			ThemeStore.getState().setApplied(applied.id, applied.instance);
+			ThemeStore.getState().setApplied(applied.id, applied.state.instance);
 		}
 
 		this.initialized = true;
@@ -64,7 +65,7 @@ export class Themes extends Addons<ThemeEntity> {
 	 * this one as `applied`, starts it if needed, and pushes it onto {@link ThemeStore}. Twin of {@link disable}.
 	 * @param entity The theme id or entity to enable.
 	 */
-	enable(entity: string | ThemeEntity) {
+	enable(entity: AddonResolveable<Theme>) {
 		const resolved = this.resolve(entity);
 
 		if (!resolved) return;
@@ -91,7 +92,7 @@ export class Themes extends Addons<ThemeEntity> {
 				this.start(resolved);
 			}
 
-			ThemeStore.getState().setApplied(resolved.id, resolved.instance);
+			ThemeStore.getState().setApplied(resolved.id, resolved.state.instance);
 			this.emit('enabled', resolved);
 		} catch (error) {
 			this.logger.error(`Failed to enable theme ${resolved.id}:`, error);
@@ -104,7 +105,7 @@ export class Themes extends Addons<ThemeEntity> {
 	 * theme if running, and clears it from {@link ThemeStore}. Twin of {@link enable}.
 	 * @param entity The theme id or entity to disable.
 	 */
-	disable(entity: string | ThemeEntity) {
+	disable(entity: AddonResolveable<Theme>) {
 		const resolved = this.resolve(entity);
 
 		if (!resolved) return;
@@ -127,6 +128,20 @@ export class Themes extends Addons<ThemeEntity> {
 			this.logger.error(`Failed to disable theme ${resolved.id}:`, error);
 			this.errors.set(resolved.id, toError(error));
 		}
+	}
+
+	/**
+	 * @description Restarts a running theme, re-parsing its bundle, and re-applies it through {@link ThemeStore} if it is the applied one.
+	 * @param entity The theme id or entity to restart.
+	 */
+	async restart(entity: AddonResolveable<Theme>): Promise<void> {
+		await super.restart(entity);
+
+		const resolved = this.resolve(entity);
+
+		if (!resolved?.started || this.getAppliedId() !== resolved.id) return;
+
+		ThemeStore.getState().setApplied(resolved.id, resolved.state.instance);
 	}
 }
 

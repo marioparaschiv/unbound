@@ -4,23 +4,18 @@ import {
 	updatesResponseSchema,
 } from '@unbound-app/contracts/updates';
 import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
-import type { AddonKind } from '@unbound-app/types/addons';
 import { createApiClient } from '@unbound-app/web/client';
-import type { Addon } from '@unbound-app/types';
+import type { Plugin } from '@unbound-app/types';
 import type { Api } from '@unbound-app/web/api';
-import sha256 from '@unbound-app/utils/sha256';
 
+import type { UpdatableKind } from '~/managers/manager-of';
 import type { Addons } from '~/managers/addons';
 
-/** Managers whose addons carry a marketplace id and version; fonts have neither. */
-export type UpdatableKind = Exclude<AddonKind, 'font'>;
-
-/** The part of an addon manager the updater drives; each manager narrows the entity type. */
+/** The part of an addon manager the updater drives. */
 export type UpdatableManager = Pick<
-	Addons<Addon>,
-	'getEntities' | 'getEntity' | 'update' | 'getHeldVersion'
-> &
-	Partial<Pick<Addons<Addon>, 'isDevelopmentCopy' | 'clearDevelopmentCopy'>>;
+	Addons<Plugin>,
+	'listInstalled' | 'applyRelease' | 'getHeldVersion' | 'clearDevelopmentCopy'
+>;
 
 export type UpdateCheckOptions = {
 	/** Origin of the Unbound web API. */
@@ -114,51 +109,6 @@ export function toPendingUpdates(
 		.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-type BundleDigest = {
-	bundle: string;
-	digest: string;
-};
-
-const bundleDigests = new Map<string, BundleDigest>();
-
-function digestOf(id: string, bundle: string): string {
-	const cached = bundleDigests.get(id);
-
-	if (cached?.bundle === bundle) {
-		return cached.digest;
-	}
-
-	const digest = sha256(bundle);
-
-	bundleDigests.set(id, { bundle, digest });
-
-	return digest;
-}
-
-/**
- *
- */
-/**
- * @description Lists a manager's installed addons for an update check.
- * @param kind The manager's kind, carried onto each entry.
- * @param manager The manager.
- * @returns One entry per installed addon.
- */
-export function listInstalled(kind: UpdatableKind, manager: UpdatableManager): InstalledEntry[] {
-	return manager
-		.getEntities()
-		.filter((entity) => !manager.isDevelopmentCopy?.(entity.id))
-		.map((entity) => ({
-			kind,
-			id: entity.id,
-			name: entity.data.name,
-			version: entity.data.version,
-			...(typeof entity.bundle === 'string' && entity.bundle
-				? { sha256: digestOf(entity.id, entity.bundle) }
-				: {}),
-		}));
-}
-
 /**
  * @description Asks `POST /api/v1/updates` which installed addons have updates, in one request.
  * Addons the server doesn't know are never listed back.
@@ -212,49 +162,30 @@ export function automaticUpdates(
 }
 
 /**
- * @description Has the owning manager apply a pending update.
- * @param manager The manager the addon belongs to.
- * @param pending The update.
- * @returns Whether the addon now runs the new version; the manager records why when it doesn't.
- */
-export async function applyUpdate(
-	manager: UpdatableManager,
-	pending: PendingUpdate,
-): Promise<boolean> {
-	await manager.update(pending.id, pending.update);
-
-	return manager.getEntity(pending.id)?.data.version === pending.update.version;
-}
-
-/**
  * @description Replaces a development copy with the store's published build: clears its development mark, then checks just that addon and applies the update the store returns.
- * @param kind The manager's kind.
  * @param manager The manager the addon belongs to.
  * @param id The addon's id.
  * @param options The API origin and this client's version.
  * @returns Whether the store's build was applied; `false` when the installed bundle already matches the store or the store does not publish it.
  */
 export async function reinstallFromStore(
-	kind: UpdatableKind,
 	manager: UpdatableManager,
 	id: string,
 	options: UpdateCheckOptions,
 ): Promise<boolean> {
-	manager.clearDevelopmentCopy?.(id);
+	manager.clearDevelopmentCopy(id);
 
-	const entries = listInstalled(kind, manager).filter((entry) => entry.id === id);
+	const entries = manager.listInstalled().filter((entry) => entry.id === id);
 	const [pending] = await fetchUpdates(entries, options);
 
-	return pending ? applyUpdate(manager, pending) : false;
+	return pending ? manager.applyRelease(pending.id, pending.update) : false;
 }
 
 export default {
 	buildUpdatesRequest,
 	toPendingUpdates,
-	listInstalled,
 	fetchUpdates,
 	autoApplies,
 	automaticUpdates,
-	applyUpdate,
 	reinstallFromStore,
 };

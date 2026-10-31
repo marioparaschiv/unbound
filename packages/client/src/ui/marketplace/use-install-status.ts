@@ -7,7 +7,7 @@ import { getInstallStatus } from '~/lib/catalog';
 import { useForceUpdate } from '~/ui/hooks';
 import { Manager } from '~/managers/base';
 
-import { getInstalledVersion, INSTALL_EVENTS } from './targets';
+import { getInstalledVersion } from './targets';
 
 /**
  * @description Compares a listed addon with the installed copy, re-rendering when the manager changes.
@@ -18,27 +18,7 @@ import { getInstalledVersion, INSTALL_EVENTS } from './targets';
 function useInstallStatus(kind: AddonKind, addon: ListedAddon): InstallStatus {
 	const forceUpdate = useForceUpdate();
 
-	useEffect(() => {
-		if (kind === 'font') {
-			const fonts = Manager.for(kind);
-
-			fonts.on('changed', forceUpdate);
-
-			return () => void fonts.off('changed', forceUpdate);
-		}
-
-		const manager = Manager.for(kind);
-
-		for (const event of INSTALL_EVENTS) {
-			manager.on(event, forceUpdate);
-		}
-
-		return () => {
-			for (const event of INSTALL_EVENTS) {
-				manager.off(event, forceUpdate);
-			}
-		};
-	}, [kind]);
+	useEffect(() => Manager.for(kind).onInstalledChange(forceUpdate), [kind]);
 
 	return getInstallStatus(addon.latestVersion.version, getInstalledVersion(kind, addon));
 }

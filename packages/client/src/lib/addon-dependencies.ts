@@ -2,7 +2,7 @@ type Version = [number, number, number];
 
 export type DependentAddon = {
 	id: string;
-	data: {
+	manifest: {
 		name: string;
 		version: string;
 		library?: boolean;
@@ -115,8 +115,8 @@ export function satisfies(version: string, range: string): boolean {
  */
 export function isLibrary(addon: DependentAddon, installed: readonly DependentAddon[]): boolean {
 	return (
-		addon.data.library === true ||
-		installed.some((other) => other.id !== addon.id && other.data.dependencies?.[addon.id])
+		addon.manifest.library === true ||
+		installed.some((other) => other.id !== addon.id && other.manifest.dependencies?.[addon.id])
 	);
 }
 
@@ -133,7 +133,7 @@ export function dependentsOf(id: string, installed: readonly DependentAddon[]): 
 
 	function visit(target: string) {
 		for (const addon of installed) {
-			if (seen.has(addon.id) || !addon.data.dependencies?.[target]) {
+			if (seen.has(addon.id) || !addon.manifest.dependencies?.[target]) {
 				continue;
 			}
 
@@ -162,7 +162,7 @@ export function brokenDependents(
 	installed: readonly DependentAddon[],
 ): DependentAddon[] {
 	return installed.filter((addon) => {
-		const range = addon.data.dependencies?.[id];
+		const range = addon.manifest.dependencies?.[id];
 
 		return addon.id !== id && range !== undefined && !satisfies(version, range);
 	});
