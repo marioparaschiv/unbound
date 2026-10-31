@@ -1,9 +1,10 @@
-import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-sheet-row';
 import patchLazySheets from '@unbound-plugins/shared/action-sheets/patch-lazy-sheets';
-import { isActionSheetRowGroup } from '@unbound-plugins/shared/action-sheets/row-group';
-import { findElement } from '@unbound-plugins/shared/react/find-element';
 import { createSheetRenderer } from '@unbound-plugins/shared/action-sheets/sheet-renderer';
-import { assets, patcher, toasts } from '@unbound-app/api';
+import {
+	insertSheetRows,
+	type SheetRowSpec,
+} from '@unbound-plugins/shared/action-sheets/sheet-rows';
+import { patcher, toasts } from '@unbound-app/api';
 
 import { channelHasLog, clearChannelLog, clearMessageHistory } from '~/history/actions';
 import { PLUGIN_NAME } from '~/constants';
@@ -23,37 +24,6 @@ type SheetProps = {
 	channel?: { id?: string };
 	channelId?: string;
 };
-
-type SheetRowSpec = {
-	key: string;
-	label: string;
-	icon: string;
-	onPress: () => void;
-};
-
-// UNKNOWN: an action sheet may render any node.
-function insertRows(result: unknown, specs: readonly SheetRowSpec[]): void {
-	const rows = findElement(result, isActionSheetRowGroup)?.props?.children;
-
-	if (!Array.isArray(rows) || !specs.length) return;
-
-	const ActionSheetRow = getActionSheetRow();
-
-	for (const spec of specs) {
-		if (rows.some((row) => row?.key === spec.key)) continue;
-
-		const icon = assets.getIdByName(spec.icon);
-
-		rows.push(
-			<ActionSheetRow
-				key={spec.key}
-				label={spec.label}
-				icon={icon ? <ActionSheetRow.Icon source={icon} /> : undefined}
-				onPress={spec.onPress}
-			/>,
-		);
-	}
-}
 
 function messageRows(log: MessageLog, hide: () => void, message: SheetMessage): SheetRowSpec[] {
 	const { id, channel_id: channelId } = message;
@@ -117,7 +87,7 @@ function channelRows(log: MessageLog, hide: () => void, channelId: string): Shee
  */
 export function patchActionSheets(log: MessageLog): () => void {
 	let specs: readonly SheetRowSpec[] = [];
-	const renderer = createSheetRenderer(patcher, (result) => insertRows(result, specs));
+	const renderer = createSheetRenderer(patcher, (result) => insertSheetRows(result, specs));
 
 	const unpatch = patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
 		const channelId = props.channel?.id ?? props.channelId;
