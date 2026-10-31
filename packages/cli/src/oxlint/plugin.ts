@@ -1,8 +1,10 @@
+import type { Plugin } from './rule';
+
 import platformCheckOnlyInPlatformFile from './platform-check-only-in-platform-file.ts';
 import noModuleScopeLookup from './no-module-scope-lookup.ts';
 import noWindowUnbound from './no-window-unbound.ts';
 
-export default {
+const addonRules: Plugin = {
 	meta: { name: 'unbound' },
 	rules: {
 		'platform-check-only-in-platform-file': platformCheckOnlyInPlatformFile,
@@ -10,3 +12,5 @@ export default {
 		'no-window-unbound': noWindowUnbound,
 	},
 };
+
+export default addonRules;

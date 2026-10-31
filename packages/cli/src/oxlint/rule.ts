@@ -6,6 +6,11 @@ type OnceRule = { createOnce: unknown };
 
 export type Rule = Exclude<AnyRule, OnceRule>;
 
+export type Plugin = {
+	meta: { name: string };
+	rules: Record<string, Rule>;
+};
+
 export type Context = Parameters<Rule['create']>[0];
 
 type Visitor = ReturnType<Rule['create']>;
