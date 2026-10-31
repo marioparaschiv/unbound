@@ -12,10 +12,10 @@ const inputGroupAddonVariants = cva(
 	{
 		variants: {
 			align: {
+				// A button's side inset matches its top and bottom one: 6px from the edge, 1.5px of it border.
 				'inline-start':
-					'order-first pl-4 has-[>button]:ml-[-0.45rem] has-[>kbd]:ml-[-0.35rem]',
-				'inline-end':
-					'order-last pr-4 has-[>button]:mr-[-0.45rem] has-[>kbd]:mr-[-0.35rem]',
+					'order-first pl-4 has-[>button]:pl-[4.5px] has-[>kbd]:ml-[-0.35rem]',
+				'inline-end': 'order-last pr-4 has-[>button]:pr-[4.5px] has-[>kbd]:mr-[-0.35rem]',
 				'block-start':
 					'order-first w-full justify-start px-3 pt-3 [.border-b]:pb-3 group-has-[>input]/input-group:pt-2.5',
 				'block-end':

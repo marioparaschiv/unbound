@@ -32,14 +32,14 @@ function DashboardPage() {
 				</Button>
 			</PageHeader>
 
-			<AttentionList addons={addons} githubLinked={githubLinked} />
+			<AttentionList addons={addons} />
 
 			<div className='items-start gap-6 grid lg:grid-cols-[1fr_380px]'>
 				{addons.length === 0 ? (
 					<FirstRun githubLinked={githubLinked} hasSubmitted={timeline.length > 0} />
 				) : (
 					<DashboardSection title='Addons'>
-						<AddonList addons={addons} userId={user.id} githubLinked={githubLinked} />
+						<AddonList addons={addons} userId={user.id} />
 					</DashboardSection>
 				)}
 

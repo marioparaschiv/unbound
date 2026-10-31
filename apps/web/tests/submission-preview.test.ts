@@ -155,7 +155,6 @@ describe('POST /api/v1/submissions/preview', () => {
 			path,
 			ref: 'hello',
 			commitSha,
-			details: { tags: ['hello'] },
 		});
 
 		const blobSha = new Bun.CryptoHasher('sha1')
@@ -182,8 +181,9 @@ describe('POST /api/v1/submissions/preview', () => {
 		});
 		expect(result.details).toMatchObject({
 			homepage: 'https://acme.example/',
-			tags: ['hello'],
+			tags: ['greeting'],
 		});
+		expect(result.suggestedTags).toEqual([]);
 	});
 
 	test('carries the manifest the build wrote into the output', async () => {

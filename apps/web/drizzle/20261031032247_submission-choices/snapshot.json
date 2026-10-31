@@ -1,0 +1,115 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "055c1244-fd7a-4e20-b032-bf72fbc7fde7",
+  "prevIds": [
+    "7dbf1061-17f9-4ee8-8eda-96ac62982f9c"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "submission",
+        "tags"
+      ],
+      "writes": [
+        "s|col|public.submission.tags",
+        "n|col|public.submission.tags",
+        "e|col|public.submission.tags"
+      ],
+      "reads": [
+        "n|tbl|public.submission",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "submission",
+        "maintainers"
+      ],
+      "writes": [
+        "s|col|public.submission.maintainers",
+        "n|col|public.submission.maintainers",
+        "e|col|public.submission.maintainers"
+      ],
+      "reads": [
+        "n|tbl|public.submission",
+        "n|sch|public"
+      ]
+    },
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "submission",
+        "icon"
+      ],
+      "writes": [
+        "s|col|public.submission.icon",
+        "n|col|public.submission.icon",
+        "e|col|public.submission.icon"
+      ],
+      "reads": [
+        "n|tbl|public.submission",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "submission",
+        "name": "tags",
+        "type": "json",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "submission",
+        "name": "maintainers",
+        "type": "json",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "submission",
+        "name": "icon",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

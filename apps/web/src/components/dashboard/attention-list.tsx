@@ -1,6 +1,6 @@
 import { IconTriangleWarning } from 'nucleo-micro-bold';
 
-import SubmitDialog from '~/components/dashboard/submit-dialog';
+import SubmitButton from '~/components/dashboard/submit-button';
 import { getStatusStyle } from '~/components/dashboard/status';
 import type { DashboardAddon } from '~/lib/dashboard';
 import Text from '~/components/ui/text';
@@ -8,12 +8,11 @@ import cn from '~/lib/cn';
 
 type AttentionListProps = {
 	addons: DashboardAddon[];
-	githubLinked: boolean;
 };
 
 const STYLE = getStatusStyle('changes_requested');
 
-function AttentionList({ addons, githubLinked }: AttentionListProps) {
+function AttentionList({ addons }: AttentionListProps) {
 	const flagged = addons.flatMap(({ id, name, pending, actions }) =>
 		pending && actions.submit === 'republish' ? [{ id, name, pending }] : [],
 	);
@@ -53,13 +52,7 @@ function AttentionList({ addons, githubLinked }: AttentionListProps) {
 							</Text>
 						) : null}
 					</div>
-					<SubmitDialog
-						addonId={id}
-						intent='republish'
-						githubLinked={githubLinked}
-						source={pending.source}
-						variant='outline'
-					/>
+					<SubmitButton addonId={id} intent='republish' variant='outline' />
 				</div>
 			))}
 		</section>
