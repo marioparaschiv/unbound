@@ -1917,7 +1917,8 @@ export type MarkdownReactParser = (
 ) => React$1.ReactNode;
 /** A simple-markdown rule: `match` finds it at the start of the source, `parse` builds its node, `react` renders it. */
 export type MarkdownRule<TNode extends MarkdownNode = MarkdownNode> = {
-	order: number;
+	/** Discord 349 ships `highlight`, `guild` and `channel` without one; the parser never calls those. */
+	order?: number;
 	match(source: string, state: MarkdownState, previous: string): RegExpExecArray | null;
 	parse(capture: RegExpExecArray, parse: MarkdownNestedParse, state: MarkdownState): TNode;
 	react?(node: TNode, output: MarkdownOutput, state: MarkdownState): React$1.ReactNode;
