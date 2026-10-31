@@ -1,7 +1,9 @@
 import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 import { expect, test } from 'bun:test';
 
-import { settings } from '~/storage/api';
+import { snapshot } from '~/storage/api';
+
+const settings = snapshot();
 
 import { getSetting, isSettingChange, setSetting, toggleSetting } from './unbound';
 

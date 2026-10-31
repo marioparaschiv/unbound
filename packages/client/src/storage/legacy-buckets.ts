@@ -1,7 +1,7 @@
 import type { SettingsObject, SettingsValue } from '@unbound-app/types';
 import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 
-import { clear, get, set, settings } from '~/storage/api';
+import { clear, get, set, snapshot } from '~/storage/api';
 
 const LEGACY_NAME = 'astral';
 const LEGACY_PREFIX = `${LEGACY_NAME}.`;
@@ -49,8 +49,10 @@ function withMissingFromLegacy(
 }
 
 function fillBucketFromLegacy(name: string, target: string) {
-	for (const [key, value] of Object.entries(settings[name] ?? {})) {
-		const merged = withMissingFromLegacy(settings[target]?.[key], value);
+	const stores = snapshot();
+
+	for (const [key, value] of Object.entries(stores[name] ?? {})) {
+		const merged = withMissingFromLegacy(stores[target]?.[key], value);
 
 		if (merged !== undefined) {
 			set(target, key, merged);
@@ -92,7 +94,7 @@ function moveLegacyStatesOver(bucket: string) {
  * A Bucket value already saved under the new name is kept: the loader kept writing its own keys to `unbound` throughout.
  */
 export function renameLegacyBuckets(): void {
-	for (const name of Object.keys(settings)) {
+	for (const name of Object.keys(snapshot())) {
 		const target = renamedId(name);
 
 		if (target) {

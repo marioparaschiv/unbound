@@ -14,7 +14,7 @@ import type {
 } from '@unbound-app/contracts/sync';
 import { createLogger } from '@unbound-app/logger';
 
-import storage, { settings } from '~/storage/api';
+import storage, { snapshot } from '~/storage/api';
 import type { SyncAction } from '~/sync/merge';
 import { icons } from '~/icon-packs/manager';
 import { plugins } from '~/plugins/manager';
@@ -146,7 +146,7 @@ export function collectLocalDocument(): SyncDocument {
 	);
 	const synced: SyncDocument['settings'] = {};
 
-	for (const [name, store] of Object.entries(settings)) {
+	for (const [name, store] of Object.entries(snapshot())) {
 		if (name.startsWith(SYNC_LOCAL_STORE_PREFIX) || RESERVED_STORES.has(name)) {
 			continue;
 		}
