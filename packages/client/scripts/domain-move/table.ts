@@ -82,6 +82,7 @@ export const moves: Record<string, string> = {
 	'builtins/find-settings-overview.test.ts': 'settings/find-overview.test.ts',
 
 	'managers/base.ts': 'addons/manager.ts',
+	'managers/manager-of.ts': 'addons/manager-of.ts',
 	'managers/addons.ts': 'addons/addons.ts',
 	'managers/addon-lifecycle.ts': 'addons/lifecycle.ts',
 	'managers/index.ts': 'addons/managers.ts',

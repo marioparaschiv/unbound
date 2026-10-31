@@ -110,7 +110,7 @@ async function check(
 	const entries: InstalledEntry[] = [];
 
 	for (const manager of managers) {
-		for (const entry of listInstalled('plugins', manager)) {
+		for (const entry of listInstalled('plugin', manager)) {
 			if (!owners.has(entry.id)) {
 				owners.set(entry.id, manager);
 			}
@@ -306,7 +306,7 @@ describe('listInstalled', () => {
 		seed(manager, 'up.pushed', true);
 		manager.markDevelopmentCopy('up.pushed');
 
-		expect(listInstalled('plugins', manager).map((entry) => entry.id)).toEqual(['up.store']);
+		expect(listInstalled('plugin', manager).map((entry) => entry.id)).toEqual(['up.store']);
 		expect(manager.isDevelopmentCopy('up.pushed')).toBe(true);
 		expect(manager.isDevelopmentCopy('up.store')).toBe(false);
 	});
@@ -337,7 +337,7 @@ describe('reinstallFromStore', () => {
 		seed(manager, 'up.pushed', true);
 		manager.markDevelopmentCopy('up.pushed');
 
-		const applied = await reinstallFromStore('plugins', manager, 'up.pushed', {
+		const applied = await reinstallFromStore('plugin', manager, 'up.pushed', {
 			baseUrl: 'http://127.0.0.1:9',
 			clientVersion: CLIENT_VERSION,
 		}).catch(() => false);

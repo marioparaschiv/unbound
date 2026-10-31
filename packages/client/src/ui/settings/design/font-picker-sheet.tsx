@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { Discord } from '~/api/metro/components';
-import { getManager } from '~/managers/utils';
+import { Manager } from '~/managers/base';
 import { Icons } from '~/api/assets';
 import { format } from '~/api/i18n';
 
@@ -15,7 +15,7 @@ type FontPickerSheetProps = {
  * system fonts, and a reset entry; selecting one writes the override through the Fonts manager.
  */
 function FontPickerSheet({ family, onClose }: FontPickerSheetProps) {
-	const fonts = getManager('fonts');
+	const fonts = Manager.for('font');
 	const [query, setQuery] = useState('');
 
 	const names = useMemo(() => {

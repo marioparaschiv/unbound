@@ -13,7 +13,7 @@ import sampleAddons from './sample-addons';
 import AddonCard from './addon-card';
 
 type AddonListProps = {
-	kind: 'plugins' | 'themes' | 'icons';
+	kind: 'plugin' | 'theme' | 'icon-pack';
 };
 
 /**
@@ -25,9 +25,9 @@ function AddonList({ kind }: AddonListProps) {
 	const managedAddons = useAddons(kind);
 	const settings = useUnboundSettings(({ key }) => key === 'plugins.showLibraries');
 	const showLibraries = settings.get('plugins.showLibraries');
-	const all = DEV && kind === 'plugins' && !managedAddons.length ? sampleAddons : managedAddons;
+	const all = DEV && kind === 'plugin' && !managedAddons.length ? sampleAddons : managedAddons;
 	const libraries = new Set(
-		kind === 'plugins'
+		kind === 'plugin'
 			? all.filter((addon) => isLibrary(addon, all)).map((addon) => addon.id)
 			: [],
 	);

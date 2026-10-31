@@ -1,11 +1,11 @@
 import type { UnboundLink } from '@unbound-app/contracts/links';
 import { parseUnboundLink } from '@unbound-app/contracts/links';
-import type { ManagerKind } from '@unbound-app/types/addons';
+import type { AddonKind } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import ShareDestinationSheet, { type ShareDestination } from '~/ui/share/share-destination-sheet';
-import { getInstalledVersion, MARKETPLACE_TABS } from '~/ui/marketplace/targets';
 import { findByPropsLazy, findStoreLazy } from '~/api/metro/wrappers';
+import { getInstalledVersion } from '~/ui/marketplace/targets';
 import { navigationReady } from '~/lib/navigation-ready';
 import { ActionSheets, Linking } from '~/api/metro/api';
 import { getNativeModule } from '~/api/native-runtime';
@@ -244,7 +244,7 @@ async function receiveShare(files: SharedFile[]) {
 	}
 }
 
-async function open(kind: ManagerKind, id: string) {
+async function open(kind: AddonKind, id: string) {
 	const ref = await navigationReady();
 
 	ref.navigate('settings', {
@@ -257,7 +257,6 @@ const targets: LinkTargets = {
 	load: () => MarketplaceStore.getState().load(),
 	refresh: () => MarketplaceStore.getState().refresh(),
 	state: () => MarketplaceStore.getState().state,
-	kindOf: (type) => MARKETPLACE_TABS.find((tab) => tab.type === type)?.kind,
 	installedVersion: getInstalledVersion,
 	open,
 };

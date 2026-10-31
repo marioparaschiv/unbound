@@ -2,6 +2,7 @@ import '~/api/metro/state';
 import '~/lib/cache';
 import '~/api/metro';
 
+import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import { askForNativeConsent } from '~/ui/addons/native-consent';
@@ -14,10 +15,10 @@ import hotRefresh from '~/builtins/hot-refresh';
 import { builtins } from '~/managers/builtins';
 import cloudSync from '~/builtins/cloud-sync';
 import staffMode from '~/builtins/staff-mode';
-import { managers } from '~/managers/utils';
 import commands from '~/builtins/commands';
 import settings from '~/builtins/settings';
 import tracking from '~/builtins/tracking';
+import { Manager } from '~/managers/base';
 import updater from '~/builtins/updater';
 import debug from '~/builtins/debugger';
 import themes from '~/builtins/themes';
@@ -79,8 +80,8 @@ export function initialize() {
 	setConsentPrompt(askForNativeConsent);
 	builtins.initialize(BUILT_INS);
 
-	for (const manager of Object.values(managers)) {
-		manager.initialize();
+	for (const kind of ADDON_KINDS) {
+		Manager.for(kind).initialize();
 	}
 
 	initialized = true;
@@ -103,8 +104,8 @@ export async function shutdown() {
 
 	builtins.shutdown();
 
-	for (const manager of Object.values(managers)) {
-		await manager.shutdown();
+	for (const kind of ADDON_KINDS) {
+		await Manager.for(kind).shutdown();
 	}
 
 	await storage.persist();

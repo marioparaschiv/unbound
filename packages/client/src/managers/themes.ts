@@ -3,6 +3,7 @@ import toError from '@unbound-app/utils/to-error';
 
 import { parseThemeBundle } from '~/lib/theme-bundle';
 import { Addons } from '~/managers/addons';
+import { Manager } from '~/managers/base';
 import ThemeStore from '~/stores/themes';
 
 /**
@@ -10,11 +11,17 @@ import ThemeStore from '~/stores/themes';
  * Loads bundled themes at startup and applies the selected one through {@link ThemeStore} and the `applied` setting.
  */
 export class Themes extends Addons<ThemeEntity> {
-	/**
-	 * @description Creates the themes manager bound to the {@link 'themes'} type.
-	 */
 	constructor() {
-		super('themes');
+		super({
+			kind: 'theme',
+			name: 'Themes',
+			directory: 'Unbound/Themes',
+			bucket: 'themes',
+			label: 'UNBOUND_THEMES',
+			icon: 'PaintPaletteIcon',
+		});
+
+		Manager.register('theme', this);
 	}
 
 	/**
@@ -42,10 +49,6 @@ export class Themes extends Addons<ThemeEntity> {
 	 */
 	protected handleBundle(bundle: string): Theme {
 		return parseThemeBundle(bundle);
-	}
-
-	protected get entityType() {
-		return 'theme' as const;
 	}
 
 	/**

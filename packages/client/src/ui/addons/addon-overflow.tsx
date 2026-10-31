@@ -6,9 +6,9 @@ import { useMemo, memo } from 'react';
 import { API_URL, CLIENT_VERSION } from '~/lib/constants';
 import { reinstallFromStore } from '~/lib/updates';
 import { Discord } from '~/api/metro/components';
-import { getManager } from '~/managers/utils';
 import { TintedIcon } from '~/ui/components';
 import { Theme } from '~/api/metro/common';
+import { Manager } from '~/managers/base';
 import { showToast } from '~/api/toasts';
 import { Icons } from '~/api/assets';
 import { format } from '~/api/i18n';
@@ -18,7 +18,7 @@ import confirmDelete from './confirm-delete';
 
 type AddonOverflowProps = {
 	addon: Addon;
-	kind: 'plugins' | 'themes' | 'icons';
+	kind: 'plugin' | 'theme' | 'icon-pack';
 	developmentCopy?: boolean;
 };
 
@@ -28,7 +28,7 @@ type AddonOverflowProps = {
  */
 function AddonOverflow({ addon, kind, developmentCopy }: AddonOverflowProps) {
 	const styles = useRoundStyles();
-	const manager = getManager(kind);
+	const manager = Manager.for(kind);
 
 	const items = useMemo(
 		() => [
@@ -70,7 +70,7 @@ async function reinstall(kind: AddonOverflowProps['kind'], addon: Addon) {
 	let applied = false;
 
 	try {
-		applied = await reinstallFromStore(kind, getManager(kind), addon.id, {
+		applied = await reinstallFromStore(kind, Manager.for(kind), addon.id, {
 			baseUrl: API_URL,
 			clientVersion: CLIENT_VERSION,
 		});
