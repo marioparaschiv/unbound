@@ -65,7 +65,10 @@ jobs:
 
             - name: Install Linux build dependencies
               if: runner.os == 'Linux'
-              run: sudo apt-get update && sudo apt-get install -y $LINUX_BUILD_DEPS
+              run: |
+                  read -ra deps <<< "$LINUX_BUILD_DEPS"
+                  sudo apt-get update
+                  sudo apt-get install -y "${deps[@]}"
 
             - name: Install Rust
               uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
@@ -136,7 +139,10 @@ jobs:
 
             - name: Install Linux build dependencies
               if: runner.os == 'Linux'
-              run: sudo apt-get update && sudo apt-get install -y $LINUX_BUILD_DEPS
+              run: |
+                  read -ra deps <<< "$LINUX_BUILD_DEPS"
+                  sudo apt-get update
+                  sudo apt-get install -y "${deps[@]}"
 
             - name: Install Rust
               uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
