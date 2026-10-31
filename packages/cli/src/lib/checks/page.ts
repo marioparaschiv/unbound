@@ -14,7 +14,7 @@ import type {
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import type { Token, Tokens } from 'marked';
 import { Lexer, walkTokens } from 'marked';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import type { BuildCheck, BuildCheckIssue } from '~/lib/build-checks';
 import { measureMedia } from '~/lib/media-probe';
@@ -35,7 +35,6 @@ export type PageResult = {
 
 const EXTERNAL_URL = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i;
 
-// A poster within 1% of its video's aspect ratio counts as the same shape.
 const POSTER_ASPECT_TOLERANCE = 0.01;
 
 /**
@@ -211,18 +210,10 @@ function checkPosters(page: AddonPage): BuildCheckIssue[] {
 	return issues;
 }
 
-function writePage(output: string, page: AddonPage | undefined) {
-	const target = join(output, MEASURED_PAGE_FILENAME);
-
-	if (!page) {
-		rmSync(target, { force: true });
-
-		return;
-	}
-
+function writePage(target: string, page: AddonPage) {
 	const temporary = `${target}.tmp`;
 
-	mkdirSync(output, { recursive: true });
+	mkdirSync(dirname(target), { recursive: true });
 	writeFileSync(temporary, `${JSON.stringify(page, null, '\t')}\n`);
 	renameSync(temporary, target);
 }
@@ -252,9 +243,15 @@ export const pageCheck: BuildCheck = {
 			return [];
 		}
 
+		const target = join(addon.output, MEASURED_PAGE_FILENAME);
+
+		rmSync(target, { force: true });
+
 		const { issues, page } = await readPage(addon.dir, parseMediaLimits());
 
-		writePage(addon.output, page);
+		if (page) {
+			writePage(target, page);
+		}
 
 		return issues;
 	},

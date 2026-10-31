@@ -28,8 +28,7 @@ type Pixels = {
 // ThumbHash encodes images of at most 100x100 pixels.
 const THUMBHASH_SIZE = 100;
 
-// The container format and codecs each extension must hold for a browser to show it.
-const FORMATS: Record<string, string> = {
+const EXTENSION_FORMATS: Record<string, string> = {
 	png: 'png',
 	jpg: 'jpeg',
 	jpeg: 'jpeg',
@@ -57,7 +56,10 @@ const ffprobeSchema = z.object({
 			}),
 		)
 		.min(1),
-	format: z.object({ format_name: z.string(), duration: z.coerce.number() }),
+	format: z.object({
+		format_name: z.string(),
+		duration: z.optional(z.coerce.number()).catch(void 0),
+	}),
 });
 
 /**
@@ -129,7 +131,7 @@ export async function measureMedia(
 }
 
 function checkFormat(kind: MediaKind, extension: string, probe: Probe): string | undefined {
-	const expected = FORMATS[extension];
+	const expected = EXTENSION_FORMATS[extension];
 
 	if (!expected || !probe.format.split(',').includes(expected)) {
 		return `is not a ${extension} file; its contents are ${probe.format}.`;

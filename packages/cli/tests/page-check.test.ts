@@ -328,22 +328,70 @@ const REJECTIONS: Rejection[] = [
 		env: { ADDON_MEDIA_TOTAL_MAX_BYTES: '10' },
 		message: "bytes together; an addon's media may take at most 10 bytes.",
 	},
+	{
+		name: 'an invalid media limit in the environment',
+		fixture: {
+			page: page('banner: media/banner.png'),
+			images: { 'media/banner.png': BANNER },
+		},
+		env: { ADDON_MEDIA_MAX_BYTES: 'many' },
+		message: 'error [page] The check crashed: Invalid environment',
+	},
 ];
+
+async function expectRejected(dir: TempDir, env: Record<string, string>, message: string) {
+	const output = join(dir.path, ADDON, 'dist', 'page.json');
+
+	mkdirSync(join(dir.path, ADDON, 'dist'));
+	writeFileSync(output, '{"stale":true}');
+
+	const result = await runUbd(['build'], dir.path, env);
+
+	expect(result.exitCode).not.toBe(0);
+	expect(result.stderr).toContain(message);
+	expect(existsSync(output)).toBe(false);
+}
 
 describe('ubd build rejects a broken ADDON.md', () => {
 	for (const rejection of REJECTIONS) {
 		test(rejection.name, async () => {
 			const dir = await workspace(rejection.fixture);
-			const output = join(dir.path, ADDON, 'dist', 'page.json');
 
-			mkdirSync(join(dir.path, ADDON, 'dist'));
-			writeFileSync(output, '{"stale":true}');
-
-			const result = await runUbd(['build'], dir.path, rejection.env ?? {});
-
-			expect(result.exitCode).not.toBe(0);
-			expect(result.stderr).toContain(rejection.message);
-			expect(existsSync(output)).toBe(false);
+			await expectRejected(dir, rejection.env ?? {}, rejection.message);
 		});
 	}
+
+	test.skipIf(!HAS_FFMPEG)('a video whose length ffprobe cannot read', async () => {
+		const dir = await workspace({
+			page: page(
+				'banner: media/banner.png\nmedia:\n  - video: media/demo.webm\n    alt: A demo',
+			),
+			images: { 'media/banner.png': BANNER },
+		});
+		const streamed = spawnSync('ffmpeg', [
+			'-v',
+			'error',
+			'-f',
+			'lavfi',
+			'-i',
+			'color=c=blue:s=320x180:d=1',
+			'-c:v',
+			'libvpx',
+			'-f',
+			'webm',
+			'pipe:1',
+		]);
+
+		if (streamed.status !== 0) {
+			throw new Error(`ffmpeg failed: ${streamed.stderr.toString()}`);
+		}
+
+		writeFileSync(join(dir.path, ADDON, 'media/demo.webm'), streamed.stdout);
+
+		await expectRejected(
+			dir,
+			{},
+			'error [page] media/demo.webm has no length; a video must play for longer than zero seconds.',
+		);
+	});
 });
