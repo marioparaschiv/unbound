@@ -38,6 +38,9 @@ export type MetroBulkItem = {
 	filter: MetroFilter;
 } & Omit<MetroSearchOptions, 'initial' | 'cache'>;
 
+/** Called with each module's exports and id as the module loads. */
+export type MetroModuleLoadListener = (mdl: any, id: number) => void;
+
 /** Tuple of search terms followed by a trailing options object. */
 export type MetroStringFindWithOptions<T extends string, Options = MetroSearchOptions> = [
 	...T[],

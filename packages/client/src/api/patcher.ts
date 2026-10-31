@@ -42,7 +42,6 @@ type SelfOf<M, F> = unknown extends ThisParameterType<F> ? M : ThisParameterType
 type ScopedPatcher = Pick<PatcherInstance, 'before' | 'instead' | 'after'>;
 
 export type { PatchOptions, PatchParent, PropOf } from 'possess';
-export { PATCH_SYMBOL, PatchType, patches } from 'possess';
 
 /**
  * The context a `before` callback receives.
@@ -113,6 +112,15 @@ export type PatcherInstance = {
 	after: typeof after;
 	unpatchAll: () => void;
 };
+
+/** @internal */
+export const patches = Possess.patches;
+
+/** @internal */
+export const PATCH_SYMBOL = Possess.PATCH_SYMBOL;
+
+/** @internal */
+export const PatchType = Possess.PatchType;
 
 /**
  * @description Runs a callback before a method, which can replace its arguments by returning an array.
@@ -277,6 +285,7 @@ export function unpatchAll(): void {
 /**
  * @description Removes every patch made with a caller id.
  * @param caller The caller id.
+ * @internal
  */
 export function unpatchAllByCaller(caller: string): void {
 	recordRemovals((patch) => patch.caller === caller);

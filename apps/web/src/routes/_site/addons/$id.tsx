@@ -20,7 +20,7 @@ import AuthorsCard from '~/components/addon/authors-card';
 import ScrollShadow from '~/components/ui/scroll-shadow';
 import AboutCard from '~/components/addon/about-card';
 import { Button } from '~/components/ui/button';
-import Markdown from '~/components/markdown';
+import AddonMd from '~/components/addon-md';
 import Text from '~/components/ui/text';
 
 /** `?submission=<id>` shows a pending submission as if published; only its reviewers get the preview. */
@@ -110,7 +110,11 @@ function AddonPage() {
 					<CardContent>
 						{/* Without an ADDON.md the manifest description stands in, as review and submit tell authors. */}
 						{source?.addonMd ? (
-							<Markdown source={source.addonMd} pin={source.pin} />
+							<AddonMd
+								source={source.addonMd}
+								pin={source.pin}
+								mediaBase={source.mediaBase}
+							/>
 						) : (
 							<Text variant='text-md' color='muted'>
 								{addon.description}

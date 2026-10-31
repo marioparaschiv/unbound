@@ -6,6 +6,7 @@ import { z } from 'zod/mini';
 import { getArtifactKeys, getCdnUrl, pinSource, toVersionChangelog } from '~/lib/artifacts';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
 import { resolvePlatforms } from '~/lib/addon-platforms';
+import { getPinnedMediaBase } from '~/lib/markdown-url';
 import type { Permissions } from '~/lib/auth/access';
 import { renderAddonIcon } from '~/lib/addon-icons';
 import { loadAuthors } from '~/lib/authors/resolve';
@@ -84,6 +85,7 @@ export const fetchSubmissionPreview = createServerFn({ method: 'GET' })
 				pin,
 				details: row.source.details,
 				addonMd: row.source.addonMd,
+				mediaBase: getPinnedMediaBase(pin),
 				approvedAt: submittedAt,
 			},
 		};

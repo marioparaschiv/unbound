@@ -1,3 +1,4 @@
+import { mediaPathSchema } from '@unbound-app/contracts/addon-page';
 import type { SourcePin } from '@unbound-app/contracts/source';
 
 /** The part of a source pin a relative ADDON.md URL resolves against. */
@@ -91,4 +92,36 @@ export function resolveMarkdownUrl(
 	return;
 }
 
-export default { resolveMarkdownUrl };
+/**
+ * @description Finds where an addon's files load from before publish: its directory at the pinned commit.
+ * @param pin The repository, commit and addon directory the page was read from.
+ * @returns The directory URL on raw.githubusercontent.com, ending in `/`.
+ */
+export function getPinnedMediaBase(pin: MarkdownPin): string {
+	const directory = pin.path ? `${pin.path}/` : '';
+
+	return `https://raw.githubusercontent.com/${pin.repository}/${pin.commitSha}/${directory}`;
+}
+
+/**
+ * @description Finds where an addon's files load from after publish: the CDN folder of the version.
+ * @param manifestUrl The published version's `manifest.json` URL, which sits in that folder.
+ * @returns The version folder URL, ending in `/`.
+ */
+export function getPublishedMediaBase(manifestUrl: string): string {
+	return new URL('./', manifestUrl).href;
+}
+
+/**
+ * @description Resolves an ADDON.md media path, such as `media/shot.png`, under a media base.
+ * @param path The path as written in the page.
+ * @param base The directory URL from {@link getPinnedMediaBase} or {@link getPublishedMediaBase}.
+ * @returns The file's URL, or `undefined` when the path is not a file inside `media/`.
+ */
+export function resolveMediaUrl(path: string, base: string): string | undefined {
+	if (!mediaPathSchema.safeParse(path).success) return;
+
+	return new URL(path, base).href;
+}
+
+export default { resolveMarkdownUrl, getPinnedMediaBase, getPublishedMediaBase, resolveMediaUrl };
