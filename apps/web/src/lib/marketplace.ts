@@ -4,6 +4,7 @@ import {
 	type AddonVersion,
 } from '@unbound-app/contracts/addons';
 import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source';
+import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
 import { z } from 'zod/mini';
@@ -43,6 +44,8 @@ export type MarketplaceSource = {
 	pin: SourcePin;
 	details: RepositoryDetails;
 	addonMd: string | null;
+	/** The measured store page, or `null` when the version has none. */
+	page: AddonPage | null;
 	/** The directory URL ADDON.md's `media/` paths load from. */
 	mediaBase: string;
 	/** When the version was approved, which dates the `details` snapshot. */
@@ -136,6 +139,7 @@ export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
 							pin: latest.source,
 							details: details.details,
 							addonMd: details.addonMd,
+							page: details.page,
 							mediaBase: getPublishedMediaBase(latest.manifestUrl),
 							approvedAt: latest.publishedAt,
 						}

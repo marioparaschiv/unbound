@@ -261,6 +261,7 @@ export async function insertSubmissionSource(
 				bundlePath: pin.bundlePath,
 				bundleBlobSha: pin.bundleBlobSha,
 				addonMd: source.addonMd,
+				page: source.page,
 				changelog: source.changelog,
 				details: source.details,
 			})
@@ -412,6 +413,7 @@ export async function previewSubmission(
 			bundleSize: source.bundleSize,
 			sha256: source.sha256,
 			addonMd: source.addonMd,
+			page: source.page,
 			changelog: source.changelog,
 			details: source.details,
 		},

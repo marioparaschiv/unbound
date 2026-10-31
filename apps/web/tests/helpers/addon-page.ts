@@ -1,6 +1,12 @@
-import { addonPageSchema, type MeasuredMedia } from '@unbound-app/contracts/addon-page';
+import {
+	addonPageSchema,
+	type AddonPage,
+	type MeasuredMedia,
+} from '@unbound-app/contracts/addon-page';
 
 import type { MarkdownPin } from '~/lib/markdown-url';
+
+import type { FixtureFiles } from './github';
 
 export const PAGE_SHA = '3f9c2e1aa0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5';
 export const PAGE_PIN: MarkdownPin = {
@@ -11,7 +17,7 @@ export const PAGE_PIN: MarkdownPin = {
 
 const THUMBHASH = 'IhUKMphwd3eIiHiIgHcIh4g=';
 
-function measure(path: string, width: number, height: number): MeasuredMedia {
+function measure(path: string, width: number, height: number, bytes: number = 1024): MeasuredMedia {
 	const video = path.endsWith('.mp4');
 
 	return {
@@ -21,7 +27,7 @@ function measure(path: string, width: number, height: number): MeasuredMedia {
 		height,
 		...(video ? { duration: 12 } : {}),
 		thumbhash: THUMBHASH,
-		bytes: 1024,
+		bytes,
 	};
 }
 
@@ -66,3 +72,66 @@ export const PAGE = addonPageSchema.parse({
 		measure('media/clip.mp4', 1280, 720),
 	],
 });
+
+/** An ADDON.md whose banner, gallery image and inline image are all PNGs. */
+export const COMMITTED_ADDON_MD = [
+	'---',
+	'banner: media/banner.png',
+	'media:',
+	'  - image: media/shot.png',
+	'    alt: The settings screen',
+	'---',
+	'## Usage',
+	'',
+	'![Inline screenshot](media/inline.png)',
+	'',
+].join('\n');
+
+const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+
+/**
+ * @description Makes the bytes of a PNG file of a given size: the PNG signature, then zeros.
+ * @param bytes The file's size.
+ * @returns The file's bytes.
+ */
+export function png(bytes: number): Uint8Array {
+	const data = new Uint8Array(bytes);
+
+	data.set(PNG_SIGNATURE);
+
+	return data;
+}
+
+/**
+ * @description Builds the page `ubd build` measures from {@link COMMITTED_ADDON_MD}.
+ * @param bytes The size of each media file.
+ * @returns The measured page.
+ */
+export function committedPage(bytes: number): AddonPage {
+	return addonPageSchema.parse({
+		frontmatter: {
+			banner: 'media/banner.png',
+			media: [{ image: 'media/shot.png', alt: 'The settings screen' }],
+		},
+		media: [
+			measure('media/banner.png', 1500, 500, bytes),
+			measure('media/shot.png', 1280, 720, bytes),
+			measure('media/inline.png', 800, 600, bytes),
+		],
+	});
+}
+
+/**
+ * @description Lists the files of a built plugin with a store page: ADDON.md, `dist/page.json` and the media.
+ * @param bytes The size of each media file.
+ * @returns The files, relative to the plugin's directory.
+ */
+export function committedPageFiles(bytes: number = 64): FixtureFiles {
+	return {
+		'ADDON.md': COMMITTED_ADDON_MD,
+		'dist/page.json': JSON.stringify(committedPage(bytes)),
+		'media/banner.png': png(bytes),
+		'media/shot.png': png(bytes),
+		'media/inline.png': png(bytes),
+	};
+}

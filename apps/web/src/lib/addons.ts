@@ -13,6 +13,7 @@ import type {
 import { and, desc, EmptyFilter, eq, gte, inArray, isNull, lt, or, sql } from 'drizzle-orm';
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
+import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import type { PinnableField } from '@unbound-app/contracts/admin';
 import { z } from 'zod';
 
@@ -52,6 +53,8 @@ export type AddonDetails = {
 	maintainers: Maintainer[];
 	/** The newest version's ADDON.md, or `null` when it has none or predates GitHub sources. */
 	addonMd: string | null;
+	/** The newest version's measured store page, or `null` when it has none. */
+	page: AddonPage | null;
 	/** The newest version's GitHub details, or `null` when it predates GitHub sources. */
 	details: RepositoryDetails | null;
 };
@@ -453,6 +456,7 @@ export async function getAddonDetails(
 		),
 		maintainers: toMaintainers(row.maintainers),
 		addonMd: latest?.addonMd ?? null,
+		page: latest?.page ?? null,
 		details: latest?.details ?? null,
 	};
 }

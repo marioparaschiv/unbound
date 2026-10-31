@@ -20,6 +20,7 @@ import { addonManifestSchema, MANIFEST_FILENAME } from '@unbound-app/contracts/m
 import type { WorkspaceAddon, WorkspaceConfig } from '@unbound-app/contracts/workspace';
 import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
+import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import type { Changelog } from '@unbound-app/contracts/changelog';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
 import { z } from 'zod';
@@ -31,6 +32,7 @@ import type {
 	RepositoryExtras,
 	TreeEntry,
 } from '~/lib/github';
+import { readAddonPage } from '~/lib/addon-page-source';
 import { readBytecode } from '~/lib/addon-bytecode';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
@@ -47,6 +49,8 @@ export type AddonSource = {
 	bundleSize: number;
 	sha256: string;
 	addonMd: string | null;
+	/** The measured `{output}/page.json`, checked against the commit, or `null` when none is committed. */
+	page: AddonPage | null;
 	/** The entry for `manifest.version`, or `null` when the addon has no CHANGELOG.md. */
 	changelog: Changelog | null;
 	details: RepositoryDetails;
@@ -268,15 +272,19 @@ function readAddonFiles(
 	return readTexts(github, repository, tree, paths);
 }
 
+function outputDirOf({ addon, config }: ConfiguredAddon): string {
+	return addon.static ? addon.path : getOutputDir(addon.path, config);
+}
+
 function shippedManifestPath(tree: GitTree, configured: ConfiguredAddon): string {
-	const { addon, config } = configured;
+	const { addon } = configured;
 	const source = childPath(addon.path, MANIFEST_FILENAME);
 
 	if (addon.static) {
 		return source;
 	}
 
-	const built = childPath(getOutputDir(addon.path, config), MANIFEST_FILENAME);
+	const built = childPath(outputDirOf(configured), MANIFEST_FILENAME);
 
 	return tree.has(built) ? built : source;
 }
@@ -582,7 +590,8 @@ export async function listRepositoryAddons(
 /**
  * @description Reads one addon at the commit the author previewed. Refuses, in order: no push access,
  * a ref that moved (`source_changed`), a path that is not a registered addon (`addon_not_found`), an
- * invalid manifest, a missing or oversize bundle, oversize texts and an invalid changelog.
+ * invalid manifest, a missing or oversize bundle, oversize texts, a `page.json` that does not match the
+ * commit and an invalid changelog.
  * @param ctx The application context.
  * @param github The caller's GitHub client.
  * @param request The repository, addon path, ref, commit and detail overrides.
@@ -636,13 +645,8 @@ export async function readAddonSource(
 		throw notFound(addon.reason);
 	}
 
-	const shipped = await readShippedManifest(
-		github,
-		repository,
-		tree,
-		{ addon, config: membership.config },
-		texts,
-	);
+	const configured = { addon, config: membership.config };
+	const shipped = await readShippedManifest(github, repository, tree, configured, texts);
 	const checked = checkAddon(ctx.env, tree, shipped, commitSha);
 
 	if (checked.blocker) {
@@ -658,6 +662,15 @@ export async function readAddonSource(
 		readBytecode(ctx.env, github, repository, tree, addon.bundle, manifest, commitSha),
 		readTexts(github, repository, tree, [addonMdPath, changelogPath]),
 	]);
+	const addonMd = extraTexts.get(addonMdPath) ?? null;
+	const page = await readAddonPage(ctx.env, github, {
+		repository,
+		tree,
+		commitSha,
+		addonDir: path,
+		outputDir: outputDirOf(configured),
+		addonMd,
+	});
 
 	return {
 		pin: {
@@ -674,7 +687,8 @@ export async function readAddonSource(
 		bytecode,
 		bundleSize: bundle.length,
 		sha256: new Bun.CryptoHasher('sha256').update(bundle).digest('hex'),
-		addonMd: extraTexts.get(addonMdPath) ?? null,
+		addonMd,
+		page,
 		changelog: readChangelog(changelogPath, extraTexts.get(changelogPath), manifest.version),
 		details: toDetails(repo, extras, tree, request.details),
 	};
