@@ -4,6 +4,7 @@ import type {
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
 	NativeJavaReference,
+	NativeUIBridge,
 } from '@unbound-app/api/native';
 import {
 	currentDecorView,
@@ -18,6 +19,7 @@ import {
 	javaInt,
 	javaNumber,
 	javaReference,
+	javaString,
 	javaText,
 	sameJavaReference,
 } from '@unbound-plugins/shared/native/android/java-values';
@@ -37,6 +39,7 @@ import {
 	type Edges,
 } from '~/geometry';
 import { AndroidClass, PLUGIN_NAME } from '~/constants';
+import { installBindGuard } from '~/android/ui-bubbles';
 import { currentAppearance } from '~/theme';
 import { argb } from '~/style';
 import { isOwnMessage } from '~/author';
@@ -44,6 +47,7 @@ import { isOwnMessage } from '~/author';
 type AndroidNative = {
 	java: NativeJavaBridge;
 	hooks: NativeJavaHooksBridge;
+	ui: NativeUIBridge;
 };
 
 const MAX_TRACKED = 256;
@@ -60,7 +64,7 @@ const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
  * @param native The plugin's Java and hook bridges.
  * @returns `refresh`, which repaints the bubbles it drew, and `dispose`, which brings back the rows' own backgrounds.
  */
-export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
+export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	const accessoriesClass = java.getClass(AndroidClass.accessories);
 	const messageClass = java.getClass(AndroidClass.messageView);
 	const idField = messageIdField(java);
@@ -71,6 +75,18 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 	const layerDrawableClass = java.getClass('android.graphics.drawable.LayerDrawable');
 	const ours = java.createAssociationKey();
 	const original = java.createAssociationKey();
+	const drawnFor = java.createAssociationKey();
+	const scope = ui.createScope();
+
+	ui.run(installBindGuard, scope, {
+		messageView: AndroidClass.messageView,
+		bindName: bindMessage.name,
+		bindParameters: bindMessage.parameters,
+		idField,
+		ours,
+		original,
+		drawnFor,
+	});
 	const tracked: NativeJavaReference[] = [];
 	const shiftedIcons: NativeJavaReference[] = [];
 	const problems = new Map<string, string>();
@@ -451,6 +467,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		if (disposed) return;
 
 		java.setAssociatedObject(row, ours, bubble);
+		java.setAssociatedObject(row, drawnFor, javaString(messageId(row) ?? ''));
 		track(row);
 		await runOnMain(java, [
 			...measure.iconShifts,
@@ -608,6 +625,7 @@ export function drawAndroidBubbles({ java, hooks }: AndroidNative) {
 		},
 		async dispose() {
 			disposed = true;
+			scope.dispose();
 			hooks.remove(token);
 			hooks.remove(bindToken);
 			pending.length = 0;

@@ -39,6 +39,7 @@ object NativeHooks {
         val receiver: Class<*>?,
         val replaces: Boolean,
         val notifies: Boolean,
+        val notifiesAfter: Boolean,
         var removable: Removable?,
     )
 
@@ -76,7 +77,8 @@ object NativeHooks {
             method,
             owner.takeIf { method.declaringClass != it },
             options.optBoolean("replace", false),
-            options.optBoolean("notify", true),
+            options.opt("notify") != false,
+            options.opt("notify") == "after",
             null,
         )
 
@@ -117,21 +119,31 @@ object NativeHooks {
             val selfJSON = NativeJava.describe(self)
             val argumentsJSON = NativeJava.describeAll(arguments)
 
-            if (registration.notifies) {
+            if (registration.notifies && !registration.notifiesAfter) {
                 notify(registration.token, selfJSON, argumentsJSON)
             }
 
-            if (!registration.replaces) return chain.proceed()
+            val result = result(registration, chain, selfJSON, argumentsJSON)
 
-            val lookup = synchronized(this@NativeHooks) { returnValues }
-            val cached = lookup.find(registration.token, selfJSON, argumentsJSON) ?: return chain.proceed()
-            val value = runCatching { NativeJava.decode(cached) }.getOrElse {
-                Logger.error(LogCategory.HOOKS, "Failed to decode a cached Android hook result", it)
-                return chain.proceed()
+            if (registration.notifies && registration.notifiesAfter) {
+                notify(registration.token, selfJSON, argumentsJSON)
             }
 
-            return coerceReturn(registration.method, value)
+            return result
         }
+    }
+
+    private fun result(registration: Registration, chain: Chain, selfJSON: String, argumentsJSON: String): Any? {
+        if (!registration.replaces) return chain.proceed()
+
+        val lookup = synchronized(this) { returnValues }
+        val cached = lookup.find(registration.token, selfJSON, argumentsJSON) ?: return chain.proceed()
+        val value = runCatching { NativeJava.decode(cached) }.getOrElse {
+            Logger.error(LogCategory.HOOKS, "Failed to decode a cached Android hook result", it)
+            return chain.proceed()
+        }
+
+        return coerceReturn(registration.method, value)
     }
 
     private fun coerceReturn(method: Executable, value: Any?): Any? {
