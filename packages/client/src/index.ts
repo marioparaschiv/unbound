@@ -5,9 +5,8 @@ import '~/api/metro';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
-import { askForNativeConsent } from '~/ui/addons/native-consent';
 import discordSupport from '~/builtins/discord-support';
-import { setConsentPrompt } from '~/lib/native-consent';
+import nativeConsent from '~/builtins/native-consent';
 import type { BuiltInEntry } from '~/managers/builtins';
 import errorBoundary from '~/builtins/error-boundary';
 import coreCommands from '~/builtins/core-commands';
@@ -53,6 +52,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['hotRefresh', hotRefresh],
 	['i18n', i18n],
 	['links', links],
+	['nativeConsent', nativeConsent],
 	['settings', settings],
 	['staffMode', staffMode],
 	['themes', themes],
@@ -77,7 +77,6 @@ export function initialize() {
 	window.unbound = { ...api, initialize, shutdown };
 	Logger.info('Initializing Unbound...');
 
-	setConsentPrompt(askForNativeConsent);
 	builtins.initialize(BUILT_INS);
 
 	for (const kind of ADDON_KINDS) {
