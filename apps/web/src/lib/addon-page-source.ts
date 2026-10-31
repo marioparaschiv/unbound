@@ -6,7 +6,6 @@ import {
 } from '@unbound-app/contracts/addon-page';
 import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-media';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
-import noop from '@unbound-app/utils/noop';
 import { z } from 'zod';
 
 import type { GitHubClient, GitTree, TreeEntry } from '~/lib/github';
@@ -32,6 +31,12 @@ export type MediaLocation = Pick<PageLocation, 'repository' | 'tree' | 'commitSh
 
 /** The bytes of a page's media files, by the path ADDON.md writes each as. */
 export type PageMediaFiles = ReadonlyMap<string, Uint8Array>;
+
+/** A measured page and the bytes of its media, both checked against the commit. */
+export type CommittedPage = {
+	page: AddonPage;
+	media: PageMediaFiles;
+};
 
 type CommittedMedia = {
 	pagePath: string;
@@ -166,13 +171,13 @@ async function readMedia(
  * @param env The environment, for the size caps.
  * @param github The GitHub client.
  * @param location The repository, tree, addon and output directories, and ADDON.md.
- * @returns The page, or `null` when no `page.json` is committed; throws when it does not match the commit.
+ * @returns The page and its media, or `null` when no `page.json` is committed; throws when it does not match the commit.
  */
 export async function readAddonPage(
 	env: Env,
 	github: GitHubClient,
 	location: PageLocation,
-): Promise<AddonPage | null> {
+): Promise<CommittedPage | null> {
 	const { repository, tree, outputDir, addonMd } = location;
 	const path = inDir(outputDir, MEASURED_PAGE_FILENAME);
 	const entry = tree.get(path);
@@ -200,9 +205,7 @@ export async function readAddonPage(
 		throw rebuild(path, 'does not measure exactly the media ADDON.md shows');
 	}
 
-	await readMedia(github, repository, findMedia(env, location, page), noop);
-
-	return page;
+	return { page, media: await readPageMedia(env, github, location, page) };
 }
 
 /**
