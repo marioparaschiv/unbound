@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0]
+
+### Changed
+
+- On Android, a reused row's reactor avatars are hidden on the UI thread as soon as the row shows a different message, so the old message's reactors never show on the new one.
+
 ## [1.1.0]
 
 ### Changed
