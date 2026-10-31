@@ -1,6 +1,7 @@
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { patcher } from '@unbound-app/api';
 
-import { InvitePermissions, Patcher } from '~/modules';
+import { InvitePermissions } from '~/modules';
 
 /**
  * @description Shows the Pause Invites setting in Server Settings to every member, not only to moderators.
@@ -11,5 +12,5 @@ export function patchInvitePermissions(): () => void {
 		return () => {};
 	}
 
-	return Patcher.after(InvitePermissions, 'useInvitesDisabledPermission', () => true);
+	return patcher.after(InvitePermissions, 'useInvitesDisabledPermission', () => true);
 }

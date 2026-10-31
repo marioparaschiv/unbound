@@ -1,28 +1,25 @@
-import Page from '@unbound-plugins/shared/components/page';
-import { Discord } from '@unbound-app/api/metro/components';
-
-import { settings } from '~/modules';
+import { storage, ui } from '@unbound-app/api';
 
 function SettingsPanel() {
-	const store = settings.useSettingsStore();
+	const settings = storage.useBucket(addon.id);
 
 	return (
-		<Page>
-			<Discord.TableRowGroup title='Visibility'>
-				<Discord.TableSwitchRow
+		<ui.Page>
+			<ui.Section title='Visibility'>
+				<ui.SwitchRow
 					label='Show Timeout Icons'
 					subLabel='Show member timeout icons in chat'
-					value={store.get('showTimeouts', true)}
-					onValueChange={(value) => store.set('showTimeouts', value)}
+					value={settings.get('showTimeouts', true)}
+					onValueChange={(value) => settings.set('showTimeouts', value)}
 				/>
-				<Discord.TableSwitchRow
+				<ui.SwitchRow
 					label='Show Paused Invites'
 					subLabel='Show the Pause Invites setting in Server Settings to everyone'
-					value={store.get('showInvitesPaused', true)}
-					onValueChange={(value) => store.set('showInvitesPaused', value)}
+					value={settings.get('showInvitesPaused', true)}
+					onValueChange={(value) => settings.set('showInvitesPaused', value)}
 				/>
-			</Discord.TableRowGroup>
-		</Page>
+			</ui.Section>
+		</ui.Page>
 	);
 }
 

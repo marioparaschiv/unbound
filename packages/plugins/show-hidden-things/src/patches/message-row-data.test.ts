@@ -1,36 +1,42 @@
+import { installAddonGlobals } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
-type AfterContext = { args: unknown[]; result: { message?: Record<string, unknown> } };
-type AfterCallback = (context: AfterContext) => void;
+type Row = { message: Record<string, unknown> };
+type Member = { communicationDisabledUntil?: string | null };
 
 const HOUR = 60 * 60 * 1000;
 
-let after: AfterCallback = () => {};
-const members = new Map<string, { communicationDisabledUntil?: string | null }>();
+const members = new Map<string, Member>();
 
-mock.module('~/modules', () => ({
-	ChannelStore: { getChannel: (id: string) => (id === 'c1' ? { guild_id: 'g1' } : undefined) },
-	GuildMemberStore: {
-		getMember: (guildId: string, userId: string) => members.get(`${guildId}:${userId}`),
-	},
-	MessageRowData: {},
-	Patcher: {
-		after: (_target: object, _name: string, callback: AfterCallback) => {
-			after = callback;
-
-			return () => {};
+const scope = installAddonGlobals({
+	manifest: { id: 'astral.show-hidden-things' },
+	unbound: {
+		flux: {
+			getStore: (name: string) => (name === 'Channel' ? ChannelStore : GuildMemberStore),
 		},
 	},
-}));
+});
+
+const ChannelStore = {
+	getChannel: (id: string) => (id === 'c1' ? { guild_id: 'g1' } : undefined),
+};
+const GuildMemberStore = {
+	getMember: (guildId: string, userId: string) => members.get(`${guildId}:${userId}`),
+};
+const MessageRowData = {
+	generateMessageRowData: (_data: Row, rowFields: Record<string, unknown>): Row => ({
+		message: { ...rowFields },
+	}),
+};
+
+scope.metro.register(MessageRowData);
+
+mock.module('@unbound-app/api', () => scope.unbound);
 
 const { patchTimeoutIcons } = await import('~/patches/message-row-data');
 
 function row(message: Record<string, unknown>, rowFields: Record<string, unknown> = {}) {
-	const result = { message: { ...rowFields } };
-
-	after({ args: [{ message }], result });
-
-	return result.message;
+	return MessageRowData.generateMessageRowData({ message }, rowFields).message;
 }
 
 beforeEach(() => {
@@ -42,10 +48,22 @@ beforeEach(() => {
 		communicationDisabledUntil: new Date(Date.now() - HOUR).toISOString(),
 	});
 	members.set('g1:free', { communicationDisabledUntil: null });
+	scope.patcher.unpatchAll();
 	patchTimeoutIcons();
 });
 
 describe('patchTimeoutIcons', () => {
+	test('patches the message row builder', () => {
+		expect(scope.patcher.patches).toEqual([
+			{
+				kind: 'after',
+				target: MessageRowData,
+				method: 'generateMessageRowData',
+				caller: undefined,
+			},
+		]);
+	});
+
 	test('marks a timed-out author', () => {
 		expect(row({ guild_id: 'g1', author: { id: 'muted' } }).communicationDisabled).toBe(true);
 	});
