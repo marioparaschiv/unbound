@@ -10,6 +10,7 @@ import type {
 	NativeJavaHookToken,
 	NativeJavaReference,
 	NativeJavaValue,
+	LoaderObjCBridge,
 } from '@unbound-app/types';
 import { mock } from 'bun:test';
 
@@ -121,7 +122,9 @@ export function cancellable<T>(promise: Promise<T>, name: string) {
 	return Object.assign(promise, { cancel: () => cancelled.push(name) });
 }
 
-const fakeBridge: NativePluginBridge = {
+type LoaderBridge = Omit<NativePluginBridge, 'objc'> & { objc: LoaderObjCBridge };
+
+const fakeBridge: LoaderBridge = {
 	abiVersion: '1.0.0',
 	apiVersion: '1.0.0',
 	capabilities,

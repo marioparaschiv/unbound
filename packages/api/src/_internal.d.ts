@@ -106,6 +106,7 @@ export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'objc.getClass': 'native.objc.classes';
 	readonly 'objc.alloc': 'native.objc.classes';
+	readonly 'objc.create': 'native.objc.invoke';
 	readonly 'objc.className': 'native.objc.classes';
 	readonly 'objc.respondsTo': 'native.objc.classes';
 	readonly 'objc.call': 'native.objc.invoke';
@@ -1840,6 +1841,7 @@ export type LayerScopeProps = {
 	children?: React$1.ReactNode;
 	zIndex?: number;
 };
+export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'>;
 /**
  * Props of `LoadingButtonPill` (function). Exports: LoadingButtonPill.
  * @see design/components/Button/native/ButtonPill.native.tsx
@@ -1921,7 +1923,8 @@ export type MarkdownReactParser = (
 ) => React$1.ReactNode;
 /** A simple-markdown rule: `match` finds it at the start of the source, `parse` builds its node, `react` renders it. */
 export type MarkdownRule<TNode extends MarkdownNode = MarkdownNode> = {
-	order: number;
+	/** Discord 349 ships `highlight`, `guild` and `channel` without one; the parser never calls those. */
+	order?: number;
 	match(source: string, state: MarkdownState, previous: string): RegExpExecArray | null;
 	parse(capture: RegExpExecArray, parse: MarkdownNestedParse, state: MarkdownState): TNode;
 	react?(node: TNode, output: MarkdownOutput, state: MarkdownState): React$1.ReactNode;
@@ -2429,6 +2432,13 @@ export type NativeJavaValue =
 export type NativeObjCBridge = {
 	getClass(name: string): NativeClassHandle | null;
 	alloc(classOrName: string | NativeClassHandle): NativeObjectHandle;
+	/** Allocates an instance and returns what `initSelector` initializes; throws when that is nil. */
+	create(
+		classOrName: string | NativeClassHandle,
+		initSelector: string,
+		args?: unknown[],
+		options?: NativeCallOptions,
+	): NativeObjectHandle;
 	className(handle: NativeHandle): string | null;
 	respondsTo(handle: NativeHandle, selector: string): boolean;
 	call(handle: NativeHandle, selector: string, ...args: unknown[]): unknown;
@@ -2591,7 +2601,9 @@ export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities'
 > &
-	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities'>>;
+	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities' | 'objc'>> & {
+		readonly objc?: LoaderObjCBridge;
+	};
 export type NativePointer = NativeHandle;
 export type NativeResourceCounts = {
 	hooks: number;

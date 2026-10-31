@@ -27,10 +27,9 @@ export function highlightedCode(
 
 	try {
 		const { spans, text } = buildCodeMarkup(tokens, light);
-		const attributed = ui.objc.alloc('NSMutableAttributedString');
+		const attributed = ui.objc.create('NSMutableAttributedString', 'initWithString:', [text]);
 		const all = range(0, text.length);
 
-		call(attributed, 'initWithString:', text);
 		call(attributed, 'addAttribute:value:range:', 'NSFont', ui.font(12, 0, true), all);
 		call(
 			attributed,
