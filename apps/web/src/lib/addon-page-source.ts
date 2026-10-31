@@ -4,6 +4,7 @@ import {
 	parseAddonPage,
 	type AddonPage,
 } from '@unbound-app/contracts/addon-page';
+import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-media';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
 import { z } from 'zod';
 
@@ -29,6 +30,9 @@ type CommittedMedia = {
 	path: string;
 	entry: TreeEntry;
 };
+
+/** How many media blobs one page check downloads at once, to stay under GitHub's concurrency limit. */
+export const MEDIA_READ_CONCURRENCY = 4;
 
 function inDir(dir: string, name: string): string {
 	return dir === '' ? name : `${dir}/${name}`;
@@ -110,9 +114,37 @@ function findMedia(env: Env, location: PageLocation, page: AddonPage): Committed
 	return committed;
 }
 
+function listsExactly(page: AddonPage, paths: string[]): boolean {
+	const measured = new Set(page.media.map((media) => media.path));
+
+	return measured.size === paths.length && paths.every((path) => measured.has(path));
+}
+
+async function checkFormats(github: GitHubClient, repository: string, media: CommittedMedia[]) {
+	// The workers share one iterator, so each file is read once and at most this many reads overlap.
+	const queue = media.values();
+
+	async function worker() {
+		for (const { path, entry } of queue) {
+			const data = await github.readBlob(repository, entry.sha);
+
+			if (!matchesMediaFormat(path, data)) {
+				throw new ApiError(
+					'artifact_mismatch',
+					`${path} is not the format its extension names.`,
+				);
+			}
+		}
+	}
+
+	await Promise.all(
+		Array.from({ length: Math.min(MEDIA_READ_CONCURRENCY, media.length) }, worker),
+	);
+}
+
 /**
  * @description Reads the measured store page `ubd build` committed, and checks it against the commit:
- * its frontmatter against ADDON.md, and each media file's size, the size caps and its format.
+ * its frontmatter and media list against ADDON.md, and each media file's size, the size caps and its format.
  * @param env The environment, for the size caps.
  * @param github The GitHub client.
  * @param location The repository, tree, addon and output directories, and ADDON.md.
@@ -146,20 +178,13 @@ export async function readAddonPage(
 		throw rebuild(path, 'does not match the frontmatter of ADDON.md');
 	}
 
-	await Promise.all(
-		findMedia(env, location, page).map(async (media) => {
-			const data = await github.readBlob(repository, media.entry.sha);
+	if (!listsExactly(page, listPageMediaPaths(source.frontmatter, source.body))) {
+		throw rebuild(path, 'does not measure exactly the media ADDON.md shows');
+	}
 
-			if (!matchesMediaFormat(media.path, data)) {
-				throw new ApiError(
-					'artifact_mismatch',
-					`${media.path} is not the format its extension names.`,
-				);
-			}
-		}),
-	);
+	await checkFormats(github, repository, findMedia(env, location, page));
 
 	return page;
 }
 
-export default { readAddonPage };
+export default { MEDIA_READ_CONCURRENCY, readAddonPage };

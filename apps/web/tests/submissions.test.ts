@@ -19,9 +19,8 @@ import {
 	signInWithDiscord,
 	snowflakeAt,
 } from './helpers/context';
-import { COMMITTED_ADDON_MD, committedPage, committedPageFiles } from './helpers/addon-page';
-import { commitPlugin, serveGitHub, type FixtureFiles } from './helpers/github';
 import { manifest, seedApprovedAddon } from './helpers/addons';
+import { commitPlugin, serveGitHub } from './helpers/github';
 import { withMemoryStaging } from './helpers/storage';
 
 const NOW = new Date('2026-10-17T12:00:00.000Z');
@@ -423,117 +422,6 @@ describe('the GitHub source', () => {
 			code: 'source_changed',
 		});
 		expect(staging.objects.size).toBe(staged);
-	});
-});
-
-describe('the store page', () => {
-	function commitPage(id: string, files: FixtureFiles = {}) {
-		return commitPlugin(fixture, REPOSITORY, id, '1.0.0', {
-			...committedPageFiles(),
-			...files,
-		});
-	}
-
-	test('stores the measured page beside ADDON.md', async () => {
-		const { headers } = await signUp();
-		const { submission: created } = await accepted(
-			await submit(headers, commitPage('page.valid').request),
-		);
-		const row = await ctx.db.query.submission.findFirst({
-			where: { id: created.id },
-			with: { source: true },
-		});
-
-		expect(row?.source?.addonMd).toBe(COMMITTED_ADDON_MD);
-		expect(row?.source?.page).toEqual(committedPage(64));
-	});
-
-	test('stores no page when none is committed', async () => {
-		const { headers } = await signUp();
-		const { request } = commitPage('page.unbuilt', { 'dist/page.json': null });
-		const { submission: created } = await accepted(await submit(headers, request));
-		const row = await ctx.db.query.submission.findFirst({
-			where: { id: created.id },
-			with: { source: true },
-		});
-
-		expect(row?.source).toMatchObject({ addonMd: COMMITTED_ADDON_MD, page: null });
-	});
-
-	test('refuses a page whose media file is not committed, staging nothing', async () => {
-		const { headers } = await signUp();
-		const { request } = commitPage('page.missing', { 'media/shot.png': null });
-		const staged = staging.objects.size;
-
-		expect(await refused(await submit(headers, request))).toEqual({
-			status: 422,
-			code: 'artifact_missing',
-		});
-		expect(staging.objects.size).toBe(staged);
-	});
-
-	test('refuses media over ADDON_MEDIA_MAX_BYTES or ADDON_MEDIA_TOTAL_MAX_BYTES', async () => {
-		const limited = await setup({
-			ADDON_MEDIA_MAX_BYTES: '100',
-			ADDON_MEDIA_TOTAL_MAX_BYTES: '250',
-		});
-
-		try {
-			const { headers } = await signUp(limited.ctx);
-			const oversize = commitPlugin(
-				fixture,
-				REPOSITORY,
-				'page.oversize',
-				'1.0.0',
-				committedPageFiles(101),
-			);
-			const total = commitPlugin(
-				fixture,
-				REPOSITORY,
-				'page.total',
-				'1.0.0',
-				committedPageFiles(100),
-			);
-			const refusals = await Promise.all([
-				submit(headers, oversize.request, limited.ctx).then(refused),
-				submit(headers, total.request, limited.ctx).then(refused),
-			]);
-
-			expect(refusals).toEqual([
-				{ status: 413, code: 'artifact_too_large' },
-				{ status: 413, code: 'artifact_too_large' },
-			]);
-
-			await accepted(await submit(headers, commitPage('page.small').request, limited.ctx));
-		} finally {
-			await limited.close();
-		}
-	});
-
-	test('refuses media that differ from what ubd build measured', async () => {
-		const { headers } = await signUp();
-		const jpeg = new Uint8Array(64);
-
-		jpeg.set([0xff, 0xd8, 0xff]);
-
-		const requests = [
-			commitPage('page.resized', { 'media/shot.png': new Uint8Array(65) }),
-			commitPage('page.renamed', { 'media/shot.png': jpeg }),
-			commitPage('page.stale', {
-				'ADDON.md': COMMITTED_ADDON_MD.replace('The settings', 'Another'),
-			}),
-			commitPage('page.unmarked', { 'ADDON.md': '## Usage' }),
-		].map(({ request }) => request);
-		const refusals = await Promise.all(
-			requests.map((request) => submit(headers, request).then(refused)),
-		);
-
-		expect(refusals.map((entry) => entry.code)).toEqual([
-			'artifact_mismatch',
-			'artifact_mismatch',
-			'artifact_mismatch',
-			'artifact_mismatch',
-		]);
 	});
 });
 

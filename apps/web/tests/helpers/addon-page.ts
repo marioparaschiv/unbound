@@ -73,7 +73,6 @@ export const PAGE = addonPageSchema.parse({
 	],
 });
 
-/** An ADDON.md whose banner, gallery image and inline image are all PNGs. */
 export const COMMITTED_ADDON_MD = [
 	'---',
 	'banner: media/banner.png',
@@ -119,6 +118,39 @@ export function committedPage(bytes: number): AddonPage {
 			measure('media/inline.png', 800, 600, bytes),
 		],
 	});
+}
+
+/**
+ * @description Lists the files of a built plugin whose ADDON.md shows many inline images.
+ * @param count How many inline images ADDON.md shows besides its banner.
+ * @returns The files, relative to the plugin's directory.
+ */
+export function manyMediaFiles(count: number): FixtureFiles {
+	const inline = Array.from({ length: count }, (_, index) => `media/inline-${index}.png`);
+	const files: FixtureFiles = {
+		'ADDON.md': [
+			'---',
+			'banner: media/banner.png',
+			'---',
+			...inline.map((path) => `![Inline](${path})`),
+		].join('\n\n'),
+		'dist/page.json': JSON.stringify(
+			addonPageSchema.parse({
+				frontmatter: { banner: 'media/banner.png' },
+				media: [
+					measure('media/banner.png', 1500, 500, 64),
+					...inline.map((path) => measure(path, 800, 600, 64)),
+				],
+			}),
+		),
+		'media/banner.png': png(64),
+	};
+
+	for (const path of inline) {
+		files[path] = png(64);
+	}
+
+	return files;
 }
 
 /**

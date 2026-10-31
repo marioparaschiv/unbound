@@ -12,6 +12,7 @@ import type {
 	MeasuredMedia,
 } from '@unbound-app/contracts/addon-page';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-media';
 import type { Token, Tokens } from 'marked';
 import { Lexer, walkTokens } from 'marked';
 import { dirname, join } from 'node:path';
@@ -20,12 +21,6 @@ import type { BuildCheck, BuildCheckIssue } from '~/lib/build-checks';
 import { measureMedia } from '~/lib/media-probe';
 import { parseMediaLimits } from '~/lib/env';
 import type { MediaLimits } from '~/lib/env';
-
-/** What the body of ADDON.md breaks, and the media paths it references in order. */
-export type PageBodyLint = {
-	issues: string[];
-	paths: string[];
-};
 
 /** Every issue found reading ADDON.md, and the measured page when nothing failed. */
 export type PageResult = {
@@ -38,15 +33,13 @@ const EXTERNAL_URL = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i;
 const POSTER_ASPECT_TOLERANCE = 0.01;
 
 /**
- * @description Checks the Markdown body of ADDON.md and lists the media it shows.
+ * @description Checks the Markdown body of ADDON.md.
  * @param body The Markdown after the frontmatter.
- * @returns One message per leading H1, table, or image path outside `media/`, and every valid
- * media path, exactly as written.
+ * @returns One message per leading H1, table, or image path outside `media/`.
  */
-export function lintPageBody(body: string): PageBodyLint {
+export function lintPageBody(body: string): string[] {
 	const tokens = Lexer.lex(body);
 	const issues: string[] = [];
-	const paths: string[] = [];
 	const first = tokens.find((token) => token.type !== 'space');
 
 	if (first?.type === 'heading' && (first as Tokens.Heading).depth === 1) {
@@ -64,17 +57,14 @@ export function lintPageBody(body: string): PageBodyLint {
 
 		if (token.type !== 'image') return;
 
-		const { href } = token as Tokens.Image;
-		const error = checkBodyPath(href);
+		const error = checkBodyPath((token as Tokens.Image).href);
 
 		if (error) {
 			issues.push(error);
-		} else {
-			paths.push(href);
 		}
 	});
 
-	return { issues, paths };
+	return issues;
 }
 
 /**
@@ -102,11 +92,9 @@ export async function readPage(dir: string, limits: MediaLimits): Promise<PageRe
 		issues.push(error(`${ADDON_PAGE_FILENAME} has invalid frontmatter:\n${parsed.error}`));
 	}
 
-	const body = lintPageBody(split.body);
+	issues.push(...lintPageBody(split.body).map(error));
 
-	issues.push(...body.issues.map(error));
-
-	const paths = [...new Set([...listFrontmatterPaths(frontmatter), ...body.paths])];
+	const paths = listPageMediaPaths(frontmatter, split.body);
 	const measurements = await Promise.all(
 		paths.map((path) => measureMedia(dir, path, limits.ADDON_MEDIA_MAX_BYTES)),
 	);
@@ -153,30 +141,6 @@ function checkBodyPath(href: string): string | undefined {
 	if (parsed.success) return;
 
 	return `${ADDON_PAGE_FILENAME} shows ${href}: ${parsed.error.issues.map((issue) => issue.message).join(' ')}`;
-}
-
-function listFrontmatterPaths(frontmatter: AddonPageFrontmatter | undefined): string[] {
-	if (!frontmatter) {
-		return [];
-	}
-
-	const paths = [frontmatter.banner];
-
-	for (const entry of frontmatter.media) {
-		if ('image' in entry) {
-			paths.push(entry.image);
-
-			continue;
-		}
-
-		paths.push(entry.video);
-
-		if (entry.poster) {
-			paths.push(entry.poster);
-		}
-	}
-
-	return paths;
 }
 
 function checkPosters(page: AddonPage): BuildCheckIssue[] {
