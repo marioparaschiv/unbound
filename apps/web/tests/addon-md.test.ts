@@ -1,9 +1,11 @@
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
+import { createElement, type ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, test } from 'bun:test';
-import { createElement } from 'react';
 
 import { getPinnedMediaBase, getPublishedMediaBase } from '~/lib/markdown-url';
+import AddonGallery from '~/components/addon-gallery';
+import { resolvePageMedia } from '~/lib/page-media';
 import Markdown from '~/components/markdown';
 import AddonMd from '~/components/addon-md';
 
@@ -125,5 +127,30 @@ describe('AddonMd', () => {
 		expect(render(source)).toBe(
 			renderToStaticMarkup(createElement(Markdown, { source, pin: PAGE_PIN })),
 		);
+	});
+
+	test('keeps a leading rule that is not frontmatter, as before', () => {
+		const source = '---\nIntro text.\n\nSection\n---\n\n| A | B |\n| --- | --- |\n| 1 | 2 |';
+		const html = render(source);
+
+		expect(html).toBe(renderToStaticMarkup(createElement(Markdown, { source, pin: PAGE_PIN })));
+		expect(html).toContain('<hr');
+		expect(html).toContain('Intro text.');
+	});
+
+	test('gives every gallery entry its own key when a file is listed twice', () => {
+		const media = resolvePageMedia(PAGE, PINNED_BASE).get('media/shot.png');
+
+		if (!media) {
+			throw new Error('media/shot.png is not measured');
+		}
+
+		const entry = { media, alt: 'The settings screen', poster: undefined };
+		const list = AddonGallery({ entries: [entry, entry] });
+		const items: ReactElement[] = list.props.children;
+		const keys = items.map((item) => item.key);
+
+		expect(keys).toHaveLength(2);
+		expect(new Set(keys).size).toBe(2);
 	});
 });

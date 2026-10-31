@@ -6,7 +6,6 @@ import cn from '~/lib/cn';
 type MediaFileProps = {
 	media: ResolvedMedia;
 	alt: string;
-	/** A video's poster image URL. */
 	poster?: string;
 	className?: string;
 };

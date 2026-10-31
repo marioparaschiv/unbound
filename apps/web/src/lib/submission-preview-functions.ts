@@ -84,7 +84,6 @@ export const fetchSubmissionPreview = createServerFn({ method: 'GET' })
 				pin,
 				details: row.source.details,
 				addonMd: row.source.addonMd,
-				// Not published, so its media load from the pinned commit.
 				mediaBase: getPinnedMediaBase(pin),
 				approvedAt: submittedAt,
 			},

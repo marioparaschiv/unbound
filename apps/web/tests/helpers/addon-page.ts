@@ -25,7 +25,6 @@ function measure(path: string, width: number, height: number): MeasuredMedia {
 	};
 }
 
-/** ADDON.md with a banner, a gallery of an image and a video, and an inline image, video and table. */
 export const PAGE_SOURCE = [
 	'---',
 	'banner: media/banner.png',
@@ -50,7 +49,6 @@ export const PAGE_SOURCE = [
 	'',
 ].join('\n');
 
-/** The page `ubd build` would measure for {@link PAGE_SOURCE}, checked against the contract. */
 export const PAGE = addonPageSchema.parse({
 	frontmatter: {
 		banner: 'media/banner.png',

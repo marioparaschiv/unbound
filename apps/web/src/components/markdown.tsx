@@ -23,6 +23,12 @@ type LinkProps = {
 	children: ReactNode;
 };
 
+type ImageLinkProps = {
+	image: Tokens.Image;
+	alt: string;
+	pin: MarkdownPin;
+};
+
 type HeadingStyle = {
 	as: 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 	variant: 'heading-md' | 'heading-sm' | 'text-md' | 'text-sm';
@@ -92,6 +98,15 @@ function Link({ href, children }: LinkProps) {
 	);
 }
 
+function ImageLink({ image, alt, pin }: ImageLinkProps) {
+	return (
+		<Link href={resolveMarkdownUrl(image.href, pin, 'image')?.href}>
+			<IconPhoto className='inline mr-1 size-4 align-[-0.125em]' aria-hidden />
+			{alt || 'Image'}
+		</Link>
+	);
+}
+
 function renderInline(tokens: Token[] | undefined, ctx: RenderContext): ReactNode[] {
 	return (tokens ?? []).map((token, index) => renderInlineToken(token, ctx, index));
 }
@@ -151,23 +166,12 @@ function renderInlineToken(token: Token, ctx: RenderContext, key: number): React
 			const alt = decodeEntities(image.text.trim());
 			const media = ctx.media?.get(image.href);
 
-			if (media) {
-				return (
-					<MediaFile
-						key={key}
-						media={media}
-						alt={alt}
-						className='block max-w-full h-auto'
-					/>
-				);
+			if (!media) {
+				return <ImageLink key={key} image={image} alt={alt} pin={ctx.pin} />;
 			}
 
-			// Any other image becomes a link to the file, so only measured repository media load on the page.
 			return (
-				<Link key={key} href={resolveMarkdownUrl(image.href, ctx.pin, 'image')?.href}>
-					<IconPhoto className='inline mr-1 size-4 align-[-0.125em]' aria-hidden />
-					{alt || 'Image'}
-				</Link>
+				<MediaFile key={key} media={media} alt={alt} className='block max-w-full h-auto' />
 			);
 		}
 		default: {
