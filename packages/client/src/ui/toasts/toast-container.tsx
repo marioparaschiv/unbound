@@ -1,32 +1,15 @@
-import { Platform, SafeAreaView, StatusBar, StyleSheet, View } from 'react-native';
+import { Platform, SafeAreaView, StatusBar } from 'react-native';
 import { useShallow } from 'zustand/shallow';
-import type { ReactNode } from 'react';
 
 import { useUnboundSettings } from '~/settings/unbound';
 import useToastStore from '~/toasts/state';
-import { Screens } from '~/metro/common';
 
 import useStyles from './toast-container.style';
+import ToastOverlay from './toast-overlay';
 import Toast from './toast';
 
 const androidInset =
 	Platform.OS === 'android' ? { paddingTop: StatusBar.currentHeight ?? 0 } : null;
-
-function AndroidOverlay({ children }: { children: ReactNode }) {
-	return (
-		<View style={StyleSheet.absoluteFill} pointerEvents='box-none'>
-			{children}
-		</View>
-	);
-}
-
-function ToastOverlay({ children }: { children: ReactNode }) {
-	if (Platform.OS === 'android') {
-		return <AndroidOverlay>{children}</AndroidOverlay>;
-	}
-
-	return <Screens.FullWindowOverlay>{children}</Screens.FullWindowOverlay>;
-}
 
 function ToastContainer() {
 	const settings = useUnboundSettings(({ key }) => key === 'toasts.maxOnScreen');

@@ -1,5 +1,5 @@
-import { Pressable, ScrollView, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { ScrollView, Text, View } from 'react-native';
 import { useState } from 'react';
 
 import { bugReportURL, describeError } from '~/ui/error-fallback';
@@ -9,6 +9,8 @@ import { Messages } from '~/i18n/api';
 import { Linking } from '~/metro/api';
 
 import styles from './error-boundary.style';
+import ErrorSection from './error-section';
+import ErrorAction from './error-action';
 
 export type ErrorFallbackProps = CaughtError & {
 	clientVersion: string;
@@ -17,55 +19,6 @@ export type ErrorFallbackProps = CaughtError & {
 	onReload: () => void;
 	onRecovery: () => void;
 };
-
-type SectionProps = {
-	title: string;
-	text: string;
-};
-
-type ActionProps = {
-	label: string;
-	primary?: boolean;
-	onPress: () => void;
-};
-
-function Section({ title, text }: SectionProps) {
-	const [open, setOpen] = useState(false);
-
-	return (
-		<View style={styles.errorCard}>
-			<Pressable
-				accessibilityRole='button'
-				onPress={() => setOpen(!open)}
-				style={styles.sectionHeader}
-			>
-				<Text style={styles.sectionTitle}>{title}</Text>
-				<Text style={styles.sectionToggle}>
-					{open ? Messages.UNBOUND_CRASH_HIDE : Messages.UNBOUND_CRASH_SHOW}
-				</Text>
-			</Pressable>
-			{open ? (
-				<Text selectable style={styles.trace}>
-					{text}
-				</Text>
-			) : null}
-		</View>
-	);
-}
-
-function Action({ label, primary, onPress }: ActionProps) {
-	return (
-		<Pressable
-			accessibilityRole='button'
-			onPress={onPress}
-			style={[styles.button, primary ? styles.primaryButton : null]}
-		>
-			<Text style={[styles.buttonText, primary ? styles.primaryButtonText : null]}>
-				{label}
-			</Text>
-		</Pressable>
-	);
-}
 
 /**
  * @description The screen shown when Discord's error boundary catches a crash: the error, its stacks
@@ -97,10 +50,10 @@ function ErrorFallback({
 						</Text>
 					</View>
 					{error?.stack ? (
-						<Section title={Messages.UNBOUND_CRASH_STACK} text={error.stack} />
+						<ErrorSection title={Messages.UNBOUND_CRASH_STACK} text={error.stack} />
 					) : null}
 					{componentStack?.trim() ? (
-						<Section
+						<ErrorSection
 							title={Messages.UNBOUND_CRASH_COMPONENT_STACK}
 							text={componentStack.trim()}
 						/>
@@ -110,17 +63,17 @@ function ErrorFallback({
 					entering={FadeInDown.delay(120).duration(320)}
 					style={styles.actions}
 				>
-					<Action label={Messages.UNBOUND_CRASH_RETRY} primary onPress={onRetry} />
-					<Action label={Messages.UNBOUND_CRASH_RELOAD} onPress={onReload} />
-					<Action label={Messages.UNBOUND_CRASH_RECOVERY} onPress={onRecovery} />
-					<Action
+					<ErrorAction label={Messages.UNBOUND_CRASH_RETRY} primary onPress={onRetry} />
+					<ErrorAction label={Messages.UNBOUND_CRASH_RELOAD} onPress={onReload} />
+					<ErrorAction label={Messages.UNBOUND_CRASH_RECOVERY} onPress={onRecovery} />
+					<ErrorAction
 						label={copied ? Messages.UNBOUND_CRASH_COPIED : Messages.UNBOUND_CRASH_COPY}
 						onPress={() => {
 							Clipboard.setString(describeError(caught));
 							setCopied(true);
 						}}
 					/>
-					<Action
+					<ErrorAction
 						label={Messages.UNBOUND_CRASH_REPORT}
 						onPress={() =>
 							Linking.openURL(bugReportURL(caught, { clientVersion, platform }))

@@ -1,16 +1,16 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
-import type { AvailableChoice, VersionChoice } from '~/addons/versions';
 import type { UpdatableKind } from '~/addons/manager-of';
+import type { AvailableChoice } from '~/addons/versions';
 import { toVersionChoices } from '~/addons/versions';
 import { CLIENT_VERSION } from '~/core/constants';
 import { BottomSheets } from '~/metro/components';
 import { messages, format } from '~/i18n/api';
 import { Manager } from '~/addons/manager';
-import { Moment } from '~/metro/common';
 
 import useAddonVersions from './use-addon-versions';
 import { getInstalledVersion } from './targets';
+import VersionRow from './version-row';
 
 type VersionPickerSheetProps = {
 	kind: UpdatableKind;
@@ -19,39 +19,6 @@ type VersionPickerSheetProps = {
 	onPick: (choice: AvailableChoice) => void;
 	onClose: () => void;
 };
-
-type VersionRowProps = {
-	choice: VersionChoice;
-	onPick: (choice: AvailableChoice) => void;
-};
-
-function describeChoice(choice: VersionChoice): string {
-	const published = Moment.utc(choice.version.publishedAt).fromNow();
-
-	switch (choice.type) {
-		case 'available':
-			return choice.latest ? `${published} · ${messages.UNBOUND_VERSION_LATEST}` : published;
-		case 'installed':
-			return choice.latest
-				? `${published} · ${messages.UNBOUND_VERSION_LATEST} · ${messages.UNBOUND_INSTALLED}`
-				: `${published} · ${messages.UNBOUND_INSTALLED}`;
-		case 'incompatible':
-			return `${published} · ${format('UNBOUND_VERSION_NEEDS_CLIENT', { version: choice.requires })}`;
-	}
-}
-
-function VersionRow({ choice, onPick }: VersionRowProps) {
-	const { ActionSheetRow } = BottomSheets;
-
-	return (
-		<ActionSheetRow
-			label={`v${choice.version.version}`}
-			subLabel={describeChoice(choice)}
-			disabled={choice.type === 'incompatible'}
-			onPress={choice.type === 'available' ? () => onPick(choice) : void 0}
-		/>
-	);
-}
 
 /**
  * @description An action sheet listing every live version of a listed addon, newest first. Pressing a

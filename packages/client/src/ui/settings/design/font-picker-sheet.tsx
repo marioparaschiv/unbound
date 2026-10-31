@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 
+import SearchIcon from '~/ui/components/search-icon';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
-import { icons } from '~/assets/api';
 import { format } from '~/i18n/api';
 
 type FontPickerSheetProps = {
@@ -44,7 +44,7 @@ function FontPickerSheet({ family, onClose }: FontPickerSheetProps) {
 				isClearable
 				isRound
 				placeholder={format('UNBOUND_SEARCH', { type: format('UNBOUND_FONTS') })}
-				leadingIcon={() => <Discord.TableRowIcon source={icons.MagnifyingGlassIcon ?? 0} />}
+				leadingIcon={SearchIcon}
 			/>
 			<Discord.ActionSheetRow label={format('UNBOUND_RESET')} onPress={reset} />
 			{names.map((name) => (
