@@ -6,6 +6,7 @@ import { savePreviewReturn, usePreviewReturn } from '~/components/staff/use-prev
 import ReviewDecisionDialog from '~/components/review/review-decision-dialog';
 import { formatDateTime } from '~/components/admin/format-date';
 import ReviewDetails from '~/components/staff/review-details';
+import { TagList } from '~/components/addon-filters/filter-parts';
 import type { ReviewEntry } from '~/lib/review-entry';
 import UserAvatar from '~/components/user-avatar';
 import { Button } from '~/components/ui/button';
@@ -67,13 +68,21 @@ function ReviewCard({ entry }: ReviewCardProps) {
 					{submission.version}
 				</Text>
 			</div>
-			<Text
-				variant='text-sm'
-				color='muted'
-				className='px-(--card-pad) pt-3 pb-(--card-pad) line-clamp-2'
-			>
+			<Text variant='text-sm' color='muted' className='px-(--card-pad) pt-3 line-clamp-2'>
 				{description ?? 'No description.'}
 			</Text>
+			<div className='flex items-center gap-2 px-(--card-pad) pt-2 pb-(--card-pad) min-w-0'>
+				<Text as='span' variant='text-xs' color='muted' className='shrink-0'>
+					Tags
+				</Text>
+				{entry.tags && entry.tags.length > 0 ? (
+					<TagList tags={entry.tags} />
+				) : (
+					<Text as='span' variant='text-xs' className='font-medium'>
+						{entry.tags ? 'None' : 'Unchanged'}
+					</Text>
+				)}
+			</div>
 
 			<div className='flex flex-wrap items-center gap-2 px-(--card-pad) py-3 border-t'>
 				<Button
