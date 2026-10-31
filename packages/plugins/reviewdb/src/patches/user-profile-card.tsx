@@ -1,8 +1,9 @@
+import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import type { DiscordFunction } from '@unbound-app/api/metro';
 import { patcher } from '@unbound-app/api';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { ReactNode } from 'react';
 
-import { UserProfileCard, UserProfileCardByName } from '~/modules';
+import { UserProfileCardSources } from '~/modules';
 import ReviewsButton from '~/components/reviews-button';
 
 type ProfileCardProps = {
@@ -10,9 +11,8 @@ type ProfileCardProps = {
 	children?: ReactNode;
 };
 
-type PatchContext = {
-	args: [ProfileCardProps];
-	result: ReactNode;
+type UserProfileCardModule = {
+	default: DiscordFunction;
 };
 
 function findUserId({ title, children }: ProfileCardProps): string | undefined {
@@ -25,18 +25,14 @@ function findUserId({ title, children }: ProfileCardProps): string | undefined {
 	}
 }
 
-/**
- * @description Adds a View Reviews button under the user info card on profiles.
- * @returns A function that removes the button.
- */
-export function patchUserProfileCard(): () => void {
-	const card = [UserProfileCard, UserProfileCardByName].find(
-		(module) => typeof module.default === 'function',
-	);
+function patchLoadedUserProfileCard(card: UserProfileCardModule) {
+	if (typeof card.default !== 'function') {
+		console.error('[ReviewDB] Skipped, UserProfileCard is not a function.');
 
-	if (!ensureModules('ReviewDB', { UserProfileCard: card }) || !card) return () => {};
+		return;
+	}
 
-	return patcher.after(card, 'default', ({ args: [props], result }: PatchContext) => {
+	return patcher.after(card, 'default', ({ args: [props], result }) => {
 		const userId = findUserId(props);
 
 		if (!userId) return;
@@ -48,6 +44,14 @@ export function patchUserProfileCard(): () => void {
 			</>
 		);
 	});
+}
+
+/**
+ * @description Adds a View Reviews button under the user info card on profiles, once the card's module loads.
+ * @returns A function that stops waiting or removes the button.
+ */
+export function patchUserProfileCard(): () => void {
+	return whenLoaded(UserProfileCardSources, patchLoadedUserProfileCard, { interop: false });
 }
 
 export default { patchUserProfileCard };
