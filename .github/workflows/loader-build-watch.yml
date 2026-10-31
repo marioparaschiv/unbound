@@ -1,0 +1,40 @@
+name: Loader build watch
+
+on:
+    schedule:
+        - cron: '27 */6 * * *'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+concurrency:
+    group: loader-build-watch
+    cancel-in-progress: true
+
+jobs:
+    watch:
+        name: Every loader change on main has a build
+        if: github.repository == 'marioparaschiv/unbound'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        permissions:
+            actions: read
+            contents: read
+        defaults:
+            run:
+                working-directory: packages/loader
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+                  fetch-depth: 0
+
+            - name: Setup Go tools
+              uses: ./.github/actions/setup-go-tools
+
+            - name: Check main's recent loader commits
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run: go run ./tools build-watch

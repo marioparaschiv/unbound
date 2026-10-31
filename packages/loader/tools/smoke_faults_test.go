@@ -1,6 +1,8 @@
 package main
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -29,5 +31,21 @@ func TestSmokeFaultExpressionsUseTheCrashFixture(t *testing.T) {
 	}
 	if !strings.Contains(smokeCrashArmExpression, "unbound.storage.persist()") {
 		t.Fatal("the crash fixture must persist its consent and state before it crashes Discord")
+	}
+}
+
+func TestArmingTheCrashFixtureReportsWhatTheDeviceSaid(t *testing.T) {
+	if problem := armSmokeCrashFixture("armed", nil); problem != "" {
+		t.Fatalf("a successful arm reported %q", problem)
+	}
+	if problem := armSmokeCrashFixture("", errors.New("bun exited: signal: killed")); problem != "" {
+		t.Fatalf("a lost connection, which a fast crash causes, reported %q", problem)
+	}
+	thrown := armSmokeCrashFixture("", fmt.Errorf("%s: TypeError: Cannot read property 'get' of undefined", smokeDeviceThrew))
+	if !strings.Contains(thrown, "could not be armed") || !strings.Contains(thrown, "TypeError") {
+		t.Fatalf("a script error reported %q", thrown)
+	}
+	if problem := armSmokeCrashFixture("undefined", nil); !strings.Contains(problem, `"undefined"`) {
+		t.Fatalf("an unexpected answer reported %q", problem)
 	}
 }

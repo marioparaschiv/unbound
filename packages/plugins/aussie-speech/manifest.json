@@ -1,0 +1,14 @@
+{
+	"id": "adrian.aussie-speech",
+	"name": "Aussie Speech",
+	"description": "Turns every message into Aussie English before you send it.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "MicrophoneIcon",
+	"main": "index.tsx"
+}

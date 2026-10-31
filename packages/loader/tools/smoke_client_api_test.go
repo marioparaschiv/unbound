@@ -28,7 +28,11 @@ func smokeScriptMembers(t *testing.T, receiver string) []string {
 	t.Helper()
 	var members []string
 	pattern := regexp.MustCompile(regexp.QuoteMeta(receiver) + `\.([A-Za-z]+)`)
-	for _, file := range []string{"smoke.go", "smoke_cycle.go", "smoke_faults.go"} {
+	scripts, err := filepath.Glob(filepath.Join("smoke_scripts", "*.js"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, file := range append([]string{"smoke.go", "smoke_cycle.go"}, scripts...) {
 		data, err := os.ReadFile(file)
 		if err != nil {
 			t.Fatal(err)
