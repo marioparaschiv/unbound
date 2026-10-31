@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0]
+
+### Changed
+
+- On iOS, a reused message's embed is removed on the UI thread as the message is reused, so it never shows on the wrong message while scrolling.
+
 ## [1.0.2]
 
 ### Fixed
