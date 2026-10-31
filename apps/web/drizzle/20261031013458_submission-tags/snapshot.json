@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "819238ea-5880-413d-8223-bba900961a22",
+  "prevIds": [
+    "7fd6c30b-b195-4bfb-9768-0b575d5a3e4c"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "submission",
+        "tags"
+      ],
+      "writes": [
+        "s|col|public.submission.tags",
+        "n|col|public.submission.tags",
+        "e|col|public.submission.tags"
+      ],
+      "reads": [
+        "n|tbl|public.submission",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "submission",
+        "name": "tags",
+        "type": "json",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

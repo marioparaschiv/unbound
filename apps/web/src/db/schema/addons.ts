@@ -139,6 +139,8 @@ export const submission = pgTable(
 		bundleSize: integer('bundle_size').notNull(),
 		stagingKey: text('staging_key').notNull().unique(),
 		sha256: text('sha256'),
+		/** The tag ids approval gives the addon; `null` keeps its current tags. */
+		tags: json('tags').$type<string[]>(),
 		createdAt: timestampMs('created_at').notNull(),
 		submittedAt: timestampMs('submitted_at'),
 		reviewerId: text('reviewer_id').references(() => user.id, { onDelete: 'set null' }),

@@ -7,12 +7,14 @@ import type {
 } from '@unbound-app/contracts/publish';
 import type { SubmissionPreviewResponse } from '@unbound-app/contracts/review';
 import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
+import { MAX_SUBMISSION_TAGS } from '@unbound-app/contracts/tags';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { and, count, eq, gte, inArray, ne } from 'drizzle-orm';
 
 import { addon, addonMaintainer, addonVersion, submission, submissionSource } from '~/db/schema';
 import type { SubmissionSourceRow } from '~/lib/artifacts';
 import type { AddonSource } from '~/lib/addon-source';
+import { readAddonTags, readTags, requireTags } from '~/lib/addon-tags';
 import { appendEvent } from '~/lib/moderation-events';
 import { readAddonSource } from '~/lib/addon-source';
 import { requirePermission } from '~/lib/api/caller';
@@ -51,6 +53,12 @@ type Claim = {
 type Staged = {
 	id: string;
 	stagingKey: string;
+};
+
+/** What a submission stores: the source read from GitHub and the author's chosen tags, `null` for none. */
+type Submitted = {
+	source: AddonSource;
+	tags: string[] | null;
 };
 
 type Reservation = {
@@ -272,7 +280,7 @@ function reserve(
 	ctx: AppContext,
 	caller: Caller,
 	staged: Staged,
-	source: AddonSource,
+	{ source, tags }: Submitted,
 	now: Date,
 ): Promise<Reservation> {
 	const { manifest, pin } = source;
@@ -302,6 +310,7 @@ function reserve(
 					bundleSize: source.bundleSize,
 					stagingKey: staged.stagingKey,
 					sha256: source.sha256,
+					tags,
 					createdAt: now,
 					submittedAt: now,
 				})
@@ -338,17 +347,17 @@ function reserve(
 async function stageAndReserve(
 	ctx: AppContext,
 	caller: Caller,
-	source: AddonSource,
+	submitted: Submitted,
 	now: Date,
 ): Promise<Reservation> {
 	const id = Bun.randomUUIDv7();
 	const staged = { id, stagingKey: `submissions/${id}/bundle` };
 
 	// Until the row exists, only STAGING_ORPHAN_GRACE_SECONDS keeps the sweeper off this object.
-	await ctx.storage.staging.write(staged.stagingKey, source.bundle);
+	await ctx.storage.staging.write(staged.stagingKey, submitted.source.bundle);
 
 	try {
-		return await reserve(ctx, caller, staged, source, now);
+		return await reserve(ctx, caller, staged, submitted, now);
 	} catch (error) {
 		await ctx.storage.staging.delete(staged.stagingKey);
 
@@ -361,7 +370,7 @@ async function stageAndReserve(
  * submission with changes requested.
  * @param ctx The application context.
  * @param caller The submitting user.
- * @param request The repository, addon path, ref, commit and detail overrides.
+ * @param request The repository, addon path, ref, commit and the author's chosen tags.
  * @returns The submission, pending review.
  */
 export async function createSubmission(
@@ -370,13 +379,15 @@ export async function createSubmission(
 	request: CreateSubmissionRequest,
 ): Promise<CreateSubmissionResponse> {
 	const now = ctx.now();
+	const tags = request.details?.tags ?? null;
 
 	await checkRateLimit(ctx, caller.user.id, now);
 	await checkAccountAge(ctx, caller.user.id, now);
+	await requireTags(ctx, tags ?? []);
 
 	const github = await connectGitHub(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request);
-	const { created, replaced } = await stageAndReserve(ctx, caller, source, now);
+	const { created, replaced } = await stageAndReserve(ctx, caller, { source, tags }, now);
 
 	if (replaced) {
 		await ctx.storage.staging.delete(replaced.stagingKey);
@@ -385,13 +396,27 @@ export async function createSubmission(
 	return { submission: toSubmission(created) };
 }
 
+async function suggestTags(
+	ctx: AppContext,
+	kind: SubmissionKind,
+	source: AddonSource,
+): Promise<string[]> {
+	const { id } = source.manifest;
+	const tags =
+		kind === 'update'
+			? ((await readAddonTags(ctx, [id])).get(id) ?? [])
+			: await readTags(ctx, source.details.tags);
+
+	return tags.slice(0, MAX_SUBMISSION_TAGS).map((entry) => entry.id);
+}
+
 /**
  * @description Shows what submitting from GitHub would create, writing nothing: the Discord account
  * age gate, every GitHub read and check of a submission, then the claim and cap checks.
  * @param ctx The application context.
  * @param caller The author.
- * @param request The repository, addon path, ref, commit and detail overrides.
- * @returns The kind, the source pin and the content reviewers would see.
+ * @param request The repository, addon path, ref, commit and the author's chosen tags.
+ * @returns The kind, the source pin, the content reviewers would see and the tags to preselect.
  */
 export async function previewSubmission(
 	ctx: AppContext,
@@ -399,6 +424,7 @@ export async function previewSubmission(
 	request: CreateSubmissionRequest,
 ): Promise<SubmissionPreviewResponse> {
 	await checkAccountAge(ctx, caller.user.id, ctx.now());
+	await requireTags(ctx, request.details?.tags ?? []);
 
 	const github = await connectGitHub(ctx, caller.user.id);
 	const source = await readAddonSource(ctx, github, request);
@@ -414,6 +440,7 @@ export async function previewSubmission(
 			addonMd: source.addonMd,
 			changelog: source.changelog,
 			details: source.details,
+			suggestedTags: await suggestTags(ctx, kind, source),
 		},
 	};
 }

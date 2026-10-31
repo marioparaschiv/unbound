@@ -53,9 +53,6 @@ export const filterMatchSchema = z.enum(['any', 'all', 'none']);
 /** A filter that compares one value per addon, which can match one of the values or none of them. */
 export const singleMatchSchema = z.enum(['any', 'none']);
 
-/** A tag's id: a lowercase slug. */
-export const tagIdSchema = z.string().check(z.regex(/^[a-z\d]+(?:-[a-z\d]+)*$/), z.maxLength(64));
-
 const TAG_LIST = /^[a-z\d]+(?:-[a-z\d]+)*(?:,[a-z\d]+(?:-[a-z\d]+)*)*$/;
 
 const SNOWFLAKE_LIST = /^[1-9]\d{0,19}(?:,[1-9]\d{0,19})*$/;
@@ -210,7 +207,6 @@ export default {
 	sortOrderSchema,
 	filterMatchSchema,
 	singleMatchSchema,
-	tagIdSchema,
 	listAddonsQuerySchema,
 	addonIconSchema,
 	listedAddonSchema,

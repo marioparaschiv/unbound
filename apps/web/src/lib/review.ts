@@ -14,6 +14,7 @@ import type { SourcedSubmissionRow, SubmissionRow } from '~/lib/submissions';
 import { requireSourced, toSubmission } from '~/lib/submissions';
 import { toAddonVersion, writeArtifact } from '~/lib/artifacts';
 import { requestProfileRefresh } from '~/lib/authors/profiles';
+import { readTags, replaceAddonTags } from '~/lib/addon-tags';
 import { recordReviewDecision } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
@@ -104,7 +105,8 @@ export async function listReviewQueue(
 	}
 
 	const updated = rows.filter((row) => row.kind === 'update').map((row) => row.addonId);
-	const [addons, memberships] = await Promise.all([
+	const chosen = [...new Set(rows.flatMap((row) => row.tags ?? []))];
+	const [addons, memberships, tags] = await Promise.all([
 		ctx.db.query.addon.findMany({
 			where: { id: { in: updated } },
 			with: LATEST_VERSION,
@@ -113,6 +115,7 @@ export async function listReviewQueue(
 			where: { userId: caller.user.id, addonId: { in: rows.map((row) => row.addonId) } },
 			columns: { addonId: true },
 		}),
+		readTags(ctx, chosen),
 	]);
 
 	const previous = new Map(addons.map((entry) => [entry.id, entry.versions[0]]));
@@ -142,6 +145,7 @@ export async function listReviewQueue(
 			details: source.details,
 			submittedAt: submittedAt.toISOString(),
 			submitter: { id: author.id, name: author.name, image: author.image ?? null },
+			tags: row.tags ? tags.filter((entry) => row.tags?.includes(entry.id)) : null,
 			selfReview: author.id === caller.user.id || maintained.has(row.addonId),
 			previousVersion: version ? toAddonVersion(ctx.env, version, version.submission) : null,
 			previousAddonMd: version?.submission?.source?.addonMd ?? null,
@@ -276,6 +280,10 @@ export async function publishVersion(
 	}
 
 	await tx.insert(addonVersion).values(toVersionRow(row, sha256, publishedAt));
+
+	if (row.tags) {
+		await replaceAddonTags(tx, row.addonId, row.tags);
+	}
 
 	if (row.kind !== 'update') return;
 

@@ -359,14 +359,13 @@ function toDetails(
 	repo: GitHubRepository,
 	extras: RepositoryExtras,
 	tree: GitTree,
-	overrides: CreateSubmissionRequest['details'] = {},
 ): RepositoryDetails {
 	const hasReadme = [...tree.keys()].some((path) => !path.includes('/') && README.test(path));
 
 	return {
 		description: repo.description,
-		homepage: overrides.homepage === undefined ? repo.homepage : overrides.homepage,
-		tags: overrides.tags ?? repo.topics,
+		homepage: repo.homepage,
+		tags: repo.topics,
 		license: repo.license,
 		stars: repo.stars,
 		defaultBranch: repo.defaultBranch,
@@ -638,7 +637,7 @@ export async function readAddonSource(
 		sha256: new Bun.CryptoHasher('sha256').update(bundle).digest('hex'),
 		addonMd: extraTexts.get(addonMdPath) ?? null,
 		changelog: readChangelog(changelogPath, extraTexts.get(changelogPath), manifest.version),
-		details: toDetails(repo, extras, tree, request.details),
+		details: toDetails(repo, extras, tree),
 	};
 }
 

@@ -2,10 +2,10 @@ import {
 	addonPathSchema,
 	commitShaSchema,
 	gitRefSchema,
-	repositoryDetailsSchema,
 	repositoryInputSchema,
 	sourcePinSchema,
 } from './source';
+import { submissionTagsSchema } from './tags';
 import { addonIdSchema, bytecodeDigestsSchema } from './manifest';
 import { z } from './zod';
 
@@ -58,10 +58,10 @@ export const submissionSchema = z.object({
 
 export const MAX_CHANGELOG_LENGTH = 10_000;
 
-/** The details an author may override; omitted fields keep what GitHub says. */
-export const submissionDetailsOverridesSchema = z.object({
-	homepage: z.optional(repositoryDetailsSchema.shape.homepage),
-	tags: z.optional(repositoryDetailsSchema.shape.tags),
+/** What the author chose for the listing; an omitted field keeps what the addon has. */
+export const submissionDetailsSchema = z.object({
+	/** Replaces the addon's tags on approval; `[]` clears them. */
+	tags: z.optional(submissionTagsSchema),
 });
 
 /**
@@ -74,7 +74,7 @@ export const createSubmissionRequestSchema = z.object({
 	/** The branch, tag or SHA the author named; it must still resolve to `commitSha`. */
 	ref: gitRefSchema,
 	commitSha: commitShaSchema,
-	details: z.optional(submissionDetailsOverridesSchema),
+	details: z.optional(submissionDetailsSchema),
 });
 
 export const createSubmissionResponseSchema = z.object({
@@ -127,7 +127,7 @@ export type OpenSubmissionStatus = z.infer<typeof openSubmissionStatusSchema>;
 export type ReviewDecision = z.infer<typeof reviewDecisionSchema>;
 export type SubmissionReview = z.infer<typeof submissionReviewSchema>;
 export type Submission = z.infer<typeof submissionSchema>;
-export type SubmissionDetailsOverrides = z.infer<typeof submissionDetailsOverridesSchema>;
+export type SubmissionDetails = z.infer<typeof submissionDetailsSchema>;
 export type CreateSubmissionRequest = z.infer<typeof createSubmissionRequestSchema>;
 export type CreateSubmissionResponse = z.infer<typeof createSubmissionResponseSchema>;
 export type PublishFirstPartyRequest = z.infer<typeof publishFirstPartyRequestSchema>;
@@ -144,7 +144,7 @@ export default {
 	reviewDecisionSchema,
 	submissionReviewSchema,
 	submissionSchema,
-	submissionDetailsOverridesSchema,
+	submissionDetailsSchema,
 	createSubmissionRequestSchema,
 	createSubmissionResponseSchema,
 	publishFirstPartyRequestSchema,

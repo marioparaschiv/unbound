@@ -4,7 +4,7 @@ import type {
 	ListRepositoryAddonsQuery,
 	RepositoryAddon,
 } from '@unbound-app/contracts/source';
-import type { Submission, SubmissionDetailsOverrides } from '@unbound-app/contracts/publish';
+import type { Submission, SubmissionDetails } from '@unbound-app/contracts/publish';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SubmissionPreview } from '@unbound-app/contracts/review';
 import { useState } from 'react';
@@ -36,7 +36,7 @@ type SubmitFlow = {
 	isPending: boolean;
 	read: (source: ListRepositoryAddonsQuery) => void;
 	pick: (addon: RepositoryAddon) => void;
-	submit: (details: SubmissionDetailsOverrides) => void;
+	submit: (details: SubmissionDetails) => void;
 };
 
 const SHORTCUT_LIMIT = 12;
@@ -83,7 +83,7 @@ function useSubmitFlow({ pendingSource, onSubmitted }: SubmitFlowOptions): Submi
 		}
 	}
 
-	function submit(details: SubmissionDetailsOverrides) {
+	function submit(details: SubmissionDetails) {
 		if (!request) return;
 
 		submission.mutate({ ...request, details }, { onSuccess: onSubmitted });

@@ -3,6 +3,7 @@ import type { reviewDecisionSchema } from './publish';
 import { repositoryDetailsSchema, sourcePinSchema } from './source';
 import { submissionKindSchema, submissionSchema } from './publish';
 import { addonVersionSchema, sha256Schema } from './addons';
+import { tagIdSchema, tagSchema } from './tags';
 import { addonManifestSchema } from './manifest';
 import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
@@ -33,6 +34,8 @@ export const reviewQueueItemSchema = z.extend(submissionContentSchema, {
 	source: sourcePinSchema,
 	submittedAt: z.iso.datetime(),
 	submitter: userSummarySchema,
+	/** The tags approval gives the addon, in menu order, or `null` to keep its current ones. */
+	tags: z.nullable(z.array(tagSchema)),
 	/** The viewer authored it or maintains the addon, so the server refuses their review with `self_review`. */
 	selfReview: z.boolean(),
 	/** The addon's newest approved version, for updates. */
@@ -55,6 +58,8 @@ export const reviewQueueResponseSchema = z.object({
 export const submissionPreviewSchema = z.extend(submissionContentSchema, {
 	kind: submissionKindSchema,
 	source: sourcePinSchema,
+	/** The tags to preselect: an update's current tags, or a new listing's repository topics that are tag ids. */
+	suggestedTags: z.array(tagIdSchema),
 });
 
 export const submissionPreviewResponseSchema = z.object({
