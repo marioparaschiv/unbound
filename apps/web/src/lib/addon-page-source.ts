@@ -34,8 +34,7 @@ export type MediaLocation = Pick<PageLocation, 'repository' | 'tree' | 'commitSh
 export type PageMediaFiles = ReadonlyMap<string, Uint8Array>;
 
 type CommittedMedia = {
-	/** The path as ADDON.md writes it, relative to the addon's directory. */
-	name: string;
+	pagePath: string;
 	path: string;
 	entry: TreeEntry;
 };
@@ -108,7 +107,7 @@ function findMedia(env: Env, location: MediaLocation, page: AddonPage): Committe
 			throw rebuild(path, `is ${entry.size} bytes, but it measured ${media.bytes} bytes`);
 		}
 
-		committed.push({ name: media.path, path, entry });
+		committed.push({ pagePath: media.path, path, entry });
 	}
 
 	const total = committed.reduce((sum, { entry }) => sum + entry.size, 0);
@@ -145,9 +144,9 @@ async function readMedia(
 	github: GitHubClient,
 	repository: string,
 	media: CommittedMedia[],
-	keep: (name: string, data: Uint8Array) => void,
+	keep: (pagePath: string, data: Uint8Array) => void,
 ) {
-	await forEachAtMost(media, MEDIA_READ_CONCURRENCY, async ({ name, path, entry }) => {
+	await forEachAtMost(media, MEDIA_READ_CONCURRENCY, async ({ pagePath, path, entry }) => {
 		const data = await github.readBlob(repository, entry.sha);
 
 		if (!matchesMediaFormat(path, data)) {
@@ -157,7 +156,7 @@ async function readMedia(
 			);
 		}
 
-		keep(name, data);
+		keep(pagePath, data);
 	});
 }
 
@@ -223,8 +222,8 @@ export async function readPageMedia(
 ): Promise<PageMediaFiles> {
 	const files = new Map<string, Uint8Array>();
 
-	await readMedia(github, location.repository, findMedia(env, location, page), (name, data) =>
-		files.set(name, data),
+	await readMedia(github, location.repository, findMedia(env, location, page), (pagePath, data) =>
+		files.set(pagePath, data),
 	);
 
 	return files;

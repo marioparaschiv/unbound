@@ -150,7 +150,7 @@ async function settle(promise: Promise<unknown>): Promise<string> {
 }
 
 // current.cfg RejectedNeverPublic: an approval is held inside publishArtifact's writes while a
-// rejection of the same submission commits. The submission has a store page, so its media race too.
+// rejection of the same submission commits.
 async function approveRacesReject(): Promise<Checks> {
 	const github = serveGitHub({ repositories: { [REPOSITORY]: {} }, tokens: {} });
 	const seeded = await setup({ GITHUB_API_URL: github.url.href });

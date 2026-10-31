@@ -205,8 +205,7 @@ async function readBundle(ctx: AppContext, row: SourcedSubmissionRow): Promise<U
 	return (await staged.exists()) ? staged.bytes() : refetchBundle(ctx, row);
 }
 
-// Media are never staged: they are re-read from the pinned commit, whose blobs are content-addressed.
-async function readStorePage(
+async function readPinnedStorePage(
 	ctx: AppContext,
 	row: SourcedSubmissionRow,
 ): Promise<StorePage | undefined> {
@@ -226,7 +225,7 @@ async function readStorePage(
 }
 
 async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<string> {
-	const [bundle, page] = await Promise.all([readBundle(ctx, row), readStorePage(ctx, row)]);
+	const [bundle, page] = await Promise.all([readBundle(ctx, row), readPinnedStorePage(ctx, row)]);
 	const sha256 = new Bun.CryptoHasher('sha256').update(bundle).digest('hex');
 
 	if (

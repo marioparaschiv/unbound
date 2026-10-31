@@ -12,8 +12,8 @@ CONSTANTS
     Reviewers,             \* concurrent POST /api/v1/submissions/$id/review requests
     MaxPendingUpdates,     \* env SUBMISSION_MAX_PENDING_UPDATES (default 1)
     PublishAfterCommit,    \* FALSE = current code; TRUE = public writes moved after decide()
-    CasOnStatus,           \* decide() WHERE status = 'pending_review' (review.ts:336)
-    HashCheck,             \* publishArtifact re-hash check (review.ts:230-241)
+    CasOnStatus,           \* decide() WHERE status = 'pending_review' (review.ts:335)
+    HashCheck,             \* publishArtifact re-hash check (review.ts:229-240)
     None                   \* model value: no row, no object
 
 Subs     == SubsV1 \cup SubsV2
@@ -114,7 +114,7 @@ Orphan(s) ==
     /\ staged' = [staged EXCEPT ![s] = None]
     /\ UNCHANGED <<status, kind, recordedSha, StoreVars, ReviewerVars>>
 
-(* ---------------- reviewSubmission (review.ts:378-411) ---------------- *)
+(* ---------------- reviewSubmission (review.ts:377-410) ---------------- *)
 
 \* requirePendingReview (review.ts:160-191): reads the row (169), status check at 177.
 Start(r, s, d) ==
@@ -139,10 +139,10 @@ Got(r, b) ==
     /\ pc' = [pc EXCEPT ![r] = IF PublishAfterCommit THEN "decide" ELSE "write"]
     /\ UNCHANGED <<target, dec, rowSha, wroteB, wroteM, wroteP>>
 
-\* publishArtifact read (review.ts:228-241, readBundle 202-206): the staged bytes, or, when the object
+\* publishArtifact read (review.ts:227-240, readBundle 202-206): the staged bytes, or, when the object
 \* is gone, the pinned blob read again (refetchBundle 195-200). The blob is content-addressed and readBlob checks its
 \* SHA-1, so a refetch yields the honest bytes or fails with github_unavailable. Then the re-hash; a
-\* mismatch throws artifact_mismatch and the request ends. readStorePage (209-226) runs alongside: it re-reads
+\* mismatch throws artifact_mismatch and the request ends. readPinnedStorePage (208-225) runs alongside: it re-reads
 \* every media file from the pinned commit's content-addressed blobs (never staged, so Tamper cannot
 \* reach them), which yields the submitted bytes or throws; a throw ends the request before any write.
 ReadStaged(r) ==
@@ -158,11 +158,10 @@ ReadStaged(r) ==
 
 AfterWrite == IF PublishAfterCommit THEN "cleanup" ELSE "decide"
 
-\* publishArtifact writes (review.ts:243-246): writeArtifact (artifacts.ts 94-111) PUTs the bundle and
+\* publishArtifact writes (review.ts:242-245): writeArtifact (artifacts.ts 94-111) PUTs the bundle and
 \* manifest; the review path passes no compiled bytecode. writeStorePage (artifacts.ts 120-142) PUTs
 \* ADDON.md, page.json and each media file. All run at once. Every submission here has a store page,
-\* the case with the most writes. Its PUTs are one action: each carries only s's content, so the
-\* invariants depend only on whose page last landed.
+\* the case with the most writes. Its PUTs are one action.
 WriteBundle(r) ==
     LET s == target[r] IN
     /\ pc[r] = "write" /\ ~wroteB[r]
@@ -190,9 +189,9 @@ WritePage(r) ==
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
                    publicManifest, decisions, target, dec, rowSha, bytes, wroteB, wroteM>>
 
-\* decide (review.ts:320-367): one serializable transaction, retried whole on a serialization failure.
-\* CAS at 336, throw at 339-344. Approval runs publishVersion (352), which inserts addon (294, PK id)
-\* for a listing and addon_version (308, PK addonId+version); a conflict throws and rolls it all back.
+\* decide (review.ts:319-366): one serializable transaction, retried whole on a serialization failure.
+\* CAS at 335, throw at 338-343. Approval runs publishVersion (351), which inserts addon (293, PK id)
+\* for a listing and addon_version (307, PK addonId+version); a conflict throws and rolls it all back.
 Decide(r) ==
     LET s == target[r]
         v == VersionOf(s)
@@ -216,7 +215,7 @@ Decide(r) ==
                               wroteB, wroteM, wroteP>>
     /\ UNCHANGED <<kind, staged, recordedSha>>
 
-\* review.ts:399-401: approve and reject delete the staged bundle; changes_requested keeps it.
+\* review.ts:398-400: approve and reject delete the staged bundle; changes_requested keeps it.
 Cleanup(r) ==
     LET s == target[r] IN
     /\ pc[r] = "cleanup"
