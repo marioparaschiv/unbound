@@ -1,3 +1,5 @@
+import type { MetroModuleLoadListener } from '~/api/metro/types';
+
 /** @internal */
 export const blacklist = new Set<number>();
 
@@ -9,5 +11,5 @@ export const data = {
 	patchedRTNProfiler: false,
 	patchedImportTracker: false,
 	origToString: Object.getOwnPropertyDescriptor(Function.prototype, 'toString')?.value,
-	listeners: new Set<(mdl: any, id: number) => void>(),
+	listeners: new Set<MetroModuleLoadListener>(),
 };

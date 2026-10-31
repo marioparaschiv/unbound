@@ -15,6 +15,7 @@ import type {
 	MetroBulkFind,
 	MetroPropertyRecordOrArray,
 	MetroFunctionSignatureOrArray,
+	MetroModuleLoadListener,
 } from '~/api/metro/types';
 import Filters, { type MetroFilter } from '~/api/metro/filters';
 import { registerLazyModule } from '~/api/metro/lazy-registry';
@@ -163,25 +164,32 @@ function onModuleRequire(exports: any, id: number) {
 }
 
 /**
- * @description Registers a listener invoked with every module as it is required.
+ * @description Registers a listener invoked with every module as it loads.
  * @param listener Callback receiving the module exports and its id.
  * @returns A function that removes the listener.
  */
-export function addListener(listener: (mdl: any, id: number) => void) {
+export function onModuleLoad(listener: MetroModuleLoadListener): () => void {
 	data.listeners.add(listener);
 
-	return () => data.listeners.delete(listener);
+	return () => void data.listeners.delete(listener);
 }
 
 /**
- * @description Removes a previously registered module listener.
+ * @description Removes a module listener registered with {@link onModuleLoad}.
+ * @deprecated Call the function onModuleLoad returns.
  * @param listener The listener to remove.
  */
-export function removeListener(listener: (mdl: any, id: number) => void) {
+export function removeListener(listener: MetroModuleLoadListener) {
 	data.listeners.delete(listener);
 }
 
-export const on = addListener;
+/** @deprecated Use onModuleLoad */
+export const addListener = onModuleLoad;
+
+/** @deprecated Use onModuleLoad */
+export const on = onModuleLoad;
+
+/** @deprecated Call the function onModuleLoad returns. */
 export const off = removeListener;
 
 /**
@@ -233,7 +241,7 @@ export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = 
 			}
 		}
 
-		const remove = addListener(callback);
+		const remove = onModuleLoad(callback);
 
 		signal?.addEventListener('abort', abort, { once: true });
 	});
@@ -391,6 +399,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
  * @description Runs several filters in a single registry pass, returning one result per item.
  * @param items The filters to resolve, each with its own per-item options.
  * @returns An array of matches positionally aligned with `items`.
+ * @internal
  */
 export function bulk(...items: MetroBulkItem[]) {
 	const result = Array.from<any>({ length: items.length });
@@ -522,6 +531,7 @@ export function findByName<
  * @description Forces a module to initialise via metro's `__r`, blacklisting it if it throws.
  * @param id The id of the module to initialise.
  * @returns `true` if the module is initialised, `false` if it was blacklisted.
+ * @internal
  */
 export function initializeModule(id: number) {
 	if (blacklist.has(id)) {

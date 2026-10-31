@@ -20,20 +20,19 @@ declare const HelpMessageTypes: {
 declare const React$1: typeof import('react');
 /** @internal */
 declare const CACHE_KEY: unique symbol;
+/** @deprecated Use onModuleLoad */
+export declare const addListener: typeof onModuleLoad;
+/** @deprecated Call the function onModuleLoad returns. */
 export declare const off: typeof removeListener;
-export declare const on: typeof addListener;
-/**
- * @description Registers a listener invoked with every module as it is required.
- * @param listener Callback receiving the module exports and its id.
- * @returns A function that removes the listener.
- */
-export declare function addListener(listener: (mdl: any, id: number) => void): () => boolean;
+/** @deprecated Use onModuleLoad */
+export declare const on: typeof onModuleLoad;
 /**
  * @description Runs several filters in a single registry pass, returning one result per item.
  * @param items The filters to resolve, each with its own per-item options.
  * @returns An array of matches positionally aligned with `items`.
+ * @internal
  */
-export declare function bulk(...items: MetroBulkItem[]): any[];
+declare function bulk(...items: MetroBulkItem[]): any[];
 /**
  * @description Core synchronous module search. Tries the per-key cache fast-path first, then falls
  * back to scanning the registry, degrading gracefully if the supplied filter throws.
@@ -106,16 +105,17 @@ export declare function findStore<
 	T extends U[] | MetroStringFindWithOptions<U, MetroStoreOptions>,
 >(...args: T): AnyProps;
 /**
- * @description Forces a module to initialise via metro's `__r`, blacklisting it if it throws.
- * @param id The id of the module to initialise.
- * @returns `true` if the module is initialised, `false` if it was blacklisted.
+ * @description Registers a listener invoked with every module as it loads.
+ * @param listener Callback receiving the module exports and its id.
+ * @returns A function that removes the listener.
  */
-export declare function initializeModule(id: number): boolean;
+export declare function onModuleLoad(listener: MetroModuleLoadListener): () => void;
 /**
- * @description Removes a previously registered module listener.
+ * @description Removes a module listener registered with {@link onModuleLoad}.
+ * @deprecated Call the function onModuleLoad returns.
  * @param listener The listener to remove.
  */
-export declare function removeListener(listener: (mdl: any, id: number) => void): void;
+export declare function removeListener(listener: MetroModuleLoadListener): void;
 /** An object of shape `T` widened with an arbitrary property index. */
 export type AnyProps<T = unknown> = T & Record<PropertyKey, MetroExport>;
 /** How each design component resolves on the running Discord build. */
@@ -187,6 +187,8 @@ export type MetroLazySearchOptions = {
 } & Omit<MetroSearchOptions, 'lazy' | 'all'>;
 /** Convenience alias for a by-property result derived from a union of prop names. */
 export type MetroModule<TProps extends string> = MetroPropertyRecordOrArray<TProps[], TProps>;
+/** Called with each module's exports and id as the module loads. */
+export type MetroModuleLoadListener = (mdl: any, id: number) => void;
 /** A bag carrying a `params` array of prop names. */
 export type MetroParamsBag<T extends string> = {
 	params: T[];

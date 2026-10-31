@@ -285,6 +285,7 @@ export const defineLocalizations = defineMessages;
  * @internal
  * @description Loads the fallback and active locales, then subscribes to Discord locale changes. Fire-and-forget; never blocks startup. Twin of {@link destroy}.
  * @returns A promise that resolves once the initial locales have been ensured and the subscription is wired.
+ * @internal
  */
 export async function init(): Promise<void> {
 	const locale = Discord.intl?.currentLocale ?? Discord.getSystemLocale?.() ?? null;
@@ -321,6 +322,7 @@ export async function init(): Promise<void> {
 /**
  * @internal
  * @description Drains every active locale-change subscription. Idempotent. Twin of {@link init}.
+ * @internal
  */
 export function destroy() {
 	subscriptions.splice(0).map((unsubscribe) => unsubscribe());
