@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.4]
+
+### Fixed
+
+- A reaction pill no longer shrinks to its avatars, or covers its emoji, after the plugin restarts with the message on screen: a pill that measures zero wide gets its width from the reaction layout.
+- Turning the plugin off on iOS puts every reaction pill and the add-reaction button back where Discord placed them.
+
 ## [1.0.3]
 
 ### Fixed

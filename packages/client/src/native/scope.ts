@@ -62,6 +62,7 @@ function dropJavaHandle(handle: NativeJavaReference): boolean {
 
 type ScopedNativePlugin = {
 	bridge: NativePluginBridge;
+	beginStop: () => void;
 	dispose: () => void;
 };
 
@@ -153,10 +154,15 @@ export function createScopedNativePlugin(
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
 	const associations: AssociationBinding[] = [];
 	let disposed = false;
+	let stopping = false;
 	const mountAsync = fabricBridge.mountAsync?.bind(fabricBridge);
 	const unmountAsync = fabricBridge.unmountAsync?.bind(fabricBridge);
 
 	function trackInvocation<T>(pending: NativeCancelablePromise<T>): NativeCancelablePromise<T> {
+		if (stopping) {
+			return pending;
+		}
+
 		pendingInvocations.add(pending);
 		pending.then(
 			() => pendingInvocations.delete(pending as NativeCancelablePromise<unknown>),
@@ -628,6 +634,9 @@ export function createScopedNativePlugin(
 			java,
 			hooks,
 			debug,
+		},
+		beginStop: () => {
+			stopping = true;
 		},
 		dispose: () => {
 			if (disposed) return;

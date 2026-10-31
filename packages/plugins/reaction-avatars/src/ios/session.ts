@@ -51,6 +51,7 @@ export type Session = {
 	cellHeights: Map<string, CellHeight>;
 	/** Bumped to abandon a visible-cell scan that is still walking the windows. */
 	scanRevision: number;
+	disposing: boolean;
 };
 
 /**
@@ -84,6 +85,7 @@ export function createSession(
 		tableHooks: [],
 		cellHeights: new Map(),
 		scanRevision: 0,
+		disposing: false,
 	};
 
 	return { session, close: () => controller.abort() };

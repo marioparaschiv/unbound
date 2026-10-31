@@ -135,6 +135,22 @@ describe('native plugin capability scopes', () => {
 		expect(cancelled).toEqual(['invoke', 'invokeSuper']);
 	});
 
+	test('lets Objective-C operations started during stop finish', async () => {
+		const { beginNativeStop } = await import('~/native/plugin-context');
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.objc.classes', 'native.objc.invokeAsync', 'native.objc.invoke'],
+		});
+		const handle = context.native.objc.alloc('NSObject');
+
+		context.native.objc.invokeAsync(handle, 'description', []);
+		beginNativeStop(context);
+		context.native.objc.invokeAsync(handle, 'setNeedsLayout', []);
+		context.dispose();
+
+		expect(cancelled).toEqual(['invoke']);
+	});
+
 	test('tracks asynchronous Fabric surfaces and cancels pending operations on stop', async () => {
 		const context = createPluginContext({
 			...manifest,
