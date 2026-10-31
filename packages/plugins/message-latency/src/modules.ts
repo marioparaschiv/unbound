@@ -1,7 +1,12 @@
-import { metro, patcher, storage } from '@unbound-app/api';
+import type { FluxStore } from '@unbound-app/api/flux';
+import { metro, storage, flux } from '@unbound-app/api';
 
-export const UserStore = metro.stores.Users;
-export const ThemeStore = metro.findStore('Theme', { lazy: true });
+type ThemeFluxStore = FluxStore & {
+	theme?: string;
+};
+
+export const UserStore = flux.getStore('User', { lazy: true });
+export const ThemeStore: ThemeFluxStore = flux.getStore('Theme', { lazy: true });
 // The same module as `metro.common.Theme`, which its typings do not declare yet.
 export const Theme = metro.findByProps('colors', 'internal', { lazy: true });
 export const Tooltips = metro.findByProps('TooltipArrowDirections', 'TooltipArrowPositions', {
@@ -10,5 +15,4 @@ export const Tooltips = metro.findByProps('TooltipArrowDirections', 'TooltipArro
 
 export const MessageRowDataFilter = metro.filters.byProps('generateMessageRowData');
 
-export const settings = storage.getStore('astral.message-latency');
-export const Patcher = patcher.createPatcher('astral.message-latency');
+export const settings = storage.getBucket();

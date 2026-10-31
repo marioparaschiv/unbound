@@ -1,5 +1,5 @@
-import type { PluginContext } from '@unbound-app/api/native';
-import { metro } from '@unbound-app/api';
+import type { NativeRuntimeBridge } from '@unbound-app/api/native';
+import { flux, native } from '@unbound-app/api';
 
 import type { LatencyRecords } from '~/records';
 import type { LatencyMessage } from '~/latency';
@@ -11,12 +11,12 @@ type MessageCreate = {
 /**
  * @description Measures every message as it arrives, through the native runtime when available or Discord's dispatcher otherwise.
  * @param records The latency cache to fill.
- * @param context The plugin context, whose runtime events are used when granted.
+ * @param runtime The native runtime bridge from `context.native`, used when the loader provides runtime events.
  * @returns A function that unsubscribes.
  */
 export function subscribeMessageCreate(
 	records: LatencyRecords,
-	context: PluginContext,
+	runtime: NativeRuntimeBridge,
 ): () => void {
 	function onMessageCreate({ message }: MessageCreate) {
 		if (!message) return;
@@ -24,9 +24,9 @@ export function subscribeMessageCreate(
 		records.update(message, message.author?.username);
 	}
 
-	if (context.capabilities.includes('native.runtime.events')) {
+	if (native.has('native.runtime.events')) {
 		try {
-			const token = context.native.runtime.subscribe('message.created', onMessageCreate);
+			const token = runtime.subscribe('message.created', onMessageCreate);
 
 			return () => token.remove();
 		} catch {
@@ -34,9 +34,7 @@ export function subscribeMessageCreate(
 		}
 	}
 
-	metro.common.Dispatcher.subscribe('MESSAGE_CREATE', onMessageCreate);
-
-	return () => metro.common.Dispatcher.unsubscribe('MESSAGE_CREATE', onMessageCreate);
+	return flux.onAction('MESSAGE_CREATE', onMessageCreate);
 }
 
 export default { subscribeMessageCreate };

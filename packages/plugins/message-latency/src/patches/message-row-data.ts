@@ -1,7 +1,8 @@
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
+import { patcher } from '@unbound-app/api';
 
-import { MessageRowDataFilter, Patcher } from '~/modules';
+import { MessageRowDataFilter } from '~/modules';
 import type { LatencyRecords } from '~/records';
 import type { LatencyMessage } from '~/latency';
 
@@ -15,7 +16,7 @@ type RowResult = { message?: { username?: string } } | undefined;
  */
 export function patchMessageRowData(records: LatencyRecords): () => void {
 	return whenLoaded(MessageRowDataFilter, (MessageRowData: AnyProps) =>
-		Patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+		patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 			const [input] = args as RowArgs;
 			const username = (result as RowResult)?.message?.username;
 

@@ -1,3 +1,5 @@
+import { flux } from '@unbound-app/api';
+
 import { Theme, ThemeStore } from '~/modules';
 
 /**
@@ -26,9 +28,7 @@ export function subscribeTheme(listener: () => void): () => void {
 	// The theme store is optional: without it the indicator keeps the dark theme's colors.
 	if (!ThemeStore.addChangeListener) return () => {};
 
-	ThemeStore.addChangeListener(listener);
-
-	return () => ThemeStore.removeChangeListener(listener);
+	return flux.onStoreChange(ThemeStore, listener);
 }
 
 export default { currentTheme, resolveColor, subscribeTheme };
