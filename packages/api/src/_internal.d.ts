@@ -31,6 +31,7 @@ export declare const ADDON_SCOPE_GLOBALS: readonly [
 	'setInterval',
 	'clearTimeout',
 	'clearInterval',
+	'commands',
 ];
 /** @deprecated Use ADDON_KINDS */
 export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'font'];
