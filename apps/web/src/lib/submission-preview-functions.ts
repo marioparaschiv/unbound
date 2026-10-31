@@ -5,8 +5,8 @@ import { z } from 'zod/mini';
 
 import { getArtifactKeys, getCdnUrl, pinSource, toVersionChangelog } from '~/lib/artifacts';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
-import type { Permissions } from '~/lib/auth/access';
 import { resolvePlatforms } from '~/lib/addon-platforms';
+import type { Permissions } from '~/lib/auth/access';
 import { renderAddonIcon } from '~/lib/addon-icons';
 import { loadAuthors } from '~/lib/authors/resolve';
 import { hasPermission } from '~/lib/auth/access';
