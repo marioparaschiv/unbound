@@ -5,6 +5,9 @@ import { z } from './zod';
 /** The file in an addon's directory that holds its store page. */
 export const ADDON_PAGE_FILENAME = 'ADDON.md';
 
+/** The file `ubd build` writes the measured page to, in the addon's output directory. */
+export const MEASURED_PAGE_FILENAME = 'page.json';
+
 /** The kinds of media a page can show. */
 export const MEDIA_KINDS = ['image', 'video'] as const;
 
@@ -24,6 +27,10 @@ export const MEDIA_EXTENSIONS: Record<string, MediaKind> = {
 /** The smallest banner the store accepts, in pixels. */
 export const BANNER_MIN_WIDTH = 1200;
 export const BANNER_MIN_HEIGHT = 400;
+
+/** The default size limits for one media file and for all of an addon's media together, in bytes. */
+export const MEDIA_MAX_BYTES = 10 * 1024 * 1024;
+export const MEDIA_TOTAL_MAX_BYTES = 50 * 1024 * 1024;
 
 const FRONTMATTER = /^\uFEFF?---[ \t]*\r?\n(?:([\s\S]*?)\r?\n)?---[ \t]*(?:\r?\n|$)/;
 
@@ -249,10 +256,13 @@ export function parseAddonPage(source: string): ParsedAddonPage {
 
 export default {
 	ADDON_PAGE_FILENAME,
+	MEASURED_PAGE_FILENAME,
 	MEDIA_KINDS,
 	MEDIA_EXTENSIONS,
 	BANNER_MIN_WIDTH,
 	BANNER_MIN_HEIGHT,
+	MEDIA_MAX_BYTES,
+	MEDIA_TOTAL_MAX_BYTES,
 	mediaPathSchema,
 	imagePathSchema,
 	videoPathSchema,
