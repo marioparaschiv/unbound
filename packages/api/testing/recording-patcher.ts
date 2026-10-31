@@ -23,11 +23,63 @@ type Context = {
 	args: never[];
 	this: PatchParent;
 	original: Method;
-	result?: unknown;
+	result: unknown;
 };
 
 // UNKNOWN: a patch callback returns whatever the test's patch returns.
 type Callback = (context: Context) => unknown;
+
+type Hook = {
+	original: Method;
+	callbacks: Map<PatchRecord, Callback>;
+};
+
+function run(hook: Hook, kind: PatchKind, context: Context) {
+	for (const [record, callback] of hook.callbacks) {
+		if (record.kind !== kind) {
+			continue;
+		}
+
+		const returned = callback.call(context.this, context);
+
+		if (kind === 'before') {
+			if (Array.isArray(returned)) {
+				context.args = returned as never[];
+			}
+		} else if (returned !== undefined) {
+			context.result = returned;
+		}
+	}
+}
+
+function hook(target: PatchParent, method: string): Hook {
+	const created: Hook = { original: Reflect.get(target, method), callbacks: new Map() };
+
+	function patched(this: PatchParent, ...args: never[]) {
+		const context: Context = {
+			args,
+			this: this,
+			original: (...next: never[]) => created.original.apply(this, next),
+			result: null,
+		};
+
+		run(created, 'before', context);
+
+		if ([...created.callbacks.keys()].some((record) => record.kind === 'instead')) {
+			run(created, 'instead', context);
+		} else {
+			context.result = context.original(...context.args);
+		}
+
+		run(created, 'after', context);
+
+		return context.result;
+	}
+
+	Reflect.set(target, method, patched);
+
+	return created;
+}
 
 /**
  * @description Creates a patcher whose patches wrap the method for real and are listed in `patches` until removed.
@@ -35,58 +87,43 @@ type Callback = (context: Context) => unknown;
  */
 export function createRecordingPatcher(): RecordingPatcher {
 	const patches: PatchRecord[] = [];
-	const unpatches = new Map<PatchRecord, () => void>();
+	const hooks = new Map<PatchParent, Map<string, Hook>>();
+
+	function unpatch(record: PatchRecord) {
+		const methods = hooks.get(record.target);
+		const hooked = methods?.get(record.method);
+
+		if (!methods || !hooked?.callbacks.delete(record)) return;
+
+		patches.splice(patches.indexOf(record), 1);
+
+		if (hooked.callbacks.size > 0) return;
+
+		Reflect.set(record.target, record.method, hooked.original);
+		methods.delete(record.method);
+	}
 
 	function patch(kind: PatchKind, caller: string | undefined) {
 		return (target: PatchParent, method: string, callback: Callback) => {
-			const original: Method = Reflect.get(target, method);
 			const record: PatchRecord = { kind, target, method, caller };
+			const methods = hooks.get(target) ?? new Map<string, Hook>();
+			const hooked = methods.get(method) ?? hook(target, method);
 
-			function patched(this: PatchParent, ...args: never[]) {
-				const context: Context = { args, this: this, original };
-
-				if (kind === 'before') {
-					const replaced = callback(context);
-
-					return original.apply(
-						this,
-						Array.isArray(replaced) ? (replaced as never[]) : args,
-					);
-				}
-
-				if (kind === 'instead') {
-					return callback(context);
-				}
-
-				context.result = original.apply(this, args);
-
-				const result = callback(context);
-
-				return result === undefined ? context.result : result;
-			}
-
-			Reflect.set(target, method, patched);
+			hooks.set(target, methods);
+			methods.set(method, hooked);
+			hooked.callbacks.set(record, callback);
 			patches.push(record);
 
-			function unpatch() {
-				if (!unpatches.delete(record)) return;
-
-				Reflect.set(target, method, original);
-				patches.splice(patches.indexOf(record), 1);
-			}
-
-			unpatches.set(record, unpatch);
-
-			return unpatch;
+			return () => unpatch(record);
 		};
 	}
 
 	function unpatchAllBy(caller: string | undefined) {
-		for (const record of [...patches].reverse()) {
-			if (caller === undefined || record.caller === caller) {
-				unpatches.get(record)?.();
-			}
-		}
+		const removed = patches.filter(
+			(record) => caller === undefined || record.caller === caller,
+		);
+
+		for (const record of removed) unpatch(record);
 	}
 
 	function createPatcher(defaultOptions: string | PatchOptions): PatcherInstance {
