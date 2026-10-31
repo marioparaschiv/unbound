@@ -6,13 +6,11 @@ export type BuildCheckIssue = {
 	message: string;
 };
 
-/** One post-build check. It reads the addon's directory and output and reports what it found. */
 export type BuildCheck = {
 	name: string;
 	run: (addon: DiscoveredAddon) => BuildCheckIssue[] | Promise<BuildCheckIssue[]>;
 };
 
-/** The checks `ubd build` runs after the bundle step, in order. Each check is its own module. */
 export const BUILD_CHECKS: readonly BuildCheck[] = [];
 
 /**
