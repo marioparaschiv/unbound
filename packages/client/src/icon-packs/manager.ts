@@ -234,8 +234,7 @@ export class Icons extends Addons<Plugin> {
 
 		await Promise.all(stamps);
 
-		// `Image` is a function component on Discord 349, so there is no `render` to patch. Every `Image`
-		// render resolves its source through this helper, which it reads off the module at call time.
+		// Every `Image` render resolves its source through this helper, which it reads off the module at call time.
 		this.patcher.before(ImageSources, 'getImageSourcesFromImageProps', ({ args: [props] }) => {
 			if (typeof props?.source !== 'number') return;
 

@@ -19,10 +19,11 @@ const ImageSources = {
 	getImageSourcesFromImageProps: (props: ImageProps) => props.source,
 };
 
-// Discord 349 ships `Image` as a function component, so it has no prototype to patch.
+const functionComponentImage = () => null;
+
 mock.module('~/metro/common', () => ({
 	Assets: { getAssetByID: (id: number) => (id === 1 ? star : null) },
-	ReactNative: { Image: () => null },
+	ReactNative: { Image: functionComponentImage },
 	ImageSources,
 }));
 
