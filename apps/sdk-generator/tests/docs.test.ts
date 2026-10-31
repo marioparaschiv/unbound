@@ -40,7 +40,12 @@ describe('generateDocs', () => {
 
 			expect(basename(path)).toBe('main.json');
 			expect(manifest).toEqual({ package: 'api', versions: ['main'] });
-			expect(project.children?.map((child) => child.name)).toContain('global');
+			const modules = project.children?.map((child) => child.name);
+			const types = project.children?.find((child) => child.name === 'types');
+
+			expect(modules).toContain('global');
+			expect(modules).not.toContain('_internal');
+			expect(types?.children?.some((child) => child.name === 'AddonHandle')).toBe(true);
 			expect(update?.kind).toBe(FUNCTION_KIND);
 		},
 		{ timeout: 120_000 },

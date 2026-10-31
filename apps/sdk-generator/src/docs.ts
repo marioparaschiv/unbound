@@ -7,7 +7,15 @@ import {
 	type DocsPackage,
 	type DocsVersion,
 } from '@unbound-app/contracts/docs';
-import { Application, LogLevel, OptionDefaults, normalizePath, type TypeDocOptions } from 'typedoc';
+import {
+	Application,
+	Comment,
+	LogLevel,
+	OptionDefaults,
+	normalizePath,
+	type ProjectReflection,
+	type TypeDocOptions,
+} from 'typedoc';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { createLogger } from '@unbound-app/logger';
 import { dirname, join } from 'node:path';
@@ -27,6 +35,20 @@ const DOCS_PACKAGE: DocsPackage = 'api';
 
 /** Entry points sort by rank, then by name; unlisted modules rank 1. */
 const ENTRY_POINT_RANKS: Record<string, number> = { 'global.d.ts': 0, '_internal.d.ts': 2 };
+
+type ModuleRename = {
+	name: string;
+	summary: string;
+};
+
+/** Modules whose file name is an implementation detail, documented under a reader-facing name and summary. */
+const MODULE_RENAMES: Record<string, ModuleRename> = {
+	_internal: {
+		name: 'types',
+		summary:
+			'The shared types the SDK modules take and return. Type-only: nothing here exists at runtime.',
+	},
+};
 
 const WEAK_REF_URL =
 	'https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakRef';
@@ -86,6 +108,30 @@ export function createDocsOptions(apiSrc: string): Partial<TypeDocOptions> {
 }
 
 /**
+ * @description Gives the modules in {@link MODULE_RENAMES} their documented name and summary. Links follow
+ * reflection ids, so every reference to them still resolves.
+ * @param project The converted project.
+ */
+export function renameDocsModules(project: ProjectReflection): void {
+	for (const module of project.children ?? []) {
+		const rename = MODULE_RENAMES[module.name];
+
+		if (!rename) {
+			continue;
+		}
+
+		if (project.getChildByName(rename.name)) {
+			throw new Error(
+				`Cannot document ${module.name} as ${rename.name}: a module has that name.`,
+			);
+		}
+
+		module.name = rename.name;
+		module.comment = new Comment([{ kind: 'text', text: rename.summary }]);
+	}
+}
+
+/**
  * @description Reads a docs manifest written earlier, parsing it at the boundary.
  * @param path The manifest's path.
  * @returns The manifest, or `undefined` when none exists.
@@ -119,6 +165,8 @@ export async function generateDocs(
 	if (!project || problems > 0) {
 		throw new Error(`TypeDoc reported ${problems} problems documenting ${apiSrc}.`);
 	}
+
+	renameDocsModules(project);
 
 	const path = join(outDir, getDocsKey(DOCS_PACKAGE, version));
 	const manifestPath = join(outDir, getDocsManifestKey(DOCS_PACKAGE));

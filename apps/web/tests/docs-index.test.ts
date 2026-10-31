@@ -63,7 +63,7 @@ const project: DocsProject = {
 				}),
 			],
 		}),
-		reflection(19, '_internal', ReflectionKind.Module, { children: [handle] }),
+		reflection(19, 'types', ReflectionKind.Module, { children: [handle] }),
 	],
 };
 
@@ -74,7 +74,7 @@ describe('buildDocsIndex', () => {
 		expect(index.byQualifiedName.get('plugins')).toBe(10);
 		expect(index.byQualifiedName.get('plugins.update')).toBe(11);
 		expect(index.byQualifiedName.get('metro.components.find')).toBe(32);
-		expect(index.byQualifiedName.get('_internal.AddonHandle')).toBe(20);
+		expect(index.byQualifiedName.get('types.AddonHandle')).toBe(20);
 	});
 
 	test('indexes nested reflections by id at their owner page', () => {
@@ -83,12 +83,12 @@ describe('buildDocsIndex', () => {
 	});
 
 	test('anchors an interface member on its owner page', () => {
-		expect(index.locations.get(21)).toEqual({ symbol: '_internal.AddonHandle', anchor: 'id' });
-		expect(index.byQualifiedName.has('_internal.AddonHandle.id')).toBe(false);
+		expect(index.locations.get(21)).toEqual({ symbol: 'types.AddonHandle', anchor: 'id' });
+		expect(index.byQualifiedName.has('types.AddonHandle.id')).toBe(false);
 	});
 
 	test('shows a re-export where its target lives, without a page of its own', () => {
-		expect(index.locations.get(2)).toEqual({ symbol: '_internal.AddonHandle' });
+		expect(index.locations.get(2)).toEqual({ symbol: 'types.AddonHandle' });
 		expect(index.byQualifiedName.has('global.AddonHandle')).toBe(false);
 		expect(resolveReference(index, index.byId.get(2)!).id).toBe(20);
 	});
@@ -102,9 +102,9 @@ describe('buildDocsIndex', () => {
 		);
 
 		expect(groups).toEqual({
-			namespaces: ['_internal', 'global', 'metro', 'metro.components', 'plugins'],
+			namespaces: ['global', 'metro', 'metro.components', 'plugins', 'types'],
 			functions: ['metro.components.find', 'plugins.enable', 'plugins.update'],
-			interfaces: ['_internal.AddonHandle'],
+			interfaces: ['types.AddonHandle'],
 			variables: ['plugins.version'],
 		});
 	});
