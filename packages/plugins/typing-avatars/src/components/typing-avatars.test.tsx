@@ -1,3 +1,4 @@
+import { installAddonGlobals } from '@unbound-app/api/testing';
 import { describe, expect, mock, test } from 'bun:test';
 import { Children, isValidElement, type ReactElement, type ReactNode } from 'react';
 
@@ -11,10 +12,16 @@ function Avatar(_props: AvatarProps) {
 
 mock.module('react-native', () => ({ View: 'View' }));
 
-mock.module('~/modules', () => ({
-	Avatars: { Avatar, AvatarSizes: { SIZE_16: 'SIZE_16' } },
-	UserStore: { getUser: (id: string) => (cached.has(id) ? { id } : undefined) },
-}));
+const UserStore = { getUser: (id: string) => (cached.has(id) ? { id } : undefined) };
+
+const scope = installAddonGlobals({
+	manifest: { id: 'astral.typing-avatars' },
+	unbound: { flux: { getStore: (name: string) => (name === 'User' ? UserStore : undefined) } },
+});
+
+scope.metro.register({ SummarizedIconRow: {}, Avatar, AvatarSizes: { SIZE_16: 'SIZE_16' } });
+
+mock.module('@unbound-app/api', () => scope.unbound);
 
 const { withTypingAvatars } = await import('~/components/typing-avatars');
 

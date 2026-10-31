@@ -1,12 +1,12 @@
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
+import { patcher } from '@unbound-app/api';
 import findRenderTarget from '@unbound-plugins/shared/react/render-target';
 import type { ReactElement, ReactNode } from 'react';
 import type { ViewStyle } from 'react-native';
 import { cloneElement } from 'react';
 
 import { withTypingAvatars } from '~/components/typing-avatars';
-import { Patcher } from '~/modules';
 
 type TypingItem = {
 	channel?: { guild_id?: string };
@@ -66,6 +66,6 @@ export function patchTypingIndicator(): () => void {
 			return () => {};
 		}
 
-		return Patcher.after(target.holder, target.key, ({ result }) => addAvatars(result));
+		return patcher.after(target.holder, target.key, ({ result }) => addAvatars(result));
 	});
 }
