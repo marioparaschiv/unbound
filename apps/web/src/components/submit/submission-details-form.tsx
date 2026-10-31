@@ -64,13 +64,15 @@ function SubmissionDetailsForm({ preview, error, disabled, onSubmit }: Submissio
 		onSubmit: ({ value }) => {
 			const maintainers = value.maintainers.map((maintainer) => maintainer.id);
 			const current = preview.suggestedMaintainers.map((maintainer) => maintainer.id);
+			// An update's suggested tags are its current ones; a listing's come from topics and still need sending.
+			const keepTags =
+				preview.kind === 'update' && sameIds(value.tags, preview.suggestedTags);
 
-			// Sending the set rewrites the addon's maintainers on approval, so only send one the author changed.
-			onSubmit(
-				sameIds(maintainers, current)
-					? { tags: value.tags }
-					: { tags: value.tags, maintainers },
-			);
+			// Sending a set rewrites the addon's tags or maintainers on approval, so only send one the author changed.
+			onSubmit({
+				...(keepTags ? {} : { tags: value.tags }),
+				...(sameIds(maintainers, current) ? {} : { maintainers }),
+			});
 		},
 	});
 
