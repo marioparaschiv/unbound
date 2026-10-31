@@ -6,7 +6,6 @@ export {
 	removeListener,
 	onModuleLoad,
 	addListener,
-	findLazy,
 	bulk,
 	find,
 	off,
@@ -17,7 +16,7 @@ export type { DiscordFunction } from '@unbound-app/types/components';
 export { getModulePresence } from '~/metro/lazy-registry';
 export * as components from '~/metro/components';
 export { blacklist, data } from '~/metro/state';
-export { onModuleLoaded } from '~/metro/wait';
+export { findLazy, onModuleLoaded } from '~/metro/wait';
 export { CACHE_KEY } from '~/core/constants';
 export * as filters from '~/metro/filters';
 export * as common from '~/metro/common';

@@ -90,6 +90,7 @@ mock.module('~/metro/cache', () => ({
 		hasModuleFlag: () => false,
 		addModuleFlag: () => undefined,
 		getModuleCacheForKey: (key: string) => cachedIds[key],
+		getHintsForKey: () => undefined,
 		addCachedIDForKey(key: string, id: number) {
 			cachedIds[key] ??= [];
 			cachedIds[key].push(id);
@@ -103,7 +104,7 @@ mock.module('~/metro/cache', () => ({
 const metro = await import('~/metro/search');
 const { findByPropsLazy } = await import('~/metro/wrappers');
 const { getModulePresence } = await import('~/metro/lazy-registry');
-const { onModuleLoaded } = await import('~/metro/wait');
+const { findLazy, onModuleLoaded } = await import('~/metro/wait');
 const { byProps } = await import('~/metro/filters');
 const { CACHE_KEY } = await import('~/core/constants');
 const { after, createPatcher, unpatchAll, unpatchAllByCaller } = await import('~/patcher/api');
@@ -201,7 +202,7 @@ describe('onModuleLoaded', () => {
 
 describe('findLazy', () => {
 	test('resolves once Discord loads the module, without loading it', async () => {
-		const found = metro.findLazy(byProps('awaited'));
+		const found = findLazy(byProps('awaited'));
 
 		expect(isLoaded(12)).toBe(false);
 
@@ -212,7 +213,7 @@ describe('findLazy', () => {
 
 	test('resolves with undefined when its signal aborts first', async () => {
 		const controller = new AbortController();
-		const found = metro.findLazy(byProps('abandoned'), { signal: controller.signal });
+		const found = findLazy(byProps('abandoned'), { signal: controller.signal });
 
 		controller.abort();
 		metroRequire(13);

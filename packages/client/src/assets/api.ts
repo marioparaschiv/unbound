@@ -2,6 +2,7 @@ import type { AssetsModule, UnboundAsset } from '@unbound-app/types/assets';
 import { createLogger } from '@unbound-app/logger';
 
 import { find as findModule, initializeModule } from '~/metro/search';
+import { isAssetModule } from '~/metro/candidates';
 import { onModuleLoaded } from '~/metro/wait';
 import { byProps } from '~/metro/filters';
 import { data } from '~/metro/state';
@@ -245,26 +246,12 @@ function sweep() {
 	for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
 		const id = Cache.moduleIds[i];
 
-		if (isAssetModule(id)) {
+		if (isAssetModule(window.modules.get(id))) {
 			initializeModule(id);
 		}
 	}
 
 	Cache.markAssetsComplete();
-}
-
-// An asset module requires only the registry. Metro clears `dependencyMap` on init, so this holds only before it.
-function isAssetModule(id: number) {
-	const mdl = window.modules.get(id);
-	const deps = mdl?.dependencyMap;
-
-	if (!mdl || mdl.isInitialized || deps?.length !== 1) {
-		return false;
-	}
-
-	const dependency = window.modules.get(deps[0])?.publicModule.exports;
-
-	return typeof dependency?.registerAsset === 'function';
 }
 
 export default {

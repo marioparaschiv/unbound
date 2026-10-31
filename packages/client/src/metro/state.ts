@@ -10,6 +10,8 @@ export const data = {
 	patchedNativeRequire: false,
 	patchedRTNProfiler: false,
 	patchedImportTracker: false,
+	// Every Discord-authored module requires this one, which tracks file paths. -1 until it loads.
+	importTrackerId: -1,
 	origToString: Object.getOwnPropertyDescriptor(Function.prototype, 'toString')?.value,
 	listeners: new Set<MetroModuleLoadListener>(),
 };

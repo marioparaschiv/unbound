@@ -8,7 +8,6 @@ import type {
 	MetroInternalOptions,
 	MetroSearchOptions,
 	MetroStoreOptions,
-	MetroLazySearchOptions,
 	MetroBulkItem,
 	MetroStringFindWithOptions,
 	AnyProps,
@@ -17,6 +16,7 @@ import type {
 	MetroFunctionSignatureOrArray,
 	MetroModuleLoadListener,
 } from '~/metro/types';
+import { couldMatch, idsNear, recordMove } from '~/metro/candidates';
 import Filters, { type MetroFilter } from '~/metro/filters';
 import { isInvalidExport } from '~/metro/invalid-exports';
 import { createLazyModule } from '~/metro/lazy-registry';
@@ -151,6 +151,7 @@ function onModuleRequire(exports: any, id: number) {
 			return result;
 		};
 
+		data.importTrackerId = id;
 		data.patchedImportTracker = true;
 	}
 
@@ -195,44 +196,6 @@ export const on = onModuleLoad;
 export const off = removeListener;
 
 /**
- * @description Resolves a module matching `filter` once it loads, without ever loading it.
- * @param filter The filter to match against.
- * @param options Whether to also match the `default` export, as in {@link onModuleLoaded}, plus a `signal` that abandons the wait.
- * @returns The loaded module, or a promise of the module once Discord loads it, or of `undefined` if `signal` aborts first.
- */
-export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = {}) {
-	const { signal, ...rest } = options;
-	const existing = find(filter, { ...rest, initialize: false });
-
-	// `find` reports a miss as `null`.
-	if (existing !== null && existing !== void 0) {
-		return existing;
-	}
-
-	if (signal?.aborted) {
-		return Promise.resolve(void 0);
-	}
-
-	return new Promise((resolve) => {
-		function abort() {
-			cancel();
-			resolve(void 0);
-		}
-
-		const cancel = onModuleLoaded(
-			filter,
-			(mdl) => {
-				signal?.removeEventListener('abort', abort);
-				resolve(mdl);
-			},
-			rest,
-		);
-
-		signal?.addEventListener('abort', abort, { once: true });
-	});
-}
-
-/**
  * @description Core synchronous module search. Modules Discord has initialized are searched first, cached ids
  * then the registry; only when none matches does it initialize modules, unless `initialize` is false.
  * @param filter The filter to match modules against.
@@ -259,7 +222,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 		raw = false,
 	} = options;
 
-	const result = { found: initial ?? [], errored: false };
+	const result = { found: initial ?? [], errored: false, id: -1 };
 
 	const search: MetroFilter = (mdl, id) => {
 		try {
@@ -295,7 +258,8 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 	const cached = key ? Cache.getModuleCacheForKey(key) : void 0;
 
 	// Tests each module of `ids` in order; an uninitialized one is skipped, or initialized first when `force` is set.
-	function scan(ids: readonly number[], force: boolean) {
+	// With a `path`, only the module from that file can match.
+	function scan(ids: readonly number[], force: boolean, path?: string) {
 		for (let i = 0, len = ids.length; i < len; i++) {
 			const id = ids[i];
 			const rawModule = window.modules.get(id);
@@ -304,7 +268,14 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 				continue;
 			}
 
-			if (!rawModule.isInitialized && (!force || !initializeModule(id))) {
+			if (
+				!rawModule.isInitialized &&
+				(!force || !couldMatch(rawModule, filter) || !initializeModule(id))
+			) {
+				continue;
+			}
+
+			if (path !== void 0 && rawModule.__filePath !== path) {
 				continue;
 			}
 
@@ -314,11 +285,34 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 				continue;
 			}
 
+			result.id = id;
+
 			if (!all) {
 				return found;
 			}
 
 			result.found.push(found);
+		}
+
+		return null;
+	}
+
+	// Ids move by a few between builds, so look near the old id. The path rules out other matches; a pathless hint
+	// tries its old id alone.
+	function scanNearHints() {
+		const hints = key ? Cache.getHintsForKey(key) : void 0;
+
+		if (!hints) return null;
+
+		for (const hint of hints) {
+			const ids = hint.path === void 0 ? [hint.id] : idsNear(hint.id);
+			const found = scan(ids, true, hint.path);
+
+			if (found) {
+				recordMove(hint.id, result.id);
+
+				return found;
+			}
 		}
 
 		return null;
@@ -365,7 +359,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 
 	if (cacheOnly) return null;
 
-	found = scan(Cache.moduleIds, true);
+	found = scanNearHints() ?? scan(Cache.moduleIds, true);
 
 	if (!found) {
 		recordMissing(key, result.errored);

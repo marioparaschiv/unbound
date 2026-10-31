@@ -17,6 +17,12 @@ const CurrentCacheInfo = {
 
 const storage = getBucket('unbound::cache');
 
+/** A module a cache key matched in an earlier Discord build: its id there and, for a Discord module, its file path. */
+export type ModuleHint = {
+	id: number;
+	path?: string;
+};
+
 type CacheState = {
 	info: typeof CurrentCacheInfo;
 	modules: Record<string, number[]>;
@@ -25,6 +31,10 @@ type CacheState = {
 	assets: Record<string, number>;
 	// Every asset module of this build has registered once, so `assets` names every asset.
 	assetsComplete: boolean;
+	// File path of each cached module that has one, so a later build can recognise the same module.
+	paths: Record<number, string>;
+	// Each key's modules in an earlier Discord build. Ids move by a few between builds, so a search tries near them.
+	hints: Record<string, ModuleHint[]>;
 };
 
 export const state: CacheState = {
@@ -33,6 +43,8 @@ export const state: CacheState = {
 	moduleFlags: storage.get('moduleFlags', {}),
 	assets: storage.get('assets', {}),
 	assetsComplete: storage.get('assetsComplete', false),
+	paths: storage.get('paths', {}),
+	hints: storage.get('hints', {}),
 };
 
 if (!isValidCache()) {
@@ -43,13 +55,37 @@ if (!isValidCache()) {
  * @description Resets the cache to a clean slate, clearing all cached module ids, flags, and assets, then persists it.
  */
 function invalidateCache() {
+	state.hints = carryHints();
 	state.info = CurrentCacheInfo;
 	state.modules = {};
 	state.moduleFlags = {};
+	state.paths = {};
 	state.assets = {};
 	state.assetsComplete = false;
 
 	save();
+}
+
+// Keeps the modules each key matched in the outgoing build, and older hints for keys it never matched.
+function carryHints() {
+	const hints = { ...state.hints };
+
+	for (const key in state.modules) {
+		if (state.modules[key].length) {
+			hints[key] = state.modules[key].map((id) => ({ id, path: state.paths[id] }));
+		}
+	}
+
+	return hints;
+}
+
+/**
+ * @description Returns the modules a cache key matched in an earlier Discord build.
+ * @param key The cache key to look up.
+ * @returns The key's modules from an earlier build, or `undefined` if it has none.
+ */
+export function getHintsForKey(key: string): ModuleHint[] | undefined {
+	return state.hints[key];
 }
 
 /**
@@ -118,6 +154,12 @@ export function addCachedIDForKey(key: string, item: number) {
 
 	if (state.modules[key].includes(item)) {
 		return true;
+	}
+
+	const path = window.modules.get(item)?.__filePath;
+
+	if (path) {
+		state.paths[item] = path;
 	}
 
 	state.modules[key].push(item);
@@ -222,6 +264,8 @@ function save() {
 	storage.set('moduleFlags', state.moduleFlags);
 	storage.set('assets', state.assets);
 	storage.set('assetsComplete', state.assetsComplete);
+	storage.set('paths', state.paths);
+	storage.set('hints', state.hints);
 }
 
 export default {
@@ -232,6 +276,7 @@ export default {
 	removeAssetFromCache,
 	markAssetsComplete,
 	getModuleCacheForKey,
+	getHintsForKey,
 	addCachedIDForKey,
 	markKeyMissing,
 	removeCachedIDForKey,

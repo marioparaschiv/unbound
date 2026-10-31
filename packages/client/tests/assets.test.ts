@@ -143,6 +143,7 @@ mock.module('~/metro/cache', () => ({
 		hasModuleFlag: () => false,
 		addModuleFlag: () => undefined,
 		getModuleCacheForKey: (key: string) => cachedIds[key],
+		getHintsForKey: () => undefined,
 		addCachedIDForKey(key: string, id: number) {
 			cachedIds[key] ??= [];
 			cachedIds[key].push(id);

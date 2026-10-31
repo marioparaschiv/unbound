@@ -54,6 +54,8 @@ mock.module('~/metro/cache', () => ({
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
 		getModuleCacheForKey: () => void 0,
+		getHintsForKey: () => void 0,
+		markKeyMissing: () => void 0,
 	},
 	ModuleFlags: { BLACKLISTED: 1 },
 }));
@@ -78,7 +80,7 @@ Object.assign(globalThis, { window: globalThis, modules: new Map(), $$DEV$$: fal
 const patcher = await import('~/patcher/api');
 const commands = await import('~/commands/api');
 const storage = await import('~/storage/api');
-const metro = await import('~/metro/search');
+const metro = { ...(await import('~/metro/search')), ...(await import('~/metro/wait')) };
 const flux = await import('~/flux/api');
 const { registry } = await import('~/commands/registry');
 const { data } = await import('~/metro/state');

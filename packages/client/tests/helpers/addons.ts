@@ -106,6 +106,12 @@ export const { createPluginContext } =
 export async function loadManagers() {
 	Reflect.set(globalThis, 'window', globalThis);
 
+	// The icon pack manager reads assets, which hook Discord's asset registry on import.
+	mock.module('~/assets/api', () => ({
+		getById: () => undefined,
+		onAssetRegistered: () => () => undefined,
+	}));
+
 	const { Manager } = await import('~/addons/manager');
 
 	await import('~/plugins/manager');

@@ -1,7 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 import noop from '@unbound-app/utils/noop';
 
-import type { MetroModuleLoadedOptions } from '~/metro/types';
+import type { MetroLazySearchOptions, MetroModuleLoadedOptions } from '~/metro/types';
 import type { MetroFilter } from '~/metro/filters';
 import { blacklist, data } from '~/metro/state';
 import { CACHE_KEY } from '~/core/constants';
@@ -71,6 +71,44 @@ export function onModuleLoaded(
 	}
 
 	return () => forget(waiter);
+}
+
+/**
+ * @description Resolves a module matching `filter` once it loads, without ever loading it.
+ * @param filter The filter to match against.
+ * @param options Whether to also match the `default` export, as in {@link onModuleLoaded}, plus a `signal` that abandons the wait.
+ * @returns The loaded module, or a promise of the module once Discord loads it, or of `undefined` if `signal` aborts first.
+ */
+export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = {}) {
+	const { signal, ...rest } = options;
+	const existing = finder('find')(filter, { ...rest, initialize: false });
+
+	// `find` reports a miss as `null`.
+	if (existing !== null && existing !== void 0) {
+		return existing;
+	}
+
+	if (signal?.aborted) {
+		return Promise.resolve(void 0);
+	}
+
+	return new Promise((resolve) => {
+		function abort() {
+			cancel();
+			resolve(void 0);
+		}
+
+		const cancel = onModuleLoaded(
+			filter,
+			(mdl) => {
+				signal?.removeEventListener('abort', abort);
+				resolve(mdl);
+			},
+			rest,
+		);
+
+		signal?.addEventListener('abort', abort, { once: true });
+	});
 }
 
 // Cached ids from an earlier launch let a wait skip testing every module that initializes.
@@ -196,4 +234,4 @@ function forget(waiter: Waiter) {
 	waiter.ids.clear();
 }
 
-export default { onModuleLoaded };
+export default { onModuleLoaded, findLazy };
