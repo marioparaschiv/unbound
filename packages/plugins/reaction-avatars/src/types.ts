@@ -22,12 +22,10 @@ type MessageStore = FluxStore & {
 };
 
 declare module '@unbound-app/api/flux' {
-	// oxlint-disable-next-line typescript/consistent-type-definitions -- declaration merging needs an interface
 	interface FluxStores {
 		Message: MessageStore;
 	}
 
-	// oxlint-disable-next-line typescript/consistent-type-definitions -- declaration merging needs an interface
 	interface FluxActions {
 		MESSAGE_REACTION_ADD: ReactionChange;
 		MESSAGE_REACTION_REMOVE: ReactionChange;

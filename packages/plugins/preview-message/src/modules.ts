@@ -18,7 +18,7 @@ export const MessageRecord = metro.findByName('MessageRecord', { interop: false,
 export const RowManager = metro.findByName('RowManager', { interop: false, lazy: true });
 
 export const { FluxHooks } = metro.common;
-export const { Users } = metro.stores;
+export const Users = flux.getStore('User', { lazy: true });
 
 export const textReplaceSettings = storage.getBucket('astral.text-replace');
 

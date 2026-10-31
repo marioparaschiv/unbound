@@ -5,22 +5,14 @@ import { patchUserProfileCard } from '~/patches/user-profile-card';
 import SettingsPanel from '~/components/settings-panel';
 import { notifyNewReviews } from '~/new-reviews';
 
-let dispose = () => {};
-
 function start() {
 	void notifyNewReviews();
 
-	dispose = applyFeatures('ReviewDB', [patchUserProfileCard]);
-}
-
-function stop() {
-	dispose();
-	dispose = () => {};
+	applyFeatures('ReviewDB', [patchUserProfileCard]);
 }
 
 export default {
 	start,
-	stop,
 	selfTest: featureSelfTest,
 	getSettingsPanel: () => <SettingsPanel />,
 };

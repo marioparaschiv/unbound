@@ -4,6 +4,6 @@ export const MessageRowData = metro.findByProps('generateMessageRowData', { lazy
 export const UserProfileStore = flux.getStore('UserProfile', { lazy: true });
 export const ChannelStore = flux.getStore('Channel', { lazy: true });
 export const MessageStore = flux.getStore('Message', { lazy: true });
-export const UserStore = metro.stores.Users;
+export const UserStore = flux.getStore('User', { lazy: true });
 
 export const settings = storage.getBucket();
