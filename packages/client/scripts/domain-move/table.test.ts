@@ -8,7 +8,7 @@ import { isStub } from './index';
 const SOURCE = join(import.meta.dir, '../../src');
 const SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)['"]([^'"]+)['"]/g;
 const BUILTIN = /^[^/]+\/builtin\.tsx?$/;
-const UI_IMPORTS_LEFT_FOR_SLICE_28 = ['index.ts'];
+const UI_IMPORTS_LEFT_FOR_SLICE_28 = ['core/index.ts'];
 
 const DOMAINS = new Set([
 	'core',
@@ -110,10 +110,15 @@ describe('domain move table', () => {
 	});
 
 	test('moves no ui/ import into a domain file other than its builtin (D14)', () => {
-		const offenders = sourceFiles().filter((path) => {
-			const destination = destinationOf(path);
+		const offenders = sourceFiles().flatMap((path) => {
+			const destination = destinationOf(path) ?? path;
+			const domain = destination.split('/')[0] ?? '';
 
-			return destination !== undefined && !BUILTIN.test(destination) && importsUi(path);
+			if (!DOMAINS.has(domain) || BUILTIN.test(destination) || kept.includes(destination)) {
+				return [];
+			}
+
+			return importsUi(path) ? [destination] : [];
 		});
 
 		expect(offenders).toEqual(UI_IMPORTS_LEFT_FOR_SLICE_28);
