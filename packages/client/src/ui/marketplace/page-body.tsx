@@ -51,7 +51,7 @@ function splitAtMedia(output: ReactNode): ReactNode[] {
 
 /**
  * @description A store page's Markdown body, rendered by Discord's Markdown rules plus one for page
- * media. Every image or video lays out as a block between the runs of text, mid-sentence ones included.
+ * media. Images and videos at the top level of a paragraph lay out as blocks between its runs of text.
  */
 function PageBody({ page }: PageBodyProps) {
 	const blocks = useMemo(() => splitPageBody(page.body), [page.body]);
