@@ -335,9 +335,10 @@ only translate and shadow change, so a press never relayouts its neighbours. */
 	transition-duration: var(--press-duration);
 }
 
-/* Press feedback for controls with no raised surface, such as ghost and link buttons; `--press-scale` is sprung. */
+/* Press feedback for controls with no raised surface, such as ghost and link buttons; `--press-scale` is sprung.
+A wide control sets `--press-depth` below 1 so its edges move about as far as a button's. */
 @utility press-flat {
-	scale: var(--press-scale, 1);
+	scale: calc(1 - (1 - var(--press-scale, 1)) * var(--press-depth, 1));
 	transition-property: color, background-color, border-color, box-shadow, opacity;
 	transition-duration: var(--press-duration);
 }

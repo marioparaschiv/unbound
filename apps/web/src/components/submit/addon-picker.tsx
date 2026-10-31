@@ -36,7 +36,6 @@ import AddonIcon from '~/components/addon-icon';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
 import Text from '~/components/ui/text';
-import Tag from '~/components/tag';
 import cn from '~/lib/cn';
 
 type AddonPickerProps = {
@@ -70,52 +69,85 @@ const LINK_CLASS = 'font-mono underline-offset-4 hover:underline';
 
 function AddonOption({ addon, request, selected, busy, disabled, onPick }: AddonOptionProps) {
 	const prefetch = usePrefetchIntent(submissionPreviewQuery(request));
+	const [issue] = addon.issues;
 
 	return (
-		<li className='flex items-center gap-4 py-4 first:pt-0 last:pb-0'>
-			<div
-				className={cn(
-					'hidden sm:flex justify-center items-center bg-accent rounded-control size-10 shrink-0',
-					addon.issues.length > 0 ? 'opacity-60' : null,
-				)}
-			>
-				<AddonIcon type={addon.kind} svg={null} className='size-5' />
-			</div>
-
-			<div className='flex flex-col flex-1 gap-1 min-w-0'>
-				<div className='flex flex-wrap items-center gap-2'>
-					<Text as='span' variant='text-md' className='font-semibold'>
-						{addon.name ?? addon.id}
-					</Text>
-					<Tag className='capitalize'>{addon.kind}</Tag>
-				</div>
-				<Text variant='text-xs' color='muted' className='truncate'>
-					<span className='font-mono'>{addon.id}</span>
-					{addon.version ? ` · ${addon.version}` : null}
-				</Text>
-				<Text variant='text-xs' color='muted' className='font-mono break-all'>
-					{addon.bundle}
-				</Text>
-				{addon.issues.map((issue) => (
-					<Text key={issue} variant='text-xs' color='destructive'>
-						{issue}
-					</Text>
-				))}
-			</div>
-
-			<Button
+		<li>
+			<button
 				type='button'
-				size='sm'
-				variant={selected ? 'default' : 'outline'}
 				disabled={disabled}
 				aria-pressed={selected}
 				onClick={onPick}
-				className='shrink-0'
+				className={cn(
+					'flex items-center gap-3 px-3 py-2.5 rounded-control w-full text-left transition-colors press-flat [--press-depth:0.25]',
+					'hover:bg-accent/40 disabled:hover:bg-transparent disabled:cursor-not-allowed',
+					'outline-none focus-visible:ring-[3px] focus-visible:ring-halo',
+					selected ? 'bg-accent hover:bg-accent' : null,
+				)}
 				{...prefetch}
 			>
-				{busy ? <Spinner /> : selected ? <IconCheck size={24} /> : null}
-				{selected ? 'Selected' : 'Select'}
-			</Button>
+				<span
+					className={cn(
+						'flex justify-center items-center rounded-control size-9 shrink-0 transition-colors',
+						selected ? 'bg-background/60' : 'bg-accent',
+						issue ? 'opacity-50' : null,
+					)}
+				>
+					<AddonIcon type={addon.kind} svg={null} className='size-4.5' />
+				</span>
+
+				<span className='flex flex-col flex-1 min-w-0'>
+					<span className='flex items-baseline gap-2 min-w-0'>
+						<Text
+							as='span'
+							variant='text-sm'
+							className={cn('font-semibold truncate', issue ? 'opacity-60' : null)}
+						>
+							{addon.name ?? addon.id}
+						</Text>
+						{addon.version ? (
+							<Text as='span' variant='text-xs' color='muted' className='font-mono'>
+								v{addon.version}
+							</Text>
+						) : null}
+					</span>
+					{issue ? (
+						<Text
+							as='span'
+							variant='text-xs'
+							color='destructive'
+							className='truncate'
+							title={addon.issues.join('\n')}
+						>
+							{issue}
+						</Text>
+					) : (
+						<Text
+							as='span'
+							variant='text-xs'
+							color='muted'
+							className='font-mono truncate'
+						>
+							{addon.id}
+						</Text>
+					)}
+				</span>
+
+				<span
+					aria-hidden
+					className={cn(
+						'flex justify-center items-center border rounded-full size-5 shrink-0 transition-colors',
+						selected ? 'bg-primary border-primary text-primary-foreground' : null,
+						issue ? 'opacity-0' : null,
+					)}
+				>
+					{busy ? (
+						<Spinner className='size-3' />
+					) : selected ? (
+						<IconCheck className='size-3' />
+					) : null}
+				</span>
+			</button>
 		</li>
 	);
 }
@@ -265,7 +297,7 @@ function AddonPicker({
 						</EmptyHeader>
 					</Empty>
 				) : (
-					<ul className='flex flex-col divide-y'>
+					<ul className='flex flex-col gap-1'>
 						{listing.addons.map((addon) => (
 							<AddonOption
 								key={addon.path}
