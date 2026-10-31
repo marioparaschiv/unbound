@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.9.1](https://github.com/marioparaschiv/unbound/compare/debugger-v0.9.0...debugger-v0.9.1) (2026-10-31)
+
+
+### Code Refactoring
+
+* fix architecture smells and enforce them with oxlint rules ([#574](https://github.com/marioparaschiv/unbound/issues/574)) ([577a2af](https://github.com/marioparaschiv/unbound/commit/577a2af9ca4f479a805765481927b1ff9302c1ec))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger-protocol bumped to 0.9.1
+
 ## [0.9.0](https://github.com/marioparaschiv/unbound/compare/debugger-v0.8.1...debugger-v0.9.0) (2026-10-29)
 
 
