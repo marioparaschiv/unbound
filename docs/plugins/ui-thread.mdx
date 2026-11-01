@@ -1,0 +1,130 @@
+---
+title: 'Native UI on the UI Thread'
+description: 'Change native views from worklets that run on the UI thread, in the same pass as Discord, so nothing flashes or pops in.'
+icon: 'bolt'
+---
+
+### Why the UI thread?
+
+Native views are created, laid out and drawn on the main thread. A hook registered from the plugin's JavaScript runs on the JavaScript thread instead. An `after` hook reaches it only after the native call has returned. So a change made from there lands a frame or more later. The user sees Discord's view first, then yours: a circle that turns into a rounded square, a bubble that pops in, a reused cell that briefly shows the previous message.
+
+`context.native.ui` runs **worklets**, small functions that the build compiles for Reanimated's UI runtime. That runtime lives on the main thread. A hook installed from a worklet runs inline, inside Discord's own call. Whatever it changes is part of the same layout pass and is drawn in the same frame, the way a stock feature would be.
+
+<Note>
+	Use the UI thread for changes to native views that have to be in place before the frame is drawn. Keep everything else on the JavaScript thread: Flux stores, settings, network, React patches and anything heavy.
+</Note>
+
+### Writing a worklet
+
+A worklet is a function whose body starts with the `'worklet'` directive. `ubd build` compiles every worklet, including those in imported files such as `@unbound-plugins/shared`. Any function a worklet calls must be a worklet too.
+
+```ts src/avatars/ui-avatars.ts
+import type {
+	NativeObjCBridge,
+	NativeObjectHandle,
+	NativeUIScope,
+} from '@unbound-app/api/native';
+
+function round(objc: NativeObjCBridge, avatar: NativeObjectHandle, radius: number) {
+	'worklet';
+	const layer = objc.invoke(avatar, 'layer', []);
+
+	objc.invoke(layer, 'setCornerRadius:', [radius]);
+}
+
+export function installAvatarHooks(scope: NativeUIScope, radius: number) {
+	'worklet';
+	const objc = scope.objc as NativeObjCBridge;
+
+	objc.hook('DCDAvatarView', 'layoutSubviews', {
+		after: ({ self }) => {
+			try {
+				round(objc, self, radius);
+			} catch (error) {
+				console.error(`[Avatar Radius] ${String(error)}`);
+			}
+		},
+	});
+}
+```
+
+A worklet runs in its own JavaScript runtime. It can't see the plugin's module state, Flux stores or settings. Values from the plugin reach it as arguments, and constants and other worklets it captures are copied in when it is built. Module-level variables that change later are not seen.
+
+### Running worklets
+
+```ts src/avatars/index.ts
+import { installAvatarHooks, setAvatarRadius } from '~/avatars/ui-avatars';
+
+export function startAvatars(context: PluginContext, radius: () => number) {
+	const { ui } = context.native;
+	const scope = ui.createScope();
+
+	ui.run(installAvatarHooks, scope, radius());
+
+	return {
+		refresh: () => ui.run(setAvatarRadius, radius()),
+		dispose: () => scope.dispose(),
+	};
+}
+```
+
+<ParamField path='ui.createScope()' type='NativeUIScope'>
+	Opens a scope for the UI runtime. Pass it to a worklet as an argument. Its `objc` namespace on iOS, and its `java` and `hooks` namespaces on Android, have every synchronous method the plugin's Capabilities allow. Asynchronous methods such as `invokeAsync`, `batch`, `snapshot` and `findViews` are left out, because a worklet must never wait for the main thread it runs on. Disposing the scope removes the hooks installed through it. The plugin context disposes every scope when the plugin stops.
+</ParamField>
+<ParamField path='ui.run(worklet, ...args)' type='void'>
+	Queues the worklet on the UI thread. Use it to install hooks, push new data and restore views.
+</ParamField>
+<ParamField path='ui.call(worklet, ...args)' type='Promise'>
+	Runs the worklet on the UI thread and resolves with what it returns, which must be serializable. Use it for self-tests and counts.
+</ParamField>
+
+Arguments must be serializable, or a scope. Every worklet runs behind a guard, so an error it throws is logged instead of crashing Discord. Hook callbacks need their own `try`/`catch`, as in the example above.
+
+### Hooks on the UI thread
+
+On iOS, `before`, `after` and `replace` callbacks of hooks installed through a scope run inline on the main thread. A `replace` callback that sizes or measures a view, such as `sizeThatFits:`, answers without blocking the main thread on the JavaScript thread.
+
+On Android, a listener passed to `hooks.hook` through a scope runs inline when the hooked method is called on the main thread. Pass `{ notify: 'after' }` to deliver the event once the original method has run. A bind hook then sees the row already bound to its new message.
+
+```ts
+hooks.hook(MESSAGE_VIEW, bind.name, bind.parameters, { notify: 'after' }, (event) => {
+	const message = javaReference(event.args?.[0]);
+	const messageId = message ? javaText(java.invoke(message, 'getId-3Eiw7ao', [])) : undefined;
+	// ...
+});
+```
+
+### Keeping data in the UI runtime
+
+Data the hooks need, such as a guild's role colors, comes from the JavaScript thread. Compute it there and push a plain snapshot into the UI runtime. Worklets keep their state on `globalThis` in the UI runtime, under a key unique to the plugin.
+
+```ts
+type ComposerState = { mentions: ComposerMentions };
+
+export function setComposerMentions(mentions: ComposerMentions) {
+	'worklet';
+	const state = (globalThis as unknown as { __myPluginComposer?: ComposerState }).__myPluginComposer;
+
+	if (state) state.mentions = mentions;
+}
+```
+
+- **Push only when the data changes.** Pushing on every render or store change keeps the JavaScript thread busy while the user scrolls. Compare with the last push, and debounce bursts.
+- **Cache what the slow path measures.** Store the result per message, such as a bubble's frame, in the UI runtime. The next layout of that message can then draw it at once instead of waiting for the measure again.
+- **Clean up in the same pass on reuse.** Remove or hide the plugin's own views in `prepareForReuse` on iOS, or in an after-bind hook on Android. Tag those views, or record them in associations, so the hook can find them without searching.
+
+### What stays on the JavaScript thread
+
+Every bridge call from a worklet costs about 15 to 35 µs on iOS and 30 to 50 µs on Android. A hook that runs during scrolling can afford a handful of calls, not a walk over hundreds of views. Keep these on the JavaScript thread:
+
+- View-tree snapshots, searches and anything that measures many views
+- Mounting React surfaces with `fabric`, which renders on the JavaScript thread anyway
+- Flux stores, settings and network requests
+
+### Worklet rules
+
+- Start every worklet, and every function it calls, with `'worklet'`.
+- Wrap hook callbacks in `try`/`catch`. An error the guard can't catch, such as one thrown inside a native callback, is fatal on Android.
+- Look up Objective-C handles and Java references inside the worklet instead of passing ones from the JavaScript thread. Android association keys can be passed as arguments.
+- Check a Java boolean with `javaFlag`. A boxed `{ type: 'boolean', value: false }` is truthy.
+- Don't declare Capabilities for worklets by hand. `ubd build` finds the bridge calls inside them like any other call.
