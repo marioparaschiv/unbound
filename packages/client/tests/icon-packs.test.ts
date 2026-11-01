@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test';
 import type { DiscordAsset, UnboundAsset } from '@unbound-app/types';
+import { afterEach, describe, expect, mock, test } from 'bun:test';
 import type { ImageProps } from 'react-native';
 
 type Listener = (asset: UnboundAsset, id: number) => void;

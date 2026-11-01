@@ -10,7 +10,11 @@ import { join } from 'node:path';
 import { shimGlobal, shimImports } from '../src/rollup/shims';
 import { buildBundle } from './helpers/rollup';
 
-type Transform = (this: { parse: typeof parseAst }, code: string) => { code: string } | null;
+type TransformContext = { parse: typeof parseAst };
+
+type TransformResult = { code: string };
+
+type Transform = (this: TransformContext, code: string) => TransformResult | null;
 
 type UsePlugin = { start: () => unknown[] };
 
@@ -64,7 +68,7 @@ describe('shimImports', () => {
 
 	test("reads each import from Unbound's shim where the plugin uses it, not when it loads", async () => {
 		const reads: string[] = [];
-		const shim = (name: string, exports: Record<string, unknown>) =>
+		const shim = (name: string, exports: Record<string, string | (() => string)>) =>
 			new Proxy(exports, {
 				get: (target, key) => (reads.push(`${name}.${String(key)}`), target[key as string]),
 			});

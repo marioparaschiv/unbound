@@ -25,8 +25,8 @@ import downlevel, { lower } from './plugins/downlevel';
 import hermesVersions from './plugins/hermes-versions';
 import generateManifest from './plugins/manifest';
 import { bytecodeVersions } from './hermes.json';
-import libraries from './shim-libraries';
 import worklets from './plugins/worklets';
+import libraries from './shim-libraries';
 import signBundles from './sign';
 
 /** What the dev engine reports after a source change. */
