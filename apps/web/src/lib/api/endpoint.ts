@@ -50,6 +50,12 @@ export type EndpointOptions<TResponse extends z.core.$ZodType> = {
 	 * stored whole in a `json` column that no query reads into.
 	 */
 	anyJsonBody?: boolean;
+	/**
+	 * Reads a body that is not JSON, such as an uploaded file, in place of the JSON parse. Its result goes
+	 * to the body schema; it should refuse an oversized body before reading all of it.
+	 */
+	// UNKNOWN: the raw body, validated by the endpoint's body schema next.
+	readBody?: (request: Request) => Promise<unknown>;
 };
 
 type Handler<TInput, TResponse extends z.core.$ZodType> = (
@@ -142,14 +148,14 @@ export function endpoint<
 			const { pathname, searchParams } = new URL(request.url);
 
 			try {
-				const rawBody = await readJson(request);
+				const rawBody = await (options.readBody ?? readJson)(request);
 				const rawQuery =
 					searchParams.size > 0 ? Object.fromEntries(searchParams) : undefined;
 
 				requirePostgresSafe(params, 'path');
 				requirePostgresSafe(rawQuery, 'query');
 
-				if (!options.anyJsonBody) {
+				if (!options.anyJsonBody && !options.readBody) {
 					requirePostgresSafe(rawBody, 'body');
 				}
 
