@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <condition_variable>
 #include <functional>
 #include <jsi/jsi.h>
 #include <memory>
@@ -48,7 +49,17 @@ private:
         std::string path;
     };
 
+    struct FirstDownload {
+        uint64_t                   token     = 0;
+        bool                       pending   = false;
+        bool                       settled   = false;
+        bool                       abandoned = false;
+        std::optional<std::string> path;
+    };
+
     void updateInBackground(std::string savedPath, bool hasSaved, uint64_t token);
+    bool settleFirstDownload(uint64_t token, std::optional<std::string> path);
+    std::optional<SavedBundle> awaitFirstDownload(uint64_t token);
     bool evaluate(facebook::jsi::Runtime &runtime, const SavedBundle &saved, uint64_t token);
     void injectPreBundle(facebook::jsi::Runtime &runtime);
     void announceCrashDisabledAddons();
@@ -61,5 +72,7 @@ private:
     std::atomic_uint64_t        token_{0};
     std::atomic_bool            bundleReady_{false};
     std::atomic_bool            evaluationFailed_{false};
+    FirstDownload               firstDownload_;
+    std::condition_variable     firstDownloadSettled_;
 };
 }

@@ -119,6 +119,23 @@ static void runsNothingEarlyWithoutASavedBundle()
     require(!pipeline.isBundleReady(), "nothing is marked ready");
 }
 
+static void runsTheFirstDownloadBeforeDiscordsWithoutAReload()
+{
+    bundle_test::Server server;
+    server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, kUnbound}});
+    loader::BundleUpdater  updater = server.updater(bundle_test::productionTrust());
+    auto                   host    = std::make_shared<Host>();
+    loader::LoaderPipeline pipeline(host, loader::updaterSettings(server.settings), updater);
+
+    std::string order = launch(pipeline);
+
+    require(order == R"(["unbound:undefined:object","discord"])",
+            "the first download runs before Discord's bundle; got " + order);
+    require(pipeline.isBundleReady(), "the first bundle is marked ready");
+    require(server.activeContents() == kUnbound, "the first bundle is promoted");
+    require(host->reloads == 0, "the first download needs no reload");
+}
+
 static void doesNotReloadIntoABundleAfterOneFailed()
 {
     bundle_test::Server server;
@@ -143,6 +160,7 @@ int main()
 {
     runsTheSavedBundleBeforeDiscords();
     runsNothingEarlyWithoutASavedBundle();
+    runsTheFirstDownloadBeforeDiscordsWithoutAReload();
     doesNotReloadIntoABundleAfterOneFailed();
     std::printf("define stage: Unbound's saved bundle runs before Discord's on Hermes\n");
     return 0;

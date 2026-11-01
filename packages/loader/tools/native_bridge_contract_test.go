@@ -361,8 +361,11 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if containsCode(string(corePipeline), "wait_for(") || containsCode(string(corePipeline), "condition_variable") {
-		t.Fatal("the shared loader pipeline must not block the JS thread waiting for a download")
+	firstDownload := codeIndex(string(corePipeline), "LoaderPipeline::awaitFirstDownload(")
+	firstWait := codeIndex(string(corePipeline), "wait_for(")
+	if firstDownload < 0 || firstWait < firstDownload || strings.Count(string(corePipeline), "wait_for(") != 1 ||
+		containsCode(string(corePipeline), "condition_variable") {
+		t.Fatal("the shared loader pipeline may only block the JS thread for the first download, when no saved bundle exists")
 	}
 	if containsCode(string(bridge), "dispatch_sync(dispatch_get_main_queue()") {
 		t.Fatal("native bridge still uses an unbounded synchronous main-thread dispatch")
