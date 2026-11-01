@@ -31,7 +31,7 @@ export type ResolvedAuthor =
 			username: string | null;
 			userId: string;
 			role: string;
-			badge: PublicBadge | null;
+			badges: PublicBadge[];
 			memberSince: string;
 	  })
 	| (AuthorFace & { kind: 'discord'; discordId: DiscordId; username: string })
@@ -41,7 +41,7 @@ export type IdentifiedAuthor = ResolvedAuthor & { discordId: DiscordId };
 
 export type AuthorResolver = (authors: ManifestAuthor[]) => ResolvedAuthor[];
 
-type LinkedUser = typeof user.$inferSelect & { badge: PublicBadge | null };
+type LinkedUser = typeof user.$inferSelect & { badges: PublicBadge[] };
 
 /**
  * @description Narrows a resolved author to one with a Discord id.
@@ -81,7 +81,7 @@ function pickAuthor(
 			name: found ? (found.globalName ?? found.username) : linked.name,
 			avatarUrl: found ? discordAvatarUrl : (linked.image ?? discordAvatarUrl),
 			role: linked.role ?? DEFAULT_ROLE,
-			badge: linked.badge,
+			badges: linked.badges,
 			memberSince: linked.createdAt.toISOString(),
 		};
 	}
@@ -130,7 +130,7 @@ async function readLinkedUsers(
 
 	for (const row of active) {
 		if (!linked.has(row.discordId)) {
-			linked.set(row.discordId, { ...row.user, badge: badges.get(row.user.id) ?? null });
+			linked.set(row.discordId, { ...row.user, badges: badges.get(row.user.id) ?? [] });
 		}
 	}
 

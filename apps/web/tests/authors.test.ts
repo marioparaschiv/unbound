@@ -83,7 +83,7 @@ describe('loadAuthors', () => {
 				name: 'Linked On Discord',
 				avatarUrl: `https://cdn.discordapp.com/avatars/${LINKED}/abc.png`,
 				role: 'developer',
-				badge: null,
+				badges: [],
 				memberSince: expect.any(String),
 			},
 			{

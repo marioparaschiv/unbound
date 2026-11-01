@@ -8,9 +8,9 @@ const listUserBadgesEndpoint = endpoint(
 	{ body: z.undefined(), query: z.undefined(), response: userBadgesResponseSchema },
 	async ({ ctx, params }) => {
 		const userId = requireParam(params, 'id');
-		const badge = (await getVisibleBadges(ctx, [userId])).get(userId);
+		const badges = (await getVisibleBadges(ctx, [userId])).get(userId);
 
-		return { badges: badge ? [badge] : [] };
+		return { badges: badges ?? [] };
 	},
 );
 

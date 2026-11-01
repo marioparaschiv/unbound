@@ -6,7 +6,7 @@ import { SidebarCard } from '~/components/addon/sidebar-card';
 import type { ResolvedAuthor } from '~/lib/authors/resolve';
 import { authorKey } from '~/components/author-byline';
 import UserAvatar from '~/components/user-avatar';
-import UserBadge from '~/components/user-badge';
+import UserBadgeList from '~/components/user-badge-list';
 import Text from '~/components/ui/text';
 
 type AuthorsCardProps = {
@@ -72,7 +72,9 @@ function AuthorRow({ author }: AuthorRowProps) {
 					</Text>
 				) : null}
 			</span>
-			{author.kind === 'user' && author.badge ? <UserBadge badge={author.badge} /> : null}
+			{author.kind === 'user' ? (
+				<UserBadgeList badges={author.badges} className='justify-end shrink-0 max-w-1/2' />
+			) : null}
 		</GhostRow>
 	);
 }

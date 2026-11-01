@@ -1,5 +1,5 @@
+import { badgesSchema } from '@unbound-app/contracts/sponsors';
 import type { PerkId } from '@unbound-app/contracts/sponsors';
-import { badgeSchema } from '@unbound-app/contracts/sponsors';
 import type { z } from 'zod';
 
 import type { SponsorStanding } from '~/lib/sponsors/standing';
@@ -19,7 +19,7 @@ export const PERKS = {
 		description:
 			'A badge of your own on your Discord profile, shown to everyone using Unbound.',
 		minimumMonthlyCents: 500,
-		config: badgeSchema,
+		config: badgesSchema,
 	},
 } satisfies Record<PerkId, PerkDefinition>;
 

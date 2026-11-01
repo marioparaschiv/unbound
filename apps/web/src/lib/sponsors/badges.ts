@@ -28,7 +28,7 @@ function badgeClaimWhere(userId: string) {
 	return and(eq(perkClaim.userId, userId), eq(perkClaim.perkId, PERK_ID));
 }
 
-function parseBadge(row: ClaimRow): Badge | undefined {
+function parseBadges(row: ClaimRow): Badge[] | undefined {
 	const result = PERKS[PERK_ID].config.safeParse(row.config);
 
 	if (!result.success) {
@@ -46,12 +46,12 @@ function parseBadge(row: ClaimRow): Badge | undefined {
  * @returns The claim, or `null` when there is none or its config cannot be read.
  */
 export function toBadgeClaim(row: ClaimRow | undefined): BadgeClaim | null {
-	const badge = row ? parseBadge(row) : undefined;
+	const badges = row ? parseBadges(row) : undefined;
 
-	if (!row || !badge) return null;
+	if (!row || !badges) return null;
 
 	return {
-		...badge,
+		badges,
 		revokedAt: row.revokedAt?.toISOString() ?? null,
 		revokeReason: row.revokeReason,
 	};
@@ -76,18 +76,36 @@ async function claimResponse(ctx: AppContext, userId: string): Promise<BadgeClai
 	return { claim: toBadgeClaim(await findBadgeClaim(ctx, userId)) };
 }
 
+function findBadgesProblem(badges: Badge[]): string | undefined {
+	const labels = new Set<string>();
+
+	for (const { label } of badges) {
+		const problem = findBadgeLabelProblem(label);
+
+		if (problem) {
+			return problem;
+		}
+
+		if (labels.has(label.toLowerCase())) {
+			return `You already have a badge called "${label}".`;
+		}
+
+		labels.add(label.toLowerCase());
+	}
+}
+
 /**
- * @description Sets or changes the caller's custom badge. Needs an active sponsorship that unlocks it,
- * a claim staff have not revoked, and a label that passes moderation.
+ * @description Replaces the caller's custom badges. Needs an active sponsorship that unlocks them, a
+ * claim staff have not revoked, and distinct labels that all pass moderation.
  * @param ctx The application context.
  * @param userId The badge owner.
- * @param badge The badge, already validated against the contract schema.
+ * @param badges The badges in display order, already validated against the contract schema.
  * @returns The stored claim.
  */
-export async function claimBadge(
+export async function claimBadges(
 	ctx: AppContext,
 	userId: string,
-	badge: Badge,
+	badges: Badge[],
 ): Promise<BadgeClaimResponse> {
 	const { standing } = await getUserSponsorship(ctx, userId);
 
@@ -98,7 +116,7 @@ export async function claimBadge(
 		);
 	}
 
-	const problem = findBadgeLabelProblem(badge.label);
+	const problem = findBadgesProblem(badges);
 
 	if (problem) {
 		throw new ApiError('badge_rejected', problem);
@@ -108,35 +126,35 @@ export async function claimBadge(
 	// One statement, so a revoke committing while it runs still wins.
 	const [row] = await ctx.db
 		.insert(perkClaim)
-		.values({ userId, perkId: PERK_ID, config: badge, createdAt: now, updatedAt: now })
+		.values({ userId, perkId: PERK_ID, config: badges, createdAt: now, updatedAt: now })
 		.onConflictDoUpdate({
 			target: [perkClaim.userId, perkClaim.perkId],
-			set: { config: badge, updatedAt: now },
+			set: { config: badges, updatedAt: now },
 			setWhere: isNull(perkClaim.revokedAt),
 		})
 		.returning();
 
 	if (!row) {
-		throw new ApiError('perk_revoked', 'Staff removed your badge; it cannot be set again.');
+		throw new ApiError('perk_revoked', 'Staff removed your badges; they cannot be set again.');
 	}
 
 	return { claim: toBadgeClaim(row) };
 }
 
 /**
- * @description Removes the caller's custom badge. A revoked one stays, so it cannot be set again.
+ * @description Removes all the caller's custom badges. A revoked claim stays, so none can be set again.
  * @param ctx The application context.
  * @param userId The badge owner.
  * @returns The claim left, which is `null` unless it was revoked.
  */
-export async function removeBadge(ctx: AppContext, userId: string): Promise<BadgeClaimResponse> {
+export async function removeBadges(ctx: AppContext, userId: string): Promise<BadgeClaimResponse> {
 	await ctx.db.delete(perkClaim).where(and(badgeClaimWhere(userId), isNull(perkClaim.revokedAt)));
 
 	return claimResponse(ctx, userId);
 }
 
 /**
- * @description Hides a user's custom badge and stops them setting another. Requires `perk:revoke`.
+ * @description Hides a user's custom badges and stops them setting others. Requires `perk:revoke`.
  * @param ctx The application context.
  * @param caller The staff member.
  * @param userId The badge owner.
@@ -159,7 +177,7 @@ export async function revokeBadge(
 }
 
 /**
- * @description Lifts a revocation, showing the badge again while the owner's sponsorship unlocks it.
+ * @description Lifts a revocation, showing the badges again while the owner's sponsorship unlocks it.
  * Requires `perk:revoke`.
  * @param ctx The application context.
  * @param caller The staff member.
@@ -188,24 +206,24 @@ async function setRevocation(
 		.returning();
 
 	if (updated.length === 0) {
-		throw new ApiError('not_found', `${userId} has no badge.`);
+		throw new ApiError('not_found', `${userId} has no badges.`);
 	}
 
 	return { claim: toBadgeClaim(updated[0]) };
 }
 
 /**
- * @description Finds the badges to show next to users' names: set, not revoked, owned by a user who
- * is not banned and whose linked GitHub sponsorship still unlocks it.
+ * @description Finds the badges to show on users' profiles: set, not revoked, owned by a user who is
+ * not banned and whose linked GitHub sponsorship still unlocks them.
  * @param ctx The application context.
  * @param userIds The users.
- * @returns Each shown badge by user id.
+ * @returns Each user's shown badges, in their order, by user id.
  */
 export async function getVisibleBadges(
 	ctx: AppContext,
 	userIds: string[],
-): Promise<Map<string, PublicBadge>> {
-	const badges = new Map<string, PublicBadge>();
+): Promise<Map<string, PublicBadge[]>> {
+	const badges = new Map<string, PublicBadge[]>();
 
 	if (userIds.length === 0) {
 		return badges;
@@ -232,13 +250,16 @@ export async function getVisibleBadges(
 
 	for (const row of rows) {
 		const standing = standingOf(row.sponsorship, now, graceMs(ctx.env));
-		const badge = isPerkUnlocked(PERK_ID, standing) ? parseBadge(row.claim) : undefined;
+		const shown = isPerkUnlocked(PERK_ID, standing) ? parseBadges(row.claim) : undefined;
 
-		if (!badge) {
+		if (!shown) {
 			continue;
 		}
 
-		badges.set(row.claim.userId, { ...badge, kind: PERK_ID });
+		badges.set(
+			row.claim.userId,
+			shown.map((badge) => ({ ...badge, kind: PERK_ID })),
+		);
 	}
 
 	return badges;
@@ -247,8 +268,8 @@ export async function getVisibleBadges(
 export default {
 	toBadgeClaim,
 	findBadgeClaim,
-	claimBadge,
-	removeBadge,
+	claimBadges,
+	removeBadges,
 	revokeBadge,
 	restoreBadge,
 	getVisibleBadges,

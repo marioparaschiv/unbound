@@ -14,6 +14,7 @@ import { developerQuery } from '~/queries/developers/developers';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import type { IdentifiedAuthor } from '~/lib/authors/resolve';
 import BlurReveal from '~/components/motion/blur-reveal';
+import UserBadgeList from '~/components/user-badge-list';
 import TEAM_GROUPS from '~/components/team/team-groups';
 import type { CssVariables } from '~/lib/css-variables';
 import { formatDate } from '~/components/addon/format';
@@ -21,7 +22,6 @@ import AvatarGlow from '~/components/avatar-glow';
 import UserAvatar from '~/components/user-avatar';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
-import UserBadge from '~/components/user-badge';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 
@@ -81,16 +81,16 @@ function DeveloperPage() {
 						name={author.name}
 					/>
 					<div className='flex flex-col flex-1 gap-1 sm:pt-12 min-w-0'>
-						<div className='flex items-center gap-2 min-w-0'>
+						<div className='flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0'>
 							<Text as='h1' variant='heading-lg' className='truncate'>
 								<BlurReveal text={author.name} />
 							</Text>
 							<div
-								className='flex items-center gap-2 animate-reveal'
+								className='flex flex-wrap items-center gap-2 animate-reveal'
 								style={staggerStyle(1)}
 							>
-								{author.kind === 'user' && author.badge ? (
-									<UserBadge badge={author.badge} />
+								{author.kind === 'user' ? (
+									<UserBadgeList badges={author.badges} />
 								) : null}
 								<Tag variant={group === 'addon-developer' ? 'default' : 'primary'}>
 									{TEAM_GROUPS[group].member}

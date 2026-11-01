@@ -9,10 +9,10 @@ import { and, eq } from 'drizzle-orm';
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
 import { account, perkClaim, sponsorship, user } from '~/db/schema';
 import listUserBadgesEndpoint from '~/endpoints/list-user-badges';
-import removeMyBadgeEndpoint from '~/endpoints/remove-my-badge';
+import removeMyBadgesEndpoint from '~/endpoints/remove-my-badges';
 import restoreBadgeEndpoint from '~/endpoints/restore-badge';
+import setMyBadgesEndpoint from '~/endpoints/set-my-badges';
 import revokeBadgeEndpoint from '~/endpoints/revoke-badge';
-import setMyBadgeEndpoint from '~/endpoints/set-my-badge';
 import { getVisibleBadges } from '~/lib/sponsors/badges';
 import { isPerkUnlocked } from '~/lib/sponsors/perks';
 import { standingOf } from '~/lib/sponsors/standing';
@@ -44,8 +44,8 @@ const ctx: AppContext = { ...base.ctx, now: () => NOW };
 
 const server = serveEndpoints(ctx, {
 	'GET /api/v1/users/$id/badges': listUserBadgesEndpoint,
-	'PUT /api/v1/me/badge': setMyBadgeEndpoint,
-	'DELETE /api/v1/me/badge': removeMyBadgeEndpoint,
+	'PUT /api/v1/me/badges': setMyBadgesEndpoint,
+	'DELETE /api/v1/me/badges': removeMyBadgesEndpoint,
 	'POST /api/v1/users/$id/badge/revoke': revokeBadgeEndpoint,
 	'DELETE /api/v1/users/$id/badge/revoke': restoreBadgeEndpoint,
 });
@@ -97,8 +97,23 @@ async function waitForLockWait() {
 	throw new Error('Expected a statement waiting on a lock.');
 }
 
+function setBadges(client: Client, badges: Badge[]) {
+	return client('PUT /api/v1/me/badges', {
+		body: { badges },
+		response: badgeClaimResponseSchema,
+	});
+}
+
 function setBadge(client: Client, badge: Badge = BADGE) {
-	return client('PUT /api/v1/me/badge', { body: badge, response: badgeClaimResponseSchema });
+	return setBadges(client, [badge]);
+}
+
+function removeBadges(client: Client) {
+	return client('DELETE /api/v1/me/badges', { response: badgeClaimResponseSchema });
+}
+
+function shown(...badges: Badge[]) {
+	return { badges: badges.map((badge) => ({ ...badge, kind: 'custom-badge' as const })) };
 }
 
 function publicBadges(userId: string) {
@@ -193,7 +208,7 @@ describe('claiming a badge', () => {
 		const sponsor = await signUp();
 
 		expect(await setBadge(sponsor.client)).toEqual({
-			claim: { ...BADGE, revokedAt: null, revokeReason: null },
+			claim: { badges: [BADGE], revokedAt: null, revokeReason: null },
 		});
 		expect(await publicBadges(sponsor.userId)).toEqual({
 			badges: [{ ...BADGE, kind: 'custom-badge' }],
@@ -206,9 +221,7 @@ describe('claiming a badge', () => {
 			],
 		});
 
-		expect(
-			await sponsor.client('DELETE /api/v1/me/badge', { response: badgeClaimResponseSchema }),
-		).toEqual({ claim: null });
+		expect(await removeBadges(sponsor.client)).toEqual({ claim: null });
 		expect(await publicBadges(sponsor.userId)).toEqual({ badges: [] });
 	});
 
@@ -273,8 +286,99 @@ describe('claiming a badge', () => {
 		for (const label of ['Supporter', 'Modern Themes', 'Badminton', 'Steam Deck']) {
 			const { claim } = await setBadge(sponsor.client, { ...BADGE, label });
 
-			expect(claim?.label).toBe(label);
+			expect(claim?.badges).toEqual([{ ...BADGE, label }]);
 		}
+	});
+});
+
+describe('several badges', () => {
+	const THREE: Badge[] = [
+		BADGE,
+		{ label: 'Early Bird', icon: 'sparkles', color: 'teal' },
+		{ label: 'Theme Fan', icon: 'palette', color: 'orange' },
+	];
+
+	test('a sponsor shows up to three badges, in the order they saved them', async () => {
+		const sponsor = await signUp();
+
+		expect((await setBadges(sponsor.client, THREE)).claim?.badges).toEqual(THREE);
+		expect(await publicBadges(sponsor.userId)).toEqual(shown(...THREE));
+
+		const reordered = [THREE[2]!, THREE[0]!];
+
+		await setBadges(sponsor.client, reordered);
+		expect(await publicBadges(sponsor.userId)).toEqual(shown(...reordered));
+	});
+
+	test('refuses an empty list or a fourth badge', async () => {
+		const sponsor = await signUp();
+		const four = [...THREE, { label: 'Fourth', icon: 'star', color: 'blue' } as const];
+
+		for (const badges of [[], four]) {
+			expect(await failure(setBadges(sponsor.client, badges))).toEqual({
+				status: 400,
+				code: 'invalid_request',
+			});
+		}
+	});
+
+	test('refuses two badges with the same label, ignoring case', async () => {
+		const sponsor = await signUp();
+
+		expect(
+			await failure(
+				setBadges(sponsor.client, [BADGE, { ...BADGE, label: 'night owl', color: 'red' }]),
+			),
+		).toEqual({ status: 400, code: 'badge_rejected' });
+	});
+
+	test('one refused label refuses the whole list and keeps the saved one', async () => {
+		const sponsor = await signUp();
+
+		await setBadge(sponsor.client);
+
+		expect(
+			await failure(setBadges(sponsor.client, [THREE[1]!, { ...BADGE, label: 'Admins' }])),
+		).toEqual({ status: 400, code: 'badge_rejected' });
+		expect(await publicBadges(sponsor.userId)).toEqual(shown(BADGE));
+	});
+
+	test('a revoke, a ban, an unlink or the end of grace hides all of them', async () => {
+		const moderator = await signUp({ role: 'moderator', github: false });
+		const [revoked, banned, unlinked, lapsed] = await Promise.all([
+			signUp(),
+			signUp(),
+			signUp(),
+			signUp({
+				sponsorship: {
+					state: 'pending_cancellation',
+					endsAt: new Date(NOW.getTime() + DAY),
+				},
+			}),
+		]);
+		const sponsors = [revoked, banned, unlinked, lapsed];
+
+		for (const sponsor of sponsors) {
+			await setBadges(sponsor.client, THREE);
+		}
+
+		await moderator.client('POST /api/v1/users/$id/badge/revoke', {
+			params: { id: revoked.userId },
+			body: { reason: 'No.' },
+			response: badgeClaimResponseSchema,
+		});
+		await ctx.db.update(user).set({ banned: true }).where(eq(user.id, banned.userId));
+		await ctx.db
+			.delete(account)
+			.where(and(eq(account.userId, unlinked.userId), eq(account.providerId, 'github')));
+
+		const ids = sponsors.map((sponsor) => sponsor.userId);
+		const afterGrace = { ...ctx, now: () => new Date(NOW.getTime() + DAY + GRACE) };
+
+		expect([...(await getVisibleBadges(ctx, ids))]).toEqual([
+			[lapsed.userId, shown(...THREE).badges],
+		]);
+		expect((await getVisibleBadges(afterGrace, ids)).size).toBe(0);
 	});
 });
 
@@ -312,7 +416,7 @@ describe('revoking a badge', () => {
 			code: 'perk_revoked',
 		});
 
-		await sponsor.client('DELETE /api/v1/me/badge', { response: badgeClaimResponseSchema });
+		await removeBadges(sponsor.client);
 		expect(await failure(setBadge(sponsor.client))).toEqual({
 			status: 403,
 			code: 'perk_revoked',
@@ -356,7 +460,7 @@ describe('revoking a badge', () => {
 			.from(perkClaim)
 			.where(eq(perkClaim.userId, sponsor.userId));
 
-		expect(stored?.config).toEqual(BADGE);
+		expect(stored?.config).toEqual([BADGE]);
 	});
 
 	test('NUL in the path, or NUL or a lone surrogate in the reason, is an invalid request', async () => {

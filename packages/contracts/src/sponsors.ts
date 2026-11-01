@@ -29,6 +29,9 @@ export const BADGE_COLORS = [
 
 export const BADGE_LABEL_MAX_LENGTH = 24;
 
+/** How many badges one sponsor shows; as many as fit on a Discord profile. */
+export const BADGE_LIMIT = 3;
+
 export const perkIdSchema = z.enum(['custom-badge']);
 
 export const badgeIconSchema = z.enum(BADGE_ICONS);
@@ -55,12 +58,20 @@ export const publicBadgeSchema = badgeSchema.extend({
 	kind: perkIdSchema,
 });
 
-/** The badges a user shows next to their name; empty when they have none or it is hidden. */
+/** A sponsor's badges, in the order their profile shows them. */
+export const badgesSchema = z.array(badgeSchema).min(1).max(BADGE_LIMIT);
+
+export const setBadgesRequestSchema = z.object({
+	badges: badgesSchema,
+});
+
+/** The badges a user shows on their profile, in their order; empty when they have none or they are hidden. */
 export const userBadgesResponseSchema = z.object({
 	badges: z.array(publicBadgeSchema),
 });
 
-export const badgeClaimSchema = badgeSchema.extend({
+export const badgeClaimSchema = z.object({
+	badges: z.array(badgeSchema),
 	revokedAt: z.iso.datetime().nullable(),
 	revokeReason: z.string().nullable(),
 });
@@ -80,6 +91,7 @@ export type BadgeIcon = z.infer<typeof badgeIconSchema>;
 export type BadgeColor = z.infer<typeof badgeColorSchema>;
 export type PerkId = z.infer<typeof perkIdSchema>;
 export type Badge = z.infer<typeof badgeSchema>;
+export type SetBadgesRequest = z.infer<typeof setBadgesRequestSchema>;
 export type PublicBadge = z.infer<typeof publicBadgeSchema>;
 export type UserBadgesResponse = z.infer<typeof userBadgesResponseSchema>;
 export type BadgeClaim = z.infer<typeof badgeClaimSchema>;
@@ -91,11 +103,14 @@ export default {
 	BADGE_ICONS,
 	BADGE_COLORS,
 	BADGE_LABEL_MAX_LENGTH,
+	BADGE_LIMIT,
 	perkIdSchema,
 	badgeIconSchema,
 	badgeColorSchema,
 	badgeLabelSchema,
 	badgeSchema,
+	badgesSchema,
+	setBadgesRequestSchema,
 	publicBadgeSchema,
 	userBadgesResponseSchema,
 	badgeClaimSchema,

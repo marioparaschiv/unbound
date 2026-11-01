@@ -13,4 +13,13 @@ export function formatPrice(cents: number): string {
 	return PRICE_FORMAT.format(cents / 100);
 }
 
-export default { formatPrice };
+/**
+ * @description Formats a recurring monthly price: `$5 a month`.
+ * @param cents The monthly price in cents.
+ * @returns The formatted price.
+ */
+export function formatMonthlyPrice(cents: number): string {
+	return `${formatPrice(cents)} a month`;
+}
+
+export default { formatPrice, formatMonthlyPrice };

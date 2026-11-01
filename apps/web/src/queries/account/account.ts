@@ -1,5 +1,5 @@
+import type { SetBadgesRequest } from '@unbound-app/contracts/sponsors';
 import { mutationOptions, queryOptions } from '@tanstack/react-query';
-import type { Badge } from '@unbound-app/contracts/sponsors';
 
 import unwrapAuthResult from '~/queries/account/unwrap-auth-result';
 import { createBrowserClient } from '~/lib/api/browser-client';
@@ -25,31 +25,31 @@ export function accountOverviewQuery() {
 }
 
 /**
- * @description Sets the signed-in user's sponsor badge, then refreshes the account overview and the public pages showing it.
- * @returns Mutation options taking the badge to save.
+ * @description Replaces the signed-in user's sponsor badges, then refreshes the account overview and the public pages showing them.
+ * @returns Mutation options taking the badges to save, in order.
  */
-export function saveBadgeMutation() {
+export function saveBadgesMutation() {
 	return mutationOptions({
-		mutationFn: async (badge: Badge) =>
-			createBrowserClient()('PUT /api/v1/me/badge', {
-				body: badge,
+		mutationFn: async (body: SetBadgesRequest) =>
+			createBrowserClient()('PUT /api/v1/me/badges', {
+				body,
 				response: await loadBadgeClaimResponseSchema(),
 			}),
-		onSuccess: (_data, _badge, _result, context) => invalidate(context.client, 'badge'),
+		onSuccess: (_data, _body, _result, context) => invalidate(context.client, 'badges'),
 	});
 }
 
 /**
- * @description Removes the signed-in user's sponsor badge, then refreshes the account overview and the public pages showing it.
+ * @description Removes all the signed-in user's sponsor badges, then refreshes the account overview and the public pages showing them.
  * @returns Mutation options taking no variables.
  */
-export function removeBadgeMutation() {
+export function removeBadgesMutation() {
 	return mutationOptions({
 		mutationFn: async () =>
-			createBrowserClient()('DELETE /api/v1/me/badge', {
+			createBrowserClient()('DELETE /api/v1/me/badges', {
 				response: await loadBadgeClaimResponseSchema(),
 			}),
-		onSuccess: (_data, _variables, _result, context) => invalidate(context.client, 'badge'),
+		onSuccess: (_data, _variables, _result, context) => invalidate(context.client, 'badges'),
 	});
 }
 
@@ -106,8 +106,8 @@ export function linkSocialMutation() {
 
 export default {
 	accountOverviewQuery,
-	saveBadgeMutation,
-	removeBadgeMutation,
+	saveBadgesMutation,
+	removeBadgesMutation,
 	createApiKeyMutation,
 	deleteApiKeyMutation,
 	unlinkAccountMutation,

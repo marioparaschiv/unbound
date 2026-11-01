@@ -34,7 +34,7 @@ function PerkRow({ perk }: PerkRowProps) {
 function PerksCard() {
 	const { sponsor } = useSuspenseQuery(accountOverviewQuery()).data;
 	const badgePerk = sponsor.perks.find((perk) => perk.id === 'custom-badge');
-	const showEditor = Boolean(badgePerk?.unlocked || sponsor.badge);
+	const showEditor = Boolean(badgePerk && (badgePerk.unlocked || sponsor.badge));
 
 	return (
 		<Card className='gap-4'>
@@ -49,12 +49,13 @@ function PerksCard() {
 					<PerkRow key={perk.id} perk={perk} />
 				))}
 
-				{showEditor ? (
+				{badgePerk && showEditor ? (
 					<>
 						<Separator />
 						<BadgeEditor
 							claim={sponsor.badge}
-							editable={Boolean(badgePerk?.unlocked) && sponsor.standing === 'active'}
+							perk={badgePerk}
+							editable={badgePerk.unlocked && sponsor.standing === 'active'}
 						/>
 					</>
 				) : null}
