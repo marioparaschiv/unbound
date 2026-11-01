@@ -41,7 +41,7 @@ jobs:
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
                   persist-credentials: false
-                  ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+                  ref: ${{ fromJSON(steps.release.outputs.pr || '{}').headBranchName }}
 
             # bun.lock is lockfileVersion 2, which stable bun cannot parse until 1.4 releases.
             # canary's frozen-lockfile check fails on a self-generated lockfile (round-trip bug),
@@ -56,7 +56,7 @@ jobs:
               if: steps.release.outputs.prs_created == 'true' && steps.release.outputs.pr != ''
               env:
                   GH_TOKEN: ${{ github.token }}
-                  BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+                  BRANCH: ${{ fromJSON(steps.release.outputs.pr || '{}').headBranchName }}
               run: |
                   bun install
                   git diff --quiet -- bun.lock && exit 0
