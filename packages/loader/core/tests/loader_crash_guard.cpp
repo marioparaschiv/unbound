@@ -35,7 +35,8 @@ static void cleanRunningLaunch(const std::filesystem::path &root)
 
 static bool markerExists(const std::filesystem::path &root)
 {
-    return loader::fileExists((root / loader::AddonCrashGuard::kStartingFile).string());
+    std::string marker = (root / loader::AddonCrashGuard::kStartingFile).string();
+    return loader::fileExists(marker) && loader::fileSize(marker) > 0;
 }
 
 static void cleanLaunchClearsNothing(const std::filesystem::path &root)
