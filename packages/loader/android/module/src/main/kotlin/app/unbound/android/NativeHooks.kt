@@ -116,8 +116,7 @@ object NativeHooks {
             if (registration.receiver?.isInstance(self) == false) return chain.proceed()
 
             val arguments = (0 until chain.argumentCount()).map { chain.argument(it) }
-            val selfJSON = NativeJava.describe(self)
-            val argumentsJSON = NativeJava.describeAll(arguments)
+            val (selfJSON, argumentsJSON) = described(self, arguments)
 
             if (registration.notifies && !registration.notifiesAfter) {
                 notify(registration.token, selfJSON, argumentsJSON)
@@ -131,6 +130,23 @@ object NativeHooks {
 
             return result
         }
+    }
+
+    private class Described(val self: Any?, val arguments: List<Any?>, val selfJSON: String, val argumentsJSON: String) {
+        fun matches(target: Any?, values: List<Any?>): Boolean =
+            target === self && values.size == arguments.size && values.indices.all { values[it] === arguments[it] }
+    }
+
+    private val lastDescribed = ThreadLocal<Described?>()
+
+    private fun described(self: Any?, arguments: List<Any?>): Pair<String, String> {
+        lastDescribed.get()?.takeIf { it.matches(self, arguments) }?.let { return it.selfJSON to it.argumentsJSON }
+
+        val selfJSON = NativeJava.describe(self)
+        val argumentsJSON = NativeJava.describeAll(arguments)
+
+        lastDescribed.set(Described(self, arguments, selfJSON, argumentsJSON))
+        return selfJSON to argumentsJSON
     }
 
     private fun result(registration: Registration, chain: Chain, selfJSON: String, argumentsJSON: String): Any? {

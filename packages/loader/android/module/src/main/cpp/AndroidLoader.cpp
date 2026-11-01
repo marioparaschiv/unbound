@@ -159,6 +159,10 @@ void AndroidLoader::onJSBundleLoaded()
 
 void AndroidLoader::onRuntimeCreated(jsi::Runtime &runtime)
 {
+    {
+        std::lock_guard<std::mutex> lock(queueMutex_);
+        runtimeDrainScheduled_ = false;
+    }
     pipeline_->onRuntimeCreated(runtime);
 }
 
@@ -169,6 +173,7 @@ void AndroidLoader::drainRuntimeWork(jsi::Runtime &runtime)
     {
         std::lock_guard<std::mutex> lock(queueMutex_);
         work.swap(queue_);
+        runtimeDrainScheduled_ = false;
     }
 
     for (auto &item : work)
@@ -195,6 +200,7 @@ void AndroidLoader::drainMainWork()
     {
         std::lock_guard<std::mutex> lock(mainQueueMutex_);
         work.swap(mainQueue_);
+        mainDrainScheduled_ = false;
     }
 
     for (auto &item : work)
@@ -221,11 +227,18 @@ void AndroidLoader::runOnRuntime(std::function<void(jsi::Runtime &)> work)
     {
         std::lock_guard<std::mutex> lock(queueMutex_);
         queue_.push_back(std::move(work));
+        if (runtimeDrainScheduled_)
+        {
+            return;
+        }
+        runtimeDrainScheduled_ = true;
     }
 
     JNIEnv *env = currentEnvironment();
     if (!env)
     {
+        std::lock_guard<std::mutex> lock(queueMutex_);
+        runtimeDrainScheduled_ = false;
         return;
     }
     env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleRuntime);
@@ -249,11 +262,18 @@ void AndroidLoader::runOnMain(std::function<void()> work)
     {
         std::lock_guard<std::mutex> lock(mainQueueMutex_);
         mainQueue_.push_back(std::move(work));
+        if (mainDrainScheduled_)
+        {
+            return;
+        }
+        mainDrainScheduled_ = true;
     }
 
     JNIEnv *env = currentEnvironment();
     if (!env)
     {
+        std::lock_guard<std::mutex> lock(mainQueueMutex_);
+        mainDrainScheduled_ = false;
         return;
     }
     env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleMain);

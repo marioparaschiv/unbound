@@ -119,8 +119,10 @@ private:
     std::shared_ptr<loader::HotReloadController>              hotReload_;
     std::mutex                                                queueMutex_;
     std::deque<std::function<void(facebook::jsi::Runtime &)>> queue_;
+    bool                                                      runtimeDrainScheduled_ = false;
     std::mutex                                                mainQueueMutex_;
     std::deque<std::function<void()>>                         mainQueue_;
+    bool                                                      mainDrainScheduled_ = false;
     loader::AddonState                                        addons_;
     std::mutex                                                systemFontsMutex_;
     std::optional<nlohmann::json>                             systemFonts_;
