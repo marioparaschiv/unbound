@@ -41,6 +41,7 @@ test('moves the legacy core and plugin Buckets to the unbound names', async () =
 		unbound: { 'developer-mode': true, debugger: { address: '10.0.0.2:9091', enabled: true } },
 		'unbound.text-replace': { stringRules: [{ find: 'a', replace: 'b' }] },
 		themes: { applied: 'mp.midnight' },
+		'unbound::migrations': { 'legacy-buckets': true },
 	});
 
 	await persist();
@@ -76,6 +77,7 @@ test('keeps every value already saved under the unbound names and fills only wha
 			toasts: { duration: 300 },
 		},
 		'unbound.text-replace': { stringRules: [], regexRules: [] },
+		'unbound::migrations': { 'legacy-buckets': true },
 	});
 });
 
@@ -105,9 +107,16 @@ test('changes nothing on a second run or for settings with no legacy names', asy
 	renameLegacyBuckets();
 	await persist();
 
+	expect(applied).toEqual([{ store: 'unbound::migrations', key: 'legacy-buckets', value: true }]);
+
+	applied.length = 0;
+	renameLegacyBuckets();
+	await persist();
+
 	expect(applied).toEqual([]);
 	expect(settings).toEqual({
 		unbound: { recovery: true },
 		plugins: { states: { 'unbound.moyai': true } },
+		'unbound::migrations': { 'legacy-buckets': true },
 	});
 });

@@ -6,6 +6,10 @@ import { clear, get, set, snapshot } from '~/storage/api';
 const LEGACY_NAME = 'astral';
 const LEGACY_PREFIX = `${LEGACY_NAME}.`;
 
+// Device-local, so Sync never carries the flag to a device that still has `astral` Buckets.
+const MIGRATIONS_BUCKET = 'unbound::migrations';
+const RENAMED_KEY = 'legacy-buckets';
+
 function isSettingsObject(value: SettingsValue | undefined): value is SettingsObject {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -49,10 +53,13 @@ function withMissingFromLegacy(
 }
 
 function fillBucketFromLegacy(name: string, target: string) {
-	const stores = snapshot();
+	const legacy = get<SettingsValue | undefined>(name, '', undefined);
 
-	for (const [key, value] of Object.entries(stores[name] ?? {})) {
-		const merged = withMissingFromLegacy(stores[target]?.[key], value);
+	for (const [key, value] of Object.entries(isSettingsObject(legacy) ? legacy : {})) {
+		const merged = withMissingFromLegacy(
+			get<SettingsValue | undefined>(target, key, undefined),
+			value,
+		);
 
 		if (merged !== undefined) {
 			set(target, key, merged);
@@ -94,12 +101,17 @@ function moveLegacyStatesOver(bucket: string) {
  * A Bucket value already saved under the new name is kept: the loader kept writing its own keys to `unbound` throughout.
  */
 export function renameLegacyBuckets(): void {
-	for (const name of Object.keys(snapshot())) {
-		const target = renamedId(name);
+	// Listing Buckets copies the whole settings file into JS, so it runs on one launch only.
+	if (!get(MIGRATIONS_BUCKET, RENAMED_KEY, false)) {
+		for (const name of Object.keys(snapshot())) {
+			const target = renamedId(name);
 
-		if (target) {
-			fillBucketFromLegacy(name, target);
+			if (target) {
+				fillBucketFromLegacy(name, target);
+			}
 		}
+
+		set(MIGRATIONS_BUCKET, RENAMED_KEY, true);
 	}
 
 	moveLegacyStatesOver('plugins');
