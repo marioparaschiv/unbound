@@ -32,7 +32,7 @@
 	"devDependencies": {
 		"@types/bun": "catalog:",
 		"@unbound-app/types": "workspace:*",
-		"tsdown": "^0.23.2"
+		"tsdown": "^0.23.4"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"
