@@ -1,9 +1,10 @@
 import { Link } from '@tanstack/react-router';
 
 import { declarationParts, signatureParts, typeToParts } from '~/lib/docs/type-parts';
-import { getDescription, isDeprecated } from '~/lib/docs/comment';
+import { getDescription, getDocComment, isDeprecated } from '~/lib/docs/comment';
 import type { DocsRenderContext } from '~/lib/docs/docs-links';
 import { DOCS_GROUPS, ReflectionKind } from '~/lib/docs/kinds';
+import { getInheritedFrom } from '~/lib/docs/declaration';
 import type { DocsReflection } from '~/lib/docs/typedoc';
 import type { DocsMember } from '~/lib/docs/docs-page';
 import KindBadge from '~/components/docs/kind-badge';
@@ -14,6 +15,11 @@ import Tag from '~/components/tag';
 
 type ObjectMembersProps = {
 	members: DocsReflection[];
+	ctx: DocsRenderContext;
+};
+
+type ObjectMemberProps = {
+	member: DocsReflection;
 	ctx: DocsRenderContext;
 };
 
@@ -34,6 +40,42 @@ function memberParts(member: DocsReflection, ctx: DocsRenderContext) {
 	return declarationParts(member, ctx);
 }
 
+function ObjectMember({ member, ctx }: ObjectMemberProps) {
+	const comment = getDocComment(member);
+	const inheritedFrom = getInheritedFrom(member, ctx);
+
+	return (
+		<div
+			id={member.name}
+			className='flex flex-col gap-2 px-4 py-3 scroll-mt-24 target:bg-accent/60'
+		>
+			<div className='flex flex-wrap items-baseline gap-x-2 gap-y-1'>
+				<a
+					href={`#${member.name}`}
+					className='font-mono font-semibold text-[0.875rem] hover:underline underline-offset-4'
+				>
+					{member.flags.isReadonly ? (
+						<span className='font-normal text-primary'>readonly </span>
+					) : null}
+					{member.name}
+					{member.flags.isOptional ? (
+						<span className='text-muted-foreground'>?</span>
+					) : null}
+				</a>
+				<TypeView parts={memberParts(member, ctx)} route={ctx.route} />
+				{isDeprecated(comment) ? <Tag variant='warning'>Deprecated</Tag> : null}
+			</div>
+			{inheritedFrom.length ? (
+				<p className='text-muted-foreground text-xs'>
+					Inherited from{' '}
+					<TypeView parts={inheritedFrom} route={ctx.route} className='text-xs' />
+				</p>
+			) : null}
+			<DocText parts={getDescription(comment)} ctx={ctx} />
+		</div>
+	);
+}
+
 /**
  * @description An interface's or object type's members, each with an anchor its links jump to.
  * @param props The members and the page's render context.
@@ -47,31 +89,7 @@ export function ObjectMembers({ members, ctx }: ObjectMembersProps) {
 			</Text>
 			<div className='flex flex-col border rounded-surface divide-y overflow-hidden'>
 				{members.map((member) => (
-					<div
-						key={member.id}
-						id={member.name}
-						className='flex flex-col gap-2 px-4 py-3 scroll-mt-24 target:bg-accent/60'
-					>
-						<div className='flex flex-wrap items-baseline gap-x-2 gap-y-1'>
-							<a
-								href={`#${member.name}`}
-								className='font-mono font-semibold text-[0.875rem] hover:underline underline-offset-4'
-							>
-								{member.flags.isReadonly ? (
-									<span className='font-normal text-primary'>readonly </span>
-								) : null}
-								{member.name}
-								{member.flags.isOptional ? (
-									<span className='text-muted-foreground'>?</span>
-								) : null}
-							</a>
-							<TypeView parts={memberParts(member, ctx)} route={ctx.route} />
-							{isDeprecated(member.comment) ? (
-								<Tag variant='warning'>Deprecated</Tag>
-							) : null}
-						</div>
-						<DocText parts={getDescription(member.comment)} ctx={ctx} />
-					</div>
+					<ObjectMember key={member.id} member={member} ctx={ctx} />
 				))}
 			</div>
 		</section>

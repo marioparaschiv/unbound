@@ -6,7 +6,7 @@ import {
 	type TypePart,
 } from '~/lib/docs/type-parts';
 import { isCallableVariable, ReflectionKind } from '~/lib/docs/kinds';
-import type { DocsReflection } from '~/lib/docs/typedoc';
+import type { DocsReflection, DocsType } from '~/lib/docs/typedoc';
 
 /** What a declaration header starts with, per kind; kinds outside it show no keyword. */
 const DECLARATION_KEYWORDS: Partial<Record<number, string>> = {
@@ -61,6 +61,30 @@ export function getObjectMembers(reflection: DocsReflection): DocsReflection[] {
 	return type?.type === 'reflection' ? (type.declaration.children ?? []) : [];
 }
 
+function extendsParts(types: DocsType[] | undefined, ctx: TypeContext): TypePart[] {
+	if (!types?.length) {
+		return [];
+	}
+
+	return [
+		keyword(' extends '),
+		...types.flatMap((type, index) => [
+			...(index ? [punctuation(', ')] : []),
+			...typeToParts(type, ctx),
+		]),
+	];
+}
+
+/**
+ * @description Renders where an inherited member comes from: `Parent.member`, linked to it.
+ * @param member An interface's or class's member.
+ * @param ctx Resolves references to their pages.
+ * @returns The parts, empty for a member the type declares itself.
+ */
+export function getInheritedFrom(member: DocsReflection, ctx: TypeContext): TypePart[] {
+	return member.inheritedFrom ? typeToParts(member.inheritedFrom, ctx) : [];
+}
+
 /**
  * @description Renders one call signature's declaration: `function name<T>(a: A): R`.
  * @param reflection The page's reflection.
@@ -77,7 +101,7 @@ export function getSignatureHeader(
 }
 
 /**
- * @description Renders a non-callable declaration's header: `type Name<T> = …`, `const name: T`, `interface Name<T>`.
+ * @description Renders a non-callable declaration's header: `type Name<T> = …`, `const name: T`, `interface Name<T> extends Base`.
  * An object type whose members are listed below collapses to `{ … }`.
  * @param reflection The page's reflection.
  * @param ctx Resolves references to their pages.
@@ -93,8 +117,11 @@ export function getDeclarationHeader(reflection: DocsReflection, ctx: TypeContex
 	const type = reflection.type;
 	const listed = getObjectMembers(reflection).length > 0;
 
-	// An interface's or class's members follow below the header, which is its name alone.
-	if (HEADER_ONLY_KINDS.has(reflection.kind) || (!type && !listed)) {
+	if (HEADER_ONLY_KINDS.has(reflection.kind)) {
+		return [...head, ...extendsParts(reflection.extendedTypes, ctx)];
+	}
+
+	if (!type && !listed) {
 		return head;
 	}
 
@@ -107,4 +134,10 @@ export function getDeclarationHeader(reflection: DocsReflection, ctx: TypeContex
 	];
 }
 
-export default { getCallSignatures, getObjectMembers, getSignatureHeader, getDeclarationHeader };
+export default {
+	getCallSignatures,
+	getObjectMembers,
+	getInheritedFrom,
+	getSignatureHeader,
+	getDeclarationHeader,
+};

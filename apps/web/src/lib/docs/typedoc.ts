@@ -1,10 +1,5 @@
 import { z } from 'zod';
 
-/**
- * The subset of TypeDoc's `JSONOutput.ProjectReflection` (schema 2.0) the docs render. Fields outside it
- * are stripped at parse time; a type discriminant outside {@link DocsType} fails the parse.
- */
-
 /** Where an `{@link}` or reference points outside this project. */
 export type DocsSymbolId = {
 	packageName: string;
@@ -60,6 +55,9 @@ export type DocsReflection = {
 	defaultValue?: string;
 	/** A re-export's original declaration. */
 	target?: number;
+	extendedTypes?: DocsType[];
+	/** The member of a parent type an inherited member comes from. */
+	inheritedFrom?: DocsType;
 };
 
 export type DocsProject = {
@@ -245,6 +243,8 @@ export const docsReflectionSchema: z.ZodType<DocsReflection> = z.lazy(() =>
 		default: docsTypeSchema.optional(),
 		defaultValue: z.string().optional(),
 		target: z.number().optional(),
+		extendedTypes: z.array(docsTypeSchema).optional(),
+		inheritedFrom: docsTypeSchema.optional(),
 	}),
 );
 
