@@ -26,7 +26,7 @@ const PRODUCT_LINKS: FooterLink[] = [
 
 const SUPPORT_LINKS: FooterLink[] = [
 	{ label: 'FAQ', href: '/faq' },
-	{ label: 'Documentation', href: 'https://docs.unbound.rip' },
+	{ label: 'Documentation', href: '/docs' },
 	{ label: 'Contact', href: '/contact' },
 ];
 

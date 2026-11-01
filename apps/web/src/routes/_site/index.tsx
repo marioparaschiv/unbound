@@ -28,8 +28,6 @@ type Feature = {
 	wide?: boolean;
 };
 
-const DOCS_URL = 'https://docs.unbound.rip';
-
 const GRID_PATTERN = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cg fill='none' opacity='0.1'%3E%3Cpath d='M48 23.5L0 23.5' stroke='%23888'/%3E%3Cpath d='M48 47.5001L0 47.5001' stroke='%23888'/%3E%3Cpath d='M23.5 0V48' stroke='%23888'/%3E%3Cpath d='M47.5 0V48' stroke='%23888'/%3E%3C/g%3E%3Cg opacity='0.25'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M48 47L48 48L47 48L47 47L48 47ZM48 43L48 44L47 44L47 43L48 43ZM48 39L48 40L47 40L47 39L48 39ZM48 35L48 36L47 36L47 35L48 35ZM48 31L48 32L47 32L47 31L48 31ZM48 27L48 28L47 28L47 27L48 27ZM48 23L48 24L47 24L47 23L48 23ZM48 19L48 20L47 20L47 19L48 19ZM48 15L48 16L47 16L47 15L48 15ZM48 11L48 12L47 12L47 11L48 11ZM48 7L48 8L47 8L47 7L48 7ZM48 3L48 4L47 4L47 3L48 3Z' fill='%23888'/%3E%3C/g%3E%3Cg opacity='0.035'%3E%3Crect width='24' height='24' fill='%23888'/%3E%3Crect x='24' y='24' width='24' height='24' fill='%23888'/%3E%3C/g%3E%3C/svg%3E")`;
 
 const FEATURES: Feature[] = [
@@ -156,9 +154,7 @@ function HomePage() {
 						<Link to='/addons/plugins'>Get Started</Link>
 					</Button>
 					<Button asChild variant='secondary' size='lg' className='min-w-40'>
-						<a href={DOCS_URL} target='_blank' rel='noopener noreferrer'>
-							Documentation
-						</a>
+						<Link to='/docs'>Documentation</Link>
 					</Button>
 				</div>
 				{/* Below md the image overhangs the viewport by its transparent margins, leaving the phones about 8px from each edge. */}
@@ -181,9 +177,9 @@ function HomePage() {
 						and developer tools.
 					</p>
 					<Button asChild variant='secondary' size='lg'>
-						<a href={DOCS_URL} target='_blank' rel='noopener noreferrer'>
+						<Link to='/docs/developer/$' params={{ _splat: 'addons/introduction' }}>
 							Start Building
-						</a>
+						</Link>
 					</Button>
 				</Reveal>
 			</div>
