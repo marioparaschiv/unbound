@@ -237,22 +237,22 @@ func TestSelectAndroidSplitsPicksTheEmulatorsABI(t *testing.T) {
 	}
 }
 
-func TestSelectSimulatorPicksTheNewestIOSRuntime(t *testing.T) {
+func TestSelectSimulatorPicksTheNewestNumberedIPhone(t *testing.T) {
 	listing := []byte(`{"runtimes":[
-		{"identifier":"com.apple.CoreSimulator.SimRuntime.iOS-17-5","platform":"iOS","version":"17.5","isAvailable":true,"supportedDeviceTypes":[{"identifier":"iPhone-15","productFamily":"iPhone"}]},
-		{"identifier":"com.apple.CoreSimulator.SimRuntime.iOS-18-10","platform":"iOS","version":"18.10","isAvailable":true,"supportedDeviceTypes":[{"identifier":"iPad-Pro","productFamily":"iPad"},{"identifier":"iPhone-16e","productFamily":"iPhone"},{"identifier":"iPhone-16-Pro","productFamily":"iPhone"}]},
-		{"identifier":"com.apple.CoreSimulator.SimRuntime.iOS-18-9","platform":"iOS","version":"18.9","isAvailable":true,"supportedDeviceTypes":[]},
+		{"identifier":"com.apple.CoreSimulator.SimRuntime.iOS-17-5","platform":"iOS","version":"17.5","isAvailable":true,"supportedDeviceTypes":[{"identifier":"iPhone-15","name":"iPhone 15","productFamily":"iPhone"}]},
+		{"identifier":"com.apple.CoreSimulator.SimRuntime.iOS-18-10","platform":"iOS","version":"18.10","isAvailable":true,"supportedDeviceTypes":[{"identifier":"iPad-Pro","name":"iPad Pro","productFamily":"iPad"},{"identifier":"iPhone-16-Pro","name":"iPhone 16 Pro","productFamily":"iPhone"},{"identifier":"iPhone-16","name":"iPhone 16","productFamily":"iPhone"},{"identifier":"iPhone-16e","name":"iPhone 16e","productFamily":"iPhone"},{"identifier":"iPhone-11","name":"iPhone 11","productFamily":"iPhone"}]},
+		{"identifier":"com.apple.CoreSimulator.SimRuntime.iOS-18-11","platform":"iOS","version":"18.11","isAvailable":true,"supportedDeviceTypes":[{"identifier":"iPhone-Duo","name":"iPhone Duo","productFamily":"iPhone"}]},
 		{"identifier":"com.apple.CoreSimulator.SimRuntime.iOS-19-0","platform":"iOS","version":"19.0","isAvailable":false,"supportedDeviceTypes":[]},
 		{"identifier":"com.apple.CoreSimulator.SimRuntime.watchOS-11-0","platform":"watchOS","version":"11.0","isAvailable":true,"supportedDeviceTypes":[]}
 	]}`)
-	runtime, deviceType, err := selectSimulator(listing)
+	choice, err := selectSimulator(listing)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if runtime != "com.apple.CoreSimulator.SimRuntime.iOS-18-10" || deviceType != "iPhone-16-Pro" {
-		t.Fatalf("unexpected simulator %s %s", runtime, deviceType)
+	if choice.runtime != "com.apple.CoreSimulator.SimRuntime.iOS-18-10" || choice.deviceType != "iPhone-16-Pro" || choice.description != "iPhone 16 Pro on iOS 18.10" {
+		t.Fatalf("unexpected simulator %+v", choice)
 	}
-	if _, _, err := selectSimulator([]byte(`{"runtimes":[]}`)); err == nil {
+	if _, err := selectSimulator([]byte(`{"runtimes":[]}`)); err == nil {
 		t.Fatal("no runtime must be reported")
 	}
 }
