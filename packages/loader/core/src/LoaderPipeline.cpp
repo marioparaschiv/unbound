@@ -161,6 +161,8 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime)
 
 void LoaderPipeline::onRuntimeCreated(jsi::Runtime &runtime)
 {
+    log(LogLevel::Info, LOG_CATEGORY_RUNTIME, "Discord's runtime was created.");
+
     std::optional<SavedBundle> saved;
     {
         std::lock_guard<std::mutex> lock(savedMutex_);

@@ -108,7 +108,7 @@ func TestSmokeLogWatcherTimesUnboundFromDiscordsRuntime(t *testing.T) {
 	watcher.now = func() time.Time { return clock }
 	watcher.markLaunch()
 	clock = clock.Add(5 * time.Minute)
-	watcher.observe("I Unbound : [runtime] Metro module capture installed before Discord bundle.")
+	watcher.observe("I Unbound : [runtime] Discord's runtime was created.")
 	clock = clock.Add(4 * time.Second)
 	watcher.observe("I Unbound : [default] Unbound's bundle was successfully executed.")
 	clock = clock.Add(time.Second)
@@ -130,7 +130,7 @@ func TestSmokeLogWatcherCountsAMilestoneReachedWithTheRuntime(t *testing.T) {
 	watcher.now = func() time.Time { return clock }
 	watcher.markLaunch()
 	clock = clock.Add(time.Minute)
-	watcher.observe("I Unbound : [runtime] Metro module capture installed before Discord bundle.")
+	watcher.observe("I Unbound : [runtime] Discord's runtime was created.")
 	watcher.observe("I Unbound : [plugins] Loaded 2 plugins.")
 	result := &smokeResult{loaded: map[string]bool{}, failures: map[string][]string{}}
 	watcher.snapshot(result)

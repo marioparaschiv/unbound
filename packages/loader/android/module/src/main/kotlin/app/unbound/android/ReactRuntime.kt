@@ -93,10 +93,10 @@ object ReactRuntime {
                     }
                 },
             )
-        }.onFailure { Logger.error(LogCategory.RUNTIME, "Failed to schedule module capture", it) }.isSuccess
+        }.onFailure { Logger.error(LogCategory.RUNTIME, "Failed to schedule Unbound before Discord's bundle", it) }.isSuccess
 
         if (scheduled && !finished.await(BEFORE_BUNDLE_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-            Logger.error(LogCategory.RUNTIME, "Module capture did not run before the bundle within ${BEFORE_BUNDLE_TIMEOUT_SECONDS}s")
+            Logger.error(LogCategory.RUNTIME, "Unbound did not run before Discord's bundle within ${BEFORE_BUNDLE_TIMEOUT_SECONDS}s")
         }
     }
 

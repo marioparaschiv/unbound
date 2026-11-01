@@ -29,7 +29,7 @@ var (
 	smokeLoadedCount      = regexp.MustCompile(`Loaded (\d+) plugins?\.`)
 	smokeAddonFailure     = regexp.MustCompile(`Failed to (?:start|load) addon ([\w.-]+)`)
 	smokeBundleExecuted   = "Unbound's bundle was successfully executed."
-	smokeRuntimeCreated   = "Metro module capture "
+	smokeRuntimeCreated   = "Discord's runtime was created."
 	errSmokeNotConnected  = errors.New("no device is connected to the debugger bridge")
 	errSmokeEvalTimedOut  = errors.New("the debugger evaluation timed out")
 	smokeStatusExpression = `(function () {
