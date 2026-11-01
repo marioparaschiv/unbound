@@ -13,24 +13,47 @@ import { encodePng } from './helpers/png';
 const NOW = new Date('2026-03-01T00:00:00Z');
 
 const suite = await createBadgeSuite(NOW);
-const { ctx, bucket, anonymous, signUp, setBadges, uploadImage, owned, shown, publicBadges } =
-	suite;
+const {
+	ctx,
+	bucket,
+	anonymous,
+	signUp,
+	setBadges,
+	requestUpload,
+	putUpload,
+	completeUpload,
+	staged,
+	uploadImage,
+	owned,
+	shown,
+	publicBadges,
+} = suite;
+
+const MB = 1024 * 1024;
 
 const BADGE: Badge = { name: 'Night Owl', image: suite.images[0] };
 
 afterAll(suite.close);
 
 describe('badge images', () => {
-	test('a $5 sponsor uploads a PNG; the same bytes again store nothing new', async () => {
+	test('a $5 sponsor uploads a PNG through a presigned URL; the same bytes again store nothing new', async () => {
 		const sponsor = await signUp();
-		const bytes = encodePng({ width: 96, color: [200, 80, 160] });
+		const bytes = encodePng({ width: 96, color: [200, 80, 160], padding: 400 * 1024 });
 		const stored = bucket.objects.size;
 
-		const first = await uploadImage(sponsor.client, bytes);
+		const { uploadId, url, expiresAt } = await requestUpload(sponsor.client, bytes.byteLength);
+
+		expect(expiresAt).toBe(new Date(NOW.getTime() + 5 * 60_000).toISOString());
+		expect(bucket.objects.size).toBe(stored);
+
+		await putUpload(url, bytes);
+
+		const first = await completeUpload(sponsor.client, uploadId);
 		const again = await uploadImage(sponsor.client, bytes);
 
 		expect(first).toEqual({ image: hashBadgeImage(bytes), url: suite.imageUrl(first.image) });
 		expect(again).toEqual(first);
+		expect(await staged(url)).toBe(false);
 		expect(bucket.objects.size).toBe(stored + 1);
 		expect(bucket.objects.get(getBadgeImageKey(first.image))).toEqual(bytes);
 
@@ -40,7 +63,6 @@ describe('badge images', () => {
 	});
 
 	test('uploading needs a linked, active, recurring sponsorship of at least $5', async () => {
-		const bytes = encodePng({ width: 64 });
 		const ineligible = await Promise.all([
 			signUp({ github: false }),
 			signUp({ sponsorship: { monthlyPriceCents: 499 } }),
@@ -48,30 +70,74 @@ describe('badge images', () => {
 		]);
 
 		for (const sponsor of ineligible) {
-			expect(await failure(uploadImage(sponsor.client, bytes))).toEqual({
+			expect(await failure(requestUpload(sponsor.client, 1024))).toEqual({
+				status: 403,
+				code: 'sponsorship_required',
+			});
+			expect(await failure(completeUpload(sponsor.client, Bun.randomUUIDv7()))).toEqual({
 				status: 403,
 				code: 'sponsorship_required',
 			});
 		}
 
-		expect(await failure(uploadImage(anonymous, bytes))).toEqual({
+		expect(await failure(requestUpload(anonymous, 1024))).toEqual({
 			status: 401,
 			code: 'unauthorized',
 		});
 	});
 
-	test('refuses an image that breaks a rule, or another content type, and stores nothing', async () => {
+	test('refuses a declared size over 5 MB before handing out a URL', async () => {
 		const sponsor = await signUp();
-		const stored = bucket.objects.size;
 
-		expect(await failure(uploadImage(sponsor.client, encodePng({ width: 300 })))).toEqual({
+		expect(await failure(requestUpload(sponsor.client, 5 * MB + 1))).toEqual({
 			status: 400,
 			code: 'badge_rejected',
 		});
-		expect(
-			await failure(uploadImage(sponsor.client, encodePng({ width: 64 }), 'image/jpeg')),
-		).toEqual({ status: 400, code: 'badge_rejected' });
+		expect((await requestUpload(sponsor.client, 5 * MB)).uploadId).toBeString();
+	});
+
+	test.each([
+		['breaks a rule', encodePng({ width: 300 })],
+		['is over 5 MB, whatever size was declared', encodePng({ width: 64, padding: 5 * MB })],
+		['is not a PNG', new TextEncoder().encode('GIF89a')],
+	])('refuses and deletes a staged file that %s, and publishes nothing', async (_name, bytes) => {
+		const sponsor = await signUp();
+		const stored = bucket.objects.size;
+		const { uploadId, url } = await requestUpload(sponsor.client, 1024);
+
+		await putUpload(url, bytes);
+
+		expect(await failure(completeUpload(sponsor.client, uploadId))).toEqual({
+			status: 400,
+			code: 'badge_rejected',
+		});
+		expect(await staged(url)).toBe(false);
 		expect(bucket.objects.size).toBe(stored);
+	});
+
+	test("completes only an upload that arrived, and only the caller's own", async () => {
+		const owner = await signUp();
+		const other = await signUp();
+		const bytes = encodePng({ width: 64, color: [10, 200, 120] });
+		const { uploadId, url } = await requestUpload(owner.client, bytes.byteLength);
+
+		expect(await failure(completeUpload(owner.client, uploadId))).toEqual({
+			status: 404,
+			code: 'not_found',
+		});
+
+		await putUpload(url, bytes);
+
+		expect(await failure(completeUpload(other.client, uploadId))).toEqual({
+			status: 404,
+			code: 'not_found',
+		});
+		expect(await failure(completeUpload(owner.client, 'not-a-uuid'))).toEqual({
+			status: 400,
+			code: 'invalid_request',
+		});
+		expect(await staged(url)).toBe(true);
+		expect((await completeUpload(owner.client, uploadId)).image).toBe(hashBadgeImage(bytes));
 	});
 
 	test('refuses a badge whose image was never uploaded', async () => {
@@ -86,16 +152,17 @@ describe('badge images', () => {
 
 	test('caps uploads at 20 an hour per user', async () => {
 		const sponsor = await signUp();
-		const bytes = encodePng({ width: 64 });
+		const other = await signUp();
 
 		for (let i = 0; i < 20; i++) {
-			await uploadImage(sponsor.client, bytes);
+			await requestUpload(sponsor.client, 1024);
 		}
 
-		expect(await failure(uploadImage(sponsor.client, bytes))).toEqual({
+		expect(await failure(requestUpload(sponsor.client, 1024))).toEqual({
 			status: 429,
 			code: 'rate_limited',
 		});
+		expect((await requestUpload(other.client, 1024)).uploadId).toBeString();
 	});
 });
 

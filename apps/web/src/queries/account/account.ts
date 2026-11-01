@@ -40,18 +40,34 @@ export function saveBadgesMutation() {
 }
 
 /**
- * @description Uploads a PNG for one of the signed-in user's sponsor badges.
+ * @description Uploads a PNG for one of the signed-in user's sponsor badges: asks for a presigned URL,
+ * PUTs the file straight to storage, then has the server check and store it.
  * @returns Mutation options taking the file, resolving to the image's hash and URL.
  */
 export function uploadBadgeImageMutation() {
 	return mutationOptions({
 		mutationFn: async (file: File) => {
-			const { BADGE_IMAGE_TYPE, uploadBadgeImageResponseSchema } =
+			const { BADGE_IMAGE_TYPE, presignedBadgeUploadSchema, uploadBadgeImageResponseSchema } =
 				await import('@unbound-app/contracts/sponsors');
-
-			return createBrowserClient()('POST /api/v1/me/badges/images', {
+			const client = createBrowserClient();
+			const { uploadId, url } = await client('POST /api/v1/me/badges/uploads', {
+				body: { size: file.size },
+				response: presignedBadgeUploadSchema,
+			});
+			// The signed URL is the only authorisation storage needs; the session cookie stays home.
+			const sent = await fetch(url, {
+				method: 'PUT',
 				body: file,
 				headers: { 'content-type': BADGE_IMAGE_TYPE },
+				credentials: 'omit',
+			}).catch(() => undefined);
+
+			if (!sent?.ok) {
+				throw new Error('The image could not be sent to storage; try again.');
+			}
+
+			return client('POST /api/v1/me/badges/uploads/$uploadId/complete', {
+				params: { uploadId },
 				response: uploadBadgeImageResponseSchema,
 			});
 		},

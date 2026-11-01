@@ -3,9 +3,11 @@ import type {
 	BadgeClaim,
 	BadgeClaimResponse,
 	OwnedBadge,
+	PresignedBadgeUpload,
 	PublicBadge,
 	UploadBadgeImageResponse,
 } from '@unbound-app/contracts/sponsors';
+import { BADGE_IMAGE_MAX_BYTES, BADGE_IMAGE_MAX_LABEL } from '@unbound-app/contracts/sponsors';
 import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm';
 import { createLogger } from '@unbound-app/logger';
 
@@ -34,6 +36,10 @@ const PERK_ID = 'custom-badge';
 
 const UPLOAD_WINDOW_SECONDS = 60 * 60;
 const UPLOADS_PER_WINDOW = 20;
+// Well under STAGING_ORPHAN_GRACE_SECONDS, so the sweeper never deletes an upload still in flight.
+const UPLOAD_URL_TTL_SECONDS = 5 * 60;
+
+const TOO_LARGE = `Badge images must be ${BADGE_IMAGE_MAX_LABEL} or smaller.`;
 
 type ClaimRow = typeof perkClaim.$inferSelect;
 
@@ -141,41 +147,102 @@ async function findBadgesProblem(ctx: AppContext, badges: Badge[]): Promise<stri
 	}
 }
 
+// Scoped by user, so completing an upload only ever reads the caller's own staged file.
+function getBadgeUploadKey(userId: string, uploadId: string): string {
+	return `badge-uploads/${userId}/${uploadId}.png`;
+}
+
 /**
- * @description Stores a badge image in the public bucket under its hash, after checking it is a
- * square, still PNG within the size limits. Uploading the same bytes again stores nothing new.
- * Needs a sponsorship that can claim a badge, and counts against an hourly upload limit.
+ * @description Opens a badge image upload: a presigned PUT into the private staging bucket that
+ * expires in minutes. Needs a sponsorship that can claim a badge, and counts against an hourly limit.
  * @param ctx The application context.
  * @param userId The uploader.
- * @param bytes The PNG's bytes.
- * @returns The image's hash, which a badge refers to, and its URL.
+ * @param size The file's length in bytes, refused above {@link BADGE_IMAGE_MAX_BYTES}.
+ * @returns The upload id to complete, the URL to PUT the PNG to, and when that URL expires.
  */
-export async function uploadBadgeImage(
+export async function createBadgeUpload(
 	ctx: AppContext,
 	userId: string,
-	bytes: Uint8Array,
-): Promise<UploadBadgeImageResponse> {
+	size: number,
+): Promise<PresignedBadgeUpload> {
 	await requireClaimable(ctx, userId);
+
+	if (size > BADGE_IMAGE_MAX_BYTES) {
+		throw new ApiError('badge_rejected', TOO_LARGE);
+	}
+
 	await consumeRateLimit(ctx, {
 		key: `api:badge-image:${userId}`,
 		windowSeconds: UPLOAD_WINDOW_SECONDS,
 		max: UPLOADS_PER_WINDOW,
 	});
 
-	const problem = findBadgeImageProblem(bytes);
+	const uploadId = Bun.randomUUIDv7();
+	const expiresIn = UPLOAD_URL_TTL_SECONDS;
 
-	if (problem) {
-		throw new ApiError('badge_rejected', problem);
+	return {
+		uploadId,
+		// S3 presigned PUTs cannot bind a length, so completing checks the size of what arrived.
+		url: ctx.storage.staging.presign(getBadgeUploadKey(userId, uploadId), {
+			method: 'PUT',
+			expiresIn,
+		}),
+		expiresAt: new Date(ctx.now().getTime() + expiresIn * 1000).toISOString(),
+	};
+}
+
+async function readStagedBadge(staged: Bun.S3File): Promise<Uint8Array> {
+	if (!(await staged.exists())) {
+		throw new ApiError('not_found', 'The badge image did not arrive; upload it again.');
 	}
 
-	const image = hashBadgeImage(bytes);
-	const key = getBadgeImageKey(image);
-
-	if (!(await ctx.storage.public.exists(key))) {
-		await ctx.storage.public.write(key, bytes, { type: 'image/png' });
+	if ((await staged.stat()).size > BADGE_IMAGE_MAX_BYTES) {
+		throw new ApiError('badge_rejected', TOO_LARGE);
 	}
 
-	return { image, url: getBadgeImageUrl(ctx.env, image) };
+	return staged.bytes();
+}
+
+/**
+ * @description Completes a badge image upload: checks the staged file is a square, still PNG within
+ * the size limits, stores it in the public bucket under its hash, and deletes the staged file
+ * whether it passed or not. The same bytes again store nothing new.
+ * @param ctx The application context.
+ * @param userId The uploader, whose own upload is completed.
+ * @param uploadId The id {@link createBadgeUpload} returned.
+ * @returns The image's hash, which a badge refers to, and its URL.
+ */
+export async function completeBadgeUpload(
+	ctx: AppContext,
+	userId: string,
+	uploadId: string,
+): Promise<UploadBadgeImageResponse> {
+	await requireClaimable(ctx, userId);
+
+	const staged = ctx.storage.staging.file(getBadgeUploadKey(userId, uploadId));
+
+	try {
+		const bytes = await readStagedBadge(staged);
+		const problem = findBadgeImageProblem(bytes);
+
+		if (problem) {
+			throw new ApiError('badge_rejected', problem);
+		}
+
+		const image = hashBadgeImage(bytes);
+		const key = getBadgeImageKey(image);
+
+		if (!(await ctx.storage.public.exists(key))) {
+			await ctx.storage.public.write(key, bytes, { type: 'image/png' });
+		}
+
+		return { image, url: getBadgeImageUrl(ctx.env, image) };
+	} finally {
+		// The staging sweeper removes it later if this fails.
+		await staged.delete().catch((error) => {
+			logger.warn(`Failed to delete badge upload ${uploadId}:`, error);
+		});
+	}
 }
 
 /**
@@ -349,7 +416,8 @@ export async function getVisibleBadges(
 export default {
 	toBadgeClaim,
 	findBadgeClaim,
-	uploadBadgeImage,
+	createBadgeUpload,
+	completeBadgeUpload,
 	claimBadges,
 	removeBadges,
 	revokeBadge,

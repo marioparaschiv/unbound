@@ -1,5 +1,6 @@
 import {
 	badgeClaimResponseSchema,
+	presignedBadgeUploadSchema,
 	uploadBadgeImageResponseSchema,
 	userBadgesResponseSchema,
 } from '@unbound-app/contracts/sponsors';
@@ -7,7 +8,8 @@ import type { Badge } from '@unbound-app/contracts/sponsors';
 import { eq } from 'drizzle-orm';
 
 import { getBadgeImageKey, hashBadgeImage } from '~/lib/sponsors/badge-image';
-import uploadBadgeImageEndpoint from '~/endpoints/upload-badge-image';
+import completeBadgeUploadEndpoint from '~/endpoints/complete-badge-upload';
+import createBadgeUploadEndpoint from '~/endpoints/create-badge-upload';
 import listUserBadgesEndpoint from '~/endpoints/list-user-badges';
 import removeMyBadgesEndpoint from '~/endpoints/remove-my-badges';
 import restoreBadgeEndpoint from '~/endpoints/restore-badge';
@@ -24,6 +26,7 @@ import type { SeededSponsorship } from './sponsors';
 import { createTestContext, linkGitHub, signInWithDiscord } from './context';
 import { seedSponsorship } from './sponsors';
 import { withMemoryPublic } from './storage';
+import { serveMemoryS3 } from './memory-s3';
 import { serveEndpoints } from './server';
 import { encodePng } from './png';
 
@@ -41,14 +44,26 @@ const IMAGE_COLORS: [number, number, number][] = [
 ];
 
 /**
- * @description Serves the badge endpoints over a fresh database and an in-memory public bucket that
- * already holds four uploaded badge images, with helpers to sign up sponsors and call the endpoints.
+ * @description Serves the badge endpoints over a fresh database, an in-memory public bucket that
+ * already holds four uploaded badge images, and an in-memory staging store that takes presigned PUTs,
+ * with helpers to sign up sponsors and call the endpoints.
  * @param now The clock the endpoints run with.
  * @returns The context, bucket, images, clients and helpers; call `close` after the tests.
  */
 export async function createBadgeSuite(now: Date) {
 	const base = await createTestContext();
-	const { ctx, bucket } = withMemoryPublic({ ...base.ctx, now: () => now } satisfies AppContext);
+	const s3 = serveMemoryS3();
+	const staging = new Bun.S3Client({
+		endpoint: s3.url.href,
+		accessKeyId: 'memory',
+		secretAccessKey: 'memory',
+		bucket: 'staging',
+	});
+	const { ctx, bucket } = withMemoryPublic({
+		...base.ctx,
+		storage: { ...base.ctx.storage, staging },
+		now: () => now,
+	} satisfies AppContext);
 	// Stored as an upload stores them, so badges can refer to them without each test uploading.
 	const images = IMAGE_COLORS.map((color) => {
 		const bytes = encodePng({ width: 128, color });
@@ -59,7 +74,8 @@ export async function createBadgeSuite(now: Date) {
 		return image;
 	}) as [string, string, string, string];
 	const server = serveEndpoints(ctx, {
-		'POST /api/v1/me/badges/images': uploadBadgeImageEndpoint,
+		'POST /api/v1/me/badges/uploads': createBadgeUploadEndpoint,
+		'POST /api/v1/me/badges/uploads/$uploadId/complete': completeBadgeUploadEndpoint,
 		'GET /api/v1/users/$id/badges': listUserBadgesEndpoint,
 		'PUT /api/v1/me/badges': setMyBadgesEndpoint,
 		'DELETE /api/v1/me/badges': removeMyBadgesEndpoint,
@@ -96,6 +112,29 @@ export async function createBadgeSuite(now: Date) {
 	const imageUrl = (image: string) => `${ctx.env.CDN_URL}/badges/${image}.png`;
 	const setBadges = (client: Client, badges: Badge[]) =>
 		client('PUT /api/v1/me/badges', { body: { badges }, response: badgeClaimResponseSchema });
+	const requestUpload = (client: Client, size: number) =>
+		client('POST /api/v1/me/badges/uploads', {
+			body: { size },
+			response: presignedBadgeUploadSchema,
+		});
+	const completeUpload = (client: Client, uploadId: string) =>
+		client('POST /api/v1/me/badges/uploads/$uploadId/complete', {
+			params: { uploadId },
+			response: uploadBadgeImageResponseSchema,
+		});
+
+	// As the browser does: no credentials, only the signed URL.
+	async function putUpload(url: string, bytes: Uint8Array<ArrayBuffer>) {
+		const response = await fetch(url, {
+			method: 'PUT',
+			body: bytes,
+			headers: { 'content-type': 'image/png' },
+		});
+
+		if (!response.ok) {
+			throw new Error(`Failed to PUT the upload: ${response.status}`);
+		}
+	}
 
 	return {
 		ctx,
@@ -118,12 +157,19 @@ export async function createBadgeSuite(now: Date) {
 		}),
 		removeBadges: (client: Client) =>
 			client('DELETE /api/v1/me/badges', { response: badgeClaimResponseSchema }),
-		uploadImage: (client: Client, bytes: Uint8Array<ArrayBuffer>, type = 'image/png') =>
-			client('POST /api/v1/me/badges/images', {
-				body: new Blob([bytes]),
-				headers: { 'content-type': type },
-				response: uploadBadgeImageResponseSchema,
-			}),
+		requestUpload,
+		putUpload,
+		completeUpload,
+		/** Whether the presigned URL's object is still in staging. */
+		staged: async (url: string) => (await fetch(url, { method: 'HEAD' })).ok,
+		/** The whole browser flow: request a URL, PUT the bytes to it, complete. */
+		uploadImage: async (client: Client, bytes: Uint8Array<ArrayBuffer>) => {
+			const { uploadId, url } = await requestUpload(client, bytes.byteLength);
+
+			await putUpload(url, bytes);
+
+			return completeUpload(client, uploadId);
+		},
 		publicBadges: (userId: string) =>
 			anonymous('GET /api/v1/users/$id/badges', {
 				params: { id: userId },
@@ -131,6 +177,7 @@ export async function createBadgeSuite(now: Date) {
 			}),
 		close: async () => {
 			await server.stop(true);
+			await s3.stop(true);
 			await base.close();
 		},
 	};

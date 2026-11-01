@@ -52,6 +52,19 @@ export const publicBadgeSchema = z.object({
 	kind: perkIdSchema,
 });
 
+/** Asks for a presigned upload of a badge image; `size` is the file's length in bytes. */
+export const createBadgeUploadRequestSchema = z.object({
+	size: z.number().int().positive(),
+});
+
+/** A short-lived presigned PUT the browser sends the PNG to, then completes by `uploadId`. */
+export const presignedBadgeUploadSchema = z.object({
+	uploadId: z.uuid(),
+	url: z.url(),
+	expiresAt: z.iso.datetime(),
+});
+
+/** A completed upload: the stored image's hash and its URL. */
 export const uploadBadgeImageResponseSchema = z.object({
 	image: badgeImageSchema,
 	url: z.url(),
@@ -89,6 +102,8 @@ export const revokeBadgeRequestSchema = z.object({
 export type PerkId = z.infer<typeof perkIdSchema>;
 export type Badge = z.infer<typeof badgeSchema>;
 export type OwnedBadge = z.infer<typeof ownedBadgeSchema>;
+export type CreateBadgeUploadRequest = z.infer<typeof createBadgeUploadRequestSchema>;
+export type PresignedBadgeUpload = z.infer<typeof presignedBadgeUploadSchema>;
 export type UploadBadgeImageResponse = z.infer<typeof uploadBadgeImageResponseSchema>;
 export type SetBadgesRequest = z.infer<typeof setBadgesRequestSchema>;
 export type PublicBadge = z.infer<typeof publicBadgeSchema>;
@@ -112,6 +127,8 @@ export default {
 	badgeImageSchema,
 	badgeSchema,
 	ownedBadgeSchema,
+	createBadgeUploadRequestSchema,
+	presignedBadgeUploadSchema,
 	uploadBadgeImageResponseSchema,
 	badgesSchema,
 	setBadgesRequestSchema,
