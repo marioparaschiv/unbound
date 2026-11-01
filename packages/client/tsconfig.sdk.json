@@ -2,6 +2,7 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"composite": false,
+		"noCheck": true,
 		"types": ["@unbound-app/types", "./src/hot-refresh/react-refresh.d.ts"],
 		"paths": {
 			"~/*": ["./src/*"],
