@@ -102,6 +102,19 @@ export function byName(name: string): MetroFilter {
 }
 
 /**
+ * @description Builds a filter matching a wrapped component, like one from `React.memo`, whose inner `type` has the given name.
+ * @param name The `name` of the wrapped component's `type`.
+ * @returns A {@link MetroFilter} matching the module whose `type` has that name.
+ */
+export function byTypeName(name: string): MetroFilter {
+	const filter = (mdl: any) => mdl.type?.name === name;
+
+	filter[CACHE_KEY] = `byTypeName::${name}`;
+
+	return filter;
+}
+
+/**
  * @description Builds a filter matching a flux store by name, appending `Store` when `short` is set.
  * @param name The store name to match against.
  * @param short Whether to append `Store` to `name` before matching.
@@ -116,4 +129,12 @@ export function byFluxStore(name: string, short: boolean = true): MetroFilter {
 	return filter;
 }
 
-export default { byProps, byDisplayName, byPrototypes, byName, byFluxStore, byFilePath };
+export default {
+	byProps,
+	byDisplayName,
+	byPrototypes,
+	byName,
+	byTypeName,
+	byFluxStore,
+	byFilePath,
+};

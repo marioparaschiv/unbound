@@ -4,7 +4,7 @@ export const SpotifyActions = metro.findByProps('play', 'sync', 'getMetadata', {
 export const ActivityButtons = metro.findByProps('PlayOnSpotifyButton', { lazy: true });
 export const SpotifyComponents = metro.findByProps('SpotifyPlayButton', { lazy: true });
 export const MediaKeyboardActions = metro.find(
-	(exports) => exports?.type?.name === 'MediaKeyboardBottomSheetActions',
+	metro.filters.byTypeName('MediaKeyboardBottomSheetActions'),
 	{ lazy: true },
 );
 export const Icons = metro.findByProps('SpotifyNeutralIcon', { lazy: true });
