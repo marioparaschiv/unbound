@@ -1,7 +1,7 @@
 import noop from '@unbound-app/utils/noop';
 
+import { createPatcher } from '~/patcher/create-patcher';
 import { onModuleLoaded } from '~/metro/wait';
-import { createPatcher } from '~/patcher/api';
 import { findByProps } from '~/metro/search';
 import { byProps } from '~/metro/filters';
 

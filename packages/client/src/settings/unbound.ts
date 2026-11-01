@@ -2,7 +2,7 @@ import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 import type { PredicateResult, Widen } from '@unbound-app/types';
 
 import type { SettingsPayload } from '~/storage/api';
-import storage from '~/storage/api';
+import { getBucket, useBucket } from '~/storage/api';
 
 const NO_FONT_OVERRIDES: Record<string, string> = {};
 
@@ -46,7 +46,7 @@ export type BooleanSettingKey = {
  * @returns The stored value, or the key's default.
  */
 export function getSetting<K extends UnboundSettingKey>(key: K): Widen<UnboundSettings[K]> {
-	return storage.get(CORE_SETTINGS_STORE, key, DEFAULTS[key]);
+	return getBucket(CORE_SETTINGS_STORE).get(key, DEFAULTS[key]);
 }
 
 /**
@@ -56,7 +56,7 @@ export function getSetting<K extends UnboundSettingKey>(key: K): Widen<UnboundSe
  * @param value The value to store.
  */
 export function setSetting<K extends UnboundSettingKey>(key: K, value: UnboundSettings[K]): void {
-	storage.set(CORE_SETTINGS_STORE, key, value);
+	getBucket(CORE_SETTINGS_STORE).set(key, value);
 }
 
 /**
@@ -64,7 +64,7 @@ export function setSetting<K extends UnboundSettingKey>(key: K, value: UnboundSe
  * @param key The setting key.
  */
 export function toggleSetting(key: BooleanSettingKey): void {
-	storage.toggle(CORE_SETTINGS_STORE, key, DEFAULTS[key]);
+	getBucket(CORE_SETTINGS_STORE).toggle(key, DEFAULTS[key]);
 }
 
 /**
@@ -83,7 +83,7 @@ export function isSettingChange(payload: SettingsPayload, key: UnboundSettingKey
  * @returns The typed core setting accessors.
  */
 export function useUnboundSettings(predicate?: (payload: SettingsPayload) => PredicateResult) {
-	storage.useBucket(CORE_SETTINGS_STORE, predicate);
+	useBucket(CORE_SETTINGS_STORE, predicate);
 
 	return { get: getSetting, set: setSetting, toggle: toggleSetting };
 }

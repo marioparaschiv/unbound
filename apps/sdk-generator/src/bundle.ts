@@ -19,6 +19,7 @@ import {
 import {
 	stripInternal,
 	declaredNames,
+	declaresValue,
 	exportedNames,
 	collectReferencedNames,
 	groupByOwner,
@@ -42,6 +43,8 @@ export type HoistFile = {
 export type LibraryBundle = {
 	text: string;
 	names: Set<string>;
+	/** The declared names that are values (`const`, function, class, enum), not only types. */
+	valueNames: Set<string>;
 	/** The names the hoist file exports - the surface other files may legally re-export. */
 	exportedNames: Set<string>;
 	/** The hoist files this file imports from, so reachability keeps its dependencies emitted. */
@@ -51,6 +54,8 @@ export type LibraryBundle = {
 export type HoistFiles = {
 	files: HoistFile[];
 	ownerByName: Map<string, string>;
+	/** The owned names their owning hoist file declares as values. */
+	hoistedValues: Set<string>;
 };
 
 /**
@@ -235,9 +240,16 @@ export function bundleLibrary(
 	}
 
 	const names = new Set<string>();
+	const valueNames = new Set<string>();
 
 	for (const statement of survivors) {
-		for (const name of declaredNames(statement)) names.add(name);
+		for (const name of declaredNames(statement)) {
+			names.add(name);
+
+			if (declaresValue(statement)) {
+				valueNames.add(name);
+			}
+		}
 	}
 
 	if (names.size === 0) {
@@ -247,6 +259,7 @@ export function bundleLibrary(
 	return {
 		text: sourceFile.getFullText(),
 		names,
+		valueNames,
 		exportedNames: exportedNames(sourceFile),
 		deps: new Set(importsByOwner.keys()),
 	};
@@ -261,6 +274,7 @@ export function bundleLibrary(
 export function buildHoistFiles(): HoistFiles {
 	const files: HoistFile[] = [];
 	const ownerByName = new Map<string, string>();
+	const hoistedValues = new Set<string>();
 
 	// The utils typings are hoisted first so their names claim the public `utils.d.ts` home before the
 	// `@unbound-app/types` index claims the rest for `_internal.d.ts`.
@@ -318,11 +332,17 @@ export function buildHoistFiles(): HoistFiles {
 		});
 
 		for (const name of bundled.names) {
-			if (!ownerByName.has(name)) {
-				ownerByName.set(name, out);
+			if (ownerByName.has(name)) {
+				continue;
+			}
+
+			ownerByName.set(name, out);
+
+			if (bundled.valueNames.has(name)) {
+				hoistedValues.add(name);
 			}
 		}
 	}
 
-	return { files, ownerByName };
+	return { files, ownerByName, hoistedValues };
 }

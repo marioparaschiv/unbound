@@ -1,18 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
-import { prefetchListing } from '~/queries/marketplace/listing';
 import { marketplaceSearchSchema } from '~/lib/addon-filters';
-import AddonListing from '~/components/addon-listing';
 
-function ThemesPage() {
-	return <AddonListing type='theme' search={Route.useSearch()} />;
-}
-
+/** The old `/themes` listing, now the Themes tab of `/addons`; old links keep their search. */
 export const Route = createFileRoute('/_site/themes')({
-	head: () => ({ meta: [{ title: 'Unbound | Themes' }] }),
 	validateSearch: marketplaceSearchSchema,
-	loaderDeps: ({ search }) => search,
-	loader: ({ context, deps, cause }) =>
-		prefetchListing(context.queryClient, 'theme', deps, cause),
-	component: ThemesPage,
+	beforeLoad: ({ search }) => {
+		throw redirect({ to: '/addons/themes', search, statusCode: 301 });
+	},
 });

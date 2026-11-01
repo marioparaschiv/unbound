@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/api",
-	"version": "0.12.0-93e23b8e7f6c14a404a52367e80a46b6290883a193abb6b4051165ef0b412ace",
+	"version": "0.12.0-818ea61aa781b727705ec26113c494a633e58d0eb434fd763f3267ebae326469",
 	"author": {
 		"name": "Mario P.",
 		"email": "contact@marioparaschiv.com",
@@ -39,6 +39,7 @@
 		"./patcher": "./src/patcher.d.ts",
 		"./plugins": "./src/plugins.d.ts",
 		"./settings": "./src/settings.d.ts",
+		"./shims": "./src/shims.d.ts",
 		"./storage": "./src/storage.d.ts",
 		"./sync": "./src/sync.d.ts",
 		"./testing": "./testing/index.ts",

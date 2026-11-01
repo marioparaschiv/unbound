@@ -36,7 +36,7 @@ async function generate() {
 
 	const ownedByModule = buildOwnership(entries);
 
-	const { files: hoistFiles, ownerByName } = buildHoistFiles();
+	const { files: hoistFiles, ownerByName, hoistedValues } = buildHoistFiles();
 
 	// Every output path must have exactly one producer; a barrel namespace named like a reserved
 	// file (`global`, a hoist file) or a duplicated additional subpath would silently overwrite it.
@@ -89,6 +89,7 @@ async function generate() {
 				ownerByName,
 				usedOwners,
 				ownedByModule.get(entry.out) ?? new Set<string>(),
+				hoistedValues,
 			),
 		);
 	}

@@ -182,7 +182,7 @@ describe('assets', () => {
 		const before = initialized();
 
 		expect(assets.getIdByName('missing')).toBeUndefined();
-		expect(assets.Icons.missing).toBeUndefined();
+		expect(assets.icons.missing).toBeUndefined();
 		expect(initializedSince(before)).toEqual([]);
 	});
 

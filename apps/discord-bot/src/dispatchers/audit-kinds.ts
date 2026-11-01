@@ -33,10 +33,15 @@ type SubmissionData = KindData<'submission.cancelled'>;
 
 export type FirstPartyBuild = NonNullable<KindData<'review.decided'>['build']>;
 
-const DECISIONS = {
-	approved: { verb: 'Approved', colour: COLOURS.positive },
-	rejected: { verb: 'Rejected', colour: COLOURS.danger },
-	changes_requested: { verb: 'Requested changes on', colour: COLOURS.warning },
+/** Each review decision as staff read it (`verb`), as its author reads it (`outcome`), and its colour. */
+export const DECISIONS = {
+	approved: { verb: 'Approved', outcome: 'was approved', colour: COLOURS.positive },
+	rejected: { verb: 'Rejected', outcome: 'was rejected', colour: COLOURS.danger },
+	changes_requested: {
+		verb: 'Requested changes on',
+		outcome: 'needs changes',
+		colour: COLOURS.warning,
+	},
 } as const;
 
 const SUBMISSION_KINDS = { listing: 'New listing', update: 'Update' } as const;
@@ -107,7 +112,8 @@ const RENDERERS: KindRenderers = {
 		data.build
 			? deployed(data, data.build)
 			: {
-					...DECISIONS[data.decision],
+					verb: DECISIONS[data.decision].verb,
+					colour: DECISIONS[data.decision].colour,
 					suffix: data.version,
 					details: submissionDetails(data),
 				},
@@ -232,4 +238,4 @@ export function deployBuild(kind: string, data: unknown): FirstPartyBuild | unde
 	return parsed.data.data.build ?? undefined;
 }
 
-export default { buildLink, renderKind, deployBuild };
+export default { DECISIONS, buildLink, renderKind, deployBuild };

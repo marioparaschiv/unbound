@@ -2,10 +2,10 @@ import { createLogger } from '@unbound-app/logger';
 import { Platform } from 'react-native';
 
 import { getSetting, setSetting } from '~/settings/unbound';
+import { createPatcher } from '~/patcher/create-patcher';
 import { CLIENT_VERSION } from '~/core/constants';
 import ErrorFallback from '~/ui/error-boundary';
 import { onModuleLoaded } from '~/metro/wait';
-import { createPatcher } from '~/patcher/api';
 import { byName } from '~/metro/filters';
 import { reload } from '~/native/native';
 

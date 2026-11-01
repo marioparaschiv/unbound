@@ -13,7 +13,7 @@ import {
 import type { LabelAppearances } from '~/label-appearances';
 import type { TagGradients } from '~/tag-gradients';
 
-const PUSH_DELAY_MS = 50;
+const PUSH_DELAY_MS = 0;
 const TAG_VIEW_CLASS = 'DiscordChat.MessageTagView';
 
 /**

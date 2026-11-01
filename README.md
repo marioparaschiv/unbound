@@ -15,7 +15,7 @@ Install plugins, themes, fonts, and icon packs on the official Discord app, on b
 [![Discord](https://img.shields.io/discord/950850315601711176?style=for-the-badge&label=discord&labelColor=0c0c0c&color=c03f4e)](https://discord.gg/unbound)
 [![License](https://img.shields.io/badge/license-GPL--3.0-c03f4e?style=for-the-badge&labelColor=0c0c0c)](./LICENSE)
 
-**[Documentation](https://docs.unbound.rip)** · [Install](https://docs.unbound.rip/user-guide/installing) · [Discord](https://discord.gg/unbound)
+**[Documentation](https://unbound.rip/docs)** · [Install](https://unbound.rip/docs/user/installing) · [Discord](https://discord.gg/unbound)
 
 </div>
 
@@ -52,7 +52,7 @@ This repository contains the client, the plugins and the native loaders that ins
 
 ### Installation
 
-Follow the [installation guide](https://docs.unbound.rip/user-guide/installing) for your platform:
+Follow the [installation guide](https://unbound.rip/docs/user/installing) for your platform:
 
 | Platform                | Method                                                                      |
 | ----------------------- | --------------------------------------------------------------------------- |
@@ -60,7 +60,7 @@ Follow the [installation guide](https://docs.unbound.rip/user-guide/installing) 
 | iOS with a jailbreak    | Install from the `repo.unbound.rip` package repository.                     |
 | Android                 | Xposed module. Support is early, and no official download is available yet. |
 
-For problems after installation, see [Troubleshooting](https://docs.unbound.rip/user-guide/troubleshooting).
+For problems after installation, see [Troubleshooting](https://unbound.rip/docs/user/troubleshooting).
 
 ## For Developers
 
@@ -72,7 +72,7 @@ For problems after installation, see [Troubleshooting](https://docs.unbound.rip/
     bunx @unbound-app/cli create
     ```
 
-2. Set the add-on `type` in its [manifest](https://docs.unbound.rip/addons/manifest):
+2. Set the add-on `type` in its [manifest](https://unbound.rip/docs/developer/addons/manifest):
 
     | Type      | Purpose                                                                                                |
     | --------- | ------------------------------------------------------------------------------------------------------ |
@@ -83,7 +83,7 @@ For problems after installation, see [Troubleshooting](https://docs.unbound.rip/
 
 3. Build against [`@unbound-app/api`](packages/api) for typed access to `metro`, `storage`, `toasts`, and the rest of the client API.
 
-The [add-on documentation](https://docs.unbound.rip/addons/introduction) covers the manifest, the lifecycle, the SDK, and publishing.
+The [add-on documentation](https://unbound.rip/docs/developer/addons/introduction) covers the manifest, the lifecycle, the SDK, and publishing.
 
 ### Developing Unbound
 
@@ -103,7 +103,7 @@ Requirements: [Bun](https://bun.sh) and a device or emulator with Unbound instal
     bun run --filter @unbound-app/client dev
     ```
 
-3. Set your Unbound installation's bundle URL to the printed LAN address, then restart Discord. See [Local Builds](https://docs.unbound.rip/development/local-builds) for the exact steps.
+3. Set your Unbound installation's bundle URL to the printed LAN address, then restart Discord. See [Local Builds](https://unbound.rip/docs/developer/development/local-builds) for the exact steps.
 
 To build once without watching for changes, run `build`, then `serve`:
 
@@ -112,7 +112,7 @@ bun run --filter @unbound-app/client build
 bun run --filter @unbound-app/client serve
 ```
 
-The [debugger](https://docs.unbound.rip/development/debugging) (`bunx @unbound-app/debugger`) evaluates code and streams logs from the device.
+The [debugger](https://unbound.rip/docs/developer/development/debugging) (`bunx @unbound-app/debugger`) evaluates code and streams logs from the device.
 
 ### Architecture
 

@@ -22,9 +22,6 @@ export function registerSection(...entries: SettingsEntry[]) {
 	}
 }
 
-/** @deprecated Use registerSection */
-export const registerSettings = registerSection;
-
 function withStableScreen(entry: SettingsEntry): SettingsEntry {
 	const { getComponent } = entry.screen;
 
@@ -46,9 +43,6 @@ export function removeSection(...keys: string[]) {
 	}
 }
 
-/** @deprecated Use removeSection */
-export const removeSettings = removeSection;
-
 /**
  * @description Returns the current registry of settings entries.
  * @returns A record of entry key to its {@link SettingsEntry}.
@@ -57,14 +51,8 @@ export function getSections(): Record<string, SettingsEntry> {
 	return SettingsStore.getState().sections;
 }
 
-/** @deprecated Use getSections */
-export const sections = getSections;
-
 export default {
 	registerSection,
-	registerSettings,
 	removeSection,
-	removeSettings,
 	getSections,
-	sections,
 };

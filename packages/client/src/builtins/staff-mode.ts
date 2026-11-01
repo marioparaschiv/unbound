@@ -1,11 +1,11 @@
 import { createLogger } from '@unbound-app/logger';
 
 import { getSetting, isSettingChange } from '~/settings/unbound';
+import { createPatcher } from '~/patcher/create-patcher';
 import { Guilds, Users } from '~/metro/stores';
 import { byFluxStore } from '~/metro/filters';
 import { onModuleLoaded } from '~/metro/wait';
-import { createPatcher } from '~/patcher/api';
-import storage from '~/storage/api';
+import { onChange } from '~/storage/api';
 
 const Patcher = createPatcher('unbound::staff-mode');
 const Logger = createLogger('StaffMode');
@@ -38,7 +38,7 @@ function patchStore(Store: MetroExport) {
 		});
 	});
 
-	unsubscribe = storage.addListener(
+	unsubscribe = onChange(
 		(payload) => isSettingChange(payload, 'staff-mode'),
 		() => Store.emitChange(),
 	);

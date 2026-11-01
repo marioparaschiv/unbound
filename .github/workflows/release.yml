@@ -105,6 +105,51 @@ jobs:
             S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
             S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
 
+    # Every push to main republishes the `main` API docs; a client release also publishes its tag's docs,
+    # generated from this same commit, which is the one release-please tagged.
+    docs:
+        needs: release
+        permissions:
+            contents: read
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        env:
+            RELEASE_VERSION: ${{ needs.release.outputs.client-released == 'true' && format('v{0}', needs.release.outputs.client-version) || '' }}
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
+
+            - name: Generate the API docs
+              run: |
+                  bun run --cwd apps/sdk-generator docs main
+                  if [ -n "$RELEASE_VERSION" ]; then
+                      bun run --cwd apps/sdk-generator docs "$RELEASE_VERSION"
+                  fi
+
+            # The docs key is its own B2 key, limited to the `docs/` prefix of the public bucket.
+            - name: Note the unconfigured docs bucket
+              if: ${{ vars.DOCS_S3_BUCKET == '' }}
+              run: echo "The docs bucket is not configured (vars DOCS_S3_ENDPOINT, DOCS_S3_REGION, DOCS_S3_BUCKET; secrets DOCS_S3_ACCESS_KEY_ID, DOCS_S3_SECRET_ACCESS_KEY), so the docs upload is skipped." >> "$GITHUB_STEP_SUMMARY"
+
+            - name: Upload the API docs to the public bucket
+              if: ${{ vars.DOCS_S3_BUCKET != '' }}
+              run: |
+                  bun run --cwd apps/sdk-generator docs:upload main
+                  if [ -n "$RELEASE_VERSION" ]; then
+                      bun run --cwd apps/sdk-generator docs:upload "$RELEASE_VERSION"
+                  fi
+              env:
+                  S3_ENDPOINT: ${{ vars.DOCS_S3_ENDPOINT }}
+                  S3_REGION: ${{ vars.DOCS_S3_REGION }}
+                  S3_PUBLIC_BUCKET: ${{ vars.DOCS_S3_BUCKET }}
+                  S3_ACCESS_KEY_ID: ${{ secrets.DOCS_S3_ACCESS_KEY_ID }}
+                  S3_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY }}
+
     devtools:
         needs: release
         if: needs.release.outputs.devtools-released == 'true'

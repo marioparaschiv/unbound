@@ -43,7 +43,7 @@ test('reads the client API, React and shared libraries from bare globals', async
 	const unbound = {
 		patcher: { name: 'patcher' },
 		metro: { common: { Moment: moment } },
-		shims: { moment: { default: moment } },
+		shims: { libraries: { moment: { default: moment } } },
 	};
 	const React = { createElement: { name: 'createElement' } };
 	const ReactNative = { View: { name: 'View' } };

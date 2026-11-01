@@ -44,7 +44,7 @@ function readDeviceEnvironment(clientPath: string) {
 		return `${(value >>> 0).toString(16)}:${text.length}`;
 	};
 
-	return Promise.resolve(unbound.fs.read(clientPath, 'base64'))
+	return Promise.resolve(unbound.fs.readFile(clientPath, 'base64'))
 		.then(
 			(text) => hash(String(text)),
 			() => '',

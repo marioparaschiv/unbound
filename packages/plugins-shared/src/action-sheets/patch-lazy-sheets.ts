@@ -4,7 +4,7 @@ import type { AnyProps } from '@unbound-app/api/metro';
 import type { patcher } from '@unbound-app/api';
 
 type Cleanup = () => void;
-type Patcher = ReturnType<typeof patcher.createPatcher>;
+type Patcher = Pick<typeof patcher, 'after' | 'before'>;
 
 const DIRECT_SHEETS: readonly (readonly [path: string, key: string])[] = [
 	[

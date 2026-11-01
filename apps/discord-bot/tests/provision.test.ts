@@ -193,6 +193,7 @@ describe.skipIf(!SUPERUSER_URL)('provision.sql', () => {
 		]);
 		expect(await reads.members({ by: 'addon', ids: ['provisioned.addon'] })).toHaveLength(1);
 		expect(await reads.eventsAfter(0, 10)).toEqual([]);
+		expect(await reads.reviewNoticesAfter(0, 10)).toEqual([]);
 		expect(await reads.release({ platform: 'ios', version: '1.0.0' })).toBeUndefined();
 		expect(await reads.releasesSince(new Date(0))).toEqual([]);
 
@@ -222,6 +223,7 @@ describe.skipIf(!SUPERUSER_URL)('provision.sql', () => {
 			bot.$client`select access_token from account`,
 			bot.$client`select email from "user"`,
 			bot.$client`select token from session`,
+			bot.$client`select review_note from submission`,
 			bot.$client`insert into addon_maintainer (addon_id, user_id, role) values ('x', 'y', 'owner')`,
 		];
 

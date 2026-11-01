@@ -1,28 +1,13 @@
-import type { MetroFindStore } from '~/metro/types';
-import { getStore } from '~/flux/api';
-
-export {
-	initializeModule,
-	removeListener,
-	onModuleLoad,
-	addListener,
-	bulk,
-	find,
-	off,
-	on,
-} from '~/metro/search';
 export { findByPrototypes, findByFilePath, findByProps, findByName } from '~/metro/lookups';
+export { initializeModule, onModuleLoad, bulk, find } from '~/metro/search';
 export type { DiscordFunction } from '@unbound-app/types/components';
 export { getModulePresence } from '~/metro/lazy-registry';
+export { findLazy, onModuleLoaded } from '~/metro/wait';
 export * as components from '~/metro/components';
 export { blacklist, data } from '~/metro/state';
-export { findLazy, onModuleLoaded } from '~/metro/wait';
 export { CACHE_KEY } from '~/core/constants';
 export * as filters from '~/metro/filters';
 export * as common from '~/metro/common';
 export * as stores from '~/metro/stores';
 export * as api from '~/metro/api';
 export type * from '~/metro/types';
-
-/** @deprecated Use flux.getStore */
-export const findStore: MetroFindStore = getStore;

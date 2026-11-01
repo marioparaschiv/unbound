@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { bugReportURL, describeError } from '~/ui/error-fallback';
 import type { CaughtError } from '~/ui/error-fallback';
 import { Clipboard } from '~/metro/common';
-import { Messages } from '~/i18n/api';
+import { messages } from '~/i18n/api';
 import { Linking } from '~/metro/api';
 
 import styles from './error-boundary.style';
@@ -41,8 +41,8 @@ function ErrorFallback({
 		<View style={styles.screen}>
 			<ScrollView contentContainerStyle={styles.content}>
 				<Animated.View entering={FadeInDown.duration(320)} style={{ gap: 16 }}>
-					<Text style={styles.title}>{Messages.UNBOUND_CRASH_TITLE}</Text>
-					<Text style={styles.subtitle}>{Messages.UNBOUND_CRASH_DESCRIPTION}</Text>
+					<Text style={styles.title}>{messages.UNBOUND_CRASH_TITLE}</Text>
+					<Text style={styles.subtitle}>{messages.UNBOUND_CRASH_DESCRIPTION}</Text>
 					<View style={styles.errorCard}>
 						<Text style={styles.errorName}>{error?.name || 'Error'}</Text>
 						<Text selectable style={styles.errorMessage}>
@@ -50,11 +50,11 @@ function ErrorFallback({
 						</Text>
 					</View>
 					{error?.stack ? (
-						<ErrorSection title={Messages.UNBOUND_CRASH_STACK} text={error.stack} />
+						<ErrorSection title={messages.UNBOUND_CRASH_STACK} text={error.stack} />
 					) : null}
 					{componentStack?.trim() ? (
 						<ErrorSection
-							title={Messages.UNBOUND_CRASH_COMPONENT_STACK}
+							title={messages.UNBOUND_CRASH_COMPONENT_STACK}
 							text={componentStack.trim()}
 						/>
 					) : null}
@@ -63,18 +63,18 @@ function ErrorFallback({
 					entering={FadeInDown.delay(120).duration(320)}
 					style={styles.actions}
 				>
-					<ErrorAction label={Messages.UNBOUND_CRASH_RETRY} primary onPress={onRetry} />
-					<ErrorAction label={Messages.UNBOUND_CRASH_RELOAD} onPress={onReload} />
-					<ErrorAction label={Messages.UNBOUND_CRASH_RECOVERY} onPress={onRecovery} />
+					<ErrorAction label={messages.UNBOUND_CRASH_RETRY} primary onPress={onRetry} />
+					<ErrorAction label={messages.UNBOUND_CRASH_RELOAD} onPress={onReload} />
+					<ErrorAction label={messages.UNBOUND_CRASH_RECOVERY} onPress={onRecovery} />
 					<ErrorAction
-						label={copied ? Messages.UNBOUND_CRASH_COPIED : Messages.UNBOUND_CRASH_COPY}
+						label={copied ? messages.UNBOUND_CRASH_COPIED : messages.UNBOUND_CRASH_COPY}
 						onPress={() => {
 							Clipboard.setString(describeError(caught));
 							setCopied(true);
 						}}
 					/>
 					<ErrorAction
-						label={Messages.UNBOUND_CRASH_REPORT}
+						label={messages.UNBOUND_CRASH_REPORT}
 						onPress={() =>
 							Linking.openURL(bugReportURL(caught, { clientVersion, platform }))
 						}

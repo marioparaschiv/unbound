@@ -22,6 +22,7 @@ const ORIENTATION = 'android.graphics.drawable.GradientDrawable$Orientation';
 const PAINT_DRAWABLE = 'android.graphics.drawable.PaintDrawable';
 const HEX = /^#[\da-f]{6}$/i;
 const MAX_PAINTED = 256;
+const MAX_UNMATCHED = 128;
 
 export type TagBind = {
 	name: string;
@@ -40,6 +41,12 @@ type TagState = {
 	leftToRight: NativeJavaReference;
 	reflectArray: NativeJavaReference | null;
 	painted: Map<string, Painted>;
+	unmatched: Map<string, Unmatched>;
+};
+
+type Unmatched = {
+	tagView: NativeJavaReference;
+	text: string;
 };
 
 type StateHolder = Record<typeof STATE_KEY, TagState | undefined>;
@@ -138,6 +145,18 @@ function remember(current: TagState, key: string, painted: Painted) {
 	}
 }
 
+function rememberUnmatched(current: TagState, tagView: NativeJavaReference, text: string) {
+	'worklet';
+	const key = viewKey(tagView);
+
+	current.unmatched.delete(key);
+	current.unmatched.set(key, { tagView, text });
+
+	if (current.unmatched.size > MAX_UNMATCHED) {
+		current.unmatched.delete(current.unmatched.keys().next().value as string);
+	}
+}
+
 function paint(current: TagState, tagView: NativeJavaReference, text: string) {
 	'worklet';
 	const { java } = current;
@@ -155,8 +174,12 @@ function paint(current: TagState, tagView: NativeJavaReference, text: string) {
 	);
 
 	if (colors.length < 2) {
+		rememberUnmatched(current, tagView, text);
+
 		return;
 	}
+
+	current.unmatched.delete(viewKey(tagView));
 
 	const gradient = java.construct(GRADIENT, [
 		current.leftToRight,
@@ -198,6 +221,7 @@ export function installAndroidTagGradients(
 		leftToRight,
 		reflectArray: java.getClass('java.lang.reflect.Array'),
 		painted: new Map(),
+		unmatched: new Map(),
 	};
 
 	holder()[STATE_KEY] = current;
@@ -206,7 +230,13 @@ export function installAndroidTagGradients(
 		const tagView = javaReference(event.self);
 		const text = event.args ? javaText(event.args[0]) : undefined;
 
-		if (!tagView || !text || !Object.keys(current.appearances).length) {
+		if (!tagView || !text) {
+			return;
+		}
+
+		if (!Object.keys(current.appearances).length) {
+			rememberUnmatched(current, tagView, text);
+
 			return;
 		}
 
@@ -221,15 +251,33 @@ export function installAndroidTagGradients(
 }
 
 /**
- * @description Replaces the gradients the tags are painted with.
+ * @description Replaces the gradients, and paints the tags it saw before their gradient was known, in the same pass.
  * @param appearances The gradients per label and color.
  */
 export function setAndroidTagAppearances(appearances: TagAppearanceTable) {
 	'worklet';
 	const current = holder()[STATE_KEY];
 
-	if (current) {
-		current.appearances = appearances;
+	if (!current) {
+		return;
+	}
+
+	current.appearances = appearances;
+
+	const names = Object.keys(appearances);
+
+	for (const entry of [...current.unmatched.values()]) {
+		const prefix = gradientKey(entry.text, '');
+
+		if (!names.some((name) => name.startsWith(prefix))) {
+			continue;
+		}
+
+		try {
+			paint(current, entry.tagView, entry.text);
+		} catch (error) {
+			console.error(`[More User Tags] ${String(error)}`);
+		}
 	}
 }
 

@@ -10,6 +10,7 @@ import type {
 /** The kinds of addon, as a manifest's `type` declares them. One manager governs each, in this start order. */
 export const ADDON_KINDS = ['plugin', 'theme', 'icon-pack', 'font'] as const;
 
+/** One addon kind, such as `plugin` or `icon-pack`; each has its own manager. */
 export type AddonKind = (typeof ADDON_KINDS)[number];
 
 /**
@@ -35,26 +36,17 @@ export type AddonLogger = Record<
 	(...args: unknown[]) => void
 >;
 
-/** @deprecated Use ADDON_KINDS */
-export const ADDON_TYPES = ADDON_KINDS;
-
-/** @deprecated Use AddonKind */
-export type AddonType = AddonKind;
-
-/** @deprecated Use ADDON_KINDS */
-export const MANAGER_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
-
-/** @deprecated Use AddonKind */
-export type ManagerKind = (typeof MANAGER_KINDS)[number];
-
 /** The author of an addon: a display name and a numeric user id. */
 export type AddonAuthor = {
+	/** The name shown for the author. */
 	name: string;
+	/** The author's Discord user id, as a string of digits. */
 	id: `${number}`;
 };
 
 /** What an addon declares for one platform it runs on: the capabilities that platform provides which it needs. */
 export type AddonPlatform<P extends NativePluginPlatform = NativePluginPlatform> = {
+	/** Capabilities needed on this platform only, added to the manifest's top-level `capabilities`. */
 	capabilities?: NativePluginPlatformCapability<P>[];
 };
 
@@ -65,23 +57,32 @@ export type AddonPlatforms = {
 
 /** The manifest an author ships in an addon's `manifest.json`: its metadata and entry point. */
 export type AuthoredAddonManifest = {
+	/** The unique id: alphanumeric runs joined by single `.`, `_` or `-`, at most 100 characters. */
 	id: string;
 	/** The addon kind this manifest describes; used to validate installs. */
 	type?: AddonKind;
+	/** The display name; must not be empty. */
 	name: string;
+	/** A short summary shown with the addon; may be empty. */
 	description: string;
+	/** Who made the addon; a published manifest lists at least one. */
 	authors: AddonAuthor[];
+	/** An image for the addon, as a URL or an `{ uri }` image source. */
 	icon?: string | { uri: string };
+	/** The bundle's path relative to the manifest, such as `index.js`; it may not leave the addon's directory. */
 	main: string;
+	/** The addon's version, in strict SemVer 2.0.0 with no `v` prefix. */
 	version: string;
 	/**
 	 * The platforms the addon runs on, each with the capabilities it needs there; absent means every platform.
 	 * Published addons may still carry the older array of platform names.
 	 */
 	platforms?: AddonPlatforms | NativePluginPlatform[];
+	/** Capabilities the addon needs on every platform it runs on. */
 	capabilities?: NativePluginCapability[];
 	/** @deprecated Use `platforms.<platform>.capabilities`. Still read for published addons. */
 	platformCapabilities?: Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
+	/** The lowest native plugin API version the addon supports; an older native bridge fails its start. */
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
 	signature?: {
@@ -116,7 +117,9 @@ export type AddonManifest = AuthoredAddonManifest & {
  * whole manifest the same way it validates one it loads, so a dev build is never held to the publish rules.
  */
 export type PushedManifest = {
+	/** The addon's id, as in {@link AuthoredAddonManifest.id}. */
 	id: string;
+	/** The bundle's path relative to the manifest, as in {@link AuthoredAddonManifest.main}. */
 	main: string;
 	/** The SHA-512 of each bytecode build the push carries, by bytecode version; the CLI fills it in. */
 	bytecode?: Record<string, string>;
@@ -129,54 +132,50 @@ export type AddonTrust = 'signed' | 'unsigned';
  * A loaded plugin, theme or icon pack its manager governs: its manifest and state, and what its manager
  * does to it. Stringifies to its {@link AddonManifest}.
  */
-export type AddonHandle<I extends object = object> = {
+export type AddonHandle = {
+	/** The manifest's `id`. */
 	readonly id: string;
+	/** The manifest's display `name`. */
 	readonly name: string;
+	/** The manifest's `version`. */
 	readonly version: string;
+	/** The manifest's `authors`. */
 	readonly authors: AddonAuthor[];
+	/** The loaded manifest, including what the loader and installer recorded. */
 	readonly manifest: AddonManifest;
 	/** Whether the addon is running. */
 	readonly started: boolean;
 	/** Whether the addon failed to start. */
 	readonly failed: boolean;
-	/** @deprecated Use manifest */
-	readonly data: AddonManifest;
-	/** @deprecated What the bundle evaluated to; readable until 1.0. */
-	readonly instance: (Plugin & I) | null;
-	/** @deprecated The bundle source; readable until 1.0. */
-	readonly bundle: string;
-	/** @deprecated The running plugin's native bridge; readable until 1.0. */
-	readonly context?: PluginContext;
+	/** Whether the user has the addon enabled, as its manager records it. */
 	isEnabled(): boolean;
+	/** Whether the plugin manager governs this addon. */
 	isPlugin(): boolean;
+	/** Asks the addon's manager to enable it. */
 	enable(): void | Promise<void>;
+	/** Asks the addon's manager to disable it. */
 	disable(): void;
+	/** Restarts the addon on its current bundle if it is running; settles once it is running again. */
 	reload(): Promise<void>;
+	/** Returns the manifest, so serializing the addon never leaks its bundle or instance. */
 	toJSON(): AddonManifest;
 };
 
-/** @deprecated Use AddonHandle */
-export type Addon = AddonHandle;
-
-/** @deprecated Use AddonHandle */
-export type AddonResolveable = string | AddonHandle;
-
-/** @deprecated Use AddonHandle */
-export type PluginEntity = AddonHandle<Plugin>;
-
-/** @deprecated Use AddonHandle */
-export type ThemeEntity = AddonHandle<Theme>;
-
 /** What a plugin's self-test found: whether the plugin works on this device, and why. */
 export type PluginSelfTestResult = {
+	/** `true` when the plugin works on this device. */
 	ok: boolean;
+	/** A human-readable reason for the result. */
 	detail: string;
 };
 
 /** The lifecycle and settings contract implemented by a plugin. */
 export type Plugin = {
+	/** Called when the plugin starts, inside its Addon scope, with its native bridge context. */
 	start?(context?: PluginContext): void;
+	/** Called when the plugin stops; a returned promise is awaited, and the scope is disposed even if it throws. */
 	stop?(): void | Promise<void>;
+	/** Renders the plugin's settings panel; called only while the plugin is running. */
 	getSettingsPanel?(): ReactNode;
 	/** Checks, without side effects, that the running plugin works on this device; the device matrix calls it after a restart. */
 	selfTest?(): PluginSelfTestResult | Promise<PluginSelfTestResult>;
@@ -184,16 +183,23 @@ export type Plugin = {
 
 /** A single semantic colour definition in a {@link Theme}. */
 export type ThemeSemanticColor = {
+	/** `color` uses `value` as is; `raw` names a raw colour, looked up in the theme's `raw` and then Discord's. */
 	type: 'color' | 'raw';
+	/** A colour string, or the name of a raw colour when `type` is `raw`. */
 	value: string;
+	/** An alpha from 0 to 1, clamped, that replaces a `#rrggbb` or `#rrggbbaa` colour's alpha; other formats ignore it. */
 	opacity?: number;
 };
 
 /** A theme's semantic and raw colour definitions plus optional background. */
 export type Theme = {
+	/** Overrides for Discord's semantic colours, keyed by name such as `BACKGROUND_BASE_LOWER`; malformed entries are dropped. */
 	semantic: Record<PropertyKey, ThemeSemanticColor>;
+	/** Overrides for Discord's raw palette colours, keyed by raw colour name. */
 	raw: Record<PropertyKey, string>;
+	/** The Discord base theme the bundle declares; parsed as `darker` when absent or unknown. */
 	type: 'midnight' | 'darker' | 'light';
+	/** A background image by `url`, with optional `blur` and `opacity`; dropped when `url` is not a string. */
 	background?: {
 		blur?: number;
 		opacity?: number;
@@ -209,14 +215,19 @@ export type IconPackManifest = AddonManifest & {
 
 /** A loaded icon pack: its bundle marker and {@link IconPackManifest}. */
 export type IconPack = {
+	/** The name the pack was loaded under: its manifest `name`, or `Default` for Discord's own icons. */
 	bundle: string;
+	/** The pack's manifest. */
 	manifest: IconPackManifest;
 };
 
 /** A custom font the native loader has registered, as injected on `window.UNBOUND_FONTS`. */
 export type FontDescriptor = {
+	/** The font's PostScript name, else its full name, else its file name without extension; the Fonts manager keys by it. */
 	name: string;
+	/** The font's file name in Unbound's `Fonts` directory. */
 	file: string;
+	/** The absolute path to the font file on the device. */
 	path: string;
 };
 

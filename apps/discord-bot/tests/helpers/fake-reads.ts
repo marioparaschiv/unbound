@@ -98,6 +98,8 @@ export function createFakeReads(): FakeReads {
 					.toSorted((a, b) => a.id - b.id)
 					.slice(0, limit),
 			newestEventId: async () => Math.max(0, ...fake.events.map((event) => event.id)),
+			// The review notices dispatcher is tested against the real reads, which join web rows.
+			reviewNoticesAfter: async () => [],
 			release: async (key) =>
 				fake.releases.find(
 					(release) =>

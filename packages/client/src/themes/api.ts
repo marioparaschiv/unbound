@@ -39,12 +39,3 @@ export async function update(id: string): Promise<boolean> {
 
 	return apply(id);
 }
-
-/** @deprecated Use getAll */
-export const getEntities = getAll;
-/** @deprecated Use get */
-export const getEntity = get;
-/** @deprecated Use uninstall */
-const deprecatedDelete = uninstall;
-
-export { deprecatedDelete as delete };

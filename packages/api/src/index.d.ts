@@ -15,13 +15,10 @@ export * as native from './native';
 export * as patcher from './patcher';
 export * as plugins from './plugins';
 export * as settings from './settings';
+export * as shims from './shims';
 export * as storage from './storage';
 export * as sync from './sync';
 export * as themes from './themes';
 export * as toasts from './toasts';
 export * as ui from './ui';
 export * as updates from './updates';
-/** @deprecated Use sync */
-export declare const cloudSync: typeof import('./sync');
-/** @deprecated Use iconPacks */
-export declare const icons: typeof import('./iconPacks');

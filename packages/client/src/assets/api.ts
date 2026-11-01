@@ -8,11 +8,8 @@ import { byProps } from '~/metro/filters';
 import { data } from '~/metro/state';
 import Cache from '~/metro/cache';
 
-/**
- * Called with each asset Discord registers, and its id.
- * @internal
- */
-type RegistrationListener = (asset: UnboundAsset, id: number) => void;
+/** Called with each asset Discord registers, and its id. */
+export type AssetRegistrationListener = (asset: UnboundAsset, id: number) => void;
 
 const Logger = createLogger('Assets');
 
@@ -21,7 +18,7 @@ export const assets = new Map<number, UnboundAsset>();
 
 // `name.type` of each registered asset to its id, so a lookup by name skips a scan.
 const ids = new Map<string, number>();
-const listeners = new Set<RegistrationListener>();
+const listeners = new Set<AssetRegistrationListener>();
 
 let registry: AssetsModule | undefined;
 // Every id up to this one has been read from the registry into `assets`.
@@ -63,9 +60,6 @@ export function getById(id: number): UnboundAsset | undefined {
 	return registry?.getAssetByID(id) ?? void 0;
 }
 
-/** @deprecated Use getById */
-export const getByID = getById;
-
 /**
  * @description Looks up an asset's id by its name and type, initializing the module that registers it if needed.
  * @param name The asset name to match.
@@ -105,9 +99,6 @@ export function getIdByName(name: string, type: 'svg' | 'png' = 'png'): number |
 	return lookup(key);
 }
 
-/** @deprecated Use getIdByName */
-export const getIDByName = getIdByName;
-
 /**
  * @description Returns every asset, initializing every asset module first.
  * @returns An array of all registered {@link UnboundAsset} records.
@@ -122,9 +113,8 @@ export function getAll(): UnboundAsset[] {
  * @description Calls `listener` with each asset registered from now on.
  * @param listener Receives the asset and its id.
  * @returns A function that removes the listener.
- * @internal
  */
-export function onAssetRegistered(listener: RegistrationListener): () => void {
+export function onAssetRegistered(listener: AssetRegistrationListener): () => void {
 	listeners.add(listener);
 
 	return () => void listeners.delete(listener);
@@ -141,9 +131,6 @@ export const icons: Record<string, number | undefined> = new Proxy(
 		},
 	},
 );
-
-/** @deprecated Use icons */
-export const Icons = icons;
 
 function keyOf(name: string, type: string) {
 	return `${name}.${type}`;
@@ -259,10 +246,7 @@ export default {
 	find,
 	getByName,
 	getById,
-	getByID,
 	getIdByName,
-	getIDByName,
 	getAll,
 	icons,
-	Icons,
 };

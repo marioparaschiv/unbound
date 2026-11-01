@@ -93,8 +93,11 @@ export const Discord: DesignModule = new Proxy(designTarget, {
 
 /** How each design component resolves on the running Discord build. */
 export type DesignComponentAudit = {
+	/** Components the running Discord build ships in a form React can render. */
 	native: DesignComponentName[];
+	/** Components the build lacks or ships unrenderable, where an Unbound fallback stands in. */
 	fallback: DesignComponentName[];
+	/** Components neither the build nor a registered fallback can render. */
 	missing: DesignComponentName[];
 };
 

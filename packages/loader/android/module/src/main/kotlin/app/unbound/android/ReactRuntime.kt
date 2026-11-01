@@ -16,6 +16,24 @@ object ReactRuntime {
     private var javaScriptContextMethod: Method? = null
     private var queueConfiguration: ((Any) -> Any?)? = null
 
+    private class JsQueue(val owner: WeakReference<Any>, val thread: Any, val runOnQueue: Method)
+
+    @Volatile
+    private var jsQueue: JsQueue? = null
+
+    private fun jsQueueFor(target: Any): JsQueue? {
+        jsQueue?.takeIf { it.owner.get() === target }?.let { return it }
+
+        return runCatching {
+            val configuration = queueConfiguration!!.invoke(target)!!
+            val thread = configuration.javaClass.findMethod("getJSQueueThread")!!.invoke(configuration)!!
+            val runOnQueue = thread.javaClass.findMethod("runOnQueue", Runnable::class.java)!!
+            JsQueue(WeakReference(target), thread, runOnQueue)
+        }.onFailure { Logger.error(LogCategory.RUNTIME, "JS queue thread is unavailable", it) }
+            .getOrNull()
+            ?.also { jsQueue = it }
+    }
+
     fun attach(reactInstance: Any) {
         ActivityTracker.install(Platform.application())
         val queued: List<(Long) -> Unit>
@@ -41,10 +59,7 @@ object ReactRuntime {
             current
         }
 
-        val queueThread = runCatching {
-            val configuration = queueConfiguration!!.invoke(target)!!
-            configuration.javaClass.findMethod("getJSQueueThread")!!.invoke(configuration)!!
-        }.onFailure { Logger.error(LogCategory.RUNTIME, "JS queue thread is unavailable", it) }.getOrNull() ?: return
+        val queue = jsQueueFor(target) ?: return
 
         val runnable = Runnable {
             val pointer = runCatching { javaScriptContextMethod!!.invoke(target) as Long }
@@ -54,7 +69,7 @@ object ReactRuntime {
         }
 
         runCatching {
-            queueThread.javaClass.findMethod("runOnQueue", Runnable::class.java)!!.invoke(queueThread, runnable)
+            queue.runOnQueue.invoke(queue.thread, runnable)
         }.onFailure { Logger.error(LogCategory.RUNTIME, "Failed to schedule work on the JS thread", it) }
     }
 

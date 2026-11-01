@@ -1,4 +1,11 @@
-import { IconMagnifierMinus, IconPalette, IconPlug, IconPlus, IconXmark } from 'nucleo-micro-bold';
+import {
+	IconGrid,
+	IconMagnifierMinus,
+	IconPalette,
+	IconPlug,
+	IconPlus,
+	IconXmark,
+} from 'nucleo-micro-bold';
 import { Link, useNavigate, useRouteContext } from '@tanstack/react-router';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import type { AddonSort } from '@unbound-app/contracts/addons';
@@ -33,7 +40,7 @@ import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
 import cn from '~/lib/cn';
 
-type ListingType = 'plugin' | 'theme';
+type ListingType = 'plugin' | 'theme' | 'icon-pack';
 
 type IconProps = {
 	className?: string;
@@ -73,6 +80,12 @@ const COPY: Record<ListingType, ListingCopy> = {
 		description: 'Customize the appearance of your app to the fullest.',
 		plural: 'themes',
 		icon: IconPalette,
+	},
+	'icon-pack': {
+		title: 'Icons',
+		description: 'Swap the icons across your app for a whole new set.',
+		plural: 'icon packs',
+		icon: IconGrid,
 	},
 };
 
@@ -168,7 +181,14 @@ function AddonResults({ type, search, onClearFilters }: AddonResultsProps) {
 						key={addon.id}
 						className='animate-reveal'
 						style={staggerStyle(Math.max(index - batchStart, 0))}
-						details={addon.tags.length > 0 ? <TagList tags={addon.tags} /> : null}
+						footer={
+							addon.tags.length > 0 ? (
+								// Up to two pills; more stack into one that truncates beside the button.
+								<div className='flex-1 min-w-0'>
+									<TagList tags={addon.tags} max={2} />
+								</div>
+							) : null
+						}
 					/>
 				))}
 			</div>
@@ -228,7 +248,7 @@ function AddonListing({ type, search }: AddonListingProps) {
 	}
 
 	return (
-		<div className='flex flex-col flex-1 gap-6 page-frame'>
+		<div className='flex flex-col flex-1 gap-6'>
 			<PageHeader title={copy.title} description={copy.description} />
 			<div className='flex flex-col flex-1 gap-6'>
 				<FilterBar

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0]
+
+### Changed
+
+- Tag gradients appear at once on iOS and Android: tags seen before their colors were known are painted the moment the colors arrive, and the colors are remembered across launches.
+
 ## [1.2.1]
 
 ### Fixed

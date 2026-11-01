@@ -1,3 +1,4 @@
+import { Node, type JSDocableNode } from 'ts-morph';
 import { existsSync, readFileSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 
@@ -7,13 +8,22 @@ import {
 	ALIAS_ROOT,
 	BARREL,
 	API_SRC,
+	ENTRY,
 	logger,
+	type Lifecycle,
 	type NamespaceAlias,
 	type ModuleEntry,
 	type SdkEntries,
 } from './paths';
 import { isInternal } from './transform';
 import { parseSource } from './project';
+
+function docText(node: JSDocableNode): string {
+	return node
+		.getJsDocs()
+		.map((jsDoc) => jsDoc.getInnerText().trim())
+		.join('\n');
+}
 
 /**
  * @description Resolves a module specifier from a barrel to its source `.ts` file. Handles the `~/`
@@ -196,10 +206,7 @@ export function readNamespaceAliases(barrel: string): NamespaceAlias[] {
 			continue;
 		}
 
-		const doc = statement
-			.getJsDocs()
-			.map((jsDoc) => jsDoc.getInnerText().trim())
-			.join('\n');
+		const doc = docText(statement);
 
 		for (const declaration of statement.getDeclarations()) {
 			const specifier = specifierOf.get(declaration.getInitializer()?.getText() ?? '');
@@ -216,4 +223,46 @@ export function readNamespaceAliases(barrel: string): NamespaceAlias[] {
 	}
 
 	return aliases.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * @description Reads the client's `UnboundLifecycle` type (`{ initialize: typeof initialize; ... }`) and
+ * the function each member names, so the SDK types the lifecycle from its source and JSDoc.
+ * @param entry The client file that declares the type and assigns `window.unbound`.
+ * @returns The type's JSDoc and one member per lifecycle function, in declaration order.
+ */
+export function readLifecycle(entry: string = ENTRY): Lifecycle {
+	const sourceFile = parseSource('entry.ts', readFileSync(entry, 'utf8'));
+	const alias = sourceFile.getTypeAliasOrThrow('UnboundLifecycle');
+	const literal = alias.getTypeNode();
+
+	if (!Node.isTypeLiteral(literal)) {
+		throw new Error(`UnboundLifecycle in '${entry}' must be an object type literal.`);
+	}
+
+	const members = literal.getProperties().map((property) => {
+		const query = property.getTypeNode();
+		const target = Node.isTypeQuery(query) ? query.getExprName().getText() : void 0;
+		const fn = target ? sourceFile.getFunction(target) : void 0;
+		const returnType = fn?.getReturnTypeNode()?.getText();
+
+		if (!fn || !returnType) {
+			throw new Error(
+				`UnboundLifecycle.${property.getName()} must be \`typeof <function>\` naming a function with a return type.`,
+			);
+		}
+
+		return {
+			name: property.getName(),
+			parameters: fn.getParameters().map((parameter) => ({
+				name: parameter.getName(),
+				type: parameter.getTypeNode()?.getText() ?? 'unknown',
+				optional: parameter.isOptional(),
+			})),
+			returnType,
+			doc: docText(fn),
+		};
+	});
+
+	return { doc: docText(alias), members };
 }

@@ -2,9 +2,9 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
 import type { DefaultEventMap } from '~/core/event-emitter';
+import { createPatcher } from '~/patcher/create-patcher';
 import type { ManagerOf } from '~/addons/manager-of';
 import { EventEmitter } from '~/core/event-emitter';
-import { createPatcher } from '~/patcher/api';
 import storage from '~/storage/api';
 
 type BaseManagerEvents<T> = {

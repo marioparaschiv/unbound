@@ -71,34 +71,41 @@ export declare function useStore<T>(
  * `declare module '@unbound-app/api/flux' { interface FluxActions { MY_ACTION: { id: string } } }`.
  */
 export interface FluxActions {
+	/** A message arrived or was sent; `optimistic` is `true` for the local copy before Discord confirms it. */
 	MESSAGE_CREATE: {
 		channelId: string;
 		guildId?: string;
 		message: FluxMessage;
 		optimistic: boolean;
 	};
+	/** A message was edited, or Discord filled in its embeds. */
 	MESSAGE_UPDATE: {
 		guildId?: string;
 		message: FluxMessage;
 	};
+	/** The message `id` in `channelId` was deleted. */
 	MESSAGE_DELETE: {
 		id: string;
 		channelId: string;
 		guildId?: string;
 	};
+	/** The user opened a channel; `messageId` is set when they jumped to a message. */
 	CHANNEL_SELECT: {
 		channelId?: string;
 		guildId?: string;
 		messageId?: string;
 	};
+	/** A user started typing in a channel. */
 	TYPING_START: {
 		channelId: string;
 		userId: string;
 	};
+	/** A user stopped typing in a channel. */
 	TYPING_STOP: {
 		channelId: string;
 		userId: string;
 	};
+	/** The gateway connection is ready; `user` is the signed-in user. */
 	CONNECTION_OPEN: {
 		user: FluxUser;
 	};
@@ -108,14 +115,23 @@ export interface FluxActions {
  * `declare module '@unbound-app/api/flux' { interface FluxStores { Message: MessageStore } }`.
  */
 export interface FluxStores {
+	/** Users Discord has loaded, including the signed-in user. */
 	User: UserStore;
+	/** Guilds the signed-in user is in. */
 	Guild: GuildStore;
+	/** Members of each guild, as far as Discord has loaded them. */
 	GuildMember: GuildMemberStore;
+	/** Channels Discord has loaded, guild channels and DMs alike. */
 	Channel: ChannelStore;
+	/** Which channel is open, per guild. */
 	SelectedChannel: SelectedChannelStore;
+	/** Who is typing in each channel. */
 	Typing: TypingStore;
+	/** Friends, blocks and friend nicknames of the signed-in user. */
 	Relationship: RelationshipStore;
+	/** Profiles of users whose profile has been opened. */
 	UserProfile: UserProfileStore;
+	/** The state of the open server settings screen. */
 	GuildSettings: GuildSettingsStore;
 }
 /** Discord's `ChannelStore`. */
@@ -126,6 +142,7 @@ export type ChannelStore = FluxStore & {
 };
 /** The base shape of every Flux action. */
 export type FluxAction<T extends string = string> = {
+	/** The action type, such as `MESSAGE_CREATE`; it picks the payload from {@link FluxActions}. */
 	type: T;
 };
 /** Runs before Discord handles an action of one type. Returning `true` drops the action. */
@@ -142,38 +159,59 @@ export type FluxActionType = LiteralUnion<Extract<keyof FluxActions, string>>;
 export type FluxChangeListener = () => void;
 /** A Discord channel record. */
 export type FluxChannel = {
+	/** The channel's Discord snowflake id. */
 	id: string;
+	/** Discord's numeric channel type, such as `0` for a guild text channel or `1` for a DM. */
 	type: number;
+	/** The channel name; DMs may have an empty one. */
 	name: string;
+	/** The id of the guild the channel belongs to; `null` for DMs and group DMs. */
 	guild_id: string | null;
 };
 /** A Discord guild record. */
 export type FluxGuild = {
+	/** The guild's Discord snowflake id. */
 	id: string;
+	/** The guild's display name. */
 	name: string;
+	/** The guild icon's image hash; `null` when the guild has no icon. */
 	icon: string | null;
+	/** The id of the user who owns the guild. */
 	ownerId: string;
 };
 /** A guild member record. */
 export type FluxGuildMember = {
+	/** The id of the member's user. */
 	userId: string;
+	/** The id of the guild this membership is in. */
 	guildId: string;
+	/** The member's nickname in this guild; `null` when they have none. */
 	nick: string | null;
+	/** The ids of the member's roles in this guild. */
 	roles: string[];
+	/** The member's name colour as a hex string from their roles; `null` when no role gives one. */
 	colorString: string | null;
 };
 /** A Discord message record. */
 export type FluxMessage = {
+	/** The message's Discord snowflake id. */
 	id: string;
+	/** The id of the channel the message is in. */
 	channel_id: string;
+	/** The raw Markdown text of the message; empty for a message with only attachments or embeds. */
 	content: string;
+	/** The user who sent the message. */
 	author: FluxUser;
 };
 /** The members every Flux store has. A store name missing from {@link FluxStores} gets this type. */
 export type FluxStore = {
+	/** Returns the store's name, such as `UserStore`. */
 	getName(): string;
+	/** Calls `listener` after every change to the store's state, until it is removed. */
 	addChangeListener(listener: FluxChangeListener): void;
+	/** Stops calling a listener added with `addChangeListener`. */
 	removeChangeListener(listener: FluxChangeListener): void;
+	/** Calls every change listener now. Discord calls it after the store handles an action. */
 	emitChange(): void;
 };
 /** A store name: one of {@link FluxStores}, or any other string. */
@@ -182,17 +220,26 @@ export type FluxStoreName = LiteralUnion<Extract<keyof FluxStores, string>>;
 export type FluxStoreOf<K extends string> = K extends keyof FluxStores ? FluxStores[K] : FluxStore;
 /** A Discord user record. */
 export type FluxUser = {
+	/** The user's Discord snowflake id. */
 	id: string;
+	/** The unique account name, without the `@`. */
 	username: string;
+	/** The display name the user set; `null` when they set none. */
 	globalName: string | null;
+	/** The legacy four-digit tag; `'0'` for accounts on unique usernames. */
 	discriminator: string;
+	/** The avatar image hash; `null` when the user has the default avatar. */
 	avatar: string | null;
+	/** `true` for bot accounts. */
 	bot: boolean;
 };
 /** A user's profile, loaded when their profile is opened. */
 export type FluxUserProfile = {
+	/** The id of the user the profile belongs to. */
 	userId: string;
+	/** The profile's About Me text, as Markdown. */
 	bio: string;
+	/** The pronouns the user set, as free text. */
 	pronouns: string;
 };
 /** Options for `flux.getStore`. */

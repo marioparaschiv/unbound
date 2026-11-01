@@ -2,7 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 
 import { startFakeMetro } from './helpers/fake-metro';
 
-const IDS = [7, 8, 9, 10];
+const IDS = [7, 8];
 
 Object.assign(globalThis, { window: globalThis, $$DEV$$: false });
 
@@ -36,23 +36,5 @@ describe('metro.onModuleLoad', () => {
 		fakeMetro.require(8);
 
 		expect(calls).toEqual([[{ id: 7 }, 7]]);
-	});
-
-	test('keeps addListener, on and off as aliases', () => {
-		const calls: number[] = [];
-
-		function listener(_mdl: MetroExport, id: number) {
-			calls.push(id);
-		}
-
-		metro.addListener(listener);
-		metro.on(listener);
-		fakeMetro.require(9);
-		metro.off(listener);
-		fakeMetro.require(10);
-
-		expect(metro.addListener).toBe(metro.onModuleLoad);
-		expect(metro.on).toBe(metro.onModuleLoad);
-		expect(calls).toEqual([9]);
 	});
 });

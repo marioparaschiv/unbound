@@ -19,7 +19,11 @@ export const adminUsersKey = ['admin-users'] as const;
 /** What `/account` manages: linked accounts, API keys and sponsorship. */
 export const accountOverviewKey = ['account', 'overview'] as const;
 
+/** Every docs query key starts with this: manifests, sidebars and symbol pages. */
+export const docsKey = ['docs'] as const;
+
 export default {
+	docsKey,
 	marketplaceKey,
 	dashboardKey,
 	dashboardPageKey,

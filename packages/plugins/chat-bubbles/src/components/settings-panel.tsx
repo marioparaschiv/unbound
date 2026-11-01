@@ -1,8 +1,8 @@
-import { ui } from '@unbound-app/api';
+import { storage, ui } from '@unbound-app/api';
 
 import { BubbleLimits, BubbleStyle } from '~/constants';
 import { parseHexColor } from '~/style';
-import { settings, ThemeStore } from '~/modules';
+import { SETTINGS_BUCKET, ThemeStore } from '~/modules';
 
 type NumberSetting = {
 	key: string;
@@ -60,7 +60,7 @@ function themeColor(): string {
 }
 
 function SettingsPanel() {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(SETTINGS_BUCKET);
 	const color = storedColor(store.get('color', ''));
 	const ownColor = storedColor(store.get('ownColor', ''));
 
