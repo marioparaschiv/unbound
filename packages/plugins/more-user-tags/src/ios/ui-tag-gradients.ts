@@ -22,6 +22,7 @@ const SHEEN_STOPS: GradientStop[] = [
 const SHEEN_FROM = [0, 0.1, 0.2, 0.3, 0.4];
 const SHEEN_TO = [0.6, 0.7, 0.8, 0.9, 1];
 const MAX_COLORS = 256;
+const MAX_UNMATCHED = 128;
 
 export type TagAppearance = {
 	colors: string[];
@@ -67,6 +68,12 @@ type TagState = {
 	cgColors: Map<string, NativeObjectHandle>;
 	records: Map<string, TagRecord>;
 	updating: Set<string>;
+	unmatched: Map<string, Unmatched>;
+};
+
+type Unmatched = {
+	label: NativeObjectHandle;
+	labelName: string;
 };
 
 type StateHolder = Record<typeof STATE_KEY, TagState | undefined>;
@@ -230,6 +237,39 @@ function findAppearance(
 	}
 
 	return found;
+}
+
+function labelNameOf(objc: NativeObjCBridge, label: NativeObjectHandle): string {
+	'worklet';
+	const text = objc.invoke(label, 'text', []);
+
+	if (typeof text === 'string' && text.length > 0) {
+		return text;
+	}
+
+	const accessibilityLabel = objc.invoke(label, 'accessibilityLabel', []);
+
+	return typeof accessibilityLabel === 'string' ? accessibilityLabel : '';
+}
+
+function rememberUnmatched(
+	current: TagState,
+	id: string,
+	label: NativeObjectHandle,
+	labelName: string,
+) {
+	'worklet';
+
+	if (!labelName) {
+		return;
+	}
+
+	current.unmatched.delete(id);
+	current.unmatched.set(id, { label, labelName });
+
+	if (current.unmatched.size > MAX_UNMATCHED) {
+		current.unmatched.delete(current.unmatched.keys().next().value as string);
+	}
 }
 
 function readLabel(
@@ -472,8 +512,12 @@ function updateLabel(current: TagState, label: NativeObjectHandle) {
 				removeRecord(current, id, record);
 			}
 
+			rememberUnmatched(current, id, label, labelNameOf(objc, label));
+
 			return;
 		}
+
+		current.unmatched.delete(id);
 
 		if (
 			record &&
@@ -575,6 +619,7 @@ export function installTagGradients(scope: NativeUIScope, settings: TagSettings)
 		cgColors: new Map(),
 		records: new Map(),
 		updating: new Set(),
+		unmatched: new Map(),
 	};
 
 	holder()[STATE_KEY] = current;
@@ -582,6 +627,14 @@ export function installTagGradients(scope: NativeUIScope, settings: TagSettings)
 	const onLabel = ({ self }: { self: NativeObjectHandle }) => {
 		if (hasAppearances(current)) {
 			updateLabel(current, self);
+
+			return;
+		}
+
+		try {
+			rememberUnmatched(current, keyOf(objc, self), self, labelNameOf(objc, self));
+		} catch (error) {
+			console.error(`[More User Tags] ${String(error)}`);
 		}
 	};
 
@@ -608,7 +661,7 @@ export function installTagGradients(scope: NativeUIScope, settings: TagSettings)
 }
 
 /**
- * @description Replaces the gradients and repaints the tags it painted.
+ * @description Replaces the gradients, repaints the tags it painted, and paints the tags it saw before their gradient was known, in the same pass.
  * @param settings The gradients per label and color, and whether to skip the holographic sheen.
  */
 export function setTagSettings(settings: TagSettings) {
@@ -623,6 +676,16 @@ export function setTagSettings(settings: TagSettings) {
 
 	for (const record of [...current.records.values()]) {
 		updateLabel(current, record.label);
+	}
+
+	const names = Object.keys(settings.appearances);
+
+	for (const entry of [...current.unmatched.values()]) {
+		const prefix = gradientKey(entry.labelName, '');
+
+		if (names.some((name) => name.startsWith(prefix))) {
+			updateLabel(current, entry.label);
+		}
 	}
 }
 
