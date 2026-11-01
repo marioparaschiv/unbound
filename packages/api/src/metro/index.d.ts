@@ -99,7 +99,8 @@ export declare function findByPrototypes<
  * @description Resolves a module matching `filter` once it loads, without ever loading it.
  * @param filter The filter to match against.
  * @param options Whether to also match the `default` export, as in {@link onModuleLoaded}, plus a `signal` that abandons the wait.
- * @returns The loaded module, or a promise of the module once Discord loads it, or of `undefined` if `signal` aborts first.
+ * @returns The loaded module, or a promise of the module once Discord loads it, or of `undefined` if `signal` aborts first
+ * or a full search of this Discord build found the module missing.
  */
 export declare function findLazy(filter: MetroFilter, options?: MetroLazySearchOptions): any;
 /**
@@ -118,6 +119,7 @@ export declare function onModuleLoad(listener: MetroModuleLoadListener): () => v
 /**
  * @description Calls `onLoad` with the module matching `filter` once it initializes, without ever initializing it.
  * A loaded module is passed at once; otherwise `onLoad` runs inside the module's factory, before its importer reads it.
+ * A module a full search of this Discord build found missing never loads, so `onLoad` never runs for it.
  * @param filter The filter to match against.
  * @param onLoad Receives the matched module, once.
  * @param options Whether to also match the `default` export (`esModules`) and return it on such a match (`interop`).

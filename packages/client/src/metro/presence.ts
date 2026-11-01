@@ -17,7 +17,7 @@ export function filterPresence(
 	const key = filter[CACHE_KEY];
 	const cached = key ? Cache.getModuleCacheForKey(key) : void 0;
 
-	if (cached?.length === 0) {
+	if (Cache.isKeyMissing(key)) {
 		return 'missing';
 	}
 

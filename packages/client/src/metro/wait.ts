@@ -28,6 +28,7 @@ data.listeners.add(onModuleInitialized);
 /**
  * @description Calls `onLoad` with the module matching `filter` once it initializes, without ever initializing it.
  * A loaded module is passed at once; otherwise `onLoad` runs inside the module's factory, before its importer reads it.
+ * A module a full search of this Discord build found missing never loads, so `onLoad` never runs for it.
  * @param filter The filter to match against.
  * @param onLoad Receives the matched module, once.
  * @param options Whether to also match the `default` export (`esModules`) and return it on such a match (`interop`).
@@ -38,6 +39,11 @@ export function onModuleLoaded(
 	onLoad: (mdl: MetroExport) => void,
 	options: MetroModuleLoadedOptions = {},
 ): () => void {
+	// Waiting would test this filter against every module Discord loads for the rest of the session.
+	if (Cache.isKeyMissing(filter[CACHE_KEY])) {
+		return noop;
+	}
+
 	const loaded = finder('find')(filter, { ...options, initialize: false });
 
 	if (loaded !== null && loaded !== void 0) {
@@ -77,7 +83,8 @@ export function onModuleLoaded(
  * @description Resolves a module matching `filter` once it loads, without ever loading it.
  * @param filter The filter to match against.
  * @param options Whether to also match the `default` export, as in {@link onModuleLoaded}, plus a `signal` that abandons the wait.
- * @returns The loaded module, or a promise of the module once Discord loads it, or of `undefined` if `signal` aborts first.
+ * @returns The loaded module, or a promise of the module once Discord loads it, or of `undefined` if `signal` aborts first
+ * or a full search of this Discord build found the module missing.
  */
 export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = {}) {
 	const { signal, ...rest } = options;
@@ -88,7 +95,7 @@ export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = 
 		return existing;
 	}
 
-	if (signal?.aborted) {
+	if (signal?.aborted || Cache.isKeyMissing(filter[CACHE_KEY])) {
 		return Promise.resolve(void 0);
 	}
 

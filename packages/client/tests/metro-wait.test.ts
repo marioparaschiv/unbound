@@ -69,11 +69,13 @@ exporting(17, { picked: () => 17 });
 exporting(18, { remembered: () => 18 });
 exporting(19, { remembered: () => 19 });
 exporting(20, { forced: () => 20 });
-exporting(21, { late: () => 21 });
 exporting(22, { viaFind: () => 22 });
 exporting(23, { presentLoaded: () => 23 });
 exporting(24, { presentCached: () => 24 });
 exporting(25, { presentUnseen: () => 25 });
+exporting(26, { absent: () => 26 });
+exporting(27, { absentPromise: () => 27 });
+exporting(28, { absentHandle: () => 28 });
 metroRequire(0);
 metroRequire(1);
 
@@ -90,6 +92,7 @@ mock.module('~/metro/cache', () => ({
 		hasModuleFlag: () => false,
 		addModuleFlag: () => undefined,
 		getModuleCacheForKey: (key: string) => cachedIds[key],
+		isKeyMissing: (key?: string) => key !== void 0 && cachedIds[key]?.length === 0,
 		getHintsForKey: () => undefined,
 		addCachedIDForKey(key: string, id: number) {
 			cachedIds[key] ??= [];
@@ -198,6 +201,32 @@ describe('onModuleLoaded', () => {
 		expect(found.map((mdl) => mdl.moved())).toEqual([7]);
 		expect(cachedIds['byProps::moved']).toEqual([6, 7]);
 	});
+
+	test('a wait on a key marked missing never tests a module, while cached and keyless waits still settle', () => {
+		let tested = 0;
+		const missing: MetroFilter = (mdl) => {
+			tested++;
+
+			return mdl.absent !== void 0;
+		};
+
+		missing[CACHE_KEY] = 'test::absent';
+		cachedIds['test::absent'] = [];
+		cachedIds['byProps::absent'] = [26];
+
+		const calls: string[] = [];
+
+		onModuleLoaded(missing, () => calls.push('missing'));
+		onModuleLoaded(byProps('absent'), () => calls.push('cached'));
+		onModuleLoaded(
+			(mdl) => mdl.absent !== void 0,
+			() => calls.push('keyless'),
+		);
+		metroRequire(26);
+
+		expect(tested).toBe(0);
+		expect(calls.sort()).toEqual(['cached', 'keyless']);
+	});
 });
 
 describe('findLazy', () => {
@@ -219,6 +248,15 @@ describe('findLazy', () => {
 		metroRequire(13);
 
 		expect(await found).toBeUndefined();
+	});
+
+	test('resolves with undefined at once for a key marked missing', async () => {
+		cachedIds['byProps::absentPromise'] = [];
+
+		const found = findLazy(byProps('absentPromise'));
+		const pending = Bun.sleep(0).then(() => 'pending');
+
+		expect(await Promise.race([found, pending])).toBeUndefined();
 	});
 });
 
@@ -266,6 +304,16 @@ describe('patching a lazy module', () => {
 
 		expect(isLoaded(5)).toBe(false);
 		expect(metroRequire(5).half(8)).toBe(4);
+	});
+
+	test('a patch on a handle whose key is marked missing never applies', () => {
+		cachedIds['byProps::absentHandle'] = [];
+
+		const Absent = metro.findByProps('absentHandle', { lazy: true });
+
+		expect(() => after(Absent, 'absentHandle', () => 0)).not.toThrow();
+		expect(isLoaded(28)).toBe(false);
+		expect(metroRequire(28).absentHandle()).toBe(28);
 	});
 });
 
@@ -357,17 +405,6 @@ describe('find', () => {
 
 		expect(metro.findByProps('forced').forced()).toBe(20);
 		expect(loadedIds()).toEqual([...before, 20].sort((a, b) => a - b));
-	});
-
-	test('a wait on a remembered miss still matches any module that loads', () => {
-		cachedIds['byProps::late'] = [];
-
-		const found: Exports[] = [];
-
-		onModuleLoaded(byProps('late'), (mdl) => found.push(mdl));
-		metroRequire(21);
-
-		expect(found.map((mdl) => mdl.late())).toEqual([21]);
 	});
 
 	// Runs last: a miss loads the whole registry.

@@ -54,6 +54,7 @@ mock.module('~/metro/cache', () => ({
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
 		getModuleCacheForKey: () => void 0,
+		isKeyMissing: () => false,
 		getHintsForKey: () => void 0,
 		markKeyMissing: () => void 0,
 	},

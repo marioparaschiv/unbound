@@ -139,7 +139,7 @@ To check that a lazy result's module exists without loading it, use `getModulePr
 
 ### Waiting for a module
 
-Some modules load only when the user opens a screen. `findLazy(filter)` returns the module if it's already loaded, or a promise that resolves when Discord loads it. It never loads the module itself. Pass a `signal` to stop waiting. In a plugin, a wait that's still pending is abandoned when the plugin stops.
+Some modules load only when the user opens a screen. `findLazy(filter)` returns the module if it's already loaded, or a promise that resolves when Discord loads it. It never loads the module itself. If a full search of this Discord build found the module `missing`, the promise resolves with `undefined` at once. Pass a `signal` to stop waiting. In a plugin, a wait that's still pending is abandoned when the plugin stops.
 
 ```ts
 const ActionSheet = await metro.findLazy(

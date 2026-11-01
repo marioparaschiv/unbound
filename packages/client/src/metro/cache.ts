@@ -176,6 +176,15 @@ export function markKeyMissing(key: string) {
 }
 
 /**
+ * @description Tests whether a full scan of this build found no module for a cache key.
+ * @param key The cache key to test, if the filter has one.
+ * @returns `true` if the key is marked missing.
+ */
+export function isKeyMissing(key: string | undefined) {
+	return key !== void 0 && state.modules[key]?.length === 0;
+}
+
+/**
  * @description Removes a module id from a cache key, dropping the key entirely once empty, and persists. Twin of {@link addCachedIDForKey}.
  * @param key The cache key to remove the id from.
  * @param item The module id to uncache.
@@ -279,6 +288,7 @@ export default {
 	getHintsForKey,
 	addCachedIDForKey,
 	markKeyMissing,
+	isKeyMissing,
 	removeCachedIDForKey,
 	addModuleFlag,
 	hasModuleFlag,
