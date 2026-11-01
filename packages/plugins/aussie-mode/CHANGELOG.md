@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2]
+
+### Changed
+
+- Rebuilt with the updated shared Android helpers; behavior is unchanged.
+
 ## [1.0.1]
 
 ### Fixed
