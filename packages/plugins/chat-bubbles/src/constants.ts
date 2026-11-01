@@ -37,7 +37,6 @@ export const AndroidClass = {
 	messageView: 'com.discord.chat.presentation.message.MessageView',
 	accessories: 'com.discord.chat.presentation.message.MessageAccessoriesView',
 	content: 'com.discord.chat.presentation.message.view.MessageContentView',
-	recycler: 'androidx.recyclerview.widget.RecyclerView',
 };
 
 export const CONTENT_COLUMN_SEARCH_DEPTH = 6;
