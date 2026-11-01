@@ -124,7 +124,6 @@ jobs:
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
 
-            # TypeDoc treats every warning as an error, so a new warning fails this step.
             - name: Generate the API docs
               run: |
                   bun run --cwd apps/sdk-generator docs main
