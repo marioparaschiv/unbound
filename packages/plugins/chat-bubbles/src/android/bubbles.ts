@@ -73,7 +73,6 @@ const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
  * @returns `refresh`, which repaints the bubbles it drew, and `dispose`, which brings back the rows' own backgrounds.
  */
 export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
-	const accessoriesClass = java.getClass(AndroidClass.accessories);
 	const messageClass = java.getClass(AndroidClass.messageView);
 	const idField = messageIdField(java);
 	const bindMessage = messageBindMethod(java);
@@ -584,14 +583,14 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	}
 
 	const token = hooks.hook(
-		AndroidClass.recycler,
+		AndroidClass.accessories,
 		'onLayout',
 		LAYOUT_PARAMETERS,
 		{ notify: true },
 		({ self }) => {
 			const accessories = javaReference(self);
 
-			if (!accessories || !isInstance(accessoriesClass, accessories)) return;
+			if (!accessories) return;
 
 			void scheduleRow(accessories).catch((error) => {
 				if (!isCancellation(error)) {

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.3] - 2026-11-01
+
+### Changed
+
+- Listens only to message rows laying out, so scrolling other lists no longer wakes the plugin.
+
 ## [1.4.2]
 
 ### Changed
