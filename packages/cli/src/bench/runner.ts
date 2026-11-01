@@ -12,9 +12,9 @@ import {
 } from '~/bench/device';
 import { runLaunch, type LaunchContext, type LaunchSpec } from '~/bench/launch';
 import { schedule, type LaunchKind, type Plan } from '~/bench/plan';
+import type { RunIdentity, RunRecord } from '~/bench/record';
 import { formatValue, METRICS } from '~/bench/metrics';
 import type { VariantBuild } from '~/bench/build';
-import type { RunRecord } from '~/bench/record';
 import { evaluateOnDevice } from '~/lib/device';
 
 /** A switch discards warm launches until one ran the variant's bundle; past this many the loader is stuck. */
@@ -107,6 +107,20 @@ export async function restoreDevice(
 	return false;
 }
 
+/**
+ * @description Whether a launch is a warm-up that ran a bundle other than its variant's. Such a launch may fail
+ * without stopping the run: a loader that runs Unbound before Discord's bundle cannot start an older cached bundle.
+ * @param identity The launch's identity.
+ * @param bundleSha256 The variant's bundle hash.
+ * @returns Whether the launch ran a stale bundle during warm-up.
+ */
+export function ranStaleBundle(
+	identity: Pick<RunIdentity, 'discarded' | 'ranBundleSha256'>,
+	bundleSha256: string,
+): boolean {
+	return identity.discarded && identity.ranBundleSha256 !== bundleSha256;
+}
+
 function progressLine(record: RunRecord, position: string, eta: string): string {
 	const { identity } = record;
 	const label = identity.discarded ? 'warm-up' : identity.kind;
@@ -125,7 +139,7 @@ function progressLine(record: RunRecord, position: string, eta: string): string 
 
 /**
  * @description Runs the plan's blocks on the prepared device, appending each launch as it finishes. Stops at the
- * first launch that misses a milestone, crashes or fails its self-check.
+ * first launch that misses a milestone, crashes or fails its self-check, unless it is a warm-up on a stale bundle.
  * @param context The device, bridge and protocol.
  * @param plan The plan.
  * @param builds Each variant's build, by variant name.
@@ -155,7 +169,10 @@ export async function runBlocks(
 		emit(record);
 		print(progressLine(record, `${index}/~${expected}`, eta));
 
-		if (record.problems.length > 0) {
+		if (
+			record.problems.length > 0 &&
+			!ranStaleBundle(record.identity, spec.build.bundleSha256)
+		) {
 			throw new Error(
 				`Launch ${index} (${spec.build.variant}, ${spec.discarded ? 'warm-up' : spec.kind}) is invalid: ${record.problems.join('; ')}`,
 			);
