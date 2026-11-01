@@ -28,20 +28,18 @@ export function compareDocsVersions(a: DocsVersion, b: DocsVersion): number {
 }
 
 /**
- * @description Adds a version to a package's manifest, keeping every version it already lists. Adding a listed version changes nothing.
+ * @description Adds versions to a package's manifest, keeping every version it already lists. Adding listed versions changes nothing.
  * @param manifest The current manifest, or `undefined` when none was published yet.
  * @param pkg The documented package.
- * @param version The version to add.
+ * @param added The versions to add.
  * @returns The merged manifest, its versions deduplicated and ordered by {@link compareDocsVersions}.
  */
 export function mergeDocsManifest(
 	manifest: DocsManifest | undefined,
 	pkg: DocsPackage,
-	version: DocsVersion,
+	added: Iterable<DocsVersion>,
 ): DocsManifest {
-	const versions = new Set(manifest?.versions);
-
-	versions.add(version);
+	const versions = new Set([...(manifest?.versions ?? []), ...added]);
 
 	return { package: pkg, versions: [...versions].sort(compareDocsVersions) };
 }

@@ -13,6 +13,7 @@ import {
 	LogLevel,
 	OptionDefaults,
 	normalizePath,
+	type JSONOutput,
 	type ProjectReflection,
 	type TypeDocOptions,
 } from 'typedoc';
@@ -131,6 +132,61 @@ export function renameDocsModules(project: ProjectReflection): void {
 	}
 }
 
+/** The fields shared by the serialized reflections and types `nameModuleReferences` looks at. */
+type JsonNode = {
+	variant?: string;
+	id?: number;
+	name?: string;
+	type?: string;
+	target?: number | { packageName: string };
+};
+
+// UNKNOWN: walks TypeDoc's serialized JSON, whose nodes have no common shape.
+function visitJson(value: unknown, onObject: (node: JsonNode) => void) {
+	if (Array.isArray(value)) {
+		for (const item of value) visitJson(item, onObject);
+
+		return;
+	}
+
+	if (typeof value !== 'object' || value === null) return;
+
+	onObject(value);
+
+	for (const child of Object.values(value)) visitJson(child, onObject);
+}
+
+/**
+ * @description Names each reference to a module after that module, or after its package when external.
+ * TypeDoc names a `typeof import('./x')` reference after TypeScript's internal module symbol, `__module`.
+ * @param project The serialized project, rewritten in place.
+ */
+export function nameModuleReferences(project: JSONOutput.ProjectReflection): void {
+	const names = new Map<number, string>();
+	const references: JsonNode[] = [];
+
+	visitJson(project, (node) => {
+		if (node.variant && typeof node.id === 'number' && typeof node.name === 'string') {
+			names.set(node.id, node.name);
+		}
+
+		if (node.type === 'reference' && node.name === '__module') {
+			references.push(node);
+		}
+	});
+
+	for (const reference of references) {
+		const name =
+			typeof reference.target === 'number'
+				? names.get(reference.target)
+				: reference.target?.packageName;
+
+		if (name) {
+			reference.name = name;
+		}
+	}
+}
+
 /**
  * @description Reads a docs manifest written earlier, parsing it at the boundary.
  * @param path The manifest's path.
@@ -170,13 +226,13 @@ export async function generateDocs(
 
 	const path = join(outDir, getDocsKey(DOCS_PACKAGE, version));
 	const manifestPath = join(outDir, getDocsManifestKey(DOCS_PACKAGE));
-	const manifest = mergeDocsManifest(readDocsManifest(manifestPath), DOCS_PACKAGE, version);
+	const manifest = mergeDocsManifest(readDocsManifest(manifestPath), DOCS_PACKAGE, [version]);
 
+	const json = app.serializer.projectToObject(project, normalizePath(outDir));
+
+	nameModuleReferences(json);
 	mkdirSync(dirname(path), { recursive: true });
-	writeFileSync(
-		path,
-		JSON.stringify(app.serializer.projectToObject(project, normalizePath(outDir))),
-	);
+	writeFileSync(path, JSON.stringify(json));
 	writeFileSync(manifestPath, `${JSON.stringify(manifest, null, '\t')}\n`);
 
 	return { path, manifest };

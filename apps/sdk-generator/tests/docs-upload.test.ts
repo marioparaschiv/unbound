@@ -19,6 +19,7 @@ function createMemoryBucket(objects: Map<string, StoredObject>): DocsBucket {
 	return {
 		read: async (key) => objects.get(key)?.body,
 		exists: async (key) => objects.has(key),
+		list: async (prefix) => [...objects.keys()].filter((key) => key.startsWith(prefix)),
 		write: async (key, body, cacheControl) => {
 			objects.set(key, { body, cacheControl });
 		},
@@ -84,6 +85,25 @@ describe('uploadDocs', () => {
 
 		expect(await uploadDocs(dir, 'v0.12.0', bucket)).toEqual([]);
 		expect(objects).toEqual(before);
+	});
+
+	test('lists a release whose earlier run failed before writing the manifest', async () => {
+		objects.set('docs/api/v0.12.0.json', {
+			body: '{"tag":1}',
+			cacheControl: IMMUTABLE_CACHE_CONTROL,
+		});
+		objects.set('docs/api/versions.json', {
+			body: JSON.stringify({ package: 'api', versions: ['main'] }),
+			cacheControl: MUTABLE_CACHE_CONTROL,
+		});
+		writeLocal('main', '{"main":1}');
+
+		await uploadDocs(dir, 'main', bucket);
+
+		expect(JSON.parse(objects.get('docs/api/versions.json')?.body ?? '').versions).toEqual([
+			'main',
+			'v0.12.0',
+		]);
 	});
 
 	test('rerunning main rewrites its docs but not the manifest', async () => {

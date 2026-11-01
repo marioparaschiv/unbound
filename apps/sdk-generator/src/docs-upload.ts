@@ -17,10 +17,8 @@ import { DOCS_OUT } from './docs';
 
 const logger = createLogger('SDK', 'Docs Upload');
 
-/** `main` and the manifest change on every push to main, so the CDN only holds them briefly. */
 export const MUTABLE_CACHE_CONTROL = 'public, max-age=300';
 
-/** A release tag's docs never change once published. */
 export const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 const DOCS_PACKAGE: DocsPackage = 'api';
@@ -35,17 +33,17 @@ export const bucketEnvSchema = z.object({
 
 export type BucketEnv = z.infer<typeof bucketEnvSchema>;
 
-/** The public bucket operations the upload needs. */
 export type DocsBucket = {
-	/** The object's text, or `undefined` when it does not exist. */
 	read: (key: string) => Promise<string | undefined>;
 	exists: (key: string) => Promise<boolean>;
+	list: (prefix: string) => Promise<string[]>;
 	write: (key: string, body: string, cacheControl: string) => Promise<void>;
 };
 
 /**
- * @description Publishes one docs version and lists it in the bucket's manifest. A release tag already
- * published is left as it is, and the manifest is only written when the version is new to it, so a rerun changes nothing.
+ * @description Publishes one docs version, then rebuilds the bucket's manifest from every version file the
+ * bucket holds, so a run that failed before its manifest write is repaired by the next. A published
+ * release tag is left as it is, and an unchanged manifest is not rewritten.
  * @param dir The directory holding `docs/<package>/<version>.json`, {@link DOCS_OUT} by default.
  * @param version The version to publish.
  * @param bucket The public bucket.
@@ -70,11 +68,14 @@ export async function uploadDocs(
 
 	const remote = await bucket.read(manifestKey);
 	const current = remote === undefined ? undefined : docsManifestSchema.parse(JSON.parse(remote));
+	const published = (await bucket.list(`docs/${DOCS_PACKAGE}/`)).flatMap((path) => {
+		const parsed = docsVersionSchema.safeParse(path.match(/([^/]+)\.json$/)?.[1]);
 
-	// The manifest is written after the version, so it never lists one readers cannot load.
-	if (!current?.versions.includes(version)) {
-		const manifest = mergeDocsManifest(current, DOCS_PACKAGE, version);
+		return parsed.success ? [parsed.data] : [];
+	});
+	const manifest = mergeDocsManifest(current, DOCS_PACKAGE, published);
 
+	if (manifest.versions.join() !== current?.versions.join()) {
 		await bucket.write(manifestKey, JSON.stringify(manifest), MUTABLE_CACHE_CONTROL);
 		written.push(manifestKey);
 	}
@@ -120,6 +121,19 @@ export function createDocsBucket(env: BucketEnv): DocsBucket {
 			return (await file.exists()) ? file.text() : undefined;
 		},
 		exists: (key) => client.exists(key),
+		list: async (prefix) => {
+			const keys: string[] = [];
+			let continuationToken: string | undefined;
+
+			do {
+				const page = await client.list({ prefix, continuationToken });
+
+				keys.push(...(page.contents ?? []).map((object) => object.key));
+				continuationToken = page.isTruncated ? page.nextContinuationToken : void 0;
+			} while (continuationToken);
+
+			return keys;
+		},
 		write: async (key, body, cacheControl) => {
 			const url = client.presign(key, { method: 'PUT', expiresIn: 300 });
 			const response = await fetch(url, {

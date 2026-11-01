@@ -27,18 +27,16 @@ describe('compareDocsVersions', () => {
 
 describe('mergeDocsManifest', () => {
 	test('starts a manifest when none was published', () => {
-		expect(mergeDocsManifest(undefined, 'api', 'main')).toEqual({
+		expect(mergeDocsManifest(undefined, 'api', ['main'])).toEqual({
 			package: 'api',
 			versions: ['main'],
 		});
 	});
 
 	test('adds a release without losing earlier ones', () => {
-		const merged = mergeDocsManifest(
-			{ package: 'api', versions: ['main', 'v0.12.0'] },
-			'api',
+		const merged = mergeDocsManifest({ package: 'api', versions: ['main', 'v0.12.0'] }, 'api', [
 			'v0.13.0',
-		);
+		]);
 
 		expect(merged.versions).toEqual(['main', 'v0.13.0', 'v0.12.0']);
 	});
@@ -49,6 +47,6 @@ describe('mergeDocsManifest', () => {
 			versions: ['main', 'v0.12.0'] as DocsVersion[],
 		};
 
-		expect(mergeDocsManifest(manifest, 'api', 'v0.12.0')).toEqual(manifest);
+		expect(mergeDocsManifest(manifest, 'api', ['v0.12.0'])).toEqual(manifest);
 	});
 });

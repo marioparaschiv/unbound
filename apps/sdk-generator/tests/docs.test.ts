@@ -47,6 +47,20 @@ describe('generateDocs', () => {
 			expect(modules).not.toContain('_internal');
 			expect(types?.children?.some((child) => child.name === 'AddonHandle')).toBe(true);
 			expect(update?.kind).toBe(FUNCTION_KIND);
+
+			const json = await Bun.file(path).text();
+			const unbound = project.children
+				?.find((child) => child.name === 'global')
+				?.children?.find((child) => child.name === 'UnboundGlobal');
+			const assets = unbound?.children?.find((child) => child.name === 'assets') as
+				| { type: { name: string; target: number } }
+				| undefined;
+
+			expect(json).not.toContain('"__module"');
+			expect(assets?.type.name).toBe('assets');
+			expect(assets?.type.target).toBe(
+				project.children?.find((child) => child.name === 'assets')?.id,
+			);
 		},
 		{ timeout: 120_000 },
 	);
