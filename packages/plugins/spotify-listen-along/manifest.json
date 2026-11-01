@@ -18,5 +18,12 @@
 	],
 	"version": "1.0.0",
 	"icon": "HeadphonesIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"bytecode": {
+		"98": "b1ff70feb64de25f0d444858c27b0b3ebac48681dc358e45489ea91510dd8344212b0dea5088e483d68b0a7f4b30b3488b00a145d92362f799f3338f0ac38e4a"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "MsxsWYGw2bc4BbM9QAxgyJBEga/Jg51toaQwkjBMeCaxbFMCiEMDsdEjNIrtzx6OHDpaM5tNIwTRSbIJjmDQAQ=="
+	}
 }
