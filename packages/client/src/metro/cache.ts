@@ -197,6 +197,9 @@ function isValidCache() {
  * @param fields The fields that changed.
  */
 function save(...fields: [keyof CacheState, ...(keyof CacheState)[]]) {
+	// A later launch trusts saved fields only under the saved `info`, which a new, empty cache never changes.
+	unsaved.add('info');
+
 	for (const field of fields) {
 		unsaved.add(field);
 	}

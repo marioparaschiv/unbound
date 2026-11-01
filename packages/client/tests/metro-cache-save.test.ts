@@ -26,7 +26,7 @@ jest.useFakeTimers();
 
 const Cache = (await import('~/metro/cache')).default;
 
-test('stages each changed cache field once per burst, and leaves unchanged fields alone', () => {
+test('stages each changed cache field and the cache info once per burst, and leaves the rest alone', () => {
 	for (let id = 0; id < 2900; id++) {
 		Cache.addAssetToCache(id);
 	}
@@ -35,6 +35,7 @@ test('stages each changed cache field once per burst, and leaves unchanged field
 	jest.advanceTimersByTime(1000);
 
 	expect(traffic.staged.map((change) => 'key' in change && change.key)).toEqual([
+		'info',
 		'assets',
 		'modules',
 	]);
