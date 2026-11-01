@@ -1,17 +1,13 @@
 import libraries from '@unbound-app/client-build/shim-libraries.ts';
 import type { Plugin } from 'rollup';
 
-type Edit = {
+type Located = {
 	start: number;
 	end: number;
-	text: string;
 };
 
-type ImportSpecifier = {
-	type: string;
-	start: number;
-	end: number;
-	local: { name: string };
+type Edit = Located & {
+	text: string;
 };
 
 // A default import of a library is rewritten to this specifier, since the iife transform reads both a
@@ -27,11 +23,23 @@ export function shimGlobal(id: string): string {
 	const isDefault = id.endsWith(DEFAULT_SUFFIX);
 	const specifier = isDefault ? id.slice(0, -DEFAULT_SUFFIX.length) : id;
 
-	if (!Object.hasOwn(libraries, specifier)) return '';
+	if (!Object.hasOwn(libraries, specifier)) {
+		return '';
+	}
 
 	const shim = `unbound.shims[${JSON.stringify(specifier)}]`;
 
 	return isDefault ? `${shim}.default` : shim;
+}
+
+// Rollup types only the program node with offsets; every node it parses carries them.
+function isLocated<T extends object>(node: T): node is T & Located {
+	return (
+		'start' in node &&
+		typeof node.start === 'number' &&
+		'end' in node &&
+		typeof node.end === 'number'
+	);
 }
 
 /**
@@ -50,21 +58,24 @@ export function shimImports(): Plugin {
 				if (
 					node.type !== 'ImportDeclaration' ||
 					typeof node.source.value !== 'string' ||
-					!Object.hasOwn(libraries, node.source.value)
+					!Object.hasOwn(libraries, node.source.value) ||
+					!isLocated(node)
 				) {
 					continue;
 				}
 
-				const specifiers = node.specifiers as unknown as ImportSpecifier[];
+				const specifiers = node.specifiers.filter(isLocated);
 				const defaults = specifiers.filter(
 					(spec) => spec.type === 'ImportDefaultSpecifier',
 				);
 				const [first] = defaults;
 
-				if (!first) continue;
+				if (!first) {
+					continue;
+				}
 
 				const source = JSON.stringify(node.source.value);
-				const rest = specifiers.filter((spec) => !defaults.includes(spec));
+				const rest = specifiers.filter((spec) => spec.type !== 'ImportDefaultSpecifier');
 				const lines = [
 					`import ${first.local.name} from ${JSON.stringify(node.source.value + DEFAULT_SUFFIX)};`,
 				];
@@ -77,9 +88,7 @@ export function shimImports(): Plugin {
 					);
 				}
 
-				const { start, end } = node as unknown as Edit;
-
-				edits.push({ start, end, text: lines.join(' ') });
+				edits.push({ start: node.start, end: node.end, text: lines.join(' ') });
 			}
 
 			if (!edits.length) return null;
