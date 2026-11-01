@@ -1,0 +1,192 @@
+---
+title: 'The Store Page'
+description: 'ADDON.md: the page your addon shows in the store, with its banner and gallery.'
+icon: 'store'
+---
+
+`ADDON.md` is your addon's **store page**. It sits next to `manifest.json` in the addon's directory, and the store shows it as the addon's page: a banner, a gallery of images and videos, and a Markdown body.
+
+The page is display only. The [manifest](/docs/developer/addons/manifest) stays the source of truth for everything Unbound reads: the name, the description, the authors, and the version. The store takes the page title and summary from the manifest, so `ADDON.md` never repeats them.
+
+```text Addon directory
+my-plugin/
+├── manifest.json
+├── ADDON.md
+├── media/
+│   ├── banner.png
+│   ├── settings.png
+│   ├── demo.mp4
+│   └── demo-poster.jpg
+└── src/
+```
+
+### Frontmatter
+
+The page starts with YAML frontmatter between two `---` lines. Unbound parses it with the [`yaml`](https://eemeli.org/yaml/) package. A key that appears twice, or a key not listed below, fails the build. `title` and `description` also fail the build, because those come from the manifest.
+
+<ParamField path='banner' type='string' required>
+	The image across the top of the page. It must be exactly **3:1** and at least **1200x400** pixels.
+</ParamField>
+<ParamField path='media' type='PageMedia[]' default='[]'>
+	The gallery, shown in the order you list it. Up to 20 entries. Each entry is an image or a video, and must be between **9:16** (portrait) and **21:9** (ultrawide).
+
+	<Expandable title='Image entry'>
+		<ParamField path='image' type='string' required>
+			The image file.
+		</ParamField>
+		<ParamField path='alt' type='string' required>
+			A description of the image for screen readers, 1 to 300 characters.
+		</ParamField>
+	</Expandable>
+	<Expandable title='Video entry'>
+		<ParamField path='video' type='string' required>
+			The video file.
+		</ParamField>
+		<ParamField path='poster' type='string'>
+			An image shown before the video plays.
+		</ParamField>
+		<ParamField path='alt' type='string' required>
+			A description of the video for screen readers, 1 to 300 characters.
+		</ParamField>
+	</Expandable>
+</ParamField>
+
+An entry has either `image` or `video`, never both. Only a video entry takes a `poster`.
+
+### Body
+
+After the frontmatter, write standard Markdown. Do not start with a `#` heading: the manifest's name is already the page title. Start with `##` or with a paragraph.
+
+To show an image or a video in the body, use image syntax with a path under `media/`. The extension decides whether the file renders as an image or a video.
+
+```md
+![The settings page](media/settings.png)
+![A short demo](media/demo.mp4)
+```
+
+### Media
+
+Every banner, gallery entry, poster, and body image is a file in your repository, inside the addon's `media/` folder. Links to images on other sites fail the build.
+
+| Kind  | Extensions                           |
+| ----- | ------------------------------------ |
+| Image | `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif` |
+| Video | `.mp4`, `.webm`                      |
+
+- A path is relative to the addon's directory and starts with `media/`. Subfolders are allowed: `media/screens/settings.png`.
+- A file or folder name uses letters, digits, `_`, `-`, and `.`, and does not start with a `.`. A path has at most 200 characters.
+- Extensions are case-insensitive. `media/SHOT.PNG` is an image.
+- A single file can be at most **10 MB**. All media in one addon together can be at most **50 MB**.
+
+| Where       | Aspect ratio             | Minimum size |
+| ----------- | ------------------------ | ------------ |
+| `banner`    | Exactly 3:1              | 1200x400     |
+| `media`     | From 9:16 to 21:9        | None         |
+
+### What `ubd build` does with the page
+
+`ubd build` reads `ADDON.md`, opens every media file it references, and measures each one: its width, its height, its size in bytes, the length of a video, and a small placeholder the store shows while the file loads. It writes the result to `page.json` in the build output, next to the bundle and the built `manifest.json`. Commit `page.json` with the bundle. When you publish, the server checks the sizes and formats again against the files in your repository.
+
+Measuring a video needs [FFmpeg](https://ffmpeg.org/download.html): `ffmpeg` and `ffprobe` must be on your `PATH`. Images need nothing extra. To change the size limits for a build, set `ADDON_MEDIA_MAX_BYTES` (one file) or `ADDON_MEDIA_TOTAL_MAX_BYTES` (all media) in bytes.
+
+The build fails when the page has any of these problems:
+
+- The frontmatter is not valid YAML, has a key twice, or has a key not listed under [Frontmatter](#frontmatter).
+- The `banner` is missing, is not 3:1, or is smaller than 1200x400.
+- A gallery entry is outside 9:16 to 21:9, or has no `alt`.
+- A media path is outside `media/`, points at another site, or has an extension not listed under [Media](#media).
+- A referenced media file does not exist, or is larger than the size limits.
+- A media file's contents do not match its extension, or a video uses a codec other than H.264, HEVC, or AV1 (`.mp4`) or VP8, VP9, or AV1 (`.webm`).
+- The body starts with a `#` heading.
+- The body contains a table. Use a list instead.
+
+<Note>
+	The store still shows tables on pages published before this rule. New builds reject them.
+</Note>
+
+### Example
+
+```md ADDON.md
+---
+banner: media/banner.png
+media:
+  - image: media/settings.png
+    alt: The plugin's settings page, with the greeting text field
+  - video: media/demo.mp4
+    poster: media/demo-poster.jpg
+    alt: A message being sent, and the greeting appearing in the log
+---
+
+Hello World logs a greeting every time you send a message.
+
+## Settings
+
+- **Greeting**: the text to log. Defaults to `Hello!`.
+- **Log level**: `info` or `debug`.
+
+![Where the greeting shows up in the debug log](media/log.png)
+```
+
+For that page, `ubd build` writes a `page.json` like this one. Your numbers depend on your files.
+
+```json page.json
+{
+	"frontmatter": {
+		"banner": "media/banner.png",
+		"media": [
+			{
+				"image": "media/settings.png",
+				"alt": "The plugin's settings page, with the greeting text field"
+			},
+			{
+				"video": "media/demo.mp4",
+				"poster": "media/demo-poster.jpg",
+				"alt": "A message being sent, and the greeting appearing in the log"
+			}
+		]
+	},
+	"media": [
+		{
+			"path": "media/banner.png",
+			"kind": "image",
+			"width": 1500,
+			"height": 500,
+			"thumbhash": "1QcSHQRnh493V4dIh4eXh1h4kJUI",
+			"bytes": 412038
+		},
+		{
+			"path": "media/settings.png",
+			"kind": "image",
+			"width": 1080,
+			"height": 1920,
+			"thumbhash": "HBkSHYSIeHiPiHh8eJd4eTN0EEQG",
+			"bytes": 286451
+		},
+		{
+			"path": "media/demo.mp4",
+			"kind": "video",
+			"width": 1920,
+			"height": 1080,
+			"duration": 12.5,
+			"thumbhash": "3PcNNYSFeXh/d3eld0iHZoZgVwh2",
+			"bytes": 3804112
+		},
+		{
+			"path": "media/demo-poster.jpg",
+			"kind": "image",
+			"width": 1920,
+			"height": 1080,
+			"thumbhash": "3PcNNYSFeXh/d3eld0iHZoZgVwh2",
+			"bytes": 158203
+		},
+		{
+			"path": "media/log.png",
+			"kind": "image",
+			"width": 1600,
+			"height": 900,
+			"thumbhash": "nAgKFYB4d3d/eHiHiId4h3iAeIcI",
+			"bytes": 97310
+		}
+	]
+}
+```

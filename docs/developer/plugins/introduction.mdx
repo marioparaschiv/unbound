@@ -1,0 +1,128 @@
+---
+title: 'Introduction'
+description: 'What plugins are, how they run, and how to keep them fast.'
+icon: 'plug'
+---
+
+A plugin is a bundle of JavaScript that Unbound loads, evaluates, and runs inside Discord. Plugins add functionality the base app doesn't ship, using the [Developer API](/docs/api/latest): Metro to find Discord's internals, storage for settings, and the [patcher](/docs/api/latest/patcher) to change behavior.
+
+### The shape of a plugin
+
+A plugin is an object with optional lifecycle hooks. Unbound calls `start` when the plugin is enabled and `stop` when it's disabled.
+
+Set up everything the plugin does (patches, listeners, commands) in `start`.
+
+```ts
+export default {
+	start() {
+		// set up patches, listeners, commands
+	},
+	stop() {
+		// undo what the Addon scope can't see
+	},
+};
+```
+
+<Note>
+	A disabled plugin should leave nothing running. The plugin's [Addon scope](/docs/developer/plugins/introduction#the-addon-scope) removes its patches, commands, timers, and Metro, Flux and storage listeners after `stop` returns. Whatever else you create in `start`, undo in `stop`.
+</Note>
+
+### How plugins are loaded
+
+Each time a plugin starts, Unbound evaluates its bundle with a fresh Addon scope, then calls `start`. The bundle's top-level code runs during that evaluation, before `start`, so it delays the plugin's start and, at launch, Discord's.
+
+<Warning>
+	Do not run eager [Metro](/docs/api/latest/metro) searches at the top level of your plugin. A search with `{ lazy: false }` and `find` walk the module registry right away. The `findBy*` helpers and `flux.getStore` are lazy by default, so they're safe at the top level.
+</Warning>
+
+### The Addon scope
+
+Each plugin's bundle runs with its own **Addon scope**: a set of globals that belong to that plugin. Everything a plugin registers through them is removed in reverse order after its `stop` returns. A plugin's `stop` only has to undo what the scope can't see.
+
+| Global | What it is |
+| --- | --- |
+| `unbound` | The API. `patcher`, `commands`, `metro`, `storage` and `flux` on it are the plugin's own versions below |
+| `addon` | The plugin's handle: `id`, `name`, `version`, `manifest` and its state |
+| `logger` | A logger that prefixes every line with the plugin's name |
+| `patcher` | Patches that carry the plugin's id and are removed on stop |
+| `commands` | Slash commands owned by the plugin and removed on stop |
+| `setTimeout`, `setInterval`, `clearTimeout`, `clearInterval` | Timers that are cleared on stop |
+| `React` | React |
+
+Imports from `@unbound-app/api` read from the scoped `unbound`, so `import { patcher } from '@unbound-app/api'` gives the plugin's own patcher. The plugin's own versions also remove these on stop:
+
+- Module listeners from `metro.onModuleLoad`, and `metro.findLazy` waits that haven't resolved.
+- Listeners from `storage.onChange`. `storage.getBucket()` with no name returns the plugin's own Bucket, named after its `id`.
+- Listeners and interceptors from `flux.onStoreChange`, `flux.onAction` and `flux.interceptAction`.
+
+```ts
+import { flux, metro, patcher, storage } from '@unbound-app/api';
+
+const settings = storage.getBucket();
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+
+export default {
+	start() {
+		patcher.before(Messages, 'sendMessage', () => {
+			settings.set('sent', settings.get('sent', 0) + 1);
+		});
+
+		flux.onAction('CHANNEL_SELECT', ({ channelId }) => logger.log('Selected', channelId));
+	},
+};
+```
+
+Themes, icon packs and fonts ship no code, so they have no scope.
+
+### Writing a fast plugin
+
+Two techniques keep a plugin's startup cost near zero until it's enabled and used.
+
+<Steps>
+	<Step title='Keep module lookups lazy' icon='clock'>
+		Declare top-level Metro lookups with the lazy `findBy*` helpers. The search runs the first time you *access* the result (inside `start`, or later inside a handler) instead of at evaluation.
+
+		```ts
+		import { metro } from '@unbound-app/api';
+
+		// Deferred: resolves on first access, not at evaluation.
+		const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+		```
+	</Step>
+	<Step title='Split heavy work behind a dynamic import' icon='code-branch'>
+		Keep your bundle's entry point small. Move code that pulls in many modules into separate files, and `import()` those files inside `start`. That code then loads only when the plugin runs.
+
+		```ts
+		export default {
+			async start() {
+				const { apply } = await import('./patches');
+				apply();
+			},
+		};
+		```
+	</Step>
+</Steps>
+
+<Tip>
+	Structure your plugin as a small entry point plus modules it loads on demand. At import time, the entry point should do almost nothing beyond declaring lazy handles and waiting for `start`.
+</Tip>
+
+### Where to go next
+
+<CardGroup cols={2}>
+	<Card title='Manifest' icon='circle-info' href='/docs/developer/addons/manifest'>
+		The metadata every addon ships and how it's validated.
+	</Card>
+	<Card title='Patcher' icon='object-subtract' href='/docs/api/latest/patcher'>
+		Intercept and modify any function with the patcher.
+	</Card>
+	<Card title='Patching Components' icon='react' href='/docs/developer/plugins/react-patching'>
+		Change what Discord's components render.
+	</Card>
+	<Card title='Flux Stores' icon='box' href='/docs/developer/plugins/flux'>
+		React to Discord's actions and read its stores.
+	</Card>
+	<Card title='Debugging' icon='bug' href='/docs/developer/development/debugging'>
+		Tools for developing and inspecting your plugin.
+	</Card>
+</CardGroup>

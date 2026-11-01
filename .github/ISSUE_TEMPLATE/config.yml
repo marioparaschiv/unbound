@@ -4,7 +4,7 @@ contact_links:
       url: https://discord.gg/unbound
       about: Ask in the Discord server for help installing or using Unbound.
     - name: A plugin or theme made by someone else
-      url: https://docs.unbound.rip
+      url: https://unbound.rip/docs
       about: We only handle first-party plugins and themes. Report problems or ideas for other addons to their authors, usually on the addon's own repository.
     - name: Security vulnerability
       url: https://github.com/marioparaschiv/unbound/security/advisories/new
