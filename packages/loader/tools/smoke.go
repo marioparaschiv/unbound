@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -30,6 +29,7 @@ var (
 	smokeAddonFailure     = regexp.MustCompile(`Failed to (?:start|load) addon ([\w.-]+)`)
 	smokeBundleExecuted   = "Unbound's bundle was successfully executed."
 	smokeRuntimeCreated   = "Discord's runtime was created."
+	smokeReloading        = "Downloaded a new bundle; reloading"
 	errSmokeNotConnected  = errors.New("no device is connected to the debugger bridge")
 	errSmokeEvalTimedOut  = errors.New("the debugger evaluation timed out")
 	smokeStatusExpression = `(function () {
@@ -99,6 +99,7 @@ type smokeTarget interface {
 	prepare(ctx context.Context, plugins []smokePlugin, settings []byte) error
 	streamLogs(ctx context.Context) (io.ReadCloser, func() error, error)
 	launch(ctx context.Context) error
+	attach(ctx context.Context) error
 	running(ctx context.Context) bool
 	isLoaderLine(line string) bool
 	isCrashLine(line string) bool
@@ -332,7 +333,7 @@ func runSmokeTest(ctx context.Context, platform string, options *smokeOptions, t
 	if watcher.crashed() {
 		evalErr = errors.New("skipped because Discord crashed")
 	} else {
-		statuses, evalErr = evaluateSmokeStatuses(ctx, target, options, deadline)
+		statuses, evalErr = evaluateSmokeStatuses(ctx, target, watcher, options, deadline)
 	}
 	if evalErr == nil {
 		result.resources = measureSmokeResources(ctx, options)
@@ -374,7 +375,7 @@ func waitForSmokeLoads(ctx context.Context, target smokeTarget, watcher *smokeLo
 		if watcher.loadedAll(plugins) || watcher.crashed() {
 			return
 		}
-		if !target.running(ctx) {
+		if !discordRunning(ctx, target, watcher) {
 			watcher.recordCrash("Discord exited before the loader logged every plugin")
 			return
 		}
@@ -382,10 +383,18 @@ func waitForSmokeLoads(ctx context.Context, target smokeTarget, watcher *smokeLo
 	}
 }
 
-func evaluateSmokeStatuses(ctx context.Context, target smokeTarget, options *smokeOptions, deadline time.Time) ([]smokePluginStatus, error) {
+// discordRunning follows a restart the loader announced, since Android reloads by relaunching Discord.
+func discordRunning(ctx context.Context, target smokeTarget, watcher *smokeLogWatcher) bool {
+	if target.running(ctx) {
+		return true
+	}
+	return watcher.takeReload() && target.attach(ctx) == nil
+}
+
+func evaluateSmokeStatuses(ctx context.Context, target smokeTarget, watcher *smokeLogWatcher, options *smokeOptions, deadline time.Time) ([]smokePluginStatus, error) {
 	lastErr := errSmokeNotConnected
 	for time.Now().Before(deadline) && ctx.Err() == nil {
-		if !target.running(ctx) {
+		if !discordRunning(ctx, target, watcher) {
 			return nil, errors.New("Discord exited before the debugger connected")
 		}
 		statuses, err := evaluateSmokeStatusesOnce(ctx, options)
@@ -452,250 +461,6 @@ func lastJSONLine(output []byte) []byte {
 		}
 	}
 	return output
-}
-
-func smokeProblems(result *smokeResult) []string {
-	var problems []string
-	problems = append(problems, result.problems...)
-	for _, crash := range result.crashes {
-		problems = append(problems, "Discord crashed: "+crash)
-	}
-	for _, plugin := range result.plugins {
-		if !result.loaded[plugin.id] {
-			problems = append(problems, fmt.Sprintf("the loader never logged Loaded %s", plugin.id))
-		}
-	}
-	if result.count < len(result.plugins) {
-		problems = append(problems, fmt.Sprintf("the loader reported %d plugins, expected %d", result.count, len(result.plugins)))
-	}
-	ids := make([]string, 0, len(result.failures))
-	for id := range result.failures {
-		ids = append(ids, id)
-	}
-	sort.Strings(ids)
-	for _, id := range ids {
-		problems = append(problems, fmt.Sprintf("%s failed to start: %s", id, result.failures[id][0]))
-	}
-	problems = append(problems, startupBudgetProblems(result.startup, result.budget, result.crashes)...)
-	problems = append(problems, pluginStartBudgetProblems(result.statuses, result.budget.pluginStart)...)
-	if result.evalError != "" {
-		problems = append(problems, "debugger check: "+result.evalError)
-		return problems
-	}
-	problems = append(problems, cycleProblems(result.cycle)...)
-	problems = append(problems, faultProblems(result.faults)...)
-	byID := map[string]smokePluginStatus{}
-	for _, status := range result.statuses {
-		byID[status.ID] = status
-	}
-	for _, plugin := range result.plugins {
-		status, ok := byID[plugin.id]
-		switch {
-		case !ok:
-			problems = append(problems, fmt.Sprintf("the client does not know %s", plugin.id))
-		case status.Failed || !status.Started:
-			problems = append(problems, fmt.Sprintf("%s is not started: %s", plugin.id, describeSmokeStatus(status)))
-		}
-	}
-	return problems
-}
-
-func describeSmokeStatus(status smokePluginStatus) string {
-	if status.Error != "" {
-		return status.Error
-	}
-	if status.Failed {
-		return "failed"
-	}
-	if status.Started {
-		return "started"
-	}
-	return "stopped"
-}
-
-func writeSmokeReport(result *smokeResult, options *smokeOptions) {
-	report := renderSmokeReport(result)
-	_ = os.WriteFile(filepath.Join(options.artifacts, "report.md"), []byte(report), 0o644)
-	if startup, err := json.MarshalIndent(startupRecord(result), "", "\t"); err == nil {
-		_ = os.WriteFile(filepath.Join(options.artifacts, smokeStartupFile), startup, 0o644)
-	}
-	if options.summary == "" {
-		return
-	}
-	file, err := os.OpenFile(options.summary, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-	_, _ = file.WriteString(report)
-}
-
-func renderSmokeReport(result *smokeResult) string {
-	var report strings.Builder
-	title := map[string]string{"android": "Android", "ios": "iOS"}[result.platform]
-	fmt.Fprintf(&report, "## %s smoke test\n\n", title)
-	if len(result.problems) == 0 {
-		fmt.Fprintf(&report, "Discord loaded and started all %d first-party plugins without signing in.\n\n", len(result.plugins))
-	} else {
-		report.WriteString("Failed:\n\n")
-		for _, problem := range result.problems {
-			fmt.Fprintf(&report, "- %s\n", problem)
-		}
-		report.WriteString("\n")
-	}
-	if result.relaunch != "" {
-		fmt.Fprintf(&report, "Warning: Discord crashed on the first launch and was relaunched once: `%s`\n\n", result.relaunch)
-	}
-	byID := map[string]smokePluginStatus{}
-	for _, status := range result.statuses {
-		byID[status.ID] = status
-	}
-	report.WriteString(renderStartupTimes(result.startup, result.budget))
-	report.WriteString(renderSlowestStarts(result.statuses))
-	report.WriteString(renderSmokeResources(result.resources))
-	report.WriteString(renderSmokeCycle(result.cycle))
-	report.WriteString(renderSmokeFaults(result.faults))
-	report.WriteString("| Plugin | Loaded by the loader | Debugger status | Start |\n| --- | --- | --- | --- |\n")
-	for _, plugin := range result.plugins {
-		loaded := "no"
-		if result.loaded[plugin.id] {
-			loaded = "yes"
-		}
-		status := "not checked"
-		if value, ok := byID[plugin.id]; ok {
-			status = describeSmokeStatus(value)
-		} else if len(result.statuses) > 0 {
-			status = "unknown to the client"
-		}
-		fmt.Fprintf(&report, "| `%s` | %s | %s | %s |\n", plugin.id, loaded, status, describeStartMs(byID[plugin.id].StartMs))
-	}
-	report.WriteString("\n")
-	return report.String()
-}
-
-type smokeLogWatcher struct {
-	target     smokeTarget
-	mu         sync.Mutex
-	loaded     map[string]bool
-	count      int
-	failures   map[string][]string
-	crashes    []string
-	launchedAt time.Time
-	runtimeAt  time.Time
-	startup    smokeStartupTimes
-	console    smokeConsoleSet
-	now        func() time.Time
-}
-
-func newSmokeLogWatcher(target smokeTarget) *smokeLogWatcher {
-	return &smokeLogWatcher{target: target, loaded: map[string]bool{}, failures: map[string][]string{}, console: smokeConsoleSet{}, now: time.Now}
-}
-
-func (watcher *smokeLogWatcher) consume(logs io.Reader, sink io.Writer) {
-	scanner := bufio.NewScanner(logs)
-	scanner.Buffer(make([]byte, 0, 64*1024), 4*1024*1024)
-	for scanner.Scan() {
-		line := scanner.Text()
-		fmt.Fprintln(sink, line)
-		watcher.observe(line)
-	}
-}
-
-func (watcher *smokeLogWatcher) observe(line string) {
-	watcher.mu.Lock()
-	defer watcher.mu.Unlock()
-	if watcher.target.isCrashLine(line) {
-		watcher.crashes = append(watcher.crashes, strings.TrimSpace(line))
-	}
-	if entry, ok := watcher.target.consoleEntry(line); ok {
-		watcher.console.add(entry)
-	}
-	if match := smokeAddonFailure.FindStringSubmatch(line); match != nil {
-		watcher.failures[match[1]] = append(watcher.failures[match[1]], strings.TrimSpace(line))
-	}
-	if !watcher.target.isLoaderLine(line) {
-		return
-	}
-	if strings.Contains(line, smokeRuntimeCreated) {
-		watcher.markRuntime()
-	}
-	if strings.Contains(line, smokeBundleExecuted) {
-		watcher.recordMilestone(&watcher.startup.bundle)
-	}
-	if match := smokeLoadedCount.FindStringSubmatch(line); match != nil {
-		watcher.count, _ = strconv.Atoi(match[1])
-		watcher.recordMilestone(&watcher.startup.plugins)
-		return
-	}
-	if index := strings.Index(line, "Loaded "); index >= 0 {
-		rest := line[index+len("Loaded "):]
-		if end := strings.Index(rest, " from "); end > 0 {
-			watcher.loaded[rest[:end]] = true
-		}
-	}
-}
-
-func (watcher *smokeLogWatcher) loadedAll(plugins []smokePlugin) bool {
-	watcher.mu.Lock()
-	defer watcher.mu.Unlock()
-	if watcher.count < len(plugins) {
-		return false
-	}
-	for _, plugin := range plugins {
-		if !watcher.loaded[plugin.id] {
-			return false
-		}
-	}
-	return true
-}
-
-func (watcher *smokeLogWatcher) recordCrash(reason string) {
-	watcher.mu.Lock()
-	defer watcher.mu.Unlock()
-	watcher.crashes = append(watcher.crashes, reason)
-}
-
-func (watcher *smokeLogWatcher) observeFailures(line string) {
-	watcher.mu.Lock()
-	defer watcher.mu.Unlock()
-	if match := smokeAddonFailure.FindStringSubmatch(line); match != nil {
-		watcher.failures[match[1]] = append(watcher.failures[match[1]], strings.TrimSpace(line))
-	}
-}
-
-func (watcher *smokeLogWatcher) takeCrashBeforeLoads() string {
-	watcher.mu.Lock()
-	defer watcher.mu.Unlock()
-	if len(watcher.crashes) == 0 {
-		return ""
-	}
-	crash := watcher.crashes[0]
-	watcher.crashes = nil
-	watcher.loaded = map[string]bool{}
-	watcher.count = 0
-	watcher.startup = smokeStartupTimes{}
-	return crash
-}
-
-func (watcher *smokeLogWatcher) crashed() bool {
-	watcher.mu.Lock()
-	defer watcher.mu.Unlock()
-	return len(watcher.crashes) > 0
-}
-
-func (watcher *smokeLogWatcher) snapshot(result *smokeResult) {
-	watcher.mu.Lock()
-	defer watcher.mu.Unlock()
-	for id := range watcher.loaded {
-		result.loaded[id] = true
-	}
-	result.count = watcher.count
-	result.startup = watcher.startup
-	for id, lines := range watcher.failures {
-		result.failures[id] = append([]string(nil), lines...)
-	}
-	result.crashes = append([]string(nil), watcher.crashes...)
-	result.console = watcher.console.sorted()
 }
 
 func serveSmokeBundle(directory string, port int, requestLog string) (*http.Server, error) {

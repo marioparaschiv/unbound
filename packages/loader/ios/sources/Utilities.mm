@@ -934,24 +934,50 @@ static NSString *defaultGatewayAddress(void)
     return controller;
 }
 
+// Both are read and written on the main queue only.
 static __weak DCDBundleUpdaterManager *gBundleUpdater = nil;
+static BOOL                            gReloadPending = NO;
 
 + (void)setBundleUpdater:(id)bundleUpdater
 {
-    gBundleUpdater = bundleUpdater;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        gBundleUpdater = bundleUpdater;
+        if (gReloadPending)
+        {
+            gReloadPending = NO;
+            [Logger info:LOG_CATEGORY_UTILITIES
+                  format:@"BundleUpdaterManager captured; running the pending reload."];
+            [self reloadWithUpdater:bundleUpdater];
+        }
+    });
 }
 
 + (void)reloadApp
 {
-    DCDBundleUpdaterManager *updater = gBundleUpdater;
+    dispatch_async(dispatch_get_main_queue(), ^{
+        DCDBundleUpdaterManager *updater = gBundleUpdater;
+        if (!updater)
+        {
+            // Discord creates its updater when its bundle first asks for it, which a fast first
+            // bundle download beats.
+            gReloadPending = YES;
+            [Logger info:LOG_CATEGORY_UTILITIES
+                  format:@"BundleUpdaterManager not captured yet; reloading once it is."];
+            return;
+        }
+        [self reloadWithUpdater:updater];
+    });
+}
+
++ (void)reloadWithUpdater:(DCDBundleUpdaterManager *)updater
+{
     if (![updater respondsToSelector:@selector(reload)])
     {
-        [Logger error:LOG_CATEGORY_UTILITIES
-               format:@"BundleUpdaterManager not captured; cannot reload."];
+        [Logger error:LOG_CATEGORY_UTILITIES format:@"BundleUpdaterManager cannot reload."];
         return;
     }
 
-    dispatch_async(dispatch_get_main_queue(), ^{ [updater reload]; });
+    [updater reload];
 }
 
 @end

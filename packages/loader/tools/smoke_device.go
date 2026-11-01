@@ -316,6 +316,11 @@ func (target *deviceSmokeTarget) launch(ctx context.Context) error {
 	return err
 }
 
+// attach fails because the iOS loader reloads Discord in its process, so an exit is never a planned restart.
+func (target *deviceSmokeTarget) attach(context.Context) error {
+	return errors.New("Discord exited; the iOS loader reloads in place")
+}
+
 func (target *deviceSmokeTarget) running(ctx context.Context) bool {
 	output, err := target.shell(ctx, 30*time.Second, "ps -A -o comm | grep -c '/Discord$' || true")
 	if err != nil {
