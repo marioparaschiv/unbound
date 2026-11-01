@@ -168,9 +168,8 @@ class Unbound : XposedModule() {
                     )
                     ReactRuntime.attach(chain.thisObject)
                     NativeBridge.nativeOnLoadJSBundle()
-                    NativeBridge.installMetroModuleCaptureBeforeBundle()
+                    NativeBridge.runBundleBeforeDiscord()
                     val result = chain.proceed()
-                    NativeBridge.nativeOnJSBundleLoaded()
                     Logger.info(
                         LogCategory.RUNTIME,
                         "ReactInstance ${System.identityHashCode(chain.thisObject)} ${loader.name} returned",

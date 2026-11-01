@@ -7,6 +7,7 @@
 
 namespace unbound::android {
 bool registerHotReloadNatives(JNIEnv *env);
+void reloadApp();
 
 std::shared_ptr<loader::HotReloadController>
 createHotReloadController(loader::SettingsStore       &settings,

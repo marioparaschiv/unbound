@@ -31,7 +31,7 @@ Match the doctor's `FAIL` line.
 ## Known faults
 
 - **JS reload loses Unbound** on loaders without `fix/reload-keeps-unbound` (`loader-ios`). Relaunch instead, or install that branch.
-- **`__c()` wipes Discord's modules** when `modules.js` was not injected. Symptom: Discord renders but never goes live and `ubd eval` finds no device. Fix: [UnboundResources](#unboundresources).
+- **No saved bundle** (first install, or the saved one failed): Discord starts without Unbound, and the loader reloads once the download lands. With `loader.update.hmr`, a relaunch runs the saved build, then reloads into a newer one.
 - **A loader newer than the client** fails at startup with an "Unbound failed to initialize" alert (`Cannot read property 'NativeModules' of undefined`) and `ready.sh` times out. Serve a client built for that loader.
 - **`Addons.delete`** reports success but leaves the addon folder on disk.
 - **Toasts** never appear on the vphone. Check state through eval.
@@ -44,7 +44,7 @@ Each step ends with its check.
 2. **Relax ATS.** iOS blocks the loader's plain-HTTP fetch (`kCFErrorDomainCFNetwork -1022`) until `Info.plist` allows arbitrary loads. `python3 scripts/patch-ats.py <in.ipa> <out.ipa>`. Check: it prints `patched <out.ipa>`.
 3. **Install** the patched IPA per the `vphone` skill's Installing section. Check: `list_apps` shows Discord.
 4. **Loader.** In a checkout of `github.com/unbound-app/loader-ios`, build the debug package so attestation is off: `make clean package DEBUG=1`. A release build shows "SECURITY WARNING" and skips hooking React Native. Install the deb per the `vphone` skill (tweak). Check: Discord shows the wrench toolbox button and a red "DEVELOPMENT BUILD" banner.
-5. <a id="unboundresources"></a>**UnboundResources.** Without `modules.js`, the loader's readiness poll and its module capture (`packages/loader/bootstrap/metro-module-capture.js`) call Metro's `__c()`, which is `clear()`, and wipe Discord's modules. Copy `/var/jb/Library/Application Support/UnboundResources.bundle` into the installed `Discord.app` (`app_info`'s `bundle_path`, under `/rootfs`), owned `_installd:_installd`. Without it `modules.js` is never injected and Discord freezes. Redo after every IPA install. Check: Discord goes live (presence dots, badges).
+5. <a id="unboundresources"></a>**UnboundResources.** It holds the loader's bootstrap scripts (`packages/loader/bootstrap/`). Without `preload.js`, Unbound runs with no settings or plugins. Copy `/var/jb/Library/Application Support/UnboundResources.bundle` into the installed `Discord.app` (`app_info`'s `bundle_path`, under `/rootfs`), owned `_installd:_installd`. Redo after every IPA install. Check: Discord goes live (presence dots, badges).
 6. <a id="settings"></a>**Settings.** In `<data_path>/Documents/Unbound/settings.json` (owner `mobile:mobile`), set these keys and keep the others, since the client rewrites this file:
     ```json
     {

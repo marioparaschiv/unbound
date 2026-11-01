@@ -6,10 +6,6 @@
 #include <string>
 
 namespace loader::bootstrap {
-inline constexpr const char *kMetroModuleCapture = "metro-module-capture";
-inline constexpr const char *kRunApplicationGate = "run-application-gate";
-inline constexpr const char *kRuntimeReadiness   = "runtime-readiness";
-inline constexpr const char *kRuntimeDiagnostics = "runtime-diagnostics";
 inline constexpr const char *kNativeFailureGuard = "native-failure-guard";
 inline constexpr const char *kPreload            = "preload";
 inline constexpr const char *kBrowserLogin       = "browser-login";

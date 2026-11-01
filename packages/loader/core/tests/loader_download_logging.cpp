@@ -19,9 +19,6 @@ struct LoggedLine {
 class ImmediateHost : public loader::LoaderHost
 {
 public:
-    void runOnRuntime(std::function<void(facebook::jsi::Runtime &)>) override {}
-    void runAfter(double, std::function<void()>) override {}
-
     void runInBackground(std::function<void()> work) override
     {
         work();

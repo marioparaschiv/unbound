@@ -38,10 +38,7 @@ object NativeBridge {
     external fun nativeOnLoadJSBundle()
 
     @JvmStatic
-    external fun nativeOnJSBundleLoaded()
-
-    @JvmStatic
-    external fun nativeInstallMetroModuleCapture(runtimePointer: Long): Boolean
+    external fun nativeOnRuntimeCreated(runtimePointer: Long): Boolean
 
     @JvmStatic
     external fun nativeDrainRuntimeWork(runtimePointer: Long)
@@ -114,8 +111,8 @@ object NativeBridge {
     }
 
     @JvmStatic
-    fun installMetroModuleCaptureBeforeBundle() {
-        ReactRuntime.runBeforeBundle { runtimePointer -> nativeInstallMetroModuleCapture(runtimePointer) }
+    fun runBundleBeforeDiscord() {
+        ReactRuntime.runBeforeBundle { runtimePointer -> nativeOnRuntimeCreated(runtimePointer) }
     }
 
     @JvmStatic

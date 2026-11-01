@@ -1,6 +1,5 @@
 #pragma once
 
-#include <functional>
 #include <jsi/jsi.h>
 #include <memory>
 #include <string>
@@ -24,9 +23,4 @@ facebook::jsi::Value evaluateSource(facebook::jsi::Runtime &runtime, const std::
                                     const std::string &tag);
 facebook::jsi::Value evaluateBytecode(facebook::jsi::Runtime &runtime, std::string bytecode,
                                       const std::string &tag);
-bool                 installMetroModuleCapture(facebook::jsi::Runtime &runtime);
-bool        installRunApplicationGate(facebook::jsi::Runtime                       &runtime,
-                                      std::function<void(facebook::jsi::Runtime &)> beforeRun);
-bool        runtimeHasRequiredModules(facebook::jsi::Runtime &runtime);
-std::string runtimeModuleDiagnostics(facebook::jsi::Runtime &runtime);
 }

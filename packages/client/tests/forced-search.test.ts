@@ -2,15 +2,7 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 import type { ModuleHint } from '~/metro/cache';
 
-type Factory = (
-	global: typeof globalThis,
-	require: (id: number) => MetroExport,
-	importDefault: (id: number) => MetroExport,
-	importAll: (id: number) => MetroExport,
-	module: MetroPublicModule,
-	exports: MetroExport,
-	dependencyMap: number[],
-) => void;
+import { startFakeMetro, type FakeFactory } from './helpers/fake-metro';
 
 type Asset = {
 	name: string;
@@ -31,16 +23,12 @@ Object.assign(globalThis, {
 
 // A fake Metro registry laid out like Discord's: asset modules require only the asset registry, and
 // every Discord-authored module requires the import tracker to report its file path.
-const modules = new Map<number, MetroModuleRecord>();
+const fakeMetro = startFakeMetro();
+const metroRequire = fakeMetro.require;
 const moduleIds: number[] = [];
 
-function define(id: number, dependencyMap: number[], factory: Factory) {
-	modules.set(id, {
-		factory,
-		dependencyMap,
-		isInitialized: false,
-		publicModule: { id, exports: {} },
-	});
+function define(id: number, dependencyMap: number[], factory: FakeFactory) {
+	fakeMetro.define(id, dependencyMap, factory);
 	moduleIds.push(id);
 }
 
@@ -55,31 +43,6 @@ function defineDiscord(id: number, path: string, exports: MetroExport) {
 		module.exports = exports;
 		require(deps[0]).fileFinishedImporting(path);
 	});
-}
-
-function metroRequire(id: number): MetroExport {
-	const record = modules.get(id);
-
-	if (!record) {
-		throw new Error(`No module ${id}`);
-	}
-
-	if (!record.isInitialized) {
-		record.isInitialized = true;
-		record.factory?.(
-			globalThis,
-			metroRequire,
-			metroRequire,
-			metroRequire,
-			record.publicModule,
-			record.publicModule.exports,
-			record.dependencyMap ?? [],
-		);
-		record.factory = undefined;
-		record.dependencyMap = undefined;
-	}
-
-	return record.publicModule.exports;
 }
 
 define(REGISTRY, [], (_, __, ___, ____, module) => {
@@ -126,11 +89,12 @@ metroRequire(REGISTRY);
 metroRequire(TRACKER);
 metroRequire(3);
 
-Object.assign(globalThis, { modules, __r: metroRequire });
+const modules = globalThis.modules;
 
 mock.module('~/metro/cache', () => ({
 	ModuleFlags: { BLACKLISTED: 1 },
 	default: {
+		state: { moduleFlags: {} },
 		moduleIds,
 		hasModuleFlag: () => false,
 		addModuleFlag: () => undefined,
