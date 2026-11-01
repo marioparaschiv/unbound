@@ -10,7 +10,6 @@ function DocsLayout() {
 	const symbol = useParams({ strict: false, select: (params) => params.symbol });
 	const { data: nav } = useSuspenseQuery(docsNavQuery(route.package, route.version));
 
-	// A refetch can find the version withdrawn since the page loaded.
 	if (!nav) {
 		throw notFound();
 	}

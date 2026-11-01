@@ -38,7 +38,6 @@ const ROUTES: NavRoute[] = [
 ];
 
 function Header() {
-	// Every docs page lights up the one Docs entry.
 	const pathname = useLocation({
 		select: (location) =>
 			location.pathname.startsWith('/docs/') ? '/docs' : location.pathname,

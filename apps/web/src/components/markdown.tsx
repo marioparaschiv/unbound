@@ -14,10 +14,8 @@ import type { PageMediaMap } from '~/lib/page-media';
 import MediaFile from '~/components/media-file';
 import Text from '~/components/ui/text';
 
-/** Decides where a URL written in the markdown may lead; `undefined` drops it. */
 type MarkdownUrlResolver = (url: string, kind: MarkdownUrlKind) => MarkdownUrl | undefined;
 
-/** Relative URLs resolve against a source pin, or through a resolver of the page's own. */
 type MarkdownUrls = { pin: MarkdownPin } | { resolveUrl: MarkdownUrlResolver };
 
 type MarkdownProps = MarkdownUrls & {
