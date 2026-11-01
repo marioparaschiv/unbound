@@ -24,6 +24,30 @@ export type SpanHit = SpanRange & {
 };
 
 /**
+ * @description Tells whether a text holds any span of a class, with one call that reads neither its string nor its spans, so callers can skip texts that cannot interest them.
+ * @param java The plugin's Java bridge.
+ * @param text The `CharSequence`.
+ * @param className The span class or interface, like `android.text.style.ClickableSpan`.
+ * @returns Whether the text holds such a span; `false` for plain text.
+ */
+export function hasSpan(java: SpanBridge, text: NativeJavaReference, className: string): boolean {
+	try {
+		const spanClass = java.getClass(className);
+		const length = javaNumber(java.invoke(text, 'length', [])) ?? 0;
+
+		if (!spanClass || !length) return false;
+
+		const next = javaNumber(
+			java.invoke(text, 'nextSpanTransition', [javaInt(0), javaInt(length), spanClass]),
+		);
+
+		return next !== undefined && next < length;
+	} catch {
+		return false;
+	}
+}
+
+/**
  * @description Reads a text view's text and its plain string.
  * @param java The plugin's Java bridge.
  * @param view The `TextView`.

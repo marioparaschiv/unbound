@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.4]
+
+### Fixed
+
+- On Android, an avatar that is released while it attaches no longer logs a hook failure.
+
 ## [1.1.3]
 
 ### Fixed

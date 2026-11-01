@@ -18,9 +18,10 @@ import {
 	javaFlag,
 	javaNumber,
 	javaReference,
+	javaText,
 	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
-import { readViewTextAsync } from '@unbound-plugins/shared/native/android/spans';
+import { hasSpan, readViewTextAsync } from '@unbound-plugins/shared/native/android/spans';
 import {
 	currentDecorView,
 	displayDensity,
@@ -32,7 +33,7 @@ import {
 
 import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 
-import { createBlockBackgroundFinder } from '~/android/block-backgrounds';
+import { createBlockBackgroundFinder, LINE_BACKGROUND_SPAN } from '~/android/block-backgrounds';
 import {
 	codeSlots,
 	placeholderOffsets,
@@ -258,21 +259,29 @@ export function createNativeCards(native: Native) {
 
 	async function render(textView: NativeJavaReference) {
 		const key = javaViewKey(textView as NativeJavaValue);
-		const content = await readViewTextAsync(java, textView);
 
-		if (!key || !content || inline.isDefined(content.string)) return;
+		if (
+			!key ||
+			!javaFlag(java.invoke(java.getClass(MESSAGE_CONTENT_VIEW), 'isInstance', [textView]))
+		) {
+			return;
+		}
 
+		const text = javaReference(await java.invokeAsync(textView, 'getText', []));
+
+		if (!text || !hasSpan(java, text, LINE_BACKGROUND_SPAN)) return;
+
+		const string = javaText(java.invoke(text, 'toString', []));
+
+		if (string === undefined || inline.isDefined(string)) return;
+
+		const content = { text, string };
 		const hits = blockBackgrounds(content.text, content.string.length);
 		const slots = codeSlots(content.string, hits).filter(
 			(slot) => slot.code.length <= Limits.codeLength,
 		);
 
-		if (
-			!slots.length ||
-			!javaFlag(java.invoke(java.getClass(MESSAGE_CONTENT_VIEW), 'isInstance', [textView]))
-		) {
-			return;
-		}
+		if (!slots.length) return;
 
 		const density = await displayDensity(java, textView);
 		const rendered = renderedText(content.string, slots);

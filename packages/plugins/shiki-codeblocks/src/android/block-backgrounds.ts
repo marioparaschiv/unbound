@@ -7,7 +7,7 @@ import { spansOf, type SpanHit } from '@unbound-plugins/shared/native/android/sp
 const BLOCK_BACKGROUND_SPAN = legacyJavaClass(
 	'com.discord.span.utilities.spannable.BlockBackgroundSpan',
 );
-const LINE_BACKGROUND_SPAN = 'android.text.style.LineBackgroundSpan';
+export const LINE_BACKGROUND_SPAN = 'android.text.style.LineBackgroundSpan';
 
 /**
  * @description Creates a finder for the spans Discord draws code block backgrounds with. Newer builds obfuscate the span's name, so it is recognised by the `blockBackgroundSpan` shape: the line background span built from seven colours and sizes.

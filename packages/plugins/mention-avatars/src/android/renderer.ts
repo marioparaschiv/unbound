@@ -13,7 +13,7 @@ import {
 	decodeBitmap,
 	inlineDrawable,
 } from '@unbound-plugins/shared/native/android/images';
-import { readViewTextAsync, spansOf } from '@unbound-plugins/shared/native/android/spans';
+import { hasSpan, spansOf } from '@unbound-plugins/shared/native/android/spans';
 import { createRewriteRetry } from '@unbound-plugins/shared/native/android/rewrite-retry';
 import {
 	currentDecorView,
@@ -26,6 +26,7 @@ import {
 	javaInt,
 	javaNumber,
 	javaReference,
+	javaText,
 	javaString,
 	javaViewKey,
 } from '@unbound-plugins/shared/native/android/java-values';
@@ -274,11 +275,13 @@ export function createAndroidRenderer(
 	}
 
 	async function render(view: NativeJavaReference) {
-		const content = await readViewTextAsync(java, view);
+		const text = javaReference(await java.invokeAsync(view, 'getText', []));
 
-		if (!content?.string.includes('@') || renderedTexts.has(content.string)) return;
+		if (!text || !hasSpan(java, text, TAPPABLE_SPAN)) return;
 
-		const { text, string } = content;
+		const string = javaText(java.invoke(text, 'toString', []));
+
+		if (!string?.includes('@') || renderedTexts.has(string)) return;
 
 		index.hydrateChannel();
 

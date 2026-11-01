@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.6]
+
+### Changed
+
+- On Android, texts without a tappable span are skipped before their text is read.
+
 ## [1.0.5]
 
 ### Changed

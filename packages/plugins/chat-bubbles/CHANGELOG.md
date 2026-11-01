@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.2]
+
+### Changed
+
+- On Android, a row shown again for a message whose bubble is already drawn at the same size skips measuring it again, which roughly halves the plugin's JavaScript allocations while scrolling.
+
 ## [1.4.1]
 
 ### Fixed

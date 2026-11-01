@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1]
+
+### Changed
+
+- On Android, only message texts that hold a code block background are read, instead of every text Discord sets, so scrolling past messages without code blocks costs almost nothing.
+
 ## [1.1.0]
 
 ### Changed
