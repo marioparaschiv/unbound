@@ -13,7 +13,7 @@ import type {
 	MetroLazySearchOptions,
 	MetroModuleLoadListener,
 } from '~/metro/types';
-import type { Bucket, SettingsPayload } from '~/storage/api';
+import type { SettingsPayload, SettingsPredicate } from '~/storage/api';
 import type { Subscriptions } from '~/addons/subscriptions';
 import type { MetroFilter } from '~/metro/filters';
 import { createCommands } from '~/commands/api';
@@ -22,8 +22,6 @@ import type * as api from '~/core/api';
 type Api = Omit<typeof api, 'default'>;
 
 type Overlay<K extends keyof Api, O> = Omit<O, keyof Api[K]> & Api[K];
-
-type ChangePredicate = Parameters<Bucket['addListener']>[0];
 
 type ChangeCallback = (payload: SettingsPayload) => void;
 
@@ -60,12 +58,7 @@ function overlay<K extends keyof Api, O extends Partial<Api[K]>>(
  */
 export function scopeMetro(subscriptions: Subscriptions): Api['metro'] {
 	function onModuleLoad(listener: MetroModuleLoadListener) {
-		return subscriptions.add(liveNamespace('metro').onModuleLoad(listener), listener);
-	}
-
-	function removeListener(listener: MetroModuleLoadListener) {
-		subscriptions.release(listener);
-		liveNamespace('metro').removeListener(listener);
+		return subscriptions.add(liveNamespace('metro').onModuleLoad(listener));
 	}
 
 	function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = {}) {
@@ -132,10 +125,6 @@ export function scopeMetro(subscriptions: Subscriptions): Api['metro'] {
 	return overlay('metro', {
 		onModuleLoaded,
 		onModuleLoad,
-		addListener: onModuleLoad,
-		on: onModuleLoad,
-		removeListener,
-		off: removeListener,
 		findLazy,
 	});
 }
@@ -148,55 +137,15 @@ export function scopeMetro(subscriptions: Subscriptions): Api['metro'] {
  * @returns The namespace.
  */
 export function scopeStorage(subscriptions: Subscriptions, owner: string): Api['storage'] {
-	function scopeBucket(bucket: Bucket): Bucket {
-		return {
-			...bucket,
-			useSettingsStore: (predicate) => scopeBucket(bucket.useSettingsStore(predicate)),
-			addListener: (predicate, callback) =>
-				subscriptions.add(bucket.addListener(predicate, callback)),
-		};
-	}
-
 	function getBucket(name: string = owner) {
-		return scopeBucket(liveNamespace('storage').getBucket(name));
+		return liveNamespace('storage').getBucket(name);
 	}
 
-	function useBucket(name: string, predicate?: ChangePredicate) {
-		return scopeBucket(liveNamespace('storage').useBucket(name, predicate));
+	function onChange(predicate: SettingsPredicate, callback: ChangeCallback) {
+		return subscriptions.add(liveNamespace('storage').onChange(predicate, callback));
 	}
 
-	function onChange(predicate: ChangePredicate, callback: ChangeCallback) {
-		return subscriptions.add(liveNamespace('storage').onChange(predicate, callback), callback);
-	}
-
-	function removeListener(callback: ChangeCallback) {
-		subscriptions.release(callback);
-		liveNamespace('storage').removeListener(callback);
-	}
-
-	function on(...args: Parameters<Api['storage']['on']>) {
-		const [event, listener] = args;
-		const emitter = liveNamespace('storage').on(...args);
-
-		subscriptions.add(() => {
-			if (emitter.listeners(event).includes(listener)) {
-				emitter.off(...args);
-			}
-		});
-
-		return emitter;
-	}
-
-	return overlay('storage', {
-		getBucket,
-		getStore: getBucket,
-		useBucket,
-		useSettingsStore: useBucket,
-		onChange,
-		addListener: onChange,
-		removeListener,
-		on,
-	});
+	return overlay('storage', { getBucket, onChange });
 }
 
 /**

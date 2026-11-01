@@ -1,9 +1,120 @@
 {
-  "version": "8",
+  "type": "base",
+  "version": "9",
   "dialect": "postgres",
   "id": "5027d89c-1a0e-40c4-88f7-cf6aea37e56c",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_schema",
+      "statementTarget": [
+        "schema",
+        "bot"
+      ],
+      "writes": [
+        "s|sch|bot",
+        "n|sch|bot",
+        "e|sch|bot"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "bot",
+        "role_grant"
+      ],
+      "writes": [
+        "s|tbl|bot.role_grant",
+        "n|tbl|bot.role_grant",
+        "e|tbl|bot.role_grant",
+        "n|rel|bot.role_grant",
+        "n|type|bot.role_grant",
+        "n|rel|bot.role_grant_pkey"
+      ],
+      "reads": [
+        "n|sch|bot"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "bot",
+        "addon_message"
+      ],
+      "writes": [
+        "s|tbl|bot.addon_message",
+        "n|tbl|bot.addon_message",
+        "e|tbl|bot.addon_message",
+        "n|rel|bot.addon_message",
+        "n|type|bot.addon_message",
+        "n|rel|bot.addon_message_pkey"
+      ],
+      "reads": [
+        "n|sch|bot"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "bot",
+        "audit_post"
+      ],
+      "writes": [
+        "s|tbl|bot.audit_post",
+        "n|tbl|bot.audit_post",
+        "e|tbl|bot.audit_post",
+        "n|rel|bot.audit_post",
+        "n|type|bot.audit_post",
+        "n|rel|bot.audit_post_pkey"
+      ],
+      "reads": [
+        "n|sch|bot"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "bot",
+        "release_post"
+      ],
+      "writes": [
+        "s|tbl|bot.release_post",
+        "n|tbl|bot.release_post",
+        "e|tbl|bot.release_post",
+        "n|rel|bot.release_post",
+        "n|type|bot.release_post",
+        "n|rel|bot.release_post_pkey"
+      ],
+      "reads": [
+        "n|sch|bot"
+      ]
+    },
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "bot",
+        "tag"
+      ],
+      "writes": [
+        "s|tbl|bot.tag",
+        "n|tbl|bot.tag",
+        "e|tbl|bot.tag",
+        "n|rel|bot.tag",
+        "n|type|bot.tag",
+        "n|rel|bot.tag_pkey",
+        "n|rel|bot.tag_name_key"
+      ],
+      "reads": [
+        "n|sch|bot"
+      ]
+    }
   ],
   "ddl": [
     {
@@ -11,49 +122,39 @@
       "entityType": "schemas"
     },
     {
-      "isRlsEnabled": false,
+      "schema": "bot",
       "name": "role_grant",
-      "entityType": "tables",
-      "schema": "bot"
+      "isRlsEnabled": false,
+      "entityType": "tables"
     },
     {
-      "isRlsEnabled": false,
+      "schema": "bot",
       "name": "addon_message",
-      "entityType": "tables",
-      "schema": "bot"
+      "isRlsEnabled": false,
+      "entityType": "tables"
     },
     {
-      "isRlsEnabled": false,
+      "schema": "bot",
       "name": "audit_post",
-      "entityType": "tables",
-      "schema": "bot"
+      "isRlsEnabled": false,
+      "entityType": "tables"
     },
     {
-      "isRlsEnabled": false,
+      "schema": "bot",
       "name": "release_post",
-      "entityType": "tables",
-      "schema": "bot"
-    },
-    {
       "isRlsEnabled": false,
+      "entityType": "tables"
+    },
+    {
+      "schema": "bot",
       "name": "tag",
-      "entityType": "tables",
-      "schema": "bot"
+      "isRlsEnabled": false,
+      "entityType": "tables"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "bot",
+      "table": "role_grant",
       "name": "discord_id",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "role_grant"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -61,77 +162,25 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "role_grant",
       "name": "role",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "role_grant"
-    },
-    {
-      "type": "timestamp with time zone",
+      "type": "text",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "now()",
+      "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "role_grant",
       "name": "granted_at",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "role_grant"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "addon_id",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "addon_message"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "channel_id",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "addon_message"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "message_id",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "addon_message"
-    },
-    {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "posted_hash",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "addon_message"
-    },
-    {
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -139,12 +188,77 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "posted_at",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "addon_message"
+      "entityType": "columns"
     },
     {
+      "schema": "bot",
+      "table": "addon_message",
+      "name": "addon_id",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "addon_message",
+      "name": "channel_id",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "addon_message",
+      "name": "message_id",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "addon_message",
+      "name": "posted_hash",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "addon_message",
+      "name": "posted_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "addon_message",
+      "name": "edited_at",
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": false,
@@ -152,12 +266,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "edited_at",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "addon_message"
+      "entityType": "columns"
     },
     {
+      "schema": "bot",
+      "table": "audit_post",
+      "name": "event_id",
       "type": "bigint",
       "typeSchema": null,
       "notNull": true,
@@ -165,25 +279,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "event_id",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "audit_post"
+      "entityType": "columns"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "bot",
+      "table": "audit_post",
       "name": "channel_id",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "audit_post"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -191,12 +292,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "message_id",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "audit_post"
+      "entityType": "columns"
     },
     {
+      "schema": "bot",
+      "table": "audit_post",
+      "name": "message_id",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "audit_post",
+      "name": "posted_at",
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -204,25 +318,12 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "posted_at",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "audit_post"
+      "entityType": "columns"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "bot",
+      "table": "release_post",
       "name": "platform",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "release_post"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -230,12 +331,12 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "release_post",
       "name": "version",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "release_post"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -243,12 +344,12 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "release_post",
       "name": "channel_id",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "release_post"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -256,12 +357,25 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "message_id",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "release_post"
+      "entityType": "columns"
     },
     {
+      "schema": "bot",
+      "table": "release_post",
+      "name": "message_id",
+      "type": "text",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": null,
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "release_post",
+      "name": "posted_at",
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -269,12 +383,12 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "posted_at",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "release_post"
+      "entityType": "columns"
     },
     {
+      "schema": "bot",
+      "table": "tag",
+      "name": "id",
       "type": "serial",
       "typeSchema": null,
       "notNull": true,
@@ -282,25 +396,12 @@
       "default": null,
       "generated": null,
       "identity": null,
-      "name": "id",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "tag"
+      "entityType": "columns"
     },
     {
-      "type": "text",
-      "typeSchema": null,
-      "notNull": true,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
+      "schema": "bot",
+      "table": "tag",
       "name": "name",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "tag"
-    },
-    {
       "type": "text",
       "typeSchema": null,
       "notNull": true,
@@ -308,25 +409,25 @@
       "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "tag",
       "name": "content",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "tag"
-    },
-    {
-      "type": "timestamp with time zone",
+      "type": "text",
       "typeSchema": null,
       "notNull": true,
       "dimensions": 0,
-      "default": "now()",
+      "default": null,
       "generated": null,
       "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "tag",
       "name": "created_at",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "tag"
-    },
-    {
       "type": "timestamp with time zone",
       "typeSchema": null,
       "notNull": true,
@@ -334,74 +435,83 @@
       "default": "now()",
       "generated": null,
       "identity": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "schema": "bot",
-      "table": "tag"
+      "entityType": "columns"
     },
     {
+      "schema": "bot",
+      "table": "tag",
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "typeSchema": null,
+      "notNull": true,
+      "dimensions": 0,
+      "default": "now()",
+      "generated": null,
+      "identity": null,
+      "entityType": "columns"
+    },
+    {
+      "schema": "bot",
+      "table": "role_grant",
+      "name": "role_grant_pkey",
       "columns": [
         "discord_id",
         "role"
       ],
       "nameExplicit": false,
-      "name": "role_grant_pkey",
-      "entityType": "pks",
-      "schema": "bot",
-      "table": "role_grant"
+      "entityType": "pks"
     },
     {
+      "schema": "bot",
+      "table": "release_post",
+      "name": "release_post_pkey",
       "columns": [
         "platform",
         "version"
       ],
       "nameExplicit": false,
-      "name": "release_post_pkey",
-      "entityType": "pks",
-      "schema": "bot",
-      "table": "release_post"
+      "entityType": "pks"
     },
     {
+      "schema": "bot",
+      "table": "addon_message",
+      "name": "addon_message_pkey",
       "columns": [
         "addon_id"
       ],
       "nameExplicit": false,
-      "name": "addon_message_pkey",
-      "schema": "bot",
-      "table": "addon_message",
       "entityType": "pks"
     },
     {
+      "schema": "bot",
+      "table": "audit_post",
+      "name": "audit_post_pkey",
       "columns": [
         "event_id"
       ],
       "nameExplicit": false,
-      "name": "audit_post_pkey",
-      "schema": "bot",
-      "table": "audit_post",
       "entityType": "pks"
     },
     {
+      "schema": "bot",
+      "table": "tag",
+      "name": "tag_pkey",
       "columns": [
         "id"
       ],
       "nameExplicit": false,
-      "name": "tag_pkey",
-      "schema": "bot",
-      "table": "tag",
       "entityType": "pks"
     },
     {
+      "schema": "bot",
+      "table": "tag",
+      "name": "tag_name_key",
       "nameExplicit": false,
       "columns": [
         "name"
       ],
       "nullsNotDistinct": false,
-      "name": "tag_name_key",
-      "schema": "bot",
-      "table": "tag",
       "entityType": "uniques"
     }
-  ],
-  "renames": []
+  ]
 }

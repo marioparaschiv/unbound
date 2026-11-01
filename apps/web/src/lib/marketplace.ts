@@ -29,7 +29,7 @@ const authorSearchSchema = z.object({
 	cursor: listingQuery.cursor,
 });
 
-/** An addon card on `/plugins` and `/themes`, with the tags it shows. */
+/** An addon card on the `/addons` tabs, with the tags it shows. */
 export type ListingAddon = MarketplaceAddon & { tags: AddonTag[] };
 
 export type MarketplacePage = {
@@ -67,7 +67,7 @@ export type MarketplaceAddonDetails = MarketplaceAddon & {
 };
 
 /**
- * @description Loads one page of the public addon listing for `/plugins` and `/themes`.
+ * @description Loads one page of the public addon listing for the `/addons` tabs.
  * @returns The page's addon cards and the cursor of the next page.
  */
 export const fetchMarketplacePage = createServerFn({ method: 'GET' })

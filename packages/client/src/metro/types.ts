@@ -6,24 +6,35 @@ import type { MetroFilter } from '~/metro/filters';
 
 /** Options that control internal search behaviour shared across every `findBy*` helper. */
 export type MetroInternalOptions = {
+	/** Treats each argument as its own search and resolves them all in one registry pass, one result per item. */
 	bulk?: boolean;
+	/** Returns a proxy that runs the search on first access instead of now. */
 	lazy?: boolean;
 };
 
 /** Public options accepted by {@link find} and the `findBy*` family. */
 export type MetroSearchOptions = {
+	/** Also tests each module's `default` export when its exports do not match; `true` when omitted. */
 	esModules?: boolean;
+	/** Returns the `default` export rather than the whole module when `default` matched; `true` when omitted. */
 	interop?: boolean;
+	/** Matches an `all` search starts from; the search sets it itself when it rescans past the cache. */
 	initial?: any[];
+	/** Searches modules earlier searches found before scanning the whole registry; `true` when omitted. */
 	cache?: boolean;
+	/** Returns a proxy that runs the search on first access instead of now. */
 	lazy?: boolean;
+	/** Returns the Metro module record instead of its exports; `false` when omitted. */
 	raw?: boolean;
+	/** Returns every match as an array instead of the first match; `false` when omitted. */
 	all?: boolean;
+	/** Searches only the modules cached for this filter and never scans the registry; `false` when omitted. */
 	cacheOnly?: boolean;
+	/** Runs modules that have not loaded yet so they can be searched; `false` skips them. `true` when omitted. */
 	initialize?: boolean;
 };
 
-/** Search options for {@link findStore}, adding the `short` name-matching toggle. */
+/** Search options for `flux.getStore`, adding the `short` name-matching toggle. */
 export type MetroStoreOptions = {
 	short?: boolean;
 } & MetroSearchOptions;
@@ -59,17 +70,20 @@ export type MetroStringFindWithOptions<T extends string, Options = MetroSearchOp
 /** An object of shape `T` widened with an arbitrary property index. */
 export type AnyProps<T = unknown> = T & Record<PropertyKey, MetroExport>;
 
-/** The signature of the deprecated `findStore`. */
-export type MetroFindStore = (name: string, options?: MetroStoreOptions) => AnyProps;
-
 /** A function or class exported by a Discord module, whose signature Discord does not document. */
 export type MetroFunction = DiscordFunction & (new (...args: any[]) => any);
 
 /** A bag carrying a `params` array of prop names. */
-type MetroParamsBag<T extends string> = { params: T[] };
+type MetroParamsBag<T extends string> = {
+	/** The prop names the lookup matches on. */
+	params: T[];
+};
 
 /** The marker object distinguishing a bulk find from a single one. */
-type MetroBulkMarker = { bulk: true };
+type MetroBulkMarker = {
+	/** Always `true`: this find is one of several resolved in one pass. */
+	bulk: true;
+};
 
 /** A record keyed by the non-options entries of a find argument tuple. */
 type MetroPropsRecord<T extends any[]> = {

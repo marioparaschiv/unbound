@@ -3,7 +3,7 @@ import { REPOSITORY } from '~/core/repository';
 /** Build-time token replaced with a boolean literal by the `replace` plugin. */
 declare const $$DEV$$: boolean;
 
-/** @internal */
+/** The symbol a metro filter stores its cache key under, so repeated lookups hit the module cache. */
 export const CACHE_KEY = Symbol.for('metro.cache');
 export const CACHE_VERSION = 2;
 

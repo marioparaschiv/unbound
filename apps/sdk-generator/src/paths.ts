@@ -11,6 +11,7 @@ export const CLIENT = join(ROOT, 'packages', 'client');
 export const API_SRC = resolveOutDir(ROOT, config.outDir);
 export const SDK_TSCONFIG = join(CLIENT, 'tsconfig.sdk.json');
 export const BARREL = resolve(ROOT, config.barrelPath);
+export const ENTRY = resolve(ROOT, config.entryPath);
 
 /** The `~/` path alias maps to the client package's `src/` directory. */
 export const ALIAS_ROOT = join(CLIENT, 'src');
@@ -61,6 +62,20 @@ export type NamespaceAlias = {
 	target: string;
 	/** The alias's JSDoc body, such as `@deprecated Use iconPacks`. */
 	doc: string;
+};
+
+/** A lifecycle function the global `unbound` object carries, read from the client entry. */
+export type LifecycleMember = {
+	name: string;
+	parameters: { name: string; type: string; optional: boolean }[];
+	returnType: string;
+	doc: string;
+};
+
+/** The client's `UnboundLifecycle` type: what the global `unbound` object keeps after shutdown. */
+export type Lifecycle = {
+	doc: string;
+	members: LifecycleMember[];
 };
 
 export type SdkEntries = {

@@ -34,7 +34,7 @@ var (
 	errSmokeEvalTimedOut  = errors.New("the debugger evaluation timed out")
 	smokeStatusExpression = `(function () {
 	var manager = unbound.plugins;
-	var entities = manager.getEntities();
+	var entities = manager.getAll();
 	var statuses = [];
 	for (var index = 0; index < entities.length; index++) {
 		var entity = entities[index];

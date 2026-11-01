@@ -66,7 +66,7 @@ Use T3's preview tools. Open with `reuseExistingTab: false` and pass the returne
 3. Navigate with `preview_evaluate` `location.href='/review'`, or click links by accessible name.
 4. Click with `preview_click` and a role locator, e.g. `role=button[name='Approve']`. Inside a dialog, use `role=dialog >> role=button[name='Approve']`.
 
-Routes: `/`, `/plugins`, `/themes`, `/developers`, `/addons/<id>`, `/submit`, `/dashboard`, `/account`, `/review`, `/admin/users`, `/admin/addons`, `/login`, `/device`. The API lives at `/api/v1/*` and Better Auth at `/api/auth/*`. The [feature map](features/README.md) has per-journey recipes.
+Routes: `/`, `/addons/plugins`, `/addons/themes`, `/addons/icons` (`/addons`, `/plugins` and `/themes` redirect), `/developers`, `/addons/<id>`, `/submit`, `/dashboard`, `/account`, `/review`, `/admin/users`, `/admin/addons`, `/login`, `/device`. The API lives at `/api/v1/*` and Better Auth at `/api/auth/*`. The [feature map](features/README.md) has per-journey recipes.
 
 ## Evidence
 

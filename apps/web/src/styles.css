@@ -219,11 +219,14 @@ code {
 }
 
 /* The dot grid is rotated inside the SVG, which has no intrinsic size and so fills the whole box. Rotating
-the element instead needed a square sized from the width, which left tall phone pages half uncovered. */
+the element instead needed a square sized from the width, which left tall phone pages half uncovered.
+Both layers stop at one viewport tall: their gradients are relative to their height, so on a long page
+they would stretch the dots down the whole page. */
 .dotted-bg::before {
 	content: '';
 	position: absolute;
-	inset: 0;
+	inset: 0 0 auto;
+	height: min(100%, 100lvh);
 	background: linear-gradient(to bottom, hsla(0, 0%, 35%, 0.25), transparent);
 	z-index: -1;
 	pointer-events: none;
@@ -233,7 +236,8 @@ the element instead needed a square sized from the width, which left tall phone 
 .dotted-bg::after {
 	content: '';
 	position: absolute;
-	inset: 0;
+	inset: 0 0 auto;
+	height: min(100%, 100lvh);
 	z-index: -1;
 	pointer-events: none;
 	background: linear-gradient(to bottom, transparent, var(--background) 60%);
@@ -253,13 +257,14 @@ the element instead needed a square sized from the width, which left tall phone 
 }
 
 /* Fine noise that dithers the page's dark gradients. It is fixed to the viewport, so it has no edge
-to read as a line, and sits under the content. Normal blending keeps scrolling cheap; an overlay blend
-re-composited the whole viewport every frame. */
+to read as a line, and sits over everything: under content, any layer painted in --background (the hero
+fade, the grid vignette) hid it and read as a darker box. Normal blending keeps scrolling cheap; an overlay
+blend re-composited the whole viewport every frame. */
 body::before {
 	content: '';
 	position: fixed;
 	inset: 0;
-	z-index: 0;
+	z-index: 2147483647;
 	pointer-events: none;
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 	background-size: 160px;
@@ -392,6 +397,15 @@ A wide control sets `--press-depth` below 1 so its edges move about as far as a 
 		filter: none !important;
 		transform: none !important;
 	}
+}
+
+/* Guide code is highlighted at build time into a light and a dark colour per token; the theme picks one. */
+.shiki span {
+	color: var(--shiki-light);
+}
+
+.dark .shiki span {
+	color: var(--shiki-dark);
 }
 
 @utility fill-grid {

@@ -29,6 +29,8 @@ type OutlineState = {
 	originalBackground: NativeJavaAssociationKey;
 	circles: Map<string, boolean>;
 	tracked: Map<string, NativeJavaReference>;
+	skipped: Map<string, boolean>;
+	applied: Map<string, number>;
 };
 
 type StateHolder = Record<typeof STATE_KEY, OutlineState | undefined>;
@@ -167,17 +169,53 @@ function guarded(action: () => void) {
 	}
 }
 
+function keepsOutline(current: OutlineState, view: NativeJavaReference): boolean {
+	'worklet';
+	const provider = javaReference(current.java.invoke(view, 'getOutlineProvider', []));
+	const ours = javaReference(current.backgroundOutline);
+
+	return (
+		!!provider &&
+		!!ours &&
+		'value' in provider &&
+		'value' in ours &&
+		provider.value === ours.value
+	);
+}
+
+function bounded<T>(map: Map<string, T>, key: string, value: T) {
+	'worklet';
+	map.delete(key);
+	map.set(key, value);
+
+	if (map.size > MAX_TRACKED) {
+		map.delete(map.keys().next().value as string);
+	}
+}
+
 function roundOutline(current: OutlineState, view: NativeJavaReference) {
 	'worklet';
+	const key = viewKey(view);
 
-	if (!javaFlag(current.java.invoke(current.avatarClass, 'isInstance', [view]))) {
+	if (
+		current.skipped.has(key) ||
+		(current.applied.get(key) === current.radius && keepsOutline(current, view))
+	) {
 		return;
 	}
 
-	if (adopt(current, view)) {
-		track(current, view);
-		apply(current, view);
+	if (
+		!javaFlag(current.java.invoke(current.avatarClass, 'isInstance', [view])) ||
+		!adopt(current, view)
+	) {
+		bounded(current.skipped, key, true);
+
+		return;
 	}
+
+	track(current, view);
+	apply(current, view);
+	bounded(current.applied, key, current.radius);
 }
 
 /**
@@ -202,6 +240,8 @@ export function installOutlineHook(scope: NativeUIScope, classes: OutlineClasses
 		originalBackground: java.createAssociationKey(),
 		circles: new Map(),
 		tracked: new Map(),
+		skipped: new Map(),
+		applied: new Map(),
 	};
 
 	holder()[STATE_KEY] = current;
@@ -230,7 +270,10 @@ export function setOutlineRadius(radius: number) {
 	current.radius = radius;
 
 	for (const view of current.tracked.values()) {
-		guarded(() => apply(current, view));
+		guarded(() => {
+			apply(current, view);
+			bounded(current.applied, viewKey(view), radius);
+		});
 	}
 }
 

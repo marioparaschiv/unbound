@@ -5,8 +5,8 @@ mock.module('~/metro/wrappers', () => ({
 	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),
 }));
 
-const { after, before, createPatcher, instead, patches, unpatchAll } =
-	await import('~/patcher/api');
+const { after, before, instead, patches, unpatchAll } = await import('~/patcher/api');
+const { createPatcher } = await import('~/patcher/create-patcher');
 const { flush } = await import('~/hot-refresh/live-patch');
 const { createLazyModule } = await import('~/metro/lazy-registry');
 

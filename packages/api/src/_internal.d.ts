@@ -33,8 +33,6 @@ export declare const ADDON_SCOPE_GLOBALS: readonly [
 	'clearInterval',
 	'commands',
 ];
-/** @deprecated Use ADDON_KINDS */
-export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'font'];
 /** The core settings store; each addon's settings store is named after the addon id. */
 export declare const CORE_SETTINGS_STORE = 'unbound';
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
@@ -75,8 +73,7 @@ export declare const DESIGN_COMPONENTS: readonly [
 	'ActionSheetRow',
 	'ContextMenu',
 ];
-/** @deprecated Use ADDON_KINDS */
-export declare const MANAGER_KINDS: readonly ['plugins', 'themes', 'icons', 'fonts'];
+/** Every capability name a manifest may declare; an unknown name fails manifest validation. */
 export declare const NATIVE_PLUGIN_CAPABILITIES: readonly [
 	'native.objc.classes',
 	'native.objc.invoke',
@@ -166,7 +163,9 @@ export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'hooks.clearReturnValues': 'native.java.hooks';
 	readonly 'hooks.remove': 'native.java.hooks';
 };
+/** The host platforms a native bridge runs on. */
 export declare const NATIVE_PLUGIN_PLATFORMS: readonly ['ios', 'android'];
+/** The capabilities each platform's loader offers; Objective-C ones are iOS only and Java ones Android only. */
 export declare const NATIVE_PLUGIN_PLATFORM_CAPABILITIES: {
 	readonly android: readonly [
 		'native.java.classes',
@@ -398,42 +397,46 @@ export type ActionSheetSwitchRowComponent = React$1.ComponentType<
  * @see design/components/Sheet/native/ActionSheetRow.native.tsx
  */
 export type ActionSheetSwitchRowProps = TableSwitchRowProps;
-/** @deprecated Use AddonHandle */
-export type Addon = AddonHandle;
 /** The author of an addon: a display name and a numeric user id. */
 export type AddonAuthor = {
+	/** The name shown for the author. */
 	name: string;
+	/** The author's Discord user id, as a string of digits. */
 	id: `${number}`;
 };
 /**
  * A loaded plugin, theme or icon pack its manager governs: its manifest and state, and what its manager
  * does to it. Stringifies to its {@link AddonManifest}.
  */
-export type AddonHandle<I extends object = object> = {
+export type AddonHandle = {
+	/** The manifest's `id`. */
 	readonly id: string;
+	/** The manifest's display `name`. */
 	readonly name: string;
+	/** The manifest's `version`. */
 	readonly version: string;
+	/** The manifest's `authors`. */
 	readonly authors: AddonAuthor[];
+	/** The loaded manifest, including what the loader and installer recorded. */
 	readonly manifest: AddonManifest;
 	/** Whether the addon is running. */
 	readonly started: boolean;
 	/** Whether the addon failed to start. */
 	readonly failed: boolean;
-	/** @deprecated Use manifest */
-	readonly data: AddonManifest;
-	/** @deprecated What the bundle evaluated to; readable until 1.0. */
-	readonly instance: (Plugin$1 & I) | null;
-	/** @deprecated The bundle source; readable until 1.0. */
-	readonly bundle: string;
-	/** @deprecated The running plugin's native bridge; readable until 1.0. */
-	readonly context?: PluginContext;
+	/** Whether the user has the addon enabled, as its manager records it. */
 	isEnabled(): boolean;
+	/** Whether the plugin manager governs this addon. */
 	isPlugin(): boolean;
+	/** Asks the addon's manager to enable it. */
 	enable(): void | Promise<void>;
+	/** Asks the addon's manager to disable it. */
 	disable(): void;
+	/** Restarts the addon on its current bundle if it is running; settles once it is running again. */
 	reload(): Promise<void>;
+	/** Returns the manifest, so serializing the addon never leaks its bundle or instance. */
 	toJSON(): AddonManifest;
 };
+/** One addon kind, such as `plugin` or `icon-pack`; each has its own manager. */
 export type AddonKind = (typeof ADDON_KINDS)[number];
 /** The `logger` global a plugin runs with: console levels prefixed with the plugin's name. */
 export type AddonLogger = Record<
@@ -451,18 +454,15 @@ export type AddonManifest = AuthoredAddonManifest & {
 };
 /** What an addon declares for one platform it runs on: the capabilities that platform provides which it needs. */
 export type AddonPlatform<P extends NativePluginPlatform = NativePluginPlatform> = {
+	/** Capabilities needed on this platform only, added to the manifest's top-level `capabilities`. */
 	capabilities?: NativePluginPlatformCapability<P>[];
 };
 /** The platforms an addon runs on, keyed by platform. */
 export type AddonPlatforms = {
 	[P in NativePluginPlatform]?: AddonPlatform<P>;
 };
-/** @deprecated Use AddonHandle */
-export type AddonResolveable = string | AddonHandle;
 /** Whether an addon's bundle carries a valid Unbound signature. */
 export type AddonTrust = 'signed' | 'unsigned';
-/** @deprecated Use AddonKind */
-export type AddonType = AddonKind;
 export type AlertActionButtonComponent = React$1.ComponentType<
 	AlertActionButtonProps & Record<string, unknown>
 >;
@@ -501,32 +501,43 @@ export type AlertModalProps = {
 };
 /** The native module used to register and resolve {@link DiscordAsset}s by id. */
 export type AssetsModule = {
+	/** Adds an asset to the registry and returns its new asset id. */
 	registerAsset: (asset: DiscordAsset) => number;
+	/** Returns the asset registered under `id`; `null` or `undefined` when there is none. */
 	getAssetByID: (id: number) => DiscordAsset | null;
 };
 /** The manifest an author ships in an addon's `manifest.json`: its metadata and entry point. */
 export type AuthoredAddonManifest = {
+	/** The unique id: alphanumeric runs joined by single `.`, `_` or `-`, at most 100 characters. */
 	id: string;
 	/** The addon kind this manifest describes; used to validate installs. */
 	type?: AddonKind;
+	/** The display name; must not be empty. */
 	name: string;
+	/** A short summary shown with the addon; may be empty. */
 	description: string;
+	/** Who made the addon; a published manifest lists at least one. */
 	authors: AddonAuthor[];
+	/** An image for the addon, as a URL or an `{ uri }` image source. */
 	icon?:
 		| string
 		| {
 				uri: string;
 		  };
+	/** The bundle's path relative to the manifest, such as `index.js`; it may not leave the addon's directory. */
 	main: string;
+	/** The addon's version, in strict SemVer 2.0.0 with no `v` prefix. */
 	version: string;
 	/**
 	 * The platforms the addon runs on, each with the capabilities it needs there; absent means every platform.
 	 * Published addons may still carry the older array of platform names.
 	 */
 	platforms?: AddonPlatforms | NativePluginPlatform[];
+	/** Capabilities the addon needs on every platform it runs on. */
 	capabilities?: NativePluginCapability[];
 	/** @deprecated Use `platforms.<platform>.capabilities`. Still read for published addons. */
 	platformCapabilities?: Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
+	/** The lowest native plugin API version the addon supports; an older native bridge fails its start. */
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
 	signature?: {
@@ -1237,28 +1248,47 @@ export type DesignCheckboxProps = {
 	onToggle: (...args: any[]) => unknown;
 	required?: unknown;
 };
+/** The name of one component in {@link DESIGN_COMPONENTS}. */
 export type DesignComponentName = (typeof DESIGN_COMPONENTS)[number];
 /** Every component the `design/native.tsx` barrel exports, typed only by `bun run generate-discord-types`. */
 export type DesignComponents = DesignBarrelComponents;
 /** The design module's non-component exports (hooks, functions, constants), which the generator does not type. */
 export type DesignHelpers = {
+	/** Discord's theme-aware style factory; see {@link CreateStyles}. */
 	createStyles: CreateStyles;
+	/** The text style Discord uses for each typography variant. */
 	TextStyleSheet: Record<TextVariant, TextStyle>;
+	/** Hook that resolves a semantic colour token, such as `Theme.colors.TEXT_DEFAULT`, to a colour for the current theme. */
 	useToken: (token: SemanticColorToken) => string;
+	/** Hook that builds the state a `SegmentedControl` and its `SegmentedControlPages` share. */
 	useSegmentedControlState: (options: SegmentedControlStateOptions) => SegmentedControlState;
+	/** Opens an alert as `openAlert(key, element)`; pass the same key to `dismissAlert` to close it. */
 	openAlert: DiscordFunction<void>;
+	/** Closes the alert opened under `key`. */
 	dismissAlert: (key: string) => void;
+	/** Closes every open alert. */
 	dismissAlerts: DiscordFunction<void>;
+	/** Shows a confirm modal from `{ title, content, confirmText, cancelText, onConfirm }`. */
 	showConfirmModal: DiscordFunction;
+	/** Shows an action sheet from `{ key, header: { title }, options: [{ label, icon, onPress }] }`. */
 	showSimpleActionSheet: DiscordFunction;
+	/** Closes the open context menu, such as after a plugin's menu item runs. */
 	hideContextMenu: DiscordFunction<void>;
+	/** Hook that returns the navigation of the screen the calling component renders in. */
 	useNavigation: <T = any>() => Navigation<T>;
+	/** Returns `color` with its opacity set to `opacity`. */
 	setColorOpacity: (color: string, opacity: number) => string;
+	/** Returns `color` darkened by `amount`. */
 	darkenColor: (color: string, amount: number) => string;
+	/** Returns `color` brightened by `amount`. */
 	brightenColor: (color: string, amount: number) => string;
+	/** Returns a colour that contrasts with `color`, for content drawn on it. */
 	getContrastingColor: (color: string) => string;
+	/** Discord's transition state enum; see {@link TransitionState}. */
 	TransitionStates: EnumLike<typeof TRANSITION_STATE_KEYS>;
+	/** Discord's theme flag enum: gradient themes, reduced or increased contrast, and reduced saturation. */
 	ThemeContextFlags: EnumLike<typeof THEME_FLAG_KEYS>;
+	/** The minimum WCAG contrast ratios Discord applies to non-text, text and high-contrast text. */
 	WCAGContrastRatios: Record<'NonText' | 'Text' | 'HighContrastText', number>;
 };
 export type DesignModalComponent = React$1.ComponentType<
@@ -1448,13 +1478,21 @@ export type DisableCustomThemeProps = {
 };
 /** An asset registered with Discord's packager (its metadata and dimensions). */
 export type DiscordAsset = {
+	/** `true` on assets the React Native packager generated. */
 	__packager_asset?: boolean;
+	/** The file name without extension, such as `ic_close`; `assets.getByName` matches on it. */
 	name: string;
+	/** The asset's directory in the bundle, such as `/assets/images`. */
 	httpServerLocation: string;
+	/** Width in points at scale 1. */
 	width: number;
+	/** Height in points at scale 1. */
 	height: number;
+	/** The pixel densities the bundle ships the file at, such as `[1, 2, 3]`. */
 	scales: number[];
+	/** The packager's content hash of the file. */
 	hash: string;
+	/** The file extension, such as `png` or `svg`. */
 	type: string;
 };
 /** A function exported by a Discord module, whose signature Discord does not document. */
@@ -1525,8 +1563,11 @@ export type FloatingActionButtonProps = Omit<
 };
 /** A custom font the native loader has registered, as injected on `window.UNBOUND_FONTS`. */
 export type FontDescriptor = {
+	/** The font's PostScript name, else its full name, else its file name without extension; the Fonts manager keys by it. */
 	name: string;
+	/** The font's file name in Unbound's `Fonts` directory. */
 	file: string;
+	/** The absolute path to the font file on the device. */
 	path: string;
 };
 /** A font managed by the Fonts manager: currently identical to its {@link FontDescriptor}. */
@@ -1724,7 +1765,9 @@ export type HeaderSubmittingIndicatorComponent =
 export type HeaderSubmittingIndicatorProps = {};
 /** A loaded icon pack: its bundle marker and {@link IconPackManifest}. */
 export type IconPack = {
+	/** The name the pack was loaded under: its manifest `name`, or `Default` for Discord's own icons. */
 	bundle: string;
+	/** The pack's manifest. */
 	manifest: IconPackManifest;
 };
 /** An icon pack's manifest: an {@link AddonManifest} tagged with its source kind. */
@@ -1841,6 +1884,7 @@ export type LayerScopeProps = {
 	children?: React$1.ReactNode;
 	zIndex?: number;
 };
+/** The `objc` namespace the loader publishes, before the client adds `create` and scopes it to a plugin. */
 export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> & NativeUIScopeFactory;
 /**
  * Props of `LoadingButtonPill` (function). Exports: LoadingButtonPill.
@@ -1893,13 +1937,13 @@ export type ManaContextProviderProps = {
 	children?: React$1.ReactNode;
 	value?: unknown;
 };
-/** @deprecated Use AddonKind */
-export type ManagerKind = (typeof MANAGER_KINDS)[number];
 /** Parses nested Markdown, as a rule's `parse` receives it. */
 export type MarkdownNestedParse = (source: string, state: MarkdownState) => MarkdownNode[];
 /** One node of a parsed Markdown tree; `type` names the rule that parsed it. */
 export type MarkdownNode = {
+	/** The name of the rule that parsed the node, such as `text` or `strong`. */
 	type: string;
+	/** The node's children, or its text for a leaf rule; absent when a rule stores its data elsewhere. */
 	content?: MarkdownNode[] | string;
 };
 /** Renders a node or a list of nodes, as a rule's `react` receives it. */
@@ -1911,8 +1955,11 @@ export type MarkdownOutput = (
 export type MarkdownParserModule = {
 	/** The rules Discord renders messages with. */
 	defaultRules: MarkdownRules;
+	/** Builds a renderer from a rule set, such as `defaultRules` plus your own rules. */
 	reactParserFor(rules: MarkdownRules): MarkdownReactParser;
+	/** Renders Markdown with `defaultRules`, as Discord renders message content. */
 	parse: MarkdownReactParser;
+	/** Parses Markdown with `defaultRules` into nodes without rendering them; `inline` defaults to `true`. */
 	parseToAST(source?: string, inline?: boolean, state?: MarkdownState): MarkdownNode[];
 };
 /** Renders Markdown source to React Native elements; `inline` defaults to `true`. */
@@ -1925,18 +1972,26 @@ export type MarkdownReactParser = (
 export type MarkdownRule<TNode extends MarkdownNode = MarkdownNode> = {
 	/** Discord 349 ships `highlight`, `guild` and `channel` without one; the parser never calls those. */
 	order?: number;
+	/** Matches the rule at the start of `source`; `previous` is the text already consumed. `null` means no match. */
 	match(source: string, state: MarkdownState, previous: string): RegExpExecArray | null;
+	/** Builds the node from `match`'s capture; call `parse` to parse nested Markdown. */
 	parse(capture: RegExpExecArray, parse: MarkdownNestedParse, state: MarkdownState): TNode;
+	/** Renders the node; call `output` to render its children. */
 	react?(node: TNode, output: MarkdownOutput, state: MarkdownState): React$1.ReactNode;
 };
 /** A rule set by rule name, the shape `reactParserFor` takes. */
 export type MarkdownRules = Record<string, MarkdownRule>;
 /** The parse state Discord's rules read; the `allow*` flags turn links, headings and lists on. */
 export type MarkdownState = {
+	/** The React key the output function sets before calling a rule's `react`. */
 	key?: string | number;
+	/** Whether the parser is inside inline content; inline-only rules such as `strong` match only then. */
 	inline?: boolean;
+	/** Renders links as links instead of plain text. */
 	allowLinks?: boolean;
+	/** Parses `#` headings. */
 	allowHeading?: boolean;
+	/** Parses `-` and `1.` lists. */
 	allowList?: boolean;
 };
 export type MenuComponent = React$1.ComponentType<MenuProps>;
@@ -2118,25 +2173,39 @@ export type ModalStepIndicatorProps = {
 };
 /** The outcome of checking an addon's signature against the keys compiled into the loader. */
 export type NativeAddonVerification = {
+	/** `signed` when a trusted key signed the bundle, `unsigned` when there is no signature, `invalid` when it fails. */
 	readonly status: 'signed' | 'unsigned' | 'invalid';
+	/** Who signed the addon; set only when `status` is `signed`. */
 	readonly signer?: string;
+	/** Why verification did not succeed, when the loader can say. */
 	readonly problem?: string;
 };
+/** A key from `objc.createAssociationKey` that names one associated object. */
 export type NativeAssociationKey = NativeHandle;
+/** Refers to an earlier step's result inside `objc.batch`, as a target or an argument. */
 export type NativeBatchReference = {
+	/** The zero-based index of the earlier step whose result to use. */
 	readonly $nativeBatchResult: number;
 };
+/** One Objective-C call in `objc.batch`; a batch takes up to 64 steps. */
 export type NativeBatchStep = {
+	/** The object to call, or an earlier step's result. */
 	target: NativeObjectHandle | NativeBatchReference;
+	/** The selector to send, at most 256 characters. */
 	selector: string;
+	/** The call's arguments, at most 16; each may be an earlier step's result. */
 	args: unknown[];
 };
+/** Options for a synchronous Objective-C call. */
 export type NativeCallOptions = {
+	/** The thread to run on. Defaults to `current`. */
 	thread?: NativeThreadPolicy;
 };
+/** A promise for native work; `cancel` drops it, and stopping the plugin cancels every pending one. */
 export type NativeCancelablePromise<T> = Promise<T> & {
 	cancel(): void;
 };
+/** A handle to an Objective-C class, from `objc.getClass`. */
 export type NativeClassHandle = NativeHandle;
 /** A plugin bundle the loader evaluated from bytecode: it takes the scoped React and returns the plugin module. */
 export type NativeCompiledPlugin = (react: typeof React$1) =>
@@ -2144,21 +2213,34 @@ export type NativeCompiledPlugin = (react: typeof React$1) =>
 	| {
 			default: Plugin$1;
 	  };
+/** What an addon was doing when the loader blamed it: `starting` or `running` for a crash, `frozen` for a freeze. */
 export type NativeCrashPhase = 'starting' | 'running' | 'frozen';
+/** An addon the loader disabled because Discord crashed or froze in it on consecutive launches. */
 export type NativeCrashedAddon = {
+	/** The addon's crash guard key, `<bucket>:<addon id>`. */
 	readonly id: string;
+	/** The addon's display name. */
 	readonly name: string;
+	/** What the addon was doing; missing on older loaders, which read it as `starting`. */
 	readonly phase?: NativeCrashPhase;
 };
+/** Debugger support for plugins. */
 export type NativeDebugBridge = {
+	/** Logs an evaluation and adds it to the loader's history; false when the record is malformed. Needs `native.debug.evaluations`. */
 	recordEvaluation(record: NativeDebugEvaluation): boolean;
+	/** Reads the debug environment. Needs `native.debug.environment`. */
 	environment(): NativeDebugEnvironment;
 };
+/** Facts about the device a debugger session needs. */
 export type NativeDebugEnvironment = {
+	/** Whether Discord runs in a simulator, emulator or virtual machine. */
 	isVirtualDevice: boolean;
+	/** The address of the machine hosting the virtual device, or `null` on a physical one. */
 	hostAddress: string | null;
+	/** The loader's resource counts; missing on older loaders. */
 	resources?: NativeResourceCounts;
 };
+/** One debugger evaluation, which the loader logs and keeps in its evaluation history. */
 export type NativeDebugEvaluation = {
 	id: string;
 	code: string;
@@ -2173,23 +2255,34 @@ export type NativeDebugEvaluation = {
 			error?: string;
 	  }
 );
+/** One console line an evaluation printed. */
 export type NativeDebugEvaluationLog = {
+	/** 1 for log, 2 for warn, 3 for error. */
 	level: 1 | 2 | 3;
+	/** The printed text. */
 	message: string;
 };
+/** Calls C functions in images Discord already loaded. An unsigned plugin needs the user's consent to use it. */
 export type NativeFFIBridge = {
+	/** Resolves a symbol in a loaded image, or in every loaded image when `image` is omitted; `null` when not found. */
 	symbol(name: string, image?: string): NativePointer | null;
+	/** Calls a symbol from `symbol` with an explicit signature. */
 	call(pointer: NativePointer, signature: NativeFFISignature, ...args: unknown[]): unknown;
 };
+/** A non-variadic C function signature for `ffi.call`. */
 export type NativeFFISignature = {
+	/** The result type; `i64` and `u64` results come back as `BigInt`. */
 	returnType: NativeFFIType;
+	/** The argument types, at most 16 and none `void`. */
 	args: NativeFFIType[];
 };
+/** An FFI type: a scalar or pointer name, or a registered struct by name, such as `{ struct: 'CGRect' }`. */
 export type NativeFFIType =
 	| NativeFFITypeName
 	| {
 			struct: string;
 	  };
+/** A C type in an FFI signature; `object`, `class` and `selector` exist only on iOS. */
 export type NativeFFITypeName =
 	| 'void'
 	| 'bool'
@@ -2208,102 +2301,165 @@ export type NativeFFITypeName =
 	| 'object'
 	| 'class'
 	| 'selector';
+/** Mounts registered React Native components inside existing native views. Sync methods are iOS only. */
 export type NativeFabricBridge = {
+	/** Starts a surface for a registered component inside a container view. Needs `native.fabric.mount`. */
 	mount(
 		container: NativeObjectHandle,
 		moduleName: string,
 		properties?: NativeSerializableObject,
 	): NativeFabricSurface;
+	/** Like `mount`, on the main thread. Needs `native.fabric.async`. */
 	mountAsync(
 		container: NativeObjectHandle,
 		moduleName: string,
 		properties?: NativeSerializableObject,
 	): NativeCancelablePromise<NativeFabricSurface>;
+	/** Sends new properties to a surface. */
 	update(surface: NativeFabricSurface, properties: NativeSerializableObject): void;
+	/** Like `update`, on the main thread. */
 	updateAsync(
 		surface: NativeFabricSurface,
 		properties: NativeSerializableObject,
 	): NativeCancelablePromise<void>;
+	/** Sets the smallest and largest size the surface may lay out at. */
 	setSize(
 		surface: NativeFabricSurface,
 		minimumSize: NativeFabricSize,
 		maximumSize: NativeFabricSize,
 	): void;
+	/** Like `setSize`, on the main thread. */
 	setSizeAsync(
 		surface: NativeFabricSurface,
 		minimumSize: NativeFabricSize,
 		maximumSize: NativeFabricSize,
 	): NativeCancelablePromise<void>;
+	/** Positions the surface's view in its container. */
 	setFrame(surface: NativeFabricSurface, frame: NativeFabricFrame): void;
+	/** Like `setFrame`, on the main thread. */
 	setFrameAsync(
 		surface: NativeFabricSurface,
 		frame: NativeFabricFrame,
 	): NativeCancelablePromise<void>;
+	/** Reads a view's frame. */
 	measure(view: NativeObjectHandle): NativeFabricFrame;
+	/** Like `measure`, on the main thread. */
 	measureAsync(view: NativeObjectHandle): NativeCancelablePromise<NativeFabricFrame>;
+	/** Stops a surface and removes its view. */
 	unmount(surface: NativeFabricSurface): void;
+	/** Like `unmount`, on the main thread. */
 	unmountAsync(surface: NativeFabricSurface): NativeCancelablePromise<void>;
 };
+/** A view's frame in its container, in points on iOS and dp on Android. */
 export type NativeFabricFrame = {
+	/** The left edge, between -100,000 and 100,000. */
 	x: number;
+	/** The top edge, between -100,000 and 100,000. */
 	y: number;
+	/** Width, between 0 and 32,768. */
 	width: number;
+	/** Height, between 0 and 32,768. */
 	height: number;
 };
+/** A Fabric surface size, in points on iOS and dp on Android, between 0 and 32,768. */
 export type NativeFabricSize = {
+	/** Width, in points on iOS and dp on Android. */
 	width: number;
+	/** Height, in points on iOS and dp on Android. */
 	height: number;
 };
+/** A mounted Fabric surface; the plugin scope unmounts it on dispose. */
 export type NativeFabricSurface = NativeHandle;
+/** One font the loader can apply. */
 export type NativeFontEntry = {
+	/** The font's PostScript name, falling back to its full or file name; unique in the list. */
 	readonly name: string;
+	/** The font's full name, or `name` when the file has none. */
 	readonly displayName: string;
+	/** The family name, when the font file declares one. */
 	readonly family?: string;
+	/** The style name, such as `Bold`, when the font file declares one. */
 	readonly style?: string;
+	/** The font file's path; missing for system fonts the loader lists by name only. */
 	readonly path?: string;
+	/** Where the font comes from. */
 	readonly source: NativeFontSource;
 };
+/** Where a font comes from: bundled with Discord, installed on the system, or a font addon. */
 export type NativeFontSource = 'app' | 'system' | 'custom';
 /** An opaque reference to a native object. Only the bridge creates handles; plugins pass them back. */
 export type NativeHandle = {
+	/** A type-only brand, absent at runtime, so plain objects cannot pass as handles. */
 	readonly [nativeHandle]: true;
 };
+/** What an Objective-C hook handler receives for one call of the hooked method. */
 export type NativeHookContext = {
+	/** The receiver, borrowed until the handler returns. */
 	self: NativeObjectHandle;
+	/** The hooked selector's name. */
 	selector: string;
+	/** The method's explicit arguments, without `self` and `_cmd`, borrowed until the handler returns. */
 	args: unknown[];
+	/** Runs the original implementation; it works only synchronously on the hook's thread. */
 	original: (...args: unknown[]) => unknown;
+	/** Swaps the object argument at an index of `args` before the original runs; only during a synchronous handler. */
 	replaceObjectArgument(index: number, value: NativeObjectHandle | null): void;
 };
+/** The handlers an Objective-C hook runs around each call; it needs at least one, unless `cacheOnly` is set. */
 export type NativeHookHandlers = {
+	/** Runs before the original implementation. */
 	before?: (context: NativeHookContext) => void | Promise<void>;
+	/** Runs after the original implementation. */
 	after?: (context: NativeHookContext) => void | Promise<void>;
+	/** Runs instead of the original; what it returns becomes the method's result. */
 	replace?: (context: NativeHookContext) => unknown;
 };
+/** Options for `objc.hook`. */
 export type NativeHookOptions = {
+	/** Runs no JavaScript and returns values set with `setReturnValue`; needs a scalar or struct return type. */
 	cacheOnly?: boolean;
+	/** Hooks calls on this object only. */
 	instance?: NativeObjectHandle;
+	/** Removes the hook after its first call. */
 	once?: boolean;
 } & NativeCallOptions;
+/** An installed Objective-C hook; the plugin scope removes it on dispose. */
 export type NativeHookToken = {
+	/** False once the hook is removed. */
 	readonly active: boolean;
+	/** Sets the result a `cacheOnly` hook returns for calls with this receiver and these arguments. */
 	setReturnValue(self: NativeObjectHandle, args: unknown[], value: unknown): void;
+	/** Removes the result set for this receiver and these arguments. */
 	removeReturnValue(self: NativeObjectHandle, args: unknown[]): void;
+	/** Removes every result set on this hook. */
 	clearReturnValues(): void;
+	/** Removes the hook; calling it again does nothing. */
 	remove(): void;
 };
+/** An argument to a Java call: a tagged value or a handle. */
 export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
+/** A key from `java.createAssociationKey` that names one associated value. */
 export type NativeJavaAssociationKey = NativeHandle;
+/** One independent operation in a Java `batch` or `batchAsync`. */
 export type NativeJavaBatchOperation = {
+	/** What to do with `handle`. */
 	op: 'invoke' | 'getField' | 'setField' | 'respondsTo';
+	/** The object to act on. */
 	handle: NativeJavaReference;
+	/** The method or field name. */
 	name: string;
+	/** The method's arguments, for `invoke` and `respondsTo`. */
 	args?: NativeJavaArgument[];
+	/** The value to write, for `setField`. */
 	value?: NativeJavaArgument;
 };
+/** The Android bridge to Java through reflection. Sync calls run on the JavaScript thread, so touch views only asynchronously. */
 export type NativeJavaBridge = {
+	/** Looks up a class by fully qualified name and returns a handle the scope holds until released. */
 	getClass(name: string): NativeJavaHandle;
+	/** Lists a class's constructors, methods and fields. */
 	describe(name: string): NativeJavaClassDescription;
+	/** Runs independent operations in one call on the JavaScript thread and returns every result in order. */
 	batch(operations: NativeJavaBatchOperation[]): NativeJavaValue[];
 	/** Runs the operations like `batch`, on the main thread, so views can be read safely. Missing on older loaders. */
 	batchAsync?(operations: NativeJavaBatchOperation[]): NativeCancelablePromise<NativeJavaValue[]>;
@@ -2313,63 +2469,99 @@ export type NativeJavaBridge = {
 		className: string,
 		options?: NativeViewSearchOptions,
 	): NativeCancelablePromise<NativeJavaValue[]>;
+	/** Creates a key for attaching a value to objects with `setAssociatedObject`. */
 	createAssociationKey(): NativeJavaAssociationKey;
+	/** Reads the value attached to an object under a key. */
 	getAssociatedObject(
 		handle: NativeJavaReference,
 		key: NativeJavaAssociationKey,
 	): NativeJavaValue;
+	/** Attaches a value to an object under a key. */
 	setAssociatedObject(
 		handle: NativeJavaReference,
 		key: NativeJavaAssociationKey,
 		value: NativeJavaArgument,
 	): void;
+	/** Reads an object's class name, as a string value. */
 	className(handle: NativeJavaReference): NativeJavaValue;
+	/** Calls the constructor matching `args` and returns a handle the scope holds until released. */
 	construct(name: string, args?: NativeJavaArgument[]): NativeJavaHandle;
+	/** Checks whether the object has a method `name` callable with `args`, as a boolean value. */
 	respondsTo(
 		handle: NativeJavaReference,
 		name: string,
 		args?: NativeJavaArgument[],
 	): NativeJavaValue;
+	/** Calls a method on the JavaScript thread. */
 	invoke(handle: NativeJavaReference, name: string, args?: NativeJavaArgument[]): NativeJavaValue;
+	/** Calls a method on the main thread and resolves with its result. Needs `native.java.invokeAsync`. */
 	invokeAsync(
 		handle: NativeJavaReference,
 		name: string,
 		args?: NativeJavaArgument[],
 	): NativeCancelablePromise<NativeJavaValue>;
+	/** Reads a field by name. */
 	getField(handle: NativeJavaReference, name: string): NativeJavaValue;
+	/** Writes a field by name. */
 	setField(handle: NativeJavaReference, name: string, value: NativeJavaArgument): void;
+	/** Drops the plugin's hold on a handle so the loader can free the object. */
 	release(handle: NativeJavaReference): void;
 };
+/** A Java class's shape, read by reflection with `java.describe`. */
 export type NativeJavaClassDescription = {
+	/** The fully qualified class name. */
 	name: string;
+	/** The superclass name, or `null` when there is none. */
 	superclass: string | null;
+	/** The names of the interfaces the class implements. */
 	interfaces: string[];
+	/** Each constructor's parameter class names. */
 	constructors: string[][];
+	/** The methods the class declares. */
 	methods: NativeJavaMethodDescription[];
+	/** The fields the class declares. */
 	fields: NativeJavaFieldDescription[];
 };
+/** One field a Java class declares, from `java.describe`. */
 export type NativeJavaFieldDescription = {
+	/** The field name. */
 	name: string;
+	/** The field type's class name. */
 	type: string;
+	/** Whether the field is static. */
 	static: boolean;
 };
+/** A handle to a Java object or class; the plugin scope releases it on dispose. */
 export type NativeJavaHandle = NativeHandle;
+/** A Java object reference the bridge returns inside a result. */
 export type NativeJavaHandleValue = {
+	/** Marks the value as an object reference. */
 	type: 'handle';
+	/** The id the loader issued for the object. */
 	value: string;
 };
+/** What a Java hook listener receives for one call of the hooked method. */
 export type NativeJavaHookEvent = {
+	/** The object the hooked method was called on. */
 	self: NativeJavaValue;
+	/** The call's arguments. */
 	args: NativeJavaValue[];
 };
+/** Options for `hooks.hook`. */
 export type NativeJavaHookOptions = {
+	/** Returns a value set with `setReturnValue` for a matching call instead of running the method. Defaults to false. */
 	replace?: boolean;
+	/** Whether the listener hears calls: before the method by default, `after` once it has run, `false` never. */
 	notify?: boolean | 'after';
 };
+/** An installed Java hook; the plugin scope removes it on dispose. */
 export type NativeJavaHookToken = {
+	/** The id the loader issued, such as `hook-1`. */
 	readonly id: string;
 };
+/** The Android bridge for hooking Java methods. Needs `native.java.hooks`. */
 export type NativeJavaHooksBridge = {
+	/** Hooks the method whose parameter class names match `parameterTypes`, and sends each call to `listener`. */
 	hook(
 		className: string,
 		methodName: string,
@@ -2377,27 +2569,38 @@ export type NativeJavaHooksBridge = {
 		options?: NativeJavaHookOptions,
 		listener?: (event: NativeJavaHookEvent) => void,
 	): NativeJavaHookToken;
+	/** Sets the result a `replace` hook returns for calls with this receiver and these arguments. */
 	setReturnValue(
 		token: NativeJavaHookToken,
 		self: NativeJavaValue,
 		args: NativeJavaValue[],
 		value: NativeJavaValue,
 	): void;
+	/** Removes the result set for this receiver and these arguments. */
 	removeReturnValue(
 		token: NativeJavaHookToken,
 		self: NativeJavaValue,
 		args: NativeJavaValue[],
 	): void;
+	/** Removes every result set on a hook. */
 	clearReturnValues(token: NativeJavaHookToken): void;
+	/** Removes a hook. */
 	remove(token: NativeJavaHookToken): void;
 };
+/** One method a Java class declares, from `java.describe`. */
 export type NativeJavaMethodDescription = {
+	/** The method name. */
 	name: string;
+	/** The parameters' class names, in order, as `hooks.hook` takes them. */
 	parameters: string[];
+	/** The return type's class name. */
 	returnType: string;
+	/** Whether the method is static. */
 	static: boolean;
 };
+/** A Java object, as a handle or as a tagged handle value from a result. */
 export type NativeJavaReference = NativeJavaHandle | NativeJavaHandleValue;
+/** A Java value tagged with its type, as the Java bridge returns and accepts it. */
 export type NativeJavaValue =
 	| {
 			type: 'null';
@@ -2429,8 +2632,11 @@ export type NativeJavaValue =
 			componentType: string;
 			value: (NativeJavaValue | NativeJavaHandle | string | number | boolean)[];
 	  };
+/** The iOS bridge to the Objective-C runtime, scoped to the plugin's capabilities. */
 export type NativeObjCBridge = {
+	/** Looks up a class by name, or returns `null` when none is registered. */
 	getClass(name: string): NativeClassHandle | null;
+	/** Allocates an uninitialized instance, UIKit classes on the main thread; send it an `init` selector next, or use `create`. */
 	alloc(classOrName: string | NativeClassHandle): NativeObjectHandle;
 	/** Allocates an instance and returns what `initSelector` initializes; throws when that is nil. */
 	create(
@@ -2439,36 +2645,46 @@ export type NativeObjCBridge = {
 		args?: unknown[],
 		options?: NativeCallOptions,
 	): NativeObjectHandle;
+	/** Returns the class name of the object a handle refers to, or `null`. */
 	className(handle: NativeHandle): string | null;
+	/** Checks whether the object responds to a selector. */
 	respondsTo(handle: NativeHandle, selector: string): boolean;
+	/** Sends a selector with its arguments on the current runtime thread. */
 	call(handle: NativeHandle, selector: string, ...args: unknown[]): unknown;
+	/** Runs the implementation `currentClass`'s superclass provides, like `super` in Objective-C. */
 	callSuper(
 		handle: NativeObjectHandle,
 		currentClass: NativeClassHandle | string,
 		selector: string,
 		...args: unknown[]
 	): unknown;
+	/** Sends a selector on the thread `options.thread` names; `main` blocks, so prefer `invokeAsync` for UI work. */
 	invoke(
 		handle: NativeObjectHandle,
 		selector: string,
 		args: unknown[],
 		options?: NativeCallOptions,
 	): unknown;
+	/** Sends a selector on the main thread and resolves with its result. Needs `native.objc.invokeAsync`. */
 	invokeAsync(
 		handle: NativeObjectHandle,
 		selector: string,
 		args: unknown[],
 	): NativeCancelablePromise<unknown>;
+	/** Runs dependent calls in one main-thread pass; a failed step rejects it without undoing earlier steps. */
 	batch(steps: readonly NativeBatchStep[]): NativeCancelablePromise<unknown[]>;
+	/** Reads a `UIView` subtree in one main-thread pass, as a point-in-time list. Needs `native.objc.snapshot`. */
 	snapshot(
 		root: NativeObjectHandle,
 		options?: NativeViewSnapshotOptions,
 	): NativeCancelablePromise<NativeViewSnapshotNode[]>;
+	/** Finds the views of a class under or above a view on the main thread. Needs `native.objc.snapshot`. */
 	findViews(
 		root: NativeObjectHandle,
 		className: string,
 		options?: NativeViewSearchOptions,
 	): NativeCancelablePromise<NativeObjectHandle[]>;
+	/** Like `callSuper` with a thread policy; it cannot cross to the main thread synchronously. */
 	invokeSuper(
 		handle: NativeObjectHandle,
 		currentClass: NativeClassHandle | string,
@@ -2476,28 +2692,38 @@ export type NativeObjCBridge = {
 		args: unknown[],
 		options?: NativeCallOptions,
 	): unknown;
+	/** Runs the superclass implementation on the main thread and resolves with its result. */
 	invokeSuperAsync(
 		handle: NativeObjectHandle,
 		currentClass: NativeClassHandle | string,
 		selector: string,
 		args: unknown[],
 	): NativeCancelablePromise<unknown>;
+	/** Reads an instance variable by name, such as `_viewModel`. */
 	getIvar(handle: NativeObjectHandle, name: string): unknown;
+	/** Writes an instance variable by name. */
 	setIvar(handle: NativeObjectHandle, name: string, value: unknown): void;
+	/** Creates a key for attaching a value to objects with `setAssociatedObject`. */
 	createAssociationKey(): NativeAssociationKey;
+	/** Reads the value attached to an object under a key. */
 	getAssociatedObject(handle: NativeObjectHandle, key: NativeAssociationKey): unknown;
+	/** Attaches a value to an object; `null` clears it. `policy` is `assign`, `retain`, `copy`, `retainNonatomic` or `copyNonatomic`. */
 	setAssociatedObject(
 		handle: NativeObjectHandle,
 		key: NativeAssociationKey,
 		value: unknown,
 		policy?: string,
 	): void;
+	/** Builds a registered struct, such as `CGRect` or `UIEdgeInsets`, to pass to native calls. */
 	struct<T extends NativeStructFields = NativeStructFields>(
 		name: string,
 		fields: T,
 	): NativeStruct<T>;
+	/** Converts an `NSArray` handle to a JavaScript array. */
 	array(handle: NativeObjectHandle): unknown[];
+	/** Copies bytes into a new `NSData` object. */
 	data(value: ArrayBuffer | Uint8Array): NativeObjectHandle;
+	/** Hooks a method by class and selector; handlers run in registration order, and the scope removes the hook on dispose. */
 	hook(
 		className: string,
 		selector: string,
@@ -2505,14 +2731,18 @@ export type NativeObjCBridge = {
 		options?: NativeHookOptions,
 	): NativeHookToken;
 };
+/** A retained handle to an Objective-C object. */
 export type NativeObjectHandle = NativeHandle;
+/** Loader helpers for verifying and loading installed addons. */
 export type NativePlatformAddons = {
 	/** Checks a manifest's `signature` against its bundle. */
 	verify(manifest: string, bundle: string): NativeAddonVerification;
 	/** Evaluates an installed plugin's bundle compiled for this bytecode version, if its digest matches the manifest. */
 	evaluateBytecode?(folder: string, bytecodeVersion: number): NativeCompiledPlugin | undefined;
 };
+/** Facts about the Discord install the loader runs in. */
 export type NativePlatformApp = {
+	/** Where Discord was installed from, such as `App Store` or `Google Play`. */
 	getAppSource(): string;
 	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. Missing on older loaders. */
 	getFramework?(): string;
@@ -2521,68 +2751,122 @@ export type NativePlatformApp = {
 	/** True for the first caller in this process; a reloaded runtime sees false. Missing on older loaders. */
 	claimLaunchURL?(): boolean;
 };
+/** Platform-wide helpers the loader publishes as `globalThis.NativePlatform`, not scoped to a plugin. */
 export type NativePlatformBridge = {
+	/** The host platform. */
 	readonly platform: NativePluginPlatform;
+	/** Evaluates Hermes bytecode in the current runtime; `tag` names it in errors. Throws on invalid bytecode. */
 	evaluateBytecode(bytecode: ArrayBuffer, tag?: string): unknown;
+	/** Facts about the device. */
 	readonly device: NativePlatformDevice;
+	/** Facts about the Discord install. */
 	readonly app: NativePlatformApp;
+	/** File removal in the Unbound folder; missing when the loader has no documents directory. */
 	readonly files?: NativePlatformFiles;
+	/** Crash and freeze attribution for addons; missing when the loader has no documents directory. */
 	readonly crashGuard?: NativePlatformCrashGuard;
+	/** The native settings file; missing when the loader does not manage settings. */
 	readonly settings?: NativePlatformSettings;
+	/** The font list; missing when the loader cannot list fonts. */
 	readonly fonts?: NativePlatformFonts;
+	/** Addon verification and bytecode loading; missing on older loaders. */
 	readonly addons?: NativePlatformAddons;
+	/** iOS-only helpers; missing on Android. */
 	readonly ios?: NativePlatformIOSBridge;
 };
+/** The loader's record of which addon was starting or running when Discord crashed, kept across launches. */
 export type NativePlatformCrashGuard = {
+	/** Marks an addon as starting, by crash guard key and display name, so a crash during its start is blamed on it. */
 	begin(id: string, name: string): boolean;
+	/** Clears the start marker once the addon's start has returned. */
 	end(id: string): boolean;
+	/** Lists the addons the loader disabled after crashes on consecutive launches. */
 	disabled(): NativeCrashedAddon[];
+	/** Registers an addon for crash attribution and returns its slot, or 0 when the loader cannot attribute crashes. */
 	register?(id: string, name: string): number;
+	/** Returns a 4-byte buffer shared with the loader that holds the running addon's slot, or `undefined` when unavailable. */
 	activity?(): ArrayBuffer | undefined;
 };
+/** Facts about the device Discord runs on. */
 export type NativePlatformDevice = {
+	/** The host platform. */
 	readonly platform: NativePluginPlatform;
+	/** The device's model name. */
 	getDeviceModel(): string;
+	/** The operating system's version. */
 	getOSVersionString(): string;
+	/** Whether the device is jailbroken on iOS or has an `su` binary on Android. */
 	isRooted(): boolean;
+	/** Whether Discord is installed as a system app. */
 	isSystemApp(): boolean;
+	/** Whether Discord runs in a simulator, emulator or virtual machine. */
 	isVirtualDevice(): boolean;
 };
+/** File operations inside the Unbound folder in Discord's documents directory. */
 export type NativePlatformFiles = {
+	/** Removes a file or folder tree, by path relative to the Unbound folder; returns whether anything was removed. */
 	remove(path: string): boolean;
 };
+/** The fonts the loader can apply. */
 export type NativePlatformFonts = {
+	/** Lists font addons first, then app and system fonts, without duplicate names. */
 	list(): NativeFontEntry[];
 };
+/** iOS-only facts about Discord's code signature. */
 export type NativePlatformIOSBridge = {
+	/** Discord's code-signing entitlements, as an object. */
 	getEntitlements(): NativeSerializableObject;
+	/** Discord's code-signing entitlements, as plist text. */
 	getEntitlementsAsPlist(): string;
 };
+/** The loader's native settings file, which holds every Bucket. */
 export type NativePlatformSettings = {
+	/** Applies changes and writes the file at once; false when the changes are malformed or the write failed. */
 	apply(changes: readonly NativeSettingsChange[]): boolean;
+	/** Applies changes in memory, to be written by `flush`. Missing on older loaders. */
 	stage?(changes: readonly NativeSettingsChange[]): boolean;
+	/** Writes staged changes to the file, if any. Missing on older loaders. */
 	flush?(): boolean;
+	/** Reads every Bucket with no arguments, one Bucket with `store`, or one dot-path `key`; `undefined` when unset. */
 	get?(store?: string, key?: string): NativeSerializable | undefined;
 };
+/** The native bridge a plugin reaches through `context.native`, gated by the capabilities it declares. */
 export type NativePluginBridge = {
+	/** The version of the JavaScript API plugins use, compared with a manifest's `minNativePluginApi`. */
 	readonly apiVersion: string;
+	/** The version of the native ABI the loader implements. */
 	readonly abiVersion: string;
+	/** Every capability this loader build provides, not only the ones the plugin declares. */
 	readonly capabilities: readonly NativePluginCapability[];
+	/** The Objective-C runtime; iOS only. */
 	readonly objc: NativeObjCBridge;
+	/** Raw calls to C functions. */
 	readonly ffi: NativeFFIBridge;
+	/** React Native surfaces mounted in native views. */
 	readonly fabric: NativeFabricBridge;
+	/** Subscriptions to Discord activity. */
 	readonly runtime: NativeRuntimeBridge;
+	/** Java reflection; Android only. */
 	readonly java: NativeJavaBridge;
+	/** Java method hooks; Android only. */
 	readonly hooks: NativeJavaHooksBridge;
+	/** Debugger support. */
 	readonly debug: NativeDebugBridge;
+	/** Worklets on the UI runtime. */
 	readonly ui: NativeUIBridge;
 };
+/** A named permission to use one part of the native bridge, declared in an addon's manifest. */
 export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
+/** The shape of an error the native bridge or its plugin scope throws. */
 export type NativePluginError = {
+	/** Which failure it is; native failures without their own code use `NATIVE_BRIDGE_ERROR`. */
 	code: NativePluginErrorCode;
+	/** A human-readable description. */
 	message: string;
+	/** The capability the plugin lacks, for `NATIVE_PLUGIN_CAPABILITY_DENIED`. */
 	capability?: NativePluginCapability;
 };
+/** The stable `code` on an error the native bridge or its plugin scope throws. */
 export type NativePluginErrorCode =
 	| 'NATIVE_BRIDGE_ERROR'
 	| 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED'
@@ -2593,14 +2877,17 @@ export type NativePluginErrorCode =
 export type NativePluginMethod = {
 	[N in NativePluginNamespace]: `${N}.${keyof NativePluginBridge[N] & string}`;
 }[NativePluginNamespace];
+/** A {@link NativePluginBridge} namespace whose methods a plugin calls, such as `objc` or `java`. */
 export type NativePluginNamespace = Exclude<
 	keyof NativePluginBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities' | 'ui'
 >;
+/** A host platform the loader reports, `ios` or `android`. */
 export type NativePluginPlatform = (typeof NATIVE_PLUGIN_PLATFORMS)[number];
 /** A capability the native bridge on platform `P` provides. */
 export type NativePluginPlatformCapability<P extends NativePluginPlatform> =
 	(typeof NATIVE_PLUGIN_PLATFORM_CAPABILITIES)[P][number];
+/** The raw bridge the loader publishes as `globalThis.NativePlugin`; namespaces an older loader lacks are missing. */
 export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities'
@@ -2614,19 +2901,28 @@ export type NativePluginRuntimeBridge = Pick<
 		readonly objc?: LoaderObjCBridge;
 		readonly java?: NativeJavaBridge & NativeUIScopeFactory;
 	};
+/** A handle to a native symbol's address, from `ffi.symbol`; `ffi.call` accepts only these. */
 export type NativePointer = NativeHandle;
+/** How many native resources the loader holds across every plugin. */
 export type NativeResourceCounts = {
+	/** Installed hooks. */
 	hooks: number;
+	/** Mounted Fabric surfaces. */
 	surfaces: number;
+	/** Hook return values set with `setReturnValue`. */
 	cachedReturns: number;
+	/** Java handles still referenced from JavaScript. */
 	handles: number;
 };
+/** Delivers Discord activity to plugins. Needs `native.runtime.events`. */
 export type NativeRuntimeBridge = {
+	/** Calls `listener` with a serializable payload each time the event happens. */
 	subscribe(
 		event: NativeRuntimeEventName,
 		listener: (payload: NativeSerializableObject) => void,
 	): NativeRuntimeEventToken;
 };
+/** A Discord activity a plugin can subscribe to; the client derives each from Flux actions, such as `MESSAGE_CREATE`. */
 export type NativeRuntimeEventName =
 	| 'message.created'
 	| 'message.updated'
@@ -2635,8 +2931,11 @@ export type NativeRuntimeEventName =
 	| 'channel.changed'
 	| 'composer.changed'
 	| 'ui.changed';
+/** A runtime event subscription; the plugin scope removes it on dispose. */
 export type NativeRuntimeEventToken = {
+	/** False once the subscription is removed. */
 	readonly active: boolean;
+	/** Stops the listener receiving events. */
 	remove(): void;
 };
 /** A value the bridge serializes by structure, such as Fabric surface props or a plist. */
@@ -2647,9 +2946,11 @@ export type NativeSerializable =
 	| null
 	| NativeSerializable[]
 	| NativeSerializableObject;
+/** A plain object of serializable values, such as a runtime event payload. */
 export type NativeSerializableObject = {
 	[key: string]: NativeSerializable;
 };
+/** One change to a Bucket: set a key, remove a key, or clear the whole Bucket. Keys are dot paths. */
 export type NativeSettingsChange =
 	| {
 			store: string;
@@ -2665,15 +2966,18 @@ export type NativeSettingsChange =
 			store: string;
 			clear: true;
 	  };
+/** A registered C struct, such as `CGRect`, built by `objc.struct` or returned from a native call. */
 export type NativeStruct<T extends NativeStructFields = NativeStructFields> = {
 	readonly name: string;
 	readonly value?: T;
 } & NativeHandle;
 /** A C struct field: a scalar, a pointer or object, or a nested struct. */
 export type NativeStructField = number | boolean | NativeHandle | NativeStructFields;
+/** A struct's field values by field name. */
 export type NativeStructFields = {
 	[field: string]: NativeStructField;
 };
+/** Where a native call runs: `current` is the calling thread; `main` blocks until the main thread runs it. */
 export type NativeThreadPolicy = 'current' | 'main';
 /** A value a worklet can take from the JS runtime: a serializable value or a UI scope, which is shared as is. */
 export type NativeUIArgument = NativeSerializable | NativeUIScope;
@@ -2691,35 +2995,57 @@ export type NativeUIBridge = {
 };
 /** The bridge methods a plugin may call from the UI runtime, synchronously and on the main thread. */
 export type NativeUIScope = {
+	/** The Objective-C methods the scope allows; present on iOS. */
 	readonly objc?: NativeObjCBridge;
+	/** The Java methods the scope allows; present on Android. */
 	readonly java?: NativeJavaBridge;
+	/** The Java hook methods the scope allows; present on Android. Listeners run inline for calls on the main thread. */
 	readonly hooks?: NativeJavaHooksBridge;
 	/** Removes every hook the scope installed. */
 	dispose(): void;
 };
+/** The loader's way to open UI-runtime scopes, offered on its raw `objc` namespace on iOS and `java` on Android. */
 export type NativeUIScopeFactory = {
 	/** Opens a UI-runtime scope allowed only the listed method paths, such as `objc.invoke`. */
 	createUIScope?(paths: readonly string[]): NativeUIScope;
 };
+/** Limits and direction for a breadth-first `findViews` search; larger limits are clamped. */
 export type NativeViewSearchOptions = {
+	/** How many levels to walk from the root. Defaults to 24, at most 128. */
 	maxDepth?: number;
+	/** How many views to visit. Defaults to 512, at most 8,192. */
 	maxVisited?: number;
+	/** How many matches to return. Defaults to 64, at most 256. */
 	maxResults?: number;
+	/** Matches only views attached to a window. */
 	attachedOnly?: boolean;
+	/** Skips the views beneath a match. */
 	stopAtMatch?: boolean;
+	/** `ancestors` walks up the superview chain instead of down. Defaults to `descendants`. */
 	direction?: 'ancestors' | 'descendants';
 };
+/** One view in an `objc.snapshot` result, which lists views in breadth-first order. */
 export type NativeViewSnapshotNode = {
+	/** A retained handle to the view; discard it after cell reuse or a channel change. */
 	view: NativeObjectHandle;
+	/** The index of the parent node in the result, or -1 for the root. */
 	parent: number;
+	/** Levels below the root, which is 0. */
 	depth: number;
+	/** The view's Objective-C class name. */
 	className: string;
+	/** The view's `frame` in its superview's coordinates, in points. */
 	frame: NativeFabricFrame;
+	/** The view's `text` when it has a string one, such as a `UILabel`'s, else `null`. */
 	text: string | null;
+	/** Whether the view is not hidden, has a non-zero alpha and is in a window. */
 	visible: boolean;
 };
+/** Limits for `objc.snapshot`; larger values are clamped and non-integers rejected. */
 export type NativeViewSnapshotOptions = {
+	/** How many levels below the root to read. Defaults to 8, at most 12. */
 	maxDepth?: number;
+	/** How many views to return. Defaults to 100, at most 256. */
 	maxNodes?: number;
 };
 export type NavScrimComponent = React$1.ComponentType<NavScrimProps>;
@@ -2728,12 +3054,19 @@ export type NavScrimComponent = React$1.ComponentType<NavScrimProps>;
  * @see design/components/Navigator/native/NavScrim.ios.tsx
  */
 export type NavScrimProps = {};
+/** A screen's handle on Discord's React Navigation stack, as `useNavigation` returns it. */
 export type Navigation<T = any> = {
+	/** Pushes a new screen for `route` with `params` onto the stack. */
 	push: (route: string, params?: T) => void;
+	/** Removes the top screen from the stack. */
 	pop: () => void;
+	/** Goes to `route`, reusing a screen already on the stack for it. */
 	navigate: (route: string, params?: T) => void;
+	/** Returns to the previous screen. */
 	goBack: () => void;
+	/** Updates the current screen's header options. */
 	setOptions: (options: NavigationOptions) => void;
+	/** Subscribes to a navigation event, such as `focus`; returns a function that unsubscribes. */
 	addListener: (event: string, callback: DiscordFunction) => DiscordFunction<void>;
 };
 /**
@@ -2761,7 +3094,9 @@ export type NavigationContainerInnerProps = Omit<
 };
 /** The screen options accepted by {@link Navigation.setOptions}. */
 export type NavigationOptions = {
+	/** The header title. */
 	title?: string;
+	/** Renders the element shown at the header's right edge. */
 	headerRight?: DiscordFunction<React$1.ReactNode>;
 };
 /**
@@ -2999,19 +3334,26 @@ export type PlainTextExperimentProviderProps = {
 	children?: React$1.ReactNode;
 	enabled?: boolean;
 };
+/** What the addon manager passes to a plugin's `start`. */
 export type PluginContext = {
+	/** The plugin's manifest. */
 	readonly manifest: AddonManifest;
+	/** The plugin's id, from its manifest. */
 	readonly id: string;
+	/** The host platform, or `undefined` when the loader reports none. */
 	readonly platform?: NativePluginPlatform;
+	/** The capabilities the manifest declares for this platform; `native` allows only these. */
 	readonly capabilities: readonly NativePluginCapability[];
+	/** The native bridge, scoped to the plugin's capabilities. */
 	readonly native: NativePluginBridge;
+	/** Releases the plugin's hooks, surfaces, handles and subscriptions; the addon manager calls it on stop, unload, reload or a failed start. */
 	dispose(): void;
 };
-/** @deprecated Use AddonHandle */
-export type PluginEntity = AddonHandle<Plugin$1>;
 /** What a plugin's self-test found: whether the plugin works on this device, and why. */
 export type PluginSelfTestResult = {
+	/** `true` when the plugin works on this device. */
 	ok: boolean;
+	/** A human-readable reason for the result. */
 	detail: string;
 };
 /**
@@ -3087,7 +3429,9 @@ export type PromoSheetProps = Omit<
  * whole manifest the same way it validates one it loads, so a dev build is never held to the publish rules.
  */
 export type PushedManifest = {
+	/** The addon's id, as in {@link AuthoredAddonManifest.id}. */
 	id: string;
+	/** The bundle's path relative to the manifest, as in {@link AuthoredAddonManifest.main}. */
 	main: string;
 	/** The SHA-512 of each bytecode build the push carries, by bytecode version; the CLI fills it in. */
 	bytecode?: Record<string, string>;
@@ -3180,8 +3524,11 @@ export type SearchFieldProps = Omit<TextFieldProps, 'ref'> & {
 export type SegmentedControlComponent = React$1.ComponentType<SegmentedControlProps>;
 /** A tab of a segmented control, with the page it shows. */
 export type SegmentedControlItem = {
+	/** A key unique among the control's tabs. */
 	id: string;
+	/** The text shown on the tab. */
 	label: string;
+	/** What `SegmentedControlPages` renders while this tab is selected. */
 	page?: React$1.ReactNode;
 };
 /**
@@ -3243,15 +3590,22 @@ export type SegmentedControlProps = {
 };
 /** The state controller `useSegmentedControlState` returns, which drives a `SegmentedControl`. */
 export type SegmentedControlState = {
+	/** The index of the selected tab in `items`. */
 	activeIndex: number;
+	/** The tabs, in display order. */
 	items: SegmentedControlItem[];
+	/** Selects the tab at `index`. */
 	setActiveIndex: (index: number) => void;
 };
 /** The options `useSegmentedControlState` builds a {@link SegmentedControlState} from. */
 export type SegmentedControlStateOptions = {
+	/** The tabs, in display order. */
 	items: SegmentedControlItem[];
+	/** The width of one page in points; Unbound passes the window width. */
 	pageWidth: number;
+	/** The index of the tab selected first. */
 	defaultIndex?: number;
+	/** Called with the new index when the selected page changes. */
 	onPageChange?: (index: number) => void;
 };
 /** A semantic colour token from `Theme.colors`, which `useToken` resolves to a colour string. */
@@ -3268,14 +3622,23 @@ export type ServerTabLottieProps = Omit<LottieIconProps, 'ref'> & {
 };
 /** A registered Unbound settings entry, mirroring Discord's `SETTING_RENDERER_CONFIG` route shape. */
 export type SettingsEntry = {
+	/** Always `'route'`: the entry opens its own screen. */
 	type: 'route';
+	/** Unique id of the entry. Registering an existing key replaces that entry and logs a warning. */
 	key: string;
+	/** A hook returning the row and screen title. */
 	useTitle: () => string;
+	/** A hook returning whether Discord shows the row; omitted, it always shows. */
 	usePredicate?: () => boolean;
+	/** The key of the parent entry; `null` for an entry at the top of the settings overview. */
 	parent: string | null;
+	/** The label of the overview section the row belongs to; Unbound's own entries use `'Unbound'`. */
 	section?: string;
+	/** Keeps the route registered but leaves its row out of the settings overview. */
 	excludeFromDisplay?: boolean;
+	/** The icon drawn at the start of the row. */
 	IconComponent?: React$1.ComponentType;
+	/** The screen the row opens. */
 	screen: SettingsScreen;
 };
 /** A settings store, or a nested group of settings within one. */
@@ -3284,6 +3647,7 @@ export type SettingsObject = {
 };
 /** The screen descriptor a settings route entry renders. */
 export type SettingsScreen = {
+	/** The navigator route name; Unbound sets it to the entry's `key`. */
 	route: string;
 	/** Discord's navigator renders the screen with its own route props, so any component fits. */
 	getComponent: () => React$1.ComponentType<never>;
@@ -3947,9 +4311,13 @@ export type TextVariant = LiteralUnion<
 export type TextWeight = 'normal' | 'medium' | 'semibold' | 'bold';
 /** A theme's semantic and raw colour definitions plus optional background. */
 export type Theme = {
+	/** Overrides for Discord's semantic colours, keyed by name such as `BACKGROUND_BASE_LOWER`; malformed entries are dropped. */
 	semantic: Record<PropertyKey, ThemeSemanticColor>;
+	/** Overrides for Discord's raw palette colours, keyed by raw colour name. */
 	raw: Record<PropertyKey, string>;
+	/** The Discord base theme the bundle declares; parsed as `darker` when absent or unknown. */
 	type: 'midnight' | 'darker' | 'light';
+	/** A background image by `url`, with optional `blur` and `opacity`; dropped when `url` is not a string. */
 	background?: {
 		blur?: number;
 		opacity?: number;
@@ -3985,8 +4353,6 @@ export type ThemeContextProviderRootThemeContextProviderProps = {
 	secondaryColor?: unknown;
 	theme?: unknown;
 };
-/** @deprecated Use AddonHandle */
-export type ThemeEntity = AddonHandle<Theme>;
 /**
  * Props of `ThemeProvider` (function). Exports: ThemeProvider.
  * @see module 4804 (no source path)
@@ -3997,8 +4363,11 @@ export type ThemeProviderProps = {
 };
 /** A single semantic colour definition in a {@link Theme}. */
 export type ThemeSemanticColor = {
+	/** `color` uses `value` as is; `raw` names a raw colour, looked up in the theme's `raw` and then Discord's. */
 	type: 'color' | 'raw';
+	/** A colour string, or the name of a raw colour when `type` is `raw`. */
 	value: string;
+	/** An alpha from 0 to 1, clamped, that replaces a `#rrggbb` or `#rrggbbaa` colour's alpha; other formats ignore it. */
 	opacity?: number;
 };
 /**
@@ -4008,11 +4377,17 @@ export type ThemeSemanticColor = {
 export type TitleProps = DesignTextProps;
 /** A button rendered inside a toast. */
 export type ToastButton = {
+	/** The Discord button style. Defaults to `'primary'`. */
 	variant?: 'primary' | 'secondary' | 'tertiary';
+	/** The Discord button size. Defaults to `'sm'`. */
 	size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
+	/** Which side of the label the icon sits on. Defaults to `'start'`. */
 	iconPosition?: 'start' | 'end';
+	/** The button's label. */
 	content: string;
+	/** An asset id, drawn beside the label. */
 	icon?: number;
+	/** Runs when the button is tapped. The toast stays open; call `close` on its handle to dismiss it. */
 	onPress: () => void;
 };
 export type ToastComponent = React$1.ComponentType<ToastProps>;
@@ -4058,18 +4433,28 @@ export type ToastEntityProps = {
 };
 /** A handle returned when showing a toast, used to update or close it. */
 export type ToastHandle = {
+	/** Merges `options` into the shown toast. Does nothing once the toast is gone. */
 	update: (options: Partial<ToastOptions>) => void;
+	/** Plays the toast's exit animation, then removes it. */
 	close: () => void;
 };
 /** Options accepted when showing a toast. */
 export type ToastOptions = {
+	/** The bold first line, or a component rendered in its place. */
 	title?: string | React$1.ComponentType;
+	/** The body text under the title. */
 	content?: string;
+	/** Milliseconds before the toast closes itself; `0` keeps it until dismissed. Omitted, the user's toast duration setting. */
 	duration?: number;
+	/** Declared for callers, but the client does not call it yet. */
 	onTimeout?: () => void;
+	/** An asset name, asset id or image source; a name with no matching asset draws no image. */
 	icon?: string | number | ImageSourcePropType;
+	/** Identifies the toast; showing another toast with the same id replaces it. Omitted, a random id. */
 	id?: string;
+	/** Buttons in a row under the content. */
 	buttons?: ToastButton[];
+	/** Tints the icon with the theme's icon colour. Defaults to `true`; set `false` for a coloured icon. */
 	tintedIcon?: boolean;
 };
 /**
@@ -4086,8 +4471,11 @@ export type ToastProps = {
 };
 /** State and actions of the toast store. */
 export type ToastStoreState = {
+	/** Every toast on screen, keyed by toast id, including ones playing their exit animation. */
 	toasts: Record<string, InternalToastOptions>;
+	/** Shows a toast, replacing any with the same id, and stamps `date` when unset. */
 	addToast: (options: InternalToastOptions) => ToastHandle;
+	/** Merges `options` into the toast `id`. Does nothing when no such toast is on screen. */
 	updateToastWithOptions: (id: string, options: Partial<InternalToastOptions>) => void;
 };
 export type ToggleIconButtonComponent = React$1.ComponentType<
@@ -4200,8 +4588,11 @@ export type YouTabLottieProps = Omit<LottieIconProps, 'ref'> & {
 };
 /** The lifecycle and settings contract implemented by a plugin. */
 type Plugin$1 = {
+	/** Called when the plugin starts, inside its Addon scope, with its native bridge context. */
 	start?(context?: PluginContext): void;
+	/** Called when the plugin stops; a returned promise is awaited, and the scope is disposed even if it throws. */
 	stop?(): void | Promise<void>;
+	/** Renders the plugin's settings panel; called only while the plugin is running. */
 	getSettingsPanel?(): React$1.ReactNode;
 	/** Checks, without side effects, that the running plugin works on this device; the device matrix calls it after a restart. */
 	selfTest?(): PluginSelfTestResult | Promise<PluginSelfTestResult>;

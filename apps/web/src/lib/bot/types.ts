@@ -1,3 +1,4 @@
+import type { ReviewDecision, SubmissionKind } from '@unbound-app/contracts/publish';
 import type { AddonType } from '@unbound-app/contracts/addons';
 
 import type { loaderRelease, moderationEvent } from '~/db/schema';
@@ -45,6 +46,22 @@ export type AuditEvent = Pick<
 	actor: AuditActor | null;
 };
 
+/** One human review decision and who to tell; CI deploys (`data.build`) are never notices. */
+export type ReviewNotice = {
+	eventId: number;
+	addonId: string;
+	/** The addon's current name, else the submitted manifest's name, else the addon id. */
+	addonName: string;
+	version: string;
+	submissionKind: SubmissionKind;
+	decision: ReviewDecision;
+	/** The reviewer's note (the event's reason). */
+	note: string | null;
+	createdAt: Date;
+	/** The author's linked Discord account; `null` when they have none or were deleted. */
+	discordId: string | null;
+};
+
 export type Release = Pick<
 	typeof loaderRelease.$inferSelect,
 	'platform' | 'version' | 'url' | 'changelog' | 'publishedAt'
@@ -87,6 +104,8 @@ export type BotReads = {
 	eventsAfter: (afterId: number, limit: number) => Promise<AuditEvent[]>;
 	/** The newest moderation event's id; `0` when the log is empty. */
 	newestEventId: () => Promise<number>;
+	/** Human review decisions after an event id, oldest first, with the author's Discord id. */
+	reviewNoticesAfter: (afterId: number, limit: number) => Promise<ReviewNotice[]>;
 	/** A published release; `undefined` once withdrawn. */
 	release: (key: ReleaseKey) => Promise<Release | undefined>;
 	/** Releases published at or after a moment, in publish order. */

@@ -14,7 +14,7 @@ import type {
 } from '@unbound-app/contracts/sync';
 import { createLogger } from '@unbound-app/logger';
 
-import storage, { snapshot } from '~/storage/api';
+import { getBucket, snapshot } from '~/storage/api';
 import type { SyncAction } from '~/sync/merge';
 import { icons } from '~/icon-packs/manager';
 import { plugins } from '~/plugins/manager';
@@ -214,9 +214,9 @@ async function applyAction(action: SyncAction): Promise<boolean> {
 
 		case 'set-setting': {
 			if (action.value !== undefined) {
-				storage.set(action.store, action.key, action.value);
+				getBucket(action.store).set(action.key, action.value);
 			} else {
-				storage.remove(action.store, action.key);
+				getBucket(action.store).remove(action.key);
 			}
 
 			return true;

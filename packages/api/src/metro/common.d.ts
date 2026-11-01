@@ -6,32 +6,46 @@ import * as React$1 from 'react';
 import { ReactNode } from 'react';
 import { ImageProps, ImageURISource } from 'react-native';
 
+/** Discord's clipboard module, which reads and writes strings and images; found on first access. */
 declare const Clipboard$1: any;
 declare const React$1: typeof import('react');
+/** The React Native instance Discord bundles, read from `window.ReactNative`. */
 declare const ReactNative$1: typeof import('react-native');
+/** React Native's asset registry, with `registerAsset`; found on first access. */
 export declare const Assets: any;
+/** Discord's module with `createBotMessage`, which builds a local message from Clyde; found on first access. */
 export declare const Clyde: any;
+/** Discord's slash command module, with `getBuiltInCommands`; found on first access. */
 export declare const Commands: any;
+/** Discord's constants module, with `Fonts`, `Endpoints` and more; found on first access. */
 export declare const Constants: any;
-/** @deprecated Use flux.dispatch, flux.onAction and flux.interceptAction */
-export declare const Dispatcher: any;
-/** @deprecated Use the flux namespace */
-export declare const Flux: any;
-/** @deprecated Use flux.useStore */
-export declare const FluxHooks: any;
+/** Discord's copy of `react-native-gesture-handler`; found on first access. */
 export declare const Gestures: any;
+/** React Native's image source resolver; patching it changes the source every `Image` renders. */
 export declare const ImageSources: ImageSourcesModule;
+/** Discord's markdown parser, which turns message text into an AST or React nodes; found on first access. */
 export declare const MarkdownParser: MarkdownParserModule;
+/** Discord's copy of Moment.js; found on first access. */
 export declare const Moment: any;
+/** Discord's HTTP client for its API, with `getAPIBaseURL`; found on first access. */
 export declare const REST: any;
+/** Discord's module exporting its `Radius` corner radius tokens; found on first access. */
 export declare const Radius: any;
+/** Discord's copy of `react-native-reanimated`; found on first access. */
 export declare const Reanimated: any;
+/** Discord's copy of `react-native-svg`, with `Svg` and `Path`; found on first access. */
 export declare const SVG: any;
+/** Discord's copy of `react-native-screens`, with `FullWindowOverlay`; found on first access. */
 export declare const Screens: any;
+/** Discord's design tokens, with `colors` and `internal`; found on first access. */
+export declare const Theme: any;
+/** Discord's `util` module, with `inspect` for printing values; found on first access. */
 export declare const Util: any;
+/** Discord's localisation module, with `getLanguages`, `getSystemLocale` and `intl`; found on first access. */
 export declare const i18n: any;
 /** React Native's `ImageSourceUtils`, which every `Image` render resolves its source through. */
 export type ImageSourcesModule = {
+	/** Resolves the source or sources an `Image` with these props loads, or `null` for none. */
 	getImageSourcesFromImageProps: (props: ImageProps) => ImageURISource | ImageURISource[] | null;
 };
 export { Clipboard$1 as Clipboard, React$1 as React, ReactNative$1 as ReactNative };

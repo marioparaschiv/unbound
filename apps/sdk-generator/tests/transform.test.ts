@@ -225,6 +225,35 @@ describe('hoistLibraries', () => {
 		expect(usedOwners).toEqual(new Set([owner]));
 	});
 
+	test('keeps a value that shares a hoisted type name, re-exports an owned value as a value', () => {
+		const sourceFile = parseSource(
+			't-hoist-values.d.ts',
+			[
+				'export declare const Theme: any;',
+				'export declare const KINDS: readonly ["a"];',
+			].join('\n'),
+		);
+		const owner = '/api/src/_internal.d.ts';
+
+		hoistLibraries(
+			sourceFile,
+			'/api/src/sample.d.ts',
+			new Map([
+				['Theme', owner],
+				['KINDS', owner],
+			]),
+			new Set<string>(),
+			new Set(['KINDS']),
+			new Set(['KINDS']),
+		);
+
+		const text = sourceFile.getFullText();
+
+		expect(text).toContain('export declare const Theme: any;');
+		expect(text).toContain("export { KINDS } from './_internal';");
+		expect(text).not.toContain('export type { KINDS }');
+	});
+
 	test('never imports a module from itself', () => {
 		const sourceFile = parseSource(
 			't-hoist-self.d.ts',

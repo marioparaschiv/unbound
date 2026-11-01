@@ -11,7 +11,7 @@
 	await manager.reload(id, fixture.bundle, fixture.manifest);
 	await manager.enable(id);
 	await settle(300);
-	var entity = manager.getEntity(id);
+	var entity = manager.get(id);
 	var error = manager.errors.get(id);
 	var problem = '';
 	if (!entity || !entity.failed) problem = 'a plugin that throws on start was not marked failed';
@@ -19,7 +19,7 @@
 		problem = 'the start error was not recorded: ' + String((error && error.message) || error);
 	else if (startedOthers(manager, id) !== before)
 		problem = 'other plugins stopped when one threw on start';
-	await manager.delete(id);
+	await manager.uninstall(id);
 	return JSON.stringify({
 		name: 'throw on start',
 		problem: problem,

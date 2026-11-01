@@ -10,7 +10,7 @@
 
 ## How to get to it (user POV)
 
-- Click an addon card's name on `/plugins`, `/themes` or the home page.
+- Click an addon card's name on `/addons/plugins`, `/addons/themes` or the home page.
 - Open `/addons/verify.hello` directly.
 
 ## Driving it with preview tools

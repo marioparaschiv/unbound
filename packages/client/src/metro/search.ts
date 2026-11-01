@@ -178,24 +178,6 @@ export function onModuleLoad(listener: MetroModuleLoadListener): () => void {
 }
 
 /**
- * @description Removes a module listener registered with {@link onModuleLoad}.
- * @deprecated Call the function onModuleLoad returns.
- * @param listener The listener to remove.
- */
-export function removeListener(listener: MetroModuleLoadListener) {
-	data.listeners.delete(listener);
-}
-
-/** @deprecated Use onModuleLoad */
-export const addListener = onModuleLoad;
-
-/** @deprecated Use onModuleLoad */
-export const on = onModuleLoad;
-
-/** @deprecated Call the function onModuleLoad returns. */
-export const off = removeListener;
-
-/**
  * @description Core synchronous module search. Modules Discord has initialized are searched first, cached ids
  * then the registry; only when none matches does it initialize modules, unless `initialize` is false.
  * @param filter The filter to match modules against.
@@ -379,7 +361,6 @@ function recordMissing(key: string | undefined, errored: boolean) {
  * @description Runs several filters in a single registry pass, returning one result per item.
  * @param items The filters to resolve, each with its own per-item options.
  * @returns An array of matches positionally aligned with `items`.
- * @internal
  */
 export function bulk(...items: MetroBulkItem[]) {
 	const result = Array.from<any>({ length: items.length });
@@ -511,7 +492,6 @@ export function findByName<
  * @description Forces a module to initialise via metro's `__r`, blacklisting it if it throws.
  * @param id The id of the module to initialise.
  * @returns `true` if the module is initialised, `false` if it was blacklisted.
- * @internal
  */
 export function initializeModule(id: number) {
 	if (blacklist.has(id)) {

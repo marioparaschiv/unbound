@@ -1,3 +1,4 @@
+import { reviewNoticesDispatcher } from '~/dispatchers/review-notices';
 import { createContributorCache } from '~/lib/github-contributors';
 import { createAuditDispatcher } from '~/dispatchers/audit';
 import { releasesDispatcher } from '~/dispatchers/releases';
@@ -24,6 +25,7 @@ export function createDispatchers({ env, guildId, telemetry }: DispatcherConfig)
 		addonsDispatcher,
 		releasesDispatcher,
 		createAuditDispatcher(telemetry),
+		reviewNoticesDispatcher,
 		createRolesDispatcher({
 			guildId,
 			contributors: createContributorCache({ token: env.GITHUB_TOKEN }),

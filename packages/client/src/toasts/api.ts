@@ -35,7 +35,4 @@ export function show(options: ToastOptions): ToastHandle {
 	return store.addToast({ ...options, id });
 }
 
-/** @deprecated Use show */
-export const showToast = show;
-
-export default { show, showToast };
+export default { show };

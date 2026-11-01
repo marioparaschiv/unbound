@@ -2,6 +2,7 @@ import type { DesignModule } from '@unbound-app/types/components';
 import type { ComponentProps } from 'react';
 import { Switch } from 'react-native';
 
+/** The props of Discord's `FormSwitch`, which the fallback switch accepts. */
 type SwitchProps = ComponentProps<DesignModule['FormSwitch']>;
 
 /**

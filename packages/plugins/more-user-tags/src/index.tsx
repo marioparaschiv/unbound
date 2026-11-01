@@ -14,7 +14,11 @@ import {
 	GuildStore,
 	PermissionUtils,
 	TagProperties,
+	settings,
 } from '~/modules';
+
+const APPEARANCE_CACHE_KEY = 'appearanceCache';
+const SAVE_DELAY_MS = 1000;
 
 let dispose = () => {};
 let settled = () => Promise.resolve();
@@ -27,12 +31,26 @@ function start(context: PluginContext) {
 	if (!ensureModules('More User Tags', modules)) return;
 
 	const appearances = createLabelAppearances();
+	let saveTimer: ReturnType<typeof setTimeout> | undefined;
+
+	appearances.restore(settings.get(APPEARANCE_CACHE_KEY, {}));
+
+	const stopSaving = appearances.subscribe(() => {
+		saveTimer ??= setTimeout(() => {
+			saveTimer = undefined;
+			settings.set(APPEARANCE_CACHE_KEY, appearances.snapshot());
+		}, SAVE_DELAY_MS);
+	});
 	const gradients = createTagGradients(context, appearances);
 
 	settled = gradients.settled;
 	gradientProblems = gradients.problems;
 	gradientsDrawn = gradients.drawn;
 	dispose = applyFeatures('More User Tags', [
+		() => () => {
+			stopSaving();
+			clearTimeout(saveTimer);
+		},
 		() => gradients.start(),
 		() => patchGetTagProperties(appearances),
 	]);

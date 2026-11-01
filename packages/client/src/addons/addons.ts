@@ -21,7 +21,7 @@ import { toRelease } from '~/addons/versions';
 import { Manager } from '~/addons/manager';
 import fs from '~/native/fs';
 
-/** The outcome of {@link Addons.reload}: success, or failure carrying the recorded error. */
+/** The outcome of an addon reload: success, or failure carrying the recorded error. */
 export type ReloadResult = { ok: true } | { ok: false; error: Error };
 
 const INSTALL_EVENTS = ['loaded', 'unloaded', 'installed', 'updated', 'deleted'] as const;

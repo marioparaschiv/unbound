@@ -110,7 +110,8 @@ const { getModulePresence } = await import('~/metro/lazy-registry');
 const { findLazy, onModuleLoaded } = await import('~/metro/wait');
 const { byProps } = await import('~/metro/filters');
 const { CACHE_KEY } = await import('~/core/constants');
-const { after, createPatcher, unpatchAll, unpatchAllByCaller } = await import('~/patcher/api');
+const { after, unpatchAll, unpatchAllByCaller } = await import('~/patcher/api');
+const { createPatcher } = await import('~/patcher/create-patcher');
 
 beforeEach(() => {
 	for (const key of Object.keys(cachedIds)) delete cachedIds[key];

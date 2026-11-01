@@ -1,9 +1,9 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { createPatcher } from '~/patcher/create-patcher';
 import type { SectionEntry } from '~/settings/section';
 import { resolveThemeColor } from '~/themes/colors';
 import { onModuleLoaded } from '~/metro/wait';
-import { createPatcher } from '~/patcher/api';
 import DesignPage from '~/ui/settings/design';
 import { Screens } from '~/core/constants';
 import { findStore } from '~/metro/search';

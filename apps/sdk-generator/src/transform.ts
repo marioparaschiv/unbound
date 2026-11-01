@@ -203,6 +203,21 @@ export function declaredNames(statement: Node): string[] {
 }
 
 /**
+ * @description Tests whether a declaration introduces a runtime value (a `const`, function, class or enum)
+ * rather than only a type.
+ * @param statement The declaration to inspect.
+ * @returns `true` when the statement declares a value.
+ */
+export function declaresValue(statement: Node): boolean {
+	return (
+		Node.isVariableStatement(statement) ||
+		Node.isFunctionDeclaration(statement) ||
+		Node.isClassDeclaration(statement) ||
+		Node.isEnumDeclaration(statement)
+	);
+}
+
+/**
  * @description Lists the names a statement container exports from its own statements: declarations
  * wearing an `export` modifier plus `export { A as B }` specifiers, under their exported alias.
  * Re-exports from other modules count (they are part of the surface); `export *` cannot be
@@ -428,6 +443,9 @@ export function collapseNamespaces(
  * @param usedOwners Collects the hoist-file paths actually imported from, so orphan files aren't emitted.
  * @param owned The names this module owns: re-exported from their owner (so they surface on the
  * module's public entry point) and additionally imported when the module references them.
+ * @param hoistedValues The hoisted names their owner declares as values. A module's value declaration
+ * is hoisted only when its owner's is a value too (a `const Theme` is not the type `Theme`), and an
+ * owned value is re-exported as a value so it stays on the module's namespace object.
  */
 export function hoistLibraries(
 	sourceFile: Node,
@@ -435,6 +453,7 @@ export function hoistLibraries(
 	ownerByName: Map<string, string>,
 	usedOwners: Set<string>,
 	owned: Set<string>,
+	hoistedValues: Set<string> = new Set<string>(),
 ) {
 	if (!Node.isStatemented(sourceFile)) return;
 
@@ -443,10 +462,14 @@ export function hoistLibraries(
 
 	for (const statement of sourceFile.getStatements()) {
 		const names = declaredNames(statement);
+		const isValue = declaresValue(statement);
 		const isHoisted =
 			names.length > 0 &&
 			names.every(
-				(name) => ownerByName.get(name) !== void 0 && ownerByName.get(name) !== outPath,
+				(name) =>
+					ownerByName.get(name) !== void 0 &&
+					ownerByName.get(name) !== outPath &&
+					(!isValue || hoistedValues.has(name)),
 			);
 
 		if (isHoisted) {
@@ -462,8 +485,13 @@ export function hoistLibraries(
 	const names = hoisted.flatMap((statement) => declaredNames(statement));
 	// Owned types are always re-exported so the public surface is stable. A re-export binds nothing
 	// locally, so any referenced name (owned or not) is imported as well.
+	const exported = names.filter((name) => owned.has(name));
 	const exportsByOwner = groupByOwner(
-		names.filter((name) => owned.has(name)),
+		exported.filter((name) => !hoistedValues.has(name)),
+		ownerByName,
+	);
+	const valueExportsByOwner = groupByOwner(
+		exported.filter((name) => hoistedValues.has(name)),
 		ownerByName,
 	);
 	const importsByOwner = groupByOwner(
@@ -471,7 +499,11 @@ export function hoistLibraries(
 		ownerByName,
 	);
 
-	for (const owner of [...exportsByOwner.keys(), ...importsByOwner.keys()]) {
+	for (const owner of [
+		...exportsByOwner.keys(),
+		...valueExportsByOwner.keys(),
+		...importsByOwner.keys(),
+	]) {
 		usedOwners.add(owner);
 	}
 
@@ -482,6 +514,10 @@ export function hoistLibraries(
 	const lines = [
 		...typeOnlyStatements('import', importsByOwner, outPath),
 		...typeOnlyStatements('export', exportsByOwner, outPath),
+		...[...valueExportsByOwner].map(
+			([owner, values]) =>
+				`export { ${[...values].sort().join(', ')} } from '${relativeSpecifier(outPath, owner)}';`,
+		),
 	].sort();
 
 	if (lines.length > 0) {
@@ -545,6 +581,7 @@ export function typeOnlyStatements(
  * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file.
  * @param usedOwners Collects the hoist-file paths actually imported from, so orphan files aren't emitted.
  * @param owned The names this module owns and re-exports from their hoist file.
+ * @param hoistedValues The hoisted names their owner declares as values.
  * @returns The stripped, collapsed, hoisted module text.
  */
 export function strip(
@@ -554,13 +591,14 @@ export function strip(
 	ownerByName: Map<string, string>,
 	usedOwners: Set<string>,
 	owned: Set<string>,
+	hoistedValues: Set<string> = new Set<string>(),
 ): string {
 	const sourceFile = parseSource('bundle.d.ts', text);
 
 	dropDefaultExport(sourceFile);
 	stripInternal(sourceFile, new Set<string>(), new Set<string>());
 	collapseNamespaces(sourceFile, outPath, children);
-	hoistLibraries(sourceFile, outPath, ownerByName, usedOwners, owned);
+	hoistLibraries(sourceFile, outPath, ownerByName, usedOwners, owned, hoistedValues);
 
 	return sourceFile.getFullText();
 }

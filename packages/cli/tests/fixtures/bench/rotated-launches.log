@@ -1,0 +1,45 @@
+2026-11-01T03:27:25.317Z I [default] RCTHost didInitializeRuntime reached.
+2026-11-01T03:27:25.318Z I [runtime] Metro module capture installed before Discord bundle.
+2026-11-01T03:27:25.357Z I [plugins] Loaded 79 plugins.
+2026-11-01T03:27:25.378Z I [default] Scheduling Unbound's bundle for execution...
+2026-11-01T03:27:25.378Z I [updater] Ensuring bundle is up to date...
+2026-11-01T03:27:25.442Z I [default] Attempting to execute bundle...
+2026-11-01T03:27:25.514Z I [console] '»', '[Core]', 'Initializing Unbound...'
+2026-11-01T03:27:25.515Z I [console] '»', '[BuiltIns]', 'Started built-in: cloudSync'
+2026-11-01T03:27:25.523Z I [console] '»', '[BuiltIns]', 'Started built-in: commands'
+2026-11-01T03:27:25.524Z I [console] '»', '[BuiltIns]', 'Started built-in: coreCommands'
+2026-11-01T03:27:25.524Z I [console] '»', '[BuiltIns]', 'Started built-in: debug'
+2026-11-01T03:27:25.524Z I [console] '»', '[BuiltIns]', 'Started built-in: discordSupport'
+2026-11-01T03:27:25.524Z I [console] '»', '[BuiltIns]', 'Started built-in: errorBoundary'
+2026-11-01T03:27:25.525Z I [console] '»', '[BuiltIns]', 'Started built-in: i18n'
+2026-11-01T03:27:25.525Z I [console] '»', '[BuiltIns]', 'Started built-in: links'
+2026-11-01T03:27:25.525Z I [console] '»', '[BuiltIns]', 'Started built-in: nativeConsent'
+2026-11-01T03:27:25.704Z I [updater] Bundle candidate is ready for validation.
+2026-11-01T03:43:57.021Z I [default] RCTHost didInitializeRuntime reached.
+2026-11-01T03:43:57.022Z I [runtime] Metro module capture installed before Discord bundle.
+2026-11-01T03:43:57.060Z I [plugins] Loaded 79 plugins.
+2026-11-01T03:43:57.085Z I [updater] Ensuring bundle is up to date...
+2026-11-01T03:43:57.085Z I [default] Scheduling Unbound's bundle for execution...
+2026-11-01T03:43:57.154Z I [default] Attempting to execute bundle...
+2026-11-01T03:43:57.179Z I [console] '»', '[Core]', 'Initializing Unbound...'
+2026-11-01T03:43:57.181Z I [console] '»', '[BuiltIns]', 'Started built-in: cloudSync'
+2026-11-01T03:43:57.189Z I [console] '»', '[BuiltIns]', 'Started built-in: commands'
+2026-11-01T03:43:57.189Z I [console] '»', '[BuiltIns]', 'Started built-in: coreCommands'
+2026-11-01T03:43:57.189Z I [console] '»', '[BuiltIns]', 'Started built-in: debug'
+2026-11-01T03:43:57.190Z I [console] '»', '[BuiltIns]', 'Started built-in: discordSupport'
+2026-11-01T03:43:57.191Z I [console] '»', '[BuiltIns]', 'Started built-in: errorBoundary'
+2026-11-01T03:43:57.193Z I [updater] No update found.
+2026-11-01T03:43:57.197Z I [console] '»', '[BuiltIns]', 'Started built-in: i18n'
+2026-11-01T03:43:57.199Z I [console] '»', '[BuiltIns]', 'Started built-in: links'
+2026-11-01T03:43:57.199Z I [console] '»', '[BuiltIns]', 'Started built-in: nativeConsent'
+2026-11-01T03:43:57.204Z I [console] '»', '[BuiltIns]', 'Started built-in: settings'
+2026-11-01T03:43:57.206Z I [console] '»', '[BuiltIns]', 'Started built-in: staffMode'
+2026-11-01T03:43:57.206Z I [console] '»', '[BuiltIns]', 'Started built-in: themes'
+2026-11-01T03:43:57.216Z I [console] '»', '[BuiltIns]', 'Started built-in: toasts'
+2026-11-01T03:43:57.221Z I [console] '»', '[BuiltIns]', 'Started built-in: tracking'
+2026-11-01T03:43:57.221Z I [console] '»', '[BuiltIns]', 'Started built-in: updater'
+2026-11-01T03:43:57.480Z I [console] '»', '[Plugins]', 'Plugins started'
+2026-11-01T03:43:57.480Z E [console] '»', '[Themes]', 'Failed to load addon local--adda99dac9ad4b49:', 'Error: Manifest id must be alphanumeric segments joined by ".", "_" or "-"\n    at Zx (address 
+2026-11-01T03:43:57.481Z I [console] '»', '[Core]', 'Unbound initialized'
+2026-11-01T03:43:57.481Z I [default] Unbound's bundle was successfully executed.
+2026-11-01T03:43:57.487Z I [console] Running "Discord"

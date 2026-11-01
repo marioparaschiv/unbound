@@ -53,8 +53,8 @@ export function fakeDiscord(
 	const unbound = {
 		metro: {
 			findByProps: (...names: string[]) => modules[names.at(-1)!] ?? modules[names[0]!],
-			findStore: (name: string) => stores[name],
 		},
+		flux: { getStore: (name: string) => stores[name] },
 	};
 
 	return { unbound, received, transitions, sent, dispatched };

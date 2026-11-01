@@ -63,9 +63,6 @@ export function getById(id: number): UnboundAsset | undefined {
 	return registry?.getAssetByID(id) ?? void 0;
 }
 
-/** @deprecated Use getById */
-export const getByID = getById;
-
 /**
  * @description Looks up an asset's id by its name and type, initializing the module that registers it if needed.
  * @param name The asset name to match.
@@ -105,9 +102,6 @@ export function getIdByName(name: string, type: 'svg' | 'png' = 'png'): number |
 	return lookup(key);
 }
 
-/** @deprecated Use getIdByName */
-export const getIDByName = getIdByName;
-
 /**
  * @description Returns every asset, initializing every asset module first.
  * @returns An array of all registered {@link UnboundAsset} records.
@@ -141,9 +135,6 @@ export const icons: Record<string, number | undefined> = new Proxy(
 		},
 	},
 );
-
-/** @deprecated Use icons */
-export const Icons = icons;
 
 function keyOf(name: string, type: string) {
 	return `${name}.${type}`;
@@ -259,10 +250,7 @@ export default {
 	find,
 	getByName,
 	getById,
-	getByID,
 	getIdByName,
-	getIDByName,
 	getAll,
 	icons,
-	Icons,
 };

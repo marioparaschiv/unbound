@@ -14,6 +14,7 @@ import FallbackText from '~/metro/fallbacks/fallback-text';
 import { findByName, findByProps } from '~/metro/search';
 import { findByPropsLazy } from '~/metro/wrappers';
 
+/** The props of Discord's `FormSwitch`, which the switch fallback accepts. */
 type SwitchProps = ComponentProps<DesignModule['FormSwitch']>;
 type SearchFieldProps = ComponentProps<DesignModule['SearchField']>;
 
@@ -26,11 +27,17 @@ export {
 } from '~/metro/design';
 export type { DesignComponentName, DesignModule } from '@unbound-app/types/components';
 export { DESIGN_COMPONENTS } from '@unbound-app/types/components';
+/** Discord's blur backdrop components, with `BackgroundBlurFill`; found on first access. */
 export const BackdropFilters = findByPropsLazy('BackgroundBlurFill');
+/** Discord's safe area components, with `SafeAreaPaddingView`; found on first access. */
 export const SafeArea = findByPropsLazy('SafeAreaPaddingView');
+/** Discord's portal components, `Portal` and `PortalHost`, for rendering outside the tree; found on first access. */
 export const Portal = findByPropsLazy('PortalHost', 'Portal');
+/** Discord's media viewer module, with `openMediaModal`; found on first access. */
 export const Media = findByPropsLazy('openMediaModal');
+/** Discord's video player module, with `VideoComponent` and `createVideoControls`; found on first access. */
 export const Video = findByPropsLazy('VideoComponent', 'createVideoControls');
+/** Discord's copy of Shopify's `FlashList` module; found on first access. */
 export const FlashList = findByPropsLazy('FlashList');
 let helpMessage: ComponentType<HelpMessageProps> | undefined;
 
@@ -49,6 +56,7 @@ export function HelpMessage(props: HelpMessageProps) {
 	return createElement(component, props);
 }
 
+/** The `messageType` values for `HelpMessage`, from Discord or else Unbound's fallback; `{}` when neither loads. */
 export const HelpMessageTypes = lazy(
 	() =>
 		firstOf(
@@ -76,6 +84,7 @@ export function Switch(props: SwitchProps) {
 
 	return createElement(component, props);
 }
+/** Discord's legacy form components, such as `FormRow` and `FormSection`; `{}` on builds without them. */
 export const Forms = lazy<any>(
 	() =>
 		firstOf(
@@ -83,9 +92,13 @@ export const Forms = lazy<any>(
 			() => findByProps('FormSection', 'FormRow'),
 		) ?? {},
 );
+/** Discord's avatar module, with `Avatar` and `AvatarSizes`; found on first access. */
 export const Avatars = findByPropsLazy('AvatarSizes', 'Avatar');
+/** Discord's stacked avatar components, `AvatarPile` and `AvatarDuoPile`; found on first access. */
 export const AvatarPiles = findByPropsLazy('AvatarPile', 'AvatarDuoPile');
+/** Discord's default avatar images, `DEFAULT_AVATARS` and `DEFAULT_AVATARS_SMALL`; found on first access. */
 export const DefaultAvatars = findByPropsLazy('DEFAULT_AVATARS', 'DEFAULT_AVATARS_SMALL');
+/** Discord's bottom sheet components, with `ActionSheet` and `BottomSheetTitleHeader`; found on first access. */
 export const BottomSheets = findByPropsLazy('BottomSheetTitleHeader', 'ActionSheet');
 
 /**

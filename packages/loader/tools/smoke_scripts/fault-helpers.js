@@ -11,7 +11,7 @@ function smokeFixture(id, name, bundle, capabilities) {
 	return { manifest: manifest, bundle: bundle };
 }
 function startedOthers(manager, id) {
-	return manager.getEntities().filter(function (entity) {
+	return manager.getAll().filter(function (entity) {
 		return entity.id !== id && entity.started;
 	}).length;
 }

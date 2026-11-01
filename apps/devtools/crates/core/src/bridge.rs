@@ -159,7 +159,7 @@ const CONNECT_SCRIPT: &str = r#"(() => {
 	let host = __HOST__;
 	if (host === null) {
 		const storage = globalThis.unbound && globalThis.unbound.storage;
-		const address = String((storage && storage.get('unbound', 'debugger.address', '')) || '');
+		const address = String((storage && storage.getBucket('unbound').get('debugger.address', '')) || '');
 		const match = /^\[([^\]]+)\]|^([^:/]+)/.exec(address.replace(/^wss?:\/\//, ''));
 		host = match ? match[1] || match[2] : null;
 	}

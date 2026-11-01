@@ -11,11 +11,11 @@ import { createLogger } from '@unbound-app/logger';
 import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/core/constants';
 import { getSetting, isSettingChange } from '~/settings/unbound';
 import { reloadSummary } from '~/debugger/reload-summary';
+import { createPatcher } from '~/patcher/create-patcher';
 import { currentEnvironment } from '~/core/environment';
-import { createPatcher } from '~/patcher/api';
 import type { Addon } from '~/addons/addon';
 import { plugins } from '~/plugins/manager';
-import storage from '~/storage/api';
+import { onChange } from '~/storage/api';
 import { show } from '~/toasts/api';
 
 const Patcher = createPatcher('Debugger');
@@ -339,7 +339,7 @@ function listenToAppState() {
 }
 
 function listenToSettings() {
-	return storage.addListener(
+	return onChange(
 		(payload) =>
 			isSettingChange(payload, 'debugger.enabled') ||
 			isSettingChange(payload, 'debugger.address'),

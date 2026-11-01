@@ -87,18 +87,17 @@ A feature never runs half-working. When anything it depends on is missing, it lo
 `src/modules.ts` holds every handle to something outside the plugin. A Discord rename then needs a one-line fix in one place.
 
 ```ts
-export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
+export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
 export const MessageActions = metro.findByProps('sendMessage', 'receiveMessage', { lazy: true });
-export const settings = storage.getStore('unbound.my-plugin');
-export const Patcher = patcher.createPatcher('unbound.my-plugin');
+export const settings = storage.getBucket('unbound.my-plugin');
 ```
 
 - Pass `{ lazy: true }` to every lookup so the search runs on first use. Nothing in `start` or at module scope may read a property of a handle, or call a lookup without `{ lazy: true }`. Either one loads the module, and every module it imports, at plugin start.
 - A class to construct or a component to render cannot be a lazy handle. Read the handle's `module` where the class or component is used, such as when an embed renders, not in `start`.
 - To patch every module that matches a filter, not just the first, pass loaded ones from `metro.find(filter, { all: true, initialize: false })` and later ones from `metro.onModuleLoad`. A plain `{ all: true }` search loads every module in the build.
 - Import a library Discord ships by its package name: `import moment from 'moment'`, `import { Svg, Path } from 'react-native-svg'`. The build reads each import from Discord's copy where it is used, so importing loads nothing at start. `packages/client/src/core/shim-libraries.json` lists the libraries. Add the package as a devDependency only for its types.
-- Prefer what Unbound already resolves: `metro.common` (`Dispatcher`, `Clipboard`, `Constants`, `Theme`, `Moment`, `Reanimated`), `metro.stores`, `metro.api`, and `metro.components` (`Discord`, `Forms`, `Media`).
-- Prefer `findStore`, `findByProps`, and `findByName` over a hand-written filter. A custom filter goes through `metro.filters.createCacheable`.
+- Prefer what Unbound already resolves: `metro.common` (`Clipboard`, `Constants`, `Theme`, `Moment`, `Reanimated`), `metro.stores`, `metro.api`, and `metro.components` (`Discord`, `Forms`, `Media`).
+- Prefer `flux.getStore`, `metro.findByProps`, and `metro.findByName` over a hand-written filter. A custom filter goes through `metro.filters.createCacheable`.
 - Resolve React Native native modules with `native.getNativeModule(...names)`.
 
 ## Patches
@@ -107,7 +106,7 @@ Put all patches on one module in `src/patches/<module>.ts`, named after the modu
 
 ```ts
 export function patchMessageStore(): () => void {
-	return Patcher.after(MessageStore, 'getMessages', ({ result }) => filterBlocked(result));
+	return patcher.after(MessageStore, 'getMessages', ({ result }) => filterBlocked(result));
 }
 ```
 

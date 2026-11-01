@@ -6,7 +6,7 @@ body:
     - type: markdown
       attributes:
           value: |
-              The error screen's **Report** button and the iOS recovery menu (toolbox) open this form with the details filled in. To open the toolbox, hold three fingers on the screen for half a second. See [Troubleshooting](https://docs.unbound.rip/user-guide/troubleshooting).
+              The error screen's **Report** button and the iOS recovery menu (toolbox) open this form with the details filled in. To open the toolbox, hold three fingers on the screen for half a second. See [Troubleshooting](https://unbound.rip/docs/user/troubleshooting).
     - type: dropdown
       id: platform
       attributes:

@@ -39,7 +39,12 @@ function avatarOf(event: AuditEvent) {
 	return image && /^https?:\/\//.test(image) ? image : undefined;
 }
 
-function quote(text: string) {
+/**
+ * @description Quotes text as a Discord block quote, line by line.
+ * @param text The text; surrounding blank space is dropped.
+ * @returns The quoted text.
+ */
+export function quote(text: string): string {
 	return text
 		.trim()
 		.split('\n')
@@ -161,4 +166,4 @@ export function buildFallbackEmbed(event: AuditEvent): APIEmbed {
 	};
 }
 
-export default { EMBED_LIMITS, buildAuditEmbed, buildDeployEmbed, buildFallbackEmbed };
+export default { EMBED_LIMITS, quote, buildAuditEmbed, buildDeployEmbed, buildFallbackEmbed };
