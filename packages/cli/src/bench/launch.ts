@@ -32,6 +32,7 @@ const LOG_POLL_MS = 500;
 const INIT_SAMPLE_TIMEOUT_MS = 20_000;
 const EVAL_TIMEOUT_MS = 15_000;
 const EVAL_RETRY_MS = 1_000;
+const WARMUP_SETTLE_MS = 5_000;
 
 export type LaunchContext = {
 	vphone: Vphone;
@@ -198,7 +199,7 @@ function selfCheck(
 
 /**
  * @description Runs one launch: stops Discord, empties the module cache for a cold launch, launches, waits for
- * Unbound's milestones, samples memory after init and at idle, then proves which bundle ran.
+ * Unbound's milestones, samples memory after init and at idle (measured launches only), then proves which bundle ran.
  * @param context The device, bridge and protocol.
  * @param spec The variant, kind and position of this launch.
  * @returns The launch's record; `problems` names why it is invalid, if it is.
@@ -235,7 +236,10 @@ export async function runLaunch(context: LaunchContext, spec: LaunchSpec): Promi
 	let idleMemory: MemorySample | null = null;
 	let gcMemory: MemorySample | null = null;
 
-	if (!problem) {
+	// A warm-up only has to prove which bundle ran and let the loader download the next one, so it skips the samples.
+	if (!problem && spec.discarded) {
+		await sleep(WARMUP_SETTLE_MS, undefined, { signal: context.signal });
+	} else if (!problem) {
 		const pid = (await vphone.discord())?.pid;
 		const initAnswer = await sample(
 			context,
