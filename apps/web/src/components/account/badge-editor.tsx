@@ -195,7 +195,7 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 						<IconUpload size={14} />
 						Upload badges
 						<span className='text-muted-foreground tabular-nums'>
-							{badges.length} of {BADGE_LIMIT}
+							{BADGE_LIMIT - freeSlots} of {BADGE_LIMIT}
 						</span>
 					</Button>
 				) : null}
