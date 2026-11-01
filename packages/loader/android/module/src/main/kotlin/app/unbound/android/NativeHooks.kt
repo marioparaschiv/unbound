@@ -140,7 +140,11 @@ object NativeHooks {
     private val lastDescribed = ThreadLocal<Described?>()
 
     private fun described(self: Any?, arguments: List<Any?>): Pair<String, String> {
-        lastDescribed.get()?.takeIf { it.matches(self, arguments) }?.let { return it.selfJSON to it.argumentsJSON }
+        lastDescribed.get()?.takeIf { it.matches(self, arguments) }?.let {
+            NativeJava.reissue(it.selfJSON)
+            NativeJava.reissue(it.argumentsJSON)
+            return it.selfJSON to it.argumentsJSON
+        }
 
         val selfJSON = NativeJava.describe(self)
         val argumentsJSON = NativeJava.describeAll(arguments)

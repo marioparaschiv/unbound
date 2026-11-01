@@ -591,6 +591,19 @@ object NativeJava {
 
     private fun parseHandle(handleJSON: String): String = JSONObject(handleJSON).getString("id")
 
+    private val issuedHandle = Regex("\"type\":\"handle\",\"value\":\"([^\"]+)\"")
+
+    fun reissue(described: String) {
+        val ids = issuedHandle.findAll(described).map { it.groupValues[1] }.toList()
+        if (ids.isEmpty()) return
+
+        synchronized(this) {
+            for (id in ids) {
+                if (objectsByHandle.containsKey(id)) issuesByHandle[id] = (issuesByHandle[id] ?: 0L) + 1
+            }
+        }
+    }
+
     private fun handle(target: Any): String = synchronized(this) {
         val key = IdentityKey(target)
         val id = handlesByIdentity[key] ?: "java-${nextHandle++}".also {
