@@ -64,7 +64,9 @@ jobs:
               env:
                   DATABASE_URL: postgres://unbound_bot:unbound_bot@localhost:5432/postgres
                   POSTGRES_SUPERUSER_URL: postgres://postgres:postgres@localhost:5432/postgres
-              run: bun test --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/plugin-scripts/**' --path-ignore-patterns 'packages/client/**'
+              run: bun test --parallel --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/plugin-scripts/**' --path-ignore-patterns 'packages/client/**' --path-ignore-patterns 'packages/cli/**'
+            - name: Run CLI tests
+              run: bun test packages/cli
             # Client tests replace modules with `mock.module`, which leaks across files in one process.
             - name: Run client tests
               env:
