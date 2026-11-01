@@ -43,7 +43,7 @@
         "colorette": "^2.0.20",
         "discord.js": "^14.27.0",
         "drizzle-orm": "1.0.0-rc.5",
-        "postgres": "^3.4.9",
+        "postgres": "^4.0.0",
         "zod": "^4.0.0",
       },
       "devDependencies": {
@@ -117,7 +117,7 @@
         "motion": "^14.7.1",
         "nucleo-micro-bold": "~1.2.1",
         "obscenity": "^0.4.6",
-        "postgres": "^3.4.9",
+        "postgres": "^4.0.0",
         "react": "catalog:react",
         "react-day-picker": "^10.0.2",
         "react-dom": "catalog:react",
@@ -157,7 +157,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.12.0-3149294a9a8b0d886169e07cc069938b4881c647fc8c5beb4a405d136b4f3d0b",
+      "version": "0.12.0-4e00f48041ede44da8c118fa7f6f1b0362e1876e2e54129052b727612236ccc0",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -396,7 +396,7 @@
     },
     "packages/plugins/add-attachments": {
       "name": "add-attachments",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -426,7 +426,7 @@
     },
     "packages/plugins/aussie-speech": {
       "name": "aussie-speech",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -485,7 +485,7 @@
     },
     "packages/plugins/chat-bubbles": {
       "name": "chat-bubbles",
-      "version": "1.0.0",
+      "version": "1.4.3",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -499,7 +499,7 @@
     },
     "packages/plugins/clear-urls": {
       "name": "clear-urls",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -514,7 +514,7 @@
     },
     "packages/plugins/custom-commands": {
       "name": "custom-commands",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -529,7 +529,7 @@
     },
     "packages/plugins/expression-tools": {
       "name": "expression-tools",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -544,7 +544,7 @@
     },
     "packages/plugins/file-size-on-picker": {
       "name": "file-size-on-picker",
-      "version": "1.0.0",
+      "version": "1.0.4",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -559,7 +559,7 @@
     },
     "packages/plugins/fix-gif-download": {
       "name": "fix-gif-download",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -588,7 +588,7 @@
     },
     "packages/plugins/gif-paste": {
       "name": "gif-paste",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -706,7 +706,7 @@
     },
     "packages/plugins/multi-account": {
       "name": "multi-account",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -736,7 +736,7 @@
     },
     "packages/plugins/no-reply-mention": {
       "name": "no-reply-mention",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -795,7 +795,7 @@
     },
     "packages/plugins/reviewdb": {
       "name": "reviewdb",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -889,7 +889,7 @@
     },
     "packages/plugins/spotify-listen-along": {
       "name": "spotify-listen-along",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -919,7 +919,7 @@
     },
     "packages/plugins/text-replace": {
       "name": "text-replace",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -934,7 +934,7 @@
     },
     "packages/plugins/translate": {
       "name": "translate",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -964,7 +964,7 @@
     },
     "packages/plugins/view-icons": {
       "name": "view-icons",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -979,7 +979,7 @@
     },
     "packages/plugins/view-raw": {
       "name": "view-raw",
-      "version": "1.0.0",
+      "version": "1.0.3",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -3305,7 +3305,7 @@
 
     "postcss": ["postcss@8.5.31", "", { "dependencies": { "nanoid": "^3.3.20", "picocolors": "^1.1.1", "source-map-js": "^1.2.2" } }, "sha512-YUbWYCgErwnMAVkjUnYa+KlMBzGpHwiIt/DE7f0G33AuX2LH9UcTk6KgWxd3zRU+pN3u/C+Xl3EnMLM4Hea7Sg=="],
 
-    "postgres": ["postgres@3.4.9", "", {}, "sha512-GD3qdB0x1z9xgFI6cdRD6xu2Sp2WCOEoe3mtnyB5Ee0XrrL5Pe+e4CCnJrRMnL1zYtRDZmQQVbvOttLnKDLnaw=="],
+    "postgres": ["postgres@4.0.0", "", {}, "sha512-kBh8qXtcvvIAc00DftQyOxz7M/3Zxww1tRMXZPLzipNXXl5PIzHml+9zB3Mrge2U8ldc0WF1ZdLp1iYQi7Kh3A=="],
 
     "prelude-ls": ["prelude-ls@1.2.1", "", {}, "sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g=="],
 
