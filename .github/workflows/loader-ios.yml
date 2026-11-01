@@ -534,25 +534,10 @@ jobs:
                   test -n "$app"
                   echo "path=$app" >> "$GITHUB_OUTPUT"
 
-            - name: Restore Discord's OTA updates
-              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: packages/loader/smoke/otas
-                  key: discord-otas-ios-${{ github.run_id }}
-                  restore-keys: discord-otas-ios-
-
             - name: Run the smoke test
               env:
                   APP_PATH: ${{ steps.app.outputs.path }}
-              run: unbound-tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --ota-cache smoke/otas --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
-
-            - name: Save Discord's OTA updates
-              if: ${{ !cancelled() && hashFiles('packages/loader/smoke/otas/*/manifest.json.*') != '' }}
-              continue-on-error: true
-              uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: packages/loader/smoke/otas
-                  key: discord-otas-ios-${{ hashFiles('packages/loader/smoke/otas/*/manifest.json.*') }}
+              run: unbound-tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
 
             - name: Compare startup and the console with main
               if: success() && github.event_name == 'pull_request'
