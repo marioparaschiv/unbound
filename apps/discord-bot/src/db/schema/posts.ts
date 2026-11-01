@@ -24,6 +24,21 @@ export const auditPost = botSchema.table('audit_post', {
 	postedAt: timestamp('posted_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * What became of a review notice: `sent` as a DM, `unlinked` author, `undeliverable` DM, or `floor`,
+ * the newest event when notices were first enabled, never sent.
+ */
+export type ReviewNoticeOutcome = 'sent' | 'unlinked' | 'undeliverable' | 'floor';
+
+/** One row per handled review decision and one floor row, never deleted; the newest `event_id` is the cursor. */
+export const reviewNotice = botSchema.table('review_notice', {
+	eventId: bigint('event_id', { mode: 'number' }).primaryKey(),
+	outcome: text('outcome').$type<ReviewNoticeOutcome>().notNull(),
+	/** Set only for `sent`. */
+	messageId: text('message_id'),
+	handledAt: timestamp('handled_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 /** One row per announced loader release, never deleted, so a release is never announced twice. */
 export const releasePost = botSchema.table(
 	'release_post',
