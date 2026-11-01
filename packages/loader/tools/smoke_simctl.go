@@ -11,6 +11,8 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -148,11 +150,12 @@ func (target *iosSmokeTarget) createDevice(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	runtime, deviceType, err := selectSimulator([]byte(output))
+	choice, err := selectSimulator([]byte(output))
 	if err != nil {
 		return err
 	}
-	created, err := target.simctl(ctx, 2*time.Minute, "create", "Unbound smoke", deviceType, runtime)
+	fmt.Printf("Creating the smoke simulator: %s.\n", choice.description)
+	created, err := target.simctl(ctx, 2*time.Minute, "create", "Unbound smoke", choice.deviceType, choice.runtime)
 	if err != nil {
 		return err
 	}
@@ -162,36 +165,57 @@ func (target *iosSmokeTarget) createDevice(ctx context.Context) error {
 	return err
 }
 
-func selectSimulator(listing []byte) (string, string, error) {
+var numberedIPhone = regexp.MustCompile(`^iPhone (\d+)( Pro)?$`)
+
+type simulatorChoice struct {
+	runtime     string
+	deviceType  string
+	description string
+}
+
+func selectSimulator(listing []byte) (simulatorChoice, error) {
 	var parsed struct {
 		Runtimes []simctlRuntime `json:"runtimes"`
 	}
 	if err := json.Unmarshal(listing, &parsed); err != nil {
-		return "", "", fmt.Errorf("unreadable simulator runtimes: %w", err)
+		return simulatorChoice{}, fmt.Errorf("unreadable simulator runtimes: %w", err)
 	}
-	var best *simctlRuntime
-	for index := range parsed.Runtimes {
-		runtime := &parsed.Runtimes[index]
-		if runtime.Platform != "iOS" || !runtime.IsAvailable {
+	var runtimes []simctlRuntime
+	for _, runtime := range parsed.Runtimes {
+		if runtime.Platform == "iOS" && runtime.IsAvailable {
+			runtimes = append(runtimes, runtime)
+		}
+	}
+	if len(runtimes) == 0 {
+		return simulatorChoice{}, errors.New("no iOS simulator runtime is installed")
+	}
+	sort.SliceStable(runtimes, func(left, right int) bool {
+		return compareVersions(runtimes[left].Version, runtimes[right].Version) > 0
+	})
+	for _, runtime := range runtimes {
+		if device, name := numberedIPhoneOf(runtime); device != "" {
+			return simulatorChoice{runtime.Identifier, device, name + " on iOS " + runtime.Version}, nil
+		}
+	}
+	return simulatorChoice{}, errors.New("no installed iOS runtime offers a numbered iPhone simulator")
+}
+
+func numberedIPhoneOf(runtime simctlRuntime) (string, string) {
+	bestNumber, bestPro := -1, false
+	device, name := "", ""
+	for _, candidate := range runtime.SupportedDeviceTypes {
+		match := numberedIPhone.FindStringSubmatch(candidate.Name)
+		if candidate.ProductFamily != "iPhone" || match == nil {
 			continue
 		}
-		if best == nil || compareVersions(runtime.Version, best.Version) > 0 {
-			best = runtime
+		number, _ := strconv.Atoi(match[1])
+		pro := match[2] != ""
+		if number > bestNumber || (number == bestNumber && pro && !bestPro) {
+			bestNumber, bestPro = number, pro
+			device, name = candidate.Identifier, candidate.Name
 		}
 	}
-	if best == nil {
-		return "", "", errors.New("no iOS simulator runtime is installed")
-	}
-	deviceType := ""
-	for _, candidate := range best.SupportedDeviceTypes {
-		if candidate.ProductFamily == "iPhone" {
-			deviceType = candidate.Identifier
-		}
-	}
-	if deviceType == "" {
-		return "", "", fmt.Errorf("iOS %s supports no iPhone simulator", best.Version)
-	}
-	return best.Identifier, deviceType, nil
+	return device, name
 }
 
 func compareVersions(left, right string) int {
@@ -245,6 +269,18 @@ func (target *iosSmokeTarget) launch(ctx context.Context) error {
 	return nil
 }
 
+func sampleProcess(ctx context.Context, pid int, path string) error {
+	_, err := runSmokeCommand(ctx, time.Minute, "sample", strconv.Itoa(pid), "3", "-file", path)
+	if err == nil {
+		return nil
+	}
+	_, sudoErr := runSmokeCommand(ctx, time.Minute, "sudo", "-n", "sample", strconv.Itoa(pid), "3", "-file", path)
+	if sudoErr == nil {
+		return nil
+	}
+	return fmt.Errorf("%w\n%w", err, sudoErr)
+}
+
 func (target *iosSmokeTarget) sampleLaunch(ctx context.Context, pid int) {
 	started := time.Now()
 	for _, delay := range launchSampleDelays {
@@ -254,8 +290,8 @@ func (target *iosSmokeTarget) sampleLaunch(ctx context.Context, pid int) {
 		case <-time.After(time.Until(started.Add(delay))):
 		}
 		path := filepath.Join(os.TempDir(), fmt.Sprintf("discord-launch-sample-%d-%ds.txt", pid, int(delay.Seconds())))
-		if _, err := runSmokeCommand(ctx, time.Minute, "sample", strconv.Itoa(pid), "3", "-file", path); err != nil {
-			return
+		if err := sampleProcess(ctx, pid, path); err != nil {
+			_ = os.WriteFile(path, []byte(err.Error()+"\n"), 0o644)
 		}
 		target.samplesMutex.Lock()
 		target.samples = append(target.samples, path)
