@@ -293,8 +293,13 @@ func (target *iosSmokeTarget) sampleLaunch(ctx context.Context, pid int) {
 		if err := sampleProcess(ctx, pid, path); err != nil {
 			_ = os.WriteFile(path, []byte(err.Error()+"\n"), 0o644)
 		}
+		screenshot := strings.TrimSuffix(path, ".txt") + ".png"
+		_, screenshotErr := target.simctl(ctx, time.Minute, "io", target.device, "screenshot", screenshot)
 		target.samplesMutex.Lock()
 		target.samples = append(target.samples, path)
+		if screenshotErr == nil {
+			target.samples = append(target.samples, screenshot)
+		}
 		target.samplesMutex.Unlock()
 	}
 }
