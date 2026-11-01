@@ -1,5 +1,70 @@
 # Changelog
 
+## [0.13.0](https://github.com/marioparaschiv/unbound/compare/cli-v0.12.0...cli-v0.13.0) (2026-11-01)
+
+
+### Features
+
+* **cli:** add an on-device startup and memory bench ([#805](https://github.com/marioparaschiv/unbound/issues/805)) ([aa199ca](https://github.com/marioparaschiv/unbound/commit/aa199ca3d10f3b16cae47e6eab49008a60f1f43f))
+* **cli:** add the unbound rollup preset for plugins ([#683](https://github.com/marioparaschiv/unbound/issues/683)) ([1b7b007](https://github.com/marioparaschiv/unbound/commit/1b7b0070ea2b8aac74349053d6bdaf0c506cb19f))
+* **cli:** add ubd profile for Hermes' sampling profiler ([0c2c07e](https://github.com/marioparaschiv/unbound/commit/0c2c07eec18cd1955cf023162795c6adc2e35a82))
+* **client:** add addon, updates, sync and builtins namespaces ([#727](https://github.com/marioparaschiv/unbound/issues/727)) ([edbbc37](https://github.com/marioparaschiv/unbound/commit/edbbc3791ab8e2681c44b49297b892d936d776a4))
+* **client:** evaluate plugins with a per-plugin Addon scope ([#721](https://github.com/marioparaschiv/unbound/issues/721)) ([a58fe1c](https://github.com/marioparaschiv/unbound/commit/a58fe1ce39a303ef5edec93e21175914c1a738c2))
+* **client:** expose plugin start durations ([b7e7a9a](https://github.com/marioparaschiv/unbound/commit/b7e7a9aea635e6b420fea7e709a425e1973d6ae0))
+* **cli:** generate platforms and Capabilities in ubd build ([#729](https://github.com/marioparaschiv/unbound/issues/729)) ([7deb4b2](https://github.com/marioparaschiv/unbound/commit/7deb4b23cb810fa7643557613ed4d763aded3b5f))
+* **cli:** measure ADDON.md media in ubd build ([#704](https://github.com/marioparaschiv/unbound/issues/704)) ([efe25d9](https://github.com/marioparaschiv/unbound/commit/efe25d92051183c8d39f4847ac71264e3702961e))
+* **cli:** run post-build checks in ubd build ([#685](https://github.com/marioparaschiv/unbound/issues/685)) ([88e2f4e](https://github.com/marioparaschiv/unbound/commit/88e2f4e8080a92d0bebdc39f4864d9d3885f7ca6))
+* **cli:** scaffold the standard plugin tree with ubd create ([#733](https://github.com/marioparaschiv/unbound/issues/733)) ([63d3fc8](https://github.com/marioparaschiv/unbound/commit/63d3fc8b66b8f0a75359ac172a9b1e993b6ba6ef))
+* **cli:** show plugin start times in ubd status ([b7e7a9a](https://github.com/marioparaschiv/unbound/commit/b7e7a9aea635e6b420fea7e709a425e1973d6ae0))
+* **cli:** validate addon naming, Capabilities and layout ([#699](https://github.com/marioparaschiv/unbound/issues/699)) ([a8f2704](https://github.com/marioparaschiv/unbound/commit/a8f2704b743e08a306607bd18d5717756edf09b4))
+* **native:** run plugin hooks on the UI thread ([4dde7a6](https://github.com/marioparaschiv/unbound/commit/4dde7a66bc26463ebc0e043c6c630727f3dba730))
+* **web,cli:** read the built manifest for publish and ubd dev ([#696](https://github.com/marioparaschiv/unbound/issues/696)) ([f417abc](https://github.com/marioparaschiv/unbound/commit/f417abc0d88f19f2144dc9a2dc5b7f8dde9b7cdd))
+* **web:** read the measured ADDON.md page on submission ([#706](https://github.com/marioparaschiv/unbound/issues/706)) ([29627b6](https://github.com/marioparaschiv/unbound/commit/29627b6b13831e2ab949a4cfa6216f51b20ff096))
+
+
+### Bug Fixes
+
+* **cli:** compile worklets before swc ([b7a63da](https://github.com/marioparaschiv/unbound/commit/b7a63dacfad77df7e1b535153c13b8637e688096))
+* **cli:** resolve symlinked paths in the capabilities check ([dd36438](https://github.com/marioparaschiv/unbound/commit/dd36438aa275b380bcc7a4baf0207ae72b1a0868))
+
+
+### Performance Improvements
+
+* **client:** load modules on demand, import Discord's libraries ([#789](https://github.com/marioparaschiv/unbound/issues/789)) ([d732248](https://github.com/marioparaschiv/unbound/commit/d7322488f7019307615246b4fc29d60fa5d85330))
+* **loader:** keep compiled plugin sources off the JS heap ([0c2c07e](https://github.com/marioparaschiv/unbound/commit/0c2c07eec18cd1955cf023162795c6adc2e35a82))
+
+
+### Code Refactoring
+
+* **client:** remove deprecated APIs and document the SDK ([#795](https://github.com/marioparaschiv/unbound/issues/795)) ([ae90809](https://github.com/marioparaschiv/unbound/commit/ae90809cad35698c8df7e954ff283a526500fb13))
+* rename astral back to unbound ([#751](https://github.com/marioparaschiv/unbound/issues/751)) ([05faca1](https://github.com/marioparaschiv/unbound/commit/05faca1a9fef48992fd80f981f009d02da943b40))
+
+
+### Build System
+
+* **deps:** bump @babel/plugin-syntax-jsx from 7.29.7 to 8.0.1 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+* **deps:** bump @babel/preset-typescript from 7.29.7 to 8.0.7 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+* **deps:** bump postgres from 3.4.9 to 4.0.0 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+* **deps:** bump the minor-and-patch group with 5 updates ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+
+
+### Continuous Integration
+
+* **deps:** bump gradle/actions/setup-gradle to 6.4.1 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/debugger-protocol bumped to 0.9.2
+  * devDependencies
+    * @unbound-app/api bumped to 0.13.0
+    * @unbound-app/contracts bumped to 0.13.0
+    * @unbound-app/types bumped to 0.12.0
+    * @unbound-app/utils bumped to 0.9.3
+    * @unbound-app/web bumped to 0.13.0
+
 ## [0.12.0](https://github.com/marioparaschiv/unbound/compare/cli-v0.11.0...cli-v0.12.0) (2026-10-31)
 
 
