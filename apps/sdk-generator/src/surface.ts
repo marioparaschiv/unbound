@@ -27,13 +27,11 @@ export type RuntimeSurfaces = {
 export type SurfaceSources = {
 	/** The client file that assigns each shape to `window.unbound`. */
 	entry: string;
-	/** The tsconfig the client compiles with. */
 	clientConfig?: string;
 	/** Object types declared under this directory are compared member by member. */
 	clientRoot: string;
 	/** The generated `global.d.ts` that types `window.unbound`. */
 	global: string;
-	/** The tsconfig the generated SDK compiles with. */
 	apiConfig?: string;
 };
 
