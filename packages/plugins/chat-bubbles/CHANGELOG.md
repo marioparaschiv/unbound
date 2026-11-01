@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.0]
+
+### Changed
+
+- On Android, a message whose bubble was already measured gets its bubble the moment its row is bound, so bubbles no longer pop in when scrolling back over messages.
+
 ## [1.3.0]
 
 ### Changed
