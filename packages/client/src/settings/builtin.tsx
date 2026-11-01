@@ -1,8 +1,6 @@
 import type { SettingsEntry } from '@unbound-app/types';
-import { createLogger } from '@unbound-app/logger';
 import { useState, useEffect } from 'react';
 
-import { findByProps, findByName, findByFilePath } from '~/metro/search';
 import { createPatcher } from '~/patcher/create-patcher';
 import { Screens, CLIENT_NAME } from '~/core/constants';
 import { useUnboundSettings } from '~/settings/unbound';
@@ -11,15 +9,16 @@ import DeveloperPage from '~/ui/settings/developer';
 import type { BuiltIn } from '~/builtins/registry';
 import PanelHostScreen from '~/ui/settings/custom';
 import GeneralPage from '~/ui/settings/general';
+import { onModuleLoaded } from '~/metro/wait';
 import { Discord } from '~/metro/components';
 import SettingsStore from '~/settings/state';
 import { getIdByName } from '~/assets/api';
+import { byProps } from '~/metro/filters';
 import { messages } from '~/i18n/api';
 
-import findSettingsOverview from './find-overview';
+import waitForSettingsOverview from './wait-for-overview';
 
 const Patcher = createPatcher('unbound::settings');
-const Logger = createLogger('Core', 'Settings');
 
 const unpatches: Array<() => void> = [];
 
@@ -114,12 +113,15 @@ function stop() {
 }
 
 function patchRendererConfig(builtIn: EntryMap) {
-	const module = findByProps('SETTING_RENDERER_CONFIG');
+	// Redefined as the module loads, before Discord's code that imports it reads the config.
+	unpatches.push(
+		onModuleLoaded(byProps('SETTING_RENDERER_CONFIG'), (module) =>
+			redefineRendererConfig(module, builtIn),
+		),
+	);
+}
 
-	if (!module) {
-		return Logger.error('Failed to find SETTING_RENDERER_CONFIG.');
-	}
-
+function redefineRendererConfig(module: MetroExport, builtIn: EntryMap) {
 	const original = module.SETTING_RENDERER_CONFIG;
 	let current = original;
 
@@ -141,12 +143,14 @@ function patchRendererConfig(builtIn: EntryMap) {
 }
 
 function patchOverview(builtIn: EntryMap) {
-	const Overview = findSettingsOverview(findByName, findByFilePath);
+	unpatches.push(
+		waitForSettingsOverview(onModuleLoaded, (Overview) =>
+			patchOverviewScreen(Overview, builtIn),
+		),
+	);
+}
 
-	if (!Overview) {
-		return Logger.error('Failed to find SettingsOverviewScreen.');
-	}
-
+function patchOverviewScreen(Overview: MetroExport, builtIn: EntryMap) {
 	Patcher.after(Overview, 'default', ({ result }) => {
 		const [, forceUpdate] = useState({});
 

@@ -16,12 +16,12 @@ type FindOptions = {
 
 type Wait = {
 	filter: FakeFilter;
-	resolve: (module: FakeModule | undefined) => void;
+	onLoad: (module: FakeModule) => void;
 };
 
 /** A metro over modules a test registers, with the finders and filters plugins call. */
 export type FakeMetro = {
-	/** Adds a module, settling any `findLazy` waiting for it and calling `onModuleLoad` listeners. */
+	/** Adds a module, settling any `findLazy` or `onModuleLoaded` waiting for it and calling `onModuleLoad` listeners. */
 	register: (module: FakeModule, path?: string) => void;
 	stores: Record<string, FakeModule>;
 	filters: {
@@ -36,6 +36,7 @@ export type FakeMetro = {
 		filter: FakeFilter,
 		options?: LazyOptions,
 	) => FakeModule | Promise<FakeModule | undefined>;
+	onModuleLoaded: (filter: FakeFilter, onLoad: (module: FakeModule) => void) => () => void;
 	onModuleLoad: (listener: (module: FakeModule) => void) => () => void;
 };
 
@@ -81,7 +82,7 @@ export function createFakeMetro(): FakeMetro {
 			}
 
 			return new Promise((resolve) => {
-				const wait: Wait = { filter, resolve };
+				const wait: Wait = { filter, onLoad: resolve };
 
 				waits.add(wait);
 				signal?.addEventListener('abort', () => {
@@ -89,6 +90,21 @@ export function createFakeMetro(): FakeMetro {
 					resolve(undefined);
 				});
 			});
+		},
+		onModuleLoaded(filter, onLoad) {
+			const found = find(filter);
+
+			if (found) {
+				onLoad(found);
+
+				return () => void 0;
+			}
+
+			const wait: Wait = { filter, onLoad };
+
+			waits.add(wait);
+
+			return () => void waits.delete(wait);
 		},
 		onModuleLoad(listener) {
 			listeners.add(listener);
@@ -105,7 +121,7 @@ export function createFakeMetro(): FakeMetro {
 			for (const wait of waits) {
 				if (wait.filter(module)) {
 					waits.delete(wait);
-					wait.resolve(module);
+					wait.onLoad(module);
 				}
 			}
 

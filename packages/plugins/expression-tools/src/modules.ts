@@ -5,10 +5,8 @@ export const { Clipboard } = metro.common;
 export const Guilds = flux.getStore('Guild', { lazy: true });
 export const Users = flux.getStore('User', { lazy: true });
 
-export const StickerDetailActionSheet = metro.findByFilePath(
-	'modules/stickers/native/StickerDetailActionSheet.tsx',
-	{ lazy: true },
-);
+export const StickerDetailActionSheetSource =
+	'modules/stickers/native/StickerDetailActionSheet.tsx';
 
 // Each is checked where it is used, so a missing one only disables its button.
 export const StickerSheets = metro.findByProps('hideStickerDetailActionSheet', { lazy: true });

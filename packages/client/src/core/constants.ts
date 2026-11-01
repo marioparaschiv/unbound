@@ -5,7 +5,7 @@ declare const $$DEV$$: boolean;
 
 /** The symbol a metro filter stores its cache key under, so repeated lookups hit the module cache. */
 export const CACHE_KEY = Symbol.for('metro.cache');
-export const CACHE_VERSION = 1;
+export const CACHE_VERSION = 2;
 
 /** Whether this is a development build. Replaced at build time by the build's `transform.define`. */
 export const DEV: boolean = $$DEV$$;

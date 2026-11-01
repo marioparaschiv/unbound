@@ -1,3 +1,5 @@
+import { shimGlobal } from './shims.ts';
+
 export type Globals = (id: string) => string;
 
 const API = '@unbound-app/api';
@@ -6,9 +8,6 @@ const scopeGlobals: Record<string, string> = {
 	[API]: 'unbound',
 	react: 'React',
 	'react-native': 'ReactNative',
-	'react-native-reanimated': 'unbound.metro.common.Reanimated',
-	'@react-native-clipboard/clipboard': 'unbound.metro.common.Clipboard',
-	moment: 'unbound.metro.common.Moment',
 };
 
 /**
@@ -21,7 +20,7 @@ export function unboundGlobals(id: string): string {
 		return `unbound.${id.slice(API.length + 1).replaceAll('/', '.')}`;
 	}
 
-	return scopeGlobals[id] ?? '';
+	return scopeGlobals[id] ?? shimGlobal(id);
 }
 
 /**

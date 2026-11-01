@@ -13,6 +13,6 @@ export const Tooltips = metro.findByProps('TooltipArrowDirections', 'TooltipArro
 	lazy: true,
 });
 
-export const MessageRowDataFilter = metro.filters.byProps('generateMessageRowData');
+export const MessageRowData = metro.findByProps('generateMessageRowData', { lazy: true });
 
 export const settings = storage.getBucket();

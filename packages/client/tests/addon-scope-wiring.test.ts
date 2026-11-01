@@ -54,6 +54,9 @@ mock.module('~/metro/cache', () => ({
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
 		getModuleCacheForKey: () => void 0,
+		isKeyMissing: () => false,
+		getHintsForKey: () => void 0,
+		markKeyMissing: () => void 0,
 	},
 	ModuleFlags: { BLACKLISTED: 1 },
 }));
@@ -78,11 +81,14 @@ Object.assign(globalThis, { window: globalThis, modules: new Map(), $$DEV$$: fal
 const patcher = await import('~/patcher/api');
 const commands = await import('~/commands/api');
 const storage = await import('~/storage/api');
-const metro = await import('~/metro/search');
+const metro = { ...(await import('~/metro/search')), ...(await import('~/metro/wait')) };
 const flux = await import('~/flux/api');
 const { registry } = await import('~/commands/registry');
 const { data } = await import('~/metro/state');
 const { Plugins } = await import('~/plugins/manager');
+
+// Metro's own listeners, such as the one serving module waits, are not the plugin's.
+const metroListeners = data.listeners.size;
 
 const seen: string[] = [];
 
@@ -118,7 +124,7 @@ function commandsOf(owner: string) {
 
 function registered() {
 	return {
-		moduleListeners: data.listeners.size,
+		moduleListeners: data.listeners.size - metroListeners,
 		actionListeners: dispatcher.subscriptions.get('WIRING')?.size ?? 0,
 		storeListeners: store.listeners.size,
 		commands: commandsOf(ID),
@@ -162,7 +168,7 @@ describe('addon scope wiring', () => {
 		})`);
 
 		expect(registered()).toEqual({
-			moduleListeners: 2,
+			moduleListeners: 1,
 			actionListeners: 1,
 			storeListeners: 1,
 			commands: ['shared', 'wired'],
@@ -200,12 +206,12 @@ describe('addon scope wiring', () => {
 
 		storage.getBucket(ID).set('key', 1);
 
-		expect(data.listeners.size).toBe(0);
+		expect(data.listeners.size).toBe(metroListeners);
 		expect(seen).toEqual([]);
 
 		await plugins.stop(ID);
 
-		expect(data.listeners.size).toBe(0);
+		expect(data.listeners.size).toBe(metroListeners);
 	});
 
 	test("getBucket with no name returns the plugin's own Bucket, and named Buckets stay reachable", async () => {

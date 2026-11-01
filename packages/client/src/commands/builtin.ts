@@ -46,9 +46,15 @@ const discordCommands = new WeakMap<CommandRecord, DiscordCommand>();
 const states = new WeakMap<IndexState, MemoState>();
 // Bot avatars this built-in added, keyed by section, removed again on stop.
 const avatars = new Set<string>();
-let enums: CommandEnums = DEFAULT_ENUMS;
+const IndexStore = findStore('ApplicationCommandIndex', { lazy: true });
+const Access = findByProps('hasAccess', 'HasAccessResult', { lazy: true });
+const Icons = findByProps('getApplicationCommandsIconSource', { lazy: true });
+const Install = findByProps('installApplicationOnDemandIfNeeded', { lazy: true });
+const Channels = findStore('Channel', { lazy: true });
+const Roles = findStore('GuildRole', { lazy: true });
+
+let enums: CommandEnums | undefined;
 let effects: CommandEffects | undefined;
-let IndexStore: ReturnType<typeof findStore> | undefined;
 let unsubscribe: (() => void) | undefined;
 let index: DiscordIndex | undefined;
 let pendingChange = false;
@@ -56,9 +62,6 @@ let nonce = 0;
 
 /** Shows registered commands in Discord's `/` picker and runs them. */
 export function start() {
-	enums = readEnums();
-	IndexStore = findStore('ApplicationCommandIndex');
-
 	patchIndex();
 	patchAccess();
 	patchIcons();
@@ -76,14 +79,27 @@ export function stop() {
 	Patcher.unpatchAll();
 	removeAvatars();
 	index = undefined;
-	IndexStore?.emitChange?.();
+	emitIndexChange();
+}
+
+// Discord builds its picker from the index store, so a store it has not loaded has nothing to refresh.
+function emitIndexChange() {
+	findStore('ApplicationCommandIndex', { initialize: false })?.emitChange?.();
+}
+
+// Discord can build the picker before it loads its command enums, so the defaults stand in until both have loaded.
+function getEnums(): CommandEnums {
+	return enums ?? readEnums();
 }
 
 function readEnums(): CommandEnums {
-	const Types = findByProps('ApplicationCommandOptionType', 'ApplicationCommandType');
-	const Inputs = findByProps('ApplicationCommandInputType', 'ApplicationCommandSectionType');
-
-	return {
+	const Types = findByProps('ApplicationCommandOptionType', 'ApplicationCommandType', {
+		initialize: false,
+	});
+	const Inputs = findByProps('ApplicationCommandInputType', 'ApplicationCommandSectionType', {
+		initialize: false,
+	});
+	const read: CommandEnums = {
 		chat: Types?.ApplicationCommandType?.CHAT ?? DEFAULT_ENUMS.chat,
 		builtInText:
 			Inputs?.ApplicationCommandInputType?.BUILT_IN_TEXT ?? DEFAULT_ENUMS.builtInText,
@@ -93,18 +109,21 @@ function readEnums(): CommandEnums {
 		subCommandGroup:
 			Types?.ApplicationCommandOptionType?.SUB_COMMAND_GROUP ?? DEFAULT_ENUMS.subCommandGroup,
 	};
+
+	if (Types && Inputs) {
+		enums = read;
+	}
+
+	return read;
 }
 
 function createEffects(): CommandEffects {
-	const Channels = findStore('Channel');
-	const Roles = findStore('GuildRole');
-
 	return {
 		resolvers: {
 			user: (id) => Users.getUser?.(id) ?? undefined,
-			channel: (id) => Channels?.getChannel?.(id) ?? undefined,
+			channel: (id) => Channels.getChannel?.(id) ?? undefined,
 			role: (guildId, id) =>
-				guildId ? (Roles?.getRole?.(guildId, id) ?? undefined) : undefined,
+				guildId ? (Roles.getRole?.(guildId, id) ?? undefined) : undefined,
 		},
 		showEphemeral,
 		dispatch: (action) => Dispatcher.dispatch(action),
@@ -147,6 +166,8 @@ function registerAvatar(section: Section): string | undefined {
 }
 
 function removeAvatars() {
+	if (!avatars.size) return;
+
 	const Avatars = findByProps('BOT_AVATARS', 'ensureAvatarSource');
 
 	for (const key of avatars) {
@@ -179,7 +200,7 @@ function getIndex(): DiscordIndex {
 
 		const icon = section.icon ?? getIdByName(DEFAULT_ICON);
 
-		sections[section.id] = { descriptor: toDescriptor(section, enums), commands: byId };
+		sections[section.id] = { descriptor: toDescriptor(section, getEnums()), commands: byId };
 
 		if (icon !== undefined) {
 			icons.set(section.id, icon);
@@ -206,7 +227,7 @@ function discordCommand(record: CommandRecord): DiscordCommand {
 
 	effects ??= createEffects();
 
-	const command = toDiscordCommand(record, createExecute(record, effects), enums);
+	const command = toDiscordCommand(record, createExecute(record, effects), getEnums());
 
 	discordCommands.set(record, command);
 
@@ -220,19 +241,11 @@ function scheduleChange() {
 
 	void Promise.resolve().then(() => {
 		pendingChange = false;
-		IndexStore?.emitChange?.();
+		emitIndexChange();
 	});
 }
 
 function patchIndex() {
-	if (typeof IndexStore?.getUserState !== 'function') {
-		Logger.error(
-			'Failed to find ApplicationCommandIndexStore.getUserState; commands will not show.',
-		);
-
-		return;
-	}
-
 	Patcher.after(IndexStore, 'getUserState', ({ result }) => {
 		if (!result) return;
 
@@ -252,16 +265,6 @@ function patchIndex() {
 }
 
 function patchAccess() {
-	const Access = findByProps('hasAccess', 'HasAccessResult');
-
-	if (!Access) {
-		Logger.error(
-			'Failed to find hasAccess; commands may be hidden where permissions are missing.',
-		);
-
-		return;
-	}
-
 	Patcher.after(Access, 'hasAccess', ({ args: [command], result }) => {
 		if (!getIndex().sectionIds.has(command?.applicationId)) return;
 
@@ -272,16 +275,6 @@ function patchAccess() {
 }
 
 function patchIcons() {
-	const Icons = findByProps('getApplicationCommandsIconSource');
-
-	if (!Icons) {
-		Logger.error(
-			'Failed to find getApplicationCommandsIconSource; sections will show no icon.',
-		);
-
-		return;
-	}
-
 	Patcher.after(Icons, 'getApplicationCommandsIconSource', ({ args: [section] }) => {
 		const icon = getIndex().icons.get(section?.id);
 
@@ -292,17 +285,9 @@ function patchIcons() {
 }
 
 function patchBuiltIns() {
-	if (typeof Commands?.getBuiltInCommands !== 'function') {
-		Logger.error(
-			'Failed to find getBuiltInCommands; commands will not show in text-only channels.',
-		);
-
-		return;
-	}
-
 	// Discord drops every non-built-in section where only text commands are allowed.
 	Patcher.after(Commands, 'getBuiltInCommands', ({ args: [types, , textOnly], result }) => {
-		if (!textOnly || !Array.isArray(types) || !types.includes(enums.chat)) return;
+		if (!textOnly || !Array.isArray(types) || !types.includes(getEnums().chat)) return;
 
 		const present = new Set(result.map((command: DiscordCommand) => command.id));
 		const missing = getIndex().commands.filter((command) => !present.has(command.id));
@@ -312,14 +297,6 @@ function patchBuiltIns() {
 }
 
 function patchInstall() {
-	const Install = findByProps('installApplicationOnDemandIfNeeded');
-
-	if (!Install) {
-		Logger.error('Failed to find installApplicationOnDemandIfNeeded; commands may not run.');
-
-		return;
-	}
-
 	// Sending a command first installs its application, which fetches /applications/<id>/public and rejects for ours.
 	Patcher.instead(
 		Install,

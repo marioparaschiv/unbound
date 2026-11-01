@@ -1,7 +1,7 @@
 import { patcher } from '@unbound-app/api';
 
+import { onMediaShareActions, type MediaShareActions } from '~/modules';
 import { isRecord, type MediaRecord } from '~/media-record';
-import { findMediaShareActions } from '~/modules';
 import { getPreferredGifUrl } from '~/gif-url';
 import { resolveKlipyGifUrl } from '~/klipy';
 
@@ -13,38 +13,30 @@ function pointAtGif(source: MediaRecord, gifUrl: string) {
 	delete source.isGIFV;
 }
 
+function patch(module: MediaShareActions) {
+	patcher.before(module, 'useMediaShareActions', ({ args }) => {
+		const [options] = args;
+
+		if (!isRecord(options) || !isRecord(options.source)) return;
+
+		const { source } = options;
+		const gifUrl = getPreferredGifUrl(source);
+
+		if (gifUrl) {
+			pointAtGif(source, gifUrl);
+
+			return;
+		}
+
+		void resolveKlipyGifUrl(source).then((resolved) => {
+			if (resolved) pointAtGif(source, resolved);
+		});
+	});
+}
+
 /**
- * @description Points the media viewer's share and save actions at the GIF instead of its video rendition.
+ * @description Points the media viewer's share and save actions at the GIF instead of its video rendition, patching each copy as Discord loads it.
  */
 export function patchMediaShareActions(): void {
-	const modules = [...new Set(findMediaShareActions())];
-
-	if (!modules.length) {
-		console.error(
-			'[Fix GIF Downloads: share actions] Skipped, modules not found: useMediaShareActions.',
-		);
-
-		return;
-	}
-
-	for (const module of modules) {
-		patcher.before(module, 'useMediaShareActions', ({ args }) => {
-			const [options] = args;
-
-			if (!isRecord(options) || !isRecord(options.source)) return;
-
-			const { source } = options;
-			const gifUrl = getPreferredGifUrl(source);
-
-			if (gifUrl) {
-				pointAtGif(source, gifUrl);
-
-				return;
-			}
-
-			void resolveKlipyGifUrl(source).then((resolved) => {
-				if (resolved) pointAtGif(source, resolved);
-			});
-		});
-	}
+	onMediaShareActions(patch);
 }

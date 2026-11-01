@@ -58,6 +58,9 @@ mock.module('~/metro/cache', () => ({
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
 		getModuleCacheForKey: () => void 0,
+		isKeyMissing: () => false,
+		getHintsForKey: () => void 0,
+		markKeyMissing: () => void 0,
 		addCachedIDForKey: () => void 0,
 	},
 	ModuleFlags: { BLACKLISTED: 1 },
@@ -78,7 +81,6 @@ const { after, instead, unpatchAll, unpatchAllByCaller } = await import('~/patch
 const { createPatcher } = await import('~/patcher/create-patcher');
 const { findByProps } = await import('~/metro/lookups');
 const { createAddonScope } = await import('~/addons/scope');
-const { data } = await import('~/metro/state');
 
 function idOf(method: string) {
 	return methods.indexOf(method) + 2;
@@ -109,7 +111,6 @@ describe('lazy patch targets', () => {
 	});
 
 	test('unpatching before the module loads leaves nothing behind', () => {
-		const listeners = data.listeners.size;
 		const original = records.get(idOf('second'))?.factory;
 		const unpatch = after(findByProps('second'), 'second', () => 0);
 		const patcher = createPatcher('plugin');
@@ -117,13 +118,9 @@ describe('lazy patch targets', () => {
 		patcher.after(findByProps('second'), 'second', () => 1);
 		createPatcher('stopped-plugin').after(findByProps('second'), 'second', () => 2);
 
-		expect(data.listeners.size).toBe(listeners + 3);
-
 		unpatch();
 		patcher.unpatchAll();
 		unpatchAllByCaller('stopped-plugin');
-
-		expect(data.listeners.size).toBe(listeners);
 
 		load(idOf('second'));
 

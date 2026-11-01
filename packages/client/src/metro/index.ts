@@ -1,6 +1,8 @@
 export { findByPrototypes, findByFilePath, findByProps, findByName } from '~/metro/lookups';
-export { initializeModule, onModuleLoad, findLazy, bulk, find } from '~/metro/search';
+export { initializeModule, onModuleLoad, bulk, find } from '~/metro/search';
 export type { DiscordFunction } from '@unbound-app/types/components';
+export { getModulePresence } from '~/metro/lazy-registry';
+export { findLazy, onModuleLoaded } from '~/metro/wait';
 export * as components from '~/metro/components';
 export { blacklist, data } from '~/metro/state';
 export { CACHE_KEY } from '~/core/constants';

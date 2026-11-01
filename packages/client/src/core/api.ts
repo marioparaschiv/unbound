@@ -13,6 +13,7 @@ export * as updates from '~/updates/api';
 export * as assets from '~/assets/api';
 export * as themes from '~/themes/api';
 export * as toasts from '~/toasts/api';
+export * as shims from '~/core/shims';
 export * as fonts from '~/fonts/api';
 export * as flux from '~/flux/api';
 export * as i18n from '~/i18n/api';

@@ -1,8 +1,10 @@
 import { getContrastingTextColor } from '@unbound-plugins/shared/colors/role-colors';
+import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import type { DiscordFunction } from '@unbound-app/api/metro';
 import { patcher } from '@unbound-app/api';
 import { processColor } from 'react-native';
 
-import { ChannelStore, GuildMemberStore, GuildStore, settings, TagProperties } from '~/modules';
+import { byTagProperties, ChannelStore, GuildMemberStore, GuildStore, settings } from '~/modules';
 import { combineTagText, withTag, type TagColors } from '~/tag-properties';
 import { resolveTag, type Guild, type Message } from '~/tags';
 import type { LabelAppearances } from '~/label-appearances';
@@ -19,16 +21,18 @@ function toTagColors(colors: string[]): TagColors | undefined {
 	};
 }
 
-/**
- * @description Adds the plugin's tag to every message header Discord builds tag properties for.
- * @param appearances Receives each tag's colors for the native gradient renderer.
- * @returns A function that removes the patch.
- */
-export function patchGetTagProperties(appearances: LabelAppearances): () => void {
+type TagPropertiesModule = {
+	default: DiscordFunction;
+};
+
+function patchLoadedGetTagProperties(
+	TagProperties: TagPropertiesModule,
+	appearances: LabelAppearances,
+) {
 	if (typeof TagProperties.default !== 'function') {
 		console.error('[More User Tags] Skipped, getTagProperties is not a function.');
 
-		return () => {};
+		return;
 	}
 
 	return patcher.after(TagProperties, 'default', ({ args, result }) => {
@@ -63,6 +67,19 @@ export function patchGetTagProperties(appearances: LabelAppearances): () => void
 
 		return withTag(result, text, colors, settings.get('useOpTagStyle', false));
 	});
+}
+
+/**
+ * @description Adds the plugin's tag to every message header Discord builds tag properties for, once `getTagProperties` loads.
+ * @param appearances Receives each tag's colors for the native gradient renderer.
+ * @returns A function that stops waiting or removes the patch.
+ */
+export function patchGetTagProperties(appearances: LabelAppearances): () => void {
+	return whenLoaded<TagPropertiesModule>(
+		byTagProperties,
+		(TagProperties) => patchLoadedGetTagProperties(TagProperties, appearances),
+		{ interop: false },
+	);
 }
 
 export default { patchGetTagProperties };

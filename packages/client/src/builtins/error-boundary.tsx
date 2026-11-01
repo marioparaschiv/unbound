@@ -5,7 +5,8 @@ import { getSetting, setSetting } from '~/settings/unbound';
 import { createPatcher } from '~/patcher/create-patcher';
 import { CLIENT_VERSION } from '~/core/constants';
 import ErrorFallback from '~/ui/error-boundary';
-import { findByName } from '~/metro/search';
+import { onModuleLoaded } from '~/metro/wait';
+import { byName } from '~/metro/filters';
 import { reload } from '~/native/native';
 
 type BoundaryState = {
@@ -25,6 +26,8 @@ type BoundaryInstance = {
 const Patcher = createPatcher('ErrorBoundary');
 const Logger = createLogger('ErrorBoundary');
 
+let stopWaiting: (() => void) | null = null;
+
 function enterRecoveryMode() {
 	setSetting('recovery', true);
 	void reload();
@@ -36,14 +39,10 @@ export function start() {
 
 	if (!enabled) return;
 
-	const Boundary = findByName('ErrorBoundary');
+	stopWaiting = onModuleLoaded(byName('ErrorBoundary'), patchBoundary);
+}
 
-	if (!Boundary) {
-		Logger.error('Failed to find ErrorBoundary component');
-
-		return;
-	}
-
+function patchBoundary(Boundary: MetroExport) {
 	Patcher.after(
 		Boundary.prototype,
 		'componentDidCatch',
@@ -82,6 +81,8 @@ export function start() {
 
 /** Removes the error boundary patch. */
 export function stop() {
+	stopWaiting?.();
+	stopWaiting = null;
 	Patcher.unpatchAll();
 }
 

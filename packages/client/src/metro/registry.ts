@@ -2,6 +2,8 @@ declare global {
 	/** An entry in Metro's module registry. */
 	type MetroModuleRecord = {
 		factory?: (...args: any[]) => void;
+		/** The ids of the modules this one requires. Metro clears it once the module initializes. */
+		dependencyMap?: number[];
 		isInitialized?: boolean;
 		hasError?: boolean;
 		publicModule: MetroPublicModule;

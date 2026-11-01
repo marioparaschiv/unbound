@@ -43,5 +43,6 @@ export declare function byPrototypes(...prototypes: string[]): MetroFilter;
 export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) & {
 	[CACHE_KEY]?: string;
 	isRaw?: boolean;
+	isFilePath?: boolean;
 };
 export {};

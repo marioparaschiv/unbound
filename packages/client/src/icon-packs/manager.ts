@@ -1,10 +1,12 @@
 import type { IconPack, IconPackManifest, Plugin, UnboundAsset } from '@unbound-app/types';
 import toError from '@unbound-app/utils/to-error';
+import noop from '@unbound-app/utils/noop';
 
 import { safeRelativePath, isSafeIconPackMain } from '~/addons/paths';
 import type { Addon, AddonResolveable } from '~/addons/addon';
-import { Assets, ImageSources } from '~/metro/common';
+import { getById, onAssetRegistered } from '~/assets/api';
 import { downloadManifest } from '~/addons/download';
+import { ImageSources } from '~/metro/common';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
 import fs from '~/native/fs';
@@ -62,6 +64,9 @@ const defaultPack: IconPack = {
  */
 export class Icons extends Addons<Plugin> {
 	extension = 'png';
+
+	// Stops stamping assets that register after the applied pack.
+	private stopStamping = noop;
 
 	constructor() {
 		super({
@@ -139,7 +144,7 @@ export class Icons extends Addons<Plugin> {
 
 			this.settings.set('applied', pack);
 
-			this.patcher.unpatchAll();
+			this.removePack();
 			await this.applyPack(resolved.id);
 
 			this.emit('enabled', resolved);
@@ -156,7 +161,7 @@ export class Icons extends Addons<Plugin> {
 
 		try {
 			this.settings.set('applied', defaultPack);
-			this.patcher.unpatchAll();
+			this.removePack();
 
 			this.emit('disabled', resolved);
 		} catch (error) {
@@ -175,7 +180,7 @@ export class Icons extends Addons<Plugin> {
 		if (!resolved || !this.isEnabled(resolved.id)) return;
 
 		try {
-			this.patcher.unpatchAll();
+			this.removePack();
 			await this.applyPack(resolved.id);
 		} catch (error) {
 			this.logger.error(`Failed to restart icon pack ${resolved.id}:`, error);
@@ -215,6 +220,7 @@ export class Icons extends Addons<Plugin> {
 	 * @description Applies a pack: stamps every registered asset with its on-disk override path, then
 	 * patches the source resolution of every `Image` render to swap numeric sources for the pack's files.
 	 * Stamps are awaited before the patch installs, so no image renders against an un-stamped asset.
+	 * Assets that register later are stamped as they register.
 	 * @param id The pack id to apply. The `default` pack is a no-op.
 	 */
 	async applyPack(id: string) {
@@ -222,8 +228,11 @@ export class Icons extends Addons<Plugin> {
 
 		const stamps: Array<Promise<void>> = [];
 
+		this.stopStamping();
+		this.stopStamping = onAssetRegistered((asset) => void this.stampAsset(id, asset));
+
 		for (let assetId = 1; ; assetId++) {
-			const asset = Assets.getAssetByID(assetId);
+			const asset = getById(assetId);
 
 			if (!asset) {
 				break;
@@ -238,7 +247,7 @@ export class Icons extends Addons<Plugin> {
 		this.patcher.before(ImageSources, 'getImageSourcesFromImageProps', ({ args: [props] }) => {
 			if (typeof props?.source !== 'number') return;
 
-			const asset = Assets.getAssetByID(props.source);
+			const asset = getById(props.source);
 
 			if (!asset?.iconPackPath || !asset.iconPackScale) return;
 
@@ -251,6 +260,18 @@ export class Icons extends Addons<Plugin> {
 
 			return [{ ...props, source }];
 		});
+	}
+
+	shutdown(): Promise<void> {
+		this.removePack();
+
+		return super.shutdown();
+	}
+
+	private removePack() {
+		this.patcher.unpatchAll();
+		this.stopStamping();
+		this.stopStamping = noop;
 	}
 
 	/**

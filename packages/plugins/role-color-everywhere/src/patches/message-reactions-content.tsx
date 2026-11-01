@@ -1,9 +1,11 @@
 import { patcher } from '@unbound-app/api';
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import type { DiscordFunction } from '@unbound-app/api/metro';
 import { cloneElement } from 'react';
 
-import { ChannelStore, GuildMemberStore, MessageReactionsContent } from '~/modules';
+import { ChannelStore, GuildMemberStore, MESSAGE_REACTIONS_CONTENT_PATH } from '~/modules';
 import RoleColoredRender from '~/components/role-colored-render';
 import { guildIdOf } from '~/channel-guild';
 import { PLUGIN_NAME } from '~/constants';
@@ -38,19 +40,21 @@ function colorReactionRow(row: Rendered, guildId: string): Rendered {
 	return cloneElement(row, { children: [cloneElement(item, { label: colored }), ...rest] });
 }
 
-/**
- * @description Paints the names in a message's reaction details list with their role colors.
- * @returns A function that removes the patch.
- */
-export function patchMessageReactionsContent(): () => void {
+type MessageReactionsContentModule = {
+	MessageReactionsContent: DiscordFunction;
+};
+
+function patchLoadedMessageReactionsContent(
+	MessageReactionsContent: MessageReactionsContentModule,
+) {
 	const feature = `${PLUGIN_NAME}: reactions`;
 
-	if (!ensureModules(feature, { MessageReactionsContent, ChannelStore })) return () => {};
+	if (!ensureModules(feature, { ChannelStore })) return;
 
 	if (typeof MessageReactionsContent.MessageReactionsContent !== 'function') {
 		console.error(`[${feature}] Skipped, MessageReactionsContent is not a function.`);
 
-		return () => {};
+		return;
 	}
 
 	return patcher.after(
@@ -71,6 +75,14 @@ export function patchMessageReactionsContent(): () => void {
 			});
 		},
 	);
+}
+
+/**
+ * @description Paints the names in a message's reaction details list with their role colors, once the list's module loads.
+ * @returns A function that stops waiting or removes the patch.
+ */
+export function patchMessageReactionsContent(): () => void {
+	return whenLoaded(MESSAGE_REACTIONS_CONTENT_PATH, patchLoadedMessageReactionsContent);
 }
 
 export default patchMessageReactionsContent;

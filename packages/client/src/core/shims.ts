@@ -1,7 +1,9 @@
-import { findByPropsLazy } from '~/metro/wrappers';
+import { createLibraryShim } from '~/metro/library-shim';
+
+import shimLibraries from './shim-libraries.json';
 
 // `react` and `react-native` are resolved from the warmup globals set in `preinitialize`
-export default {
+const shims: Record<string, MetroExport> = {
 	/**
 	 * @description Resolves `react` to Discord's React from the warmup globals.
 	 * @returns Discord's React module.
@@ -16,8 +18,14 @@ export default {
 	get 'react-native'() {
 		return globalThis.ReactNative;
 	},
-	'react-native-reanimated': findByPropsLazy('useSharedValue', 'useAnimatedStyle', {
-		interop: false,
-	}),
-	'react-native-gesture-handler': findByPropsLazy('PanGestureHandler', { interop: false }),
 };
+
+// Every other library in Discord's bundle is found by props the first time an import of it is read.
+for (const [specifier, props] of Object.entries(shimLibraries)) {
+	shims[specifier] = createLibraryShim(props);
+}
+
+/** Discord's copy of each library its bundle ships, by package name. A built plugin reads its library imports here. */
+export const libraries = shims;
+
+export default shims;

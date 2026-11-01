@@ -16,6 +16,7 @@ import { externalFor, unboundGlobals } from './globals.ts';
 import { findFile, sourceAlias } from './source-alias.ts';
 import { hermesBytecode } from './hermes-bytecode.ts';
 import { lazyModules } from './lazy-modules.ts';
+import { shimImports } from './shims.ts';
 import { worklets } from './worklets.ts';
 
 export type PluginConfigOptions = {
@@ -70,6 +71,7 @@ export function pluginConfig(
 		json(),
 		worklets(),
 		swc({ tsconfig: false }),
+		shimImports(),
 	];
 
 	return {
