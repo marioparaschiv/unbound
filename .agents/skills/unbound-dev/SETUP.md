@@ -31,7 +31,7 @@ Match the doctor's `FAIL` line.
 ## Known faults
 
 - **JS reload loses Unbound** on loaders without `fix/reload-keeps-unbound` (`loader-ios`). Relaunch instead, or install that branch.
-- **`__c()` wipes Discord's modules** when `modules.js` was not injected. Symptom: Discord renders but never goes live and `ubd eval` finds no device. Fix: [UnboundResources](#unboundresources).
+- **No saved bundle** (first install, or the saved one failed): Discord starts without Unbound, and the loader reloads once the download lands. With `loader.update.hmr`, a relaunch runs the saved build, then reloads into a newer one.
 - **A loader newer than the client** fails at startup with an "Unbound failed to initialize" alert (`Cannot read property 'NativeModules' of undefined`) and `ready.sh` times out. Serve a client built for that loader.
 - **`Addons.delete`** reports success but leaves the addon folder on disk.
 - **Toasts** never appear on the vphone. Check state through eval.

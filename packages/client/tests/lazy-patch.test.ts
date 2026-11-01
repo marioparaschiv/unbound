@@ -6,43 +6,36 @@ import type { CrashEvent } from '~/diagnostics/crash-report';
 import type { PluginScope } from '~/addons/scope';
 import type { Addon } from '~/addons/addon';
 
+import { startFakeMetro } from './helpers/fake-metro';
+
 const LOADED_ID = 1;
 const loadedExports = { loaded: (value: number) => value };
-const records = new Map<number, MetroModuleRecord>([
-	[LOADED_ID, { isInitialized: true, publicModule: { id: LOADED_ID, exports: loadedExports } }],
-]);
 const methods = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth'];
 
+Object.assign(globalThis, { window: globalThis });
+
+const fakeMetro = startFakeMetro();
+
+fakeMetro.define(
+	LOADED_ID,
+	[],
+	(_, __, ___, ____, module) => void (module.exports = loadedExports),
+);
+
 for (const [index, method] of methods.entries()) {
-	const id = index + 2;
 	const exported = { [method]: (value: number) => value };
 
-	records.set(id, {
-		isInitialized: false,
-		publicModule: { id, exports: {} },
-		factory: (...args: Parameters<MetroDefine>) => void (args[4].exports = exported),
-	});
+	fakeMetro.define(index + 2, [], (_, __, ___, ____, module) => void (module.exports = exported));
 }
 
+fakeMetro.require(LOADED_ID);
+
+const records = globalThis.modules;
+const load = fakeMetro.require;
 let searchLoads = 0;
 
-function load(id: number) {
-	const record = records.get(id);
-
-	if (!record || record.isInitialized) {
-		return record?.publicModule.exports;
-	}
-
-	record.factory?.(globalThis, __r, null, null, record.publicModule);
-	record.isInitialized = true;
-
-	return record.publicModule.exports;
-}
-
 Object.assign(globalThis, {
-	window: globalThis,
 	React: { createElement: () => null },
-	modules: records,
 	$$DEV$$: false,
 	ErrorUtils: { getGlobalHandler: () => void 0, setGlobalHandler: () => void 0 },
 	__r: (id: number) => {
@@ -54,6 +47,7 @@ Object.assign(globalThis, {
 
 mock.module('~/metro/cache', () => ({
 	default: {
+		state: { moduleFlags: {} },
 		moduleIds: [...records.keys()],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
@@ -122,10 +116,11 @@ describe('lazy patch targets', () => {
 		patcher.unpatchAll();
 		unpatchAllByCaller('stopped-plugin');
 
+		expect(records.get(idOf('second'))?.factory).toBe(original);
+
 		load(idOf('second'));
 
 		expect(exportsOf('second').second(5)).toBe(5);
-		expect(records.get(idOf('second'))?.factory).toBe(original);
 		expect(searchLoads).toBe(0);
 	});
 

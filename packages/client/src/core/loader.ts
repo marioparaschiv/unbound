@@ -1,5 +1,7 @@
 import { createLogger } from '@unbound-app/logger';
 
+import { captureMetro } from '~/metro/capture';
+
 // `window` is referenced throughout the client but the host only defines it later in its own
 // bundle, so alias it to the global object up front.
 globalThis.window ??= globalThis as typeof window;
@@ -43,63 +45,53 @@ const deferredCalls: DeferredCall[] = [];
 const unpatches: (() => void)[] = [];
 
 /**
- * @description Defers Unbound's initialization until the Metro module registry is populated and the
- * native run-application call has been intercepted, then runs `onReady` before releasing Discord and
- * any held native calls. Twin of the host loader pattern in `revenge-bundle`.
- * @param onReady Runs once the registry is ready; resolve it before Discord and deferred calls flush.
+ * @description Hooks Metro before Discord's bundle runs, then runs `onReady` right after Discord's main module
+ * (`__r(0)`) while holding Discord's run-application call, so Unbound is up before Discord renders.
+ * @param onReady Runs once React and React Native are initialized; held native calls flush after it.
  */
 export default function deferUntilReady(onReady: () => void | Promise<void>): void {
-	// `__r` already exists: the hook point is gone (legacy Vendetta-style loader). Initialize now.
 	if (typeof window.__r !== 'undefined') {
-		void runReady(onReady).then((initialized) => {
-			if (initialized) {
-				markReady();
-			}
-		});
-
-		return;
+		throw new Error(
+			"Unbound's bundle ran after Discord's. Update the Unbound loader: it must run Unbound before Discord's bundle.",
+		);
 	}
+
+	captureMetro();
 
 	let requireFn: ((id: number) => ReturnType<MetroRequire>) | undefined;
 
-	Object.defineProperties(globalThis, {
-		__r: {
-			configurable: true,
-			get: () => requireFn,
-			set(original: MetroRequire) {
-				requireFn = function patchedRequire(id: number) {
-					if (id !== 0) {
-						return original(id);
-					}
+	Object.defineProperty(globalThis, '__r', {
+		configurable: true,
+		get: () => requireFn,
+		set(original: MetroRequire) {
+			requireFn = function patchedRequire(id: number) {
+				if (id !== 0) {
+					return original(id);
+				}
 
-					onRunApplication(original, onReady);
-					requireFn = original;
-				};
-			},
-		},
-		__d: {
-			configurable: true,
-			get() {
-				return this.value;
-			},
-			set(value: MetroDefine) {
-				this.value = value;
-			},
+				requireFn = original;
+
+				// React first initializes inside Discord's main module, so Unbound starts after it.
+				const exports = original(0);
+
+				onMainModuleRun(onReady);
+
+				return exports;
+			};
 		},
 	});
 }
 
 /**
- * Handles the native `__r(0)` "run application" call: holds outstanding native calls, runs our
- * initialization, then starts Discord and flushes everything we held back.
+ * Runs once Discord's main module has run: holds the native calls that start rendering, runs our
+ * initialization, then flushes everything we held back.
  */
-function onRunApplication(original: MetroRequire, onReady: () => void | Promise<void>) {
+function onMainModuleRun(onReady: () => void | Promise<void>) {
 	holdNativeCalls();
 
 	void runReady(onReady).then((initialized) => {
 		for (const unpatch of unpatches.splice(0)) unpatch();
 
-		original(0);
 		resumeDeferred();
 
 		if (initialized) {
