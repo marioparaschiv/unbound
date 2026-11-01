@@ -42,10 +42,10 @@ const DEFAULT_OPTIONS: ts.CompilerOptions = {
  * @returns The platforms with their Capabilities, and one error per dynamic or misplaced access.
  */
 export function analyzeCapabilities(dir: string, entry: string): CapabilityAnalysis {
-	const program = createProgram(dir, entry);
-	const context = { program, bridge: createBridgeTypes(program), siteRoot: dir };
-	const facts = new Map<string, FileFacts>();
 	const root = realPath(entry);
+	const program = createProgram(dir, root);
+	const context = { program, bridge: createBridgeTypes(program), siteRoot: realPath(dir) };
+	const facts = new Map<string, FileFacts>();
 
 	function factsOf(path: string): FileFacts {
 		const cached = facts.get(path);
@@ -54,7 +54,7 @@ export function analyzeCapabilities(dir: string, entry: string): CapabilityAnaly
 			return cached;
 		}
 
-		const file = program.getSourceFile(path);
+		const file = program.getSourceFile(path) ?? sourceFileByRealPath(program, path);
 
 		if (!file) {
 			throw new Error(`${path} is imported but not in the program.`);
@@ -129,7 +129,7 @@ export function analyzeCapabilities(dir: string, entry: string): CapabilityAnaly
 			return true;
 		}
 
-		return handler.declaredIn === from ? false : describeStrayImport(handler, dir);
+		return handler.declaredIn === from ? false : describeStrayImport(handler, context.siteRoot);
 	});
 	const sharedFiles = new Set(shared.files);
 	const platforms: PlatformCapabilities = {};
@@ -153,7 +153,9 @@ export function analyzeCapabilities(dir: string, entry: string): CapabilityAnaly
 				}
 
 				return (
-					!handler || handler.platform === platform || describeStrayImport(handler, dir)
+					!handler ||
+					handler.platform === platform ||
+					describeStrayImport(handler, context.siteRoot)
 				);
 			},
 		);
@@ -213,6 +215,10 @@ function describeMisplaced(platform: NativePluginPlatform, calls: BridgeCall[]):
 
 		return `${platform} cannot provide ${capability}, which ${first?.site} needs for ${first?.method}${more}; select the platform's code with native.definePlatform.`;
 	});
+}
+
+function sourceFileByRealPath(program: ts.Program, path: string): ts.SourceFile | undefined {
+	return program.getSourceFiles().find((file) => realPath(file.fileName) === path);
 }
 
 function describeStrayImport(handler: PlatformHandler, dir: string): string {
