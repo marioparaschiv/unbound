@@ -3,8 +3,8 @@ import {
 	docsPackageSchema,
 	type DocsVersion,
 } from '@unbound-app/contracts/docs';
+import { Link, useNavigate, useRouter } from '@tanstack/react-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useNavigate } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { IconMagnifier } from 'nucleo-micro-bold';
 
@@ -45,6 +45,28 @@ function versionLabel(version: DocsVersion): string {
 	return version === MAIN_DOCS_VERSION ? 'main (development)' : version;
 }
 
+// Scrolls only the sidebar, never the window; `scrollIntoView` would scroll both.
+// A group still expanding is too short to scroll to, so this waits for the sidebar's animations to end.
+async function revealActiveItem(nav: HTMLElement | null) {
+	const container = nav?.parentElement;
+
+	if (!container) return;
+
+	await Promise.allSettled(
+		container.getAnimations({ subtree: true }).map((animation) => animation.finished),
+	);
+
+	const item = nav?.querySelector<HTMLElement>('[data-active="true"]');
+
+	if (!item || container.scrollHeight <= container.clientHeight) return;
+
+	const offset = item.getBoundingClientRect().top - container.getBoundingClientRect().top;
+
+	if (offset < 0 || offset > container.clientHeight - item.offsetHeight) {
+		container.scrollTop += offset - container.clientHeight / 2;
+	}
+}
+
 /**
  * @description The docs sidebar: package and version selects, the `⌘K` search, and every symbol in collapsible kind groups.
  * @param props The version's navigation and the open symbol.
@@ -53,6 +75,7 @@ function versionLabel(version: DocsVersion): string {
 function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
+	const router = useRouter();
 	const [searchOpen, setSearchOpen] = useState(false);
 	const navRef = useRef<HTMLElement>(null);
 	const route = { package: nav.package, version: nav.version };
@@ -91,22 +114,14 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 		return () => window.removeEventListener('keydown', handleKeyDown);
 	}, []);
 
-	// Opening a page from search or a type link centres its entry in the sidebar's own scroll area,
-	// never the window's; `scrollIntoView` would scroll both.
+	// After a navigation renders, the router puts every scrolled element back where it was, so the
+	// sidebar reveals its active entry only once the router has.
 	useEffect(() => {
-		const container = navRef.current?.parentElement;
-		const item = navRef.current?.querySelector<HTMLElement>('[data-active="true"]');
+		void revealActiveItem(navRef.current);
 
-		if (!container || !item || container.scrollHeight <= container.clientHeight) return;
+		return router.subscribe('onRendered', () => void revealActiveItem(navRef.current));
+	}, [router]);
 
-		const offset = item.getBoundingClientRect().top - container.getBoundingClientRect().top;
-
-		if (offset < 0 || offset > container.clientHeight - item.offsetHeight) {
-			container.scrollTop += offset - container.clientHeight / 2;
-		}
-	}, [symbol, nav.version]);
-
-	// The open symbol is kept when the target version has it; otherwise the target's overview opens.
 	async function switchVersion(next: string | null) {
 		const version = nav.versions.find((entry) => entry === next);
 
