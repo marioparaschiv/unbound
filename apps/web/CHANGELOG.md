@@ -1,5 +1,62 @@
 # Changelog
 
+## [0.13.0](https://github.com/marioparaschiv/unbound/compare/web-v0.12.0...web-v0.13.0) (2026-11-01)
+
+
+### Features
+
+* **client:** redesign settings and add a shared Unbound account ([#810](https://github.com/marioparaschiv/unbound/issues/810)) ([859add1](https://github.com/marioparaschiv/unbound/commit/859add1230f6dce2ff67c2088f4590199a8ab667))
+* **discord-bot:** send authors their review decisions by DM ([#799](https://github.com/marioparaschiv/unbound/issues/799)) ([020ef60](https://github.com/marioparaschiv/unbound/commit/020ef60f73cf6c3a089d57dd1f82bdd297990fa9))
+* type all of window.unbound and publish versioned API docs ([#784](https://github.com/marioparaschiv/unbound/issues/784)) ([3174a68](https://github.com/marioparaschiv/unbound/commit/3174a68aa9713d44631bf2527b0014a7d79f2a8c))
+* **web,cli:** read the built manifest for publish and ubd dev ([#696](https://github.com/marioparaschiv/unbound/issues/696)) ([f417abc](https://github.com/marioparaschiv/unbound/commit/f417abc0d88f19f2144dc9a2dc5b7f8dde9b7cdd))
+* **web:** catalog versions carry their store page URL ([#718](https://github.com/marioparaschiv/unbound/issues/718)) ([5f1f0f3](https://github.com/marioparaschiv/unbound/commit/5f1f0f31402ce2b4d9890f63a55b454f410f2d2e))
+* **web:** custom Better Auth error page and 404 route ([#747](https://github.com/marioparaschiv/unbound/issues/747)) ([e023dea](https://github.com/marioparaschiv/unbound/commit/e023deacf17fa35adfbea49622edab6ec9d79b3e))
+* **web:** merge plugins and themes into one addons page with tabs ([#800](https://github.com/marioparaschiv/unbound/issues/800)) ([fa92f7f](https://github.com/marioparaschiv/unbound/commit/fa92f7fa8d5ff542721866b37ff952eef542c7a9))
+* **web:** publish copies the ADDON.md store page and media ([#710](https://github.com/marioparaschiv/unbound/issues/710)) ([fdaa4cf](https://github.com/marioparaschiv/unbound/commit/fdaa4cf5ab901faf80791e76795681099c3955a9))
+* **web:** put addon tags beside the install button and stack overflow ([#801](https://github.com/marioparaschiv/unbound/issues/801)) ([173a9cc](https://github.com/marioparaschiv/unbound/commit/173a9cc6b44bc8e149322d5b7b1a2b0776ae52be))
+* **web:** read the measured ADDON.md page on submission ([#706](https://github.com/marioparaschiv/unbound/issues/706)) ([29627b6](https://github.com/marioparaschiv/unbound/commit/29627b6b13831e2ab949a4cfa6216f51b20ff096))
+* **web:** redesign the GitHub submit flow ([#715](https://github.com/marioparaschiv/unbound/issues/715)) ([d582e06](https://github.com/marioparaschiv/unbound/commit/d582e067b9fb5839e6503e686e4e36b38744d7da))
+* **web:** render ADDON.md banner, gallery and media ([#701](https://github.com/marioparaschiv/unbound/issues/701)) ([04dc235](https://github.com/marioparaschiv/unbound/commit/04dc23591c22ddebfb97154c982d8cf06f86d2e2))
+* **web:** replace Mintlify with built-in docs tabs ([7567ced](https://github.com/marioparaschiv/unbound/commit/7567cede76ba53c11dc530709fe0a433fbbf4d50))
+* **web:** show Capabilities per platform ([#700](https://github.com/marioparaschiv/unbound/issues/700)) ([73f4262](https://github.com/marioparaschiv/unbound/commit/73f4262f467f3df3e56d62ed4c7ee5113a48ff53))
+* **web:** sponsor badges as PNGs, $5 tier and profile perks ([#809](https://github.com/marioparaschiv/unbound/issues/809)) ([c19e946](https://github.com/marioparaschiv/unbound/commit/c19e94652620ad34cb09a6c21aa91247914380a9))
+
+
+### Bug Fixes
+
+* **web:** keep the dotted background one viewport tall ([#791](https://github.com/marioparaschiv/unbound/issues/791)) ([0445168](https://github.com/marioparaschiv/unbound/commit/04451686395e9a183df0a98bca4d2babdaeec1da))
+* **web:** lift the page noise over content and point docs links at /docs ([#804](https://github.com/marioparaschiv/unbound/issues/804)) ([74b8d73](https://github.com/marioparaschiv/unbound/commit/74b8d73cef222ed95f510855214ecb2a27255c45))
+* **web:** limit emails to the dev team and block role escalation ([#765](https://github.com/marioparaschiv/unbound/issues/765)) ([137cc50](https://github.com/marioparaschiv/unbound/commit/137cc50253533181a22c9d1a5066b094288ec667))
+* **web:** show each addon's picked icon on the staff addons list ([#769](https://github.com/marioparaschiv/unbound/issues/769)) ([31ab09e](https://github.com/marioparaschiv/unbound/commit/31ab09e237b5641d638a68cc010aacd5a4f73882))
+* **web:** span the hero fade across wide viewports ([#802](https://github.com/marioparaschiv/unbound/issues/802)) ([902a0d9](https://github.com/marioparaschiv/unbound/commit/902a0d973f982fc60352261562a130e5e3a76795))
+
+
+### Code Refactoring
+
+* rename astral back to unbound ([#751](https://github.com/marioparaschiv/unbound/issues/751)) ([05faca1](https://github.com/marioparaschiv/unbound/commit/05faca1a9fef48992fd80f981f009d02da943b40))
+* **web:** drop the status page icon, keep the logo ([#748](https://github.com/marioparaschiv/unbound/issues/748)) ([43a7cee](https://github.com/marioparaschiv/unbound/commit/43a7cee9cc0965dfa93be2c6bbf2a4f61b2b744e))
+
+
+### Build System
+
+* **deps:** bump @babel/plugin-syntax-jsx from 7.29.7 to 8.0.1 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+* **deps:** bump @babel/preset-typescript from 7.29.7 to 8.0.7 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+* **deps:** bump postgres from 3.4.9 to 4.0.0 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+* **deps:** bump the minor-and-patch group with 5 updates ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+
+
+### Continuous Integration
+
+* **deps:** bump gradle/actions/setup-gradle to 6.4.1 ([513bfab](https://github.com/marioparaschiv/unbound/commit/513bfab33593678c1cc0ea80c55658e0280e3942))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/contracts bumped to 0.13.0
+    * @unbound-app/utils bumped to 0.9.3
+
 ## [0.12.0](https://github.com/marioparaschiv/unbound/compare/web-v0.11.0...web-v0.12.0) (2026-10-31)
 
 
