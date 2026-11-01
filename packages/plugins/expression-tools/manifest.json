@@ -22,5 +22,12 @@
 	],
 	"version": "1.0.1",
 	"icon": "ReactionIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "0c5debaa510d8a502e351eacccaa1ff015a4d128eee3db5e6612270d58dcdfcf7effd081e2a758af62b2235c520ecc7048038a871ee24b6c8747a8e14f3e6e3f"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "Kf6Inl2eA6/UFcaSTrLV+0dHOaVFPJoorWFIRPUCYKk6VUyhSHHHaD4IHmI0MsFQsZM/vssZu2nxx0VTmOszCQ=="
+	}
 }
