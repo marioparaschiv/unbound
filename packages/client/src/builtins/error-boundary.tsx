@@ -2,9 +2,9 @@ import { createLogger } from '@unbound-app/logger';
 import { Platform } from 'react-native';
 
 import { getSetting, setSetting } from '~/settings/unbound';
+import { createPatcher } from '~/patcher/create-patcher';
 import { CLIENT_VERSION } from '~/core/constants';
 import ErrorFallback from '~/ui/error-boundary';
-import { createPatcher } from '~/patcher/api';
 import { findByName } from '~/metro/search';
 import { reload } from '~/native/native';
 

@@ -4,8 +4,6 @@ description: 'Read and control installed addons, and drive updates, the marketpl
 icon: 'layer-group'
 ---
 
-import Deprecated from '/snippets/deprecated.mdx';
-
 ### What are managers?
 
 `plugins`, `themes`, `iconPacks` and `fonts` are the addon managers. Each one runs every addon of its kind through the same lifecycle: load the bundle, run it, persist whether it's enabled, and tear it down.
@@ -25,13 +23,17 @@ Every addon goes through the same stages. The key distinction is between two kin
 
 <Steps>
 	<Step title='Load' icon='download'>
-		The manager takes in the bundle and manifest. If the addon's persisted state is enabled, it starts right away.
+		The manager takes in the bundle and manifest. If the addon's persisted state is enabled, it
+		starts right away.
 	</Step>
 	<Step title='Start / Stop' icon='play'>
-		Runtime state. Starting turns the bundle into an instance and runs it. Stopping tears that instance down. This isn't persisted; it only tracks whether the addon is running in this session.
+		Runtime state. Starting turns the bundle into an instance and runs it. Stopping tears that
+		instance down. This isn't persisted; it only tracks whether the addon is running in this
+		session.
 	</Step>
 	<Step title='Enable / Disable / Toggle' icon='toggle-on'>
-		Intent state. `enable` saves the addon as on and starts it. `disable` saves it as off and stops it. `toggle` switches between the two. This is the state that survives a reload.
+		Intent state. `enable` saves the addon as on and starts it. `disable` saves it as off and
+		stops it. `toggle` switches between the two. This is the state that survives a reload.
 	</Step>
 	<Step title='Uninstall' icon='trash'>
 		The addon is removed. If it's running, it stops first.
@@ -39,23 +41,24 @@ Every addon goes through the same stages. The key distinction is between two kin
 </Steps>
 
 <Note>
-	Because enabled-state is persisted, the manager restores it on launch: an enabled addon starts automatically during Load. This is the reason intent and runtime are kept separate.
+	Because enabled-state is persisted, the manager restores it on launch: an enabled addon starts
+	automatically during Load. This is the reason intent and runtime are kept separate.
 </Note>
 
 ### Reading and controlling addons
 
 `plugins`, `themes` and `iconPacks` share these members. Each takes the addon's `id`.
 
-| Member | Does |
-| --- | --- |
-| `getAll()` | Lists every installed addon of the kind |
-| `get(id)` | Reads one installed addon, or `undefined` |
-| `isEnabled(id)` | Whether the addon is enabled |
-| `enable(id)`, `disable(id)`, `toggle(id)` | Changes and persists the enabled state |
-| `install(url)` | Installs an addon from its manifest URL |
-| `update(id)` | Checks for updates, then applies this addon's update. Resolves to whether it now runs a newer version |
-| `uninstall(id)` | Stops and removes the addon |
-| `reload(id, bundle, manifest)` | Swaps the bundle in place and keeps the enabled state. `ubd push` uses it |
+| Member                                    | Does                                                                                                  |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `getAll()`                                | Lists every installed addon of the kind                                                               |
+| `get(id)`                                 | Reads one installed addon, or `undefined`                                                             |
+| `isEnabled(id)`                           | Whether the addon is enabled                                                                          |
+| `enable(id)`, `disable(id)`, `toggle(id)` | Changes and persists the enabled state                                                                |
+| `install(url)`                            | Installs an addon from its manifest URL                                                               |
+| `update(id)`                              | Checks for updates, then applies this addon's update. Resolves to whether it now runs a newer version |
+| `uninstall(id)`                           | Stops and removes the addon                                                                           |
+| `reload(id, bundle, manifest)`            | Swaps the bundle in place and keeps the enabled state. `ubd push` uses it                             |
 
 `get` and `getAll` return addon handles. A handle has `id`, `name`, `version`, `authors`, `manifest`, `started` and `failed`, and the methods `isEnabled()`, `enable()`, `disable()` and `reload()`. It stringifies to its manifest.
 
@@ -92,12 +95,12 @@ Everything else is shared: loading, validation, enable/disable, persistence, and
 
 ### Updates, marketplace, Sync and built-ins
 
-| Namespace | Members |
-| --- | --- |
-| `updates` | `check()` checks every addon and the loader. `apply(id)` applies one pending update. `applyAll()` applies every pending update. `checkLoader()` resolves to a newer loader version, or `null` |
-| `marketplace` | `refresh()` fetches the catalog if it changed. `search({ type, search?, sort? })` lists matching addons. `install(id)` installs the latest version |
-| `sync` | `isEnabled()`, `setEnabled(enabled)`, `getMode()`, `setMode(mode)`, `getSession()`, `now()`, `signIn()`, `signOut()`, `deleteData()`, `resolveFirstSync(strategy)` |
-| `builtins` | `register(name, builtin)` starts a built-in feature with `start`/`stop` hooks. `unregister(name)` stops it |
+| Namespace     | Members                                                                                                                                                                                       |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `updates`     | `check()` checks every addon and the loader. `apply(id)` applies one pending update. `applyAll()` applies every pending update. `checkLoader()` resolves to a newer loader version, or `null` |
+| `marketplace` | `refresh()` fetches the catalog if it changed. `search({ type, search?, sort? })` lists matching addons. `install(id)` installs the latest version                                            |
+| `sync`        | `isEnabled()`, `setEnabled(enabled)`, `getMode()`, `setMode(mode)`, `getSession()`, `now()`, `signIn()`, `signOut()`, `deleteData()`, `resolveFirstSync(strategy)`                            |
+| `builtins`    | `register(name, builtin)` starts a built-in feature with `start`/`stop` hooks. `unregister(name)` stops it                                                                                    |
 
 ```ts
 import { updates } from '@unbound-app/api';
@@ -107,15 +110,3 @@ await updates.applyAll();
 ```
 
 `sync.getSession()` returns the signed-in account (`id`, `name`, `image`) and never the token. See [Sync](/user-guide/sync) for what Sync keeps in step.
-
-### Deprecated names
-
-<Deprecated />
-
-| Deprecated | Use |
-| --- | --- |
-| `getEntities()` | `getAll()` |
-| `getEntity(id)` | `get(id)` |
-| `delete(id)` | `uninstall(id)` |
-| `unbound.icons` | `iconPacks` |
-| `unbound.cloudSync` | `sync` |

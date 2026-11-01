@@ -37,22 +37,4 @@ describe('metro.onModuleLoad', () => {
 
 		expect(calls).toEqual([[exported, MODULE_ID]]);
 	});
-
-	test('keeps addListener, on and off as aliases', () => {
-		const calls: number[] = [];
-
-		function listener(_mdl: MetroExport, id: number) {
-			calls.push(id);
-		}
-
-		metro.addListener(listener);
-		metro.on(listener);
-		requireModuleOnce();
-		metro.off(listener);
-		requireModuleOnce();
-
-		expect(metro.addListener).toBe(metro.onModuleLoad);
-		expect(metro.on).toBe(metro.onModuleLoad);
-		expect(calls).toEqual([MODULE_ID]);
-	});
 });

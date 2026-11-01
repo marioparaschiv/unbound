@@ -4,8 +4,7 @@ import noop from '@unbound-app/utils/noop';
 type Remove = () => void;
 
 export type Subscriptions = {
-	add: (remove: Remove, listener?: WeakKey) => Remove;
-	release: (listener: WeakKey) => void;
+	add: (remove: Remove) => Remove;
 	dispose: () => void;
 };
 
@@ -36,11 +35,10 @@ export function disposeInReverse(disposers: Remove[]): void {
  */
 export function createSubscriptions(): Subscriptions {
 	const live = new Set<Remove>();
-	const byListener = new Map<WeakKey, Remove>();
 	let disposed = false;
 
 	return {
-		add(remove, listener) {
+		add(remove) {
 			if (disposed) {
 				remove();
 
@@ -50,23 +48,12 @@ export function createSubscriptions(): Subscriptions {
 			function release() {
 				if (!live.delete(release)) return;
 
-				if (listener !== undefined && byListener.get(listener) === release) {
-					byListener.delete(listener);
-				}
-
 				remove();
 			}
 
 			live.add(release);
 
-			if (listener !== undefined) {
-				byListener.set(listener, release);
-			}
-
 			return release;
-		},
-		release(listener) {
-			byListener.get(listener)?.();
 		},
 		dispose() {
 			disposed = true;

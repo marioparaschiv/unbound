@@ -16,9 +16,6 @@ const FileManager: DCDFileManagerType = getNativeModule(
 export const documentsPath =
 	FileManager.DocumentsDirPath ?? FileManager.getConstants().DocumentsDirPath;
 
-/** @deprecated Use documentsPath */
-export const Documents = documentsPath;
-
 /**
  * @description Reads a file's contents, resolving relative paths against {@link documentsPath}.
  * @param path The file path to read, relative to {@link documentsPath} unless `inDocuments` is `false`.
@@ -34,9 +31,6 @@ export function readFile(
 	return FileManager.readFile(inDocuments ? `${documentsPath}/${path}` : path, encoding);
 }
 
-/** @deprecated Use readFile */
-export const read = readFile;
-
 /**
  * @description Writes content to a file within {@link documentsPath}.
  * @param path The file path to write to, relative to {@link documentsPath}.
@@ -51,9 +45,6 @@ export function writeFile(
 ) {
 	return FileManager.writeFile('documents', path, content, encoding);
 }
-
-/** @deprecated Use writeFile */
-export const write = writeFile;
 
 /**
  * @description Removes a file or a whole folder within {@link documentsPath}.
@@ -71,9 +62,6 @@ export function removeFile(path: string): Promise<boolean> {
 	return FileManager.removeFile('documents', path);
 }
 
-/** @deprecated Use removeFile */
-export const rm = removeFile;
-
 /**
  * @description Checks whether a file exists, resolving relative paths against {@link documentsPath}.
  * @param path The file path to check, relative to {@link documentsPath} unless `inDocuments` is `false`.
@@ -86,12 +74,8 @@ export function exists(path: string, inDocuments: boolean = true): Promise<boole
 
 export default {
 	documentsPath,
-	Documents,
 	readFile,
-	read,
 	writeFile,
-	write,
 	removeFile,
-	rm,
 	exists,
 };

@@ -3,13 +3,13 @@ import { describe, expect, test } from 'bun:test';
 import { flaggedFiles, lintFixture } from '../lint-fixture';
 
 const files = {
-	'lazy.ts': "export const Store = metro.findStore('User', { lazy: true });",
-	'in-function.ts': "export function store() { return metro.findStore('User'); }",
+	'lazy.ts': "export const Store = flux.getStore('User', { lazy: true });",
+	'in-function.ts': "export function store() { return flux.getStore('User'); }",
 	'in-arrow.ts': "export const store = () => flux.getStore('UserStore');",
 	'in-method.ts': "export default { start() { metro.findByProps('sendMessage'); } };",
-	'storage.ts': "export const settings = storage.getStore('unbound.moyai');",
+	'storage.ts': "export const settings = storage.getBucket('unbound.moyai');",
 	'unrelated.ts': "export const row = rows.findByProps('id');",
-	'eager.ts': "export const Store = metro.findStore('User', { lazy: false });",
+	'eager.ts': "export const Store = flux.getStore('User', { lazy: false });",
 	'scoped.ts':
 		"export const Messages = unbound.metro.findByProps('sendMessage', { lazy: false });",
 	'flux.ts': "export const Users = flux.getStore('UserStore', { lazy: false });",
@@ -17,7 +17,7 @@ const files = {
 		"import { findByName as byName } from '@unbound-app/api/metro';",
 		"export const Row = byName('RowManager', { interop: false, lazy: false });",
 	].join('\n'),
-	'variable.ts': "export const Store = metro.findStore('User', { lazy: isLazy });",
+	'variable.ts': "export const Store = flux.getStore('User', { lazy: isLazy });",
 	'default.ts': "export const Messages = metro.findByProps('sendMessage');",
 	'default-options.ts': "export const Row = metro.findByName('RowManager', { interop: false });",
 };

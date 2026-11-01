@@ -6,8 +6,11 @@ export declare const register: (name: string, builtin: BuiltIn) => void;
 export declare const unregister: (name: string) => void;
 /** A built-in feature exposing optional `start`/`stop` lifecycle hooks. */
 export type BuiltIn = {
+	/** Runs when the built-in is registered; if it throws, the built-in is logged and left inactive. */
 	start?: () => void;
+	/** Runs when the built-in is unregistered or the built-ins shut down, in reverse start order. */
 	stop?: () => void;
+	/** Checked once at initialisation; returning `false` skips registering the built-in. */
 	shouldStart?: () => boolean;
 };
 

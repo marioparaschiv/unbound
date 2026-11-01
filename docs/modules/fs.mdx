@@ -4,8 +4,6 @@ description: 'Read, write, and check files against the documents directory.'
 icon: 'folder'
 ---
 
-import Deprecated from '/snippets/deprecated.mdx';
-
 ### What is the file system module?
 
 `fs` is a small wrapper over the native file manager. Use it to read, write, remove, and check files. By default, every path resolves against the platform's **documents directory** (the private, persistent folder where Unbound stores its data), so you can use short relative paths instead of absolute ones.
@@ -30,21 +28,25 @@ const raw = await fs.readFile('my-plugin/data.json');
 import { fs } from '@unbound-app/api';
 
 await fs.writeFile('my-plugin/notes.txt', 'hello');
-```
+
+````
 
 ```ts readFile
 const contents = await fs.readFile('my-plugin/notes.txt');
 // contents === 'hello'
-```
+````
 
 ```ts base64
 // Pass an encoding when you're not working with text.
 await fs.writeFile('my-plugin/icon.png', base64Data, 'base64');
 ```
+
 </CodeGroup>
 
 <Note>
-	Relative paths resolve against `fs.documentsPath`. To read a file elsewhere on disk, pass an absolute path and `false` as the `inDocuments` argument: `fs.readFile('/abs/path', 'utf8', false)`.
+	Relative paths resolve against `fs.documentsPath`. To read a file elsewhere on disk, pass an
+	absolute path and `false` as the `inDocuments` argument: `fs.readFile('/abs/path', 'utf8',
+	false)`.
 </Note>
 
 ### Checking & removing
@@ -60,16 +62,7 @@ if (await fs.exists('my-plugin/data.json')) {
 ```
 
 <Tip>
-	For configuration, use [storage](/modules/storage) instead. Use `fs` directly when an addon ships its own data files, such as caches, exports, or downloaded assets, that don't belong in a settings Bucket.
+	For configuration, use [storage](/modules/storage) instead. Use `fs` directly when an addon
+	ships its own data files, such as caches, exports, or downloaded assets, that don't belong in a
+	settings Bucket.
 </Tip>
-
-### Deprecated names
-
-<Deprecated />
-
-| Deprecated | Use |
-| --- | --- |
-| `fs.read` | `fs.readFile` |
-| `fs.write` | `fs.writeFile` |
-| `fs.rm` | `fs.removeFile` |
-| `fs.Documents` | `fs.documentsPath` |

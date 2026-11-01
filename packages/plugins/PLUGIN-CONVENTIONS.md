@@ -87,15 +87,14 @@ A feature never runs half-working. When anything it depends on is missing, it lo
 `src/modules.ts` holds every handle to something outside the plugin. A Discord rename then needs a one-line fix in one place.
 
 ```ts
-export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
+export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
 export const MessageActions = metro.findByProps('sendMessage', 'receiveMessage', { lazy: true });
-export const settings = storage.getStore('unbound.my-plugin');
-export const Patcher = patcher.createPatcher('unbound.my-plugin');
+export const settings = storage.getBucket('unbound.my-plugin');
 ```
 
 - Pass `{ lazy: true }` to every lookup so the search runs on first use.
-- Prefer what Unbound already resolves: `metro.common` (`Dispatcher`, `Clipboard`, `Constants`, `Theme`, `Moment`, `Reanimated`), `metro.stores`, `metro.api`, and `metro.components` (`Discord`, `Forms`, `Media`).
-- Prefer `findStore`, `findByProps`, and `findByName` over a hand-written filter. A custom filter goes through `metro.filters.createCacheable`.
+- Prefer what Unbound already resolves: `metro.common` (`Clipboard`, `Constants`, `Theme`, `Moment`, `Reanimated`), `metro.stores`, `metro.api`, and `metro.components` (`Discord`, `Forms`, `Media`).
+- Prefer `flux.getStore`, `metro.findByProps`, and `metro.findByName` over a hand-written filter. A custom filter goes through `metro.filters.createCacheable`.
 - Resolve React Native native modules with `native.getNativeModule(...names)`.
 
 ## Patches
@@ -104,7 +103,7 @@ Put all patches on one module in `src/patches/<module>.ts`, named after the modu
 
 ```ts
 export function patchMessageStore(): () => void {
-	return Patcher.after(MessageStore, 'getMessages', ({ result }) => filterBlocked(result));
+	return patcher.after(MessageStore, 'getMessages', ({ result }) => filterBlocked(result));
 }
 ```
 

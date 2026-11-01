@@ -1,11 +1,11 @@
-import { ui } from '@unbound-app/api';
+import { storage, ui } from '@unbound-app/api';
 
 import { DEFAULT_RADIUS, MAXIMUM_RADIUS } from '~/constants';
 import { storedRadius } from '~/radius';
-import { settings } from '~/modules';
+import { SETTINGS_BUCKET } from '~/modules';
 
 function SettingsPanel() {
-	const store = settings.useSettingsStore();
+	const store = storage.useBucket(SETTINGS_BUCKET);
 
 	return (
 		<ui.Page>

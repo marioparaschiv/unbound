@@ -1,6 +1,3 @@
-import * as IconPacks from '~/icon-packs/api';
-import * as Sync from '~/sync/api';
-
 export * as marketplace from '~/marketplace/api';
 export * as iconPacks from '~/icon-packs/api';
 export * as ui from '~/ui/settings-kit/api';
@@ -22,8 +19,3 @@ export * as i18n from '~/i18n/api';
 export * as sync from '~/sync/api';
 export * as fs from '~/native/fs';
 export * as metro from '~/metro';
-
-/** @deprecated Use iconPacks */
-export const icons = IconPacks;
-/** @deprecated Use sync */
-export const cloudSync = Sync;

@@ -7,11 +7,17 @@ import { findByName } from '~/metro/search';
 import { ActionSheets } from '~/metro/api';
 import { messages } from '~/i18n/api';
 
+/** Props for `ColorRow`. */
 export type ColorRowProps = {
+	/** The row's title. */
 	label: string;
+	/** The chosen color as a `#RRGGBB` hex code, or `undefined` when the default applies. */
 	color: string | undefined;
+	/** The default color, swatched while `color` is unset and used as the hex input's placeholder. */
 	fallbackColor: string;
+	/** The text shown under the label while `color` is unset, in place of the hex code. */
 	fallbackLabel: string;
+	/** Called with the new `#RRGGBB` hex code, or `undefined` when the user resets or clears it. */
 	onChange: (color: string | undefined) => void;
 };
 

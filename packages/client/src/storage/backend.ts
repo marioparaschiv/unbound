@@ -6,6 +6,7 @@ import type {
 } from '@unbound-app/types';
 import isEmpty from '@unbound-app/utils/is-empty';
 
+/** Every Bucket's settings, keyed by Bucket name, as the loader persists them. */
 export type SettingsStores = Record<string, SettingsObject>;
 
 export type SettingsBackend = {

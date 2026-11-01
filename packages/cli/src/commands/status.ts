@@ -78,7 +78,7 @@ const deviceStatusReportSchema = z.object({
 type DeviceStatusReport = z.infer<typeof deviceStatusReportSchema>;
 
 type PluginManagerView = {
-	getEntities(): { id: string; started: boolean; failed: boolean }[];
+	getAll(): { id: string; started: boolean; failed: boolean }[];
 };
 
 function readDeviceStatus(unbound: UnboundGlobal): string {
@@ -91,7 +91,7 @@ function readDeviceStatus(unbound: UnboundGlobal): string {
 	const hasPlugins = (
 		value: UnboundGlobal,
 	): value is UnboundGlobal & { plugins: PluginManagerView } => 'plugins' in value;
-	const entities = hasPlugins(unbound) ? unbound.plugins.getEntities() : [];
+	const entities = hasPlugins(unbound) ? unbound.plugins.getAll() : [];
 	const report: DeviceStatusReport = {
 		started: entities.filter((entity) => entity.started).length,
 		failed: entities.filter((entity) => entity.failed).map((entity) => entity.id),

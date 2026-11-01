@@ -79,9 +79,6 @@ export function getById(id: number): UnboundAsset | undefined {
 	return assets.get(id);
 }
 
-/** @deprecated Use getById */
-export const getByID = getById;
-
 /**
  * @description Looks up a known asset's id by its name and type.
  * @param name The asset name to match.
@@ -94,9 +91,6 @@ export function getIdByName(name: string, type: 'svg' | 'png' = 'png'): number |
 
 	return id;
 }
-
-/** @deprecated Use getIdByName */
-export const getIDByName = getIdByName;
 
 /**
  * @description Returns every known asset.
@@ -116,18 +110,12 @@ export const icons: Record<string, number | undefined> = new Proxy(
 	},
 );
 
-/** @deprecated Use icons */
-export const Icons = icons;
-
 export default {
 	assets,
 	find,
 	getByName,
 	getById,
-	getByID,
 	getIdByName,
-	getIDByName,
 	getAll,
 	icons,
-	Icons,
 };

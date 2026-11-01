@@ -48,12 +48,3 @@ export const errors: ReadonlyMap<PropertyKey, Error> = plugins.errors;
 export const start: (id: string) => void | Promise<void> = plugins.start.bind(plugins);
 /** Stops a running plugin without changing its enabled state. */
 export const stop: (id: string) => void | Promise<void> = plugins.stop.bind(plugins);
-
-/** @deprecated Use getAll */
-export const getEntities = getAll;
-/** @deprecated Use get */
-export const getEntity = get;
-/** @deprecated Use uninstall */
-const deprecatedDelete = uninstall;
-
-export { deprecatedDelete as delete };

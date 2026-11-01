@@ -4,8 +4,6 @@ description: 'Show transient, non-blocking notifications to the user.'
 icon: 'bells'
 ---
 
-import Deprecated from '/snippets/deprecated.mdx';
-
 ### Showing a toast
 
 `show` displays a toast and returns a handle for controlling it. If you don't pass an `id`, one is generated for you.
@@ -34,13 +32,6 @@ toast.close();
 ```
 
 <Tip>
-	Pass a stable `id` when a toast should _replace_ a previous one instead of stacking. This is useful for progress updates that shouldn't pile up on screen.
+	Pass a stable `id` when a toast should _replace_ a previous one instead of stacking. This is
+	useful for progress updates that shouldn't pile up on screen.
 </Tip>
-
-### Deprecated names
-
-<Deprecated />
-
-| Deprecated | Use |
-| --- | --- |
-| `toasts.showToast` | `toasts.show` |
