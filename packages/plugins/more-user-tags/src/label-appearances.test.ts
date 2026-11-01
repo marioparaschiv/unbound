@@ -67,3 +67,15 @@ test('reports whether any color is known for a tag text and bumps its revision o
 	expect(appearances.has('Staff')).toBe(false);
 	expect(appearances.revision()).toBeGreaterThan(afterSet);
 });
+
+test('notifies listeners only when an appearance changes', () => {
+	const appearances = createLabelAppearances();
+	let notified = 0;
+
+	appearances.subscribe(() => notified++);
+	appearances.set('Owner', { colors: ['#112233', '#445566'], style: 'gradient' });
+	appearances.set('Owner', { colors: ['#112233', '#445566'], style: 'gradient' });
+	appearances.set('Nobody', { colors: [], style: 'solid' });
+
+	expect(notified).toBe(1);
+});

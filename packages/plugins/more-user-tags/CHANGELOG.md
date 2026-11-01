@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1]
+
+### Fixed
+
+- Scrolling no longer stalls the JavaScript thread: colors are sent to the UI thread only when they actually change.
+
 ## [1.2.0]
 
 ### Changed

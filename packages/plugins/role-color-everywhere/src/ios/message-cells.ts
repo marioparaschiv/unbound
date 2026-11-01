@@ -393,9 +393,18 @@ export function colorMessageMentions(native: NativePluginBridge): () => Promise<
 	const scope = ui.createScope();
 	let pushTimer: ReturnType<typeof setTimeout> | undefined;
 
+	let pushed = '';
+
 	function pushMentions() {
 		pushTimer = undefined;
-		ui.run(setMessageMentions, channelMentions(currentChannelId));
+
+		const mentions = channelMentions(currentChannelId);
+		const signature = JSON.stringify(mentions);
+
+		if (signature === pushed) return;
+
+		pushed = signature;
+		ui.run(setMessageMentions, mentions);
 	}
 
 	function schedulePush() {

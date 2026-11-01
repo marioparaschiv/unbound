@@ -33,17 +33,26 @@ export function createLabelAppearances() {
 
 		if (!colors.length) {
 			const prefix = getRoleGradientKey(label, '');
+			const stale = [...entries.keys()].filter((key) => key.startsWith(prefix));
 
-			for (const key of entries.keys()) {
-				if (key.startsWith(prefix)) entries.delete(key);
-			}
+			for (const key of stale) entries.delete(key);
 
-			changed();
+			if (stale.length) changed();
 
 			return;
 		}
 
-		entries.set(getRoleGradientKey(label, colors[0]), { colors, style: appearance.style });
+		const key = getRoleGradientKey(label, colors[0]);
+		const existing = entries.get(key);
+
+		if (
+			existing?.style === appearance.style &&
+			existing.colors.join(':') === colors.join(':')
+		) {
+			return;
+		}
+
+		entries.set(key, { colors, style: appearance.style });
 		changed();
 	}
 
