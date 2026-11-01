@@ -168,7 +168,7 @@ describe('addon scope wiring', () => {
 		})`);
 
 		expect(registered()).toEqual({
-			moduleListeners: 2,
+			moduleListeners: 1,
 			actionListeners: 1,
 			storeListeners: 1,
 			commands: ['shared', 'wired'],
