@@ -30,7 +30,12 @@ mock.module('~/metro/wait', () => ({
 }));
 
 mock.module('~/metro/cache', () => ({
-	default: { moduleIds: [], hasModuleFlag: () => false, addModuleFlag: () => void 0 },
+	default: {
+		state: { moduleFlags: {} },
+		moduleIds: [],
+		hasModuleFlag: () => false,
+		addModuleFlag: () => void 0,
+	},
 	ModuleFlags: { BLACKLISTED: 1 },
 }));
 mock.module('~/assets/api', () => ({ getIdByName: () => 1 }));

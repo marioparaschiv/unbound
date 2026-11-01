@@ -1,9 +1,7 @@
 #include "LoaderJSI.h"
 
 #include "HermesBytecodeHeader.h"
-#include "LoaderBootstrap.h"
 #include "LoaderLog.h"
-#include "NativePluginRuntime.h"
 
 namespace loader {
 namespace jsi = facebook::jsi;
@@ -102,52 +100,5 @@ jsi::Value evaluateBytecode(jsi::Runtime &runtime, std::string bytecode, const s
     auto prepared =
         runtime.prepareJavaScript(std::make_shared<OwnedBuffer>(std::move(bytecode)), tag);
     return runtime.evaluatePreparedJavaScript(prepared);
-}
-
-bool installMetroModuleCapture(jsi::Runtime &runtime)
-{
-    jsi::Value result = bootstrap::evaluate(runtime, bootstrap::kMetroModuleCapture);
-    return result.isBool() && result.getBool();
-}
-
-bool installRunApplicationGate(jsi::Runtime &runtime, std::function<void(jsi::Runtime &)> beforeRun)
-{
-    auto gate = bootstrap::function(runtime, bootstrap::kRunApplicationGate);
-    if (!gate)
-    {
-        return false;
-    }
-
-    auto hook = native::makeFunction(
-        runtime, "beforeRunApplication", 0,
-        [beforeRun = std::move(beforeRun)](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *,
-                                           size_t) -> jsi::Value {
-            beforeRun(rt);
-            return jsi::Value::undefined();
-        });
-
-    try
-    {
-        jsi::Value result = gate->call(runtime, std::move(hook));
-        return result.isBool() && result.getBool();
-    }
-    catch (const std::exception &error)
-    {
-        log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
-            std::string("The run-application gate failed: ") + error.what());
-        return false;
-    }
-}
-
-bool runtimeHasRequiredModules(jsi::Runtime &runtime)
-{
-    jsi::Value result = bootstrap::evaluate(runtime, bootstrap::kRuntimeReadiness);
-    return result.isBool() && result.getBool();
-}
-
-std::string runtimeModuleDiagnostics(jsi::Runtime &runtime)
-{
-    jsi::Value result = bootstrap::evaluate(runtime, bootstrap::kRuntimeDiagnostics);
-    return result.isString() ? result.getString(runtime).utf8(runtime) : "unavailable";
 }
 }

@@ -53,7 +53,7 @@ class ReactRuntimeTest {
             ran.set(true)
         }
 
-        assertTrue("the capture must finish before runBeforeBundle returns", ran.get())
+        assertTrue("the work must finish before runBeforeBundle returns", ran.get())
         assertEquals(42L, pointer)
         queue.shutdown()
     }

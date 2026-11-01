@@ -1,8 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <chrono>
-#include <condition_variable>
 #include <functional>
 #include <jsi/jsi.h>
 #include <memory>
@@ -19,9 +17,7 @@ class LoaderHost
 public:
     virtual ~LoaderHost() = default;
 
-    virtual void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) = 0;
-    virtual void runAfter(double seconds, std::function<void()> work)             = 0;
-    virtual void runInBackground(std::function<void()> work)                      = 0;
+    virtual void runInBackground(std::function<void()> work) = 0;
 
     virtual std::optional<std::string> resource(const std::string &name) = 0;
     virtual std::optional<std::string> resolveUpdateURL()                = 0;
@@ -32,6 +28,7 @@ public:
     virtual void onAddonsPrepared() {}
     virtual void onBundleExecuted() {}
     virtual void alert(const std::string &message) {}
+    virtual void reload() {}
 };
 
 class LoaderPipeline
@@ -40,40 +37,29 @@ public:
     LoaderPipeline(std::shared_ptr<LoaderHost> host, UpdaterSettings settings,
                    BundleUpdater &updater);
 
-    static constexpr std::chrono::milliseconds kRunApplicationBundleWait{1500};
-
-    void onRuntimeCreated(facebook::jsi::Runtime &runtime);
     void prepare();
-    void enqueueBundle();
-    bool executeNow(facebook::jsi::Runtime &runtime, std::chrono::milliseconds wait);
-    bool waitForPreparedBundle(std::chrono::milliseconds wait);
+    void onRuntimeCreated(facebook::jsi::Runtime &runtime);
 
     bool isBundleReady() const;
 
 private:
-    struct PendingBundle {
-        std::mutex              mutex;
-        std::condition_variable ready;
-        bool                    settled = false;
-        std::string             bundle;
-        std::string             path;
+    struct SavedBundle {
+        std::string bundle;
+        std::string path;
     };
 
-    void prefetchBundle();
-    void executeBundle(std::shared_ptr<PendingBundle> pending, uint64_t token, unsigned attempt);
-    bool evaluatePending(facebook::jsi::Runtime               &runtime,
-                         const std::shared_ptr<PendingBundle> &pending, uint64_t token);
-    std::shared_ptr<PendingBundle> currentPending();
-    void                           injectPreBundle(facebook::jsi::Runtime &runtime);
-    void                           announceCrashDisabledAddons();
+    void updateInBackground(std::string savedPath, bool hasSaved, uint64_t token);
+    bool evaluate(facebook::jsi::Runtime &runtime, const SavedBundle &saved, uint64_t token);
+    void injectPreBundle(facebook::jsi::Runtime &runtime);
+    void announceCrashDisabledAddons();
 
-    std::shared_ptr<LoaderHost>    host_;
-    UpdaterSettings                settings_;
-    BundleUpdater                 &updater_;
-    std::shared_ptr<PendingBundle> pending_;
-    std::mutex                     pendingMutex_;
-    std::atomic_uint64_t           prefetchToken_{0};
-    std::atomic_bool               executionScheduled_{false};
-    std::atomic_bool               bundleReady_{false};
+    std::shared_ptr<LoaderHost> host_;
+    UpdaterSettings             settings_;
+    BundleUpdater              &updater_;
+    std::optional<SavedBundle>  saved_;
+    std::mutex                  savedMutex_;
+    std::atomic_uint64_t        token_{0};
+    std::atomic_bool            bundleReady_{false};
+    std::atomic_bool            evaluationFailed_{false};
 };
 }

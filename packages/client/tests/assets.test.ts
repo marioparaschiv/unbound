@@ -1,5 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 
+import { startFakeMetro, type FakeFactory } from './helpers/fake-metro';
+
 type Asset = {
 	__packager_asset: boolean;
 	name: string;
@@ -14,15 +16,6 @@ type Registry = {
 	registerAsset: (asset: Asset) => number;
 	getAssetByID: (id: number) => Asset | undefined;
 };
-type Factory = (
-	global: typeof globalThis,
-	require: (id: number) => MetroExport,
-	importDefault: (id: number) => MetroExport,
-	importAll: (id: number) => MetroExport,
-	module: MetroPublicModule,
-	exports: MetroExport,
-	dependencyMap: number[],
-) => void;
 
 const REGISTRY = 83;
 const REEXPORT = 1134;
@@ -39,16 +32,12 @@ Object.assign(globalThis, {
 
 // A fake Metro registry laid out like Discord's: 83 holds the assets, 1134 copies its functions, and
 // every asset module requires only 1134.
-const modules = new Map<number, MetroModuleRecord>();
+const fakeMetro = startFakeMetro();
+const metroRequire = fakeMetro.require;
 const moduleIds: number[] = [];
 
-function define(id: number, dependencyMap: number[], factory: Factory) {
-	modules.set(id, {
-		factory,
-		dependencyMap,
-		isInitialized: false,
-		publicModule: { id, exports: {} },
-	});
+function define(id: number, dependencyMap: number[], factory: FakeFactory) {
+	fakeMetro.define(id, dependencyMap, factory);
 	moduleIds.push(id);
 }
 
@@ -67,33 +56,8 @@ function defineAsset(id: number, name: string) {
 	});
 }
 
-function metroRequire(id: number): MetroExport {
-	const record = modules.get(id);
-
-	if (!record) {
-		throw new Error(`No module ${id}`);
-	}
-
-	if (!record.isInitialized) {
-		record.isInitialized = true;
-		record.factory?.(
-			globalThis,
-			metroRequire,
-			metroRequire,
-			metroRequire,
-			record.publicModule,
-			record.publicModule.exports,
-			record.dependencyMap ?? [],
-		);
-		record.factory = undefined;
-		record.dependencyMap = undefined;
-	}
-
-	return record.publicModule.exports;
-}
-
 function initialized() {
-	return moduleIds.filter((id) => modules.get(id)?.isInitialized);
+	return moduleIds.filter((id) => globalThis.modules.get(id)?.isInitialized);
 }
 
 function initializedSince(before: number[]) {
@@ -131,9 +95,7 @@ define(3001, [PLAIN], (_, __, ___, ____, module) => {
 metroRequire(PLAIN);
 metroRequire(2000);
 
-Object.assign(globalThis, { modules, __r: metroRequire });
-
-const cacheState = { assetsComplete: false };
+const cacheState = { assetsComplete: false, moduleFlags: {} };
 
 mock.module('~/metro/cache', () => ({
 	ModuleFlags: { BLACKLISTED: 1 },

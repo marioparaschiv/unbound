@@ -152,11 +152,6 @@ void AndroidLoader::onLoadJSBundle()
     pipeline_->prepare();
 }
 
-void AndroidLoader::onJSBundleLoaded()
-{
-    pipeline_->enqueueBundle();
-}
-
 void AndroidLoader::onRuntimeCreated(jsi::Runtime &runtime)
 {
     {
@@ -386,6 +381,11 @@ void AndroidLoader::onBundleExecuted()
     }
     env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.onBundleExecuted);
     clearPendingException(env);
+}
+
+void AndroidLoader::reload()
+{
+    reloadApp();
 }
 
 void AndroidLoader::alert(const std::string &message)

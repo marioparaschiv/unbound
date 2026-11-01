@@ -50,6 +50,7 @@ const store = {
 mock.module('~/flux/modules', () => ({ Dispatcher: dispatcher, Flux: {}, FluxHooks: {} }));
 mock.module('~/metro/cache', () => ({
 	default: {
+		state: { moduleFlags: {} },
 		moduleIds: [],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,

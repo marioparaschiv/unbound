@@ -17,6 +17,7 @@ import type {
 	MetroModuleLoadListener,
 } from '~/metro/types';
 import { couldMatch, idsNear, recordMove } from '~/metro/candidates';
+import { attachRunner, type MetroFactory } from '~/metro/capture';
 import Filters, { type MetroFilter } from '~/metro/filters';
 import { isInvalidExport } from '~/metro/invalid-exports';
 import { createLazyModule } from '~/metro/lazy-registry';
@@ -29,74 +30,70 @@ import { CACHE_KEY } from '~/core/constants';
 
 const Logger = createLogger('Metro');
 
-// Walk the entire module registry once at import time, wrapping each module factory so we can
-// track the importing module, harden invalid exports, and run our patches as modules initialize.
-for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
-	const id = Cache.moduleIds[i];
-	const mdl = window.modules.get(id);
+for (const id in Cache.state.moduleFlags) {
+	if (Cache.hasModuleFlag(Number(id), ModuleFlags.BLACKLISTED)) {
+		blacklist.add(Number(id));
+	}
+}
 
-	if (Cache.hasModuleFlag(id, ModuleFlags.BLACKLISTED)) {
-		blacklist.add(id);
-		continue;
+// Modules that ran before this file loaded, such as React Native's InitializeCore, get the patches now.
+for (const id of attachRunner(runModule)) {
+	if (!blacklist.has(id)) {
+		onModuleExports(window.modules.get(id)?.publicModule.exports, id);
+	}
+}
+
+/**
+ * Runs a module's original factory the first time Metro requires it, tracking the importing module,
+ * hardening invalid exports and running our patches. A blacklisted module runs untouched.
+ */
+function runModule(factory: MetroFactory, id: number, args: Parameters<MetroFactory>) {
+	if (blacklist.has(id)) {
+		factory.apply(globalThis, args);
+
+		return;
 	}
 
-	if (!mdl) {
-		continue;
-	}
+	const originalImportingId = data.importingModuleId;
 
-	if (mdl.factory) {
-		const orig = mdl.factory;
+	data.importingModuleId = id;
 
-		mdl.factory = function (...args) {
-			try {
-				const originalImportingId = data.importingModuleId;
+	try {
+		const [, metroRequire, , , moduleObject] = args;
 
-				data.importingModuleId = id;
+		args[2] = (id: number) => {
+			const exps = metroRequire(id);
 
-				const [, metroRequire, , , moduleObject] = args;
-
-				args[2] = (id: number) => {
-					const exps = metroRequire(id);
-
-					return exps && exps.__esModule ? exps.default : exps;
-				};
-
-				args[3] = (id: number) => {
-					const exps = metroRequire(id);
-
-					if (exps && exps.__esModule) {
-						return exps;
-					}
-
-					return { ...exps, default: exps };
-				};
-
-				orig.apply(self, args);
-
-				const exported = moduleObject.exports;
-
-				if (isInvalidExport(exported)) {
-					Cache.addModuleFlag(moduleObject.id, ModuleFlags.BLACKLISTED);
-					blacklist.add(moduleObject.id);
-				} else {
-					onModuleRequire(exported, id);
-				}
-
-				data.importingModuleId = originalImportingId;
-			} catch {
-				Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
-				blacklist.add(id);
-			}
+			return exps && exps.__esModule ? exps.default : exps;
 		};
-	} else {
-		const exported = mdl.publicModule?.exports;
 
-		if (isInvalidExport(exported)) {
-			Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
-			blacklist.add(id);
-		} else {
-			onModuleRequire(exported, id);
-		}
+		args[3] = (id: number) => {
+			const exps = metroRequire(id);
+
+			if (exps && exps.__esModule) {
+				return exps;
+			}
+
+			return { ...exps, default: exps };
+		};
+
+		factory.apply(globalThis, args);
+		onModuleExports(moduleObject.exports, id);
+	} catch {
+		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
+		blacklist.add(id);
+	} finally {
+		data.importingModuleId = originalImportingId;
+	}
+}
+
+// Blacklists a module with invalid exports, so searches skip it; otherwise runs the one-time patches.
+function onModuleExports(exported: MetroExport, id: number) {
+	if (isInvalidExport(exported)) {
+		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
+		blacklist.add(id);
+	} else {
+		onModuleRequire(exported, id);
 	}
 }
 

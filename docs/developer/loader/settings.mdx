@@ -70,7 +70,7 @@ All keys below are inside the `unbound` store.
 		</ParamField>
 
 		<ParamField path="loader.update.hmr" type="boolean" default="false">
-			Opens a hot reload connection to the origin of `loader.update.url`. No connection is made if that key is empty or doesn't parse into a URL with both a scheme and a host. While it is on, the loader waits for a fresh bundle download on launch instead of running the cached bundle first.
+			Opens a hot reload connection to the origin of `loader.update.url`. No connection is made if that key is empty or doesn't parse into a URL with both a scheme and a host. While it is on, the loader runs the cached bundle, then reloads Discord once a newer bundle downloads.
 		</ParamField>
 
 		<ParamField path="loader.update.unsigned" type="boolean" default="false">

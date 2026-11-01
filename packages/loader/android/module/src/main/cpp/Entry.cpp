@@ -96,15 +96,7 @@ static void nativeOnLoadJSBundle(JNIEnv *, jclass)
     }
 }
 
-static void nativeOnJSBundleLoaded(JNIEnv *, jclass)
-{
-    if (auto loader = currentLoader())
-    {
-        loader->onJSBundleLoaded();
-    }
-}
-
-static jboolean nativeInstallMetroModuleCapture(JNIEnv *, jclass, jlong runtimePointer)
+static jboolean nativeOnRuntimeCreated(JNIEnv *, jclass, jlong runtimePointer)
 {
     if (runtimePointer == 0)
     {
@@ -505,9 +497,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;ILjava/lang/String;)V",
          reinterpret_cast<void *>(nativeInitialize)},
         {"nativeOnLoadJSBundle", "()V", reinterpret_cast<void *>(nativeOnLoadJSBundle)},
-        {"nativeOnJSBundleLoaded", "()V", reinterpret_cast<void *>(nativeOnJSBundleLoaded)},
-        {"nativeInstallMetroModuleCapture", "(J)Z",
-         reinterpret_cast<void *>(nativeInstallMetroModuleCapture)},
+        {"nativeOnRuntimeCreated", "(J)Z", reinterpret_cast<void *>(nativeOnRuntimeCreated)},
         {"nativeDrainRuntimeWork", "(J)V", reinterpret_cast<void *>(nativeDrainRuntimeWork)},
         {"nativeDrainMainWork", "()V", reinterpret_cast<void *>(nativeDrainMainWork)},
         {"nativeDispatchHookEvent", "(Ljava/lang/String;Ljava/lang/String;)V",

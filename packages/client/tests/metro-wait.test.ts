@@ -2,40 +2,20 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 
 import type { MetroFilter } from '~/metro/filters';
 
+import { startFakeMetro, type FakeFactory } from './helpers/fake-metro';
+
 type Exports = Record<string, (...args: number[]) => number | null>;
-type Factory = (
-	global: typeof globalThis,
-	require: (id: number) => Exports,
-	importDefault: (id: number) => Exports,
-	importAll: (id: number) => Exports,
-	module: MetroPublicModule,
-) => void;
 
 const cachedIds: Record<string, number[]> = {};
 
 Object.assign(globalThis, { $$DEV$$: false, window: globalThis });
 
 // A fake Metro registry: modules 0 and 1 are loaded before Unbound, the rest load on demand.
-const modules = new Map<number, MetroModuleRecord>();
+const fakeMetro = startFakeMetro();
+const metroRequire: (id: number) => Exports = fakeMetro.require;
 
-function define(id: number, factory: Factory) {
-	modules.set(id, { factory, isInitialized: false, publicModule: { id, exports: {} } });
-}
-
-function metroRequire(id: number): Exports {
-	const record = modules.get(id);
-
-	if (!record) {
-		throw new Error(`No module ${id}`);
-	}
-
-	if (!record.isInitialized) {
-		record.isInitialized = true;
-		record.factory?.(globalThis, metroRequire, metroRequire, metroRequire, record.publicModule);
-		record.factory = undefined;
-	}
-
-	return record.publicModule.exports;
+function define(id: number, factory: FakeFactory) {
+	fakeMetro.define(id, [], factory);
 }
 
 function exporting(id: number, exported: Exports) {
@@ -79,15 +59,16 @@ exporting(28, { absentHandle: () => 28 });
 metroRequire(0);
 metroRequire(1);
 
+const modules = globalThis.modules;
+
 Object.assign(globalThis, {
-	modules,
-	__r: metroRequire,
 	ErrorUtils: { getGlobalHandler: () => undefined, setGlobalHandler: () => undefined },
 });
 
 mock.module('~/metro/cache', () => ({
 	ModuleFlags: { BLACKLISTED: 1 },
 	default: {
+		state: { moduleFlags: {} },
 		moduleIds: [...modules.keys()],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => undefined,

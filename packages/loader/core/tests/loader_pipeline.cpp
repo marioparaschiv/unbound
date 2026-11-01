@@ -1,20 +1,23 @@
 #include <cassert>
-#include <chrono>
-#include <filesystem>
 #include <string>
-#include <unistd.h>
 
 #include "LoaderPipeline.h"
+#include "bundle_test_server.h"
 
 namespace {
+const std::string kBase   = "https://builds.unbound.rip/";
+const std::string kBundle = "unbound.98.bundle";
+
 class CountingHost : public loader::LoaderHost
 {
 public:
     int addonPreparations = 0;
+    int reloads           = 0;
 
-    void runOnRuntime(std::function<void(facebook::jsi::Runtime &)>) override {}
-    void runAfter(double, std::function<void()>) override {}
-    void runInBackground(std::function<void()>) override {}
+    void runInBackground(std::function<void()> work) override
+    {
+        work();
+    }
 
     std::optional<std::string> resource(const std::string &) override
     {
@@ -42,51 +45,77 @@ public:
     {
         addonPreparations++;
     }
+
+    void reload() override
+    {
+        reloads++;
+    }
 };
 
-std::filesystem::path makeTemporaryDirectory()
+struct Launch {
+    bundle_test::Server           server;
+    loader::BundleUpdater         updater = server.updater(bundle_test::productionTrust());
+    std::shared_ptr<CountingHost> host    = std::make_shared<CountingHost>();
+    loader::LoaderPipeline        pipeline{host, loader::updaterSettings(server.settings), updater};
+};
+
+void reloadsOnceAFirstDownloadArrives()
 {
-    std::string templatePath =
-        (std::filesystem::temp_directory_path() / "loader-pipeline-XXXXXX").string();
-    char *directory = mkdtemp(templatePath.data());
-    assert(directory);
-    return std::filesystem::path(directory);
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "first"}});
+
+    launch.pipeline.prepare();
+
+    assert(launch.host->addonPreparations == 1);
+    assert(launch.host->reloads == 1);
+    assert(loader::readTextFile(launch.server.candidate()) == "first");
+}
+
+void keepsTheSavedBundleUntilTheNextLaunch()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
+
+    launch.pipeline.prepare();
+
+    assert(launch.host->reloads == 0);
+    assert(loader::readTextFile(launch.server.candidate()) == "next");
+}
+
+void reloadsForAnUpdateWithHotReloadOn()
+{
+    Launch launch;
+    launch.server.settings.set("unbound", "loader.update.hmr", true);
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
+
+    launch.pipeline.prepare();
+
+    assert(launch.host->reloads == 1);
+}
+
+void doesNothingWhenDisabled()
+{
+    Launch launch;
+    launch.server.settings.set("unbound", "loader.enabled", false);
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "first"}});
+
+    launch.pipeline.prepare();
+
+    assert(launch.host->addonPreparations == 0);
+    assert(launch.host->reloads == 0);
+    assert(launch.server.downloads == 0);
 }
 }
 
 int main()
 {
-    const auto root = makeTemporaryDirectory();
-
-    loader::SettingsStore settings((root / "settings.json").string());
-    settings.load();
-
-    loader::BundleUpdater updater(
-        root.string(), loader::updaterSettings(settings),
-        [](const std::string &, double) -> std::optional<std::string> {
-            return std::nullopt;
-        },
-        [](const std::string &, const std::string &, const std::map<std::string, std::string> &,
-           const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
-            return std::nullopt;
-        });
-
-    auto                   host = std::make_shared<CountingHost>();
-    loader::LoaderPipeline pipeline(host, loader::updaterSettings(settings), updater);
-
-    pipeline.prepare();
-    assert(host->addonPreparations == 1);
-    assert(!pipeline.waitForPreparedBundle(std::chrono::milliseconds(1)));
-
-    pipeline.prepare();
-    pipeline.prepare();
-    assert(host->addonPreparations == 3);
-
-    settings.set("unbound", "loader.enabled", false);
-    pipeline.prepare();
-    assert(host->addonPreparations == 3);
-    assert(!pipeline.waitForPreparedBundle(std::chrono::milliseconds(1)));
-
-    std::filesystem::remove_all(root);
+    reloadsOnceAFirstDownloadArrives();
+    keepsTheSavedBundleUntilTheNextLaunch();
+    reloadsForAnUpdateWithHotReloadOn();
+    doesNothingWhenDisabled();
     return 0;
 }
