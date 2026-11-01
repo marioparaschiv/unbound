@@ -72,6 +72,7 @@ type Indicator = {
 	record: LatencyRecord;
 	revision: number;
 	disposed: boolean;
+	placed: boolean;
 };
 
 /**
@@ -207,6 +208,7 @@ export function createAndroidIndicators(
 			{ width, height },
 		);
 		await java.invokeAsync(indicator.host, 'setVisibility', [javaInt(VISIBLE)]);
+		indicator.placed = true;
 
 		if (!indicator.mounting && !indicator.disposed) {
 			indicator.mounting = fabric.mountAsync(indicator.host, iconModule!, {
@@ -269,6 +271,8 @@ export function createAndroidIndicators(
 		const current = await startDrawable(authorName);
 
 		if (existing && !existing.disposed && sameJavaReference(existing.authorName, authorName)) {
+			const sameMessage = existing.messageId === messageId;
+
 			existing.messageId = messageId;
 			existing.record = record;
 			mark(existing);
@@ -282,9 +286,12 @@ export function createAndroidIndicators(
 					NO_DRAWABLE,
 				]);
 				await relayout(existing);
+				settle(existing);
+
+				return;
 			}
 
-			settle(existing);
+			if (!sameMessage || !existing.placed) settle(existing);
 
 			return;
 		}
@@ -304,6 +311,7 @@ export function createAndroidIndicators(
 			record,
 			revision: 0,
 			disposed: false,
+			placed: false,
 		};
 
 		indicators.set(key, indicator);

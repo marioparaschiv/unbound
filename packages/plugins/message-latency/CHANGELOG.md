@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.2]
+
+### Changed
+
+- On Android, a row shown again for the message its latency icon is already placed on no longer repositions the icon three times, which saves main-thread work while scrolling.
+
 ## [1.2.1]
 
 ### Fixed
