@@ -66,7 +66,8 @@ jobs:
                   POSTGRES_SUPERUSER_URL: postgres://postgres:postgres@localhost:5432/postgres
               run: bun test --parallel --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/plugin-scripts/**' --path-ignore-patterns 'packages/client/**' --path-ignore-patterns 'packages/cli/**'
             - name: Run CLI tests
-              run: bun test packages/cli
+              working-directory: packages/cli
+              run: bun test
             # Client tests replace modules with `mock.module`, which leaks across files in one process.
             - name: Run client tests
               env:
