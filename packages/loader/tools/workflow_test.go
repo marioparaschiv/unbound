@@ -460,45 +460,29 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 	}
 }
 
-func TestMetroRegistryIsCapturedBeforeBundleWithoutLegacyPatch(t *testing.T) {
+func TestLoaderLeavesMetroToTheClientBundle(t *testing.T) {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
 		t.Fatal("could not locate test source")
 	}
 	root := filepath.Dir(filepath.Dir(filename))
-	if _, err := os.Stat(filepath.Join(root, "bootstrap", "modules.js")); !os.IsNotExist(err) {
-		t.Fatal("legacy modules bootstrap shim must not be packaged")
+	for _, name := range []string{"modules.js", "metro-module-capture.js", "run-application-gate.js", "runtime-readiness.js"} {
+		if _, err := os.Stat(filepath.Join(root, "bootstrap", name)); !os.IsNotExist(err) {
+			t.Fatalf("bootstrap/%s must not be packaged: Unbound's bundle runs before Discord's and hooks Metro itself", name)
+		}
 	}
-	for _, path := range []string{
-		filepath.Join(root, "core", "src", "LoaderPipeline.cpp"),
-		filepath.Join(root, "ios", "sources", "Unbound.xm"),
-		filepath.Join(root, "android", "module", "src", "main", "cpp", "AndroidLoader.cpp"),
-	} {
+	scripts, err := filepath.Glob(filepath.Join(root, "bootstrap", "*.js"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range scripts {
 		contents, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if strings.Contains(string(contents), "injectModulesPatch") || strings.Contains(string(contents), "modulesScript") {
-			t.Fatalf("legacy modules bootstrap plumbing remains in %s", path)
+		if strings.Contains(string(contents), "__c(") || strings.Contains(string(contents), "'__d'") {
+			t.Fatalf("%s touches Metro; only Unbound's bundle may", filepath.Base(path))
 		}
-	}
-	contents, err := os.ReadFile(filepath.Join(root, "core", "src", "LoaderPipeline.cpp"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if strings.Contains(string(contents), "globalThis.__c?.()") {
-		t.Fatal("bundle readiness must not invoke Metro's destructive registry collector")
-	}
-	capture, err := os.ReadFile(filepath.Join(root, "core", "src", "LoaderJSI.cpp"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	script, err := os.ReadFile(filepath.Join(root, "bootstrap", "metro-module-capture.js"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(capture), "bootstrap::kMetroModuleCapture") || !strings.Contains(string(script), "Object.defineProperty(globalThis, '__d'") {
-		t.Fatal("shared loader no longer captures the Metro registry before module definitions")
 	}
 }
 

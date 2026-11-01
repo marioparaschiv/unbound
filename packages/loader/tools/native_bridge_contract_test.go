@@ -352,7 +352,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if containsCode(string(bridge), "result = invokeObject(runtime, target, selector, arguments)") {
 		t.Fatal("Objective-C invocation still creates JSI values on the main thread")
 	}
-	for _, required := range []string{"[HotReload observe];", "pipeline().prepare()", "pipeline().enqueueBundle()"} {
+	for _, required := range []string{"[HotReload observe];", "pipeline().prepare()", "pipeline().onRuntimeCreated(runtime)"} {
 		if !containsCode(string(loader), required) {
 			t.Fatalf("loader lifecycle guard %q is missing", required)
 		}
@@ -361,8 +361,8 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !containsCode(string(corePipeline), "Bundle preparation timed out.") {
-		t.Fatal("the shared loader pipeline no longer bounds bundle preparation")
+	if containsCode(string(corePipeline), "wait_for(") || containsCode(string(corePipeline), "condition_variable") {
+		t.Fatal("the shared loader pipeline must not block the JS thread waiting for a download")
 	}
 	if containsCode(string(bridge), "dispatch_sync(dispatch_get_main_queue()") {
 		t.Fatal("native bridge still uses an unbounded synchronous main-thread dispatch")
@@ -373,7 +373,7 @@ func TestNativeBridgeSafetyGuards(t *testing.T) {
 		!containsCode(string(bridge)[superStart:superEnd], "validateNativeScalarArgument(object, scalarType);") {
 		t.Fatal("Objective-C super arguments bypass scalar validation")
 	}
-	for _, required := range []string{"updater_.markBundleAttempted(pending->path)", "updater_.acceptBundle(pending->path)", "updater_.rejectBundle(pending->path)"} {
+	for _, required := range []string{"updater_.markBundleAttempted(saved.path)", "updater_.acceptBundle(saved.path)", "updater_.rejectBundle(saved.path)"} {
 		if !containsCode(string(corePipeline), required) {
 			t.Fatalf("bundle promotion step %q is missing", required)
 		}
