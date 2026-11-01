@@ -1070,35 +1070,33 @@ public:
         disposeUIScope(*scope_);
     }
 
+    // Hermes on Android cannot take a C++ exception, so a failed read returns a failure envelope.
     jsi::Value get(jsi::Runtime &runtime, const jsi::PropNameID &property) override
     {
-        std::string name = property.utf8(runtime);
-        if (name == "dispose")
-        {
-            auto scope = scope_;
-            return jsi::Function::createFromHostFunction(
-                runtime, property, 0,
-                [scope](jsi::Runtime &, const jsi::Value &, const jsi::Value *, size_t) {
-                    disposeUIScope(*scope);
-                    return jsi::Value::undefined();
-                });
-        }
-        if (name == "java")
-        {
-            loader::AddonScope addonScope(scope_->addon);
-            return filterNamespace(runtime, makeJavaNamespace(runtime, scope_->callbacks), *scope_,
-                                   "java.");
-        }
-        if (name == "hooks")
-        {
-            return makeScopedHooks(runtime, scope_);
-        }
-        return jsi::Value::undefined();
-    }
-
-    std::vector<jsi::PropNameID> getPropertyNames(jsi::Runtime &runtime) override
-    {
-        return jsi::PropNameID::names(runtime, "dispose", "java", "hooks");
+        return loader::native::guard(runtime, [&]() -> jsi::Value {
+            std::string name = property.utf8(runtime);
+            if (name == "dispose")
+            {
+                auto scope = scope_;
+                return loader::native::makeFunction(
+                    runtime, "dispose", 0,
+                    [scope](jsi::Runtime &, const jsi::Value &, const jsi::Value *, size_t) {
+                        disposeUIScope(*scope);
+                        return jsi::Value::undefined();
+                    });
+            }
+            if (name == "java")
+            {
+                loader::AddonScope addonScope(scope_->addon);
+                return filterNamespace(runtime, makeJavaNamespace(runtime, scope_->callbacks),
+                                       *scope_, "java.");
+            }
+            if (name == "hooks")
+            {
+                return makeScopedHooks(runtime, scope_);
+            }
+            return jsi::Value::undefined();
+        });
     }
 
 private:
