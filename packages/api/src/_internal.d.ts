@@ -2775,6 +2775,8 @@ export type NativePlatformBridge = {
 	readonly fonts?: NativePlatformFonts;
 	/** Addon verification and bytecode loading; missing on older loaders. */
 	readonly addons?: NativePlatformAddons;
+	/** Hermes' sampling profiler; missing on older loaders. */
+	readonly profiler?: NativePlatformProfiler;
 	/** iOS-only helpers; missing on Android. */
 	readonly ios?: NativePlatformIOSBridge;
 };
@@ -2822,6 +2824,13 @@ export type NativePlatformIOSBridge = {
 	getEntitlements(): NativeSerializableObject;
 	/** Discord's code-signing entitlements, as plist text. */
 	getEntitlementsAsPlist(): string;
+};
+/** Hermes' sampling profiler, shared with the loader's freeze watchdog. */
+export type NativePlatformProfiler = {
+	/** Starts sampling; `false` when the profiler is missing or already running. */
+	start(): boolean;
+	/** Stops sampling and returns the Chrome trace it recorded, or `undefined` when it was not running. */
+	stop(): string | undefined;
 };
 /** The loader's native settings file, which holds every Bucket. */
 export type NativePlatformSettings = {

@@ -265,6 +265,7 @@ export type {
 	NativePlatformFiles,
 	NativePlatformFonts,
 	NativePlatformIOSBridge,
+	NativePlatformProfiler,
 	NativePlatformSettings,
 	NativePluginBridge,
 	NativePluginCapability,
