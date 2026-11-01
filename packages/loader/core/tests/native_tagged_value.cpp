@@ -4,6 +4,7 @@
 
 #include "NativeTaggedValue.h"
 
+using loader::native::parseTaggedEvent;
 using loader::native::parseTaggedValue;
 using loader::native::TaggedValueKind;
 
@@ -60,5 +61,26 @@ int main()
     assert(!parseTaggedValue(R"([{"type":"int","value":1}])"));
     assert(!parseTaggedValue(R"({"type":"object","value":{"a":1}})"));
     assert(!parseTaggedValue(""));
+
+    auto empty = parseTaggedEvent(R"({"self":{"type":"handle","value":"java-3"},"args":[]})");
+    assert(empty && empty->self.text == "java-3" && empty->arguments.empty());
+
+    auto event = parseTaggedEvent(
+        R"({"self":{"type":"null","value":null},"args":[{"type":"string","value":"a},{\"b\":[1]"},{"type":"int","value":7},{"type":"handle","value":"java-9"},{"type":"boolean","value":false}]})");
+    assert(event && event->self.kind == TaggedValueKind::Null);
+    assert(event->arguments.size() == 4);
+    assert(event->arguments[0].text == "a},{\"b\":[1]");
+    assert(event->arguments[1].kind == TaggedValueKind::Number && event->arguments[1].number == 7);
+    assert(event->arguments[2].type == "handle" && event->arguments[2].text == "java-9");
+    assert(event->arguments[3].kind == TaggedValueKind::Boolean && !event->arguments[3].boolean);
+
+    assert(!parseTaggedEvent(R"({"args":[],"self":{"type":"null","value":null}})"));
+    assert(!parseTaggedEvent(
+        R"({"self":{"type":"null","value":null},"args":[{"type":"int","value":1}{"type":"int","value":2}]})"));
+    assert(!parseTaggedEvent(
+        R"({"self":{"type":"null","value":null},"args":[{"type":"string","value":"\u0001"}]})"));
+    assert(!parseTaggedEvent(R"({"self":{"type":"null","value":null},"args":[]}x)"));
+    assert(!parseTaggedEvent(
+        R"({"self":{"type":"null","value":null},"args":[{"type":"object","value":{"a":1}}]})"));
     return 0;
 }

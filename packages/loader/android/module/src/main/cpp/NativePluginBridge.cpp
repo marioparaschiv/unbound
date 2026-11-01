@@ -367,16 +367,11 @@ static jsi::Value adoptJavaValue(jsi::Runtime &runtime, const nlohmann::json &va
     return leases ? leases->adopt(runtime, value) : loader::toJSIValue(runtime, value);
 }
 
-static std::optional<jsi::Value> adoptTaggedJavaValue(jsi::Runtime      &runtime,
-                                                      const std::string &response)
+static jsi::Value adoptTaggedJavaValue(jsi::Runtime                      &runtime,
+                                       const loader::native::TaggedValue &tagged)
 {
-    std::optional<loader::native::TaggedValue> tagged = loader::native::parseTaggedValue(response);
-    if (!tagged)
-    {
-        return std::nullopt;
-    }
-    if (tagged->kind == loader::native::TaggedValueKind::String && tagged->type == "handle" &&
-        tagged->text.rfind("java-", 0) == 0)
+    if (tagged.kind == loader::native::TaggedValueKind::String && tagged.type == "handle" &&
+        tagged.text.rfind("java-", 0) == 0)
     {
         std::shared_ptr<loader::native::HandleLeases> leases;
         {
@@ -385,36 +380,56 @@ static std::optional<jsi::Value> adoptTaggedJavaValue(jsi::Runtime      &runtime
         }
         if (leases)
         {
-            return leases->adoptTaggedHandle(runtime, tagged->type, tagged->text);
+            return leases->adoptTaggedHandle(runtime, tagged.type, tagged.text);
         }
     }
 
     jsi::Object object(runtime);
-    object.setProperty(runtime, "type", jsi::String::createFromUtf8(runtime, tagged->type));
-    switch (tagged->kind)
+    object.setProperty(runtime, "type", jsi::String::createFromUtf8(runtime, tagged.type));
+    switch (tagged.kind)
     {
         case loader::native::TaggedValueKind::Null:
             object.setProperty(runtime, "value", jsi::Value::null());
             break;
         case loader::native::TaggedValueKind::Boolean:
-            object.setProperty(runtime, "value", tagged->boolean);
+            object.setProperty(runtime, "value", tagged.boolean);
             break;
         case loader::native::TaggedValueKind::Number:
-            object.setProperty(runtime, "value", tagged->number);
+            object.setProperty(runtime, "value", tagged.number);
             break;
         case loader::native::TaggedValueKind::String:
-            object.setProperty(runtime, "value",
-                               jsi::String::createFromUtf8(runtime, tagged->text));
+            object.setProperty(runtime, "value", jsi::String::createFromUtf8(runtime, tagged.text));
             break;
     }
     return object;
 }
 
+static std::optional<jsi::Value> adoptTaggedJavaEvent(jsi::Runtime      &runtime,
+                                                      const std::string &payload)
+{
+    std::optional<loader::native::TaggedEvent> event = loader::native::parseTaggedEvent(payload);
+    if (!event)
+    {
+        return std::nullopt;
+    }
+    jsi::Array arguments(runtime, event->arguments.size());
+    for (size_t index = 0; index < event->arguments.size(); index++)
+    {
+        arguments.setValueAtIndex(runtime, index,
+                                  adoptTaggedJavaValue(runtime, event->arguments[index]));
+    }
+    jsi::Object object(runtime);
+    object.setProperty(runtime, "args", arguments);
+    object.setProperty(runtime, "self", adoptTaggedJavaValue(runtime, event->self));
+    return object;
+}
+
 static jsi::Value parseJavaResult(jsi::Runtime &runtime, const std::string &response)
 {
-    if (std::optional<jsi::Value> fast = adoptTaggedJavaValue(runtime, response))
+    if (std::optional<loader::native::TaggedValue> tagged =
+            loader::native::parseTaggedValue(response))
     {
-        return std::move(*fast);
+        return adoptTaggedJavaValue(runtime, *tagged);
     }
 
     nlohmann::json result = nlohmann::json::parse(response, nullptr, false);
@@ -502,15 +517,20 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
     std::function<void(jsi::Runtime &)> deliver = [callback = listener.callback,
                                                    addon    = listener.addon,
                                                    payload](jsi::Runtime &runtime) {
-        nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
-        if (parsed.is_discarded())
+        loader::AddonScope        runtimeScope(addon);
+        std::optional<jsi::Value> event = adoptTaggedJavaEvent(runtime, payload);
+        if (!event)
         {
-            return;
+            nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
+            if (parsed.is_discarded())
+            {
+                return;
+            }
+            event = adoptJavaValue(runtime, parsed);
         }
 
-        loader::AddonScope runtimeScope(addon);
-        jsi::Value failure = catchingCall(runtime).call(runtime, jsi::Value(runtime, *callback),
-                                                        adoptJavaValue(runtime, parsed));
+        jsi::Value failure =
+            catchingCall(runtime).call(runtime, jsi::Value(runtime, *callback), std::move(*event));
         if (!failure.isString())
         {
             return;
