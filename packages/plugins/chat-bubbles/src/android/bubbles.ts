@@ -39,7 +39,7 @@ import {
 	type Edges,
 } from '~/geometry';
 import { AndroidClass, PLUGIN_NAME } from '~/constants';
-import { installBindGuard } from '~/android/ui-bubbles';
+import { forgetBubbles, installBindGuard, rememberBubble } from '~/android/ui-bubbles';
 import { currentAppearance } from '~/theme';
 import { argb } from '~/style';
 import { isOwnMessage } from '~/author';
@@ -55,6 +55,7 @@ const MAX_ANCESTORS = 16;
 const VISIBLE = 0;
 const ICON_SPACING_DP = 4;
 const BUBBLE_LAYER_ID = 0x0b0b1e;
+const MESSAGE_ID_GETTER = 'getId-3Eiw7ao';
 const BIND_SETTLE_MS = 50;
 const PLACEMENT_WORKERS = 8;
 const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
@@ -82,7 +83,8 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		messageView: AndroidClass.messageView,
 		bindName: bindMessage.name,
 		bindParameters: bindMessage.parameters,
-		idField,
+		messageIdGetter: MESSAGE_ID_GETTER,
+		layerId: BUBBLE_LAYER_ID,
 		ours,
 		original,
 		drawnFor,
@@ -467,12 +469,23 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		if (disposed) return;
 
 		java.setAssociatedObject(row, ours, bubble);
-		java.setAssociatedObject(row, drawnFor, javaString(messageId(row) ?? ''));
+		const drawnMessage = messageId(row);
+
+		java.setAssociatedObject(row, drawnFor, javaString(drawnMessage ?? ''));
 		track(row);
 		await runOnMain(java, [
 			...measure.iconShifts,
 			{ op: 'invoke', handle: row, name: 'setBackground', args: [bubble] },
 		]);
+
+		if (drawnMessage) {
+			ui.run(rememberBubble, drawnMessage, {
+				...insets,
+				radius: style.radius * scale,
+				color: argb(isOwnMessage(drawnMessage) ? style.ownColor : style.color),
+				rowWidth: measure.width,
+			});
+		}
 	}
 
 	let flushing: Promise<void> = Promise.resolve();
@@ -615,6 +628,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 			...(await lostBubbles()),
 		],
 		refresh() {
+			ui.run(forgetBubbles);
 			for (const row of tracked) schedule(row);
 
 			refreshVisible().catch((error) => {
