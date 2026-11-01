@@ -1,7 +1,6 @@
 #import "Unbound.h"
 
 #import <jsi/jsi.h>
-#import <substrate.h>
 
 #import "AddonsCore.h"
 #import "CoreBridge.h"
@@ -33,9 +32,8 @@ using namespace facebook;
 
 #pragma mark - Pre/post bundle injection
 
-static jsi::Runtime *gRuntime             = nullptr;
-static __weak id     gInstance            = nil;
-static BOOL          gHostPreparedRuntime = NO;
+static jsi::Runtime *gRuntime  = nullptr;
+static __weak id     gInstance = nil;
 
 static loader::browserlogin::PendingLogin &pendingBrowserLogin(void)
 {
@@ -116,22 +114,6 @@ void CompleteBrowserLogin(NSString *token)
 class IOSLoaderHost final : public loader::LoaderHost
 {
 public:
-    void runOnRuntime(std::function<void(jsi::Runtime &)> work) override
-    {
-        id instance = gInstance;
-        if (instance)
-        {
-            [instance callFunctionOnBufferedRuntimeExecutor:std::move(work)];
-        }
-    }
-
-    void runAfter(double seconds, std::function<void()> work) override
-    {
-        auto task = std::make_shared<std::function<void()>>(std::move(work));
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t) (seconds * NSEC_PER_SEC)),
-                       dispatch_get_main_queue(), ^{ (*task)(); });
-    }
-
     void runInBackground(std::function<void()> work) override
     {
         auto task = std::make_shared<std::function<void()>>(std::move(work));
@@ -191,6 +173,11 @@ public:
         NSString *text = toNSString(message);
         dispatch_async(dispatch_get_main_queue(), ^{ [Utilities alert:text]; });
     }
+
+    void reload() override
+    {
+        [Utilities reloadApp];
+    }
 };
 
 static loader::LoaderPipeline &pipeline(void)
@@ -216,12 +203,6 @@ static void prepareLoading(id instance)
     pipeline().prepare();
 }
 
-static void enqueueBundle(id instance)
-{
-    gInstance = instance;
-    pipeline().enqueueBundle();
-}
-
 #pragma mark - Hooks
 
 %hook RCTHost
@@ -230,22 +211,11 @@ static void enqueueBundle(id instance)
 {
     gRuntime = &runtime;
     [Logger info:LOG_CATEGORY_DEFAULT format:@"RCTHost didInitializeRuntime reached."];
-    pipeline().onRuntimeCreated(runtime);
     loader::setNativePluginFabricHost(self);
-    id hostInstance = instance;
-    prepareLoading(hostInstance);
-    gHostPreparedRuntime = YES;
+    prepareLoading(instance);
+    // The last point before Discord's bundle is read, so Unbound's bundle runs first.
+    pipeline().onRuntimeCreated(runtime);
     %orig;
-    if ([hostInstance respondsToSelector:@selector(callFunctionOnBufferedRuntimeExecutor:)])
-    {
-        [Logger info:LOG_CATEGORY_DEFAULT format:@"RCTHost runtime instance is ready."];
-        enqueueBundle(hostInstance);
-    }
-    else
-    {
-        [Logger error:LOG_CATEGORY_DEFAULT
-               format:@"RCTHost runtime instance has no buffered executor."];
-    }
 }
 
 %end
@@ -264,77 +234,6 @@ static void enqueueBundle(id instance)
 }
 
 %end
-
-typedef void (*LoadJSBundleIMP)(id, SEL, NSURL *);
-typedef void (*LoadScriptFromSourceIMP)(id, SEL, id);
-
-static LoadJSBundleIMP         gOriginalLoadJSBundle         = NULL;
-static LoadScriptFromSourceIMP gOriginalLoadScriptFromSource = NULL;
-static BOOL                    gRCTInstanceHooksInstalled    = NO;
-
-static void loadJSBundle(id self, SEL selector, NSURL *sourceURL)
-{
-    if (gHostPreparedRuntime)
-    {
-        gHostPreparedRuntime = NO;
-    }
-    else
-    {
-        prepareLoading(self);
-    }
-    if (gOriginalLoadJSBundle)
-    {
-        gOriginalLoadJSBundle(self, selector, sourceURL);
-    }
-}
-
-static void loadScriptFromSource(id self, SEL selector, id source)
-{
-    if (gOriginalLoadScriptFromSource)
-    {
-        gOriginalLoadScriptFromSource(self, selector, source);
-    }
-
-    enqueueBundle(self);
-}
-
-static BOOL installRCTInstanceHooks(void)
-{
-    if (gRCTInstanceHooksInstalled)
-    {
-        return YES;
-    }
-
-    Class instanceClass = NSClassFromString(@"RCTInstance");
-    if (!instanceClass || !class_getInstanceMethod(instanceClass, @selector(_loadJSBundle:)) ||
-        !class_getInstanceMethod(instanceClass, @selector(_loadScriptFromSource:)))
-    {
-        return NO;
-    }
-
-    MSHookMessageEx(instanceClass, @selector(_loadJSBundle:), (IMP) loadJSBundle,
-                    (IMP *) &gOriginalLoadJSBundle);
-    MSHookMessageEx(instanceClass, @selector(_loadScriptFromSource:), (IMP) loadScriptFromSource,
-                    (IMP *) &gOriginalLoadScriptFromSource);
-    gRCTInstanceHooksInstalled =
-        gOriginalLoadJSBundle != NULL && gOriginalLoadScriptFromSource != NULL;
-    return gRCTInstanceHooksInstalled;
-}
-
-static void retryRCTInstanceHooks(NSUInteger attempt)
-{
-    if (installRCTInstanceHooks() || attempt >= 300)
-    {
-        if (!gRCTInstanceHooksInstalled)
-        {
-            [Logger error:LOG_CATEGORY_DEFAULT format:@"RCTInstance hooks could not be installed."];
-        }
-        return;
-    }
-
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(),
-                   ^{ retryRCTInstanceHooks(attempt + 1); });
-}
 
 %ctor
 {
@@ -363,14 +262,9 @@ static void retryRCTInstanceHooks(NSUInteger attempt)
                            title:@(loader::diagnostics::kAttestationWarningTitle)
                          timeout:loader::diagnostics::kAttestationWarningSeconds
                          warning:YES];
-                return;
             }
-            retryRCTInstanceHooks(0);
         });
     });
-#else
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1 * NSEC_PER_SEC), dispatch_get_main_queue(),
-                   ^{ retryRCTInstanceHooks(0); });
 #endif
 
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 1.0 * NSEC_PER_SEC), dispatch_get_main_queue(),
