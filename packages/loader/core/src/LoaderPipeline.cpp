@@ -11,6 +11,8 @@
 namespace loader {
 namespace jsi = facebook::jsi;
 
+static constexpr std::chrono::seconds kFirstDownloadWait{10};
+
 LoaderPipeline::LoaderPipeline(std::shared_ptr<LoaderHost> host, UpdaterSettings settings,
                                BundleUpdater &updater)
     : host_(std::move(host)), settings_(std::move(settings)), updater_(updater)
@@ -36,6 +38,7 @@ void LoaderPipeline::prepare()
     {
         std::lock_guard<std::mutex> lock(savedMutex_);
         saved_.reset();
+        firstDownload_ = FirstDownload{token};
     }
 
     if (!settings_.getBoolean("loader.enabled", true))
@@ -61,10 +64,16 @@ void LoaderPipeline::prepare()
     std::optional<std::string> bundle =
         !savedPath.empty() && fileExists(savedPath) ? readTextFile(savedPath) : std::nullopt;
     bool hasSaved = bundle && !bundle->empty();
-    if (hasSaved)
     {
         std::lock_guard<std::mutex> lock(savedMutex_);
-        saved_ = SavedBundle{std::move(*bundle), savedPath};
+        if (hasSaved)
+        {
+            saved_ = SavedBundle{std::move(*bundle), savedPath};
+        }
+        else
+        {
+            firstDownload_.pending = true;
+        }
     }
 
     updateInBackground(savedPath, hasSaved, token);
@@ -88,6 +97,10 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, ui
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 std::string("Bundle download failed. (") + error.what() + ")" +
                     (hasSaved ? "; using the cached bundle" : ""));
+            if (!hasSaved)
+            {
+                settleFirstDownload(token, std::nullopt);
+            }
             if (!hasSaved && token == token_.load())
             {
                 host_->alert(
@@ -97,6 +110,11 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, ui
         }
 
         bool updated = downloaded != savedPath && fileExists(downloaded);
+        if (!hasSaved && settleFirstDownload(token, updated ? std::optional<std::string>(downloaded)
+                                                            : std::nullopt))
+        {
+            return;
+        }
         if (!updated || !reloadOnUpdate || token != token_.load())
         {
             return;
@@ -172,12 +190,65 @@ void LoaderPipeline::onRuntimeCreated(jsi::Runtime &runtime)
 
     if (!saved)
     {
+        saved = awaitFirstDownload(token_.load());
+    }
+
+    if (!saved)
+    {
         log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
             "No saved bundle to run before Discord's bundle; Unbound runs once it downloads.");
         return;
     }
 
     evaluate(runtime, *saved, token_.load());
+}
+
+bool LoaderPipeline::settleFirstDownload(uint64_t token, std::optional<std::string> path)
+{
+    std::lock_guard<std::mutex> lock(savedMutex_);
+    if (firstDownload_.token != token)
+    {
+        return false;
+    }
+    firstDownload_.settled = true;
+    firstDownload_.path    = std::move(path);
+    firstDownloadSettled_.notify_all();
+    return !firstDownload_.abandoned;
+}
+
+std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(uint64_t token)
+{
+    std::unique_lock<std::mutex> lock(savedMutex_);
+    if (firstDownload_.token != token || !firstDownload_.pending)
+    {
+        return std::nullopt;
+    }
+    bool settled = firstDownloadSettled_.wait_for(lock, kFirstDownloadWait, [this, token]() {
+        return firstDownload_.token != token || firstDownload_.settled;
+    });
+    if (firstDownload_.token != token)
+    {
+        return std::nullopt;
+    }
+    if (!settled)
+    {
+        firstDownload_.abandoned = true;
+        return std::nullopt;
+    }
+    if (!firstDownload_.path)
+    {
+        return std::nullopt;
+    }
+
+    std::optional<std::string> bundle = readTextFile(*firstDownload_.path);
+    if (!bundle || bundle->empty())
+    {
+        firstDownload_.abandoned = true;
+        return std::nullopt;
+    }
+    log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
+        "Downloaded Unbound's first bundle in time to run it before Discord's.");
+    return SavedBundle{std::move(*bundle), *firstDownload_.path};
 }
 
 bool LoaderPipeline::evaluate(jsi::Runtime &runtime, const SavedBundle &saved, uint64_t token)

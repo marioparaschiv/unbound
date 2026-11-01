@@ -64,7 +64,7 @@ struct Launch {
     loader::LoaderPipeline        pipeline{host, loader::updaterSettings(server.settings), updater};
 };
 
-void reloadsOnceAFirstDownloadArrives()
+void leavesAFirstDownloadForTheRuntime()
 {
     Launch launch;
     launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "first"}});
@@ -72,7 +72,7 @@ void reloadsOnceAFirstDownloadArrives()
     launch.pipeline.prepare();
 
     assert(launch.host->addonPreparations == 1);
-    assert(launch.host->reloads == 1);
+    assert(launch.host->reloads == 0);
     assert(loader::readTextFile(launch.server.candidate()) == "first");
 }
 
@@ -135,7 +135,7 @@ void doesNothingWhenDisabled()
 
 int main()
 {
-    reloadsOnceAFirstDownloadArrives();
+    leavesAFirstDownloadForTheRuntime();
     keepsTheSavedBundleUntilTheNextLaunch();
     reloadsForAnUpdateWithHotReloadOn();
     logsTheRuntimeBeforeAddonsLoadForIt();
