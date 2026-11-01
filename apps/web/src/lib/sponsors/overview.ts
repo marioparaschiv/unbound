@@ -66,7 +66,7 @@ export async function getSponsorOverview(
 		standing: standing.kind,
 		graceUntil: standing.kind === 'grace' ? standing.until : null,
 		perks,
-		badge: toBadgeClaim(claim),
+		badge: toBadgeClaim(ctx.env, claim),
 	};
 }
 

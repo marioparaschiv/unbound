@@ -4,7 +4,7 @@ type WriteArgs = Parameters<Bun.S3Client['write']>;
 
 type PathArgs = Parameters<Bun.S3Client['delete']>;
 
-/** A staging bucket kept in memory, for `*.test.ts` code that only writes, checks and deletes objects. */
+/** A bucket kept in memory, for `*.test.ts` code that only writes, checks and deletes objects. */
 export class MemoryBucket extends Bun.S3Client {
 	objects = new Map<string, Uint8Array>();
 
@@ -39,4 +39,16 @@ export function withMemoryStaging(ctx: AppContext) {
 	const staging = new MemoryBucket({ bucket: 'memory' });
 
 	return { ctx: { ...ctx, storage: { ...ctx.storage, staging } }, staging };
+}
+
+/**
+ * @description Swaps a context's public bucket for a {@link MemoryBucket}, so code that publishes small
+ * files runs without object storage.
+ * @param ctx The application context.
+ * @returns The context using the memory bucket, and the bucket.
+ */
+export function withMemoryPublic(ctx: AppContext) {
+	const bucket = new MemoryBucket({ bucket: 'memory' });
+
+	return { ctx: { ...ctx, storage: { ...ctx.storage, public: bucket } }, bucket };
 }

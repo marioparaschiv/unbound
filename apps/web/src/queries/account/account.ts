@@ -40,6 +40,25 @@ export function saveBadgesMutation() {
 }
 
 /**
+ * @description Uploads a PNG for one of the signed-in user's sponsor badges.
+ * @returns Mutation options taking the file, resolving to the image's hash and URL.
+ */
+export function uploadBadgeImageMutation() {
+	return mutationOptions({
+		mutationFn: async (file: File) => {
+			const { BADGE_IMAGE_TYPE, uploadBadgeImageResponseSchema } =
+				await import('@unbound-app/contracts/sponsors');
+
+			return createBrowserClient()('POST /api/v1/me/badges/images', {
+				body: file,
+				headers: { 'content-type': BADGE_IMAGE_TYPE },
+				response: uploadBadgeImageResponseSchema,
+			});
+		},
+	});
+}
+
+/**
  * @description Removes all the signed-in user's sponsor badges, then refreshes the account overview and the public pages showing them.
  * @returns Mutation options taking no variables.
  */
@@ -107,6 +126,7 @@ export function linkSocialMutation() {
 export default {
 	accountOverviewQuery,
 	saveBadgesMutation,
+	uploadBadgeImageMutation,
 	removeBadgesMutation,
 	createApiKeyMutation,
 	deleteApiKeyMutation,

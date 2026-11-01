@@ -1,5 +1,4 @@
 import { IconExternalLink, IconHeart } from 'nucleo-micro-bold';
-import type { Badge } from '@unbound-app/contracts/sponsors';
 
 import {
 	Dialog,
@@ -24,12 +23,6 @@ type PerkUpsellDialogProps = {
 	onClose: () => void;
 };
 
-const SAMPLE_BADGES: Badge[] = [
-	{ label: 'Night Owl', icon: 'moon', color: 'purple' },
-	{ label: 'Theme Fan', icon: 'palette', color: 'teal' },
-	{ label: 'Early Supporter', icon: 'heart', color: 'pink' },
-];
-
 function tierNote(perk: PerkStatus, sponsor: SponsorOverview): string {
 	const tier = formatMonthlyPrice(perk.minimumMonthlyCents);
 	const current = sponsor.sponsorship;
@@ -43,8 +36,6 @@ function tierNote(perk: PerkStatus, sponsor: SponsorOverview): string {
 
 /** Shows what a locked perk looks like and the tier that unlocks it. */
 function PerkUpsellDialog({ perk, sponsor, user, onClose }: PerkUpsellDialogProps) {
-	const stored = sponsor.badge?.badges ?? [];
-
 	return (
 		<Dialog open={perk !== null} onOpenChange={(open) => (open ? null : onClose())}>
 			{perk ? (
@@ -62,7 +53,7 @@ function PerkUpsellDialog({ perk, sponsor, user, onClose }: PerkUpsellDialogProp
 					<DiscordProfilePreview
 						name={user.name}
 						image={user.image}
-						badges={stored.length > 0 ? stored : SAMPLE_BADGES}
+						badges={sponsor.badge?.badges ?? []}
 					/>
 
 					<Text variant='text-sm' color='muted'>

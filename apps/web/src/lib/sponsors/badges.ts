@@ -2,25 +2,38 @@ import type {
 	Badge,
 	BadgeClaim,
 	BadgeClaimResponse,
+	OwnedBadge,
 	PublicBadge,
+	UploadBadgeImageResponse,
 } from '@unbound-app/contracts/sponsors';
 import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm';
 import { createLogger } from '@unbound-app/logger';
 
+import {
+	findBadgeImageProblem,
+	getBadgeImageKey,
+	hashBadgeImage,
+} from '~/lib/sponsors/badge-image';
 import { canClaimPerk, isPerkUnlocked, PERKS } from '~/lib/sponsors/perks';
 import { getUserSponsorship, graceMs } from '~/lib/sponsors/sponsorships';
 import { account, perkClaim, sponsorship, user } from '~/db/schema';
-import { findBadgeLabelProblem } from '~/lib/sponsors/moderation';
+import { findBadgeNameProblem } from '~/lib/sponsors/moderation';
 import { requirePermission } from '~/lib/api/caller';
 import { standingOf } from '~/lib/sponsors/standing';
+import { consumeRateLimit } from '~/lib/rate-limit';
 import { formatPrice } from '~/lib/sponsors/price';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
+import { getCdnUrl } from '~/lib/artifacts';
+import type { Env } from '~/lib/env';
 
 const logger = createLogger('Web', 'Sponsors');
 
 const PERK_ID = 'custom-badge';
+
+const UPLOAD_WINDOW_SECONDS = 60 * 60;
+const UPLOADS_PER_WINDOW = 20;
 
 type ClaimRow = typeof perkClaim.$inferSelect;
 
@@ -28,11 +41,12 @@ function badgeClaimWhere(userId: string) {
 	return and(eq(perkClaim.userId, userId), eq(perkClaim.perkId, PERK_ID));
 }
 
+// Configs from before badges were images (an icon, colour and label) read as no badges until replaced.
 function parseBadges(row: ClaimRow): Badge[] | undefined {
 	const result = PERKS[PERK_ID].config.safeParse(row.config);
 
 	if (!result.success) {
-		logger.warn(`Ignoring the unreadable ${PERK_ID} of ${row.userId}:`, result.error);
+		logger.debug(`Ignoring the unreadable ${PERK_ID} of ${row.userId}:`, result.error);
 
 		return;
 	}
@@ -40,18 +54,30 @@ function parseBadges(row: ClaimRow): Badge[] | undefined {
 	return result.data;
 }
 
-/**
- * @description Shapes a stored badge claim for its owner or staff.
- * @param row The claim row, if any.
- * @returns The claim, or `null` when there is none or its config cannot be read.
- */
-export function toBadgeClaim(row: ClaimRow | undefined): BadgeClaim | null {
-	const badges = row ? parseBadges(row) : undefined;
+function getBadgeImageUrl(env: Env, image: string): string {
+	return getCdnUrl(env, getBadgeImageKey(image));
+}
 
-	if (!row || !badges) return null;
+function toOwnedBadge(env: Env, badge: Badge): OwnedBadge {
+	return { ...badge, imageUrl: getBadgeImageUrl(env, badge.image) };
+}
+
+/**
+ * @description Shapes a stored badge claim for its owner or staff. A revoked claim stays visible even
+ * when its config is unreadable, so its owner sees why they cannot set badges.
+ * @param env The validated environment, for image URLs.
+ * @param row The claim row, if any.
+ * @returns The claim, or `null` when there is none, or its config cannot be read and it is not revoked.
+ */
+export function toBadgeClaim(env: Env, row: ClaimRow | undefined): BadgeClaim | null {
+	if (!row) return null;
+
+	const badges = parseBadges(row);
+
+	if (!badges && !row.revokedAt) return null;
 
 	return {
-		badges,
+		badges: (badges ?? []).map((badge) => toOwnedBadge(env, badge)),
 		revokedAt: row.revokedAt?.toISOString() ?? null,
 		revokeReason: row.revokeReason,
 	};
@@ -73,30 +99,88 @@ export async function findBadgeClaim(
 }
 
 async function claimResponse(ctx: AppContext, userId: string): Promise<BadgeClaimResponse> {
-	return { claim: toBadgeClaim(await findBadgeClaim(ctx, userId)) };
+	return { claim: toBadgeClaim(ctx.env, await findBadgeClaim(ctx, userId)) };
 }
 
-function findBadgesProblem(badges: Badge[]): string | undefined {
-	const labels = new Set<string>();
+async function requireClaimable(ctx: AppContext, userId: string): Promise<void> {
+	const { standing } = await getUserSponsorship(ctx, userId);
 
-	for (const { label } of badges) {
-		const problem = findBadgeLabelProblem(label);
+	if (!canClaimPerk(PERK_ID, standing)) {
+		throw new ApiError(
+			'sponsorship_required',
+			`A monthly GitHub sponsorship of ${formatPrice(PERKS[PERK_ID].minimumMonthlyCents)} or more unlocks a custom badge.`,
+		);
+	}
+}
+
+async function findBadgesProblem(ctx: AppContext, badges: Badge[]): Promise<string | undefined> {
+	const names = new Set<string>();
+
+	for (const { name } of badges) {
+		const problem = findBadgeNameProblem(name);
 
 		if (problem) {
 			return problem;
 		}
 
-		if (labels.has(label.toLowerCase())) {
-			return `You already have a badge called "${label}".`;
+		if (names.has(name.toLowerCase())) {
+			return `You already have a badge called "${name}".`;
 		}
 
-		labels.add(label.toLowerCase());
+		names.add(name.toLowerCase());
+	}
+
+	// Only images that passed the upload checks are in the bucket, so a hash nobody uploaded is refused.
+	const uploaded = await Promise.all(
+		badges.map(({ image }) => ctx.storage.public.exists(getBadgeImageKey(image))),
+	);
+	const missing = badges.find((_, index) => !uploaded[index]);
+
+	if (missing) {
+		return `Upload the image for "${missing.name}" again; it was not found.`;
 	}
 }
 
 /**
+ * @description Stores a badge image in the public bucket under its hash, after checking it is a
+ * square, still PNG within the size limits. Uploading the same bytes again stores nothing new.
+ * Needs a sponsorship that can claim a badge, and counts against an hourly upload limit.
+ * @param ctx The application context.
+ * @param userId The uploader.
+ * @param bytes The PNG's bytes.
+ * @returns The image's hash, which a badge refers to, and its URL.
+ */
+export async function uploadBadgeImage(
+	ctx: AppContext,
+	userId: string,
+	bytes: Uint8Array,
+): Promise<UploadBadgeImageResponse> {
+	await requireClaimable(ctx, userId);
+	await consumeRateLimit(ctx, {
+		key: `api:badge-image:${userId}`,
+		windowSeconds: UPLOAD_WINDOW_SECONDS,
+		max: UPLOADS_PER_WINDOW,
+	});
+
+	const problem = findBadgeImageProblem(bytes);
+
+	if (problem) {
+		throw new ApiError('badge_rejected', problem);
+	}
+
+	const image = hashBadgeImage(bytes);
+	const key = getBadgeImageKey(image);
+
+	if (!(await ctx.storage.public.exists(key))) {
+		await ctx.storage.public.write(key, bytes, { type: 'image/png' });
+	}
+
+	return { image, url: getBadgeImageUrl(ctx.env, image) };
+}
+
+/**
  * @description Replaces the caller's custom badges. Needs an active sponsorship that unlocks them, a
- * claim staff have not revoked, and distinct labels that all pass moderation.
+ * claim staff have not revoked, distinct names that all pass moderation, and uploaded images.
  * @param ctx The application context.
  * @param userId The badge owner.
  * @param badges The badges in display order, already validated against the contract schema.
@@ -107,16 +191,9 @@ export async function claimBadges(
 	userId: string,
 	badges: Badge[],
 ): Promise<BadgeClaimResponse> {
-	const { standing } = await getUserSponsorship(ctx, userId);
+	await requireClaimable(ctx, userId);
 
-	if (!canClaimPerk(PERK_ID, standing)) {
-		throw new ApiError(
-			'sponsorship_required',
-			`A monthly GitHub sponsorship of ${formatPrice(PERKS[PERK_ID].minimumMonthlyCents)} or more unlocks a custom badge.`,
-		);
-	}
-
-	const problem = findBadgesProblem(badges);
+	const problem = await findBadgesProblem(ctx, badges);
 
 	if (problem) {
 		throw new ApiError('badge_rejected', problem);
@@ -138,7 +215,7 @@ export async function claimBadges(
 		throw new ApiError('perk_revoked', 'Staff removed your badges; they cannot be set again.');
 	}
 
-	return { claim: toBadgeClaim(row) };
+	return { claim: toBadgeClaim(ctx.env, row) };
 }
 
 /**
@@ -209,7 +286,7 @@ async function setRevocation(
 		throw new ApiError('not_found', `${userId} has no badges.`);
 	}
 
-	return { claim: toBadgeClaim(updated[0]) };
+	return { claim: toBadgeClaim(ctx.env, updated[0]) };
 }
 
 /**
@@ -258,7 +335,11 @@ export async function getVisibleBadges(
 
 		badges.set(
 			row.claim.userId,
-			shown.map((badge) => ({ ...badge, kind: PERK_ID })),
+			shown.map(({ name, image }) => ({
+				name,
+				imageUrl: getBadgeImageUrl(ctx.env, image),
+				kind: PERK_ID,
+			})),
 		);
 	}
 
@@ -268,6 +349,7 @@ export async function getVisibleBadges(
 export default {
 	toBadgeClaim,
 	findBadgeClaim,
+	uploadBadgeImage,
 	claimBadges,
 	removeBadges,
 	revokeBadge,

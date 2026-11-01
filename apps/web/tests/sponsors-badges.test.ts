@@ -1,87 +1,30 @@
-import {
-	badgeClaimResponseSchema,
-	userBadgesResponseSchema,
-} from '@unbound-app/contracts/sponsors';
+import { badgeClaimResponseSchema } from '@unbound-app/contracts/sponsors';
 import type { Badge } from '@unbound-app/contracts/sponsors';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
 import { account, perkClaim, sponsorship, user } from '~/db/schema';
-import listUserBadgesEndpoint from '~/endpoints/list-user-badges';
-import removeMyBadgesEndpoint from '~/endpoints/remove-my-badges';
-import restoreBadgeEndpoint from '~/endpoints/restore-badge';
-import setMyBadgesEndpoint from '~/endpoints/set-my-badges';
-import revokeBadgeEndpoint from '~/endpoints/revoke-badge';
 import { getVisibleBadges } from '~/lib/sponsors/badges';
 import { isPerkUnlocked } from '~/lib/sponsors/perks';
 import { standingOf } from '~/lib/sponsors/standing';
-import type { AppContext } from '~/lib/context';
-import { createApiClient } from '~/api/client';
-import type { Role } from '~/lib/auth/access';
-import type { Api } from '~/api';
 
-import type { SeededSponsorship } from './helpers/sponsors';
-
-import { createTestContext, linkGitHub, signInWithDiscord } from './helpers/context';
-import { failure, serveEndpoints } from './helpers/server';
-import { seedSponsorship } from './helpers/sponsors';
-
-type SponsorOptions = {
-	role?: Role;
-	github?: boolean;
-	sponsorship?: Omit<SeededSponsorship, 'githubId'> | null;
-};
+import { createBadgeSuite } from './helpers/badges';
+import { failure } from './helpers/server';
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = new Date('2026-03-01T00:00:00Z');
 const GRACE = 7 * DAY;
 
-const BADGE: Badge = { label: 'Night Owl', icon: 'moon', color: 'purple' };
+const suite = await createBadgeSuite(NOW);
+const { ctx, anonymous, signUp, setBadges, removeBadges, owned, shown, publicBadges } = suite;
+const [MOON, LEAF, SUN, SPARE] = suite.images;
 
-const base = await createTestContext();
-const ctx: AppContext = { ...base.ctx, now: () => NOW };
-
-const server = serveEndpoints(ctx, {
-	'GET /api/v1/users/$id/badges': listUserBadgesEndpoint,
-	'PUT /api/v1/me/badges': setMyBadgesEndpoint,
-	'DELETE /api/v1/me/badges': removeMyBadgesEndpoint,
-	'POST /api/v1/users/$id/badge/revoke': revokeBadgeEndpoint,
-	'DELETE /api/v1/users/$id/badge/revoke': restoreBadgeEndpoint,
-});
-
-const anonymous = createApiClient<Api>({ baseUrl: server.url.href });
-
-afterAll(async () => {
-	await server.stop(true);
-	await base.close();
-});
-
-let users = 0;
-
-async function signUp({ role = 'user', github = true, sponsorship = {} }: SponsorOptions = {}) {
-	users += 1;
-
-	const { userId, headers } = await signInWithDiscord(ctx, {
-		id: `8035111022469${String(users).padStart(4, '0')}`,
-		name: `Sponsor ${users}`,
-		email: `sponsor-${users}@example.com`,
-	});
-
-	await ctx.db.update(user).set({ role }).where(eq(user.id, userId));
-
-	if (github) {
-		await linkGitHub(ctx, userId, `token-${users}`);
-	}
-
-	if (github && sponsorship) {
-		await seedSponsorship(ctx, { githubId: userId, ...sponsorship });
-	}
-
-	return { userId, client: createApiClient<Api>({ baseUrl: server.url.href, headers }) };
-}
+const BADGE: Badge = { name: 'Night Owl', image: MOON };
 
 type Client = Awaited<ReturnType<typeof signUp>>['client'];
+
+afterAll(suite.close);
 
 async function waitForLockWait() {
 	for (let i = 0; i < 250; i++) {
@@ -97,30 +40,8 @@ async function waitForLockWait() {
 	throw new Error('Expected a statement waiting on a lock.');
 }
 
-function setBadges(client: Client, badges: Badge[]) {
-	return client('PUT /api/v1/me/badges', {
-		body: { badges },
-		response: badgeClaimResponseSchema,
-	});
-}
-
 function setBadge(client: Client, badge: Badge = BADGE) {
 	return setBadges(client, [badge]);
-}
-
-function removeBadges(client: Client) {
-	return client('DELETE /api/v1/me/badges', { response: badgeClaimResponseSchema });
-}
-
-function shown(...badges: Badge[]) {
-	return { badges: badges.map((badge) => ({ ...badge, kind: 'custom-badge' as const })) };
-}
-
-function publicBadges(userId: string) {
-	return anonymous('GET /api/v1/users/$id/badges', {
-		params: { id: userId },
-		response: userBadgesResponseSchema,
-	});
 }
 
 async function storedClaimCount(userId: string) {
@@ -208,18 +129,14 @@ describe('claiming a badge', () => {
 		const sponsor = await signUp();
 
 		expect(await setBadge(sponsor.client)).toEqual({
-			claim: { badges: [BADGE], revokedAt: null, revokeReason: null },
+			claim: { badges: owned(BADGE), revokedAt: null, revokeReason: null },
 		});
-		expect(await publicBadges(sponsor.userId)).toEqual({
-			badges: [{ ...BADGE, kind: 'custom-badge' }],
-		});
+		expect(await publicBadges(sponsor.userId)).toEqual(shown(BADGE));
 
-		await setBadge(sponsor.client, { label: 'Early Bird', icon: 'sparkles', color: 'teal' });
-		expect(await publicBadges(sponsor.userId)).toEqual({
-			badges: [
-				{ label: 'Early Bird', icon: 'sparkles', color: 'teal', kind: 'custom-badge' },
-			],
-		});
+		await setBadge(sponsor.client, { name: 'Early Bird', image: LEAF });
+		expect(await publicBadges(sponsor.userId)).toEqual(
+			shown({ name: 'Early Bird', image: LEAF }),
+		);
 
 		expect(await removeBadges(sponsor.client)).toEqual({ claim: null });
 		expect(await publicBadges(sponsor.userId)).toEqual({ badges: [] });
@@ -245,21 +162,26 @@ describe('claiming a badge', () => {
 		expect(await failure(setBadge(anonymous))).toEqual({ status: 401, code: 'unauthorized' });
 	});
 
-	test('refuses labels outside the allowed characters and length', async () => {
+	test('refuses names outside the allowed characters and length, and malformed image hashes', async () => {
 		const sponsor = await signUp();
-		const labels = ['', 'x'.repeat(25), 'Cool 😎', 'st\u0430ff', 'Line\nBreak', ' - lead'];
+		const names = ['', 'x'.repeat(25), 'Cool 😎', 'st\u0430ff', 'Line\nBreak', ' - lead'];
+		const badges = [
+			...names.map((name) => ({ ...BADGE, name })),
+			{ ...BADGE, image: 'not-a-hash' },
+			{ ...BADGE, image: MOON.toUpperCase() },
+		];
 
-		for (const label of labels) {
-			expect(await failure(setBadge(sponsor.client, { ...BADGE, label }))).toEqual({
+		for (const badge of badges) {
+			expect(await failure(setBadge(sponsor.client, badge))).toEqual({
 				status: 400,
 				code: 'invalid_request',
 			});
 		}
 	});
 
-	test('refuses profanity and labels that impersonate staff', async () => {
+	test('refuses profanity and names that impersonate staff', async () => {
 		const sponsor = await signUp();
-		const labels = [
+		const names = [
 			'Fuck Yeah',
 			'f u c k',
 			'S t a f f',
@@ -270,8 +192,8 @@ describe('claiming a badge', () => {
 			'Stäff',
 		];
 
-		for (const label of labels) {
-			expect(await failure(setBadge(sponsor.client, { ...BADGE, label }))).toEqual({
+		for (const name of names) {
+			expect(await failure(setBadge(sponsor.client, { ...BADGE, name }))).toEqual({
 				status: 400,
 				code: 'badge_rejected',
 			});
@@ -283,10 +205,10 @@ describe('claiming a badge', () => {
 	test('allows ordinary words that only contain a reserved word', async () => {
 		const sponsor = await signUp();
 
-		for (const label of ['Supporter', 'Modern Themes', 'Badminton', 'Steam Deck']) {
-			const { claim } = await setBadge(sponsor.client, { ...BADGE, label });
+		for (const name of ['Supporter', 'Modern Themes', 'Badminton', 'Steam Deck']) {
+			const { claim } = await setBadge(sponsor.client, { ...BADGE, name });
 
-			expect(claim?.badges).toEqual([{ ...BADGE, label }]);
+			expect(claim?.badges).toEqual(owned({ ...BADGE, name }));
 		}
 	});
 });
@@ -294,14 +216,14 @@ describe('claiming a badge', () => {
 describe('several badges', () => {
 	const THREE: Badge[] = [
 		BADGE,
-		{ label: 'Early Bird', icon: 'sparkles', color: 'teal' },
-		{ label: 'Theme Fan', icon: 'palette', color: 'orange' },
+		{ name: 'Early Bird', image: LEAF },
+		{ name: 'Theme Fan', image: SUN },
 	];
 
 	test('a sponsor shows up to three badges, in the order they saved them', async () => {
 		const sponsor = await signUp();
 
-		expect((await setBadges(sponsor.client, THREE)).claim?.badges).toEqual(THREE);
+		expect((await setBadges(sponsor.client, THREE)).claim?.badges).toEqual(owned(...THREE));
 		expect(await publicBadges(sponsor.userId)).toEqual(shown(...THREE));
 
 		const reordered = [THREE[2]!, THREE[0]!];
@@ -312,7 +234,7 @@ describe('several badges', () => {
 
 	test('refuses an empty list or a fourth badge', async () => {
 		const sponsor = await signUp();
-		const four = [...THREE, { label: 'Fourth', icon: 'star', color: 'blue' } as const];
+		const four = [...THREE, { name: 'Fourth', image: SPARE }];
 
 		for (const badges of [[], four]) {
 			expect(await failure(setBadges(sponsor.client, badges))).toEqual({
@@ -322,23 +244,21 @@ describe('several badges', () => {
 		}
 	});
 
-	test('refuses two badges with the same label, ignoring case', async () => {
+	test('refuses two badges with the same name, ignoring case', async () => {
 		const sponsor = await signUp();
 
 		expect(
-			await failure(
-				setBadges(sponsor.client, [BADGE, { ...BADGE, label: 'night owl', color: 'red' }]),
-			),
+			await failure(setBadges(sponsor.client, [BADGE, { name: 'night owl', image: LEAF }])),
 		).toEqual({ status: 400, code: 'badge_rejected' });
 	});
 
-	test('one refused label refuses the whole list and keeps the saved one', async () => {
+	test('one refused name refuses the whole list and keeps the saved one', async () => {
 		const sponsor = await signUp();
 
 		await setBadge(sponsor.client);
 
 		expect(
-			await failure(setBadges(sponsor.client, [THREE[1]!, { ...BADGE, label: 'Admins' }])),
+			await failure(setBadges(sponsor.client, [THREE[1]!, { ...BADGE, name: 'Admins' }])),
 		).toEqual({ status: 400, code: 'badge_rejected' });
 		expect(await publicBadges(sponsor.userId)).toEqual(shown(BADGE));
 	});
@@ -426,9 +346,7 @@ describe('revoking a badge', () => {
 			params: { id: sponsor.userId },
 			response: badgeClaimResponseSchema,
 		});
-		expect(await publicBadges(sponsor.userId)).toEqual({
-			badges: [{ ...BADGE, kind: 'custom-badge' }],
-		});
+		expect(await publicBadges(sponsor.userId)).toEqual(shown(BADGE));
 	});
 
 	test('a revoke landing while a badge is being set keeps the revoked badge', async () => {
@@ -447,7 +365,7 @@ describe('revoking a badge', () => {
 
 		await locked.promise;
 
-		const replaced = failure(setBadge(sponsor.client, { ...BADGE, label: 'Replaced' }));
+		const replaced = failure(setBadge(sponsor.client, { ...BADGE, name: 'Replaced' }));
 
 		await waitForLockWait();
 		release.resolve();
@@ -561,9 +479,7 @@ describe('getVisibleBadges', () => {
 			.set({ monthlyPriceCents: 500 })
 			.where(eq(sponsorship.githubId, githubId));
 
-		expect(await publicBadges(sponsor.userId)).toEqual({
-			badges: [{ ...BADGE, kind: 'custom-badge' }],
-		});
+		expect(await publicBadges(sponsor.userId)).toEqual(shown(BADGE));
 	});
 
 	test('hides the badge once GitHub is unlinked', async () => {

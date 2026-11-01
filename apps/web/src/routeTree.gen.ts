@@ -74,6 +74,7 @@ import { Route as ApiV1AddonsIdMaintainersRouteImport } from './routes/api/v1/ad
 import { Route as ApiV1AddonsIdRelistRouteImport } from './routes/api/v1/addons/$id/relist'
 import { Route as ApiV1AddonsIdTransferRouteImport } from './routes/api/v1/addons/$id/transfer'
 import { Route as ApiV1AddonsIdVersionsRouteImport } from './routes/api/v1/addons/$id/versions'
+import { Route as ApiV1MeBadgesImagesRouteImport } from './routes/api/v1/me/badges/images'
 import { Route as ApiV1SubmissionsIdReviewRouteImport } from './routes/api/v1/submissions/$id/review'
 import { Route as ApiV1UsersIdBadgesRouteImport } from './routes/api/v1/users/$id/badges'
 import { Route as ApiV1AddonsIdMaintainersUserIdRouteImport } from './routes/api/v1/addons/$id/maintainers/$userId'
@@ -411,6 +412,11 @@ const ApiV1AddonsIdVersionsRoute = ApiV1AddonsIdVersionsRouteImport.update({
   path: '/$id/versions',
   getParentRoute: () => ApiV1AddonsRoute,
 } as any)
+const ApiV1MeBadgesImagesRoute = ApiV1MeBadgesImagesRouteImport.update({
+  id: '/images',
+  path: '/images',
+  getParentRoute: () => ApiV1MeBadgesRoute,
+} as any)
 const ApiV1SubmissionsIdReviewRoute =
   ApiV1SubmissionsIdReviewRouteImport.update({
     id: '/$id/review',
@@ -486,7 +492,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
   '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
-  '/api/v1/me/badges': typeof ApiV1MeBadgesRoute
+  '/api/v1/me/badges': typeof ApiV1MeBadgesRouteWithChildren
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
@@ -501,6 +507,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
+  '/api/v1/me/badges/images': typeof ApiV1MeBadgesImagesRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/admin/addons/': typeof SiteStaffAdminAddonsIndexRoute
@@ -553,7 +560,7 @@ export interface FileRoutesByTo {
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
   '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
-  '/api/v1/me/badges': typeof ApiV1MeBadgesRoute
+  '/api/v1/me/badges': typeof ApiV1MeBadgesRouteWithChildren
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
@@ -568,6 +575,7 @@ export interface FileRoutesByTo {
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
+  '/api/v1/me/badges/images': typeof ApiV1MeBadgesImagesRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/admin/addons': typeof SiteStaffAdminAddonsIndexRoute
@@ -626,7 +634,7 @@ export interface FileRoutesById {
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
   '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
-  '/api/v1/me/badges': typeof ApiV1MeBadgesRoute
+  '/api/v1/me/badges': typeof ApiV1MeBadgesRouteWithChildren
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
@@ -641,6 +649,7 @@ export interface FileRoutesById {
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
+  '/api/v1/me/badges/images': typeof ApiV1MeBadgesImagesRoute
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/_site/_staff/admin/addons/': typeof SiteStaffAdminAddonsIndexRoute
@@ -713,6 +722,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
+    | '/api/v1/me/badges/images'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/admin/addons/'
@@ -780,6 +790,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
+    | '/api/v1/me/badges/images'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/admin/addons'
@@ -852,6 +863,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
+    | '/api/v1/me/badges/images'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/_site/_staff/admin/addons/'
@@ -1345,6 +1357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1AddonsIdVersionsRouteImport
       parentRoute: typeof ApiV1AddonsRoute
     }
+    '/api/v1/me/badges/images': {
+      id: '/api/v1/me/badges/images'
+      path: '/images'
+      fullPath: '/api/v1/me/badges/images'
+      preLoaderRoute: typeof ApiV1MeBadgesImagesRouteImport
+      parentRoute: typeof ApiV1MeBadgesRoute
+    }
     '/api/v1/submissions/$id/review': {
       id: '/api/v1/submissions/$id/review'
       path: '/$id/review'
@@ -1542,14 +1561,26 @@ const ApiV1AddonsRouteWithChildren = ApiV1AddonsRoute._addFileChildren(
   ApiV1AddonsRouteChildren,
 )
 
+interface ApiV1MeBadgesRouteChildren {
+  ApiV1MeBadgesImagesRoute: typeof ApiV1MeBadgesImagesRoute
+}
+
+const ApiV1MeBadgesRouteChildren: ApiV1MeBadgesRouteChildren = {
+  ApiV1MeBadgesImagesRoute: ApiV1MeBadgesImagesRoute,
+}
+
+const ApiV1MeBadgesRouteWithChildren = ApiV1MeBadgesRoute._addFileChildren(
+  ApiV1MeBadgesRouteChildren,
+)
+
 interface ApiV1MeRouteChildren {
   ApiV1MeAddonsRoute: typeof ApiV1MeAddonsRoute
-  ApiV1MeBadgesRoute: typeof ApiV1MeBadgesRoute
+  ApiV1MeBadgesRoute: typeof ApiV1MeBadgesRouteWithChildren
 }
 
 const ApiV1MeRouteChildren: ApiV1MeRouteChildren = {
   ApiV1MeAddonsRoute: ApiV1MeAddonsRoute,
-  ApiV1MeBadgesRoute: ApiV1MeBadgesRoute,
+  ApiV1MeBadgesRoute: ApiV1MeBadgesRouteWithChildren,
 }
 
 const ApiV1MeRouteWithChildren =
@@ -1620,13 +1651,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -1,18 +1,18 @@
+import { BADGE_IMAGE_TYPE, BADGE_LIMIT } from '@unbound-app/contracts/sponsors';
 import type { Badge, BadgeClaim } from '@unbound-app/contracts/sponsors';
-import { IconPen, IconPlus, IconTrash } from 'nucleo-micro-bold';
-import { BADGE_LIMIT } from '@unbound-app/contracts/sponsors';
+import { IconPen, IconTrash, IconUpload } from 'nucleo-micro-bold';
 import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { removeBadgesMutation, saveBadgesMutation } from '~/queries/account/account';
+import useBadgeDrafts from '~/components/account/use-badge-drafts';
 import type { PerkStatus } from '~/lib/sponsors/overview';
 import { formatMonthlyPrice } from '~/lib/sponsors/price';
 import UserBadgeList from '~/components/user-badge-list';
 import getApiErrorMessage from '~/lib/api/error-message';
 import BadgeForm from '~/components/account/badge-form';
 import { Button } from '~/components/ui/button';
-import UserBadge from '~/components/user-badge';
 import Text from '~/components/ui/text';
 
 type BadgeEditorProps = {
@@ -21,11 +21,9 @@ type BadgeEditorProps = {
 	editable: boolean;
 };
 
-type Draft = { kind: 'closed' } | { kind: 'adding' } | { kind: 'editing'; index: number };
+type Mode = { kind: 'closed' } | { kind: 'adding' } | { kind: 'editing'; index: number };
 
-const NEW_BADGE: Badge = { label: '', icon: 'heart', color: 'pink' };
-
-const CLOSED: Draft = { kind: 'closed' };
+const CLOSED: Mode = { kind: 'closed' };
 
 function lockedNote(perk: PerkStatus, editable: boolean): string | null {
 	if (!perk.unlocked) {
@@ -36,12 +34,48 @@ function lockedNote(perk: PerkStatus, editable: boolean): string | null {
 }
 
 function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
-	const [draft, setDraft] = useState<Draft>(CLOSED);
+	const [mode, setMode] = useState<Mode>(CLOSED);
+	const addPicker = useRef<HTMLInputElement>(null);
+	const replacePicker = useRef<HTMLInputElement>(null);
+	// The draft whose image the single-file picker replaces.
+	const replacing = useRef<string | null>(null);
+	const drafts = useBadgeDrafts();
 	const saveBadges = useMutation(saveBadgesMutation());
 	const removeBadges = useMutation(removeBadgesMutation());
 	const isPending = saveBadges.isPending || removeBadges.isPending;
 	const badges = claim?.badges ?? [];
 	const note = lockedNote(perk, editable);
+	const freeSlots =
+		BADGE_LIMIT - badges.length - (mode.kind === 'adding' ? drafts.drafts.length : 0);
+
+	function pickReplacement(id: string) {
+		replacing.current = id;
+		replacePicker.current?.click();
+	}
+
+	function onReplacementPicked(file: File | undefined) {
+		if (file && replacing.current) {
+			void drafts.replaceImage(replacing.current, file);
+		}
+	}
+
+	function onAdded(files: File[]) {
+		if (files.length > freeSlots) {
+			toast.info(
+				freeSlots === 1
+					? 'One badge slot is free, so only the first image was added.'
+					: `${freeSlots} badge slots are free, so only the first ${freeSlots} images were added.`,
+			);
+		}
+
+		drafts.addFiles(files.slice(0, freeSlots));
+		setMode({ kind: 'adding' });
+	}
+
+	function close() {
+		drafts.clear();
+		setMode(CLOSED);
+	}
 
 	async function save(next: Badge[], message: string): Promise<boolean> {
 		try {
@@ -61,6 +95,25 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 		}
 	}
 
+	async function saveDrafts(edited: Badge[]) {
+		const stored = badges.map(({ name, image }) => ({ name, image }));
+		const next =
+			mode.kind === 'editing' ? stored.with(mode.index, edited[0]!) : [...stored, ...edited];
+
+		if (
+			await save(
+				next,
+				mode.kind === 'editing'
+					? 'Badge saved'
+					: edited.length === 1
+						? 'Badge added'
+						: 'Badges added',
+			)
+		) {
+			close();
+		}
+	}
+
 	if (claim?.revokedAt) {
 		return (
 			<Text variant='text-sm' color='destructive'>
@@ -70,8 +123,55 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 		);
 	}
 
+	const form =
+		mode.kind === 'closed' ? null : (
+			<BadgeForm
+				drafts={drafts.drafts}
+				takenNames={badges
+					.filter((_, index) => mode.kind !== 'editing' || index !== mode.index)
+					.map((badge) => badge.name)}
+				disabled={isPending}
+				onAddMore={
+					mode.kind === 'adding' && freeSlots > 0
+						? () => addPicker.current?.click()
+						: undefined
+				}
+				onReplaceImage={pickReplacement}
+				onRename={drafts.rename}
+				onRemove={
+					mode.kind === 'adding'
+						? (id) => (drafts.drafts.length === 1 ? close() : drafts.remove(id))
+						: undefined
+				}
+				onCancel={close}
+				onSave={(edited) => void saveDrafts(edited)}
+			/>
+		);
+
 	return (
 		<div className='flex flex-col gap-3'>
+			<input
+				ref={addPicker}
+				type='file'
+				accept={BADGE_IMAGE_TYPE}
+				multiple
+				className='hidden'
+				onChange={(event) => {
+					onAdded([...(event.target.files ?? [])]);
+					event.target.value = '';
+				}}
+			/>
+			<input
+				ref={replacePicker}
+				type='file'
+				accept={BADGE_IMAGE_TYPE}
+				className='hidden'
+				onChange={(event) => {
+					onReplacementPicked(event.target.files?.[0]);
+					event.target.value = '';
+				}}
+			/>
+
 			<div className='flex items-center justify-between gap-4'>
 				<div className='flex flex-col'>
 					<Text variant='text-sm' className='font-medium'>
@@ -88,12 +188,12 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 						size='sm'
 						className='gap-2'
 						disabled={
-							isPending || draft.kind !== 'closed' || badges.length >= BADGE_LIMIT
+							isPending || mode.kind !== 'closed' || badges.length >= BADGE_LIMIT
 						}
-						onClick={() => setDraft({ kind: 'adding' })}
+						onClick={() => addPicker.current?.click()}
 					>
-						<IconPlus size={14} />
-						Add badge
+						<IconUpload size={14} />
+						Upload badges
 						<span className='text-muted-foreground tabular-nums'>
 							{badges.length} of {BADGE_LIMIT}
 						</span>
@@ -107,36 +207,44 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 				</Text>
 			) : null}
 
-			{badges.length === 0 && draft.kind === 'closed' ? (
+			{badges.length === 0 && mode.kind === 'closed' ? (
 				<Text variant='text-sm' color='muted'>
-					No badges yet. Add up to {BADGE_LIMIT}.
+					No badges yet. Upload up to {BADGE_LIMIT} PNGs and name each one.
 				</Text>
 			) : null}
 
 			{editable ? (
 				badges.map((badge, index) =>
-					draft.kind === 'editing' && draft.index === index ? (
-						<BadgeForm
-							key={badge.label}
-							initial={badge}
-							disabled={isPending}
-							onSave={(edited) => save(badges.with(index, edited), 'Badge saved')}
-							onCancel={() => setDraft(CLOSED)}
-						/>
+					mode.kind === 'editing' && mode.index === index ? (
+						<div key={badge.image}>{form}</div>
 					) : (
 						<div
-							key={badge.label}
+							key={badge.image}
 							className='flex items-center justify-between gap-4 min-h-8'
 						>
-							<UserBadge badge={badge} />
+							<div className='flex items-center gap-3 min-w-0'>
+								<img
+									src={badge.imageUrl}
+									alt=''
+									width={32}
+									height={32}
+									className='size-8 shrink-0 object-contain'
+								/>
+								<Text variant='text-sm' className='truncate'>
+									{badge.name}
+								</Text>
+							</div>
 							<div className='flex gap-1'>
 								<Button
 									type='button'
 									variant='ghost'
 									size='sm'
 									className='gap-2'
-									disabled={isPending || draft.kind !== 'closed'}
-									onClick={() => setDraft({ kind: 'editing', index })}
+									disabled={isPending || mode.kind !== 'closed'}
+									onClick={() => {
+										drafts.edit(badge);
+										setMode({ kind: 'editing', index });
+									}}
 								>
 									<IconPen size={14} />
 									Edit
@@ -146,9 +254,14 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 									variant='ghost'
 									size='sm'
 									className='gap-2'
-									disabled={isPending || draft.kind !== 'closed'}
+									disabled={isPending || mode.kind !== 'closed'}
 									onClick={() =>
-										void save(badges.toSpliced(index, 1), 'Badge removed')
+										void save(
+											badges
+												.toSpliced(index, 1)
+												.map(({ name, image }) => ({ name, image })),
+											'Badge removed',
+										)
 									}
 								>
 									<IconTrash size={14} />
@@ -162,14 +275,7 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 				<UserBadgeList badges={badges} />
 			)}
 
-			{draft.kind === 'adding' ? (
-				<BadgeForm
-					initial={NEW_BADGE}
-					disabled={isPending}
-					onSave={(added) => save([...badges, added], 'Badge added')}
-					onCancel={() => setDraft(CLOSED)}
-				/>
-			) : null}
+			{mode.kind === 'adding' ? form : null}
 
 			{!editable && badges.length > 0 ? (
 				<Button
