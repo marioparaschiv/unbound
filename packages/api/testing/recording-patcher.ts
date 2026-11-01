@@ -1,4 +1,4 @@
-import type { PatchOptions, PatchParent, PatcherInstance } from '../src/patcher';
+import type { PatchParent, after, before, instead } from '../src/patcher';
 
 type PatchKind = 'before' | 'instead' | 'after';
 
@@ -7,13 +7,16 @@ export type PatchRecord = {
 	kind: PatchKind;
 	target: PatchParent;
 	method: string;
-	caller: string | undefined;
 };
 
 /** A patcher that really patches, and records each patch it holds in `patches`. */
-export type RecordingPatcher = PatcherInstance & {
+export type RecordingPatcher = {
+	before: typeof before;
+	instead: typeof instead;
+	after: typeof after;
+	/** Removes every patch this patcher holds. */
+	unpatchAll: () => void;
 	patches: PatchRecord[];
-	createPatcher: (defaultOptions: string | PatchOptions) => PatcherInstance;
 };
 
 // UNKNOWN: a patched method returns whatever the code under test returns.
@@ -83,7 +86,7 @@ function hook(target: PatchParent, method: string): Hook {
 
 /**
  * @description Creates a patcher whose patches wrap the method for real and are listed in `patches` until removed.
- * @returns The patcher, with `createPatcher` for tagged patchers that share its record.
+ * @returns The patcher.
  */
 export function createRecordingPatcher(): RecordingPatcher {
 	const patches: PatchRecord[] = [];
@@ -103,9 +106,9 @@ export function createRecordingPatcher(): RecordingPatcher {
 		methods.delete(record.method);
 	}
 
-	function patch(kind: PatchKind, caller: string | undefined) {
+	function patch(kind: PatchKind) {
 		return (target: PatchParent, method: string, callback: Callback) => {
-			const record: PatchRecord = { kind, target, method, caller };
+			const record: PatchRecord = { kind, target, method };
 			const methods = hooks.get(target) ?? new Map<string, Hook>();
 			const hooked = methods.get(method) ?? hook(target, method);
 
@@ -118,32 +121,14 @@ export function createRecordingPatcher(): RecordingPatcher {
 		};
 	}
 
-	function unpatchAllBy(caller: string | undefined) {
-		const removed = patches.filter(
-			(record) => caller === undefined || record.caller === caller,
-		);
-
-		for (const record of removed) unpatch(record);
-	}
-
-	function createPatcher(defaultOptions: string | PatchOptions): PatcherInstance {
-		const caller =
-			typeof defaultOptions === 'string' ? defaultOptions : (defaultOptions.caller ?? 'test');
-
-		return {
-			before: patch('before', caller) as PatcherInstance['before'],
-			instead: patch('instead', caller) as PatcherInstance['instead'],
-			after: patch('after', caller) as PatcherInstance['after'],
-			unpatchAll: () => unpatchAllBy(caller),
-		};
-	}
-
 	return {
 		patches,
-		createPatcher,
-		before: patch('before', undefined) as PatcherInstance['before'],
-		instead: patch('instead', undefined) as PatcherInstance['instead'],
-		after: patch('after', undefined) as PatcherInstance['after'],
-		unpatchAll: () => unpatchAllBy(undefined),
+		before: patch('before') as RecordingPatcher['before'],
+		instead: patch('instead') as RecordingPatcher['instead'],
+		after: patch('after') as RecordingPatcher['after'],
+		unpatchAll: () => {
+			// `unpatch` splices `patches`, so walk a copy.
+			for (const record of patches.slice()) unpatch(record);
+		},
 	};
 }

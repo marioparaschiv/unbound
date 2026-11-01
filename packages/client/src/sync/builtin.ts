@@ -5,7 +5,7 @@ import { getMode, isApplying, isEnabled, now } from '~/sync/api';
 import type { SectionEntry } from '~/settings/section';
 import CloudSyncPage from '~/ui/settings/cloud-sync';
 import { Screens } from '~/core/constants';
-import storage from '~/storage/api';
+import { onChange } from '~/storage/api';
 
 /** How long local changes settle before they are synced. */
 const SYNC_DELAY_MS = 5000;
@@ -34,7 +34,7 @@ export function start() {
 	});
 
 	// Install sources, enabled and applied state all live in settings, so one listener sees every change.
-	unsubscribe = storage.addListener(
+	unsubscribe = onChange(
 		(payload) => !payload.store.startsWith(SYNC_LOCAL_STORE_PREFIX) && !isApplying(),
 		scheduleSync,
 	);

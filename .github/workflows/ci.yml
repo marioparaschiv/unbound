@@ -68,6 +68,8 @@ jobs:
             - name: Check the generated SDK is up to date
               run: |
                   git diff --exit-code -I '^[[:space:]]*"version": ' -- packages/api/src packages/api/package.json
+            - name: Check every public SDK member is documented
+              run: bun run --cwd apps/sdk-generator docs:coverage
             - name: Check the database migrations match the schema
               working-directory: apps/web
               run: |

@@ -6,6 +6,7 @@ import { NativePluginUnsupportedPlatformError } from '~/native/errors';
 /** One Platform handler per platform an addon runs on. */
 export type PlatformHandlers<Handler> = Partial<Record<NativePluginPlatform, Handler>>;
 
+/** The loader's platform bridge, read from `globalThis.NativePlatform` at import; `undefined` when no loader injected it. */
 export const NativePlatform: NativePlatformBridge | undefined = globalThis.NativePlatform;
 
 /**

@@ -3,7 +3,6 @@
 export type {
 	ADDON_KINDS,
 	ADDON_SCOPE_GLOBALS,
-	ADDON_TYPES,
 	AIGlyphTextProps,
 	AILoaderComponent,
 	AILoaderProps,
@@ -35,7 +34,6 @@ export type {
 	ActionSheetRowStatics,
 	ActionSheetSwitchRowComponent,
 	ActionSheetSwitchRowProps,
-	Addon,
 	AddonAuthor,
 	AddonHandle,
 	AddonKind,
@@ -43,9 +41,7 @@ export type {
 	AddonManifest,
 	AddonPlatform,
 	AddonPlatforms,
-	AddonResolveable,
 	AddonTrust,
-	AddonType,
 	AlertActionButtonComponent,
 	AlertActionButtonProps,
 	AlertActionsProps,
@@ -171,10 +167,8 @@ export type {
 	LoaderObjCBridge,
 	LoadingButtonPillProps,
 	LottieIconProps,
-	MANAGER_KINDS,
 	ManaContextProviderComponent,
 	ManaContextProviderProps,
-	ManagerKind,
 	MarkdownNestedParse,
 	MarkdownNode,
 	MarkdownOutput,
@@ -342,7 +336,6 @@ export type {
 	PlainTextExperimentProviderProps,
 	Plugin,
 	PluginContext,
-	PluginEntity,
 	PluginSelfTestResult,
 	PostponeRenderProps,
 	PressableBaseProps,
@@ -444,7 +437,6 @@ export type {
 	Theme,
 	ThemeContextProviderRootThemeContextProviderComponent,
 	ThemeContextProviderRootThemeContextProviderProps,
-	ThemeEntity,
 	ThemeProviderProps,
 	ThemeSemanticColor,
 	TitleProps,
@@ -486,16 +478,16 @@ declare global {
 
 /** The globals a plugin runs with, keyed by name. Plugin code reads them without an import. */
 export type AddonScope = {
-	React: typeof React;
-	unbound: UnboundGlobal;
-	addon: AddonHandle;
-	patcher: UnboundGlobal['patcher'];
-	logger: AddonLogger;
-	setTimeout: typeof setTimeout;
-	setInterval: typeof setInterval;
-	clearTimeout: typeof clearTimeout;
-	clearInterval: typeof clearInterval;
-	commands: Omit<
+	/** Discord's React, whose `createElement` keeps a reloaded plugin's components matched to their mounted ones. */ React: typeof React;
+	/** The Unbound API, with the `metro`, `storage`, `flux`, `patcher` and `commands` listeners scoped to this plugin. */ unbound: UnboundGlobal;
+	/** This plugin's handle: its manifest and state. */ addon: AddonHandle;
+	/** The patcher, tagging each patch with this plugin's id; Unbound removes them when it stops. */ patcher: UnboundGlobal['patcher'];
+	/** A logger that prefixes each line with this plugin's name. */ logger: AddonLogger;
+	/** `setTimeout`, cleared when this plugin stops. */ setTimeout: typeof setTimeout;
+	/** `setInterval`, cleared when this plugin stops. */ setInterval: typeof setInterval;
+	/** Clears a timer this plugin set with `setTimeout`. */ clearTimeout: typeof clearTimeout;
+	/** Clears a timer this plugin set with `setInterval`. */ clearInterval: typeof clearInterval;
+	/** The commands API, registering each command under this plugin's id; Unbound removes them when it stops. */ commands: Omit<
 		ReturnType<UnboundGlobal['commands']['createCommands']>,
 		keyof UnboundGlobal['commands']
 	> &
@@ -519,31 +511,48 @@ export interface UnboundLifecycle {
 
 /** The global `unbound` object while the client is initialized: the API plus the lifecycle. */
 export interface UnboundGlobal extends UnboundLifecycle {
+	/** The `assets` module, which plugins also import from `@unbound-app/api/assets`. */
 	assets: typeof import('./assets.d.ts');
+	/** The `builtins` module, which plugins also import from `@unbound-app/api/builtins`. */
 	builtins: typeof import('./builtins.d.ts');
+	/** The `commands` module, which plugins also import from `@unbound-app/api/commands`. */
 	commands: typeof import('./commands.d.ts');
+	/** The `dialogs` module, which plugins also import from `@unbound-app/api/dialogs`. */
 	dialogs: typeof import('./dialogs.d.ts');
+	/** The `flux` module, which plugins also import from `@unbound-app/api/flux`. */
 	flux: typeof import('./flux.d.ts');
+	/** The `fonts` module, which plugins also import from `@unbound-app/api/fonts`. */
 	fonts: typeof import('./fonts.d.ts');
+	/** The `fs` module, which plugins also import from `@unbound-app/api/fs`. */
 	fs: typeof import('./fs.d.ts');
+	/** The `i18n` module, which plugins also import from `@unbound-app/api/i18n`. */
 	i18n: typeof import('./i18n.d.ts');
+	/** The `iconPacks` module, which plugins also import from `@unbound-app/api/iconPacks`. */
 	iconPacks: typeof import('./iconPacks.d.ts');
+	/** The `marketplace` module, which plugins also import from `@unbound-app/api/marketplace`. */
 	marketplace: typeof import('./marketplace.d.ts');
+	/** The `metro` module, which plugins also import from `@unbound-app/api/metro`. */
 	metro: typeof import('./metro/index.d.ts');
+	/** The `native` module, which plugins also import from `@unbound-app/api/native`. */
 	native: typeof import('./native.d.ts');
+	/** The `patcher` module, which plugins also import from `@unbound-app/api/patcher`. */
 	patcher: typeof import('./patcher.d.ts');
+	/** The `plugins` module, which plugins also import from `@unbound-app/api/plugins`. */
 	plugins: typeof import('./plugins.d.ts');
+	/** The `settings` module, which plugins also import from `@unbound-app/api/settings`. */
 	settings: typeof import('./settings.d.ts');
+	/** The `storage` module, which plugins also import from `@unbound-app/api/storage`. */
 	storage: typeof import('./storage.d.ts');
+	/** The `sync` module, which plugins also import from `@unbound-app/api/sync`. */
 	sync: typeof import('./sync.d.ts');
+	/** The `themes` module, which plugins also import from `@unbound-app/api/themes`. */
 	themes: typeof import('./themes.d.ts');
+	/** The `toasts` module, which plugins also import from `@unbound-app/api/toasts`. */
 	toasts: typeof import('./toasts.d.ts');
+	/** The `ui` module, which plugins also import from `@unbound-app/api/ui`. */
 	ui: typeof import('./ui.d.ts');
+	/** The `updates` module, which plugins also import from `@unbound-app/api/updates`. */
 	updates: typeof import('./updates.d.ts');
-	/** @deprecated Use sync */
-	cloudSync: typeof import('./sync.d.ts');
-	/** @deprecated Use iconPacks */
-	icons: typeof import('./iconPacks.d.ts');
 }
 
 declare global {

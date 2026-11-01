@@ -114,7 +114,6 @@ describe('byFluxStore', () => {
 		expect(filter[CACHE_KEY]).toBe('byStore::UserStore');
 		expect(filter({ _dispatcher: dispatcher, getName: () => 'UserStore' }, 1)).toBe(true);
 		expect(filter({ _dispatcher: dispatcher, getName: () => 'GuildStore' }, 1)).toBe(false);
-		expect(filters.byStore).toBe(filters.byFluxStore);
 	});
 });
 

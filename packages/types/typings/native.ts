@@ -1,11 +1,21 @@
-import type * as React from 'react';
-
+import type { NativeJavaBridge, NativeJavaHooksBridge } from './native-java';
+import type { LoaderObjCBridge, NativeObjCBridge } from './native-objc';
 import type { NativeUIBridge, NativeUIScopeFactory } from './native-ui';
-import type { AddonManifest, Plugin } from './addons';
+import type { NativeSerializableObject } from './native-handles';
+import type { NativeFabricBridge } from './native-fabric';
+import type { NativeFFIBridge } from './native-ffi';
+import type { AddonManifest } from './addons';
 
+export * from './native-platform';
+export * from './native-handles';
 export * from './native-methods';
+export * from './native-fabric';
+export * from './native-java';
+export * from './native-objc';
+export * from './native-ffi';
 export * from './native-ui';
 
+/** Every capability name a manifest may declare; an unknown name fails manifest validation. */
 export const NATIVE_PLUGIN_CAPABILITIES = [
 	'native.objc.classes',
 	'native.objc.invoke',
@@ -32,12 +42,16 @@ export const NATIVE_PLUGIN_CAPABILITIES = [
 	'native.debug.environment',
 ] as const;
 
+/** A named permission to use one part of the native bridge, declared in an addon's manifest. */
 export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
 
+/** The host platforms a native bridge runs on. */
 export const NATIVE_PLUGIN_PLATFORMS = ['ios', 'android'] as const;
 
+/** A host platform the loader reports, `ios` or `android`. */
 export type NativePluginPlatform = (typeof NATIVE_PLUGIN_PLATFORMS)[number];
 
+/** The capabilities each platform's loader offers; Objective-C ones are iOS only and Java ones Android only. */
 export const NATIVE_PLUGIN_PLATFORM_CAPABILITIES = {
 	android: [
 		'native.java.classes',
@@ -78,286 +92,7 @@ export const NATIVE_PLUGIN_PLATFORM_CAPABILITIES = {
 export type NativePluginPlatformCapability<P extends NativePluginPlatform> =
 	(typeof NATIVE_PLUGIN_PLATFORM_CAPABILITIES)[P][number];
 
-declare const nativeHandle: unique symbol;
-
-/** An opaque reference to a native object. Only the bridge creates handles; plugins pass them back. */
-export type NativeHandle = {
-	readonly [nativeHandle]: true;
-};
-
-export type NativeClassHandle = NativeHandle;
-export type NativeObjectHandle = NativeHandle;
-export type NativePointer = NativeHandle;
-export type NativeAssociationKey = NativeHandle;
-
-/** A C struct field: a scalar, a pointer or object, or a nested struct. */
-export type NativeStructField = number | boolean | NativeHandle | NativeStructFields;
-
-export type NativeStructFields = {
-	[field: string]: NativeStructField;
-};
-
-export type NativeStruct<T extends NativeStructFields = NativeStructFields> = {
-	readonly name: string;
-	readonly value?: T;
-} & NativeHandle;
-
-/** A value the bridge serializes by structure, such as Fabric surface props or a plist. */
-export type NativeSerializable =
-	| string
-	| number
-	| boolean
-	| null
-	| NativeSerializable[]
-	| NativeSerializableObject;
-
-export type NativeSerializableObject = {
-	[key: string]: NativeSerializable;
-};
-
-export type NativeThreadPolicy = 'current' | 'main';
-
-export type NativeCancelablePromise<T> = Promise<T> & { cancel(): void };
-
-export type NativeBatchReference = {
-	readonly $nativeBatchResult: number;
-};
-
-export type NativeBatchStep = {
-	target: NativeObjectHandle | NativeBatchReference;
-	selector: string;
-	args: unknown[];
-};
-
-export type NativeViewSnapshotOptions = {
-	maxDepth?: number;
-	maxNodes?: number;
-};
-
-export type NativeViewSearchOptions = {
-	maxDepth?: number;
-	maxVisited?: number;
-	maxResults?: number;
-	attachedOnly?: boolean;
-	stopAtMatch?: boolean;
-	direction?: 'ancestors' | 'descendants';
-};
-
-export type NativeViewSnapshotNode = {
-	view: NativeObjectHandle;
-	parent: number;
-	depth: number;
-	className: string;
-	frame: NativeFabricFrame;
-	text: string | null;
-	visible: boolean;
-};
-
-export type NativeCallOptions = {
-	thread?: NativeThreadPolicy;
-};
-
-export type NativeFFITypeName =
-	| 'void'
-	| 'bool'
-	| 'i8'
-	| 'u8'
-	| 'i16'
-	| 'u16'
-	| 'i32'
-	| 'u32'
-	| 'i64'
-	| 'u64'
-	| 'float'
-	| 'double'
-	| 'cstring'
-	| 'pointer'
-	| 'object'
-	| 'class'
-	| 'selector';
-
-export type NativeFFIType = NativeFFITypeName | { struct: string };
-
-export type NativeFFISignature = {
-	returnType: NativeFFIType;
-	args: NativeFFIType[];
-};
-
-export type NativeHookContext = {
-	self: NativeObjectHandle;
-	selector: string;
-	args: unknown[];
-	// UNKNOWN: returns whatever the hooked Objective-C method returns.
-	original: (...args: unknown[]) => unknown;
-	replaceObjectArgument(index: number, value: NativeObjectHandle | null): void;
-};
-
-export type NativeHookHandlers = {
-	before?: (context: NativeHookContext) => void | Promise<void>;
-	after?: (context: NativeHookContext) => void | Promise<void>;
-	// UNKNOWN: the replacement returns whatever type the hooked Objective-C method returns.
-	replace?: (context: NativeHookContext) => unknown;
-};
-
-export type NativeHookOptions = {
-	cacheOnly?: boolean;
-	instance?: NativeObjectHandle;
-	once?: boolean;
-} & NativeCallOptions;
-
-export type NativeHookToken = {
-	readonly active: boolean;
-	// UNKNOWN: `value` is whatever type the hooked Objective-C method returns.
-	setReturnValue(self: NativeObjectHandle, args: unknown[], value: unknown): void;
-	removeReturnValue(self: NativeObjectHandle, args: unknown[]): void;
-	clearReturnValues(): void;
-	remove(): void;
-};
-
-export type NativeObjCBridge = {
-	getClass(name: string): NativeClassHandle | null;
-	alloc(classOrName: string | NativeClassHandle): NativeObjectHandle;
-	/** Allocates an instance and returns what `initSelector` initializes; throws when that is nil. */
-	create(
-		classOrName: string | NativeClassHandle,
-		initSelector: string,
-		args?: unknown[],
-		options?: NativeCallOptions,
-	): NativeObjectHandle;
-	className(handle: NativeHandle): string | null;
-	respondsTo(handle: NativeHandle, selector: string): boolean;
-	// UNKNOWN: returns whatever the Objective-C method returns, bridged to JS.
-	call(handle: NativeHandle, selector: string, ...args: unknown[]): unknown;
-	// UNKNOWN: returns whatever the Objective-C method returns, bridged to JS.
-	callSuper(
-		handle: NativeObjectHandle,
-		currentClass: NativeClassHandle | string,
-		selector: string,
-		...args: unknown[]
-	): unknown;
-	// UNKNOWN: returns whatever the Objective-C method returns, bridged to JS.
-	invoke(
-		handle: NativeObjectHandle,
-		selector: string,
-		args: unknown[],
-		options?: NativeCallOptions,
-	): unknown;
-	invokeAsync(
-		handle: NativeObjectHandle,
-		selector: string,
-		args: unknown[],
-	): NativeCancelablePromise<unknown>;
-	batch(steps: readonly NativeBatchStep[]): NativeCancelablePromise<unknown[]>;
-	snapshot(
-		root: NativeObjectHandle,
-		options?: NativeViewSnapshotOptions,
-	): NativeCancelablePromise<NativeViewSnapshotNode[]>;
-	findViews(
-		root: NativeObjectHandle,
-		className: string,
-		options?: NativeViewSearchOptions,
-	): NativeCancelablePromise<NativeObjectHandle[]>;
-	// UNKNOWN: returns whatever the Objective-C method returns, bridged to JS.
-	invokeSuper(
-		handle: NativeObjectHandle,
-		currentClass: NativeClassHandle | string,
-		selector: string,
-		args: unknown[],
-		options?: NativeCallOptions,
-	): unknown;
-	invokeSuperAsync(
-		handle: NativeObjectHandle,
-		currentClass: NativeClassHandle | string,
-		selector: string,
-		args: unknown[],
-	): NativeCancelablePromise<unknown>;
-	// UNKNOWN: an ivar holds whatever type its Objective-C declaration says.
-	getIvar(handle: NativeObjectHandle, name: string): unknown;
-	// UNKNOWN: an ivar holds whatever type its Objective-C declaration says.
-	setIvar(handle: NativeObjectHandle, name: string, value: unknown): void;
-	createAssociationKey(): NativeAssociationKey;
-	// UNKNOWN: an association holds any JS or native value the plugin stored.
-	getAssociatedObject(handle: NativeObjectHandle, key: NativeAssociationKey): unknown;
-	// UNKNOWN: an association holds any JS or native value the plugin stores.
-	setAssociatedObject(
-		handle: NativeObjectHandle,
-		key: NativeAssociationKey,
-		value: unknown,
-		policy?: string,
-	): void;
-	struct<T extends NativeStructFields = NativeStructFields>(
-		name: string,
-		fields: T,
-	): NativeStruct<T>;
-	array(handle: NativeObjectHandle): unknown[];
-	data(value: ArrayBuffer | Uint8Array): NativeObjectHandle;
-	hook(
-		className: string,
-		selector: string,
-		handlers: NativeHookHandlers,
-		options?: NativeHookOptions,
-	): NativeHookToken;
-};
-
-export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> & NativeUIScopeFactory;
-
-export type NativeFFIBridge = {
-	symbol(name: string, image?: string): NativePointer | null;
-	// UNKNOWN: the result's type is described at runtime by `signature.returnType`.
-	call(pointer: NativePointer, signature: NativeFFISignature, ...args: unknown[]): unknown;
-};
-
-export type NativeFabricSize = {
-	width: number;
-	height: number;
-};
-
-export type NativeFabricFrame = {
-	x: number;
-	y: number;
-	width: number;
-	height: number;
-};
-
-export type NativeFabricSurface = NativeHandle;
-
-export type NativeFabricBridge = {
-	mount(
-		container: NativeObjectHandle,
-		moduleName: string,
-		properties?: NativeSerializableObject,
-	): NativeFabricSurface;
-	mountAsync(
-		container: NativeObjectHandle,
-		moduleName: string,
-		properties?: NativeSerializableObject,
-	): NativeCancelablePromise<NativeFabricSurface>;
-	update(surface: NativeFabricSurface, properties: NativeSerializableObject): void;
-	updateAsync(
-		surface: NativeFabricSurface,
-		properties: NativeSerializableObject,
-	): NativeCancelablePromise<void>;
-	setSize(
-		surface: NativeFabricSurface,
-		minimumSize: NativeFabricSize,
-		maximumSize: NativeFabricSize,
-	): void;
-	setSizeAsync(
-		surface: NativeFabricSurface,
-		minimumSize: NativeFabricSize,
-		maximumSize: NativeFabricSize,
-	): NativeCancelablePromise<void>;
-	setFrame(surface: NativeFabricSurface, frame: NativeFabricFrame): void;
-	setFrameAsync(
-		surface: NativeFabricSurface,
-		frame: NativeFabricFrame,
-	): NativeCancelablePromise<void>;
-	measure(view: NativeObjectHandle): NativeFabricFrame;
-	measureAsync(view: NativeObjectHandle): NativeCancelablePromise<NativeFabricFrame>;
-	unmount(surface: NativeFabricSurface): void;
-	unmountAsync(surface: NativeFabricSurface): NativeCancelablePromise<void>;
-};
-
+/** A Discord activity a plugin can subscribe to; the client derives each from Flux actions, such as `MESSAGE_CREATE`. */
 export type NativeRuntimeEventName =
 	| 'message.created'
 	| 'message.updated'
@@ -367,291 +102,95 @@ export type NativeRuntimeEventName =
 	| 'composer.changed'
 	| 'ui.changed';
 
+/** A runtime event subscription; the plugin scope removes it on dispose. */
 export type NativeRuntimeEventToken = {
+	/** False once the subscription is removed. */
 	readonly active: boolean;
+	/** Stops the listener receiving events. */
 	remove(): void;
 };
 
+/** Delivers Discord activity to plugins. Needs `native.runtime.events`. */
 export type NativeRuntimeBridge = {
+	/** Calls `listener` with a serializable payload each time the event happens. */
 	subscribe(
 		event: NativeRuntimeEventName,
 		listener: (payload: NativeSerializableObject) => void,
 	): NativeRuntimeEventToken;
 };
 
-export type NativeJavaHandle = NativeHandle;
-
-export type NativeJavaValue =
-	| { type: 'null'; class?: string }
-	| NativeJavaHandleValue
-	| { type: 'string'; value: string }
-	| { type: 'boolean'; value: boolean }
-	| { type: 'byte' | 'short' | 'int' | 'long'; value: number }
-	| { type: 'float' | 'double'; value: number }
-	| { type: 'char'; value: string }
-	| {
-			type: 'array';
-			componentType: string;
-			value: (NativeJavaValue | NativeJavaHandle | string | number | boolean)[];
-	  };
-
-export type NativeJavaHandleValue = { type: 'handle'; value: string };
-
-export type NativeJavaReference = NativeJavaHandle | NativeJavaHandleValue;
-
-export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
-
-export type NativeJavaHookEvent = {
-	self: NativeJavaValue;
-	args: NativeJavaValue[];
+/** One console line an evaluation printed. */
+export type NativeDebugEvaluationLog = {
+	/** 1 for log, 2 for warn, 3 for error. */
+	level: 1 | 2 | 3;
+	/** The printed text. */
+	message: string;
 };
 
-export type NativeJavaHookOptions = {
-	replace?: boolean;
-	notify?: boolean | 'after';
-};
-
-export type NativeJavaHookToken = {
-	readonly id: string;
-};
-
-export type NativeJavaHooksBridge = {
-	hook(
-		className: string,
-		methodName: string,
-		parameterTypes: string[],
-		options?: NativeJavaHookOptions,
-		listener?: (event: NativeJavaHookEvent) => void,
-	): NativeJavaHookToken;
-	setReturnValue(
-		token: NativeJavaHookToken,
-		self: NativeJavaValue,
-		args: NativeJavaValue[],
-		value: NativeJavaValue,
-	): void;
-	removeReturnValue(
-		token: NativeJavaHookToken,
-		self: NativeJavaValue,
-		args: NativeJavaValue[],
-	): void;
-	clearReturnValues(token: NativeJavaHookToken): void;
-	remove(token: NativeJavaHookToken): void;
-};
-
-export type NativeJavaBatchOperation = {
-	op: 'invoke' | 'getField' | 'setField' | 'respondsTo';
-	handle: NativeJavaReference;
-	name: string;
-	args?: NativeJavaArgument[];
-	value?: NativeJavaArgument;
-};
-
-export type NativeJavaAssociationKey = NativeHandle;
-
-export type NativeDebugEvaluationLog = { level: 1 | 2 | 3; message: string };
-
+/** One debugger evaluation, which the loader logs and keeps in its evaluation history. */
 export type NativeDebugEvaluation = {
 	id: string;
 	code: string;
 	logs?: NativeDebugEvaluationLog[];
 } & ({ ok: true; value?: string } | { ok: false; error?: string });
 
+/** How many native resources the loader holds across every plugin. */
 export type NativeResourceCounts = {
+	/** Installed hooks. */
 	hooks: number;
+	/** Mounted Fabric surfaces. */
 	surfaces: number;
+	/** Hook return values set with `setReturnValue`. */
 	cachedReturns: number;
+	/** Java handles still referenced from JavaScript. */
 	handles: number;
 };
 
+/** Facts about the device a debugger session needs. */
 export type NativeDebugEnvironment = {
+	/** Whether Discord runs in a simulator, emulator or virtual machine. */
 	isVirtualDevice: boolean;
+	/** The address of the machine hosting the virtual device, or `null` on a physical one. */
 	hostAddress: string | null;
+	/** The loader's resource counts; missing on older loaders. */
 	resources?: NativeResourceCounts;
 };
 
+/** Debugger support for plugins. */
 export type NativeDebugBridge = {
+	/** Logs an evaluation and adds it to the loader's history; false when the record is malformed. Needs `native.debug.evaluations`. */
 	recordEvaluation(record: NativeDebugEvaluation): boolean;
+	/** Reads the debug environment. Needs `native.debug.environment`. */
 	environment(): NativeDebugEnvironment;
 };
 
-export type NativeJavaMethodDescription = {
-	name: string;
-	parameters: string[];
-	returnType: string;
-	static: boolean;
-};
-
-export type NativeJavaFieldDescription = {
-	name: string;
-	type: string;
-	static: boolean;
-};
-
-export type NativeJavaClassDescription = {
-	name: string;
-	superclass: string | null;
-	interfaces: string[];
-	constructors: string[][];
-	methods: NativeJavaMethodDescription[];
-	fields: NativeJavaFieldDescription[];
-};
-
-export type NativeJavaBridge = {
-	getClass(name: string): NativeJavaHandle;
-	describe(name: string): NativeJavaClassDescription;
-	batch(operations: NativeJavaBatchOperation[]): NativeJavaValue[];
-	/** Runs the operations like `batch`, on the main thread, so views can be read safely. Missing on older loaders. */
-	batchAsync?(operations: NativeJavaBatchOperation[]): NativeCancelablePromise<NativeJavaValue[]>;
-	/** Finds the views of a class under or above a view, on the main thread, like `objc.findViews`. Missing on older loaders. */
-	findViews?(
-		root: NativeJavaReference,
-		className: string,
-		options?: NativeViewSearchOptions,
-	): NativeCancelablePromise<NativeJavaValue[]>;
-	createAssociationKey(): NativeJavaAssociationKey;
-	getAssociatedObject(
-		handle: NativeJavaReference,
-		key: NativeJavaAssociationKey,
-	): NativeJavaValue;
-	setAssociatedObject(
-		handle: NativeJavaReference,
-		key: NativeJavaAssociationKey,
-		value: NativeJavaArgument,
-	): void;
-	className(handle: NativeJavaReference): NativeJavaValue;
-	construct(name: string, args?: NativeJavaArgument[]): NativeJavaHandle;
-	respondsTo(
-		handle: NativeJavaReference,
-		name: string,
-		args?: NativeJavaArgument[],
-	): NativeJavaValue;
-	invoke(handle: NativeJavaReference, name: string, args?: NativeJavaArgument[]): NativeJavaValue;
-	invokeAsync(
-		handle: NativeJavaReference,
-		name: string,
-		args?: NativeJavaArgument[],
-	): NativeCancelablePromise<NativeJavaValue>;
-	getField(handle: NativeJavaReference, name: string): NativeJavaValue;
-	setField(handle: NativeJavaReference, name: string, value: NativeJavaArgument): void;
-	release(handle: NativeJavaReference): void;
-};
-
-export type NativePlatformDevice = {
-	readonly platform: NativePluginPlatform;
-	getDeviceModel(): string;
-	getOSVersionString(): string;
-	isRooted(): boolean;
-	isSystemApp(): boolean;
-	isVirtualDevice(): boolean;
-};
-
-export type NativePlatformIOSBridge = {
-	getEntitlements(): NativeSerializableObject;
-	getEntitlementsAsPlist(): string;
-};
-
-export type NativePlatformApp = {
-	getAppSource(): string;
-	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. Missing on older loaders. */
-	getFramework?(): string;
-	/** Whether the loader's embedded attestation verified against Unbound's pinned key. False for development builds. Missing on older loaders. */
-	isVerifiedBuild?(): boolean;
-	/** True for the first caller in this process; a reloaded runtime sees false. Missing on older loaders. */
-	claimLaunchURL?(): boolean;
-};
-
-export type NativePlatformFiles = {
-	remove(path: string): boolean;
-};
-
-export type NativeCrashPhase = 'starting' | 'running' | 'frozen';
-
-export type NativeCrashedAddon = {
-	readonly id: string;
-	readonly name: string;
-	readonly phase?: NativeCrashPhase;
-};
-
-export type NativePlatformCrashGuard = {
-	begin(id: string, name: string): boolean;
-	end(id: string): boolean;
-	disabled(): NativeCrashedAddon[];
-	register?(id: string, name: string): number;
-	activity?(): ArrayBuffer | undefined;
-};
-
-export type NativeSettingsChange =
-	| { store: string; key: string; value: NativeSerializable }
-	| { store: string; key: string; remove: true }
-	| { store: string; clear: true };
-
-export type NativeFontSource = 'app' | 'system' | 'custom';
-
-export type NativeFontEntry = {
-	readonly name: string;
-	readonly displayName: string;
-	readonly family?: string;
-	readonly style?: string;
-	readonly path?: string;
-	readonly source: NativeFontSource;
-};
-
-/** The outcome of checking an addon's signature against the keys compiled into the loader. */
-export type NativeAddonVerification = {
-	readonly status: 'signed' | 'unsigned' | 'invalid';
-	readonly signer?: string;
-	readonly problem?: string;
-};
-
-/** A plugin bundle the loader evaluated from bytecode: it takes the scoped React and returns the plugin module. */
-export type NativeCompiledPlugin = (react: typeof React) => Plugin | { default: Plugin };
-
-export type NativePlatformAddons = {
-	/** Checks a manifest's `signature` against its bundle. */
-	verify(manifest: string, bundle: string): NativeAddonVerification;
-	/** Evaluates an installed plugin's bundle compiled for this bytecode version, if its digest matches the manifest. */
-	evaluateBytecode?(folder: string, bytecodeVersion: number): NativeCompiledPlugin | undefined;
-};
-
-export type NativePlatformFonts = {
-	list(): NativeFontEntry[];
-};
-
-export type NativePlatformSettings = {
-	apply(changes: readonly NativeSettingsChange[]): boolean;
-	stage?(changes: readonly NativeSettingsChange[]): boolean;
-	flush?(): boolean;
-	get?(store?: string, key?: string): NativeSerializable | undefined;
-};
-
-export type NativePlatformBridge = {
-	readonly platform: NativePluginPlatform;
-	// UNKNOWN: returns the completion value of arbitrary evaluated bytecode.
-	evaluateBytecode(bytecode: ArrayBuffer, tag?: string): unknown;
-	readonly device: NativePlatformDevice;
-	readonly app: NativePlatformApp;
-	readonly files?: NativePlatformFiles;
-	readonly crashGuard?: NativePlatformCrashGuard;
-	readonly settings?: NativePlatformSettings;
-	readonly fonts?: NativePlatformFonts;
-	readonly addons?: NativePlatformAddons;
-	readonly ios?: NativePlatformIOSBridge;
-};
-
+/** The native bridge a plugin reaches through `context.native`, gated by the capabilities it declares. */
 export type NativePluginBridge = {
+	/** The version of the JavaScript API plugins use, compared with a manifest's `minNativePluginApi`. */
 	readonly apiVersion: string;
+	/** The version of the native ABI the loader implements. */
 	readonly abiVersion: string;
+	/** Every capability this loader build provides, not only the ones the plugin declares. */
 	readonly capabilities: readonly NativePluginCapability[];
+	/** The Objective-C runtime; iOS only. */
 	readonly objc: NativeObjCBridge;
+	/** Raw calls to C functions. */
 	readonly ffi: NativeFFIBridge;
+	/** React Native surfaces mounted in native views. */
 	readonly fabric: NativeFabricBridge;
+	/** Subscriptions to Discord activity. */
 	readonly runtime: NativeRuntimeBridge;
+	/** Java reflection; Android only. */
 	readonly java: NativeJavaBridge;
+	/** Java method hooks; Android only. */
 	readonly hooks: NativeJavaHooksBridge;
+	/** Debugger support. */
 	readonly debug: NativeDebugBridge;
+	/** Worklets on the UI runtime. */
 	readonly ui: NativeUIBridge;
 };
 
+/** The raw bridge the loader publishes as `globalThis.NativePlugin`; namespaces an older loader lacks are missing. */
 export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities'
@@ -666,6 +205,7 @@ export type NativePluginRuntimeBridge = Pick<
 		readonly java?: NativeJavaBridge & NativeUIScopeFactory;
 	};
 
+/** The stable `code` on an error the native bridge or its plugin scope throws. */
 export type NativePluginErrorCode =
 	| 'NATIVE_BRIDGE_ERROR'
 	| 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED'
@@ -673,17 +213,28 @@ export type NativePluginErrorCode =
 	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
 	| 'NATIVE_PLUGIN_UNAVAILABLE';
 
+/** The shape of an error the native bridge or its plugin scope throws. */
 export type NativePluginError = {
+	/** Which failure it is; native failures without their own code use `NATIVE_BRIDGE_ERROR`. */
 	code: NativePluginErrorCode;
+	/** A human-readable description. */
 	message: string;
+	/** The capability the plugin lacks, for `NATIVE_PLUGIN_CAPABILITY_DENIED`. */
 	capability?: NativePluginCapability;
 };
 
+/** What the addon manager passes to a plugin's `start`. */
 export type PluginContext = {
+	/** The plugin's manifest. */
 	readonly manifest: AddonManifest;
+	/** The plugin's id, from its manifest. */
 	readonly id: string;
+	/** The host platform, or `undefined` when the loader reports none. */
 	readonly platform?: NativePluginPlatform;
+	/** The capabilities the manifest declares for this platform; `native` allows only these. */
 	readonly capabilities: readonly NativePluginCapability[];
+	/** The native bridge, scoped to the plugin's capabilities. */
 	readonly native: NativePluginBridge;
+	/** Releases the plugin's hooks, surfaces, handles and subscriptions; the addon manager calls it on stop, unload, reload or a failed start. */
 	dispose(): void;
 };

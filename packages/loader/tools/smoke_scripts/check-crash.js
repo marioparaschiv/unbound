@@ -2,9 +2,9 @@
 	__FAULT_HELPERS__;
 	var manager = unbound.plugins;
 	var id = 'smoke.fault.crashes';
-	var entity = manager.getEntity(id);
+	var entity = manager.get(id);
 	var enabled = pluginSettings().get('states', {})[id] === true;
-	var others = manager.getEntities().filter(function (candidate) {
+	var others = manager.getAll().filter(function (candidate) {
 		return candidate.id !== id && candidate.started;
 	}).length;
 	var problem = '';
@@ -13,7 +13,7 @@
 	else if (enabled || entity.started)
 		problem =
 			'the plugin that crashed Discord while starting was not disabled after the relaunch';
-	if (entity) await manager.delete(id);
+	if (entity) await manager.uninstall(id);
 	return JSON.stringify({
 		name: 'native crash on start',
 		problem: problem,

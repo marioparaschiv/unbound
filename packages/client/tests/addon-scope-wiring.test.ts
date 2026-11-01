@@ -89,7 +89,7 @@ const seen: string[] = [];
 function startPlugin(bundle: string) {
 	const plugins = new Plugins();
 
-	storage.set('plugins', 'states', { [ID]: true });
+	storage.getBucket('plugins').set('states', { [ID]: true });
 	plugins.load(bundle, manifest());
 	expect(plugins.errors.get(ID)).toBeUndefined();
 
@@ -134,8 +134,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-	storage.clear(ID);
-	storage.clear('other');
+	storage.getBucket(ID).clear();
+	storage.getBucket('other').clear();
 
 	for (const key of ['React', 'unbound', '__wiringSeen', '__wiringStore', '__wiringLate']) {
 		Reflect.deleteProperty(globalThis, key);
@@ -149,11 +149,8 @@ describe('addon scope wiring', () => {
 				const seen = globalThis.__wiringSeen;
 
 				unbound.metro.onModuleLoad(() => {});
-				unbound.metro.addListener(() => {});
 				unbound.metro.findLazy(() => false).then((mdl) => seen.push('lazy:' + mdl));
-				unbound.storage.getBucket().addListener(() => true, () => seen.push('bucket'));
 				unbound.storage.onChange(() => true, () => seen.push('change'));
-				unbound.storage.on('changed', () => seen.push('event'));
 				unbound.flux.onAction('WIRING', () => seen.push('action'));
 				unbound.flux.interceptAction('WIRING', () => true);
 				unbound.flux.onStoreChange(globalThis.__wiringStore, () => {});
@@ -165,22 +162,22 @@ describe('addon scope wiring', () => {
 		})`);
 
 		expect(registered()).toEqual({
-			moduleListeners: 3,
+			moduleListeners: 2,
 			actionListeners: 1,
 			storeListeners: 1,
 			commands: ['shared', 'wired'],
 		});
 
 		await flux.dispatch({ type: 'WIRING' });
-		storage.set(ID, 'key', 1);
+		storage.getBucket(ID).set('key', 1);
 
 		expect(dispatcher.handled).toEqual([]);
-		expect(seen).toEqual(['bucket', 'change', 'event']);
+		expect(seen).toEqual(['change']);
 
 		await plugins.stop(ID);
 		Reflect.apply(Reflect.get(globalThis, '__wiringLate'), undefined, []);
 		await flux.dispatch({ type: 'WIRING' });
-		storage.set(ID, 'key', 2);
+		storage.getBucket(ID).set('key', 2);
 
 		expect(registered()).toEqual({
 			moduleListeners: 0,
@@ -189,27 +186,19 @@ describe('addon scope wiring', () => {
 			commands: [],
 		});
 		expect(dispatcher.handled).toEqual([{ type: 'WIRING' }]);
-		expect(seen).toEqual(['bucket', 'change', 'event', 'lazy:undefined']);
+		expect(seen).toEqual(['change', 'lazy:undefined']);
 	});
 
-	test('a listener the plugin removes by reference stays removed', async () => {
+	test('a listener the plugin removes through its returned function stays removed', async () => {
 		const plugins = startPlugin(`({
 			start() {
-				function listener() {}
-
-				function callback() {
-					globalThis.__wiringSeen.push('change');
-				}
-
-				unbound.metro.addListener(listener);
-				unbound.metro.removeListener(listener);
-				unbound.storage.onChange(() => true, callback);
-				unbound.storage.removeListener(callback);
+				unbound.metro.onModuleLoad(() => {})();
+				unbound.storage.onChange(() => true, () => globalThis.__wiringSeen.push('change'))();
 			},
 			stop() {},
 		})`);
 
-		storage.set(ID, 'key', 1);
+		storage.getBucket(ID).set('key', 1);
 
 		expect(data.listeners.size).toBe(0);
 		expect(seen).toEqual([]);
@@ -219,45 +208,17 @@ describe('addon scope wiring', () => {
 		expect(data.listeners.size).toBe(0);
 	});
 
-	test('stop leaves alone a lone storage listener of another owner after the plugin removed its own', async () => {
-		function other() {
-			seen.push('other');
-		}
-
-		const plugins = startPlugin(`({
-			start() {
-				function byNamespace() {}
-
-				function byEmitter() {}
-
-				unbound.storage.on('set', byNamespace);
-				unbound.storage.off('set', byNamespace);
-				unbound.storage.on('set', byEmitter).off('set', byEmitter);
-			},
-			stop() {},
-		})`);
-
-		storage.on('set', other);
-		await plugins.stop(ID);
-		storage.set(ID, 'key', 1);
-		storage.off('set', other);
-
-		expect(seen).toEqual(['other']);
-	});
-
 	test("getBucket with no name returns the plugin's own Bucket, and named Buckets stay reachable", async () => {
 		const plugins = startPlugin(`({
 			start() {
 				unbound.storage.getBucket().set('greeting', 'hi');
-				unbound.storage.getStore().set('farewell', 'bye');
 				unbound.storage.getBucket('other').set('greeting', 'hello');
 			},
 			stop() {},
 		})`);
 
-		expect(storage.get(ID, 'greeting', '')).toBe('hi');
-		expect(storage.get(ID, 'farewell', '')).toBe('bye');
-		expect(storage.get('other', 'greeting', '')).toBe('hello');
+		expect(storage.getBucket(ID).get('greeting', '')).toBe('hi');
+		expect(storage.getBucket('other').get('greeting', '')).toBe('hello');
 		expect(() => storage.getBucket()).toThrow('outside a plugin');
 
 		await plugins.stop(ID);

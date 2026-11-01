@@ -1,5 +1,7 @@
 import { bubbleAppearance, type BubbleAppearance } from '~/style';
-import { settings, ThemeStore } from '~/modules';
+import { storage } from '@unbound-app/api';
+
+import { settings, SETTINGS_BUCKET, ThemeStore } from '~/modules';
 
 /**
  * @description Reads the bubble's look for the theme Discord is showing.
@@ -15,7 +17,10 @@ export function currentAppearance(): BubbleAppearance {
  * @returns A function that stops listening.
  */
 export function subscribeAppearance(listener: () => void): () => void {
-	const unsubscribeSettings = settings.addListener(() => true, listener);
+	const unsubscribeSettings = storage.onChange(
+		({ store }) => store === SETTINGS_BUCKET,
+		listener,
+	);
 
 	ThemeStore.addChangeListener?.(listener);
 

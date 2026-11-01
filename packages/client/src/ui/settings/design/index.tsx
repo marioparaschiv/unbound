@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { installsFromManifest } from '~/addons/addons';
 import { Discord, SafeArea } from '~/metro/components';
 import InstallButton from '~/ui/addons/install-button';
-import storage from '~/storage/api';
+import { getBucket } from '~/storage/api';
 
 import ThemesTab from './themes';
 import FontsTab from './fonts';
@@ -30,7 +30,7 @@ const TABS: DesignTab[] = [
  * pages, with a floating install button that targets the active tab. The selected tab persists.
  */
 function DesignPage() {
-	const [tab, setTab] = useState(storage.get('design', 'tab', 0));
+	const [tab, setTab] = useState(getBucket('design').get('tab', 0));
 
 	const items = useMemo(
 		() => TABS.map(({ id, label, Page }) => ({ id, label, page: <Page /> })),
@@ -44,7 +44,7 @@ function DesignPage() {
 		defaultIndex: tab,
 		onPageChange: (index: number) => {
 			setTab(index);
-			storage.set('design', 'tab', index);
+			getBucket('design').set('tab', index);
 		},
 	});
 

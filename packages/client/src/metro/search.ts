@@ -175,24 +175,6 @@ export function onModuleLoad(listener: MetroModuleLoadListener): () => void {
 }
 
 /**
- * @description Removes a module listener registered with {@link onModuleLoad}.
- * @deprecated Call the function onModuleLoad returns.
- * @param listener The listener to remove.
- */
-export function removeListener(listener: MetroModuleLoadListener) {
-	data.listeners.delete(listener);
-}
-
-/** @deprecated Use onModuleLoad */
-export const addListener = onModuleLoad;
-
-/** @deprecated Use onModuleLoad */
-export const on = onModuleLoad;
-
-/** @deprecated Call the function onModuleLoad returns. */
-export const off = removeListener;
-
-/**
  * @description Resolves a module matching `filter`, waiting for it to load if it is not yet present.
  * @param filter The filter to match against.
  * @param options Search options, excluding `lazy` and `all`, plus an optional `signal` to abort the wait.

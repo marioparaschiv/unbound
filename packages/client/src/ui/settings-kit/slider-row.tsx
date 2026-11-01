@@ -4,14 +4,23 @@ import { View } from 'react-native';
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
 
+/** Props for `SliderRow`. */
 export type SliderRowProps = {
+	/** The row's title, shown left of the current value. */
 	label: string;
+	/** The saved value; the slider follows it whenever it changes. */
 	value: number;
+	/** The value the reset button restores; the button shows only while the slider is elsewhere. */
 	defaultValue: number;
+	/** The lowest value the slider reaches. */
 	minimum: number;
+	/** The highest value the slider reaches. */
 	maximum: number;
+	/** The increment values snap to; `1` when omitted. */
 	step?: number;
+	/** Text appended to the shown value, such as `px` or `%`; none when omitted. */
 	unit?: string;
+	/** Called with the snapped value when a drag ends or the reset button is pressed, not during the drag. */
 	onChange: (value: number) => void;
 };
 

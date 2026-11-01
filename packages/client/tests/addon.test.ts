@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
-import type { AddonHandle } from '@unbound-app/types';
 
 import { FakeAddons, makeManifest, persists, resetDevice, states } from './helpers/addons';
 
@@ -42,19 +41,6 @@ describe('Addon', () => {
 		expect(addon.started).toBe(true);
 		expect(JSON.stringify(addon)).toBe(JSON.stringify(manifest));
 		expect(JSON.parse(JSON.stringify({ addons: [addon] }))).toEqual({ addons: [manifest] });
-	});
-
-	test('keeps the members published plugins read before the getters', () => {
-		const manifest = makeManifest('legacy');
-
-		manager.load('legacy bundle', manifest);
-		manager.enable('legacy');
-
-		const addon: AddonHandle = manager.getEntity('legacy')!;
-
-		expect(addon.data).toBe(manifest);
-		expect(addon.bundle).toBe('legacy bundle');
-		expect(addon.instance).not.toBeNull();
 	});
 
 	test('exposes no writable state', () => {

@@ -29,8 +29,11 @@ type SyncSession = {
 
 /** The account signed in to Sync. */
 export type SyncAccount = {
+	/** The account's id on Unbound's servers, saved with the session at sign-in. */
 	id: string;
+	/** The account's display name, as Unbound's servers returned it at sign-in. */
 	name: string;
+	/** The account's avatar image URL, or `null` when it has none. */
 	image: string | null;
 };
 

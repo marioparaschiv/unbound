@@ -30,12 +30,12 @@ describe('createMemoryStorage', () => {
 		expect(storage.getBucket('other').get('enabled', true)).toBe(false);
 	});
 
-	test('calls a Bucket listener for each change to that Bucket the predicate accepts', () => {
+	test('calls an onChange listener for each change the predicate accepts', () => {
 		const storage = createMemoryStorage();
 		const bucket = storage.getBucket('plugin');
 		const seen: (string | null)[] = [];
-		const stop = bucket.addListener(
-			({ key }) => key !== 'ignored',
+		const stop = storage.onChange(
+			({ store, key }) => store === 'plugin' && key !== 'ignored',
 			({ key }) => seen.push(key),
 		);
 
@@ -120,32 +120,17 @@ describe('createRecordingPatcher', () => {
 		expect(counter.value).toBe(original);
 	});
 
-	test('keeps other callers’ patches on a method when one tagged patcher unpatches', () => {
+	test('removes every patch with unpatchAll and restores each method', () => {
 		const patcher = createRecordingPatcher();
-		const tagged = patcher.createPatcher('plugin');
-		const greeter = { greet: () => 'hi' };
-
-		tagged.after(greeter, 'greet', ({ result }) => `${result}!`);
-		patcher.after(greeter, 'greet', ({ result }) => `${result}?`);
-		tagged.unpatchAll();
-
-		expect(greeter.greet()).toBe('hi?');
-	});
-
-	test('removes only a tagged patcher’s patches with its unpatchAll', () => {
-		const patcher = createRecordingPatcher();
-		const tagged = patcher.createPatcher('plugin');
 		const greeter = { greet: () => 'hi', wave: () => 'wave' };
 
-		tagged.instead(greeter, 'greet', () => 'hello');
-		patcher.instead(greeter, 'wave', () => 'bye');
-		tagged.unpatchAll();
+		patcher.instead(greeter, 'greet', () => 'hello');
+		patcher.after(greeter, 'wave', ({ result }) => `${result}!`);
+		patcher.unpatchAll();
 
 		expect(greeter.greet()).toBe('hi');
-		expect(greeter.wave()).toBe('bye');
-		expect(patcher.patches).toEqual([
-			{ kind: 'instead', target: greeter, method: 'wave', caller: undefined },
-		]);
+		expect(greeter.wave()).toBe('wave');
+		expect(patcher.patches).toEqual([]);
 	});
 });
 

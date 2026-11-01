@@ -5,6 +5,7 @@ import { scopeCommands, scopeFlux, scopeMetro, scopeStorage } from '~/addons/sco
 import { createSubscriptions, disposeInReverse } from '~/addons/subscriptions';
 import type { ScopedCommands } from '~/addons/scoped-namespaces';
 import { createScopedReact } from '~/hot-refresh/runtime';
+import { createPatcher } from '~/patcher/create-patcher';
 import { createScopedTimers } from '~/addons/timers';
 import type { Addon } from '~/addons/addon';
 import * as patcherApi from '~/patcher/api';
@@ -63,7 +64,7 @@ function liveUnbound(): object {
  * @returns The globals, and a `dispose` that undoes each scoped part in reverse order of creation.
  */
 export function createAddonScope(addon: Addon<Plugin>): PluginScope {
-	const tagged = patcherApi.createPatcher(addon.id);
+	const tagged = createPatcher(addon.id);
 	const timers = createScopedTimers();
 	const subscriptions = createSubscriptions();
 	const commands = scopeCommands(addon.id);

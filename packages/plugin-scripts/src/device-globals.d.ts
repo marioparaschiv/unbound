@@ -49,7 +49,7 @@ type DeviceEntity = {
 	id: string;
 	started: boolean;
 	bundle?: unknown;
-	data: { name: string };
+	manifest: { name: string };
 	instance?: DevicePluginInstance | null;
 	context?: DevicePluginContext;
 };
@@ -83,8 +83,9 @@ type DeviceUnbound = {
 		getNativeResources?: () => { hooks: number } | null;
 		BundleInfo?: { Version?: string; Build?: string };
 	};
-	storage: { getStore(name: string): DeviceStore };
-	fs: { read(path: string, encoding?: string): unknown };
+	storage: { getBucket(name: string): DeviceStore };
+	fs: { readFile(path: string, encoding?: string): unknown };
+	flux: { getStore<T>(name: string): T };
 	metro: {
 		common: {
 			React: {
@@ -97,7 +98,6 @@ type DeviceUnbound = {
 			};
 		};
 		findByProps<T>(...names: string[]): T;
-		findStore<T>(name: string): T;
 	};
 };
 

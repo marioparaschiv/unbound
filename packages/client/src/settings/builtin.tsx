@@ -3,6 +3,7 @@ import { createLogger } from '@unbound-app/logger';
 import { useState, useEffect } from 'react';
 
 import { findByProps, findByName, findByFilePath } from '~/metro/search';
+import { createPatcher } from '~/patcher/create-patcher';
 import { Screens, CLIENT_NAME } from '~/core/constants';
 import { useUnboundSettings } from '~/settings/unbound';
 import type { SectionEntry } from '~/settings/section';
@@ -10,7 +11,6 @@ import DeveloperPage from '~/ui/settings/developer';
 import type { BuiltIn } from '~/builtins/registry';
 import PanelHostScreen from '~/ui/settings/custom';
 import GeneralPage from '~/ui/settings/general';
-import { createPatcher } from '~/patcher/api';
 import { Discord } from '~/metro/components';
 import SettingsStore from '~/settings/state';
 import { getIdByName } from '~/assets/api';
