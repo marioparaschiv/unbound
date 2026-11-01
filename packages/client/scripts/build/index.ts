@@ -25,6 +25,7 @@ import downlevel, { lower } from './plugins/downlevel';
 import hermesVersions from './plugins/hermes-versions';
 import generateManifest from './plugins/manifest';
 import { bytecodeVersions } from './hermes.json';
+import libraries from './shim-libraries';
 import worklets from './plugins/worklets';
 import signBundles from './sign';
 
@@ -76,14 +77,7 @@ const config: RolldownOptions = {
 		// Every build carries the refresh runtime: its production entry only throws, and plugins
 		// built by `ubd dev` register their components with it on release clients too.
 		refreshRuntime(root),
-		globals(
-			shimmedModules([
-				'react',
-				'react-native',
-				'react-native-reanimated',
-				'react-native-gesture-handler',
-			]),
-		),
+		globals(shimmedModules(['react', 'react-native', ...Object.keys(libraries)])),
 		worklets(),
 		replace({
 			preventAssignment: true,

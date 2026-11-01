@@ -40,7 +40,11 @@ afterAll(async () => {
 test('reads the client API, React and shared libraries from bare globals', async () => {
 	const code = await buildBundle(pathToFileURL(join(pluginRoot, 'rollup.config.mjs')).href);
 	const moment = { name: 'moment' };
-	const unbound = { patcher: { name: 'patcher' }, metro: { common: { Moment: moment } } };
+	const unbound = {
+		patcher: { name: 'patcher' },
+		metro: { common: { Moment: moment } },
+		shims: { moment: { default: moment } },
+	};
 	const React = { createElement: { name: 'createElement' } };
 	const ReactNative = { View: { name: 'View' } };
 	const plugin: ScopedPlugin = runInNewContext(`(${code})`, { unbound, React, ReactNative });
