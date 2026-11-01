@@ -17,6 +17,7 @@ These are the standards every plugin follows. `ubd create` scaffolds a plugin th
 | [Use the scoped API, never `window.unbound`](#use-the-scoped-api-never-windowunbound) | Lint rule `unbound/no-window-unbound` |
 | [Developer notes are JSDoc on the feature](#developer-notes-are-jsdoc-on-the-feature) | Addon review. No lint rule or build check |
 | [Never write Capabilities or platforms by hand](#never-write-capabilities-or-platforms-by-hand) | Build check `capabilities` |
+| [Change native views from the UI thread](#change-native-views-from-the-ui-thread) | Addon review. No lint rule or build check |
 
 ### No eager lookups while the plugin loads
 
@@ -121,6 +122,14 @@ Notes for the next developer go in the JSDoc of the feature's `index.ts`, next t
 `ubd build` writes `platforms` and each platform's Capabilities into `dist/manifest.json`. It reads them from the `native` calls each platform handler can reach. A plugin never writes them in its `manifest.json`.
 
 **Enforced by** the build check `capabilities`. A hand-written `capabilities`, `platforms` or `platformCapabilities` field, or a dynamic `native.objc[name]` access, is an error and fails the build.
+
+### Change native views from the UI thread
+
+A native plugin that changes how Discord's native views look, such as their color, size, corners or extra views, makes the change from a worklet on the UI thread. It uses `context.native.ui` and installs its hooks through a UI scope. The change is then part of Discord's own layout pass, so it never flashes or pops in. Data comes from the JavaScript thread as a snapshot, pushed only when it changes. Measuring many views, mounting React surfaces and reading stores stay on the JavaScript thread.
+
+See [Native UI on the UI Thread](/plugins/ui-thread) for the API and the patterns.
+
+**Enforced by** addon review. No lint rule or build check covers it.
 
 ### What `ubd build` and the lint rules check
 

@@ -61,7 +61,12 @@
 					{
 						"group": "Plugins",
 						"icon": "plug",
-						"pages": ["plugins/introduction", "plugins/react-patching", "plugins/flux"]
+						"pages": [
+							"plugins/introduction",
+							"plugins/react-patching",
+							"plugins/flux",
+							"plugins/ui-thread"
+						]
 					},
 					{
 						"group": "Themes",

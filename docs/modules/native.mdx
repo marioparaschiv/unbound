@@ -180,6 +180,10 @@ Sizes and frames must be finite. Widths and heights must be between 0 and 32,768
 
 Surface handles belong to the plugin scope. They are unmounted automatically when the scope is disposed.
 
+### UI thread
+
+`native.ui` runs worklets on Reanimated's UI runtime, on the main thread. Hooks installed through a scope from `native.ui.createScope()` run inline inside Discord's own calls, so their changes land in the same frame. See [Native UI on the UI Thread](/plugins/ui-thread).
+
 ### Capabilities and lifecycle
 
 In the plugin manifest, declare only the capabilities the plugin needs:
