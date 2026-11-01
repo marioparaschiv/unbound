@@ -68,6 +68,7 @@ object TextRewrites {
     private val groups = HashMap<String, MutableList<Group>>()
     private val groupsById = HashMap<String, Group>()
     private val pendingLayout = WeakHashMap<TextView, Boolean>()
+    private val pendingShow = WeakHashMap<TextView, Boolean>()
     private val contentRetries = WeakHashMap<TextView, Int>()
     private val listening = WeakHashMap<TextView, Boolean>()
     private val images = object : LinkedHashMap<String, Bitmap>(32, 0.75f, true) {
@@ -366,9 +367,7 @@ object TextRewrites {
         if (synchronized(lock) { listening.put(view, true) } == true) return
         view.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
             override fun onViewAttachedToWindow(attached: View) {
-                val stages = synchronized(lock) { shown[view] } ?: return
-                runCatching { onTextShown(view, stages) }
-                    .onFailure { Logger.error(LogCategory.PLUGINS, "Text rewrite hosts failed", it) }
+                if (synchronized(lock) { shown[view] } != null) showBeforeNextDraw(view)
             }
 
             override fun onViewDetachedFromWindow(detached: View) {
@@ -379,6 +378,28 @@ object TextRewrites {
         view.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
             if (left != oldLeft || top != oldTop || right != oldRight || bottom != oldBottom) positionAll(view)
         }
+    }
+
+    private fun showBeforeNextDraw(view: TextView) {
+        if (synchronized(lock) { pendingShow.put(view, true) } == true) return
+        val observer = view.viewTreeObserver
+        if (!observer.isAlive) {
+            synchronized(lock) { pendingShow.remove(view) }
+            return
+        }
+        observer.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                if (view.viewTreeObserver.isAlive) view.viewTreeObserver.removeOnPreDrawListener(this)
+                synchronized(lock) { pendingShow.remove(view) }
+                val stages = synchronized(lock) { shown[view] } ?: return true
+                if (!view.isAttachedToWindow) return true
+                runCatching {
+                    onTextShown(view, stages)
+                    positionAll(view)
+                }.onFailure { Logger.error(LogCategory.PLUGINS, "Text rewrite hosts failed", it) }
+                return true
+            }
+        })
     }
 
     private fun onTextShown(view: TextView, stages: Set<String>) {

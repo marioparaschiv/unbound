@@ -549,17 +549,17 @@ object NativeJava {
     }
 
     private fun serialize(result: Any?): String = when (result) {
-        null -> JSONObject().put("type", "null").put("value", JSONObject.NULL).toString()
-        is Boolean -> tagged("boolean", result)
-        is Byte -> tagged("byte", result.toInt())
-        is Short -> tagged("short", result.toInt())
-        is Char -> tagged("char", result.toString())
-        is Int -> tagged("int", result)
-        is Long -> tagged("long", result)
-        is Float -> tagged("float", result.toDouble())
-        is Double -> tagged("double", result)
-        is String -> tagged("string", result.take(MAX_RESULT_STRING_LENGTH))
-        else -> tagged("handle", handle(result))
+        null -> NULL_VALUE
+        is Boolean -> tagged("boolean", result.toString())
+        is Byte -> tagged("byte", result.toString())
+        is Short -> tagged("short", result.toString())
+        is Char -> tagged("char", JSONObject.quote(result.toString()))
+        is Int -> tagged("int", result.toString())
+        is Long -> tagged("long", result.toString())
+        is Float -> tagged("float", JSONObject.numberToString(result.toDouble()))
+        is Double -> tagged("double", JSONObject.numberToString(result))
+        is String -> tagged("string", JSONObject.quote(result.take(MAX_RESULT_STRING_LENGTH)))
+        else -> tagged("handle", JSONObject.quote(handle(result)))
     }
 
     private inline fun <T> rethrowingCause(call: () -> T): T = try {
@@ -582,8 +582,10 @@ object NativeJava {
         return resolve(id)
     }
 
-    private fun tagged(type: String, value: Any): String =
-        JSONObject().put("type", type).put("value", value).toString()
+    private const val NULL_VALUE = "{\"type\":\"null\",\"value\":null}"
+
+    private fun tagged(type: String, encodedValue: String): String =
+        "{\"type\":\"$type\",\"value\":$encodedValue}"
 
     private fun resolve(id: String): Any = synchronized(this) {
         objectsByHandle[id] ?: throw IllegalArgumentException("The Java handle is unavailable")
@@ -591,10 +593,20 @@ object NativeJava {
 
     private fun parseHandle(handleJSON: String): String = JSONObject(handleJSON).getString("id")
 
-    private val issuedHandle = Regex("\"type\":\"handle\",\"value\":\"([^\"]+)\"")
+    private val issuedRecorder = ThreadLocal<MutableList<String>?>()
 
-    fun reissue(described: String) {
-        val ids = issuedHandle.findAll(described).map { it.groupValues[1] }.toList()
+    fun <T> recordingIssues(block: () -> T): Pair<T, List<String>> {
+        val issued = mutableListOf<String>()
+        val previous = issuedRecorder.get()
+        issuedRecorder.set(issued)
+        try {
+            return block() to issued
+        } finally {
+            issuedRecorder.set(previous)
+        }
+    }
+
+    fun reissue(ids: List<String>) {
         if (ids.isEmpty()) return
 
         synchronized(this) {
@@ -611,6 +623,7 @@ object NativeJava {
             handlesByIdentity[key] = it
         }
         issuesByHandle[id] = (issuesByHandle[id] ?: 0L) + 1
+        issuedRecorder.get()?.add(id)
         return id
     }
 }
