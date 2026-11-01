@@ -13,7 +13,6 @@ import {
 import { developerQuery } from '~/queries/developers/developers';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import type { IdentifiedAuthor } from '~/lib/authors/resolve';
-import SponsorSparkles from '~/components/sponsor-sparkles';
 import BlurReveal from '~/components/motion/blur-reveal';
 import TEAM_GROUPS from '~/components/team/team-groups';
 import type { CssVariables } from '~/lib/css-variables';
@@ -25,7 +24,6 @@ import { Button } from '~/components/ui/button';
 import BadgeRow from '~/components/badge-row';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
-import cn from '~/lib/cn';
 
 type DeveloperDetailsProps = {
 	author: IdentifiedAuthor;
@@ -86,24 +84,27 @@ function DeveloperPage() {
 					/>
 					<div className='flex flex-col flex-1 gap-1 sm:pt-12 min-w-0'>
 						<div className='flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0'>
-							<Text
-								as='h1'
-								variant='heading-lg'
-								className={cn('truncate', sponsor ? 'text-primary' : null)}
-							>
-								<BlurReveal text={author.name} />
-							</Text>
 							{sponsor ? (
-								<SponsorSparkles
-									className='-ml-1.5 self-start animate-reveal'
-									style={staggerStyle(1)}
-								/>
-							) : null}
+								// The gold is clipped to the text, which per-word reveals would drop, so the name reveals whole.
+								<div className='min-w-0 animate-reveal' style={staggerStyle(0)}>
+									<Text
+										as='h1'
+										variant='heading-lg'
+										className='truncate text-gold'
+									>
+										{author.name}
+									</Text>
+								</div>
+							) : (
+								<Text as='h1' variant='heading-lg' className='truncate'>
+									<BlurReveal text={author.name} />
+								</Text>
+							)}
 							<div
 								className='flex flex-wrap items-center gap-2 animate-reveal'
 								style={staggerStyle(1)}
 							>
-								{sponsor ? <Tag variant='primary'>Sponsor</Tag> : null}
+								{sponsor ? <Tag variant='warning'>Sponsor</Tag> : null}
 								<Tag variant={group === 'addon-developer' ? 'default' : 'primary'}>
 									{TEAM_GROUPS[group].member}
 								</Tag>
