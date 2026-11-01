@@ -184,6 +184,14 @@ func TestPlatformBridgesInstallEveryAdvertisedCapabilityMethod(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	pluginRoot, err := os.ReadFile(filepath.Join(root, "core", "src", "NativePluginRoot.cpp"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	factory := regexp.MustCompile(`kUIScopeFactory = "(\w+)"`).FindStringSubmatch(string(pluginRoot))
+	if factory == nil {
+		t.Fatal("core no longer names the UI scope factory it exempts from capability binding")
+	}
 	setProperty := regexp.MustCompile(`\b(objc|ffi|fabric|debug)\.setProperty\(\s*runtime,\s*"(\w+)"`)
 	defined := regexp.MustCompile(`define\(\s*runtime,\s*(\w+),\s*"(\w+)"`)
 	platforms := map[string]map[string]map[string]bool{
@@ -208,7 +216,7 @@ func TestPlatformBridgesInstallEveryAdvertisedCapabilityMethod(t *testing.T) {
 		}
 		for namespace, methods := range installed {
 			for method := range methods {
-				bound := false
+				bound := method == factory[1]
 				for _, binding := range bindings {
 					if binding.namespace != namespace {
 						continue
