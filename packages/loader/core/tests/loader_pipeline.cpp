@@ -1,6 +1,9 @@
+#include <algorithm>
 #include <cassert>
 #include <string>
+#include <vector>
 
+#include "LoaderLog.h"
 #include "LoaderPipeline.h"
 #include "bundle_test_server.h"
 
@@ -11,8 +14,9 @@ const std::string kBundle = "unbound.98.bundle";
 class CountingHost : public loader::LoaderHost
 {
 public:
-    int addonPreparations = 0;
-    int reloads           = 0;
+    int                      addonPreparations = 0;
+    int                      reloads           = 0;
+    std::vector<std::string> events;
 
     void runInBackground(std::function<void()> work) override
     {
@@ -44,6 +48,7 @@ public:
     void onAddonsPrepared() override
     {
         addonPreparations++;
+        events.push_back("addons prepared");
     }
 
     void reload() override
@@ -97,6 +102,23 @@ void reloadsForAnUpdateWithHotReloadOn()
     assert(launch.host->reloads == 1);
 }
 
+void logsTheRuntimeBeforeAddonsLoadForIt()
+{
+    Launch launch;
+    loader::setLogSink([&](loader::LogLevel, const std::string &, const std::string &text) {
+        launch.host->events.push_back(text);
+    });
+
+    launch.pipeline.prepare();
+    loader::setLogSink(nullptr);
+
+    const std::vector<std::string> &events = launch.host->events;
+    auto runtime  = std::find(events.begin(), events.end(), "Discord's runtime was created.");
+    auto prepared = std::find(events.begin(), events.end(), "addons prepared");
+    assert(runtime != events.end() && prepared != events.end());
+    assert(runtime < prepared);
+}
+
 void doesNothingWhenDisabled()
 {
     Launch launch;
@@ -116,6 +138,7 @@ int main()
     reloadsOnceAFirstDownloadArrives();
     keepsTheSavedBundleUntilTheNextLaunch();
     reloadsForAnUpdateWithHotReloadOn();
+    logsTheRuntimeBeforeAddonsLoadForIt();
     doesNothingWhenDisabled();
     return 0;
 }

@@ -28,6 +28,9 @@ bool LoaderPipeline::isBundleReady() const
 
 void LoaderPipeline::prepare()
 {
+    // Hosts call this once Discord's runtime exists, before addons load for it; smoke timing starts
+    // here.
+    log(LogLevel::Info, LOG_CATEGORY_RUNTIME, "Discord's runtime was created.");
     bundleReady_.store(false);
     uint64_t token = token_.fetch_add(1) + 1;
     {
@@ -161,8 +164,6 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime)
 
 void LoaderPipeline::onRuntimeCreated(jsi::Runtime &runtime)
 {
-    log(LogLevel::Info, LOG_CATEGORY_RUNTIME, "Discord's runtime was created.");
-
     std::optional<SavedBundle> saved;
     {
         std::lock_guard<std::mutex> lock(savedMutex_);
