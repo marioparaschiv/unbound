@@ -7,10 +7,13 @@ import type {
 import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
 import { readRect } from '@unbound-plugins/shared/native/ios/rect';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
-import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
+import {
+	readNativeMessageInfo,
+	type NativeMessageInfo,
+} from '@unbound-plugins/shared/native/ios/message-info';
 
 import { messageLayout, type SnapshotNode } from '~/message-layout';
-import { installBubbleGuards } from '~/ios/ui-bubbles';
+import { forgetBubbles, installBubbleGuards, rememberBubble } from '~/ios/ui-bubbles';
 import { IOSClass, PLUGIN_NAME } from '~/constants';
 import { bubbleFrame, bubbleProblem, frameDrift } from '~/geometry';
 import type { BubbleColor } from '~/style';
@@ -35,7 +38,6 @@ function describeBox({
 	return [x, y, width, height].map((value) => Math.round(value)).join(',');
 }
 const REUSE_SETTLE_MS = 150;
-const MAX_STALE_BUBBLES = 8;
 const TEXT_MEASURE_HEIGHT = 100_000;
 const USES_LINE_FRAGMENT_ORIGIN = 1;
 
@@ -95,7 +97,15 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 
 		if (existing) return existing.bubble;
 
-		await removeStaleBubbles(cell);
+		const adopted = (await objc.invokeAsync(cell, 'viewWithTag:', [
+			BUBBLE_TAG,
+		])) as NativeObjectHandle | null;
+
+		if (adopted) {
+			bubbles.set(key, { cell, bubble: adopted });
+
+			return adopted;
+		}
 
 		const bubble = objc.alloc('UIView');
 		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
@@ -109,18 +119,6 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 		if (disposed) await objc.invokeAsync(bubble, 'removeFromSuperview', []);
 
 		return bubble;
-	}
-
-	async function removeStaleBubbles(cell: NativeObjectHandle) {
-		for (let removed = 0; removed < MAX_STALE_BUBBLES; removed++) {
-			const stale = (await objc.invokeAsync(cell, 'viewWithTag:', [
-				BUBBLE_TAG,
-			])) as NativeObjectHandle | null;
-
-			if (!stale) return;
-
-			await objc.invokeAsync(stale, 'removeFromSuperview', []);
-		}
 	}
 
 	async function isNested(cell: NativeObjectHandle): Promise<boolean> {
@@ -144,12 +142,14 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 		return `${Math.round(width)}x${Math.round(height)}`;
 	}
 
-	async function isOwn(key: string, cell: NativeObjectHandle): Promise<boolean> {
+	async function isOwn(
+		key: string,
+		cell: NativeObjectHandle,
+		info: NativeMessageInfo | undefined,
+	): Promise<boolean> {
 		const known = ownership.get(key);
 
 		if (known !== undefined) return known;
-
-		const info = await readNativeMessageInfo(cell, objc).catch(() => undefined);
 
 		const own = messageOwnership(info?.messageId, info?.channelId);
 
@@ -254,7 +254,8 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
 
 		await objc.invokeAsync(layer, 'setCornerRadius:', [style.radius]);
-		const own = await isOwn(key, cell);
+		const info = await readNativeMessageInfo(cell, objc).catch(() => undefined);
+		const own = await isOwn(key, cell, info);
 
 		await objc.invokeAsync(bubble, 'setBackgroundColor:', [
 			color(own ? style.ownColor : style.color),
@@ -266,6 +267,15 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 			}),
 		]);
 		await objc.invokeAsync(bubble, 'setHidden:', [false]);
+
+		if (info?.messageId) {
+			ui.run(rememberBubble, info.messageId, {
+				...frame,
+				cellWidth: Number(size.split('x')[0]),
+				radius: style.radius,
+				color: own ? style.ownColor : style.color,
+			});
+		}
 	}
 
 	async function flush() {
@@ -357,6 +367,8 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 	}
 
 	async function refresh() {
+		ui.run(forgetBubbles);
+
 		for (const className of [IOSClass.messageCell, IOSClass.separatorCell]) {
 			for (const cell of await findVisibleCells(objc, className)) {
 				await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]);
