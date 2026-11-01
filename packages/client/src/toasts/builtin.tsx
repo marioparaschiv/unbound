@@ -1,13 +1,13 @@
 import { createLogger } from '@unbound-app/logger';
 
 import { getSetting, useUnboundSettings } from '~/settings/unbound';
-import type { MetroFilter } from '~/metro/filters';
-import { onModuleLoaded } from '~/metro/wait';
+import { createPatcher } from '~/patcher/create-patcher';
 import ToastContainer from '~/ui/toasts/toast-container';
 import type { SectionEntry } from '~/settings/section';
-import { createPatcher } from '~/patcher/api';
-import ToastsPage from '~/ui/settings/toasts';
 import { CACHE_KEY, Screens } from '~/core/constants';
+import type { MetroFilter } from '~/metro/filters';
+import { onModuleLoaded } from '~/metro/wait';
+import ToastsPage from '~/ui/settings/toasts';
 import { show } from '~/toasts/api';
 
 import discordToastOptions, { type DiscordToastOptions } from './discord-toast-options';

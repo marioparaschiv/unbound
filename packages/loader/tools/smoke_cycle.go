@@ -39,7 +39,7 @@ const smokeCycleExpression = `(async function () {
 	var hooks = function () { var counts = read ? read() : null; return counts ? counts.hooks : 0; };
 	var settle = function () { return new Promise(function (resolve) { setTimeout(resolve, 300); }); };
 	var results = [];
-	var running = manager.getEntities().filter(function (entity) { return entity.started; });
+	var running = manager.getAll().filter(function (entity) { return entity.started; });
 	for (var index = 0; index < running.length; index++) {
 		var id = running[index].id;
 		var before = manager.errors.get(id);
@@ -53,18 +53,18 @@ const smokeCycleExpression = `(async function () {
 		await settle();
 		var after = manager.errors.get(id);
 		if (!error && after && after !== before) error = String(after && after.message ? after.message : after);
-		var entity = manager.getEntity(id);
+		var entity = manager.get(id);
 		var restarted = Boolean(entity && entity.started);
 		var hooksAfter = hooks();
 		var updateError = '';
 		if (restarted) {
 			try {
-				var update = await manager.reload(id, entity.bundle, entity.data);
+				var update = await manager.reload(id, entity.bundle, entity.manifest);
 				if (!update.ok) updateError = String(update.error && update.error.message ? update.error.message : update.error);
 			} catch (failure) { updateError = String(failure && failure.message ? failure.message : failure); }
 			await settle();
 		}
-		var updated = manager.getEntity(id);
+		var updated = manager.get(id);
 		results.push({ id: id, stopMs: stopMs, error: error, restarted: restarted, hooksBefore: hooksBefore, hooksStopped: hooksStopped, hooksAfter: hooksAfter, updateError: updateError, updated: Boolean(updated && updated.started), hooksUpdated: hooks() });
 	}
 	return JSON.stringify(results);

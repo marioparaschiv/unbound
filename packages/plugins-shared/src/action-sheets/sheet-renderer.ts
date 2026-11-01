@@ -3,7 +3,7 @@ import { isElementNode } from '@unbound-plugins/shared/react/find-element';
 import type { patcher } from '@unbound-app/api';
 
 type Cleanup = () => void;
-type Patcher = ReturnType<typeof patcher.createPatcher> | typeof patcher;
+type Patcher = typeof patcher;
 // UNKNOWN: a component may render any node.
 type RenderFunction = (...args: never[]) => unknown;
 // UNKNOWN: an action sheet may render any node.

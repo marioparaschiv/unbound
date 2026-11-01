@@ -1,11 +1,12 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { PluginContext } from '@unbound-app/api/native';
+import { storage } from '@unbound-app/api';
 
 import SettingsPanel from '~/components/settings-panel';
 import { PLUGIN_NAME } from '~/constants';
 import { roundAvatars } from '~/platform';
 import { storedRadius } from '~/radius';
-import { settings } from '~/modules';
+import { settings, SETTINGS_BUCKET } from '~/modules';
 
 let dispose: () => void | Promise<void> = () => {};
 
@@ -18,8 +19,8 @@ function start(context: PluginContext) {
 
 	const radius = radiusSetting;
 	const avatars = roundAvatars(context.native, radius);
-	const unsubscribe = settings.addListener(
-		({ key }) => key === 'radius',
+	const unsubscribe = storage.onChange(
+		({ store, key }) => store === SETTINGS_BUCKET && key === 'radius',
 		() => avatars.refresh(),
 	);
 

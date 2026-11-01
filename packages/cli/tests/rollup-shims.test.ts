@@ -10,7 +10,11 @@ import { join } from 'node:path';
 import { shimGlobal, shimImports } from '../src/rollup/shims';
 import { buildBundle } from './helpers/rollup';
 
-type Transform = (this: { parse: typeof parseAst }, code: string) => { code: string } | null;
+type TransformContext = { parse: typeof parseAst };
+
+type TransformResult = { code: string };
+
+type Transform = (this: TransformContext, code: string) => TransformResult | null;
 
 type UsePlugin = { start: () => unknown[] };
 
@@ -40,8 +44,8 @@ function transform(code: string) {
 
 describe('shimGlobal', () => {
 	test("maps a library in Discord's bundle to its shim, and its default import to the shim's default", () => {
-		expect(shimGlobal('moment')).toBe('unbound.shims["moment"]');
-		expect(shimGlobal('moment?default')).toBe('unbound.shims["moment"].default');
+		expect(shimGlobal('moment')).toBe('unbound.shims.libraries["moment"]');
+		expect(shimGlobal('moment?default')).toBe('unbound.shims.libraries["moment"].default');
 	});
 
 	test('leaves any other import alone', () => {
@@ -64,15 +68,17 @@ describe('shimImports', () => {
 
 	test("reads each import from Unbound's shim where the plugin uses it, not when it loads", async () => {
 		const reads: string[] = [];
-		const shim = (name: string, exports: Record<string, unknown>) =>
+		const shim = (name: string, exports: Record<string, string | (() => string)>) =>
 			new Proxy(exports, {
 				get: (target, key) => (reads.push(`${name}.${String(key)}`), target[key as string]),
 			});
 		const unbound = {
 			shims: {
-				moment: shim('moment', { default: () => 'now' }),
-				'react-native-svg': shim('svg', { default: 'Svg', Path: 'Path' }),
-				lodash: shim('lodash', { chunk: 'chunk' }),
+				libraries: {
+					moment: shim('moment', { default: () => 'now' }),
+					'react-native-svg': shim('svg', { default: 'Svg', Path: 'Path' }),
+					lodash: shim('lodash', { chunk: 'chunk' }),
+				},
 			},
 		};
 

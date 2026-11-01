@@ -12,7 +12,7 @@ import { marketplaceKey } from '~/queries/keys';
 type LoaderCause = LoaderFnContext['cause'];
 
 /**
- * @description The `/plugins` or `/themes` listing as an infinite query, one cache entry per URL search.
+ * @description An `/addons` tab's listing as an infinite query, one cache entry per URL search.
  * @param type The listing's addon type.
  * @param search The URL's search, filters and sort.
  * @returns Options for `useSuspenseInfiniteQuery` and `ensureInfiniteQueryData`.

@@ -2,8 +2,6 @@
 
 import type { PredicateResult } from '../utils';
 declare const CACHE_KEY: unique symbol;
-/** @deprecated Use byFluxStore */
-export declare const byStore: typeof byFluxStore;
 /**
  * @description Builds a filter matching a module whose `displayName` equals the given name.
  * @param name The `displayName` the module must have.

@@ -3,8 +3,11 @@ import type { ReactElement } from 'react';
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
 
+/** Props for `ResetRow`. */
 export type ResetRowProps = {
+	/** The row's text; the localised "Reset all to defaults" when omitted. */
 	label?: string;
+	/** Called when the row is pressed; it should put the page's settings back to their defaults. */
 	onReset: () => void;
 };
 

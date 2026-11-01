@@ -2,14 +2,8 @@
 
 export type { UnboundAsset } from './_internal';
 import type { UnboundAsset } from './_internal';
-/** @deprecated Use icons */
-export declare const Icons: Record<string, number | undefined>;
 /** Map of registered asset ids to their {@link UnboundAsset} record. */
 export declare const assets: Map<number, UnboundAsset>;
-/** @deprecated Use getById */
-export declare const getByID: typeof getById;
-/** @deprecated Use getIdByName */
-export declare const getIDByName: typeof getIdByName;
 /** Proxy resolving any property name to its asset id via {@link getIdByName}. */
 export declare const icons: Record<string, number | undefined>;
 /**
@@ -43,4 +37,12 @@ export declare function getByName(name: string, type?: 'svg' | 'png'): UnboundAs
  * @returns The matched asset's id, or `undefined` if none match.
  */
 export declare function getIdByName(name: string, type?: 'svg' | 'png'): number | undefined;
+/**
+ * @description Calls `listener` with each asset registered from now on.
+ * @param listener Receives the asset and its id.
+ * @returns A function that removes the listener.
+ */
+export declare function onAssetRegistered(listener: AssetRegistrationListener): () => void;
+/** Called with each asset Discord registers, and its id. */
+export type AssetRegistrationListener = (asset: UnboundAsset, id: number) => void;
 export {};

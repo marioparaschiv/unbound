@@ -15,7 +15,7 @@ export type FilterField = 'tag' | 'author' | 'updated';
 
 export type MarketplaceSearch = z.infer<typeof marketplaceSearchSchema>;
 
-/** The `/plugins` and `/themes` URL search parameters. The sort brings its own order. */
+/** The `/addons` tabs' URL search parameters. The sort brings its own order. */
 export const marketplaceSearchSchema = z.pick(listAddonsQuerySchema.def.innerType, {
 	q: true,
 	sort: true,

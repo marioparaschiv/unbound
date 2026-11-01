@@ -1,7 +1,7 @@
 /**
- * @description The function patcher, built on `possess`. Exposes `createPatcher` for scoped patchers along
- * with the standalone `before`/`after`/`instead` hooks and unpatch helpers. Patching a React component
- * updates its mounted instances in place, keeping their state, including when a callback calls hooks.
+ * @description The function patcher, built on `possess`: the `before`/`after`/`instead` hooks and unpatch
+ * helpers. Patching a React component updates its mounted instances in place, keeping their state,
+ * including when a callback calls hooks.
  * This is the public surface behind `unbound.patcher` and `@unbound-app/api/patcher`.
  */
 import type {
@@ -12,17 +12,15 @@ import type {
 	PatchParent,
 	PropOf,
 } from 'possess';
-import toError from '@unbound-app/utils/to-error';
-import noop from '@unbound-app/utils/noop';
-import uuid from '@unbound-app/utils/uuid';
 import * as Possess from 'possess';
 
-import { currentAddonScope, withAddonScope } from '~/addons/crash-guard';
+import { patchWhenLoaded, pendingPatchCallers } from '~/patcher/apply';
 import { patch, recordRemovals } from '~/hot-refresh/live-patch';
-import { whenModuleLoads } from '~/metro/lazy-registry';
 
+/** Whether `T` is `any`, so a patch on an untyped method keeps loose types. */
 type IsUntyped<T> = 0 extends 1 & T ? true : false;
 
+/** The arguments a patch receives for method `F`: its parameters, or its constructor's for a class. */
 type ArgsOf<F> =
 	IsUntyped<F> extends true
 		? F[]
@@ -32,6 +30,7 @@ type ArgsOf<F> =
 				? ConstructorParameters<F>
 				: never;
 
+/** The result a patch receives for method `F`: its return value, or an instance for a class. */
 type ResultOf<F> =
 	IsUntyped<F> extends true
 		? F
@@ -41,6 +40,7 @@ type ResultOf<F> =
 				? InstanceType<F>
 				: never;
 
+/** The `this` a patch receives: the method's declared `this`, else the object `M` holding it. */
 type SelfOf<M, F> = unknown extends ThisParameterType<F> ? M : ThisParameterType<F>;
 
 export type { PatchOptions, PatchParent, PropOf } from 'possess';
@@ -52,8 +52,11 @@ export type { PatchOptions, PatchParent, PropOf } from 'possess';
  * @template Self The method's `this`.
  */
 export type BeforeContext<Args extends unknown[], Res, Self> = {
+	/** The arguments of this call; a `before` callback can return a new array to replace them. */
 	args: Args;
+	/** The `this` the method was called with. */
 	this: Self;
+	/** The unpatched method; call it with `ctx.this` and `ctx.args` to run the original behavior. */
 	original: (...args: Args) => Res;
 };
 
@@ -105,25 +108,13 @@ export type AfterCallback<Args extends unknown[], Res, Self> = (
 	ctx: AfterContext<Args, Res, Self>,
 ) => Res | void;
 
-/**
- * The patcher `createPatcher` returns.
- */
-export type PatcherInstance = {
-	before: typeof before;
-	instead: typeof instead;
-	after: typeof after;
-	unpatchAll: () => void;
-};
-
-const pendingPatchCallers = new Map<() => void, string | undefined>();
-
-/** @internal */
+/** Every module the patcher has patched, with its live patches. */
 export const patches = Possess.patches;
 
-/** @internal */
+/** The symbol a patched method carries, pointing at its patch state. */
 export const PATCH_SYMBOL = Possess.PATCH_SYMBOL;
 
-/** @internal */
+/** The kinds of patch: before, instead and after. */
 export const PatchType = Possess.PatchType;
 
 /**
@@ -207,124 +198,6 @@ export function after(
 	);
 }
 
-function patchWhenLoaded(
-	parent: PatchParent,
-	caller: string | undefined,
-	apply: (target: PatchParent) => () => void,
-): () => void {
-	const scope = currentAddonScope();
-	let deferred = false;
-	let unpatch = noop;
-	let stopWaiting = noop;
-
-	function drop() {
-		pendingPatchCallers.delete(drop);
-		stopWaiting();
-	}
-
-	pendingPatchCallers.set(drop, caller);
-	stopWaiting = whenModuleLoads(parent, (target) => {
-		pendingPatchCallers.delete(drop);
-
-		if (!deferred) {
-			unpatch = apply(target);
-
-			return;
-		}
-
-		try {
-			unpatch = withAddonScope(scope, () => apply(target));
-		} catch (error) {
-			if (!scope?.recordDeferredFailure) {
-				throw error;
-			}
-
-			scope.recordDeferredFailure(toError(error));
-		}
-	});
-	deferred = true;
-
-	return () => {
-		drop();
-		unpatch();
-		unpatch = noop;
-	};
-}
-
-function unpatchKeepingReplacement(parent: PatchParent, key: PropertyKey, unpatch: () => void) {
-	const installed = Reflect.get(parent, key);
-
-	return () => {
-		if (Reflect.get(parent, key) === installed) {
-			unpatch();
-
-			return;
-		}
-
-		const replacement = Reflect.get(parent, key);
-		const descriptor = Object.getOwnPropertyDescriptor(parent, key);
-
-		try {
-			unpatch();
-		} finally {
-			if (descriptor) {
-				Object.defineProperty(parent, key, descriptor);
-			} else {
-				Reflect.set(parent, key, replacement);
-			}
-		}
-	};
-}
-
-/**
- * @description Creates a patcher whose patches share default options, so they can be removed together.
- * @param defaultOptions A caller id, or options merged into every patch; a caller id is generated if missing.
- * @returns The scoped patcher.
- */
-export function createPatcher(defaultOptions: string | PatchOptions): PatcherInstance {
-	const defaults =
-		typeof defaultOptions === 'string' ? { caller: defaultOptions } : defaultOptions;
-
-	defaults.caller ??= uuid();
-	const unpatches = new Set<() => void>();
-
-	function scoped(type: Possess.PatchType) {
-		return function scopedPatch(
-			parent: PatchParent,
-			method: string,
-			callback: PatchCallback,
-			options: PatchOptions = {},
-		): () => void {
-			const merged = { ...defaults, ...options };
-			const unpatch = patchWhenLoaded(parent, merged.caller, (target) =>
-				unpatchKeepingReplacement(
-					target,
-					method,
-					patch(type, target, method, callback, merged),
-				),
-			);
-
-			function remove() {
-				unpatches.delete(remove);
-				unpatch();
-			}
-
-			unpatches.add(remove);
-
-			return remove;
-		};
-	}
-
-	return {
-		before: scoped(Possess.PatchType.Before) as typeof before,
-		instead: scoped(Possess.PatchType.Instead) as typeof instead,
-		after: scoped(Possess.PatchType.After) as typeof after,
-		unpatchAll(): void {
-			for (const unpatch of unpatches) unpatch();
-		},
-	};
-}
-
 /**
  * @description Removes every patch.
  */
@@ -338,7 +211,6 @@ export function unpatchAll(): void {
 /**
  * @description Removes every patch made with a caller id.
  * @param caller The caller id.
- * @internal
  */
 export function unpatchAllByCaller(caller: string): void {
 	for (const [drop, owner] of pendingPatchCallers) {

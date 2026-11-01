@@ -62,32 +62,52 @@ export declare function SliderRow({
  * @returns The row.
  */
 export declare function SwitchRow(props: SwitchRowProps): React$1.ReactElement;
+/** Props for `ColorRow`. */
 export type ColorRowProps = {
+	/** The row's title. */
 	label: string;
+	/** The chosen color as a `#RRGGBB` hex code, or `undefined` when the default applies. */
 	color: string | undefined;
+	/** The default color, swatched while `color` is unset and used as the hex input's placeholder. */
 	fallbackColor: string;
+	/** The text shown under the label while `color` is unset, in place of the hex code. */
 	fallbackLabel: string;
+	/** Called with the new `#RRGGBB` hex code, or `undefined` when the user resets or clears it. */
 	onChange: (color: string | undefined) => void;
 };
+/** The props of {@link Page}. */
 export type PageProps = {
+	/** The page's form groups, laid out top to bottom with a 24px gap. */
 	children: React$1.ReactNode;
 };
+/** Props for `ResetRow`. */
 export type ResetRowProps = {
+	/** The row's text; the localised "Reset all to defaults" when omitted. */
 	label?: string;
+	/** Called when the row is pressed; it should put the page's settings back to their defaults. */
 	onReset: () => void;
 };
 /** Props of {@link Row}: Discord's `TableRow` props, such as `label`, `subLabel` and `onPress`. */
 export type RowProps = React$1.ComponentProps<DesignModule['TableRow']>;
 /** Props of {@link Section}: Discord's `TableRowGroup` props, such as `title`. */
 export type SectionProps = React$1.ComponentProps<DesignModule['TableRowGroup']>;
+/** Props for `SliderRow`. */
 export type SliderRowProps = {
+	/** The row's title, shown left of the current value. */
 	label: string;
+	/** The saved value; the slider follows it whenever it changes. */
 	value: number;
+	/** The value the reset button restores; the button shows only while the slider is elsewhere. */
 	defaultValue: number;
+	/** The lowest value the slider reaches. */
 	minimum: number;
+	/** The highest value the slider reaches. */
 	maximum: number;
+	/** The increment values snap to; `1` when omitted. */
 	step?: number;
+	/** Text appended to the shown value, such as `px` or `%`; none when omitted. */
 	unit?: string;
+	/** Called with the snapped value when a drag ends or the reset button is pressed, not during the drag. */
 	onChange: (value: number) => void;
 };
 /** Props of {@link SwitchRow}: Discord's `TableSwitchRow` props, such as `label`, `value` and `onValueChange`. */

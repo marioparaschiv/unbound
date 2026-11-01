@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.2]
+
+### Fixed
+
+- Scrolling on Android is smooth again: an avatar that is already rounded is no longer rounded again every time it scrolls into view.
+
 ## [1.1.1]
 
 ### Fixed

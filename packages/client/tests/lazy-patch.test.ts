@@ -77,8 +77,8 @@ mock.module('~/diagnostics/crash-reports', () => ({
 }));
 
 const { FakeAddons, makeManifest, resetDevice, states } = await import('./helpers/addons');
-const { after, createPatcher, instead, unpatchAll, unpatchAllByCaller } =
-	await import('~/patcher/api');
+const { after, instead, unpatchAll, unpatchAllByCaller } = await import('~/patcher/api');
+const { createPatcher } = await import('~/patcher/create-patcher');
 const { findByProps } = await import('~/metro/lookups');
 const { createAddonScope } = await import('~/addons/scope');
 

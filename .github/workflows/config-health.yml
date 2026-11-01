@@ -54,6 +54,11 @@ jobs:
                   CONFIG_PRESENT_S3_PUBLIC_BUCKET: ${{ vars.S3_PUBLIC_BUCKET != '' }}
                   CONFIG_PRESENT_S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID != '' }}
                   CONFIG_PRESENT_S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY != '' }}
+                  CONFIG_PRESENT_DOCS_S3_ENDPOINT: ${{ vars.DOCS_S3_ENDPOINT != '' }}
+                  CONFIG_PRESENT_DOCS_S3_REGION: ${{ vars.DOCS_S3_REGION != '' }}
+                  CONFIG_PRESENT_DOCS_S3_BUCKET: ${{ vars.DOCS_S3_BUCKET != '' }}
+                  CONFIG_PRESENT_DOCS_S3_ACCESS_KEY_ID: ${{ secrets.DOCS_S3_ACCESS_KEY_ID != '' }}
+                  CONFIG_PRESENT_DOCS_S3_SECRET_ACCESS_KEY: ${{ secrets.DOCS_S3_SECRET_ACCESS_KEY != '' }}
                   CONFIG_PRESENT_CDN_URL: ${{ vars.CDN_URL != '' }}
                   CONFIG_PRESENT_DKRYPT_BASE_URL: ${{ vars.DKRYPT_BASE_URL != '' }}
               run: bun scripts/config-health.ts

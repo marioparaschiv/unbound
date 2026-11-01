@@ -20,14 +20,22 @@ export const HelpMessageTypes = {
 	SUCCESS: 3,
 } as const;
 
+/** A `HelpMessage` style: one of the `HelpMessageTypes` values. */
 type HelpMessageType = (typeof HelpMessageTypes)[keyof typeof HelpMessageTypes & string];
 
+/** Props for `HelpMessage`; the defaults named here are those of Unbound's fallback. */
 export type HelpMessageProps = {
+	/** The message; a string or number is rendered as text, any other node as given. */
 	children?: ReactNode;
+	/** A `HelpMessageTypes` value that picks the icon and feedback colors; `WARNING` when omitted. */
 	messageType?: HelpMessageType;
+	/** Discord's text variant for string children; `text-sm/medium` when omitted. */
 	textVariant?: string;
+	/** The color of string children; the theme's default text color when omitted. */
 	textColor?: ColorValue;
+	/** The corner radius in density-independent pixels; `8` when omitted. */
 	borderRadius?: number;
+	/** A node, usually a button, rendered after the message. */
 	button?: ReactNode;
 };
 

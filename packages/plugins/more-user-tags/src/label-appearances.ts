@@ -100,6 +100,13 @@ export function createLabelAppearances() {
 			changed();
 		},
 		snapshot: (): Record<string, RoleColorAppearance> => Object.fromEntries(entries),
+		restore(saved: Record<string, RoleColorAppearance>) {
+			for (const [key, appearance] of Object.entries(saved)) {
+				if (appearance?.colors?.length) entries.set(key, appearance);
+			}
+
+			if (entries.size) changed();
+		},
 		subscribe(listener: () => void) {
 			listeners.add(listener);
 

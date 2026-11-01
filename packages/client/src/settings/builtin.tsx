@@ -1,8 +1,7 @@
 import type { SettingsEntry } from '@unbound-app/types';
 import { useState, useEffect } from 'react';
 
-import { onModuleLoaded } from '~/metro/wait';
-import { byProps } from '~/metro/filters';
+import { createPatcher } from '~/patcher/create-patcher';
 import { Screens, CLIENT_NAME } from '~/core/constants';
 import { useUnboundSettings } from '~/settings/unbound';
 import type { SectionEntry } from '~/settings/section';
@@ -10,10 +9,11 @@ import DeveloperPage from '~/ui/settings/developer';
 import type { BuiltIn } from '~/builtins/registry';
 import PanelHostScreen from '~/ui/settings/custom';
 import GeneralPage from '~/ui/settings/general';
-import { createPatcher } from '~/patcher/api';
+import { onModuleLoaded } from '~/metro/wait';
 import { Discord } from '~/metro/components';
 import SettingsStore from '~/settings/state';
 import { getIdByName } from '~/assets/api';
+import { byProps } from '~/metro/filters';
 import { messages } from '~/i18n/api';
 
 import waitForSettingsOverview from './wait-for-overview';

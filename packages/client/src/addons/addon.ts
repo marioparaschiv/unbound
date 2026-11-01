@@ -55,7 +55,7 @@ export type ManagerActions = Pick<
  * its manager to enable, disable or reload it. Stringifies to its manifest.
  * @template I What the addon's bundle evaluates to.
  */
-export class Addon<I extends object = object> implements AddonHandle<I> {
+export class Addon<I extends object = object> implements AddonHandle {
 	readonly #state: AddonState<I>;
 	readonly #manager: ManagerActions;
 
@@ -106,22 +106,20 @@ export class Addon<I extends object = object> implements AddonHandle<I> {
 		return instance?.getSettingsPanel ? () => instance.getSettingsPanel?.() : void 0;
 	}
 
-	/** @internal */
+	// `context`, `instance` and `bundle` are for first-party device tooling (the CLI's probes and the
+	// plugin device matrix); they stay out of AddonHandle, so the SDK does not offer them to plugins.
+
+	/** The running plugin's native bridge. */
 	get context(): PluginContext | undefined {
 		return this.#state.context;
 	}
 
-	/** @deprecated Use manifest */
-	get data(): AddonManifest {
-		return this.#state.manifest;
-	}
-
-	/** @deprecated What the bundle evaluated to; readable until 1.0. */
+	/** What the bundle evaluated to. */
 	get instance(): (Plugin & I) | null {
 		return this.#state.instance;
 	}
 
-	/** @deprecated The bundle source; readable until 1.0. */
+	/** The bundle source. */
 	get bundle(): string {
 		return this.#state.bundle;
 	}

@@ -9,12 +9,11 @@ const gestureHandler = {
 	PanGestureHandler: () => null,
 };
 
-mock.module('~/metro/finders', () => ({
-	finder:
-		() =>
-		(...properties: string[]) =>
-			properties.includes('GestureDetector') ? gestureHandler : null,
-}));
+function findGestureHandler(...properties: string[]) {
+	return properties.includes('GestureDetector') ? gestureHandler : null;
+}
+
+mock.module('~/metro/finders', () => ({ finder: () => findGestureHandler }));
 
 const { default: shims } = await import('./shims');
 

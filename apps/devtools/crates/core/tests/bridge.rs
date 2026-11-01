@@ -117,8 +117,8 @@ fn run_on_fake_device(script: &str, devtools_loaded: bool, address: &str) -> Opt
 		r#"
 		const calls = [];
 		if ({devtools_loaded}) globalThis.DevTools = {{ connect: (options) => calls.push(options) }};
-		globalThis.unbound = {{ storage: {{ get: (store, key, fallback) =>
-			store === 'unbound' && key === 'debugger.address' ? {address} : fallback }} }};
+		globalThis.unbound = {{ storage: {{ getBucket: (store) => ({{ get: (key, fallback) =>
+			store === 'unbound' && key === 'debugger.address' ? {address} : fallback }}) }} }};
 		const run = () => {{ try {{ return {{ ok: {script} }}; }} catch (e) {{ return {{ error: e.message }}; }} }};
 		console.log(JSON.stringify({{ first: run(), second: run(), calls }}));
 		"#,

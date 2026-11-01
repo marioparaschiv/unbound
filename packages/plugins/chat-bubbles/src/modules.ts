@@ -1,11 +1,22 @@
-import { metro, storage } from '@unbound-app/api';
+import type { FluxMessage, FluxStore } from '@unbound-app/api/flux';
+import { storage, flux } from '@unbound-app/api';
 
-export const ThemeStore = metro.findStore('Theme', { lazy: true });
+type ThemeStoreType = FluxStore & {
+	theme?: string;
+};
 
-export const MessageStore = metro.findStore('Message', { lazy: true });
+type MessageStoreType = FluxStore & {
+	getMessage?(channelId: string, id: string): FluxMessage | undefined;
+};
 
-export const UserStore = metro.findStore('User', { lazy: true });
+export const SETTINGS_BUCKET = 'unbound.chat-bubbles';
 
-export const SelectedChannelStore = metro.findStore('SelectedChannel', { lazy: true });
+export const ThemeStore = flux.getStore('Theme', { lazy: true }) as ThemeStoreType;
 
-export const settings = storage.getStore('unbound.chat-bubbles');
+export const MessageStore = flux.getStore('Message', { lazy: true }) as MessageStoreType;
+
+export const UserStore = flux.getStore('User', { lazy: true });
+
+export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
+
+export const settings = storage.getBucket(SETTINGS_BUCKET);

@@ -1,7 +1,7 @@
 import type { SettingsObject, SettingsValue } from '@unbound-app/types';
 import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 
-import { clear, get, set, snapshot } from '~/storage/api';
+import { getBucket, snapshot } from '~/storage/api';
 
 const LEGACY_NAME = 'astral';
 const LEGACY_PREFIX = `${LEGACY_NAME}.`;
@@ -50,20 +50,22 @@ function withMissingFromLegacy(
 
 function fillBucketFromLegacy(name: string, target: string) {
 	const stores = snapshot();
+	const bucket = getBucket(target);
 
 	for (const [key, value] of Object.entries(stores[name] ?? {})) {
 		const merged = withMissingFromLegacy(stores[target]?.[key], value);
 
 		if (merged !== undefined) {
-			set(target, key, merged);
+			bucket.set(key, merged);
 		}
 	}
 
-	clear(name);
+	getBucket(name).clear();
 }
 
-function moveLegacyStatesOver(bucket: string) {
-	const states = get<SettingsValue | undefined>(bucket, 'states', undefined);
+function moveLegacyStatesOver(name: string) {
+	const bucket = getBucket(name);
+	const states = bucket.get<SettingsValue | undefined>('states', undefined);
 
 	if (!isSettingsObject(states)) return;
 
@@ -86,7 +88,7 @@ function moveLegacyStatesOver(bucket: string) {
 		renamed[target] = state;
 	}
 
-	set(bucket, 'states', renamed);
+	bucket.set('states', renamed);
 }
 
 /**

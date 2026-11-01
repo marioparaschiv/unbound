@@ -7,6 +7,8 @@ import { ROOT } from './paths';
 
 type ScopeGlobal = {
 	sdkType: string;
+	/** The global's comment in the SDK's `AddonScope`. */
+	doc: string;
 	/** Whether `global.d.ts` declares the global; lib declares the timers and `@unbound-app/types` declares `React`. */
 	declare: boolean;
 };
@@ -18,19 +20,56 @@ const ADDONS_TYPINGS = join(ROOT, 'packages', 'types', 'typings', 'addons.ts');
  * which dts-bundle-generator cannot bundle, so the SDK names them through `UnboundGlobal` instead.
  */
 const ADDON_SCOPE: Record<string, ScopeGlobal> = {
-	React: { sdkType: 'typeof React', declare: false },
-	unbound: { sdkType: 'UnboundGlobal', declare: true },
+	React: {
+		sdkType: 'typeof React',
+		doc: "Discord's React, whose `createElement` keeps a reloaded plugin's components matched to their mounted ones.",
+		declare: false,
+	},
+	unbound: {
+		sdkType: 'UnboundGlobal',
+		doc: 'The Unbound API, with the `metro`, `storage`, `flux`, `patcher` and `commands` listeners scoped to this plugin.',
+		declare: true,
+	},
 	// Not `AddonHandle<Plugin>`: `_internal.d.ts` declares `Plugin` as `Plugin$1`, and the bare name is lib.dom's.
-	addon: { sdkType: 'AddonHandle', declare: true },
-	patcher: { sdkType: "UnboundGlobal['patcher']", declare: true },
-	logger: { sdkType: 'AddonLogger', declare: true },
-	setTimeout: { sdkType: 'typeof setTimeout', declare: false },
-	setInterval: { sdkType: 'typeof setInterval', declare: false },
-	clearTimeout: { sdkType: 'typeof clearTimeout', declare: false },
-	clearInterval: { sdkType: 'typeof clearInterval', declare: false },
+	addon: {
+		sdkType: 'AddonHandle',
+		doc: "This plugin's handle: its manifest and state.",
+		declare: true,
+	},
+	patcher: {
+		sdkType: "UnboundGlobal['patcher']",
+		doc: "The patcher, tagging each patch with this plugin's id; Unbound removes them when it stops.",
+		declare: true,
+	},
+	logger: {
+		sdkType: 'AddonLogger',
+		doc: "A logger that prefixes each line with this plugin's name.",
+		declare: true,
+	},
+	setTimeout: {
+		sdkType: 'typeof setTimeout',
+		doc: '`setTimeout`, cleared when this plugin stops.',
+		declare: false,
+	},
+	setInterval: {
+		sdkType: 'typeof setInterval',
+		doc: '`setInterval`, cleared when this plugin stops.',
+		declare: false,
+	},
+	clearTimeout: {
+		sdkType: 'typeof clearTimeout',
+		doc: 'Clears a timer this plugin set with `setTimeout`.',
+		declare: false,
+	},
+	clearInterval: {
+		sdkType: 'typeof clearInterval',
+		doc: 'Clears a timer this plugin set with `setInterval`.',
+		declare: false,
+	},
 	commands: {
 		sdkType:
 			"Omit<ReturnType<UnboundGlobal['commands']['createCommands']>, keyof UnboundGlobal['commands']> & UnboundGlobal['commands']",
+		doc: "The commands API, registering each command under this plugin's id; Unbound removes them when it stops.",
 		declare: true,
 	},
 };

@@ -14,6 +14,7 @@
 		"packages/discord-types/src/**",
 		"packages/cli/templates/**",
 		"CHANGELOG.md",
+		"docs/**/*.mdx",
 		"packages/loader/bootstrap/devtools.js",
 		"apps/devtools/target/**",
 		"packages/loader/vendor/**",

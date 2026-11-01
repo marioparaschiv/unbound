@@ -4,11 +4,11 @@ import { createCommands, option } from '~/commands/api';
 import { Discord } from '~/metro/components';
 import { findByProps } from '~/metro/search';
 import { Screens } from '~/core/constants';
+import { getBucket } from '~/storage/api';
 import { reload } from '~/native/native';
 import debug from '~/debugger/builtin';
 import { messages } from '~/i18n/api';
 import { Util } from '~/metro/common';
-import storage from '~/storage/api';
 
 import formatCodeBlock from './format-code-block';
 
@@ -86,7 +86,7 @@ export function start() {
 			description: 'Open the Unbound themes settings',
 			execute() {
 				// The Design page opens on the tab it last showed; themes are tab 0.
-				storage.set('design', 'tab', 0);
+				getBucket('design').set('tab', 0);
 				openScreen(Screens.Design);
 			},
 		},
