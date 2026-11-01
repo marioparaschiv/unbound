@@ -1,6 +1,5 @@
 import type {
 	NativePlatformSettings,
-	NativeSerializable,
 	NativeSettingsChange,
 	SettingsObject,
 	SettingsValue,
