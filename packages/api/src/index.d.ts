@@ -15,6 +15,7 @@ export * as native from './native';
 export * as patcher from './patcher';
 export * as plugins from './plugins';
 export * as settings from './settings';
+export * as shims from './shims';
 export * as storage from './storage';
 export * as sync from './sync';
 export * as themes from './themes';

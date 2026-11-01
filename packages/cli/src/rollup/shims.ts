@@ -27,7 +27,7 @@ export function shimGlobal(id: string): string {
 		return '';
 	}
 
-	const shim = `unbound.shims[${JSON.stringify(specifier)}]`;
+	const shim = `unbound.shims.libraries[${JSON.stringify(specifier)}]`;
 
 	return isDefault ? `${shim}.default` : shim;
 }

@@ -541,6 +541,8 @@ export interface UnboundGlobal extends UnboundLifecycle {
 	plugins: typeof import('./plugins.d.ts');
 	/** The `settings` module, which plugins also import from `@unbound-app/api/settings`. */
 	settings: typeof import('./settings.d.ts');
+	/** The `shims` module, which plugins also import from `@unbound-app/api/shims`. */
+	shims: typeof import('./shims.d.ts');
 	/** The `storage` module, which plugins also import from `@unbound-app/api/storage`. */
 	storage: typeof import('./storage.d.ts');
 	/** The `sync` module, which plugins also import from `@unbound-app/api/sync`. */
