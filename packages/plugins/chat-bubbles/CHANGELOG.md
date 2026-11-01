@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.4] - 2026-11-01
+
+### Fixed
+
+- On iOS, a message measured before it finished laying out, such as a reply still loading its preview, no longer stays without a bubble: the plugin measures it again.
+
 ## [1.4.3] - 2026-11-01
 
 ### Changed

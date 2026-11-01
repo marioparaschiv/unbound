@@ -38,6 +38,8 @@ function describeBox({
 	return [x, y, width, height].map((value) => Math.round(value)).join(',');
 }
 const REUSE_SETTLE_MS = 150;
+const MEASURE_RETRIES = 3;
+const MEASURE_RETRY_MS = 250;
 const TEXT_MEASURE_HEIGHT = 100_000;
 const USES_LINE_FRAGMENT_ORIGIN = 1;
 
@@ -75,6 +77,7 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 	const bubbles = new Map<string, { cell: NativeObjectHandle; bubble: NativeObjectHandle }>();
 	const pending = new Map<string, PendingCell>();
 	const placedSizes = new Map<string, string>();
+	const failedMeasures = new Map<string, number>();
 	const ownership = new Map<string, boolean>();
 	const problems = new Map<string, string>();
 	const clear = clearColor(objc);
@@ -240,8 +243,12 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 
 			if (existing) await objc.invokeAsync(existing.bubble, 'setHidden:', [true]);
 
+			retryMeasure(key, cell);
+
 			return;
 		}
+
+		failedMeasures.delete(key);
 
 		const { frame, contentWidth } = measured;
 		const style = currentAppearance();
@@ -297,6 +304,19 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 		}
 	}
 
+	function retryMeasure(key: string, cell: NativeObjectHandle) {
+		const failures = (failedMeasures.get(key) ?? 0) + 1;
+
+		failedMeasures.set(key, failures);
+
+		if (failures > MEASURE_RETRIES) return;
+
+		placedSizes.delete(key);
+		setTimeout(() => {
+			if (!disposed) schedule(cell);
+		}, MEASURE_RETRY_MS);
+	}
+
 	function schedule(cell: NativeObjectHandle, onlyWhenResized = false) {
 		const key = viewKey(objc, cell);
 
@@ -330,6 +350,7 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 				if (key === undefined) return;
 
 				placedSizes.delete(key);
+				failedMeasures.delete(key);
 				ownership.delete(key);
 				problems.delete(key);
 				pending.delete(key);
@@ -397,6 +418,7 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 
 			pending.clear();
 			placedSizes.clear();
+			failedMeasures.clear();
 			ownership.clear();
 			problems.clear();
 			await Promise.all(
