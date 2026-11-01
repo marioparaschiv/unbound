@@ -60,6 +60,7 @@ const ADD_REACTION_VIEW = 'com.discord.reactions.AddReactionView';
 const LINEAR_PARAMS = 'android.widget.LinearLayout$LayoutParams';
 const CENTER_VERTICAL = 16;
 const VISIBLE = 0;
+const MESSAGE_ID_GETTER = 'getId-3Eiw7ao';
 const HOST_HEIGHT = 20;
 const AVATAR_GAP = 4;
 const MAX_SEARCH_DEPTH = 6;
@@ -349,6 +350,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 
 			if (existing && existing.contextKey === context.key && !existing.disposed) {
 				describe(existing, context, users);
+				await java.invokeAsync(existing.host, 'setVisibility', [javaInt(VISIBLE)]);
 				await refresh(existing);
 
 				continue;
@@ -414,7 +416,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 		messageView: MESSAGE_VIEW,
 		bindName: bindMessage.name,
 		bindParameters: bindMessage.parameters,
-		idField,
+		messageIdGetter: MESSAGE_ID_GETTER,
 		hosts: hostsKey,
 		drawnFor: drawnForKey,
 	});
@@ -428,7 +430,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 			const messageView = javaReference(self);
 			const message = javaReference(args[0]);
 			const messageId = message
-				? javaText(java.invoke(message, 'getId-3Eiw7ao', []))
+				? javaText(java.invoke(message, MESSAGE_ID_GETTER, []))
 				: undefined;
 
 			if (messageView && messageId) setTimeout(() => schedule(messageView, messageId), 0);

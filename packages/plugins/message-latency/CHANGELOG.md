@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1]
+
+### Fixed
+
+- Latency icons no longer blink on Android when a row is shown again for the same message.
+
 ## [1.2.0]
 
 ### Changed
