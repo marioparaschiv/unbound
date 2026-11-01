@@ -580,8 +580,11 @@ func TestParsedIOSSmokeTestGatesTheIOSBuild(t *testing.T) {
 	if smoke.step(t, "Download the simulator build").With["name"] != "ios-simulator" {
 		t.Fatal("the smoke test must install this run's simulator build")
 	}
-	if run := smoke.step(t, "Run the smoke test").Run; !strings.HasPrefix(run, `unbound-tools smoke ios --app "$APP_PATH"`) {
+	if run := smoke.step(t, "Run the smoke test").Run; !strings.HasPrefix(run, `unbound-tools smoke ios --app "$APP_PATH" --device "$SIMULATOR"`) {
 		t.Fatalf("unexpected smoke command %q", run)
+	}
+	if smoke.Steps[0].Name != "Boot and warm a simulator" {
+		t.Fatal("the smoke test must boot its simulator first, so the boot overlaps the setup steps")
 	}
 }
 

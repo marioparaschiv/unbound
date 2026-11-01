@@ -499,6 +499,19 @@ jobs:
             contents: read
             actions: read
         steps:
+            - name: Boot and warm a simulator
+              id: simulator
+              working-directory: .
+              run: |
+                  set -euo pipefail
+                  runtimes=$(xcrun simctl list runtimes -j)
+                  runtime=$(jq -r '[.runtimes[] | select(.platform == "iOS" and .isAvailable)] | sort_by(.version | split(".") | map(tonumber)) | last | .identifier' <<< "$runtimes")
+                  device_type=$(jq -r --arg runtime "$runtime" '.runtimes[] | select(.identifier == $runtime) | [.supportedDeviceTypes[] | select(.productFamily == "iPhone")] | last | .identifier' <<< "$runtimes")
+                  udid=$(xcrun simctl create "Unbound smoke" "$device_type" "$runtime")
+                  xcrun simctl boot "$udid"
+                  echo "udid=$udid" >> "$GITHUB_OUTPUT"
+                  nohup sh -c "xcrun simctl bootstatus '$udid' -b && xcrun simctl launch '$udid' com.apple.mobilesafari" > "$RUNNER_TEMP/simulator-warm.log" 2>&1 &
+
             - name: Checkout code
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
               with:
@@ -537,7 +550,8 @@ jobs:
             - name: Run the smoke test
               env:
                   APP_PATH: ${{ steps.app.outputs.path }}
-              run: unbound-tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
+                  SIMULATOR: ${{ steps.simulator.outputs.udid }}
+              run: unbound-tools smoke ios --app "$APP_PATH" --device "$SIMULATOR" --client ../client/dist --artifacts smoke/artifacts --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
 
             - name: Compare startup and the console with main
               if: success() && github.event_name == 'pull_request'
