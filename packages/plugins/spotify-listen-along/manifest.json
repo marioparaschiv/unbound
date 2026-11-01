@@ -18,5 +18,9 @@
 	],
 	"version": "1.0.1",
 	"icon": "HeadphonesIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"signature": {
+		"version": 1,
+		"ed25519": "UZ26XATNVRh8aysIEN+q5bUWecmwWznvhzX3Jd9nI/ojxatj+5nPi6NahqDZAOjQ+aO4aEq2GMsv+UubfnJ9AA=="
+	}
 }

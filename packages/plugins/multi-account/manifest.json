@@ -10,5 +10,9 @@
 	],
 	"version": "1.0.1",
 	"icon": "UserCircleIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "ezmzlDHbSJfLpU2I296QjXdyQnjNT8AZwm3kc9YeUhYWQI3tTYfBA796+mYojwEoeUBhwSjMvXv6zf+PEmxxAQ=="
+	}
 }

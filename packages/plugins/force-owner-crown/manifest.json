@@ -18,5 +18,9 @@
 	],
 	"version": "1.0.1",
 	"icon": "CrownIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "/9wuFCkS288jQfY7UA3OP/YYZgvGHUhFQdIFr388MdsgDBpzV9eHyXywDA05V14KiCF1hi0lGQ8B+I7BI8vHAA=="
+	}
 }

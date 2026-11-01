@@ -22,5 +22,9 @@
 	],
 	"version": "1.0.1",
 	"icon": "ReactionIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "TXnp6f2xVf9FRM1TwJgVKcpIb+eQsuAxOBU4JxgYHdH2SW09C6X5/olZ70QTybMjJAb7TS+Zbk7F5Iljt6q6Ag=="
+	}
 }

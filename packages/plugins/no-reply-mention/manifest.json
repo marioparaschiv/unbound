@@ -26,5 +26,9 @@
 	],
 	"version": "1.0.1",
 	"icon": "ic_swipe_reply_24px",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"signature": {
+		"version": 1,
+		"ed25519": "UctKIPqsL2U2hbUgLclOlRyL9I2LM3aSQ6pav1Tkpm8qBsS+0fPKplJf5sdZwaVoWXI5JPLta2eTOugU8MhLAQ=="
+	}
 }

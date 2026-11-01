@@ -26,5 +26,9 @@
 	],
 	"version": "1.0.2",
 	"icon": "ChevronLargeRightIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "em/C2monKQgArNIYqVAZBUTW2DwHB+cBE9q5PERv2ACjKguvgefDzUlrD3RSPfdTU54f0yOpxJuXJSnxx8GOBg=="
+	}
 }

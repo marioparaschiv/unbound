@@ -22,5 +22,9 @@
 	],
 	"version": "1.0.1",
 	"icon": "EyeSlashIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "IQ9eX2tayUm8dgd8S9PoOudbGoKor40RRp9BSYBtP6ifSjOYxXtkhQ8Fb6nMpTBwh39s7uWjDc2wotgOg7DZAA=="
+	}
 }
