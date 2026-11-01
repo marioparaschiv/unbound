@@ -4,6 +4,7 @@ import {
 	resolveReference,
 	type DocsIndex,
 	type DocsLocation,
+	type DocsPageMembers,
 	type DocsSymbol,
 } from '~/lib/docs/docs-index';
 import { getDocsGroup, ReflectionKind, type DocsGroupKey } from '~/lib/docs/kinds';
@@ -19,12 +20,13 @@ export type DocsMember = {
 	deprecated: boolean;
 };
 
-/** The sidebar's view of a version: every page, grouped by kind. */
+/** The sidebar's view of a version: every page, grouped by kind, and the members its search finds. */
 export type DocsNav = {
 	package: DocsPackage;
 	version: DocsVersion;
 	versions: DocsVersion[];
 	groups: { key: DocsGroupKey; symbols: Pick<DocsSymbol, 'name' | 'qualifiedName'>[] }[];
+	members: DocsPageMembers[];
 };
 
 /** One symbol page: its reflection, a namespace's members, and where each referenced id is shown. */
@@ -51,7 +53,6 @@ function toMember(index: DocsIndex, child: DocsReflection): DocsMember {
 	};
 }
 
-// A JSON walk finds every id the page links to: type references, `{@link}` targets and re-exports.
 function collectLinks(
 	index: DocsIndex,
 	payload: DocsPageBody,
@@ -136,6 +137,7 @@ export function getDocsNav(
 			key: group.key,
 			symbols: group.symbols.map(({ name, qualifiedName }) => ({ name, qualifiedName })),
 		})),
+		members: index.members,
 	};
 }
 

@@ -21,9 +21,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '~/components/ui/select';
-import type { SearchableSymbol } from '~/lib/docs/search';
 import DocsSearch from '~/components/docs/docs-search';
 import KindBadge from '~/components/docs/kind-badge';
+import { getSearchEntries } from '~/lib/docs/search';
 import type { DocsNav } from '~/lib/docs/docs-page';
 import { docsNavQuery } from '~/queries/docs/docs';
 import { DOCS_GROUPS } from '~/lib/docs/kinds';
@@ -56,21 +56,16 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 	const [searchOpen, setSearchOpen] = useState(false);
 	const navRef = useRef<HTMLElement>(null);
 	const route = { package: nav.package, version: nav.version };
-	const symbols = useMemo<SearchableSymbol[]>(
-		() =>
-			nav.groups.flatMap((group) =>
-				group.symbols.map((entry) => ({ ...entry, group: group.key })),
-			),
-		[nav],
-	);
-	const activeGroup = symbols.find((entry) => entry.qualifiedName === symbol)?.group;
+	const entries = useMemo(() => getSearchEntries(nav), [nav]);
+	const activeGroup = nav.groups.find((group) =>
+		group.symbols.some((entry) => entry.qualifiedName === symbol),
+	)?.key;
 	const [openGroups, setOpenGroups] = useState<string[]>(() => [
 		'namespaces',
 		...(activeGroup ? [activeGroup] : []),
 	]);
 	const [shownGroup, setShownGroup] = useState(activeGroup);
 
-	// Navigating to a symbol opens its group, leaving the groups the reader opened or closed alone.
 	if (activeGroup !== shownGroup) {
 		setShownGroup(activeGroup);
 
@@ -217,7 +212,7 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 			</Accordion>
 
 			<DocsSearch
-				symbols={symbols}
+				entries={entries}
 				route={route}
 				open={searchOpen}
 				onOpenChange={setSearchOpen}

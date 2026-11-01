@@ -4,13 +4,13 @@ import type { KeyboardEvent } from 'react';
 import { useMemo, useState } from 'react';
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '~/components/ui/dialog';
-import { searchSymbols, type SearchableSymbol } from '~/lib/docs/search';
+import { searchDocs, type DocsSearchEntry } from '~/lib/docs/search';
 import type { DocsRoute } from '~/lib/docs/docs-links';
 import KindBadge from '~/components/docs/kind-badge';
 import cn from '~/lib/cn';
 
 type DocsSearchProps = {
-	symbols: SearchableSymbol[];
+	entries: DocsSearchEntry[];
 	route: DocsRoute;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
@@ -19,15 +19,16 @@ type DocsSearchProps = {
 const KEY_STEPS: Record<string, number> = { ArrowDown: 1, ArrowUp: -1 };
 
 /**
- * @description The `⌘K` dialog: searches every symbol of the version by name, arrows move, Enter opens.
- * @param props The symbols, the version they belong to, and the open state.
+ * @description The `⌘K` dialog: searches every symbol and member of the version by name, arrows move, Enter opens.
+ * @param props The search entries, the version they belong to, and the open state.
  * @returns The dialog.
  */
-function DocsSearch({ symbols, route, open, onOpenChange }: DocsSearchProps) {
+function DocsSearch({ entries, route, open, onOpenChange }: DocsSearchProps) {
 	const navigate = useNavigate();
 	const [query, setQuery] = useState('');
 	const [active, setActive] = useState(0);
-	const results = useMemo(() => searchSymbols(symbols, query), [symbols, query]);
+	const results = useMemo(() => searchDocs(entries, query), [entries, query]);
+	const memberCount = entries.filter((entry) => entry.kind === 'members').length;
 
 	function close() {
 		onOpenChange(false);
@@ -55,7 +56,8 @@ function DocsSearch({ symbols, route, open, onOpenChange }: DocsSearchProps) {
 		close();
 		void navigate({
 			to: '/docs/$package/$version/$symbol',
-			params: { ...route, symbol: selected.qualifiedName },
+			params: { ...route, symbol: selected.location.symbol },
+			hash: selected.location.anchor,
 		});
 	}
 
@@ -95,15 +97,16 @@ function DocsSearch({ symbols, route, open, onOpenChange }: DocsSearchProps) {
 					role='listbox'
 					className='p-1.5 max-h-96 overflow-y-auto'
 				>
-					{results.map((symbol, index) => (
+					{results.map((entry, index) => (
 						<li
-							key={symbol.qualifiedName}
+							key={`${entry.kind}:${entry.qualifiedName}`}
 							role='option'
 							aria-selected={index === active}
 						>
 							<Link
 								to='/docs/$package/$version/$symbol'
-								params={{ ...route, symbol: symbol.qualifiedName }}
+								params={{ ...route, symbol: entry.location.symbol }}
+								hash={entry.location.anchor}
 								onClick={close}
 								onMouseMove={() => setActive(index)}
 								className={cn(
@@ -111,10 +114,10 @@ function DocsSearch({ symbols, route, open, onOpenChange }: DocsSearchProps) {
 									index === active && 'bg-accent text-accent-foreground',
 								)}
 							>
-								<KindBadge group={symbol.group} />
-								<span className='font-medium font-mono'>{symbol.name}</span>
+								<KindBadge group={entry.kind} />
+								<span className='font-medium font-mono'>{entry.name}</span>
 								<span className='ml-auto font-mono text-muted-foreground text-xs single-line'>
-									{symbol.qualifiedName}
+									{entry.qualifiedName}
 								</span>
 							</Link>
 						</li>
@@ -122,12 +125,13 @@ function DocsSearch({ symbols, route, open, onOpenChange }: DocsSearchProps) {
 				</ul>
 				{query.trim() && !results.length ? (
 					<p className='px-4 pb-6 text-muted-foreground text-sm text-center'>
-						No symbol matches “{query.trim()}”.
+						Nothing matches “{query.trim()}”.
 					</p>
 				) : null}
 				{!query.trim() ? (
 					<p className='px-4 pb-6 text-muted-foreground text-sm text-center'>
-						{symbols.length} symbols in this version.
+						{entries.length - memberCount} symbols and {memberCount} members in this
+						version.
 					</p>
 				) : null}
 			</DialogContent>

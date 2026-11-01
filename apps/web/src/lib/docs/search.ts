@@ -1,15 +1,19 @@
-import type { DocsGroupKey } from '~/lib/docs/kinds';
+import type { DocsLocation } from '~/lib/docs/docs-index';
+import type { DocsSearchKind } from '~/lib/docs/kinds';
+import type { DocsNav } from '~/lib/docs/docs-page';
 
-export type SearchableSymbol = {
+/** One thing the `⌘K` search finds: a page, or a member at an anchor on its owner's page. */
+export type DocsSearchEntry = {
 	name: string;
 	qualifiedName: string;
-	group: DocsGroupKey;
+	kind: DocsSearchKind;
+	location: DocsLocation;
 };
 
-/** Lower ranks list first. */
-function rank(symbol: SearchableSymbol, query: string): number | undefined {
-	const name = symbol.name.toLowerCase();
-	const qualified = symbol.qualifiedName.toLowerCase();
+/** Match tiers, best first; within a tier a page outranks a member. */
+function tier(entry: DocsSearchEntry, query: string): number | undefined {
+	const name = entry.name.toLowerCase();
+	const qualified = entry.qualifiedName.toLowerCase();
 
 	if (name === query || qualified === query) {
 		return 0;
@@ -31,33 +35,60 @@ function rank(symbol: SearchableSymbol, query: string): number | undefined {
 }
 
 /**
- * @description Finds the symbols matching a search, best first: exact names, then name prefixes, then
- * qualified-name prefixes, then substrings; ties keep their order.
- * @param symbols The symbols to search, in sidebar order.
+ * @description Lists what a version's search covers: every page in sidebar order, then every member a page lists.
+ * @param nav The version's navigation.
+ * @returns The entries.
+ */
+export function getSearchEntries(nav: Pick<DocsNav, 'groups' | 'members'>): DocsSearchEntry[] {
+	const pages = nav.groups.flatMap((group) =>
+		group.symbols.map((symbol) => ({
+			...symbol,
+			kind: group.key,
+			location: { symbol: symbol.qualifiedName },
+		})),
+	);
+	const members = nav.members.flatMap(({ owner, names }) =>
+		names.map((name) => ({
+			name,
+			qualifiedName: `${owner}.${name}`,
+			kind: 'members' as const,
+			location: { symbol: owner, anchor: name },
+		})),
+	);
+
+	return [...pages, ...members];
+}
+
+/**
+ * @description Finds the entries matching a search, best first: exact names, then name prefixes, then
+ * qualified-name prefixes, then substrings. In each tier pages come before members; ties keep their order.
+ * @param entries The entries to search, from {@link getSearchEntries}.
  * @param query The search text; case-insensitive.
  * @param limit The most results to return.
  * @returns The matches.
  */
-export function searchSymbols<T extends SearchableSymbol>(
-	symbols: T[],
+export function searchDocs(
+	entries: DocsSearchEntry[],
 	query: string,
 	limit = 50,
-): T[] {
+): DocsSearchEntry[] {
 	const needle = query.trim().toLowerCase();
 
 	if (!needle) {
 		return [];
 	}
 
-	return symbols
-		.flatMap((symbol) => {
-			const score = rank(symbol, needle);
+	return entries
+		.flatMap((entry) => {
+			const match = tier(entry, needle);
 
-			return score === undefined ? [] : [{ symbol, score }];
+			return match === undefined
+				? []
+				: [{ entry, score: match * 2 + (entry.kind === 'members' ? 1 : 0) }];
 		})
 		.sort((a, b) => a.score - b.score)
 		.slice(0, limit)
-		.map(({ symbol }) => symbol);
+		.map(({ entry }) => entry);
 }
 
-export default { searchSymbols };
+export default { getSearchEntries, searchDocs };

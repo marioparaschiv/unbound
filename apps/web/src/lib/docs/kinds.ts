@@ -31,6 +31,11 @@ export const DOCS_GROUPS = [
 
 export type DocsGroupKey = (typeof DOCS_GROUPS)[number]['key'];
 
+/** A search result's kind: a page's group, or a member listed on its owner's page. */
+export type DocsSearchKind = DocsGroupKey | 'members';
+
+export const MEMBER_BADGE = { key: 'members', label: 'Members', badge: 'M' } as const;
+
 /** The kinds that get a page of their own, and the group each is listed under. */
 const PAGE_KIND_GROUPS: Partial<Record<number, DocsGroupKey>> = {
 	[ReflectionKind.Module]: 'namespaces',
@@ -68,4 +73,4 @@ export function getDocsGroup(reflection: DocsReflection): DocsGroupKey | undefin
 	return isCallableVariable(reflection) ? 'functions' : PAGE_KIND_GROUPS[reflection.kind];
 }
 
-export default { ReflectionKind, DOCS_GROUPS, isCallableVariable, getDocsGroup };
+export default { ReflectionKind, DOCS_GROUPS, MEMBER_BADGE, isCallableVariable, getDocsGroup };

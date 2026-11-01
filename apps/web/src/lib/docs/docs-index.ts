@@ -1,5 +1,6 @@
 import { DOCS_GROUPS, ReflectionKind, getDocsGroup, type DocsGroupKey } from '~/lib/docs/kinds';
 import type { DocsProject, DocsReflection } from '~/lib/docs/typedoc';
+import { getObjectMembers } from '~/lib/docs/declaration';
 
 /** Where a reflection is shown: its own page, or an anchor on its owner's page. */
 export type DocsLocation = {
@@ -16,6 +17,13 @@ export type DocsSymbol = {
 	group: DocsGroupKey;
 };
 
+/** The members a page lists, each under an anchor of its name, such as an interface's methods. */
+export type DocsPageMembers = {
+	/** The page's dotted qualified name. */
+	owner: string;
+	names: string[];
+};
+
 export type DocsGroup = {
 	key: DocsGroupKey;
 	symbols: DocsSymbol[];
@@ -27,6 +35,7 @@ export type DocsIndex = {
 	byQualifiedName: Map<string, number>;
 	locations: Map<number, DocsLocation>;
 	symbols: DocsSymbol[];
+	members: DocsPageMembers[];
 	/** The non-empty kind groups in {@link DOCS_GROUPS} order, each sorted by qualified name. */
 	groups: DocsGroup[];
 };
@@ -40,7 +49,7 @@ const NESTED_REFLECTIONS = [
 
 /**
  * @description Indexes a docs version: every reflection by id, each page by its dotted qualified name, where
- * every reflection is shown, and the sidebar's kind groups. A re-export is shown where its target is.
+ * every reflection is shown, the members each page lists, and the sidebar's kind groups. A re-export is shown where its target is.
  * @param project The parsed TypeDoc project.
  * @returns The index.
  */
@@ -104,12 +113,19 @@ export function buildDocsIndex(project: DocsProject): DocsIndex {
 
 	symbols.sort((a, b) => a.qualifiedName.localeCompare(b.qualifiedName));
 
+	const members = symbols.flatMap((symbol) => {
+		const owner = byId.get(symbol.id);
+		const names = owner ? getObjectMembers(owner).map((member) => member.name) : [];
+
+		return names.length ? [{ owner: symbol.qualifiedName, names }] : [];
+	});
+
 	const groups = DOCS_GROUPS.map(({ key }) => ({
 		key,
 		symbols: symbols.filter((symbol) => symbol.group === key),
 	})).filter((group) => group.symbols.length);
 
-	return { byId, byQualifiedName, locations, symbols, groups };
+	return { byId, byQualifiedName, locations, symbols, members, groups };
 }
 
 /**
