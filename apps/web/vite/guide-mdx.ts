@@ -82,8 +82,19 @@ function guideMdx(): Plugin[] {
 			...compiler,
 			enforce: 'pre',
 			// The compiler drops the query before matching, so it would compile `?meta` modules as MDX too.
-			transform(value, id) {
-				return id.includes('?') ? undefined : compiler.transform(value, id);
+			async transform(value, id) {
+				if (id.includes('?')) {
+					return;
+				}
+
+				const compiled = await compiler.transform(value, id);
+				const map = compiled?.map;
+
+				if (!compiled || (typeof map === 'object' && map !== null && 'sections' in map)) {
+					return compiled ? { code: compiled.code } : undefined;
+				}
+
+				return { code: compiled.code, map };
 			},
 		},
 	];
