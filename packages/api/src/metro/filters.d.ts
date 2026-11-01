@@ -39,6 +39,12 @@ export declare function byProps(...props: string[]): MetroFilter;
  * @returns A {@link MetroFilter} matching modules whose prototype exposes every given method.
  */
 export declare function byPrototypes(...prototypes: string[]): MetroFilter;
+/**
+ * @description Builds a filter matching a wrapped component, like one from `React.memo`, whose inner `type` has the given name.
+ * @param name The `name` of the wrapped component's `type`.
+ * @returns A {@link MetroFilter} matching the module whose `type` has that name.
+ */
+export declare function byTypeName(name: string): MetroFilter;
 /** A module predicate, carrying its cache key and a `raw` flag, produced by every `by*` helper. */
 export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) & {
 	[CACHE_KEY]?: string;
