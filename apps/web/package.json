@@ -63,7 +63,7 @@
 		"motion": "^14.8.0",
 		"nucleo-micro-bold": "~1.2.1",
 		"obscenity": "^0.4.6",
-		"postgres": "^3.4.9",
+		"postgres": "^4.0.0",
 		"react": "catalog:react",
 		"react-day-picker": "^10.0.2",
 		"react-dom": "catalog:react",

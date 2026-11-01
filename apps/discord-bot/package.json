@@ -28,7 +28,7 @@
 		"colorette": "^2.0.20",
 		"discord.js": "^14.27.0",
 		"drizzle-orm": "1.0.0-rc.5",
-		"postgres": "^3.4.9",
+		"postgres": "^4.0.0",
 		"zod": "^4.0.0"
 	},
 	"devDependencies": {
