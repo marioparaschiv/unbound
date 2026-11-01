@@ -12,6 +12,7 @@ import { formatMonthlyPrice } from '~/lib/sponsors/price';
 import UserBadgeList from '~/components/user-badge-list';
 import getApiErrorMessage from '~/lib/api/error-message';
 import BadgeForm from '~/components/account/badge-form';
+import BadgeTile from '~/components/account/badge-tile';
 import { Button } from '~/components/ui/button';
 import Text from '~/components/ui/text';
 
@@ -223,13 +224,7 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 							className='flex items-center justify-between gap-4 min-h-8'
 						>
 							<div className='flex items-center gap-3 min-w-0'>
-								<img
-									src={badge.imageUrl}
-									alt=''
-									width={32}
-									height={32}
-									className='size-8 shrink-0 object-contain'
-								/>
+								<BadgeTile imageUrl={badge.imageUrl} />
 								<Text variant='text-sm' className='truncate'>
 									{badge.name}
 								</Text>

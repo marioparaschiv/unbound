@@ -6,11 +6,18 @@ import {
 import { IconCircleWarning, IconPhoto, IconPlus, IconXmark } from 'nucleo-micro-bold';
 import type { Badge } from '@unbound-app/contracts/sponsors';
 
+import {
+	InputGroup,
+	InputGroupAddon,
+	InputGroupButton,
+	InputGroupInput,
+	InputGroupText,
+} from '~/components/ui/input-group';
 import type { BadgeDraft } from '~/components/account/use-badge-drafts';
+import { FieldDescription, FieldError } from '~/components/ui/field';
+import BadgeTile from '~/components/account/badge-tile';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
-import Input from '~/components/ui/input';
-import Text from '~/components/ui/text';
 
 type BadgeFormProps = {
 	drafts: BadgeDraft[];
@@ -51,21 +58,13 @@ function DraftImage({ draft }: { draft: BadgeDraft }) {
 	const { upload } = draft;
 
 	return (
-		<span className='grid size-8 shrink-0 place-items-center rounded-item bg-muted text-muted-foreground'>
-			{upload.kind === 'ready' ? (
-				<img
-					src={upload.imageUrl}
-					alt=''
-					width={32}
-					height={32}
-					className='size-8 object-contain'
-				/>
-			) : upload.kind === 'uploading' ? (
+		<BadgeTile imageUrl={upload.kind === 'ready' ? upload.imageUrl : undefined}>
+			{upload.kind === 'uploading' ? (
 				<Spinner />
 			) : (
-				<IconCircleWarning size={16} className='text-destructive' aria-hidden />
+				<IconCircleWarning size={18} className='text-destructive' aria-hidden />
 			)}
-		</span>
+		</BadgeTile>
 	);
 }
 
@@ -74,53 +73,49 @@ function DraftRow({ draft, problem, disabled, onReplaceImage, onRename, onRemove
 
 	return (
 		<div className='flex flex-col gap-1.5'>
-			<div className='flex items-center gap-2'>
+			<div className='flex items-center gap-3'>
 				<DraftImage draft={draft} />
-				<Input
-					value={draft.name}
-					onChange={(event) => onRename(draft.id, event.target.value)}
-					maxLength={BADGE_NAME_MAX_LENGTH}
-					placeholder='Badge name, e.g. Night Owl'
-					aria-label='Badge name'
-					disabled={disabled}
-				/>
-				<Text
-					variant='text-xs'
-					color='muted'
-					className='w-10 shrink-0 text-right tabular-nums'
-				>
-					{draft.name.length}/{BADGE_NAME_MAX_LENGTH}
-				</Text>
-				<Button
-					type='button'
-					variant='ghost'
-					size='icon-sm'
-					aria-label='Choose another image'
-					title='Choose another image'
-					disabled={disabled}
-					onClick={() => onReplaceImage(draft.id)}
-				>
-					<IconPhoto size={14} />
-				</Button>
+				<InputGroup data-disabled={disabled}>
+					<InputGroupInput
+						value={draft.name}
+						onChange={(event) => onRename(draft.id, event.target.value)}
+						maxLength={BADGE_NAME_MAX_LENGTH}
+						placeholder='Badge name, e.g. Night Owl'
+						aria-label='Badge name'
+						aria-invalid={
+							draft.upload.kind !== 'rejected' && problem ? true : undefined
+						}
+						disabled={disabled}
+					/>
+					<InputGroupAddon align='inline-end'>
+						<InputGroupText className='tabular-nums'>
+							{draft.name.length}/{BADGE_NAME_MAX_LENGTH}
+						</InputGroupText>
+						<InputGroupButton
+							size='sm'
+							disabled={disabled}
+							onClick={() => onReplaceImage(draft.id)}
+						>
+							<IconPhoto size={24} />
+							Replace
+						</InputGroupButton>
+					</InputGroupAddon>
+				</InputGroup>
 				{onRemove ? (
 					<Button
 						type='button'
-						variant='ghost'
-						size='icon-sm'
+						variant='outline'
+						size='icon'
 						aria-label='Remove'
 						title='Remove'
 						disabled={disabled}
 						onClick={() => onRemove(draft.id)}
 					>
-						<IconXmark size={14} />
+						<IconXmark size={24} />
 					</Button>
 				) : null}
 			</div>
-			{error ? (
-				<Text variant='text-xs' color='destructive'>
-					{error}
-				</Text>
-			) : null}
+			{error ? <FieldError className='pl-14'>{error}</FieldError> : null}
 		</div>
 	);
 }
@@ -159,7 +154,7 @@ function BadgeForm({
 					onSave(badges);
 				}
 			}}
-			className='flex flex-col gap-3 rounded-control border p-3'
+			className='flex flex-col gap-3'
 		>
 			{drafts.map((draft, index) => (
 				<DraftRow
@@ -173,27 +168,25 @@ function BadgeForm({
 				/>
 			))}
 
-			<Text variant='text-xs' color='muted'>
-				{BADGE_IMAGE_RULES}. The name is what people see when they tap the badge in Discord.
-			</Text>
-
-			<div className='flex items-center justify-between gap-2'>
-				{onAddMore ? (
-					<Button
-						type='button'
-						variant='ghost'
-						size='sm'
-						className='gap-2'
-						disabled={disabled}
-						onClick={onAddMore}
-					>
-						<IconPlus size={14} />
-						Add another
-					</Button>
-				) : (
-					<span />
-				)}
+			<div className='flex flex-wrap items-center justify-end gap-x-4 gap-y-3'>
+				<FieldDescription className='flex-1 basis-64 text-xs'>
+					{BADGE_IMAGE_RULES}. The name is what people see when they tap the badge in
+					Discord.
+				</FieldDescription>
 				<div className='flex gap-2'>
+					{onAddMore ? (
+						<Button
+							type='button'
+							variant='outline'
+							size='sm'
+							className='gap-2'
+							disabled={disabled}
+							onClick={onAddMore}
+						>
+							<IconPlus size={14} />
+							Add another
+						</Button>
+					) : null}
 					<Button
 						type='button'
 						variant='outline'
