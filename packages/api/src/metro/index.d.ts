@@ -37,6 +37,7 @@ export declare const data: {
 	patchedRTNProfiler: boolean;
 	patchedImportTracker: boolean;
 	importTrackerId: number;
+	filePaths: Map<string, number>;
 	origToString: any;
 	listeners: Set<MetroModuleLoadListener>;
 };

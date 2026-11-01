@@ -1,14 +1,6 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
-type Factory = (
-	global: typeof globalThis,
-	require: (id: number) => MetroExport,
-	importDefault: (id: number) => MetroExport,
-	importAll: (id: number) => MetroExport,
-	module: MetroPublicModule,
-	exports: MetroExport,
-	dependencyMap: number[],
-) => void;
+import { startFakeMetro } from './helpers/fake-metro';
 
 const TRACKER = 1;
 const MODULE_COUNT = 200;
@@ -22,7 +14,24 @@ Object.assign(globalThis, {
 });
 
 // A fake Metro registry where every Discord-authored module reports its file path to the import tracker.
-const modules = new Map<number, MetroModuleRecord>();
+const fakeMetro = startFakeMetro();
+const metroRequire = fakeMetro.require;
+
+fakeMetro.define(TRACKER, [], (_, __, ___, ____, module) => {
+	module.exports = { fileFinishedImporting: () => undefined };
+});
+fakeMetro.define(2, [], (_, __, ___, ____, module) => {
+	module.exports = { getPublicInstanceFromRootTag: () => null };
+});
+
+for (let id = 10; id < 10 + MODULE_COUNT; id++) {
+	fakeMetro.define(id, [TRACKER], (_, require, ___, ____, module, _____, deps) => {
+		module.exports = { id };
+		require(deps[0]).fileFinishedImporting(`modules/m${id}.tsx`);
+	});
+}
+
+const modules = globalThis.modules;
 const recordsRead = new Set<number>();
 const readRecord = modules.get.bind(modules);
 
@@ -32,62 +41,10 @@ modules.get = (id: number) => {
 	return readRecord(id);
 };
 
-function define(id: number, dependencyMap: number[], factory: Factory) {
-	modules.set(id, {
-		factory,
-		dependencyMap,
-		isInitialized: false,
-		publicModule: { id, exports: {} },
-	});
-}
-
-function metroRequire(id: number): MetroExport {
-	const record = readRecord(id);
-
-	if (!record) {
-		throw new Error(`No module ${id}`);
-	}
-
-	if (!record.isInitialized) {
-		record.isInitialized = true;
-		record.factory?.(
-			globalThis,
-			metroRequire,
-			metroRequire,
-			metroRequire,
-			record.publicModule,
-			record.publicModule.exports,
-			record.dependencyMap ?? [],
-		);
-		record.factory = undefined;
-		record.dependencyMap = undefined;
-	}
-
-	return record.publicModule.exports;
-}
-
-define(TRACKER, [], (_, __, ___, ____, module) => {
-	module.exports = { fileFinishedImporting: () => undefined };
-});
-define(2, [], (_, __, ___, ____, module) => {
-	module.exports = { getPublicInstanceFromRootTag: () => null };
-});
-
-for (let id = 10; id < 10 + MODULE_COUNT; id++) {
-	define(id, [TRACKER], (_, require, ___, ____, module, _____, deps) => {
-		module.exports = { id };
-		require(deps[0]).fileFinishedImporting(`modules/m${id}.tsx`);
-	});
-}
-
-metroRequire(TRACKER);
-metroRequire(2);
-
-Object.assign(globalThis, { modules, __r: metroRequire });
-
 mock.module('~/metro/cache', () => ({
 	ModuleFlags: { BLACKLISTED: 1 },
 	default: {
+		state: { moduleFlags: {} },
 		moduleIds: [...modules.keys()],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => undefined,
@@ -107,6 +64,9 @@ mock.module('~/metro/cache', () => ({
 const metro = await import('~/metro/search');
 const { findLazy, onModuleLoaded } = await import('~/metro/wait');
 const { byFilePath } = await import('~/metro/filters');
+
+metroRequire(TRACKER);
+metroRequire(2);
 
 beforeEach(() => {
 	for (const key of Object.keys(cachedIds)) delete cachedIds[key];
