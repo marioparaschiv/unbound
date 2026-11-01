@@ -2,10 +2,8 @@ import type { DocsPackage, DocsVersion } from '@unbound-app/contracts/docs';
 import { queryOptions } from '@tanstack/react-query';
 
 import { fetchDocsManifest, fetchDocsNav, fetchDocsPage } from '~/lib/docs/docs-functions';
+import { MUTABLE_DOCS_TTL_MS } from '~/lib/docs/docs-source';
 import { docsKey } from '~/queries/keys';
-
-/** The server caches `main` and the manifests for five minutes, so a client refetch sooner gains nothing. */
-const DOCS_STALE_TIME = 5 * 60 * 1000;
 
 /**
  * @description A package's published docs versions.
@@ -16,7 +14,7 @@ export function docsManifestQuery(pkg: DocsPackage) {
 	return queryOptions({
 		queryKey: [...docsKey, pkg, 'manifest'],
 		queryFn: ({ signal }) => fetchDocsManifest({ data: pkg, signal }),
-		staleTime: DOCS_STALE_TIME,
+		staleTime: MUTABLE_DOCS_TTL_MS,
 	});
 }
 
@@ -30,7 +28,7 @@ export function docsNavQuery(pkg: DocsPackage, version: DocsVersion) {
 	return queryOptions({
 		queryKey: [...docsKey, pkg, version, 'nav'],
 		queryFn: ({ signal }) => fetchDocsNav({ data: { package: pkg, version }, signal }),
-		staleTime: DOCS_STALE_TIME,
+		staleTime: MUTABLE_DOCS_TTL_MS,
 	});
 }
 
@@ -45,7 +43,7 @@ export function docsPageQuery(pkg: DocsPackage, version: DocsVersion, symbol: st
 	return queryOptions({
 		queryKey: [...docsKey, pkg, version, 'page', symbol],
 		queryFn: ({ signal }) => fetchDocsPage({ data: { package: pkg, version, symbol }, signal }),
-		staleTime: DOCS_STALE_TIME,
+		staleTime: MUTABLE_DOCS_TTL_MS,
 	});
 }
 

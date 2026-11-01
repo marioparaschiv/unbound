@@ -9,12 +9,11 @@ import {
 } from '@unbound-app/contracts/docs';
 
 import { buildDocsIndex, type DocsIndex } from '~/lib/docs/docs-index';
+import { createLruCache, type LruCache } from '~/lib/docs/lru-cache';
 import { docsProjectSchema } from '~/lib/docs/typedoc';
 
-/** How long `main` and the manifests are trusted; CI republishes them on every push to main. */
 export const MUTABLE_DOCS_TTL_MS = 5 * 60 * 1000;
 
-/** Each loaded version holds its whole project in memory, so only the most recently read ones stay. */
 export const DOCS_VERSION_CACHE_LIMIT = 8;
 
 type Cached<T> = {
@@ -47,23 +46,20 @@ export function createDocsSource({
 	fetch = globalThis.fetch,
 	now = Date.now,
 }: DocsSourceOptions): DocsSource {
-	const manifests = new Map<DocsPackage, Cached<DocsManifest | undefined>>();
-	const versions = new Map<string, Cached<DocsIndex>>();
+	const manifests = createLruCache<DocsPackage, Cached<DocsManifest | undefined>>(
+		DOCS_VERSION_CACHE_LIMIT,
+	);
+	const versions = createLruCache<string, Cached<DocsIndex>>(DOCS_VERSION_CACHE_LIMIT);
 
 	function readThrough<K, T>(
-		cache: Map<K, Cached<T>>,
+		cache: LruCache<K, Cached<T>>,
 		key: K,
 		ttl: number,
 		load: () => Promise<T>,
 	): Promise<T> {
 		const hit = cache.get(key);
 
-		// Re-inserting keeps the map in least-recently-read order for eviction.
-		cache.delete(key);
-
 		if (hit && hit.expiresAt > now()) {
-			cache.set(key, hit);
-
 			return hit.value;
 		}
 
@@ -75,14 +71,6 @@ export function createDocsSource({
 				cache.delete(key);
 			}
 		});
-
-		for (const oldest of cache.keys()) {
-			if (cache.size <= DOCS_VERSION_CACHE_LIMIT) {
-				break;
-			}
-
-			cache.delete(oldest);
-		}
 
 		return entry.value;
 	}

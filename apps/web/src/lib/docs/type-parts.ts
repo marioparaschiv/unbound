@@ -21,8 +21,10 @@ export type TypeContext = {
 	resolve: (id: number) => DocsLocation | undefined;
 };
 
+type DocsTypeVariants = { [K in DocsTypeName]: DocsTypeVariant<K> };
+
 type Renderers = {
-	[K in DocsTypeName]: (type: DocsTypeVariant<K>, ctx: TypeContext) => TypePart[];
+	[K in DocsTypeName]: (type: DocsTypeVariants[K], ctx: TypeContext) => TypePart[];
 };
 
 /** Binding strength: a type below its slot's minimum is parenthesised there. */
@@ -329,6 +331,16 @@ const RENDERERS: Renderers = {
 	unknown: (type) => [name(type.name)],
 };
 
+function render<K extends DocsTypeName>(
+	kind: K,
+	type: DocsTypeVariants[K],
+	ctx: TypeContext,
+): TypePart[] {
+	const renderer: Renderers[K] = RENDERERS[kind];
+
+	return renderer(type, ctx);
+}
+
 /**
  * @description Renders a TypeDoc type as styled parts, recursing through the renderer of each nested type's discriminant.
  * @param type The type.
@@ -336,10 +348,7 @@ const RENDERERS: Renderers = {
  * @returns The parts, in reading order.
  */
 export function typeToParts(type: DocsType, ctx: TypeContext): TypePart[] {
-	// `type.type` keys the registry, so the entry it picks takes exactly this variant.
-	const render = RENDERERS[type.type] as (type: DocsType, ctx: TypeContext) => TypePart[];
-
-	return render(type, ctx);
+	return render(type.type, type, ctx);
 }
 
 /**
