@@ -35,7 +35,9 @@ export function hasSpan(java: SpanBridge, text: NativeJavaReference, className: 
 		const spanClass = java.getClass(className);
 		const length = javaNumber(java.invoke(text, 'length', [])) ?? 0;
 
-		if (!spanClass || !length) return false;
+		if (!spanClass || !length) {
+			return false;
+		}
 
 		const next = javaNumber(
 			java.invoke(text, 'nextSpanTransition', [javaInt(0), javaInt(length), spanClass]),
