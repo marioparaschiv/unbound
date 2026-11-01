@@ -132,7 +132,13 @@ object NativeHooks {
         }
     }
 
-    private class Described(val self: Any?, val arguments: List<Any?>, val selfJSON: String, val argumentsJSON: String) {
+    private class Described(
+        val self: Any?,
+        val arguments: List<Any?>,
+        val selfJSON: String,
+        val argumentsJSON: String,
+        val issued: List<String>,
+    ) {
         fun matches(target: Any?, values: List<Any?>): Boolean =
             target === self && values.size == arguments.size && values.indices.all { values[it] === arguments[it] }
     }
@@ -141,15 +147,16 @@ object NativeHooks {
 
     private fun described(self: Any?, arguments: List<Any?>): Pair<String, String> {
         lastDescribed.get()?.takeIf { it.matches(self, arguments) }?.let {
-            NativeJava.reissue(it.selfJSON)
-            NativeJava.reissue(it.argumentsJSON)
+            NativeJava.reissue(it.issued)
             return it.selfJSON to it.argumentsJSON
         }
 
-        val selfJSON = NativeJava.describe(self)
-        val argumentsJSON = NativeJava.describeAll(arguments)
+        val (described, issued) = NativeJava.recordingIssues {
+            NativeJava.describe(self) to NativeJava.describeAll(arguments)
+        }
+        val (selfJSON, argumentsJSON) = described
 
-        lastDescribed.set(Described(self, arguments, selfJSON, argumentsJSON))
+        lastDescribed.set(Described(self, arguments, selfJSON, argumentsJSON, issued))
         return selfJSON to argumentsJSON
     }
 
@@ -173,10 +180,8 @@ object NativeHooks {
 
     private fun notify(token: String, selfJSON: String, argumentsJSON: String) {
         val target = synchronized(this) { dispatcher } ?: return
-        val payload = JSONObject()
-            .put("self", JSONObject(selfJSON))
-            .put("args", JSONArray(argumentsJSON))
-        runCatching { target.dispatch(token, payload.toString()) }
+        val payload = "{\"self\":$selfJSON,\"args\":$argumentsJSON}"
+        runCatching { target.dispatch(token, payload) }
             .onFailure { Logger.error(LogCategory.HOOKS, "Failed to dispatch an Android hook event", it) }
     }
 
