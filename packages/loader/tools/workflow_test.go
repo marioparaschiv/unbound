@@ -732,7 +732,7 @@ func TestObtainiumLinksMatchTheirConfigs(t *testing.T) {
 	}
 	root := filepath.Dir(filepath.Dir(filename))
 	link := regexp.MustCompile(`obtainium://app/([^)\s"']+)`)
-	for _, document := range []string{filepath.Join(root, "README.md"), filepath.Join(root, "..", "..", "docs", "user-guide", "installing.mdx")} {
+	for _, document := range []string{filepath.Join(root, "README.md"), filepath.Join(root, "..", "..", "docs", "user", "installing.mdx")} {
 		contents, err := os.ReadFile(document)
 		if err != nil {
 			t.Fatal(err)
