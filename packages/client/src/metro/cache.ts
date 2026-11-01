@@ -17,6 +17,10 @@ const CurrentCacheInfo = {
 
 const storage = getBucket('unbound::cache');
 
+const SAVE_DELAY_MS = 1000;
+const unsaved = new Set<keyof CacheState>();
+let saveTimer: ReturnType<typeof setTimeout> | undefined;
+
 type CacheState = {
 	info: typeof CurrentCacheInfo;
 	modules: Record<string, number[]>;
@@ -44,7 +48,7 @@ function invalidateCache() {
 	state.moduleFlags = {};
 	state.assets = [];
 
-	save();
+	save('info', 'modules', 'moduleFlags', 'assets');
 }
 
 /**
@@ -61,7 +65,7 @@ export function getCachedAssets() {
  */
 export function addAssetToCache(moduleId: number) {
 	state.assets.push(moduleId);
-	save();
+	save('assets');
 }
 
 /**
@@ -75,7 +79,7 @@ function removeAssetFromCache(moduleId: number) {
 		state.assets.splice(idx, 1);
 	}
 
-	save();
+	save('assets');
 }
 
 /**
@@ -101,7 +105,7 @@ export function addCachedIDForKey(key: string, item: number) {
 	}
 
 	state.modules[key].push(item);
-	save();
+	save('modules');
 }
 
 /**
@@ -127,7 +131,7 @@ function removeCachedIDForKey(key: string, item: number) {
 		delete state.modules[key];
 	}
 
-	save();
+	save('modules');
 
 	return true;
 }
@@ -139,7 +143,7 @@ function removeCachedIDForKey(key: string, item: number) {
  */
 export function addModuleFlag(id: number, flag: ModuleFlags) {
 	state.moduleFlags[id] |= flag;
-	save();
+	save('moduleFlags');
 }
 
 /**
@@ -154,7 +158,7 @@ function removeModuleFlag(id: number, flag: ModuleFlags) {
 	}
 
 	state.moduleFlags[id] &= ~flag;
-	save();
+	save('moduleFlags');
 }
 
 /**
@@ -187,11 +191,25 @@ function isValidCache() {
 	return true;
 }
 
-function save() {
-	storage.set('info', state.info);
-	storage.set('modules', state.modules);
-	storage.set('moduleFlags', state.moduleFlags);
-	storage.set('assets', state.assets);
+/**
+ * @description Persists the named fields within {@link SAVE_DELAY_MS}. A burst of changes, such as every asset
+ * registering on a cold cache, stages each field once instead of once per change.
+ * @param fields The fields that changed.
+ */
+function save(...fields: [keyof CacheState, ...(keyof CacheState)[]]) {
+	for (const field of fields) {
+		unsaved.add(field);
+	}
+
+	saveTimer ??= setTimeout(() => {
+		saveTimer = undefined;
+
+		for (const field of unsaved) {
+			storage.set(field, state[field]);
+		}
+
+		unsaved.clear();
+	}, SAVE_DELAY_MS);
 }
 
 export default {
