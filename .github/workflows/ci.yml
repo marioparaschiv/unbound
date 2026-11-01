@@ -83,6 +83,8 @@ jobs:
                   persist-credentials: false
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
+            - name: Build the web API types
+              run: bun run --filter @unbound-app/web build:types
             - name: Generate the plugin SDK
               run: bun run generate-sdk
             # Releases replace the generated `<version>-<hash>` with the plain release version.
