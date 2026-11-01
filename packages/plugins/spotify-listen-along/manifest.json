@@ -1,0 +1,22 @@
+{
+	"id": "unbound.spotify-listen-along",
+	"name": "Spotify Listen Along",
+	"description": "Listen along to someone's Spotify activity and invite a channel to listen along with you.",
+	"authors": [
+		{
+			"name": "nexpid",
+			"id": "853550207039832084"
+		},
+		{
+			"name": "Dziurwa",
+			"id": "1001086404203389018"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "HeadphonesIcon",
+	"main": "index.tsx"
+}
