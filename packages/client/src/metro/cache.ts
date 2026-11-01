@@ -17,6 +17,10 @@ const CurrentCacheInfo = {
 
 const storage = getBucket('unbound::cache');
 
+const SAVE_DELAY_MS = 1000;
+const unsaved = new Set<keyof CacheState>();
+let saveTimer: ReturnType<typeof setTimeout> | undefined;
+
 /** A module a cache key matched in an earlier Discord build: its id there and, for a Discord module, its file path. */
 export type ModuleHint = {
 	id: number;
@@ -63,7 +67,7 @@ function invalidateCache() {
 	state.assets = {};
 	state.assetsComplete = false;
 
-	save();
+	save('hints', 'info', 'modules', 'moduleFlags', 'paths', 'assets', 'assetsComplete');
 }
 
 // Keeps the modules each key matched in the outgoing build, and older hints for keys it never matched.
@@ -93,7 +97,7 @@ export function getHintsForKey(key: string): ModuleHint[] | undefined {
  */
 export function markAssetsComplete() {
 	state.assetsComplete = true;
-	save();
+	save('assetsComplete');
 }
 
 /**
@@ -117,7 +121,7 @@ export function addAssetToCache(key: string, moduleId: number) {
 	}
 
 	state.assets[key] = moduleId;
-	save();
+	save('assets');
 }
 
 /**
@@ -131,7 +135,7 @@ export function removeAssetFromCache(key: string) {
 	}
 
 	delete state.assets[key];
-	save();
+	save('assets');
 }
 
 /**
@@ -163,7 +167,7 @@ export function addCachedIDForKey(key: string, item: number) {
 	}
 
 	state.modules[key].push(item);
-	save();
+	save('modules', 'paths');
 }
 
 /**
@@ -172,7 +176,7 @@ export function addCachedIDForKey(key: string, item: number) {
  */
 export function markKeyMissing(key: string) {
 	state.modules[key] = [];
-	save();
+	save('modules');
 }
 
 /**
@@ -207,7 +211,7 @@ function removeCachedIDForKey(key: string, item: number) {
 		delete state.modules[key];
 	}
 
-	save();
+	save('modules');
 
 	return true;
 }
@@ -219,7 +223,7 @@ function removeCachedIDForKey(key: string, item: number) {
  */
 export function addModuleFlag(id: number, flag: ModuleFlags) {
 	state.moduleFlags[id] |= flag;
-	save();
+	save('moduleFlags');
 }
 
 /**
@@ -234,7 +238,7 @@ function removeModuleFlag(id: number, flag: ModuleFlags) {
 	}
 
 	state.moduleFlags[id] &= ~flag;
-	save();
+	save('moduleFlags');
 }
 
 /**
@@ -267,14 +271,28 @@ function isValidCache() {
 	return true;
 }
 
-function save() {
-	storage.set('info', state.info);
-	storage.set('modules', state.modules);
-	storage.set('moduleFlags', state.moduleFlags);
-	storage.set('assets', state.assets);
-	storage.set('assetsComplete', state.assetsComplete);
-	storage.set('paths', state.paths);
-	storage.set('hints', state.hints);
+/**
+ * @description Persists the named fields within {@link SAVE_DELAY_MS}. A burst of changes, such as every asset
+ * registering on a cold cache, stages each field once instead of every field once per change.
+ * @param fields The fields that changed.
+ */
+function save(...fields: [keyof CacheState, ...(keyof CacheState)[]]) {
+	// A later launch trusts saved fields only under the saved `info`, which a new, empty cache never changes.
+	unsaved.add('info');
+
+	for (const field of fields) {
+		unsaved.add(field);
+	}
+
+	saveTimer ??= setTimeout(() => {
+		saveTimer = undefined;
+
+		for (const field of unsaved) {
+			storage.set(field, state[field]);
+		}
+
+		unsaved.clear();
+	}, SAVE_DELAY_MS);
 }
 
 export default {
