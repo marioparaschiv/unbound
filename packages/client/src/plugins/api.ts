@@ -44,6 +44,8 @@ export async function update(id: string): Promise<boolean> {
 export const entities: ReadonlyMap<PropertyKey, AddonHandle> = plugins.entities;
 /** The error each plugin that failed to load or start threw, keyed by id. */
 export const errors: ReadonlyMap<PropertyKey, Error> = plugins.errors;
+/** How long each plugin's last start took, in milliseconds, keyed by id. */
+export const startDurations: ReadonlyMap<string, number> = plugins.startDurations;
 /** Starts a plugin without changing its enabled state. */
 export const start: (id: string) => void | Promise<void> = plugins.start.bind(plugins);
 /** Stops a running plugin without changing its enabled state. */
