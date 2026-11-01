@@ -4,9 +4,8 @@ import {
 	type DocsVersion,
 } from '@unbound-app/contracts/docs';
 import { Link, useNavigate, useRouter } from '@tanstack/react-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { IconMagnifier } from 'nucleo-micro-bold';
+import { useEffect, useRef, useState } from 'react';
 
 import {
 	Accordion,
@@ -21,9 +20,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '~/components/ui/select';
-import DocsSearch from '~/components/docs/docs-search';
 import KindBadge from '~/components/docs/kind-badge';
-import { getSearchEntries } from '~/lib/docs/search';
 import type { DocsNav } from '~/lib/docs/docs-page';
 import { docsNavQuery } from '~/queries/docs/docs';
 import { DOCS_GROUPS } from '~/lib/docs/kinds';
@@ -68,7 +65,7 @@ async function revealActiveItem(nav: HTMLElement | null) {
 }
 
 /**
- * @description The docs sidebar: package and version selects, the `⌘K` search, and every symbol in collapsible kind groups.
+ * @description The API reference sidebar: package and version selects, and every symbol in collapsible kind groups.
  * @param props The version's navigation and the open symbol.
  * @returns The sidebar.
  */
@@ -76,10 +73,8 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 	const queryClient = useQueryClient();
 	const navigate = useNavigate();
 	const router = useRouter();
-	const [searchOpen, setSearchOpen] = useState(false);
 	const navRef = useRef<HTMLElement>(null);
 	const route = { package: nav.package, version: nav.version };
-	const entries = useMemo(() => getSearchEntries(nav), [nav]);
 	const activeGroup = nav.groups.find((group) =>
 		group.symbols.some((entry) => entry.qualifiedName === symbol),
 	)?.key;
@@ -98,21 +93,6 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 	}
 
 	const versionLabels = Object.fromEntries(nav.versions.map((v) => [v, versionLabel(v)]));
-
-	useEffect(() => {
-		function handleKeyDown(event: KeyboardEvent) {
-			if (!((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k')) {
-				return;
-			}
-
-			event.preventDefault();
-			setSearchOpen(true);
-		}
-
-		window.addEventListener('keydown', handleKeyDown);
-
-		return () => window.removeEventListener('keydown', handleKeyDown);
-	}, []);
 
 	// After a navigation renders, the router puts every scrolled element back where it was, so the
 	// sidebar reveals its active entry only once the router has.
@@ -178,17 +158,6 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 						))}
 					</SelectContent>
 				</Select>
-				<button
-					type='button'
-					onClick={() => setSearchOpen(true)}
-					className='flex items-center gap-2 px-3 w-full h-9 text-muted-foreground text-sm field press-flat'
-				>
-					<IconMagnifier className='size-4' />
-					Search
-					<kbd className='ml-auto px-1.5 py-0.5 border rounded-md font-mono text-[11px]'>
-						⌘K
-					</kbd>
-				</button>
 			</div>
 
 			<Accordion type='multiple' value={openGroups} onValueChange={setOpenGroups}>
@@ -225,13 +194,6 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 					</AccordionItem>
 				))}
 			</Accordion>
-
-			<DocsSearch
-				entries={entries}
-				route={route}
-				open={searchOpen}
-				onOpenChange={setSearchOpen}
-			/>
 		</nav>
 	);
 }

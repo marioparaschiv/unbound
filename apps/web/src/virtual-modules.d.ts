@@ -13,3 +13,12 @@ declare module 'virtual:addon-icon-atlas' {
 
 	export default url;
 }
+
+declare module '*.mdx' {
+	import type { MDXContent } from 'mdx/types';
+
+	/** The guide's body, compiled at build time by `vite/guide-mdx.ts`. */
+	const content: MDXContent;
+
+	export default content;
+}

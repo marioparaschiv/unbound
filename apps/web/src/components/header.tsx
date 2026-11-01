@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { Drawer, DrawerClose, DrawerContent, DrawerTrigger } from '~/components/ui/drawer';
 import { Segmented, SegmentedItem } from '~/components/ui/segmented';
 import AccountMenu from '~/components/account-menu';
+import { getDocsTab } from '~/lib/docs/docs-tabs';
 import { Button } from '~/components/ui/button';
 import Logo from '~/components/icons/logo';
 import cn from '~/lib/cn';
@@ -39,8 +40,7 @@ const ROUTES: NavRoute[] = [
 
 function Header() {
 	const pathname = useLocation({
-		select: (location) =>
-			location.pathname.startsWith('/docs/') ? '/docs' : location.pathname,
+		select: (location) => (getDocsTab(location.pathname) ? '/docs' : location.pathname),
 	});
 	const [drawerOpen, setDrawerOpen] = useState(false);
 

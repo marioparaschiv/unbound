@@ -398,6 +398,15 @@ A wide control sets `--press-depth` below 1 so its edges move about as far as a 
 	}
 }
 
+/* Guide code is highlighted at build time into a light and a dark colour per token; the theme picks one. */
+.shiki span {
+	color: var(--shiki-light);
+}
+
+.dark .shiki span {
+	color: var(--shiki-dark);
+}
+
 @utility fill-grid {
 	--col-width: 280px;
 	grid-template-columns: repeat(auto-fill, minmax(var(--col-width), 1fr));
