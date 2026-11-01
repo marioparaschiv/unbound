@@ -1,38 +1,27 @@
-import { IconCircleCheck, IconCircleDashed, IconClock } from 'nucleo-micro-bold';
+import type { GuideIconName } from '~/lib/guides/guide-icon-names';
+import { GUIDE_ICONS } from '~/components/guides/guide-icons';
 
 type IconProps = {
-	icon: string;
+	icon: GuideIconName;
 	color?: string;
-};
-
-type IconEntry = {
-	component: typeof IconClock;
-	/** What the mark means where the guides use it: the roadmap's status column. */
-	label: string;
-};
-
-// Font Awesome names the guides use, mapped to the site's icon set.
-const ICONS: Record<string, IconEntry> = {
-	'circle-check': { component: IconCircleCheck, label: 'Implemented' },
-	circle: { component: IconCircleDashed, label: 'Planned' },
-	clock: { component: IconClock, label: 'In progress' },
+	/** What the icon means; without one it is decorative. */
+	label?: string;
 };
 
 /**
- * @description An inline status icon, such as the roadmap's implemented, in progress and planned marks.
- * @param props The Font Awesome name and colour the guide gives.
- * @returns The icon, or nothing for a name with no match.
+ * @description An inline icon in running text or a table cell, such as the roadmap's status marks.
+ * @param props The icon name, its colour and what it means.
+ * @returns The icon.
  */
-function Icon({ icon, color }: IconProps) {
-	const entry = ICONS[icon];
-
-	if (!entry) return null;
+function Icon({ icon, color, label }: IconProps) {
+	const Glyph = GUIDE_ICONS[icon];
 
 	return (
-		<entry.component
+		<Glyph
 			size={16}
-			role='img'
-			aria-label={entry.label}
+			role={label ? 'img' : undefined}
+			aria-label={label}
+			aria-hidden={label ? undefined : true}
 			className='inline-block align-[-0.2em]'
 			style={color ? { color } : undefined}
 		/>

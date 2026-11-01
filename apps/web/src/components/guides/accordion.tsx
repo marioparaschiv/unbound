@@ -8,9 +8,12 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from '~/components/ui/accordion';
+import type { GuideIconName } from '~/lib/guides/guide-icon-names';
+import { GUIDE_ICONS } from '~/components/guides/guide-icons';
 
 type AccordionProps = {
 	title: string;
+	icon?: GuideIconName;
 	children: ReactNode;
 };
 
@@ -28,10 +31,11 @@ function slugify(text: string): string {
 /**
  * @description A question or detail that opens in place; on its own it gets a card, in a group it shares one.
  * Its title is its anchor, as on the old docs site, and linking to that anchor opens it.
- * @param props The title and the content it reveals.
+ * @param props The title, its icon and the content it reveals.
  * @returns The accordion.
  */
-export function Accordion({ title, children }: AccordionProps) {
+export function Accordion({ title, icon, children }: AccordionProps) {
+	const Glyph = icon && GUIDE_ICONS[icon];
 	const id = slugify(title);
 	const hash = useLocation({ select: (location) => location.hash });
 	const [open, setOpen] = useState(hash === id);
@@ -55,7 +59,18 @@ export function Accordion({ title, children }: AccordionProps) {
 			className='scroll-mt-6 bg-card px-4 border rounded-surface shadow-surface [[data-slot=accordion-group]_&]:bg-transparent [[data-slot=accordion-group]_&]:shadow-none [[data-slot=accordion-group]_&]:border-0 [[data-slot=accordion-group]_&]:rounded-none'
 		>
 			<AccordionItem value='item'>
-				<AccordionTrigger className='text-foreground text-base'>{title}</AccordionTrigger>
+				<AccordionTrigger className='text-foreground text-base'>
+					<span className='flex items-center gap-2.5'>
+						{Glyph ? (
+							<Glyph
+								size={16}
+								aria-hidden
+								className='text-muted-foreground shrink-0'
+							/>
+						) : null}
+						{title}
+					</span>
+				</AccordionTrigger>
 				<AccordionContent className='flex flex-col gap-3 text-muted-foreground'>
 					{children}
 				</AccordionContent>

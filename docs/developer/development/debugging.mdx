@@ -151,7 +151,7 @@ The `id` on a request is echoed on its result, which is how the bridge routes ea
 ### Troubleshooting
 
 <AccordionGroup>
-	<Accordion title='The terminal never shows "Device connected"' icon='plug-circle-xmark'>
+	<Accordion title='The terminal never shows "Device connected"' icon='plug'>
 		1. Check that `debugger.enabled` was on when the app started. Turning it on later only applies after a restart.
 		2. Check the address. The phone must reach the computer's LAN IP on the bridge's port.
 		3. In a production build, check that `debugger.address` is set. If it's empty, the client logs `No debugger address configured; set debugger.address in developer settings.` and doesn't connect.
@@ -165,7 +165,7 @@ The `id` on a request is echoed on its result, which is how the bridge routes ea
 	<Accordion title='"Device disconnected before the evaluation completed."' icon='circle-xmark'>
 		The device dropped while code was running, for example because the app went to the background. Every pending evaluation fails with this message. The client reconnects when the app is active again.
 	</Accordion>
-	<Accordion title='"Parsing failed on message from device"' icon='triangle-exclamation'>
+	<Accordion title='"Parsing failed on message from device"' icon='triangle-warning'>
 		The bridge received a frame that isn't valid JSON or isn't a known message type. It ignores the frame and keeps the connection open.
 	</Accordion>
 </AccordionGroup>

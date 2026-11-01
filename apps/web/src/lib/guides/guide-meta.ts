@@ -1,9 +1,12 @@
 import { z } from 'zod';
 
-/** A guide's frontmatter: the title and description its page header and search show. */
+import { GUIDE_ICON_NAMES } from './guide-icon-names';
+
+/** A guide's frontmatter: the title and description its page header and search show, and its sidebar icon. */
 export const guideFrontmatterSchema = z.object({
 	title: z.string().min(1),
 	description: z.string().min(1),
+	icon: z.enum(GUIDE_ICON_NAMES).optional(),
 });
 
 export type GuideFrontmatter = z.infer<typeof guideFrontmatterSchema>;

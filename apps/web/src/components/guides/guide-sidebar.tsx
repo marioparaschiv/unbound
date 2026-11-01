@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router';
 
 import { GUIDE_NAV, type GuideTab } from '~/lib/guides/guide-nav';
+import { GUIDE_ICONS } from '~/components/guides/guide-icons';
 import { getGuide, getGuidePath } from '~/lib/guides/guides';
 import cn from '~/lib/cn';
 
@@ -32,18 +33,23 @@ function GuideSidebar({ tab, slug }: GuideSidebarProps) {
 							return [];
 						}
 
+						const Glyph = guide.frontmatter.icon && GUIDE_ICONS[guide.frontmatter.icon];
+
 						return (
 							<Link
 								key={entry}
 								to={getGuidePath(guide)}
 								data-active={entry === slug}
 								className={cn(
-									'flex items-center px-2 rounded-item h-8 text-sm press-flat hover:bg-accent',
+									'flex items-center gap-2.5 px-2 rounded-item h-8 text-sm press-flat hover:bg-accent',
 									entry === slug
 										? 'bg-accent text-foreground font-semibold'
 										: 'text-muted-foreground',
 								)}
 							>
+								{Glyph ? (
+									<Glyph size={16} aria-hidden className='shrink-0' />
+								) : null}
 								<span className='single-line'>{guide.frontmatter.title}</span>
 							</Link>
 						);

@@ -2,10 +2,13 @@ import { IconChevronRight } from 'nucleo-micro-bold';
 import { Link } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
+import type { GuideIconName } from '~/lib/guides/guide-icon-names';
+import { GUIDE_ICONS } from '~/components/guides/guide-icons';
 import cn from '~/lib/cn';
 
 type CardProps = {
 	title: string;
+	icon?: GuideIconName;
 	href?: string;
 	children?: ReactNode;
 };
@@ -27,12 +30,14 @@ const COLUMNS: Record<number, string> = {
 
 /**
  * @description A card that names a page and says what it holds; the whole card is the link.
- * @param props The title, the link target and the summary.
+ * @param props The title, its icon, the link target and the summary.
  * @returns The card.
  */
-export function Card({ title, href, children }: CardProps) {
+export function Card({ title, icon, href, children }: CardProps) {
+	const Glyph = icon && GUIDE_ICONS[icon];
 	const body = (
 		<>
+			{Glyph ? <Glyph size={20} aria-hidden className='mb-1.5 text-primary' /> : null}
 			<span className='flex items-center gap-1 font-semibold text-foreground text-base'>
 				{title}
 				{href ? (

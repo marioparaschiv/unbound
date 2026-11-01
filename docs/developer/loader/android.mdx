@@ -1,7 +1,7 @@
 ---
 title: 'Android'
 description: 'How the Android loader injects Unbound into Discord, where it keeps your files, and how it updates and protects the bundle.'
-icon: 'android'
+icon: 'mobile'
 ---
 
 The Android loader is a [libxposed](https://github.com/libxposed/api) module with a native library, `libunbound.so`. The Kotlin side hooks Discord's React Native runtime and Android UI, and the native library runs the same C++ core as the iOS loader: settings, addon scanning, bundle updates and signature checks, the crash guard, the toolbox, and hot reload.

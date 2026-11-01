@@ -114,7 +114,7 @@ See [iOS](/docs/developer/loader/ios) for where these folders are on the device.
 
 		While a theme is active, its `id` is stored as `applied`. Only one theme is applied at a time, and this value is how Unbound remembers which one. The palette and background live in `bundle.json`, not in the manifest. See [Theme Types](/docs/developer/themes/types).
 	</Accordion>
-	<Accordion title='Icon Packs' icon='icons'>
+	<Accordion title='Icon Packs' icon='shapes'>
 		An icon pack is a **folder of image files** with the same layout as Discord's asset tree, installed under `Unbound/Icons/<id>`. It uses the shared manifest above, plus two fields of its own:
 
 		<ParamField path='type' type="'icon-pack'">
@@ -131,7 +131,7 @@ See [iOS](/docs/developer/loader/ios) for where these folders are on the device.
 
 		See [Icon Packs](/docs/developer/icon-packs/introduction).
 	</Accordion>
-	<Accordion title='Fonts' icon='font'>
+	<Accordion title='Fonts' icon='text-a'>
 		A font has **no manifest and no folder**. It is a single font file placed directly in the `Fonts` directory. The loader registers it under the full name stored inside the font file, not under its file name.
 
 		Registering a font does not apply it. A font only takes effect through the `unbound.font-states` setting, which maps a font family name to the name of the font to use in its place. See [Settings](/docs/developer/loader/settings) for that key.

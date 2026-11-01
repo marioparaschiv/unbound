@@ -1,7 +1,7 @@
 ---
 title: 'Creating an Addon'
 description: 'Build a plugin from an empty folder, step by step.'
-icon: 'wand-magic-sparkles'
+icon: 'wand-sparkle'
 ---
 
 This guide builds a small working plugin that finds a Discord module, patches it, and stores a setting.
@@ -30,7 +30,7 @@ Plugins have the most features of any addon kind, so they make the best example.
 		</Note>
 	</Step>
 
-	<Step title='Write the entry point' icon='file-code'>
+	<Step title='Write the entry point' icon='square-code'>
 		Your `main` file default-exports an object with optional `start` and `stop` hooks.
 
 		- Unbound calls `start` when the plugin is enabled. Set everything up here.
@@ -51,7 +51,7 @@ Plugins have the most features of any addon kind, so they make the best example.
 		</Warning>
 	</Step>
 
-	<Step title='Find what you want to change' icon='magnifying-glass'>
+	<Step title='Find what you want to change' icon='magnifier'>
 		Use [Metro](/docs/api/latest/metro) to find the Discord module you need. The `findBy*` helpers are lazy, so the search runs only the first time a property on the result is accessed. That makes them safe at the top of a file.
 
 		```ts
@@ -61,7 +61,7 @@ Plugins have the most features of any addon kind, so they make the best example.
 		```
 	</Step>
 
-	<Step title='Patch it' icon='object-subtract'>
+	<Step title='Patch it' icon='layers'>
 		Wrap the function with the [patcher](/docs/api/latest/patcher). Your plugin's patches carry its `id`, and Unbound removes them when the plugin stops.
 
 		```ts
@@ -121,16 +121,16 @@ export default {
 	<Card title='Authoring Standards' icon='ruler' href='/docs/developer/addons/standards'>
 		The layout and loading rules, and the check that enforces each one.
 	</Card>
-	<Card title='Patcher' icon='object-subtract' href='/docs/api/latest/patcher'>
+	<Card title='Patcher' icon='layers' href='/docs/api/latest/patcher'>
 		The full patcher API: before, after, instead, and typing.
 	</Card>
-	<Card title='Patching Components' icon='react' href='/docs/developer/plugins/react-patching'>
+	<Card title='Patching Components' icon='atom' href='/docs/developer/plugins/react-patching'>
 		Change what Discord's components render.
 	</Card>
 	<Card title='Flux' icon='box' href='/docs/api/latest/flux'>
 		Read Discord's state and react to its actions.
 	</Card>
-	<Card title='Commands' icon='square-terminal' href='/docs/api/latest/commands'>
+	<Card title='Commands' icon='terminal' href='/docs/api/latest/commands'>
 		Add slash commands to the chat input.
 	</Card>
 </CardGroup>

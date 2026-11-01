@@ -1,7 +1,7 @@
 ---
 title: 'Introduction'
 description: "Replace Discord's icons with your own set."
-icon: 'icons'
+icon: 'shapes'
 ---
 
 An icon pack replaces Discord's built-in icons with your own. Like a [theme](/docs/developer/themes/introduction), it's a restyling addon. A theme recolors the interface, and an icon pack replaces the *images* Discord renders for its icons.
@@ -53,7 +53,7 @@ Scale variants use the `@2x` and `@3x` suffixes. A file with no suffix is scale 
 Unbound installs a pack from its manifest URL. The manifest's `source` field sets how the files are downloaded. For the in-app install steps, see [Managing Addons](/docs/user/managing-addons).
 
 <AccordionGroup>
-	<Accordion title='GitHub' icon='github'>
+	<Accordion title='GitHub' icon='code-branch'>
 		`main` is the repo URL. You can narrow it to a branch and folder with `/tree/<branch>/<subpath>`. Unbound reads the repo's file tree and downloads every file under that path into the pack folder. If `source` is omitted and `main` is a `github.com` URL, this method is used.
 	</Accordion>
 	<Accordion title='Other' icon='link'>
