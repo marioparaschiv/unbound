@@ -11,17 +11,23 @@ object HermesSampler {
     }.getOrNull()
 
     @JvmStatic
-    fun sample(durationMs: Long): String {
+    fun start(): Boolean {
+        val profiler = profiler() ?: return false
+        return runCatching { profiler.getMethod("enable").invoke(null) }.isSuccess
+    }
+
+    @JvmStatic
+    fun stop(): String {
         val profiler = profiler() ?: return ""
         val context = Platform.application() ?: return ""
-        val trace = File(context.cacheDir, "unbound-freeze-trace.json")
+        val trace = File(context.cacheDir, "unbound-sampled-trace.json")
 
         return runCatching {
-            profiler.getMethod("enable").invoke(null)
-            Thread.sleep(durationMs)
             profiler.getMethod("dumpSampledTraceToFile", String::class.java).invoke(null, trace.path)
-            profiler.getMethod("disable").invoke(null)
             trace.readText()
-        }.getOrDefault("").also { trace.delete() }
+        }.getOrDefault("").also {
+            runCatching { profiler.getMethod("disable").invoke(null) }
+            trace.delete()
+        }
     }
 }

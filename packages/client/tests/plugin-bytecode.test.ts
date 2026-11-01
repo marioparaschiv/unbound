@@ -17,6 +17,12 @@ function compiledPlugin(marker: string): Plugin {
 	return { start: () => void evaluations.push([marker, 0]), stop: () => {} };
 }
 
+function scanCompiled(sha256: string) {
+	const manifest = { ...makeManifest('bytecode.example'), folder: 'bytecode.example' };
+
+	globalThis.UNBOUND_PLUGINS = [{ manifest, sha256 }];
+}
+
 function scan(bundle: string) {
 	const manifest = { ...makeManifest('bytecode.example'), folder: 'bytecode.example' };
 
@@ -145,5 +151,35 @@ describe('plugin bytecode', () => {
 			['bytecode', 0],
 		]);
 		expect(Reflect.get(globalThis, '__bytecodeTestPushedSource')).toBeUndefined();
+	});
+
+	test('starts a plugin the loader kept the source of from its bytecode', () => {
+		scanCompiled('abc');
+		const plugins = new Plugins();
+
+		plugins.initialize();
+
+		expect(evaluations).toEqual([
+			['bytecode.example', 98],
+			['bytecode', 0],
+		]);
+		expect(plugins.listInstalled()).toEqual([
+			expect.objectContaining({ id: 'bytecode.example', sha256: 'abc' }),
+		]);
+	});
+
+	test('reads a kept source from the loader when its bytecode fails', () => {
+		compiled = undefined;
+		Reflect.set(
+			globalThis.NativePlatform!.addons!,
+			'readSource',
+			(folder: string) =>
+				`({ start() { globalThis.__bytecodeTestKept = '${folder}'; }, stop() {} })`,
+		);
+		scanCompiled('abc');
+		new Plugins().initialize();
+
+		expect(Reflect.get(globalThis, '__bytecodeTestKept')).toBe('bytecode.example');
+		Reflect.deleteProperty(globalThis, '__bytecodeTestKept');
 	});
 });

@@ -32,6 +32,16 @@ type BundleDigest = {
 };
 
 const bundleDigests = new Map<string, BundleDigest>();
+const sourceDigests = new Map<string, string>();
+
+/**
+ * @description Records the SHA-256 the loader took of a plugin source it kept back, for update checks.
+ * @param id The plugin's id.
+ * @param digest The source's SHA-256, in hex.
+ */
+export function rememberSourceDigest(id: string, digest: string): void {
+	sourceDigests.set(id, digest);
+}
 
 function cachedDigest(id: string, bundle: string): string {
 	const cached = bundleDigests.get(id);
@@ -375,13 +385,16 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			.filter((entity) => !this.isDevelopmentCopy(entity.id))
 			.map((entity) => {
 				const { bundle } = this.stateOf(entity);
+				const sha256 = bundle
+					? cachedDigest(entity.id, bundle)
+					: sourceDigests.get(entity.id);
 
 				return {
 					kind: this.kind,
 					id: entity.id,
 					name: entity.name,
 					version: entity.version,
-					...(bundle ? { sha256: cachedDigest(entity.id, bundle) } : {}),
+					...(sha256 ? { sha256 } : {}),
 				};
 			});
 	}

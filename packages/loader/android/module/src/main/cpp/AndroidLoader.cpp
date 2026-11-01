@@ -368,7 +368,7 @@ void AndroidLoader::installNativeModules(jsi::Runtime &runtime)
 
 void AndroidLoader::onAddonsPrepared()
 {
-    addons_.scan(configuration_.documents);
+    addons_.scan(configuration_.documents, runtimeBytecodeVersion());
 }
 
 void AndroidLoader::onBundleExecuted()

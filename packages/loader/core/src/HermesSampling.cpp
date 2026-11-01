@@ -7,6 +7,7 @@
 #endif
 #include <jsi/jsi.h>
 #include <map>
+#include <mutex>
 #include <nlohmann/json.hpp>
 #include <sstream>
 #include <thread>
@@ -215,32 +216,67 @@ std::string formatSampledStack(const std::vector<std::string> &frames)
     return text;
 }
 
-static JavaScriptSampler gSampler;
-
-void setJavaScriptSampler(JavaScriptSampler sampler)
+static JavaScriptProfiler hermesProfiler()
 {
-    gSampler = std::move(sampler);
+    return {
+        [] {
+            HermesRootAPI *api = rootAPI();
+            if (api)
+            {
+                api->enableSamplingProfiler(kSamplingHz);
+            }
+            return api != nullptr;
+        },
+        [] {
+            HermesRootAPI     *api = rootAPI();
+            std::ostringstream trace;
+            api->dumpSampledTraceToStream(trace);
+            api->disableSamplingProfiler();
+            return trace.str();
+        },
+    };
+}
+
+static std::mutex         gProfilerMutex;
+static JavaScriptProfiler gProfiler  = hermesProfiler();
+static bool               gProfiling = false;
+
+void setJavaScriptProfiler(JavaScriptProfiler profiler)
+{
+    std::lock_guard<std::mutex> lock(gProfilerMutex);
+    gProfiler = std::move(profiler);
+}
+
+bool startJavaScriptProfiler()
+{
+    std::lock_guard<std::mutex> lock(gProfilerMutex);
+    if (gProfiling || !gProfiler.start)
+    {
+        return false;
+    }
+    gProfiling = gProfiler.start();
+    return gProfiling;
+}
+
+std::optional<std::string> stopJavaScriptProfiler()
+{
+    std::lock_guard<std::mutex> lock(gProfilerMutex);
+    if (!gProfiling)
+    {
+        return std::nullopt;
+    }
+    gProfiling = false;
+    return gProfiler.stop();
 }
 
 std::vector<std::string> sampleJavaScriptStack(std::chrono::milliseconds duration)
 {
-    if (gSampler)
-    {
-        return hottestStack(gSampler(duration));
-    }
-
-    HermesRootAPI *api = rootAPI();
-    if (!api)
+    if (!startJavaScriptProfiler())
     {
         return {};
     }
-
-    api->enableSamplingProfiler(kSamplingHz);
     std::this_thread::sleep_for(duration);
-    std::ostringstream trace;
-    api->dumpSampledTraceToStream(trace);
-    api->disableSamplingProfiler();
-
-    return hottestStack(trace.str());
+    std::optional<std::string> trace = stopJavaScriptProfiler();
+    return trace ? hottestStack(*trace) : std::vector<std::string>{};
 }
 }

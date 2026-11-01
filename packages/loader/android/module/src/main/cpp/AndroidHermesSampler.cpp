@@ -7,17 +7,28 @@ namespace unbound::android {
 static constexpr const char *kSamplerClass = "app/unbound/android/HermesSampler";
 
 static jclass    gSamplerClass = nullptr;
-static jmethodID gSample       = nullptr;
+static jmethodID gStart        = nullptr;
+static jmethodID gStop         = nullptr;
 
-static std::string sample(std::chrono::milliseconds duration)
+static bool start()
 {
     JNIEnv *env = currentEnvironment();
-    if (!env || !gSamplerClass || !gSample)
+    if (!env || !gSamplerClass || !gStart)
+    {
+        return false;
+    }
+    bool started = env->CallStaticBooleanMethod(gSamplerClass, gStart);
+    return !clearPendingException(env) && started;
+}
+
+static std::string stop()
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env || !gSamplerClass || !gStop)
     {
         return {};
     }
-    auto trace = static_cast<jstring>(
-        env->CallStaticObjectMethod(gSamplerClass, gSample, static_cast<jlong>(duration.count())));
+    auto trace = static_cast<jstring>(env->CallStaticObjectMethod(gSamplerClass, gStop));
     if (clearPendingException(env) || !trace)
     {
         return {};
@@ -36,12 +47,13 @@ bool registerHermesSampler(JNIEnv *env)
         return false;
     }
     gSamplerClass = static_cast<jclass>(env->NewGlobalRef(sampler.get()));
-    gSample       = env->GetStaticMethodID(sampler.get(), "sample", "(J)Ljava/lang/String;");
-    if (clearPendingException(env) || !gSample)
+    gStart        = env->GetStaticMethodID(sampler.get(), "start", "()Z");
+    gStop         = env->GetStaticMethodID(sampler.get(), "stop", "()Ljava/lang/String;");
+    if (clearPendingException(env) || !gStart || !gStop)
     {
         return false;
     }
-    loader::native::setJavaScriptSampler(sample);
+    loader::native::setJavaScriptProfiler({start, stop});
     return true;
 }
 }

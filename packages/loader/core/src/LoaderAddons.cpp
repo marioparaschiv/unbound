@@ -5,6 +5,7 @@
 #include "HermesBytecodeHeader.h"
 #include "LoaderAddonSignature.h"
 #include "LoaderBundleSignature.h"
+#include "LoaderCrypto.h"
 #include "LoaderDigestCache.h"
 #include "LoaderFiles.h"
 #include "LoaderFonts.h"
@@ -134,7 +135,55 @@ std::optional<std::string> readPluginBytecode(const std::string &documents,
     return bytecode;
 }
 
-nlohmann::json scanPlugins(const std::string &documents)
+static bool hasBytecodeFor(const nlohmann::json &manifest, const std::string &entry,
+                           uint32_t bytecodeVersion)
+{
+    if (bytecodeVersion == 0)
+    {
+        return false;
+    }
+    auto digests = manifest.find("bytecode");
+    return digests != manifest.end() && isValidBytecodeDigests(*digests) &&
+           digests->contains(std::to_string(bytecodeVersion)) &&
+           fileExists(bytecodePathFor(entry, bytecodeVersion));
+}
+
+static nlohmann::json pluginEntry(nlohmann::json manifest, std::string bundle, bool compiled)
+{
+    if (compiled)
+    {
+        std::string digest = crypto::hex(crypto::sha256(bundle));
+        return {{"manifest", std::move(manifest)}, {"sha256", std::move(digest)}};
+    }
+    return {{"manifest", std::move(manifest)}, {"bundle", std::move(bundle)}};
+}
+
+std::optional<std::string> readPluginSource(const std::string &documents, const std::string &folder)
+{
+    if (!isSingleFolderName(folder))
+    {
+        return std::nullopt;
+    }
+    std::string                   directory = joinPath(joinPath(documents, "Plugins"), folder);
+    std::optional<nlohmann::json> manifest =
+        parseObjectFile(joinPath(directory, "manifest.json"), folder, "plugins", "manifest");
+    std::optional<std::string> entry =
+        manifest ? resolveManifestEntry(directory, *manifest, "main") : std::nullopt;
+    std::optional<std::string> bundle = entry ? readTextFile(*entry) : std::nullopt;
+    if (!bundle)
+    {
+        return std::nullopt;
+    }
+    std::string digest = cachedSha512(directory, *entry, *bundle);
+    if (verifyAddonSignature(*manifest, *bundle, compiledBundleTrust(), &digest).status ==
+        AddonSignatureStatus::Invalid)
+    {
+        return std::nullopt;
+    }
+    return bundle;
+}
+
+nlohmann::json scanPlugins(const std::string &documents, uint32_t bytecodeVersion)
 {
     nlohmann::json plugins = nlohmann::json::array();
 
@@ -194,7 +243,8 @@ nlohmann::json scanPlugins(const std::string &documents)
             (*manifest)["path"]   = directory;
             (*manifest)["entry"]  = *entry;
 
-            plugins.push_back({{"manifest", *manifest}, {"bundle", *bundle}});
+            bool compiled = hasBytecodeFor(*manifest, *entry, bytecodeVersion);
+            plugins.push_back(pluginEntry(std::move(*manifest), std::move(*bundle), compiled));
             log(LogLevel::Info, LOG_CATEGORY_PLUGINS, "Loaded " + folder + " from " + *entry + ".");
         });
 
@@ -276,9 +326,9 @@ nlohmann::json scanFonts(const std::string &documents)
     return fonts;
 }
 
-void AddonState::scan(const std::string &documents)
+void AddonState::scan(const std::string &documents, uint32_t bytecodeVersion)
 {
-    nlohmann::json plugins = scanPlugins(documents);
+    nlohmann::json plugins = scanPlugins(documents, bytecodeVersion);
     nlohmann::json themes  = scanThemes(documents);
     nlohmann::json fonts   = scanFonts(documents);
 
