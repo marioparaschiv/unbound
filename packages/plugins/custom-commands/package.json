@@ -1,6 +1,6 @@
 {
 	"name": "custom-commands",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"private": true,
 	"description": "Create slash commands that send saved text, images, and videos.",
 	"type": "module",

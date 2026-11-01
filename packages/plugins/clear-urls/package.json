@@ -1,6 +1,6 @@
 {
 	"name": "clear-urls",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"private": true,
 	"description": "Removes tracking garbage from URLs before you send them.",
 	"type": "module",

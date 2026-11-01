@@ -1,6 +1,6 @@
 {
 	"name": "text-replace",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"private": true,
 	"description": "Replace text in messages before you send them.",
 	"type": "module",

@@ -1,6 +1,6 @@
 {
 	"name": "expression-tools",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"private": true,
 	"description": "Useful tools for custom emojis and stickers.",
 	"type": "module",

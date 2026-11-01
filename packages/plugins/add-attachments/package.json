@@ -1,6 +1,6 @@
 {
 	"name": "add-attachments",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": true,
 	"description": "Adds attachments to messages you already sent, while you edit them or from the message menu.",
 	"type": "module",
