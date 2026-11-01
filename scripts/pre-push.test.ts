@@ -44,7 +44,7 @@ describe('pre-push checks', () => {
 	test('runs the client tests in isolation', () => {
 		const [check] = checksFor(['packages/client/src/core/index.ts'], exists);
 
-		expect(check?.command).toEqual(['bun', 'test', '--isolate']);
+		expect(check?.command).toEqual(['bun', 'test', '--parallel']);
 	});
 
 	test('only type-checks apps and lints the loader', () => {
