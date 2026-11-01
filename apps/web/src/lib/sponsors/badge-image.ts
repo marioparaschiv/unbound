@@ -1,5 +1,6 @@
 import {
 	BADGE_IMAGE_MAX_BYTES,
+	BADGE_IMAGE_MAX_LABEL,
 	BADGE_IMAGE_MAX_SIZE,
 	BADGE_IMAGE_MIN_SIZE,
 } from '@unbound-app/contracts/sponsors';
@@ -47,7 +48,7 @@ function readChunks(bytes: Uint8Array): Chunk[] | undefined {
  */
 export function findBadgeImageProblem(bytes: Uint8Array): string | undefined {
 	if (bytes.byteLength > BADGE_IMAGE_MAX_BYTES) {
-		return `Badge images must be ${BADGE_IMAGE_MAX_BYTES / 1024} KB or smaller.`;
+		return `Badge images must be ${BADGE_IMAGE_MAX_LABEL} or smaller.`;
 	}
 
 	if (!matchesMediaFormat('badge.png', bytes)) {

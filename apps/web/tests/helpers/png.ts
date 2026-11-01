@@ -8,6 +8,8 @@ export type PngOptions = {
 	color?: [number, number, number];
 	/** Adds an `acTL` chunk before the image data, as an animated PNG has. */
 	animated?: boolean;
+	/** Bytes of `tEXt` chunk to add after the image data, for a valid PNG of a given file size. */
+	padding?: number;
 };
 
 const SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
@@ -68,6 +70,7 @@ export function encodePng({
 	color = [88, 101, 242],
 	pixel = disc(width, height, color),
 	animated = false,
+	padding = 0,
 }: PngOptions): Uint8Array<ArrayBuffer> {
 	const rows = new Uint8Array(height * (1 + width * 4));
 
@@ -89,29 +92,11 @@ export function encodePng({
 		chunk('IHDR', header),
 		...(animated ? [chunk('acTL', uint32s(1, 0))] : []),
 		chunk('IDAT', deflateSync(rows)),
+		...(padding > 0 ? [chunk('tEXt', new Uint8Array(padding).fill(0x61))] : []),
 		chunk('IEND', new Uint8Array()),
 	];
 
 	return new Uint8Array(Buffer.concat(parts));
 }
 
-/**
- * @description Seeded noise that deflate cannot shrink, for a PNG over a size limit.
- * @param seed Varies the noise.
- * @returns A pixel function for {@link encodePng}.
- */
-export function noise(seed = 1) {
-	let state = seed;
-
-	return (): [number, number, number, number] => {
-		// xorshift32: a linear congruential generator's low bits repeat, and deflate finds them.
-		state ^= state << 13;
-		state ^= state >>> 17;
-		state ^= state << 5;
-		state >>>= 0;
-
-		return [state & 255, (state >> 8) & 255, (state >> 16) & 255, 255];
-	};
-}
-
-export default { encodePng, noise };
+export default { encodePng };

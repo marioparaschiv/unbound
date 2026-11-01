@@ -7,13 +7,15 @@ export const BADGE_IMAGE_MIN_SIZE = 64;
 
 export const BADGE_IMAGE_MAX_SIZE = 256;
 
-/** Small, so a profile's badges load at once in Discord. */
-export const BADGE_IMAGE_MAX_BYTES = 64 * 1024;
+export const BADGE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+
+/** {@link BADGE_IMAGE_MAX_BYTES} as every message and hint shows it. */
+export const BADGE_IMAGE_MAX_LABEL = `${BADGE_IMAGE_MAX_BYTES / 1024 / 1024} MB`;
 
 export const BADGE_IMAGE_TYPE = 'image/png';
 
 /** The rules a badge image follows, in one line. */
-export const BADGE_IMAGE_RULES = `Square PNG, ${BADGE_IMAGE_MIN_SIZE} to ${BADGE_IMAGE_MAX_SIZE} px, up to ${BADGE_IMAGE_MAX_BYTES / 1024} KB`;
+export const BADGE_IMAGE_RULES = `Square PNG, ${BADGE_IMAGE_MIN_SIZE} to ${BADGE_IMAGE_MAX_SIZE} px, up to ${BADGE_IMAGE_MAX_LABEL}`;
 
 /** How many badges one sponsor shows; as many as fit on a Discord profile. */
 export const BADGE_LIMIT = 3;
@@ -101,6 +103,7 @@ export default {
 	BADGE_IMAGE_MIN_SIZE,
 	BADGE_IMAGE_MAX_SIZE,
 	BADGE_IMAGE_MAX_BYTES,
+	BADGE_IMAGE_MAX_LABEL,
 	BADGE_IMAGE_TYPE,
 	BADGE_IMAGE_RULES,
 	BADGE_LIMIT,

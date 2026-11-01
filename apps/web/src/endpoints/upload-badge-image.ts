@@ -1,5 +1,6 @@
 import {
 	BADGE_IMAGE_MAX_BYTES,
+	BADGE_IMAGE_MAX_LABEL,
 	BADGE_IMAGE_TYPE,
 	uploadBadgeImageResponseSchema,
 } from '@unbound-app/contracts/sponsors';
@@ -18,7 +19,7 @@ async function readPng(request: Request): Promise<Blob> {
 	if (Number(request.headers.get('content-length')) > BADGE_IMAGE_MAX_BYTES) {
 		throw new ApiError(
 			'badge_rejected',
-			`Badge images must be ${BADGE_IMAGE_MAX_BYTES / 1024} KB or smaller.`,
+			`Badge images must be ${BADGE_IMAGE_MAX_LABEL} or smaller.`,
 		);
 	}
 

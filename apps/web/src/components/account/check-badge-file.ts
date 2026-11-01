@@ -1,5 +1,6 @@
 import {
 	BADGE_IMAGE_MAX_BYTES,
+	BADGE_IMAGE_MAX_LABEL,
 	BADGE_IMAGE_MAX_SIZE,
 	BADGE_IMAGE_MIN_SIZE,
 	BADGE_IMAGE_TYPE,
@@ -17,7 +18,7 @@ export async function checkBadgeFile(file: File): Promise<string | undefined> {
 	}
 
 	if (file.size > BADGE_IMAGE_MAX_BYTES) {
-		return `Badge images must be ${BADGE_IMAGE_MAX_BYTES / 1024} KB or smaller; this one is ${Math.ceil(file.size / 1024)} KB.`;
+		return `Badge images must be ${BADGE_IMAGE_MAX_LABEL} or smaller; this one is ${(file.size / 1024 / 1024).toFixed(1)} MB.`;
 	}
 
 	const bitmap = await createImageBitmap(file).catch(() => undefined);
