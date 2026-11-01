@@ -117,7 +117,7 @@ export type PatcherInstance = {
 
 const pendingPatchCallers = new Map<() => void, string | undefined>();
 
-/** Every module the patcher has patched, with its live patches. Patch and unpatch through the functions below. */
+/** Every module the patcher has patched, with its live patches. */
 export const patches = Possess.patches;
 
 /** The symbol a patched method carries, pointing at its patch state. */

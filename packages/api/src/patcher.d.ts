@@ -9,7 +9,7 @@ declare enum PatchType {
 }
 /** The symbol a patched method carries, pointing at its patch state. */
 export declare const PATCH_SYMBOL: symbol;
-/** Every module the patcher has patched, with its live patches. Patch and unpatch through the functions below. */
+/** Every module the patcher has patched, with its live patches. */
 export declare const patches: PatchedModule[];
 /**
  * @description Runs a callback after a method, which can replace its result by returning a value.
