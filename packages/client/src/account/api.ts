@@ -12,20 +12,13 @@ import type { Api } from '@unbound-app/web/api';
 import { authorizeWithDiscord } from '~/account/discord-oauth';
 import { getBucket, useBucket } from '~/storage/api';
 import { EventEmitter } from '~/core/event-emitter';
+import type { Account } from '~/account/account';
 import { API_URL } from '~/core/constants';
 
 /** The Bucket the account keeps its session in. Never synced. */
 export const ACCOUNT_STORE = 'unbound::account';
 
-/** The Unbound account signed in on this device. */
-export type Account = {
-	/** The account's id on Unbound's servers. */
-	id: string;
-	/** The account's display name, refreshed from Unbound's servers at each launch. */
-	name: string;
-	/** The account's avatar image URL, or `null` when it has none. */
-	image: string | null;
-};
+export type { Account } from '~/account/account';
 
 /** How a {@link signIn} ended. */
 export type SignInResult =

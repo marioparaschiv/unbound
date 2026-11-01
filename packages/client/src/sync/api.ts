@@ -10,8 +10,9 @@ import toError from '@unbound-app/utils/to-error';
 
 import { applyActions, collectLocalDocument } from '~/sync/device';
 import { isJsonEqual, plan, reconcileBase } from '~/sync/merge';
-import type { Account, ApiRequest } from '~/account/api';
+import type { Account } from '~/account/account';
 import type { SyncStrategy } from '~/sync/merge';
+import type { ApiRequest } from '~/account/api';
 import { getBucket } from '~/storage/api';
 import * as account from '~/account/api';
 
@@ -228,8 +229,13 @@ export async function signIn(): Promise<boolean> {
 	return (await account.signIn()).status === 'signed-in';
 }
 
-/** @deprecated Use account.signOut */
-export const signOut = account.signOut;
+/**
+ * @deprecated Use account.signOut
+ * @returns Once the account signed out.
+ */
+export function signOut(): Promise<void> {
+	return account.signOut();
+}
 
 /**
  * @description Turns automatic syncing on or off, syncing right away when turned on.
