@@ -181,4 +181,25 @@ describe('webhook events', () => {
 
 		expect(await storedSponsorship(ctx, id)).toMatchObject({ state: 'active', endsAt: null });
 	});
+
+	test('stores the privacy level, and an edit that changes it', async () => {
+		const id = '600';
+
+		await deliver(ctx, sponsorshipPayload({ action: 'created', sponsorId: id }), {
+			id: 'privacy-1',
+		});
+
+		expect((await storedSponsorship(ctx, id))?.isPublic).toBe(true);
+
+		await deliver(
+			ctx,
+			sponsorshipPayload({ action: 'edited', sponsorId: id, privacy: 'private' }),
+			{ id: 'privacy-2' },
+		);
+
+		expect(await storedSponsorship(ctx, id)).toMatchObject({
+			state: 'active',
+			isPublic: false,
+		});
+	});
 });

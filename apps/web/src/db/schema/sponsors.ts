@@ -11,6 +11,8 @@ export const sponsorship = pgTable('sponsorship', {
 	tierName: text('tier_name').notNull(),
 	monthlyPriceCents: integer('monthly_price_cents').notNull(),
 	oneTime: boolean('one_time').notNull(),
+	/** GitHub's privacy level; private until a webhook or reconcile says otherwise, so the site never names a private sponsor. */
+	isPublic: boolean('is_public').notNull().default(false),
 	since: timestampMs('since').notNull(),
 	endsAt: timestampMs('ends_at'),
 	updatedAt: timestampMs('updated_at').notNull(),

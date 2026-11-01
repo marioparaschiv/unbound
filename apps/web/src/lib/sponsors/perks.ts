@@ -1,5 +1,5 @@
+import { badgesSchema } from '@unbound-app/contracts/sponsors';
 import type { PerkId } from '@unbound-app/contracts/sponsors';
-import { badgeSchema } from '@unbound-app/contracts/sponsors';
 import type { z } from 'zod';
 
 import type { SponsorStanding } from '~/lib/sponsors/standing';
@@ -8,39 +8,33 @@ import { isSponsoring } from '~/lib/sponsors/standing';
 export type PerkDefinition = {
 	name: string;
 	description: string;
-	eligible: (standing: SponsorStanding) => boolean;
+	/** The smallest recurring monthly tier that unlocks the perk, in cents. */
+	minimumMonthlyCents: number;
 	config: z.ZodType;
 };
-
-/**
- * @description Builds the eligibility rule for a perk any recurring tier of at least an amount unlocks.
- * @param cents The smallest monthly price, in cents.
- * @returns The eligibility rule.
- */
-export function monthlyTierFrom(cents: number): PerkDefinition['eligible'] {
-	return (standing) =>
-		isSponsoring(standing) &&
-		!standing.sponsorship.oneTime &&
-		standing.sponsorship.monthlyPriceCents >= cents;
-}
 
 export const PERKS = {
 	'custom-badge': {
 		name: 'Custom badge',
-		description: 'A badge of your own next to your name on developer and addon pages.',
-		eligible: monthlyTierFrom(100),
-		config: badgeSchema,
+		description:
+			'A badge of your own on your Discord profile, shown to everyone using Unbound.',
+		minimumMonthlyCents: 500,
+		config: badgesSchema,
 	},
 } satisfies Record<PerkId, PerkDefinition>;
 
 /**
- * @description Checks whether a standing unlocks a perk.
+ * @description Checks whether a standing unlocks a perk: a recurring tier of at least the perk's minimum.
  * @param perkId The perk.
  * @param standing The sponsor's standing.
  * @returns Whether the perk is unlocked.
  */
 export function isPerkUnlocked(perkId: PerkId, standing: SponsorStanding): boolean {
-	return PERKS[perkId].eligible(standing);
+	return (
+		isSponsoring(standing) &&
+		!standing.sponsorship.oneTime &&
+		standing.sponsorship.monthlyPriceCents >= PERKS[perkId].minimumMonthlyCents
+	);
 }
 
 /**
@@ -54,4 +48,4 @@ export function canClaimPerk(perkId: PerkId, standing: SponsorStanding): boolean
 	return standing.kind === 'active' && isPerkUnlocked(perkId, standing);
 }
 
-export default { PERKS, monthlyTierFrom, isPerkUnlocked, canClaimPerk };
+export default { PERKS, isPerkUnlocked, canClaimPerk };

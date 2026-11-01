@@ -2,6 +2,7 @@ import { IconExternalLink, IconHeart } from 'nucleo-micro-bold';
 import { useSuspenseQuery } from '@tanstack/react-query';
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { formatMonthlyPrice, formatPrice } from '~/lib/sponsors/price';
 import { accountOverviewQuery } from '~/queries/account/account';
 import type { SponsorOverview } from '~/lib/sponsors/overview';
 import { Button } from '~/components/ui/button';
@@ -26,8 +27,6 @@ type SponsorshipDetailsProps = {
 // Fixed to UTC so the server render and the hydrated page print the same day.
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
 
-const PRICE_FORMAT = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
-
 const STANDING_LABELS: Record<SponsorOverview['standing'], StandingLabel> = {
 	none: { label: 'Not sponsoring', variant: 'default' },
 	active: { label: 'Active', variant: 'primary' },
@@ -50,9 +49,9 @@ function SponsorCta({ url, label }: SponsorCtaProps) {
 }
 
 function describeAmount(sponsorship: SponsorshipDetailsProps['sponsorship']): string {
-	const price = PRICE_FORMAT.format(sponsorship.monthlyPriceCents / 100);
-
-	return sponsorship.oneTime ? `${price} one time` : `${price} a month`;
+	return sponsorship.oneTime
+		? `${formatPrice(sponsorship.monthlyPriceCents)} one time`
+		: formatMonthlyPrice(sponsorship.monthlyPriceCents);
 }
 
 function SponsorshipDetails({ sponsor, sponsorship }: SponsorshipDetailsProps) {

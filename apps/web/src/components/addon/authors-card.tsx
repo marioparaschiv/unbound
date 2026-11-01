@@ -5,8 +5,8 @@ import type { ReactNode } from 'react';
 import { SidebarCard } from '~/components/addon/sidebar-card';
 import type { ResolvedAuthor } from '~/lib/authors/resolve';
 import { authorKey } from '~/components/author-byline';
+import { GHOST_ROW } from '~/components/ghost-row';
 import UserAvatar from '~/components/user-avatar';
-import UserBadge from '~/components/user-badge';
 import Text from '~/components/ui/text';
 
 type AuthorsCardProps = {
@@ -21,9 +21,6 @@ type GhostRowProps = {
 	author: ResolvedAuthor;
 	children: ReactNode;
 };
-
-const GHOST =
-	'group flex items-center gap-3 -mx-2 px-2 py-1.5 rounded-control outline-none press-flat hover:bg-accent dark:hover:bg-accent/50 focus-visible:ring-[3px] focus-visible:ring-halo';
 
 function handle(author: ResolvedAuthor): string | null {
 	if (author.kind === 'discord') {
@@ -44,7 +41,11 @@ function GhostRow({ author, children }: GhostRowProps) {
 	}
 
 	return (
-		<Link to='/profiles/$discordId' params={{ discordId: author.discordId }} className={GHOST}>
+		<Link
+			to='/profiles/$discordId'
+			params={{ discordId: author.discordId }}
+			className={GHOST_ROW}
+		>
 			{children}
 			<IconChevronRight className='opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 size-3.5 text-muted-foreground transition-[opacity,translate] -translate-x-1 group-hover:translate-x-0 duration-150' />
 		</Link>
@@ -72,7 +73,6 @@ function AuthorRow({ author }: AuthorRowProps) {
 					</Text>
 				) : null}
 			</span>
-			{author.kind === 'user' && author.badge ? <UserBadge badge={author.badge} /> : null}
 		</GhostRow>
 	);
 }

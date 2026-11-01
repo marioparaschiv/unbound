@@ -1,5 +1,5 @@
+import type { SetBadgesRequest } from '@unbound-app/contracts/sponsors';
 import { mutationOptions, queryOptions } from '@tanstack/react-query';
-import type { Badge } from '@unbound-app/contracts/sponsors';
 
 import unwrapAuthResult from '~/queries/account/unwrap-auth-result';
 import { createBrowserClient } from '~/lib/api/browser-client';
@@ -25,31 +25,66 @@ export function accountOverviewQuery() {
 }
 
 /**
- * @description Sets the signed-in user's sponsor badge, then refreshes the account overview and the public pages showing it.
- * @returns Mutation options taking the badge to save.
+ * @description Replaces the signed-in user's sponsor badges, then refreshes the account overview and the public pages showing them.
+ * @returns Mutation options taking the badges to save, in order.
  */
-export function saveBadgeMutation() {
+export function saveBadgesMutation() {
 	return mutationOptions({
-		mutationFn: async (badge: Badge) =>
-			createBrowserClient()('PUT /api/v1/me/badge', {
-				body: badge,
+		mutationFn: async (body: SetBadgesRequest) =>
+			createBrowserClient()('PUT /api/v1/me/badges', {
+				body,
 				response: await loadBadgeClaimResponseSchema(),
 			}),
-		onSuccess: (_data, _badge, _result, context) => invalidate(context.client, 'badge'),
+		onSuccess: (_data, _body, _result, context) => invalidate(context.client, 'badges'),
 	});
 }
 
 /**
- * @description Removes the signed-in user's sponsor badge, then refreshes the account overview and the public pages showing it.
+ * @description Uploads a PNG for one of the signed-in user's sponsor badges: asks for a presigned URL,
+ * PUTs the file straight to storage, then has the server check and store it.
+ * @returns Mutation options taking the file, resolving to the image's hash and URL.
+ */
+export function uploadBadgeImageMutation() {
+	return mutationOptions({
+		mutationFn: async (file: File) => {
+			const { BADGE_IMAGE_TYPE, presignedBadgeUploadSchema, uploadBadgeImageResponseSchema } =
+				await import('@unbound-app/contracts/sponsors');
+			const client = createBrowserClient();
+			const { uploadId, url } = await client('POST /api/v1/me/badges/uploads', {
+				body: { size: file.size },
+				response: presignedBadgeUploadSchema,
+			});
+			// The signed URL is the only authorisation storage needs; the session cookie stays home.
+			const sent = await fetch(url, {
+				method: 'PUT',
+				body: file,
+				headers: { 'content-type': BADGE_IMAGE_TYPE },
+				credentials: 'omit',
+			}).catch(() => undefined);
+
+			if (!sent?.ok) {
+				throw new Error('The image could not be sent to storage; try again.');
+			}
+
+			return client('POST /api/v1/me/badges/uploads/$uploadId/complete', {
+				params: { uploadId },
+				response: uploadBadgeImageResponseSchema,
+			});
+		},
+	});
+}
+
+/**
+ * @description Removes all the signed-in user's sponsor badges, then refreshes the account overview and the public pages showing them.
  * @returns Mutation options taking no variables.
  */
-export function removeBadgeMutation() {
+export function removeBadgesMutation() {
 	return mutationOptions({
 		mutationFn: async () =>
-			createBrowserClient()('DELETE /api/v1/me/badge', {
+			createBrowserClient()('DELETE /api/v1/me/badges', {
 				response: await loadBadgeClaimResponseSchema(),
 			}),
-		onSuccess: (_data, _variables, _result, context) => invalidate(context.client, 'badge'),
+		onSuccess: (_data, _variables, _result, context) => invalidate(context.client, 'badges'),
 	});
 }
 
@@ -106,8 +141,9 @@ export function linkSocialMutation() {
 
 export default {
 	accountOverviewQuery,
-	saveBadgeMutation,
-	removeBadgeMutation,
+	saveBadgesMutation,
+	uploadBadgeImageMutation,
+	removeBadgesMutation,
 	createApiKeyMutation,
 	deleteApiKeyMutation,
 	unlinkAccountMutation,

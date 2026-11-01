@@ -11,13 +11,15 @@ export type PerkStatus = {
 	id: PerkId;
 	name: string;
 	description: string;
+	/** The smallest recurring monthly tier that unlocks the perk, in cents. */
+	minimumMonthlyCents: number;
 	unlocked: boolean;
 };
 
 export type SponsorOverview = {
 	sponsorUrl: string | null;
 	githubLinked: boolean;
-	sponsorship: Omit<Sponsorship, 'githubId' | 'githubLogin' | 'updatedAt'> | null;
+	sponsorship: Omit<Sponsorship, 'githubId' | 'githubLogin' | 'isPublic' | 'updatedAt'> | null;
 	standing: SponsorStanding['kind'];
 	graceUntil: Date | null;
 	perks: PerkStatus[];
@@ -44,6 +46,7 @@ export async function getSponsorOverview(
 		id,
 		name: PERKS[id].name,
 		description: PERKS[id].description,
+		minimumMonthlyCents: PERKS[id].minimumMonthlyCents,
 		unlocked: isPerkUnlocked(id, standing),
 	}));
 
@@ -63,7 +66,7 @@ export async function getSponsorOverview(
 		standing: standing.kind,
 		graceUntil: standing.kind === 'grace' ? standing.until : null,
 		perks,
-		badge: toBadgeClaim(claim),
+		badge: toBadgeClaim(ctx.env, claim),
 	};
 }
 

@@ -53,7 +53,7 @@ function ProviderRow({ provider, account }: ProviderRowProps) {
 	return (
 		<div className='flex justify-between items-center'>
 			<div className='flex items-center gap-3'>
-				<provider.icon />
+				<provider.icon className='size-7 shrink-0' />
 				<div className='flex flex-col'>
 					<Text variant='text-sm' className='font-medium'>
 						{provider.name}

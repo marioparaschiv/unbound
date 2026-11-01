@@ -59,7 +59,7 @@ import { Route as ApiV1GithubRepositoriesRouteImport } from './routes/api/v1/git
 import { Route as ApiV1LoaderReleasesRouteImport } from './routes/api/v1/loader/releases'
 import { Route as ApiV1LoaderUpdatesRouteImport } from './routes/api/v1/loader/updates'
 import { Route as ApiV1MeAddonsRouteImport } from './routes/api/v1/me/addons'
-import { Route as ApiV1MeBadgeRouteImport } from './routes/api/v1/me/badge'
+import { Route as ApiV1MeBadgesRouteImport } from './routes/api/v1/me/badges'
 import { Route as ApiV1ReviewQueueRouteImport } from './routes/api/v1/review/queue'
 import { Route as ApiV1SubmissionsPreviewRouteImport } from './routes/api/v1/submissions/preview'
 import { Route as ApiV1SyncOauthRouteImport } from './routes/api/v1/sync/oauth'
@@ -75,11 +75,13 @@ import { Route as ApiV1AddonsIdMaintainersRouteImport } from './routes/api/v1/ad
 import { Route as ApiV1AddonsIdRelistRouteImport } from './routes/api/v1/addons/$id/relist'
 import { Route as ApiV1AddonsIdTransferRouteImport } from './routes/api/v1/addons/$id/transfer'
 import { Route as ApiV1AddonsIdVersionsRouteImport } from './routes/api/v1/addons/$id/versions'
+import { Route as ApiV1MeBadgesUploadsRouteImport } from './routes/api/v1/me/badges/uploads'
 import { Route as ApiV1SubmissionsIdReviewRouteImport } from './routes/api/v1/submissions/$id/review'
 import { Route as ApiV1UsersIdBadgesRouteImport } from './routes/api/v1/users/$id/badges'
 import { Route as ApiV1AddonsIdMaintainersUserIdRouteImport } from './routes/api/v1/addons/$id/maintainers/$userId'
 import { Route as ApiV1LoaderReleasesPlatformVersionRouteImport } from './routes/api/v1/loader/releases/$platform/$version'
 import { Route as ApiV1UsersIdBadgeRevokeRouteImport } from './routes/api/v1/users/$id/badge/revoke'
+import { Route as ApiV1MeBadgesUploadsUploadIdCompleteRouteImport } from './routes/api/v1/me/badges/uploads/$uploadId/complete'
 
 const SiteRouteRoute = SiteRouteRouteImport.update({
   id: '/_site',
@@ -332,9 +334,9 @@ const ApiV1MeAddonsRoute = ApiV1MeAddonsRouteImport.update({
   path: '/addons',
   getParentRoute: () => ApiV1MeRoute,
 } as any)
-const ApiV1MeBadgeRoute = ApiV1MeBadgeRouteImport.update({
-  id: '/badge',
-  path: '/badge',
+const ApiV1MeBadgesRoute = ApiV1MeBadgesRouteImport.update({
+  id: '/badges',
+  path: '/badges',
   getParentRoute: () => ApiV1MeRoute,
 } as any)
 const ApiV1ReviewQueueRoute = ApiV1ReviewQueueRouteImport.update({
@@ -417,6 +419,11 @@ const ApiV1AddonsIdVersionsRoute = ApiV1AddonsIdVersionsRouteImport.update({
   path: '/$id/versions',
   getParentRoute: () => ApiV1AddonsRoute,
 } as any)
+const ApiV1MeBadgesUploadsRoute = ApiV1MeBadgesUploadsRouteImport.update({
+  id: '/uploads',
+  path: '/uploads',
+  getParentRoute: () => ApiV1MeBadgesRoute,
+} as any)
 const ApiV1SubmissionsIdReviewRoute =
   ApiV1SubmissionsIdReviewRouteImport.update({
     id: '/$id/review',
@@ -445,6 +452,12 @@ const ApiV1UsersIdBadgeRevokeRoute = ApiV1UsersIdBadgeRevokeRouteImport.update({
   path: '/api/v1/users/$id/badge/revoke',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1MeBadgesUploadsUploadIdCompleteRoute =
+  ApiV1MeBadgesUploadsUploadIdCompleteRouteImport.update({
+    id: '/$uploadId/complete',
+    path: '/$uploadId/complete',
+    getParentRoute: () => ApiV1MeBadgesUploadsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof SiteIndexRoute
@@ -493,7 +506,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
   '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
-  '/api/v1/me/badge': typeof ApiV1MeBadgeRoute
+  '/api/v1/me/badges': typeof ApiV1MeBadgesRouteWithChildren
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
@@ -508,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
+  '/api/v1/me/badges/uploads': typeof ApiV1MeBadgesUploadsRouteWithChildren
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/admin/addons/': typeof SiteStaffAdminAddonsIndexRoute
@@ -516,6 +530,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/addons/$id/maintainers/$userId': typeof ApiV1AddonsIdMaintainersUserIdRoute
   '/api/v1/loader/releases/$platform/$version': typeof ApiV1LoaderReleasesPlatformVersionRoute
   '/api/v1/users/$id/badge/revoke': typeof ApiV1UsersIdBadgeRevokeRoute
+  '/api/v1/me/badges/uploads/$uploadId/complete': typeof ApiV1MeBadgesUploadsUploadIdCompleteRoute
 }
 export interface FileRoutesByTo {
   '/device': typeof DeviceRoute
@@ -561,7 +576,7 @@ export interface FileRoutesByTo {
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
   '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
-  '/api/v1/me/badge': typeof ApiV1MeBadgeRoute
+  '/api/v1/me/badges': typeof ApiV1MeBadgesRouteWithChildren
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
@@ -576,6 +591,7 @@ export interface FileRoutesByTo {
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
+  '/api/v1/me/badges/uploads': typeof ApiV1MeBadgesUploadsRouteWithChildren
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/admin/addons': typeof SiteStaffAdminAddonsIndexRoute
@@ -584,6 +600,7 @@ export interface FileRoutesByTo {
   '/api/v1/addons/$id/maintainers/$userId': typeof ApiV1AddonsIdMaintainersUserIdRoute
   '/api/v1/loader/releases/$platform/$version': typeof ApiV1LoaderReleasesPlatformVersionRoute
   '/api/v1/users/$id/badge/revoke': typeof ApiV1UsersIdBadgeRevokeRoute
+  '/api/v1/me/badges/uploads/$uploadId/complete': typeof ApiV1MeBadgesUploadsUploadIdCompleteRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -635,7 +652,7 @@ export interface FileRoutesById {
   '/api/v1/loader/releases': typeof ApiV1LoaderReleasesRouteWithChildren
   '/api/v1/loader/updates': typeof ApiV1LoaderUpdatesRoute
   '/api/v1/me/addons': typeof ApiV1MeAddonsRoute
-  '/api/v1/me/badge': typeof ApiV1MeBadgeRoute
+  '/api/v1/me/badges': typeof ApiV1MeBadgesRouteWithChildren
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
@@ -650,6 +667,7 @@ export interface FileRoutesById {
   '/api/v1/addons/$id/relist': typeof ApiV1AddonsIdRelistRoute
   '/api/v1/addons/$id/transfer': typeof ApiV1AddonsIdTransferRoute
   '/api/v1/addons/$id/versions': typeof ApiV1AddonsIdVersionsRoute
+  '/api/v1/me/badges/uploads': typeof ApiV1MeBadgesUploadsRouteWithChildren
   '/api/v1/submissions/$id/review': typeof ApiV1SubmissionsIdReviewRoute
   '/api/v1/users/$id/badges': typeof ApiV1UsersIdBadgesRoute
   '/_site/_staff/admin/addons/': typeof SiteStaffAdminAddonsIndexRoute
@@ -658,6 +676,7 @@ export interface FileRoutesById {
   '/api/v1/addons/$id/maintainers/$userId': typeof ApiV1AddonsIdMaintainersUserIdRoute
   '/api/v1/loader/releases/$platform/$version': typeof ApiV1LoaderReleasesPlatformVersionRoute
   '/api/v1/users/$id/badge/revoke': typeof ApiV1UsersIdBadgeRevokeRoute
+  '/api/v1/me/badges/uploads/$uploadId/complete': typeof ApiV1MeBadgesUploadsUploadIdCompleteRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -708,7 +727,7 @@ export interface FileRouteTypes {
     | '/api/v1/loader/releases'
     | '/api/v1/loader/updates'
     | '/api/v1/me/addons'
-    | '/api/v1/me/badge'
+    | '/api/v1/me/badges'
     | '/api/v1/review/queue'
     | '/api/v1/submissions/preview'
     | '/api/v1/sync/oauth'
@@ -723,6 +742,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
+    | '/api/v1/me/badges/uploads'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/admin/addons/'
@@ -731,6 +751,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/maintainers/$userId'
     | '/api/v1/loader/releases/$platform/$version'
     | '/api/v1/users/$id/badge/revoke'
+    | '/api/v1/me/badges/uploads/$uploadId/complete'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/device'
@@ -776,7 +797,7 @@ export interface FileRouteTypes {
     | '/api/v1/loader/releases'
     | '/api/v1/loader/updates'
     | '/api/v1/me/addons'
-    | '/api/v1/me/badge'
+    | '/api/v1/me/badges'
     | '/api/v1/review/queue'
     | '/api/v1/submissions/preview'
     | '/api/v1/sync/oauth'
@@ -791,6 +812,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
+    | '/api/v1/me/badges/uploads'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/admin/addons'
@@ -799,6 +821,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/maintainers/$userId'
     | '/api/v1/loader/releases/$platform/$version'
     | '/api/v1/users/$id/badge/revoke'
+    | '/api/v1/me/badges/uploads/$uploadId/complete'
   id:
     | '__root__'
     | '/_site'
@@ -849,7 +872,7 @@ export interface FileRouteTypes {
     | '/api/v1/loader/releases'
     | '/api/v1/loader/updates'
     | '/api/v1/me/addons'
-    | '/api/v1/me/badge'
+    | '/api/v1/me/badges'
     | '/api/v1/review/queue'
     | '/api/v1/submissions/preview'
     | '/api/v1/sync/oauth'
@@ -864,6 +887,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/relist'
     | '/api/v1/addons/$id/transfer'
     | '/api/v1/addons/$id/versions'
+    | '/api/v1/me/badges/uploads'
     | '/api/v1/submissions/$id/review'
     | '/api/v1/users/$id/badges'
     | '/_site/_staff/admin/addons/'
@@ -872,6 +896,7 @@ export interface FileRouteTypes {
     | '/api/v1/addons/$id/maintainers/$userId'
     | '/api/v1/loader/releases/$platform/$version'
     | '/api/v1/users/$id/badge/revoke'
+    | '/api/v1/me/badges/uploads/$uploadId/complete'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1253,11 +1278,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1MeAddonsRouteImport
       parentRoute: typeof ApiV1MeRoute
     }
-    '/api/v1/me/badge': {
-      id: '/api/v1/me/badge'
-      path: '/badge'
-      fullPath: '/api/v1/me/badge'
-      preLoaderRoute: typeof ApiV1MeBadgeRouteImport
+    '/api/v1/me/badges': {
+      id: '/api/v1/me/badges'
+      path: '/badges'
+      fullPath: '/api/v1/me/badges'
+      preLoaderRoute: typeof ApiV1MeBadgesRouteImport
       parentRoute: typeof ApiV1MeRoute
     }
     '/api/v1/review/queue': {
@@ -1365,6 +1390,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1AddonsIdVersionsRouteImport
       parentRoute: typeof ApiV1AddonsRoute
     }
+    '/api/v1/me/badges/uploads': {
+      id: '/api/v1/me/badges/uploads'
+      path: '/uploads'
+      fullPath: '/api/v1/me/badges/uploads'
+      preLoaderRoute: typeof ApiV1MeBadgesUploadsRouteImport
+      parentRoute: typeof ApiV1MeBadgesRoute
+    }
     '/api/v1/submissions/$id/review': {
       id: '/api/v1/submissions/$id/review'
       path: '/$id/review'
@@ -1399,6 +1431,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/v1/users/$id/badge/revoke'
       preLoaderRoute: typeof ApiV1UsersIdBadgeRevokeRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/api/v1/me/badges/uploads/$uploadId/complete': {
+      id: '/api/v1/me/badges/uploads/$uploadId/complete'
+      path: '/$uploadId/complete'
+      fullPath: '/api/v1/me/badges/uploads/$uploadId/complete'
+      preLoaderRoute: typeof ApiV1MeBadgesUploadsUploadIdCompleteRouteImport
+      parentRoute: typeof ApiV1MeBadgesUploadsRoute
     }
   }
 }
@@ -1562,14 +1601,38 @@ const ApiV1AddonsRouteWithChildren = ApiV1AddonsRoute._addFileChildren(
   ApiV1AddonsRouteChildren,
 )
 
+interface ApiV1MeBadgesUploadsRouteChildren {
+  ApiV1MeBadgesUploadsUploadIdCompleteRoute: typeof ApiV1MeBadgesUploadsUploadIdCompleteRoute
+}
+
+const ApiV1MeBadgesUploadsRouteChildren: ApiV1MeBadgesUploadsRouteChildren = {
+  ApiV1MeBadgesUploadsUploadIdCompleteRoute:
+    ApiV1MeBadgesUploadsUploadIdCompleteRoute,
+}
+
+const ApiV1MeBadgesUploadsRouteWithChildren =
+  ApiV1MeBadgesUploadsRoute._addFileChildren(ApiV1MeBadgesUploadsRouteChildren)
+
+interface ApiV1MeBadgesRouteChildren {
+  ApiV1MeBadgesUploadsRoute: typeof ApiV1MeBadgesUploadsRouteWithChildren
+}
+
+const ApiV1MeBadgesRouteChildren: ApiV1MeBadgesRouteChildren = {
+  ApiV1MeBadgesUploadsRoute: ApiV1MeBadgesUploadsRouteWithChildren,
+}
+
+const ApiV1MeBadgesRouteWithChildren = ApiV1MeBadgesRoute._addFileChildren(
+  ApiV1MeBadgesRouteChildren,
+)
+
 interface ApiV1MeRouteChildren {
   ApiV1MeAddonsRoute: typeof ApiV1MeAddonsRoute
-  ApiV1MeBadgeRoute: typeof ApiV1MeBadgeRoute
+  ApiV1MeBadgesRoute: typeof ApiV1MeBadgesRouteWithChildren
 }
 
 const ApiV1MeRouteChildren: ApiV1MeRouteChildren = {
   ApiV1MeAddonsRoute: ApiV1MeAddonsRoute,
-  ApiV1MeBadgeRoute: ApiV1MeBadgeRoute,
+  ApiV1MeBadgesRoute: ApiV1MeBadgesRouteWithChildren,
 }
 
 const ApiV1MeRouteWithChildren =

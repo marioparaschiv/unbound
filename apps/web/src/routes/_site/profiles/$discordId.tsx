@@ -21,7 +21,7 @@ import AvatarGlow from '~/components/avatar-glow';
 import UserAvatar from '~/components/user-avatar';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
-import UserBadge from '~/components/user-badge';
+import BadgeRow from '~/components/badge-row';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 
@@ -57,6 +57,8 @@ function DeveloperPage() {
 	}
 
 	const { author, addons, group, bannerUrl } = developer;
+	const sponsor = author.kind === 'user' && author.sponsor;
+	const badges = author.kind === 'user' ? author.badges : [];
 
 	return (
 		<div className='flex flex-col flex-1 gap-8 page-frame'>
@@ -72,7 +74,7 @@ function DeveloperPage() {
 						<AvatarGlow src={author.avatarUrl} className='opacity-60 saturate-300' />
 					)}
 				</div>
-				<div className='flex sm:flex-row flex-col gap-4 -mt-10 px-4 sm:px-6'>
+				<div className='relative flex sm:flex-row flex-col gap-4 -mt-10 px-4 sm:px-6'>
 					<UserAvatar
 						size='xl'
 						className='relative size-20 text-4xl rounded-surface object-cover ring-4 ring-background animate-reveal'
@@ -81,17 +83,28 @@ function DeveloperPage() {
 						name={author.name}
 					/>
 					<div className='flex flex-col flex-1 gap-1 sm:pt-12 min-w-0'>
-						<div className='flex items-center gap-2 min-w-0'>
-							<Text as='h1' variant='heading-lg' className='truncate'>
-								<BlurReveal text={author.name} />
-							</Text>
+						<div className='flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0'>
+							{sponsor ? (
+								// The gold is clipped to the text, which per-word reveals would drop, so the name reveals whole.
+								<div className='min-w-0 animate-reveal' style={staggerStyle(0)}>
+									<Text
+										as='h1'
+										variant='heading-lg'
+										className='truncate text-gold'
+									>
+										{author.name}
+									</Text>
+								</div>
+							) : (
+								<Text as='h1' variant='heading-lg' className='truncate'>
+									<BlurReveal text={author.name} />
+								</Text>
+							)}
 							<div
-								className='flex items-center gap-2 animate-reveal'
+								className='flex flex-wrap items-center gap-2 animate-reveal'
 								style={staggerStyle(1)}
 							>
-								{author.kind === 'user' && author.badge ? (
-									<UserBadge badge={author.badge} />
-								) : null}
+								{sponsor ? <Tag variant='warning'>Sponsor</Tag> : null}
 								<Tag variant={group === 'addon-developer' ? 'default' : 'primary'}>
 									{TEAM_GROUPS[group].member}
 								</Tag>
@@ -106,6 +119,14 @@ function DeveloperPage() {
 							<DeveloperDetails author={author} />
 						</Text>
 					</div>
+					{badges.length > 0 ? (
+						<BadgeRow
+							badges={badges}
+							// On narrow screens it sits beside the avatar, below the banner, like Discord's profile.
+							className='max-sm:absolute max-sm:top-11 max-sm:right-4 sm:mt-12 animate-reveal'
+							style={staggerStyle(1)}
+						/>
+					) : null}
 				</div>
 			</header>
 

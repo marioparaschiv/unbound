@@ -8,8 +8,11 @@ import { discordProfile, user } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
 import type { DiscordId } from '~/db/schema';
 
-import { createTestContext, signInWithDiscord } from './helpers/context';
+import type { SeededSponsorship } from './helpers/sponsors';
+
+import { createTestContext, linkGitHub, signInWithDiscord } from './helpers/context';
 import { manifest, seedApprovedAddon } from './helpers/addons';
+import { seedSponsorship } from './helpers/sponsors';
 import { serveDiscord } from './helpers/discord';
 
 const LINKED = '175928847299117063';
@@ -83,7 +86,8 @@ describe('loadAuthors', () => {
 				name: 'Linked On Discord',
 				avatarUrl: `https://cdn.discordapp.com/avatars/${LINKED}/abc.png`,
 				role: 'developer',
-				badge: null,
+				badges: [],
+				sponsor: false,
 				memberSince: expect.any(String),
 			},
 			{
@@ -200,6 +204,39 @@ describe('loadAuthors', () => {
 		]);
 
 		expect(authors.map((author) => author.name)).toEqual(['Profiled', 'Anon', 'Other Anon']);
+	});
+
+	test('names only a public sponsor who is sponsoring now and not banned', async () => {
+		const cases: [DiscordId, Omit<SeededSponsorship, 'githubId'>, boolean?][] = [
+			['777777777777777701', { isPublic: true }],
+			['777777777777777702', { isPublic: false }],
+			['777777777777777703', { isPublic: true, state: 'cancelled', endsAt: new Date(0) }],
+			['777777777777777704', { isPublic: true }, true],
+		];
+
+		for (const [id, sponsorship, banned] of cases) {
+			const { userId } = await signInWithDiscord(ctx, {
+				id,
+				name: `Sponsor ${id}`,
+				email: `${id}@example.com`,
+			});
+
+			await linkGitHub(ctx, userId, `token-${id}`);
+			await seedSponsorship(ctx, { githubId: userId, ...sponsorship });
+
+			if (banned) {
+				await ctx.db.update(user).set({ banned: true }).where(eq(user.id, userId));
+			}
+		}
+
+		const authors = await resolve(cases.map(([id]) => ({ name: id, id })));
+
+		expect(authors.map((author) => author.kind === 'user' && author.sponsor)).toEqual([
+			true,
+			false,
+			false,
+			false,
+		]);
 	});
 
 	test('returns cached data at once while Discord hangs', async () => {

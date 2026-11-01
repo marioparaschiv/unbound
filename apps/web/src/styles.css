@@ -119,6 +119,8 @@
 	--halo: oklch(0.2 0.005 286 / 0.22);
 	--halo-border: oklch(0.2 0.005 286 / 0.5);
 	--link: oklch(from var(--primary) calc(l - 0.03) c h);
+	--gold: --theme(--color-amber-600);
+	--gold-shine: --theme(--color-amber-300);
 	--header: oklch(0.985 0.001 286);
 	--header-pill: oklch(0.94 0.002 286);
 	--glow: oklch(from var(--primary) l c h / 0.16);
@@ -138,6 +140,8 @@
 	color-scheme: dark;
 	--background: oklch(0.141 0.005 285.823);
 	--foreground: oklch(0.985 0 0);
+	--gold: --theme(--color-amber-400);
+	--gold-shine: --theme(--color-yellow-100);
 	--card: oklch(0.21 0.006 285.885);
 	--card-foreground: var(--foreground);
 	--popover: oklch(0.21 0.006 285.885);
@@ -375,6 +379,36 @@ A wide control sets `--press-depth` below 1 so its edges move about as far as a 
 		backwards;
 }
 
+/* The highlight crosses in the first part of each cycle, then the text rests as plain gold. */
+@keyframes shine {
+	from {
+		background-position: 100% 0;
+	}
+
+	40%,
+	to {
+		background-position: 0 0;
+	}
+}
+
+/*
+ * Gold text with a highlight sweeping across. `bg-clip-text` drops the text of children animating on their
+ * own layers, so put this on text without per-word reveals.
+ */
+@utility text-gold {
+	color: transparent;
+	background-image: linear-gradient(
+		110deg,
+		var(--gold) 35%,
+		var(--gold-shine) 50%,
+		var(--gold) 65%
+	);
+	background-size: 300% 100%;
+	background-position: 0 0;
+	background-clip: text;
+	animation: shine 5s ease-in-out 1s infinite;
+}
+
 /*
  * A foreground-to-muted text gradient made with a mask, because `bg-clip-text` drops the text of children
  * that animate on their own layers. The padding keeps their offset and blur inside the mask.
@@ -387,7 +421,8 @@ A wide control sets `--press-depth` below 1 so its edges move about as far as a 
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.animate-reveal {
+	.animate-reveal,
+	.text-gold {
 		animation: none;
 	}
 

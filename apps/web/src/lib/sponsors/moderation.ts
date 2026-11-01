@@ -61,25 +61,25 @@ function isReserved(word: string): boolean {
 }
 
 /**
- * @description Checks a badge label that already passed the contract schema for profanity and for
+ * @description Checks a badge name that already passed the contract schema for profanity and for
  * words that would impersonate staff, ignoring case, accents, spacing and punctuation.
- * @param label The badge label.
- * @returns Why the label is refused, or `undefined` when it is fine.
+ * @param name The badge name.
+ * @returns Why the name is refused, or `undefined` when it is fine.
  */
-export function findBadgeLabelProblem(label: string): string | undefined {
-	const labelWords = wordsJoiningSpelledLetters(label);
+export function findBadgeNameProblem(name: string): string | undefined {
+	const nameWords = wordsJoiningSpelledLetters(name);
 
-	if (profanity.hasMatch(label) || profanity.hasMatch(labelWords.join(' '))) {
-		return 'The badge label contains a word that is not allowed.';
+	if (profanity.hasMatch(name) || profanity.hasMatch(nameWords.join(' '))) {
+		return 'The badge name contains a word that is not allowed.';
 	}
 
-	const compacted = labelWords.join('');
+	const compacted = nameWords.join('');
 	const reserved =
-		labelWords.find(isReserved) ?? RESERVED_SUBSTRINGS.find((word) => compacted.includes(word));
+		nameWords.find(isReserved) ?? RESERVED_SUBSTRINGS.find((word) => compacted.includes(word));
 
 	if (reserved) {
-		return `Badge labels cannot contain "${reserved}".`;
+		return `Badge names cannot contain "${reserved}".`;
 	}
 }
 
-export default { findBadgeLabelProblem };
+export default { findBadgeNameProblem };

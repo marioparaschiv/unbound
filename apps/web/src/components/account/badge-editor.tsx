@@ -1,210 +1,291 @@
-import {
-	BADGE_COLORS,
-	BADGE_ICONS,
-	BADGE_LABEL_MAX_LENGTH,
-	badgeLabelSchema,
-} from '@unbound-app/contracts/sponsors';
+import { BADGE_IMAGE_TYPE, BADGE_LIMIT } from '@unbound-app/contracts/sponsors';
 import type { Badge, BadgeClaim } from '@unbound-app/contracts/sponsors';
+import { IconPen, IconTrash, IconUpload } from 'nucleo-micro-bold';
 import { useMutation } from '@tanstack/react-query';
-import { useForm } from '@tanstack/react-form';
-import { IconTrash } from 'nucleo-micro-bold';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
-import UserBadge, { BADGE_COLOR_CLASSES, BADGE_ICON_COMPONENTS } from '~/components/user-badge';
-import { removeBadgeMutation, saveBadgeMutation } from '~/queries/account/account';
+import { removeBadgesMutation, saveBadgesMutation } from '~/queries/account/account';
+import useBadgeDrafts from '~/components/account/use-badge-drafts';
+import type { PerkStatus } from '~/lib/sponsors/overview';
+import { formatMonthlyPrice } from '~/lib/sponsors/price';
+import UserBadgeList from '~/components/user-badge-list';
 import getApiErrorMessage from '~/lib/api/error-message';
+import BadgeForm from '~/components/account/badge-form';
+import BadgeTile from '~/components/account/badge-tile';
 import { Button } from '~/components/ui/button';
-import Input from '~/components/ui/input';
 import Text from '~/components/ui/text';
-import cn from '~/lib/cn';
 
 type BadgeEditorProps = {
 	claim: BadgeClaim | null;
+	perk: PerkStatus;
 	editable: boolean;
 };
 
-const DEFAULT_BADGE: Badge = { label: '', icon: 'heart', color: 'pink' };
+type Mode = { kind: 'closed' } | { kind: 'adding' } | { kind: 'editing'; index: number };
 
-function BadgeEditor({ claim, editable }: BadgeEditorProps) {
-	const saveBadge = useMutation(saveBadgeMutation());
-	const removeBadge = useMutation(removeBadgeMutation());
-	const isPending = saveBadge.isPending || removeBadge.isPending;
-	const disabled = isPending || !editable;
-	const defaultValues: Badge = claim
-		? { label: claim.label, icon: claim.icon, color: claim.color }
-		: DEFAULT_BADGE;
+const CLOSED: Mode = { kind: 'closed' };
 
-	const form = useForm({
-		defaultValues,
-		onSubmit: async ({ value }) => {
-			try {
-				await saveBadge.mutateAsync(value);
-				toast.success('Badge saved');
-			} catch (error) {
-				toast.error(getApiErrorMessage(error));
+function lockedNote(perk: PerkStatus, editable: boolean): string | null {
+	if (!perk.unlocked) {
+		return `Your badges are hidden until your sponsorship is ${formatMonthlyPrice(perk.minimumMonthlyCents)} or more.`;
+	}
+
+	return editable ? null : 'Sponsor again to change your badges.';
+}
+
+function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
+	const [mode, setMode] = useState<Mode>(CLOSED);
+	const addPicker = useRef<HTMLInputElement>(null);
+	const replacePicker = useRef<HTMLInputElement>(null);
+	// The draft whose image the single-file picker replaces.
+	const replacing = useRef<string | null>(null);
+	const drafts = useBadgeDrafts();
+	const saveBadges = useMutation(saveBadgesMutation());
+	const removeBadges = useMutation(removeBadgesMutation());
+	const isPending = saveBadges.isPending || removeBadges.isPending;
+	const badges = claim?.badges ?? [];
+	const note = lockedNote(perk, editable);
+	const freeSlots =
+		BADGE_LIMIT - badges.length - (mode.kind === 'adding' ? drafts.drafts.length : 0);
+
+	function pickReplacement(id: string) {
+		replacing.current = id;
+		replacePicker.current?.click();
+	}
+
+	function onReplacementPicked(file: File | undefined) {
+		if (file && replacing.current) {
+			void drafts.replaceImage(replacing.current, file);
+		}
+	}
+
+	function onAdded(files: File[]) {
+		if (files.length > freeSlots) {
+			toast.info(
+				freeSlots === 1
+					? 'One badge slot is free, so only the first image was added.'
+					: `${freeSlots} badge slots are free, so only the first ${freeSlots} images were added.`,
+			);
+		}
+
+		drafts.addFiles(files.slice(0, freeSlots));
+		setMode({ kind: 'adding' });
+	}
+
+	function close() {
+		drafts.clear();
+		setMode(CLOSED);
+	}
+
+	async function save(next: Badge[], message: string): Promise<boolean> {
+		try {
+			if (next.length === 0) {
+				await removeBadges.mutateAsync();
+			} else {
+				await saveBadges.mutateAsync({ badges: next });
 			}
-		},
-	});
 
-	function remove() {
-		removeBadge.mutate(undefined, {
-			onSuccess: () => {
-				form.reset(DEFAULT_BADGE);
-				toast.success('Badge removed');
-			},
-			onError: (error) => toast.error(getApiErrorMessage(error)),
-		});
+			toast.success(message);
+
+			return true;
+		} catch (error) {
+			toast.error(getApiErrorMessage(error));
+
+			return false;
+		}
+	}
+
+	async function saveDrafts(edited: Badge[]) {
+		const stored = badges.map(({ name, image }) => ({ name, image }));
+		const next =
+			mode.kind === 'editing' ? stored.with(mode.index, edited[0]!) : [...stored, ...edited];
+
+		if (
+			await save(
+				next,
+				mode.kind === 'editing'
+					? 'Badge saved'
+					: edited.length === 1
+						? 'Badge added'
+						: 'Badges added',
+			)
+		) {
+			close();
+		}
 	}
 
 	if (claim?.revokedAt) {
 		return (
 			<Text variant='text-sm' color='destructive'>
-				Staff removed your badge
-				{claim.revokeReason ? `: ${claim.revokeReason}` : '.'} You cannot set another.
+				Staff removed your badges
+				{claim.revokeReason ? `: ${claim.revokeReason}` : '.'} You cannot set others.
 			</Text>
 		);
 	}
 
+	const form =
+		mode.kind === 'closed' ? null : (
+			<BadgeForm
+				drafts={drafts.drafts}
+				takenNames={badges
+					.filter((_, index) => mode.kind !== 'editing' || index !== mode.index)
+					.map((badge) => badge.name)}
+				disabled={isPending}
+				onAddMore={
+					mode.kind === 'adding' && freeSlots > 0
+						? () => addPicker.current?.click()
+						: undefined
+				}
+				onReplaceImage={pickReplacement}
+				onRename={drafts.rename}
+				onRemove={
+					mode.kind === 'adding'
+						? (id) => (drafts.drafts.length === 1 ? close() : drafts.remove(id))
+						: undefined
+				}
+				onCancel={close}
+				onSave={(edited) => void saveDrafts(edited)}
+			/>
+		);
+
 	return (
-		<form
-			onSubmit={(event) => {
-				event.preventDefault();
-				void form.handleSubmit();
-			}}
-			className='flex flex-col gap-4'
-		>
-			<form.Field name='label'>
-				{(field) => {
-					const label = badgeLabelSchema.safeParse(field.state.value);
+		<div className='flex flex-col gap-3'>
+			<input
+				ref={addPicker}
+				type='file'
+				accept={BADGE_IMAGE_TYPE}
+				multiple
+				className='hidden'
+				onChange={(event) => {
+					onAdded([...(event.target.files ?? [])]);
+					event.target.value = '';
+				}}
+			/>
+			<input
+				ref={replacePicker}
+				type='file'
+				accept={BADGE_IMAGE_TYPE}
+				className='hidden'
+				onChange={(event) => {
+					onReplacementPicked(event.target.files?.[0]);
+					event.target.value = '';
+				}}
+			/>
 
-					return (
-						<div className='flex flex-col gap-1.5'>
-							<div className='flex gap-2 items-center'>
-								<Input
-									value={field.state.value}
-									onChange={(event) => field.handleChange(event.target.value)}
-									onBlur={field.handleBlur}
-									maxLength={BADGE_LABEL_MAX_LENGTH}
-									placeholder='Badge label, e.g. Night Owl'
-									aria-label='Badge label'
-									disabled={disabled}
-								/>
-								<Text
-									variant='text-xs'
-									color='muted'
-									className='tabular-nums shrink-0'
-								>
-									{field.state.value.length}/{BADGE_LABEL_MAX_LENGTH}
+			<div className='flex items-center justify-between gap-4'>
+				<div className='flex flex-col'>
+					<Text variant='text-sm' className='font-medium'>
+						Your badges
+					</Text>
+					<Text variant='text-xs' color='muted'>
+						They show on your Discord profile for everyone using Unbound.
+					</Text>
+				</div>
+				{editable ? (
+					<Button
+						type='button'
+						variant='outline'
+						size='sm'
+						className='gap-2'
+						disabled={
+							isPending || mode.kind !== 'closed' || badges.length >= BADGE_LIMIT
+						}
+						onClick={() => addPicker.current?.click()}
+					>
+						<IconUpload size={14} />
+						Upload badges
+						<span className='text-muted-foreground tabular-nums'>
+							{BADGE_LIMIT - freeSlots} of {BADGE_LIMIT}
+						</span>
+					</Button>
+				) : null}
+			</div>
+
+			{note ? (
+				<Text variant='text-xs' color='muted'>
+					{note}
+				</Text>
+			) : null}
+
+			{badges.length === 0 && mode.kind === 'closed' ? (
+				<Text variant='text-sm' color='muted'>
+					No badges yet. Upload up to {BADGE_LIMIT} PNGs and name each one.
+				</Text>
+			) : null}
+
+			{editable ? (
+				badges.map((badge, index) =>
+					mode.kind === 'editing' && mode.index === index ? (
+						<div key={badge.image}>{form}</div>
+					) : (
+						<div
+							key={badge.image}
+							className='flex items-center justify-between gap-4 min-h-8'
+						>
+							<div className='flex items-center gap-3 min-w-0'>
+								<BadgeTile imageUrl={badge.imageUrl} />
+								<Text variant='text-sm' className='truncate'>
+									{badge.name}
 								</Text>
 							</div>
-							{field.state.value && !label.success ? (
-								<Text variant='text-xs' color='destructive'>
-									{label.error.issues[0]?.message}
-								</Text>
-							) : null}
-						</div>
-					);
-				}}
-			</form.Field>
-
-			<form.Field name='icon'>
-				{(field) => (
-					<div
-						className='flex flex-wrap gap-1.5'
-						role='radiogroup'
-						aria-label='Badge icon'
-					>
-						{BADGE_ICONS.map((icon) => {
-							const IconComponent = BADGE_ICON_COMPONENTS[icon];
-
-							return (
+							<div className='flex gap-1'>
 								<Button
-									key={icon}
 									type='button'
-									size='icon-sm'
-									variant={field.state.value === icon ? 'default' : 'outline'}
-									role='radio'
-									aria-checked={field.state.value === icon}
-									aria-label={icon}
-									disabled={disabled}
-									onClick={() => field.handleChange(icon)}
-								>
-									<IconComponent size={16} />
-								</Button>
-							);
-						})}
-					</div>
-				)}
-			</form.Field>
-
-			<form.Field name='color'>
-				{(field) => (
-					<div
-						className='flex flex-wrap gap-2'
-						role='radiogroup'
-						aria-label='Badge colour'
-					>
-						{BADGE_COLORS.map((color) => (
-							<button
-								key={color}
-								type='button'
-								role='radio'
-								aria-checked={field.state.value === color}
-								aria-label={color}
-								disabled={disabled}
-								onClick={() => field.handleChange(color)}
-								className={cn(
-									'size-7 rounded-full border-2 border-transparent disabled:opacity-50',
-									BADGE_COLOR_CLASSES[color],
-									field.state.value === color && 'border-foreground',
-								)}
-							/>
-						))}
-					</div>
-				)}
-			</form.Field>
-
-			<form.Subscribe selector={(state) => state.values}>
-				{(badge) => {
-					const label = badgeLabelSchema.safeParse(badge.label);
-
-					return (
-						<div className='flex items-center justify-between gap-4'>
-							<div className='flex items-center gap-2 min-w-0'>
-								<Text variant='text-xs' color='muted'>
-									Preview
-								</Text>
-								{label.success ? (
-									<UserBadge badge={{ ...badge, label: label.data }} />
-								) : null}
-							</div>
-							<div className='flex gap-2'>
-								{claim ? (
-									<Button
-										type='button'
-										variant='outline'
-										size='sm'
-										className='gap-2'
-										disabled={isPending}
-										onClick={remove}
-									>
-										<IconTrash size={14} />
-										Remove
-									</Button>
-								) : null}
-								<Button
-									type='submit'
+									variant='ghost'
 									size='sm'
-									disabled={disabled || !label.success}
+									className='gap-2'
+									disabled={isPending || mode.kind !== 'closed'}
+									onClick={() => {
+										drafts.edit(badge);
+										setMode({ kind: 'editing', index });
+									}}
 								>
-									Save
+									<IconPen size={14} />
+									Edit
+								</Button>
+								<Button
+									type='button'
+									variant='ghost'
+									size='sm'
+									className='gap-2'
+									disabled={isPending || mode.kind !== 'closed'}
+									onClick={() =>
+										void save(
+											badges
+												.toSpliced(index, 1)
+												.map(({ name, image }) => ({ name, image })),
+											'Badge removed',
+										)
+									}
+								>
+									<IconTrash size={14} />
+									Remove
 								</Button>
 							</div>
 						</div>
-					);
-				}}
-			</form.Subscribe>
-		</form>
+					),
+				)
+			) : (
+				<UserBadgeList badges={badges} />
+			)}
+
+			{mode.kind === 'adding' ? form : null}
+
+			{!editable && badges.length > 0 ? (
+				<Button
+					type='button'
+					variant='outline'
+					size='sm'
+					className='gap-2 self-start'
+					disabled={isPending}
+					onClick={() => void save([], 'Badges removed')}
+				>
+					<IconTrash size={14} />
+					Remove badges
+				</Button>
+			) : null}
+		</div>
 	);
 }
 

@@ -29,8 +29,8 @@ const VIEWS = {
 	review: [{ queryKey: reviewKey }, { queryKey: dashboardKey }],
 	/** An approval published a version. */
 	release: [{ queryKey: marketplaceKey }],
-	/** The badge shows on `/account`, next to the user on addon pages and on the Team pages. */
-	badge: [{ queryKey: accountOverviewKey }, { queryKey: marketplaceKey }],
+	/** Badges show on `/account`, next to the user on addon pages and on the Team pages. */
+	badges: [{ queryKey: accountOverviewKey }, { queryKey: marketplaceKey }],
 	/** Linked accounts and API keys. */
 	account: [{ queryKey: accountOverviewKey }],
 } satisfies Record<string, InvalidateQueryFilters[]>;

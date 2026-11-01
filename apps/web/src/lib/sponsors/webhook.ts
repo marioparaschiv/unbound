@@ -38,6 +38,7 @@ const payloadSchema = z.object({
 		created_at: isoDate,
 		sponsorable: githubAccountSchema,
 		sponsor: githubAccountSchema.nullable(),
+		privacy_level: z.enum(['public', 'private']),
 		tier: z.object({
 			name: z.string(),
 			monthly_price_in_cents: z.int().nonnegative(),
@@ -226,6 +227,7 @@ export async function handleSponsorsWebhook(ctx: AppContext, request: Request): 
 			tierName: remote.tier.name,
 			monthlyPriceCents: remote.tier.monthly_price_in_cents,
 			oneTime: remote.tier.is_one_time,
+			isPublic: remote.privacy_level === 'public',
 			since: remote.created_at,
 		},
 		effectiveDate: effective_date,

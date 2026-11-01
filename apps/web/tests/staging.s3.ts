@@ -104,6 +104,19 @@ describe('sweepStaging', () => {
 
 		expect(await staged(orphan)).toBe(false);
 	});
+
+	test('deletes a badge upload nobody completed once it is older than the grace period', async () => {
+		const upload = `badge-uploads/${Bun.randomUUIDv7()}/${Bun.randomUUIDv7()}.png`;
+
+		await ctx.storage.staging.write(upload, 'png');
+		await sweepAfter(0);
+
+		expect(await staged(upload)).toBe(true);
+
+		await sweepAfter(grace + MINUTE_MS);
+
+		expect(await staged(upload)).toBe(false);
+	});
 });
 
 describe('banning a user', () => {
