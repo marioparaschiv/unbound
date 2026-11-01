@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 
 #include "LoaderBundleSignature.h"
+#include "LoaderCrypto.h"
 #include "LoaderFiles.h"
 
 namespace loader {
@@ -39,8 +40,9 @@ static std::string fileName(const std::string &path)
     return slash == std::string::npos ? path : path.substr(slash + 1);
 }
 
-std::string cachedSha512(const std::string &directory, const std::string &path,
-                         const std::string &contents)
+static std::string cachedDigest(const std::string &directory, const std::string &path,
+                                const std::string &contents, const char *field,
+                                std::string (*compute)(std::string_view))
 {
     std::string                   cachePath = joinPath(directory, kDigestCacheFile);
     std::optional<nlohmann::json> identity  = fileIdentity(path);
@@ -52,21 +54,43 @@ std::string cachedSha512(const std::string &directory, const std::string &path,
         cache = nlohmann::json::object();
     }
 
-    std::string name  = fileName(path);
-    auto        entry = cache.find(name);
-    if (identity && entry != cache.end() && entry->is_object() && entry->contains("sha512") &&
-        (*entry)["sha512"].is_string() && entry->value("identity", nlohmann::json()) == *identity &&
-        (*entry)["size"] == contents.size())
+    std::string name    = fileName(path);
+    auto        entry   = cache.find(name);
+    bool        current = identity && entry != cache.end() && entry->is_object() &&
+                          entry->value("identity", nlohmann::json()) == *identity &&
+                          (*entry)["size"] == contents.size();
+    if (current && entry->contains(field) && (*entry)[field].is_string())
     {
-        return (*entry)["sha512"].get<std::string>();
+        return (*entry)[field].get<std::string>();
     }
 
-    std::string digest = sha512Hex(contents);
+    std::string digest = compute(contents);
     if (identity)
     {
-        cache[name] = {{"identity", *identity}, {"size", contents.size()}, {"sha512", digest}};
+        if (!current)
+        {
+            cache[name] = {{"identity", *identity}, {"size", contents.size()}};
+        }
+        cache[name][field] = digest;
         writeTextFileAtomically(cachePath, cache.dump());
     }
     return digest;
+}
+
+static std::string sha256Hex(std::string_view contents)
+{
+    return crypto::hex(crypto::sha256(contents));
+}
+
+std::string cachedSha512(const std::string &directory, const std::string &path,
+                         const std::string &contents)
+{
+    return cachedDigest(directory, path, contents, "sha512", sha512Hex);
+}
+
+std::string cachedSha256(const std::string &directory, const std::string &path,
+                         const std::string &contents)
+{
+    return cachedDigest(directory, path, contents, "sha256", sha256Hex);
 }
 }

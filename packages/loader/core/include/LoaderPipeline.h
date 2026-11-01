@@ -60,7 +60,7 @@ private:
     void updateInBackground(std::string savedPath, bool hasSaved, uint64_t token);
     bool settleFirstDownload(uint64_t token, std::optional<std::string> path);
     std::optional<SavedBundle> awaitFirstDownload(uint64_t token);
-    bool evaluate(facebook::jsi::Runtime &runtime, const SavedBundle &saved, uint64_t token);
+    bool evaluate(facebook::jsi::Runtime &runtime, SavedBundle saved, uint64_t token);
     void injectPreBundle(facebook::jsi::Runtime &runtime);
     void announceCrashDisabledAddons();
 
