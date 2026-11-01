@@ -23,6 +23,12 @@ const DEFAULTS = {
 	'toasts.maxOnScreen': 3,
 	'plugins.showLibraries': false,
 	'updater.auto': true,
+	/** The loader reads the `loader.*` keys at launch; an empty URL means the default bundle. */
+	'loader.update.url': '',
+	'loader.update.force': false,
+	'loader.update.hmr': false,
+	'loader.update.unsigned': false,
+	'loader.devtools': false,
 	'discord-support.warned': '',
 	/** The font override map the loader applies, `{ [family]: overrideName }`. Treat it as read-only. */
 	'font-states': NO_FONT_OVERRIDES,
@@ -47,6 +53,16 @@ export type BooleanSettingKey = {
  */
 export function getSetting<K extends UnboundSettingKey>(key: K): Widen<UnboundSettings[K]> {
 	return getBucket(CORE_SETTINGS_STORE).get(key, DEFAULTS[key]);
+}
+
+/**
+ * @description Reads a core setting's default, such as the value a reset restores.
+ * @template K The setting key.
+ * @param key The setting key.
+ * @returns The key's default.
+ */
+export function getDefault<K extends UnboundSettingKey>(key: K): UnboundSettings[K] {
+	return DEFAULTS[key];
 }
 
 /**
@@ -88,4 +104,11 @@ export function useUnboundSettings(predicate?: (payload: SettingsPayload) => Pre
 	return { get: getSetting, set: setSetting, toggle: toggleSetting };
 }
 
-export default { getSetting, setSetting, toggleSetting, isSettingChange, useUnboundSettings };
+export default {
+	getSetting,
+	getDefault,
+	setSetting,
+	toggleSetting,
+	isSettingChange,
+	useUnboundSettings,
+};

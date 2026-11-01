@@ -3,16 +3,19 @@ import {
 	SYNC_CORE_STORE,
 	SYNC_KINDS,
 	syncDeleteResponseSchema,
-	syncOAuthConfigSchema,
-	syncSignInResponseSchema,
 	syncStateSchema,
 } from '@unbound-app/contracts/sync';
-import type { SyncDocumentInput, SyncSignInResponse } from '@unbound-app/contracts/sync';
+import {
+	accountOAuthConfigSchema,
+	accountSignInResponseSchema,
+} from '@unbound-app/contracts/account';
+import type { AccountSignInResponse } from '@unbound-app/contracts/account';
+import type { SyncDocumentInput } from '@unbound-app/contracts/sync';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
-import getSyncOAuthEndpoint from '~/endpoints/get-sync-oauth';
-import syncSignInEndpoint from '~/endpoints/sync-sign-in';
+import getDiscordOAuthEndpoint from '~/endpoints/get-discord-oauth';
+import discordSignInEndpoint from '~/endpoints/discord-sign-in';
 import deleteSyncEndpoint from '~/endpoints/delete-sync';
 import getSyncEndpoint from '~/endpoints/get-sync';
 import putSyncEndpoint from '~/endpoints/put-sync';
@@ -97,8 +100,10 @@ const base = await createTestContext({
 });
 const ctx = base.ctx;
 const server = serveEndpoints(ctx, {
-	'GET /api/v1/sync/oauth': getSyncOAuthEndpoint,
-	'POST /api/v1/sync/oauth': syncSignInEndpoint,
+	'GET /api/v1/auth/discord': getDiscordOAuthEndpoint,
+	'POST /api/v1/auth/discord': discordSignInEndpoint,
+	'GET /api/v1/sync/oauth': getDiscordOAuthEndpoint,
+	'POST /api/v1/sync/oauth': discordSignInEndpoint,
 	'GET /api/v1/sync': getSyncEndpoint,
 	'PUT /api/v1/sync': putSyncEndpoint,
 	'DELETE /api/v1/sync': deleteSyncEndpoint,
@@ -125,10 +130,10 @@ async function signIn() {
 	return headers;
 }
 
-function exchange(code: string): Promise<SyncSignInResponse> {
-	return client('POST /api/v1/sync/oauth', {
+function exchange(code: string): Promise<AccountSignInResponse> {
+	return client('POST /api/v1/auth/discord', {
 		body: { code },
-		response: syncSignInResponseSchema,
+		response: accountSignInResponseSchema,
 	});
 }
 
@@ -161,9 +166,11 @@ function plugins(...ids: string[]): SyncDocumentInput['addons'] {
 	};
 }
 
-describe('GET /api/v1/sync/oauth', () => {
+describe('GET /api/v1/auth/discord', () => {
 	test('describes the in-app Discord authorize request', async () => {
-		const config = await client('GET /api/v1/sync/oauth', { response: syncOAuthConfigSchema });
+		const config = await client('GET /api/v1/auth/discord', {
+			response: accountOAuthConfigSchema,
+		});
 
 		expect(config).toEqual({
 			clientId: 'discord-client',
@@ -173,7 +180,37 @@ describe('GET /api/v1/sync/oauth', () => {
 	});
 });
 
-describe('POST /api/v1/sync/oauth', () => {
+describe('/api/v1/sync/oauth', () => {
+	test('still signs in released clients', async () => {
+		const config = await client('GET /api/v1/sync/oauth', {
+			response: accountOAuthConfigSchema,
+		});
+		const session = await client('POST /api/v1/sync/oauth', {
+			body: { code: 'code-alice' },
+			response: accountSignInResponseSchema,
+		});
+
+		expect(config.clientId).toBe('discord-client');
+		expect(session.user.name).toBe('Alice');
+	});
+});
+
+describe('POST /api/v1/auth/discord', () => {
+	test('opens a session that Better Auth sign-out revokes through the bearer token', async () => {
+		const { token } = await exchange('code-alice');
+		const headers = new Headers({ authorization: `Bearer ${token}` });
+
+		expect((await getState(headers)).revision).toBeNumber();
+
+		const signOut = await fetch(new URL('/api/auth/sign-out', server.url), {
+			method: 'POST',
+			headers,
+		});
+
+		expect(signOut.status).toBe(200);
+		expect(await failure(getState(headers))).toEqual({ status: 401, code: 'unauthorized' });
+	});
+
 	test('creates the account on first sign-in, then reuses it', async () => {
 		const first = await exchange('code-alice');
 		const second = await exchange('code-alice');

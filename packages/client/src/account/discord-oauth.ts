@@ -1,4 +1,4 @@
-import type { SyncOAuthConfig } from '@unbound-app/contracts/sync';
+import type { AccountOAuthConfig } from '@unbound-app/contracts/account';
 import uuid from '@unbound-app/utils/uuid';
 
 import { OAuth2 } from '~/metro/api';
@@ -31,7 +31,7 @@ function readQuery(location: string): Record<string, string> {
  * @param config The client id, redirect URI and scopes from the server.
  * @returns The authorization code, or `undefined` when the user cancelled or the state did not match.
  */
-export function authorizeWithDiscord(config: SyncOAuthConfig): Promise<string | undefined> {
+export function authorizeWithDiscord(config: AccountOAuthConfig): Promise<string | undefined> {
 	const state = uuid(32);
 
 	return new Promise((resolve) => {

@@ -54,6 +54,7 @@ export declare function SliderRow({
 	maximum,
 	step,
 	unit,
+	format,
 	onChange,
 }: SliderRowProps): React$1.ReactElement | null;
 /**
@@ -107,6 +108,8 @@ export type SliderRowProps = {
 	step?: number;
 	/** Text appended to the shown value, such as `px` or `%`; none when omitted. */
 	unit?: string;
+	/** Formats the shown value, such as a fraction as a percentage; replaces `unit` when given. */
+	format?: (value: number) => string;
 	/** Called with the snapped value when a drag ends or the reset button is pressed, not during the drag. */
 	onChange: (value: number) => void;
 };

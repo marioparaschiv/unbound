@@ -78,6 +78,7 @@
 							"packages/client/src/marketplace",
 							"packages/client/src/updates",
 							"packages/client/src/sync",
+							"packages/client/src/account",
 							"packages/client/src/builtins",
 							"packages/client/src/debugger",
 							"packages/client/src/hot-refresh",
@@ -87,6 +88,7 @@
 						],
 						"deny": ["~/ui"],
 						"except": [
+							"packages/client/src/account/builtin.ts",
 							"packages/client/src/assets/builtin.ts",
 							"packages/client/src/commands/builtin.ts",
 							"packages/client/src/debugger/builtin.ts",
@@ -95,7 +97,7 @@
 							"packages/client/src/links/builtin.ts",
 							"packages/client/src/marketplace/builtin.ts",
 							"packages/client/src/native/builtin.ts",
-							"packages/client/src/plugins/builtin.ts",
+							"packages/client/src/plugins/builtin.tsx",
 							"packages/client/src/settings/builtin.tsx",
 							"packages/client/src/sync/builtin.ts",
 							"packages/client/src/themes/builtin.ts",
@@ -121,6 +123,7 @@
 							"~/plugins/builtin",
 							"~/settings/builtin",
 							"~/sync/builtin",
+							"~/account/builtin",
 							"~/themes/builtin",
 							"~/toasts/builtin",
 							"~/updates/builtin"

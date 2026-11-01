@@ -29,6 +29,7 @@ const DOMAINS = new Set([
 	'marketplace',
 	'updates',
 	'sync',
+	'account',
 	'builtins',
 	'debugger',
 	'hot-refresh',

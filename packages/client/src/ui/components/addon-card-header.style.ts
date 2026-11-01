@@ -1,19 +1,10 @@
 import { Discord } from '~/metro/components';
-import { Theme } from '~/metro/common';
 
 export default Discord.createStyles({
 	container: {
 		flexDirection: 'row',
 		alignItems: 'flex-start',
 		gap: 12,
-	},
-	iconContainer: {
-		width: 40,
-		height: 40,
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderRadius: 12,
-		backgroundColor: Theme.colors.BACKGROUND_SURFACE_HIGH,
 	},
 	content: {
 		flex: 1,

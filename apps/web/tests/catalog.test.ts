@@ -34,6 +34,7 @@ beforeAll(async () => {
 	}));
 
 	await seedApprovedAddon(ctx, ownerId, manifest('cat.plugin', '1.0.0', { name: 'Plugin' }));
+	await ctx.db.update(addon).set({ icon: 'IconFlag2' }).where(eq(addon.id, 'cat.plugin'));
 	await seedApprovedAddon(
 		ctx,
 		ownerId,
@@ -64,6 +65,17 @@ describe('GET /api/v1/catalog', () => {
 			['cat.theme', 'theme'],
 		]);
 		expect(catalog.addons[0]?.latestVersion.version).toBe('1.0.0');
+	});
+
+	test("carries each picked icon's markup, and null for the type's default", async () => {
+		const catalog = await client('GET /api/v1/catalog', { response: catalogResponseSchema });
+		const [plugin, theme] = catalog.addons;
+
+		expect(plugin?.icon).toBe('IconFlag2');
+		expect(plugin?.iconSvg).toStartWith('<svg');
+		expect(plugin?.iconSvg).toContain('currentColor');
+		expect(theme?.icon).toBeNull();
+		expect(theme?.iconSvg).toBeNull();
 	});
 
 	test('serves the revision as a strong ETag', async () => {

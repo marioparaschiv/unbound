@@ -3,7 +3,13 @@ import { describe, expect, test } from 'bun:test';
 
 import type { MarketplaceEvent, MarketplaceState } from './catalog';
 
-import { getInstallStatus, parseCatalog, queryCatalog, reduceMarketplace } from './catalog';
+import {
+	findIconSvg,
+	getInstallStatus,
+	parseCatalog,
+	queryCatalog,
+	reduceMarketplace,
+} from './catalog';
 
 type ListingOptions = {
 	type?: AddonType;
@@ -100,6 +106,26 @@ describe('getInstallStatus', () => {
 		expect(getInstallStatus('1.1.0', '1.0.0')).toBe('update');
 		expect(getInstallStatus('1.1.0', '1.1.0')).toBe('installed');
 		expect(getInstallStatus('1.1.0', '2.0.0')).toBe('installed');
+	});
+});
+
+describe('findIconSvg', () => {
+	const svg = '<svg viewBox="0 0 20 20"></svg>';
+	const catalog = {
+		revision: 'r1',
+		addons: [{ ...listing('a.flag'), icon: 'IconFlag2', iconSvg: svg }, listing('a.plain')],
+	};
+
+	test("finds a picked icon's markup in a ready catalog", () => {
+		expect(findIconSvg({ status: 'ready', catalog, refreshing: false }, 'a.flag')).toBe(svg);
+	});
+
+	test('has no icon for a default, an unlisted addon, or a missing catalog', () => {
+		const ready: MarketplaceState = { status: 'ready', catalog, refreshing: false };
+
+		expect(findIconSvg(ready, 'a.plain')).toBeUndefined();
+		expect(findIconSvg(ready, 'a.unlisted')).toBeUndefined();
+		expect(findIconSvg({ status: 'loading' }, 'a.flag')).toBeUndefined();
 	});
 });
 

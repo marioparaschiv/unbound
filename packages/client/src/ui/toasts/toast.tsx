@@ -7,16 +7,15 @@ import { memo, useCallback } from 'react';
 
 import { useUnboundSettings } from '~/settings/unbound';
 import TintedIcon from '~/metro/fallbacks/tinted-icon';
-import { BackdropFilters } from '~/metro/components';
 import toastDuration from '~/toasts/duration';
 import useToastStore from '~/toasts/state';
 import { icons } from '~/assets/api';
 
-import { unitToHex, withoutOpacity } from './color';
 import useToastState from './use-toast-state';
 import ToastProgress from './toast-progress';
 import ToastButtons from './toast-buttons';
 import ToastContent from './toast-content';
+import ToastSurface from './toast-surface';
 import useStyles from './toast.style';
 import ToastIcon from './toast-icon';
 
@@ -52,7 +51,6 @@ function Toast({ id }: ToastProps) {
 	const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 	const styles = useStyles();
 
-	const opacity = settings.get('toasts.opacity');
 	const animations = settings.get('toasts.animations');
 
 	const onGestureEvent = useCallback(
@@ -79,7 +77,6 @@ function Toast({ id }: ToastProps) {
 	if (!options) return null;
 
 	const duration = toastDuration(options.duration, settings.get('toasts.duration'));
-	const background = withoutOpacity(styles.container.backgroundColor) + unitToHex(opacity);
 
 	return (
 		<PanGestureHandler onGestureEvent={onGestureEvent}>
@@ -90,15 +87,7 @@ function Toast({ id }: ToastProps) {
 				]}
 				pointerEvents='box-none'
 			>
-				<View
-					style={[styles.container, styles.toastShadow, { backgroundColor: background }]}
-					onLayout={onLayout}
-				>
-					{opacity !== 1 ? (
-						<BackdropFilters.BackgroundBlurFill
-							blurAmount={settings.get('toasts.blur')}
-						/>
-					) : null}
+				<ToastSurface onLayout={onLayout}>
 					<View style={styles.wrapper}>
 						{options.icon ? (
 							<ToastIcon icon={options.icon} tinted={options.tintedIcon ?? true} />
@@ -117,7 +106,7 @@ function Toast({ id }: ToastProps) {
 						<ToastButtons buttons={options.buttons} />
 					) : null}
 					{duration > 0 ? <ToastProgress width={width} /> : null}
-				</View>
+				</ToastSurface>
 			</Animated.View>
 		</PanGestureHandler>
 	);

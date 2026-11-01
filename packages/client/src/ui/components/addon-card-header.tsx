@@ -1,38 +1,36 @@
+import type { AddonKind } from '@unbound-app/types/addons';
 import type { AddonManifest } from '@unbound-app/types';
 import { View } from 'react-native';
 import { memo } from 'react';
 
-import TintedIcon from '~/metro/fallbacks/tinted-icon';
 import { Discord } from '~/metro/components';
 import { Theme } from '~/metro/common';
-import { icons } from '~/assets/api';
 
 import useStyles from './addon-card-header.style';
 import AddonTitle from './addon-title';
+import AddonIcon from './addon-icon';
 
 /** The manifest fields a card header shows; an installed addon's and a listed addon's both fit. */
 export type AddonCardManifest = Pick<AddonManifest, 'name' | 'version' | 'authors' | 'description'>;
 
 type AddonCardHeaderProps = {
+	id: string;
+	kind: AddonKind;
 	manifest: AddonCardManifest;
-	/** The asset name of the tinted icon. */
-	icon?: string;
 };
 
 /**
- * @description The top of an addon card: a tinted icon, the addon name with its version, the author,
+ * @description The top of an addon card: the addon's icon, its name with its version, the author,
  * and the description. Pure and memoized; it reads nothing from any manager.
  */
-function AddonCardHeader({ manifest, icon = 'PuzzlePieceIcon' }: AddonCardHeaderProps) {
+function AddonCardHeader({ id, kind, manifest }: AddonCardHeaderProps) {
 	const styles = useStyles();
 	const { name, version, authors, description } = manifest;
 	const author = authors?.map((a) => a.name).join(', ');
 
 	return (
 		<View style={styles.container}>
-			<View style={styles.iconContainer}>
-				<TintedIcon source={icons[icon] ?? 0} size={22} tint={Theme.colors.TEXT_STRONG} />
-			</View>
+			<AddonIcon id={id} kind={kind} />
 			<View style={styles.content}>
 				<AddonTitle name={name} version={version} />
 				{author ? (

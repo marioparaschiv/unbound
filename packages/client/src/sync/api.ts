@@ -1,41 +1,26 @@
 import {
 	emptySyncDocument,
 	syncDeleteResponseSchema,
-	syncOAuthConfigSchema,
-	syncSignInResponseSchema,
 	syncStateSchema,
 } from '@unbound-app/contracts/sync';
-import { ApiRequestError, createApiClient } from '@unbound-app/web/client';
 import type { SyncDocument } from '@unbound-app/contracts/sync';
-import type { Caller } from '@unbound-app/contracts/account';
+import { ApiRequestError } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
-import type { Api } from '@unbound-app/web/api';
 
 import { applyActions, collectLocalDocument } from '~/sync/device';
 import { isJsonEqual, plan, reconcileBase } from '~/sync/merge';
-import { authorizeWithDiscord } from '~/sync/discord-oauth';
+import type { Account } from '~/account/account';
 import type { SyncStrategy } from '~/sync/merge';
-import { API_URL } from '~/core/constants';
+import type { ApiRequest } from '~/account/api';
 import { getBucket } from '~/storage/api';
+import * as account from '~/account/api';
 
-/** The settings store Sync keeps its session and last agreed document in. Never synced. */
+/** The settings store Sync keeps its mode and last agreed document in. Never synced. */
 export const SYNC_STORE = 'unbound::sync';
 
-type SyncSession = {
-	token: string;
-	user: Caller;
-};
-
-/** The account signed in to Sync. */
-export type SyncAccount = {
-	/** The account's id on Unbound's servers, saved with the session at sign-in. */
-	id: string;
-	/** The account's display name, as Unbound's servers returned it at sign-in. */
-	name: string;
-	/** The account's avatar image URL, or `null` when it has none. */
-	image: string | null;
-};
+/** @deprecated Use account.Account */
+export type SyncAccount = Account;
 
 /** Which way automatic syncs move changes on this device. */
 export type SyncMode = 'two-way' | 'download' | 'upload';
@@ -46,8 +31,6 @@ const MODE_STRATEGIES: Record<SyncMode, SyncStrategy> = {
 	upload: 'push',
 };
 
-type ApiRequest = ReturnType<typeof createApiClient<Api>>;
-
 const logger = createLogger('Sync');
 const Store = getBucket(SYNC_STORE);
 
@@ -55,20 +38,17 @@ let running: Promise<boolean> | undefined;
 let rerun = false;
 let applying = false;
 
-function readSession(): SyncSession | null {
-	return Store.get<SyncSession | null>('session', null);
-}
-
-/** @returns The signed-in account, or `null`. */
-export function getSession(): SyncAccount | null {
-	const user = readSession()?.user;
-
-	return user ? { id: user.id, name: user.name, image: user.image } : null;
+/**
+ * @deprecated Use account.getAccount
+ * @returns The signed-in account, or `null`.
+ */
+export function getSession(): Account | null {
+	return account.getAccount() ?? null;
 }
 
 /** @returns Whether this device syncs automatically. */
 export function isEnabled(): boolean {
-	return Boolean(readSession()) && Store.get('enabled', false) && !needsFirstSyncChoice();
+	return Boolean(account.getAccount()) && Store.get('enabled', false) && !needsFirstSyncChoice();
 }
 
 /** @returns Which way automatic syncs move changes on this device. */
@@ -92,12 +72,6 @@ function needsFirstSyncChoice(): boolean {
  */
 export function isApplying(): boolean {
 	return applying;
-}
-
-function client(session: SyncSession | null = readSession()): ApiRequest {
-	const headers = session ? { authorization: `Bearer ${session.token}` } : undefined;
-
-	return createApiClient<Api>({ baseUrl: API_URL, headers });
 }
 
 function resetBase() {
@@ -146,13 +120,11 @@ function isConflict(error: Error): boolean {
 }
 
 async function run(strategy: SyncStrategy): Promise<boolean> {
-	const session = readSession();
-
-	if (!session) {
+	if (!account.getAccount()) {
 		return false;
 	}
 
-	const request = client(session);
+	const request = account.createClient();
 
 	try {
 		await attempt(request, strategy).catch((error) => {
@@ -171,10 +143,6 @@ async function run(strategy: SyncStrategy): Promise<boolean> {
 	} catch (error) {
 		logger.error('Failed to sync:', error);
 		Store.set('lastError', toError(error).message);
-
-		if (error instanceof ApiRequestError && error.status === 401) {
-			Store.set('session', null);
-		}
 
 		return false;
 	}
@@ -213,28 +181,17 @@ export function now(strategy: SyncStrategy = MODE_STRATEGIES[getMode()]): Promis
 }
 
 /**
- * @description Signs in through Discord's in-app authorize screen, turns syncing on and syncs.
- * @returns Whether the user signed in. Failures are recorded as `lastError`.
+ * @description Starts syncing for an account that just signed in: turns syncing on, and asks how to
+ * combine this device with a setup the cloud already holds before the first sync.
+ * @returns Whether the cloud could be read. Failures are recorded as `lastError`.
  */
-export async function signIn(): Promise<boolean> {
+export async function connect(): Promise<boolean> {
 	try {
-		const request = client(null);
-		const config = await request('GET /api/v1/sync/oauth', { response: syncOAuthConfigSchema });
-		const code = await authorizeWithDiscord(config);
-
-		if (!code) {
-			return false;
-		}
-
-		const session = await request('POST /api/v1/sync/oauth', {
-			body: { code },
-			response: syncSignInResponseSchema,
+		const remote = await account.createClient()('GET /api/v1/sync', {
+			response: syncStateSchema,
 		});
 
-		const remote = await client(session)('GET /api/v1/sync', { response: syncStateSchema });
-
 		resetBase();
-		Store.set('session', session);
 		Store.set('enabled', true);
 		Store.set('lastError', null);
 		Store.set('pendingChoice', remote.revision > 0);
@@ -245,21 +202,39 @@ export async function signIn(): Promise<boolean> {
 
 		return true;
 	} catch (error) {
-		logger.error('Failed to sign in:', error);
+		logger.error('Failed to read the cloud setup after signing in:', error);
 		Store.set('lastError', toError(error).message);
 
 		return false;
 	}
 }
 
-/** @description Signs out on this device. Installed addons and settings stay as they are. */
-export function signOut() {
-	Store.set('session', null);
+/**
+ * @description Stops syncing after the account signed out and forgets what was agreed with its
+ * cloud setup. Installed addons and settings stay as they are.
+ */
+export function disconnect() {
 	Store.set('pendingChoice', false);
 	Store.set('enabled', false);
 	Store.set('lastSyncedAt', null);
 	Store.set('lastError', null);
 	resetBase();
+}
+
+/**
+ * @deprecated Use account.signIn
+ * @returns Whether the account signed in.
+ */
+export async function signIn(): Promise<boolean> {
+	return (await account.signIn()).status === 'signed-in';
+}
+
+/**
+ * @deprecated Use account.signOut
+ * @returns Once the account signed out.
+ */
+export function signOut(): Promise<void> {
+	return account.signOut();
 }
 
 /**
@@ -305,7 +280,7 @@ export function resolveFirstSync(strategy: SyncStrategy): Promise<boolean> {
  */
 export async function deleteData(): Promise<boolean> {
 	try {
-		await client()('DELETE /api/v1/sync', { response: syncDeleteResponseSchema });
+		await account.createClient()('DELETE /api/v1/sync', { response: syncDeleteResponseSchema });
 
 		Store.set('enabled', false);
 		Store.set('lastSyncedAt', null);
@@ -333,6 +308,8 @@ export default {
 	now,
 	signIn,
 	signOut,
+	connect,
+	disconnect,
 	setEnabled,
 	deleteData,
 };

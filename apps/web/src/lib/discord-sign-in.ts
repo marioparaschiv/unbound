@@ -1,4 +1,4 @@
-import type { SyncOAuthConfig, SyncSignInResponse } from '@unbound-app/contracts/sync';
+import type { AccountOAuthConfig, AccountSignInResponse } from '@unbound-app/contracts/account';
 import { z } from 'zod';
 
 import { getAvatarUrl, getDefaultAvatarUrl } from '~/lib/discord';
@@ -55,7 +55,7 @@ function avatarUrl(user: DiscordUser): string {
  * @param env The validated environment.
  * @returns The client id, the redirect URI registered for web sign-in, and the scopes.
  */
-export function getSyncOAuthConfig(env: Env): SyncOAuthConfig {
+export function getDiscordOAuthConfig(env: Env): AccountOAuthConfig {
 	return {
 		clientId: env.DISCORD_CLIENT_ID,
 		redirectUri: new URL('/api/auth/callback/discord', env.PUBLIC_URL).href,
@@ -72,7 +72,7 @@ async function fetchDiscordProfile(env: Env, code: string): Promise<DiscordProfi
 			client_secret: env.DISCORD_CLIENT_SECRET,
 			grant_type: 'authorization_code',
 			code,
-			redirect_uri: getSyncOAuthConfig(env).redirectUri,
+			redirect_uri: getDiscordOAuthConfig(env).redirectUri,
 		}),
 	});
 
@@ -143,7 +143,7 @@ async function findOrCreateUser(ctx: AppContext, profile: DiscordProfile): Promi
 export async function signInWithDiscordCode(
 	ctx: AppContext,
 	code: string,
-): Promise<SyncSignInResponse> {
+): Promise<AccountSignInResponse> {
 	const userId = await findOrCreateUser(ctx, await fetchDiscordProfile(ctx.env, code));
 	const user = await ctx.db.query.user.findFirst({ where: { id: userId } });
 
@@ -161,4 +161,4 @@ export async function signInWithDiscordCode(
 	return { token: session.token, user: toCallerProfile(user) };
 }
 
-export default { getSyncOAuthConfig, signInWithDiscordCode };
+export default { getDiscordOAuthConfig, signInWithDiscordCode };

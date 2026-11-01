@@ -3,7 +3,7 @@
 export type { SettingsEntry } from './_internal';
 import type { SettingsEntry } from './_internal';
 import * as React$1 from 'react';
-import { ComponentType } from 'react';
+import { ComponentType, ReactNode } from 'react';
 /**
  * @description Returns the current registry of settings entries.
  * @returns A record of entry key to its {@link SettingsEntry}.
