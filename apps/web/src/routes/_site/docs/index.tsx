@@ -1,20 +1,8 @@
-import { createFileRoute, notFound, redirect } from '@tanstack/react-router';
-import { getLatestDocsVersion } from '@unbound-app/contracts/docs';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
-import { docsManifestQuery } from '~/queries/docs/docs';
-
-/** `/docs` opens the newest release of the API reference, or `main` before the first release. */
+/** `/docs` opens the user guide's first page. */
 export const Route = createFileRoute('/_site/docs/')({
-	loader: async ({ context }) => {
-		const manifest = await context.queryClient.ensureQueryData(docsManifestQuery('api'));
-
-		if (!manifest) {
-			throw notFound();
-		}
-
-		throw redirect({
-			to: '/docs/$package/$version',
-			params: { package: manifest.package, version: getLatestDocsVersion(manifest) },
-		});
+	loader: () => {
+		throw redirect({ to: '/docs/user/$', params: { _splat: 'overview' } });
 	},
 });
