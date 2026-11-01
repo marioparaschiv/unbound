@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.3]
+
+### Fixed
+
+- The plugin starts again on the current client, which no longer provides the old settings API.
+
 ## [1.1.2]
 
 ### Fixed
