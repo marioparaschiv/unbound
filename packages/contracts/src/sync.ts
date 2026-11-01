@@ -1,6 +1,5 @@
 import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 
-import { callerSchema } from './account';
 import { z } from './zod';
 
 /** The addon managers whose installs sync, named after their settings buckets. */
@@ -99,22 +98,6 @@ export const syncPutRequestSchema = z.object({
 	document: syncDocumentInputSchema,
 });
 
-export const syncOAuthConfigSchema = z.object({
-	clientId: z.string().check(z.minLength(1)),
-	redirectUri: z.url(),
-	scopes: z.array(z.string()),
-});
-
-export const syncSignInRequestSchema = z.object({
-	code: z.string().check(z.minLength(1), z.maxLength(512)),
-});
-
-/** `token` is a session token, sent back as `Authorization: Bearer <token>`. */
-export const syncSignInResponseSchema = z.object({
-	token: z.string().check(z.minLength(1)),
-	user: callerSchema,
-});
-
 export const syncDeleteResponseSchema = z.object({
 	deleted: z.boolean(),
 });
@@ -127,9 +110,6 @@ export type SyncDocument = z.infer<typeof syncDocumentSchema>;
 export type SyncState = z.infer<typeof syncStateSchema>;
 export type SyncDocumentInput = z.infer<typeof syncDocumentInputSchema>;
 export type SyncPutRequest = z.infer<typeof syncPutRequestSchema>;
-export type SyncOAuthConfig = z.infer<typeof syncOAuthConfigSchema>;
-export type SyncSignInRequest = z.infer<typeof syncSignInRequestSchema>;
-export type SyncSignInResponse = z.infer<typeof syncSignInResponseSchema>;
 export type SyncDeleteResponse = z.infer<typeof syncDeleteResponseSchema>;
 
 /**
@@ -162,9 +142,6 @@ export default {
 	syncStateSchema,
 	syncDocumentInputSchema,
 	syncPutRequestSchema,
-	syncOAuthConfigSchema,
-	syncSignInRequestSchema,
-	syncSignInResponseSchema,
 	syncDeleteResponseSchema,
 	emptySyncDocument,
 };

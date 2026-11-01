@@ -51,6 +51,7 @@ import { Route as SiteDocsPackageIndexRouteImport } from './routes/_site/docs/$p
 import { Route as SiteDocsPackageVersionRouteRouteImport } from './routes/_site/docs/$package/$version/route'
 import { Route as SiteDocsDeveloperSplatRouteImport } from './routes/_site/docs/developer/$'
 import { Route as SiteDocsUserSplatRouteImport } from './routes/_site/docs/user/$'
+import { Route as ApiV1AuthDiscordRouteImport } from './routes/api/v1/auth/discord'
 import { Route as ApiV1FirstPartyAddonsRouteImport } from './routes/api/v1/first-party/addons'
 import { Route as ApiV1FirstPartyPublishRouteImport } from './routes/api/v1/first-party/publish'
 import { Route as ApiV1GithubAddonsRouteImport } from './routes/api/v1/github/addons'
@@ -291,6 +292,11 @@ const SiteDocsUserSplatRoute = SiteDocsUserSplatRouteImport.update({
   path: '/user/$',
   getParentRoute: () => SiteDocsRouteRoute,
 } as any)
+const ApiV1AuthDiscordRoute = ApiV1AuthDiscordRouteImport.update({
+  id: '/api/v1/auth/discord',
+  path: '/api/v1/auth/discord',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1FirstPartyAddonsRoute = ApiV1FirstPartyAddonsRouteImport.update({
   id: '/api/v1/first-party/addons',
   path: '/api/v1/first-party/addons',
@@ -479,6 +485,7 @@ export interface FileRoutesByFullPath {
   '/addons/themes': typeof SiteAddonsListingThemesRoute
   '/docs/developer/$': typeof SiteDocsDeveloperSplatRoute
   '/docs/user/$': typeof SiteDocsUserSplatRoute
+  '/api/v1/auth/discord': typeof ApiV1AuthDiscordRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -546,6 +553,7 @@ export interface FileRoutesByTo {
   '/addons/themes': typeof SiteAddonsListingThemesRoute
   '/docs/developer/$': typeof SiteDocsDeveloperSplatRoute
   '/docs/user/$': typeof SiteDocsUserSplatRoute
+  '/api/v1/auth/discord': typeof ApiV1AuthDiscordRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -619,6 +627,7 @@ export interface FileRoutesById {
   '/_site/addons/_listing/themes': typeof SiteAddonsListingThemesRoute
   '/_site/docs/developer/$': typeof SiteDocsDeveloperSplatRoute
   '/_site/docs/user/$': typeof SiteDocsUserSplatRoute
+  '/api/v1/auth/discord': typeof ApiV1AuthDiscordRoute
   '/api/v1/first-party/addons': typeof ApiV1FirstPartyAddonsRoute
   '/api/v1/first-party/publish': typeof ApiV1FirstPartyPublishRoute
   '/api/v1/github/addons': typeof ApiV1GithubAddonsRoute
@@ -691,6 +700,7 @@ export interface FileRouteTypes {
     | '/addons/themes'
     | '/docs/developer/$'
     | '/docs/user/$'
+    | '/api/v1/auth/discord'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -758,6 +768,7 @@ export interface FileRouteTypes {
     | '/addons/themes'
     | '/docs/developer/$'
     | '/docs/user/$'
+    | '/api/v1/auth/discord'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -830,6 +841,7 @@ export interface FileRouteTypes {
     | '/_site/addons/_listing/themes'
     | '/_site/docs/developer/$'
     | '/_site/docs/user/$'
+    | '/api/v1/auth/discord'
     | '/api/v1/first-party/addons'
     | '/api/v1/first-party/publish'
     | '/api/v1/github/addons'
@@ -877,6 +889,7 @@ export interface RootRouteChildren {
   ApiV1SyncRoute: typeof ApiV1SyncRouteWithChildren
   ApiV1UpdatesRoute: typeof ApiV1UpdatesRoute
   ApiWebhooksGithubSponsorsRoute: typeof ApiWebhooksGithubSponsorsRoute
+  ApiV1AuthDiscordRoute: typeof ApiV1AuthDiscordRoute
   ApiV1FirstPartyAddonsRoute: typeof ApiV1FirstPartyAddonsRoute
   ApiV1FirstPartyPublishRoute: typeof ApiV1FirstPartyPublishRoute
   ApiV1GithubAddonsRoute: typeof ApiV1GithubAddonsRoute
@@ -1183,6 +1196,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/docs/user/$'
       preLoaderRoute: typeof SiteDocsUserSplatRouteImport
       parentRoute: typeof SiteDocsRouteRoute
+    }
+    '/api/v1/auth/discord': {
+      id: '/api/v1/auth/discord'
+      path: '/api/v1/auth/discord'
+      fullPath: '/api/v1/auth/discord'
+      preLoaderRoute: typeof ApiV1AuthDiscordRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/v1/first-party/addons': {
       id: '/api/v1/first-party/addons'
@@ -1607,6 +1627,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1SyncRoute: ApiV1SyncRouteWithChildren,
   ApiV1UpdatesRoute: ApiV1UpdatesRoute,
   ApiWebhooksGithubSponsorsRoute: ApiWebhooksGithubSponsorsRoute,
+  ApiV1AuthDiscordRoute: ApiV1AuthDiscordRoute,
   ApiV1FirstPartyAddonsRoute: ApiV1FirstPartyAddonsRoute,
   ApiV1FirstPartyPublishRoute: ApiV1FirstPartyPublishRoute,
   ApiV1GithubAddonsRoute: ApiV1GithubAddonsRoute,

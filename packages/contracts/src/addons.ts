@@ -111,6 +111,8 @@ export const listedAddonSchema = z.object({
 	type: addonTypeSchema,
 	/** The website icon a maintainer picked; `null` for the type's default. Optional so catalogs stored before it still parse. */
 	icon: z.optional(z.nullable(addonIconSchema)),
+	/** The server-rendered SVG markup of `icon`; `null` when `icon` is null or unknown. Optional like `icon`. */
+	iconSvg: z.optional(z.nullable(z.string())),
 	/** The display name: the served version's, unless staff pinned another. Optional so catalogs stored before it still parse. */
 	name: z.optional(z.string()),
 	/** The display description: the served version's, unless staff pinned another. Optional like `name`. */

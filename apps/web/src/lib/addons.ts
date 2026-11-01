@@ -27,6 +27,7 @@ import { addon, addonTag, addonVersion } from '~/db/schema';
 import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
 import { requirePermission } from '~/lib/api/caller';
+import { renderAddonIcon } from '~/lib/addon-icons';
 import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { likeContains } from '~/lib/like-contains';
 import type { Transaction } from '~/db/database';
@@ -364,6 +365,7 @@ function toListedAddons(ctx: AppContext, rows: ListedAddonRow[]): ListedAddon[] 
 						name: row.name,
 						description: row.description,
 						icon: row.icon,
+						iconSvg: renderAddonIcon(row.icon),
 						latestVersion: toAddonVersion(ctx.env, latest, latest.submission),
 					},
 				]
