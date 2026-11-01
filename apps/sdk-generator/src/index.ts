@@ -15,8 +15,9 @@ import {
 	type ModuleEntry,
 } from './paths';
 import { buildRoot, buildGlobal, writeManifest, normalizeForHash } from './emit';
-import { buildHoistFiles, bundle } from './bundle';
+import { bundleInWorkers } from './bundle-pool';
 import { buildOwnership } from './ownership';
+import { buildHoistFiles } from './bundle';
 import { buildEntries } from './entries';
 import { strip } from './transform';
 
@@ -33,6 +34,8 @@ async function generate() {
 	mkdirSync(API_SRC, { recursive: true });
 
 	const { root, modules: entries, aliases } = buildEntries();
+
+	const bundling = bundleInWorkers(entries.map((entry) => entry.source));
 
 	const ownedByModule = buildOwnership(entries);
 
@@ -69,6 +72,8 @@ async function generate() {
 	const usedOwners = new Set<string>();
 	const outputs = new Map<string, string>();
 
+	const bundled = await bundling;
+
 	for (const entry of entries) {
 		// A folder module's direct children (`metro/common` under `metro`) become `export * as` imports
 		// instead of inlined namespaces.
@@ -83,7 +88,7 @@ async function generate() {
 		outputs.set(
 			entry.out,
 			strip(
-				bundle(entry.source),
+				bundled.get(entry.source)!,
 				entry.out,
 				children,
 				ownerByName,
