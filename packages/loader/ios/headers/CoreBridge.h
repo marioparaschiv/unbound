@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (nullable NSDictionary *)themeColorsForId:(NSString *)themeId;
 + (BOOL)hasTheme:(NSString *)themeId;
 
++ (void)prescanAddons;
 + (void)scanAddons;
 + (NSArray *)themes;
 + (NSArray<NSDictionary *> *)fonts;
