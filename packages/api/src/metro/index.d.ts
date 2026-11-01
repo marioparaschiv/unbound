@@ -37,6 +37,7 @@ export declare const data: {
 	patchedRTNProfiler: boolean;
 	patchedImportTracker: boolean;
 	importTrackerId: number;
+	filePaths: Map<string, number>;
 	origToString: any;
 	listeners: Set<MetroModuleLoadListener>;
 };
@@ -210,7 +211,7 @@ export type MetroBulkModuleByProperty<T extends any[]> = {
 export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) & {
 	[CACHE_KEY]?: string;
 	isRaw?: boolean;
-	isFilePath?: boolean;
+	filePath?: string;
 };
 /** A function or class exported by a Discord module, whose signature Discord does not document. */
 export type MetroFunction = DiscordFunction & (new (...args: any[]) => any);

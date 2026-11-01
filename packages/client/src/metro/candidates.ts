@@ -35,7 +35,7 @@ export function couldMatch(mdl: MetroModuleRecord, filter: MetroFilter): boolean
 		return true;
 	}
 
-	if (filter.isFilePath && data.importTrackerId !== -1) {
+	if (filter.filePath !== void 0 && data.importTrackerId !== -1) {
 		return deps.includes(data.importTrackerId);
 	}
 
