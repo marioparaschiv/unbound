@@ -48,9 +48,9 @@ Each time Discord loads its JavaScript bundle, the loader:
 
 1. Reloads `settings.json`. If `loader.enabled` is `false`, it logs `Loader is disabled. Aborting.` and stops here, so Discord runs with no Unbound code.
 2. Scans the [addon folders](#storage) again.
-3. Starts preparing Unbound's bundle in the background: the cached copy if it has one, then an [update](#bundle-updates).
-4. Installs a module capture so Unbound can reach Discord's Metro modules, and a gate that holds Discord's first screen for up to 1.5 seconds so Unbound can run before it.
-5. Lets Discord's bundle run, then runs Unbound's bundle as soon as it is ready and React Native's modules are available.
+3. Reads the cached Unbound bundle, if there is one, and starts an [update](#bundle-updates) in the background.
+4. Runs the cached bundle before Discord's bundle, so Unbound hooks Metro before Discord defines its modules.
+5. Lets Discord's bundle run.
 
 Just before Unbound's bundle runs, the loader installs the native modules and console capture. It then runs the DevTools script when `loader.devtools` is `true`, and finally a preload script that defines these globals:
 
@@ -132,7 +132,7 @@ On each launch the loader:
 4. Checks the candidate's SHA-512 against the signed manifest.
 5. Runs the candidate. Only once it has run is it promoted to the active bundle, and its ETag is saved to `loader.update.etag`. If it fails to run, or the app dies while running it, the candidate is discarded on the next launch and the previous bundle is used.
 
-A cached bundle is used right away if there is one, and the update applies on the next launch. With `loader.update.hmr` set to `true`, the loader waits for a fresh download first and falls back to the cached copy only if the download fails.
+A cached bundle runs right away, and the update applies on the next launch. With no cached bundle, Discord starts without Unbound and the loader restarts it once the download lands. With `loader.update.hmr` set to `true`, the loader also restarts Discord whenever a newer bundle downloads.
 
 The signature check is skipped when `loader.update.unsigned` is `true`, when the URL's host is `localhost`, `*.localhost`, `*.local`, `::1`, or a private IPv4 address, or when the loader was built without a signing key.
 
