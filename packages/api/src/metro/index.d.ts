@@ -26,10 +26,22 @@ declare const HelpMessageTypes: {
 };
 declare const React$1: typeof import('react');
 declare function byFluxStore(name: string, short?: boolean): MetroFilter;
-/** @internal */
-declare const CACHE_KEY: unique symbol;
+/** The symbol a metro filter stores its cache key under, so repeated lookups hit the module cache. */
+export declare const CACHE_KEY: unique symbol;
 /** @deprecated Use onModuleLoad */
 export declare const addListener: typeof onModuleLoad;
+/** Ids of metro modules that threw while initialising; searches skip them. */
+export declare const blacklist: Set<number>;
+/** Metro search's mutable internal state: the module cache, load listeners and which require hooks are installed. */
+export declare const data: {
+	cache: Map<any, any>;
+	importingModuleId: number;
+	patchedNativeRequire: boolean;
+	patchedRTNProfiler: boolean;
+	patchedImportTracker: boolean;
+	origToString: any;
+	listeners: Set<MetroModuleLoadListener>;
+};
 /** @deprecated Use flux.getStore */
 export declare const findStore: MetroFindStore;
 /** @deprecated Call the function onModuleLoad returns. */
@@ -40,9 +52,8 @@ export declare const on: typeof onModuleLoad;
  * @description Runs several filters in a single registry pass, returning one result per item.
  * @param items The filters to resolve, each with its own per-item options.
  * @returns An array of matches positionally aligned with `items`.
- * @internal
  */
-declare function bulk(...items: MetroBulkItem[]): any[];
+export declare function bulk(...items: MetroBulkItem[]): any[];
 /**
  * @description Core synchronous module search. Tries the per-key cache fast-path first, then falls
  * back to scanning the registry, degrading gracefully if the supplied filter throws.
@@ -103,6 +114,12 @@ export declare function findByPrototypes<
  * `undefined` if the supplied signal aborts first.
  */
 export declare function findLazy(filter: MetroFilter, options?: MetroLazySearchOptions): any;
+/**
+ * @description Forces a module to initialise via metro's `__r`, blacklisting it if it throws.
+ * @param id The id of the module to initialise.
+ * @returns `true` if the module is initialised, `false` if it was blacklisted.
+ */
+export declare function initializeModule(id: number): boolean;
 /**
  * @description Registers a listener invoked with every module as it loads.
  * @param listener Callback receiving the module exports and its id.

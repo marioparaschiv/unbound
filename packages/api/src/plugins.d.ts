@@ -5,10 +5,16 @@ import * as React$1 from 'react';
 import { ReactNode } from 'react';
 /** @deprecated Use uninstall */
 declare const deprecatedDelete: (id: string) => Promise<void>;
+/** Stops a running plugin without changing its enabled state. */
+declare const stop$1: (id: string) => void | Promise<void>;
 /** Disables a plugin and stops it. */
 export declare const disable: (id: string) => void;
 /** Enables a plugin and starts it. */
 export declare const enable: (id: string) => void | Promise<void>;
+/** Every installed plugin, keyed by id. */
+export declare const entities: ReadonlyMap<PropertyKey, AddonHandle>;
+/** The error each plugin that failed to load or start threw, keyed by id. */
+export declare const errors: ReadonlyMap<PropertyKey, Error>;
 /** Reads one installed plugin by id. */
 export declare const get: (id: string) => AddonHandle | undefined;
 /** Lists every installed plugin. */
@@ -28,6 +34,8 @@ export declare const reload: (
 	manifest: PushedManifest,
 	bytecode?: string,
 ) => Promise<ReloadResult>;
+/** Starts a plugin without changing its enabled state. */
+export declare const start: (id: string) => void | Promise<void>;
 /** Enables a disabled plugin, or disables an enabled one. */
 export declare const toggle: (id: string) => void;
 /** Stops and removes an installed plugin. */
@@ -38,7 +46,7 @@ export declare const uninstall: (id: string) => Promise<void>;
  * @returns Whether the plugin now runs a newer version.
  */
 export declare function update(id: string): Promise<boolean>;
-/** The outcome of {@link Addons.reload}: success, or failure carrying the recorded error. */
+/** The outcome of an addon reload: success, or failure carrying the recorded error. */
 export type ReloadResult =
 	| {
 			ok: true;
@@ -47,6 +55,6 @@ export type ReloadResult =
 			ok: false;
 			error: Error;
 	  };
-export { deprecatedDelete as delete };
+export { deprecatedDelete as delete, stop$1 as stop };
 
 export {};

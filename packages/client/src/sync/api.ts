@@ -19,10 +19,7 @@ import type { SyncStrategy } from '~/sync/merge';
 import { API_URL } from '~/core/constants';
 import { getBucket } from '~/storage/api';
 
-/**
- * The settings store Sync keeps its session and last agreed document in. Never synced.
- * @internal
- */
+/** The settings store Sync keeps its session and last agreed document in. Never synced. */
 export const SYNC_STORE = 'unbound::sync';
 
 type SyncSession = {
@@ -89,7 +86,6 @@ function needsFirstSyncChoice(): boolean {
 
 /**
  * @returns Whether a sync is applying remote changes right now, so the changes it makes can be told apart.
- * @internal
  */
 export function isApplying(): boolean {
 	return applying;

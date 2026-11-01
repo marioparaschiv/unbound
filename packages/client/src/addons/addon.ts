@@ -106,7 +106,7 @@ export class Addon<I extends object = object> implements AddonHandle<I> {
 		return instance?.getSettingsPanel ? () => instance.getSettingsPanel?.() : void 0;
 	}
 
-	/** @internal */
+	/** @deprecated The running plugin's native bridge; readable until 1.0. */
 	get context(): PluginContext | undefined {
 		return this.#state.context;
 	}

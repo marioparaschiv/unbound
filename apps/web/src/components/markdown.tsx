@@ -4,29 +4,40 @@ import type { ReactNode } from 'react';
 import { useMemo } from 'react';
 import { Lexer } from 'marked';
 
-import { resolveMarkdownUrl, type MarkdownPin } from '~/lib/markdown-url';
+import {
+	resolveMarkdownUrl,
+	type MarkdownPin,
+	type MarkdownUrl,
+	type MarkdownUrlKind,
+} from '~/lib/markdown-url';
 import type { PageMediaMap } from '~/lib/page-media';
 import MediaFile from '~/components/media-file';
 import Text from '~/components/ui/text';
 
-type MarkdownProps = {
+type MarkdownUrlResolver = (url: string, kind: MarkdownUrlKind) => MarkdownUrl | undefined;
+
+type MarkdownUrls = { pin: MarkdownPin } | { resolveUrl: MarkdownUrlResolver };
+
+type MarkdownProps = MarkdownUrls & {
 	source: string;
-	pin: MarkdownPin;
 	/** The page's measured media; an image whose path is here renders in place instead of as a link. */
 	media?: PageMediaMap;
 };
 
-type RenderContext = Pick<MarkdownProps, 'pin' | 'media'>;
+type RenderContext = {
+	resolveUrl: MarkdownUrlResolver;
+	media?: PageMediaMap;
+};
 
 type LinkProps = {
-	href: string | undefined;
+	url: MarkdownUrl | undefined;
 	children: ReactNode;
 };
 
 type ImageLinkProps = {
 	image: Tokens.Image;
 	alt: string;
-	pin: MarkdownPin;
+	resolveUrl: MarkdownUrlResolver;
 };
 
 type HeadingStyle = {
@@ -78,29 +89,29 @@ function decodeEntities(text: string): string {
 		: text;
 }
 
-function Link({ href, children }: LinkProps) {
-	if (!href) {
+function Link({ url, children }: LinkProps) {
+	if (!url) {
 		return <span>{children}</span>;
 	}
 
-	if (href.startsWith('#')) {
+	if (!url.external) {
 		return (
-			<a href={href} className={LINK_CLASS}>
+			<a href={url.href} className={LINK_CLASS}>
 				{children}
 			</a>
 		);
 	}
 
 	return (
-		<a href={href} target='_blank' rel={LINK_REL} className={LINK_CLASS}>
+		<a href={url.href} target='_blank' rel={LINK_REL} className={LINK_CLASS}>
 			{children}
 		</a>
 	);
 }
 
-function ImageLink({ image, alt, pin }: ImageLinkProps) {
+function ImageLink({ image, alt, resolveUrl }: ImageLinkProps) {
 	return (
-		<Link href={resolveMarkdownUrl(image.href, pin, 'image')?.href}>
+		<Link url={resolveUrl(image.href, 'image')}>
 			<IconPhoto className='inline mr-1 size-4 align-[-0.125em]' aria-hidden />
 			{alt || 'Image'}
 		</Link>
@@ -156,7 +167,7 @@ function renderInlineToken(token: Token, ctx: RenderContext, key: number): React
 			const link = token as Tokens.Link;
 
 			return (
-				<Link key={key} href={resolveMarkdownUrl(link.href, ctx.pin, 'link')?.href}>
+				<Link key={key} url={ctx.resolveUrl(link.href, 'link')}>
 					{renderInline(link.tokens, ctx)}
 				</Link>
 			);
@@ -167,7 +178,7 @@ function renderInlineToken(token: Token, ctx: RenderContext, key: number): React
 			const media = ctx.media?.get(image.href);
 
 			if (!media) {
-				return <ImageLink key={key} image={image} alt={alt} pin={ctx.pin} />;
+				return <ImageLink key={key} image={image} alt={alt} resolveUrl={ctx.resolveUrl} />;
 			}
 
 			return (
@@ -343,21 +354,25 @@ function renderBlock(token: Token, ctx: RenderContext, key: number): ReactNode {
 }
 
 /**
- * @description Renders an addon's ADDON.md: GitHub-flavoured markdown without raw HTML, with every
- * URL passed through {@link resolveMarkdownUrl}, and images shown in place when measured, else as links.
- * @param props The markdown text, the source pin its relative URLs resolve against and its measured media.
+ * @description Renders GitHub-flavoured markdown without raw HTML: an addon's ADDON.md with every URL passed
+ * through {@link resolveMarkdownUrl}, or a page's own text through its resolver. Images show in place when measured, else as links.
+ * @param props The markdown text, the source pin or resolver its URLs go through and its measured media.
  * @returns The rendered document.
  */
-function Markdown({ source, pin, media }: MarkdownProps) {
+function Markdown(props: MarkdownProps) {
+	const { source, media } = props;
+	const urls = 'pin' in props ? props.pin : props.resolveUrl;
 	// marked only tokenizes here; React builds the elements, so nothing renders as raw HTML.
-	const content = useMemo(
-		() => renderBlocks(Lexer.lex(source, { gfm: true }), { pin, media }),
-		[source, pin, media],
-	);
+	const content = useMemo(() => {
+		const resolveUrl: MarkdownUrlResolver =
+			typeof urls === 'function' ? urls : (url, kind) => resolveMarkdownUrl(url, urls, kind);
+
+		return renderBlocks(Lexer.lex(source, { gfm: true }), { resolveUrl, media });
+	}, [source, urls, media]);
 
 	return <div className='flex flex-col gap-4 min-w-0 break-words'>{content}</div>;
 }
 
-export type { MarkdownProps };
+export type { MarkdownProps, MarkdownUrlResolver };
 
 export default Markdown;

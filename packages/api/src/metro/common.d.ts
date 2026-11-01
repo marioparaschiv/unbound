@@ -28,6 +28,7 @@ export declare const Radius: any;
 export declare const Reanimated: any;
 export declare const SVG: any;
 export declare const Screens: any;
+export declare const Theme: any;
 export declare const Util: any;
 export declare const i18n: any;
 /** React Native's `ImageSourceUtils`, which every `Image` render resolves its source through. */

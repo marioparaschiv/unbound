@@ -38,7 +38,7 @@ export declare const uninstall: (id: string) => Promise<void>;
  * @returns Whether the theme now runs a newer version.
  */
 export declare function update(id: string): Promise<boolean>;
-/** The outcome of {@link Addons.reload}: success, or failure carrying the recorded error. */
+/** The outcome of an addon reload: success, or failure carrying the recorded error. */
 export type ReloadResult =
 	| {
 			ok: true;

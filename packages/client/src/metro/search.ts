@@ -426,7 +426,6 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
  * @description Runs several filters in a single registry pass, returning one result per item.
  * @param items The filters to resolve, each with its own per-item options.
  * @returns An array of matches positionally aligned with `items`.
- * @internal
  */
 export function bulk(...items: MetroBulkItem[]) {
 	const result = Array.from<any>({ length: items.length });
@@ -558,7 +557,6 @@ export function findByName<
  * @description Forces a module to initialise via metro's `__r`, blacklisting it if it throws.
  * @param id The id of the module to initialise.
  * @returns `true` if the module is initialised, `false` if it was blacklisted.
- * @internal
  */
 export function initializeModule(id: number) {
 	if (blacklist.has(id)) {

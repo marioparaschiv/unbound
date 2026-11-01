@@ -9,6 +9,7 @@ import {
 	TYPES_INDEX,
 	readJson,
 	relativeSpecifier,
+	type Lifecycle,
 	type NamespaceAlias,
 	type ModuleEntry,
 } from './paths';
@@ -20,6 +21,7 @@ import {
 	typeOnlyStatements,
 } from './transform';
 import { addonScopeGlobals } from './addon-scope';
+import { readLifecycle } from './entries';
 import { parseSource } from './project';
 import { bundle } from './bundle';
 
@@ -77,13 +79,14 @@ function docComment(doc: string): string {
  * @description Emits the SDK's `global.d.ts`: the addon-facing ambient globals (`$$DEV$$`,
  * `NativePlugin`, `React`, …) from the `@unbound-app/types` `declare global` block, a re-export of the
  * shared types (so `@unbound-app/api/global` stays their public home even though `_internal.d.ts` is
- * unlisted), the `UnboundGlobal` interface that types `window.unbound`, and the `AddonScope` type with
- * an ambient const per Addon scope global. Shared types are never re-declared here - they are imported from `_internal.d.ts`.
+ * unlisted), `UnboundGlobal` and `UnboundLifecycle`, the live and post-shutdown shapes of `window.unbound`,
+ * and the `AddonScope` type with an ambient const per Addon scope global. Shared types are never re-declared here - they are imported from `_internal.d.ts`.
  * @param entries The emitted module entries; only top-level capability modules appear on `unbound.*`.
  * @param internalExports The names the `_internal.d.ts` hoist file exports, re-exported for public access.
  * @param ownerByName The map attributing each hoisted declaration name to its owning hoist file, used
  * to import names the ambient block references.
  * @param aliases The barrel's old names for top-level modules, added to `UnboundGlobal` with their JSDoc.
+ * @param lifecycle The client's lifecycle functions, typed on both shapes with their JSDoc.
  * @returns The `global.d.ts` file text (unformatted, no banner).
  */
 export function buildGlobal(
@@ -91,6 +94,7 @@ export function buildGlobal(
 	internalExports: Set<string>,
 	ownerByName: Map<string, string>,
 	aliases: NamespaceAlias[] = [],
+	lifecycle: Lifecycle = readLifecycle(),
 ): string {
 	const outPath = join(API_SRC, 'global.d.ts');
 	const sourceFile = parseSource('global.d.ts', bundle(TYPES_INDEX, true));
@@ -207,7 +211,27 @@ export function buildGlobal(
 
 	sourceFile.addInterface({
 		isExported: true,
+		name: 'UnboundLifecycle',
+		docs: lifecycle.doc ? [lifecycle.doc] : [],
+		methods: lifecycle.members.map((member) => ({
+			name: member.name,
+			parameters: member.parameters.map(({ name, type, optional }) => ({
+				name,
+				type,
+				hasQuestionToken: optional,
+			})),
+			returnType: member.returnType,
+			docs: member.doc ? [member.doc] : [],
+		})),
+	});
+
+	sourceFile.addInterface({
+		isExported: true,
 		name: 'UnboundGlobal',
+		extends: ['UnboundLifecycle'],
+		docs: [
+			'The global `unbound` object while the client is initialized: the API plus the lifecycle.',
+		],
 		properties: [
 			...[...pathOf].map(([name, path]) => ({ name, type: `typeof import('${path}')` })),
 			...aliases.map((alias) => ({
@@ -226,7 +250,7 @@ export function buildGlobal(
 
 	global.addInterface({
 		name: 'Window',
-		properties: [{ name: 'unbound', type: 'UnboundGlobal' }],
+		properties: [{ name: 'unbound', type: 'UnboundGlobal | UnboundLifecycle' }],
 	});
 
 	global.addVariableStatements(
