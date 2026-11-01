@@ -2,7 +2,7 @@ THEOS_PACKAGE_SCHEME=rootless
 FINALPACKAGE=1
 INSTALL_TARGET_PROCESSES = Discord
 
-ARCHS := arm64 arm64e
+ARCHS := arm64
 TARGET := iphone:clang:latest:15.0
 COMMIT_HASH := $(shell git rev-parse HEAD)
 COMMIT_SHORT_HASH := $(shell git rev-parse --short HEAD)
@@ -12,6 +12,16 @@ COMMIT_BRANCH := $(shell git branch --show-current 2>/dev/null || echo detached)
 BUILD_TIMESTAMP := $(shell date "+%Y-%m-%d %H:%M:%S %Z")
 
 include $(THEOS)/makefiles/common.mk
+OPTFLAG := -O2
+DEBUG.CFLAGS = -DDEBUG -O2
+DEBUG.LDFLAGS = -O2
+CCACHE := $(shell command -v ccache 2>/dev/null)
+ifneq ($(CCACHE),)
+TARGET_CC := $(CCACHE) $(shell xcrun -sdk iphoneos -f clang)
+TARGET_CXX := $(CCACHE) $(shell xcrun -sdk iphoneos -f clang++)
+export CCACHE_DEPEND := 1
+export CCACHE_SLOPPINESS := modules,include_file_mtime,include_file_ctime,time_macros
+endif
 
 TWEAK_NAME = Unbound
 REPO_ROOT := $(abspath $(THEOS_PROJECT_DIR)/..)

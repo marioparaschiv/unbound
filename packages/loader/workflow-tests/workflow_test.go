@@ -256,7 +256,7 @@ func TestOnlyTheStableScanTracksRemovableLegacyNames(t *testing.T) {
 	}
 	var steps []workflowStep
 	for _, step := range workflow.Jobs["scan"].Steps {
-		if strings.Contains(step.Run, "go run ./tools compat-legacy-issue") {
+		if strings.Contains(step.Run, "unbound-tools compat-legacy-issue") {
 			steps = append(steps, step)
 		}
 	}
@@ -283,7 +283,7 @@ func TestOnlyTheStableScanRemindsToRaiseTheMinimum(t *testing.T) {
 	}
 	var steps []workflowStep
 	for _, step := range workflow.Jobs["scan"].Steps {
-		if strings.Contains(step.Run, "go run ./tools compat-support-issue") {
+		if strings.Contains(step.Run, "unbound-tools compat-support-issue") {
 			steps = append(steps, step)
 		}
 	}
@@ -419,8 +419,14 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 		}
 	}
 	goTools := loadCompositeAction(t, "setup-go-tools")
-	if len(goTools.Runs.Steps) != 2 || !strings.HasPrefix(goTools.Runs.Steps[0].Uses, "actions/setup-go@") || goTools.Runs.Steps[0].With["go-version-file"] != "packages/loader/go.mod" || !strings.HasPrefix(goTools.Runs.Steps[1].Uses, "actions/cache@") {
-		t.Fatalf("setup-go-tools must install Go and restore its cache, got %+v", goTools.Runs.Steps)
+	installsGo, cachesGo, buildsTools := false, false, false
+	for _, step := range goTools.Runs.Steps {
+		installsGo = installsGo || (strings.HasPrefix(step.Uses, "actions/setup-go@") && step.With["go-version-file"] == "packages/loader/go.mod")
+		cachesGo = cachesGo || strings.HasPrefix(step.Uses, "actions/cache@")
+		buildsTools = buildsTools || strings.Contains(step.Run, "go build -o \"$RUNNER_TEMP/loader-tools/unbound-tools\" ./tools")
+	}
+	if !installsGo || !cachesGo || !buildsTools {
+		t.Fatalf("setup-go-tools must install Go, restore its cache and build the tools when no prebuilt binary is available, got %+v", goTools.Runs.Steps)
 	}
 	bun := loadCompositeAction(t, "setup-bun-deps")
 	for input, value := range map[string]string{"bun-version": "canary", "install": "true", "frozen-lockfile": "false"} {
@@ -445,7 +451,7 @@ func TestParsedWorkflowsSetUpGoAndBunOnlyThroughTheSharedActions(t *testing.T) {
 }
 
 func TestParsedLoaderArtifactsExpireOnlyOnPullRequests(t *testing.T) {
-	intermediates := map[string]bool{"discord-source-ipa": true, "source ipa": true, "patched discord emulator split": true}
+	intermediates := map[string]bool{"discord-source-ipa": true, "source ipa": true, "patched discord emulator split": true, "loader-tools": true, "ios smoke inputs": true, "android smoke inputs": true}
 	diagnostics := map[string]bool{"android smoke test": true, "ios smoke test": true}
 	uploaded := map[string]string{}
 	for _, name := range []string{"loader-android.yml", "loader-build.yml", "loader-ios.yml"} {
@@ -464,7 +470,7 @@ func TestParsedLoaderArtifactsExpireOnlyOnPullRequests(t *testing.T) {
 				}
 				if intermediates[artifact] {
 					if retention != "1" {
-						t.Errorf("%s %s keeps the decrypted %s for %q days, only its own run needs it", name, jobName, artifact, retention)
+						t.Errorf("%s %s keeps %s for %q days, only its own run needs it", name, jobName, artifact, retention)
 					}
 					continue
 				}
@@ -548,7 +554,7 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 	if !regexp.MustCompile(`@[0-9a-f]{40}$`).MatchString(runner.Uses) {
 		t.Fatalf("the emulator runner must be pinned by SHA, uses %q", runner.Uses)
 	}
-	if runner.With["target"] != "google_apis" || runner.With["arch"] != "x86_64" || !strings.HasPrefix(runner.With["script"], "go run ./tools smoke android --apks smoke/apks") {
+	if runner.With["target"] != "google_apis" || runner.With["arch"] != "x86_64" || !strings.HasPrefix(runner.With["script"], "unbound-tools smoke android --apks smoke/apks") {
 		t.Fatalf("the smoke test must run on a rootable x86_64 emulator, got %+v", runner.With)
 	}
 	if !strings.Contains(smoke.step(t, "Enable KVM").Run, "udevadm trigger --name-match=kvm") {
@@ -567,14 +573,14 @@ func TestParsedAndroidSmokeTestGatesTheAndroidBuild(t *testing.T) {
 func TestParsedIOSSmokeTestGatesTheIOSBuild(t *testing.T) {
 	ios := loadWorkflow(t, "loader-ios.yml")
 	smoke := ios.job(t, "smoke-simulator")
-	requireNeeds(t, "smoke-simulator", smoke, "build-simulator")
+	requireNeeds(t, "smoke-simulator", smoke, "build-ipa")
 	if smoke.If != "inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true" || smoke.ContinueOnError {
 		t.Fatalf("the iOS smoke test must run whenever the simulator is built, unless a pull request touches nothing it covers, runs if %q", smoke.If)
 	}
 	if smoke.step(t, "Download the simulator build").With["name"] != "ios-simulator" {
 		t.Fatal("the smoke test must install this run's simulator build")
 	}
-	if run := smoke.step(t, "Run the smoke test").Run; !strings.HasPrefix(run, `go run ./tools smoke ios --app "$APP_PATH"`) {
+	if run := smoke.step(t, "Run the smoke test").Run; !strings.HasPrefix(run, `unbound-tools smoke ios --app "$APP_PATH"`) {
 		t.Fatalf("unexpected smoke command %q", run)
 	}
 }

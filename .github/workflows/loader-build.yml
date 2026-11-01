@@ -222,7 +222,7 @@ jobs:
                     fi
                     apk_args=(--channel "$INPUT_ANDROID_CHANNEL" --android-tracker "$INPUT_ANDROID_TRACKER")
                     if [ -n "$INPUT_ANDROID_CODE" ]; then apk_args+=(--code "$INPUT_ANDROID_CODE"); fi
-                    release=$(go run ./tools discord-apk "${apk_args[@]}")
+                    release=$(unbound-tools discord-apk "${apk_args[@]}")
                     release_version=$(jq -r '.releaseVersion' <<< "$release")
                     if [ -n "$INPUT_VERSION" ] && [ "$INPUT_VERSION" != "$release_version" ]; then
                       echo "::error::Android version code $(jq -r '.code' <<< "$release") is $release_version, not the requested $INPUT_VERSION"
@@ -321,7 +321,7 @@ jobs:
                   fetch_args=(--base-url "$INPUT_DKRYPT_BASE_URL" --source-url "$INPUT_IPA_URL")
                   if [ "$INPUT_AUTHENTICATED_SOURCE" = true ]; then fetch_args+=(--authenticated-source); fi
                   fetch_args+=(--channel "$channel" --version "$REQUESTED_VERSION" --output source.ipa)
-                  go run ./tools fetch "${fetch_args[@]}"
+                  unbound-tools fetch "${fetch_args[@]}"
 
             - name: Skip the TestFlight release without a source IPA
               if: steps.source.outputs.missing == 'true' && inputs.is_testflight == true
@@ -350,13 +350,13 @@ jobs:
                   ANDROID_STABLE_CODE: ${{ steps.select.outputs.android_stable_code }}
               run: |
                   set -euo pipefail
-                  ipa_info=$(go run ./tools ipa-info --ipa source.ipa)
+                  ipa_info=$(unbound-tools ipa-info --ipa source.ipa)
                   version=$(jq -r '.version' <<< "$ipa_info")
                   build=$(jq -r '.build' <<< "$ipa_info")
                   if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ]; then
                     pairing_args=(--ios-version "$version" --android-code "$ANDROID_STABLE_CODE" --requested-version "$REQUESTED_VERSION")
                     if [ "$RELEASE_DRY_RUN" = true ]; then pairing_args+=(--dry-run); fi
-                    go run ./tools release-pairing "${pairing_args[@]}"
+                    unbound-tools release-pairing "${pairing_args[@]}"
                   fi
                   release_version="$version"
                   if [ "$INPUT_IS_TESTFLIGHT" = true ]; then release_version="${version}_${build}-ios-testflight"; fi
@@ -372,7 +372,7 @@ jobs:
               env:
                   RELEASE_VERSION: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
                   ANDROID_VERSION: ${{ steps.resolve.outputs.android_version }}
-              run: go run ./tools release-names --release-version "$RELEASE_VERSION" ${ANDROID_VERSION:+--android-version "$ANDROID_VERSION"}
+              run: unbound-tools release-names --release-version "$RELEASE_VERSION" ${ANDROID_VERSION:+--android-version "$ANDROID_VERSION"}
 
             - name: Keep the source IPA for the gate and the iOS build
               if: steps.select.outputs.platform == 'ios' && steps.source.outputs.missing != 'true'
@@ -422,8 +422,8 @@ jobs:
               run: |
                   set -euo pipefail
                   code="$ANDROID_CODE"
-                  if [ -z "$code" ]; then code=$(go run ./tools discord-version --version "$DISCORD_VERSION"); fi
-                  go run ./tools discord-apk --channel "$ANDROID_CHANNEL" --code "$code" --output-dir discord-android --split base
+                  if [ -z "$code" ]; then code=$(unbound-tools discord-version --version "$DISCORD_VERSION"); fi
+                  unbound-tools discord-apk --channel "$ANDROID_CHANNEL" --code "$code" --output-dir discord-android --split base
 
             - name: Find the platform SDKs
               id: sdks
@@ -455,7 +455,7 @@ jobs:
                   if [ "$SCAN_IOS" = true ]; then scan_args+=(--ipa source.ipa); fi
                   if [ "$SCAN_ANDROID" = true ]; then scan_args+=(--apk "$ANDROID_APK" --android-version "$ANDROID_VERSION"); fi
                   status=0
-                  go run ./tools compat-scan "${scan_args[@]}" || status=$?
+                  unbound-tools compat-scan "${scan_args[@]}" || status=$?
                   cat report.md >> "$GITHUB_STEP_SUMMARY"
                   if [ "$status" -ne 0 ] && [ "$RELEASE_DRY_RUN" = true ]; then
                     echo "::warning::This Discord build breaks parts of Unbound, so a real release would stop here. The dry run carries on; the job summary lists what broke."
@@ -487,6 +487,20 @@ jobs:
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
+
+            - name: Build the tools for the other jobs
+              run: |
+                  set -euo pipefail
+                  GOOS=linux GOARCH=amd64 go build -o loader-tools/unbound-tools-linux-amd64 ./tools
+                  GOOS=darwin GOARCH=arm64 go build -o loader-tools/unbound-tools-darwin-arm64 ./tools
+
+            - name: Upload the tools
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+              with:
+                  name: loader-tools
+                  path: packages/loader/loader-tools/
+                  if-no-files-found: error
+                  retention-days: 1
 
             - name: Test tools
               run: go test -count=1 ./...
@@ -548,7 +562,7 @@ jobs:
                   echo "::warning title=Slower jobs::Some jobs took over 1.5 times as long as on the last main build. The job summary lists them."
 
     android:
-        needs: [resolve-source, compat-gate]
+        needs: [resolve-source, compat-gate, tool-tests]
         if: ${{ !cancelled() && inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.is_testflight != true && needs.resolve-source.result == 'success' && (needs.compat-gate.result == 'success' || needs.compat-gate.result == 'skipped') }}
         permissions:
             contents: read
@@ -618,6 +632,8 @@ jobs:
             - name: Setup Go tools for loader update publishing
               if: needs.resolve-source.outputs.is_testflight != 'true'
               uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
 
             - name: Download iOS tweak
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
@@ -680,7 +696,7 @@ jobs:
               run: |
                   set -euo pipefail
                   loader_version=$(dpkg-deb -f "release-assets/$IOS_DEB_FILENAME" Version)
-                  go run ./tools sbom --version "$loader_version" --commit "$GITHUB_SHA" --output release-assets/loader-sbom.spdx.json
+                  unbound-tools sbom --version "$loader_version" --commit "$GITHUB_SHA" --output release-assets/loader-sbom.spdx.json
 
             - name: Show what the release would publish
               if: inputs.release_dry_run == true
@@ -801,12 +817,12 @@ jobs:
                   deb_path="release-assets/$IOS_DEB_FILENAME"
                   loader_version=$(dpkg-deb -f "$deb_path" Version)
                   release_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download"
-                  go run ./tools generate-loader-changelog \
+                  unbound-tools generate-loader-changelog \
                     --version "$loader_version" \
                     --output release-assets/loader-changelog.md
                   dry_run=()
                   if [ "$RELEASE_DRY_RUN" = true ]; then dry_run=(--dry-run); fi
-                  go run ./tools publish-loader-releases "${dry_run[@]}" \
+                  unbound-tools publish-loader-releases "${dry_run[@]}" \
                     --api-url "$api_url" \
                     --version "$loader_version" \
                     --ios-url "$release_url/$IOS_RELEASE_TAG/$IOS_DEB_FILENAME" \

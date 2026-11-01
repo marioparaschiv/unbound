@@ -344,6 +344,8 @@ jobs:
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
 
             - name: Setup Java
               uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad
@@ -387,7 +389,7 @@ jobs:
                   args=(--channel "$DISCORD_CHANNEL" --ios-version "$IOS_VERSION")
                   if [ -n "$ANDROID_CODE" ]; then args+=(--code "$ANDROID_CODE"); fi
                   if [ "$REQUIRE_MATCHING_VERSION" = true ]; then args+=(--require-matching); fi
-                  go run ./tools android-version "${args[@]}"
+                  unbound-tools android-version "${args[@]}"
 
             - name: Restore the cached Discord APKs
               id: apk-cache
@@ -406,7 +408,7 @@ jobs:
                   for split in base config.arm64_v8a config.armeabi_v7a config.x86_64 config.xxhdpi config.en; do
                       split_args+=(--split "$split")
                   done
-                  env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$VERSION" --output-dir discord "${split_args[@]}" > /dev/null
+                  env -u GITHUB_OUTPUT unbound-tools discord-apk --channel "$DISCORD_CHANNEL" --code "$VERSION" --output-dir discord "${split_args[@]}" > /dev/null
 
             - name: Check the Discord APKs
               id: discord
@@ -497,6 +499,8 @@ jobs:
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
@@ -567,7 +571,7 @@ jobs:
                   emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect
                   disable-animations: true
                   working-directory: packages/loader
-                  script: go run ./tools smoke android --apks smoke/apks --client ../client/dist --artifacts smoke/artifacts --bundle-budget 30s --plugins-budget 20s --plugin-start-budget 1s ${{ inputs.pr_number != '' && '--quick --timeout 6m' || '--timeout 12m' }}
+                  script: unbound-tools smoke android --apks smoke/apks --client ../client/dist --artifacts smoke/artifacts --bundle-budget 30s --plugins-budget 20s --plugin-start-budget 1s ${{ inputs.pr_number != '' && '--quick --timeout 6m' || '--timeout 12m' }}
 
             - name: Check whether the emulator booted
               id: booted
@@ -595,7 +599,7 @@ jobs:
                   emulator-options: -no-window -no-snapshot -noaudio -no-boot-anim -gpu swiftshader_indirect
                   disable-animations: true
                   working-directory: packages/loader
-                  script: go run ./tools smoke android --apks smoke/apks --client ../client/dist --artifacts smoke/artifacts --bundle-budget 30s --plugins-budget 20s --plugin-start-budget 1s ${{ inputs.pr_number != '' && '--quick --timeout 6m' || '--timeout 12m' }}
+                  script: unbound-tools smoke android --apks smoke/apks --client ../client/dist --artifacts smoke/artifacts --bundle-budget 30s --plugins-budget 20s --plugin-start-budget 1s ${{ inputs.pr_number != '' && '--quick --timeout 6m' || '--timeout 12m' }}
 
             - name: Fail when the smoke test failed
               if: steps.smoke.outcome == 'failure' && (steps.booted.outputs.booted == 'true' || steps.smoke-retry.outcome == 'failure')
@@ -605,7 +609,7 @@ jobs:
               if: success() && github.event_name == 'pull_request'
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: go run ./tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY" --report smoke/artifacts/comparison.md --fail-on-startup-regression
+              run: unbound-tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY" --report smoke/artifacts/comparison.md --fail-on-startup-regression
 
             - name: Upload smoke test logs
               if: ${{ !cancelled() }}

@@ -122,16 +122,16 @@ jobs:
                   out="$RUNNER_TEMP/release"
                   mkdir -p "$out"
                   version=$(sed -n 's/^Version: *//p' ios/control)
-                  go run ./tools release-pairing --ios-version 351.0 --android-code 351011 --output "$out/pairing"
+                  unbound-tools release-pairing --ios-version 351.0 --android-code 351011 --output "$out/pairing"
                   grep -qx 'android_version=351.11' "$out/pairing"
-                  GITHUB_OUTPUT="$out/names" go run ./tools release-names --release-version 351.0 --android-version 351.11
+                  GITHUB_OUTPUT="$out/names" unbound-tools release-names --release-version 351.0 --android-version 351.11
                   cat "$out/names"
-                  go run ./tools sbom --version "$version" --commit "$GITHUB_SHA" --output "$out/sbom.spdx.json"
+                  unbound-tools sbom --version "$version" --commit "$GITHUB_SHA" --output "$out/sbom.spdx.json"
                   jq -e '.spdxVersion and (.packages | length > 0)' "$out/sbom.spdx.json" > /dev/null
-                  go run ./tools generate-loader-changelog --version "$version" --output "$out/changelog.md"
+                  unbound-tools generate-loader-changelog --version "$version" --output "$out/changelog.md"
                   test -s "$out/changelog.md"
                   if [ -n "$UNBOUND_API_URL" ]; then
-                      go run ./tools publish-loader-releases --dry-run \
+                      unbound-tools publish-loader-releases --dry-run \
                         --api-url "${UNBOUND_API_URL%/}/api/v1/loader/releases" \
                         --version "$version" \
                         --ios-url "https://example.invalid/ios.deb" \
@@ -198,7 +198,7 @@ jobs:
                   echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 
             - name: Lint and check formatting
-              run: go run ./tools lint
+              run: unbound-tools lint
 
     pr-builds:
         name: Plan pull request uploads
@@ -526,7 +526,7 @@ jobs:
               run: |
                   set -euo pipefail
                   body="$RUNNER_TEMP/smoke-comment.md"
-                  go run ./tools smoke-failure-summary --artifacts "$GITHUB_WORKSPACE/smoke" --output "$body"
+                  unbound-tools smoke-failure-summary --artifacts "$GITHUB_WORKSPACE/smoke" --output "$body"
                   if [ -s "$body" ]; then
-                      go run ./tools pr-comment --pr "$PR_NUMBER" --title "$PLATFORM smoke test" --body-file "$body"
+                      unbound-tools pr-comment --pr "$PR_NUMBER" --title "$PLATFORM smoke test" --body-file "$body"
                   fi

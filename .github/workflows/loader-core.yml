@@ -3,6 +3,8 @@ name: Loader Core
 on:
     workflow_call:
     workflow_dispatch:
+    schedule:
+        - cron: '29 3 * * *'
 
 concurrency:
     group: core-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
@@ -134,7 +136,7 @@ jobs:
 
             - name: Fuzz
               env:
-                  UNBOUND_FUZZ_ITERATIONS: '20000'
+                  UNBOUND_FUZZ_ITERATIONS: ${{ github.event_name == 'push' && '3000' || '20000' }}
               run: build/jsi-fuzz/native_jsi_fuzz
 
     native-bridge-fuzz:
