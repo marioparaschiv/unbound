@@ -84,6 +84,31 @@
 		"required": false,
 		"purpose": "Bucket secret key for artifact uploads."
 	},
+	"DOCS_S3_ENDPOINT": {
+		"kind": "var",
+		"required": false,
+		"purpose": "Bucket endpoint for the API docs upload; without it the upload is skipped."
+	},
+	"DOCS_S3_REGION": {
+		"kind": "var",
+		"required": false,
+		"purpose": "Bucket region for the API docs upload."
+	},
+	"DOCS_S3_BUCKET": {
+		"kind": "var",
+		"required": false,
+		"purpose": "Public bucket the API docs are uploaded to under docs/; without it the upload is skipped."
+	},
+	"DOCS_S3_ACCESS_KEY_ID": {
+		"kind": "secret",
+		"required": false,
+		"purpose": "Docs-only bucket key, limited to the docs/ prefix."
+	},
+	"DOCS_S3_SECRET_ACCESS_KEY": {
+		"kind": "secret",
+		"required": false,
+		"purpose": "Secret of the docs-only bucket key."
+	},
 	"CDN_URL": {
 		"kind": "var",
 		"required": false,
