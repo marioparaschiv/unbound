@@ -5,7 +5,6 @@ export * as builtins from '~/builtins/api';
 export * as commands from '~/commands/api';
 export * as settings from '~/settings/api';
 export * as native from '~/native/native';
-export * as account from '~/account/api';
 export * as dialogs from '~/dialogs/api';
 export * as patcher from '~/patcher/api';
 export * as plugins from '~/plugins/api';

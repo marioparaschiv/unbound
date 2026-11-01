@@ -124,7 +124,7 @@ export const moves: Record<string, string> = {
 	'lib/sync.ts': 'sync/merge.ts',
 	'lib/sync.test.ts': 'sync/merge.test.ts',
 	'managers/sync-device.ts': 'sync/device.ts',
-	'lib/discord-oauth.ts': 'sync/discord-oauth.ts',
+	'lib/discord-oauth.ts': 'account/discord-oauth.ts',
 	'builtins/cloud-sync.ts': 'sync/builtin.ts',
 
 	'managers/builtins.ts': 'builtins/registry.ts',

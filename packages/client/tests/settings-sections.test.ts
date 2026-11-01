@@ -43,6 +43,7 @@ mock.module('~/metro/components', () => ({ Discord: { TableRowIcon: Page } }));
 mock.module('~/ui/settings/general', () => ({ default: Page }));
 mock.module('~/ui/settings/developer', () => ({ default: Page }));
 mock.module('~/ui/settings/custom', () => ({ default: Page }));
+mock.module('~/ui/icons/logo-row-icon', () => ({ default: Page }));
 
 const { createSettings } = await import('~/settings/builtin');
 const { registerSection, removeSection } = await import('~/settings/api');

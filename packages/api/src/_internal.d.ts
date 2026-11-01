@@ -3638,6 +3638,8 @@ export type SettingsEntry = {
 	excludeFromDisplay?: boolean;
 	/** The icon drawn at the start of the row. */
 	IconComponent?: React$1.ComponentType;
+	/** A hook returning what the row shows at its end, such as a count. */
+	useTrailing?: () => React$1.ReactNode;
 	/** The screen the row opens. */
 	screen: SettingsScreen;
 };

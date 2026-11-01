@@ -1,5 +1,7 @@
 import { beforeEach, expect, mock, test } from 'bun:test';
 
+Object.assign(globalThis, { $$DEV$$: false });
+
 mock.module('~/account/discord-oauth', () => ({ authorizeWithDiscord: async () => undefined }));
 
 const { getBucket, snapshot } = await import('~/storage/api');
