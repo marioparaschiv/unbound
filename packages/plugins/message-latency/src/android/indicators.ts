@@ -51,6 +51,7 @@ import { installRebindGuard } from '~/android/rebind-guard';
 const DRAWABLE = 'android.graphics.drawable.Drawable';
 const NO_DRAWABLE = { type: 'null', class: DRAWABLE } as const;
 const VISIBLE = 0;
+const MESSAGE_ID_GETTER = 'getId-3Eiw7ao';
 const SETTLE_DELAYS = [0, 120, 600];
 
 type Native = {
@@ -351,7 +352,7 @@ export function createAndroidIndicators(
 		messageView: MESSAGE_VIEW,
 		bindName: bindMessage.name,
 		bindParameters: bindMessage.parameters,
-		idField,
+		messageIdGetter: MESSAGE_ID_GETTER,
 		host: hostKey,
 		drawnFor: drawnForKey,
 	});
@@ -365,7 +366,7 @@ export function createAndroidIndicators(
 			const messageView = javaReference(self);
 			const message = javaReference(args[0]);
 			const messageId = message
-				? javaText(java.invoke(message, 'getId-3Eiw7ao', []))
+				? javaText(java.invoke(message, MESSAGE_ID_GETTER, []))
 				: undefined;
 
 			if (messageView && messageId) setTimeout(() => schedule(messageView, messageId), 0);

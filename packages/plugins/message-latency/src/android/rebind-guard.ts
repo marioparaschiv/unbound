@@ -17,19 +17,20 @@ export type RebindGuard = {
 	messageView: string;
 	bindName: string;
 	bindParameters: string[];
-	idField: string;
+	messageIdGetter: string;
 	host: NativeJavaAssociationKey;
 	drawnFor: NativeJavaAssociationKey;
 };
 
 type BindEvent = {
 	self?: NativeJavaValue;
+	args?: NativeJavaValue[];
 };
 
 /**
  * @description Hides a row's latency icon from a hook that runs on the UI thread right after Discord binds the row to a different message, so the old message's latency never shows on the new one; the icon shows again once it is drawn for the new message.
  * @param scope The plugin's UI scope.
- * @param guard The message view class, its bind method and message id field, and the keys the icon's host and its message are kept under.
+ * @param guard The message view class, its bind method and the getter of the bound message's id, and the keys the icon's host and its message are kept under.
  */
 export function installRebindGuard(scope: NativeUIScope, guard: RebindGuard) {
 	'worklet';
@@ -55,7 +56,10 @@ export function installRebindGuard(scope: NativeUIScope, guard: RebindGuard) {
 					return;
 				}
 
-				const shown = javaText(java.getField(row, guard.idField));
+				const message = event.args ? javaReference(event.args[0]) : null;
+				const shown = message
+					? javaText(java.invoke(message, guard.messageIdGetter, []))
+					: undefined;
 				const drawnFor = javaText(java.getAssociatedObject(row, guard.drawnFor));
 
 				if (!shown || shown !== drawnFor) {

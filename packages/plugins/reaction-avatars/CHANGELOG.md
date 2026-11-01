@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1]
+
+### Fixed
+
+- Reactor avatars no longer disappear on Android when a row is shown again for the same message.
+
 ## [1.2.0]
 
 ### Changed
