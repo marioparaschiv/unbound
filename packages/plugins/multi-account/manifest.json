@@ -8,7 +8,7 @@
 			"id": "1547629837273923684"
 		}
 	],
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"icon": "UserCircleIcon",
 	"main": "index.ts"
 }
