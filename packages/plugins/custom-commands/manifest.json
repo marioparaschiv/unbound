@@ -19,5 +19,12 @@
 	"version": "1.0.2",
 	"icon": "KeyboardIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "a0395a8edf15e095e85d8dd139810ba547121c767861d0ae02049d5572f2410c2a88cb310b055c0efca0dcf4e61739dbe7eeda009a8f706239f96048a7b12fb8"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "oqfpf4rRdRjw/gFVLXpNiXJ7Ty3hlYYdiJX5WhHv2UHdFdHcErSJzcnmPb50CPSDw4WbxpsSIIYEpxeJU1XPBg=="
+	}
 }
