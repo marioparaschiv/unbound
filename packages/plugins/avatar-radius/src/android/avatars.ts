@@ -365,7 +365,11 @@ export function roundAndroidAvatars({ java, hooks, ui }: AndroidNative, radius: 
 		({ self }) => {
 			const view = javaReference(self);
 
-			if (view && !isAvatar(view)) round(view).catch(report);
+			try {
+				if (view && !isAvatar(view)) round(view).catch(report);
+			} catch (error) {
+				report(error);
+			}
 		},
 	);
 

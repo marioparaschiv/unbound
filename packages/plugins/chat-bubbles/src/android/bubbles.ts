@@ -51,6 +51,13 @@ type AndroidNative = {
 };
 
 const MAX_TRACKED = 256;
+
+type PlacedRow = {
+	width: number;
+	height: number;
+	contentStart: number;
+	revision: number;
+};
 const MAX_ANCESTORS = 16;
 const VISIBLE = 0;
 const ICON_SPACING_DP = 4;
@@ -97,7 +104,34 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	let placing = 0;
 	let disposed = false;
 	let contentStart = Number.POSITIVE_INFINITY;
+	let appearanceRevision = 0;
 	const measuredLefts: { row: NativeJavaReference; left: number }[] = [];
+	const placedRows = new Map<string, PlacedRow>();
+
+	function rememberPlaced(id: string, width: number, height: number) {
+		placedRows.delete(id);
+		placedRows.set(id, { width, height, contentStart, revision: appearanceRevision });
+
+		if (placedRows.size > MAX_TRACKED) placedRows.delete(placedRows.keys().next().value!);
+	}
+
+	function alreadyPlaced(row: NativeJavaReference, id: string): boolean {
+		const placed = placedRows.get(id);
+
+		if (
+			!placed ||
+			placed.revision !== appearanceRevision ||
+			placed.contentStart !== contentStart ||
+			!javaReference(java.getAssociatedObject(row, ours)) ||
+			javaText(java.getAssociatedObject(row, drawnFor)) !== id
+		) {
+			return false;
+		}
+
+		return (
+			number(row, 'getWidth') === placed.width && number(row, 'getHeight') === placed.height
+		);
+	}
 
 	function noteContentStart(row: NativeJavaReference, left: number) {
 		const index = measuredLefts.findIndex((entry) => sameJavaReference(entry.row, row));
@@ -404,6 +438,10 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	}
 
 	async function place(row: NativeJavaReference) {
+		const placedId = messageId(row);
+
+		if (placedId && alreadyPlaced(row, placedId)) return;
+
 		const [measure, header, scale] = await Promise.all([
 			measureRow(row),
 			headerBottom(row),
@@ -414,6 +452,8 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		if (disposed) return;
 
 		if (!measure || !area) {
+			if (placedId) placedRows.delete(placedId);
+
 			await runOnMain(java, measure?.iconShifts ?? []);
 
 			return restore(row);
@@ -479,6 +519,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		]);
 
 		if (drawnMessage) {
+			rememberPlaced(drawnMessage, measure.width, measure.height);
 			ui.run(rememberBubble, drawnMessage, {
 				...insets,
 				radius: style.radius * scale,
@@ -533,7 +574,13 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	async function scheduleRow(accessories: NativeJavaReference) {
 		const row = javaReference(await java.invokeAsync(accessories, 'getParent', []));
 
-		if (row && isInstance(messageClass, row) && !(await isNested(row))) schedule(row);
+		if (!row || !isInstance(messageClass, row)) return;
+
+		const id = messageId(row);
+
+		if (id && alreadyPlaced(row, id)) return;
+
+		if (!(await isNested(row))) schedule(row);
 	}
 
 	const token = hooks.hook(
@@ -628,6 +675,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 			...(await lostBubbles()),
 		],
 		refresh() {
+			appearanceRevision++;
 			ui.run(forgetBubbles);
 			for (const row of tracked) schedule(row);
 
