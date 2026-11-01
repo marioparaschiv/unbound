@@ -1,0 +1,118 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "70ccc018-dc46-40e8-8ddd-3f625dedaa30",
+  "prevIds": [
+    "f1b41efd-729f-42d4-b392-07c793b73c7e"
+  ],
+  "footprints": [
+    {
+      "statementType": "create_table",
+      "statementTarget": [
+        "table",
+        "bot",
+        "review_notice"
+      ],
+      "writes": [
+        "s|tbl|bot.review_notice",
+        "n|tbl|bot.review_notice",
+        "e|tbl|bot.review_notice",
+        "n|rel|bot.review_notice",
+        "n|type|bot.review_notice",
+        "n|rel|bot.review_notice_pkey"
+      ],
+      "reads": [
+        "n|sch|bot"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "name": "review_notice",
+        "isRlsEnabled": false,
+        "entityType": "tables"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "review_notice",
+        "name": "event_id",
+        "type": "bigint",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "review_notice",
+        "name": "outcome",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "review_notice",
+        "name": "message_id",
+        "type": "text",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "review_notice",
+        "name": "handled_at",
+        "type": "timestamp with time zone",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "now()",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    },
+    {
+      "op": "create",
+      "row": {
+        "schema": "bot",
+        "table": "review_notice",
+        "name": "review_notice_pkey",
+        "columns": [
+          "event_id"
+        ],
+        "nameExplicit": false,
+        "entityType": "pks"
+      }
+    }
+  ]
+}

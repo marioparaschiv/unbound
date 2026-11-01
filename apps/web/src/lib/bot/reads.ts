@@ -3,6 +3,7 @@ import type postgres from 'postgres';
 
 import { readEventsAfter, readNewestEventId } from '~/lib/bot/events';
 import { readRelease, readReleasesSince } from '~/lib/bot/releases';
+import { readReviewNoticesAfter } from '~/lib/bot/review-notices';
 import { DEFAULT_PERK_GRACE_DAYS } from '~/lib/sponsors/standing';
 import type { BotReadOptions, BotReads } from '~/lib/bot/types';
 import { readAddon, readAddons } from '~/lib/bot/addons';
@@ -37,6 +38,7 @@ export function createBotReads(client: postgres.Sql, options: BotReadOptions): B
 		addons: () => readAddons(db, resolved),
 		eventsAfter: (afterId, limit) => readEventsAfter(db, afterId, limit),
 		newestEventId: () => readNewestEventId(db),
+		reviewNoticesAfter: (afterId, limit) => readReviewNoticesAfter(db, afterId, limit),
 		release: (key) => readRelease(db, key),
 		releasesSince: (since) => readReleasesSince(db, since),
 		members: (query) => readMembers(db, resolved, query),
