@@ -1,0 +1,22 @@
+{
+	"name": "add-attachments",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Adds attachments to messages you already sent, while you edit them or from the message menu.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@unbound-plugins/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-app/cli": "workspace:*",
+		"react-native": "^0.86.0",
+		"rollup": "^4.65.1"
+	}
+}

@@ -22,7 +22,7 @@ import { linkFont, surfaceInsertion } from '~/ios/attachment';
 import type { EmbeddedContent } from '~/embedded-content';
 import type { Message, RowGenerator } from '~/modules';
 import type { Session } from '~/ios/session';
-import { Surface } from '~/constants';
+import { EMBED_HOST_TAG, Surface } from '~/constants';
 
 type Timer = ReturnType<typeof setTimeout>;
 
@@ -411,6 +411,7 @@ async function createHost(
 	try {
 		const view = objc.alloc('UIView');
 
+		await objc.invokeAsync(view, 'setTag:', [EMBED_HOST_TAG]);
 		await objc.invokeAsync(view, 'setFrame:', [toRect(objc, { x: 0, y: 0, width, height })]);
 
 		return view;

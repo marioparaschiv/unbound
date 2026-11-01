@@ -1,5 +1,5 @@
 {
-	"id": "astral.mention-avatars",
+	"id": "unbound.mention-avatars",
 	"name": "Mention Avatars",
 	"description": "Shows user avatars and role icons inside mentions.",
 	"authors": [
@@ -16,7 +16,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.1",
+	"version": "1.0.5",
 	"icon": "UserCircleIcon",
 	"minNativePluginApi": "1.0.0",
 	"main": "index.ts"

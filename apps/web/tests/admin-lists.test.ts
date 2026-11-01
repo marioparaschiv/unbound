@@ -216,7 +216,7 @@ describe('admin users list', () => {
 		expect(backward).toEqual(forward.toReversed());
 	});
 
-	test('searches a substring of the name, email or id, case-insensitively', async () => {
+	test('searches a substring of the name or id, case-insensitively, but not the email', async () => {
 		const [one, , , four] = walkers;
 
 		if (!one || !four) {
@@ -224,7 +224,7 @@ describe('admin users list', () => {
 		}
 
 		expect(await usersMatching('WALKER')).toEqual(newestFirst(walkers));
-		expect(await usersMatching('walker-four@exa')).toEqual([four.id]);
+		expect(await usersMatching('walker-four@exa')).toEqual([]);
 		expect(await usersMatching(one.id.slice(4, 16))).toEqual([one.id]);
 		expect(await usersMatching('Wal"ker')).toEqual([]);
 	});
@@ -298,13 +298,17 @@ describe('admin addons list', () => {
 		},
 	);
 
-	test('lists each addon with its newest version and owners', async () => {
+	test('lists each addon with its icon, newest version and owners', async () => {
+		await ctx.db.update(addon).set({ icon: 'IconRocket' }).where(eq(addon.id, 'walk.alpha'));
+
 		const { items } = await listAdminAddons(ctx, moderator, { q: 'walk.alpha' });
 
 		expect(items).toMatchObject([
 			{
 				id: 'walk.alpha',
 				name: 'Night Owl',
+				type: 'plugin',
+				iconSvg: expect.stringContaining('<svg'),
 				latestVersion: '1.0.0',
 				delistedAt: null,
 				owners: [{ id: owner, name: 'Lists Owner' }],

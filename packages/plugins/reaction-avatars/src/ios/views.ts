@@ -77,6 +77,16 @@ export function setFrame(objc: NativeObjCBridge, view: NativeObjectHandle, frame
 }
 
 /**
+ * @description Moves or resizes a view on the main thread without waiting for it.
+ * @param objc The Objective-C bridge.
+ * @param view The view.
+ * @param frame Its new frame.
+ */
+export function restoreFrame(objc: NativeObjCBridge, view: NativeObjectHandle, frame: Frame): void {
+	void objc.invokeAsync(view, 'setFrame:', [toRect(objc, frame)]).catch(() => undefined);
+}
+
+/**
  * @description Sets a scroll view's content size.
  * @param objc The Objective-C bridge.
  * @param view The scroll view.

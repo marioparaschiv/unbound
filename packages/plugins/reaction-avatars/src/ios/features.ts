@@ -7,6 +7,8 @@ import { subscribeReactionChanges } from '~/events/message-reaction';
 import { subscribeConnectionOpen } from '~/events/connection-open';
 import { scanInitialCells } from '~/ios/visible-cells';
 import { createSession } from '~/ios/session';
+import { installHeightHook } from '~/ios/ui-cell-heights';
+import { NativeClass } from '~/constants';
 import type { Feature } from '~/types';
 
 /**
@@ -19,6 +21,11 @@ export function reactionFeatures(native: NativePluginBridge, surfaceName: string
 	const { session, close } = createSession(native, surfaceName, renderCell);
 
 	return [
+		() => {
+			session.ui.run(installHeightHook, session.scope, NativeClass.messageCell);
+
+			return () => session.scope.dispose();
+		},
 		() => () => disposeRenderer(session),
 		() => hookMessageCells(session.objc, messageCellHandlers(session)),
 		() => subscribeReactionChanges(session),

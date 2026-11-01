@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -14,93 +15,29 @@ type smokeFaultResult struct {
 	Observed string `json:"observed"`
 }
 
-const smokeFaultFixture = `function smokeFixture(id, name, bundle, capabilities) {
-	var manifest = { id: id, name: name, description: 'A smoke test fault fixture.', version: '1.0.0', main: 'index.js', authors: [{ name: 'astral smoke', id: '0' }] };
-	if (capabilities) manifest.capabilities = capabilities;
-	return { manifest: manifest, bundle: bundle };
-}
-function startedOthers(manager, id) {
-	return manager.getEntities().filter(function (entity) { return entity.id !== id && entity.started; }).length;
-}
-function settle(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }`
-
-const smokeThrowExpression = `(async function () {
-	` + smokeFaultFixture + `
-	var manager = astral.plugins;
-	var id = 'smoke.fault.throws';
-	var fixture = smokeFixture(id, 'Smoke fault: throws', "({ start() { throw new Error('smoke fault: thrown on start'); }, stop() {} })");
-	var before = startedOthers(manager, id);
-	await manager.reload(id, fixture.bundle, fixture.manifest);
-	await manager.enable(id);
-	await settle(300);
-	var entity = manager.getEntity(id);
-	var error = manager.errors.get(id);
-	var problem = '';
-	if (!entity || !entity.failed) problem = 'a plugin that throws on start was not marked failed';
-	else if (!error || String(error.message || error).indexOf('smoke fault: thrown on start') < 0) problem = 'the start error was not recorded: ' + String(error && error.message || error);
-	else if (startedOthers(manager, id) !== before) problem = 'other plugins stopped when one threw on start';
-	await manager.delete(id);
-	return JSON.stringify({ name: 'throw on start', problem: problem, observed: entity ? 'failed with ' + String(error && error.message || error) : 'not loaded' });
-})()`
-
-const smokeFreezeExpression = `(async function () {
-	` + smokeFaultFixture + `
-	var manager = astral.plugins;
-	var id = 'smoke.fault.freezes';
-	var fixture = smokeFixture(id, 'Smoke fault: freezes', "({ start() { var until = Date.now() + 8000; while (Date.now() < until) {} }, stop() {} })");
-	var before = startedOthers(manager, id);
-	await manager.reload(id, fixture.bundle, fixture.manifest);
-	await manager.enable(id);
-	await settle(2500);
-	await manager.stop(id);
-	await manager.start(id);
-	await settle(2500);
-	var entity = manager.getEntity(id);
-	var enabled = manager.settings.get('states', {})[id] === true;
-	var freezes = manager.freezes ? manager.freezes.get(id) || 0 : 0;
-	var problem = '';
-	if (freezes < 2) problem = 'the watchdog attributed ' + freezes + ' of 2 freezes to the plugin that froze Discord';
-	else if (enabled || (entity && entity.started)) problem = 'a plugin that froze Discord twice was not disabled';
-	else if (startedOthers(manager, id) !== before) problem = 'other plugins stopped after one froze Discord';
-	await manager.delete(id);
-	return JSON.stringify({ name: 'freeze on start', problem: problem, observed: freezes + ' freezes attributed, ' + (enabled ? 'still enabled' : 'disabled') });
-})()`
+//go:embed smoke_scripts/*.js
+var smokeScriptFiles embed.FS
 
 const smokeCrashFixtureID = "smoke.fault.crashes"
 
-const smokeCrashArmExpression = `(async function () {
-	` + smokeFaultFixture + `
-	var manager = astral.plugins;
-	var id = '` + smokeCrashFixtureID + `';
-	var capabilities = ['native.ffi.call', 'native.ffi.symbols'];
-	var fixture = smokeFixture(id, 'Smoke fault: crashes', "({ start(context) { var ffi = context.native.ffi; ffi.call(ffi.symbol('abort'), { returnType: 'void', args: [] }); }, stop() {} })", capabilities);
-	var states = manager.settings.get('states', {});
-	states[id] = false;
-	manager.settings.set('states', states);
-	await manager.reload(id, fixture.bundle, fixture.manifest);
-	var consents = manager.settings.get('consents', {});
-	consents[id] = capabilities.slice().sort().join(',');
-	manager.settings.set('consents', consents);
-	states = manager.settings.get('states', {});
-	states[id] = true;
-	manager.settings.set('states', states);
-	await astral.storage.persist();
-	setTimeout(function () { manager.start(id); }, 200);
-	return 'armed';
-})()`
+func smokeScript(name string) string {
+	helpers, err := smokeScriptFiles.ReadFile("smoke_scripts/fault-helpers.js")
+	if err != nil {
+		panic(err)
+	}
+	script, err := smokeScriptFiles.ReadFile("smoke_scripts/" + name)
+	if err != nil {
+		panic(err)
+	}
+	return strings.Replace(string(script), "__FAULT_HELPERS__", strings.TrimSpace(string(helpers)), 1)
+}
 
-const smokeCrashCheckExpression = `(async function () {
-	var manager = astral.plugins;
-	var id = '` + smokeCrashFixtureID + `';
-	var entity = manager.getEntity(id);
-	var enabled = manager.settings.get('states', {})[id] === true;
-	var others = manager.getEntities().filter(function (candidate) { return candidate.id !== id && candidate.started; }).length;
-	var problem = '';
-	if (!entity) problem = 'the plugin that crashed Discord was not loaded again after the relaunch';
-	else if (enabled || entity.started) problem = 'the plugin that crashed Discord while starting was not disabled after the relaunch';
-	if (entity) await manager.delete(id);
-	return JSON.stringify({ name: 'native crash on start', problem: problem, observed: (entity ? (enabled ? 'still enabled' : 'disabled') : 'missing') + ' after the relaunch, ' + others + ' other plugins started' });
-})()`
+var (
+	smokeThrowExpression      = smokeScript("throw-on-start.js")
+	smokeFreezeExpression     = smokeScript("freeze-on-start.js")
+	smokeCrashArmExpression   = smokeScript("arm-crash.js")
+	smokeCrashCheckExpression = smokeScript("check-crash.js")
+)
 
 func runSmokeFault(ctx context.Context, options *smokeOptions, expression string, timeout time.Duration) smokeFaultResult {
 	value, err := evaluateSmokeExpressionWithin(ctx, options, expression, timeout)
@@ -138,7 +75,9 @@ func runSmokeFaults(ctx context.Context, target smokeTarget, options *smokeOptio
 
 func runSmokeCrashFault(ctx context.Context, target smokeTarget, options *smokeOptions) smokeFaultResult {
 	const name = "native crash on start"
-	_, _ = evaluateSmokeExpressionWithin(ctx, options, smokeCrashArmExpression, 20*time.Second)
+	if problem := armSmokeCrashFixture(evaluateSmokeExpressionWithin(ctx, options, smokeCrashArmExpression, 20*time.Second)); problem != "" {
+		return smokeFaultResult{Name: name, Problem: problem}
+	}
 	if !waitUntil(ctx, smokeCrashStopWait, func() bool { return !target.running(ctx) }) {
 		return smokeFaultResult{Name: name, Problem: "the fixture that calls abort() while starting did not crash Discord"}
 	}
@@ -154,6 +93,16 @@ func runSmokeCrashFault(ctx context.Context, target smokeTarget, options *smokeO
 		return result
 	}
 	return smokeFaultResult{Name: name, Problem: fmt.Sprintf("Discord kept crashing for %d relaunches, so the loader never disabled the plugin that crashed it", smokeCrashRelaunches)}
+}
+
+func armSmokeCrashFixture(value string, err error) string {
+	switch {
+	case err != nil && strings.HasPrefix(err.Error(), smokeDeviceThrew):
+		return "the crash fixture could not be armed: " + err.Error()
+	case err == nil && value != "armed":
+		return fmt.Sprintf("the crash fixture could not be armed: the device answered %q", value)
+	}
+	return ""
 }
 
 func waitForSmokeDebugger(ctx context.Context, target smokeTarget, options *smokeOptions) bool {

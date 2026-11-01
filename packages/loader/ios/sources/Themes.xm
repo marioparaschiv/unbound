@@ -5,8 +5,8 @@
 #import "CoreConversions.h"
 #include "LoaderThemes.h"
 
-using astral::ios::toNSString;
-using astral::ios::toStdString;
+using unbound::ios::toNSString;
+using unbound::ios::toStdString;
 
 @interface Themes ()
 + (void)refreshDiscordTheme;
@@ -25,7 +25,7 @@ static NSDictionary<NSString *, NSString *>       *rawFallbacks           = nil;
 static loader::ThemeSelection &themeSelection(void)
 {
     static loader::ThemeSelection selection([](const std::string &themeId) {
-        return AstralAddonState().theme(themeId).has_value();
+        return UnboundAddonState().theme(themeId).has_value();
     });
     return selection;
 }

@@ -12,6 +12,7 @@
 #include "LoaderColor.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderDiagnostics.h"
+#include "LoaderDocuments.h"
 #include "LoaderJSI.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
@@ -21,9 +22,9 @@
 #include "LoaderToolboxGestures.h"
 #include "NativePluginBridge.h"
 
-using namespace astral::android;
+using namespace unbound::android;
 
-static const char *const kBridgeClass = "app/astral/android/NativeBridge";
+static const char *const kBridgeClass = "app/unbound/android/NativeBridge";
 
 static JavaCallbacks gCallbacks;
 
@@ -46,7 +47,7 @@ static int androidPriority(loader::LogLevel level)
 static void writeLog(loader::LogLevel level, const std::string &category,
                      const std::string &message)
 {
-    __android_log_write(androidPriority(level), "astral",
+    __android_log_write(androidPriority(level), "Unbound",
                         loader::formatLogLine(category, message).c_str());
     loader::appendLogFile(level, category, message);
 }
@@ -139,8 +140,8 @@ static void nativeDispatchHookEvent(JNIEnv *env, jclass, jstring token, jstring 
         return;
     }
 
-    astral::android::dispatchHookEvent(astral::android::toStdString(env, token),
-                                       astral::android::toStdString(env, payload));
+    unbound::android::dispatchHookEvent(unbound::android::toStdString(env, token),
+                                        unbound::android::toStdString(env, payload));
 }
 
 static void nativeDrainMainWork(JNIEnv *, jclass)
@@ -177,7 +178,7 @@ static jstring nativeHookReturnValue(JNIEnv *env, jclass, jstring token, jstring
     {
         return nullptr;
     }
-    std::optional<std::string> value = astral::android::hookReturnValue(
+    std::optional<std::string> value = unbound::android::hookReturnValue(
         toStdString(env, token), toStdString(env, self), toStdString(env, arguments));
     return value ? toJavaString(env, *value) : nullptr;
 }
@@ -282,9 +283,9 @@ static jstring nativeResolveFont(JNIEnv *env, jclass, jstring family)
     return toJavaString(env, loader ? loader->resolveFont(toStdString(env, family)) : "{}");
 }
 
-static jstring nativeDocumentsName(JNIEnv *env, jclass)
+static jstring nativeDocumentsDirectory(JNIEnv *env, jclass, jstring parent)
 {
-    return toJavaString(env, loader::preferences::kDocumentsName);
+    return toJavaString(env, loader::documentsDirectory(toStdString(env, parent)));
 }
 
 static jstring nativeSettingsFileName(JNIEnv *env, jclass)
@@ -525,8 +526,8 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
          reinterpret_cast<void *>(nativeThreeFingerEvent)},
         {"nativeResolveFont", "(Ljava/lang/String;)Ljava/lang/String;",
          reinterpret_cast<void *>(nativeResolveFont)},
-        {"nativeDocumentsName", "()Ljava/lang/String;",
-         reinterpret_cast<void *>(nativeDocumentsName)},
+        {"nativeDocumentsDirectory", "(Ljava/lang/String;)Ljava/lang/String;",
+         reinterpret_cast<void *>(nativeDocumentsDirectory)},
         {"nativeSettingsFileName", "()Ljava/lang/String;",
          reinterpret_cast<void *>(nativeSettingsFileName)},
         {"nativeThemeColorsJSON", "(Ljava/lang/String;)Ljava/lang/String;",

@@ -1,10 +1,5 @@
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
-import type {
-	NativeJavaBridge,
-	NativeJavaHookToken,
-	NativeJavaReference,
-	PluginContext,
-} from '@unbound-app/api/native';
+import type { NativeJavaBridge, NativeJavaReference, PluginContext } from '@unbound-app/api/native';
 import {
 	javaFloat,
 	javaInt,
@@ -22,6 +17,11 @@ import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabiliti
 import { androidColor, hexColor } from '@unbound-plugins/shared/colors/android-colors';
 import { shapeMethod } from '@unbound-plugins/shared/native/android/discord-shapes';
 
+import {
+	installAndroidTagGradients,
+	removeAndroidTagGradients,
+	setAndroidTagAppearances,
+} from '~/android/ui-tag-gradients';
 import type { LabelAppearances } from '~/label-appearances';
 import type { TagGradients } from '~/tag-gradients';
 import { HEX_COLOR } from '~/constants';
@@ -72,7 +72,7 @@ export function startAndroidTagGradients(
 		return async () => {};
 	}
 
-	const { java, hooks } = context.native;
+	const { java, ui } = context.native;
 	const bind = shapeMethod(java, 'messageTagBind');
 	const orientationClass = java.getClass(ORIENTATION);
 	const leftToRight = orientationClass
@@ -123,26 +123,24 @@ export function startAndroidTagGradients(
 		painted.set(key, { layout, original: background, gradient });
 	}
 
-	const token: NativeJavaHookToken = hooks.hook(
-		TAG_VIEW,
-		bind.name,
-		bind.parameters,
-		{ notify: true },
-		({ self, args }) => {
-			const tagView = javaReference(self);
-			const text = javaText(args[0]);
+	const scope = ui.createScope();
 
-			if (!tagView || !text || stopped) return;
+	ui.call(installAndroidTagGradients, scope, bind, appearances.snapshot())
+		.then((installed) => {
+			if (!installed) {
+				console.error(
+					'[More User Tags: gradients] Skipped, the gradient classes were not found.',
+				);
+			}
+		})
+		.catch((error: unknown) => {
+			if (!isCancellation(error)) {
+				console.error('[More User Tags: gradients] Failed to install the hook:', error);
+			}
+		});
 
-			paint(tagView, text).catch((error) => {
-				if (!isCancellation(error)) {
-					console.error(
-						'[More User Tags: gradients] Failed to paint an Android tag:',
-						error,
-					);
-				}
-			});
-		},
+	const unsubscribe = appearances.subscribe(() =>
+		ui.run(setAndroidTagAppearances, appearances.snapshot()),
 	);
 
 	async function tagText(tagView: NativeJavaReference): Promise<string | undefined> {
@@ -170,7 +168,9 @@ export function startAndroidTagGradients(
 
 	return async () => {
 		stopped = true;
-		hooks.remove(token);
+		unsubscribe();
+		ui.run(removeAndroidTagGradients);
+		scope.dispose();
 
 		for (const { layout, original, gradient } of painted.values()) {
 			const current = javaReference(

@@ -12,8 +12,8 @@
 #import "Utilities+CodeSignature.h"
 #import "Utilities.h"
 
-using astral::ios::jsonFromObject;
-using astral::ios::toStdString;
+using unbound::ios::jsonFromObject;
+using unbound::ios::toStdString;
 
 static nlohmann::json entitlementsJSON()
 {
@@ -63,9 +63,9 @@ void registerNativePlatformProvider(void)
         return host ? std::optional<std::string>(toStdString(host)) : std::nullopt;
     };
     provider->documents = toStdString(FileSystem.documents);
-    provider->settings  = &AstralSettingsStore();
+    provider->settings  = &UnboundSettingsStore();
     provider->fonts     = [] {
-        return AstralFontCatalog();
+        return UnboundFontCatalog();
     };
 
     setNativePlatformProvider(provider);

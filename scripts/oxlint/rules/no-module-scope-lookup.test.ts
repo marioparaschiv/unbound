@@ -7,7 +7,7 @@ const files = {
 	'in-function.ts': "export function store() { return metro.findStore('User'); }",
 	'in-arrow.ts': "export const store = () => flux.getStore('UserStore');",
 	'in-method.ts': "export default { start() { metro.findByProps('sendMessage'); } };",
-	'storage.ts': "export const settings = storage.getStore('astral.moyai');",
+	'storage.ts': "export const settings = storage.getStore('unbound.moyai');",
 	'unrelated.ts': "export const row = rows.findByProps('id');",
 	'eager.ts': "export const Store = metro.findStore('User', { lazy: false });",
 	'scoped.ts':

@@ -1,9 +1,9 @@
 import { addonIdSchema } from './manifest';
 
 /** The URL scheme the client claims. */
-export const UNBOUND_SCHEME = 'astral';
+export const UNBOUND_SCHEME = 'unbound';
 
-const DISCORD_RELAY_PREFIX = 'com.hammerandchisel.discord://astral/';
+const DISCORD_RELAY_PREFIX = 'com.hammerandchisel.discord://unbound/';
 const LINK_PREFIXES = [`${UNBOUND_SCHEME}://`, DISCORD_RELAY_PREFIX];
 
 /** Something a page asks the client to do. */
@@ -34,7 +34,7 @@ function readQuery(query: string): Map<string, string> | undefined {
 /**
  * @description Builds the link a page navigates to so the client installs an addon.
  * @param link What the client should do.
- * @returns The `astral://` URL, e.g. `astral://install?id=acme.hello`.
+ * @returns The `unbound://` URL, e.g. `unbound://install?id=acme.hello`.
  */
 export function createUnboundLink(link: UnboundLink): string {
 	return `${UNBOUND_SCHEME}://${link.action}?id=${encodeURIComponent(link.id)}`;

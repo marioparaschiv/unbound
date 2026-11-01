@@ -1,0 +1,14 @@
+{
+	"id": "adrian.aussie-mode",
+	"name": "Aussie Mode",
+	"description": "Discord designed for Aussies.",
+	"authors": [
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.2",
+	"icon": "GlobeEarthIcon",
+	"main": "index.tsx"
+}

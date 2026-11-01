@@ -13,13 +13,15 @@ import { PLUGIN_NAME } from '~/constants';
  * @returns A function that queues the removal of both features.
  */
 export function enableMentions(native: NativePluginBridge, enqueue: Enqueue): () => void {
-	const { objc } = native;
 	const removers: (() => Promise<void>)[] = [];
 
 	enqueue(() => {
-		for (const apply of [colorMessageMentions, colorChatInputMentions]) {
+		for (const apply of [
+			() => colorMessageMentions(native),
+			() => colorChatInputMentions(native),
+		]) {
 			try {
-				removers.push(apply(objc));
+				removers.push(apply());
 			} catch (error) {
 				if (!isCancellation(error)) {
 					console.error(`[${PLUGIN_NAME}] Failed to color native mentions:`, error);

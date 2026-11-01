@@ -8,6 +8,7 @@ import type {
 	NativeJavaHooksBridge,
 	NativeJavaReference,
 	NativeJavaValue,
+	NativeUIBridge,
 } from '@unbound-app/api/native';
 import {
 	createHost,
@@ -20,6 +21,7 @@ import {
 	javaInt,
 	javaNumber,
 	javaReference,
+	javaString,
 	javaText,
 	javaViewKey,
 	sameJavaReference,
@@ -44,16 +46,19 @@ import type { LatencyRecord, LatencyRecords } from '~/records';
 import type { AndroidTooltips } from '~/android/tooltip';
 import { subscribeTheme } from '~/theme';
 import { Icon } from '~/constants';
+import { installRebindGuard } from '~/android/rebind-guard';
 
 const DRAWABLE = 'android.graphics.drawable.Drawable';
 const NO_DRAWABLE = { type: 'null', class: DRAWABLE } as const;
 const VISIBLE = 0;
+const MESSAGE_ID_GETTER = 'getId-3Eiw7ao';
 const SETTLE_DELAYS = [0, 120, 600];
 
 type Native = {
 	java: NativeJavaBridge;
 	hooks: NativeJavaHooksBridge;
 	fabric: NativeFabricBridge;
+	ui: NativeUIBridge;
 };
 
 type Indicator = {
@@ -77,12 +82,14 @@ type Indicator = {
  * @returns `dispose`, which removes every indicator and resolves once the rows are restored, or `undefined` when the icon surface did not register.
  */
 export function createAndroidIndicators(
-	{ java, hooks, fabric }: Native,
+	{ java, hooks, fabric, ui }: Native,
 	records: LatencyRecords,
 	tooltips: AndroidTooltips | null,
 ) {
 	const indicators = new Map<string, Indicator>();
 	const byId = new Map<string, Indicator>();
+	const hostKey = java.createAssociationKey();
+	const drawnForKey = java.createAssociationKey();
 	const bound = new Map<string, { messageView: NativeJavaReference; messageId: string }>();
 	const listeners = createSurfaceListeners();
 	const queues = new Map<string, Promise<void>>();
@@ -142,8 +149,18 @@ export function createAndroidIndicators(
 		await layoutHostingList(java, indicator.messageView);
 	}
 
+	function mark(indicator: Indicator) {
+		java.setAssociatedObject(indicator.messageView, hostKey, indicator.host);
+		java.setAssociatedObject(
+			indicator.messageView,
+			drawnForKey,
+			javaString(indicator.messageId),
+		);
+	}
+
 	async function remove(indicator: Indicator) {
 		indicator.disposed = true;
+		java.setAssociatedObject(indicator.messageView, hostKey, { type: 'null' });
 		byId.delete(indicator.id);
 		indicators.delete(javaViewKey(indicator.messageView as NativeJavaValue) ?? '');
 		tooltips?.dismissFor(indicator.id);
@@ -189,6 +206,7 @@ export function createAndroidIndicators(
 			},
 			{ width, height },
 		);
+		await java.invokeAsync(indicator.host, 'setVisibility', [javaInt(VISIBLE)]);
 
 		if (!indicator.mounting && !indicator.disposed) {
 			indicator.mounting = fabric.mountAsync(indicator.host, iconModule!, {
@@ -253,6 +271,7 @@ export function createAndroidIndicators(
 		if (existing && !existing.disposed && sameJavaReference(existing.authorName, authorName)) {
 			existing.messageId = messageId;
 			existing.record = record;
+			mark(existing);
 			publish(existing);
 
 			if (!sameJavaReference(current, existing.spacer)) {
@@ -289,6 +308,7 @@ export function createAndroidIndicators(
 
 		indicators.set(key, indicator);
 		byId.set(indicator.id, indicator);
+		mark(indicator);
 		await java.invokeAsync(authorName, 'setCompoundDrawablesRelative', [
 			indicator.spacer,
 			NO_DRAWABLE,
@@ -326,6 +346,17 @@ export function createAndroidIndicators(
 
 	const bindMessage = messageBindMethod(java);
 	const idField = messageIdField(java);
+	const scope = ui.createScope();
+
+	ui.run(installRebindGuard, scope, {
+		messageView: MESSAGE_VIEW,
+		bindName: bindMessage.name,
+		bindParameters: bindMessage.parameters,
+		messageIdGetter: MESSAGE_ID_GETTER,
+		host: hostKey,
+		drawnFor: drawnForKey,
+	});
+
 	const token = hooks.hook(
 		MESSAGE_VIEW,
 		bindMessage.name,
@@ -335,7 +366,7 @@ export function createAndroidIndicators(
 			const messageView = javaReference(self);
 			const message = javaReference(args[0]);
 			const messageId = message
-				? javaText(java.invoke(message, 'getId-3Eiw7ao', []))
+				? javaText(java.invoke(message, MESSAGE_ID_GETTER, []))
 				: undefined;
 
 			if (messageView && messageId) setTimeout(() => schedule(messageView, messageId), 0);
@@ -369,6 +400,7 @@ export function createAndroidIndicators(
 	return {
 		async dispose() {
 			disposed = true;
+			scope.dispose();
 			hooks.remove(token);
 			unsubscribeRecords();
 			unsubscribeTheme();

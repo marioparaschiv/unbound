@@ -9,7 +9,7 @@ const HOUR = 60 * 60 * 1000;
 const members = new Map<string, Member>();
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.show-hidden-things' },
+	manifest: { id: 'unbound.show-hidden-things' },
 	unbound: {
 		flux: {
 			getStore: (name: string) => (name === 'Channel' ? ChannelStore : GuildMemberStore),

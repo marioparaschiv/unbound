@@ -10,7 +10,7 @@ const Messages = {
 	editMessage: (_channelId: string, _messageId: string, draft: Draft) => void edited.push(draft),
 };
 
-const scope = installAddonGlobals({ manifest: { id: 'astral.clear-urls' } });
+const scope = installAddonGlobals({ manifest: { id: 'unbound.clear-urls' } });
 
 Object.assign(scope.metro, { api: { Messages } });
 

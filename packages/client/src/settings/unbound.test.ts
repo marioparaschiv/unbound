@@ -1,9 +1,11 @@
 import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 import { expect, test } from 'bun:test';
 
-import { settings } from '~/storage/api';
+import { snapshot } from '~/storage/api';
 
 import { getSetting, isSettingChange, setSetting, toggleSetting } from './unbound';
+
+const settings = snapshot();
 
 test('falls back to the default until a value is stored', () => {
 	delete settings[CORE_SETTINGS_STORE];

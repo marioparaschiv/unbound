@@ -23,6 +23,7 @@ import { validateNativePluginRequirements } from '~/native/capabilities';
 import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
 import { reportCrash } from '~/diagnostics/crash-reports';
+import { beginNativeStop } from '~/native/plugin-context';
 import type { NativeConsents } from '~/native/consent';
 import { currentPlatform } from '~/native/platform';
 import { unpatchAllByCaller } from '~/patcher/api';
@@ -390,6 +391,8 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		state.started = false;
 
 		try {
+			beginNativeStop(context);
+
 			const result = withAddonAttribution(this.attribution(resolved), () =>
 				instance?.stop?.(),
 			);

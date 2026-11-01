@@ -1,5 +1,5 @@
 {
-	"id": "astral.reaction-avatars",
+	"id": "unbound.reaction-avatars",
 	"name": "Reaction Avatars",
 	"description": "Shows the people who reacted beside each message reaction.",
 	"authors": [
@@ -25,7 +25,7 @@
 		}
 	],
 	"minNativePluginApi": "1.0.0",
-	"version": "1.0.1",
+	"version": "1.2.1",
 	"icon": "ReactionIcon",
 	"main": "index.ts"
 }

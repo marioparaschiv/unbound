@@ -26,6 +26,11 @@ describe('reactionBaseViewWidth', () => {
 		expect(reactionBaseViewWidth(47.5, 65.5, 61.5)).toBe(43.5);
 		expect(reactionBaseViewWidth(47.5, 83.5, 79.5)).toBe(43.5);
 	});
+
+	test('keeps a restored reaction view whose cell is still widened', () => {
+		expect(reactionBaseViewWidth(47.5, 65.5, 43.5)).toBe(43.5);
+		expect(reactionBaseViewWidth(38, 65.5, 34)).toBe(34);
+	});
 });
 
 describe('reactionAvatarFrame', () => {

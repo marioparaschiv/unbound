@@ -1,8 +1,8 @@
 #import <UIKit/UIKit.h>
 
-static NSString *const kAstralPrefix = @"astral://";
-// Discord registers this scheme on every install, and its router ignores the astral host.
-static NSString *const kRelayPrefix = @"com.hammerandchisel.discord://astral/";
+static NSString *const kUnboundPrefix = @"unbound://";
+// Discord registers this scheme on every install, and its router ignores the unbound host.
+static NSString *const kRelayPrefix = @"com.hammerandchisel.discord://unbound/";
 
 @interface ULSceneDelegate : UIResponder <UIWindowSceneDelegate>
 @property (strong, nonatomic) UIWindow *window;
@@ -12,13 +12,13 @@ static NSString *const kRelayPrefix = @"com.hammerandchisel.discord://astral/";
 static NSURL *relayURL(NSURL *url)
 {
     NSString *string = url.absoluteString;
-    if (string.length <= kAstralPrefix.length ||
-        [string rangeOfString:kAstralPrefix options:NSCaseInsensitiveSearch | NSAnchoredSearch]
+    if (string.length <= kUnboundPrefix.length ||
+        [string rangeOfString:kUnboundPrefix options:NSCaseInsensitiveSearch | NSAnchoredSearch]
                 .location == NSNotFound)
     {
         return nil;
     }
-    return [NSURL URLWithString:[kRelayPrefix stringByAppendingString:[string substringFromIndex:kAstralPrefix.length]]];
+    return [NSURL URLWithString:[kRelayPrefix stringByAppendingString:[string substringFromIndex:kUnboundPrefix.length]]];
 }
 
 static NSURL *firstRelayURL(NSSet<UIOpenURLContext *> *contexts)

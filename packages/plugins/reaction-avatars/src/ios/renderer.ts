@@ -20,6 +20,7 @@ import type { ReactionCellViews } from '~/ios/cell-views';
 import { releaseStates } from '~/ios/reaction-views';
 import { surfaceStates } from '~/surface-states';
 import { MessageStore } from '~/modules';
+import { MAX_UNMEASURED_RETRIES, UNMEASURED_RETRY_MS } from '~/constants';
 
 /**
  * @description Stops showing avatars in a message cell and restores its reaction layouts.
@@ -34,6 +35,24 @@ export function clearCell(session: Session, cellKey: string): void {
 	}
 
 	restoreCellLayouts(session, cellKey);
+}
+
+const unmeasuredRetries = new Map<string, number>();
+
+function retryUnmeasuredCell(session: Session, cell: NativeObjectHandle): void {
+	const cellKey = key(session.objc, cell);
+	const retries = unmeasuredRetries.get(cellKey) ?? 0;
+
+	if (retries >= MAX_UNMEASURED_RETRIES) {
+		unmeasuredRetries.delete(cellKey);
+
+		return;
+	}
+
+	unmeasuredRetries.set(cellKey, retries + 1);
+	setTimeout(() => {
+		if (!session.signal.aborted) scheduleCell(session, cell, true);
+	}, UNMEASURED_RETRY_MS);
 }
 
 /**
@@ -74,6 +93,7 @@ export function renderCell(
 
 	const reactions: Reaction[] = message.reactions ?? [];
 	const visibleKeys = new Set<string>();
+	let unmeasured = false;
 
 	for (const collectionCell of toHandles(objc, views.visibleCells)) {
 		const index = itemOfCell(objc, collection, collectionCell);
@@ -96,11 +116,13 @@ export function renderCell(
 		const viewKey = key(objc, view);
 
 		visibleKeys.add(viewKey);
-		syncReactionView(
+		const synced = syncReactionView(
 			session,
 			{ cellKey, collectionCell, itemIndex: index, layoutKey, view },
 			reaction ? reactionContext(info.channelId, info.messageId, reaction) : null,
 		);
+
+		if (!synced) unmeasured = true;
 		followReactionView(session, viewKey);
 	}
 
@@ -109,6 +131,9 @@ export function renderCell(
 		(state, viewKey) => state.cellKey === cellKey && !visibleKeys.has(viewKey),
 	);
 	applyLayout(session, entry);
+
+	if (unmeasured) retryUnmeasuredCell(session, cell);
+	else unmeasuredRetries.delete(cellKey);
 }
 
 /**
@@ -143,6 +168,7 @@ export function clearRenderedCells(session: Session): void {
  * @param session The running session.
  */
 export function disposeRenderer(session: Session): void {
+	session.disposing = true;
 	releaseStates(session, () => true);
 	disposeLayouts(session);
 	session.reactors.clear();

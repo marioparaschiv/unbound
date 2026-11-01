@@ -20,7 +20,7 @@ function dispatch(type: string, action: object) {
 }
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.moyai' },
+	manifest: { id: 'unbound.moyai' },
 	unbound: { flux: { getStore: () => SelectedChannelStore, onAction } },
 });
 

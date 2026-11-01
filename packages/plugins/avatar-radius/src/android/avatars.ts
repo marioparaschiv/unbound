@@ -5,6 +5,7 @@ import type {
 	NativeJavaHooksBridge,
 	NativeJavaReference,
 	NativeJavaValue,
+	NativeUIBridge,
 } from '@unbound-app/api/native';
 import {
 	currentDecorView,
@@ -21,12 +22,19 @@ import {
 	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
 
+import {
+	countOutlines,
+	installOutlineHook,
+	restoreOutlines,
+	setOutlineRadius,
+} from '~/android/ui-avatars';
 import { AvatarClass, PLUGIN_NAME } from '~/constants';
 import { mayBeAvatar } from '~/image-sources';
 
 type AndroidNative = {
 	java: NativeJavaBridge;
 	hooks: NativeJavaHooksBridge;
+	ui: NativeUIBridge;
 };
 
 type Rounded =
@@ -63,7 +71,7 @@ function isBorderRadiusSetter(method: {
  * @param radius Reads the chosen radius in density-independent pixels.
  * @returns `refresh`, which re-rounds the avatars it rounded, and `dispose`, which brings back the circles.
  */
-export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () => number) {
+export function roundAndroidAvatars({ java, hooks, ui }: AndroidNative, radius: () => number) {
 	const avatarClass = java.getClass(AvatarClass.android);
 	const attachClass = java.describe(AvatarClass.android).superclass ?? AvatarClass.android;
 	const backgroundOutline = java.getField(
@@ -357,8 +365,21 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 		({ self }) => {
 			const view = javaReference(self);
 
-			if (view) round(view).catch(report);
+			if (view && !isAvatar(view)) round(view).catch(report);
 		},
+	);
+
+	function isAvatar(view: NativeJavaReference): boolean {
+		return javaFlag(java.invoke(avatarClass, 'isInstance', [view]));
+	}
+
+	const scope = ui.createScope();
+
+	ui.run(
+		installOutlineHook,
+		scope,
+		{ avatar: AvatarClass.android, attach: attachClass },
+		radius(),
 	);
 
 	async function roundAttached() {
@@ -391,7 +412,7 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 	}
 
 	return {
-		rounded: () => tracked.length,
+		rounded: async () => tracked.length + (await ui.call(countOutlines)),
 		async unrounded() {
 			const checks = await Promise.all(
 				tracked.map((rounded) => isUnrounded(rounded).catch(() => false)),
@@ -400,10 +421,13 @@ export function roundAndroidAvatars({ java, hooks }: AndroidNative, radius: () =
 			return checks.filter(Boolean).length;
 		},
 		refresh() {
+			ui.run(setOutlineRadius, radius());
 			for (const rounded of tracked) apply(rounded).catch(report);
 		},
 		async dispose() {
 			disposed = true;
+			ui.run(restoreOutlines);
+			scope.dispose();
 			hooks.remove(token);
 
 			await Promise.all(tracked.splice(0).map((rounded) => restore(rounded).catch(report)));

@@ -2,7 +2,7 @@ import type { NativePluginBridge, NativePluginCapability } from './native';
 
 type NativePluginNamespace = Exclude<
 	keyof NativePluginBridge,
-	'apiVersion' | 'abiVersion' | 'capabilities'
+	'apiVersion' | 'abiVersion' | 'capabilities' | 'ui'
 >;
 
 /** A native bridge method by the path a plugin calls it through, such as `objc.invoke`. */

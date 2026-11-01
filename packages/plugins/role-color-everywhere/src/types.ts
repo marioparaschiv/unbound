@@ -24,6 +24,7 @@ export type User = {
 };
 
 export type Message = {
+	id?: string;
 	content?: string;
 	guildId?: string;
 };
@@ -35,6 +36,8 @@ export type Channel = {
 export type MemberStore = {
 	getMember(guildId: string, userId: string): Member | null | undefined;
 	getMembers(guildId: string): Member[] | null | undefined;
+	addChangeListener(listener: () => void): void;
+	removeChangeListener(listener: () => void): void;
 };
 
 // Discord's render output has no published shape, so patches read it structurally and bail when it differs.
@@ -49,6 +52,7 @@ type GuildRoleStore = FluxStore & {
 
 type MessageStore = FluxStore & {
 	getMessage(channelId: string, messageId: string): Message | null | undefined;
+	getMessages(channelId: string): { _array?: Message[] } | null | undefined;
 };
 
 declare module '@unbound-app/api/flux' {

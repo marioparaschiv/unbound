@@ -338,6 +338,31 @@ function readSigningKey(): KeyObject | undefined {
 	return parsePluginSigningKey(pem);
 }
 
+const GENERATED_MANIFEST_FIELDS = ['platforms', 'platformCapabilities', 'capabilities'] as const;
+
+/**
+ * @description Builds the manifest to publish: the source manifest with the platforms and Capabilities `ubd build` generated into `dist/manifest.json`, which the source never holds.
+ * @param root The repository root.
+ * @param dir The plugin's folder.
+ * @returns The manifest's JSON text.
+ */
+export function publishedManifest(root: string, dir: string): string {
+	const source = JSON.parse(
+		readFileSync(join(root, WORKSPACE_DIR, dir, 'manifest.json'), 'utf8'),
+	) as Record<string, unknown>;
+	const builtPath = join(root, WORKSPACE_DIR, dir, 'dist', 'manifest.json');
+
+	if (!existsSync(builtPath)) return JSON.stringify(source);
+
+	const built = JSON.parse(readFileSync(builtPath, 'utf8')) as Record<string, unknown>;
+
+	for (const field of GENERATED_MANIFEST_FIELDS) {
+		if (built[field] !== undefined) source[field] = built[field];
+	}
+
+	return JSON.stringify(source);
+}
+
 /**
  * @description Finds the bundles a plugin build compiled to Hermes bytecode beside its source bundle.
  * @param root The repository root.
@@ -395,7 +420,7 @@ function collectFiles(root: string, releases: PluginRelease[], key?: KeyObject):
 			files.push({
 				path: manifest,
 				contents: new TextEncoder().encode(
-					withSignature(readFileSync(join(root, manifest), 'utf8'), signature, digests),
+					withSignature(publishedManifest(root, plugin.dir), signature, digests),
 				),
 			});
 		}

@@ -1,5 +1,5 @@
 (() => {
-	const key = '__astralNativeFailure';
+	const key = '__unboundNativeFailure';
 	const NativeError = Error;
 
 	const guard = (native) =>
@@ -23,7 +23,7 @@
 			return result;
 		};
 
-	Object.defineProperty(globalThis, '__astralGuardNativeFunction', { value: guard });
+	Object.defineProperty(globalThis, '__unboundGuardNativeFunction', { value: guard });
 
 	return guard;
 })();

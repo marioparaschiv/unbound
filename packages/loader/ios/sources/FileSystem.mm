@@ -8,7 +8,7 @@
 #import "CoreConversions.h"
 #include "LoaderFileWatcher.h"
 
-using astral::ios::toStdString;
+using unbound::ios::toStdString;
 
 static const unsigned long kFileVnodeMask =
     DISPATCH_VNODE_ATTRIB | DISPATCH_VNODE_DELETE | DISPATCH_VNODE_EXTEND | DISPATCH_VNODE_LINK |
@@ -274,8 +274,8 @@ static NSString      *documents = nil;
 
     if (!documents)
     {
-        documents = [NSString
-            pathWithComponents:@[ NSHomeDirectory(), @"Documents", [CoreBridge documentsName] ]];
+        documents = [CoreBridge
+            documentsIn:[NSHomeDirectory() stringByAppendingPathComponent:@"Documents"]];
     }
 
     if (![FileSystem exists:documents])

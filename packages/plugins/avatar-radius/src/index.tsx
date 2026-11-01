@@ -2,26 +2,22 @@ import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabiliti
 import type { PluginContext } from '@unbound-app/api/native';
 
 import SettingsPanel from '~/components/settings-panel';
-import { roundAndroidAvatars } from '~/android/avatars';
-import { roundIOSAvatars } from '~/ios/avatars';
 import { PLUGIN_NAME } from '~/constants';
+import { roundAvatars } from '~/platform';
 import { storedRadius } from '~/radius';
 import { settings } from '~/modules';
 
 let dispose: () => void | Promise<void> = () => {};
 
 const radiusSetting = () => storedRadius(settings.get('radius', undefined));
-let rounded: (() => number) | null = null;
+let rounded: (() => number | Promise<number>) | null = null;
 let unrounded: (() => Promise<number>) | null = null;
 
 function start(context: PluginContext) {
 	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
 
 	const radius = radiusSetting;
-	const avatars =
-		context.platform === 'android'
-			? roundAndroidAvatars(context.native, radius)
-			: roundIOSAvatars(context.native.objc, radius);
+	const avatars = roundAvatars(context.native, radius);
 	const unsubscribe = settings.addListener(
 		({ key }) => key === 'radius',
 		() => avatars.refresh(),
@@ -60,7 +56,7 @@ async function selfTest() {
 		};
 	}
 
-	return { ok: true, detail: `${rounded()} avatars rounded to ${radiusSetting()} points` };
+	return { ok: true, detail: `${await rounded()} avatars rounded to ${radiusSetting()} points` };
 }
 
 export default {

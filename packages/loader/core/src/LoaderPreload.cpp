@@ -27,25 +27,21 @@ static nlohmann::json themesWithSourceBundles(nlohmann::json themes)
 
 nlohmann::json preloadData(const PreloadPayload &payload)
 {
-    return {
-        {"settings", payload.settings.is_object() ? payload.settings : nlohmann::json::object()},
-        {"plugins", payload.plugins.is_array() ? payload.plugins : nlohmann::json::array()},
-        {"themes", themesWithSourceBundles(payload.themes)},
-        {"fonts", payload.fonts.is_array() ? payload.fonts : nlohmann::json::array()},
-        {"availableFonts",
-         payload.availableFonts.is_array() ? payload.availableFonts : nlohmann::json::array()},
-        {"loader",
-         {{"origin", payload.origin},
-          {"version", payload.version},
-          {"bytecodeVersion", payload.bytecodeVersion}}}};
+    return {{"plugins", payload.plugins.is_array() ? payload.plugins : nlohmann::json::array()},
+            {"themes", themesWithSourceBundles(payload.themes)},
+            {"fonts", payload.fonts.is_array() ? payload.fonts : nlohmann::json::array()},
+            {"availableFonts",
+             payload.availableFonts.is_array() ? payload.availableFonts : nlohmann::json::array()},
+            {"loader",
+             {{"origin", payload.origin},
+              {"version", payload.version},
+              {"bytecodeVersion", payload.bytecodeVersion}}}};
 }
 
-PreloadPayload makePreloadPayload(const SettingsStore &settings, const AddonState &addons,
-                                  const nlohmann::json &availableFonts, std::string origin,
-                                  uint32_t bytecodeVersion)
+PreloadPayload makePreloadPayload(const AddonState &addons, const nlohmann::json &availableFonts,
+                                  std::string origin, uint32_t bytecodeVersion)
 {
     PreloadPayload payload;
-    payload.settings        = settings.snapshot();
     payload.plugins         = addons.plugins();
     payload.themes          = addons.themes();
     payload.fonts           = addons.fonts();

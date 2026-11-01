@@ -1,10 +1,10 @@
 (beforeRunApplication) => {
-	if (globalThis.__astralRunGateInstalled) {
+	if (globalThis.__unboundRunGateInstalled) {
 		return true;
 	}
 
 	function gate(registry) {
-		if (!registry || typeof registry !== 'object' || registry.__astralGated) {
+		if (!registry || typeof registry !== 'object' || registry.__unboundGated) {
 			return registry;
 		}
 
@@ -23,7 +23,7 @@
 		};
 
 		try {
-			Object.defineProperty(registry, '__astralGated', { value: true });
+			Object.defineProperty(registry, '__unboundGated', { value: true });
 		} catch {}
 
 		return registry;
@@ -42,7 +42,7 @@
 		},
 	});
 
-	globalThis.__astralRunGateInstalled = true;
+	globalThis.__unboundRunGateInstalled = true;
 
 	return true;
 };

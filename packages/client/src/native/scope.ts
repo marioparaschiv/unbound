@@ -29,9 +29,11 @@ import type {
 
 import { requireCapability, scopedMethod, unavailableNativePlugin } from '~/native/capabilities';
 import { NativePluginDisposedError, NativePluginUnavailableError } from '~/native/errors';
+import { createMainThreadAlloc } from '~/native/main-thread-alloc';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { getNativePlugin } from '~/native/plugin-bridge';
+import { createScopedUIBridge } from '~/native/ui';
 
 type AssociationBinding = {
 	handle: NativeObjectHandle;
@@ -61,6 +63,7 @@ function dropJavaHandle(handle: NativeJavaReference): boolean {
 
 type ScopedNativePlugin = {
 	bridge: NativePluginBridge;
+	beginStop: () => void;
 	dispose: () => void;
 };
 
@@ -151,11 +154,17 @@ export function createScopedNativePlugin(
 	const runtimeTokens = new Set<NativeRuntimeEventToken>();
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
 	const associations: AssociationBinding[] = [];
+	const ui = createScopedUIBridge(capabilities, platform);
 	let disposed = false;
+	let stopping = false;
 	const mountAsync = fabricBridge.mountAsync?.bind(fabricBridge);
 	const unmountAsync = fabricBridge.unmountAsync?.bind(fabricBridge);
 
 	function trackInvocation<T>(pending: NativeCancelablePromise<T>): NativeCancelablePromise<T> {
+		if (stopping) {
+			return pending;
+		}
+
 		pendingInvocations.add(pending);
 		pending.then(
 			() => pendingInvocations.delete(pending as NativeCancelablePromise<unknown>),
@@ -206,9 +215,11 @@ export function createScopedNativePlugin(
 		};
 	}
 
+	const allocObject = createMainThreadAlloc(objcBridge);
+
 	const objc: NativeObjCBridge = {
 		getClass: scopeMethod(objcBridge.getClass.bind(objcBridge), 'objc.getClass'),
-		alloc: scopeMethod(objcBridge.alloc.bind(objcBridge), 'objc.alloc'),
+		alloc: scopeMethod(allocObject, 'objc.alloc'),
 		create: scopeMethod(
 			(
 				classOrName: string | NativeClassHandle,
@@ -216,7 +227,7 @@ export function createScopedNativePlugin(
 				args: unknown[] = [],
 				options?: NativeCallOptions,
 			) => {
-				const instance = objcBridge.alloc(classOrName);
+				const instance = allocObject(classOrName);
 				const initialized = objcBridge.invoke(instance, initSelector, args, options);
 
 				if (!isObjectHandle(initialized)) {
@@ -625,11 +636,16 @@ export function createScopedNativePlugin(
 			java,
 			hooks,
 			debug,
+			ui: ui.bridge,
+		},
+		beginStop: () => {
+			stopping = true;
 		},
 		dispose: () => {
 			if (disposed) return;
 
 			disposed = true;
+			ui.dispose();
 
 			for (const pending of pendingInvocations) pending.cancel();
 

@@ -1,14 +1,8 @@
-import type {
-	NativeSettingsChange,
-	PredicateResult,
-	SettingsObject,
-	SettingsValue,
-	Widen,
-} from '@unbound-app/types';
+import type { PredicateResult, SettingsValue, Widen } from '@unbound-app/types';
 import debounce from '@unbound-app/utils/debounce';
-import isEmpty from '@unbound-app/utils/is-empty';
 import { useEffect, useState } from 'react';
 
+import { createSettingsBackend, type SettingsStores } from '~/storage/backend';
 import { EventEmitter } from '~/core/event-emitter';
 
 /** Payload describing a settings change, passed to `changed` listeners and predicates. */
@@ -55,8 +49,15 @@ type EventMap = {
 const Events = new EventEmitter<EventMap>();
 const handlers = new Map<(payload: SettingsPayload) => void, (payload: SettingsPayload) => void>();
 
-/** Every settings store, keyed by store name, as loaded at startup. Read and write through getBucket. */
-export const settings: Record<string, SettingsObject> = globalThis.UNBOUND_SETTINGS ?? {};
+const backend = createSettingsBackend();
+
+/**
+ * @description Reads every Bucket at once. Most callers should read single keys, which stay in native code.
+ * @returns Every Bucket by name.
+ */
+export function snapshot(): SettingsStores {
+	return backend.readAll();
+}
 
 /** @deprecated Use onChange */
 export const on = Events.on.bind(Events);
@@ -112,23 +113,9 @@ export function removeListener(callback: (payload: SettingsPayload) => void) {
  * @returns The stored value, or `def` if the key path is not present.
  */
 export function get<T>(store: string, key: string, def: T): Widen<T> {
-	let result: SettingsValue | undefined = settings[store];
+	const value = backend.read(store, key);
 
-	for (const segment of key.split('.')) {
-		const next = isSettingsObject(result) ? result[segment] : void 0;
-
-		if (next === void 0) {
-			return def as Widen<T>;
-		}
-
-		result = next;
-	}
-
-	return result as Widen<T>;
-}
-
-function isSettingsObject(value: SettingsValue | undefined): value is SettingsObject {
-	return typeof value === 'object' && value !== null;
+	return (value === undefined ? def : value) as Widen<T>;
 }
 
 /**
@@ -139,21 +126,7 @@ function isSettingsObject(value: SettingsValue | undefined): value is SettingsOb
  * @param value The value to store.
  */
 export function set(store: string, key: string, value: SettingsValue) {
-	const keys = key.split('.');
-	const last = keys.pop() ?? key;
-	let current = (settings[store] ??= {});
-
-	for (const segment of keys) {
-		const next = (current[segment] ??= {});
-
-		if (!isSettingsObject(next)) {
-			throw new TypeError(`Cannot set ${store}.${key}: ${segment} is not an object.`);
-		}
-
-		current = next;
-	}
-
-	current[last] = value;
+	backend.write({ store, key, value });
 
 	Events.emit('changed', { store, key, value });
 	Events.emit('set', { store, key, value });
@@ -181,42 +154,9 @@ export function toggle(store: string, key: string, def: boolean) {
  * @param key The dot-separated key path to delete.
  */
 export function remove(store: string, key: string) {
-	const keys = key.split('.');
-	const last = keys.pop() ?? key;
-	const parents: SettingsObject[] = [];
-	let current: SettingsValue | undefined = settings[store];
+	if (backend.read(store, key) === undefined) return;
 
-	for (const segment of keys) {
-		if (!isSettingsObject(current)) return;
-
-		parents.push(current);
-		current = current[segment];
-	}
-
-	if (!isSettingsObject(current) || current[last] === undefined) return;
-
-	delete current[last];
-
-	for (let index = keys.length - 1; index >= 0; index--) {
-		const parent = parents[index];
-		const segment = keys[index];
-
-		if (!parent || segment === undefined) {
-			break;
-		}
-
-		const child = parent[segment];
-
-		if (!isSettingsObject(child) || !isEmpty(child)) {
-			break;
-		}
-
-		delete parent[segment];
-	}
-
-	if (settings[store] && isEmpty(settings[store])) {
-		delete settings[store];
-	}
+	backend.write({ store, key, remove: true });
 
 	Events.emit('changed', { store, key, value: undefined });
 	Events.emit('removed', { store, key });
@@ -228,9 +168,9 @@ export function remove(store: string, key: string) {
  * @param store The store to clear.
  */
 export function clear(store: string) {
-	if (!settings[store]) return;
+	if (backend.read(store, '') === undefined) return;
 
-	delete settings[store];
+	backend.write({ store, clear: true });
 
 	Events.emit('changed', { store, key: null, value: undefined });
 	Events.emit('cleared', { store });
@@ -305,32 +245,14 @@ export function useBucket(
 /** @deprecated Use useBucket */
 export const useSettingsStore = useBucket;
 
-const pending: NativeSettingsChange[] = [];
-
-function record({ store, key, value }: SettingsPayload) {
-	if (key === null) {
-		pending.push({ store, clear: true });
-	} else if (value === undefined) {
-		pending.push({ store, key, remove: true });
-	} else {
-		pending.push({ store, key, value });
-	}
-}
-
 /**
- * @description Hands the settings changed since the last call to the loader, which merges them into the
- * settings file key by key, so values the loader wrote in the meantime are kept.
- * @returns A promise that resolves once the loader has stored the changes.
+ * @description Saves the settings changed since the last call. Each change already reached the loader when it was made.
+ * @returns A promise that resolves once the loader has saved them.
  */
 export async function persist() {
-	const settingsBridge = globalThis.NativePlatform?.settings;
-
-	if (!settingsBridge || !pending.length) return;
-
-	settingsBridge.apply(pending.splice(0));
+	backend.flush();
 }
 
-Events.on('changed', record);
 Events.on(
 	'changed',
 	debounce(() => void persist(), 100),
@@ -346,6 +268,7 @@ export default {
 	on,
 	onChange,
 	persist,
+	snapshot,
 	remove,
 	removeListener,
 	set,

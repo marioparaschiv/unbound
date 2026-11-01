@@ -36,7 +36,7 @@ export declare const ADDON_SCOPE_GLOBALS: readonly [
 /** @deprecated Use ADDON_KINDS */
 export declare const ADDON_TYPES: readonly ['plugin', 'theme', 'icon-pack', 'font'];
 /** The core settings store; each addon's settings store is named after the addon id. */
-export declare const CORE_SETTINGS_STORE = 'astral';
+export declare const CORE_SETTINGS_STORE = 'unbound';
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
 export declare const DESIGN_COMPONENTS: readonly [
 	'Text',
@@ -1841,7 +1841,7 @@ export type LayerScopeProps = {
 	children?: React$1.ReactNode;
 	zIndex?: number;
 };
-export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'>;
+export type LoaderObjCBridge = Omit<NativeObjCBridge, 'create'> & NativeUIScopeFactory;
 /**
  * Props of `LoadingButtonPill` (function). Exports: LoadingButtonPill.
  * @see design/components/Button/native/ButtonPill.native.tsx
@@ -2364,7 +2364,7 @@ export type NativeJavaHookEvent = {
 };
 export type NativeJavaHookOptions = {
 	replace?: boolean;
-	notify?: boolean;
+	notify?: boolean | 'after';
 };
 export type NativeJavaHookToken = {
 	readonly id: string;
@@ -2560,6 +2560,9 @@ export type NativePlatformIOSBridge = {
 };
 export type NativePlatformSettings = {
 	apply(changes: readonly NativeSettingsChange[]): boolean;
+	stage?(changes: readonly NativeSettingsChange[]): boolean;
+	flush?(): boolean;
+	get?(store?: string, key?: string): NativeSerializable | undefined;
 };
 export type NativePluginBridge = {
 	readonly apiVersion: string;
@@ -2572,6 +2575,7 @@ export type NativePluginBridge = {
 	readonly java: NativeJavaBridge;
 	readonly hooks: NativeJavaHooksBridge;
 	readonly debug: NativeDebugBridge;
+	readonly ui: NativeUIBridge;
 };
 export type NativePluginCapability = (typeof NATIVE_PLUGIN_CAPABILITIES)[number];
 export type NativePluginError = {
@@ -2591,7 +2595,7 @@ export type NativePluginMethod = {
 }[NativePluginNamespace];
 export type NativePluginNamespace = Exclude<
 	keyof NativePluginBridge,
-	'apiVersion' | 'abiVersion' | 'capabilities'
+	'apiVersion' | 'abiVersion' | 'capabilities' | 'ui'
 >;
 export type NativePluginPlatform = (typeof NATIVE_PLUGIN_PLATFORMS)[number];
 /** A capability the native bridge on platform `P` provides. */
@@ -2601,8 +2605,14 @@ export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities'
 > &
-	Partial<Omit<NativePluginBridge, 'apiVersion' | 'abiVersion' | 'capabilities' | 'objc'>> & {
+	Partial<
+		Omit<
+			NativePluginBridge,
+			'apiVersion' | 'abiVersion' | 'capabilities' | 'objc' | 'java' | 'ui'
+		>
+	> & {
 		readonly objc?: LoaderObjCBridge;
+		readonly java?: NativeJavaBridge & NativeUIScopeFactory;
 	};
 export type NativePointer = NativeHandle;
 export type NativeResourceCounts = {
@@ -2665,6 +2675,32 @@ export type NativeStructFields = {
 	[field: string]: NativeStructField;
 };
 export type NativeThreadPolicy = 'current' | 'main';
+/** A value a worklet can take from the JS runtime: a serializable value or a UI scope, which is shared as is. */
+export type NativeUIArgument = NativeSerializable | NativeUIScope;
+/** Runs plugin worklets on the UI runtime, where native views live, so hooks there act before the next frame. */
+export type NativeUIBridge = {
+	/** Opens a scope with every synchronous method the plugin's capabilities allow; capture it in a worklet. */
+	createScope(): NativeUIScope;
+	/** Runs a worklet on the UI runtime and resolves with what it returns, which must be serializable. */
+	call<A extends NativeUIArgument[], R extends NativeSerializable | void>(
+		worklet: (...args: A) => R,
+		...args: A
+	): Promise<R>;
+	/** Queues a worklet on the UI runtime. */
+	run<A extends NativeUIArgument[]>(worklet: (...args: A) => void, ...args: A): void;
+};
+/** The bridge methods a plugin may call from the UI runtime, synchronously and on the main thread. */
+export type NativeUIScope = {
+	readonly objc?: NativeObjCBridge;
+	readonly java?: NativeJavaBridge;
+	readonly hooks?: NativeJavaHooksBridge;
+	/** Removes every hook the scope installed. */
+	dispose(): void;
+};
+export type NativeUIScopeFactory = {
+	/** Opens a UI-runtime scope allowed only the listed method paths, such as `objc.invoke`. */
+	createUIScope?(paths: readonly string[]): NativeUIScope;
+};
 export type NativeViewSearchOptions = {
 	maxDepth?: number;
 	maxVisited?: number;

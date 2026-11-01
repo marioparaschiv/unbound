@@ -3,10 +3,10 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <application android:label="astral">
+    <application android:label="Unbound">
         <meta-data
             android:name="xposeddescription"
-            android:value="Bridges astral into Discord's native layer." />
+            android:value="Bridges Unbound into Discord's native layer." />
     </application>
 
 </manifest>

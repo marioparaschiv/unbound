@@ -12,6 +12,7 @@ import {
 	panelHostSection,
 } from '~/settings/builtin';
 import { marketplaceSection, storePageSection } from '~/marketplace/builtin';
+import { renameLegacyBuckets } from '~/storage/legacy-buckets';
 import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
 import themes, { designSection } from '~/themes/builtin';
@@ -100,6 +101,7 @@ export function initialize(): void {
 	window.unbound = { ...api, initialize, shutdown };
 	Logger.info('Initializing Unbound...');
 
+	renameLegacyBuckets();
 	builtins.initialize(BUILT_INS);
 
 	for (const kind of ADDON_KINDS) {

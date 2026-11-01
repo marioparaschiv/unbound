@@ -1,7 +1,7 @@
 import type { NativeFabricSurface, NativeObjectHandle } from '@unbound-app/api/native';
 
 import type { ReactionContext } from '~/reaction-context';
-import { frameOf, setFrame } from '~/ios/views';
+import { frameOf, restoreFrame, setFrame } from '~/ios/views';
 import type { Session } from '~/ios/session';
 import { surfaceStates } from '~/surface-states';
 import type { Reactor } from '~/avatars';
@@ -43,7 +43,7 @@ export function unmountSurface(session: Session, state: ReactionViewState): void
 
 	if (state.surface) {
 		try {
-			session.fabric.unmount(state.surface);
+			void session.fabric.unmountAsync(state.surface).catch(() => undefined);
 		} catch {
 			// The surface already went away with its container.
 		}
@@ -51,7 +51,10 @@ export function unmountSurface(session: Session, state: ReactionViewState): void
 
 	state.surface = null;
 	state.surfaceFrame = null;
-	setFrame(session.objc, state.view, state.baseFrame);
+	if (state.baseFrame.width < 1) return;
+
+	if (session.disposing) setFrame(session.objc, state.view, state.baseFrame);
+	else restoreFrame(session.objc, state.view, state.baseFrame);
 }
 
 /**

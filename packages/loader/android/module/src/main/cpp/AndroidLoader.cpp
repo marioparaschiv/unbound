@@ -16,7 +16,7 @@
 #include "NativePlatformBridge.h"
 #include "NativePluginBridge.h"
 
-namespace astral::android {
+namespace unbound::android {
 namespace jsi = facebook::jsi;
 
 static constexpr const char *kAssetFontPrefix = "asset:";
@@ -338,7 +338,7 @@ uint32_t AndroidLoader::runtimeBytecodeVersion()
 
 loader::PreloadPayload AndroidLoader::preloadPayload()
 {
-    return loader::makePreloadPayload(settings_, addons_, availableFonts(), configuration_.origin,
+    return loader::makePreloadPayload(addons_, availableFonts(), configuration_.origin,
                                       runtimeBytecodeVersion());
 }
 

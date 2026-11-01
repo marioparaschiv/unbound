@@ -17,7 +17,8 @@ function rendererlessReact() {
 mock.module('react', rendererlessReact);
 
 const storage = await import('./api');
-const { get, on, remove, set, settings } = storage;
+const { get, on, remove, set } = storage;
+const settings = storage.snapshot();
 
 beforeEach(() => {
 	stateUpdates = 0;

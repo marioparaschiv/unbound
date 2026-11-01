@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2]
+
+### Fixed
+
+- The **View Raw** row now appears in the long-press menu of a channel or a thread on Android.
+
 ## [1.0.1]
 
 ### Changed

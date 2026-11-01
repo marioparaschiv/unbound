@@ -1,11 +1,16 @@
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
-import type { NativeObjCBridge, NativeObjectHandle } from '@unbound-app/api/native';
+import type {
+	NativeObjCBridge,
+	NativeObjectHandle,
+	NativePluginBridge,
+} from '@unbound-app/api/native';
 import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
 import { readRect } from '@unbound-plugins/shared/native/ios/rect';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
 
 import { messageLayout, type SnapshotNode } from '~/message-layout';
+import { installBubbleGuards } from '~/ios/ui-bubbles';
 import { IOSClass, PLUGIN_NAME } from '~/constants';
 import { bubbleFrame, bubbleProblem, frameDrift } from '~/geometry';
 import type { BubbleColor } from '~/style';
@@ -63,7 +68,8 @@ type PendingCell = { cell: NativeObjectHandle; onlyWhenResized: boolean };
  * @param objc The Objective-C bridge.
  * @returns `refresh`, which repaints the bubbles on screen, and `dispose`, which removes them.
  */
-export function drawIOSBubbles(objc: NativeObjCBridge) {
+export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
+	const scope = ui.createScope();
 	const bubbles = new Map<string, { cell: NativeObjectHandle; bubble: NativeObjectHandle }>();
 	const pending = new Map<string, PendingCell>();
 	const placedSizes = new Map<string, string>();
@@ -296,21 +302,13 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 		if (!flushing) setTimeout(() => void flush(), 0);
 	}
 
-	async function clearSeparator(cell: NativeObjectHandle) {
-		if (!disposed)
-			await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]).catch(() => undefined);
-	}
+	ui.run(installBubbleGuards, scope, {
+		messageCell: IOSClass.messageCell,
+		separatorCell: IOSClass.separatorCell,
+		bubbleTag: BUBBLE_TAG,
+	});
 
 	const hooks = [
-		objc.hook(IOSClass.messageCell, 'setBackgroundColor:', {
-			before: (context) => context.replaceObjectArgument(0, clear),
-		}),
-		objc.hook(IOSClass.separatorCell, 'setBackgroundColor:', {
-			before: (context) => context.replaceObjectArgument(0, clear),
-		}),
-		objc.hook(IOSClass.separatorCell, 'layoutSubviews', {
-			after: ({ self }) => void clearSeparator(self),
-		}),
 		objc.hook(IOSClass.messageCell, 'layoutSubviews', {
 			after: ({ self }) => schedule(self, true),
 		}),
@@ -325,11 +323,6 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 				ownership.delete(key);
 				problems.delete(key);
 				pending.delete(key);
-
-				const bubble = bubbles.get(key)?.bubble;
-
-				if (bubble)
-					void objc.invokeAsync(bubble, 'setHidden:', [true]).catch(() => undefined);
 
 				setTimeout(() => {
 					if (!disposed) schedule(self);
@@ -383,9 +376,10 @@ export function drawIOSBubbles(objc: NativeObjCBridge) {
 			...(await staleBubbles()),
 			...(await missingBubbles()),
 		],
-		refresh: () => void refresh(),
+		refresh: (): void => void refresh(),
 		async dispose() {
 			disposed = true;
+			scope.dispose();
 
 			for (const hook of hooks) hook.remove();
 

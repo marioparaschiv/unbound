@@ -15,6 +15,14 @@ export type LabelAppearances = ReturnType<typeof createLabelAppearances>;
  */
 export function createLabelAppearances() {
 	const entries = new Map<string, RoleColorAppearance>();
+	const listeners = new Set<() => void>();
+	let revision = 0;
+
+	function changed() {
+		revision++;
+
+		for (const listener of listeners) listener();
+	}
 
 	function set(label: string, appearance: RoleColorAppearance) {
 		if (!label.trim()) return;
@@ -25,15 +33,27 @@ export function createLabelAppearances() {
 
 		if (!colors.length) {
 			const prefix = getRoleGradientKey(label, '');
+			const stale = [...entries.keys()].filter((key) => key.startsWith(prefix));
 
-			for (const key of entries.keys()) {
-				if (key.startsWith(prefix)) entries.delete(key);
-			}
+			for (const key of stale) entries.delete(key);
+
+			if (stale.length) changed();
 
 			return;
 		}
 
-		entries.set(getRoleGradientKey(label, colors[0]), { colors, style: appearance.style });
+		const key = getRoleGradientKey(label, colors[0]);
+		const existing = entries.get(key);
+
+		if (
+			existing?.style === appearance.style &&
+			existing.colors.join(':') === colors.join(':')
+		) {
+			return;
+		}
+
+		entries.set(key, { colors, style: appearance.style });
+		changed();
 	}
 
 	// A native label's background tells us its primary color; without one, only an unambiguous match counts.
@@ -61,10 +81,31 @@ export function createLabelAppearances() {
 		return unique.size === 1 ? [...unique.values()][0] : null;
 	}
 
+	function has(label: string): boolean {
+		const prefix = getRoleGradientKey(label, '');
+
+		for (const key of entries.keys()) {
+			if (key.startsWith(prefix)) return true;
+		}
+
+		return false;
+	}
+
 	return {
 		set,
 		find,
-		clear: () => entries.clear(),
+		has,
+		clear: () => {
+			entries.clear();
+			changed();
+		},
+		snapshot: (): Record<string, RoleColorAppearance> => Object.fromEntries(entries),
+		subscribe(listener: () => void) {
+			listeners.add(listener);
+
+			return () => void listeners.delete(listener);
+		},
+		revision: () => revision,
 		isEmpty: () => entries.size === 0,
 	};
 }

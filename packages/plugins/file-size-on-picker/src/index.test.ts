@@ -45,7 +45,7 @@ const bridge: FakeContext['native']['java'] = java;
 const context: FakeContext = { capabilities: [], native: { capabilities: [], java: bridge } };
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.file-size-on-picker' },
+	manifest: { id: 'unbound.file-size-on-picker' },
 	unbound: {
 		native: {
 			definePlatform: (handlers: Record<string, AndroidHandler>) => handlers.android,

@@ -1,5 +1,5 @@
 {
-	"id": "astral.more-user-tags",
+	"id": "unbound.more-user-tags",
 	"name": "More User Tags",
 	"description": "Adds tags for webhooks and moderative roles.",
 	"authors": [
@@ -28,7 +28,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.1",
+	"version": "1.2.1",
 	"icon": "UserPlusIcon",
 	"minNativePluginApi": "1.0.0",
 	"main": "index.tsx"

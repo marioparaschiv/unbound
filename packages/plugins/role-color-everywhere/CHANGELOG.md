@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.2.1]
+
+### Fixed
+
+- Scrolling no longer stalls the JavaScript thread: colors are sent to the UI thread only when they actually change.
+
+## [1.2.0]
+
+### Changed
+
+- On iOS, mentions in messages are painted on the UI thread in the same pass that sets the message text, so they no longer flash in the default color while scrolling.
+
+## [1.1.1]
+
+### Fixed
+
+- Code that runs on the UI thread no longer fails on type checks and destructuring, which left some views unpainted.
+
+## [1.1.0]
+
+### Changed
+
+- Mentions in the chat input are painted in the same pass that changes the text, on the UI thread, so they no longer flash in the default color first.
+
+## [1.0.2]
+
+### Fixed
+
+- The plugin starts again when installed from the store: its published manifest now lists the native features it uses.
+
 ## [1.0.1]
 
 ### Changed

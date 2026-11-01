@@ -50,7 +50,7 @@ func androidConsoleEntry(line string) (smokeConsoleEntry, bool) {
 		return smokeConsoleEntry{}, false
 	}
 	tag := strings.TrimSpace(match[2])
-	if tag != "ReactNativeJS" && tag != "astral" {
+	if tag != "ReactNativeJS" && tag != "Unbound" {
 		return smokeConsoleEntry{}, false
 	}
 	switch match[1] {

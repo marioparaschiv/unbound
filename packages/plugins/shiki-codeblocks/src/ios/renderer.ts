@@ -20,6 +20,7 @@ import { CARD_SETTINGS, Limits, PLUGIN_NAME } from '~/constants';
 import { locateCodeBlocks, parseFencedCodeBlocks, type CodeBlockPlacement } from '~/fences';
 import { getLanguageMetadata, loadLanguageCatalog } from '~/catalog';
 import { MessageStore } from '~/modules';
+import { channelCodeLines, mayShowCode } from '~/ios/code-lines';
 import { storage } from '@unbound-app/api';
 import { createFlatRecovery } from '~/flat-recovery';
 import { onAppForeground } from '~/foreground';
@@ -38,7 +39,7 @@ import { detachSurface, surfaceMatchesCell, visibleChannelId } from '~/ios/sessi
 import { cellForLabel, messageIdentity } from '~/ios/cells';
 import type { Session, Surface } from '~/ios/session';
 import { createNativeUI } from '~/ios/ui';
-import { CARD_TAG, removeStrayCards } from '~/ios/code-host';
+import { CARD_TAG, removeStrayCards, removeStrayCardsAsync } from '~/ios/code-host';
 
 type HookSpec = [className: string, selector: string, handlers: NativeHookHandlers];
 
@@ -74,6 +75,9 @@ function renderLabel(session: Session, label: NativeObjectHandle, original: Nati
 	const rendered = ui.string(ui.call(original, 'string'));
 
 	if (rendered === undefined) return;
+
+	if (!surfaces.has(labelKey) && !mayShowCode(rendered, channelCodeLines(visibleChannelId())))
+		return;
 
 	const cell = cellForLabel(ui, label);
 
@@ -183,6 +187,8 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 
 		if (session.signal.aborted || !channelId) return;
 
+		if (session.surfaces.size === 0 && channelCodeLines(channelId)?.length === 0) return;
+
 		void objc
 			.batch([
 				{ target: label, selector: 'window', args: [] },
@@ -191,17 +197,41 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 			.then(([window, text]) => {
 				if (session.signal.aborted || channelId !== visibleChannelId()) return;
 
-				if (window && text) renderLabel(session, label, text as NativeObjectHandle);
+				if (!window || !text) return;
+
+				const handle = text as NativeObjectHandle;
+
+				if (!session.surfaces.has(session.ui.key(label)) && !mayRenderText(handle)) return;
+
+				renderLabel(session, label, handle);
 			})
 			.catch(() => {
 				// The label was deallocated before the batch ran.
 			});
 	}
 
+	function mayRenderText(text: NativeObjectHandle): boolean {
+		const lines = channelCodeLines(visibleChannelId());
+
+		if (lines?.length === 0) return false;
+
+		try {
+			const value = session.ui.objc.call(text, 'string');
+
+			return typeof value !== 'string' || mayShowCode(value, lines);
+		} catch {
+			return true;
+		}
+	}
+
 	function onSetText({ self, args }: NativeHookContext) {
 		const text = args[0] as NativeObjectHandle | undefined;
 
-		if (text) renderLabel(session, self, text);
+		if (!text) return;
+
+		if (!session.surfaces.has(session.ui.key(self)) && !mayRenderText(text)) return;
+
+		renderLabel(session, self, text);
 	}
 
 	function onMoveToWindow({ self }: NativeHookContext) {
@@ -220,7 +250,7 @@ function labelHooks(session: Session, timers: Set<ReturnType<typeof setTimeout>>
 			if (surface.cellKey === cellKey) detachSurface(session, surface);
 		}
 
-		removeStrayCards(session.ui, self);
+		void removeStrayCardsAsync(session.ui, self).catch(() => undefined);
 	}
 
 	const classes = textViewClasses(objc);

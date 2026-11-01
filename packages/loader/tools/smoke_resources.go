@@ -21,7 +21,7 @@ const (
 	smokeCollectExpression   = `(function () { if (typeof gc === 'function') gc(); return 'collected'; })()`
 	smokeResourcesExpression = `(function () {
 	if (typeof gc === 'function') gc();
-	var read = astral.native && astral.native.getNativeResources;
+	var read = unbound.native && unbound.native.getNativeResources;
 	return JSON.stringify(read ? read() || null : null);
 })()`
 	smokeReleaseSettle      = 3 * time.Second
@@ -62,6 +62,8 @@ func evaluateSmokeExpression(ctx context.Context, options *smokeOptions, express
 	return evaluateSmokeExpressionWithin(ctx, options, expression, smokeExpressionEvalTimeout)
 }
 
+const smokeDeviceThrew = "the device threw"
+
 func evaluateSmokeExpressionWithin(ctx context.Context, options *smokeOptions, expression string, timeout time.Duration) (string, error) {
 	cli := filepath.Join(options.repository, "packages", "cli", "src", "index.ts")
 	evalCtx, cancel := context.WithTimeout(ctx, timeout+30*time.Second)
@@ -79,7 +81,7 @@ func evaluateSmokeExpressionWithin(ctx context.Context, options *smokeOptions, e
 		return "", jsonErr
 	}
 	if !result.OK {
-		return "", fmt.Errorf("the device threw: %s", result.Error)
+		return "", fmt.Errorf("%s: %s", smokeDeviceThrew, result.Error)
 	}
 	return result.Value, nil
 }

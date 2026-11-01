@@ -1,6 +1,6 @@
 import type { AdminAddonStatus, AdminAddonsSearch } from '@unbound-app/contracts/admin';
+import type { SortOrder, AddonType, Addon } from '@unbound-app/contracts/addons';
 import { and, eq, gte, inArray, isNotNull, isNull, lt, sql } from 'drizzle-orm';
-import type { SortOrder, Addon } from '@unbound-app/contracts/addons';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import type { SQL } from 'drizzle-orm';
@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
 import { requirePermission } from '~/lib/api/caller';
+import { renderAddonIcon } from '~/lib/addon-icons';
 import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { matchesSearch } from '~/lib/admin-search';
 import type { AppContext } from '~/lib/context';
@@ -21,6 +22,9 @@ import { toAddon } from '~/lib/addons';
 
 export type AdminAddon = Addon & {
 	name: string;
+	type: AddonType;
+	/** The picked icon's SVG markup, rendered on the server; `null` for the type's default. */
+	iconSvg: string | null;
 	/** The version it serves: the newest one no rollback withdrew. */
 	latestVersion: string | null;
 	owners: UserSummary[];
@@ -164,6 +168,8 @@ export async function listAdminAddons(
 	const items = page.items.map((row) => ({
 		...toAddon(row),
 		name: row.name,
+		type: row.type,
+		iconSvg: renderAddonIcon(row.icon),
 		latestVersion: row.versions[0]?.version ?? null,
 		owners: row.maintainers.flatMap(({ user }) =>
 			user ? [{ id: user.id, name: user.name, image: user.image ?? null }] : [],

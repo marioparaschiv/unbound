@@ -7,7 +7,7 @@ let platform = 'ios';
 const guilds = new Map<string, { ownerId: string }>();
 
 const scope = installAddonGlobals({
-	manifest: { id: 'astral.force-owner-crown' },
+	manifest: { id: 'unbound.force-owner-crown' },
 	unbound: {
 		assets: {
 			getIdByName: (name: string) => (name === 'ic_crown_16px' ? 42 : undefined),

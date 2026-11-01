@@ -100,8 +100,6 @@ export declare const on: <EventKey extends keyof EventMap = string>(
 	event: EventKey,
 	listener: EventMap[EventKey],
 ) => EventEmitter<EventMap>;
-/** Every settings store, keyed by store name, as loaded at startup. Read and write through getBucket. */
-export declare const settings: Record<string, SettingsObject>;
 /** @deprecated Use useBucket */
 export declare const useSettingsStore: typeof useBucket;
 /**
@@ -138,9 +136,8 @@ export declare function onChange(
 	callback: (payload: SettingsPayload) => void,
 ): () => void;
 /**
- * @description Hands the settings changed since the last call to the loader, which merges them into the
- * settings file key by key, so values the loader wrote in the meantime are kept.
- * @returns A promise that resolves once the loader has stored the changes.
+ * @description Saves the settings changed since the last call. Each change already reached the loader when it was made.
+ * @returns A promise that resolves once the loader has saved them.
  */
 export declare function persist(): Promise<void>;
 /**
@@ -164,6 +161,11 @@ export declare function removeListener(callback: (payload: SettingsPayload) => v
  * @param value The value to store.
  */
 export declare function set(store: string, key: string, value: SettingsValue): void;
+/**
+ * @description Reads every Bucket at once. Most callers should read single keys, which stay in native code.
+ * @returns Every Bucket by name.
+ */
+export declare function snapshot(): SettingsStores;
 /**
  * @description Flips a boolean value at a key path against its current (or default) value, and emits `toggled`.
  * @deprecated Use getBucket(store).toggle
@@ -241,6 +243,7 @@ export type SettingsPayload = {
 	key: string | null;
 	value: SettingsValue | undefined;
 };
+export type SettingsStores = Record<string, SettingsObject>;
 export type Tasks<Func> = Func[] | Func | null;
 export type ToggledPayload = {
 	store: string;

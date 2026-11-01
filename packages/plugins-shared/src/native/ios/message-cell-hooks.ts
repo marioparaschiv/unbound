@@ -9,7 +9,7 @@ export type MessageCellHandlers = {
 	/** The cell moved into a window. */
 	shown: (cell: NativeObjectHandle) => void;
 	/** The cell laid out its subviews. */
-	laidOut: (cell: NativeObjectHandle) => void;
+	laidOut?: (cell: NativeObjectHandle) => void;
 	/** UIKit is about to reuse the cell for another message. */
 	reused: (cell: NativeObjectHandle) => void;
 	textChanged?: (cell: NativeObjectHandle) => void;
@@ -49,13 +49,18 @@ export function hookMessageCells(
 						.catch(() => undefined);
 				},
 			}),
-			objc.hook('DCDMessageTableViewCell', 'layoutSubviews', {
-				after: ({ self }) => laidOut(self),
-			}),
 			objc.hook('DCDMessageTableViewCell', 'prepareForReuse', {
 				after: ({ self }) => reused(self),
 			}),
 		);
+
+		if (laidOut) {
+			hooks.push(
+				objc.hook('DCDMessageTableViewCell', 'layoutSubviews', {
+					after: ({ self }) => laidOut(self),
+				}),
+			);
+		}
 
 		if (textChanged) {
 			for (const className of MESSAGE_TEXT_VIEW_CLASSES) {
