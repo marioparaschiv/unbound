@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0]
+
+### Changed
+
+- On iOS, a message whose bubble was already measured gets its bubble in the same pass that lays it out, so bubbles no longer pop in when scrolling back over messages.
+
 ## [1.2.0]
 
 ### Changed
