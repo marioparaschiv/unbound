@@ -3,7 +3,6 @@ import {
 	IconBookmark,
 	IconHouse,
 	IconMenu2,
-	IconPalette,
 	IconPlug,
 	IconUsers,
 } from 'nucleo-micro-bold';
@@ -16,6 +15,7 @@ import { Segmented, SegmentedItem } from '~/components/ui/segmented';
 import AccountMenu from '~/components/account-menu';
 import { getDocsTab } from '~/lib/docs/docs-tabs';
 import { Button } from '~/components/ui/button';
+import { getAddonTab } from '~/lib/addon-tabs';
 import Logo from '~/components/icons/logo';
 import cn from '~/lib/cn';
 
@@ -31,8 +31,7 @@ type NavRoute = {
 
 const ROUTES: NavRoute[] = [
 	{ path: '/', title: 'Home', icon: IconHouse },
-	{ path: '/plugins', title: 'Plugins', icon: IconPlug },
-	{ path: '/themes', title: 'Themes', icon: IconPalette },
+	{ path: '/addons', title: 'Addons', icon: IconPlug },
 	{ path: '/team', title: 'Team', icon: IconUsers },
 	{ path: '/docs', title: 'Docs', icon: IconBook },
 	{ path: '/faq', title: 'FAQ', icon: IconBookmark },
@@ -40,7 +39,17 @@ const ROUTES: NavRoute[] = [
 
 function Header() {
 	const pathname = useLocation({
-		select: (location) => (getDocsTab(location.pathname) ? '/docs' : location.pathname),
+		select: (location) => {
+			if (getDocsTab(location.pathname)) {
+				return '/docs';
+			}
+
+			if (getAddonTab(location.pathname)) {
+				return '/addons';
+			}
+
+			return location.pathname;
+		},
 	});
 	const [drawerOpen, setDrawerOpen] = useState(false);
 

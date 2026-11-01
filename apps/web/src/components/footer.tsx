@@ -18,8 +18,9 @@ type FooterColumnProps = {
 const CURRENT_YEAR = new Date().getFullYear();
 
 const PRODUCT_LINKS: FooterLink[] = [
-	{ label: 'Plugins', href: '/plugins' },
-	{ label: 'Themes', href: '/themes' },
+	{ label: 'Plugins', href: '/addons/plugins' },
+	{ label: 'Themes', href: '/addons/themes' },
+	{ label: 'Icons', href: '/addons/icons' },
 	{ label: 'Developers', href: '/team' },
 ];
 

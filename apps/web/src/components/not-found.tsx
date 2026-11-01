@@ -15,7 +15,7 @@ function NotFound() {
 						<Link to='/'>Go Home</Link>
 					</Button>
 					<Button variant='outline' size='lg' className='w-full' asChild>
-						<Link to='/plugins'>Browse Plugins</Link>
+						<Link to='/addons/plugins'>Browse Plugins</Link>
 					</Button>
 				</>
 			}

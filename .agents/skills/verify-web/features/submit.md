@@ -13,7 +13,7 @@ A signed-in user with a linked GitHub account picks a repository on `/submit`, t
 
 ## How to get to it (user POV)
 
-- Choose `Submit Addon` on `/dashboard`, or the `Submit` link on `/plugins`.
+- Choose `Submit Addon` on `/dashboard`, or the `Submit` link on `/addons/plugins`.
 - Choose `Republish` on a dashboard row with changes requested: the dialog reads the same repository and directory again.
 - Open `/submit`. A signed-out user is redirected to `/login`.
 

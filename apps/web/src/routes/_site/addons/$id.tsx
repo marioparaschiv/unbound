@@ -89,7 +89,7 @@ function AddonNotFound() {
 			</EmptyHeader>
 			<EmptyContent>
 				<Button asChild>
-					<Link to='/plugins'>Browse Plugins</Link>
+					<Link to='/addons/plugins'>Browse Plugins</Link>
 				</Button>
 			</EmptyContent>
 		</Empty>
