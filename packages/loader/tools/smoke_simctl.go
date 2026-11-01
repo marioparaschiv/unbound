@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -27,7 +28,12 @@ type iosSmokeTarget struct {
 	device  string
 	created bool
 	pid     int
+
+	samplesMutex sync.Mutex
+	samples      []string
 }
+
+var launchSampleDelays = []time.Duration{30 * time.Second, 90 * time.Second, 180 * time.Second}
 
 type simctlRuntime struct {
 	Identifier           string `json:"identifier"`
@@ -233,7 +239,28 @@ func (target *iosSmokeTarget) launch(ctx context.Context) error {
 		return err
 	}
 	target.pid = parseSimctlLaunchPID(output)
+	if target.pid > 0 && len(target.samples) == 0 {
+		go target.sampleLaunch(ctx, target.pid)
+	}
 	return nil
+}
+
+func (target *iosSmokeTarget) sampleLaunch(ctx context.Context, pid int) {
+	started := time.Now()
+	for _, delay := range launchSampleDelays {
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Until(started.Add(delay))):
+		}
+		path := filepath.Join(os.TempDir(), fmt.Sprintf("discord-launch-sample-%d-%ds.txt", pid, int(delay.Seconds())))
+		if _, err := runSmokeCommand(ctx, time.Minute, "sample", strconv.Itoa(pid), "3", "-file", path); err != nil {
+			return
+		}
+		target.samplesMutex.Lock()
+		target.samples = append(target.samples, path)
+		target.samplesMutex.Unlock()
+	}
 }
 
 // attach fails because the iOS loader reloads Discord in its process, so an exit is never a planned restart.
@@ -288,6 +315,13 @@ func (target *iosSmokeTarget) collect(ctx context.Context, artifacts string) {
 		return
 	}
 	_, _ = target.simctl(ctx, time.Minute, "io", target.device, "screenshot", filepath.Join(artifacts, "screenshot.png"))
+	target.samplesMutex.Lock()
+	for _, sample := range target.samples {
+		if data, err := os.ReadFile(sample); err == nil {
+			_ = os.WriteFile(filepath.Join(artifacts, filepath.Base(sample)), data, 0o644)
+		}
+	}
+	target.samplesMutex.Unlock()
 	saveSmokeOutput(ctx, filepath.Join(artifacts, "ios-log-show.txt"), 2*time.Minute, "xcrun", "simctl", "spawn", target.device, "log", "show", "--last", "30m", "--info", "--style", "compact", "--predicate", smokeIOSLogPredicate)
 	if container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, smokeIOSBundleID, "data"); err == nil {
 		saveSmokeOutput(ctx, filepath.Join(artifacts, "settings-after.json"), time.Minute, "cat", filepath.Join(strings.TrimSpace(container), "Documents", "Unbound", "settings.json"))
