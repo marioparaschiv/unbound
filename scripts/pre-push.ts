@@ -92,7 +92,7 @@ export function checksFor(files: string[], exists: (path: string) => boolean): C
 		}
 
 		if (!UNTESTED.has(project) && exists(`${project}/package.json`)) {
-			const command = ISOLATED.has(project) ? ['bun', 'test', '--isolate'] : ['bun', 'test'];
+			const command = ISOLATED.has(project) ? ['bun', 'test', '--parallel'] : ['bun', 'test'];
 
 			add({ label: `${project} tests`, cwd: project, command });
 		}

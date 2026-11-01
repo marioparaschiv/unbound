@@ -70,7 +70,7 @@ jobs:
               env:
                   DATABASE_URL: postgres://unbound_bot:unbound_bot@localhost:5432/postgres
                   POSTGRES_SUPERUSER_URL: postgres://postgres:postgres@localhost:5432/postgres
-              run: bun test --isolate packages/client
+              run: bun test --parallel packages/client
 
     generated:
         name: Generated SDK, migrations and client build
