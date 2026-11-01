@@ -14,7 +14,24 @@ concurrency:
     cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-    validate:
+    static:
+        name: Format, lint and typecheck
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
+            - name: Check formatting
+              run: bun run fmt:js:check
+            - name: Lint and typecheck
+              run: bun run lint:js
+
+    tests:
+        name: Tests
         runs-on: ubuntu-26.04
         timeout-minutes: 10
         services:
@@ -36,14 +53,6 @@ jobs:
                   persist-credentials: false
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
-            - name: Check formatting
-              run: bun run fmt:js:check
-            - name: Lint
-              run: bun run lint:js
-
-            - name: Typecheck
-              run: bun run typecheck
-
             # The test helper creates and drops databases, so the role needs CREATEDB but not superuser.
             - name: Create the test database role
               run: psql -c "CREATE ROLE unbound_bot LOGIN CREATEDB PASSWORD 'unbound_bot'"
@@ -62,6 +71,18 @@ jobs:
                   DATABASE_URL: postgres://unbound_bot:unbound_bot@localhost:5432/postgres
                   POSTGRES_SUPERUSER_URL: postgres://postgres:postgres@localhost:5432/postgres
               run: bun test --isolate packages/client
+
+    generated:
+        name: Generated SDK, migrations and client build
+        runs-on: ubuntu-26.04
+        timeout-minutes: 10
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+              with:
+                  persist-credentials: false
+            - name: Setup Bun dependencies
+              uses: ./.github/actions/setup-bun-deps
             - name: Generate the plugin SDK
               run: bun run generate-sdk
             # Releases replace the generated `<version>-<hash>` with the plain release version.

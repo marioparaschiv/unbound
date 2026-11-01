@@ -41,11 +41,6 @@ struct UpdaterSettings {
 
 UpdaterSettings updaterSettings(SettingsStore &store);
 
-#ifndef UNBOUND_DEFAULT_BUNDLE_URL
-#define UNBOUND_DEFAULT_BUNDLE_URL "https://builds.unbound.rip/"
-#endif
-
-constexpr const char *kDefaultBundleBaseURL  = UNBOUND_DEFAULT_BUNDLE_URL;
 constexpr const char *kBundleTrustSuffix     = ".trust";
 constexpr const char *kBundleBaselineSetting = "loader.update.baseline";
 

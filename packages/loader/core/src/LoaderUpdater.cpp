@@ -9,9 +9,15 @@
 #include "NativeBundleTransaction.h"
 #include "NativePluginVersion.h"
 
+#ifndef UNBOUND_DEFAULT_BUNDLE_URL
+#define UNBOUND_DEFAULT_BUNDLE_URL "https://builds.unbound.rip/"
+#endif
+
 namespace loader {
-static const char *const kExtensions[]    = {"bundle", "js"};
-static const std::string kCandidateSuffix = ".candidate";
+
+constexpr const char    *kDefaultBundleBaseURL = UNBOUND_DEFAULT_BUNDLE_URL;
+static const char *const kExtensions[]         = {"bundle", "js"};
+static const std::string kCandidateSuffix      = ".candidate";
 
 static bool hasSuffix(const std::string &value, const std::string &suffix)
 {

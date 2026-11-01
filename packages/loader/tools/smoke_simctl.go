@@ -23,10 +23,11 @@ const (
 )
 
 type iosSmokeTarget struct {
-	app     string
-	device  string
-	created bool
-	pid     int
+	app      string
+	device   string
+	otaCache string
+	created  bool
+	pid      int
 }
 
 type simctlRuntime struct {
@@ -46,6 +47,7 @@ func runIOSSmoke(args []string) error {
 	options := registerSmokeFlags(set)
 	app := set.String("app", "", "the simulator build's Discord.app")
 	device := set.String("device", "", "UDID of a booted simulator; empty creates and boots a fresh iPhone")
+	otaCache := set.String("ota-cache", "", "directory of Discord's downloaded OTA updates, seeded into the app before launch and refreshed after the run, so the first launch skips the download")
 	if err := set.Parse(args); err != nil {
 		return err
 	}
@@ -64,7 +66,7 @@ func runIOSSmoke(args []string) error {
 		}
 		return skipSmokeTest("ios", options, reason)
 	}
-	target := &iosSmokeTarget{app: *app, device: *device}
+	target := &iosSmokeTarget{app: *app, device: *device, otaCache: *otaCache}
 	defer target.cleanup()
 	return runSmokeTest(ctx, "ios", options, target)
 }
@@ -108,6 +110,9 @@ func (target *iosSmokeTarget) prepare(ctx context.Context, plugins []smokePlugin
 	}
 	container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, smokeIOSBundleID, "data")
 	if err != nil {
+		return err
+	}
+	if err := target.seedOTAs(strings.TrimSpace(container)); err != nil {
 		return err
 	}
 	documents := filepath.Join(strings.TrimSpace(container), "Documents", "Unbound")
@@ -291,6 +296,9 @@ func (target *iosSmokeTarget) collect(ctx context.Context, artifacts string) {
 	saveSmokeOutput(ctx, filepath.Join(artifacts, "ios-log-show.txt"), 2*time.Minute, "xcrun", "simctl", "spawn", target.device, "log", "show", "--last", "30m", "--info", "--style", "compact", "--predicate", smokeIOSLogPredicate)
 	if container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, smokeIOSBundleID, "data"); err == nil {
 		saveSmokeOutput(ctx, filepath.Join(artifacts, "settings-after.json"), time.Minute, "cat", filepath.Join(strings.TrimSpace(container), "Documents", "Unbound", "settings.json"))
+		if err := target.keepOTAs(strings.TrimSpace(container)); err != nil {
+			fmt.Fprintf(os.Stderr, "Could not keep Discord's OTA updates: %v\n", err)
+		}
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -307,6 +315,34 @@ func (target *iosSmokeTarget) collect(ctx context.Context, artifacts string) {
 			_ = os.WriteFile(filepath.Join(artifacts, filepath.Base(report)), data, 0o644)
 		}
 	}
+}
+
+func containerOTAs(container string) string {
+	return filepath.Join(container, "Library", "Caches", "otas")
+}
+
+func (target *iosSmokeTarget) seedOTAs(container string) error {
+	if target.otaCache == "" {
+		return nil
+	}
+	if _, err := os.Stat(target.otaCache); errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	return copyTree(target.otaCache, containerOTAs(container))
+}
+
+func (target *iosSmokeTarget) keepOTAs(container string) error {
+	if target.otaCache == "" {
+		return nil
+	}
+	downloaded := containerOTAs(container)
+	if _, err := os.Stat(downloaded); err != nil {
+		return nil
+	}
+	if err := os.RemoveAll(target.otaCache); err != nil {
+		return err
+	}
+	return copyTree(downloaded, target.otaCache)
 }
 
 func (target *iosSmokeTarget) cleanup() {
