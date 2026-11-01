@@ -28,13 +28,6 @@ function AboutCard({ addon }: AboutCardProps) {
 			<DetailRow label='Platforms'>
 				{addon.platforms.map(({ platform }) => PLATFORM_LABELS[platform]).join(', ')}
 			</DetailRow>
-			{addon.platforms.map(({ platform, capabilities }) =>
-				capabilities.length > 0 ? (
-					<DetailRow key={platform} label={`${PLATFORM_LABELS[platform]} access`}>
-						{capabilities.join(', ')}
-					</DetailRow>
-				) : null,
-			)}
 			{pin ? (
 				<ExternalLink
 					href={directoryUrl(pin)}
