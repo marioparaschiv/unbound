@@ -1,4 +1,6 @@
-import { MultiAccountStore, Patcher } from '~/modules';
+import { patcher } from '@unbound-app/api';
+
+import { MultiAccountStore } from '~/modules';
 
 /**
  * @description Reports multi-account as available on mobile, then re-renders everything that reads the store.
@@ -11,7 +13,7 @@ export function patchMultiAccountStore(): () => void {
 		return () => {};
 	}
 
-	const unpatch = Patcher.instead(MultiAccountStore, 'getCanUseMultiAccountMobile', () => true);
+	const unpatch = patcher.instead(MultiAccountStore, 'getCanUseMultiAccountMobile', () => true);
 
 	MultiAccountStore.emitChange();
 

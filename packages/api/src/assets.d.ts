@@ -2,14 +2,8 @@
 
 export type { UnboundAsset } from './_internal';
 import type { UnboundAsset } from './_internal';
-/** @deprecated Use icons */
-export declare const Icons: Record<string, number | undefined>;
 /** Map of discovered asset ids to their resolved {@link UnboundAsset} record. */
 export declare const assets: Map<number, UnboundAsset>;
-/** @deprecated Use getById */
-export declare const getByID: typeof getById;
-/** @deprecated Use getIdByName */
-export declare const getIDByName: typeof getIdByName;
 /** Proxy resolving any property name to its asset id via {@link getIdByName}. */
 export declare const icons: Record<string, number | undefined>;
 /**

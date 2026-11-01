@@ -1,7 +1,5 @@
 import { beforeEach, expect, mock, test } from 'bun:test';
 
-import type { SettingsPayload } from './api';
-
 type Effect = () => (() => void) | void;
 
 let stateUpdates = 0;
@@ -17,7 +15,6 @@ function rendererlessReact() {
 mock.module('react', rendererlessReact);
 
 const storage = await import('./api');
-const { get, on, remove, set } = storage;
 const settings = storage.snapshot();
 
 beforeEach(() => {
@@ -29,130 +26,108 @@ beforeEach(() => {
 });
 
 test('removes keys whose value is falsy', () => {
-	const removed: string[] = [];
+	const bucket = storage.getBucket('storage-test');
+	const removed: (string | null)[] = [];
 
-	on('removed', ({ key }) => removed.push(key));
+	const off = storage.onChange(
+		({ store, value }) => store === 'storage-test' && value === undefined,
+		({ key }) => removed.push(key),
+	);
 
-	set('storage-test', 'enabled', false);
-	set('storage-test', 'count', 0);
-	set('storage-test', 'label', '');
-	set('storage-test', 'kept', true);
+	bucket.set('enabled', false);
+	bucket.set('count', 0);
+	bucket.set('label', '');
+	bucket.set('kept', true);
 
-	remove('storage-test', 'enabled');
-	remove('storage-test', 'count');
-	remove('storage-test', 'label');
+	bucket.remove('enabled');
+	bucket.remove('count');
+	bucket.remove('label');
+	off();
 
 	expect(removed).toEqual(['enabled', 'count', 'label']);
-	expect(get('storage-test', 'enabled', 'missing')).toBe('missing');
+	expect(bucket.get('enabled', 'missing')).toBe('missing');
 	expect(settings['storage-test']).toEqual({ kept: true });
 });
 
 test('ignores a key in a store that does not exist', () => {
-	expect(() => remove('storage-test-missing', 'key')).not.toThrow();
+	expect(() => storage.getBucket('storage-test-missing').remove('key')).not.toThrow();
 });
 
 test('removes a value at a nested key path and prunes what it leaves empty', () => {
-	set('storage-nested', 'toasts.duration', 300);
-	set('storage-nested', 'toasts.opacity', 0.5);
+	const bucket = storage.getBucket('storage-nested');
 
-	remove('storage-nested', 'toasts.duration');
+	bucket.set('toasts.duration', 300);
+	bucket.set('toasts.opacity', 0.5);
 
-	expect(get('storage-nested', 'toasts.duration', 5000)).toBe(5000);
+	bucket.remove('toasts.duration');
+
+	expect(bucket.get('toasts.duration', 5000)).toBe(5000);
 	expect(settings['storage-nested']).toEqual({ toasts: { opacity: 0.5 } });
 
-	remove('storage-nested', 'toasts.opacity');
+	bucket.remove('toasts.opacity');
 
 	expect(settings['storage-nested']).toBeUndefined();
-	expect(() => remove('storage-nested', 'toasts.missing.deeper')).not.toThrow();
+	expect(() => bucket.remove('toasts.missing.deeper')).not.toThrow();
 });
 
-test('saves a Bucket under its own name, so old and new forms share it', () => {
+test('saves a Bucket under its own name, so every handle to it shares it', () => {
 	const bucket = storage.getBucket('storage-bucket');
-	const store = storage.getStore('storage-bucket');
+	const other = storage.getBucket('storage-bucket');
 
 	bucket.set('appearance.compact', true);
 
 	expect(settings['storage-bucket']).toEqual({ appearance: { compact: true } });
-	expect(store.get('appearance.compact', false)).toBe(true);
-	expect(storage.get('storage-bucket', 'appearance.compact', false)).toBe(true);
+	expect(other.get('appearance.compact', false)).toBe(true);
 
-	store.set('volume', 0.8);
-	storage.set('storage-bucket', 'muted', false);
+	other.set('volume', 0.8);
 
 	expect(bucket.get('volume', 1)).toBe(0.8);
 	expect(bucket.get('missing', 'default')).toBe('default');
 
-	bucket.toggle('muted', true);
-	store.toggle('muted', true);
-	storage.toggle('storage-bucket', 'muted', true);
+	bucket.toggle('muted', false);
 
-	expect(bucket.get('muted', false)).toBe(true);
+	expect(other.get('muted', false)).toBe(true);
 
 	bucket.remove('volume');
 
-	expect(store.get('volume', 1)).toBe(1);
+	expect(other.get('volume', 1)).toBe(1);
 
-	store.clear();
+	other.clear();
 
 	expect(settings['storage-bucket']).toBeUndefined();
-
-	bucket.set('volume', 0.5);
-	storage.clear('storage-bucket');
-
-	expect(bucket.get('volume', 1)).toBe(1);
 });
 
-test('notifies onChange and the old listener forms of the same Bucket changes', () => {
-	const seen: string[] = [];
+test('notifies onChange only for changes its predicate accepts, until removed', () => {
+	const seen: (string | null)[] = [];
 	const bucket = storage.getBucket('storage-listeners');
 
-	const offChange = storage.onChange(
+	const off = storage.onChange(
 		({ store }) => store === 'storage-listeners',
-		({ key }) => seen.push(`onChange:${key}`),
+		({ key }) => seen.push(key),
 	);
 
-	function legacy({ key }: SettingsPayload) {
-		seen.push(`addListener:${key}`);
-	}
-
-	storage.addListener(({ store }) => store === 'storage-listeners', legacy);
-
-	const offBucket = storage.getStore('storage-listeners').addListener(
-		() => true,
-		({ key }) => seen.push(`bucket:${key}`),
-	);
-
-	storage.set('storage-other', 'ignored', true);
+	storage.getBucket('storage-other').set('ignored', true);
 	bucket.set('first', 1);
 
-	expect(seen).toEqual(['onChange:first', 'addListener:first', 'bucket:first']);
+	expect(seen).toEqual(['first']);
 
-	offChange();
-	storage.removeListener(legacy);
-	offBucket();
+	off();
 	bucket.set('second', 2);
 
-	expect(seen).toHaveLength(3);
+	expect(seen).toEqual(['first']);
 });
 
-test('re-renders useBucket and useSettingsStore only for changes to their Bucket', () => {
+test('re-renders useBucket only for changes to its Bucket that its predicate accepts', () => {
 	const bucket = storage.useBucket('storage-hook');
-	const store = storage.useSettingsStore('storage-hook');
-	const nested = storage
-		.getStore('storage-hook')
-		.useSettingsStore(({ key }) => key === 'watched');
+
+	storage.useBucket('storage-hook', ({ key }) => key === 'watched');
 
 	bucket.set('value', 1);
 
-	expect(stateUpdates).toBe(2);
-	expect(store.get('value', 0)).toBe(1);
+	expect(stateUpdates).toBe(1);
 
 	storage.getBucket('storage-hook-other').set('value', 1);
-	nested.set('watched', true);
+	bucket.set('watched', true);
 
-	expect(stateUpdates).toBe(5);
-
-	storage.set('storage-hook', 'unwatched', true);
-
-	expect(stateUpdates).toBe(7);
+	expect(stateUpdates).toBe(3);
 });

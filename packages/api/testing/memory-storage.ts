@@ -1,5 +1,5 @@
+import type { Bucket, SettingsPayload, SettingsPredicate } from '../src/storage';
 import type { SettingsObject, SettingsValue } from '../src/global';
-import type { Bucket, SettingsPayload } from '../src/storage';
 import type { Widen } from '../src/utils';
 
 /** In-memory Buckets: `storage.getBucket(name)` without a device, and the settings each holds. */
@@ -8,6 +8,13 @@ export type MemoryStorage = {
 	data: Map<string, SettingsObject>;
 	/** Returns a Bucket by name, or the default Bucket when `name` is omitted. */
 	getBucket: (name?: string) => Bucket;
+	/** Returns a Bucket by name. Without a renderer there is nothing to re-render. */
+	useBucket: (name: string, predicate?: SettingsPredicate) => Bucket;
+	/** Calls `callback` for each change the predicate accepts, until the returned function runs. */
+	onChange: (
+		predicate: SettingsPredicate,
+		callback: (payload: SettingsPayload) => void,
+	) => () => void;
 };
 
 function isSettingsObject(value: SettingsValue | undefined): value is SettingsObject {
@@ -117,28 +124,26 @@ export function createMemoryStorage(defaultName: string = 'test-addon'): MemoryS
 	}
 
 	function getBucket(name: string = defaultName): Bucket {
-		const bucket: Bucket = {
+		return {
 			get: (key, def) => get(name, key, def),
 			set: (key, value) => set(name, key, value),
 			toggle: (key, def) => set(name, key, !get(name, key, def)),
 			remove: (key) => remove(name, key),
 			clear: () => clear(name),
-			useSettingsStore: () => bucket,
-			addListener(predicate, callback) {
-				function listener(payload: SettingsPayload) {
-					if (payload.store === name && predicate(payload)) {
-						callback(payload);
-					}
-				}
-
-				listeners.add(listener);
-
-				return () => void listeners.delete(listener);
-			},
 		};
-
-		return bucket;
 	}
 
-	return { data, getBucket };
+	function onChange(predicate: SettingsPredicate, callback: (payload: SettingsPayload) => void) {
+		function listener(payload: SettingsPayload) {
+			if (predicate(payload)) {
+				callback(payload);
+			}
+		}
+
+		listeners.add(listener);
+
+		return () => void listeners.delete(listener);
+	}
+
+	return { data, getBucket, useBucket: (name) => getBucket(name), onChange };
 }

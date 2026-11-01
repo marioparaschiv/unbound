@@ -123,7 +123,7 @@ export function buildGlobal(
 	const scope = sourceFile.addTypeAlias({
 		isExported: true,
 		name: 'AddonScope',
-		type: `{ ${scopeGlobals.map(([name, global]) => `${name}: ${global.sdkType};`).join(' ')} }`,
+		type: `{ ${scopeGlobals.map(([name, global]) => `/** ${global.doc} */ ${name}: ${global.sdkType};`).join(' ')} }`,
 		docs: [
 			'The globals a plugin runs with, keyed by name. Plugin code reads them without an import.',
 		],
@@ -233,7 +233,13 @@ export function buildGlobal(
 			'The global `unbound` object while the client is initialized: the API plus the lifecycle.',
 		],
 		properties: [
-			...[...pathOf].map(([name, path]) => ({ name, type: `typeof import('${path}')` })),
+			...[...pathOf].map(([name, path]) => ({
+				name,
+				type: `typeof import('${path}')`,
+				docs: [
+					`The \`${name}\` module, which plugins also import from \`@unbound-app/api/${name}\`.`,
+				],
+			})),
 			...aliases.map((alias) => ({
 				name: alias.name,
 				type: `typeof import('${pathOf.get(alias.target)}')`,

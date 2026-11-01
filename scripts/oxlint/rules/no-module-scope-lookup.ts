@@ -7,17 +7,7 @@ type CallNode = NodeOf<'CallExpression'>;
 type Options = { lazyByDefault?: boolean };
 
 const LOOKUPS_BY_NAMESPACE = new Map([
-	[
-		'metro',
-		new Set([
-			'find',
-			'findByProps',
-			'findByName',
-			'findByFilePath',
-			'findByPrototypes',
-			'findStore',
-		]),
-	],
+	['metro', new Set(['find', 'findByProps', 'findByName', 'findByFilePath', 'findByPrototypes'])],
 	['flux', new Set(['getStore'])],
 ]);
 

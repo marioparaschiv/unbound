@@ -5,8 +5,6 @@ import type { ToastHandle, ToastOptions } from './_internal';
 import * as React$1 from 'react';
 import { ComponentType } from 'react';
 import { ImageSourcePropType } from 'react-native';
-/** @deprecated Use show */
-export declare const showToast: typeof show;
 /**
  * @description Shows a toast, generating an id when one is not supplied.
  * @param options The toast options, optionally including a custom `id`.

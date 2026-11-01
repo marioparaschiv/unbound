@@ -1,25 +1,26 @@
 /// <reference types="@unbound-app/api/global" />
 
 import { getNativeModule, reload, BundleInfo } from '@unbound-app/api/native';
-import { findByName, findByProps, findStore } from '@unbound-app/api/metro';
 import type { DesignModule } from '@unbound-app/api/metro/components';
+import { findByName, findByProps } from '@unbound-app/api/metro';
 import { byProps, byName } from '@unbound-app/api/metro/filters';
-import { getStore, get, set } from '@unbound-app/api/storage';
-import { showToast } from '@unbound-app/api/toasts';
+import { getBucket } from '@unbound-app/api/storage';
+import { getStore } from '@unbound-app/api/flux';
+import { show } from '@unbound-app/api/toasts';
 
 const SomeComponent = findByName('SomeComponent');
 const props = findByProps('someProp', 'anotherProp');
-const userStore = findStore('UserStore');
+const userStore = getStore('UserStore');
 
 const propsFilter = byProps('a', 'b');
 const nameFilter = byName('C');
 
-const store = getStore('unbound');
-const enabled = get('unbound', 'plugins.enabled', false);
+const store = getBucket('unbound');
+const enabled = store.get('plugins.enabled', false);
 
-set('unbound', 'plugins.enabled', true);
+store.set('plugins.enabled', true);
 
-const handle = showToast({
+const handle = show({
 	title: 'Plugin SDK Test',
 	content: 'Resolved end to end.',
 	duration: 3000,

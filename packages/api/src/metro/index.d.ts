@@ -25,11 +25,8 @@ declare const HelpMessageTypes: {
 	readonly SUCCESS: 3;
 };
 declare const React$1: typeof import('react');
-declare function byFluxStore(name: string, short?: boolean): MetroFilter;
 /** The symbol a metro filter stores its cache key under, so repeated lookups hit the module cache. */
 export declare const CACHE_KEY: unique symbol;
-/** @deprecated Use onModuleLoad */
-export declare const addListener: typeof onModuleLoad;
 /** Ids of metro modules that threw while initialising; searches skip them. */
 export declare const blacklist: Set<number>;
 /** Metro search's mutable internal state: the module cache, load listeners and which require hooks are installed. */
@@ -42,12 +39,6 @@ export declare const data: {
 	origToString: any;
 	listeners: Set<MetroModuleLoadListener>;
 };
-/** @deprecated Use flux.getStore */
-export declare const findStore: MetroFindStore;
-/** @deprecated Call the function onModuleLoad returns. */
-export declare const off: typeof removeListener;
-/** @deprecated Use onModuleLoad */
-export declare const on: typeof onModuleLoad;
 /**
  * @description Runs several filters in a single registry pass, returning one result per item.
  * @param items The filters to resolve, each with its own per-item options.
@@ -126,31 +117,37 @@ export declare function initializeModule(id: number): boolean;
  * @returns A function that removes the listener.
  */
 export declare function onModuleLoad(listener: MetroModuleLoadListener): () => void;
-/**
- * @description Removes a module listener registered with {@link onModuleLoad}.
- * @deprecated Call the function onModuleLoad returns.
- * @param listener The listener to remove.
- */
-export declare function removeListener(listener: MetroModuleLoadListener): void;
 /** An object of shape `T` widened with an arbitrary property index. */
 export type AnyProps<T = unknown> = T & Record<PropertyKey, MetroExport>;
 /** How each design component resolves on the running Discord build. */
 export type DesignComponentAudit = {
+	/** Components the running Discord build ships in a form React can render. */
 	native: DesignComponentName[];
+	/** Components the build lacks or ships unrenderable, where an Unbound fallback stands in. */
 	fallback: DesignComponentName[];
+	/** Components neither the build nor a registered fallback can render. */
 	missing: DesignComponentName[];
 };
+/** Props for `HelpMessage`; the defaults named here are those of Unbound's fallback. */
 export type HelpMessageProps = {
+	/** The message; a string or number is rendered as text, any other node as given. */
 	children?: React$1.ReactNode;
+	/** A `HelpMessageTypes` value that picks the icon and feedback colors; `WARNING` when omitted. */
 	messageType?: HelpMessageType;
+	/** Discord's text variant for string children; `text-sm/medium` when omitted. */
 	textVariant?: string;
+	/** The color of string children; the theme's default text color when omitted. */
 	textColor?: ColorValue;
+	/** The corner radius in density-independent pixels; `8` when omitted. */
 	borderRadius?: number;
+	/** A node, usually a button, rendered after the message. */
 	button?: React$1.ReactNode;
 };
+/** A `HelpMessage` style: one of the `HelpMessageTypes` values. */
 export type HelpMessageType = (typeof HelpMessageTypes)[keyof typeof HelpMessageTypes & string];
 /** React Native's `ImageSourceUtils`, which every `Image` render resolves its source through. */
 export type ImageSourcesModule = {
+	/** Resolves the source or sources an `Image` with these props loads, or `null` for none. */
 	getImageSourcesFromImageProps: (props: ImageProps) => ImageURISource | ImageURISource[] | null;
 };
 /** Widens a single result to an array when the search was made with `all: true`. */
@@ -170,6 +167,7 @@ export type MetroBulkItem = {
 } & Omit<MetroSearchOptions, 'initial' | 'cache'>;
 /** The marker object distinguishing a bulk find from a single one. */
 export type MetroBulkMarker = {
+	/** Always `true`: this find is one of several resolved in one pass. */
 	bulk: true;
 };
 /** Result shape of a bulk by-name search, one function per requested item. */
@@ -191,8 +189,6 @@ export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) &
 	[CACHE_KEY]?: string;
 	isRaw?: boolean;
 };
-/** The signature of the deprecated `findStore`. */
-export type MetroFindStore = (name: string, options?: MetroStoreOptions) => AnyProps;
 /** A function or class exported by a Discord module, whose signature Discord does not document. */
 export type MetroFunction = DiscordFunction & (new (...args: any[]) => any);
 /** Dispatches to the bulk or single by-name result shape based on the argument tuple. */
@@ -200,7 +196,9 @@ export type MetroFunctionSignatureOrArray<T extends any[], U extends string> =
 	T extends MetroBulkFind<U> ? MetroBulkModuleByName<T> : MetroSingleModuleByName<T>;
 /** Options that control internal search behaviour shared across every `findBy*` helper. */
 export type MetroInternalOptions = {
+	/** Treats each argument as its own search and resolves them all in one registry pass, one result per item. */
 	bulk?: boolean;
+	/** Returns a proxy that runs the search on first access instead of now. */
 	lazy?: boolean;
 };
 /** Search options for {@link findLazy}, adding a `signal` that abandons the wait when aborted. */
@@ -213,6 +211,7 @@ export type MetroModule<TProps extends string> = MetroPropertyRecordOrArray<TPro
 export type MetroModuleLoadListener = (mdl: any, id: number) => void;
 /** A bag carrying a `params` array of prop names. */
 export type MetroParamsBag<T extends string> = {
+	/** The prop names the lookup matches on. */
 	params: T[];
 };
 /** A record keyed by the prop names listed in a single bulk item's `params`. */
@@ -228,14 +227,23 @@ export type MetroPropsRecord<T extends any[]> = {
 };
 /** Public options accepted by {@link find} and the `findBy*` family. */
 export type MetroSearchOptions = {
+	/** Also tests each module's `default` export when its exports do not match; `true` when omitted. */
 	esModules?: boolean;
+	/** Returns the `default` export rather than the whole module when `default` matched; `true` when omitted. */
 	interop?: boolean;
+	/** Matches an `all` search starts from; the search sets it itself when it rescans past the cache. */
 	initial?: any[];
+	/** Searches modules earlier searches found before scanning the whole registry; `true` when omitted. */
 	cache?: boolean;
+	/** Returns a proxy that runs the search on first access instead of now. */
 	lazy?: boolean;
+	/** Returns the Metro module record instead of its exports; `false` when omitted. */
 	raw?: boolean;
+	/** Returns every match as an array instead of the first match; `false` when omitted. */
 	all?: boolean;
+	/** Searches only the modules cached for this filter and never scans the registry; `false` when omitted. */
 	cacheOnly?: boolean;
+	/** Runs modules that have not loaded yet so they can be searched; `false` skips them. `true` when omitted. */
 	initialize?: boolean;
 };
 /** Result shape of a by-name search: the matched function (or its default export). */
@@ -261,7 +269,7 @@ export type MetroSingleModuleByProperty<T extends any[]> = T extends [
 ]
 	? MetroAllValues<O, AnyProps<MetroPropsRecord<T>>>
 	: AnyProps<MetroPropsRecord<T>>;
-/** Search options for {@link findStore}, adding the `short` name-matching toggle. */
+/** Search options for `flux.getStore`, adding the `short` name-matching toggle. */
 export type MetroStoreOptions = {
 	short?: boolean;
 } & MetroSearchOptions;
@@ -270,6 +278,7 @@ export type MetroStringFindWithOptions<T extends string, Options = MetroSearchOp
 	...T[],
 	Options,
 ];
+/** The props of Discord's `FormSwitch`, which the switch fallback accepts. */
 export type SwitchProps = React$1.ComponentProps<DesignModule['FormSwitch']>;
 export * as api from './api';
 export * as common from './common';

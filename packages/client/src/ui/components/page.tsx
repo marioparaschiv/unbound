@@ -3,7 +3,9 @@ import { View, ScrollView } from 'react-native';
 
 import { SafeArea } from '~/metro/components';
 
+/** The props of {@link Page}. */
 type PageProps = {
+	/** The page's form groups, laid out top to bottom with a 24px gap. */
 	children: ReactNode;
 };
 

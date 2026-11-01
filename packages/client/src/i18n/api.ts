@@ -13,15 +13,19 @@ import createMomentLocaleDefiner from './create-moment-locale-definer';
 import createMomentLocaleSetter from './create-moment-locale-setter';
 import resolveMomentLocale from './resolve-moment-locale';
 
+/** One locale's messages, keyed by message key. */
 type LocaleStrings = Record<string, string>;
+/** A string table: each locale code, such as `en-US`, mapped to its messages. */
 type StringStore = Record<string, LocaleStrings>;
+/** The values `format` puts into a message's ICU `MessageFormat` placeholders, by placeholder name. */
 type FormatVars = Record<string, string | number | boolean | Date>;
 type I18nLoadSuccess = { locale: string };
 
+/** A `messages`/`format` pair over one string table, as `defineMessages` returns. */
 type Localizations = {
+	/** Each message in the active locale, falling back to en-US, then the key itself. */
 	messages: Record<string, string>;
-	/** @deprecated Use messages */
-	Messages: Record<string, string>;
+	/** Formats a message in the active locale, filling its placeholders from `vars`. */
 	format: (key: string, vars?: FormatVars) => string;
 };
 
@@ -239,9 +243,6 @@ async function ensureLocale(locale: string): Promise<void> {
 /** The core messages proxy, resolving Unbound's own UI strings against the active Discord locale. */
 export const messages = createMessages(strings, () => currentLocale, enUS);
 
-/** @deprecated Use messages */
-export const Messages = messages;
-
 /**
  * @description Formats a localized string, interpolating ICU `MessageFormat` placeholders.
  * @param key The message key to resolve and format.
@@ -276,11 +277,8 @@ export function defineMessages(table: StringStore): Localizations {
 		return new MessageFormat(messages[key]).format(vars);
 	}
 
-	return { messages, Messages: messages, format };
+	return { messages, format };
 }
-
-/** @deprecated Use defineMessages */
-export const defineLocalizations = defineMessages;
 
 /**
  * @description Loads the fallback and active locales, then subscribes to Discord locale changes. Fire-and-forget; never blocks startup. Twin of {@link destroy}.
@@ -373,10 +371,8 @@ export function destroy() {
 
 export default {
 	messages,
-	Messages,
 	format,
 	defineMessages,
-	defineLocalizations,
 	init,
 	destroy,
 };

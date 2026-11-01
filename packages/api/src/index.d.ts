@@ -21,7 +21,3 @@ export * as themes from './themes';
 export * as toasts from './toasts';
 export * as ui from './ui';
 export * as updates from './updates';
-/** @deprecated Use sync */
-export declare const cloudSync: typeof import('./sync');
-/** @deprecated Use iconPacks */
-export declare const icons: typeof import('./iconPacks');

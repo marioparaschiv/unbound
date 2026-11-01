@@ -4,8 +4,6 @@ description: 'The module finder. Locate the Discord module you need before you p
 icon: 'box-taped'
 ---
 
-import Deprecated from '/snippets/deprecated.mdx';
-
 ### What is Metro?
 
 `metro` finds Discord's internal modules for you. It walks the module registry and returns the module that matches the description you give it.
@@ -25,7 +23,8 @@ Messages.sendMessage(channelId, { content: 'Hello from Unbound' });
 ```
 
 <Note>
-	Learn this module first. The search patterns on this page come up throughout the rest of the API.
+	Learn this module first. The search patterns on this page come up throughout the rest of the
+	API.
 </Note>
 
 ### Finding modules
@@ -36,45 +35,52 @@ Each `findBy*` helper matches a module by one kind of identifying trait, such as
 	<Tab title='By props'>
 		Match a module by the properties it exposes. This is the most common search.
 
-		```ts
-		const Clipboard = metro.findByProps('setString', 'getString');
-		```
-	</Tab>
-	<Tab title='By name'>
-		Match a function or component by the name of its default export.
+    	```ts
+    	const Clipboard = metro.findByProps('setString', 'getString');
+    	```
+    </Tab>
+    <Tab title='By name'>
+    	Match a function or component by the name of its default export.
 
-		```ts
-		const Button = metro.findByName('Button');
-		```
-	</Tab>
-	<Tab title='By file path'>
-		Match a module by the source file it was bundled from.
+    	```ts
+    	const Button = metro.findByName('Button');
+    	```
+    </Tab>
+    <Tab title='By file path'>
+    	Match a module by the source file it was bundled from.
 
-		```ts
-		const ActionSheet = metro.findByFilePath('modules/user_profile/native/UserProfileActionSheet.tsx');
-		```
-	</Tab>
+    	```ts
+    	const ActionSheet = metro.findByFilePath('modules/user_profile/native/UserProfileActionSheet.tsx');
+    	```
+    </Tab>
+
 </Tabs>
 
 To find a Flux store, use [`flux.getStore`](/modules/flux#reading-a-store).
 
 All search helpers:
 
-| Helper | Matches on |
-| --- | --- |
-| `findByProps(...names)` | Properties present on the export |
-| `findByName(name)` | The name of the default export |
-| `findByFilePath(path)` | The source file a module was imported from |
-| `findByPrototypes(...names)` | Methods present on the export's prototype |
-| `find(filter)` | Any [filter](#filters) |
-| `findLazy(filter)` | Any filter, waiting for the module to load if it hasn't yet |
+| Helper                       | Matches on                                                  |
+| ---------------------------- | ----------------------------------------------------------- |
+| `findByProps(...names)`      | Properties present on the export                            |
+| `findByName(name)`           | The name of the default export                              |
+| `findByFilePath(path)`       | The source file a module was imported from                  |
+| `findByPrototypes(...names)` | Methods present on the export's prototype                   |
+| `find(filter)`               | Any [filter](#filters)                                      |
+| `findLazy(filter)`           | Any filter, waiting for the module to load if it hasn't yet |
 
 <Note>
-	On mobile, use `findByName` for components, since most are identified by their `name`. For a component that sets a `displayName`, pass `metro.filters.byDisplayName(name)` to `find`. This is less common on mobile than on desktop.
+	On mobile, use `findByName` for components, since most are identified by their `name`. For a
+	component that sets a `displayName`, pass `metro.filters.byDisplayName(name)` to `find`. This is
+	less common on mobile than on desktop.
 </Note>
 
 <Warning>
-	Mobile has no search by source string. Desktop clients can match a module by string literals in its source, which is the usual way to find a function component there. The mobile bundle doesn't expose module source in the same way, so this technique isn't available. If a component has no props, prototype, or name to match on, reach it through its parent instead. See [Reaching into a render](/plugins/react-patching#reaching-into-a-render).
+	Mobile has no search by source string. Desktop clients can match a module by string literals in
+	its source, which is the usual way to find a function component there. The mobile bundle doesn't
+	expose module source in the same way, so this technique isn't available. If a component has no
+	props, prototype, or name to match on, reach it through its parent instead. See [Reaching into a
+	render](/plugins/react-patching#reaching-into-a-render).
 </Warning>
 
 ### Filters
@@ -92,7 +98,8 @@ const Messages = metro.find(filter);
 ```
 
 <Tip>
-	Use `find` with a raw filter only when no `findBy*` helper can express the match, for example a combination of conditions. Otherwise use the helpers: they're shorter and cache better.
+	Use `find` with a raw filter only when no `findBy*` helper can express the match, for example a
+	combination of conditions. Otherwise use the helpers: they're shorter and cache better.
 </Tip>
 
 ### Lazy resolution & caching
@@ -160,7 +167,8 @@ const handler = metro.find(byActionHandler('MESSAGE_CREATE'));
 ```
 
 <Tip>
-	The key must fully describe the filter's inputs. If two searches should return different modules, they need different keys. Otherwise they collide in the cache.
+	The key must fully describe the filter's inputs. If two searches should return different
+	modules, they need different keys. Otherwise they collide in the cache.
 </Tip>
 
 ### Common modules
@@ -171,30 +179,15 @@ Metro pre-resolves the modules most addons need: React, React Native, constants,
 	<Accordion title='metro.common: shared modules' icon='cubes'>
 		Framework and app-level handles you would otherwise look up with `findByProps` again and again: `React`, `ReactNative`, `Constants`, `Clipboard`, `Assets`, `MarkdownParser`, `Moment`, and more.
 
-		```ts
-		const { React, Constants } = metro.common;
-		```
-	</Accordion>
-	<Accordion title='metro.components: UI components' icon='shapes'>
-		Discord's design system and other components. See [Components](/modules/components).
-	</Accordion>
-	<Accordion title='metro.api: request helpers' icon='cloud'>
-		Action-creator modules such as `Messages`, `Linking`, and `Profiles`, used to trigger actions in the app.
-	</Accordion>
+    	```ts
+    	const { React, Constants } = metro.common;
+    	```
+    </Accordion>
+    <Accordion title='metro.components: UI components' icon='shapes'>
+    	Discord's design system and other components. See [Components](/modules/components).
+    </Accordion>
+    <Accordion title='metro.api: request helpers' icon='cloud'>
+    	Action-creator modules such as `Messages`, `Linking`, and `Profiles`, used to trigger actions in the app.
+    </Accordion>
+
 </AccordionGroup>
-
-### Deprecated names
-
-<Deprecated />
-
-These names still work in published plugins until 1.0. New code uses the replacement.
-
-| Deprecated | Use |
-| --- | --- |
-| `metro.findStore(name)` | `flux.getStore(name)` |
-| `metro.addListener`, `metro.on` | `metro.onModuleLoad` |
-| `metro.removeListener`, `metro.off` | The function `onModuleLoad` returns |
-| `metro.filters.byStore` | `metro.filters.byFluxStore` |
-| `metro.common.Dispatcher` | `flux.dispatch`, `flux.onAction`, `flux.interceptAction` |
-| `metro.common.Flux` | The [flux](/modules/flux) namespace |
-| `metro.common.FluxHooks` | `flux.useStore` |

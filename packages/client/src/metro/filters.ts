@@ -113,7 +113,4 @@ export function byFluxStore(name: string, short: boolean = true): MetroFilter {
 	return filter;
 }
 
-/** @deprecated Use byFluxStore */
-export const byStore = byFluxStore;
-
 export default { byProps, byDisplayName, byPrototypes, byName, byFluxStore, byFilePath };

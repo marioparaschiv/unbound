@@ -8,6 +8,7 @@
 		"generate": "bun src/index.ts",
 		"check-surface": "bun src/surface.ts",
 		"docs": "bun src/docs.ts",
+		"docs:coverage": "bun src/doc-coverage.ts",
 		"docs:upload": "bun src/docs-upload.ts"
 	},
 	"dependencies": {

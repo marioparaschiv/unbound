@@ -70,7 +70,7 @@ function startSelfTest(marker: string) {
 		];
 
 		state.platform = 'ios';
-		state.host = ios.data.name;
+		state.host = ios.manifest.name;
 		state.tokens = tokens;
 		state.remove = () => tokens.forEach((token) => token.remove());
 
@@ -81,7 +81,7 @@ function startSelfTest(marker: string) {
 		const { hooks } = android.context.native;
 
 		state.platform = 'android';
-		state.host = android.data.name;
+		state.host = android.manifest.name;
 		state.tokens.push(
 			hooks.hook('android.view.View', 'onAttachedToWindow', [], { notify: true }, () => {
 				state.base++;
@@ -190,7 +190,7 @@ function runCancellations(trackerClass: string) {
 		await stopping;
 		await unbound.plugins.start(host.id);
 
-		return JSON.stringify({ host: host.data.name, cancellations: outcomes });
+		return JSON.stringify({ host: host.manifest.name, cancellations: outcomes });
 	})();
 }
 

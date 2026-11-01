@@ -4,8 +4,6 @@ description: "Localize your addon so it renders in the user's Discord language."
 icon: 'globe'
 ---
 
-import Deprecated from '/snippets/deprecated.mdx';
-
 ### What is i18n?
 
 `i18n` is Unbound's localization layer. It loads string tables for the user's active Discord locale and falls back to `en-US`.
@@ -52,7 +50,7 @@ import { i18n } from '@unbound-app/api';
 
 const { messages, format } = i18n.defineMessages({
 	'en-US': { GREETING: 'Hello, {name}!' },
-	'fr':    { GREETING: 'Bonjour, {name} !' },
+	fr: { GREETING: 'Bonjour, {name} !' },
 });
 
 format('GREETING', { name: 'Mario' });
@@ -61,13 +59,3 @@ format('GREETING', { name: 'Mario' });
 <Tip>
 	Always include an `en-US` table. Every other locale falls back to it when a key is missing.
 </Tip>
-
-### Deprecated names
-
-<Deprecated />
-
-| Deprecated | Use |
-| --- | --- |
-| `i18n.Messages` | `i18n.messages` |
-| `i18n.defineLocalizations` | `i18n.defineMessages` |
-| `Messages` on the object `defineMessages` returns | `messages` |

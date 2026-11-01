@@ -2,122 +2,6 @@
 
 import type { PredicateResult, Widen } from './utils';
 import type { SettingsObject, SettingsValue } from './_internal';
-declare class EventEmitter<EventMap extends DefaultEventMap = DefaultEventMap> {
-	events: EventCollections<EventMap>;
-	onceEvents: OnceCollections<EventMap>;
-	_symbolKeys: Set<symbol>;
-	maxListeners: number;
-	boundFuncs: undefined | Map<Listener, Listener>;
-	emit: <EventKey extends keyof EventMap>(
-		event: EventKey,
-		...args: Parameters<EventMap[EventKey]>
-	) => boolean;
-	on: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => this;
-	once: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => this;
-	addListener: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-		argsNum?: ArgsNum<EventMap[EventKey]>,
-	) => this;
-	removeListener: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => this;
-	hasListeners: <EventKey extends keyof EventMap = string>(event: EventKey) => boolean;
-	prependListener: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => this;
-	prependOnceListener: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => this;
-	off: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => this;
-	removeAllListeners: <EventKey extends keyof EventMap = string>(event?: EventKey) => this;
-	setMaxListeners: (n: number) => this;
-	getMaxListeners: () => number;
-	listeners: <EventKey extends keyof EventMap = string>(event: EventKey) => EventMap[EventKey][];
-	rawListeners: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-	) => EventMap[EventKey][];
-	eventNames: () => Array<string | symbol>;
-	listenerCount: <EventKey extends keyof EventMap = string>(type: EventKey) => number;
-	addListenerBound: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-		bindTo?: unknown,
-		argsNum?: ArgsNum<EventMap[EventKey]>,
-	) => this;
-	removeListenerBound: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => this;
-	/**
-	 * @description Creates an emitter with no listeners.
-	 */
-	constructor();
-	get _eventsCount(): number;
-}
-declare class TaskCollection<Func extends Listener = Listener> {
-	argsNum: number;
-	_tasks: Tasks<Func>;
-	length: number;
-	call: (...args: Parameters<Func>) => ReturnType<Listener>;
-	/**
-	 * @description Creates a collection holding a single listener.
-	 * @param argsNum How many arguments each listener receives when more than one is registered.
-	 * @param task The first listener.
-	 */
-	constructor(argsNum: number, task: Func);
-	push(task: Func): void;
-	insert(index: number, task: Func): void;
-	removeLast(task: Func): void;
-	growArgsNum(argsNum: number): void;
-	rebuild(): void;
-	tasksAsArray(): Func[];
-}
-
-/** @deprecated Use onChange */
-export declare const addListener: typeof onChange;
-/** @deprecated Use getBucket */
-export declare const getStore: typeof getBucket;
-/** @deprecated Use the function onChange returns */
-export declare const off: <EventKey extends keyof EventMap = string>(
-	event: EventKey,
-	listener: EventMap[EventKey],
-) => EventEmitter<EventMap>;
-/** @deprecated Use onChange */
-export declare const on: <EventKey extends keyof EventMap = string>(
-	event: EventKey,
-	listener: EventMap[EventKey],
-) => EventEmitter<EventMap>;
-/** @deprecated Use useBucket */
-export declare const useSettingsStore: typeof useBucket;
-/**
- * @description Removes an entire store and all of its keys, and emits `changed` and `cleared`.
- * @deprecated Use getBucket(store).clear
- * @param store The store to clear.
- */
-export declare function clear(store: string): void;
-/**
- * @description Reads a value from a store by dot-separated key path, falling back to a default when absent.
- * @deprecated Use getBucket(store).get
- * @template T The type of the default value.
- * @param store The store to read from.
- * @param key The dot-separated key path within the store.
- * @param def The value to return when the key is not set.
- * @returns The stored value, or `def` if the key path is not present.
- */
-export declare function get<T>(store: string, key: string, def: T): Widen<T>;
 /**
  * @description Returns the Bucket with the given name. The name is the key the Bucket is saved under on disk.
  * @param name The Bucket name. A plugin may omit it to get its own Bucket, named after its id.
@@ -132,7 +16,7 @@ export declare function getBucket(name?: string): Bucket;
  * @returns A function that removes the listener.
  */
 export declare function onChange(
-	predicate: (payload: SettingsPayload) => PredicateResult,
+	predicate: SettingsPredicate,
 	callback: (payload: SettingsPayload) => void,
 ): () => void;
 /**
@@ -141,51 +25,17 @@ export declare function onChange(
  */
 export declare function persist(): Promise<void>;
 /**
- * @description Deletes a value at a dot-separated key path, pruning objects the deletion leaves empty and the store itself when it becomes empty, and emits `changed` and `removed`.
- * @deprecated Use getBucket(store).remove
- * @param store The store to remove the key from.
- * @param key The dot-separated key path to delete.
- */
-export declare function remove(store: string, key: string): void;
-/**
- * @description Removes a previously registered settings change listener.
- * @deprecated Call the function onChange returns.
- * @param callback The listener to remove.
- */
-export declare function removeListener(callback: (payload: SettingsPayload) => void): void;
-/**
- * @description Writes a value into a store at a dot-separated key path, creating intermediate objects, and emits `changed` and `set`.
- * @deprecated Use getBucket(store).set
- * @param store The store to write to.
- * @param key The dot-separated key path within the store.
- * @param value The value to store.
- */
-export declare function set(store: string, key: string, value: SettingsValue): void;
-/**
  * @description Reads every Bucket at once. Most callers should read single keys, which stay in native code.
  * @returns Every Bucket by name.
  */
 export declare function snapshot(): SettingsStores;
-/**
- * @description Flips a boolean value at a key path against its current (or default) value, and emits `toggled`.
- * @deprecated Use getBucket(store).toggle
- * @param store The store to write to.
- * @param key The dot-separated key path within the store.
- * @param def The value to assume when the key is not yet set.
- */
-export declare function toggle(store: string, key: string, def: boolean): void;
 /**
  * @description React hook that re-renders the component whenever a matching change occurs in the Bucket.
  * @param name The Bucket to subscribe to.
  * @param predicate Optional filter deciding which changes trigger a re-render.
  * @returns The Bucket, with every operation bound to `name`.
  */
-export declare function useBucket(
-	name: string,
-	predicate?: (payload: SettingsPayload) => PredicateResult,
-): Bucket;
-/** The declared parameter count of a listener. */
-export type ArgsNum<T extends Listener> = Parameters<T>['length'];
+export declare function useBucket(name: string, predicate?: SettingsPredicate): Bucket;
 /** A Bucket: a named, persisted group of settings. Keys are dot-separated paths. */
 export type Bucket = {
 	/** Reads a value, falling back to `def` when the key is not set. */
@@ -198,57 +48,18 @@ export type Bucket = {
 	remove: (key: string) => void;
 	/** Deletes every setting in the Bucket. */
 	clear: () => void;
-	/** @deprecated Use storage.useBucket(name) */
-	useSettingsStore: (predicate?: (payload: SettingsPayload) => PredicateResult) => Bucket;
-	/** @deprecated Use storage.onChange */
-	addListener: (
-		predicate: (payload: SettingsPayload) => PredicateResult,
-		callback: (payload: SettingsPayload) => void,
-	) => () => void;
 };
-export type ClearedPayload = {
-	store: string;
-};
-/** The event map of an untyped emitter. `__proto__` is reserved, as in tseep. */
-export type DefaultEventMap = Record<string | symbol, Listener> & {
-	__proto__?: never;
-};
-export type EventCollections<EventMap extends DefaultEventMap> = {
-	[eventName in keyof EventMap]?: TaskCollection<EventMap[eventName]>;
-};
-export type EventMap = {
-	set: (payload: SetPayload) => void;
-	changed: (payload: SettingsPayload) => void;
-	cleared: (payload: ClearedPayload) => void;
-	removed: (payload: RemovedPayload) => void;
-	toggled: (payload: ToggledPayload) => void;
-};
-/** Any event listener. tseep's `any[]` parameters become `never[]`, which accepts every listener. */
-export type Listener = (...args: never[]) => Promise<unknown> | void;
-export type OnceCollections<EventMap extends DefaultEventMap> = {
-	[eventName in keyof EventMap]?: EventMap[eventName][] | EventMap[eventName];
-};
-export type RemovedPayload = {
-	store: string;
-	key: string;
-};
-export type SetPayload = {
-	store: string;
-	key: string;
-	value: SettingsValue;
-};
-/** Payload describing a settings change, passed to `changed` listeners and predicates. */
+/** Payload describing a settings change, passed to `onChange` listeners and predicates. */
 export type SettingsPayload = {
+	/** The name of the Bucket that changed. */
 	store: string;
+	/** The dot-separated key that changed, or `null` when the whole Bucket was cleared. */
 	key: string | null;
+	/** The new value, or `undefined` when the key was removed or the Bucket cleared. */
 	value: SettingsValue | undefined;
 };
+/** Decides whether a settings change should reach a listener. */
+export type SettingsPredicate = (payload: SettingsPayload) => PredicateResult;
+/** Every Bucket's settings, keyed by Bucket name, as the loader persists them. */
 export type SettingsStores = Record<string, SettingsObject>;
-export type Tasks<Func> = Func[] | Func | null;
-export type ToggledPayload = {
-	store: string;
-	key: string;
-	prev: boolean;
-	value: boolean;
-};
 export {};

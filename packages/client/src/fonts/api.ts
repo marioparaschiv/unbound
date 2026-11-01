@@ -8,12 +8,3 @@ export const get = fonts.getEntity.bind(fonts);
 export const install = fonts.install.bind(fonts);
 /** Removes an installed font by the file name {@link install} resolved. */
 export const uninstall = fonts.delete.bind(fonts);
-
-/** @deprecated Use getAll */
-export const getEntities = getAll;
-/** @deprecated Use get */
-export const getEntity = get;
-/** @deprecated Use uninstall */
-const deprecatedDelete = uninstall;
-
-export { deprecatedDelete as delete };

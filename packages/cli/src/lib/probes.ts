@@ -5,12 +5,13 @@ import type {
 	NativePluginCapability,
 	PluginContext,
 } from '@unbound-app/api/native';
-import type { UnboundGlobal } from '@unbound-app/api/global';
+import type { AddonHandle, UnboundGlobal } from '@unbound-app/api/global';
 
-type PluginEntity = { started?: boolean; context?: PluginContext };
+/** A loaded plugin as the client's manager holds it: its handle, plus the native bridge the client keeps off it. */
+type PluginEntity = AddonHandle & { context?: PluginContext };
 
 /** The slice of Unbound's plugin manager the device probes borrow a running plugin's native bridge from. */
-export type PluginManager = { entities: Map<string, PluginEntity> };
+export type PluginManager = { entities: ReadonlyMap<PropertyKey, PluginEntity> };
 type ModuleRecord = {
 	isInitialized?: boolean;
 	__filePath?: string;
@@ -42,7 +43,7 @@ export async function viewTree(
 	maxDepth: number,
 	maxNodes: number,
 ): Promise<string> {
-	const manager = Reflect.get(unbound, 'plugins') as UnboundGlobal['plugins'] & PluginManager;
+	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
 	const holder = (platform: string, capabilities: NativePluginCapability[]) =>
 		[...manager.entities.values()].find(
 			(entity) =>
@@ -236,7 +237,7 @@ export async function viewTree(
  * @returns Each matching view's escaped text and its spans with their ranges.
  */
 export function textSpans(unbound: UnboundGlobal, match: string, maxViews: number): string {
-	const manager = Reflect.get(unbound, 'plugins') as UnboundGlobal['plugins'] & PluginManager;
+	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
 	const context = [...manager.entities.values()].find(
 		(entity) =>
 			entity.started &&
@@ -401,7 +402,7 @@ export async function captureNativeHook(
 	duration: number,
 	samples: number,
 ): Promise<string> {
-	const manager = Reflect.get(unbound, 'plugins') as UnboundGlobal['plugins'] & PluginManager;
+	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
 	const holder = (platform: string, capability: NativePluginCapability) =>
 		[...manager.entities.values()].find(
 			(entity) =>
@@ -501,12 +502,11 @@ export async function traceFunction(
 
 		return `{${keys.slice(0, 10).join(',')}${keys.length > 10 ? ',…' : ''}}`;
 	}
-	const patcher = unbound.patcher.createPatcher(`ubd-trace-${Date.now()}`);
 	const calls: string[] = [];
 	const started = Date.now();
 	let count = 0;
 
-	patcher.after(module, name, ({ args, result }) => {
+	const unpatch = unbound.patcher.after(module, name, ({ args, result }) => {
 		count++;
 
 		if (calls.length < samples) {
@@ -517,7 +517,7 @@ export async function traceFunction(
 	});
 
 	await new Promise((resolve) => setTimeout(resolve, duration));
-	patcher.unpatchAll();
+	unpatch();
 
 	return `${count} call${count === 1 ? '' : 's'} in ${duration}ms\n${calls.join('\n')}`;
 }
@@ -529,7 +529,7 @@ export async function traceFunction(
  * @returns The timer delay and main-thread round trip of each sample, in milliseconds.
  */
 export async function measureTiming(unbound: UnboundGlobal, rounds: number): Promise<string> {
-	const manager = Reflect.get(unbound, 'plugins') as UnboundGlobal['plugins'] & PluginManager;
+	const manager = Reflect.get(unbound, 'plugins') as PluginManager;
 	const context = [...manager.entities.values()].find(
 		(entity) =>
 			entity.started &&

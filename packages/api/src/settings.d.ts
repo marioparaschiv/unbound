@@ -4,12 +4,6 @@ export type { SettingsEntry } from './_internal';
 import type { SettingsEntry } from './_internal';
 import * as React$1 from 'react';
 import { ComponentType } from 'react';
-/** @deprecated Use registerSection */
-export declare const registerSettings: typeof registerSection;
-/** @deprecated Use removeSection */
-export declare const removeSettings: typeof removeSection;
-/** @deprecated Use getSections */
-export declare const sections: typeof getSections;
 /**
  * @description Returns the current registry of settings entries.
  * @returns A record of entry key to its {@link SettingsEntry}.

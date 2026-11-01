@@ -44,12 +44,6 @@ export declare function before<M extends PatchParent, P extends PropOf<M>>(
 	options?: PatchOptions,
 ): () => void;
 /**
- * @description Creates a patcher whose patches share default options, so they can be removed together.
- * @param defaultOptions A caller id, or options merged into every patch; a caller id is generated if missing.
- * @returns The scoped patcher.
- */
-export declare function createPatcher(defaultOptions: string | PatchOptions): PatcherInstance;
-/**
  * @description Runs a callback in place of a method, which can call `ctx.original` and replaces its result.
  * @template M The object holding the method.
  * @template P The method's key.
@@ -130,6 +124,7 @@ export type AnyConstructor = {
 };
 export type AnyFunction = (...args: any[]) => any;
 export type AnyObject = Record<any, any>;
+/** The arguments a patch receives for method `F`: its parameters, or its constructor's for a class. */
 export type ArgsOf<F> =
 	IsUntyped<F> extends true
 		? F[]
@@ -154,8 +149,11 @@ export type BeforeCallback<Args extends unknown[], Res, Self> = (
  * @template Self The method's `this`.
  */
 export type BeforeContext<Args extends unknown[], Res, Self> = {
+	/** The arguments of this call; a `before` callback can return a new array to replace them. */
 	args: Args;
+	/** The `this` the method was called with. */
 	this: Self;
+	/** The unpatched method; call it with `ctx.this` and `ctx.args` to run the original behavior. */
 	original: (...args: Args) => Res;
 };
 /**
@@ -174,21 +172,14 @@ export type InsteadCallback<Args extends unknown[], Res, Self> = (
  * @template Self The method's `this`.
  */
 export type InsteadContext<Args extends unknown[], Res, Self> = BeforeContext<Args, Res, Self>;
+/** Whether `T` is `any`, so a patch on an untyped method keeps loose types. */
 export type IsUntyped<T> = 0 extends 1 & T ? true : false;
 export type PatchMethod = string;
 export type PatchParent = AnyFunction | AnyObject;
-/**
- * The patcher `createPatcher` returns.
- */
-export type PatcherInstance = {
-	before: typeof before;
-	instead: typeof instead;
-	after: typeof after;
-	unpatchAll: () => void;
-};
 export type PropOf<M> = {
 	[K in keyof M]: M[K] extends AnyFunction | AnyConstructor ? Extract<K, string> : never;
 }[keyof M];
+/** The result a patch receives for method `F`: its return value, or an instance for a class. */
 export type ResultOf<F> =
 	IsUntyped<F> extends true
 		? F
@@ -197,6 +188,7 @@ export type ResultOf<F> =
 			: F extends AnyConstructor
 				? InstanceType<F>
 				: never;
+/** The `this` a patch receives: the method's declared `this`, else the object `M` holding it. */
 export type SelfOf<M, F> = unknown extends ThisParameterType<F> ? M : ThisParameterType<F>;
 
 export { PatchType$1 as PatchType };

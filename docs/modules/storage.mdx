@@ -4,8 +4,6 @@ description: 'Reactive, persisted settings: read, write, and re-render on change
 icon: 'database'
 ---
 
-import Deprecated from '/snippets/deprecated.mdx';
-
 ### What is Storage?
 
 `storage` holds your addon's settings. Values you write are held in memory, broadcast as a change, and saved to disk, so your addon's configuration survives a reload without any file handling on your part.
@@ -35,8 +33,8 @@ Keys inside a Bucket are dot-paths. `set('appearance.compact', true)` writes `{ 
 import { storage } from '@unbound-app/api';
 
 const settings = storage.getBucket();
-settings.set('appearance.compact', true);   // dot-path key
-settings.get('appearance.compact', false);  // with a default
+settings.set('appearance.compact', true); // dot-path key
+settings.get('appearance.compact', false); // with a default
 ```
 
 ### Reading & writing
@@ -49,21 +47,24 @@ const settings = storage.getBucket();
 
 settings.set('volume', 0.8);
 const volume = settings.get('volume', 1); // default 1 if unset
-```
+
+````
 
 ```ts toggle
 // Flip a boolean against its current (or default) value.
 settings.toggle('muted', false);
-```
+````
 
 ```ts remove & clear
 settings.remove('volume'); // delete one key
-settings.clear();          // drop the whole Bucket
+settings.clear(); // drop the whole Bucket
 ```
+
 </CodeGroup>
 
 <Note>
-	`get` requires a default as its last argument. This keeps the Bucket predictable and keeps `undefined` out of your UI.
+	`get` requires a default as its last argument. This keeps the Bucket predictable and keeps
+	`undefined` out of your UI.
 </Note>
 
 ### Reactivity
@@ -78,12 +79,7 @@ function Toggle() {
 	const settings = storage.useBucket('my-plugin');
 	const compact = settings.get('appearance.compact', false);
 
-	return (
-		<Switch
-			value={compact}
-			onValueChange={(v) => settings.set('appearance.compact', v)}
-		/>
-	);
+	return <Switch value={compact} onValueChange={(v) => settings.set('appearance.compact', v)} />;
 }
 ```
 
@@ -101,21 +97,7 @@ storage.onChange(
 `storage.persist()` saves pending changes right away instead of waiting for the debounce.
 
 <Note>
-	This module owns the values. To give your addon its own screen in Discord's settings list, see [settings](/modules/settings). The keys the loader reads from the same file are listed in the [settings reference](/loader/settings).
+	This module owns the values. To give your addon its own screen in Discord's settings list, see
+	[settings](/modules/settings). The keys the loader reads from the same file are listed in the
+	[settings reference](/loader/settings).
 </Note>
-
-### Deprecated names
-
-<Deprecated />
-
-These names still work in published plugins until 1.0. New code uses the replacement.
-
-| Deprecated | Use |
-| --- | --- |
-| `storage.getStore(name)` | `storage.getBucket(name)` |
-| `storage.useSettingsStore(name)` | `storage.useBucket(name)` |
-| `storage.get`, `set`, `toggle`, `remove`, `clear` with a store name | The same method on `storage.getBucket(name)` |
-| `storage.addListener`, `storage.on` | `storage.onChange` |
-| `storage.removeListener`, `storage.off` | The function `onChange` returns |
-| `bucket.useSettingsStore(predicate)` | `storage.useBucket(name, predicate)` |
-| `bucket.addListener(predicate, callback)` | `storage.onChange` |

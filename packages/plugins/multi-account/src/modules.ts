@@ -1,5 +1,10 @@
-import { metro, patcher } from '@unbound-app/api';
+import type { FluxStore } from '@unbound-app/api/flux';
+import { flux } from '@unbound-app/api';
 
-export const MultiAccountStore = metro.findStore('MultiAccount', { lazy: true });
+type MultiAccountStoreType = FluxStore & {
+	getCanUseMultiAccountMobile(): boolean;
+};
 
-export const Patcher = patcher.createPatcher('unbound.multi-account');
+export const MultiAccountStore = flux.getStore('MultiAccount', {
+	lazy: true,
+}) as MultiAccountStoreType;

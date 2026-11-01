@@ -159,7 +159,7 @@ function runCycle(id: string, settleMs: number, selfTestDelayMs: number, drawnPo
 			const reloading = Date.now();
 
 			try {
-				const update = await manager.reload(id, entity.bundle, entity.data);
+				const update = await manager.reload(id, entity.bundle, entity.manifest);
 
 				watching = true;
 				drawn = watchDrawn(reloading);
@@ -242,7 +242,7 @@ function stageFixtures(
 	fixtures: typeof LAYOUT_FIXTURES,
 	messages: string[],
 ) {
-	const { metro } = unbound;
+	const { metro, flux } = unbound;
 
 	metro
 		.findByProps<{ transitionToGuild(guild: string, channel: string): void }>(
@@ -255,9 +255,9 @@ function stageFixtures(
 
 		const actions = metro.findByProps<MessageActions>('sendMessage', 'receiveMessage');
 		const bot = metro.findByProps<BotMessages>('createBotMessage');
-		const me = metro.findStore<{ getCurrentUser(): CurrentUser }>('User').getCurrentUser();
-		const loaded = metro
-			.findStore<{ getMessages(channel: string): StoredMessages }>('Message')
+		const me = flux.getStore<{ getCurrentUser(): CurrentUser }>('User').getCurrentUser();
+		const loaded = flux
+			.getStore<{ getMessages(channel: string): StoredMessages }>('Message')
 			.getMessages(channel);
 		const linked = (loaded?.toArray ? loaded.toArray() : [])
 			.filter((message) => message.author && !message.author.bot && /^\d+$/.test(message.id))
@@ -360,7 +360,7 @@ export function fixtureScript(guild: string, channel: string): string {
 }
 
 function setDeveloperMode(enabled: boolean) {
-	const store = unbound.storage.getStore('unbound');
+	const store = unbound.storage.getBucket('unbound');
 	const previous = store.get('developer-mode', false);
 
 	store.set('developer-mode', enabled);
@@ -428,7 +428,7 @@ function openSettingsScreen(id: string) {
 		.navigate('settings', {
 			screen: 'UNBOUND_CUSTOM',
 			params: {
-				title: entity.data.name,
+				title: entity.manifest.name,
 				render: () => React.createElement(Boundary, null, React.createElement(Panel)),
 			},
 		});
@@ -602,7 +602,7 @@ export const MATRIX_TOAST_MS = 300;
  * @returns A script whose result is the previous value as JSON, `null` when unset.
  */
 function setToastDuration(milliseconds: number | null) {
-	const store = unbound.storage.getStore('unbound');
+	const store = unbound.storage.getBucket('unbound');
 	const previous = store.get('toasts.duration', null);
 
 	if (milliseconds === null) store.remove('toasts.duration');
@@ -616,7 +616,7 @@ export function toastDurationScript(milliseconds: number | null): string {
 }
 
 function logLines(path: string, needles: string[]) {
-	return Promise.resolve(unbound.fs.read(path)).then(
+	return Promise.resolve(unbound.fs.readFile(path)).then(
 		(text) =>
 			JSON.stringify(
 				String(text)
@@ -638,10 +638,10 @@ export function pluginLogScript(): string {
 }
 
 function checkFixtures(channel: string, marker: string) {
-	const { metro } = unbound;
-	const selected = metro.findStore<{ getChannelId(): string }>('SelectedChannel').getChannelId();
-	const loaded = metro
-		.findStore<{ getMessages(channel: string): StoredMessages }>('Message')
+	const { flux } = unbound;
+	const selected = flux.getStore<{ getChannelId(): string }>('SelectedChannel').getChannelId();
+	const loaded = flux
+		.getStore<{ getMessages(channel: string): StoredMessages }>('Message')
 		.getMessages(channel);
 	const messages = loaded?.toArray ? loaded.toArray() : [];
 	const staged = messages.some((message) => message.content === marker);
@@ -664,10 +664,10 @@ export function restoreScript(id: string): string {
 export const SCROLL_FILLER = 30;
 
 function stageScrollFiller(channel: string, count: number) {
-	const { metro } = unbound;
+	const { metro, flux } = unbound;
 	const actions = metro.findByProps<MessageActions>('sendMessage', 'receiveMessage');
 	const bot = metro.findByProps<BotMessages>('createBotMessage');
-	const self = metro.findStore<{ getCurrentUser(): CurrentUser }>('User').getCurrentUser().id;
+	const self = flux.getStore<{ getCurrentUser(): CurrentUser }>('User').getCurrentUser().id;
 	const holder = globalThis as StagedMessages;
 	const staged = holder.matrixStagedMessages ?? [];
 
@@ -686,13 +686,13 @@ function stageScrollFiller(channel: string, count: number) {
 }
 
 function clearStaged(channel: string) {
-	const { metro } = unbound;
+	const { metro, flux } = unbound;
 	const bot = metro.findByProps<BotMessages>('createBotMessage');
 	const dispatcher = metro.findByProps<Dispatcher>('dispatch', 'subscribe');
 	const author = (bot.createBotMessage({ channelId: channel, content: '' }) as StagedAuthor)
 		.author?.id;
-	const loaded = metro
-		.findStore<{ getMessages(channel: string): StoredMessages }>('Message')
+	const loaded = flux
+		.getStore<{ getMessages(channel: string): StoredMessages }>('Message')
 		.getMessages(channel);
 	const staged = (loaded?.toArray ? loaded.toArray() : []).filter(
 		(message) => author !== undefined && (message as StagedAuthor).author?.id === author,

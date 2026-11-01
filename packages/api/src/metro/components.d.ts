@@ -8,6 +8,7 @@ import { ComponentProps, ComponentType, ElementType, ReactNode } from 'react';
 import * as RN from 'react-native';
 import { ColorValue, ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
+/** The `messageType` values for `HelpMessage`, from Discord or else Unbound's fallback; `{}` when neither loads. */
 declare const HelpMessageTypes$1: any;
 declare const HelpMessageTypes: {
 	readonly 0: 'WARNING';
@@ -19,18 +20,29 @@ declare const HelpMessageTypes: {
 	readonly ERROR: 2;
 	readonly SUCCESS: 3;
 };
+/** Discord's stacked avatar components, `AvatarPile` and `AvatarDuoPile`; found on first access. */
 export declare const AvatarPiles: any;
+/** Discord's avatar module, with `Avatar` and `AvatarSizes`; found on first access. */
 export declare const Avatars: any;
+/** Discord's blur backdrop components, with `BackgroundBlurFill`; found on first access. */
 export declare const BackdropFilters: any;
+/** Discord's bottom sheet components, with `ActionSheet` and `BottomSheetTitleHeader`; found on first access. */
 export declare const BottomSheets: any;
+/** Discord's default avatar images, `DEFAULT_AVATARS` and `DEFAULT_AVATARS_SMALL`; found on first access. */
 export declare const DefaultAvatars: any;
 /** Discord's design module, with Unbound's fallbacks standing in for components a build lacks. */
 export declare const Discord: DesignModule;
+/** Discord's copy of Shopify's `FlashList` module; found on first access. */
 export declare const FlashList: any;
+/** Discord's legacy form components, such as `FormRow` and `FormSection`; `{}` on builds without them. */
 export declare const Forms: any;
+/** Discord's media viewer module, with `openMediaModal`; found on first access. */
 export declare const Media: any;
+/** Discord's portal components, `Portal` and `PortalHost`, for rendering outside the tree; found on first access. */
 export declare const Portal: any;
+/** Discord's safe area components, with `SafeAreaPaddingView`; found on first access. */
 export declare const SafeArea: any;
+/** Discord's video player module, with `VideoComponent` and `createVideoControls`; found on first access. */
 export declare const Video: any;
 /**
  * @description Discord's help message, or Unbound's own on Discord builds that no longer ship one, picked on first render.
@@ -84,19 +96,31 @@ export declare function registerDesignFallback<K extends DesignComponentName>(
 ): void;
 /** How each design component resolves on the running Discord build. */
 export type DesignComponentAudit = {
+	/** Components the running Discord build ships in a form React can render. */
 	native: DesignComponentName[];
+	/** Components the build lacks or ships unrenderable, where an Unbound fallback stands in. */
 	fallback: DesignComponentName[];
+	/** Components neither the build nor a registered fallback can render. */
 	missing: DesignComponentName[];
 };
+/** Props for `HelpMessage`; the defaults named here are those of Unbound's fallback. */
 export type HelpMessageProps = {
+	/** The message; a string or number is rendered as text, any other node as given. */
 	children?: React$1.ReactNode;
+	/** A `HelpMessageTypes` value that picks the icon and feedback colors; `WARNING` when omitted. */
 	messageType?: HelpMessageType;
+	/** Discord's text variant for string children; `text-sm/medium` when omitted. */
 	textVariant?: string;
+	/** The color of string children; the theme's default text color when omitted. */
 	textColor?: ColorValue;
+	/** The corner radius in density-independent pixels; `8` when omitted. */
 	borderRadius?: number;
+	/** A node, usually a button, rendered after the message. */
 	button?: React$1.ReactNode;
 };
+/** A `HelpMessage` style: one of the `HelpMessageTypes` values. */
 export type HelpMessageType = (typeof HelpMessageTypes)[keyof typeof HelpMessageTypes & string];
+/** The props of Discord's `FormSwitch`, which the switch fallback accepts. */
 export type SwitchProps = React$1.ComponentProps<DesignModule['FormSwitch']>;
 export { HelpMessageTypes$1 as HelpMessageTypes };
 

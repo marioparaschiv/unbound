@@ -1,5 +1,6 @@
 import type { NativePluginBridge, NativePluginCapability } from './native';
 
+/** A {@link NativePluginBridge} namespace whose methods a plugin calls, such as `objc` or `java`. */
 type NativePluginNamespace = Exclude<
 	keyof NativePluginBridge,
 	'apiVersion' | 'abiVersion' | 'capabilities' | 'ui'

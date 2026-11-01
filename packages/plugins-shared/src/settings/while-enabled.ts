@@ -1,11 +1,11 @@
-import type { storage } from '@unbound-app/api';
+import { storage } from '@unbound-app/api';
 
-type Store = ReturnType<typeof storage.getStore>;
+type Store = ReturnType<typeof storage.getBucket>;
 type Cleanup = () => void;
 
 /**
  * @description Runs `enable` while a boolean setting is on and its cleanup while it is off, so a feature's patches exist only when the user wants them.
- * @param store The plugin's settings store from `storage.getStore`.
+ * @param store The plugin's settings Bucket from `storage.getBucket`.
  * @param key The boolean setting that gates the feature.
  * @param def The setting's default value.
  * @param enable Applies the feature and returns the function that removes it.
@@ -30,7 +30,8 @@ export function whileEnabled(
 		}
 	}
 
-	const unsubscribe = store.addListener(
+	// A change to the same key in another Bucket costs one extra read: `sync` is idempotent.
+	const unsubscribe = storage.onChange(
 		(payload) => payload.key === null || payload.key === key,
 		sync,
 	);

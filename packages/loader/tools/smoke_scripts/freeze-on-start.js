@@ -14,7 +14,7 @@
 	await manager.stop(id);
 	await manager.start(id);
 	await settle(2500);
-	var entity = manager.getEntity(id);
+	var entity = manager.get(id);
 	var enabled = pluginSettings().get('states', {})[id] === true;
 	var freezes = manager.freezes ? manager.freezes.get(id) || 0 : undefined;
 	var problem = '';
@@ -25,7 +25,7 @@
 		problem = 'a plugin that froze Discord twice was not disabled';
 	else if (startedOthers(manager, id) !== before)
 		problem = 'other plugins stopped after one froze Discord';
-	await manager.delete(id);
+	await manager.uninstall(id);
 	return JSON.stringify({
 		name: 'freeze on start',
 		problem: problem,

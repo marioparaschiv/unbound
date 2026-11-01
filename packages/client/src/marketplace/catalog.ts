@@ -1,5 +1,5 @@
 import type { CatalogResponse, ListedAddon } from '@unbound-app/contracts/addons';
-import type { AddonAuthor, AddonType } from '@unbound-app/types/addons';
+import type { AddonAuthor, AddonKind } from '@unbound-app/types/addons';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 
 import { compareVersions } from '~/core/versions';
@@ -12,9 +12,11 @@ export type CatalogSort = 'name' | 'updated';
 
 /** What `marketplace.search` filters the catalog by. */
 export type CatalogQuery = {
-	type: AddonType;
+	/** Only addons of this kind are returned. */
+	type: AddonKind;
 	/** Matches the name, description, authors or id, case-insensitively. */
 	search?: string;
+	/** The result order; `name` when omitted. */
 	sort?: CatalogSort;
 };
 
@@ -37,12 +39,19 @@ export type MarketplaceEvent =
 
 /** One addon the marketplace lists, at its newest version. */
 export type MarketplaceListing = {
+	/** The addon's id from its manifest, which installs and updates key on. */
 	id: string;
-	type: AddonType;
+	/** Whether the addon is a plugin, theme, icon pack or font. */
+	type: AddonKind;
+	/** The catalog's display name, or the newest version's manifest name when the catalog has none. */
 	name: string;
+	/** The catalog's description, or the newest version's manifest description when the catalog has none. */
 	description: string;
+	/** The authors listed in the newest version's manifest. */
 	authors: AddonAuthor[];
+	/** The newest published version. */
 	version: string;
+	/** When the newest version was published, as an ISO 8601 date-time. */
 	publishedAt: string;
 };
 
