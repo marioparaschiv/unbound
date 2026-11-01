@@ -76,7 +76,7 @@ function DeveloperPage() {
 						<AvatarGlow src={author.avatarUrl} className='opacity-60 saturate-300' />
 					)}
 				</div>
-				<div className='flex sm:flex-row flex-col gap-4 -mt-10 px-4 sm:px-6'>
+				<div className='relative flex sm:flex-row flex-col gap-4 -mt-10 px-4 sm:px-6'>
 					<UserAvatar
 						size='xl'
 						className='relative size-20 text-4xl rounded-surface object-cover ring-4 ring-background animate-reveal'
@@ -121,7 +121,8 @@ function DeveloperPage() {
 					{badges.length > 0 ? (
 						<BadgeRow
 							badges={badges}
-							className='sm:mt-12 animate-reveal'
+							// On narrow screens it sits beside the avatar, below the banner, like Discord's profile.
+							className='max-sm:absolute max-sm:top-11 max-sm:right-4 sm:mt-12 animate-reveal'
 							style={staggerStyle(1)}
 						/>
 					) : null}
