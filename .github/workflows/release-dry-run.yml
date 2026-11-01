@@ -32,7 +32,7 @@ jobs:
             ANDROID_SIGNING_KEY_ALIAS: ${{ secrets.ANDROID_SIGNING_KEY_ALIAS }}
             ANDROID_SIGNING_KEY_PASSWORD: ${{ secrets.ANDROID_SIGNING_KEY_PASSWORD }}
             ANDROID_SIGNING_STORE_PASSWORD: ${{ secrets.ANDROID_SIGNING_STORE_PASSWORD }}
-            ASTRAL_API_KEY: ${{ secrets.ASTRAL_API_KEY }}
+            UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
             ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
             DKRYPT_API_KEY: ${{ secrets.DKRYPT_API_KEY }}
             GPG_KEY: ${{ secrets.GPG_KEY }}

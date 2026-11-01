@@ -356,7 +356,7 @@ Release, scheduled and `main` builds have no pull request number and keep the de
 The `pr-builds` job decides with `bun scripts/pr-builds-plan.ts plan`, and the uploads stay inert, with the reason in the job summary and the comment, until all of these exist:
 
 - variables `S3_ENDPOINT`, `S3_REGION`, `S3_PUBLIC_BUCKET` and `CDN_URL` (the public `https` base URL the bucket is served from)
-- secrets `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `ASTRAL_PR_BUNDLE_SIGNING_KEY`
+- secrets `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY` and `UNBOUND_PR_BUNDLE_SIGNING_KEY`
 
 Pull requests from forks are published without ever giving the fork's code a secret:
 

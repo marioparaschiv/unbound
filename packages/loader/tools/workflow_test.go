@@ -383,8 +383,8 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 	contents := string(workflow)
 	for _, required := range []string{
 		"name: Publish loader update records",
-		"UNBOUND_API_KEY: ${{ secrets.ASTRAL_API_KEY }}",
-		"UNBOUND_API_URL: ${{ vars.ASTRAL_API_URL }}",
+		"UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}",
+		"UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}",
 		"UNBOUND_API_KEY is required for stable release publication",
 		"UNBOUND_API_URL is required for stable release publication",
 		"api_url=\"${UNBOUND_API_URL%/}/api/v1/loader/releases\"",

@@ -76,7 +76,7 @@ on:
                 required: false
             ANDROID_SIGNING_STORE_PASSWORD:
                 required: false
-            ASTRAL_API_KEY:
+            UNBOUND_API_KEY:
                 required: false
             ATTESTATION_PK:
                 required: false
@@ -786,8 +786,8 @@ jobs:
             - name: Publish loader update records
               if: needs.resolve-source.outputs.is_testflight != 'true'
               env:
-                  UNBOUND_API_KEY: ${{ secrets.ASTRAL_API_KEY }}
-                  UNBOUND_API_URL: ${{ vars.ASTRAL_API_URL }}
+                  UNBOUND_API_KEY: ${{ secrets.UNBOUND_API_KEY }}
+                  UNBOUND_API_URL: ${{ vars.UNBOUND_API_URL }}
                   IOS_RELEASE_TAG: ${{ needs.resolve-source.outputs.ios_release_tag }}
                   ANDROID_RELEASE_TAG: ${{ needs.resolve-source.outputs.android_release_tag }}
                   IOS_DEB_FILENAME: ${{ needs.ios.outputs.deb_filename }}
