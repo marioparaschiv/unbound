@@ -236,6 +236,11 @@ func (target *iosSmokeTarget) launch(ctx context.Context) error {
 	return nil
 }
 
+// attach fails because the iOS loader reloads Discord in its process, so an exit is never a planned restart.
+func (target *iosSmokeTarget) attach(context.Context) error {
+	return errors.New("Discord exited; the iOS loader reloads in place")
+}
+
 func parseSimctlLaunchPID(output string) int {
 	fields := strings.Fields(output)
 	if len(fields) == 0 {

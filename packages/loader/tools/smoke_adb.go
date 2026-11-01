@@ -225,6 +225,11 @@ func (target *androidSmokeTarget) launch(ctx context.Context) error {
 	if _, err := target.shell(ctx, time.Minute, "monkey -p "+smokeAndroidPackage+" -c android.intent.category.LAUNCHER 1"); err != nil {
 		return err
 	}
+	return target.attach(ctx)
+}
+
+// attach waits for Discord's process, after a launch or the loader's own restart.
+func (target *androidSmokeTarget) attach(ctx context.Context) error {
 	deadline := time.Now().Add(time.Minute)
 	for time.Now().Before(deadline) && ctx.Err() == nil {
 		if pids, err := target.discordPIDs(ctx); err == nil && len(pids) > 0 {
