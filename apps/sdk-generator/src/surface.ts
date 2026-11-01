@@ -61,10 +61,7 @@ type Walk = {
 	paths: string[];
 	/** Whether the non-module value at `path` is compared member by member. */
 	expand: (path: string, type: Type) => boolean;
-	/** Types already expanded, so a type reached twice is listed once. */
-	visited: Set<ts.Type>;
-	/** Modules on the current path, so a namespace cycle cannot recurse forever. */
-	modules: Set<ts.Type>;
+	ancestors: Set<ts.Type>;
 };
 
 function createProject(tsconfig: string | undefined): Project {
@@ -101,28 +98,22 @@ function walk(type: Type, prefix: string, state: Walk) {
 
 		state.paths.push(path);
 
-		if (isModule(value)) {
-			if (state.modules.has(value.compilerType)) {
-				continue;
-			}
-
-			state.modules.add(value.compilerType);
-			walk(value, path, state);
-			state.modules.delete(value.compilerType);
+		if (state.ancestors.has(value.compilerType)) {
 			continue;
 		}
 
-		if (state.visited.has(value.compilerType) || !state.expand(path, value)) {
+		if (!isModule(value) && !state.expand(path, value)) {
 			continue;
 		}
 
-		state.visited.add(value.compilerType);
+		state.ancestors.add(value.compilerType);
 		walk(value, path, state);
+		state.ancestors.delete(value.compilerType);
 	}
 }
 
 function readSurface(type: Type, anchor: Node, expand: Walk['expand']): Surface {
-	const state: Walk = { anchor, paths: [], expand, visited: new Set(), modules: new Set() };
+	const state: Walk = { anchor, paths: [], expand, ancestors: new Set() };
 
 	walk(type, '', state);
 

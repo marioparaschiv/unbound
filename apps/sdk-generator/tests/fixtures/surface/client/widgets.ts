@@ -14,6 +14,7 @@ class Counter {
 }
 
 export const counter = new Counter();
+export const spare = new Counter();
 
 /**
  *

@@ -32,15 +32,24 @@ describe('checkSurface', () => {
 				'widgets.counter.increment',
 				'widgets.counter.value',
 				'widgets.render',
+				'widgets.spare',
+				'widgets.spare.doubled',
+				'widgets.spare.increment',
+				'widgets.spare.value',
 			],
 			shutdown: ['initialize', 'shutdown'],
 		});
 	});
 
-	test('reports a missing namespace key, a missing class member and an extra key', () => {
+	test('reports a missing namespace key, missing class members on every path to a type, and an extra key', () => {
 		expect(checkSurface(SOURCES)).toEqual({
 			live: {
-				missing: ['widgets.counter.doubled', 'widgets.render'],
+				missing: [
+					'widgets.counter.doubled',
+					'widgets.render',
+					'widgets.spare.doubled',
+					'widgets.spare.increment',
+				],
 				extra: ['widgets.legacy'],
 			},
 			shutdown: { missing: [], extra: [] },
