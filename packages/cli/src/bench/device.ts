@@ -188,7 +188,7 @@ export function installScript(
 				`  mkdir -p ${dir}; curl -sf -o ${dir}/Unbound.dylib ${quote(url('Unbound.dylib'))}; curl -sf -o ${dir}/Unbound.plist ${quote(url('Unbound.plist'))}; chown root:wheel ${dir}/Unbound.dylib ${dir}/Unbound.plist; chmod 755 ${dir}/Unbound.dylib; chmod 644 ${dir}/Unbound.plist`,
 		),
 		`  rm -rf ${appResources}; curl -sf ${quote(url('resources.tar'))} | tar -xf - -C ${quote(paths.app)}; chown -R _installd:_installd ${appResources}`,
-		`  rm -rf ${quote(`${JB_RESOURCES}/UnboundResources.bundle`)}; mkdir -p ${quote(JB_RESOURCES)}; curl -sf ${quote(url('resources.tar'))} | tar -xf - -C ${quote(JB_RESOURCES)}`,
+		`  rm -rf ${quote(`${JB_RESOURCES}/UnboundResources.bundle`)}; mkdir -p ${quote(JB_RESOURCES)}; curl -sf ${quote(url('resources.tar'))} | tar -xf - -C ${quote(JB_RESOURCES)}; chown -R root:wheel ${quote(`${JB_RESOURCES}/UnboundResources.bundle`)}`,
 		'  echo loader installed',
 		'fi',
 	].join('\n');

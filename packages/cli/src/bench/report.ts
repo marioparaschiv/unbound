@@ -223,7 +223,7 @@ function verdicts(plan: Plan, rows: SummaryRow[]): string[] {
 		}
 	}
 
-	return lines;
+	return lines.length > 0 ? lines : ['- One variant only: nothing to compare.'];
 }
 
 function metricTable(kind: LaunchKind, rows: SummaryRow[]): string {
