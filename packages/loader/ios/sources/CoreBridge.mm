@@ -215,7 +215,8 @@ nlohmann::json UnboundFontCatalog()
 
 + (void)scanAddons
 {
-    UnboundAddonState().scan(toStdString(FileSystem.documents));
+    UnboundAddonState().scan(toStdString(FileSystem.documents),
+                             [CoreBridge mainBundleBytecodeVersion]);
 }
 
 + (NSArray *)themes

@@ -4,6 +4,7 @@
 #include <mutex>
 #include <stdexcept>
 
+#include "HermesSampling.h"
 #include "LoaderAddonActivity.h"
 #include "LoaderAddonSignature.h"
 #include "LoaderAddons.h"
@@ -272,6 +273,27 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                 return evaluateBytecode(rt, std::move(bytecode), tag);
             }));
 
+    jsi::Object profiler(runtime);
+    profiler.setProperty(runtime, "start",
+                         native::makeFunction(runtime, "start", 0,
+                                              [](jsi::Runtime &, const jsi::Value &,
+                                                 const jsi::Value *, size_t) -> jsi::Value {
+                                                  return native::startJavaScriptProfiler();
+                                              }));
+    profiler.setProperty(runtime, "stop",
+                         native::makeFunction(runtime, "stop", 0,
+                                              [](jsi::Runtime &rt, const jsi::Value &,
+                                                 const jsi::Value *, size_t) -> jsi::Value {
+                                                  std::optional<std::string> trace =
+                                                      native::stopJavaScriptProfiler();
+                                                  if (!trace)
+                                                  {
+                                                      return jsi::Value::undefined();
+                                                  }
+                                                  return jsi::String::createFromUtf8(rt, *trace);
+                                              }));
+    platform.setProperty(runtime, "profiler", std::move(profiler));
+
     if (provider->fonts)
     {
         jsi::Object fonts(runtime);
@@ -477,6 +499,24 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
                                  return evaluateBytecode(rt, std::move(*bytecode),
                                                          "unbound-plugin:" + folder);
                              }));
+    addons.setProperty(
+        runtime, "readSource",
+        native::makeFunction(
+            runtime, "readSource", 1,
+            [provider](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *args,
+                       size_t count) -> jsi::Value {
+                if (!provider || provider->documents.empty() || count < 1 || !args[0].isString())
+                {
+                    return jsi::Value::undefined();
+                }
+                std::optional<std::string> source =
+                    readPluginSource(provider->documents, args[0].getString(rt).utf8(rt));
+                if (!source)
+                {
+                    return jsi::Value::undefined();
+                }
+                return jsi::String::createFromUtf8(rt, *source);
+            }));
     platform.setProperty(runtime, "addons", std::move(addons));
 
     platform.setProperty(runtime, "platform",

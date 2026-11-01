@@ -4,6 +4,7 @@ import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 import { attributeAddon, crashGuardKey, setFreezeListener } from '~/addons/crash-guard';
 import { performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
 import type { AddonGlobals, PluginScope } from '~/addons/scope';
+import { Addons, rememberSourceDigest } from '~/addons/addons';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
@@ -13,7 +14,6 @@ import { createAddonScope } from '~/addons/scope';
 import { setOwnerCheck } from '~/commands/owners';
 import { registry } from '~/commands/registry';
 import { Manager } from '~/addons/manager';
-import { Addons } from '~/addons/addons';
 
 /**
  * @description Manages plugins, building on the base {@link Addons} manager to load and evaluate plugin bundles.
@@ -56,7 +56,14 @@ export class Plugins extends Addons<Plugin> {
 		setFreezeListener((freeze) => this.handleFreeze(freeze));
 		setOwnerCheck((owner) => Boolean(this.getEntity(owner)));
 
-		for (const { bundle, manifest } of window.UNBOUND_PLUGINS ?? []) {
+		for (const entry of window.UNBOUND_PLUGINS ?? []) {
+			const { manifest } = entry;
+			const bundle = 'bundle' in entry ? entry.bundle : '';
+
+			if ('sha256' in entry) {
+				rememberSourceDigest(manifest.id, entry.sha256);
+			}
+
 			if ('folder' in manifest && typeof manifest.folder === 'string') {
 				this.scanned.set(manifest.id, { bundle, folder: manifest.folder });
 			}
@@ -148,11 +155,28 @@ export class Plugins extends Addons<Plugin> {
 			return cached.factory;
 		}
 
-		const factory = this.compiledFactory(bundle, id) ?? this.sourceFactory(bundle);
+		const factory =
+			this.compiledFactory(bundle, id) ?? this.sourceFactory(this.sourceOf(bundle, id));
 
 		this.evaluated.set(id, { bundle, factory });
 
 		return factory;
+	}
+
+	private sourceOf(bundle: string, id: string): string {
+		const scanned = this.scanned.get(id);
+
+		if (bundle || !scanned || scanned.bundle !== bundle) {
+			return bundle;
+		}
+
+		const source = globalThis.NativePlatform?.addons?.readSource?.(scanned.folder);
+
+		if (source === undefined || source === '') {
+			throw new Error(`The loader kept ${id}'s source back, and it could not be read.`);
+		}
+
+		return source;
 	}
 
 	private sourceFactory(bundle: string): PluginFactory {

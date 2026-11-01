@@ -5,6 +5,7 @@
 
 #include "LoaderAddons.h"
 #include "LoaderBundleSignature.h"
+#include "LoaderCrypto.h"
 #include "LoaderFiles.h"
 #include "LoaderPreload.h"
 #include "LoaderVersion.h"
@@ -87,10 +88,39 @@ static void pluginBytecodeMatchesItsManifest()
     std::filesystem::remove_all(root);
 }
 
+static void compiledPluginsLeaveTheirSourceOnDisk()
+{
+    const auto        root     = makeTemporaryDirectory();
+    const auto        folder   = root / "Plugins" / "compiled";
+    const std::string source   = "module.exports = 1;";
+    const std::string bytecode = fakeBytecode(98, "body");
+    write(folder / "manifest.json", R"({"id":"a.compiled","main":"index.js","bytecode":{"98":")" +
+                                        loader::sha512Hex(bytecode) + R"("}})");
+    write(folder / "index.js", source);
+    write(folder / "index.98.hbc", bytecode);
+
+    nlohmann::json compiled = loader::scanPlugins(root.string(), 98);
+    assert(compiled.size() == 1);
+    assert(!compiled[0].contains("bundle"));
+    assert(compiled[0]["sha256"] == loader::crypto::hex(loader::crypto::sha256(source)));
+    assert(loader::readPluginSource(root.string(), "compiled") == source);
+    assert(!loader::readPluginSource(root.string(), ".."));
+
+    nlohmann::json otherRuntime = loader::scanPlugins(root.string(), 96);
+    assert(otherRuntime[0]["bundle"] == source);
+    assert(!otherRuntime[0].contains("sha256"));
+
+    std::filesystem::remove(folder / "index.98.hbc");
+    assert(loader::scanPlugins(root.string(), 98)[0]["bundle"] == source);
+
+    std::filesystem::remove_all(root);
+}
+
 int main()
 {
     pluginEntriesStayInsideTheirFolder();
     pluginBytecodeMatchesItsManifest();
+    compiledPluginsLeaveTheirSourceOnDisk();
 
     const auto root = makeTemporaryDirectory();
 

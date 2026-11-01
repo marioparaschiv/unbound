@@ -4,6 +4,7 @@ import type { z } from 'zod';
 import inspectCommand from '~/commands/inspect';
 import installCommand from '~/commands/install';
 import modulesCommand from '~/commands/modules';
+import profileCommand from '~/commands/profile';
 import publishCommand from '~/commands/publish';
 import bridgeCommand from '~/commands/bridge';
 import createCommand from '~/commands/create';
@@ -53,6 +54,7 @@ export const commands: CommandDefinition<z.ZodObject<z.ZodRawShape>>[] = [
 	modulesCommand,
 	hookCommand,
 	traceCommand,
+	profileCommand,
 	timingCommand,
 ];
 

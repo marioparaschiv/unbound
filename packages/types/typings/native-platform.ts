@@ -117,6 +117,16 @@ export type NativePlatformAddons = {
 	verify(manifest: string, bundle: string): NativeAddonVerification;
 	/** Evaluates an installed plugin's bundle compiled for this bytecode version, if its digest matches the manifest. */
 	evaluateBytecode?(folder: string, bytecodeVersion: number): NativeCompiledPlugin | undefined;
+	/** Reads an installed plugin's source, for one the loader handed over without it, if its signature still holds. */
+	readSource?(folder: string): string | undefined;
+};
+
+/** Hermes' sampling profiler, shared with the loader's freeze watchdog. */
+export type NativePlatformProfiler = {
+	/** Starts sampling; `false` when the profiler is missing or already running. */
+	start(): boolean;
+	/** Stops sampling and returns the Chrome trace it recorded, or `undefined` when it was not running. */
+	stop(): string | undefined;
 };
 
 /** The fonts the loader can apply. */
@@ -158,6 +168,8 @@ export type NativePlatformBridge = {
 	readonly fonts?: NativePlatformFonts;
 	/** Addon verification and bytecode loading; missing on older loaders. */
 	readonly addons?: NativePlatformAddons;
+	/** Hermes' sampling profiler; missing on older loaders. */
+	readonly profiler?: NativePlatformProfiler;
 	/** iOS-only helpers; missing on Android. */
 	readonly ios?: NativePlatformIOSBridge;
 };

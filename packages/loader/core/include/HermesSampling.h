@@ -2,15 +2,21 @@
 
 #include <chrono>
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace loader::native {
 inline constexpr size_t kSampledStackDepth = 4;
 
-using JavaScriptSampler = std::function<std::string(std::chrono::milliseconds)>;
+struct JavaScriptProfiler {
+    std::function<bool()>        start;
+    std::function<std::string()> stop;
+};
 
-void setJavaScriptSampler(JavaScriptSampler sampler);
+void                       setJavaScriptProfiler(JavaScriptProfiler profiler);
+bool                       startJavaScriptProfiler();
+std::optional<std::string> stopJavaScriptProfiler();
 
 std::vector<std::string> hottestStack(const std::string &chromeTrace,
                                       size_t             depth = kSampledStackDepth);

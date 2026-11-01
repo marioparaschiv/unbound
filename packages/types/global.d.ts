@@ -76,7 +76,7 @@ declare global {
 	/** @internal */
 	var UNBOUND_SETTINGS: Record<string, SettingsObject> | undefined;
 	/** @internal */
-	var UNBOUND_PLUGINS: UnboundAddonBundle[];
+	var UNBOUND_PLUGINS: UnboundPluginBundle[];
 	/** @internal */
 	var UNBOUND_THEMES: UnboundAddonBundle[];
 	/** @internal */
@@ -104,6 +104,12 @@ declare global {
 		manifest: AddonManifest;
 		bundle: string;
 	};
+
+	/**
+	 * A plugin the native loader read: its source, or only the source's SHA-256 when it runs from bytecode.
+	 * @internal
+	 */
+	type UnboundPluginBundle = UnboundAddonBundle | { manifest: AddonManifest; sha256: string };
 
 	/**
 	 * A custom font file the native loader registered.

@@ -8,16 +8,18 @@
 #include <string>
 
 namespace loader {
-nlohmann::json             scanPlugins(const std::string &documents);
+nlohmann::json             scanPlugins(const std::string &documents, uint32_t bytecodeVersion = 0);
 nlohmann::json             scanThemes(const std::string &documents);
 nlohmann::json             scanFonts(const std::string &documents);
 std::optional<std::string> readPluginBytecode(const std::string &documents,
                                               const std::string &folder, uint32_t bytecodeVersion);
+std::optional<std::string> readPluginSource(const std::string &documents,
+                                            const std::string &folder);
 
 class AddonState
 {
 public:
-    void scan(const std::string &documents);
+    void scan(const std::string &documents, uint32_t bytecodeVersion = 0);
 
     nlohmann::json                plugins() const;
     nlohmann::json                themes() const;

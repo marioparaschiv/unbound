@@ -84,6 +84,7 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 | `ubd modules [pattern]` | Searches Discord's Metro modules by file path or export name, and lists each match's id, whether it has loaded, and its exports. `--max` defaults to `40`. |
 | `ubd trace <props...>` | Records calls to a function of one of Discord's modules, such as `generateMessageRowData`, and summarises the first calls' arguments and results. |
 | `ubd timing` | Measures a zero-delay JavaScript timer and a native main-thread round trip. `--rounds` defaults to `3`. |
+| `ubd profile` | Samples the JavaScript thread with Hermes' sampling profiler for `--duration` milliseconds (default `5000`) and ranks the functions and sources it ran, by their own time and their time on the stack. `--top` defaults to `20`. `--out` also saves the Chrome trace, which opens in Perfetto. |
 
 `trace` and `hook` record for `--duration` milliseconds (default `3000`) and describe the first `--samples` calls (default `10`).
 
