@@ -824,6 +824,18 @@ static void fabricRequire(bool condition, const char *message)
     }
 }
 
+static constexpr NSTimeInterval kFabricFirstRenderWait = 0.1;
+
+static void fabricWaitForFirstRender(id surface)
+{
+    if (![surface respondsToSelector:@selector(synchronouslyWaitFor:)])
+    {
+        return;
+    }
+    using Function = BOOL (*)(id, SEL, NSTimeInterval);
+    ((Function) objc_msgSend)(surface, @selector(synchronouslyWaitFor:), kFabricFirstRenderWait);
+}
+
 struct IOSFabricSurface {
     __strong id      surface     = nil;
     __strong UIView *view        = nil;
@@ -864,6 +876,10 @@ static IOSFabricSurface fabricMountNative(id host, UIView *containerView, NSStri
     [containerView addSubview:surfaceContainer];
     [surfaceContainer setNeedsLayout];
     [surfaceContainer layoutIfNeeded];
+    if (loader::native::runningAsynchronousMainOperation())
+    {
+        fabricWaitForFirstRender(surface);
+    }
     return {surface, surfaceContainer, view};
 }
 

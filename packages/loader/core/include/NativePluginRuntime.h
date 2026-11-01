@@ -102,6 +102,7 @@ executeMainAsynchronously(facebook::jsi::Runtime &runtime, std::function<void()>
                           std::function<facebook::jsi::Value(facebook::jsi::Runtime &)> result);
 
 void executeRuntimeAsynchronously(std::function<void(facebook::jsi::Runtime &)> callback);
+bool runningAsynchronousMainOperation();
 bool executeRuntimeSynchronously(
     std::function<void(facebook::jsi::Runtime &)> callback,
     std::chrono::milliseconds                     timeout = std::chrono::milliseconds(100));

@@ -444,6 +444,30 @@ static void rejectPending(jsi::Runtime &runtime, const std::string &identifier, 
     pair.getPropertyAsFunction(runtime, "reject").call(runtime, makeError(runtime, code, message));
 }
 
+static thread_local bool tRunningAsynchronousMainOperation = false;
+
+class AsynchronousMainOperation
+{
+public:
+    AsynchronousMainOperation() : previous_(tRunningAsynchronousMainOperation)
+    {
+        tRunningAsynchronousMainOperation = true;
+    }
+
+    ~AsynchronousMainOperation()
+    {
+        tRunningAsynchronousMainOperation = previous_;
+    }
+
+private:
+    bool previous_;
+};
+
+bool runningAsynchronousMainOperation()
+{
+    return tRunningAsynchronousMainOperation;
+}
+
 jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()> operation,
                                      std::function<jsi::Value(jsi::Runtime &)> result)
 {
@@ -497,6 +521,7 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                 std::optional<NativeFailure> failure;
                 try
                 {
+                    AsynchronousMainOperation running;
                     operation();
                 }
                 catch (...)
