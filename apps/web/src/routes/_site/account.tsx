@@ -21,7 +21,7 @@ function AccountPage() {
 			<ProfileCard user={user} />
 			<LinkedAccountsCard />
 			<SponsorshipCard />
-			<PerksCard />
+			<PerksCard user={user} />
 			<ApiKeysCard />
 		</div>
 	);
