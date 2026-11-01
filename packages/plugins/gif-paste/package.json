@@ -1,6 +1,6 @@
 {
 	"name": "gif-paste",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"private": true,
 	"description": "Makes GIF picker selections paste a link into the chat box instead of sending immediately.",
 	"type": "module",

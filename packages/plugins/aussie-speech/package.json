@@ -1,6 +1,6 @@
 {
 	"name": "aussie-speech",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"private": true,
 	"description": "Turns every message into Aussie English before you send it.",
 	"type": "module",

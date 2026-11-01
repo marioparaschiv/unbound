@@ -1,6 +1,6 @@
 {
 	"name": "multi-account",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"private": true,
 	"description": "Unlocks the built-in multi-account switcher on mobile.",
 	"type": "module",

@@ -1,6 +1,6 @@
 {
 	"name": "view-icons",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"private": true,
 	"description": "View Discord avatars, banners, server icons, server banners, and group DM icons.",
 	"type": "module",

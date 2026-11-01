@@ -1,6 +1,6 @@
 {
 	"name": "reviewdb",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"private": true,
 	"description": "Leave reviews on other users' profiles and see what others think of you.",
 	"type": "module",

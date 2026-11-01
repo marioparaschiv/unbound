@@ -25,6 +25,7 @@ import { crashReportAddon } from '~/diagnostics/crash-report';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import { beginNativeStop } from '~/native/plugin-context';
 import type { NativeConsents } from '~/native/consent';
+import { afterFirstFrame } from '~/core/first-frame';
 import { currentPlatform } from '~/native/platform';
 import { unpatchAllByCaller } from '~/patcher/api';
 import type { PluginScope } from '~/addons/scope';
@@ -157,7 +158,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			const states = this.getStates();
 
 			if (states[manifest.id] && !this.disableAfterCrash(entity)) {
-				this.start(entity);
+				this.startWhenDue(entity);
 			}
 
 			this.emit('loaded', entity);
@@ -165,6 +166,20 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			this.logger.error(`Failed to load addon ${manifest.id}:`, error);
 			this.errors.set(manifest.id, toError(error));
 		}
+	}
+
+	private startWhenDue(entity: Addon<I>) {
+		if (!entity.manifest.startAfterFirstFrame) {
+			this.start(entity);
+
+			return;
+		}
+
+		afterFirstFrame(() => {
+			if (this.entities.get(entity.id) === entity && this.getStates()[entity.id]) {
+				this.start(entity);
+			}
+		});
 	}
 
 	/**
