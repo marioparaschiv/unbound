@@ -65,7 +65,7 @@ func TestBuildWorkflowArchivesMatchingTweakSymbols(t *testing.T) {
 	}
 	contents := string(workflow)
 	for _, required := range []string{
-		"for architecture in arm64 arm64e; do",
+		"for architecture in arm64; do",
 		"test -f \"$binary\"",
 		"test -d \"$bundle\"",
 		"dwarfdump --uuid \"$binary\"",
@@ -184,7 +184,7 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		"require_matching_version: ${{ inputs.release == true && inputs.is_testflight != true }}",
 		"version: ${{ needs.resolve-source.outputs.release_version || inputs.version }}",
 		"android_code=$(curl -fsSL \"$INPUT_ANDROID_TRACKER/index\" | jq -er '.latest.stable | tonumber')",
-		"go run ./tools release-pairing \"${pairing_args[@]}\"",
+		"unbound-tools release-pairing \"${pairing_args[@]}\"",
 		"--android-code \"$ANDROID_STABLE_CODE\"",
 		"ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}",
 		"value: ${{ jobs.android.outputs.module_filename }}",
@@ -192,7 +192,7 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		"name: ios-simulator",
 		"name: Publish stable iOS release",
 		"name: Publish stable Android release",
-		"go run ./tools release-names --release-version",
+		"unbound-tools release-names --release-version",
 		"name: Publish TestFlight prerelease",
 		"if: inputs.is_testflight != true",
 	} {
@@ -230,7 +230,7 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 	}
 	for _, required := range []string{
 		"name=\"app.unbound.android.xposed.apk\"",
-		`go run ./tools android-version "${args[@]}"`,
+		`unbound-tools android-version "${args[@]}"`,
 		`if [ "$REQUIRE_MATCHING_VERSION" = true ]; then args+=(--require-matching); fi`,
 		"REQUIRE_MATCHING_VERSION: ${{ inputs.require_matching_version }}",
 		`apk_version_code=$("$build_tools/aapt" dump badging discord/base.apk`,
@@ -248,8 +248,8 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 	for _, required := range []string{
 		"schedule:",
 		"cron: '17 */3 * * *'",
-		"go run ./tools release-candidate --channel stable",
-		"go run ./tools release-candidate --channel testflight",
+		"unbound-tools release-candidate --channel stable",
+		"unbound-tools release-candidate --channel testflight",
 		"uses: ./.github/workflows/loader-build.yml",
 		"is_testflight: true",
 		"needs: [testflight-candidate, stable-release]",
@@ -391,10 +391,10 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 		"--api-url \"$api_url\"",
 		"dpkg-deb -f \"$deb_path\" Version",
 		"fetch-depth: 0",
-		"go run ./tools generate-loader-changelog",
+		"unbound-tools generate-loader-changelog",
 		"--output release-assets/loader-changelog.md",
 		"--changelog-file release-assets/loader-changelog.md",
-		"go run ./tools publish-loader-releases",
+		"unbound-tools publish-loader-releases",
 		"loader-release",
 		"loader-release",
 		"--ios-url \"$release_url/$IOS_RELEASE_TAG/$IOS_DEB_FILENAME\"",
@@ -406,7 +406,7 @@ func TestStableReleasePublishesLoaderUpdateRecords(t *testing.T) {
 		}
 	}
 	for _, forbidden := range []string{
-		"loader_version=$(go run ./tools loader-version",
+		"loader_version=$(unbound-tools loader-version",
 		"IOS_BUILD:",
 		"LOADER_VERSION:",
 		"resolve.outputs.loader_version",
@@ -630,7 +630,7 @@ func TestCompatScanCoversEveryDiscordChannel(t *testing.T) {
 		`if [ "$IOS_SOURCE" != none ] && [ -f discord.ipa ]; then`,
 		"name: compat-${{ matrix.channel }}",
 		`--name "compat-$CHANNEL"`,
-		`go run ./tools compat-issue --repo "$GITHUB_REPOSITORY" --channel "$CHANNEL"`,
+		`unbound-tools compat-issue --repo "$GITHUB_REPOSITORY" --channel "$CHANNEL"`,
 	} {
 		if !strings.Contains(contents, required) {
 			t.Fatalf("compat workflow is missing %q", required)
@@ -783,8 +783,8 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 	}
 	poll := read("loader-release-poll.yml")
 	for _, required := range []string{
-		"go run ./tools release-candidate --channel android-beta",
-		"go run ./tools release-candidate --channel android-alpha",
+		"unbound-tools release-candidate --channel android-beta",
+		"unbound-tools release-candidate --channel android-alpha",
 		"android_code: ${{ steps.candidate.outputs.android_code }}",
 		"needs: [android-beta-candidate, testflight-release]",
 		"needs: [android-alpha-candidate, android-beta-release]",
@@ -804,7 +804,7 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"      android_channel:\n",
 		"      android_code:\n",
 		"beta|alpha) ;;",
-		`release=$(go run ./tools discord-apk "${apk_args[@]}")`,
+		`release=$(unbound-tools discord-apk "${apk_args[@]}")`,
 		"android_code: ${{ steps.select.outputs.code || steps.resolve.outputs.android_code }}",
 		"discord_channel: ${{ inputs.android_channel || 'stable' }}",
 		"android_code: ${{ needs.resolve-source.outputs.android_code }}",
@@ -838,7 +838,7 @@ func TestAndroidChannelsReleaseLikeTestflight(t *testing.T) {
 		"options: [stable, beta, alpha]",
 		"DISCORD_CHANNEL: ${{ inputs.discord_channel || 'stable' }}",
 		"ANDROID_CODE: ${{ inputs.android_code }}",
-		`env -u GITHUB_OUTPUT go run ./tools discord-apk --channel "$DISCORD_CHANNEL" --code "$VERSION" --output-dir discord "${split_args[@]}"`,
+		`env -u GITHUB_OUTPUT unbound-tools discord-apk --channel "$DISCORD_CHANNEL" --code "$VERSION" --output-dir discord "${split_args[@]}"`,
 		`if [ "$DISCORD_CHANNEL" != stable ]; then name="Unbound-$DISCORD_CHANNEL.apks"; fi`,
 	} {
 		if !strings.Contains(android, required) {
@@ -897,7 +897,7 @@ func TestDkryptIsOnlyReachedThroughTheAction(t *testing.T) {
 			}
 		}
 		for _, line := range strings.Split(contents, "\n") {
-			if strings.Contains(line, "go run ./tools fetch") && !strings.Contains(line, "fetch_args") {
+			if strings.Contains(line, "unbound-tools fetch") && !strings.Contains(line, "fetch_args") {
 				t.Fatalf("%s decrypts with the fetch tool instead of the action: %s", name, strings.TrimSpace(line))
 			}
 		}

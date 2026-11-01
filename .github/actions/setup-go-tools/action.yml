@@ -1,16 +1,50 @@
 name: Setup Go tools
-description: Installs the Go version of the loader tools and restores the Go build and module caches.
+description: Puts the loader tools on PATH as unbound-tools, from the run's prebuilt binaries when asked and available, otherwise by installing Go and building them.
+
+inputs:
+    prebuilt:
+        description: Use the loader-tools artifact this run's tool tests uploaded, falling back to a local build when it is missing.
+        default: 'false'
 
 runs:
     using: composite
     steps:
+        - name: Download the prebuilt tools
+          id: download
+          if: inputs.prebuilt == 'true'
+          continue-on-error: true
+          uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+          with:
+              name: loader-tools
+              path: ${{ runner.temp }}/loader-tools-download
+
+        - name: Install the prebuilt tools
+          id: prebuilt
+          if: inputs.prebuilt == 'true' && steps.download.outcome == 'success'
+          shell: bash
+          run: |
+              case "$RUNNER_OS-$RUNNER_ARCH" in
+                  Linux-X64) binary=unbound-tools-linux-amd64 ;;
+                  macOS-ARM64) binary=unbound-tools-darwin-arm64 ;;
+                  *) exit 0 ;;
+              esac
+              source="$RUNNER_TEMP/loader-tools-download/$binary"
+              if [ ! -f "$source" ]; then
+                  exit 0
+              fi
+              mkdir -p "$RUNNER_TEMP/loader-tools"
+              install -m 755 "$source" "$RUNNER_TEMP/loader-tools/unbound-tools"
+              echo "installed=true" >> "$GITHUB_OUTPUT"
+
         - name: Setup Go
+          if: steps.prebuilt.outputs.installed != 'true'
           uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
           with:
               cache: false
               go-version-file: packages/loader/go.mod
 
         - name: Cache Go builds
+          if: steps.prebuilt.outputs.installed != 'true'
           uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
           with:
               path: |
@@ -19,3 +53,13 @@ runs:
                   ~/go/pkg/mod
               key: go-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('packages/loader/go.mod', 'packages/loader/go.sum') }}
               restore-keys: go-${{ runner.os }}-${{ runner.arch }}-
+
+        - name: Build the tools
+          if: steps.prebuilt.outputs.installed != 'true'
+          shell: bash
+          working-directory: packages/loader
+          run: go build -o "$RUNNER_TEMP/loader-tools/unbound-tools" ./tools
+
+        - name: Put the tools on PATH
+          shell: bash
+          run: echo "$RUNNER_TEMP/loader-tools" >> "$GITHUB_PATH"

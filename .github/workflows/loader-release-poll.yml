@@ -36,7 +36,7 @@ jobs:
               env:
                   GITHUB_REPOSITORY: ${{ github.repository }}
                   GITHUB_TOKEN: ${{ github.token }}
-              run: go run ./tools release-candidate --channel stable
+              run: unbound-tools release-candidate --channel stable
 
     testflight-candidate:
         runs-on: ubuntu-26.04
@@ -67,7 +67,7 @@ jobs:
                   GITHUB_REPOSITORY: ${{ github.repository }}
                   GITHUB_TOKEN: ${{ github.token }}
                   TESTFLIGHT_VERSION: ${{ steps.testflight.outputs.version }}
-              run: go run ./tools release-candidate --channel testflight --version "$TESTFLIGHT_VERSION"
+              run: unbound-tools release-candidate --channel testflight --version "$TESTFLIGHT_VERSION"
 
     android-beta-candidate:
         runs-on: ubuntu-26.04
@@ -89,7 +89,7 @@ jobs:
                   DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
                   GITHUB_REPOSITORY: ${{ github.repository }}
                   GITHUB_TOKEN: ${{ github.token }}
-              run: go run ./tools release-candidate --channel android-beta
+              run: unbound-tools release-candidate --channel android-beta
 
     android-alpha-candidate:
         runs-on: ubuntu-26.04
@@ -111,7 +111,7 @@ jobs:
                   DISCORD_SNIFF_URL: https://sniff.xhyrom.dev
                   GITHUB_REPOSITORY: ${{ github.repository }}
                   GITHUB_TOKEN: ${{ github.token }}
-              run: go run ./tools release-candidate --channel android-alpha
+              run: unbound-tools release-candidate --channel android-alpha
 
     stable-release:
         needs: stable-candidate

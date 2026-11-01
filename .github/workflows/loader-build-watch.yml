@@ -37,4 +37,4 @@ jobs:
             - name: Check main's recent loader commits
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: go run ./tools build-watch
+              run: unbound-tools build-watch

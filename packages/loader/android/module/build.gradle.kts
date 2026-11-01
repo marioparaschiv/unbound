@@ -96,6 +96,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            externalNativeBuild {
+                cmake {
+                    arguments +=
+                        listOf(
+                            "-DCMAKE_C_FLAGS_DEBUG=-O2 -g -fno-limit-debug-info",
+                            "-DCMAKE_CXX_FLAGS_DEBUG=-O2 -g -fno-limit-debug-info",
+                        )
+                }
+            }
+        }
         release {
             buildConfigField("boolean", "ATTESTATION_ENABLED", "true")
             isMinifyEnabled = true

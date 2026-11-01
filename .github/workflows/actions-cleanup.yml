@@ -36,4 +36,4 @@ jobs:
               working-directory: packages/loader
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: go run ./tools actions-cleanup
+              run: unbound-tools actions-cleanup

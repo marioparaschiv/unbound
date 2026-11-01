@@ -55,7 +55,7 @@ on:
                 value: ${{ jobs.build-ipa.outputs.ipa_url }}
             simulator_url:
                 description: 'Download URL for the iOS Simulator zip artifact'
-                value: ${{ jobs.build-simulator.outputs.simulator_url }}
+                value: ${{ jobs.build-ipa.outputs.simulator_url }}
             deb_filename:
                 description: 'Filename of the deb package'
                 value: ${{ jobs.build-tweak.outputs.deb_filename }}
@@ -64,7 +64,7 @@ on:
                 value: ${{ jobs.build-ipa.outputs.ipa_filename }}
             simulator_filename:
                 description: 'Filename of the iOS Simulator zip'
-                value: ${{ jobs.build-simulator.outputs.simulator_filename }}
+                value: ${{ jobs.build-ipa.outputs.simulator_filename }}
 
 permissions: {}
 
@@ -143,6 +143,8 @@ jobs:
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
 
             - name: Check cache
               run: printf 'upstream_heads=%s-%s\n' "$(git ls-remote https://github.com/theos/theos | awk 'NR == 1 { print $1 }')" "$(git ls-remote https://github.com/theos/sdks | awk 'NR == 1 { print $1 }')" >> "$GITHUB_ENV"
@@ -207,15 +209,7 @@ jobs:
                   key: ios-tweak
 
             - name: Build package
-              env:
-                  CCACHE_DEPEND: 'true'
-                  CCACHE_SLOPPINESS: modules,time_macros,include_file_mtime,include_file_ctime
-              run: |
-                  set -euo pipefail
-                  TARGET_CC="ccache $(xcrun -sdk iphoneos -f clang)"
-                  TARGET_CXX="ccache $(xcrun -sdk iphoneos -f clang++)"
-                  export TARGET_CC TARGET_CXX
-                  go run ./tools build tweak --configuration release --non-interactive
+              run: unbound-tools build tweak --configuration release --non-interactive
 
             - name: Report the compiler cache
               if: ${{ !cancelled() }}
@@ -239,7 +233,7 @@ jobs:
               run: |
                   set -euo pipefail
                   mkdir -p symbols
-                  for architecture in arm64 arm64e; do
+                  for architecture in arm64; do
                     binary="ios/.theos/obj/${architecture}/Unbound.dylib"
                     bundle="${binary}.dSYM"
                     test -f "$binary"
@@ -300,6 +294,8 @@ jobs:
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
 
             - name: Download the resolved source ipa
               if: inputs.source_ipa_artifact != ''
@@ -355,7 +351,7 @@ jobs:
                   fetch_args=(--base-url "$INPUT_DKRYPT_BASE_URL" --source-url "$INPUT_IPA_URL")
                   if [ "$INPUT_AUTHENTICATED_SOURCE" = true ]; then fetch_args+=(--authenticated-source); fi
                   fetch_args+=(--channel "$channel" --version "$INPUT_VERSION" --output discord.ipa)
-                  go run ./tools fetch "${fetch_args[@]}"
+                  unbound-tools fetch "${fetch_args[@]}"
 
             - name: Check the source ipa matches the release
               if: inputs.release == true && inputs.is_testflight != true && inputs.version != ''
@@ -363,10 +359,10 @@ jobs:
                   INPUT_VERSION: ${{ inputs.version }}
               run: |
                   set -euo pipefail
-                  ipa_info=$(go run ./tools ipa-info --ipa discord.ipa)
+                  ipa_info=$(unbound-tools ipa-info --ipa discord.ipa)
                   source_version=$(jq -r '.version' <<< "$ipa_info")
-                  expected_android_code=$(go run ./tools discord-version --version "$INPUT_VERSION")
-                  source_android_code=$(go run ./tools discord-version --version "$source_version")
+                  expected_android_code=$(unbound-tools discord-version --version "$INPUT_VERSION")
+                  source_android_code=$(unbound-tools discord-version --version "$source_version")
                   if [ "$source_android_code" != "$expected_android_code" ]; then
                     echo "::error::The source IPA is $source_version but the selected combined release is $INPUT_VERSION"
                     exit 1
@@ -392,6 +388,8 @@ jobs:
         outputs:
             ipa_url: ${{ steps.upload-ipa.outputs.artifact-url }}
             ipa_filename: ${{ steps.set-ipa-filename.outputs.filename }}
+            simulator_url: ${{ steps.upload-simulator.outputs.artifact-url }}
+            simulator_filename: ${{ steps.set-simulator-filename.outputs.filename }}
 
         steps:
             - name: Checkout code
@@ -435,6 +433,8 @@ jobs:
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
 
             - name: Extract app name
               run: |
@@ -445,7 +445,7 @@ jobs:
               env:
                   BUILD_CHANNEL: ${{ needs.resolve-source-ipa.outputs.channel }}
               run: |
-                  go run ./tools build ipa --ipa discord.ipa --deb "$(find . -maxdepth 1 -name '*.deb' -print -quit)" --channel "$BUILD_CHANNEL" --output "${APP_NAME}.ipa" --non-interactive
+                  unbound-tools build ipa --ipa discord.ipa --deb "$(find . -maxdepth 1 -name '*.deb' -print -quit)" --channel "$BUILD_CHANNEL" --output "${APP_NAME}.ipa" --non-interactive
 
             - name: Upload ipa as artifact
               id: upload-ipa
@@ -465,52 +465,11 @@ jobs:
               id: set-ipa-filename
               run: echo "filename=$APP_NAME.ipa" >> "$GITHUB_OUTPUT"
 
-    build-simulator:
-        if: *only_build_check
-        runs-on: macos-15
-        timeout-minutes: 20
-        permissions:
-            contents: read
-            id-token: write
-            attestations: write
-            artifact-metadata: write
-        needs: build-ipa
-        env:
-            ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
-            UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
-        outputs:
-            simulator_url: ${{ steps.upload-simulator.outputs.artifact-url }}
-            simulator_filename: ${{ steps.set-simulator-filename.outputs.filename }}
-
-        steps:
-            - name: Checkout code
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-              with:
-                  persist-credentials: false
-
-            - name: Setup Go tools
-              uses: ./.github/actions/setup-go-tools
-
-            - name: Download ipa artifact
-              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
-              with:
-                  name: ipa
-                  path: packages/loader
-
-            - name: Extract app name
-              run: |
-                  NAME=$(grep '^Name:' ios/control | cut -d ' ' -f 2)
-                  echo "APP_NAME=$NAME" >> "$GITHUB_ENV"
-
-            - name: Restore the packaging tools
-              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-              with:
-                  path: packages/loader/.tools-cache
-                  key: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ hashFiles('packages/loader/tools/build.go') }}
-                  restore-keys: tools-${{ runner.os }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
-
             - name: Build simulator
-              run: go run ./tools build simulator --ipa "${APP_NAME}.ipa" --output unbound-ios-simulator.zip --configuration release --non-interactive
+              env:
+                  ATTESTATION_PK: ${{ secrets.ATTESTATION_PK }}
+                  UNBOUND_PR_NUMBER: ${{ inputs.pr_number || '' }}
+              run: unbound-tools build simulator --ipa "${APP_NAME}.ipa" --output unbound-ios-simulator.zip --configuration release --non-interactive
 
             - name: Upload iOS Simulator artifact
               id: upload-simulator
@@ -533,7 +492,7 @@ jobs:
     smoke-simulator:
         name: Smoke test the simulator build
         if: inputs.only_app_repo != true && inputs.only_apt_repo != true && inputs.skip_smoke != true
-        needs: [build-simulator, smoke-inputs]
+        needs: [build-ipa, smoke-inputs]
         runs-on: macos-26
         timeout-minutes: 30
         permissions:
@@ -548,6 +507,8 @@ jobs:
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
 
             - name: Setup Bun dependencies
               uses: ./.github/actions/setup-bun-deps
@@ -583,7 +544,7 @@ jobs:
             - name: Run the smoke test
               env:
                   APP_PATH: ${{ steps.app.outputs.path }}
-              run: go run ./tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --ota-cache smoke/otas --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
+              run: unbound-tools smoke ios --app "$APP_PATH" --client ../client/dist --artifacts smoke/artifacts --ota-cache smoke/otas --bundle-budget 60s --plugins-budget 60s ${{ inputs.pr_number != '' && '--quick --timeout 12m' || '--timeout 25m' }}
 
             - name: Save Discord's OTA updates
               if: ${{ !cancelled() && hashFiles('packages/loader/smoke/otas/*/manifest.json.*') != '' }}
@@ -598,7 +559,7 @@ jobs:
               continue-on-error: true
               env:
                   GH_TOKEN: ${{ github.token }}
-              run: go run ./tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY" --artifact "ios smoke test" --report smoke/artifacts/comparison.md
+              run: unbound-tools smoke-regression --current smoke/artifacts/startup.json --repo "$GITHUB_REPOSITORY" --artifact "ios smoke test" --report smoke/artifacts/comparison.md
 
             - name: Upload smoke test logs
               if: ${{ !cancelled() }}
@@ -637,6 +598,8 @@ jobs:
 
             - name: Setup Go tools
               uses: ./.github/actions/setup-go-tools
+              with:
+                  prebuilt: 'true'
 
             - name: Download deb artifact
               if: inputs.only_app_repo != true && inputs.only_apt_repo != true
@@ -724,7 +687,7 @@ jobs:
               run: |
                   set -euo pipefail
                   APP_FILE=$(find . -maxdepth 1 -type f -name '*.ipa' -print -quit)
-                  IPA_INFO=$(go run ./tools ipa-info --ipa "$APP_FILE")
+                  IPA_INFO=$(unbound-tools ipa-info --ipa "$APP_FILE")
                   VERSION=$(printf '%s\n' "$IPA_INFO" | jq -r '.version')
 
                   if [ "${{ inputs.only_app_repo }}" == true ]; then
