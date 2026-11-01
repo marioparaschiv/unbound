@@ -107,16 +107,6 @@ function buildPath(path: string, params: Record<string, string> | undefined): st
 	});
 }
 
-// A file, such as an uploaded image, goes as it is, typed by the caller's `content-type` header.
-// UNKNOWN: a route's body; anything but a file is sent as JSON.
-function encodeBody(body: unknown): string | Blob | undefined {
-	if (body === undefined || body instanceof Blob) {
-		return body;
-	}
-
-	return JSON.stringify(body);
-}
-
 async function toRequestError(response: Response): Promise<ApiRequestError> {
 	const parsed = apiErrorResponseSchema.safeParse(await response.json().catch(() => null));
 
@@ -154,14 +144,16 @@ export function createApiClient<Api extends ApiMap>(options: ApiClientOptions) {
 			headers.set(name, value);
 		}
 
-		const body = encodeBody(init.body);
-
-		if (typeof body === 'string') {
+		if (init.body !== undefined) {
 			headers.set('content-type', 'application/json');
 		}
 
 		const url = buildUrl(options.baseUrl, path, init.params, init.query);
-		const response = await fetch(url, { method, headers, body });
+		const response = await fetch(url, {
+			method,
+			headers,
+			body: init.body === undefined ? undefined : JSON.stringify(init.body),
+		});
 
 		if (response.status === 304) {
 			throw new NotModifiedError();
