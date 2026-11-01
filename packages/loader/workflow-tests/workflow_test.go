@@ -636,7 +636,7 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 		"IS_FORK":                           "${{ github.event.pull_request.head.repo.full_name != github.repository }}",
 		"HAS_S3_ACCESS_KEY_ID":              "${{ secrets.S3_ACCESS_KEY_ID != '' }}",
 		"HAS_S3_SECRET_ACCESS_KEY":          "${{ secrets.S3_SECRET_ACCESS_KEY != '' }}",
-		"HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY": "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY != '' }}",
+		"HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY": "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}",
 		"CDN_URL":                           "${{ vars.CDN_URL }}",
 	} {
 		if planStep.Env[name] != value {
@@ -666,7 +666,7 @@ func TestParsedPullRequestBuildsUploadOnlyWhenPlanned(t *testing.T) {
 		t.Fatal("pull request bundles must never be signed with the production key")
 	}
 	sign := upload.step(t, "Sign the bundles with the pull request key")
-	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY }}" || sign.Run != `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"` {
+	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || sign.Run != `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"` {
 		t.Fatalf("pull request bundles must be signed with the pull request key, got %+v", sign)
 	}
 	if upload.step(t, "Check every bundle is signed").Run != `bun run --cwd packages/client verify-signatures --dir dist --pr "$PR_NUMBER"` {
@@ -805,7 +805,7 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 		t.Fatalf("the claimed pull request must be checked against the run's head, got %+v", confirm)
 	}
 	plan := publish.step(t, "Plan the uploads")
-	if plan.Env["PR_NUMBER"] != "${{ steps.pull-request.outputs.number }}" || plan.Env["HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY != '' }}" {
+	if plan.Env["PR_NUMBER"] != "${{ steps.pull-request.outputs.number }}" || plan.Env["HAS_UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY != '' }}" {
 		t.Fatalf("the publisher must plan with the confirmed number and the pull request key, got %+v", plan.Env)
 	}
 	for _, step := range publish.Steps {
@@ -817,7 +817,7 @@ func TestParsedForkBuildsArePublishedByATrustedRun(t *testing.T) {
 		}
 	}
 	sign := publish.step(t, "Sign the bundles with the pull request key")
-	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.ASTRAL_PR_BUNDLE_SIGNING_KEY }}" || !strings.Contains(sign.Run, `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"`) || !strings.Contains(sign.Run, `verify-signatures --dir dist --pr "$PR_NUMBER"`) {
+	if sign.Env["UNBOUND_PR_BUNDLE_SIGNING_KEY"] != "${{ secrets.UNBOUND_PR_BUNDLE_SIGNING_KEY }}" || !strings.Contains(sign.Run, `bun run --cwd packages/client sign --dir dist --pr "$PR_NUMBER"`) || !strings.Contains(sign.Run, `verify-signatures --dir dist --pr "$PR_NUMBER"`) {
 		t.Fatalf("fork bundles must be signed with the pull request key, got %+v", sign)
 	}
 	if _, ok := sign.Env["UNBOUND_BUNDLE_SIGNING_KEY"]; ok {
