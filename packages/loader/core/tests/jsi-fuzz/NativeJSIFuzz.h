@@ -8,6 +8,7 @@
 #include <jsi/jsi.h>
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -230,10 +231,45 @@ inline void checkSerialized(const std::string &serialized, const NativeConversio
     require(nlohmann::json::accept(serialized), "a serialized value is valid JSON", source);
 }
 
+template <typename Body> inline std::optional<std::string> serializedOrRejected(Body body)
+{
+    try
+    {
+        return body();
+    }
+    catch (const std::invalid_argument &)
+    {
+        return std::nullopt;
+    }
+    catch (const jsi::JSError &)
+    {
+        return std::nullopt;
+    }
+}
+
+inline void checkDirectMatchesTree(jsi::Runtime &runtime, const jsi::Value &value,
+                                   const NativeConversionProfile &profile,
+                                   const std::string             &source)
+{
+    std::optional<std::string> direct = serializedOrRejected([&] {
+        return loader::native::serializeBounded(runtime, value, profile);
+    });
+    std::optional<std::string> tree   = serializedOrRejected([&] {
+        NativeConversionBudget budget(profile);
+        return loader::native::dumpBounded(loader::native::serializeBounded(runtime, value, budget),
+                                           profile);
+    });
+    require(direct.has_value() == tree.has_value(),
+            "the direct serializer accepts exactly what the tree serializer accepts", source);
+    require(!direct || *direct == *tree,
+            "the direct serializer writes the same JSON as the tree serializer", source);
+}
+
 inline void fuzzConversions(jsi::Runtime &runtime, const jsi::Value &value, std::uint8_t selector,
                             const std::string &source)
 {
     const NativeConversionProfile &profile = profileFor(selector);
+    checkDirectMatchesTree(runtime, value, profile, source);
     rejectsOnly([&] {
         checkSerialized(loader::native::serializeBounded(runtime, value, profile), profile, source);
     });
