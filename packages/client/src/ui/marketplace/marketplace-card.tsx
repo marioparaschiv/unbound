@@ -201,7 +201,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 		>
 			<View style={styles.row}>
 				<View style={styles.body}>
-					<AddonCardHeader manifest={manifest} icon={Manager.for(kind).icon} />
+					<AddonCardHeader id={addon.id} kind={kind} manifest={manifest} />
 				</View>
 				<Discord.Button
 					size='sm'

@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 
 /** The core settings store; each addon's settings store is named after the addon id. */
 export const CORE_SETTINGS_STORE = 'unbound';
@@ -29,6 +29,8 @@ export type SettingsEntry = {
 	excludeFromDisplay?: boolean;
 	/** The icon drawn at the start of the row. */
 	IconComponent?: ComponentType;
+	/** A hook returning what the row shows at its end, such as a count. */
+	useTrailing?: () => ReactNode;
 	/** The screen the row opens. */
 	screen: SettingsScreen;
 };

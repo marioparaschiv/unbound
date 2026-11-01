@@ -7,7 +7,6 @@ import AddonCardHeader from '~/ui/components/addon-card-header';
 import { findPageMedia } from '~/marketplace/store-page';
 import { Discord, SafeArea } from '~/metro/components';
 import Empty from '~/ui/components/empty-state';
-import { Manager } from '~/addons/manager';
 import { messages } from '~/i18n/api';
 
 import useStorePage from './use-store-page';
@@ -73,7 +72,7 @@ function StorePageScreen({ route }: StorePageScreenProps) {
 					</View>
 				) : null}
 				<View style={{ paddingHorizontal: 16 }}>
-					<AddonCardHeader manifest={manifest} icon={Manager.for(kind).icon} />
+					<AddonCardHeader id={addon.id} kind={kind} manifest={manifest} />
 				</View>
 				{frontmatter?.media.length ? (
 					<PageGallery page={page} entries={frontmatter.media} />

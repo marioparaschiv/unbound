@@ -3,14 +3,13 @@ import { memo } from 'react';
 
 import useDevelopmentCopy from '~/ui/hooks/use-development-copy';
 import { useUnboundSettings } from '~/settings/unbound';
-import TintedIcon from '~/metro/fallbacks/tinted-icon';
 import AddonTitle from '~/ui/components/addon-title';
+import AddonIcon from '~/ui/components/addon-icon';
 import { Discord } from '~/metro/components';
 import type { Addon } from '~/addons/addon';
 import { Manager } from '~/addons/manager';
 import { Theme } from '~/metro/common';
 import { messages } from '~/i18n/api';
-import { icons } from '~/assets/api';
 
 import AddonOverflow from './addon-overflow';
 import AddonSettings from './addon-settings';
@@ -27,7 +26,7 @@ type AddonCardProps = {
 };
 
 /**
- * @description One addon card: the title, authors and controls on top, the description and icon below.
+ * @description One addon card: the icon, title, authors and controls on top, the description and version below.
  * Failed addons dim and show the manager's recorded error; recovery mode disables interaction.
  */
 function AddonCard({ addon, kind, library }: AddonCardProps) {
@@ -62,8 +61,9 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 			style={[styles.card, disabled ? styles.failed : null]}
 		>
 			<View style={styles.top}>
+				<AddonIcon id={addon.id} kind={kind} />
 				<View style={styles.heading}>
-					<AddonTitle name={name} version={version} tag={tag} />
+					<AddonTitle name={name} tag={tag} />
 					{authors?.length ? <AddonAuthors authors={authors} /> : null}
 				</View>
 				<View style={styles.actions}>
@@ -83,12 +83,13 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 				) : (
 					<View style={styles.spacer} />
 				)}
-				<View style={styles.icon}>
-					<TintedIcon
-						source={icons['PuzzlePieceIcon'] ?? 0}
-						size={18}
-						tint={Theme.colors.TEXT_STRONG}
-					/>
+				<View style={styles.version}>
+					<Discord.Text
+						variant='text-xxs/semibold'
+						style={{ color: Theme.colors.TEXT_MUTED }}
+					>
+						v{version}
+					</Discord.Text>
 				</View>
 			</View>
 			{error ? (

@@ -119,6 +119,20 @@ export function getInstallStatus(latest: string, installed: string | undefined):
 }
 
 /**
+ * @description Looks up the website icon a listed addon's maintainers picked.
+ * @param state The marketplace lifecycle; only a ready catalog has icons.
+ * @param id The addon id.
+ * @returns The icon's SVG markup, or `undefined` when there is no catalog, no such addon, or no icon.
+ */
+export function findIconSvg(state: MarketplaceState, id: string): string | undefined {
+	if (state.status !== 'ready') {
+		return undefined;
+	}
+
+	return state.catalog.addons.find((addon) => addon.id === id)?.iconSvg ?? undefined;
+}
+
+/**
  * @description Advances the marketplace lifecycle by one event.
  * @param state The current state.
  * @param event What happened: the stored copy was read, a refresh started, or it ended.
@@ -152,5 +166,6 @@ export default {
 	parseCatalog,
 	queryCatalog,
 	getInstallStatus,
+	findIconSvg,
 	reduceMarketplace,
 };

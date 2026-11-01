@@ -1,12 +1,13 @@
 import type { SettingsEntry } from '@unbound-app/types';
 import { useState, useEffect } from 'react';
 
+import { Screens, CLIENT_NAME, CLIENT_VERSION } from '~/core/constants';
 import { createPatcher } from '~/patcher/create-patcher';
-import { Screens, CLIENT_NAME } from '~/core/constants';
 import { useUnboundSettings } from '~/settings/unbound';
 import type { SectionEntry } from '~/settings/section';
 import DeveloperPage from '~/ui/settings/developer';
 import type { BuiltIn } from '~/builtins/registry';
+import LogoRowIcon from '~/ui/icons/logo-row-icon';
 import PanelHostScreen from '~/ui/settings/custom';
 import GeneralPage from '~/ui/settings/general';
 import { onModuleLoaded } from '~/metro/wait';
@@ -36,9 +37,14 @@ function useDeveloperMode(): boolean {
 
 export const generalSection: SectionEntry = {
 	key: Screens.General,
-	titleKey: 'UNBOUND_GENERAL',
+	titleKey: 'UNBOUND_CLIENT',
 	component: GeneralPage,
-	icon: 'SettingsIcon',
+	icon: LogoRowIcon,
+	/**
+	 * @description Shows the client version.
+	 * @returns The overview row's trailing version.
+	 */
+	useTrailing: () => <Discord.TableRow.TrailingText text={CLIENT_VERSION} />,
 };
 
 export const developerSection: SectionEntry = {
@@ -66,6 +72,7 @@ function route({
 	titleKey,
 	component,
 	usePredicate,
+	useTrailing,
 	icon,
 	hidden,
 }: SectionEntry): SettingsEntry {
@@ -74,10 +81,14 @@ function route({
 		key,
 		useTitle: () => messages[titleKey],
 		usePredicate,
+		useTrailing,
 		parent: null,
 		section: hidden ? undefined : CLIENT_NAME,
 		excludeFromDisplay: hidden,
-		IconComponent: icon ? () => <Discord.TableRowIcon source={getIdByName(icon)} /> : undefined,
+		IconComponent:
+			typeof icon === 'string'
+				? () => <Discord.TableRowIcon source={getIdByName(icon)} />
+				: icon,
 		screen: { route: key, getComponent: () => component },
 	};
 }

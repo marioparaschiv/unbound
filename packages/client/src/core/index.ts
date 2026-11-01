@@ -31,6 +31,7 @@ import nativeConsent from '~/native/builtin';
 import { Manager } from '~/addons/manager';
 import tracking from '~/builtins/tracking';
 import commands from '~/commands/builtin';
+import account from '~/account/builtin';
 import debug from '~/debugger/builtin';
 import links from '~/links/builtin';
 import storage from '~/storage/api';
@@ -56,9 +57,9 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	generalSection,
 	pluginsSection,
 	designSection,
-	developerSection,
 	marketplaceSection,
 	updatesSection,
+	developerSection,
 	toastsSection,
 	cloudSyncSection,
 	assetsSection,
@@ -66,7 +67,9 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	storePageSection,
 ];
 
+// The account starts first: it takes over Sync's session before Sync reads it.
 const BUILT_INS: BuiltInEntry[] = [
+	['account', account],
 	['cloudSync', cloudSync],
 	['commands', commands],
 	['coreCommands', coreCommands],

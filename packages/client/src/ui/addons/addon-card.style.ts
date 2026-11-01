@@ -9,7 +9,7 @@ export default Discord.createStyles({
 	top: {
 		flexDirection: 'row',
 		alignItems: 'flex-start',
-		gap: 8,
+		gap: 12,
 	},
 	heading: {
 		flex: 1,
@@ -34,12 +34,10 @@ export default Discord.createStyles({
 	spacer: {
 		flex: 1,
 	},
-	icon: {
-		width: 32,
-		height: 32,
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderRadius: 10,
+	version: {
+		paddingHorizontal: 6,
+		paddingVertical: 2,
+		borderRadius: 6,
 		backgroundColor: Theme.colors.BACKGROUND_SURFACE_HIGH,
 	},
 	failed: {

@@ -20,6 +20,8 @@ export type SliderRowProps = {
 	step?: number;
 	/** Text appended to the shown value, such as `px` or `%`; none when omitted. */
 	unit?: string;
+	/** Formats the shown value, such as a fraction as a percentage; replaces `unit` when given. */
+	format?: (value: number) => string;
 	/** Called with the snapped value when a drag ends or the reset button is pressed, not during the drag. */
 	onChange: (value: number) => void;
 };
@@ -37,6 +39,7 @@ function SliderRow({
 	maximum,
 	step = 1,
 	unit = '',
+	format,
 	onChange,
 }: SliderRowProps): ReactElement | null {
 	const [dragged, setDragged] = useState(value);
@@ -47,8 +50,13 @@ function SliderRow({
 
 	const changed = dragged !== defaultValue;
 
+	// Rounding to the step's decimals drops float noise, so 0.15 never saves as 0.15000000000000002.
+	const decimals = String(step).split('.')[1]?.length ?? 0;
 	const snap = (raw: number) =>
-		Math.max(minimum, Math.min(maximum, Math.round(raw / step) * step));
+		Math.max(
+			minimum,
+			Math.min(maximum, Number((Math.round(raw / step) * step).toFixed(decimals))),
+		);
 
 	return (
 		<Discord.TableRow
@@ -62,7 +70,7 @@ function SliderRow({
 						color='text-muted'
 						style={{ marginLeft: 'auto' }}
 					>
-						{`${dragged}${unit}`}
+						{format ? format(dragged) : `${dragged}${unit}`}
 					</Discord.Text>
 					<View
 						style={{ opacity: changed ? 1 : 0 }}

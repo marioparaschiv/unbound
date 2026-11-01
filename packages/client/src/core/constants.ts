@@ -63,6 +63,8 @@ export { REPOSITORY };
 export const SOCIAL_LINKS = {
 	GitHub: `https://github.com/${REPOSITORY}`,
 	Docs: 'https://docs.unbound.rip/',
+	/** GitHub Sponsors, where the web API links sponsorships and their perks from. */
+	Sponsor: 'https://github.com/sponsors/marioparaschiv/',
 } as const;
 
 /** Discord invite code for the support server, opened as a deep link from the General page. */
