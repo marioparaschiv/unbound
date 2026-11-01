@@ -28,6 +28,8 @@ export declare const reload: (
 ) => Promise<ReloadResult>;
 /** Starts a plugin without changing its enabled state. */
 export declare const start: (id: string) => void | Promise<void>;
+/** How long each plugin's last start took, in milliseconds, keyed by id. */
+export declare const startDurations: ReadonlyMap<string, number>;
 /** Enables a disabled plugin, or disables an enabled one. */
 export declare const toggle: (id: string) => void;
 /** Stops and removes an installed plugin. */

@@ -73,12 +73,15 @@ const deviceStatusReportSchema = z.object({
 	failed: z.array(z.string()),
 	stopped: z.array(z.string()),
 	resources: z.record(z.string(), z.number()).nullable(),
+	slowestStarts: z.array(z.tuple([z.string(), z.number()])).default([]),
+	startTotal: z.number().default(0),
 });
 
 type DeviceStatusReport = z.infer<typeof deviceStatusReportSchema>;
 
 type PluginManagerView = {
 	getAll(): { id: string; started: boolean; failed: boolean }[];
+	startDurations?: ReadonlyMap<string, number>;
 };
 
 function readDeviceStatus(unbound: UnboundGlobal): string {
@@ -92,6 +95,7 @@ function readDeviceStatus(unbound: UnboundGlobal): string {
 		value: UnboundGlobal,
 	): value is UnboundGlobal & { plugins: PluginManagerView } => 'plugins' in value;
 	const entities = hasPlugins(unbound) ? unbound.plugins.getAll() : [];
+	const durations = hasPlugins(unbound) ? unbound.plugins.startDurations : undefined;
 	const report: DeviceStatusReport = {
 		started: entities.filter((entity) => entity.started).length,
 		failed: entities.filter((entity) => entity.failed).map((entity) => entity.id),
@@ -99,6 +103,8 @@ function readDeviceStatus(unbound: UnboundGlobal): string {
 			.filter((entity) => !entity.started && !entity.failed)
 			.map((entity) => entity.id),
 		resources: unbound.native.getNativeResources?.() ?? null,
+		slowestStarts: [...(durations ?? [])].sort((left, right) => right[1] - left[1]).slice(0, 8),
+		startTotal: [...(durations?.values() ?? [])].reduce((total, ms) => total + ms, 0),
 	};
 
 	return JSON.stringify(report);
@@ -131,6 +137,14 @@ function formatStatus(device: DeviceInfo | undefined, report: DeviceStatusReport
 
 	if (report.failed.length) {
 		lines.push(`Failed: ${report.failed.join(', ')}`);
+	}
+
+	if (report.slowestStarts.length) {
+		const starts = report.slowestStarts.map(([id, ms]) => `${id} ${ms.toFixed(1)} ms`);
+
+		lines.push(
+			`Plugin starts: ${report.startTotal.toFixed(0)} ms in all; slowest ${starts.join(', ')}`,
+		);
 	}
 
 	if (report.resources) {
