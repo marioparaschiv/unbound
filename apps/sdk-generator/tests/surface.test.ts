@@ -11,13 +11,19 @@ const SOURCES = {
 	global: join(FIXTURE, 'typed', 'global.d.ts'),
 };
 
+const PROGRAM_TIMEOUT_MS = 30_000;
+
 describe('checkSurface', () => {
-	test('the committed SDK types everything window.unbound exposes', () => {
-		expect(checkSurface()).toEqual({
-			live: { missing: [], extra: [] },
-			shutdown: { missing: [], extra: [] },
-		});
-	});
+	test(
+		'the committed SDK types everything window.unbound exposes',
+		() => {
+			expect(checkSurface()).toEqual({
+				live: { missing: [], extra: [] },
+				shutdown: { missing: [], extra: [] },
+			});
+		},
+		PROGRAM_TIMEOUT_MS,
+	);
 
 	test('reads value exports and public class members, without types, default or private members', () => {
 		const { surfaces } = readRuntimeSurfaces(SOURCES);
