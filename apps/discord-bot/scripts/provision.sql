@@ -64,7 +64,7 @@ BEGIN
 
 	SELECT array_agg(name) INTO missing
 	FROM unnest(ARRAY['addon', 'addon_version', 'addon_maintainer', 'account', 'user', 'sponsorship',
-		'moderation_event', 'loader_release']) AS name
+		'moderation_event', 'loader_release', 'submission']) AS name
 	WHERE NOT EXISTS (
 		SELECT 1 FROM pg_tables WHERE schemaname = 'public' AND tablename = name AND tableowner = web_role
 	);
@@ -139,6 +139,8 @@ GRANT SELECT ON public.addon, public.addon_version, public.addon_maintainer, pub
 -- Links, names and avatars only, never tokens, emails or sessions.
 GRANT SELECT (user_id, provider_id, account_id) ON public.account TO :"bot_role";
 GRANT SELECT (id, name, image) ON public."user" TO :"bot_role";
+-- Who submitted a decided version and what it was called, for review notices; never the bundle or review.
+GRANT SELECT (id, author_id, manifest) ON public.submission TO :"bot_role";
 -- Lets the bot's migrations install or replace its notify triggers until the lock phase takes it back.
 GRANT TRIGGER ON public.addon, public.addon_version, public.addon_maintainer, public.account,
 	public.sponsorship, public.moderation_event, public.loader_release TO :"bot_role";
@@ -173,7 +175,7 @@ GROUP BY table_name
 ORDER BY table_name;
 SELECT table_name, string_agg(column_name, ', ' ORDER BY column_name) AS readable_columns
 FROM information_schema.column_privileges
-WHERE grantee = :'bot_role' AND table_schema = 'public' AND table_name IN ('account', 'user')
+WHERE grantee = :'bot_role' AND table_schema = 'public' AND table_name IN ('account', 'user', 'submission')
 	AND privilege_type = 'SELECT'
 GROUP BY table_name
 ORDER BY table_name;
