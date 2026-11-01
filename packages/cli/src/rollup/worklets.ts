@@ -35,9 +35,7 @@ export function worklets(): Plugin {
 				configFile: false,
 				filename: id,
 				sourceMaps: true,
-				presets: typescript
-					? [[typescriptPreset, { isTSX: id.endsWith('x'), allExtensions: true }]]
-					: [],
+				presets: typescript ? [typescriptPreset] : [],
 				plugins: [
 					jsxSyntax,
 					[workletsPlugin, { relativeSourceLocation: true, disableSourceMaps: true }],
