@@ -17,8 +17,7 @@ private:
     std::string data_;
 };
 
-bool                 evaluateScript(facebook::jsi::Runtime &runtime, const std::string &script,
-                                    const std::string &tag);
+bool evaluateScript(facebook::jsi::Runtime &runtime, std::string script, const std::string &tag);
 facebook::jsi::Value evaluateSource(facebook::jsi::Runtime &runtime, const std::string &source,
                                     const std::string &tag);
 facebook::jsi::Value evaluateBytecode(facebook::jsi::Runtime &runtime, std::string bytecode,

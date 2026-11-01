@@ -200,7 +200,7 @@ void LoaderPipeline::onRuntimeCreated(jsi::Runtime &runtime)
         return;
     }
 
-    evaluate(runtime, *saved, token_.load());
+    evaluate(runtime, std::move(*saved), token_.load());
 }
 
 bool LoaderPipeline::settleFirstDownload(uint64_t token, std::optional<std::string> path)
@@ -251,7 +251,7 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
     return SavedBundle{std::move(*bundle), *firstDownload_.path};
 }
 
-bool LoaderPipeline::evaluate(jsi::Runtime &runtime, const SavedBundle &saved, uint64_t token)
+bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t token)
 {
     jsi::Object global = runtime.global();
 
@@ -265,7 +265,7 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, const SavedBundle &saved, u
     injectPreBundle(runtime);
 
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Evaluating Unbound's bundle before Discord's...");
-    if (!evaluateScript(runtime, saved.bundle, "unbound"))
+    if (!evaluateScript(runtime, std::move(saved.bundle), "unbound"))
     {
         global.setProperty(runtime, "__loaderBundleInstalled", jsi::Value(false));
         evaluationFailed_.store(true);

@@ -5,7 +5,6 @@
 #include "HermesBytecodeHeader.h"
 #include "LoaderAddonSignature.h"
 #include "LoaderBundleSignature.h"
-#include "LoaderCrypto.h"
 #include "LoaderDigestCache.h"
 #include "LoaderFiles.h"
 #include "LoaderFonts.h"
@@ -148,12 +147,12 @@ static bool hasBytecodeFor(const nlohmann::json &manifest, const std::string &en
            fileExists(bytecodePathFor(entry, bytecodeVersion));
 }
 
-static nlohmann::json pluginEntry(nlohmann::json manifest, std::string bundle, bool compiled)
+static nlohmann::json pluginEntry(nlohmann::json manifest, std::string bundle,
+                                  std::optional<std::string> sourceDigest)
 {
-    if (compiled)
+    if (sourceDigest)
     {
-        std::string digest = crypto::hex(crypto::sha256(bundle));
-        return {{"manifest", std::move(manifest)}, {"sha256", std::move(digest)}};
+        return {{"manifest", std::move(manifest)}, {"sha256", std::move(*sourceDigest)}};
     }
     return {{"manifest", std::move(manifest)}, {"bundle", std::move(bundle)}};
 }
@@ -243,8 +242,13 @@ nlohmann::json scanPlugins(const std::string &documents, uint32_t bytecodeVersio
             (*manifest)["path"]   = directory;
             (*manifest)["entry"]  = *entry;
 
-            bool compiled = hasBytecodeFor(*manifest, *entry, bytecodeVersion);
-            plugins.push_back(pluginEntry(std::move(*manifest), std::move(*bundle), compiled));
+            std::optional<std::string> sourceDigest;
+            if (hasBytecodeFor(*manifest, *entry, bytecodeVersion))
+            {
+                sourceDigest = cachedSha256(directory, *entry, *bundle);
+            }
+            plugins.push_back(
+                pluginEntry(std::move(*manifest), std::move(*bundle), std::move(sourceDigest)));
             log(LogLevel::Info, LOG_CATEGORY_PLUGINS, "Loaded " + folder + " from " + *entry + ".");
         });
 

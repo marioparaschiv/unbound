@@ -18,7 +18,7 @@ const uint8_t *OwnedBuffer::data() const
     return reinterpret_cast<const uint8_t *>(data_.data());
 }
 
-bool evaluateScript(jsi::Runtime &runtime, const std::string &script, const std::string &tag)
+bool evaluateScript(jsi::Runtime &runtime, std::string script, const std::string &tag)
 {
     if (script.empty())
     {
@@ -29,12 +29,13 @@ bool evaluateScript(jsi::Runtime &runtime, const std::string &script, const std:
     {
         if (isHermesBytecode(script.data(), script.size()))
         {
-            auto prepared = runtime.prepareJavaScript(std::make_shared<OwnedBuffer>(script), tag);
+            auto prepared =
+                runtime.prepareJavaScript(std::make_shared<OwnedBuffer>(std::move(script)), tag);
             runtime.evaluatePreparedJavaScript(prepared);
         }
         else
         {
-            runtime.evaluateJavaScript(std::make_shared<jsi::StringBuffer>(script), tag);
+            runtime.evaluateJavaScript(std::make_shared<jsi::StringBuffer>(std::move(script)), tag);
         }
         return true;
     }
