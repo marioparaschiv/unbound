@@ -58,6 +58,7 @@ function row(overrides: Partial<Sponsorship>): Sponsorship {
 		tierName: '$5 a month',
 		monthlyPriceCents: 500,
 		oneTime: false,
+		isPublic: false,
 		since: new Date('2026-01-01T00:00:00Z'),
 		endsAt: null,
 		updatedAt: new Date('2026-02-01T00:00:00Z'),

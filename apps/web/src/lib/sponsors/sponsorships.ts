@@ -9,7 +9,7 @@ import type { Env } from '~/lib/env';
 
 export type SponsorshipValues = Pick<
 	Sponsorship,
-	'githubId' | 'githubLogin' | 'tierName' | 'monthlyPriceCents' | 'oneTime' | 'since'
+	'githubId' | 'githubLogin' | 'tierName' | 'monthlyPriceCents' | 'oneTime' | 'isPublic' | 'since'
 >;
 
 export type SponsorshipLifecycle = Pick<Sponsorship, 'state' | 'endsAt'>;

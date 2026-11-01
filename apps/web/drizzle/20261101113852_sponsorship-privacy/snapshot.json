@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "2317b170-ac6d-48b6-a688-41c591c460f2",
+  "prevIds": [
+    "055c1244-fd7a-4e20-b032-bf72fbc7fde7"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "sponsorship",
+        "is_public"
+      ],
+      "writes": [
+        "s|col|public.sponsorship.is_public",
+        "n|col|public.sponsorship.is_public",
+        "e|col|public.sponsorship.is_public"
+      ],
+      "reads": [
+        "n|tbl|public.sponsorship",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "sponsorship",
+        "name": "is_public",
+        "type": "boolean",
+        "typeSchema": null,
+        "notNull": true,
+        "dimensions": 0,
+        "default": "false",
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

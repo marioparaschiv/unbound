@@ -12,6 +12,7 @@ type RemoteNode = {
 	active: boolean;
 	cents?: number;
 	createdAt?: string;
+	privacy?: 'PUBLIC' | 'PRIVATE';
 };
 
 type RemoteState = {
@@ -39,6 +40,7 @@ function toGraphQLNode(node: RemoteNode) {
 		createdAt: node.createdAt ?? '2026-01-01T00:00:00Z',
 		isActive: node.active,
 		isOneTimePayment: false,
+		privacyLevel: node.privacy ?? 'PRIVATE',
 		tier: { name: 'Monthly', monthlyPriceInCents: node.cents ?? 500, isOneTime: false },
 		sponsorEntity: { __typename: 'User', databaseId: node.id, login: `sponsor-${node.id}` },
 	};
@@ -172,6 +174,27 @@ describe('reconcileSponsorships', () => {
 			endsAt: later,
 		});
 		expect(await storedSponsorship(ctx, '21')).toMatchObject({ state: 'active', endsAt: null });
+	});
+
+	test('a privacy change alone is written, both ways', async () => {
+		const ctx = await setup();
+
+		await seed(ctx, { githubId: '60', tierName: 'Monthly' });
+		await seed(ctx, { githubId: '61', tierName: 'Monthly', isPublic: true });
+		remote.nodes = [
+			{ id: 60, active: true, privacy: 'PUBLIC' },
+			{ id: 61, active: true, privacy: 'PRIVATE' },
+		];
+
+		expect(await reconcileSponsorships(ctx)).toEqual({ fetched: 2, updated: 2 });
+		expect(await storedSponsorship(ctx, '60')).toMatchObject({
+			state: 'active',
+			isPublic: true,
+		});
+		expect(await storedSponsorship(ctx, '61')).toMatchObject({
+			state: 'active',
+			isPublic: false,
+		});
 	});
 
 	test('running it twice changes nothing the second time', async () => {

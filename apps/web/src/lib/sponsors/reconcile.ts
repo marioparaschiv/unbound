@@ -22,6 +22,7 @@ const SPONSORSHIPS_QUERY = `query ($login: String!, $after: String) {
 					createdAt
 					isActive
 					isOneTimePayment
+					privacyLevel
 					tier { name monthlyPriceInCents isOneTime }
 					sponsorEntity {
 						__typename
@@ -44,6 +45,7 @@ const pageSchema = z.object({
 						createdAt: z.iso.datetime({ offset: true }),
 						isActive: z.boolean(),
 						isOneTimePayment: z.boolean(),
+						privacyLevel: z.enum(['PUBLIC', 'PRIVATE']),
 						tier: z
 							.object({
 								name: z.string(),
@@ -158,6 +160,7 @@ export async function fetchRemoteSponsorships(env: Env): Promise<Map<string, Rem
 				tierName: node.tier?.name ?? 'Custom amount',
 				monthlyPriceCents: node.tier?.monthlyPriceInCents ?? 0,
 				oneTime: node.isOneTimePayment,
+				isPublic: node.privacyLevel === 'PUBLIC',
 				since: new Date(node.createdAt),
 				active: node.isActive,
 			});
@@ -200,6 +203,7 @@ function isSameSponsorship(current: Sponsorship, next: Sponsorship): boolean {
 		current.tierName === next.tierName &&
 		current.monthlyPriceCents === next.monthlyPriceCents &&
 		current.oneTime === next.oneTime &&
+		current.isPublic === next.isPublic &&
 		current.since.getTime() === next.since.getTime() &&
 		current.endsAt?.getTime() === next.endsAt?.getTime()
 	);
@@ -244,6 +248,7 @@ export function planReconcile(
 			tierName: values.tierName,
 			monthlyPriceCents: values.monthlyPriceCents,
 			oneTime: values.oneTime,
+			isPublic: values.isPublic,
 			since: values.since,
 			...lifecycle,
 			updatedAt: now,

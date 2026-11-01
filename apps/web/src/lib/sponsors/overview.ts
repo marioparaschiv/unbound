@@ -19,7 +19,7 @@ export type PerkStatus = {
 export type SponsorOverview = {
 	sponsorUrl: string | null;
 	githubLinked: boolean;
-	sponsorship: Omit<Sponsorship, 'githubId' | 'githubLogin' | 'updatedAt'> | null;
+	sponsorship: Omit<Sponsorship, 'githubId' | 'githubLogin' | 'isPublic' | 'updatedAt'> | null;
 	standing: SponsorStanding['kind'];
 	graceUntil: Date | null;
 	perks: PerkStatus[];

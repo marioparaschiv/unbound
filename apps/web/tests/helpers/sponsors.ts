@@ -19,6 +19,7 @@ export type SponsorshipPayloadOptions = {
 	tierName?: string;
 	cents?: number;
 	oneTime?: boolean;
+	privacy?: 'public' | 'private';
 	effectiveDate?: string;
 };
 
@@ -51,6 +52,7 @@ export function sponsorshipPayload({
 	tierName = '$5 a month',
 	cents = 500,
 	oneTime = false,
+	privacy = 'public',
 	effectiveDate,
 }: SponsorshipPayloadOptions) {
 	return {
@@ -61,7 +63,7 @@ export function sponsorshipPayload({
 			created_at: createdAt,
 			sponsorable: { login: sponsorable, id: 1, type: 'Organization' },
 			sponsor: { login: sponsorLogin, id: Number(sponsorId), type: 'User' },
-			privacy_level: 'public',
+			privacy_level: privacy,
 			tier: {
 				name: tierName,
 				monthly_price_in_cents: cents,
