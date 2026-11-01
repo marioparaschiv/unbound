@@ -9,7 +9,7 @@ describe('ranStaleBundle', () => {
 	// The 2026-11-01T061947Z run stopped here: a define-stage loader ran the previous variant's bundle.
 	test('a warm-up that ran another bundle may fail', () => {
 		expect(ranStaleBundle({ discarded: true, ranBundleSha256: STALE }, OWN)).toBe(true);
-		expect(ranStaleBundle({ discarded: true, ranBundleSha256: undefined }, OWN)).toBe(true);
+		expect(ranStaleBundle({ discarded: true, ranBundleSha256: null }, OWN)).toBe(true);
 	});
 
 	test('a warm-up that ran its own bundle must not fail', () => {
