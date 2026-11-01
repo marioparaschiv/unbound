@@ -30,6 +30,7 @@
 #include "NativePlatformBridge.h"
 #include "NativePluginRoot.h"
 #include "NativeResourceBudget.h"
+#include "NativeTaggedValue.h"
 #include "NativeTraversalOptions.h"
 
 namespace unbound::android {
@@ -366,8 +367,56 @@ static jsi::Value adoptJavaValue(jsi::Runtime &runtime, const nlohmann::json &va
     return leases ? leases->adopt(runtime, value) : loader::toJSIValue(runtime, value);
 }
 
+static std::optional<jsi::Value> adoptTaggedJavaValue(jsi::Runtime      &runtime,
+                                                      const std::string &response)
+{
+    std::optional<loader::native::TaggedValue> tagged = loader::native::parseTaggedValue(response);
+    if (!tagged)
+    {
+        return std::nullopt;
+    }
+    if (tagged->kind == loader::native::TaggedValueKind::String && tagged->type == "handle" &&
+        tagged->text.rfind("java-", 0) == 0)
+    {
+        std::shared_ptr<loader::native::HandleLeases> leases;
+        {
+            std::lock_guard<std::mutex> lock(gJavaLeasesMutex);
+            leases = gJavaLeases;
+        }
+        if (leases)
+        {
+            return leases->adoptTaggedHandle(runtime, tagged->type, tagged->text);
+        }
+    }
+
+    jsi::Object object(runtime);
+    object.setProperty(runtime, "type", jsi::String::createFromUtf8(runtime, tagged->type));
+    switch (tagged->kind)
+    {
+        case loader::native::TaggedValueKind::Null:
+            object.setProperty(runtime, "value", jsi::Value::null());
+            break;
+        case loader::native::TaggedValueKind::Boolean:
+            object.setProperty(runtime, "value", tagged->boolean);
+            break;
+        case loader::native::TaggedValueKind::Number:
+            object.setProperty(runtime, "value", tagged->number);
+            break;
+        case loader::native::TaggedValueKind::String:
+            object.setProperty(runtime, "value",
+                               jsi::String::createFromUtf8(runtime, tagged->text));
+            break;
+    }
+    return object;
+}
+
 static jsi::Value parseJavaResult(jsi::Runtime &runtime, const std::string &response)
 {
+    if (std::optional<jsi::Value> fast = adoptTaggedJavaValue(runtime, response))
+    {
+        return std::move(*fast);
+    }
+
     nlohmann::json result = nlohmann::json::parse(response, nullptr, false);
     if (result.is_discarded())
     {

@@ -133,6 +133,16 @@ jsi::Value HandleLeases::adopt(jsi::Runtime &runtime, const nlohmann::json &valu
     return convert(runtime, value, 0);
 }
 
+jsi::Value HandleLeases::adoptTaggedHandle(jsi::Runtime &runtime, const std::string &type,
+                                           const std::string &id) const
+{
+    jsi::Object handle(runtime);
+    handle.setProperty(runtime, "type", jsi::String::createFromUtf8(runtime, type));
+    handle.setProperty(runtime, "value", jsi::String::createFromUtf8(runtime, id));
+    handle.setNativeState(runtime, std::make_shared<HandleLease>(ledger_, id));
+    return handle;
+}
+
 size_t HandleLeases::liveHandles() const
 {
     return ledger_->live();

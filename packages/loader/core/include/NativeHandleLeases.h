@@ -22,6 +22,8 @@ public:
     HandleLeases(HandleMatcher matcher, HandleRelease release);
 
     facebook::jsi::Value adopt(facebook::jsi::Runtime &runtime, const nlohmann::json &value) const;
+    facebook::jsi::Value adoptTaggedHandle(facebook::jsi::Runtime &runtime, const std::string &type,
+                                           const std::string &id) const;
     size_t               liveHandles() const;
 
 private:

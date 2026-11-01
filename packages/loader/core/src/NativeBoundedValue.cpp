@@ -1,7 +1,9 @@
 #include "NativeBoundedValue.h"
 
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <vector>
 
 namespace loader::native {
 namespace jsi = facebook::jsi;
@@ -140,11 +142,131 @@ std::string dumpBounded(const nlohmann::json &value, const NativeConversionProfi
     return serialized;
 }
 
+static void writeBounded(jsi::Runtime &runtime, const jsi::Value &value,
+                         NativeConversionBudget &budget, std::string &out)
+{
+    BudgetScope scope(budget);
+    if (value.isNull())
+    {
+        out += "null";
+        return;
+    }
+    if (value.isBool())
+    {
+        out += value.getBool() ? "true" : "false";
+        return;
+    }
+    if (value.isNumber())
+    {
+        double number = value.getNumber();
+        if (!std::isfinite(number))
+        {
+            throw std::invalid_argument("Native value numbers must be finite");
+        }
+        out += nlohmann::json(number).dump();
+        return;
+    }
+    if (value.isString())
+    {
+        out += nlohmann::json(boundedString(runtime, value, budget)).dump();
+        return;
+    }
+    if (!value.isObject())
+    {
+        throw std::invalid_argument(
+            "Native values must be null, booleans, numbers, strings, arrays or objects");
+    }
+
+    jsi::Object object = value.asObject(runtime);
+    if (object.isHostObject(runtime))
+    {
+        throw std::invalid_argument("Native object handles cannot be serialized");
+    }
+    if (object.isFunction(runtime))
+    {
+        throw std::invalid_argument("Functions cannot be serialized as native values");
+    }
+
+    if (object.isArray(runtime))
+    {
+        jsi::Array array = object.asArray(runtime);
+        size_t     count = array.size(runtime);
+        reserve(budget, count);
+        out += '[';
+        for (size_t index = 0; index < count; index++)
+        {
+            if (index > 0)
+            {
+                out += ',';
+            }
+            jsi::Value element = array.getValueAtIndex(runtime, index);
+            if (element.isUndefined())
+            {
+                out += "null";
+            }
+            else
+            {
+                writeBounded(runtime, element, budget, out);
+            }
+        }
+        out += ']';
+        return;
+    }
+
+    jsi::Array names = object.getPropertyNames(runtime);
+    size_t     count = names.size(runtime);
+    reserve(budget, count);
+    std::vector<std::string> sorted;
+    sorted.reserve(count);
+    for (size_t index = 0; index < count; index++)
+    {
+        jsi::Value nameValue = names.getValueAtIndex(runtime, index);
+        if (!nameValue.isString())
+        {
+            throw std::invalid_argument("Native value property names must be strings");
+        }
+        sorted.push_back(nameValue.getString(runtime).utf8(runtime));
+    }
+    std::sort(sorted.begin(), sorted.end());
+    out += '{';
+    bool first = true;
+    for (const std::string &name : sorted)
+    {
+        jsi::Value property = object.getProperty(runtime, name.c_str());
+        if (property.isUndefined())
+        {
+            continue;
+        }
+        if (!budget.addName(name.size()))
+        {
+            throw std::invalid_argument("Native value property names must be 1 to " +
+                                        std::to_string(budget.profile().maximumNameBytes) +
+                                        " bytes");
+        }
+        if (!first)
+        {
+            out += ',';
+        }
+        first = false;
+        out += nlohmann::json(name).dump();
+        out += ':';
+        writeBounded(runtime, property, budget, out);
+    }
+    out += '}';
+}
+
 std::string serializeBounded(jsi::Runtime &runtime, const jsi::Value &value,
                              const NativeConversionProfile &profile)
 {
     NativeConversionBudget budget(profile);
-    return dumpBounded(serializeBounded(runtime, value, budget), profile);
+    std::string            serialized;
+    writeBounded(runtime, value, budget, serialized);
+    if (serialized.size() > profile.maximumBytes)
+    {
+        throw std::invalid_argument("Native value exceeds " + std::to_string(profile.maximumBytes) +
+                                    " serialized bytes");
+    }
+    return serialized;
 }
 
 static bool isPlainObject(jsi::Runtime &runtime, const jsi::Value &value)
