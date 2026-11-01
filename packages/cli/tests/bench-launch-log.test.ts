@@ -29,6 +29,18 @@ describe('parseLaunchLog', () => {
 		expect(log.missing).toEqual([]);
 	});
 
+	test('reads how many plugins the loader found on disk', () => {
+		expect(parseLaunchLog(fixture('warm-launch.log')).pluginsLoaded).toBe(79);
+		expect(
+			parseLaunchLog(
+				[
+					'2026-11-01T03:43:57.021Z I [runtime] RCTHost didInitializeRuntime reached.',
+					'2026-11-01T03:43:57.060Z I [plugins] Loaded 0 plugins.',
+				].join('\n'),
+			).pluginsLoaded,
+		).toBe(0);
+	});
+
 	test('lists error lines without invalidating the launch', () => {
 		const log = parseLaunchLog(fixture('warm-launch.log'));
 

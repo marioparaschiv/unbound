@@ -4,8 +4,10 @@ import type { Milestone } from '~/bench/record';
 /** The loader's own line for Discord's JavaScript runtime being created: time zero of every launch. */
 export const RUNTIME_CREATED = 'RCTHost didInitializeRuntime reached.';
 
+const PLUGINS_LOADED = /Loaded (\d+) plugins?\./;
+
 const MARKERS: Record<Milestone, RegExp> = {
-	pluginsRead: /Loaded \d+ plugins?\./,
+	pluginsRead: PLUGINS_LOADED,
 	bundleStart: /Attempting to execute bundle\.\.\./,
 	initStart: /Initializing Unbound\.\.\./,
 	pluginsStarted: /(?:^|')Plugins started(?:'|$)/,
@@ -26,6 +28,8 @@ export type LaunchLog = {
 	missing: Milestone[];
 	/** Error-level lines from the launch, cut to a readable length. */
 	failures: string[];
+	/** The plugin count the loader read from disk (`Loaded N plugins.`), or `undefined` if it logged none. */
+	pluginsLoaded: number | undefined;
 };
 
 /**
@@ -42,11 +46,25 @@ export function parseLaunchLog(text: string): LaunchLog {
 	const milestones: Partial<Record<Milestone, number>> = {};
 	const failures: string[] = [];
 
+	let pluginsLoaded: number | undefined;
+
 	if (runtimeEpochMs === undefined) {
-		return { runtimeEpochMs, milestones, missing: REQUIRED_MILESTONES, failures };
+		return {
+			runtimeEpochMs,
+			milestones,
+			missing: REQUIRED_MILESTONES,
+			failures,
+			pluginsLoaded,
+		};
 	}
 
 	for (const entry of launch) {
+		const loaded = PLUGINS_LOADED.exec(entry.message);
+
+		if (pluginsLoaded === undefined && loaded) {
+			pluginsLoaded = Number(loaded[1]);
+		}
+
 		if (entry.level === 'error' || entry.level === 'fatal') {
 			failures.push(`[${entry.tag}] ${entry.message}`.slice(0, FAILURE_LENGTH));
 		}
@@ -60,7 +78,7 @@ export function parseLaunchLog(text: string): LaunchLog {
 
 	const missing = REQUIRED_MILESTONES.filter((milestone) => milestones[milestone] === undefined);
 
-	return { runtimeEpochMs, milestones, missing, failures };
+	return { runtimeEpochMs, milestones, missing, failures, pluginsLoaded };
 }
 
 export default { RUNTIME_CREATED, REQUIRED_MILESTONES, parseLaunchLog };

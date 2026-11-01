@@ -1,4 +1,4 @@
-import type { LaunchKind } from '~/bench/plan';
+import type { AddonMode, LaunchKind } from '~/bench/plan';
 
 /** Loader log milestones, in milliseconds after Discord's JavaScript runtime was created (device clock). */
 export type Milestone =
@@ -36,6 +36,7 @@ export type RunIdentity = {
 	discord: DiscordBuild;
 	loader: { sha256: string; flags: string };
 	kind: LaunchKind;
+	addons: AddonMode;
 	/** Position in the whole run, counting discarded launches. */
 	index: number;
 	discarded: boolean;
@@ -53,6 +54,8 @@ export type RunRecord = {
 	work: {
 		modulesInitialized: number | null;
 		modulesTotal: number | null;
+		/** The plugin count the loader logged reading from disk. */
+		pluginsLoaded: number | null;
 		pluginsStarted: number | null;
 		pluginsInstalled: number;
 	};

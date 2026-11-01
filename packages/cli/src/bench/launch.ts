@@ -21,9 +21,9 @@ import {
 import type { DiscordBuild, MemorySample, RunRecord } from '~/bench/record';
 import { parseLaunchLog, type LaunchLog } from '~/bench/launch-log';
 import { evaluateOnDevice, type DeviceClient } from '~/lib/device';
+import type { AddonMode, LaunchKind } from '~/bench/plan';
 import type { VariantBuild } from '~/bench/build';
 import type { BenchServer } from '~/bench/server';
-import type { LaunchKind } from '~/bench/plan';
 import type { Vphone } from '~/bench/vphone';
 
 const MILESTONE_TIMEOUT_MS = 30_000;
@@ -39,6 +39,7 @@ export type LaunchContext = {
 	client: DeviceClient;
 	discord: DiscordBuild;
 	idleMs: number;
+	addons: AddonMode;
 	signal: AbortSignal;
 };
 
@@ -140,6 +141,38 @@ async function memory(
 	};
 }
 
+/**
+ * @description Checks a launch against its addon mode: with `none` the loader must log `Loaded 0 plugins.` and no
+ * plugin may start; with `all` at least one installed plugin must start.
+ * @param addons The run's addon mode.
+ * @param spec The launch.
+ * @param idle The idle sample, if one was read.
+ * @param pluginsLoaded The plugin count the loader logged.
+ * @returns Why the launch is invalid; empty when it passes.
+ */
+export function addonCheck(
+	addons: AddonMode,
+	spec: LaunchSpec,
+	idle: IdleSample | undefined,
+	pluginsLoaded: number | undefined,
+): string[] {
+	if (addons === 'all') {
+		return idle && idle.pluginsStarted === 0 && spec.build.pluginCount > 0
+			? [`no plugin started out of ${spec.build.pluginCount}`]
+			: [];
+	}
+
+	if (pluginsLoaded !== 0) {
+		return [
+			`addons are off, but the loader logged ${pluginsLoaded === undefined ? 'no plugin count' : `Loaded ${pluginsLoaded} plugins`}`,
+		];
+	}
+
+	return idle && idle.pluginsStarted > 0
+		? [`addons are off, but ${idle.pluginsStarted} plugins started`]
+		: [];
+}
+
 function selfCheck(
 	spec: LaunchSpec,
 	idle: IdleSample | undefined,
@@ -157,10 +190,6 @@ function selfCheck(
 		problems.push(
 			'no Metro module was counted as initialized: the runtime has no global `modules` map',
 		);
-	}
-
-	if (idle && idle.pluginsStarted === 0 && spec.build.pluginCount > 0) {
-		problems.push(`no plugin started out of ${spec.build.pluginCount}`);
 	}
 
 	return problems;
@@ -258,6 +287,7 @@ export async function runLaunch(context: LaunchContext, spec: LaunchSpec): Promi
 			discord: context.discord,
 			loader: { sha256: build.loaderSha256, flags: build.loaderFlags },
 			kind: spec.kind,
+			addons: context.addons,
 			index: spec.index,
 			discarded: spec.discarded,
 			startedAt,
@@ -269,6 +299,7 @@ export async function runLaunch(context: LaunchContext, spec: LaunchSpec): Promi
 		work: {
 			modulesInitialized: idle?.modulesInitialized ?? null,
 			modulesTotal: idle?.modulesTotal ?? null,
+			pluginsLoaded: log.pluginsLoaded ?? null,
 			pluginsStarted: idle?.pluginsStarted ?? null,
 			pluginsInstalled: build.pluginCount,
 		},
@@ -277,8 +308,12 @@ export async function runLaunch(context: LaunchContext, spec: LaunchSpec): Promi
 			...log.failures,
 			...(idle?.pluginErrors.map((e) => `plugin failed: ${e}`) ?? []),
 		],
-		problems: [...problems, ...selfCheck(spec, idle, ranBundleSha256)],
+		problems: [
+			...problems,
+			...selfCheck(spec, idle, ranBundleSha256),
+			...addonCheck(context.addons, spec, idle, log.pluginsLoaded),
+		],
 	};
 }
 
-export default { runLaunch };
+export default { addonCheck, runLaunch };

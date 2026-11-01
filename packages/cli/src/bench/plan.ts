@@ -3,6 +3,12 @@ import { z } from 'zod';
 /** `warm` keeps Unbound's module cache; `cold` empties it before the launch. */
 export type LaunchKind = 'warm' | 'cold';
 
+/**
+ * `none` measures core alone: no plugin, theme, icon pack or font is installed or applied, and plugins are not built.
+ * `all` installs and enables every first-party plugin the variant builds.
+ */
+export type AddonMode = 'none' | 'all';
+
 const variantSchema = z.object({
 	name: z
 		.string()
@@ -20,6 +26,7 @@ const protocolSchema = z.object({
 	warm: z.number().int().nonnegative().default(2),
 	cold: z.number().int().nonnegative().default(1),
 	idleMs: z.number().int().positive().default(25_000),
+	addons: z.enum(['none', 'all']).default('none'),
 });
 
 /** The JSON a `--variants` file holds: two or more variants plus optional protocol overrides. */

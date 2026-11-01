@@ -43,6 +43,7 @@ function launch(
 			discord: { version: '349.0', build: '114462' },
 			loader: { sha256: 'c'.repeat(64), flags: 'FINALPACKAGE=1' },
 			kind: 'warm',
+			addons: 'all',
 			index: ++index,
 			discarded: false,
 			startedAt: '2026-11-01T06:00:00.000Z',
@@ -63,6 +64,7 @@ function launch(
 		work: {
 			modulesInitialized: 4700,
 			modulesTotal: 18136,
+			pluginsLoaded: 1,
 			pluginsStarted: 1,
 			pluginsInstalled: 1,
 		},
@@ -72,10 +74,14 @@ function launch(
 	};
 }
 
-function report(records: RunRecord[], refs = ['main', 'main']): string {
+function report(
+	records: RunRecord[],
+	refs = ['main', 'main'],
+	addons: 'none' | 'all' = 'all',
+): string {
 	return renderReport({
 		startedAt: '2026-11-01T06:00:00Z',
-		plan: planFromRefs(refs, { rounds: 3, warm: 1, cold: 0 }),
+		plan: planFromRefs(refs, { rounds: 3, warm: 1, cold: 0, addons }),
 		builds: [build('A'), build('B')],
 		records,
 		discord: { version: '349.0', build: '114462' },
@@ -136,6 +142,22 @@ describe('bench report', () => {
 		expect(report(records)).toContain(
 			"Every measured launch ran its variant's bundle (sha256 read on the device after the launch): **no**.",
 		);
+	});
+
+	test('states the addon mode and the plugin count the loader logged', () => {
+		const core = { identity: { addons: 'none' as const }, work: { pluginsLoaded: 0 } };
+		const records = [launch('A', 300), launch('B', 300)].map((r) => ({
+			...r,
+			identity: { ...r.identity, ...core.identity },
+			work: { ...r.work, ...core.work },
+		}));
+		const text = report(records, ['main', 'main'], 'none');
+
+		expect(text).toContain(
+			'Addons: **none** (core only: no plugin, theme, icon pack or font).',
+		);
+		expect(text).toContain('Addons: none. Loader flags:');
+		expect(text).toContain('the loader logged `Loaded N plugins` with N = 0 (expected 0).');
 	});
 
 	test('converts Hermes and process memory to megabytes', () => {

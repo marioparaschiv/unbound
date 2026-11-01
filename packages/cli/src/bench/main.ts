@@ -15,7 +15,7 @@ import { devicePaths } from '~/bench/device';
 import { acquireLock } from '~/bench/lock';
 import { Vphone } from '~/bench/vphone';
 
-const USAGE = `usage: bun run bench <ref> <ref> [...] [--rounds 3] [--warm 2] [--cold 1] [--idle-ms 25000]
+const USAGE = `usage: bun run bench <ref> <ref> [...] [--rounds 3] [--warm 2] [--cold 1] [--idle-ms 25000] [--addons none|all]
        bun run bench --variants <file.json> [overrides]
        bun run bench --build-only <ref> ...
        bun run bench --restore`;
@@ -40,6 +40,12 @@ function readPlan(values: Record<string, string | boolean | undefined>, refs: st
 		}
 	}
 
+	if (values.addons === 'none' || values.addons === 'all') {
+		protocol.addons = values.addons;
+	} else if (values.addons !== undefined) {
+		throw new Error(`--addons is none or all, not ${String(values.addons)}.\n${USAGE}`);
+	}
+
 	if (typeof values.variants === 'string') {
 		const plan = planFromFile(JSON.parse(readFileSync(values.variants, 'utf8')), protocol);
 
@@ -57,21 +63,27 @@ function readPlan(values: Record<string, string | boolean | undefined>, refs: st
 	return planFromRefs(refs, protocol);
 }
 
-function deviations(origin: string): string[] {
+function deviations(origin: string, plan: Plan): string[] {
 	return [
 		'The loader is built with `ATTESTATION_ENABLED=0` and no bundle signing key. A release has attestation on and verifies the signed bundle manifest; that check runs only when a new bundle downloads, which happens in discarded warm-ups.',
 		`Bundles come from the bench's CDN stand-in at ${origin} (strong ETags, 304s), not builds.unbound.rip.`,
 		'The debugger stays enabled so the samples can run; the client dials the bridge after init and each sample is one eval.',
 		'Hot reload is off (`loader.update.hmr` false, the release default): the loader runs its cached bundle and checks for updates in the background.',
-		"Only the variant's first-party iOS plugins are installed, all enabled, staged as published (Hermes bytecode with its digest in the manifest).",
+		plan.addons === 'all'
+			? "Only the variant's first-party iOS plugins are installed, all enabled, staged as published (Hermes bytecode with its digest in the manifest)."
+			: 'Addons are off: the Plugins, Themes, Icons and Fonts folders are empty, and no theme, icon pack or font override is applied.',
 		'Discord runs on the vphone, an iOS VM, not a phone.',
 	];
 }
 
-function unmeasured(records: RunRecord[]): string[] {
+function unmeasured(records: RunRecord[], plan: Plan): string[] {
 	const lines = ['Unbound module-cache hits and misses: the client does not count them.'];
 
-	if (records.length > 0 && records.every((r) => r.pluginStartMs === null)) {
+	if (
+		records.length > 0 &&
+		plan.addons === 'all' &&
+		records.every((r) => r.pluginStartMs === null)
+	) {
 		lines.push(
 			"Per-plugin `start()` time: no variant's client exposes `unbound.plugins.startDurations`.",
 		);
@@ -99,8 +111,8 @@ function writeOutputs(
 		builds,
 		records,
 		discord,
-		deviations: deviations(origin),
-		unmeasured: unmeasured(records),
+		deviations: deviations(origin, plan),
+		unmeasured: unmeasured(records, plan),
 	};
 
 	writeFileSync(join(out, 'runs.csv'), runsCsv(records));
@@ -120,7 +132,7 @@ async function build(environment: BenchEnvironment, plan: Plan): Promise<Variant
 	const builds: VariantBuild[] = [];
 
 	for (const variant of plan.variants)
-		builds.push(await buildVariant(REPO, environment.cache, variant, print));
+		builds.push(await buildVariant(REPO, environment.cache, variant, plan.addons, print));
 
 	return builds;
 }
@@ -134,6 +146,7 @@ async function main(): Promise<void> {
 			warm: { type: 'string' },
 			cold: { type: 'string' },
 			'idle-ms': { type: 'string' },
+			addons: { type: 'string' },
 			'build-only': { type: 'boolean' },
 			restore: { type: 'boolean' },
 			help: { type: 'boolean' },
@@ -204,11 +217,14 @@ async function main(): Promise<void> {
 			client: bridge.client,
 			discord,
 			idleMs: plan.idleMs,
+			addons: plan.addons,
 			signal: controller.signal,
 		};
 
 		mkdirSync(out, { recursive: true });
-		print(`Discord ${discord.version} (${discord.build}); writing to ${out}`);
+		print(
+			`Discord ${discord.version} (${discord.build}), addons ${plan.addons}; writing to ${out}`,
+		);
 
 		try {
 			await prepareDevice(context, builds, print);

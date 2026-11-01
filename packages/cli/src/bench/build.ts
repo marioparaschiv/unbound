@@ -15,7 +15,7 @@ import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
 import { z } from 'zod';
 
-import type { Variant } from '~/bench/plan';
+import type { AddonMode, Variant } from '~/bench/plan';
 
 /** Release-configured loader: optimised and unsigned, with attestation off so it runs on the vphone. */
 export const LOADER_FLAGS = [
@@ -200,19 +200,26 @@ async function checkout(repo: string, cache: string, sha: string, log: string): 
 	return source;
 }
 
+function withoutPlugins(build: VariantBuild): VariantBuild {
+	return { ...build, pluginIds: [], pluginCount: 0, pluginSetHash: pluginSetHash('', []) };
+}
+
 /**
  * @description Builds one variant as a release would ship it, or reuses the cached build of the same commit and
- * environment. Builds land in a temporary folder renamed into place, so an interrupted build is never reused.
+ * environment. Builds land in a temporary folder renamed into place, so an interrupted build is never reused. With
+ * addons `none` the plugins are not built, and a cached full build is reused without its plugins.
  * @param repo The repository the refs belong to.
  * @param cache The build cache folder.
  * @param variant The variant.
+ * @param addons The run's addon mode.
  * @param progress Prints one line per build step.
- * @returns The build's artifacts and identity.
+ * @returns The build's artifacts and identity; with `none` it names no plugins.
  */
 export async function buildVariant(
 	repo: string,
 	cache: string,
 	variant: Variant,
+	addons: AddonMode,
 	progress: (line: string) => void,
 ): Promise<VariantBuild> {
 	const origin = resolveSource(repo, variant.ref);
@@ -223,15 +230,17 @@ export async function buildVariant(
 		),
 	).slice(0, 8);
 	const dirty = origin.kind === 'checkout' && origin.dirty ? `-dirty-${origin.dirty}` : '';
-	const dir = join(cache, 'builds', `${sha.slice(0, 12)}-${envKey}${dirty}`);
-	const cached = join(dir, BUILD_FILE);
+	const full = join(cache, 'builds', `${sha.slice(0, 12)}-${envKey}${dirty}`);
+	const dir = addons === 'all' ? full : `${full}-core`;
+	const cached = [full, dir].map((folder) => join(folder, BUILD_FILE)).find(existsSync);
 
-	if (existsSync(cached)) {
+	if (cached) {
 		const build = buildSchema.parse(JSON.parse(readFileSync(cached, 'utf8')));
+		const reused = { ...build, variant: variant.name, ref: variant.ref };
 
 		progress(`${variant.name}: reusing the build of ${variant.ref} (${sha.slice(0, 9)})`);
 
-		return { ...build, variant: variant.name, ref: variant.ref };
+		return addons === 'all' ? reused : withoutPlugins(reused);
 	}
 
 	const staging = `${dir}.tmp`;
@@ -254,9 +263,13 @@ export async function buildVariant(
 		cpSync(join(source, 'packages/client/dist', file), join(staging, 'bundle', file));
 	}
 
-	progress(`${variant.name}: client built; building plugins`);
-	await run(['bun', 'run', 'build'], join(source, 'packages/plugins'), log, env);
-	const pluginIds = stagePlugins(source, join(staging, 'plugins'));
+	let pluginIds: string[] = [];
+
+	if (addons === 'all') {
+		progress(`${variant.name}: client built; building plugins`);
+		await run(['bun', 'run', 'build'], join(source, 'packages/plugins'), log, env);
+		pluginIds = stagePlugins(source, join(staging, 'plugins'));
+	}
 
 	await run(
 		['tar', '-cf', join(staging, 'plugins.tar'), '-C', join(staging, 'plugins'), '.'],

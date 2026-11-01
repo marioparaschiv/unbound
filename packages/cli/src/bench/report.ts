@@ -257,9 +257,11 @@ function selfCheck(input: ReportInput): string[] {
 			r.identity.ranBundleSha256 ===
 			builds.find((b) => b.variant === r.identity.variant)?.bundleSha256,
 	);
+	const loaded = [...new Set(measured.map((r) => r.work.pluginsLoaded ?? 'none'))];
 	const lines = [
 		`- ${records.length} launches: ${measured.length} measured, ${discarded.length} discarded warm-ups after a switch, ${invalid.length} invalid.`,
 		`- Every measured launch ran its variant's bundle (sha256 read on the device after the launch): ${ranOwn ? 'yes' : '**no**'}.`,
+		`- Addons ${input.plan.addons}; the loader logged \`Loaded N plugins\` with N = ${loaded.join(', ') || 'nothing measured'}${input.plan.addons === 'none' ? ' (expected 0)' : ''}.`,
 	];
 
 	if (modules.length > 0) {
@@ -299,7 +301,7 @@ export function renderReport(input: ReportInput): string {
 		`Discord ${discord.version} (${discord.build}) on the vphone. Startup times are milliseconds after Discord's JavaScript runtime was created, on the device clock. Memory is sampled after Unbound initialized and ${plan.idleMs / 1000} s after the launch. p is an exact two-sided Mann-Whitney U test against ${plan.variants[0]!.name}.`,
 		`## Verdict\n\n${verdicts(plan, rows).join('\n')}`,
 		[
-			'## Variants\n',
+			`## Variants\n\nAddons: **${plan.addons}**${plan.addons === 'none' ? ' (core only: no plugin, theme, icon pack or font)' : ' (every first-party iOS plugin, enabled)'}.\n`,
 			'| Variant | Ref | Commit | Build env | Bundle sha256 | Plugins | Loader sha256 |',
 			'| --- | --- | --- | --- | --- | --- | --- |',
 			...builds.map(
@@ -311,7 +313,7 @@ export function renderReport(input: ReportInput): string {
 					} | \`${b.bundleSha256.slice(0, 16)}\` | ${b.pluginCount} (\`${b.pluginSetHash.slice(0, 12)}\`) | \`${b.loaderSha256.slice(0, 16)}\` |`,
 			),
 		].join('\n'),
-		`## Protocol\n\n${plan.rounds} rounds. Each round visits every variant once, odd rounds in reverse order. A visit switches the bundle, plugins and loader, discards warm launches until one has run the variant's bundle, then measures ${plan.warm} warm and ${plan.cold} cold launches (cold empties Unbound's module cache first). Loader flags: \`${builds[0]?.loaderFlags ?? ''}\`.`,
+		`## Protocol\n\n${plan.rounds} rounds. Each round visits every variant once, odd rounds in reverse order. A visit switches the bundle, plugins and loader, discards warm launches until one has run the variant's bundle, then measures ${plan.warm} warm and ${plan.cold} cold launches (cold empties Unbound's module cache first). Addons: ${plan.addons}. Loader flags: \`${builds[0]?.loaderFlags ?? ''}\`.`,
 		...KINDS.filter((kind) => rows.some((r) => r.kind === kind)).map(
 			(kind) =>
 				`## ${kind === 'warm' ? 'Warm' : 'Cold'} launches\n\n${metricTable(kind, rows)}`,

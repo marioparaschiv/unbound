@@ -31,8 +31,8 @@ const PROGRESS_METRICS = [
 
 /**
  * @description Puts the device into its bench state: restores a snapshot an interrupted run left, takes a fresh
- * snapshot, then points the loader at the bench server and enables every variant's plugins.
- * @param context The device and bench server.
+ * snapshot, then points the loader at the bench server and sets up the addon mode's settings.
+ * @param context The device, bench server and addon mode.
  * @param builds The variants' builds.
  * @param print Prints progress.
  */
@@ -59,10 +59,13 @@ export async function prepareDevice(
 		benchSettings(
 			await readSettings(vphone, paths),
 			`${server.origin}/unbound.bundle`,
+			context.addons,
 			pluginIds,
 		),
 	);
-	print(`Snapshot taken; the loader now fetches from ${server.origin}.`);
+	print(
+		`Snapshot taken; the loader now fetches from ${server.origin}, addons ${context.addons}.`,
+	);
 }
 
 /**
@@ -166,7 +169,9 @@ export async function runBlocks(
 
 		context.server.serveBundle(join(build.dir, 'bundle'));
 		await context.vphone.stopDiscord();
-		await context.vphone.shell(installScript(build, context.paths, urls.get(build.variant)!));
+		await context.vphone.shell(
+			installScript(build, context.paths, urls.get(build.variant)!, context.addons),
+		);
 
 		for (let warmups = 1; ; warmups++) {
 			const record = await launch({ build, kind: 'warm', discarded: true });

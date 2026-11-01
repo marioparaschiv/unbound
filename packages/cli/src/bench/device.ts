@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { AppInfo, Vphone } from '~/bench/vphone';
 import type { VariantBuild } from '~/bench/build';
 import type { BenchServer } from '~/bench/server';
+import type { AddonMode } from '~/bench/plan';
 
 /** Where the bench keeps its snapshot and staged plugin sets on the device. Removed by every restore. */
 export const DEVICE_BENCH_DIR = '/var/tmp/unbound-bench';
@@ -14,6 +15,8 @@ const TWEAK_DIRS = [
 	'/var/jb/Library/MobileSubstrate/DynamicLibraries',
 ];
 const JB_RESOURCES = '/var/jb/Library/Application Support';
+/** The addon folders the loader scans in the Unbound folder; `none` empties all of them. */
+const ADDON_FOLDERS = ['Plugins', 'Themes', 'Icons', 'Fonts'];
 
 /** The device folders and files a bench run changes; the snapshot holds exactly these. */
 export type DevicePaths = { unbound: string; app: string };
@@ -128,24 +131,39 @@ function child(object: SettingsJson, key: string): SettingsJson {
 }
 
 /**
- * @description Points the loader at the bench server with hot reload off (the release default) and enables every
- * plugin the variants ship. Everything else in the settings is kept.
+ * @description Points the loader at the bench server with hot reload off (the release default). With `all` it
+ * enables every plugin the variants ship; with `none` it applies no theme, icon pack or font. Everything else is kept.
  * @param current The device's settings.
  * @param bundleUrl The bench server's bundle URL.
+ * @param addons The run's addon mode.
  * @param pluginIds Every plugin id across the variants.
  * @returns The new settings.
  */
 export function benchSettings(
 	current: SettingsJson,
 	bundleUrl: string,
+	addons: AddonMode,
 	pluginIds: string[],
 ): SettingsJson {
 	const settings = { ...current };
-	const update = child(child(child(settings, 'unbound'), 'loader'), 'update');
-	const states = child(child(settings, 'plugins'), 'states');
+	const unbound = child(settings, 'unbound');
+	const update = child(child(unbound, 'loader'), 'update');
 
 	update.url = bundleUrl;
 	update.hmr = false;
+
+	if (addons === 'none') {
+		delete unbound['font-states'];
+		delete child(settings, 'themes').applied;
+		const icons = child(settings, 'icons');
+
+		delete icons.applied;
+		delete icons.packs;
+
+		return settings;
+	}
+
+	const states = child(child(settings, 'plugins'), 'states');
 
 	for (const id of pluginIds) states[id] = true;
 
@@ -161,27 +179,50 @@ export function withoutModuleCache(current: SettingsJson): SettingsJson {
 	return Object.fromEntries(Object.entries(current).filter(([key]) => key !== 'unbound::cache'));
 }
 
+function addonScript(
+	build: VariantBuild,
+	paths: DevicePaths,
+	url: (file: string) => string,
+	addons: AddonMode,
+): string[] {
+	if (addons === 'none') {
+		const folders = ADDON_FOLDERS.map((folder) => quote(`${paths.unbound}/${folder}`)).join(
+			' ',
+		);
+
+		return [`rm -rf ${folders}; mkdir -p ${folders}; chown mobile:mobile ${folders}`];
+	}
+
+	const staged = `${DEVICE_BENCH_DIR}/plugins/${build.variant}`;
+	const plugins = quote(`${paths.unbound}/Plugins`);
+
+	return [
+		`if [ ! -f ${staged}/.ready ]; then rm -rf ${staged}; mkdir -p ${staged}; curl -sf ${quote(url('plugins.tar'))} | tar -xf - -C ${staged}; touch ${staged}/.ready; fi`,
+		`rm -rf ${plugins}; cp -R ${staged} ${plugins}; rm -f ${plugins}/.ready; chown -R mobile:mobile ${plugins}`,
+	];
+}
+
 /**
- * @description Shell script that installs a variant's plugins and, when the installed loader differs, its loader.
- * Plugin sets are downloaded once per run and copied in at each switch. Discord must be stopped.
+ * @description Shell script that sets up a variant's addons and, when the installed loader differs, its loader. With
+ * `all`, plugin sets are downloaded once per run and copied in at each switch; with `none`, every addon folder is
+ * emptied. Discord must be stopped.
  * @param build The variant's build.
  * @param paths The device paths.
  * @param url The URLs of the variant's published files.
+ * @param addons The run's addon mode.
  * @returns The script.
  */
 export function installScript(
 	build: VariantBuild,
 	paths: DevicePaths,
 	url: (file: string) => string,
+	addons: AddonMode,
 ): string {
-	const staged = `${DEVICE_BENCH_DIR}/plugins/${build.variant}`;
-	const plugins = quote(`${paths.unbound}/Plugins`);
 	const appResources = quote(`${paths.app}/UnboundResources.bundle`);
 
 	return [
 		'set -e',
-		`if [ ! -f ${staged}/.ready ]; then rm -rf ${staged}; mkdir -p ${staged}; curl -sf ${quote(url('plugins.tar'))} | tar -xf - -C ${staged}; touch ${staged}/.ready; fi`,
-		`rm -rf ${plugins}; cp -R ${staged} ${plugins}; rm -f ${plugins}/.ready; chown -R mobile:mobile ${plugins}`,
+		...addonScript(build, paths, url, addons),
 		`if [ "$(sha256sum ${TWEAK_DIRS[0]}/Unbound.dylib 2>/dev/null | cut -c1-64)" != "${build.loaderSha256}" ]; then`,
 		...TWEAK_DIRS.map(
 			(dir) =>
