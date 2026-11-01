@@ -1,7 +1,7 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 
+import { isSponsoring, perkGraceMs, standingOf } from '~/lib/sponsors/standing';
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
-import { perkGraceMs, standingOf } from '~/lib/sponsors/standing';
 import { account, sponsorship } from '~/db/schema';
 import type { Transaction } from '~/db/database';
 import type { AppContext } from '~/lib/context';
@@ -65,4 +65,36 @@ export async function getUserSponsorship(
 	};
 }
 
-export default { graceMs, upsertSponsorship, getUserSponsorship };
+/**
+ * @description Finds which users sponsor publicly now: their linked GitHub sponsorship is active or in
+ * grace, at any tier, and GitHub lists it as public.
+ * @param ctx The application context.
+ * @param userIds The users.
+ * @returns The ids of those who do.
+ */
+export async function getPublicSponsors(ctx: AppContext, userIds: string[]): Promise<Set<string>> {
+	if (userIds.length === 0) {
+		return new Set();
+	}
+
+	const now = ctx.now();
+	const rows = await ctx.db
+		.select({ userId: account.userId, sponsorship })
+		.from(account)
+		.innerJoin(sponsorship, eq(sponsorship.githubId, account.accountId))
+		.where(
+			and(
+				inArray(account.userId, userIds),
+				eq(account.providerId, 'github'),
+				eq(sponsorship.isPublic, true),
+			),
+		);
+
+	return new Set(
+		rows
+			.filter((row) => isSponsoring(standingOf(row.sponsorship, now, graceMs(ctx.env))))
+			.map((row) => row.userId),
+	);
+}
+
+export default { graceMs, upsertSponsorship, getUserSponsorship, getPublicSponsors };

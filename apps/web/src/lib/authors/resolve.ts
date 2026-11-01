@@ -9,6 +9,7 @@ import {
 	type CachedProfile,
 } from '~/lib/authors/profiles';
 import { getAvatarUrl, getDefaultAvatarUrl, isDiscordId } from '~/lib/discord';
+import { getPublicSponsors } from '~/lib/sponsors/sponsorships';
 import { getVisibleBadges } from '~/lib/sponsors/badges';
 import { DEFAULT_ROLE } from '~/lib/auth/access';
 import type { AppContext } from '~/lib/context';
@@ -32,6 +33,8 @@ export type ResolvedAuthor =
 			userId: string;
 			role: string;
 			badges: PublicBadge[];
+			/** Sponsoring now, publicly on GitHub; a private sponsor is never named. */
+			sponsor: boolean;
 			memberSince: string;
 	  })
 	| (AuthorFace & { kind: 'discord'; discordId: DiscordId; username: string })
@@ -41,7 +44,7 @@ export type IdentifiedAuthor = ResolvedAuthor & { discordId: DiscordId };
 
 export type AuthorResolver = (authors: ManifestAuthor[]) => ResolvedAuthor[];
 
-type LinkedUser = typeof user.$inferSelect & { badges: PublicBadge[] };
+type LinkedUser = typeof user.$inferSelect & { badges: PublicBadge[]; sponsor: boolean };
 
 /**
  * @description Narrows a resolved author to one with a Discord id.
@@ -82,6 +85,7 @@ function pickAuthor(
 			avatarUrl: found ? discordAvatarUrl : (linked.image ?? discordAvatarUrl),
 			role: linked.role ?? DEFAULT_ROLE,
 			badges: linked.badges,
+			sponsor: linked.sponsor,
 			memberSince: linked.createdAt.toISOString(),
 		};
 	}
@@ -123,14 +127,19 @@ async function readLinkedUsers(
 
 	const now = ctx.now();
 	const active = rows.filter((row) => !isBanned(row.user, now));
-	const badges = await getVisibleBadges(
-		ctx,
-		active.map((row) => row.user.id),
-	);
+	const userIds = active.map((row) => row.user.id);
+	const [badges, sponsors] = await Promise.all([
+		getVisibleBadges(ctx, userIds),
+		getPublicSponsors(ctx, userIds),
+	]);
 
 	for (const row of active) {
 		if (!linked.has(row.discordId)) {
-			linked.set(row.discordId, { ...row.user, badges: badges.get(row.user.id) ?? [] });
+			linked.set(row.discordId, {
+				...row.user,
+				badges: badges.get(row.user.id) ?? [],
+				sponsor: sponsors.has(row.user.id),
+			});
 		}
 	}
 
