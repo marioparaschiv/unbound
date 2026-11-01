@@ -25,12 +25,9 @@ function DiscordProfilePreview({ name, image, badges }: DiscordProfilePreviewPro
 					src={image}
 					name={name}
 				/>
-				<div className='flex flex-col gap-1.5'>
-					<Text variant='heading-sm' className='truncate leading-tight!'>
-						{name}
-					</Text>
-					<div className='h-2.5 w-24 rounded-full bg-muted' />
-				</div>
+				<Text variant='heading-sm' className='truncate leading-tight!'>
+					{name}
+				</Text>
 				<UserBadgeList badges={badges} />
 			</div>
 		</div>
