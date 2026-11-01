@@ -26,15 +26,12 @@ import { API_SRC, ROOT } from './paths';
 
 const logger = createLogger('SDK', 'Docs');
 
-/** The gitignored tree the docs are written to; below it, paths match the public bucket keys. */
 export const DOCS_OUT = join(ROOT, 'apps', 'sdk-generator', 'dist');
 
-/** Block tags the SDK's comments use beyond TypeDoc's defaults. An unknown tag warns, which fails the run. */
 export const CUSTOM_BLOCK_TAGS = ['@description'] as const;
 
 const DOCS_PACKAGE: DocsPackage = 'api';
 
-/** Entry points sort by rank, then by name; unlisted modules rank 1. */
 const ENTRY_POINT_RANKS: Record<string, number> = { 'global.d.ts': 0, '_internal.d.ts': 2 };
 
 type ModuleRename = {
@@ -42,7 +39,6 @@ type ModuleRename = {
 	summary: string;
 };
 
-/** Modules whose file name is an implementation detail, documented under a reader-facing name and summary. */
 const MODULE_RENAMES: Record<string, ModuleRename> = {
 	_internal: {
 		name: 'types',
@@ -51,13 +47,13 @@ const MODULE_RENAMES: Record<string, ModuleRename> = {
 	},
 };
 
+const BUNDLER_SUFFIX = /\$\d+(?=\.|$)/g;
+
 const WEAK_REF_URL =
 	'https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/WeakRef';
 
 export type GenerateDocsOptions = {
-	/** The generated SDK tree, `packages/api/src` by default. */
 	apiSrc?: string;
-	/** Where `docs/<package>/` is written, {@link DOCS_OUT} by default. */
 	outDir?: string;
 };
 
@@ -101,7 +97,6 @@ export function createDocsOptions(apiSrc: string): Partial<TypeDocOptions> {
 		// `typeof import('react')` re-exports would otherwise pull all of React into the docs.
 		excludeExternals: true,
 		externalSymbolLinkMappings: { typescript: { WeakRef: WEAK_REF_URL } },
-		// Inlined helpers the generated `.d.ts` keep file-local are referenced but never exported.
 		validation: { notExported: false, invalidLink: true, rewrittenLink: true },
 		treatWarningsAsErrors: true,
 		logLevel: LogLevel.Warn,
@@ -132,7 +127,7 @@ export function renameDocsModules(project: ProjectReflection): void {
 	}
 }
 
-/** The fields shared by the serialized reflections and types `nameModuleReferences` looks at. */
+/** The fields shared by the serialized reflections and types `nameReferences` looks at. */
 type JsonNode = {
 	variant?: string;
 	id?: number;
@@ -157,25 +152,30 @@ function visitJson(value: unknown, onObject: (node: JsonNode) => void) {
 }
 
 /**
- * @description Names each reference to a module after that module, or after its package when external.
- * TypeDoc names a `typeof import('./x')` reference after TypeScript's internal module symbol, `__module`.
+ * @description Names references the way the SDK's source does. A `typeof import('./x')` reference, which
+ * TypeDoc names `__module`, takes its module's name, or its package's when external. A name
+ * dts-bundle-generator suffixed to dodge a clash, such as `Plugin$1` or `React$1.ReactNode`, loses the `$1`.
  * @param project The serialized project, rewritten in place.
  */
-export function nameModuleReferences(project: JSONOutput.ProjectReflection): void {
+export function nameReferences(project: JSONOutput.ProjectReflection): void {
 	const names = new Map<number, string>();
-	const references: JsonNode[] = [];
+	const modules: JsonNode[] = [];
 
 	visitJson(project, (node) => {
 		if (node.variant && typeof node.id === 'number' && typeof node.name === 'string') {
 			names.set(node.id, node.name);
 		}
 
-		if (node.type === 'reference' && node.name === '__module') {
-			references.push(node);
+		if (node.type !== 'reference' || typeof node.name !== 'string') return;
+
+		if (node.name === '__module') {
+			modules.push(node);
 		}
+
+		node.name = node.name.replace(BUNDLER_SUFFIX, '');
 	});
 
-	for (const reference of references) {
+	for (const reference of modules) {
 		const name =
 			typeof reference.target === 'number'
 				? names.get(reference.target)
@@ -230,7 +230,7 @@ export async function generateDocs(
 
 	const json = app.serializer.projectToObject(project, normalizePath(outDir));
 
-	nameModuleReferences(json);
+	nameReferences(json);
 	mkdirSync(dirname(path), { recursive: true });
 	writeFileSync(path, JSON.stringify(json));
 	writeFileSync(manifestPath, `${JSON.stringify(manifest, null, '\t')}\n`);

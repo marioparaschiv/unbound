@@ -15,6 +15,24 @@ type Reflection = {
 
 const FUNCTION_KIND = 64;
 
+// UNKNOWN: walks TypeDoc's serialized JSON, whose nodes have no common shape.
+function referenceNames(value: unknown): string[] {
+	if (Array.isArray(value)) {
+		return value.flatMap(referenceNames);
+	}
+
+	if (typeof value !== 'object' || value === null) {
+		return [];
+	}
+
+	const own =
+		'type' in value && value.type === 'reference' && 'name' in value
+			? [String(value.name)]
+			: [];
+
+	return [...own, ...Object.values(value).flatMap(referenceNames)];
+}
+
 describe('listDocsEntryPoints', () => {
 	test('documents every module, global first and the internal types last', () => {
 		const names = listDocsEntryPoints(API_SRC).map((path) => path.slice(API_SRC.length + 1));
@@ -57,6 +75,8 @@ describe('generateDocs', () => {
 				| undefined;
 
 			expect(json).not.toContain('"__module"');
+			expect(referenceNames(project).filter((name) => /\$\d+(\.|$)/.test(name))).toEqual([]);
+			expect(json).toContain('"name":"Plugin"');
 			expect(assets?.type.name).toBe('assets');
 			expect(assets?.type.target).toBe(
 				project.children?.find((child) => child.name === 'assets')?.id,
