@@ -219,11 +219,14 @@ code {
 }
 
 /* The dot grid is rotated inside the SVG, which has no intrinsic size and so fills the whole box. Rotating
-the element instead needed a square sized from the width, which left tall phone pages half uncovered. */
+the element instead needed a square sized from the width, which left tall phone pages half uncovered.
+Both layers stop at one viewport tall: their gradients are relative to their height, so on a long page
+they would stretch the dots down the whole page. */
 .dotted-bg::before {
 	content: '';
 	position: absolute;
-	inset: 0;
+	inset: 0 0 auto;
+	height: min(100%, 100lvh);
 	background: linear-gradient(to bottom, hsla(0, 0%, 35%, 0.25), transparent);
 	z-index: -1;
 	pointer-events: none;
@@ -233,7 +236,8 @@ the element instead needed a square sized from the width, which left tall phone 
 .dotted-bg::after {
 	content: '';
 	position: absolute;
-	inset: 0;
+	inset: 0 0 auto;
+	height: min(100%, 100lvh);
 	z-index: -1;
 	pointer-events: none;
 	background: linear-gradient(to bottom, transparent, var(--background) 60%);
