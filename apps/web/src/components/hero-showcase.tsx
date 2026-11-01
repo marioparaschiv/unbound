@@ -62,9 +62,9 @@ function HeroShowcase({
 					className='relative w-full'
 				/>
 			</div>
-			{/* The fade reaches past the image so it also covers the glow that the blur spreads outside it. */}
+			{/* The fade spans the glow's 150% and at least the viewport, so on wide screens its solid end never leaves the page's dots boxed off. */}
 			{fade ? (
-				<div className='z-10 absolute -inset-x-1/4 top-0 -bottom-1/4 pointer-events-none hero-fade' />
+				<div className='z-10 absolute left-1/2 w-[max(150%,100vw)] top-0 -bottom-1/4 -translate-x-1/2 pointer-events-none hero-fade' />
 			) : null}
 		</div>
 	);
