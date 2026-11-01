@@ -6,8 +6,8 @@ import { CACHE_KEY } from '~/core/constants';
 export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) & {
 	[CACHE_KEY]?: string;
 	isRaw?: boolean;
-	// Matches only a Discord-authored module, the only kind that reports a file path.
-	isFilePath?: boolean;
+	// The file path a `byFilePath` filter matches. Only a Discord-authored module reports one.
+	filePath?: string;
 };
 
 /**
@@ -45,7 +45,7 @@ export function byFilePath(path: string): MetroFilter {
 
 	filter[CACHE_KEY] = `byFilePath::${path}`;
 	filter.isRaw = true;
-	filter.isFilePath = true;
+	filter.filePath = path;
 
 	return filter;
 }

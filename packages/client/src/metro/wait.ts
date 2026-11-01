@@ -21,6 +21,7 @@ type Waiter = {
 const Logger = createLogger('Metro', 'Wait');
 
 const waitingById = new Map<number, Set<Waiter>>();
+const waitingByPath = new Map<string, Set<Waiter>>();
 const waitingForAny = new Set<Waiter>();
 
 data.listeners.add(onModuleInitialized);
@@ -56,21 +57,17 @@ export function onModuleLoaded(
 		filter,
 		options,
 		onLoad,
-		ids: pendingCachedIds(filter),
+		ids: filter.filePath === void 0 ? pendingCachedIds(filter) : null,
 		done: false,
 		threw: false,
 	};
 
-	if (waiter.ids) {
+	// A module records its file path as it loads, so a path wait is settled by that module alone.
+	if (filter.filePath !== void 0) {
+		waitUnder(waitingByPath, filter.filePath, waiter);
+	} else if (waiter.ids) {
 		for (const id of waiter.ids) {
-			let waiting = waitingById.get(id);
-
-			if (!waiting) {
-				waiting = new Set();
-				waitingById.set(id, waiting);
-			}
-
-			waiting.add(waiter);
+			waitUnder(waitingById, id, waiter);
 		}
 	} else {
 		waitingForAny.add(waiter);
@@ -136,9 +133,38 @@ function pendingCachedIds(filter: MetroFilter) {
 	return ids.size ? ids : null;
 }
 
+function waitUnder<K>(waiting: Map<K, Set<Waiter>>, key: K, waiter: Waiter) {
+	let waiters = waiting.get(key);
+
+	if (!waiters) {
+		waiters = new Set();
+		waiting.set(key, waiters);
+	}
+
+	waiters.add(waiter);
+}
+
+function stopWaitingUnder<K>(waiting: Map<K, Set<Waiter>>, key: K, waiter: Waiter) {
+	const waiters = waiting.get(key);
+
+	waiters?.delete(waiter);
+
+	if (waiters?.size === 0) {
+		waiting.delete(key);
+	}
+}
+
 function onModuleInitialized(exports: MetroExport, id: number) {
 	for (const waiter of waitingForAny) {
 		settle(waiter, exports, id);
+	}
+
+	const path = window.modules.get(id)?.__filePath;
+
+	if (path !== void 0) {
+		for (const waiter of waitingByPath.get(path) ?? []) {
+			settle(waiter, exports, id);
+		}
 	}
 
 	const waiting = waitingById.get(id);
@@ -226,16 +252,16 @@ function forget(waiter: Waiter) {
 	waiter.done = true;
 	waitingForAny.delete(waiter);
 
+	const path = waiter.filter.filePath;
+
+	if (path !== void 0) {
+		stopWaitingUnder(waitingByPath, path, waiter);
+	}
+
 	if (!waiter.ids) return;
 
 	for (const id of waiter.ids) {
-		const waiting = waitingById.get(id);
-
-		waiting?.delete(waiter);
-
-		if (waiting?.size === 0) {
-			waitingById.delete(id);
-		}
+		stopWaitingUnder(waitingById, id, waiter);
 	}
 
 	waiter.ids.clear();

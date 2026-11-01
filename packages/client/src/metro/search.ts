@@ -143,6 +143,7 @@ function onModuleRequire(exports: any, id: number) {
 
 				if (module) {
 					module.__filePath = filePath;
+					data.filePaths.set(filePath, data.importingModuleId);
 				}
 			}
 
@@ -340,12 +341,24 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 		return result.found;
 	}
 
-	// Modules Discord has already initialized come first, so a search forces nothing it does not need.
-	let found = cached ? scan(cached, false) : null;
+	let found = null;
 
-	if (!found && !cacheOnly) {
-		found =
-			(useCache ? scan([...data.cache.keys()], false) : null) ?? scan(Cache.moduleIds, false);
+	if (filter.filePath !== void 0) {
+		// A module records its path as it loads, so an unrecorded path has no loaded module to scan for.
+		const id = data.filePaths.get(filter.filePath);
+
+		if (id !== void 0) {
+			return scan([id], initializeModules);
+		}
+	} else {
+		// Modules Discord has already initialized come first, so a search forces nothing it does not need.
+		found = cached ? scan(cached, false) : null;
+
+		if (!found && !cacheOnly) {
+			found =
+				(useCache ? scan([...data.cache.keys()], false) : null) ??
+				scan(Cache.moduleIds, false);
+		}
 	}
 
 	if (found || !initializeModules) {

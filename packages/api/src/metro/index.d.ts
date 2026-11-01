@@ -194,7 +194,7 @@ export type MetroBulkModuleByProperty<T extends any[]> = {
 export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) & {
 	[CACHE_KEY]?: string;
 	isRaw?: boolean;
-	isFilePath?: boolean;
+	filePath?: string;
 };
 /** The signature of the deprecated `findStore`. */
 export type MetroFindStore = (name: string, options?: MetroStoreOptions) => AnyProps;
