@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 
 import { SidebarCard } from '~/components/addon/sidebar-card';
 import type { ResolvedAuthor } from '~/lib/authors/resolve';
-import UserBadgeList from '~/components/user-badge-list';
 import { authorKey } from '~/components/author-byline';
 import { GHOST_ROW } from '~/components/ghost-row';
 import UserAvatar from '~/components/user-avatar';
@@ -74,9 +73,6 @@ function AuthorRow({ author }: AuthorRowProps) {
 					</Text>
 				) : null}
 			</span>
-			{author.kind === 'user' ? (
-				<UserBadgeList badges={author.badges} className='justify-end shrink-0 max-w-1/2' />
-			) : null}
 		</GhostRow>
 	);
 }
