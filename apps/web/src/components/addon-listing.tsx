@@ -181,7 +181,14 @@ function AddonResults({ type, search, onClearFilters }: AddonResultsProps) {
 						key={addon.id}
 						className='animate-reveal'
 						style={staggerStyle(Math.max(index - batchStart, 0))}
-						details={addon.tags.length > 0 ? <TagList tags={addon.tags} /> : null}
+						footer={
+							addon.tags.length > 0 ? (
+								// Up to two pills; more stack into one that truncates beside the button.
+								<div className='flex-1 min-w-0'>
+									<TagList tags={addon.tags} max={2} />
+								</div>
+							) : null
+						}
 					/>
 				))}
 			</div>

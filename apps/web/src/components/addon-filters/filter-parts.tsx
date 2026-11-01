@@ -72,7 +72,12 @@ type TagDotProps = {
 
 type TagListProps = {
 	tags: AddonTag[];
+	/** How many tags show as their own pills; past it they stack into one pill. All of them when omitted. */
+	max?: number;
 };
+
+const TAG_PILL =
+	'inline-flex items-center gap-1.5 px-2 py-0.5 border border-border rounded-full font-medium text-[11px] text-muted-foreground whitespace-nowrap shrink-0';
 
 const FIELD_ICONS = { tag: IconTag, author: IconUser, updated: IconCalendar };
 
@@ -127,17 +132,36 @@ export function OptionMark({ field, option, size = 'sm' }: OptionMarkProps) {
 
 /**
  * @description The tags under an addon card on one line, each a coloured dot and its name.
- * @param props The tags to show.
+ * @param props The tags to show and how many fit before the rest collapse.
  * @returns The tag row.
  */
-export function TagList({ tags }: TagListProps) {
+export function TagList({ tags, max = tags.length }: TagListProps) {
+	if (tags.length > max) {
+		const labels = tags.map((tag) => tag.label).join(', ');
+
+		// Like the author byline: overlapping dots, then every name, cut with an ellipsis if it runs out.
+		return (
+			<div className='flex min-w-0'>
+				<span className={cn(TAG_PILL, 'min-w-0 shrink')} title={labels}>
+					<span className='flex -space-x-0.5 shrink-0'>
+						{tags.map((tag) => (
+							<TagDot
+								key={tag.id}
+								color={tag.color}
+								className='box-content ring-2 ring-card size-1.5'
+							/>
+						))}
+					</span>
+					<span className='truncate'>{labels}</span>
+				</span>
+			</div>
+		);
+	}
+
 	return (
 		<div className='flex gap-1.5 min-w-0 overflow-hidden'>
 			{tags.map((tag) => (
-				<span
-					key={tag.id}
-					className='inline-flex items-center gap-1.5 px-2 py-0.5 border border-border rounded-full font-medium text-[11px] text-muted-foreground whitespace-nowrap shrink-0'
-				>
+				<span key={tag.id} className={TAG_PILL}>
 					<TagDot color={tag.color} className='size-1.5' />
 					{tag.label}
 				</span>

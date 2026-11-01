@@ -11,13 +11,11 @@ import cn from '~/lib/cn';
 
 type AddonCardProps = ComponentProps<typeof Card> & {
 	addon: MarketplaceAddon;
-	/** Rendered under the description, such as the addon's tags. */
-	details?: ReactNode;
-	/** Rendered at the start of the footer, beside the install button. */
+	/** Rendered at the start of the footer, beside the install button, such as the addon's tags. */
 	footer?: ReactNode;
 };
 
-function AddonCard({ addon, details, footer, className, ...props }: AddonCardProps) {
+function AddonCard({ addon, footer, className, ...props }: AddonCardProps) {
 	return (
 		<Card
 			className={cn(
@@ -49,11 +47,10 @@ function AddonCard({ addon, details, footer, className, ...props }: AddonCardPro
 					v{addon.version}
 				</Text>
 			</CardHeader>
-			<CardContent className='flex flex-col gap-3 px-(--card-pad) pt-3 pb-0'>
+			<CardContent className='px-(--card-pad) pt-3 pb-0'>
 				<Text variant='text-sm' color='muted' className='line-clamp-2'>
 					{addon.description}
 				</Text>
-				{details}
 			</CardContent>
 			<CardFooter className='flex flex-wrap items-center gap-3 mt-auto px-(--card-pad) pt-4 pb-(--card-pad)'>
 				{footer}
