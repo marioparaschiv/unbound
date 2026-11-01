@@ -116,11 +116,36 @@ static void compiledPluginsLeaveTheirSourceOnDisk()
     std::filesystem::remove_all(root);
 }
 
+static void firstScanAdoptsThePrescan()
+{
+    const auto root = makeTemporaryDirectory();
+    write(root / "Plugins" / "first" / "manifest.json", R"({"id":"a.first","main":"index.js"})");
+    write(root / "Plugins" / "first" / "index.js", "first");
+
+    loader::AddonState state;
+    state.prescan(root.string(), 98);
+    state.scan(root.string(), 98);
+    assert(state.plugins().size() == 1);
+
+    write(root / "Plugins" / "second" / "manifest.json", R"({"id":"a.second","main":"index.js"})");
+    write(root / "Plugins" / "second" / "index.js", "second");
+    state.prescan(root.string(), 98);
+    state.scan(root.string(), 98);
+    assert(state.plugins().size() == 2);
+
+    loader::AddonState other;
+    other.prescan(root.string(), 96);
+    other.scan(root.string(), 98);
+    assert(other.plugins().size() == 2);
+    std::filesystem::remove_all(root);
+}
+
 int main()
 {
     pluginEntriesStayInsideTheirFolder();
     pluginBytecodeMatchesItsManifest();
     compiledPluginsLeaveTheirSourceOnDisk();
+    firstScanAdoptsThePrescan();
 
     const auto root = makeTemporaryDirectory();
 

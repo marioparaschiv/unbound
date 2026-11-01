@@ -330,16 +330,61 @@ nlohmann::json scanFonts(const std::string &documents)
     return fonts;
 }
 
+AddonState::Scanned AddonState::scanAll(const std::string &documents, uint32_t bytecodeVersion)
+{
+    return {documents, bytecodeVersion, scanPlugins(documents, bytecodeVersion),
+            scanThemes(documents), scanFonts(documents)};
+}
+
+void AddonState::prescan(const std::string &documents, uint32_t bytecodeVersion)
+{
+    std::lock_guard<std::mutex> lock(prescanMutex_);
+    if (scanned_ || prescan_.valid())
+    {
+        return;
+    }
+    prescan_ = std::async(std::launch::async, scanAll, documents, bytecodeVersion).share();
+}
+
+bool AddonState::adoptPrescan(const std::string &documents, uint32_t bytecodeVersion)
+{
+    std::shared_future<Scanned> pending;
+    {
+        std::lock_guard<std::mutex> lock(prescanMutex_);
+        bool                        first = !scanned_;
+        scanned_                          = true;
+        if (!first || !prescan_.valid())
+        {
+            return false;
+        }
+        pending  = std::move(prescan_);
+        prescan_ = {};
+    }
+
+    const Scanned &scanned = pending.get();
+    if (scanned.documents != documents || scanned.bytecodeVersion != bytecodeVersion)
+    {
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    plugins_ = scanned.plugins;
+    themes_  = scanned.themes;
+    fonts_   = scanned.fonts;
+    return true;
+}
+
 void AddonState::scan(const std::string &documents, uint32_t bytecodeVersion)
 {
-    nlohmann::json plugins = scanPlugins(documents, bytecodeVersion);
-    nlohmann::json themes  = scanThemes(documents);
-    nlohmann::json fonts   = scanFonts(documents);
+    if (adoptPrescan(documents, bytecodeVersion))
+    {
+        return;
+    }
+    Scanned scanned = scanAll(documents, bytecodeVersion);
 
     std::lock_guard<std::mutex> lock(mutex_);
-    plugins_ = std::move(plugins);
-    themes_  = std::move(themes);
-    fonts_   = std::move(fonts);
+    plugins_ = std::move(scanned.plugins);
+    themes_  = std::move(scanned.themes);
+    fonts_   = std::move(scanned.fonts);
 }
 
 nlohmann::json AddonState::plugins() const

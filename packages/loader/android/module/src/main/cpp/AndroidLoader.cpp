@@ -114,6 +114,7 @@ void AndroidLoader::start()
         [this](double seconds, std::function<void()> work) {
             runAfter(seconds, std::move(work));
         });
+    addons_.prescan(configuration_.documents, runtimeBytecodeVersion());
 }
 
 std::string AndroidLoader::toolbox(const std::string &action, const std::string &argument)

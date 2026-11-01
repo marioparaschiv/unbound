@@ -213,6 +213,12 @@ nlohmann::json UnboundFontCatalog()
     loader::openLogFile(toStdString(FileSystem.documents));
 }
 
++ (void)prescanAddons
+{
+    UnboundAddonState().prescan(toStdString(FileSystem.documents),
+                                [CoreBridge mainBundleBytecodeVersion]);
+}
+
 + (void)scanAddons
 {
     UnboundAddonState().scan(toStdString(FileSystem.documents),

@@ -250,6 +250,9 @@ static void prepareLoading(id instance)
         return;
     }
 
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0),
+                   ^{ [CoreBridge prescanAddons]; });
+
 #if ATTESTATION_ENABLED
     dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
         BOOL verified = [Utilities isVerifiedBuild];
