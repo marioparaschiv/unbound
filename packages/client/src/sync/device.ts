@@ -5,13 +5,9 @@ import {
 	SYNC_KINDS,
 	SYNC_LOCAL_KEYS,
 	SYNC_LOCAL_STORE_PREFIX,
+	syncSettingsStoreSchema,
 } from '@unbound-app/contracts/sync';
-import type {
-	SyncDocument,
-	SyncKind,
-	SyncKindDocument,
-	SyncSettingsStore,
-} from '@unbound-app/contracts/sync';
+import type { SyncDocument, SyncKind, SyncKindDocument } from '@unbound-app/contracts/sync';
 import { createLogger } from '@unbound-app/logger';
 
 import { getBucket, snapshot } from '~/storage/api';
@@ -125,10 +121,6 @@ function collectKind(kind: SyncKind): SyncKindDocument {
 	return { installs, applied: known ? applied : null };
 }
 
-function clone(store: SyncSettingsStore): SyncSettingsStore {
-	return structuredClone(store);
-}
-
 /**
  * @description Reads this device's side of Sync: the URL, enabled and applied state of every
  * addon installed from a URL, the core settings minus device-local keys, and those addons' settings.
@@ -152,7 +144,8 @@ export function collectLocalDocument(): SyncDocument {
 		}
 
 		if (name === SYNC_CORE_STORE) {
-			const core = clone(store);
+			// Parsing copies the store; Hermes has no `structuredClone`.
+			const core = syncSettingsStoreSchema.parse(store);
 
 			for (const key of LOCAL_KEYS) {
 				delete core[key];
@@ -160,7 +153,7 @@ export function collectLocalDocument(): SyncDocument {
 
 			synced[name] = core;
 		} else if (ids.has(name)) {
-			synced[name] = clone(store);
+			synced[name] = syncSettingsStoreSchema.parse(store);
 		}
 	}
 

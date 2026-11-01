@@ -5,17 +5,16 @@ import {
 	SYNC_STORE,
 	deleteData,
 	getMode,
-	getSession,
 	resolveFirstSync,
 	setEnabled,
 	setMode,
-	signIn,
-	signOut,
 	now,
 } from '~/sync/api';
 import type { SyncStrategy } from '~/sync/merge';
+import SignInRow from '~/ui/account/sign-in-row';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
+import { useAccount } from '~/account/api';
 import type { SyncMode } from '~/sync/api';
 import { useBucket } from '~/storage/api';
 import Page from '~/ui/components/page';
@@ -95,7 +94,7 @@ function CloudSyncPage() {
 	const styles = useStyles();
 	const settings = useBucket(SYNC_STORE);
 	const [busy, setBusy] = useState(false);
-	const session = getSession();
+	const account = useAccount();
 
 	function track(task: Promise<boolean>) {
 		setBusy(true);
@@ -112,36 +111,15 @@ function CloudSyncPage() {
 		});
 	}
 
-	if (!session) {
+	if (!account) {
 		return (
 			<Page>
-				<Discord.TableRowGroup
-					helperText={
-						settings.get<string | null>('lastError', null) ??
-						messages.UNBOUND_CLOUD_SYNC_SIGN_IN_DESC
-					}
-				>
-					<Discord.TableRow
-						label={messages.UNBOUND_CLOUD_SYNC_SIGN_IN}
-						icon={<Discord.TableRowIcon source={icons.CloudIcon} />}
-						arrow
-						disabled={busy}
-						onPress={() => track(signIn())}
-					/>
+				<Discord.TableRowGroup helperText={messages.UNBOUND_CLOUD_SYNC_SIGN_IN_DESC}>
+					<SignInRow />
 				</Discord.TableRowGroup>
 			</Page>
 		);
 	}
-
-	const signOutGroup = (
-		<Discord.TableRowGroup>
-			<Discord.TableRow
-				label={messages.UNBOUND_CLOUD_SYNC_SIGN_OUT}
-				icon={<Discord.TableRowIcon source={icons.DoorExitIcon} />}
-				onPress={signOut}
-			/>
-		</Discord.TableRowGroup>
-	);
 
 	if (settings.get('pendingChoice', false)) {
 		return (
@@ -162,7 +140,6 @@ function CloudSyncPage() {
 						/>
 					))}
 				</Discord.TableRowGroup>
-				{signOutGroup}
 			</Page>
 		);
 	}
@@ -200,8 +177,6 @@ function CloudSyncPage() {
 					/>
 				))}
 			</Discord.TableRadioGroup>
-
-			{signOutGroup}
 
 			<Discord.TableRowGroup>
 				<Discord.TableRow

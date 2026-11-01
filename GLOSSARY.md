@@ -58,6 +58,12 @@ _Avoid_: Store
 An event Discord's dispatcher sends to every Flux store, such as `MESSAGE_CREATE`.
 _Avoid_: Event, dispatch
 
+### Account
+
+**Account**:
+The Unbound account a user signs in to with Discord, shared by every feature that talks to unbound.rip, such as Sync. The client keeps one session for it.
+_Avoid_: Sync account, login, profile
+
 ### Sync
 
 **Sync**:

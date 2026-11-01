@@ -1,7 +1,8 @@
 import { SYNC_LOCAL_STORE_PREFIX } from '@unbound-app/contracts/sync';
 import debounce from '@unbound-app/utils/debounce';
 
-import { getMode, isApplying, isEnabled, now } from '~/sync/api';
+import { connect, disconnect, getMode, isApplying, isEnabled, now } from '~/sync/api';
+import { off as offAccount, on as onAccount } from '~/account/api';
 import type { SectionEntry } from '~/settings/section';
 import CloudSyncPage from '~/ui/settings/cloud-sync';
 import { Screens } from '~/core/constants';
@@ -22,7 +23,11 @@ const scheduleSync = debounce(() => {
 	void now();
 }, SYNC_DELAY_MS);
 
-/** Syncs once addons have loaded, then after local changes settle. */
+function onSignedIn() {
+	void connect();
+}
+
+/** Syncs once addons have loaded, then after local changes settle, and follows the account signing in and out. */
 export function start() {
 	stopped = false;
 
@@ -32,6 +37,9 @@ export function start() {
 			void now();
 		}
 	});
+
+	onAccount('signedIn', onSignedIn);
+	onAccount('signedOut', disconnect);
 
 	// Install sources, enabled and applied state all live in settings, so one listener sees every change.
 	unsubscribe = onChange(
@@ -44,6 +52,8 @@ export function start() {
 export function stop() {
 	stopped = true;
 	clearTimeout(pending);
+	offAccount('signedIn', onSignedIn);
+	offAccount('signedOut', disconnect);
 	unsubscribe?.();
 	unsubscribe = null;
 }
@@ -52,7 +62,8 @@ export const cloudSyncSection: SectionEntry = {
 	key: Screens.Sync,
 	titleKey: 'UNBOUND_CLOUD_SYNC',
 	component: CloudSyncPage,
-	icon: 'CloudIcon',
+	// Listed on the General page, so the overview stays short.
+	hidden: true,
 };
 
 export default { start, stop, cloudSyncSection };
