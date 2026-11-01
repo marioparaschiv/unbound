@@ -1,9 +1,12 @@
 #include "LoaderCrashGuard.h"
 
+#include <fcntl.h>
 #include <map>
 #include <mutex>
 #include <optional>
 #include <set>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "LoaderCrashHandler.h"
 #include "LoaderFiles.h"
@@ -148,25 +151,74 @@ std::vector<CrashedAddon> AddonCrashGuard::recoverFromPreviousLaunch() const
     return {};
 }
 
+class StartMarker
+{
+public:
+    bool write(const std::string &directory, const std::string &path, const std::string &id,
+               const std::string &record)
+    {
+        if (!reopenIfUnlinked(directory, path))
+        {
+            return false;
+        }
+        bool written = pwrite(descriptor_, record.data(), record.size(), 0) ==
+                           static_cast<ssize_t>(record.size()) &&
+                       ftruncate(descriptor_, static_cast<off_t>(record.size())) == 0;
+        id_          = written ? id : std::string();
+        return written;
+    }
+
+    bool clear(const std::string &id)
+    {
+        if (id_.empty() || id_ != id || descriptor_ < 0)
+        {
+            return false;
+        }
+        id_.clear();
+        return ftruncate(descriptor_, 0) == 0;
+    }
+
+private:
+    bool reopenIfUnlinked(const std::string &directory, const std::string &path)
+    {
+        struct stat status = {};
+        if (descriptor_ >= 0 && fstat(descriptor_, &status) == 0 && status.st_nlink > 0)
+        {
+            return true;
+        }
+        if (descriptor_ >= 0)
+        {
+            close(descriptor_);
+        }
+        id_.clear();
+        createDirectories(directory);
+        descriptor_ = open(path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+        return descriptor_ >= 0;
+    }
+
+    int         descriptor_ = -1;
+    std::string id_;
+};
+
+static std::mutex                         gStartMarkersMutex;
+static std::map<std::string, StartMarker> gStartMarkers;
+
 bool AddonCrashGuard::beginStart(const std::string &id, const std::string &name) const
 {
     if (id.empty())
     {
         return false;
     }
-    createDirectories(directory_);
-    return writeTextFileAtomically(startingPath(),
-                                   recordJSON({id, name.empty() ? id : name}, 0).dump());
+    std::string                 record = recordJSON({id, name.empty() ? id : name}, 0).dump();
+    std::lock_guard<std::mutex> lock(gStartMarkersMutex);
+    return gStartMarkers[startingPath()].write(directory_, startingPath(), id, record);
 }
 
 bool AddonCrashGuard::finishStart(const std::string &id) const
 {
-    std::optional<CrashRecord> starting = readRecord(startingPath());
-    if (!starting || starting->addon.id != id)
-    {
-        return false;
-    }
-    return removeFile(startingPath());
+    std::lock_guard<std::mutex> lock(gStartMarkersMutex);
+    auto                        marker = gStartMarkers.find(startingPath());
+    return marker != gStartMarkers.end() && marker->second.clear(id);
 }
 
 std::vector<CrashedAddon> crashDisabledAddons(const std::string &directory)
@@ -186,13 +238,29 @@ std::vector<CrashedAddon> crashDisabledAddons(const std::string &directory)
 
 bool armAddonCrashAttribution(const std::string &directory)
 {
+    static std::mutex            mutex;
+    static std::set<std::string> armed;
+
     if (directory.empty())
     {
         return false;
     }
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        if (armed.count(directory))
+        {
+            return true;
+        }
+    }
     crashDisabledAddons(directory);
     createDirectories(directory);
-    return installAddonCrashHandler(joinPath(directory, AddonCrashGuard::kRunningFile));
+    bool installed = installAddonCrashHandler(joinPath(directory, AddonCrashGuard::kRunningFile));
+    if (installed)
+    {
+        std::lock_guard<std::mutex> lock(mutex);
+        armed.insert(directory);
+    }
+    return installed;
 }
 
 std::vector<CrashedAddon> takeUnannouncedCrashDisabledAddons(const std::string &directory)
