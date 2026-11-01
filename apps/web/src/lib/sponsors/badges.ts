@@ -13,6 +13,7 @@ import { account, perkClaim, sponsorship, user } from '~/db/schema';
 import { findBadgeLabelProblem } from '~/lib/sponsors/moderation';
 import { requirePermission } from '~/lib/api/caller';
 import { standingOf } from '~/lib/sponsors/standing';
+import { formatPrice } from '~/lib/sponsors/price';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
@@ -93,7 +94,7 @@ export async function claimBadge(
 	if (!canClaimPerk(PERK_ID, standing)) {
 		throw new ApiError(
 			'sponsorship_required',
-			'A monthly GitHub sponsorship of $1 or more unlocks a custom badge.',
+			`A monthly GitHub sponsorship of ${formatPrice(PERKS[PERK_ID].minimumMonthlyCents)} or more unlocks a custom badge.`,
 		);
 	}
 

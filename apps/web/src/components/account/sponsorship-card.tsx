@@ -4,6 +4,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
 import { accountOverviewQuery } from '~/queries/account/account';
 import type { SponsorOverview } from '~/lib/sponsors/overview';
+import { formatPrice } from '~/lib/sponsors/price';
 import { Button } from '~/components/ui/button';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
@@ -25,8 +26,6 @@ type SponsorshipDetailsProps = {
 
 // Fixed to UTC so the server render and the hydrated page print the same day.
 const DATE_FORMAT = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeZone: 'UTC' });
-
-const PRICE_FORMAT = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 const STANDING_LABELS: Record<SponsorOverview['standing'], StandingLabel> = {
 	none: { label: 'Not sponsoring', variant: 'default' },
@@ -50,7 +49,7 @@ function SponsorCta({ url, label }: SponsorCtaProps) {
 }
 
 function describeAmount(sponsorship: SponsorshipDetailsProps['sponsorship']): string {
-	const price = PRICE_FORMAT.format(sponsorship.monthlyPriceCents / 100);
+	const price = formatPrice(sponsorship.monthlyPriceCents);
 
 	return sponsorship.oneTime ? `${price} one time` : `${price} a month`;
 }

@@ -7,13 +7,13 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
+import { account, perkClaim, sponsorship, user } from '~/db/schema';
 import listUserBadgesEndpoint from '~/endpoints/list-user-badges';
 import removeMyBadgeEndpoint from '~/endpoints/remove-my-badge';
 import restoreBadgeEndpoint from '~/endpoints/restore-badge';
 import revokeBadgeEndpoint from '~/endpoints/revoke-badge';
 import setMyBadgeEndpoint from '~/endpoints/set-my-badge';
 import { getVisibleBadges } from '~/lib/sponsors/badges';
-import { account, perkClaim, user } from '~/db/schema';
 import { isPerkUnlocked } from '~/lib/sponsors/perks';
 import { standingOf } from '~/lib/sponsors/standing';
 import type { AppContext } from '~/lib/context';
@@ -108,6 +108,12 @@ function publicBadges(userId: string) {
 	});
 }
 
+async function storedClaimCount(userId: string) {
+	const rows = await ctx.db.select().from(perkClaim).where(eq(perkClaim.userId, userId));
+
+	return rows.length;
+}
+
 function row(overrides: Partial<Sponsorship>): Sponsorship {
 	return {
 		githubId: '1',
@@ -138,9 +144,10 @@ describe('standing and eligibility', () => {
 	test.each([
 		['no sponsorship', undefined, NOW, 'none', false],
 		['active monthly', row({}), NOW, 'active', true],
-		['active at exactly $1', row({ monthlyPriceCents: 100 }), NOW, 'active', true],
-		['active below $1', row({ monthlyPriceCents: 99 }), NOW, 'active', false],
-		['one-time', row({ oneTime: true }), NOW, 'active', false],
+		['active at exactly $5', row({ monthlyPriceCents: 500 }), NOW, 'active', true],
+		['active at $4.99', row({ monthlyPriceCents: 499 }), NOW, 'active', false],
+		['active at $1', row({ monthlyPriceCents: 100 }), NOW, 'active', false],
+		['one-time $10', row({ oneTime: true, monthlyPriceCents: 1000 }), NOW, 'active', false],
 		[
 			'pending, before it takes effect',
 			row({ state: 'pending_cancellation', endsAt: ends }),
@@ -161,6 +168,13 @@ describe('standing and eligibility', () => {
 			new Date(ends.getTime() + GRACE - 1),
 			'grace',
 			true,
+		],
+		[
+			'cancelled $1, within grace',
+			row({ state: 'cancelled', endsAt: ends, monthlyPriceCents: 100 }),
+			new Date(ends.getTime() + DAY),
+			'grace',
+			false,
 		],
 		[
 			'cancelled, grace over',
@@ -198,12 +212,13 @@ describe('claiming a badge', () => {
 		expect(await publicBadges(sponsor.userId)).toEqual({ badges: [] });
 	});
 
-	test('needs a linked, active, recurring sponsorship of at least $1', async () => {
+	test('needs a linked, active, recurring sponsorship of at least $5', async () => {
 		const ineligible = await Promise.all([
 			signUp({ github: false }),
 			signUp({ sponsorship: null }),
 			signUp({ sponsorship: { oneTime: true } }),
-			signUp({ sponsorship: { monthlyPriceCents: 50 } }),
+			signUp({ sponsorship: { monthlyPriceCents: 100, tierName: '$1 a month' } }),
+			signUp({ sponsorship: { monthlyPriceCents: 499 } }),
 			signUp({ sponsorship: { state: 'cancelled', endsAt: new Date(NOW.getTime() - DAY) } }),
 		]);
 
@@ -422,6 +437,29 @@ describe('getVisibleBadges', () => {
 		const badges = await getVisibleBadges(ctx, [banned.userId, expired.userId]);
 
 		expect([...badges.keys()]).toEqual([expired.userId]);
+	});
+
+	test('keeps a badge stored below $5 but hides it until the tier reaches $5 again', async () => {
+		const sponsor = await signUp();
+		const githubId = sponsor.userId;
+
+		await setBadge(sponsor.client);
+		await ctx.db
+			.update(sponsorship)
+			.set({ monthlyPriceCents: 100 })
+			.where(eq(sponsorship.githubId, githubId));
+
+		expect(await publicBadges(sponsor.userId)).toEqual({ badges: [] });
+		expect(await storedClaimCount(sponsor.userId)).toBe(1);
+
+		await ctx.db
+			.update(sponsorship)
+			.set({ monthlyPriceCents: 500 })
+			.where(eq(sponsorship.githubId, githubId));
+
+		expect(await publicBadges(sponsor.userId)).toEqual({
+			badges: [{ ...BADGE, kind: 'custom-badge' }],
+		});
 	});
 
 	test('hides the badge once GitHub is unlinked', async () => {

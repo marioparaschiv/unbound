@@ -11,6 +11,8 @@ export type PerkStatus = {
 	id: PerkId;
 	name: string;
 	description: string;
+	/** The smallest recurring monthly tier that unlocks the perk, in cents. */
+	minimumMonthlyCents: number;
 	unlocked: boolean;
 };
 
@@ -44,6 +46,7 @@ export async function getSponsorOverview(
 		id,
 		name: PERKS[id].name,
 		description: PERKS[id].description,
+		minimumMonthlyCents: PERKS[id].minimumMonthlyCents,
 		unlocked: isPerkUnlocked(id, standing),
 	}));
 
