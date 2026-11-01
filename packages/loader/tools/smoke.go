@@ -215,11 +215,13 @@ func smokeSettings(plugins []smokePlugin, debuggerAddress, bundleURL string) ([]
 	for _, plugin := range plugins {
 		states[plugin.id] = true
 	}
+	loader := map[string]any{"discordUpdateCheck": false}
+	if bundleURL != "" {
+		loader["update"] = map[string]any{"url": bundleURL}
+	}
 	unbound := map[string]any{
 		"debugger": map[string]any{"enabled": true, "address": debuggerAddress},
-	}
-	if bundleURL != "" {
-		unbound["loader"] = map[string]any{"update": map[string]any{"url": bundleURL}}
+		"loader":   loader,
 	}
 	return json.MarshalIndent(map[string]any{
 		"unbound": unbound,
