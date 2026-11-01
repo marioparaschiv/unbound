@@ -68,7 +68,9 @@ func TestHostFunctionsOnlyComeFromTheGuardedFactory(t *testing.T) {
 		filepath.Join(root, "android", "module", "src", "main", "cpp"),
 	}
 	hostObjectAccessor := regexp.MustCompile(`(?s)class \w+[^{;]*:\s*public\s+(facebook::)?jsi::HostObject\s*\{(.*?)\n\s*\};`)
-	accessor := regexp.MustCompile(`\b(get|set|getPropertyNames)\s*\(\s*(facebook::)?jsi::Runtime`)
+	unguardedAccessor := regexp.MustCompile(`\b(set|getPropertyNames)\s*\(\s*(facebook::)?jsi::Runtime`)
+	getter := regexp.MustCompile(`(?s)\bget\s*\(\s*(facebook::)?jsi::Runtime[^{]*\{\s*return loader::native::guard\(`)
+	anyGetter := regexp.MustCompile(`\bget\s*\(\s*(facebook::)?jsi::Runtime`)
 	for _, directory := range directories {
 		err := filepath.WalkDir(directory, func(path string, entry fs.DirEntry, err error) error {
 			if err != nil || entry.IsDir() {
@@ -86,7 +88,8 @@ func TestHostFunctionsOnlyComeFromTheGuardedFactory(t *testing.T) {
 				t.Errorf("%s creates a host function outside loader::native::makeFunction", path)
 			}
 			for _, match := range hostObjectAccessor.FindAllStringSubmatch(text, -1) {
-				if accessor.MatchString(match[2]) {
+				if unguardedAccessor.MatchString(match[2]) ||
+					len(anyGetter.FindAllString(match[2], -1)) != len(getter.FindAllString(match[2], -1)) {
 					t.Errorf("%s declares a host object accessor that can throw into Hermes", path)
 				}
 			}
