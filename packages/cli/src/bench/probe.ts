@@ -70,9 +70,23 @@ export function idleProbe(): string {
 })()`;
 }
 
+/**
+ * @description Device code for the last sample: forces a full GC, then reads the Hermes heap counters, so
+ * `js_allocatedBytes` counts only live objects. Without a global `gc` it returns `null` counters.
+ * @returns The JavaScript, which returns JSON.
+ */
+export function gcProbe(): string {
+	return `(function () {
+	var launch = globalThis.__unboundBenchLaunch === undefined ? null : globalThis.__unboundBenchLaunch;
+	if (typeof gc !== 'function') return JSON.stringify({ launch: launch, hermes: null });
+	gc();
+	return JSON.stringify({ launch: launch, hermes: ${HERMES_STATS} });
+})()`;
+}
+
 const hermesSchema = z.record(z.string(), z.number()).nullable();
 
-export const initSampleSchema = z.object({ launch: z.string().nullable(), hermes: hermesSchema });
+export const hermesSampleSchema = z.object({ launch: z.string().nullable(), hermes: hermesSchema });
 
 export const idleSampleSchema = z.object({
 	launch: z.string().nullable(),
@@ -115,7 +129,8 @@ export default {
 	DISCORD_MARKS,
 	initProbe,
 	idleProbe,
-	initSampleSchema,
+	gcProbe,
+	hermesSampleSchema,
 	idleSampleSchema,
 	relativeMarks,
 };

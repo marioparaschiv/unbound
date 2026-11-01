@@ -84,9 +84,15 @@ export const METRICS: Metric[] = [
 	},
 	{
 		key: 'allocated_idle_mb',
-		label: 'Hermes live allocations at idle',
+		label: 'Hermes allocations at idle, live and garbage',
 		unit: 'MB',
 		read: (r) => hermes(r.memory.idle, 'js_allocatedBytes', 1 / MEGABYTE),
+	},
+	{
+		key: 'live_idle_mb',
+		label: 'Hermes live heap at idle, after a forced GC',
+		unit: 'MB',
+		read: (r) => hermes(r.memory.idleAfterGc, 'js_allocatedBytes', 1 / MEGABYTE),
 	},
 	{
 		key: 'gc_count_idle',

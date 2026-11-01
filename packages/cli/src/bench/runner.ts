@@ -25,6 +25,7 @@ const PROGRESS_METRICS = [
 	'initialized_ms',
 	'discord_fcp_ms',
 	'heap_idle_mb',
+	'live_idle_mb',
 	'footprint_idle_mb',
 	'modules_idle',
 ];

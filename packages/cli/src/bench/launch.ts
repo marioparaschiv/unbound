@@ -11,10 +11,11 @@ import {
 	type DevicePaths,
 } from '~/bench/device';
 import {
+	gcProbe,
+	hermesSampleSchema,
 	idleProbe,
 	idleSampleSchema,
 	initProbe,
-	initSampleSchema,
 	relativeMarks,
 	type IdleSample,
 } from '~/bench/probe';
@@ -232,13 +233,14 @@ export async function runLaunch(context: LaunchContext, spec: LaunchSpec): Promi
 	let init: MemorySample | null = null;
 	let idle: IdleSample | undefined;
 	let idleMemory: MemorySample | null = null;
+	let gcMemory: MemorySample | null = null;
 
 	if (!problem) {
 		const pid = (await vphone.discord())?.pid;
 		const initAnswer = await sample(
 			context,
 			initProbe(launchId),
-			initSampleSchema,
+			hermesSampleSchema,
 			(v) => v.launch === null || v.launch === launchId,
 			Date.now() + INIT_SAMPLE_TIMEOUT_MS,
 		);
@@ -268,6 +270,21 @@ export async function runLaunch(context: LaunchContext, spec: LaunchSpec): Promi
 
 		idleMemory = idle ? await memory(context, idle.hermes, launchedAt) : null;
 
+		// After every other sample, because the forced GC shrinks the heap and footprint they read.
+		const gcAnswer = await sample(
+			context,
+			gcProbe(),
+			hermesSampleSchema,
+			(v) => v.launch === launchId,
+			Date.now() + EVAL_TIMEOUT_MS,
+		);
+
+		if (typeof gcAnswer === 'string') {
+			problems.push(`no sample after a forced GC: ${gcAnswer}`);
+		} else {
+			gcMemory = await memory(context, gcAnswer.hermes, launchedAt);
+		}
+
 		if ((await vphone.discord())?.pid !== pid) {
 			problems.push('Discord restarted between the samples (crash)');
 		}
@@ -295,7 +312,7 @@ export async function runLaunch(context: LaunchContext, spec: LaunchSpec): Promi
 		},
 		startup: log.milestones,
 		discord: relativeMarks(idle?.discord, log.runtimeEpochMs),
-		memory: { init, idle: idleMemory },
+		memory: { init, idle: idleMemory, idleAfterGc: gcMemory },
 		work: {
 			modulesInitialized: idle?.modulesInitialized ?? null,
 			modulesTotal: idle?.modulesTotal ?? null,

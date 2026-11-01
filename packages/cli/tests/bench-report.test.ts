@@ -60,6 +60,12 @@ function launch(
 				footprintBytes: 500 * 1024 * 1024,
 				residentBytes: null,
 			},
+			idleAfterGc: {
+				atMs: 25_100,
+				hermes: { js_allocatedBytes: 40 * 1024 * 1024 },
+				footprintBytes: 480 * 1024 * 1024,
+				residentBytes: null,
+			},
 		},
 		work: {
 			modulesInitialized: 4700,
@@ -134,6 +140,14 @@ describe('bench report', () => {
 		]);
 		expect(report(records)).toContain('is invalid: never reached initialized within 30 s.');
 		expect(runsCsv(records).trim().split('\n')).toHaveLength(5);
+	});
+
+	test('reports the live heap from the sample after the forced GC', () => {
+		const records = [launch('A', 300), launch('B', 300)];
+
+		expect(report(records)).toMatch(
+			/\| Hermes live heap at idle, after a forced GC \| A \| 1 \| 40\.0 MB \|/,
+		);
 	});
 
 	test('flags a measured launch that ran another bundle', () => {

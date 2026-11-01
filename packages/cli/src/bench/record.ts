@@ -50,7 +50,12 @@ export type RunRecord = {
 	identity: RunIdentity;
 	startup: Partial<Record<Milestone, number>>;
 	discord: Partial<Record<DiscordMark, number>>;
-	memory: { init: MemorySample | null; idle: MemorySample | null };
+	/** `idleAfterGc` is read right after `idle`, once a forced full GC has run. */
+	memory: {
+		init: MemorySample | null;
+		idle: MemorySample | null;
+		idleAfterGc: MemorySample | null;
+	};
 	work: {
 		modulesInitialized: number | null;
 		modulesTotal: number | null;
