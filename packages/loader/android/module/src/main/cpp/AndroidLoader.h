@@ -73,7 +73,6 @@ public:
 
     void start();
     void onLoadJSBundle();
-    void onJSBundleLoaded();
     void onRuntimeCreated(facebook::jsi::Runtime &runtime);
     void drainMainWork();
     void drainRuntimeWork(facebook::jsi::Runtime &runtime);
@@ -97,6 +96,7 @@ public:
     void                       onAddonsPrepared() override;
     void                       onBundleExecuted() override;
     void                       alert(const std::string &message) override;
+    void                       reload() override;
 
 private:
     std::optional<std::string> fetchText(const std::string &url, double timeoutSeconds);
