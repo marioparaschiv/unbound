@@ -4,6 +4,7 @@ import { BADGE_LIMIT } from '@unbound-app/contracts/sponsors';
 import type { ShownBadge } from '~/components/user-badge';
 import AvatarGlow from '~/components/avatar-glow';
 import UserAvatar from '~/components/user-avatar';
+import BadgeRow from '~/components/badge-row';
 import Text from '~/components/ui/text';
 
 type DiscordProfilePreviewProps = {
@@ -35,7 +36,7 @@ function DiscordProfilePreview({ name, image, badges }: DiscordProfilePreviewPro
 				<Text variant='heading-sm' className='truncate leading-tight!'>
 					{name}
 				</Text>
-				<div className='flex items-center gap-2 self-start rounded-item bg-muted/60 px-2 py-1.5'>
+				<BadgeRow badges={badges}>
 					{DISCORD_BADGES.map((Icon, index) => (
 						<span
 							key={index}
@@ -44,27 +45,17 @@ function DiscordProfilePreview({ name, image, badges }: DiscordProfilePreviewPro
 							<Icon size={16} aria-hidden />
 						</span>
 					))}
-					{badges.length > 0
-						? badges.map((badge) => (
-								<img
-									key={badge.name}
-									src={badge.imageUrl}
-									alt=''
-									title={badge.name}
-									width={22}
-									height={22}
-									className='size-5.5 object-contain'
-								/>
-							))
-						: EMPTY_SLOTS.map((slot) => (
+					{badges.length === 0
+						? EMPTY_SLOTS.map((slot) => (
 								<span
 									key={slot}
 									className='grid size-6 place-items-center rounded-full border border-dashed border-primary/60 text-primary'
 								>
 									<IconPlus size={10} aria-hidden />
 								</span>
-							))}
-				</div>
+							))
+						: null}
+				</BadgeRow>
 			</div>
 		</div>
 	);

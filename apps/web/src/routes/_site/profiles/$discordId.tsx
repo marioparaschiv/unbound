@@ -13,8 +13,8 @@ import {
 import { developerQuery } from '~/queries/developers/developers';
 import { staggerStyle } from '~/components/motion/reveal-style';
 import type { IdentifiedAuthor } from '~/lib/authors/resolve';
+import SponsorSparkles from '~/components/sponsor-sparkles';
 import BlurReveal from '~/components/motion/blur-reveal';
-import UserBadgeList from '~/components/user-badge-list';
 import TEAM_GROUPS from '~/components/team/team-groups';
 import type { CssVariables } from '~/lib/css-variables';
 import { formatDate } from '~/components/addon/format';
@@ -22,8 +22,10 @@ import AvatarGlow from '~/components/avatar-glow';
 import UserAvatar from '~/components/user-avatar';
 import AddonCard from '~/components/addon-card';
 import { Button } from '~/components/ui/button';
+import BadgeRow from '~/components/badge-row';
 import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
+import cn from '~/lib/cn';
 
 type DeveloperDetailsProps = {
 	author: IdentifiedAuthor;
@@ -57,6 +59,8 @@ function DeveloperPage() {
 	}
 
 	const { author, addons, group, bannerUrl } = developer;
+	const sponsor = author.kind === 'user' && author.sponsor;
+	const badges = author.kind === 'user' ? author.badges : [];
 
 	return (
 		<div className='flex flex-col flex-1 gap-8 page-frame'>
@@ -82,16 +86,24 @@ function DeveloperPage() {
 					/>
 					<div className='flex flex-col flex-1 gap-1 sm:pt-12 min-w-0'>
 						<div className='flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0'>
-							<Text as='h1' variant='heading-lg' className='truncate'>
+							<Text
+								as='h1'
+								variant='heading-lg'
+								className={cn('truncate', sponsor ? 'text-primary' : null)}
+							>
 								<BlurReveal text={author.name} />
 							</Text>
+							{sponsor ? (
+								<SponsorSparkles
+									className='-ml-1.5 self-start animate-reveal'
+									style={staggerStyle(1)}
+								/>
+							) : null}
 							<div
 								className='flex flex-wrap items-center gap-2 animate-reveal'
 								style={staggerStyle(1)}
 							>
-								{author.kind === 'user' ? (
-									<UserBadgeList badges={author.badges} />
-								) : null}
+								{sponsor ? <Tag variant='primary'>Sponsor</Tag> : null}
 								<Tag variant={group === 'addon-developer' ? 'default' : 'primary'}>
 									{TEAM_GROUPS[group].member}
 								</Tag>
@@ -106,6 +118,13 @@ function DeveloperPage() {
 							<DeveloperDetails author={author} />
 						</Text>
 					</div>
+					{badges.length > 0 ? (
+						<BadgeRow
+							badges={badges}
+							className='sm:mt-12 animate-reveal'
+							style={staggerStyle(1)}
+						/>
+					) : null}
 				</div>
 			</header>
 

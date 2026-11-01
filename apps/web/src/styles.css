@@ -375,6 +375,17 @@ A wide control sets `--press-depth` below 1 so its edges move about as far as a 
 		backwards;
 }
 
+@keyframes twinkle {
+	50% {
+		opacity: 0.5;
+		transform: scale(0.75) rotate(15deg);
+	}
+}
+
+@utility animate-twinkle {
+	animation: twinkle 2.4s ease-in-out infinite;
+}
+
 /*
  * A foreground-to-muted text gradient made with a mask, because `bg-clip-text` drops the text of children
  * that animate on their own layers. The padding keeps their offset and blur inside the mask.
@@ -387,7 +398,8 @@ A wide control sets `--press-depth` below 1 so its edges move about as far as a 
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.animate-reveal {
+	.animate-reveal,
+	.animate-twinkle {
 		animation: none;
 	}
 
