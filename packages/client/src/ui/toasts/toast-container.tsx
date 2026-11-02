@@ -3,7 +3,6 @@ import { useShallow } from 'zustand/shallow';
 import { useUnboundSettings } from '~/settings/unbound';
 import useToastStore from '~/toasts/state';
 
-import ToastOverlay from './toast-overlay';
 import ToastList from './toast-list';
 
 function ToastContainer() {
@@ -26,11 +25,7 @@ function ToastContainer() {
 	// floating windows (dialogs, action sheets) that may already be open.
 	if (!ids.length) return null;
 
-	return (
-		<ToastOverlay>
-			<ToastList ids={ids} />
-		</ToastOverlay>
-	);
+	return <ToastList ids={ids} />;
 }
 
 export default ToastContainer;
