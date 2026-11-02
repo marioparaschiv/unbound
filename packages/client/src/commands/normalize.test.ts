@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import type { ErasedTree, Section } from './normalize';
 
 import { CommandDefinitionError, normalize, resolveSection } from './normalize';
+import { UNBOUND_ICON } from './unbound-icon';
 import { option } from './options';
 
 const section: Section = { id: 'unbound', name: 'Unbound', icon: undefined };
@@ -133,9 +134,7 @@ describe('normalize', () => {
 describe('resolveSection', () => {
 	test('uses the shared section unless the owner names its own', () => {
 		expect(resolveSection('unbound.demo', undefined).id).toBe('unbound');
-		expect(resolveSection('unbound.demo', undefined).icon).toStartWith(
-			'data:image/png;base64,',
-		);
+		expect(resolveSection('unbound.demo', undefined).icon).toBe(UNBOUND_ICON);
 		expect(resolveSection('unbound.demo', { name: ' Demo ' })).toEqual({
 			id: 'unbound:unbound.demo',
 			name: 'Demo',

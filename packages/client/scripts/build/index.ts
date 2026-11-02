@@ -22,6 +22,7 @@ import {
 import globals, { shimmedModules } from './plugins/globals';
 import downlevel, { lower } from './plugins/downlevel';
 import hermesVersions from './plugins/hermes-versions';
+import staticAssets from './plugins/static-assets';
 import generateManifest from './plugins/manifest';
 import { bytecodeVersions } from './hermes.json';
 import worklets from './plugins/worklets';
@@ -106,6 +107,7 @@ const config: RolldownOptions = {
 			IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map', '-fstrip-function-names'],
 		),
 		generateManifest(GIT_REVISION, bytecodeVersions, IS_DEV_BUILD, BUILD_CHANNEL),
+		staticAssets(root),
 		...(IS_DEV_BUILD ? [locales()] : []),
 	],
 
