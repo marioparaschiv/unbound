@@ -79,11 +79,13 @@ function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellP
 					<IconMagnifier />
 				</Button>
 			</div>
-			<aside className='hidden top-6 sticky lg:flex flex-col gap-3 pr-2 max-h-[calc(100dvh-3rem)] overflow-y-auto'>
+			{/* The 4px of padding, taken back by the negative margin, keeps focus rings inside the scroll clip. */}
+			<aside className='hidden top-5 sticky lg:flex flex-col gap-3 -m-1 p-1 pr-3 max-h-[calc(100dvh-2.5rem)] overflow-y-auto'>
 				<button
 					type='button'
 					onClick={() => setSearchOpen(true)}
-					className='flex items-center gap-2 px-3 w-full h-9 text-muted-foreground text-sm shrink-0 field press-flat'
+					// The key sits as far from the right edge as from the top and bottom, so its corners stay concentric with the field's.
+					className='flex items-center gap-2 pr-[4.5px] pl-3 w-full h-9 text-muted-foreground text-sm shrink-0 field press-flat'
 				>
 					<IconMagnifier className='size-4' />
 					Search
