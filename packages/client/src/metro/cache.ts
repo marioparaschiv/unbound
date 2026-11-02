@@ -148,7 +148,7 @@ export function getModuleCacheForKey(key: string) {
 }
 
 /**
- * @description Records a module id under a cache key, persisting if it was not already present. Twin of {@link removeCachedIDForKey}.
+ * @description Records a module id under a cache key, persisting if it was not already present.
  * @param key The cache key to add the id under.
  * @param item The module id to cache.
  * @returns `true` if the id was already cached under the key, otherwise `undefined`.
