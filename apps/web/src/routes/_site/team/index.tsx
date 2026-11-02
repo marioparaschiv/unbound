@@ -15,10 +15,10 @@ import {
 } from '~/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
 import useTeamPages, { type TeamPages } from '~/queries/developers/use-team-pages';
+import { schemaValidator, type Validator } from '~/lib/schema-validator';
 import { pageSearchSchema, type PageSearch } from '~/lib/page-search';
 import { teamQuery } from '~/queries/developers/developers';
 import TeamSections from '~/components/team/team-sections';
-import { schemaValidator, type Validator } from '~/lib/schema-validator';
 import PageHeader from '~/components/page-header';
 import type { Developer } from '~/lib/developers';
 import { Button } from '~/components/ui/button';

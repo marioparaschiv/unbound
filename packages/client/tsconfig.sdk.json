@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"composite": false,
 		"noCheck": true,
-		"types": ["@unbound-app/types", "./src/hot-refresh/react-refresh.d.ts"],
+		"types": ["@unbound-app/types"],
 		"paths": {
 			"~/*": ["./src/*"],
 			"@i18n/*": ["../../i18n/*"],

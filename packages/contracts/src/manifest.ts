@@ -95,7 +95,8 @@ const legacyPlatformListSchema = Type.Array(Type.Enum(NATIVE_PLUGIN_PLATFORMS), 
 
 export const addonAuthorSchema = Type.Object({
 	name: Type.String({ minLength: 1 }),
-	id: Type.String({ pattern: '^\\d+$' }),
+	// A string of digits, typed as the template literal Discord user ids use.
+	id: Type.Unsafe<`${number}`>(Type.String({ pattern: '^\\d+$' })),
 });
 
 /**

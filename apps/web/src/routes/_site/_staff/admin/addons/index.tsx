@@ -1,8 +1,8 @@
 import { adminAddonsSearchSchema, type AdminAddonsSearch } from '@unbound-app/contracts/admin';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 
-import { adminAddonsQuery } from '~/queries/admin-addons/admin-addons';
 import { schemaValidator, type Validator } from '~/lib/schema-validator';
+import { adminAddonsQuery } from '~/queries/admin-addons/admin-addons';
 import AddonsPage from '~/components/staff/addons-page';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
 import { hasPermission } from '~/lib/auth/access';

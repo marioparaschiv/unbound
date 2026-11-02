@@ -1,8 +1,8 @@
 import { adminUsersSearchSchema, type AdminUsersSearch } from '@unbound-app/contracts/admin';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 
-import { adminUsersQuery } from '~/queries/admin-users/admin-users';
 import { schemaValidator, type Validator } from '~/lib/schema-validator';
+import { adminUsersQuery } from '~/queries/admin-users/admin-users';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
 import UsersPage from '~/components/staff/users-page';
 import { hasPermission } from '~/lib/auth/access';
