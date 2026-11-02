@@ -63,8 +63,6 @@ const defaultPack: IconPack = {
  * the applied pack rewrites `Image` sources to the on-disk files. Single-select, like themes.
  */
 export class Icons extends Addons<Plugin> {
-	extension = 'png';
-
 	// Stops stamping assets that register after the applied pack.
 	private stopStamping = noop;
 
