@@ -2883,6 +2883,8 @@ export type NativePluginError = {
 export type NativePluginErrorCode =
 	| 'NATIVE_BRIDGE_ERROR'
 	| 'NATIVE_PLUGIN_API_VERSION_UNSUPPORTED'
+	| 'NATIVE_PLUGIN_CALL_CANCELLED'
+	| 'NATIVE_PLUGIN_CALL_TIMEOUT'
 	| 'NATIVE_PLUGIN_CAPABILITY_DENIED'
 	| 'NATIVE_PLUGIN_SCOPE_DISPOSED'
 	| 'NATIVE_PLUGIN_UNAVAILABLE';
@@ -3002,7 +3004,7 @@ export type NativeUIBridge = {
 	call<A extends NativeUIArgument[], R extends NativeSerializable | void>(
 		worklet: (...args: A) => R,
 		...args: A
-	): Promise<R>;
+	): NativeCancelablePromise<R>;
 	/** Queues a worklet on the UI runtime. */
 	run<A extends NativeUIArgument[]>(worklet: (...args: A) => void, ...args: A): void;
 	/** Wraps a JS-thread listener so a worklet can call it, for example to wake JS only for the hook events that need it; it stops calling the listener once the plugin stops. */
