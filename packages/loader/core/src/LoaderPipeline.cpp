@@ -1,5 +1,6 @@
 #include "LoaderPipeline.h"
 
+#include "HermesSampling.h"
 #include "LoaderBootstrap.h"
 #include "LoaderCrashGuard.h"
 #include "LoaderFiles.h"
@@ -33,6 +34,7 @@ void LoaderPipeline::prepare()
     // Hosts call this once Discord's runtime exists, before addons load for it; smoke timing starts
     // here.
     log(LogLevel::Info, LOG_CATEGORY_RUNTIME, "Discord's runtime was created.");
+    native::noteRuntimeCreated();
     bundleReady_.store(false);
     uint64_t token = token_.fetch_add(1) + 1;
     {

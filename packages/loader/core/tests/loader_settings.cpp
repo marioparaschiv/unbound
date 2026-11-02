@@ -64,7 +64,7 @@ int main()
     {
         const auto fresh = (root / "fresh.json").string();
         assert(loader::writeTextFileAtomically(fresh, R"({"unbound":{"recovery":false}})"));
-        loader::SettingsStore native(fresh);
+        loader::SettingsStore native(fresh, std::chrono::milliseconds(0));
         native.load();
         assert(!native.getBoolean("unbound", "recovery", true));
 
