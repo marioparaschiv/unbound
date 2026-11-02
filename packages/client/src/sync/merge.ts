@@ -6,6 +6,7 @@ import type {
 	SyncSettingsStore,
 } from '@unbound-app/contracts/sync';
 import { syncDocumentSchema } from '@unbound-app/contracts/sync';
+import { parse } from '@unbound-app/contracts/schema';
 
 type JsonValue = SyncSettingsStore[string];
 
@@ -246,7 +247,7 @@ export function reconcileBase(
 	failed: SyncAction[],
 ): SyncDocument {
 	// Parsing copies the document; Hermes has no `structuredClone`.
-	const result = syncDocumentSchema.parse(document);
+	const result = parse(syncDocumentSchema, document);
 
 	for (const action of failed) {
 		if (action.type === 'install') {

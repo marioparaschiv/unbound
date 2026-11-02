@@ -5,6 +5,7 @@ import {
 } from '@unbound-app/contracts/account';
 import type { AccountSignInResponse, Caller } from '@unbound-app/contracts/account';
 import { ApiRequestError, createApiClient } from '@unbound-app/web/client';
+import { safeParse } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
 import type { Api } from '@unbound-app/web/api';
@@ -49,7 +50,7 @@ export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
 
 function readSession(): Session | undefined {
-	const parsed = accountSignInResponseSchema.safeParse(Store.get('session', null));
+	const parsed = safeParse(accountSignInResponseSchema, Store.get('session', null));
 
 	return parsed.success ? parsed.data : undefined;
 }

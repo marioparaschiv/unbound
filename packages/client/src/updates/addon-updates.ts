@@ -4,6 +4,7 @@ import {
 	updatesResponseSchema,
 } from '@unbound-app/contracts/updates';
 import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
+import { parse, safeParse } from '@unbound-app/contracts/schema';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Plugin } from '@unbound-app/types';
 import type { Api } from '@unbound-app/web/api';
@@ -49,7 +50,7 @@ function checkable(entries: InstalledEntry[]): Map<string, InstalledEntry> {
 	const owners = new Map<string, InstalledEntry>();
 
 	for (const entry of entries) {
-		if (owners.has(entry.id) || !installedAddonSchema.safeParse(entry).success) {
+		if (owners.has(entry.id) || !safeParse(installedAddonSchema, entry).success) {
 			continue;
 		}
 
@@ -75,7 +76,7 @@ export function buildUpdatesRequest(
 
 	if (!addons.length) return;
 
-	return updatesRequestSchema.parse({ clientVersion, addons });
+	return parse(updatesRequestSchema, { clientVersion, addons });
 }
 
 /**

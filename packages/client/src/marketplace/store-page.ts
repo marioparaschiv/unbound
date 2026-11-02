@@ -5,6 +5,7 @@ import {
 	type AddonPage,
 	type MeasuredMedia,
 } from '@unbound-app/contracts/addon-page';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 /** A version's store page as the CDN serves it beside the bundle. */
 export type StorePage = {
@@ -43,7 +44,7 @@ function parseMeasured(text: string | null): AddonPage | null {
 	if (text === null) return null;
 
 	try {
-		const parsed = addonPageSchema.safeParse(JSON.parse(text));
+		const parsed = safeParse(addonPageSchema, JSON.parse(text));
 
 		return parsed.success ? parsed.data : null;
 	} catch {

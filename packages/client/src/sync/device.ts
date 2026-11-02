@@ -8,6 +8,7 @@ import {
 	syncSettingsStoreSchema,
 } from '@unbound-app/contracts/sync';
 import type { SyncDocument, SyncKind, SyncKindDocument } from '@unbound-app/contracts/sync';
+import { parse } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
 
 import { getBucket, snapshot } from '~/storage/api';
@@ -149,7 +150,7 @@ export function collectLocalDocument(): SyncDocument {
 
 		if (name === SYNC_CORE_STORE) {
 			// Parsing copies the store; Hermes has no `structuredClone`.
-			const core = syncSettingsStoreSchema.parse(store);
+			const core = parse(syncSettingsStoreSchema, store);
 
 			for (const key of LOCAL_KEYS) {
 				delete core[key];
@@ -157,7 +158,7 @@ export function collectLocalDocument(): SyncDocument {
 
 			synced[name] = core;
 		} else if (ids.has(name)) {
-			synced[name] = syncSettingsStoreSchema.parse(store);
+			synced[name] = parse(syncSettingsStoreSchema, store);
 		}
 	}
 

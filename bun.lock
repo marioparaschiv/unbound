@@ -295,7 +295,6 @@
         "picomatch": "^4.0.7",
         "typebox": "^1.4.3",
         "yaml": "^2.9.1",
-        "zod": "^4.0.0",
       },
       "devDependencies": {
         "@types/bun": "catalog:",

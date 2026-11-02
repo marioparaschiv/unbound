@@ -1,5 +1,6 @@
 import { CRASH_REPORT_LOG_LIMIT, crashReportSchema } from '@unbound-app/contracts/crash-reports';
 import type { CrashReport } from '@unbound-app/contracts/crash-reports';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 import type { Addon } from '~/addons/addon';
 
@@ -105,7 +106,7 @@ export function buildCrashReport(
 	log?: string,
 ): CrashReport | undefined {
 	const excerpt = log === undefined ? undefined : crashLogExcerpt(log);
-	const parsed = crashReportSchema.safeParse({
+	const parsed = safeParse(crashReportSchema, {
 		...event,
 		...environment,
 		...(excerpt === undefined ? {} : { log: excerpt }),

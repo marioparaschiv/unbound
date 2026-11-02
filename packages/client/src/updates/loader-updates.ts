@@ -1,5 +1,6 @@
 import { loaderUpdateQuerySchema, loaderUpdateResponseSchema } from '@unbound-app/contracts/loader';
 import type { LoaderUpdate, LoaderUpdateQuery } from '@unbound-app/contracts/loader';
+import { safeParse } from '@unbound-app/contracts/schema';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Api } from '@unbound-app/web/api';
 
@@ -24,7 +25,7 @@ export function buildLoaderUpdateQuery(
 ): LoaderUpdateQuery | undefined {
 	if (!loader) return;
 
-	const query = loaderUpdateQuerySchema.safeParse({ platform, version: loader.version });
+	const query = safeParse(loaderUpdateQuerySchema, { platform, version: loader.version });
 
 	return query.success ? query.data : undefined;
 }

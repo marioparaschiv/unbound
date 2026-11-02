@@ -14,7 +14,7 @@ import type {
 	SubmissionStatus,
 } from '@unbound-app/contracts/publish';
 import type { AddonType, MaintainerRole } from '@unbound-app/contracts/addons';
-import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
+import { OPEN_SUBMISSION_STATUSES } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { defineRelationsPart, sql, type SQL } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
@@ -24,7 +24,7 @@ import { moderationEvent } from './admin';
 import { user } from './auth';
 
 // Index predicates are stored in the schema verbatim, so the statuses are inlined rather than bound.
-const OPEN_STATUSES = `(${openSubmissionStatusSchema.options.map((status) => `'${status}'`).join(', ')})`;
+const OPEN_STATUSES = `(${OPEN_SUBMISSION_STATUSES.map((status) => `'${status}'`).join(', ')})`;
 
 const LISTING_SORTS = ['name', 'createdAt', 'updatedAt'] as const;
 

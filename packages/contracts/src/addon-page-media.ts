@@ -1,6 +1,7 @@
 import { Lexer, walkTokens, type Tokens } from 'marked';
 
 import { mediaPathSchema, type AddonPageFrontmatter } from './addon-page';
+import { safeParse } from './schema';
 
 /**
  * @description Lists every media file ADDON.md shows, the set `ubd build` measures into `page.json`.
@@ -38,7 +39,7 @@ export function listPageMediaPaths(
 
 		const { href } = token as Tokens.Image;
 
-		if (mediaPathSchema.safeParse(href).success) {
+		if (safeParse(mediaPathSchema, href).success) {
 			paths.add(href);
 		}
 	});

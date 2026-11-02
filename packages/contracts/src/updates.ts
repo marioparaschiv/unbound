@@ -1,74 +1,75 @@
 import { addonIdSchema, semverSchema } from './manifest';
 import { addonVersionSchema } from './addons';
-import { z } from './zod';
+import { Type, type Static } from './schema';
 
-export const installedAddonSchema = z.object({
+export const installedAddonSchema = Type.Object({
 	id: addonIdSchema,
 	version: semverSchema,
 	/** The SHA-256 of the installed bundle, so a version rebuilt in place is offered again. */
-	sha256: z.optional(z.string().check(z.regex(/^[\da-f]{64}$/))),
+	sha256: Type.Optional(Type.String({ pattern: /^[\da-f]{64}$/ })),
 });
 
-export const updatesRequestSchema = z.object({
+export const updatesRequestSchema = Type.Object({
 	clientVersion: semverSchema,
-	addons: z.array(installedAddonSchema).check(
-		z.maxLength(500),
-		z.refine(
-			(addons) => new Set(addons.map((addon) => addon.id)).size === addons.length,
-			'Addon ids must be unique.',
-		),
+	addons: Type.Refine(
+		Type.Array(installedAddonSchema, { maxItems: 500 }),
+		(addons) => new Set(addons.map((addon) => addon.id)).size === addons.length,
+		() => 'Addon ids must be unique.',
 	),
 });
 
 /** The release a manager installs: where to fetch it and the bundle digest to verify. */
-export const addonReleaseSchema = z.extend(
-	z.pick(addonVersionSchema, {
-		version: true,
-		manifestUrl: true,
-		bundleUrl: true,
-		sha256: true,
-		changelog: true,
-		changes: true,
-	}),
-	{ id: addonIdSchema },
-);
+export const addonReleaseSchema = Type.Object({
+	...Type.Pick(addonVersionSchema, [
+		'version',
+		'manifestUrl',
+		'bundleUrl',
+		'sha256',
+		'changelog',
+		'changes',
+	]).properties,
+	id: addonIdSchema,
+});
 
 /** The most changelogs one update lists. */
 export const MAX_UPDATE_CHANGELOGS = 20;
 
-export const versionChangelogSchema = z.pick(addonVersionSchema, {
-	version: true,
-	changelog: true,
-	changes: true,
-	publishedAt: true,
-});
+export const versionChangelogSchema = Type.Pick(addonVersionSchema, [
+	'version',
+	'changelog',
+	'changes',
+	'publishedAt',
+]);
 
 /** Why an update is offered: a newer version, a withdrawn install to roll back, or the same version rebuilt. */
-export const updateReasonSchema = z.enum(['newer', 'withdrawn', 'rebuilt']);
+export const UPDATE_REASONS = ['newer', 'withdrawn', 'rebuilt'] as const;
+
+export const updateReasonSchema = Type.Enum(UPDATE_REASONS);
 
 /** The newest compatible release, with `changelogs` covering every version it skips over. */
-export const addonUpdateSchema = z.extend(addonReleaseSchema, {
+export const addonUpdateSchema = Type.Object({
+	...addonReleaseSchema.properties,
 	/** Defaults to `newer` so responses from servers that predate it still parse. */
-	reason: z._default(updateReasonSchema, 'newer'),
+	reason: Type.Enum(UPDATE_REASONS, { default: 'newer' }),
 	/** Each version newer than the installed one, up to and including `version`, newest first. */
-	changelogs: z._default(
-		z.array(versionChangelogSchema).check(z.maxLength(MAX_UPDATE_CHANGELOGS)),
-		[],
-	),
+	changelogs: Type.Array(versionChangelogSchema, {
+		maxItems: MAX_UPDATE_CHANGELOGS,
+		default: [],
+	}),
 });
 
 /** Only addons with a newer approved version compatible with `clientVersion` are listed. */
-export const updatesResponseSchema = z.object({
-	updates: z.array(addonUpdateSchema),
+export const updatesResponseSchema = Type.Object({
+	updates: Type.Array(addonUpdateSchema),
 });
 
-export type InstalledAddon = z.infer<typeof installedAddonSchema>;
-export type UpdatesRequest = z.infer<typeof updatesRequestSchema>;
-export type AddonRelease = z.infer<typeof addonReleaseSchema>;
-export type VersionChangelog = z.infer<typeof versionChangelogSchema>;
-export type UpdateReason = z.infer<typeof updateReasonSchema>;
-export type AddonUpdate = z.infer<typeof addonUpdateSchema>;
-export type UpdatesResponse = z.infer<typeof updatesResponseSchema>;
+export type InstalledAddon = Static<typeof installedAddonSchema>;
+export type UpdatesRequest = Static<typeof updatesRequestSchema>;
+export type AddonRelease = Static<typeof addonReleaseSchema>;
+export type VersionChangelog = Static<typeof versionChangelogSchema>;
+export type UpdateReason = Static<typeof updateReasonSchema>;
+export type AddonUpdate = Static<typeof addonUpdateSchema>;
+export type UpdatesResponse = Static<typeof updatesResponseSchema>;
 
 export default {
 	MAX_UPDATE_CHANGELOGS,

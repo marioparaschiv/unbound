@@ -6,26 +6,27 @@ import type {
 	SortOrder,
 } from '@unbound-app/contracts/addons';
 import { listAddonsQuerySchema } from '@unbound-app/contracts/addons';
-import { z } from 'zod/mini';
+import type { Static } from '@unbound-app/contracts/schema';
+import { Type } from '@unbound-app/contracts/schema';
 
 import type { AuthorOption } from '~/lib/authors/directory';
 import type { TagOption } from '~/lib/addon-tags';
 
 export type FilterField = 'tag' | 'author' | 'updated';
 
-export type MarketplaceSearch = z.infer<typeof marketplaceSearchSchema>;
+export type MarketplaceSearch = Static<typeof marketplaceSearchSchema>;
 
 /** The `/addons` tabs' URL search parameters. The sort brings its own order. */
-export const marketplaceSearchSchema = z.pick(listAddonsQuerySchema.def.innerType, {
-	q: true,
-	sort: true,
-	tags: true,
-	tagMatch: true,
-	authors: true,
-	authorMatch: true,
-	updated: true,
-	updatedMatch: true,
-});
+export const marketplaceSearchSchema = Type.Pick(listAddonsQuerySchema, [
+	'q',
+	'sort',
+	'tags',
+	'tagMatch',
+	'authors',
+	'authorMatch',
+	'updated',
+	'updatedMatch',
+]);
 
 /** One condition, Linear style: a field, how it compares, and the picked values. */
 export type AddonFilter = {

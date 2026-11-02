@@ -1,4 +1,5 @@
 import { addonIdSchema, addonMainSchema } from '@unbound-app/contracts/manifest';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 const FONT_EXTENSION = /\.(?:ttf|otf|ttc|woff2?)$/i;
 const FONT_NAME_UNSAFE = /[^\w .()-]+/g;
@@ -38,7 +39,7 @@ export function isSafeIconPackMain(main: unknown): main is string {
  * @returns Whether the id is safe to use as a folder name.
  */
 export function isSafeAddonId(id: unknown): id is string {
-	return addonIdSchema.safeParse(id).success;
+	return safeParse(addonIdSchema, id).success;
 }
 
 /**
@@ -47,7 +48,7 @@ export function isSafeAddonId(id: unknown): id is string {
  * @returns Whether `main` is a relative path inside the addon.
  */
 export function isSafeAddonMain(main: unknown): main is string {
-	return addonMainSchema.safeParse(main).success;
+	return safeParse(addonMainSchema, main).success;
 }
 
 /**

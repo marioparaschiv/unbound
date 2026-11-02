@@ -1,6 +1,7 @@
 import type { CatalogResponse, ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonAuthor, AddonKind } from '@unbound-app/types/addons';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 import { compareVersions } from '~/core/versions';
 
@@ -74,7 +75,7 @@ const SORTERS: Record<CatalogSort, (a: ListedAddon, b: ListedAddon) => number> =
  */
 export function parseCatalog(text: string): Catalog | undefined {
 	try {
-		const result = catalogResponseSchema.safeParse(JSON.parse(text));
+		const result = safeParse(catalogResponseSchema, JSON.parse(text));
 
 		return result.success ? result.data : undefined;
 	} catch {

@@ -1,15 +1,11 @@
+import { safeParse, Type, type Static } from './schema';
 import { apiErrorCodeSchema } from './errors';
-import { z } from './zod';
 
 /** A GitHub repository as `owner/name`. */
-export const repositorySchema = z
-	.string()
-	.check(
-		z.regex(
-			/^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\/[A-Za-z0-9._-]+$/,
-			'Must be a GitHub owner/name.',
-		),
-	);
+export const repositorySchema = Type.String({
+	pattern: /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?\/[A-Za-z0-9._-]+$/,
+	errorMessage: 'Must be a GitHub owner/name.',
+});
 
 /** What a pasted repository reference names: always the repository, and a ref and path for deep links. */
 export type ParsedRepository = {
@@ -48,7 +44,7 @@ export function parseRepository(input: string): ParsedRepository | undefined {
 		const [, owner, name, ref, path] = match;
 		const repository = `${owner}/${name}`;
 
-		if (name === '.' || name === '..' || !repositorySchema.safeParse(repository).success) {
+		if (name === '.' || name === '..' || !safeParse(repositorySchema, repository).success) {
 			return;
 		}
 
@@ -68,158 +64,157 @@ export function parseRepository(input: string): ParsedRepository | undefined {
 	return;
 }
 
+function readRepository(input: string): string {
+	return parseRepository(input)?.repository ?? input;
+}
+
 /** Accepts every form {@link parseRepository} reads and outputs `owner/name`. */
-export const repositoryInputSchema = z.pipe(
-	z.string().check(z.maxLength(300)),
-	z.transform((input: string, context) => {
-		const parsed = parseRepository(input);
-
-		if (parsed) {
-			return parsed.repository;
-		}
-
-		context.issues.push({
-			code: 'custom',
-			input,
-			message: 'Must be a GitHub repository URL or owner/name.',
-		});
-
-		return z.NEVER;
-	}),
-);
+export const repositoryInputSchema = Type.Codec(
+	Type.Refine(
+		Type.String({ maxLength: 300 }),
+		(input) => parseRepository(input) !== undefined,
+		() => 'Must be a GitHub repository URL or owner/name.',
+	),
+)
+	.Decode((input: string) => readRepository(input))
+	.Encode((repository) => repository);
 
 /** A full, lowercase git object id. */
-export const commitShaSchema = z
-	.string()
-	.check(z.regex(/^[0-9a-f]{40}$/, 'Must be a full commit SHA.'));
+export const commitShaSchema = Type.String({
+	pattern: /^[0-9a-f]{40}$/,
+	errorMessage: 'Must be a full commit SHA.',
+});
 
 /** A branch, tag or full commit SHA. */
-export const gitRefSchema = z
-	.string()
-	.check(
-		z.minLength(1),
-		z.maxLength(255),
-		z.regex(/^[^\s~^:?*[\\]+$/, 'Must be a branch, tag or commit SHA.'),
-	);
+export const gitRefSchema = Type.String({
+	minLength: 1,
+	maxLength: 255,
+	pattern: /^[^\s~^:?*[\\]+$/,
+	errorMessage: 'Must be a branch, tag or commit SHA.',
+});
 
 /** An addon directory relative to the repository root, `/`-separated; `''` is the root. */
-export const addonPathSchema = z.string().check(
-	z.maxLength(255),
-	z.regex(/^(?:[\w.-]+(?:\/[\w.-]+)*)?$/, 'Must be a directory inside the repository.'),
-	z.refine((path) => !path.split('/').includes('..'), 'Must stay inside the repository.'),
+export const addonPathSchema = Type.Refine(
+	Type.String({
+		maxLength: 255,
+		pattern: /^(?:[\w.-]+(?:\/[\w.-]+)*)?$/,
+		errorMessage: 'Must be a directory inside the repository.',
+	}),
+	(path) => !path.split('/').includes('..'),
+	() => 'Must stay inside the repository.',
 );
 
 /** Where a submitted version was read from: everything a reviewer needs to find the exact bytes. */
-export const sourcePinSchema = z.object({
+export const sourcePinSchema = Type.Object({
 	repository: repositorySchema,
 	/** GitHub's numeric id, which survives renames and transfers. */
-	repositoryId: z.int().check(z.positive()),
+	repositoryId: Type.Integer({ exclusiveMinimum: 0 }),
 	path: addonPathSchema,
 	/** The branch, tag or SHA the author named; `commitSha` is what it resolved to. */
 	ref: gitRefSchema,
 	commitSha: commitShaSchema,
 	/** The shipped file, relative to the repository root. */
-	bundlePath: z.string().check(z.minLength(1)),
+	bundlePath: Type.String({ minLength: 1 }),
 	/** The git blob id of `bundlePath` at `commitSha`. */
 	bundleBlobSha: commitShaSchema,
 });
 
-export const repositoryContributorSchema = z.object({
-	login: z.string().check(z.minLength(1)),
-	contributions: z.int().check(z.nonnegative()),
+export const repositoryContributorSchema = Type.Object({
+	login: Type.String({ minLength: 1 }),
+	contributions: Type.Integer({ minimum: 0 }),
 });
 
-export const repositoryReleaseSchema = z.object({
-	tag: z.string().check(z.minLength(1)),
-	name: z.nullable(z.string()),
-	publishedAt: z.nullable(z.iso.datetime()),
-	url: z.url(),
+export const repositoryReleaseSchema = Type.Object({
+	tag: Type.String({ minLength: 1 }),
+	name: Type.Union([Type.String(), Type.Null()]),
+	publishedAt: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
+	url: Type.String({ format: 'url' }),
 });
 
 /** What GitHub said about the repository when the version was submitted; never refreshed live. */
-export const repositoryDetailsSchema = z.object({
-	description: z.nullable(z.string()),
-	homepage: z.nullable(z.url()),
-	tags: z.array(z.string().check(z.minLength(1), z.maxLength(50))).check(z.maxLength(20)),
+export const repositoryDetailsSchema = Type.Object({
+	description: Type.Union([Type.String(), Type.Null()]),
+	homepage: Type.Union([Type.String({ format: 'url' }), Type.Null()]),
+	tags: Type.Array(Type.String({ minLength: 1, maxLength: 50 }), { maxItems: 20 }),
 	/** An SPDX id such as `MIT`, or `null` when GitHub detected none. */
-	license: z.nullable(z.string()),
-	stars: z.int().check(z.nonnegative()),
-	defaultBranch: z.string().check(z.minLength(1)),
-	htmlUrl: z.url(),
-	readmeUrl: z.nullable(z.url()),
-	contributors: z.array(repositoryContributorSchema).check(z.maxLength(10)),
-	latestRelease: z.nullable(repositoryReleaseSchema),
+	license: Type.Union([Type.String(), Type.Null()]),
+	stars: Type.Integer({ minimum: 0 }),
+	defaultBranch: Type.String({ minLength: 1 }),
+	htmlUrl: Type.String({ format: 'url' }),
+	readmeUrl: Type.Union([Type.String({ format: 'url' }), Type.Null()]),
+	contributors: Type.Array(repositoryContributorSchema, { maxItems: 10 }),
+	latestRelease: Type.Union([repositoryReleaseSchema, Type.Null()]),
 });
 
 /** Why an addon cannot be submitted, with the code the submission itself would fail with. */
-export const repositoryAddonIssueSchema = z.object({
+export const repositoryAddonIssueSchema = Type.Object({
 	code: apiErrorCodeSchema,
-	message: z.string(),
+	message: Type.String(),
 });
 
 /** One addon a repository registers at a commit, as the repository picker lists it. */
-export const repositoryAddonSchema = z.object({
-	id: z.string(),
+export const repositoryAddonSchema = Type.Object({
+	id: Type.String(),
 	/** `null` when the manifest does not pass the manifest contract; `issues` says why. */
-	name: z.nullable(z.string()),
-	version: z.nullable(z.string()),
-	kind: z.enum(['plugin', 'theme']),
+	name: Type.Union([Type.String(), Type.Null()]),
+	version: Type.Union([Type.String(), Type.Null()]),
+	kind: Type.Enum(['plugin', 'theme']),
 	path: addonPathSchema,
-	static: z.boolean(),
+	static: Type.Boolean(),
 	/** The file that ships, relative to the repository root. */
-	bundle: z.string(),
-	hasAddonMd: z.boolean(),
-	hasChangelog: z.boolean(),
+	bundle: Type.String(),
+	hasAddonMd: Type.Boolean(),
+	hasChangelog: Type.Boolean(),
 	/** Why the addon cannot be submitted at this commit as it is; empty when it can. */
-	issues: z.array(repositoryAddonIssueSchema),
+	issues: Type.Array(repositoryAddonIssueSchema),
 	/** This version is already published, so there is nothing new to submit. */
-	upToDate: z.boolean(),
+	upToDate: Type.Boolean(),
 });
 
 /** A directory a workspace registers that is not an addon, and why. */
-export const skippedDirectorySchema = z.object({
-	path: z.string(),
-	reason: z.string(),
+export const skippedDirectorySchema = Type.Object({
+	path: Type.String(),
+	reason: Type.String(),
 });
 
-export const listRepositoryAddonsQuerySchema = z.object({
+export const listRepositoryAddonsQuerySchema = Type.Object({
 	repository: repositoryInputSchema,
 	/** Defaults to the repository's default branch. */
-	ref: z.optional(gitRefSchema),
+	ref: Type.Optional(gitRefSchema),
 });
 
-export const listRepositoryAddonsResponseSchema = z.object({
+export const listRepositoryAddonsResponseSchema = Type.Object({
 	repository: repositorySchema,
 	ref: gitRefSchema,
 	commitSha: commitShaSchema,
 	details: repositoryDetailsSchema,
-	addons: z.array(repositoryAddonSchema),
-	skipped: z.array(skippedDirectorySchema),
+	addons: Type.Array(repositoryAddonSchema),
+	skipped: Type.Array(skippedDirectorySchema),
 });
 
 /** A public repository the caller's linked GitHub account can push to. */
-export const pushableRepositorySchema = z.object({
+export const pushableRepositorySchema = Type.Object({
 	repository: repositorySchema,
-	description: z.nullable(z.string()),
-	pushedAt: z.nullable(z.iso.datetime()),
+	description: Type.Union([Type.String(), Type.Null()]),
+	pushedAt: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
 	/** The owning user's or organization's GitHub avatar. */
-	ownerAvatarUrl: z.nullable(z.string()),
+	ownerAvatarUrl: Type.Union([Type.String(), Type.Null()]),
 });
 
-export const pushableRepositoriesResponseSchema = z.object({
-	repositories: z.array(pushableRepositorySchema),
+export const pushableRepositoriesResponseSchema = Type.Object({
+	repositories: Type.Array(pushableRepositorySchema),
 });
 
-export type SourcePin = z.infer<typeof sourcePinSchema>;
-export type RepositoryContributor = z.infer<typeof repositoryContributorSchema>;
-export type RepositoryRelease = z.infer<typeof repositoryReleaseSchema>;
-export type RepositoryDetails = z.infer<typeof repositoryDetailsSchema>;
-export type RepositoryAddonIssue = z.infer<typeof repositoryAddonIssueSchema>;
-export type RepositoryAddon = z.infer<typeof repositoryAddonSchema>;
-export type ListRepositoryAddonsQuery = z.infer<typeof listRepositoryAddonsQuerySchema>;
-export type ListRepositoryAddonsResponse = z.infer<typeof listRepositoryAddonsResponseSchema>;
-export type PushableRepository = z.infer<typeof pushableRepositorySchema>;
-export type PushableRepositoriesResponse = z.infer<typeof pushableRepositoriesResponseSchema>;
+export type SourcePin = Static<typeof sourcePinSchema>;
+export type RepositoryContributor = Static<typeof repositoryContributorSchema>;
+export type RepositoryRelease = Static<typeof repositoryReleaseSchema>;
+export type RepositoryDetails = Static<typeof repositoryDetailsSchema>;
+export type RepositoryAddonIssue = Static<typeof repositoryAddonIssueSchema>;
+export type RepositoryAddon = Static<typeof repositoryAddonSchema>;
+export type ListRepositoryAddonsQuery = Static<typeof listRepositoryAddonsQuerySchema>;
+export type ListRepositoryAddonsResponse = Static<typeof listRepositoryAddonsResponseSchema>;
+export type PushableRepository = Static<typeof pushableRepositorySchema>;
+export type PushableRepositoriesResponse = Static<typeof pushableRepositoriesResponseSchema>;
 
 export default {
 	repositorySchema,

@@ -1,6 +1,6 @@
-import { z } from './zod';
+import { Type, type Static } from './schema';
 
-export const apiErrorCodeSchema = z.enum([
+export const apiErrorCodeSchema = Type.Enum([
 	'invalid_request',
 	'invalid_manifest',
 	'unauthorized',
@@ -37,14 +37,14 @@ export const apiErrorCodeSchema = z.enum([
 ]);
 
 /** The body of every non-2xx JSON response from `/api/v1/*`. */
-export const apiErrorResponseSchema = z.object({
-	error: z.object({
+export const apiErrorResponseSchema = Type.Object({
+	error: Type.Object({
 		code: apiErrorCodeSchema,
-		message: z.string(),
+		message: Type.String(),
 	}),
 });
 
-export type ApiErrorCode = z.infer<typeof apiErrorCodeSchema>;
-export type ApiErrorResponse = z.infer<typeof apiErrorResponseSchema>;
+export type ApiErrorCode = Static<typeof apiErrorCodeSchema>;
+export type ApiErrorResponse = Static<typeof apiErrorResponseSchema>;
 
 export default { apiErrorCodeSchema, apiErrorResponseSchema };

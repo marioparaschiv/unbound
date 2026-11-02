@@ -3,94 +3,106 @@ import type { reviewDecisionSchema } from './publish';
 import { repositoryDetailsSchema, sourcePinSchema } from './source';
 import { submissionKindSchema, submissionSchema } from './publish';
 import { addonVersionSchema, sha256Schema } from './addons';
+import { trimmedString, Type, type Static } from './schema';
 import { addonManifestSchema } from './manifest';
 import { tagIdSchema, tagSchema } from './tags';
 import { addonPageSchema } from './addon-page';
 import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
 import { addonIconSchema } from './icons';
-import { z } from './zod';
 
-const noteSchema = z.string().check(z.trim(), z.minLength(1), z.maxLength(10_000));
+const NOTE_MAX_LENGTH = 10_000;
 
-export const reviewQueueQuerySchema = z.optional(
-	z.object({
-		kind: z.optional(submissionKindSchema),
+const noteSchema = trimmedString(
+	(value) => (value.length < 1 ? 'Too small: expected string to have >=1 characters' : undefined),
+	(value) =>
+		value.length > NOTE_MAX_LENGTH
+			? `Too big: expected string to have <=${NOTE_MAX_LENGTH} characters`
+			: undefined,
+);
+
+export const reviewQueueQuerySchema = Type.Optional(
+	Type.Object({
+		kind: Type.Optional(submissionKindSchema),
 	}),
 );
 
 /** What a submission read from its source: what the reviewer sees and approval publishes. */
-export const submissionContentSchema = z.object({
+export const submissionContentSchema = Type.Object({
 	/** `main` names the published bundle. */
 	manifest: addonManifestSchema,
-	bundleSize: z.int().check(z.positive()),
+	bundleSize: Type.Integer({ exclusiveMinimum: 0 }),
 	sha256: sha256Schema,
-	addonMd: z.nullable(z.string()),
+	addonMd: Type.Union([Type.String(), Type.Null()]),
 	/** The measured `{output}/page.json`, its media checked against the commit; `null` when none is committed. */
-	page: z.nullable(addonPageSchema),
+	page: Type.Union([addonPageSchema, Type.Null()]),
 	/** The entry for `manifest.version`, or `null` when the addon has no CHANGELOG.md. */
-	changelog: z.nullable(changelogSchema),
+	changelog: Type.Union([changelogSchema, Type.Null()]),
 	details: repositoryDetailsSchema,
 });
 
 /** How approving a submission changes the addon's maintainers other than its owners. */
-export const maintainerChangeSchema = z.object({
-	added: z.array(userSummarySchema),
-	removed: z.array(userSummarySchema),
+export const maintainerChangeSchema = Type.Object({
+	added: Type.Array(userSummarySchema),
+	removed: Type.Array(userSummarySchema),
 });
 
-export const reviewQueueItemSchema = z.extend(submissionContentSchema, {
+export const reviewQueueItemSchema = Type.Object({
+	...submissionContentSchema.properties,
 	submission: submissionSchema,
 	source: sourcePinSchema,
-	submittedAt: z.iso.datetime(),
+	submittedAt: Type.String({ format: 'date-time' }),
 	submitter: userSummarySchema,
 	/** The tags approval gives the addon, in menu order, or `null` to keep its current ones. */
-	tags: z.nullable(z.array(tagSchema)),
+	tags: Type.Union([Type.Array(tagSchema), Type.Null()]),
 	/** The maintainers approval adds and removes, or `null` to keep the current ones. */
-	maintainers: z.nullable(maintainerChangeSchema),
+	maintainers: Type.Union([maintainerChangeSchema, Type.Null()]),
 	/** The website icon a new listing starts with, or `null` for the type's default. */
-	icon: z.nullable(addonIconSchema),
+	icon: Type.Union([addonIconSchema, Type.Null()]),
 	/** The viewer authored it or maintains the addon, so the server refuses their review with `self_review`. */
-	selfReview: z.boolean(),
+	selfReview: Type.Boolean(),
 	/** The addon's newest approved version, for updates. */
-	previousVersion: z.nullable(addonVersionSchema),
+	previousVersion: Type.Union([addonVersionSchema, Type.Null()]),
 	/** The previous version's ADDON.md; `null` for new listings and versions without one. */
-	previousAddonMd: z.nullable(z.string()),
+	previousAddonMd: Type.Union([Type.String(), Type.Null()]),
 	/** A short-lived presigned download of the staged bundle. */
-	artifact: z.object({
-		url: z.url(),
-		expiresAt: z.iso.datetime(),
+	artifact: Type.Object({
+		url: Type.String({ format: 'url' }),
+		expiresAt: Type.String({ format: 'date-time' }),
 	}),
 });
 
 /** Submissions pending review, oldest first. */
-export const reviewQueueResponseSchema = z.object({
-	submissions: z.array(reviewQueueItemSchema),
+export const reviewQueueResponseSchema = Type.Object({
+	submissions: Type.Array(reviewQueueItemSchema),
 });
 
 /** What submitting the same request would create, without creating it. */
-export const submissionPreviewSchema = z.extend(submissionContentSchema, {
+export const submissionPreviewSchema = Type.Object({
+	...submissionContentSchema.properties,
 	kind: submissionKindSchema,
 	source: sourcePinSchema,
 	/** The tags to preselect: an update's current tags, or a new listing's repository topics that are tag ids. */
-	suggestedTags: z.array(tagIdSchema),
+	suggestedTags: Type.Array(tagIdSchema),
 	/** The addon's maintainers other than its owners: an update's current ones, none for a new listing. */
-	suggestedMaintainers: z.array(userSummarySchema),
+	suggestedMaintainers: Type.Array(userSummarySchema),
 	/** Whether the author may change them: they own the addon, or the new listing makes them its owner. */
-	canEditMaintainers: z.boolean(),
+	canEditMaintainers: Type.Boolean(),
 });
 
-export const submissionPreviewResponseSchema = z.object({
+export const submissionPreviewResponseSchema = Type.Object({
 	preview: submissionPreviewSchema,
 });
 
-export const reviewSubmissionRequestSchema = z.discriminatedUnion('decision', [
-	z.object({
-		decision: z.enum(['approved'] satisfies z.infer<typeof reviewDecisionSchema>[]),
-		note: z.optional(noteSchema),
+export const reviewSubmissionRequestSchema = Type.Union([
+	Type.Object({
+		decision: Type.Enum(['approved'] as const satisfies readonly Static<
+			typeof reviewDecisionSchema
+		>[]),
+		note: Type.Optional(noteSchema),
 	}),
-	z.object({
-		decision: z.enum(['rejected', 'changes_requested'] satisfies z.infer<
+	Type.Object({
+		decision: Type.Enum(['rejected', 'changes_requested'] as const satisfies readonly Static<
 			typeof reviewDecisionSchema
 		>[]),
 		/** The rejection reason or the changes the author must make. */
@@ -98,19 +110,19 @@ export const reviewSubmissionRequestSchema = z.discriminatedUnion('decision', [
 	}),
 ]);
 
-export const reviewSubmissionResponseSchema = z.object({
+export const reviewSubmissionResponseSchema = Type.Object({
 	submission: submissionSchema,
 });
 
-export type ReviewQueueQuery = z.infer<typeof reviewQueueQuerySchema>;
-export type SubmissionContent = z.infer<typeof submissionContentSchema>;
-export type MaintainerChange = z.infer<typeof maintainerChangeSchema>;
-export type ReviewQueueItem = z.infer<typeof reviewQueueItemSchema>;
-export type ReviewQueueResponse = z.infer<typeof reviewQueueResponseSchema>;
-export type SubmissionPreview = z.infer<typeof submissionPreviewSchema>;
-export type SubmissionPreviewResponse = z.infer<typeof submissionPreviewResponseSchema>;
-export type ReviewSubmissionRequest = z.infer<typeof reviewSubmissionRequestSchema>;
-export type ReviewSubmissionResponse = z.infer<typeof reviewSubmissionResponseSchema>;
+export type ReviewQueueQuery = Static<typeof reviewQueueQuerySchema>;
+export type SubmissionContent = Static<typeof submissionContentSchema>;
+export type MaintainerChange = Static<typeof maintainerChangeSchema>;
+export type ReviewQueueItem = Static<typeof reviewQueueItemSchema>;
+export type ReviewQueueResponse = Static<typeof reviewQueueResponseSchema>;
+export type SubmissionPreview = Static<typeof submissionPreviewSchema>;
+export type SubmissionPreviewResponse = Static<typeof submissionPreviewResponseSchema>;
+export type ReviewSubmissionRequest = Static<typeof reviewSubmissionRequestSchema>;
+export type ReviewSubmissionResponse = Static<typeof reviewSubmissionResponseSchema>;
 
 export default {
 	reviewQueueQuerySchema,

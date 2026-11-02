@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { Type, type Static, trimmedString } from './schema';
 
 export const BADGE_NAME_MAX_LENGTH = 24;
 
@@ -20,98 +20,114 @@ export const BADGE_IMAGE_RULES = `Square PNG, ${BADGE_IMAGE_MIN_SIZE} to ${BADGE
 /** How many badges one sponsor shows; as many as fit on a Discord profile. */
 export const BADGE_LIMIT = 3;
 
-export const perkIdSchema = z.enum(['custom-badge']);
+export const perkIdSchema = Type.Enum(['custom-badge']);
 
-export const badgeNameSchema = z
-	.string()
-	.trim()
-	.min(1)
-	.max(BADGE_NAME_MAX_LENGTH)
-	.regex(
-		/^[\p{Script=Latin}0-9][\p{Script=Latin}0-9 .,'!&+\-_:]*$/u,
-		"Use Latin letters, digits, spaces and . , ' ! & + - _ : only, starting with a letter or digit.",
-	);
+const BADGE_NAME_PATTERN = /^[\p{Script=Latin}0-9][\p{Script=Latin}0-9 .,'!&+\-_:]*$/u;
+
+export const badgeNameSchema = trimmedString(
+	(value) => (value.length < 1 ? 'Too small: expected string to have >=1 characters' : undefined),
+	(value) =>
+		value.length > BADGE_NAME_MAX_LENGTH
+			? `Too big: expected string to have <=${BADGE_NAME_MAX_LENGTH} characters`
+			: undefined,
+	(value) =>
+		BADGE_NAME_PATTERN.test(value)
+			? undefined
+			: "Use Latin letters, digits, spaces and . , ' ! & + - _ : only, starting with a letter or digit.",
+);
 
 /** A badge image: the lowercase hex SHA-256 of its PNG bytes, which also names it in storage. */
-export const badgeImageSchema = z.string().regex(/^[0-9a-f]{64}$/, 'Upload the badge image first.');
+export const badgeImageSchema = Type.String({
+	pattern: /^[0-9a-f]{64}$/,
+	errorMessage: 'Upload the badge image first.',
+});
 
 /** A badge as its owner sets it: the name Discord shows when it is tapped, and its uploaded image. */
-export const badgeSchema = z.object({
+export const badgeSchema = Type.Object({
 	name: badgeNameSchema,
 	image: badgeImageSchema,
 });
 
 /** A stored badge with the URL its image loads from. */
-export const ownedBadgeSchema = badgeSchema.extend({
-	imageUrl: z.url(),
+export const ownedBadgeSchema = Type.Object({
+	...badgeSchema.properties,
+	imageUrl: Type.String({ format: 'url' }),
 });
 
-export const publicBadgeSchema = z.object({
-	name: z.string(),
-	imageUrl: z.url(),
+export const publicBadgeSchema = Type.Object({
+	name: Type.String(),
+	imageUrl: Type.String({ format: 'url' }),
 	kind: perkIdSchema,
 });
 
 /** Asks for a presigned upload of a badge image; `size` is the file's length in bytes. */
-export const createBadgeUploadRequestSchema = z.object({
-	size: z.number().int().positive(),
+export const createBadgeUploadRequestSchema = Type.Object({
+	size: Type.Integer({ exclusiveMinimum: 0 }),
 });
 
 /** A short-lived presigned PUT the browser sends the PNG to, then completes by `uploadId`. */
-export const presignedBadgeUploadSchema = z.object({
-	uploadId: z.uuid(),
-	url: z.url(),
-	expiresAt: z.iso.datetime(),
+export const presignedBadgeUploadSchema = Type.Object({
+	uploadId: Type.String({ format: 'uuid' }),
+	url: Type.String({ format: 'url' }),
+	expiresAt: Type.String({ format: 'date-time' }),
 });
 
 /** A completed upload: the stored image's hash and its URL. */
-export const uploadBadgeImageResponseSchema = z.object({
+export const uploadBadgeImageResponseSchema = Type.Object({
 	image: badgeImageSchema,
-	url: z.url(),
+	url: Type.String({ format: 'url' }),
 });
 
 /** A sponsor's badges, in the order their profile shows them. */
-export const badgesSchema = z.array(badgeSchema).min(1).max(BADGE_LIMIT);
+export const badgesSchema = Type.Array(badgeSchema, {
+	minItems: 1,
+	maxItems: BADGE_LIMIT,
+});
 
-export const setBadgesRequestSchema = z.object({
+export const setBadgesRequestSchema = Type.Object({
 	badges: badgesSchema,
 });
 
 /** The badges a user shows on their profile, in their order; empty when they have none or they are hidden. */
-export const userBadgesResponseSchema = z.object({
-	badges: z.array(publicBadgeSchema),
+export const userBadgesResponseSchema = Type.Object({
+	badges: Type.Array(publicBadgeSchema),
 });
 
-export const badgeClaimSchema = z.object({
-	badges: z.array(ownedBadgeSchema),
-	revokedAt: z.iso.datetime().nullable(),
-	revokeReason: z.string().nullable(),
+export const badgeClaimSchema = Type.Object({
+	badges: Type.Array(ownedBadgeSchema),
+	revokedAt: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
+	revokeReason: Type.Union([Type.String(), Type.Null()]),
 });
 
-export const badgeClaimResponseSchema = z.object({
-	claim: badgeClaimSchema.nullable(),
+export const badgeClaimResponseSchema = Type.Object({
+	claim: Type.Union([badgeClaimSchema, Type.Null()]),
 });
 
 /** `pending_cancellation` sponsors stay active until the cancellation takes effect. */
-export const sponsorshipStateSchema = z.enum(['active', 'pending_cancellation', 'cancelled']);
+export const sponsorshipStateSchema = Type.Enum(['active', 'pending_cancellation', 'cancelled']);
 
-export const revokeBadgeRequestSchema = z.object({
-	reason: z.string().trim().min(1).max(500),
+export const revokeBadgeRequestSchema = Type.Object({
+	reason: trimmedString(
+		(value) =>
+			value.length < 1 ? 'Too small: expected string to have >=1 characters' : undefined,
+		(value) =>
+			value.length > 500 ? 'Too big: expected string to have <=500 characters' : undefined,
+	),
 });
 
-export type PerkId = z.infer<typeof perkIdSchema>;
-export type Badge = z.infer<typeof badgeSchema>;
-export type OwnedBadge = z.infer<typeof ownedBadgeSchema>;
-export type CreateBadgeUploadRequest = z.infer<typeof createBadgeUploadRequestSchema>;
-export type PresignedBadgeUpload = z.infer<typeof presignedBadgeUploadSchema>;
-export type UploadBadgeImageResponse = z.infer<typeof uploadBadgeImageResponseSchema>;
-export type SetBadgesRequest = z.infer<typeof setBadgesRequestSchema>;
-export type PublicBadge = z.infer<typeof publicBadgeSchema>;
-export type UserBadgesResponse = z.infer<typeof userBadgesResponseSchema>;
-export type BadgeClaim = z.infer<typeof badgeClaimSchema>;
-export type BadgeClaimResponse = z.infer<typeof badgeClaimResponseSchema>;
-export type SponsorshipState = z.infer<typeof sponsorshipStateSchema>;
-export type RevokeBadgeRequest = z.infer<typeof revokeBadgeRequestSchema>;
+export type PerkId = Static<typeof perkIdSchema>;
+export type Badge = Static<typeof badgeSchema>;
+export type OwnedBadge = Static<typeof ownedBadgeSchema>;
+export type CreateBadgeUploadRequest = Static<typeof createBadgeUploadRequestSchema>;
+export type PresignedBadgeUpload = Static<typeof presignedBadgeUploadSchema>;
+export type UploadBadgeImageResponse = Static<typeof uploadBadgeImageResponseSchema>;
+export type SetBadgesRequest = Static<typeof setBadgesRequestSchema>;
+export type PublicBadge = Static<typeof publicBadgeSchema>;
+export type UserBadgesResponse = Static<typeof userBadgesResponseSchema>;
+export type BadgeClaim = Static<typeof badgeClaimSchema>;
+export type BadgeClaimResponse = Static<typeof badgeClaimResponseSchema>;
+export type SponsorshipState = Static<typeof sponsorshipStateSchema>;
+export type RevokeBadgeRequest = Static<typeof revokeBadgeRequestSchema>;
 
 export default {
 	BADGE_NAME_MAX_LENGTH,

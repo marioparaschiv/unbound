@@ -1,5 +1,5 @@
 import { addonIdSchema, semverSchema } from './manifest';
-import { z } from './zod';
+import { Type, type Static } from './schema';
 
 export const CRASH_REPORT_KINDS = ['crash', 'freeze', 'start-failure'] as const;
 
@@ -8,34 +8,34 @@ export const CRASH_REPORT_PLATFORMS = ['ios', 'android'] as const;
 export const CRASH_REPORT_LOG_LIMIT = 16_000;
 
 /** What the client sends when crash reporting is on: no account, message content or addon settings. */
-export const crashReportSchema = z.object({
-	kind: z.enum(CRASH_REPORT_KINDS),
-	platform: z.enum(CRASH_REPORT_PLATFORMS),
+export const crashReportSchema = Type.Object({
+	kind: Type.Enum(CRASH_REPORT_KINDS),
+	platform: Type.Enum(CRASH_REPORT_PLATFORMS),
 	clientVersion: semverSchema,
-	loaderVersion: z.string().check(z.maxLength(64)),
-	discordVersion: z.string().check(z.maxLength(64)),
-	osVersion: z.string().check(z.maxLength(64)),
-	deviceModel: z.string().check(z.maxLength(64)),
-	verifiedBuild: z.optional(z.boolean()),
-	addon: z.optional(
-		z.object({
+	loaderVersion: Type.String({ maxLength: 64 }),
+	discordVersion: Type.String({ maxLength: 64 }),
+	osVersion: Type.String({ maxLength: 64 }),
+	deviceModel: Type.String({ maxLength: 64 }),
+	verifiedBuild: Type.Optional(Type.Boolean()),
+	addon: Type.Optional(
+		Type.Object({
 			id: addonIdSchema,
-			version: z.string().check(z.maxLength(64)),
-			trust: z.enum(['signed', 'unsigned']),
+			version: Type.String({ maxLength: 64 }),
+			trust: Type.Enum(['signed', 'unsigned']),
 		}),
 	),
-	phase: z.optional(z.enum(['starting', 'running', 'frozen'])),
-	seconds: z.optional(z.number().check(z.nonnegative(), z.lte(86_400))),
-	message: z.optional(z.string().check(z.maxLength(2_000))),
-	stack: z.optional(z.string().check(z.maxLength(16_000))),
-	log: z.optional(z.string().check(z.maxLength(CRASH_REPORT_LOG_LIMIT))),
+	phase: Type.Optional(Type.Enum(['starting', 'running', 'frozen'])),
+	seconds: Type.Optional(Type.Number({ minimum: 0, maximum: 86_400 })),
+	message: Type.Optional(Type.String({ maxLength: 2_000 })),
+	stack: Type.Optional(Type.String({ maxLength: 16_000 })),
+	log: Type.Optional(Type.String({ maxLength: CRASH_REPORT_LOG_LIMIT })),
 });
 
-export const crashReportResponseSchema = z.object({
-	id: z.string(),
+export const crashReportResponseSchema = Type.Object({
+	id: Type.String(),
 });
 
-export type CrashReport = z.infer<typeof crashReportSchema>;
+export type CrashReport = Static<typeof crashReportSchema>;
 
 export default {
 	CRASH_REPORT_KINDS,

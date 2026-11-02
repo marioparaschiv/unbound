@@ -1,4 +1,5 @@
 import { addonIdSchema } from './manifest';
+import { safeParse } from './schema';
 
 /** The URL scheme the client claims. */
 export const UNBOUND_SCHEME = 'unbound';
@@ -62,7 +63,7 @@ export function parseUnboundLink(url: string): UnboundLink | undefined {
 		return undefined;
 	}
 
-	const id = addonIdSchema.safeParse(params.get('id'));
+	const id = safeParse(addonIdSchema, params.get('id'));
 
 	return id.success ? { action, id: id.data } : undefined;
 }

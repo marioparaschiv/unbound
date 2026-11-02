@@ -23,6 +23,7 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import type { Changelog } from '@unbound-app/contracts/changelog';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
+import { parse } from '@unbound-app/contracts/schema';
 import { z } from 'zod';
 
 import type {
@@ -103,7 +104,7 @@ const ADDON_MD = 'ADDON.md';
 const CHANGELOG_MD = 'CHANGELOG.md';
 const MAX_LISTED_ADDONS = 50;
 const README = /^readme(?:\.\w+)?$/i;
-const DEFAULT_CONFIG = workspaceConfigSchema.parse({});
+const DEFAULT_CONFIG = parse(workspaceConfigSchema, {});
 
 function childPath(dir: string, name: string): string {
 	return dir === '' ? name : `${dir}/${name}`;

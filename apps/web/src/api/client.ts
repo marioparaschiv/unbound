@@ -1,6 +1,6 @@
+import { parse, safeParse, type TSchema, type StaticDecode } from '@unbound-app/contracts/schema';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import type { ApiErrorCode } from '@unbound-app/contracts/errors';
-import type { z } from 'zod/mini';
 
 /** The header `ubd publish` sends an API key in, for CI publishing. */
 export const API_KEY_HEADER = 'x-api-key';
@@ -15,7 +15,7 @@ export type QueryValues = Record<string, string | undefined>;
 export type ApiRoute = {
 	body: unknown;
 	query: QueryValues | undefined;
-	response: z.ZodMiniType;
+	response: TSchema;
 };
 
 export type ApiMap = Record<string, ApiRoute>;
@@ -108,7 +108,7 @@ function buildPath(path: string, params: Record<string, string> | undefined): st
 }
 
 async function toRequestError(response: Response): Promise<ApiRequestError> {
-	const parsed = apiErrorResponseSchema.safeParse(await response.json().catch(() => null));
+	const parsed = safeParse(apiErrorResponseSchema, await response.json().catch(() => null));
 
 	if (!parsed.success) {
 		return new ApiRequestError(
@@ -134,7 +134,7 @@ export function createApiClient<Api extends ApiMap>(options: ApiClientOptions) {
 	return async function request<K extends keyof Api & string>(
 		route: K,
 		init: RequestOptions<K, Api[K]>,
-	): Promise<z.output<Api[K]['response']>> {
+	): Promise<StaticDecode<Api[K]['response']>> {
 		const separator = route.indexOf(' ');
 		const method = route.slice(0, separator);
 		const path = route.slice(separator + 1);
@@ -163,7 +163,7 @@ export function createApiClient<Api extends ApiMap>(options: ApiClientOptions) {
 			throw await toRequestError(response);
 		}
 
-		return init.response.parse(await response.json());
+		return parse(init.response, await response.json());
 	};
 }
 

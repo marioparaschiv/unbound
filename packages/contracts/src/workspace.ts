@@ -1,20 +1,20 @@
 import picomatch from 'picomatch';
 
+import { safeParse, Type, type Static } from './schema';
 import { MANIFEST_FILENAME } from './manifest';
-import { z } from './zod';
 
 /** The workspace config's filename; the directory holding one is a workspace root. */
 export const CONFIG_FILENAME = 'unbound.config.json';
 
 /** The validated shape of an `unbound.config.json`. */
-export const workspaceConfigSchema = z.object({
-	$schema: z.optional(z.string()),
-	addons: z._default(z.array(z.string()), ['plugins/*', 'themes/*']),
-	build: z._default(z.string(), 'bun run build'),
-	output: z._default(z.string(), 'dist'),
+export const workspaceConfigSchema = Type.Object({
+	$schema: Type.Optional(Type.String()),
+	addons: Type.Array(Type.String(), { default: ['plugins/*', 'themes/*'] }),
+	build: Type.String({ default: 'bun run build' }),
+	output: Type.String({ default: 'dist' }),
 });
 
-export type WorkspaceConfig = z.infer<typeof workspaceConfigSchema>;
+export type WorkspaceConfig = Static<typeof workspaceConfigSchema>;
 
 export type AddonKind = 'plugin' | 'theme';
 
@@ -41,10 +41,12 @@ export type WorkspaceFiles = {
 	read(path: string): string | undefined;
 };
 
-const manifestFieldsSchema = z.object({ id: z.string(), main: z.string() });
+const manifestFieldsSchema = Type.Object({ id: Type.String(), main: Type.String() });
 
-const packageScriptsSchema = z.object({
-	scripts: z.optional(z.looseObject({ build: z.optional(z.string()) })),
+const packageScriptsSchema = Type.Object({
+	scripts: Type.Optional(
+		Type.Object({ build: Type.Optional(Type.String()) }, { additionalProperties: true }),
+	),
 });
 
 /**
@@ -106,7 +108,7 @@ export function readAddon(
 		};
 	}
 
-	const parsed = manifestFieldsSchema.safeParse(json);
+	const parsed = safeParse(manifestFieldsSchema, json);
 
 	if (!parsed.success) {
 		return { path: dir, reason: `its ${MANIFEST_FILENAME} has no string "id" and "main"` };
@@ -239,7 +241,7 @@ function hasBuildScript(text: string | undefined): boolean {
 		return false;
 	}
 
-	const parsed = packageScriptsSchema.safeParse(json);
+	const parsed = safeParse(packageScriptsSchema, json);
 
 	return parsed.success && Boolean(parsed.data.scripts?.build);
 }
