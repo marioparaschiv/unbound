@@ -377,11 +377,3 @@ export function destroy() {
 	originalMomentDefineLocale = null;
 	wrappedMomentDefineLocale = null;
 }
-
-export default {
-	messages,
-	format,
-	defineMessages,
-	init,
-	destroy,
-};

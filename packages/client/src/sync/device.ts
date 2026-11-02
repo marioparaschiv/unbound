@@ -243,5 +243,3 @@ export async function applyActions(actions: SyncAction[]): Promise<SyncAction[]>
 
 	return failed;
 }
-
-export default { collectLocalDocument, applyActions };

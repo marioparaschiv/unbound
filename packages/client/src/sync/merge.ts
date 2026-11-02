@@ -268,5 +268,3 @@ export function reconcileBase(
 
 	return result;
 }
-
-export default { isJsonEqual, merge, plan, reconcileBase };

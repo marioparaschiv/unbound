@@ -295,21 +295,3 @@ export async function deleteData(): Promise<boolean> {
 		return false;
 	}
 }
-
-export default {
-	SYNC_STORE,
-	getSession,
-	isEnabled,
-	isApplying,
-	getMode,
-	needsFirstSyncChoice,
-	setMode,
-	resolveFirstSync,
-	now,
-	signIn,
-	signOut,
-	connect,
-	disconnect,
-	setEnabled,
-	deleteData,
-};
