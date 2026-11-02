@@ -246,12 +246,14 @@ struct HookState {
     std::mutex                                             returnCacheMutex;
     __strong NSMutableDictionary<NSArray *, NSData *> *returnCache =
         [NSMutableDictionary dictionary];
-    bool              cacheOnly     = false;
-    bool              once          = false;
-    Runtime          *inlineRuntime = nullptr;
-    loader::AddonSlot addon         = loader::kNoAddon;
-    std::atomic_bool  active{true};
-    std::atomic_bool  afterOncePending{false};
+    bool                                                           cacheOnly     = false;
+    bool                                                           once          = false;
+    Runtime                                                       *inlineRuntime = nullptr;
+    loader::AddonSlot                                              addon         = loader::kNoAddon;
+    std::atomic_bool                                               active{true};
+    std::atomic_bool                                               afterOncePending{false};
+    std::shared_ptr<loader::native::RuntimeResourceOperationScope> operations =
+        std::make_shared<loader::native::RuntimeResourceOperationScope>();
 };
 
 class HookTokenHost final : public HostObject
@@ -2468,8 +2470,17 @@ static void removeHook(const std::shared_ptr<HookState> &state, bool preserveAft
         return;
     }
     state->afterOncePending.store(preserveAfter && state->hasAfter);
-    if (!state->active.exchange(false))
+    bool wasActive = state->active.exchange(false);
+    if (!preserveAfter)
     {
+        state->operations->cancelPending();
+    }
+    if (!wasActive)
+    {
+        if (!state->afterOncePending.load())
+        {
+            releaseHookCallbacks(state);
+        }
         return;
     }
     loader::native::nativeHookBudget().release();
@@ -2776,14 +2787,25 @@ static bool hookRuntimeMatches(const std::shared_ptr<HookState> &state, Runtime 
 static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selector,
                             std::function<void(Runtime &)> callback)
 {
+    auto operation = loader::native::beginRuntimeResourceOperation(state->callbackResources,
+                                                                   state->callbackRuntimeIdentity);
+    if (!operation)
+    {
+        return false;
+    }
+    if (!state->operations->track(operation))
+    {
+        operation->cancel();
+        return false;
+    }
     bool invoked = false;
     if (state->inlineRuntime && [NSThread isMainThread] &&
         state->runtimeGeneration == loader::native::runtimeGeneration())
     {
         loader::native::withRuntimeResource(
-            state->callbackResources, state->callbackRuntimeIdentity,
+            state->callbackResources, state->callbackRuntimeIdentity, operation,
             [&](loader::native::RuntimeResourceRegistry &resources) {
-                if (!hookRuntimeMatches(state, *state->inlineRuntime))
+                if (!state->active.load() || !hookRuntimeMatches(state, *state->inlineRuntime))
                 {
                     return;
                 }
@@ -2801,24 +2823,25 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
     if (!state->inlineRuntime)
     {
         auto invokedForRuntime = std::make_shared<std::atomic_bool>(false);
-        completed              = executeRuntimeSynchronously(
-            [state, callback = std::move(callback), invokedForRuntime](Runtime &runtime) {
-                if (state->runtimeGeneration != loader::native::runtimeGeneration())
-                {
-                    return;
-                }
-                loader::native::withRuntimeResource(
-                    state->callbackResources, state->callbackRuntimeIdentity,
-                    [&](loader::native::RuntimeResourceRegistry &resources) {
-                        if (!hookRuntimeMatches(state, runtime))
-                        {
-                            return;
-                        }
-                        resources.drainDeferredReleases();
-                        callback(runtime);
-                        invokedForRuntime->store(true, std::memory_order_release);
-                    });
-            });
+        completed = executeRuntimeSynchronously([state, callback = std::move(callback), operation,
+                                                 invokedForRuntime](Runtime &runtime) {
+            if (!state->active.load() ||
+                state->runtimeGeneration != loader::native::runtimeGeneration())
+            {
+                return;
+            }
+            loader::native::withRuntimeResource(
+                state->callbackResources, state->callbackRuntimeIdentity, operation,
+                [&](loader::native::RuntimeResourceRegistry &resources) {
+                    if (!state->active.load() || !hookRuntimeMatches(state, runtime))
+                    {
+                        return;
+                    }
+                    resources.drainDeferredReleases();
+                    callback(runtime);
+                    invokedForRuntime->store(true, std::memory_order_release);
+                });
+        });
         completed = completed && invokedForRuntime->load(std::memory_order_acquire);
     }
     std::string name = sel_getName(selector);
@@ -3495,15 +3518,26 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
                 loader::native::releaseRuntimeResource(runtime, state->callbackResourceKey);
             }
         };
+        auto operation = loader::native::beginRuntimeResourceOperation(
+            state->callbackResources, state->callbackRuntimeIdentity);
+        if (!operation)
+        {
+            continue;
+        }
+        if (!state->operations->track(operation))
+        {
+            operation->cancel();
+            continue;
+        }
         if (!state->inlineRuntime)
         {
-            executeRuntimeAsynchronously([state, afterWork](Runtime &runtime) {
+            executeRuntimeAsynchronously([state, afterWork, operation](Runtime &runtime) {
                 if (state->runtimeGeneration != loader::native::runtimeGeneration())
                 {
                     return;
                 }
                 loader::native::withRuntimeResource(
-                    state->callbackResources, state->callbackRuntimeIdentity,
+                    state->callbackResources, state->callbackRuntimeIdentity, operation,
                     [&](loader::native::RuntimeResourceRegistry &resources) {
                         if (!hookRuntimeMatches(state, runtime))
                         {
@@ -3517,7 +3551,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         else if ([NSThread isMainThread])
         {
             loader::native::withRuntimeResource(
-                state->callbackResources, state->callbackRuntimeIdentity,
+                state->callbackResources, state->callbackRuntimeIdentity, operation,
                 [&](loader::native::RuntimeResourceRegistry &resources) {
                     if (!hookRuntimeMatches(state, *state->inlineRuntime))
                     {
@@ -3534,7 +3568,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
                     state->runtimeGeneration == loader::native::runtimeGeneration())
                 {
                     loader::native::withRuntimeResource(
-                        state->callbackResources, state->callbackRuntimeIdentity,
+                        state->callbackResources, state->callbackRuntimeIdentity, operation,
                         [&](loader::native::RuntimeResourceRegistry &resources) {
                             if (!hookRuntimeMatches(state, *state->inlineRuntime))
                             {

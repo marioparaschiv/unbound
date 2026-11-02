@@ -1,5 +1,6 @@
 #include "NativeRuntimeResources.h"
 
+#include <algorithm>
 #include <atomic>
 #include <iterator>
 
@@ -44,6 +45,164 @@ RuntimeResourceRegistry::~RuntimeResourceRegistry()
     clear();
 }
 
+RuntimeResourceOperation::RuntimeResourceOperation(std::weak_ptr<RuntimeResourceRegistry> registry,
+                                                   uint64_t identity, uint64_t identifier)
+    : registry_(std::move(registry)), identity_(identity), identifier_(identifier)
+{
+}
+
+RuntimeResourceOperation::~RuntimeResourceOperation()
+{
+    finish();
+}
+
+bool RuntimeResourceOperation::start(uint64_t identity)
+{
+    if (identity != identity_)
+    {
+        return false;
+    }
+    auto registry = registry_.lock();
+    return registry && registry->active() && registry->identity() == identity_ && gate_.start();
+}
+
+bool RuntimeResourceOperation::cancel()
+{
+    bool expired = gate_.expire();
+    if (expired)
+    {
+        if (auto registry = registry_.lock())
+        {
+            registry->finishOperation(identifier_);
+        }
+        forgetFromScope();
+    }
+    return expired;
+}
+
+void RuntimeResourceOperation::finish()
+{
+    NativeOperationPhase phase = gate_.phase();
+    if (phase == NativeOperationPhase::queued)
+    {
+        gate_.expire();
+    }
+    else if (phase == NativeOperationPhase::running)
+    {
+        gate_.finish();
+    }
+    if (auto registry = registry_.lock())
+    {
+        registry->finishOperation(identifier_);
+    }
+    forgetFromScope();
+}
+
+bool RuntimeResourceOperation::active() const
+{
+    NativeOperationPhase phase = gate_.phase();
+    if (phase != NativeOperationPhase::queued && phase != NativeOperationPhase::running)
+    {
+        return false;
+    }
+    auto registry = registry_.lock();
+    return registry && registry->active() && registry->identity() == identity_;
+}
+
+void RuntimeResourceOperation::expireFromRuntime()
+{
+    gate_.expire();
+    forgetFromScope();
+}
+
+void RuntimeResourceOperation::forgetFromScope()
+{
+    std::shared_ptr<RuntimeResourceOperationScope> scope;
+    {
+        std::lock_guard<std::mutex> lock(scopeMutex_);
+        scope = scope_.lock();
+    }
+    if (scope)
+    {
+        scope->forget(this);
+    }
+}
+
+RuntimeResourceOperationScope::~RuntimeResourceOperationScope()
+{
+    cancelPending();
+}
+
+bool RuntimeResourceOperationScope::active() const
+{
+    return active_.load(std::memory_order_acquire);
+}
+
+bool RuntimeResourceOperationScope::track(
+    const std::shared_ptr<RuntimeResourceOperation> &operation)
+{
+    std::weak_ptr<RuntimeResourceOperationScope> scope = weak_from_this();
+    if (!operation || scope.expired())
+    {
+        return false;
+    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (!active())
+    {
+        return false;
+    }
+    {
+        std::lock_guard<std::mutex> operationLock(operation->scopeMutex_);
+        operation->scope_ = scope;
+    }
+    operations_.erase(std::remove_if(operations_.begin(), operations_.end(),
+                                     [](const auto &entry) {
+                                         auto current = entry.lock();
+                                         return !current || !current->active();
+                                     }),
+                      operations_.end());
+    operations_.push_back(operation);
+    return true;
+}
+
+size_t RuntimeResourceOperationScope::pendingOperationCount() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return operations_.size();
+}
+
+void RuntimeResourceOperationScope::forget(const RuntimeResourceOperation *operation)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    operations_.erase(std::remove_if(operations_.begin(), operations_.end(),
+                                     [operation](const auto &entry) {
+                                         auto current = entry.lock();
+                                         return !current || current.get() == operation;
+                                     }),
+                      operations_.end());
+}
+
+void RuntimeResourceOperationScope::cancelPending()
+{
+    active_.store(false, std::memory_order_release);
+    std::vector<std::shared_ptr<RuntimeResourceOperation>> pending;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        for (const auto &entry : operations_)
+        {
+            if (auto operation = entry.lock())
+            {
+                pending.push_back(std::move(operation));
+            }
+        }
+        operations_.clear();
+    }
+    for (const auto &operation : pending)
+    {
+        operation->cancel();
+    }
+}
+
 uint64_t RuntimeResourceRegistry::identity() const
 {
     return identity_;
@@ -66,9 +225,52 @@ std::unique_lock<std::recursive_mutex> RuntimeResourceRegistry::lockRuntime() co
 
 void RuntimeResourceRegistry::invalidate()
 {
-    auto                        runtimeLock = lockRuntime();
+    auto                                                   runtimeLock = lockRuntime();
+    std::vector<std::shared_ptr<RuntimeResourceOperation>> pending;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        active_.store(false, std::memory_order_release);
+        for (const auto &entry : pendingOperations_)
+        {
+            if (auto pendingOperation = entry.second.lock())
+            {
+                pendingOperation->expireFromRuntime();
+                pending.push_back(std::move(pendingOperation));
+            }
+        }
+        pendingOperations_.clear();
+    }
+}
+
+std::shared_ptr<RuntimeResourceOperation> RuntimeResourceRegistry::beginOperation(uint64_t identity)
+{
     std::lock_guard<std::mutex> lock(mutex_);
-    active_.store(false, std::memory_order_release);
+    if (!active() || identity != identity_)
+    {
+        return nullptr;
+    }
+    auto registry = weak_from_this();
+    if (registry.expired())
+    {
+        return nullptr;
+    }
+    uint64_t identifier = nextOperationId_++;
+    auto     operation  = std::shared_ptr<RuntimeResourceOperation>(
+        new RuntimeResourceOperation(registry, identity_, identifier));
+    pendingOperations_.emplace(identifier, operation);
+    return operation;
+}
+
+size_t RuntimeResourceRegistry::pendingOperationCount() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return pendingOperations_.size();
+}
+
+void RuntimeResourceRegistry::finishOperation(uint64_t identifier)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    pendingOperations_.erase(identifier);
 }
 
 bool RuntimeResourceRegistry::retain(const std::string &key, std::shared_ptr<void> resource)
@@ -252,6 +454,14 @@ bool invalidateRuntimeResources(const std::weak_ptr<RuntimeResourceRegistry> &re
     }
     resources->invalidate();
     return true;
+}
+
+std::shared_ptr<RuntimeResourceOperation>
+beginRuntimeResourceOperation(const std::weak_ptr<RuntimeResourceRegistry> &registry,
+                              uint64_t                                      identity)
+{
+    auto resources = registry.lock();
+    return resources ? resources->beginOperation(identity) : nullptr;
 }
 
 size_t drainRuntimeResourceReleases(jsi::Runtime &runtime)

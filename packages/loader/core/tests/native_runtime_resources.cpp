@@ -18,6 +18,65 @@ int main()
     bool                                    deferredReleased = false;
     assert(resources.identity() != otherResources.identity());
     assert(resources.active());
+    auto operationResources = std::make_shared<loader::native::RuntimeResourceRegistry>();
+    std::weak_ptr<loader::native::RuntimeResourceRegistry> operationReference = operationResources;
+    auto operation = loader::native::beginRuntimeResourceOperation(operationReference,
+                                                                   operationResources->identity());
+    bool operationCalled = false;
+    assert(operation);
+    assert(operationResources->pendingOperationCount() == 1);
+    assert(loader::native::withRuntimeResource(operationReference, operationResources->identity(),
+                                               operation,
+                                               [&](loader::native::RuntimeResourceRegistry &) {
+                                                   operationCalled = true;
+                                               }));
+    assert(operationCalled);
+    assert(!operation->active());
+    assert(operationResources->pendingOperationCount() == 0);
+    auto cancelledOperation = operationResources->beginOperation(operationResources->identity());
+    assert(cancelledOperation);
+    assert(cancelledOperation->cancel());
+    assert(!cancelledOperation->active());
+    assert(operationResources->pendingOperationCount() == 0);
+    bool cancelledOperationCalled = false;
+    assert(!loader::native::withRuntimeResource(operationReference, operationResources->identity(),
+                                                cancelledOperation,
+                                                [&](loader::native::RuntimeResourceRegistry &) {
+                                                    cancelledOperationCalled = true;
+                                                }));
+    assert(!cancelledOperationCalled);
+    auto operationScope  = std::make_shared<loader::native::RuntimeResourceOperationScope>();
+    auto scopedOperation = operationResources->beginOperation(operationResources->identity());
+    assert(operationScope->track(scopedOperation));
+    assert(operationScope->active());
+    assert(operationScope->pendingOperationCount() == 1);
+    assert(loader::native::withRuntimeResource(operationReference, operationResources->identity(),
+                                               scopedOperation,
+                                               [](loader::native::RuntimeResourceRegistry &) {}));
+    assert(operationScope->pendingOperationCount() == 0);
+    auto cancellableScopedOperation =
+        operationResources->beginOperation(operationResources->identity());
+    assert(operationScope->track(cancellableScopedOperation));
+    assert(operationScope->pendingOperationCount() == 1);
+    operationScope->cancelPending();
+    assert(!operationScope->active());
+    assert(!scopedOperation->active());
+    assert(operationScope->pendingOperationCount() == 0);
+    assert(!cancellableScopedOperation->active());
+    assert(operationResources->pendingOperationCount() == 0);
+    auto rejectedOperation = operationResources->beginOperation(operationResources->identity());
+    assert(!operationScope->track(rejectedOperation));
+    assert(rejectedOperation->cancel());
+    auto abandonedOperation = operationResources->beginOperation(operationResources->identity());
+    assert(operationResources->pendingOperationCount() == 1);
+    abandonedOperation.reset();
+    assert(operationResources->pendingOperationCount() == 0);
+    auto invalidatedOperation = operationResources->beginOperation(operationResources->identity());
+    operationResources->invalidate();
+    assert(invalidatedOperation);
+    assert(!invalidatedOperation->active());
+    assert(operationResources->pendingOperationCount() == 0);
+    operationResources.reset();
     auto invalidatedResources = std::make_shared<loader::native::RuntimeResourceRegistry>();
     std::weak_ptr<loader::native::RuntimeResourceRegistry> invalidatedReference =
         invalidatedResources;

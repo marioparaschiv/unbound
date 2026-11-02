@@ -487,12 +487,13 @@ static jsi::Function catchingCall(jsi::Runtime &runtime)
 }
 
 struct HookListener {
-    std::weak_ptr<jsi::Function>                           callback;
-    std::weak_ptr<loader::native::RuntimeResourceRegistry> resources;
-    loader::AddonSlot                                      addon             = loader::kNoAddon;
-    jsi::Runtime                                          *inlineRuntime     = nullptr;
-    uint64_t                                               runtimeIdentity   = 0;
-    uint64_t                                               runtimeGeneration = 0;
+    std::weak_ptr<jsi::Function>                                   callback;
+    std::weak_ptr<loader::native::RuntimeResourceRegistry>         resources;
+    std::shared_ptr<loader::native::RuntimeResourceOperationScope> operations;
+    loader::AddonSlot                                              addon         = loader::kNoAddon;
+    jsi::Runtime                                                  *inlineRuntime = nullptr;
+    uint64_t                                                       runtimeIdentity   = 0;
+    uint64_t                                                       runtimeGeneration = 0;
 };
 
 static thread_local jsi::Runtime *gUIScopeRuntime = nullptr;
@@ -517,12 +518,29 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
         }
         listener = found->second;
     }
+    if (!listener.operations || !listener.operations->active())
+    {
+        return;
+    }
+
+    auto operation =
+        loader::native::beginRuntimeResourceOperation(listener.resources, listener.runtimeIdentity);
+    if (!operation || !listener.operations->track(operation))
+    {
+        if (operation)
+        {
+            operation->cancel();
+        }
+        return;
+    }
 
     loader::AddonScope scope(listener.addon);
-    auto deliver = [callback = listener.callback, identity = listener.runtimeIdentity,
-                    generation = listener.runtimeGeneration, addon = listener.addon, payload](
+    auto deliver = [callback = listener.callback, operations = listener.operations, operation,
+                    identity = listener.runtimeIdentity, generation = listener.runtimeGeneration,
+                    addon = listener.addon, payload](
                        jsi::Runtime &runtime, loader::native::RuntimeResourceRegistry &resources) {
-        if (generation != loader::native::runtimeGeneration())
+        if (!operations->active() || !operation->active() ||
+            generation != loader::native::runtimeGeneration())
         {
             return;
         }
@@ -565,14 +583,15 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
 
     if (!listener.inlineRuntime)
     {
-        loader::native::executeRuntimeAsynchronously(
-            [deliver, resources = listener.resources,
-             identity = listener.runtimeIdentity](jsi::Runtime &runtime) {
-                loader::native::withRuntimeResource(
-                    resources, identity, [&](loader::native::RuntimeResourceRegistry &owner) {
-                        deliver(runtime, owner);
-                    });
-            });
+        loader::native::executeRuntimeAsynchronously([deliver, resources = listener.resources,
+                                                      identity = listener.runtimeIdentity,
+                                                      operation](jsi::Runtime &runtime) {
+            loader::native::withRuntimeResource(
+                resources, identity, operation,
+                [&](loader::native::RuntimeResourceRegistry &owner) {
+                    deliver(runtime, owner);
+                });
+        });
         return;
     }
     if (onMainThread())
@@ -580,7 +599,7 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
         if (listener.runtimeGeneration == loader::native::runtimeGeneration())
         {
             loader::native::withRuntimeResource(
-                listener.resources, listener.runtimeIdentity,
+                listener.resources, listener.runtimeIdentity, operation,
                 [&](loader::native::RuntimeResourceRegistry &owner) {
                     if (loader::native::runtimeResourceRegistry(*listener.inlineRuntime)
                             ->identity() == listener.runtimeIdentity)
@@ -597,12 +616,14 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
         auto generation    = listener.runtimeGeneration;
         auto identity      = listener.runtimeIdentity;
         auto resources     = listener.resources;
+        auto pending       = operation;
         target->runOnMain([deliver = std::move(deliver), inlineRuntime, generation, identity,
-                           resources]() {
+                           resources, pending]() {
             if (generation == loader::native::runtimeGeneration())
             {
                 loader::native::withRuntimeResource(
-                    resources, identity, [&](loader::native::RuntimeResourceRegistry &owner) {
+                    resources, identity, pending,
+                    [&](loader::native::RuntimeResourceRegistry &owner) {
                         if (loader::native::runtimeResourceRegistry(*inlineRuntime)->identity() ==
                             identity)
                         {
@@ -623,10 +644,12 @@ static void rememberHookListener(jsi::Runtime &runtime, const std::string &token
     }
 
     auto callback = std::make_shared<jsi::Function>(listener.asObject(runtime).asFunction(runtime));
-    auto resources = loader::native::runtimeResourceRegistry(runtime);
+    auto resources  = loader::native::runtimeResourceRegistry(runtime);
+    auto operations = std::make_shared<loader::native::RuntimeResourceOperationScope>();
     loader::native::retainRuntimeResource(runtime, "android-hook:" + token, callback);
     HookListener                stored{callback,
                                        resources,
+                                       operations,
                                        loader::currentAddon(),
                                        gUIScopeRuntime,
                                        resources->identity(),
@@ -681,6 +704,7 @@ static void forgetHookListener(const std::string &token)
     {
         return;
     }
+    listener.operations->cancelPending();
     const std::string key = "android-hook:" + token;
     if (loader::native::releaseRuntimeResourceOnOwnerThread(listener.resources, key))
     {
@@ -701,6 +725,7 @@ static void retireHookListeners()
     }
     for (const auto &[token, listener] : retired)
     {
+        listener.operations->cancelPending();
         const std::string key = "android-hook:" + token;
         if (loader::native::deferRuntimeResourceRelease(listener.resources, key))
         {
