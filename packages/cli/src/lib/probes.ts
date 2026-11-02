@@ -437,6 +437,8 @@ export async function captureNativeHook(
 			parameters,
 			{ notify: true },
 			({ self, args }) => {
+				if (!self) return;
+
 				count++;
 
 				if (calls.length < samples) {
@@ -453,6 +455,8 @@ export async function captureNativeHook(
 		const { objc } = ios.native;
 		const token = objc.hook(className, method, {
 			after: ({ self, args }) => {
+				if (!self) return;
+
 				count++;
 
 				if (calls.length < samples) {

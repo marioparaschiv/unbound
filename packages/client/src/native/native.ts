@@ -20,6 +20,7 @@ export type {
 	NativeHookContext,
 	NativeHookHandlers,
 	NativeHookOptions,
+	NativeHookPayload,
 	NativeHookToken,
 	NativeJavaArgument,
 	NativeJavaAssociationKey,

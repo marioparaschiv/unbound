@@ -9,6 +9,8 @@ import type {
 	NativeJavaBridge,
 	NativeJavaHandle,
 	NativeJavaReference,
+	NativeJavaHookEvent,
+	NativeJavaHookOptions,
 	NativeDebugBridge,
 	NativeJavaHooksBridge,
 	NativeJavaHookToken,
@@ -303,18 +305,18 @@ export function createScopedNativePlugin(
 		struct: scopeMethod(objcBridge.struct.bind(objcBridge), 'objc.struct'),
 		array: scopeMethod(objcBridge.array.bind(objcBridge), 'objc.array'),
 		data: scopeMethod(objcBridge.data.bind(objcBridge), 'objc.data'),
-		hook: (
+		hook: <Receiver extends boolean = true>(
 			className: string,
 			selector: string,
-			handlers: NativeHookHandlers,
-			options?: NativeHookOptions,
+			handlers: NativeHookHandlers<Receiver>,
+			options?: NativeHookOptions<Receiver>,
 		) => {
 			if (disposed) {
 				throw new NativePluginDisposedError();
 			}
 
 			requireCapability(capabilities, 'objc.hook');
-			const token = objcBridge.hook(className, selector, handlers, options);
+			const token = objcBridge.hook<Receiver>(className, selector, handlers, options);
 
 			tokens.add(token);
 
@@ -593,8 +595,19 @@ export function createScopedNativePlugin(
 	};
 
 	const hooks: NativeJavaHooksBridge = {
-		hook: (className, methodName, parameterTypes, options, listener) => {
-			const token = scopeMethod(hooksBridge.hook.bind(hooksBridge), 'hooks.hook')(
+		hook: <Receiver extends boolean = true>(
+			className: string,
+			methodName: string,
+			parameterTypes: string[],
+			options?: NativeJavaHookOptions<Receiver>,
+			listener?: (event: NativeJavaHookEvent<Receiver>) => void,
+		) => {
+			if (disposed) {
+				throw new NativePluginDisposedError();
+			}
+
+			requireCapability(capabilities, 'hooks.hook');
+			const token = hooksBridge.hook<Receiver>(
 				className,
 				methodName,
 				parameterTypes,

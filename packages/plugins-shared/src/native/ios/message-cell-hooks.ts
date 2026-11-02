@@ -38,6 +38,8 @@ export function hookMessageCells(
 		hooks.push(
 			objc.hook('DCDMessageTableViewCell', 'didMoveToWindow', {
 				after: ({ self }) => {
+					if (!self) return;
+
 					// `window` is read asynchronously so the hook does not block on the main thread.
 					void objc
 						.invokeAsync(self, 'window', [])
@@ -50,14 +52,22 @@ export function hookMessageCells(
 				},
 			}),
 			objc.hook('DCDMessageTableViewCell', 'prepareForReuse', {
-				after: ({ self }) => reused(self),
+				after: ({ self }) => {
+					if (self) {
+						reused(self);
+					}
+				},
 			}),
 		);
 
 		if (laidOut) {
 			hooks.push(
 				objc.hook('DCDMessageTableViewCell', 'layoutSubviews', {
-					after: ({ self }) => laidOut(self),
+					after: ({ self }) => {
+						if (self) {
+							laidOut(self);
+						}
+					},
 				}),
 			);
 		}
@@ -71,6 +81,8 @@ export function hookMessageCells(
 				hooks.push(
 					objc.hook(className, 'setAttributedText:', {
 						after: ({ self }) => {
+							if (!self) return;
+
 							void objc
 								.findViews(self, 'DCDMessageTableViewCell', {
 									direction: 'ancestors',

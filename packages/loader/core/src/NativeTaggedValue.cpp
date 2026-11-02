@@ -1,5 +1,7 @@
 #include "NativeTaggedValue.h"
 
+#include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <cstdlib>
 
@@ -219,24 +221,33 @@ static std::optional<TaggedValue> taggedValueAt(std::string_view json, size_t &p
 
 std::optional<TaggedEvent> parseTaggedEvent(std::string_view json)
 {
-    static constexpr std::string_view kSelfPrefix   = "{\"self\":";
-    static constexpr std::string_view kArgsMarker   = ",\"args\":[";
-    static constexpr std::string_view kEventClosing = "]}";
-
-    if (json.substr(0, kSelfPrefix.size()) != kSelfPrefix)
-    {
-        return std::nullopt;
-    }
-    size_t                     position = kSelfPrefix.size();
-    std::optional<TaggedValue> self     = taggedValueAt(json, position);
-    if (!self || json.substr(position, kArgsMarker.size()) != kArgsMarker)
-    {
-        return std::nullopt;
-    }
-    position += kArgsMarker.size();
+    static constexpr std::string_view kSelfPrefix      = "{\"self\":";
+    static constexpr std::string_view kArgsWithSelf    = ",\"args\":[";
+    static constexpr std::string_view kArgsWithoutSelf = "{\"args\":[";
+    static constexpr std::string_view kArgumentIndexes = ",\"argumentIndexes\":[";
+    static constexpr std::string_view kPhase           = ",\"phase\":\"";
 
     TaggedEvent event;
-    event.self = std::move(*self);
+    size_t      position = 0;
+    if (json.substr(0, kSelfPrefix.size()) == kSelfPrefix)
+    {
+        position += kSelfPrefix.size();
+        event.self = taggedValueAt(json, position);
+        if (!event.self || json.substr(position, kArgsWithSelf.size()) != kArgsWithSelf)
+        {
+            return std::nullopt;
+        }
+        position += kArgsWithSelf.size();
+    }
+    else if (json.substr(0, kArgsWithoutSelf.size()) == kArgsWithoutSelf)
+    {
+        position += kArgsWithoutSelf.size();
+    }
+    else
+    {
+        return std::nullopt;
+    }
+
     while (position < json.size() && json[position] != ']')
     {
         if (!event.arguments.empty())
@@ -254,7 +265,72 @@ std::optional<TaggedEvent> parseTaggedEvent(std::string_view json)
         }
         event.arguments.push_back(std::move(*argument));
     }
-    if (json.substr(position) != kEventClosing)
+    if (position >= json.size() || json[position++] != ']')
+    {
+        return std::nullopt;
+    }
+    event.argumentIndexes.resize(event.arguments.size());
+    for (size_t index = 0; index < event.argumentIndexes.size(); index++)
+    {
+        event.argumentIndexes[index] = index;
+    }
+    event.phase = "before";
+    if (position < json.size() && json[position] == '}')
+    {
+        return position + 1 == json.size() ? std::optional<TaggedEvent>(std::move(event))
+                                           : std::nullopt;
+    }
+    if (json.substr(position, kArgumentIndexes.size()) != kArgumentIndexes)
+    {
+        return std::nullopt;
+    }
+    position += kArgumentIndexes.size();
+    event.argumentIndexes.clear();
+    while (position < json.size() && json[position] != ']')
+    {
+        if (!event.argumentIndexes.empty())
+        {
+            if (json[position++] != ',')
+            {
+                return std::nullopt;
+            }
+        }
+        size_t start = position;
+        while (position < json.size() && json[position] >= '0' && json[position] <= '9')
+        {
+            position++;
+        }
+        size_t value  = 0;
+        auto   parsed = std::from_chars(json.data() + start, json.data() + position, value);
+        if (start == position || parsed.ec != std::errc{} || parsed.ptr != json.data() + position ||
+            std::find(event.argumentIndexes.begin(), event.argumentIndexes.end(), value) !=
+                event.argumentIndexes.end())
+        {
+            return std::nullopt;
+        }
+        event.argumentIndexes.push_back(value);
+    }
+    if (position >= json.size() || json[position++] != ']' ||
+        event.argumentIndexes.size() != event.arguments.size() ||
+        json.substr(position, kPhase.size()) != kPhase)
+    {
+        return std::nullopt;
+    }
+    position += kPhase.size();
+    size_t phaseEnd = json.find('"', position);
+    if (phaseEnd == std::string_view::npos)
+    {
+        return std::nullopt;
+    }
+    std::optional<std::string> phase =
+        unescaped(json.substr(position - 1, phaseEnd - position + 2));
+    if (!phase || (*phase != "before" && *phase != "after"))
+    {
+        return std::nullopt;
+    }
+    event.phase = std::move(*phase);
+    position    = phaseEnd + 1;
+    if (position + 1 != json.size() || json[position] != '}')
     {
         return std::nullopt;
     }

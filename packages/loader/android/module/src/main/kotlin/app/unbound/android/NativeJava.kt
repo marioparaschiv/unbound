@@ -260,6 +260,12 @@ object NativeJava {
         }
     }
 
+    fun releaseIssued(issued: List<String>) {
+        for ((id, count) in issued.groupingBy { it }.eachCount()) {
+            release(JSONObject().put("id", id).put("issues", count).toString())
+        }
+    }
+
     fun liveHandles(): Int = synchronized(this) { objectsByHandle.size }
 
     fun releaseAll() {

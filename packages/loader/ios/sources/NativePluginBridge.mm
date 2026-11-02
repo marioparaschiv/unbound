@@ -219,6 +219,13 @@ struct HookCallbacks {
     std::shared_ptr<Function> replace;
 };
 
+enum class HookPayloadPhase
+{
+    both,
+    before,
+    after,
+};
+
 struct HookDispatcher {
     Class                                   cls;
     SEL                                     selector;
@@ -246,8 +253,11 @@ struct HookState {
     std::mutex                                             returnCacheMutex;
     __strong NSMutableDictionary<NSArray *, NSData *> *returnCache =
         [NSMutableDictionary dictionary];
-    bool                                                           cacheOnly     = false;
-    bool                                                           once          = false;
+    bool                                                           cacheOnly           = false;
+    bool                                                           once                = false;
+    bool                                                           payloadReceiver     = true;
+    bool                                                           payloadAllArguments = true;
+    std::vector<size_t>                                            payloadArgumentIndexes;
     Runtime                                                       *inlineRuntime = nullptr;
     loader::AddonSlot                                              addon         = loader::kNoAddon;
     std::atomic_bool                                               active{true};
@@ -2858,33 +2868,55 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
 }
 
 static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation> &invocation,
-                          id object, SEL selector, bool allowOriginal, loader::AddonSlot addon)
+                          id object, SEL selector, bool allowOriginal,
+                          const std::shared_ptr<HookState> &state, const char *phase)
 {
     Object context(runtime);
-    context.setProperty(
-        runtime, "self",
-        Object::createFromHostObject(runtime, std::make_shared<ObjCHandleHost>(object)));
+    if (state->payloadReceiver)
+    {
+        context.setProperty(
+            runtime, "self",
+            Object::createFromHostObject(runtime, std::make_shared<ObjCHandleHost>(object)));
+    }
     context.setProperty(runtime, "selector",
                         String::createFromUtf8(runtime, sel_getName(selector)));
 
-    size_t explicitCount = invocation->dispatcher->signature->arguments.size() - 2;
-    Array  values(runtime, explicitCount);
-    for (size_t index = 0; index < explicitCount; index++)
+    size_t              explicitCount = invocation->dispatcher->signature->arguments.size() - 2;
+    std::vector<size_t> argumentIndexes;
+    if (state->payloadAllArguments)
     {
-        values.setValueAtIndex(runtime, index,
-                               hookValue(runtime,
-                                         invocation->dispatcher->signature->arguments[index + 2],
-                                         invocation->arguments[index + 2]));
+        argumentIndexes.resize(explicitCount);
+        for (size_t index = 0; index < explicitCount; index++)
+        {
+            argumentIndexes[index] = index;
+        }
+    }
+    else
+    {
+        argumentIndexes = state->payloadArgumentIndexes;
+    }
+    Array values(runtime, argumentIndexes.size());
+    Array indexValues(runtime, argumentIndexes.size());
+    for (size_t index = 0; index < argumentIndexes.size(); index++)
+    {
+        size_t argumentIndex = argumentIndexes[index];
+        values.setValueAtIndex(
+            runtime, index,
+            hookValue(runtime, invocation->dispatcher->signature->arguments[argumentIndex + 2],
+                      invocation->arguments[argumentIndex + 2]));
+        indexValues.setValueAtIndex(runtime, index, Value(static_cast<double>(argumentIndex)));
     }
     context.setProperty(runtime, "args", std::move(values));
+    context.setProperty(runtime, "argumentIndexes", std::move(indexValues));
+    context.setProperty(runtime, "phase", String::createFromUtf8(runtime, phase));
 
     auto original = invocation;
     context.setProperty(
         runtime, "replaceObjectArgument",
         Function::createFromHostFunction(
             runtime, PropNameID::forUtf8(runtime, "replaceObjectArgument"), 2,
-            [original, allowOriginal, addon, selector](Runtime     &rt, const Value &,
-                                                       const Value *args, size_t count) -> Value {
+            [original, allowOriginal, addon = state->addon, selector, argumentIndexes](
+                Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
                 std::lock_guard<std::mutex> lock(original->lifecycleMutex);
                 if (!original->active.load())
                 {
@@ -2906,18 +2938,17 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                 }
 
                 double requestedIndex = args[0].getNumber();
-                size_t explicitCount  = original->dispatcher->signature->arguments.size() - 2;
-                if (!(requestedIndex >= 0 && requestedIndex < explicitCount))
+                if (!(requestedIndex >= 0 && requestedIndex < argumentIndexes.size()))
                 {
                     throw JSError(rt, "Native hook argument index is out of range");
                 }
-                size_t explicitIndex = static_cast<size_t>(requestedIndex);
-                if (static_cast<double>(explicitIndex) != requestedIndex)
+                size_t selectedIndex = static_cast<size_t>(requestedIndex);
+                if (static_cast<double>(selectedIndex) != requestedIndex)
                 {
                     throw JSError(rt, "Native hook argument index must be an integer");
                 }
 
-                size_t                   argumentIndex = explicitIndex + 2;
+                size_t                   argumentIndex = argumentIndexes[selectedIndex] + 2;
                 const loader::ffi::Type &spec =
                     original->dispatcher->signature->arguments[argumentIndex];
                 if (spec.name != "object" && spec.name != "class")
@@ -2945,8 +2976,8 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
         runtime, "original",
         Function::createFromHostFunction(
             runtime, PropNameID::forUtf8(runtime, "original"), 0,
-            [original, allowOriginal, addon, selector](Runtime &rt, const Value &, const Value *,
-                                                       size_t) -> Value {
+            [original, allowOriginal, addon = state->addon,
+             selector](Runtime &rt, const Value &, const Value *, size_t) -> Value {
                 std::lock_guard<std::mutex> lock(original->lifecycleMutex);
                 if (!original->active.load())
                 {
@@ -3407,17 +3438,17 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         {
             try
             {
-                runHookCallback(
-                    state, selector, [invocation, object, selector, state](Runtime &runtime) {
-                        auto callbacks = state->callbacks.lock();
-                        if (!callbacks || !callbacks->before)
-                        {
-                            return;
-                        }
-                        Object context =
-                            hookContext(runtime, invocation, object, selector, true, state->addon);
-                        callbacks->before->call(runtime, context);
-                    });
+                runHookCallback(state, selector,
+                                [invocation, object, selector, state](Runtime &runtime) {
+                                    auto callbacks = state->callbacks.lock();
+                                    if (!callbacks || !callbacks->before)
+                                    {
+                                        return;
+                                    }
+                                    Object context = hookContext(runtime, invocation, object,
+                                                                 selector, true, state, "before");
+                                    callbacks->before->call(runtime, context);
+                                });
             }
             catch (const std::exception &exception)
             {
@@ -3446,9 +3477,9 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
                         {
                             throw std::runtime_error("Native hook callback expired");
                         }
-                        Object context =
-                            hookContext(runtime, invocation, object, selector, true, state->addon);
-                        Value result = callbacks->replace->call(runtime, context);
+                        Object context = hookContext(runtime, invocation, object, selector, true,
+                                                     state, "replace");
+                        Value  result  = callbacks->replace->call(runtime, context);
                         if (!setHookReturn(runtime, invocation->dispatcher->signature->result,
                                            result, replacementResult->data()))
                         {
@@ -3509,8 +3540,8 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             loader::AddonScope runtimeScope(state->addon);
             try
             {
-                Object context =
-                    hookContext(runtime, invocation, retainedObject, selector, false, state->addon);
+                Object context = hookContext(runtime, invocation, retainedObject, selector, false,
+                                             state, "after");
                 callbacks->after->call(runtime, context);
             }
             catch (const std::exception &exception)
@@ -3808,11 +3839,15 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         return std::make_shared<Function>(value.asObject(runtime).getFunction(runtime));
     };
 
-    std::shared_ptr<Function> before         = functionFor("before");
-    std::shared_ptr<Function> after          = functionFor("after");
-    std::shared_ptr<Function> replace        = functionFor("replace");
-    bool                      once           = false;
-    bool                      cacheOnly      = false;
+    std::shared_ptr<Function> before              = functionFor("before");
+    std::shared_ptr<Function> after               = functionFor("after");
+    std::shared_ptr<Function> replace             = functionFor("replace");
+    bool                      once                = false;
+    bool                      cacheOnly           = false;
+    bool                      payloadReceiver     = true;
+    bool                      payloadAllArguments = true;
+    HookPayloadPhase          payloadPhase        = HookPayloadPhase::both;
+    std::vector<size_t>       payloadArgumentIndexes;
     id                        instanceTarget = nil;
     if (count > 3 && args[3].isObject())
     {
@@ -3828,6 +3863,84 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
             if (!instanceTarget)
             {
                 throw JSError(runtime, "Native hook instance target must be an Objective-C handle");
+            }
+        }
+        Value payloadValue = options.getProperty(runtime, "payload");
+        if (!payloadValue.isUndefined() && !payloadValue.isNull())
+        {
+            if (!payloadValue.isObject() || payloadValue.asObject(runtime).isArray(runtime))
+            {
+                throw JSError(runtime, "Native hook payload options must be an object");
+            }
+            Object payload       = payloadValue.asObject(runtime);
+            Value  receiverValue = payload.getProperty(runtime, "receiver");
+            if (!receiverValue.isUndefined())
+            {
+                if (!receiverValue.isBool())
+                {
+                    throw JSError(runtime, "Native hook payload receiver must be boolean");
+                }
+                payloadReceiver = receiverValue.getBool();
+            }
+            Value argumentsValue = payload.getProperty(runtime, "arguments");
+            if (!argumentsValue.isUndefined())
+            {
+                if (!argumentsValue.isObject() ||
+                    !argumentsValue.asObject(runtime).isArray(runtime))
+                {
+                    throw JSError(runtime, "Native hook payload arguments must be an array");
+                }
+                payloadAllArguments  = false;
+                Array  indexes       = argumentsValue.asObject(runtime).asArray(runtime);
+                size_t indexCount    = indexes.size(runtime);
+                size_t explicitCount = signature->arguments.size() - 2;
+                payloadArgumentIndexes.reserve(indexCount);
+                for (size_t index = 0; index < indexCount; index++)
+                {
+                    Value selectedValue = indexes.getValueAtIndex(runtime, index);
+                    if (!selectedValue.isNumber())
+                    {
+                        throw JSError(runtime,
+                                      "Native hook payload argument indexes must be integers");
+                    }
+                    double requestedIndex = selectedValue.getNumber();
+                    if (!std::isfinite(requestedIndex) || requestedIndex < 0 ||
+                        std::trunc(requestedIndex) != requestedIndex ||
+                        requestedIndex >= static_cast<double>(explicitCount))
+                    {
+                        throw JSError(runtime,
+                                      "Native hook payload argument index is out of range");
+                    }
+                    size_t selectedIndex = static_cast<size_t>(requestedIndex);
+                    if (std::find(payloadArgumentIndexes.begin(), payloadArgumentIndexes.end(),
+                                  selectedIndex) != payloadArgumentIndexes.end())
+                    {
+                        throw JSError(runtime,
+                                      "Native hook payload argument indexes must be unique");
+                    }
+                    payloadArgumentIndexes.push_back(selectedIndex);
+                }
+            }
+            Value phaseValue = payload.getProperty(runtime, "phase");
+            if (!phaseValue.isUndefined())
+            {
+                if (!phaseValue.isString())
+                {
+                    throw JSError(runtime, "Native hook payload phase must be a string");
+                }
+                NSString *phase = jsiString(runtime, phaseValue);
+                if ([phase isEqualToString:@"before"])
+                {
+                    payloadPhase = HookPayloadPhase::before;
+                }
+                else if ([phase isEqualToString:@"after"])
+                {
+                    payloadPhase = HookPayloadPhase::after;
+                }
+                else
+                {
+                    throw JSError(runtime, "Native hook payload phase must be before or after");
+                }
             }
         }
     }
@@ -3929,15 +4042,18 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
     state->callbackRuntimeIdentity = callbackResources->identity();
     state->callbacks               = callbacks;
     loader::native::retainRuntimeResource(runtime, state->callbackResourceKey, callbacks);
-    state->hasBefore      = callbacks->before != nullptr;
-    state->hasAfter       = callbacks->after != nullptr;
-    state->hasReplace     = callbacks->replace != nullptr;
-    state->cacheOnly      = cacheOnly;
-    state->once           = once;
-    state->instanceTarget = instanceTarget;
-    state->dispatcher     = dispatcher;
-    state->inlineRuntime  = gUIScopeRuntime;
-    state->addon          = loader::currentAddon();
+    state->hasBefore  = callbacks->before != nullptr && payloadPhase != HookPayloadPhase::after;
+    state->hasAfter   = callbacks->after != nullptr && payloadPhase != HookPayloadPhase::before;
+    state->hasReplace = callbacks->replace != nullptr;
+    state->cacheOnly  = cacheOnly;
+    state->once       = once;
+    state->payloadReceiver        = payloadReceiver;
+    state->payloadAllArguments    = payloadAllArguments;
+    state->payloadArgumentIndexes = std::move(payloadArgumentIndexes);
+    state->instanceTarget         = instanceTarget;
+    state->dispatcher             = dispatcher;
+    state->inlineRuntime          = gUIScopeRuntime;
+    state->addon                  = loader::currentAddon();
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
         dispatcher->hooks.push_back(state);

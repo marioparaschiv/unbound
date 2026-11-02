@@ -17,6 +17,10 @@ open class HookedBase {
 
 class HookedDerived : HookedBase()
 
+class HookPayloadTarget {
+    fun receive(first: Any?, second: Any?): Int = if (first == second) 1 else 0
+}
+
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [35])
 class NativeHooksTest {
@@ -239,6 +243,68 @@ class NativeHooksTest {
         assertEquals("int", payload.getJSONObject("self").getString("type"))
         assertEquals(42, payload.getJSONObject("self").getInt("value"))
         assertEquals("alpha", payload.getJSONArray("args").getJSONObject(0).getString("value"))
+    }
+
+    @Test
+    fun payloadOptionsSelectReceiverArgumentsAndPhase() {
+        NativeHooks.hook(
+            "app.unbound.android.HookPayloadTarget",
+            "receive",
+            """["java.lang.Object","java.lang.Object"]""",
+            """{"payload":{"receiver":false,"arguments":[1],"phase":"after"}}""",
+        )
+        val chain = FakeChain(HookPayloadTarget(), listOf("unused", "selected"), 1)
+
+        installer.installed.single().hook.intercept(chain)
+
+        assertTrue(chain.proceeded)
+        val payload = JSONObject(dispatched.single().second)
+        assertEquals(false, payload.has("self"))
+        assertEquals("after", payload.getString("phase"))
+        assertEquals(1, payload.getJSONArray("args").length())
+        assertEquals(1, payload.getJSONArray("argumentIndexes").getInt(0))
+        assertEquals("selected", payload.getJSONArray("args").getJSONObject(0).getString("value"))
+    }
+
+    @Test
+    fun omittedPayloadValuesAreNotTurnedIntoNativeHandles() {
+        NativeHooks.hook(
+            "app.unbound.android.HookPayloadTarget",
+            "receive",
+            """["java.lang.Object","java.lang.Object"]""",
+            """{"payload":{"receiver":false,"arguments":[]}}""",
+        )
+
+        installer.installed.single().hook.intercept(
+            FakeChain(HookPayloadTarget(), listOf(Any(), Any()), 1),
+        )
+
+        assertEquals(0, NativeJava.liveHandles())
+        assertEquals(0, JSONObject(dispatched.single().second).getJSONArray("args").length())
+    }
+
+    @Test
+    fun payloadOptionsRejectInvalidArgumentIndexesAndPhases() {
+        val invalidArgument = assertThrows(IllegalArgumentException::class.java) {
+            NativeHooks.hook(
+                "app.unbound.android.HookPayloadTarget",
+                "receive",
+                """["java.lang.Object","java.lang.Object"]""",
+                """{"payload":{"arguments":[2]}}""",
+            )
+        }
+        val invalidPhase = assertThrows(IllegalArgumentException::class.java) {
+            NativeHooks.hook(
+                "app.unbound.android.HookPayloadTarget",
+                "receive",
+                """["java.lang.Object","java.lang.Object"]""",
+                """{"payload":{"phase":"during"}}""",
+            )
+        }
+
+        assertTrue(invalidArgument.message.orEmpty().contains("argument index"))
+        assertTrue(invalidPhase.message.orEmpty().contains("phase"))
+        assertEquals(0, installer.installed.size)
     }
 
     @Test

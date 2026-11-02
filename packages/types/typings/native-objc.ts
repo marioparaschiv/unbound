@@ -29,14 +29,21 @@ export type NativeBatchStep = {
 	args: unknown[];
 };
 
-/** What an Objective-C hook handler receives for one call of the hooked method. */
-export type NativeHookContext = {
+export type NativeHookPayload<Receiver extends boolean = boolean> = {
+	receiver?: Receiver;
+	arguments?: number[];
+	phase?: 'before' | 'after';
+};
+
+export type NativeHookContext<Receiver extends boolean = true> = {
 	/** The receiver, borrowed until the handler returns. */
-	self: NativeObjectHandle;
+	self: Receiver extends true ? NativeObjectHandle : undefined;
 	/** The hooked selector's name. */
 	selector: string;
 	/** The method's explicit arguments, without `self` and `_cmd`, borrowed until the handler returns. */
 	args: unknown[];
+	argumentIndexes: number[];
+	phase: 'before' | 'after' | 'replace';
 	/** Runs the original implementation; it works only synchronously on the hook's thread. */
 	// UNKNOWN: returns whatever the hooked Objective-C method returns.
 	original: (...args: unknown[]) => unknown;
@@ -45,24 +52,25 @@ export type NativeHookContext = {
 };
 
 /** The handlers an Objective-C hook runs around each call; it needs at least one, unless `cacheOnly` is set. */
-export type NativeHookHandlers = {
+export type NativeHookHandlers<Receiver extends boolean = true> = {
 	/** Runs before the original implementation. */
-	before?: (context: NativeHookContext) => void | Promise<void>;
+	before?: (context: NativeHookContext<Receiver>) => void | Promise<void>;
 	/** Runs after the original implementation. */
-	after?: (context: NativeHookContext) => void | Promise<void>;
+	after?: (context: NativeHookContext<Receiver>) => void | Promise<void>;
 	/** Runs instead of the original; what it returns becomes the method's result. */
 	// UNKNOWN: the replacement returns whatever type the hooked Objective-C method returns.
-	replace?: (context: NativeHookContext) => unknown;
+	replace?: (context: NativeHookContext<Receiver>) => unknown;
 };
 
 /** Options for `objc.hook`. */
-export type NativeHookOptions = {
+export type NativeHookOptions<Receiver extends boolean = boolean> = {
 	/** Runs no JavaScript and returns values set with `setReturnValue`; needs a scalar or struct return type. */
 	cacheOnly?: boolean;
 	/** Hooks calls on this object only. */
 	instance?: NativeObjectHandle;
 	/** Removes the hook after its first call. */
 	once?: boolean;
+	payload?: NativeHookPayload<Receiver>;
 } & NativeCallOptions;
 
 /** An installed Objective-C hook; the plugin scope removes it on dispose. */
@@ -180,11 +188,11 @@ export type NativeObjCBridge = {
 	/** Copies bytes into a new `NSData` object. */
 	data(value: ArrayBuffer | Uint8Array): NativeObjectHandle;
 	/** Hooks a method by class and selector; handlers run in registration order, and the scope removes the hook on dispose. */
-	hook(
+	hook<Receiver extends boolean = true>(
 		className: string,
 		selector: string,
-		handlers: NativeHookHandlers,
-		options?: NativeHookOptions,
+		handlers: NativeHookHandlers<Receiver>,
+		options?: NativeHookOptions<Receiver>,
 	): NativeHookToken;
 };
 

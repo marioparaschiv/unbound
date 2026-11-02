@@ -422,7 +422,18 @@ static std::optional<jsi::Value> adoptTaggedJavaEvent(jsi::Runtime      &runtime
     }
     jsi::Object object(runtime);
     object.setProperty(runtime, "args", arguments);
-    object.setProperty(runtime, "self", adoptTaggedJavaValue(runtime, event->self));
+    if (event->self)
+    {
+        object.setProperty(runtime, "self", adoptTaggedJavaValue(runtime, *event->self));
+    }
+    jsi::Array indexes(runtime, event->argumentIndexes.size());
+    for (size_t index = 0; index < event->argumentIndexes.size(); index++)
+    {
+        indexes.setValueAtIndex(runtime, index,
+                                jsi::Value(static_cast<double>(event->argumentIndexes[index])));
+    }
+    object.setProperty(runtime, "argumentIndexes", indexes);
+    object.setProperty(runtime, "phase", jsi::String::createFromUtf8(runtime, event->phase));
     return object;
 }
 
