@@ -1,7 +1,6 @@
 import { semverSchema } from '@unbound-app/contracts/manifest';
 import { parse, Type } from '@unbound-app/contracts/schema';
 import { apiUrlSchema } from '@unbound-app/contracts/api';
-import { parse } from '@unbound-app/contracts/schema';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';

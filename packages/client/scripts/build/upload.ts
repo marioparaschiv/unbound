@@ -188,7 +188,7 @@ export function parseUploadEnv(
 	}
 
 	if (result.data.UNBOUND_CHANNEL === 'stable') {
-		const version = semverSchema.safeParse(result.data.UNBOUND_VERSION);
+		const version = safeParse(semverSchema, result.data.UNBOUND_VERSION);
 
 		if (!version.success) {
 			throw new Error(`Invalid upload environment:\n${version.error.message}`);
