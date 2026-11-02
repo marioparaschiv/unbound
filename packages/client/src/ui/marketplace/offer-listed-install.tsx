@@ -3,8 +3,8 @@ import type { AddonKind } from '@unbound-app/types/addons';
 
 import { getInstalledVersion, installVersion } from '~/marketplace/install';
 import { getInstallStatus } from '~/marketplace/catalog';
+import { messages, format } from '~/i18n/api';
 import { confirm } from '~/dialogs/api';
-import { format } from '~/i18n/api';
 import { show } from '~/toasts/api';
 
 /**
@@ -32,7 +32,7 @@ export async function offerListedInstall(kind: AddonKind, addon: ListedAddon): P
 			description,
 		}),
 		confirmLabel: format(update ? 'UNBOUND_UPDATE' : 'UNBOUND_INSTALL'),
-		cancelLabel: format('UNBOUND_CANCEL'),
+		cancelLabel: messages.UNBOUND_CANCEL,
 	});
 
 	if (!approved) {

@@ -1,6 +1,6 @@
 import { Avatars, BottomSheets } from '~/metro/components';
 import { UserProfiles } from '~/metro/api';
-import { format } from '~/i18n/api';
+import { messages } from '~/i18n/api';
 
 import type { AuthorUser } from './use-author-users';
 
@@ -19,7 +19,7 @@ function AddonAuthorsSheet({ authors, onClose }: AddonAuthorsSheetProps) {
 
 	return (
 		<ActionSheet>
-			<BottomSheetTitleHeader title={format('UNBOUND_AUTHORS')} />
+			<BottomSheetTitleHeader title={messages.UNBOUND_AUTHORS} />
 			<ActionSheetRow.Group hasIcons>
 				{authors.map(({ author, user, avatar }, index) => (
 					<ActionSheetRow
@@ -27,7 +27,7 @@ function AddonAuthorsSheet({ authors, onClose }: AddonAuthorsSheetProps) {
 						label={
 							user
 								? (user.globalName ?? user.username)
-								: format('UNBOUND_UNKNOWN_USER')
+								: messages.UNBOUND_UNKNOWN_USER
 						}
 						subLabel={user ? `@${user.username}` : author.name}
 						icon={<Avatar source={avatar} size={AvatarSizes.SMALL} />}

@@ -3,8 +3,8 @@ import { View } from 'react-native';
 
 import { Discord } from '~/metro/components';
 import { Screens } from '~/core/constants';
+import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
-import { format } from '~/i18n/api';
 
 import InstallUrlModal from './install-url-modal';
 import useStyles from './install-button.style';
@@ -34,15 +34,15 @@ function InstallButton({ kind }: InstallButtonProps) {
 	function open() {
 		Discord.showSimpleActionSheet({
 			key: 'unbound-install',
-			header: { title: format('UNBOUND_INSTALL') },
+			header: { title: messages.UNBOUND_INSTALL },
 			options: [
 				{
-					label: format('UNBOUND_INSTALL_FROM_URL'),
+					label: messages.UNBOUND_INSTALL_FROM_URL,
 					icon: icons['LinkIcon'],
 					onPress: () => openInstallUrlModal(kind),
 				},
 				{
-					label: format('UNBOUND_BROWSE_MARKETPLACE'),
+					label: messages.UNBOUND_BROWSE_MARKETPLACE,
 					icon: icons['ShopIcon'],
 					onPress: () => navigation.push(Screens.Marketplace, { kind }),
 				},

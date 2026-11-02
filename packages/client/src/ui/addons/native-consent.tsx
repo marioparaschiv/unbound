@@ -1,8 +1,8 @@
 import type { NativePluginCapability } from '@unbound-app/types';
 
+import { messages, format } from '~/i18n/api';
 import type { Addon } from '~/addons/addon';
 import { confirm } from '~/dialogs/api';
-import { format } from '~/i18n/api';
 
 /**
  * @description Asks the user, in an alert, whether an addon may call native functions directly.
@@ -15,10 +15,10 @@ export function askForNativeConsent(
 	_capabilities: readonly NativePluginCapability[],
 ): Promise<boolean> {
 	return confirm({
-		title: format('UNBOUND_FFI_CONSENT_TITLE'),
+		title: messages.UNBOUND_FFI_CONSENT_TITLE,
 		body: format('UNBOUND_FFI_CONSENT_BODY', { name: addon.name }),
-		confirmLabel: format('UNBOUND_FFI_CONSENT_ALLOW'),
-		cancelLabel: format('UNBOUND_CANCEL'),
+		confirmLabel: messages.UNBOUND_FFI_CONSENT_ALLOW,
+		cancelLabel: messages.UNBOUND_CANCEL,
 		destructive: true,
 	});
 }

@@ -5,12 +5,12 @@ import { useMemo, memo } from 'react';
 import { reinstallFromStore } from '~/updates/addon-updates';
 import { API_URL, CLIENT_VERSION } from '~/core/constants';
 import TintedIcon from '~/metro/fallbacks/tinted-icon';
+import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import type { Addon } from '~/addons/addon';
 import { Manager } from '~/addons/manager';
 import { Theme } from '~/metro/common';
 import { icons } from '~/assets/api';
-import { format } from '~/i18n/api';
 import { show } from '~/toasts/api';
 
 import useRoundStyles from './round-button.style';
@@ -35,13 +35,13 @@ function AddonOverflow({ addon, kind, developmentCopy }: AddonOverflowProps) {
 			...(developmentCopy
 				? [
 						{
-							label: format('UNBOUND_REINSTALL_FROM_STORE'),
+							label: messages.UNBOUND_REINSTALL_FROM_STORE,
 							action: () => void reinstall(kind, addon),
 						},
 					]
 				: []),
 			{
-				label: format('UNBOUND_DELETE'),
+				label: messages.UNBOUND_DELETE,
 				variant: 'destructive',
 				action: () => confirmDelete(manager, addon),
 			},
