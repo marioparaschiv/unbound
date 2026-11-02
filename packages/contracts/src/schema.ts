@@ -5,6 +5,7 @@ import {
 	type StaticEncode,
 	type TCodec,
 	type TSchema,
+	type TString,
 } from 'typebox';
 import { Compile, type Validator } from 'typebox/compile';
 import { Format } from 'typebox/format';
@@ -125,8 +126,8 @@ export type TrimmedCheck = (value: string) => string | undefined;
  * @param checks The checks, in order.
  * @returns The schema, whose parsed value is the trimmed string.
  */
-export function trimmedString(...checks: TrimmedCheck[]): TCodec<TSchema, string> {
-	let schema: TSchema = Type.String();
+export function trimmedString(...checks: TrimmedCheck[]): TCodec<TString, string> {
+	let schema: TString = Type.String();
 
 	for (const check of checks) {
 		schema = Type.Refine(
