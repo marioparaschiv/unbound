@@ -58,6 +58,6 @@ export const HEART_SIDE_PIXELS: HeartPixel[] = HEART_PIXELS.map((pixel) => ({
 }));
 
 /** The heart seen exactly side-on: per row, the side-wall colour of its outermost pixel. */
-export const HEART_EDGE: HeartPixel[] = Array.from({ length: HEART_ROWS }, (_, y) =>
-	HEART_SIDE_PIXELS.filter((pixel) => pixel.y === y).at(-1),
-).filter((pixel): pixel is HeartPixel => Boolean(pixel));
+export const HEART_EDGE: HeartPixel[] = HEART_SIDE_PIXELS.filter(
+	(pixel, index, pixels) => pixel.y !== pixels[index + 1]?.y,
+);
