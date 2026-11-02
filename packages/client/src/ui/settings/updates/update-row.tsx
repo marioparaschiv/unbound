@@ -2,10 +2,10 @@ import type { PendingUpdate } from '~/updates/addon-updates';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
+import { icons } from '~/assets/api';
 
 import UpdateRowShell from './update-row-shell';
 import UpdateButton from './update-button';
-import { kindIcon } from './format';
 
 type UpdateRowProps = {
 	entry: PendingUpdate;
@@ -20,7 +20,7 @@ function UpdateRow({ entry }: UpdateRowProps) {
 	return (
 		<UpdateRowShell
 			name={entry.name}
-			icon={kindIcon(entry.kind)}
+			icon={icons[Manager.for(entry.kind).icon]}
 			installed={entry.from}
 			update={update}
 			note={held ? format('UNBOUND_UPDATES_HELD', { version: held }) : undefined}

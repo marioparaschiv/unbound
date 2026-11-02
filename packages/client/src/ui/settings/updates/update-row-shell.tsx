@@ -6,7 +6,18 @@ import { Screens } from '~/core/constants';
 import type { ChangelogEntry } from './changelog';
 
 import Changelog from './changelog';
-import { headline } from './format';
+
+/**
+ * @description Picks a changelog's first line of prose, dropping Markdown heading and list markers.
+ * @param changelog The changelog text.
+ * @returns The line, or `undefined` when the changelog is empty.
+ */
+function headline(changelog: string | null): string | undefined {
+	return changelog
+		?.split('\n')
+		.map((text) => text.replace(/^\s*(?:#+|[-*+]|\d+\.)\s*/, '').trim())
+		.find(Boolean);
+}
 
 /** The fields an addon's and the loader's pending update share, as the row and its changelog read them. */
 export type UpdateInfo = {

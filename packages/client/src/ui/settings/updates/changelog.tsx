@@ -3,11 +3,22 @@ import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
 import { Discord } from '~/metro/components';
+import { Moment } from '~/metro/common';
 import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
 
-import { shortDate } from './format';
+/**
+ * @description Formats a release date compactly in the active locale, like "Oct 19", so it fits as trailing text.
+ * @param date An ISO timestamp.
+ * @returns The short date.
+ */
+function shortDate(date: string): string {
+	return Moment.utc(date)
+		.local()
+		.format('ll')
+		.replace(/,? \d{4}$/, '');
+}
 
 /** What an addon's and a loader release's skipped versions share. */
 export type ChangelogEntry = Pick<VersionChangelog, 'version' | 'changelog' | 'publishedAt'>;
