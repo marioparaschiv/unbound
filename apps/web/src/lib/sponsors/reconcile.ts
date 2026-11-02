@@ -89,7 +89,7 @@ export type ReconcileResult = {
 function sponsorsConfig(env: Env): SponsorsConfig | undefined {
 	const { GITHUB_SPONSORS_LOGIN: login, GITHUB_SPONSORS_TOKEN: token } = env;
 
-	if (!login || !token) return;
+	if (!token) return;
 
 	return { url: new URL('/graphql', env.GITHUB_API_URL), login, token };
 }
@@ -133,7 +133,7 @@ export async function fetchRemoteSponsorships(env: Env): Promise<Map<string, Rem
 	const config = sponsorsConfig(env);
 
 	if (!config) {
-		throw new Error('GITHUB_SPONSORS_LOGIN and GITHUB_SPONSORS_TOKEN must be set.');
+		throw new Error('GITHUB_SPONSORS_TOKEN must be set.');
 	}
 
 	const remote = new Map<string, RemoteSponsorship>();

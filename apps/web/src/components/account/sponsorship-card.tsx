@@ -10,7 +10,7 @@ import Text from '~/components/ui/text';
 import Tag from '~/components/tag';
 
 type SponsorCtaProps = {
-	url: string | null;
+	url: string;
 	label: string;
 };
 
@@ -35,8 +35,6 @@ const STANDING_LABELS: Record<SponsorOverview['standing'], StandingLabel> = {
 };
 
 function SponsorCta({ url, label }: SponsorCtaProps) {
-	if (!url) return null;
-
 	return (
 		<Button asChild variant='outline' size='sm' className='gap-2 self-start'>
 			<a href={url} target='_blank' rel='noreferrer'>

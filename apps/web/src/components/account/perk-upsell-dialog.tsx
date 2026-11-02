@@ -1,4 +1,4 @@
-import { IconExternalLink, IconHeart } from 'nucleo-micro-bold';
+import { IconHeart } from 'nucleo-micro-bold';
 
 import {
 	Dialog,
@@ -64,15 +64,12 @@ function PerkUpsellDialog({ perk, sponsor, user, onClose }: PerkUpsellDialogProp
 						<DialogClose asChild>
 							<Button variant='outline'>Not now</Button>
 						</DialogClose>
-						{sponsor.sponsorUrl ? (
-							<Button asChild className='gap-2'>
-								<a href={sponsor.sponsorUrl} target='_blank' rel='noreferrer'>
-									<IconHeart size={14} />
-									Sponsor on GitHub
-									<IconExternalLink size={14} />
-								</a>
-							</Button>
-						) : null}
+						<Button asChild className='gap-2'>
+							<a href={sponsor.sponsorUrl} target='_blank' rel='noreferrer'>
+								<IconHeart size={14} />
+								Sponsor
+							</a>
+						</Button>
 					</DialogFooter>
 				</DialogContent>
 			) : null}

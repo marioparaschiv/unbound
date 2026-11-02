@@ -17,7 +17,7 @@ export type PerkStatus = {
 };
 
 export type SponsorOverview = {
-	sponsorUrl: string | null;
+	sponsorUrl: string;
 	githubLinked: boolean;
 	sponsorship: Omit<Sponsorship, 'githubId' | 'githubLogin' | 'isPublic' | 'updatedAt'> | null;
 	standing: SponsorStanding['kind'];
@@ -36,7 +36,6 @@ export async function getSponsorOverview(
 	ctx: AppContext,
 	userId: string,
 ): Promise<SponsorOverview> {
-	const login = ctx.env.GITHUB_SPONSORS_LOGIN;
 	const [{ githubLinked, standing }, claim] = await Promise.all([
 		getUserSponsorship(ctx, userId),
 		findBadgeClaim(ctx, userId),
@@ -51,7 +50,7 @@ export async function getSponsorOverview(
 	}));
 
 	return {
-		sponsorUrl: login ? `https://github.com/sponsors/${encodeURIComponent(login)}` : null,
+		sponsorUrl: `https://github.com/sponsors/${encodeURIComponent(ctx.env.GITHUB_SPONSORS_LOGIN)}`,
 		githubLinked,
 		sponsorship: row
 			? {
