@@ -423,7 +423,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @param url The manifest URL.
 	 * @returns The validated manifest.
 	 */
-	private async fetchManifest(url: string): Promise<AddonManifest> {
+	protected async fetchManifest(url: string): Promise<AddonManifest> {
 		const manifest = await downloadManifest(url, (raw) => this.validateManifest(raw));
 
 		if (manifest.type && manifest.type !== this.kind) {

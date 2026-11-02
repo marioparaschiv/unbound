@@ -5,7 +5,6 @@ import noop from '@unbound-app/utils/noop';
 import { safeRelativePath, isSafeIconPackMain } from '~/addons/paths';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { getById, onAssetRegistered } from '~/assets/api';
-import { downloadManifest } from '~/addons/download';
 import { ImageSources } from '~/metro/common';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
@@ -297,11 +296,7 @@ export class Icons extends Addons<Plugin> {
 	 */
 	async install(url: string, digest?: string): Promise<Addon | undefined> {
 		try {
-			const parsed = await downloadManifest(url, (raw) => this.validateManifest(raw));
-
-			if (parsed.type && parsed.type !== this.kind) {
-				throw new Error(`Expected a icon-pack manifest, got ${parsed.type}.`);
-			}
+			const parsed = await this.fetchManifest(url);
 
 			const declared: unknown = Reflect.get(parsed, 'source');
 			const manifest: IconPackManifest = {
