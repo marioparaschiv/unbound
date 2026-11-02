@@ -1,13 +1,49 @@
 #include "NativeRuntimeResources.h"
 
+#include <atomic>
+
 namespace loader::native {
 namespace jsi = facebook::jsi;
 
-static constexpr jsi::UUID kRuntimeResourcesId(0x64e8b209, 0x6e91, 0x4c70, 0x913a, 0x72d489a45c21);
+static constexpr jsi::UUID  kRuntimeResourcesId(0x64e8b209, 0x6e91, 0x4c70, 0x913a, 0x72d489a45c21);
+static std::atomic_uint64_t gNextRuntimeResourceIdentity{1};
+
+struct RuntimeResourceRuntimeData {
+    std::shared_ptr<RuntimeResourceRegistry> resources =
+        std::make_shared<RuntimeResourceRegistry>();
+
+    ~RuntimeResourceRuntimeData()
+    {
+        resources->invalidate();
+        resources->clear();
+    }
+};
+
+RuntimeResourceRegistry::RuntimeResourceRegistry()
+    : identity_(gNextRuntimeResourceIdentity.fetch_add(1, std::memory_order_relaxed))
+{
+}
 
 RuntimeResourceRegistry::~RuntimeResourceRegistry()
 {
+    invalidate();
     clear();
+}
+
+uint64_t RuntimeResourceRegistry::identity() const
+{
+    return identity_;
+}
+
+bool RuntimeResourceRegistry::active() const
+{
+    return active_.load(std::memory_order_acquire);
+}
+
+void RuntimeResourceRegistry::invalidate()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    active_.store(false, std::memory_order_release);
 }
 
 bool RuntimeResourceRegistry::retain(const std::string &key, std::shared_ptr<void> resource)
@@ -17,6 +53,10 @@ bool RuntimeResourceRegistry::retain(const std::string &key, std::shared_ptr<voi
         return false;
     }
     std::lock_guard<std::mutex> lock(mutex_);
+    if (!active())
+    {
+        return false;
+    }
     return resources_.emplace(key, std::move(resource)).second;
 }
 
@@ -26,6 +66,10 @@ bool RuntimeResourceRegistry::release(const std::string &key)
     std::vector<std::shared_ptr<void>> deferred;
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        if (!active())
+        {
+            return false;
+        }
         deferred.swap(deferredReleases_);
         auto found = resources_.find(key);
         if (found == resources_.end())
@@ -41,7 +85,11 @@ bool RuntimeResourceRegistry::release(const std::string &key)
 bool RuntimeResourceRegistry::deferRelease(const std::string &key)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    auto                        found = resources_.find(key);
+    if (!active())
+    {
+        return false;
+    }
+    auto found = resources_.find(key);
     if (found == resources_.end())
     {
         return false;
@@ -90,11 +138,11 @@ std::shared_ptr<RuntimeResourceRegistry> runtimeResourceRegistry(jsi::Runtime &r
     std::shared_ptr<void> existing = runtime.getRuntimeData(kRuntimeResourcesId);
     if (existing)
     {
-        return std::static_pointer_cast<RuntimeResourceRegistry>(existing);
+        return std::static_pointer_cast<RuntimeResourceRuntimeData>(existing)->resources;
     }
-    auto created = std::make_shared<RuntimeResourceRegistry>();
+    auto created = std::make_shared<RuntimeResourceRuntimeData>();
     runtime.setRuntimeData(kRuntimeResourcesId, created);
-    return created;
+    return created->resources;
 }
 
 void retainRuntimeResource(jsi::Runtime &runtime, const std::string &key,
@@ -111,7 +159,8 @@ void retainRuntimeResource(jsi::Runtime &runtime, const std::string &key,
 bool releaseRuntimeResource(jsi::Runtime &runtime, const std::string &key)
 {
     auto existing = runtime.getRuntimeData(kRuntimeResourcesId);
-    return existing && std::static_pointer_cast<RuntimeResourceRegistry>(existing)->release(key);
+    return existing &&
+           std::static_pointer_cast<RuntimeResourceRuntimeData>(existing)->resources->release(key);
 }
 
 bool deferRuntimeResourceRelease(const std::weak_ptr<RuntimeResourceRegistry> &registry,
@@ -121,18 +170,38 @@ bool deferRuntimeResourceRelease(const std::weak_ptr<RuntimeResourceRegistry> &r
     return resources && resources->deferRelease(key);
 }
 
+bool releaseRuntimeResource(const std::weak_ptr<RuntimeResourceRegistry> &registry,
+                            const std::string                            &key)
+{
+    auto resources = registry.lock();
+    return resources && resources->release(key);
+}
+
+bool invalidateRuntimeResources(const std::weak_ptr<RuntimeResourceRegistry> &registry)
+{
+    auto resources = registry.lock();
+    if (!resources || !resources->active())
+    {
+        return false;
+    }
+    resources->invalidate();
+    return true;
+}
+
 size_t drainRuntimeResourceReleases(jsi::Runtime &runtime)
 {
     auto existing = runtime.getRuntimeData(kRuntimeResourcesId);
-    return existing ? std::static_pointer_cast<RuntimeResourceRegistry>(existing)
-                          ->drainDeferredReleases()
+    return existing ? std::static_pointer_cast<RuntimeResourceRuntimeData>(existing)
+                          ->resources->drainDeferredReleases()
                     : 0;
 }
 
 std::shared_ptr<void> runtimeResource(jsi::Runtime &runtime, const std::string &key)
 {
     auto existing = runtime.getRuntimeData(kRuntimeResourcesId);
-    return existing ? std::static_pointer_cast<RuntimeResourceRegistry>(existing)->find(key)
-                    : nullptr;
+    return existing
+               ? std::static_pointer_cast<RuntimeResourceRuntimeData>(existing)->resources->find(
+                     key)
+               : nullptr;
 }
 }

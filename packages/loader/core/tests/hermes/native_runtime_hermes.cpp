@@ -12,6 +12,7 @@
 
 #include "LoaderBootstrap.h"
 #include "NativePluginRuntime.h"
+#include "NativeRuntimeResources.h"
 #if UNBOUND_TEST_FFI
 #include "NativeFFI.h"
 #endif
@@ -181,12 +182,38 @@ static void freshRuntimesAdvanceTheGeneration()
                 reusedAnAddress ? ", including one at a reused address" : "");
 }
 
+static void runtimeResourcesFollowHermesLifetime()
+{
+    std::weak_ptr<loader::native::RuntimeResourceRegistry> firstResources;
+    bool                                                   released = false;
+    {
+        auto runtime   = facebook::hermes::makeHermesRuntime();
+        auto resources = loader::native::runtimeResourceRegistry(*runtime);
+        firstResources = resources;
+        loader::native::retainRuntimeResource(*runtime, "runtime-lifetime",
+                                              std::shared_ptr<void>(new int(1), [&](void *value) {
+                                                  delete static_cast<int *>(value);
+                                                  released = true;
+                                              }));
+        resources.reset();
+    }
+    require(released, "destroying Hermes releases runtime-owned resources");
+    require(firstResources.expired(), "destroying Hermes expires its runtime registry");
+
+    auto firstRuntime   = facebook::hermes::makeHermesRuntime();
+    auto secondRuntime  = facebook::hermes::makeHermesRuntime();
+    auto firstIdentity  = loader::native::runtimeResourceRegistry(*firstRuntime)->identity();
+    auto secondIdentity = loader::native::runtimeResourceRegistry(*secondRuntime)->identity();
+    require(firstIdentity != secondIdentity, "each Hermes runtime has a distinct identity");
+}
+
 int main()
 {
     loader::bootstrap::setScriptSource(bootstrapScript);
     runChecks(loader::native::NativeErrorDelivery::Throw, "throw delivery");
     runChecks(loader::native::NativeErrorDelivery::Envelope, "envelope delivery");
     freshRuntimesAdvanceTheGeneration();
+    runtimeResourcesFollowHermesLifetime();
     std::printf("native runtime: all checks passed on Hermes in both error deliveries%s\n",
                 UNBOUND_TEST_FFI ? ", FFI included" : "");
     return 0;

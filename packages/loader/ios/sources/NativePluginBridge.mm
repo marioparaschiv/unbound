@@ -236,7 +236,7 @@ struct HookState {
     uint64_t                                               runtimeGeneration;
     std::string                                            callbackResourceKey;
     std::weak_ptr<loader::native::RuntimeResourceRegistry> callbackResources;
-    Runtime                                               *callbackRuntime = nullptr;
+    uint64_t                                               callbackRuntimeIdentity = 0;
     std::weak_ptr<HookCallbacks>                           callbacks;
     bool                                                   hasBefore  = false;
     bool                                                   hasAfter   = false;
@@ -2423,16 +2423,26 @@ static Class classFromValue(Runtime &runtime, const Value &value)
 }
 
 static void releaseHookCallbacks(const std::shared_ptr<HookState> &state,
-                                 Runtime                          *ownerRuntime = nullptr)
+                                 Runtime *ownerRuntime = nullptr, bool ownerRuntimeThread = false)
 {
     if (state->callbackResourceKey.empty())
     {
         return;
     }
-    if (ownerRuntime && ownerRuntime == state->callbackRuntime &&
-        state->runtimeGeneration == loader::native::runtimeGeneration())
+    if (ownerRuntime && state->runtimeGeneration == loader::native::runtimeGeneration())
     {
-        loader::native::releaseRuntimeResource(*ownerRuntime, state->callbackResourceKey);
+        auto ownerResources = loader::native::runtimeResourceRegistry(*ownerRuntime);
+        if (ownerResources->active() &&
+            ownerResources->identity() == state->callbackRuntimeIdentity)
+        {
+            loader::native::releaseRuntimeResource(*ownerRuntime, state->callbackResourceKey);
+            return;
+        }
+    }
+    if (ownerRuntimeThread)
+    {
+        loader::native::releaseRuntimeResource(state->callbackResources,
+                                               state->callbackResourceKey);
         return;
     }
     loader::native::deferRuntimeResourceRelease(state->callbackResources,
@@ -2440,7 +2450,8 @@ static void releaseHookCallbacks(const std::shared_ptr<HookState> &state,
 }
 
 static void removeHook(const std::shared_ptr<HookState> &state, bool preserveAfter = false,
-                       bool restoreImplementation = true, Runtime *ownerRuntime = nullptr)
+                       bool restoreImplementation = true, Runtime *ownerRuntime = nullptr,
+                       bool ownerRuntimeThread = false)
 {
     if (!state)
     {
@@ -2455,7 +2466,7 @@ static void removeHook(const std::shared_ptr<HookState> &state, bool preserveAft
     clearHookReturnCache(state);
     if (!state->afterOncePending.load())
     {
-        releaseHookCallbacks(state, ownerRuntime);
+        releaseHookCallbacks(state, ownerRuntime, ownerRuntimeThread);
     }
 
     std::shared_ptr<HookDispatcher> dispatcher = state->dispatcher.lock();
@@ -2745,12 +2756,30 @@ static bool executeRuntimeSynchronously(std::function<void(Runtime &)> callback)
 
 static thread_local Runtime *gUIScopeRuntime = nullptr;
 
+static bool hookRuntimeIsActive(const std::shared_ptr<HookState> &state)
+{
+    auto callbackResources = state->callbackResources.lock();
+    return callbackResources && callbackResources->active() &&
+           callbackResources->identity() == state->callbackRuntimeIdentity;
+}
+
+static bool hookRuntimeMatches(const std::shared_ptr<HookState> &state, Runtime &runtime)
+{
+    if (!hookRuntimeIsActive(state))
+    {
+        return false;
+    }
+    auto runtimeResources = loader::native::runtimeResourceRegistry(runtime);
+    return runtimeResources->active() &&
+           runtimeResources->identity() == state->callbackRuntimeIdentity;
+}
+
 static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selector,
                             std::function<void(Runtime &)> callback)
 {
     if (state->inlineRuntime && [NSThread isMainThread] &&
         state->runtimeGeneration == loader::native::runtimeGeneration() &&
-        !state->callbackResources.expired())
+        hookRuntimeIsActive(state) && hookRuntimeMatches(state, *state->inlineRuntime))
     {
         loader::native::drainRuntimeResourceReleases(*state->inlineRuntime);
         callback(*state->inlineRuntime);
@@ -2760,7 +2789,8 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
     bool completed =
         !state->inlineRuntime &&
         executeRuntimeSynchronously([state, callback = std::move(callback)](Runtime &runtime) {
-            if (state->runtimeGeneration != loader::native::runtimeGeneration())
+            if (state->runtimeGeneration != loader::native::runtimeGeneration() ||
+                !hookRuntimeMatches(state, runtime))
             {
                 return;
             }
@@ -3414,7 +3444,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         std::function<void(Runtime &)> afterWork      = [invocation, retainedObject, selector,
                                                          state](Runtime &runtime) {
             if (state->runtimeGeneration != loader::native::runtimeGeneration() ||
-                state->callbackResources.expired())
+                !hookRuntimeMatches(state, runtime))
             {
                 return;
             }
@@ -3447,7 +3477,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         {
             executeRuntimeAsynchronously(std::move(afterWork));
         }
-        else if ([NSThread isMainThread])
+        else if ([NSThread isMainThread] && hookRuntimeIsActive(state))
         {
             afterWork(*state->inlineRuntime);
         }
@@ -3456,7 +3486,7 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             dispatch_async(dispatch_get_main_queue(), ^{
                 if (state->active.load() && state->inlineRuntime &&
                     state->runtimeGeneration == loader::native::runtimeGeneration() &&
-                    !state->callbackResources.expired())
+                    hookRuntimeIsActive(state) && hookRuntimeMatches(state, *state->inlineRuntime))
                 {
                     afterWork(*state->inlineRuntime);
                 }
@@ -3794,17 +3824,18 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         }
     }
 
-    auto callbacks             = std::make_shared<HookCallbacks>();
-    callbacks->before          = std::move(before);
-    callbacks->after           = std::move(after);
-    callbacks->replace         = std::move(replace);
-    auto state                 = std::make_shared<HookState>();
-    state->identifier          = gNextHookIdentifier.fetch_add(1);
-    state->runtimeGeneration   = loader::native::runtimeGeneration();
-    state->callbackResourceKey = "ios-hook:" + std::to_string(state->identifier);
-    state->callbackResources   = loader::native::runtimeResourceRegistry(runtime);
-    state->callbackRuntime     = &runtime;
-    state->callbacks           = callbacks;
+    auto callbacks                 = std::make_shared<HookCallbacks>();
+    callbacks->before              = std::move(before);
+    callbacks->after               = std::move(after);
+    callbacks->replace             = std::move(replace);
+    auto state                     = std::make_shared<HookState>();
+    state->identifier              = gNextHookIdentifier.fetch_add(1);
+    state->runtimeGeneration       = loader::native::runtimeGeneration();
+    state->callbackResourceKey     = "ios-hook:" + std::to_string(state->identifier);
+    auto callbackResources         = loader::native::runtimeResourceRegistry(runtime);
+    state->callbackResources       = callbackResources;
+    state->callbackRuntimeIdentity = callbackResources->identity();
+    state->callbacks               = callbacks;
     loader::native::retainRuntimeResource(runtime, state->callbackResourceKey, callbacks);
     state->hasBefore      = callbacks->before != nullptr;
     state->hasAfter       = callbacks->after != nullptr;
@@ -4166,7 +4197,7 @@ struct ObjCUIScopeState {
 };
 
 static void disposeUIScope(const std::shared_ptr<ObjCUIScopeState> &scope,
-                           Runtime                                 *ownerRuntime = nullptr)
+                           Runtime *ownerRuntime = nullptr, bool ownerRuntimeThread = false)
 {
     std::vector<std::shared_ptr<HookState>> hooks;
     {
@@ -4176,7 +4207,7 @@ static void disposeUIScope(const std::shared_ptr<ObjCUIScopeState> &scope,
     }
     for (const std::shared_ptr<HookState> &state : hooks)
     {
-        removeHook(state, false, true, ownerRuntime);
+        removeHook(state, false, true, ownerRuntime, ownerRuntimeThread);
     }
 }
 
@@ -4222,7 +4253,7 @@ public:
 
     ~ObjCUIScopeHost() override
     {
-        disposeUIScope(scope_);
+        disposeUIScope(scope_, nullptr, true);
     }
 
     Value get(Runtime &runtime, const PropNameID &name) override

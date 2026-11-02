@@ -491,6 +491,7 @@ struct HookListener {
     std::weak_ptr<loader::native::RuntimeResourceRegistry> resources;
     loader::AddonSlot                                      addon             = loader::kNoAddon;
     jsi::Runtime                                          *inlineRuntime     = nullptr;
+    uint64_t                                               runtimeIdentity   = 0;
     uint64_t                                               runtimeGeneration = 0;
 };
 
@@ -518,51 +519,56 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
     }
 
     loader::AddonScope                  scope(listener.addon);
-    std::function<void(jsi::Runtime &)> deliver = [callback   = listener.callback,
-                                                   resources  = listener.resources,
-                                                   generation = listener.runtimeGeneration,
-                                                   addon      = listener.addon,
-                                                   payload](jsi::Runtime &runtime) {
-        if (generation != loader::native::runtimeGeneration())
-        {
-            return;
-        }
-        auto owningResources = resources.lock();
-        if (!owningResources)
-        {
-            return;
-        }
-        loader::native::drainRuntimeResourceReleases(runtime);
-        auto activeCallback = callback.lock();
-        if (!activeCallback)
-        {
-            return;
-        }
-        loader::AddonScope        runtimeScope(addon);
-        std::optional<jsi::Value> event = adoptTaggedJavaEvent(runtime, payload);
-        if (!event)
-        {
-            nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
-            if (parsed.is_discarded())
+    std::function<void(jsi::Runtime &)> deliver =
+        [callback = listener.callback, resources = listener.resources,
+         identity = listener.runtimeIdentity, generation = listener.runtimeGeneration,
+         addon = listener.addon, payload](jsi::Runtime &runtime) {
+            if (generation != loader::native::runtimeGeneration())
             {
                 return;
             }
-            event = adoptJavaValue(runtime, parsed);
-        }
+            auto owningResources = resources.lock();
+            if (!owningResources || !owningResources->active() ||
+                owningResources->identity() != identity)
+            {
+                return;
+            }
+            auto runtimeResources = loader::native::runtimeResourceRegistry(runtime);
+            if (!runtimeResources->active() || runtimeResources->identity() != identity)
+            {
+                return;
+            }
+            loader::native::drainRuntimeResourceReleases(runtime);
+            auto activeCallback = callback.lock();
+            if (!activeCallback)
+            {
+                return;
+            }
+            loader::AddonScope        runtimeScope(addon);
+            std::optional<jsi::Value> event = adoptTaggedJavaEvent(runtime, payload);
+            if (!event)
+            {
+                nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
+                if (parsed.is_discarded())
+                {
+                    return;
+                }
+                event = adoptJavaValue(runtime, parsed);
+            }
 
-        jsi::Value failure = catchingCall(runtime).call(
-            runtime, jsi::Value(runtime, *activeCallback), std::move(*event));
-        if (!failure.isString())
-        {
-            return;
-        }
-        std::optional<std::string> message =
-            loader::threading::throttledHookFailure(addon, failure.asString(runtime).utf8(runtime));
-        if (message)
-        {
-            loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS, *message);
-        }
-    };
+            jsi::Value failure = catchingCall(runtime).call(
+                runtime, jsi::Value(runtime, *activeCallback), std::move(*event));
+            if (!failure.isString())
+            {
+                return;
+            }
+            std::optional<std::string> message = loader::threading::throttledHookFailure(
+                addon, failure.asString(runtime).utf8(runtime));
+            if (message)
+            {
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS, *message);
+            }
+        };
 
     if (!listener.inlineRuntime)
     {
@@ -571,8 +577,9 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
     }
     if (onMainThread())
     {
-        if (listener.runtimeGeneration == loader::native::runtimeGeneration() &&
-            !listener.resources.expired())
+        auto resources = listener.resources.lock();
+        if (listener.runtimeGeneration == loader::native::runtimeGeneration() && resources &&
+            resources->active() && resources->identity() == listener.runtimeIdentity)
         {
             deliver(*listener.inlineRuntime);
         }
@@ -582,13 +589,17 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
     {
         auto inlineRuntime = listener.inlineRuntime;
         auto generation    = listener.runtimeGeneration;
+        auto identity      = listener.runtimeIdentity;
         auto resources     = listener.resources;
-        target->runOnMain([deliver = std::move(deliver), inlineRuntime, generation, resources]() {
-            if (generation == loader::native::runtimeGeneration() && !resources.expired())
-            {
-                deliver(*inlineRuntime);
-            }
-        });
+        target->runOnMain(
+            [deliver = std::move(deliver), inlineRuntime, generation, identity, resources]() {
+                auto owningResources = resources.lock();
+                if (generation == loader::native::runtimeGeneration() && owningResources &&
+                    owningResources->active() && owningResources->identity() == identity)
+                {
+                    deliver(*inlineRuntime);
+                }
+            });
     }
 }
 
@@ -603,13 +614,18 @@ static void rememberHookListener(jsi::Runtime &runtime, const std::string &token
     auto callback = std::make_shared<jsi::Function>(listener.asObject(runtime).asFunction(runtime));
     auto resources = loader::native::runtimeResourceRegistry(runtime);
     loader::native::retainRuntimeResource(runtime, "android-hook:" + token, callback);
-    HookListener                stored{callback, resources, loader::currentAddon(), gUIScopeRuntime,
+    HookListener                stored{callback,
+                                       resources,
+                                       loader::currentAddon(),
+                                       gUIScopeRuntime,
+                                       resources->identity(),
                                        loader::native::runtimeGeneration()};
     std::lock_guard<std::mutex> lock(gHookMutex);
     gHookListeners[token] = std::move(stored);
 }
 
-static void forgetHookListener(const std::string &token, jsi::Runtime *runtime = nullptr)
+static void forgetHookListener(const std::string &token, jsi::Runtime *runtime = nullptr,
+                               bool ownerRuntimeThread = false)
 {
     HookListener listener;
     bool         foundListener = false;
@@ -630,7 +646,16 @@ static void forgetHookListener(const std::string &token, jsi::Runtime *runtime =
     const std::string key = "android-hook:" + token;
     if (runtime && listener.runtimeGeneration == loader::native::runtimeGeneration())
     {
-        loader::native::releaseRuntimeResource(*runtime, key);
+        auto resources = loader::native::runtimeResourceRegistry(*runtime);
+        if (resources->active() && resources->identity() == listener.runtimeIdentity)
+        {
+            loader::native::releaseRuntimeResource(*runtime, key);
+            return;
+        }
+    }
+    if (ownerRuntimeThread)
+    {
+        loader::native::releaseRuntimeResource(listener.resources, key);
         return;
     }
     loader::native::deferRuntimeResourceRelease(listener.resources, key);
@@ -911,9 +936,9 @@ static jsi::Object makeFFINamespace(jsi::Runtime &runtime)
 }
 
 static void removeHook(const JavaCallbacks &callbacks, const std::string &token,
-                       jsi::Runtime *runtime = nullptr)
+                       jsi::Runtime *runtime = nullptr, bool ownerRuntimeThread = false)
 {
-    forgetHookListener(token, runtime);
+    forgetHookListener(token, runtime, ownerRuntimeThread);
     hookReturnValues().clear(token);
     installedHooks().release(token);
     callJavaVoid(callbacks, callbacks.hooksRemove, {loader::native::handleJSON(token)});
@@ -1081,7 +1106,8 @@ struct UIScopeState {
     bool                     disposed = false;
 };
 
-static void disposeUIScope(UIScopeState &scope, jsi::Runtime *runtime = nullptr)
+static void disposeUIScope(UIScopeState &scope, jsi::Runtime *runtime = nullptr,
+                           bool ownerRuntimeThread = false)
 {
     std::vector<std::string> tokens;
     {
@@ -1097,7 +1123,7 @@ static void disposeUIScope(UIScopeState &scope, jsi::Runtime *runtime = nullptr)
     {
         if (installedHooks().contains(token))
         {
-            removeHook(scope.callbacks, token, runtime);
+            removeHook(scope.callbacks, token, runtime, ownerRuntimeThread);
         }
     }
 }
@@ -1181,7 +1207,7 @@ public:
 
     ~UIScopeHost() override
     {
-        disposeUIScope(*scope_);
+        disposeUIScope(*scope_, nullptr, true);
     }
 
     // Hermes on Android cannot take a C++ exception, so a failed read returns a failure envelope.

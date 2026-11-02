@@ -1,5 +1,7 @@
 #pragma once
 
+#include <atomic>
+#include <cstdint>
 #include <jsi/jsi.h>
 #include <memory>
 #include <mutex>
@@ -11,8 +13,12 @@ namespace loader::native {
 class RuntimeResourceRegistry
 {
 public:
+    RuntimeResourceRegistry();
     ~RuntimeResourceRegistry();
 
+    uint64_t              identity() const;
+    bool                  active() const;
+    void                  invalidate();
     bool                  retain(const std::string &key, std::shared_ptr<void> resource);
     bool                  release(const std::string &key);
     bool                  deferRelease(const std::string &key);
@@ -22,6 +28,8 @@ public:
     void                  clear();
 
 private:
+    uint64_t                                               identity_;
+    std::atomic_bool                                       active_{true};
     mutable std::mutex                                     mutex_;
     std::unordered_map<std::string, std::shared_ptr<void>> resources_;
     std::vector<std::shared_ptr<void>>                     deferredReleases_;
@@ -33,6 +41,9 @@ void   retainRuntimeResource(facebook::jsi::Runtime &runtime, const std::string 
 bool   releaseRuntimeResource(facebook::jsi::Runtime &runtime, const std::string &key);
 bool   deferRuntimeResourceRelease(const std::weak_ptr<RuntimeResourceRegistry> &registry,
                                    const std::string                            &key);
+bool   releaseRuntimeResource(const std::weak_ptr<RuntimeResourceRegistry> &registry,
+                              const std::string                            &key);
+bool   invalidateRuntimeResources(const std::weak_ptr<RuntimeResourceRegistry> &registry);
 size_t drainRuntimeResourceReleases(facebook::jsi::Runtime &runtime);
 std::shared_ptr<void> runtimeResource(facebook::jsi::Runtime &runtime, const std::string &key);
 }
