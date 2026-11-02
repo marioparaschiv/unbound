@@ -1,10 +1,9 @@
 import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
-import { SchemaError } from '@unbound-app/contracts/schema-error';
+import { isAddonId, isSemver } from '@unbound-app/contracts/manifest-patterns';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Plugin } from '@unbound-app/types';
 import type { Api } from '@unbound-app/web/api';
 
-import { isInstalledAddon, isUpdatesRequest, isUpdatesResponse } from '~/core/validators.gen';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { Addons } from '~/addons/addons';
 
@@ -46,7 +45,7 @@ function checkable(entries: InstalledEntry[]): Map<string, InstalledEntry> {
 	const owners = new Map<string, InstalledEntry>();
 
 	for (const entry of entries) {
-		if (owners.has(entry.id) || !isInstalledAddon(entry)) {
+		if (owners.has(entry.id) || !isAddonId(entry.id) || !isSemver(entry.version)) {
 			continue;
 		}
 
@@ -72,19 +71,7 @@ export function buildUpdatesRequest(
 
 	if (!addons.length) return;
 
-	const request: unknown = { clientVersion, addons };
-
-	// `checkable` keys by id, so the contract's unique-id refinement always holds; check it anyway
-	// rather than trust that.
-	const unique = new Set(addons.map((addon) => addon.id)).size === addons.length;
-
-	if (!isUpdatesRequest(request) || !unique) {
-		throw new SchemaError([
-			{ path: '', message: 'The updates request does not match the contract.' },
-		]);
-	}
-
-	return request;
+	return { clientVersion, addons };
 }
 
 /**
@@ -148,7 +135,6 @@ export async function fetchUpdates(
 	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
 	const response = await request('POST /api/v1/updates', {
 		body,
-		response: isUpdatesResponse,
 	});
 
 	return toPendingUpdates(entries, response);

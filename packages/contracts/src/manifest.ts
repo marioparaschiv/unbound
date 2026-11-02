@@ -5,7 +5,12 @@ import {
 } from '@unbound-app/types/native';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 
-import { ADDON_ID_MAX_LENGTH, ADDON_ID_PATTERN, ADDON_MAIN_PATTERN } from './manifest-patterns';
+import {
+	ADDON_ID_MAX_LENGTH,
+	ADDON_ID_PATTERN,
+	ADDON_MAIN_PATTERN,
+	SEMVER_PATTERN,
+} from './manifest-patterns';
 import { DEVELOPMENT_MARKER, MANIFEST_FILENAME } from './manifest-files';
 import { Type, type StaticDecode } from './schema';
 
@@ -15,22 +20,14 @@ export {
 	ADDON_MAIN_PATTERN,
 	isAddonId,
 	isAddonMain,
+	isSemver,
+	SEMVER_PATTERN,
 } from './manifest-patterns';
 export { DEVELOPMENT_MARKER, MANIFEST_FILENAME } from './manifest-files';
 
-/**
- * A strict SemVer 2.0.0 version (the specification's own pattern): no `v` prefix, no leading zeros.
- * Versions become object-storage path segments and are ordered by the server, so loose forms are refused.
- */
-const SEMVER =
-	'(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?';
-
-/** The semver source {@link semverSchema} matches, so a composed pattern can embed it. */
-export const SEMVER_PATTERN = SEMVER;
-
 export const semverSchema = Type.String({
 	maxLength: 64,
-	pattern: `^${SEMVER}$`,
+	pattern: `^${SEMVER_PATTERN}$`,
 	errorMessage: 'Must be a semver version.',
 });
 

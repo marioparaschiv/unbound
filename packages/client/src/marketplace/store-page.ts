@@ -1,8 +1,7 @@
 import { MEASURED_PAGE_FILENAME, splitFrontmatter } from '@unbound-app/contracts/addon-page-text';
 import type { AddonPage, MeasuredMedia } from '@unbound-app/contracts/addon-page';
-import { readMeasuredPage } from '@unbound-app/contracts/addon-page-media';
 
-import { isAddonPage } from '~/core/validators.gen';
+import { readServerJson } from '~/core/server-data';
 
 /** A version's store page as the CDN serves it beside the bundle. */
 export type StorePage = {
@@ -41,11 +40,8 @@ function parseMeasured(text: string | null): AddonPage | null {
 	if (text === null) return null;
 
 	try {
-		const value: unknown = JSON.parse(text);
-
-		// The check covers the contract's structure; `readMeasuredPage` runs its media rules and trims
-		// each alt text, which the schema's refinements and codec used to do.
-		return isAddonPage(value) ? (readMeasuredPage(value) ?? null) : null;
+		// The server validated the page and wrote its parsed form when it published the version.
+		return readServerJson<AddonPage>(text);
 	} catch {
 		return null;
 	}

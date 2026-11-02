@@ -6,9 +6,6 @@ import type {
 	SyncSettingsStore,
 } from '@unbound-app/contracts/sync';
 
-import { isSyncDocument } from '~/core/validators.gen';
-import { expectContract } from '~/core/contracts';
-
 type JsonValue = SyncSettingsStore[string];
 
 /** A change merging made to the remote side that this device has to carry out. */
@@ -281,7 +278,7 @@ export function reconcileBase(
 	previous: SyncDocument,
 	failed: SyncAction[],
 ): SyncDocument {
-	const result = expectContract(copyDocument(document), isSyncDocument, 'The sync document');
+	const result = copyDocument(document);
 
 	for (const action of failed) {
 		if (action.type === 'install') {

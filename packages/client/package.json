@@ -16,8 +16,7 @@
 		"sign": "bun scripts/build/sign.ts",
 		"verify-signatures": "bun scripts/build/verify-signatures.ts",
 		"symbolicate": "bun scripts/build/symbolicate.ts",
-		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p .",
-		"validators": "bun --bun scripts/build/validators/emit.ts"
+		"typecheck": "bun run --filter @unbound-app/web build:types && tsc --noEmit -p ."
 	},
 	"dependencies": {
 		"@unbound-app/contracts": "workspace:*",

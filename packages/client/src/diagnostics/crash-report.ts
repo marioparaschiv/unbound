@@ -1,7 +1,6 @@
 import { CRASH_REPORT_LOG_LIMIT } from '@unbound-app/contracts/crash-report-limits';
 import type { CrashReport } from '@unbound-app/contracts/crash-reports';
 
-import { isCrashReport } from '~/core/validators.gen';
 import type { Addon } from '~/addons/addon';
 
 /** The addon a report is about. */
@@ -98,16 +97,16 @@ export function crashLogExcerpt(log: string): string | undefined {
  * @param event The failure the manager saw.
  * @param environment The app, loader and device details.
  * @param log The loader's log file, whose newest lines go into the report scrubbed of secrets.
- * @returns The validated report, or `undefined` when the details don't validate.
+ * @returns The report; the server validates it.
  */
 export function buildCrashReport(
 	event: CrashEvent,
 	environment: CrashEnvironment,
 	log?: string,
-): CrashReport | undefined {
+): CrashReport {
 	const excerpt = log === undefined ? undefined : crashLogExcerpt(log);
-	// UNKNOWN: assembled from the event, the environment and the log, and checked below.
-	const report: unknown = {
+
+	return {
 		...event,
 		...environment,
 		...(excerpt === undefined ? {} : { log: excerpt }),
@@ -118,6 +117,4 @@ export function buildCrashReport(
 		osVersion: environment.osVersion.slice(0, 64),
 		deviceModel: environment.deviceModel.slice(0, 64),
 	};
-
-	return isCrashReport(report) ? report : undefined;
 }

@@ -14,9 +14,7 @@ import type {
 } from '@unbound-app/contracts/sync';
 import { createLogger } from '@unbound-app/logger';
 
-import { isSyncSettingsStore } from '~/core/validators.gen';
 import { getBucket, snapshot } from '~/storage/api';
-import { expectContract } from '~/core/contracts';
 import type { SyncAction } from '~/sync/merge';
 import { icons } from '~/icon-packs/manager';
 import { plugins } from '~/plugins/manager';
@@ -132,13 +130,12 @@ function collectKind(kind: SyncKind): SyncKindDocument {
 }
 
 /**
- * @description Copies a settings store, checking it against the contract as `parse` did, so the synced
- * document cannot write through to the live settings.
+ * @description Copies a settings store, so the synced document cannot write through to the live settings.
  * @param store The store as `snapshot` reports it.
  * @returns A shallow copy of it.
  */
 function copyStore(store: SyncSettingsStore): SyncSettingsStore {
-	return expectContract({ ...store }, isSyncSettingsStore, 'The settings store');
+	return { ...store };
 }
 
 /**

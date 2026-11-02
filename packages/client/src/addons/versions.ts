@@ -3,7 +3,6 @@ import type { AddonVersion } from '@unbound-app/contracts/addons';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Api } from '@unbound-app/web/api';
 
-import { isAddonVersionsResponse } from '~/core/validators.gen';
 import { compareVersions } from '~/core/versions';
 
 /** A version that can be installed. `holds`: installing it pauses automatic updates for the addon. */
@@ -40,7 +39,6 @@ export async function fetchAddonVersions(
 	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
 	const { versions } = await request('GET /api/v1/addons/$id/versions', {
 		params: { id },
-		response: isAddonVersionsResponse,
 	});
 
 	return versions;

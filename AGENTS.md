@@ -56,7 +56,7 @@ Name things with `GLOSSARY.md` terms. `DESIGN.md` lists the design-system primit
 - Constrain generics: `T extends Addon`.
 - `PropertyKey` for keys; `Record<K, V>` with a concrete `V`; `Map` at runtime.
 - Narrow with `value is T`. Mark a needed `unknown` with `// UNKNOWN: <reason>`.
-- Parse `JSON.parse` and `.json()` output with a schema.
+- Parse `JSON.parse` and `.json()` output with a schema. The server never trusts the client; the client trusts the server and reads its data with `readServerJson`.
 
 ## Errors
 

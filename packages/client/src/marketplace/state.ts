@@ -6,7 +6,6 @@ import { create } from 'zustand';
 
 import type { Catalog, MarketplaceEvent, MarketplaceState } from '~/marketplace/catalog';
 import { parseCatalog, reduceMarketplace } from '~/marketplace/catalog';
-import { isCatalogResponse } from '~/core/validators.gen';
 import { API_URL } from '~/core/constants';
 import fs from '~/native/fs';
 
@@ -64,7 +63,6 @@ async function fetchCatalog(current: Catalog | undefined): Promise<MarketplaceEv
 
 	try {
 		const catalog = await request('GET /api/v1/catalog', {
-			response: isCatalogResponse,
 			headers: current ? { 'If-None-Match': `"${current.revision}"` } : undefined,
 		});
 

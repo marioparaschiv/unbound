@@ -4,6 +4,9 @@ import isTestFile from '../is-test-file.ts';
 
 type Expression = NodeOf<'ExpressionStatement'>['expression'];
 
+// The client trusts what the server validated and sent; `server-data.ts` is the one place that reads it typed.
+const TRUSTED_READER = /(^|\/)server-data\.ts$/;
+
 // `FunctionDeclaration` and `FunctionExpression` share one node type.
 type FunctionNode = NodeOf<'FunctionDeclaration'> | NodeOf<'ArrowFunctionExpression'>;
 
@@ -81,11 +84,11 @@ const noAssertedExternalData: Rule = {
 		type: 'problem',
 		messages: {
 			asserted:
-				'`{{source}}` returns unvalidated data. Parse it with a schema at this boundary instead of asserting a type on it (AGENTS.md: errors and validation at the boundary).',
+				'`{{source}}` returns unvalidated data. Parse it with a schema at this boundary instead of asserting a type on it; the client reads server data through `readServerJson` (AGENTS.md: Types).',
 		},
 	},
 	create(context) {
-		if (isTestFile(context.filename)) {
+		if (isTestFile(context.filename) || TRUSTED_READER.test(context.filename)) {
 			return {};
 		}
 

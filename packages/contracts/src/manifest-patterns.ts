@@ -39,3 +39,24 @@ export default {
 	ADDON_MAIN_PATTERN,
 	isAddonMain,
 };
+
+/**
+ * A strict SemVer 2.0.0 version (the specification's own pattern): no `v` prefix, no leading zeros.
+ * Versions become object-storage path segments and are ordered by the server, so loose forms are refused.
+ */
+const SEMVER =
+	'(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?';
+
+/** The semver source `semverSchema` matches, so a composed pattern can embed it. */
+export const SEMVER_PATTERN = SEMVER;
+
+const SEMVER_VERSION = new RegExp(`^${SEMVER}$`);
+
+/**
+ * @description Tells whether `value` is a version the store accepts.
+ * @param value The version to test.
+ * @returns Whether it is strict semver of at most 64 characters.
+ */
+export function isSemver(value: string): boolean {
+	return value.length <= 64 && SEMVER_VERSION.test(value);
+}

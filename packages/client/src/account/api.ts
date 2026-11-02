@@ -4,7 +4,6 @@ import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
 import type { Api } from '@unbound-app/web/api';
 
-import { isAccountOAuthConfig, isAccountSignInResponse, isMeResponse } from '~/core/validators.gen';
 import { authorizeWithDiscord } from '~/account/discord-oauth';
 import { getBucket, useBucket } from '~/storage/api';
 import { EventEmitter } from '~/core/event-emitter';
@@ -45,9 +44,8 @@ export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
 
 function readSession(): Session | undefined {
-	const stored: unknown = Store.get('session', null);
-
-	return isAccountSignInResponse(stored) ? stored : undefined;
+	// Written by `signIn` from the server's answer, so it is read back as stored.
+	return Store.get<Session | null>('session', null) ?? undefined;
 }
 
 function toAccount(user: Caller): Account {
@@ -102,8 +100,8 @@ export function createClient(): ApiRequest {
 		return request;
 	}
 
-	const authenticated: ApiRequest = (route, init) =>
-		request(route, init).catch((cause: unknown) => {
+	const authenticated: ApiRequest = (route, ...init) =>
+		request(route, ...init).catch((cause: unknown) => {
 			if (cause instanceof ApiRequestError && cause.status === 401) {
 				expire(session.token);
 			}
@@ -122,9 +120,7 @@ export async function signIn(): Promise<SignInResult> {
 	try {
 		const request = createApiClient<Api>({ baseUrl: API_URL });
 		// Production serves only the deprecated path until `/api/v1/auth/discord` deploys; switch then.
-		const config = await request('GET /api/v1/sync/oauth', {
-			response: isAccountOAuthConfig,
-		});
+		const config = await request('GET /api/v1/sync/oauth', {});
 		const code = await authorizeWithDiscord(config);
 
 		if (!code) {
@@ -133,7 +129,6 @@ export async function signIn(): Promise<SignInResult> {
 
 		const session = await request('POST /api/v1/sync/oauth', {
 			body: { code },
-			response: isAccountSignInResponse,
 		});
 		const account = toAccount(session.user);
 
@@ -187,7 +182,7 @@ export async function refresh(): Promise<void> {
 	}
 
 	try {
-		const { user } = await createClient()('GET /api/v1/me', { response: isMeResponse });
+		const { user } = await createClient()('GET /api/v1/me');
 
 		if (readSession()?.token === session.token) {
 			Store.set('session', { token: session.token, user });

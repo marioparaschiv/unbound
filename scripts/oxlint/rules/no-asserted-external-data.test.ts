@@ -20,6 +20,8 @@ test('flags a type asserted onto JSON.parse or response.json output', async () =
 		'invalid/type-argument.ts':
 			'async function f() { return schema.parse(await response.json<Thing>()); }',
 		'tests/fixture.ts': 'const value = JSON.parse(text) as Thing;',
+		'valid/core/server-data.ts':
+			'function readServerJson<T>(text: string): T { return JSON.parse(text); }',
 		'invalid/as.ts': 'const value = JSON.parse(text) as Thing;',
 		'invalid/annotated.ts': 'const value: Thing = JSON.parse(text);',
 		'invalid/response-as.ts': 'async function f() { return (await response.json()) as Thing; }',
