@@ -1,9 +1,10 @@
+import { Type, safeParse } from '@unbound-app/contracts/schema';
+import type { Static } from '@unbound-app/contracts/schema';
 import { useEffect } from 'react';
-import { z } from 'zod/mini';
 
-const RETURN_STATE = z.object({ id: z.string(), open: z.boolean(), y: z.number() });
+const RETURN_STATE = Type.Object({ id: Type.String(), open: Type.Boolean(), y: Type.Number() });
 
-type ReturnState = z.infer<typeof RETURN_STATE>;
+type ReturnState = Static<typeof RETURN_STATE>;
 
 const KEY = 'review-preview-return';
 
@@ -27,7 +28,7 @@ function readSaved(): ReturnState | null {
 	if (!raw) return null;
 
 	try {
-		const result = RETURN_STATE.safeParse(JSON.parse(raw));
+		const result = safeParse(RETURN_STATE, JSON.parse(raw));
 
 		return result.success ? result.data : null;
 	} catch {
