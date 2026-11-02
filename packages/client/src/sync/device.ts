@@ -46,15 +46,19 @@ const ACTION_ORDER: Record<SyncAction['type'], number> = {
 	'set-setting': 4,
 };
 
+// A kind with no such step shares the no-op that ignores it.
+const noApplied = () => null;
+const ignored = () => undefined;
+
 const adapters: Record<SyncKind, KindAdapter> = {
 	plugins: {
-		getApplied: () => null,
+		getApplied: noApplied,
 		isEnabled: (id) => plugins.isEnabled(id),
 		isInstalled: (id) => Boolean(plugins.getEntity(id)),
 		install: (url) => plugins.install(url),
 		delete: (id) => plugins.delete(id),
 		setEnabled: (id, enabled) => void (enabled ? plugins.enable(id) : plugins.disable(id)),
-		apply: () => undefined,
+		apply: ignored,
 		getSources: () => plugins.getSources(),
 		recordSource: (id, url) => plugins.recordSource(id, url),
 		forgetSource: (id) => plugins.forgetSource(id),
@@ -66,7 +70,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		install: (url) => themes.install(url),
 		delete: (id) => themes.delete(id),
 		// A theme is enabled by being applied.
-		setEnabled: () => undefined,
+		setEnabled: ignored,
 		apply: (id) => {
 			const current = themes.getAppliedId();
 
@@ -86,22 +90,22 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		isInstalled: (id) => Boolean(icons.getEntity(id)),
 		install: (url) => icons.install(url),
 		delete: (id) => icons.delete(id),
-		setEnabled: () => undefined,
+		setEnabled: ignored,
 		apply: (id) => icons.enable(id ?? SYNC_DEFAULT_ICON_PACK),
 		getSources: () => icons.getSources(),
 		recordSource: (id, url) => icons.recordSource(id, url),
 		forgetSource: (id) => icons.forgetSource(id),
 	},
 	fonts: {
-		getApplied: () => null,
+		getApplied: noApplied,
 		isEnabled: () => true,
 		// A new font only registers natively after a relaunch, so its recorded source counts too.
 		isInstalled: (id) =>
 			id in fonts.getSources() || fonts.getEntities().some((font) => font.file === id),
 		install: (url) => fonts.install(url),
 		delete: (id) => fonts.delete(id),
-		setEnabled: () => undefined,
-		apply: () => undefined,
+		setEnabled: ignored,
+		apply: ignored,
 		getSources: () => fonts.getSources(),
 		recordSource: (id, url) => fonts.recordSource(id, url),
 		forgetSource: (id) => fonts.forgetSource(id),
