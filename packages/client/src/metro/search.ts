@@ -1,6 +1,5 @@
 import '~/metro/registry';
 
-import type { DiscordFunction } from '@unbound-app/types/components';
 import { createLogger } from '@unbound-app/logger';
 import noop from '@unbound-app/utils/noop';
 
@@ -16,9 +15,16 @@ import type {
 	MetroFunctionSignatureOrArray,
 	MetroModuleLoadListener,
 } from '~/metro/types';
+import {
+	byFilePath,
+	byFluxStore,
+	byName,
+	byProps,
+	byPrototypes,
+	type MetroFilter,
+} from '~/metro/filters';
 import { couldMatch, idsNear, recordMove } from '~/metro/candidates';
 import { attachRunner, type MetroFactory } from '~/metro/capture';
-import Filters, { type MetroFilter } from '~/metro/filters';
 import { isInvalidExport } from '~/metro/invalid-exports';
 import { createLazyModule } from '~/metro/lazy-registry';
 import Cache, { ModuleFlags } from '~/metro/cache';
@@ -431,7 +437,7 @@ export function findByProps<
 >(...args: T): MetroPropertyRecordOrArray<T, U> & {} {
 	const [props, options] = parseOptions<MetroInternalOptions, T>(args);
 
-	return searchWithOptions(props, options, 'byProps');
+	return searchWithOptions(props, options, byProps);
 }
 
 /**
@@ -447,7 +453,7 @@ export function findByFilePath<
 >(...args: T): AnyProps {
 	const [name, options] = parseOptions<MetroInternalOptions, T>(args);
 
-	return searchWithOptions(name, options, 'byFilePath');
+	return searchWithOptions(name, options, byFilePath);
 }
 
 /**
@@ -463,7 +469,7 @@ export function findByPrototypes<
 >(...args: T): AnyProps {
 	const [prototypes, options] = parseOptions<MetroInternalOptions, T>(args);
 
-	return searchWithOptions(prototypes, options, 'byPrototypes');
+	return searchWithOptions(prototypes, options, byPrototypes);
 }
 
 /**
@@ -479,7 +485,7 @@ export function findStore<
 >(...args: T): AnyProps {
 	const [[name], { short = true, ...options }] = parseOptions<MetroStoreOptions>(args);
 
-	return searchWithOptions([name, short], options, 'byFluxStore');
+	return searchWithOptions([name, short], options, byFluxStore);
 }
 
 /**
@@ -495,7 +501,7 @@ export function findByName<
 >(...args: T): MetroFunctionSignatureOrArray<T, U> {
 	const [name, options] = parseOptions<MetroInternalOptions, T>(args);
 
-	return searchWithOptions(name, options, 'byName');
+	return searchWithOptions(name, options, byName);
 }
 
 /**
@@ -595,16 +601,15 @@ function searchExports(
  * resolution, and bulk dispatch before delegating to {@link find}.
  * @param args The search terms (and any per-item param bags for bulk searches).
  * @param options Internal options controlling `lazy` and `bulk` behaviour.
- * @param filter A filter function, or the name of a {@link Filters} entry to resolve.
+ * @param filter The filter builder for the search terms.
  * @returns A lazy proxy, a bulk result array, or the result of {@link find}.
  */
 function searchWithOptions(
 	args: any[],
 	options: MetroInternalOptions & MetroSearchOptions,
-	filter: DiscordFunction | string,
+	filter: (...args: any[]) => MetroFilter,
 ) {
 	if (options.lazy) {
-		const create = typeof filter === 'string' ? Filters[filter] : filter;
 		const search = () =>
 			searchWithOptions(args, Object.assign(options, { lazy: false }), filter);
 
@@ -617,29 +622,23 @@ function searchWithOptions(
 		const { esModules, interop } = options;
 
 		return createLazyModule(search, {
-			wait: (callback) => onModuleLoaded(create(...args), callback, { esModules, interop }),
-			presence: () => filterPresence(create(...args), { esModules, interop }),
+			wait: (callback) => onModuleLoaded(filter(...args), callback, { esModules, interop }),
+			presence: () => filterPresence(filter(...args), { esModules, interop }),
 		});
 	}
-
-	if (typeof filter === 'string') {
-		filter = Filters[filter] as MetroFilter;
-	}
-
-	if (!filter) return;
 
 	if (options.bulk) {
 		return bulk(
 			...args.map((payload) => {
 				if (!Array.isArray(payload) && typeof payload === 'object' && payload.params) {
 					return {
-						filter: (filter as MetroFilter)(...((payload.params ?? []) as [any, any])),
+						filter: filter(...((payload.params ?? []) as [any, any])),
 						...payload,
 					};
 				}
 
 				return {
-					filter: (filter as MetroFilter)(...(payload as [any, any])),
+					filter: filter(...(payload as [any, any])),
 					interop: true,
 				};
 			}),
