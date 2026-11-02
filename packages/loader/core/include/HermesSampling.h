@@ -23,5 +23,6 @@ std::vector<std::string> hottestStack(const std::string &chromeTrace,
 std::string              describeSampledStack(const std::vector<std::string> &frames,
                                               bool                            insideNativeCall = false);
 std::string              formatSampledStack(const std::vector<std::string> &frames);
+void                     noteRuntimeCreated();
 std::vector<std::string> sampleJavaScriptStack(std::chrono::milliseconds duration);
 }

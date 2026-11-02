@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -10,7 +11,8 @@ namespace loader {
 class SettingsStore
 {
 public:
-    explicit SettingsStore(std::string path);
+    explicit SettingsStore(std::string               path,
+                           std::chrono::milliseconds diskRecheck = std::chrono::milliseconds(500));
 
     void load();
     bool save() const;
@@ -42,15 +44,17 @@ private:
 
     void      backupCorruptFile() const;
     FileStamp stampOnDisk() const;
-    void      refreshLocked() const;
+    void      refreshLocked(bool beforeWrite = false) const;
     void      setLocked(const std::string &store, const std::string &key, nlohmann::json value);
     void      removeLocked(const std::string &store, const std::string &key);
     void      applyLocked(const nlohmann::json &changes);
 
-    std::string            path_;
-    mutable nlohmann::json data_ = nlohmann::json::object();
-    mutable FileStamp      stamp_;
-    mutable bool           dirty_ = false;
-    mutable std::mutex     mutex_;
+    std::string                                   path_;
+    mutable nlohmann::json                        data_ = nlohmann::json::object();
+    mutable FileStamp                             stamp_;
+    mutable bool                                  dirty_ = false;
+    mutable std::mutex                            mutex_;
+    std::chrono::milliseconds                     diskRecheck_;
+    mutable std::chrono::steady_clock::time_point checkedAt_{};
 };
 }

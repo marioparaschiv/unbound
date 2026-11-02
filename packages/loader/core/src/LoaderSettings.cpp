@@ -27,7 +27,10 @@ static std::vector<std::string> splitKeyPath(const std::string &key)
     return parts;
 }
 
-SettingsStore::SettingsStore(std::string path) : path_(std::move(path)) {}
+SettingsStore::SettingsStore(std::string path, std::chrono::milliseconds diskRecheck)
+    : path_(std::move(path)), diskRecheck_(diskRecheck)
+{
+}
 
 SettingsStore::FileStamp SettingsStore::stampOnDisk() const
 {
@@ -46,12 +49,18 @@ SettingsStore::FileStamp SettingsStore::stampOnDisk() const
             static_cast<uint64_t>(size)};
 }
 
-void SettingsStore::refreshLocked() const
+void SettingsStore::refreshLocked(bool beforeWrite) const
 {
     if (dirty_)
     {
         return;
     }
+    auto now = std::chrono::steady_clock::now();
+    if (!beforeWrite && now - checkedAt_ < diskRecheck_)
+    {
+        return;
+    }
+    checkedAt_              = now;
     const FileStamp current = stampOnDisk();
     if (current == stamp_ || !current.exists)
     {
@@ -218,14 +227,14 @@ std::string SettingsStore::getString(const std::string &store, const std::string
 void SettingsStore::set(const std::string &store, const std::string &key, nlohmann::json value)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    refreshLocked();
+    refreshLocked(true);
     setLocked(store, key, std::move(value));
 }
 
 void SettingsStore::remove(const std::string &store, const std::string &key)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    refreshLocked();
+    refreshLocked(true);
     removeLocked(store, key);
 }
 
@@ -242,7 +251,7 @@ bool SettingsStore::stage(const nlohmann::json &changes)
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
-    refreshLocked();
+    refreshLocked(true);
     applyLocked(changes);
     return true;
 }

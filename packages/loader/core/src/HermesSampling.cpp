@@ -1,5 +1,6 @@
 #include "HermesSampling.h"
 
+#include <atomic>
 #include <cstring>
 #include <dlfcn.h>
 #if __has_include(<link.h>)
@@ -269,9 +270,24 @@ std::optional<std::string> stopJavaScriptProfiler()
     return gProfiler.stop();
 }
 
+static constexpr std::chrono::seconds              kRuntimeSettling{15};
+static std::atomic<std::chrono::steady_clock::rep> gRuntimeCreatedAt{0};
+
+void noteRuntimeCreated()
+{
+    gRuntimeCreatedAt.store(std::chrono::steady_clock::now().time_since_epoch().count());
+}
+
+static bool runtimeSettling()
+{
+    auto created = std::chrono::steady_clock::time_point(
+        std::chrono::steady_clock::duration(gRuntimeCreatedAt.load()));
+    return std::chrono::steady_clock::now() - created < kRuntimeSettling;
+}
+
 std::vector<std::string> sampleJavaScriptStack(std::chrono::milliseconds duration)
 {
-    if (!startJavaScriptProfiler())
+    if (runtimeSettling() || !startJavaScriptProfiler())
     {
         return {};
     }
