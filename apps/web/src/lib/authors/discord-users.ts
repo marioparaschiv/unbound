@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { Type, safeParse } from '@unbound-app/contracts/schema';
 
 import { isBotTokenHost } from '~/lib/discord';
 import type { DiscordId } from '~/db/schema';
@@ -26,21 +26,20 @@ const DEFAULT_RETRY_AFTER_MS = 60_000;
 // A `retry_after` of 0 would resume at once and loop against Discord.
 const MIN_RETRY_AFTER_MS = 1000;
 
-const discordUserSchema = z.object({
-	id: z.string(),
-	username: z.string().min(1),
-	global_name: z
-		.string()
-		.nullish()
-		.transform((value) => value || null),
-	avatar: z.string().nullish(),
-	banner: z.string().nullish(),
+const discordUserSchema = Type.Object({
+	id: Type.String(),
+	username: Type.String({ minLength: 1 }),
+	global_name: Type.Optional(
+		Type.Decode(Type.Union([Type.String(), Type.Null()]), (value) => value || null),
+	),
+	avatar: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+	banner: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 });
 
-const rateLimitSchema = z.object({ retry_after: z.number().nonnegative() });
+const rateLimitSchema = Type.Object({ retry_after: Type.Number({ minimum: 0 }) });
 
 async function readRetryAfterMs(response: Response): Promise<number> {
-	const body = rateLimitSchema.safeParse(await response.json().catch(() => null));
+	const body = safeParse(rateLimitSchema, await response.json().catch(() => null));
 	const header = Number(response.headers.get('retry-after'));
 	const seconds = body.success ? body.data.retry_after : header;
 
@@ -92,7 +91,7 @@ export async function fetchDiscordUser(
 	}
 
 	const parsed = response.ok
-		? discordUserSchema.safeParse(await response.json().catch(() => null))
+		? safeParse(discordUserSchema, await response.json().catch(() => null))
 		: undefined;
 
 	if (!parsed?.success || parsed.data.id !== id) {
