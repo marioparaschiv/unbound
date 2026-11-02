@@ -21,11 +21,9 @@ const noteSchema = trimmedString(
 			: undefined,
 );
 
-export const reviewQueueQuerySchema = Type.Optional(
-	Type.Object({
-		kind: Type.Optional(submissionKindSchema),
-	}),
-);
+export const reviewQueueQuerySchema = Type.Object({
+	kind: Type.Optional(submissionKindSchema),
+});
 
 /** What a submission read from its source: what the reviewer sees and approval publishes. */
 export const submissionContentSchema = Type.Object({

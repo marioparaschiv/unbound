@@ -1,4 +1,5 @@
 import {
+	is,
 	parse,
 	safeParse,
 	type StaticDecode,
@@ -138,8 +139,11 @@ export function endpoint<TBody extends TSchema, TResponse extends TSchema, TQuer
 
 			try {
 				const rawBody = await readJson(request);
+				// No search string reads as no fields, so an all-optional query schema accepts it.
 				const rawQuery =
-					searchParams.size > 0 ? Object.fromEntries(searchParams) : undefined;
+					searchParams.size > 0 || !is(schemas.query, undefined)
+						? Object.fromEntries(searchParams)
+						: undefined;
 
 				requirePostgresSafe(params, 'path');
 				requirePostgresSafe(rawQuery, 'query');

@@ -70,54 +70,50 @@ const TAG_LIST = /^[a-z\d]+(?:-[a-z\d]+)*(?:,[a-z\d]+(?:-[a-z\d]+)*)*$/;
 
 const SNOWFLAKE_LIST = /^[1-9]\d{0,19}(?:,[1-9]\d{0,19})*$/;
 
-export const listAddonsQuerySchema = Type.Optional(
-	Type.Object({
-		type: Type.Optional(addonTypeSchema),
-		/** Matches anywhere in the newest version's name or description, case-insensitively. */
-		q: Type.Optional(
-			trimmedString((value) =>
-				value.length > 100
-					? 'Too big: expected string to have <=100 characters'
-					: undefined,
-			),
+export const listAddonsQuerySchema = Type.Object({
+	type: Type.Optional(addonTypeSchema),
+	/** Matches anywhere in the newest version's name or description, case-insensitively. */
+	q: Type.Optional(
+		trimmedString((value) =>
+			value.length > 100 ? 'Too big: expected string to have <=100 characters' : undefined,
 		),
-		/** Defaults to `name`; ties are ordered by id. */
-		sort: Type.Optional(addonSortSchema),
-		/** Defaults to `asc`. */
-		order: Type.Optional(sortOrderSchema),
-		/** Comma-separated tag ids, compared by `tagMatch`. */
-		tags: Type.Optional(
-			Type.String({
-				pattern: TAG_LIST,
-				errorMessage: 'Must be comma-separated tag ids.',
-				maxLength: 512,
-			}),
-		),
-		/** Defaults to `any`: the addon has at least one of `tags`. */
-		tagMatch: Type.Optional(filterMatchSchema),
-		/** Comma-separated Discord ids, matched against the newest version's manifest `authors[].id`. */
-		authors: Type.Optional(
-			Type.String({
-				pattern: SNOWFLAKE_LIST,
-				errorMessage: 'Must be comma-separated Discord ids.',
-				maxLength: 512,
-			}),
-		),
-		/** Defaults to `any`: one of `authors` is credited. `none` keeps addons crediting none of them. */
-		authorMatch: Type.Optional(singleMatchSchema),
-		/** A number of days, compared with when the newest version was approved by `updatedMatch`. */
-		updated: Type.Optional(
-			Type.String({
-				pattern: /^[1-9]\d{0,3}$/,
-				errorMessage: 'Must be a number of days up to 9999.',
-			}),
-		),
-		/** Defaults to `any`: updated within `updated` days. `none` keeps addons updated before then. */
-		updatedMatch: Type.Optional(singleMatchSchema),
-		/** The previous page's `nextCursor`, requested with the same filters and sort. */
-		cursor: Type.Optional(Type.String({ maxLength: 512 })),
-	}),
-);
+	),
+	/** Defaults to `name`; ties are ordered by id. */
+	sort: Type.Optional(addonSortSchema),
+	/** Defaults to `asc`. */
+	order: Type.Optional(sortOrderSchema),
+	/** Comma-separated tag ids, compared by `tagMatch`. */
+	tags: Type.Optional(
+		Type.String({
+			pattern: TAG_LIST,
+			errorMessage: 'Must be comma-separated tag ids.',
+			maxLength: 512,
+		}),
+	),
+	/** Defaults to `any`: the addon has at least one of `tags`. */
+	tagMatch: Type.Optional(filterMatchSchema),
+	/** Comma-separated Discord ids, matched against the newest version's manifest `authors[].id`. */
+	authors: Type.Optional(
+		Type.String({
+			pattern: SNOWFLAKE_LIST,
+			errorMessage: 'Must be comma-separated Discord ids.',
+			maxLength: 512,
+		}),
+	),
+	/** Defaults to `any`: one of `authors` is credited. `none` keeps addons crediting none of them. */
+	authorMatch: Type.Optional(singleMatchSchema),
+	/** A number of days, compared with when the newest version was approved by `updatedMatch`. */
+	updated: Type.Optional(
+		Type.String({
+			pattern: /^[1-9]\d{0,3}$/,
+			errorMessage: 'Must be a number of days up to 9999.',
+		}),
+	),
+	/** Defaults to `any`: updated within `updated` days. `none` keeps addons updated before then. */
+	updatedMatch: Type.Optional(singleMatchSchema),
+	/** The previous page's `nextCursor`, requested with the same filters and sort. */
+	cursor: Type.Optional(Type.String({ maxLength: 512 })),
+});
 
 export const listedAddonSchema = Type.Object({
 	id: addonIdSchema,
