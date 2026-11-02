@@ -1,6 +1,6 @@
 {
 	"name": "chat-bubbles",
-	"version": "1.4.4",
+	"version": "1.4.5",
 	"private": true,
 	"description": "Draws a rounded bubble behind each message.",
 	"type": "module",
