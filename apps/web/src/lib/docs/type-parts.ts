@@ -11,7 +11,15 @@ import { ReflectionKind } from '~/lib/docs/kinds';
 /** One styled token of a rendered type. Only a reference into this project becomes a link. */
 export type TypePart =
 	| {
-			kind: 'keyword' | 'intrinsic' | 'punctuation' | 'name' | 'literal' | 'parameter';
+			kind:
+				| 'keyword'
+				| 'intrinsic'
+				| 'punctuation'
+				| 'name'
+				| 'reference'
+				| 'literal'
+				| 'parameter'
+				| 'typeParameter';
 			text: string;
 	  }
 	| { kind: 'link'; text: string; location: DocsLocation };
@@ -37,6 +45,7 @@ const LEVEL_PRIMARY = 4;
 const keyword = (text: string): TypePart => ({ kind: 'keyword', text });
 const punctuation = (text: string): TypePart => ({ kind: 'punctuation', text });
 const name = (text: string): TypePart => ({ kind: 'name', text });
+const typeParameter = (text: string): TypePart => ({ kind: 'typeParameter', text });
 
 function isFunctionType(type: DocsType): boolean {
 	return (
@@ -118,7 +127,7 @@ export function typeParameterParts(
 	}
 
 	const each = typeParameters.map((parameter) => [
-		name(parameter.name),
+		typeParameter(parameter.name),
 		...(parameter.type ? [keyword(' extends '), ...typeToParts(parameter.type, ctx)] : []),
 		...(parameter.default ? [punctuation(' = '), ...typeToParts(parameter.default, ctx)] : []),
 	]);
@@ -240,9 +249,10 @@ const RENDERERS: Renderers = {
 			typeof type.target === 'number' && !type.refersToTypeParameter
 				? ctx.resolve(type.target)
 				: undefined;
-		const head: TypePart = location
-			? { kind: 'link', text: type.name, location }
-			: name(type.name);
+		const unlinked: TypePart = type.refersToTypeParameter
+			? typeParameter(type.name)
+			: { kind: 'reference', text: type.name };
+		const head: TypePart = location ? { kind: 'link', text: type.name, location } : unlinked;
 
 		return [head, ...typeArgumentParts(type.typeArguments, ctx)];
 	},
@@ -325,7 +335,7 @@ const RENDERERS: Renderers = {
 	rest: (type, ctx) => [punctuation('...'), ...wrap(type.elementType, ctx, LEVEL_PRIMARY)],
 	inferred: (type, ctx) => [
 		keyword('infer '),
-		name(type.name),
+		typeParameter(type.name),
 		...(type.constraint ? [keyword(' extends '), ...typeToParts(type.constraint, ctx)] : []),
 	],
 	unknown: (type) => [name(type.name)],

@@ -1,7 +1,7 @@
 import { notFound, redirect } from '@tanstack/react-router';
 
+import { GUIDE_NAV, getGuideSlugs, type GuideTab } from '~/lib/guides/guide-nav';
 import { getGuide, getGuidePath, loadGuideBody } from '~/lib/guides/guides';
-import { getGuideSlugs, type GuideTab } from '~/lib/guides/guide-nav';
 
 /** What a guide route's loader hands its page: the guide to show. */
 export type GuideRouteData = {
@@ -13,14 +13,15 @@ export type GuideRouteData = {
  * @description Resolves a guide URL and loads the page's body, so it renders without suspending.
  * @param tab The guide tab the route serves.
  * @param splat The path after `/docs/<tab>/`.
- * @returns The guide to show; an empty path redirects to the tab's first page, an unknown one is not found.
+ * @returns The guide to show; an empty path redirects to the tab's first page, a moved page to its new
+ * slug, and an unknown one is not found.
  */
 export async function loadGuideRoute(tab: GuideTab, splat = ''): Promise<GuideRouteData> {
 	const slug = splat.replace(/\/+$/, '');
-	const first = getGuideSlugs(tab)[0];
+	const target = slug ? GUIDE_NAV[tab].redirects?.[slug] : getGuideSlugs(tab)[0];
 
-	if (!slug && first) {
-		throw redirect({ href: getGuidePath({ tab, slug: first }), replace: true });
+	if (target) {
+		throw redirect({ href: getGuidePath({ tab, slug: target }), replace: true });
 	}
 
 	const guide = getGuide(tab, slug);

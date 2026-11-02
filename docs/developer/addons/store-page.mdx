@@ -1,5 +1,5 @@
 ---
-title: 'The Store Page'
+title: 'Store Page'
 description: 'ADDON.md: the page your addon shows in the store, with its banner and gallery.'
 icon: 'shop'
 ---
@@ -8,19 +8,49 @@ icon: 'shop'
 
 The page is display only. The [manifest](/docs/developer/addons/manifest) stays the source of truth for everything Unbound reads: the name, the description, the authors, and the version. The store takes the page title and summary from the manifest, so `ADDON.md` never repeats them.
 
-```text Addon directory
-my-plugin/
-├── manifest.json
-├── ADDON.md
-├── media/
-│   ├── banner.png
-│   ├── settings.png
-│   ├── demo.mp4
-│   └── demo-poster.jpg
-└── src/
+<FileTree>
+	<Folder name='my-plugin'>
+		<File name='manifest.json' />
+		<File name='ADDON.md' note='The store page' />
+		<Folder name='media' note='Every file the page shows'>
+			<File name='banner.png' />
+			<File name='settings.png' />
+			<File name='demo.mp4' />
+			<File name='demo-poster.jpg' />
+			<File name='log.png' />
+		</Folder>
+		<Folder name='src' />
+	</Folder>
+</FileTree>
+
+## A complete page
+
+YAML frontmatter at the top names the banner and the gallery. Markdown below it is the page's body.
+
+```md ADDON.md
+---
+banner: media/banner.png
+media:
+  - image: media/settings.png
+    alt: The plugin's settings page, with the greeting text field
+  - video: media/demo.mp4
+    poster: media/demo-poster.jpg
+    alt: A message being sent, and the greeting appearing in the log
+---
+
+Hello World logs a greeting every time you send a message.
+
+## Settings
+
+- **Greeting**: the text to log. Defaults to `Hello!`.
+- **Log level**: `info` or `debug`.
+
+![Where the greeting shows up in the debug log](media/log.png)
 ```
 
-### Frontmatter
+The sections below define each part.
+
+## Frontmatter
 
 The page starts with YAML frontmatter between two `---` lines. Unbound parses it with the [`yaml`](https://eemeli.org/yaml/) package. A key that appears twice, or a key not listed below, fails the build. `title` and `description` also fail the build, because those come from the manifest.
 
@@ -53,7 +83,7 @@ The page starts with YAML frontmatter between two `---` lines. Unbound parses it
 
 An entry has either `image` or `video`, never both. Only a video entry takes a `poster`.
 
-### Body
+## Body
 
 After the frontmatter, write standard Markdown. Do not start with a `#` heading: the manifest's name is already the page title. Start with `##` or with a paragraph.
 
@@ -64,7 +94,7 @@ To show an image or a video in the body, use image syntax with a path under `med
 ![A short demo](media/demo.mp4)
 ```
 
-### Media
+## Media
 
 Every banner, gallery entry, poster, and body image is a file in your repository, inside the addon's `media/` folder. Links to images on other sites fail the build.
 
@@ -83,7 +113,7 @@ Every banner, gallery entry, poster, and body image is a file in your repository
 | `banner`    | Exactly 3:1              | 1200x400     |
 | `media`     | From 9:16 to 21:9        | None         |
 
-### What `ubd build` does with the page
+## What `ubd build` does with the page
 
 `ubd build` reads `ADDON.md`, opens every media file it references, and measures each one: its width, its height, its size in bytes, the length of a video, and a small placeholder the store shows while the file loads. It writes the result to `page.json` in the build output, next to the bundle and the built `manifest.json`. Commit `page.json` with the bundle. When you publish, the server checks the sizes and formats again against the files in your repository.
 
@@ -104,30 +134,9 @@ The build fails when the page has any of these problems:
 	The store still shows tables on pages published before this rule. New builds reject them.
 </Note>
 
-### Example
+For the page in [A complete page](#a-complete-page), `ubd build` writes this `page.json`. Your numbers depend on your files.
 
-```md ADDON.md
----
-banner: media/banner.png
-media:
-  - image: media/settings.png
-    alt: The plugin's settings page, with the greeting text field
-  - video: media/demo.mp4
-    poster: media/demo-poster.jpg
-    alt: A message being sent, and the greeting appearing in the log
----
-
-Hello World logs a greeting every time you send a message.
-
-## Settings
-
-- **Greeting**: the text to log. Defaults to `Hello!`.
-- **Log level**: `info` or `debug`.
-
-![Where the greeting shows up in the debug log](media/log.png)
-```
-
-For that page, `ubd build` writes a `page.json` like this one. Your numbers depend on your files.
+<Accordion title='The page.json for this example' icon='file-content'>
 
 ```json page.json
 {
@@ -190,3 +199,5 @@ For that page, `ubd build` writes a `page.json` like this one. Your numbers depe
 	]
 }
 ```
+
+</Accordion>
