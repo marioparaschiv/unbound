@@ -1,7 +1,8 @@
 import { createFileRoute, Link, notFound, useNavigate } from '@tanstack/react-router';
+import { Type, safeParse } from '@unbound-app/contracts/schema';
+import type { Static } from '@unbound-app/contracts/schema';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { IconFaceNeutral } from 'nucleo-micro-bold';
-import { z } from 'zod/mini';
 
 import {
 	Empty,
@@ -17,9 +18,19 @@ import AddonPageView from '~/components/addon/addon-page';
 import { Button } from '~/components/ui/button';
 
 /** `?submission=<id>` shows a pending submission as if published; only its reviewers get the preview. */
-const addonSearchSchema = z.object({
-	submission: z.catch(z.optional(z.uuid()), undefined),
+const addonSearchSchema = Type.Object({
+	submission: Type.Optional(Type.String({ format: 'uuid' })),
 });
+
+type AddonSearch = Static<typeof addonSearchSchema>;
+
+/** An id that is not a UUID is dropped, so the page falls back to the live addon. The router spreads
+ * the result over the raw search, so a dropped id has to be `undefined` rather than absent. */
+function readAddonSearch(search: Record<string, string>): AddonSearch {
+	const parsed = safeParse(addonSearchSchema, search);
+
+	return parsed.success ? parsed.data : { submission: undefined };
+}
 
 type ExitPreviewProps = {
 	id: string;
@@ -97,7 +108,7 @@ function AddonNotFound() {
 }
 
 export const Route = createFileRoute('/_site/addons/$id')({
-	validateSearch: addonSearchSchema,
+	validateSearch: readAddonSearch,
 	loaderDeps: ({ search }) => ({ submission: search.submission }),
 	// `loader` comes before `head` so `head` can infer the loader data's type.
 	loader: async ({ context, params, deps }) => {
