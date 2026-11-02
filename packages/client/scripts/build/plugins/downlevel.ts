@@ -1,23 +1,26 @@
+import { parse, Type } from '@unbound-app/contracts/schema';
 import { transformSync } from '@swc/core';
 import { readFileSync } from 'node:fs';
 import type { Plugin } from 'rolldown';
 import { join } from 'node:path';
-import { z } from 'zod';
 
 const WRAPPER_HEAD = '(() => {\n';
 
 // Checks the `env` keys this plugin reads and passes any other `env` key through to swc.
-const swcrcSchema = z.object({
-	env: z.optional(
-		z.looseObject({
-			targets: z.optional(z.string()),
-			include: z.optional(z.array(z.string())),
-			exclude: z.optional(z.array(z.string())),
-		}),
+const swcrcSchema = Type.Object({
+	env: Type.Optional(
+		Type.Object(
+			{
+				targets: Type.Optional(Type.String()),
+				include: Type.Optional(Type.Array(Type.String())),
+				exclude: Type.Optional(Type.Array(Type.String())),
+			},
+			{ additionalProperties: true },
+		),
 	),
 });
 
-const sourceMapSchema = z.looseObject({ mappings: z.string() });
+const sourceMapSchema = Type.Object({ mappings: Type.String() }, { additionalProperties: true });
 
 export type Lowered = {
 	code: string;
@@ -32,7 +35,7 @@ export type Lowered = {
  * @returns The lowered code wrapped in an arrow function, keeping swc's helpers out of Discord's globals, and its map when asked for.
  */
 export function lower(root: string, code: string, sourceMaps: boolean = false): Lowered {
-	const { env } = swcrcSchema.parse(JSON.parse(readFileSync(join(root, '.swcrc'), 'utf8')));
+	const { env } = parse(swcrcSchema, JSON.parse(readFileSync(join(root, '.swcrc'), 'utf8')));
 	// Lowered classes carry "use strict", which hermesc rejects in a function with non-simple parameters.
 	const exclude = env?.exclude?.filter((name) => name !== 'transform-parameters');
 
@@ -49,7 +52,7 @@ export function lower(root: string, code: string, sourceMaps: boolean = false): 
 		return { code: wrapped };
 	}
 
-	const map = sourceMapSchema.parse(JSON.parse(lowered.map));
+	const map = parse(sourceMapSchema, JSON.parse(lowered.map));
 	// Each line the wrapper adds above the lowered code is one empty mappings line.
 	const headLines = ';'.repeat(WRAPPER_HEAD.split('\n').length - 1);
 

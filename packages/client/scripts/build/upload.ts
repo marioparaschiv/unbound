@@ -1,45 +1,54 @@
+import { safeParse, Type, type StaticDecode } from '@unbound-app/contracts/schema';
 import { semverSchema } from '@unbound-app/contracts/manifest';
 import { createLogger } from '@unbound-app/logger';
 import { join } from 'node:path';
-import { z } from 'zod';
 
 const logger = createLogger('Build', 'Upload');
 
 /** Uploaded last, so a version only looks complete to readers once every other file is in place. */
 const COMPLETION_MARKER = 'manifest.json';
 
-const releaseSchema = z.discriminatedUnion('UNBOUND_CHANNEL', [
-	z.object({
-		UNBOUND_CHANNEL: z.literal('stable'),
-		UNBOUND_VERSION: semverSchema,
-	}),
-	z.object({
-		UNBOUND_CHANNEL: z.literal('beta'),
-		UNBOUND_VERSION: z
-			.string()
-			.regex(/^[0-9a-f]{7,40}$/, 'Beta versions are the commit SHA they were built from.'),
-	}),
-	z.object({
-		UNBOUND_CHANNEL: z.literal('pr'),
-		UNBOUND_VERSION: z
-			.string()
-			.regex(/^[1-9][0-9]*$/, 'Pull request builds are keyed by the pull request number.'),
-	}),
-]);
+const CHANNEL_MESSAGE = 'Must be "stable", "beta" or "pr".';
 
-export const bucketEnvSchema = z.object({
-	S3_ENDPOINT: z.url(),
-	S3_REGION: z.string().min(1),
-	S3_ACCESS_KEY_ID: z.string().min(1),
-	S3_SECRET_ACCESS_KEY: z.string().min(1),
-	S3_PUBLIC_BUCKET: z.string().min(1),
+// A release's version becomes a bucket path segment. A `stable` version keeps the manifest's semver rule,
+// which `parseUploadEnv` applies after the shape check.
+const releaseSchema = Type.Union(
+	[
+		Type.Object({
+			UNBOUND_CHANNEL: Type.Literal('stable', { errorMessage: CHANNEL_MESSAGE }),
+			UNBOUND_VERSION: Type.String(),
+		}),
+		Type.Object({
+			UNBOUND_CHANNEL: Type.Literal('beta', { errorMessage: CHANNEL_MESSAGE }),
+			UNBOUND_VERSION: Type.String({
+				pattern: '^[0-9a-f]{7,40}$',
+				errorMessage: 'Beta versions are the commit SHA they were built from.',
+			}),
+		}),
+		Type.Object({
+			UNBOUND_CHANNEL: Type.Literal('pr', { errorMessage: CHANNEL_MESSAGE }),
+			UNBOUND_VERSION: Type.String({
+				pattern: '^[1-9][0-9]*$',
+				errorMessage: 'Pull request builds are keyed by the pull request number.',
+			}),
+		}),
+	],
+	{ errorMessage: CHANNEL_MESSAGE },
+);
+
+export const bucketEnvSchema = Type.Object({
+	S3_ENDPOINT: Type.String({ format: 'url' }),
+	S3_REGION: Type.String({ minLength: 1 }),
+	S3_ACCESS_KEY_ID: Type.String({ minLength: 1 }),
+	S3_SECRET_ACCESS_KEY: Type.String({ minLength: 1 }),
+	S3_PUBLIC_BUCKET: Type.String({ minLength: 1 }),
 });
 
-export const uploadEnvSchema = bucketEnvSchema.and(releaseSchema);
+export const uploadEnvSchema = Type.Intersect([bucketEnvSchema, releaseSchema]);
 
-export type BucketEnv = z.infer<typeof bucketEnvSchema>;
+export type BucketEnv = StaticDecode<typeof bucketEnvSchema>;
 
-export type UploadEnv = z.infer<typeof uploadEnvSchema>;
+export type UploadEnv = StaticDecode<typeof uploadEnvSchema>;
 
 export type PublicBucket = Pick<Bun.S3Client, 'write' | 'list' | 'delete' | 'exists'>;
 
@@ -172,10 +181,18 @@ export async function uploadBuild(
 export function parseUploadEnv(
 	source: Record<string, string | undefined> = process.env,
 ): UploadEnv {
-	const result = uploadEnvSchema.safeParse(source);
+	const result = safeParse(uploadEnvSchema, source);
 
 	if (!result.success) {
-		throw new Error(`Invalid upload environment:\n${z.prettifyError(result.error)}`);
+		throw new Error(`Invalid upload environment:\n${result.error.message}`);
+	}
+
+	if (result.data.UNBOUND_CHANNEL === 'stable') {
+		const version = semverSchema.safeParse(result.data.UNBOUND_VERSION);
+
+		if (!version.success) {
+			throw new Error(`Invalid upload environment:\n${version.error.message}`);
+		}
 	}
 
 	return result.data;
@@ -189,10 +206,10 @@ export function parseUploadEnv(
 export function parseBucketEnv(
 	source: Record<string, string | undefined> = process.env,
 ): BucketEnv {
-	const result = bucketEnvSchema.safeParse(source);
+	const result = safeParse(bucketEnvSchema, source);
 
 	if (!result.success) {
-		throw new Error(`Invalid bucket environment:\n${z.prettifyError(result.error)}`);
+		throw new Error(`Invalid bucket environment:\n${result.error.message}`);
 	}
 
 	return result.data;

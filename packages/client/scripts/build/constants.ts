@@ -1,9 +1,9 @@
 import { semverSchema } from '@unbound-app/contracts/manifest';
+import { parse, Type } from '@unbound-app/contracts/schema';
 import { apiUrlSchema } from '@unbound-app/contracts/api';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { z } from 'zod';
 
 import { resolveDevServerUrl, resolveDevHost } from '../dev-host';
 import { version } from '../../package.json';
@@ -20,16 +20,17 @@ export const CLIENT_VERSION = semverSchema.parse(version);
 
 export const API_URL = apiUrlSchema.parse(process.env.UNBOUND_API_URL);
 
-const compatPolicySchema = z.object({
-	minimumDiscordVersion: z.object({
-		android: z.string().regex(/^\d+\.\d+$/),
-		ios: z.string().regex(/^\d+\.\d+$/),
+const compatPolicySchema = Type.Object({
+	minimumDiscordVersion: Type.Object({
+		android: Type.String({ pattern: '^\\d+\\.\\d+$' }),
+		ios: Type.String({ pattern: '^\\d+\\.\\d+$' }),
 	}),
 });
 
 export const COMPAT_POLICY_PATH = join(__dirname, '..', '..', '..', 'loader', 'compat-policy.json');
 
-export const MINIMUM_DISCORD_VERSIONS = compatPolicySchema.parse(
+export const MINIMUM_DISCORD_VERSIONS = parse(
+	compatPolicySchema,
 	JSON.parse(readFileSync(COMPAT_POLICY_PATH, 'utf8')),
 ).minimumDiscordVersion;
 

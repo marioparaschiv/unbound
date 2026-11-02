@@ -1,27 +1,30 @@
+import { parse, Type, type StaticDecode } from '@unbound-app/contracts/schema';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { z } from 'zod';
 
 export const HERMESC_MANIFEST_URL =
 	'https://raw.githubusercontent.com/unbound-app/hermesc/main/manifest.json';
 
 const hermesJson = resolve(__dirname, 'hermes.json');
 
-const hermescPackageSchema = z.object({ npm: z.string() });
+const hermescPackageSchema = Type.Object({ npm: Type.String() });
 
-const hermescManifestSchema = z.object({
-	latest: z.array(z.number()),
-	versions: z.record(z.string(), hermescPackageSchema),
+const hermescManifestSchema = Type.Object({
+	latest: Type.Array(Type.Number()),
+	versions: Type.Record(Type.String(), hermescPackageSchema),
 });
 
 // Keys other than `bytecodeVersions` are written back untouched.
-const hermesConfigSchema = z.looseObject({ bytecodeVersions: z.array(z.number()) });
+const hermesConfigSchema = Type.Object(
+	{ bytecodeVersions: Type.Array(Type.Number()) },
+	{ additionalProperties: true },
+);
 
-export type HermescPackage = z.infer<typeof hermescPackageSchema>;
+export type HermescPackage = StaticDecode<typeof hermescPackageSchema>;
 
-export type HermescManifest = z.infer<typeof hermescManifestSchema>;
+export type HermescManifest = StaticDecode<typeof hermescManifestSchema>;
 
-export type HermesConfig = z.infer<typeof hermesConfigSchema>;
+export type HermesConfig = StaticDecode<typeof hermesConfigSchema>;
 
 /**
  * @description Picks the bytecode versions the build compiles: every version `hermes.json` declares,
@@ -76,8 +79,8 @@ async function main(): Promise<void> {
 		throw new Error(`Fetching the hermesc manifest failed with ${response.status}.`);
 	}
 
-	const manifest = hermescManifestSchema.parse(await response.json());
-	const config = hermesConfigSchema.parse(JSON.parse(readFileSync(hermesJson, 'utf8')));
+	const manifest = parse(hermescManifestSchema, await response.json());
+	const config = parse(hermesConfigSchema, JSON.parse(readFileSync(hermesJson, 'utf8')));
 	const next = nextBytecodeVersions(manifest, config.bytecodeVersions);
 
 	if (next.length === 0) {

@@ -7,9 +7,9 @@ import {
 	type KeyObject,
 } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { safeParse, Type, type StaticDecode } from '@unbound-app/contracts/schema';
 import { join, resolve } from 'node:path';
 import Logger from '@unbound-app/logger';
-import { z } from 'zod';
 
 const logger = Logger.create('Build', 'Sign');
 
@@ -95,14 +95,18 @@ export function parseSigningKey(pem: string): KeyObject {
 	return key;
 }
 
-const buildManifestSchema = z.looseObject({
-	revision: z.string().optional(),
-	channel: z.string().optional(),
-	buildTime: z.string().optional(),
-	sha512: z.record(z.string(), z.string()).optional(),
-});
+// Keys the build writes but signing only passes through, such as the bytecode versions, are kept.
+const buildManifestSchema = Type.Object(
+	{
+		revision: Type.Optional(Type.String()),
+		channel: Type.Optional(Type.String()),
+		buildTime: Type.Optional(Type.String()),
+		sha512: Type.Optional(Type.Record(Type.String(), Type.String())),
+	},
+	{ additionalProperties: true },
+);
 
-type BuildManifest = z.infer<typeof buildManifestSchema>;
+type BuildManifest = StaticDecode<typeof buildManifestSchema>;
 
 function readManifest(dir: string): BuildManifest {
 	const path = join(dir, MANIFEST_FILE);
@@ -111,7 +115,7 @@ function readManifest(dir: string): BuildManifest {
 		throw new Error(`${dir} has no ${MANIFEST_FILE} to sign.`);
 	}
 
-	const parsed = buildManifestSchema.safeParse(JSON.parse(readFileSync(path, 'utf8')));
+	const parsed = safeParse(buildManifestSchema, JSON.parse(readFileSync(path, 'utf8')));
 
 	if (!parsed.success) {
 		throw new Error(`${MANIFEST_FILE} is not a build manifest: ${parsed.error.message}`);
