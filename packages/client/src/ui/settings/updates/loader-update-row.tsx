@@ -1,10 +1,11 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
 
 import { messages, format } from '~/i18n/api';
+import { Discord } from '~/metro/components';
+import { Linking } from '~/metro/api';
 import { icons } from '~/assets/api';
 
 import UpdateRowShell from './update-row-shell';
-import DownloadButton from './download-button';
 
 type LoaderUpdateRowProps = {
 	update: LoaderUpdate;
@@ -20,13 +21,21 @@ function LoaderUpdateRow({ update }: LoaderUpdateRowProps) {
 			icon={icons.WrenchIcon}
 			installed={globalThis.UNBOUND_LOADER.version}
 			update={update}
-			action={<DownloadButton url={url} text={messages.UNBOUND_UPDATES_DOWNLOAD} />}
+			action={
+				<Discord.Button
+					size='sm'
+					variant='primary'
+					text={messages.UNBOUND_UPDATES_DOWNLOAD}
+					onPress={() => void Linking.openURL(url)}
+				/>
+			}
 			actionLarge={
-				<DownloadButton
-					url={url}
+				<Discord.Button
 					size='lg'
 					grow
+					variant='primary'
 					text={format('UNBOUND_UPDATES_DOWNLOAD_VERSION', { version: update.version })}
+					onPress={() => void Linking.openURL(url)}
 				/>
 			}
 		/>
