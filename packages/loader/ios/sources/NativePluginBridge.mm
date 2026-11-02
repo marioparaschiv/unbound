@@ -2441,9 +2441,11 @@ static void releaseHookCallbacks(const std::shared_ptr<HookState> &state,
     }
     if (ownerRuntimeThread)
     {
-        loader::native::releaseRuntimeResource(state->callbackResources,
-                                               state->callbackResourceKey);
-        return;
+        if (loader::native::releaseRuntimeResourceOnOwnerThread(state->callbackResources,
+                                                                state->callbackResourceKey))
+        {
+            return;
+        }
     }
     loader::native::deferRuntimeResourceRelease(state->callbackResources,
                                                 state->callbackResourceKey);

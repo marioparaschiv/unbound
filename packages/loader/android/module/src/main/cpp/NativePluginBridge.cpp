@@ -655,8 +655,10 @@ static void forgetHookListener(const std::string &token, jsi::Runtime *runtime =
     }
     if (ownerRuntimeThread)
     {
-        loader::native::releaseRuntimeResource(listener.resources, key);
-        return;
+        if (loader::native::releaseRuntimeResourceOnOwnerThread(listener.resources, key))
+        {
+            return;
+        }
     }
     loader::native::deferRuntimeResourceRelease(listener.resources, key);
 }

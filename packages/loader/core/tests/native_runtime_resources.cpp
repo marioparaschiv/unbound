@@ -1,6 +1,7 @@
 #include <cassert>
 #include <memory>
 #include <string>
+#include <thread>
 
 #include "NativeRuntimeResources.h"
 
@@ -55,6 +56,41 @@ int main()
     assert(resources.release("hook-1"));
     assert(firstReleased);
     assert(!resources.release("hook-1"));
+
+    auto ownerThreadResources = std::make_shared<loader::native::RuntimeResourceRegistry>();
+    std::weak_ptr<loader::native::RuntimeResourceRegistry> ownerThreadReference =
+        ownerThreadResources;
+    bool ownerThreadReleased = false;
+    auto ownerThreadResource = std::shared_ptr<void>(new int(7), [&](void *value) {
+        delete static_cast<int *>(value);
+        ownerThreadReleased = true;
+    });
+    assert(ownerThreadResources->retain("owner-thread", ownerThreadResource));
+    ownerThreadResource.reset();
+    bool        releasedFromOtherThread = true;
+    std::thread otherThread([&] {
+        releasedFromOtherThread = loader::native::releaseRuntimeResourceOnOwnerThread(
+            ownerThreadReference, "owner-thread");
+    });
+    otherThread.join();
+    assert(!releasedFromOtherThread);
+    assert(!ownerThreadReleased);
+    assert(
+        loader::native::releaseRuntimeResourceOnOwnerThread(ownerThreadReference, "owner-thread"));
+    assert(ownerThreadReleased);
+    auto wrongThreadResources        = std::make_shared<loader::native::RuntimeResourceRegistry>();
+    bool wrongThreadResourceReleased = false;
+    auto wrongThreadResource         = std::shared_ptr<void>(new int(8), [&](void *value) {
+        delete static_cast<int *>(value);
+        wrongThreadResourceReleased = true;
+    });
+    assert(wrongThreadResources->retain("wrong-thread-destruction", wrongThreadResource));
+    wrongThreadResource.reset();
+    std::thread wrongThread([resources = std::move(wrongThreadResources)]() mutable {
+        resources.reset();
+    });
+    wrongThread.join();
+    assert(!wrongThreadResourceReleased);
 
     assert(resources.retain("hook-2", second));
     second.reset();
