@@ -16,7 +16,7 @@ function ToastContainer() {
 		useShallow((state) =>
 			Object.values(state.toasts)
 				.sort((a, b) => (b.date ?? 0) - (a.date ?? 0))
-				.slice(0, maxOnScreen === 0 ? Infinity : maxOnScreen)
+				.slice(0, maxOnScreen || undefined)
 				.map((toast) => toast.id),
 		),
 	);
