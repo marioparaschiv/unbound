@@ -2,7 +2,7 @@ import {
 	loaderReleaseSchema,
 	publishLoaderReleaseRequestSchema,
 } from '@unbound-app/contracts/loader';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { publishLoaderRelease } from '~/lib/loader-releases';
 import { callerEndpoint } from '~/lib/api/endpoint';
@@ -10,7 +10,7 @@ import { callerEndpoint } from '~/lib/api/endpoint';
 const publishLoaderReleaseEndpoint = callerEndpoint(
 	{
 		body: publishLoaderReleaseRequestSchema,
-		query: z.undefined(),
+		query: Type.Undefined(),
 		response: loaderReleaseSchema,
 	},
 	async ({ ctx, body, caller }) => {
