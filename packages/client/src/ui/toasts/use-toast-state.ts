@@ -34,10 +34,6 @@ function useToastState(options: InternalToastOptions) {
 	const translateY = useSharedValue(0);
 	const width = useSharedValue(Dimensions.get('window').width * 0.9);
 
-	function onLeaveComplete() {
-		setLeaving(true);
-	}
-
 	function leave() {
 		setClosing(true);
 
@@ -47,7 +43,7 @@ function useToastState(options: InternalToastOptions) {
 			marginVertical.value = withTiming(0, MOUNT_CHANGE_CONFIG);
 			translateY.value = withTiming(-40, MOUNT_CHANGE_CONFIG);
 			opacity.value = withTiming(0, MOUNT_CHANGE_CONFIG, () => {
-				runOnJS(onLeaveComplete)();
+				runOnJS(setLeaving)(true);
 			});
 		} else {
 			height.value = 0;
@@ -55,7 +51,7 @@ function useToastState(options: InternalToastOptions) {
 			scale.value = 0.75;
 			marginVertical.value = 0;
 			translateY.value = -40;
-			onLeaveComplete();
+			setLeaving(true);
 		}
 	}
 
