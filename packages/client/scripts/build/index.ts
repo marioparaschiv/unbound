@@ -65,6 +65,8 @@ const config: RolldownOptions = {
 		{
 			postBanner: 'var global = globalThis;',
 			footer: '//# sourceURL=unbound',
+			// `__PURE__` annotations only matter to a later bundler; the shipped JS has none.
+			comments: { annotation: false },
 			file: 'dist/unbound.js',
 			format: 'iife',
 			minify: !IS_DEV_BUILD,
