@@ -20,13 +20,13 @@ import {
 	MINIMUM_DISCORD_VERSIONS,
 } from './constants';
 import globals, { shimmedModules } from './plugins/globals';
-import refresh, { refreshRuntime } from './plugins/refresh';
 import downlevel, { lower } from './plugins/downlevel';
 import hermesVersions from './plugins/hermes-versions';
 import generateManifest from './plugins/manifest';
 import { bytecodeVersions } from './hermes.json';
 import worklets from './plugins/worklets';
 import libraries from './shim-libraries';
+import refresh from './plugins/refresh';
 import signBundles from './sign';
 
 /** What the dev engine reports after a source change. */
@@ -74,9 +74,6 @@ const config: RolldownOptions = {
 	],
 
 	plugins: [
-		// Every build carries the refresh runtime: its production entry only throws, and plugins
-		// built by `ubd dev` register their components with it on release clients too.
-		refreshRuntime(root),
 		globals(shimmedModules(['react', 'react-native', ...Object.keys(libraries)])),
 		worklets(),
 		replace({

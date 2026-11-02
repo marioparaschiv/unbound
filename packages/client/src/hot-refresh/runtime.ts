@@ -1,11 +1,11 @@
 import type { Attributes, ElementType, ReactElement, ReactNode } from 'react';
-import type { Family, RefreshType } from 'react-refresh/runtime';
-import * as Refresh from 'react-refresh/runtime';
 
+import type { Family, RefreshType } from '~/hot-refresh/families';
 import type { Component, FiberType } from '~/hot-refresh/refresh';
+import * as Refresh from '~/hot-refresh/families';
 import { rerender } from '~/hot-refresh/refresh';
 
-export { register, createSignatureFunctionForTransform } from 'react-refresh/runtime';
+export { register, createSignatureFunctionForTransform } from '~/hot-refresh/families';
 
 type RefreshResult = {
 	count: number;
