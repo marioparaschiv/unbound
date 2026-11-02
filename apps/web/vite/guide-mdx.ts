@@ -1,3 +1,4 @@
+import { safeParse } from '@unbound-app/contracts/schema';
 import remarkFrontmatter from 'remark-frontmatter';
 import { createProcessor } from '@mdx-js/mdx';
 import type { ShikiTransformer } from 'shiki';
@@ -29,7 +30,7 @@ const codeTitle: ShikiTransformer = {
 function readGuideMeta(source: string, id: string): GuideMeta {
 	const tree = createProcessor({ remarkPlugins: [remarkGfm, remarkFrontmatter] }).parse(source);
 	const yaml = tree.children.find((node) => node.type === 'yaml');
-	const frontmatter = guideFrontmatterSchema.safeParse(Bun.YAML.parse(yaml?.value ?? ''));
+	const frontmatter = safeParse(guideFrontmatterSchema, Bun.YAML.parse(yaml?.value ?? ''));
 
 	if (!frontmatter.success) {
 		throw new Error(`Failed to read the frontmatter of ${id}: ${frontmatter.error.message}`);
