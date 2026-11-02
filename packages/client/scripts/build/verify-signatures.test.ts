@@ -25,6 +25,9 @@ function makeBuild() {
 	mkdirSync(dist);
 	mkdirSync(keys);
 	writeFileSync(join(dist, 'unbound.js'), 'console.log(1);');
+	writeFileSync(join(dist, 'unbound.98.bundle'), Buffer.from([0xc6, 0x1f, 0xbc, 0x03]));
+	writeFileSync(join(dist, 'unbound-dev.js'), 'console.log(2);');
+	writeFileSync(join(dist, 'unbound-dev.98.bundle'), Buffer.from([0xc6, 0x1f, 0xbc, 0x05]));
 	writeFileSync(
 		join(dist, MANIFEST_FILE),
 		JSON.stringify({

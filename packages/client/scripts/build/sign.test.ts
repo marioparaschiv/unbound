@@ -11,6 +11,7 @@ import {
 	SIGNING_KEY_VARIABLE,
 	bundleHashes,
 	findUnsignedBundles,
+	signableBundles,
 	parseSignArguments,
 	pullRequestSigningContext,
 	signBundles,
@@ -24,12 +25,17 @@ const BUILD_MANIFEST = {
 	bytecodeVersions: [98],
 };
 
+const DEV_BYTECODE = Buffer.from([0xc6, 0x1f, 0xbc, 0x05]);
+
 function makeDist(manifest: object = BUILD_MANIFEST) {
 	const dir = mkdtempSync(join(tmpdir(), 'unbound-sign-'));
 
 	writeFileSync(join(dir, 'unbound.js'), 'console.log(1);');
 	writeFileSync(join(dir, 'unbound.98.bundle'), Buffer.from([0xc6, 0x1f, 0xbc, 0x03]));
 	writeFileSync(join(dir, 'unbound.98.bundle.map'), '{}');
+	writeFileSync(join(dir, 'unbound-dev.js'), 'console.log(2);');
+	writeFileSync(join(dir, 'unbound-dev.98.bundle'), DEV_BYTECODE);
+	writeFileSync(join(dir, 'unbound-dev.98.bundle.map'), '{}');
 	writeFileSync(join(dir, MANIFEST_FILE), JSON.stringify(manifest, null, 2));
 
 	return dir;
@@ -71,7 +77,12 @@ describe('bundle signing', () => {
 			true,
 		);
 
-		for (const file of ['unbound.js', 'unbound.98.bundle', 'unbound.98.bundle.map']) {
+		for (const file of [
+			'unbound.js',
+			'unbound.98.bundle',
+			'unbound.98.bundle.map',
+			'unbound-dev.98.bundle',
+		]) {
 			expect(existsSync(join(dir, `${file}${SIGNATURE_SUFFIX}`))).toBe(false);
 		}
 	});
@@ -88,10 +99,26 @@ describe('bundle signing', () => {
 
 		expect(manifest).toMatchObject(BUILD_MANIFEST);
 		expect(manifest.sha512).toEqual({
+			'unbound-dev.98.bundle': sha512(DEV_BYTECODE),
+			'unbound-dev.js': sha512('console.log(2);'),
 			'unbound.98.bundle': sha512(Buffer.from([0xc6, 0x1f, 0xbc, 0x03])),
 			'unbound.js': sha512('console.log(1);'),
 		});
 		expect(bundleHashes(dir)).toEqual(manifest.sha512);
+	});
+
+	test('lists both flavours and nothing else', () => {
+		const dir = makeDist();
+
+		writeFileSync(join(dir, 'unbound.js.map'), '{}');
+		writeFileSync(join(dir, 'manifest.json.sig'), 'signature');
+
+		expect(signableBundles(dir)).toEqual([
+			'unbound-dev.98.bundle',
+			'unbound-dev.js',
+			'unbound.98.bundle',
+			'unbound.js',
+		]);
 	});
 
 	test('binds pull request signatures to the pull request context', () => {

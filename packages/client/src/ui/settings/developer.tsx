@@ -1,7 +1,7 @@
 import type { BooleanSettingKey } from '~/settings/unbound';
 import { useUnboundSettings } from '~/settings/unbound';
+import { DEV_TOOLS, Screens } from '~/core/constants';
 import { Discord } from '~/metro/components';
-import { Screens } from '~/core/constants';
 import { reload } from '~/native/native';
 import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';
@@ -43,21 +43,23 @@ function DeveloperPage() {
 
 	return (
 		<Page>
-			<Discord.TableRowGroup title={messages.UNBOUND_DEBUGGER}>
-				<Discord.TableSwitchRow
-					label={messages.UNBOUND_DEBUGGER_ENABLED}
-					subLabel={messages.UNBOUND_DEBUGGER_ENABLED_DESC}
-					icon={<Discord.TableRowIcon source={icons.BugIcon} />}
-					{...switchProps('debugger.enabled')}
-				/>
-				<TextSettingRow
-					label={messages.UNBOUND_DEBUGGER_ADDRESS}
-					icon={<Discord.TableRowIcon source={icons.LinkIcon} />}
-					value={settings.get('debugger.address')}
-					placeholder={messages.UNBOUND_DEBUGGER_ADDRESS_PLACEHOLDER}
-					onSave={(address) => settings.set('debugger.address', address)}
-				/>
-			</Discord.TableRowGroup>
+			{DEV_TOOLS ? (
+				<Discord.TableRowGroup title={messages.UNBOUND_DEBUGGER}>
+					<Discord.TableSwitchRow
+						label={messages.UNBOUND_DEBUGGER_ENABLED}
+						subLabel={messages.UNBOUND_DEBUGGER_ENABLED_DESC}
+						icon={<Discord.TableRowIcon source={icons.BugIcon} />}
+						{...switchProps('debugger.enabled')}
+					/>
+					<TextSettingRow
+						label={messages.UNBOUND_DEBUGGER_ADDRESS}
+						icon={<Discord.TableRowIcon source={icons.LinkIcon} />}
+						value={settings.get('debugger.address')}
+						placeholder={messages.UNBOUND_DEBUGGER_ADDRESS_PLACEHOLDER}
+						onSave={(address) => settings.set('debugger.address', address)}
+					/>
+				</Discord.TableRowGroup>
+			) : null}
 
 			<Discord.TableRowGroup
 				title={messages.UNBOUND_LOADER}

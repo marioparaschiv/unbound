@@ -21,6 +21,12 @@ export const SIGNATURE_SUFFIX = '.sig';
 
 export const MANIFEST_FILE = 'manifest.json';
 
+/**
+ * Matches every client bundle the loader may download: the default and dev flavours, as source or
+ * bytecode, e.g. `unbound.js`, `unbound.98.bundle`, `unbound-dev.js`, `unbound-dev.98.bundle`.
+ */
+export const BUNDLE_PATTERN = /^unbound(?:-dev)?\.(?:js|\d+\.bundle)$/;
+
 const BUILD_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
 
 export type SignOptions = {
@@ -57,10 +63,7 @@ export function signedMessage(contents: Buffer, pullRequest = 0): Buffer {
  */
 export function signableBundles(dir: string): string[] {
 	return readdirSync(dir)
-		.filter(
-			(file) =>
-				file.startsWith('unbound.') && (file === 'unbound.js' || file.endsWith('.bundle')),
-		)
+		.filter((file) => BUNDLE_PATTERN.test(file))
 		.sort();
 }
 
