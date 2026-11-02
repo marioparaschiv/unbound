@@ -114,25 +114,10 @@ export class Icons extends Addons<Plugin> {
 	}
 
 	/**
-	 * @description Enables the pack if it isn't applied, disables it if it is, and emits `toggled`.
-	 * Icons are single-select: the applied pack lives in `applied`, not the base `states` map, so
-	 * {@link isEnabled} decides the direction here.
-	 * @param entity The pack to toggle, as its id or the entity itself.
+	 * @description Applies a pack, replacing the one applied before, and emits `enabled`. Icons are
+	 * single-select: the applied pack lives in `applied`, not the base `states` map.
+	 * @param entity The pack to enable, as its id or the entity itself.
 	 */
-	toggle(entity: AddonResolveable) {
-		const resolved = this.resolve(entity);
-
-		if (!resolved) return;
-
-		if (this.isEnabled(resolved.id)) {
-			this.disable(resolved);
-		} else {
-			this.enable(resolved);
-		}
-
-		this.emit('toggled', resolved);
-	}
-
 	async enable(entity: AddonResolveable) {
 		const resolved = this.resolve(entity);
 

@@ -626,9 +626,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 		if (!resolved) return;
 
-		const states = this.getStates();
-
-		if (states[resolved.id]) {
+		if (this.isEnabled(resolved.id)) {
 			this.disable(resolved);
 		} else {
 			this.enable(resolved);
