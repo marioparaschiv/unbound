@@ -2842,6 +2842,10 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
                     invokedForRuntime->store(true, std::memory_order_release);
                 });
         });
+        if (!completed)
+        {
+            operation->cancel();
+        }
         completed = completed && invokedForRuntime->load(std::memory_order_acquire);
     }
     std::string name = sel_getName(selector);
