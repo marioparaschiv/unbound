@@ -30,7 +30,7 @@ export function toDeviceCode<A extends Json[], R>(
 /** The answer every device command gives when the bridge has no device. */
 export const NOT_CONNECTED: CommandOutput = {
 	ok: false,
-	text: 'No device is connected to the debugger. Launch the app so its debugger dials the bridge, then retry.',
+	text: "No device is connected to the debugger. Launch the app so its debugger dials the bridge, then retry. The standard build has no debugger; turn on Developer mode in Unbound's settings.",
 };
 
 /**
