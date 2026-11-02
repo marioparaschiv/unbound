@@ -230,13 +230,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 
 			result.errored = true;
 
-			Logger.error(
-				'Search filter threw an error, degrading performance.',
-				'This will create a bad experience for the user including lag spikes, a slow startup, etc.',
-				'Please fix this as soon as possible.',
-				'\n',
-				error instanceof Error ? error.stack : String(error),
-			);
+			Logger.error(`Failed to test a search filter against module ${id}:`, error);
 
 			return false;
 		}
