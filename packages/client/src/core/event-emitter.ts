@@ -125,12 +125,11 @@ function rebuildOnFirstCall(this: TaskCollection, ...args: unknown[]) {
 }
 
 // tseep's generated callers pass exactly this many arguments, truncating or padding with undefined.
+// The array is always one this module just built, so resizing it in place is safe.
 function fit(args: unknown[], length: number) {
-	const fitted = args.slice(0, length);
+	args.length = length;
 
-	fitted.length = length;
-
-	return fitted;
+	return args;
 }
 
 function tail(args: IArguments, length: number) {
