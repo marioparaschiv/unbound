@@ -133,7 +133,7 @@ function preview(headers: Headers, body: CreateSubmissionRequest, target = main)
 	});
 }
 
-async function refusal(request: Promise<object>) {
+async function refusal(request: Promise<unknown>) {
 	const error = await request.then(
 		() => new Error('Expected the request to fail.'),
 		(cause: unknown) => cause,

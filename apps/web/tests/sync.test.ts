@@ -1,3 +1,4 @@
+import { parse } from '@unbound-app/contracts/schema';
 import {
 	emptySyncDocument,
 	SYNC_CORE_STORE,
@@ -434,7 +435,7 @@ describe('stripping', () => {
 				},
 			}),
 		});
-		const state = syncStateSchema.parse(await response.json());
+		const state = parse(syncStateSchema, await response.json());
 
 		expect(Object.keys(state.document).toSorted()).toEqual(
 			Object.keys(emptySyncDocument()).toSorted(),

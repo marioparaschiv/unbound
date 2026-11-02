@@ -1,3 +1,4 @@
+import { parse } from '@unbound-app/contracts/schema';
 import { createSubmissionResponseSchema } from '@unbound-app/contracts/publish';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
@@ -164,7 +165,7 @@ describe('banning a user', () => {
 			}),
 		);
 
-		expect(createSubmissionResponseSchema.parse(await claimed.json()).submission.kind).toBe(
+		expect(parse(createSubmissionResponseSchema, await claimed.json()).submission.kind).toBe(
 			'listing',
 		);
 		expect(

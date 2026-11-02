@@ -1,50 +1,47 @@
 import { addonIdSchema, addonManifestSchema, semverSchema } from '@unbound-app/contracts/manifest';
 import { addonTypeSchema, sha256Schema } from '@unbound-app/contracts/addons';
-import { z } from '@unbound-app/contracts/zod';
+import { Type } from '@unbound-app/contracts/schema';
 
-const addonVersionSchema = z.object({
+const addonVersionSchema = Type.Object({
 	version: semverSchema,
 	manifest: addonManifestSchema,
-	changelog: z.nullable(z.string()),
-	bundleSize: z.int().check(z.positive()),
+	changelog: Type.Union([Type.String(), Type.Null()]),
+	bundleSize: Type.Integer({ minimum: 1 }),
 	sha256: sha256Schema,
-	publishedAt: z.iso.datetime(),
-	manifestUrl: z.url(),
-	bundleUrl: z.url(),
+	publishedAt: Type.String({ format: 'date-time' }),
+	manifestUrl: Type.String({ format: 'url' }),
+	bundleUrl: Type.String({ format: 'url' }),
 });
 
-const listedAddonSchema = z.object({
+const listedAddonSchema = Type.Object({
 	id: addonIdSchema,
 	type: addonTypeSchema,
 	latestVersion: addonVersionSchema,
 });
 
-export const shippedCatalogResponseSchema = z.object({
-	revision: z.string().check(z.minLength(1)),
-	addons: z.array(listedAddonSchema),
+export const shippedCatalogResponseSchema = Type.Object({
+	revision: Type.String({ minLength: 1 }),
+	addons: Type.Array(listedAddonSchema),
 });
 
-const addonReleaseSchema = z.extend(
-	z.pick(addonVersionSchema, {
-		version: true,
-		manifestUrl: true,
-		bundleUrl: true,
-		sha256: true,
-		changelog: true,
+const addonReleaseSchema = Type.Intersect([
+	Type.Pick(addonVersionSchema, ['version', 'manifestUrl', 'bundleUrl', 'sha256', 'changelog']),
+	Type.Object({ id: addonIdSchema }),
+]);
+
+const versionChangelogSchema = Type.Pick(addonVersionSchema, [
+	'version',
+	'changelog',
+	'publishedAt',
+]);
+
+const addonUpdateSchema = Type.Intersect([
+	addonReleaseSchema,
+	Type.Object({
+		changelogs: Type.Array(versionChangelogSchema, { default: [], maxItems: 20 }),
 	}),
-	{ id: addonIdSchema },
-);
+]);
 
-const versionChangelogSchema = z.pick(addonVersionSchema, {
-	version: true,
-	changelog: true,
-	publishedAt: true,
-});
-
-const addonUpdateSchema = z.extend(addonReleaseSchema, {
-	changelogs: z._default(z.array(versionChangelogSchema).check(z.maxLength(20)), []),
-});
-
-export const shippedUpdatesResponseSchema = z.object({
-	updates: z.array(addonUpdateSchema),
+export const shippedUpdatesResponseSchema = Type.Object({
+	updates: Type.Array(addonUpdateSchema),
 });

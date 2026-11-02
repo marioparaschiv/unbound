@@ -1,3 +1,4 @@
+import { parse } from '@unbound-app/contracts/schema';
 import {
 	addonPageSchema,
 	type AddonPage,
@@ -55,7 +56,7 @@ export const PAGE_SOURCE = [
 	'',
 ].join('\n');
 
-export const PAGE = addonPageSchema.parse({
+export const PAGE = parse(addonPageSchema, {
 	frontmatter: {
 		banner: 'media/banner.png',
 		media: [
@@ -107,7 +108,7 @@ export function png(bytes: number): Uint8Array {
  * @returns The measured page.
  */
 export function committedPage(bytes: number): AddonPage {
-	return addonPageSchema.parse({
+	return parse(addonPageSchema, {
 		frontmatter: {
 			banner: 'media/banner.png',
 			media: [{ image: 'media/shot.png', alt: 'The settings screen' }],
@@ -135,7 +136,7 @@ export function manyMediaFiles(count: number): FixtureFiles {
 			...inline.map((path) => `![Inline](${path})`),
 		].join('\n\n'),
 		'dist/page.json': JSON.stringify(
-			addonPageSchema.parse({
+			parse(addonPageSchema, {
 				frontmatter: { banner: 'media/banner.png' },
 				media: [
 					measure('media/banner.png', 1500, 500, 64),

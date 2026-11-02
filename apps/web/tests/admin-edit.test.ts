@@ -1,3 +1,4 @@
+import { safeParse } from '@unbound-app/contracts/schema';
 import { editAddonRequestSchema } from '@unbound-app/contracts/admin';
 import type { EditAddonRequest } from '@unbound-app/contracts/admin';
 import { afterAll, describe, expect, test } from 'bun:test';
@@ -91,7 +92,7 @@ function eventsOf(id: string) {
 	});
 }
 
-function rejection(request: Promise<object>): Promise<Error | undefined> {
+function rejection(request: Promise<unknown>): Promise<Error | undefined> {
 	return request.then(
 		() => undefined,
 		(error: Error) => error,
@@ -284,7 +285,7 @@ describe('editAddon', () => {
 		const form = await formOf('edit.owners');
 		const ownerless = { ...form, maintainers: [{ userId: owner.userId, role: 'maintainer' }] };
 
-		expect(editAddonRequestSchema.safeParse(ownerless).success).toBe(false);
+		expect(safeParse(editAddonRequestSchema, ownerless).success).toBe(false);
 		expect(
 			await rejection(
 				editAddon(ctx, admin.caller, 'edit.owners', {

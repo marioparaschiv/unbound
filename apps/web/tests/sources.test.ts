@@ -1,3 +1,4 @@
+import { parse } from '@unbound-app/contracts/schema';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import type { Changelog } from '@unbound-app/contracts/changelog';
@@ -206,11 +207,9 @@ describe('withdrawn versions', () => {
 describe('shipped clients', () => {
 	test('still parse the catalog, reading the changelog as text and dropping the new fields', async () => {
 		const response = await fetch(new URL('/api/v1/catalog', server.url));
-		const parsed = shippedCatalogResponseSchema.safeParse(await response.json());
+		const catalog = parse(shippedCatalogResponseSchema, await response.json());
 
-		expect(parsed.error).toBeUndefined();
-
-		const mixed = parsed.data?.addons.find((entry) => entry.id === 'src.mixed');
+		const mixed = catalog.addons.find((entry) => entry.id === 'src.mixed');
 
 		expect(mixed?.latestVersion.changelog).toBe(SOURCED.changelog);
 		expect(Object.keys(mixed?.latestVersion ?? {})).not.toContain('changes');
@@ -223,12 +222,9 @@ describe('shipped clients', () => {
 			headers: { [ctx.env.IP_ADDRESS_HEADER]: '203.0.113.7' },
 			body: JSON.stringify(UPDATES_REQUEST),
 		});
-		const parsed = shippedUpdatesResponseSchema.safeParse(await response.json());
+		const updates = parse(shippedUpdatesResponseSchema, await response.json());
 
-		expect(parsed.error).toBeUndefined();
-
-		const mixed = parsed.data?.updates.find((update) => update.id === 'src.mixed');
-
+		const mixed = updates.updates.find((update) => update.id === 'src.mixed');
 		expect(mixed?.changelog).toBe(SOURCED.changelog);
 		expect(mixed?.changelogs.map((entry) => entry.changelog)).toEqual([
 			SOURCED.changelog,

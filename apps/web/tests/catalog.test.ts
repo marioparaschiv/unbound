@@ -1,3 +1,4 @@
+import { parse } from '@unbound-app/contracts/schema';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { eq } from 'drizzle-orm';
@@ -80,7 +81,7 @@ describe('GET /api/v1/catalog', () => {
 
 	test('serves the revision as a strong ETag', async () => {
 		const response = await get();
-		const catalog = catalogResponseSchema.parse(await response.json());
+		const catalog = parse(catalogResponseSchema, await response.json());
 
 		expect(response.headers.get('etag')).toBe(`"${catalog.revision}"`);
 		expect(response.headers.get('cache-control')).toBe('no-cache');
@@ -111,7 +112,7 @@ describe('GET /api/v1/catalog', () => {
 		await seedVersion(ctx, ownerId, manifest('cat.plugin', '1.1.0', { name: 'Plugin' }));
 
 		const approved = await get(first);
-		const catalog = catalogResponseSchema.parse(await approved.json());
+		const catalog = parse(catalogResponseSchema, await approved.json());
 
 		expect(approved.status).toBe(200);
 		expect(catalog.addons[0]?.latestVersion.version).toBe('1.1.0');
@@ -123,7 +124,7 @@ describe('GET /api/v1/catalog', () => {
 		const delisted = await get(second);
 
 		expect(delisted.status).toBe(200);
-		expect(catalogResponseSchema.parse(await delisted.json()).addons).toHaveLength(1);
+		expect(parse(catalogResponseSchema, await delisted.json()).addons).toHaveLength(1);
 
 		await setDelisted('cat.theme', false);
 
@@ -152,7 +153,7 @@ describe('GET /api/v1/catalog', () => {
 		await serveVersion(ctx, caller, 'cat.plugin', { version: '1.0.0', reason: 'Broken' });
 
 		const rolledBack = await get(before);
-		const catalog = catalogResponseSchema.parse(await rolledBack.json());
+		const catalog = parse(catalogResponseSchema, await rolledBack.json());
 
 		expect(rolledBack.status).toBe(200);
 		expect(
