@@ -4,6 +4,7 @@ import type {
 	ModerationEventKind,
 } from '@unbound-app/contracts/admin';
 import { moderationEventDataSchema } from '@unbound-app/contracts/admin';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 import { COLOURS } from '~/lib/constants';
 
@@ -218,7 +219,7 @@ function renderEvent<K extends ModerationEventKind>(event: KindEvent<K>): KindEm
  */
 // UNKNOWN: `data` is the stored per-kind JSON; the contract schema parses it here.
 export function renderKind(kind: string, data: unknown): KindEmbed | undefined {
-	const parsed = moderationEventDataSchema.safeParse({ kind, data });
+	const parsed = safeParse(moderationEventDataSchema, { kind, data });
 
 	return parsed.success ? renderEvent(parsed.data) : undefined;
 }
@@ -231,7 +232,7 @@ export function renderKind(kind: string, data: unknown): KindEmbed | undefined {
  */
 // UNKNOWN: `data` is the stored per-kind JSON; the contract schema parses it here.
 export function deployBuild(kind: string, data: unknown): FirstPartyBuild | undefined {
-	const parsed = moderationEventDataSchema.safeParse({ kind, data });
+	const parsed = safeParse(moderationEventDataSchema, { kind, data });
 
 	if (!parsed.success || parsed.data.kind !== 'review.decided') return;
 
