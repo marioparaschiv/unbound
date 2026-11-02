@@ -11,5 +11,12 @@
 	"version": "1.0.2",
 	"icon": "UserCircleIcon",
 	"main": "index.ts",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "2775c4ce595f880497676337bfd94e20ca1b3c74d2d0a47834a9346c8c890b9b664a318df9e36f1ea905e0b0275ee45dffa255c9fdb11963dc7a9e1eb8a9c905"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "67AtnUuBh4G1QbrZMprD/mxYGP/xEWGGl6SPnFWLeacOWnW0u6Fb5XJ/nIpvP88vpltNIOveE5AeykAVT6ajCA=="
+	}
 }

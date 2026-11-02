@@ -23,5 +23,12 @@
 	"version": "1.0.2",
 	"icon": "LanguageIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "83b1faf117e4d1214872e85b459fa136b019059eab79962808750232424f6665b429b4446485a40f703191eff874177af73990e74224c803927e64d678d16739"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "Yipb1f9Lw70j6Dx4zYeN5NEmOY5N6EM5b3ABxplcm9elFmqAOc7QJrutc40XOqOGin4lR+0+Weeodr7KRh79AA=="
+	}
 }
