@@ -10,8 +10,22 @@ import { safeParse } from '~/lib/schema';
 /** The value that marks a positional as fed from stdin instead of the command line. */
 const STDIN_MARKER = '-';
 
+/** A raw command-line value as cleye produces it: a flag's value, or a variadic positional's strings. */
+type CommandInputValue = string | number | boolean | string[] | undefined;
+
 /** The raw command-line input, after cleye reads it and before the definition's schema validates it. */
-type CommandInput = Record<string, string | number | boolean | undefined>;
+type CommandInput = Record<string, CommandInputValue>;
+
+// UNKNOWN: cleye types a flag's value as `unknown`; a flag only ever holds its scalar.
+function inputValue(value: unknown): CommandInputValue {
+	if (Array.isArray(value)) {
+		return value.map(String);
+	}
+
+	return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
+		? value
+		: undefined;
+}
 
 /**
  * @description Builds a cleye command from a registry definition: the properties named in
@@ -64,7 +78,11 @@ export function toCleyeCommand(definition: CommandDefinition<TObject>): Command 
 		},
 		(parsed) => {
 			const { json, ...flagInput } = parsed.flags;
-			const input: CommandInput = { ...flagInput };
+			const input: CommandInput = {};
+
+			for (const [name, value] of Object.entries(flagInput)) {
+				input[name] = inputValue(value);
+			}
 			const booleans = Object.keys(flags).filter((name) => flags[name]!.type === Boolean);
 			const { off, unmatched } = negatedFlags(parsed.unknownFlags, booleans);
 
@@ -75,7 +93,7 @@ export function toCleyeCommand(definition: CommandDefinition<TObject>): Command 
 			}
 
 			for (const name of positionalNames) {
-				input[name] = parsed._[name as keyof typeof parsed._];
+				input[name] = inputValue(Reflect.get(parsed._, name));
 			}
 
 			void run(definition, input, positionalNames[0], Boolean(json));
