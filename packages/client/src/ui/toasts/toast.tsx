@@ -8,11 +8,11 @@ import { memo, useCallback } from 'react';
 import { useUnboundSettings } from '~/settings/unbound';
 import TintedIcon from '~/metro/fallbacks/tinted-icon';
 import toastDuration from '~/toasts/duration';
+import { Discord } from '~/metro/components';
 import useToastStore from '~/toasts/state';
 import { icons } from '~/assets/api';
 
 import useToastState from './use-toast-state';
-import ToastButtons from './toast-buttons';
 import ToastContent from './toast-content';
 import ToastSurface from './toast-surface';
 import useStyles from './toast.style';
@@ -96,7 +96,20 @@ function Toast({ id }: ToastProps) {
 						</Pressable>
 					</View>
 					{Array.isArray(options.buttons) && options.buttons.length ? (
-						<ToastButtons buttons={options.buttons} />
+						<View style={styles.buttons}>
+							{options.buttons.map((button, index) => (
+								<Discord.Button
+									key={index}
+									style={styles.button}
+									variant={button.variant || 'primary'}
+									size={button.size || 'sm'}
+									onPress={button.onPress}
+									iconPosition={button.iconPosition || 'start'}
+									icon={button.icon || undefined}
+									text={button.content}
+								/>
+							))}
+						</View>
 					) : null}
 					{duration > 0 ? (
 						<Animated.View style={[styles.progressBar, { width }, styles.bar]} />
