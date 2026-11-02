@@ -26,7 +26,12 @@ object NativeHooks {
         fun intercept(chain: Chain): Any?
     }
 
-    private data class PayloadSelection(val receiver: Boolean, val arguments: List<Int>?, val phase: String)
+    private enum class HookPhase(val wireName: String) {
+        BEFORE("before"),
+        AFTER("after"),
+    }
+
+    private data class PayloadSelection(val receiver: Boolean, val arguments: List<Int>?, val phase: HookPhase)
 
     private data class Description(val receiver: String?, val arguments: String, val issued: List<String>)
 
@@ -81,7 +86,7 @@ object NativeHooks {
         val payload = payloadSelection(
             options,
             method.parameterCount,
-            if (notify == "after") "after" else "before",
+            if (notify == "after") HookPhase.AFTER else HookPhase.BEFORE,
         )
         val registration = Registration(
             token,
@@ -130,14 +135,14 @@ object NativeHooks {
             val cacheDescription = if (registration.replaces) describe(self, arguments) else null
             var eventDescription: Description? = null
 
-            if (registration.notifies && registration.payload.phase == "before") {
-                eventDescription = notify(registration, self, arguments, cacheDescription, "before")
+            if (registration.notifies && registration.payload.phase == HookPhase.BEFORE) {
+                eventDescription = notify(registration, self, arguments, cacheDescription, HookPhase.BEFORE)
             }
 
             val result = result(registration, chain, cacheDescription)
 
-            if (registration.notifies && registration.payload.phase == "after") {
-                eventDescription = notify(registration, self, arguments, cacheDescription, "after")
+            if (registration.notifies && registration.payload.phase == HookPhase.AFTER) {
+                eventDescription = notify(registration, self, arguments, cacheDescription, HookPhase.AFTER)
             }
 
             if (cacheDescription != null && cacheDescription !== eventDescription) {
@@ -174,7 +179,7 @@ object NativeHooks {
         self: Any?,
         arguments: List<Any?>,
         cacheDescription: Description?,
-        phase: String,
+        phase: HookPhase,
     ): Description? {
         val target = synchronized(this) { dispatcher } ?: return null
         val indexes = registration.payload.arguments ?: arguments.indices.toList()
@@ -196,7 +201,7 @@ object NativeHooks {
         description.receiver?.let { payload.put("self", JSONTokener(it).nextValue()) }
         payload.put("args", JSONArray(description.arguments))
             .put("argumentIndexes", JSONArray(indexes))
-            .put("phase", phase)
+            .put("phase", phase.wireName)
         val dispatched = runCatching {
             target.dispatch(registration.token, payload.toString())
         }.onFailure {
@@ -223,7 +228,7 @@ object NativeHooks {
     private fun payloadSelection(
         options: JSONObject,
         argumentCount: Int,
-        defaultPhase: String,
+        defaultPhase: HookPhase,
     ): PayloadSelection {
         if (!options.has("payload")) return PayloadSelection(true, null, defaultPhase)
         val payload = options.optJSONObject("payload")
@@ -257,11 +262,14 @@ object NativeHooks {
         }
         val phase = payload.opt("phase")?.let {
             it as? String ?: throw IllegalArgumentException("The hook payload phase must be a string")
-        } ?: defaultPhase
-        require(phase == "before" || phase == "after") {
-            "The hook payload phase must be before or after"
         }
-        return PayloadSelection(receiver, arguments, phase)
+        val selectedPhase = when (phase) {
+            null -> defaultPhase
+            HookPhase.BEFORE.wireName -> HookPhase.BEFORE
+            HookPhase.AFTER.wireName -> HookPhase.AFTER
+            else -> throw IllegalArgumentException("The hook payload phase must be before or after")
+        }
+        return PayloadSelection(receiver, arguments, selectedPhase)
     }
 
     private fun parseToken(tokenJSON: String): String = JSONObject(tokenJSON).getString("id")
