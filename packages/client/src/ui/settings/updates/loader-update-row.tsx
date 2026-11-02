@@ -1,13 +1,10 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
 
 import { messages, format } from '~/i18n/api';
-import { Discord } from '~/metro/components';
-import { Screens } from '~/core/constants';
 import { icons } from '~/assets/api';
 
+import UpdateRowShell from './update-row-shell';
 import DownloadButton from './download-button';
-import Changelog from './changelog';
-import { headline } from './format';
 
 type LoaderUpdateRowProps = {
 	update: LoaderUpdate;
@@ -15,42 +12,22 @@ type LoaderUpdateRowProps = {
 
 /** A newer native loader release: the version jump and what changed; pressing it opens the changelog. */
 function LoaderUpdateRow({ update }: LoaderUpdateRowProps) {
-	const navigation = Discord.useNavigation();
-	const from = globalThis.UNBOUND_LOADER.version;
-	const summary = headline(update.changelogs[0]?.changelog ?? update.changelog);
-	const jump = `${from} → ${update.version}`;
-	const icon = icons.WrenchIcon;
+	const url = update.url;
 
 	return (
-		<Discord.TableRow
-			label={messages.UNBOUND_UPDATES_LOADER}
-			subLabel={summary ? `${jump}\n${summary}` : jump}
-			labelLineClamp={1}
-			subLabelLineClamp={2}
-			icon={<Discord.TableRowIcon source={icon} />}
-			trailing={<DownloadButton url={update.url} text={messages.UNBOUND_UPDATES_DOWNLOAD} />}
-			onPress={() =>
-				navigation.push(Screens.PanelHost, {
-					title: messages.UNBOUND_UPDATES_LOADER,
-					render: () => (
-						<Changelog
-							name={messages.UNBOUND_UPDATES_LOADER}
-							icon={icon}
-							installed={from}
-							offered={update.version}
-							changelogs={update.changelogs}
-						>
-							<DownloadButton
-								url={update.url}
-								size='lg'
-								grow
-								text={format('UNBOUND_UPDATES_DOWNLOAD_VERSION', {
-									version: update.version,
-								})}
-							/>
-						</Changelog>
-					),
-				})
+		<UpdateRowShell
+			name={messages.UNBOUND_UPDATES_LOADER}
+			icon={icons.WrenchIcon}
+			installed={globalThis.UNBOUND_LOADER.version}
+			update={update}
+			action={<DownloadButton url={url} text={messages.UNBOUND_UPDATES_DOWNLOAD} />}
+			actionLarge={
+				<DownloadButton
+					url={url}
+					size='lg'
+					grow
+					text={format('UNBOUND_UPDATES_DOWNLOAD_VERSION', { version: update.version })}
+				/>
 			}
 		/>
 	);

@@ -10,7 +10,7 @@ import { icons } from '~/assets/api';
 import { shortDate } from './format';
 
 /** What an addon's and a loader release's skipped versions share. */
-type ChangelogEntry = Pick<VersionChangelog, 'version' | 'changelog' | 'publishedAt'>;
+export type ChangelogEntry = Pick<VersionChangelog, 'version' | 'changelog' | 'publishedAt'>;
 
 type ChangelogProps = {
 	name: string;
