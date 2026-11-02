@@ -1,9 +1,9 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 import type { UnboundGlobal } from '@unbound-app/api/global';
-import { z } from 'zod';
 
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
 import { bridgePortField, waitForDevice } from '~/lib/context';
+import { defaulted, Type } from '~/lib/schema';
 import { formatResult } from '~/lib/format';
 
 /** The global the running bundle is tagged with, so the reloaded one can be told apart. */
@@ -12,11 +12,13 @@ const TOKEN_KEY = '__UBD_RELOAD__';
 /** How often the reload command probes for the fresh bundle. */
 const RELOAD_POLL_MS = 500;
 
-const schema = z.object({
-	timeout: z
-		.number()
-		.default(60_000)
-		.describe('How long to wait for the reloaded app to reconnect, in milliseconds.'),
+const schema = Type.Object({
+	timeout: defaulted(
+		Type.Number({
+			description: 'How long to wait for the reloaded app to reconnect, in milliseconds.',
+		}),
+		60_000,
+	),
 	port: bridgePortField,
 });
 

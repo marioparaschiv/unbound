@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { runInNewContext } from 'node:vm';
 
 import { gcProbe, hermesSampleSchema } from '../src/bench/probe';
+import { parse } from '../src/lib/schema';
 
 const MB = 1024 * 1024;
 
@@ -37,7 +38,8 @@ function runtime(withGc: boolean): FakeRuntime {
 
 describe('bench gc probe', () => {
 	test('reads the heap counters after a forced GC, so allocations count only live objects', () => {
-		const answer = hermesSampleSchema.parse(
+		const answer = parse(
+			hermesSampleSchema,
 			JSON.parse(runInNewContext(gcProbe(), runtime(true))),
 		);
 
@@ -45,7 +47,8 @@ describe('bench gc probe', () => {
 	});
 
 	test('returns no counters when the runtime has no gc', () => {
-		const answer = hermesSampleSchema.parse(
+		const answer = parse(
+			hermesSampleSchema,
 			JSON.parse(runInNewContext(gcProbe(), runtime(false))),
 		);
 

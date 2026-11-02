@@ -1,5 +1,4 @@
-import { z } from 'zod';
-
+import { Type, type StaticDecode } from '~/lib/schema';
 import type { DiscordMark } from '~/bench/record';
 
 /** Discord's `AppStartPerformance` log names for the marks the report reads. */
@@ -84,23 +83,26 @@ export function gcProbe(): string {
 })()`;
 }
 
-const hermesSchema = z.record(z.string(), z.number()).nullable();
+const hermesSchema = Type.Union([Type.Record(Type.String(), Type.Number()), Type.Null()]);
 
-export const hermesSampleSchema = z.object({ launch: z.string().nullable(), hermes: hermesSchema });
-
-export const idleSampleSchema = z.object({
-	launch: z.string().nullable(),
-	modulesTotal: z.number().optional(),
-	modulesInitialized: z.number().optional(),
+export const hermesSampleSchema = Type.Object({
+	launch: Type.Union([Type.String(), Type.Null()]),
 	hermes: hermesSchema,
-	pluginsStarted: z.number(),
-	pluginErrors: z.array(z.string()),
-	pluginStartMs: z.record(z.string(), z.number()).nullable(),
-	discord: z.record(z.string(), z.number()).optional(),
-	discordError: z.string().optional(),
 });
 
-export type IdleSample = z.infer<typeof idleSampleSchema>;
+export const idleSampleSchema = Type.Object({
+	launch: Type.Union([Type.String(), Type.Null()]),
+	modulesTotal: Type.Optional(Type.Number()),
+	modulesInitialized: Type.Optional(Type.Number()),
+	hermes: hermesSchema,
+	pluginsStarted: Type.Number(),
+	pluginErrors: Type.Array(Type.String()),
+	pluginStartMs: Type.Union([Type.Record(Type.String(), Type.Number()), Type.Null()]),
+	discord: Type.Optional(Type.Record(Type.String(), Type.Number())),
+	discordError: Type.Optional(Type.String()),
+});
+
+export type IdleSample = StaticDecode<typeof idleSampleSchema>;
 
 /**
  * @description Turns Discord's epoch-millisecond marks into milliseconds after the runtime was created.

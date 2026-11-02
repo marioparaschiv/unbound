@@ -2,9 +2,10 @@ import { authRequest, createSubmissionEndpoint, serveEndpoints } from '@unbound-
 import type { AppContext, GitFixture } from '@unbound-app/web/testing';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { z } from 'zod';
 
-const createdApiKeySchema = z.object({ key: z.string() });
+import { parse, Type } from '~/lib/schema';
+
+const createdApiKeySchema = Type.Object({ key: Type.String() });
 
 const GIT_IDENTITY = {
 	GIT_AUTHOR_NAME: 'Publisher',
@@ -60,7 +61,7 @@ export async function createApiKey(ctx: AppContext, headers: Headers): Promise<s
 		body: JSON.stringify({ name: 'ci' }),
 	});
 
-	const { key } = createdApiKeySchema.parse(await response.json());
+	const { key } = parse(createdApiKeySchema, await response.json());
 
 	return key;
 }

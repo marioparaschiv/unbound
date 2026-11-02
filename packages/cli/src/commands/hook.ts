@@ -1,19 +1,24 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
 import { captureNativeHook } from '~/lib/probes';
 import { bridgePortField } from '~/lib/context';
+import { defaulted, Type } from '~/lib/schema';
 
-const schema = z.object({
-	className: z.string().describe('The class that declares or inherits the method.'),
-	method: z.string().describe('The Java method name, or the Objective-C selector.'),
-	parameters: z
-		.array(z.string())
-		.default([])
-		.describe('The Java parameter type names, such as int or android.view.MotionEvent.'),
-	duration: z.number().default(3000).describe('How long to record calls, in milliseconds.'),
-	samples: z.number().default(10).describe('How many calls to describe.'),
+const schema = Type.Object({
+	className: Type.String({ description: 'The class that declares or inherits the method.' }),
+	method: Type.String({ description: 'The Java method name, or the Objective-C selector.' }),
+	parameters: defaulted(
+		Type.Array(Type.String(), {
+			description: 'The Java parameter type names, such as int or android.view.MotionEvent.',
+		}),
+		[],
+	),
+	duration: defaulted(
+		Type.Number({ description: 'How long to record calls, in milliseconds.' }),
+		3000,
+	),
+	samples: defaulted(Type.Number({ description: 'How many calls to describe.' }), 10),
 	port: bridgePortField,
 });
 

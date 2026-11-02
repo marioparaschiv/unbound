@@ -1,28 +1,30 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 import { command, type Command } from 'cleye';
-import { z } from 'zod';
 
-import { fieldToFlag, isArrayField, negatedFlags } from '~/lib/zod-flags';
+import { fieldToFlag, isArrayField, negatedFlags } from '~/lib/flags';
 import { readStdin, isStdinPiped } from '~/lib/stdin';
 import { createContext } from '~/lib/context';
+import type { TObject } from '~/lib/schema';
+import { safeParse } from '~/lib/schema';
 
 /** The value that marks a positional as fed from stdin instead of the command line. */
 const STDIN_MARKER = '-';
 
-/** The raw command-line input, before the definition's schema validates it. */
-type CommandInput = z.input<z.ZodObject<z.ZodRawShape>>;
+/** The raw command-line input, after cleye reads it and before the definition's schema validates it. */
+type CommandInput = Record<string, string | number | boolean | undefined>;
 
 /**
- * @description Builds a cleye command from a registry definition: the fields named in
- * `cli.positionals` become positional parameters, every other schema field becomes a flag whose type
- * is derived from the zod field. The callback reads a stdin-fed positional when piped, validates the
+ * @description Builds a cleye command from a registry definition: the properties named in
+ * `cli.positionals` become positional parameters, every other schema property becomes a flag whose type
+ * is derived from the schema field. The callback reads a stdin-fed positional when piped, validates the
  * assembled input through the definition's schema, runs the handler, and exits `0`/`1`/`2` on
  * success, on-device failure, and connection or usage error respectively.
  * @param definition The command to adapt.
  * @returns A cleye `command()` ready to register on the CLI.
  */
-export function toCleyeCommand(definition: CommandDefinition<z.ZodObject<z.ZodRawShape>>): Command {
+export function toCleyeCommand(definition: CommandDefinition<TObject>): Command {
 	const positionalNames = (definition.cli?.positionals ?? []).map(String);
+	const properties = definition.schema.properties;
 
 	const flags: Record<string, ReturnType<typeof fieldToFlag>> = {
 		json: {
@@ -32,12 +34,12 @@ export function toCleyeCommand(definition: CommandDefinition<z.ZodObject<z.ZodRa
 		},
 	};
 
-	for (const [name, field] of Object.entries(definition.schema.shape)) {
+	for (const [name, field] of Object.entries(properties)) {
 		if (positionalNames.includes(name)) {
 			continue;
 		}
 
-		flags[name] = fieldToFlag(field as z.ZodType);
+		flags[name] = fieldToFlag(field);
 	}
 
 	return command(
@@ -45,9 +47,7 @@ export function toCleyeCommand(definition: CommandDefinition<z.ZodObject<z.ZodRa
 			name: definition.name,
 			description: definition.description,
 			parameters: positionalNames.map((name) =>
-				isArrayField(definition.schema.shape[name] as z.ZodType)
-					? `[${name}...]`
-					: `[${name}]`,
+				isArrayField(properties[name]!) ? `[${name}...]` : `[${name}]`,
 			),
 			flags,
 			// Tools under `ubd mcp` run through a second cleye instance, whose usage line would drop `mcp`.
@@ -88,7 +88,7 @@ function firstSentence(description: string) {
 }
 
 async function run(
-	definition: CommandDefinition<z.ZodObject<z.ZodRawShape>>,
+	definition: CommandDefinition<TObject>,
 	input: CommandInput,
 	stdinField: string | undefined,
 	json: boolean,
@@ -102,10 +102,10 @@ async function run(
 		input[stdinField] = await readStdin();
 	}
 
-	const parsed = definition.schema.safeParse(input);
+	const parsed = safeParse(definition.schema, input);
 
 	if (!parsed.success) {
-		process.stderr.write(`${z.prettifyError(parsed.error)}\n`);
+		process.stderr.write(`${parsed.error.message}\n`);
 		process.exit(2);
 	}
 

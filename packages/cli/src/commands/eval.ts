@@ -1,22 +1,20 @@
 import { DEFAULT_EVAL_TIMEOUT_MS, MAX_EVAL_TIMEOUT_MS } from '@unbound-app/debugger-protocol';
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { bridgePortField } from '~/lib/context';
 import { runOnDevice } from '~/lib/device';
+import { Type } from '~/lib/schema';
 
-const schema = z.object({
-	code: z.string().describe('The JavaScript to evaluate on the device.'),
+const schema = Type.Object({
+	code: Type.String({ description: 'The JavaScript to evaluate on the device.' }),
 	port: bridgePortField,
-	timeout: z
-		.number()
-		.int()
-		.positive()
-		.max(MAX_EVAL_TIMEOUT_MS)
-		.optional()
-		.describe(
-			`How long to wait for the result, in milliseconds. Defaults to the bridge's ${DEFAULT_EVAL_TIMEOUT_MS}ms.`,
-		),
+	timeout: Type.Optional(
+		Type.Integer({
+			minimum: 1,
+			maximum: MAX_EVAL_TIMEOUT_MS,
+			description: `How long to wait for the result, in milliseconds. Defaults to the bridge's ${DEFAULT_EVAL_TIMEOUT_MS}ms.`,
+		}),
+	),
 });
 
 const evalCommand: CommandDefinition<typeof schema> = {

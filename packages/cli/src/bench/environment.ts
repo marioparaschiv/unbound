@@ -1,23 +1,24 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { z } from 'zod';
 
-const schema = z.object({
-	DEV_HOST: z
-		.string()
-		.min(1, 'DEV_HOST is unset: the address the vphone reaches this machine at'),
-	UNBOUND_BRIDGE_PORT: z.coerce.number().int().positive().default(9090),
-	UNBOUND_BENCH_PORT: z.coerce.number().int().positive().default(3110),
-	TAILNET_URL: z
-		.string()
-		.url(
+import { defaulted, safeParse, Type } from '~/lib/schema';
+const schema = Type.Object({
+	DEV_HOST: Type.String({
+		minLength: 1,
+		errorMessage: 'DEV_HOST is unset: the address the vphone reaches this machine at',
+	}),
+	UNBOUND_BRIDGE_PORT: defaulted(Type.Integer({ minimum: 1 }), 9090),
+	UNBOUND_BENCH_PORT: defaulted(Type.Integer({ minimum: 1 }), 3110),
+	TAILNET_URL: Type.String({
+		format: 'url',
+		errorMessage:
 			'TAILNET_URL is unset: the tailnet MCP hub that drives the vphone, such as http://<hub>:8790',
-		),
-	TAILNET_CONNECTOR: z.string().optional(),
-	UNBOUND_BENCH_OUT: z.string().optional(),
-	UNBOUND_BENCH_URL: z.string().optional(),
-	UNBOUND_BENCH_CACHE: z.string().optional(),
+	}),
+	TAILNET_CONNECTOR: Type.Optional(Type.String()),
+	UNBOUND_BENCH_OUT: Type.Optional(Type.String()),
+	UNBOUND_BENCH_URL: Type.Optional(Type.String()),
+	UNBOUND_BENCH_CACHE: Type.Optional(Type.String()),
 });
 
 /** Where the bench runs: this machine's addresses, the vphone's hub, and where builds and reports go. */
@@ -51,20 +52,29 @@ export function parseDotEnv(text: string): Record<string, string> {
 	return variables;
 }
 
+// Env values arrive as strings, so convert a port before the schema checks it, as `z.coerce` did.
+function toPort(value: string | undefined): number | undefined {
+	return value === undefined ? undefined : Number(value);
+}
+
 /**
  * @description Reads the bench's settings from the environment, falling back to the repo's gitignored `.env` as the
  * unbound-dev scripts do.
  * @param repo The repository root.
  * @returns The settings; throws naming each missing or invalid variable.
- */
-export function benchEnvironment(repo: string): BenchEnvironment {
+ */ export function benchEnvironment(repo: string): BenchEnvironment {
 	const file = join(repo, '.env');
 	const dotEnv = existsSync(file) ? parseDotEnv(readFileSync(file, 'utf8')) : {};
-	const parsed = schema.safeParse({ ...dotEnv, ...process.env });
+	const raw = { ...dotEnv, ...process.env };
+	const parsed = safeParse(schema, {
+		...raw,
+		UNBOUND_BRIDGE_PORT: toPort(raw.UNBOUND_BRIDGE_PORT),
+		UNBOUND_BENCH_PORT: toPort(raw.UNBOUND_BENCH_PORT),
+	});
 
 	if (!parsed.success) {
 		throw new Error(
-			`The bench needs these in the environment or ${file}:\n${z.prettifyError(parsed.error)}`,
+			`The bench needs these in the environment or ${file}:\n${parsed.error.message}`,
 		);
 	}
 

@@ -1,13 +1,13 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
 import { bridgePortField } from '~/lib/context';
+import { defaulted, Type } from '~/lib/schema';
 import { textSpans } from '~/lib/probes';
 
-const schema = z.object({
-	match: z.string().describe('Text the text views must contain.'),
-	max: z.number().default(5).describe('How many matching text views to print.'),
+const schema = Type.Object({
+	match: Type.String({ description: 'Text the text views must contain.' }),
+	max: defaulted(Type.Number({ description: 'How many matching text views to print.' }), 5),
 	port: bridgePortField,
 });
 
