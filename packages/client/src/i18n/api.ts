@@ -252,13 +252,7 @@ async function ensureLocale(locale: string): Promise<void> {
 /** The core messages proxy, resolving Unbound's own UI strings against the active Discord locale. */
 export const messages = createMessages(strings, () => currentLocale, enUS);
 
-/**
- * @description Formats a localized string, interpolating ICU `MessageFormat` placeholders.
- * @param key The message key to resolve and format.
- * @param vars The variables to interpolate into the message.
- * @returns The formatted string.
- */
-export function format(key: string, vars?: FormatVars): string {
+function formatWith(messages: Record<string, string>, key: string, vars?: FormatVars): string {
 	const MessageFormat = getMessageFormat();
 
 	if (!MessageFormat) {
@@ -269,24 +263,24 @@ export function format(key: string, vars?: FormatVars): string {
 }
 
 /**
+ * @description Formats a localized string, interpolating ICU `MessageFormat` placeholders.
+ * @param key The message key to resolve and format.
+ * @param vars The variables to interpolate into the message.
+ * @returns The formatted string.
+ */
+export function format(key: string, vars?: FormatVars): string {
+	return formatWith(messages, key, vars);
+}
+
+/**
  * @description Creates an isolated, in-memory `messages`/`format` pair over an addon-supplied string table, sharing the active locale with core.
  * @param table The addon's string store, keyed by locale then message key.
  * @returns A `messages` proxy and `format` function scoped to the supplied table.
  */
 export function defineMessages(table: StringStore): Localizations {
-	const messages = createMessages(table, () => currentLocale);
+	const local = createMessages(table, () => currentLocale);
 
-	function format(key: string, vars?: FormatVars): string {
-		const MessageFormat = getMessageFormat();
-
-		if (!MessageFormat) {
-			return messages[key];
-		}
-
-		return new MessageFormat(messages[key]).format(vars);
-	}
-
-	return { messages, format };
+	return { messages: local, format: (key, vars) => formatWith(local, key, vars) };
 }
 
 /**
