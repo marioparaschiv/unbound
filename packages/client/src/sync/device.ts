@@ -189,12 +189,14 @@ async function applyAction(action: SyncAction): Promise<boolean> {
 		}
 
 		case 'delete': {
-			await adapters[action.kind].delete(action.id);
+			const adapter = adapters[action.kind];
+
+			await adapter.delete(action.id);
 
 			// A delete returns early for an addon that is not loaded, which would leave its source to resync.
-			adapters[action.kind].forgetSource(action.id);
+			adapter.forgetSource(action.id);
 
-			return !adapters[action.kind].isInstalled(action.id);
+			return !adapter.isInstalled(action.id);
 		}
 
 		case 'set-enabled': {
