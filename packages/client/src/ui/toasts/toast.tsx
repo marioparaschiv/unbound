@@ -12,7 +12,6 @@ import useToastStore from '~/toasts/state';
 import { icons } from '~/assets/api';
 
 import useToastState from './use-toast-state';
-import ToastProgress from './toast-progress';
 import ToastButtons from './toast-buttons';
 import ToastContent from './toast-content';
 import ToastSurface from './toast-surface';
@@ -99,7 +98,9 @@ function Toast({ id }: ToastProps) {
 					{Array.isArray(options.buttons) && options.buttons.length ? (
 						<ToastButtons buttons={options.buttons} />
 					) : null}
-					{duration > 0 ? <ToastProgress width={width} /> : null}
+					{duration > 0 ? (
+						<Animated.View style={[styles.progressBar, { width }, styles.bar]} />
+					) : null}
 				</ToastSurface>
 			</Animated.View>
 		</PanGestureHandler>
