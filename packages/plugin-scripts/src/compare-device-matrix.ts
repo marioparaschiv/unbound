@@ -1,6 +1,5 @@
-import { z } from '@unbound-app/contracts/zod';
-
 import type { DeviceCheck } from './device-matrix';
+import { Type } from '@unbound-app/contracts/schema';
 
 export type CheckMetrics = {
 	stopMs: number;
@@ -21,32 +20,32 @@ export type MeasuredCheck = DeviceCheck & {
 	visualProblems?: string[];
 };
 
-const result = z.enum(['pass', 'fail']);
+const result = Type.Enum(['pass', 'fail']);
 
 /** A matrix run's `results.json`, or a baseline given on the command line. */
-export const measuredChecksSchema: z.ZodMiniType<MeasuredCheck[]> = z.array(
-	z.object({
-		id: z.string(),
+export const measuredChecksSchema = Type.Array(
+	Type.Object({
+		id: Type.String(),
 		behavior: result,
 		lifecycle: result,
-		evidence: z.array(z.string()),
-		note: z.optional(z.string()),
-		metrics: z.optional(
-			z.object({
-				stopMs: z.number(),
-				startMs: z.number(),
-				drawnMs: z.optional(z.number()),
-				leakedHooks: z.number(),
+		evidence: Type.Array(Type.String()),
+		note: Type.Optional(Type.String()),
+		metrics: Type.Optional(
+			Type.Object({
+				stopMs: Type.Number(),
+				startMs: Type.Number(),
+				drawnMs: Type.Optional(Type.Number()),
+				leakedHooks: Type.Number(),
 			}),
 		),
-		offMainCalls: z.optional(z.array(z.string())),
-		errors: z.optional(z.array(z.string())),
-		skippedHooks: z.optional(z.array(z.string())),
-		memoryDeltaMB: z.optional(z.number()),
-		redrawMs: z.optional(z.number()),
-		leakPerCycleMB: z.optional(z.number()),
-		bundleHash: z.optional(z.string()),
-		visualProblems: z.optional(z.array(z.string())),
+		offMainCalls: Type.Optional(Type.Array(Type.String())),
+		errors: Type.Optional(Type.Array(Type.String())),
+		skippedHooks: Type.Optional(Type.Array(Type.String())),
+		memoryDeltaMB: Type.Optional(Type.Number()),
+		redrawMs: Type.Optional(Type.Number()),
+		leakPerCycleMB: Type.Optional(Type.Number()),
+		bundleHash: Type.Optional(Type.String()),
+		visualProblems: Type.Optional(Type.Array(Type.String())),
 	}),
 );
 

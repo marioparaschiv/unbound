@@ -1,5 +1,5 @@
 import type { ChangeType, Changelog } from '@unbound-app/contracts/changelog';
-import { CHANGE_LABELS, changeTypeSchema, parseChangelog } from '@unbound-app/contracts/changelog';
+import { CHANGE_LABELS, CHANGE_TYPES, parseChangelog } from '@unbound-app/contracts/changelog';
 
 /** One commit that touched a plugin, as `git log` reports it. */
 export type PluginCommit = {
@@ -29,7 +29,7 @@ const RELEASE_HEADING = /^##(?:\s|$)/;
 const UNRELEASED_HEADING = /^##\s+\[?unreleased\]?\s*$/i;
 
 /** The commit types a release lists; every other type is left out. */
-const CHANGE_TYPES: Record<string, ChangeType> = {
+const COMMIT_CHANGE_TYPES: Record<string, ChangeType> = {
 	feat: 'added',
 	fix: 'fixed',
 	perf: 'changed',
@@ -62,9 +62,10 @@ export function createRelease(input: ReleaseInput): Changelog {
 		}
 	}
 
-	const sections = changeTypeSchema.options
-		.filter((type) => items.has(type))
-		.map((type) => ({ type, items: [...(items.get(type) ?? [])] }));
+	const sections = CHANGE_TYPES.filter((type) => items.has(type)).map((type) => ({
+		type,
+		items: [...(items.get(type) ?? [])],
+	}));
 
 	if (sections.length > 0) {
 		return { date: input.date, sections };
@@ -135,7 +136,7 @@ export function mergeRelease(
 
 function parseCommit(subject: string): CommitChange | undefined {
 	const match = CONVENTIONAL_HEADER.exec(subject.trim());
-	const type = CHANGE_TYPES[match?.[1]?.toLowerCase() ?? ''];
+	const type = COMMIT_CHANGE_TYPES[match?.[1]?.toLowerCase() ?? ''];
 	const description = match?.[2]?.trim();
 
 	if (!type || !description) return;
