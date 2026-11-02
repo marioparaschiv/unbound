@@ -132,8 +132,7 @@ export class Icons extends Addons<Plugin> {
 
 			this.emit('enabled', resolved);
 		} catch (error) {
-			this.logger.error(`Failed to enable icon pack ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('enable', resolved.id, error, 'icon pack');
 		}
 	}
 
@@ -148,8 +147,7 @@ export class Icons extends Addons<Plugin> {
 
 			this.emit('disabled', resolved);
 		} catch (error) {
-			this.logger.error(`Failed to disable icon pack ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('disable', resolved.id, error, 'icon pack');
 		}
 	}
 
@@ -166,8 +164,7 @@ export class Icons extends Addons<Plugin> {
 			this.removePack();
 			await this.applyPack(resolved.id);
 		} catch (error) {
-			this.logger.error(`Failed to restart icon pack ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('restart', resolved.id, error, 'icon pack');
 		}
 	}
 
@@ -194,8 +191,7 @@ export class Icons extends Addons<Plugin> {
 
 			this.emit('deleted', resolved);
 		} catch (error) {
-			this.logger.error(`Failed to delete icon pack ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('delete', resolved.id, error, 'icon pack');
 		}
 	}
 

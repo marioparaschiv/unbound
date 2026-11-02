@@ -120,13 +120,14 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 * @param action What the manager tried to do, such as `unload`.
 	 * @param id The addon's id.
 	 * @param error The value `catch` bound.
+	 * @param noun What the manager calls the addon, when it is not an addon.
 	 * @returns The recorded error.
 	 */
 	// UNKNOWN: catch binds whatever was thrown, not necessarily an Error.
-	protected fail(action: string, id: string, error: unknown): Error {
+	protected fail(action: string, id: string, error: unknown, noun = 'addon'): Error {
 		const failure = toError(error);
 
-		this.logger.error(`Failed to ${action} addon ${id}:`, failure);
+		this.logger.error(`Failed to ${action} ${noun} ${id}:`, failure);
 		this.errors.set(id, failure);
 
 		return failure;
