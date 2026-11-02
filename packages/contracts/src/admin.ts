@@ -1,6 +1,6 @@
 import { addonTypeSchema, maintainerRoleSchema, sortOrderSchema } from './addons';
 import { reviewDecisionSchema, submissionKindSchema } from './publish';
-import { Type, type Static, trimmedString } from './schema';
+import { Type, type StaticDecode, trimmedString } from './schema';
 import { userSummarySchema } from './account';
 import { repositorySchema } from './source';
 import { semverSchema } from './manifest';
@@ -281,26 +281,26 @@ export const editStaffNoteRequestSchema = Type.Object({
 /** Deletes the caller's own note. */
 export const deleteStaffNoteRequestSchema = Type.Object({ id: staffNoteIdSchema });
 
-export type SubjectType = Static<typeof subjectTypeSchema>;
-export type Subject = Static<typeof subjectSchema>;
-export type MaintainerEntry = Static<typeof maintainerEntrySchema>;
-export type PinnableField = Static<typeof pinnableFieldSchema>;
-export type EditableField = Static<typeof editableFieldSchema>;
-export type FieldChange = Static<typeof fieldChangeSchema>;
-export type ModerationEventData = Static<typeof moderationEventDataSchema>;
+export type SubjectType = StaticDecode<typeof subjectTypeSchema>;
+export type Subject = StaticDecode<typeof subjectSchema>;
+export type MaintainerEntry = StaticDecode<typeof maintainerEntrySchema>;
+export type PinnableField = StaticDecode<typeof pinnableFieldSchema>;
+export type EditableField = StaticDecode<typeof editableFieldSchema>;
+export type FieldChange = StaticDecode<typeof fieldChangeSchema>;
+export type ModerationEventData = StaticDecode<typeof moderationEventDataSchema>;
 export type ModerationEventKind = ModerationEventData['kind'];
-export type ModerationEvent = Static<typeof moderationEventSchema>;
-export type ModerationEventPage = Static<typeof moderationEventPageSchema>;
-export type ModerationEventPageRequest = Static<typeof moderationEventPageRequestSchema>;
-export type PageDirection = Static<typeof pageDirectionSchema>;
-export type AdminUsersSearch = Static<typeof adminUsersSearchSchema>;
-export type AdminAddonStatus = Static<typeof adminAddonStatusSchema>;
-export type AdminAddonsSearch = Static<typeof adminAddonsSearchSchema>;
-export type ServeVersionRequest = Static<typeof serveVersionRequestSchema>;
-export type EditAddonRequest = Static<typeof editAddonRequestSchema>;
-export type CreateStaffNoteRequest = Static<typeof createStaffNoteRequestSchema>;
-export type EditStaffNoteRequest = Static<typeof editStaffNoteRequestSchema>;
-export type DeleteStaffNoteRequest = Static<typeof deleteStaffNoteRequestSchema>;
+export type ModerationEvent = StaticDecode<typeof moderationEventSchema>;
+export type ModerationEventPage = StaticDecode<typeof moderationEventPageSchema>;
+export type ModerationEventPageRequest = StaticDecode<typeof moderationEventPageRequestSchema>;
+export type PageDirection = StaticDecode<typeof pageDirectionSchema>;
+export type AdminUsersSearch = StaticDecode<typeof adminUsersSearchSchema>;
+export type AdminAddonStatus = StaticDecode<typeof adminAddonStatusSchema>;
+export type AdminAddonsSearch = StaticDecode<typeof adminAddonsSearchSchema>;
+export type ServeVersionRequest = StaticDecode<typeof serveVersionRequestSchema>;
+export type EditAddonRequest = StaticDecode<typeof editAddonRequestSchema>;
+export type CreateStaffNoteRequest = StaticDecode<typeof createStaffNoteRequestSchema>;
+export type EditStaffNoteRequest = StaticDecode<typeof editStaffNoteRequestSchema>;
+export type DeleteStaffNoteRequest = StaticDecode<typeof deleteStaffNoteRequestSchema>;
 
 export default {
 	subjectTypeSchema,

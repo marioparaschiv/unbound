@@ -1,6 +1,6 @@
 import { addonIdSchema, semverSchema } from './manifest';
+import { Type, type StaticDecode } from './schema';
 import { addonVersionSchema } from './addons';
-import { Type, type Static } from './schema';
 
 export const installedAddonSchema = Type.Object({
 	id: addonIdSchema,
@@ -63,13 +63,13 @@ export const updatesResponseSchema = Type.Object({
 	updates: Type.Array(addonUpdateSchema),
 });
 
-export type InstalledAddon = Static<typeof installedAddonSchema>;
-export type UpdatesRequest = Static<typeof updatesRequestSchema>;
-export type AddonRelease = Static<typeof addonReleaseSchema>;
-export type VersionChangelog = Static<typeof versionChangelogSchema>;
-export type UpdateReason = Static<typeof updateReasonSchema>;
-export type AddonUpdate = Static<typeof addonUpdateSchema>;
-export type UpdatesResponse = Static<typeof updatesResponseSchema>;
+export type InstalledAddon = StaticDecode<typeof installedAddonSchema>;
+export type UpdatesRequest = StaticDecode<typeof updatesRequestSchema>;
+export type AddonRelease = StaticDecode<typeof addonReleaseSchema>;
+export type VersionChangelog = StaticDecode<typeof versionChangelogSchema>;
+export type UpdateReason = StaticDecode<typeof updateReasonSchema>;
+export type AddonUpdate = StaticDecode<typeof addonUpdateSchema>;
+export type UpdatesResponse = StaticDecode<typeof updatesResponseSchema>;
 
 export default {
 	MAX_UPDATE_CHANGELOGS,

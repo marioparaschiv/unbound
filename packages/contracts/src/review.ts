@@ -1,9 +1,9 @@
 import type { reviewDecisionSchema } from './publish';
 
+import { trimmedString, Type, type Static, type StaticDecode } from './schema';
 import { repositoryDetailsSchema, sourcePinSchema } from './source';
 import { submissionKindSchema, submissionSchema } from './publish';
 import { addonVersionSchema, sha256Schema } from './addons';
-import { trimmedString, Type, type Static } from './schema';
 import { addonManifestSchema } from './manifest';
 import { tagIdSchema, tagSchema } from './tags';
 import { addonPageSchema } from './addon-page';
@@ -114,15 +114,15 @@ export const reviewSubmissionResponseSchema = Type.Object({
 	submission: submissionSchema,
 });
 
-export type ReviewQueueQuery = Static<typeof reviewQueueQuerySchema>;
-export type SubmissionContent = Static<typeof submissionContentSchema>;
-export type MaintainerChange = Static<typeof maintainerChangeSchema>;
-export type ReviewQueueItem = Static<typeof reviewQueueItemSchema>;
-export type ReviewQueueResponse = Static<typeof reviewQueueResponseSchema>;
-export type SubmissionPreview = Static<typeof submissionPreviewSchema>;
-export type SubmissionPreviewResponse = Static<typeof submissionPreviewResponseSchema>;
-export type ReviewSubmissionRequest = Static<typeof reviewSubmissionRequestSchema>;
-export type ReviewSubmissionResponse = Static<typeof reviewSubmissionResponseSchema>;
+export type ReviewQueueQuery = StaticDecode<typeof reviewQueueQuerySchema>;
+export type SubmissionContent = StaticDecode<typeof submissionContentSchema>;
+export type MaintainerChange = StaticDecode<typeof maintainerChangeSchema>;
+export type ReviewQueueItem = StaticDecode<typeof reviewQueueItemSchema>;
+export type ReviewQueueResponse = StaticDecode<typeof reviewQueueResponseSchema>;
+export type SubmissionPreview = StaticDecode<typeof submissionPreviewSchema>;
+export type SubmissionPreviewResponse = StaticDecode<typeof submissionPreviewResponseSchema>;
+export type ReviewSubmissionRequest = StaticDecode<typeof reviewSubmissionRequestSchema>;
+export type ReviewSubmissionResponse = StaticDecode<typeof reviewSubmissionResponseSchema>;
 
 export default {
 	reviewQueueQuerySchema,

@@ -1,4 +1,4 @@
-import { safeParse, Type, type Static } from './schema';
+import { safeParse, Type, type StaticDecode } from './schema';
 import { semverSchema } from './manifest';
 
 /** The change types a release lists, in the order its sections are kept. */
@@ -27,9 +27,9 @@ export const changelogSchema = Type.Object({
 	sections: Type.Array(changelogSectionSchema, { maxItems: CHANGE_TYPES.length }),
 });
 
-export type ChangeType = Static<typeof changeTypeSchema>;
-export type ChangelogSection = Static<typeof changelogSectionSchema>;
-export type Changelog = Static<typeof changelogSchema>;
+export type ChangeType = StaticDecode<typeof changeTypeSchema>;
+export type ChangelogSection = StaticDecode<typeof changelogSectionSchema>;
+export type Changelog = StaticDecode<typeof changelogSchema>;
 
 /** A problem on one 1-based line of the file. */
 export type ChangelogIssue = {

@@ -1,4 +1,4 @@
-import { Type, type Static } from './schema';
+import { Type, type StaticDecode } from './schema';
 
 /** How many tags an author may file one submission under. */
 export const MAX_SUBMISSION_TAGS = 5;
@@ -21,7 +21,7 @@ export const submissionTagsSchema = Type.Refine(
 	() => 'Tag ids must be unique.',
 );
 
-export type TagId = Static<typeof tagIdSchema>;
-export type Tag = Static<typeof tagSchema>;
+export type TagId = StaticDecode<typeof tagIdSchema>;
+export type Tag = StaticDecode<typeof tagSchema>;
 
 export default { MAX_SUBMISSION_TAGS, tagIdSchema, tagSchema, submissionTagsSchema };

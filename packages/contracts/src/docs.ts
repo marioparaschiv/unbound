@@ -1,4 +1,4 @@
-import { Type, type Static } from './schema';
+import { Type, type StaticDecode } from './schema';
 import { SEMVER_PATTERN } from './manifest';
 
 /** The development docs, rebuilt from every push to main. */
@@ -19,11 +19,11 @@ export const docsManifestSchema = Type.Object({
 	versions: Type.Array(docsVersionSchema),
 });
 
-export type DocsPackage = Static<typeof docsPackageSchema>;
+export type DocsPackage = StaticDecode<typeof docsPackageSchema>;
 
-export type DocsVersion = Static<typeof docsVersionSchema>;
+export type DocsVersion = StaticDecode<typeof docsVersionSchema>;
 
-export type DocsManifest = Static<typeof docsManifestSchema>;
+export type DocsManifest = StaticDecode<typeof docsManifestSchema>;
 
 /**
  * @description Builds the public bucket key of one version's TypeDoc JSON.

@@ -1,4 +1,4 @@
-import { Type, type Static } from './schema';
+import { Type, type StaticDecode } from './schema';
 
 export const apiErrorCodeSchema = Type.Enum([
 	'invalid_request',
@@ -44,7 +44,7 @@ export const apiErrorResponseSchema = Type.Object({
 	}),
 });
 
-export type ApiErrorCode = Static<typeof apiErrorCodeSchema>;
-export type ApiErrorResponse = Static<typeof apiErrorResponseSchema>;
+export type ApiErrorCode = StaticDecode<typeof apiErrorCodeSchema>;
+export type ApiErrorResponse = StaticDecode<typeof apiErrorResponseSchema>;
 
 export default { apiErrorCodeSchema, apiErrorResponseSchema };

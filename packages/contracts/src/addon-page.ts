@@ -6,7 +6,7 @@ import {
 	superRefine,
 	trimmedString,
 	Type,
-	type Static,
+	type StaticDecode,
 } from './schema';
 
 /** The file in an addon's directory that holds its store page. */
@@ -131,9 +131,9 @@ export const measuredMediaSchema = Type.Refine(
 	() => 'Only a video has a duration.',
 );
 
-export type PageMedia = Static<typeof pageMediaSchema>;
-export type AddonPageFrontmatter = Static<typeof addonPageFrontmatterSchema>;
-export type MeasuredMedia = Static<typeof measuredMediaSchema>;
+export type PageMedia = StaticDecode<typeof pageMediaSchema>;
+export type AddonPageFrontmatter = StaticDecode<typeof addonPageFrontmatterSchema>;
+export type MeasuredMedia = StaticDecode<typeof measuredMediaSchema>;
 
 /**
  * @description Checks the banner shape: exactly 3:1 and at least 1200x400.
@@ -217,7 +217,7 @@ export const addonPageSchema = superRefine(
 	},
 );
 
-export type AddonPage = Static<typeof addonPageSchema>;
+export type AddonPage = StaticDecode<typeof addonPageSchema>;
 
 /** ADDON.md cut at its frontmatter fences. */
 export type SplitAddonPage = {

@@ -1,4 +1,4 @@
-import { safeParse, Type, type Static } from './schema';
+import { safeParse, Type, type StaticDecode } from './schema';
 import { apiErrorCodeSchema } from './errors';
 
 /** A GitHub repository as `owner/name`. */
@@ -205,16 +205,16 @@ export const pushableRepositoriesResponseSchema = Type.Object({
 	repositories: Type.Array(pushableRepositorySchema),
 });
 
-export type SourcePin = Static<typeof sourcePinSchema>;
-export type RepositoryContributor = Static<typeof repositoryContributorSchema>;
-export type RepositoryRelease = Static<typeof repositoryReleaseSchema>;
-export type RepositoryDetails = Static<typeof repositoryDetailsSchema>;
-export type RepositoryAddonIssue = Static<typeof repositoryAddonIssueSchema>;
-export type RepositoryAddon = Static<typeof repositoryAddonSchema>;
-export type ListRepositoryAddonsQuery = Static<typeof listRepositoryAddonsQuerySchema>;
-export type ListRepositoryAddonsResponse = Static<typeof listRepositoryAddonsResponseSchema>;
-export type PushableRepository = Static<typeof pushableRepositorySchema>;
-export type PushableRepositoriesResponse = Static<typeof pushableRepositoriesResponseSchema>;
+export type SourcePin = StaticDecode<typeof sourcePinSchema>;
+export type RepositoryContributor = StaticDecode<typeof repositoryContributorSchema>;
+export type RepositoryRelease = StaticDecode<typeof repositoryReleaseSchema>;
+export type RepositoryDetails = StaticDecode<typeof repositoryDetailsSchema>;
+export type RepositoryAddonIssue = StaticDecode<typeof repositoryAddonIssueSchema>;
+export type RepositoryAddon = StaticDecode<typeof repositoryAddonSchema>;
+export type ListRepositoryAddonsQuery = StaticDecode<typeof listRepositoryAddonsQuerySchema>;
+export type ListRepositoryAddonsResponse = StaticDecode<typeof listRepositoryAddonsResponseSchema>;
+export type PushableRepository = StaticDecode<typeof pushableRepositorySchema>;
+export type PushableRepositoriesResponse = StaticDecode<typeof pushableRepositoriesResponseSchema>;
 
 export default {
 	repositorySchema,

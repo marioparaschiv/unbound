@@ -1,6 +1,6 @@
 import picomatch from 'picomatch';
 
-import { safeParse, Type, type Static } from './schema';
+import { safeParse, Type, type StaticDecode } from './schema';
 import { MANIFEST_FILENAME } from './manifest';
 
 /** The workspace config's filename; the directory holding one is a workspace root. */
@@ -14,7 +14,7 @@ export const workspaceConfigSchema = Type.Object({
 	output: Type.String({ default: 'dist' }),
 });
 
-export type WorkspaceConfig = Static<typeof workspaceConfigSchema>;
+export type WorkspaceConfig = StaticDecode<typeof workspaceConfigSchema>;
 
 export type AddonKind = 'plugin' | 'theme';
 

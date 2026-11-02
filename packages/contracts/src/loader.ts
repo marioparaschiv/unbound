@@ -1,6 +1,6 @@
+import { Type, type StaticDecode } from './schema';
 import { MAX_UPDATE_CHANGELOGS } from './updates';
 import { MAX_CHANGELOG_LENGTH } from './publish';
-import { Type, type Static } from './schema';
 import { semverSchema } from './manifest';
 
 export const loaderPlatformSchema = Type.Enum(['ios', 'android']);
@@ -45,13 +45,13 @@ export const loaderUpdateResponseSchema = Type.Object({
 	update: Type.Union([loaderUpdateSchema, Type.Null()]),
 });
 
-export type LoaderPlatform = Static<typeof loaderPlatformSchema>;
-export type LoaderRelease = Static<typeof loaderReleaseSchema>;
-export type PublishLoaderReleaseRequest = Static<typeof publishLoaderReleaseRequestSchema>;
-export type LoaderChangelog = Static<typeof loaderChangelogSchema>;
-export type LoaderUpdateQuery = Static<typeof loaderUpdateQuerySchema>;
-export type LoaderUpdate = Static<typeof loaderUpdateSchema>;
-export type LoaderUpdateResponse = Static<typeof loaderUpdateResponseSchema>;
+export type LoaderPlatform = StaticDecode<typeof loaderPlatformSchema>;
+export type LoaderRelease = StaticDecode<typeof loaderReleaseSchema>;
+export type PublishLoaderReleaseRequest = StaticDecode<typeof publishLoaderReleaseRequestSchema>;
+export type LoaderChangelog = StaticDecode<typeof loaderChangelogSchema>;
+export type LoaderUpdateQuery = StaticDecode<typeof loaderUpdateQuerySchema>;
+export type LoaderUpdate = StaticDecode<typeof loaderUpdateSchema>;
+export type LoaderUpdateResponse = StaticDecode<typeof loaderUpdateResponseSchema>;
 
 export default {
 	loaderPlatformSchema,

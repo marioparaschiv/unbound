@@ -5,7 +5,7 @@ import {
 } from '@unbound-app/types/native';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 
-import { Type, type Static } from './schema';
+import { Type, type StaticDecode } from './schema';
 
 /** The file in an addon's directory that holds its manifest. */
 export const MANIFEST_FILENAME = 'manifest.json';
@@ -137,7 +137,7 @@ export const addonManifestSchema = Type.Object(
 	{ additionalProperties: true },
 );
 
-export type PublishedManifest = Static<typeof addonManifestSchema>;
+export type PublishedManifest = StaticDecode<typeof addonManifestSchema>;
 
 export default {
 	MANIFEST_FILENAME,

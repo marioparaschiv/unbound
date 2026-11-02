@@ -6,8 +6,8 @@ import {
 	sourcePinSchema,
 } from './source';
 import { addonIdSchema, bytecodeDigestsSchema } from './manifest';
+import { Type, type StaticDecode } from './schema';
 import { submissionTagsSchema } from './tags';
-import { Type, type Static } from './schema';
 import { addonIconSchema } from './icons';
 
 /** `listing` claims a new addon id; `update` publishes a new version of an addon the caller maintains. */
@@ -142,20 +142,20 @@ export const listFirstPartyAddonsResponseSchema = Type.Object({
 	addons: Type.Array(firstPartyAddonSchema),
 });
 
-export type SubmissionKind = Static<typeof submissionKindSchema>;
-export type SubmissionStatus = Static<typeof submissionStatusSchema>;
-export type OpenSubmissionStatus = Static<typeof openSubmissionStatusSchema>;
-export type ReviewDecision = Static<typeof reviewDecisionSchema>;
-export type SubmissionReview = Static<typeof submissionReviewSchema>;
-export type Submission = Static<typeof submissionSchema>;
-export type SubmissionDetails = Static<typeof submissionDetailsSchema>;
-export type CreateSubmissionRequest = Static<typeof createSubmissionRequestSchema>;
-export type CreateSubmissionResponse = Static<typeof createSubmissionResponseSchema>;
-export type PublishFirstPartyRequest = Static<typeof publishFirstPartyRequestSchema>;
-export type FirstPartyPublishStatus = Static<typeof firstPartyPublishStatusSchema>;
-export type PublishFirstPartyResponse = Static<typeof publishFirstPartyResponseSchema>;
-export type FirstPartyAddon = Static<typeof firstPartyAddonSchema>;
-export type ListFirstPartyAddonsResponse = Static<typeof listFirstPartyAddonsResponseSchema>;
+export type SubmissionKind = StaticDecode<typeof submissionKindSchema>;
+export type SubmissionStatus = StaticDecode<typeof submissionStatusSchema>;
+export type OpenSubmissionStatus = StaticDecode<typeof openSubmissionStatusSchema>;
+export type ReviewDecision = StaticDecode<typeof reviewDecisionSchema>;
+export type SubmissionReview = StaticDecode<typeof submissionReviewSchema>;
+export type Submission = StaticDecode<typeof submissionSchema>;
+export type SubmissionDetails = StaticDecode<typeof submissionDetailsSchema>;
+export type CreateSubmissionRequest = StaticDecode<typeof createSubmissionRequestSchema>;
+export type CreateSubmissionResponse = StaticDecode<typeof createSubmissionResponseSchema>;
+export type PublishFirstPartyRequest = StaticDecode<typeof publishFirstPartyRequestSchema>;
+export type FirstPartyPublishStatus = StaticDecode<typeof firstPartyPublishStatusSchema>;
+export type PublishFirstPartyResponse = StaticDecode<typeof publishFirstPartyResponseSchema>;
+export type FirstPartyAddon = StaticDecode<typeof firstPartyAddonSchema>;
+export type ListFirstPartyAddonsResponse = StaticDecode<typeof listFirstPartyAddonsResponseSchema>;
 
 export default {
 	MAX_CHANGELOG_LENGTH,

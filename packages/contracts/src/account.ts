@@ -1,4 +1,4 @@
-import { Type, type Static } from './schema';
+import { Type, type StaticDecode } from './schema';
 
 /** A user as other users see them, e.g. a submitter or a maintainer. */
 export const userSummarySchema = Type.Object({
@@ -31,12 +31,12 @@ export const accountSignInResponseSchema = Type.Object({
 	user: callerSchema,
 });
 
-export type UserSummary = Static<typeof userSummarySchema>;
-export type Caller = Static<typeof callerSchema>;
-export type MeResponse = Static<typeof meResponseSchema>;
-export type AccountOAuthConfig = Static<typeof accountOAuthConfigSchema>;
-export type AccountSignInRequest = Static<typeof accountSignInRequestSchema>;
-export type AccountSignInResponse = Static<typeof accountSignInResponseSchema>;
+export type UserSummary = StaticDecode<typeof userSummarySchema>;
+export type Caller = StaticDecode<typeof callerSchema>;
+export type MeResponse = StaticDecode<typeof meResponseSchema>;
+export type AccountOAuthConfig = StaticDecode<typeof accountOAuthConfigSchema>;
+export type AccountSignInRequest = StaticDecode<typeof accountSignInRequestSchema>;
+export type AccountSignInResponse = StaticDecode<typeof accountSignInResponseSchema>;
 
 export default {
 	userSummarySchema,

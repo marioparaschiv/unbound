@@ -1,5 +1,5 @@
 import { addonIdSchema, semverSchema } from './manifest';
-import { Type, type Static } from './schema';
+import { Type, type StaticDecode } from './schema';
 
 export const CRASH_REPORT_KINDS = ['crash', 'freeze', 'start-failure'] as const;
 
@@ -35,7 +35,7 @@ export const crashReportResponseSchema = Type.Object({
 	id: Type.String(),
 });
 
-export type CrashReport = Static<typeof crashReportSchema>;
+export type CrashReport = StaticDecode<typeof crashReportSchema>;
 
 export default {
 	CRASH_REPORT_KINDS,

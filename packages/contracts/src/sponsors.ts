@@ -1,4 +1,4 @@
-import { Type, type Static, trimmedString } from './schema';
+import { Type, type StaticDecode, trimmedString } from './schema';
 
 export const BADGE_NAME_MAX_LENGTH = 24;
 
@@ -115,19 +115,19 @@ export const revokeBadgeRequestSchema = Type.Object({
 	),
 });
 
-export type PerkId = Static<typeof perkIdSchema>;
-export type Badge = Static<typeof badgeSchema>;
-export type OwnedBadge = Static<typeof ownedBadgeSchema>;
-export type CreateBadgeUploadRequest = Static<typeof createBadgeUploadRequestSchema>;
-export type PresignedBadgeUpload = Static<typeof presignedBadgeUploadSchema>;
-export type UploadBadgeImageResponse = Static<typeof uploadBadgeImageResponseSchema>;
-export type SetBadgesRequest = Static<typeof setBadgesRequestSchema>;
-export type PublicBadge = Static<typeof publicBadgeSchema>;
-export type UserBadgesResponse = Static<typeof userBadgesResponseSchema>;
-export type BadgeClaim = Static<typeof badgeClaimSchema>;
-export type BadgeClaimResponse = Static<typeof badgeClaimResponseSchema>;
-export type SponsorshipState = Static<typeof sponsorshipStateSchema>;
-export type RevokeBadgeRequest = Static<typeof revokeBadgeRequestSchema>;
+export type PerkId = StaticDecode<typeof perkIdSchema>;
+export type Badge = StaticDecode<typeof badgeSchema>;
+export type OwnedBadge = StaticDecode<typeof ownedBadgeSchema>;
+export type CreateBadgeUploadRequest = StaticDecode<typeof createBadgeUploadRequestSchema>;
+export type PresignedBadgeUpload = StaticDecode<typeof presignedBadgeUploadSchema>;
+export type UploadBadgeImageResponse = StaticDecode<typeof uploadBadgeImageResponseSchema>;
+export type SetBadgesRequest = StaticDecode<typeof setBadgesRequestSchema>;
+export type PublicBadge = StaticDecode<typeof publicBadgeSchema>;
+export type UserBadgesResponse = StaticDecode<typeof userBadgesResponseSchema>;
+export type BadgeClaim = StaticDecode<typeof badgeClaimSchema>;
+export type BadgeClaimResponse = StaticDecode<typeof badgeClaimResponseSchema>;
+export type SponsorshipState = StaticDecode<typeof sponsorshipStateSchema>;
+export type RevokeBadgeRequest = StaticDecode<typeof revokeBadgeRequestSchema>;
 
 export default {
 	BADGE_NAME_MAX_LENGTH,

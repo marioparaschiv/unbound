@@ -1,7 +1,7 @@
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 
 import { addonIdSchema, addonManifestSchema, semverSchema } from './manifest';
-import { Type, type Static, trimmedString } from './schema';
+import { Type, type StaticDecode, trimmedString } from './schema';
 import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
 import { submissionSchema } from './publish';
@@ -196,28 +196,28 @@ export const myAddonsResponseSchema = Type.Object({
 	openListings: Type.Array(submissionSchema),
 });
 
-export type MaintainerRole = Static<typeof maintainerRoleSchema>;
-export type AddonVersion = Static<typeof addonVersionSchema>;
-export type Addon = Static<typeof addonSchema>;
-export type AddonResponse = Static<typeof addonResponseSchema>;
-export type AddonType = Static<typeof addonTypeSchema>;
-export type AddonSort = Static<typeof addonSortSchema>;
-export type SortOrder = Static<typeof sortOrderSchema>;
-export type FilterMatch = Static<typeof filterMatchSchema>;
-export type SingleMatch = Static<typeof singleMatchSchema>;
-export type ListAddonsQuery = Static<typeof listAddonsQuerySchema>;
-export type ListedAddon = Static<typeof listedAddonSchema>;
-export type SetAddonIconRequest = Static<typeof setAddonIconRequestSchema>;
-export type AddonIconResponse = Static<typeof addonIconResponseSchema>;
-export type ListAddonsResponse = Static<typeof listAddonsResponseSchema>;
-export type CatalogResponse = Static<typeof catalogResponseSchema>;
-export type AddonVersionsResponse = Static<typeof addonVersionsResponseSchema>;
-export type Maintainer = Static<typeof maintainerSchema>;
-export type AddMaintainerRequest = Static<typeof addMaintainerRequestSchema>;
-export type MaintainersResponse = Static<typeof maintainersResponseSchema>;
-export type TransferAddonRequest = Static<typeof transferAddonRequestSchema>;
-export type MaintainedAddon = Static<typeof maintainedAddonSchema>;
-export type MyAddonsResponse = Static<typeof myAddonsResponseSchema>;
+export type MaintainerRole = StaticDecode<typeof maintainerRoleSchema>;
+export type AddonVersion = StaticDecode<typeof addonVersionSchema>;
+export type Addon = StaticDecode<typeof addonSchema>;
+export type AddonResponse = StaticDecode<typeof addonResponseSchema>;
+export type AddonType = StaticDecode<typeof addonTypeSchema>;
+export type AddonSort = StaticDecode<typeof addonSortSchema>;
+export type SortOrder = StaticDecode<typeof sortOrderSchema>;
+export type FilterMatch = StaticDecode<typeof filterMatchSchema>;
+export type SingleMatch = StaticDecode<typeof singleMatchSchema>;
+export type ListAddonsQuery = StaticDecode<typeof listAddonsQuerySchema>;
+export type ListedAddon = StaticDecode<typeof listedAddonSchema>;
+export type SetAddonIconRequest = StaticDecode<typeof setAddonIconRequestSchema>;
+export type AddonIconResponse = StaticDecode<typeof addonIconResponseSchema>;
+export type ListAddonsResponse = StaticDecode<typeof listAddonsResponseSchema>;
+export type CatalogResponse = StaticDecode<typeof catalogResponseSchema>;
+export type AddonVersionsResponse = StaticDecode<typeof addonVersionsResponseSchema>;
+export type Maintainer = StaticDecode<typeof maintainerSchema>;
+export type AddMaintainerRequest = StaticDecode<typeof addMaintainerRequestSchema>;
+export type MaintainersResponse = StaticDecode<typeof maintainersResponseSchema>;
+export type TransferAddonRequest = StaticDecode<typeof transferAddonRequestSchema>;
+export type MaintainedAddon = StaticDecode<typeof maintainedAddonSchema>;
+export type MyAddonsResponse = StaticDecode<typeof myAddonsResponseSchema>;
 
 export default {
 	sha256Schema,

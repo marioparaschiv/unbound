@@ -1,6 +1,6 @@
 import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
 
-import { Type, type Static } from './schema';
+import { Type, type StaticDecode } from './schema';
 
 /** The addon managers whose installs sync, named after their settings buckets. */
 export const SYNC_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
@@ -101,15 +101,15 @@ export const syncDeleteResponseSchema = Type.Object({
 	deleted: Type.Boolean(),
 });
 
-export type SyncKind = Static<typeof syncKindSchema>;
-export type SyncInstall = Static<typeof syncInstallSchema>;
-export type SyncKindDocument = Static<typeof syncKindDocumentSchema>;
-export type SyncSettingsStore = Static<typeof syncSettingsStoreSchema>;
-export type SyncDocument = Static<typeof syncDocumentSchema>;
-export type SyncState = Static<typeof syncStateSchema>;
-export type SyncDocumentInput = Static<typeof syncDocumentInputSchema>;
-export type SyncPutRequest = Static<typeof syncPutRequestSchema>;
-export type SyncDeleteResponse = Static<typeof syncDeleteResponseSchema>;
+export type SyncKind = StaticDecode<typeof syncKindSchema>;
+export type SyncInstall = StaticDecode<typeof syncInstallSchema>;
+export type SyncKindDocument = StaticDecode<typeof syncKindDocumentSchema>;
+export type SyncSettingsStore = StaticDecode<typeof syncSettingsStoreSchema>;
+export type SyncDocument = StaticDecode<typeof syncDocumentSchema>;
+export type SyncState = StaticDecode<typeof syncStateSchema>;
+export type SyncDocumentInput = StaticDecode<typeof syncDocumentInputSchema>;
+export type SyncPutRequest = StaticDecode<typeof syncPutRequestSchema>;
+export type SyncDeleteResponse = StaticDecode<typeof syncDeleteResponseSchema>;
 
 /**
  * @description Builds a document with no installs and no settings.
