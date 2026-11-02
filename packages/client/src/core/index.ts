@@ -32,6 +32,7 @@ import { Manager } from '~/addons/manager';
 import tracking from '~/builtins/tracking';
 import commands from '~/commands/builtin';
 import account from '~/account/builtin';
+import { DEV } from '~/core/constants';
 import debug from '~/debugger/builtin';
 import links from '~/links/builtin';
 import storage from '~/storage/api';
@@ -76,7 +77,8 @@ const BUILT_INS: BuiltInEntry[] = [
 	['debug', debug],
 	['discordSupport', discordSupport],
 	['errorBoundary', errorBoundary],
-	['hotRefresh', hotRefresh],
+	// The hot refresh client dials the dev server, and `shouldStart` already refused a release build.
+	...(DEV ? ([['hotRefresh', hotRefresh]] as BuiltInEntry[]) : []),
 	['i18n', i18n],
 	['links', links],
 	['nativeConsent', nativeConsent],
