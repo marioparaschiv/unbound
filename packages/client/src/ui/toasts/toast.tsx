@@ -46,7 +46,7 @@ function Toast({ id }: ToastProps) {
 		style,
 		closing,
 		leave,
-		properties: { scale, height, width, translateY },
+		properties: { height, width },
 	} = useToastState(options ?? { id });
 	const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 	const styles = useStyles();
@@ -80,13 +80,7 @@ function Toast({ id }: ToastProps) {
 
 	return (
 		<PanGestureHandler onGestureEvent={onGestureEvent}>
-			<Animated.View
-				style={[
-					{ ...style, transform: [{ scale }, { translateY }] },
-					{ zIndex: closing ? 0 : 10 },
-				]}
-				pointerEvents='box-none'
-			>
+			<Animated.View style={[style, { zIndex: closing ? 0 : 10 }]} pointerEvents='box-none'>
 				<ToastSurface onLayout={onLayout}>
 					<View style={styles.wrapper}>
 						{options.icon ? (

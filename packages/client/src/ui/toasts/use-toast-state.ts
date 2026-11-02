@@ -100,8 +100,13 @@ function useToastState(options: InternalToastOptions) {
 	}, [options.closing]);
 
 	return {
-		style: { opacity, height, marginVertical },
-		properties: { scale, height, width, translateY },
+		style: {
+			opacity,
+			height,
+			transform: [{ scale }, { translateY }],
+			marginVertical,
+		},
+		properties: { height, width },
 		leave,
 		closing,
 	};
