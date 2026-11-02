@@ -159,38 +159,155 @@ function validator(schema: TSchema): Validator {
 	return compiled;
 }
 
-// A schema with no `default` anywhere skips the fill pass, so the common parse does no extra work.
+// A schema with no `default` (or no codec) anywhere skips that pass, so a plain parse only checks and copies.
 const defaultSchemas = new WeakMap<TSchema, boolean>();
+const codecSchemas = new WeakMap<TSchema, boolean>();
 
 // UNKNOWN: walks schema JSON, so each step can land on any value.
-function hasDefault(node: unknown): boolean {
+function hasKey(node: unknown, key: string): boolean {
 	if (Array.isArray(node)) {
-		return node.some(hasDefault);
+		return node.some((child) => hasKey(child, key));
 	}
 
 	if (typeof node !== 'object' || node === null) {
 		return false;
 	}
 
-	if (Object.hasOwn(node, 'default')) {
+	// Codecs mark themselves with a non-enumerable key, so `hasOwn` rather than `Object.keys`.
+	if (Object.hasOwn(node, key)) {
 		return true;
 	}
 
-	return Object.values(node).some(hasDefault);
+	return Object.values(node).some((child) => hasKey(child, key));
 }
 
-function hasDefaults(schema: TSchema): boolean {
-	const cached = defaultSchemas.get(schema);
+function cachedHas(cache: WeakMap<TSchema, boolean>, schema: TSchema, key: string): boolean {
+	const cached = cache.get(schema);
 
 	if (cached !== undefined) {
 		return cached;
 	}
 
-	const found = hasDefault(schema);
+	const found = hasKey(schema, key);
 
-	defaultSchemas.set(schema, found);
+	cache.set(schema, found);
 
 	return found;
+}
+
+// UNKNOWN: a schema node read as JSON.
+function child(node: TSchema, key: string): unknown {
+	return Reflect.get(node, key);
+}
+
+function isSchema(node: unknown): node is TSchema {
+	return typeof node === 'object' && node !== null && !Array.isArray(node);
+}
+
+type ObjectPlan = {
+	properties: Map<string, TSchema>;
+	patterns: [RegExp, TSchema][];
+	keepUnknown: boolean;
+};
+
+// Each object schema's declared keys are gathered once, not on every parse.
+const plans = new WeakMap<TSchema, ObjectPlan>();
+
+function objectPlan(schema: TSchema): ObjectPlan {
+	const cached = plans.get(schema);
+
+	if (cached) {
+		return cached;
+	}
+
+	const members = child(schema, 'allOf');
+	const parts = Array.isArray(members) ? members.filter(isSchema) : [schema];
+	const properties = new Map<string, TSchema>();
+	const patterns: [RegExp, TSchema][] = [];
+	let keepUnknown = parts.length === 0;
+
+	for (const part of parts) {
+		const declared = child(part, 'properties');
+		const patternProperties = child(part, 'patternProperties');
+
+		if (isSchema(declared)) {
+			for (const [key, property] of Object.entries(declared)) {
+				if (isSchema(property)) {
+					properties.set(key, property);
+				}
+			}
+		}
+
+		if (isSchema(patternProperties)) {
+			for (const [pattern, property] of Object.entries(patternProperties)) {
+				if (isSchema(property)) {
+					patterns.push([new RegExp(pattern, 'u'), property]);
+				}
+			}
+		}
+
+		// Not an object schema (a `$ref`, `Any`, `Unknown`): keep the value whole.
+		const additional = child(part, 'additionalProperties');
+
+		if (
+			additional === true ||
+			isSchema(additional) ||
+			(!isSchema(declared) && !isSchema(patternProperties))
+		) {
+			keepUnknown = true;
+		}
+	}
+
+	const plan = { properties, patterns, keepUnknown };
+
+	plans.set(schema, plan);
+
+	return plan;
+}
+
+// UNKNOWN: a value that already passed Check against `schema`.
+function strip(schema: TSchema, value: unknown): unknown {
+	const anyOf = child(schema, 'anyOf');
+
+	if (Array.isArray(anyOf)) {
+		const match = anyOf.find((variant: TSchema) => validator(variant).Check(value));
+
+		return match ? strip(match, value) : value;
+	}
+
+	if (Array.isArray(value)) {
+		const items = child(schema, 'items');
+
+		if (Array.isArray(items)) {
+			return value.map((item, index) =>
+				isSchema(items[index]) ? strip(items[index], item) : item,
+			);
+		}
+
+		return isSchema(items) ? value.map((item) => strip(items, item)) : [...value];
+	}
+
+	if (typeof value !== 'object' || value === null) {
+		return value;
+	}
+
+	const { properties, patterns, keepUnknown } = objectPlan(schema);
+
+	// UNKNOWN: field values were checked against their own subschemas.
+	const copy: [string, unknown][] = [];
+
+	for (const [key, entry] of Object.entries(value)) {
+		const declared =
+			properties.get(key) ?? patterns.find(([pattern]) => pattern.test(key))?.[1];
+
+		if (declared) {
+			copy.push([key, strip(declared, entry)]);
+		} else if (keepUnknown) {
+			copy.push([key, entry]);
+		}
+	}
+
+	return Object.fromEntries(copy);
 }
 
 // A subschema's `errorMessage` option replaces every built-in message for failures on it.
@@ -284,21 +401,24 @@ export function safeParse<T extends TSchema>(
 ): SafeParseResult<StaticDecode<T>> {
 	const compiled = validator(schema);
 	// Like zod, a `default` fills a missing value before validation.
-	const defaulted = hasDefaults(schema);
-	const input = defaulted ? compiled.Default(Clone(value)) : value;
+	const input = cachedHas(defaultSchemas, schema, 'default')
+		? compiled.Default(Clone(value))
+		: value;
 
 	if (!compiled.Check(input)) {
 		return { success: false, error: new SchemaError(issues(schema, compiled, input)) };
 	}
 
+	// Like zod, the result is a copy without keys the schema does not declare; `additionalProperties` keeps them.
+	const stripped = strip(schema, input);
+
 	// A codec's decode callback can still throw on a value that passed Check.
 	try {
-		// Like zod, the result is a copy without keys the schema does not declare; `additionalProperties` keeps them.
 		return {
 			success: true,
-			data: compiled.Decode(
-				compiled.Clean(defaulted ? input : Clone(value)),
-			) as StaticDecode<T>,
+			data: (cachedHas(codecSchemas, schema, '~codec')
+				? compiled.Decode(stripped)
+				: stripped) as StaticDecode<T>,
 		};
 	} catch {
 		const found = issues(schema, compiled, value);
