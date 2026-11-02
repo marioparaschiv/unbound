@@ -1,5 +1,4 @@
 import { createApiClient, NotModifiedError } from '@unbound-app/web/client';
-import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
 import type { Api } from '@unbound-app/web/api';
@@ -7,6 +6,7 @@ import { create } from 'zustand';
 
 import type { Catalog, MarketplaceEvent, MarketplaceState } from '~/marketplace/catalog';
 import { parseCatalog, reduceMarketplace } from '~/marketplace/catalog';
+import { isCatalogResponse } from '~/core/validators.gen';
 import { API_URL } from '~/core/constants';
 import fs from '~/native/fs';
 
@@ -64,7 +64,7 @@ async function fetchCatalog(current: Catalog | undefined): Promise<MarketplaceEv
 
 	try {
 		const catalog = await request('GET /api/v1/catalog', {
-			response: catalogResponseSchema,
+			response: isCatalogResponse,
 			headers: current ? { 'If-None-Match': `"${current.revision}"` } : undefined,
 		});
 

@@ -1,11 +1,12 @@
+import { CRASH_REPORT_LOG_LIMIT } from './crash-report-limits';
 import { addonIdSchema, semverSchema } from './manifest';
 import { Type, type StaticDecode } from './schema';
+
+export { CRASH_REPORT_LOG_LIMIT } from './crash-report-limits';
 
 export const CRASH_REPORT_KINDS = ['crash', 'freeze', 'start-failure'] as const;
 
 export const CRASH_REPORT_PLATFORMS = ['ios', 'android'] as const;
-
-export const CRASH_REPORT_LOG_LIMIT = 16_000;
 
 /** What the client sends when crash reporting is on: no account, message content or addon settings. */
 export const crashReportSchema = Type.Object({

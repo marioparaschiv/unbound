@@ -11,84 +11,22 @@ import { Compile, type Validator } from 'typebox/compile';
 import { Format } from 'typebox/format';
 import { Clone } from 'typebox/value';
 
+import { SchemaError, type SchemaIssue } from './schema-error';
+import { isDate, isDateTime, isUrl, isUuid } from './formats';
+
 export { Type, type Static, type StaticDecode, type StaticEncode, type TSchema } from 'typebox';
-
 // TypeBox checks a `format` only when one is registered; these mirror zod's `z.url()` and `z.iso.*()`.
-function isUrl(value: string): boolean {
-	if (typeof URL !== 'undefined' && typeof URL.canParse === 'function') {
-		return URL.canParse(value);
-	}
-
-	try {
-		new URL(value);
-
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-function isDate(value: string): boolean {
-	const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-
-	if (!match) {
-		return false;
-	}
-
-	const [year, month, day] = [Number(match[1]), Number(match[2]), Number(match[3])];
-	const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-	const days = [0, 31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-	return month >= 1 && month <= 12 && day >= 1 && day <= (days[month] ?? 0);
-}
-
-// RFC 3339 with a required timezone offset, as zod's `z.iso.datetime()` accepts.
-const TIME = /^(\d\d):(\d\d):(\d\d)(?:\.\d+)?(?:[Zz]|[+-](\d\d):(\d\d))$/;
-
-function isDateTime(value: string): boolean {
-	const parts = value.split(/[Tt]/);
-
-	if (parts.length !== 2 || !isDate(parts[0] ?? '')) {
-		return false;
-	}
-
-	const match = TIME.exec(parts[1] ?? '');
-
-	if (!match) {
-		return false;
-	}
-
-	const [hour, minute, second] = [Number(match[1]), Number(match[2]), Number(match[3])];
-
-	return hour <= 23 && minute <= 59 && second <= 60;
-}
-
 Format.Set('url', isUrl);
 Format.Set('date', isDate);
 Format.Set('date-time', isDateTime);
-Format.Set('uuid', (value) => /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i.test(value));
+Format.Set('uuid', isUuid);
+export type { SchemaIssue } from './schema-error';
+export { SchemaError } from './schema-error';
 
-/** One failed check, at a `/`-separated path into the value (empty at the root). */
-export type SchemaIssue = { path: string; message: string };
-
+/** The decoded value, or a `SchemaError` listing every issue. */
 export type SafeParseResult<T> =
 	| { success: true; data: T }
 	| { success: false; error: SchemaError };
-
-/** Thrown by `parse`; `message` lists every issue on its own line. */
-export class SchemaError extends Error {
-	readonly issues: SchemaIssue[];
-
-	constructor(issues: SchemaIssue[]) {
-		super(
-			issues
-				.map(({ path, message }) => (path ? `${message} (at ${path})` : message))
-				.join('\n'),
-		);
-		this.name = 'SchemaError';
-		this.issues = issues;
-	}
-}
 
 /** A refinement that reports each failure at its own path, like zod's `superRefine`. */
 const CHECKS = '~checks';

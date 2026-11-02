@@ -252,6 +252,42 @@ describe('generated checks', () => {
 		expect(first).toBe(second);
 	});
 
+	test('checks the structure alone for a structure-only entry', async () => {
+		const schema = Type.Object({
+			name: Type.Refine(
+				Type.String({ minLength: 1 }),
+				(value) => value.startsWith('x'),
+				() => 'Must start with x.',
+			),
+			count: Type.Integer({ default: 1 }),
+		});
+		const { source, checks } = await load([
+			{
+				...entry({ check: 'isRefined', schema, schemaName: 'x', valid: [], invalid: [] }),
+				structureOnly: true,
+			},
+		]);
+
+		expect(source).not.toMatch(/External\[0\]\.check/);
+		expect(checks.isRefined!({ name: 'y' })).toBe(true);
+		expect(checks.isRefined!({ name: '', count: 2 })).toBe(false);
+		expect(checks.isRefined!({ name: 'x', count: 1.5 })).toBe(false);
+	});
+
+	test('treats a property with a default as absent for a structure-only entry', async () => {
+		const schema = Type.Object({ count: Type.Integer({ default: 1 }) });
+		const { checks } = await load([
+			{
+				...entry({ check: 'isDefaulted', schema, schemaName: 'x', valid: [], invalid: [] }),
+				structureOnly: true,
+			},
+		]);
+
+		expect(checks.isDefaulted!({})).toBe(true);
+		expect(checks.isDefaulted!({ count: 1 })).toBe(true);
+		expect(checks.isDefaulted!({ count: 'one' })).toBe(false);
+	});
+
 	test('refuses Type.Refine with the schema name and path', async () => {
 		const schema = Type.Object({
 			name: Type.Refine(Type.String(), () => true),

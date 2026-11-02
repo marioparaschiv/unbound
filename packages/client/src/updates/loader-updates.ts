@@ -1,8 +1,8 @@
-import { loaderUpdateQuerySchema, loaderUpdateResponseSchema } from '@unbound-app/contracts/loader';
 import type { LoaderUpdate, LoaderUpdateQuery } from '@unbound-app/contracts/loader';
-import { safeParse } from '@unbound-app/contracts/schema';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Api } from '@unbound-app/web/api';
+
+import { isLoaderUpdateQuery, isLoaderUpdateResponse } from '~/core/validators.gen';
 
 export type LoaderUpdateCheckOptions = {
 	baseUrl: string;
@@ -25,9 +25,9 @@ export function buildLoaderUpdateQuery(
 ): LoaderUpdateQuery | undefined {
 	if (!loader) return;
 
-	const query = safeParse(loaderUpdateQuerySchema, { platform, version: loader.version });
+	const query: unknown = { platform, version: loader.version };
 
-	return query.success ? query.data : undefined;
+	return isLoaderUpdateQuery(query) ? query : undefined;
 }
 
 /**
@@ -46,7 +46,7 @@ export async function fetchLoaderUpdate(
 	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
 	const { update } = await request('GET /api/v1/loader/updates', {
 		query,
-		response: loaderUpdateResponseSchema,
+		response: isLoaderUpdateResponse,
 	});
 
 	return update;

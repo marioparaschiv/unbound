@@ -1,6 +1,6 @@
 import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
+import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest-files';
 import type { AddonManifest, PushedManifest } from '@unbound-app/types';
-import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
 import type { AddonKind } from '@unbound-app/types/addons';
 import toError from '@unbound-app/utils/to-error';

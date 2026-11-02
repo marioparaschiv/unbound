@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm';
 
 import checkUpdatesEndpoint from '~/endpoints/check-updates';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
-import { createApiClient } from '~/api/client';
+import { createApiClient } from '~/api/schema-client';
 import { getAddonDetails } from '~/lib/addons';
 import { serveVersion } from '~/lib/rollback';
 import { findUpdates } from '~/lib/updates';

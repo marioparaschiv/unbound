@@ -5,13 +5,18 @@ import {
 } from '@unbound-app/types/native';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 
+import { ADDON_ID_MAX_LENGTH, ADDON_ID_PATTERN, ADDON_MAIN_PATTERN } from './manifest-patterns';
+import { DEVELOPMENT_MARKER, MANIFEST_FILENAME } from './manifest-files';
 import { Type, type StaticDecode } from './schema';
 
-/** The file in an addon's directory that holds its manifest. */
-export const MANIFEST_FILENAME = 'manifest.json';
-
-/** The file `ubd install` leaves in an installed addon's folder so the client treats it as a development copy. */
-export const DEVELOPMENT_MARKER = 'development';
+export {
+	ADDON_ID_MAX_LENGTH,
+	ADDON_ID_PATTERN,
+	ADDON_MAIN_PATTERN,
+	isAddonId,
+	isAddonMain,
+} from './manifest-patterns';
+export { DEVELOPMENT_MARKER, MANIFEST_FILENAME } from './manifest-files';
 
 /**
  * A strict SemVer 2.0.0 version (the specification's own pattern): no `v` prefix, no leading zeros.
@@ -33,10 +38,8 @@ export const semverSchema = Type.String({
  * Addon ids become object-storage path segments (`addons/{id}/{version}/...`), so they are limited to
  * path-safe characters: alphanumeric runs joined by single `.`, `_` or `-`.
  */
-export const ADDON_ID_PATTERN = '^[A-Za-z0-9]+(?:[._-][A-Za-z0-9]+)*$';
-
 export const addonIdSchema = Type.String({
-	maxLength: 100,
+	maxLength: ADDON_ID_MAX_LENGTH,
 	pattern: ADDON_ID_PATTERN,
 	errorMessage: 'Must be alphanumeric segments joined by ".", "_" or "-".',
 });
@@ -44,7 +47,7 @@ export const addonIdSchema = Type.String({
 // The bundle is published next to the manifest at `addons/{id}/{version}/{main}` and resolved
 // relative to the manifest URL, so `main` may not leave that directory.
 export const addonMainSchema = Type.String({
-	pattern: /^(?:[\w-][\w.-]*\/)*[\w-][\w.-]*$/,
+	pattern: ADDON_MAIN_PATTERN,
 	errorMessage: 'Must be a relative path inside the addon.',
 });
 

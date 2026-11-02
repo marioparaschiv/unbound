@@ -1,5 +1,4 @@
-import { addonIdSchema } from './manifest';
-import { safeParse } from './schema';
+import { isAddonId } from './manifest-patterns';
 
 /** The URL scheme the client claims. */
 export const UNBOUND_SCHEME = 'unbound';
@@ -63,9 +62,9 @@ export function parseUnboundLink(url: string): UnboundLink | undefined {
 		return undefined;
 	}
 
-	const id = safeParse(addonIdSchema, params.get('id'));
+	const id = params.get('id');
 
-	return id.success ? { action, id: id.data } : undefined;
+	return isAddonId(id) ? { action, id } : undefined;
 }
 
 export default { UNBOUND_SCHEME, createUnboundLink, parseUnboundLink };

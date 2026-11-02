@@ -4,7 +4,7 @@ import {
 	parseAddonPage,
 	type AddonPage,
 } from '@unbound-app/contracts/addon-page';
-import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-media';
+import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-paths';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
 import { safeParse } from '@unbound-app/contracts/schema';
 

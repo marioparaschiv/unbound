@@ -4,7 +4,8 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { count } from 'drizzle-orm';
 
 import previewSubmissionEndpoint from '~/endpoints/preview-submission';
-import { ApiRequestError, createApiClient } from '~/api/client';
+import { createApiClient } from '~/api/schema-client';
+import { ApiRequestError } from '~/api/client';
 import type { EnvSource } from '~/lib/env';
 import { submission } from '~/db/schema';
 import type { Api } from '~/api';

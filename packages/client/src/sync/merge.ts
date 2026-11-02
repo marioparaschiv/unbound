@@ -5,8 +5,9 @@ import type {
 	SyncKindDocument,
 	SyncSettingsStore,
 } from '@unbound-app/contracts/sync';
-import { syncDocumentSchema } from '@unbound-app/contracts/sync';
-import { parse } from '@unbound-app/contracts/schema';
+
+import { isSyncDocument } from '~/core/validators.gen';
+import { expectContract } from '~/core/contracts';
 
 type JsonValue = SyncSettingsStore[string];
 
@@ -233,6 +234,40 @@ export function plan(
 }
 
 /**
+ * @description Copies one kind's installs, so merging can change the copy without the original.
+ * @param entry The kind document to copy.
+ * @returns The copy.
+ */
+function copyKind(entry: SyncKindDocument): SyncKindDocument {
+	return {
+		applied: entry.applied,
+		installs: entry.installs.map((install) => ({ ...install })),
+	};
+}
+
+/**
+ * @description Copies a document, so merging can mutate it without writing through to the one the
+ * caller still holds: Hermes has no `structuredClone`.
+ * @param document The document to copy.
+ * @returns The copy.
+ */
+function copyDocument(document: SyncDocument): SyncDocument {
+	const addons: Record<SyncKind, SyncKindDocument> = {
+		plugins: copyKind(document.addons.plugins),
+		themes: copyKind(document.addons.themes),
+		icons: copyKind(document.addons.icons),
+		fonts: copyKind(document.addons.fonts),
+	};
+	const settings: Record<string, SyncSettingsStore> = {};
+
+	for (const [name, store] of Object.entries(document.settings)) {
+		settings[name] = { ...store };
+	}
+
+	return { addons, settings };
+}
+
+/**
  * @description Builds the base to keep after a sync whose actions partly failed: a failed install is
  * left out so the next sync retries it, and a failed delete is kept so the next sync deletes again.
  * Without this, a failed install would read as a delete on this device and remove it everywhere.
@@ -246,8 +281,7 @@ export function reconcileBase(
 	previous: SyncDocument,
 	failed: SyncAction[],
 ): SyncDocument {
-	// Parsing copies the document; Hermes has no `structuredClone`.
-	const result = parse(syncDocumentSchema, document);
+	const result = expectContract(copyDocument(document), isSyncDocument, 'The sync document');
 
 	for (const action of failed) {
 		if (action.type === 'install') {

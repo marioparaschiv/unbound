@@ -5,13 +5,18 @@ import {
 	SYNC_KINDS,
 	SYNC_LOCAL_KEYS,
 	SYNC_LOCAL_STORE_PREFIX,
-	syncSettingsStoreSchema,
+} from '@unbound-app/contracts/sync-stores';
+import type {
+	SyncDocument,
+	SyncKind,
+	SyncKindDocument,
+	SyncSettingsStore,
 } from '@unbound-app/contracts/sync';
-import type { SyncDocument, SyncKind, SyncKindDocument } from '@unbound-app/contracts/sync';
-import { parse } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
 
+import { isSyncSettingsStore } from '~/core/validators.gen';
 import { getBucket, snapshot } from '~/storage/api';
+import { expectContract } from '~/core/contracts';
 import type { SyncAction } from '~/sync/merge';
 import { icons } from '~/icon-packs/manager';
 import { plugins } from '~/plugins/manager';
@@ -127,6 +132,16 @@ function collectKind(kind: SyncKind): SyncKindDocument {
 }
 
 /**
+ * @description Copies a settings store, checking it against the contract as `parse` did, so the synced
+ * document cannot write through to the live settings.
+ * @param store The store as `snapshot` reports it.
+ * @returns A shallow copy of it.
+ */
+function copyStore(store: SyncSettingsStore): SyncSettingsStore {
+	return expectContract({ ...store }, isSyncSettingsStore, 'The settings store');
+}
+
+/**
  * @description Reads this device's side of Sync: the URL, enabled and applied state of every
  * addon installed from a URL, the core settings minus device-local keys, and those addons' settings.
  * @returns The document, detached from the live settings.
@@ -148,9 +163,10 @@ export function collectLocalDocument(): SyncDocument {
 			continue;
 		}
 
+		// The document keeps its own copy of each store; Hermes has no `structuredClone`, so a shallow
+		// copy stands in for the deep one `parse` used to make.
 		if (name === SYNC_CORE_STORE) {
-			// Parsing copies the store; Hermes has no `structuredClone`.
-			const core = parse(syncSettingsStoreSchema, store);
+			const core = copyStore(store);
 
 			for (const key of LOCAL_KEYS) {
 				delete core[key];
@@ -158,7 +174,7 @@ export function collectLocalDocument(): SyncDocument {
 
 			synced[name] = core;
 		} else if (ids.has(name)) {
-			synced[name] = parse(syncSettingsStoreSchema, store);
+			synced[name] = copyStore(store);
 		}
 	}
 

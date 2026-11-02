@@ -5,7 +5,7 @@ import { Code } from 'typebox/compile';
 import Guard from 'typebox/guard';
 import { Type } from 'typebox';
 
-import { inlineExports, type TypeboxModule } from './inline';
+import { CONTRACT_FORMATS, inlineExports, type HelperModule } from './inline';
 
 /** One schema the client validates without shipping a validator library. */
 export type ValidatorEntry = {
@@ -17,6 +17,11 @@ export type ValidatorEntry = {
 	typeImports: string[];
 	/** What the check narrows to, such as `Static<typeof catalogResponseSchema>`. */
 	valueType: string;
+	/**
+	 * Check the schema's structure only, dropping its `Type.Refine` predicates and any codec's decode;
+	 * the call site runs those itself. Without it, a schema that carries either is refused.
+	 */
+	structureOnly?: boolean;
 };
 
 /** The helpers a compiled schema needs inlined beside it. */
@@ -46,6 +51,8 @@ type Compiled = Split & {
 /**
  * @description Generates one standalone module of `(value: unknown) => value is T` checks for the
  * registry, with typebox's helpers and format checkers inlined so no validator library is imported.
+ * A `structureOnly` entry checks the structure a `parse` accepts before defaults, refinements and
+ * codec decoding, which its call site runs itself.
  * @param entries The schemas to compile, in the order their checks are exported.
  * @returns The module source, deterministic for the same entries.
  * @throws When a schema uses `Type.Refine` or `Type.Codec`, which `Code` cannot inline faithfully.
@@ -81,25 +88,56 @@ function importedTypes(entries: ValidatorEntry[]): string {
 }
 
 async function helpersFor(needs: Needs): Promise<string[]> {
-	const helpers: string[] = [];
-	const formats = namespace('Formats', 'format', [...needs.formats].sort());
-	const guard = namespace('Guard', 'guard', [...needs.guard].sort());
-	const hashing = namespace('Hashing', 'hashing', [...needs.hashing].sort());
+	const helpers = [
+		await formatsFor([...needs.formats].sort()),
+		await namespace('Guard', 'guard', [...needs.guard].sort()),
+		await namespace('Hashing', 'hashing', [...needs.hashing].sort()),
+		await checkContext(needs.checkContext),
+	];
 
-	for (const helper of [formats, guard, hashing, checkContext(needs.checkContext)]) {
-		const source = await helper;
+	return helpers.filter((helper): helper is string => helper !== undefined);
+}
 
-		if (source) {
-			helpers.push(source);
+// The contracts register their own format checkers, so those come from `contracts/formats` and only
+// typebox's built-in ones from typebox.
+async function formatsFor(members: string[]): Promise<string | undefined> {
+	if (members.length === 0) {
+		return undefined;
+	}
+
+	const groups = [
+		{
+			module: 'contracts-format' as const,
+			prefix: 'f',
+			members: members.filter((member) => CONTRACT_FORMATS.includes(member)),
+		},
+		{
+			module: 'format' as const,
+			prefix: 'g',
+			members: members.filter((member) => !CONTRACT_FORMATS.includes(member)),
+		},
+	].filter((group) => group.members.length > 0);
+	const code: string[] = [];
+	const returned = new Map<string, string>();
+
+	for (const group of groups) {
+		const inlined = await inlineExports(group.module, group.members, group.prefix);
+
+		code.push(inlined.code);
+
+		for (const [index, member] of group.members.entries()) {
+			returned.set(member, inlined.bindings[index]!);
 		}
 	}
 
-	return helpers;
+	const entries = members.map((member) => `${member}: ${returned.get(member)}`).join(', ');
+
+	return `const Formats = /* @__PURE__ */ (() => {\n${indent(code.join('\n\n'))}\n\n\treturn { ${entries} };\n})();`;
 }
 
 async function namespace(
 	name: string,
-	module: TypeboxModule,
+	module: HelperModule,
 	members: string[],
 ): Promise<string | undefined> {
 	if (members.length === 0) {
@@ -129,14 +167,98 @@ function check(entry: ValidatorEntry, compiled: Compiled): string {
 	const returned = compiled.checkContext
 		? `(value) => ${compiled.entry}(new CheckContext(), value)`
 		: compiled.entry;
+	const description = entry.structureOnly
+		? `Whether \`value\` passes the structure of \`${entry.name.replace(/^is/, '')}\`; its refinements and codec decoding are the call site's.`
+		: `Whether \`value\` passes the \`${entry.name}\` check.`;
 
 	return [
-		`/** @description Whether \`value\` passes the \`${entry.name}\` check. */`,
+		`/** @description ${description} */`,
 		`export const ${entry.name}: (value: unknown) => value is ${entry.valueType} = /* @__PURE__ */ (() => {\n${external}${indent(compiled.body)}\n\n\treturn ${returned};\n})();`,
 	].join('\n');
 }
 
+function compileStructure(entry: ValidatorEntry, needs: Needs): Compiled {
+	const { Code: code, External } = Code(structural(entry.schema) as TSchema);
+	const { body, checkContext } = split(entry.name, code);
+	const external = External.variables.map((value) => serialize(entry.name, value, needs));
+
+	needs.checkContext ||= checkContext;
+
+	inlinedHelpers(entry.name, body, needs);
+
+	return { body, entry: entryOf(entry.name, code), external, checkContext };
+}
+
+/**
+ * @description Copies a schema without the non-enumerable refinement hooks `Type.Refine` and
+ * `superRefine` ride on, so `Code` compiles the structure alone.
+ * @param node The schema or any node inside it.
+ * @param cloned The copies already made, so shared and cyclic nodes stay shared.
+ * @returns The structural copy.
+ */
+// UNKNOWN: walks the schema's JSON shape, where every node may be any value.
+function structural(node: unknown, cloned = new Map<object, unknown>()): unknown {
+	if (typeof node !== 'object' || node === null || node instanceof RegExp) {
+		return node;
+	}
+
+	const made = cloned.get(node);
+
+	if (made !== undefined) {
+		return made;
+	}
+
+	if (Array.isArray(node)) {
+		const items: unknown[] = [];
+
+		cloned.set(node, items);
+
+		for (const item of node) {
+			items.push(structural(item, cloned));
+		}
+
+		return items;
+	}
+
+	const copy: object = {};
+
+	cloned.set(node, copy);
+
+	for (const [key, value] of Object.entries(node)) {
+		// `parse` fills a subschema's `default` before it checks, so a structure-only check accepts
+		// the property being absent and leaves the default to the call site.
+		if (key === 'required' && Array.isArray(value)) {
+			Reflect.set(
+				copy,
+				key,
+				value.filter((member) => !hasDefault(Reflect.get(node, 'properties'), member)),
+			);
+
+			continue;
+		}
+
+		Reflect.set(copy, key, structural(value, cloned));
+	}
+
+	return copy;
+}
+
+// UNKNOWN: an object schema's `properties` map, whose values are subschemas.
+function hasDefault(properties: unknown, key: unknown): boolean {
+	if (typeof properties !== 'object' || properties === null || typeof key !== 'string') {
+		return false;
+	}
+
+	const subschema: unknown = Reflect.get(properties, key);
+
+	return typeof subschema === 'object' && subschema !== null && 'default' in subschema;
+}
+
 function compile(entry: ValidatorEntry, needs: Needs): Compiled {
+	if (entry.structureOnly) {
+		return compileStructure(entry, needs);
+	}
+
 	assertInlinable(entry.name, entry.schema);
 
 	const { Code: code, External } = Code(entry.schema);
@@ -145,6 +267,19 @@ function compile(entry: ValidatorEntry, needs: Needs): Compiled {
 
 	needs.checkContext ||= checkContext;
 
+	inlinedHelpers(entry.name, body, needs);
+
+	return { body, entry: entryOf(entry.name, code), external, checkContext };
+}
+
+/**
+ * @description Records the typebox `Guard` and `Hashing` helpers a compiled check calls, so the
+ * generated module inlines exactly those.
+ * @param name The entry the check belongs to, for the error.
+ * @param body The compiled check's source.
+ * @param needs The accumulator the helpers are recorded in.
+ */
+function inlinedHelpers(name: string, body: string, needs: Needs): void {
 	for (const match of body.matchAll(/\b(Guard|Hashing)\.(\w+)/g)) {
 		const [, owner, member] = match;
 
@@ -154,12 +289,10 @@ function compile(entry: ValidatorEntry, needs: Needs): Compiled {
 			needs.hashing.add(member!);
 		} else {
 			throw new Error(
-				`${entry.name} needs typebox/${owner}.${member}, which is not a runtime helper.`,
+				`${name} needs typebox/${owner}.${member}, which is not a runtime helper.`,
 			);
 		}
 	}
-
-	return { body, entry: entryOf(entry.name, code), external, checkContext };
 }
 
 function split(name: string, code: string): Split {

@@ -8,7 +8,7 @@ import { eq } from 'drizzle-orm';
 import createSubmissionEndpoint from '~/endpoints/create-submission';
 import reviewSubmissionEndpoint from '~/endpoints/review-submission';
 import getCatalogEndpoint from '~/endpoints/get-catalog';
-import { createApiClient } from '~/api/client';
+import { createApiClient } from '~/api/schema-client';
 import { submission, user } from '~/db/schema';
 import type { Role } from '~/lib/auth/access';
 import type { Api } from '~/api';

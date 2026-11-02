@@ -1,8 +1,8 @@
-import { crashReportResponseSchema } from '@unbound-app/contracts/crash-reports';
 import { createApiClient } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
 import type { Api } from '@unbound-app/web/api';
 
+import { isCrashReportResponse } from '~/core/validators.gen';
 import { buildCrashReport } from '~/diagnostics/crash-report';
 import type { CrashEvent } from '~/diagnostics/crash-report';
 import { currentEnvironment } from '~/core/environment';
@@ -53,7 +53,7 @@ export async function reportCrash(event: CrashEvent): Promise<void> {
 
 		await request('POST /api/v1/crash-reports', {
 			body: report,
-			response: crashReportResponseSchema,
+			response: isCrashReportResponse,
 		});
 	} catch (error) {
 		logger.warn('Could not send a crash report:', error);

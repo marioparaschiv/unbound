@@ -12,7 +12,7 @@ import type {
 	MeasuredMedia,
 } from '@unbound-app/contracts/addon-page';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
-import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-media';
+import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-paths';
 import { safeParse } from '@unbound-app/contracts/schema';
 import type { Token, Tokens } from 'marked';
 import { Lexer, walkTokens } from 'marked';
@@ -20,8 +20,8 @@ import { dirname, join } from 'node:path';
 
 import type { BuildCheck, BuildCheckIssue } from '~/lib/build-checks';
 import { measureMedia } from '~/lib/media-probe';
-import { parseMediaLimits } from '~/lib/env';
 import type { MediaLimits } from '~/lib/env';
+import { parseMediaLimits } from '~/lib/env';
 
 /** Every issue found reading ADDON.md, and the measured page when nothing failed. */
 export type PageResult = {

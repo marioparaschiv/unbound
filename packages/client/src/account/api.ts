@@ -1,15 +1,10 @@
-import {
-	accountOAuthConfigSchema,
-	accountSignInResponseSchema,
-	meResponseSchema,
-} from '@unbound-app/contracts/account';
 import type { AccountSignInResponse, Caller } from '@unbound-app/contracts/account';
 import { ApiRequestError, createApiClient } from '@unbound-app/web/client';
-import { safeParse } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
 import toError from '@unbound-app/utils/to-error';
 import type { Api } from '@unbound-app/web/api';
 
+import { isAccountOAuthConfig, isAccountSignInResponse, isMeResponse } from '~/core/validators.gen';
 import { authorizeWithDiscord } from '~/account/discord-oauth';
 import { getBucket, useBucket } from '~/storage/api';
 import { EventEmitter } from '~/core/event-emitter';
@@ -50,9 +45,9 @@ export const on = Events.on.bind(Events);
 export const off = Events.off.bind(Events);
 
 function readSession(): Session | undefined {
-	const parsed = safeParse(accountSignInResponseSchema, Store.get('session', null));
+	const stored: unknown = Store.get('session', null);
 
-	return parsed.success ? parsed.data : undefined;
+	return isAccountSignInResponse(stored) ? stored : undefined;
 }
 
 function toAccount(user: Caller): Account {
@@ -128,7 +123,7 @@ export async function signIn(): Promise<SignInResult> {
 		const request = createApiClient<Api>({ baseUrl: API_URL });
 		// Production serves only the deprecated path until `/api/v1/auth/discord` deploys; switch then.
 		const config = await request('GET /api/v1/sync/oauth', {
-			response: accountOAuthConfigSchema,
+			response: isAccountOAuthConfig,
 		});
 		const code = await authorizeWithDiscord(config);
 
@@ -138,7 +133,7 @@ export async function signIn(): Promise<SignInResult> {
 
 		const session = await request('POST /api/v1/sync/oauth', {
 			body: { code },
-			response: accountSignInResponseSchema,
+			response: isAccountSignInResponse,
 		});
 		const account = toAccount(session.user);
 
@@ -192,7 +187,7 @@ export async function refresh(): Promise<void> {
 	}
 
 	try {
-		const { user } = await createClient()('GET /api/v1/me', { response: meResponseSchema });
+		const { user } = await createClient()('GET /api/v1/me', { response: isMeResponse });
 
 		if (readSession()?.token === session.token) {
 			Store.set('session', { token: session.token, user });

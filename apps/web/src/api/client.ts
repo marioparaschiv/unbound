@@ -1,6 +1,7 @@
-import { parse, safeParse, type TSchema, type StaticDecode } from '@unbound-app/contracts/schema';
-import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
+import type { StaticDecode, TSchema } from '@unbound-app/contracts/schema';
+import { isApiErrorCode } from '@unbound-app/contracts/api-error-codes';
 import type { ApiErrorCode } from '@unbound-app/contracts/errors';
+import { SchemaError } from '@unbound-app/contracts/schema-error';
 
 /** The header `ubd publish` sends an API key in, for CI publishing. */
 export const API_KEY_HEADER = 'x-api-key';
@@ -46,6 +47,28 @@ type QueryOption<R extends ApiRoute> = undefined extends R['query']
 		? { query?: R['query'] }
 		: { query: R['query'] };
 
+/** Checks a response body against a route's contract, narrowing it to the schema's decoded type. */
+export type ResponseCheck<T> = (value: unknown) => value is T;
+
+// `parse` decoded codecs and filled defaults, which a generated check leaves to its call site; the
+// type a route answers with is therefore the schema's decoded type either way.
+export type CheckedRequestOptions<K, R extends ApiRoute> = ParamsOption<K> &
+	BodyOption<R> &
+	QueryOption<R> & {
+		/** The generated check for the route's contract response; the compiler checks it is that schema's. */
+		response: ResponseCheck<StaticDecode<R['response']>>;
+		headers?: HeaderValues;
+	};
+
+/** What a request sends besides its route: the path parameters, query, body and extra headers. */
+export type RequestParts = {
+	params?: Record<string, string>;
+	query?: QueryValues;
+	body?: unknown;
+	headers?: HeaderValues;
+};
+
+/** The options a request sends to the API: everything but how its response is read. */
 export type RequestOptions<K, R extends ApiRoute> = ParamsOption<K> &
 	BodyOption<R> &
 	QueryOption<R> & {
@@ -110,10 +133,28 @@ function buildPath(path: string, params: Record<string, string> | undefined): st
 	});
 }
 
-async function toRequestError(response: Response): Promise<ApiRequestError> {
-	const parsed = safeParse(apiErrorResponseSchema, await response.json().catch(() => null));
+// UNKNOWN: an error body before its schema runs.
+function isErrorBody(value: unknown): value is { error: { code: ApiErrorCode; message: string } } {
+	if (typeof value !== 'object' || value === null || !('error' in value)) {
+		return false;
+	}
 
-	if (!parsed.success) {
+	const { error } = value;
+
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		'code' in error &&
+		isApiErrorCode(error.code) &&
+		'message' in error &&
+		typeof error.message === 'string'
+	);
+}
+
+async function toRequestError(response: Response): Promise<ApiRequestError> {
+	const body: unknown = await response.json().catch(() => null);
+
+	if (!isErrorBody(body)) {
 		return new ApiRequestError(
 			'internal_error',
 			response.status,
@@ -121,52 +162,75 @@ async function toRequestError(response: Response): Promise<ApiRequestError> {
 		);
 	}
 
-	return new ApiRequestError(parsed.data.error.code, response.status, parsed.data.error.message);
+	return new ApiRequestError(body.error.code, response.status, body.error.message);
+}
+
+/**
+ * @description Sends one request and returns its JSON body, throwing an {@link ApiRequestError} for a
+ * non-2xx answer and a {@link NotModifiedError} for a `304` to a conditional request.
+ * @param options The API origin and headers sent with every request (e.g. credentials).
+ * @param route The `"METHOD /path"` route, with `$param` segments.
+ * @param init The path parameters, query, body and per-request headers.
+ * @returns The parsed body, still unchecked: the caller validates it against the route's contract.
+ */
+// UNKNOWN: the body of a route, which the caller checks against its contract.
+export async function sendRequest(
+	options: ApiClientOptions,
+	route: string,
+	init: RequestParts,
+): Promise<unknown> {
+	const separator = route.indexOf(' ');
+	const method = route.slice(0, separator);
+	const path = route.slice(separator + 1);
+	const headers = new Headers(options.headers);
+
+	for (const [name, value] of new Headers(init.headers)) {
+		headers.set(name, value);
+	}
+
+	if (init.body !== undefined) {
+		headers.set('content-type', 'application/json');
+	}
+
+	const url = buildUrl(options.baseUrl, path, init.params, init.query);
+	const response = await fetch(url, {
+		method,
+		headers,
+		body: init.body === undefined ? undefined : JSON.stringify(init.body),
+	});
+
+	if (response.status === 304) {
+		throw new NotModifiedError();
+	}
+
+	if (!response.ok) {
+		throw await toRequestError(response);
+	}
+
+	return response.json();
 }
 
 /**
  * @description Creates a typed client for the Unbound web API. Routes, bodies and responses are
- * checked against the API map exported by `@unbound-app/web/api`; responses are parsed with the
- * route's contract schema and `{ error: { code, message } }` bodies are thrown as
+ * checked against the API map exported by `@unbound-app/web/api`; each answer is checked by the
+ * route's generated contract check, and `{ error: { code, message } }` bodies are thrown as
  * {@link ApiRequestError}. A `304` to a conditional request is thrown as {@link NotModifiedError}.
  * @template Api The API map, `Api` from `@unbound-app/web/api`.
  * @param options The API origin and headers sent with every request (e.g. credentials).
- * @returns A `request(route, options)` function.
+ * @returns A `request(route, options)` function taking the route's generated check.
  */
 export function createApiClient<Api extends ApiMap>(options: ApiClientOptions) {
 	return async function request<K extends keyof Api & string>(
 		route: K,
-		init: RequestOptions<K, Api[K]>,
+		init: CheckedRequestOptions<K, Api[K]>,
 	): Promise<StaticDecode<Api[K]['response']>> {
-		const separator = route.indexOf(' ');
-		const method = route.slice(0, separator);
-		const path = route.slice(separator + 1);
-		const headers = new Headers(options.headers);
+		const body = await sendRequest(options, route, init);
 
-		for (const [name, value] of new Headers(init.headers)) {
-			headers.set(name, value);
+		if (!init.response(body)) {
+			throw new SchemaError([{ path: '', message: 'Response did not match the contract.' }]);
 		}
 
-		if (init.body !== undefined) {
-			headers.set('content-type', 'application/json');
-		}
-
-		const url = buildUrl(options.baseUrl, path, init.params, init.query);
-		const response = await fetch(url, {
-			method,
-			headers,
-			body: init.body === undefined ? undefined : JSON.stringify(init.body),
-		});
-
-		if (response.status === 304) {
-			throw new NotModifiedError();
-		}
-
-		if (!response.ok) {
-			throw await toRequestError(response);
-		}
-
-		return parse(init.response, await response.json());
+		return body;
 	};
 }
 
@@ -176,4 +240,5 @@ export default {
 	ApiRequestError,
 	NotModifiedError,
 	createApiClient,
+	sendRequest,
 };

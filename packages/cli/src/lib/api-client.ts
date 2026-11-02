@@ -1,4 +1,5 @@
-import { API_KEY_HEADER, createApiClient } from '@unbound-app/web/client';
+import { createApiClient } from '@unbound-app/web/schema-client';
+import { API_KEY_HEADER } from '@unbound-app/web/client';
 import type { Api } from '@unbound-app/web/api';
 
 import { getCredentialsPath, type Env } from '~/lib/env';

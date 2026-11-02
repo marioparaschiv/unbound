@@ -1,7 +1,7 @@
-import { CRASH_REPORT_LOG_LIMIT, crashReportSchema } from '@unbound-app/contracts/crash-reports';
+import { CRASH_REPORT_LOG_LIMIT } from '@unbound-app/contracts/crash-report-limits';
 import type { CrashReport } from '@unbound-app/contracts/crash-reports';
-import { safeParse } from '@unbound-app/contracts/schema';
 
+import { isCrashReport } from '~/core/validators.gen';
 import type { Addon } from '~/addons/addon';
 
 /** The addon a report is about. */
@@ -106,7 +106,8 @@ export function buildCrashReport(
 	log?: string,
 ): CrashReport | undefined {
 	const excerpt = log === undefined ? undefined : crashLogExcerpt(log);
-	const parsed = safeParse(crashReportSchema, {
+	// UNKNOWN: assembled from the event, the environment and the log, and checked below.
+	const report: unknown = {
 		...event,
 		...environment,
 		...(excerpt === undefined ? {} : { log: excerpt }),
@@ -116,7 +117,7 @@ export function buildCrashReport(
 		discordVersion: environment.discordVersion.slice(0, 64),
 		osVersion: environment.osVersion.slice(0, 64),
 		deviceModel: environment.deviceModel.slice(0, 64),
-	});
+	};
 
-	return parsed.success ? parsed.data : undefined;
+	return isCrashReport(report) ? report : undefined;
 }

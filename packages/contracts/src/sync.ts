@@ -1,23 +1,24 @@
-import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
-
+import {
+	emptySyncDocument,
+	SYNC_DEFAULT_ICON_PACK,
+	SYNC_ID_PATTERN,
+	SYNC_KINDS,
+	SYNC_LOCAL_KEYS,
+	SYNC_LOCAL_STORE_PREFIX,
+	SYNC_CORE_STORE,
+} from './sync-stores';
 import { Type, type StaticDecode } from './schema';
 
-/** The addon managers whose installs sync, named after their settings buckets. */
-export const SYNC_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
+export {
+	SYNC_KINDS,
+	SYNC_CORE_STORE,
+	SYNC_LOCAL_STORE_PREFIX,
+	SYNC_LOCAL_KEYS,
+	SYNC_DEFAULT_ICON_PACK,
+	SYNC_ID_PATTERN,
+	emptySyncDocument,
+} from './sync-stores';
 
-/** The core settings store; addon settings stores are named after the addon id. */
-export const SYNC_CORE_STORE = CORE_SETTINGS_STORE;
-
-/** Stores under this prefix hold caches and session state, and never sync. */
-export const SYNC_LOCAL_STORE_PREFIX = 'unbound::';
-
-/** Keys of the core store that only make sense on the device that set them. */
-export const SYNC_LOCAL_KEYS = ['recovery', 'debugger', 'loader'] as const;
-
-/** The built-in icon pack, which is always installed and may be applied without a synced install. */
-export const SYNC_DEFAULT_ICON_PACK = 'default';
-
-export const SYNC_ID_PATTERN = /^[\w.-]{1,128}$/;
 export const SYNC_URL_MAX_LENGTH = 2048;
 export const SYNC_SETTINGS_MAX_DEPTH = 8;
 
@@ -110,19 +111,6 @@ export type SyncState = StaticDecode<typeof syncStateSchema>;
 export type SyncDocumentInput = StaticDecode<typeof syncDocumentInputSchema>;
 export type SyncPutRequest = StaticDecode<typeof syncPutRequestSchema>;
 export type SyncDeleteResponse = StaticDecode<typeof syncDeleteResponseSchema>;
-
-/**
- * @description Builds a document with no installs and no settings.
- * @returns The empty document.
- */
-export function emptySyncDocument(): SyncDocument {
-	const kind = () => ({ installs: [], applied: null });
-
-	return {
-		addons: { plugins: kind(), themes: kind(), icons: kind(), fonts: kind() },
-		settings: {},
-	};
-}
 
 export default {
 	SYNC_KINDS,

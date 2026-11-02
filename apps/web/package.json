@@ -12,6 +12,10 @@
 			"types": "./dist/types/src/api/client.d.ts",
 			"default": "./src/api/client.ts"
 		},
+		"./schema-client": {
+			"types": "./dist/types/src/api/schema-client.d.ts",
+			"default": "./src/api/schema-client.ts"
+		},
 		"./bot": {
 			"types": "./dist/types/src/lib/bot/index.d.ts",
 			"default": "./src/lib/bot/index.ts"

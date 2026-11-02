@@ -1,67 +1,47 @@
 import { parseDocument } from 'yaml';
 
 import {
-	safeParse,
-	type SchemaIssue,
-	superRefine,
-	trimmedString,
-	Type,
-	type StaticDecode,
-} from './schema';
+	ALT_CHECKS,
+	BANNER_MIN_HEIGHT,
+	BANNER_MIN_WIDTH,
+	getMediaKind,
+	isBannerAspect,
+	isGalleryAspect,
+	MEDIA_EXTENSIONS,
+	MEDIA_KINDS,
+	MEDIA_MAX_BYTES,
+	MEDIA_PATH_MAX_LENGTH,
+	MEDIA_TOTAL_MAX_BYTES,
+	measuredPageIssues,
+} from './addon-page-media';
+import { ADDON_PAGE_FILENAME, MEASURED_PAGE_FILENAME, splitFrontmatter } from './addon-page-text';
+import { safeParse, superRefine, trimmedString, Type, type StaticDecode } from './schema';
 
-/** The file in an addon's directory that holds its store page. */
-export const ADDON_PAGE_FILENAME = 'ADDON.md';
-
-/** The file `ubd build` writes the measured page to, in the addon's output directory. */
-export const MEASURED_PAGE_FILENAME = 'page.json';
-
-/** The kinds of media a page can show. */
-export const MEDIA_KINDS = ['image', 'video'] as const;
-
-export type MediaKind = (typeof MEDIA_KINDS)[number];
-
-/** Maps each lowercase file extension a page may reference to the kind of media it holds. */
-export const MEDIA_EXTENSIONS: Record<string, MediaKind> = {
-	png: 'image',
-	jpg: 'image',
-	jpeg: 'image',
-	webp: 'image',
-	gif: 'image',
-	mp4: 'video',
-	webm: 'video',
-};
-
-/** The smallest banner the store accepts, in pixels. */
-export const BANNER_MIN_WIDTH = 1200;
-export const BANNER_MIN_HEIGHT = 400;
-
-/** The default size limits for one media file and for all of an addon's media together, in bytes. */
-export const MEDIA_MAX_BYTES = 10 * 1024 * 1024;
-export const MEDIA_TOTAL_MAX_BYTES = 50 * 1024 * 1024;
-
-const FRONTMATTER = /^\uFEFF?---[ \t]*\r?\n(?:([\s\S]*?)\r?\n)?---[ \t]*(?:\r?\n|$)/;
-
-/**
- * @description Reads the kind of media a file holds from its extension.
- * @param path The file's path or name.
- * @returns The kind, or `undefined` when the extension is not one a page may use.
- */
-export function getMediaKind(path: string): MediaKind | undefined {
-	const dot = path.lastIndexOf('.');
-
-	if (dot === -1) {
-		return undefined;
-	}
-
-	return MEDIA_EXTENSIONS[path.slice(dot + 1).toLowerCase()];
-}
+export {
+	BANNER_MIN_HEIGHT,
+	BANNER_MIN_WIDTH,
+	getMediaKind,
+	isBannerAspect,
+	isGalleryAspect,
+	isMediaPath,
+	MEDIA_EXTENSIONS,
+	MEDIA_KINDS,
+	MEDIA_MAX_BYTES,
+	MEDIA_TOTAL_MAX_BYTES,
+	measuredPageIssues,
+	readAlt,
+	readMeasuredPage,
+} from './addon-page-media';
+export { ADDON_PAGE_FILENAME, MEASURED_PAGE_FILENAME, splitFrontmatter } from './addon-page-text';
+export type { MeasuredPage, MediaKind } from './addon-page-media';
+export type { SplitAddonPage } from './addon-page-text';
 
 const UNDOTTED_SEGMENT = String.raw`[\w-][\w.-]*`;
 const MEDIA_PATH = new RegExp(String.raw`^media/(?:${UNDOTTED_SEGMENT}/)*${UNDOTTED_SEGMENT}$`);
 
 export const mediaPathSchema = Type.Refine(
 	Type.String({
-		maxLength: 200,
+		maxLength: MEDIA_PATH_MAX_LENGTH,
 		pattern: MEDIA_PATH,
 		errorMessage: 'Must be a relative path inside the media/ folder.',
 	}),
@@ -81,11 +61,7 @@ export const videoPathSchema = Type.Refine(
 	() => 'Must be a video.',
 );
 
-const altSchema = trimmedString(
-	(value) => (value.length < 1 ? 'Describe the media.' : undefined),
-	(value) =>
-		value.length > 300 ? 'Too big: expected string to have <=300 characters' : undefined,
-);
+const altSchema = trimmedString(...ALT_CHECKS);
 
 /** One gallery entry: an image, or a video with an optional poster image. */
 export const pageMediaSchema = Type.Union([
@@ -135,116 +111,21 @@ export type PageMedia = StaticDecode<typeof pageMediaSchema>;
 export type AddonPageFrontmatter = StaticDecode<typeof addonPageFrontmatterSchema>;
 export type MeasuredMedia = StaticDecode<typeof measuredMediaSchema>;
 
-/**
- * @description Checks the banner shape: exactly 3:1 and at least 1200x400.
- * @param media The measured banner.
- * @returns Whether the store accepts it as a banner.
- */
-export function isBannerAspect(media: MeasuredMedia): boolean {
-	return (
-		media.width === media.height * 3 &&
-		media.width >= BANNER_MIN_WIDTH &&
-		media.height >= BANNER_MIN_HEIGHT
-	);
-}
-
-/**
- * @description Checks a gallery entry's shape: between 9:16 (portrait) and 21:9 (ultrawide), inclusive.
- * @param media The measured image or video.
- * @returns Whether the store accepts it in the gallery.
- */
-export function isGalleryAspect(media: MeasuredMedia): boolean {
-	return media.width * 16 >= media.height * 9 && media.width * 9 <= media.height * 21;
-}
-
 /** The measured page `ubd build` writes to `{output}/page.json`: the frontmatter and every media file it measured. */
 export const addonPageSchema = superRefine(
 	Type.Object({
 		frontmatter: addonPageFrontmatterSchema,
 		media: Type.Array(measuredMediaSchema),
 	}),
-	(page) => {
-		const issues: SchemaIssue[] = [];
-		const measured = new Map<string, MeasuredMedia>();
-
-		for (const [index, media] of page.media.entries()) {
-			if (measured.has(media.path)) {
-				issues.push({
-					path: `/media/${index}/path`,
-					message: `${media.path} is measured twice.`,
-				});
-			}
-
-			measured.set(media.path, media);
-		}
-
-		function find(path: string, at: string): MeasuredMedia | undefined {
-			const media = measured.get(path);
-
-			if (!media) {
-				issues.push({ path: at, message: `${path} was not measured.` });
-			}
-
-			return media;
-		}
-
-		const banner = find(page.frontmatter.banner, '/frontmatter/banner');
-
-		if (banner && !isBannerAspect(banner)) {
-			issues.push({
-				path: '/frontmatter/banner',
-				message: `The banner must be exactly 3:1 and at least ${BANNER_MIN_WIDTH}x${BANNER_MIN_HEIGHT}; ${banner.path} is ${banner.width}x${banner.height}.`,
-			});
-		}
-
-		for (const [index, entry] of page.frontmatter.media.entries()) {
-			const at = `/frontmatter/media/${index}`;
-			const media = 'image' in entry ? find(entry.image, at) : find(entry.video, at);
-
-			if (media && !isGalleryAspect(media)) {
-				issues.push({
-					path: at,
-					message: `Media must be between 9:16 and 21:9; ${media.path} is ${media.width}x${media.height}.`,
-				});
-			}
-
-			if ('video' in entry && entry.poster) {
-				find(entry.poster, `${at}/poster`);
-			}
-		}
-
-		return issues;
-	},
+	measuredPageIssues,
 );
 
 export type AddonPage = StaticDecode<typeof addonPageSchema>;
-
-/** ADDON.md cut at its frontmatter fences. */
-export type SplitAddonPage = {
-	/** The YAML between the `---` fences, or `undefined` when the file has none. */
-	frontmatter: string | undefined;
-	body: string;
-};
 
 /** The result of reading ADDON.md: its typed frontmatter and Markdown body, or why it was refused. */
 export type ParsedAddonPage =
 	| { success: true; frontmatter: AddonPageFrontmatter; body: string }
 	| { success: false; error: string };
-
-/**
- * @description Cuts ADDON.md into its YAML frontmatter and its Markdown body.
- * @param source The file's text.
- * @returns The YAML between the leading `---` fences and the Markdown after them.
- */
-export function splitFrontmatter(source: string): SplitAddonPage {
-	const match = FRONTMATTER.exec(source);
-
-	if (!match) {
-		return { frontmatter: undefined, body: source };
-	}
-
-	return { frontmatter: match[1] ?? '', body: source.slice(match[0].length) };
-}
 
 /**
  * @description Reads ADDON.md's frontmatter as YAML and validates it against the page contract.

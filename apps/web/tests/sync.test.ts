@@ -18,9 +18,9 @@ import { eq } from 'drizzle-orm';
 import getDiscordOAuthEndpoint from '~/endpoints/get-discord-oauth';
 import discordSignInEndpoint from '~/endpoints/discord-sign-in';
 import deleteSyncEndpoint from '~/endpoints/delete-sync';
+import { createApiClient } from '~/api/schema-client';
 import getSyncEndpoint from '~/endpoints/get-sync';
 import putSyncEndpoint from '~/endpoints/put-sync';
-import { createApiClient } from '~/api/client';
 import { account, user } from '~/db/schema';
 import type { Api } from '~/api';
 

@@ -1,14 +1,10 @@
-import {
-	installedAddonSchema,
-	updatesRequestSchema,
-	updatesResponseSchema,
-} from '@unbound-app/contracts/updates';
 import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
-import { parse, safeParse } from '@unbound-app/contracts/schema';
+import { SchemaError } from '@unbound-app/contracts/schema-error';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Plugin } from '@unbound-app/types';
 import type { Api } from '@unbound-app/web/api';
 
+import { isInstalledAddon, isUpdatesRequest, isUpdatesResponse } from '~/core/validators.gen';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { Addons } from '~/addons/addons';
 
@@ -50,7 +46,7 @@ function checkable(entries: InstalledEntry[]): Map<string, InstalledEntry> {
 	const owners = new Map<string, InstalledEntry>();
 
 	for (const entry of entries) {
-		if (owners.has(entry.id) || !safeParse(installedAddonSchema, entry).success) {
+		if (owners.has(entry.id) || !isInstalledAddon(entry)) {
 			continue;
 		}
 
@@ -76,7 +72,29 @@ export function buildUpdatesRequest(
 
 	if (!addons.length) return;
 
-	return parse(updatesRequestSchema, { clientVersion, addons });
+	const request: unknown = { clientVersion, addons };
+
+	// `checkable` keys by id, so the contract's unique-id refinement always holds; check it anyway
+	// rather than trust that.
+	const unique = new Set(addons.map((addon) => addon.id)).size === addons.length;
+
+	if (!isUpdatesRequest(request) || !unique) {
+		throw new SchemaError([
+			{ path: '', message: 'The updates request does not match the contract.' },
+		]);
+	}
+
+	return request;
+}
+
+/**
+ * @description Fills the fields a server older than the contract omits, which the contract declares
+ * `default`s for: why the update is offered, and the changelogs it skips over.
+ * @param update The update as the server sent it.
+ * @returns The update with both fields present.
+ */
+function readUpdate(update: AddonUpdate): AddonUpdate {
+	return Object.assign({ reason: 'newer', changelogs: [] }, update);
 }
 
 /**
@@ -102,7 +120,7 @@ export function toPendingUpdates(
 							id: entry.id,
 							name: entry.name,
 							from: entry.version,
-							update,
+							update: readUpdate(update),
 						},
 					]
 				: [];
@@ -130,7 +148,7 @@ export async function fetchUpdates(
 	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
 	const response = await request('POST /api/v1/updates', {
 		body,
-		response: updatesResponseSchema,
+		response: isUpdatesResponse,
 	});
 
 	return toPendingUpdates(entries, response);

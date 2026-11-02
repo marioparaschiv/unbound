@@ -40,9 +40,7 @@ describe('release bundle', () => {
 		expect(vm.runInContext('typeof global', context)).toBe('object');
 	});
 
-	// The client still validates with zod until the typebox migration moves the call sites to the
-	// generated checks, so this fails today. Delete `.skip` in that wave.
-	test.skip('ships no zod or typebox module', async () => {
+	test('ships no zod or typebox module', async () => {
 		const options: unknown[] = [config.plugins].flat(2);
 		const plugins = options.filter(
 			(option): option is Plugin =>
