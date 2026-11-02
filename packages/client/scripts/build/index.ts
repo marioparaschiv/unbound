@@ -99,7 +99,12 @@ const config: RolldownOptions = {
 			sourceMaps: !IS_DEV_BUILD,
 		}),
 		downlevel(root),
-		hermesVersions(bytecodeVersions, IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map']),
+		// Stripping function names saves ~15 bytes per function; release stack frames then name no function,
+		// and `symbolicate` recovers file and line from the source map.
+		hermesVersions(
+			bytecodeVersions,
+			IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map', '-fstrip-function-names'],
+		),
 		generateManifest(GIT_REVISION, bytecodeVersions, IS_DEV_BUILD, BUILD_CHANNEL),
 		...(IS_DEV_BUILD ? [locales()] : []),
 	],
