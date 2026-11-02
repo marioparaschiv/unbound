@@ -85,15 +85,15 @@ function byId(installs: SyncInstall[]): Map<string, SyncInstall> {
 
 function mergeKind(
 	kind: SyncKind,
-	base: SyncKindDocument,
-	local: SyncKindDocument,
-	remote: SyncKindDocument,
+	base: SyncDocument,
+	local: SyncDocument,
+	remote: SyncDocument,
 	actions: SyncAction[],
 ): SyncKindDocument {
 	const [baseIds, localIds, remoteIds] = [
-		byId(base.installs),
-		byId(local.installs),
-		byId(remote.installs),
+		byId(base.addons[kind].installs),
+		byId(local.addons[kind].installs),
+		byId(remote.addons[kind].installs),
 	];
 	const installs: SyncInstall[] = [];
 
@@ -126,7 +126,11 @@ function mergeKind(
 		// Remote only but in the base: deleted on this device, so it stays deleted.
 	}
 
-	const applied = mergeValue(base.applied, local.applied, remote.applied);
+	const applied = mergeValue(
+		base.addons[kind].applied,
+		local.addons[kind].applied,
+		remote.addons[kind].applied,
+	);
 
 	if (applied.pull) {
 		actions.push({ type: 'apply', kind, id: applied.value });
@@ -182,34 +186,10 @@ export function merge(base: SyncDocument, local: SyncDocument, remote: SyncDocum
 	]);
 
 	const addons: Record<SyncKind, SyncKindDocument> = {
-		plugins: mergeKind(
-			'plugins',
-			base.addons.plugins,
-			local.addons.plugins,
-			remote.addons.plugins,
-			actions,
-		),
-		themes: mergeKind(
-			'themes',
-			base.addons.themes,
-			local.addons.themes,
-			remote.addons.themes,
-			actions,
-		),
-		icons: mergeKind(
-			'icons',
-			base.addons.icons,
-			local.addons.icons,
-			remote.addons.icons,
-			actions,
-		),
-		fonts: mergeKind(
-			'fonts',
-			base.addons.fonts,
-			local.addons.fonts,
-			remote.addons.fonts,
-			actions,
-		),
+		plugins: mergeKind('plugins', base, local, remote, actions),
+		themes: mergeKind('themes', base, local, remote, actions),
+		icons: mergeKind('icons', base, local, remote, actions),
+		fonts: mergeKind('fonts', base, local, remote, actions),
 	};
 
 	for (const name of names) {
