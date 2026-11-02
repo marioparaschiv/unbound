@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 /** Where an `{@link}` or reference points outside this project. */
 export type DocsSymbolId = {
@@ -118,140 +118,148 @@ export type DocsTypeName = DocsType['type'];
 /** The one variant of {@link DocsType} a discriminant names. */
 export type DocsTypeVariant<K extends DocsTypeName> = Extract<DocsType, Record<'type', K>>;
 
-const symbolIdSchema = z.object({ packageName: z.string(), qualifiedName: z.string() });
+const symbolIdSchema = Type.Object({ packageName: Type.String(), qualifiedName: Type.String() });
 
-const commentPartSchema: z.ZodType<DocsCommentPart> = z.discriminatedUnion('kind', [
-	z.object({ kind: z.enum(['text', 'code']), text: z.string() }),
-	z.object({
-		kind: z.literal('inline-tag'),
-		tag: z.string(),
-		text: z.string(),
-		target: z.union([z.number(), z.string(), symbolIdSchema]).optional(),
+const commentPartSchema = Type.Union([
+	Type.Object({ kind: Type.Enum(['text', 'code']), text: Type.String() }),
+	Type.Object({
+		kind: Type.Literal('inline-tag'),
+		tag: Type.String(),
+		text: Type.String(),
+		target: Type.Optional(Type.Union([Type.Number(), Type.String(), symbolIdSchema])),
 	}),
-	z.object({ kind: z.literal('relative-link'), text: z.string() }),
+	Type.Object({ kind: Type.Literal('relative-link'), text: Type.String() }),
 ]);
 
-const commentSchema: z.ZodType<DocsComment> = z.object({
-	summary: z.array(commentPartSchema),
-	blockTags: z
-		.array(
-			z.object({
-				tag: z.string(),
-				name: z.string().optional(),
-				content: z.array(commentPartSchema),
+const commentSchema = Type.Object({
+	summary: Type.Array(commentPartSchema),
+	blockTags: Type.Optional(
+		Type.Array(
+			Type.Object({
+				tag: Type.String(),
+				name: Type.Optional(Type.String()),
+				content: Type.Array(commentPartSchema),
 			}),
-		)
-		.optional(),
-	modifierTags: z.array(z.string()).optional(),
+		),
+	),
+	modifierTags: Type.Optional(Type.Array(Type.String())),
 });
 
-const literalSchema: z.ZodType<DocsLiteral> = z.union([
-	z.string(),
-	z.number(),
-	z.boolean(),
-	z.null(),
-	z.object({ value: z.string(), negative: z.boolean() }),
+const literalSchema = Type.Union([
+	Type.String(),
+	Type.Number(),
+	Type.Boolean(),
+	Type.Null(),
+	Type.Object({ value: Type.String(), negative: Type.Boolean() }),
 ]);
 
-const modifierSchema = z.enum(['+', '-']).optional();
+const modifierSchema = Type.Optional(Type.Enum(['+', '-']));
 
-export const docsTypeSchema: z.ZodType<DocsType> = z.lazy(() =>
-	z.discriminatedUnion('type', [
-		z.object({ type: z.literal('intrinsic'), name: z.string() }),
-		z.object({
-			type: z.literal('reference'),
-			name: z.string(),
-			target: z.union([z.number(), symbolIdSchema]),
-			typeArguments: z.array(docsTypeSchema).optional(),
-			package: z.string().optional(),
-			externalUrl: z.string().optional(),
-			refersToTypeParameter: z.boolean().optional(),
+const docsType = Type.Ref('DocsType');
+const docsReflection = Type.Ref('DocsReflection');
+
+// Types and reflections nest in each other, so both live in one module and refer to each other by name.
+const docs = Type.Module({
+	DocsType: Type.Union([
+		Type.Object({ type: Type.Literal('intrinsic'), name: Type.String() }),
+		Type.Object({
+			type: Type.Literal('reference'),
+			name: Type.String(),
+			target: Type.Union([Type.Number(), symbolIdSchema]),
+			typeArguments: Type.Optional(Type.Array(docsType)),
+			package: Type.Optional(Type.String()),
+			externalUrl: Type.Optional(Type.String()),
+			refersToTypeParameter: Type.Optional(Type.Boolean()),
 		}),
-		z.object({ type: z.literal('union'), types: z.array(docsTypeSchema) }),
-		z.object({ type: z.literal('intersection'), types: z.array(docsTypeSchema) }),
-		z.object({ type: z.literal('array'), elementType: docsTypeSchema }),
-		z.object({ type: z.literal('literal'), value: literalSchema }),
-		z.object({ type: z.literal('reflection'), declaration: docsReflectionSchema }),
-		z.object({ type: z.literal('tuple'), elements: z.array(docsTypeSchema).optional() }),
-		z.object({ type: z.literal('typeOperator'), operator: z.string(), target: docsTypeSchema }),
-		z.object({
-			type: z.literal('indexedAccess'),
-			objectType: docsTypeSchema,
-			indexType: docsTypeSchema,
+		Type.Object({ type: Type.Literal('union'), types: Type.Array(docsType) }),
+		Type.Object({ type: Type.Literal('intersection'), types: Type.Array(docsType) }),
+		Type.Object({ type: Type.Literal('array'), elementType: docsType }),
+		Type.Object({ type: Type.Literal('literal'), value: literalSchema }),
+		Type.Object({ type: Type.Literal('reflection'), declaration: docsReflection }),
+		Type.Object({ type: Type.Literal('tuple'), elements: Type.Optional(Type.Array(docsType)) }),
+		Type.Object({
+			type: Type.Literal('typeOperator'),
+			operator: Type.String(),
+			target: docsType,
 		}),
-		z.object({
-			type: z.literal('conditional'),
-			checkType: docsTypeSchema,
-			extendsType: docsTypeSchema,
-			trueType: docsTypeSchema,
-			falseType: docsTypeSchema,
+		Type.Object({
+			type: Type.Literal('indexedAccess'),
+			objectType: docsType,
+			indexType: docsType,
 		}),
-		z.object({ type: z.literal('query'), queryType: docsTypeSchema }),
-		z.object({
-			type: z.literal('predicate'),
-			name: z.string(),
-			asserts: z.boolean(),
-			targetType: docsTypeSchema.optional(),
+		Type.Object({
+			type: Type.Literal('conditional'),
+			checkType: docsType,
+			extendsType: docsType,
+			trueType: docsType,
+			falseType: docsType,
 		}),
-		z.object({
-			type: z.literal('templateLiteral'),
-			head: z.string(),
-			tail: z.array(z.tuple([docsTypeSchema, z.string()])),
+		Type.Object({ type: Type.Literal('query'), queryType: docsType }),
+		Type.Object({
+			type: Type.Literal('predicate'),
+			name: Type.String(),
+			asserts: Type.Boolean(),
+			targetType: Type.Optional(docsType),
 		}),
-		z.object({
-			type: z.literal('mapped'),
-			parameter: z.string(),
-			parameterType: docsTypeSchema,
-			templateType: docsTypeSchema,
+		Type.Object({
+			type: Type.Literal('templateLiteral'),
+			head: Type.String(),
+			tail: Type.Array(Type.Tuple([docsType, Type.String()])),
+		}),
+		Type.Object({
+			type: Type.Literal('mapped'),
+			parameter: Type.String(),
+			parameterType: docsType,
+			templateType: docsType,
 			readonlyModifier: modifierSchema,
 			optionalModifier: modifierSchema,
-			nameType: docsTypeSchema.optional(),
+			nameType: Type.Optional(docsType),
 		}),
-		z.object({
-			type: z.literal('namedTupleMember'),
-			name: z.string(),
-			isOptional: z.boolean(),
-			element: docsTypeSchema,
+		Type.Object({
+			type: Type.Literal('namedTupleMember'),
+			name: Type.String(),
+			isOptional: Type.Boolean(),
+			element: docsType,
 		}),
-		z.object({ type: z.literal('optional'), elementType: docsTypeSchema }),
-		z.object({ type: z.literal('rest'), elementType: docsTypeSchema }),
-		z.object({
-			type: z.literal('inferred'),
-			name: z.string(),
-			constraint: docsTypeSchema.optional(),
+		Type.Object({ type: Type.Literal('optional'), elementType: docsType }),
+		Type.Object({ type: Type.Literal('rest'), elementType: docsType }),
+		Type.Object({
+			type: Type.Literal('inferred'),
+			name: Type.String(),
+			constraint: Type.Optional(docsType),
 		}),
-		z.object({ type: z.literal('unknown'), name: z.string() }),
+		Type.Object({ type: Type.Literal('unknown'), name: Type.String() }),
 	]),
-);
-
-export const docsReflectionSchema: z.ZodType<DocsReflection> = z.lazy(() =>
-	z.object({
-		id: z.number(),
-		name: z.string(),
-		kind: z.number(),
-		variant: z.string(),
-		flags: z.record(z.string(), z.boolean()),
-		comment: commentSchema.optional(),
-		children: z.array(docsReflectionSchema).optional(),
-		signatures: z.array(docsReflectionSchema).optional(),
-		indexSignatures: z.array(docsReflectionSchema).optional(),
-		getSignature: docsReflectionSchema.optional(),
-		setSignature: docsReflectionSchema.optional(),
-		parameters: z.array(docsReflectionSchema).optional(),
-		typeParameters: z.array(docsReflectionSchema).optional(),
-		type: docsTypeSchema.optional(),
-		default: docsTypeSchema.optional(),
-		defaultValue: z.string().optional(),
-		target: z.number().optional(),
-		extendedTypes: z.array(docsTypeSchema).optional(),
-		inheritedFrom: docsTypeSchema.optional(),
+	DocsReflection: Type.Object({
+		id: Type.Number(),
+		name: Type.String(),
+		kind: Type.Number(),
+		variant: Type.String(),
+		flags: Type.Record(Type.String(), Type.Boolean()),
+		comment: Type.Optional(commentSchema),
+		children: Type.Optional(Type.Array(docsReflection)),
+		signatures: Type.Optional(Type.Array(docsReflection)),
+		indexSignatures: Type.Optional(Type.Array(docsReflection)),
+		getSignature: Type.Optional(docsReflection),
+		setSignature: Type.Optional(docsReflection),
+		parameters: Type.Optional(Type.Array(docsReflection)),
+		typeParameters: Type.Optional(Type.Array(docsReflection)),
+		type: Type.Optional(docsType),
+		default: Type.Optional(docsType),
+		defaultValue: Type.Optional(Type.String()),
+		target: Type.Optional(Type.Number()),
+		extendedTypes: Type.Optional(Type.Array(docsType)),
+		inheritedFrom: Type.Optional(docsType),
 	}),
-);
-
-export const docsProjectSchema: z.ZodType<DocsProject> = z.object({
-	schemaVersion: z.string(),
-	name: z.string(),
-	children: z.array(docsReflectionSchema),
+	DocsProject: Type.Object({
+		schemaVersion: Type.String(),
+		name: Type.String(),
+		children: Type.Array(docsReflection),
+	}),
 });
+
+export const docsTypeSchema = Type.Unsafe<DocsType>(docs.DocsType);
+export const docsReflectionSchema = Type.Unsafe<DocsReflection>(docs.DocsReflection);
+export const docsProjectSchema = Type.Unsafe<DocsProject>(docs.DocsProject);
 
 export default { docsTypeSchema, docsReflectionSchema, docsProjectSchema };

@@ -112,7 +112,7 @@ export function createDocsSource({
 						throw new Error(`Failed to load docs ${key}: not on the CDN.`);
 					}
 
-					return buildDocsIndex(docsProjectSchema.parse(json));
+					return buildDocsIndex(parse(docsProjectSchema, json));
 				},
 			),
 	};

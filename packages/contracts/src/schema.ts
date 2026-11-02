@@ -101,6 +101,9 @@ function validator(schema: TSchema): Validator {
 const defaultSchemas = new WeakMap<TSchema, boolean>();
 const codecSchemas = new WeakMap<TSchema, boolean>();
 
+// Under these keywords the keys are property or definition names, so a property named `default` is not one.
+const NAMED_SCHEMAS = new Set(['properties', 'patternProperties', '$defs']);
+
 // UNKNOWN: walks schema JSON, so each step can land on any value.
 function hasKey(node: unknown, key: string): boolean {
 	if (Array.isArray(node)) {
@@ -116,7 +119,11 @@ function hasKey(node: unknown, key: string): boolean {
 		return true;
 	}
 
-	return Object.values(node).some((child) => hasKey(child, key));
+	return Object.entries(node).some(([name, child]) =>
+		NAMED_SCHEMAS.has(name)
+			? Object.values(child ?? {}).some((schema) => hasKey(schema, key))
+			: hasKey(child, key),
+	);
 }
 
 function cachedHas(cache: WeakMap<TSchema, boolean>, schema: TSchema, key: string): boolean {

@@ -66,6 +66,13 @@ describe('parse', () => {
 		expect(parse(schema, { name: ' x ' })).toEqual({ name: 'x', size: 3 });
 	});
 
+	test('treats a property named default as a property, not a default', () => {
+		const schema = Type.Object({ default: Type.String() });
+
+		expect(parse(schema, { default: 'x' })).toEqual({ default: 'x' });
+		expect(safeParse(schema, {}).success).toBe(false);
+	});
+
 	test('reports every issue with its path and custom message', () => {
 		const schema = Type.Object({
 			id: Type.String({ pattern: '^[a-z]+$', errorMessage: 'Must be lowercase.' }),
