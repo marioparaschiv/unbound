@@ -1,5 +1,6 @@
-import { Compile, type Validator } from 'typebox/compile';
 import type { StaticDecode, StaticEncode, TSchema } from 'typebox';
+import { Compile, type Validator } from 'typebox/compile';
+import { Clone } from 'typebox/value';
 
 export { Type, type Static, type StaticDecode, type StaticEncode, type TSchema } from 'typebox';
 
@@ -106,7 +107,11 @@ export function safeParse<T extends TSchema>(
 
 	// A codec's decode callback can still throw on a value that passed Check.
 	try {
-		return { success: true, data: compiled.Decode(value) as StaticDecode<T> };
+		// Like zod, the result is a copy without keys the schema does not declare; `additionalProperties` keeps them.
+		return {
+			success: true,
+			data: compiled.Decode(compiled.Clean(Clone(value))) as StaticDecode<T>,
+		};
 	} catch {
 		const found = issues(schema, compiled, value);
 
