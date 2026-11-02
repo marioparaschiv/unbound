@@ -5,9 +5,7 @@ import Animated, { withSpring } from 'react-native-reanimated';
 import { View, Pressable } from 'react-native';
 import { memo, useCallback } from 'react';
 
-import { useUnboundSettings } from '~/settings/unbound';
 import TintedIcon from '~/metro/fallbacks/tinted-icon';
-import toastDuration from '~/toasts/duration';
 import { Discord } from '~/metro/components';
 import useToastStore from '~/toasts/state';
 import { icons } from '~/assets/api';
@@ -44,13 +42,12 @@ function Toast({ id }: ToastProps) {
 	const {
 		style,
 		closing,
+		animations,
+		duration,
 		leave,
 		properties: { height, width },
 	} = useToastState(options ?? { id });
-	const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 	const styles = useStyles();
-
-	const animations = settings.get('toasts.animations');
 
 	const onGestureEvent = useCallback(
 		(event: GestureEvent<PanGestureHandlerEventPayload>) => {
@@ -74,8 +71,6 @@ function Toast({ id }: ToastProps) {
 
 	// The store entry is gone the instant this toast is removed; skip a final empty render.
 	if (!options) return null;
-
-	const duration = toastDuration(options.duration, settings.get('toasts.duration'));
 
 	return (
 		<PanGestureHandler onGestureEvent={onGestureEvent}>

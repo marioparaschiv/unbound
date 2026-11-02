@@ -26,6 +26,7 @@ function useToastState(options: InternalToastOptions) {
 
 	const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 	const animations = settings.get('toasts.animations');
+	const duration = toastDuration(options.duration, settings.get('toasts.duration'));
 
 	const opacity = useSharedValue(0);
 	const marginVertical = useSharedValue(0);
@@ -68,8 +69,6 @@ function useToastState(options: InternalToastOptions) {
 			marginVertical.value = 5;
 		}
 
-		const duration = toastDuration(options.duration, settings.get('toasts.duration'));
-
 		if (duration !== 0) {
 			width.value = withTiming(0, { duration, easing: Easing.linear }, () => {
 				runOnJS(leave)();
@@ -103,6 +102,8 @@ function useToastState(options: InternalToastOptions) {
 			marginVertical,
 		},
 		properties: { height, width },
+		animations,
+		duration,
 		leave,
 		closing,
 	};
