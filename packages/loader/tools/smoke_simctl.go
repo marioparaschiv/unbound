@@ -114,7 +114,6 @@ func (target *iosSmokeTarget) prepare(ctx context.Context, plugins []smokePlugin
 	if _, err := target.simctl(ctx, 10*time.Minute, "install", target.device, target.app); err != nil {
 		return err
 	}
-	target.prefetchInstalledApp(ctx)
 	container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, smokeIOSBundleID, "data")
 	if err != nil {
 		return err
@@ -142,38 +141,6 @@ func (target *iosSmokeTarget) prepare(ctx context.Context, plugins []smokePlugin
 		}
 	}
 	return nil
-}
-
-func (target *iosSmokeTarget) prefetchInstalledApp(ctx context.Context) {
-	bundle, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, smokeIOSBundleID, "app")
-	if err != nil {
-		return
-	}
-	started := time.Now()
-	read, err := readTree(strings.TrimSpace(bundle))
-	if err != nil {
-		fmt.Printf("Could not prefetch the installed app: %v\n", err)
-		return
-	}
-	fmt.Printf("Read the installed app (%d MB) in %s before launching it.\n", read>>20, time.Since(started).Round(100*time.Millisecond))
-}
-
-func readTree(root string) (int64, error) {
-	var total int64
-	err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
-		if err != nil || !entry.Type().IsRegular() {
-			return err
-		}
-		file, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		read, err := io.Copy(io.Discard, file)
-		total += read
-		return err
-	})
-	return total, err
 }
 
 func (target *iosSmokeTarget) createDevice(ctx context.Context) error {
