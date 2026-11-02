@@ -180,7 +180,7 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 									title={entry.qualifiedName}
 									data-active={entry.qualifiedName === symbol}
 									className={cn(
-										'flex items-center gap-2 px-2 rounded-item h-8 font-mono text-[0.8125rem] press-flat',
+										'flex items-center gap-2 px-2 rounded-item h-8 font-mono text-[0.8125rem] press-flat outline-none focus-visible:ring-[3px] focus-visible:ring-halo',
 										entry.qualifiedName === symbol
 											? 'bg-accent text-foreground'
 											: 'text-muted-foreground hover:bg-accent/50',

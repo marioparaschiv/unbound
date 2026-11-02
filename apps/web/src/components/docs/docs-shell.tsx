@@ -79,7 +79,8 @@ function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellP
 					<IconMagnifier />
 				</Button>
 			</div>
-			<aside className='hidden top-6 sticky lg:flex flex-col gap-3 pr-2 max-h-[calc(100dvh-3rem)] overflow-y-auto'>
+			{/* The 4px of padding, taken back by the negative margin, keeps focus rings inside the scroll clip. */}
+			<aside className='hidden top-5 sticky lg:flex flex-col gap-3 -m-1 p-1 pr-3 max-h-[calc(100dvh-2.5rem)] overflow-y-auto'>
 				<button
 					type='button'
 					onClick={() => setSearchOpen(true)}
