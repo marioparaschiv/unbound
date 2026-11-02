@@ -100,20 +100,22 @@ export function safeParse<T extends TSchema>(
 	value: unknown,
 ): SafeParseResult<StaticDecode<T>> {
 	const compiled = validator(schema);
+	// Like zod, the result is a copy: missing values take the schema's `default`, and keys the schema does
+	// not declare are dropped unless `additionalProperties` keeps them.
+	const candidate = compiled.Default(Clone(value));
 
-	if (!compiled.Check(value)) {
-		return { success: false, error: new SchemaError(issues(schema, compiled, value)) };
+	if (!compiled.Check(candidate)) {
+		return { success: false, error: new SchemaError(issues(schema, compiled, candidate)) };
 	}
 
 	// A codec's decode callback can still throw on a value that passed Check.
 	try {
-		// Like zod, the result is a copy without keys the schema does not declare; `additionalProperties` keeps them.
 		return {
 			success: true,
-			data: compiled.Decode(compiled.Clean(Clone(value))) as StaticDecode<T>,
+			data: compiled.Decode(compiled.Clean(candidate)) as StaticDecode<T>,
 		};
 	} catch {
-		const found = issues(schema, compiled, value);
+		const found = issues(schema, compiled, candidate);
 
 		return {
 			success: false,
