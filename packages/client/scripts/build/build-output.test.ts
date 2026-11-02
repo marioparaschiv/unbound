@@ -10,6 +10,10 @@ import { config } from '.';
 const root = join(import.meta.dir, '..', '..');
 const [output] = [config.output].flat();
 
+function isPlugin(option: unknown): option is Plugin {
+	return typeof option === 'object' && option !== null && 'name' in option;
+}
+
 const entry: Plugin = {
 	name: 'entry',
 	resolveId(id) {
@@ -35,4 +39,30 @@ describe('release bundle', () => {
 		expect(context.seen).toBe('object');
 		expect(vm.runInContext('typeof global', context)).toBe('object');
 	});
+
+	// The client still validates with zod until the typebox migration moves the call sites to the
+	// generated checks, so this fails today. Delete `.skip` in that wave.
+	test.skip('ships no zod or typebox module', async () => {
+		const options: unknown[] = [config.plugins].flat(2);
+		const plugins = options.filter(
+			(option): option is Plugin =>
+				isPlugin(option) && !['hermes-versions', 'manifest'].includes(option.name),
+		);
+		const bundle = await rolldown({ ...config, plugins });
+		const { output: chunks } = await bundle.generate({
+			...output,
+			file: undefined,
+			minify: false,
+			sourcemap: false,
+		});
+		const [chunk] = chunks;
+
+		await bundle.close();
+
+		const modules = chunk && 'modules' in chunk ? Object.keys(chunk.modules) : [];
+
+		expect(
+			modules.filter((id) => /[/\\]node_modules[/\\](?:zod|typebox)[/\\]/.test(id)),
+		).toEqual([]);
+	}, 120_000);
 });
