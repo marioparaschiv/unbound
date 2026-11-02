@@ -2,7 +2,7 @@ import { IconMagnifier, IconMagnifierMinus, IconUsers, IconXmark } from 'nucleo-
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import type { ChangeEvent, FormEvent } from 'react';
 import debounce from '@unbound-app/utils/debounce';
-import { z } from '@unbound-app/contracts/zod';
+import { Type } from '@unbound-app/contracts/schema';
 import { useMemo, useState } from 'react';
 
 import {
@@ -18,6 +18,7 @@ import useTeamPages, { type TeamPages } from '~/queries/developers/use-team-page
 import { teamQuery } from '~/queries/developers/developers';
 import TeamSections from '~/components/team/team-sections';
 import { pageSearchSchema } from '~/lib/page-search';
+import { searchValidator } from '~/lib/search-validator';
 import PageHeader from '~/components/page-header';
 import type { Developer } from '~/lib/developers';
 import { Button } from '~/components/ui/button';
@@ -30,7 +31,7 @@ type TeamListProps = Omit<TeamPages, 'developers'> & {
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-const teamSearchSchema = z.pick(pageSearchSchema, { search: true });
+const teamSearchSchema = Type.Pick(pageSearchSchema, ['search']);
 
 // A new search keeps the old people up until its own arrive. They are not dimmed meanwhile: fading the
 // cards repaints every blurred avatar and delayed the new results by 11 to 20 ms.
@@ -167,7 +168,7 @@ function TeamPage() {
 
 export const Route = createFileRoute('/_site/team/')({
 	head: () => ({ meta: [{ title: 'Unbound | Team' }] }),
-	validateSearch: teamSearchSchema,
+	validateSearch: searchValidator(teamSearchSchema),
 	loaderDeps: ({ search }) => search,
 	loader: async ({ context, deps, cause }) => {
 		const team = teamQuery(deps.search ?? '');

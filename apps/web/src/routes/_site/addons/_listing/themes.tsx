@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { prefetchListing } from '~/queries/marketplace/listing';
 import { marketplaceSearchSchema } from '~/lib/addon-filters';
+import { searchValidator } from '~/lib/search-validator';
 import AddonListing from '~/components/addon-listing';
 
 function ThemesTab() {
@@ -10,7 +11,7 @@ function ThemesTab() {
 
 export const Route = createFileRoute('/_site/addons/_listing/themes')({
 	head: () => ({ meta: [{ title: 'Unbound | Themes' }] }),
-	validateSearch: marketplaceSearchSchema,
+	validateSearch: searchValidator(marketplaceSearchSchema),
 	loaderDeps: ({ search }) => search,
 	loader: ({ context, deps, cause }) =>
 		prefetchListing(context.queryClient, 'theme', deps, cause),

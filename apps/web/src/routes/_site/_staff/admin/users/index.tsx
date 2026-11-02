@@ -3,12 +3,13 @@ import { createFileRoute, redirect } from '@tanstack/react-router';
 
 import { adminUsersQuery } from '~/queries/admin-users/admin-users';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
+import { searchValidator } from '~/lib/search-validator';
 import UsersPage from '~/components/staff/users-page';
 import { hasPermission } from '~/lib/auth/access';
 
 export const Route = createFileRoute('/_site/_staff/admin/users/')({
 	head: () => ({ meta: [{ title: 'Unbound | Users' }] }),
-	validateSearch: adminUsersSearchSchema,
+	validateSearch: searchValidator(adminUsersSearchSchema),
 	beforeLoad: ({ context }) => {
 		if (!hasPermission(context.user.role, STAFF_SECTIONS.users.permissions)) {
 			throw redirect({ to: '/' });
