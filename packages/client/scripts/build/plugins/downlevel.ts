@@ -36,15 +36,12 @@ export type Lowered = {
  */
 export function lower(root: string, code: string, sourceMaps: boolean = false): Lowered {
 	const { env } = parse(swcrcSchema, JSON.parse(readFileSync(join(root, '.swcrc'), 'utf8')));
-	// Lowered classes carry "use strict", which hermesc rejects in a function with non-simple parameters.
-	const exclude = env?.exclude?.filter((name) => name !== 'transform-parameters');
-
 	const lowered = transformSync(code, {
 		swcrc: false,
 		configFile: false,
 		sourceMaps,
 		jsc: { parser: { syntax: 'ecmascript' } },
-		env: { ...env, exclude },
+		env,
 	});
 	const wrapped = `${WRAPPER_HEAD}${lowered.code}\n})();`;
 
