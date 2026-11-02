@@ -13,6 +13,7 @@ import type {
 } from '@unbound-app/contracts/addon-page';
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-media';
+import { safeParse } from '@unbound-app/contracts/schema';
 import type { Token, Tokens } from 'marked';
 import { Lexer, walkTokens } from 'marked';
 import { dirname, join } from 'node:path';
@@ -122,7 +123,7 @@ export async function readPage(dir: string, limits: MediaLimits): Promise<PageRe
 		return { issues };
 	}
 
-	const page = addonPageSchema.safeParse({ frontmatter, media });
+	const page = safeParse(addonPageSchema, { frontmatter, media });
 
 	if (!page.success) {
 		return { issues: [...issues, ...page.error.issues.map((issue) => error(issue.message))] };
@@ -136,7 +137,7 @@ function checkBodyPath(href: string): string | undefined {
 		return `${ADDON_PAGE_FILENAME} shows ${href}, which is not in the repository; put the file in media/ and use its path.`;
 	}
 
-	const parsed = mediaPathSchema.safeParse(href);
+	const parsed = safeParse(mediaPathSchema, href);
 
 	if (parsed.success) return;
 

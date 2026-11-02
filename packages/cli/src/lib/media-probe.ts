@@ -6,7 +6,8 @@ import { stat } from 'node:fs/promises';
 import { promisify } from 'node:util';
 import { join } from 'node:path';
 import sharp from 'sharp';
-import { z } from 'zod';
+
+import { safeParse, Type } from './schema';
 
 /** One media file measured, or why it could not be. */
 export type Measurement = { media: MeasuredMedia } | { error: string };
@@ -45,20 +46,21 @@ const VIDEO_CODECS: Record<string, string[]> = {
 
 const execFileAsync = promisify(execFile);
 
-const ffprobeSchema = z.object({
-	streams: z
-		.array(
-			z.object({
-				codec_name: z.string(),
-				width: z.number(),
-				height: z.number(),
-				side_data_list: z.optional(z.array(z.object({ rotation: z.optional(z.number()) }))),
-			}),
-		)
-		.min(1),
-	format: z.object({
-		format_name: z.string(),
-		duration: z.optional(z.coerce.number()).catch(void 0),
+const ffprobeSchema = Type.Object({
+	streams: Type.Array(
+		Type.Object({
+			codec_name: Type.String(),
+			width: Type.Number(),
+			height: Type.Number(),
+			side_data_list: Type.Optional(
+				Type.Array(Type.Object({ rotation: Type.Optional(Type.Number()) })),
+			),
+		}),
+		{ minItems: 1 },
+	),
+	format: Type.Object({
+		format_name: Type.String(),
+		duration: Type.Optional(Type.Unknown()),
 	}),
 });
 
@@ -173,6 +175,14 @@ async function readImagePixels(file: string): Promise<Pixels> {
 	return { data, width: info.width, height: info.height };
 }
 
+// ffprobe reports `duration` as a string, and some containers omit it, so anything not a number reads as no length.
+// UNKNOWN: ffprobe writes whatever the container declares, so the value can be any JSON.
+function readSeconds(value: unknown): number | undefined {
+	const seconds = Number(value);
+
+	return Number.isFinite(seconds) ? seconds : undefined;
+}
+
 async function probeVideo(file: string): Promise<Probe> {
 	const { stdout } = await runVideoTool('ffprobe', [
 		'-v',
@@ -185,7 +195,7 @@ async function probeVideo(file: string): Promise<Probe> {
 		'format=format_name,duration:stream=codec_name,width,height:stream_side_data=rotation',
 		file,
 	]);
-	const parsed = ffprobeSchema.safeParse(JSON.parse(stdout.toString()));
+	const parsed = safeParse(ffprobeSchema, JSON.parse(stdout.toString()));
 
 	if (!parsed.success) {
 		throw new Error('it has no video stream');
@@ -205,7 +215,7 @@ async function probeVideo(file: string): Promise<Probe> {
 		codec: stream.codec_name,
 		width: rotated ? stream.height : stream.width,
 		height: rotated ? stream.width : stream.height,
-		duration: parsed.data.format.duration,
+		duration: readSeconds(parsed.data.format.duration),
 	};
 }
 
