@@ -1,4 +1,5 @@
 import Animated, { FadeOut, useSharedValue, withRepeat, withTiming } from 'react-native-reanimated';
+import type { ViewStyle } from 'react-native';
 import { View } from 'react-native';
 import { useEffect } from 'react';
 
@@ -15,6 +16,14 @@ type MarketplaceSkeletonProps = {
 /** Discord's shop skeleton pulse: 0.3 to full opacity and back, 650ms each way. */
 const PULSE_FROM = 0.3;
 const PULSE_DURATION = 650;
+
+/** Two title lines, then a two-line description, sized like the real card's text. */
+const BARS: ViewStyle[] = [
+	{ width: '45%', height: 16 },
+	{ width: '25%', height: 12 },
+	{ width: '92%', height: 14, marginTop: 6 },
+	{ width: '64%', height: 14 },
+];
 
 /**
  * @description Placeholder cards shaped like marketplace cards, pulsing while the catalog loads, in
@@ -44,12 +53,9 @@ function MarketplaceSkeleton({ count = 3 }: MarketplaceSkeletonProps) {
 					<View style={styles.header}>
 						<View style={styles.icon} />
 						<View style={styles.content}>
-							<View style={[styles.bar, { width: '45%', height: 16 }]} />
-							<View style={[styles.bar, { width: '25%', height: 12 }]} />
-							<View
-								style={[styles.bar, { width: '92%', height: 14, marginTop: 6 }]}
-							/>
-							<View style={[styles.bar, { width: '64%', height: 14 }]} />
+							{BARS.map((bar, index) => (
+								<View key={index} style={[styles.bar, bar]} />
+							))}
 						</View>
 						<View style={styles.button} />
 					</View>
