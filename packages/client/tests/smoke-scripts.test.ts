@@ -1,5 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 
+import { createCacheMock } from './helpers/cache';
+
 mock.module('~/flux/modules', () => ({
 	Dispatcher: {
 		subscribe: () => undefined,
@@ -9,8 +11,8 @@ mock.module('~/flux/modules', () => ({
 	Flux: {},
 	FluxHooks: {},
 }));
-mock.module('~/metro/cache', () => ({
-	default: {
+mock.module('~/metro/cache', () =>
+	createCacheMock({
 		moduleIds: [],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
@@ -18,9 +20,8 @@ mock.module('~/metro/cache', () => ({
 		isKeyMissing: () => false,
 		getHintsForKey: () => void 0,
 		markKeyMissing: () => void 0,
-	},
-	ModuleFlags: { BLACKLISTED: 1 },
-}));
+	}),
+);
 mock.module('~/native/fs', () => ({
 	default: {
 		documentsPath: '/docs',

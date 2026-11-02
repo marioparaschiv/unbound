@@ -4,6 +4,8 @@ import enUS from '@i18n/en-US.json';
 
 import type { SectionEntry } from '~/settings/section';
 
+import { createCacheMock } from './helpers/cache';
+
 await import('./helpers/addons');
 
 Object.assign(globalThis, { window: globalThis, modules: new Map(), $$DEV$$: false });
@@ -29,15 +31,14 @@ mock.module('~/metro/wait', () => ({
 	},
 }));
 
-mock.module('~/metro/cache', () => ({
-	default: {
+mock.module('~/metro/cache', () =>
+	createCacheMock({
 		state: { moduleFlags: {} },
 		moduleIds: [],
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
-	},
-	ModuleFlags: { BLACKLISTED: 1 },
-}));
+	}),
+);
 mock.module('~/assets/api', () => ({ getIdByName: () => 1 }));
 mock.module('~/metro/components', () => ({ Discord: { TableRowIcon: Page } }));
 mock.module('~/ui/settings/general', () => ({ default: Page }));

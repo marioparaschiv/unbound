@@ -16,6 +16,17 @@ import type {
 	MetroModuleLoadListener,
 } from '~/metro/types';
 import {
+	addCachedIDForKey,
+	addModuleFlag,
+	getHintsForKey,
+	getModuleCacheForKey,
+	hasModuleFlag,
+	markKeyMissing,
+	moduleIds,
+	state,
+	ModuleFlags,
+} from '~/metro/cache';
+import {
 	byFilePath,
 	byFluxStore,
 	byName,
@@ -27,7 +38,6 @@ import { couldMatch, idsNear, recordMove } from '~/metro/candidates';
 import { attachRunner, type MetroFactory } from '~/metro/capture';
 import { isInvalidExport } from '~/metro/invalid-exports';
 import { createLazyModule } from '~/metro/lazy-registry';
-import Cache, { ModuleFlags } from '~/metro/cache';
 import { filterPresence } from '~/metro/presence';
 import { provideFinders } from '~/metro/finders';
 import { blacklist, data } from '~/metro/state';
@@ -36,8 +46,8 @@ import { CACHE_KEY } from '~/core/constants';
 
 const Logger = createLogger('Metro');
 
-for (const id in Cache.state.moduleFlags) {
-	if (Cache.hasModuleFlag(Number(id), ModuleFlags.BLACKLISTED)) {
+for (const id in state.moduleFlags) {
+	if (hasModuleFlag(Number(id), ModuleFlags.BLACKLISTED)) {
 		blacklist.add(Number(id));
 	}
 }
@@ -86,7 +96,7 @@ function runModule(factory: MetroFactory, id: number, args: Parameters<MetroFact
 		factory.apply(globalThis, args);
 		onModuleExports(moduleObject.exports, id);
 	} catch {
-		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
+		addModuleFlag(id, ModuleFlags.BLACKLISTED);
 		blacklist.add(id);
 	} finally {
 		data.importingModuleId = originalImportingId;
@@ -96,7 +106,7 @@ function runModule(factory: MetroFactory, id: number, args: Parameters<MetroFact
 // Blacklists a module with invalid exports, so searches skip it; otherwise runs the one-time patches.
 function onModuleExports(exported: MetroExport, id: number) {
 	if (isInvalidExport(exported)) {
-		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
+		addModuleFlag(id, ModuleFlags.BLACKLISTED);
 		blacklist.add(id);
 	} else {
 		onModuleRequire(exported, id);
@@ -115,7 +125,7 @@ function onModuleRequire(exports: any, id: number) {
 	if (!data.patchedRTNProfiler && exports?.getEnforcing && exports?.get) {
 		const offender = id + 1;
 
-		Cache.addModuleFlag(offender, ModuleFlags.BLACKLISTED);
+		addModuleFlag(offender, ModuleFlags.BLACKLISTED);
 		blacklist.add(offender);
 
 		data.patchedRTNProfiler = true;
@@ -241,7 +251,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 	}
 
 	const key = filter[CACHE_KEY];
-	const cached = key ? Cache.getModuleCacheForKey(key) : void 0;
+	const cached = key ? getModuleCacheForKey(key) : void 0;
 
 	// Tests each module of `ids` in order; an uninitialized one is skipped, or initialized first when `force` is set.
 	// With a `path`, only the module from that file can match.
@@ -286,7 +296,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 	// Ids move by a few between builds, so look near the old id. The path rules out other matches; a pathless hint
 	// tries its old id alone.
 	function scanNearHints() {
-		const hints = key ? Cache.getHintsForKey(key) : void 0;
+		const hints = key ? getHintsForKey(key) : void 0;
 
 		if (!hints) return null;
 
@@ -317,7 +327,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 			return result.found;
 		}
 
-		scan(Cache.moduleIds, initializeModules);
+		scan(moduleIds, initializeModules);
 
 		if (initializeModules && !result.found.length) {
 			recordMissing(key, result.errored);
@@ -341,8 +351,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 
 		if (!found && !cacheOnly) {
 			found =
-				(useCache ? scan([...data.cache.keys()], false) : null) ??
-				scan(Cache.moduleIds, false);
+				(useCache ? scan([...data.cache.keys()], false) : null) ?? scan(moduleIds, false);
 		}
 	}
 
@@ -357,7 +366,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 
 	if (cacheOnly) return null;
 
-	found = scanNearHints() ?? scan(Cache.moduleIds, true);
+	found = scanNearHints() ?? scan(moduleIds, true);
 
 	if (!found) {
 		recordMissing(key, result.errored);
@@ -369,7 +378,7 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 // A filter that threw may have missed its module, so only a clean full scan proves it is absent.
 function recordMissing(key: string | undefined, errored: boolean) {
 	if (key && !errored) {
-		Cache.markKeyMissing(key);
+		markKeyMissing(key);
 	}
 }
 
@@ -537,7 +546,7 @@ export function initializeModule(id: number) {
 
 		return true;
 	} catch {
-		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
+		addModuleFlag(id, ModuleFlags.BLACKLISTED);
 		blacklist.add(id);
 
 		return false;
@@ -569,7 +578,7 @@ function searchExports(
 	if (!mdl) return null;
 
 	if (isInvalidExport(mdl)) {
-		Cache.addModuleFlag(id, ModuleFlags.BLACKLISTED);
+		addModuleFlag(id, ModuleFlags.BLACKLISTED);
 		blacklist.add(id);
 
 		return null;
@@ -577,7 +586,7 @@ function searchExports(
 
 	if (filter(filter.isRaw ? rawModule : mdl, id)) {
 		if (filter[CACHE_KEY]) {
-			Cache.addCachedIDForKey(filter[CACHE_KEY], id);
+			addCachedIDForKey(filter[CACHE_KEY], id);
 		}
 
 		data.cache.set(id, rawModule);
@@ -588,7 +597,7 @@ function searchExports(
 	if (filter.isRaw || !esModules || !mdl.default || !filter(mdl.default, id)) return;
 
 	if (filter[CACHE_KEY]) {
-		Cache.addCachedIDForKey(filter[CACHE_KEY], id);
+		addCachedIDForKey(filter[CACHE_KEY], id);
 	}
 
 	data.cache.set(id, rawModule);

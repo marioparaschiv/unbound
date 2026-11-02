@@ -1,8 +1,8 @@
 import type { MetroModuleLoadedOptions, MetroModulePresence } from '~/metro/types';
+import { getModuleCacheForKey, isKeyMissing } from '~/metro/cache';
 import type { MetroFilter } from '~/metro/filters';
 import { CACHE_KEY } from '~/core/constants';
 import { finder } from '~/metro/finders';
-import Cache from '~/metro/cache';
 
 /**
  * @description Reports what is known of the module matching `filter`, without loading any module.
@@ -15,9 +15,9 @@ export function filterPresence(
 	options: MetroModuleLoadedOptions = {},
 ): MetroModulePresence {
 	const key = filter[CACHE_KEY];
-	const cached = key ? Cache.getModuleCacheForKey(key) : void 0;
+	const cached = key ? getModuleCacheForKey(key) : void 0;
 
-	if (Cache.isKeyMissing(key)) {
+	if (isKeyMissing(key)) {
 		return 'missing';
 	}
 

@@ -189,7 +189,7 @@ export function isKeyMissing(key: string | undefined) {
 }
 
 /**
- * @description Sets a {@link ModuleFlags} bit on a module and persists. Twin of {@link removeModuleFlag}.
+ * @description Sets a {@link ModuleFlags} bit on a module and persists.
  * @param id The id of the module to flag.
  * @param flag The flag bit to set.
  */
@@ -251,19 +251,3 @@ function save(...fields: [keyof CacheState, ...(keyof CacheState)[]]) {
 		unsaved.clear();
 	}, SAVE_DELAY_MS);
 }
-
-export default {
-	state,
-	moduleIds,
-	getCachedAssetModule,
-	addAssetToCache,
-	removeAssetFromCache,
-	markAssetsComplete,
-	getModuleCacheForKey,
-	getHintsForKey,
-	addCachedIDForKey,
-	markKeyMissing,
-	isKeyMissing,
-	addModuleFlag,
-	hasModuleFlag,
-};

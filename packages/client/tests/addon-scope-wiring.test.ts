@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import type { FluxAction, FluxChangeListener } from '@unbound-app/types/flux';
 import type { AddonManifest } from '@unbound-app/types';
 
+import { createCacheMock } from './helpers/cache';
+
 type Listener = (action: FluxAction) => void;
 type Interceptor = (action: FluxAction) => boolean;
 
@@ -48,8 +50,8 @@ const store = {
 };
 
 mock.module('~/flux/modules', () => ({ Dispatcher: dispatcher, Flux: {}, FluxHooks: {} }));
-mock.module('~/metro/cache', () => ({
-	default: {
+mock.module('~/metro/cache', () =>
+	createCacheMock({
 		state: { moduleFlags: {} },
 		moduleIds: [],
 		hasModuleFlag: () => false,
@@ -58,9 +60,8 @@ mock.module('~/metro/cache', () => ({
 		isKeyMissing: () => false,
 		getHintsForKey: () => void 0,
 		markKeyMissing: () => void 0,
-	},
-	ModuleFlags: { BLACKLISTED: 1 },
-}));
+	}),
+);
 mock.module('~/native/fs', () => ({
 	default: {
 		documentsPath: '/docs',
