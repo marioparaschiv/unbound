@@ -91,14 +91,8 @@ void LoaderPipeline::prepare()
 
 bool LoaderPipeline::savedFlavourIsCurrent(const std::string &path) const
 {
-    std::optional<BundleFlavour> saved = updater_.bundleFlavour(path);
-    if (!saved)
-    {
-        return true;
-    }
-    BundleFlavour wanted =
-        updater_.developerMode() ? BundleFlavour::Development : BundleFlavour::Default;
-    return *saved == wanted;
+    std::optional<bool> downloadedFor = updater_.recordedDeveloperMode(path);
+    return !downloadedFor || *downloadedFor == updater_.developerMode();
 }
 
 // Downloads the newest bundle for the next runtime. With no saved bundle, or with

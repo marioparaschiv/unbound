@@ -136,6 +136,22 @@ void runsTheDevBundleItDownloadedForTheSwitch()
     assert(launch.host->reloads == 0);
 }
 
+void runsTheSavedBundleWhenNoDevBundleIsPublished()
+{
+    Launch launch;
+    launch.server.settings.set("unbound", "developer-mode", true);
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "default"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
+
+    launch.pipeline.prepare();
+
+    // Not a pending switch: the saved bundle runs now and the update waits for the next launch.
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bundle == "default");
+    assert(bundle->path == launch.server.active());
+}
+
 void fallsBackToTheSavedBundleWhenTheSwitchDownloadFails()
 {
     Launch launch;
@@ -191,6 +207,7 @@ int main()
     runsTheSavedBundleWhenItsFlavourMatches();
     runsTheDevBundleItDownloadedForTheSwitch();
     fallsBackToTheSavedBundleWhenTheSwitchDownloadFails();
+    runsTheSavedBundleWhenNoDevBundleIsPublished();
     logsTheRuntimeBeforeAddonsLoadForIt();
     doesNothingWhenDisabled();
     return 0;

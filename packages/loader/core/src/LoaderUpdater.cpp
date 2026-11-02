@@ -137,10 +137,13 @@ bool BundleUpdater::developerMode() const
     return settings_.developerMode && settings_.developerMode();
 }
 
-std::optional<BundleFlavour> BundleUpdater::bundleFlavour(const std::string &path) const
+// The developer mode a bundle was downloaded for; a manifest without the dev files leaves the
+// default bundle in place for developer mode, which must not count as a pending switch.
+std::optional<bool> BundleUpdater::recordedDeveloperMode(const std::string &path) const
 {
-    std::string file = recordField(parseRecord(readTextFile(path + kBundleTrustSuffix)), "file");
-    return file.empty() ? std::nullopt : bundleFlavourNamed(file);
+    std::string mode =
+        recordField(parseRecord(readTextFile(path + kBundleTrustSuffix)), "developerMode");
+    return mode.empty() ? std::nullopt : std::optional<bool>(mode == "1");
 }
 
 std::optional<std::string> BundleUpdater::exemptionFor(const std::string &url) const
@@ -452,8 +455,10 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
 std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &plan,
                                                          const std::string  &candidatePath) const
 {
-    nlohmann::json record{
-        {"url", plan.url}, {"source", plan.source}, {"file", urlFileName(plan.url)}};
+    nlohmann::json record{{"url", plan.url},
+                          {"source", plan.source},
+                          {"file", urlFileName(plan.url)},
+                          {"developerMode", developerMode() ? "1" : "0"}};
 
     if (!plan.exemption.empty())
     {

@@ -61,8 +61,8 @@ public:
     bool acceptBundle(const std::string &path);
     void rejectBundle(const std::string &path);
 
-    bool                         developerMode() const;
-    std::optional<BundleFlavour> bundleFlavour(const std::string &path) const;
+    bool                developerMode() const;
+    std::optional<bool> recordedDeveloperMode(const std::string &path) const;
 
     std::optional<BundleBaseline> baseline() const;
 
