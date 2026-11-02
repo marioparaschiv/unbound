@@ -34,8 +34,3 @@ export async function installVersion(
 
 	return Manager.for(kind).installListed(addon, version, hold);
 }
-
-export default {
-	getInstalledVersion,
-	installVersion,
-};

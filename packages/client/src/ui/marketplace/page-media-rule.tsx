@@ -48,5 +48,3 @@ export function createPageMediaRule(
 		},
 	};
 }
-
-export default { createPageMediaRule };
