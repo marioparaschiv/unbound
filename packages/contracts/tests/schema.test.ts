@@ -23,7 +23,10 @@ describe('parse', () => {
 	test('keeps undeclared keys where additionalProperties allows them', () => {
 		const schema = Type.Object({ a: Type.String() }, { additionalProperties: true });
 
-		expect(parse(schema, { a: 'x', extra: 1 })).toEqual({ a: 'x', extra: 1 });
+		expect(parse(schema, { a: 'x', extra: 1 })).toEqual({
+			a: 'x',
+			extra: 1,
+		});
 	});
 
 	test('strips by the union member that matched', () => {

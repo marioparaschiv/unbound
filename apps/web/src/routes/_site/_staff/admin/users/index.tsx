@@ -1,15 +1,18 @@
-import { adminUsersSearchSchema } from '@unbound-app/contracts/admin';
+import { adminUsersSearchSchema, type AdminUsersSearch } from '@unbound-app/contracts/admin';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 
 import { adminUsersQuery } from '~/queries/admin-users/admin-users';
+import { schemaValidator, type Validator } from '~/lib/schema-validator';
 import { STAFF_SECTIONS } from '~/lib/auth/staff-areas';
-import { searchValidator } from '~/lib/search-validator';
 import UsersPage from '~/components/staff/users-page';
 import { hasPermission } from '~/lib/auth/access';
 
+// Annotated, or the search type loops through the page that reads it back and collapses to `{}`.
+const validateSearch: Validator<AdminUsersSearch> = schemaValidator(adminUsersSearchSchema);
+
 export const Route = createFileRoute('/_site/_staff/admin/users/')({
 	head: () => ({ meta: [{ title: 'Unbound | Users' }] }),
-	validateSearch: searchValidator(adminUsersSearchSchema),
+	validateSearch,
 	beforeLoad: ({ context }) => {
 		if (!hasPermission(context.user.role, STAFF_SECTIONS.users.permissions)) {
 			throw redirect({ to: '/' });

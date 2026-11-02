@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
 import { decideDeviceMutation, deviceCodeQuery } from '~/queries/account/device';
-import { searchValidator } from '~/lib/search-validator';
+import { schemaValidator } from '~/lib/schema-validator';
 import type { SessionUser } from '~/lib/auth/session';
 import { Button } from '~/components/ui/button';
 import Logo from '~/components/icons/logo';
@@ -166,6 +166,6 @@ function DevicePage() {
 
 export const Route = createFileRoute('/device')({
 	head: () => ({ meta: [{ title: 'Unbound | Authorize a device' }] }),
-	validateSearch: searchValidator(deviceSearchSchema),
+	validateSearch: schemaValidator(deviceSearchSchema),
 	component: DevicePage,
 });

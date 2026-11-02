@@ -1,8 +1,8 @@
 import { IconMagnifier, IconMagnifierMinus, IconUsers, IconXmark } from 'nucleo-micro-bold';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { Type } from '@unbound-app/contracts/schema';
 import type { ChangeEvent, FormEvent } from 'react';
 import debounce from '@unbound-app/utils/debounce';
-import { Type } from '@unbound-app/contracts/schema';
 import { useMemo, useState } from 'react';
 
 import {
@@ -15,10 +15,10 @@ import {
 } from '~/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
 import useTeamPages, { type TeamPages } from '~/queries/developers/use-team-pages';
+import { pageSearchSchema, type PageSearch } from '~/lib/page-search';
 import { teamQuery } from '~/queries/developers/developers';
 import TeamSections from '~/components/team/team-sections';
-import { pageSearchSchema } from '~/lib/page-search';
-import { searchValidator } from '~/lib/search-validator';
+import { schemaValidator, type Validator } from '~/lib/schema-validator';
 import PageHeader from '~/components/page-header';
 import type { Developer } from '~/lib/developers';
 import { Button } from '~/components/ui/button';
@@ -166,9 +166,12 @@ function TeamPage() {
 	);
 }
 
+// Annotated, or the search type loops through the page that reads it back and collapses to `{}`.
+const validateSearch: Validator<Pick<PageSearch, 'search'>> = schemaValidator(teamSearchSchema);
+
 export const Route = createFileRoute('/_site/team/')({
 	head: () => ({ meta: [{ title: 'Unbound | Team' }] }),
-	validateSearch: searchValidator(teamSearchSchema),
+	validateSearch,
 	loaderDeps: ({ search }) => search,
 	loader: async ({ context, deps, cause }) => {
 		const team = teamQuery(deps.search ?? '');

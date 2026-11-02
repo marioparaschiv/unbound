@@ -39,9 +39,12 @@ type BodyOption<R extends ApiRoute> = undefined extends R['body']
 	? { body?: R['body'] }
 	: { body: R['body'] };
 
+// A query whose every field is optional may be left out, as an empty search string.
 type QueryOption<R extends ApiRoute> = undefined extends R['query']
 	? { query?: R['query'] }
-	: { query: R['query'] };
+	: {} extends R['query']
+		? { query?: R['query'] }
+		: { query: R['query'] };
 
 export type RequestOptions<K, R extends ApiRoute> = ParamsOption<K> &
 	BodyOption<R> &
