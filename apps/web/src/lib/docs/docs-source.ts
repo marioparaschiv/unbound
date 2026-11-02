@@ -7,6 +7,7 @@ import {
 	type DocsPackage,
 	type DocsVersion,
 } from '@unbound-app/contracts/docs';
+import { parse } from '@unbound-app/contracts/schema';
 
 import { buildDocsIndex, type DocsIndex } from '~/lib/docs/docs-index';
 import { createLruCache, type LruCache } from '~/lib/docs/lru-cache';
@@ -96,7 +97,7 @@ export function createDocsSource({
 			readThrough(manifests, pkg, MUTABLE_DOCS_TTL_MS, async () => {
 				const json = await fetchJson(getDocsManifestKey(pkg));
 
-				return json === undefined ? undefined : docsManifestSchema.parse(json);
+				return json === undefined ? undefined : parse(docsManifestSchema, json);
 			}),
 		index: (pkg, version) =>
 			readThrough(

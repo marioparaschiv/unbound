@@ -1,5 +1,6 @@
 import { mediaPathSchema } from '@unbound-app/contracts/addon-page';
 import type { SourcePin } from '@unbound-app/contracts/source';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 /** The part of a source pin a relative ADDON.md URL resolves against. */
 export type MarkdownPin = Pick<SourcePin, 'repository' | 'commitSha' | 'path'>;
@@ -119,7 +120,7 @@ export function getPublishedMediaBase(manifestUrl: string): string {
  * @returns The file's URL, or `undefined` when the path is not a file inside `media/`.
  */
 export function resolveMediaUrl(path: string, base: string): string | undefined {
-	if (!mediaPathSchema.safeParse(path).success) return;
+	if (!safeParse(mediaPathSchema, path).success) return;
 
 	return new URL(path, base).href;
 }

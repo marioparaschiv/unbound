@@ -6,7 +6,7 @@ import {
 } from '@unbound-app/contracts/addon-page';
 import { listPageMediaPaths } from '@unbound-app/contracts/addon-page-media';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
-import { z } from 'zod';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 import type { GitHubClient, GitTree, TreeEntry } from '~/lib/github';
 import { matchesMediaFormat } from '~/lib/media-format';
@@ -74,12 +74,12 @@ function parsePage(path: string, text: string): AddonPage {
 		);
 	}
 
-	const parsed = addonPageSchema.safeParse(json);
+	const parsed = safeParse(addonPageSchema, json);
 
 	if (!parsed.success) {
 		throw new ApiError(
 			'invalid_request',
-			`${path} is not a valid page:\n${z.prettifyError(parsed.error)}`,
+			`${path} is not a valid page:\n${parsed.error.message}`,
 		);
 	}
 

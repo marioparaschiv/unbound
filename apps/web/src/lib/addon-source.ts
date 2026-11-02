@@ -22,9 +22,8 @@ import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import type { Changelog } from '@unbound-app/contracts/changelog';
+import { parse, safeParse } from '@unbound-app/contracts/schema';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
-import { parse } from '@unbound-app/contracts/schema';
-import { z } from 'zod';
 
 import type {
 	GitHubClient,
@@ -194,9 +193,9 @@ function parseConfig(root: string, text: string | undefined): WorkspaceConfig | 
 		return `${file} is not valid JSON`;
 	}
 
-	const parsed = workspaceConfigSchema.safeParse(json);
+	const parsed = safeParse(workspaceConfigSchema, json);
 
-	return parsed.success ? parsed.data : `${file} is invalid: ${z.prettifyError(parsed.error)}`;
+	return parsed.success ? parsed.data : `${file} is invalid: ${parsed.error.message}`;
 }
 
 function workspaceRootOf(tree: GitTree, dir: string): string | undefined {
@@ -343,12 +342,12 @@ function parseManifest(shipped: ShippedManifest): PublishedManifest | ApiError {
 		);
 	}
 
-	const parsed = addonManifestSchema.safeParse(json);
+	const parsed = safeParse(addonManifestSchema, json);
 
 	if (!parsed.success) {
 		return new ApiError(
 			'invalid_manifest',
-			`${shipped.path} is not a valid manifest:\n${z.prettifyError(parsed.error)}`,
+			`${shipped.path} is not a valid manifest:\n${parsed.error.message}`,
 		);
 	}
 

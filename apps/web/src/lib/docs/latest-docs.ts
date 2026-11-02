@@ -5,6 +5,7 @@ import {
 	type DocsPackage,
 } from '@unbound-app/contracts/docs';
 import { notFound, redirect } from '@tanstack/react-router';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 /** The `$version` that stands for the newest release, so links outlive releases: `/docs/api/latest/storage`. */
 export const LATEST_DOCS_ALIAS = 'latest';
@@ -23,7 +24,7 @@ export async function redirectToLatestDocs(
 	pkg: string,
 	symbol?: string,
 ): Promise<never> {
-	const parsed = docsPackageSchema.safeParse(pkg);
+	const parsed = safeParse(docsPackageSchema, pkg);
 	const manifest = parsed.success ? await loadManifest(parsed.data) : null;
 
 	if (!manifest) {

@@ -71,7 +71,7 @@ type Reservation = {
 	replaced: SubmissionRow | undefined;
 };
 
-export const OPEN_SUBMISSION_STATUSES = openSubmissionStatusSchema.options;
+export const OPEN_SUBMISSION_STATUSES = openSubmissionStatusSchema.enum;
 
 /** The caller's own open submission in one of these states is superseded by submitting the addon again. */
 export const REPLACEABLE_SUBMISSION_STATUSES = [

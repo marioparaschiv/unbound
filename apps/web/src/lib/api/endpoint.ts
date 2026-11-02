@@ -1,5 +1,10 @@
-import type { StaticDecode, StaticEncode, TSchema } from '@unbound-app/contracts/schema';
-import { parse, safeParse } from '@unbound-app/contracts/schema';
+import {
+	parse,
+	safeParse,
+	type StaticDecode,
+	type StaticEncode,
+	type TSchema,
+} from '@unbound-app/contracts/schema';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
 import { createLogger } from '@unbound-app/logger';
 

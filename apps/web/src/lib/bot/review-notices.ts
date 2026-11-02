@@ -1,5 +1,6 @@
 import { moderationEventDataSchema } from '@unbound-app/contracts/admin';
 import { and, asc, eq, gt, isNull, sql } from 'drizzle-orm';
+import { safeParse } from '@unbound-app/contracts/schema';
 import { alias } from 'drizzle-orm/pg-core';
 
 import { account, addon, moderationEvent, submission } from '~/db/schema';
@@ -51,7 +52,7 @@ export async function readReviewNoticesAfter(
 		.limit(limit);
 
 	return rows.flatMap((row) => {
-		const parsed = moderationEventDataSchema.safeParse({ kind: row.kind, data: row.data });
+		const parsed = safeParse(moderationEventDataSchema, { kind: row.kind, data: row.data });
 
 		if (!parsed.success || parsed.data.kind !== 'review.decided') {
 			return [];
