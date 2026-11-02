@@ -19,7 +19,7 @@ function Expandable({ title, children }: ExpandableProps) {
 		<Accordion type='single' collapsible className='border rounded-control'>
 			<AccordionItem value='item' className='group/expandable'>
 				<AccordionPrimitive.Header className='flex'>
-					<AccordionPrimitive.Trigger className='flex flex-1 items-center gap-2 px-3 rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-9 font-medium text-muted-foreground hover:text-foreground text-sm text-left transition-colors press-flat [--press-depth:0.4]'>
+					<AccordionPrimitive.Trigger className='flex flex-1 items-center gap-2 px-3 rounded-control outline-none focus-visible:ring-[3px] focus-visible:ring-halo h-9 font-medium text-muted-foreground hover:text-foreground text-sm text-left transition-colors press-flat [--press-depth:0.1]'>
 						<IconChevronRight className='size-3.5 group-data-[state=open]/expandable:rotate-90 transition-transform duration-280 ease-expo' />
 						<span className='text-foreground'>
 							<span className='group-data-[state=open]/expandable:hidden'>
