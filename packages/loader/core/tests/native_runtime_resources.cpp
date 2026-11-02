@@ -1,4 +1,8 @@
+#include <atomic>
 #include <cassert>
+#include <chrono>
+#include <condition_variable>
+#include <future>
 #include <memory>
 #include <string>
 #include <thread>
@@ -75,8 +79,8 @@ int main()
     otherThread.join();
     assert(!releasedFromOtherThread);
     assert(!ownerThreadReleased);
-    assert(
-        loader::native::releaseRuntimeResourceOnOwnerThread(ownerThreadReference, "owner-thread"));
+    assert(ownerThreadResources->deferRelease("owner-thread"));
+    assert(loader::native::drainRuntimeResourceReleases(ownerThreadReference) == 1);
     assert(ownerThreadReleased);
     auto wrongThreadResources        = std::make_shared<loader::native::RuntimeResourceRegistry>();
     bool wrongThreadResourceReleased = false;
@@ -91,6 +95,56 @@ int main()
     });
     wrongThread.join();
     assert(!wrongThreadResourceReleased);
+
+    std::mutex                                                             leaseMutex;
+    std::condition_variable                                                leaseCondition;
+    bool                                                                   leaseEntered = false;
+    bool                                                                   releaseLease = false;
+    std::promise<std::shared_ptr<loader::native::RuntimeResourceRegistry>> leasePromise;
+    auto        leaseFuture = leasePromise.get_future();
+    std::thread leaseOwner([&] {
+        auto     registry = std::make_shared<loader::native::RuntimeResourceRegistry>();
+        uint64_t identity = registry->identity();
+        leasePromise.set_value(registry);
+        loader::native::withRuntimeResource(registry, identity,
+                                            [&](loader::native::RuntimeResourceRegistry &) {
+                                                std::unique_lock<std::mutex> lock(leaseMutex);
+                                                leaseEntered = true;
+                                                leaseCondition.notify_all();
+                                                leaseCondition.wait(lock, [&] {
+                                                    return releaseLease;
+                                                });
+                                            });
+    });
+    auto        leaseResources = leaseFuture.get();
+    {
+        std::unique_lock<std::mutex> lock(leaseMutex);
+        leaseCondition.wait(lock, [&] {
+            return leaseEntered;
+        });
+    }
+    std::atomic_bool invalidationStarted{false};
+    std::atomic_bool invalidationFinished{false};
+    std::thread      invalidator([&] {
+        invalidationStarted.store(true, std::memory_order_release);
+        leaseResources->invalidate();
+        invalidationFinished.store(true, std::memory_order_release);
+    });
+    while (!invalidationStarted.load(std::memory_order_acquire))
+    {
+        std::this_thread::yield();
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    assert(!invalidationFinished.load(std::memory_order_acquire));
+    {
+        std::lock_guard<std::mutex> lock(leaseMutex);
+        releaseLease = true;
+    }
+    leaseCondition.notify_all();
+    leaseOwner.join();
+    invalidator.join();
+    assert(invalidationFinished.load(std::memory_order_acquire));
+    assert(!leaseResources->active());
 
     assert(resources.retain("hook-2", second));
     second.reset();

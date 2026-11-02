@@ -8,6 +8,7 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace loader::native {
@@ -17,10 +18,11 @@ public:
     RuntimeResourceRegistry();
     ~RuntimeResourceRegistry();
 
-    uint64_t              identity() const;
-    bool                  active() const;
-    bool                  onOwnerThread() const;
-    void                  invalidate();
+    uint64_t                               identity() const;
+    bool                                   active() const;
+    bool                                   onOwnerThread() const;
+    std::unique_lock<std::recursive_mutex> lockRuntime() const;
+    void                                   invalidate();
     bool                  retain(const std::string &key, std::shared_ptr<void> resource);
     bool                  release(const std::string &key);
     bool                  releaseOnOwnerThread(const std::string &key);
@@ -34,6 +36,7 @@ private:
     uint64_t                                               identity_;
     std::thread::id                                        ownerThread_;
     std::atomic_bool                                       active_{true};
+    mutable std::recursive_mutex                           runtimeMutex_;
     mutable std::mutex                                     mutex_;
     std::unordered_map<std::string, std::shared_ptr<void>> resources_;
     std::vector<std::shared_ptr<void>>                     deferredReleases_;
@@ -51,5 +54,24 @@ bool   releaseRuntimeResourceOnOwnerThread(const std::weak_ptr<RuntimeResourceRe
                                            const std::string                            &key);
 bool   invalidateRuntimeResources(const std::weak_ptr<RuntimeResourceRegistry> &registry);
 size_t drainRuntimeResourceReleases(facebook::jsi::Runtime &runtime);
+size_t drainRuntimeResourceReleases(const std::weak_ptr<RuntimeResourceRegistry> &registry);
 std::shared_ptr<void> runtimeResource(facebook::jsi::Runtime &runtime, const std::string &key);
+
+template <typename Callback>
+bool withRuntimeResource(const std::weak_ptr<RuntimeResourceRegistry> &registry, uint64_t identity,
+                         Callback &&callback)
+{
+    auto resources = registry.lock();
+    if (!resources)
+    {
+        return false;
+    }
+    auto runtimeLock = resources->lockRuntime();
+    if (!resources->active() || !resources->onOwnerThread() || resources->identity() != identity)
+    {
+        return false;
+    }
+    std::forward<Callback>(callback)(*resources);
+    return true;
+}
 }

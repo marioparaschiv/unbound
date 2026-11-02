@@ -1,6 +1,7 @@
 #include "NativeRuntimeResources.h"
 
 #include <atomic>
+#include <iterator>
 
 namespace loader::native {
 namespace jsi = facebook::jsi;
@@ -58,8 +59,14 @@ bool RuntimeResourceRegistry::onOwnerThread() const
     return std::this_thread::get_id() == ownerThread_;
 }
 
+std::unique_lock<std::recursive_mutex> RuntimeResourceRegistry::lockRuntime() const
+{
+    return std::unique_lock<std::recursive_mutex>(runtimeMutex_);
+}
+
 void RuntimeResourceRegistry::invalidate()
 {
+    auto                        runtimeLock = lockRuntime();
     std::lock_guard<std::mutex> lock(mutex_);
     active_.store(false, std::memory_order_release);
 }
@@ -70,6 +77,7 @@ bool RuntimeResourceRegistry::retain(const std::string &key, std::shared_ptr<voi
     {
         return false;
     }
+    auto                        runtimeLock = lockRuntime();
     std::lock_guard<std::mutex> lock(mutex_);
     if (!active())
     {
@@ -84,6 +92,7 @@ bool RuntimeResourceRegistry::release(const std::string &key)
     {
         return false;
     }
+    auto                               runtimeLock = lockRuntime();
     std::shared_ptr<void>              released;
     std::vector<std::shared_ptr<void>> deferred;
     {
@@ -145,6 +154,7 @@ size_t RuntimeResourceRegistry::drainDeferredReleases()
     {
         return 0;
     }
+    auto                               runtimeLock = lockRuntime();
     std::vector<std::shared_ptr<void>> released;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -155,6 +165,7 @@ size_t RuntimeResourceRegistry::drainDeferredReleases()
 
 void RuntimeResourceRegistry::clear()
 {
+    auto                                                   runtimeLock = lockRuntime();
     std::unordered_map<std::string, std::shared_ptr<void>> released;
     std::vector<std::shared_ptr<void>>                     deferred;
     if (!onOwnerThread())
@@ -249,6 +260,12 @@ size_t drainRuntimeResourceReleases(jsi::Runtime &runtime)
     return existing ? std::static_pointer_cast<RuntimeResourceRuntimeData>(existing)
                           ->resources->drainDeferredReleases()
                     : 0;
+}
+
+size_t drainRuntimeResourceReleases(const std::weak_ptr<RuntimeResourceRegistry> &registry)
+{
+    auto resources = registry.lock();
+    return resources ? resources->drainDeferredReleases() : 0;
 }
 
 std::shared_ptr<void> runtimeResource(jsi::Runtime &runtime, const std::string &key)
