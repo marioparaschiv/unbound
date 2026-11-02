@@ -7,6 +7,9 @@ import { getUserSponsorship } from '~/lib/sponsors/sponsorships';
 import { isPerkUnlocked, PERKS } from '~/lib/sponsors/perks';
 import type { AppContext } from '~/lib/context';
 
+// The account in `.github/FUNDING.yml`, so the sponsor link shows before the sponsors integration is configured.
+const DEFAULT_SPONSORS_LOGIN = 'marioparaschiv';
+
 export type PerkStatus = {
 	id: PerkId;
 	name: string;
@@ -50,7 +53,7 @@ export async function getSponsorOverview(
 	}));
 
 	return {
-		sponsorUrl: `https://github.com/sponsors/${encodeURIComponent(ctx.env.GITHUB_SPONSORS_LOGIN)}`,
+		sponsorUrl: `https://github.com/sponsors/${encodeURIComponent(ctx.env.GITHUB_SPONSORS_LOGIN ?? DEFAULT_SPONSORS_LOGIN)}`,
 		githubLinked,
 		sponsorship: row
 			? {

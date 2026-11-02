@@ -59,8 +59,8 @@ export const envSchema = z.object({
 	DISCORD_ADDON_DEVELOPER_ROLE_ID: z.string().regex(/^\d+$/).default('952688684107456612'),
 	TEAM_SYNC_INTERVAL_SECONDS: positiveInt.default(900),
 
-	/** The sponsored account, also the `/account` sponsor link. The webhook also needs the secret; the reconcile also needs the token. */
-	GITHUB_SPONSORS_LOGIN: z.string().min(1).default('marioparaschiv'),
+	/** The sponsored account. The webhook also needs the secret; the reconcile also needs the token. */
+	GITHUB_SPONSORS_LOGIN: z.string().min(1).optional(),
 	/** A token of the sponsored account that can read its sponsorships through GraphQL. */
 	GITHUB_SPONSORS_TOKEN: z.string().min(1).optional(),
 	GITHUB_SPONSORS_WEBHOOK_SECRET: z.string().min(1).optional(),

@@ -175,9 +175,9 @@ function applyDelivery(
  */
 export async function handleSponsorsWebhook(ctx: AppContext, request: Request): Promise<Response> {
 	const secret = ctx.env.GITHUB_SPONSORS_WEBHOOK_SECRET;
-	const login = ctx.env.GITHUB_SPONSORS_LOGIN.toLowerCase();
+	const login = ctx.env.GITHUB_SPONSORS_LOGIN?.toLowerCase();
 
-	if (!secret) {
+	if (!secret || !login) {
 		return new Response(null, { status: 404 });
 	}
 
