@@ -2,6 +2,12 @@ import { Discord } from '~/metro/components';
 import { Theme } from '~/metro/common';
 
 export default Discord.createStyles({
+	list: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+	},
 	toastShadow: Theme.shadows.SHADOW_MEDIUM,
 	container: {
 		backgroundColor: Theme.colors.BACKGROUND_SURFACE_HIGH,

@@ -1,6 +1,6 @@
 import { Platform, SafeAreaView, StatusBar } from 'react-native';
 
-import useStyles from './toast-list.style';
+import useStyles from './toast.style';
 import Toast from './toast';
 
 type ToastListProps = {
@@ -15,7 +15,7 @@ function ToastList({ ids }: ToastListProps) {
 	const styles = useStyles();
 
 	return (
-		<SafeAreaView style={[styles.container, androidInset]} pointerEvents='box-none'>
+		<SafeAreaView style={[styles.list, androidInset]} pointerEvents='box-none'>
 			{ids.map((id) => (
 				<Toast key={id} id={id} />
 			))}
