@@ -189,55 +189,12 @@ export function isKeyMissing(key: string | undefined) {
 }
 
 /**
- * @description Removes a module id from a cache key, dropping the key entirely once empty, and persists. Twin of {@link addCachedIDForKey}.
- * @param key The cache key to remove the id from.
- * @param item The module id to uncache.
- * @returns Always `true`.
- */
-function removeCachedIDForKey(key: string, item: number) {
-	const store = state.modules[key];
-
-	if (!store) {
-		return true;
-	}
-
-	const idx = store.indexOf(item);
-
-	if (~idx) {
-		store.splice(idx, 1);
-	}
-
-	if (!store.length) {
-		delete state.modules[key];
-	}
-
-	save('modules');
-
-	return true;
-}
-
-/**
  * @description Sets a {@link ModuleFlags} bit on a module and persists. Twin of {@link removeModuleFlag}.
  * @param id The id of the module to flag.
  * @param flag The flag bit to set.
  */
 export function addModuleFlag(id: number, flag: ModuleFlags) {
 	state.moduleFlags[id] |= flag;
-	save('moduleFlags');
-}
-
-/**
- * @description Clears a {@link ModuleFlags} bit from a module and persists. Twin of {@link addModuleFlag}.
- * @param id The id of the module to unflag.
- * @param flag The flag bit to clear.
- * @returns `true` if the module had no flags set, otherwise `undefined`.
- */
-function removeModuleFlag(id: number, flag: ModuleFlags) {
-	if (!state.moduleFlags[id]) {
-		return true;
-	}
-
-	state.moduleFlags[id] &= ~flag;
 	save('moduleFlags');
 }
 
@@ -307,9 +264,6 @@ export default {
 	addCachedIDForKey,
 	markKeyMissing,
 	isKeyMissing,
-	removeCachedIDForKey,
 	addModuleFlag,
 	hasModuleFlag,
-	removeModuleFlag,
-	save,
 };
