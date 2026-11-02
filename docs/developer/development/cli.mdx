@@ -12,13 +12,13 @@ bunx @unbound-app/cli --help
 
 Every command takes `--help` for its flags and `--json` to print the raw result instead of the formatted transcript.
 
-### Commands that talk to the device
+## Commands that talk to the device
 
 Commands that act on the running client, such as `eval`, `push`, `reload` and `dev`, go through the debugger bridge. Start it first with `bunx @unbound-app/debugger` and connect the device to it, as described in [debugging](/docs/developer/development/debugging). They use port `9090` unless you pass `--port`.
 
 `install`, `device` and `logs` don't need the bridge. They reach Discord directly: over `adb` on a rooted Android device or emulator, or through jb-p1lot on a jailbroken iPhone when you pass `--ios` or `--udid`. Use `--serial` to pick one of several Android devices.
 
-### Make an addon
+## Make an addon
 
 <Steps>
 	<Step title='Scaffold it'>
@@ -75,7 +75,7 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 	</Step>
 </Steps>
 
-### Run code and reload
+## Run code and reload
 
 | Command | What it does |
 | --- | --- |
@@ -88,7 +88,7 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 
 `trace` and `hook` record for `--duration` milliseconds (default `3000`) and describe the first `--samples` calls (default `10`).
 
-### Inspect native code
+## Inspect native code
 
 | Command | What it does |
 | --- | --- |
@@ -97,7 +97,7 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 | `ubd hook <className> [method]` | Records calls to an Android Java method or an iOS Objective-C selector. On Android, `--parameters` gives the Java parameter types, such as `android.view.MotionEvent`. |
 | `ubd spans [match]` | Prints the text and spans of Android text views that contain some text, with each span's class and range, and invisible characters escaped. |
 
-### Logs and device state
+## Logs and device state
 
 `ubd logs` tails Discord's log, filtered to Unbound, the JavaScript console and crashes. On Android it follows `adb logcat` for `com.discord` across restarts. On an iPhone it reads the unified log.
 
@@ -119,7 +119,7 @@ ubd device restore clean --restart
 ubd device reset
 ```
 
-### AI clients
+## AI clients
 
 `ubd mcp` serves the bridge commands above, plus `install` and `device`, as tools of a stdio [MCP](https://modelcontextprotocol.io) server over one connection to the bridge, so an AI client can evaluate code, inspect views, and push plugins. `build`, `dev`, `create`, `logs`, `login`, `logout` and `publish` stay CLI only.
 

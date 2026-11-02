@@ -1,136 +1,147 @@
 ---
-title: 'Creating an Addon'
-description: 'Build a plugin from an empty folder, step by step.'
-icon: 'wand-sparkle'
+title: 'Your First Plugin'
+description: 'Scaffold a plugin, run it on your phone, and make it change Discord.'
+icon: 'rocket'
 ---
 
-This guide builds a small working plugin that finds a Discord module, patches it, and stores a setting.
+This guide takes you from an empty folder to a plugin running on your phone. You need [Bun](https://bun.sh) on your computer, and a phone with [Unbound installed](/docs/user/installing) on the same network.
 
-Plugins have the most features of any addon kind, so they make the best example. Themes and icon packs use the same manifest and lifecycle, with different content.
-
-`ubd create` scaffolds a plugin in the standard layout. This guide builds one file by hand to show the API. Before you publish, follow the [authoring standards](/docs/developer/addons/standards).
+## Run the starter plugin
 
 <Steps>
-	<Step title='Describe it with a manifest' icon='circle-info'>
-		Create a `manifest.json` with at least the required fields. The [manifest](/docs/developer/addons/manifest) is the metadata Unbound uses to list, attribute, and validate your addon.
+	<Step title='Scaffold a workspace'>
+		`ubd`, Unbound's CLI, creates a workspace with one plugin in it. It asks for anything you leave out, such as your Discord user id.
 
-		```json manifest.json
-		{
-			"id": "hello-world",
-			"name": "Hello World",
-			"description": "Logs a greeting when a message is sent.",
-			"authors": [{ "name": "you", "id": "1234567890" }],
-			"version": "1.0.0",
-			"main": "index.js"
-		}
-		```
-
-		<Note>
-			`main` points at your entry file. `id` is the name you use everywhere else. See [the manifest](/docs/developer/addons/manifest) for the full field list.
-		</Note>
-	</Step>
-
-	<Step title='Write the entry point' icon='square-code'>
-		Your `main` file default-exports an object with optional `start` and `stop` hooks.
-
-		- Unbound calls `start` when the plugin is enabled. Set everything up here.
-		- Unbound calls `stop` when the plugin is disabled. Undo anything Unbound can't undo for you.
-
-		```ts index.ts
-		export default {
-			start() {
-				// set up patches, listeners, commands
-			},
-		};
-		```
-
-		Your bundle runs with its own [Addon scope](/docs/developer/plugins/introduction#the-addon-scope). Patches, commands, timers, and Metro, Flux and storage listeners made through it are removed when the plugin stops, so most plugins need no `stop`. The scope also gives you `addon`, your plugin's handle, and `logger`, which prefixes each line with your plugin's name.
-
-		<Warning>
-			Your bundle's top-level code runs each time the plugin starts, before `start`. Keep it cheap: no eager Metro searches. See [how plugins are loaded](/docs/developer/plugins/introduction#how-plugins-are-loaded).
-		</Warning>
-	</Step>
-
-	<Step title='Find what you want to change' icon='magnifier'>
-		Use [Metro](/docs/api/latest/metro) to find the Discord module you need. The `findBy*` helpers are lazy, so the search runs only the first time a property on the result is accessed. That makes them safe at the top of a file.
-
-		```ts
-		import { metro } from '@unbound-app/api';
-
-		const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+		```bash
+		bunx @unbound-app/cli create --kind plugin --name hello-world --shape repository --git-init --install
+		cd hello-world
 		```
 	</Step>
+	<Step title='Start the debugger bridge'>
+		The bridge connects your computer to the phone. Leave it running in its own terminal.
 
-	<Step title='Patch it' icon='layers'>
-		Wrap the function with the [patcher](/docs/api/latest/patcher). Your plugin's patches carry its `id`, and Unbound removes them when the plugin stops.
+		```bash
+		bunx @unbound-app/debugger
+		```
 
-		```ts
-		import { patcher } from '@unbound-app/api';
+		It prints a `Devices` address, such as `192.168.1.20:9090`.
+	</Step>
+	<Step title='Connect your phone'>
+		1. In Discord, open **Unbound** settings, then **General**, and turn on **Developer Mode**.
+		2. Open the **Developer** screen and turn on **Enable Debugger**.
+		3. Enter the `Devices` address in **Debugger Address**.
+		4. Restart Discord.
 
-		// inside start():
-		patcher.before(Messages, 'sendMessage', ({ args }) => {
-			logger.log('Sending message to channel', args[0]);
-		});
+		The bridge prints `Device connected`.
+	</Step>
+	<Step title='Send the plugin to your phone'>
+		`push` builds the plugin, installs it, and starts it. The starter plugin greets you with a toast.
+
+		```bash
+		bunx @unbound-app/cli push hello-world
 		```
 	</Step>
+	<Step title='Rebuild on every save'>
+		`dev` watches your files. Each time you save, it rebuilds the plugin and reloads it on the phone.
 
-	<Step title='Remember a setting' icon='database'>
-		Save configuration with [storage](/docs/api/latest/storage). `storage.getBucket()` returns your plugin's own Bucket, named after its `id`. Values persist across reloads with no extra work.
-
-		```ts
-		import { storage } from '@unbound-app/api';
-
-		const settings = storage.getBucket();
-		settings.set('greeting', 'Hello from Unbound');
-		settings.get('greeting', 'Hi'); // default if unset
+		```bash
+		bun run dev
 		```
-	</Step>
-
-	<Step title='Clean up what the scope cannot see' icon='broom'>
-		If you patched a component's render, call `patcher.unpatchAll()` in `stop` and force a re-render, so the original UI comes back. See [cleaning up](/docs/developer/plugins/react-patching#cleaning-up).
-
-		<Warning>
-			The scope only removes what went through it. A listener you add straight to a Discord module, or a settings section you register, stays until your `stop` removes it.
-		</Warning>
 	</Step>
 </Steps>
 
-### The full plugin
+## What you got
 
-All the steps combined into one file:
+The plugin lives in `plugins/hello-world`. Each feature gets its own folder under `src/`, and `src/index.tsx` only starts them.
 
-```ts index.ts
-import { metro, patcher, storage } from '@unbound-app/api';
+<FileTree>
+	<Folder name='hello-world'>
+		<File name='manifest.json' note='Who the plugin is: its id, name and version' />
+		<File name='ADDON.md' note='The page the store shows' />
+		<Folder name='media' note='Images for the store page' />
+		<Folder name='src'>
+			<File name='index.tsx' note='Starts each feature' />
+			<File name='settings.tsx' note='The settings panel' />
+			<File name='constants.ts' note='Setting keys' />
+			<Folder name='greeting' note='One feature: the greeting toast'>
+				<File name='index.ts' />
+				<File name='platform.ts' note='Picks the iOS or Android version' />
+			</Folder>
+		</Folder>
+	</Folder>
+</FileTree>
 
-const settings = storage.getBucket();
-const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+The entry file exports the plugin. Unbound calls `start` when the plugin is turned on, and shows `getSettingsPanel` in its settings.
+
+```tsx src/index.tsx
+import { startGreeting } from '~/greeting';
+import Settings from '~/settings';
 
 export default {
 	start() {
-		patcher.before(Messages, 'sendMessage', ({ args }) => {
-			const greeting = settings.get('greeting', 'Hi');
-			logger.log(greeting, '→ channel', args[0]);
-		});
+		startGreeting();
 	},
+
+	getSettingsPanel: () => <Settings />,
 };
 ```
 
-### Where to go next
+## Make it change Discord
+
+Add a feature that logs every message you send. Create a new folder for it.
+
+```ts src/message-log/index.ts
+import { metro, patcher } from '@unbound-app/api';
+
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+
+export function startMessageLog() {
+	patcher.before(Messages, 'sendMessage', ({ args }) => {
+		logger.log('Sending a message to channel', args[0]);
+	});
+}
+```
+
+1. `findByProps` finds Discord's module that has both `sendMessage` and `receiveMessage`. The search waits until the patch first needs the module.
+2. `patcher.before` runs your callback each time Discord sends a message, with the arguments Discord passed.
+3. `logger` is a global every plugin gets. It prefixes each line with your plugin's name.
+
+Then start the feature from the entry file:
+
+```tsx src/index.tsx
+import { startMessageLog } from '~/message-log';
+import { startGreeting } from '~/greeting';
+import Settings from '~/settings';
+
+export default {
+	start() {
+		startGreeting();
+		startMessageLog();
+	},
+
+	getSettingsPanel: () => <Settings />,
+};
+```
+
+Save, and `dev` reloads the plugin. Send a message on your phone, and the log line appears in the bridge's terminal.
+
+<Note>
+	The plugin has no `stop`. Unbound records every patch a plugin makes, and removes them all when the plugin is turned off. [How Plugins Run](/docs/developer/plugins/introduction) explains what it cleans up for you.
+</Note>
+
+## Where to go next
 
 <CardGroup cols={2}>
-	<Card title='Authoring Standards' icon='ruler' href='/docs/developer/addons/standards'>
-		The layout and loading rules, and the check that enforces each one.
+	<Card title='How Plugins Run' icon='plug' href='/docs/developer/plugins/introduction'>
+		The lifecycle, the Addon scope, and keeping a plugin fast.
 	</Card>
-	<Card title='Patcher' icon='layers' href='/docs/api/latest/patcher'>
-		The full patcher API: before, after, instead, and typing.
+	<Card title='Project Layout' icon='folder-tree' href='/docs/developer/addons/standards'>
+		Where each file goes, and the checks that enforce it.
 	</Card>
-	<Card title='Patching Components' icon='atom' href='/docs/developer/plugins/react-patching'>
-		Change what Discord's components render.
+	<Card title='Settings and Storage' icon='toggle' href='/docs/developer/plugins/settings'>
+		Save options and build a settings panel.
 	</Card>
-	<Card title='Flux' icon='box' href='/docs/api/latest/flux'>
-		Read Discord's state and react to its actions.
-	</Card>
-	<Card title='Commands' icon='terminal' href='/docs/api/latest/commands'>
-		Add slash commands to the chat input.
+	<Card title='CLI' icon='terminal' href='/docs/developer/development/cli'>
+		Build, install and publish your plugin.
 	</Card>
 </CardGroup>

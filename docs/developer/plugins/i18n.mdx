@@ -1,0 +1,106 @@
+---
+title: 'Translations'
+description: "Show your plugin's text in the language the user picked in Discord."
+icon: 'language'
+---
+
+Discord lets each user pick a language. Your plugin can follow that choice. You write every string once per language in a JSON file, and Unbound picks the right one each time you read it.
+
+## How a string is chosen
+
+Each string has a **key**, such as `GREETING_TITLE`. When your plugin reads a key, Unbound looks for it in this order, and uses the first match:
+
+<Flow>
+	<FlowStep title="The user's language" detail='de, when Discord is in German' />
+	<FlowStep title='en-US' detail='Your source of truth' />
+	<FlowStep title='The key itself' detail='GREETING_TITLE' />
+</Flow>
+
+So a missing translation never breaks your plugin. It shows English until someone translates it. That makes `en-US` the one file that must have every key.
+
+## Lay out the files
+
+Keep translations in their own domain folder: one JSON file per language, and one file that loads them.
+
+<FileTree>
+	<Folder name='src'>
+		<File name='index.tsx' />
+		<Folder name='i18n' note='Everything about translations'>
+			<File name='index.ts' note='Loads the files and exports messages and format' />
+			<Folder name='locales'>
+				<File name='en-US.json' note='Every key. The fallback for the rest' />
+				<File name='de.json' note='German' />
+				<File name='fr.json' note='French' />
+			</Folder>
+		</Folder>
+	</Folder>
+</FileTree>
+
+Name each file after Discord's code for the language. Most are two letters, such as `de`, `fr` and `ja`. A few name a region: `en-US`, `en-GB`, `es-ES`, `es-419`, `pt-BR`, `sv-SE`, `zh-CN` and `zh-TW`.
+
+## Write the strings
+
+Each file maps keys to strings. Use the same keys in every file.
+
+```json src/i18n/locales/en-US.json
+{
+	"GREETING_TITLE": "Welcome back",
+	"GREETING_BODY": "Hello, {name}!",
+	"UNREAD_COUNT": "{count, plural, one {# unread message} other {# unread messages}}"
+}
+```
+
+```json src/i18n/locales/de.json
+{
+	"GREETING_TITLE": "Willkommen zurück",
+	"GREETING_BODY": "Hallo, {name}!",
+	"UNREAD_COUNT": "{count, plural, one {# ungelesene Nachricht} other {# ungelesene Nachrichten}}"
+}
+```
+
+Strings use ICU message syntax. `{name}` is a placeholder. `{count, plural, ...}` picks a form by number, and `#` prints the number. Each language writes its own plural forms.
+
+## Load them
+
+`i18n.defineMessages` takes every language, keyed by its code, and returns two ways to read them.
+
+```ts src/i18n/index.ts
+import { i18n } from '@unbound-app/api';
+
+import enUS from '~/i18n/locales/en-US.json';
+import de from '~/i18n/locales/de.json';
+import fr from '~/i18n/locales/fr.json';
+
+export const { messages, format } = i18n.defineMessages({ 'en-US': enUS, de, fr });
+```
+
+Your strings are kept apart from Unbound's and every other plugin's, so your keys need no prefix.
+
+## Use them
+
+Read plain strings from `messages`. Use `format` for strings with placeholders, and pass the values.
+
+```ts src/greeting/index.ts
+import { toasts } from '@unbound-app/api';
+
+import { format, messages } from '~/i18n';
+
+export function showGreeting(name: string) {
+	toasts.show({
+		title: messages.GREETING_TITLE,
+		content: format('GREETING_BODY', { name }),
+	});
+}
+```
+
+<Warning>
+	Read strings when you show them, not once at the top of a file. `messages` looks up the user's current language on every read. A string saved in a constant at load stays in whatever language was active then.
+</Warning>
+
+## Adding a language
+
+1. Copy `en-US.json` to a file named after the language's code.
+2. Translate each string. Keep the keys and placeholders exactly as they are.
+3. Import the file in `src/i18n/index.ts`, and add it to `defineMessages`.
+
+You can ship a partly translated file. Every key it leaves out falls back to `en-US`.

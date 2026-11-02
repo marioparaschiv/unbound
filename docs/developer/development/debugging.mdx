@@ -11,7 +11,7 @@ It has two parts:
 - `ub-debugger`, the CLI from the [`@unbound-app/debugger`](https://www.npmjs.com/package/@unbound-app/debugger) npm package. It hosts a WebSocket server (the bridge) and draws the REPL.
 - The debugger built-in in the client. When enabled, it dials the bridge, runs the code it receives, and forwards console output.
 
-### Running the debugger
+## Running the debugger
 
 Start the bridge on your computer, then point the phone at it. `ub-debugger` is published on npm as `@unbound-app/debugger` and needs [Bun](https://bun.sh), because it uses Bun's WebSocket server and file APIs.
 
@@ -48,7 +48,7 @@ Pass `--help` to list the flags. `--port` is the only one.
 	The `Devices` address is the first non-internal IPv4 address the CLI finds. If your computer has several network interfaces (a VPN, Docker, WSL), it may print one the phone can't reach. Use the address of the interface the phone shares a network with.
 </Note>
 
-### Connecting a device
+## Connecting a device
 
 Turn on `debugger.enabled` and set `debugger.address` to the bridge's `Devices` address. Both keys are in the `unbound` store of `settings.json`. See the [settings reference](/docs/developer/loader/settings#structure) for where that file lives and how keys map to it.
 
@@ -80,7 +80,7 @@ Once enabled, the client reconnects on its own:
 - If the socket fails or closes, it retries every 2 seconds.
 - When the app goes to the background, it closes the socket and stops retrying. It reconnects when the app becomes active again.
 
-### Using the REPL
+## Using the REPL
 
 Type JavaScript at the `»` prompt and press Enter. The client evaluates it in the global scope of Discord's runtime and sends back the result, which is printed after `«`. Errors are printed in red.
 
@@ -93,7 +93,7 @@ Type JavaScript at the `»` prompt and press Enter. The client evaluates it in t
 
 Every line you enter is sent to the device as code. The REPL has no commands of its own.
 
-#### How results are shown
+### How results are shown
 
 The client converts the result to text before sending it:
 
@@ -109,13 +109,13 @@ If the code evaluates to a Promise, the client waits for it and returns the reso
 	The bridge waits 10 seconds for each result. A slow Promise fails with `Evaluation timed out after 10000ms.` even if the device finishes later.
 </Warning>
 
-#### Console output
+### Console output
 
 While connected, every line Discord's runtime logs (all `console.*` calls) appears in the terminal, prefixed with `«`. Lines are coloured by level: grey for logs, yellow for warnings, red for errors.
 
 Output logged before the device connects is not buffered or replayed.
 
-#### History
+### History
 
 Press the up and down arrow keys to recall earlier inputs. Every line you evaluate is saved to a `.history.json` file, so history carries over between sessions.
 
@@ -123,7 +123,7 @@ For an npm install, the file is written to the `node_modules/@unbound-app` folde
 
 Press `Ctrl+C` to quit.
 
-### Other tools on the bridge
+## Other tools on the bridge
 
 Other programs on your computer can connect to the bridge as controllers at `ws://127.0.0.1:<port>?mcp`. Any number of controllers can attach at once. A controller can:
 
@@ -133,7 +133,7 @@ Other programs on your computer can connect to the bridge as controllers at `ws:
 
 The terminal prints `MCP connected` and `MCP disconnected` with the number of attached controllers.
 
-### Wire protocol
+## Wire protocol
 
 `@unbound-app/debugger-protocol` defines the messages shared by the bridge, the client, and controllers. Every frame is a JSON object with a `type` field. Frames that don't parse or have an unknown `type` are dropped.
 
@@ -148,7 +148,7 @@ The terminal prints `MCP connected` and `MCP disconnected` with the number of at
 
 The `id` on a request is echoed on its result, which is how the bridge routes each result back to the controller that sent the request.
 
-### Troubleshooting
+## Troubleshooting
 
 <AccordionGroup>
 	<Accordion title='The terminal never shows "Device connected"' icon='plug'>

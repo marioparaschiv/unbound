@@ -1,24 +1,59 @@
 ---
-title: 'Marketplace'
-description: 'Browse and install addons from inside Discord. Coming soon.'
+title: 'Finding Addons'
+description: "Browse the Marketplace, read an addon's page and install it, or install from a link."
 icon: 'shop'
 ---
 
+The **Marketplace** lists every published addon. Each one is reviewed before it appears there. Open it from the **Unbound** section of Discord's settings.
+
+## Browse and install
+
+<Steps>
+	<Step title='Open the Marketplace'>
+		It has one tab per kind: **Plugins**, **Themes** and **Icons**. Swipe between them, or search by name.
+	</Step>
+	<Step title="Read the addon's page">
+		Tap a card to open its store page, with screenshots and what it does.
+	</Step>
+	<Step title='Tap Install'>
+		The button turns into **Installed**. A plugin starts turned off, and a theme or icon pack isn't applied yet. [Managing Addons](/docs/user/managing-addons) shows how to turn them on.
+	</Step>
+</Steps>
+
+An installed addon with a newer version shows **Update** instead.
+
+## Plugins that need other plugins
+
+Some plugins build on another plugin, called a **library**. When you install one, Unbound lists what it needs and offers **Install all**. On the **Plugins** page, libraries stay folded away under a button such as **+1 library**.
+
+## Install an older version
+
+Press and hold an addon's **Install** or **Update** button, and tap **Choose version** if it asks. Then pick any published version.
+
 <Note>
-	The Marketplace is not available yet. Opening it in the app shows **Coming Soon**.
+	A version you pick yourself stays put. Automatic updates for that addon pause until you tap **Update** on it again.
 </Note>
 
-### Where to find it
+## Install from the website
 
-Open Discord's settings and go to **Marketplace** in the **Unbound** section, below **General**, **Plugins**, and **Design**.
+Every addon on [unbound.rip](https://unbound.rip/addons) has an **Install** button. On your phone, it opens Discord on that addon in the Marketplace. On a computer, it copies an install link instead.
 
-### What it will do
+## Install from a link
 
-The Marketplace is where you'll browse plugins, themes, and icon packs and install them without copying a link. It's planned on the [roadmap](/docs/user/roadmap) as two parts:
+An addon that isn't in the Marketplace installs from a link to its manifest, a small file that describes it. Only use links from authors you trust.
 
-- **Embedded Addon Store**: the store screen inside Discord.
-- **Centralized Addon Store** and **Addon Submission**: the online catalog behind it, where developers publish their addons.
+<Steps>
+	<Step title='Open the page for its kind'>
+		**Plugins** for a plugin. For a theme or icon pack, open **Design** and pick its tab.
+	</Step>
+	<Step title='Tap +'>
+		It's in the bottom right corner. Tap **Install from URL**.
+	</Step>
+	<Step title='Paste the link and tap Install'>
+		The addon appears as a new card.
+	</Step>
+</Steps>
 
-### Install addons today
-
-Until the Marketplace is ready, install addons from a link. See [Install an addon](/docs/user/managing-addons#install-an-addon).
+<Warning>
+	Install from the page that matches the addon. A theme link pasted on the **Plugins** page doesn't install.
+</Warning>

@@ -1,50 +1,45 @@
 ---
-title: 'Authoring Standards'
-description: 'How a plugin is laid out and loads, and which lint rule or build check enforces each rule.'
-icon: 'ruler'
+title: 'Project Layout'
+description: 'Where each file of a plugin goes, how it loads, and the lint rule or build check behind each rule.'
+icon: 'folder-tree'
 ---
 
-These are the standards every plugin follows. `ubd create` scaffolds a plugin that already meets them. Most rules are checked by a lint rule from `@unbound-app/cli/oxlint` or by a `ubd build` check, and each rule below names its check.
+Every plugin follows the same layout and loading rules, so anyone can open one and find their way. `ubd create` scaffolds a plugin that already follows them. Lint rules from `@unbound-app/cli/oxlint` and checks in `ubd build` catch most departures, and each rule below names its check.
 
-### Summary
+## The layout
 
-| Rule | Enforced by |
-| --- | --- |
-| [No eager lookups while the plugin loads](#no-eager-lookups-while-the-plugin-loads) | Lint rule `unbound/no-module-scope-lookup` |
-| [Each feature loads itself and patches only what it needs](#each-feature-loads-itself-and-patches-only-what-it-needs) | Lint rule `unbound/no-module-scope-lookup` for its lookups. Addon review for the rest |
-| [The standard layout](#the-standard-layout) | Build check `layout` |
-| [`platform.ts` is the only platform check](#platformts-is-the-only-platform-check) | Lint rule `unbound/platform-check-only-in-platform-file` and build check `layout` |
-| [Use the scoped API, never `window.unbound`](#use-the-scoped-api-never-windowunbound) | Lint rule `unbound/no-window-unbound` |
-| [Developer notes are JSDoc on the feature](#developer-notes-are-jsdoc-on-the-feature) | Addon review. No lint rule or build check |
-| [Never write Capabilities or platforms by hand](#never-write-capabilities-or-platforms-by-hand) | Build check `capabilities` |
-| [Change native views from the UI thread](#change-native-views-from-the-ui-thread) | Addon review. No lint rule or build check |
+A plugin is split by **feature**: one thing the plugin does, in its own folder under `src/`. The entry file only starts features.
 
-### No eager lookups while the plugin loads
+<FileTree>
+	<Folder name='my-plugin'>
+		<File name='manifest.json' note='The metadata Unbound reads' />
+		<File name='ADDON.md' note='The store page' />
+		<Folder name='media' note='Images and videos ADDON.md shows' />
+		<Folder name='src'>
+			<File name='index.tsx' note='Starts each feature. Nothing else' />
+			<File name='settings.tsx' note='The settings panel' />
+			<File name='constants.ts' />
+			<File name='types.ts' />
+			<Folder name='components' note='Components several features share' />
+			<Folder name='<feature>' note='One folder per feature'>
+				<File name='index.ts' note='Starts the feature, with its developer notes' />
+				<File name='platform.ts' note='Picks the iOS or Android handler, if the feature has one' />
+				<Folder name='ios' />
+				<Folder name='android' />
+				<Folder name='components' note="This feature's own components" />
+			</Folder>
+		</Folder>
+	</Folder>
+</FileTree>
 
-A plugin's bundle is evaluated each time the plugin starts. Code at the top of a file runs during that evaluation, before `start`, and at launch it delays Discord. A Metro search walks every module in Discord's bundle.
+- The only files at the root of `src/` are `index.tsx`, `settings.tsx`, `constants.ts` and `types.ts`. Every other file goes in a feature folder.
+- Platform code goes in the `ios/` and `android/` folders of the feature it belongs to, never at the root of `src/`.
 
-So code that runs while the plugin loads makes no eager search: no `metro.find`, no `findBy*` or `flux.getStore` with `{ lazy: false }`. The `findBy*` helpers and `flux.getStore` are lazy by default. They return a proxy, and the search runs the first time the plugin reads from it.
+**Checked by** the build check `layout`. `ubd build` prints a warning for each departure. Warnings don't fail the build.
 
-```ts
-import { flux, metro } from '@unbound-app/api';
+## Each feature starts itself
 
-// Lazy: safe at the top of a file.
-const Messages = metro.findByProps('sendMessage', 'receiveMessage');
-const UserStore = flux.getStore('User');
-
-// Eager: move it into the function that uses it.
-const Button = metro.findByName('Button', { lazy: false });
-```
-
-**Enforced by** the lint rule `unbound/no-module-scope-lookup`. It reports a `metro.find`, `findByProps`, `findByName`, `findByFilePath`, `findByPrototypes` or `flux.getStore` call made outside a function, unless the call is lazy. The scaffold turns it on with `{ "lazyByDefault": true }`, so only a call with `{ lazy: false }` is reported.
-
-### Each feature loads itself and patches only what it needs
-
-A **feature** is one thing the plugin does, in its own domain folder. `src/index.tsx` starts each feature. The feature then finds its own modules and makes its own patches. A feature may be always on. It doesn't need a setting.
-
-A feature makes only the patches it needs. One exception is a patch on another module that exists only to get data to the feature, such as passing on data from a closure. That patch belongs to the feature that uses the data, in that feature's folder.
-
-Patch lazy targets. If the module hasn't loaded yet, the patcher waits and applies the patch when it loads, so a patch never makes Discord load a module early.
+`src/index.tsx` calls each feature's start function. The feature then finds its own modules and makes its own patches. A feature makes only the patches it needs. The one exception is a patch on another module that only passes data to the feature, such as a value from a closure. That patch lives in the folder of the feature that uses the data.
 
 ```ts src/greeting/index.ts
 import { metro, patcher } from '@unbound-app/api';
@@ -60,86 +55,71 @@ export function startGreeting() {
 }
 ```
 
-**Enforced by** the lint rule `unbound/no-module-scope-lookup` for the lookups a feature makes. No lint rule or build check can tell whether a patch is needed, so addon review checks that.
+Notes for the next developer go in the JSDoc of the feature's `index.ts`, as above. Name every patch the feature makes on another module, and every Discord module or store it depends on.
 
-### The standard layout
+**Checked by** addon review.
 
-```
-my-plugin/
-├── manifest.json
-├── ADDON.md
-├── media/                    # images and videos ADDON.md shows
-└── src/
-    ├── index.tsx             # starts the features. Nothing else.
-    ├── settings.tsx          # the settings panel
-    ├── constants.ts
-    ├── types.ts
-    ├── components/           # components shared by several features
-    └── <domain>/             # one folder per feature or domain
-        ├── index.ts          # the feature, with its developer notes
-        ├── platform.ts       # definePlatform, only if the domain has platform code
-        ├── ios/
-        ├── android/
-        └── components/       # this domain's components
+## No eager lookups while the plugin loads
+
+The top level of your files runs every time the plugin starts, before `start`. At launch, it delays Discord. A Metro search walks every module in Discord's bundle, so the top level makes no eager search: no `metro.find`, and no `findBy*` or `flux.getStore` with `{ lazy: false }`.
+
+```ts
+import { flux, metro } from '@unbound-app/api';
+
+// Lazy: safe at the top of a file.
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+const UserStore = flux.getStore('User');
+
+// Eager: move it into the function that uses it.
+const Button = metro.findByName('Button', { lazy: false });
 ```
 
-- `src/index.tsx` only starts features and exports the settings panel.
-- The only files at the root of `src/` are `index.tsx`, `settings.tsx`, `constants.ts` and `types.ts`. Every other file goes in a domain folder.
-- Platform code goes in the `ios/` and `android/` folders of the domain it belongs to, never at the root of `src/`.
-- A domain's own components go in that domain's folder.
+**Checked by** the lint rule `unbound/no-module-scope-lookup`.
 
-**Enforced by** the build check `layout`. `ubd build` prints one warning per departure: a missing `src/index.tsx`, another file at the root of `src/`, `ios/` or `android/` at the root of `src/`, or a domain with `ios/` or `android/` but no `platform.ts`. Warnings don't fail the build.
+## `platform.ts` is the only platform check
 
-### `platform.ts` is the only platform check
-
-A domain with platform code picks its platform handler once, in `platform.ts`, with `native.definePlatform`. The rest of the domain calls the handler and never checks the platform itself.
+A feature with platform code picks its handler once, in `platform.ts`. The rest of the feature calls the handler, and never checks the platform itself.
 
 ```ts src/greeting/platform.ts
-import { native } from '@unbound-app/api';
+import { definePlatform } from '@unbound-app/api/native';
 
 import { platformName as android } from '~/greeting/android/platform-name';
 import { platformName as ios } from '~/greeting/ios/platform-name';
 
-export const platformName = native.definePlatform({ ios, android });
+export const platformName = definePlatform({ ios, android });
 ```
 
-**Enforced by** the lint rule `unbound/platform-check-only-in-platform-file`, which reports `Platform.OS` and `context.platform` in any file other than `platform.ts`, and by the build check `layout`, which warns about an `ios/` or `android/` folder with no `platform.ts` next to it. `ubd build` also reads the keys you pass to `definePlatform` to know which platforms the plugin supports.
+`ubd build` reads the keys you pass to `definePlatform` to learn which platforms the plugin supports.
 
-### Use the scoped API, never `window.unbound`
+**Checked by** the lint rule `unbound/platform-check-only-in-platform-file`, and the build check `layout`.
 
-Import namespaces from `@unbound-app/api`. In a plugin they come from its [Addon scope](/docs/developer/plugins/introduction#the-addon-scope), so the plugin's patches, commands, timers and listeners are removed when it stops. `window.unbound` is the unscoped API: what a plugin registers through it outlives the plugin.
+## Use the scoped API
 
-**Enforced by** the lint rule `unbound/no-window-unbound`, which reports `window.unbound` and `globalThis.unbound`, including inside strings.
+Import from `@unbound-app/api`. In a plugin, those imports come from its [Addon scope](/docs/developer/plugins/introduction#the-addon-scope), which removes what the plugin registered when it stops. `window.unbound` is the unscoped API, so anything registered through it outlives the plugin.
 
-### Developer notes are JSDoc on the feature
+**Checked by** the lint rule `unbound/no-window-unbound`.
 
-Notes for the next developer go in the JSDoc of the feature's `index.ts`, next to the code they describe. Name every patch the feature forces on another module, and every Discord module or store it depends on.
+## Never write Capabilities by hand
 
-**Enforced by** addon review. No lint rule or build check reads the notes.
+`ubd build` writes `platforms` and each platform's Capabilities into `dist/manifest.json`. It finds them by reading the native calls each platform handler can reach. Your own `manifest.json` never lists them.
 
-### Never write Capabilities or platforms by hand
+**Checked by** the build check `capabilities`. A hand-written `capabilities`, `platforms` or `platformCapabilities` field fails the build, and so does a dynamic access such as `native.objc[name]`.
 
-`ubd build` writes `platforms` and each platform's Capabilities into `dist/manifest.json`. It reads them from the `native` calls each platform handler can reach. A plugin never writes them in its `manifest.json`.
+## Change native views from the UI thread
 
-**Enforced by** the build check `capabilities`. A hand-written `capabilities`, `platforms` or `platformCapabilities` field, or a dynamic `native.objc[name]` access, is an error and fails the build.
+A plugin that changes how Discord's native views look makes the change from a worklet on the UI thread, so it never flashes in. See [Native UI Thread](/docs/developer/plugins/ui-thread).
 
-### Change native views from the UI thread
+**Checked by** addon review.
 
-A native plugin that changes how Discord's native views look, such as their color, size, corners or extra views, makes the change from a worklet on the UI thread. It uses `context.native.ui` and installs its hooks through a UI scope. The change is then part of Discord's own layout pass, so it never flashes or pops in. Data comes from the JavaScript thread as a snapshot, pushed only when it changes. Measuring many views, mounting React surfaces and reading stores stay on the JavaScript thread.
-
-See [Native UI on the UI Thread](/docs/developer/plugins/ui-thread) for the API and the patterns.
-
-**Enforced by** addon review. No lint rule or build check covers it.
-
-### What `ubd build` and the lint rules check
+## Every check at a glance
 
 `ubd build` runs these checks after it bundles a plugin. An error fails the build, and a warning is printed.
 
 | Build check | Reports |
 | --- | --- |
 | `naming` | Warnings for a folder, id, name or description that breaks the [manifest](/docs/developer/addons/manifest) naming rules |
-| `capabilities` | Errors for hand-written `capabilities`, `platforms` or `platformCapabilities`, and for dynamic `native` access |
-| `layout` | Warnings for each departure from [the standard layout](#the-standard-layout) |
+| `capabilities` | Errors for hand-written Capabilities or platforms, and for dynamic `native` access |
+| `layout` | Warnings for each departure from [the layout](#the-layout) |
 | `page` | Errors and warnings for an `ADDON.md` that breaks the [store page](/docs/developer/addons/store-page) rules |
 
 A scaffolded plugin's `.oxlintrc.json` turns on the three lint rules:

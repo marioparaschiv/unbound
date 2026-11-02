@@ -1,107 +1,75 @@
 ---
 title: 'Settings'
-description: 'What each option in the Unbound section of Discord settings does, and when to use it.'
+description: "What each option on Unbound's settings page does, and when to use it."
 icon: 'sliders-3'
 ---
 
-Unbound adds its own section, called **Unbound**, at the top of Discord's settings. Most of Unbound's options live on its **General** page.
+Unbound's own options are on the **Unbound** page, at the top of the **Unbound** section of Discord's settings. The page shows your Unbound version at the top. Tap it to see what changed in that version on GitHub.
 
-### Pages in the Unbound section
+## Quick actions
 
-| Page | What it's for |
+Three buttons sit under the version.
+
+| Button | What it does |
 | --- | --- |
-| **General** | Recovery, restart, toasts, links, and version info. Covered on this page. |
-| **Plugins** | Your installed plugins. See [Managing Addons](/docs/user/managing-addons). |
-| **Design** | Your themes, icon packs, and fonts. See [Managing Addons](/docs/user/managing-addons). |
-| **Developer** | Tools for addon developers. Only shown while **Developer Mode** is on. |
-| **Marketplace** | Coming soon. See [Marketplace](/docs/user/marketplace). |
+| **Restart** | Restarts Discord, after asking first |
+| **Updates** | Checks your addons and Unbound for updates. See [Updates](/docs/user/managing-addons#updates) |
+| **Report Bug** | Opens a new bug report on GitHub, already filled in with your versions and device |
 
-Some pages don't appear in the list and open from another page instead: **Toast Settings** and **Sync** open from **General**, and a plugin's settings open from the gear button on its card.
+## Recovery Mode
 
-### The General page
+Stops every addon from loading. Use it when an addon breaks Discord and you need to get in to remove it. Unbound asks you to restart when you flip it. Turn it off and restart again when you're done. See [Troubleshooting](/docs/user/troubleshooting).
 
-The rows below are listed in the order they appear, from top to bottom.
+## Account
 
-#### Recovery and restart
+Sign in with Discord to use [Sync](/docs/user/sync) and get [sponsor perks](/docs/user/sync#sponsor-perks).
 
-<ResponseField name='Recovery Mode'>
-	Stops all addons from loading. The description under it reads "Prevents all addons from loading while enabled."
-
-	Use it when a plugin breaks Discord and you need to get in and remove it. When you flip the switch, Unbound asks you to restart, because the change only takes effect after a restart. Turn it off and restart again when you're done.
-
-	For step-by-step fixes, see [Troubleshooting](/docs/user/troubleshooting).
-</ResponseField>
-<ResponseField name='Restart'>
-	Restarts Discord. Unbound asks "Are you sure you want to restart the app?" first. Tap **Restart** to go ahead or **Cancel** to stay.
-
-	Use it after you apply or change a theme, after you update an addon, or after you turn **Recovery Mode** on or off.
-</ResponseField>
-
-#### Toasts and Sync
+## Preferences
 
 <ResponseField name='Toasts'>
-	Opens **Toast Settings**, where you control the small pop-up notifications that appear at the top of the screen. See [Toast Settings](#toast-settings) below.
+	Opens the settings for the small notifications that slide in at the top of the screen. See [Toasts](#toasts) below.
 </ResponseField>
 <ResponseField name='Sync'>
-	Opens **Sync**, where you sign in to keep your addons and settings the same on every device. See [Sync](/docs/user/sync).
+	Keeps your addons and settings the same on every device. See [Account and Sync](/docs/user/sync).
 </ResponseField>
 
-#### Advanced
+## Advanced
 
-<ResponseField name='Discord Staff Settings'>
-	Makes Discord treat your account as a Discord staff member, so it shows settings it normally only shows to its own employees. Off by default.
+Most people never need these.
 
-	These are Discord's own internal options, not Unbound's. Leave this off unless you know what you're looking for.
-</ResponseField>
 <ResponseField name='Developer Mode'>
-	Shows the **Developer** page in the Unbound section, which has tools for people who build addons. Off by default, and most people never need it. To learn what's on that page, see [Debugging](/docs/developer/development/debugging) in the Developer Guide.
+	Off by default. Adds the **Developer** page, with tools for people who build addons, and logs extra detail. See [Debugging](/docs/developer/development/debugging).
+</ResponseField>
+<ResponseField name='Discord Staff Settings'>
+	Off by default. Shows the settings Discord keeps for its own staff. They're Discord's options, not Unbound's.
+</ResponseField>
+<ResponseField name='Send Crash Reports'>
+	Off by default. When a plugin crashes, freezes or fails to start, sends a report to Unbound. Unbound asks before turning it on. [Privacy](/docs/user/privacy#what-unbound-itself-sends) lists what a report holds.
 </ResponseField>
 
-#### Links
+## Help
 
-<ResponseField name='GitHub'>
-	Opens Unbound's GitHub page in your browser.
-</ResponseField>
-<ResponseField name='Documentation'>
-	Opens this documentation site.
-</ResponseField>
-<ResponseField name='Support Server'>
-	Joins Unbound's Discord server and takes you to it. Go here to ask for help or report a problem.
-</ResponseField>
+**Support Server** joins Unbound's Discord server, where you can ask for help. **Documentation** opens this site, and **GitHub** opens Unbound's code.
 
-#### Version info
+## Toasts
 
-Include all three of these values when you report a bug. They tell the developers exactly which build of Unbound and Discord you're running.
-
-<ResponseField name='Unbound'>
-	The version of Unbound you're running, shown as a short code. Tap it to open the matching change on GitHub.
-</ResponseField>
-<ResponseField name='Discord'>
-	Discord's version, followed by its build number in parentheses.
-</ResponseField>
-<ResponseField name='Bytecode'>
-	The bytecode version of the JavaScript engine Discord runs on.
-</ResponseField>
-
-### Toast settings
-
-Open these from **General** > **Toasts**. Changes apply right away.
+Open these from **Toasts** under **Preferences**. A preview at the top shows each change as you make it, and **Send a test toast** shows a real one.
 
 <ResponseField name='Enable Toasts'>
-	On by default. While it's on, Unbound shows Discord's pop-up notifications in its own style, along with toasts from Unbound and your plugins.
-
-	Turn it off to get Discord's normal pop-ups back. While it's off, toasts from Unbound and plugins don't appear.
+	On by default. Replaces Discord's toasts with Unbound's. Turn it off to get Discord's own back. Toasts from Unbound and your plugins then don't show.
 </ResponseField>
 <ResponseField name='Animations'>
-	On by default. Toasts slide and fade in and out. Turn it off and toasts appear and disappear instantly.
+	On by default. Slides toasts in and out. Off, they appear and disappear at once.
+</ResponseField>
+<ResponseField name='Opacity'>
+	How solid a toast is. **80%** by default. Below 100%, **Blur** softens what's behind it.
+</ResponseField>
+<ResponseField name='Blur'>
+	How much the background behind a toast is blurred. **15%** by default.
 </ResponseField>
 <ResponseField name='Max Toasts on Screen'>
-	How many toasts can show at once, from **0** to **10**. The default is **3**. When there are more than that, the newest ones are shown.
-
-	Set it to **0** for no limit.
+	How many toasts show at once, up to 10. **3** by default. **Unlimited** shows every toast.
 </ResponseField>
 <ResponseField name='Duration'>
-	How long a toast stays on screen, from **0** to **10** seconds. The default is **5s**.
-
-	Set it to **0** and the label reads **Indefinite**, meaning toasts stay until you close them. A toast that sets its own length ignores this setting.
+	How long a toast stays, up to 10 seconds. **5s** by default. **Indefinite** keeps it until you close it. A toast that sets its own length ignores this.
 </ResponseField>

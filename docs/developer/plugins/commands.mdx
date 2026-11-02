@@ -1,0 +1,117 @@
+---
+title: 'Slash Commands'
+description: "Add commands to Discord's / picker, with typed options."
+icon: 'command'
+---
+
+A plugin can add its own slash commands. They show in Discord's `/` picker, in an **Unbound** section. When the user sends one, your plugin runs it on the phone, so it works in every channel and DM without a bot.
+
+## A first command
+
+`commands.register` takes an object of commands, keyed by name.
+
+```ts src/shrug/index.ts
+import { commands } from '@unbound-app/api';
+
+export function startShrug() {
+	commands.register({
+		shrug: {
+			description: 'Send a message with a shrug on the end',
+			options: {
+				message: commands.option.string({ description: 'What to say', required: true }),
+			},
+			execute: ({ message }) => `${message} ¯\\_(ツ)_/¯`,
+		},
+	});
+}
+```
+
+`execute` gets the options the user filled in, already typed from `options`. Here `message` is a `string`, because the option is a required string. An optional option arrives as `undefined` when the user leaves it out.
+
+Unbound removes your commands when the plugin stops.
+
+## What a command can reply
+
+What `execute` returns decides what happens next. It may also return a promise of any of these.
+
+| Return | Result |
+| --- | --- |
+| A string | Sent to the channel as a normal message from the user |
+| `{ content }` | The same, and `tts: true` sends it as text-to-speech |
+| `{ ephemeral: true, content }` | Shown only to the user, as a bot message. Can add `embeds` |
+| Nothing | Nothing is sent |
+
+If `execute` throws, the user sees the error as an ephemeral message.
+
+```ts
+commands.register({
+	'channel-id': {
+		description: 'Show the id of this channel',
+		execute: (_options, { channel }) => ({ ephemeral: true, content: channel.id }),
+	},
+});
+```
+
+The second argument is the context: the `channel` the command was sent in, and its `guild`, which is `undefined` in DMs.
+
+## Options
+
+Each option is made with a builder on `commands.option`. Every builder takes a `description` and `required`.
+
+| Builder | The handler gets | Extra settings |
+| --- | --- | --- |
+| `string()` | A string | `minLength`, `maxLength`, `autocomplete` |
+| `integer()`, `number()` | A number | `minValue`, `maxValue`, `autocomplete` |
+| `boolean()` | `true` or `false` | None |
+| `user()`, `channel()`, `role()` | The picked user, channel or role | None |
+| `choice([...])` | One of the listed values | None |
+
+`choice` limits an option to fixed values, and types the handler's value as their union:
+
+```ts
+commands.register({
+	coin: {
+		description: 'Flip a coin',
+		options: {
+			call: commands.option.choice(['heads', 'tails'], { required: true }),
+		},
+		execute: ({ call }) => (Math.random() < 0.5 ? call : `Not ${call}`),
+	},
+});
+```
+
+## Grouping commands
+
+Give a command `subcommands` instead of `execute` to group related commands under one name, such as `/notes add` and `/notes list`.
+
+```ts
+const notes: string[] = [];
+
+commands.register({
+	notes: {
+		description: 'Keep notes',
+		subcommands: {
+			add: {
+				description: 'Add a note',
+				options: { text: commands.option.string({ required: true }) },
+				execute: ({ text }) => {
+					notes.push(text);
+				},
+			},
+			list: {
+				description: 'List your notes',
+				execute: () => ({ ephemeral: true, content: notes.join('\n') }),
+			},
+		},
+	},
+});
+```
+
+## Limits
+
+`register` checks every command and throws a `CommandDefinitionError` that names the one it rejected:
+
+- Names are 1 to 32 lowercase letters, digits, `-` or `_`.
+- A description is 1 to 100 characters.
+- A command has at most 25 options, a group 1 to 25 subcommands, and a `choice` 1 to 25 values.
+- A name another plugin already registered is taken.

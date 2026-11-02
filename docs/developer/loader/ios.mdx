@@ -1,12 +1,12 @@
 ---
-title: 'iOS'
+title: 'iOS Loader'
 description: 'Where the iOS loader keeps Unbound files.'
 icon: 'apple'
 ---
 
 The iOS loader keeps all of Unbound's files in a single `Unbound` folder in the app's Documents directory.
 
-### Storage
+## Storage
 
 To browse the folder in the Files app, open `On My iPhone` -> `<App Name>` -> `Unbound`.
 
@@ -16,7 +16,7 @@ To browse the folder in the Files app, open `On My iPhone` -> `<App Name>` -> `U
 
 		| Directory | Contents |
 		| --- | --- |
-		| `Plugins/<id>` | An installed [plugin](/docs/developer/addons/introduction): its `manifest.json` and bundle, in a folder named after the plugin's id. |
+		| `Plugins/<id>` | An installed [plugin](/docs/developer/plugins/introduction): its `manifest.json` and bundle, in a folder named after the plugin's id. |
 		| `Themes/<id>` | An installed [theme](/docs/developer/themes/introduction): its `manifest.json` and bundle, in a folder named after the theme's id. |
 		| `Fonts` | Installed font files, stored directly in this folder with no subfolders. |
 		| `Icons/<id>` | An installed icon pack, in a folder named after the pack's id. Its images follow the same layout as Discord's asset tree. |
@@ -26,7 +26,7 @@ To browse the folder in the Files app, open `On My iPhone` -> `<App Name>` -> `U
 		The toolbox's **Wipe Plugins**, **Wipe Themes**, **Wipe Fonts**, and **Wipe Icon Packs** actions each permanently delete the matching directory. **Factory Reset** deletes the entire `Unbound` folder, including `settings.json` and the bundle.
 	</Accordion>
 	<Accordion title='Settings' icon='gear'>
-		`settings.json` holds every Unbound setting, including the [loader configuration flags](/docs/developer/loader/configuration) and everything in the [settings reference](/docs/developer/loader/settings).
+		`settings.json` holds every Unbound setting, including every key in the [settings reference](/docs/developer/loader/settings).
 
 		If this file can't be read or isn't valid JSON, the loader copies it to `settings.json.corrupt-<timestamp>` and starts with a fresh file instead of refusing to boot. If your settings disappear unexpectedly, look for that backup.
 	</Accordion>
