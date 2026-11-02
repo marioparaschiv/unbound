@@ -22,7 +22,6 @@
 		"targets": "fully supports es6",
 		"include": [
 			"transform-block-scoping",
-			"transform-classes",
 			"transform-async-to-generator",
 			"transform-async-generator-functions"
 		],
