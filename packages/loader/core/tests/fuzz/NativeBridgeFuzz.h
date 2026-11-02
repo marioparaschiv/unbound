@@ -234,7 +234,8 @@ inline void fuzzBundleManifest(const std::string &input)
     }
     for (std::uint32_t version : manifest->bytecodeVersions)
     {
-        manifest->bundleFile(version);
+        manifest->bundleFile(version, false);
+        manifest->bundleFile(version, true);
     }
     if (!manifest->isSignable())
     {

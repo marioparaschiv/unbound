@@ -37,6 +37,7 @@ struct UpdaterSettings {
     std::function<std::string(const std::string &key, const std::string &fallback)> getString;
     std::function<bool(const std::string &key, bool fallback)>                      getBoolean;
     std::function<void(const std::string &key, const std::string &value)>           setString;
+    std::function<bool()>                                                           developerMode;
 };
 
 UpdaterSettings updaterSettings(SettingsStore &store);
@@ -59,6 +60,9 @@ public:
     bool markBundleAttempted(const std::string &path);
     bool acceptBundle(const std::string &path);
     void rejectBundle(const std::string &path);
+
+    bool                         developerMode() const;
+    std::optional<BundleFlavour> bundleFlavour(const std::string &path) const;
 
     std::optional<BundleBaseline> baseline() const;
 

@@ -6,6 +6,7 @@
 
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
+#include "LoaderPreferences.h"
 #include "NativeBundleTransaction.h"
 #include "NativePluginVersion.h"
 
@@ -85,6 +86,9 @@ UpdaterSettings updaterSettings(SettingsStore &store)
         store.set("unbound", key, value);
         store.save();
     };
+    settings.developerMode = [&store]() {
+        return preferences::developerMode(store);
+    };
     return settings;
 }
 
@@ -126,6 +130,17 @@ std::optional<std::string> BundleUpdater::fetch(const std::string &url) const
 std::optional<BundleBaseline> BundleUpdater::baseline() const
 {
     return parseBaseline(settings_.getString(kBundleBaselineSetting, ""));
+}
+
+bool BundleUpdater::developerMode() const
+{
+    return settings_.developerMode && settings_.developerMode();
+}
+
+std::optional<BundleFlavour> BundleUpdater::bundleFlavour(const std::string &path) const
+{
+    std::string file = recordField(parseRecord(readTextFile(path + kBundleTrustSuffix)), "file");
+    return file.empty() ? std::nullopt : bundleFlavourNamed(file);
 }
 
 std::optional<std::string> BundleUpdater::exemptionFor(const std::string &url) const
@@ -344,9 +359,9 @@ std::string BundleUpdater::selectURL(const BundleSource                  &source
         "Manifest bytecode versions: [" + versions +
             "], Current bytecode version: " + std::to_string(bytecodeVersion));
 
-    std::string file = manifest->bundleFile(bytecodeVersion);
+    std::string file = manifest->bundleFile(bytecodeVersion, developerMode());
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-        file == "unbound.js" ? "Using JavaScript bundle" : "Using hermes bytecode bundle");
+        hasSuffix(file, ".js") ? "Using JavaScript bundle" : "Using hermes bytecode bundle");
     return source.baseURL + file;
 }
 
@@ -526,7 +541,12 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
             "The active bundle has no verification record; downloading a verified copy.");
     }
-    if (fileExists(targetPath) && isVerified && !forceUpdate && !storedEtag.empty())
+    // The stored ETag belongs to whichever file the active bundle came from, so it only
+    // describes the download when the plan selects that same file.
+    std::string activeFile =
+        recordField(parseRecord(readTextFile(targetPath + kBundleTrustSuffix)), "file");
+    if (fileExists(targetPath) && isVerified && !forceUpdate && !storedEtag.empty() &&
+        activeFile == urlFileName(url))
     {
         headers["If-None-Match"] = storedEtag;
     }
