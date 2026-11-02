@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 
+import { TYPE_TONE_CLASSES, getTypeTone } from '~/lib/type-tone';
 import type { DocsRoute } from '~/lib/docs/docs-links';
 import type { TypePart } from '~/lib/docs/type-parts';
 import cn from '~/lib/cn';
@@ -10,14 +11,28 @@ type TypeViewProps = {
 	className?: string;
 };
 
-const PART_CLASSES: Record<Exclude<TypePart['kind'], 'link'>, string> = {
+type LinkPart = {
+	kind: 'link';
+};
+
+/** A part shown as coloured text rather than a link. */
+type TextPart = Exclude<TypePart, LinkPart>;
+
+const PART_CLASSES: Record<Exclude<TypePart['kind'], 'link' | 'intrinsic' | 'literal'>, string> = {
 	keyword: 'text-primary',
-	intrinsic: 'text-emerald-700 dark:text-emerald-400',
 	punctuation: 'text-muted-foreground',
 	name: 'text-foreground',
-	literal: 'text-amber-700 dark:text-amber-400',
-	parameter: 'text-sky-700 dark:text-sky-400',
+	reference: TYPE_TONE_CLASSES.reference,
+	parameter: 'text-foreground/80',
+	typeParameter: 'italic text-orange-700 dark:text-orange-300',
 };
+
+// Intrinsics and literals take the tone of the value they describe, so `boolean` and `true` match.
+function partClass(part: TextPart): string {
+	return part.kind === 'intrinsic' || part.kind === 'literal'
+		? TYPE_TONE_CLASSES[getTypeTone(part.text)]
+		: PART_CLASSES[part.kind];
+}
 
 /**
  * @description Renders a type's parts as code, each reference into the docs a link to its page.
@@ -39,7 +54,7 @@ function TypeView({ parts, route, className }: TypeViewProps) {
 						{part.text}
 					</Link>
 				) : (
-					<span key={index} className={PART_CLASSES[part.kind]}>
+					<span key={index} className={partClass(part)}>
 						{part.text}
 					</span>
 				),

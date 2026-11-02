@@ -55,7 +55,7 @@ function CodeBlock({
 				ref={ref}
 				className={cn(
 					className,
-					'p-4 overflow-x-auto font-mono text-[0.8125rem] leading-relaxed',
+					'p-4 overflow-x-auto font-mono text-[0.8125rem] leading-relaxed [tab-size:2]',
 				)}
 				{...props}
 			>
