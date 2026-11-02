@@ -646,22 +646,19 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 * @returns The matching entity, or `undefined` if none is found.
 	 */
 	protected resolve(entity: AddonResolveable<I>): Addon<I> | undefined {
-		if (typeof entity === 'string') {
-			return this.entities.get(entity) ?? this.getByName(entity);
+		if (typeof entity !== 'string') {
+			return entity;
 		}
 
-		return entity;
-	}
+		const byId = this.entities.get(entity);
 
-	/**
-	 * @description Finds a governed addon by its manifest name.
-	 * @param name The name to search for.
-	 * @returns The matching entity, or `undefined` if none is found.
-	 */
-	protected getByName(name: string): Addon<I> | undefined {
-		for (const entity of this.entities.values()) {
-			if (entity.name === name) {
-				return entity;
+		if (byId) {
+			return byId;
+		}
+
+		for (const candidate of this.entities.values()) {
+			if (candidate.name === entity) {
+				return candidate;
 			}
 		}
 	}
