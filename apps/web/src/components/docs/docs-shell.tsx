@@ -83,7 +83,8 @@ function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellP
 				<button
 					type='button'
 					onClick={() => setSearchOpen(true)}
-					className='flex items-center gap-2 px-3 w-full h-9 text-muted-foreground text-sm shrink-0 field press-flat'
+					// The key sits as far from the right edge as from the top and bottom, so its corners stay concentric with the field's.
+					className='flex items-center gap-2 pr-[4.5px] pl-3 w-full h-9 text-muted-foreground text-sm shrink-0 field press-flat'
 				>
 					<IconMagnifier className='size-4' />
 					Search
