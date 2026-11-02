@@ -48,6 +48,7 @@
 #import "NativeStructLayouts.h"
 #import "NativeTraversalOptions.h"
 #import "NativeTypeEncoding.h"
+#import "NativeUIScopeCache.h"
 #import "NativeWorkQueue.h"
 #import "SettingsCore.h"
 
@@ -4206,33 +4207,43 @@ public:
             return Value::undefined();
         }
 
-        Object full(runtime);
-        installObjC(runtime, full);
-        Object scoped(runtime);
-        for (const std::string &allowed : scope_->allowed)
-        {
-            if (allowed == "hook")
-            {
-                auto scope = scope_;
-                scoped.setProperty(runtime, "hook",
-                                   makeFunction("hook", 3, runtime,
-                                                [scope](Runtime     &rt, const Value &,
-                                                        const Value *args, size_t count) -> Value {
-                                                    return makeUIScopeHook(rt, scope, args, count);
-                                                }));
-                continue;
-            }
-            Value value = full.getProperty(runtime, allowed.c_str());
-            if (!value.isUndefined())
-            {
-                scoped.setProperty(runtime, allowed.c_str(), std::move(value));
-            }
-        }
-        return scoped;
+        auto scope = scope_;
+        return loader::native::cachedUIScopeNamespace(
+            runtime, std::to_string(cacheId_) + ":objc",
+            [&] {
+                Object full(runtime);
+                installObjC(runtime, full);
+                Object scoped(runtime);
+                for (const std::string &allowed : scope->allowed)
+                {
+                    if (allowed == "hook")
+                    {
+                        scoped.setProperty(
+                            runtime, "hook",
+                            makeFunction("hook", 3, runtime,
+                                         [scope](Runtime &rt, const Value &, const Value *args,
+                                                 size_t count) -> Value {
+                                             return makeUIScopeHook(rt, scope, args, count);
+                                         }));
+                        continue;
+                    }
+                    Value value = full.getProperty(runtime, allowed.c_str());
+                    if (!value.isUndefined())
+                    {
+                        scoped.setProperty(runtime, allowed.c_str(), std::move(value));
+                    }
+                }
+                return scoped;
+            },
+            [scope] {
+                std::lock_guard<std::mutex> lock(scope->mutex);
+                return !scope->disposed;
+            });
     }
 
 private:
     std::shared_ptr<ObjCUIScopeState> scope_;
+    uint64_t                          cacheId_ = loader::native::nextUIScopeCacheId();
 };
 
 static Value createUIScope(Runtime &runtime, const Value *args, size_t count)

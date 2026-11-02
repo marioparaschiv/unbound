@@ -32,6 +32,7 @@
 #include "NativeResourceBudget.h"
 #include "NativeTaggedValue.h"
 #include "NativeTraversalOptions.h"
+#include "NativeUIScopeCache.h"
 
 namespace unbound::android {
 namespace jsi = facebook::jsi;
@@ -1154,15 +1155,23 @@ public:
                         return jsi::Value::undefined();
                     });
             }
-            if (name == "java")
+            if (name == "java" || name == "hooks")
             {
-                loader::AddonScope addonScope(scope_->addon);
-                return filterNamespace(runtime, makeJavaNamespace(runtime, scope_->callbacks),
-                                       *scope_, "java.");
-            }
-            if (name == "hooks")
-            {
-                return makeScopedHooks(runtime, scope_);
+                auto scope = scope_;
+                return loader::native::cachedUIScopeNamespace(
+                    runtime, std::to_string(cacheId_) + ":" + name,
+                    [&] {
+                        loader::AddonScope addonScope(scope->addon);
+                        return name == "java"
+                                   ? filterNamespace(runtime,
+                                                     makeJavaNamespace(runtime, scope->callbacks),
+                                                     *scope, "java.")
+                                   : makeScopedHooks(runtime, scope);
+                    },
+                    [scope] {
+                        std::lock_guard<std::mutex> lock(scope->mutex);
+                        return !scope->disposed;
+                    });
             }
             return jsi::Value::undefined();
         });
@@ -1170,6 +1179,7 @@ public:
 
 private:
     std::shared_ptr<UIScopeState> scope_;
+    uint64_t                      cacheId_ = loader::native::nextUIScopeCacheId();
 };
 
 static jsi::Value createUIScope(jsi::Runtime &runtime, const JavaCallbacks &callbacks,

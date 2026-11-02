@@ -12,6 +12,7 @@ inline constexpr size_t kMaximumQueryRoleBytes        = 128;
 inline constexpr size_t kMaximumBatchSteps            = 64;
 inline constexpr size_t kMaximumAssociationsPerObject = 64;
 inline constexpr size_t kMaximumMountedSurfaces       = 64;
+inline constexpr size_t kMaximumUIScopeNamespaces     = 128;
 
 std::string parseName(const std::string &value, size_t maximum, const char *subject);
 std::string parseName(facebook::jsi::Runtime &runtime, const facebook::jsi::Value &value,
