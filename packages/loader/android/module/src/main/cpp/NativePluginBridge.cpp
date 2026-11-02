@@ -30,6 +30,7 @@
 #include "NativePlatformBridge.h"
 #include "NativePluginRoot.h"
 #include "NativeResourceBudget.h"
+#include "NativeRuntimeResources.h"
 #include "NativeTaggedValue.h"
 #include "NativeTraversalOptions.h"
 #include "NativeUIScopeCache.h"
@@ -486,9 +487,11 @@ static jsi::Function catchingCall(jsi::Runtime &runtime)
 }
 
 struct HookListener {
-    std::shared_ptr<jsi::Function> callback;
-    loader::AddonSlot              addon         = loader::kNoAddon;
-    jsi::Runtime                  *inlineRuntime = nullptr;
+    std::weak_ptr<jsi::Function>                           callback;
+    std::weak_ptr<loader::native::RuntimeResourceRegistry> resources;
+    loader::AddonSlot                                      addon             = loader::kNoAddon;
+    jsi::Runtime                                          *inlineRuntime     = nullptr;
+    uint64_t                                               runtimeGeneration = 0;
 };
 
 static thread_local jsi::Runtime *gUIScopeRuntime = nullptr;
@@ -515,9 +518,26 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
     }
 
     loader::AddonScope                  scope(listener.addon);
-    std::function<void(jsi::Runtime &)> deliver = [callback = listener.callback,
-                                                   addon    = listener.addon,
+    std::function<void(jsi::Runtime &)> deliver = [callback   = listener.callback,
+                                                   resources  = listener.resources,
+                                                   generation = listener.runtimeGeneration,
+                                                   addon      = listener.addon,
                                                    payload](jsi::Runtime &runtime) {
+        if (generation != loader::native::runtimeGeneration())
+        {
+            return;
+        }
+        auto owningResources = resources.lock();
+        if (!owningResources)
+        {
+            return;
+        }
+        loader::native::drainRuntimeResourceReleases(runtime);
+        auto activeCallback = callback.lock();
+        if (!activeCallback)
+        {
+            return;
+        }
         loader::AddonScope        runtimeScope(addon);
         std::optional<jsi::Value> event = adoptTaggedJavaEvent(runtime, payload);
         if (!event)
@@ -530,8 +550,8 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
             event = adoptJavaValue(runtime, parsed);
         }
 
-        jsi::Value failure =
-            catchingCall(runtime).call(runtime, jsi::Value(runtime, *callback), std::move(*event));
+        jsi::Value failure = catchingCall(runtime).call(
+            runtime, jsi::Value(runtime, *activeCallback), std::move(*event));
         if (!failure.isString())
         {
             return;
@@ -551,24 +571,22 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
     }
     if (onMainThread())
     {
-        deliver(*listener.inlineRuntime);
+        if (listener.runtimeGeneration == loader::native::runtimeGeneration() &&
+            !listener.resources.expired())
+        {
+            deliver(*listener.inlineRuntime);
+        }
         return;
     }
     if (auto target = loader::native::executor())
     {
-        target->runOnMain([token, deliver = std::move(deliver)]() {
-            jsi::Runtime *runtime = nullptr;
+        auto inlineRuntime = listener.inlineRuntime;
+        auto generation    = listener.runtimeGeneration;
+        auto resources     = listener.resources;
+        target->runOnMain([deliver = std::move(deliver), inlineRuntime, generation, resources]() {
+            if (generation == loader::native::runtimeGeneration() && !resources.expired())
             {
-                std::lock_guard<std::mutex> lock(gHookMutex);
-                auto                        found = gHookListeners.find(token);
-                if (found != gHookListeners.end())
-                {
-                    runtime = found->second.inlineRuntime;
-                }
-            }
-            if (runtime)
-            {
-                deliver(*runtime);
+                deliver(*inlineRuntime);
             }
         });
     }
@@ -582,28 +600,53 @@ static void rememberHookListener(jsi::Runtime &runtime, const std::string &token
         return;
     }
 
-    HookListener stored{
-        std::make_shared<jsi::Function>(listener.asObject(runtime).asFunction(runtime)),
-        loader::currentAddon(), gUIScopeRuntime};
+    auto callback = std::make_shared<jsi::Function>(listener.asObject(runtime).asFunction(runtime));
+    auto resources = loader::native::runtimeResourceRegistry(runtime);
+    loader::native::retainRuntimeResource(runtime, "android-hook:" + token, callback);
+    HookListener                stored{callback, resources, loader::currentAddon(), gUIScopeRuntime,
+                                       loader::native::runtimeGeneration()};
     std::lock_guard<std::mutex> lock(gHookMutex);
     gHookListeners[token] = std::move(stored);
 }
 
-static void forgetHookListener(const std::string &token)
+static void forgetHookListener(const std::string &token, jsi::Runtime *runtime = nullptr)
 {
-    std::lock_guard<std::mutex> lock(gHookMutex);
-    gHookListeners.erase(token);
+    HookListener listener;
+    bool         foundListener = false;
+    {
+        std::lock_guard<std::mutex> lock(gHookMutex);
+        auto                        found = gHookListeners.find(token);
+        if (found != gHookListeners.end())
+        {
+            listener = found->second;
+            gHookListeners.erase(found);
+            foundListener = true;
+        }
+    }
+    if (!foundListener)
+    {
+        return;
+    }
+    const std::string key = "android-hook:" + token;
+    if (runtime && listener.runtimeGeneration == loader::native::runtimeGeneration())
+    {
+        loader::native::releaseRuntimeResource(*runtime, key);
+        return;
+    }
+    loader::native::deferRuntimeResourceRelease(listener.resources, key);
 }
 
 static void retireHookListeners()
 {
-    static auto                *retired = new std::vector<std::shared_ptr<jsi::Function>>();
-    std::lock_guard<std::mutex> lock(gHookMutex);
-    for (auto &entry : gHookListeners)
+    std::unordered_map<std::string, HookListener> retired;
     {
-        retired->push_back(std::move(entry.second.callback));
+        std::lock_guard<std::mutex> lock(gHookMutex);
+        retired.swap(gHookListeners);
     }
-    gHookListeners.clear();
+    for (const auto &[token, listener] : retired)
+    {
+        loader::native::deferRuntimeResourceRelease(listener.resources, "android-hook:" + token);
+    }
 }
 
 static std::string hookTokenId(jsi::Runtime &runtime, const jsi::Value &value)
@@ -867,9 +910,10 @@ static jsi::Object makeFFINamespace(jsi::Runtime &runtime)
     return ffi;
 }
 
-static void removeHook(const JavaCallbacks &callbacks, const std::string &token)
+static void removeHook(const JavaCallbacks &callbacks, const std::string &token,
+                       jsi::Runtime *runtime = nullptr)
 {
-    forgetHookListener(token);
+    forgetHookListener(token, runtime);
     hookReturnValues().clear(token);
     installedHooks().release(token);
     callJavaVoid(callbacks, callbacks.hooksRemove, {loader::native::handleJSON(token)});
@@ -907,7 +951,7 @@ static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks
     define(runtime, hooks, "remove", 1,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 1, "Removing a hook requires its token");
-               removeHook(callbacks, hookTokenId(rt, args[0]));
+               removeHook(callbacks, hookTokenId(rt, args[0]), &rt);
                return jsi::Value::undefined();
            });
     define(runtime, hooks, "setReturnValue", 4,
@@ -1037,7 +1081,7 @@ struct UIScopeState {
     bool                     disposed = false;
 };
 
-static void disposeUIScope(UIScopeState &scope)
+static void disposeUIScope(UIScopeState &scope, jsi::Runtime *runtime = nullptr)
 {
     std::vector<std::string> tokens;
     {
@@ -1053,7 +1097,7 @@ static void disposeUIScope(UIScopeState &scope)
     {
         if (installedHooks().contains(token))
         {
-            removeHook(scope.callbacks, token);
+            removeHook(scope.callbacks, token, runtime);
         }
     }
 }
@@ -1150,8 +1194,8 @@ public:
                 auto scope = scope_;
                 return loader::native::makeFunction(
                     runtime, "dispose", 0,
-                    [scope](jsi::Runtime &, const jsi::Value &, const jsi::Value *, size_t) {
-                        disposeUIScope(*scope);
+                    [scope](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *, size_t) {
+                        disposeUIScope(*scope, &rt);
                         return jsi::Value::undefined();
                     });
             }
