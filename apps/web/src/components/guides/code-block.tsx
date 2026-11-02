@@ -38,9 +38,11 @@ function CodeBlock({
 				size='icon-sm'
 				aria-label='Copy code'
 				className={cn(
-					'top-1 right-1 absolute text-muted-foreground',
-					!title &&
-						'[@media(hover:hover)]:opacity-0 group-hover/code:opacity-100 focus-visible:opacity-100',
+					// Centred in the title bar, or in a one-line block's first line box, with even space to both edges.
+					'absolute size-8 text-muted-foreground [&_svg]:size-4',
+					title
+						? 'top-1 right-1'
+						: 'top-2.5 right-2.5 [@media(hover:hover)]:opacity-0 group-hover/code:opacity-100 focus-visible:opacity-100',
 				)}
 				onClick={() =>
 					void copyText(ref.current?.textContent ?? '', `${language ?? 'code'} snippet`)

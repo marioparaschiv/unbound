@@ -42,9 +42,7 @@ function GuideSidebar({ tab, slug }: GuideSidebarProps) {
 								data-active={entry === slug}
 								className={cn(
 									'flex items-center gap-2.5 px-2 rounded-item h-8 text-sm press-flat hover:bg-accent',
-									entry === slug
-										? 'bg-accent text-foreground font-semibold'
-										: 'text-muted-foreground',
+									entry === slug ? 'text-foreground' : 'text-muted-foreground',
 								)}
 							>
 								{Glyph ? (

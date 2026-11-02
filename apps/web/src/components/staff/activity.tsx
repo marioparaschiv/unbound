@@ -6,6 +6,12 @@ import type { ComponentType, ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
 
+import {
+	Accordion,
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from '~/components/ui/accordion';
 import { moderationEventsQuery } from '~/queries/moderation-events/moderation-events';
 import { formatDate, formatDateTime } from '~/components/admin/format-date';
 import { ActorName, EventSummary } from '~/components/staff/event-summary';
@@ -220,24 +226,26 @@ function Entry({ item, props, users }: EntryProps) {
 							: null}
 					</Text>
 					{changelog && (changelog.changes?.sections.length || changelog.changelog) ? (
-						<details className='group'>
-							<summary className='w-max text-muted-foreground hover:text-foreground text-xs cursor-pointer'>
-								Changelog
-							</summary>
-							<div className='mt-2'>
-								{changelog.changes && changelog.changes.sections.length > 0 ? (
-									<ChangelogSections changelog={changelog.changes} />
-								) : (
-									<Text
-										variant='text-sm'
-										color='muted'
-										className='whitespace-pre-wrap'
-									>
-										{changelog.changelog}
-									</Text>
-								)}
-							</div>
-						</details>
+						<Accordion type='single' collapsible>
+							<AccordionItem value='changelog'>
+								<AccordionTrigger className='flex-none items-center gap-1 py-0 text-muted-foreground hover:text-foreground text-xs hover:no-underline hover:[&>svg]:text-foreground transition-colors press-flat [&>svg]:size-3.5 [&>svg]:translate-y-0'>
+									Changelog
+								</AccordionTrigger>
+								<AccordionContent className='pt-2 pb-0'>
+									{changelog.changes && changelog.changes.sections.length > 0 ? (
+										<ChangelogSections changelog={changelog.changes} />
+									) : (
+										<Text
+											variant='text-sm'
+											color='muted'
+											className='whitespace-pre-wrap'
+										>
+											{changelog.changelog}
+										</Text>
+									)}
+								</AccordionContent>
+							</AccordionItem>
+						</Accordion>
 					) : null}
 					{versions?.canServe && !served ? (
 						<div>

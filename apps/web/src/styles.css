@@ -61,6 +61,8 @@
 	--color-link: var(--link);
 
 	--ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+	/* CSS twin of MORPH_EXPO's `expoOut`, for disclosures that animate their height. */
+	--ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
 
 	--font-primary: Geist, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 	--font-secondary: Manrope, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

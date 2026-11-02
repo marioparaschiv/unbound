@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '~/components/ui/drawer';
 import { Button } from '~/components/ui/button';
+import Kbd from '~/components/ui/kbd';
 
 export type DocsSearchState = {
 	open: boolean;
@@ -24,7 +25,7 @@ type DocsShellProps = {
 /**
  * @description The layout every docs tab shares. From `lg` up, a sticky scrolling sidebar beside the page;
  * below it, a bar with the page's title that opens the sidebar in a drawer, which closes on navigation.
- * `⌘K` opens the tab's search either way.
+ * `⌘K` opens the tab's search either way, and closes it again while it is open.
  * @param props The sidebar, the search dialog, the open page's title and the page.
  * @returns The shell.
  */
@@ -46,7 +47,7 @@ function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellP
 			}
 
 			event.preventDefault();
-			setSearchOpen(true);
+			setSearchOpen((open) => !open);
 		}
 
 		window.addEventListener('keydown', handleKeyDown);
@@ -86,9 +87,7 @@ function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellP
 				>
 					<IconMagnifier className='size-4' />
 					Search
-					<kbd className='ml-auto px-1.5 py-0.5 border rounded-md font-mono text-[11px]'>
-						⌘K
-					</kbd>
+					<Kbd className='ml-auto'>⌘K</Kbd>
 				</button>
 				{sidebar}
 			</aside>
