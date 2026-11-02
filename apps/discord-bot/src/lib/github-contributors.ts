@@ -1,5 +1,5 @@
+import { type StaticDecode, parse, type TSchema, Type } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
-import { z } from 'zod';
 
 const logger = createLogger('Bot', 'Contributors');
 
@@ -25,8 +25,8 @@ export const CONTRIBUTOR_REFRESH_MS = 6 * 60 * 60 * 1000;
 export const FAILED_REFRESH_RETRY_MS = 15 * 60 * 1000;
 export const REQUEST_TIMEOUT_MS = 30_000;
 
-const repoSchema = z.object({ full_name: z.string(), fork: z.boolean() });
-const contributorSchema = z.object({ id: z.number() });
+const repoSchema = Type.Object({ full_name: Type.String(), fork: Type.Boolean() });
+const contributorSchema = Type.Object({ id: Type.Number() });
 const NEXT_LINK = /<([^>]+)>;\s*rel="next"/;
 
 export class GitHubError extends Error {
@@ -67,13 +67,14 @@ function retryAtOf(response: Response, now: () => number): number | undefined {
 	return undefined;
 }
 
-async function paginate<T>(
+async function paginate<S extends TSchema>(
 	url: string,
-	schema: z.ZodType<T>,
+	schema: S,
 	request: (url: string) => Promise<Response>,
 	now: () => number,
-): Promise<T[]> {
-	const items: T[] = [];
+): Promise<StaticDecode<S>[]> {
+	const items: StaticDecode<S>[] = [];
+	const pageSchema = Type.Array(schema);
 	let next: string | undefined = url;
 
 	while (next) {
@@ -87,7 +88,7 @@ async function paginate<T>(
 			return items;
 		}
 
-		items.push(...z.array(schema).parse(await response.json()));
+		items.push(...parse(pageSchema, await response.json()));
 		next = NEXT_LINK.exec(response.headers.get('link') ?? '')?.[1];
 	}
 
