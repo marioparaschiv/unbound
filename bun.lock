@@ -71,7 +71,6 @@
       "dependencies": {
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/logger": "workspace:*",
-        "zod": "^4.0.0",
       },
       "devDependencies": {
         "@types/bun": "catalog:",
@@ -197,7 +196,6 @@
         "sharp": "^0.35.5",
         "thumbhash": "^0.1.1",
         "typebox": "^1.4.3",
-        "zod": "^4.0.0",
       },
       "devDependencies": {
         "@types/bun": "latest",

@@ -52,8 +52,7 @@
 		"rollup-plugin-swc3": "^0.12.1",
 		"sharp": "^0.35.5",
 		"thumbhash": "^0.1.1",
-		"typebox": "^1.4.3",
-		"zod": "^4.0.0"
+		"typebox": "^1.4.3"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
