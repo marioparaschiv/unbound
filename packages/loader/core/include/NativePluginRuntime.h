@@ -10,6 +10,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace loader::native {
@@ -21,7 +22,11 @@ public:
     virtual bool isMainThread()                                                   = 0;
     virtual void runOnMain(std::function<void()> work)                            = 0;
     virtual void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) = 0;
-    virtual void runAfter(double seconds, std::function<void()> work)             = 0;
+    virtual void runOnRuntimeCritical(std::function<void(facebook::jsi::Runtime &)> work)
+    {
+        runOnRuntime(std::move(work));
+    }
+    virtual void runAfter(double seconds, std::function<void()> work) = 0;
 };
 
 class NativeCodedError : public std::runtime_error

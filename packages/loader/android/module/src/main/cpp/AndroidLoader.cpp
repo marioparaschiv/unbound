@@ -155,38 +155,35 @@ void AndroidLoader::onLoadJSBundle()
 
 void AndroidLoader::onRuntimeCreated(jsi::Runtime &runtime)
 {
-    {
-        std::lock_guard<std::mutex> lock(queueMutex_);
-        runtimeDrainScheduled_ = false;
-    }
+    runtimeQueue_.retryScheduling();
     pipeline_->onRuntimeCreated(runtime);
 }
 
 void AndroidLoader::drainRuntimeWork(jsi::Runtime &runtime)
 {
     loader::native::registerRuntime(runtime);
-    std::deque<std::function<void(jsi::Runtime &)>> work;
+    bool remaining = runtimeQueue_.drain(
+        [&](auto item) {
+            try
+            {
+                item(runtime);
+            }
+            catch (const std::exception &error)
+            {
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_DEFAULT,
+                            std::string("Runtime work failed: ") + error.what());
+            }
+            catch (...)
+            {
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_DEFAULT, "Runtime work failed.");
+            }
+        },
+        [] {
+            return std::chrono::steady_clock::now();
+        });
+    if (remaining)
     {
-        std::lock_guard<std::mutex> lock(queueMutex_);
-        work.swap(queue_);
-        runtimeDrainScheduled_ = false;
-    }
-
-    for (auto &item : work)
-    {
-        try
-        {
-            item(runtime);
-        }
-        catch (const std::exception &error)
-        {
-            loader::log(loader::LogLevel::Error, LOG_CATEGORY_DEFAULT,
-                        std::string("Runtime work failed: ") + error.what());
-        }
-        catch (...)
-        {
-            loader::log(loader::LogLevel::Error, LOG_CATEGORY_DEFAULT, "Runtime work failed.");
-        }
+        scheduleRuntimeDrain();
     }
 }
 
@@ -220,21 +217,29 @@ void AndroidLoader::drainMainWork()
 
 void AndroidLoader::runOnRuntime(std::function<void(jsi::Runtime &)> work)
 {
-    {
-        std::lock_guard<std::mutex> lock(queueMutex_);
-        queue_.push_back(std::move(work));
-        if (runtimeDrainScheduled_)
-        {
-            return;
-        }
-        runtimeDrainScheduled_ = true;
-    }
+    enqueueRuntime(std::move(work), loader::native::NativeWorkPriority::Deferred);
+}
 
+void AndroidLoader::runOnRuntimeCritical(std::function<void(jsi::Runtime &)> work)
+{
+    enqueueRuntime(std::move(work), loader::native::NativeWorkPriority::Critical);
+}
+
+void AndroidLoader::enqueueRuntime(std::function<void(jsi::Runtime &)> work,
+                                   loader::native::NativeWorkPriority  priority)
+{
+    if (runtimeQueue_.enqueue(std::move(work), priority))
+    {
+        scheduleRuntimeDrain();
+    }
+}
+
+void AndroidLoader::scheduleRuntimeDrain()
+{
     JNIEnv *env = currentEnvironment();
     if (!env)
     {
-        std::lock_guard<std::mutex> lock(queueMutex_);
-        runtimeDrainScheduled_ = false;
+        runtimeQueue_.retryScheduling();
         return;
     }
     env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleRuntime);

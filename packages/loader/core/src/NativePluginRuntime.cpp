@@ -688,8 +688,8 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
     auto      state      = std::make_shared<State>();
     uint64_t  generation = gGenerations.generation();
     AddonSlot addon      = currentAddon();
-    target->runOnRuntime([state, callback = std::move(callback), expected, generation,
-                          addon](jsi::Runtime &runtime) {
+    target->runOnRuntimeCritical([state, callback = std::move(callback), expected, generation,
+                                  addon](jsi::Runtime &runtime) {
         gMainThreadRuntimeStall.answered();
         bool               completed = false;
         std::exception_ptr failure;

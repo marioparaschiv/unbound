@@ -48,6 +48,7 @@
 #import "NativeStructLayouts.h"
 #import "NativeTraversalOptions.h"
 #import "NativeTypeEncoding.h"
+#import "NativeWorkQueue.h"
 #import "SettingsCore.h"
 
 using namespace facebook;
@@ -318,7 +319,8 @@ static void removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookSt
                                   const Value *args, size_t count);
 static void clearHookReturnCache(const std::shared_ptr<HookState> &state);
 
-class IOSNativePluginExecutor final : public loader::native::NativePluginExecutor
+class IOSNativePluginExecutor final : public loader::native::NativePluginExecutor,
+                                      public std::enable_shared_from_this<IOSNativePluginExecutor>
 {
 public:
     bool isMainThread() override
@@ -339,18 +341,12 @@ public:
 
     void runOnRuntime(std::function<void(Runtime &)> work) override
     {
-        id instance = gRuntimeExecutorInstance;
-        if (!instance)
-        {
-            return;
-        }
+        enqueueRuntime(std::move(work), loader::native::NativeWorkPriority::Deferred);
+    }
 
-        [instance callFunctionOnBufferedRuntimeExecutor:[work = std::move(work)](Runtime &runtime) {
-            @autoreleasepool
-            {
-                work(runtime);
-            }
-        }];
+    void runOnRuntimeCritical(std::function<void(Runtime &)> work) override
+    {
+        enqueueRuntime(std::move(work), loader::native::NativeWorkPriority::Critical);
     }
 
     void runAfter(double seconds, std::function<void()> work) override
@@ -360,6 +356,59 @@ public:
             dispatch_time(DISPATCH_TIME_NOW, static_cast<int64_t>(seconds * NSEC_PER_SEC)),
             dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{ (*task)(); });
     }
+
+private:
+    void enqueueRuntime(std::function<void(Runtime &)>     work,
+                        loader::native::NativeWorkPriority priority)
+    {
+        if (runtimeQueue_.enqueue(std::move(work), priority))
+        {
+            scheduleRuntimeDrain();
+        }
+    }
+
+    void scheduleRuntimeDrain()
+    {
+        id instance = gRuntimeExecutorInstance;
+        if (!instance)
+        {
+            runtimeQueue_.retryScheduling();
+            return;
+        }
+
+        auto owner = shared_from_this();
+        [instance callFunctionOnBufferedRuntimeExecutor:[owner](Runtime &runtime) {
+            @autoreleasepool
+            {
+                bool remaining = owner->runtimeQueue_.drain(
+                    [&](auto work) {
+                        try
+                        {
+                            work(runtime);
+                        }
+                        catch (const std::exception &error)
+                        {
+                            [Logger error:LOG_CATEGORY_PLUGINS
+                                   format:@"Runtime work failed: %s", error.what()];
+                        }
+                        catch (...)
+                        {
+                            [Logger error:LOG_CATEGORY_PLUGINS format:@"Runtime work failed."];
+                        }
+                    },
+                    [] {
+                        return std::chrono::steady_clock::now();
+                    });
+                if (remaining)
+                {
+                    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0),
+                                   ^{ owner->scheduleRuntimeDrain(); });
+                }
+            }
+        }];
+    }
+
+    loader::native::NativeWorkQueue<std::function<void(Runtime &)>> runtimeQueue_;
 };
 
 [[noreturn]] static void throwWrongThread(Runtime &runtime, const char *message)

@@ -15,6 +15,7 @@
 #include "LoaderSettings.h"
 #include "LoaderUpdater.h"
 #include "NativePluginRuntime.h"
+#include "NativeWorkQueue.h"
 
 namespace unbound::android {
 struct JavaCallbacks {
@@ -84,6 +85,7 @@ public:
     std::shared_ptr<loader::HotReloadController> hotReload();
 
     void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) override;
+    void runOnRuntimeCritical(std::function<void(facebook::jsi::Runtime &)> work) override;
     bool isMainThread() override;
     void runOnMain(std::function<void()> work) override;
     void runAfter(double seconds, std::function<void()> work) override;
@@ -99,6 +101,9 @@ public:
     void                       reload() override;
 
 private:
+    void                       enqueueRuntime(std::function<void(facebook::jsi::Runtime &)> work,
+                                              loader::native::NativeWorkPriority            priority);
+    void                       scheduleRuntimeDrain();
     std::optional<std::string> fetchText(const std::string &url, double timeoutSeconds);
     std::optional<loader::DownloadResult>
                                download(const std::string &url, const std::string &destination,
@@ -111,21 +116,19 @@ private:
     std::optional<std::string> devServerHost();
     bool                       isServing(const std::string &url, double timeoutSeconds);
 
-    LoaderConfiguration                                       configuration_;
-    JavaCallbacks                                             callbacks_;
-    loader::SettingsStore                                     settings_;
-    std::unique_ptr<loader::BundleUpdater>                    updater_;
-    std::unique_ptr<loader::LoaderPipeline>                   pipeline_;
-    std::shared_ptr<loader::HotReloadController>              hotReload_;
-    std::mutex                                                queueMutex_;
-    std::deque<std::function<void(facebook::jsi::Runtime &)>> queue_;
-    bool                                                      runtimeDrainScheduled_ = false;
-    std::mutex                                                mainQueueMutex_;
-    std::deque<std::function<void()>>                         mainQueue_;
-    bool                                                      mainDrainScheduled_ = false;
-    loader::AddonState                                        addons_;
-    std::mutex                                                systemFontsMutex_;
-    std::optional<nlohmann::json>                             systemFonts_;
+    LoaderConfiguration                                                            configuration_;
+    JavaCallbacks                                                                  callbacks_;
+    loader::SettingsStore                                                          settings_;
+    std::unique_ptr<loader::BundleUpdater>                                         updater_;
+    std::unique_ptr<loader::LoaderPipeline>                                        pipeline_;
+    std::shared_ptr<loader::HotReloadController>                                   hotReload_;
+    loader::native::NativeWorkQueue<std::function<void(facebook::jsi::Runtime &)>> runtimeQueue_;
+    std::mutex                                                                     mainQueueMutex_;
+    std::deque<std::function<void()>>                                              mainQueue_;
+    bool                          mainDrainScheduled_ = false;
+    loader::AddonState            addons_;
+    std::mutex                    systemFontsMutex_;
+    std::optional<nlohmann::json> systemFonts_;
 };
 
 std::shared_ptr<AndroidLoader> currentLoader();
