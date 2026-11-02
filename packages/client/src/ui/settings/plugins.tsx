@@ -1,7 +1,7 @@
-import { View, ScrollView } from 'react-native';
+import { View } from 'react-native';
 
 import InstallButton from '~/ui/addons/install-button';
-import AddonList from '~/ui/addons/addon-list';
+import AddonTab from '~/ui/settings/addon-tab';
 import { SafeArea } from '~/metro/components';
 
 /**
@@ -14,9 +14,7 @@ function PluginsPage() {
 	return (
 		<SafeArea.SafeAreaPaddingView bottom style={{ flex: 1 }}>
 			<View style={{ flex: 1 }}>
-				<ScrollView contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 12 }}>
-					<AddonList kind={'plugin'} />
-				</ScrollView>
+				<AddonTab kind={'plugin'} />
 				<InstallButton kind={'plugin'} />
 			</View>
 		</SafeArea.SafeAreaPaddingView>

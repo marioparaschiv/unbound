@@ -4,9 +4,9 @@ import { useMemo, useState } from 'react';
 import { installsFromManifest } from '~/addons/addons';
 import { Discord, SafeArea } from '~/metro/components';
 import InstallButton from '~/ui/addons/install-button';
+import AddonTab from '~/ui/settings/addon-tab';
 import { getBucket } from '~/storage/api';
 
-import AddonTab from './addon-tab';
 import FontsTab from './fonts';
 
 /** The segmented tabs in order; each tab's id is the manager kind its install button targets. */
