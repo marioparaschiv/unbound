@@ -15,7 +15,6 @@ const ALLOWED = [
 	/^@unbound-app\/contracts\//,
 	/^drizzle-orm(\/|$)/,
 	/^postgres$/,
-	/^zod$/,
 ];
 
 const transpiler = new Bun.Transpiler({ loader: 'ts' });
