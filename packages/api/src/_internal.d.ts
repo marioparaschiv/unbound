@@ -2992,8 +2992,8 @@ export type NativeStructFields = {
 };
 /** Where a native call runs: `current` is the calling thread; `main` blocks until the main thread runs it. */
 export type NativeThreadPolicy = 'current' | 'main';
-/** A value a worklet can take from the JS runtime: a serializable value or a UI scope, which is shared as is. */
-export type NativeUIArgument = NativeSerializable | NativeUIScope;
+/** A value a worklet can take from the JS runtime: a serializable value, a UI scope, which is shared as is, or a callback into the JS thread. */
+export type NativeUIArgument = NativeSerializable | NativeUIScope | NativeUICallback;
 /** Runs plugin worklets on the UI runtime, where native views live, so hooks there act before the next frame. */
 export type NativeUIBridge = {
 	/** Opens a scope with every synchronous method the plugin's capabilities allow; capture it in a worklet. */
@@ -3005,7 +3005,13 @@ export type NativeUIBridge = {
 	): Promise<R>;
 	/** Queues a worklet on the UI runtime. */
 	run<A extends NativeUIArgument[]>(worklet: (...args: A) => void, ...args: A): void;
+	/** Wraps a JS-thread listener so a worklet can call it, for example to wake JS only for the hook events that need it; it stops calling the listener once the plugin stops. */
+	callback<A extends NativeSerializable[]>(listener: (...args: A) => void): NativeUICallback<A>;
 };
+/** A function a worklet calls on the UI runtime to hand serializable values to a listener on the JS thread, made with `callback`. */
+export type NativeUICallback<A extends NativeSerializable[] = NativeSerializable[]> = {
+	call(...args: A): void;
+}['call'];
 /** The bridge methods a plugin may call from the UI runtime, synchronously and on the main thread. */
 export type NativeUIScope = {
 	/** The Objective-C methods the scope allows; present on iOS. */

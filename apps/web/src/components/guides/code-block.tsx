@@ -39,8 +39,8 @@ function CodeBlock({
 				aria-label='Copy code'
 				className={cn(
 					// Centred in the title bar, or in a one-line block's first line box, with even space to both edges.
-					// Concentric with the block: its radius is the block's inner radius (1px border) less that inset.
-					'absolute size-8 text-muted-foreground [&_svg]:size-4 corner-continuous',
+					// Concentric with the block: its radius less the gap from its outer edge.
+					'absolute size-8 text-muted-foreground [&_svg]:size-4',
 					title
 						? 'top-1 right-1 rounded-[calc(var(--radius-control)-5px)]'
 						: 'top-2.5 right-2.5 rounded-[calc(var(--radius-control)-11px)] [@media(hover:hover)]:opacity-0 group-hover/code:opacity-100 focus-visible:opacity-100',

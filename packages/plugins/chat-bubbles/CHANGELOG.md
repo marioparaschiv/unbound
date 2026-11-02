@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.4.5] - 2026-11-02
+
+### Changed
+
+- On Android, a row whose bubble is already known is handled on the UI thread alone; JavaScript only hears about rows that still need measuring, which halves the plugin's allocations while scrolling.
+
 ## [1.4.4] - 2026-11-01
 
 ### Fixed

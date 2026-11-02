@@ -290,6 +290,7 @@ export type {
 	NativeThreadPolicy,
 	NativeUIArgument,
 	NativeUIBridge,
+	NativeUICallback,
 	NativeUIScope,
 	NativeUIScopeFactory,
 	NativeViewSearchOptions,

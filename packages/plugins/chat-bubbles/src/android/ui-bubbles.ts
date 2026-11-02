@@ -4,6 +4,7 @@ import type {
 	NativeJavaHooksBridge,
 	NativeJavaReference,
 	NativeJavaValue,
+	NativeUICallback,
 	NativeUIScope,
 } from '@unbound-app/api/native';
 import {
@@ -118,8 +119,13 @@ function restore(java: NativeJavaBridge, guard: BindGuard, row: NativeJavaRefere
  * @description Handles each row right after Discord binds it, from a hook that runs on the UI thread: a message whose bubble was already measured gets it at once, and a row moved to a message without a known bubble gets its own background back, so neither an old bubble nor a missing one is ever drawn.
  * @param scope The plugin's UI scope.
  * @param guard The message view class, its bind method, the bound message's id getter, the bubble's layer id, and the keys the bubble, the row's own background and the bubble's message are kept under.
+ * @param needsBubble Wakes the JS thread for a row the guard could not draw a known bubble for, so it gets measured.
  */
-export function installBindGuard(scope: NativeUIScope, guard: BindGuard) {
+export function installBindGuard(
+	scope: NativeUIScope,
+	guard: BindGuard,
+	needsBubble: NativeUICallback<[NativeJavaValue]>,
+) {
 	'worklet';
 	const java = scope.java as NativeJavaBridge;
 	const hooks = scope.hooks as NativeJavaHooksBridge;
@@ -164,6 +170,10 @@ export function installBindGuard(scope: NativeUIScope, guard: BindGuard) {
 
 				if (drawn) {
 					restore(java, guard, row);
+				}
+
+				if (event.self) {
+					needsBubble(event.self);
 				}
 			} catch (error) {
 				console.error(`[Chat Bubbles] ${String(error)}`);
