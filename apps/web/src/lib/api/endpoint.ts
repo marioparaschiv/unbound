@@ -1,6 +1,7 @@
+import type { StaticDecode, StaticEncode, TSchema } from '@unbound-app/contracts/schema';
+import { parse, safeParse } from '@unbound-app/contracts/schema';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
 import { createLogger } from '@unbound-app/logger';
-import { z } from 'zod';
 
 import { requireCaller } from '~/lib/api/caller';
 import type { AppContext } from '~/lib/context';
@@ -25,26 +26,26 @@ export type CallerEndpointInput<TBody, TQuery> = EndpointInput<TBody, TQuery> & 
 };
 
 export type EndpointSchemas<
-	TBody extends z.core.$ZodType,
-	TResponse extends z.core.$ZodType,
-	TQuery extends z.core.$ZodType,
+	TBody extends TSchema,
+	TResponse extends TSchema,
+	TQuery extends TSchema,
 > = {
-	/** `z.undefined()` for body-less requests. */
+	/** `Type.Undefined()` for body-less requests. */
 	body: TBody;
 	/**
-	 * The URL search parameters as a string record, or `undefined` when the URL has none; `z.undefined()`
+	 * The URL search parameters as a string record, or `undefined` when the URL has none; `Type.Undefined()`
 	 * for routes that take none.
 	 */
 	query: TQuery;
 	response: TResponse;
 };
 
-export type EndpointOptions<TResponse extends z.core.$ZodType> = {
+export type EndpointOptions<TResponse extends TSchema> = {
 	/**
 	 * Derives the response's entity tag. When set, the response carries it as a strong `ETag` and a
 	 * request whose `If-None-Match` lists it is answered `304` with no body.
 	 */
-	etag?: (result: z.output<TResponse>) => string;
+	etag?: (result: StaticDecode<TResponse>) => string;
 	/**
 	 * Accepts a body Postgres cannot read back as text: NUL or an unpaired surrogate. Only for a body
 	 * stored whole in a `json` column that no query reads into.
@@ -52,16 +53,12 @@ export type EndpointOptions<TResponse extends z.core.$ZodType> = {
 	anyJsonBody?: boolean;
 };
 
-type Handler<TInput, TResponse extends z.core.$ZodType> = (
+type Handler<TInput, TResponse extends TSchema> = (
 	input: TInput,
-) => Promise<z.input<TResponse>>;
+) => Promise<StaticEncode<TResponse>>;
 
 /** A `/api/v1` handler bound to the contract schemas its request and response follow. */
-export type Endpoint<
-	TBody extends z.core.$ZodType,
-	TResponse extends z.core.$ZodType,
-	TQuery extends z.core.$ZodType,
-> = {
+export type Endpoint<TBody extends TSchema, TResponse extends TSchema, TQuery extends TSchema> = {
 	schemas: EndpointSchemas<TBody, TResponse, TQuery>;
 	handle(ctx: AppContext, request: Request, params?: PathParams): Promise<Response>;
 };
@@ -104,14 +101,11 @@ function requirePostgresSafe(input: unknown, part: string) {
 }
 
 // UNKNOWN: request input, validated by the endpoint's schema.
-function parseInput<TSchema extends z.core.$ZodType>(
-	schema: TSchema,
-	input: unknown,
-): z.output<TSchema> {
-	const result = z.safeParse(schema, input);
+function parseInput<T extends TSchema>(schema: T, input: unknown): StaticDecode<T> {
+	const result = safeParse(schema, input);
 
 	if (!result.success) {
-		throw new ApiError('invalid_request', z.prettifyError(result.error));
+		throw new ApiError('invalid_request', result.error.message);
 	}
 
 	return result.data;
@@ -127,13 +121,9 @@ function parseInput<TSchema extends z.core.$ZodType>(
  * @param options Conditional-request support, e.g. an `etag` derived from the result.
  * @returns The endpoint, served from a route with `serve` and called directly from tests.
  */
-export function endpoint<
-	TBody extends z.core.$ZodType,
-	TResponse extends z.core.$ZodType,
-	TQuery extends z.core.$ZodType,
->(
+export function endpoint<TBody extends TSchema, TResponse extends TSchema, TQuery extends TSchema>(
 	schemas: EndpointSchemas<TBody, TResponse, TQuery>,
-	handler: Handler<EndpointInput<z.output<TBody>, z.output<TQuery>>, TResponse>,
+	handler: Handler<EndpointInput<StaticDecode<TBody>, StaticDecode<TQuery>>, TResponse>,
 	options: EndpointOptions<TResponse> = {},
 ): Endpoint<TBody, TResponse, TQuery> {
 	return {
@@ -155,7 +145,7 @@ export function endpoint<
 
 				const body = parseInput(schemas.body, rawBody);
 				const query = parseInput(schemas.query, rawQuery);
-				const result = z.parse(
+				const result = parse(
 					schemas.response,
 					await handler({ ctx, request, params, body, query }),
 				);
@@ -195,12 +185,12 @@ export function endpoint<
  * @returns The endpoint, served from a route with `serve` and called directly from tests.
  */
 export function callerEndpoint<
-	TBody extends z.core.$ZodType,
-	TResponse extends z.core.$ZodType,
-	TQuery extends z.core.$ZodType,
+	TBody extends TSchema,
+	TResponse extends TSchema,
+	TQuery extends TSchema,
 >(
 	schemas: EndpointSchemas<TBody, TResponse, TQuery>,
-	handler: Handler<CallerEndpointInput<z.output<TBody>, z.output<TQuery>>, TResponse>,
+	handler: Handler<CallerEndpointInput<StaticDecode<TBody>, StaticDecode<TQuery>>, TResponse>,
 	options: EndpointOptions<TResponse> = {},
 ): Endpoint<TBody, TResponse, TQuery> {
 	return endpoint(
@@ -236,11 +226,11 @@ export function requireParam(params: PathParams, name: string): string {
  * @param schema The schema the segment must satisfy.
  * @returns The parsed parameter.
  */
-export function parseParam<TSchema extends z.core.$ZodType>(
+export function parseParam<T extends TSchema>(
 	params: PathParams,
 	name: string,
-	schema: TSchema,
-): z.output<TSchema> {
+	schema: T,
+): StaticDecode<T> {
 	return parseInput(schema, requireParam(params, name));
 }
 

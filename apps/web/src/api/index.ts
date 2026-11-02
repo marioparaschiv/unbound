@@ -1,4 +1,4 @@
-import type { z } from 'zod';
+import type { StaticEncode } from '@unbound-app/contracts/schema';
 
 import type { FileRoutesByFullPath } from '~/routeTree.gen';
 import type { ServedEndpoint } from '~/lib/api/serve';
@@ -12,7 +12,7 @@ type Handlers<R> = R extends { options: { server?: { handlers?: infer H } } }
 
 type RouteEntry<H> =
 	H extends ServedEndpoint<Endpoint<infer TBody, infer TResponse, infer TQuery>>
-		? { body: z.input<TBody>; query: z.input<TQuery>; response: TResponse }
+		? { body: StaticEncode<TBody>; query: StaticEncode<TQuery>; response: TResponse }
 		: never;
 
 /** Maps every `serve`d handler of a server route to its `"METHOD /path"` API map entry. */

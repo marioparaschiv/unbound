@@ -60,7 +60,7 @@ export function transferAddonMutation() {
 		mutationFn: ({ id, userId }: TransferAddonVariables) =>
 			createBrowserClient()('POST /api/v1/addons/$id/transfer', {
 				params: { id },
-				body: { userId },
+				body: { userId, keepPreviousOwner: true },
 				response: maintainersResponseSchema,
 			}),
 		onSuccess: (_data, _variables, _result, context) => invalidate(context.client, 'addon'),

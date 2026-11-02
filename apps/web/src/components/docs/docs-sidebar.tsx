@@ -33,7 +33,7 @@ type DocsSidebarProps = {
 };
 
 const PACKAGE_LABELS: Record<string, string> = Object.fromEntries(
-	docsPackageSchema.options.map((pkg) => [pkg, `@unbound-app/${pkg}`]),
+	docsPackageSchema.enum.map((pkg) => [pkg, `@unbound-app/${pkg}`]),
 );
 
 const GROUP_LABELS = new Map(DOCS_GROUPS.map((group) => [group.key, group.label]));
@@ -135,7 +135,7 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 						<SelectValue />
 					</SelectTrigger>
 					<SelectContent>
-						{docsPackageSchema.options.map((pkg) => (
+						{docsPackageSchema.enum.map((pkg) => (
 							<SelectItem key={pkg} value={pkg}>
 								{PACKAGE_LABELS[pkg]}
 							</SelectItem>

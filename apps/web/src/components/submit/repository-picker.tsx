@@ -1,5 +1,6 @@
 import type { PushableRepository } from '@unbound-app/contracts/source';
 import { repositoryInputSchema } from '@unbound-app/contracts/source';
+import { parse } from '@unbound-app/contracts/schema';
 import { IconMagnifier } from 'nucleo-micro-bold';
 import { useForm } from '@tanstack/react-form';
 import { useId } from 'react';
@@ -16,6 +17,7 @@ import { SubmitCallout } from '~/components/submit/submit-callout';
 import { SubmitSection } from '~/components/submit/submit-section';
 import type { ApiErrorDetails } from '~/lib/api/error-details';
 import GitHubIcon from '~/components/icons/github';
+import standardSchema from '~/lib/standard-schema';
 import { Button } from '~/components/ui/button';
 import Spinner from '~/components/ui/spinner';
 
@@ -42,7 +44,7 @@ function RepositoryPicker({
 	const id = useId();
 	const form = useForm({
 		defaultValues: { repository: defaultValue },
-		onSubmit: ({ value }) => onPick(repositoryInputSchema.parse(value.repository)),
+		onSubmit: ({ value }) => onPick(parse(repositoryInputSchema, value.repository)),
 	});
 
 	function pick(repository: string) {
@@ -62,7 +64,10 @@ function RepositoryPicker({
 				}}
 				className='flex flex-col gap-4'
 			>
-				<form.Field name='repository' validators={{ onSubmit: repositoryInputSchema }}>
+				<form.Field
+					name='repository'
+					validators={{ onSubmit: standardSchema(repositoryInputSchema) }}
+				>
 					{(field) => (
 						<Field data-invalid={field.state.meta.errors.length > 0}>
 							<FieldLabel htmlFor={`${id}-repository`} className='sr-only'>

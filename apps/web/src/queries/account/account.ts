@@ -8,7 +8,7 @@ import { accountOverviewKey } from '~/queries/keys';
 import { invalidate } from '~/queries/invalidate';
 import authClient from '~/lib/auth/client';
 
-// The sponsor contracts are classic zod; loading them on use keeps it out of the entry chunk every page loads.
+// Loading the sponsor contracts on use keeps them out of the entry chunk every page loads.
 async function loadBadgeClaimResponseSchema() {
 	return (await import('@unbound-app/contracts/sponsors')).badgeClaimResponseSchema;
 }

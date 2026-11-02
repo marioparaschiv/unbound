@@ -1,5 +1,6 @@
 import { infiniteQueryOptions, queryOptions } from '@tanstack/react-query';
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 import { fetchDeveloper, fetchDevelopers } from '~/lib/developer-functions';
 import { marketplaceKey } from '~/queries/keys';
@@ -32,7 +33,7 @@ export function developerQuery(discordId: string) {
 	return queryOptions({
 		queryKey: [...developersKey, 'profile', discordId],
 		queryFn: async ({ signal }) => {
-			const parsed = addonAuthorSchema.shape.id.safeParse(discordId);
+			const parsed = safeParse(addonAuthorSchema.properties.id, discordId);
 
 			// Text that cannot be a Discord id matches nobody, so it needs no request.
 			return parsed.success ? fetchDeveloper({ data: parsed.data, signal }) : null;
