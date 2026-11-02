@@ -14,7 +14,7 @@ function ToastButtons({ buttons }: ToastButtonsProps) {
 	const styles = useStyles();
 
 	return (
-		<View style={[styles.buttons, { marginTop: 5 }]}>
+		<View style={styles.buttons}>
 			{buttons.map((button, index) => (
 				<Discord.Button
 					key={index}

@@ -36,6 +36,10 @@ export default Discord.createStyles({
 		marginVertical: 10,
 		marginLeft: 12,
 	},
+	image: {
+		width: 24,
+		aspectRatio: 1,
+	},
 	closeButton: {
 		marginVertical: 10,
 		marginLeft: 12,
@@ -45,6 +49,7 @@ export default Discord.createStyles({
 		flexWrap: 'wrap',
 		flexDirection: 'row',
 		marginHorizontal: 12,
+		marginTop: 5,
 		marginBottom: 12,
 		gap: 5,
 	},
