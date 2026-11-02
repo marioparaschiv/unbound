@@ -1,5 +1,5 @@
-import { Constants, Theme } from '~/metro/common';
 import { Discord } from '~/metro/components';
+import { Theme } from '~/metro/common';
 
 export default Discord.createStyles({
 	toastShadow: Theme.shadows.SHADOW_MEDIUM,
@@ -28,11 +28,6 @@ export default Discord.createStyles({
 		flex: 1,
 		flexDirection: 'column',
 		justifyContent: 'center',
-	},
-	title: {
-		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-		color: Theme.colors.TEXT_DEFAULT,
-		fontSize: 14,
 	},
 	content: {
 		height: 'auto',

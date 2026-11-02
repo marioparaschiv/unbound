@@ -61,5 +61,3 @@ export const HEART_SIDE_PIXELS: HeartPixel[] = HEART_PIXELS.map((pixel) => ({
 export const HEART_EDGE: HeartPixel[] = Array.from({ length: HEART_ROWS }, (_, y) =>
 	HEART_SIDE_PIXELS.filter((pixel) => pixel.y === y).at(-1),
 ).filter((pixel): pixel is HeartPixel => Boolean(pixel));
-
-export default { HEART_COLUMNS, HEART_ROWS, HEART_PIXELS, HEART_SIDE_PIXELS, HEART_EDGE };
