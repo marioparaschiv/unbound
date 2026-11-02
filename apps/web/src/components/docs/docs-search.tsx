@@ -1,12 +1,14 @@
+import { IconCode, IconFileSearch, IconMagnifier } from 'nucleo-micro-bold';
 import { Link, useNavigate } from '@tanstack/react-router';
-import { IconMagnifier } from 'nucleo-micro-bold';
 import type { KeyboardEvent } from 'react';
 import { useMemo, useState } from 'react';
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '~/components/ui/dialog';
 import { searchDocs, type DocsSearchEntry } from '~/lib/docs/search';
+import SearchEmpty from '~/components/docs/search-empty';
 import type { DocsRoute } from '~/lib/docs/docs-links';
 import KindBadge from '~/components/docs/kind-badge';
+import Kbd from '~/components/ui/kbd';
 import cn from '~/lib/cn';
 
 type DocsSearchProps = {
@@ -29,11 +31,20 @@ function DocsSearch({ entries, route, open, onOpenChange }: DocsSearchProps) {
 	const [active, setActive] = useState(0);
 	const results = useMemo(() => searchDocs(entries, query), [entries, query]);
 	const memberCount = entries.filter((entry) => entry.kind === 'members').length;
+	const [shownOpen, setShownOpen] = useState(open);
+
+	// Clears the query on every close, including the `⌘K` toggle the shell owns.
+	if (open !== shownOpen) {
+		setShownOpen(open);
+
+		if (!open) {
+			setQuery('');
+			setActive(0);
+		}
+	}
 
 	function close() {
 		onOpenChange(false);
-		setQuery('');
-		setActive(0);
 	}
 
 	function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -88,14 +99,12 @@ function DocsSearch({ entries, route, open, onOpenChange }: DocsSearchProps) {
 						}}
 						onKeyDown={handleKeyDown}
 					/>
-					<kbd className='px-1.5 py-0.5 border rounded-md font-mono text-[11px] text-muted-foreground'>
-						Esc
-					</kbd>
+					<Kbd>Esc</Kbd>
 				</label>
 				<ul
 					id='docs-search-results'
 					role='listbox'
-					className='p-1.5 max-h-96 overflow-y-auto'
+					className='p-1.5 max-h-96 overflow-y-auto empty:hidden'
 				>
 					{results.map((entry, index) => (
 						<li
@@ -124,15 +133,15 @@ function DocsSearch({ entries, route, open, onOpenChange }: DocsSearchProps) {
 					))}
 				</ul>
 				{query.trim() && !results.length ? (
-					<p className='px-4 pb-6 text-muted-foreground text-sm text-center'>
+					<SearchEmpty icon={IconFileSearch}>
 						Nothing matches “{query.trim()}”.
-					</p>
+					</SearchEmpty>
 				) : null}
 				{!query.trim() ? (
-					<p className='px-4 pb-6 text-muted-foreground text-sm text-center'>
+					<SearchEmpty icon={IconCode}>
 						{entries.length - memberCount} symbols and {memberCount} members in this
 						version.
-					</p>
+					</SearchEmpty>
 				) : null}
 			</DialogContent>
 		</Dialog>

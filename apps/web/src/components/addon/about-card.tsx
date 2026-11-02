@@ -23,7 +23,9 @@ function AboutCard({ addon }: AboutCardProps) {
 			) : null}
 			{latest ? <DetailRow label='Size'>{formatBytes(latest.bundleSize)}</DetailRow> : null}
 			<DetailRow label='Requires'>
-				{addon.minClientVersion ? `Unbound ${addon.minClientVersion}+` : 'Any Unbound'}
+				{addon.minClientVersion
+					? `Unbound ${addon.minClientVersion}+`
+					: 'Any Unbound version'}
 			</DetailRow>
 			<DetailRow label='Platforms'>
 				{addon.platforms.map(({ platform }) => PLATFORM_LABELS[platform]).join(', ')}

@@ -163,7 +163,7 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 			<Accordion type='multiple' value={openGroups} onValueChange={setOpenGroups}>
 				{nav.groups.map((group) => (
 					<AccordionItem key={group.key} value={group.key} className='border-b-0'>
-						<AccordionTrigger className='py-2 font-semibold text-muted-foreground text-xs uppercase tracking-wide hover:no-underline'>
+						<AccordionTrigger className='py-2 font-semibold text-muted-foreground hover:text-foreground text-xs uppercase tracking-wide hover:no-underline hover:[&>svg]:text-foreground transition-colors press-flat [--press-depth:0.5]'>
 							<span className='flex items-center gap-2'>
 								{GROUP_LABELS.get(group.key)}
 								<span className='font-normal normal-case tabular-nums'>
@@ -182,7 +182,7 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 									className={cn(
 										'flex items-center gap-2 px-2 rounded-item h-8 font-mono text-[0.8125rem] press-flat hover:bg-accent',
 										entry.qualifiedName === symbol
-											? 'bg-accent text-foreground font-semibold'
+											? 'text-foreground'
 											: 'text-muted-foreground',
 									)}
 								>

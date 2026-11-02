@@ -29,6 +29,7 @@ import { pickedAuthorsQuery } from '~/queries/marketplace/authors';
 import FilterMenu from '~/components/addon-filters/filter-menu';
 import { buttonVariants } from '~/components/ui/button';
 import { tagsQuery } from '~/queries/marketplace/tags';
+import Kbd from '~/components/ui/kbd';
 import cn from '~/lib/cn';
 
 type FilterBarProps = {
@@ -219,9 +220,7 @@ function FilterBar({
 				>
 					<IconBarsFilter size={24} />
 					<span>Filter</span>
-					<kbd className='hidden sm:inline px-1.5 border border-border rounded font-mono text-[10px] text-muted-foreground'>
-						F
-					</kbd>
+					<Kbd className='hidden sm:inline-flex'>F</Kbd>
 				</FilterMenu>
 				{actions}
 			</div>

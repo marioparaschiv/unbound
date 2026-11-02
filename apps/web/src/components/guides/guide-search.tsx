@@ -1,4 +1,4 @@
-import { IconHashtag, IconMagnifier, IconNote } from 'nucleo-micro-bold';
+import { IconBooks, IconFileSearch, IconHashtag, IconMagnifier, IconNote } from 'nucleo-micro-bold';
 import { Link, useNavigate } from '@tanstack/react-router';
 import type { KeyboardEvent } from 'react';
 import { useMemo, useState } from 'react';
@@ -6,8 +6,10 @@ import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '~/components/ui/dialog';
 import { searchGuides, type GuideSearchEntry } from '~/lib/guides/guide-search';
 import type { DocsSearchState } from '~/components/docs/docs-shell';
+import SearchEmpty from '~/components/docs/search-empty';
 import type { GuideTab } from '~/lib/guides/guide-nav';
 import { getGuidePath } from '~/lib/guides/guides';
+import Kbd from '~/components/ui/kbd';
 import cn from '~/lib/cn';
 
 type GuideSearchProps = DocsSearchState & {
@@ -27,11 +29,20 @@ function GuideSearch({ tab, entries, open, onOpenChange }: GuideSearchProps) {
 	const [query, setQuery] = useState('');
 	const [active, setActive] = useState(0);
 	const results = useMemo(() => searchGuides(entries, query), [entries, query]);
+	const [shownOpen, setShownOpen] = useState(open);
+
+	// Clears the query on every close, including the `⌘K` toggle the shell owns.
+	if (open !== shownOpen) {
+		setShownOpen(open);
+
+		if (!open) {
+			setQuery('');
+			setActive(0);
+		}
+	}
 
 	function close() {
 		onOpenChange(false);
-		setQuery('');
-		setActive(0);
 	}
 
 	function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -82,14 +93,12 @@ function GuideSearch({ tab, entries, open, onOpenChange }: GuideSearchProps) {
 						}}
 						onKeyDown={handleKeyDown}
 					/>
-					<kbd className='px-1.5 py-0.5 border rounded-md font-mono text-[11px] text-muted-foreground'>
-						Esc
-					</kbd>
+					<Kbd>Esc</Kbd>
 				</label>
 				<ul
 					id='guide-search-results'
 					role='listbox'
-					className='p-1.5 max-h-96 overflow-y-auto'
+					className='p-1.5 max-h-96 overflow-y-auto empty:hidden'
 				>
 					{results.map((entry, index) => (
 						<li
@@ -123,15 +132,15 @@ function GuideSearch({ tab, entries, open, onOpenChange }: GuideSearchProps) {
 					))}
 				</ul>
 				{query.trim() && !results.length ? (
-					<p className='px-4 pb-6 text-muted-foreground text-sm text-center'>
+					<SearchEmpty icon={IconFileSearch}>
 						Nothing matches “{query.trim()}”.
-					</p>
+					</SearchEmpty>
 				) : null}
 				{!query.trim() ? (
-					<p className='px-4 pb-6 text-muted-foreground text-sm text-center'>
+					<SearchEmpty icon={IconBooks}>
 						Search {entries.filter((entry) => !entry.anchor).length} pages and their
 						headings.
-					</p>
+					</SearchEmpty>
 				) : null}
 			</DialogContent>
 		</Dialog>

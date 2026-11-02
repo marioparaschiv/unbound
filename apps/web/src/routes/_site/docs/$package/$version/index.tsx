@@ -68,7 +68,7 @@ function DocsOverview() {
 						key={namespace.name}
 						to='/docs/$package/$version/$symbol'
 						params={{ ...route, symbol: namespace.name }}
-						className='flex flex-col gap-3 bg-card p-4 border rounded-surface shadow-surface hover:border-primary/40 transition-colors press-flat'
+						className='flex flex-col gap-3 bg-card hover:bg-accent dark:hover:bg-accent/50 shadow-surface hover:shadow-float p-4 border rounded-surface transition-[translate,box-shadow,background-color] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 duration-(--press-duration) ease-spring'
 					>
 						<div className='flex items-center gap-2'>
 							<KindBadge group='namespaces' />
