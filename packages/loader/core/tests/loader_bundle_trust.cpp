@@ -112,23 +112,11 @@ static void refusesBundleSignaturesWithoutASignedManifest()
 {
     Server server;
     server.files[kBase + "manifest.json"]  = R"({"bytecodeVersions":[98]})";
-    server.files[kBase + kBundle]          = "legacy";
-    server.files[kBase + kBundle + ".sig"] = bundle_test::productionKey().sign("legacy");
+    server.files[kBase + kBundle]          = "bundle";
+    server.files[kBase + kBundle + ".sig"] = bundle_test::productionKey().sign("bundle");
     loader::BundleUpdater updater          = server.updater(bundle_test::productionTrust());
 
     assert(!server.download(updater, std::nullopt));
-    assert(!loader::fileExists(server.candidate()));
-
-    assert(loader::writeTextFileAtomically(server.candidate(), "legacy"));
-    assert(loader::writeTextFileAtomically(
-        server.candidate() + loader::kBundleTrustSuffix,
-        nlohmann::json{{"kind", "bundle"},
-                       {"url", kBase + kBundle},
-                       {"source", kBase},
-                       {"file", kBundle},
-                       {"signature", bundle_test::productionKey().sign("legacy")}}
-            .dump()));
-    assert(updater.resolveBundlePath() != server.candidate());
     assert(!loader::fileExists(server.candidate()));
 }
 
@@ -242,7 +230,7 @@ static void reverifiesCandidatesBeforeRunningAndPromoting()
     assert(server.activeContents() == "current");
 
     server.settings.set("unbound", "loader.update.unsigned", true);
-    server.files[kBase + kBundle] = "unsigned";
+    server.files[kBase + kBundle] = "bundle";
     assert(server.download(updater, std::nullopt));
     server.settings.set("unbound", "loader.update.unsigned", false);
     assert(updater.resolveBundlePath() == server.active());

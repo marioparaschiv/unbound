@@ -7,6 +7,7 @@
 #include <jsi/jsi.h>
 #include <memory>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -139,4 +140,24 @@ bool runningAsynchronousMainOperation();
 bool executeRuntimeSynchronously(
     std::function<void(facebook::jsi::Runtime &)> callback,
     std::chrono::milliseconds                     timeout = std::chrono::milliseconds(100));
+
+inline constexpr size_t kMainWaitRecordLimit = 256;
+inline constexpr size_t kMainWaitLabelLimit  = 64;
+
+void           recordMainDrain(size_t items, std::chrono::nanoseconds duration);
+nlohmann::json mainWorkCounts();
+nlohmann::json mainWaitCounts();
+void           resetMainWorkCounts();
+
+struct DebugEnvironmentOptions {
+    bool collectGarbage = false;
+    bool resetCounters  = false;
+};
+
+void                 setUIRuntimeGarbageCollector(std::function<bool()> collector);
+nlohmann::json       collectGarbage(facebook::jsi::Runtime &runtime);
+nlohmann::json       debugEnvironmentSnapshot(const DebugEnvironmentOptions &options,
+                                              const std::function<void()>   &collectRuntime);
+facebook::jsi::Value readDebugEnvironment(facebook::jsi::Runtime     &runtime,
+                                          const facebook::jsi::Value *args, size_t count);
 }

@@ -73,10 +73,9 @@ function writePlugin(dir: string, version: string) {
 			id: `unbound.${dir}`,
 			main: 'index.js',
 			version,
-			platforms: ['ios', 'android'],
-			platformCapabilities: {
-				ios: ['native.objc.classes'],
-				android: ['native.java.classes'],
+			platforms: {
+				ios: { capabilities: ['native.objc.classes'] },
+				android: { capabilities: ['native.java.classes'] },
 			},
 		})}\n`,
 	);
@@ -318,10 +317,9 @@ test('signs each published bundle into its manifest when the signing key is set'
 
 		expect(manifest.version).toBe('1.1.0');
 		expect(manifest.main).toBe('index.tsx');
-		expect(manifest.platforms).toEqual(['ios', 'android']);
-		expect(manifest.platformCapabilities).toEqual({
-			ios: ['native.objc.classes'],
-			android: ['native.java.classes'],
+		expect(manifest.platforms).toEqual({
+			ios: { capabilities: ['native.objc.classes'] },
+			android: { capabilities: ['native.java.classes'] },
 		});
 		expect(
 			verifyPluginSignature(

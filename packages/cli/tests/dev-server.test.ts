@@ -129,8 +129,7 @@ export function start(context: PluginContext) {
 
 		expect(manifests).toEqual([
 			expect.objectContaining({
-				platforms: ['ios'],
-				platformCapabilities: { ios: ['native.objc.classes'] },
+				platforms: { ios: { capabilities: ['native.objc.classes'] } },
 			}),
 		]);
 	});

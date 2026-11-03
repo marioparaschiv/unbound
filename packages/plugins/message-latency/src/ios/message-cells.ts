@@ -145,13 +145,18 @@ export function createMessageCells(
 		await safeInvokeAsync(objc, match.header, 'layoutIfNeeded');
 	}
 
+	function isAttached(handle: NativeObjectHandle): boolean {
+		try {
+			return Boolean(objc.call(handle, 'window'));
+		} catch {
+			return false;
+		}
+	}
+
 	async function render(handle: NativeObjectHandle, key: string, revision: number) {
 		const isFresh = () => !disposed && cells.get(key)?.revision === revision;
-		const nodes = await objc.snapshot(handle, CELL_SNAPSHOT);
 
-		if (!isFresh()) return;
-
-		if (!nodes[0]?.visible) {
+		if (!isAttached(handle)) {
 			disposeCell(handle);
 
 			return;
@@ -193,6 +198,10 @@ export function createMessageCells(
 
 				return;
 			}
+
+			const nodes = await objc.snapshot(handle, CELL_SNAPSHOT);
+
+			if (!isFresh() || !nodes[0]?.visible) return;
 
 			await addView(key, messageId, record, nodes, isFresh);
 		});

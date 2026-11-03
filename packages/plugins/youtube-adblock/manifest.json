@@ -1,0 +1,22 @@
+{
+	"id": "unbound.youtube-adblock",
+	"name": "Youtube Adblock",
+	"description": "Blocks ads in YouTube videos played inside Discord and in the Watch Together activity, using AdGuard's YouTube ad blocker.",
+	"authors": [
+		{
+			"name": "lillith <3",
+			"id": "799319081723232267"
+		},
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "EyeSlashIcon",
+	"main": "index.ts"
+}

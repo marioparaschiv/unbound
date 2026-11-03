@@ -91,12 +91,6 @@ export declare class NativePluginDisposedError extends Error {
 	readonly code = 'NATIVE_PLUGIN_SCOPE_DISPOSED';
 	constructor();
 }
-/** Thrown when a manifest declares per-platform capabilities but the loader reports an unrecognised host platform. */
-export declare class NativePluginPlatformError extends Error {
-	/** A stable code to match on instead of the message. */
-	readonly code = 'NATIVE_PLUGIN_PLATFORM_UNSUPPORTED';
-	constructor();
-}
 /** Thrown when the loader does not provide the native plugin bridge, or the part of it a call needs. */
 export declare class NativePluginUnavailableError extends Error {
 	/** A stable code to match on instead of the message. */
@@ -152,7 +146,7 @@ export declare function getNativeResources(): NativeResourceCounts | undefined;
 export declare function getRuntimeProperties(): HermesRuntimeProperties;
 /**
  * @description Checks whether the native bridge on this device provides a capability, so an addon can
- * fall back when an older loader or the other platform lacks it.
+ * fall back when the other platform lacks it.
  * @param capability The capability to look for.
  * @returns Whether the bridge provides it.
  */

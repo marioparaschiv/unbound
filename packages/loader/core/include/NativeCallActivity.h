@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 
 namespace loader {
 inline constexpr size_t kNativeCallLabelLimit = 96;
@@ -15,8 +16,14 @@ struct NativeCallSnapshot {
     int64_t     startedAt = 0;
 };
 
+struct CurrentNativeCall {
+    std::string_view label;
+    uint32_t         sequence = 0;
+};
+
 int64_t                           nativeCallClock();
 std::optional<NativeCallSnapshot> nativeCallOnThread(uintptr_t thread);
+CurrentNativeCall                 currentNativeCall();
 std::string describeNativeCall(const std::optional<NativeCallSnapshot> &call, int64_t now);
 
 class NativeCallScope

@@ -1,6 +1,5 @@
 import type {
 	NativeFabricBridge,
-	NativeHookToken,
 	NativeObjCBridge,
 	NativeObjectHandle,
 	NativePluginBridge,
@@ -48,7 +47,6 @@ export type Session = {
 	layouts: Map<string, LayoutEntry>;
 	layoutRefreshes: Map<string, ReturnType<typeof setTimeout>>;
 	tables: Map<string, TableLayout>;
-	tableHooks: NativeHookToken[];
 	cellHeights: Map<string, CellHeight>;
 	ui: NativePluginBridge['ui'];
 	scope: NativeUIScope;
@@ -85,7 +83,6 @@ export function createSession(
 		layouts: new Map(),
 		layoutRefreshes: new Map(),
 		tables: new Map(),
-		tableHooks: [],
 		cellHeights: new Map(),
 		ui: native.ui,
 		scope: native.ui.createScope(),

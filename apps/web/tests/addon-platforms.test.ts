@@ -3,19 +3,18 @@ import { describe, expect, test } from 'bun:test';
 import { resolvePlatforms } from '~/lib/addon-platforms';
 
 describe('resolvePlatforms', () => {
-	test('lists each platform in platforms with its own Capabilities', () => {
+	test('lists each platform in platforms with the flat Capabilities and its own', () => {
 		expect(
 			resolvePlatforms({
 				platforms: {
 					android: { capabilities: ['native.java.invoke'] },
-					ios: { capabilities: ['native.objc.invoke', 'native.objc.hooks'] },
+					ios: { capabilities: ['native.objc.invoke', 'native.ffi.call'] },
 				},
 				capabilities: ['native.ffi.call'],
-				platformCapabilities: { ios: ['native.objc.ivars'] },
 			}),
 		).toEqual([
-			{ platform: 'ios', capabilities: ['native.objc.invoke', 'native.objc.hooks'] },
-			{ platform: 'android', capabilities: ['native.java.invoke'] },
+			{ platform: 'ios', capabilities: ['native.ffi.call', 'native.objc.invoke'] },
+			{ platform: 'android', capabilities: ['native.ffi.call', 'native.java.invoke'] },
 		]);
 	});
 
@@ -25,20 +24,7 @@ describe('resolvePlatforms', () => {
 		]);
 	});
 
-	test('reads platformCapabilities on top of the flat list for a platform list', () => {
-		expect(
-			resolvePlatforms({
-				platforms: ['android', 'ios'],
-				capabilities: ['native.ffi.call'],
-				platformCapabilities: { ios: ['native.objc.invoke', 'native.ffi.call'] },
-			}),
-		).toEqual([
-			{ platform: 'ios', capabilities: ['native.ffi.call', 'native.objc.invoke'] },
-			{ platform: 'android', capabilities: ['native.ffi.call'] },
-		]);
-	});
-
-	test('falls back to the flat Capabilities on every platform for the oldest manifests', () => {
+	test('runs the flat Capabilities on every platform without platforms', () => {
 		expect(resolvePlatforms({ capabilities: ['native.runtime.events'] })).toEqual([
 			{ platform: 'ios', capabilities: ['native.runtime.events'] },
 			{ platform: 'android', capabilities: ['native.runtime.events'] },

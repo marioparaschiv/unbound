@@ -29,10 +29,10 @@ Test: `bun test scripts/oxlint` passes.
 
 - Add the module to `core/api.ts`: `export * as toasts from '~/toasts/api'`.
 - New modules: named exports only. The SDK drops `default`; an existing `default` object stays and gets each new member.
-- Rename: keep each old name until 1.0 as `/** @deprecated Use show */ export const showToast = show;`, pointing at the newest name. Add `{ from, to }` to `scripts/api-renames.ts` and repoint earlier entries to the newest name. `bun run rename-api` migrates callers.
+- Rename: rename in place and update every caller. Unbound is unreleased, so no `@deprecated` alias keeps the old name.
 - Barrels hold only re-exports: `core/api.ts` and `metro/index.ts`. Everything else imports its file.
 
-Test: the namespace is in `core/api.ts`, and every old name is a `@deprecated` alias.
+Test: the namespace is in `core/api.ts`.
 
 ## Stores
 

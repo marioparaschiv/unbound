@@ -36,7 +36,7 @@ const server = Bun.serve({
 afterAll(() => server.stop(true));
 
 function loader(version: string): UnboundLoaderInfo {
-	return { origin: 'unbound-app/loader-ios', version };
+	return { origin: 'unbound-app/loader-ios', version, bytecodeVersion: 96 };
 }
 
 describe('buildLoaderUpdateQuery', () => {

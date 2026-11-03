@@ -5,6 +5,11 @@ import { readReactionCellViews } from '~/ios/cell-views';
 import { selectedChannelId } from '~/selected-channel';
 import type { Session } from '~/ios/session';
 import { key } from '~/ios/views';
+import { MessageStore } from '~/modules';
+
+function hasReactions(channelId: string, messageId: string): boolean {
+	return Boolean(MessageStore.getMessage(channelId, messageId)?.reactions?.length);
+}
 
 async function readCell(session: Session, cell: NativeObjectHandle) {
 	const { objc } = session;
@@ -13,10 +18,13 @@ async function readCell(session: Session, cell: NativeObjectHandle) {
 	const info = message?.channelId
 		? { channelId: message.channelId, messageId: message.messageId }
 		: undefined;
-	const views = info ? await readReactionCellViews(objc, cell) : undefined;
+
+	if (!info || !hasReactions(info.channelId, info.messageId)) return { info, views: undefined };
+
+	const views = await readReactionCellViews(objc, cell);
 
 	// The cell was reused for another message while it was being read.
-	if (info && viewModel) {
+	if (viewModel) {
 		const current = objc.getIvar(cell, 'viewModel') as NativeObjectHandle | null;
 
 		if (!current || !(await objc.invokeAsync(viewModel, 'isEqual:', [current]))) return;

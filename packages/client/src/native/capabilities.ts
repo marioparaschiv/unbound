@@ -80,7 +80,7 @@ export function validateNativePluginRequirements(
 
 /**
  * @description Checks whether the native bridge on this device provides a capability, so an addon can
- * fall back when an older loader or the other platform lacks it.
+ * fall back when the other platform lacks it.
  * @param capability The capability to look for.
  * @returns Whether the bridge provides it.
  */

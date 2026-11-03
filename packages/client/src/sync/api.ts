@@ -6,7 +6,6 @@ import toError from '@unbound-app/utils/to-error';
 
 import { applyActions, collectLocalDocument } from '~/sync/device';
 import { isJsonEqual, plan, reconcileBase } from '~/sync/merge';
-import type { Account } from '~/account/account';
 import type { SyncStrategy } from '~/sync/merge';
 import type { ApiRequest } from '~/account/api';
 import { getBucket } from '~/storage/api';
@@ -14,9 +13,6 @@ import * as account from '~/account/api';
 
 /** The settings store Sync keeps its mode and last agreed document in. Never synced. */
 export const SYNC_STORE = 'unbound::sync';
-
-/** @deprecated Use account.Account */
-export type SyncAccount = Account;
 
 /** Which way automatic syncs move changes on this device. */
 export type SyncMode = 'two-way' | 'download' | 'upload';
@@ -33,14 +29,6 @@ const Store = getBucket(SYNC_STORE);
 let running: Promise<boolean> | undefined;
 let rerun = false;
 let applying = false;
-
-/**
- * @deprecated Use account.getAccount
- * @returns The signed-in account, or `null`.
- */
-export function getSession(): Account | null {
-	return account.getAccount() ?? null;
-}
 
 /** @returns Whether this device syncs automatically. */
 export function isEnabled(): boolean {
@@ -212,22 +200,6 @@ export function disconnect() {
 	Store.set('lastSyncedAt', null);
 	Store.set('lastError', null);
 	resetBase();
-}
-
-/**
- * @deprecated Use account.signIn
- * @returns Whether the account signed in.
- */
-export async function signIn(): Promise<boolean> {
-	return (await account.signIn()).status === 'signed-in';
-}
-
-/**
- * @deprecated Use account.signOut
- * @returns Once the account signed out.
- */
-export function signOut(): Promise<void> {
-	return account.signOut();
 }
 
 /**

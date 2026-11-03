@@ -38,6 +38,7 @@ struct JavaCallbacks {
     jmethodID javaGetField             = nullptr;
     jmethodID javaSetField             = nullptr;
     jmethodID javaRelease              = nullptr;
+    jmethodID javaLiveHandles          = nullptr;
     jmethodID hooksInstall             = nullptr;
     jmethodID hooksRemove              = nullptr;
     jmethodID runtimeReplaced          = nullptr;

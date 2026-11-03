@@ -388,7 +388,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		this.logger.warn(crashDisabledNotice(crashed, entity.name));
 		void reportCrash({
 			kind: crashed.phase === 'frozen' ? 'freeze' : 'crash',
-			phase: crashed.phase ?? 'starting',
+			phase: crashed.phase,
 			addon: crashReportAddon(entity),
 		});
 

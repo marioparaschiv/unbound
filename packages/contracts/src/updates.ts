@@ -49,8 +49,7 @@ export const updateReasonSchema = Type.Enum(UPDATE_REASONS);
 /** The newest compatible release, with `changelogs` covering every version it skips over. */
 export const addonUpdateSchema = Type.Object({
 	...addonReleaseSchema.properties,
-	/** Defaults to `newer` so responses from servers that predate it still parse. */
-	reason: Type.Enum(UPDATE_REASONS, { default: 'newer' }),
+	reason: updateReasonSchema,
 	/** Each version newer than the installed one, up to and including `version`, newest first. */
 	changelogs: Type.Array(versionChangelogSchema, {
 		maxItems: MAX_UPDATE_CHANGELOGS,

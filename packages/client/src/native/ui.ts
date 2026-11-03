@@ -105,7 +105,7 @@ function createNativeScope(
 	const bridge = getNativePlugin();
 	const factory = platform === 'android' ? bridge?.java : bridge?.objc;
 
-	if (!factory?.createUIScope) {
+	if (!factory) {
 		throw new NativePluginUnavailableError('UI-runtime native scopes are unavailable.');
 	}
 

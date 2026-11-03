@@ -231,6 +231,9 @@ object NativeBridge {
     fun javaRelease(handleJSON: String) = NativeJava.release(handleJSON)
 
     @JvmStatic
+    fun javaLiveHandles(): Int = NativeJava.liveHandles()
+
+    @JvmStatic
     fun javaBatch(operationsJSON: String): String = NativeJava.batch(operationsJSON)
 
     @JvmStatic

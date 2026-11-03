@@ -1,0 +1,19 @@
+{
+	"id": "unbound.picture-in-picture",
+	"name": "Picture In Picture",
+	"description": "Adds a picture in picture button to videos in the media viewer, so a video keeps playing in a floating window.",
+	"authors": [
+		{
+			"name": "Lumap",
+			"id": "585278686291427338"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "VideoIcon",
+	"minNativePluginApi": "1.0.0",
+	"main": "index.tsx"
+}

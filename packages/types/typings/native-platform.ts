@@ -32,12 +32,12 @@ export type NativePlatformIOSBridge = {
 export type NativePlatformApp = {
 	/** Where Discord was installed from, such as `App Store` or `Google Play`. */
 	getAppSource(): string;
-	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. Missing on older loaders. */
-	getFramework?(): string;
-	/** Whether the loader's embedded attestation verified against Unbound's pinned key. False for development builds. Missing on older loaders. */
-	isVerifiedBuild?(): boolean;
-	/** True for the first caller in this process; a reloaded runtime sees false. Missing on older loaders. */
-	claimLaunchURL?(): boolean;
+	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. */
+	getFramework(): string;
+	/** Whether the loader's embedded attestation verified against Unbound's pinned key. False for development builds. */
+	isVerifiedBuild(): boolean;
+	/** True for the first caller in this process; a reloaded runtime sees false. */
+	claimLaunchURL(): boolean;
 };
 
 /** File operations inside the Unbound folder in Discord's documents directory. */
@@ -55,8 +55,8 @@ export type NativeCrashedAddon = {
 	readonly id: string;
 	/** The addon's display name. */
 	readonly name: string;
-	/** What the addon was doing; missing on older loaders, which read it as `starting`. */
-	readonly phase?: NativeCrashPhase;
+	/** What the addon was doing. */
+	readonly phase: NativeCrashPhase;
 };
 
 /** The loader's record of which addon was starting or running when Discord crashed, kept across launches. */
@@ -68,9 +68,9 @@ export type NativePlatformCrashGuard = {
 	/** Lists the addons the loader disabled after crashes on consecutive launches. */
 	disabled(): NativeCrashedAddon[];
 	/** Registers an addon for crash attribution and returns its slot, or 0 when the loader cannot attribute crashes. */
-	register?(id: string, name: string): number;
+	register(id: string, name: string): number;
 	/** Returns a 4-byte buffer shared with the loader that holds the running addon's slot, or `undefined` when unavailable. */
-	activity?(): ArrayBuffer | undefined;
+	activity(): ArrayBuffer | undefined;
 };
 
 /** One change to a Bucket: set a key, remove a key, or clear the whole Bucket. Keys are dot paths. */
@@ -116,9 +116,9 @@ export type NativePlatformAddons = {
 	/** Checks a manifest's `signature` against its bundle. */
 	verify(manifest: string, bundle: string): NativeAddonVerification;
 	/** Evaluates an installed plugin's bundle compiled for this bytecode version, if its digest matches the manifest. */
-	evaluateBytecode?(folder: string, bytecodeVersion: number): NativeCompiledPlugin | undefined;
+	evaluateBytecode(folder: string, bytecodeVersion: number): NativeCompiledPlugin | undefined;
 	/** Reads an installed plugin's source, for one the loader handed over without it, if its signature still holds. */
-	readSource?(folder: string): string | undefined;
+	readSource(folder: string): string | undefined;
 };
 
 /** Hermes' sampling profiler, shared with the loader's freeze watchdog. */
@@ -139,12 +139,12 @@ export type NativePlatformFonts = {
 export type NativePlatformSettings = {
 	/** Applies changes and writes the file at once; false when the changes are malformed or the write failed. */
 	apply(changes: readonly NativeSettingsChange[]): boolean;
-	/** Applies changes in memory, to be written by `flush`. Missing on older loaders. */
-	stage?(changes: readonly NativeSettingsChange[]): boolean;
-	/** Writes staged changes to the file, if any. Missing on older loaders. */
-	flush?(): boolean;
+	/** Applies changes in memory, to be written by `flush`. */
+	stage(changes: readonly NativeSettingsChange[]): boolean;
+	/** Writes staged changes to the file, if any. */
+	flush(): boolean;
 	/** Reads every Bucket with no arguments, one Bucket with `store`, or one dot-path `key`; `undefined` when unset. */
-	get?(store?: string, key?: string): NativeSerializable | undefined;
+	get(store?: string, key?: string): NativeSerializable | undefined;
 };
 
 /** Platform-wide helpers the loader publishes as `globalThis.NativePlatform`, not scoped to a plugin. */
@@ -166,10 +166,10 @@ export type NativePlatformBridge = {
 	readonly settings?: NativePlatformSettings;
 	/** The font list; missing when the loader cannot list fonts. */
 	readonly fonts?: NativePlatformFonts;
-	/** Addon verification and bytecode loading; missing on older loaders. */
-	readonly addons?: NativePlatformAddons;
-	/** Hermes' sampling profiler; missing on older loaders. */
-	readonly profiler?: NativePlatformProfiler;
+	/** Addon verification and bytecode loading. */
+	readonly addons: NativePlatformAddons;
+	/** Hermes' sampling profiler. */
+	readonly profiler: NativePlatformProfiler;
 	/** iOS-only helpers; missing on Android. */
 	readonly ios?: NativePlatformIOSBridge;
 };

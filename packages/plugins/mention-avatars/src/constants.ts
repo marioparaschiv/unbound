@@ -2,3 +2,4 @@
 export const MENTION_PLACEHOLDER = '\uFFFC';
 export const PILL_PADDING = '\u2060\u2009\u2060';
 export const PILL_PADDING_ATTRIBUTE = 'UnboundMentionPadding';
+export const MAX_MENTION_REFRESHES = 20;

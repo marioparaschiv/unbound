@@ -29,8 +29,8 @@ func writeSmokePlugin(t *testing.T, root, folder, manifest string, files ...stri
 func TestDiscoverSmokePluginsKeepsThePlatformsBuiltPlugins(t *testing.T) {
 	root := t.TempDir()
 	writeSmokePlugin(t, root, "view-raw", `{"id":"unbound.view-raw","main":"index.js"}`, "index.js")
-	writeSmokePlugin(t, root, "moyai", `{"id":"unbound.moyai","main":"index.js","platforms":["ios","android"]}`, "index.js")
-	writeSmokePlugin(t, root, "ios-only", `{"id":"unbound.ios-only","main":"index.js","platforms":["ios"]}`, "index.js")
+	writeSmokePlugin(t, root, "moyai", `{"id":"unbound.moyai","main":"index.js","platforms":{"ios":{},"android":{}}}`, "index.js")
+	writeSmokePlugin(t, root, "ios-only", `{"id":"unbound.ios-only","main":"index.js","platforms":{"ios":{"capabilities":["native.objc.classes"]}}}`, "index.js")
 	if err := os.MkdirAll(filepath.Join(root, "shared", "src"), 0o755); err != nil {
 		t.Fatal(err)
 	}

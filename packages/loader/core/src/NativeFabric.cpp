@@ -1,5 +1,6 @@
 #include "NativeFabric.h"
 
+#include <algorithm>
 #include <atomic>
 #include <deque>
 #include <functional>
@@ -27,6 +28,11 @@ bool FabricAdapter::detach(const std::string &)
 }
 
 bool FabricAdapter::attach(const std::string &, const FabricView &)
+{
+    return false;
+}
+
+bool FabricAdapter::detachesEverySurface() const
 {
     return false;
 }
@@ -126,15 +132,18 @@ using SurfacePointer = std::shared_ptr<FabricSurface>;
 struct IdleSurface {
     std::string    key;
     SurfacePointer surface;
+    uint64_t       parking = 0;
 };
 
 static std::atomic<size_t> gCreatedSurfaces{0};
 static std::atomic<size_t> gReusedSurfaces{0};
+static std::atomic<size_t> gMissedSurfaces{0};
 
 struct SurfaceRegistry {
     std::mutex                                          mutex;
     std::unordered_map<FabricSurface *, SurfacePointer> surfaces;
     std::deque<IdleSurface>                             idle;
+    uint64_t                                            parkings = 0;
 };
 
 static SurfaceRegistry &registry()
@@ -240,6 +249,84 @@ static bool park(const SurfacePointer &surface)
     }
     destroyIdle(evicted);
     return true;
+}
+
+static std::optional<uint64_t> parkBeforeDetaching(const SurfacePointer &surface)
+{
+    std::string key = surface->reuseKey();
+    if (key.empty() || !surface->adapter().detachesEverySurface() ||
+        surface->generation() != runtimeGeneration())
+    {
+        return std::nullopt;
+    }
+    std::lock_guard<std::mutex> lock(registry().mutex);
+    if (!surface->active() || registry().surfaces.erase(surface.get()) == 0)
+    {
+        return std::nullopt;
+    }
+    surface->deactivate();
+    uint64_t ticket = ++registry().parkings;
+    registry().idle.push_back({key, surface, ticket});
+    return ticket;
+}
+
+static std::vector<SurfacePointer> overflowingIdle()
+{
+    std::lock_guard<std::mutex> lock(registry().mutex);
+    return overflowingIdleLocked();
+}
+
+static std::deque<IdleSurface>::iterator findParking(const SurfacePointer &surface, uint64_t ticket)
+{
+    auto &idle = registry().idle;
+    return std::find_if(idle.begin(), idle.end(), [&](const IdleSurface &entry) {
+        return entry.surface == surface && entry.parking == ticket;
+    });
+}
+
+static bool stillParked(const SurfacePointer &surface, uint64_t ticket)
+{
+    std::lock_guard<std::mutex> lock(registry().mutex);
+    return findParking(surface, ticket) != registry().idle.end();
+}
+
+static bool unpark(const SurfacePointer &surface, uint64_t ticket)
+{
+    std::lock_guard<std::mutex> lock(registry().mutex);
+    auto                        found = findParking(surface, ticket);
+    if (found == registry().idle.end())
+    {
+        return false;
+    }
+    registry().idle.erase(found);
+    return true;
+}
+
+static bool detachQuietly(const SurfacePointer &surface)
+{
+    try
+    {
+        return surface->adapter().detach(surface->id());
+    }
+    catch (const std::exception &error)
+    {
+        log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
+            std::string("Failed to detach an idle Fabric surface: ") + error.what());
+    }
+    return false;
+}
+
+static void finishParking(const SurfacePointer &surface, uint64_t ticket)
+{
+    destroyIdle(overflowingIdle());
+    if (!stillParked(surface, ticket) || detachQuietly(surface))
+    {
+        return;
+    }
+    if (unpark(surface, ticket))
+    {
+        destroyIdle({surface});
+    }
 }
 
 static SurfacePointer takeIdle(const std::string &key, uint64_t generation)
@@ -402,9 +489,9 @@ static bool reuseIdle(const MountRequest &request)
     }
     try
     {
-        if (idle->adapter().attach(idle->id(), *request.container))
+        if (idle->adapter().attach(idle->id(), *request.container) &&
+            idle->adapter().update(idle->id(), request.properties))
         {
-            idle->adapter().update(idle->id(), request.properties);
             std::lock_guard<std::mutex> lock(registry().mutex);
             if (request.generation == runtimeGeneration())
             {
@@ -424,6 +511,32 @@ static bool reuseIdle(const MountRequest &request)
     return false;
 }
 
+static SurfacePointer takeOldestIdle()
+{
+    std::lock_guard<std::mutex> lock(registry().mutex);
+    auto                       &idle = registry().idle;
+    if (idle.empty())
+    {
+        return nullptr;
+    }
+    SurfacePointer oldest = idle.front().surface;
+    idle.pop_front();
+    return oldest;
+}
+
+static void evictIdleUntilSurfaceFits()
+{
+    while (nativeSurfaceBudget().used() >= nativeSurfaceBudget().limit())
+    {
+        SurfacePointer oldest = takeOldestIdle();
+        if (!oldest)
+        {
+            return;
+        }
+        destroyIdle({oldest});
+    }
+}
+
 static void mount(const MountRequest &request)
 {
     if (request.generation != runtimeGeneration())
@@ -434,6 +547,11 @@ static void mount(const MountRequest &request)
     {
         return;
     }
+    if (!request.reuseKey.empty())
+    {
+        gMissedSurfaces++;
+    }
+    evictIdleUntilSurfaceFits();
     NativeResourceReservation reservation(nativeSurfaceBudget(),
                                           "Too many React surfaces are mounted");
     std::string id = request.surface->adapter().mount(*request.container, request.moduleName,
@@ -690,6 +808,13 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
         requireArguments(count, 1, "Unmounting a React surface requires a handle");
         SurfacePointer surface = surfaceOf(rt, args[0]);
         surface->forgetSetFrame();
+        if (std::optional<uint64_t> ticket = parkBeforeDetaching(surface))
+        {
+            return FabricCall{[surface, parked = *ticket]() {
+                                  finishParking(surface, parked);
+                              },
+                              nullptr, nullptr};
+        }
         return FabricCall{[surface]() {
                               unmount(surface);
                           },
@@ -712,6 +837,11 @@ size_t createdFabricSurfaces()
 size_t reusedFabricSurfaces()
 {
     return gReusedSurfaces.load();
+}
+
+size_t missedFabricSurfaces()
+{
+    return gMissedSurfaces.load();
 }
 
 size_t idleFabricSurfaces()

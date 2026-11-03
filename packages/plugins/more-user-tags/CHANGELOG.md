@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.3] - 2026-11-03
+
+### Changed
+
+- Publish the plugin's native capabilities in the current manifest format, so Unbound keeps granting them. The plugin works the same as before.
+
 ## [1.3.2] - 2026-11-03
 
 ### Changed

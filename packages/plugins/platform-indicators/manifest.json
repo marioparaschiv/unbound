@@ -1,0 +1,30 @@
+{
+	"id": "unbound.platform-indicators",
+	"name": "Platform Indicators",
+	"description": "Shows which platforms users are online on, such as desktop, mobile, web, console or VR, in the member list, profiles and messages.",
+	"authors": [
+		{
+			"name": "kemo",
+			"id": "715746190813298788"
+		},
+		{
+			"name": "sunnie",
+			"id": "406028027768733696"
+		},
+		{
+			"name": "Nuckyz",
+			"id": "235834946571337729"
+		},
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "LaptopPhoneIcon",
+	"main": "index.tsx"
+}

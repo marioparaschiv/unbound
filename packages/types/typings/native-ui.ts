@@ -21,7 +21,7 @@ export type NativeUIScope = {
 /** The loader's way to open UI-runtime scopes, offered on its raw `objc` namespace on iOS and `java` on Android. */
 export type NativeUIScopeFactory = {
 	/** Opens a UI-runtime scope allowed only the listed method paths, such as `objc.invoke`. */
-	createUIScope?(paths: readonly string[]): NativeUIScope;
+	createUIScope(paths: readonly string[]): NativeUIScope;
 };
 
 /** A function a worklet calls on the UI runtime to hand serializable values to a listener on the JS thread, made with `callback`. */

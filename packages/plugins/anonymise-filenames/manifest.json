@@ -1,0 +1,18 @@
+{
+	"id": "unbound.anonymise-filenames",
+	"name": "Anonymise File Names",
+	"description": "Replaces the names of files you upload with random characters, a fixed name or a timestamp, keeping the extension.",
+	"authors": [
+		{
+			"name": "fawn",
+			"id": "336678828233588736"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "FileIcon",
+	"main": "index.tsx"
+}

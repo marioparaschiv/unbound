@@ -122,6 +122,7 @@ describe('addonManifestSchema', () => {
 			{ ios: { capabilities: 'native.objc.invoke' } },
 			{ ios: [] },
 			[],
+			['ios'],
 			['web'],
 			'ios',
 		];
@@ -129,24 +130,6 @@ describe('addonManifestSchema', () => {
 		for (const platforms of invalid) {
 			expect(safeParse(addonManifestSchema, { ...manifest, platforms }).success).toBe(false);
 		}
-	});
-
-	test('still accepts the deprecated platform list and platformCapabilities', () => {
-		const parsed = parse(addonManifestSchema, {
-			...manifest,
-			platforms: ['ios', 'android'],
-			capabilities: [],
-			platformCapabilities: { ios: ['native.objc.invoke'] },
-		});
-
-		expect(parsed.platforms).toEqual(['ios', 'android']);
-		expect(parsed.platformCapabilities).toEqual({ ios: ['native.objc.invoke'] });
-		expect(
-			safeParse(addonManifestSchema, {
-				...manifest,
-				platformCapabilities: { web: ['native.objc.invoke'] },
-			}).success,
-		).toBe(false);
 	});
 
 	test('accepts every first-party plugin manifest', async () => {
@@ -240,12 +223,10 @@ describe('updatesResponseSchema', () => {
 		expect(parse(updatesResponseSchema, { updates: [update] })).toEqual({ updates: [update] });
 	});
 
-	test('reads an update without a reason as newer', () => {
-		const { reason: _, ...legacy } = update;
+	test('rejects an update without a reason', () => {
+		const { reason: _, ...withoutReason } = update;
 
-		expect(parse(updatesResponseSchema, { updates: [legacy] }).updates[0]?.reason).toBe(
-			'newer',
-		);
+		expect(safeParse(updatesResponseSchema, { updates: [withoutReason] }).success).toBe(false);
 	});
 
 	test('rejects an uppercase or short digest', () => {

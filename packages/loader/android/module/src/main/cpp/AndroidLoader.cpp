@@ -289,7 +289,12 @@ void AndroidLoader::drainMainWork()
         work.swap(mainQueue_);
         mainDrainScheduled_ = false;
     }
+    if (work.empty())
+    {
+        return;
+    }
 
+    const auto startedAt = std::chrono::steady_clock::now();
     for (auto &item : work)
     {
         try
@@ -307,6 +312,7 @@ void AndroidLoader::drainMainWork()
                         "Main-thread native work failed.");
         }
     }
+    loader::native::recordMainDrain(work.size(), std::chrono::steady_clock::now() - startedAt);
 }
 
 void AndroidLoader::runOnRuntime(std::function<void(jsi::Runtime &)> work)

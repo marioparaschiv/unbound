@@ -103,8 +103,6 @@ const ctx = base.ctx;
 const server = serveEndpoints(ctx, {
 	'GET /api/v1/auth/discord': getDiscordOAuthEndpoint,
 	'POST /api/v1/auth/discord': discordSignInEndpoint,
-	'GET /api/v1/sync/oauth': getDiscordOAuthEndpoint,
-	'POST /api/v1/sync/oauth': discordSignInEndpoint,
 	'GET /api/v1/sync': getSyncEndpoint,
 	'PUT /api/v1/sync': putSyncEndpoint,
 	'DELETE /api/v1/sync': deleteSyncEndpoint,
@@ -178,21 +176,6 @@ describe('GET /api/v1/auth/discord', () => {
 			redirectUri: 'http://localhost:3000/api/auth/callback/discord',
 			scopes: ['identify', 'email'],
 		});
-	});
-});
-
-describe('/api/v1/sync/oauth', () => {
-	test('still signs in released clients', async () => {
-		const config = await client('GET /api/v1/sync/oauth', {
-			response: accountOAuthConfigSchema,
-		});
-		const session = await client('POST /api/v1/sync/oauth', {
-			body: { code: 'code-alice' },
-			response: accountSignInResponseSchema,
-		});
-
-		expect(config.clientId).toBe('discord-client');
-		expect(session.user.name).toBe('Alice');
 	});
 });
 

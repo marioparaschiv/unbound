@@ -108,6 +108,14 @@ export declare function findByPrototypes<
  */
 export declare function findLazy(filter: MetroFilter, options?: MetroLazySearchOptions): any;
 /**
+ * @description Gives the module a lazy handle stands for once it has loaded, so a caller can keep the real object
+ * instead of reading through the proxy. It never loads a module.
+ * @template T The handle's type.
+ * @param handle A lazy handle, or any other value.
+ * @returns The loaded module, `undefined` while the handle's module has not loaded, or `handle` itself when it is not a lazy handle.
+ */
+export declare function getLoadedModule<T>(handle: T): T | undefined;
+/**
  * @description Reports what is known of a lazy handle's module, without loading it or resolving the handle.
  * A plugin should treat `unknown` as present: a patch on the handle waits for the module, so it never applies to nothing.
  * @param handle A lazy handle, such as a `{ lazy: true }` search, `metro.common.*` or `metro.stores.*`.

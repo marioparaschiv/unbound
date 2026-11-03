@@ -3,6 +3,10 @@ import type {
 	NativeFabricSurface,
 	NativePluginBridge,
 	NativePluginRuntimeBridge,
+	NativeJavaBridge,
+	NativeResourceCounts,
+	NativeUIScope,
+	NativeUIScopeFactory,
 	NativePlatformBridge,
 	NativeHandle,
 	NativeJavaArgument,
@@ -74,7 +78,6 @@ export const cleared: unknown[] = [];
 export const unmounted: NativeFabricSurface[] = [];
 export const asynchronouslyUnmounted: NativeFabricSurface[] = [];
 export const cancelled: string[] = [];
-export const removedSubscriptions: string[] = [];
 export const javaInvokeArguments: (NativeJavaArgument[] | undefined)[] = [];
 export const javaReleased: NativeJavaHandle[] = [];
 export const javaHandle: NativeJavaHandle = Object.create(null);
@@ -130,7 +133,33 @@ export function cancellable<T>(promise: Promise<T>, name: string) {
 	return Object.assign(promise, { cancel: () => cancelled.push(name) });
 }
 
-type LoaderBridge = Omit<NativePluginBridge, 'objc' | 'ui'> & { objc: LoaderObjCBridge };
+type LoaderBridge = Omit<NativePluginBridge, 'objc' | 'java' | 'runtime' | 'ui'> & {
+	objc: LoaderObjCBridge;
+	java: NativeJavaBridge & NativeUIScopeFactory;
+};
+
+function createUnavailableUIScope(): NativeUIScope {
+	throw Object.assign(new Error('UI-runtime native scopes are unavailable.'), {
+		code: 'NATIVE_PLUGIN_UNAVAILABLE',
+	});
+}
+
+const idleResources: NativeResourceCounts = {
+	hooks: 0,
+	surfaces: 0,
+	cachedReturns: 0,
+	handles: 0,
+	leases: 0,
+	objcHandles: 0,
+	objcPlans: 0,
+	objcRetains: 0,
+	javaHandles: 0,
+	idleSurfaces: 0,
+	createdSurfaces: 0,
+	reusedSurfaces: 0,
+	mainWork: { drains: 0, items: 0, drainMs: 0, maxDrainMs: 0, maxDrainItems: 0 },
+	mainWaits: [],
+};
 
 const fakeBridge: LoaderBridge = {
 	abiVersion: '1.0.0',
@@ -143,6 +172,7 @@ const fakeBridge: LoaderBridge = {
 		callSuper: () => undefined,
 		className: () => 'NSObject',
 		createAssociationKey: () => nativeHandle,
+		createUIScope: createUnavailableUIScope,
 		data: () => nativeHandle,
 		getAssociatedObject: () => null,
 		getClass: () => nativeHandle,
@@ -195,12 +225,8 @@ const fakeBridge: LoaderBridge = {
 
 			return cancellable(Promise.resolve(), 'unmount');
 		},
-	},
-	runtime: {
-		subscribe: (event: string) => ({
-			active: true,
-			remove: () => removedSubscriptions.push(event),
-		}),
+		releaseIdle: () => undefined,
+		releaseIdleAsync: () => cancellable(Promise.resolve(), 'releaseIdle'),
 	},
 	java: {
 		getClass: () => nativeHandle,
@@ -244,7 +270,10 @@ const fakeBridge: LoaderBridge = {
 			javaReleased.push(handle);
 		},
 		batch: () => [{ type: 'int', value: 1 }],
+		batchAsync: () => cancellable(Promise.resolve([{ type: 'int', value: 1 }]), 'java-batch'),
+		findViews: () => cancellable(Promise.resolve([]), 'java-findViews'),
 		createAssociationKey: () => javaHandle,
+		createUIScope: createUnavailableUIScope,
 		getAssociatedObject: () => ({ type: 'string', value: 'kept' }),
 		setAssociatedObject: () => undefined,
 	},
@@ -259,7 +288,11 @@ const fakeBridge: LoaderBridge = {
 	},
 	debug: {
 		recordEvaluation: () => true,
-		environment: () => ({ isVirtualDevice: true, hostAddress: '10.0.2.2' }),
+		environment: () => ({
+			isVirtualDevice: true,
+			hostAddress: '10.0.2.2',
+			resources: idleResources,
+		}),
 	},
 };
 
@@ -267,9 +300,6 @@ export const iosSpecificBridges = {
 	objc: fakeBridge.objc,
 	ffi: fakeBridge.ffi,
 	fabric: fakeBridge.fabric,
-};
-const genericBridges = {
-	runtime: fakeBridge.runtime,
 };
 
 export const manifest: AddonManifest = {
@@ -299,6 +329,18 @@ const fakePlatformBridge: NativePlatformBridge = {
 	},
 	app: {
 		getAppSource: () => '',
+		getFramework: () => '',
+		isVerifiedBuild: () => false,
+		claimLaunchURL: () => true,
+	},
+	addons: {
+		verify: () => ({ status: 'unsigned' }),
+		evaluateBytecode: () => undefined,
+		readSource: () => undefined,
+	},
+	profiler: {
+		start: () => false,
+		stop: () => undefined,
 	},
 	ios: iosPlatformDetails,
 };
@@ -314,7 +356,6 @@ export const nativePlatformBridge = fakePlatformBridge;
 export const {
 	NativePluginCapabilityError,
 	NativePluginDisposedError,
-	NativePluginPlatformError,
 	NativePluginUnavailableError,
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
@@ -332,7 +373,8 @@ export const { withNativeConstants } =
 export function resetNativeFixtures(): void {
 	Object.assign(bridge, { capabilities, apiVersion: '1.0.0' });
 	Object.assign(bridge, iosSpecificBridges);
-	Object.assign(bridge, genericBridges);
+	Object.assign(bridge.objc, { createUIScope: createUnavailableUIScope });
+	Object.assign(bridge.java, { createUIScope: createUnavailableUIScope });
 	Object.assign(nativePlatformBridge.device, { platform: 'ios' });
 	Object.assign(nativePlatformBridge, { platform: 'ios', ios: iosPlatformDetails });
 	removed.length = 0;
@@ -340,7 +382,6 @@ export function resetNativeFixtures(): void {
 	unmounted.length = 0;
 	asynchronouslyUnmounted.length = 0;
 	cancelled.length = 0;
-	removedSubscriptions.length = 0;
 	javaInvokeArguments.length = 0;
 	javaReleased.length = 0;
 	javaPlansDisposed.length = 0;

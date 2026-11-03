@@ -540,15 +540,10 @@ export type AuthoredAddonManifest = {
 	main: string;
 	/** The addon's version, in strict SemVer 2.0.0 with no `v` prefix. */
 	version: string;
-	/**
-	 * The platforms the addon runs on, each with the capabilities it needs there; absent means every platform.
-	 * Published addons may still carry the older array of platform names.
-	 */
-	platforms?: AddonPlatforms | NativePluginPlatform[];
+	/** The platforms the addon runs on, each with the capabilities it needs there; absent means every platform. */
+	platforms?: AddonPlatforms;
 	/** Capabilities the addon needs on every platform it runs on. */
 	capabilities?: NativePluginCapability[];
-	/** @deprecated Use `platforms.<platform>.capabilities`. Still read for published addons. */
-	platformCapabilities?: Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
 	/** The lowest native plugin API version the addon supports; an older native bridge fails its start. */
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */
@@ -2235,15 +2230,15 @@ export type NativeCrashedAddon = {
 	readonly id: string;
 	/** The addon's display name. */
 	readonly name: string;
-	/** What the addon was doing; missing on older loaders, which read it as `starting`. */
-	readonly phase?: NativeCrashPhase;
+	/** What the addon was doing. */
+	readonly phase: NativeCrashPhase;
 };
 /** Debugger support for plugins. */
 export type NativeDebugBridge = {
 	/** Logs an evaluation and adds it to the loader's history; false when the record is malformed. Needs `native.debug.evaluations`. */
 	recordEvaluation(record: NativeDebugEvaluation): boolean;
-	/** Reads the debug environment. Needs `native.debug.environment`. */
-	environment(): NativeDebugEnvironment;
+	/** Reads the debug environment, optionally collecting garbage or resetting counters first. Needs `native.debug.environment`. */
+	environment(options?: NativeDebugEnvironmentOptions): NativeDebugEnvironment;
 };
 /** Facts about the device a debugger session needs. */
 export type NativeDebugEnvironment = {
@@ -2251,8 +2246,17 @@ export type NativeDebugEnvironment = {
 	isVirtualDevice: boolean;
 	/** The address of the machine hosting the virtual device, or `null` on a physical one. */
 	hostAddress: string | null;
-	/** The loader's resource counts; missing on older loaders. */
-	resources?: NativeResourceCounts;
+	/** The loader's resource counts. */
+	resources: NativeResourceCounts;
+	/** Present when the read collected garbage first. */
+	garbageCollection?: NativeGarbageCollection;
+};
+/** What reading the debug environment may do first. */
+export type NativeDebugEnvironmentOptions = {
+	/** Collects garbage on the calling runtime and the UI runtime before counting. */
+	collectGarbage?: boolean;
+	/** Zeroes the main-thread counters after reading them. */
+	resetCounters?: boolean;
 };
 /** One debugger evaluation, which the loader logs and keeps in its evaluation history. */
 export type NativeDebugEvaluation = {
@@ -2368,7 +2372,7 @@ export type NativeFabricBridge = {
 	/** Destroys the idle surfaces this plugin left for reuse. */
 	releaseIdle?(): void;
 	/** Like `releaseIdle`, on the main thread; the plugin scope calls it when the plugin stops. */
-	releaseIdleAsync?(): NativeCancelablePromise<void>;
+	releaseIdleAsync(): NativeCancelablePromise<void>;
 };
 /** A view's frame in its container, in points on iOS and dp on Android. */
 export type NativeFabricFrame = {
@@ -2412,6 +2416,11 @@ export type NativeFontEntry = {
 };
 /** Where a font comes from: bundled with Discord, installed on the system, or a font addon. */
 export type NativeFontSource = 'app' | 'system' | 'custom';
+/** Which runtimes a debug garbage collection reached. */
+export type NativeGarbageCollection = {
+	runtime: boolean;
+	uiRuntime: boolean;
+};
 /** An opaque reference to a native object. Only the bridge creates handles; plugins pass them back. */
 export type NativeHandle = {
 	/** A type-only brand, absent at runtime, so plain objects cannot pass as handles. */
@@ -2494,10 +2503,10 @@ export type NativeJavaBridge = {
 	describe(name: string): NativeJavaClassDescription;
 	/** Runs independent operations in one call on the JavaScript thread and returns every result in order. */
 	batch(operations: NativeJavaBatchOperation[]): NativeJavaValue[];
-	/** Runs the operations like `batch`, on the main thread, so views can be read safely. Missing on older loaders. */
-	batchAsync?(operations: NativeJavaBatchOperation[]): NativeCancelablePromise<NativeJavaValue[]>;
-	/** Finds the views of a class under or above a view, on the main thread, like `objc.findViews`. Missing on older loaders. */
-	findViews?(
+	/** Runs the operations like `batch`, on the main thread, so views can be read safely. */
+	batchAsync(operations: NativeJavaBatchOperation[]): NativeCancelablePromise<NativeJavaValue[]>;
+	/** Finds the views of a class under or above a view, on the main thread, like `objc.findViews`. */
+	findViews(
 		root: NativeJavaReference,
 		className: string,
 		options?: NativeViewSearchOptions,
@@ -2688,6 +2697,31 @@ export type NativeJavaValue =
 			componentType: string;
 			value: (NativeJavaValue | NativeJavaHandle | string | number | boolean)[];
 	  };
+/** How long main-thread crossings for one addon, kind and call label waited and ran. */
+export type NativeMainWaitCounts = {
+	addon: string;
+	kind: 'sync' | 'posted' | 'async' | 'unknown';
+	label: string;
+	posted: number;
+	started: number;
+	finished: number;
+	/** Crossings that timed out or were refused before they started. */
+	expired: number;
+	/** Total time between posting and starting on the main thread. */
+	queuedMs: number;
+	maxQueuedMs: number;
+	/** Total time spent running on the main thread. */
+	runMs: number;
+	maxRunMs: number;
+};
+/** Main-thread drains since launch or the last counter reset. */
+export type NativeMainWorkCounts = {
+	drains: number;
+	items: number;
+	drainMs: number;
+	maxDrainMs: number;
+	maxDrainItems: number;
+};
 /** The iOS bridge to the Objective-C runtime, scoped to the plugin's capabilities. */
 export type NativeObjCBridge = {
 	/** Looks up a class by name, or returns `null` when none is registered. */
@@ -2811,20 +2845,20 @@ export type NativePlatformAddons = {
 	/** Checks a manifest's `signature` against its bundle. */
 	verify(manifest: string, bundle: string): NativeAddonVerification;
 	/** Evaluates an installed plugin's bundle compiled for this bytecode version, if its digest matches the manifest. */
-	evaluateBytecode?(folder: string, bytecodeVersion: number): NativeCompiledPlugin | undefined;
+	evaluateBytecode(folder: string, bytecodeVersion: number): NativeCompiledPlugin | undefined;
 	/** Reads an installed plugin's source, for one the loader handed over without it, if its signature still holds. */
-	readSource?(folder: string): string | undefined;
+	readSource(folder: string): string | undefined;
 };
 /** Facts about the Discord install the loader runs in. */
 export type NativePlatformApp = {
 	/** Where Discord was installed from, such as `App Store` or `Google Play`. */
 	getAppSource(): string;
-	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. Missing on older loaders. */
-	getFramework?(): string;
-	/** Whether the loader's embedded attestation verified against Unbound's pinned key. False for development builds. Missing on older loaders. */
-	isVerifiedBuild?(): boolean;
-	/** True for the first caller in this process; a reloaded runtime sees false. Missing on older loaders. */
-	claimLaunchURL?(): boolean;
+	/** The framework that injected the loader, such as Vector or LSPosed on Android and ElleKit on iOS, or an empty string. */
+	getFramework(): string;
+	/** Whether the loader's embedded attestation verified against Unbound's pinned key. False for development builds. */
+	isVerifiedBuild(): boolean;
+	/** True for the first caller in this process; a reloaded runtime sees false. */
+	claimLaunchURL(): boolean;
 };
 /** Platform-wide helpers the loader publishes as `globalThis.NativePlatform`, not scoped to a plugin. */
 export type NativePlatformBridge = {
@@ -2844,10 +2878,10 @@ export type NativePlatformBridge = {
 	readonly settings?: NativePlatformSettings;
 	/** The font list; missing when the loader cannot list fonts. */
 	readonly fonts?: NativePlatformFonts;
-	/** Addon verification and bytecode loading; missing on older loaders. */
-	readonly addons?: NativePlatformAddons;
-	/** Hermes' sampling profiler; missing on older loaders. */
-	readonly profiler?: NativePlatformProfiler;
+	/** Addon verification and bytecode loading. */
+	readonly addons: NativePlatformAddons;
+	/** Hermes' sampling profiler. */
+	readonly profiler: NativePlatformProfiler;
 	/** iOS-only helpers; missing on Android. */
 	readonly ios?: NativePlatformIOSBridge;
 };
@@ -2860,9 +2894,9 @@ export type NativePlatformCrashGuard = {
 	/** Lists the addons the loader disabled after crashes on consecutive launches. */
 	disabled(): NativeCrashedAddon[];
 	/** Registers an addon for crash attribution and returns its slot, or 0 when the loader cannot attribute crashes. */
-	register?(id: string, name: string): number;
+	register(id: string, name: string): number;
 	/** Returns a 4-byte buffer shared with the loader that holds the running addon's slot, or `undefined` when unavailable. */
-	activity?(): ArrayBuffer | undefined;
+	activity(): ArrayBuffer | undefined;
 };
 /** Facts about the device Discord runs on. */
 export type NativePlatformDevice = {
@@ -2907,12 +2941,12 @@ export type NativePlatformProfiler = {
 export type NativePlatformSettings = {
 	/** Applies changes and writes the file at once; false when the changes are malformed or the write failed. */
 	apply(changes: readonly NativeSettingsChange[]): boolean;
-	/** Applies changes in memory, to be written by `flush`. Missing on older loaders. */
-	stage?(changes: readonly NativeSettingsChange[]): boolean;
-	/** Writes staged changes to the file, if any. Missing on older loaders. */
-	flush?(): boolean;
+	/** Applies changes in memory, to be written by `flush`. */
+	stage(changes: readonly NativeSettingsChange[]): boolean;
+	/** Writes staged changes to the file, if any. */
+	flush(): boolean;
 	/** Reads every Bucket with no arguments, one Bucket with `store`, or one dot-path `key`; `undefined` when unset. */
-	get?(store?: string, key?: string): NativeSerializable | undefined;
+	get(store?: string, key?: string): NativeSerializable | undefined;
 };
 /** The native bridge a plugin reaches through `context.native`, gated by the capabilities it declares. */
 export type NativePluginBridge = {
@@ -2973,17 +3007,12 @@ export type NativePluginPlatform = (typeof NATIVE_PLUGIN_PLATFORMS)[number];
 /** A capability the native bridge on platform `P` provides. */
 export type NativePluginPlatformCapability<P extends NativePluginPlatform> =
 	(typeof NATIVE_PLUGIN_PLATFORM_CAPABILITIES)[P][number];
-/** The raw bridge the loader publishes as `globalThis.NativePlugin`; namespaces an older loader lacks are missing. */
+/** The raw bridge the loader publishes as `globalThis.NativePlugin`; `objc` exists only on iOS, `java` and `hooks` only on Android. */
 export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,
-	'apiVersion' | 'abiVersion' | 'capabilities'
+	'apiVersion' | 'abiVersion' | 'capabilities' | 'ffi' | 'fabric' | 'debug'
 > &
-	Partial<
-		Omit<
-			NativePluginBridge,
-			'apiVersion' | 'abiVersion' | 'capabilities' | 'objc' | 'java' | 'ui'
-		>
-	> & {
+	Partial<Pick<NativePluginBridge, 'hooks'>> & {
 		readonly objc?: LoaderObjCBridge;
 		readonly java?: NativeJavaBridge & NativeUIScopeFactory;
 	};
@@ -2997,8 +3026,28 @@ export type NativeResourceCounts = {
 	surfaces: number;
 	/** Hook return values set with `setReturnValue`. */
 	cachedReturns: number;
-	/** Java handles still referenced from JavaScript. */
+	/** Handles still referenced from JavaScript: leases plus the platform's own handle count. */
 	handles: number;
+	/** Handle leases JavaScript still holds. */
+	leases: number;
+	/** Live Objective-C value handles; iOS only, 0 elsewhere. */
+	objcHandles: number;
+	/** Prepared Objective-C call plans; iOS only, 0 elsewhere. */
+	objcPlans: number;
+	/** Objective-C objects the loader retains internally; iOS only, 0 elsewhere. */
+	objcRetains: number;
+	/** Java objects with a live handle; Android only, 0 elsewhere. */
+	javaHandles: number;
+	/** Pooled Fabric surfaces waiting to be reused. */
+	idleSurfaces: number;
+	/** Fabric surfaces created since launch. */
+	createdSurfaces: number;
+	/** Fabric surfaces reused from the pool since launch. */
+	reusedSurfaces: number;
+	/** Batches of main-thread work the loader drained. */
+	mainWork: NativeMainWorkCounts;
+	/** Main-thread crossings per addon, kind and call label, busiest first. */
+	mainWaits: NativeMainWaitCounts[];
 };
 /** Delivers Discord activity to plugins. Needs `native.runtime.events`. */
 export type NativeRuntimeBridge = {
@@ -3102,7 +3151,7 @@ export type NativeUIScope = {
 /** The loader's way to open UI-runtime scopes, offered on its raw `objc` namespace on iOS and `java` on Android. */
 export type NativeUIScopeFactory = {
 	/** Opens a UI-runtime scope allowed only the listed method paths, such as `objc.invoke`. */
-	createUIScope?(paths: readonly string[]): NativeUIScope;
+	createUIScope(paths: readonly string[]): NativeUIScope;
 };
 /** Limits and direction for a breadth-first `findViews` search; larger limits are clamped. */
 export type NativeViewSearchOptions = {

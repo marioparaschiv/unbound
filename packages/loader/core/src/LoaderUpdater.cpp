@@ -195,7 +195,7 @@ std::optional<std::string> BundleUpdater::candidateProblem(const std::string &ca
     nlohmann::json record = parseRecord(readTextFile(candidatePath + kBundleTrustSuffix));
     if (record.is_null())
     {
-        return std::string("it has no verification record, so an older loader downloaded it");
+        return std::string("it has no verification record");
     }
 
     std::string kind = recordField(record, "kind");
@@ -224,11 +224,6 @@ std::optional<std::string> BundleUpdater::candidateProblem(const std::string &ca
 
     std::string source    = recordField(record, "source");
     std::string signature = recordField(record, "signature");
-    if (kind == "bundle")
-    {
-        return std::string("it was verified by its own signature, without a signed manifest");
-    }
-
     if (kind != "manifest")
     {
         return "its verification record has an unknown kind \"" + kind + "\"";

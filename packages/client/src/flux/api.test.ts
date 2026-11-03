@@ -1,5 +1,6 @@
 import type { FluxAction, FluxChangeListener, FluxStore } from '@unbound-app/types/flux';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
+import type { NativeSerializableObject } from '@unbound-app/types';
 
 type Listener = (action: FluxAction) => void;
 type Interceptor = (action: FluxAction) => boolean;
@@ -74,17 +75,21 @@ mock.module('~/flux/modules', () => ({
 	},
 }));
 
-mock.module('~/metro/finders', () => ({
-	finder: () => (name: string, options: StoreSearch['options']) => {
-		searches.push({ name, options });
+let storeLoaded = true;
 
-		return userStore;
-	},
+mock.module('~/metro/finders', () => ({
+	finder: () =>
+		function findStore(name: string, options: StoreSearch['options']) {
+			searches.push({ name, options });
+
+			return storeLoaded || options.lazy ? userStore : null;
+		},
 }));
 
 Reflect.set(globalThis, '$$DEV$$', false);
 
 const flux = await import('./api');
+const runtime = await import('./runtime-bridge');
 const filters = await import('~/metro/filters');
 const { CACHE_KEY } = await import('~/core/constants');
 
@@ -96,13 +101,31 @@ beforeEach(() => {
 });
 
 describe('getStore', () => {
-	test('searches lazily by default and passes the name and options on', () => {
+	test('returns a loaded cached store itself, and passes the name and options on', () => {
 		expect<FluxStore>(flux.getStore('User')).toBe(userStore);
 		flux.getStore('Typing', { lazy: false, short: false });
 
 		expect(searches).toEqual([
-			{ name: 'User', options: { lazy: true } },
+			{ name: 'User', options: { lazy: false, initialize: false, cacheOnly: true } },
 			{ name: 'Typing', options: { lazy: false, short: false } },
+		]);
+	});
+
+	test('falls back to a lazy search while the store has not loaded', () => {
+		storeLoaded = false;
+
+		try {
+			expect<FluxStore>(flux.getStore('Guild', { short: true })).toBe(userStore);
+		} finally {
+			storeLoaded = true;
+		}
+
+		expect(searches).toEqual([
+			{
+				name: 'Guild',
+				options: { short: true, lazy: false, initialize: false, cacheOnly: true },
+			},
+			{ name: 'Guild', options: { short: true, lazy: true } },
 		]);
 	});
 });
@@ -225,5 +248,137 @@ describe('dispatch', () => {
 		expect<object[]>(dispatcher.handled).toEqual([
 			{ type: 'CHANNEL_SELECT', channelId: 'c', guildId: 'g' },
 		]);
+	});
+});
+
+type RuntimeToken = { active: boolean; remove: () => void };
+
+type RuntimeTokens = { second?: RuntimeToken };
+
+const issued: RuntimeToken[] = [];
+
+function createFluxRuntimeBridge() {
+	const bridge = runtime.createFluxRuntimeBridge();
+
+	return {
+		subscribe(...args: Parameters<typeof bridge.subscribe>) {
+			const token = bridge.subscribe(...args);
+
+			issued.push(token);
+
+			return token;
+		},
+	};
+}
+
+function subscriberCount() {
+	let count = 0;
+
+	for (const listeners of dispatcher.subscriptions.values()) count += listeners.size;
+
+	return count;
+}
+
+const messageCreate = {
+	type: 'MESSAGE_CREATE',
+	channelId: 'c1',
+	message: { id: 'm1', channel_id: 'c1', author: { id: 'u1', username: 'a', bot: false } },
+};
+
+describe('the Flux runtime bridge', () => {
+	afterEach(() => {
+		for (const token of issued.splice(0)) token.remove();
+
+		expect(subscriberCount()).toBe(0);
+	});
+
+	test('keeps one dispatcher listener per action however many plugins subscribe', () => {
+		const first = createFluxRuntimeBridge();
+		const second = createFluxRuntimeBridge();
+		const tokens = [
+			first.subscribe('ui.changed', () => undefined),
+			first.subscribe('message.created', () => undefined),
+			second.subscribe('ui.changed', () => undefined),
+			second.subscribe('message.created', () => undefined),
+		];
+
+		expect(subscriberCount()).toBe(8);
+		expect(dispatcher.subscriptions.get('MESSAGE_CREATE')?.size).toBe(1);
+
+		for (const token of tokens) token.remove();
+
+		expect(subscriberCount()).toBe(0);
+	});
+
+	test('hands every subscriber of an event the same frozen payload', () => {
+		const bridge = createFluxRuntimeBridge();
+		const ui: NativeSerializableObject[] = [];
+		const created: NativeSerializableObject[] = [];
+
+		bridge.subscribe('ui.changed', (payload) => ui.push(payload));
+		bridge.subscribe('ui.changed', (payload) => ui.push(payload));
+		bridge.subscribe('message.created', (payload) => created.push(payload));
+
+		void flux.dispatch(messageCreate);
+
+		expect(ui).toHaveLength(2);
+		expect(ui[0]).toBe(ui[1]);
+		expect(Object.isFrozen(ui[0])).toBe(true);
+		expect(Object.isFrozen(ui[0].message)).toBe(true);
+		expect(ui[0]).toMatchObject({ event: 'ui.changed', action: 'MESSAGE_CREATE' });
+		expect(created).toEqual([
+			{
+				event: 'message.created',
+				action: 'MESSAGE_CREATE',
+				channelId: 'c1',
+				guildId: null,
+				messageId: 'm1',
+				userId: null,
+				hasDraft: null,
+				message: {
+					id: 'm1',
+					channelId: 'c1',
+					nonce: null,
+					author: { id: 'u1', username: 'a', bot: false },
+				},
+				emoji: null,
+			},
+		]);
+	});
+
+	test('runs the other listeners when one throws, and skips one removed mid-dispatch', () => {
+		const bridge = createFluxRuntimeBridge();
+		const calls: string[] = [];
+		const later: RuntimeTokens = {};
+
+		bridge.subscribe('message.created', () => {
+			calls.push('first');
+			later.second?.remove();
+			throw new Error('listener failed');
+		});
+		const second = bridge.subscribe('message.created', () => calls.push('second'));
+
+		later.second = second;
+		const third = bridge.subscribe('message.created', () => calls.push('third'));
+
+		void flux.dispatch(messageCreate);
+
+		expect(calls).toEqual(['first', 'third']);
+		expect(second.active).toBe(false);
+		expect(third.active).toBe(true);
+	});
+
+	test('a removed token stays removed and reports inactive', () => {
+		const bridge = createFluxRuntimeBridge();
+		const calls: string[] = [];
+		const token = bridge.subscribe('channel.changed', () => calls.push('changed'));
+
+		token.remove();
+		token.remove();
+		void flux.dispatch({ type: 'CHANNEL_SELECT', channelId: 'c2' });
+
+		expect(token.active).toBe(false);
+		expect(calls).toEqual([]);
+		expect(subscriberCount()).toBe(0);
 	});
 });

@@ -3,10 +3,19 @@ import type { NativeCrashedAddon, NativePlatformCrashGuard } from '@unbound-app/
 let disabledAfterCrash: Map<string, NativeCrashedAddon> | undefined;
 let activityCell: Uint32Array | null | undefined;
 
+/** The loader's shared activity cell and the slot an addon writes to it while its code runs. */
+export type AddonActivity = {
+	readonly cell: Uint32Array;
+	readonly slot: number;
+};
+
 /** Wraps a native bridge method so the loader attributes a crash inside it to one addon. */
-export type AddonAttribution = <A extends unknown[], R>(
+export type AddonAttribution = (<A extends unknown[], R>(
 	method: (...args: A) => R,
-) => (...args: A) => R;
+) => (...args: A) => R) & {
+	/** The cell the wrapper marks, so a hot caller can mark it without another wrapper. */
+	readonly activity?: AddonActivity;
+};
 
 /** How the loader names an addon in its crash guard, persisted across launches: `<settings bucket>:<addon id>`. */
 export type CrashGuardKey = `${string}:${string}`;
@@ -27,7 +36,7 @@ function bridge(): NativePlatformCrashGuard | undefined {
 
 function sharedActivityCell(guard: NativePlatformCrashGuard): Uint32Array | null {
 	if (activityCell === undefined) {
-		const buffer = guard.activity?.();
+		const buffer = guard.activity();
 
 		activityCell = buffer && buffer.byteLength >= 4 ? new Uint32Array(buffer, 0, 1) : null;
 	}
@@ -61,14 +70,15 @@ export function finishAddonStart(key: CrashGuardKey): void {
  */
 export function attributeAddon(key: CrashGuardKey, name: string): AddonAttribution | undefined {
 	const guard = bridge();
-	const slot = guard?.register?.(key, name) ?? 0;
+	const slot = guard?.register(key, name) ?? 0;
 	const cell = guard && slot > 0 ? sharedActivityCell(guard) : null;
 
 	if (!cell) {
 		return undefined;
 	}
 
-	return (method) =>
+	const attribution: AddonAttribution =
+		(method) =>
 		(...args) => {
 			const previous = cell[0];
 
@@ -80,6 +90,8 @@ export function attributeAddon(key: CrashGuardKey, name: string): AddonAttributi
 				cell[0] = previous;
 			}
 		};
+
+	return Object.assign(attribution, { activity: { cell, slot } });
 }
 
 /**

@@ -8,7 +8,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"icon": "GlobeEarthIcon",
 	"main": "index.tsx"
 }

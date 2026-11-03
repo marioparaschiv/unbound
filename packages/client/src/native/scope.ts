@@ -19,7 +19,6 @@ import type {
 	NativeObjectHandle,
 	NativePluginBridge,
 	NativePluginCapability,
-	NativePluginMethod,
 	NativePluginPlatform,
 	NativeRuntimeBridge,
 	NativeRuntimeEventName,
@@ -27,10 +26,11 @@ import type {
 	NativeSerializableObject,
 } from '@unbound-app/types';
 
-import { requireCapability, scopedMethod, unavailableNativePlugin } from '~/native/capabilities';
 import { NativePluginDisposedError, NativePluginUnavailableError } from '~/native/errors';
+import { createScopeGate, type ScopeLifecycle } from '~/native/scope-gate';
 import { createMainThreadAlloc } from '~/native/main-thread-alloc';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
+import { unavailableNativePlugin } from '~/native/capabilities';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedJavaBridge } from '~/native/scope-java';
 import { getNativePlugin } from '~/native/plugin-bridge';
@@ -111,22 +111,19 @@ export function createScopedNativePlugin(
 ): ScopedNativePlugin {
 	const fallbackBridge = unavailableNativePlugin();
 	const bridge = getNativePlugin() ?? fallbackBridge;
-	const objcBridge = attributeBridge(bridge.objc ?? fallbackBridge.objc, attribute);
-	const ffiBridge = attributeBridge(bridge.ffi ?? fallbackBridge.ffi, attribute);
-	const fabricBridge = attributeBridge(
-		withFallback(bridge.fabric, fallbackBridge.fabric),
-		attribute,
-	);
-	const runtimeBridge =
-		platform === 'android' && capabilities.includes('native.runtime.events')
-			? createFluxRuntimeBridge()
-			: (bridge.runtime ??
-				(capabilities.includes('native.runtime.events')
-					? createFluxRuntimeBridge()
-					: fallbackBridge.runtime));
-	const javaBridge = attributeBridge(bridge.java ?? fallbackBridge.java, attribute);
-	const hooksBridge = attributeBridge(bridge.hooks ?? fallbackBridge.hooks, attribute);
-	const debugBridge = attributeBridge(bridge.debug ?? fallbackBridge.debug, attribute);
+	const objcSource = bridge.objc ?? fallbackBridge.objc;
+	const ffiSource = bridge.ffi;
+	const fabricSource = withFallback(bridge.fabric, fallbackBridge.fabric);
+	const javaSource = bridge.java ?? fallbackBridge.java;
+	const hooksSource = bridge.hooks ?? fallbackBridge.hooks;
+	const debugSource = bridge.debug;
+	const objcBridge = attributeBridge(objcSource, attribute);
+	const fabricBridge = attributeBridge(fabricSource, attribute);
+	const runtimeBridge = capabilities.includes('native.runtime.events')
+		? createFluxRuntimeBridge()
+		: fallbackBridge.runtime;
+	const javaBridge = attributeBridge(javaSource, attribute);
+	const hooksBridge = attributeBridge(hooksSource, attribute);
 	const tokens = new Set<NativeHookToken>();
 	const objcPlans = new Set<NativeObjCCallPlan>();
 	const surfaces = new Set<NativeFabricSurface>();
@@ -135,11 +132,11 @@ export function createScopedNativePlugin(
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
 	const associations: AssociationBinding[] = [];
 	const ui = createScopedUIBridge(capabilities, platform);
-	let disposed = false;
+	const lifecycle: ScopeLifecycle = { disposed: false };
 	let stopping = false;
-	const mountAsync = fabricBridge.mountAsync?.bind(fabricBridge);
-	const unmountAsync = fabricBridge.unmountAsync?.bind(fabricBridge);
-	const releaseIdleAsync = fabricBridge.releaseIdleAsync?.bind(fabricBridge);
+	const mountAsync = fabricBridge.mountAsync.bind(fabricBridge);
+	const unmountAsync = fabricBridge.unmountAsync.bind(fabricBridge);
+	const releaseIdleAsync = fabricBridge.releaseIdleAsync.bind(fabricBridge);
 
 	function trackInvocation<T>(pending: NativeCancelablePromise<T>): NativeCancelablePromise<T> {
 		if (stopping) {
@@ -157,13 +154,7 @@ export function createScopedNativePlugin(
 
 	function disposeSurface(surface: NativeFabricSurface): void {
 		try {
-			if (unmountAsync) {
-				void unmountAsync(surface).catch(() => undefined);
-
-				return;
-			}
-
-			fabricBridge.unmount(surface);
+			void unmountAsync(surface).catch(() => undefined);
 		} catch {
 			return;
 		}
@@ -171,63 +162,55 @@ export function createScopedNativePlugin(
 
 	function releaseIdleSurfaces(): void {
 		try {
-			void releaseIdleAsync?.().catch(() => undefined);
+			void releaseIdleAsync().catch(() => undefined);
 		} catch {
 			return;
 		}
 	}
 
-	function scopeMethod<A extends unknown[], R>(
-		method: (...args: A) => R,
-		path: NativePluginMethod,
-	) {
-		return scopedMethod(method, capabilities, path, () => !disposed);
-	}
+	const {
+		requireGranted,
+		scopeMethod,
+		scopeAsyncMethod,
+		scopeBridgeMethod,
+		scopeBridgeAsyncMethod,
+	} = createScopeGate({ capabilities, attribute, lifecycle, track: trackInvocation });
 
-	function scopeOptionalMethod<A extends unknown[], R>(
-		method: ((...args: A) => R) | undefined,
-		path: NativePluginMethod,
-		unavailableMessage: string,
-	): (...args: A) => R {
-		return (...args: A) => {
-			if (disposed) {
-				throw new NativePluginDisposedError();
-			}
-
-			requireCapability(capabilities, path);
-
-			if (!method) {
-				throw new NativePluginUnavailableError(unavailableMessage);
-			}
-
-			return method(...args);
-		};
-	}
-
-	function scopeAsyncMethod<A extends unknown[], R>(
-		method: ((...args: A) => NativeCancelablePromise<R>) | undefined,
-		path: NativePluginMethod,
-		unavailableMessage: string,
-	): (...args: A) => NativeCancelablePromise<R> {
-		return (...args: A) => {
-			if (disposed) {
-				throw new NativePluginDisposedError();
-			}
-
-			requireCapability(capabilities, path);
-
-			if (!method) {
-				throw new NativePluginUnavailableError(unavailableMessage);
-			}
-
-			return trackInvocation(method(...args));
-		};
-	}
+	const prepareObjC = scopeBridgeMethod(
+		objcSource,
+		'prepare',
+		'objc.prepare',
+		'Prepared Objective-C calls are unavailable.',
+	);
+	const invokePreparedObjC = scopeBridgeMethod(
+		objcSource,
+		'invokePrepared',
+		'objc.invokePrepared',
+		'Prepared Objective-C calls are unavailable.',
+	);
+	const invokePreparedObjCAsync = scopeBridgeAsyncMethod(
+		objcSource,
+		'invokePreparedAsync',
+		'objc.invokePreparedAsync',
+		'Prepared asynchronous Objective-C calls are unavailable.',
+	);
+	const disposeObjCPlan = scopeBridgeMethod(
+		objcSource,
+		'disposePlan',
+		'objc.disposePlan',
+		'Prepared Objective-C calls are unavailable.',
+	);
+	const setObjCAssociatedObject = scopeBridgeMethod(
+		objcSource,
+		'setAssociatedObject',
+		'objc.setAssociatedObject',
+	);
+	const removeJavaHook = scopeBridgeMethod(hooksSource, 'remove', 'hooks.remove');
 
 	const allocObject = createMainThreadAlloc(objcBridge);
 
 	const objc: NativeObjCBridge = {
-		getClass: scopeMethod(objcBridge.getClass.bind(objcBridge), 'objc.getClass'),
+		getClass: scopeBridgeMethod(objcSource, 'getClass', 'objc.getClass'),
 		alloc: scopeMethod(allocObject, 'objc.alloc'),
 		create: scopeMethod(
 			(
@@ -247,22 +230,19 @@ export function createScopedNativePlugin(
 			},
 			'objc.create',
 		),
-		className: scopeMethod(objcBridge.className.bind(objcBridge), 'objc.className'),
-		respondsTo: scopeMethod(objcBridge.respondsTo.bind(objcBridge), 'objc.respondsTo'),
-		call: scopeMethod(objcBridge.call.bind(objcBridge), 'objc.call'),
-		callSuper: scopeMethod(objcBridge.callSuper.bind(objcBridge), 'objc.callSuper'),
-		invoke: scopeMethod(objcBridge.invoke.bind(objcBridge), 'objc.invoke'),
-		invokeAsync: scopeAsyncMethod(
-			objcBridge.invokeAsync?.bind(objcBridge),
+		className: scopeBridgeMethod(objcSource, 'className', 'objc.className'),
+		respondsTo: scopeBridgeMethod(objcSource, 'respondsTo', 'objc.respondsTo'),
+		call: scopeBridgeMethod(objcSource, 'call', 'objc.call'),
+		callSuper: scopeBridgeMethod(objcSource, 'callSuper', 'objc.callSuper'),
+		invoke: scopeBridgeMethod(objcSource, 'invoke', 'objc.invoke'),
+		invokeAsync: scopeBridgeAsyncMethod(
+			objcSource,
+			'invokeAsync',
 			'objc.invokeAsync',
 			'Async native invocation is unavailable.',
 		),
 		prepare: (handle, selector) => {
-			const plan = scopeOptionalMethod(
-				objcBridge.prepare?.bind(objcBridge),
-				'objc.prepare',
-				'Prepared Objective-C calls are unavailable.',
-			)(handle, selector);
+			const plan = prepareObjC(handle, selector);
 
 			objcPlans.add(plan);
 
@@ -275,11 +255,7 @@ export function createScopedNativePlugin(
 				);
 			}
 
-			return scopeOptionalMethod(
-				objcBridge.invokePrepared?.bind(objcBridge),
-				'objc.invokePrepared',
-				'Prepared Objective-C calls are unavailable.',
-			)(plan, handle, args, options);
+			return invokePreparedObjC(plan, handle, args, options);
 		},
 		invokePreparedAsync: (plan, handle, args) => {
 			if (!objcPlans.has(plan)) {
@@ -288,11 +264,7 @@ export function createScopedNativePlugin(
 				);
 			}
 
-			return scopeAsyncMethod(
-				objcBridge.invokePreparedAsync?.bind(objcBridge),
-				'objc.invokePreparedAsync',
-				'Prepared asynchronous Objective-C calls are unavailable.',
-			)(plan, handle, args);
+			return invokePreparedObjCAsync(plan, handle, args);
 		},
 		disposePlan: (plan) => {
 			if (!objcPlans.has(plan)) {
@@ -301,49 +273,48 @@ export function createScopedNativePlugin(
 				);
 			}
 
-			scopeOptionalMethod(
-				objcBridge.disposePlan?.bind(objcBridge),
-				'objc.disposePlan',
-				'Prepared Objective-C calls are unavailable.',
-			)(plan);
+			disposeObjCPlan(plan);
 			objcPlans.delete(plan);
 		},
-		batch: scopeAsyncMethod(
-			objcBridge.batch?.bind(objcBridge),
+		batch: scopeBridgeAsyncMethod(
+			objcSource,
+			'batch',
 			'objc.batch',
 			'Native batch is unavailable.',
 		),
-		snapshot: scopeAsyncMethod(
-			objcBridge.snapshot?.bind(objcBridge),
+		snapshot: scopeBridgeAsyncMethod(
+			objcSource,
+			'snapshot',
 			'objc.snapshot',
 			'Native UI snapshot is unavailable.',
 		),
-		findViews: scopeAsyncMethod(
-			objcBridge.findViews?.bind(objcBridge),
+		findViews: scopeBridgeAsyncMethod(
+			objcSource,
+			'findViews',
 			'objc.findViews',
 			'Native view search is unavailable.',
 		),
-		invokeSuper: scopeMethod(objcBridge.invokeSuper.bind(objcBridge), 'objc.invokeSuper'),
-		invokeSuperAsync: scopeAsyncMethod(
-			objcBridge.invokeSuperAsync?.bind(objcBridge),
+		invokeSuper: scopeBridgeMethod(objcSource, 'invokeSuper', 'objc.invokeSuper'),
+		invokeSuperAsync: scopeBridgeAsyncMethod(
+			objcSource,
+			'invokeSuperAsync',
 			'objc.invokeSuperAsync',
 			'Async native super invocation is unavailable.',
 		),
-		getIvar: scopeMethod(objcBridge.getIvar.bind(objcBridge), 'objc.getIvar'),
-		setIvar: scopeMethod(objcBridge.setIvar.bind(objcBridge), 'objc.setIvar'),
-		createAssociationKey: scopeMethod(
-			objcBridge.createAssociationKey.bind(objcBridge),
+		getIvar: scopeBridgeMethod(objcSource, 'getIvar', 'objc.getIvar'),
+		setIvar: scopeBridgeMethod(objcSource, 'setIvar', 'objc.setIvar'),
+		createAssociationKey: scopeBridgeMethod(
+			objcSource,
+			'createAssociationKey',
 			'objc.createAssociationKey',
 		),
-		getAssociatedObject: scopeMethod(
-			objcBridge.getAssociatedObject.bind(objcBridge),
+		getAssociatedObject: scopeBridgeMethod(
+			objcSource,
+			'getAssociatedObject',
 			'objc.getAssociatedObject',
 		),
 		setAssociatedObject: (handle, key, value, policy) => {
-			scopeMethod(
-				objcBridge.setAssociatedObject.bind(objcBridge),
-				'objc.setAssociatedObject',
-			)(handle, key, value, policy);
+			setObjCAssociatedObject(handle, key, value, policy);
 			const index = associations.findIndex(
 				(binding) => binding.handle === handle && binding.key === key,
 			);
@@ -360,20 +331,20 @@ export function createScopedNativePlugin(
 				associations.push({ handle, key });
 			}
 		},
-		struct: scopeMethod(objcBridge.struct.bind(objcBridge), 'objc.struct'),
-		array: scopeMethod(objcBridge.array.bind(objcBridge), 'objc.array'),
-		data: scopeMethod(objcBridge.data.bind(objcBridge), 'objc.data'),
+		struct: scopeBridgeMethod(objcSource, 'struct', 'objc.struct'),
+		array: scopeBridgeMethod(objcSource, 'array', 'objc.array'),
+		data: scopeBridgeMethod(objcSource, 'data', 'objc.data'),
 		hook: <Receiver extends boolean = true>(
 			className: string,
 			selector: string,
 			handlers: NativeHookHandlers<Receiver>,
 			options?: NativeHookOptions<Receiver>,
 		) => {
-			if (disposed) {
+			if (lifecycle.disposed) {
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, 'objc.hook');
+			requireGranted('objc.hook');
 			const token = objcBridge.hook<Receiver>(className, selector, handlers, options);
 
 			tokens.add(token);
@@ -383,21 +354,21 @@ export function createScopedNativePlugin(
 					return token.active;
 				},
 				setReturnValue(self, args, value) {
-					if (disposed) {
+					if (lifecycle.disposed) {
 						throw new NativePluginDisposedError();
 					}
 
 					token.setReturnValue(self, args, value);
 				},
 				removeReturnValue(self, args) {
-					if (disposed) {
+					if (lifecycle.disposed) {
 						throw new NativePluginDisposedError();
 					}
 
 					token.removeReturnValue(self, args);
 				},
 				clearReturnValues() {
-					if (disposed) {
+					if (lifecycle.disposed) {
 						throw new NativePluginDisposedError();
 					}
 
@@ -412,17 +383,17 @@ export function createScopedNativePlugin(
 	};
 
 	const ffi: NativeFFIBridge = {
-		symbol: scopeMethod(ffiBridge.symbol.bind(ffiBridge), 'ffi.symbol'),
-		call: scopeMethod(ffiBridge.call.bind(ffiBridge), 'ffi.call'),
+		symbol: scopeBridgeMethod(ffiSource, 'symbol', 'ffi.symbol'),
+		call: scopeBridgeMethod(ffiSource, 'call', 'ffi.call'),
 	};
 
 	const fabric: NativeFabricBridge = {
 		mount: (container, moduleName, properties, options) => {
-			if (disposed) {
+			if (lifecycle.disposed) {
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, 'fabric.mount');
+			requireGranted('fabric.mount');
 			const surface = fabricBridge.mount(container, moduleName, properties, options);
 
 			surfaces.add(surface);
@@ -430,21 +401,17 @@ export function createScopedNativePlugin(
 			return surface;
 		},
 		mountAsync: (container, moduleName, properties, options) => {
-			if (disposed) {
+			if (lifecycle.disposed) {
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, 'fabric.mountAsync');
-
-			if (!mountAsync) {
-				throw new NativePluginUnavailableError('Async Fabric mounting is unavailable.');
-			}
+			requireGranted('fabric.mountAsync');
 
 			const pending = trackInvocation(mountAsync(container, moduleName, properties, options));
 
 			pending.then(
 				(surface) => {
-					if (disposed) {
+					if (lifecycle.disposed) {
 						disposeSurface(surface);
 					} else {
 						surfaces.add(surface);
@@ -455,49 +422,49 @@ export function createScopedNativePlugin(
 
 			return pending;
 		},
-		update: scopeMethod(fabricBridge.update.bind(fabricBridge), 'fabric.update'),
-		updateAsync: scopeAsyncMethod(
-			fabricBridge.updateAsync?.bind(fabricBridge),
+		update: scopeBridgeMethod(fabricSource, 'update', 'fabric.update'),
+		updateAsync: scopeBridgeAsyncMethod(
+			fabricSource,
+			'updateAsync',
 			'fabric.updateAsync',
 			'Async Fabric updates are unavailable.',
 		),
-		setSize: scopeMethod(fabricBridge.setSize.bind(fabricBridge), 'fabric.setSize'),
-		setSizeAsync: scopeAsyncMethod(
-			fabricBridge.setSizeAsync?.bind(fabricBridge),
+		setSize: scopeBridgeMethod(fabricSource, 'setSize', 'fabric.setSize'),
+		setSizeAsync: scopeBridgeAsyncMethod(
+			fabricSource,
+			'setSizeAsync',
 			'fabric.setSizeAsync',
 			'Async Fabric sizing is unavailable.',
 		),
-		setFrame: scopeMethod(fabricBridge.setFrame.bind(fabricBridge), 'fabric.setFrame'),
-		setFrameAsync: scopeAsyncMethod(
-			fabricBridge.setFrameAsync?.bind(fabricBridge),
+		setFrame: scopeBridgeMethod(fabricSource, 'setFrame', 'fabric.setFrame'),
+		setFrameAsync: scopeBridgeAsyncMethod(
+			fabricSource,
+			'setFrameAsync',
 			'fabric.setFrameAsync',
 			'Async Fabric frame updates are unavailable.',
 		),
-		measure: scopeMethod(fabricBridge.measure.bind(fabricBridge), 'fabric.measure'),
-		measureAsync: scopeAsyncMethod(
-			fabricBridge.measureAsync?.bind(fabricBridge),
+		measure: scopeBridgeMethod(fabricSource, 'measure', 'fabric.measure'),
+		measureAsync: scopeBridgeAsyncMethod(
+			fabricSource,
+			'measureAsync',
 			'fabric.measureAsync',
 			'Async Fabric measurement is unavailable.',
 		),
 		unmount: (surface) => {
-			if (disposed) {
+			if (lifecycle.disposed) {
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, 'fabric.unmount');
+			requireGranted('fabric.unmount');
 			fabricBridge.unmount(surface);
 			surfaces.delete(surface);
 		},
 		unmountAsync: (surface) => {
-			if (disposed) {
+			if (lifecycle.disposed) {
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, 'fabric.unmountAsync');
-
-			if (!unmountAsync) {
-				throw new NativePluginUnavailableError('Async Fabric unmounting is unavailable.');
-			}
+			requireGranted('fabric.unmountAsync');
 
 			const pending = trackInvocation(unmountAsync(surface));
 
@@ -508,8 +475,9 @@ export function createScopedNativePlugin(
 
 			return pending;
 		},
-		releaseIdle: scopeOptionalMethod(
-			fabricBridge.releaseIdle?.bind(fabricBridge),
+		releaseIdle: scopeBridgeMethod(
+			fabricSource,
+			'releaseIdle',
 			'fabric.releaseIdle',
 			'Releasing idle Fabric surfaces is unavailable.',
 		),
@@ -525,11 +493,11 @@ export function createScopedNativePlugin(
 			event: NativeRuntimeEventName,
 			listener: (payload: NativeSerializableObject) => void,
 		) => {
-			if (disposed) {
+			if (lifecycle.disposed) {
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, 'runtime.subscribe');
+			requireGranted('runtime.subscribe');
 			const token = runtimeBridge.subscribe(event, listener);
 
 			runtimeTokens.add(token);
@@ -548,18 +516,19 @@ export function createScopedNativePlugin(
 
 	const scopedJava = createScopedJavaBridge({
 		bridge: javaBridge,
-		scopeMethod,
-		scopeOptionalMethod,
-		scopeAsyncMethod,
+		source: javaSource,
+		scopeBridgeMethod,
+		scopeBridgeAsyncMethod,
 	});
 	const java = scopedJava.bridge;
 
 	const debug: NativeDebugBridge = {
-		recordEvaluation: scopeMethod(
-			debugBridge.recordEvaluation.bind(debugBridge),
+		recordEvaluation: scopeBridgeMethod(
+			debugSource,
+			'recordEvaluation',
 			'debug.recordEvaluation',
 		),
-		environment: scopeMethod(debugBridge.environment.bind(debugBridge), 'debug.environment'),
+		environment: scopeBridgeMethod(debugSource, 'environment', 'debug.environment'),
 	};
 
 	const hooks: NativeJavaHooksBridge = {
@@ -570,11 +539,11 @@ export function createScopedNativePlugin(
 			options?: NativeJavaHookOptions<Receiver>,
 			listener?: (event: NativeJavaHookEvent<Receiver>) => void,
 		) => {
-			if (disposed) {
+			if (lifecycle.disposed) {
 				throw new NativePluginDisposedError();
 			}
 
-			requireCapability(capabilities, 'hooks.hook');
+			requireGranted('hooks.hook');
 			const token = hooksBridge.hook<Receiver>(
 				className,
 				methodName,
@@ -587,21 +556,20 @@ export function createScopedNativePlugin(
 
 			return token;
 		},
-		setReturnValue: scopeMethod(
-			hooksBridge.setReturnValue.bind(hooksBridge),
-			'hooks.setReturnValue',
-		),
-		removeReturnValue: scopeMethod(
-			hooksBridge.removeReturnValue.bind(hooksBridge),
+		setReturnValue: scopeBridgeMethod(hooksSource, 'setReturnValue', 'hooks.setReturnValue'),
+		removeReturnValue: scopeBridgeMethod(
+			hooksSource,
+			'removeReturnValue',
 			'hooks.removeReturnValue',
 		),
-		clearReturnValues: scopeMethod(
-			hooksBridge.clearReturnValues.bind(hooksBridge),
+		clearReturnValues: scopeBridgeMethod(
+			hooksSource,
+			'clearReturnValues',
 			'hooks.clearReturnValues',
 		),
 		remove: (token) => {
 			javaHookTokens.delete(token);
-			scopeMethod(hooksBridge.remove.bind(hooksBridge), 'hooks.remove')(token);
+			removeJavaHook(token);
 		},
 	};
 
@@ -623,9 +591,9 @@ export function createScopedNativePlugin(
 			stopping = true;
 		},
 		dispose: () => {
-			if (disposed) return;
+			if (lifecycle.disposed) return;
 
-			disposed = true;
+			lifecycle.disposed = true;
 			ui.dispose();
 
 			for (const pending of pendingInvocations) pending.cancel();

@@ -64,6 +64,12 @@ NativeResourceBudget &nativeHookBudget();
 NativeResourceBudget &nativeCachedReturnBudget();
 NativeResourceBudget &nativeSurfaceBudget();
 
+inline constexpr const char *kObjCHandleCounter = "objcHandles";
+inline constexpr const char *kObjCPlanCounter   = "objcPlans";
+inline constexpr const char *kObjCRetainCounter = "objcRetains";
+inline constexpr const char *kJavaHandleCounter = "javaHandles";
+
 void           setPlatformHandleCounter(std::function<size_t()> counter);
+void           setPlatformResourceCounter(const std::string &name, std::function<size_t()> counter);
 nlohmann::json nativeResourceCounts();
 }

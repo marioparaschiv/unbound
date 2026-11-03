@@ -102,13 +102,20 @@ function readDeviceStatus(unbound: UnboundGlobal): string {
 	): value is UnboundGlobal & { plugins: PluginManagerView } => 'plugins' in value;
 	const entities = hasPlugins(unbound) ? unbound.plugins.getAll() : [];
 	const durations = hasPlugins(unbound) ? unbound.plugins.startDurations : undefined;
+	const counts = unbound.native.getNativeResources?.();
 	const report: DeviceStatusReport = {
 		started: entities.filter((entity) => entity.started).length,
 		failed: entities.filter((entity) => entity.failed).map((entity) => entity.id),
 		stopped: entities
 			.filter((entity) => !entity.started && !entity.failed)
 			.map((entity) => entity.id),
-		resources: unbound.native.getNativeResources?.() ?? null,
+		resources: counts
+			? Object.fromEntries(
+					Object.entries(counts).filter(
+						(entry): entry is [string, number] => typeof entry[1] === 'number',
+					),
+				)
+			: null,
 		slowestStarts: [...(durations ?? [])].sort((left, right) => right[1] - left[1]).slice(0, 8),
 		startTotal: [...(durations?.values() ?? [])].reduce((total, ms) => total + ms, 0),
 	};

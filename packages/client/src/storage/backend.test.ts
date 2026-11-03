@@ -77,24 +77,18 @@ describe('native settings backend', () => {
 });
 
 describe('memory settings backend', () => {
-	test('keeps changes in the injected object and hands them over on flush', () => {
-		const applied: NativeSettingsChange[] = [];
+	test('keeps changes in the given object and prunes what removals leave empty', () => {
 		const stores = { unbound: { a: { b: 1 } } };
-		const backend = createMemoryBackend(stores, () => ({
-			apply(changes: readonly NativeSettingsChange[]) {
-				applied.push(...changes);
-
-				return true;
-			},
-		}));
+		const backend = createMemoryBackend(stores);
 
 		backend.write({ store: 'unbound', key: 'a.c', value: 2 });
 		backend.write({ store: 'unbound', key: 'a.b', remove: true });
+		backend.flush();
 
 		expect(backend.read('unbound', 'a')).toEqual({ c: 2 });
 
-		backend.flush();
+		backend.write({ store: 'unbound', key: 'a.c', remove: true });
 
-		expect(applied).toHaveLength(2);
+		expect(backend.readAll()).toEqual({});
 	});
 });

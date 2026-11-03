@@ -22,7 +22,7 @@ function bearer(request: Request): string {
 const server = Bun.serve({
 	port: 0,
 	routes: {
-		'/api/v1/sync/oauth': {
+		'/api/v1/auth/discord': {
 			GET: () =>
 				Response.json({
 					clientId: 'discord-client',

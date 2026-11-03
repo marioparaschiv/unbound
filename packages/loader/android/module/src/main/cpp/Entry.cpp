@@ -437,7 +437,8 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.javaSetField = env->GetStaticMethodID(
         bridge, "javaSetField", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.javaRelease = env->GetStaticMethodID(bridge, "javaRelease", "(Ljava/lang/String;)V");
-    gCallbacks.hooksInstall = env->GetStaticMethodID(
+    gCallbacks.javaLiveHandles = env->GetStaticMethodID(bridge, "javaLiveHandles", "()I");
+    gCallbacks.hooksInstall    = env->GetStaticMethodID(
         bridge, "hooksInstall",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/"
         "String;");
@@ -495,15 +496,16 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
            gCallbacks.javaClassName && gCallbacks.javaDescribe && gCallbacks.javaConstruct &&
            gCallbacks.javaRespondsTo && gCallbacks.javaInvoke && gCallbacks.javaPrepare &&
            gCallbacks.javaInvokePrepared && gCallbacks.javaDisposePlan && gCallbacks.javaGetField &&
-           gCallbacks.javaSetField && gCallbacks.javaRelease && gCallbacks.hooksInstall &&
-           gCallbacks.hooksRemove && gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
-           gCallbacks.javaFindViews && gCallbacks.javaCreateAssociationKey &&
-           gCallbacks.javaGetAssociatedObject && gCallbacks.javaSetAssociatedObject &&
-           gCallbacks.fabricMount && gCallbacks.fabricUpdate && gCallbacks.fabricUnmount &&
-           gCallbacks.fabricSetSize && gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure &&
-           gCallbacks.fetchText && gCallbacks.download && gCallbacks.devServerHost &&
-           gCallbacks.isServing && gCallbacks.availableFonts && gCallbacks.appFonts &&
-           gCallbacks.appFontBytes && gCallbacks.alert && gCallbacks.onBundleExecuted;
+           gCallbacks.javaSetField && gCallbacks.javaRelease && gCallbacks.javaLiveHandles &&
+           gCallbacks.hooksInstall && gCallbacks.hooksRemove && gCallbacks.runtimeReplaced &&
+           gCallbacks.javaBatch && gCallbacks.javaFindViews &&
+           gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
+           gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
+           gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&
+           gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure && gCallbacks.fetchText &&
+           gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing &&
+           gCallbacks.availableFonts && gCallbacks.appFonts && gCallbacks.appFontBytes &&
+           gCallbacks.alert && gCallbacks.onBundleExecuted;
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)

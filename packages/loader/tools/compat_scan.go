@@ -32,6 +32,11 @@ var compatEnvironmentClasses = map[string]string{
 	"org.lsposed.lspatch.loader.LSPApplication": "LSPatch's own class, present only when Discord was patched with LSPatch, so its absence is expected",
 }
 
+var compatEnvironmentFields = map[string]string{
+	"mOuterRadii": "the private corner radii of Android's `android.graphics.drawable.shapes.RoundRectShape`, which the public SDK stubs leave out; it exists on every device, and the SDK has no getter for it",
+	"mColor":      "the private color field of Android's `android.text.style.ForegroundColorSpan`, which the public SDK stubs leave out; it exists on every device, and the SDK has no setter for it",
+}
+
 type compatTarget struct {
 	Platform  string `json:"platform"`
 	Version   string `json:"version"`

@@ -83,47 +83,61 @@ describe('validateAddonCapabilities', () => {
 	test('accepts every Capability the client declares, per platform', () => {
 		expect(
 			validateAddonCapabilities({
-				platforms: Object.keys(NATIVE_PLUGIN_PLATFORM_CAPABILITIES),
-				platformCapabilities: NATIVE_PLUGIN_PLATFORM_CAPABILITIES,
+				platforms: Object.fromEntries(
+					Object.entries(NATIVE_PLUGIN_PLATFORM_CAPABILITIES).map(
+						([platform, capabilities]) => [platform, { capabilities }],
+					),
+				),
 			}),
 		).toEqual([]);
 	});
 
-	test('rejects Capabilities the client does not declare', () => {
-		const errors = validateAddonCapabilities({ capabilities: ['native.objc.unknown'] });
+	test('accepts a manifest without platforms', () => {
+		expect(validateAddonCapabilities({})).toEqual([]);
+	});
 
-		expect(errors.join('\n')).toContain('native.objc.unknown');
+	test('rejects Capabilities the client does not declare', () => {
+		const errors = validateAddonCapabilities({
+			platforms: { ios: { capabilities: ['native.objc.unknown'] } },
+		});
+
+		expect(errors).toEqual([
+			'platforms.ios contains an unsupported value: native.objc.unknown',
+		]);
 	});
 
 	test('rejects a flat Capability that only one platform can provide', () => {
 		const errors = validateAddonCapabilities({ capabilities: [iosOnlyCapability] });
 
-		expect(errors.find((error) => error.includes(iosOnlyCapability))).toMatch(/android/);
+		expect(errors).toEqual([
+			`capabilities contains ${iosOnlyCapability}, which android cannot provide; declare it under platforms.ios.capabilities`,
+		]);
 	});
 
 	test('accepts a flat Capability that every supported platform provides', () => {
 		expect(validateAddonCapabilities({ capabilities: ['native.runtime.events'] })).toEqual([]);
 	});
 
-	test('accepts a platform-exclusive Capability declared under its platform', () => {
-		expect(
-			validateAddonCapabilities({
-				platforms: ['ios'],
-				platformCapabilities: { ios: ['native.objc.classes', 'native.fabric.mount'] },
-			}),
-		).toEqual([]);
-	});
-
 	test('accepts a flat Capability restricted to the declared platforms', () => {
 		expect(
 			validateAddonCapabilities({
-				platforms: ['ios'],
+				platforms: { ios: {} },
 				capabilities: ['native.objc.classes'],
 			}),
 		).toEqual([]);
 	});
 
-	test('accepts the object form of platforms', () => {
+	test('accepts a platform-exclusive Capability declared under its platform', () => {
+		expect(
+			validateAddonCapabilities({
+				platforms: {
+					ios: { capabilities: ['native.objc.classes', 'native.fabric.mount'] },
+				},
+			}),
+		).toEqual([]);
+	});
+
+	test('accepts Capabilities on both platforms', () => {
 		expect(
 			validateAddonCapabilities({
 				platforms: {
@@ -134,7 +148,7 @@ describe('validateAddonCapabilities', () => {
 		).toEqual([]);
 	});
 
-	test('rejects an object-form Capability its platform cannot provide', () => {
+	test('rejects a Capability its platform cannot provide', () => {
 		expect(
 			validateAddonCapabilities({
 				platforms: { android: { capabilities: [iosOnlyCapability] } },
@@ -142,63 +156,36 @@ describe('validateAddonCapabilities', () => {
 		).toEqual([`platforms.android cannot provide ${iosOnlyCapability}`]);
 	});
 
-	test('rejects platformCapabilities for a platform missing from the object form', () => {
-		const errors = validateAddonCapabilities({
-			platforms: { ios: {} },
-			platformCapabilities: { android: ['native.java.classes'] },
-		});
-
-		expect(errors).toEqual([
-			'platformCapabilities declares android, which is not in platforms',
-		]);
+	test('rejects capabilities that are not arrays', () => {
+		expect(
+			validateAddonCapabilities({
+				platforms: { ios: { capabilities: 'native.objc.classes' } },
+			}),
+		).toEqual(['platforms.ios must be an array']);
 	});
 
 	test('rejects platforms that are not supported targets', () => {
-		expect(validateAddonCapabilities({ platforms: ['web'] }).join('\n')).toContain('web');
+		expect(validateAddonCapabilities({ platforms: { web: {} } })).toEqual([
+			'platforms contains an unsupported platform: web',
+			'platforms must not be empty',
+		]);
 	});
 
-	test('rejects an empty platforms list', () => {
-		expect(validateAddonCapabilities({ platforms: [] }).join('\n')).toMatch(/platforms.*empty/);
+	test('rejects empty platforms', () => {
+		expect(validateAddonCapabilities({ platforms: {} })).toEqual([
+			'platforms must not be empty',
+		]);
 	});
 
-	test('rejects duplicate platforms', () => {
-		expect(validateAddonCapabilities({ platforms: ['ios', 'ios'] }).join('\n')).toMatch(
-			/platforms.*ios/,
-		);
+	test('rejects the list form of platforms', () => {
+		expect(validateAddonCapabilities({ platforms: ['ios'] })).toEqual([
+			'platforms must be an object',
+		]);
 	});
 
-	test('rejects platformCapabilities for a platform the addon does not support', () => {
-		const errors = validateAddonCapabilities({
-			platforms: ['ios'],
-			platformCapabilities: { android: ['native.java.classes'] },
-		});
-
-		expect(errors.join('\n')).toMatch(/platformCapabilities.*android/);
-	});
-
-	test('rejects a platformCapabilities entry the platform cannot provide', () => {
-		const errors = validateAddonCapabilities({
-			platformCapabilities: { android: [iosOnlyCapability] },
-		});
-
-		expect(errors.find((error) => error.includes(iosOnlyCapability))).toMatch(
-			/platformCapabilities\.android/,
-		);
-	});
-
-	test('rejects platformCapabilities values that are not arrays', () => {
-		const errors = validateAddonCapabilities({
-			platformCapabilities: { ios: 'native.objc.classes' },
-		});
-
-		expect(errors.join('\n')).toMatch(/platformCapabilities\.ios/);
-	});
-
-	test('rejects an unknown platformCapabilities platform', () => {
-		const errors = validateAddonCapabilities({
-			platformCapabilities: { web: ['native.java.classes'] },
-		});
-
-		expect(errors.join('\n')).toContain('web');
+	test('rejects a platform entry that is not an object', () => {
+		expect(validateAddonCapabilities({ platforms: { ios: [] } })).toEqual([
+			'platforms.ios must be an object',
+		]);
 	});
 });

@@ -294,9 +294,9 @@ The loader compiles in `core/keys/bundle-signing.pub`, the production public key
 3. Download the bundle and compare its SHA-512 with the manifest. A mismatch rejects the candidate, and the current bundle keeps running.
 4. Store the signed manifest and its signature beside the candidate as `<candidate>.trust`.
 
-The candidate is verified again from `<candidate>.trust` before it runs (every `resolveBundlePath`) and before it is promoted. A candidate that fails, or has no `.trust` file, is discarded and downloaded again at the same update check. That covers candidates downloaded by a loader from before signing existed. On promotion, the record moves to `unbound.<ext>.trust`, and the manifest becomes the anti-rollback baseline.
+The candidate is verified again from `<candidate>.trust` before it runs (every `resolveBundlePath`) and before it is promoted. A candidate that fails, or has no `.trust` file, is discarded and downloaded again at the same update check. On promotion, the record moves to `unbound.<ext>.trust`, and the manifest becomes the anti-rollback baseline.
 
-The active bundle is not re-verified at launch, so a bundle verified at install keeps running offline. An active bundle without a `.trust` file came from an older loader. It keeps running, so the app works offline after the upgrade, but the next update check skips `If-None-Match` and downloads a verified copy, which replaces it on the next launch.
+The active bundle is not re-verified at launch, so a bundle verified at install keeps running offline. An active bundle without a `.trust` file keeps running, but the next update check skips `If-None-Match` and downloads a verified copy, which replaces it on the next launch.
 
 ### Anti-rollback
 

@@ -63,7 +63,6 @@ import { Route as ApiV1MeAddonsRouteImport } from './routes/api/v1/me/addons'
 import { Route as ApiV1MeBadgesRouteImport } from './routes/api/v1/me/badges'
 import { Route as ApiV1ReviewQueueRouteImport } from './routes/api/v1/review/queue'
 import { Route as ApiV1SubmissionsPreviewRouteImport } from './routes/api/v1/submissions/preview'
-import { Route as ApiV1SyncOauthRouteImport } from './routes/api/v1/sync/oauth'
 import { Route as SiteStaffAdminAddonsIndexRouteImport } from './routes/_site/_staff/admin/addons/index'
 import { Route as SiteStaffAdminAddonsIdRouteImport } from './routes/_site/_staff/admin/addons/$id'
 import { Route as SiteStaffAdminUsersIndexRouteImport } from './routes/_site/_staff/admin/users/index'
@@ -355,11 +354,6 @@ const ApiV1SubmissionsPreviewRoute = ApiV1SubmissionsPreviewRouteImport.update({
   path: '/preview',
   getParentRoute: () => ApiV1SubmissionsRoute,
 } as any)
-const ApiV1SyncOauthRoute = ApiV1SyncOauthRouteImport.update({
-  id: '/oauth',
-  path: '/oauth',
-  getParentRoute: () => ApiV1SyncRoute,
-} as any)
 const SiteStaffAdminAddonsIndexRoute =
   SiteStaffAdminAddonsIndexRouteImport.update({
     id: '/admin/addons/',
@@ -493,7 +487,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
-  '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
+  '/api/v1/sync': typeof ApiV1SyncRoute
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/addons/': typeof SiteAddonsIndexRoute
@@ -516,7 +510,6 @@ export interface FileRoutesByFullPath {
   '/api/v1/me/badges': typeof ApiV1MeBadgesRouteWithChildren
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
-  '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
   '/admin/': typeof SiteStaffAdminIndexRoute
   '/docs/$package/': typeof SiteDocsPackageIndexRoute
   '/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
@@ -566,7 +559,7 @@ export interface FileRoutesByTo {
   '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
-  '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
+  '/api/v1/sync': typeof ApiV1SyncRoute
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/docs': typeof SiteDocsIndexRoute
@@ -587,7 +580,6 @@ export interface FileRoutesByTo {
   '/api/v1/me/badges': typeof ApiV1MeBadgesRouteWithChildren
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
-  '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
   '/admin': typeof SiteStaffAdminIndexRoute
   '/docs/$package': typeof SiteDocsPackageIndexRoute
   '/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
@@ -641,7 +633,7 @@ export interface FileRoutesById {
   '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
-  '/api/v1/sync': typeof ApiV1SyncRouteWithChildren
+  '/api/v1/sync': typeof ApiV1SyncRoute
   '/api/v1/updates': typeof ApiV1UpdatesRoute
   '/api/webhooks/github-sponsors': typeof ApiWebhooksGithubSponsorsRoute
   '/_site/addons/': typeof SiteAddonsIndexRoute
@@ -664,7 +656,6 @@ export interface FileRoutesById {
   '/api/v1/me/badges': typeof ApiV1MeBadgesRouteWithChildren
   '/api/v1/review/queue': typeof ApiV1ReviewQueueRoute
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
-  '/api/v1/sync/oauth': typeof ApiV1SyncOauthRoute
   '/_site/_staff/admin/': typeof SiteStaffAdminIndexRoute
   '/_site/docs/$package/': typeof SiteDocsPackageIndexRoute
   '/_site/_staff/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
@@ -740,7 +731,6 @@ export interface FileRouteTypes {
     | '/api/v1/me/badges'
     | '/api/v1/review/queue'
     | '/api/v1/submissions/preview'
-    | '/api/v1/sync/oauth'
     | '/admin/'
     | '/docs/$package/'
     | '/admin/addons/$id'
@@ -811,7 +801,6 @@ export interface FileRouteTypes {
     | '/api/v1/me/badges'
     | '/api/v1/review/queue'
     | '/api/v1/submissions/preview'
-    | '/api/v1/sync/oauth'
     | '/admin'
     | '/docs/$package'
     | '/admin/addons/$id'
@@ -887,7 +876,6 @@ export interface FileRouteTypes {
     | '/api/v1/me/badges'
     | '/api/v1/review/queue'
     | '/api/v1/submissions/preview'
-    | '/api/v1/sync/oauth'
     | '/_site/_staff/admin/'
     | '/_site/docs/$package/'
     | '/_site/_staff/admin/addons/$id'
@@ -924,7 +912,7 @@ export interface RootRouteChildren {
   ApiV1CrashReportsRoute: typeof ApiV1CrashReportsRoute
   ApiV1MeRoute: typeof ApiV1MeRouteWithChildren
   ApiV1SubmissionsRoute: typeof ApiV1SubmissionsRouteWithChildren
-  ApiV1SyncRoute: typeof ApiV1SyncRouteWithChildren
+  ApiV1SyncRoute: typeof ApiV1SyncRoute
   ApiV1UpdatesRoute: typeof ApiV1UpdatesRoute
   ApiWebhooksGithubSponsorsRoute: typeof ApiWebhooksGithubSponsorsRoute
   ApiV1AuthDiscordRoute: typeof ApiV1AuthDiscordRoute
@@ -1319,13 +1307,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1SubmissionsPreviewRouteImport
       parentRoute: typeof ApiV1SubmissionsRoute
     }
-    '/api/v1/sync/oauth': {
-      id: '/api/v1/sync/oauth'
-      path: '/oauth'
-      fullPath: '/api/v1/sync/oauth'
-      preLoaderRoute: typeof ApiV1SyncOauthRouteImport
-      parentRoute: typeof ApiV1SyncRoute
-    }
     '/_site/_staff/admin/addons/': {
       id: '/_site/_staff/admin/addons/'
       path: '/admin/addons'
@@ -1671,18 +1652,6 @@ const ApiV1SubmissionsRouteChildren: ApiV1SubmissionsRouteChildren = {
 const ApiV1SubmissionsRouteWithChildren =
   ApiV1SubmissionsRoute._addFileChildren(ApiV1SubmissionsRouteChildren)
 
-interface ApiV1SyncRouteChildren {
-  ApiV1SyncOauthRoute: typeof ApiV1SyncOauthRoute
-}
-
-const ApiV1SyncRouteChildren: ApiV1SyncRouteChildren = {
-  ApiV1SyncOauthRoute: ApiV1SyncOauthRoute,
-}
-
-const ApiV1SyncRouteWithChildren = ApiV1SyncRoute._addFileChildren(
-  ApiV1SyncRouteChildren,
-)
-
 interface ApiV1LoaderReleasesRouteChildren {
   ApiV1LoaderReleasesPlatformVersionRoute: typeof ApiV1LoaderReleasesPlatformVersionRoute
 }
@@ -1708,7 +1677,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1CrashReportsRoute: ApiV1CrashReportsRoute,
   ApiV1MeRoute: ApiV1MeRouteWithChildren,
   ApiV1SubmissionsRoute: ApiV1SubmissionsRouteWithChildren,
-  ApiV1SyncRoute: ApiV1SyncRouteWithChildren,
+  ApiV1SyncRoute: ApiV1SyncRoute,
   ApiV1UpdatesRoute: ApiV1UpdatesRoute,
   ApiWebhooksGithubSponsorsRoute: ApiWebhooksGithubSponsorsRoute,
   ApiV1AuthDiscordRoute: ApiV1AuthDiscordRoute,

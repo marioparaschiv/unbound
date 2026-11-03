@@ -1,6 +1,10 @@
+import type { NativePluginCapability } from '@unbound-app/types';
 import { afterEach, describe, expect, test } from 'bun:test';
 
 import {
+	NativePluginCapabilityError,
+	NativePluginDisposedError,
+	NativePluginUnavailableError,
 	createPluginContext,
 	withNativeConstants,
 	nativeHandle,
@@ -80,5 +84,101 @@ describe('withNativeConstants', () => {
 
 		expect(withNativeConstants(module)).toBe(module);
 		expect(withNativeConstants(undefined)).toBeUndefined();
+	});
+});
+
+describe('the scoped native call wrapper', () => {
+	test('marks the plugin active for prepared calls and calls the loader with its own receiver', async () => {
+		const { attributeAddon, resetCrashGuard } = await import('~/addons/crash-guard');
+		const buffer = new ArrayBuffer(4);
+		const cell = new Uint32Array(buffer);
+		const observed: unknown[] = [];
+		const objc = bridge.objc;
+
+		resetCrashGuard();
+		Object.assign(nativePlatformBridge, {
+			crashGuard: {
+				begin: () => true,
+				end: () => true,
+				disabled: () => [],
+				register: () => 4,
+				activity: () => buffer,
+			},
+		});
+		Object.assign(bridge, {
+			objc: {
+				...objc,
+				invokePrepared(this: typeof objc, ...args: Parameters<typeof objc.invokePrepared>) {
+					observed.push(cell[0], this === bridge.objc, args.length);
+				},
+			},
+		});
+
+		try {
+			const context = createPluginContext(
+				{ ...manifest, capabilities: ['native.objc.classes', 'native.objc.invoke'] },
+				attributeAddon('plugins:test', 'test'),
+			);
+			const plan = context.native.objc.prepare(nativeHandle, 'description');
+
+			context.native.objc.invokePrepared(plan, nativeHandle, []);
+
+			expect(observed).toEqual([4, true, 4]);
+			expect(cell[0]).toBe(0);
+		} finally {
+			Object.assign(bridge, { objc });
+			Reflect.deleteProperty(nativePlatformBridge, 'crashGuard');
+			resetCrashGuard();
+		}
+	});
+
+	test('grants only the capabilities declared when the scope was built', async () => {
+		const { createScopeGate } = await import('~/native/scope-gate');
+		const capabilities: NativePluginCapability[] = ['native.ffi.symbols'];
+		const { scopeMethod, requireGranted } = createScopeGate({
+			capabilities,
+			lifecycle: { disposed: false },
+			track: (pending) => pending,
+		});
+		const call = scopeMethod(() => 'called', 'ffi.call');
+
+		capabilities.push('native.ffi.call');
+
+		expect(() => call()).toThrow(NativePluginCapabilityError);
+		expect(() => requireGranted('ffi.call')).toThrow(NativePluginCapabilityError);
+		expect(scopeMethod(() => 'called', 'ffi.call')).toThrow(NativePluginCapabilityError);
+	});
+
+	test('reports disposal before a missing capability, and a missing capability before a missing method', () => {
+		const objc = bridge.objc;
+
+		Object.assign(bridge, { objc: { ...objc, invokeAsync: undefined } });
+
+		try {
+			const declared = createPluginContext({
+				...manifest,
+				capabilities: ['native.objc.classes', 'native.objc.invokeAsync'],
+			});
+			const undeclared = createPluginContext({
+				...manifest,
+				capabilities: ['native.objc.classes'],
+			});
+
+			expect(() => declared.native.objc.invokeAsync(nativeHandle, 'description', [])).toThrow(
+				NativePluginUnavailableError,
+			);
+			expect(() =>
+				undeclared.native.objc.invokeAsync(nativeHandle, 'description', []),
+			).toThrow(NativePluginCapabilityError);
+
+			undeclared.dispose();
+
+			expect(() =>
+				undeclared.native.objc.invokeAsync(nativeHandle, 'description', []),
+			).toThrow(NativePluginDisposedError);
+			declared.dispose();
+		} finally {
+			Object.assign(bridge, { objc });
+		}
 	});
 });

@@ -103,7 +103,7 @@ Import from `@unbound-app/api`. In a plugin, those imports come from its [Addon 
 
 `ubd build` writes `platforms` and each platform's Capabilities into `dist/manifest.json`. It finds them by reading the native calls each platform handler can reach. Your own `manifest.json` never lists them.
 
-**Checked by** the build check `capabilities`. A hand-written `capabilities`, `platforms` or `platformCapabilities` field fails the build, and so does a dynamic access such as `native.objc[name]`.
+**Checked by** the build check `capabilities`. A hand-written `capabilities` or `platforms` field fails the build, and so does a dynamic access such as `native.objc[name]`.
 
 ## Change native views from the UI thread
 

@@ -142,8 +142,69 @@ export type NativeResourceCounts = {
 	surfaces: number;
 	/** Hook return values set with `setReturnValue`. */
 	cachedReturns: number;
-	/** Java handles still referenced from JavaScript. */
+	/** Handles still referenced from JavaScript: leases plus the platform's own handle count. */
 	handles: number;
+	/** Handle leases JavaScript still holds. */
+	leases: number;
+	/** Live Objective-C value handles; iOS only, 0 elsewhere. */
+	objcHandles: number;
+	/** Prepared Objective-C call plans; iOS only, 0 elsewhere. */
+	objcPlans: number;
+	/** Objective-C objects the loader retains internally; iOS only, 0 elsewhere. */
+	objcRetains: number;
+	/** Java objects with a live handle; Android only, 0 elsewhere. */
+	javaHandles: number;
+	/** Pooled Fabric surfaces waiting to be reused. */
+	idleSurfaces: number;
+	/** Fabric surfaces created since launch. */
+	createdSurfaces: number;
+	/** Fabric surfaces reused from the pool since launch. */
+	reusedSurfaces: number;
+	/** Batches of main-thread work the loader drained. */
+	mainWork: NativeMainWorkCounts;
+	/** Main-thread crossings per addon, kind and call label, busiest first. */
+	mainWaits: NativeMainWaitCounts[];
+};
+
+/** Main-thread drains since launch or the last counter reset. */
+export type NativeMainWorkCounts = {
+	drains: number;
+	items: number;
+	drainMs: number;
+	maxDrainMs: number;
+	maxDrainItems: number;
+};
+
+/** How long main-thread crossings for one addon, kind and call label waited and ran. */
+export type NativeMainWaitCounts = {
+	addon: string;
+	kind: 'sync' | 'posted' | 'async' | 'unknown';
+	label: string;
+	posted: number;
+	started: number;
+	finished: number;
+	/** Crossings that timed out or were refused before they started. */
+	expired: number;
+	/** Total time between posting and starting on the main thread. */
+	queuedMs: number;
+	maxQueuedMs: number;
+	/** Total time spent running on the main thread. */
+	runMs: number;
+	maxRunMs: number;
+};
+
+/** What reading the debug environment may do first. */
+export type NativeDebugEnvironmentOptions = {
+	/** Collects garbage on the calling runtime and the UI runtime before counting. */
+	collectGarbage?: boolean;
+	/** Zeroes the main-thread counters after reading them. */
+	resetCounters?: boolean;
+};
+
+/** Which runtimes a debug garbage collection reached. */
+export type NativeGarbageCollection = {
+	runtime: boolean;
+	uiRuntime: boolean;
 };
 
 /** Facts about the device a debugger session needs. */
@@ -152,16 +213,18 @@ export type NativeDebugEnvironment = {
 	isVirtualDevice: boolean;
 	/** The address of the machine hosting the virtual device, or `null` on a physical one. */
 	hostAddress: string | null;
-	/** The loader's resource counts; missing on older loaders. */
-	resources?: NativeResourceCounts;
+	/** The loader's resource counts. */
+	resources: NativeResourceCounts;
+	/** Present when the read collected garbage first. */
+	garbageCollection?: NativeGarbageCollection;
 };
 
 /** Debugger support for plugins. */
 export type NativeDebugBridge = {
 	/** Logs an evaluation and adds it to the loader's history; false when the record is malformed. Needs `native.debug.evaluations`. */
 	recordEvaluation(record: NativeDebugEvaluation): boolean;
-	/** Reads the debug environment. Needs `native.debug.environment`. */
-	environment(): NativeDebugEnvironment;
+	/** Reads the debug environment, optionally collecting garbage or resetting counters first. Needs `native.debug.environment`. */
+	environment(options?: NativeDebugEnvironmentOptions): NativeDebugEnvironment;
 };
 
 /** The native bridge a plugin reaches through `context.native`, gated by the capabilities it declares. */
@@ -190,17 +253,12 @@ export type NativePluginBridge = {
 	readonly ui: NativeUIBridge;
 };
 
-/** The raw bridge the loader publishes as `globalThis.NativePlugin`; namespaces an older loader lacks are missing. */
+/** The raw bridge the loader publishes as `globalThis.NativePlugin`; `objc` exists only on iOS, `java` and `hooks` only on Android. */
 export type NativePluginRuntimeBridge = Pick<
 	NativePluginBridge,
-	'apiVersion' | 'abiVersion' | 'capabilities'
+	'apiVersion' | 'abiVersion' | 'capabilities' | 'ffi' | 'fabric' | 'debug'
 > &
-	Partial<
-		Omit<
-			NativePluginBridge,
-			'apiVersion' | 'abiVersion' | 'capabilities' | 'objc' | 'java' | 'ui'
-		>
-	> & {
+	Partial<Pick<NativePluginBridge, 'hooks'>> & {
 		readonly objc?: LoaderObjCBridge;
 		readonly java?: NativeJavaBridge & NativeUIScopeFactory;
 	};

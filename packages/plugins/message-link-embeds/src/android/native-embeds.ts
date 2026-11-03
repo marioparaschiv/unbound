@@ -184,7 +184,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		messageView: NativeJavaReference,
 		channelName: string,
 	): Promise<{ view: NativeJavaReference; text: ViewText } | null> {
-		const views = await java.findViews!(messageView, MESSAGE_CONTENT_VIEW, {
+		const views = await java.findViews(messageView, MESSAGE_CONTENT_VIEW, {
 			maxDepth: 64,
 			maxVisited: 2_000,
 			maxResults: 32,

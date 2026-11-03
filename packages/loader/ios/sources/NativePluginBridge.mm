@@ -113,20 +113,22 @@ using namespace facebook::jsi;
 namespace {
 
 static std::atomic<size_t> gLiveObjCHandles{0};
+static std::atomic<size_t> gLiveObjCRetains{0};
 static std::atomic<size_t> gLiveObjCCallPlans{0};
 static constexpr size_t    kMaximumPreparedObjCCalls = 256;
 
 class ObjCHandleHost final : public HostObject
 {
 public:
-    explicit ObjCHandleHost(id value) : value_(value)
+    explicit ObjCHandleHost(id value, std::atomic<size_t> &live = gLiveObjCHandles)
+        : value_(value), live_(live)
     {
-        gLiveObjCHandles++;
+        live_.fetch_add(1, std::memory_order_relaxed);
     }
 
     ~ObjCHandleHost() override
     {
-        gLiveObjCHandles--;
+        live_.fetch_sub(1, std::memory_order_relaxed);
     }
 
     id value(void) const
@@ -135,7 +137,8 @@ public:
     }
 
 private:
-    __strong id value_;
+    __strong id          value_;
+    std::atomic<size_t> &live_;
 };
 
 class ObjCCallPlanHost final : public HostObject
@@ -149,13 +152,11 @@ public:
           argumentTypes_(std::move(argumentTypes)), runtimeIdentity_(runtimeIdentity),
           runtimeGeneration_(runtimeGeneration)
     {
-        gLiveObjCHandles++;
     }
 
     ~ObjCCallPlanHost() override
     {
         releasePlanSlot();
-        gLiveObjCHandles--;
     }
 
     void validate(Runtime &runtime, id target) const
@@ -819,13 +820,15 @@ static Value objcResultValue(Runtime &runtime, id value, ConversionState &state)
         Object result(runtime);
         for (id key in dictionary)
         {
-            if (![key isKindOfClass:[NSString class]])
+            const char *name =
+                [key isKindOfClass:[NSString class]] ? ((NSString *) key).UTF8String : nullptr;
+            if (!name)
             {
                 continue;
             }
             state.addBytes(runtime,
                            [(NSString *) key lengthOfBytesUsingEncoding:NSUTF8StringEncoding]);
-            result.setProperty(runtime, ((NSString *) key).UTF8String,
+            result.setProperty(runtime, PropNameID::forUtf8(runtime, std::string(name)),
                                objcResultValue(runtime, dictionary[key], state));
         }
         return result;
@@ -986,10 +989,10 @@ static UIView *fabricView(id surface)
     return ((Function) objc_msgSend)(surface, @selector(view));
 }
 
-static void fabricSetProps(id surface, NSDictionary *properties)
+static void fabricSetProperties(id surface, NSDictionary *properties)
 {
     using Function = void (*)(id, SEL, NSDictionary *);
-    ((Function) objc_msgSend)(surface, @selector(setProps:), properties);
+    ((Function) objc_msgSend)(surface, @selector(setProperties:), properties);
 }
 
 static void fabricSetMinimumSize(id surface, CGSize minimumSize, CGSize maximumSize)
@@ -1066,12 +1069,14 @@ static IOSFabricSurface fabricMountNative(id host, UIView *containerView, NSStri
     return {surface, surfaceContainer, view};
 }
 
-static void fabricUpdateNative(id surface, NSDictionary *properties)
+static bool fabricUpdateNative(id surface, NSDictionary *properties)
 {
-    if ([surface respondsToSelector:@selector(setProps:)])
+    if (![surface respondsToSelector:@selector(setProperties:)])
     {
-        fabricSetProps(surface, properties);
+        return false;
     }
+    fabricSetProperties(surface, properties);
+    return true;
 }
 
 static void fabricSetSizeNative(id surface, CGSize minimumSize, CGSize maximumSize)
@@ -1183,13 +1188,15 @@ public:
         return id;
     }
 
-    void update(const std::string &surface, const nlohmann::json &properties) override
+    bool update(const std::string &surface, const nlohmann::json &properties) override
     {
         IOSFabricSurface mounted    = find(surface);
         NSDictionary    *dictionary = fabricDictionary(properties);
+        bool             updated    = false;
         guarded([&]() {
-            fabricUpdateNative(mounted.surface, dictionary);
+            updated = fabricUpdateNative(mounted.surface, dictionary);
         });
+        return updated;
     }
 
     void setSize(const std::string &surface, const loader::native::NativeSize &minimum,
@@ -1226,6 +1233,11 @@ public:
     }
 
     bool measuresLastSetFrame() const override
+    {
+        return true;
+    }
+
+    bool detachesEverySurface() const override
     {
         return true;
     }
@@ -2974,7 +2986,8 @@ hookInvocation(const std::shared_ptr<HookDispatcher> &dispatcher, void **argumen
             id object = (__bridge id) rawObject;
             if (object)
             {
-                invocation->retainedObjects.emplace_back(std::make_shared<ObjCHandleHost>(object));
+                invocation->retainedObjects.emplace_back(
+                    std::make_shared<ObjCHandleHost>(object, gLiveObjCRetains));
             }
         }
         else if (spec.name == "cstring")
@@ -3262,7 +3275,7 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                 if (object)
                 {
                     original->retainedObjects.emplace_back(
-                        std::make_shared<ObjCHandleHost>(object));
+                        std::make_shared<ObjCHandleHost>(object, gLiveObjCRetains));
                 }
                 memcpy(original->arguments[argumentIndex].data(), &rawObject, sizeof(rawObject));
                 if (std::this_thread::get_id() != original->hookThread)
@@ -5242,7 +5255,7 @@ public:
             return;
         }
         id object = valueToObjC(runtime, value);
-        storage.retain(std::make_shared<ObjCHandleHost>(object));
+        storage.retain(std::make_shared<ObjCHandleHost>(object, gLiveObjCRetains));
         storeNativeValue<void *>(target, (__bridge void *) object);
     }
 
@@ -5396,7 +5409,16 @@ void registerNativePluginBridge(Runtime &runtime)
     });
     loader::native::registerRuntime(runtime);
     loader::native::setPlatformHandleCounter([] {
+        return gLiveObjCHandles.load() + gLiveObjCCallPlans.load() + gLiveObjCRetains.load();
+    });
+    loader::native::setPlatformResourceCounter(loader::native::kObjCHandleCounter, [] {
         return gLiveObjCHandles.load();
+    });
+    loader::native::setPlatformResourceCounter(loader::native::kObjCPlanCounter, [] {
+        return gLiveObjCCallPlans.load();
+    });
+    loader::native::setPlatformResourceCounter(loader::native::kObjCRetainCounter, [] {
+        return gLiveObjCRetains.load();
     });
     loader::native::NativePluginRootBuilder bridge(runtime,
                                                    loader::native::NativePluginPlatform::IOS);
