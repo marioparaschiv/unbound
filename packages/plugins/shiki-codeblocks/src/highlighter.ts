@@ -44,6 +44,22 @@ async function withRetries<T>(load: () => Promise<T>, delays: number[]): Promise
 	}
 }
 
+function tokenizeWithinLimit(
+	highlighter: HighlighterCore,
+	code: string,
+	language: string,
+	theme: string,
+): { tokens: TokenLines; complete: boolean } {
+	const started = Date.now();
+	const tokens = highlighter.codeToTokensBase(code, {
+		lang: language,
+		theme,
+		tokenizeTimeLimit: Limits.tokenizeMs,
+	});
+
+	return { tokens, complete: Date.now() - started <= Limits.tokenizeMs };
+}
+
 function isLightColor(hex: string): boolean | undefined {
 	const rgb = hex.replace('#', '').slice(0, 6);
 
@@ -213,10 +229,15 @@ export function createHighlighter(
 
 		await Promise.all([loadGrammar(highlighter, language), loadTheme(highlighter, theme)]);
 
-		const tokens = highlighter.codeToTokensBase(code, { lang: language, theme });
+		const firstPass = tokenizeWithinLimit(highlighter, code, language, theme);
+		const { tokens, complete } = firstPass.complete
+			? firstPass
+			: tokenizeWithinLimit(highlighter, code, language, theme);
 
-		remember(key, tokens);
-		store?.set(key, tokens);
+		if (complete) {
+			remember(key, tokens);
+			store?.set(key, tokens);
+		}
 
 		return tokens;
 	}

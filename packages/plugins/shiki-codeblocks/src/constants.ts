@@ -22,6 +22,7 @@ export const LANGUAGE_CATALOG_URL =
 export const Limits = {
 	codeLength: 6000,
 	tokenCacheEntries: 96,
+	tokenizeMs: 500,
 	surfaces: 96,
 	rowRetries: 4,
 };
