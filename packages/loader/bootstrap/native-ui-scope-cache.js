@@ -1,6 +1,19 @@
 (() => {
 	const namespaces = new Map();
 
+	const scoped = (operation, active) =>
+		function (...args) {
+			if (!active()) {
+				const error = new Error('The UI scope has been disposed');
+
+				error.code = 'NATIVE_PLUGIN_SCOPE_DISPOSED';
+
+				throw error;
+			}
+
+			return operation.apply(this, args);
+		};
+
 	return {
 		read(key) {
 			return namespaces.get(key);
@@ -9,26 +22,16 @@
 			namespaces.delete(key);
 		},
 		create(key, source, active, limit) {
-			const namespace = {};
+			const namespace = Object.fromEntries(
+				Object.keys(source).map((name) => {
+					const operation = source[name];
 
-			for (const name of Object.keys(source)) {
-				const operation = source[name];
-
-				namespace[name] =
-					typeof operation === 'function'
-						? function (...args) {
-								if (!active()) {
-									const error = new Error('The UI scope has been disposed');
-
-									error.code = 'NATIVE_PLUGIN_SCOPE_DISPOSED';
-
-									throw error;
-								}
-
-								return operation.apply(this, args);
-							}
-						: operation;
-			}
+					return [
+						name,
+						typeof operation === 'function' ? scoped(operation, active) : operation,
+					];
+				}),
+			);
 
 			if (namespaces.size >= limit) {
 				namespaces.delete(namespaces.keys().next().value);

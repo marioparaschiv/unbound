@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -39,8 +40,29 @@ cache.create('4:java', source, () => true, 2);
 check(cache.read('2:java') === undefined, 'the cache must enforce its capacity');
 check(retained.invoke.call({factor: 2}, 5) === 10, 'eviction must not dispose a live scope');
 check(cache.read('3:java') === retained, 'live entries below capacity must keep identity');
+const several = createCache().create('5:objc', { hook: () => 'hook', invoke: () => 'invoke', getClass: () => 'getClass' }, () => true, 4);
+check(several.hook() === 'hook' && several.invoke() === 'invoke' && several.getClass() === 'getClass', 'each wrapper must call its own operation');
 `
 	if output, err := exec.Command(engine, "-e", script).CombinedOutput(); err != nil {
 		t.Fatalf("UI scope namespace cache misbehaves: %v\n%s", err, output)
+	}
+}
+
+func TestBootstrapScriptsAvoidLoopBlockBindings(t *testing.T) {
+	scripts, err := filepath.Glob(filepath.Join(loaderRoot(t), "bootstrap", "*.js"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	loop := regexp.MustCompile(`\bfor\s*\(\s*(const|let)\b`)
+	for _, script := range scripts {
+		source, err := os.ReadFile(script)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for index, line := range strings.Split(string(source), "\n") {
+			if loop.MatchString(line) {
+				t.Errorf("%s:%d declares a loop binding with const or let; Hermes compiles bootstrap source with one binding per function, so closures created in the loop all see its last value. Use forEach or a helper function instead.", filepath.Base(script), index+1)
+			}
+		}
 	}
 }
