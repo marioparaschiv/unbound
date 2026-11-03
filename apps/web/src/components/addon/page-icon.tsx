@@ -23,9 +23,9 @@ export function renderPageIcon(name: string, key: number): ReactNode | undefined
 	return (
 		<Glyph
 			key={key}
-			size={16}
+			size='1em'
 			aria-hidden
-			className='inline-block text-primary align-[-0.2em]'
+			className='inline-block text-primary align-[-0.125em]'
 		/>
 	);
 }
