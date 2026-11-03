@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray, sql, type SQL } from 'drizzle-orm';
 import { afterAll, describe, expect, test } from 'bun:test';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import {
 	rateLimit,
@@ -87,7 +87,7 @@ describe('round trips', () => {
 		}
 
 		const cursor = encodeCursor([first.createdAt.getTime(), first.id]);
-		const position = decodeCursor(cursor, z.tuple([cursorTime, z.string()]));
+		const position = decodeCursor(cursor, Type.Tuple([cursorTime, Type.String()]));
 		const after = await page(afterKey([user.createdAt, user.id], position, 'asc'));
 
 		expect(after).toEqual(rest);

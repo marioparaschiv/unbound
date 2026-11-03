@@ -3,7 +3,6 @@ import { useShallow } from 'zustand/shallow';
 import { useUnboundSettings } from '~/settings/unbound';
 import useToastStore from '~/toasts/state';
 
-import ToastOverlay from './toast-overlay';
 import ToastList from './toast-list';
 
 function ToastContainer() {
@@ -17,7 +16,7 @@ function ToastContainer() {
 		useShallow((state) =>
 			Object.values(state.toasts)
 				.sort((a, b) => (b.date ?? 0) - (a.date ?? 0))
-				.slice(0, maxOnScreen === 0 ? Infinity : maxOnScreen)
+				.slice(0, maxOnScreen || undefined)
 				.map((toast) => toast.id),
 		),
 	);
@@ -26,11 +25,7 @@ function ToastContainer() {
 	// floating windows (dialogs, action sheets) that may already be open.
 	if (!ids.length) return null;
 
-	return (
-		<ToastOverlay>
-			<ToastList ids={ids} />
-		</ToastOverlay>
-	);
+	return <ToastList ids={ids} />;
 }
 
 export default ToastContainer;

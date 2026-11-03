@@ -1,12 +1,22 @@
-import { z } from '@unbound-app/contracts/zod';
+import { Type, type StaticDecode } from '@unbound-app/contracts/schema';
+
+// Search parameters arrive as text, so the page number is checked as text and decoded, as `z.coerce` did.
+const pageNumber = Type.Decode(
+	Type.Refine(
+		Type.Union([Type.String(), Type.Number()]),
+		(value: string | number) => Number.isInteger(Number(value)) && Number(value) >= 1,
+		() => 'Too small: expected number to be >=1',
+	),
+	Number,
+);
 
 /** The URL search of a searchable, paginated list page. */
-export const pageSearchSchema = z.object({
-	page: z.optional(z.coerce.number().check(z.int(), z.minimum(1))),
-	search: z.optional(z.string().check(z.maxLength(100))),
+export const pageSearchSchema = Type.Object({
+	page: Type.Optional(pageNumber),
+	search: Type.Optional(Type.String({ maxLength: 100 })),
 });
 
-export type PageSearch = z.infer<typeof pageSearchSchema>;
+export type PageSearch = StaticDecode<typeof pageSearchSchema>;
 
 /**
  * @description Builds a list page's URL search, leaving defaults out so the first page stays canonical.

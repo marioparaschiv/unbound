@@ -1,5 +1,3 @@
-Forgot the screenshot? Add Attachments puts files on a message you already sent, without a second message.
-
 ## :sparkle: What it does
 
 - :pen: While you edit a message, pick a photo, video or file, take a picture, or paste an image, and it goes onto that message.

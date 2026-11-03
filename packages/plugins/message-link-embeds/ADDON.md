@@ -1,5 +1,3 @@
-No more tapping a message link to see what it says. Message Link Embeds shows the linked message right inside the one that links to it.
-
 ## :sparkle: What it does
 
 - :msgs: Draws the linked message as a Discord chat row, on a new line after the channel mention Discord shows for the link.

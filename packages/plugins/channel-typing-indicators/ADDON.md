@@ -1,5 +1,3 @@
-Someone's typing in #general and now you know. Channel Typing Indicators shows who's typing right in the channel list.
-
 ## :sparkle: What it does
 
 - :dots: Shows up to three avatars, a `+N` badge for the rest, and animated dots on channel and thread rows.

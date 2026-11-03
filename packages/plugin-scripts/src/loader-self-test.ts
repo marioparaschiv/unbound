@@ -1,22 +1,23 @@
-import { z } from '@unbound-app/contracts/zod';
-
 import { deviceScript } from './device-script';
+import { Type, type Static } from '@unbound-app/contracts/schema';
 
 export const SELF_TEST_MARKER = 'loader self-test';
 
 export type SelfTestResult = { ok: boolean; detail: string };
 
 /** What the finish and cancellation scripts return. */
-export const selfTestCountsSchema = z.object({
-	host: z.optional(z.string()),
-	platform: z.optional(z.string()),
-	base: z.optional(z.number()),
-	derived: z.optional(z.number()),
-	error: z.optional(z.string()),
-	cancellations: z.optional(z.record(z.string(), z.string())),
+export const selfTestCountsSchema = Type.Object({
+	host: Type.Optional(Type.String()),
+	platform: Type.Optional(Type.String()),
+	base: Type.Optional(Type.Number()),
+	derived: Type.Optional(Type.Number()),
+	error: Type.Optional(Type.String()),
+	cancellations: Type.Optional(
+		Type.Record(Type.String(), Type.String(), { additionalProperties: false }),
+	),
 });
 
-export type SelfTestCounts = z.infer<typeof selfTestCountsSchema>;
+export type SelfTestCounts = Static<typeof selfTestCountsSchema>;
 
 /**
  * @description Installs the self-test hooks through the first running plugin that can hook natively: on iOS a superclass and subclass hook on the same selector, one of which throws once, and on Android a Java hook whose listener throws once.

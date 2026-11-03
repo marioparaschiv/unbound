@@ -1,5 +1,3 @@
-Never sent a gift from the chat bar? Hide Gift Button takes that button away.
-
 ## :sparkle: What it does
 
 - :gift: Removes the gift button from the right side of the chat input.

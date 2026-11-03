@@ -1,8 +1,9 @@
 import { createFileRoute, Link, redirect } from '@tanstack/react-router';
 import type { ErrorComponentProps } from '@tanstack/react-router';
+import { Type, parse } from '@unbound-app/contracts/schema';
+import type { Static } from '@unbound-app/contracts/schema';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { IconFaceNeutral } from 'nucleo-micro-bold';
-import { z } from 'zod/mini';
 
 import {
 	Empty,
@@ -21,18 +22,18 @@ import { splitList } from '~/lib/addon-filters';
 import { shortSha } from '~/lib/github-urls';
 
 /** The addon directory the submit form previews, pinned to the commit it read. */
-const previewSearchSchema = z.object({
-	repository: z.string(),
-	path: z.string(),
-	ref: z.string(),
-	commitSha: z.string(),
+const previewSearchSchema = Type.Object({
+	repository: Type.String(),
+	path: Type.String(),
+	ref: Type.String(),
+	commitSha: Type.String(),
 	/** The icon picked on the form, not saved yet. */
-	icon: z.catch(z.optional(z.string()), undefined),
+	icon: Type.Optional(Type.String()),
 	/** The tag ids picked on the form, not saved yet, comma-separated like the listing filters. */
-	tags: z.catch(z.optional(z.string()), undefined),
+	tags: Type.Optional(Type.String()),
 });
 
-type PreviewSearch = z.infer<typeof previewSearchSchema>;
+type PreviewSearch = Static<typeof previewSearchSchema>;
 
 function toPreviewPage({ tags, ...search }: PreviewSearch): SourcePreviewPage {
 	return { ...search, tags: tags === undefined ? undefined : splitList(tags) };
@@ -91,7 +92,7 @@ function PreviewUnavailable({ error }: ErrorComponentProps) {
 }
 
 export const Route = createFileRoute('/_site/submit_/preview')({
-	validateSearch: previewSearchSchema,
+	validateSearch: (search: Record<string, string>) => parse(previewSearchSchema, search),
 	beforeLoad: ({ context }) => {
 		if (!context.session) {
 			throw redirect({ to: '/login' });

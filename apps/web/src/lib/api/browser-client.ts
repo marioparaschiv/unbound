@@ -1,4 +1,4 @@
-import { createApiClient } from '~/api/client';
+import { createApiClient } from '~/api/schema-client';
 import type { Api } from '~/api';
 
 export type ApiRequest = ReturnType<typeof createApiClient<Api>>;

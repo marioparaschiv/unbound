@@ -16,7 +16,7 @@ import {
 import addMaintainerEndpoint from '~/endpoints/add-maintainer';
 import setAddonIconEndpoint from '~/endpoints/set-addon-icon';
 import listAddonsEndpoint from '~/endpoints/list-addons';
-import { createApiClient } from '~/api/client';
+import { createApiClient } from '~/api/schema-client';
 import { user } from '~/db/schema';
 import type { Api } from '~/api';
 

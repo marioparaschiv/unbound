@@ -19,7 +19,7 @@ import { createAuditDispatcher } from '~/dispatchers/audit';
 import { createRolesDispatcher } from '~/dispatchers/roles';
 import { messageLinks } from '~/dispatchers/addon-card';
 import { startDispatchers } from '~/runtime/start';
-import { otelEnvSchema } from '~/lib/env';
+import { parseOtelEnv } from '~/lib/env';
 
 import {
 	createFakeDiscord as createFakeChannels,
@@ -92,7 +92,7 @@ describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake 
 				handle: (payload, context) => announceRelease(context, rest, payload, RELEASES),
 			},
 			createAuditDispatcher(
-				createAuditTelemetry({ env: otelEnvSchema.parse({}) }),
+				createAuditTelemetry({ env: parseOtelEnv({}) }),
 				auditLog.channelId,
 			),
 			{

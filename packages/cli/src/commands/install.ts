@@ -1,35 +1,39 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { installOnAndroid } from '~/lib/android-install';
 import { readPluginPayload } from '~/lib/plugin-install';
 import { resolveAddonTarget } from '~/lib/addon-target';
 import { installOnIOS } from '~/lib/ios-install';
+import { defaulted, Type } from '~/lib/schema';
 
 const BUILD_TIMEOUT_MS = 300_000;
 
-const schema = z.object({
-	addon: z
-		.string()
-		.default('.')
-		.describe('The plugin to install, as its manifest id or directory.'),
-	build: z.boolean().default(true).describe('Build the plugin before installing it.'),
-	serial: z
-		.string()
-		.optional()
-		.describe('The adb serial of the Android device, when several are attached.'),
-	ios: z
-		.boolean()
-		.default(false)
-		.describe('Install on a jailbroken iPhone through jb-p1lot instead of over adb.'),
-	udid: z
-		.string()
-		.optional()
-		.describe('The UDID of the iPhone, when several are connected. Implies --ios.'),
-	restart: z
-		.boolean()
-		.default(false)
-		.describe('Restart Discord afterwards so it loads the plugin.'),
+const schema = Type.Object({
+	addon: defaulted(
+		Type.String({ description: 'The plugin to install, as its manifest id or directory.' }),
+		'.',
+	),
+	build: defaulted(Type.Boolean({ description: 'Build the plugin before installing it.' }), true),
+	serial: Type.Optional(
+		Type.String({
+			description: 'The adb serial of the Android device, when several are attached.',
+		}),
+	),
+	ios: defaulted(
+		Type.Boolean({
+			description: 'Install on a jailbroken iPhone through jb-p1lot instead of over adb.',
+		}),
+		false,
+	),
+	udid: Type.Optional(
+		Type.String({
+			description: 'The UDID of the iPhone, when several are connected. Implies --ios.',
+		}),
+	),
+	restart: defaulted(
+		Type.Boolean({ description: 'Restart Discord afterwards so it loads the plugin.' }),
+		false,
+	),
 });
 
 const installCommand: CommandDefinition<typeof schema> = {

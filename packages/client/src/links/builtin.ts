@@ -269,34 +269,22 @@ const targets: LinkTargets = {
 };
 
 function report(outcome: LinkOutcome) {
-	switch (outcome.type) {
-		case 'opened':
-			return;
-		case 'current':
-			show({
-				title: messages.UNBOUND_MARKETPLACE,
-				content: format('UNBOUND_LINK_ALREADY_INSTALLED', {
-					name: outcome.addon.latestVersion.manifest.name,
-				}),
-				icon: 'CircleCheckIcon',
+	if (outcome.type === 'opened') return;
+
+	const current = outcome.type === 'current';
+	const content = current
+		? format('UNBOUND_LINK_ALREADY_INSTALLED', {
+				name: outcome.addon.latestVersion.manifest.name,
+			})
+		: format(outcome.type === 'missing' ? 'UNBOUND_LINK_NOT_FOUND' : 'UNBOUND_LINK_OFFLINE', {
+				id: outcome.id,
 			});
 
-			return;
-		case 'missing':
-			show({
-				title: messages.UNBOUND_MARKETPLACE,
-				content: format('UNBOUND_LINK_NOT_FOUND', { id: outcome.id }),
-				icon: 'CircleXIcon',
-			});
-
-			return;
-		case 'offline':
-			show({
-				title: messages.UNBOUND_MARKETPLACE,
-				content: format('UNBOUND_LINK_OFFLINE', { id: outcome.id }),
-				icon: 'CircleXIcon',
-			});
-	}
+	show({
+		title: messages.UNBOUND_MARKETPLACE,
+		content,
+		icon: current ? 'CircleCheckIcon' : 'CircleXIcon',
+	});
 }
 
 async function receive(link: UnboundLink) {
@@ -317,18 +305,20 @@ async function receive(link: UnboundLink) {
 	}
 }
 
-function onURL(event: LinkEvent) {
-	const shared = parseShareLink(event.url);
+function handleURL(url: string, launch = false) {
+	const shared = parseShareLink(url);
 
 	if (shared) {
-		void receiveShare(shared);
+		if (!launch || claimLaunchURL('shared files')) {
+			void receiveShare(shared);
+		}
 
 		return;
 	}
 
-	const link = parseUnboundLink(event.url);
+	const link = parseUnboundLink(url);
 
-	if (link) {
+	if (link && (!launch || claimLaunchURL(link.id))) {
 		void receive(link);
 	}
 }
@@ -350,27 +340,9 @@ function claimLaunchURL(subject: string): boolean {
 	return false;
 }
 
-function onLaunchURL(url: string | null) {
-	const shared = url ? parseShareLink(url) : undefined;
-
-	if (shared) {
-		if (claimLaunchURL('shared files')) {
-			void receiveShare(shared);
-		}
-
-		return;
-	}
-
-	const link = url ? parseUnboundLink(url) : undefined;
-
-	if (link && claimLaunchURL(link.id)) {
-		void receive(link);
-	}
-}
-
 /** Hands Unbound links to the Marketplace and shared files to a destination picker: the launch URL once per process, every link opened while running, and install links tapped in Discord. */
 export function start() {
-	subscription = Linking.addEventListener('url', onURL);
+	subscription = Linking.addEventListener('url', (event: LinkEvent) => handleURL(event.url));
 	// An install link tapped inside Discord installs in place, before any prompt or browser.
 	Patcher.instead(LinkClicks, 'handleClick', ({ args, original, this: self }) => {
 		const [options] = args as [LinkClick | undefined];
@@ -383,7 +355,11 @@ export function start() {
 		void receive(link);
 	});
 	readLaunchURL()
-		.then(onLaunchURL)
+		.then((url: string | null) => {
+			if (url) {
+				handleURL(url, true);
+			}
+		})
 		.catch((error: Error) => Logger.error('Failed to read the launch URL:', error));
 }
 

@@ -1,5 +1,3 @@
-Role colors shouldn't stop at the member list. Role Color Everywhere paints names and mentions with their role colors across Discord.
-
 ## :sparkle: What it does
 
 - :at-sign: Colors mentions in messages, embeds, reply previews and the chat input.

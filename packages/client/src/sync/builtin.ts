@@ -1,4 +1,4 @@
-import { SYNC_LOCAL_STORE_PREFIX } from '@unbound-app/contracts/sync';
+import { SYNC_LOCAL_STORE_PREFIX } from '@unbound-app/contracts/sync-stores';
 import debounce from '@unbound-app/utils/debounce';
 
 import { connect, disconnect, getMode, isApplying, isEnabled, now } from '~/sync/api';

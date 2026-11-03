@@ -5,9 +5,13 @@ import {
 	SYNC_KINDS,
 	SYNC_LOCAL_KEYS,
 	SYNC_LOCAL_STORE_PREFIX,
-	syncSettingsStoreSchema,
+} from '@unbound-app/contracts/sync-stores';
+import type {
+	SyncDocument,
+	SyncKind,
+	SyncKindDocument,
+	SyncSettingsStore,
 } from '@unbound-app/contracts/sync';
-import type { SyncDocument, SyncKind, SyncKindDocument } from '@unbound-app/contracts/sync';
 import { createLogger } from '@unbound-app/logger';
 
 import { getBucket, snapshot } from '~/storage/api';
@@ -46,15 +50,19 @@ const ACTION_ORDER: Record<SyncAction['type'], number> = {
 	'set-setting': 4,
 };
 
+// A kind with no such step shares the no-op that ignores it.
+const noApplied = () => null;
+const ignored = () => undefined;
+
 const adapters: Record<SyncKind, KindAdapter> = {
 	plugins: {
-		getApplied: () => null,
+		getApplied: noApplied,
 		isEnabled: (id) => plugins.isEnabled(id),
 		isInstalled: (id) => Boolean(plugins.getEntity(id)),
 		install: (url) => plugins.install(url),
 		delete: (id) => plugins.delete(id),
 		setEnabled: (id, enabled) => void (enabled ? plugins.enable(id) : plugins.disable(id)),
-		apply: () => undefined,
+		apply: ignored,
 		getSources: () => plugins.getSources(),
 		recordSource: (id, url) => plugins.recordSource(id, url),
 		forgetSource: (id) => plugins.forgetSource(id),
@@ -66,7 +74,7 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		install: (url) => themes.install(url),
 		delete: (id) => themes.delete(id),
 		// A theme is enabled by being applied.
-		setEnabled: () => undefined,
+		setEnabled: ignored,
 		apply: (id) => {
 			const current = themes.getAppliedId();
 
@@ -86,22 +94,22 @@ const adapters: Record<SyncKind, KindAdapter> = {
 		isInstalled: (id) => Boolean(icons.getEntity(id)),
 		install: (url) => icons.install(url),
 		delete: (id) => icons.delete(id),
-		setEnabled: () => undefined,
+		setEnabled: ignored,
 		apply: (id) => icons.enable(id ?? SYNC_DEFAULT_ICON_PACK),
 		getSources: () => icons.getSources(),
 		recordSource: (id, url) => icons.recordSource(id, url),
 		forgetSource: (id) => icons.forgetSource(id),
 	},
 	fonts: {
-		getApplied: () => null,
+		getApplied: noApplied,
 		isEnabled: () => true,
 		// A new font only registers natively after a relaunch, so its recorded source counts too.
 		isInstalled: (id) =>
 			id in fonts.getSources() || fonts.getEntities().some((font) => font.file === id),
 		install: (url) => fonts.install(url),
 		delete: (id) => fonts.delete(id),
-		setEnabled: () => undefined,
-		apply: () => undefined,
+		setEnabled: ignored,
+		apply: ignored,
 		getSources: () => fonts.getSources(),
 		recordSource: (id, url) => fonts.recordSource(id, url),
 		forgetSource: (id) => fonts.forgetSource(id),
@@ -119,6 +127,15 @@ function collectKind(kind: SyncKind): SyncKindDocument {
 		(kind === 'icons' && applied === SYNC_DEFAULT_ICON_PACK);
 
 	return { installs, applied: known ? applied : null };
+}
+
+/**
+ * @description Copies a settings store, so the synced document cannot write through to the live settings.
+ * @param store The store as `snapshot` reports it.
+ * @returns A shallow copy of it.
+ */
+function copyStore(store: SyncSettingsStore): SyncSettingsStore {
+	return { ...store };
 }
 
 /**
@@ -143,9 +160,10 @@ export function collectLocalDocument(): SyncDocument {
 			continue;
 		}
 
+		// The document keeps its own copy of each store; Hermes has no `structuredClone`, so a shallow
+		// copy stands in for the deep one `parse` used to make.
 		if (name === SYNC_CORE_STORE) {
-			// Parsing copies the store; Hermes has no `structuredClone`.
-			const core = syncSettingsStoreSchema.parse(store);
+			const core = copyStore(store);
 
 			for (const key of LOCAL_KEYS) {
 				delete core[key];
@@ -153,7 +171,7 @@ export function collectLocalDocument(): SyncDocument {
 
 			synced[name] = core;
 		} else if (ids.has(name)) {
-			synced[name] = syncSettingsStoreSchema.parse(store);
+			synced[name] = copyStore(store);
 		}
 	}
 
@@ -185,12 +203,14 @@ async function applyAction(action: SyncAction): Promise<boolean> {
 		}
 
 		case 'delete': {
-			await adapters[action.kind].delete(action.id);
+			const adapter = adapters[action.kind];
+
+			await adapter.delete(action.id);
 
 			// A delete returns early for an addon that is not loaded, which would leave its source to resync.
-			adapters[action.kind].forgetSource(action.id);
+			adapter.forgetSource(action.id);
 
-			return !adapters[action.kind].isInstalled(action.id);
+			return !adapter.isInstalled(action.id);
 		}
 
 		case 'set-enabled': {
@@ -239,5 +259,3 @@ export async function applyActions(actions: SyncAction[]): Promise<SyncAction[]>
 
 	return failed;
 }
-
-export default { collectLocalDocument, applyActions };

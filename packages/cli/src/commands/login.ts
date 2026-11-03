@@ -1,13 +1,13 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 import { setTimeout as sleep } from 'node:timers/promises';
 import toError from '@unbound-app/utils/to-error';
-import { z } from 'zod';
 
 import type { DeviceCode } from '~/lib/login';
 import { parseEnv } from '~/lib/env';
 import { login } from '~/lib/login';
+import { Type } from '~/lib/schema';
 
-const schema = z.object({});
+const schema = Type.Object({});
 
 const loginCommand: CommandDefinition<typeof schema> = {
 	name: 'login',

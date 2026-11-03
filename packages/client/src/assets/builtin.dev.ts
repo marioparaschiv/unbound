@@ -1,5 +1,5 @@
 import type { SectionEntry } from '~/settings/section';
-import AssetsPage from '~/ui/settings/assets';
+import AssetsPage from '~/ui/settings/assets.dev';
 import { Screens } from '~/core/constants';
 
 export const assetsSection: SectionEntry = {

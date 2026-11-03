@@ -1,5 +1,3 @@
-Who is "Alice", really? Show Me Your Name adds the username next to the author name on each message, so "Alice" reads "Alice (@alice99)".
-
 ## :sparkle: What it does
 
 - :at-sign: Adds the account's username to the author name above each message.

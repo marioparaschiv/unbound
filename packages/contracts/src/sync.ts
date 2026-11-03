@@ -1,129 +1,124 @@
-import { CORE_SETTINGS_STORE } from '@unbound-app/types/settings';
+import {
+	emptySyncDocument,
+	SYNC_DEFAULT_ICON_PACK,
+	SYNC_ID_PATTERN,
+	SYNC_KINDS,
+	SYNC_LOCAL_KEYS,
+	SYNC_LOCAL_STORE_PREFIX,
+	SYNC_CORE_STORE,
+} from './sync-stores';
+import { Type, type StaticDecode } from './schema';
 
-import { z } from './zod';
+export {
+	SYNC_KINDS,
+	SYNC_CORE_STORE,
+	SYNC_LOCAL_STORE_PREFIX,
+	SYNC_LOCAL_KEYS,
+	SYNC_DEFAULT_ICON_PACK,
+	SYNC_ID_PATTERN,
+	emptySyncDocument,
+} from './sync-stores';
 
-/** The addon managers whose installs sync, named after their settings buckets. */
-export const SYNC_KINDS = ['plugins', 'themes', 'icons', 'fonts'] as const;
-
-/** The core settings store; addon settings stores are named after the addon id. */
-export const SYNC_CORE_STORE = CORE_SETTINGS_STORE;
-
-/** Stores under this prefix hold caches and session state, and never sync. */
-export const SYNC_LOCAL_STORE_PREFIX = 'unbound::';
-
-/** Keys of the core store that only make sense on the device that set them. */
-export const SYNC_LOCAL_KEYS = ['recovery', 'debugger', 'loader'] as const;
-
-/** The built-in icon pack, which is always installed and may be applied without a synced install. */
-export const SYNC_DEFAULT_ICON_PACK = 'default';
-
-export const SYNC_ID_PATTERN = /^[\w.-]{1,128}$/;
 export const SYNC_URL_MAX_LENGTH = 2048;
 export const SYNC_SETTINGS_MAX_DEPTH = 8;
 
-export const syncKindSchema = z.enum(SYNC_KINDS);
+export const syncKindSchema = Type.Enum(SYNC_KINDS);
 
 /** One synced install. `id` is the addon id, or the installed file name for a font. */
-export const syncInstallSchema = z.object({
-	id: z.string().check(z.regex(SYNC_ID_PATTERN)),
-	url: z.url({ protocol: /^https?$/ }).check(z.maxLength(SYNC_URL_MAX_LENGTH)),
-	enabled: z.boolean(),
+export const syncInstallSchema = Type.Object({
+	id: Type.String({ pattern: SYNC_ID_PATTERN }),
+	url: Type.String({ format: 'url', pattern: /^https?:\/\//i, maxLength: SYNC_URL_MAX_LENGTH }),
+	enabled: Type.Boolean(),
 });
 
-export const syncKindDocumentSchema = z.object({
-	installs: z.array(syncInstallSchema),
+export const syncKindDocumentSchema = Type.Object({
+	installs: Type.Array(syncInstallSchema),
 	/** The applied theme or icon pack; always `null` for plugins and fonts. */
-	applied: z.nullable(z.string()),
+	applied: Type.Union([Type.String(), Type.Null()]),
 });
+
+type JsonObject = { [key: string]: JsonValue };
+
+/** A value JSON can carry. */
+export type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
+
+// Values arrive as parsed JSON, so any value is already JSON; the type restores what `z.json()` gave.
+const jsonValueSchema = Type.Unsafe<JsonValue>(Type.Any());
 
 /** A settings store as JSON. */
-export const syncSettingsStoreSchema = z.record(z.string(), z.json());
+export const syncSettingsStoreSchema = Type.Record(Type.String(), jsonValueSchema, {
+	additionalProperties: false,
+});
 
-export const syncDocumentSchema = z.object({
-	addons: z.object({
+export const syncDocumentSchema = Type.Object({
+	addons: Type.Object({
 		plugins: syncKindDocumentSchema,
 		themes: syncKindDocumentSchema,
 		icons: syncKindDocumentSchema,
 		fonts: syncKindDocumentSchema,
 	}),
 	/** Settings stores by name. */
-	settings: z.record(z.string(), syncSettingsStoreSchema),
+	settings: Type.Record(Type.String(), syncSettingsStoreSchema, { additionalProperties: false }),
 });
 
 /** The stored document. `revision` is `0` and `updatedAt` is `null` before the first save. */
-export const syncStateSchema = z.object({
-	revision: z.number().check(z.int(), z.nonnegative()),
-	updatedAt: z.nullable(z.iso.datetime()),
+export const syncStateSchema = Type.Object({
+	revision: Type.Integer({ minimum: 0 }),
+	updatedAt: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
 	document: syncDocumentSchema,
 });
 
 // Bounded but permissive: entries that break the rules above are dropped by the server, not rejected.
-const syncInstallInputSchema = z.object({
-	id: z.string().check(z.maxLength(1024)),
-	url: z.string().check(z.maxLength(8192)),
-	enabled: z.boolean(),
+const syncInstallInputSchema = Type.Object({
+	id: Type.String({ maxLength: 1024 }),
+	url: Type.String({ maxLength: 8192 }),
+	enabled: Type.Boolean(),
 });
 
-const syncKindInputSchema = z.object({
-	installs: z.array(syncInstallInputSchema).check(z.maxLength(1000)),
-	applied: z._default(z.nullable(z.string().check(z.maxLength(1024))), null),
+const syncKindInputSchema = Type.Object({
+	installs: Type.Array(syncInstallInputSchema, { maxItems: 1000 }),
+	applied: Type.Union([Type.String({ maxLength: 1024 }), Type.Null()], { default: null }),
 });
 
-export const syncDocumentInputSchema = z.object({
-	addons: z._default(
-		z.object({
-			plugins: z.optional(syncKindInputSchema),
-			themes: z.optional(syncKindInputSchema),
-			icons: z.optional(syncKindInputSchema),
-			fonts: z.optional(syncKindInputSchema),
-		}),
-		{},
+export const syncDocumentInputSchema = Type.Object({
+	addons: Type.Object(
+		{
+			plugins: Type.Optional(syncKindInputSchema),
+			themes: Type.Optional(syncKindInputSchema),
+			icons: Type.Optional(syncKindInputSchema),
+			fonts: Type.Optional(syncKindInputSchema),
+		},
+		{ default: {} },
 	),
-	settings: z._default(
-		z
-			.record(z.string().check(z.maxLength(256)), syncSettingsStoreSchema)
-			.check(
-				z.refine(
-					(settings) => Object.keys(settings).length <= 1000,
-					'Too many settings stores.',
-				),
-			),
-		{},
+	settings: Type.Refine(
+		Type.Record(Type.String({ maxLength: 256 }), syncSettingsStoreSchema, {
+			additionalProperties: false,
+			default: {},
+		}),
+		(settings) => Object.keys(settings).length <= 1000,
+		() => 'Too many settings stores.',
 	),
 });
 
 /** `revision` is the revision the document was merged against; a stale one is a conflict. */
-export const syncPutRequestSchema = z.object({
-	revision: z.number().check(z.int(), z.nonnegative()),
+export const syncPutRequestSchema = Type.Object({
+	revision: Type.Integer({ minimum: 0 }),
 	document: syncDocumentInputSchema,
 });
 
-export const syncDeleteResponseSchema = z.object({
-	deleted: z.boolean(),
+export const syncDeleteResponseSchema = Type.Object({
+	deleted: Type.Boolean(),
 });
 
-export type SyncKind = z.infer<typeof syncKindSchema>;
-export type SyncInstall = z.infer<typeof syncInstallSchema>;
-export type SyncKindDocument = z.infer<typeof syncKindDocumentSchema>;
-export type SyncSettingsStore = z.infer<typeof syncSettingsStoreSchema>;
-export type SyncDocument = z.infer<typeof syncDocumentSchema>;
-export type SyncState = z.infer<typeof syncStateSchema>;
-export type SyncDocumentInput = z.infer<typeof syncDocumentInputSchema>;
-export type SyncPutRequest = z.infer<typeof syncPutRequestSchema>;
-export type SyncDeleteResponse = z.infer<typeof syncDeleteResponseSchema>;
-
-/**
- * @description Builds a document with no installs and no settings.
- * @returns The empty document.
- */
-export function emptySyncDocument(): SyncDocument {
-	const kind = () => ({ installs: [], applied: null });
-
-	return {
-		addons: { plugins: kind(), themes: kind(), icons: kind(), fonts: kind() },
-		settings: {},
-	};
-}
+export type SyncKind = StaticDecode<typeof syncKindSchema>;
+export type SyncInstall = StaticDecode<typeof syncInstallSchema>;
+export type SyncKindDocument = StaticDecode<typeof syncKindDocumentSchema>;
+export type SyncSettingsStore = StaticDecode<typeof syncSettingsStoreSchema>;
+export type SyncDocument = StaticDecode<typeof syncDocumentSchema>;
+export type SyncState = StaticDecode<typeof syncStateSchema>;
+export type SyncDocumentInput = StaticDecode<typeof syncDocumentInputSchema>;
+export type SyncPutRequest = StaticDecode<typeof syncPutRequestSchema>;
+export type SyncDeleteResponse = StaticDecode<typeof syncDeleteResponseSchema>;
 
 export default {
 	SYNC_KINDS,

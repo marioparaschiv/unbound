@@ -1,5 +1,4 @@
 import { setTimeout as sleep } from 'node:timers/promises';
-import type { z } from 'zod';
 
 import {
 	currentBundleSha,
@@ -20,6 +19,7 @@ import {
 	type IdleSample,
 } from '~/bench/probe';
 import type { DiscordBuild, MemorySample, RunRecord } from '~/bench/record';
+import { safeParse, type StaticDecode, type TSchema } from '~/lib/schema';
 import { parseLaunchLog, type LaunchLog } from '~/bench/launch-log';
 import { evaluateOnDevice, type DeviceClient } from '~/lib/device';
 import type { AddonMode, LaunchKind } from '~/bench/plan';
@@ -67,27 +67,27 @@ function json(text: string): unknown {
  * @description Evaluates a probe until it answers from this launch's runtime, or the deadline passes. Right after a
  * launch the bridge may still hold the previous process, or no device at all.
  */
-async function sample<T extends { launch: string | null }>(
+async function sample<S extends TSchema>(
 	context: LaunchContext,
 	code: string,
-	schema: z.ZodType<T>,
-	accept: (value: T) => boolean,
+	schema: S,
+	accept: (value: StaticDecode<S>) => boolean,
 	deadline: number,
-): Promise<T | string> {
+): Promise<StaticDecode<S> | string> {
 	let last = 'the device never connected to the debugger bridge';
 
 	while (Date.now() < deadline) {
 		const result = await evaluateOnDevice(context.client, code, EVAL_TIMEOUT_MS);
 
 		if (result?.ok) {
-			const parsed = schema.safeParse(json(result.value));
+			const parsed = safeParse(schema, json(result.value));
 
 			if (parsed.success && accept(parsed.data)) {
 				return parsed.data;
 			}
 
 			last = parsed.success
-				? `the bridge answered from another launch (${parsed.data.launch})`
+				? `the bridge answered from another launch (${launchOf(parsed.data)})`
 				: `unexpected probe answer: ${result.value.slice(0, 200)}`;
 		} else if (result) {
 			last = `the probe threw: ${result.error.slice(0, 200)}`;
@@ -97,6 +97,15 @@ async function sample<T extends { launch: string | null }>(
 	}
 
 	return last;
+}
+
+// UNKNOWN: a probe answer, which every schema the bench samples with carries a `launch` id on.
+function launchOf(answer: unknown): string {
+	return String(
+		typeof answer === 'object' && answer !== null && 'launch' in answer
+			? answer.launch
+			: undefined,
+	);
 }
 
 async function waitForMilestones(

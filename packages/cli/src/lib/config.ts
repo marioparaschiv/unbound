@@ -7,7 +7,8 @@ import type { WorkspaceConfig } from '@unbound-app/contracts/workspace';
 import { existsSync, readFileSync } from 'node:fs';
 import toError from '@unbound-app/utils/to-error';
 import { join, resolve } from 'node:path';
-import { z } from 'zod';
+
+import { parse, safeParse } from './schema';
 
 /** A parsed `unbound.config.json` paired with the directory it was found in (or defaulted into). */
 export type ResolvedConfig = {
@@ -28,7 +29,7 @@ export function loadConfig(cwd: string = process.cwd()): ResolvedConfig | { erro
 	const root = findWorkspaceRoot(resolve(cwd), (dir) => existsSync(join(dir, CONFIG_FILENAME)));
 
 	if (root === undefined) {
-		return { config: workspaceConfigSchema.parse({}), dir: resolve(cwd), bare: true };
+		return { config: parse(workspaceConfigSchema, {}), dir: resolve(cwd), bare: true };
 	}
 
 	const path = join(root, CONFIG_FILENAME);
@@ -40,10 +41,10 @@ export function loadConfig(cwd: string = process.cwd()): ResolvedConfig | { erro
 		return { error: `Invalid ${path}: ${toError(error).message}` };
 	}
 
-	const parsed = workspaceConfigSchema.safeParse(json);
+	const parsed = safeParse(workspaceConfigSchema, json);
 
 	if (!parsed.success) {
-		return { error: `Invalid ${path}:\n${z.prettifyError(parsed.error)}` };
+		return { error: `Invalid ${path}:\n${parsed.error.message}` };
 	}
 
 	return { config: parsed.data, dir: root, bare: false };

@@ -1,5 +1,5 @@
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';
 import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
@@ -63,12 +63,12 @@ type SortKey = [
 	discordId: DiscordId,
 ];
 
-const CURSOR = z.tuple([
-	z.enum(TEAM_GROUPS),
-	z.number().int(),
-	z.number().int(),
-	z.string(),
-	addonAuthorSchema.shape.id,
+const CURSOR = Type.Tuple([
+	Type.Enum(TEAM_GROUPS),
+	Type.Integer(),
+	Type.Integer(),
+	Type.String(),
+	addonAuthorSchema.properties.id,
 ]);
 
 const STAFF_RANK: Record<StaffRole, number> = { admin: 0, moderator: 1 };

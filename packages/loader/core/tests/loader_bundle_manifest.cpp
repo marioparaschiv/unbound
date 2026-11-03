@@ -1,5 +1,7 @@
 #include <cassert>
+#include <nlohmann/json.hpp>
 #include <string>
+#include <vector>
 
 #include "LoaderBundleManifest.h"
 #include "LoaderBundleSignature.h"
@@ -21,6 +23,21 @@ static void parsesBuildTimes()
     assert(!loader::parseBuildTime("2026-10-27T12:06:15.Z"));
 }
 
+static std::string manifestWithHashes(const std::vector<std::string> &files)
+{
+    nlohmann::json hashes = nlohmann::json::object();
+    for (const std::string &file : files)
+    {
+        hashes[file] = loader::sha512Hex(file);
+    }
+    return nlohmann::json{{"revision", "r"},
+                          {"channel", "beta"},
+                          {"buildTime", "2026-10-27T12:06:15Z"},
+                          {"bytecodeVersions", {98}},
+                          {"sha512", hashes}}
+        .dump();
+}
+
 static void parsesManifests()
 {
     const std::string                     hash     = loader::sha512Hex("bundle");
@@ -34,8 +51,31 @@ static void parsesManifests()
     assert(manifest->buildTimeMilliseconds == 1793102775507);
     assert((manifest->bytecodeVersions == std::vector<uint32_t>{98, 96}));
     assert(manifest->sha512.size() == 1 && manifest->sha512.at("unbound.98.bundle") == hash);
-    assert(manifest->bundleFile(98) == "unbound.98.bundle");
-    assert(manifest->bundleFile(90) == "unbound.js");
+    assert(manifest->bundleFile(98, false) == "unbound.98.bundle");
+    assert(manifest->bundleFile(98, true) == "unbound.98.bundle");
+    assert(manifest->bundleFile(90, false) == "unbound.js");
+    assert(manifest->bundleFile(90, true) == "unbound.js");
+
+    std::optional<loader::BundleManifest> both = loader::parseBundleManifest(manifestWithHashes(
+        {"unbound.98.bundle", "unbound.js", "unbound-dev.98.bundle", "unbound-dev.js"}));
+    assert(both);
+    assert(both->bundleFile(98, false) == "unbound.98.bundle");
+    assert(both->bundleFile(98, true) == "unbound-dev.98.bundle");
+    assert(both->bundleFile(90, false) == "unbound.js");
+    assert(both->bundleFile(90, true) == "unbound-dev.js");
+
+    std::optional<loader::BundleManifest> sourceOnly = loader::parseBundleManifest(
+        manifestWithHashes({"unbound.98.bundle", "unbound.js", "unbound-dev.js"}));
+    assert(sourceOnly);
+    assert(sourceOnly->bundleFile(98, false) == "unbound.98.bundle");
+    assert(sourceOnly->bundleFile(98, true) == "unbound-dev.js");
+
+    assert(loader::bundleFlavourNamed("unbound.js") == loader::BundleFlavour::Default);
+    assert(loader::bundleFlavourNamed("unbound.98.bundle") == loader::BundleFlavour::Default);
+    assert(loader::bundleFlavourNamed("unbound-dev.js") == loader::BundleFlavour::Development);
+    assert(loader::bundleFlavourNamed("https://builds.unbound.rip/unbound-dev.98.bundle") ==
+           loader::BundleFlavour::Development);
+    assert(!loader::bundleFlavourNamed("manifest.json"));
 
     std::optional<loader::BundleManifest> legacy = loader::parseBundleManifest(
         R"({"revision":"b53f3860","buildTime":"2026-10-27T12:06:15.507Z","bytecodeVersions":[98]})");

@@ -6,6 +6,7 @@
 
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
+#include "LoaderPreferences.h"
 #include "NativeBundleTransaction.h"
 #include "NativePluginVersion.h"
 
@@ -85,6 +86,9 @@ UpdaterSettings updaterSettings(SettingsStore &store)
         store.set("unbound", key, value);
         store.save();
     };
+    settings.developerMode = [&store]() {
+        return preferences::developerMode(store);
+    };
     return settings;
 }
 
@@ -126,6 +130,20 @@ std::optional<std::string> BundleUpdater::fetch(const std::string &url) const
 std::optional<BundleBaseline> BundleUpdater::baseline() const
 {
     return parseBaseline(settings_.getString(kBundleBaselineSetting, ""));
+}
+
+bool BundleUpdater::developerMode() const
+{
+    return settings_.developerMode && settings_.developerMode();
+}
+
+// The developer mode a bundle was downloaded for; a manifest without the dev files leaves the
+// default bundle in place for developer mode, which must not count as a pending switch.
+std::optional<bool> BundleUpdater::recordedDeveloperMode(const std::string &path) const
+{
+    std::string mode =
+        recordField(parseRecord(readTextFile(path + kBundleTrustSuffix)), "developerMode");
+    return mode.empty() ? std::nullopt : std::optional<bool>(mode == "1");
 }
 
 std::optional<std::string> BundleUpdater::exemptionFor(const std::string &url) const
@@ -344,9 +362,9 @@ std::string BundleUpdater::selectURL(const BundleSource                  &source
         "Manifest bytecode versions: [" + versions +
             "], Current bytecode version: " + std::to_string(bytecodeVersion));
 
-    std::string file = manifest->bundleFile(bytecodeVersion);
+    std::string file = manifest->bundleFile(bytecodeVersion, developerMode());
     log(LogLevel::Info, LOG_CATEGORY_UPDATER,
-        file == "unbound.js" ? "Using JavaScript bundle" : "Using hermes bytecode bundle");
+        hasSuffix(file, ".js") ? "Using JavaScript bundle" : "Using hermes bytecode bundle");
     return source.baseURL + file;
 }
 
@@ -437,8 +455,10 @@ BundleUpdater::DownloadPlan BundleUpdater::planDownload(const std::optional<std:
 std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &plan,
                                                          const std::string  &candidatePath) const
 {
-    nlohmann::json record{
-        {"url", plan.url}, {"source", plan.source}, {"file", urlFileName(plan.url)}};
+    nlohmann::json record{{"url", plan.url},
+                          {"source", plan.source},
+                          {"file", urlFileName(plan.url)},
+                          {"developerMode", developerMode() ? "1" : "0"}};
 
     if (!plan.exemption.empty())
     {
@@ -526,7 +546,12 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
         log(LogLevel::Info, LOG_CATEGORY_UPDATER,
             "The active bundle has no verification record; downloading a verified copy.");
     }
-    if (fileExists(targetPath) && isVerified && !forceUpdate && !storedEtag.empty())
+    // The stored ETag belongs to whichever file the active bundle came from, so it only
+    // describes the download when the plan selects that same file.
+    std::string activeFile =
+        recordField(parseRecord(readTextFile(targetPath + kBundleTrustSuffix)), "file");
+    if (fileExists(targetPath) && isVerified && !forceUpdate && !storedEtag.empty() &&
+        activeFile == urlFileName(url))
     {
         headers["If-None-Match"] = storedEtag;
     }

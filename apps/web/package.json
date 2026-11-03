@@ -12,6 +12,10 @@
 			"types": "./dist/types/src/api/client.d.ts",
 			"default": "./src/api/client.ts"
 		},
+		"./schema-client": {
+			"types": "./dist/types/src/api/schema-client.d.ts",
+			"default": "./src/api/schema-client.ts"
+		},
 		"./bot": {
 			"types": "./dist/types/src/lib/bot/index.d.ts",
 			"default": "./src/lib/bot/index.ts"
@@ -71,8 +75,7 @@
 		"sonner": "^2.0.7",
 		"tailwind-merge": "^3.5.0",
 		"thumbhash": "^0.1.1",
-		"vaul": "^1.1.2",
-		"zod": "^4.0.0"
+		"vaul": "^1.1.2"
 	},
 	"devDependencies": {
 		"@mdx-js/mdx": "^3.1.1",

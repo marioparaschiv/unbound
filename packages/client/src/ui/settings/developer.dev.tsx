@@ -7,7 +7,7 @@ import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
 
-import TextSettingRow from './text-setting-row';
+import TextSettingRow from './text-setting-row.dev';
 
 /** The loader reads the same rule: an http or https URL with a host. */
 function isBundleURL(value: string): boolean {

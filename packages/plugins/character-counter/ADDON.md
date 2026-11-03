@@ -1,5 +1,3 @@
-Know you're about to hit the limit before Discord tells you. Character Counter shows your message length above the chat input.
-
 ## :sparkle: What it does
 
 - :text: Shows length over your limit, like `120/2000`, while you type.

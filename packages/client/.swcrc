@@ -20,13 +20,14 @@
 	},
 	"env": {
 		"targets": "fully supports es6",
-		"include": [
-			"transform-block-scoping",
-			"transform-classes",
-			"transform-async-to-generator",
-			"transform-async-generator-functions"
-		],
+		"include": ["transform-block-scoping", "transform-async-generator-functions"],
 		"exclude": [
+			"transform-async-to-generator",
+			"transform-class-properties",
+			"transform-private-methods",
+			"transform-class-static-block",
+			"transform-private-property-in-object",
+			"transform-typeof-symbol",
 			"transform-parameters",
 			"transform-template-literals",
 			"transform-exponentiation-operator",

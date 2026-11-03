@@ -5,15 +5,12 @@ import Animated, { withSpring } from 'react-native-reanimated';
 import { View, Pressable } from 'react-native';
 import { memo, useCallback } from 'react';
 
-import { useUnboundSettings } from '~/settings/unbound';
 import TintedIcon from '~/metro/fallbacks/tinted-icon';
-import toastDuration from '~/toasts/duration';
+import { Discord } from '~/metro/components';
 import useToastStore from '~/toasts/state';
 import { icons } from '~/assets/api';
 
 import useToastState from './use-toast-state';
-import ToastProgress from './toast-progress';
-import ToastButtons from './toast-buttons';
 import ToastContent from './toast-content';
 import ToastSurface from './toast-surface';
 import useStyles from './toast.style';
@@ -45,13 +42,12 @@ function Toast({ id }: ToastProps) {
 	const {
 		style,
 		closing,
+		animations,
+		duration,
 		leave,
-		properties: { scale, height, width, translateY },
+		properties: { height, width },
 	} = useToastState(options ?? { id });
-	const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 	const styles = useStyles();
-
-	const animations = settings.get('toasts.animations');
 
 	const onGestureEvent = useCallback(
 		(event: GestureEvent<PanGestureHandlerEventPayload>) => {
@@ -76,17 +72,9 @@ function Toast({ id }: ToastProps) {
 	// The store entry is gone the instant this toast is removed; skip a final empty render.
 	if (!options) return null;
 
-	const duration = toastDuration(options.duration, settings.get('toasts.duration'));
-
 	return (
 		<PanGestureHandler onGestureEvent={onGestureEvent}>
-			<Animated.View
-				style={[
-					{ ...style, transform: [{ scale }, { translateY }] },
-					{ zIndex: closing ? 0 : 10 },
-				]}
-				pointerEvents='box-none'
-			>
+			<Animated.View style={[style, { zIndex: closing ? 0 : 10 }]} pointerEvents='box-none'>
 				<ToastSurface onLayout={onLayout}>
 					<View style={styles.wrapper}>
 						{options.icon ? (
@@ -103,9 +91,24 @@ function Toast({ id }: ToastProps) {
 						</Pressable>
 					</View>
 					{Array.isArray(options.buttons) && options.buttons.length ? (
-						<ToastButtons buttons={options.buttons} />
+						<View style={styles.buttons}>
+							{options.buttons.map((button, index) => (
+								<Discord.Button
+									key={index}
+									style={styles.button}
+									variant={button.variant || 'primary'}
+									size={button.size || 'sm'}
+									onPress={button.onPress}
+									iconPosition={button.iconPosition || 'start'}
+									icon={button.icon || undefined}
+									text={button.content}
+								/>
+							))}
+						</View>
 					) : null}
-					{duration > 0 ? <ToastProgress width={width} /> : null}
+					{duration > 0 ? (
+						<Animated.View style={[styles.progressBar, { width }, styles.bar]} />
+					) : null}
 				</ToastSurface>
 			</Animated.View>
 		</PanGestureHandler>

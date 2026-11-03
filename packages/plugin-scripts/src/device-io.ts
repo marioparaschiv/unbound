@@ -1,8 +1,14 @@
 import { copyFileSync, existsSync, writeFileSync } from 'node:fs';
-import { z } from '@unbound-app/contracts/zod';
 import { join } from 'node:path';
 
 import { REPO_ROOT } from './paths';
+import {
+	parse,
+	safeParse,
+	Type,
+	type StaticDecode,
+	type TSchema,
+} from '@unbound-app/contracts/schema';
 
 export type ScreenshotTarget = { kind: 'android'; serial?: string } | { kind: 'ios'; udid: string };
 
@@ -28,10 +34,10 @@ const IOS_POINTS = { width: 375, height: 667 };
 export const SCROLL_SWIPES = 12;
 
 // `unbound eval --json` prints the eval result; only `ok`, `value` and `error` are read.
-const evalReplySchema = z.object({
-	ok: z.optional(z.boolean()),
-	value: z.optional(z.unknown()),
-	error: z.optional(z.unknown()),
+const evalReplySchema = Type.Object({
+	ok: Type.Optional(Type.Boolean()),
+	value: Type.Optional(Type.Unknown()),
+	error: Type.Optional(Type.Unknown()),
 });
 
 export async function run(command: string[]): Promise<CommandResult> {
@@ -79,7 +85,7 @@ async function evaluateOnce(port: number, code: string): Promise<string> {
 		code,
 	]);
 	const line = stdout.trim().split('\n').at(-1) ?? '';
-	const parsed = evalReplySchema.safeParse(JSON.parse(line || '{}'));
+	const parsed = safeParse(evalReplySchema, JSON.parse(line || '{}'));
 	const reply = parsed.success ? parsed.data : {};
 
 	if (!reply.ok || typeof reply.value !== 'string') {
@@ -107,12 +113,12 @@ export function evaluate(port: number, code: string): Promise<string> {
  * @param schema The shape the script's JSON must have.
  * @returns The parsed result.
  */
-export async function evaluateJson<T>(
+export async function evaluateJson<T extends TSchema>(
 	port: number,
 	code: string,
-	schema: z.ZodMiniType<T>,
-): Promise<T> {
-	return schema.parse(JSON.parse(await evaluate(port, code)));
+	schema: T,
+): Promise<StaticDecode<T>> {
+	return parse(schema, JSON.parse(await evaluate(port, code)));
 }
 
 export async function waitForBridge(port: number): Promise<void> {

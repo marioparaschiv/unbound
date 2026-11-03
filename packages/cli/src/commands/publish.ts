@@ -1,29 +1,31 @@
 import type { CommandDefinition, CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import { ApiRequestError } from '@unbound-app/web/client';
 import toError from '@unbound-app/utils/to-error';
-import { z } from 'zod';
 
 import type { DiscoveredAddon } from '~/lib/discovery';
 import { discoverAddons } from '~/lib/discovery';
 import { loadConfig } from '~/lib/config';
 import { publish } from '~/lib/publish';
 import { parseEnv } from '~/lib/env';
+import { Type } from '~/lib/schema';
 
-const schema = z.object({
-	addon: z
-		.string()
-		.optional()
-		.describe('The id of the addon to publish; required when the workspace has several.'),
-	ref: z
-		.string()
-		.optional()
-		.describe(
-			'The branch, tag or commit to submit; defaults to the tag on HEAD, else its SHA.',
-		),
-	repository: z
-		.string()
-		.optional()
-		.describe('The GitHub repository to submit from; defaults to the `origin` remote.'),
+const schema = Type.Object({
+	addon: Type.Optional(
+		Type.String({
+			description: 'The id of the addon to publish; required when the workspace has several.',
+		}),
+	),
+	ref: Type.Optional(
+		Type.String({
+			description:
+				'The branch, tag or commit to submit; defaults to the tag on HEAD, else its SHA.',
+		}),
+	),
+	repository: Type.Optional(
+		Type.String({
+			description: 'The GitHub repository to submit from; defaults to the `origin` remote.',
+		}),
+	),
 });
 
 const publishCommand: CommandDefinition<typeof schema> = {

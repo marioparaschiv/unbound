@@ -1,16 +1,17 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { z } from 'zod';
 
-const schema = z.object({
+import { safeParse, Type, type StaticDecode } from '~/lib/schema';
+
+const schema = Type.Object({
 	/** The API origin the session belongs to; it is never sent to any other origin. */
-	apiUrl: z.url(),
+	apiUrl: Type.String({ format: 'url' }),
 	/** The Better Auth session token from the device authorization flow, sent as a bearer token. */
-	token: z.string().min(1),
+	token: Type.String({ minLength: 1 }),
 });
 
 /** The session `ubd login` stores. */
-export type Credentials = z.infer<typeof schema>;
+export type Credentials = StaticDecode<typeof schema>;
 
 /**
  * @description Reads the stored credentials, throwing when the file exists but is not valid.
@@ -22,10 +23,10 @@ export function readCredentials(path: string): Credentials | undefined {
 		return undefined;
 	}
 
-	const parsed = schema.safeParse(JSON.parse(readFileSync(path, 'utf8')));
+	const parsed = safeParse(schema, JSON.parse(readFileSync(path, 'utf8')));
 
 	if (!parsed.success) {
-		throw new Error(`Invalid credentials in ${path}:\n${z.prettifyError(parsed.error)}`);
+		throw new Error(`Invalid credentials in ${path}:\n${parsed.error.message}`);
 	}
 
 	return parsed.data;

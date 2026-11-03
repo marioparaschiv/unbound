@@ -1,6 +1,7 @@
 import { reviewQueueQuerySchema } from '@unbound-app/contracts/review';
 import { createServerFn } from '@tanstack/react-start';
 
+import { schemaValidator } from '~/lib/schema-validator';
 import type { ReviewEntry } from '~/lib/review-entry';
 import requestCaller from '~/lib/api/request-caller';
 import { toReviewEntry } from '~/lib/review-entry';
@@ -12,7 +13,7 @@ import app from '~/lib/app';
  * @returns The waiting submissions, oldest first.
  */
 export const fetchReviewQueue = createServerFn({ method: 'GET' })
-	.validator(reviewQueueQuerySchema)
+	.validator(schemaValidator(reviewQueueQuerySchema))
 	.handler(async ({ data }): Promise<ReviewEntry[]> => {
 		const caller = await requestCaller();
 		const { submissions } = await listReviewQueue(app, caller, data?.kind);

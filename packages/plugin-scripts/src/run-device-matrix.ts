@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { parse } from '@unbound-app/contracts/schema';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -260,7 +261,7 @@ function readChecks(out: string): MeasuredCheck[] {
 	const file = join(out, 'results.json');
 
 	return existsSync(file)
-		? measuredChecksSchema.parse(JSON.parse(readFileSync(file, 'utf8')))
+		? parse(measuredChecksSchema, JSON.parse(readFileSync(file, 'utf8')))
 		: [];
 }
 

@@ -23,7 +23,7 @@ type DocsVersionPickerProps = {
 };
 
 const PACKAGE_LABELS: Record<string, string> = Object.fromEntries(
-	docsPackageSchema.options.map((pkg) => [pkg, `@unbound-app/${pkg}`]),
+	docsPackageSchema.enum.map((pkg) => [pkg, `@unbound-app/${pkg}`]),
 );
 
 function versionLabel(version: DocsVersion): string {
@@ -72,7 +72,7 @@ function DocsVersionPicker({ nav, symbol }: DocsVersionPickerProps) {
 					<SelectValue />
 				</SelectTrigger>
 				<SelectContent>
-					{docsPackageSchema.options.map((pkg) => (
+					{docsPackageSchema.enum.map((pkg) => (
 						<SelectItem key={pkg} value={pkg}>
 							{PACKAGE_LABELS[pkg]}
 						</SelectItem>

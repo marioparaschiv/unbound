@@ -1,11 +1,11 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
 import { bridgePortField } from '~/lib/context';
 import { currentRoute } from '~/lib/navigation';
+import { Type } from '~/lib/schema';
 
-const schema = z.object({
+const schema = Type.Object({
 	port: bridgePortField,
 });
 

@@ -1,9 +1,9 @@
 import { createStaffNoteRequestSchema } from '@unbound-app/contracts/admin';
 import { dirname, join, relative, resolve } from 'node:path';
 import { afterAll, describe, expect, test } from 'bun:test';
+import { safeParse } from '@unbound-app/contracts/schema';
 import { existsSync, readdirSync } from 'node:fs';
 import { eq } from 'drizzle-orm';
-import { z } from 'zod/mini';
 
 import {
 	createStaffNote,
@@ -294,11 +294,11 @@ describe('staff notes', () => {
 			{ id: onAddon.id, userId: null, addonId: 'notes.subject' },
 		]);
 
-		expect(z.safeParse(createStaffNoteRequestSchema, { body: 'No subject.' }).success).toBe(
+		expect(safeParse(createStaffNoteRequestSchema, { body: 'No subject.' }).success).toBe(
 			false,
 		);
 		expect(
-			z.safeParse(createStaffNoteRequestSchema, {
+			safeParse(createStaffNoteRequestSchema, {
 				subject: { type: 'both', id: target.userId },
 				body: 'Hi.',
 			}).success,
@@ -313,12 +313,11 @@ describe('staff notes', () => {
 
 	test('rejects an empty or overlong body and trims it', () => {
 		const subject = { type: 'user', id: 'someone' } as const;
-		const parse = (body: string) =>
-			z.safeParse(createStaffNoteRequestSchema, { subject, body });
+		const parse = (body: string) => safeParse(createStaffNoteRequestSchema, { subject, body });
 
 		expect(parse('   ').success).toBe(false);
 		expect(parse('x'.repeat(5001)).success).toBe(false);
-		expect(parse('  Trim me.  ').data?.body).toBe('Trim me.');
+		expect(parse('  Trim me.  ')).toMatchObject({ data: { body: 'Trim me.' } });
 		expect(parse('x'.repeat(5000)).success).toBe(true);
 	});
 

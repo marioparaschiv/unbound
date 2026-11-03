@@ -5,8 +5,8 @@ import { eq } from 'drizzle-orm';
 
 import { getAddonDetails, queryListedAddons } from '~/lib/addons';
 import listAddonsEndpoint from '~/endpoints/list-addons';
+import { createApiClient } from '~/api/schema-client';
 import type { AppContext } from '~/lib/context';
-import { createApiClient } from '~/api/client';
 import { encodeCursor } from '~/lib/keyset';
 import { addon } from '~/db/schema';
 import type { Api } from '~/api';

@@ -1,9 +1,5 @@
-import {
-	installedAddonSchema,
-	updatesRequestSchema,
-	updatesResponseSchema,
-} from '@unbound-app/contracts/updates';
 import type { AddonUpdate, UpdatesRequest, UpdatesResponse } from '@unbound-app/contracts/updates';
+import { isAddonId, isSemver } from '@unbound-app/contracts/manifest-patterns';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Plugin } from '@unbound-app/types';
 import type { Api } from '@unbound-app/web/api';
@@ -49,7 +45,7 @@ function checkable(entries: InstalledEntry[]): Map<string, InstalledEntry> {
 	const owners = new Map<string, InstalledEntry>();
 
 	for (const entry of entries) {
-		if (owners.has(entry.id) || !installedAddonSchema.safeParse(entry).success) {
+		if (owners.has(entry.id) || !isAddonId(entry.id) || !isSemver(entry.version)) {
 			continue;
 		}
 
@@ -75,7 +71,17 @@ export function buildUpdatesRequest(
 
 	if (!addons.length) return;
 
-	return updatesRequestSchema.parse({ clientVersion, addons });
+	return { clientVersion, addons };
+}
+
+/**
+ * @description Fills the fields a server older than the contract omits, which the contract declares
+ * `default`s for: why the update is offered, and the changelogs it skips over.
+ * @param update The update as the server sent it.
+ * @returns The update with both fields present.
+ */
+function readUpdate(update: AddonUpdate): AddonUpdate {
+	return Object.assign({ reason: 'newer', changelogs: [] }, update);
 }
 
 /**
@@ -101,7 +107,7 @@ export function toPendingUpdates(
 							id: entry.id,
 							name: entry.name,
 							from: entry.version,
-							update,
+							update: readUpdate(update),
 						},
 					]
 				: [];
@@ -129,7 +135,6 @@ export async function fetchUpdates(
 	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
 	const response = await request('POST /api/v1/updates', {
 		body,
-		response: updatesResponseSchema,
 	});
 
 	return toPendingUpdates(entries, response);

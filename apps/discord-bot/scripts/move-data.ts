@@ -1,9 +1,9 @@
+import { parse, Type } from '@unbound-app/contracts/schema';
 // Copies the bot's posted state from its old database (`unbound_bot`) into schema `bot` of the web's
 // database: `SOURCE_DATABASE_URL=… bun run db:move-data`, bot stopped, after `db:migrate`. Rerunnable.
 import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 import postgres from 'postgres';
-import { z } from 'zod';
 
 import { ADDON_CHANNELS, desiredChannel, type AddonChannels } from '~/dispatchers/addons';
 import { CDN_URL, SITE_URL } from '~/lib/constants';
@@ -291,11 +291,11 @@ export async function moveData(
 	return { tables, drift: await hashDrift(target, options) };
 }
 
-const moveEnvSchema = z.object({ SOURCE_DATABASE_URL: z.string().min(1) });
+const moveEnvSchema = Type.Object({ SOURCE_DATABASE_URL: Type.String({ minLength: 1 }) });
 
 if (import.meta.main) {
 	const { DATABASE_DIRECT_URL } = parseDatabaseEnv();
-	const { SOURCE_DATABASE_URL } = moveEnvSchema.parse(process.env);
+	const { SOURCE_DATABASE_URL } = parse(moveEnvSchema, process.env);
 	const source = postgres(SOURCE_DATABASE_URL, { max: 1, onnotice: () => void 0 });
 	const target = postgres(DATABASE_DIRECT_URL, { max: 1, onnotice: () => void 0 });
 

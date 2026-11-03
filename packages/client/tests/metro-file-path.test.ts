@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
 import { startFakeMetro } from './helpers/fake-metro';
+import { createCacheMock } from './helpers/cache';
 
 const TRACKER = 1;
 const MODULE_COUNT = 200;
@@ -41,9 +42,8 @@ modules.get = (id: number) => {
 	return readRecord(id);
 };
 
-mock.module('~/metro/cache', () => ({
-	ModuleFlags: { BLACKLISTED: 1 },
-	default: {
+mock.module('~/metro/cache', () =>
+	createCacheMock({
 		state: { moduleFlags: {} },
 		moduleIds: [...modules.keys()],
 		hasModuleFlag: () => false,
@@ -58,8 +58,8 @@ mock.module('~/metro/cache', () => ({
 		markKeyMissing(key: string) {
 			cachedIds[key] = [];
 		},
-	},
-}));
+	}),
+);
 
 const metro = await import('~/metro/search');
 const { findLazy, onModuleLoaded } = await import('~/metro/wait');

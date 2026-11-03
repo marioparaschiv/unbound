@@ -2,6 +2,7 @@ import { adminAddonsSearchSchema, adminUsersSearchSchema } from '@unbound-app/co
 import type { AdminAddonsSearch, AdminUsersSearch } from '@unbound-app/contracts/admin';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { SortOrder } from '@unbound-app/contracts/addons';
+import { safeParse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import { listAdminAddons, queryAdminAddons } from '~/lib/admin-addons';
@@ -335,10 +336,10 @@ describe('admin search text', () => {
 	test.each([adminUsersSearchSchema, adminAddonsSearchSchema])(
 		'is trimmed and needs 3 to 100 characters',
 		(schema) => {
-			expect(schema.safeParse({ q: 'ab' }).success).toBe(false);
-			expect(schema.safeParse({ q: '  ab  ' }).success).toBe(false);
-			expect(schema.safeParse({ q: 'x'.repeat(101) }).success).toBe(false);
-			expect(schema.safeParse({ q: ' abc ' }).data).toEqual({ q: 'abc' });
+			expect(safeParse(schema, { q: 'ab' }).success).toBe(false);
+			expect(safeParse(schema, { q: '  ab  ' }).success).toBe(false);
+			expect(safeParse(schema, { q: 'x'.repeat(101) }).success).toBe(false);
+			expect(safeParse(schema, { q: ' abc ' })).toMatchObject({ data: { q: 'abc' } });
 		},
 	);
 });
@@ -493,9 +494,9 @@ describe('admin addon filters', () => {
 	});
 
 	test('rejects an unknown status and a date that is not a day', () => {
-		expect(adminAddonsSearchSchema.safeParse({ status: 'approved' }).success).toBe(false);
+		expect(safeParse(adminAddonsSearchSchema, { status: 'approved' }).success).toBe(false);
 		expect(
-			adminAddonsSearchSchema.safeParse({ publishedFrom: '1970-01-02T00:00' }).success,
+			safeParse(adminAddonsSearchSchema, { publishedFrom: '1970-01-02T00:00' }).success,
 		).toBe(false);
 	});
 });

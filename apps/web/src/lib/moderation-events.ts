@@ -5,12 +5,18 @@ import type {
 	Subject,
 	SubjectType,
 } from '@unbound-app/contracts/admin';
+import {
+	parse,
+	safeParse,
+	trimmedString,
+	Type,
+	type StaticDecode,
+} from '@unbound-app/contracts/schema';
 import { openSubmissionStatusSchema } from '@unbound-app/contracts/publish';
 import { moderationEventSchema } from '@unbound-app/contracts/admin';
 import { and, count, EmptyFilter, eq, inArray } from 'drizzle-orm';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { createLogger } from '@unbound-app/logger';
-import { z } from 'zod';
 
 import { moderationEvent, staffNote, submission, user } from '~/db/schema';
 import type { Database, Transaction } from '~/db/database';
@@ -60,24 +66,38 @@ export type AuthAdminAction = {
 
 type AuthAdminEvent = ModerationEventData & Pick<EventMeta, 'reason'>;
 
-const authUserSchema = z.object({
-	user: z.object({
-		id: z.string().min(1),
-		role: z.string().nullish(),
-		banExpires: z.coerce.date().nullish(),
+// Better Auth hands the ban expiry back as a `Date`, or its text when it has been serialized.
+// UNKNOWN: the value Better Auth returned, which nothing has checked yet.
+function toIsoText(value: unknown): string | null {
+	if (value instanceof Date) {
+		return value.toISOString();
+	}
+
+	if (typeof value !== 'string') return null;
+
+	const date = new Date(value);
+
+	return Number.isNaN(date.valueOf()) ? null : date.toISOString();
+}
+
+const authUserSchema = Type.Object({
+	user: Type.Object({
+		id: Type.String({ minLength: 1 }),
+		role: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+		banExpires: Type.Optional(Type.Decode(Type.Any(), toIsoText)),
 	}),
 });
 
-const authBodySchema = z.object({ banReason: z.string().trim().optional() });
+const authBodySchema = Type.Object({ banReason: Type.Optional(trimmedString()) });
 
-type AuthUser = z.infer<typeof authUserSchema>['user'];
+type AuthUser = StaticDecode<typeof authUserSchema>['user'];
 
-type AuthBody = z.infer<typeof authBodySchema>;
+type AuthBody = StaticDecode<typeof authBodySchema>;
 
 const AUTH_ADMIN_EVENTS = {
 	'/admin/ban-user': (target: AuthUser, body: AuthBody): AuthAdminEvent => ({
 		kind: 'user.banned',
-		data: { expiresAt: target.banExpires?.toISOString() ?? null },
+		data: { expiresAt: target.banExpires ?? null },
 		reason: body.banReason || null,
 	}),
 	'/admin/unban-user': (): AuthAdminEvent => ({ kind: 'user.unbanned', data: {} }),
@@ -187,7 +207,7 @@ export function queryEvents(ctx: AppContext, subject: Subject, before?: number) 
  * @returns The event, or `undefined` (logged) when the row no longer matches its kind's schema.
  */
 export function toEvent(row: EventRow): ModerationEvent | undefined {
-	const parsed = moderationEventSchema.safeParse({
+	const parsed = safeParse(moderationEventSchema, {
 		id: row.id,
 		subject: { type: row.subjectType, id: row.subjectId },
 		actor: row.actor,
@@ -299,12 +319,12 @@ export async function recordAuthAdminAction(db: Database, action: AuthAdminActio
 
 	if (!isAuthAdminPath(path)) return;
 
-	const parsed = authUserSchema.safeParse(returned);
+	const parsed = safeParse(authUserSchema, returned);
 
 	if (!parsed.success) return;
 
 	const target = parsed.data.user;
-	const event = AUTH_ADMIN_EVENTS[path](target, authBodySchema.parse(body));
+	const event = AUTH_ADMIN_EVENTS[path](target, parse(authBodySchema, body));
 
 	await db.transaction((tx) =>
 		appendEvent(tx, { subject: { type: 'user', id: target.id }, actorId, at, ...event }),
@@ -357,7 +377,7 @@ export async function deleteUserWithRecord(
 			.where(
 				and(
 					eq(submission.authorId, userId),
-					inArray(submission.status, openSubmissionStatusSchema.options),
+					inArray(submission.status, openSubmissionStatusSchema.enum),
 				),
 			);
 

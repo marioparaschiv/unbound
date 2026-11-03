@@ -1,10 +1,11 @@
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createServerFn } from '@tanstack/react-start';
-import { z } from 'zod/mini';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { loadDashboard, loadSubmitTarget } from '~/lib/dashboard';
 import type { Dashboard, SubmitTarget } from '~/lib/dashboard';
+import { schemaValidator } from '~/lib/schema-validator';
 import requestCaller from '~/lib/api/request-caller';
 import app from '~/lib/app';
 
@@ -14,12 +15,12 @@ export type SubmitOverview = {
 	target: SubmitTarget | null;
 };
 
-const submitOverviewRequestSchema = z.object({
-	addonId: z.optional(z.string().check(z.maxLength(100))),
+const submitOverviewRequestSchema = Type.Object({
+	addonId: Type.Optional(Type.String({ maxLength: 100 })),
 });
 
-const findUserRequestSchema = z.object({
-	id: z.string().check(z.minLength(1), z.maxLength(64)),
+const findUserRequestSchema = Type.Object({
+	id: Type.String({ minLength: 1, maxLength: 64 }),
 });
 
 async function isGitHubLinked(headers: Headers): Promise<boolean> {
@@ -33,7 +34,7 @@ async function isGitHubLinked(headers: Headers): Promise<boolean> {
  * @returns Whether the user has linked GitHub, and the addon to submit for.
  */
 export const getSubmitOverview = createServerFn({ method: 'GET' })
-	.validator(submitOverviewRequestSchema)
+	.validator(schemaValidator(submitOverviewRequestSchema))
 	.handler(async ({ data }): Promise<SubmitOverview> => {
 		const { addonId } = data;
 		const [githubLinked, target] = await Promise.all([
@@ -66,7 +67,7 @@ export const getDashboard = createServerFn({ method: 'GET' }).handler(
  * @returns The user's name and avatar, or `null` when no user has that id.
  */
 export const findUser = createServerFn({ method: 'GET' })
-	.validator(findUserRequestSchema)
+	.validator(schemaValidator(findUserRequestSchema))
 	.handler(async ({ data }): Promise<UserSummary | null> => {
 		await requestCaller();
 

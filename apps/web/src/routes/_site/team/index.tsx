@@ -1,8 +1,8 @@
 import { IconMagnifier, IconMagnifierMinus, IconUsers, IconXmark } from 'nucleo-micro-bold';
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { Type } from '@unbound-app/contracts/schema';
 import type { ChangeEvent, FormEvent } from 'react';
 import debounce from '@unbound-app/utils/debounce';
-import { z } from '@unbound-app/contracts/zod';
 import { useMemo, useState } from 'react';
 
 import {
@@ -15,9 +15,10 @@ import {
 } from '~/components/ui/empty';
 import { InputGroup, InputGroupAddon, InputGroupInput } from '~/components/ui/input-group';
 import useTeamPages, { type TeamPages } from '~/queries/developers/use-team-pages';
+import { schemaValidator, type Validator } from '~/lib/schema-validator';
+import { pageSearchSchema, type PageSearch } from '~/lib/page-search';
 import { teamQuery } from '~/queries/developers/developers';
 import TeamSections from '~/components/team/team-sections';
-import { pageSearchSchema } from '~/lib/page-search';
 import PageHeader from '~/components/page-header';
 import type { Developer } from '~/lib/developers';
 import { Button } from '~/components/ui/button';
@@ -30,7 +31,7 @@ type TeamListProps = Omit<TeamPages, 'developers'> & {
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-const teamSearchSchema = z.pick(pageSearchSchema, { search: true });
+const teamSearchSchema = Type.Pick(pageSearchSchema, ['search']);
 
 // A new search keeps the old people up until its own arrive. They are not dimmed meanwhile: fading the
 // cards repaints every blurred avatar and delayed the new results by 11 to 20 ms.
@@ -165,9 +166,12 @@ function TeamPage() {
 	);
 }
 
+// Annotated, or the search type loops through the page that reads it back and collapses to `{}`.
+const validateSearch: Validator<Pick<PageSearch, 'search'>> = schemaValidator(teamSearchSchema);
+
 export const Route = createFileRoute('/_site/team/')({
 	head: () => ({ meta: [{ title: 'Unbound | Team' }] }),
-	validateSearch: teamSearchSchema,
+	validateSearch,
 	loaderDeps: ({ search }) => search,
 	loader: async ({ context, deps, cause }) => {
 		const team = teamQuery(deps.search ?? '');

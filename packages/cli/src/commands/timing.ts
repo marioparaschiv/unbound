@@ -1,12 +1,12 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
 import { bridgePortField } from '~/lib/context';
+import { defaulted, Type } from '~/lib/schema';
 import { measureTiming } from '~/lib/probes';
 
-const schema = z.object({
-	rounds: z.number().default(3).describe('How many samples to take.'),
+const schema = Type.Object({
+	rounds: defaulted(Type.Number({ description: 'How many samples to take.' }), 3),
 	port: bridgePortField,
 });
 

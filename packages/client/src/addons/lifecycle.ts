@@ -114,6 +114,25 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		this.errors.delete(addon.id);
 	}
 
+	/**
+	 * @description Records a failed operation on an addon: logs it naming the operation and the addon,
+	 * and keeps the error for the UI.
+	 * @param action What the manager tried to do, such as `unload`.
+	 * @param id The addon's id.
+	 * @param error The value `catch` bound.
+	 * @param noun What the manager calls the addon, when it is not an addon.
+	 * @returns The recorded error.
+	 */
+	// UNKNOWN: catch binds whatever was thrown, not necessarily an Error.
+	protected fail(action: string, id: string, error: unknown, noun = 'addon'): Error {
+		const failure = toError(error);
+
+		this.logger.error(`Failed to ${action} ${noun} ${id}:`, failure);
+		this.errors.set(id, failure);
+
+		return failure;
+	}
+
 	protected createContext(entity: Addon<I>): PluginContext | undefined {
 		void entity;
 
@@ -133,8 +152,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		try {
 			this.validateManifest(manifest);
 		} catch (error) {
-			this.logger.error(`Failed to load addon ${manifest.id}:`, error);
-			this.errors.set(manifest.id, toError(error));
+			this.fail('load', manifest.id, error);
 
 			return;
 		}
@@ -163,8 +181,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 			this.emit('loaded', entity);
 		} catch (error) {
-			this.logger.error(`Failed to load addon ${manifest.id}:`, error);
-			this.errors.set(manifest.id, toError(error));
+			this.fail('load', manifest.id, error);
 		}
 	}
 
@@ -209,8 +226,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 			this.finishUnload(resolved);
 		} catch (error) {
-			this.logger.error(`Failed to unload addon ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('unload', resolved.id, error);
 		}
 	}
 
@@ -222,10 +238,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 			this.errors.delete(resolved.id);
 			this.emit('unloaded', resolved);
 		} catch (error) {
-			const failure = toError(error);
-
-			this.logger.error(`Failed to unload addon ${resolved.id}:`, failure);
-			this.errors.set(resolved.id, failure);
+			this.fail('unload', resolved.id, error);
 		}
 	}
 
@@ -481,10 +494,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		}
 
 		if (error) {
-			const failure = toError(error);
-
-			this.logger.error(`Failed to stop addon ${resolved.id}:`, failure);
-			this.errors.set(resolved.id, failure);
+			this.fail('stop', resolved.id, error);
 
 			return false;
 		}
@@ -494,10 +504,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 			return true;
 		} catch (emitError) {
-			const failure = toError(emitError);
-
-			this.logger.error(`Failed to stop addon ${resolved.id}:`, failure);
-			this.errors.set(resolved.id, failure);
+			this.fail('stop', resolved.id, emitError);
 
 			return false;
 		}
@@ -550,8 +557,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 			this.emit('enabled', resolved);
 		} catch (error) {
-			this.logger.error(`Failed to enable addon ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('enable', resolved.id, error);
 		}
 	}
 
@@ -577,8 +583,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 			this.emit('disabled', resolved);
 		} catch (error) {
-			this.logger.error(`Failed to disable addon ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('disable', resolved.id, error);
 		}
 	}
 
@@ -626,9 +631,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 		if (!resolved) return;
 
-		const states = this.getStates();
-
-		if (states[resolved.id]) {
+		if (this.isEnabled(resolved.id)) {
 			this.disable(resolved);
 		} else {
 			this.enable(resolved);
@@ -643,22 +646,19 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 * @returns The matching entity, or `undefined` if none is found.
 	 */
 	protected resolve(entity: AddonResolveable<I>): Addon<I> | undefined {
-		if (typeof entity === 'string') {
-			return this.entities.get(entity) ?? this.getByName(entity);
+		if (typeof entity !== 'string') {
+			return entity;
 		}
 
-		return entity;
-	}
+		const byId = this.entities.get(entity);
 
-	/**
-	 * @description Finds a governed addon by its manifest name.
-	 * @param name The name to search for.
-	 * @returns The matching entity, or `undefined` if none is found.
-	 */
-	protected getByName(name: string): Addon<I> | undefined {
-		for (const entity of this.entities.values()) {
-			if (entity.name === name) {
-				return entity;
+		if (byId) {
+			return byId;
+		}
+
+		for (const candidate of this.entities.values()) {
+			if (candidate.name === entity) {
+				return candidate;
 			}
 		}
 	}

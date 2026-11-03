@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import type { MetroFilter } from '~/metro/filters';
 
 import { startFakeMetro, type FakeFactory } from './helpers/fake-metro';
+import { createCacheMock } from './helpers/cache';
 
 type Exports = Record<string, (...args: number[]) => number | null>;
 
@@ -65,9 +66,8 @@ Object.assign(globalThis, {
 	ErrorUtils: { getGlobalHandler: () => undefined, setGlobalHandler: () => undefined },
 });
 
-mock.module('~/metro/cache', () => ({
-	ModuleFlags: { BLACKLISTED: 1 },
-	default: {
+mock.module('~/metro/cache', () =>
+	createCacheMock({
 		state: { moduleFlags: {} },
 		moduleIds: [...modules.keys()],
 		hasModuleFlag: () => false,
@@ -82,8 +82,8 @@ mock.module('~/metro/cache', () => ({
 		markKeyMissing(key: string) {
 			cachedIds[key] = [];
 		},
-	},
-}));
+	}),
+);
 
 const metro = await import('~/metro/search');
 const { findByPropsLazy } = await import('~/metro/wrappers');

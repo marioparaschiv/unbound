@@ -26,6 +26,7 @@ function useToastState(options: InternalToastOptions) {
 
 	const settings = useUnboundSettings(({ key }) => key?.startsWith('toasts'));
 	const animations = settings.get('toasts.animations');
+	const duration = toastDuration(options.duration, settings.get('toasts.duration'));
 
 	const opacity = useSharedValue(0);
 	const marginVertical = useSharedValue(0);
@@ -33,10 +34,6 @@ function useToastState(options: InternalToastOptions) {
 	const height = useSharedValue(0);
 	const translateY = useSharedValue(0);
 	const width = useSharedValue(Dimensions.get('window').width * 0.9);
-
-	function onLeaveComplete() {
-		setLeaving(true);
-	}
 
 	function leave() {
 		setClosing(true);
@@ -47,7 +44,7 @@ function useToastState(options: InternalToastOptions) {
 			marginVertical.value = withTiming(0, MOUNT_CHANGE_CONFIG);
 			translateY.value = withTiming(-40, MOUNT_CHANGE_CONFIG);
 			opacity.value = withTiming(0, MOUNT_CHANGE_CONFIG, () => {
-				runOnJS(onLeaveComplete)();
+				runOnJS(setLeaving)(true);
 			});
 		} else {
 			height.value = 0;
@@ -55,7 +52,7 @@ function useToastState(options: InternalToastOptions) {
 			scale.value = 0.75;
 			marginVertical.value = 0;
 			translateY.value = -40;
-			onLeaveComplete();
+			setLeaving(true);
 		}
 	}
 
@@ -71,8 +68,6 @@ function useToastState(options: InternalToastOptions) {
 			scale.value = 1;
 			marginVertical.value = 5;
 		}
-
-		const duration = toastDuration(options.duration, settings.get('toasts.duration'));
 
 		if (duration !== 0) {
 			width.value = withTiming(0, { duration, easing: Easing.linear }, () => {
@@ -103,19 +98,13 @@ function useToastState(options: InternalToastOptions) {
 		style: {
 			opacity,
 			height,
-			transform: [{ scale, translateY }],
+			transform: [{ scale }, { translateY }],
 			marginVertical,
 		},
-		properties: {
-			opacity,
-			height,
-			scale,
-			translateY,
-			width,
-			marginVertical,
-		},
+		properties: { height, width },
+		animations,
+		duration,
 		leave,
-		leaving,
 		closing,
 	};
 }

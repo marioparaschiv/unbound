@@ -5,12 +5,12 @@ import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
 import UpdatesStore from '~/updates/state';
+import { Moment } from '~/metro/common';
 import Page from '~/ui/components/page';
 import { icons } from '~/assets/api';
 
 import LoaderUpdateRow from './loader-update-row';
 import UpdateRow from './update-row';
-import { fromNow } from './format';
 
 function describeStatus(state: UpdatesState): string {
 	switch (state.status) {
@@ -21,7 +21,9 @@ function describeStatus(state: UpdatesState): string {
 		case 'error':
 			return format('UNBOUND_UPDATES_CHECK_FAILED', { error: state.error });
 		case 'ready':
-			return format('UNBOUND_UPDATES_CHECKED', { date: fromNow(state.checkedAt) });
+			return format('UNBOUND_UPDATES_CHECKED', {
+				date: Moment.utc(state.checkedAt).fromNow(),
+			});
 	}
 }
 

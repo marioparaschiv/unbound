@@ -186,19 +186,7 @@ class Logger {
 	 * @returns The prefix string.
 	 */
 	_getPrefix(type: LogLevel) {
-		return this._paint(
-			this._paint(`[${this.caller.join(' → ')}]`, this._getColor(type)),
-			'bold',
-		);
-	}
-
-	/**
-	 * @description Maps a log level to its display color.
-	 * @param type The log level.
-	 * @returns The ANSI color name for the level.
-	 */
-	_getColor(type: LogLevel): Color {
-		return LEVELS[type].color;
+		return this._paint(this._paint(`[${this.caller.join(' → ')}]`, LEVELS[type].color), 'bold');
 	}
 }
 

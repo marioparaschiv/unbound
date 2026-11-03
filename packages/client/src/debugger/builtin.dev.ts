@@ -10,7 +10,7 @@ import { createLogger } from '@unbound-app/logger';
 
 import { CLIENT_VERSION, DEBUGGER_ADDRESS } from '~/core/constants';
 import { getSetting, isSettingChange } from '~/settings/unbound';
-import { reloadSummary } from '~/debugger/reload-summary';
+import { reloadSummary } from '~/debugger/reload-summary.dev';
 import { createPatcher } from '~/patcher/create-patcher';
 import { currentEnvironment } from '~/core/environment';
 import type { Addon } from '~/addons/addon';

@@ -37,4 +37,5 @@ export type Localizations = {
 };
 /** A string table: each locale code, such as `en-US`, mapped to its messages. */
 export type StringStore = Record<string, LocaleStrings>;
+
 export {};

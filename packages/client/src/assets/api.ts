@@ -1,12 +1,19 @@
 import type { AssetsModule, UnboundAsset } from '@unbound-app/types/assets';
 import { createLogger } from '@unbound-app/logger';
 
+import {
+	addAssetToCache,
+	getCachedAssetModule,
+	markAssetsComplete,
+	moduleIds,
+	removeAssetFromCache,
+	state,
+} from '~/metro/cache';
 import { find as findModule, initializeModule } from '~/metro/search';
 import { isAssetModule } from '~/metro/candidates';
 import { onModuleLoaded } from '~/metro/wait';
 import { byProps } from '~/metro/filters';
 import { data } from '~/metro/state';
-import Cache from '~/metro/cache';
 
 /** Called with each asset Discord registers, and its id. */
 export type AssetRegistrationListener = (asset: UnboundAsset, id: number) => void;
@@ -78,7 +85,7 @@ export function getIdByName(name: string, type: 'svg' | 'png' = 'png'): number |
 		return lookup(key);
 	}
 
-	const moduleId = Cache.getCachedAssetModule(key);
+	const moduleId = getCachedAssetModule(key);
 
 	if (moduleId !== void 0) {
 		initializeModule(moduleId);
@@ -89,8 +96,8 @@ export function getIdByName(name: string, type: 'svg' | 'png' = 'png'): number |
 			return loaded;
 		}
 
-		Cache.removeAssetFromCache(key);
-	} else if (Cache.state.assetsComplete) {
+		removeAssetFromCache(key);
+	} else if (state.assetsComplete) {
 		return lookup(key);
 	}
 
@@ -166,7 +173,7 @@ function hook(target: AssetsModule) {
 		record(id, asset);
 
 		if (asset.__packager_asset && data.importingModuleId !== -1) {
-			Cache.addAssetToCache(keyOf(asset.name, asset.type), data.importingModuleId);
+			addAssetToCache(keyOf(asset.name, asset.type), data.importingModuleId);
 		}
 
 		return id;
@@ -230,15 +237,15 @@ function sweep() {
 
 	swept = true;
 
-	for (let i = 0, len = Cache.moduleIds.length; i < len; i++) {
-		const id = Cache.moduleIds[i];
+	for (let i = 0, len = moduleIds.length; i < len; i++) {
+		const id = moduleIds[i];
 
 		if (isAssetModule(window.modules.get(id))) {
 			initializeModule(id);
 		}
 	}
 
-	Cache.markAssetsComplete();
+	markAssetsComplete();
 }
 
 export default {

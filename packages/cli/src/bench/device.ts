@@ -1,7 +1,7 @@
 import { join } from 'node:path';
-import { z } from 'zod';
 
 import type { AppInfo, Vphone } from '~/bench/vphone';
+import { parse, safeParse, Type } from '~/lib/schema';
 import type { VariantBuild } from '~/bench/build';
 import type { BenchServer } from '~/bench/server';
 import type { AddonMode } from '~/bench/plan';
@@ -21,10 +21,13 @@ const ADDON_FOLDERS = ['Plugins', 'Themes', 'Icons', 'Fonts'];
 /** The device folders and files a bench run changes; the snapshot holds exactly these. */
 export type DevicePaths = { unbound: string; app: string };
 
-const settingsSchema = z.record(z.string(), z.json());
+/** A JSON value, as settings.json stores them. */
+type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 /** settings.json: one key per storage bucket. */
-export type SettingsJson = z.infer<typeof settingsSchema>;
+export type SettingsJson = Record<string, JsonValue>;
+
+const settingsSchema = Type.Unsafe<SettingsJson>(Type.Record(Type.String(), Type.Unknown()));
 
 /**
  * @description Finds Discord's Unbound folder and app bundle from its install info.
@@ -92,7 +95,8 @@ export function restoreScript(): string {
  * @returns The parsed settings.
  */
 export async function readSettings(vphone: Vphone, paths: DevicePaths): Promise<SettingsJson> {
-	return settingsSchema.parse(
+	return parse(
+		settingsSchema,
 		JSON.parse(await vphone.shell(`cat ${quote(`${paths.unbound}/settings.json`)}`)),
 	);
 }
@@ -122,7 +126,7 @@ export async function writeSettings(
 
 function child(object: SettingsJson, key: string): SettingsJson {
 	const existing = object[key];
-	const parsed = settingsSchema.safeParse(existing);
+	const parsed = safeParse(settingsSchema, existing);
 	const next = parsed.success ? { ...parsed.data } : {};
 
 	object[key] = next;

@@ -1,11 +1,13 @@
 import type { ApiErrorCode } from '@unbound-app/contracts/errors';
-import type { z } from 'zod';
 
-import type { Endpoint } from '~/lib/api/endpoint';
+import type { PathParams } from '~/lib/api/endpoint';
 import type { AppContext } from '~/lib/context';
 import { ApiRequestError } from '~/api/client';
 
-export type AnyEndpoint = Endpoint<z.core.$ZodType, z.core.$ZodType, z.core.$ZodType>;
+/** A served endpoint, whatever schemas it validates its request and response against. */
+export type AnyEndpoint = {
+	handle(ctx: AppContext, request: Request, params?: PathParams): Promise<Response>;
+};
 
 type MethodHandlers = Record<string, (request: Bun.BunRequest) => Promise<Response>>;
 
@@ -42,7 +44,7 @@ export function serveEndpoints(ctx: AppContext, endpoints: Record<string, AnyEnd
  * @param request The pending typed-client request.
  * @returns The failure.
  */
-export async function failure(request: Promise<object>): Promise<ApiFailure> {
+export async function failure(request: Promise<unknown>): Promise<ApiFailure> {
 	const error = await request.then(
 		() => new Error('Expected the request to fail.'),
 		(cause: unknown) => cause,

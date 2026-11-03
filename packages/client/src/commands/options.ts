@@ -60,6 +60,8 @@ export type OptionKindSpec<V, S> = {
 
 type KindTable = { readonly [K in OptionKind]: OptionKindSpec<OptionValue<K>, OptionSettings<K>> };
 
+const NO_EXTRAS = () => ({});
+
 function toNumber(value: RawOptionValue): number | undefined {
 	// Autocomplete hands a picked number back as the string the picker inserted.
 	const number = typeof value === 'string' && value.trim() ? Number(value) : value;
@@ -106,12 +108,12 @@ const OptionKinds: KindTable = {
 	boolean: {
 		type: OptionType.BOOLEAN,
 		parse: ({ value }) => (typeof value === 'boolean' ? value : undefined),
-		toDiscord: () => ({}),
+		toDiscord: NO_EXTRAS,
 	},
 	user: {
 		type: OptionType.USER,
 		parse: ({ value, resolvers }) => resolvers.user(String(value)),
-		toDiscord: () => ({}),
+		toDiscord: NO_EXTRAS,
 	},
 	channel: {
 		type: OptionType.CHANNEL,
@@ -121,7 +123,7 @@ const OptionKinds: KindTable = {
 	role: {
 		type: OptionType.ROLE,
 		parse: ({ value, context, resolvers }) => resolvers.role(context.guild?.id, String(value)),
-		toDiscord: () => ({}),
+		toDiscord: NO_EXTRAS,
 	},
 };
 

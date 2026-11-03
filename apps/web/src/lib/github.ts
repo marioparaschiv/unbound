@@ -3,9 +3,9 @@ import type {
 	RepositoryContributor,
 	RepositoryRelease,
 } from '@unbound-app/contracts/source';
+import { safeParse, Type, type StaticDecode, type TSchema } from '@unbound-app/contracts/schema';
 import { commitShaSchema } from '@unbound-app/contracts/source';
 import { APIError } from 'better-auth/api';
-import { z } from 'zod';
 
 import { rankAddonRepositories } from '~/lib/addon-repository-rank';
 import { consumeRateLimit } from '~/lib/rate-limit';
@@ -44,66 +44,74 @@ export type RepositoryExtras = {
 
 export type GitHubClient = ReturnType<typeof createGitHubClient>;
 
-const repositoryResponseSchema = z.object({
-	id: z.number().int().positive(),
-	full_name: z.string(),
-	private: z.boolean(),
-	html_url: z.url(),
-	description: z.string().nullable(),
-	homepage: z.string().nullish(),
-	topics: z.array(z.string()).optional(),
-	license: z.object({ spdx_id: z.string().nullable() }).nullish(),
-	stargazers_count: z.number().int().nonnegative(),
-	default_branch: z.string().min(1),
-	permissions: z.object({ push: z.boolean() }).optional(),
+const repositoryResponseSchema = Type.Object({
+	id: Type.Integer({ exclusiveMinimum: 0 }),
+	full_name: Type.String(),
+	private: Type.Boolean(),
+	html_url: Type.String({ format: 'url' }),
+	description: Type.Union([Type.String(), Type.Null()]),
+	homepage: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+	topics: Type.Optional(Type.Array(Type.String())),
+	license: Type.Optional(
+		Type.Union([
+			Type.Object({ spdx_id: Type.Union([Type.String(), Type.Null()]) }),
+			Type.Null(),
+		]),
+	),
+	stargazers_count: Type.Integer({ minimum: 0 }),
+	default_branch: Type.String({ minLength: 1 }),
+	permissions: Type.Optional(Type.Object({ push: Type.Boolean() })),
 });
 
-const gitObjectSchema = z.object({
-	sha: z.string(),
-	type: z.string(),
+const gitObjectSchema = Type.Object({
+	sha: Type.String(),
+	type: Type.String(),
 });
 
-const refResponseSchema = z.object({ object: gitObjectSchema });
+const refResponseSchema = Type.Object({ object: gitObjectSchema });
 
-const compareResponseSchema = z.object({ status: z.string() });
+const compareResponseSchema = Type.Object({ status: Type.String() });
 
-const treeResponseSchema = z.object({
-	truncated: z.boolean(),
-	tree: z.array(
-		z.object({
-			path: z.string(),
-			mode: z.string(),
-			type: z.string(),
-			sha: z.string(),
-			size: z.number().int().nonnegative().optional(),
+const treeResponseSchema = Type.Object({
+	truncated: Type.Boolean(),
+	tree: Type.Array(
+		Type.Object({
+			path: Type.String(),
+			mode: Type.String(),
+			type: Type.String(),
+			sha: Type.String(),
+			size: Type.Optional(Type.Integer({ minimum: 0 })),
 		}),
 	),
 });
 
-const blobResponseSchema = z.object({
-	encoding: z.literal('base64'),
-	content: z.string(),
+const blobResponseSchema = Type.Object({
+	encoding: Type.Literal('base64'),
+	content: Type.String(),
 });
 
-const contributorsResponseSchema = z.array(
-	z.object({ login: z.string().min(1), contributions: z.number().int().nonnegative() }),
+const contributorsResponseSchema = Type.Array(
+	Type.Object({
+		login: Type.String({ minLength: 1 }),
+		contributions: Type.Integer({ minimum: 0 }),
+	}),
 );
 
-const releaseResponseSchema = z.object({
-	tag_name: z.string().min(1),
-	name: z.string().nullable(),
-	published_at: z.iso.datetime().nullable(),
-	html_url: z.url(),
+const releaseResponseSchema = Type.Object({
+	tag_name: Type.String({ minLength: 1 }),
+	name: Type.Union([Type.String(), Type.Null()]),
+	published_at: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
+	html_url: Type.String({ format: 'url' }),
 });
 
-const userRepositoriesResponseSchema = z.array(
-	z.object({
-		full_name: z.string(),
-		private: z.boolean(),
-		description: z.string().nullable(),
-		pushed_at: z.iso.datetime().nullable(),
-		permissions: z.object({ push: z.boolean() }).optional(),
-		owner: z.object({ avatar_url: z.string() }).optional(),
+const userRepositoriesResponseSchema = Type.Array(
+	Type.Object({
+		full_name: Type.String(),
+		private: Type.Boolean(),
+		description: Type.Union([Type.String(), Type.Null()]),
+		pushed_at: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
+		permissions: Type.Optional(Type.Object({ push: Type.Boolean() })),
+		owner: Type.Optional(Type.Object({ avatar_url: Type.String() })),
 	}),
 );
 
@@ -185,19 +193,19 @@ async function send(env: Env, token: string | null, path: string): Promise<Respo
 }
 
 // `null` when GitHub has nothing there: a 404, or the 204 an empty repository's lists answer with.
-async function getJson<TSchema extends z.ZodType>(
+async function getJson<T extends TSchema>(
 	env: Env,
 	token: string | null,
 	path: string,
-	schema: TSchema,
-): Promise<z.output<TSchema> | null> {
+	schema: T,
+): Promise<StaticDecode<T> | null> {
 	const response = await send(env, token, path);
 
 	if (response.status === 404 || response.status === 204) {
 		return null;
 	}
 
-	const parsed = schema.safeParse(await response.json().catch(() => null));
+	const parsed = safeParse(schema, await response.json().catch(() => null));
 
 	if (!parsed.success) {
 		throw unavailable(`unexpected response from ${new URL(path, env.GITHUB_API_URL).pathname}`);
@@ -247,11 +255,15 @@ export function gitBlobSha(bytes: Uint8Array): string {
  * @returns The calls publishing from GitHub needs.
  */
 export function createGitHubClient(env: Env, token: string | null) {
-	function get<TSchema extends z.ZodType>(path: string, schema: TSchema) {
+	function get<T extends TSchema>(path: string, schema: T) {
 		return getJson(env, token, path, schema);
 	}
 
-	async function peel(repository: string, ref: string, object: z.output<typeof gitObjectSchema>) {
+	async function peel(
+		repository: string,
+		ref: string,
+		object: StaticDecode<typeof gitObjectSchema>,
+	) {
 		let current = object;
 
 		for (let depth = 0; depth < MAX_TAG_DEPTH && current.type === 'tag'; depth++) {
@@ -317,7 +329,7 @@ export function createGitHubClient(env: Env, token: string | null) {
 		 * @returns The commit SHA; `ref_not_found` when nothing matches.
 		 */
 		async resolveRef(repository: string, ref: string, defaultBranch: string): Promise<string> {
-			if (commitShaSchema.safeParse(ref).success) {
+			if (safeParse(commitShaSchema, ref).success) {
 				const comparison = await get(
 					`/repos/${repository}/compare/${encodeRef(defaultBranch)}...${ref}`,
 					compareResponseSchema,

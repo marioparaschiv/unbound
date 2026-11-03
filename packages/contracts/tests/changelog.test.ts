@@ -7,6 +7,7 @@ import {
 	parseChangelog,
 	selectRelease,
 } from '../src/changelog';
+import { parse, safeParse } from '../src/schema';
 
 const VALID = `# Changelog
 
@@ -242,20 +243,20 @@ describe('formatChangelogIssues', () => {
 
 describe('changelog wire schemas', () => {
 	test('reads an unknown change type as changed', () => {
-		expect(changelogSectionSchema.parse({ type: 'security', items: ['x'] }).type).toBe(
+		expect(parse(changelogSectionSchema, { type: 'security', items: ['x'] }).type).toBe(
 			'changed',
 		);
 	});
 
 	test('bounds items', () => {
-		expect(changelogSectionSchema.safeParse({ type: 'added', items: [] }).success).toBe(false);
-		expect(changelogSectionSchema.safeParse({ type: 'added', items: [''] }).success).toBe(
+		expect(safeParse(changelogSectionSchema, { type: 'added', items: [] }).success).toBe(false);
+		expect(safeParse(changelogSectionSchema, { type: 'added', items: [''] }).success).toBe(
 			false,
 		);
 
 		const items = Array.from({ length: 51 }, () => 'x');
 
-		expect(changelogSectionSchema.safeParse({ type: 'added', items }).success).toBe(false);
+		expect(safeParse(changelogSectionSchema, { type: 'added', items }).success).toBe(false);
 	});
 });
 

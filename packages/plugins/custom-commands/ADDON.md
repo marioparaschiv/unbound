@@ -1,5 +1,3 @@
-Type it once, send it forever. Custom Commands lets you make your own slash commands with saved responses.
-
 ## :sparkle: What it does
 
 - :command: Your commands show in Discord's slash-command list, next to the built-in ones.

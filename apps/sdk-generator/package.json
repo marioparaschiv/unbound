@@ -13,8 +13,7 @@
 	},
 	"dependencies": {
 		"@unbound-app/contracts": "workspace:*",
-		"@unbound-app/logger": "workspace:*",
-		"zod": "^4.0.0"
+		"@unbound-app/logger": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",

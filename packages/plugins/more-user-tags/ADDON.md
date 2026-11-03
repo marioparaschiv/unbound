@@ -1,5 +1,3 @@
-Who's in charge here? More User Tags labels message authors by what they can do in the server, right next to their name.
-
 ## :sparkle: What it does
 
 - :tag: Each author gets one tag, the first enabled one that applies: Webhook, Owner, Admin, Staff, Mod or VC Mod.

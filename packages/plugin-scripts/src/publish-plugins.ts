@@ -1,4 +1,5 @@
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { parse, safeParse } from '@unbound-app/contracts/schema';
 import type { PublishFirstPartyRequest } from '@unbound-app/contracts/publish';
 import type { WorkspaceFiles } from '@unbound-app/contracts/workspace';
 import type { KeyObject } from 'node:crypto';
@@ -168,7 +169,8 @@ function builtContent(root: string, bundle: string): Pick<LocalPlugin, 'sha256' 
 
 function discoverPlugins(root: string): LocalPlugin[] {
 	const workspace = join(root, WORKSPACE_DIR);
-	const config = workspaceConfigSchema.parse(
+	const config = parse(
+		workspaceConfigSchema,
 		JSON.parse(readFileSync(join(workspace, CONFIG_FILENAME), 'utf8')),
 	);
 	const files: WorkspaceFiles = {
@@ -213,7 +215,7 @@ async function fetchPublished(options: Options): Promise<PublishedVersions> {
 	const body = await response.json().catch(() => null);
 
 	if (!response.ok) {
-		const error = apiErrorResponseSchema.safeParse(body);
+		const error = safeParse(apiErrorResponseSchema, body);
 		const reason = error.success
 			? `${error.data.error.code}: ${error.data.error.message}`
 			: `status ${response.status}`;
@@ -221,7 +223,7 @@ async function fetchPublished(options: Options): Promise<PublishedVersions> {
 		throw new Error(`GET ${url} failed (${reason}).`);
 	}
 
-	const { addons } = listFirstPartyAddonsResponseSchema.parse(body);
+	const { addons } = parse(listFirstPartyAddonsResponseSchema, body);
 
 	return new Map(
 		addons.map(({ id, version, commitSha, sha256, bytecode }) => [
@@ -537,14 +539,14 @@ async function publishPlugin(
 		const body = await response.json().catch(() => null);
 
 		if (response.ok) {
-			const result = publishFirstPartyResponseSchema.safeParse(body);
+			const result = safeParse(publishFirstPartyResponseSchema, body);
 
 			return result.success
 				? { ok: true, line: `${label} ${result.data.status} ${result.data.sha256}` }
 				: { ok: false, line: `${label} failed invalid_response: ${result.error.message}` };
 		}
 
-		const error = apiErrorResponseSchema.safeParse(body);
+		const error = safeParse(apiErrorResponseSchema, body);
 
 		return error.success
 			? {

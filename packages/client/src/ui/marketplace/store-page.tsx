@@ -3,14 +3,14 @@ import type { ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonKind } from '@unbound-app/types/addons';
 import { useEffect } from 'react';
 
+import { fetchStorePage, findPageMedia } from '~/marketplace/store-page';
 import AddonCardHeader from '~/ui/components/addon-card-header';
-import { findPageMedia } from '~/marketplace/store-page';
 import { Discord, SafeArea } from '~/metro/components';
 import Empty from '~/ui/components/empty-state';
 import { messages } from '~/i18n/api';
 
-import useStorePage from './use-store-page';
 import PageGallery from './page-gallery';
+import useResource from './use-resource';
 import PageMedia from './page-media';
 import PageBody from './page-body';
 
@@ -32,7 +32,7 @@ function StorePageScreen({ route }: StorePageScreenProps) {
 	const { addon, kind } = route.params;
 	const { manifest, pageUrl } = addon.latestVersion;
 	const navigation = Discord.useNavigation();
-	const { state, retry } = useStorePage(pageUrl ?? null);
+	const { state, retry } = useResource(pageUrl ?? null, fetchStorePage);
 
 	useEffect(() => {
 		navigation.setOptions({ title: manifest.name });
@@ -59,7 +59,7 @@ function StorePageScreen({ route }: StorePageScreenProps) {
 		);
 	}
 
-	const { page } = state;
+	const page = state.value;
 	const frontmatter = page.measured?.frontmatter;
 	const banner = frontmatter ? findPageMedia(page, frontmatter.banner) : undefined;
 

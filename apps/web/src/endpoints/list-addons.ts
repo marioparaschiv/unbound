@@ -1,11 +1,11 @@
 import { listAddonsQuerySchema, listAddonsResponseSchema } from '@unbound-app/contracts/addons';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { listAddons } from '~/lib/addons';
 import endpoint from '~/lib/api/endpoint';
 
 const listAddonsEndpoint = endpoint(
-	{ body: z.undefined(), query: listAddonsQuerySchema, response: listAddonsResponseSchema },
+	{ body: Type.Undefined(), query: listAddonsQuerySchema, response: listAddonsResponseSchema },
 	async ({ ctx, query }) => listAddons(ctx, query),
 );
 

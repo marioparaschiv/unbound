@@ -1,29 +1,29 @@
-import { semverSchema } from './manifest';
-import { z } from './zod';
+import { Type, type StaticDecode } from './schema';
+import { SEMVER_PATTERN } from './manifest';
 
 /** The development docs, rebuilt from every push to main. */
 export const MAIN_DOCS_VERSION = 'main';
 
 /** The packages the site documents; each one is `docs/<package>/` in the public bucket. */
-export const docsPackageSchema = z.enum(['api']);
+export const docsPackageSchema = Type.Enum(['api']);
 
 /** `main`, or a client release tag such as `v1.2.3`. */
-export const docsVersionSchema = z.union([
-	z.literal(MAIN_DOCS_VERSION),
-	z.templateLiteral(['v', semverSchema]),
+export const docsVersionSchema = Type.Union([
+	Type.Literal(MAIN_DOCS_VERSION),
+	Type.String({ pattern: `^v${SEMVER_PATTERN}$` }),
 ]);
 
 /** `docs/<package>/versions.json`: `main` first, then the release tags newest first. */
-export const docsManifestSchema = z.object({
+export const docsManifestSchema = Type.Object({
 	package: docsPackageSchema,
-	versions: z.array(docsVersionSchema),
+	versions: Type.Array(docsVersionSchema),
 });
 
-export type DocsPackage = z.infer<typeof docsPackageSchema>;
+export type DocsPackage = StaticDecode<typeof docsPackageSchema>;
 
-export type DocsVersion = z.infer<typeof docsVersionSchema>;
+export type DocsVersion = StaticDecode<typeof docsVersionSchema>;
 
-export type DocsManifest = z.infer<typeof docsManifestSchema>;
+export type DocsManifest = StaticDecode<typeof docsManifestSchema>;
 
 /**
  * @description Builds the public bucket key of one version's TypeDoc JSON.

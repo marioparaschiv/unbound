@@ -1,28 +1,31 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { listSnapshots, resetDevice, restoreSnapshot, saveSnapshot } from '~/lib/device-state';
+import { defaulted, Type } from '~/lib/schema';
 
-const schema = z.object({
-	action: z
-		.enum(['reset', 'save', 'restore', 'list'])
-		.describe(
+const schema = Type.Object({
+	action: Type.Enum(['reset', 'save', 'restore', 'list'], {
+		description:
 			'reset moves Unbound aside for a fresh start, save and restore snapshots, list shows them.',
-		),
-	name: z.string().default('').describe('The snapshot to save or restore.'),
-	serial: z
-		.string()
-		.optional()
-		.describe('The adb serial of the Android device, when several are attached.'),
-	ios: z
-		.boolean()
-		.default(false)
-		.describe('Act on a jailbroken iPhone through jb-p1lot instead of over adb.'),
-	udid: z
-		.string()
-		.optional()
-		.describe('The UDID of the iPhone, when several are connected. Implies --ios.'),
-	restart: z.boolean().default(false).describe('Relaunch Discord afterwards.'),
+	}),
+	name: defaulted(Type.String({ description: 'The snapshot to save or restore.' }), ''),
+	serial: Type.Optional(
+		Type.String({
+			description: 'The adb serial of the Android device, when several are attached.',
+		}),
+	),
+	ios: defaulted(
+		Type.Boolean({
+			description: 'Act on a jailbroken iPhone through jb-p1lot instead of over adb.',
+		}),
+		false,
+	),
+	udid: Type.Optional(
+		Type.String({
+			description: 'The UDID of the iPhone, when several are connected. Implies --ios.',
+		}),
+	),
+	restart: defaulted(Type.Boolean({ description: 'Relaunch Discord afterwards.' }), false),
 });
 
 const deviceCommand: CommandDefinition<typeof schema> = {

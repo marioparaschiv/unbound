@@ -1,5 +1,3 @@
-Check it before the whole server does. Preview Message shows your draft exactly as it will look once sent.
-
 ## :sparkle: What it does
 
 - :eye: Adds an eye button to the chat input once your draft has text or a staged sticker.

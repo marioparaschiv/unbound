@@ -1,8 +1,9 @@
+import { createElement, memo } from 'react';
 import type { ComponentType } from 'react';
 import { View } from 'react-native';
-import { memo } from 'react';
 
-import ToastField from './toast-field';
+import { Discord } from '~/metro/components';
+
 import useStyles from './toast.style';
 
 type ToastContentProps = {
@@ -15,14 +16,17 @@ function ToastContent({ title, content }: ToastContentProps) {
 
 	return (
 		<View style={styles.contentContainer}>
-			{title ? <ToastField value={title} variant='text-sm/semibold' /> : null}
+			{title ? (
+				typeof title === 'function' ? (
+					createElement(title)
+				) : (
+					<Discord.Text variant='text-sm/semibold'>{title}</Discord.Text>
+				)
+			) : null}
 			{content ? (
-				<ToastField
-					value={content}
-					style={styles.content}
-					variant='text-sm/normal'
-					color='text-muted'
-				/>
+				<Discord.Text style={styles.content} variant='text-sm/normal' color='text-muted'>
+					{content}
+				</Discord.Text>
 			) : null}
 		</View>
 	);

@@ -7,10 +7,10 @@ import {
 	type DocsPackage,
 	type DocsVersion,
 } from '@unbound-app/contracts/docs';
+import { parse, safeParse, Type, type Static } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { z } from 'zod';
 
 import { mergeDocsManifest } from './docs-manifest';
 import { DOCS_OUT } from './docs';
@@ -23,15 +23,15 @@ export const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 const DOCS_PACKAGE: DocsPackage = 'api';
 
-export const bucketEnvSchema = z.object({
-	S3_ENDPOINT: z.url(),
-	S3_REGION: z.string().min(1),
-	S3_ACCESS_KEY_ID: z.string().min(1),
-	S3_SECRET_ACCESS_KEY: z.string().min(1),
-	S3_PUBLIC_BUCKET: z.string().min(1),
+export const bucketEnvSchema = Type.Object({
+	S3_ENDPOINT: Type.String({ format: 'url' }),
+	S3_REGION: Type.String({ minLength: 1 }),
+	S3_ACCESS_KEY_ID: Type.String({ minLength: 1 }),
+	S3_SECRET_ACCESS_KEY: Type.String({ minLength: 1 }),
+	S3_PUBLIC_BUCKET: Type.String({ minLength: 1 }),
 });
 
-export type BucketEnv = z.infer<typeof bucketEnvSchema>;
+export type BucketEnv = Static<typeof bucketEnvSchema>;
 
 export type DocsBucket = {
 	read: (key: string) => Promise<string | undefined>;
@@ -67,9 +67,10 @@ export async function uploadDocs(
 	}
 
 	const remote = await bucket.read(manifestKey);
-	const current = remote === undefined ? undefined : docsManifestSchema.parse(JSON.parse(remote));
+	const current =
+		remote === undefined ? undefined : parse(docsManifestSchema, JSON.parse(remote));
 	const published = (await bucket.list(`docs/${DOCS_PACKAGE}/`)).flatMap((path) => {
-		const parsed = docsVersionSchema.safeParse(path.match(/([^/]+)\.json$/)?.[1]);
+		const parsed = safeParse(docsVersionSchema, path.match(/([^/]+)\.json$/)?.[1]);
 
 		return parsed.success ? [parsed.data] : [];
 	});
@@ -91,10 +92,10 @@ export async function uploadDocs(
 export function parseBucketEnv(
 	source: Record<string, string | undefined> = process.env,
 ): BucketEnv {
-	const result = bucketEnvSchema.safeParse(source);
+	const result = safeParse(bucketEnvSchema, source);
 
 	if (!result.success) {
-		throw new Error(`Invalid bucket environment:\n${z.prettifyError(result.error)}`);
+		throw new Error(`Invalid bucket environment:\n${result.error.message}`);
 	}
 
 	return result.data;
@@ -152,7 +153,7 @@ export function createDocsBucket(env: BucketEnv): DocsBucket {
 }
 
 if (import.meta.main) {
-	const version = docsVersionSchema.parse(process.argv[2]);
+	const version = parse(docsVersionSchema, process.argv[2]);
 
 	try {
 		const keys = await uploadDocs(DOCS_OUT, version, createDocsBucket(parseBucketEnv()));

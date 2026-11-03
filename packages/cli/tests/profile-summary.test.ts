@@ -1,8 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 
 import { chromeTraceSchema, formatProfile, summarizeProfile } from '~/lib/profile-summary';
+import { parse } from '~/lib/schema';
 
-const trace = chromeTraceSchema.parse({
+const trace = parse(chromeTraceSchema, {
 	stackFrames: {
 		'1': { name: 'render(unbound-plugin:chat-bubbles:1:20)', category: 'JavaScript' },
 		'2': {
@@ -35,7 +36,7 @@ describe('summarizeProfile', () => {
 	});
 
 	test('says when the JavaScript thread sat idle', () => {
-		const idle = chromeTraceSchema.parse({ stackFrames: {}, samples: [{ sf: 9 }] });
+		const idle = parse(chromeTraceSchema, { stackFrames: {}, samples: [{ sf: 9 }] });
 
 		expect(formatProfile(summarizeProfile(idle, 10))).toContain('was idle');
 	});

@@ -1,7 +1,7 @@
-import { performReactRefresh } from 'react-refresh/runtime';
 import { describe, expect, test } from 'bun:test';
 
 import { stableType, withRefreshScope } from '~/hot-refresh/runtime';
+import { performReactRefresh } from '~/hot-refresh/families';
 
 function register(type: () => string, name: string) {
 	globalThis.$RefreshReg$?.(type, name);

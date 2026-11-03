@@ -12,7 +12,7 @@ import { userSummarySchema } from '@unbound-app/contracts/account';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
-import { z } from 'zod/mini';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { createStaffNote, deleteStaffNote, editStaffNote } from '~/lib/staff-notes';
 import { getAdminUser, getUserSummary, listAdminUsers } from '~/lib/admin-users';
@@ -22,6 +22,7 @@ import type { EventTimeline } from '~/lib/moderation-events';
 import { getEventTimeline } from '~/lib/moderation-events';
 import type { AdminAddonsPage } from '~/lib/admin-addons';
 import type { ServeVersionResult } from '~/lib/rollback';
+import { schemaValidator } from '~/lib/schema-validator';
 import type { AdminAddonView } from '~/lib/admin-addon';
 import { listAdminAddons } from '~/lib/admin-addons';
 import requestCaller from '~/lib/api/request-caller';
@@ -39,7 +40,7 @@ export type AdminAddonsView = AdminAddonsPage & {
  * @returns The page and the cursors on either side of it.
  */
 export const fetchAdminUsers = createServerFn({ method: 'GET' })
-	.validator(adminUsersSearchSchema)
+	.validator(schemaValidator(adminUsersSearchSchema))
 	.handler(async ({ data }): Promise<AdminUsersPage> => {
 		const caller = await requestCaller();
 
@@ -52,7 +53,7 @@ export const fetchAdminUsers = createServerFn({ method: 'GET' })
  * @returns The page, the cursors on either side of it and the filtered maintainer.
  */
 export const fetchAdminAddons = createServerFn({ method: 'GET' })
-	.validator(adminAddonsSearchSchema)
+	.validator(schemaValidator(adminAddonsSearchSchema))
 	.handler(async ({ data }): Promise<AdminAddonsView> => {
 		const caller = await requestCaller();
 		const [page, maintainer] = await Promise.all([
@@ -68,7 +69,7 @@ export const fetchAdminAddons = createServerFn({ method: 'GET' })
  * @returns The addon's view, or `null` when no approved addon has the id.
  */
 export const fetchAdminAddon = createServerFn({ method: 'GET' })
-	.validator(addonIdSchema)
+	.validator(schemaValidator(addonIdSchema))
 	.handler(async ({ data }): Promise<AdminAddonView | null> => {
 		const caller = await requestCaller();
 
@@ -80,7 +81,7 @@ export const fetchAdminAddon = createServerFn({ method: 'GET' })
  * @returns The user's view, or `null` when no user has the id.
  */
 export const fetchAdminUser = createServerFn({ method: 'GET' })
-	.validator(userSummarySchema.shape.id)
+	.validator(schemaValidator(userSummarySchema.properties.id))
 	.handler(async ({ data }): Promise<AdminUserView | null> => {
 		const caller = await requestCaller();
 
@@ -92,7 +93,7 @@ export const fetchAdminUser = createServerFn({ method: 'GET' })
  * @returns The page and the users it names.
  */
 export const fetchEvents = createServerFn({ method: 'GET' })
-	.validator(moderationEventPageRequestSchema)
+	.validator(schemaValidator(moderationEventPageRequestSchema))
 	.handler(async ({ data }): Promise<EventTimeline> => {
 		const caller = await requestCaller();
 
@@ -104,7 +105,9 @@ export const fetchEvents = createServerFn({ method: 'GET' })
  * @returns What was served before and after, and which versions were withdrawn or restored.
  */
 export const submitServeVersion = createServerFn({ method: 'POST' })
-	.validator(z.object({ id: addonIdSchema, request: serveVersionRequestSchema }))
+	.validator(
+		schemaValidator(Type.Object({ id: addonIdSchema, request: serveVersionRequestSchema })),
+	)
 	.handler(async ({ data }): Promise<ServeVersionResult> => {
 		const caller = await requestCaller();
 
@@ -116,7 +119,7 @@ export const submitServeVersion = createServerFn({ method: 'POST' })
  * @returns The addon's view after the edit.
  */
 export const submitAddonEdit = createServerFn({ method: 'POST' })
-	.validator(z.object({ id: addonIdSchema, edit: editAddonRequestSchema }))
+	.validator(schemaValidator(Type.Object({ id: addonIdSchema, edit: editAddonRequestSchema })))
 	.handler(async ({ data }): Promise<AdminAddonView> => {
 		const caller = await requestCaller();
 
@@ -128,7 +131,7 @@ export const submitAddonEdit = createServerFn({ method: 'POST' })
  * @returns The new note.
  */
 export const createStaffNoteFn = createServerFn({ method: 'POST' })
-	.validator(createStaffNoteRequestSchema)
+	.validator(schemaValidator(createStaffNoteRequestSchema))
 	.handler(async ({ data }): Promise<StaffNote> => {
 		const caller = await requestCaller();
 
@@ -140,7 +143,7 @@ export const createStaffNoteFn = createServerFn({ method: 'POST' })
  * @returns The edited note.
  */
 export const editStaffNoteFn = createServerFn({ method: 'POST' })
-	.validator(editStaffNoteRequestSchema)
+	.validator(schemaValidator(editStaffNoteRequestSchema))
 	.handler(async ({ data }): Promise<StaffNote> => {
 		const caller = await requestCaller();
 
@@ -151,7 +154,7 @@ export const editStaffNoteFn = createServerFn({ method: 'POST' })
  * @description Deletes the signed-in staff member's own note.
  */
 export const deleteStaffNoteFn = createServerFn({ method: 'POST' })
-	.validator(deleteStaffNoteRequestSchema)
+	.validator(schemaValidator(deleteStaffNoteRequestSchema))
 	.handler(async ({ data }) => {
 		const caller = await requestCaller();
 

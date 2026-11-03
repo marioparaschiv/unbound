@@ -1,15 +1,15 @@
 import { Application, ReflectionKind, type DeclarationReflection, type Reflection } from 'typedoc';
+import { parse, Type } from '@unbound-app/contracts/schema';
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { createLogger } from '@unbound-app/logger';
-import { z } from 'zod';
 
 import { API_SRC, CLIENT, ROOT } from './paths';
 import { createDocsOptions } from './docs';
 
 const logger = createLogger('SDK', 'DocCoverage');
 
-const typesManifestSchema = z.object({ types: z.string() });
+const typesManifestSchema = Type.Object({ types: Type.String() });
 
 /** The reflections a reader looks up by name, so each needs its own comment. */
 const REQUIRED_KINDS =
@@ -61,7 +61,7 @@ function sourceFiles(directory: string): string[] {
 
 function possessTypings(): string {
 	const manifest = Bun.resolveSync('possess/package.json', CLIENT);
-	const { types } = typesManifestSchema.parse(JSON.parse(readFileSync(manifest, 'utf8')));
+	const { types } = parse(typesManifestSchema, JSON.parse(readFileSync(manifest, 'utf8')));
 
 	return join(dirname(manifest), types);
 }

@@ -3,7 +3,7 @@ import Logger from '@unbound-app/logger';
 import type { Plugin } from 'rolldown';
 import { resolve } from 'node:path';
 
-import { bundleHashes } from '../sign';
+import { BUNDLE_PATTERN, bundleHashes } from '../sign';
 
 const logger = Logger.create('Build', 'Manifest');
 const root = resolve(__dirname, '..', '..', '..');
@@ -52,7 +52,7 @@ function getBytecodeVersions(): number[] {
 	const versions: number[] = [];
 
 	for (const file of readdirSync(dist)) {
-		if (!file.startsWith('unbound.') || !file.endsWith('.bundle')) {
+		if (!BUNDLE_PATTERN.test(file)) {
 			continue;
 		}
 
@@ -113,8 +113,55 @@ export function describeBytecodeMismatch(declared: number[], built: number[]): s
 	return `hermes.json declares bytecode ${declared.join(', ')}, but the build ${problems.join(' and ')}. Update hermes.json so the compatibility scan checks what ships.`;
 }
 
+/** What {@link writeManifest} records beside the bundles. */
+export type ManifestOptions = {
+	/** The git revision the bundles were built from. */
+	revision: string;
+	/** The bytecode versions `hermes.json` declares. */
+	declared: number[];
+	/** Whether a mismatch with `declared` only warns instead of failing the build. */
+	lenient: boolean;
+	/** The channel the build is published to. */
+	channel: string;
+};
+
 /**
- * @description Writes `manifest.json` next to the bundles, listing the revision, channel, build time, bytecode versions and each bundle's SHA-512.
+ * @description Writes `manifest.json` next to the bundles, listing the revision, channel, build time,
+ * bytecode versions and each bundle's SHA-512.
+ * @param options The build's revision, declared bytecode versions, leniency and channel.
+ * @returns Why the manifest was not written, or `null` once it is.
+ */
+export function writeManifest(options: ManifestOptions): string | null {
+	const manifestPath = resolve(dist, 'manifest.json');
+	const bytecodeVersions = getBytecodeVersions();
+	const mismatch = describeBytecodeMismatch(options.declared, bytecodeVersions);
+
+	if (mismatch) {
+		logger.warn(mismatch);
+
+		// A release that ships a version `hermes.json` leaves out fails before the manifest is written.
+		if (!options.lenient) {
+			return mismatch;
+		}
+	}
+
+	const manifest = {
+		revision: options.revision,
+		channel: options.channel,
+		buildTime: new Date().toISOString(),
+		bytecodeVersions,
+		nativeBridge: parseNativeBridgeVersion(readFileSync(nativePluginVersionHeader, 'utf8')),
+		sha512: bundleHashes(dist),
+	};
+
+	writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+	logger.success('Generated manifest.json with bytecode versions', bytecodeVersions.join(', '));
+
+	return null;
+}
+
+/**
+ * @description Writes `manifest.json` after every bundle, failing the build on a declared-version mismatch.
  * @param revision The git revision the bundle was built from.
  * @param declared The bytecode versions `hermes.json` declares.
  * @param lenient Whether a mismatch with `declared` only warns instead of failing the build.
@@ -130,34 +177,11 @@ export default function generateManifest(
 	return {
 		name: 'generate-manifest',
 		writeBundle() {
-			const manifestPath = resolve(dist, 'manifest.json');
-			const bytecodeVersions = getBytecodeVersions();
-			const mismatch = describeBytecodeMismatch(declared, bytecodeVersions);
+			const problem = writeManifest({ revision, declared, lenient, channel });
 
-			if (mismatch && !lenient) {
-				this.error(mismatch);
+			if (problem) {
+				this.error(problem);
 			}
-
-			if (mismatch) {
-				logger.warn(mismatch);
-			}
-
-			const manifest = {
-				revision,
-				channel,
-				buildTime: new Date().toISOString(),
-				bytecodeVersions,
-				nativeBridge: parseNativeBridgeVersion(
-					readFileSync(nativePluginVersionHeader, 'utf8'),
-				),
-				sha512: bundleHashes(dist),
-			};
-
-			writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-			logger.success(
-				'Generated manifest.json with bytecode versions',
-				bytecodeVersions.join(', '),
-			);
 		},
 	};
 }

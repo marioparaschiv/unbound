@@ -1,35 +1,36 @@
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { z } from 'zod';
+
+import { parse, Type, type StaticDecode } from '~/lib/schema';
 
 export const DISCORD_BUNDLE_ID = 'com.hammerandchisel.discord';
 
 const TOOL_SUFFIX = '__vphone__vphone';
 
-const contentSchema = z.object({
-	content: z.array(z.object({ type: z.string(), text: z.string().optional() })),
-	isError: z.boolean().optional(),
+const contentSchema = Type.Object({
+	content: Type.Array(Type.Object({ type: Type.String(), text: Type.Optional(Type.String()) })),
+	isError: Type.Optional(Type.Boolean()),
 });
 
-const processesSchema = z.object({
-	processes: z.array(
-		z.object({
-			bundle_id: z.string().nullish(),
-			pid: z.number(),
-			footprint_bytes: z.number().nullish(),
-			resident_bytes: z.number().nullish(),
+const processesSchema = Type.Object({
+	processes: Type.Array(
+		Type.Object({
+			bundle_id: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+			pid: Type.Number(),
+			footprint_bytes: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
+			resident_bytes: Type.Optional(Type.Union([Type.Number(), Type.Null()])),
 		}),
 	),
 });
 
-const appInfoSchema = z.object({
-	version: z.string(),
-	build: z.string(),
-	bundle_path: z.string(),
-	documents_path: z.string(),
+const appInfoSchema = Type.Object({
+	version: Type.String(),
+	build: Type.String(),
+	bundle_path: Type.String(),
+	documents_path: Type.String(),
 });
 
-export type AppInfo = z.infer<typeof appInfoSchema>;
+export type AppInfo = StaticDecode<typeof appInfoSchema>;
 
 export type DiscordProcess = {
 	pid: number;
@@ -105,7 +106,8 @@ export class Vphone {
 		for (let attempt = 0; ; attempt++) {
 			try {
 				const { client, tool } = await this.connect();
-				const result = contentSchema.parse(
+				const result = parse(
+					contentSchema,
 					await client.callTool({ name: tool, arguments: { action, args } }),
 				);
 				const text = result.content.map((part) => part.text ?? '').join('');
@@ -139,7 +141,8 @@ export class Vphone {
 	 * @returns The app info.
 	 */
 	async appInfo(): Promise<AppInfo> {
-		return appInfoSchema.parse(
+		return parse(
+			appInfoSchema,
 			JSON.parse(await this.call('app_info', { bundle_id: DISCORD_BUNDLE_ID })),
 		);
 	}
@@ -149,7 +152,8 @@ export class Vphone {
 	 * @returns The process, or `undefined` when Discord is not running.
 	 */
 	async discord(): Promise<DiscordProcess | undefined> {
-		const { processes } = processesSchema.parse(
+		const { processes } = parse(
+			processesSchema,
 			JSON.parse(await this.call('rpc', { method: 'processes.list' })),
 		);
 		const found = processes.find((entry) => entry.bundle_id === DISCORD_BUNDLE_ID);

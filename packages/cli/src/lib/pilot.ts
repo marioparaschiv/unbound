@@ -1,11 +1,11 @@
 import { delimiter, join } from 'node:path';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { z } from 'zod';
 
 import type { CommandResult, CommandRunner } from '~/lib/run-command';
 import { DISCORD_BUNDLE_ID } from '~/lib/device-paths';
 import { parseJson } from '~/lib/parse-json';
+import { Type } from '~/lib/schema';
 
 /** The binary that drives a jailbroken iPhone over its bridge. */
 export const PILOT = 'jb-p1lot';
@@ -40,16 +40,18 @@ type PilotCommand = (args: string[], timeoutMs: number) => Promise<CommandResult
 // The host waits this much longer than a device-side timeout, so the device's own report arrives first.
 const DEVICE_TIMEOUT_GRACE_MS = 10_000;
 
-const shellOutputSchema = z.object({
-	exitCode: z.number().optional(),
-	output: z.string().optional(),
+const shellOutputSchema = Type.Object({
+	exitCode: Type.Optional(Type.Number()),
+	output: Type.Optional(Type.String()),
 });
 
-const deviceListSchema = z.object({
-	devices: z.array(z.object({ id: z.unknown(), bridge: z.boolean().optional() })).optional(),
+const deviceListSchema = Type.Object({
+	devices: Type.Optional(
+		Type.Array(Type.Object({ id: Type.Unknown(), bridge: Type.Optional(Type.Boolean()) })),
+	),
 });
 
-const appContainerSchema = z.object({ dataContainer: z.string().optional() });
+const appContainerSchema = Type.Object({ dataContainer: Type.Optional(Type.String()) });
 
 /**
  * @description Finds the `jb-p1lot` binary on the PATH, falling back to Go's install directory.

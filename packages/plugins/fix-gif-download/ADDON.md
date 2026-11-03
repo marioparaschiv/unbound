@@ -1,5 +1,3 @@
-You saved a GIF and got an MP4. Fix GIF Downloads makes Discord save the actual GIF file instead.
-
 ## :sparkle: What it does
 
 - :floppy-disk: Changes the share and save actions in Discord's media viewer, and the download Discord's media manager runs, to use the GIF.

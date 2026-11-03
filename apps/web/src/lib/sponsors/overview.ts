@@ -44,7 +44,7 @@ export async function getSponsorOverview(
 		findBadgeClaim(ctx, userId),
 	]);
 	const row = standing.kind === 'none' ? undefined : standing.sponsorship;
-	const perks = perkIdSchema.options.map((id) => ({
+	const perks = perkIdSchema.enum.map((id) => ({
 		id,
 		name: PERKS[id].name,
 		description: PERKS[id].description,

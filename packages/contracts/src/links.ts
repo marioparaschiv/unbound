@@ -1,4 +1,4 @@
-import { addonIdSchema } from './manifest';
+import { isAddonId } from './manifest-patterns';
 
 /** The URL scheme the client claims. */
 export const UNBOUND_SCHEME = 'unbound';
@@ -20,9 +20,7 @@ function parseInstallPage(url: string): UnboundLink | undefined {
 		return undefined;
 	}
 
-	const id = addonIdSchema.safeParse(decoded);
-
-	return id.success ? { action: 'install', id: id.data } : undefined;
+	return isAddonId(decoded) ? { action: 'install', id: decoded } : undefined;
 }
 
 /** Something a page asks the client to do. */
@@ -86,9 +84,9 @@ export function parseUnboundLink(url: string): UnboundLink | undefined {
 		return undefined;
 	}
 
-	const id = addonIdSchema.safeParse(params.get('id'));
+	const id = params.get('id');
 
-	return id.success ? { action, id: id.data } : undefined;
+	return isAddonId(id) ? { action, id } : undefined;
 }
 
 export default { UNBOUND_SCHEME, INSTALL_PAGE_PREFIX, createUnboundLink, parseUnboundLink };

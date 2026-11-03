@@ -2,7 +2,7 @@ import {
 	publishFirstPartyRequestSchema,
 	publishFirstPartyResponseSchema,
 } from '@unbound-app/contracts/publish';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { publishFirstParty } from '~/lib/first-party';
 import { callerEndpoint } from '~/lib/api/endpoint';
@@ -10,7 +10,7 @@ import { callerEndpoint } from '~/lib/api/endpoint';
 const publishFirstPartyEndpoint = callerEndpoint(
 	{
 		body: publishFirstPartyRequestSchema,
-		query: z.undefined(),
+		query: Type.Undefined(),
 		response: publishFirstPartyResponseSchema,
 	},
 	async ({ ctx, body, caller }) => {

@@ -1,12 +1,12 @@
 import { createLogger } from '@unbound-app/logger';
 import noop from '@unbound-app/utils/noop';
 
+import { addCachedIDForKey, getModuleCacheForKey, isKeyMissing } from '~/metro/cache';
 import type { MetroLazySearchOptions, MetroModuleLoadedOptions } from '~/metro/types';
 import type { MetroFilter } from '~/metro/filters';
 import { blacklist, data } from '~/metro/state';
 import { CACHE_KEY } from '~/core/constants';
 import { finder } from '~/metro/finders';
-import Cache from '~/metro/cache';
 
 type Waiter = {
 	filter: MetroFilter;
@@ -41,7 +41,7 @@ export function onModuleLoaded(
 	options: MetroModuleLoadedOptions = {},
 ): () => void {
 	// Waiting would test this filter against every module Discord loads for the rest of the session.
-	if (Cache.isKeyMissing(filter[CACHE_KEY])) {
+	if (isKeyMissing(filter[CACHE_KEY])) {
 		return noop;
 	}
 
@@ -92,7 +92,7 @@ export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = 
 		return existing;
 	}
 
-	if (signal?.aborted || Cache.isKeyMissing(filter[CACHE_KEY])) {
+	if (signal?.aborted || isKeyMissing(filter[CACHE_KEY])) {
 		return Promise.resolve(void 0);
 	}
 
@@ -118,7 +118,7 @@ export function findLazy(filter: MetroFilter, options: MetroLazySearchOptions = 
 // Cached ids from an earlier launch let a wait skip testing every module that initializes.
 function pendingCachedIds(filter: MetroFilter) {
 	const key = filter[CACHE_KEY];
-	const cached = key ? Cache.getModuleCacheForKey(key) : void 0;
+	const cached = key ? getModuleCacheForKey(key) : void 0;
 
 	if (!cached) return null;
 
@@ -213,7 +213,7 @@ function settle(waiter: Waiter, exports: MetroExport, id: number) {
 	const key = waiter.filter[CACHE_KEY];
 
 	if (key) {
-		Cache.addCachedIDForKey(key, id);
+		addCachedIDForKey(key, id);
 	}
 
 	data.cache.set(id, window.modules.get(id));

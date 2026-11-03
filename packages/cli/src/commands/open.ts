@@ -1,28 +1,32 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 import toError from '@unbound-app/utils/to-error';
-import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
+import { defaulted, parse, Type } from '~/lib/schema';
 import type { ScreenParams } from '~/lib/navigation';
 import { bridgePortField } from '~/lib/context';
 import { openScreen } from '~/lib/navigation';
 
-const schema = z.object({
-	screen: z
-		.string()
-		.min(1)
-		.describe(
-			'The settings screen to open: a `Screens` key such as `Marketplace` or `Plugins`, or any ' +
-				'`SETTING_RENDERER_CONFIG` route key.',
-		),
-	params: z
-		.string()
-		.default('{}')
-		.describe('Route parameters for the screen, as a JSON object, e.g. `{"kind":"theme"}`.'),
+const schema = Type.Object({
+	screen: Type.String({
+		minLength: 1,
+		description:
+			'The settings screen to open: a `Screens` key such as `Marketplace` or `Plugins`, or any `SETTING_RENDERER_CONFIG` route key.',
+	}),
+	params: defaulted(
+		Type.String({
+			description:
+				'Route parameters for the screen, as a JSON object, e.g. `{"kind":"theme"}`.',
+		}),
+		'{}',
+	),
 	port: bridgePortField,
 });
 
-const paramsSchema = z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()]));
+const paramsSchema = Type.Record(
+	Type.String(),
+	Type.Union([Type.String(), Type.Number(), Type.Boolean(), Type.Null()]),
+);
 
 const openCommand: CommandDefinition<typeof schema> = {
 	name: 'open',
@@ -36,7 +40,7 @@ const openCommand: CommandDefinition<typeof schema> = {
 		let parsed: ScreenParams;
 
 		try {
-			parsed = paramsSchema.parse(JSON.parse(params));
+			parsed = parse(paramsSchema, JSON.parse(params));
 		} catch (error) {
 			return {
 				ok: false,

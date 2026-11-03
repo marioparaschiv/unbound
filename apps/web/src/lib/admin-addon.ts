@@ -101,7 +101,7 @@ export type AdminAddonView = {
 	notes: StaffNote[];
 };
 
-const PINNABLE_FIELDS = pinnableFieldSchema.options;
+const PINNABLE_FIELDS = pinnableFieldSchema.enum;
 
 const GROUP_PERMISSIONS = {
 	fields: { addon: ['edit'] },

@@ -27,7 +27,7 @@
 		"typecheck": "tsc --noEmit -p ."
 	},
 	"dependencies": {
-		"zod": "^4.0.0"
+		"typebox": "^1.4.3"
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",

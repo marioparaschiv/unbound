@@ -18,6 +18,7 @@ import {
 	type TypeDocOptions,
 } from 'typedoc';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { parse } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
 import { dirname, join } from 'node:path';
 
@@ -195,7 +196,7 @@ export function nameReferences(project: JSONOutput.ProjectReflection): void {
 export function readDocsManifest(path: string): DocsManifest | undefined {
 	if (!existsSync(path)) return;
 
-	return docsManifestSchema.parse(JSON.parse(readFileSync(path, 'utf8')));
+	return parse(docsManifestSchema, JSON.parse(readFileSync(path, 'utf8')));
 }
 
 /**
@@ -239,7 +240,7 @@ export async function generateDocs(
 }
 
 if (import.meta.main) {
-	const version = docsVersionSchema.parse(process.argv[2]);
+	const version = parse(docsVersionSchema, process.argv[2]);
 
 	try {
 		const { path } = await generateDocs(version);

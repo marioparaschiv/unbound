@@ -18,16 +18,16 @@ const { data, traffic } = installSettingsBridge();
 
 jest.useFakeTimers();
 
-const Cache = (await import('~/metro/cache')).default;
+const { addAssetToCache, addCachedIDForKey, markAssetsComplete } = await import('~/metro/cache');
 const { CACHE_VERSION } = await import('~/core/constants');
 
 test('stages each changed cache field once per burst, with the info a later launch validates it by', () => {
 	for (let id = 0; id < 2900; id++) {
-		Cache.addAssetToCache(`Icon${id}.png`, id);
+		addAssetToCache(`Icon${id}.png`, id);
 	}
 
-	Cache.addCachedIDForKey('byProps::b', 3);
-	Cache.markAssetsComplete();
+	addCachedIDForKey('byProps::b', 3);
+	markAssetsComplete();
 
 	expect(traffic.staged).toEqual([]);
 

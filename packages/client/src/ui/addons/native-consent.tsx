@@ -1,10 +1,8 @@
 import type { NativePluginCapability } from '@unbound-app/types';
 
-import { Discord } from '~/metro/components';
+import { messages, format } from '~/i18n/api';
 import type { Addon } from '~/addons/addon';
-import { format } from '~/i18n/api';
-
-const ALERT_KEY = 'unbound-native-consent';
+import { confirm } from '~/dialogs/api';
 
 /**
  * @description Asks the user, in an alert, whether an addon may call native functions directly.
@@ -16,37 +14,11 @@ export function askForNativeConsent(
 	addon: Addon,
 	_capabilities: readonly NativePluginCapability[],
 ): Promise<boolean> {
-	return new Promise((resolve) => {
-		let answered = false;
-
-		function answer(granted: boolean) {
-			if (answered) return;
-
-			answered = true;
-			Discord.dismissAlert(ALERT_KEY);
-			resolve(granted);
-		}
-
-		Discord.openAlert(
-			ALERT_KEY,
-			<Discord.AlertModal
-				title={format('UNBOUND_FFI_CONSENT_TITLE')}
-				content={format('UNBOUND_FFI_CONSENT_BODY', { name: addon.name })}
-				actions={
-					<>
-						<Discord.AlertActionButton
-							text={format('UNBOUND_FFI_CONSENT_ALLOW')}
-							variant='destructive'
-							onPress={() => answer(true)}
-						/>
-						<Discord.AlertActionButton
-							text={format('UNBOUND_CANCEL')}
-							variant='secondary'
-							onPress={() => answer(false)}
-						/>
-					</>
-				}
-			/>,
-		);
+	return confirm({
+		title: messages.UNBOUND_FFI_CONSENT_TITLE,
+		body: format('UNBOUND_FFI_CONSENT_BODY', { name: addon.name }),
+		confirmLabel: messages.UNBOUND_FFI_CONSENT_ALLOW,
+		cancelLabel: messages.UNBOUND_CANCEL,
+		destructive: true,
 	});
 }

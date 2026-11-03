@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 
 import { startFakeMetro } from './helpers/fake-metro';
+import { createCacheMock } from './helpers/cache';
 
 const TRACKER = 2;
 const EARLY = 3;
@@ -51,9 +52,8 @@ const definedFactories = [...globalThis.modules.values()].map((record) => record
 metro.require(EARLY);
 metro.require(COUNTED);
 
-mock.module('~/metro/cache', () => ({
-	ModuleFlags: { BLACKLISTED: 1 },
-	default: {
+mock.module('~/metro/cache', () =>
+	createCacheMock({
 		state: { moduleFlags },
 		moduleIds: [...globalThis.modules.keys()],
 		hasModuleFlag: (id: number, flag: number) => Boolean(moduleFlags[id] & flag),
@@ -65,8 +65,8 @@ mock.module('~/metro/cache', () => ({
 		getHintsForKey: () => undefined,
 		addCachedIDForKey: () => undefined,
 		markKeyMissing: () => undefined,
-	},
-}));
+	}),
+);
 
 const search = await import('~/metro/search');
 const { blacklist } = await import('~/metro/state');

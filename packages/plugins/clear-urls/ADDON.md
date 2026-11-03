@@ -1,5 +1,3 @@
-Links pick up trackers. Clear URLs takes them off before your message goes out.
-
 ## :sparkle: What it does
 
 - :broom: Removes tracking parameters like `utm_source`, `fbclid` and `gclid` when you send or edit a message.

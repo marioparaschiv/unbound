@@ -1,5 +1,3 @@
-Curious what Discord actually knows? View Raw shows the data it holds for a message, a user profile, a channel or a server.
-
 ## :sparkle: What it does
 
 - :brackets-curly: A **View Raw** row opens a sheet with the data as JSON, keys sorted alphabetically.

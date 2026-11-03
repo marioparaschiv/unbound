@@ -152,15 +152,20 @@ func signedBundleFiles(directory string) ([]string, error) {
 	var files []string
 	for _, entry := range entries {
 		name := entry.Name()
-		if entry.IsDir() || !strings.HasPrefix(name, "unbound.") {
+		if entry.IsDir() || !isBundleName(name) {
 			continue
 		}
-		if name == "unbound.js" || strings.HasSuffix(name, ".bundle") {
-			files = append(files, filepath.Join(directory, name))
-		}
+		files = append(files, filepath.Join(directory, name))
 	}
 	sort.Strings(files)
 	return files, nil
+}
+
+func isBundleName(name string) bool {
+	if !strings.HasPrefix(name, "unbound.") && !strings.HasPrefix(name, "unbound-dev.") {
+		return false
+	}
+	return name == "unbound.js" || name == "unbound-dev.js" || strings.HasSuffix(name, ".bundle")
 }
 
 func verifyBundleSignatures(directory string, public ed25519.PublicKey) ([]string, error) {

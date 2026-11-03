@@ -1,5 +1,3 @@
-Not every reply needs a ping. No Reply Mention starts each reply with the mention turned off.
-
 ## :sparkle: What it does
 
 - :bell-slash: New replies don't mention the author of the message you reply to.

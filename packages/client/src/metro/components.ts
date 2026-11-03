@@ -41,11 +41,10 @@ let helpMessage: ComponentType<HelpMessageProps> | undefined;
  * @returns The help message element.
  */
 export function HelpMessage(props: HelpMessageProps) {
-	const component: ComponentType<HelpMessageProps> = (helpMessage ??=
-		firstOf(
-			() => findByName('HelpMessage'),
-			() => require('~/metro/fallbacks/help-message').default,
-		) ?? require('~/metro/fallbacks/help-message').default);
+	const component: ComponentType<HelpMessageProps> = (helpMessage ??= firstOf(
+		() => findByName('HelpMessage'),
+		() => require('~/metro/fallbacks/help-message').default,
+	)!);
 
 	return createElement(component, props);
 }

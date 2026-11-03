@@ -95,6 +95,23 @@ int main()
     }
     assert(rejected);
     assert(!loader::fileExists((root / "unbound.bundle.candidate").string()));
+
+    settings.set("unbound", "developer-mode", true);
+    manifest                = R"({"bytecodeVersions":[98],"sha512":{"unbound-dev.98.bundle":")" +
+                              loader::sha512Hex("dev") + R"("}})";
+    nextStatus              = 200;
+    std::string development = updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98);
+    assert(requestedURL == "https://builds.unbound.rip/unbound-dev.98.bundle");
+    assert(development == (root / "unbound.bundle.candidate").string());
+    assert(requestedHeaders.empty());
+
+    assert(updater.markBundleAttempted(development));
+    assert(updater.acceptBundle(development));
+    nextStatus             = 304;
+    std::string settledDev = updater.downloadBundle(updater.resolveBundlePath(), std::nullopt, 98);
+    assert(settledDev == (root / "unbound.bundle").string());
+    assert(requestedHeaders.at("If-None-Match") == "\"etag-1\"");
+
     assert(loader::isAcceptedDownloadStatus(200) && loader::isAcceptedDownloadStatus(304));
     assert(!loader::isAcceptedDownloadStatus(404));
 
