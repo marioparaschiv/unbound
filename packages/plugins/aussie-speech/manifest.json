@@ -11,5 +11,9 @@
 	"version": "1.0.3",
 	"icon": "MicrophoneIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "Yt51MQnhgJn63OTKeOygNkUlIY1NvuQ//fwa8pmA8Xg8G8S6mItC9D7VddGfU2jqQ9X7Ox81M7LqvHcXTN59Dw=="
+	}
 }

@@ -19,5 +19,9 @@
 	"version": "1.0.4",
 	"icon": "KeyboardIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "1RvjDFvVAYZpOjFsWtGsweS4Tc9APCTmyrPH4+wQk/wENrAwuqzxfQq3Qj4ApyY6g+fwm1Q4GKKEUs5H3lKzDg=="
+	}
 }

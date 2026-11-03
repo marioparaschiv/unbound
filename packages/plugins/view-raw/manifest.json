@@ -27,5 +27,9 @@
 	"version": "1.0.4",
 	"icon": "ChevronLargeRightIcon",
 	"main": "index.ts",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "oeoc/mefeOV/RkJyeW5kl5cjjL1i/RABEAkqfEU7P8VAHOJoPW6l7lWUfndB6a3yXU1tbxcBfazdT9nMWefDCA=="
+	}
 }

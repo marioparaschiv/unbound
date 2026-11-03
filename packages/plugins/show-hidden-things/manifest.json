@@ -14,5 +14,9 @@
 	],
 	"version": "1.0.3",
 	"icon": "EyeIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"signature": {
+		"version": 1,
+		"ed25519": "IDcLwbKFTccUkkGxVp8GgrtCmmmea0t8bRgSTBlAi1QB9R/IAbcZEzB9hwc4m6ihhJYEDvKxlN6HEUcXnyxqBA=="
+	}
 }

@@ -18,5 +18,9 @@
 	],
 	"version": "1.0.3",
 	"icon": "MicrophoneIcon",
-	"main": "index.tsx"
+	"main": "index.tsx",
+	"signature": {
+		"version": 1,
+		"ed25519": "pSzfIbR7O7xGnUt884vfmLizLGV4VcsELM9b16Adh6/XnaVWYn7hMzrzWSyMqh9LwQRsKBEghQhW+QrqS0GXCQ=="
+	}
 }

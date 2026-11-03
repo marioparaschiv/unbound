@@ -23,5 +23,9 @@
 	"version": "1.0.4",
 	"icon": "ReactionIcon",
 	"main": "index.ts",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "+oyotldxol+gXOjabFs0G+g13HWJTgL+YTBLEG/qrqymCSHaG7jctlnUCufkgg9rZVVbc7kJxooWFCpV2NSQCg=="
+	}
 }

@@ -18,5 +18,9 @@
 	],
 	"version": "1.0.2",
 	"icon": "TimerIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"signature": {
+		"version": 1,
+		"ed25519": "Xy7bippoM1goR219deN4xl8dNkNaUxZlXUbk903AhaDLW9G5lfEVBKJ7XM3Bdqb3EcWSfE8vWIesR6vkWx1GCw=="
+	}
 }

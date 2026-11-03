@@ -19,5 +19,9 @@
 	"version": "1.0.3",
 	"icon": "HeadphonesIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "lAM0L+5qEkA0DyXXvxWLZ4zsPhO8pX1ZVYpqos4C5XaprIOXM0qQz4xukhq/MuYlmeKoZG/3WJVNhC5eHSDrCg=="
+	}
 }

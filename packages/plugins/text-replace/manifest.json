@@ -19,5 +19,9 @@
 	"version": "1.0.3",
 	"icon": "TextIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "heI+klePiKgdhczGQ13q4FoVfX5+xoX6ExA8i226IC2rRhS2xgydh3RNB2Ry9hP8ud1r7lZd4EK16V16YrUMAw=="
+	}
 }

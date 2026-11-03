@@ -23,5 +23,9 @@
 	"version": "1.0.3",
 	"icon": "LanguageIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "NwGPN6W44R6J2VY2yA42lhrkTHFkL/KitMkzFV5kxh1hvLA4qXv1zLN2mJEqM5lOOP7wukQw2I3WVGSVmtJWDA=="
+	}
 }

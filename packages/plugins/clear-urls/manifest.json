@@ -19,5 +19,9 @@
 	"version": "1.0.4",
 	"icon": "LinkIcon",
 	"main": "index.ts",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "NV/4XWVMYplXbr7h93gxs52Rgb+6F/5DOYY+knvCzKbxPaI9gxX5O/7v2FjmgZW5ZQZ0MTsZbR4ZJaGbocWuAw=="
+	}
 }

@@ -15,5 +15,9 @@
 	"version": "1.0.4",
 	"icon": "GifIcon",
 	"main": "index.ts",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "boZW4QETtbh6uqK8sKW5k4fcKeluq4xuM+u7nnLTwnG8Y4bIByiqV3aO8OlyIL4pg25Ug2zJd3T1C2RcfDcUCQ=="
+	}
 }

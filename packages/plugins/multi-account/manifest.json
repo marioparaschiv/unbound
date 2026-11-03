@@ -11,5 +11,9 @@
 	"version": "1.0.4",
 	"icon": "UserCircleIcon",
 	"main": "index.ts",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "v34OhdydD9qZdAz2Q2AaDK/7AWpEb7772PY3s+RJRGaVyVVsv1gIMLc2rrREc7ucpMg4NMFqmhbwUYh/dPjkAw=="
+	}
 }

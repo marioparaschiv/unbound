@@ -27,5 +27,9 @@
 	"version": "1.0.4",
 	"icon": "ic_swipe_reply_24px",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"signature": {
+		"version": 1,
+		"ed25519": "NjzfadfHnW0asu7HTH/DDJDV93K6WI2xmKXOw2Grwj/V/38pK1Lha63SkNfcedEvUu09DN4AZLd0PyrjoPHJBw=="
+	}
 }
