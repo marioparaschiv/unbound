@@ -7,9 +7,15 @@ import {
 	type DocsPageMembers,
 	type DocsSymbol,
 } from '~/lib/docs/docs-index';
-import { getDocsGroup, ReflectionKind, type DocsGroupKey } from '~/lib/docs/kinds';
+import {
+	getDocsGroup,
+	isCallableVariable,
+	ReflectionKind,
+	type DocsGroupKey,
+} from '~/lib/docs/kinds';
+import type { DocsCommentPart, DocsReflection, DocsType } from '~/lib/docs/typedoc';
 import { getDescription, getDocComment, isDeprecated } from '~/lib/docs/comment';
-import type { DocsCommentPart, DocsReflection } from '~/lib/docs/typedoc';
+import { getCallSignatures } from '~/lib/docs/declaration';
 
 /** One row of a namespace's member list; a re-export shows its target's kind and prose. */
 export type DocsMember = {
@@ -17,7 +23,13 @@ export type DocsMember = {
 	name: string;
 	group: DocsGroupKey | undefined;
 	summary: DocsCommentPart[];
+	/** The `@returns` prose, empty when it has none. */
+	returns: DocsCommentPart[];
 	deprecated: boolean;
+	/** A function's call signatures without their comments, for its parameters and return type. */
+	signatures: DocsReflection[];
+	/** A variable's type; `undefined` for anything else, whose type the member's own page shows. */
+	type: DocsType | undefined;
 };
 
 /** The sidebar's view of a version: every page, grouped by kind, and the members its search finds. */
@@ -43,13 +55,17 @@ type DocsPageBody = Omit<DocsPageData, 'links'>;
 function toMember(index: DocsIndex, child: DocsReflection): DocsMember {
 	const target = resolveReference(index, child);
 	const comment = getDocComment(target);
+	const group = getDocsGroup(target);
 
 	return {
 		id: child.id,
 		name: child.name,
-		group: getDocsGroup(target),
+		group,
 		summary: getDescription(comment),
+		returns: comment?.blockTags?.find((tag) => tag.tag === '@returns')?.content ?? [],
 		deprecated: isDeprecated(comment),
+		signatures: getCallSignatures(target).map(({ comment: _, ...signature }) => signature),
+		type: group === 'variables' && !isCallableVariable(target) ? target.type : undefined,
 	};
 }
 
