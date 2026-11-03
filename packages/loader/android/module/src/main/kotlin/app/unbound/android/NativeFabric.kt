@@ -1,6 +1,8 @@
 package app.unbound.android
 
+import android.content.ComponentCallbacks2
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Looper
 import android.view.View
@@ -29,8 +31,33 @@ object NativeFabric {
     private var nextSurface = 1L
     private var host: Host? = null
 
+    private var trimming = false
+
     fun useHost(value: Host) {
         synchronized(this) { host = value }
+        evictIdleSurfacesOnTrim()
+    }
+
+    private fun evictIdleSurfacesOnTrim() {
+        val application = Platform.application() ?: return
+        synchronized(this) {
+            if (trimming) return
+            trimming = true
+        }
+        application.registerComponentCallbacks(
+            object : ComponentCallbacks2 {
+                override fun onTrimMemory(level: Int) {
+                    if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) {
+                        NativeBridge.nativeEvictIdleSurfaces()
+                    }
+                }
+
+                override fun onConfigurationChanged(newConfig: Configuration) = Unit
+
+                @Deprecated("Superseded by onTrimMemory")
+                override fun onLowMemory() = NativeBridge.nativeEvictIdleSurfaces()
+            },
+        )
     }
 
     fun mount(containerHandleJSON: String, moduleName: String, propsJSON: String): String {
@@ -74,6 +101,28 @@ object NativeFabric {
         (entry.view.parent as? ViewGroup)?.removeView(entry.view)
         entry.surface.stop()
         return true
+    }
+
+    fun detach(handleJSON: String): Boolean {
+        requireMainThread()
+        val entry = synchronized(this) { mounted[parseHandle(handleJSON)] } ?: return false
+        (entry.view.parent as? ViewGroup)?.removeView(entry.view)
+        return true
+    }
+
+    fun attach(handleJSON: String, containerHandleJSON: String) {
+        requireMainThread()
+        val entry = resolve(parseHandle(handleJSON))
+        val context = synchronized(this) { host }?.activityContext()
+            ?: throw IllegalStateException("No resumed Android activity is available")
+        (entry.view.parent as? ViewGroup)?.removeView(entry.view)
+        containerFor(containerHandleJSON, context).addView(
+            entry.view,
+            ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ),
+        )
     }
 
     fun setSize(handleJSON: String, minimumJSON: String, maximumJSON: String) {

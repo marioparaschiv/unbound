@@ -52,6 +52,7 @@ import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';
 import type { CodeBlock } from '~/fences';
 import { codeBlockLayout } from '~/layout';
+import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
 const TOP_GAP = 2;
@@ -369,7 +370,7 @@ export function createNativeCards(native: Native) {
 		DRAWEE_TEXT_VIEW,
 		DRAWEE_TEXT_SETTER,
 		[draweeTextBuilder(java)],
-		{ notify: true },
+		RECEIVER_ONLY_AFTER_CALL,
 		({ self }) => {
 			const textView = javaReference(self);
 
@@ -381,7 +382,7 @@ export function createNativeCards(native: Native) {
 		MESSAGE_CONTENT_VIEW,
 		'onSizeChanged',
 		SIZE_PARAMETERS,
-		{ notify: true },
+		RECEIVER_ONLY_AFTER_CALL,
 		({ self }) => {
 			const key = javaViewKey(self);
 			const textView = key ? awaitingSize.get(key) : undefined;

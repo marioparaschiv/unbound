@@ -44,6 +44,7 @@ import { forgetBubbles, installBindGuard, rememberBubble } from '~/android/ui-bu
 import { currentAppearance } from '~/theme';
 import { argb } from '~/style';
 import { isOwnMessage } from '~/author';
+import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 type AndroidNative = {
 	java: NativeJavaBridge;
@@ -601,7 +602,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		AndroidClass.accessories,
 		'onLayout',
 		LAYOUT_PARAMETERS,
-		{ notify: true },
+		RECEIVER_ONLY_AFTER_CALL,
 		({ self }) => {
 			const accessories = javaReference(self);
 

@@ -3,6 +3,7 @@ import type {
 	NativeHandle,
 	NativeViewSearchOptions,
 } from './native-handles';
+import type { NativeHookPayload } from './native-objc';
 
 /** A handle to a Java object or class; the plugin scope releases it on dispose. */
 export type NativeJavaHandle = NativeHandle;
@@ -33,23 +34,33 @@ export type NativeJavaHandleValue = {
 /** A Java object, as a handle or as a tagged handle value from a result. */
 export type NativeJavaReference = NativeJavaHandle | NativeJavaHandleValue;
 
+declare const nativeJavaCallPlan: unique symbol;
+
+export type NativeJavaCallPlan = NativeJavaHandle & {
+	readonly [nativeJavaCallPlan]: true;
+};
+
 /** An argument to a Java call: a tagged value or a handle. */
 export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
 
 /** What a Java hook listener receives for one call of the hooked method. */
-export type NativeJavaHookEvent = {
+export type NativeJavaHookEvent<Receiver extends boolean = true> = {
 	/** The object the hooked method was called on. */
-	self: NativeJavaValue;
+	self: Receiver extends true ? NativeJavaValue : undefined;
 	/** The call's arguments. */
 	args: NativeJavaValue[];
+	argumentIndexes: number[];
+	phase: 'before' | 'after';
 };
 
 /** Options for `hooks.hook`. */
-export type NativeJavaHookOptions = {
+export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
+	coalesce?: 'receiver';
 	/** Returns a value set with `setReturnValue` for a matching call instead of running the method. Defaults to false. */
 	replace?: boolean;
 	/** Whether the listener hears calls: before the method by default, `after` once it has run, `false` never. */
 	notify?: boolean | 'after';
+	payload?: NativeHookPayload<Receiver>;
 };
 
 /** An installed Java hook; the plugin scope removes it on dispose. */
@@ -61,12 +72,12 @@ export type NativeJavaHookToken = {
 /** The Android bridge for hooking Java methods. Needs `native.java.hooks`. */
 export type NativeJavaHooksBridge = {
 	/** Hooks the method whose parameter class names match `parameterTypes`, and sends each call to `listener`. */
-	hook(
+	hook<Receiver extends boolean = true>(
 		className: string,
 		methodName: string,
 		parameterTypes: string[],
-		options?: NativeJavaHookOptions,
-		listener?: (event: NativeJavaHookEvent) => void,
+		options?: NativeJavaHookOptions<Receiver>,
+		listener?: (event: NativeJavaHookEvent<Receiver>) => void,
 	): NativeJavaHookToken;
 	/** Sets the result a `replace` hook returns for calls with this receiver and these arguments. */
 	setReturnValue(
@@ -183,6 +194,22 @@ export type NativeJavaBridge = {
 	): NativeJavaValue;
 	/** Calls a method on the JavaScript thread. */
 	invoke(handle: NativeJavaReference, name: string, args?: NativeJavaArgument[]): NativeJavaValue;
+	prepare(
+		target: NativeJavaReference,
+		name: string,
+		parameterTypes: readonly string[],
+	): NativeJavaCallPlan;
+	invokePrepared(
+		plan: NativeJavaCallPlan,
+		target: NativeJavaReference,
+		args?: NativeJavaArgument[],
+	): NativeJavaValue;
+	invokePreparedAsync(
+		plan: NativeJavaCallPlan,
+		target: NativeJavaReference,
+		args?: NativeJavaArgument[],
+	): NativeCancelablePromise<NativeJavaValue>;
+	disposePlan(plan: NativeJavaCallPlan): void;
 	/** Calls a method on the main thread and resolves with its result. Needs `native.java.invokeAsync`. */
 	invokeAsync(
 		handle: NativeJavaReference,

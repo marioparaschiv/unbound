@@ -24,6 +24,8 @@ function callFromUIRuntime(callback: Listener, values: number[]) {
 
 describe('UI callbacks', () => {
 	test('hand values from a worklet to the JS listener until the plugin stops', () => {
+		Reflect.set(globalThis, '_REANIMATED_VERSION_JS', '3.19.4');
+		Reflect.set(globalThis, '_REANIMATED_VERSION_CPP', '3.19.4');
 		const heard: number[][] = [];
 		const { bridge, dispose } = createScopedUIBridge([], 'android');
 		const callback = bridge.callback((...values: number[]) => heard.push(values));
@@ -34,5 +36,7 @@ describe('UI callbacks', () => {
 		dispose();
 		callFromUIRuntime(callback, [3]);
 		expect(heard).toEqual([[1, 2]]);
+		Reflect.deleteProperty(globalThis, '_REANIMATED_VERSION_JS');
+		Reflect.deleteProperty(globalThis, '_REANIMATED_VERSION_CPP');
 	});
 });

@@ -45,9 +45,12 @@
 #import "NativePluginRoot.h"
 #import "NativePluginRuntime.h"
 #import "NativeResourceBudget.h"
+#import "NativeRuntimeResources.h"
 #import "NativeStructLayouts.h"
 #import "NativeTraversalOptions.h"
 #import "NativeTypeEncoding.h"
+#import "NativeUIScopeCache.h"
+#import "NativeWorkQueue.h"
 #import "SettingsCore.h"
 
 using namespace facebook;
@@ -110,6 +113,8 @@ using namespace facebook::jsi;
 namespace {
 
 static std::atomic<size_t> gLiveObjCHandles{0};
+static std::atomic<size_t> gLiveObjCCallPlans{0};
+static constexpr size_t    kMaximumPreparedObjCCalls = 256;
 
 class ObjCHandleHost final : public HostObject
 {
@@ -131,6 +136,104 @@ public:
 
 private:
     __strong id value_;
+};
+
+class ObjCCallPlanHost final : public HostObject
+{
+public:
+    ObjCCallPlanHost(Class ownerClass, SEL selector, bool classMethod, NSMethodSignature *signature,
+                     loader::ffi::Type resultType, std::vector<loader::ffi::Type> argumentTypes,
+                     uint64_t runtimeIdentity, uint64_t runtimeGeneration)
+        : ownerClass_(ownerClass), selector_(selector), classMethod_(classMethod),
+          signature_(signature), resultType_(std::move(resultType)),
+          argumentTypes_(std::move(argumentTypes)), runtimeIdentity_(runtimeIdentity),
+          runtimeGeneration_(runtimeGeneration)
+    {
+        gLiveObjCHandles++;
+    }
+
+    ~ObjCCallPlanHost() override
+    {
+        releasePlanSlot();
+        gLiveObjCHandles--;
+    }
+
+    void validate(Runtime &runtime, id target) const
+    {
+        if (!active_.load(std::memory_order_acquire) ||
+            runtimeGeneration_ != loader::native::runtimeGeneration() ||
+            runtimeIdentity_ != loader::native::runtimeResourceRegistry(runtime)->identity())
+        {
+            throw JSError(runtime, "The Objective-C call plan is stale or disposed");
+        }
+        bool matchesTarget = false;
+        if (classMethod_ && object_isClass(target))
+        {
+            for (Class current = (Class) target; current; current = class_getSuperclass(current))
+            {
+                if (current == ownerClass_)
+                {
+                    matchesTarget = true;
+                    break;
+                }
+            }
+        }
+        else if (!classMethod_ && target && !object_isClass(target))
+        {
+            matchesTarget = [target isKindOfClass:ownerClass_];
+        }
+        if (!matchesTarget)
+        {
+            throw JSError(runtime, "The Objective-C call target does not match its prepared class");
+        }
+    }
+
+    SEL selector() const
+    {
+        return selector_;
+    }
+
+    NSMethodSignature *signature() const
+    {
+        return signature_;
+    }
+
+    const loader::ffi::Type &resultType() const
+    {
+        return resultType_;
+    }
+
+    const std::vector<loader::ffi::Type> &argumentTypes() const
+    {
+        return argumentTypes_;
+    }
+
+    void dispose()
+    {
+        active_.store(false, std::memory_order_release);
+        signature_ = nil;
+        releasePlanSlot();
+    }
+
+private:
+    void releasePlanSlot()
+    {
+        if (slotActive_.exchange(false, std::memory_order_acq_rel))
+        {
+            gLiveObjCCallPlans--;
+        }
+    }
+
+    Class                          ownerClass_;
+    SEL                            selector_;
+    bool                           classMethod_;
+    __strong NSMethodSignature    *signature_;
+    loader::ffi::Type              resultType_;
+    std::vector<loader::ffi::Type> argumentTypes_;
+    uint64_t                       runtimeIdentity_;
+    uint64_t                       runtimeGeneration_;
+    std::atomic_bool               active_{true};
+    std::atomic_bool               slotActive_{true};
 };
 
 class NativeDataBuffer final : public MutableBuffer
@@ -216,6 +319,13 @@ struct HookCallbacks {
     std::shared_ptr<Function> replace;
 };
 
+enum class HookPayloadPhase
+{
+    both,
+    before,
+    after,
+};
+
 struct HookDispatcher {
     Class                                   cls;
     SEL                                     selector;
@@ -229,24 +339,32 @@ struct HookDispatcher {
 };
 
 struct HookState {
-    uint64_t                       identifier;
-    uint64_t                       runtimeGeneration;
-    std::weak_ptr<HookCallbacks>   callbacks;
-    std::shared_ptr<HookCallbacks> ownedCallbacks;
-    bool                           hasBefore  = false;
-    bool                           hasAfter   = false;
-    bool                           hasReplace = false;
-    std::weak_ptr<HookDispatcher>  dispatcher;
-    __strong id                    instanceTarget = nil;
-    std::mutex                     returnCacheMutex;
+    uint64_t                                               identifier;
+    uint64_t                                               runtimeGeneration;
+    std::string                                            callbackResourceKey;
+    std::weak_ptr<loader::native::RuntimeResourceRegistry> callbackResources;
+    uint64_t                                               callbackRuntimeIdentity = 0;
+    std::weak_ptr<HookCallbacks>                           callbacks;
+    bool                                                   hasBefore     = false;
+    bool                                                   hasAfter      = false;
+    bool                                                   hasReplace    = false;
+    bool                                                   coalesceAfter = false;
+    std::weak_ptr<HookDispatcher>                          dispatcher;
+    __strong id                                            instanceTarget = nil;
+    std::mutex                                             returnCacheMutex;
     __strong NSMutableDictionary<NSArray *, NSData *> *returnCache =
         [NSMutableDictionary dictionary];
-    bool              cacheOnly     = false;
-    bool              once          = false;
-    Runtime          *inlineRuntime = nullptr;
-    loader::AddonSlot addon         = loader::kNoAddon;
-    std::atomic_bool  active{true};
-    std::atomic_bool  afterOncePending{false};
+    bool                                                           cacheOnly           = false;
+    bool                                                           once                = false;
+    bool                                                           payloadReceiver     = true;
+    bool                                                           payloadAllArguments = true;
+    std::vector<size_t>                                            payloadArgumentIndexes;
+    Runtime                                                       *inlineRuntime = nullptr;
+    loader::AddonSlot                                              addon         = loader::kNoAddon;
+    std::atomic_bool                                               active{true};
+    std::atomic_bool                                               afterOncePending{false};
+    std::shared_ptr<loader::native::RuntimeResourceOperationScope> operations =
+        std::make_shared<loader::native::RuntimeResourceOperationScope>();
 };
 
 class HookTokenHost final : public HostObject
@@ -318,7 +436,8 @@ static void removeHookReturnCache(Runtime &runtime, const std::shared_ptr<HookSt
                                   const Value *args, size_t count);
 static void clearHookReturnCache(const std::shared_ptr<HookState> &state);
 
-class IOSNativePluginExecutor final : public loader::native::NativePluginExecutor
+class IOSNativePluginExecutor final : public loader::native::NativePluginExecutor,
+                                      public std::enable_shared_from_this<IOSNativePluginExecutor>
 {
 public:
     bool isMainThread() override
@@ -339,18 +458,20 @@ public:
 
     void runOnRuntime(std::function<void(Runtime &)> work) override
     {
-        id instance = gRuntimeExecutorInstance;
-        if (!instance)
-        {
-            return;
-        }
+        enqueueRuntime(std::move(work), loader::native::NativeWorkPriority::Deferred);
+    }
 
-        [instance callFunctionOnBufferedRuntimeExecutor:[work = std::move(work)](Runtime &runtime) {
-            @autoreleasepool
-            {
-                work(runtime);
-            }
-        }];
+    void runOnRuntimeCoalesced(std::string key, std::function<void(Runtime &)> work) override
+    {
+        if (runtimeQueue_.enqueueCoalesced(std::move(key), std::move(work)))
+        {
+            scheduleRuntimeDrain();
+        }
+    }
+
+    void runOnRuntimeCritical(std::function<void(Runtime &)> work) override
+    {
+        enqueueRuntime(std::move(work), loader::native::NativeWorkPriority::Critical);
     }
 
     void runAfter(double seconds, std::function<void()> work) override
@@ -360,6 +481,59 @@ public:
             dispatch_time(DISPATCH_TIME_NOW, static_cast<int64_t>(seconds * NSEC_PER_SEC)),
             dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{ (*task)(); });
     }
+
+private:
+    void enqueueRuntime(std::function<void(Runtime &)>     work,
+                        loader::native::NativeWorkPriority priority)
+    {
+        if (runtimeQueue_.enqueue(std::move(work), priority))
+        {
+            scheduleRuntimeDrain();
+        }
+    }
+
+    void scheduleRuntimeDrain()
+    {
+        id instance = gRuntimeExecutorInstance;
+        if (!instance)
+        {
+            runtimeQueue_.retryScheduling();
+            return;
+        }
+
+        auto owner = shared_from_this();
+        [instance callFunctionOnBufferedRuntimeExecutor:[owner](Runtime &runtime) {
+            @autoreleasepool
+            {
+                bool remaining = owner->runtimeQueue_.drain(
+                    [&](auto work) {
+                        try
+                        {
+                            work(runtime);
+                        }
+                        catch (const std::exception &error)
+                        {
+                            [Logger error:LOG_CATEGORY_PLUGINS
+                                   format:@"Runtime work failed: %s", error.what()];
+                        }
+                        catch (...)
+                        {
+                            [Logger error:LOG_CATEGORY_PLUGINS format:@"Runtime work failed."];
+                        }
+                    },
+                    [] {
+                        return std::chrono::steady_clock::now();
+                    });
+                if (remaining)
+                {
+                    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0),
+                                   ^{ owner->scheduleRuntimeDrain(); });
+                }
+            }
+        }];
+    }
+
+    loader::native::NativeWorkQueue<std::function<void(Runtime &)>> runtimeQueue_;
 };
 
 [[noreturn]] static void throwWrongThread(Runtime &runtime, const char *message)
@@ -425,6 +599,15 @@ static std::shared_ptr<ObjCHandleHost> objcHost(Runtime &runtime, const Value &v
     }
 
     return object.getHostObject<ObjCHandleHost>(runtime);
+}
+
+static std::shared_ptr<ObjCCallPlanHost> objcCallPlanHost(Runtime &runtime, const Value &value)
+{
+    if (!value.isObject() || !value.asObject(runtime).isHostObject<ObjCCallPlanHost>(runtime))
+    {
+        throw JSError(runtime, "An Objective-C call plan is required");
+    }
+    return value.asObject(runtime).getHostObject<ObjCCallPlanHost>(runtime);
 }
 
 static id objcValue(Runtime &runtime, const Value &value)
@@ -959,6 +1142,18 @@ static CGSize cgSize(const loader::native::NativeSize &size)
     return CGSizeMake(size.width, size.height);
 }
 
+static void evictIdleSurfacesOnMemoryWarnings()
+{
+    static dispatch_once_t observing;
+    dispatch_once(&observing, ^{
+        [[NSNotificationCenter defaultCenter]
+            addObserverForName:UIApplicationDidReceiveMemoryWarningNotification
+                        object:nil
+                         queue:[NSOperationQueue mainQueue]
+                    usingBlock:^(NSNotification *) { loader::native::evictIdleFabricSurfaces(); }];
+    });
+}
+
 class IOSFabricAdapter final : public loader::native::FabricAdapter
 {
 public:
@@ -1023,6 +1218,27 @@ public:
     loader::native::NativeFrame measureSurface(const std::string &surface) override
     {
         return nativeFrame(find(surface).view.frame);
+    }
+
+    bool detach(const std::string &surface) override
+    {
+        IOSFabricSurface mounted = find(surface);
+        guarded([&]() {
+            [mounted.view removeFromSuperview];
+        });
+        return true;
+    }
+
+    bool attach(const std::string &surface, const loader::native::FabricView &container) override
+    {
+        IOSFabricSurface mounted       = find(surface);
+        UIView          *containerView = static_cast<const IOSFabricView &>(container).view();
+        guarded([&]() {
+            mounted.view.frame = containerView.bounds;
+            [containerView addSubview:mounted.view];
+            [mounted.view setNeedsLayout];
+        });
+        return true;
     }
 
     void unmount(const std::string &surface) override
@@ -1117,7 +1333,8 @@ static Value structValue(Runtime &runtime, NSString *name, const Value &fields)
                         [NSValue valueWithBytes:bytes.data() objCType:encoding.c_str()]);
 }
 
-static Value returnValue(Runtime &runtime, NSInvocation *invocation, NSMethodSignature *signature)
+static Value returnValue(Runtime &runtime, NSInvocation *invocation, NSMethodSignature *signature,
+                         const loader::ffi::Type *preparedType = nullptr)
 {
     std::string name = nativeFFITypeName(signature.methodReturnType);
     if (name.empty())
@@ -1131,7 +1348,7 @@ static Value returnValue(Runtime &runtime, NSInvocation *invocation, NSMethodSig
         throw JSError(runtime, "Native return value has an invalid size");
     }
 
-    loader::ffi::Type    type = loader::ffi::resolveType(name);
+    loader::ffi::Type    type = preparedType ? *preparedType : loader::ffi::resolveType(name);
     std::vector<uint8_t> bytes(std::max<size_t>(length, loader::ffi::valueStorageSize(type)));
     [invocation getReturnValue:bytes.data()];
     return loader::ffi::readValue(runtime, type, bytes.data());
@@ -1235,11 +1452,12 @@ static bool isSelectorPointer(const void *pointer)
 
 static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *signature, id object,
                                   NSUInteger index, std::vector<id> &retained,
-                                  std::vector<std::vector<uint8_t>> &storage)
+                                  std::vector<std::vector<uint8_t>> &storage,
+                                  const loader::ffi::Type           *preparedType = nullptr)
 {
     const char *type       = [signature getArgumentTypeAtIndex:index];
     char        code       = normalizedType(type);
-    std::string scalarType = nativeFFITypeName(type);
+    std::string scalarType = preparedType ? preparedType->name : nativeFFITypeName(type);
     if (isNativeScalarType(scalarType))
     {
         validateNativeScalarArgument(object, scalarType);
@@ -1450,17 +1668,14 @@ static void setInvocationArgument(NSInvocation *invocation, NSMethodSignature *s
     throw std::runtime_error("Unsupported native argument type");
 }
 
-static NSInvocation *prepareInvocation(id target, SEL selector, NSArray *arguments)
+static NSInvocation *
+prepareInvocationWithSignature(id target, SEL selector, NSArray *arguments,
+                               NSMethodSignature                    *signature,
+                               const std::vector<loader::ffi::Type> *preparedTypes = nullptr)
 {
-    if (!target || !selector)
+    if (!target || !selector || !signature)
     {
         throw std::runtime_error("Invalid native Objective-C target or selector");
-    }
-
-    NSMethodSignature *signature = [target methodSignatureForSelector:selector];
-    if (!signature)
-    {
-        throw std::runtime_error("Objective-C selector is not available");
     }
 
     NSUInteger expected = signature.numberOfArguments >= 2 ? signature.numberOfArguments - 2 : 0;
@@ -1480,8 +1695,10 @@ static NSInvocation *prepareInvocation(id target, SEL selector, NSArray *argumen
 
     for (NSUInteger index = 0; index < arguments.count; index++)
     {
-        setInvocationArgument(invocation, signature, arguments[index], index + 2, retained,
-                              storage);
+        const loader::ffi::Type *preparedType =
+            preparedTypes && index < preparedTypes->size() ? &(*preparedTypes)[index] : nullptr;
+        setInvocationArgument(invocation, signature, arguments[index], index + 2, retained, storage,
+                              preparedType);
     }
 
     [invocation retainArguments];
@@ -1498,6 +1715,101 @@ static NSInvocation *prepareInvocation(id target, SEL selector, NSArray *argumen
                                  OBJC_ASSOCIATION_RETAIN_NONATOMIC);
     }
     return invocation;
+}
+
+static NSInvocation *prepareInvocation(id target, SEL selector, NSArray *arguments)
+{
+    if (!target || !selector)
+    {
+        throw std::runtime_error("Invalid native Objective-C target or selector");
+    }
+
+    NSMethodSignature *signature = [target methodSignatureForSelector:selector];
+    if (!signature)
+    {
+        throw std::runtime_error("Objective-C selector is not available");
+    }
+
+    return prepareInvocationWithSignature(target, selector, arguments, signature);
+}
+
+static std::shared_ptr<ObjCCallPlanHost> prepareObjCCallPlan(Runtime &runtime, id target,
+                                                             SEL selector)
+{
+    if (!target || !selector)
+    {
+        throw JSError(runtime, "Invalid native Objective-C call-plan target or selector");
+    }
+    bool   classMethod = object_isClass(target);
+    Class  ownerClass  = classMethod ? (Class) target : [target class];
+    Method method      = classMethod ? class_getClassMethod(ownerClass, selector)
+                                     : class_getInstanceMethod(ownerClass, selector);
+    if (!method)
+    {
+        throw JSError(runtime, "Objective-C call-plan selector is unavailable");
+    }
+    NSMethodSignature *signature =
+        [NSMethodSignature signatureWithObjCTypes:method_getTypeEncoding(method)];
+    if (!signature || signature.numberOfArguments < 2 ||
+        signature.numberOfArguments - 2 > kMaximumNativeArguments)
+    {
+        throw JSError(runtime, "Objective-C call-plan signature is invalid");
+    }
+    std::string resultName = nativeFFITypeName(signature.methodReturnType);
+    if (resultName.empty())
+    {
+        throw JSError(runtime, "Unsupported Objective-C call-plan return type");
+    }
+    loader::ffi::Type              resultType;
+    std::vector<loader::ffi::Type> argumentTypes;
+    argumentTypes.reserve(signature.numberOfArguments - 2);
+    try
+    {
+        resultType = loader::ffi::resolveType(resultName);
+        for (NSUInteger index = 2; index < signature.numberOfArguments; index++)
+        {
+            const char *encoding = [signature getArgumentTypeAtIndex:index];
+            char        code     = normalizedType(encoding);
+            if (code != '@' && code != '#' && code != 'c' && code != 'C' && code != 's' &&
+                code != 'S' && code != 'i' && code != 'I' && code != 'l' && code != 'L' &&
+                code != 'q' && code != 'Q' && code != 'B' && code != 'f' && code != 'd' &&
+                code != '{')
+            {
+                throw std::invalid_argument("Unsupported Objective-C call-plan argument type");
+            }
+            std::string name = nativeFFITypeName(encoding);
+            if (name.empty())
+            {
+                throw std::invalid_argument("Unsupported Objective-C call-plan argument type");
+            }
+            argumentTypes.push_back(loader::ffi::resolveType(name));
+        }
+    }
+    catch (const std::exception &error)
+    {
+        throw JSError(runtime, error.what());
+    }
+    size_t activePlans = gLiveObjCCallPlans.load(std::memory_order_relaxed);
+    do
+    {
+        if (activePlans >= kMaximumPreparedObjCCalls)
+        {
+            throw JSError(runtime, "Too many prepared Objective-C calls are active");
+        }
+    } while (!gLiveObjCCallPlans.compare_exchange_weak(activePlans, activePlans + 1,
+                                                       std::memory_order_acq_rel));
+    try
+    {
+        auto resources = loader::native::runtimeResourceRegistry(runtime);
+        return std::make_shared<ObjCCallPlanHost>(
+            ownerClass, selector, classMethod, signature, std::move(resultType),
+            std::move(argumentTypes), resources->identity(), loader::native::runtimeGeneration());
+    }
+    catch (...)
+    {
+        gLiveObjCCallPlans--;
+        throw;
+    }
 }
 
 static Value invokeObject(Runtime &runtime, id target, SEL selector, NSArray *arguments)
@@ -1686,8 +1998,9 @@ static Value invokeSuperObject(Runtime &runtime, id target, Class currentClass, 
     return loader::ffi::readValue(runtime, frame->interface().result, frame->result());
 }
 
-static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, NSArray *arguments,
-                                    const Value *options)
+static Value invokeInvocationWithThreadPolicy(Runtime &runtime, NSInvocation *invocation,
+                                              const Value             *options,
+                                              const loader::ffi::Type *preparedResult = nullptr)
 {
     std::string policy = "current";
     if (options && options->isObject())
@@ -1700,7 +2013,8 @@ static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, N
     }
     if (policy == "current" || ([NSThread isMainThread] && policy == "main"))
     {
-        return invokeObject(runtime, target, selector, arguments);
+        [invocation invoke];
+        return returnValue(runtime, invocation, invocation.methodSignature, preparedResult);
     }
     if (policy != "main")
     {
@@ -1712,9 +2026,8 @@ static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, N
             runtime, "Objective-C invocation cannot synchronously cross to a waiting main thread");
     }
 
-    NSInvocation *invocation     = prepareInvocation(target, selector, arguments);
-    __strong id   retainedResult = nil;
-    NSException  *failure        = nil;
+    __strong id  retainedResult = nil;
+    NSException *failure        = nil;
     executeMainSynchronously([&]() {
         @try
         {
@@ -1737,9 +2050,16 @@ static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, N
         throw JSError(runtime, std::string("Objective-C invocation failed: ") +
                                    (failure.reason.UTF8String ?: "unknown"));
     }
-    Value result = returnValue(runtime, invocation, invocation.methodSignature);
+    Value result = returnValue(runtime, invocation, invocation.methodSignature, preparedResult);
     (void) retainedResult;
     return result;
+}
+
+static Value invokeWithThreadPolicy(Runtime &runtime, id target, SEL selector, NSArray *arguments,
+                                    const Value *options)
+{
+    return invokeInvocationWithThreadPolicy(runtime, prepareInvocation(target, selector, arguments),
+                                            options);
 }
 
 static Value executeMainAsynchronously(Runtime &runtime, std::function<void(void)> operation,
@@ -2232,10 +2552,10 @@ struct NativeRetainedObject {
     __strong id value = nil;
 };
 
-static Value invokeAsync(Runtime &runtime, id target, SEL selector, NSArray *arguments)
+static Value invokeInvocationAsync(Runtime &runtime, NSInvocation *invocation,
+                                   std::shared_ptr<ObjCCallPlanHost> preparedPlan = nullptr)
 {
-    NSInvocation *invocation     = prepareInvocation(target, selector, arguments);
-    auto          retainedResult = std::make_shared<NativeRetainedObject>();
+    auto retainedResult = std::make_shared<NativeRetainedObject>();
     return executeMainAsynchronously(
         runtime,
         [invocation, retainedResult]() {
@@ -2248,9 +2568,15 @@ static Value invokeAsync(Runtime &runtime, id target, SEL selector, NSArray *arg
                 retainedResult->value = object;
             }
         },
-        [invocation, retainedResult](Runtime &completionRuntime) {
-            return returnValue(completionRuntime, invocation, invocation.methodSignature);
+        [invocation, retainedResult, preparedPlan](Runtime &completionRuntime) {
+            return returnValue(completionRuntime, invocation, invocation.methodSignature,
+                               preparedPlan ? &preparedPlan->resultType() : nullptr);
         });
+}
+
+static Value invokeAsync(Runtime &runtime, id target, SEL selector, NSArray *arguments)
+{
+    return invokeInvocationAsync(runtime, prepareInvocation(target, selector, arguments));
 }
 
 struct AsyncSuperCall {
@@ -2334,6 +2660,17 @@ static Value invokeSuperWithThreadPolicy(Runtime &runtime, id target, Class curr
     throw JSError(runtime, "Native super invocation cannot synchronously cross to the main thread");
 }
 
+static NSMutableArray *argumentArray(Runtime &runtime, const Array &values)
+{
+    NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:values.size(runtime)];
+    for (size_t index = 0; index < values.size(runtime); index++)
+    {
+        [arguments addObject:valueToObjC(runtime, values.getValueAtIndex(runtime, index))
+                                 ?: [NSNull null]];
+    }
+    return arguments;
+}
+
 static NSArray *argumentArray(Runtime &runtime, const Value *args, size_t count, size_t start)
 {
     NSMutableArray *arguments = [NSMutableArray arrayWithCapacity:count - start];
@@ -2371,10 +2708,39 @@ static Class classFromValue(Runtime &runtime, const Value &value)
 
 static void releaseHookCallbacks(const std::shared_ptr<HookState> &state)
 {
-    std::shared_ptr<HookCallbacks> owned = std::move(state->ownedCallbacks);
-    if (owned)
+    if (state->callbackResourceKey.empty())
     {
-        executeRuntimeAsynchronously([owned = std::move(owned)](Runtime &) {});
+        return;
+    }
+    if (loader::native::releaseRuntimeResourceOnOwnerThread(state->callbackResources,
+                                                            state->callbackResourceKey))
+    {
+        return;
+    }
+    if (loader::native::deferRuntimeResourceRelease(state->callbackResources,
+                                                    state->callbackResourceKey))
+    {
+        auto resources = state->callbackResources;
+        auto identity  = state->callbackRuntimeIdentity;
+        if (state->inlineRuntime)
+        {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                loader::native::withRuntimeResource(
+                    resources, identity, [](loader::native::RuntimeResourceRegistry &owner) {
+                        owner.drainDeferredReleases();
+                    });
+            });
+            return;
+        }
+        executeRuntimeAsynchronously([resources, identity](Runtime &runtime) {
+            loader::native::withRuntimeResource(
+                resources, identity, [&](loader::native::RuntimeResourceRegistry &owner) {
+                    if (loader::native::runtimeResourceRegistry(runtime)->identity() == identity)
+                    {
+                        owner.drainDeferredReleases();
+                    }
+                });
+        });
     }
 }
 
@@ -2386,8 +2752,17 @@ static void removeHook(const std::shared_ptr<HookState> &state, bool preserveAft
         return;
     }
     state->afterOncePending.store(preserveAfter && state->hasAfter);
-    if (!state->active.exchange(false))
+    bool wasActive = state->active.exchange(false);
+    if (!preserveAfter)
     {
+        state->operations->cancelPending();
+    }
+    if (!wasActive)
+    {
+        if (!state->afterOncePending.load())
+        {
+            releaseHookCallbacks(state);
+        }
         return;
     }
     loader::native::nativeHookBudget().release();
@@ -2456,7 +2831,7 @@ Value HookTokenHost::get(Runtime &runtime, const PropNameID &name)
         std::shared_ptr<HookState> state = state_;
         return Function::createFromHostFunction(
             runtime, PropNameID::forUtf8(runtime, "remove"), 0,
-            [state](Runtime &, const Value &, const Value *, size_t) -> Value {
+            [state](Runtime &rt, const Value &, const Value *, size_t) -> Value {
                 removeHook(state);
                 return Value::undefined();
             });
@@ -2684,16 +3059,77 @@ static bool executeRuntimeSynchronously(std::function<void(Runtime &)> callback)
 
 static thread_local Runtime *gUIScopeRuntime = nullptr;
 
+static bool hookRuntimeMatches(const std::shared_ptr<HookState> &state, Runtime &runtime)
+{
+    auto runtimeResources = loader::native::runtimeResourceRegistry(runtime);
+    return runtimeResources->active() &&
+           runtimeResources->identity() == state->callbackRuntimeIdentity;
+}
+
 static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selector,
                             std::function<void(Runtime &)> callback)
 {
-    if (state->inlineRuntime && [NSThread isMainThread])
+    auto operation = loader::native::beginRuntimeResourceOperation(state->callbackResources,
+                                                                   state->callbackRuntimeIdentity);
+    if (!operation)
     {
-        callback(*state->inlineRuntime);
-        return true;
+        return false;
+    }
+    if (!state->operations->track(operation))
+    {
+        operation->cancel();
+        return false;
+    }
+    bool invoked = false;
+    if (state->inlineRuntime && [NSThread isMainThread] &&
+        state->runtimeGeneration == loader::native::runtimeGeneration())
+    {
+        loader::native::withRuntimeResource(
+            state->callbackResources, state->callbackRuntimeIdentity, operation,
+            [&](loader::native::RuntimeResourceRegistry &resources) {
+                if (!state->active.load() || !hookRuntimeMatches(state, *state->inlineRuntime))
+                {
+                    return;
+                }
+                resources.drainDeferredReleases();
+                callback(*state->inlineRuntime);
+                invoked = true;
+            });
+        if (invoked)
+        {
+            return true;
+        }
     }
 
-    bool completed   = !state->inlineRuntime && executeRuntimeSynchronously(std::move(callback));
+    bool completed = false;
+    if (!state->inlineRuntime)
+    {
+        auto invokedForRuntime = std::make_shared<std::atomic_bool>(false);
+        completed = executeRuntimeSynchronously([state, callback = std::move(callback), operation,
+                                                 invokedForRuntime](Runtime &runtime) {
+            if (!state->active.load() ||
+                state->runtimeGeneration != loader::native::runtimeGeneration())
+            {
+                return;
+            }
+            loader::native::withRuntimeResource(
+                state->callbackResources, state->callbackRuntimeIdentity, operation,
+                [&](loader::native::RuntimeResourceRegistry &resources) {
+                    if (!state->active.load() || !hookRuntimeMatches(state, runtime))
+                    {
+                        return;
+                    }
+                    resources.drainDeferredReleases();
+                    callback(runtime);
+                    invokedForRuntime->store(true, std::memory_order_release);
+                });
+        });
+        if (!completed)
+        {
+            operation->cancel();
+        }
+        completed = completed && invokedForRuntime->load(std::memory_order_acquire);
+    }
     std::string name = sel_getName(selector);
     if (!completed && firstHookWarning(state->addon, name, "skipped"))
     {
@@ -2704,33 +3140,55 @@ static bool runHookCallback(const std::shared_ptr<HookState> &state, SEL selecto
 }
 
 static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation> &invocation,
-                          id object, SEL selector, bool allowOriginal, loader::AddonSlot addon)
+                          id object, SEL selector, bool allowOriginal,
+                          const std::shared_ptr<HookState> &state, const char *phase)
 {
     Object context(runtime);
-    context.setProperty(
-        runtime, "self",
-        Object::createFromHostObject(runtime, std::make_shared<ObjCHandleHost>(object)));
+    if (state->payloadReceiver)
+    {
+        context.setProperty(
+            runtime, "self",
+            Object::createFromHostObject(runtime, std::make_shared<ObjCHandleHost>(object)));
+    }
     context.setProperty(runtime, "selector",
                         String::createFromUtf8(runtime, sel_getName(selector)));
 
-    size_t explicitCount = invocation->dispatcher->signature->arguments.size() - 2;
-    Array  values(runtime, explicitCount);
-    for (size_t index = 0; index < explicitCount; index++)
+    size_t              explicitCount = invocation->dispatcher->signature->arguments.size() - 2;
+    std::vector<size_t> argumentIndexes;
+    if (state->payloadAllArguments)
     {
-        values.setValueAtIndex(runtime, index,
-                               hookValue(runtime,
-                                         invocation->dispatcher->signature->arguments[index + 2],
-                                         invocation->arguments[index + 2]));
+        argumentIndexes.resize(explicitCount);
+        for (size_t index = 0; index < explicitCount; index++)
+        {
+            argumentIndexes[index] = index;
+        }
+    }
+    else
+    {
+        argumentIndexes = state->payloadArgumentIndexes;
+    }
+    Array values(runtime, argumentIndexes.size());
+    Array indexValues(runtime, argumentIndexes.size());
+    for (size_t index = 0; index < argumentIndexes.size(); index++)
+    {
+        size_t argumentIndex = argumentIndexes[index];
+        values.setValueAtIndex(
+            runtime, index,
+            hookValue(runtime, invocation->dispatcher->signature->arguments[argumentIndex + 2],
+                      invocation->arguments[argumentIndex + 2]));
+        indexValues.setValueAtIndex(runtime, index, Value(static_cast<double>(argumentIndex)));
     }
     context.setProperty(runtime, "args", std::move(values));
+    context.setProperty(runtime, "argumentIndexes", std::move(indexValues));
+    context.setProperty(runtime, "phase", String::createFromUtf8(runtime, phase));
 
     auto original = invocation;
     context.setProperty(
         runtime, "replaceObjectArgument",
         Function::createFromHostFunction(
             runtime, PropNameID::forUtf8(runtime, "replaceObjectArgument"), 2,
-            [original, allowOriginal, addon, selector](Runtime     &rt, const Value &,
-                                                       const Value *args, size_t count) -> Value {
+            [original, allowOriginal, addon = state->addon, selector, argumentIndexes](
+                Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
                 std::lock_guard<std::mutex> lock(original->lifecycleMutex);
                 if (!original->active.load())
                 {
@@ -2752,18 +3210,17 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
                 }
 
                 double requestedIndex = args[0].getNumber();
-                size_t explicitCount  = original->dispatcher->signature->arguments.size() - 2;
-                if (!(requestedIndex >= 0 && requestedIndex < explicitCount))
+                if (!(requestedIndex >= 0 && requestedIndex < argumentIndexes.size()))
                 {
                     throw JSError(rt, "Native hook argument index is out of range");
                 }
-                size_t explicitIndex = static_cast<size_t>(requestedIndex);
-                if (static_cast<double>(explicitIndex) != requestedIndex)
+                size_t selectedIndex = static_cast<size_t>(requestedIndex);
+                if (static_cast<double>(selectedIndex) != requestedIndex)
                 {
                     throw JSError(rt, "Native hook argument index must be an integer");
                 }
 
-                size_t                   argumentIndex = explicitIndex + 2;
+                size_t                   argumentIndex = argumentIndexes[selectedIndex] + 2;
                 const loader::ffi::Type &spec =
                     original->dispatcher->signature->arguments[argumentIndex];
                 if (spec.name != "object" && spec.name != "class")
@@ -2791,8 +3248,8 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
         runtime, "original",
         Function::createFromHostFunction(
             runtime, PropNameID::forUtf8(runtime, "original"), 0,
-            [original, allowOriginal, addon, selector](Runtime &rt, const Value &, const Value *,
-                                                       size_t) -> Value {
+            [original, allowOriginal, addon = state->addon,
+             selector](Runtime &rt, const Value &, const Value *, size_t) -> Value {
                 std::lock_guard<std::mutex> lock(original->lifecycleMutex);
                 if (!original->active.load())
                 {
@@ -3253,17 +3710,17 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         {
             try
             {
-                runHookCallback(
-                    state, selector, [invocation, object, selector, state](Runtime &runtime) {
-                        auto callbacks = state->callbacks.lock();
-                        if (!callbacks || !callbacks->before)
-                        {
-                            return;
-                        }
-                        Object context =
-                            hookContext(runtime, invocation, object, selector, true, state->addon);
-                        callbacks->before->call(runtime, context);
-                    });
+                runHookCallback(state, selector,
+                                [invocation, object, selector, state](Runtime &runtime) {
+                                    auto callbacks = state->callbacks.lock();
+                                    if (!callbacks || !callbacks->before)
+                                    {
+                                        return;
+                                    }
+                                    Object context = hookContext(runtime, invocation, object,
+                                                                 selector, true, state, "before");
+                                    callbacks->before->call(runtime, context);
+                                });
             }
             catch (const std::exception &exception)
             {
@@ -3292,9 +3749,9 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
                         {
                             throw std::runtime_error("Native hook callback expired");
                         }
-                        Object context =
-                            hookContext(runtime, invocation, object, selector, true, state->addon);
-                        Value result = callbacks->replace->call(runtime, context);
+                        Object context = hookContext(runtime, invocation, object, selector, true,
+                                                     state, "replace");
+                        Value  result  = callbacks->replace->call(runtime, context);
                         if (!setHookReturn(runtime, invocation->dispatcher->signature->result,
                                            result, replacementResult->data()))
                         {
@@ -3340,6 +3797,10 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         __strong id                    retainedObject = object;
         std::function<void(Runtime &)> afterWork      = [invocation, retainedObject, selector,
                                                          state](Runtime &runtime) {
+            if (state->runtimeGeneration != loader::native::runtimeGeneration())
+            {
+                return;
+            }
             bool pending = state->afterOncePending.exchange(false);
             if (!state->active.load() && !pending)
             {
@@ -3351,8 +3812,8 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             loader::AddonScope runtimeScope(state->addon);
             try
             {
-                Object context =
-                    hookContext(runtime, invocation, retainedObject, selector, false, state->addon);
+                Object context = hookContext(runtime, invocation, retainedObject, selector, false,
+                                             state, "after");
                 callbacks->after->call(runtime, context);
             }
             catch (const std::exception &exception)
@@ -3361,23 +3822,91 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
             }
             if (pending)
             {
-                state->ownedCallbacks.reset();
+                loader::native::releaseRuntimeResource(runtime, state->callbackResourceKey);
             }
         };
-        if (!state->inlineRuntime)
+        auto operation = loader::native::beginRuntimeResourceOperation(
+            state->callbackResources, state->callbackRuntimeIdentity);
+        if (!operation)
         {
-            executeRuntimeAsynchronously(std::move(afterWork));
+            continue;
+        }
+        if (!state->operations->track(operation))
+        {
+            operation->cancel();
+            continue;
+        }
+        if (state->coalesceAfter)
+        {
+            std::string key =
+                "ios-hook:" + std::to_string(state->identifier) + ":" +
+                std::to_string(reinterpret_cast<uintptr_t>((__bridge void *) retainedObject));
+            loader::native::executeRuntimeCoalesced(
+                std::move(key), [state, afterWork, operation](Runtime &runtime) {
+                    if (state->runtimeGeneration != loader::native::runtimeGeneration())
+                    {
+                        return;
+                    }
+                    loader::native::withRuntimeResource(
+                        state->callbackResources, state->callbackRuntimeIdentity, operation,
+                        [&](loader::native::RuntimeResourceRegistry &resources) {
+                            if (!hookRuntimeMatches(state, runtime))
+                            {
+                                return;
+                            }
+                            resources.drainDeferredReleases();
+                            afterWork(runtime);
+                        });
+                });
+        }
+        else if (!state->inlineRuntime)
+        {
+            executeRuntimeAsynchronously([state, afterWork, operation](Runtime &runtime) {
+                if (state->runtimeGeneration != loader::native::runtimeGeneration())
+                {
+                    return;
+                }
+                loader::native::withRuntimeResource(
+                    state->callbackResources, state->callbackRuntimeIdentity, operation,
+                    [&](loader::native::RuntimeResourceRegistry &resources) {
+                        if (!hookRuntimeMatches(state, runtime))
+                        {
+                            return;
+                        }
+                        resources.drainDeferredReleases();
+                        afterWork(runtime);
+                    });
+            });
         }
         else if ([NSThread isMainThread])
         {
-            afterWork(*state->inlineRuntime);
+            loader::native::withRuntimeResource(
+                state->callbackResources, state->callbackRuntimeIdentity, operation,
+                [&](loader::native::RuntimeResourceRegistry &resources) {
+                    if (!hookRuntimeMatches(state, *state->inlineRuntime))
+                    {
+                        return;
+                    }
+                    resources.drainDeferredReleases();
+                    afterWork(*state->inlineRuntime);
+                });
         }
         else
         {
             dispatch_async(dispatch_get_main_queue(), ^{
-                if (state->active.load() && state->inlineRuntime)
+                if (state->active.load() && state->inlineRuntime &&
+                    state->runtimeGeneration == loader::native::runtimeGeneration())
                 {
-                    afterWork(*state->inlineRuntime);
+                    loader::native::withRuntimeResource(
+                        state->callbackResources, state->callbackRuntimeIdentity, operation,
+                        [&](loader::native::RuntimeResourceRegistry &resources) {
+                            if (!hookRuntimeMatches(state, *state->inlineRuntime))
+                            {
+                                return;
+                            }
+                            resources.drainDeferredReleases();
+                            afterWork(*state->inlineRuntime);
+                        });
                 }
             });
         }
@@ -3605,11 +4134,16 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         return std::make_shared<Function>(value.asObject(runtime).getFunction(runtime));
     };
 
-    std::shared_ptr<Function> before         = functionFor("before");
-    std::shared_ptr<Function> after          = functionFor("after");
-    std::shared_ptr<Function> replace        = functionFor("replace");
-    bool                      once           = false;
-    bool                      cacheOnly      = false;
+    std::shared_ptr<Function> before              = functionFor("before");
+    std::shared_ptr<Function> after               = functionFor("after");
+    std::shared_ptr<Function> replace             = functionFor("replace");
+    bool                      once                = false;
+    bool                      cacheOnly           = false;
+    bool                      coalesceAfter       = false;
+    bool                      payloadReceiver     = true;
+    bool                      payloadAllArguments = true;
+    HookPayloadPhase          payloadPhase        = HookPayloadPhase::both;
+    std::vector<size_t>       payloadArgumentIndexes;
     id                        instanceTarget = nil;
     if (count > 3 && args[3].isObject())
     {
@@ -3618,7 +4152,17 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         once                 = onceValue.isBool() && onceValue.getBool();
         Value cacheOnlyValue = options.getProperty(runtime, "cacheOnly");
         cacheOnly            = cacheOnlyValue.isBool() && cacheOnlyValue.getBool();
-        Value instanceValue  = options.getProperty(runtime, "instance");
+        Value coalesceValue  = options.getProperty(runtime, "coalesce");
+        if (!coalesceValue.isUndefined() && !coalesceValue.isNull())
+        {
+            if (!coalesceValue.isString() ||
+                ![jsiString(runtime, coalesceValue) isEqualToString:@"receiver"])
+            {
+                throw JSError(runtime, "Native hook coalescing must be set to receiver");
+            }
+            coalesceAfter = true;
+        }
+        Value instanceValue = options.getProperty(runtime, "instance");
         if (!instanceValue.isUndefined() && !instanceValue.isNull())
         {
             instanceTarget = objcValue(runtime, instanceValue);
@@ -3627,10 +4171,95 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
                 throw JSError(runtime, "Native hook instance target must be an Objective-C handle");
             }
         }
+        Value payloadValue = options.getProperty(runtime, "payload");
+        if (!payloadValue.isUndefined() && !payloadValue.isNull())
+        {
+            if (!payloadValue.isObject() || payloadValue.asObject(runtime).isArray(runtime))
+            {
+                throw JSError(runtime, "Native hook payload options must be an object");
+            }
+            Object payload       = payloadValue.asObject(runtime);
+            Value  receiverValue = payload.getProperty(runtime, "receiver");
+            if (!receiverValue.isUndefined())
+            {
+                if (!receiverValue.isBool())
+                {
+                    throw JSError(runtime, "Native hook payload receiver must be boolean");
+                }
+                payloadReceiver = receiverValue.getBool();
+            }
+            Value argumentsValue = payload.getProperty(runtime, "arguments");
+            if (!argumentsValue.isUndefined())
+            {
+                if (!argumentsValue.isObject() ||
+                    !argumentsValue.asObject(runtime).isArray(runtime))
+                {
+                    throw JSError(runtime, "Native hook payload arguments must be an array");
+                }
+                payloadAllArguments  = false;
+                Array  indexes       = argumentsValue.asObject(runtime).asArray(runtime);
+                size_t indexCount    = indexes.size(runtime);
+                size_t explicitCount = signature->arguments.size() - 2;
+                payloadArgumentIndexes.reserve(indexCount);
+                for (size_t index = 0; index < indexCount; index++)
+                {
+                    Value selectedValue = indexes.getValueAtIndex(runtime, index);
+                    if (!selectedValue.isNumber())
+                    {
+                        throw JSError(runtime,
+                                      "Native hook payload argument indexes must be integers");
+                    }
+                    double requestedIndex = selectedValue.getNumber();
+                    if (!std::isfinite(requestedIndex) || requestedIndex < 0 ||
+                        std::trunc(requestedIndex) != requestedIndex ||
+                        requestedIndex >= static_cast<double>(explicitCount))
+                    {
+                        throw JSError(runtime,
+                                      "Native hook payload argument index is out of range");
+                    }
+                    size_t selectedIndex = static_cast<size_t>(requestedIndex);
+                    if (std::find(payloadArgumentIndexes.begin(), payloadArgumentIndexes.end(),
+                                  selectedIndex) != payloadArgumentIndexes.end())
+                    {
+                        throw JSError(runtime,
+                                      "Native hook payload argument indexes must be unique");
+                    }
+                    payloadArgumentIndexes.push_back(selectedIndex);
+                }
+            }
+            Value phaseValue = payload.getProperty(runtime, "phase");
+            if (!phaseValue.isUndefined())
+            {
+                if (!phaseValue.isString())
+                {
+                    throw JSError(runtime, "Native hook payload phase must be a string");
+                }
+                NSString *phase = jsiString(runtime, phaseValue);
+                if ([phase isEqualToString:@"before"])
+                {
+                    payloadPhase = HookPayloadPhase::before;
+                }
+                else if ([phase isEqualToString:@"after"])
+                {
+                    payloadPhase = HookPayloadPhase::after;
+                }
+                else
+                {
+                    throw JSError(runtime, "Native hook payload phase must be before or after");
+                }
+            }
+        }
     }
     if (!before && !after && !replace && !cacheOnly)
     {
         throw JSError(runtime, "objc.hook requires at least one handler");
+    }
+    if (coalesceAfter &&
+        (replace || !after || payloadPhase == HookPayloadPhase::before || !payloadReceiver))
+    {
+        throw JSError(
+            runtime,
+            "Receiver coalescing requires a non-replacing after-observation hook with its receiver");
     }
     if (cacheOnly)
     {
@@ -3713,24 +4342,32 @@ static Value makeHook(Runtime &runtime, const Value *args, size_t count)
         }
     }
 
-    auto callbacks           = std::make_shared<HookCallbacks>();
-    callbacks->before        = std::move(before);
-    callbacks->after         = std::move(after);
-    callbacks->replace       = std::move(replace);
-    auto state               = std::make_shared<HookState>();
-    state->identifier        = gNextHookIdentifier.fetch_add(1);
-    state->runtimeGeneration = loader::native::runtimeGeneration();
-    state->callbacks         = callbacks;
-    state->ownedCallbacks    = callbacks;
-    state->hasBefore         = callbacks->before != nullptr;
-    state->hasAfter          = callbacks->after != nullptr;
-    state->hasReplace        = callbacks->replace != nullptr;
-    state->cacheOnly         = cacheOnly;
-    state->once              = once;
-    state->instanceTarget    = instanceTarget;
-    state->dispatcher        = dispatcher;
-    state->inlineRuntime     = gUIScopeRuntime;
-    state->addon             = loader::currentAddon();
+    auto callbacks                 = std::make_shared<HookCallbacks>();
+    callbacks->before              = std::move(before);
+    callbacks->after               = std::move(after);
+    callbacks->replace             = std::move(replace);
+    auto state                     = std::make_shared<HookState>();
+    state->identifier              = gNextHookIdentifier.fetch_add(1);
+    state->runtimeGeneration       = loader::native::runtimeGeneration();
+    state->callbackResourceKey     = "ios-hook:" + std::to_string(state->identifier);
+    auto callbackResources         = loader::native::runtimeResourceRegistry(runtime);
+    state->callbackResources       = callbackResources;
+    state->callbackRuntimeIdentity = callbackResources->identity();
+    state->callbacks               = callbacks;
+    loader::native::retainRuntimeResource(runtime, state->callbackResourceKey, callbacks);
+    state->hasBefore     = callbacks->before != nullptr && payloadPhase != HookPayloadPhase::after;
+    state->hasAfter      = callbacks->after != nullptr && payloadPhase != HookPayloadPhase::before;
+    state->hasReplace    = callbacks->replace != nullptr;
+    state->cacheOnly     = cacheOnly;
+    state->coalesceAfter = coalesceAfter;
+    state->once          = once;
+    state->payloadReceiver        = payloadReceiver;
+    state->payloadAllArguments    = payloadAllArguments;
+    state->payloadArgumentIndexes = std::move(payloadArgumentIndexes);
+    state->instanceTarget         = instanceTarget;
+    state->dispatcher             = dispatcher;
+    state->inlineRuntime          = gUIScopeRuntime;
+    state->addon                  = loader::currentAddon();
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
         dispatcher->hooks.push_back(state);
@@ -4157,33 +4794,43 @@ public:
             return Value::undefined();
         }
 
-        Object full(runtime);
-        installObjC(runtime, full);
-        Object scoped(runtime);
-        for (const std::string &allowed : scope_->allowed)
-        {
-            if (allowed == "hook")
-            {
-                auto scope = scope_;
-                scoped.setProperty(runtime, "hook",
-                                   makeFunction("hook", 3, runtime,
-                                                [scope](Runtime     &rt, const Value &,
-                                                        const Value *args, size_t count) -> Value {
-                                                    return makeUIScopeHook(rt, scope, args, count);
-                                                }));
-                continue;
-            }
-            Value value = full.getProperty(runtime, allowed.c_str());
-            if (!value.isUndefined())
-            {
-                scoped.setProperty(runtime, allowed.c_str(), std::move(value));
-            }
-        }
-        return scoped;
+        auto scope = scope_;
+        return loader::native::cachedUIScopeNamespace(
+            runtime, std::to_string(cacheId_) + ":objc",
+            [&] {
+                Object full(runtime);
+                installObjC(runtime, full);
+                Object scoped(runtime);
+                for (const std::string &allowed : scope->allowed)
+                {
+                    if (allowed == "hook")
+                    {
+                        scoped.setProperty(
+                            runtime, "hook",
+                            makeFunction("hook", 3, runtime,
+                                         [scope](Runtime &rt, const Value &, const Value *args,
+                                                 size_t count) -> Value {
+                                             return makeUIScopeHook(rt, scope, args, count);
+                                         }));
+                        continue;
+                    }
+                    Value value = full.getProperty(runtime, allowed.c_str());
+                    if (!value.isUndefined())
+                    {
+                        scoped.setProperty(runtime, allowed.c_str(), std::move(value));
+                    }
+                }
+                return scoped;
+            },
+            [scope] {
+                std::lock_guard<std::mutex> lock(scope->mutex);
+                return !scope->disposed;
+            });
     }
 
 private:
     std::shared_ptr<ObjCUIScopeState> scope_;
+    uint64_t                          cacheId_ = loader::native::nextUIScopeCacheId();
 };
 
 static Value createUIScope(Runtime &runtime, const Value *args, size_t count)
@@ -4315,6 +4962,74 @@ static void installObjC(Runtime &runtime, Object &objc)
                 return invokeWithThreadPolicy(rt, object, NSSelectorFromString(selectorName),
                                               arguments, count > 3 ? &args[3] : nullptr);
             }));
+
+    objc.setProperty(
+        runtime, "prepare",
+        makeFunction("prepare", 2, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         if (count < 2)
+                         {
+                             throw JSError(rt, "objc.prepare expects an object and selector");
+                         }
+                         id        target       = objcValue(rt, args[0]);
+                         NSString *selectorName = jsiString(rt, args[1]);
+                         auto      plan =
+                             prepareObjCCallPlan(rt, target, NSSelectorFromString(selectorName));
+                         return Object::createFromHostObject(rt, std::move(plan));
+                     }));
+
+    objc.setProperty(
+        runtime, "invokePrepared",
+        makeFunction(
+            "invokePrepared", 3, runtime,
+            [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                if (count < 3 || !args[2].isObject() || !args[2].asObject(rt).isArray(rt))
+                {
+                    throw JSError(rt,
+                                  "objc.invokePrepared expects a plan, target, and argument array");
+                }
+                auto plan   = objcCallPlanHost(rt, args[0]);
+                id   target = objcValue(rt, args[1]);
+                plan->validate(rt, target);
+                Array           array      = args[2].asObject(rt).asArray(rt);
+                NSMutableArray *arguments  = argumentArray(rt, array);
+                NSInvocation   *invocation = prepareInvocationWithSignature(
+                    target, plan->selector(), arguments, plan->signature(), &plan->argumentTypes());
+                return invokeInvocationWithThreadPolicy(
+                    rt, invocation, count > 3 ? &args[3] : nullptr, &plan->resultType());
+            }));
+
+    objc.setProperty(
+        runtime, "invokePreparedAsync",
+        makeFunction(
+            "invokePreparedAsync", 3, runtime,
+            [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                if (count < 3 || !args[2].isObject() || !args[2].asObject(rt).isArray(rt))
+                {
+                    throw JSError(
+                        rt, "objc.invokePreparedAsync expects a plan, target, and argument array");
+                }
+                auto plan   = objcCallPlanHost(rt, args[0]);
+                id   target = objcValue(rt, args[1]);
+                plan->validate(rt, target);
+                Array           array      = args[2].asObject(rt).asArray(rt);
+                NSMutableArray *arguments  = argumentArray(rt, array);
+                NSInvocation   *invocation = prepareInvocationWithSignature(
+                    target, plan->selector(), arguments, plan->signature(), &plan->argumentTypes());
+                return invokeInvocationAsync(rt, invocation, plan);
+            }));
+
+    objc.setProperty(
+        runtime, "disposePlan",
+        makeFunction("disposePlan", 1, runtime,
+                     [](Runtime &rt, const Value &, const Value *args, size_t count) -> Value {
+                         if (count < 1)
+                         {
+                             throw JSError(rt, "objc.disposePlan expects a call plan");
+                         }
+                         objcCallPlanHost(rt, args[0])->dispose();
+                         return Value::undefined();
+                     }));
 
     objc.setProperty(
         runtime, "invokeAsync",
@@ -4668,6 +5383,7 @@ void registerNativePluginBridge(Runtime &runtime)
     bridge.addNamespace(
         "fabric", loader::native::makeFabricNamespace(runtime, std::make_shared<IOSFabricAdapter>(),
                                                       loader::native::FabricCalls::SyncAndAsync));
+    evictIdleSurfacesOnMemoryWarnings();
 
     Object debug(runtime);
     installDebug(runtime, debug);

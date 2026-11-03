@@ -47,6 +47,7 @@ import type { AndroidTooltips } from '~/android/tooltip';
 import { subscribeTheme } from '~/theme';
 import { Icon } from '~/constants';
 import { installRebindGuard } from '~/android/rebind-guard';
+import { FIRST_ARGUMENT_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 const DRAWABLE = 'android.graphics.drawable.Drawable';
 const NO_DRAWABLE = { type: 'null', class: DRAWABLE } as const;
@@ -369,7 +370,7 @@ export function createAndroidIndicators(
 		MESSAGE_VIEW,
 		bindMessage.name,
 		bindMessage.parameters,
-		{ notify: true },
+		FIRST_ARGUMENT_AFTER_CALL,
 		({ self, args }) => {
 			const messageView = javaReference(self);
 			const message = javaReference(args[0]);

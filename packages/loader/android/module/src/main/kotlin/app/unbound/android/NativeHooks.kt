@@ -2,8 +2,10 @@ package app.unbound.android
 
 import org.json.JSONArray
 import org.json.JSONObject
+import org.json.JSONTokener
 import java.lang.reflect.Executable
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 
 object NativeHooks {
     interface Installer {
@@ -25,6 +27,15 @@ object NativeHooks {
         fun intercept(chain: Chain): Any?
     }
 
+    private enum class HookPhase(val wireName: String) {
+        BEFORE("before"),
+        AFTER("after"),
+    }
+
+    private data class PayloadSelection(val receiver: Boolean, val arguments: List<Int>?, val phase: HookPhase)
+
+    private data class Description(val receiver: String?, val arguments: String, val issued: List<String>)
+
     interface Dispatcher {
         fun dispatch(token: String, payloadJSON: String)
     }
@@ -39,7 +50,7 @@ object NativeHooks {
         val receiver: Class<*>?,
         val replaces: Boolean,
         val notifies: Boolean,
-        val notifiesAfter: Boolean,
+        val payload: PayloadSelection,
         var removable: Removable?,
     )
 
@@ -72,13 +83,34 @@ object NativeHooks {
         val owner = NativeJava.loadHostClass(className)
         val method = resolveMethod(className, methodName, parametersJSON)
         val token = synchronized(this) { "hook-${nextToken++}" }
+        val notify = options.opt("notify")
+        val payload = payloadSelection(
+            options,
+            method.parameterCount,
+            if (notify == "after") HookPhase.AFTER else HookPhase.BEFORE,
+        )
+        val coalesceValue = options.opt("coalesce")
+        val coalesce = coalesceValue != null && coalesceValue != JSONObject.NULL
+        require(!coalesce || coalesceValue == "receiver") {
+            "The hook coalescing policy is unsupported"
+        }
+        require(
+            !coalesce ||
+                (
+                    notify != false && !options.optBoolean("replace", false) &&
+                        !Modifier.isStatic(method.modifiers) && payload.receiver &&
+                        payload.phase == HookPhase.AFTER
+                    ),
+        ) {
+            "Receiver coalescing requires a non-replacing after-observation hook with its receiver"
+        }
         val registration = Registration(
             token,
             method,
             owner.takeIf { method.declaringClass != it },
             options.optBoolean("replace", false),
-            options.opt("notify") != false,
-            options.opt("notify") == "after",
+            notify != false,
+            payload,
             null,
         )
 
@@ -116,53 +148,33 @@ object NativeHooks {
             if (registration.receiver?.isInstance(self) == false) return chain.proceed()
 
             val arguments = (0 until chain.argumentCount()).map { chain.argument(it) }
-            val (selfJSON, argumentsJSON) = described(self, arguments)
+            val cacheDescription = if (registration.replaces) describe(self, arguments) else null
+            var eventDescription: Description? = null
 
-            if (registration.notifies && !registration.notifiesAfter) {
-                notify(registration.token, selfJSON, argumentsJSON)
+            if (registration.notifies && registration.payload.phase == HookPhase.BEFORE) {
+                eventDescription = notify(registration, self, arguments, cacheDescription, HookPhase.BEFORE)
             }
 
-            val result = result(registration, chain, selfJSON, argumentsJSON)
+            val result = result(registration, chain, cacheDescription)
 
-            if (registration.notifies && registration.notifiesAfter) {
-                notify(registration.token, selfJSON, argumentsJSON)
+            if (registration.notifies && registration.payload.phase == HookPhase.AFTER) {
+                eventDescription = notify(registration, self, arguments, cacheDescription, HookPhase.AFTER)
+            }
+
+            if (cacheDescription != null && cacheDescription !== eventDescription) {
+                NativeJava.releaseIssued(cacheDescription.issued)
             }
 
             return result
         }
     }
 
-    private class Described(
-        val self: Any?,
-        val arguments: List<Any?>,
-        val selfJSON: String,
-        val argumentsJSON: String,
-        val issued: List<String>,
-    ) {
-        fun matches(target: Any?, values: List<Any?>): Boolean =
-            target === self && values.size == arguments.size && values.indices.all { values[it] === arguments[it] }
-    }
-
-    private val lastDescribed = ThreadLocal<Described?>()
-
-    private fun described(self: Any?, arguments: List<Any?>): Pair<String, String> {
-        lastDescribed.get()?.takeIf { it.matches(self, arguments) }?.let {
-            NativeJava.reissue(it.issued)
-            return it.selfJSON to it.argumentsJSON
-        }
-
-        val (described, issued) = NativeJava.recordingIssues {
-            NativeJava.describe(self) to NativeJava.describeAll(arguments)
-        }
-        val (selfJSON, argumentsJSON) = described
-
-        lastDescribed.set(Described(self, arguments, selfJSON, argumentsJSON, issued))
-        return selfJSON to argumentsJSON
-    }
-
-    private fun result(registration: Registration, chain: Chain, selfJSON: String, argumentsJSON: String): Any? {
+    private fun result(registration: Registration, chain: Chain, description: Description?): Any? {
         if (!registration.replaces) return chain.proceed()
 
+        val description = description ?: return chain.proceed()
+        val selfJSON = description.receiver ?: return chain.proceed()
+        val argumentsJSON = description.arguments
         val lookup = synchronized(this) { returnValues }
         val cached = lookup.find(registration.token, selfJSON, argumentsJSON) ?: return chain.proceed()
         val value = runCatching { NativeJava.decode(cached) }.getOrElse {
@@ -178,11 +190,102 @@ object NativeHooks {
         return NativeJava.coerceTo(method.returnType, value)
     }
 
-    private fun notify(token: String, selfJSON: String, argumentsJSON: String) {
-        val target = synchronized(this) { dispatcher } ?: return
-        val payload = "{\"self\":$selfJSON,\"args\":$argumentsJSON}"
-        runCatching { target.dispatch(token, payload) }
-            .onFailure { Logger.error(LogCategory.HOOKS, "Failed to dispatch an Android hook event", it) }
+    private fun notify(
+        registration: Registration,
+        self: Any?,
+        arguments: List<Any?>,
+        cacheDescription: Description?,
+        phase: HookPhase,
+    ): Description? {
+        val target = synchronized(this) { dispatcher } ?: return null
+        val indexes = registration.payload.arguments ?: arguments.indices.toList()
+        val useCacheDescription =
+            cacheDescription != null &&
+                registration.payload.receiver &&
+                indexes.size == arguments.size &&
+                indexes.indices.all { indexes[it] == it }
+        val description = if (useCacheDescription) {
+            requireNotNull(cacheDescription)
+        } else {
+            describe(
+                self,
+                indexes.map(arguments::get),
+                registration.payload.receiver,
+            )
+        }
+        val payload = JSONObject()
+        description.receiver?.let { payload.put("self", JSONTokener(it).nextValue()) }
+        payload.put("args", JSONArray(description.arguments))
+            .put("argumentIndexes", JSONArray(indexes))
+            .put("phase", phase.wireName)
+        val dispatched = runCatching {
+            target.dispatch(registration.token, payload.toString())
+        }.onFailure {
+            Logger.error(LogCategory.HOOKS, "Failed to dispatch an Android hook event", it)
+        }.isSuccess
+        if (!dispatched) {
+            NativeJava.releaseIssued(description.issued)
+            return null
+        }
+        return description
+    }
+
+    private fun describe(
+        self: Any?,
+        arguments: List<Any?>,
+        includeReceiver: Boolean = true,
+    ): Description {
+        val (encoded, issued) = NativeJava.recordingIssues {
+            (if (includeReceiver) NativeJava.describe(self) else null) to NativeJava.describeAll(arguments)
+        }
+        return Description(encoded.first, encoded.second, issued)
+    }
+
+    private fun payloadSelection(
+        options: JSONObject,
+        argumentCount: Int,
+        defaultPhase: HookPhase,
+    ): PayloadSelection {
+        if (!options.has("payload")) return PayloadSelection(true, null, defaultPhase)
+        val payload = options.optJSONObject("payload")
+            ?: throw IllegalArgumentException("The hook payload options must be an object")
+        val receiver = payload.opt("receiver")?.let {
+            it as? Boolean ?: throw IllegalArgumentException("The hook payload receiver must be boolean")
+        } ?: true
+        val arguments = if (payload.has("arguments")) {
+            val selected = payload.optJSONArray("arguments")
+                ?: throw IllegalArgumentException("The hook payload arguments must be an array")
+            val indexes = mutableListOf<Int>()
+            for (index in 0 until selected.length()) {
+                val value = selected.opt(index)
+                val number = value as? Number
+                    ?: throw IllegalArgumentException("The hook payload argument index must be an integer")
+                val selectedIndex = number.toDouble().toInt()
+                require(number.toDouble() == selectedIndex.toDouble()) {
+                    "The hook payload argument index must be an integer"
+                }
+                require(selectedIndex in 0 until argumentCount) {
+                    "The hook payload argument index is out of range"
+                }
+                require(selectedIndex !in indexes) {
+                    "The hook payload argument indexes must be unique"
+                }
+                indexes.add(selectedIndex)
+            }
+            indexes
+        } else {
+            null
+        }
+        val phase = payload.opt("phase")?.let {
+            it as? String ?: throw IllegalArgumentException("The hook payload phase must be a string")
+        }
+        val selectedPhase = when (phase) {
+            null -> defaultPhase
+            HookPhase.BEFORE.wireName -> HookPhase.BEFORE
+            HookPhase.AFTER.wireName -> HookPhase.AFTER
+            else -> throw IllegalArgumentException("The hook payload phase must be before or after")
+        }
+        return PayloadSelection(receiver, arguments, selectedPhase)
     }
 
     private fun parseToken(tokenJSON: String): String = JSONObject(tokenJSON).getString("id")

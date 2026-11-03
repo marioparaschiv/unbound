@@ -26,15 +26,13 @@ struct NativeCapabilityBinding {
 inline constexpr std::array<std::string_view, 7> kObjCClassMethods = {
     "getClass", "alloc", "className", "respondsTo", "struct", "array", "data",
 };
-inline constexpr std::array<std::string_view, 4> kObjCInvokeMethods = {
-    "call",
-    "callSuper",
-    "invoke",
-    "invokeSuper",
+inline constexpr std::array<std::string_view, 7> kObjCInvokeMethods = {
+    "call", "callSuper", "invoke", "invokeSuper", "prepare", "invokePrepared", "disposePlan",
 };
-inline constexpr std::array<std::string_view, 2> kObjCInvokeAsyncMethods = {
+inline constexpr std::array<std::string_view, 3> kObjCInvokeAsyncMethods = {
     "invokeAsync",
     "invokeSuperAsync",
+    "invokePreparedAsync",
 };
 inline constexpr std::array<std::string_view, 1> kObjCBatchMethods    = {"batch"};
 inline constexpr std::array<std::string_view, 2> kObjCSnapshotMethods = {"snapshot", "findViews"};
@@ -47,20 +45,23 @@ inline constexpr std::array<std::string_view, 3> kAssociationMethods  = {
 inline constexpr std::array<std::string_view, 1> kObjCHookMethods    = {"hook"};
 inline constexpr std::array<std::string_view, 1> kFFISymbolMethods   = {"symbol"};
 inline constexpr std::array<std::string_view, 1> kFFICallMethods     = {"call"};
-inline constexpr std::array<std::string_view, 6> kFabricMountMethods = {
-    "mount", "update", "setSize", "setFrame", "measure", "unmount",
+inline constexpr std::array<std::string_view, 7> kFabricMountMethods = {
+    "mount", "update", "setSize", "setFrame", "measure", "unmount", "releaseIdle",
 };
-inline constexpr std::array<std::string_view, 6> kFabricAsyncMethods = {
-    "mountAsync", "updateAsync", "setSizeAsync", "setFrameAsync", "measureAsync", "unmountAsync",
+inline constexpr std::array<std::string_view, 7> kFabricAsyncMethods = {
+    "mountAsync",   "updateAsync",  "setSizeAsync",     "setFrameAsync",
+    "measureAsync", "unmountAsync", "releaseIdleAsync",
 };
 inline constexpr std::array<std::string_view, 0> kClientProvidedMethods = {};
 inline constexpr std::array<std::string_view, 5> kJavaClassMethods      = {
     "getClass", "className", "describe", "respondsTo", "release",
 };
-inline constexpr std::array<std::string_view, 1> kJavaConstructMethods   = {"construct"};
-inline constexpr std::array<std::string_view, 2> kJavaFieldMethods       = {"getField", "setField"};
-inline constexpr std::array<std::string_view, 2> kJavaInvokeMethods      = {"invoke", "findViews"};
-inline constexpr std::array<std::string_view, 1> kJavaInvokeAsyncMethods = {"invokeAsync"};
+inline constexpr std::array<std::string_view, 1> kJavaConstructMethods = {"construct"};
+inline constexpr std::array<std::string_view, 2> kJavaFieldMethods     = {"getField", "setField"};
+inline constexpr std::array<std::string_view, 5> kJavaInvokeMethods    = {
+    "invoke", "findViews", "prepare", "invokePrepared", "disposePlan"};
+inline constexpr std::array<std::string_view, 2> kJavaInvokeAsyncMethods = {"invokeAsync",
+                                                                            "invokePreparedAsync"};
 inline constexpr std::array<std::string_view, 5> kJavaHookMethods        = {
     "hook", "remove", "setReturnValue", "removeReturnValue", "clearReturnValues",
 };

@@ -30,6 +30,9 @@ describe('native UI scopes', () => {
 		expect(paths).not.toContain('objc.invokeAsync');
 		expect(paths).not.toContain('objc.batch');
 		expect(paths).not.toContain('objc.getClass');
+		expect(paths).not.toContain('objc.prepare');
+		expect(paths).not.toContain('objc.invokePrepared');
+		expect(paths).not.toContain('objc.disposePlan');
 	});
 
 	test('opens scopes through the loader and disposes them with the plugin', () => {

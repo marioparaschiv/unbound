@@ -1,6 +1,7 @@
 import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
 import type { NativeHookToken, NativeObjectHandle } from '@unbound-app/api/native';
 import viewKey from '@unbound-plugins/shared/native/ios/view-key';
+import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/ios/hook-options';
 import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/ios/text-attachments';
 
 import { embedCell, type CellStatus } from '~/ios/embed-cell';
@@ -92,7 +93,7 @@ function observeLabels(session: Session, tracked: TrackedCell, labels: NativeObj
 					className,
 					'setAttributedText:',
 					{ after: () => refreshCell(session, tracked.cell) },
-					{ instance: label },
+					{ ...LATEST_CALL_PER_RECEIVER, instance: label },
 				),
 			);
 		} catch {
@@ -316,24 +317,29 @@ export async function scanVisibleCells(session: Session) {
 export function hookMessageCells(session: Session): () => void {
 	const { objc, signal } = session;
 	const hooks = [
-		objc.hook('DCDMessageTableViewCell', 'didMoveToWindow', {
-			after: ({ self }) => {
-				void objc
-					.invokeAsync(self, 'window', [])
-					.then((window) => {
-						const key = viewKey(objc, self);
+		objc.hook(
+			'DCDMessageTableViewCell',
+			'didMoveToWindow',
+			{
+				after: ({ self }) => {
+					void objc
+						.invokeAsync(self, 'window', [])
+						.then((window) => {
+							const key = viewKey(objc, self);
 
-						if (signal.aborted || !key) return;
+							if (signal.aborted || !key) return;
 
-						if (window) {
-							scheduleCell(session, self);
-						} else {
-							clearCell(session, key);
-						}
-					})
-					.catch(() => undefined);
+							if (window) {
+								scheduleCell(session, self);
+							} else {
+								clearCell(session, key);
+							}
+						})
+						.catch(() => undefined);
+				},
 			},
-		}),
+			LATEST_CALL_PER_RECEIVER,
+		),
 		objc.hook('DCDMessageTableViewCell', 'prepareForReuse', {
 			after: ({ self }) => {
 				const key = viewKey(objc, self);

@@ -1,4 +1,5 @@
 import type {
+	NativeCancelablePromise,
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
 	NativeObjCBridge,
@@ -39,7 +40,7 @@ export type NativeUIBridge = {
 	call<A extends NativeUIArgument[], R extends NativeSerializable | void>(
 		worklet: (...args: A) => R,
 		...args: A
-	): Promise<R>;
+	): NativeCancelablePromise<R>;
 	/** Queues a worklet on the UI runtime. */
 	run<A extends NativeUIArgument[]>(worklet: (...args: A) => void, ...args: A): void;
 	/** Wraps a JS-thread listener so a worklet can call it, for example to wake JS only for the hook events that need it; it stops calling the listener once the plugin stops. */

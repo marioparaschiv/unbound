@@ -149,11 +149,22 @@ describe('native Java bridge', () => {
 		Object.assign(nativePlatformBridge, { platform: 'android' });
 		const androidSurface: NativeFabricSurface = Object.create(null);
 		const androidUnmounted: NativeFabricSurface[] = [];
+		const mountOptions: unknown[] = [];
+		let idleReleases = 0;
 
 		Object.assign(bridge, {
 			objc: undefined,
 			fabric: {
-				mountAsync: () => cancellable(Promise.resolve(androidSurface), 'android-mount'),
+				mountAsync: (...args: unknown[]) => {
+					mountOptions.push(args[3]);
+
+					return cancellable(Promise.resolve(androidSurface), 'android-mount');
+				},
+				releaseIdleAsync: () => {
+					idleReleases += 1;
+
+					return cancellable(Promise.resolve(), 'android-release-idle');
+				},
 				unmountAsync: (surface: NativeFabricSurface) => {
 					androidUnmounted.push(surface);
 
@@ -168,9 +179,15 @@ describe('native Java bridge', () => {
 			capabilities: ['native.fabric.async'],
 		});
 
-		expect(await context.native.fabric.mountAsync(nativeHandle, 'AndroidSurface')).toBe(
-			androidSurface,
-		);
+		expect(
+			await context.native.fabric.mountAsync(
+				nativeHandle,
+				'AndroidSurface',
+				{},
+				{ reuse: true },
+			),
+		).toBe(androidSurface);
+		expect(mountOptions).toEqual([{ reuse: true }]);
 		expect(() => context.native.fabric.mount(nativeHandle, 'AndroidSurface')).toThrow(
 			NativePluginCapabilityError,
 		);
@@ -179,6 +196,7 @@ describe('native Java bridge', () => {
 		);
 		context.dispose();
 		expect(androidUnmounted).toEqual([androidSurface]);
+		expect(idleReleases).toBe(1);
 	});
 
 	test('scopes Java hooks to the capability a plugin declares', () => {

@@ -6,6 +6,10 @@ import type {
 	NativePlatformBridge,
 	NativeHandle,
 	NativeJavaArgument,
+	NativeJavaCallPlan,
+	NativeObjCCallPlan,
+	NativeObjCResult,
+	NativeBatchStep,
 	NativeJavaHandle,
 	NativeJavaHookToken,
 	NativeJavaReference,
@@ -74,8 +78,12 @@ export const removedSubscriptions: string[] = [];
 export const javaInvokeArguments: (NativeJavaArgument[] | undefined)[] = [];
 export const javaReleased: NativeJavaHandle[] = [];
 export const javaHandle: NativeJavaHandle = Object.create(null);
+export const javaCallPlan: NativeJavaCallPlan = Object.create(null);
+export const objcCallPlan: NativeObjCCallPlan = Object.create(null);
 export const javaHookToken: NativeJavaHookToken = { id: 'hook-1' };
 export const hooksRemoved: NativeJavaHookToken[] = [];
+export const javaPlansDisposed: NativeJavaCallPlan[] = [];
+export const objcPlansDisposed: NativeObjCCallPlan[] = [];
 export const javaInvokeResult: NativeJavaValue = { type: 'string', value: 'invoked' };
 /** Set `fails` to make the Java bridge's `invoke` throw {@link javaInvokeFailure}. */
 export const javaInvoke = { fails: false };
@@ -141,7 +149,15 @@ const fakeBridge: LoaderBridge = {
 		getIvar: () => null,
 		invoke: () => undefined,
 		invokeAsync: () => cancellable(new Promise(() => undefined), 'invoke'),
-		batch: (steps: readonly unknown[]) => cancellable(Promise.resolve([...steps]), 'batch'),
+		prepare: () => objcCallPlan,
+		invokePrepared: () => undefined,
+		invokePreparedAsync: () =>
+			cancellable(new Promise(() => undefined), 'objc-invoke-prepared'),
+		disposePlan: (plan: NativeObjCCallPlan) => {
+			objcPlansDisposed.push(plan);
+		},
+		batch: (steps: readonly NativeBatchStep[]) =>
+			cancellable(Promise.resolve(steps.map((): NativeObjCResult => undefined)), 'batch'),
 		snapshot: () => cancellable(Promise.resolve([]), 'snapshot'),
 		findViews: () => cancellable(Promise.resolve([]), 'findViews'),
 		invokeSuper: () => undefined,
@@ -209,6 +225,17 @@ const fakeBridge: LoaderBridge = {
 			}
 
 			return javaInvokeResult;
+		},
+		prepare: () => javaCallPlan,
+		invokePrepared: (_plan, _target, args) => {
+			javaInvokeArguments.push(args);
+
+			return javaInvokeResult;
+		},
+		invokePreparedAsync: () =>
+			cancellable(Promise.resolve(javaInvokeResult), 'java-invoke-prepared'),
+		disposePlan: (plan) => {
+			javaPlansDisposed.push(plan);
 		},
 		invokeAsync: () => cancellable(Promise.resolve(javaInvokeResult), 'java-invoke'),
 		getField: () => ({ type: 'int', value: 7 }),
@@ -314,5 +341,9 @@ export function resetNativeFixtures(): void {
 	asynchronouslyUnmounted.length = 0;
 	cancelled.length = 0;
 	removedSubscriptions.length = 0;
+	javaInvokeArguments.length = 0;
+	javaReleased.length = 0;
+	javaPlansDisposed.length = 0;
+	objcPlansDisposed.length = 0;
 	fluxSubscriptions.clear();
 }

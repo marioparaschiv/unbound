@@ -63,18 +63,32 @@ int main()
     assert(!parseTaggedValue(""));
 
     auto empty = parseTaggedEvent(R"({"self":{"type":"handle","value":"java-3"},"args":[]})");
-    assert(empty && empty->self.text == "java-3" && empty->arguments.empty());
+    assert(empty && empty->self && empty->self->text == "java-3" && empty->arguments.empty());
+    assert(empty->argumentIndexes.empty() && empty->phase == "before");
 
     auto event = parseTaggedEvent(
         R"({"self":{"type":"null","value":null},"args":[{"type":"string","value":"a},{\"b\":[1]"},{"type":"int","value":7},{"type":"handle","value":"java-9"},{"type":"boolean","value":false}]})");
-    assert(event && event->self.kind == TaggedValueKind::Null);
+    assert(event && event->self && event->self->kind == TaggedValueKind::Null);
     assert(event->arguments.size() == 4);
     assert(event->arguments[0].text == "a},{\"b\":[1]");
     assert(event->arguments[1].kind == TaggedValueKind::Number && event->arguments[1].number == 7);
     assert(event->arguments[2].type == "handle" && event->arguments[2].text == "java-9");
     assert(event->arguments[3].kind == TaggedValueKind::Boolean && !event->arguments[3].boolean);
 
+    auto selected = parseTaggedEvent(
+        R"({"self":{"type":"handle","value":"java-3"},"args":[{"type":"string","value":"selected"}],"argumentIndexes":[2],"phase":"after"})");
+    assert(selected && selected->self && selected->self->text == "java-3");
+    assert(selected->arguments.size() == 1 && selected->arguments[0].text == "selected");
+    assert(selected->argumentIndexes == std::vector<size_t>{2} && selected->phase == "after");
+
+    auto receiverless = parseTaggedEvent(R"({"args":[],"argumentIndexes":[],"phase":"before"})");
+    assert(receiverless && !receiverless->self && receiverless->arguments.empty());
+    assert(receiverless->argumentIndexes.empty() && receiverless->phase == "before");
+
     assert(!parseTaggedEvent(R"({"args":[],"self":{"type":"null","value":null}})"));
+    assert(!parseTaggedEvent(
+        R"({"args":[{"type":"int","value":1}],"argumentIndexes":[0,1],"phase":"before"})"));
+    assert(!parseTaggedEvent(R"({"args":[],"argumentIndexes":[],"phase":"unknown"})"));
     assert(!parseTaggedEvent(
         R"({"self":{"type":"null","value":null},"args":[{"type":"int","value":1}{"type":"int","value":2}]})"));
     assert(!parseTaggedEvent(

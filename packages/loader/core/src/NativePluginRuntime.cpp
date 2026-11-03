@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <cstdint>
 #include <exception>
 #include <mutex>
 #include <thread>
@@ -654,6 +655,43 @@ void executeRuntimeAsynchronously(std::function<void(jsi::Runtime &)> callback)
         });
 }
 
+void executeRuntimeCoalesced(std::string key, std::function<void(jsi::Runtime &)> callback)
+{
+    auto target = executor();
+    if (!target)
+    {
+        return;
+    }
+
+    jsi::Runtime *expected   = currentRuntime();
+    uint64_t      generation = gGenerations.generation();
+    AddonSlot     addon      = currentAddon();
+    key = std::to_string(reinterpret_cast<uintptr_t>(expected)) + ":" + std::to_string(generation) +
+          ":" + std::to_string(addon) + ":" + key;
+    target->runOnRuntimeCoalesced(std::move(key), [callback = std::move(callback), expected,
+                                                   generation, addon](jsi::Runtime &runtime) {
+        if (expected != &runtime || generation != gGenerations.generation())
+        {
+            return;
+        }
+        AddonScope scope(addon);
+        try
+        {
+            callback(runtime);
+        }
+        catch (const std::exception &error)
+        {
+            log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                threading::callbackFailureMessage(addon, error.what()));
+        }
+        catch (...)
+        {
+            log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                threading::callbackFailureMessage(addon, "an unknown error"));
+        }
+    });
+}
+
 bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
                                  std::chrono::milliseconds           timeout)
 {
@@ -688,8 +726,8 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
     auto      state      = std::make_shared<State>();
     uint64_t  generation = gGenerations.generation();
     AddonSlot addon      = currentAddon();
-    target->runOnRuntime([state, callback = std::move(callback), expected, generation,
-                          addon](jsi::Runtime &runtime) {
+    target->runOnRuntimeCritical([state, callback = std::move(callback), expected, generation,
+                                  addon](jsi::Runtime &runtime) {
         gMainThreadRuntimeStall.answered();
         bool               completed = false;
         std::exception_ptr failure;

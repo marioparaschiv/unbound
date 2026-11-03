@@ -32,7 +32,7 @@ public:
 
     bool enter();
     void leave();
-    bool reserveEntries(size_t count) const;
+    bool reserveEntries(size_t count);
     bool addBytes(size_t count);
     bool addString(size_t count);
     bool addName(size_t count);

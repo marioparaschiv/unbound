@@ -22,6 +22,8 @@ type UIRuntime = {
 	runOnUI?: <A extends NativeUIArgument[]>(worklet: UIWorklet<A, void>) => (...args: A) => void;
 };
 
+type ResolvedUIRuntime = Required<UIRuntime> & { version: string };
+
 type GuardedResult = { ok: true; value: unknown } | { ok: false; error: string };
 
 // UNKNOWN: a plugin worklet may return any value the UI runtime can share back.
@@ -46,7 +48,7 @@ type ScopedUIBridge = {
 
 const Reanimated = findByPropsLazy('runOnJS', 'runOnUI');
 
-const REANIMATED_VERSION = '3.19.4';
+const SUPPORTED_WORKLET_VERSIONS = new Set(['3.19.4']);
 
 const GUARDED_RUN = {
 	hash: 0x75_6e_62_01,
@@ -62,6 +64,15 @@ const JS_CALLBACK = {
 	hash: 0x75_6e_62_05,
 	code: 'function unboundJSCallback(){const{runOnJS,listener}=this.__closure;runOnJS(listener).apply(undefined,arguments);}',
 };
+
+const PREPARED_CALL_METHODS: ReadonlySet<NativePluginMethod> = new Set([
+	'objc.prepare',
+	'objc.invokePrepared',
+	'objc.disposePlan',
+	'java.prepare',
+	'java.invokePrepared',
+	'java.disposePlan',
+]);
 
 const PROMISE_METHODS: ReadonlySet<NativePluginMethod> = new Set([
 	'objc.batch',
@@ -82,7 +93,8 @@ export function uiScopePaths(
 		(path) =>
 			capabilities.includes(NATIVE_PLUGIN_METHOD_CAPABILITIES[path]) &&
 			!path.endsWith('Async') &&
-			!PROMISE_METHODS.has(path),
+			!PROMISE_METHODS.has(path) &&
+			!PREPARED_CALL_METHODS.has(path),
 	);
 }
 
@@ -100,19 +112,33 @@ function createNativeScope(
 	return factory.createUIScope(paths);
 }
 
-function uiRuntime(): Required<UIRuntime> {
+function uiRuntime(): ResolvedUIRuntime {
 	const runtime = Reanimated as UIRuntime | undefined;
 
 	if (!runtime?.runOnJS || !runtime.runOnUI) {
 		throw new NativePluginUnavailableError('The UI runtime is unavailable.');
 	}
 
-	return runtime as Required<UIRuntime>;
+	const version = Reflect.get(globalThis, '_REANIMATED_VERSION_JS');
+	const nativeVersion = Reflect.get(globalThis, '_REANIMATED_VERSION_CPP');
+
+	if (
+		typeof version !== 'string' ||
+		version !== nativeVersion ||
+		!SUPPORTED_WORKLET_VERSIONS.has(version)
+	) {
+		throw new NativePluginUnavailableError(
+			`The UI runtime version is unsupported (JS ${String(version)}, native ${String(nativeVersion)}).`,
+		);
+	}
+
+	return { runOnJS: runtime.runOnJS, runOnUI: runtime.runOnUI, version };
 }
 
 function guardWorklet<A extends NativeUIArgument[]>(
 	guard: WorkletGuard,
 	closure: WorkletClosure,
+	version: string,
 ): UIWorklet<A, void> {
 	return Object.assign(() => undefined, {
 		__closure: closure,
@@ -120,7 +146,7 @@ function guardWorklet<A extends NativeUIArgument[]>(
 		__initData: {
 			code: guard.code,
 			location: 'unbound/native/ui',
-			version: REANIMATED_VERSION,
+			version,
 		},
 	});
 }
@@ -136,6 +162,7 @@ export function createScopedUIBridge(
 	platform?: NativePluginPlatform,
 ): ScopedUIBridge {
 	const scopes = new Set<NativeUIScope>();
+	const pendingCalls = new Set<(error: Error) => void>();
 	let disposed = false;
 
 	function requireActive() {
@@ -158,47 +185,104 @@ export function createScopedUIBridge(
 				requireActive();
 				const runtime = uiRuntime();
 
-				return new Promise((resolve, reject) => {
+				let cancel = () => {};
+				const pending = new Promise<ReturnType<typeof worklet>>((resolve, reject) => {
+					let settled = false;
+
+					function complete(action: () => void) {
+						if (settled) return;
+
+						settled = true;
+						clearTimeout(timeout);
+						pendingCalls.delete(rejectCall);
+						action();
+					}
+					function rejectCall(error: Error) {
+						complete(() => reject(error));
+					}
+					cancel = () =>
+						rejectCall(
+							Object.assign(new Error('The UI call was cancelled.'), {
+								code: 'NATIVE_PLUGIN_CALL_CANCELLED',
+							}),
+						);
+					pendingCalls.add(rejectCall);
+					const timeout = setTimeout(
+						() =>
+							rejectCall(
+								Object.assign(new Error('The UI call timed out.'), {
+									code: 'NATIVE_PLUGIN_CALL_TIMEOUT',
+								}),
+							),
+						5000,
+					);
 					const settle: Settle = (result) => {
 						if (result.ok) {
-							resolve(result.value as ReturnType<typeof worklet>);
+							complete(() => resolve(result.value as ReturnType<typeof worklet>));
 						} else {
-							reject(new Error(result.error));
+							rejectCall(new Error(result.error));
 						}
 					};
-					const guarded = guardWorklet<typeof args>(GUARDED_CALL, {
-						worklet,
-						runOnJS: runtime.runOnJS,
-						settle,
-					});
+					const guarded = guardWorklet<typeof args>(
+						GUARDED_CALL,
+						{
+							worklet,
+							runOnJS: runtime.runOnJS,
+							settle,
+						},
+						runtime.version,
+					);
 
-					runtime.runOnUI(guarded)(...args);
+					try {
+						runtime.runOnUI(guarded)(...args);
+					} catch (error) {
+						rejectCall(error instanceof Error ? error : new Error(String(error)));
+					}
 				});
+
+				return Object.assign(pending, { cancel: () => cancel() });
 			},
 			run(worklet, ...args) {
 				requireActive();
-				const guarded = guardWorklet<typeof args>(GUARDED_RUN, { worklet });
+				const runtime = uiRuntime();
+				const guarded = guardWorklet<typeof args>(
+					GUARDED_RUN,
+					{ worklet },
+					runtime.version,
+				);
 
-				uiRuntime().runOnUI(guarded)(...args);
+				runtime.runOnUI(guarded)(...args);
 			},
 			callback(listener) {
 				requireActive();
+				const runtime = uiRuntime();
+
 				function forward(...args: NativeSerializable[]) {
 					if (!disposed) {
 						Reflect.apply(listener, undefined, args);
 					}
 				}
 
-				return guardWorklet(JS_CALLBACK, {
-					runOnJS: uiRuntime().runOnJS,
-					listener: forward,
-				});
+				return guardWorklet(
+					JS_CALLBACK,
+					{
+						runOnJS: runtime.runOnJS,
+						listener: forward,
+					},
+					runtime.version,
+				);
 			},
 		},
 		dispose() {
 			if (disposed) return;
 
 			disposed = true;
+
+			for (const rejectCall of pendingCalls) {
+				rejectCall(new NativePluginDisposedError());
+			}
+
+			pendingCalls.clear();
 
 			for (const scope of scopes) {
 				try {

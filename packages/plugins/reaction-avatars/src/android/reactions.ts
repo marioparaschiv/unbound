@@ -53,6 +53,10 @@ import type { ReactionChange } from '~/types';
 import { surfaceStates } from '~/surface-states';
 import ReactionUserCache from '~/reactor-cache';
 import { fetchReactors } from '~/reactors';
+import {
+	FIRST_ARGUMENT_AFTER_CALL,
+	RECEIVER_ONLY_AFTER_CALL,
+} from '@unbound-plugins/shared/native/android/hook-options';
 
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 const REACTION_ROW = 'com.discord.reactions.ShortcutsFlexbox';
@@ -256,10 +260,12 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 	async function mount(pill: Pill) {
 		if (pill.disposed || pill.mounting) return;
 
-		pill.mounting = fabric.mountAsync(pill.host, surfaceName, {
-			surfaceId: pill.id,
-			revision: pill.revision,
-		});
+		pill.mounting = fabric.mountAsync(
+			pill.host,
+			surfaceName,
+			{ surfaceId: pill.id, revision: pill.revision },
+			{ reuse: true },
+		);
 		await pill.mounting.catch((error: unknown) => {
 			pill.mounting = null;
 			throw error;
@@ -425,7 +431,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 		MESSAGE_VIEW,
 		bindMessage.name,
 		bindMessage.parameters,
-		{ notify: true },
+		FIRST_ARGUMENT_AFTER_CALL,
 		({ self, args }) => {
 			const messageView = javaReference(self);
 			const message = javaReference(args[0]);
@@ -441,7 +447,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 		MESSAGE_VIEW,
 		'onSizeChanged',
 		SIZE_PARAMETERS,
-		{ notify: true },
+		RECEIVER_ONLY_AFTER_CALL,
 		({ self }) => {
 			const key = javaViewKey(self);
 			const pending = key ? awaitingSize.get(key) : undefined;

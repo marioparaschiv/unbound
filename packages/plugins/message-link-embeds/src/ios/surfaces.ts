@@ -3,6 +3,7 @@ import type {
 	NativeHookToken,
 	NativeObjectHandle,
 } from '@unbound-app/api/native';
+import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/ios/hook-options';
 import { safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import { toRect } from '@unbound-plugins/shared/native/ios/rect';
 import {
@@ -159,7 +160,7 @@ function hookLayout(session: Session, surface: EmbeddedSurface): NativeHookToken
 			session.objc.className(surface.label) ?? MESSAGE_TEXT_VIEW_CLASSES[0],
 			'layoutSubviews',
 			{ after: () => placeHost(session, surface) },
-			{ instance: surface.label },
+			{ ...LATEST_CALL_PER_RECEIVER, instance: surface.label },
 		);
 	} catch {
 		return null;
@@ -375,7 +376,7 @@ export async function createSurface(
 					setTimeout(() => void reconcileSurfaceText(session, surface));
 				},
 			},
-			{ instance: label },
+			{ ...LATEST_CALL_PER_RECEIVER, instance: label },
 		);
 		surface.layoutHook = hookLayout(session, surface);
 		surface.mounted = fabric.mount(host, session.surfaceModule, {

@@ -11,6 +11,7 @@ import java.lang.reflect.Modifier
 object NativeJava {
     private const val MAX_RESULT_STRING_LENGTH = 1 shl 20
     private const val MAX_LISTED_OVERLOADS = 6
+    private const val MAX_PREPARED_CALLS = 256
 
     private val associations = java.util.WeakHashMap<Any, HashMap<String, Any?>>()
     private var nextAssociation = 1L
@@ -31,6 +32,8 @@ object NativeJava {
     private val resolvedFields = java.util.concurrent.ConcurrentHashMap<Pair<Class<*>, String>, Field>()
 
     private data class MethodKey(val owner: Class<*>, val static: Boolean, val name: String, val arguments: List<String>)
+
+    private data class PreparedCall(val owner: Class<*>, val classTarget: Boolean, val method: Method)
 
     fun useClassLoader(classLoader: ClassLoader) {
         synchronized(this) { pluginClassLoader = classLoader }
@@ -126,6 +129,69 @@ object NativeJava {
 
         method.isAccessible = true
         return serialize(rethrowingCause { method.invoke(receiver, *values(method.parameterTypes, arguments)) })
+    }
+
+    fun prepare(handleJSON: String, name: String, parameterTypesJSON: String): String {
+        val target = resolve(parseHandle(handleJSON))
+        val parameterNames = JSONArray(parameterTypesJSON)
+        val parameterTypes = (0 until parameterNames.length()).map { resolveType(parameterNames.getString(it)) }
+        val owner = if (target is Class<*>) target else target.javaClass
+        val searched = if (target is Class<*>) listOf(owner, Class::class.java) else listOf(owner)
+        val method = searched
+            .flatMap { methodsNamed(it, name) }
+            .firstOrNull { it.parameterTypes.contentEquals(parameterTypes.toTypedArray()) }
+            ?: throw IllegalArgumentException(
+                "No method $name${signature(parameterTypes.toTypedArray())} on ${owner.name}",
+            )
+        require(!Modifier.isStatic(method.modifiers) || target is Class<*>) {
+            "$name is static but was prepared on an instance"
+        }
+        method.isAccessible = true
+        val plan = synchronized(this) {
+            require(objectsByHandle.values.count { it is PreparedCall } < MAX_PREPARED_CALLS) {
+                "Too many Java call plans are prepared"
+            }
+            handle(PreparedCall(owner, target is Class<*>, method))
+        }
+        return JSONObject().put("id", plan).toString()
+    }
+
+    fun invokePrepared(planJSON: String, handleJSON: String, argumentsJSON: String): String {
+        val plan = resolve(parseHandle(planJSON)) as? PreparedCall
+            ?: throw IllegalArgumentException("The Java call plan is unavailable")
+        val target = resolve(parseHandle(handleJSON))
+        val arguments = parseArguments(argumentsJSON)
+        val method = plan.method
+        val compatible = when {
+            Modifier.isStatic(method.modifiers) ->
+                plan.classTarget && target is Class<*> && plan.owner.isAssignableFrom(target)
+
+            plan.classTarget -> target is Class<*> && method.declaringClass.isInstance(target)
+
+            else -> target !is Class<*> && plan.owner.isInstance(target)
+        }
+        require(compatible) { "The Java call target does not match the prepared class" }
+        require(matches(method.parameterTypes, arguments)) {
+            "Prepared Java arguments do not match ${method.name}${signature(method.parameterTypes)}"
+        }
+        val receiver = if (Modifier.isStatic(method.modifiers)) null else target
+
+        if (receiver == null && target !is Class<*>) {
+            throw IllegalArgumentException("${method.name} is static but was prepared on an instance")
+        }
+
+        if (receiver is View && !Looper.getMainLooper().isCurrentThread) {
+            NativeBridge.nativeWarnOffMainViewCall("${receiver.javaClass.name}.${method.name}()")
+        }
+
+        return serialize(rethrowingCause { method.invoke(receiver, *values(method.parameterTypes, arguments)) })
+    }
+
+    fun disposePlan(planJSON: String) {
+        require(resolve(parseHandle(planJSON)) is PreparedCall) {
+            "The Java call plan is unavailable"
+        }
+        release(planJSON)
     }
 
     fun getField(handleJSON: String, name: String): String {
@@ -257,6 +323,12 @@ object NativeJava {
             issuesByHandle.remove(id)
             val target = objectsByHandle.remove(id) ?: return
             handlesByIdentity.remove(IdentityKey(target))
+        }
+    }
+
+    fun releaseIssued(issued: List<String>) {
+        for ((id, count) in issued.groupingBy { it }.eachCount()) {
+            release(JSONObject().put("id", id).put("issues", count).toString())
         }
     }
 

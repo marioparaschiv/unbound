@@ -39,6 +39,7 @@ import {
 import { planPlacements, type Placement, type SpanRange } from '~/android/placements';
 import type { MentionIndex } from '~/mention-index';
 import type { Mention } from '~/mentions';
+import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 const TEXT_VIEW = 'com.facebook.drawee.span.SimpleDraweeSpanTextView';
 const TAPPABLE_SPAN = 'android.text.style.ClickableSpan';
@@ -353,7 +354,7 @@ export function createAndroidRenderer(
 		TEXT_VIEW,
 		DRAWEE_TEXT_SETTER,
 		[textBuilder],
-		{ notify: true },
+		RECEIVER_ONLY_AFTER_CALL,
 		({ self }) => {
 			const view = javaReference(self);
 

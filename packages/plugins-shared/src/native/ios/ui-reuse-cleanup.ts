@@ -19,6 +19,8 @@ export function installReuseCleanup(scope: NativeUIScope, cleanup: ReuseCleanup)
 
 	objc.hook(cleanup.cellClass, 'prepareForReuse', {
 		after: ({ self }) => {
+			if (!self) return;
+
 			try {
 				for (let removed = 0; removed < MAX_REMOVED; removed++) {
 					const view = objc.invoke(self, 'viewWithTag:', [

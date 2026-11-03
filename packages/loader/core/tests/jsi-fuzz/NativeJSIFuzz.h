@@ -342,14 +342,10 @@ inline std::string sourceFor(const std::uint8_t *data, std::size_t size)
     return valueSource(bytes, 0);
 }
 
-inline void fuzzOne(jsi::Runtime &runtime, const std::uint8_t *data, std::size_t size)
+inline void fuzzSource(jsi::Runtime &runtime, const std::string &source,
+                       std::uint8_t conversionSelector, std::uint8_t ffiSelector)
 {
-    if (size < 2)
-    {
-        return;
-    }
-    std::string source = sourceFor(data + 2, size - 2);
-    jsi::Value  value;
+    jsi::Value value;
     try
     {
         value = runtime.evaluateJavaScript(std::make_shared<jsi::StringBuffer>("(" + source + ")"),
@@ -361,9 +357,36 @@ inline void fuzzOne(jsi::Runtime &runtime, const std::uint8_t *data, std::size_t
     }
     stats().evaluated++;
     auto started = std::chrono::steady_clock::now();
-    fuzzConversions(runtime, value, data[0], source);
-    fuzzFFIWrite(runtime, value, data[1], source);
+    fuzzConversions(runtime, value, conversionSelector, source);
+    fuzzFFIWrite(runtime, value, ffiSelector, source);
     require(std::chrono::steady_clock::now() - started < kInputTimeLimit,
             "converting one value finishes quickly", source);
+}
+
+inline void fuzzOne(jsi::Runtime &runtime, const std::uint8_t *data, std::size_t size)
+{
+    if (size < 2)
+    {
+        return;
+    }
+    fuzzSource(runtime, sourceFor(data + 2, size - 2), data[0], data[1]);
+}
+
+inline const char *const kRegressionSources[] = {
+    "({'y':(() => { const a = []; a.length = 513; return a; })(),'__proto__':Array.from({ length: "
+    "3640 }, (_, i) => i)})",
+    "({'b':(() => { const a = []; a.length = 600; return a; })(),'__proto__':Array.from({ length: "
+    "3600 }, (_, i) => i)})",
+};
+
+inline void replayRegressions(jsi::Runtime &runtime)
+{
+    for (const char *source : kRegressionSources)
+    {
+        for (std::uint8_t selector = 0; selector < 4; selector++)
+        {
+            fuzzSource(runtime, source, selector, selector);
+        }
+    }
 }
 }

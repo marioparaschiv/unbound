@@ -73,13 +73,15 @@ jobs:
 
             - name: Fuzz JS-to-native conversion
               run: |
-                  mkdir -p build/fuzz-corpus/jsi build/fuzz-crashes
-                  build/libfuzzer/native_jsi_libfuzzer build/fuzz-corpus/jsi -max_total_time=$(( JSI_MINUTES * 60 )) -max_len=512 -timeout=10 -rss_limit_mb=4096 -detect_leaks=0 -artifact_prefix=build/fuzz-crashes/jsi-
+                  set -o pipefail
+                  mkdir -p build/fuzz-corpus/jsi build/fuzz-crashes build/fuzz-logs
+                  build/libfuzzer/native_jsi_libfuzzer build/fuzz-corpus/jsi -max_total_time=$(( JSI_MINUTES * 60 )) -max_len=512 -timeout=10 -rss_limit_mb=4096 -detect_leaks=0 -artifact_prefix=build/fuzz-crashes/jsi- 2>&1 | tee build/fuzz-logs/jsi.log
 
             - name: Fuzz the native parsers
               run: |
-                  mkdir -p build/fuzz-corpus/bridge build/fuzz-crashes
-                  build/libfuzzer/native_bridge_libfuzzer build/fuzz-corpus/bridge core/tests/fuzz/corpus -max_total_time=600 -max_len=4096 -artifact_prefix=build/fuzz-crashes/bridge-
+                  set -o pipefail
+                  mkdir -p build/fuzz-corpus/bridge build/fuzz-crashes build/fuzz-logs
+                  build/libfuzzer/native_bridge_libfuzzer build/fuzz-corpus/bridge core/tests/fuzz/corpus -max_total_time=600 -max_len=4096 -artifact_prefix=build/fuzz-crashes/bridge- 2>&1 | tee build/fuzz-logs/bridge.log
 
             - name: Minimise the corpus
               run: |
@@ -116,7 +118,60 @@ jobs:
                   set -euo pipefail
                   gh label create native-fuzz --repo "$GITHUB_REPOSITORY" --color B60205 --description "The nightly native fuzzer found a crash" --force >/dev/null
                   existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --label native-fuzz --state open --json number --jq '.[0].number // empty')
-                  body="The nightly native fuzzer failed in $RUN_URL. Its crashing inputs are in the \`native fuzz crashes\` artifact; reproduce one with \`build/libfuzzer/native_jsi_libfuzzer <input>\` or \`native_bridge_libfuzzer <input>\` after configuring as the workflow does."
+                  fence='```'
+                  report() {
+                    local log=$1 fuzzer=$2
+                    [ -s "$log" ] || return 0
+                    grep -qE 'fuzz invariant broken|ERROR: (AddressSanitizer|UndefinedBehaviorSanitizer|libFuzzer)|runtime error:' "$log" || return 0
+                    echo "### $fuzzer"
+                    echo
+                    local invariant value summary
+                    invariant=$(grep -m1 'fuzz invariant broken:' "$log" | sed 's/^.*invariant broken: //' || true)
+                    value=$(grep -m1 -A1 'fuzz invariant broken:' "$log" | sed -n 's/^value: //p' || true)
+                    summary=$(grep -m1 -E '^SUMMARY: ' "$log" || true)
+                    if [ -n "$invariant" ]; then echo "Broken invariant: **$invariant**"; echo; fi
+                    if [ -n "$value" ]; then echo "Value (first 400 characters of the generated JavaScript):"; echo; echo "${fence}js"; echo "$value"; echo "$fence"; echo; fi
+                    if [ -n "$summary" ]; then echo "$summary"; echo; fi
+                    echo "Top of the stack:"
+                    echo
+                    echo "$fence"
+                    grep -m1 -A40 -E 'ERROR: (AddressSanitizer|UndefinedBehaviorSanitizer|libFuzzer)|runtime error:' "$log" | grep -E '^ *#[0-9]+ ' | grep -vE 'libfuzzer|fuzzer::|libc\.so|_start|__sanitizer|__asan|__ubsan' | head -12 | sed -E 's#/home/runner/work/[^/]+/[^/]+/##'
+                    echo "$fence"
+                    echo
+                  }
+                  crashes=$(find build/fuzz-crashes -type f 2>/dev/null | sort)
+                  {
+                    echo "The nightly native fuzzer failed in $RUN_URL."
+                    echo
+                    report build/fuzz-logs/jsi.log native_jsi_libfuzzer
+                    report build/fuzz-logs/bridge.log native_bridge_libfuzzer
+                    if [ -n "$crashes" ]; then
+                      echo "### Crashing inputs"
+                      echo
+                      echo "Also in the \`native fuzz crashes\` artifact. Each line is \`name base64\`:"
+                      echo
+                      echo "$fence"
+                      for crash in $crashes; do echo "$(basename "$crash") $(base64 -w0 "$crash" | head -c 6000)"; done
+                      echo "$fence"
+                      echo
+                    fi
+                    echo "### Reproduce"
+                    echo
+                    echo "${fence}sh"
+                    echo "cd packages/loader"
+                    echo "git clone --depth 1 --branch $HERMES_TAG https://github.com/facebook/hermes.git build/hermes-src"
+                    echo "cmake -S core -B build/libfuzzer -DUNBOUND_CORE_TESTS=ON -DUNBOUND_CORE_FUZZ=ON -DUNBOUND_CORE_JSI_FUZZ=ON -DUNBOUND_HERMES_SOURCE_DIR=\"\$PWD/build/hermes-src\" -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS='-fsanitize=fuzzer-no-link,address,undefined' -DCMAKE_CXX_FLAGS='-fsanitize=fuzzer-no-link,address,undefined -fno-sanitize-recover=all'"
+                    echo "cmake --build build/libfuzzer --target native_jsi_libfuzzer native_bridge_libfuzzer"
+                    for crash in $crashes; do
+                      name=$(basename "$crash")
+                      case "$name" in jsi-*) fuzzer=native_jsi_libfuzzer ;; *) fuzzer=native_bridge_libfuzzer ;; esac
+                      echo "echo '$(base64 -w0 "$crash" | head -c 6000)' | base64 -d > $name && build/libfuzzer/$fuzzer $name"
+                    done
+                    echo "$fence"
+                    echo
+                    echo "A JS value that breaks an invariant can also go into \`kRegressionSources\` in \`core/tests/jsi-fuzz/NativeJSIFuzz.h\`, which \`native_jsi_fuzz\` replays on every CI run."
+                  } > build/fuzz-report.md
+                  body=$(cat build/fuzz-report.md)
                   if [ -n "$existing" ]; then
                     gh issue comment "$existing" --repo "$GITHUB_REPOSITORY" --body "$body"
                   else

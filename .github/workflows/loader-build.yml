@@ -278,7 +278,7 @@ jobs:
 
             - name: Decrypt the latest source IPA for a dry run
               id: decrypt-latest
-              if: steps.decrypt.outcome == 'failure' && inputs.release_dry_run == true
+              if: steps.decrypt.outcome == 'failure' && inputs.release_dry_run == true && steps.select.outputs.requested_version != ''
               continue-on-error: true
               timeout-minutes: 12
               uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
@@ -332,7 +332,7 @@ jobs:
               env:
                   REQUESTED_VERSION: ${{ steps.select.outputs.requested_version }}
               run: |
-                  echo "::error title=No iOS source::dkrypt could not provide Discord $REQUESTED_VERSION for iOS, and a release must build both platforms. The Decrypt the source IPA step shows dkrypt's reason."
+                  echo "::error title=No iOS source::dkrypt could not provide Discord ${REQUESTED_VERSION:-(latest App Store build)} for iOS, and a release must build both platforms. The Decrypt the source IPA step shows dkrypt's reason."
                   exit 1
 
             - name: Skip iOS without a source IPA

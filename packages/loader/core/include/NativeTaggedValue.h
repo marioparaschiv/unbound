@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -23,8 +24,10 @@ struct TaggedValue {
 };
 
 struct TaggedEvent {
-    TaggedValue              self;
-    std::vector<TaggedValue> arguments;
+    std::optional<TaggedValue> self;
+    std::vector<TaggedValue>   arguments;
+    std::vector<size_t>        argumentIndexes;
+    std::string                phase;
 };
 
 std::optional<TaggedValue> parseTaggedValue(std::string_view json);

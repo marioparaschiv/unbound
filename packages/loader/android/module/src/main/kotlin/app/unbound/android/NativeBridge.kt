@@ -37,6 +37,8 @@ object NativeBridge {
     @JvmStatic
     external fun nativeOnLoadJSBundle()
 
+    external fun nativeEvictIdleSurfaces()
+
     @JvmStatic
     external fun nativeOnRuntimeCreated(runtimePointer: Long): Boolean
 
@@ -149,6 +151,13 @@ object NativeBridge {
     fun fabricUnmount(handleJSON: String): Boolean = NativeFabric.unmount(handleJSON)
 
     @JvmStatic
+    fun fabricDetach(handleJSON: String): Boolean = NativeFabric.detach(handleJSON)
+
+    @JvmStatic
+    fun fabricAttach(handleJSON: String, containerHandleJSON: String) =
+        NativeFabric.attach(handleJSON, containerHandleJSON)
+
+    @JvmStatic
     fun fabricSetSize(handleJSON: String, minimumJSON: String, maximumJSON: String) =
         NativeFabric.setSize(handleJSON, minimumJSON, maximumJSON)
 
@@ -188,6 +197,17 @@ object NativeBridge {
     @JvmStatic
     fun javaInvoke(handleJSON: String, name: String, argumentsJSON: String): String =
         NativeJava.invoke(handleJSON, name, argumentsJSON)
+
+    @JvmStatic
+    fun javaPrepare(handleJSON: String, name: String, parameterTypesJSON: String): String =
+        NativeJava.prepare(handleJSON, name, parameterTypesJSON)
+
+    @JvmStatic
+    fun javaInvokePrepared(planJSON: String, handleJSON: String, argumentsJSON: String): String =
+        NativeJava.invokePrepared(planJSON, handleJSON, argumentsJSON)
+
+    @JvmStatic
+    fun javaDisposePlan(planJSON: String) = NativeJava.disposePlan(planJSON)
 
     @JvmStatic
     fun javaGetField(handleJSON: String, name: String): String =

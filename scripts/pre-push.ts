@@ -130,6 +130,7 @@ async function runCheck(check: Check): Promise<boolean> {
 	const child = Bun.spawn(check.command, {
 		cwd: resolve(root, check.cwd),
 		env: checkEnv(),
+		stdin: 'ignore',
 		stdout: 'pipe',
 		stderr: 'pipe',
 	});
