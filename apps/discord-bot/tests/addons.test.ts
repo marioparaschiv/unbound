@@ -180,10 +180,15 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		expect(cardText(plugin)).toContain('Mario, Alex');
 		expect(buttons(plugin)).toEqual([
 			{ label: 'Install', url: PLUGIN.installUrl },
-			{ label: 'View on Web', url: PLUGIN.pageUrl },
+			{ label: 'Web', url: PLUGIN.pageUrl },
+			{ label: 'Changelog', url: `${PLUGIN.pageUrl}#changelog` },
 			{ label: 'Source', url: PLUGIN.sourceUrl ?? '' },
 		]);
-		expect(buttons(theme).map((button) => button.label)).toEqual(['Install', 'View on Web']);
+		expect(buttons(theme).map((button) => button.label)).toEqual([
+			'Install',
+			'Web',
+			'Changelog',
+		]);
 		expect(cardText(theme)).toContain(' Theme\n');
 
 		for (const [item, channelId] of [
@@ -539,7 +544,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		expect(cardText(message)).toContain('`v2.0.0`');
 		expect(buttons(message).slice(0, 2)).toEqual([
 			{ label: 'Install', url: 'https://unbound.rip/install/web.listed' },
-			{ label: 'View on Web', url: 'https://unbound.rip/addons/web.listed' },
+			{ label: 'Web', url: 'https://unbound.rip/addons/web.listed' },
 		]);
 		expect(await rowOf('web.listed')).toMatchObject({
 			messageId: message?.id,

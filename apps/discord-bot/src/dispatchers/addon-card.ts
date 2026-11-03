@@ -113,7 +113,8 @@ export function renderAddon(
 		type: ComponentType.ActionRow,
 		components: [
 			link('Install', item.installUrl, EMOJIS.download),
-			link('View on Web', item.pageUrl, EMOJIS.globe),
+			link('Web', item.pageUrl, EMOJIS.globe),
+			link('Changelog', `${item.pageUrl}#changelog`, EMOJIS.history),
 			...(item.sourceUrl ? [link('Source', item.sourceUrl, EMOJIS.codeBranch)] : []),
 		],
 	};
