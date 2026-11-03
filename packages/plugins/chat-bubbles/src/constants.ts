@@ -28,7 +28,6 @@ export const IOSClass = {
 	messageCell: 'DCDMessageTableViewCell',
 	separatorCell: 'DCDSeparatorTableViewCell',
 	avatar: 'DCDAvatarView',
-	attributedText: 'DCDAttributedTextView',
 	reactions: 'DCDReactionListView',
 	ephemeral: 'DiscordChat.EphemeralView',
 	button: 'UIButton',

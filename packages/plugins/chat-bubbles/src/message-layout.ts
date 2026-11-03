@@ -1,4 +1,5 @@
 import type { NativeViewSnapshotNode } from '@unbound-app/api/native';
+import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/ios/text-attachments';
 
 import {
 	CONTENT_COLUMN_MINIMUM_WIDTH,
@@ -33,7 +34,7 @@ function isMedia(node: SnapshotNode): boolean {
 }
 
 function isText(node: SnapshotNode): boolean {
-	return node.className === IOSClass.attributedText && Boolean(node.text);
+	return MESSAGE_TEXT_VIEW_CLASSES.some((name) => name === node.className) && Boolean(node.text);
 }
 
 function childrenOf(nodes: SnapshotNode[], parent: number): number[] {

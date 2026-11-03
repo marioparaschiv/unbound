@@ -54,6 +54,16 @@ describe('message layout', () => {
 		expect(messageLayout(forwarded)?.body).toEqual({ x: 68, y: 38, width: 291, height: 50 });
 	});
 
+	test('reads the text of builds that draw message text with YYText labels', () => {
+		const yytext = cell.map((entry, index) =>
+			index === 12 ? node(10, 'DCDReusableYYLabel', [0, 0, 291, 22], 'lol') : entry,
+		);
+		const textOnly = yytext.filter((_, index) => index !== 13);
+
+		expect(messageLayout(yytext)?.text).toEqual({ index: 12, offset: 0 });
+		expect(messageLayout(textOnly)?.body).toEqual({ x: 68, y: 38, width: 291, height: 50 });
+	});
+
 	test('skips an empty last child and hidden content', () => {
 		const hidden = cell.map((entry, index) =>
 			index === 13 ? { ...entry, visible: false } : entry,
