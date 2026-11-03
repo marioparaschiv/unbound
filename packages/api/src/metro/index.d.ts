@@ -142,8 +142,11 @@ export declare function onModuleLoaded(
 ): () => void;
 /** An object of shape `T` widened with an arbitrary property index. */
 export type AnyProps<T = unknown> = T & Record<PropertyKey, MetroExport>;
-/** How each design component resolves on the running Discord build. */
-export type DesignComponentAudit = {
+/**
+ * How each design component resolves on the running Discord build.
+ * @internal
+ */
+type DesignComponentAudit = {
 	/** Components the running Discord build ships in a form React can render. */
 	native: DesignComponentName[];
 	/** Components the build lacks or ships unrenderable, where an Unbound fallback stands in. */

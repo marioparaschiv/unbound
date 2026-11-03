@@ -85,7 +85,10 @@ export const Discord: DesignModule = new Proxy(designTarget, {
 		readDesignModule(key) !== undefined || (isDesignComponent(key) && designFallbacks.has(key)),
 });
 
-/** How each design component resolves on the running Discord build. */
+/**
+ * How each design component resolves on the running Discord build.
+ * @internal
+ */
 export type DesignComponentAudit = {
 	/** Components the running Discord build ships in a form React can render. */
 	native: DesignComponentName[];
@@ -97,7 +100,9 @@ export type DesignComponentAudit = {
 
 /**
  * @description Checks every design component the SDK exposes against the running Discord build.
+ * Unbound's own compatibility check, for its tests and debugging, so it stays out of the SDK.
  * @returns The components Discord renders itself, the ones a fallback stands in for, and the ones nothing renders.
+ * @internal
  */
 export function auditDesignComponents(): DesignComponentAudit {
 	const audit: DesignComponentAudit = { native: [], fallback: [], missing: [] };
