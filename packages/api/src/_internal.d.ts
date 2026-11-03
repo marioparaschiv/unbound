@@ -138,12 +138,14 @@ export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'fabric.setFrame': 'native.fabric.mount';
 	readonly 'fabric.measure': 'native.fabric.mount';
 	readonly 'fabric.unmount': 'native.fabric.mount';
+	readonly 'fabric.releaseIdle': 'native.fabric.mount';
 	readonly 'fabric.mountAsync': 'native.fabric.async';
 	readonly 'fabric.updateAsync': 'native.fabric.async';
 	readonly 'fabric.setSizeAsync': 'native.fabric.async';
 	readonly 'fabric.setFrameAsync': 'native.fabric.async';
 	readonly 'fabric.measureAsync': 'native.fabric.async';
 	readonly 'fabric.unmountAsync': 'native.fabric.async';
+	readonly 'fabric.releaseIdleAsync': 'native.fabric.async';
 	readonly 'runtime.subscribe': 'native.runtime.events';
 	readonly 'java.getClass': 'native.java.classes';
 	readonly 'java.className': 'native.java.classes';
@@ -2320,12 +2322,14 @@ export type NativeFabricBridge = {
 		container: NativeObjectHandle,
 		moduleName: string,
 		properties?: NativeSerializableObject,
+		options?: NativeFabricMountOptions,
 	): NativeFabricSurface;
 	/** Like `mount`, on the main thread. Needs `native.fabric.async`. */
 	mountAsync(
 		container: NativeObjectHandle,
 		moduleName: string,
 		properties?: NativeSerializableObject,
+		options?: NativeFabricMountOptions,
 	): NativeCancelablePromise<NativeFabricSurface>;
 	/** Sends new properties to a surface. */
 	update(surface: NativeFabricSurface, properties: NativeSerializableObject): void;
@@ -2361,6 +2365,10 @@ export type NativeFabricBridge = {
 	unmount(surface: NativeFabricSurface): void;
 	/** Like `unmount`, on the main thread. */
 	unmountAsync(surface: NativeFabricSurface): NativeCancelablePromise<void>;
+	/** Destroys the idle surfaces this plugin left for reuse. */
+	releaseIdle?(): void;
+	/** Like `releaseIdle`, on the main thread; the plugin scope calls it when the plugin stops. */
+	releaseIdleAsync?(): NativeCancelablePromise<void>;
 };
 /** A view's frame in its container, in points on iOS and dp on Android. */
 export type NativeFabricFrame = {
@@ -2372,6 +2380,11 @@ export type NativeFabricFrame = {
 	width: number;
 	/** Height, between 0 and 32,768. */
 	height: number;
+};
+/** Options for mounting a Fabric surface. */
+export type NativeFabricMountOptions = {
+	/** Reuses an idle surface of the same component this plugin unmounted, re-hosted in the new container with the new properties, instead of starting one. Only for components whose state follows their properties. */
+	reuse?: boolean;
 };
 /** A Fabric surface size, in points on iOS and dp on Android, between 0 and 32,768. */
 export type NativeFabricSize = {

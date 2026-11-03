@@ -1,11 +1,14 @@
 #include "NativeFabric.h"
 
+#include <atomic>
+#include <deque>
 #include <functional>
 #include <mutex>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
 
+#include "LoaderAddonActivity.h"
 #include "LoaderLog.h"
 #include "NativeBoundedValue.h"
 #include "NativeConversionBudget.h"
@@ -17,17 +20,34 @@
 namespace loader::native {
 namespace jsi = facebook::jsi;
 
+bool FabricAdapter::detach(const std::string &)
+{
+    return false;
+}
+
+bool FabricAdapter::attach(const std::string &, const FabricView &)
+{
+    return false;
+}
+
 class FabricSurface final : public jsi::HostObject
 {
 public:
     explicit FabricSurface(std::shared_ptr<FabricAdapter> adapter) : adapter_(std::move(adapter)) {}
 
-    void activate(std::string id, uint64_t generation)
+    void activate(std::string id, uint64_t generation, std::string reuseKey)
     {
         std::lock_guard<std::mutex> lock(mutex_);
         id_         = std::move(id);
         generation_ = generation;
+        reuseKey_   = std::move(reuseKey);
         active_     = true;
+    }
+
+    std::string reuseKey() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return reuseKey_;
     }
 
     bool deactivate()
@@ -65,15 +85,25 @@ private:
     std::shared_ptr<FabricAdapter> adapter_;
     mutable std::mutex             mutex_;
     std::string                    id_;
+    std::string                    reuseKey_;
     uint64_t                       generation_ = 0;
     bool                           active_     = false;
 };
 
 using SurfacePointer = std::shared_ptr<FabricSurface>;
 
+struct IdleSurface {
+    std::string    key;
+    SurfacePointer surface;
+};
+
+static std::atomic<size_t> gCreatedSurfaces{0};
+static std::atomic<size_t> gReusedSurfaces{0};
+
 struct SurfaceRegistry {
     std::mutex                                          mutex;
     std::unordered_map<FabricSurface *, SurfacePointer> surfaces;
+    std::deque<IdleSurface>                             idle;
 };
 
 static SurfaceRegistry &registry()
@@ -83,14 +113,14 @@ static SurfaceRegistry &registry()
 }
 
 static bool remember(const SurfacePointer &surface, const std::string &id, uint64_t generation,
-                     NativeResourceReservation &reservation)
+                     const std::string &reuseKey, NativeResourceReservation &reservation)
 {
     std::lock_guard<std::mutex> lock(registry().mutex);
     if (generation != runtimeGeneration())
     {
         return false;
     }
-    surface->activate(id, generation);
+    surface->activate(id, generation, reuseKey);
     registry().surfaces[surface.get()] = surface;
     reservation.commit();
     return true;
@@ -118,11 +148,103 @@ static void unmountQuietly(const SurfacePointer &surface)
     }
 }
 
+static size_t countIdle(const std::string &key)
+{
+    size_t count = 0;
+    for (const IdleSurface &idle : registry().idle)
+    {
+        count += idle.key == key ? 1 : 0;
+    }
+    return count;
+}
+
+static std::vector<SurfacePointer> overflowingIdleLocked()
+{
+    std::vector<SurfacePointer> evicted;
+    auto                       &idle = registry().idle;
+    while (idle.size() > kIdleFabricSurfaces)
+    {
+        evicted.push_back(idle.front().surface);
+        idle.pop_front();
+    }
+    for (auto iterator = idle.begin(); iterator != idle.end();)
+    {
+        if (countIdle(iterator->key) > kIdleFabricSurfacesPerModule)
+        {
+            evicted.push_back(iterator->surface);
+            iterator = idle.erase(iterator);
+            continue;
+        }
+        ++iterator;
+    }
+    return evicted;
+}
+
+static void destroyIdle(const std::vector<SurfacePointer> &evicted)
+{
+    for (const SurfacePointer &surface : evicted)
+    {
+        unmountQuietly(surface);
+        nativeSurfaceBudget().release();
+    }
+}
+
+static bool park(const SurfacePointer &surface)
+{
+    std::string key = surface->reuseKey();
+    if (key.empty() || surface->generation() != runtimeGeneration() ||
+        !surface->adapter().detach(surface->id()))
+    {
+        return false;
+    }
+    std::vector<SurfacePointer> evicted;
+    {
+        std::lock_guard<std::mutex> lock(registry().mutex);
+        if (registry().surfaces.erase(surface.get()) == 0)
+        {
+            return false;
+        }
+        registry().idle.push_back({key, surface});
+        evicted = overflowingIdleLocked();
+    }
+    destroyIdle(evicted);
+    return true;
+}
+
+static SurfacePointer takeIdle(const std::string &key, uint64_t generation)
+{
+    std::lock_guard<std::mutex> lock(registry().mutex);
+    auto                       &idle = registry().idle;
+    for (auto iterator = idle.rbegin(); iterator != idle.rend(); ++iterator)
+    {
+        if (iterator->key == key && iterator->surface->generation() == generation)
+        {
+            SurfacePointer surface = iterator->surface;
+            idle.erase(std::next(iterator).base());
+            return surface;
+        }
+    }
+    return nullptr;
+}
+
 static void releaseStaleSurfaces(uint64_t generation)
 {
     std::vector<SurfacePointer> stale;
+    std::vector<SurfacePointer> staleIdle;
     {
         std::lock_guard<std::mutex> lock(registry().mutex);
+        auto                       &idle = registry().idle;
+        for (auto iterator = idle.begin(); iterator != idle.end();)
+        {
+            if (iterator->surface->generation() >= generation)
+            {
+                ++iterator;
+                continue;
+            }
+            staleIdle.push_back(iterator->surface);
+            iterator = idle.erase(iterator);
+            nativeSurfaceBudget().release();
+        }
         for (auto iterator = registry().surfaces.begin(); iterator != registry().surfaces.end();)
         {
             if (iterator->second->generation() >= generation)
@@ -136,17 +258,21 @@ static void releaseStaleSurfaces(uint64_t generation)
         }
     }
     auto target = executor();
-    if (stale.empty() || !target)
+    if ((stale.empty() && staleIdle.empty()) || !target)
     {
         return;
     }
-    target->runOnMain([stale = std::move(stale)]() {
+    target->runOnMain([stale = std::move(stale), staleIdle = std::move(staleIdle)]() {
         for (const SurfacePointer &surface : stale)
         {
             if (surface->deactivate())
             {
                 unmountQuietly(surface);
             }
+        }
+        for (const SurfacePointer &surface : staleIdle)
+        {
+            unmountQuietly(surface);
         }
     });
 }
@@ -197,7 +323,24 @@ struct MountRequest {
     std::string                 moduleName;
     nlohmann::json              properties;
     uint64_t                    generation = 0;
+    std::string                 reuseKey;
 };
+
+static std::string reuseKeyOf(jsi::Runtime &runtime, const jsi::Value *options,
+                              const std::string &moduleName)
+{
+    if (!options || !options->isObject())
+    {
+        return "";
+    }
+    jsi::Value reuse = options->asObject(runtime).getProperty(runtime, "reuse");
+    AddonSlot  addon = currentAddon();
+    if (!reuse.isBool() || !reuse.getBool() || addon == kNoAddon)
+    {
+        return "";
+    }
+    return std::to_string(addon) + ":" + moduleName;
+}
 
 static MountRequest mountRequest(jsi::Runtime                         &runtime,
                                  const std::shared_ptr<FabricAdapter> &adapter,
@@ -209,9 +352,45 @@ static MountRequest mountRequest(jsi::Runtime                         &runtime,
     request.moduleName =
         parseName(runtime, args[1], kMaximumNativeNameBytes, "A Fabric module name");
     request.properties = propertiesOf(runtime, count > 2 ? &args[2] : nullptr);
+    request.reuseKey   = reuseKeyOf(runtime, count > 3 ? &args[3] : nullptr, request.moduleName);
     request.surface    = std::make_shared<FabricSurface>(adapter);
     request.generation = runtimeGeneration();
     return request;
+}
+
+static bool reuseIdle(const MountRequest &request)
+{
+    if (request.reuseKey.empty())
+    {
+        return false;
+    }
+    SurfacePointer idle = takeIdle(request.reuseKey, request.generation);
+    if (!idle)
+    {
+        return false;
+    }
+    try
+    {
+        if (idle->adapter().attach(idle->id(), *request.container))
+        {
+            idle->adapter().update(idle->id(), request.properties);
+            std::lock_guard<std::mutex> lock(registry().mutex);
+            if (request.generation == runtimeGeneration())
+            {
+                request.surface->activate(idle->id(), request.generation, request.reuseKey);
+                registry().surfaces[request.surface.get()] = request.surface;
+                gReusedSurfaces++;
+                return true;
+            }
+        }
+    }
+    catch (const std::exception &error)
+    {
+        log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
+            std::string("Failed to reuse an idle Fabric surface: ") + error.what());
+    }
+    destroyIdle({idle});
+    return false;
 }
 
 static void mount(const MountRequest &request)
@@ -220,20 +399,29 @@ static void mount(const MountRequest &request)
     {
         throw std::runtime_error("Fabric runtime was replaced before mounting");
     }
+    if (reuseIdle(request))
+    {
+        return;
+    }
     NativeResourceReservation reservation(nativeSurfaceBudget(),
                                           "Too many React surfaces are mounted");
     std::string id = request.surface->adapter().mount(*request.container, request.moduleName,
                                                       request.properties);
-    if (!remember(request.surface, id, request.generation, reservation))
+    if (!remember(request.surface, id, request.generation, request.reuseKey, reservation))
     {
         request.surface->adapter().unmount(id);
         throw std::runtime_error("Fabric runtime was replaced while mounting");
     }
+    gCreatedSurfaces++;
 }
 
 static void unmount(const SurfacePointer &surface)
 {
     if (!surface->deactivate())
+    {
+        return;
+    }
+    if (park(surface))
     {
         return;
     }
@@ -347,7 +535,7 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
     FabricNamespace fabric(runtime, std::move(adapter), calls);
     auto            shared = fabric.adapter();
 
-    fabric.define("mount", 3, [shared](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+    fabric.define("mount", 4, [shared](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         auto request = std::make_shared<MountRequest>(mountRequest(rt, shared, args, count));
         return std::pair<Operation, Result>(
             [request]() {
@@ -410,6 +598,18 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
                 return toJSIValue(completion, toJSON(*frame));
             });
     });
+    fabric.define("releaseIdle", 0, [](jsi::Runtime &, const jsi::Value *, size_t) {
+        AddonSlot   addon  = currentAddon();
+        std::string prefix = std::to_string(addon) + ":";
+        return std::pair<Operation, Result>(
+            [addon, prefix]() {
+                if (addon != kNoAddon)
+                {
+                    evictIdleFabricSurfaces(prefix);
+                }
+            },
+            undefinedResult);
+    });
     fabric.define("unmount", 1, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         requireArguments(count, 1, "Unmounting a React surface requires a handle");
         SurfacePointer surface = surfaceOf(rt, args[0]);
@@ -426,5 +626,41 @@ size_t mountedFabricSurfaces()
 {
     std::lock_guard<std::mutex> lock(registry().mutex);
     return registry().surfaces.size();
+}
+
+size_t createdFabricSurfaces()
+{
+    return gCreatedSurfaces.load();
+}
+
+size_t reusedFabricSurfaces()
+{
+    return gReusedSurfaces.load();
+}
+
+size_t idleFabricSurfaces()
+{
+    std::lock_guard<std::mutex> lock(registry().mutex);
+    return registry().idle.size();
+}
+
+void evictIdleFabricSurfaces(const std::string &keyPrefix)
+{
+    std::vector<SurfacePointer> evicted;
+    {
+        std::lock_guard<std::mutex> lock(registry().mutex);
+        auto                       &idle = registry().idle;
+        for (auto iterator = idle.begin(); iterator != idle.end();)
+        {
+            if (iterator->key.rfind(keyPrefix, 0) != 0)
+            {
+                ++iterator;
+                continue;
+            }
+            evicted.push_back(iterator->surface);
+            iterator = idle.erase(iterator);
+        }
+    }
+    destroyIdle(evicted);
 }
 }

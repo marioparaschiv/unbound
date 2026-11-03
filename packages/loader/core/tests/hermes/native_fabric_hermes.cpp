@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <hermes/hermes.h>
@@ -6,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "LoaderAddonActivity.h"
 #include "NativeFabric.h"
 #include "NativePluginRuntime.h"
 
@@ -105,7 +107,23 @@ public:
         calls.push_back("unmount " + surface);
     }
 
-    int                      mounted = 0;
+    bool detach(const std::string &surface) override
+    {
+        if (reusable)
+        {
+            calls.push_back("detach " + surface);
+        }
+        return reusable;
+    }
+
+    bool attach(const std::string &surface, const loader::native::FabricView &container) override
+    {
+        calls.push_back("attach " + surface + " " + static_cast<const NamedView &>(container).name);
+        return reusable;
+    }
+
+    bool                     reusable = false;
+    int                      mounted  = 0;
     std::vector<std::string> calls;
 };
 
@@ -167,6 +185,69 @@ static const char *const kFabricChecks = R"JS((function () {
 	return JSON.stringify(failures);
 })())JS";
 
+static const char *const kReuseChecks = R"JS((function () {
+	var first = fabric.mount('row-a', 'Avatar', { user: 1 }, { reuse: true });
+	fabric.unmount(first);
+	var second = fabric.mount('row-b', 'Avatar', { user: 2 }, { reuse: true });
+	var plain = fabric.mount('row-c', 'Avatar', { user: 3 });
+	fabric.unmount(plain);
+	var a = fabric.mount('row-d', 'Avatar', {}, { reuse: true });
+	var b = fabric.mount('row-e', 'Avatar', {}, { reuse: true });
+	var c = fabric.mount('row-f', 'Avatar', {}, { reuse: true });
+	fabric.unmount(second);
+	fabric.unmount(a);
+	fabric.unmount(b);
+	fabric.unmount(c);
+	return 'done';
+})())JS";
+
+static void reusesIdleSurfaces(jsi::Runtime &runtime, RecordingAdapter &adapter)
+{
+    adapter.reusable = true;
+    adapter.calls.clear();
+    loader::AddonScope scope(loader::registerAddonSlot("unbound.reuse", "Reuse"));
+    runtime.evaluateJavaScript(std::make_shared<jsi::StringBuffer>(kReuseChecks),
+                               "native-fabric-reuse.js");
+
+    auto count = [&](const std::string &prefix) {
+        size_t found = 0;
+        for (const std::string &call : adapter.calls)
+        {
+            found += call.rfind(prefix, 0) == 0 ? 1 : 0;
+        }
+        return found;
+    };
+    require(count("attach ") == 1, "a reusable mount reuses the idle surface of its module");
+    require(std::find(adapter.calls.begin(), adapter.calls.end(), "attach surface-3 row-b") !=
+                adapter.calls.end(),
+            "the idle surface is attached to the new container");
+    require(count("mount ") == 5, "only mounts with no idle surface create one");
+    require(count("unmount ") == 3,
+            "a mount without reuse unmounts, and idle surfaces past two per module are destroyed");
+    require(loader::native::idleFabricSurfaces() == loader::native::kIdleFabricSurfacesPerModule,
+            "each module keeps at most two idle surfaces");
+
+    {
+        loader::AddonScope other(loader::registerAddonSlot("unbound.other", "Other"));
+        runtime.evaluateJavaScript(
+            std::make_shared<jsi::StringBuffer>(
+                "fabric.unmount(fabric.mount('row-g', 'Avatar', {}, { reuse: true }))"),
+            "native-fabric-other.js");
+    }
+    require(loader::native::idleFabricSurfaces() == 3, "another plugin parks its own surface");
+
+    runtime.evaluateJavaScript(std::make_shared<jsi::StringBuffer>("fabric.releaseIdle()"),
+                               "native-fabric-release.js");
+    require(loader::native::idleFabricSurfaces() == 1,
+            "releasing idle surfaces keeps those of other plugins");
+    require(count("unmount ") == 5, "releasing unmounts the plugin's idle surfaces");
+
+    loader::native::evictIdleFabricSurfaces();
+    require(loader::native::idleFabricSurfaces() == 0, "eviction destroys every idle surface");
+    require(count("unmount ") == 6, "eviction unmounts the idle surfaces");
+    adapter.reusable = false;
+}
+
 int main()
 {
     loader::native::setExecutor(std::make_shared<InlineExecutor>());
@@ -206,6 +287,9 @@ int main()
     }
     require(adapter->calls.size() == expected.size(), "an unmounted surface takes no more calls");
     require(loader::native::mountedFabricSurfaces() == 1, "only the kept surface stays mounted");
+
+    reusesIdleSurfaces(*runtime, *adapter);
+    require(loader::native::mountedFabricSurfaces() == 1, "reuse leaves only the kept surface");
 
     auto replacement = facebook::hermes::makeHermesRuntime();
     loader::native::registerRuntime(*replacement);

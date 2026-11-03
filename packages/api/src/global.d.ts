@@ -231,6 +231,7 @@ export type {
 	NativeFFITypeName,
 	NativeFabricBridge,
 	NativeFabricFrame,
+	NativeFabricMountOptions,
 	NativeFabricSize,
 	NativeFabricSurface,
 	NativeFontEntry,

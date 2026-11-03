@@ -28,6 +28,12 @@ export type NativeFabricFrame = {
 /** A mounted Fabric surface; the plugin scope unmounts it on dispose. */
 export type NativeFabricSurface = NativeHandle;
 
+/** Options for mounting a Fabric surface. */
+export type NativeFabricMountOptions = {
+	/** Reuses an idle surface of the same component this plugin unmounted, re-hosted in the new container with the new properties, instead of starting one. Only for components whose state follows their properties. */
+	reuse?: boolean;
+};
+
 /** Mounts registered React Native components inside existing native views. Sync methods are iOS only. */
 export type NativeFabricBridge = {
 	/** Starts a surface for a registered component inside a container view. Needs `native.fabric.mount`. */
@@ -35,12 +41,14 @@ export type NativeFabricBridge = {
 		container: NativeObjectHandle,
 		moduleName: string,
 		properties?: NativeSerializableObject,
+		options?: NativeFabricMountOptions,
 	): NativeFabricSurface;
 	/** Like `mount`, on the main thread. Needs `native.fabric.async`. */
 	mountAsync(
 		container: NativeObjectHandle,
 		moduleName: string,
 		properties?: NativeSerializableObject,
+		options?: NativeFabricMountOptions,
 	): NativeCancelablePromise<NativeFabricSurface>;
 	/** Sends new properties to a surface. */
 	update(surface: NativeFabricSurface, properties: NativeSerializableObject): void;
@@ -76,4 +84,8 @@ export type NativeFabricBridge = {
 	unmount(surface: NativeFabricSurface): void;
 	/** Like `unmount`, on the main thread. */
 	unmountAsync(surface: NativeFabricSurface): NativeCancelablePromise<void>;
+	/** Destroys the idle surfaces this plugin left for reuse. */
+	releaseIdle?(): void;
+	/** Like `releaseIdle`, on the main thread; the plugin scope calls it when the plugin stops. */
+	releaseIdleAsync?(): NativeCancelablePromise<void>;
 };

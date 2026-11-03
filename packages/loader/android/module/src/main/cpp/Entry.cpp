@@ -20,6 +20,7 @@
 #include "LoaderPreload.h"
 #include "LoaderThreadWarnings.h"
 #include "LoaderToolboxGestures.h"
+#include "NativeFabric.h"
 #include "NativePluginBridge.h"
 
 using namespace unbound::android;
@@ -185,6 +186,11 @@ static jstring nativeToolbox(JNIEnv *env, jclass, jstring action, jstring argume
     return toJavaString(env,
                         loader->toolbox(toStdString(env, action),
                                         argument ? toStdString(env, argument) : std::string()));
+}
+
+static void nativeEvictIdleSurfaces(JNIEnv *, jclass)
+{
+    loader::native::evictIdleFabricSurfaces();
 }
 
 static void nativeWarnOffMainViewCall(JNIEnv *env, jclass, jstring call)
@@ -444,6 +450,10 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
         env->GetStaticMethodID(bridge, "fabricUpdate", "(Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.fabricUnmount =
         env->GetStaticMethodID(bridge, "fabricUnmount", "(Ljava/lang/String;)Z");
+    gCallbacks.fabricDetach =
+        env->GetStaticMethodID(bridge, "fabricDetach", "(Ljava/lang/String;)Z");
+    gCallbacks.fabricAttach =
+        env->GetStaticMethodID(bridge, "fabricAttach", "(Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.fabricSetSize = env->GetStaticMethodID(
         bridge, "fabricSetSize", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V");
     gCallbacks.fabricSetFrame =
@@ -540,6 +550,7 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativeAttestation", "()Ljava/lang/String;", reinterpret_cast<void *>(nativeAttestation)},
         {"nativeWarnOffMainViewCall", "(Ljava/lang/String;)V",
          reinterpret_cast<void *>(nativeWarnOffMainViewCall)},
+        {"nativeEvictIdleSurfaces", "()V", reinterpret_cast<void *>(nativeEvictIdleSurfaces)},
         {"nativeIncompatibleHostMessage", "()Ljava/lang/String;",
          reinterpret_cast<void *>(nativeIncompatibleHostMessage)},
         {"nativeDevelopmentBuildBanner",

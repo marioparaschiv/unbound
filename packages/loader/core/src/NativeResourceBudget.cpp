@@ -1,5 +1,6 @@
 #include "NativeResourceBudget.h"
 
+#include "NativeFabric.h"
 #include "NativeHandleLeases.h"
 #include "NativeLimits.h"
 #include "NativePluginRuntime.h"
@@ -148,6 +149,9 @@ nlohmann::json nativeResourceCounts()
     return {{"hooks", nativeHookBudget().used()},
             {"surfaces", nativeSurfaceBudget().used()},
             {"cachedReturns", nativeCachedReturnBudget().used()},
-            {"handles", leasedHandleCount() + platformHandleCount()}};
+            {"handles", leasedHandleCount() + platformHandleCount()},
+            {"idleSurfaces", idleFabricSurfaces()},
+            {"createdSurfaces", createdFabricSurfaces()},
+            {"reusedSurfaces", reusedFabricSurfaces()}};
 }
 }

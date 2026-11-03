@@ -256,10 +256,12 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 	async function mount(pill: Pill) {
 		if (pill.disposed || pill.mounting) return;
 
-		pill.mounting = fabric.mountAsync(pill.host, surfaceName, {
-			surfaceId: pill.id,
-			revision: pill.revision,
-		});
+		pill.mounting = fabric.mountAsync(
+			pill.host,
+			surfaceName,
+			{ surfaceId: pill.id, revision: pill.revision },
+			{ reuse: true },
+		);
 		await pill.mounting.catch((error: unknown) => {
 			pill.mounting = null;
 			throw error;

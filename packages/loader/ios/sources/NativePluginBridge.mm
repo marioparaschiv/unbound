@@ -1142,6 +1142,18 @@ static CGSize cgSize(const loader::native::NativeSize &size)
     return CGSizeMake(size.width, size.height);
 }
 
+static void evictIdleSurfacesOnMemoryWarnings()
+{
+    static dispatch_once_t observing;
+    dispatch_once(&observing, ^{
+        [[NSNotificationCenter defaultCenter]
+            addObserverForName:UIApplicationDidReceiveMemoryWarningNotification
+                        object:nil
+                         queue:[NSOperationQueue mainQueue]
+                    usingBlock:^(NSNotification *) { loader::native::evictIdleFabricSurfaces(); }];
+    });
+}
+
 class IOSFabricAdapter final : public loader::native::FabricAdapter
 {
 public:
@@ -1206,6 +1218,27 @@ public:
     loader::native::NativeFrame measureSurface(const std::string &surface) override
     {
         return nativeFrame(find(surface).view.frame);
+    }
+
+    bool detach(const std::string &surface) override
+    {
+        IOSFabricSurface mounted = find(surface);
+        guarded([&]() {
+            [mounted.view removeFromSuperview];
+        });
+        return true;
+    }
+
+    bool attach(const std::string &surface, const loader::native::FabricView &container) override
+    {
+        IOSFabricSurface mounted       = find(surface);
+        UIView          *containerView = static_cast<const IOSFabricView &>(container).view();
+        guarded([&]() {
+            mounted.view.frame = containerView.bounds;
+            [containerView addSubview:mounted.view];
+            [mounted.view setNeedsLayout];
+        });
+        return true;
     }
 
     void unmount(const std::string &surface) override
@@ -5350,6 +5383,7 @@ void registerNativePluginBridge(Runtime &runtime)
     bridge.addNamespace(
         "fabric", loader::native::makeFabricNamespace(runtime, std::make_shared<IOSFabricAdapter>(),
                                                       loader::native::FabricCalls::SyncAndAsync));
+    evictIdleSurfacesOnMemoryWarnings();
 
     Object debug(runtime);
     installDebug(runtime, debug);

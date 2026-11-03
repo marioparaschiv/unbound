@@ -45,11 +45,12 @@ inline constexpr std::array<std::string_view, 3> kAssociationMethods  = {
 inline constexpr std::array<std::string_view, 1> kObjCHookMethods    = {"hook"};
 inline constexpr std::array<std::string_view, 1> kFFISymbolMethods   = {"symbol"};
 inline constexpr std::array<std::string_view, 1> kFFICallMethods     = {"call"};
-inline constexpr std::array<std::string_view, 6> kFabricMountMethods = {
-    "mount", "update", "setSize", "setFrame", "measure", "unmount",
+inline constexpr std::array<std::string_view, 7> kFabricMountMethods = {
+    "mount", "update", "setSize", "setFrame", "measure", "unmount", "releaseIdle",
 };
-inline constexpr std::array<std::string_view, 6> kFabricAsyncMethods = {
-    "mountAsync", "updateAsync", "setSizeAsync", "setFrameAsync", "measureAsync", "unmountAsync",
+inline constexpr std::array<std::string_view, 7> kFabricAsyncMethods = {
+    "mountAsync",   "updateAsync",  "setSizeAsync",     "setFrameAsync",
+    "measureAsync", "unmountAsync", "releaseIdleAsync",
 };
 inline constexpr std::array<std::string_view, 0> kClientProvidedMethods = {};
 inline constexpr std::array<std::string_view, 5> kJavaClassMethods      = {

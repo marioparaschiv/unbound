@@ -1363,6 +1363,21 @@ public:
         callJavaBoolean(callbacks_, callbacks_.fabricUnmount, loader::native::handleJSON(surface));
     }
 
+    bool detach(const std::string &surface) override
+    {
+        return callbacks_.fabricDetach && callbacks_.fabricAttach &&
+               callJavaBoolean(callbacks_, callbacks_.fabricDetach,
+                               loader::native::handleJSON(surface));
+    }
+
+    bool attach(const std::string &surface, const loader::native::FabricView &container) override
+    {
+        callJavaVoid(callbacks_, callbacks_.fabricAttach,
+                     {loader::native::handleJSON(surface),
+                      static_cast<const AndroidFabricView &>(container).handle});
+        return true;
+    }
+
 private:
     loader::native::NativeFrame measureHandle(const std::string &handle)
     {

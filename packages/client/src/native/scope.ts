@@ -139,6 +139,7 @@ export function createScopedNativePlugin(
 	let stopping = false;
 	const mountAsync = fabricBridge.mountAsync?.bind(fabricBridge);
 	const unmountAsync = fabricBridge.unmountAsync?.bind(fabricBridge);
+	const releaseIdleAsync = fabricBridge.releaseIdleAsync?.bind(fabricBridge);
 
 	function trackInvocation<T>(pending: NativeCancelablePromise<T>): NativeCancelablePromise<T> {
 		if (stopping) {
@@ -163,6 +164,14 @@ export function createScopedNativePlugin(
 			}
 
 			fabricBridge.unmount(surface);
+		} catch {
+			return;
+		}
+	}
+
+	function releaseIdleSurfaces(): void {
+		try {
+			void releaseIdleAsync?.().catch(() => undefined);
 		} catch {
 			return;
 		}
@@ -408,19 +417,19 @@ export function createScopedNativePlugin(
 	};
 
 	const fabric: NativeFabricBridge = {
-		mount: (container, moduleName, properties) => {
+		mount: (container, moduleName, properties, options) => {
 			if (disposed) {
 				throw new NativePluginDisposedError();
 			}
 
 			requireCapability(capabilities, 'fabric.mount');
-			const surface = fabricBridge.mount(container, moduleName, properties);
+			const surface = fabricBridge.mount(container, moduleName, properties, options);
 
 			surfaces.add(surface);
 
 			return surface;
 		},
-		mountAsync: (container, moduleName, properties) => {
+		mountAsync: (container, moduleName, properties, options) => {
 			if (disposed) {
 				throw new NativePluginDisposedError();
 			}
@@ -431,7 +440,7 @@ export function createScopedNativePlugin(
 				throw new NativePluginUnavailableError('Async Fabric mounting is unavailable.');
 			}
 
-			const pending = trackInvocation(mountAsync(container, moduleName, properties));
+			const pending = trackInvocation(mountAsync(container, moduleName, properties, options));
 
 			pending.then(
 				(surface) => {
@@ -499,6 +508,16 @@ export function createScopedNativePlugin(
 
 			return pending;
 		},
+		releaseIdle: scopeOptionalMethod(
+			fabricBridge.releaseIdle?.bind(fabricBridge),
+			'fabric.releaseIdle',
+			'Releasing idle Fabric surfaces is unavailable.',
+		),
+		releaseIdleAsync: scopeAsyncMethod(
+			releaseIdleAsync,
+			'fabric.releaseIdleAsync',
+			'Releasing idle Fabric surfaces is unavailable.',
+		),
 	};
 
 	const runtime: NativeRuntimeBridge = {
@@ -624,6 +643,7 @@ export function createScopedNativePlugin(
 			for (const surface of surfaces) disposeSurface(surface);
 
 			surfaces.clear();
+			releaseIdleSurfaces();
 
 			for (const plan of objcPlans) {
 				try {

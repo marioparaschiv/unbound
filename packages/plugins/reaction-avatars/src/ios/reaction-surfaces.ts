@@ -134,10 +134,12 @@ function createSurface(session: Session, state: ReactionViewState): void {
 	renderSurface(session, state);
 
 	try {
-		state.surface = session.fabric.mount(state.collectionCell, session.surfaceName, {
-			revision: state.revision,
-			surfaceId: state.surfaceId,
-		});
+		state.surface = session.fabric.mount(
+			state.collectionCell,
+			session.surfaceName,
+			{ revision: state.revision, surfaceId: state.surfaceId },
+			{ reuse: true },
+		);
 	} catch {
 		state.surface = null;
 

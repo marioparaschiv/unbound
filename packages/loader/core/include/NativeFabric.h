@@ -31,6 +31,8 @@ public:
     virtual NativeFrame measure(const FabricView &view)                                      = 0;
     virtual NativeFrame measureSurface(const std::string &surface)                           = 0;
     virtual void        unmount(const std::string &surface)                                  = 0;
+    virtual bool        detach(const std::string &surface);
+    virtual bool        attach(const std::string &surface, const FabricView &container);
 };
 
 enum class FabricCalls
@@ -43,5 +45,12 @@ facebook::jsi::Object makeFabricNamespace(facebook::jsi::Runtime        &runtime
                                           std::shared_ptr<FabricAdapter> adapter,
                                           FabricCalls                    calls);
 
+inline constexpr size_t kIdleFabricSurfacesPerModule = 2;
+inline constexpr size_t kIdleFabricSurfaces          = 8;
+
 size_t mountedFabricSurfaces();
+size_t idleFabricSurfaces();
+size_t createdFabricSurfaces();
+size_t reusedFabricSurfaces();
+void   evictIdleFabricSurfaces(const std::string &keyPrefix = "");
 }

@@ -37,6 +37,8 @@ object NativeBridge {
     @JvmStatic
     external fun nativeOnLoadJSBundle()
 
+    external fun nativeEvictIdleSurfaces()
+
     @JvmStatic
     external fun nativeOnRuntimeCreated(runtimePointer: Long): Boolean
 
@@ -147,6 +149,13 @@ object NativeBridge {
 
     @JvmStatic
     fun fabricUnmount(handleJSON: String): Boolean = NativeFabric.unmount(handleJSON)
+
+    @JvmStatic
+    fun fabricDetach(handleJSON: String): Boolean = NativeFabric.detach(handleJSON)
+
+    @JvmStatic
+    fun fabricAttach(handleJSON: String, containerHandleJSON: String) =
+        NativeFabric.attach(handleJSON, containerHandleJSON)
 
     @JvmStatic
     fun fabricSetSize(handleJSON: String, minimumJSON: String, maximumJSON: String) =

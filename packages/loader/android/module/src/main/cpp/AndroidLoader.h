@@ -46,6 +46,8 @@ struct JavaCallbacks {
     jmethodID fabricMount              = nullptr;
     jmethodID fabricUpdate             = nullptr;
     jmethodID fabricUnmount            = nullptr;
+    jmethodID fabricDetach             = nullptr;
+    jmethodID fabricAttach             = nullptr;
     jmethodID fabricSetSize            = nullptr;
     jmethodID fabricSetFrame           = nullptr;
     jmethodID fabricMeasure            = nullptr;
