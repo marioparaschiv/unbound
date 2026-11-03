@@ -1,5 +1,3 @@
-No more stickers sent by a stray tap. Sticker Preview holds the sticker you pick and shows it above the chat input until you hit send.
-
 ## :sparkle: What it does
 
 - :sticker: Tapping a sticker in the picker shows it above the chat input instead of sending it. Tap the preview to remove it.

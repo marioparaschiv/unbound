@@ -1,5 +1,3 @@
-Discord built an account switcher and left it off mobile. Multi Account turns it back on.
-
 ## :sparkle: What it does
 
 - :user-change: Unlocks the multi-account switcher Discord already ships but doesn't offer in its mobile app.

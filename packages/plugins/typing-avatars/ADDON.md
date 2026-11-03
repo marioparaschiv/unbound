@@ -1,5 +1,3 @@
-Someone is typing. Now you can see who. Typing Avatars puts their avatars at the front of the chat's typing indicator.
-
 ## :sparkle: What it does
 
 - :users: Shows up to three small, overlapping avatars of the people typing.

@@ -1,5 +1,3 @@
-Deleted it? Message Logger already saw it. Deleted and edited messages stay in your chat until Discord restarts.
-
 ## :sparkle: What it does
 
 - :trash: Deleted messages stay where they were, in red, marked **This message was deleted**.

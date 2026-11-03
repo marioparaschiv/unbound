@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.3] - 2026-11-03
+
+### Changed
+
+- Remove the opening line from the plugin's page on unbound.rip. The plugin works the same as before.
+
 ## [1.2.2] - 2026-11-03
 
 ### Changed

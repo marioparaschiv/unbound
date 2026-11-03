@@ -1,5 +1,3 @@
-Is that video going to fit? Now you know before you pick it. File Size On Picker shows each file's size on the media picker thumbnails.
-
 ## :sparkle: What it does
 
 - :ruler: Puts a size badge in the top-left corner of each photo and video in the picker that opens from the chat input.

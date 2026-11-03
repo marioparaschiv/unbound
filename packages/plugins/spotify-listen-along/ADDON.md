@@ -1,5 +1,3 @@
-Spotify's listen along, now on your phone. Spotify Listen Along brings it over from Discord desktop, both joining a friend and inviting a channel.
-
 ## :sparkle: What it does
 
 - :headphones: A headphones button next to **Play on Spotify** on someone's Spotify activity plays the same track at the same position and keeps following what they play.

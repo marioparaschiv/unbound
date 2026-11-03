@@ -1,5 +1,3 @@
-No more guessing. PronounDB puts a message author's pronouns right after the timestamp, like `• he/him`.
-
 ## :sparkle: What it does
 
 - :msg-user: Shows pronouns from PronounDB and from the author's Discord profile in the message header.

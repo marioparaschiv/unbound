@@ -1,5 +1,3 @@
-Discord, the way Australians see it. If your device is set to Australian English, the whole app turns upside down.
-
 ## :sparkle: What it does
 
 - :arrows-rotate-center: Turns all of Discord upside down, menus, sheets and pop-ups included.

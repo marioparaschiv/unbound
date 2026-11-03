@@ -1,5 +1,3 @@
-Put a face to the name. Mention Avatars adds a small image inside each user and role mention in chat.
-
 ## :sparkle: What it does
 
 - :circle-user: User mentions show the user's avatar, cropped to a circle, in front of the name.

@@ -24,7 +24,7 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.3",
+	"version": "1.0.4",
 	"icon": "ic_swipe_reply_24px",
 	"main": "index.tsx",
 	"startAfterFirstFrame": true

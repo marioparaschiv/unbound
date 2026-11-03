@@ -1,5 +1,3 @@
-No worries, mate. Aussie Speech rewrites every message into Aussie English as you send or edit it.
-
 ## :sparkle: What it does
 
 - :msg-smile: Swaps phrases, so "thank you" becomes "cheers, legend" and "I don't know" becomes "dunno".
