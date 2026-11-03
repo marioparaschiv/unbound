@@ -6,6 +6,7 @@ import { Accordion, AccordionGroup } from '~/components/guides/accordion';
 import { File, FileTree, Folder } from '~/components/guides/file-tree';
 import { ParamField, ResponseField } from '~/components/guides/field';
 import { Note, Tip, Warning } from '~/components/guides/callout';
+import PageIconList from '~/components/guides/page-icon-list';
 import { Card, CardGroup } from '~/components/guides/card';
 import { Flow, FlowStep } from '~/components/guides/flow';
 import Expandable from '~/components/guides/expandable';
@@ -128,6 +129,7 @@ export const GUIDE_COMPONENTS: MDXComponents = {
 	InstallQuiz,
 	InstallResult,
 	Note,
+	PageIconList,
 	ParamField,
 	ResponseField,
 	Step,

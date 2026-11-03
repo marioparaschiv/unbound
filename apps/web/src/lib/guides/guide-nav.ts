@@ -35,7 +35,12 @@ export const GUIDE_NAV: Record<GuideTab, GuideTabNav> = {
 			{ label: 'Start Here', slugs: ['concepts', 'addons/creating'] },
 			{
 				label: 'Addons',
-				slugs: ['addons/manifest', 'addons/standards', 'addons/store-page'],
+				slugs: [
+					'addons/manifest',
+					'addons/standards',
+					'addons/store-page',
+					'addons/page-icons',
+				],
 			},
 			{
 				label: 'Plugins',
