@@ -1,7 +1,8 @@
+import { Discord } from '@unbound-app/api/metro/components';
 import { storage, ui } from '@unbound-app/api';
 
-import { BubbleLimits, BubbleStyle } from '~/constants';
-import { parseHexColor } from '~/style';
+import { BubbleLayout, BubbleLimits, BubbleStyle } from '~/constants';
+import { bubbleLayout, parseHexColor } from '~/style';
 import { SETTINGS_BUCKET, ThemeStore } from '~/modules';
 
 type NumberSetting = {
@@ -10,6 +11,7 @@ type NumberSetting = {
 	fallback: number;
 	maximum: number;
 	unit: string;
+	dynamicOnly?: boolean;
 };
 
 const NUMBER_SETTINGS: NumberSetting[] = [
@@ -26,6 +28,7 @@ const NUMBER_SETTINGS: NumberSetting[] = [
 		fallback: BubbleStyle.horizontalPadding,
 		maximum: BubbleLimits.padding,
 		unit: ' pt',
+		dynamicOnly: true,
 	},
 	{
 		key: 'verticalPadding',
@@ -33,6 +36,7 @@ const NUMBER_SETTINGS: NumberSetting[] = [
 		fallback: BubbleStyle.verticalPadding,
 		maximum: BubbleLimits.padding,
 		unit: ' pt',
+		dynamicOnly: true,
 	},
 	{
 		key: 'opacity',
@@ -63,11 +67,31 @@ function SettingsPanel() {
 	const store = storage.useBucket(SETTINGS_BUCKET);
 	const color = storedColor(store.get('color', ''));
 	const ownColor = storedColor(store.get('ownColor', ''));
+	const layout = bubbleLayout(store.get('layout', BubbleLayout.dynamic));
+	const shapeSettings = NUMBER_SETTINGS.filter(
+		(setting) => layout === BubbleLayout.dynamic || !setting.dynamicOnly,
+	);
 
 	return (
 		<ui.Page>
+			<Discord.TableRadioGroup
+				title='Layout'
+				value={layout}
+				onChange={(value: string) => store.set('layout', value)}
+			>
+				<Discord.TableRadioRow
+					label='Fit to message'
+					subLabel='Each bubble wraps just the text and media of its message'
+					value={BubbleLayout.dynamic}
+				/>
+				<Discord.TableRadioRow
+					label='Full-width cards'
+					subLabel='One card behind each whole message, name and reactions included, like Rosiecord'
+					value={BubbleLayout.card}
+				/>
+			</Discord.TableRadioGroup>
 			<ui.Section title='Shape'>
-				{NUMBER_SETTINGS.map((setting) => (
+				{shapeSettings.map((setting) => (
 					<ui.SliderRow
 						key={setting.key}
 						label={setting.title}
@@ -100,6 +124,7 @@ function SettingsPanel() {
 				onReset={() => {
 					for (const setting of NUMBER_SETTINGS) store.set(setting.key, setting.fallback);
 
+					store.set('layout', BubbleLayout.dynamic);
 					store.set('color', '');
 					store.set('ownColor', '');
 				}}

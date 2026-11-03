@@ -155,7 +155,7 @@
     },
     "packages/api": {
       "name": "@unbound-app/api",
-      "version": "0.12.0-e3c62b0ada2a010ffa768f2c2b6659dd5e11af479fadba6621f10a7da04c2ea9",
+      "version": "0.12.0-d371460c9841aa2f46c0b6c98f9b5b187752332acb2fbc5e5391f200a957b924",
       "devDependencies": {
         "@unbound-app/client": "workspace:*",
         "@unbound-app/sdk-generator": "workspace:*",
@@ -394,6 +394,21 @@
     "packages/plugins/add-attachments": {
       "name": "add-attachments",
       "version": "1.0.1",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.66.0",
+      },
+    },
+    "packages/plugins/always-animate": {
+      "name": "always-animate",
+      "version": "1.0.0",
       "dependencies": {
         "@unbound-plugins/shared": "workspace:*",
       },
@@ -2167,6 +2182,8 @@
     "ajv": ["ajv@8.20.0", "", { "dependencies": { "fast-deep-equal": "^3.1.3", "fast-uri": "^3.0.1", "json-schema-traverse": "^1.0.0", "require-from-string": "^2.0.2" } }, "sha512-Thbli+OlOj+iMPYFBVBfJ3OmCAnaSyNn4M1vz9T6Gka5Jt9ba/HIR56joy65tY6kx/FCF5VXNB819Y7/GUrBGA=="],
 
     "ajv-formats": ["ajv-formats@3.0.1", "", { "dependencies": { "ajv": "^8.0.0" } }, "sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ=="],
+
+    "always-animate": ["always-animate@workspace:packages/plugins/always-animate"],
 
     "anser": ["anser@1.4.10", "", {}, "sha512-hCv9AqTQ8ycjpSd3upOJd7vFwW1JaoYQ7tpham03GJ1ca8/65rqn0RpaWpItOAd6ylW9wAw6luXYPJIyPFVOww=="],
 

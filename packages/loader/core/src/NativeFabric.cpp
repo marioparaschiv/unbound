@@ -4,6 +4,7 @@
 #include <deque>
 #include <functional>
 #include <mutex>
+#include <optional>
 #include <stdexcept>
 #include <unordered_map>
 #include <vector>
@@ -26,6 +27,16 @@ bool FabricAdapter::detach(const std::string &)
 }
 
 bool FabricAdapter::attach(const std::string &, const FabricView &)
+{
+    return false;
+}
+
+bool FabricAdapter::postsVoidCalls() const
+{
+    return false;
+}
+
+bool FabricAdapter::measuresLastSetFrame() const
 {
     return false;
 }
@@ -55,7 +66,26 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         bool                        wasActive = active_;
         active_                               = false;
+        lastSetFrame_.reset();
         return wasActive;
+    }
+
+    void rememberSetFrame(const NativeFrame &frame)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        lastSetFrame_ = frame;
+    }
+
+    void forgetSetFrame()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        lastSetFrame_.reset();
+    }
+
+    std::optional<NativeFrame> knownFrame() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return active_ ? lastSetFrame_ : std::nullopt;
     }
 
     bool active() const
@@ -88,6 +118,7 @@ private:
     std::string                    reuseKey_;
     uint64_t                       generation_ = 0;
     bool                           active_     = false;
+    std::optional<NativeFrame>     lastSetFrame_;
 };
 
 using SurfacePointer = std::shared_ptr<FabricSurface>;
@@ -459,6 +490,13 @@ static NativeFrame measure(const std::shared_ptr<FabricAdapter> &adapter,
 
 using Operation = std::function<void()>;
 using Result    = std::function<jsi::Value(jsi::Runtime &)>;
+using Immediate = std::function<std::optional<jsi::Value>(jsi::Runtime &)>;
+
+struct FabricCall {
+    Operation operation;
+    Result    result;
+    Immediate immediate;
+};
 
 static jsi::Value undefinedResult(jsi::Runtime &)
 {
@@ -477,15 +515,16 @@ public:
     template <typename Prepare>
     void define(const char *name, unsigned int argumentCount, Prepare prepare)
     {
-        auto run = [prepare](jsi::Runtime &rt, const jsi::Value *args, size_t count,
-                             bool synchronous) -> jsi::Value {
-            auto [operation, result] = prepare(rt, args, count);
-            if (synchronous)
+        auto run = [prepare, adapter = adapter_, label = std::string("fabric.") + name](
+                       jsi::Runtime &rt, const jsi::Value *args, size_t count,
+                       bool synchronous) -> jsi::Value {
+            FabricCall call = prepare(rt, args, count);
+            if (!synchronous)
             {
-                executeMainSynchronously(operation);
-                return result(rt);
+                return executeMainAsynchronously(
+                    rt, call.operation, call.result ? call.result : Result(undefinedResult));
             }
-            return executeMainAsynchronously(rt, operation, result);
+            return runSynchronously(rt, call, *adapter, label);
         };
         if (calls_ == FabricCalls::SyncAndAsync)
         {
@@ -512,6 +551,25 @@ public:
 private:
     using Handler = std::function<jsi::Value(jsi::Runtime &, const jsi::Value *, size_t)>;
 
+    static jsi::Value runSynchronously(jsi::Runtime &rt, const FabricCall &call,
+                                       const FabricAdapter &adapter, const std::string &label)
+    {
+        if (call.immediate)
+        {
+            if (std::optional<jsi::Value> known = call.immediate(rt))
+            {
+                return std::move(*known);
+            }
+        }
+        if (!call.result && adapter.postsVoidCalls())
+        {
+            postMainOperation(call.operation, label);
+            return jsi::Value::undefined();
+        }
+        executeMainSynchronouslyUnlessMainWaits(call.operation);
+        return call.result ? call.result(rt) : jsi::Value::undefined();
+    }
+
     void add(const char *name, unsigned int argumentCount, Handler handler)
     {
         object_.setProperty(runtime_, name,
@@ -537,26 +595,26 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
 
     fabric.define("mount", 4, [shared](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         auto request = std::make_shared<MountRequest>(mountRequest(rt, shared, args, count));
-        return std::pair<Operation, Result>(
-            [request]() {
-                mount(*request);
-            },
-            [request](jsi::Runtime &completion) {
-                return jsi::Value(jsi::Object::createFromHostObject(completion, request->surface));
-            });
+        return FabricCall{[request]() {
+                              mount(*request);
+                          },
+                          [request](jsi::Runtime &completion) {
+                              return jsi::Value(
+                                  jsi::Object::createFromHostObject(completion, request->surface));
+                          },
+                          nullptr};
     });
     fabric.define("update", 2, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         requireArguments(count, 2, "Updating a React surface requires a handle and properties");
         SurfacePointer surface    = surfaceOf(rt, args[0]);
         nlohmann::json properties = propertiesOf(rt, &args[1]);
-        return std::pair<Operation, Result>(
-            [surface, properties]() {
-                if (surface->active())
-                {
-                    surface->adapter().update(surface->id(), properties);
-                }
-            },
-            undefinedResult);
+        return FabricCall{[surface, properties]() {
+                              if (surface->active())
+                              {
+                                  surface->adapter().update(surface->id(), properties);
+                              }
+                          },
+                          nullptr, nullptr};
     });
     fabric.define("setSize", 3, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         requireArguments(
@@ -565,59 +623,77 @@ jsi::Object makeFabricNamespace(jsi::Runtime &runtime, std::shared_ptr<FabricAda
         SurfacePointer surface = surfaceOf(rt, args[0]);
         NativeSize     minimum = parseSize(rt, args[1]);
         NativeSize     maximum = parseSize(rt, args[2]);
-        return std::pair<Operation, Result>(
-            [surface, minimum, maximum]() {
-                if (surface->active())
-                {
-                    surface->adapter().setSize(surface->id(), minimum, maximum);
-                }
-            },
-            undefinedResult);
+        return FabricCall{[surface, minimum, maximum]() {
+                              if (surface->active())
+                              {
+                                  surface->adapter().setSize(surface->id(), minimum, maximum);
+                              }
+                          },
+                          nullptr, nullptr};
     });
     fabric.define("setFrame", 2, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         requireArguments(count, 2, "Framing a React surface requires a handle and a frame");
         SurfacePointer surface = surfaceOf(rt, args[0]);
         NativeFrame    frame   = parseFrame(rt, args[1]);
-        return std::pair<Operation, Result>(
-            [surface, frame]() {
-                if (surface->active())
-                {
-                    surface->adapter().setFrame(surface->id(), frame);
-                }
-            },
-            undefinedResult);
+        if (surface->adapter().measuresLastSetFrame())
+        {
+            surface->rememberSetFrame(frame);
+        }
+        return FabricCall{[surface, frame]() {
+                              if (!surface->active())
+                              {
+                                  return;
+                              }
+                              try
+                              {
+                                  surface->adapter().setFrame(surface->id(), frame);
+                              }
+                              catch (...)
+                              {
+                                  surface->forgetSetFrame();
+                                  throw;
+                              }
+                          },
+                          nullptr, nullptr};
     });
     fabric.define("measure", 1, [shared](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         FrameRequest request = measureRequest(rt, shared, args, count);
         auto         frame   = std::make_shared<NativeFrame>();
-        return std::pair<Operation, Result>(
-            [shared, request, frame]() {
-                *frame = measure(shared, request);
-            },
-            [frame](jsi::Runtime &completion) {
-                return toJSIValue(completion, toJSON(*frame));
-            });
+        return FabricCall{[shared, request, frame]() {
+                              *frame = measure(shared, request);
+                          },
+                          [frame](jsi::Runtime &completion) {
+                              return toJSIValue(completion, toJSON(*frame));
+                          },
+                          [request](jsi::Runtime &completion) -> std::optional<jsi::Value> {
+                              std::optional<NativeFrame> known =
+                                  request.surface ? request.surface->knownFrame() : std::nullopt;
+                              if (!known)
+                              {
+                                  return std::nullopt;
+                              }
+                              return toJSIValue(completion, toJSON(*known));
+                          }};
     });
     fabric.define("releaseIdle", 0, [](jsi::Runtime &, const jsi::Value *, size_t) {
         AddonSlot   addon  = currentAddon();
         std::string prefix = std::to_string(addon) + ":";
-        return std::pair<Operation, Result>(
-            [addon, prefix]() {
-                if (addon != kNoAddon)
-                {
-                    evictIdleFabricSurfaces(prefix);
-                }
-            },
-            undefinedResult);
+        return FabricCall{[addon, prefix]() {
+                              if (addon != kNoAddon)
+                              {
+                                  evictIdleFabricSurfaces(prefix);
+                              }
+                          },
+                          nullptr, nullptr};
     });
     fabric.define("unmount", 1, [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
         requireArguments(count, 1, "Unmounting a React surface requires a handle");
         SurfacePointer surface = surfaceOf(rt, args[0]);
-        return std::pair<Operation, Result>(
-            [surface]() {
-                unmount(surface);
-            },
-            undefinedResult);
+        surface->forgetSetFrame();
+        return FabricCall{[surface]() {
+                              unmount(surface);
+                          },
+                          nullptr, nullptr};
     });
     return fabric.take();
 }

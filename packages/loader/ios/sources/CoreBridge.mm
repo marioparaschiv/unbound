@@ -238,9 +238,11 @@ static loader::FontOverrideRegistry &UnboundFontOverrides()
 
 + (NSDictionary *)fontOverridePlan
 {
-    nlohmann::json targets =
-        loader::fontOverrideTargets(loader::preferences::fontOverrides(UnboundSettingsStore()),
-                                    UnboundAddonState().fonts(), UnboundPlatformFonts());
+    nlohmann::json targets = loader::lazyFontOverrideTargets(
+        loader::preferences::fontOverrides(UnboundSettingsStore()), UnboundAddonState().fonts(),
+        []() -> const nlohmann::json & {
+            return UnboundPlatformFonts();
+        });
     id converted =
         objectFromJSON(loader::fontOverridePlanJSON(UnboundFontOverrides().plan(targets)));
     return [converted isKindOfClass:[NSDictionary class]] ? converted : @{};

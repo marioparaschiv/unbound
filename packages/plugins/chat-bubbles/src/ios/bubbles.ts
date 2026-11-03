@@ -6,6 +6,7 @@ import type {
 } from '@unbound-app/api/native';
 import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/ios/hook-options';
 import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
+import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/ios/text-attachments';
 import { readRect } from '@unbound-plugins/shared/native/ios/rect';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 import {
@@ -15,8 +16,8 @@ import {
 
 import { messageLayout, type SnapshotNode } from '~/message-layout';
 import { forgetBubbles, installBubbleGuards, rememberBubble } from '~/ios/ui-bubbles';
-import { IOSClass, PLUGIN_NAME } from '~/constants';
-import { bubbleFrame, bubbleProblem, frameDrift } from '~/geometry';
+import { BubbleLayout, CARD_INSET, IOSClass, PLUGIN_NAME } from '~/constants';
+import { bubbleFrame, bubbleProblem, cardFrame, frameDrift } from '~/geometry';
 import type { BubbleColor } from '~/style';
 import { currentAppearance } from '~/theme';
 import { messageOwnership } from '~/author';
@@ -69,7 +70,7 @@ async function textWidth(
 type PendingCell = { cell: NativeObjectHandle; onlyWhenResized: boolean };
 
 /**
- * @description Draws a rounded bubble behind each iOS message, sized to its text and media.
+ * @description Draws a rounded bubble behind each iOS message, sized to its text and media, or in the card layout one card behind its whole content column.
  * @param objc The Objective-C bridge.
  * @returns `refresh`, which repaints the bubbles on screen, and `dispose`, which removes them.
  */
@@ -81,6 +82,7 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 	const failedMeasures = new Map<string, number>();
 	const ownership = new Map<string, boolean>();
 	const problems = new Map<string, string>();
+	const settlingReuse = new Set<string>();
 	const clear = clearColor(objc);
 	let flushing = false;
 	let disposed = false;
@@ -168,12 +170,20 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 
 		if (!layout) return;
 
+		const style = currentAppearance();
+
+		if (style.layout === BubbleLayout.card) {
+			return {
+				frame: cardFrame(layout.column, CARD_INSET),
+				contentWidth: layout.column.width,
+			};
+		}
+
 		const textView = layout.text ? nodes[layout.text.index]?.view : undefined;
 		const text = textView
 			? layout.text!.offset + (await textWidth(objc, textView, layout.body.width))
 			: 0;
 		const contentWidth = Math.max(text, layout.footerRight ?? 0, layout.mediaRight);
-		const style = currentAppearance();
 		const frame = bubbleFrame(
 			layout.body,
 			contentWidth,
@@ -358,8 +368,11 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 				ownership.delete(key);
 				problems.delete(key);
 				pending.delete(key);
+				settlingReuse.add(key);
 
 				setTimeout(() => {
+					settlingReuse.delete(key);
+
 					if (!disposed) schedule(self);
 				}, REUSE_SETTLE_MS);
 			},
@@ -367,18 +380,23 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 	];
 
 	function textChangeHooks() {
-		try {
-			return [
-				objc.hook(
-					IOSClass.attributedText,
-					'setAttributedText:',
-					{ after: ({ self }) => void scheduleOwningCell(self).catch(() => undefined) },
-					LATEST_CALL_PER_RECEIVER,
-				),
-			];
-		} catch {
-			return [];
-		}
+		return MESSAGE_TEXT_VIEW_CLASSES.flatMap((className) => {
+			try {
+				return [
+					objc.hook(
+						className,
+						'setAttributedText:',
+						{
+							after: ({ self }) =>
+								void scheduleOwningCell(self).catch(() => undefined),
+						},
+						LATEST_CALL_PER_RECEIVER,
+					),
+				];
+			} catch {
+				return [];
+			}
+		});
 	}
 
 	async function scheduleOwningCell(view: NativeObjectHandle) {
@@ -391,7 +409,11 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 			stopAtMatch: true,
 		});
 
-		if (cell) schedule(cell as NativeObjectHandle);
+		if (!cell) return;
+
+		const key = viewKey(objc, cell as NativeObjectHandle);
+
+		if (key !== undefined && !settlingReuse.has(key)) schedule(cell as NativeObjectHandle);
 	}
 
 	async function refresh() {
@@ -428,6 +450,7 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 			failedMeasures.clear();
 			ownership.clear();
 			problems.clear();
+			settlingReuse.clear();
 			await Promise.all(
 				[...bubbles.values()].map(({ bubble }) =>
 					objc.invokeAsync(bubble, 'removeFromSuperview', []).catch(() => undefined),

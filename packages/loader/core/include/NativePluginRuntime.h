@@ -13,6 +13,8 @@
 #include <utility>
 #include <vector>
 
+#include "LoaderAddonActivity.h"
+
 namespace loader::native {
 class NativePluginExecutor
 {
@@ -93,6 +95,16 @@ void     onRuntimeGenerationChanged(RuntimeGenerationListener listener);
 bool     isRuntimeThread();
 bool     mainThreadIsWaitingForRuntime();
 
+class MainThreadRuntimeWait
+{
+public:
+    MainThreadRuntimeWait();
+    ~MainThreadRuntimeWait();
+
+    MainThreadRuntimeWait(const MainThreadRuntimeWait &)            = delete;
+    MainThreadRuntimeWait &operator=(const MainThreadRuntimeWait &) = delete;
+};
+
 facebook::jsi::Function makeFunction(facebook::jsi::Runtime &runtime, const char *name,
                                      unsigned int                    argumentCount,
                                      facebook::jsi::HostFunctionType handler);
@@ -107,6 +119,14 @@ facebook::jsi::Object makeError(facebook::jsi::Runtime &runtime, const char *cod
 
 void executeMainSynchronously(std::function<void()>     operation,
                               std::chrono::milliseconds timeout = std::chrono::seconds(1));
+void executeMainSynchronouslyUnlessMainWaits(
+    std::function<void()> operation, std::chrono::milliseconds timeout = std::chrono::seconds(1));
+void        postMainOperation(std::function<void()> operation, std::string description);
+std::string postedMainFailureMessage(AddonSlot addon, const std::string &description,
+                                     const std::string &reason);
+
+inline constexpr const char *kMainWaitsForRuntimeMessage =
+    "Native call cannot synchronously cross to a main thread that is waiting for JavaScript";
 
 facebook::jsi::Value
 executeMainAsynchronously(facebook::jsi::Runtime &runtime, std::function<void()> operation,

@@ -33,6 +33,8 @@ public:
     virtual void        unmount(const std::string &surface)                                  = 0;
     virtual bool        detach(const std::string &surface);
     virtual bool        attach(const std::string &surface, const FabricView &container);
+    virtual bool        postsVoidCalls() const;
+    virtual bool        measuresLastSetFrame() const;
 };
 
 enum class FabricCalls

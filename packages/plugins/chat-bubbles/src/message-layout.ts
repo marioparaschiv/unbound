@@ -1,4 +1,5 @@
 import type { NativeViewSnapshotNode } from '@unbound-app/api/native';
+import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/ios/text-attachments';
 
 import {
 	CONTENT_COLUMN_MINIMUM_WIDTH,
@@ -17,6 +18,7 @@ export type SnapshotNode = Pick<
 
 export type MessageLayout = {
 	body: Box;
+	column: Box;
 	text?: { index: number; offset: number };
 	mediaRight: number;
 	headerBottom?: number;
@@ -32,7 +34,7 @@ function isMedia(node: SnapshotNode): boolean {
 }
 
 function isText(node: SnapshotNode): boolean {
-	return node.className === IOSClass.attributedText && Boolean(node.text);
+	return MESSAGE_TEXT_VIEW_CLASSES.some((name) => name === node.className) && Boolean(node.text);
 }
 
 function childrenOf(nodes: SnapshotNode[], parent: number): number[] {
@@ -137,7 +139,7 @@ function ephemeralFooterRight(nodes: SnapshotNode[], body: number, left: number)
 /**
  * @description Finds a message cell's body, the view its bubble wraps, from a snapshot of the cell.
  * @param nodes The cell's snapshot, the cell first, each frame in its parent's coordinates.
- * @returns The body's frame in the cell, its first text view and how far its media reaches, or `undefined` for rows without an author column.
+ * @returns The body's and the whole content column's frames in the cell, the body's first text view and how far its media reaches, or `undefined` for rows without an author column.
  */
 export function messageLayout(nodes: SnapshotNode[]): MessageLayout | undefined {
 	const avatar = largestAvatar(nodes);
@@ -151,7 +153,8 @@ export function messageLayout(nodes: SnapshotNode[]): MessageLayout | undefined 
 
 	if (body === undefined) return;
 
-	const columnLeft = absolute(nodes, column).x;
+	const columnFrame = absolute(nodes, column);
+	const columnLeft = columnFrame.x;
 	const laidOut = absolute(nodes, body);
 	const frame =
 		laidOut.x > columnLeft
@@ -181,6 +184,7 @@ export function messageLayout(nodes: SnapshotNode[]): MessageLayout | undefined 
 
 	return {
 		body: frame,
+		column: columnFrame,
 		text:
 			text === undefined
 				? undefined

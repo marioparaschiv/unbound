@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <map>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -42,6 +43,13 @@ nlohmann::json fontTargetJSON(const nlohmann::json &customFonts, const nlohmann:
 nlohmann::json fontOverrideTargets(const nlohmann::json &overrides,
                                    const nlohmann::json &customFonts,
                                    const nlohmann::json &systemFonts);
+
+using SystemFontSource = std::function<const nlohmann::json &()>;
+
+nlohmann::json lazyFontOverrideTargets(const nlohmann::json   &overrides,
+                                       const nlohmann::json   &customFonts,
+                                       const SystemFontSource &systemFonts);
+nlohmann::json platformFontNames(std::vector<std::string> names, const nlohmann::json &customFonts);
 nlohmann::json systemFontsFromFiles(const std::vector<std::string> &paths,
                                     const std::string              &source);
 nlohmann::json fontCatalog(const nlohmann::json &customFonts, const nlohmann::json &platformFonts);

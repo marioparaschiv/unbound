@@ -122,8 +122,19 @@ public:
         return reusable;
     }
 
-    bool                     reusable = false;
-    int                      mounted  = 0;
+    bool postsVoidCalls() const override
+    {
+        return knowsFrames;
+    }
+
+    bool measuresLastSetFrame() const override
+    {
+        return knowsFrames;
+    }
+
+    bool                     reusable    = false;
+    bool                     knowsFrames = false;
+    int                      mounted     = 0;
     std::vector<std::string> calls;
 };
 
@@ -200,6 +211,49 @@ static const char *const kReuseChecks = R"JS((function () {
 	fabric.unmount(c);
 	return 'done';
 })())JS";
+
+static const char *const kKnownFrameChecks = R"JS((function () {
+	var failures = [];
+	function check(condition, message) {
+		if (!condition) failures.push(message);
+	}
+	var surface = fabric.mount('container', 'Card', {});
+	var measured = fabric.measure(surface);
+	check(measured.x === 5 && measured.height === 8, 'a surface with no set frame is measured');
+	check(fabric.setFrame(surface, { x: 1, y: 2, width: 3, height: 4 }) === undefined, 'setFrame returns nothing');
+	var known = fabric.measure(surface);
+	check(known.x === 1 && known.y === 2 && known.width === 3 && known.height === 4, 'measure serves the last set frame');
+	check(fabric.update(surface, { revision: 2 }) === undefined, 'update returns nothing');
+	fabric.unmount(surface);
+	var gone = fabric.measure(surface);
+	check(gone.x === 0 && gone.width === 0, 'an unmounted surface measures empty');
+	return JSON.stringify(failures);
+})())JS";
+
+static void servesKnownFrames(jsi::Runtime &runtime, RecordingAdapter &adapter)
+{
+    adapter.knowsFrames = true;
+    adapter.calls.clear();
+    jsi::Value result = runtime.evaluateJavaScript(
+        std::make_shared<jsi::StringBuffer>(kKnownFrameChecks), "native-fabric-known-frames.js");
+    nlohmann::json failures = nlohmann::json::parse(result.getString(runtime).utf8(runtime));
+    for (const auto &failure : failures)
+    {
+        std::fprintf(stderr, "%s\n", failure.get<std::string>().c_str());
+    }
+    require(failures.empty(), "every known frame check passes");
+
+    size_t measured = 0;
+    for (const std::string &call : adapter.calls)
+    {
+        measured += call.rfind("measureSurface ", 0) == 0 ? 1 : 0;
+    }
+    require(measured == 1, "a known frame is served without measuring on main");
+    require(adapter.calls.size() == 5,
+            "mount, measure, setFrame, update and unmount reach the adapter");
+    require(adapter.calls.back().rfind("unmount ", 0) == 0, "the surface is unmounted last");
+    adapter.knowsFrames = false;
+}
 
 static void reusesIdleSurfaces(jsi::Runtime &runtime, RecordingAdapter &adapter)
 {
@@ -290,6 +344,10 @@ int main()
 
     reusesIdleSurfaces(*runtime, *adapter);
     require(loader::native::mountedFabricSurfaces() == 1, "reuse leaves only the kept surface");
+
+    servesKnownFrames(*runtime, *adapter);
+    require(loader::native::mountedFabricSurfaces() == 1,
+            "known frames leave only the kept surface");
 
     auto replacement = facebook::hermes::makeHermesRuntime();
     loader::native::registerRuntime(*replacement);

@@ -39,6 +39,7 @@ describe('message layout', () => {
 	test('finds the body beside the avatar column, its text and its media', () => {
 		expect(messageLayout(cell)).toEqual({
 			body: { x: 68, y: 38, width: 291, height: 50 },
+			column: { x: 68, y: 16, width: 291, height: 72 },
 			text: { index: 12, offset: 0 },
 			mediaRight: 180,
 			headerBottom: 38,
@@ -53,12 +54,32 @@ describe('message layout', () => {
 		expect(messageLayout(forwarded)?.body).toEqual({ x: 68, y: 38, width: 291, height: 50 });
 	});
 
+	test('reads the text of builds that draw message text with YYText labels', () => {
+		const yytext = cell.map((entry, index) =>
+			index === 12 ? node(10, 'DCDReusableYYLabel', [0, 0, 291, 22], 'lol') : entry,
+		);
+		const textOnly = yytext.filter((_, index) => index !== 13);
+
+		expect(messageLayout(yytext)?.text).toEqual({ index: 12, offset: 0 });
+		expect(messageLayout(textOnly)?.body).toEqual({ x: 68, y: 38, width: 291, height: 50 });
+	});
+
 	test('skips an empty last child and hidden content', () => {
 		const hidden = cell.map((entry, index) =>
 			index === 13 ? { ...entry, visible: false } : entry,
 		);
 
 		expect(messageLayout(hidden)?.mediaRight).toBe(0);
+	});
+
+	test('gives the whole content column, header and reactions included, for the card layout', () => {
+		const reacted = [
+			...cell,
+			node(4, 'UIView', [0, 72, 291, 30]),
+			node(14, 'DCDReactionListView', [0, 0, 120, 30]),
+		].map((entry, index) => (index === 4 ? node(2, 'UIView', [68, 0, 291, 102]) : entry));
+
+		expect(messageLayout(reacted)?.column).toEqual({ x: 68, y: 16, width: 291, height: 102 });
 	});
 
 	test('wraps the message, not the reactions below it', () => {

@@ -18,19 +18,23 @@ export type Edges = {
 };
 
 /**
- * @description Says what is visibly wrong with a bubble: one that wraps nothing, reaches the screen's left edge past the avatar column, or runs past its row.
+ * @description Says what is visibly wrong with a bubble: one that wraps nothing, reaches the screen's left edge or over the avatar column, or runs past its row.
  * @param bubble The bubble's frame in its row.
  * @param rowWidth The row's width.
  * @param contentWidth How wide the content the bubble wraps is.
+ * @param leftLimit The furthest left the bubble may start, right of the avatar column, or `undefined` when unknown.
  * @returns The problem, or `undefined` for a bubble that fits its content.
  */
 export function bubbleProblem(
 	bubble: Box,
 	rowWidth: number,
 	contentWidth: number,
+	leftLimit?: number,
 ): string | undefined {
 	if (contentWidth <= 0 || bubble.width <= 0 || bubble.height <= 0) return 'wraps no content';
 	if (bubble.x <= 0) return 'reaches the left edge of the screen';
+	if (leftLimit !== undefined && bubble.x < leftLimit - 1)
+		return 'reaches over the avatar column';
 	if (rowWidth > 0 && bubble.x + bubble.width > rowWidth + 1) return 'runs past its row';
 }
 
@@ -80,10 +84,41 @@ export function bubbleFrame(
 }
 
 /**
- * @description Unions edge rectangles.
- * @param boxes The rectangles.
- * @returns Their bounding rectangle, or `undefined` when there are none.
+ * @description Draws one card behind a message's whole content column, the way Rosiecord's Flowercord does: as tall as the column and reaching `inset` past both of its sides.
+ * @param column The content column's frame, right of the avatar.
+ * @param inset How far the card reaches past the column's sides.
+ * @returns The card's frame.
  */
+export function cardFrame(column: Box, inset: number): Box {
+	return {
+		x: column.x - inset,
+		y: column.y,
+		width: column.width + inset * 2,
+		height: column.height,
+	};
+}
+
+/**
+ * @description Finds where a row's content column ends: at the right edge of its width-filling children when it has any, which also teaches the gap left to the edge for that column width, otherwise at the width minus the gap learned earlier.
+ * @param fillingRights The right edges of the children that fill the column's width.
+ * @param width The column's width.
+ * @param gutter The gap to the edge already learned for this width, if any.
+ * @returns The column end, when it can be told, and the gap to remember for this width.
+ */
+export function columnEndFrom(
+	fillingRights: number[],
+	width: number,
+	gutter: number | undefined,
+): { end: number | undefined; gutter: number | undefined } {
+	if (fillingRights.length) {
+		const end = Math.max(...fillingRights);
+
+		return { end, gutter: width - end };
+	}
+
+	return { end: gutter === undefined ? undefined : width - gutter, gutter };
+}
+
 /**
  * @description Whether a row's content left edge has been laid out: an unread or zero edge means the row has not been measured yet, since message content always sits right of the avatar gutter.
  * @param left The content's left edge, if it could be read.
@@ -94,14 +129,20 @@ export function isLaidOut(left: number | undefined): left is number {
 }
 
 /**
- * @description Picks the left edge every bubble aligns to from the rows measured recently, so one stale reading ages out instead of dragging every bubble with it.
- * @param lefts The recently measured content lefts.
- * @returns The smallest laid-out left, or infinity before any row is measured.
+ * @description Picks where a row's bubble starts from that row alone: its content column when it is laid out, so an indented body still lines up with the text above it, otherwise the content's own left edge.
+ * @param contentLeft Where the row's content starts.
+ * @param columnLeft Where the row's content column starts, right of the avatar, if it could be read.
+ * @returns The left edge the bubble wraps from.
  */
-export function sharedContentStart(lefts: number[]): number {
-	return Math.min(Number.POSITIVE_INFINITY, ...lefts.filter((left) => isLaidOut(left)));
+export function rowContentStart(contentLeft: number, columnLeft: number | undefined): number {
+	return isLaidOut(columnLeft) ? Math.min(contentLeft, columnLeft) : contentLeft;
 }
 
+/**
+ * @description Unions edge rectangles.
+ * @param boxes The rectangles.
+ * @returns Their bounding rectangle, or `undefined` when there are none.
+ */
 export function union(boxes: Edges[]): Edges | undefined {
 	if (!boxes.length) return;
 
@@ -129,4 +170,14 @@ export function rowInsets(bubble: Box, width: number, height: number): Edges {
 	};
 }
 
-export default { bubbleFrame, bubbleProblem, frameDrift, rowInsets, union };
+export default {
+	bubbleFrame,
+	bubbleProblem,
+	cardFrame,
+	columnEndFrom,
+	frameDrift,
+	isLaidOut,
+	rowContentStart,
+	rowInsets,
+	union,
+};

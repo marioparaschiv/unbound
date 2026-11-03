@@ -2,10 +2,14 @@
 
 #include <dlfcn.h>
 #include <elf.h>
-#include <fstream>
-#include <iterator>
+#include <fcntl.h>
 #include <nlohmann/json.hpp>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "JniEnvironment.h"
 #include "LoaderAttestation.h"
@@ -23,24 +27,74 @@ static constexpr int32_t kLoadedMachine = EM_AARCH64;
 static constexpr int32_t kLoadedMachine = EM_X86_64;
 #endif
 
-static std::optional<std::string> loadedLibrary()
+class MappedFile
+{
+public:
+    explicit MappedFile(const char *path)
+    {
+        const int descriptor = open(path, O_RDONLY | O_CLOEXEC);
+        if (descriptor < 0)
+        {
+            return;
+        }
+        struct stat status{};
+        if (fstat(descriptor, &status) == 0 && status.st_size > 0)
+        {
+            void *mapped = mmap(nullptr, static_cast<size_t>(status.st_size), PROT_READ,
+                                MAP_PRIVATE, descriptor, 0);
+            if (mapped != MAP_FAILED)
+            {
+                data_ = mapped;
+                size_ = static_cast<size_t>(status.st_size);
+            }
+        }
+        close(descriptor);
+    }
+
+    MappedFile(const MappedFile &)            = delete;
+    MappedFile &operator=(const MappedFile &) = delete;
+
+    ~MappedFile()
+    {
+        if (data_)
+        {
+            munmap(data_, size_);
+        }
+    }
+
+    std::optional<std::string_view> contents() const
+    {
+        if (!data_)
+        {
+            return std::nullopt;
+        }
+        return std::string_view(static_cast<const char *>(data_), size_);
+    }
+
+private:
+    void  *data_ = nullptr;
+    size_t size_ = 0;
+};
+
+static std::optional<std::string> loadedLibraryPath()
 {
     Dl_info info{};
     if (!dladdr(reinterpret_cast<const void *>(&nativeAttestation), &info) || !info.dli_fname)
     {
         return std::nullopt;
     }
-    std::ifstream file(info.dli_fname, std::ios::binary);
-    if (!file)
-    {
-        return std::nullopt;
-    }
-    return std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+    return std::string(info.dli_fname);
 }
 
 static nlohmann::json evaluation()
 {
-    const std::optional<std::string> library = loadedLibrary();
+    const std::optional<std::string> path = loadedLibraryPath();
+    if (!path)
+    {
+        return {{"failure", "unable to read the loaded library"}};
+    }
+    const MappedFile                      file(path->c_str());
+    const std::optional<std::string_view> library = file.contents();
     if (!library)
     {
         return {{"failure", "unable to read the loaded library"}};

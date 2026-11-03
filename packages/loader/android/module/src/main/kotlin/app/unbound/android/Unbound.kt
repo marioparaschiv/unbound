@@ -40,6 +40,7 @@ class Unbound : XposedModule() {
             .onFailure { Logger.error(LogCategory.RUNTIME, "Failed to set up React surfaces", it) }
         System.load(nativeLibraryPath(moduleInfo, appInfo))
         Logger.nativeReady = true
+        Attestation.start()
 
         val documents = NativeBridge.nativeDocumentsDirectory(File(appInfo.dataDir, "files").absolutePath)
         NativeBridge.documents = documents

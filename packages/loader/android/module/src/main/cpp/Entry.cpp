@@ -126,6 +126,18 @@ static void nativeDrainRuntimeWork(JNIEnv *, jclass, jlong runtimePointer)
     loader->drainRuntimeWork(*runtime);
 }
 
+static jboolean nativeInstallSchedulerDrain(JNIEnv *, jclass, jlong runtimePointer)
+{
+    auto loader = currentLoader();
+    if (!loader || runtimePointer == 0)
+    {
+        return JNI_FALSE;
+    }
+
+    auto *runtime = reinterpret_cast<facebook::jsi::Runtime *>(runtimePointer);
+    return loader->installSchedulerDrain(*runtime) ? JNI_TRUE : JNI_FALSE;
+}
+
 static void nativeDispatchHookEvent(JNIEnv *env, jclass, jstring token, jstring payload)
 {
     if (!token || !payload)
@@ -394,9 +406,10 @@ static jint nativeDevelopmentBuildBannerSeconds(JNIEnv *, jclass)
 static bool cacheCallbacks(JNIEnv *env, jclass bridge)
 {
     gCallbacks.bridgeClass     = static_cast<jclass>(env->NewGlobalRef(bridge));
-    gCallbacks.scheduleRuntime = env->GetStaticMethodID(bridge, "scheduleRuntimeWork", "()V");
+    gCallbacks.scheduleRuntime = env->GetStaticMethodID(bridge, "scheduleRuntimeWork", "(Z)V");
     gCallbacks.scheduleMain    = env->GetStaticMethodID(bridge, "scheduleMainWork", "()V");
     gCallbacks.isMainThread    = env->GetStaticMethodID(bridge, "isMainThread", "()Z");
+    gCallbacks.isVerifiedBuild = env->GetStaticMethodID(bridge, "isVerifiedBuild", "()Z");
     gCallbacks.javaGetClass =
         env->GetStaticMethodID(bridge, "javaGetClass", "(Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaClassName =
@@ -478,19 +491,19 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.onBundleExecuted = env->GetStaticMethodID(bridge, "onBundleExecuted", "()V");
 
     return !clearPendingException(env) && gCallbacks.scheduleRuntime && gCallbacks.scheduleMain &&
-           gCallbacks.isMainThread && gCallbacks.javaGetClass && gCallbacks.javaClassName &&
-           gCallbacks.javaDescribe && gCallbacks.javaConstruct && gCallbacks.javaRespondsTo &&
-           gCallbacks.javaInvoke && gCallbacks.javaPrepare && gCallbacks.javaInvokePrepared &&
-           gCallbacks.javaDisposePlan && gCallbacks.javaGetField && gCallbacks.javaSetField &&
-           gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
-           gCallbacks.runtimeReplaced && gCallbacks.javaBatch && gCallbacks.javaFindViews &&
-           gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
-           gCallbacks.javaSetAssociatedObject && gCallbacks.fabricMount &&
-           gCallbacks.fabricUpdate && gCallbacks.fabricUnmount && gCallbacks.fabricSetSize &&
-           gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure && gCallbacks.fetchText &&
-           gCallbacks.download && gCallbacks.devServerHost && gCallbacks.isServing &&
-           gCallbacks.availableFonts && gCallbacks.appFonts && gCallbacks.appFontBytes &&
-           gCallbacks.alert && gCallbacks.onBundleExecuted;
+           gCallbacks.isMainThread && gCallbacks.isVerifiedBuild && gCallbacks.javaGetClass &&
+           gCallbacks.javaClassName && gCallbacks.javaDescribe && gCallbacks.javaConstruct &&
+           gCallbacks.javaRespondsTo && gCallbacks.javaInvoke && gCallbacks.javaPrepare &&
+           gCallbacks.javaInvokePrepared && gCallbacks.javaDisposePlan && gCallbacks.javaGetField &&
+           gCallbacks.javaSetField && gCallbacks.javaRelease && gCallbacks.hooksInstall &&
+           gCallbacks.hooksRemove && gCallbacks.runtimeReplaced && gCallbacks.javaBatch &&
+           gCallbacks.javaFindViews && gCallbacks.javaCreateAssociationKey &&
+           gCallbacks.javaGetAssociatedObject && gCallbacks.javaSetAssociatedObject &&
+           gCallbacks.fabricMount && gCallbacks.fabricUpdate && gCallbacks.fabricUnmount &&
+           gCallbacks.fabricSetSize && gCallbacks.fabricSetFrame && gCallbacks.fabricMeasure &&
+           gCallbacks.fetchText && gCallbacks.download && gCallbacks.devServerHost &&
+           gCallbacks.isServing && gCallbacks.availableFonts && gCallbacks.appFonts &&
+           gCallbacks.appFontBytes && gCallbacks.alert && gCallbacks.onBundleExecuted;
 }
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
@@ -518,6 +531,8 @@ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *)
         {"nativeOnLoadJSBundle", "()V", reinterpret_cast<void *>(nativeOnLoadJSBundle)},
         {"nativeOnRuntimeCreated", "(J)Z", reinterpret_cast<void *>(nativeOnRuntimeCreated)},
         {"nativeDrainRuntimeWork", "(J)V", reinterpret_cast<void *>(nativeDrainRuntimeWork)},
+        {"nativeInstallSchedulerDrain", "(J)Z",
+         reinterpret_cast<void *>(nativeInstallSchedulerDrain)},
         {"nativeDrainMainWork", "()V", reinterpret_cast<void *>(nativeDrainMainWork)},
         {"nativeDispatchHookEvent", "(Ljava/lang/String;Ljava/lang/String;)V",
          reinterpret_cast<void *>(nativeDispatchHookEvent)},

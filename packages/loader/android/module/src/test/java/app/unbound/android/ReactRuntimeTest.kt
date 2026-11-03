@@ -1,6 +1,9 @@
 package app.unbound.android
 
+import com.facebook.react.bridge.NativeArray
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,6 +42,76 @@ class ReactRuntimeTest {
         fun getJavaScriptContext(): Long = 42L
 
         fun getReactQueueConfiguration(): QueueConfiguration = configuration
+    }
+
+    class SchedulingReactInstance(private val configuration: QueueConfiguration, private val failing: Boolean = false) {
+        val calls = ArrayList<Triple<String, String, NativeArray>>()
+
+        fun getJavaScriptContext(): Long = 7L
+
+        fun getReactQueueConfiguration(): QueueConfiguration = configuration
+
+        fun callFunctionOnModule(moduleName: String, methodName: String, args: NativeArray) {
+            check(!failing) { "the instance was destroyed" }
+            calls.add(Triple(moduleName, methodName, args))
+        }
+    }
+
+    @Test
+    fun drainsUseTheRuntimeSchedulerOnlyAfterTheRouteIsEnabledForThatRuntime() {
+        val queue = SlowQueueThread(delayMillis = 0)
+        val instance = SchedulingReactInstance(QueueConfiguration(queue))
+        ReactRuntime.attach(instance)
+
+        assertFalse(ReactRuntime.postThroughScheduler())
+        assertFalse(ReactRuntime.enableSchedulerRoute(8L))
+        assertTrue(instance.calls.isEmpty())
+
+        assertTrue(ReactRuntime.enableSchedulerRoute(7L))
+        assertTrue(ReactRuntime.postThroughScheduler())
+
+        assertEquals(2, instance.calls.size)
+        instance.calls.forEach {
+            assertEquals(ReactRuntime.NATIVE_WORK_MODULE, it.first)
+            assertEquals(ReactRuntime.NATIVE_WORK_METHOD, it.second)
+        }
+        assertNotSame("each call needs its own arguments array", instance.calls[0].third, instance.calls[1].third)
+        queue.shutdown()
+    }
+
+    @Test
+    fun attachingANewInstanceFallsBackToTheJsQueueUntilItsRouteIsEnabled() {
+        val queue = SlowQueueThread(delayMillis = 0)
+        val first = SchedulingReactInstance(QueueConfiguration(queue))
+        ReactRuntime.attach(first)
+        assertTrue(ReactRuntime.enableSchedulerRoute(7L))
+
+        val second = SchedulingReactInstance(QueueConfiguration(queue))
+        ReactRuntime.attach(second)
+
+        assertFalse(ReactRuntime.postThroughScheduler())
+        assertTrue(second.calls.isEmpty())
+        queue.shutdown()
+    }
+
+    @Test
+    fun anInstanceWithoutCallFunctionOnModuleKeepsTheJsQueue() {
+        val queue = SlowQueueThread(delayMillis = 0)
+        ReactRuntime.attach(FakeReactInstance(QueueConfiguration(queue)))
+
+        assertFalse(ReactRuntime.enableSchedulerRoute(42L))
+        assertFalse(ReactRuntime.postThroughScheduler())
+        queue.shutdown()
+    }
+
+    @Test
+    fun aFailedSchedulerCallDisablesTheRoute() {
+        val queue = SlowQueueThread(delayMillis = 0)
+        ReactRuntime.attach(SchedulingReactInstance(QueueConfiguration(queue), failing = true))
+
+        assertFalse(ReactRuntime.enableSchedulerRoute(7L))
+        assertFalse(ReactRuntime.postThroughScheduler())
+        queue.shutdown()
     }
 
     @Test

@@ -30,9 +30,11 @@ static std::atomic<NativeErrorDelivery> gErrorDelivery{NativeErrorDelivery::Enve
 #else
 static std::atomic<NativeErrorDelivery> gErrorDelivery{NativeErrorDelivery::Throw};
 #endif
-static std::atomic_uint64_t gNextInvocation{1};
-static std::atomic_uint     gMainThreadRuntimeWaits{0};
-static RuntimeStallGate     gMainThreadRuntimeStall;
+static std::atomic_uint64_t    gNextInvocation{1};
+static std::atomic_uint        gMainThreadRuntimeWaits{0};
+static RuntimeStallGate        gMainThreadRuntimeStall;
+static std::mutex              gCrossingMutex;
+static std::condition_variable gCrossingChanged;
 
 NativeCodedError::NativeCodedError(std::string code, const std::string &message)
     : std::runtime_error(message), code_(std::move(code))
@@ -359,7 +361,34 @@ jsi::Function makeFunction(jsi::Runtime &runtime, const char *name, unsigned int
     return wrap->call(runtime, std::move(native)).asObject(runtime).asFunction(runtime);
 }
 
-void executeMainSynchronously(std::function<void()> operation, std::chrono::milliseconds timeout)
+struct MainCrossing {
+    bool                finished = false;
+    std::exception_ptr  failure;
+    NativeOperationGate gate;
+};
+
+MainThreadRuntimeWait::MainThreadRuntimeWait()
+{
+    {
+        std::lock_guard<std::mutex> lock(gCrossingMutex);
+        gMainThreadRuntimeWaits.fetch_add(1);
+    }
+    gCrossingChanged.notify_all();
+}
+
+MainThreadRuntimeWait::~MainThreadRuntimeWait()
+{
+    std::lock_guard<std::mutex> lock(gCrossingMutex);
+    gMainThreadRuntimeWaits.fetch_sub(1);
+}
+
+[[noreturn]] static void refuseCrossingWhileMainWaits()
+{
+    throw NativeCodedError("NATIVE_WRONG_THREAD", kMainWaitsForRuntimeMessage);
+}
+
+static void crossToMain(std::function<void()> operation, std::chrono::milliseconds timeout,
+                        bool refuseWhileMainWaits)
 {
     auto target = executor();
     if (!target)
@@ -373,18 +402,16 @@ void executeMainSynchronously(std::function<void()> operation, std::chrono::mill
         return;
     }
 
-    struct State {
-        std::mutex              mutex;
-        std::condition_variable done;
-        bool                    finished = false;
-        std::exception_ptr      failure;
-        NativeOperationGate     gate;
-    };
+    if (refuseWhileMainWaits && mainThreadIsWaitingForRuntime())
+    {
+        refuseCrossingWhileMainWaits();
+    }
 
-    auto      state = std::make_shared<State>();
-    AddonSlot addon = currentAddon();
-    target->runOnMain([state, operation = std::move(operation), addon]() {
-        if (!state->gate.start())
+    auto      crossing = std::make_shared<MainCrossing>();
+    AddonSlot addon    = currentAddon();
+    auto      deadline = std::chrono::steady_clock::now() + timeout;
+    target->runOnMain([crossing, operation = std::move(operation), addon]() {
+        if (!crossing->gate.start())
         {
             return;
         }
@@ -395,33 +422,94 @@ void executeMainSynchronously(std::function<void()> operation, std::chrono::mill
         }
         catch (...)
         {
-            state->failure = std::current_exception();
+            crossing->failure = std::current_exception();
         }
-        state->gate.finish();
-        std::lock_guard<std::mutex> lock(state->mutex);
-        state->finished = true;
-        state->done.notify_all();
+        crossing->gate.finish();
+        {
+            std::lock_guard<std::mutex> lock(gCrossingMutex);
+            crossing->finished = true;
+        }
+        gCrossingChanged.notify_all();
     });
 
-    std::unique_lock<std::mutex> lock(state->mutex);
-    if (!state->done.wait_for(lock, timeout, [&] {
-            return state->finished;
-        }))
+    std::unique_lock<std::mutex> lock(gCrossingMutex);
+    bool                         pastDeadline = false;
+    while (!crossing->finished)
     {
-        if (state->gate.expire())
+        if (refuseWhileMainWaits && mainThreadIsWaitingForRuntime() && crossing->gate.expire())
         {
-            throw NativeCodedError("NATIVE_MAIN_THREAD_TIMEOUT",
-                                   "Native operation timed out before reaching the main thread");
+            refuseCrossingWhileMainWaits();
         }
-        state->done.wait(lock, [&] {
-            return state->finished;
-        });
+        if (pastDeadline)
+        {
+            gCrossingChanged.wait(lock);
+            continue;
+        }
+        if (gCrossingChanged.wait_until(lock, deadline) == std::cv_status::timeout)
+        {
+            pastDeadline = true;
+            if (!crossing->finished && crossing->gate.expire())
+            {
+                throw NativeCodedError(
+                    "NATIVE_MAIN_THREAD_TIMEOUT",
+                    "Native operation timed out before reaching the main thread");
+            }
+        }
     }
 
-    if (state->failure)
+    if (crossing->failure)
     {
-        std::rethrow_exception(state->failure);
+        std::rethrow_exception(crossing->failure);
     }
+}
+
+void executeMainSynchronously(std::function<void()> operation, std::chrono::milliseconds timeout)
+{
+    crossToMain(std::move(operation), timeout, false);
+}
+
+void executeMainSynchronouslyUnlessMainWaits(std::function<void()>     operation,
+                                             std::chrono::milliseconds timeout)
+{
+    crossToMain(std::move(operation), timeout, true);
+}
+
+std::string postedMainFailureMessage(AddonSlot addon, const std::string &description,
+                                     const std::string &reason)
+{
+    return "Posted native call " + description + " failed in " + threading::addonName(addon) +
+           ": " + reason;
+}
+
+void postMainOperation(std::function<void()> operation, std::string description)
+{
+    auto target = executor();
+    if (!target)
+    {
+        throw NativeCodedError("NATIVE_PLUGIN_UNAVAILABLE", "Native executor is unavailable");
+    }
+
+    if (target->isMainThread())
+    {
+        operation();
+        return;
+    }
+
+    AddonSlot addon = currentAddon();
+    target->runOnMain(
+        [operation = std::move(operation), description = std::move(description), addon]() {
+            AddonScope scope(addon);
+            try
+            {
+                operation();
+            }
+            catch (...)
+            {
+                NativeFailure failure = describeFailure(std::current_exception());
+                log(LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                    postedMainFailureMessage(addon, description, failure.message));
+            }
+        });
 }
 
 static void rejectPending(jsi::Runtime &runtime, const std::string &identifier, const char *code,
@@ -752,17 +840,17 @@ bool executeRuntimeSynchronously(std::function<void(jsi::Runtime &)> callback,
         state->done.notify_all();
     });
 
-    if (mainThread)
+    bool signaled = false;
     {
-        gMainThreadRuntimeWaits.fetch_add(1);
-    }
-    std::unique_lock<std::mutex> lock(state->mutex);
-    bool                         signaled = state->done.wait_for(lock, timeout, [&] {
-        return state->signaled;
-    });
-    if (mainThread)
-    {
-        gMainThreadRuntimeWaits.fetch_sub(1);
+        std::optional<MainThreadRuntimeWait> waiting;
+        if (mainThread)
+        {
+            waiting.emplace();
+        }
+        std::unique_lock<std::mutex> lock(state->mutex);
+        signaled = state->done.wait_for(lock, timeout, [&] {
+            return state->signaled;
+        });
     }
     if (!signaled)
     {

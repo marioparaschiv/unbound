@@ -2714,7 +2714,7 @@ export type NativeObjCBridge = {
 		selector: string,
 		...args: unknown[]
 	): NativeObjCResult;
-	/** Sends a selector on the thread `options.thread` names; `main` blocks, so prefer `invokeAsync` for UI work. */
+	/** Sends a selector on the thread `options.thread` names; `main` blocks, `main-post` queues `void` methods, so prefer `invokeAsync` or `main-post` for UI work. */
 	invoke(
 		handle: NativeObjectHandle,
 		selector: string,
@@ -3063,8 +3063,11 @@ export type NativeStructField = number | boolean | NativeHandle | NativeStructFi
 export type NativeStructFields = {
 	[field: string]: NativeStructField;
 };
-/** Where a native call runs: `current` is the calling thread; `main` blocks until the main thread runs it. */
-export type NativeThreadPolicy = 'current' | 'main';
+/**
+ * Where a native call runs: `current` is the calling thread; `main` blocks until the main thread runs it;
+ * `main-post` queues a `void` method on main and logs its failure, and blocks like `main` otherwise.
+ */
+export type NativeThreadPolicy = 'current' | 'main' | 'main-post';
 /** A value a worklet can take from the JS runtime: a serializable value, a UI scope, which is shared as is, or a callback into the JS thread. */
 export type NativeUIArgument = NativeSerializable | NativeUIScope | NativeUICallback;
 /** Runs plugin worklets on the UI runtime, where native views live, so hooks there act before the next frame. */
