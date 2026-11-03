@@ -1,5 +1,5 @@
 import { installAddonGlobals } from '@unbound-app/api/testing';
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, mock, spyOn, test } from 'bun:test';
 import type { LanguageRegistration } from 'shiki';
 
 const scope = installAddonGlobals({
@@ -87,6 +87,20 @@ describe('createHighlighter', () => {
 		const colors = new Set(tokens?.[0].map((token) => token.color));
 
 		expect(colors.size).toBeGreaterThan(1);
+	});
+
+	test('keeps no result that the tokenize time limit cut short', async () => {
+		const highlighter = createHighlighter();
+		const block = { code: 'const answer = 42;', language: 'typescript' };
+		let now = Date.now();
+		const slowClock = spyOn(Date, 'now').mockImplementation(() => (now += 1_000));
+		const cutShort = await highlighter
+			.tokenize(block, 'dark-plus', 'secondary')
+			.finally(() => slowClock.mockRestore());
+		const tokens = await highlighter.tokenize(block, 'dark-plus', 'secondary');
+
+		expect(cutShort?.[0]).toHaveLength(1);
+		expect(new Set(tokens?.[0].map((token) => token.color)).size).toBeGreaterThan(1);
 	});
 
 	test('gives up once its retries run out, so the next block tries again', async () => {
