@@ -124,13 +124,13 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 				$$MINIMUM_DISCORD_IOS$$: MINIMUM_DISCORD_VERSIONS.ios,
 				$$DEV_TOOLS$$: devTools ? 'true' : 'false',
 			}),
-			// Only strips TS and JSX, and lowers class fields so parameter properties stay assigned before
-			// field initializers. `downlevel` lowers the rest once per chunk, sharing each helper.
+			// Only strips TS and JSX; class fields stay native, which Hermes runs. `downlevel` lowers the rest
+			// once per chunk, sharing each helper.
 			swc({
 				tsconfig: false,
 				swcrc: false,
 				exclude: /node_modules/,
-				jsc: { target: 'es2021' },
+				jsc: { target: 'es2022' },
 				sourceMaps: !IS_DEV_BUILD,
 			}),
 			downlevel(root),
