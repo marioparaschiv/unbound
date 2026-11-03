@@ -7,6 +7,7 @@ import ShareDestinationSheet, { type ShareDestination } from '~/ui/share/share-d
 import { findByPropsLazy, findStoreLazy } from '~/metro/wrappers';
 import { getInstalledVersion } from '~/marketplace/install';
 import { navigationReady } from '~/core/navigation-ready';
+import { createPatcher } from '~/patcher/create-patcher';
 import { ActionSheets, Linking } from '~/metro/api';
 import MarketplaceStore from '~/marketplace/state';
 import { getNativeModule } from '~/native/runtime';
@@ -43,7 +44,11 @@ type GuildRecord = {
 	name: string;
 };
 
+/** The part of Discord's link click options a patch reads. */
+type LinkClick = { href?: string };
+
 const Logger = createLogger('Links');
+const Patcher = createPatcher('unbound::links');
 const DeepLinkManager: DeepLinkManagerType | undefined = getNativeModule('DeepLinkManager');
 const ShareLogger = createLogger('Share');
 const SHEET_KEY = 'unbound-share-destinations';
@@ -62,6 +67,8 @@ const PrivateChannelSortStore = findStoreLazy('PrivateChannelSort');
 const FrecencyStore = findStoreLazy('Frecency');
 const PermissionStore = findStoreLazy('Permission');
 const UserStore = findStoreLazy('User');
+// Discord's one entry for tapped links (messages, embeds, buttons): it shows the leaving-Discord prompt, then opens the URL.
+const LinkClicks = findByPropsLazy('handleClick', 'isLinkTrusted');
 
 let subscription: LinkSubscription | undefined;
 let handling = false;
@@ -361,9 +368,20 @@ function onLaunchURL(url: string | null) {
 	}
 }
 
-/** Hands Unbound links to the Marketplace and shared files to a destination picker: the launch URL once per process, then every link opened while running. */
+/** Hands Unbound links to the Marketplace and shared files to a destination picker: the launch URL once per process, every link opened while running, and install links tapped in Discord. */
 export function start() {
 	subscription = Linking.addEventListener('url', onURL);
+	// An install link tapped inside Discord installs in place, before any prompt or browser.
+	Patcher.instead(LinkClicks, 'handleClick', ({ args, original, this: self }) => {
+		const [options] = args as [LinkClick | undefined];
+		const link = options?.href ? parseUnboundLink(options.href) : undefined;
+
+		if (!link) {
+			return original.apply(self, args);
+		}
+
+		void receive(link);
+	});
 	readLaunchURL()
 		.then(onLaunchURL)
 		.catch((error: Error) => Logger.error('Failed to read the launch URL:', error));
@@ -373,6 +391,7 @@ export function start() {
 export function stop() {
 	subscription?.remove();
 	subscription = undefined;
+	Patcher.unpatchAll();
 }
 
 export default { start, stop };

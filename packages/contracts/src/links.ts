@@ -6,6 +6,25 @@ export const UNBOUND_SCHEME = 'unbound';
 const DISCORD_RELAY_PREFIX = 'com.hammerandchisel.discord://unbound/';
 const LINK_PREFIXES = [`${UNBOUND_SCHEME}://`, DISCORD_RELAY_PREFIX];
 
+/** The site's install page, `https://unbound.rip/install/<id>`; Discord buttons can only link to http(s). */
+export const INSTALL_PAGE_PREFIX = 'https://unbound.rip/install/';
+
+function parseInstallPage(url: string): UnboundLink | undefined {
+	const segment = url.slice(INSTALL_PAGE_PREFIX.length).split(/[/?#]/)[0] ?? '';
+	let decoded: string;
+
+	try {
+		decoded = decodeURIComponent(segment);
+	} catch {
+		// A malformed escape is not an addon id.
+		return undefined;
+	}
+
+	const id = addonIdSchema.safeParse(decoded);
+
+	return id.success ? { action: 'install', id: id.data } : undefined;
+}
+
 /** Something a page asks the client to do. */
 export type UnboundLink = { action: 'install'; id: string };
 
@@ -42,11 +61,16 @@ export function createUnboundLink(link: UnboundLink): string {
 
 /**
  * @description Parses an incoming URL into a link. Reads the string by hand, since Hermes' URL lacks `searchParams`.
- * @param url Any URL the app received, Discord's own included. Unknown query parameters are ignored.
+ * @param url Any URL the app received or opened, Discord's own and the site's install page included. Unknown query parameters are ignored.
  * @returns The link, or `undefined` when the URL is not a well-formed Unbound link.
  */
 export function parseUnboundLink(url: string): UnboundLink | undefined {
 	const lower = url.toLowerCase();
+
+	if (lower.startsWith(INSTALL_PAGE_PREFIX)) {
+		return parseInstallPage(url);
+	}
+
 	const prefix = LINK_PREFIXES.find((candidate) => lower.startsWith(candidate));
 
 	if (!prefix) {
@@ -67,4 +91,4 @@ export function parseUnboundLink(url: string): UnboundLink | undefined {
 	return id.success ? { action, id: id.data } : undefined;
 }
 
-export default { UNBOUND_SCHEME, createUnboundLink, parseUnboundLink };
+export default { UNBOUND_SCHEME, INSTALL_PAGE_PREFIX, createUnboundLink, parseUnboundLink };

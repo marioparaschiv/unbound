@@ -31,6 +31,20 @@ describe('parseUnboundLink', () => {
 		}
 	});
 
+	test('reads the site install page as an install link', () => {
+		expect(parseUnboundLink('https://unbound.rip/install/acme.hello')).toEqual({
+			action: 'install',
+			id: 'acme.hello',
+		});
+		expect(parseUnboundLink('https://unbound.rip/install/acme.hello?ref=discord#top')).toEqual({
+			action: 'install',
+			id: 'acme.hello',
+		});
+		expect(parseUnboundLink('https://unbound.rip/install/')).toBeUndefined();
+		expect(parseUnboundLink('https://unbound.rip/install/a%2Fb')).toBeUndefined();
+		expect(parseUnboundLink('https://unbound.rip/addons/acme.hello')).toBeUndefined();
+	});
+
 	test('rejects everything that is not a well-formed Unbound link', () => {
 		const urls = [
 			'',
