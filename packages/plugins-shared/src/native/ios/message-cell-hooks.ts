@@ -4,6 +4,7 @@ import type {
 	NativeObjectHandle,
 } from '@unbound-app/api/native';
 import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/ios/text-attachments';
+import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/ios/hook-options';
 
 export type MessageCellHandlers = {
 	/** The cell moved into a window. */
@@ -36,21 +37,26 @@ export function hookMessageCells(
 
 	try {
 		hooks.push(
-			objc.hook('DCDMessageTableViewCell', 'didMoveToWindow', {
-				after: ({ self }) => {
-					if (!self) return;
+			objc.hook(
+				'DCDMessageTableViewCell',
+				'didMoveToWindow',
+				{
+					after: ({ self }) => {
+						if (!self) return;
 
-					// `window` is read asynchronously so the hook does not block on the main thread.
-					void objc
-						.invokeAsync(self, 'window', [])
-						.then((window) => {
-							if (window && !controller.signal.aborted) {
-								shown(self);
-							}
-						})
-						.catch(() => undefined);
+						// `window` is read asynchronously so the hook does not block on the main thread.
+						void objc
+							.invokeAsync(self, 'window', [])
+							.then((window) => {
+								if (window && !controller.signal.aborted) {
+									shown(self);
+								}
+							})
+							.catch(() => undefined);
+					},
 				},
-			}),
+				LATEST_CALL_PER_RECEIVER,
+			),
 			objc.hook('DCDMessageTableViewCell', 'prepareForReuse', {
 				after: ({ self }) => {
 					if (self) {
@@ -62,13 +68,18 @@ export function hookMessageCells(
 
 		if (laidOut) {
 			hooks.push(
-				objc.hook('DCDMessageTableViewCell', 'layoutSubviews', {
-					after: ({ self }) => {
-						if (self) {
-							laidOut(self);
-						}
+				objc.hook(
+					'DCDMessageTableViewCell',
+					'layoutSubviews',
+					{
+						after: ({ self }) => {
+							if (self) {
+								laidOut(self);
+							}
+						},
 					},
-				}),
+					LATEST_CALL_PER_RECEIVER,
+				),
 			);
 		}
 
@@ -79,25 +90,30 @@ export function hookMessageCells(
 				}
 
 				hooks.push(
-					objc.hook(className, 'setAttributedText:', {
-						after: ({ self }) => {
-							if (!self) return;
+					objc.hook(
+						className,
+						'setAttributedText:',
+						{
+							after: ({ self }) => {
+								if (!self) return;
 
-							void objc
-								.findViews(self, 'DCDMessageTableViewCell', {
-									direction: 'ancestors',
-									maxDepth: 16,
-									maxResults: 1,
-									stopAtMatch: true,
-								})
-								.then(([cell]) => {
-									if (cell && !controller.signal.aborted) {
-										textChanged(cell);
-									}
-								})
-								.catch(() => undefined);
+								void objc
+									.findViews(self, 'DCDMessageTableViewCell', {
+										direction: 'ancestors',
+										maxDepth: 16,
+										maxResults: 1,
+										stopAtMatch: true,
+									})
+									.then(([cell]) => {
+										if (cell && !controller.signal.aborted) {
+											textChanged(cell);
+										}
+									})
+									.catch(() => undefined);
+							},
 						},
-					}),
+						LATEST_CALL_PER_RECEIVER,
+					),
 				);
 			}
 		}

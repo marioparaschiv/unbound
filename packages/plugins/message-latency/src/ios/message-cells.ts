@@ -1,10 +1,12 @@
 import type {
 	NativeHookToken,
 	NativeHookHandlers,
+	NativeHookOptions,
 	NativeObjCBridge,
 	NativeObjectHandle,
 	NativeViewSnapshotNode,
 } from '@unbound-app/api/native';
+import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/ios/hook-options';
 import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
@@ -281,13 +283,23 @@ export function createMessageCells(
 
 	function hook() {
 		const hooks: NativeHookToken[] = [];
-		const handlers: [className: string, selector: string, NativeHookHandlers][] = [
+		const handlers: [
+			className: string,
+			selector: string,
+			NativeHookHandlers,
+			options?: NativeHookOptions<true>,
+		][] = [
 			[
 				'UIControl',
 				'endTrackingWithTouch:withEvent:',
 				{ after: ({ self }) => onIconTap(self) },
 			],
-			['DCDMessageTableViewCell', 'didMoveToWindow', { after: ({ self }) => schedule(self) }],
+			[
+				'DCDMessageTableViewCell',
+				'didMoveToWindow',
+				{ after: ({ self }) => schedule(self) },
+				LATEST_CALL_PER_RECEIVER,
+			],
 			[
 				'DCDMessageTableViewCell',
 				'prepareForReuse',
@@ -301,8 +313,8 @@ export function createMessageCells(
 		];
 
 		try {
-			for (const [className, selector, handler] of handlers) {
-				hooks.push(objc.hook(className, selector, handler));
+			for (const [className, selector, handler, options] of handlers) {
+				hooks.push(objc.hook(className, selector, handler, options));
 			}
 		} catch (error) {
 			for (const token of hooks) token.remove();

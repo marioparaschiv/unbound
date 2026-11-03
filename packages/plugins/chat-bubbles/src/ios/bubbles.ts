@@ -4,6 +4,7 @@ import type {
 	NativeObjectHandle,
 	NativePluginBridge,
 } from '@unbound-app/api/native';
+import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/ios/hook-options';
 import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cells';
 import { readRect } from '@unbound-plugins/shared/native/ios/rect';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
@@ -339,9 +340,12 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 	});
 
 	const hooks = [
-		objc.hook(IOSClass.messageCell, 'layoutSubviews', {
-			after: ({ self }) => schedule(self, true),
-		}),
+		objc.hook(
+			IOSClass.messageCell,
+			'layoutSubviews',
+			{ after: ({ self }) => schedule(self, true) },
+			LATEST_CALL_PER_RECEIVER,
+		),
 		...textChangeHooks(),
 		objc.hook(IOSClass.messageCell, 'prepareForReuse', {
 			after: ({ self }) => {
@@ -365,9 +369,12 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 	function textChangeHooks() {
 		try {
 			return [
-				objc.hook(IOSClass.attributedText, 'setAttributedText:', {
-					after: ({ self }) => void scheduleOwningCell(self).catch(() => undefined),
-				}),
+				objc.hook(
+					IOSClass.attributedText,
+					'setAttributedText:',
+					{ after: ({ self }) => void scheduleOwningCell(self).catch(() => undefined) },
+					LATEST_CALL_PER_RECEIVER,
+				),
 			];
 		} catch {
 			return [];
