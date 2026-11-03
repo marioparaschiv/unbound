@@ -42,6 +42,7 @@ public:
         {
             replaced.emplace(std::move(found->second->task));
             found->second->task = std::move(task);
+            deferred_.splice(deferred_.end(), deferred_, found->second);
             return false;
         }
         deferred_.push_back({std::move(task), std::move(key)});

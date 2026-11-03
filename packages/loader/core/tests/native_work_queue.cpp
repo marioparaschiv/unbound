@@ -142,4 +142,18 @@ int main()
                    return now;
                }) == false);
     assert(latest.back() == 4);
+
+    loader::native::NativeWorkQueue<int> ordered;
+    std::vector<int>                     delivered;
+    assert(ordered.enqueueCoalesced("hook-1:receiver-1", 1));
+    assert(!ordered.enqueue(2));
+    assert(!ordered.enqueueCoalesced("hook-1:receiver-1", 3));
+    assert(!ordered.drain(
+        [&](int value) {
+            delivered.push_back(value);
+        },
+        [&] {
+            return now;
+        }));
+    assert((delivered == std::vector<int>{2, 3}));
 }
