@@ -30,7 +30,7 @@ import {
 } from '~/android/ui-avatars';
 import { AvatarClass, PLUGIN_NAME } from '~/constants';
 import { mayBeAvatar } from '~/image-sources';
-import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/android/hook-options';
+import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 type AndroidNative = {
 	java: NativeJavaBridge;
@@ -362,7 +362,7 @@ export function roundAndroidAvatars({ java, hooks, ui }: AndroidNative, radius: 
 		attachClass,
 		'onAttachedToWindow',
 		[],
-		LATEST_CALL_PER_RECEIVER,
+		RECEIVER_ONLY_AFTER_CALL,
 		({ self }) => {
 			const view = javaReference(self);
 

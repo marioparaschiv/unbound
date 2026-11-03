@@ -51,7 +51,7 @@ import { createHighlighter } from '~/highlighter';
 import { readPreferences } from '~/preferences';
 import type { CodeBlock } from '~/fences';
 import { codeBlockLayout } from '~/layout';
-import { LATEST_CALL_PER_RECEIVER } from '@unbound-plugins/shared/native/android/hook-options';
+import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
 const IMAGE_SPAN = 'android.text.style.ImageSpan';
@@ -462,7 +462,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		DRAWEE_TEXT_VIEW,
 		DRAWEE_TEXT_SETTER,
 		[textBuilder],
-		LATEST_CALL_PER_RECEIVER,
+		RECEIVER_ONLY_AFTER_CALL,
 		({ self }) => {
 			const textView = javaReference(self);
 
@@ -474,7 +474,7 @@ export function createAndroidCards({ java, hooks, fabric }: Native) {
 		MESSAGE_CONTENT_VIEW,
 		'onSizeChanged',
 		SIZE_PARAMETERS,
-		LATEST_CALL_PER_RECEIVER,
+		RECEIVER_ONLY_AFTER_CALL,
 		({ self }) => {
 			const key = javaViewKey(self);
 			const textView = key ? awaitingSize.get(key) : undefined;

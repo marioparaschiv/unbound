@@ -39,8 +39,8 @@ import { createLinkedMessages } from '~/linked-messages';
 import { currentChannelId, linkedChannelName } from '~/channels';
 import { Surface } from '~/constants';
 import {
-	LATEST_BIND_PER_RECEIVER,
-	LATEST_CALL_PER_RECEIVER,
+	FIRST_ARGUMENT_AFTER_CALL,
+	RECEIVER_ONLY_AFTER_CALL,
 } from '@unbound-plugins/shared/native/android/hook-options';
 
 const MESSAGE_CONTENT_VIEW = 'com.discord.chat.presentation.message.view.MessageContentView';
@@ -305,7 +305,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		MESSAGE_VIEW,
 		bindMessage.name,
 		bindMessage.parameters,
-		LATEST_BIND_PER_RECEIVER,
+		FIRST_ARGUMENT_AFTER_CALL,
 		({ self, args }) => {
 			const messageView = javaReference(self);
 			const message = javaReference(args[0]);
@@ -321,7 +321,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		MESSAGE_VIEW,
 		'onSizeChanged',
 		SIZE_PARAMETERS,
-		LATEST_CALL_PER_RECEIVER,
+		RECEIVER_ONLY_AFTER_CALL,
 		({ self }) => {
 			const key = javaViewKey(self);
 			const pending = key ? awaitingSize.get(key) : undefined;

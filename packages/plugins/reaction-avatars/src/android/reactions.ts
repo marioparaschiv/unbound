@@ -54,8 +54,8 @@ import { surfaceStates } from '~/surface-states';
 import ReactionUserCache from '~/reactor-cache';
 import { fetchReactors } from '~/reactors';
 import {
-	LATEST_BIND_PER_RECEIVER,
-	LATEST_CALL_PER_RECEIVER,
+	FIRST_ARGUMENT_AFTER_CALL,
+	RECEIVER_ONLY_AFTER_CALL,
 } from '@unbound-plugins/shared/native/android/hook-options';
 
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
@@ -431,7 +431,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 		MESSAGE_VIEW,
 		bindMessage.name,
 		bindMessage.parameters,
-		LATEST_BIND_PER_RECEIVER,
+		FIRST_ARGUMENT_AFTER_CALL,
 		({ self, args }) => {
 			const messageView = javaReference(self);
 			const message = javaReference(args[0]);
@@ -447,7 +447,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 		MESSAGE_VIEW,
 		'onSizeChanged',
 		SIZE_PARAMETERS,
-		LATEST_CALL_PER_RECEIVER,
+		RECEIVER_ONLY_AFTER_CALL,
 		({ self }) => {
 			const key = javaViewKey(self);
 			const pending = key ? awaitingSize.get(key) : undefined;
