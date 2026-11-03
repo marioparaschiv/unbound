@@ -16,6 +16,12 @@ import {
 	asynchronouslyUnmounted,
 	cancelled,
 	removedSubscriptions,
+	javaInvokeArguments,
+	javaPlansDisposed,
+	javaHandle,
+	javaReleased,
+	objcPlansDisposed,
+	nativeHandle,
 	bridge,
 	manifest,
 	nativePlatformBridge,
@@ -133,6 +139,101 @@ describe('native plugin capability scopes', () => {
 		context.dispose();
 
 		expect(cancelled).toEqual(['invoke', 'invokeSuper']);
+	});
+
+	test('gates prepared Objective-C calls and disposes their plans with the plugin scope', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.objc.invoke'],
+		});
+		const plan = context.native.objc.prepare(nativeHandle, 'description');
+
+		context.native.objc.invokePrepared(plan, nativeHandle, []);
+		context.dispose();
+
+		expect(objcPlansDisposed).toEqual([plan]);
+	});
+
+	test('explicit Objective-C plan disposal is idempotent through scope cleanup', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.objc.invoke'],
+		});
+		const plan = context.native.objc.prepare(nativeHandle, 'description');
+
+		context.native.objc.disposePlan(plan);
+		context.dispose();
+
+		expect(objcPlansDisposed).toEqual([plan]);
+	});
+
+	test('cancels pending prepared Objective-C calls when a plugin context stops', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.objc.invoke', 'native.objc.invokeAsync'],
+		});
+		const plan = context.native.objc.prepare(nativeHandle, 'description');
+
+		context.native.objc.invokePreparedAsync(plan, nativeHandle, []);
+		context.dispose();
+
+		expect(cancelled).toEqual(['objc-invoke-prepared']);
+		expect(objcPlansDisposed).toEqual([plan]);
+	});
+
+	test('keeps Objective-C call plans inside the plugin scope that created them', () => {
+		const owner = createPluginContext({ ...manifest, capabilities: ['native.objc.invoke'] });
+		const other = createPluginContext({ ...manifest, capabilities: ['native.objc.invoke'] });
+		const plan = owner.native.objc.prepare(nativeHandle, 'description');
+
+		expect(() => other.native.objc.invokePrepared(plan, nativeHandle, [])).toThrow();
+
+		owner.dispose();
+		other.dispose();
+	});
+
+	test('gates prepared Java calls and releases their plans with the plugin scope', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.java.invoke'],
+		});
+		const plan = context.native.java.prepare(javaHandle, 'toString', []);
+
+		context.native.java.invokePrepared(plan, javaHandle, [
+			{ type: 'string', value: 'prepared' },
+		]);
+		context.dispose();
+
+		expect(javaInvokeArguments).toEqual([[{ type: 'string', value: 'prepared' }]]);
+		expect(javaReleased).toEqual([plan]);
+	});
+
+	test('disposes prepared Java plans explicitly without releasing them twice', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.java.invoke'],
+		});
+		const plan = context.native.java.prepare(javaHandle, 'toString', []);
+
+		context.native.java.disposePlan(plan);
+		context.dispose();
+
+		expect(javaPlansDisposed).toEqual([plan]);
+		expect(javaReleased).toEqual([]);
+	});
+
+	test('cancels pending prepared Java calls when a plugin context stops', () => {
+		const context = createPluginContext({
+			...manifest,
+			capabilities: ['native.java.invoke', 'native.java.invokeAsync'],
+		});
+		const plan = context.native.java.prepare(javaHandle, 'toString', []);
+
+		context.native.java.invokePreparedAsync(plan, javaHandle);
+		context.dispose();
+
+		expect(cancelled).toEqual(['java-invoke-prepared']);
+		expect(javaReleased).toEqual([plan]);
 	});
 
 	test('lets Objective-C operations started during stop finish', async () => {

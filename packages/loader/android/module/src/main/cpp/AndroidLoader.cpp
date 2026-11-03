@@ -220,6 +220,14 @@ void AndroidLoader::runOnRuntime(std::function<void(jsi::Runtime &)> work)
     enqueueRuntime(std::move(work), loader::native::NativeWorkPriority::Deferred);
 }
 
+void AndroidLoader::runOnRuntimeCoalesced(std::string key, std::function<void(jsi::Runtime &)> work)
+{
+    if (runtimeQueue_.enqueueCoalesced(std::move(key), std::move(work)))
+    {
+        scheduleRuntimeDrain();
+    }
+}
+
 void AndroidLoader::runOnRuntimeCritical(std::function<void(jsi::Runtime &)> work)
 {
     enqueueRuntime(std::move(work), loader::native::NativeWorkPriority::Critical);

@@ -65,6 +65,15 @@ const JS_CALLBACK = {
 	code: 'function unboundJSCallback(){const{runOnJS,listener}=this.__closure;runOnJS(listener).apply(undefined,arguments);}',
 };
 
+const PREPARED_CALL_METHODS: ReadonlySet<NativePluginMethod> = new Set([
+	'objc.prepare',
+	'objc.invokePrepared',
+	'objc.disposePlan',
+	'java.prepare',
+	'java.invokePrepared',
+	'java.disposePlan',
+]);
+
 const PROMISE_METHODS: ReadonlySet<NativePluginMethod> = new Set([
 	'objc.batch',
 	'objc.snapshot',
@@ -84,7 +93,8 @@ export function uiScopePaths(
 		(path) =>
 			capabilities.includes(NATIVE_PLUGIN_METHOD_CAPABILITIES[path]) &&
 			!path.endsWith('Async') &&
-			!PROMISE_METHODS.has(path),
+			!PROMISE_METHODS.has(path) &&
+			!PREPARED_CALL_METHODS.has(path),
 	);
 }
 

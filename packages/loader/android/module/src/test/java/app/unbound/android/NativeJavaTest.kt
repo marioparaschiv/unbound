@@ -100,6 +100,104 @@ class NativeJavaTest {
     }
 
     @Test
+    fun preparedInvocationReusesTheResolvedOverloadWithChangingArguments() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+        val plan = NativeJava.prepare(builder, "append", """["int"]""")
+
+        NativeJava.invokePrepared(plan, builder, """[{"type":"int","value":7}]""")
+        NativeJava.invokePrepared(plan, builder, """[{"type":"int","value":8}]""")
+
+        assertEquals("78", value(NativeJava.invoke(builder, "toString", "[]")).getString("value"))
+    }
+
+    @Test
+    fun preparedInvocationRejectsArgumentsWithAnotherSignature() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+        val plan = NativeJava.prepare(builder, "append", """["int"]""")
+
+        val error = assertThrows(IllegalArgumentException::class.java) {
+            NativeJava.invokePrepared(
+                plan,
+                builder,
+                """[{"type":"string","value":"wrong"}]""",
+            )
+        }
+
+        assertTrue(error.message.orEmpty().contains("Prepared Java arguments"))
+        assertEquals("", value(NativeJava.invoke(builder, "toString", "[]")).getString("value"))
+    }
+
+    @Test
+    fun preparedInvocationSupportsStaticMethodsOnClassHandles() {
+        val integer = NativeJava.getClass("java.lang.Integer")
+        val plan = NativeJava.prepare(integer, "parseInt", "[\"java.lang.String\"]")
+
+        val result = value(
+            NativeJava.invokePrepared(
+                plan,
+                integer,
+                "[{\"type\":\"string\",\"value\":\"42\"}]",
+            ),
+        )
+
+        assertEquals("int", result.getString("type"))
+        assertEquals(42, result.getInt("value"))
+    }
+
+    @Test
+    fun preparedInvocationSupportsClassInstanceMethodsOnClassHandles() {
+        val integer = NativeJava.getClass("java.lang.Integer")
+        val plan = NativeJava.prepare(integer, "getName", "[]")
+
+        assertEquals(
+            "java.lang.Integer",
+            value(NativeJava.invokePrepared(plan, integer, "[]")).getString("value"),
+        )
+    }
+
+    @Test
+    fun preparedInvocationRejectsAClassTargetForAnInstanceMethod() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+        val integer = NativeJava.getClass("java.lang.Integer")
+        val plan = NativeJava.prepare(builder, "toString", "[]")
+
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeJava.invokePrepared(plan, integer, "[]")
+        }
+    }
+
+    @Test
+    fun preparingAStaticMethodFromAnInstanceFails() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeJava.prepare(builder, "valueOf", "[\"int\"]")
+        }
+    }
+
+    @Test
+    fun releasingAPreparedInvocationInvalidatesIt() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+        val plan = NativeJava.prepare(builder, "toString", "[]")
+
+        NativeJava.release(plan)
+
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeJava.invokePrepared(plan, builder, "[]")
+        }
+    }
+
+    @Test
+    fun disposingARegularJavaHandleAsAPlanDoesNotReleaseIt() {
+        val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
+
+        assertThrows(IllegalArgumentException::class.java) {
+            NativeJava.disposePlan(builder)
+        }
+        assertEquals("java.lang.StringBuilder", value(NativeJava.className(builder)).getString("value"))
+    }
+
+    @Test
     fun invokeReturnsAHandleForANonSerializableResult() {
         val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
         val result = value(NativeJava.invoke(builder, "append", """[{"type":"string","value":"x"}]"""))

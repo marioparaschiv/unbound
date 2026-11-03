@@ -6,9 +6,6 @@ import type {
 	NativeFabricBridge,
 	NativeFabricSurface,
 	NativeFFIBridge,
-	NativeJavaBridge,
-	NativeJavaHandle,
-	NativeJavaReference,
 	NativeJavaHookEvent,
 	NativeJavaHookOptions,
 	NativeDebugBridge,
@@ -18,6 +15,7 @@ import type {
 	NativeHookOptions,
 	NativeHookToken,
 	NativeObjCBridge,
+	NativeObjCCallPlan,
 	NativeObjectHandle,
 	NativePluginBridge,
 	NativePluginCapability,
@@ -34,6 +32,7 @@ import { NativePluginDisposedError, NativePluginUnavailableError } from '~/nativ
 import { createMainThreadAlloc } from '~/native/main-thread-alloc';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import type { AddonAttribution } from '~/addons/crash-guard';
+import { createScopedJavaBridge } from '~/native/scope-java';
 import { getNativePlugin } from '~/native/plugin-bridge';
 import { createScopedUIBridge } from '~/native/ui';
 
@@ -41,27 +40,6 @@ type AssociationBinding = {
 	handle: NativeObjectHandle;
 	key: NativeAssociationKey;
 };
-
-const JAVA_HANDLE_PRUNE_SIZE = 1_024;
-const javaHandleHolders = new WeakMap<NativeJavaReference, number>();
-
-function holdJavaHandle(handle: NativeJavaReference) {
-	javaHandleHolders.set(handle, (javaHandleHolders.get(handle) ?? 0) + 1);
-}
-
-function dropJavaHandle(handle: NativeJavaReference): boolean {
-	const holders = (javaHandleHolders.get(handle) ?? 1) - 1;
-
-	if (holders > 0) {
-		javaHandleHolders.set(handle, holders);
-
-		return false;
-	}
-
-	javaHandleHolders.delete(handle);
-
-	return true;
-}
 
 type ScopedNativePlugin = {
 	bridge: NativePluginBridge;
@@ -150,8 +128,8 @@ export function createScopedNativePlugin(
 	const hooksBridge = attributeBridge(bridge.hooks ?? fallbackBridge.hooks, attribute);
 	const debugBridge = attributeBridge(bridge.debug ?? fallbackBridge.debug, attribute);
 	const tokens = new Set<NativeHookToken>();
+	const objcPlans = new Set<NativeObjCCallPlan>();
 	const surfaces = new Set<NativeFabricSurface>();
-	const javaHandles = new Set<WeakRef<NativeJavaReference>>();
 	const javaHookTokens = new Set<NativeJavaHookToken>();
 	const runtimeTokens = new Set<NativeRuntimeEventToken>();
 	const pendingInvocations = new Set<NativeCancelablePromise<unknown>>();
@@ -195,6 +173,26 @@ export function createScopedNativePlugin(
 		path: NativePluginMethod,
 	) {
 		return scopedMethod(method, capabilities, path, () => !disposed);
+	}
+
+	function scopeOptionalMethod<A extends unknown[], R>(
+		method: ((...args: A) => R) | undefined,
+		path: NativePluginMethod,
+		unavailableMessage: string,
+	): (...args: A) => R {
+		return (...args: A) => {
+			if (disposed) {
+				throw new NativePluginDisposedError();
+			}
+
+			requireCapability(capabilities, path);
+
+			if (!method) {
+				throw new NativePluginUnavailableError(unavailableMessage);
+			}
+
+			return method(...args);
+		};
 	}
 
 	function scopeAsyncMethod<A extends unknown[], R>(
@@ -250,6 +248,57 @@ export function createScopedNativePlugin(
 			'objc.invokeAsync',
 			'Async native invocation is unavailable.',
 		),
+		prepare: (handle, selector) => {
+			const plan = scopeOptionalMethod(
+				objcBridge.prepare?.bind(objcBridge),
+				'objc.prepare',
+				'Prepared Objective-C calls are unavailable.',
+			)(handle, selector);
+
+			objcPlans.add(plan);
+
+			return plan;
+		},
+		invokePrepared: (plan, handle, args, options) => {
+			if (!objcPlans.has(plan)) {
+				throw new NativePluginUnavailableError(
+					'The Objective-C call plan is outside this plugin scope.',
+				);
+			}
+
+			return scopeOptionalMethod(
+				objcBridge.invokePrepared?.bind(objcBridge),
+				'objc.invokePrepared',
+				'Prepared Objective-C calls are unavailable.',
+			)(plan, handle, args, options);
+		},
+		invokePreparedAsync: (plan, handle, args) => {
+			if (!objcPlans.has(plan)) {
+				throw new NativePluginUnavailableError(
+					'The Objective-C call plan is outside this plugin scope.',
+				);
+			}
+
+			return scopeAsyncMethod(
+				objcBridge.invokePreparedAsync?.bind(objcBridge),
+				'objc.invokePreparedAsync',
+				'Prepared asynchronous Objective-C calls are unavailable.',
+			)(plan, handle, args);
+		},
+		disposePlan: (plan) => {
+			if (!objcPlans.has(plan)) {
+				throw new NativePluginUnavailableError(
+					'The Objective-C call plan is outside this plugin scope.',
+				);
+			}
+
+			scopeOptionalMethod(
+				objcBridge.disposePlan?.bind(objcBridge),
+				'objc.disposePlan',
+				'Prepared Objective-C calls are unavailable.',
+			)(plan);
+			objcPlans.delete(plan);
+		},
 		batch: scopeAsyncMethod(
 			objcBridge.batch?.bind(objcBridge),
 			'objc.batch',
@@ -478,113 +527,13 @@ export function createScopedNativePlugin(
 		},
 	};
 
-	function trackJavaHandle(handle: NativeJavaHandle): NativeJavaHandle {
-		if (javaHandles.size >= JAVA_HANDLE_PRUNE_SIZE) {
-			for (const tracked of javaHandles) {
-				if (!tracked.deref()) {
-					javaHandles.delete(tracked);
-				}
-			}
-		}
-
-		if (!holdsJavaHandle(handle)) {
-			javaHandles.add(new WeakRef(handle));
-			holdJavaHandle(handle);
-		}
-
-		return handle;
-	}
-
-	function holdsJavaHandle(handle: NativeJavaReference): boolean {
-		for (const tracked of javaHandles) {
-			if (tracked.deref() === handle) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	function untrackJavaHandle(handle: NativeJavaReference): boolean {
-		let held = false;
-
-		for (const tracked of javaHandles) {
-			if (tracked.deref() === handle) {
-				javaHandles.delete(tracked);
-				held = true;
-			}
-		}
-
-		return held;
-	}
-
-	const java: NativeJavaBridge = {
-		getClass: (name) =>
-			trackJavaHandle(
-				scopeMethod(javaBridge.getClass.bind(javaBridge), 'java.getClass')(name),
-			),
-		className: scopeMethod(javaBridge.className.bind(javaBridge), 'java.className'),
-		describe: scopeMethod(javaBridge.describe.bind(javaBridge), 'java.describe'),
-		construct: (name, args) =>
-			trackJavaHandle(
-				scopeMethod(javaBridge.construct.bind(javaBridge), 'java.construct')(
-					name,
-					args ?? [],
-				),
-			),
-		respondsTo: (handle, name, args) =>
-			scopeMethod(javaBridge.respondsTo.bind(javaBridge), 'java.respondsTo')(
-				handle,
-				name,
-				args ?? [],
-			),
-		invoke: (handle, name, args) =>
-			scopeMethod(javaBridge.invoke.bind(javaBridge), 'java.invoke')(
-				handle,
-				name,
-				args ?? [],
-			),
-		invokeAsync: (handle, name, args) =>
-			scopeAsyncMethod(
-				javaBridge.invokeAsync?.bind(javaBridge),
-				'java.invokeAsync',
-				'Asynchronous Java invocation is unavailable.',
-			)(handle, name, args ?? []),
-		getField: scopeMethod(javaBridge.getField.bind(javaBridge), 'java.getField'),
-		setField: scopeMethod(javaBridge.setField.bind(javaBridge), 'java.setField'),
-		batch: scopeMethod(javaBridge.batch.bind(javaBridge), 'java.batch'),
-		batchAsync: scopeAsyncMethod(
-			javaBridge.batchAsync?.bind(javaBridge),
-			'java.batchAsync',
-			'Asynchronous Java batches are unavailable.',
-		),
-		findViews: (root, className, options) =>
-			scopeAsyncMethod(
-				javaBridge.findViews?.bind(javaBridge),
-				'java.findViews',
-				'Java view searches are unavailable.',
-			)(root, className, options),
-		createAssociationKey: scopeMethod(
-			javaBridge.createAssociationKey.bind(javaBridge),
-			'java.createAssociationKey',
-		),
-		getAssociatedObject: scopeMethod(
-			javaBridge.getAssociatedObject.bind(javaBridge),
-			'java.getAssociatedObject',
-		),
-		setAssociatedObject: scopeMethod(
-			javaBridge.setAssociatedObject.bind(javaBridge),
-			'java.setAssociatedObject',
-		),
-		release: (handle) => {
-			const release = scopeMethod(javaBridge.release.bind(javaBridge), 'java.release');
-			const held = untrackJavaHandle(handle);
-
-			if (held ? dropJavaHandle(handle) : !javaHandleHolders.has(handle)) {
-				release(handle);
-			}
-		},
-	};
+	const scopedJava = createScopedJavaBridge({
+		bridge: javaBridge,
+		scopeMethod,
+		scopeOptionalMethod,
+		scopeAsyncMethod,
+	});
+	const java = scopedJava.bridge;
 
 	const debug: NativeDebugBridge = {
 		recordEvaluation: scopeMethod(
@@ -676,21 +625,17 @@ export function createScopedNativePlugin(
 
 			surfaces.clear();
 
-			for (const tracked of javaHandles) {
-				const handle = tracked.deref();
-
-				if (!handle || !dropJavaHandle(handle)) {
-					continue;
-				}
-
+			for (const plan of objcPlans) {
 				try {
-					javaBridge.release(handle);
+					objcBridge.disposePlan?.(plan);
 				} catch {
 					continue;
 				}
 			}
 
-			javaHandles.clear();
+			objcPlans.clear();
+
+			scopedJava.dispose();
 
 			for (const token of javaHookTokens) {
 				try {

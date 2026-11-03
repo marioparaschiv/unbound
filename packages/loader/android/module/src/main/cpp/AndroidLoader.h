@@ -29,6 +29,9 @@ struct JavaCallbacks {
     jmethodID javaConstruct            = nullptr;
     jmethodID javaRespondsTo           = nullptr;
     jmethodID javaInvoke               = nullptr;
+    jmethodID javaPrepare              = nullptr;
+    jmethodID javaInvokePrepared       = nullptr;
+    jmethodID javaDisposePlan          = nullptr;
     jmethodID javaGetField             = nullptr;
     jmethodID javaSetField             = nullptr;
     jmethodID javaRelease              = nullptr;
@@ -85,6 +88,8 @@ public:
     std::shared_ptr<loader::HotReloadController> hotReload();
 
     void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) override;
+    void runOnRuntimeCoalesced(std::string                                   key,
+                               std::function<void(facebook::jsi::Runtime &)> work) override;
     void runOnRuntimeCritical(std::function<void(facebook::jsi::Runtime &)> work) override;
     bool isMainThread() override;
     void runOnMain(std::function<void()> work) override;

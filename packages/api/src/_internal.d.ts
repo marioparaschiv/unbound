@@ -15,6 +15,8 @@ declare const THEME_FLAG_KEYS: readonly [
 ];
 declare const TRANSITION_STATE_KEYS: readonly ['MOUNTED', 'ENTERED', 'YEETED'];
 declare const nativeHandle: unique symbol;
+declare const nativeJavaCallPlan: unique symbol;
+declare const nativeObjCCallPlan: unique symbol;
 /** The kinds of addon, as a manifest's `type` declares them. One manager governs each, in this start order. */
 export declare const ADDON_KINDS: readonly ['plugin', 'theme', 'icon-pack', 'font'];
 /**
@@ -109,7 +111,11 @@ export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'objc.call': 'native.objc.invoke';
 	readonly 'objc.callSuper': 'native.objc.invoke';
 	readonly 'objc.invoke': 'native.objc.invoke';
+	readonly 'objc.prepare': 'native.objc.invoke';
+	readonly 'objc.invokePrepared': 'native.objc.invoke';
+	readonly 'objc.disposePlan': 'native.objc.invoke';
 	readonly 'objc.invokeAsync': 'native.objc.invokeAsync';
+	readonly 'objc.invokePreparedAsync': 'native.objc.invokeAsync';
 	readonly 'objc.batch': 'native.objc.batch';
 	readonly 'objc.snapshot': 'native.objc.snapshot';
 	readonly 'objc.findViews': 'native.objc.snapshot';
@@ -146,6 +152,10 @@ export declare const NATIVE_PLUGIN_METHOD_CAPABILITIES: {
 	readonly 'java.respondsTo': 'native.java.classes';
 	readonly 'java.invoke': 'native.java.invoke';
 	readonly 'java.invokeAsync': 'native.java.invokeAsync';
+	readonly 'java.prepare': 'native.java.invoke';
+	readonly 'java.invokePrepared': 'native.java.invoke';
+	readonly 'java.invokePreparedAsync': 'native.java.invokeAsync';
+	readonly 'java.disposePlan': 'native.java.invoke';
 	readonly 'java.getField': 'native.java.fields';
 	readonly 'java.setField': 'native.java.fields';
 	readonly 'java.release': 'native.java.classes';
@@ -2404,7 +2414,7 @@ export type NativeHookContext<Receiver extends boolean = true> = {
 	argumentIndexes: number[];
 	phase: 'before' | 'after' | 'replace';
 	/** Runs the original implementation; it works only synchronously on the hook's thread. */
-	original: (...args: unknown[]) => unknown;
+	original: (...args: unknown[]) => NativeObjCResult;
 	/** Swaps the object argument at an index of `args` before the original runs; only during a synchronous handler. */
 	replaceObjectArgument(index: number, value: NativeObjectHandle | null): void;
 };
@@ -2415,12 +2425,13 @@ export type NativeHookHandlers<Receiver extends boolean = true> = {
 	/** Runs after the original implementation. */
 	after?: (context: NativeHookContext<Receiver>) => void | Promise<void>;
 	/** Runs instead of the original; what it returns becomes the method's result. */
-	replace?: (context: NativeHookContext<Receiver>) => unknown;
+	replace?: (context: NativeHookContext<Receiver>) => NativeObjCResult;
 };
 /** Options for `objc.hook`. */
 export type NativeHookOptions<Receiver extends boolean = boolean> = {
 	/** Runs no JavaScript and returns values set with `setReturnValue`; needs a scalar or struct return type. */
 	cacheOnly?: boolean;
+	coalesce?: 'receiver';
 	/** Hooks calls on this object only. */
 	instance?: NativeObjectHandle;
 	/** Removes the hook after its first call. */
@@ -2437,7 +2448,7 @@ export type NativeHookToken = {
 	/** False once the hook is removed. */
 	readonly active: boolean;
 	/** Sets the result a `cacheOnly` hook returns for calls with this receiver and these arguments. */
-	setReturnValue(self: NativeObjectHandle, args: unknown[], value: unknown): void;
+	setReturnValue(self: NativeObjectHandle, args: unknown[], value: NativeObjCResult): void;
 	/** Removes the result set for this receiver and these arguments. */
 	removeReturnValue(self: NativeObjectHandle, args: unknown[]): void;
 	/** Removes every result set on this hook. */
@@ -2503,6 +2514,22 @@ export type NativeJavaBridge = {
 	): NativeJavaValue;
 	/** Calls a method on the JavaScript thread. */
 	invoke(handle: NativeJavaReference, name: string, args?: NativeJavaArgument[]): NativeJavaValue;
+	prepare(
+		target: NativeJavaReference,
+		name: string,
+		parameterTypes: readonly string[],
+	): NativeJavaCallPlan;
+	invokePrepared(
+		plan: NativeJavaCallPlan,
+		target: NativeJavaReference,
+		args?: NativeJavaArgument[],
+	): NativeJavaValue;
+	invokePreparedAsync(
+		plan: NativeJavaCallPlan,
+		target: NativeJavaReference,
+		args?: NativeJavaArgument[],
+	): NativeCancelablePromise<NativeJavaValue>;
+	disposePlan(plan: NativeJavaCallPlan): void;
 	/** Calls a method on the main thread and resolves with its result. Needs `native.java.invokeAsync`. */
 	invokeAsync(
 		handle: NativeJavaReference,
@@ -2515,6 +2542,9 @@ export type NativeJavaBridge = {
 	setField(handle: NativeJavaReference, name: string, value: NativeJavaArgument): void;
 	/** Drops the plugin's hold on a handle so the loader can free the object. */
 	release(handle: NativeJavaReference): void;
+};
+export type NativeJavaCallPlan = NativeJavaHandle & {
+	readonly [nativeJavaCallPlan]: true;
 };
 /** A Java class's shape, read by reflection with `java.describe`. */
 export type NativeJavaClassDescription = {
@@ -2560,6 +2590,7 @@ export type NativeJavaHookEvent<Receiver extends boolean = true> = {
 };
 /** Options for `hooks.hook`. */
 export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
+	coalesce?: 'receiver';
 	/** Returns a value set with `setReturnValue` for a matching call instead of running the method. Defaults to false. */
 	replace?: boolean;
 	/** Whether the listener hears calls: before the method by default, `after` once it has run, `false` never. */
@@ -2662,29 +2693,42 @@ export type NativeObjCBridge = {
 	/** Checks whether the object responds to a selector. */
 	respondsTo(handle: NativeHandle, selector: string): boolean;
 	/** Sends a selector with its arguments on the current runtime thread. */
-	call(handle: NativeHandle, selector: string, ...args: unknown[]): unknown;
+	call(handle: NativeHandle, selector: string, ...args: unknown[]): NativeObjCResult;
 	/** Runs the implementation `currentClass`'s superclass provides, like `super` in Objective-C. */
 	callSuper(
 		handle: NativeObjectHandle,
 		currentClass: NativeClassHandle | string,
 		selector: string,
 		...args: unknown[]
-	): unknown;
+	): NativeObjCResult;
 	/** Sends a selector on the thread `options.thread` names; `main` blocks, so prefer `invokeAsync` for UI work. */
 	invoke(
 		handle: NativeObjectHandle,
 		selector: string,
 		args: unknown[],
 		options?: NativeCallOptions,
-	): unknown;
+	): NativeObjCResult;
 	/** Sends a selector on the main thread and resolves with its result. Needs `native.objc.invokeAsync`. */
 	invokeAsync(
 		handle: NativeObjectHandle,
 		selector: string,
 		args: unknown[],
-	): NativeCancelablePromise<unknown>;
+	): NativeCancelablePromise<NativeObjCResult>;
+	prepare(handle: NativeHandle, selector: string): NativeObjCCallPlan;
+	invokePrepared(
+		plan: NativeObjCCallPlan,
+		handle: NativeHandle,
+		args: unknown[],
+		options?: NativeCallOptions,
+	): NativeObjCResult;
+	invokePreparedAsync(
+		plan: NativeObjCCallPlan,
+		handle: NativeHandle,
+		args: unknown[],
+	): NativeCancelablePromise<NativeObjCResult>;
+	disposePlan(plan: NativeObjCCallPlan): void;
 	/** Runs dependent calls in one main-thread pass; a failed step rejects it without undoing earlier steps. */
-	batch(steps: readonly NativeBatchStep[]): NativeCancelablePromise<unknown[]>;
+	batch(steps: readonly NativeBatchStep[]): NativeCancelablePromise<NativeObjCResult[]>;
 	/** Reads a `UIView` subtree in one main-thread pass, as a point-in-time list. Needs `native.objc.snapshot`. */
 	snapshot(
 		root: NativeObjectHandle,
@@ -2703,27 +2747,27 @@ export type NativeObjCBridge = {
 		selector: string,
 		args: unknown[],
 		options?: NativeCallOptions,
-	): unknown;
+	): NativeObjCResult;
 	/** Runs the superclass implementation on the main thread and resolves with its result. */
 	invokeSuperAsync(
 		handle: NativeObjectHandle,
 		currentClass: NativeClassHandle | string,
 		selector: string,
 		args: unknown[],
-	): NativeCancelablePromise<unknown>;
+	): NativeCancelablePromise<NativeObjCResult>;
 	/** Reads an instance variable by name, such as `_viewModel`. */
-	getIvar(handle: NativeObjectHandle, name: string): unknown;
+	getIvar(handle: NativeObjectHandle, name: string): NativeObjCResult;
 	/** Writes an instance variable by name. */
-	setIvar(handle: NativeObjectHandle, name: string, value: unknown): void;
+	setIvar(handle: NativeObjectHandle, name: string, value: NativeObjCResult): void;
 	/** Creates a key for attaching a value to objects with `setAssociatedObject`. */
 	createAssociationKey(): NativeAssociationKey;
 	/** Reads the value attached to an object under a key. */
-	getAssociatedObject(handle: NativeObjectHandle, key: NativeAssociationKey): unknown;
+	getAssociatedObject(handle: NativeObjectHandle, key: NativeAssociationKey): NativeObjCResult;
 	/** Attaches a value to an object; `null` clears it. `policy` is `assign`, `retain`, `copy`, `retainNonatomic` or `copyNonatomic`. */
 	setAssociatedObject(
 		handle: NativeObjectHandle,
 		key: NativeAssociationKey,
-		value: unknown,
+		value: NativeObjCResult,
 		policy?: string,
 	): void;
 	/** Builds a registered struct, such as `CGRect` or `UIEdgeInsets`, to pass to native calls. */
@@ -2732,7 +2776,7 @@ export type NativeObjCBridge = {
 		fields: T,
 	): NativeStruct<T>;
 	/** Converts an `NSArray` handle to a JavaScript array. */
-	array(handle: NativeObjectHandle): unknown[];
+	array(handle: NativeObjectHandle): NativeObjCResult[];
 	/** Copies bytes into a new `NSData` object. */
 	data(value: ArrayBuffer | Uint8Array): NativeObjectHandle;
 	/** Hooks a method by class and selector; handlers run in registration order, and the scope removes the hook on dispose. */
@@ -2743,6 +2787,10 @@ export type NativeObjCBridge = {
 		options?: NativeHookOptions<Receiver>,
 	): NativeHookToken;
 };
+export type NativeObjCCallPlan = NativeHandle & {
+	readonly [nativeObjCCallPlan]: true;
+};
+export type NativeObjCResult = NativeSerializable | NativeHandle | bigint | undefined;
 /** A retained handle to an Objective-C object. */
 export type NativeObjectHandle = NativeHandle;
 /** Loader helpers for verifying and loading installed addons. */

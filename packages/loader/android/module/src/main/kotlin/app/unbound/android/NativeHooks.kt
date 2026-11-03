@@ -5,6 +5,7 @@ import org.json.JSONObject
 import org.json.JSONTokener
 import java.lang.reflect.Executable
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 
 object NativeHooks {
     interface Installer {
@@ -88,6 +89,21 @@ object NativeHooks {
             method.parameterCount,
             if (notify == "after") HookPhase.AFTER else HookPhase.BEFORE,
         )
+        val coalesceValue = options.opt("coalesce")
+        val coalesce = coalesceValue != null && coalesceValue != JSONObject.NULL
+        require(!coalesce || coalesceValue == "receiver") {
+            "The hook coalescing policy is unsupported"
+        }
+        require(
+            !coalesce ||
+                (
+                    notify != false && !options.optBoolean("replace", false) &&
+                        !Modifier.isStatic(method.modifiers) && payload.receiver &&
+                        payload.phase == HookPhase.AFTER
+                    ),
+        ) {
+            "Receiver coalescing requires a non-replacing after-observation hook with its receiver"
+        }
         val registration = Registration(
             token,
             method,

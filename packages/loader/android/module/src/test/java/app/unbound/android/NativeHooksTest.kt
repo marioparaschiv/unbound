@@ -308,6 +308,70 @@ class NativeHooksTest {
     }
 
     @Test
+    fun receiverCoalescingAllowsAfterObservationHooks() {
+        NativeHooks.hook(
+            "app.unbound.android.HookPayloadTarget",
+            "receive",
+            "[\"java.lang.Object\",\"java.lang.Object\"]",
+            "{\"notify\":\"after\",\"coalesce\":\"receiver\"}",
+        )
+        val chain = FakeChain(HookPayloadTarget(), listOf("first", "second"), 1)
+
+        installer.installed.single().hook.intercept(chain)
+
+        assertTrue(chain.proceeded)
+        assertEquals("after", JSONObject(dispatched.single().second).getString("phase"))
+    }
+
+    @Test
+    fun receiverCoalescingRejectsSynchronousAndReplacingHooks() {
+        val before = assertThrows(IllegalArgumentException::class.java) {
+            NativeHooks.hook(
+                "app.unbound.android.HookPayloadTarget",
+                "receive",
+                "[\"java.lang.Object\",\"java.lang.Object\"]",
+                "{\"coalesce\":\"receiver\"}",
+            )
+        }
+        val replacing = assertThrows(IllegalArgumentException::class.java) {
+            NativeHooks.hook(
+                "app.unbound.android.HookPayloadTarget",
+                "receive",
+                "[\"java.lang.Object\",\"java.lang.Object\"]",
+                "{\"notify\":\"after\",\"replace\":true,\"coalesce\":\"receiver\"}",
+            )
+        }
+
+        assertTrue(before.message.orEmpty().contains("after-observation"))
+        assertTrue(replacing.message.orEmpty().contains("after-observation"))
+        assertEquals(0, installer.installed.size)
+    }
+
+    @Test
+    fun receiverCoalescingRejectsHooksWithoutReceiversAndStaticMethods() {
+        val receiverless = assertThrows(IllegalArgumentException::class.java) {
+            NativeHooks.hook(
+                "app.unbound.android.HookPayloadTarget",
+                "receive",
+                "[\"java.lang.Object\",\"java.lang.Object\"]",
+                "{\"notify\":\"after\",\"coalesce\":\"receiver\",\"payload\":{\"receiver\":false}}",
+            )
+        }
+        val static = assertThrows(IllegalArgumentException::class.java) {
+            NativeHooks.hook(
+                "java.lang.Integer",
+                "parseInt",
+                "[\"java.lang.String\"]",
+                "{\"notify\":\"after\",\"coalesce\":\"receiver\"}",
+            )
+        }
+
+        assertTrue(receiverless.message.orEmpty().contains("after-observation"))
+        assertTrue(static.message.orEmpty().contains("after-observation"))
+        assertEquals(0, installer.installed.size)
+    }
+
+    @Test
     fun removeAllDetachesEveryHook() {
         hookToString()
         NativeHooks.hook("java.lang.String", "length", "[]", "{}")

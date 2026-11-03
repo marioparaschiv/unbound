@@ -323,6 +323,26 @@ static std::string serializeJavaArguments(jsi::Runtime &runtime, const jsi::Valu
                                                      kNativeArgumentsConversion);
 }
 
+static std::string serializeJavaParameterTypes(jsi::Runtime &runtime, const jsi::Value &value)
+{
+    if (!value.isObject() || !value.asObject(runtime).isArray(runtime))
+    {
+        throw std::invalid_argument("Java method parameter types must be an array");
+    }
+    jsi::Array     types = value.asObject(runtime).asArray(runtime);
+    nlohmann::json names = nlohmann::json::array();
+    const size_t   count = types.size(runtime);
+    if (count > kMaximumNativeArguments)
+    {
+        throw std::invalid_argument("A prepared Java call has too many parameter types");
+    }
+    for (size_t index = 0; index < count; index++)
+    {
+        names.push_back(javaName(runtime, types.getValueAtIndex(runtime, index)));
+    }
+    return names.dump();
+}
+
 static std::string serializeJavaValue(jsi::Runtime &runtime, const jsi::Value &value)
 {
     return loader::native::serializeBounded(runtime, value, kNativeArgumentsConversion);
@@ -501,7 +521,9 @@ struct HookListener {
     std::weak_ptr<jsi::Function>                                   callback;
     std::weak_ptr<loader::native::RuntimeResourceRegistry>         resources;
     std::shared_ptr<loader::native::RuntimeResourceOperationScope> operations;
+    JavaCallbacks                                                  callbacks;
     loader::AddonSlot                                              addon         = loader::kNoAddon;
+    bool                                                           coalesce      = false;
     jsi::Runtime                                                  *inlineRuntime = nullptr;
     uint64_t                                                       runtimeIdentity   = 0;
     uint64_t                                                       runtimeGeneration = 0;
@@ -516,6 +538,115 @@ static bool onMainThread()
 
 static std::mutex                                    gHookMutex;
 static std::unordered_map<std::string, HookListener> gHookListeners;
+
+static std::optional<std::string> coalescedHookKey(const std::string &token,
+                                                   const std::string &payload)
+{
+    nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
+    if (!parsed.is_object())
+    {
+        return std::nullopt;
+    }
+    auto self = parsed.find("self");
+    if (self == parsed.end() || !self->is_object())
+    {
+        return std::nullopt;
+    }
+    auto type  = self->find("type");
+    auto value = self->find("value");
+    if (type == self->end() || !type->is_string() || *type != "handle" || value == self->end() ||
+        !value->is_string())
+    {
+        return std::nullopt;
+    }
+    return "android-hook:" + token + ":" + value->get<std::string>();
+}
+
+static void collectJavaHandleIssues(const nlohmann::json &value, std::vector<std::string> &issues)
+{
+    if (value.is_array())
+    {
+        for (const nlohmann::json &child : value)
+        {
+            collectJavaHandleIssues(child, issues);
+        }
+        return;
+    }
+    if (!value.is_object())
+    {
+        return;
+    }
+    auto type = value.find("type");
+    auto id   = value.find("value");
+    if (type != value.end() && type->is_string() && *type == "handle" && id != value.end() &&
+        id->is_string() && id->get<std::string>().rfind("java-", 0) == 0)
+    {
+        issues.push_back(id->get<std::string>());
+        return;
+    }
+    for (auto iterator = value.begin(); iterator != value.end(); ++iterator)
+    {
+        collectJavaHandleIssues(iterator.value(), issues);
+    }
+}
+
+class PendingJavaHookEvent final
+{
+public:
+    PendingJavaHookEvent(JavaCallbacks callbacks, std::string payload)
+        : callbacks_(callbacks), payload_(std::move(payload))
+    {
+    }
+
+    ~PendingJavaHookEvent()
+    {
+        if (transferred_.load(std::memory_order_acquire))
+        {
+            return;
+        }
+        nlohmann::json parsed = nlohmann::json::parse(payload_, nullptr, false);
+        if (parsed.is_discarded())
+        {
+            return;
+        }
+        std::vector<std::string> issues;
+        collectJavaHandleIssues(parsed, issues);
+        for (const std::string &id : issues)
+        {
+            try
+            {
+                callJavaVoid(callbacks_, callbacks_.javaRelease,
+                             {nlohmann::json{{"id", id}, {"issues", 1}}.dump()});
+            }
+            catch (const std::exception &error)
+            {
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                            std::string("Failed to release a coalesced Java hook handle: ") +
+                                error.what());
+            }
+            catch (...)
+            {
+                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                            "Failed to release a coalesced Java hook handle.");
+            }
+        }
+    }
+
+    const std::string &payload() const
+    {
+        return payload_;
+    }
+
+    void transfer()
+    {
+        transferred_.store(true, std::memory_order_release);
+    }
+
+private:
+    JavaCallbacks    callbacks_;
+    std::string      payload_;
+    std::atomic_bool transferred_{false};
+};
 
 void dispatchHookEvent(const std::string &token, const std::string &payload)
 {
@@ -533,6 +664,7 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
     {
         return;
     }
+    auto pendingEvent = std::make_shared<PendingJavaHookEvent>(listener.callbacks, payload);
 
     auto operation =
         loader::native::beginRuntimeResourceOperation(listener.resources, listener.runtimeIdentity);
@@ -548,7 +680,7 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
     loader::AddonScope scope(listener.addon);
     auto deliver = [callback = listener.callback, operations = listener.operations, operation,
                     identity = listener.runtimeIdentity, generation = listener.runtimeGeneration,
-                    addon = listener.addon, payload](
+                    addon = listener.addon, pendingEvent](
                        jsi::Runtime &runtime, loader::native::RuntimeResourceRegistry &resources) {
         if (!operations->active() || !operation->active() ||
             generation != loader::native::runtimeGeneration())
@@ -567,16 +699,17 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
             return;
         }
         loader::AddonScope        runtimeScope(addon);
-        std::optional<jsi::Value> event = adoptTaggedJavaEvent(runtime, payload);
+        std::optional<jsi::Value> event = adoptTaggedJavaEvent(runtime, pendingEvent->payload());
         if (!event)
         {
-            nlohmann::json parsed = nlohmann::json::parse(payload, nullptr, false);
+            nlohmann::json parsed = nlohmann::json::parse(pendingEvent->payload(), nullptr, false);
             if (parsed.is_discarded())
             {
                 return;
             }
             event = adoptJavaValue(runtime, parsed);
         }
+        pendingEvent->transfer();
 
         jsi::Value failure = catchingCall(runtime).call(
             runtime, jsi::Value(runtime, *activeCallback), std::move(*event));
@@ -591,6 +724,25 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
             loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS, *message);
         }
     };
+
+    if (listener.coalesce)
+    {
+        std::optional<std::string> key = coalescedHookKey(token, payload);
+        if (key)
+        {
+            loader::native::executeRuntimeCoalesced(
+                std::move(*key),
+                [deliver, resources = listener.resources, identity = listener.runtimeIdentity,
+                 operation](jsi::Runtime &runtime) {
+                    loader::native::withRuntimeResource(
+                        resources, identity, operation,
+                        [&](loader::native::RuntimeResourceRegistry &owner) {
+                            deliver(runtime, owner);
+                        });
+                });
+            return;
+        }
+    }
 
     if (!listener.inlineRuntime)
     {
@@ -647,7 +799,7 @@ void dispatchHookEvent(const std::string &token, const std::string &payload)
 }
 
 static void rememberHookListener(jsi::Runtime &runtime, const std::string &token,
-                                 const jsi::Value &listener)
+                                 const jsi::Value &listener, bool coalesce, JavaCallbacks callbacks)
 {
     if (!listener.isObject() || !listener.asObject(runtime).isFunction(runtime))
     {
@@ -661,7 +813,9 @@ static void rememberHookListener(jsi::Runtime &runtime, const std::string &token
     HookListener                stored{callback,
                                        resources,
                                        operations,
+                                       callbacks,
                                        loader::currentAddon(),
+                                       coalesce,
                                        gUIScopeRuntime,
                                        resources->identity(),
                                        loader::native::runtimeGeneration()};
@@ -912,6 +1066,39 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
                    return callJavaString(callbacks, callbacks.javaInvoke, arguments);
                });
            });
+    define(runtime, java, "prepare", 3,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 3,
+                                "Prepared Java calls require a handle, method and signature");
+               return javaSynchronously(rt, callbacks, callbacks.javaPrepare,
+                                        {serializeJavaHandle(rt, args[0]), javaName(rt, args[1]),
+                                         serializeJavaParameterTypes(rt, args[2])});
+           });
+    define(runtime, java, "invokePrepared", 3,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 2, "Prepared Java invocation requires a plan and target");
+               return javaSynchronously(rt, callbacks, callbacks.javaInvokePrepared,
+                                        {serializeJavaHandle(rt, args[0]),
+                                         serializeJavaHandle(rt, args[1]),
+                                         serializeJavaArguments(rt, args, count, 2)});
+           });
+    define(runtime, java, "invokePreparedAsync", 3,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 2, "Prepared Java invocation requires a plan and target");
+               std::vector<std::string> arguments{serializeJavaHandle(rt, args[0]),
+                                                  serializeJavaHandle(rt, args[1]),
+                                                  serializeJavaArguments(rt, args, count, 2)};
+               return javaAsynchronously(rt, [callbacks, arguments = std::move(arguments)]() {
+                   return callJavaString(callbacks, callbacks.javaInvokePrepared, arguments);
+               });
+           });
+    define(runtime, java, "disposePlan", 1,
+           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               requireArguments(count, 1, "Prepared Java plan disposal requires a call plan");
+               callJavaVoid(callbacks, callbacks.javaDisposePlan,
+                            {serializeJavaHandle(rt, args[0])});
+               return jsi::Value::undefined();
+           });
     define(runtime, java, "getField", 2,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 2, "Java field reads require a handle and a field name");
@@ -1017,32 +1204,51 @@ static void removeHook(const JavaCallbacks &callbacks, const std::string &token)
 static jsi::Object makeHooksNamespace(jsi::Runtime &runtime, const JavaCallbacks &callbacks)
 {
     jsi::Object hooks(runtime);
-    define(runtime, hooks, "hook", 5,
-           [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
-               requireArguments(count, 3,
-                                "Hooks require a class name, a method name and parameter types");
-               std::string parameters = serializeJavaArguments(rt, args, count, 2);
-               std::string options    = count > 3 && args[3].isObject()
-                                            ? serializeJavaValue(rt, args[3])
-                                            : std::string("{}");
-               loader::native::NativeResourceReservation reservation(
-                   loader::native::nativeHookBudget(), "Too many native hooks are installed");
-               std::string token = callJavaString(
-                   callbacks, callbacks.hooksInstall,
-                   {javaName(rt, args[0]), javaName(rt, args[1]), parameters, options});
+    define(
+        runtime, hooks, "hook", 5,
+        [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+            requireArguments(count, 3,
+                             "Hooks require a class name, a method name and parameter types");
+            std::string parameters = serializeJavaArguments(rt, args, count, 2);
+            std::string options  = count > 3 && args[3].isObject() ? serializeJavaValue(rt, args[3])
+                                                                   : std::string("{}");
+            bool        coalesce = false;
+            if (count > 3 && args[3].isObject())
+            {
+                jsi::Value value = args[3].asObject(rt).getProperty(rt, "coalesce");
+                if (!value.isUndefined() && !value.isNull())
+                {
+                    if (!value.isString() || javaName(rt, value) != "receiver")
+                    {
+                        throw std::invalid_argument("Hook coalescing must be set to receiver");
+                    }
+                    coalesce = true;
+                }
+            }
+            if (coalesce &&
+                (count <= 4 || !args[4].isObject() || !args[4].asObject(rt).isFunction(rt)))
+            {
+                throw std::invalid_argument("Receiver coalescing requires an observation callback");
+            }
+            loader::native::NativeResourceReservation reservation(
+                loader::native::nativeHookBudget(), "Too many native hooks are installed");
+            std::string token =
+                callJavaString(callbacks, callbacks.hooksInstall,
+                               {javaName(rt, args[0]), javaName(rt, args[1]), parameters, options});
 
-               nlohmann::json parsed = nlohmann::json::parse(token, nullptr, false);
-               if (parsed.is_discarded() || !parsed.contains("id") || !parsed["id"].is_string())
-               {
-                   throw std::runtime_error("The Android hook adapter returned no token");
-               }
-               installedHooks().adopt(parsed["id"].get<std::string>(), reservation);
-               if (count > 4)
-               {
-                   rememberHookListener(rt, parsed["id"].get<std::string>(), args[4]);
-               }
-               return loader::toJSIValue(rt, parsed);
-           });
+            nlohmann::json parsed = nlohmann::json::parse(token, nullptr, false);
+            if (parsed.is_discarded() || !parsed.contains("id") || !parsed["id"].is_string())
+            {
+                throw std::runtime_error("The Android hook adapter returned no token");
+            }
+            installedHooks().adopt(parsed["id"].get<std::string>(), reservation);
+            if (count > 4)
+            {
+                rememberHookListener(rt, parsed["id"].get<std::string>(), args[4], coalesce,
+                                     callbacks);
+            }
+            return loader::toJSIValue(rt, parsed);
+        });
     define(runtime, hooks, "remove", 1,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 1, "Removing a hook requires its token");

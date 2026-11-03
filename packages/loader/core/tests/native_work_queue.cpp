@@ -117,4 +117,29 @@ int main()
         assert(count == 1);
     }
     assert(concurrent.enqueue(400));
+
+    loader::native::NativeWorkQueue<int> coalesced;
+    std::vector<int>                     latest;
+    assert(coalesced.enqueueCoalesced("hook-1:receiver-1", 1));
+    assert(!coalesced.enqueueCoalesced("hook-1:receiver-1", 2));
+    assert(!coalesced.enqueueCoalesced("hook-1:receiver-2", 3));
+    assert(coalesced.size() == 2);
+    assert(!coalesced.drain(
+        [&](int value) {
+            latest.push_back(value);
+        },
+        [&] {
+            return now;
+        }));
+    assert((latest == std::vector<int>{2, 3}));
+
+    assert(coalesced.enqueueCoalesced("hook-1:receiver-1", 4));
+    assert(coalesced.drain(
+               [&](int value) {
+                   latest.push_back(value);
+               },
+               [&] {
+                   return now;
+               }) == false);
+    assert(latest.back() == 4);
 }

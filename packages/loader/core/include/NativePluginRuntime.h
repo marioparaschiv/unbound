@@ -22,6 +22,12 @@ public:
     virtual bool isMainThread()                                                   = 0;
     virtual void runOnMain(std::function<void()> work)                            = 0;
     virtual void runOnRuntime(std::function<void(facebook::jsi::Runtime &)> work) = 0;
+    virtual void runOnRuntimeCoalesced(std::string                                   key,
+                                       std::function<void(facebook::jsi::Runtime &)> work)
+    {
+        (void) key;
+        runOnRuntime(std::move(work));
+    }
     virtual void runOnRuntimeCritical(std::function<void(facebook::jsi::Runtime &)> work)
     {
         runOnRuntime(std::move(work));
@@ -107,6 +113,8 @@ executeMainAsynchronously(facebook::jsi::Runtime &runtime, std::function<void()>
                           std::function<facebook::jsi::Value(facebook::jsi::Runtime &)> result);
 
 void executeRuntimeAsynchronously(std::function<void(facebook::jsi::Runtime &)> callback);
+void executeRuntimeCoalesced(std::string                                   key,
+                             std::function<void(facebook::jsi::Runtime &)> callback);
 bool runningAsynchronousMainOperation();
 bool executeRuntimeSynchronously(
     std::function<void(facebook::jsi::Runtime &)> callback,

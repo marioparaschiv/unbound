@@ -34,6 +34,12 @@ export type NativeJavaHandleValue = {
 /** A Java object, as a handle or as a tagged handle value from a result. */
 export type NativeJavaReference = NativeJavaHandle | NativeJavaHandleValue;
 
+declare const nativeJavaCallPlan: unique symbol;
+
+export type NativeJavaCallPlan = NativeJavaHandle & {
+	readonly [nativeJavaCallPlan]: true;
+};
+
 /** An argument to a Java call: a tagged value or a handle. */
 export type NativeJavaArgument = NativeJavaValue | NativeJavaHandle;
 
@@ -49,6 +55,7 @@ export type NativeJavaHookEvent<Receiver extends boolean = true> = {
 
 /** Options for `hooks.hook`. */
 export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
+	coalesce?: 'receiver';
 	/** Returns a value set with `setReturnValue` for a matching call instead of running the method. Defaults to false. */
 	replace?: boolean;
 	/** Whether the listener hears calls: before the method by default, `after` once it has run, `false` never. */
@@ -187,6 +194,22 @@ export type NativeJavaBridge = {
 	): NativeJavaValue;
 	/** Calls a method on the JavaScript thread. */
 	invoke(handle: NativeJavaReference, name: string, args?: NativeJavaArgument[]): NativeJavaValue;
+	prepare(
+		target: NativeJavaReference,
+		name: string,
+		parameterTypes: readonly string[],
+	): NativeJavaCallPlan;
+	invokePrepared(
+		plan: NativeJavaCallPlan,
+		target: NativeJavaReference,
+		args?: NativeJavaArgument[],
+	): NativeJavaValue;
+	invokePreparedAsync(
+		plan: NativeJavaCallPlan,
+		target: NativeJavaReference,
+		args?: NativeJavaArgument[],
+	): NativeCancelablePromise<NativeJavaValue>;
+	disposePlan(plan: NativeJavaCallPlan): void;
 	/** Calls a method on the main thread and resolves with its result. Needs `native.java.invokeAsync`. */
 	invokeAsync(
 		handle: NativeJavaReference,

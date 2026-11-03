@@ -5,6 +5,7 @@ import type {
 	NativeClassHandle,
 	NativeHandle,
 	NativeObjectHandle,
+	NativeSerializable,
 	NativeStruct,
 	NativeStructFields,
 	NativeViewSearchOptions,
@@ -12,6 +13,14 @@ import type {
 	NativeViewSnapshotOptions,
 } from './native-handles';
 import type { NativeUIScopeFactory } from './native-ui';
+
+export type NativeObjCResult = NativeSerializable | NativeHandle | bigint | undefined;
+
+declare const nativeObjCCallPlan: unique symbol;
+
+export type NativeObjCCallPlan = NativeHandle & {
+	readonly [nativeObjCCallPlan]: true;
+};
 
 /** Refers to an earlier step's result inside `objc.batch`, as a target or an argument. */
 export type NativeBatchReference = {
@@ -45,8 +54,7 @@ export type NativeHookContext<Receiver extends boolean = true> = {
 	argumentIndexes: number[];
 	phase: 'before' | 'after' | 'replace';
 	/** Runs the original implementation; it works only synchronously on the hook's thread. */
-	// UNKNOWN: returns whatever the hooked Objective-C method returns.
-	original: (...args: unknown[]) => unknown;
+	original: (...args: unknown[]) => NativeObjCResult;
 	/** Swaps the object argument at an index of `args` before the original runs; only during a synchronous handler. */
 	replaceObjectArgument(index: number, value: NativeObjectHandle | null): void;
 };
@@ -58,14 +66,14 @@ export type NativeHookHandlers<Receiver extends boolean = true> = {
 	/** Runs after the original implementation. */
 	after?: (context: NativeHookContext<Receiver>) => void | Promise<void>;
 	/** Runs instead of the original; what it returns becomes the method's result. */
-	// UNKNOWN: the replacement returns whatever type the hooked Objective-C method returns.
-	replace?: (context: NativeHookContext<Receiver>) => unknown;
+	replace?: (context: NativeHookContext<Receiver>) => NativeObjCResult;
 };
 
 /** Options for `objc.hook`. */
 export type NativeHookOptions<Receiver extends boolean = boolean> = {
 	/** Runs no JavaScript and returns values set with `setReturnValue`; needs a scalar or struct return type. */
 	cacheOnly?: boolean;
+	coalesce?: 'receiver';
 	/** Hooks calls on this object only. */
 	instance?: NativeObjectHandle;
 	/** Removes the hook after its first call. */
@@ -78,8 +86,7 @@ export type NativeHookToken = {
 	/** False once the hook is removed. */
 	readonly active: boolean;
 	/** Sets the result a `cacheOnly` hook returns for calls with this receiver and these arguments. */
-	// UNKNOWN: `value` is whatever type the hooked Objective-C method returns.
-	setReturnValue(self: NativeObjectHandle, args: unknown[], value: unknown): void;
+	setReturnValue(self: NativeObjectHandle, args: unknown[], value: NativeObjCResult): void;
 	/** Removes the result set for this receiver and these arguments. */
 	removeReturnValue(self: NativeObjectHandle, args: unknown[]): void;
 	/** Removes every result set on this hook. */
@@ -106,32 +113,42 @@ export type NativeObjCBridge = {
 	/** Checks whether the object responds to a selector. */
 	respondsTo(handle: NativeHandle, selector: string): boolean;
 	/** Sends a selector with its arguments on the current runtime thread. */
-	// UNKNOWN: returns whatever the Objective-C method returns, bridged to JS.
-	call(handle: NativeHandle, selector: string, ...args: unknown[]): unknown;
+	call(handle: NativeHandle, selector: string, ...args: unknown[]): NativeObjCResult;
 	/** Runs the implementation `currentClass`'s superclass provides, like `super` in Objective-C. */
-	// UNKNOWN: returns whatever the Objective-C method returns, bridged to JS.
 	callSuper(
 		handle: NativeObjectHandle,
 		currentClass: NativeClassHandle | string,
 		selector: string,
 		...args: unknown[]
-	): unknown;
+	): NativeObjCResult;
 	/** Sends a selector on the thread `options.thread` names; `main` blocks, so prefer `invokeAsync` for UI work. */
-	// UNKNOWN: returns whatever the Objective-C method returns, bridged to JS.
 	invoke(
 		handle: NativeObjectHandle,
 		selector: string,
 		args: unknown[],
 		options?: NativeCallOptions,
-	): unknown;
+	): NativeObjCResult;
 	/** Sends a selector on the main thread and resolves with its result. Needs `native.objc.invokeAsync`. */
 	invokeAsync(
 		handle: NativeObjectHandle,
 		selector: string,
 		args: unknown[],
-	): NativeCancelablePromise<unknown>;
+	): NativeCancelablePromise<NativeObjCResult>;
+	prepare(handle: NativeHandle, selector: string): NativeObjCCallPlan;
+	invokePrepared(
+		plan: NativeObjCCallPlan,
+		handle: NativeHandle,
+		args: unknown[],
+		options?: NativeCallOptions,
+	): NativeObjCResult;
+	invokePreparedAsync(
+		plan: NativeObjCCallPlan,
+		handle: NativeHandle,
+		args: unknown[],
+	): NativeCancelablePromise<NativeObjCResult>;
+	disposePlan(plan: NativeObjCCallPlan): void;
 	/** Runs dependent calls in one main-thread pass; a failed step rejects it without undoing earlier steps. */
-	batch(steps: readonly NativeBatchStep[]): NativeCancelablePromise<unknown[]>;
+	batch(steps: readonly NativeBatchStep[]): NativeCancelablePromise<NativeObjCResult[]>;
 	/** Reads a `UIView` subtree in one main-thread pass, as a point-in-time list. Needs `native.objc.snapshot`. */
 	snapshot(
 		root: NativeObjectHandle,
@@ -144,38 +161,33 @@ export type NativeObjCBridge = {
 		options?: NativeViewSearchOptions,
 	): NativeCancelablePromise<NativeObjectHandle[]>;
 	/** Like `callSuper` with a thread policy; it cannot cross to the main thread synchronously. */
-	// UNKNOWN: returns whatever the Objective-C method returns, bridged to JS.
 	invokeSuper(
 		handle: NativeObjectHandle,
 		currentClass: NativeClassHandle | string,
 		selector: string,
 		args: unknown[],
 		options?: NativeCallOptions,
-	): unknown;
+	): NativeObjCResult;
 	/** Runs the superclass implementation on the main thread and resolves with its result. */
 	invokeSuperAsync(
 		handle: NativeObjectHandle,
 		currentClass: NativeClassHandle | string,
 		selector: string,
 		args: unknown[],
-	): NativeCancelablePromise<unknown>;
+	): NativeCancelablePromise<NativeObjCResult>;
 	/** Reads an instance variable by name, such as `_viewModel`. */
-	// UNKNOWN: an ivar holds whatever type its Objective-C declaration says.
-	getIvar(handle: NativeObjectHandle, name: string): unknown;
+	getIvar(handle: NativeObjectHandle, name: string): NativeObjCResult;
 	/** Writes an instance variable by name. */
-	// UNKNOWN: an ivar holds whatever type its Objective-C declaration says.
-	setIvar(handle: NativeObjectHandle, name: string, value: unknown): void;
+	setIvar(handle: NativeObjectHandle, name: string, value: NativeObjCResult): void;
 	/** Creates a key for attaching a value to objects with `setAssociatedObject`. */
 	createAssociationKey(): NativeAssociationKey;
 	/** Reads the value attached to an object under a key. */
-	// UNKNOWN: an association holds any JS or native value the plugin stored.
-	getAssociatedObject(handle: NativeObjectHandle, key: NativeAssociationKey): unknown;
+	getAssociatedObject(handle: NativeObjectHandle, key: NativeAssociationKey): NativeObjCResult;
 	/** Attaches a value to an object; `null` clears it. `policy` is `assign`, `retain`, `copy`, `retainNonatomic` or `copyNonatomic`. */
-	// UNKNOWN: an association holds any JS or native value the plugin stores.
 	setAssociatedObject(
 		handle: NativeObjectHandle,
 		key: NativeAssociationKey,
-		value: unknown,
+		value: NativeObjCResult,
 		policy?: string,
 	): void;
 	/** Builds a registered struct, such as `CGRect` or `UIEdgeInsets`, to pass to native calls. */
@@ -184,7 +196,7 @@ export type NativeObjCBridge = {
 		fields: T,
 	): NativeStruct<T>;
 	/** Converts an `NSArray` handle to a JavaScript array. */
-	array(handle: NativeObjectHandle): unknown[];
+	array(handle: NativeObjectHandle): NativeObjCResult[];
 	/** Copies bytes into a new `NSData` object. */
 	data(value: ArrayBuffer | Uint8Array): NativeObjectHandle;
 	/** Hooks a method by class and selector; handlers run in registration order, and the scope removes the hook on dispose. */

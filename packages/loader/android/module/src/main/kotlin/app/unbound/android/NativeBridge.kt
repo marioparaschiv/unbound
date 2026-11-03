@@ -190,6 +190,17 @@ object NativeBridge {
         NativeJava.invoke(handleJSON, name, argumentsJSON)
 
     @JvmStatic
+    fun javaPrepare(handleJSON: String, name: String, parameterTypesJSON: String): String =
+        NativeJava.prepare(handleJSON, name, parameterTypesJSON)
+
+    @JvmStatic
+    fun javaInvokePrepared(planJSON: String, handleJSON: String, argumentsJSON: String): String =
+        NativeJava.invokePrepared(planJSON, handleJSON, argumentsJSON)
+
+    @JvmStatic
+    fun javaDisposePlan(planJSON: String) = NativeJava.disposePlan(planJSON)
+
+    @JvmStatic
     fun javaGetField(handleJSON: String, name: String): String =
         NativeJava.getField(handleJSON, name)
 

@@ -405,6 +405,14 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     gCallbacks.javaInvoke = env->GetStaticMethodID(
         bridge, "javaInvoke",
         "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.javaPrepare = env->GetStaticMethodID(
+        bridge, "javaPrepare",
+        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.javaInvokePrepared = env->GetStaticMethodID(
+        bridge, "javaInvokePrepared",
+        "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
+    gCallbacks.javaDisposePlan =
+        env->GetStaticMethodID(bridge, "javaDisposePlan", "(Ljava/lang/String;)V");
     gCallbacks.javaGetField = env->GetStaticMethodID(
         bridge, "javaGetField", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;");
     gCallbacks.javaSetField = env->GetStaticMethodID(
@@ -462,7 +470,8 @@ static bool cacheCallbacks(JNIEnv *env, jclass bridge)
     return !clearPendingException(env) && gCallbacks.scheduleRuntime && gCallbacks.scheduleMain &&
            gCallbacks.isMainThread && gCallbacks.javaGetClass && gCallbacks.javaClassName &&
            gCallbacks.javaDescribe && gCallbacks.javaConstruct && gCallbacks.javaRespondsTo &&
-           gCallbacks.javaInvoke && gCallbacks.javaGetField && gCallbacks.javaSetField &&
+           gCallbacks.javaInvoke && gCallbacks.javaPrepare && gCallbacks.javaInvokePrepared &&
+           gCallbacks.javaDisposePlan && gCallbacks.javaGetField && gCallbacks.javaSetField &&
            gCallbacks.javaRelease && gCallbacks.hooksInstall && gCallbacks.hooksRemove &&
            gCallbacks.runtimeReplaced && gCallbacks.javaBatch && gCallbacks.javaFindViews &&
            gCallbacks.javaCreateAssociationKey && gCallbacks.javaGetAssociatedObject &&
