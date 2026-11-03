@@ -15,6 +15,7 @@ int main()
         iterationsVariable ? std::strtol(iterationsVariable, nullptr, 10) : 3000;
     std::mt19937 random(0x15eed);
     auto         runtime = facebook::hermes::makeHermesRuntime();
+    native_jsi_fuzz::replayRegressions(*runtime);
     for (long iteration = 0; iteration < iterations; iteration++)
     {
         std::vector<std::uint8_t> input(2 + random() % 96);

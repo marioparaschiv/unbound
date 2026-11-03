@@ -12,12 +12,11 @@ const NativeConversionProfile &NativeConversionBudget::profile() const
 
 bool NativeConversionBudget::enter()
 {
-    if (depth >= profile_.maximumDepth || entries >= profile_.maximumEntries)
+    if (depth >= profile_.maximumDepth)
     {
         return false;
     }
     depth++;
-    entries++;
     return true;
 }
 
@@ -29,9 +28,14 @@ void NativeConversionBudget::leave()
     }
 }
 
-bool NativeConversionBudget::reserveEntries(size_t count) const
+bool NativeConversionBudget::reserveEntries(size_t count)
 {
-    return count <= profile_.maximumEntries - entries;
+    if (count > profile_.maximumEntries - entries)
+    {
+        return false;
+    }
+    entries += count;
+    return true;
 }
 
 bool NativeConversionBudget::addBytes(size_t count)
