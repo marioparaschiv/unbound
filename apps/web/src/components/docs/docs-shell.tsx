@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '~/components/ui/drawer';
+import useSteadySidebar from '~/hooks/use-steady-sidebar';
 import { Button } from '~/components/ui/button';
 import Kbd from '~/components/ui/kbd';
 
@@ -46,8 +47,12 @@ function DocsShell({
 	const [searchOpen, setSearchOpen] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
 	const toggledAt = useRef(0);
+	const sidebarRef = useRef<HTMLElement>(null);
+	const listRef = useRef<HTMLDivElement>(null);
 	const href = useLocation({ select: (location) => location.href });
 	const [shownHref, setShownHref] = useState(href);
+
+	useSteadySidebar(sidebarRef, listRef);
 
 	if (href !== shownHref) {
 		setShownHref(href);
@@ -103,7 +108,10 @@ function DocsShell({
 					<IconMagnifier />
 				</Button>
 			</div>
-			<aside className='hidden top-5 sticky lg:flex flex-col gap-3 max-h-[calc(100dvh-2.5rem)]'>
+			<aside
+				ref={sidebarRef}
+				className='hidden top-5 sticky lg:flex flex-col gap-3 max-h-[calc(100dvh-2.5rem)]'
+			>
 				{/* Inset by the list's right padding less its negative margin, so both share a right edge. */}
 				<div className='flex flex-col gap-3 pr-2'>
 					<button
@@ -119,9 +127,12 @@ function DocsShell({
 					{sidebarHeader}
 				</div>
 				{/* The 4px of padding, taken back by the negative margin, keeps focus rings inside the scroll clip. */}
-				<div className='-m-1 p-1 pr-3 min-h-0 overflow-y-auto'>{sidebar}</div>
+				<div ref={listRef} className='-m-1 p-1 pr-3 min-h-0 overflow-y-auto'>
+					{sidebar}
+				</div>
 			</aside>
-			<main className='min-w-0'>{children}</main>
+			{/* A viewport tall at least, so even a short page scrolls far enough for the sidebar to stick. */}
+			<main className='lg:min-h-[calc(100dvh-2.5rem)] min-w-0'>{children}</main>
 			{renderSearch({ open: searchOpen, onOpenChange: setSearchOpen })}
 		</div>
 	);
