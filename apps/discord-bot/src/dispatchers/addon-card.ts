@@ -7,7 +7,7 @@ import type {
 	RawFile,
 	RESTPostAPIChannelMessageJSONBody,
 } from 'discord.js';
-import { ButtonStyle, ComponentType, MessageFlags, SeparatorSpacingSize } from 'discord.js';
+import { ButtonStyle, ComponentType, MessageFlags } from 'discord.js';
 import type { AddonType } from '@unbound-app/contracts/addons';
 import type { PublicAddon } from '@unbound-app/web/bot';
 
@@ -143,10 +143,7 @@ export function renderAddon(
 		});
 	}
 
-	components.push(
-		{ type: ComponentType.Separator, divider: true, spacing: SeparatorSpacingSize.Small },
-		buttons,
-	);
+	components.push(buttons);
 
 	return {
 		body: {
