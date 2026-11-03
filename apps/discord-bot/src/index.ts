@@ -53,6 +53,8 @@ const client = new SapphireClient({
 		GatewayIntentBits.Guilds,
 	],
 	loadMessageCommandListeners: true,
+	// Sent on every identify, so the status survives reconnects.
+	presence: { status: 'dnd' },
 });
 
 async function exit(code: number): Promise<never> {
