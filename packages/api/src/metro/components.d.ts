@@ -4,7 +4,7 @@ export type { DesignComponentName, DesignModule } from '../_internal';
 export { DESIGN_COMPONENTS } from '../_internal';
 import type { DesignComponentName, DesignModule, FormsFormSwitchProps } from '../_internal';
 import * as React$1 from 'react';
-import { ComponentProps, ComponentType, ElementType, ReactNode } from 'react';
+import { ComponentProps, ElementType, ReactNode } from 'react';
 import * as RN from 'react-native';
 import { ColorValue, ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
@@ -77,13 +77,7 @@ export declare function auditDesignComponents(): DesignComponentAudit;
  * @param value The value to check.
  * @returns Whether React can render it.
  */
-export declare function isRenderable(
-	value:
-		| DesignModule[keyof DesignModule]
-		| React$1.ElementType
-		| Record<string, React$1.ComponentType<never>>
-		| undefined,
-): value is React$1.ElementType;
+export declare function isRenderable(value: unknown): value is React$1.ElementType;
 /**
  * @description Registers the component the design module returns when a Discord build lacks the
  * named one or ships something React can't render.

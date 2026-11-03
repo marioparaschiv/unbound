@@ -4,7 +4,7 @@ export type { DiscordFunction } from '../_internal';
 import type { DesignComponentName, DesignModule, DiscordFunction } from '../_internal';
 import type { PredicateResult } from '../utils';
 import * as React$1 from 'react';
-import { ComponentProps, ComponentType, ElementType, ReactNode } from 'react';
+import { ComponentProps, ElementType, ReactNode } from 'react';
 import * as RN from 'react-native';
 import {
 	ColorValue,
