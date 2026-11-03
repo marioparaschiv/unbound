@@ -53,6 +53,10 @@ import type { ReactionChange } from '~/types';
 import { surfaceStates } from '~/surface-states';
 import ReactionUserCache from '~/reactor-cache';
 import { fetchReactors } from '~/reactors';
+import {
+	LATEST_BIND_PER_RECEIVER,
+	LATEST_CALL_PER_RECEIVER,
+} from '@unbound-plugins/shared/native/android/hook-options';
 
 const REACTION_VIEW = legacyJavaClass('com.discord.reactions.ReactionView');
 const REACTION_ROW = 'com.discord.reactions.ShortcutsFlexbox';
@@ -427,7 +431,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 		MESSAGE_VIEW,
 		bindMessage.name,
 		bindMessage.parameters,
-		{ notify: true },
+		LATEST_BIND_PER_RECEIVER,
 		({ self, args }) => {
 			const messageView = javaReference(self);
 			const message = javaReference(args[0]);
@@ -443,7 +447,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 		MESSAGE_VIEW,
 		'onSizeChanged',
 		SIZE_PARAMETERS,
-		{ notify: true },
+		LATEST_CALL_PER_RECEIVER,
 		({ self }) => {
 			const key = javaViewKey(self);
 			const pending = key ? awaitingSize.get(key) : undefined;
