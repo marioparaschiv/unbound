@@ -1,0 +1,117 @@
+---
+title: 'Settings and Storage'
+description: 'Save options that last across restarts, and give users a panel to change them.'
+icon: 'toggle'
+---
+
+Unbound saves settings in **Buckets**. A Bucket is a named group of keys and values. Every Bucket is saved to the same `settings.json` on the device, under its own name, so they never collide. Your plugin gets its own Bucket, named after its manifest `id`.
+
+## Reading and writing
+
+`storage.getBucket()` with no name returns your plugin's Bucket. Values are saved as soon as you set them, and are still there after Discord restarts.
+
+```ts
+import { storage } from '@unbound-app/api';
+
+const settings = storage.getBucket();
+
+settings.set('greeting', 'Hello there');
+settings.get('greeting', 'Hi');
+```
+
+`get` takes a default, which it returns while the key is unset. So you never need to write defaults on first run.
+
+| Method | What it does |
+| --- | --- |
+| `get(key, default)` | Reads a value, or the default when the key is unset |
+| `set(key, value)` | Saves a value |
+| `toggle(key, default)` | Flips a boolean. An unset key starts from the default |
+| `remove(key)` | Deletes a value |
+| `clear()` | Deletes every value in the Bucket |
+
+Keys can be dot-paths, such as `colors.accent`. Unbound saves them as nested objects.
+
+## Keep keys in one place
+
+Put the Bucket name and every key in `src/constants.ts`. Each feature and the settings panel then read the same names, and a typo can't create a second key.
+
+```ts src/constants.ts
+export const SETTINGS_BUCKET = 'my-plugin';
+
+export const GREET_ON_START = 'greetOnStart';
+```
+
+`SETTINGS_BUCKET` is your manifest `id`. The settings panel needs the name, because React components read Buckets by name.
+
+## The settings panel
+
+Export `getSettingsPanel` from your entry file, and Unbound adds a settings screen to your plugin. Build it from Discord's own components, so it looks like the rest of the app.
+
+<Steps>
+	<Step title='Write the panel'>
+		`storage.useBucket` returns the Bucket and re-renders the panel whenever a value changes.
+
+		```tsx src/settings.tsx
+		import { Discord } from '@unbound-app/api/metro/components';
+		import { storage } from '@unbound-app/api';
+		import { ScrollView } from 'react-native';
+
+		import { GREET_ON_START, SETTINGS_BUCKET } from '~/constants';
+
+		function Settings() {
+			const settings = storage.useBucket(SETTINGS_BUCKET);
+
+			return (
+				<ScrollView>
+					<Discord.TableRowGroup title='General'>
+						<Discord.TableSwitchRow
+							label='Greet on start'
+							subLabel='Show a greeting when the plugin starts.'
+							value={settings.get(GREET_ON_START, true)}
+							onValueChange={() => settings.toggle(GREET_ON_START, true)}
+						/>
+					</Discord.TableRowGroup>
+				</ScrollView>
+			);
+		}
+
+		export default Settings;
+		```
+	</Step>
+	<Step title='Export it from the entry file'>
+		```tsx src/index.tsx
+		import Settings from '~/settings';
+
+		export default {
+			getSettingsPanel: () => <Settings />,
+		};
+		```
+	</Step>
+	<Step title='Tell the build about it'>
+		Set `settingsPanel` in the plugin's `rollup.config.mjs`. `ubd create` already does this.
+
+		```js rollup.config.mjs
+		import { unbound } from '@unbound-app/cli/rollup';
+
+		export default unbound(import.meta.url, { settingsPanel: true });
+		```
+	</Step>
+</Steps>
+
+## Reacting to changes outside React
+
+A feature that isn't a component can listen for changes with `storage.onChange`. The first callback decides which changes matter, and the second runs for each of them. Unbound removes the listener when your plugin stops.
+
+```ts src/greeting/index.ts
+import { storage } from '@unbound-app/api';
+
+import { GREET_ON_START, SETTINGS_BUCKET } from '~/constants';
+
+export function watchGreetingSetting() {
+	storage.onChange(
+		({ store, key }) => store === SETTINGS_BUCKET && key === GREET_ON_START,
+		({ value }) => logger.log('Greet on start is now', value),
+	);
+}
+```
+

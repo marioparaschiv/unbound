@@ -1,26 +1,22 @@
 ---
-title: 'Introduction'
+title: 'Icon Packs'
 description: "Replace Discord's icons with your own set."
 icon: 'shapes'
 ---
 
 An icon pack replaces Discord's built-in icons with your own. Like a [theme](/docs/developer/themes/introduction), it's a restyling addon. A theme recolors the interface, and an icon pack replaces the *images* Discord renders for its icons.
 
-### How icon packs work
+## How icon packs work
 
-Discord refers to each icon by name and resolves it to a bundled [asset](/docs/api/latest/assets). An icon pack hooks into that step. For each icon name the pack replaces, Unbound points the asset at your image instead of Discord's.
-
-Names you don't override fall through to Discord's originals, so a pack can replace a few icons or all of them.
-
-Internally, each overridden asset has an `iconPackPath` (where your replacement image is) and an `iconPackScale` (the density the image was made for). Unbound uses these to load your image at the right resolution.
+Discord refers to each icon by name, such as `ic_message_delete`. For each name your pack has an image for, Unbound shows your image instead of Discord's. Names you leave out keep Discord's icon, so a pack can replace a few icons or all of them.
 
 <Note>
 	An icon pack overrides icons *by name*. The asset names that the [assets](/docs/api/latest/assets) module discovers are the same names a pack targets.
 </Note>
 
-### What an icon pack ships
+## What an icon pack ships
 
-Unlike a [plugin](/docs/developer/plugins/introduction), a pack ships no code. It's a folder of image files that mirrors Discord's asset tree, installed under `Unbound/Icons/<id>`. See [iOS](/docs/developer/loader/ios) and [Android](/docs/developer/loader/android#storage) for where that folder is on the device.
+Unlike a [plugin](/docs/developer/plugins/introduction), a pack ships no code. It's a folder of image files laid out like Discord's own assets.
 
 <CardGroup cols={2}>
 	<Card title='Manifest' icon='circle-info' href='/docs/developer/addons/manifest'>
@@ -31,24 +27,23 @@ Unlike a [plugin](/docs/developer/plugins/introduction), a pack ships no code. I
 	</Card>
 </CardGroup>
 
-### File layout
+## File layout
 
-Each image's path mirrors the asset it replaces. To build it:
+Each image sits at the same path as the Discord asset it replaces, without the leading `assets/`, and is named after the asset.
 
-1. Take the asset's location and strip the leading `assets/`.
-2. Add the asset name.
-3. Add the extension.
-
-For example:
-
-```
-Unbound/Icons/my-pack/images/ic_message_delete.png
-Unbound/Icons/my-pack/images/ic_message_delete@2x.png
-```
+<FileTree>
+	<Folder name='my-pack'>
+		<File name='manifest.json' />
+		<Folder name='images'>
+			<File name='ic_message_delete.png' note='Scale 1' />
+			<File name='ic_message_delete@2x.png' note='Scale 2' />
+		</Folder>
+	</Folder>
+</FileTree>
 
 Scale variants use the `@2x` and `@3x` suffixes. A file with no suffix is scale `1`. Unbound picks the **highest** scale present for each asset, so shipping only an `@3x` file is fine. An asset with no matching file in the pack keeps Discord's original.
 
-### How installation resolves files
+## How installation resolves files
 
 Unbound installs a pack from its manifest URL. The manifest's `source` field sets how the files are downloaded. For the in-app install steps, see [Managing Addons](/docs/user/managing-addons).
 
@@ -62,7 +57,7 @@ Unbound installs a pack from its manifest URL. The manifest's `source` field set
 </AccordionGroup>
 
 <Note>
-	Only one pack applies at a time, like a [theme](/docs/developer/themes/introduction). Enabling a pack replaces the applied one. Disabling it falls back to the built-in `default` pack, which renders Discord's own icons. See [managers](/docs/api/latest/plugins) for the methods that toggle packs.
+	Only one pack applies at a time, like a [theme](/docs/developer/themes/introduction). Enabling a pack replaces the applied one. Disabling it brings back Discord's own icons.
 </Note>
 
 <Tip>

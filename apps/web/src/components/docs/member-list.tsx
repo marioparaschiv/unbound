@@ -1,12 +1,18 @@
 import { Link } from '@tanstack/react-router';
 
-import { declarationParts, signatureParts, typeToParts } from '~/lib/docs/type-parts';
+import {
+	declarationParts,
+	signatureParts,
+	typeToParts,
+	type TypePart,
+} from '~/lib/docs/type-parts';
 import { getDescription, getDocComment, isDeprecated } from '~/lib/docs/comment';
+import type { DocsCommentPart, DocsReflection } from '~/lib/docs/typedoc';
 import type { DocsRenderContext } from '~/lib/docs/docs-links';
 import { DOCS_GROUPS, ReflectionKind } from '~/lib/docs/kinds';
 import { getInheritedFrom } from '~/lib/docs/declaration';
-import type { DocsReflection } from '~/lib/docs/typedoc';
 import type { DocsMember } from '~/lib/docs/docs-page';
+import BlockTags from '~/components/docs/block-tags';
 import KindBadge from '~/components/docs/kind-badge';
 import TypeView from '~/components/docs/type-view';
 import DocText from '~/components/docs/doc-text';
@@ -28,6 +34,35 @@ type NamespaceMembersProps = {
 	ctx: DocsRenderContext;
 };
 
+type ReturnsNoteProps = {
+	parts: DocsCommentPart[];
+	ctx: DocsRenderContext;
+};
+
+function ReturnsNote({ parts, ctx }: ReturnsNoteProps) {
+	if (!parts.length) return null;
+
+	return (
+		<div className='flex flex-col gap-1'>
+			<Text variant='text-xs' color='muted' className='font-medium uppercase tracking-wide'>
+				Returns
+			</Text>
+			<DocText parts={parts} ctx={ctx} />
+		</div>
+	);
+}
+
+// A namespace member's signatures, one line per overload, or a variable's type.
+function namespaceMemberParts(member: DocsMember, ctx: DocsRenderContext): TypePart[][] {
+	if (member.signatures.length) {
+		return member.signatures.map((signature) => signatureParts(signature, ctx, false));
+	}
+
+	return member.type
+		? [[{ kind: 'punctuation', text: ': ' }, ...typeToParts(member.type, ctx)]]
+		: [];
+}
+
 function memberParts(member: DocsReflection, ctx: DocsRenderContext) {
 	if (member.kind === ReflectionKind.Method && member.signatures?.length) {
 		return member.signatures.flatMap((signature) => signatureParts(signature, ctx, false));
@@ -43,6 +78,9 @@ function memberParts(member: DocsReflection, ctx: DocsRenderContext) {
 function ObjectMember({ member, ctx }: ObjectMemberProps) {
 	const comment = getDocComment(member);
 	const inheritedFrom = getInheritedFrom(member, ctx);
+	const returns = member.signatures?.length
+		? (comment?.blockTags?.find((tag) => tag.tag === '@returns')?.content ?? [])
+		: [];
 
 	return (
 		<div
@@ -72,6 +110,8 @@ function ObjectMember({ member, ctx }: ObjectMemberProps) {
 				</p>
 			) : null}
 			<DocText parts={getDescription(comment)} ctx={ctx} />
+			<ReturnsNote parts={returns} ctx={ctx} />
+			<BlockTags comment={comment} ctx={ctx} />
 		</div>
 	);
 }
@@ -119,31 +159,44 @@ export function NamespaceMembers({ members, ctx }: NamespaceMembersProps) {
 								const location = ctx.resolve(member.id);
 
 								return (
-									<div key={member.id} className='flex flex-col gap-1 px-4 py-3'>
-										<div className='flex items-center gap-2'>
-											<KindBadge group={group.key} />
-											{location ? (
-												<Link
-													to='/docs/$package/$version/$symbol'
-													params={{
-														...ctx.route,
-														symbol: location.symbol,
-													}}
-													hash={location.anchor}
-													className='font-mono font-semibold text-[0.875rem] hover:underline underline-offset-4'
-												>
-													{member.name}
-												</Link>
-											) : (
-												<span className='font-mono font-semibold text-[0.875rem]'>
-													{member.name}
-												</span>
-											)}
+									<div key={member.id} className='flex flex-col gap-2 px-4 py-3'>
+										<div className='flex items-start gap-2'>
+											<KindBadge group={group.key} className='mt-px' />
+											{/* Inline, so a long signature wraps under the name rather than beside it. */}
+											<p className='flex-1 min-w-0'>
+												{location ? (
+													<Link
+														to='/docs/$package/$version/$symbol'
+														params={{
+															...ctx.route,
+															symbol: location.symbol,
+														}}
+														hash={location.anchor}
+														className='font-mono font-semibold text-[0.875rem] hover:underline underline-offset-4'
+													>
+														{member.name}
+													</Link>
+												) : (
+													<span className='font-mono font-semibold text-[0.875rem]'>
+														{member.name}
+													</span>
+												)}
+												{namespaceMemberParts(member, ctx).map(
+													(parts, index) => (
+														<TypeView
+															key={index}
+															parts={parts}
+															route={ctx.route}
+														/>
+													),
+												)}
+											</p>
 											{member.deprecated ? (
 												<Tag variant='warning'>Deprecated</Tag>
 											) : null}
 										</div>
 										<DocText parts={member.summary} ctx={ctx} />
+										<ReturnsNote parts={member.returns} ctx={ctx} />
 									</div>
 								);
 							})}

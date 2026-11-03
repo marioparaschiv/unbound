@@ -4,6 +4,7 @@ import type {
 	NativeJavaBridge,
 	NativeJavaHooksBridge,
 	NativeJavaReference,
+	NativeJavaValue,
 	NativeUIBridge,
 } from '@unbound-app/api/native';
 import {
@@ -84,17 +85,31 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	const original = java.createAssociationKey();
 	const drawnFor = java.createAssociationKey();
 	const scope = ui.createScope();
+	const needsBubble = ui.callback((self: NativeJavaValue) => {
+		const row = javaReference(self);
 
-	ui.run(installBindGuard, scope, {
-		messageView: AndroidClass.messageView,
-		bindName: bindMessage.name,
-		bindParameters: bindMessage.parameters,
-		messageIdGetter: MESSAGE_ID_GETTER,
-		layerId: BUBBLE_LAYER_ID,
-		ours,
-		original,
-		drawnFor,
+		if (!row) return;
+
+		setTimeout(() => {
+			if (!disposed) schedule(row);
+		}, BIND_SETTLE_MS);
 	});
+
+	ui.run(
+		installBindGuard,
+		scope,
+		{
+			messageView: AndroidClass.messageView,
+			bindName: bindMessage.name,
+			bindParameters: bindMessage.parameters,
+			messageIdGetter: MESSAGE_ID_GETTER,
+			layerId: BUBBLE_LAYER_ID,
+			ours,
+			original,
+			drawnFor,
+		},
+		needsBubble,
+	);
 	const tracked: NativeJavaReference[] = [];
 	const shiftedIcons: NativeJavaReference[] = [];
 	const problems = new Map<string, string>();
@@ -600,22 +615,6 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		},
 	);
 
-	const bindToken = hooks.hook(
-		AndroidClass.messageView,
-		bindMessage.name,
-		bindMessage.parameters,
-		{ notify: true },
-		({ self }) => {
-			const row = javaReference(self);
-
-			if (!row) return;
-
-			setTimeout(() => {
-				if (!disposed) schedule(row);
-			}, BIND_SETTLE_MS);
-		},
-	);
-
 	async function lostBubbles(): Promise<string[]> {
 		const drawn = tracked.filter((row) => javaReference(java.getAssociatedObject(row, ours)));
 		const states = await runOnMain(
@@ -688,7 +687,6 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 			disposed = true;
 			scope.dispose();
 			hooks.remove(token);
-			hooks.remove(bindToken);
 			pending.length = 0;
 			await flushing;
 

@@ -1,11 +1,15 @@
 import { IconMagnifier, IconSidebarLeft } from 'nucleo-micro-bold';
 import { useLocation } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '~/components/ui/drawer';
+import useSteadySidebar from '~/hooks/use-steady-sidebar';
 import { Button } from '~/components/ui/button';
 import Kbd from '~/components/ui/kbd';
+
+// The search dialog's open and close animations. Their keyframes cannot reverse, so toggling mid-way snaps the opacity.
+const TOGGLE_MS = 200;
 
 export type DocsSearchState = {
 	open: boolean;
@@ -18,22 +22,37 @@ type DocsShellProps = {
 	/** The open page's title, shown in the phone bar that opens the sidebar. */
 	title: string;
 	sidebar: ReactNode;
+	/** Controls pinned above the sidebar, such as version selects, that stay put while the sidebar scrolls. */
+	sidebarHeader?: ReactNode;
 	renderSearch: (state: DocsSearchState) => ReactNode;
 	children: ReactNode;
 };
 
 /**
- * @description The layout every docs tab shares. From `lg` up, a sticky scrolling sidebar beside the page;
+ * @description The layout every docs tab shares. From `lg` up, a sticky sidebar beside the page whose search
+ * and header stay pinned while its list scrolls;
  * below it, a bar with the page's title that opens the sidebar in a drawer, which closes on navigation.
- * `⌘K` opens the tab's search either way, and closes it again while it is open.
+ * `⌘K` opens the tab's search either way, and closes it again; presses during the open or close animation are ignored.
  * @param props The sidebar, the search dialog, the open page's title and the page.
  * @returns The shell.
  */
-function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellProps) {
+function DocsShell({
+	label,
+	title,
+	sidebar,
+	sidebarHeader,
+	renderSearch,
+	children,
+}: DocsShellProps) {
 	const [searchOpen, setSearchOpen] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
+	const toggledAt = useRef(0);
+	const sidebarRef = useRef<HTMLElement>(null);
+	const listRef = useRef<HTMLDivElement>(null);
 	const href = useLocation({ select: (location) => location.href });
 	const [shownHref, setShownHref] = useState(href);
+
+	useSteadySidebar(sidebarRef, listRef);
 
 	if (href !== shownHref) {
 		setShownHref(href);
@@ -47,6 +66,13 @@ function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellP
 			}
 
 			event.preventDefault();
+
+			// A held key repeats, and a quick second press would interrupt the running animation.
+			if (event.repeat || event.timeStamp - toggledAt.current < TOGGLE_MS) {
+				return;
+			}
+
+			toggledAt.current = event.timeStamp;
 			setSearchOpen((open) => !open);
 		}
 
@@ -67,7 +93,10 @@ function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellP
 					</DrawerTrigger>
 					<DrawerContent>
 						<DrawerTitle className='sr-only'>{label}</DrawerTitle>
-						<div className='p-4 overflow-y-auto'>{sidebar}</div>
+						<div className='flex flex-col gap-3 p-4 min-h-0'>
+							{sidebarHeader}
+							<div className='-m-1 p-1 overflow-y-auto'>{sidebar}</div>
+						</div>
 					</DrawerContent>
 				</Drawer>
 				<Button
@@ -79,21 +108,31 @@ function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellP
 					<IconMagnifier />
 				</Button>
 			</div>
-			{/* The 4px of padding, taken back by the negative margin, keeps focus rings inside the scroll clip. */}
-			<aside className='hidden top-5 sticky lg:flex flex-col gap-3 -m-1 p-1 pr-3 max-h-[calc(100dvh-2.5rem)] overflow-y-auto'>
-				<button
-					type='button'
-					onClick={() => setSearchOpen(true)}
-					// The key sits as far from the right edge as from the top and bottom, so its corners stay concentric with the field's.
-					className='flex items-center gap-2 pr-[4.5px] pl-3 w-full h-9 text-muted-foreground text-sm shrink-0 field press-flat'
-				>
-					<IconMagnifier className='size-4' />
-					Search
-					<Kbd className='ml-auto'>⌘K</Kbd>
-				</button>
-				{sidebar}
+			<aside
+				ref={sidebarRef}
+				className='hidden top-5 sticky lg:flex flex-col gap-3 max-h-[calc(100dvh-2.5rem)]'
+			>
+				{/* Inset by the list's right padding less its negative margin, so both share a right edge. */}
+				<div className='flex flex-col gap-3 pr-2'>
+					<button
+						type='button'
+						onClick={() => setSearchOpen(true)}
+						// The key sits as far from the right edge as from the top and bottom, so its corners stay concentric with the field's.
+						className='flex items-center gap-2 pr-[4.5px] pl-3 w-full h-9 text-muted-foreground text-sm shrink-0 field press-flat'
+					>
+						<IconMagnifier className='size-4' />
+						Search
+						<Kbd className='ml-auto'>⌘K</Kbd>
+					</button>
+					{sidebarHeader}
+				</div>
+				{/* The 4px of padding, taken back by the negative margin, keeps focus rings inside the scroll clip. */}
+				<div ref={listRef} className='-m-1 p-1 pr-3 min-h-0 overflow-y-auto'>
+					{sidebar}
+				</div>
 			</aside>
-			<main className='min-w-0'>{children}</main>
+			{/* A viewport tall at least, so even a short page scrolls far enough for the sidebar to stick. */}
+			<main className='lg:min-h-[calc(100dvh-2.5rem)] min-w-0'>{children}</main>
 			{renderSearch({ open: searchOpen, onOpenChange: setSearchOpen })}
 		</div>
 	);

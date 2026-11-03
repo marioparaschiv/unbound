@@ -1,10 +1,13 @@
 import type { MDXComponents } from 'mdx/types';
 import type { ComponentProps } from 'react';
 
+import { InstallQuiz, InstallResult } from '~/components/guides/install-quiz';
 import { Accordion, AccordionGroup } from '~/components/guides/accordion';
+import { File, FileTree, Folder } from '~/components/guides/file-tree';
 import { ParamField, ResponseField } from '~/components/guides/field';
 import { Note, Tip, Warning } from '~/components/guides/callout';
 import { Card, CardGroup } from '~/components/guides/card';
+import { Flow, FlowStep } from '~/components/guides/flow';
 import Expandable from '~/components/guides/expandable';
 import { Step, Steps } from '~/components/guides/steps';
 import CodeBlock from '~/components/guides/code-block';
@@ -116,7 +119,14 @@ export const GUIDE_COMPONENTS: MDXComponents = {
 	Card,
 	CardGroup,
 	Expandable,
+	File,
+	FileTree,
+	Flow,
+	FlowStep,
+	Folder,
 	Icon,
+	InstallQuiz,
+	InstallResult,
 	Note,
 	ParamField,
 	ResponseField,

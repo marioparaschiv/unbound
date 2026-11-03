@@ -6,13 +6,13 @@ icon: 'sliders-3'
 
 This page lists every key the native loader reads from or writes to `settings.json`, its default when absent, and what it does. The loader keeps all of its configuration in this one file.
 
-### File location
+## File location
 
 `settings.json` is in the `Unbound` folder inside the app's documents directory. On iOS, open it in the Files app at `On My iPhone` -> `<App Name>` -> `Unbound`, as described on the [iOS page](/docs/developer/loader/ios). On Android it is in `files/Unbound` inside Discord's data directory, as described on the [Android page](/docs/developer/loader/android).
 
 If the file doesn't exist when the loader starts, the loader creates it with the contents `{}`.
 
-### Structure
+## Structure
 
 The root of the file is an object of **stores**. Each store is a namespace. The loader reads from the store named `unbound`, and the applied theme's id from `applied` in the `themes` store.
 
@@ -36,7 +36,7 @@ Inside a store, keys are dot-paths that map to nested objects. For example, `loa
 	The native loader and Unbound's JavaScript settings share the `unbound` store. Keys the loader doesn't recognise, such as `staff-mode` or `toasts.*`, belong to the client. They are documented with the features that use them.
 </Note>
 
-### Keys
+## Keys
 
 All keys below are inside the `unbound` store.
 
@@ -54,7 +54,7 @@ All keys below are inside the `unbound` store.
 	Controls where the JavaScript bundle is downloaded from and when it is refetched.
 
 	<Expandable title="properties">
-		<ParamField path="loader.update.url" type="string" default="https://builds.unbound.rip/">
+		<ParamField path="loader.update.url" type="string" default="'https://builds.unbound.rip/'">
 			The URL the bundle is downloaded from. When it is empty, the loader uses the default its build was made with, which is `https://builds.unbound.rip/` for releases. On a simulator or emulator, a dev server running on the host's port 3000 is used instead of that default.
 
 			- If the value ends in `.bundle` or `.js`, it names the bundle file directly, and its folder is the source.
@@ -77,11 +77,11 @@ All keys below are inside the `unbound` store.
 			Skips the bundle signature check, so the loader accepts a bundle from any source. Leave it off unless you are loading your own build from a server that isn't on your local network. Bundles from `localhost`, `*.localhost`, `*.local`, `::1`, or a private IPv4 address skip the check without it.
 		</ParamField>
 
-		<ParamField path="loader.update.baseline" type="string" default="">
+		<ParamField path="loader.update.baseline" type="string" default="''">
 			Set by the loader. Don't edit it by hand. It records the source, channel, and build time of the active signed bundle, so the loader can refuse an update that is on another channel or was built earlier.
 		</ParamField>
 
-		<ParamField path="loader.update.etag" type="string" default="">
+		<ParamField path="loader.update.etag" type="string" default="''">
 			Set by the loader. Don't edit it by hand. It stores the `etag` response header from the last successful bundle download, so the next launch can revalidate instead of redownloading. Deleting it forces one full download.
 		</ParamField>
 	</Expandable>
@@ -100,7 +100,7 @@ All keys below are inside the `unbound` store.
 <ParamField path="font-states" type="object" default="{}">
 	Maps a font state name to the name of the font that replaces it. The native font layer looks up each override in both your installed custom fonts and the system fonts. If an override's font isn't loaded, it logs an error and leaves that state unchanged.
 
-	Unbound's font settings normally manage this key for you. See [theme types](/docs/developer/themes/types) and the [addon manifest](/docs/developer/addons/manifest) for how fonts are declared.
+	Unbound's font settings normally manage this key for you. See [theme colors](/docs/developer/themes/types) and the [addon manifest](/docs/developer/addons/manifest) for how fonts are declared.
 </ParamField>
 
 <ParamField path="toolbox.shake" type="boolean" default="true">
@@ -121,7 +121,7 @@ All keys below are inside the `unbound` store.
 	The toolbox's **Use Unbound Icon** switch on iOS isn't stored in `settings.json`. It sets the app's alternate icon directly.
 </Note>
 
-### External edits apply without a restart
+## External edits apply without a restart
 
 You can edit `settings.json` from the Files app, over SSH, or with any other tool, and the new values take effect without restarting the app. The loader watches the file for changes and reloads it in place.
 
@@ -133,7 +133,7 @@ On each change, the loader reparses the file and posts an internal change notifi
 
 Writes made from inside the app are debounced by 300ms before they are flushed to disk, so a burst of changes produces one write.
 
-### Corrupt files are backed up
+## Corrupt files are backed up
 
 If `settings.json` fails to parse, or parses into anything other than a JSON object, the loader doesn't crash the app. Instead it:
 
@@ -147,7 +147,7 @@ settings.json.corrupt-1753488000
 
 Your old configuration is still readable in that backup. At worst, a bad hand edit costs you a restart.
 
-### Disabling the loader
+## Disabling the loader
 
 Set `loader.enabled` to `false` to turn Unbound off without uninstalling anything. The check runs before any plugin, theme, or bundle work, so the loader does nothing and you get a stock app.
 
@@ -161,4 +161,4 @@ Set `loader.enabled` to `false` to turn Unbound off without uninstalling anythin
 }
 ```
 
-Use this when a bad bundle or addon makes the app unusable and you can't get far enough into the UI to fix it. If you only need to get addons out of the way, use `recovery` instead, which changes less. For the full list of flags you can combine here, see [configuration](/docs/developer/loader/configuration).
+Use this when a bad bundle or addon makes the app unusable and you can't get far enough into the UI to fix it. If you only need to get addons out of the way, use `recovery` instead, which changes less.

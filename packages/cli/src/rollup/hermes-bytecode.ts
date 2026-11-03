@@ -1,5 +1,5 @@
 import hermesManifest from '@unbound-app/rollup-plugin-hermes/dist/manifest.js';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 import { execFile } from 'node:child_process';
 import { join, resolve } from 'node:path';
@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 
 type HermesTarget = { version: number; dir: string | null };
 
-type BytecodeOptions = { versions: number[] };
+type BytecodeOptions = { versions: number[]; sourceName: string };
 
 const run = promisify(execFile);
 const { fetchManifest, resolveHermesTargets } = hermesManifest;
@@ -61,17 +61,21 @@ function firstError(error: unknown) {
 	);
 }
 
-async function compile(hermesc: string, source: string, output: string) {
-	await run(hermesc, [
-		'--emit-binary',
-		'-O',
-		'-g0',
-		'-Wno-direct-eval',
-		'-Wno-undefined-variable',
-		'--out',
-		output,
-		source,
-	]);
+async function compile(hermesc: string, directory: string, source: string, output: string) {
+	await run(
+		hermesc,
+		[
+			'--emit-binary',
+			'-O',
+			'-g1',
+			'-Wno-direct-eval',
+			'-Wno-undefined-variable',
+			'--out',
+			output,
+			source,
+		],
+		{ cwd: directory },
+	);
 
 	return readFile(output);
 }
@@ -94,10 +98,10 @@ export function hermescCount(latest: number[], wanted: number[]): number {
 
 /**
  * @description Compiles each plugin bundle to Hermes bytecode for exactly the bytecode versions the client ships.
- * @param options The bytecode versions to compile for.
+ * @param options The bytecode versions to compile for, and the name the bytecode's source locations use.
  * @returns The rollup plugin.
  */
-export function hermesBytecode({ versions }: BytecodeOptions): Plugin {
+export function hermesBytecode({ versions, sourceName }: BytecodeOptions): Plugin {
 	let targets: HermesTarget[] | undefined;
 
 	return {
@@ -118,9 +122,10 @@ export function hermesBytecode({ versions }: BytecodeOptions): Plugin {
 						continue;
 					}
 
-					const source = join(directory, 'bundle.js');
+					const source = `unbound-plugin/${sourceName}.js`;
 
-					await writeFile(source, bytecodeSource(chunk.code));
+					await mkdir(join(directory, 'unbound-plugin'), { recursive: true });
+					await writeFile(join(directory, source), bytecodeSource(chunk.code));
 
 					for (const { version, dir } of targets) {
 						if (!dir) {
@@ -132,11 +137,13 @@ export function hermesBytecode({ versions }: BytecodeOptions): Plugin {
 
 						const hermesc = resolve(dir, process.platform, executable);
 						const output = join(directory, `${version}.hbc`);
-						const compiled = await compile(hermesc, source, output).catch((error) => {
-							this.warn(
-								`hermesc ${version} could not compile ${chunk.fileName}, so that runtime loads its source: ${firstError(error)}`,
-							);
-						});
+						const compiled = await compile(hermesc, directory, source, output).catch(
+							(error) => {
+								this.warn(
+									`hermesc ${version} could not compile ${chunk.fileName}, so that runtime loads its source: ${firstError(error)}`,
+								);
+							},
+						);
 
 						if (compiled) {
 							this.emitFile({

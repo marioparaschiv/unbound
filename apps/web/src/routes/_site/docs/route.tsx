@@ -10,6 +10,7 @@ function DocsAreaLayout() {
 		<div className='flex flex-col gap-6 page-frame'>
 			{/* The site nav's own control, so the docs tabs read as one more level of it. */}
 			<div className='-m-1 p-1 overflow-x-auto hide-scrollbar'>
+				{/* Each tab preloads once shown, so switching to one renders without waiting on the server. */}
 				<Segmented value={tab} tone='header' aria-label='Docs'>
 					{DOCS_TABS.map((entry) => (
 						<SegmentedItem
@@ -18,7 +19,7 @@ function DocsAreaLayout() {
 							className='text-base tracking-tight whitespace-nowrap'
 							asChild
 						>
-							<Link to={entry.path}>
+							<Link to={entry.path} preload='viewport'>
 								<span className='relative'>{entry.label}</span>
 							</Link>
 						</SegmentedItem>

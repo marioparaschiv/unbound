@@ -5,6 +5,7 @@ import type {
 	NativeUIArgument,
 	NativeUIBridge,
 	NativeUIScope,
+	NativeSerializable,
 } from '@unbound-app/types';
 import { NATIVE_PLUGIN_METHOD_CAPABILITIES } from '@unbound-app/types/native';
 
@@ -27,9 +28,10 @@ type GuardedResult = { ok: true; value: unknown } | { ok: false; error: string }
 type PluginWorklet = (...args: never[]) => unknown;
 
 type WorkletClosure = {
-	worklet: PluginWorklet;
+	worklet?: PluginWorklet;
 	runOnJS?: (callback: Settle) => Settle;
 	settle?: Settle;
+	listener?: (...args: NativeSerializable[]) => void;
 };
 
 type WorkletGuard = {
@@ -54,6 +56,11 @@ const GUARDED_RUN = {
 const GUARDED_CALL = {
 	hash: 0x75_6e_62_03,
 	code: 'function unboundGuardedCall(){const{worklet,runOnJS,settle}=this.__closure;let result;try{result={ok:true,value:worklet.apply(undefined,arguments)};}catch(error){result={ok:false,error:String(error)};}runOnJS(settle)(result);}',
+};
+
+const JS_CALLBACK = {
+	hash: 0x75_6e_62_05,
+	code: 'function unboundJSCallback(){const{runOnJS,listener}=this.__closure;runOnJS(listener).apply(undefined,arguments);}',
 };
 
 const PROMISE_METHODS: ReadonlySet<NativePluginMethod> = new Set([
@@ -173,6 +180,19 @@ export function createScopedUIBridge(
 				const guarded = guardWorklet<typeof args>(GUARDED_RUN, { worklet });
 
 				uiRuntime().runOnUI(guarded)(...args);
+			},
+			callback(listener) {
+				requireActive();
+				function forward(...args: NativeSerializable[]) {
+					if (!disposed) {
+						Reflect.apply(listener, undefined, args);
+					}
+				}
+
+				return guardWorklet(JS_CALLBACK, {
+					runOnJS: uiRuntime().runOnJS,
+					listener: forward,
+				});
 			},
 		},
 		dispose() {

@@ -151,7 +151,7 @@ describe('typeToParts', () => {
 		]);
 	});
 
-	test('renders an external reference and a type parameter as plain names', () => {
+	test('renders an external reference and a type parameter as unlinked names of their own kind', () => {
 		const external: DocsType = {
 			type: 'reference',
 			name: 'Promise',
@@ -164,8 +164,8 @@ describe('typeToParts', () => {
 			refersToTypeParameter: true,
 		};
 
-		expect(typeToParts(external, ctx)).toEqual([{ kind: 'name', text: 'Promise' }]);
-		expect(typeToParts(parameter, ctx)).toEqual([{ kind: 'name', text: 'T' }]);
+		expect(typeToParts(external, ctx)).toEqual([{ kind: 'reference', text: 'Promise' }]);
+		expect(typeToParts(parameter, ctx)).toEqual([{ kind: 'typeParameter', text: 'T' }]);
 	});
 
 	test('recurses into nested types, linking at every depth', () => {

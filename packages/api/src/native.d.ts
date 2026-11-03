@@ -55,6 +55,7 @@ export type {
 	NativeThreadPolicy,
 	NativeUIArgument,
 	NativeUIBridge,
+	NativeUICallback,
 	NativeUIScope,
 	NativeViewSearchOptions,
 	NativeViewSnapshotNode,

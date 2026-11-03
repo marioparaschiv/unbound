@@ -1,9 +1,9 @@
 import hermes from '@unbound-app/client-build/hermes.json' with { type: 'json' };
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import { basename, dirname, resolve } from 'node:path';
 import type { Plugin, RollupOptions } from 'rollup';
 import { minify, swc } from 'rollup-plugin-swc3';
 import commonjs from '@rollup/plugin-commonjs';
-import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import json from '@rollup/plugin-json';
 import { readFileSync } from 'node:fs';
@@ -83,7 +83,14 @@ export function pluginConfig(
 			iife(),
 			minify(minifyOptions),
 			hermesExpressionEntrypoint({ hasSettingsPanel: settingsPanel }),
-			...(bytecode ? [hermesBytecode({ versions: hermes.bytecodeVersions })] : []),
+			...(bytecode
+				? [
+						hermesBytecode({
+							versions: hermes.bytecodeVersions,
+							sourceName: basename(pluginRoot),
+						}),
+					]
+				: []),
 			manifestToDist(pluginRoot),
 		],
 		output: {

@@ -56,6 +56,7 @@ export type {
 	NativeViewSnapshotOptions,
 	NativeUIArgument,
 	NativeUIBridge,
+	NativeUICallback,
 	NativeUIScope,
 	PluginContext,
 } from '@unbound-app/types/native';

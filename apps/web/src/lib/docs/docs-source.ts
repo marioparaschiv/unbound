@@ -8,10 +8,13 @@ import {
 	type DocsVersion,
 } from '@unbound-app/contracts/docs';
 import { parse } from '@unbound-app/contracts/schema';
+import { createLogger } from '@unbound-app/logger';
 
 import { buildDocsIndex, type DocsIndex } from '~/lib/docs/docs-index';
 import { createLruCache, type LruCache } from '~/lib/docs/lru-cache';
 import { docsProjectSchema } from '~/lib/docs/typedoc';
+
+const logger = createLogger('Web', 'Docs');
 
 export const MUTABLE_DOCS_TTL_MS = 5 * 60 * 1000;
 
@@ -38,7 +41,8 @@ export type DocsSourceOptions = {
 
 /**
  * @description Reads the docs from the CDN through an in-memory cache: release tags until evicted, `main` and
- * the manifests for {@link MUTABLE_DOCS_TTL_MS}. A failed load is never cached.
+ * the manifests refreshed in the background once older than {@link MUTABLE_DOCS_TTL_MS}, while reads keep
+ * getting the cached copy. A failed load is never cached; a failed refresh keeps the old copy.
  * @param options The CDN URL builder, and the fetch and clock to use.
  * @returns The source.
  */
@@ -60,7 +64,11 @@ export function createDocsSource({
 	): Promise<T> {
 		const hit = cache.get(key);
 
-		if (hit && hit.expiresAt > now()) {
+		if (hit) {
+			if (hit.expiresAt <= now()) {
+				revalidate(cache, key, hit, ttl, load);
+			}
+
 			return hit.value;
 		}
 
@@ -74,6 +82,34 @@ export function createDocsSource({
 		});
 
 		return entry.value;
+	}
+
+	function revalidate<K, T>(
+		cache: LruCache<K, Cached<T>>,
+		key: K,
+		stale: Cached<T>,
+		ttl: number,
+		load: () => Promise<T>,
+	) {
+		// Pushing the stale copy's expiry back makes the reads until the refresh lands share this one load.
+		stale.expiresAt = now() + ttl;
+
+		const value = load();
+
+		value.then(
+			() => {
+				if (cache.get(key) === stale) {
+					cache.set(key, { expiresAt: now() + ttl, value });
+				}
+			},
+			(cause: unknown) => {
+				logger.error(`Failed to refresh docs ${String(key)}:`, cause);
+
+				if (cache.get(key) === stale) {
+					stale.expiresAt = 0;
+				}
+			},
+		);
 	}
 
 	// UNKNOWN: the CDN's JSON is parsed by each caller's schema.

@@ -83,7 +83,7 @@ For problems after installation, see [Troubleshooting](https://unbound.rip/docs/
 
 3. Build against [`@unbound-app/api`](packages/api) for typed access to `metro`, `storage`, `toasts`, and the rest of the client API.
 
-The [add-on documentation](https://unbound.rip/docs/developer/addons/introduction) covers the manifest, the lifecycle, the SDK, and publishing.
+The [add-on documentation](https://unbound.rip/docs/developer/concepts) covers the manifest, the lifecycle, the SDK, and publishing.
 
 ### Developing Unbound
 
@@ -103,7 +103,7 @@ Requirements: [Bun](https://bun.sh) and a device or emulator with Unbound instal
     bun run --filter @unbound-app/client dev
     ```
 
-3. Set your Unbound installation's bundle URL to the printed LAN address, then restart Discord. See [Local Builds](https://unbound.rip/docs/developer/development/local-builds) for the exact steps.
+3. Set your Unbound installation's bundle URL to the printed LAN address, then restart Discord. See [Building Unbound](https://unbound.rip/docs/developer/development/local-builds) for the exact steps.
 
 To build once without watching for changes, run `build`, then `serve`:
 
