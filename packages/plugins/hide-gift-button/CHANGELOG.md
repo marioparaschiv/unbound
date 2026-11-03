@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-11-03
+
+### Changed
+
+- Rewrite the plugin's page on unbound.rip in a shorter style. The plugin works the same as before.
+
 ## [1.0.1]
 
 ### Changed
