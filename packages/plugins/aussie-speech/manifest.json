@@ -11,5 +11,12 @@
 	"version": "1.0.2",
 	"icon": "MicrophoneIcon",
 	"main": "index.tsx",
-	"startAfterFirstFrame": true
+	"startAfterFirstFrame": true,
+	"bytecode": {
+		"98": "3eccead7abd9327946636f461d21ae2b884593e1a716c49d25e123293e41133a8cc0b824804997bb865d52369c076edf660c1c8af163a0e8f31cbd76bf5ebba2"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "rscNAZ5gIMeneZVTlaHj1AM48swbCDu+5gzQrftx105DrYadsU1kC0bb9nsMshXxuyPjF8aP6nxDnTiDE/CaDQ=="
+	}
 }

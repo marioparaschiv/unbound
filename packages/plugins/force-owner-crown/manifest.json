@@ -18,5 +18,12 @@
 	],
 	"version": "1.0.2",
 	"icon": "CrownIcon",
-	"main": "index.ts"
+	"main": "index.ts",
+	"bytecode": {
+		"98": "f78cd81098e0c03d11db000566cc5ad3bf91b9a1cccac65f3514b3d4169c84dda4c403c53d21a3cc1da5323e90ea447532d6ac7e79fceac6835fd41b5dd375f8"
+	},
+	"signature": {
+		"version": 1,
+		"ed25519": "/KO/ZMK9m4BhMwaPBcvYRiW6R0XpzzVaFSblXesjd+Hp8BwhoOKCR5ygThNj1RqI+yzAZnIV2lraMlPfyjLUAw=="
+	}
 }
