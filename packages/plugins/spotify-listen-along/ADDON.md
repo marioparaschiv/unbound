@@ -1,6 +1,13 @@
-Spotify Listen Along brings Spotify's listen along from Discord desktop to mobile. It is a port of the Add Listen Along and Send Spotify invite modules of nexpid's NexxUtils.
+Spotify's listen along, now on your phone. Spotify Listen Along brings it over from Discord desktop, both joining a friend and inviting a channel.
 
-- **Listen along:** when someone is listening to Spotify, their activity card gets a headphones button next to **Play on Spotify**. Press it to play the same track at the same position and keep following what they play. The button is dimmed when it can't work: on your own activity, when you are already listening along, or when Spotify is not connected or not available on the device.
-- **Invite to listen along:** while you play something on Spotify, the attachment menu (the **+** next to the message box) has a **Spotify** button next to Photos, Poll, Thread, Apps and Files. It invites the channel to listen along with you, sending whatever you typed as the message. The button shows when a Spotify account is connected to Discord.
+## :sparkle: What it does
 
-Listening along needs a Spotify account connected to Discord and the Spotify app on your device, and Spotify only allows it with Premium.
+- :headphones: A headphones button next to **Play on Spotify** on someone's Spotify activity plays the same track at the same position and keeps following what they play.
+- :circle-xmark: The button is dimmed on your own activity, when you're already listening along, or when Spotify isn't connected or available.
+- :music: While you play something, the **+** menu next to the message box gets a **Spotify** button that invites the channel to listen along, sending what you typed as the message.
+- :lock: Needs a Spotify account connected to Discord and the Spotify app on your device. Spotify only allows it with Premium.
+- :code-fork: A port of the Add Listen Along and Send Spotify invite modules of nexpid's NexxUtils.
+
+## :gear: Settings
+
+None. The buttons show up wherever they can work.

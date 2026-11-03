@@ -1,8 +1,12 @@
-Discord often plays a GIF as a video, and saving it gives you that video file. Fix GIF Downloads makes Discord save the GIF file instead. It changes the share and save actions in Discord's media viewer and the download that Discord's media manager runs.
+You saved a GIF and got an MP4. Fix GIF Downloads makes Discord save the actual GIF file instead.
 
-The plugin finds the GIF address for Tenor, Giphy, and Klipy media, including links that Discord wraps in its external media proxy. For Tenor and Giphy it builds the GIF address from the video address. For animated images from Discord's own media proxy, it asks the proxy for the GIF format.
+## :sparkle: What it does
 
-## Known issues
+- :floppy-disk: Changes the share and save actions in Discord's media viewer, and the download Discord's media manager runs, to use the GIF.
+- :link: Finds the GIF address for Tenor, Giphy and Klipy media, including links wrapped in Discord's external media proxy.
+- :photo: Asks Discord's own media proxy for the GIF format of animated images.
+- :globe: Klipy GIFs are found through the Klipy API (`api.klipy.com`). It sends the name from the GIF's Klipy link, or its title, when Klipy media shows in chat.
 
-- Klipy uses different addresses for its video and its GIF, so the plugin searches the Klipy API (`api.klipy.com`) for the GIF. The search sends the name from the GIF's Klipy page link, or the GIF's title. The plugin starts this search when Klipy media shows in chat, before you save it, so the save does not wait.
-- If no Klipy search result matches the media, or the search fails, the plugin saves Discord's own file.
+## :gear: Settings
+
+None. Save a GIF and you get a GIF.

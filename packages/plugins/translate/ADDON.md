@@ -1,17 +1,16 @@
-Translate adds a **Translate** row to the long-press menu on a message. Tap it to translate the message's text into your target language. The plugin copies the translation to your clipboard and shows it in a toast titled "Translated". If the translation fails, a "Translate Error" toast shows the reason.
+Every server has that one channel in a language you don't speak. Translate turns any message into yours from its long-press menu.
 
-The row appears only on messages that have text. Before you can translate, connect your Discord account in the plugin's settings.
+## :sparkle: What it does
 
-## Settings
+- :language: Adds a **Translate** row to the long-press menu on messages that have text.
+- :clipboard: Copies the translation to your clipboard and shows it in a "Translated" toast.
+- :circle-xmark: If it fails, a "Translate Error" toast says why.
+- :globe: Translations go through `translate.unbound.rip`, which gets the message text and your language codes.
 
-- **Connect Discord account** opens Discord's authorize screen to sign you in to the translate service. After you sign in, the row reads **Reconnect Discord account**.
-- **Source Language** is the language of the messages you translate. The default is `auto`, which detects the language.
-- **Target Language** is the language to translate into. The default is `en` (English).
+## :gear: Settings
 
-Both language rows open a searchable list of 35 languages. They stay off until you connect your account.
+- :user-key: **Connect Discord account** signs you in to the translate service. Do this first.
+- :magnifier: **Source Language** is the language you translate from. `auto` by default, which detects it.
+- :language: **Target Language** is the language you translate into. `en` (English) by default.
 
-## Known issues
-
-- The plugin sends the text of each message you translate, with your source and target language codes, to the translate service at `translate.unbound.rip`.
-- Signing in asks Discord for the `identify`, `email`, and `guilds` scopes. The plugin keeps the service's tokens in its settings on your device.
-- If the service rejects your saved sign-in, the plugin signs you out. Connect your account again to keep translating.
+Both language rows search a list of 35 languages.

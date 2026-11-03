@@ -1,8 +1,12 @@
-Aussie Speech rewrites each message into Aussie English as you send or edit it. "Thank you" becomes "cheers, legend", "I don't know" becomes "dunno", and American spellings such as "color" and "favorite" become "colour" and "favourite". Capital letters and punctuation stay as you typed them.
+No worries, mate. Aussie Speech rewrites every message into Aussie English as you send or edit it.
 
-Code blocks, inline code, links, mentions, channels and custom emoji are never changed.
+## :sparkle: What it does
 
-## Known issues
+- :msg-smile: Swaps phrases, so "thank you" becomes "cheers, legend" and "I don't know" becomes "dunno".
+- :language: Fixes American spellings, so "color" and "favorite" become "colour" and "favourite".
+- :text: Keeps your capital letters and punctuation as you typed them.
+- :code: Never touches code blocks, inline code, links, mentions, channels or custom emoji.
 
-- The rewrite happens when you press send, so the text box shows your original wording until then.
-- Words and phrases are matched from a fixed list, so the result can read oddly when a word has more than one meaning.
+## :gear: Settings
+
+None. Every message you send gets the treatment.
