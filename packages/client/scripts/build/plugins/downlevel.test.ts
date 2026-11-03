@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 import vm from 'node:vm';
 
-import { lower } from './downlevel';
+import { GLOBAL_BANNER, lower, lowerSourceFallback } from './downlevel';
 
 const root = join(import.meta.dir, '..', '..', '..');
 
@@ -21,5 +21,51 @@ describe('lower', () => {
 		);
 
 		expect(added).toEqual(['probe']);
+	});
+
+	test('leaves loop bindings and async generators to hermesc in bytecode, and lowers them for source', () => {
+		const code =
+			'globalThis.fns = []; for (let i = 0; i < 3; i++) fns.push(() => i); async function* g() {}';
+		const bytecode = lower(root, code, false, 'bytecode').code;
+
+		expect(bytecode).toContain('let i');
+		expect(bytecode).toContain('async function*');
+
+		const context = vm.createContext({});
+
+		vm.runInContext(lower(root, code, false, 'source').code, context);
+
+		expect(vm.runInContext('fns.map((f) => f())', context)).toEqual([0, 1, 2]);
+	});
+});
+
+describe('lowerSourceFallback', () => {
+	test('lowers the shipped script for a Hermes without the feature flags, keeping helpers off the global object', () => {
+		const plugin = lowerSourceFallback();
+		const chunk = {
+			type: 'chunk',
+			fileName: 'unbound.js',
+			map: null,
+			// A `return` inside the loop makes swc add its `_type_of` helper.
+			code: `${GLOBAL_BANNER}(() => { globalThis.out = []; (() => { for (let i = 0; i < 3; i++) { out.push(() => i); if (i > 5) return i; } })(); })();`,
+		};
+		const generate = plugin.generateBundle as (
+			options: Record<string, never>,
+			bundle: Record<string, typeof chunk>,
+		) => void;
+
+		generate.call({}, {}, { 'unbound.js': chunk });
+
+		const context = vm.createContext({});
+		const before = Object.getOwnPropertyNames(vm.runInContext('globalThis', context));
+
+		vm.runInContext(chunk.code, context);
+
+		const added = Object.getOwnPropertyNames(vm.runInContext('globalThis', context)).filter(
+			(name) => !before.includes(name),
+		);
+
+		expect(added.sort()).toEqual(['global', 'out']);
+		expect(vm.runInContext('out.map((f) => f())', context)).toEqual([0, 1, 2]);
 	});
 });

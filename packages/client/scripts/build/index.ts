@@ -19,9 +19,14 @@ import {
 	DEBUGGER_ADDRESS,
 	MINIMUM_DISCORD_VERSIONS,
 } from './constants';
+import downlevel, {
+	GLOBAL_BANNER,
+	HERMESC_FEATURE_FLAGS,
+	lower,
+	lowerSourceFallback,
+} from './plugins/downlevel';
 import generateManifest, { writeManifest } from './plugins/manifest';
 import globals, { shimmedModules } from './plugins/globals';
-import downlevel, { lower } from './plugins/downlevel';
 import hermesVersions from './plugins/hermes-versions';
 import releaseModules from './plugins/release-modules';
 import staticAssets from './plugins/static-assets';
@@ -95,7 +100,7 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 		},
 		output: [
 			{
-				postBanner: 'var global = globalThis;',
+				postBanner: GLOBAL_BANNER.trimEnd(),
 				footer: '//# sourceURL=unbound',
 				// `__PURE__` annotations only matter to a later bundler; the shipped JS has none.
 				comments: { annotation: false },
@@ -136,10 +141,14 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 			downlevel(root),
 			// Stripping function names saves ~15 bytes per function; release stack frames then name no function,
 			// and `symbolicate` recovers file and line from the source map.
-			hermesVersions(
-				bytecodeVersions,
-				IS_DEV_BUILD ? [] : ['-O', '-g0', '-output-source-map', '-fstrip-function-names'],
-			),
+			hermesVersions(bytecodeVersions, [
+				...HERMESC_FEATURE_FLAGS,
+				...(IS_DEV_BUILD
+					? []
+					: ['-O', '-g0', '-output-source-map', '-fstrip-function-names']),
+			]),
+			// The shipped JavaScript is the loader's fallback on other bytecode versions; hermesc compiled first.
+			lowerSourceFallback(),
 			...(manifest
 				? [generateManifest(GIT_REVISION, bytecodeVersions, IS_DEV_BUILD, BUILD_CHANNEL)]
 				: []),
