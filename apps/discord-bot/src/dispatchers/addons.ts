@@ -1,21 +1,17 @@
-import type { APIEmbed, APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import type { AddonType } from '@unbound-app/contracts/addons';
+import type { APIMessage, Client, REST } from 'discord.js';
 import type { PublicAddon } from '@unbound-app/web/bot';
+import { DiscordAPIError, Routes } from 'discord.js';
 import { createLogger } from '@unbound-app/logger';
-import { Routes } from 'discord.js';
 import { eq } from 'drizzle-orm';
 
-import {
-	deleteMessage,
-	listOwnMessages,
-	messageExists,
-	postMessage,
-	truncate,
-} from '~/lib/discord-messages';
+import { deleteMessage, listOwnMessages, messageExists, postMessage } from '~/lib/discord-messages';
+import { messageLinks, renderAddon, renderCardImages } from '~/dispatchers/addon-card';
+import { createAuthorEmojis, type AuthorEmojis } from '~/lib/author-emojis';
 import type { Dispatcher, Stores } from '~/dispatchers/types';
-import { COLOURS, DISCORD_IDS } from '~/lib/constants';
 import { contentHash } from '~/lib/content-hash';
 import type { Database } from '~/db/database';
+import { DISCORD_IDS } from '~/lib/constants';
 import { addonMessage } from '~/db/schema';
 
 export type AddonChannels = { [K in AddonType]?: string };
@@ -29,10 +25,7 @@ export const ADDON_CHANNELS: AddonChannels = {
 	'icon-pack': DISCORD_IDS.ICON_PACKS_CHANNEL_ID,
 };
 
-// Discord rejects a longer value or an embed over 6000 characters in all, failing every retry.
-const TITLE_LIMIT = 256;
-const DESCRIPTION_LIMIT = 2048;
-const FIELD_LIMIT = 1024;
+const BAD_REQUEST = 400;
 
 /**
  * @description Names the channel an addon's message belongs in.
@@ -42,28 +35,6 @@ const FIELD_LIMIT = 1024;
  */
 export function desiredChannel(addon: PublicAddon, channels: AddonChannels): string | undefined {
 	return addon.listed ? channels[addon.type] : undefined;
-}
-
-/**
- * @description Renders an addon listing as a message body that can never ping anyone.
- * @param item The addon's public listing.
- * @returns The message body to post or patch.
- */
-export function renderAddon(item: PublicAddon): RESTPostAPIChannelMessageJSONBody {
-	const authors = item.authors.map((author) => author.name).join(', ') || 'Unknown';
-	const embed: APIEmbed = {
-		title: truncate(item.name, TITLE_LIMIT),
-		url: item.pageUrl,
-		description: item.description ? truncate(item.description, DESCRIPTION_LIMIT) : undefined,
-		color: COLOURS.brand,
-		fields: [
-			{ name: 'Version', value: truncate(item.version, FIELD_LIMIT), inline: true },
-			{ name: 'Authors', value: truncate(authors, FIELD_LIMIT), inline: true },
-		],
-		thumbnail: item.iconUrl ? { url: item.iconUrl } : undefined,
-	};
-
-	return { embeds: [embed], allowed_mentions: { parse: [] } };
 }
 
 async function storeMessage(
@@ -101,7 +72,7 @@ async function adoptOrphans(
 		const listed = new Set(listing.map((message) => message.id));
 
 		for (const message of listing) {
-			const url = message.embeds[0]?.url;
+			const url = messageLinks(message).find((candidate) => byUrl.has(candidate));
 			const owner = url ? byUrl.get(url) : undefined;
 
 			// A url that names no addon is not an addon post (a tag reply, an old bot's post), so it stays.
@@ -138,6 +109,37 @@ async function adoptOrphans(
 	}
 }
 
+function authorIds(item: PublicAddon): string[] {
+	return item.authors.flatMap((author) => (author.discordId ? [author.discordId] : []));
+}
+
+// Clearing the embed and content lets an old embed post become a components v2 card in place; an
+// edit Discord still refuses is answered by replacing the message.
+async function editOrReplace(
+	rest: REST,
+	channelId: string,
+	messageId: string,
+	card: ReturnType<typeof renderAddon>,
+): Promise<string> {
+	try {
+		await rest.patch(Routes.channelMessage(channelId, messageId), {
+			body: { ...card.body, embeds: [], content: '' },
+			files: card.files,
+		});
+
+		return messageId;
+	} catch (error) {
+		if (!(error instanceof DiscordAPIError) || error.status !== BAD_REQUEST) {
+			throw error;
+		}
+
+		logger.warn(`Failed to edit message ${messageId}, replacing it:`, error);
+		await deleteMessage(rest, channelId, messageId);
+
+		return postMessage(rest, channelId, card.body, card.files);
+	}
+}
+
 /**
  * @description Brings one addon's Discord message in line with its listing: posted, edited, moved or removed.
  * @param stores The bot database and the web's reads.
@@ -145,6 +147,7 @@ async function adoptOrphans(
  * @param id The addon id.
  * @param channels The channel each addon type posts to.
  * @param present Ids of our messages that exist, from a listing; without it the message is fetched.
+ * @param emojis The author avatar emoji sync; without it a card shows no avatars.
  * @returns Resolves once the message and its row match the addon.
  */
 export async function syncAddon(
@@ -153,6 +156,7 @@ export async function syncAddon(
 	id: string,
 	channels: AddonChannels = ADDON_CHANNELS,
 	present?: ReadonlySet<string>,
+	emojis?: AuthorEmojis,
 ): Promise<void> {
 	const [current, [posted]] = await Promise.all([
 		web.addon(id),
@@ -171,21 +175,27 @@ export async function syncAddon(
 		return;
 	}
 
-	const hash = contentHash(current);
+	const avatars = emojis ? await emojis.resolve(authorIds(current)) : new Map();
+	const hash = contentHash(
+		current,
+		Object.fromEntries([...avatars].map(([discordId, emoji]) => [discordId, emoji.name])),
+	);
 	const kept =
 		posted?.channelId === channelId &&
 		(present?.has(posted.messageId) ??
 			(await messageExists(rest, posted.channelId, posted.messageId)));
 
-	if (posted && kept) {
-		if (posted.postedHash === hash) return;
+	if (posted && kept && posted.postedHash === hash) return;
 
-		await rest.patch(Routes.channelMessage(channelId, posted.messageId), {
-			body: renderAddon(current),
-		});
+	// Images are rendered only once the card is known to change; they need downloads.
+	const card = renderAddon(current, await renderCardImages(current), avatars);
+
+	if (posted && kept) {
+		const messageId = await editOrReplace(rest, channelId, posted.messageId, card);
+
 		await db
 			.update(addonMessage)
-			.set({ postedHash: hash, editedAt: new Date() })
+			.set({ messageId, postedHash: hash, editedAt: new Date() })
 			.where(eq(addonMessage.addonId, id));
 
 		return;
@@ -195,7 +205,7 @@ export async function syncAddon(
 		await deleteMessage(rest, posted.channelId, posted.messageId);
 	}
 
-	const messageId = await postMessage(rest, channelId, renderAddon(current));
+	const messageId = await postMessage(rest, channelId, card.body, card.files);
 
 	try {
 		await storeMessage(db, id, channelId, messageId, hash);
@@ -218,6 +228,7 @@ export async function syncAddon(
  * @param rest The Discord REST client.
  * @param selfId The bot's own user id.
  * @param channels The channel each addon type posts to.
+ * @param emojis The author avatar emoji sync; its emojis of authors no posted addon names are deleted.
  * @returns Resolves once every addon was synced; one addon's failure is logged and left to the next run.
  */
 export async function reconcileAddons(
@@ -225,6 +236,7 @@ export async function reconcileAddons(
 	rest: REST,
 	selfId: string,
 	channels: AddonChannels = ADDON_CHANNELS,
+	emojis?: AuthorEmojis,
 ): Promise<void> {
 	// One listing per channel replaces a fetch per message on every periodic run.
 	const listings = new Map<string, APIMessage[]>();
@@ -246,11 +258,24 @@ export async function reconcileAddons(
 
 	for (const id of ids) {
 		try {
-			await syncAddon(stores, rest, id, channels, present);
+			await syncAddon(stores, rest, id, channels, present, emojis);
 		} catch (error) {
 			logger.error(`Failed to sync addon ${id}:`, error);
 		}
 	}
+
+	const shown = addons.filter((item) => desiredChannel(item, channels));
+
+	await emojis?.prune(new Set(shown.flatMap(authorIds)));
+}
+
+// One sync per process, so its avatar lookups and emoji listing outlive a single run.
+let authorEmojis: AuthorEmojis | undefined;
+
+function authorEmojisOf(client: Client<true>): AuthorEmojis {
+	authorEmojis ??= createAuthorEmojis(client.rest, client.application.id);
+
+	return authorEmojis;
 }
 
 export const addonsDispatcher: Dispatcher = {
@@ -262,20 +287,34 @@ export const addonsDispatcher: Dispatcher = {
 	 * @param context The dispatcher's stores and Discord client.
 	 * @returns Resolves once every addon was synced.
 	 */
-	reconcile: (context) => reconcileAddons(context, context.client.rest, context.client.user.id),
+	reconcile: (context) =>
+		reconcileAddons(
+			context,
+			context.client.rest,
+			context.client.user.id,
+			ADDON_CHANNELS,
+			authorEmojisOf(context.client),
+		),
 	/**
 	 * @description Syncs the message of the addon a NOTIFY payload names.
 	 * @param id The addon id from the payload.
 	 * @param context The dispatcher's stores and Discord client.
 	 * @returns Resolves once the addon's message matches its listing.
 	 */
-	handle: (id, context) => syncAddon(context, context.client.rest, id),
+	handle: (id, context) =>
+		syncAddon(
+			context,
+			context.client.rest,
+			id,
+			ADDON_CHANNELS,
+			undefined,
+			authorEmojisOf(context.client),
+		),
 };
 
 export default {
 	ADDON_CHANNELS,
 	desiredChannel,
-	renderAddon,
 	syncAddon,
 	reconcileAddons,
 	addonsDispatcher,

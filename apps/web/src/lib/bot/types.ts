@@ -9,7 +9,15 @@ export type PublicAddonAuthor = {
 	discordId?: string;
 };
 
-/** An addon's public listing as it is now; the old feed's addon minus `updatedAt`, so its hash matches. */
+/** One gallery image of an addon's store page, on the CDN; a video shows as its poster. */
+export type PublicGalleryImage = {
+	url: string;
+	width: number;
+	height: number;
+	alt: string;
+};
+
+/** An addon's public listing as it is now. */
 export type PublicAddon = {
 	id: string;
 	type: AddonType;
@@ -18,10 +26,16 @@ export type PublicAddon = {
 	/** The newest live version's version. */
 	version: string;
 	authors: PublicAddonAuthor[];
-	/** Only an http(s) manifest icon. */
-	iconUrl?: string;
+	/** The website icon's `<svg>` markup: the one maintainers picked, else the type's default. */
+	iconSvg: string;
 	/** `<siteUrl>/addons/<id>`. */
 	pageUrl: string;
+	/** `<siteUrl>/install/<id>`, which hands the addon to the client. */
+	installUrl: string;
+	/** The addon's directory on GitHub at the served version's commit; unset for a legacy upload. */
+	sourceUrl?: string;
+	/** The served version's store page gallery, in page order. */
+	gallery: PublicGalleryImage[];
 	/** `false` once staff delist it. */
 	listed: boolean;
 };
@@ -88,6 +102,8 @@ export type MemberQuery = { by: 'all' } | { by: MemberSubject; ids: readonly str
 export type BotReadOptions = {
 	/** The site origin addon page urls are built on, e.g. `https://unbound.rip`. */
 	siteUrl: string;
+	/** The CDN origin published files load from, as the web's `CDN_URL`. */
+	cdnUrl: string;
 	/** Days sponsor perks outlast a sponsorship, as the web's `SPONSOR_PERK_GRACE_DAYS`; its default unset. */
 	sponsorGraceDays?: number;
 	/** The clock sponsor standing is judged at. */

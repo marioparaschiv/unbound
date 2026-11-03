@@ -139,8 +139,11 @@ GRANT SELECT ON public.addon, public.addon_version, public.addon_maintainer, pub
 -- Links, names and avatars only, never tokens, emails or sessions.
 GRANT SELECT (user_id, provider_id, account_id) ON public.account TO :"bot_role";
 GRANT SELECT (id, name, image) ON public."user" TO :"bot_role";
--- Who submitted a decided version and what it was called, for review notices; never the bundle or review.
-GRANT SELECT (id, author_id, manifest) ON public.submission TO :"bot_role";
+-- Who submitted a decided version, what it was called and where it came from, for review notices and
+-- addon cards; never the bundle or review.
+GRANT SELECT (id, author_id, manifest, repository) ON public.submission TO :"bot_role";
+-- Where a served version's source and store page gallery live, for addon cards; never ADDON.md or details.
+GRANT SELECT (submission_id, path, commit_sha, page) ON public.submission_source TO :"bot_role";
 -- Lets the bot's migrations install or replace its notify triggers until the lock phase takes it back.
 GRANT TRIGGER ON public.addon, public.addon_version, public.addon_maintainer, public.account,
 	public.sponsorship, public.moderation_event, public.loader_release TO :"bot_role";

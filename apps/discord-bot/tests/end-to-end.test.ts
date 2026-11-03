@@ -17,6 +17,7 @@ import { DISCORD_IDS, type DiscordIds } from '~/lib/constants';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { createAuditDispatcher } from '~/dispatchers/audit';
 import { createRolesDispatcher } from '~/dispatchers/roles';
+import { messageLinks } from '~/dispatchers/addon-card';
 import { startDispatchers } from '~/runtime/start';
 import { parseOtelEnv } from '~/lib/env';
 
@@ -121,7 +122,9 @@ describe.skipIf(!DATABASE_URL)('the runtime against the web database and a fake 
 		const posted = () =>
 			channels
 				.messages('11')
-				.filter((message) => message.embeds[0]?.url?.endsWith('/e2e.plugin'));
+				.filter((message) =>
+					messageLinks(message).some((url) => url.endsWith('/addons/e2e.plugin')),
+				);
 
 		await seedApprovedAddon(database.web, owner.userId, manifest('e2e.plugin'));
 		await waitFor(() => posted().length > 0, NOTIFY_WITHIN_MS);

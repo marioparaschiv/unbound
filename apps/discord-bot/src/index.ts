@@ -6,8 +6,8 @@ import { createBotReads } from '@unbound-app/web/bot';
 import { createLogger } from '@unbound-app/logger';
 
 import { createDatabase, POOLED_OPTIONS } from '~/db/database';
+import { CDN_URL, GUILD_ID, SITE_URL } from '~/lib/constants';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
-import { GUILD_ID, SITE_URL } from '~/lib/constants';
 import { startDispatchers } from '~/runtime/start';
 import { createDispatchers } from '~/dispatchers';
 import { checkTriggers } from '~/db/triggers';
@@ -29,6 +29,7 @@ const db = createDatabase(env.DATABASE_URL, POOLED_OPTIONS);
 // One pool for both: the bot's schema through `db`, the web's tables, read only, through `web`.
 const web = createBotReads(db.$client, {
 	siteUrl: SITE_URL,
+	cdnUrl: CDN_URL,
 	sponsorGraceDays: env.SPONSOR_PERK_GRACE_DAYS,
 });
 
@@ -52,6 +53,8 @@ const client = new SapphireClient({
 		GatewayIntentBits.Guilds,
 	],
 	loadMessageCommandListeners: true,
+	// Sent on every identify, so the status survives reconnects.
+	presence: { status: 'dnd' },
 });
 
 async function exit(code: number): Promise<never> {

@@ -2,8 +2,9 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import { afterAll, describe, expect, test } from 'bun:test';
 import { and, eq } from 'drizzle-orm';
 
-import { account, addonMaintainer, addonVersion, moderationEvent, user } from '~/db/schema';
+import { account, addon, addonMaintainer, addonVersion, moderationEvent, user } from '~/db/schema';
 import { publishLoaderRelease, withdrawLoaderRelease } from '~/lib/loader-releases';
+import { renderAddonIcon } from '~/lib/addon-icons';
 import { createStaffNote } from '~/lib/staff-notes';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
@@ -26,6 +27,7 @@ const NOW = new Date('2026-10-20T00:00:00.000Z');
 const { ctx, close } = await createTestContext();
 const reads = createBotReads(ctx.db.$client, {
 	siteUrl: 'https://unbound.rip',
+	cdnUrl: 'https://cdn.unbound.rip',
 	sponsorGraceDays: 7,
 	now: () => NOW,
 });
@@ -80,27 +82,88 @@ async function withdraw(addonId: string, version: string) {
 }
 
 describe('addons', () => {
-	test('reads the public listing, with only an http(s) icon and the page on the site url', async () => {
+	test('reads the public listing, with its website icon and links on the site url', async () => {
 		const owner = await signUp();
 
-		await seedAddon(owner.userId, 'reads.first', { icon: 'https://cdn.example.com/a.png' });
-		await seedAddon(owner.userId, 'reads.second', {
-			icon: { uri: 'data:image/png;base64,AA' },
-		});
+		await seedAddon(owner.userId, 'reads.first');
+		await ctx.db.update(addon).set({ icon: 'IconGlobe' }).where(eq(addon.id, 'reads.first'));
 
-		expect(await reads.addon('reads.first')).toEqual({
+		const listing = await reads.addon('reads.first');
+
+		expect(listing).toMatchObject({
 			id: 'reads.first',
 			type: 'plugin',
 			name: 'Hello',
 			description: 'Says hello.',
 			version: '1.0.0',
 			authors: [{ name: 'Mario', discordId: '1234567890' }],
-			iconUrl: 'https://cdn.example.com/a.png',
 			pageUrl: 'https://unbound.rip/addons/reads.first',
+			installUrl: 'https://unbound.rip/install/reads.first',
+			gallery: [],
 			listed: true,
 		});
-		expect(await reads.addon('reads.second')).not.toHaveProperty('iconUrl');
+		expect(listing?.iconSvg).toBe(renderAddonIcon('IconGlobe') ?? '');
 		expect(await reads.addon('reads.missing')).toBeUndefined();
+	});
+
+	test('reads the served version gallery on the CDN, a video as its poster, and its source on GitHub', async () => {
+		const owner = await signUp();
+		const measured = (path: string, kind: 'image' | 'video' = 'image') => ({
+			path,
+			kind,
+			width: 900,
+			height: 1600,
+			thumbhash: 'AAAA',
+			bytes: 10,
+		});
+
+		await seedApprovedAddon(ctx, owner.userId, manifest('reads.gallery', '1.0.0'), {
+			page: {
+				frontmatter: {
+					banner: 'media/banner.png',
+					media: [
+						{ image: 'media/a.png', alt: 'A' },
+						{ video: 'media/v.mp4', poster: 'media/p.png', alt: 'V' },
+						{ video: 'media/w.mp4', alt: 'W' },
+					],
+				},
+				media: [
+					{ ...measured('media/banner.png'), width: 1200, height: 400 },
+					measured('media/a.png'),
+					measured('media/p.png'),
+					measured('media/v.mp4', 'video'),
+					measured('media/w.mp4', 'video'),
+				],
+			},
+		});
+
+		const listing = await reads.addon('reads.gallery');
+
+		expect(listing?.gallery).toEqual([
+			{
+				url: 'https://cdn.unbound.rip/addons/reads.gallery/1.0.0/media/a.png',
+				width: 900,
+				height: 1600,
+				alt: 'A',
+			},
+			{
+				url: 'https://cdn.unbound.rip/addons/reads.gallery/1.0.0/media/p.png',
+				width: 900,
+				height: 1600,
+				alt: 'V',
+			},
+		]);
+		expect(listing?.sourceUrl).toMatch(
+			/^https:\/\/github\.com\/[^/]+\/[^/]+\/tree\/[\da-f]{40}\/plugins\/hello$/,
+		);
+	});
+
+	test('falls back to the type icon when maintainers picked none', async () => {
+		const owner = await signUp();
+
+		await seedAddon(owner.userId, 'reads.plain');
+
+		expect((await reads.addon('reads.plain'))?.iconSvg).toBe(renderAddonIcon('IconPlug') ?? '');
 	});
 
 	test('serves the newest live version and has nothing to show once every version is withdrawn', async () => {
@@ -130,7 +193,7 @@ describe('addons', () => {
 
 		expect(await reads.addon('reads.delisted')).toMatchObject({ listed: false });
 		expect((await reads.addons()).map((item) => item.id)).toEqual(
-			expect.arrayContaining(['reads.first', 'reads.second', 'reads.delisted']),
+			expect.arrayContaining(['reads.first', 'reads.plain', 'reads.delisted']),
 		);
 	});
 });

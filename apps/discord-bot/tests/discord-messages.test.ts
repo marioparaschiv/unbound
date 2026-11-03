@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { renderAddon } from '~/dispatchers/addons';
+import { renderAddon } from '~/dispatchers/addon-card';
 import { truncate } from '~/lib/discord-messages';
 
 import { ADDON } from './helpers/fake-reads';
@@ -23,11 +23,12 @@ describe('truncate', () => {
 		expect(isWellFormed(cut)).toBe(true);
 	});
 
-	test('an addon name cut inside an emoji renders a title Discord accepts', () => {
+	test('an addon name cut inside an emoji renders a heading Discord accepts', () => {
 		const name = `${'a'.repeat(254)}😀 tail`;
-		const title = renderAddon({ ...ADDON, name }).embeds?.[0]?.title;
+		const { body } = renderAddon({ ...ADDON, name }, { icon: Buffer.alloc(0) });
+		const text = JSON.stringify(body.components);
 
-		expect(title).toBe(`${'a'.repeat(254)}…`);
-		expect(isWellFormed(title ?? '')).toBe(true);
+		expect(text).toContain(`## ${'a'.repeat(254)}…\\n`);
+		expect(isWellFormed(text)).toBe(true);
 	});
 });

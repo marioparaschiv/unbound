@@ -44,6 +44,7 @@
         "discord.js": "^14.27.0",
         "drizzle-orm": "1.0.0-rc.5",
         "postgres": "^4.0.0",
+        "sharp": "^0.35.5",
       },
       "devDependencies": {
         "@types/bun": "catalog:",
