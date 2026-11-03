@@ -1,5 +1,3 @@
-That avatar deserves a closer look. View Icons opens user and server images in Discord's media viewer, at full size.
-
 ## :sparkle: What it does
 
 - :user: **View Avatar** and **View Banner** for a user, plus **View Server Avatar** when they have one in the server you're viewing.

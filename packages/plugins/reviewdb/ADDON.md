@@ -1,5 +1,3 @@
-What do people really think of them? ReviewDB lets you read and leave reviews on Discord profiles.
-
 ## :sparkle: What it does
 
 - :star: Adds a **View Reviews** button under the user info card on a profile, opening a sheet of that user's reviews.

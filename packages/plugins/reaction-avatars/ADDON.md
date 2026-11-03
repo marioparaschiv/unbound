@@ -1,5 +1,3 @@
-A number tells you how many. Reaction Avatars tells you who, with the faces of the people who reacted inside each reaction.
-
 ## :sparkle: What it does
 
 - :face-smile: Shows up to five faces per reaction, with a `+N` badge for the rest.

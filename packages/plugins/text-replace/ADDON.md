@@ -1,5 +1,3 @@
-Type it your way, send it theirs. Text Replace rewrites each message you send using rules you write, before Discord sends it.
-
 ## :sparkle: What it does
 
 - :text: Text rules replace every match of their text. They run first.

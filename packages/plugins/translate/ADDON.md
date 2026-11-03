@@ -1,5 +1,3 @@
-Every server has that one channel in a language you don't speak. Translate turns any message into yours from its long-press menu.
-
 ## :sparkle: What it does
 
 - :language: Adds a **Translate** row to the long-press menu on messages that have text.

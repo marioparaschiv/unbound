@@ -1,5 +1,3 @@
-Saw an emoji you need? Expression Tools adds copy, favorite and clone buttons to the sheet you get when you tap a custom emoji or sticker.
-
 ## :sparkle: What it does
 
 - :link: **Copy URL** copies an emoji's image link at 160 pixels (GIF if animated, PNG otherwise) or a sticker's `discord.com` page.

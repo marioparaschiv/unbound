@@ -1,5 +1,3 @@
-Your chat, but bubblier. Chat Bubbles draws a rounded bubble behind every message.
-
 ## :sparkle: What it does
 
 - :msgs: Wraps each message's text and media in a rounded bubble with a small margin.

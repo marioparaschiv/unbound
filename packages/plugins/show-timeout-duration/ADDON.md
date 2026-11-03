@@ -1,5 +1,3 @@
-How long are they out for? Show Timeout Duration adds the time left on a member's timeout to the timestamp of their messages in a server.
-
 ## :sparkle: What it does
 
 - :timer: The timestamp reads, for example, "• 2d 3h timeout remaining".

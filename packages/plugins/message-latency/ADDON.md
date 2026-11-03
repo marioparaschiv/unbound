@@ -1,5 +1,3 @@
-Was it them, or the network? Message Latency marks messages that took a long time to send with a small signal icon in front of the author name.
-
 ## :sparkle: What it does
 
 - :stopwatch: Measures the gap between the time in the message ID and the nonce the sender's client created. Bots and messages without a nonce are skipped.

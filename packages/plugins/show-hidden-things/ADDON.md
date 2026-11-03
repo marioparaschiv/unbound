@@ -1,5 +1,3 @@
-Discord keeps a few things to itself. Show Hidden Things puts features that are hidden or moderator-only in front of you.
-
 ## :sparkle: What it does
 
 - :timer: Shows the timeout icon next to members in chat whose timeout hasn't ended yet.

@@ -1,5 +1,3 @@
-Circles are fine. Squircles are better. Avatar Radius draws avatars as rounded squares, as round as you like.
-
 ## :sparkle: What it does
 
 - :square-user: Draws avatars as rounded squares instead of circles.
