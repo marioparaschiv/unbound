@@ -183,11 +183,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 			{ label: 'Web', url: PLUGIN.pageUrl },
 			{ label: 'Source', url: PLUGIN.sourceUrl ?? '' },
 		]);
-		expect(buttons(theme).map((button) => button.label)).toEqual([
-			'Install',
-			'Web',
-			'Changelog',
-		]);
+		expect(buttons(theme).map((button) => button.label)).toEqual(['Install', 'Web']);
 		expect(cardText(theme)).toContain(' Theme\n');
 
 		for (const [item, channelId] of [
