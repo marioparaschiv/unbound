@@ -18,13 +18,7 @@ import { findByPropsLazy } from '~/metro/wrappers';
 type SwitchProps = ComponentProps<DesignModule['FormSwitch']>;
 type SearchFieldProps = ComponentProps<DesignModule['SearchField']>;
 
-export {
-	Discord,
-	auditDesignComponents,
-	isRenderable,
-	registerDesignFallback,
-	type DesignComponentAudit,
-} from '~/metro/design';
+export { Discord, isRenderable, registerDesignFallback } from '~/metro/design';
 export type { DesignComponentName, DesignModule } from '@unbound-app/types/components';
 export { DESIGN_COMPONENTS } from '@unbound-app/types/components';
 /** Discord's blur backdrop components, with `BackgroundBlurFill`; found on first access. */
