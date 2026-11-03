@@ -193,7 +193,7 @@ describe('addons', () => {
 
 		expect(await reads.addon('reads.delisted')).toMatchObject({ listed: false });
 		expect((await reads.addons()).map((item) => item.id)).toEqual(
-			expect.arrayContaining(['reads.first', 'reads.second', 'reads.delisted']),
+			expect.arrayContaining(['reads.first', 'reads.plain', 'reads.delisted']),
 		);
 	});
 });

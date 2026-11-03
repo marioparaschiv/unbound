@@ -18,7 +18,13 @@ const LISTING = {
 			orderBy: { versionKey: 'desc' },
 			limit: 1,
 			columns: { version: true, manifest: true },
-			with: { submission: { columns: { repository: true }, with: { source: true } } },
+			// Only the columns provision.sql grants the bot: never the bundle, ADDON.md or review details.
+			with: {
+				submission: {
+					columns: { repository: true },
+					with: { source: { columns: { path: true, commitSha: true, page: true } } },
+				},
+			},
 		},
 	},
 } as const;
