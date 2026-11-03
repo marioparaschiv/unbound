@@ -3,6 +3,7 @@ import { useSuspenseQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { LATEST_DOCS_ALIAS, redirectToLatestDocs } from '~/lib/docs/latest-docs';
+import DocsVersionPicker from '~/components/docs/docs-version-picker';
 import { docsManifestQuery, docsNavQuery } from '~/queries/docs/docs';
 import DocsSidebar from '~/components/docs/docs-sidebar';
 import DocsSearch from '~/components/docs/docs-search';
@@ -25,6 +26,7 @@ function DocsLayout() {
 			label='API reference'
 			title={symbol ?? `@unbound-app/${route.package}`}
 			sidebar={<DocsSidebar nav={nav} symbol={symbol} />}
+			sidebarHeader={<DocsVersionPicker nav={nav} symbol={symbol} />}
 			renderSearch={(state) => <DocsSearch entries={entries} route={route} {...state} />}
 		>
 			<Outlet />
