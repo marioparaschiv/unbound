@@ -6,9 +6,9 @@ import postgres from 'postgres';
 import { z } from 'zod';
 
 import { ADDON_CHANNELS, desiredChannel, type AddonChannels } from '~/dispatchers/addons';
+import { CDN_URL, SITE_URL } from '~/lib/constants';
 import { contentHash } from '~/lib/content-hash';
 import { parseDatabaseEnv } from '~/lib/env';
-import { SITE_URL } from '~/lib/constants';
 
 type Row = Record<string, string | null>;
 
@@ -211,7 +211,7 @@ async function preflight(source: postgres.Sql, target: postgres.Sql) {
 
 async function hashDrift(target: postgres.Sql, options: MoveOptions): Promise<HashDrift> {
 	const { channels = ADDON_CHANNELS } = options;
-	const reads = createBotReads(target, { siteUrl: SITE_URL });
+	const reads = createBotReads(target, { siteUrl: SITE_URL, cdnUrl: CDN_URL });
 	const posts = await target<{ addonId: string; channelId: string; postedHash: string }[]>`
 		select addon_id as "addonId", channel_id as "channelId", posted_hash as "postedHash" from bot.addon_message`;
 	const drift: HashDrift = { equal: 0, wouldEdit: 0, wouldMove: 0, wouldDelete: 0 };

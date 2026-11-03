@@ -22,13 +22,14 @@ export type ResolvedReadOptions = Required<BotReadOptions>;
 /**
  * @description Opens the bot's read model of the web's tables over an existing postgres.js pool.
  * @param client The caller's pool; it is not ended here.
- * @param options The site url, the sponsor grace period and the clock.
+ * @param options The site and CDN urls, the sponsor grace period and the clock.
  * @returns The reads.
  */
 export function createBotReads(client: postgres.Sql, options: BotReadOptions): BotReads {
 	const db = open(client);
 	const resolved: ResolvedReadOptions = {
 		siteUrl: options.siteUrl,
+		cdnUrl: options.cdnUrl,
 		sponsorGraceDays: options.sponsorGraceDays ?? DEFAULT_PERK_GRACE_DAYS,
 		now: options.now ?? (() => new Date()),
 	};

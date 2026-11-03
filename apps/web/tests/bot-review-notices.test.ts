@@ -12,7 +12,10 @@ import { manifest, seedApprovedAddon, seedSubmission } from './helpers/addons';
 const BUILD: FirstPartyBuild = { repository: 'owner/repo', commitSha: 'abc', ref: 'builds/abc' };
 
 const { ctx, close } = await createTestContext();
-const reads = createBotReads(ctx.db.$client, { siteUrl: 'https://unbound.rip' });
+const reads = createBotReads(ctx.db.$client, {
+	siteUrl: 'https://unbound.rip',
+	cdnUrl: 'https://cdn.unbound.rip',
+});
 
 afterAll(close);
 

@@ -1,15 +1,25 @@
 import { manifest, schema, seedApprovedAddon, signInWithDiscord } from '@unbound-app/web/testing';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import type { PublicAddon } from '@unbound-app/web/bot';
+import type { APIMessage } from 'discord.js';
 import { eq, sql } from 'drizzle-orm';
+import sharp from 'sharp';
 
 import { reconcileAddons, syncAddon, type AddonChannels } from '~/dispatchers/addons';
 import { createDatabase, type Database } from '~/db/database';
+import { messageLinks } from '~/dispatchers/addon-card';
+import type { AuthorEmojis } from '~/lib/author-emojis';
 import { contentHash } from '~/lib/content-hash';
+import type { AppEmoji } from '~/lib/constants';
 import { addonMessage } from '~/db/schema';
 
+import {
+	componentsTextLength,
+	createFakeDiscord,
+	type FakeDiscord,
+	type FakeMessage,
+} from './helpers/fake-discord-rest';
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
-import { createFakeDiscord, embedLength, type FakeDiscord } from './helpers/fake-discord-rest';
 import { ADDON, createFakeReads, type FakeReads } from './helpers/fake-reads';
 
 const CHANNELS: AddonChannels = { plugin: '11', theme: '12', 'icon-pack': '13' };
@@ -21,16 +31,16 @@ const PLUGIN: PublicAddon = {
 		{ name: 'Mario', discordId: '1' },
 		{ name: 'Alex', discordId: '2' },
 	],
-	iconUrl: 'https://unbound.rip/icons/plugin-1.png',
 	pageUrl: 'https://unbound.rip/addons/plugin-1',
+	installUrl: 'https://unbound.rip/install/plugin-1',
 };
 const THEME: PublicAddon = {
 	...PLUGIN,
 	id: 'theme-1',
 	type: 'theme',
 	name: 'Midnight',
-	iconUrl: undefined,
 	pageUrl: 'https://unbound.rip/addons/theme-1',
+	sourceUrl: undefined,
 };
 const ICON_PACK: PublicAddon = {
 	...PLUGIN,
@@ -46,6 +56,39 @@ const FONT: PublicAddon = {
 	name: 'Inter',
 	pageUrl: 'https://unbound.rip/addons/font-1',
 };
+
+type CardNode = {
+	type: number;
+	content?: string;
+	url?: string;
+	label?: string;
+	components?: CardNode[];
+	accessory?: CardNode;
+	items?: { media: { url: string } }[];
+};
+
+function nodes(message: Pick<APIMessage, 'components'> | undefined): CardNode[] {
+	const walk = (list: readonly CardNode[]): CardNode[] =>
+		list.flatMap((node) => [
+			node,
+			...walk(node.components ?? []),
+			...walk(node.accessory ? [node.accessory] : []),
+		]);
+
+	return walk(message?.components ?? []);
+}
+
+function cardText(message: FakeMessage | undefined) {
+	return nodes(message)
+		.flatMap((node) => (node.content === undefined ? [] : [node.content]))
+		.join('\n');
+}
+
+function buttons(message: FakeMessage | undefined) {
+	return nodes(message).flatMap((node) =>
+		node.url && node.label ? [{ label: node.label, url: node.url }] : [],
+	);
+}
 
 describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 	let database: BotTestDatabase;
@@ -103,7 +146,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		return channelId
 			? discord
 					.messages(channelId)
-					.filter((message) => message.embeds[0]?.url === item.pageUrl)
+					.filter((message) => messageLinks(message).includes(item.pageUrl))
 			: [];
 	}
 
@@ -111,7 +154,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		return discord.requests.filter((request) => request.method !== 'GET');
 	}
 
-	test('a listed plugin, theme and icon pack each get one embed in their own channel; a font gets none', async () => {
+	test('a listed plugin, theme and icon pack each get one card in their own channel; a font gets none', async () => {
 		ingest(PLUGIN, THEME, ICON_PACK, FONT);
 
 		for (const item of [PLUGIN, THEME, ICON_PACK, FONT]) {
@@ -129,20 +172,19 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 		expect(plugin?.author.id).toBe(discord.selfId);
 		expect(plugin?.allowed_mentions).toEqual({ parse: [] });
-		expect(plugin?.embeds).toEqual([
-			{
-				title: 'Silent Typing',
-				url: PLUGIN.pageUrl,
-				description: 'Hides your typing indicator.',
-				color: 0xc8_41_51,
-				fields: [
-					{ name: 'Version', value: '1.0.0', inline: true },
-					{ name: 'Authors', value: 'Mario, Alex', inline: true },
-				],
-				thumbnail: { url: PLUGIN.iconUrl ?? '' },
-			},
+		expect(plugin?.flags).toBe(1 << 15);
+		expect(plugin?.files).toEqual(['icon.png']);
+		expect(cardText(plugin)).toContain('## Silent Typing\nHides your typing indicator.');
+		expect(cardText(plugin)).toContain(' Plugin\n');
+		expect(cardText(plugin)).toContain('`v1.0.0`');
+		expect(cardText(plugin)).toContain('Mario, Alex');
+		expect(buttons(plugin)).toEqual([
+			{ label: 'Install', url: PLUGIN.installUrl },
+			{ label: 'View on Web', url: PLUGIN.pageUrl },
+			{ label: 'Source', url: PLUGIN.sourceUrl ?? '' },
 		]);
-		expect(theme?.embeds[0]?.thumbnail).toBeUndefined();
+		expect(buttons(theme).map((button) => button.label)).toEqual(['Install', 'View on Web']);
+		expect(cardText(theme)).toContain(' Theme\n');
 
 		for (const [item, channelId] of [
 			[PLUGIN, '11'],
@@ -155,7 +197,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		}
 	});
 
-	test('an addon with every text at its longest still posts within the embed size cap', async () => {
+	test('an addon with every text at its longest still posts within the text cap', async () => {
 		const long = {
 			...PLUGIN,
 			name: 'n'.repeat(300),
@@ -167,10 +209,10 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		ingest(long);
 		await sync(long.id);
 
-		const [embed] = messagesOf(long)[0]?.embeds ?? [];
+		const [message] = messagesOf(long);
 
-		expect(embed).toBeDefined();
-		expect(embedLength(embed ?? {})).toBeLessThanOrEqual(6000);
+		expect(message).toBeDefined();
+		expect(componentsTextLength(message?.components ?? [])).toBeLessThanOrEqual(4000);
 	});
 
 	test('a content change edits the message in place and advances posted_hash', async () => {
@@ -187,7 +229,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 		expect(writes().map((request) => request.method)).toEqual(['POST', 'PATCH']);
 		expect(messagesOf(PLUGIN)).toHaveLength(1);
-		expect(messagesOf(PLUGIN)[0]?.embeds[0]?.fields?.[0]?.value).toBe('1.1.0');
+		expect(cardText(messagesOf(PLUGIN)[0])).toContain('`v1.1.0`');
 		expect(after?.messageId).toBe(before?.messageId);
 		expect(after?.postedHash).toBe(current ? contentHash(current) : '');
 		expect(after?.postedHash).not.toBe(before?.postedHash);
@@ -269,7 +311,8 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 	test('an addon Discord rejects is logged and skipped, and the next reconcile posts it', async () => {
 		ingest(PLUGIN, THEME);
-		discord.rejectPost = (body) => body.embeds?.[0]?.title === PLUGIN.name;
+		discord.rejectPost = (body) =>
+			JSON.stringify(body.components).includes(`## ${PLUGIN.name}`);
 		await reconcile();
 
 		expect(messagesOf(THEME)).toHaveLength(1);
@@ -433,7 +476,7 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 		expect(extra).toHaveLength(0);
 		expect(message?.id).toBe(orphan?.id);
-		expect(message?.embeds[0]?.fields?.[0]?.value).toBe('2.0.0');
+		expect(cardText(message)).toContain('`v2.0.0`');
 		expect(await rowOf(PLUGIN.id)).toMatchObject({ channelId: '11', messageId: message?.id });
 	});
 
@@ -492,14 +535,12 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		const [message, ...extra] = discord.messages('11');
 
 		expect(extra).toHaveLength(0);
-		expect(message?.embeds[0]).toMatchObject({
-			title: 'Hello',
-			url: 'https://unbound.rip/addons/web.listed',
-			fields: [
-				{ name: 'Version', value: '2.0.0', inline: true },
-				{ name: 'Authors', value: 'Mario', inline: true },
-			],
-		});
+		expect(cardText(message)).toContain('## Hello');
+		expect(cardText(message)).toContain('`v2.0.0`');
+		expect(buttons(message).slice(0, 2)).toEqual([
+			{ label: 'Install', url: 'https://unbound.rip/install/web.listed' },
+			{ label: 'View on Web', url: 'https://unbound.rip/addons/web.listed' },
+		]);
 		expect(await rowOf('web.listed')).toMatchObject({
 			messageId: message?.id,
 			postedHash: contentHash((await reads.addon('web.listed')) ?? ADDON),
@@ -513,5 +554,61 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 
 		expect(discord.messages('11')).toHaveLength(0);
 		expect(await rowOf('web.listed')).toBeUndefined();
+	});
+
+	test('a gallery is stitched into one image under the card; an image that fails to load is left out', async () => {
+		const shot = await sharp({
+			create: { width: 90, height: 160, channels: 3, background: '#336699' },
+		})
+			.png()
+			.toBuffer();
+		const server = Bun.serve({
+			port: 0,
+			hostname: '127.0.0.1',
+			fetch: (request) =>
+				new URL(request.url).pathname === '/shot.png'
+					? new Response(shot, { headers: { 'content-type': 'image/png' } })
+					: new Response(null, { status: 404 }),
+		});
+		const base = `http://127.0.0.1:${server.port}`;
+
+		try {
+			ingest({
+				...PLUGIN,
+				gallery: [
+					{ url: `${base}/shot.png`, width: 90, height: 160, alt: 'Chat' },
+					{ url: `${base}/gone.png`, width: 90, height: 160, alt: 'Gone' },
+				],
+			});
+			await sync(PLUGIN.id);
+		} finally {
+			await server.stop(true);
+		}
+
+		const [message] = messagesOf(PLUGIN);
+		const gallery = nodes(message).find((node) => node.items);
+
+		expect(message?.files).toEqual(['icon.png', 'gallery.png']);
+		expect(gallery?.items?.map((item) => item.media.url)).toEqual(['attachment://gallery.png']);
+	});
+
+	test('an author whose avatar emoji changes gets the card edited to show it', async () => {
+		let avatar: AppEmoji = { name: 'av_1_aaaa', id: '501' };
+		const emojis: AuthorEmojis = {
+			resolve: async (ids) => new Map(ids.map((id) => [id, avatar])),
+			prune: async () => {},
+		};
+
+		ingest(PLUGIN);
+		await syncAddon(stores(), discord.rest, PLUGIN.id, CHANNELS, undefined, emojis);
+		await syncAddon(stores(), discord.rest, PLUGIN.id, CHANNELS, undefined, emojis);
+
+		expect(cardText(messagesOf(PLUGIN)[0])).toContain('<:av_1_aaaa:501> Mario');
+
+		avatar = { name: 'av_1_bbbb', id: '502' };
+		await syncAddon(stores(), discord.rest, PLUGIN.id, CHANNELS, undefined, emojis);
+
+		expect(writes().map((request) => request.method)).toEqual(['POST', 'PATCH']);
+		expect(cardText(messagesOf(PLUGIN)[0])).toContain('<:av_1_bbbb:502> Mario');
 	});
 });

@@ -1,14 +1,22 @@
 import type { APIEmbed, APIMessage, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import { REST } from 'discord.js';
 
-export type FakeMessage = Pick<APIMessage, 'id' | 'channel_id' | 'author' | 'content' | 'embeds'> &
-	Pick<RESTPostAPIChannelMessageJSONBody, 'allowed_mentions'>;
+export type FakeMessage = Pick<
+	APIMessage,
+	'id' | 'channel_id' | 'author' | 'content' | 'embeds' | 'components' | 'flags'
+> &
+	Pick<RESTPostAPIChannelMessageJSONBody, 'allowed_mentions'> & {
+		/** The names of the files the last post or edit uploaded. */
+		files: string[];
+	};
 
 export type RecordedRequest = {
 	method: string;
 	channelId: string;
 	messageId?: string;
 	body?: RESTPostAPIChannelMessageJSONBody;
+	/** The names of the files a multipart request uploaded. */
+	files: string[];
 };
 
 export type FakeDiscordOptions = {
@@ -57,6 +65,7 @@ const INVALID_FORM_BODY = { message: 'Invalid Form Body', code: 50_035 };
 const MISSING_PERMISSIONS = { message: 'Missing Permissions', code: 50_013 };
 const EMBED_DESCRIPTION_LIMIT = 4096;
 const EMBED_TOTAL_LIMIT = 6000;
+const COMPONENTS_TEXT_LIMIT = 4000;
 // Starts one below a power of ten so ids change length, catching snowflakes compared as strings.
 const FIRST_ID = 99_999_999_999_999_999n;
 
@@ -89,13 +98,54 @@ export function embedLength(embed: APIEmbed): number {
 	].reduce((total, text) => total + (text?.length ?? 0), 0);
 }
 
-function isOversized(embeds: APIEmbed[]) {
+type TextNode = { content?: string; components?: TextNode[] };
+
+/**
+ * @description Counts the text a components v2 message holds, which Discord caps at 4000 characters.
+ * @param components The message's top-level components.
+ * @returns The total length of every text display.
+ */
+export function componentsTextLength(components: readonly object[]): number {
+	return (components as readonly TextNode[]).reduce(
+		(total, node) =>
+			total + (node.content?.length ?? 0) + componentsTextLength(node.components ?? []),
+		0,
+	);
+}
+
+function isOversized(body: RESTPostAPIChannelMessageJSONBody) {
+	const embeds = body.embeds ?? [];
 	const total = embeds.reduce((sum, embed) => sum + embedLength(embed), 0);
 	const description = embeds.some(
 		(embed) => (embed.description?.length ?? 0) > EMBED_DESCRIPTION_LIMIT,
 	);
+	const text = componentsTextLength(body.components ?? []);
 
-	return description || total > EMBED_TOTAL_LIMIT;
+	return description || total > EMBED_TOTAL_LIMIT || text > COMPONENTS_TEXT_LIMIT;
+}
+
+// A post with files arrives as multipart: the JSON body under `payload_json`, each file under `files[n]`.
+async function readBody(request: Request) {
+	if (!request.body) {
+		return { body: undefined, files: [] };
+	}
+
+	if (!request.headers.get('content-type')?.startsWith('multipart/form-data')) {
+		return { body: (await request.json()) as RESTPostAPIChannelMessageJSONBody, files: [] };
+	}
+
+	const form = await request.formData();
+	const payload = form.get('payload_json');
+	const files = [...form.entries()].flatMap(([key, value]) =>
+		key.startsWith('files[') && value instanceof File ? [value.name] : [],
+	);
+
+	return {
+		body: JSON.parse(
+			typeof payload === 'string' ? payload : '{}',
+		) as RESTPostAPIChannelMessageJSONBody,
+		files,
+	};
 }
 
 /**
@@ -127,6 +177,7 @@ export function createFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord
 		authorId: string,
 		body: RESTPostAPIChannelMessageJSONBody,
 		id: string = String(nextId++),
+		files: string[] = [],
 	) {
 		const embeds: APIEmbed[] = body.embeds ?? [];
 
@@ -142,7 +193,10 @@ export function createFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord
 			},
 			content: body.content ?? '',
 			embeds,
+			components: body.components ?? [],
+			flags: body.flags,
 			allowed_mentions: body.allowed_mentions,
+			files,
 		});
 
 		return id;
@@ -167,11 +221,9 @@ export function createFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord
 		}
 
 		const { channelId, messageId } = route;
-		const body = request.body
-			? ((await request.json()) as RESTPostAPIChannelMessageJSONBody)
-			: undefined;
+		const { body, files } = await readBody(request);
 
-		requests.push({ method: request.method, channelId, messageId, body });
+		requests.push({ method: request.method, channelId, messageId, body, files });
 
 		if (!messageId) {
 			if (request.method === 'GET') {
@@ -185,11 +237,11 @@ export function createFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord
 				return Response.json(original);
 			}
 
-			if (fake.rejectPost?.(body ?? {}) || isOversized(body?.embeds ?? [])) {
+			if (fake.rejectPost?.(body ?? {}) || isOversized(body ?? {})) {
 				return Response.json(INVALID_FORM_BODY, { status: 400 });
 			}
 
-			const id = store(channelId, selfId, body ?? {});
+			const id = store(channelId, selfId, body ?? {}, undefined, files);
 
 			if (nonce) {
 				nonces.set(nonce, id);
@@ -214,6 +266,9 @@ export function createFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord
 			case 'PATCH': {
 				message.content = body?.content ?? message.content;
 				message.embeds = body?.embeds ?? message.embeds;
+				message.components = body?.components ?? message.components;
+				message.flags = body?.flags ?? message.flags;
+				message.files = files;
 				message.allowed_mentions = body?.allowed_mentions ?? message.allowed_mentions;
 
 				return Response.json(message);
@@ -251,7 +306,7 @@ export function createFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord
 		rejectPost: undefined,
 		rejectDelete: undefined,
 		messages: (channelId) => [...channel(channelId).values()].sort(byIdDescending).reverse(),
-		seed: store,
+		seed: (channelId, authorId, body, id) => store(channelId, authorId, body, id),
 		handDelete: (channelId, messageId) => void channel(channelId).delete(messageId),
 		stop: async () => {
 			await server.stop(true);
@@ -261,4 +316,4 @@ export function createFakeDiscord(options: FakeDiscordOptions = {}): FakeDiscord
 	return fake;
 }
 
-export default { createFakeDiscord, embedLength };
+export default { createFakeDiscord, embedLength, componentsTextLength };

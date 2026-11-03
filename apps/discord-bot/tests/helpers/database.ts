@@ -5,8 +5,8 @@ import postgres from 'postgres';
 
 import { createDatabase, type Database } from '~/db/database';
 import { NOTIFY_CHANNELS } from '~/dispatchers/types';
+import { CDN_URL, SITE_URL } from '~/lib/constants';
 import { migrateDatabase } from '~/db/migrate';
-import { SITE_URL } from '~/lib/constants';
 
 export type BotTestDatabase = {
 	/** The web's context over the same database, for seeding web rows through the web's own helpers. */
@@ -59,7 +59,11 @@ export async function createBotTestDatabase(): Promise<BotTestDatabase> {
 	return {
 		web,
 		db,
-		reads: createBotReads(db.$client, { siteUrl: SITE_URL, sponsorGraceDays: TEST_GRACE_DAYS }),
+		reads: createBotReads(db.$client, {
+			siteUrl: SITE_URL,
+			cdnUrl: CDN_URL,
+			sponsorGraceDays: TEST_GRACE_DAYS,
+		}),
 		url,
 		async drop() {
 			await db.$client.end();
