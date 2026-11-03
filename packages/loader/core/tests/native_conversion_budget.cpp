@@ -7,12 +7,15 @@ static void exhaustsProfile(const NativeConversionProfile &profile)
 {
     NativeConversionBudget budget(profile);
     assert(budget.profile().maximumDepth == profile.maximumDepth);
-    assert(budget.enter());
-    assert(budget.reserveEntries(profile.maximumEntries - 1));
-    assert(!budget.reserveEntries(profile.maximumEntries));
+    assert(!budget.reserveEntries(profile.maximumEntries + 1));
     assert(!budget.reserveEntries(std::numeric_limits<size_t>::max()));
+    assert(budget.reserveEntries(profile.maximumEntries - 1));
+    assert(!budget.reserveEntries(2));
+    assert(budget.reserveEntries(1));
+    assert(!budget.reserveEntries(1));
+    assert(budget.reserveEntries(0));
 
-    for (size_t index = 1; index < profile.maximumDepth; index++)
+    for (size_t index = 0; index < profile.maximumDepth; index++)
     {
         assert(budget.enter());
     }
@@ -21,14 +24,19 @@ static void exhaustsProfile(const NativeConversionProfile &profile)
     {
         budget.leave();
     }
+    assert(budget.enter());
+    budget.leave();
+}
 
-    for (size_t index = profile.maximumDepth; index < profile.maximumEntries; index++)
-    {
-        assert(budget.enter());
-        budget.leave();
-    }
-    assert(!budget.enter());
-    assert(!budget.reserveEntries(1));
+static void reservesRegardlessOfOrder(const NativeConversionProfile &profile)
+{
+    NativeConversionBudget wideFirst(profile);
+    NativeConversionBudget wideLast(profile);
+    size_t                 wide   = profile.maximumEntries / 2;
+    size_t                 narrow = profile.maximumEntries - wide;
+    assert(wideFirst.reserveEntries(wide) && wideFirst.reserveEntries(narrow));
+    assert(wideLast.reserveEntries(narrow) && wideLast.reserveEntries(wide));
+    assert(!wideFirst.reserveEntries(1) && !wideLast.reserveEntries(1));
 }
 
 int main()
@@ -45,6 +53,9 @@ int main()
     exhaustsProfile(kNativeValueConversion);
     exhaustsProfile(kNativePropertiesConversion);
     exhaustsProfile(kNativeArgumentsConversion);
+    exhaustsProfile(kNativeBatchConversion);
+    reservesRegardlessOfOrder(kNativeValueConversion);
+    reservesRegardlessOfOrder(kNativeBatchConversion);
 
     assert(kNativePropertiesConversion.maximumDepth == 8);
     assert(kNativePropertiesConversion.maximumEntries == 512);
