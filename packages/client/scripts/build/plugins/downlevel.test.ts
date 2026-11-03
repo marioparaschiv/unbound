@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 import vm from 'node:vm';
 
-import { GLOBAL_BANNER, lower, lowerSourceFallback } from './downlevel';
+import { GLOBAL_BANNER, lower, lowerScript } from './downlevel';
 
 const root = join(import.meta.dir, '..', '..', '..');
 
@@ -39,33 +39,23 @@ describe('lower', () => {
 	});
 });
 
-describe('lowerSourceFallback', () => {
+describe('lowerScript', () => {
 	test('lowers the shipped script for a Hermes without the feature flags, keeping helpers off the global object', () => {
-		const plugin = lowerSourceFallback();
-		const chunk = {
-			type: 'chunk',
-			fileName: 'unbound.js',
-			map: null,
-			// A `return` inside the loop makes swc add its `_type_of` helper.
-			code: `${GLOBAL_BANNER}(() => { globalThis.out = []; (() => { for (let i = 0; i < 3; i++) { out.push(() => i); if (i > 5) return i; } })(); })();`,
-		};
-		const generate = plugin.generateBundle as (
-			options: Record<string, never>,
-			bundle: Record<string, typeof chunk>,
-		) => void;
-
-		generate.call({}, {}, { 'unbound.js': chunk });
-
+		// A `return` inside the loop makes swc add its `_type_of` helper.
+		const { code } = lowerScript(
+			`${GLOBAL_BANNER}(() => { globalThis.out = []; (() => { for (let i = 0; i < 3; i++) { out.push(() => i); if (i > 5) return i; } })(); })();`,
+		);
 		const context = vm.createContext({});
 		const before = Object.getOwnPropertyNames(vm.runInContext('globalThis', context));
 
-		vm.runInContext(chunk.code, context);
+		vm.runInContext(code, context);
 
 		const added = Object.getOwnPropertyNames(vm.runInContext('globalThis', context)).filter(
 			(name) => !before.includes(name),
 		);
 
-		expect(added.sort()).toEqual(['global', 'out']);
+		expect(code).toContain('_type_of');
+		expect(added.toSorted()).toEqual(['global', 'out']);
 		expect(vm.runInContext('out.map((f) => f())', context)).toEqual([0, 1, 2]);
 	});
 });

@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from 'react';
 
 import { Discord } from '~/metro/components';
 
-import TextSettingModal from './text-setting-modal';
+import TextSettingModal from './text-setting-modal.dev';
 
 const ALERT_KEY = 'unbound-text-setting';
 

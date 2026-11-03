@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { reloadSummary } from './reload-summary';
+import { reloadSummary } from './reload-summary.dev';
 
 describe('reloadSummary', () => {
 	test('names one, two or three plugins', () => {

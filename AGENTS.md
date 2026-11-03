@@ -36,6 +36,7 @@ Name things with `GLOSSARY.md` terms. `DESIGN.md` lists the design-system primit
 - `~/` across directories, `./` for siblings.
 - Import `@unbound-app/utils` per file: `@unbound-app/utils/noop`.
 - `import type` for type-only imports.
+- Developer-only client code lives in `*.dev.ts(x)`, reached only behind `import.meta.env.DEV_TOOLS`; it ships in the dev bundle alone, and a build test fails if one leaks.
 
 ## Functions
 

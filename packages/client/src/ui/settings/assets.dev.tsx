@@ -7,10 +7,10 @@ import { getAll, getIdByName } from '~/assets/api';
 import Empty from '~/ui/components/empty-state';
 import { messages, format } from '~/i18n/api';
 
-import type { IndexedAsset } from './asset-row';
+import type { IndexedAsset } from './asset-row.dev';
 
+import AssetRow from './asset-row.dev';
 import useStyles from './assets.style';
-import AssetRow from './asset-row';
 
 type AssetRowInfo = { item: IndexedAsset; index: number };
 

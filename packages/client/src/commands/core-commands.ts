@@ -1,12 +1,12 @@
 import { sendDebugReport } from '~/diagnostics/debug-report';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { createCommands, option } from '~/commands/api';
-import { DEV_TOOLS, Screens } from '~/core/constants';
 import { Discord } from '~/metro/components';
 import { findByProps } from '~/metro/search';
+import { Screens } from '~/core/constants';
+import debug from '~/debugger/builtin.dev';
 import { getBucket } from '~/storage/api';
 import { reload } from '~/native/native';
-import debug from '~/debugger/builtin';
 import { messages } from '~/i18n/api';
 import { Util } from '~/metro/common';
 
@@ -60,7 +60,7 @@ export function start() {
 	});
 
 	// The default bundle carries no debugger, so its command would have nothing to toggle.
-	if (DEV_TOOLS) {
+	if (import.meta.env.DEV_TOOLS) {
 		Commands.register({
 			debugger: {
 				description: 'Turn the WebSocket debugger on or off, or connect it to an address',

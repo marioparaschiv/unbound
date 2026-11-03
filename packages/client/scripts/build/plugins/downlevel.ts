@@ -104,6 +104,49 @@ export default function downlevel(root: string): Plugin {
 }
 
 /**
+ * @description Lowers a shipped script for a Hermes that compiles it from source without {@link HERMESC_FEATURE_FLAGS},
+ * keeping `var global` on the global object and the helpers swc adds inside a wrapper.
+ * @param code The script, starting with the build's {@link GLOBAL_BANNER}.
+ * @param map The script's source map, if it has one.
+ * @returns The lowered script, and its map when given one.
+ */
+export function lowerScript(code: string, map?: string): Lowered {
+	const banner = code.startsWith(GLOBAL_BANNER) ? GLOBAL_BANNER : '';
+	const input = map ? parse(sourceMapSchema, JSON.parse(map)) : undefined;
+	const lowered = transformSync(code.slice(banner.length), {
+		swcrc: false,
+		configFile: false,
+		isModule: false,
+		minify: true,
+		sourceMaps: Boolean(input),
+		// The banner is one whole line, so the body's map drops that line.
+		inputSourceMap: input
+			? JSON.stringify({
+					...input,
+					mappings: input.mappings.slice(banner ? input.mappings.indexOf(';') + 1 : 0),
+				})
+			: undefined,
+		jsc: { parser: { syntax: 'ecmascript' }, minify: { compress: true, mangle: true } },
+		// A modern target lowers only the flagged features.
+		env: { targets: 'chrome 120', include: FLAGGED_TRANSFORMS },
+	});
+	const wrapped = `${banner}${WRAPPER_HEAD}${lowered.code}\n})();`;
+
+	if (!lowered.map) {
+		return { code: wrapped };
+	}
+
+	const result = parse(sourceMapSchema, JSON.parse(lowered.map));
+	// One empty mappings line for the banner and one for the wrapper head.
+	const offset = ';'.repeat((banner ? 1 : 0) + WRAPPER_HEAD.split('\n').length - 1);
+
+	return {
+		code: wrapped,
+		map: JSON.stringify({ ...result, mappings: offset + result.mappings }),
+	};
+}
+
+/**
  * @description Lowers the shipped JavaScript after hermesc compiled its bytecode, since the loader falls back
  * to it on a Hermes that compiles it from source without {@link HERMESC_FEATURE_FLAGS}.
  * @returns A rolldown plugin to place after the hermesc plugin.
@@ -122,47 +165,15 @@ export function lowerSourceFallback(): Plugin {
 					continue;
 				}
 
-				// `var global` stays on the global object; the rest, with the helpers swc adds, goes in a wrapper.
-				const banner = output.code.startsWith(GLOBAL_BANNER) ? GLOBAL_BANNER : '';
-				const map = output.map
-					? parse(sourceMapSchema, JSON.parse(JSON.stringify(output.map)))
-					: undefined;
-				const lowered = transformSync(output.code.slice(banner.length), {
-					swcrc: false,
-					configFile: false,
-					isModule: false,
-					minify: true,
-					sourceMaps: Boolean(map),
-					// The banner is one whole line, so the body's map drops that line.
-					inputSourceMap: map
-						? JSON.stringify({
-								...map,
-								mappings: map.mappings.slice(
-									banner ? map.mappings.indexOf(';') + 1 : 0,
-								),
-							})
-						: undefined,
-					jsc: {
-						parser: { syntax: 'ecmascript' },
-						minify: { compress: true, mangle: true },
-					},
-					// A modern target lowers only the flagged features.
-					env: { targets: 'chrome 120', include: FLAGGED_TRANSFORMS },
-				});
+				const lowered = lowerScript(
+					output.code,
+					output.map ? JSON.stringify(output.map) : undefined,
+				);
 
-				output.code = `${banner}${WRAPPER_HEAD}${lowered.code}\n})();`;
+				output.code = lowered.code;
 
-				if (map && lowered.map) {
-					const result = parse(sourceMapSchema, JSON.parse(lowered.map));
-					// One empty mappings line for the banner and one for the wrapper head.
-					const offset = ';'.repeat(
-						(banner ? 1 : 0) + WRAPPER_HEAD.split('\n').length - 1,
-					);
-
-					maps.set(
-						`${output.fileName}.map`,
-						JSON.stringify({ ...result, mappings: offset + result.mappings }),
-					);
+				if (lowered.map) {
+					maps.set(`${output.fileName}.map`, lowered.map);
 				}
 			}
 		},

@@ -62,7 +62,6 @@ export const DEV_FLAVOUR: Flavour = { name: 'unbound-dev', devTools: true };
 
 /** The modules the default bundle swaps for the release twin that drops the developer tooling. */
 const RELEASE_MODULES: Record<string, string> = {
-	'~/debugger/builtin': join(root, 'src', 'debugger', 'builtin.release.ts'),
 	'~/hot-refresh/runtime': join(root, 'src', 'hot-refresh', 'runtime.release.ts'),
 };
 
@@ -87,16 +86,22 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 				'#shims#': './src/core/shims',
 			},
 		},
-		// `$$DEV$$` is replaced by Oxc's transformer (rolldown's `transform.define`), so `if ($$DEV$$)`
-		// folds to `if (false)` and DCE prunes the branch.
+		// Each flag becomes a literal, so `if (import.meta.env.DEV_TOOLS)` folds to `if (false)` in the default
+		// bundle and DCE prunes the branch and the `*.dev.ts` modules only it imports.
 		transform: {
 			define: {
 				$$DEV$$: JSON.stringify(IS_DEV_BUILD),
+				'import.meta.env.DEV': JSON.stringify(IS_DEV_BUILD),
+				'import.meta.env.DEV_TOOLS': JSON.stringify(devTools),
 			},
 		},
 		// The store page imports the ADDON.md contract but never parses YAML; yaml declares no `sideEffects`.
+		// A `*.dev.ts` module's top level (loggers, style sheets) runs only if something reaches its exports.
 		treeshake: {
-			moduleSideEffects: [{ test: /[\\/]node_modules[\\/]yaml[\\/]/, sideEffects: false }],
+			moduleSideEffects: [
+				{ test: /[\\/]node_modules[\\/]yaml[\\/]/, sideEffects: false },
+				{ test: /\.dev\.tsx?$/, sideEffects: false },
+			],
 		},
 		output: [
 			{
@@ -127,7 +132,6 @@ function createConfig(flavour: Flavour, manifest = true): RolldownOptions {
 				$$DEV_SERVER_URL$$: DEV_SERVER_URL,
 				$$MINIMUM_DISCORD_ANDROID$$: MINIMUM_DISCORD_VERSIONS.android,
 				$$MINIMUM_DISCORD_IOS$$: MINIMUM_DISCORD_VERSIONS.ios,
-				$$DEV_TOOLS$$: devTools ? 'true' : 'false',
 			}),
 			// Only strips TS and JSX; class fields stay native, which Hermes runs. `downlevel` lowers the rest
 			// once per chunk, sharing each helper.

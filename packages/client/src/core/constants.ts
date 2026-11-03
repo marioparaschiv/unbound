@@ -10,15 +10,6 @@ export const CACHE_VERSION = 2;
 /** Whether this is a development build. Replaced at build time by the build's `transform.define`. */
 export const DEV: boolean = $$DEV$$;
 
-/** The build writes `true` or `false` here; a source run keeps the token and so reads `false`. */
-const devToolsToken: string = '$$DEV_TOOLS$$';
-
-/**
- * Whether this bundle keeps the developer tooling: the debugger and the hot-refresh runtime. The
- * default bundle leaves them out; the dev one and every local dev build keep them.
- */
-export const DEV_TOOLS: boolean = devToolsToken === 'true';
-
 /**
  * Base URL the i18n locale tables are fetched from. Replaced at build time: the GitHub raw URL in
  * production, the local dev server (`UNBOUND_DEV=1`) otherwise.

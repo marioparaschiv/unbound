@@ -36,7 +36,14 @@ async function bundledModules(options: RolldownOptions): Promise<string[]> {
 
 	await bundle.close();
 
-	return chunks.flatMap((chunk) => ('modules' in chunk ? Object.keys(chunk.modules) : []));
+	// A module tree-shaking emptied is still listed, with no rendered code.
+	return chunks.flatMap((chunk) =>
+		'modules' in chunk
+			? Object.entries(chunk.modules)
+					.filter(([, module]) => module.renderedLength > 0)
+					.map(([id]) => id)
+			: [],
+	);
 }
 
 /** Trims a module id to the workspace path, so the assertions do not depend on the checkout. */
@@ -46,11 +53,11 @@ function workspacePath(id: string): string {
 	return marker === -1 ? id : id.slice(marker).replaceAll('\\', '/');
 }
 
-/** The debugger and the hot-refresh runtime, which only the dev bundle carries. */
+/** Developer tooling only the dev bundle carries: every `*.dev.ts(x)` module, the protocol and the refresh runtime. */
 function isDeveloperModule(id: string): boolean {
 	return (
+		/\.dev\.tsx?$/.test(id) ||
 		/[/\\]debugger-protocol[/\\]/.test(id) ||
-		/[/\\]src[/\\]debugger[/\\]builtin\.ts$/.test(id) ||
 		/[/\\]hot-refresh[/\\](?:families|runtime)\.ts$/.test(id)
 	);
 }
@@ -114,8 +121,9 @@ describe('bundle flavours', () => {
 		expect(files).toEqual(['dist/unbound.js', 'dist/unbound-dev.js']);
 	});
 
-	test('leaves the debugger and the refresh runtime out of the default bundle', () => {
-		expect(defaultModules.filter(isDeveloperModule)).toEqual([]);
+	// A `*.dev.ts` module here was imported outside an `import.meta.env.DEV_TOOLS` branch.
+	test('leaves every developer module out of the default bundle', () => {
+		expect(defaultModules.filter(isDeveloperModule).map(workspacePath)).toEqual([]);
 	});
 
 	test('keeps the live patcher in the default bundle', () => {
@@ -127,11 +135,19 @@ describe('bundle flavours', () => {
 		]);
 	});
 
-	test('keeps the debugger and the refresh runtime in the dev bundle', () => {
+	test('keeps the developer modules in the dev bundle', () => {
 		expect(devModules.filter(isDeveloperModule).map(workspacePath).sort()).toEqual([
-			'packages/client/src/debugger/builtin.ts',
+			'packages/client/src/assets/builtin.dev.ts',
+			'packages/client/src/debugger/builtin.dev.ts',
+			'packages/client/src/debugger/reload-summary.dev.ts',
 			'packages/client/src/hot-refresh/families.ts',
 			'packages/client/src/hot-refresh/runtime.ts',
+			'packages/client/src/settings/builtin.dev.ts',
+			'packages/client/src/ui/settings/asset-row.dev.tsx',
+			'packages/client/src/ui/settings/assets.dev.tsx',
+			'packages/client/src/ui/settings/developer.dev.tsx',
+			'packages/client/src/ui/settings/text-setting-modal.dev.tsx',
+			'packages/client/src/ui/settings/text-setting-row.dev.tsx',
 			'packages/debugger-protocol/src/index.ts',
 		]);
 	});
