@@ -38,7 +38,6 @@ export const EMOJIS = {
 	download: { name: 'mb_download', id: '1567000099467567156' },
 	globe: { name: 'mb_globe', id: '1567000100708819019' },
 	codeBranch: { name: 'mb_code_branch', id: '1567000101883347026' },
-	history: { name: 'mb_history', id: '1567009046240956489' },
 } as const satisfies Record<string, AppEmoji>;
 
 export type IdConstantName = keyof typeof IDS;

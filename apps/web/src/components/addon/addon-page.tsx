@@ -26,7 +26,7 @@ function AddonPage({ addon, banner }: AddonPageProps) {
 	const { source } = addon;
 	const sidebar = [
 		<AuthorsCard key='authors' authors={addon.authors} />,
-		<Card key='changelog' id='changelog' className='gap-4 scroll-mt-24'>
+		<Card key='changelog' className='gap-4'>
 			<CardHeader>
 				<CardTitle>What's New</CardTitle>
 			</CardHeader>

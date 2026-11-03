@@ -181,7 +181,6 @@ describe.skipIf(!DATABASE_URL)('addon announcements', () => {
 		expect(buttons(plugin)).toEqual([
 			{ label: 'Install', url: PLUGIN.installUrl },
 			{ label: 'Web', url: PLUGIN.pageUrl },
-			{ label: 'Changelog', url: `${PLUGIN.pageUrl}#changelog` },
 			{ label: 'Source', url: PLUGIN.sourceUrl ?? '' },
 		]);
 		expect(buttons(theme).map((button) => button.label)).toEqual([

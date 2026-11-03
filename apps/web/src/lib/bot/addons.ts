@@ -3,7 +3,6 @@ import type { AddonType } from '@unbound-app/contracts/addons';
 
 import type { ReadDatabase, ResolvedReadOptions } from '~/lib/bot/reads';
 import type { PublicAddon, PublicGalleryImage } from '~/lib/bot/types';
-import { getVersionDirectory, VERSION_SOURCE } from '~/lib/artifacts';
 import { renderAddonIcon } from '~/lib/addon-icons';
 import { LIVE_VERSIONS } from '~/lib/live-versions';
 import { getTreeUrl } from '~/lib/github-urls';
@@ -19,7 +18,7 @@ const LISTING = {
 			orderBy: { versionKey: 'desc' },
 			limit: 1,
 			columns: { version: true, manifest: true },
-			with: VERSION_SOURCE,
+			with: { submission: { columns: { repository: true }, with: { source: true } } },
 		},
 	},
 } as const;
@@ -78,7 +77,8 @@ function toPublicAddon(
 
 	const { repository, source } = served.submission ?? {};
 	const cdn = options.cdnUrl.endsWith('/') ? options.cdnUrl : `${options.cdnUrl}/`;
-	const folder = new URL(`${getVersionDirectory(row.id, served.version)}/`, cdn).href;
+	// The version's CDN folder, as `getVersionDirectory` names it; artifacts.ts is outside the bot's import graph.
+	const folder = new URL(`addons/${row.id}/${served.version}/`, cdn).href;
 
 	return {
 		id: row.id,
