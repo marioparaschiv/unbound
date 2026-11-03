@@ -13,6 +13,7 @@ mock.module('~/metro/search', () => ({
 }));
 
 const components = await import('~/metro/components');
+const { auditDesignComponents } = await import('~/metro/design');
 const { default: FallbackHeading } = await import('~/metro/fallbacks/fallback-heading');
 const { default: FallbackSwitch } = await import('~/metro/fallbacks/fallback-switch');
 const { default: FallbackStack } = await import('~/metro/fallbacks/fallback-stack');
@@ -83,7 +84,7 @@ describe('design components', () => {
 	});
 
 	test('audits how each component resolves', () => {
-		const audit = components.auditDesignComponents();
+		const audit = auditDesignComponents();
 
 		expect(audit.native).toEqual([]);
 		expect(audit.fallback).toEqual(

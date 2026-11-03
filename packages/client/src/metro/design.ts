@@ -19,13 +19,7 @@ const designFallbacks = new Map<DesignComponentName, ComponentType<never>>();
  * @param value The value to check.
  * @returns Whether React can render it.
  */
-export function isRenderable(
-	value:
-		| DesignModule[keyof DesignModule]
-		| ElementType
-		| Record<string, ComponentType<never>>
-		| undefined,
-): value is ElementType {
+export function isRenderable(value: unknown): value is ElementType {
 	return (
 		typeof value === 'function' ||
 		(typeof value === 'object' && value !== null && '$$typeof' in value)
