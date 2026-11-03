@@ -1,11 +1,14 @@
 import { IconMagnifier, IconSidebarLeft } from 'nucleo-micro-bold';
 import { useLocation } from '@tanstack/react-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '~/components/ui/drawer';
 import { Button } from '~/components/ui/button';
 import Kbd from '~/components/ui/kbd';
+
+// The search dialog's open and close animations. Their keyframes cannot reverse, so toggling mid-way snaps the opacity.
+const TOGGLE_MS = 200;
 
 export type DocsSearchState = {
 	open: boolean;
@@ -25,13 +28,14 @@ type DocsShellProps = {
 /**
  * @description The layout every docs tab shares. From `lg` up, a sticky scrolling sidebar beside the page;
  * below it, a bar with the page's title that opens the sidebar in a drawer, which closes on navigation.
- * `⌘K` opens the tab's search either way, and closes it again while it is open.
+ * `⌘K` opens the tab's search either way, and closes it again; presses during the open or close animation are ignored.
  * @param props The sidebar, the search dialog, the open page's title and the page.
  * @returns The shell.
  */
 function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellProps) {
 	const [searchOpen, setSearchOpen] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
+	const toggledAt = useRef(0);
 	const href = useLocation({ select: (location) => location.href });
 	const [shownHref, setShownHref] = useState(href);
 
@@ -47,6 +51,13 @@ function DocsShell({ label, title, sidebar, renderSearch, children }: DocsShellP
 			}
 
 			event.preventDefault();
+
+			// A held key repeats, and a quick second press would interrupt the running animation.
+			if (event.repeat || event.timeStamp - toggledAt.current < TOGGLE_MS) {
+				return;
+			}
+
+			toggledAt.current = event.timeStamp;
 			setSearchOpen((open) => !open);
 		}
 
