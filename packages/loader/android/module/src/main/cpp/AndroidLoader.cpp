@@ -1,5 +1,6 @@
 #include "AndroidLoader.h"
 
+#include <algorithm>
 #include <chrono>
 #include <thread>
 
@@ -19,7 +20,10 @@
 namespace unbound::android {
 namespace jsi = facebook::jsi;
 
-static constexpr const char *kAssetFontPrefix = "asset:";
+static constexpr const char *kAssetFontPrefix         = "asset:";
+static constexpr const char *kCallableModuleRegistrar = "RN$registerCallableModule";
+static constexpr const char *kSchedulerDrainModule    = "UnboundNativeWork";
+static constexpr const char *kSchedulerDrainMethod    = "drain";
 
 static jint milliseconds(double seconds)
 {
@@ -47,8 +51,21 @@ AndroidLoader::AndroidLoader(LoaderConfiguration configuration, JavaCallbacks ca
 {
 }
 
+static bool verifiedBuild(const JavaCallbacks &callbacks)
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env)
+    {
+        return false;
+    }
+    jboolean verified =
+        env->CallStaticBooleanMethod(callbacks.bridgeClass, callbacks.isVerifiedBuild);
+    return !clearPendingException(env) && verified == JNI_TRUE;
+}
+
 static std::shared_ptr<loader::NativePlatformProvider>
-platformProvider(const LoaderConfiguration &configuration, loader::SettingsStore &settings)
+platformProvider(const LoaderConfiguration &configuration, const JavaCallbacks &callbacks,
+                 loader::SettingsStore &settings)
 {
     const nlohmann::json info = configuration.platformInfo;
     auto                 text = [info](const char *key) {
@@ -62,15 +79,17 @@ platformProvider(const LoaderConfiguration &configuration, loader::SettingsStore
         };
     };
 
-    auto provider               = std::make_shared<loader::NativePlatformProvider>();
-    provider->platform          = "android";
-    provider->deviceModel       = text("deviceModel");
-    provider->osVersion         = text("osVersion");
-    provider->isRooted          = flag("isRooted");
-    provider->isSystemApp       = flag("isSystemApp");
-    provider->appSource         = text("appSource");
-    provider->framework         = text("framework");
-    provider->isVerifiedBuild   = flag("isVerifiedBuild");
+    auto provider             = std::make_shared<loader::NativePlatformProvider>();
+    provider->platform        = "android";
+    provider->deviceModel     = text("deviceModel");
+    provider->osVersion       = text("osVersion");
+    provider->isRooted        = flag("isRooted");
+    provider->isSystemApp     = flag("isSystemApp");
+    provider->appSource       = text("appSource");
+    provider->framework       = text("framework");
+    provider->isVerifiedBuild = [callbacks]() {
+        return verifiedBuild(callbacks);
+    };
     provider->isVirtualDevice   = flag("isVirtualDevice");
     provider->virtualDeviceHost = [info]() -> std::optional<std::string> {
         const auto host = info.find("virtualDeviceHost");
@@ -85,7 +104,7 @@ platformProvider(const LoaderConfiguration &configuration, loader::SettingsStore
 
 void AndroidLoader::start()
 {
-    auto provider   = platformProvider(configuration_, settings_);
+    auto provider   = platformProvider(configuration_, callbacks_, settings_);
     provider->fonts = [weak = weak_from_this()] {
         auto loader = std::static_pointer_cast<AndroidLoader>(weak.lock());
         return loader ? loader->fontCatalog() : nlohmann::json::array();
@@ -112,7 +131,9 @@ void AndroidLoader::start()
             return resolveUpdateURL();
         },
         [this](double seconds, std::function<void()> work) {
-            runAfter(seconds, std::move(work));
+            runAfter(seconds, [this, work = std::move(work)]() mutable {
+                runInBackground(std::move(work));
+            });
         });
     addons_.prescan(configuration_.documents, runtimeBytecodeVersion());
 }
@@ -159,10 +180,87 @@ void AndroidLoader::onRuntimeCreated(jsi::Runtime &runtime)
     pipeline_->onRuntimeCreated(runtime);
 }
 
+bool AndroidLoader::installSchedulerDrain(jsi::Runtime &runtime)
+{
+    schedulerDrainLive_.store(false);
+    try
+    {
+        jsi::Value registrar = runtime.global().getProperty(runtime, kCallableModuleRegistrar);
+        if (!registrar.isObject() || !registrar.getObject(runtime).isFunction(runtime))
+        {
+            loader::log(loader::LogLevel::Warning, LOG_CATEGORY_RUNTIME,
+                        "RuntimeScheduler drains are unavailable, runtime work drains on the JS "
+                        "queue with explicit microtask checkpoints.");
+            return false;
+        }
+
+        std::weak_ptr<AndroidLoader> weak    = weak_from_this();
+        jsi::Function                factory = loader::native::makeFunction(
+            runtime, kSchedulerDrainModule, 0,
+            [weak](jsi::Runtime &moduleRuntime, const jsi::Value &, const jsi::Value *,
+                   size_t) -> jsi::Value {
+                jsi::Object module(moduleRuntime);
+                module.setProperty(moduleRuntime, kSchedulerDrainMethod,
+                                   loader::native::makeFunction(
+                                       moduleRuntime, kSchedulerDrainMethod, 0,
+                                       [weak](jsi::Runtime &drainRuntime, const jsi::Value &,
+                                              const jsi::Value *, size_t) -> jsi::Value {
+                                           if (auto loader = weak.lock())
+                                           {
+                                               loader->drainScheduledRuntimeWork(drainRuntime);
+                                           }
+                                           return jsi::Value::undefined();
+                                       }));
+                return jsi::Value(std::move(module));
+            });
+        registrar.getObject(runtime).getFunction(runtime).call(
+            runtime, jsi::String::createFromAscii(runtime, kSchedulerDrainModule), factory);
+        return true;
+    }
+    catch (const std::exception &error)
+    {
+        loader::log(loader::LogLevel::Warning, LOG_CATEGORY_RUNTIME,
+                    std::string("RuntimeScheduler drains could not be registered: ") +
+                        error.what());
+        return false;
+    }
+}
+
+void AndroidLoader::drainScheduledRuntimeWork(jsi::Runtime &runtime)
+{
+    if (!schedulerDrainLive_.exchange(true))
+    {
+        loader::log(loader::LogLevel::Info, LOG_CATEGORY_RUNTIME,
+                    "Runtime work now drains through React Native's RuntimeScheduler.");
+    }
+    if (drainQueuedRuntimeWork(runtime))
+    {
+        requestRuntimeDrain(false);
+    }
+}
+
 void AndroidLoader::drainRuntimeWork(jsi::Runtime &runtime)
 {
+    const bool remaining = drainQueuedRuntimeWork(runtime);
+    try
+    {
+        runtime.drainMicrotasks();
+    }
+    catch (const std::exception &error)
+    {
+        loader::log(loader::LogLevel::Error, LOG_CATEGORY_RUNTIME,
+                    std::string("Microtasks after runtime work failed: ") + error.what());
+    }
+    if (remaining)
+    {
+        scheduleRuntimeDrain();
+    }
+}
+
+bool AndroidLoader::drainQueuedRuntimeWork(jsi::Runtime &runtime)
+{
     loader::native::registerRuntime(runtime);
-    bool remaining = runtimeQueue_.drain(
+    return runtimeQueue_.drain(
         [&](auto item) {
             try
             {
@@ -181,10 +279,6 @@ void AndroidLoader::drainRuntimeWork(jsi::Runtime &runtime)
         [] {
             return std::chrono::steady_clock::now();
         });
-    if (remaining)
-    {
-        scheduleRuntimeDrain();
-    }
 }
 
 void AndroidLoader::drainMainWork()
@@ -244,13 +338,19 @@ void AndroidLoader::enqueueRuntime(std::function<void(jsi::Runtime &)> work,
 
 void AndroidLoader::scheduleRuntimeDrain()
 {
+    requestRuntimeDrain(schedulerDrainLive_.load());
+}
+
+void AndroidLoader::requestRuntimeDrain(bool throughScheduler)
+{
     JNIEnv *env = currentEnvironment();
     if (!env)
     {
         runtimeQueue_.retryScheduling();
         return;
     }
-    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleRuntime);
+    env->CallStaticVoidMethod(callbacks_.bridgeClass, callbacks_.scheduleRuntime,
+                              static_cast<jboolean>(throughScheduler));
     clearPendingException(env);
 }
 
@@ -291,10 +391,24 @@ void AndroidLoader::runOnMain(std::function<void()> work)
 
 void AndroidLoader::runAfter(double seconds, std::function<void()> work)
 {
-    std::thread([seconds, work = std::move(work)]() {
-        std::this_thread::sleep_for(std::chrono::duration<double>(seconds));
-        work();
-    }).detach();
+    timer_.schedule(std::chrono::duration_cast<DeadlineTimer::Clock::duration>(
+                        std::chrono::duration<double>(std::max(seconds, 0.0))),
+                    [work = std::move(work)]() {
+                        try
+                        {
+                            work();
+                        }
+                        catch (const std::exception &error)
+                        {
+                            loader::log(loader::LogLevel::Error, LOG_CATEGORY_DEFAULT,
+                                        std::string("Delayed native work failed: ") + error.what());
+                        }
+                        catch (...)
+                        {
+                            loader::log(loader::LogLevel::Error, LOG_CATEGORY_DEFAULT,
+                                        "Delayed native work failed.");
+                        }
+                    });
 }
 
 void AndroidLoader::runInBackground(std::function<void()> work)

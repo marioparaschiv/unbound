@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.5.0] - 2026-11-03
+
+### Added
+
+- A **Layout** setting. **Fit to message** keeps the bubbles that wrap each message's text and media, and stays the default. **Full-width cards** draws one rounded card behind each whole message, name, embeds and reactions included, reaching from the text column to the right edge like Rosiecord's Flowercord. The color, opacity and corner radius settings apply to both layouts.
+
+### Fixed
+
+- On Android, bubbles no longer jump to the left edge behind the avatars. Every row used to line up with the leftmost content edge any message row had reported, so one row laid out without the avatar gutter dragged every bubble on screen under the avatars. Each row now starts its bubble at its own text column.
+
 ## [1.4.7] - 2026-11-03
 
 ### Changed

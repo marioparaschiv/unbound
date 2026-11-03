@@ -9,6 +9,8 @@ import java.security.spec.ECGenParameterSpec
 import java.security.spec.ECParameterSpec
 import java.security.spec.ECPoint
 import java.security.spec.ECPublicKeySpec
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.FutureTask
 
 object Attestation {
     private const val POINT_BYTES = 65
@@ -16,9 +18,48 @@ object Attestation {
 
     data class Result(val verified: Boolean, val detail: String, val warningTitle: String, val warningMessage: String)
 
-    @Volatile private var cached: Result? = null
+    private const val THREAD_NAME = "unbound-attestation"
+    private const val NANOS_PER_MILLI = 1_000_000L
 
-    fun current(): Result = cached ?: evaluate(fields(NativeBridge.nativeAttestation())).also { cached = it }
+    @Volatile private var pending: FutureTask<Result>? = null
+
+    fun start(evaluation: () -> Map<String, String> = { fields(NativeBridge.nativeAttestation()) }) {
+        synchronized(this) {
+            if (pending != null) return
+            val task = FutureTask { timed(evaluation) }
+            pending = task
+            Thread(task, THREAD_NAME).apply { isDaemon = true }.start()
+        }
+    }
+
+    fun current(): Result {
+        start()
+        val task = pending!!
+        if (task.isDone) return resultOf(task)
+        val waitStarted = System.nanoTime()
+        val result = resultOf(task)
+        Logger.info(LogCategory.DEFAULT, "Waited ${elapsedMillis(waitStarted)} ms for the attestation result")
+        return result
+    }
+
+    private fun timed(evaluation: () -> Map<String, String>): Result {
+        val started = System.nanoTime()
+        val result = evaluate(evaluation())
+        Logger.info(LogCategory.DEFAULT, "Attestation evaluated off the main thread in ${elapsedMillis(started)} ms")
+        return result
+    }
+
+    private fun resultOf(task: FutureTask<Result>): Result = try {
+        task.get()
+    } catch (failure: ExecutionException) {
+        throw failure.cause ?: failure
+    }
+
+    private fun elapsedMillis(started: Long): Long = (System.nanoTime() - started) / NANOS_PER_MILLI
+
+    internal fun reset() {
+        synchronized(this) { pending = null }
+    }
 
     private fun fields(json: String): Map<String, String> {
         val parsed = JSONObject(json)

@@ -1,12 +1,13 @@
 import { describe, expect, test } from 'bun:test';
 
-import { argb, bubbleAppearance, parseHexColor } from '~/style';
+import { argb, bubbleAppearance, bubbleLayout, parseHexColor } from '~/style';
 
 const reader = (values: Record<string, unknown>) => (key: string) => values[key];
 
 describe('bubble style', () => {
 	test('uses the loader style by default, following the theme', () => {
 		expect(bubbleAppearance(reader({}), false)).toEqual({
+			layout: 'dynamic',
 			radius: 10,
 			horizontalPadding: 8,
 			verticalPadding: 4,
@@ -54,6 +55,13 @@ describe('bubble style', () => {
 		expect(
 			bubbleAppearance(reader({ color: '#f80', ownColor: 'blue' }), false).ownColor,
 		).toEqual({ red: 1, green: 136 / 255, blue: 0, alpha: 0.4 });
+	});
+
+	test('reads the layout, falling back to bubbles that fit the content', () => {
+		expect(bubbleAppearance(reader({ layout: 'card' }), false).layout).toBe('card');
+		expect(bubbleLayout('dynamic')).toBe('dynamic');
+		expect(bubbleLayout('grid')).toBe('dynamic');
+		expect(bubbleLayout(undefined)).toBe('dynamic');
 	});
 
 	test('ignores colors that are not hex', () => {

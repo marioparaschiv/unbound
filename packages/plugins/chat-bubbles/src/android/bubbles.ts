@@ -33,13 +33,16 @@ import {
 import {
 	bubbleFrame,
 	bubbleProblem,
+	cardFrame,
+	columnEndFrom,
 	isLaidOut,
+	rowContentStart,
 	rowInsets,
-	sharedContentStart,
 	union,
+	type Box,
 	type Edges,
 } from '~/geometry';
-import { AndroidClass, PLUGIN_NAME } from '~/constants';
+import { AndroidClass, BubbleLayout, CARD_INSET, PLUGIN_NAME } from '~/constants';
 import { forgetBubbles, installBindGuard, rememberBubble } from '~/android/ui-bubbles';
 import { currentAppearance } from '~/theme';
 import { argb } from '~/style';
@@ -57,7 +60,6 @@ const MAX_TRACKED = 256;
 type PlacedRow = {
 	width: number;
 	height: number;
-	contentStart: number;
 	revision: number;
 };
 const MAX_ANCESTORS = 16;
@@ -68,9 +70,10 @@ const MESSAGE_ID_GETTER = 'getId-3Eiw7ao';
 const BIND_SETTLE_MS = 50;
 const PLACEMENT_WORKERS = 8;
 const LAYOUT_PARAMETERS = ['boolean', 'int', 'int', 'int', 'int'];
+const MATCH_PARENT = -1;
 
 /**
- * @description Draws a rounded bubble behind each Android message as the row's background, sized to its content without changing the row's padding.
+ * @description Draws a rounded bubble behind each Android message as the row's background, sized to its content or, in the card layout, covering its whole content column, without changing the row's padding.
  * @param native The plugin's Java and hook bridges.
  * @returns `refresh`, which repaints the bubbles it drew, and `dispose`, which brings back the rows' own backgrounds.
  */
@@ -118,14 +121,12 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	let scheduled = false;
 	let placing = 0;
 	let disposed = false;
-	let contentStart = Number.POSITIVE_INFINITY;
 	let appearanceRevision = 0;
-	const measuredLefts: { row: NativeJavaReference; left: number }[] = [];
 	const placedRows = new Map<string, PlacedRow>();
 
 	function rememberPlaced(id: string, width: number, height: number) {
 		placedRows.delete(id);
-		placedRows.set(id, { width, height, contentStart, revision: appearanceRevision });
+		placedRows.set(id, { width, height, revision: appearanceRevision });
 
 		if (placedRows.size > MAX_TRACKED) placedRows.delete(placedRows.keys().next().value!);
 	}
@@ -136,7 +137,6 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		if (
 			!placed ||
 			placed.revision !== appearanceRevision ||
-			placed.contentStart !== contentStart ||
 			!javaReference(java.getAssociatedObject(row, ours)) ||
 			javaText(java.getAssociatedObject(row, drawnFor)) !== id
 		) {
@@ -146,26 +146,6 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		return (
 			number(row, 'getWidth') === placed.width && number(row, 'getHeight') === placed.height
 		);
-	}
-
-	function noteContentStart(row: NativeJavaReference, left: number) {
-		const index = measuredLefts.findIndex((entry) => sameJavaReference(entry.row, row));
-
-		if (index >= 0) measuredLefts.splice(index, 1);
-
-		measuredLefts.push({ row, left });
-
-		if (measuredLefts.length > MAX_TRACKED) measuredLefts.shift();
-
-		const previous = contentStart;
-
-		contentStart = sharedContentStart(measuredLefts.map((entry) => entry.left));
-
-		if (contentStart === previous) return;
-
-		for (const entry of measuredLefts) {
-			if (!sameJavaReference(entry.row, row)) schedule(entry.row);
-		}
 	}
 
 	const number = (view: NativeJavaReference, method: string) =>
@@ -217,27 +197,44 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 
 	const ROW_READS = ['getWidth', 'getHeight', 'getBackground'];
 
+	const ACCESSORIES_READS = ['getLeft', 'getTop', 'getWidth'];
+
+	const columnGutters = new Map<number, number>();
+	const awaitingGutter: NativeJavaReference[] = [];
+
+	type RowHeader = { left: number; top: number; bottom: number; shown: boolean };
+
 	type RowMeasure = {
 		area: Edges | undefined;
+		column: Edges | undefined;
+		columnLeft: number | undefined;
+		header: RowHeader | undefined;
 		width: number;
 		height: number;
 		background: NativeJavaReference | null;
 		iconShifts: NativeJavaBatchOperation[];
 	};
 
-	async function measureRow(row: NativeJavaReference): Promise<RowMeasure | undefined> {
-		const [accessories] = await directChildren(row, AndroidClass.accessories);
+	async function measureRow(
+		row: NativeJavaReference,
+		tight: boolean,
+	): Promise<RowMeasure | undefined> {
+		const [[accessories], header] = await Promise.all([
+			directChildren(row, AndroidClass.accessories),
+			readHeader(row),
+		]);
 
 		if (!accessories) return;
 
 		const kids = await directChildren(accessories, 'android.view.View');
 		const values = await runOnMain(java, [
 			...readCalls(row, ROW_READS),
-			...readCalls(accessories, ['getLeft', 'getTop']),
+			...readCalls(accessories, ACCESSORIES_READS),
 			...kids.flatMap((child) => readCalls(child, CHILD_READS)),
 		]);
-		const [rowWidth, rowHeight, background, accessoriesLeft, accessoriesTop] = values;
-		const childValues = values.slice(ROW_READS.length + 2);
+		const [rowWidth, rowHeight, background, accessoriesLeft, accessoriesTop, accessoriesWidth] =
+			values;
+		const childValues = values.slice(ROW_READS.length + ACCESSORIES_READS.length);
 		const measured = kids.map((child, index) => {
 			const [visibility, width, height, left, right, top, bottom] = childValues
 				.slice(index * CHILD_READS.length, (index + 1) * CHILD_READS.length)
@@ -249,22 +246,48 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 			(child) => child.visibility === VISIBLE && child.width > 0 && child.height > 0,
 		);
 		const iconShifts: NativeJavaBatchOperation[] = [];
-		const rights = await Promise.all(shown.map((child) => tightRight(child, iconShifts)));
+		const rights = tight
+			? await Promise.all(shown.map((child) => tightRight(child, iconShifts)))
+			: shown.map((child) => child.right);
+		const x = javaNumber(accessoriesLeft);
+		const y = javaNumber(accessoriesTop) ?? 0;
+		const columnLeft = header && isLaidOut(header.left) ? header.left : undefined;
+		const edges = (right: (index: number) => number) =>
+			union(
+				shown.map((child, index) => ({
+					left: child.left,
+					top: child.top,
+					right: right(index),
+					bottom: child.bottom,
+				})),
+			);
+		const whole = offsetArea(
+			edges((index) => shown[index]!.right),
+			x,
+			y,
+			columnLeft,
+		);
+		const end =
+			tight || !whole || x === undefined
+				? undefined
+				: await columnEnd(row, shown, javaNumber(accessoriesWidth) ?? 0);
 
 		return {
-			area: offsetArea(
-				row,
-				union(
-					shown.map((child, index) => ({
-						left: child.left,
-						top: child.top,
-						right: rights[index]!,
-						bottom: child.bottom,
-					})),
-				),
-				javaNumber(accessoriesLeft),
-				javaNumber(accessoriesTop) ?? 0,
-			),
+			area: tight
+				? offsetArea(
+						edges((index) => rights[index]!),
+						x,
+						y,
+						columnLeft,
+					)
+				: whole,
+			column: whole && {
+				...whole,
+				top: header?.shown ? Math.min(header.top, whole.top) : whole.top,
+				right: Math.max(whole.right, end === undefined ? 0 : end + x!),
+			},
+			columnLeft,
+			header,
 			width: javaNumber(rowWidth) ?? 0,
 			height: javaNumber(rowHeight) ?? 0,
 			background: javaReference(background),
@@ -272,18 +295,60 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		};
 	}
 
-	function offsetArea(
+	function remeasure(row: NativeJavaReference) {
+		const id = messageId(row);
+
+		if (id) placedRows.delete(id);
+
+		schedule(row);
+	}
+
+	async function columnEnd(
 		row: NativeJavaReference,
+		shown: { child: NativeJavaReference; right: number }[],
+		width: number,
+	): Promise<number | undefined> {
+		const params = await runOnMain(
+			java,
+			shown.flatMap(({ child }) => readCalls(child, ['getLayoutParams'])),
+		);
+		const filling = shown.filter((_, index) => {
+			const layout = javaReference(params[index]);
+
+			return layout && javaNumber(java.getField(layout, 'width')) === MATCH_PARENT;
+		});
+
+		const known = columnGutters.get(width);
+		const { end, gutter } = columnEndFrom(
+			filling.map((child) => child.right),
+			width,
+			known,
+		);
+
+		if (end !== undefined) {
+			if (gutter !== undefined) columnGutters.set(width, gutter);
+
+			if (known === undefined) awaitingGutter.splice(0).forEach(remeasure);
+
+			return end;
+		}
+
+		if (!awaitingGutter.some((entry) => sameJavaReference(entry, row)))
+			awaitingGutter.push(row);
+
+		if (awaitingGutter.length > MAX_TRACKED) awaitingGutter.shift();
+	}
+
+	function offsetArea(
 		area: Edges | undefined,
 		x: number | undefined,
 		y: number,
+		columnLeft: number | undefined,
 	): Edges | undefined {
 		if (!area || x === undefined || !isLaidOut(area.left + x)) return;
 
-		noteContentStart(row, area.left + x);
-
 		return {
-			left: Math.min(area.left + x, contentStart),
+			left: rowContentStart(area.left + x, columnLeft),
 			top: area.top + y,
 			right: area.right + x,
 			bottom: area.bottom + y,
@@ -356,16 +421,24 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		return !!javaReference(outer);
 	}
 
-	async function headerBottom(row: NativeJavaReference): Promise<number | undefined> {
+	async function readHeader(row: NativeJavaReference): Promise<RowHeader | undefined> {
 		const header = await viewByIdNameAsync(java, row, 'header');
 
 		if (!header) return;
 
-		const [visibility, height, bottom] = (
-			await runOnMain(java, readCalls(header, ['getVisibility', 'getHeight', 'getBottom']))
+		const [visibility, height, left, top, bottom] = (
+			await runOnMain(
+				java,
+				readCalls(header, ['getVisibility', 'getHeight', 'getLeft', 'getTop', 'getBottom']),
+			)
 		).map((value) => javaNumber(value) ?? 0);
 
-		return visibility === VISIBLE && height! > 0 ? bottom : undefined;
+		return {
+			left: left!,
+			top: top!,
+			bottom: bottom!,
+			shown: visibility === VISIBLE && height! > 0,
+		};
 	}
 
 	function track(row: NativeJavaReference) {
@@ -457,12 +530,10 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 
 		if (placedId && alreadyPlaced(row, placedId)) return;
 
-		const [measure, header, scale] = await Promise.all([
-			measureRow(row),
-			headerBottom(row),
-			density(row),
-		]);
-		const area = measure?.area;
+		const style = currentAppearance();
+		const card = style.layout === BubbleLayout.card;
+		const [measure, scale] = await Promise.all([measureRow(row, !card), density(row)]);
+		const area = card ? measure?.column : measure?.area;
 
 		if (disposed) return;
 
@@ -474,24 +545,32 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 			return restore(row);
 		}
 
-		const style = currentAppearance();
-		const frame = bubbleFrame(
-			{
-				x: area.left,
-				y: area.top,
-				width: area.right - area.left,
-				height: area.bottom - area.top,
-			},
-			0,
-			{
-				horizontal: style.horizontalPadding * scale,
-				vertical: style.verticalPadding * scale,
-			},
-			header,
-		);
+		const box: Box = {
+			x: area.left,
+			y: area.top,
+			width: area.right - area.left,
+			height: area.bottom - area.top,
+		};
+		const inset = card ? CARD_INSET * scale : style.horizontalPadding * scale;
+		const frame = card
+			? cardFrame(box, inset)
+			: bubbleFrame(
+					box,
+					0,
+					{ horizontal: inset, vertical: style.verticalPadding * scale },
+					measure.header?.shown ? measure.header.bottom : undefined,
+				);
 		const insets = rowInsets(frame, measure.width, measure.height);
 
-		noteProblem(messageId(row), bubbleProblem(frame, measure.width, area.right - area.left));
+		noteProblem(
+			messageId(row),
+			bubbleProblem(
+				frame,
+				measure.width,
+				box.width,
+				measure.columnLeft === undefined ? undefined : measure.columnLeft - inset,
+			),
+		);
 		const shape = java.construct('android.graphics.drawable.GradientDrawable', []);
 
 		java.invoke(shape, 'setCornerRadius', [javaFloat(style.radius * scale)]);
@@ -676,6 +755,18 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		refresh() {
 			appearanceRevision++;
 			ui.run(forgetBubbles);
+
+			if (currentAppearance().layout === BubbleLayout.card && shiftedIcons.length) {
+				runOnMain(java, shiftedIcons.splice(0).map(unshiftOperation)).catch((error) => {
+					if (!isCancellation(error)) {
+						console.error(
+							`[${PLUGIN_NAME}] Failed to put the footer icons back:`,
+							error,
+						);
+					}
+				});
+			}
+
 			for (const row of tracked) schedule(row);
 
 			refreshVisible().catch((error) => {

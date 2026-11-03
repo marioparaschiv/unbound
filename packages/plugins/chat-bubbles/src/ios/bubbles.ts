@@ -15,8 +15,8 @@ import {
 
 import { messageLayout, type SnapshotNode } from '~/message-layout';
 import { forgetBubbles, installBubbleGuards, rememberBubble } from '~/ios/ui-bubbles';
-import { IOSClass, PLUGIN_NAME } from '~/constants';
-import { bubbleFrame, bubbleProblem, frameDrift } from '~/geometry';
+import { BubbleLayout, CARD_INSET, IOSClass, PLUGIN_NAME } from '~/constants';
+import { bubbleFrame, bubbleProblem, cardFrame, frameDrift } from '~/geometry';
 import type { BubbleColor } from '~/style';
 import { currentAppearance } from '~/theme';
 import { messageOwnership } from '~/author';
@@ -69,7 +69,7 @@ async function textWidth(
 type PendingCell = { cell: NativeObjectHandle; onlyWhenResized: boolean };
 
 /**
- * @description Draws a rounded bubble behind each iOS message, sized to its text and media.
+ * @description Draws a rounded bubble behind each iOS message, sized to its text and media, or in the card layout one card behind its whole content column.
  * @param objc The Objective-C bridge.
  * @returns `refresh`, which repaints the bubbles on screen, and `dispose`, which removes them.
  */
@@ -168,12 +168,20 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 
 		if (!layout) return;
 
+		const style = currentAppearance();
+
+		if (style.layout === BubbleLayout.card) {
+			return {
+				frame: cardFrame(layout.column, CARD_INSET),
+				contentWidth: layout.column.width,
+			};
+		}
+
 		const textView = layout.text ? nodes[layout.text.index]?.view : undefined;
 		const text = textView
 			? layout.text!.offset + (await textWidth(objc, textView, layout.body.width))
 			: 0;
 		const contentWidth = Math.max(text, layout.footerRight ?? 0, layout.mediaRight);
-		const style = currentAppearance();
 		const frame = bubbleFrame(
 			layout.body,
 			contentWidth,

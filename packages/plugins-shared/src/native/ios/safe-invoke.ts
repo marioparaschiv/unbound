@@ -1,12 +1,12 @@
 import type { NativeHandle, NativeObjCBridge } from '@unbound-app/api/native';
 
 /**
- * @description Calls a selector on the main thread, treating a bridge error as no result.
+ * @description Calls a selector on the main thread, treating a bridge error as no result. A `void` selector is queued without waiting, in order with other main-thread work, and its failure is logged; any other selector waits for its result.
  * @param objc The Objective-C bridge from `context.native`.
  * @param handle The receiver.
  * @param selector The selector to call.
  * @param args The selector's arguments.
- * @returns The selector's result, or `null` when the call failed.
+ * @returns The selector's result, `undefined` for a `void` selector, or `null` when the call failed.
  */
 // UNKNOWN: returns whatever the Objective-C method returns; callers narrow it.
 export function safeInvoke(
@@ -16,7 +16,7 @@ export function safeInvoke(
 	...args: unknown[]
 ): unknown {
 	try {
-		return objc.invoke(handle, selector, args, { thread: 'main' });
+		return objc.invoke(handle, selector, args, { thread: 'main-post' });
 	} catch {
 		return null;
 	}

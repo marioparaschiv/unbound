@@ -9,6 +9,15 @@ export const BubbleStyle = {
 	light: { red: 1, green: 1, blue: 1 },
 };
 
+export const BubbleLayout = {
+	dynamic: 'dynamic',
+	card: 'card',
+} as const;
+
+export type BubbleLayoutName = (typeof BubbleLayout)[keyof typeof BubbleLayout];
+
+export const CARD_INSET = 5;
+
 export const BubbleLimits = {
 	radius: 32,
 	padding: 24,

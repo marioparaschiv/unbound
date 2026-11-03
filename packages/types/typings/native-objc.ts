@@ -121,7 +121,7 @@ export type NativeObjCBridge = {
 		selector: string,
 		...args: unknown[]
 	): NativeObjCResult;
-	/** Sends a selector on the thread `options.thread` names; `main` blocks, so prefer `invokeAsync` for UI work. */
+	/** Sends a selector on the thread `options.thread` names; `main` blocks, `main-post` queues `void` methods, so prefer `invokeAsync` or `main-post` for UI work. */
 	invoke(
 		handle: NativeObjectHandle,
 		selector: string,

@@ -1,0 +1,18 @@
+{
+	"id": "unbound.always-animate",
+	"name": "Always Animate",
+	"description": "Animates anything that can be animated: avatars, decorations, nameplates, profile effects, server icons, emojis, stickers and GIFs.",
+	"authors": [
+		{
+			"name": "Fiery",
+			"id": "890228870559698955"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "GifIcon",
+	"main": "index.tsx"
+}

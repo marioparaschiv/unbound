@@ -394,10 +394,9 @@ std::string fontUnavailableMessage(const std::string &family, const std::string 
            "\". The requested font isn't loaded.";
 }
 
-nlohmann::json fontTargetJSON(const nlohmann::json &customFonts, const nlohmann::json &systemFonts,
-                              const std::string &family, const std::string &name)
+static nlohmann::json resolvedTargetJSON(const std::optional<FontTarget> &font,
+                                         const std::string &family, const std::string &name)
 {
-    const auto font = resolveFontTarget(customFonts, systemFonts, name);
     if (!font)
     {
         return {{"name", name}, {"error", fontUnavailableMessage(family, name)}};
@@ -410,9 +409,25 @@ nlohmann::json fontTargetJSON(const nlohmann::json &customFonts, const nlohmann:
     return target;
 }
 
+nlohmann::json fontTargetJSON(const nlohmann::json &customFonts, const nlohmann::json &systemFonts,
+                              const std::string &family, const std::string &name)
+{
+    return resolvedTargetJSON(resolveFontTarget(customFonts, systemFonts, name), family, name);
+}
+
 nlohmann::json fontOverrideTargets(const nlohmann::json &overrides,
                                    const nlohmann::json &customFonts,
                                    const nlohmann::json &systemFonts)
+{
+    return lazyFontOverrideTargets(overrides, customFonts,
+                                   [&systemFonts]() -> const nlohmann::json & {
+                                       return systemFonts;
+                                   });
+}
+
+nlohmann::json lazyFontOverrideTargets(const nlohmann::json   &overrides,
+                                       const nlohmann::json   &customFonts,
+                                       const SystemFontSource &systemFonts)
 {
     nlohmann::json targets = nlohmann::json::object();
     if (!overrides.is_object())
@@ -421,13 +436,45 @@ nlohmann::json fontOverrideTargets(const nlohmann::json &overrides,
     }
     for (const auto &[family, value] : overrides.items())
     {
-        if (value.is_string() && !value.get<std::string>().empty())
+        if (!value.is_string() || value.get<std::string>().empty())
         {
-            targets[family] =
-                fontTargetJSON(customFonts, systemFonts, family, value.get<std::string>());
+            continue;
         }
+        const std::string         name = value.get<std::string>();
+        std::optional<FontTarget> font = findFont(customFonts, name);
+        if (!font)
+        {
+            font = findFont(systemFonts(), name);
+        }
+        targets[family] = resolvedTargetJSON(font, family, name);
     }
     return targets;
+}
+
+nlohmann::json platformFontNames(std::vector<std::string> names, const nlohmann::json &customFonts)
+{
+    std::set<std::string> custom;
+    if (customFonts.is_array())
+    {
+        for (const nlohmann::json &font : customFonts)
+        {
+            if (const auto name = fontName(font))
+            {
+                custom.insert(*name);
+            }
+        }
+    }
+    std::sort(names.begin(), names.end());
+    names.erase(std::unique(names.begin(), names.end()), names.end());
+    nlohmann::json list = nlohmann::json::array();
+    for (std::string &name : names)
+    {
+        if (!name.empty() && !custom.count(name))
+        {
+            list.push_back(std::move(name));
+        }
+    }
+    return list;
 }
 
 nlohmann::json systemFontsFromFiles(const std::vector<std::string> &paths,

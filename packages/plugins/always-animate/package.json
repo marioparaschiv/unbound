@@ -1,0 +1,22 @@
+{
+	"name": "always-animate",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Animates anything that can be animated: avatars, decorations, nameplates, profile effects, server icons, emojis, stickers and GIFs.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@unbound-plugins/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-app/cli": "workspace:*",
+		"react-native": "^0.86.0",
+		"rollup": "^4.66.0"
+	}
+}

@@ -45,8 +45,11 @@ export type NativeSerializableObject = {
 	[key: string]: NativeSerializable;
 };
 
-/** Where a native call runs: `current` is the calling thread; `main` blocks until the main thread runs it. */
-export type NativeThreadPolicy = 'current' | 'main';
+/**
+ * Where a native call runs: `current` is the calling thread; `main` blocks until the main thread runs it;
+ * `main-post` queues a `void` method on main and logs its failure, and blocks like `main` otherwise.
+ */
+export type NativeThreadPolicy = 'current' | 'main' | 'main-post';
 
 /** A promise for native work; `cancel` drops it, and stopping the plugin cancels every pending one. */
 export type NativeCancelablePromise<T> = Promise<T> & { cancel(): void };

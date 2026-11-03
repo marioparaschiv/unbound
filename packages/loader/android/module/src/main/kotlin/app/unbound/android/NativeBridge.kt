@@ -46,6 +46,9 @@ object NativeBridge {
     external fun nativeDrainRuntimeWork(runtimePointer: Long)
 
     @JvmStatic
+    external fun nativeInstallSchedulerDrain(runtimePointer: Long): Boolean
+
+    @JvmStatic
     external fun nativeDrainMainWork()
 
     @JvmStatic
@@ -108,14 +111,21 @@ object NativeBridge {
     external fun nativeSaveDevOverlayCenter(x: Double, y: Double, bounds: DoubleArray)
 
     @JvmStatic
-    fun scheduleRuntimeWork() {
+    fun scheduleRuntimeWork(throughScheduler: Boolean) {
+        if (throughScheduler && ReactRuntime.postThroughScheduler()) return
         ReactRuntime.post { runtimePointer -> nativeDrainRuntimeWork(runtimePointer) }
     }
 
     @JvmStatic
     fun runBundleBeforeDiscord() {
-        ReactRuntime.runBeforeBundle { runtimePointer -> nativeOnRuntimeCreated(runtimePointer) }
+        ReactRuntime.runBeforeBundle { runtimePointer ->
+            nativeOnRuntimeCreated(runtimePointer)
+            if (nativeInstallSchedulerDrain(runtimePointer)) ReactRuntime.enableSchedulerRoute(runtimePointer)
+        }
     }
+
+    @JvmStatic
+    fun isVerifiedBuild(): Boolean = Attestation.current().verified
 
     @JvmStatic
     fun scheduleMainWork() {

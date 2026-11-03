@@ -1,4 +1,4 @@
-import { BubbleLimits, BubbleStyle } from '~/constants';
+import { BubbleLayout, BubbleLimits, BubbleStyle, type BubbleLayoutName } from '~/constants';
 
 export type BubbleColor = {
 	red: number;
@@ -8,6 +8,7 @@ export type BubbleColor = {
 };
 
 export type BubbleAppearance = {
+	layout: BubbleLayoutName;
 	radius: number;
 	horizontalPadding: number;
 	verticalPadding: number;
@@ -25,6 +26,15 @@ function bounded(value: unknown, fallback: number, maximum: number): number {
 	}
 
 	return Math.max(0, Math.min(maximum, Math.round(number)));
+}
+
+/**
+ * @description Reads the stored bubble layout.
+ * @param value The stored setting.
+ * @returns `card` for one card per message, otherwise `dynamic`, bubbles that fit the message content.
+ */
+export function bubbleLayout(value: unknown): BubbleLayoutName {
+	return value === BubbleLayout.card ? BubbleLayout.card : BubbleLayout.dynamic;
 }
 
 /**
@@ -52,7 +62,7 @@ export function parseHexColor(value: unknown): Omit<BubbleColor, 'alpha'> | unde
  * @description Builds the bubble's look from the plugin's settings.
  * @param read Reads one setting.
  * @param light Whether Discord shows its light theme, which picks the default color.
- * @returns The radius, padding and colors to draw bubbles with, `ownColor` for the user's own messages.
+ * @returns The layout, radius, padding and colors to draw bubbles with, `ownColor` for the user's own messages.
  */
 export function bubbleAppearance(read: SettingReader, light: boolean): BubbleAppearance {
 	const base = parseHexColor(read('color')) ?? (light ? BubbleStyle.light : BubbleStyle.dark);
@@ -60,6 +70,7 @@ export function bubbleAppearance(read: SettingReader, light: boolean): BubbleApp
 	const opacity = bounded(read('opacity'), BubbleStyle.opacity, BubbleLimits.opacity);
 
 	return {
+		layout: bubbleLayout(read('layout')),
 		radius: bounded(read('radius'), BubbleStyle.radius, BubbleLimits.radius),
 		horizontalPadding: bounded(
 			read('horizontalPadding'),
@@ -89,4 +100,4 @@ export function argb({ red, green, blue, alpha }: BubbleColor): number {
 	);
 }
 
-export default { argb, bubbleAppearance, parseHexColor };
+export default { argb, bubbleAppearance, bubbleLayout, parseHexColor };

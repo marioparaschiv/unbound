@@ -962,10 +962,10 @@ static std::function<void(void)> objcGuarded(std::function<void(void)> operation
     };
 }
 
-static void executeMainSynchronously(std::function<void(void)> callback)
+static void executeMainSynchronouslyUnlessMainWaits(std::function<void(void)> callback)
 {
     NativeOperationSignpost signpost("main thread crossing");
-    loader::native::executeMainSynchronously(objcGuarded(std::move(callback)));
+    loader::native::executeMainSynchronouslyUnlessMainWaits(objcGuarded(std::move(callback)));
 }
 
 static void fabricStart(id surface)
@@ -1218,6 +1218,16 @@ public:
     loader::native::NativeFrame measureSurface(const std::string &surface) override
     {
         return nativeFrame(find(surface).view.frame);
+    }
+
+    bool postsVoidCalls() const override
+    {
+        return true;
+    }
+
+    bool measuresLastSetFrame() const override
+    {
+        return true;
     }
 
     bool detach(const std::string &surface) override
@@ -1998,37 +2008,64 @@ static Value invokeSuperObject(Runtime &runtime, id target, Class currentClass, 
     return loader::ffi::readValue(runtime, frame->interface().result, frame->result());
 }
 
-static Value invokeInvocationWithThreadPolicy(Runtime &runtime, NSInvocation *invocation,
-                                              const Value             *options,
-                                              const loader::ffi::Type *preparedResult = nullptr)
+static std::string threadPolicy(Runtime &runtime, const Value *options)
 {
-    std::string policy = "current";
     if (options && options->isObject())
     {
         Value thread = options->asObject(runtime).getProperty(runtime, "thread");
         if (thread.isString())
         {
-            policy = jsiString(runtime, thread).UTF8String;
+            return jsiString(runtime, thread).UTF8String ?: "";
         }
     }
-    if (policy == "current" || ([NSThread isMainThread] && policy == "main"))
+    return "current";
+}
+
+static bool crossesToMain(const std::string &policy)
+{
+    return policy == "main" || policy == "main-post";
+}
+
+static std::string invocationDescription(NSInvocation *invocation)
+{
+    return std::string("objc.invoke ") + (sel_getName(invocation.selector) ?: "");
+}
+
+static void postInvocation(NSInvocation *invocation)
+{
+    loader::native::postMainOperation(objcGuarded([invocation]() {
+                                          [invocation invoke];
+                                      }),
+                                      invocationDescription(invocation));
+}
+
+static Value invokeInvocationWithThreadPolicy(Runtime &runtime, NSInvocation *invocation,
+                                              const Value             *options,
+                                              const loader::ffi::Type *preparedResult = nullptr)
+{
+    std::string policy = threadPolicy(runtime, options);
+    if (policy == "current" || ([NSThread isMainThread] && crossesToMain(policy)))
     {
         [invocation invoke];
         return returnValue(runtime, invocation, invocation.methodSignature, preparedResult);
     }
-    if (policy != "main")
+    if (!crossesToMain(policy))
     {
         throw JSError(runtime, "Unsupported native thread policy");
     }
+    if (policy == "main-post" && normalizedType(invocation.methodSignature.methodReturnType) == 'v')
+    {
+        postInvocation(invocation);
+        return Value::undefined();
+    }
     if (loader::native::mainThreadIsWaitingForRuntime())
     {
-        throwWrongThread(
-            runtime, "Objective-C invocation cannot synchronously cross to a waiting main thread");
+        throwWrongThread(runtime, loader::native::kMainWaitsForRuntimeMessage);
     }
 
     __strong id  retainedResult = nil;
     NSException *failure        = nil;
-    executeMainSynchronously([&]() {
+    executeMainSynchronouslyUnlessMainWaits([&]() {
         @try
         {
             [invocation invoke];
@@ -2639,20 +2676,12 @@ static Value invokeSuperAsync(Runtime &runtime, id target, Class currentClass, S
 static Value invokeSuperWithThreadPolicy(Runtime &runtime, id target, Class currentClass,
                                          SEL selector, NSArray *arguments, const Value *options)
 {
-    std::string policy = "current";
-    if (options && options->isObject())
-    {
-        Value thread = options->asObject(runtime).getProperty(runtime, "thread");
-        if (thread.isString())
-        {
-            policy = jsiString(runtime, thread).UTF8String;
-        }
-    }
-    if (policy == "current" || ([NSThread isMainThread] && policy == "main"))
+    std::string policy = threadPolicy(runtime, options);
+    if (policy == "current" || ([NSThread isMainThread] && crossesToMain(policy)))
     {
         return invokeSuperObject(runtime, target, currentClass, selector, arguments);
     }
-    if (policy != "main")
+    if (!crossesToMain(policy))
     {
         throw JSError(runtime, "Unsupported native thread policy");
     }

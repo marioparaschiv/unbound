@@ -4,7 +4,9 @@ import {
 	bubbleFrame,
 	isLaidOut,
 	rowInsets,
-	sharedContentStart,
+	rowContentStart,
+	cardFrame,
+	columnEndFrom,
 	union,
 	bubbleProblem,
 	frameDrift,
@@ -78,16 +80,28 @@ describe('bubble geometry', () => {
 	});
 });
 
-describe('shared content start', () => {
+describe('row content start', () => {
 	test('ignores rows that have not been laid out', () => {
 		expect(isLaidOut(undefined)).toBe(false);
 		expect(isLaidOut(0)).toBe(false);
 		expect(isLaidOut(148)).toBe(true);
 	});
 
-	test('aligns to the smallest laid-out left among recent rows', () => {
-		expect(sharedContentStart([168, 148, 0, 168])).toBe(148);
-		expect(sharedContentStart([])).toBe(Number.POSITIVE_INFINITY);
+	test("starts at the row's own content column, reaching back for an indented body", () => {
+		expect(rowContentStart(168, 168)).toBe(168);
+		expect(rowContentStart(200, 168)).toBe(168);
+		expect(rowContentStart(168, 0)).toBe(168);
+		expect(rowContentStart(168, undefined)).toBe(168);
+	});
+
+	test("never follows another row's narrower column under the avatar", () => {
+		const rows = [
+			rowContentStart(168, 168),
+			rowContentStart(53, 53),
+			rowContentStart(168, 168),
+		];
+
+		expect(rows).toEqual([168, 53, 168]);
 	});
 });
 
@@ -106,6 +120,44 @@ describe('bubble problems', () => {
 		expect(bubbleProblem({ x: 60, y: 0, width: 330, height: 30 }, 375, 314)).toBe(
 			'runs past its row',
 		);
+	});
+
+	test('flags a bubble that starts left of its content column', () => {
+		expect(bubbleProblem({ x: 32, y: 0, width: 300, height: 30 }, 1080, 280, 147)).toBe(
+			'reaches over the avatar column',
+		);
+		expect(
+			bubbleProblem({ x: 147, y: 0, width: 300, height: 30 }, 1080, 280, 147),
+		).toBeUndefined();
+	});
+});
+
+describe('card frame', () => {
+	test('covers the whole content column and reaches past both sides', () => {
+		expect(cardFrame({ x: 68, y: 16, width: 291, height: 72 }, 5)).toEqual({
+			x: 63,
+			y: 16,
+			width: 301,
+			height: 72,
+		});
+	});
+});
+
+describe('column end', () => {
+	test('ends a filling row at its widest filling child and learns the gutter', () => {
+		expect(columnEndFrom([700, 720], 760, undefined)).toEqual({ end: 720, gutter: 40 });
+	});
+
+	test('relearns the gutter from a filling row when one is already known', () => {
+		expect(columnEndFrom([730], 760, 40)).toEqual({ end: 730, gutter: 30 });
+	});
+
+	test('ends a media-only row at the known gutter', () => {
+		expect(columnEndFrom([], 760, 40)).toEqual({ end: 720, gutter: 40 });
+	});
+
+	test('leaves the end unknown until a gutter is learned', () => {
+		expect(columnEndFrom([], 760, undefined)).toEqual({ end: undefined, gutter: undefined });
 	});
 });
 

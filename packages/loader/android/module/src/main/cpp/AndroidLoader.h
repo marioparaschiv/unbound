@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <deque>
 #include <functional>
 #include <jni.h>
@@ -9,6 +10,7 @@
 #include <optional>
 #include <string>
 
+#include "DeadlineTimer.h"
 #include "LoaderAddons.h"
 #include "LoaderHotReload.h"
 #include "LoaderPipeline.h"
@@ -23,6 +25,7 @@ struct JavaCallbacks {
     jmethodID scheduleRuntime          = nullptr;
     jmethodID scheduleMain             = nullptr;
     jmethodID isMainThread             = nullptr;
+    jmethodID isVerifiedBuild          = nullptr;
     jmethodID javaGetClass             = nullptr;
     jmethodID javaClassName            = nullptr;
     jmethodID javaDescribe             = nullptr;
@@ -82,6 +85,7 @@ public:
     void onRuntimeCreated(facebook::jsi::Runtime &runtime);
     void drainMainWork();
     void drainRuntimeWork(facebook::jsi::Runtime &runtime);
+    bool installSchedulerDrain(facebook::jsi::Runtime &runtime);
 
     loader::SettingsStore &settings();
     std::string            toolbox(const std::string &action, const std::string &argument);
@@ -111,6 +115,9 @@ private:
     void                       enqueueRuntime(std::function<void(facebook::jsi::Runtime &)> work,
                                               loader::native::NativeWorkPriority            priority);
     void                       scheduleRuntimeDrain();
+    void                       requestRuntimeDrain(bool throughScheduler);
+    void                       drainScheduledRuntimeWork(facebook::jsi::Runtime &runtime);
+    bool                       drainQueuedRuntimeWork(facebook::jsi::Runtime &runtime);
     std::optional<std::string> fetchText(const std::string &url, double timeoutSeconds);
     std::optional<loader::DownloadResult>
                                download(const std::string &url, const std::string &destination,
@@ -133,6 +140,8 @@ private:
     std::mutex                                                                     mainQueueMutex_;
     std::deque<std::function<void()>>                                              mainQueue_;
     bool                          mainDrainScheduled_ = false;
+    std::atomic<bool>             schedulerDrainLive_ = false;
+    DeadlineTimer                 timer_;
     loader::AddonState            addons_;
     std::mutex                    systemFontsMutex_;
     std::optional<nlohmann::json> systemFonts_;
