@@ -1,23 +1,17 @@
-ReviewDB adds a **View Reviews** button under the user info card on a profile. Tap it to open a sheet with the reviews other people left for that user on ReviewDB. Each review shows the author's avatar and name, the date, the text, and a score with up and down arrows. The sheet shortens reviews longer than 200 characters and adds a **Read more** link.
+What do people really think of them? ReviewDB lets you read and leave reviews on Discord profiles.
 
-To write reviews and vote, sign in to ReviewDB. Tap **Sign in to leave a review** in the sheet, or **Authorize with ReviewDB** in the plugin settings. Sign-in opens Discord's authorize screen for the ReviewDB app with the `identify` scope. After you sign in, the sheet has a box to review the user in up to 1000 characters. You can leave one review per profile, and a new review replaces your old one. You cannot review your own profile.
+## :sparkle: What it does
 
-Long-press a review to see its actions. You can report reviews that other people wrote. You can delete your own reviews and any review on your own profile, after a second tap on **Confirm delete**. On your own profile, you can also block a review's author so that they cannot review you again.
+- :star: Adds a **View Reviews** button under the user info card on a profile, opening a sheet of that user's reviews.
+- :pen: Sign in to leave one review per profile, up to 1000 characters, and vote on others.
+- :shield: Long-press a review to report it, delete your own, or block someone from reviewing you.
+- :bell: Tells you on startup when your profile has new reviews.
+- :globe: Reviews live on the ReviewDB service at `manti.vendicated.dev`, which gets the Discord ID of each profile you open.
 
-When you start Discord while signed in, the plugin shows the toast "You have new reviews on your profile!" if your profile got new reviews since the last check.
+## :gear: Settings
 
-## Settings
-
-- **Authorize with ReviewDB** signs you in to ReviewDB. After sign-in, the row reads **Reauthorize with ReviewDB**.
-- **View My Reviews** opens the review sheet for your own profile.
-- **Manage Blocked Users** lists the users you blocked from reviewing you, each with an **Unblock** button. You must be signed in to use it.
-- **Notify About New Reviews** shows the new-reviews toast on startup. On by default.
-- **Hide Timestamps** hides the date on each review. Off by default.
-- **Hide Reviews From Blocked Users** hides reviews written by users you blocked on Discord. On by default.
-- **ReviewDB Website** and **ReviewDB Support Server** open the ReviewDB website and its Discord server.
-
-## Known issues
-
-- The plugin uses the ReviewDB service at `manti.vendicated.dev`. Each time you open a review sheet, it sends the profile's Discord ID to ReviewDB. When you are signed in, it also sends your ReviewDB token, and it sends your reviews, votes, reports, and blocks.
-- The plugin saves your ReviewDB token in its settings on this device.
-- If the plugin cannot find Discord's profile card, the **View Reviews** button does not appear.
+- :user-key: **Authorize with ReviewDB** signs you in through Discord.
+- :user-xmark: **Manage Blocked Users** lists who you blocked from reviewing you.
+- :bell: **Notify About New Reviews** shows the startup toast. On by default.
+- :clock: **Hide Timestamps** hides review dates. Off by default.
+- :ban: **Hide Reviews From Blocked Users** hides reviews from people you blocked on Discord. On by default.
