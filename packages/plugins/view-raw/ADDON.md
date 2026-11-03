@@ -1,5 +1,10 @@
-View Raw adds a **View Raw** row that shows the data Discord holds for a message, a user profile, a channel, or a server. The row appears in the long-press menu on a message, in the action sheets of a user profile, a channel, and a server, in a server's long-press menu, and in the overflow menu of a profile.
+## :sparkle: What it does
 
-The row opens a sheet titled, for example, **Raw Message Data**. It shows the data as JSON with its keys in alphabetical order. For a message, the sheet also shows the message's text under **Message Content**. Use **Copy data** to copy the JSON, **Copy content** to copy a message's text, and **Close** to close the sheet.
+- :brackets-curly: A **View Raw** row opens a sheet with the data as JSON, keys sorted alphabetically.
+- :cursor-default: Find it in a message's long-press menu, in user, channel and server action sheets, in a server's long-press menu, and in a profile's overflow menu.
+- :clipboard: **Copy data** copies the JSON. For messages, **Copy content** copies the text shown under **Message Content**.
+- :lock: Message data leaves out the author's `email`, `phone`, `mfaEnabled` and `personalConnectionId`, plus app-only fields like `editHistory`.
 
-The message data leaves out the author's `email`, `phone`, `mfaEnabled`, and `personalConnectionId` fields. It also leaves out the `editHistory`, `deleted`, and `firstEditTimestamp` fields that Discord keeps only in the app.
+## :gear: Settings
+
+None. Long-press and look.

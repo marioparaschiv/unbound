@@ -1,6 +1,6 @@
 import { badgesSchema } from '@unbound-app/contracts/sponsors';
 import type { PerkId } from '@unbound-app/contracts/sponsors';
-import type { z } from 'zod';
+import type { TSchema } from '@unbound-app/contracts/schema';
 
 import type { SponsorStanding } from '~/lib/sponsors/standing';
 import { isSponsoring } from '~/lib/sponsors/standing';
@@ -10,7 +10,7 @@ export type PerkDefinition = {
 	description: string;
 	/** The smallest recurring monthly tier that unlocks the perk, in cents. */
 	minimumMonthlyCents: number;
-	config: z.ZodType;
+	config: TSchema;
 };
 
 export const PERKS = {

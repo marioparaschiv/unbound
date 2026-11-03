@@ -1,6 +1,5 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
 import { resolve } from 'node:path';
-import { z } from 'zod';
 
 import {
 	defaultLogFolder,
@@ -11,59 +10,73 @@ import {
 import { createLogPrinter, LOG_LEVELS, parseLogLevel, type LogEvent } from '~/lib/log-lines';
 import { loadFrameRewriter } from '~/lib/log-symbolicator';
 import { tailAndroid, tailIOS } from '~/lib/log-tail';
+import { defaulted, Type } from '~/lib/schema';
 
-const schema = z.object({
-	serial: z
-		.string()
-		.optional()
-		.describe('The adb serial of the Android device, when several are attached.'),
-	ios: z
-		.boolean()
-		.default(false)
-		.describe('Tail a jailbroken iPhone over USB instead of an Android device over adb.'),
-	udid: z
-		.string()
-		.optional()
-		.describe('The UDID of the iPhone, when several are connected. Implies --ios.'),
-	level: z
-		.string()
-		.default('verbose')
-		.describe(`The lowest level to print: ${LOG_LEVELS.join(', ')}, or their first letter.`),
-	grep: z.string().optional().describe('Print only lines matching this regular expression.'),
-	since: z
-		.string()
-		.optional()
-		.describe(
-			'Start from history: a duration such as 5m, a clock time such as 14:30, or a date. iOS history holds notices, errors and faults only.',
-		),
-	follow: z
-		.boolean()
-		.default(true)
-		.describe('Keep printing new lines; pass --follow=false to print the history and exit.'),
-	symbolicate: z
-		.boolean()
-		.default(false)
-		.describe(
-			"Rewrite Hermes frames of the client bundle to source positions using packages/client/dist's maps.",
-		),
-	bundle: z
-		.string()
-		.optional()
-		.describe(
-			'The Hermes bundle to symbolicate against; defaults to the bytecode version the loader reports, else the newest built.',
-		),
-	pull: z
-		.boolean()
-		.default(false)
-		.describe(
-			"Copy the loader's own log files off the device instead of tailing; they survive restarts and hold the JavaScript console too.",
-		),
-	out: z
-		.string()
-		.optional()
-		.describe(
-			'The folder --pull writes the log files into; defaults to a timestamped folder here.',
-		),
+const schema = Type.Object({
+	serial: Type.Optional(
+		Type.String({
+			description: 'The adb serial of the Android device, when several are attached.',
+		}),
+	),
+	ios: defaulted(
+		Type.Boolean({
+			description: 'Tail a jailbroken iPhone over USB instead of an Android device over adb.',
+		}),
+		false,
+	),
+	udid: Type.Optional(
+		Type.String({
+			description: 'The UDID of the iPhone, when several are connected. Implies --ios.',
+		}),
+	),
+	level: defaulted(
+		Type.String({
+			description: `The lowest level to print: ${LOG_LEVELS.join(', ')}, or their first letter.`,
+		}),
+		'verbose',
+	),
+	grep: Type.Optional(
+		Type.String({ description: 'Print only lines matching this regular expression.' }),
+	),
+	since: Type.Optional(
+		Type.String({
+			description:
+				'Start from history: a duration such as 5m, a clock time such as 14:30, or a date. iOS history holds notices, errors and faults only.',
+		}),
+	),
+	follow: defaulted(
+		Type.Boolean({
+			description:
+				'Keep printing new lines; pass --follow=false to print the history and exit.',
+		}),
+		true,
+	),
+	symbolicate: defaulted(
+		Type.Boolean({
+			description:
+				"Rewrite Hermes frames of the client bundle to source positions using packages/client/dist's maps.",
+		}),
+		false,
+	),
+	bundle: Type.Optional(
+		Type.String({
+			description:
+				'The Hermes bundle to symbolicate against; defaults to the bytecode version the loader reports, else the newest built.',
+		}),
+	),
+	pull: defaulted(
+		Type.Boolean({
+			description:
+				"Copy the loader's own log files off the device instead of tailing; they survive restarts and hold the JavaScript console too.",
+		}),
+		false,
+	),
+	out: Type.Optional(
+		Type.String({
+			description:
+				'The folder --pull writes the log files into; defaults to a timestamped folder here.',
+		}),
+	),
 });
 
 const logsCommand: CommandDefinition<typeof schema> = {

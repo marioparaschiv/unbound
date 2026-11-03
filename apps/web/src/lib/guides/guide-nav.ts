@@ -11,6 +11,8 @@ export type GuideTabNav = {
 	tab: GuideTab;
 	label: string;
 	groups: GuideGroup[];
+	/** Old slugs of moved or merged pages, mapped to the page that now holds their content. */
+	redirects?: Record<string, string>;
 };
 
 /** Every guide page in sidebar order. A test keeps it in step with the files in `docs/`. */
@@ -19,64 +21,67 @@ export const GUIDE_NAV: Record<GuideTab, GuideTabNav> = {
 		tab: 'user',
 		label: 'User guide',
 		groups: [
-			{ label: 'Get Started', slugs: ['overview', 'installing', 'updating', 'roadmap'] },
-			{
-				label: 'Using Unbound',
-				slugs: [
-					'managing-addons',
-					'marketplace',
-					'settings',
-					'fonts',
-					'sync',
-					'ios-extensions',
-				],
-			},
-			{ label: 'Help', slugs: ['troubleshooting', 'privacy'] },
+			{ label: 'Get Started', slugs: ['overview', 'installing', 'updating'] },
+			{ label: 'Addons', slugs: ['marketplace', 'managing-addons', 'fonts'] },
+			{ label: 'Settings', slugs: ['settings', 'sync', 'ios-extensions'] },
+			{ label: 'Help', slugs: ['troubleshooting', 'privacy', 'roadmap'] },
 		],
 	},
 	developer: {
 		tab: 'developer',
 		label: 'Developer guide',
+		// Fundamentals before what builds on them: each group assumes only the groups above it.
 		groups: [
+			{ label: 'Start Here', slugs: ['concepts', 'addons/creating'] },
 			{
 				label: 'Addons',
 				slugs: [
-					'addons/introduction',
-					'addons/creating',
-					'addons/standards',
 					'addons/manifest',
+					'addons/standards',
 					'addons/store-page',
+					'addons/page-icons',
 				],
 			},
 			{
 				label: 'Plugins',
 				slugs: [
 					'plugins/introduction',
+					'plugins/metro',
+					'plugins/patching',
 					'plugins/react-patching',
 					'plugins/flux',
+				],
+			},
+			{
+				label: 'Plugin Features',
+				slugs: [
+					'plugins/settings',
+					'plugins/commands',
+					'plugins/feedback',
+					'plugins/i18n',
 					'plugins/ui-thread',
 				],
 			},
 			{
-				label: 'Themes',
-				slugs: ['themes/introduction', 'themes/types', 'themes/backgrounds'],
-			},
-			{ label: 'Icon Packs', slugs: ['icon-packs/introduction'] },
-			{
-				label: 'Development',
-				slugs: ['development/debugging', 'development/cli', 'development/local-builds'],
-			},
-			{
-				label: 'Loader',
+				label: 'Themes and Icons',
 				slugs: [
-					'loader/introduction',
-					'loader/ios',
-					'loader/android',
-					'loader/configuration',
-					'loader/settings',
+					'themes/introduction',
+					'themes/types',
+					'themes/backgrounds',
+					'icon-packs/introduction',
 				],
 			},
+			{ label: 'Tools', slugs: ['development/cli', 'development/debugging'] },
+			{ label: 'Core Development', slugs: ['development/local-builds'] },
+			{
+				label: 'Under the Hood',
+				slugs: ['loader/introduction', 'loader/ios', 'loader/android', 'loader/settings'],
+			},
 		],
+		redirects: {
+			'addons/introduction': 'concepts',
+			'loader/configuration': 'loader/settings',
+		},
 	},
 };
 

@@ -2,6 +2,7 @@ import { crashReportResponseSchema } from '@unbound-app/contracts/crash-reports'
 import type { CrashReport } from '@unbound-app/contracts/crash-reports';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import { afterAll, describe, expect, test } from 'bun:test';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import reportCrashEndpoint from '~/endpoints/report-crash';
@@ -46,7 +47,7 @@ describe('crash reports', () => {
 
 		expect(response.status).toBe(200);
 
-		const { id } = crashReportResponseSchema.parse(await response.json());
+		const { id } = parse(crashReportResponseSchema, await response.json());
 		const [stored] = await ctx.db.select().from(crashReport).where(eq(crashReport.id, id));
 
 		expect(stored?.kind).toBe('freeze');
@@ -63,7 +64,7 @@ describe('crash reports', () => {
 
 		expect(response.status).toBe(200);
 
-		const { id } = crashReportResponseSchema.parse(await response.json());
+		const { id } = parse(crashReportResponseSchema, await response.json());
 		const [stored] = await ctx.db.select().from(crashReport).where(eq(crashReport.id, id));
 
 		expect(stored?.log).toBe(log);
@@ -73,7 +74,7 @@ describe('crash reports', () => {
 		const invalid = await send({ ...report, kind: 'other' }, '203.0.113.11');
 
 		expect(invalid.status).toBe(400);
-		expect(apiErrorResponseSchema.parse(await invalid.json()).error.code).toBeString();
+		expect(parse(apiErrorResponseSchema, await invalid.json()).error.code).toBeString();
 
 		const oversized = await send({ ...report, stack: 'x'.repeat(16_001) }, '203.0.113.11');
 

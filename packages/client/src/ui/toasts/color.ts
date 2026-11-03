@@ -34,5 +34,3 @@ export function withoutOpacity(color: ColorValue | undefined): string {
 
 	return color.slice(0, 7);
 }
-
-export default { unitToHex, withoutOpacity };

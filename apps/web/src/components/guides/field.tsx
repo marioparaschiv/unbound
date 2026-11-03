@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import TypeText from '~/components/guides/type-text';
+
 type FieldProps = {
 	type?: string;
 	required?: boolean;
@@ -25,14 +27,14 @@ function FieldEntry({ name, type, required, default: fallback, children }: Field
 			<div className='flex flex-wrap items-baseline gap-x-2 gap-y-1 font-mono text-sm'>
 				<span className='font-semibold text-foreground break-all'>{name}</span>
 				{type ? (
-					<span className='bg-muted px-1.5 py-0.5 rounded-md text-muted-foreground text-xs break-all'>
-						{type}
+					<span className='bg-muted px-1.5 py-0.5 rounded-md text-xs break-all'>
+						<TypeText text={type} />
 					</span>
 				) : null}
 				{required ? <span className='text-destructive text-xs'>required</span> : null}
 				{fallback === undefined ? null : (
 					<span className='text-muted-foreground text-xs break-all'>
-						default: {fallback}
+						default: <TypeText text={fallback} />
 					</span>
 				)}
 			</div>

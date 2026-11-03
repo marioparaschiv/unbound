@@ -26,7 +26,12 @@ export const ADDON: PublicAddon = {
 	description: 'Hides your typing indicator.',
 	version: '1.0.0',
 	authors: [{ name: 'Mario', discordId: '1' }],
+	iconSvg:
+		'<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7" fill="currentColor"/></svg>',
 	pageUrl: 'https://unbound.rip/addons/addon-1',
+	installUrl: 'https://unbound.rip/install/addon-1',
+	sourceUrl: 'https://github.com/acme/addons/tree/abc123/addon-1',
+	gallery: [],
 	listed: true,
 };
 

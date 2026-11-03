@@ -1,15 +1,15 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
 import { bridgePortField } from '~/lib/context';
+import { defaulted, Type } from '~/lib/schema';
 import { searchModules } from '~/lib/probes';
 
-const schema = z.object({
-	pattern: z
-		.string()
-		.describe('A case-insensitive regular expression for file paths or export names.'),
-	max: z.number().default(40).describe('How many modules to list.'),
+const schema = Type.Object({
+	pattern: Type.String({
+		description: 'A case-insensitive regular expression for file paths or export names.',
+	}),
+	max: defaulted(Type.Number({ description: 'How many modules to list.' }), 40),
 	port: bridgePortField,
 });
 

@@ -1,8 +1,8 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import type { Submission } from '@unbound-app/contracts/publish';
+import { Type, safeParse } from '@unbound-app/contracts/schema';
 import { useSuspenseQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { z } from 'zod/mini';
 
 import { repositoryAddonsQuery, submitOverviewQuery } from '~/queries/submissions/submissions';
 import SubmitForm from '~/components/submit/submit-form';
@@ -10,15 +10,28 @@ import type { SubmitIntent } from '~/lib/dashboard';
 import PageHeader from '~/components/page-header';
 import Text from '~/components/ui/text';
 
+type SubmitSearch = {
+	addon?: string;
+};
+
 type HeaderCopy = {
 	title: string;
 	description: string;
 };
 
-const submitSearchSchema = z.object({
-	/** The addon to submit an update or republish for, as the dashboard's submit buttons link it. */
-	addon: z.catch(z.optional(z.string().check(z.minLength(1), z.maxLength(100))), undefined),
-});
+/** The addon an update or republish is for, as the dashboard's submit buttons link it. */
+const addonIdSearch = Type.String({ minLength: 1, maxLength: 100 });
+
+/**
+ * @description Reads the addon the dashboard linked, ignoring a value it could not have written.
+ * @param search The route's URL search.
+ * @returns The addon id, absent when the URL carries none or a malformed one.
+ */
+function submitSearch(search: Record<string, string>): SubmitSearch {
+	const result = safeParse(addonIdSearch, search.addon);
+
+	return { addon: result.success ? result.data : undefined };
+}
 
 const NEW_SUBMISSION: HeaderCopy = {
 	title: 'Submit Addon',
@@ -87,7 +100,7 @@ function SubmitAddonPage() {
 }
 
 export const Route = createFileRoute('/_site/submit')({
-	validateSearch: submitSearchSchema,
+	validateSearch: submitSearch,
 	head: () => ({ meta: [{ title: 'Unbound | Submit Addon' }] }),
 	beforeLoad: ({ context }) => {
 		if (!context.session) {

@@ -1,56 +1,58 @@
-import { z } from 'zod';
+import { Type, type StaticDecode } from '~/lib/schema';
 
-const platformSchema = z.enum(['android', 'ios']);
+const platformSchema = Type.Enum(['android', 'ios']);
 
-export const classReportSchema = z.object({
+export const classReportSchema = Type.Object({
 	platform: platformSchema,
-	name: z.string(),
-	superclasses: z.array(z.string()),
-	interfaces: z.array(z.string()),
-	constructors: z.array(z.array(z.string())),
-	methods: z.array(
-		z.object({
-			name: z.string(),
-			parameters: z.array(z.string()),
-			returnType: z.string(),
-			static: z.boolean(),
+	name: Type.String(),
+	superclasses: Type.Array(Type.String()),
+	interfaces: Type.Array(Type.String()),
+	constructors: Type.Array(Type.Array(Type.String())),
+	methods: Type.Array(
+		Type.Object({
+			name: Type.String(),
+			parameters: Type.Array(Type.String()),
+			returnType: Type.String(),
+			static: Type.Boolean(),
 		}),
 	),
-	fields: z.array(z.object({ name: z.string(), type: z.string(), static: z.boolean() })),
-	members: z.boolean(),
+	fields: Type.Array(
+		Type.Object({ name: Type.String(), type: Type.String(), static: Type.Boolean() }),
+	),
+	members: Type.Boolean(),
 });
 
-export const viewRecordSchema = z.object({
-	depth: z.number(),
-	className: z.string(),
-	id: z.string().nullable(),
-	width: z.number(),
-	height: z.number(),
-	visibility: z.enum(['visible', 'invisible', 'gone', 'hidden']),
-	text: z.string().nullable(),
-	handle: z.string().nullable(),
+export const viewRecordSchema = Type.Object({
+	depth: Type.Number(),
+	className: Type.String(),
+	id: Type.Union([Type.String(), Type.Null()]),
+	width: Type.Number(),
+	height: Type.Number(),
+	visibility: Type.Enum(['visible', 'invisible', 'gone', 'hidden']),
+	text: Type.Union([Type.String(), Type.Null()]),
+	handle: Type.Union([Type.String(), Type.Null()]),
 });
 
-export const viewsReportSchema = z.object({
+export const viewsReportSchema = Type.Object({
 	platform: platformSchema,
-	roots: z.array(z.array(viewRecordSchema)),
-	visited: z.number().nullable(),
-	truncated: z.boolean(),
+	roots: Type.Array(Type.Array(viewRecordSchema)),
+	visited: Type.Union([Type.Number(), Type.Null()]),
+	truncated: Type.Boolean(),
 });
 
 /** What `inspectNative` answers with on the device, as `ubd inspect` reads it back. */
-export const inspectReportSchema = z.union([
-	z.object({ error: z.string() }),
+export const inspectReportSchema = Type.Union([
+	Type.Object({ error: Type.String() }),
 	classReportSchema,
 	viewsReportSchema,
 ]);
 
-export type ClassReport = z.infer<typeof classReportSchema>;
+export type ClassReport = StaticDecode<typeof classReportSchema>;
 
-export type ViewRecord = z.infer<typeof viewRecordSchema>;
+export type ViewRecord = StaticDecode<typeof viewRecordSchema>;
 
-export type ViewsReport = z.infer<typeof viewsReportSchema>;
+export type ViewsReport = StaticDecode<typeof viewsReportSchema>;
 
-export type InspectReport = z.infer<typeof inspectReportSchema>;
+export type InspectReport = StaticDecode<typeof inspectReportSchema>;
 
 export default { classReportSchema, viewRecordSchema, viewsReportSchema, inspectReportSchema };

@@ -13,7 +13,8 @@ type HeadingProps = {
 };
 
 const VARIANTS = {
-	h2: { variant: 'heading-md', className: 'mt-6' },
+	// A section break: the extra space above an h2 is the pause before a new idea.
+	h2: { variant: 'heading-md', className: 'mt-8' },
 	h3: { variant: 'heading-sm', className: 'mt-4' },
 	h4: { variant: 'text-lg', className: 'mt-2 font-semibold' },
 } as const;

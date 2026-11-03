@@ -1,7 +1,7 @@
 import { IconPhoto } from 'nucleo-micro-bold';
 import type { Token, Tokens } from 'marked';
+import { Fragment, useMemo } from 'react';
 import type { ReactNode } from 'react';
-import { useMemo } from 'react';
 import { Lexer } from 'marked';
 
 import {
@@ -22,11 +22,27 @@ type MarkdownProps = MarkdownUrls & {
 	source: string;
 	/** The page's measured media; an image whose path is here renders in place instead of as a link. */
 	media?: PageMediaMap;
+	/** Renders a fenced code block in place of the plain one, such as with highlighting. */
+	renderCode?: MarkdownCodeRenderer;
+	/** Renders `:name:` in running text as an icon; a name it returns nothing for stays text. */
+	renderIcon?: MarkdownIconRenderer;
 };
+
+type MarkdownCode = {
+	text: string;
+	/** The fence's language, `undefined` for a bare fence. */
+	language: string | undefined;
+};
+
+type MarkdownCodeRenderer = (code: MarkdownCode) => ReactNode;
+
+type MarkdownIconRenderer = (name: string, key: number) => ReactNode | undefined;
 
 type RenderContext = {
 	resolveUrl: MarkdownUrlResolver;
 	media?: PageMediaMap;
+	renderCode?: MarkdownCodeRenderer;
+	renderIcon?: MarkdownIconRenderer;
 };
 
 type LinkProps = {
@@ -83,10 +99,42 @@ const NAMED_ENTITIES: Record<string, string> = {
 
 const NAMED_ENTITY = /&([a-z]+);/gi;
 
+const ICON_SHORTCODE = /:([a-z0-9]+(?:-[a-z0-9]+)*):/g;
+
 function decodeEntities(text: string): string {
 	return text.includes('&')
 		? text.replace(NAMED_ENTITY, (entity, name: string) => NAMED_ENTITIES[name] ?? entity)
 		: text;
+}
+
+function renderText(text: string, ctx: RenderContext, key: number): ReactNode {
+	const decoded = decodeEntities(text);
+
+	if (!ctx.renderIcon || !decoded.includes(':')) {
+		return decoded;
+	}
+
+	const parts: ReactNode[] = [];
+	let last = 0;
+
+	for (const match of decoded.matchAll(ICON_SHORTCODE)) {
+		const icon = ctx.renderIcon(match[1] ?? '', parts.length);
+
+		if (icon === undefined) {
+			continue;
+		}
+
+		parts.push(decoded.slice(last, match.index), icon);
+		last = match.index + match[0].length;
+	}
+
+	if (!parts.length) {
+		return decoded;
+	}
+
+	parts.push(decoded.slice(last));
+
+	return <Fragment key={key}>{parts}</Fragment>;
 }
 
 function Link({ url, children }: LinkProps) {
@@ -128,7 +176,7 @@ function renderInlineToken(token: Token, ctx: RenderContext, key: number): React
 		case 'text': {
 			const text = token as Tokens.Text;
 
-			return text.tokens ? renderInline(text.tokens, ctx) : decodeEntities(text.text);
+			return text.tokens ? renderInline(text.tokens, ctx) : renderText(text.text, ctx, key);
 		}
 		case 'escape': {
 			return (token as Tokens.Escape).text;
@@ -332,12 +380,22 @@ function renderBlock(token: Token, ctx: RenderContext, key: number): ReactNode {
 			);
 		}
 		case 'code': {
+			const code = token as Tokens.Code;
+
+			if (ctx.renderCode) {
+				return (
+					<Fragment key={key}>
+						{ctx.renderCode({ text: code.text, language: code.lang || undefined })}
+					</Fragment>
+				);
+			}
+
 			return (
 				<pre
 					key={key}
 					className='bg-muted p-4 border rounded-control overflow-x-auto font-mono text-sm leading-relaxed'
 				>
-					<code>{`${(token as Tokens.Code).text}\n`}</code>
+					<code>{`${code.text}\n`}</code>
 				</pre>
 			);
 		}
@@ -360,19 +418,24 @@ function renderBlock(token: Token, ctx: RenderContext, key: number): ReactNode {
  * @returns The rendered document.
  */
 function Markdown(props: MarkdownProps) {
-	const { source, media } = props;
+	const { source, media, renderCode, renderIcon } = props;
 	const urls = 'pin' in props ? props.pin : props.resolveUrl;
 	// marked only tokenizes here; React builds the elements, so nothing renders as raw HTML.
 	const content = useMemo(() => {
 		const resolveUrl: MarkdownUrlResolver =
 			typeof urls === 'function' ? urls : (url, kind) => resolveMarkdownUrl(url, urls, kind);
 
-		return renderBlocks(Lexer.lex(source, { gfm: true }), { resolveUrl, media });
-	}, [source, urls, media]);
+		return renderBlocks(Lexer.lex(source, { gfm: true }), {
+			resolveUrl,
+			media,
+			renderCode,
+			renderIcon,
+		});
+	}, [source, urls, media, renderCode, renderIcon]);
 
 	return <div className='flex flex-col gap-4 min-w-0 break-words'>{content}</div>;
 }
 
-export type { MarkdownProps, MarkdownUrlResolver };
+export type { MarkdownCodeRenderer, MarkdownIconRenderer, MarkdownProps, MarkdownUrlResolver };
 
 export default Markdown;

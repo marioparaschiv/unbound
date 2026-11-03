@@ -16,9 +16,9 @@ import checkUpdatesEndpoint from '~/endpoints/check-updates';
 import delistAddonEndpoint from '~/endpoints/delist-addon';
 import relistAddonEndpoint from '~/endpoints/relist-addon';
 import listAddonsEndpoint from '~/endpoints/list-addons';
+import { createApiClient } from '~/api/schema-client';
 import myAddonsEndpoint from '~/endpoints/my-addons';
 import type { AppContext } from '~/lib/context';
-import { createApiClient } from '~/api/client';
 import type { Role } from '~/lib/auth/access';
 import { user } from '~/db/schema';
 import type { Api } from '~/api';
@@ -91,7 +91,7 @@ function removeMaintainer(client: Member['client'], id: string, userId: string) 
 	});
 }
 
-function transfer(client: Member['client'], id: string, userId: string, keep?: boolean) {
+function transfer(client: Member['client'], id: string, userId: string, keep = true) {
 	return client('POST /api/v1/addons/$id/transfer', {
 		params: { id },
 		body: { userId, keepPreviousOwner: keep },

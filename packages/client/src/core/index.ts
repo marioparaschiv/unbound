@@ -5,34 +5,30 @@ import '~/metro';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 import { createLogger } from '@unbound-app/logger';
 
-import {
-	createSettings,
-	developerSection,
-	generalSection,
-	panelHostSection,
-} from '~/settings/builtin';
+import { createSettings, generalSection, panelHostSection } from '~/settings/builtin';
 import { marketplaceSection, storePageSection } from '~/marketplace/builtin';
 import { renameLegacyBuckets } from '~/storage/legacy-buckets';
 import cloudSync, { cloudSyncSection } from '~/sync/builtin';
 import updater, { updatesSection } from '~/updates/builtin';
+import { developerSection } from '~/settings/builtin.dev';
 import themes, { designSection } from '~/themes/builtin';
 import toasts, { toastsSection } from '~/toasts/builtin';
 import discordSupport from '~/builtins/discord-support';
 import type { BuiltInEntry } from '~/builtins/registry';
 import type { SectionEntry } from '~/settings/section';
 import errorBoundary from '~/builtins/error-boundary';
+import { assetsSection } from '~/assets/builtin.dev';
 import coreCommands from '~/commands/core-commands';
+import hotRefresh from '~/hot-refresh/builtin.dev';
 import { pluginsSection } from '~/plugins/builtin';
-import { assetsSection } from '~/assets/builtin';
 import { builtins } from '~/builtins/registry';
-import hotRefresh from '~/hot-refresh/builtin';
 import staffMode from '~/builtins/staff-mode';
 import nativeConsent from '~/native/builtin';
 import { Manager } from '~/addons/manager';
 import tracking from '~/builtins/tracking';
+import debug from '~/debugger/builtin.dev';
 import commands from '~/commands/builtin';
 import account from '~/account/builtin';
-import debug from '~/debugger/builtin';
 import links from '~/links/builtin';
 import storage from '~/storage/api';
 import * as api from '~/core/api';
@@ -59,10 +55,10 @@ const SECTIONS_IN_OVERVIEW_ORDER: SectionEntry[] = [
 	designSection,
 	marketplaceSection,
 	updatesSection,
-	developerSection,
+	...(import.meta.env.DEV_TOOLS ? [developerSection] : []),
 	toastsSection,
 	cloudSyncSection,
-	assetsSection,
+	...(import.meta.env.DEV_TOOLS ? [assetsSection] : []),
 	panelHostSection,
 	storePageSection,
 ];
@@ -73,10 +69,11 @@ const BUILT_INS: BuiltInEntry[] = [
 	['cloudSync', cloudSync],
 	['commands', commands],
 	['coreCommands', coreCommands],
-	['debug', debug],
 	['discordSupport', discordSupport],
 	['errorBoundary', errorBoundary],
-	['hotRefresh', hotRefresh],
+	// Developer tooling ships only in the dev bundle; the hot refresh client also needs a local dev build.
+	...(import.meta.env.DEV_TOOLS ? ([['debug', debug]] as BuiltInEntry[]) : []),
+	...(import.meta.env.DEV ? ([['hotRefresh', hotRefresh]] as BuiltInEntry[]) : []),
 	['i18n', i18n],
 	['links', links],
 	['nativeConsent', nativeConsent],

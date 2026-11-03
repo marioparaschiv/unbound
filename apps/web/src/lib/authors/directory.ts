@@ -1,6 +1,6 @@
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
 import type { AddonType } from '@unbound-app/contracts/addons';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { isIdentified, loadAuthors, type IdentifiedAuthor } from '~/lib/authors/resolve';
 import { decodeCursor, encodeCursor } from '~/lib/keyset';
@@ -47,7 +47,7 @@ type Entry = {
 
 type SortKey = [count: number, name: string, discordId: DiscordId];
 
-const CURSOR = z.tuple([z.number().int(), z.string(), addonAuthorSchema.shape.id]);
+const CURSOR = Type.Tuple([Type.Integer(), Type.String(), addonAuthorSchema.properties.id]);
 
 async function loadEntries(ctx: AppContext, type: AddonType | undefined): Promise<Entry[]> {
 	const listed = (await listListedAddons(ctx)).filter((entry) => !type || entry.type === type);

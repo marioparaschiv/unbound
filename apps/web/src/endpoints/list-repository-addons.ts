@@ -2,7 +2,7 @@ import {
 	listRepositoryAddonsQuerySchema,
 	listRepositoryAddonsResponseSchema,
 } from '@unbound-app/contracts/source';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { listRepositoryAddons } from '~/lib/addon-source';
 import { callerEndpoint } from '~/lib/api/endpoint';
@@ -11,7 +11,7 @@ import { connectGitHub } from '~/lib/github';
 
 const listRepositoryAddonsEndpoint = callerEndpoint(
 	{
-		body: z.undefined(),
+		body: Type.Undefined(),
 		query: listRepositoryAddonsQuerySchema,
 		response: listRepositoryAddonsResponseSchema,
 	},

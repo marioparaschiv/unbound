@@ -1,1 +1,8 @@
-Hide Gift Button removes the gift button from the right side of the chat input. Discord draws gifts and threads with one shared button, and the plugin tells that button to leave out the gift.
+## :sparkle: What it does
+
+- :gift: Removes the gift button from the right side of the chat input.
+- :msgs: Discord draws gifts and threads with one shared button. The plugin tells it to leave out the gift.
+
+## :gear: Settings
+
+None. The button is just gone.

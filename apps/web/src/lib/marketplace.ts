@@ -7,7 +7,7 @@ import type { RepositoryDetails, SourcePin } from '@unbound-app/contracts/source
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import { createServerFn } from '@tanstack/react-start';
-import { z } from 'zod/mini';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { listTags, readAddonTags, type AddonTag, type TagOption } from '~/lib/addon-tags';
 import { toMarketplaceAddon, type MarketplaceAddon } from '~/lib/marketplace-addon';
@@ -15,14 +15,15 @@ import { resolvePlatforms, type PlatformSupport } from '~/lib/addon-platforms';
 import { searchAuthors, type AuthorPage } from '~/lib/authors/directory';
 import { getAddonDetails, listAddons } from '~/lib/addons';
 import { getPublishedMediaBase } from '~/lib/markdown-url';
+import { schemaValidator } from '~/lib/schema-validator';
 import { loadAuthors } from '~/lib/authors/resolve';
 import { splitList } from '~/lib/addon-filters';
 import app from '~/lib/app';
 
-const listingQuery = listAddonsQuerySchema.def.innerType.shape;
+const listingQuery = listAddonsQuerySchema.properties;
 
-const authorSearchSchema = z.object({
-	type: z.optional(addonTypeSchema),
+const authorSearchSchema = Type.Object({
+	type: Type.Optional(addonTypeSchema),
 	q: listingQuery.q,
 	/** Comma-separated Discord ids, the way the listing's `authors` takes them. */
 	ids: listingQuery.authors,
@@ -71,7 +72,7 @@ export type MarketplaceAddonDetails = MarketplaceAddon & {
  * @returns The page's addon cards and the cursor of the next page.
  */
 export const fetchMarketplacePage = createServerFn({ method: 'GET' })
-	.validator(listAddonsQuerySchema)
+	.validator(schemaValidator(listAddonsQuerySchema))
 	.handler(async ({ data }): Promise<MarketplacePage> => {
 		const page = await listAddons(app, data);
 		const [resolve, tags] = await Promise.all([
@@ -99,7 +100,7 @@ export const fetchMarketplacePage = createServerFn({ method: 'GET' })
  * @returns The tags in menu order.
  */
 export const fetchMarketplaceTags = createServerFn({ method: 'GET' })
-	.validator(addonTypeSchema)
+	.validator(schemaValidator(addonTypeSchema))
 	.handler(({ data }): Promise<TagOption[]> => listTags(app, data));
 
 /**
@@ -107,7 +108,7 @@ export const fetchMarketplaceTags = createServerFn({ method: 'GET' })
  * @returns The page, its next cursor and how many authors match.
  */
 export const fetchMarketplaceAuthors = createServerFn({ method: 'GET' })
-	.validator(authorSearchSchema)
+	.validator(schemaValidator(authorSearchSchema))
 	.handler(({ data }): Promise<AuthorPage> =>
 		searchAuthors(app, {
 			...data,
@@ -120,7 +121,7 @@ export const fetchMarketplaceAuthors = createServerFn({ method: 'GET' })
  * @returns The addon with its version history and resolved authors, or `null` when it is not listed.
  */
 export const fetchMarketplaceAddon = createServerFn({ method: 'GET' })
-	.validator(addonIdSchema)
+	.validator(schemaValidator(addonIdSchema))
 	.handler(async ({ data }): Promise<MarketplaceAddonDetails | null> => {
 		const details = await getAddonDetails(app, data);
 		const [latest] = details?.versions ?? [];

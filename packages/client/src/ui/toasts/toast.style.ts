@@ -1,7 +1,13 @@
-import { Constants, Theme } from '~/metro/common';
 import { Discord } from '~/metro/components';
+import { Theme } from '~/metro/common';
 
 export default Discord.createStyles({
+	list: {
+		position: 'absolute',
+		top: 0,
+		left: 0,
+		right: 0,
+	},
 	toastShadow: Theme.shadows.SHADOW_MEDIUM,
 	container: {
 		backgroundColor: Theme.colors.BACKGROUND_SURFACE_HIGH,
@@ -29,17 +35,16 @@ export default Discord.createStyles({
 		flexDirection: 'column',
 		justifyContent: 'center',
 	},
-	title: {
-		fontFamily: Constants.Fonts.PRIMARY_SEMIBOLD,
-		color: Theme.colors.TEXT_DEFAULT,
-		fontSize: 14,
-	},
 	content: {
 		height: 'auto',
 	},
 	icon: {
 		marginVertical: 10,
 		marginLeft: 12,
+	},
+	image: {
+		width: 24,
+		aspectRatio: 1,
 	},
 	closeButton: {
 		marginVertical: 10,
@@ -50,6 +55,7 @@ export default Discord.createStyles({
 		flexWrap: 'wrap',
 		flexDirection: 'row',
 		marginHorizontal: 12,
+		marginTop: 5,
 		marginBottom: 12,
 		gap: 5,
 	},

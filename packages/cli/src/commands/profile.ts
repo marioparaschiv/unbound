@@ -1,32 +1,34 @@
 import type { CommandDefinition, CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import type { UnboundGlobal } from '@unbound-app/api/global';
-import { z } from 'zod';
 
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode, type DeviceClient } from '~/lib/device';
 import { chromeTraceSchema, formatProfile, summarizeProfile } from '~/lib/profile-summary';
+import { defaulted, Type, type StaticDecode } from '~/lib/schema';
 import { bridgePortField } from '~/lib/context';
 import { parseJson } from '~/lib/parse-json';
 
 const RESULT_GRACE_MS = 10_000;
 
-const schema = z.object({
-	duration: z
-		.number()
-		.int()
-		.positive()
-		.max(60_000)
-		.default(5000)
-		.describe('How long to sample the JavaScript thread, in milliseconds.'),
-	top: z
-		.number()
-		.int()
-		.positive()
-		.default(20)
-		.describe('How many functions and sources to list.'),
-	out: z
-		.string()
-		.default('')
-		.describe('Also save the raw Chrome trace here, to open in Perfetto or chrome://tracing.'),
+const schema = Type.Object({
+	duration: defaulted(
+		Type.Integer({
+			minimum: 1,
+			maximum: 60_000,
+			description: 'How long to sample the JavaScript thread, in milliseconds.',
+		}),
+		5000,
+	),
+	top: defaulted(
+		Type.Integer({ minimum: 1, description: 'How many functions and sources to list.' }),
+		20,
+	),
+	out: defaulted(
+		Type.String({
+			description:
+				'Also save the raw Chrome trace here, to open in Perfetto or chrome://tracing.',
+		}),
+		'',
+	),
 	port: bridgePortField,
 });
 
@@ -69,7 +71,7 @@ const profileCommand: CommandDefinition<typeof schema> = {
  */
 export async function runProfile(
 	client: DeviceClient,
-	input: z.infer<typeof schema>,
+	input: StaticDecode<typeof schema>,
 ): Promise<CommandOutput> {
 	const result = await evaluateOnDevice(
 		client,

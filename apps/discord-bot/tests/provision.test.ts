@@ -175,6 +175,7 @@ describe.skipIf(!SUPERUSER_URL)('provision.sql', () => {
 		await migrateDatabase(bot);
 		reads = createBotReads(bot.$client, {
 			siteUrl: 'https://unbound.rip',
+			cdnUrl: 'https://cdn.unbound.rip',
 			sponsorGraceDays: TEST_GRACE_DAYS,
 		});
 

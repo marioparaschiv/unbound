@@ -23,13 +23,15 @@ function sortKeys(value: JsonValue): JsonValue {
 }
 
 /**
- * @description Hashes an addon listing so an unchanged one compares equal. The hashes posted under the
- * old feed used the same serialization, so a listing that did not change still matches its post.
+ * @description Hashes an addon listing and the author emojis its card shows, so an unchanged card compares equal.
  * @param addon The addon's public listing.
+ * @param authorEmojis The avatar emoji name per author Discord id; a new avatar changes the hash.
  * @returns The sha256 hex of the listing serialized with sorted keys.
  */
-export function contentHash(addon: PublicAddon): string {
-	const serialized = JSON.stringify(sortKeys(addon));
+export function contentHash(addon: PublicAddon, authorEmojis: Record<string, string> = {}): string {
+	// Without avatars the listing hashes alone, as it always has.
+	const value = Object.keys(authorEmojis).length > 0 ? { ...addon, authorEmojis } : addon;
+	const serialized = JSON.stringify(sortKeys(value));
 
 	return new Bun.CryptoHasher('sha256').update(serialized).digest('hex');
 }

@@ -1,4 +1,4 @@
-import type { APIMessage, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
+import type { APIMessage, RawFile, REST, RESTPostAPIChannelMessageJSONBody } from 'discord.js';
 import { DiscordAPIError, RESTJSONErrorCodes, Routes } from 'discord.js';
 import { randomBytes } from 'node:crypto';
 
@@ -48,21 +48,33 @@ export function isUnknownMessage(error: unknown): error is DiscordAPIError {
 }
 
 /**
+ * @description Tells whether a REST failure means the resource does not exist.
+ * @param error The thrown value.
+ * @returns Whether Discord answered 404.
+ */
+export function isNotFound(error: unknown): error is DiscordAPIError {
+	return error instanceof DiscordAPIError && error.status === 404;
+}
+
+/**
  * @description Posts a message with a fresh nonce Discord enforces, so a retried request posts once.
  * @param rest The Discord REST client.
  * @param channelId The channel to post in.
  * @param body The message body.
+ * @param files The files the body's `attachments` name, in order.
  * @returns The posted message's id.
  */
 export async function postMessage(
 	rest: REST,
 	channelId: string,
 	body: RESTPostAPIChannelMessageJSONBody,
+	files?: RawFile[],
 ): Promise<string> {
 	// REST retries a timed-out post with this body, and Discord answers a repeated nonce with the original.
 	const payload = { ...body, nonce: randomBytes(12).toString('hex'), enforce_nonce: true };
 	const message = (await rest.post(Routes.channelMessages(channelId), {
 		body: payload,
+		files,
 	})) as APIMessage;
 
 	return message.id;
@@ -144,6 +156,7 @@ export async function listOwnMessages(
 export default {
 	truncate,
 	isUnknownMessage,
+	isNotFound,
 	postMessage,
 	messageExists,
 	deleteMessage,

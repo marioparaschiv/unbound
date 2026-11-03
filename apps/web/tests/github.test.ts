@@ -7,9 +7,9 @@ import { APIError } from 'better-auth/api';
 
 import listGitHubRepositoriesEndpoint from '~/endpoints/list-github-repositories';
 import listRepositoryAddonsEndpoint from '~/endpoints/list-repository-addons';
+import { createApiClient } from '~/api/schema-client';
 import { connectGitHubIfLinked } from '~/lib/github';
 import type { AppContext } from '~/lib/context';
-import { createApiClient } from '~/api/client';
 import type { Api } from '~/api';
 
 import { createTestContext, linkGitHub, signInWithDiscord } from './helpers/context';

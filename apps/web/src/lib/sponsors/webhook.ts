@@ -1,7 +1,8 @@
+import { Type, is, safeParse } from '@unbound-app/contracts/schema';
+import type { Static } from '@unbound-app/contracts/schema';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { createLogger } from '@unbound-app/logger';
 import { eq } from 'drizzle-orm';
-import { z } from 'zod';
 
 import type { SponsorshipLifecycle, SponsorshipValues } from '~/lib/sponsors/sponsorships';
 import { sponsorship, sponsorWebhookDelivery } from '~/db/schema';
@@ -15,9 +16,9 @@ const MAX_BODY_BYTES = 1024 * 1024;
 
 const SIGNATURE_PREFIX = 'sha256=';
 
-const isoDate = z.iso.datetime({ offset: true }).transform((value) => new Date(value));
+const isoDate = Type.Decode(Type.String({ format: 'date-time' }), (value) => new Date(value));
 
-const sponsorshipActionSchema = z.enum([
+const sponsorshipActionSchema = Type.Enum([
 	'created',
 	'cancelled',
 	'edited',
@@ -26,28 +27,28 @@ const sponsorshipActionSchema = z.enum([
 	'pending_tier_change',
 ]);
 
-const githubAccountSchema = z.object({
-	login: z.string(),
-	id: z.union([z.int(), z.string()]).transform(String),
+const githubAccountSchema = Type.Object({
+	login: Type.String(),
+	id: Type.Decode(Type.Union([Type.Integer(), Type.String()]), (value) => String(value)),
 });
 
-const payloadSchema = z.object({
-	action: z.string(),
-	effective_date: isoDate.optional(),
-	sponsorship: z.object({
+const payloadSchema = Type.Object({
+	action: Type.String(),
+	effective_date: Type.Optional(isoDate),
+	sponsorship: Type.Object({
 		created_at: isoDate,
 		sponsorable: githubAccountSchema,
-		sponsor: githubAccountSchema.nullable(),
-		privacy_level: z.enum(['public', 'private']),
-		tier: z.object({
-			name: z.string(),
-			monthly_price_in_cents: z.int().nonnegative(),
-			is_one_time: z.boolean(),
+		sponsor: Type.Union([githubAccountSchema, Type.Null()]),
+		privacy_level: Type.Enum(['public', 'private']),
+		tier: Type.Object({
+			name: Type.String(),
+			monthly_price_in_cents: Type.Integer({ minimum: 0 }),
+			is_one_time: Type.Boolean(),
 		}),
 	}),
 });
 
-type SponsorshipAction = z.infer<typeof sponsorshipActionSchema>;
+type SponsorshipAction = Static<typeof sponsorshipActionSchema>;
 
 type SponsorshipEvent = {
 	values: SponsorshipValues;
@@ -96,7 +97,7 @@ function status(value: WebhookStatus, code: number = 200): Response {
 }
 
 function isSponsorshipAction(action: string): action is SponsorshipAction {
-	return sponsorshipActionSchema.safeParse(action).success;
+	return is(sponsorshipActionSchema, action);
 }
 
 // UNKNOWN: the parsed body, validated by the payload schema next.
@@ -204,7 +205,7 @@ export async function handleSponsorsWebhook(ctx: AppContext, request: Request): 
 	}
 
 	const deliveryId = request.headers.get('x-github-delivery');
-	const payload = payloadSchema.safeParse(parseJson(body));
+	const payload = safeParse(payloadSchema, parseJson(body));
 
 	if (!deliveryId || !payload.success) {
 		return new Response(null, { status: 400 });

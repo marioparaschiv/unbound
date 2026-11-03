@@ -9,6 +9,7 @@ import type {
 } from '@unbound-app/contracts/sponsors';
 import { BADGE_IMAGE_MAX_BYTES, BADGE_IMAGE_MAX_LABEL } from '@unbound-app/contracts/sponsors';
 import { and, eq, inArray, isNull, lte, or } from 'drizzle-orm';
+import { safeParse } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
 
 import {
@@ -49,7 +50,7 @@ function badgeClaimWhere(userId: string) {
 
 // Configs from before badges were images (an icon, colour and label) read as no badges until replaced.
 function parseBadges(row: ClaimRow): Badge[] | undefined {
-	const result = PERKS[PERK_ID].config.safeParse(row.config);
+	const result = safeParse(PERKS[PERK_ID].config, row.config);
 
 	if (!result.success) {
 		logger.debug(`Ignoring the unreadable ${PERK_ID} of ${row.userId}:`, result.error);

@@ -1,6 +1,6 @@
 import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
+import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest-files';
 import type { AddonManifest, PushedManifest } from '@unbound-app/types';
-import { DEVELOPMENT_MARKER } from '@unbound-app/contracts/manifest';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
 import type { AddonKind } from '@unbound-app/types/addons';
 import toError from '@unbound-app/utils/to-error';
@@ -118,7 +118,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 		try {
 			manifest = this.validateManifest(pushed);
 		} catch (error) {
-			return this.reloadFailed(targetId, resolved, toError(error));
+			return this.reloadFailed(targetId, resolved, error);
 		}
 
 		// Absent addon: install path over the socket bytes — load it fresh and persist it. load()
@@ -146,7 +146,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 
 				return { ok: true };
 			} catch (error) {
-				return this.reloadFailed(targetId, resolved, toError(error));
+				return this.reloadFailed(targetId, resolved, error);
 			}
 		}
 
@@ -194,20 +194,20 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 
 			return { ok: true };
 		} catch (error) {
-			return this.reloadFailed(targetId, resolved, toError(error));
+			return this.reloadFailed(targetId, resolved, error);
 		}
 	}
 
 	// Only a loaded addon gets a `reload-error` emit; an absent one has no entity to report against.
-	private reloadFailed(id: string, resolved: Addon<I> | undefined, error: Error): ReloadResult {
-		this.logger.error(`Failed to reload addon ${id}:`, error);
-		this.errors.set(id, error);
+	// UNKNOWN: catch binds whatever was thrown, not necessarily an Error.
+	private reloadFailed(id: string, resolved: Addon<I> | undefined, error: unknown): ReloadResult {
+		const failure = this.fail('reload', id, error);
 
 		if (resolved) {
-			this.emit('reload-error', resolved, error);
+			this.emit('reload-error', resolved, failure);
 		}
 
-		return { ok: false, error };
+		return { ok: false, error: failure };
 	}
 
 	/**
@@ -298,10 +298,8 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 
 			return resolved.version === update.version;
 		} catch (error) {
-			const failure = toError(error);
+			const failure = this.fail('update', resolved.id, error);
 
-			this.logger.error(`Failed to update addon ${resolved.id}:`, failure);
-			this.errors.set(resolved.id, failure);
 			this.emit('update-error', resolved, failure);
 
 			return false;
@@ -416,8 +414,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			this.releaseHold(resolved.id);
 			this.emit('deleted', resolved);
 		} catch (error) {
-			this.logger.error(`Failed to delete addon ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('delete', resolved.id, error);
 		}
 	}
 
@@ -426,7 +423,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @param url The manifest URL.
 	 * @returns The validated manifest.
 	 */
-	private async fetchManifest(url: string): Promise<AddonManifest> {
+	protected async fetchManifest(url: string): Promise<AddonManifest> {
 		const manifest = await downloadManifest(url, (raw) => this.validateManifest(raw));
 
 		if (manifest.type && manifest.type !== this.kind) {

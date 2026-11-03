@@ -1,11 +1,43 @@
 ---
-title: 'Introduction'
-description: 'Unbound needs a loader to inject into Discord.'
-icon: 'loader'
+title: 'The Loader'
+description: "The native part of Unbound that gets its JavaScript running inside Discord."
+icon: 'microchip'
 ---
 
-A loader is a native tweak or module that patches specific native functions to get JavaScript running inside Discord. It then uses that to load Unbound's JavaScript bundle, which provides Unbound's in-app features.
+The **loader** is the native part of Unbound. It's a tweak on iOS and an Xposed module on Android. Its job is to get Unbound's JavaScript bundle running inside Discord, before Discord's own. Addon developers don't need it. Read on if you work on Unbound itself, or want to know what happens at launch.
 
-Discord is a React Native app, so there are several ways to get code to execute in it.
+## What happens at launch
 
-**Loaders are platform-specific, but the goal is the same experience on every platform.**
+Each time Discord loads its JavaScript, the loader runs these steps first.
+
+<Flow>
+	<FlowStep title='Read settings.json' detail='Stop here if loader.enabled is false' />
+	<FlowStep title='Scan addon folders' detail='Plugins, Themes, Fonts' />
+	<FlowStep title="Run Unbound's bundle" detail='The cached copy' />
+	<FlowStep title="Run Discord's bundle" />
+</Flow>
+
+The loader never runs plugins itself. It reads them from disk, and hands them to Unbound's JavaScript in globals such as `UNBOUND_PLUGINS` and `UNBOUND_THEMES`. Unbound's bundle starts and stops them.
+
+Running first is what lets Unbound hook Metro before Discord defines its modules. See [Concepts](/docs/developer/concepts).
+
+## What else it does in native code
+
+- **Updates the bundle.** It downloads a newer bundle in the background, checks its signature and hash, and uses it from the next launch.
+- **Applies the theme and fonts.** Colors and fonts are swapped below JavaScript, so they cover native views too.
+- **Guards against crashes.** When two launches in a row end inside the same addon, Unbound turns that addon off.
+- **Opens the toolbox.** The recovery menu works even when Unbound's JavaScript fails to load.
+
+## Where to read more
+
+<CardGroup cols={2}>
+	<Card title='iOS Loader' icon='apple' href='/docs/developer/loader/ios'>
+		Where the iOS loader keeps Unbound's files.
+	</Card>
+	<Card title='Android Loader' icon='mobile' href='/docs/developer/loader/android'>
+		Startup, storage, bundle updates and signed plugins on Android.
+	</Card>
+	<Card title='Settings Reference' icon='sliders-3' href='/docs/developer/loader/settings'>
+		Every key the loader reads from settings.json.
+	</Card>
+</CardGroup>

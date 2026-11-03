@@ -1,5 +1,9 @@
-Multi Account turns on the multi-account switcher that Discord already has but does not offer in its mobile app. The plugin tells Discord that multi-account is available on mobile, and the parts of Discord that check this update right away. When you turn the plugin off, Discord goes back to its own answer.
+## :sparkle: What it does
 
-## Known issues
+- :user-change: Unlocks the multi-account switcher Discord already ships but doesn't offer in its mobile app.
+- :circle-check: The parts of Discord that check for it update right away.
+- :toggle: Turn the plugin off and Discord goes back to its own answer.
 
-- If a Discord update removes the check that the plugin changes, the plugin does nothing.
+## :gear: Settings
+
+None. Turn it on and the switcher is there.

@@ -11,6 +11,7 @@ import {
 import { afterAll, beforeAll, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { updatesRequestSchema } from '@unbound-app/contracts/updates';
 import type { TestContext } from '@unbound-app/web/testing';
+import { parse } from '@unbound-app/contracts/schema';
 
 import type { InstalledEntry, PendingUpdate } from '~/updates/addon-updates';
 import { fetchUpdates, reinstallFromStore } from '~/updates/addon-updates';
@@ -141,7 +142,7 @@ async function sentBodies(calls: Parameters<typeof fetch>[]) {
 		.filter((request) => new URL(request.url).pathname === '/api/v1/updates');
 
 	return Promise.all(
-		sent.map(async (request) => updatesRequestSchema.parse(await request.json())),
+		sent.map(async (request) => parse(updatesRequestSchema, await request.json())),
 	);
 }
 

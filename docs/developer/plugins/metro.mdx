@@ -1,0 +1,97 @@
+---
+title: 'Finding Modules'
+description: "Search Metro for the Discord code your plugin wants to read or change."
+icon: 'magnifier'
+---
+
+Discord's JavaScript is split into thousands of Metro modules, each with a number. The numbers change with every Discord update, so a plugin never uses them. It searches by what a module exports instead: its property names, its name, or its file path.
+
+## Search by what a module exports
+
+Most searches use `findByProps`. It finds the module that has **all** the property names you pass. Pass two or three names that only that module has, so the search can't match the wrong one.
+
+```ts
+import { metro } from '@unbound-app/api';
+
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+```
+
+Each helper searches a different part of a module:
+
+| Helper | Finds the module whose | Good for |
+| --- | --- | --- |
+| `findByProps('a', 'b')` | Exports include every name | Utility modules and action creators |
+| `findByName('Name')` | Default export has this name | Components and classes |
+| `findByFilePath('path/to/file')` | Source file path contains this segment | Modules with no distinctive exports |
+| `findByPrototypes('method')` | Default export's prototype has every method | Classes |
+| `flux.getStore('User')` | Flux store is named `UserStore` | Stores. See [Flux Stores](/docs/developer/plugins/flux) |
+
+## Searches are lazy
+
+Every helper above returns a stand-in at once, and searches only the first time you read from it. A search walks every module, so this keeps a plugin from slowing Discord's launch. It also makes lookups safe at the top of a file.
+
+```ts
+import { flux } from '@unbound-app/api';
+
+// No search yet: UserStore is a stand-in.
+const UserStore = flux.getStore('User');
+
+export function currentUsername() {
+	// The first read runs the search. Later reads reuse the result.
+	return UserStore.getCurrentUser()?.username;
+}
+```
+
+Pass `{ lazy: false }` as the last argument to search right away. Do that only inside a function, never at the top of a file. The [standards](/docs/developer/addons/standards#no-eager-lookups-while-the-plugin-loads) lint rule reports it there.
+
+<Note>
+	Results are cached, so a repeat search for the same names is cheap. Prefer the helpers over `metro.find` with a filter function you write yourself, which can't be cached.
+</Note>
+
+## Waiting for a module that hasn't loaded
+
+Metro runs a module the first time Discord needs it. A screen Discord hasn't opened yet may not exist when your plugin starts. You don't usually need to care: a patch on a lazy result waits for the module and applies when it loads.
+
+When you need the module itself, wait for it with `findLazy`. It resolves once Discord loads the module, and never loads it early.
+
+```ts
+import { metro } from '@unbound-app/api';
+
+export async function startMessageFeature() {
+	const Messages = await metro.findLazy(metro.filters.byProps('sendMessage', 'receiveMessage'));
+
+	logger.log('Message actions loaded', Messages);
+}
+```
+
+## Modules Unbound already found
+
+Unbound looks up some modules every plugin needs. Import them instead of searching again:
+
+| Import | What it holds |
+| --- | --- |
+| `metro.common` | Shared Discord modules, such as `i18n`, `Moment`, `REST` and `Util` |
+| `@unbound-app/api/metro/stores` | Common stores, such as `Users` and `Guilds` |
+| `@unbound-app/api/metro/components` | Discord's components, such as `Discord.TableRowGroup` |
+
+```ts
+import { Users } from '@unbound-app/api/metro/stores';
+
+const me = Users.getCurrentUser();
+```
+
+## Exploring Discord's modules
+
+Search from your terminal while the phone is connected to the [debugger](/docs/developer/development/debugging):
+
+```bash
+bunx @unbound-app/cli modules sendMessage
+```
+
+It lists each matching module's id, whether it has loaded, and its exports. To try a search before you write it, run it in the debugger's REPL:
+
+```js
+» unbound.metro.findByProps('sendMessage', 'receiveMessage', { lazy: false })
+```
+
+Next, [patch](/docs/developer/plugins/patching) the module you found.

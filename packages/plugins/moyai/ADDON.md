@@ -1,12 +1,9 @@
-Moyai plays a thud when the Moyai emoji appears in a message in the channel you have open. It counts the Unicode Moyai and custom emojis whose name contains "moyai" or "moai", static or animated. A message with several Moyai plays the sound once for each, 350 milliseconds apart.
+## :sparkle: What it does
 
-Moyai also plays the sound when someone adds a Moyai reaction to a message in the open channel. Repeated reaction events for the same message and emoji within half a second play it only once.
+- :volume-up: Plays a thud for every Moyai in the channel you have open, custom "moyai" and "moai" emojis included.
+- :msgs: Several in one message play one after another, 350 ms apart.
+- :face-smile: Moyai reactions thud too, once per reaction.
 
-## Settings
+## :gear: Settings
 
-- **Play on reactions**. Plays the sound when someone reacts with Moyai. On by default.
-
-## Known issues
-
-- Moyai downloads the sound file from GitHub (`raw.githubusercontent.com`, the MeguminSama/VencordPlugins repository) when it starts, and plays it through Discord's own sound manager.
-- If the sound has not finished loading, or failed to load, the next Moyai starts loading it again instead of playing it.
+- :toggle: **Play on reactions** plays the sound for reactions as well as messages. On by default.

@@ -1,3 +1,10 @@
-Show Timeout Duration adds the time left on a member's timeout to the timestamp of their messages in a server. The timestamp reads, for example, "• 2d 3h timeout remaining". Screen readers hear "Timeout expires in 2d 3h".
+## :sparkle: What it does
 
-The time shows the two largest units, such as `2d 3h`, `5h 12m`, or `7m`. The plugin rounds up to whole minutes and never shows less than `1m`. It updates the countdown every 30 seconds.
+- :timer: The timestamp reads, for example, "• 2d 3h timeout remaining".
+- :hourglass: Shows the two largest units, like `2d 3h`, `5h 12m` or `7m`, rounded up to whole minutes and never less than `1m`.
+- :refresh: Updates the countdown every 30 seconds.
+- :accessibility: Screen readers hear "Timeout expires in 2d 3h".
+
+## :gear: Settings
+
+None. It shows up on timed-out members on its own.

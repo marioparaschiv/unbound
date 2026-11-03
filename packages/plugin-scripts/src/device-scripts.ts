@@ -1,34 +1,33 @@
-import { z } from '@unbound-app/contracts/zod';
-
 import { deviceScript } from './device-script';
+import { Type, type Static } from '@unbound-app/contracts/schema';
 
-export const cycleResultSchema = z.object({
-	id: z.string(),
-	installed: z.boolean(),
-	wasStarted: z.boolean(),
-	error: z.string(),
-	restarted: z.boolean(),
-	updateError: z.string(),
-	updated: z.boolean(),
-	hooksBefore: z.number(),
-	hooksStopped: z.number(),
-	hooksAfter: z.number(),
-	hooksUpdated: z.number(),
-	stopMs: z.optional(z.number()),
-	startMs: z.optional(z.number()),
-	drawnMs: z.optional(z.number()),
-	selfTest: z.optional(z.object({ ok: z.boolean(), detail: z.string() })),
-	bundleHash: z.optional(z.string()),
+export const cycleResultSchema = Type.Object({
+	id: Type.String(),
+	installed: Type.Boolean(),
+	wasStarted: Type.Boolean(),
+	error: Type.String(),
+	restarted: Type.Boolean(),
+	updateError: Type.String(),
+	updated: Type.Boolean(),
+	hooksBefore: Type.Number(),
+	hooksStopped: Type.Number(),
+	hooksAfter: Type.Number(),
+	hooksUpdated: Type.Number(),
+	stopMs: Type.Optional(Type.Number()),
+	startMs: Type.Optional(Type.Number()),
+	drawnMs: Type.Optional(Type.Number()),
+	selfTest: Type.Optional(Type.Object({ ok: Type.Boolean(), detail: Type.String() })),
+	bundleHash: Type.Optional(Type.String()),
 });
 
-export type CycleResult = z.infer<typeof cycleResultSchema>;
+export type CycleResult = Static<typeof cycleResultSchema>;
 
 const CYCLE_SETTLE_MS = 300;
 const SELF_TEST_DELAY_MS = 2_500;
 const DRAWN_POLL_MS = 200;
 
 /** The log lines {@link pluginLogScript} and {@link toastLogScript} return. */
-export const logLinesSchema = z.array(z.string());
+export const logLinesSchema = Type.Array(Type.String());
 
 type MatrixGlobal = typeof globalThis & {
 	__matrixSettingsProbe?: SettingsProbeState;
@@ -372,13 +371,13 @@ export function developerModeScript(enabled: boolean): string {
 	return deviceScript(setDeveloperMode, enabled);
 }
 
-export const settingsProbeSchema = z.object({
-	rendered: z.boolean(),
-	texts: z.number(),
-	error: z.string(),
+export const settingsProbeSchema = Type.Object({
+	rendered: Type.Boolean(),
+	texts: Type.Number(),
+	error: Type.String(),
 });
 
-export type SettingsProbe = z.infer<typeof settingsProbeSchema>;
+export type SettingsProbe = Static<typeof settingsProbeSchema>;
 
 function openSettingsScreen(id: string) {
 	const entity = unbound.plugins.get(id);
@@ -506,9 +505,10 @@ export function closeScreenScript(): string {
 	return deviceScript(closeScreen);
 }
 
-export const selfTestReportsSchema = z.record(
-	z.string(),
-	z.object({ ok: z.boolean(), detail: z.string(), nothingDrawn: z.boolean() }),
+export const selfTestReportsSchema = Type.Record(
+	Type.String(),
+	Type.Object({ ok: Type.Boolean(), detail: Type.String(), nothingDrawn: Type.Boolean() }),
+	{ additionalProperties: false },
 );
 
 type SelfTestReport = { ok: boolean; detail: string; nothingDrawn: boolean };
@@ -553,7 +553,9 @@ export function selfTestsScript(): string {
 	return deviceScript(runSelfTests);
 }
 
-export const redrawTimesSchema = z.record(z.string(), z.number());
+export const redrawTimesSchema = Type.Record(Type.String(), Type.Number(), {
+	additionalProperties: false,
+});
 
 function timeRedraws(limitMs: number, pollMs: number) {
 	const started = Date.now();

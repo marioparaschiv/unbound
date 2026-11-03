@@ -1,5 +1,4 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import type { z } from 'zod';
 
 import inspectCommand from '~/commands/inspect';
 import installCommand from '~/commands/install';
@@ -19,6 +18,7 @@ import routeCommand from '~/commands/route';
 import spansCommand from '~/commands/spans';
 import traceCommand from '~/commands/trace';
 import viewsCommand from '~/commands/views';
+import type { TObject } from '~/lib/schema';
 import evalCommand from '~/commands/eval';
 import hookCommand from '~/commands/hook';
 import logsCommand from '~/commands/logs';
@@ -31,7 +31,7 @@ import devCommand from '~/commands/dev';
  * Every command defined once, from which both surfaces derive: the CLI adapter builds a cleye
  * command per entry, the MCP adapter registers a tool for each entry opted into `surfaces.mcp`.
  */
-export const commands: CommandDefinition<z.ZodObject<z.ZodRawShape>>[] = [
+export const commands: CommandDefinition<TObject>[] = [
 	createCommand,
 	devCommand,
 	buildCommand,

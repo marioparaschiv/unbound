@@ -151,6 +151,30 @@ func TestBundleKeyVerifyAcceptsSignedBundles(t *testing.T) {
 	}
 }
 
+func TestBundleKeyVerifyChecksTheDevBundle(t *testing.T) {
+	_, private, public := generatedKey(t)
+	dist := t.TempDir()
+	writeSignedManifest(t, dist, map[string][]byte{
+		"unbound.js":            []byte("console.log(1);"),
+		"unbound.98.bundle":     {0xc6, 0x1f, 0xbc, 0x03},
+		"unbound-dev.js":        []byte("console.log(2);"),
+		"unbound-dev.98.bundle": {0xc6, 0x1f, 0xbc, 0x04},
+	}, private, 0)
+	files, err := verifyBundleSignatures(dist, public)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 5 {
+		t.Fatalf("verified %d files, want 4 bundles and the manifest", len(files))
+	}
+
+	writeSignedBundle(t, dist, "unbound-dev.98.bundle", []byte("replaced"), private)
+	_, err = verifyBundleSignatures(dist, public)
+	if err == nil || !strings.Contains(err.Error(), "unbound-dev.98.bundle: SHA-512 does not match") {
+		t.Fatalf("verify did not check the dev bundle: %v", err)
+	}
+}
+
 func TestBundleKeyVerifyChecksTheSignedManifest(t *testing.T) {
 	_, private, public := generatedKey(t)
 	dist := signedBuild(t, private, 0)

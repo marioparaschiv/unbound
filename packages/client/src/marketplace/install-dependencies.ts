@@ -113,5 +113,3 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 
 	return true;
 }
-
-export default installDependencies;

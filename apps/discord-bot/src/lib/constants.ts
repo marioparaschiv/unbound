@@ -1,5 +1,6 @@
 export const GUILD_ID: string | undefined = '950850315601711176';
 export const SITE_URL = 'https://unbound.rip';
+export const CDN_URL = 'https://cdn.unbound.rip';
 
 export const COLOURS = {
 	positive: 0x00_ff_00,
@@ -25,6 +26,20 @@ const IDS = {
 	SPONSOR_ROLE_ID: '997233808522874910',
 } as const;
 
+export type AppEmoji = { name: string; id: string };
+
+/** The bot application's own emojis: Nucleo Micro Bold icons in the brand colour. */
+export const EMOJIS = {
+	plug: { name: 'mb_plug', id: '1567001632045146202' },
+	palette: { name: 'mb_palette', id: '1567001633336856676' },
+	shapes: { name: 'mb_shapes', id: '1567001634620440576' },
+	users: { name: 'mb_users', id: '1567001635862085702' },
+	codeCommit: { name: 'mb_code_commit', id: '1567001636847747074' },
+	download: { name: 'mb_download', id: '1567000099467567156' },
+	globe: { name: 'mb_globe', id: '1567000100708819019' },
+	codeBranch: { name: 'mb_code_branch', id: '1567000101883347026' },
+} as const satisfies Record<string, AppEmoji>;
+
 export type IdConstantName = keyof typeof IDS;
 export type DiscordIds = Readonly<Record<IdConstantName, string | undefined>>;
 
@@ -46,4 +61,4 @@ export function requireId(name: IdConstantName, ids: DiscordIds = DISCORD_IDS): 
 	return id;
 }
 
-export default { GUILD_ID, SITE_URL, COLOURS, DISCORD_IDS, requireId };
+export default { GUILD_ID, SITE_URL, CDN_URL, COLOURS, EMOJIS, DISCORD_IDS, requireId };

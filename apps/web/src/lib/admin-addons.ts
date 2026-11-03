@@ -1,10 +1,10 @@
 import type { AdminAddonStatus, AdminAddonsSearch } from '@unbound-app/contracts/admin';
 import type { SortOrder, AddonType, Addon } from '@unbound-app/contracts/addons';
 import { and, eq, gte, inArray, isNotNull, isNull, lt, sql } from 'drizzle-orm';
+import { Type, type StaticDecode } from '@unbound-app/contracts/schema';
 import type { UserSummary } from '@unbound-app/contracts/account';
 import { addonIdSchema } from '@unbound-app/contracts/manifest';
 import type { SQL } from 'drizzle-orm';
-import { z } from 'zod';
 
 import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { addonMaintainer, addonSearchText, submission } from '~/db/schema';
@@ -36,9 +36,9 @@ type OpenUpdateStatus = Extract<AdminAddonStatus, 'pending_review' | 'changes_re
 
 type StatusFilter = (db: Database, table: typeof addon) => SQL;
 
-const ADDON_CURSOR = z.tuple([cursorTime, addonIdSchema]);
+const ADDON_CURSOR = Type.Tuple([cursorTime, addonIdSchema]);
 
-type AddonPosition = z.output<typeof ADDON_CURSOR>;
+type AddonPosition = StaticDecode<typeof ADDON_CURSOR>;
 
 function withOpenUpdate(db: Database, table: typeof addon, status: OpenUpdateStatus): SQL {
 	const open = db

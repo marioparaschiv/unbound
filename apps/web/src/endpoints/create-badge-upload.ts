@@ -2,7 +2,7 @@ import {
 	createBadgeUploadRequestSchema,
 	presignedBadgeUploadSchema,
 } from '@unbound-app/contracts/sponsors';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { createBadgeUpload } from '~/lib/sponsors/badges';
 import { callerEndpoint } from '~/lib/api/endpoint';
@@ -10,7 +10,7 @@ import { callerEndpoint } from '~/lib/api/endpoint';
 const createBadgeUploadEndpoint = callerEndpoint(
 	{
 		body: createBadgeUploadRequestSchema,
-		query: z.undefined(),
+		query: Type.Undefined(),
 		response: presignedBadgeUploadSchema,
 	},
 	async ({ ctx, body, caller }) => {

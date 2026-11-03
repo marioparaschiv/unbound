@@ -4,15 +4,15 @@ import { spawn } from 'node:child_process';
 import { connect } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { z } from 'zod';
 
 import { bridgePortField } from '~/lib/context';
 import { runCommand } from '~/lib/run-command';
+import { Type } from '~/lib/schema';
 
-const schema = z.object({
-	action: z
-		.enum(['restart', 'start'])
-		.describe('Restart the running bridge, or start one when none runs.'),
+const schema = Type.Object({
+	action: Type.Enum(['restart', 'start'], {
+		description: 'Restart the running bridge, or start one when none runs.',
+	}),
 	port: bridgePortField,
 });
 

@@ -2,6 +2,7 @@ import { MAX_UPDATE_CHANGELOGS, updatesResponseSchema } from '@unbound-app/contr
 import { afterAll, beforeAll, describe, expect, spyOn, test } from 'bun:test';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import type { UpdatesRequest } from '@unbound-app/contracts/updates';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import { findUpdates, newestCompatibleVersions } from '~/lib/updates';
@@ -103,11 +104,11 @@ async function updatesFor(request: UpdatesRequest) {
 
 	expect(response.status).toBe(200);
 
-	return updatesResponseSchema.parse(await response.json()).updates;
+	return parse(updatesResponseSchema, await response.json()).updates;
 }
 
 async function refused(response: Response) {
-	const { error } = apiErrorResponseSchema.parse(await response.json());
+	const { error } = parse(apiErrorResponseSchema, await response.json());
 
 	return { status: response.status, code: error.code };
 }

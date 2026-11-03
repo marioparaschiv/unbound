@@ -28,7 +28,7 @@ export function show(options: ToastOptions): ToastHandle {
 	const store = useToastStore.getState();
 	const id = options.id ?? uuid();
 
-	if (getSetting('developer-mode')) {
+	if (import.meta.env.DEV_TOOLS && getSetting('developer-mode')) {
 		Logger.info('Showing a toast:', typeof options.title === 'string' ? options.title : id);
 	}
 

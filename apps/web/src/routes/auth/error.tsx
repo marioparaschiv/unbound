@@ -1,7 +1,7 @@
+import { Type, safeParse } from '@unbound-app/contracts/schema';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { z } from 'zod/mini';
 
 import type { AuthErrorKind } from '~/lib/auth/auth-errors';
 import { getAuthErrorKind } from '~/lib/auth/auth-errors';
@@ -47,11 +47,24 @@ const COPY: Record<AuthErrorKind, ErrorCopy> = {
 	},
 };
 
-const errorSearchSchema = z.object({
-	// Better Auth only forwards codes matching this pattern; anything else is not worth echoing back.
-	error: z.catch(z.optional(z.string().check(z.regex(/^[\w-]{1,64}$/))), undefined),
-	retry_after: z.catch(z.optional(z.coerce.number().check(z.int(), z.minimum(0))), undefined),
-});
+/** Better Auth only forwards codes matching this pattern, so anything else is dropped. */
+const errorCodeSchema = Type.String({ pattern: '^[\\w-]{1,64}$' });
+
+type AuthErrorSearch = {
+	error?: string;
+	retry_after?: number;
+};
+
+/** Each field falls back on its own, so a malformed one never hides the other. */
+function readAuthErrorSearch(search: Record<string, string>): AuthErrorSearch {
+	const error = safeParse(errorCodeSchema, search.error);
+	const retryAfter = Number(search.retry_after);
+
+	return {
+		error: error.success ? error.data : undefined,
+		retry_after: Number.isInteger(retryAfter) && retryAfter >= 0 ? retryAfter : undefined,
+	};
+}
 
 function RetryButton({ seconds }: RetryButtonProps) {
 	const [remaining, setRemaining] = useState(seconds);
@@ -123,6 +136,6 @@ function AuthErrorPage() {
 
 export const Route = createFileRoute('/auth/error')({
 	head: () => ({ meta: [{ title: 'Unbound | Sign-in Failed' }] }),
-	validateSearch: errorSearchSchema,
+	validateSearch: readAuthErrorSearch,
 	component: AuthErrorPage,
 });

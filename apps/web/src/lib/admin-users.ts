@@ -1,8 +1,8 @@
 import type { AddonType, MaintainerRole } from '@unbound-app/contracts/addons';
 import type { AdminUsersSearch } from '@unbound-app/contracts/admin';
 import type { UserSummary } from '@unbound-app/contracts/account';
+import { Type } from '@unbound-app/contracts/schema';
 import { and, sql } from 'drizzle-orm';
-import { z } from 'zod';
 
 import { afterKey, cursorTime, decodeCursor, scanOrder, toKeysetPage } from '~/lib/keyset';
 import { userNameSearchText, userSearchText } from '~/db/schema';
@@ -66,7 +66,7 @@ export type AdminUserView = {
 
 type UserRow = typeof user.$inferSelect;
 
-const USER_CURSOR = z.tuple([cursorTime, z.string().min(1)]);
+const USER_CURSOR = Type.Tuple([cursorTime, Type.String({ minLength: 1 })]);
 
 function toAdminUser(row: UserRow, showEmail: boolean): AdminUser {
 	return {

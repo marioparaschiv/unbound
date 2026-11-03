@@ -1,4 +1,3 @@
-import { addonVersionsResponseSchema } from '@unbound-app/contracts/addons';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
 import type { AddonVersion } from '@unbound-app/contracts/addons';
 import { createApiClient } from '@unbound-app/web/client';
@@ -40,7 +39,6 @@ export async function fetchAddonVersions(
 	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
 	const { versions } = await request('GET /api/v1/addons/$id/versions', {
 		params: { id },
-		response: addonVersionsResponseSchema,
 	});
 
 	return versions;

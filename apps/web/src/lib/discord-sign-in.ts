@@ -1,5 +1,5 @@
 import type { AccountOAuthConfig, AccountSignInResponse } from '@unbound-app/contracts/account';
-import { z } from 'zod';
+import { parse, Type, type StaticDecode } from '@unbound-app/contracts/schema';
 
 import { getAvatarUrl, getDefaultAvatarUrl } from '~/lib/discord';
 import { isBanned, toCallerProfile } from '~/lib/api/caller';
@@ -10,22 +10,22 @@ import type { Env } from '~/lib/env';
 // `email` lets a first sign-in create the account exactly as the web's Discord sign-in would.
 const SCOPES = ['identify', 'email'];
 
-const tokenResponseSchema = z.object({
-	access_token: z.string().min(1),
-	scope: z.string().optional(),
+const tokenResponseSchema = Type.Object({
+	access_token: Type.String({ minLength: 1 }),
+	scope: Type.Optional(Type.String()),
 });
 
-const discordUserSchema = z.object({
-	id: z.string().regex(/^\d+$/),
-	username: z.string(),
-	global_name: z.string().nullish(),
-	discriminator: z.string().optional(),
-	avatar: z.string().nullish(),
-	email: z.string().nullish(),
-	verified: z.boolean().optional(),
+const discordUserSchema = Type.Object({
+	id: Type.String({ pattern: /^\d+$/ }),
+	username: Type.String(),
+	global_name: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+	discriminator: Type.Optional(Type.String()),
+	avatar: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+	email: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+	verified: Type.Optional(Type.Boolean()),
 });
 
-type DiscordUser = z.infer<typeof discordUserSchema>;
+type DiscordUser = StaticDecode<typeof discordUserSchema>;
 
 type DiscordProfile = {
 	user: DiscordUser;
@@ -87,7 +87,7 @@ async function fetchDiscordProfile(env: Env, code: string): Promise<DiscordProfi
 		throw new Error(`Discord answered ${response.status} to the token exchange.`);
 	}
 
-	const token = tokenResponseSchema.parse(await response.json());
+	const token = parse(tokenResponseSchema, await response.json());
 	const profile = await fetch(discordUrl(env, 'users/@me'), {
 		headers: { authorization: `Bearer ${token.access_token}` },
 	});
@@ -96,7 +96,7 @@ async function fetchDiscordProfile(env: Env, code: string): Promise<DiscordProfi
 		throw new Error(`Discord answered ${profile.status} for the signed-in user.`);
 	}
 
-	return { user: discordUserSchema.parse(await profile.json()), scope: token.scope };
+	return { user: parse(discordUserSchema, await profile.json()), scope: token.scope };
 }
 
 async function findOrCreateUser(ctx: AppContext, profile: DiscordProfile): Promise<string> {

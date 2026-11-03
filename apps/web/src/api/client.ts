@@ -1,6 +1,6 @@
-import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
+import type { StaticEncode, TSchema } from '@unbound-app/contracts/schema';
+import { isApiErrorCode } from '@unbound-app/contracts/api-error-codes';
 import type { ApiErrorCode } from '@unbound-app/contracts/errors';
-import type { z } from 'zod/mini';
 
 /** The header `ubd publish` sends an API key in, for CI publishing. */
 export const API_KEY_HEADER = 'x-api-key';
@@ -15,7 +15,7 @@ export type QueryValues = Record<string, string | undefined>;
 export type ApiRoute = {
 	body: unknown;
 	query: QueryValues | undefined;
-	response: z.ZodMiniType;
+	response: TSchema;
 };
 
 export type ApiMap = Record<string, ApiRoute>;
@@ -39,17 +39,28 @@ type BodyOption<R extends ApiRoute> = undefined extends R['body']
 	? { body?: R['body'] }
 	: { body: R['body'] };
 
+// A query whose every field is optional may be left out, as an empty search string.
 type QueryOption<R extends ApiRoute> = undefined extends R['query']
 	? { query?: R['query'] }
-	: { query: R['query'] };
+	: {} extends R['query']
+		? { query?: R['query'] }
+		: { query: R['query'] };
 
+/** What a request sends besides its route: the path parameters, query, body and extra headers. */
+export type RequestParts = {
+	params?: Record<string, string>;
+	query?: QueryValues;
+	body?: unknown;
+	headers?: HeaderValues;
+};
+
+/** The options a request sends to the API: its path parameters, query, body and extra headers. */
 export type RequestOptions<K, R extends ApiRoute> = ParamsOption<K> &
 	BodyOption<R> &
-	QueryOption<R> & {
-		/** The route's contract response schema; the compiler checks it is the one the route declares. */
-		response: R['response'];
-		headers?: HeaderValues;
-	};
+	QueryOption<R> & { headers?: HeaderValues };
+
+// A route with nothing to send may be called without options.
+type InitArgs<O> = {} extends O ? [init?: O] : [init: O];
 
 export type ApiClientOptions = {
 	baseUrl: string;
@@ -107,10 +118,28 @@ function buildPath(path: string, params: Record<string, string> | undefined): st
 	});
 }
 
-async function toRequestError(response: Response): Promise<ApiRequestError> {
-	const parsed = apiErrorResponseSchema.safeParse(await response.json().catch(() => null));
+// UNKNOWN: an error body before its schema runs.
+function isErrorBody(value: unknown): value is { error: { code: ApiErrorCode; message: string } } {
+	if (typeof value !== 'object' || value === null || !('error' in value)) {
+		return false;
+	}
 
-	if (!parsed.success) {
+	const { error } = value;
+
+	return (
+		typeof error === 'object' &&
+		error !== null &&
+		'code' in error &&
+		isApiErrorCode(error.code) &&
+		'message' in error &&
+		typeof error.message === 'string'
+	);
+}
+
+async function toRequestError(response: Response): Promise<ApiRequestError> {
+	const body: unknown = await response.json().catch(() => null);
+
+	if (!isErrorBody(body)) {
 		return new ApiRequestError(
 			'internal_error',
 			response.status,
@@ -118,52 +147,69 @@ async function toRequestError(response: Response): Promise<ApiRequestError> {
 		);
 	}
 
-	return new ApiRequestError(parsed.data.error.code, response.status, parsed.data.error.message);
+	return new ApiRequestError(body.error.code, response.status, body.error.message);
+}
+
+/**
+ * @description Sends one request and returns its JSON body, throwing an {@link ApiRequestError} for a
+ * non-2xx answer and a {@link NotModifiedError} for a `304` to a conditional request.
+ * @param options The API origin and headers sent with every request (e.g. credentials).
+ * @param route The `"METHOD /path"` route, with `$param` segments.
+ * @param init The path parameters, query, body and per-request headers.
+ * @returns The parsed body, still unchecked: the caller validates it against the route's contract.
+ */
+// UNKNOWN: the body of a route, which the caller checks against its contract.
+export async function sendRequest(
+	options: ApiClientOptions,
+	route: string,
+	init: RequestParts,
+): Promise<unknown> {
+	const separator = route.indexOf(' ');
+	const method = route.slice(0, separator);
+	const path = route.slice(separator + 1);
+	const headers = new Headers(options.headers);
+
+	for (const [name, value] of new Headers(init.headers)) {
+		headers.set(name, value);
+	}
+
+	if (init.body !== undefined) {
+		headers.set('content-type', 'application/json');
+	}
+
+	const url = buildUrl(options.baseUrl, path, init.params, init.query);
+	const response = await fetch(url, {
+		method,
+		headers,
+		body: init.body === undefined ? undefined : JSON.stringify(init.body),
+	});
+
+	if (response.status === 304) {
+		throw new NotModifiedError();
+	}
+
+	if (!response.ok) {
+		throw await toRequestError(response);
+	}
+
+	return response.json();
 }
 
 /**
  * @description Creates a typed client for the Unbound web API. Routes, bodies and responses are
- * checked against the API map exported by `@unbound-app/web/api`; responses are parsed with the
- * route's contract schema and `{ error: { code, message } }` bodies are thrown as
- * {@link ApiRequestError}. A `304` to a conditional request is thrown as {@link NotModifiedError}.
+ * typed by the API map exported by `@unbound-app/web/api`, and `{ error: { code, message } }` bodies
+ * are thrown as {@link ApiRequestError}. A `304` to a conditional request is thrown as {@link NotModifiedError}.
  * @template Api The API map, `Api` from `@unbound-app/web/api`.
  * @param options The API origin and headers sent with every request (e.g. credentials).
- * @returns A `request(route, options)` function.
+ * @returns A `request(route, options)` function resolving to the route's response.
  */
 export function createApiClient<Api extends ApiMap>(options: ApiClientOptions) {
 	return async function request<K extends keyof Api & string>(
 		route: K,
-		init: RequestOptions<K, Api[K]>,
-	): Promise<z.output<Api[K]['response']>> {
-		const separator = route.indexOf(' ');
-		const method = route.slice(0, separator);
-		const path = route.slice(separator + 1);
-		const headers = new Headers(options.headers);
-
-		for (const [name, value] of new Headers(init.headers)) {
-			headers.set(name, value);
-		}
-
-		if (init.body !== undefined) {
-			headers.set('content-type', 'application/json');
-		}
-
-		const url = buildUrl(options.baseUrl, path, init.params, init.query);
-		const response = await fetch(url, {
-			method,
-			headers,
-			body: init.body === undefined ? undefined : JSON.stringify(init.body),
-		});
-
-		if (response.status === 304) {
-			throw new NotModifiedError();
-		}
-
-		if (!response.ok) {
-			throw await toRequestError(response);
-		}
-
-		return init.response.parse(await response.json());
+		...[init]: InitArgs<RequestOptions<K, Api[K]>>
+	): Promise<StaticEncode<Api[K]['response']>> {
+		// The server validates every request and answers in its contract, so the answer is trusted as sent.
+		return (await sendRequest(options, route, init ?? {})) as StaticEncode<Api[K]['response']>;
 	};
 }
 
@@ -173,4 +219,5 @@ export default {
 	ApiRequestError,
 	NotModifiedError,
 	createApiClient,
+	sendRequest,
 };

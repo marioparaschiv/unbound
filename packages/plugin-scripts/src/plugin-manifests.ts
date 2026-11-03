@@ -1,4 +1,5 @@
 import { addonManifestSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
+import { safeParse } from '@unbound-app/contracts/schema';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -15,7 +16,7 @@ export type PluginManifestEntry = {
  * @returns The parsed manifest.
  */
 export function readPluginManifest(path: string): PublishedManifest {
-	const result = addonManifestSchema.safeParse(JSON.parse(readFileSync(path, 'utf8')));
+	const result = safeParse(addonManifestSchema, JSON.parse(readFileSync(path, 'utf8')));
 
 	if (!result.success) {
 		throw new Error(`${path} is not a valid addon manifest: ${result.error.message}`);

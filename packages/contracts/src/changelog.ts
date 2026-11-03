@@ -1,26 +1,35 @@
+import { safeParse, Type, type StaticDecode } from './schema';
 import { semverSchema } from './manifest';
-import { z } from './zod';
 
 /** The change types a release lists, in the order its sections are kept. */
-export const changeTypeSchema = z.enum(['added', 'changed', 'fixed', 'removed']);
+export const CHANGE_TYPES = ['added', 'changed', 'fixed', 'removed'] as const;
+
+export const changeTypeSchema = Type.Enum(CHANGE_TYPES);
+
+/** An unknown type reads as `changed`, so an older client keeps rendering a newer changelog. */
+const changeTypeValueSchema = Type.Codec(Type.Any())
+	.Decode((value): ChangeType => {
+		const parsed = safeParse(changeTypeSchema, value);
+
+		return parsed.success ? parsed.data : 'changed';
+	})
+	.Encode((value) => value);
 
 /** One `### Type` block. Items are plain text; a type this client does not know reads as `changed`. */
-export const changelogSectionSchema = z.object({
-	type: z.catch(changeTypeSchema, 'changed'),
-	items: z
-		.array(z.string().check(z.minLength(1), z.maxLength(500)))
-		.check(z.minLength(1), z.maxLength(50)),
+export const changelogSectionSchema = Type.Object({
+	type: changeTypeValueSchema,
+	items: Type.Array(Type.String({ minLength: 1, maxLength: 500 }), { minItems: 1, maxItems: 50 }),
 });
 
 /** One release's entry: its date and its sections, in `changeTypeSchema` order, each type at most once. */
-export const changelogSchema = z.object({
-	date: z.nullable(z.iso.date()),
-	sections: z.array(changelogSectionSchema).check(z.maxLength(changeTypeSchema.options.length)),
+export const changelogSchema = Type.Object({
+	date: Type.Union([Type.String({ format: 'date' }), Type.Null()]),
+	sections: Type.Array(changelogSectionSchema, { maxItems: CHANGE_TYPES.length }),
 });
 
-export type ChangeType = z.infer<typeof changeTypeSchema>;
-export type ChangelogSection = z.infer<typeof changelogSectionSchema>;
-export type Changelog = z.infer<typeof changelogSchema>;
+export type ChangeType = StaticDecode<typeof changeTypeSchema>;
+export type ChangelogSection = StaticDecode<typeof changelogSectionSchema>;
+export type Changelog = StaticDecode<typeof changelogSchema>;
 
 /** A problem on one 1-based line of the file. */
 export type ChangelogIssue = {
@@ -54,7 +63,7 @@ const FOLDED_HEADINGS: Record<string, string> = {
 const RELEASE_HEADING = /^(?:\[([^\]]+)\]|([^\s[\]]+))(?:\s+-\s+(\S+))?$/;
 const LINK_DEFINITION = /^\[[^\]]+\]:\s*\S+/;
 const BULLET = /^[-*](?:\s+(.*))?$/;
-const ISO_DATE = z.iso.date();
+const ISO_DATE = Type.String({ format: 'date' });
 
 type Item = {
 	line: number;
@@ -217,10 +226,10 @@ function openRelease(parser: Parser, heading: string, line: number) {
 			line,
 			`Write a release heading as "## [1.2.0] - 2026-05-01", not "## ${heading}".`,
 		);
-	} else if (!semverSchema.safeParse(version).success) {
+	} else if (!safeParse(semverSchema, version).success) {
 		valid = false;
 		addIssue(parser, line, `"${version}" is not a semver version.`);
-	} else if (date !== null && !ISO_DATE.safeParse(date).success) {
+	} else if (date !== null && !safeParse(ISO_DATE, date).success) {
 		valid = false;
 		addIssue(parser, line, `"${date}" is not a date in YYYY-MM-DD form.`);
 	}
@@ -251,7 +260,7 @@ function closeRelease(parser: Parser) {
 
 	const sections: ChangelogSection[] = [];
 
-	for (const type of changeTypeSchema.options) {
+	for (const type of CHANGE_TYPES) {
 		const items = release.sections.get(type);
 
 		if (items) {
@@ -264,7 +273,7 @@ function closeRelease(parser: Parser) {
 
 function openSection(parser: Parser, heading: string, line: number) {
 	const name = heading.toLowerCase();
-	const parsed = changeTypeSchema.safeParse(name);
+	const parsed = safeParse(changeTypeSchema, name);
 	const folded = FOLDED_HEADINGS[name];
 
 	let type: ChangeType | undefined;
@@ -357,6 +366,7 @@ function addIssue(parser: Parser, line: number, message: string) {
 }
 
 export default {
+	CHANGE_TYPES,
 	changeTypeSchema,
 	changelogSectionSchema,
 	changelogSchema,

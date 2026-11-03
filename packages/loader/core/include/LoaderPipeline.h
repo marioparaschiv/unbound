@@ -41,23 +41,28 @@ public:
     void prepare();
     void onRuntimeCreated(facebook::jsi::Runtime &runtime);
 
-    bool isBundleReady() const;
-
-private:
     struct SavedBundle {
         std::string bundle;
         std::string path;
     };
 
+    std::optional<SavedBundle> takeSavedBundle();
+
+    bool isBundleReady() const;
+
+private:
     struct FirstDownload {
         uint64_t                   token     = 0;
         bool                       pending   = false;
         bool                       settled   = false;
         bool                       abandoned = false;
+        std::optional<SavedBundle> fallback;
         std::optional<std::string> path;
     };
 
-    void updateInBackground(std::string savedPath, bool hasSaved, uint64_t token);
+    void updateInBackground(std::string savedPath, bool hasSaved, bool waitForDownload,
+                            uint64_t token);
+    bool savedFlavourIsCurrent(const std::string &path) const;
     bool settleFirstDownload(uint64_t token, std::optional<std::string> path);
     std::optional<SavedBundle> awaitFirstDownload(uint64_t token);
     bool evaluate(facebook::jsi::Runtime &runtime, SavedBundle saved, uint64_t token);

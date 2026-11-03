@@ -1,6 +1,6 @@
 import { createHash, createPrivateKey, createPublicKey, sign, verify } from 'node:crypto';
-import { z } from '@unbound-app/contracts/zod';
 import type { KeyObject } from 'node:crypto';
+import { Type, parse } from '@unbound-app/contracts/schema';
 
 export const PLUGIN_SIGNING_KEY_VARIABLE = 'UNBOUND_BUNDLE_SIGNING_KEY';
 
@@ -129,7 +129,10 @@ export function withSignature(
 	signature: PluginSignature,
 	bytecode: BytecodeDigests = {},
 ): string {
-	const manifest = z.looseObject({}).parse(JSON.parse(manifestText));
+	const manifest = parse(
+		Type.Object({}, { additionalProperties: true }),
+		JSON.parse(manifestText),
+	);
 	const compiled = Object.keys(bytecode).length > 0 ? { bytecode } : {};
 
 	return `${JSON.stringify({ ...manifest, ...compiled, signature }, null, '\t')}\n`;

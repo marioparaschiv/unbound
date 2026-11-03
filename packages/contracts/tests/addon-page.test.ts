@@ -9,6 +9,7 @@ import {
 	measuredMediaSchema,
 	addonPageFrontmatterSchema,
 } from '../src/addon-page';
+import { parse, safeParse } from '../src/schema';
 
 const thumbhash = '1QcSHQRnh493V4dIh4eXh1h4kJUI';
 
@@ -40,15 +41,20 @@ const demo = measure('media/demo.mp4', 1920, 1080);
 const poster = measure('media/demo-poster.jpg', 1920, 1080);
 const media = [banner, settings, demo, poster];
 
-function issuePaths(page: AddonPage): string[] {
-	const parsed = addonPageSchema.safeParse(page);
+/** A schema issue's path with `/` separators, as the messages show it. */
+function issuePath(path: string): string {
+	return path.split('/').filter(Boolean).join('.');
+}
 
-	return parsed.success ? [] : parsed.error.issues.map((issue) => issue.path.join('.'));
+function issuePaths(page: AddonPage): string[] {
+	const parsed = safeParse(addonPageSchema, page);
+
+	return parsed.success ? [] : parsed.error.issues.map((issue) => issuePath(issue.path));
 }
 
 describe('addonPageSchema', () => {
 	test('accepts a page whose media are all measured and in shape', () => {
-		expect(addonPageSchema.safeParse({ frontmatter, media }).success).toBe(true);
+		expect(safeParse(addonPageSchema, { frontmatter, media }).success).toBe(true);
 	});
 
 	test('accepts a banner of exactly 1200x400 and media at the 9:16 and 21:9 bounds', () => {
@@ -118,14 +124,16 @@ describe('addonPageSchema', () => {
 
 describe('addonPageFrontmatterSchema', () => {
 	test('rejects a missing banner', () => {
-		const parsed = addonPageFrontmatterSchema.safeParse({ media: frontmatter.media });
+		const parsed = safeParse(addonPageFrontmatterSchema, { media: frontmatter.media });
 
 		expect(parsed.success).toBe(false);
-		expect(parsed.error?.issues.map((issue) => issue.path)).toEqual([['banner']]);
+		expect(
+			parsed.success ? [] : parsed.error.issues.map((issue) => issuePath(issue.path)),
+		).toEqual(['banner']);
 	});
 
 	test('defaults media to an empty gallery', () => {
-		expect(addonPageFrontmatterSchema.parse({ banner: 'media/banner.png' })).toEqual({
+		expect(parse(addonPageFrontmatterSchema, { banner: 'media/banner.png' })).toEqual({
 			banner: 'media/banner.png',
 			media: [],
 		});
@@ -133,7 +141,10 @@ describe('addonPageFrontmatterSchema', () => {
 
 	test('rejects a title or description, which come from the manifest', () => {
 		for (const key of ['title', 'description']) {
-			const parsed = addonPageFrontmatterSchema.safeParse({ ...frontmatter, [key]: 'Hello' });
+			const parsed = safeParse(addonPageFrontmatterSchema, {
+				...frontmatter,
+				[key]: 'Hello',
+			});
 
 			expect({ key, success: parsed.success }).toEqual({ key, success: false });
 		}
@@ -153,7 +164,7 @@ describe('addonPageFrontmatterSchema', () => {
 		];
 
 		for (const page of pages) {
-			expect({ page, success: addonPageFrontmatterSchema.safeParse(page).success }).toEqual({
+			expect({ page, success: safeParse(addonPageFrontmatterSchema, page).success }).toEqual({
 				page,
 				success: false,
 			});
@@ -170,7 +181,7 @@ describe('addonPageFrontmatterSchema', () => {
 		];
 
 		for (const banner of banners) {
-			const parsed = addonPageFrontmatterSchema.safeParse({ banner });
+			const parsed = safeParse(addonPageFrontmatterSchema, { banner });
 
 			expect({ banner, success: parsed.success }).toEqual({ banner, success: false });
 		}
@@ -185,7 +196,10 @@ describe('addonPageFrontmatterSchema', () => {
 		];
 
 		for (const entry of entries) {
-			const parsed = addonPageFrontmatterSchema.safeParse({ ...frontmatter, media: [entry] });
+			const parsed = safeParse(addonPageFrontmatterSchema, {
+				...frontmatter,
+				media: [entry],
+			});
 
 			expect({ entry, success: parsed.success }).toEqual({ entry, success: false });
 		}
@@ -194,9 +208,11 @@ describe('addonPageFrontmatterSchema', () => {
 
 describe('measuredMediaSchema', () => {
 	test('reads the kind from the extension, case-insensitively', () => {
-		expect(measuredMediaSchema.safeParse(measure('media/SHOT.PNG', 10, 10)).success).toBe(true);
+		expect(safeParse(measuredMediaSchema, measure('media/SHOT.PNG', 10, 10)).success).toBe(
+			true,
+		);
 		expect(
-			measuredMediaSchema.safeParse({ ...measure('media/shot.png', 10, 10), kind: 'video' })
+			safeParse(measuredMediaSchema, { ...measure('media/shot.png', 10, 10), kind: 'video' })
 				.success,
 		).toBe(false);
 	});
@@ -211,7 +227,7 @@ describe('measuredMediaSchema', () => {
 		];
 
 		for (const entry of entries) {
-			expect({ entry, success: measuredMediaSchema.safeParse(entry).success }).toEqual({
+			expect({ entry, success: safeParse(measuredMediaSchema, entry).success }).toEqual({
 				entry,
 				success: false,
 			});

@@ -128,13 +128,3 @@ export function byFluxStore(name: string, short: boolean = true): MetroFilter {
 
 	return filter;
 }
-
-export default {
-	byProps,
-	byDisplayName,
-	byPrototypes,
-	byName,
-	byTypeName,
-	byFluxStore,
-	byFilePath,
-};

@@ -32,6 +32,7 @@ describe.skipIf(!DATABASE_URL || !PGBOUNCER)('pooled database behind pgbouncer',
 		pooled = createDatabase(bouncer.url, POOLED_OPTIONS);
 		reads = createBotReads(pooled.$client, {
 			siteUrl: 'https://unbound.rip',
+			cdnUrl: 'https://cdn.unbound.rip',
 			sponsorGraceDays: TEST_GRACE_DAYS,
 		});
 

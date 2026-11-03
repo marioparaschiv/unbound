@@ -1,4 +1,3 @@
-import { crashReportResponseSchema } from '@unbound-app/contracts/crash-reports';
 import { createApiClient } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
 import type { Api } from '@unbound-app/web/api';
@@ -53,7 +52,6 @@ export async function reportCrash(event: CrashEvent): Promise<void> {
 
 		await request('POST /api/v1/crash-reports', {
 			body: report,
-			response: crashReportResponseSchema,
 		});
 	} catch (error) {
 		logger.warn('Could not send a crash report:', error);

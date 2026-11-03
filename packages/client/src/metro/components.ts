@@ -18,14 +18,8 @@ import { findByPropsLazy } from '~/metro/wrappers';
 type SwitchProps = ComponentProps<DesignModule['FormSwitch']>;
 type SearchFieldProps = ComponentProps<DesignModule['SearchField']>;
 
-export {
-	Discord,
-	auditDesignComponents,
-	isRenderable,
-	registerDesignFallback,
-	type DesignComponentAudit,
-} from '~/metro/design';
 export type { DesignComponentName, DesignModule } from '@unbound-app/types/components';
+export { Discord, isRenderable, registerDesignFallback } from '~/metro/design';
 export { DESIGN_COMPONENTS } from '@unbound-app/types/components';
 /** Discord's blur backdrop components, with `BackgroundBlurFill`; found on first access. */
 export const BackdropFilters = findByPropsLazy('BackgroundBlurFill');
@@ -47,11 +41,10 @@ let helpMessage: ComponentType<HelpMessageProps> | undefined;
  * @returns The help message element.
  */
 export function HelpMessage(props: HelpMessageProps) {
-	const component: ComponentType<HelpMessageProps> = (helpMessage ??=
-		firstOf(
-			() => findByName('HelpMessage'),
-			() => require('~/metro/fallbacks/help-message').default,
-		) ?? require('~/metro/fallbacks/help-message').default);
+	const component: ComponentType<HelpMessageProps> = (helpMessage ??= firstOf(
+		() => findByName('HelpMessage'),
+		() => require('~/metro/fallbacks/help-message').default,
+	)!);
 
 	return createElement(component, props);
 }

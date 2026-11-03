@@ -1,13 +1,17 @@
 import { loaderUpdateQuerySchema, loaderUpdateResponseSchema } from '@unbound-app/contracts/loader';
+import { Type } from '@unbound-app/contracts/schema';
 import { getIP } from 'better-auth/api';
-import { z } from 'zod';
 
 import { findLoaderUpdate } from '~/lib/loader-releases';
 import { consumeRateLimit } from '~/lib/rate-limit';
 import endpoint from '~/lib/api/endpoint';
 
 const checkLoaderUpdateEndpoint = endpoint(
-	{ body: z.undefined(), query: loaderUpdateQuerySchema, response: loaderUpdateResponseSchema },
+	{
+		body: Type.Undefined(),
+		query: loaderUpdateQuerySchema,
+		response: loaderUpdateResponseSchema,
+	},
 	async ({ ctx, request, query }) => {
 		const ip = getIP(request, ctx.auth.options) ?? 'unknown';
 

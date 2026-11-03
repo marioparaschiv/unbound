@@ -1,0 +1,104 @@
+---
+title: 'Patching Functions'
+description: "Run your own code before, after or instead of one of Discord's functions."
+icon: 'layers'
+---
+
+A **patch** wraps a function that belongs to someone else. You give the patcher an object and the name of a function on it. From then on, every call to that function runs your callback too. Discord doesn't know it was patched, so your code runs wherever Discord calls it.
+
+## A first patch
+
+```ts src/message-log/index.ts
+import { metro, patcher } from '@unbound-app/api';
+
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+
+export function startMessageLog() {
+	patcher.before(Messages, 'sendMessage', ({ args }) => {
+		logger.log('Sending to channel', args[0]);
+	});
+}
+```
+
+The patcher takes the object, the function's name on it, and your callback. It swaps the function for a wrapper that runs your callback, then Discord's original.
+
+## The three kinds of patch
+
+Each kind runs at a different point of the call, and gets the parts of the call that exist at that point. The examples below use the `Messages` lookup from above, and Discord's user store:
+
+```ts
+const UserStore = flux.getStore('User');
+```
+
+<Flow>
+	<FlowStep title='before' detail='args' />
+	<FlowStep title='instead' detail='args, original' />
+	<FlowStep title='after' detail='args, result' />
+</Flow>
+
+<Tabs>
+	<Tab title='before'>
+		Runs before the original, with its `args`. Return a new array to replace the arguments.
+
+		```ts
+		patcher.before(Messages, 'sendMessage', ({ args }) => {
+			const [channelId, message] = args;
+
+			return [channelId, { ...message, content: message.content.trim() }];
+		});
+		```
+	</Tab>
+	<Tab title='after'>
+		Runs after the original, with its `result`. Return a value to replace the result. This is the usual choice for changing what a component renders.
+
+		```ts
+		patcher.after(UserStore, 'getCurrentUser', ({ result }) => {
+			logger.log('Current user is', result?.username);
+		});
+		```
+	</Tab>
+	<Tab title='instead'>
+		Runs in place of the original. Call `original` yourself when you want Discord's behavior, or skip it to replace the function entirely.
+
+		```ts
+		const quietChannels = new Set(['1234567890']);
+
+		patcher.instead(Messages, 'sendMessage', ({ args, original }) => {
+			if (quietChannels.has(args[0])) return;
+
+			return original(...args);
+		});
+		```
+	</Tab>
+</Tabs>
+
+Every callback also gets `this`, the object the function was called on.
+
+## Undoing a patch
+
+A plugin's patches are removed when it stops, so most plugins never undo one by hand. To remove one sooner, call the function the patch returns.
+
+```ts
+const unpatch = patcher.after(UserStore, 'getCurrentUser', ({ result }) => {
+	logger.log('Current user is', result?.username);
+});
+
+// later
+unpatch();
+```
+
+Pass `{ once: true }` as the last argument to remove a patch after it runs once. `patcher.unpatchAll()` removes every patch your plugin made.
+
+## Patching a module that hasn't loaded
+
+You can patch a [lazy lookup](/docs/developer/plugins/metro#searches-are-lazy) before its module loads. The patcher waits, and applies the patch when Discord loads the module. So a patch never makes Discord load a module early.
+
+## Several plugins, one function
+
+Other plugins may patch the same function. The patcher chains every patch, so each one runs. Write patches that work alongside others:
+
+- Change only what you need, and return the rest unchanged.
+- Expect `result` to already be changed by another plugin's `after` patch.
+- In an `instead` patch, call `original` unless you mean to replace Discord's behavior.
+
+Next, apply the same patcher to [Discord's components](/docs/developer/plugins/react-patching).

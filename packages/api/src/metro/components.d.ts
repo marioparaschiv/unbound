@@ -4,7 +4,7 @@ export type { DesignComponentName, DesignModule } from '../_internal';
 export { DESIGN_COMPONENTS } from '../_internal';
 import type { DesignComponentName, DesignModule, FormsFormSwitchProps } from '../_internal';
 import * as React$1 from 'react';
-import { ComponentProps, ComponentType, ElementType, ReactNode } from 'react';
+import { ComponentProps, ElementType, ReactNode } from 'react';
 import * as RN from 'react-native';
 import { ColorValue, ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
@@ -67,23 +67,12 @@ export declare function Switch(
 	string | import('react').JSXElementConstructor<any>
 >;
 /**
- * @description Checks every design component the SDK exposes against the running Discord build.
- * @returns The components Discord renders itself, the ones a fallback stands in for, and the ones nothing renders.
- */
-export declare function auditDesignComponents(): DesignComponentAudit;
-/**
  * @description Tells whether a value can be rendered as a React element type: a function or class
  * component, or a `memo`/`forwardRef`/`lazy` object.
  * @param value The value to check.
  * @returns Whether React can render it.
  */
-export declare function isRenderable(
-	value:
-		| DesignModule[keyof DesignModule]
-		| React$1.ElementType
-		| Record<string, React$1.ComponentType<never>>
-		| undefined,
-): value is React$1.ElementType;
+export declare function isRenderable(value: unknown): value is React$1.ElementType;
 /**
  * @description Registers the component the design module returns when a Discord build lacks the
  * named one or ships something React can't render.
@@ -94,15 +83,6 @@ export declare function registerDesignFallback<K extends DesignComponentName>(
 	name: K,
 	component: DesignModule[K],
 ): void;
-/** How each design component resolves on the running Discord build. */
-export type DesignComponentAudit = {
-	/** Components the running Discord build ships in a form React can render. */
-	native: DesignComponentName[];
-	/** Components the build lacks or ships unrenderable, where an Unbound fallback stands in. */
-	fallback: DesignComponentName[];
-	/** Components neither the build nor a registered fallback can render. */
-	missing: DesignComponentName[];
-};
 /** Props for `HelpMessage`; the defaults named here are those of Unbound's fallback. */
 export type HelpMessageProps = {
 	/** The message; a string or number is rendered as text, any other node as given. */

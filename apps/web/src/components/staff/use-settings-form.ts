@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { editAddonMutation } from '~/queries/admin-addons/addon-mutations';
 import getApiErrorMessage from '~/lib/api/error-message';
 import type { AdminAddonView } from '~/lib/admin-addon';
+import standardSchema from '~/lib/standard-schema';
 
 /** The form fields a save pill counts, each named the way the pill says it. */
 export const CHANGE_LABELS = {
@@ -50,7 +51,7 @@ function useSettingsForm(view: AdminAddonView) {
 
 	return useForm({
 		defaultValues: view.form,
-		validators: { onChange: editAddonRequestSchema },
+		validators: { onChange: standardSchema(editAddonRequestSchema) },
 		onSubmit: async ({ value }) => {
 			try {
 				await edit.mutateAsync({ id: addonId, edit: value });

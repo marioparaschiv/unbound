@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 
 import AddonGallery, { type GalleryEntry } from '~/components/addon-gallery';
 import { resolvePageMedia, type PageMediaMap } from '~/lib/page-media';
+import { renderPageIcon } from '~/components/addon/page-icon';
 import type { MarkdownPin } from '~/lib/markdown-url';
 import MediaFile from '~/components/media-file';
 import Markdown from '~/components/markdown';
@@ -22,7 +23,7 @@ type AddonMdProps = {
 	page?: AddonPage | null;
 };
 
-const FRONTMATTER_KEYS = new Set(Object.keys(addonPageFrontmatterSchema.shape));
+const FRONTMATTER_KEYS = new Set(Object.keys(addonPageFrontmatterSchema.properties));
 const TOP_LEVEL_KEY = /^([^\s#:-][^:]*):(?:\s|$)/;
 
 function isPageFrontmatter(frontmatter: string): boolean {
@@ -70,7 +71,7 @@ function AddonMd({ source, pin, mediaBase, page }: AddonMdProps) {
 	);
 
 	if (!page || !media) {
-		return <Markdown source={body} pin={pin} />;
+		return <Markdown source={body} pin={pin} renderIcon={renderPageIcon} />;
 	}
 
 	const banner = media.get(page.frontmatter.banner);
@@ -84,7 +85,7 @@ function AddonMd({ source, pin, mediaBase, page }: AddonMdProps) {
 				<MediaFile media={banner} alt='' className='w-full h-auto object-cover' />
 			) : null}
 			{gallery.length > 0 ? <AddonGallery entries={gallery} /> : null}
-			<Markdown source={body} pin={pin} media={media} />
+			<Markdown source={body} pin={pin} media={media} renderIcon={renderPageIcon} />
 		</div>
 	);
 }

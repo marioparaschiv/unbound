@@ -2,7 +2,6 @@ import type { CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { z } from 'zod';
 
 import {
 	createAndroidLogSource,
@@ -16,6 +15,7 @@ import { followLoaderLogFile, readLoaderLogHistory } from '~/lib/loader-log-file
 import { runCommand, spawnGroup, type CommandRunner } from '~/lib/run-command';
 import { pickDevice, resolvePilot } from '~/lib/pilot';
 import { DISCORD_PACKAGE } from '~/lib/device-paths';
+import { safeParse, Type } from '~/lib/schema';
 
 export type TailOptions = {
 	since?: string;
@@ -33,14 +33,14 @@ export type IOSTailOptions = TailOptions & {
 	logTool?: string;
 };
 
-const archiveEventSchema = z.object({
-	eventType: z.literal('logEvent'),
-	timestamp: z.string(),
-	messageType: z.string().optional(),
-	processImagePath: z.string().optional(),
-	senderImagePath: z.string().optional(),
-	processID: z.number().optional(),
-	eventMessage: z.string().optional(),
+const archiveEventSchema = Type.Object({
+	eventType: Type.Literal('logEvent'),
+	timestamp: Type.String(),
+	messageType: Type.Optional(Type.String()),
+	processImagePath: Type.Optional(Type.String()),
+	senderImagePath: Type.Optional(Type.String()),
+	processID: Type.Optional(Type.Number()),
+	eventMessage: Type.Optional(Type.String()),
 });
 
 type StreamEnd = { code: number | null; stderr: string } | { error: string };
@@ -335,7 +335,7 @@ export function parseArchiveEvent(line: string): SyslogRecord | undefined {
 		return;
 	}
 
-	const parsed = archiveEventSchema.safeParse(json);
+	const parsed = safeParse(archiveEventSchema, json);
 
 	if (!parsed.success) {
 		return;

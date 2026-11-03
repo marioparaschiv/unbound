@@ -1,4 +1,4 @@
-import type { z } from 'zod';
+import type { StaticDecode, TObject } from 'typebox';
 
 import type { ControllerClient } from './controller';
 
@@ -20,15 +20,15 @@ export type CommandOutput = { ok: boolean; text: string; data?: unknown };
 export type CommandSurfaces = { cli: 'root'; mcp: boolean } | { cli: 'mcp'; mcp: true };
 
 /** A command usable from both the CLI and (when opted in) the MCP server. */
-export type CommandDefinition<S extends z.ZodObject<z.ZodRawShape>> = {
+export type CommandDefinition<S extends TObject = TObject> = {
 	name: string;
 	description: string;
 	/** A one-line summary for the CLI's menu, where the description is too long. */
 	summary?: string;
 	surfaces: CommandSurfaces;
-	/** Used directly as the MCP inputSchema; the CLI adapter derives flags from its fields. */
+	/** Used directly as the MCP tool's input schema; the CLI adapter derives flags from its properties. */
 	schema: S;
-	/** Which schema fields the CLI presents as positionals; the rest become flags. */
-	cli?: { positionals?: (keyof z.infer<S>)[] };
-	handler: (input: z.infer<S>, context: CommandContext) => Promise<CommandOutput>;
+	/** Which schema properties the CLI presents as positionals; the rest become flags. */
+	cli?: { positionals?: (keyof StaticDecode<S>)[] };
+	handler(input: StaticDecode<S>, context: CommandContext): Promise<CommandOutput>;
 };

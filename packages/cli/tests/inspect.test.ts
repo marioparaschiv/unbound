@@ -11,6 +11,7 @@ import type { DeviceClient } from '../src/lib/device';
 
 import { formatClassReport, formatFoundViews, formatViewTree } from '../src/lib/inspect-format';
 import inspectCommand, { runInspect } from '../src/commands/inspect';
+import { parse, type StaticDecode } from '../src/lib/schema';
 
 const textView: ClassReport = {
 	platform: 'android',
@@ -57,7 +58,9 @@ function view(depth: number, overrides: Partial<ViewRecord> = {}): ViewRecord {
 	};
 }
 
-type InspectInput = Parameters<typeof inspectCommand.schema.parse>[0];
+type InspectInput = Partial<StaticDecode<typeof inspectCommand.schema>> & {
+	what: 'class' | 'views' | 'find';
+};
 
 function clientAnswering(report: InspectReport, codes: string[] = []): DeviceClient {
 	return {
@@ -78,7 +81,7 @@ function clientAnswering(report: InspectReport, codes: string[] = []): DeviceCli
 }
 
 function run(input: InspectInput, client: DeviceClient) {
-	return runInspect(client, inspectCommand.schema.parse(input));
+	return runInspect(client, parse(inspectCommand.schema, input));
 }
 
 describe('formatClassReport', () => {
@@ -251,7 +254,7 @@ describe('inspect command', () => {
 			clientAnswering(report, codes),
 		);
 
-		const maxNodes = inspectCommand.schema.parse({ what: 'views' }).max;
+		const maxNodes = parse(inspectCommand.schema, { what: 'views' }).max;
 
 		expect(codes[0]).toStartWith('90000 ');
 		expect(requestIn(codes[0])).toMatchObject({

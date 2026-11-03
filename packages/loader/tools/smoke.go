@@ -215,8 +215,10 @@ func smokeSettings(plugins []smokePlugin, debuggerAddress, bundleURL string) ([]
 	for _, plugin := range plugins {
 		states[plugin.id] = true
 	}
+	// The checks evaluate over the debugger, which only the developer-mode bundle (unbound-dev.*) carries.
 	unbound := map[string]any{
-		"debugger": map[string]any{"enabled": true, "address": debuggerAddress},
+		"debugger":       map[string]any{"enabled": true, "address": debuggerAddress},
+		"developer-mode": true,
 	}
 	if bundleURL != "" {
 		unbound["loader"] = map[string]any{"update": map[string]any{"url": bundleURL}}

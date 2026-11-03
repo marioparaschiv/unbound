@@ -1,6 +1,5 @@
-import { z } from '@unbound-app/contracts/zod';
-
 import type { CommandRunner, DropTarget } from './device-drops';
+import { Type, safeParse } from '@unbound-app/contracts/schema';
 
 export type MemoryRange = { lowMB: number; highMB: number };
 
@@ -15,13 +14,13 @@ export type MemoryReport = {
 
 export type ProcessMemory = { footprintMB: number; peakMB: number };
 
-const processListSchema = z.object({
-	processes: z.optional(
-		z.array(
-			z.object({
-				name: z.optional(z.string()),
-				footprintMB: z.optional(z.number()),
-				peakFootprintMB: z.optional(z.number()),
+const processListSchema = Type.Object({
+	processes: Type.Optional(
+		Type.Array(
+			Type.Object({
+				name: Type.Optional(Type.String()),
+				footprintMB: Type.Optional(Type.Number()),
+				peakFootprintMB: Type.Optional(Type.Number()),
 			}),
 		),
 	),
@@ -48,7 +47,7 @@ export function parseIOSFootprint(output: string): number | undefined {
  */
 export function parseProcessMemory(output: string, name: string): ProcessMemory | undefined {
 	try {
-		const parsed = processListSchema.safeParse(JSON.parse(output));
+		const parsed = safeParse(processListSchema, JSON.parse(output));
 
 		if (!parsed.success) return undefined;
 

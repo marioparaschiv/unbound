@@ -1,12 +1,12 @@
 import { loaderPlatformSchema, loaderReleaseSchema } from '@unbound-app/contracts/loader';
 import { semverSchema } from '@unbound-app/contracts/manifest';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { callerEndpoint, parseParam } from '~/lib/api/endpoint';
 import { withdrawLoaderRelease } from '~/lib/loader-releases';
 
 const withdrawLoaderReleaseEndpoint = callerEndpoint(
-	{ body: z.undefined(), query: z.undefined(), response: loaderReleaseSchema },
+	{ body: Type.Undefined(), query: Type.Undefined(), response: loaderReleaseSchema },
 	async ({ ctx, params, caller }) => {
 		return withdrawLoaderRelease(
 			ctx,

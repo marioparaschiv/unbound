@@ -26,6 +26,7 @@ import { Route as SiteTermsRouteImport } from './routes/_site/terms'
 import { Route as SiteThemesRouteImport } from './routes/_site/themes'
 import { Route as AuthErrorRouteImport } from './routes/auth/error'
 import { Route as DevelopersSplatRouteImport } from './routes/developers/$'
+import { Route as InstallIdRouteImport } from './routes/install/$id'
 import { Route as SiteStaffReviewRouteImport } from './routes/_site/_staff/review'
 import { Route as SiteAddonsIndexRouteImport } from './routes/_site/addons/index'
 import { Route as SiteAddonsIdRouteImport } from './routes/_site/addons/$id'
@@ -164,6 +165,11 @@ const AuthErrorRoute = AuthErrorRouteImport.update({
 const DevelopersSplatRoute = DevelopersSplatRouteImport.update({
   id: '/developers/$',
   path: '/developers/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstallIdRoute = InstallIdRouteImport.update({
+  id: '/install/$id',
+  path: '/install/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SiteStaffReviewRoute = SiteStaffReviewRouteImport.update({
@@ -475,6 +481,7 @@ export interface FileRoutesByFullPath {
   '/themes': typeof SiteThemesRoute
   '/auth/error': typeof AuthErrorRoute
   '/developers/$': typeof DevelopersSplatRoute
+  '/install/$id': typeof InstallIdRoute
   '/addons': typeof SiteAddonsListingRouteRouteWithChildren
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
@@ -547,6 +554,7 @@ export interface FileRoutesByTo {
   '/themes': typeof SiteThemesRoute
   '/auth/error': typeof AuthErrorRoute
   '/developers/$': typeof DevelopersSplatRoute
+  '/install/$id': typeof InstallIdRoute
   '/addons': typeof SiteAddonsIndexRoute
   '/review': typeof SiteStaffReviewRoute
   '/addons/$id': typeof SiteAddonsIdRoute
@@ -620,6 +628,7 @@ export interface FileRoutesById {
   '/_site/themes': typeof SiteThemesRoute
   '/auth/error': typeof AuthErrorRoute
   '/developers/$': typeof DevelopersSplatRoute
+  '/install/$id': typeof InstallIdRoute
   '/_site/': typeof SiteIndexRoute
   '/_site/addons/_listing': typeof SiteAddonsListingRouteRouteWithChildren
   '/_site/_staff/review': typeof SiteStaffReviewRoute
@@ -696,6 +705,7 @@ export interface FileRouteTypes {
     | '/themes'
     | '/auth/error'
     | '/developers/$'
+    | '/install/$id'
     | '/addons'
     | '/review'
     | '/addons/$id'
@@ -768,6 +778,7 @@ export interface FileRouteTypes {
     | '/themes'
     | '/auth/error'
     | '/developers/$'
+    | '/install/$id'
     | '/addons'
     | '/review'
     | '/addons/$id'
@@ -840,6 +851,7 @@ export interface FileRouteTypes {
     | '/_site/themes'
     | '/auth/error'
     | '/developers/$'
+    | '/install/$id'
     | '/_site/'
     | '/_site/addons/_listing'
     | '/_site/_staff/review'
@@ -905,6 +917,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   AuthErrorRoute: typeof AuthErrorRoute
   DevelopersSplatRoute: typeof DevelopersSplatRoute
+  InstallIdRoute: typeof InstallIdRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiV1AddonsRoute: typeof ApiV1AddonsRouteWithChildren
   ApiV1CatalogRoute: typeof ApiV1CatalogRoute
@@ -1045,6 +1058,13 @@ declare module '@tanstack/react-router' {
       path: '/developers/$'
       fullPath: '/developers/$'
       preLoaderRoute: typeof DevelopersSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/install/$id': {
+      id: '/install/$id'
+      path: '/install/$id'
+      fullPath: '/install/$id'
+      preLoaderRoute: typeof InstallIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_site/_staff/review': {
@@ -1681,6 +1701,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   AuthErrorRoute: AuthErrorRoute,
   DevelopersSplatRoute: DevelopersSplatRoute,
+  InstallIdRoute: InstallIdRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiV1AddonsRoute: ApiV1AddonsRouteWithChildren,
   ApiV1CatalogRoute: ApiV1CatalogRoute,

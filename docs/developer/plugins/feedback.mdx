@@ -1,0 +1,76 @@
+---
+title: 'Toasts and Dialogs'
+description: 'Tell the user something happened, or ask them before you act.'
+icon: 'bell'
+---
+
+Use a **toast** to report something without stopping the user, such as "Copied". Use a **dialog** when you need an answer before you go on, such as "Reset all settings?".
+
+## Toasts
+
+A toast slides in at the top of the screen and closes on its own.
+
+```ts
+import { toasts } from '@unbound-app/api';
+
+toasts.show({ title: 'Copied', content: 'The message link is on your clipboard.' });
+```
+
+| Option | What it does |
+| --- | --- |
+| `title`, `content` | The bold first line, and the text under it |
+| `icon` | An asset name or id, drawn beside the text |
+| `duration` | Milliseconds before it closes. `0` keeps it until dismissed. Omitted, the user's own setting |
+| `id` | Showing another toast with the same `id` replaces this one |
+| `buttons` | Buttons under the text, each with `content` and `onPress` |
+
+`show` returns a handle. Use it to change a toast that's still open, such as a progress message, and to close it.
+
+```ts
+const toast = toasts.show({ title: 'Checking for updates', duration: 0 });
+const response = await fetch('https://example.com/latest.json');
+
+toast.update({ title: response.ok ? 'Up to date' : 'Could not check' });
+setTimeout(() => toast.close(), 3000);
+```
+
+## Asking a yes or no question
+
+`dialogs.confirm` shows Discord's own alert with two buttons. It resolves `true` when the user confirms, and `false` when they cancel or close it any other way.
+
+```ts
+import { dialogs, storage } from '@unbound-app/api';
+
+const settings = storage.getBucket();
+
+export async function resetSettings() {
+	const confirmed = await dialogs.confirm({
+		title: 'Reset all settings?',
+		body: "You can't undo this.",
+		confirmLabel: 'Reset',
+		destructive: true,
+	});
+
+	if (confirmed) settings.clear();
+}
+```
+
+`destructive` colors the confirm button red. Use it whenever confirming loses data.
+
+## A dialog with your own buttons
+
+`dialogs.showDialog` takes any number of buttons. Each button closes the dialog, then runs its `onPress`.
+
+```ts
+dialogs.showDialog({
+	title: 'Reset settings',
+	body: 'Choose what to reset.',
+	buttons: [
+		{ label: 'Reset colors', onPress: () => settings.remove('colors') },
+		{ label: 'Reset everything', variant: 'destructive', onPress: () => settings.clear() },
+	],
+	cancel: true,
+});
+```
+
+`cancel: true` adds a cancel button last. Pass a string instead to change its label. For more than text, pass a component as `content`. It gets a `dismiss` function to close the dialog.

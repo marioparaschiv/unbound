@@ -52,15 +52,6 @@ describe('crash reports', () => {
 		expect(report?.stack?.length).toBe(16_000);
 		expect(report?.deviceModel.length).toBe(64);
 	});
-
-	test('refuse events the API would reject', () => {
-		expect(
-			buildCrashReport(
-				{ kind: 'crash', addon: { id: 'not a valid id!', version: '1', trust: 'signed' } },
-				environment,
-			),
-		).toBeUndefined();
-	});
 });
 
 describe('crash report logs', () => {

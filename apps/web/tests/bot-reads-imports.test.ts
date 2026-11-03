@@ -12,10 +12,14 @@ const ALLOWED = [
 	/^~\/lib\/sponsors\/standing$/,
 	/^~\/lib\/live-versions$/,
 	/^~\/lib\/calendar-date$/,
+	/^~\/lib\/github-urls$/,
+	// The website icon's markup, rendered as the site renders it.
+	/^~\/lib\/addon-icons$/,
+	/^react(-dom\/server)?$/,
+	/^nucleo-micro-bold$/,
 	/^@unbound-app\/contracts\//,
 	/^drizzle-orm(\/|$)/,
 	/^postgres$/,
-	/^zod$/,
 ];
 
 const transpiler = new Bun.Transpiler({ loader: 'ts' });

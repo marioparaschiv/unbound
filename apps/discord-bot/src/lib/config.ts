@@ -1,5 +1,7 @@
+import { safeParse } from '@unbound-app/contracts/schema';
+
+import { envSchema, REQUIRED_ENV } from '~/lib/env';
 import type { Env, EnvSource } from '~/lib/env';
-import { envSchema } from '~/lib/env';
 
 export type ConfigCheck = { ok: true; env: Env; guildId: string } | { ok: false; message: string };
 
@@ -10,18 +12,20 @@ export type ConfigCheck = { ok: true; env: Env; guildId: string } | { ok: false;
  * @returns The parsed environment and guild id, or a message listing every unset or invalid value.
  */
 export function checkConfig(source: EnvSource, guildId: string | undefined): ConfigCheck {
-	const result = envSchema.safeParse(source);
-	const problems: string[] = [];
+	const missing = REQUIRED_ENV.filter((name) => source[name] === undefined);
+	const result = safeParse(envSchema, source);
+	const problems = missing.map((name) => `env ${name} is not set`);
 
 	if (!result.success) {
 		for (const issue of result.error.issues) {
-			const name = issue.path.join('.');
+			const name = issue.path.replace(/^\//, '');
 
-			problems.push(
-				source[name] === undefined
-					? `env ${name} is not set`
-					: `env ${name}: ${issue.message}`,
-			);
+			// The validator reports every missing key in one issue; `missing` names each of them instead.
+			if (!name || missing.includes(name)) {
+				continue;
+			}
+
+			problems.push(`env ${name}: ${issue.message}`);
 		}
 	}
 

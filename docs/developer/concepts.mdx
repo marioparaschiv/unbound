@@ -1,0 +1,71 @@
+---
+title: 'Concepts'
+description: 'What you can build for Unbound, and the few ideas every plugin is made of.'
+icon: 'lightbulb'
+---
+
+An **addon** changes the Discord mobile app. There are three kinds. Pick the one that fits what you want to make, and this page tells you which ideas you need.
+
+## What you can build
+
+| Kind | What you ship | Use it to |
+| --- | --- | --- |
+| [Plugin](/docs/developer/plugins/introduction) | JavaScript | Add features, change how Discord behaves, add buttons and screens |
+| [Theme](/docs/developer/themes/introduction) | A JSON palette and an optional background | Recolor Discord |
+| [Icon pack](/docs/developer/icon-packs/introduction) | A folder of images | Replace Discord's icons |
+
+Themes and icon packs need no code. If that's what you're making, go straight to [How Themes Work](/docs/developer/themes/introduction) or [Icon Packs](/docs/developer/icon-packs/introduction). The rest of this page is about plugins.
+
+## How a plugin changes Discord
+
+Discord's app is written in JavaScript, split into thousands of small **modules**. One sends messages, one holds the current user, one draws a button. Your plugin runs inside the same app, so it can reach the same modules Discord uses. Almost every plugin does some mix of three things with them.
+
+### Find Discord's code
+
+Modules have no fixed names, so you search for them by what they export. This finds the module that has both `sendMessage` and `receiveMessage`:
+
+```ts
+import { metro } from '@unbound-app/api';
+
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+```
+
+The search is lazy. It runs the first time you use `Messages`, so it never slows Discord's launch. [Finding Modules](/docs/developer/plugins/metro) covers every way to search.
+
+### Change what it does
+
+To change a function, you **patch** it. A patch wraps the function in your own code, which runs before it, after it, or instead of it. Discord keeps calling the same function, so your code runs every time Discord's does.
+
+<Flow caption='Discord calls a function you patched'>
+	<FlowStep title='Discord calls sendMessage' />
+	<FlowStep title='Your before patch' detail='Sees the arguments' added />
+	<FlowStep title='The original runs' />
+	<FlowStep title='Your after patch' detail='Sees the result' added />
+</Flow>
+
+Components are functions too, so the same idea changes what Discord shows on screen. See [Patching Functions](/docs/developer/plugins/patching) and [Patching Components](/docs/developer/plugins/react-patching).
+
+### Read what Discord knows
+
+Discord keeps its state in **stores**: the current user, the servers you're in, the selected channel. When something happens, such as a message arriving, Discord sends out an **action** and the stores update. Read a store to get state, and listen for an action to run code when something happens. See [Flux Stores](/docs/developer/plugins/flux).
+
+## Unbound cleans up after you
+
+While your plugin runs, Unbound records every patch, command and listener it makes. When the user turns the plugin off, Unbound removes them all. So most plugins only write a `start` function. [How Plugins Run](/docs/developer/plugins/introduction) covers the few things you clean up yourself.
+
+## Where to go next
+
+<CardGroup cols={2}>
+	<Card title='Your First Plugin' icon='rocket' href='/docs/developer/addons/creating'>
+		Scaffold a plugin, run it on your phone, and make it change Discord.
+	</Card>
+	<Card title='How Plugins Run' icon='plug' href='/docs/developer/plugins/introduction'>
+		The lifecycle, the Addon scope, and what to clean up.
+	</Card>
+	<Card title='How Themes Work' icon='paintbrush' href='/docs/developer/themes/introduction'>
+		Recolor Discord with a palette and no code.
+	</Card>
+	<Card title='Icon Packs' icon='shapes' href='/docs/developer/icon-packs/introduction'>
+		Replace Discord's icons with your own set.
+	</Card>
+</CardGroup>

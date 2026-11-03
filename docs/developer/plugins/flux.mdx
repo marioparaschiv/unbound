@@ -1,65 +1,64 @@
 ---
 title: 'Flux Stores'
-description: "Read Discord's state and react to its internal events."
-icon: 'box'
+description: "Read Discord's state, and run code when something happens."
+icon: 'signal'
 ---
 
-### What is Flux?
+Flux is how Discord manages its state. When something happens, such as a message arriving or the user switching channels, Discord **dispatches an action**. **Stores** listen for actions and update the state they hold.
 
-Flux is how Discord manages its state. A central dispatcher broadcasts actions, such as a message arriving, a channel being selected, or the user's settings changing. Stores listen for those actions and hold the resulting state.
+<Flow>
+	<FlowStep title='Something happens' detail='A message arrives' />
+	<FlowStep title='Action' detail='MESSAGE_CREATE' />
+	<FlowStep title='Stores update' detail='MessageStore' />
+	<FlowStep title='Screens re-render' />
+</Flow>
 
-- To get *what* Discord currently knows (the current user, a guild, the selected channel), read a store.
-- To run code *when* something happens, listen for an action.
+So a plugin has two ways in:
 
-Both go through the [flux](/docs/api/latest/flux) namespace.
+- Read a **store** to get what Discord knows right now: the current user, a server, the selected channel.
+- Listen for an **action** to run code when something happens.
 
-### Reading stores
+## Reading a store
 
-A store is a singleton with getters for Discord's state. `flux.getStore` is lazy, so you can declare the store at the top of a file. The search runs the first time you read from it.
+A store is a single object with getters for its state. `flux.getStore` is lazy, so you can declare the store at the top of a file.
 
 ```ts
 import { flux } from '@unbound-app/api';
 
 const UserStore = flux.getStore('User');
 
-// later, inside start() or a handler:
-const me = UserStore.getCurrentUser();
+export function currentUsername() {
+	return UserStore.getCurrentUser()?.username;
+}
 ```
 
-In a component, read the store with `flux.useStore` so the component re-renders when the store changes. See [Reading a store in a component](/docs/api/latest/flux).
+In a component, read the store with `flux.useStore` instead. The component then re-renders when the store changes. See [flux](/docs/api/latest/flux) in the API reference.
 
-### Listening for actions
+## Listening for an action
 
-Listen for an action type to run code each time Discord dispatches it.
+Pass the action's type and a callback. The callback gets the action's payload each time Discord dispatches it.
 
-```ts
+```ts src/channel-log/index.ts
 import { flux } from '@unbound-app/api';
 
-export default {
-	start() {
-		flux.onAction('CHANNEL_SELECT', ({ channelId }) => {
-			logger.log('Channel selected:', channelId);
-		});
-	},
-};
+export function startChannelLog() {
+	flux.onAction('CHANNEL_SELECT', ({ channelId }) => {
+		logger.log('Channel selected:', channelId);
+	});
+}
 ```
 
-You don't need a `stop` for this. Unbound removes the plugin's Flux listeners and interceptors when the plugin stops. To remove a listener earlier, call the function `onAction` returns.
+Unbound removes the listener when your plugin stops. To remove it sooner, call the function `onAction` returns.
 
-### Common action types
+## Common actions
 
-Discord dispatches hundreds of action types. These are some you'll see often:
+Discord dispatches hundreds of action types. These are the ones you'll use most:
 
-<AccordionGroup>
-	<Accordion title='Messages' icon='msg'>
-		`MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE`, fired when messages are sent, edited, or deleted.
-	</Accordion>
-	<Accordion title='Navigation' icon='compass'>
-		`CHANNEL_SELECT`, `GUILD_SELECT`, fired when the user switches channels or servers.
-	</Accordion>
-	<Accordion title='Connection' icon='wifi'>
-		`CONNECTION_OPEN`, fired once the client is connected and stores are populated. Use it for setup that needs live state.
-	</Accordion>
-</AccordionGroup>
+| Action | Dispatched when |
+| --- | --- |
+| `MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE` | A message is sent, edited or deleted |
+| `CHANNEL_SELECT`, `GUILD_SELECT` | The user switches channel or server |
+| `TYPING_START`, `TYPING_STOP` | Someone starts or stops typing |
+| `CONNECTION_OPEN` | The client connects and the stores fill. Use it for setup that needs live state |
 
-`MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE`, `CHANNEL_SELECT`, `TYPING_START`, `TYPING_STOP` and `CONNECTION_OPEN` have typed payloads. To type another action, see [Typing your own stores and actions](/docs/api/latest/flux).
+All of these except `GUILD_SELECT` have typed payloads. To type another action, see [Typing your own stores and actions](/docs/api/latest/flux).

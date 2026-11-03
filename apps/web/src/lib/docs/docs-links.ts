@@ -4,6 +4,7 @@ import {
 	type DocsPackage,
 	type DocsVersion,
 } from '@unbound-app/contracts/docs';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 import type { MarkdownUrl, MarkdownUrlKind } from '~/lib/markdown-url';
 import type { DocsLocation } from '~/lib/docs/docs-index';
@@ -27,8 +28,8 @@ export type DocsRenderContext = TypeContext & CommentContext & { route: DocsRout
  * @returns The route, or `undefined` when either is not one the docs publish.
  */
 export function parseDocsRoute(params: DocsRouteParams): DocsRoute | undefined {
-	const pkg = docsPackageSchema.safeParse(params.package);
-	const version = docsVersionSchema.safeParse(params.version);
+	const pkg = safeParse(docsPackageSchema, params.package);
+	const version = safeParse(docsVersionSchema, params.version);
 
 	return pkg.success && version.success
 		? { package: pkg.data, version: version.data }

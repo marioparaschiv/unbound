@@ -1,15 +1,15 @@
 import { addonManifestSchema } from '@unbound-app/contracts/manifest';
 import { updatesResponseSchema } from '@unbound-app/contracts/updates';
 import { appendFileSync, readFileSync } from 'node:fs';
-import { z } from '@unbound-app/contracts/zod';
 import { createHash } from 'node:crypto';
 import { join } from 'node:path';
 
 import { readPluginManifests } from './plugin-manifests';
 import { PLUGINS_DIR, REPO_ROOT } from './paths';
+import { Type, parse } from '@unbound-app/contracts/schema';
 
 const UNINSTALLED_VERSION = '0.0.0';
-const clientPackageSchema = z.object({ version: z.string() });
+const clientPackageSchema = Type.Object({ version: Type.String() });
 
 type FirstPartyPlugin = { id: string };
 
@@ -52,7 +52,8 @@ export function firstPartyPlugins(directory: string): FirstPartyPlugin[] {
 }
 
 function clientVersion(): string {
-	return clientPackageSchema.parse(
+	return parse(
+		clientPackageSchema,
 		JSON.parse(readFileSync(join(REPO_ROOT, 'packages/client/package.json'), 'utf8')),
 	).version;
 }
@@ -75,7 +76,7 @@ async function publishedReleases(
 		throw new Error(`POST ${apiUrl}/api/v1/updates answered ${response.status}.`);
 	}
 
-	return updatesResponseSchema.parse(await response.json()).updates;
+	return parse(updatesResponseSchema, await response.json()).updates;
 }
 
 /**
@@ -109,7 +110,7 @@ export async function checkRelease(release: PublishedRelease, fetcher: Fetcher):
 		];
 	}
 
-	const manifest = addonManifestSchema.parse(await manifestResponse.json());
+	const manifest = parse(addonManifestSchema, await manifestResponse.json());
 
 	for (const [version, expected] of Object.entries(manifest.bytecode ?? {})) {
 		const url = compiledBundleUrl(release.bundleUrl, version);

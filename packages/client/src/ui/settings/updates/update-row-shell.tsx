@@ -1,0 +1,91 @@
+import type { ReactNode } from 'react';
+
+import { Discord } from '~/metro/components';
+import { Screens } from '~/core/constants';
+
+import type { ChangelogEntry } from './changelog';
+
+import Changelog from './changelog';
+
+/**
+ * @description Picks a changelog's first line of prose, dropping Markdown heading and list markers.
+ * @param changelog The changelog text.
+ * @returns The line, or `undefined` when the changelog is empty.
+ */
+function headline(changelog: string | null): string | undefined {
+	return changelog
+		?.split('\n')
+		.map((text) => text.replace(/^\s*(?:#+|[-*+]|\d+\.)\s*/, '').trim())
+		.find(Boolean);
+}
+
+/** The fields an addon's and the loader's pending update share, as the row and its changelog read them. */
+export type UpdateInfo = {
+	version: string;
+	changelog: string | null;
+	changelogs: ChangelogEntry[];
+};
+
+type UpdateRowShellProps = {
+	name: string;
+	icon: number | undefined;
+	/** The installed version, shown before the arrow. */
+	installed: string;
+	update: UpdateInfo;
+	/** Appended to the version jump, such as the version a held addon stays on. */
+	note?: string;
+	/** The row's trailing action. */
+	action: ReactNode;
+	/** The changelog page's action. */
+	actionLarge: ReactNode;
+};
+
+/**
+ * @description One pending update: the version jump and what changed most recently, opening its changelog
+ * with the action that applies it.
+ * @param props The update, its installed and offered versions, and the two actions that apply it.
+ * @returns The row.
+ */
+function UpdateRowShell({
+	name,
+	icon,
+	installed,
+	update,
+	note,
+	action,
+	actionLarge,
+}: UpdateRowShellProps) {
+	const navigation = Discord.useNavigation();
+	const summary = headline(update.changelogs[0]?.changelog ?? update.changelog);
+	const versions = `${installed} → ${update.version}`;
+	const jump = note ? `${versions} · ${note}` : versions;
+
+	return (
+		<Discord.TableRow
+			label={name}
+			subLabel={summary ? `${jump}\n${summary}` : jump}
+			labelLineClamp={1}
+			subLabelLineClamp={2}
+			icon={<Discord.TableRowIcon source={icon} />}
+			trailing={action}
+			onPress={() =>
+				navigation.push(Screens.PanelHost, {
+					title: name,
+					render: () => (
+						<Changelog
+							name={name}
+							icon={icon}
+							installed={installed}
+							offered={update.version}
+							changelogs={update.changelogs}
+						>
+							{actionLarge}
+						</Changelog>
+					),
+				})
+			}
+		/>
+	);
+}
+
+export default UpdateRowShell;

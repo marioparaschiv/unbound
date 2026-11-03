@@ -10,6 +10,12 @@
 namespace loader {
 constexpr const char *kBundleManifestName = "manifest.json";
 
+enum class BundleFlavour
+{
+    Default,
+    Development,
+};
+
 struct BundleManifest {
     std::string                        revision;
     std::string                        channel;
@@ -21,8 +27,10 @@ struct BundleManifest {
     std::string                        nativeBridgeAbi;
 
     bool        isSignable() const;
-    std::string bundleFile(uint32_t bytecodeVersion) const;
+    std::string bundleFile(uint32_t bytecodeVersion, bool developerMode) const;
 };
+
+std::optional<BundleFlavour> bundleFlavourNamed(std::string_view file);
 
 std::optional<BundleManifest> parseBundleManifest(const std::string &text);
 std::optional<int64_t>        parseBuildTime(std::string_view text);

@@ -1,3 +1,8 @@
-No Blocked Messages removes the rows that Discord shows in a chat in place of messages from users you blocked. Those messages no longer appear in the chat at all.
+## :sparkle: What it does
 
-When you turn the plugin on or off, the open chat rebuilds its rows at once. You do not need to leave and reopen the chat.
+- :ban: Messages from blocked users don't appear in the chat at all, not even as a placeholder row.
+- :repeat: The open chat rebuilds as soon as you turn the plugin on or off, so you don't need to reopen it.
+
+## :gear: Settings
+
+None. It works as soon as you turn it on.

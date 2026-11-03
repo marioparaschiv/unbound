@@ -1,22 +1,28 @@
 import type { CommandDefinition, CommandOutput } from '@unbound-app/debugger-protocol/registry';
 import type { DeviceInfo } from '@unbound-app/debugger-protocol';
 import type { UnboundGlobal } from '@unbound-app/api/global';
-import { z } from 'zod';
 
 import { evaluateOnDevice, NOT_CONNECTED, toDeviceCode } from '~/lib/device';
+import { defaulted, Type, type StaticDecode } from '~/lib/schema';
 import { logToStderr } from '~/lib/plugin-install';
 import type { DeviceClient } from '~/lib/device';
 import { bridgePortField } from '~/lib/context';
 import { parseJson } from '~/lib/parse-json';
 
-const schema = z.object({
+const schema = Type.Object({
 	port: bridgePortField,
-	watch: z
-		.boolean()
-		.default(false)
-		.describe('Sample the native resources repeatedly and report which ones keep growing.'),
-	interval: z.number().default(5_000).describe('Milliseconds between samples when watching.'),
-	samples: z.number().default(12).describe('How many samples to take when watching.'),
+	watch: defaulted(
+		Type.Boolean({
+			description:
+				'Sample the native resources repeatedly and report which ones keep growing.',
+		}),
+		false,
+	),
+	interval: defaulted(
+		Type.Number({ description: 'Milliseconds between samples when watching.' }),
+		5_000,
+	),
+	samples: defaulted(Type.Number({ description: 'How many samples to take when watching.' }), 12),
 });
 
 const WATCHED_RESOURCES = ['handles', 'hooks', 'surfaces', 'cachedReturns'] as const;
@@ -68,16 +74,16 @@ export function analyzeSamples(samples: ResourceSample[]): SampleAnalysis {
 	return { lines, growing };
 }
 
-const deviceStatusReportSchema = z.object({
-	started: z.number(),
-	failed: z.array(z.string()),
-	stopped: z.array(z.string()),
-	resources: z.record(z.string(), z.number()).nullable(),
-	slowestStarts: z.array(z.tuple([z.string(), z.number()])).default([]),
-	startTotal: z.number().default(0),
+const deviceStatusReportSchema = Type.Object({
+	started: Type.Number(),
+	failed: Type.Array(Type.String()),
+	stopped: Type.Array(Type.String()),
+	resources: Type.Union([Type.Record(Type.String(), Type.Number()), Type.Null()]),
+	slowestStarts: defaulted(Type.Array(Type.Tuple([Type.String(), Type.Number()])), []),
+	startTotal: defaulted(Type.Number(), 0),
 });
 
-type DeviceStatusReport = z.infer<typeof deviceStatusReportSchema>;
+type DeviceStatusReport = StaticDecode<typeof deviceStatusReportSchema>;
 
 type PluginManagerView = {
 	getAll(): { id: string; started: boolean; failed: boolean }[];

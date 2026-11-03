@@ -2,28 +2,42 @@ import { MEDIA_MAX_BYTES, MEDIA_TOTAL_MAX_BYTES } from '@unbound-app/contracts/a
 import { apiUrlSchema } from '@unbound-app/contracts/api';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { z } from 'zod';
 
-const schema = z.object({
+import { safeParse, Type, type StaticDecode } from './schema';
+
+const schema = Type.Object({
 	/** The origin of the Unbound web API that `ubd login` and `ubd publish` talk to. */
 	UNBOUND_API_URL: apiUrlSchema,
 	/** An API key for CI; when set, `ubd publish` sends it instead of the stored login. */
-	UNBOUND_API_KEY: z.string().min(1).optional(),
-	XDG_CONFIG_HOME: z.string().min(1).optional(),
+	UNBOUND_API_KEY: Type.Optional(Type.String({ minLength: 1 })),
+	XDG_CONFIG_HOME: Type.Optional(Type.String({ minLength: 1 })),
 });
 
-const mediaLimitsSchema = z.object({
+// The process environment holds only strings, so each limit is a string check plus a decode to a number.
+const positiveInteger = Type.Refine(
+	Type.String(),
+	(value: string) => Number.isInteger(Number(value)) && Number(value) > 0,
+	() => 'Too small: expected number to be >0',
+);
+
+const mediaLimitsSource = Type.Object({
 	/** The largest media file ADDON.md may reference, in bytes. */
-	ADDON_MEDIA_MAX_BYTES: z.coerce.number().int().positive().default(MEDIA_MAX_BYTES),
+	ADDON_MEDIA_MAX_BYTES: Type.Optional(positiveInteger),
 	/** The most bytes all of an addon's media may take together. */
-	ADDON_MEDIA_TOTAL_MAX_BYTES: z.coerce.number().int().positive().default(MEDIA_TOTAL_MAX_BYTES),
+	ADDON_MEDIA_TOTAL_MAX_BYTES: Type.Optional(positiveInteger),
 });
+
+// A missing key skips its field's codec, so the store's defaults are applied as the object decodes.
+const mediaLimitsSchema = Type.Decode(mediaLimitsSource, (raw) => ({
+	ADDON_MEDIA_MAX_BYTES: Number(raw.ADDON_MEDIA_MAX_BYTES ?? MEDIA_MAX_BYTES),
+	ADDON_MEDIA_TOTAL_MAX_BYTES: Number(raw.ADDON_MEDIA_TOTAL_MAX_BYTES ?? MEDIA_TOTAL_MAX_BYTES),
+}));
 
 /** The validated environment the account commands read. */
-export type Env = z.infer<typeof schema>;
+export type Env = StaticDecode<typeof schema>;
 
 /** The media size limits `ubd build` enforces. */
-export type MediaLimits = z.infer<typeof mediaLimitsSchema>;
+export type MediaLimits = StaticDecode<typeof mediaLimitsSchema>;
 
 /** Environment variables as `process.env` provides them. */
 export type EnvSource = Record<string, string | undefined>;
@@ -35,10 +49,10 @@ export type EnvSource = Record<string, string | undefined>;
  * @returns The validated environment.
  */
 export function parseEnv(source: EnvSource = process.env): Env {
-	const parsed = schema.safeParse(source);
+	const parsed = safeParse(schema, source);
 
 	if (!parsed.success) {
-		throw new Error(`Invalid environment:\n${z.prettifyError(parsed.error)}`);
+		throw new Error(`Invalid environment:\n${parsed.error.message}`);
 	}
 
 	return parsed.data;
@@ -50,10 +64,10 @@ export function parseEnv(source: EnvSource = process.env): Env {
  * @returns The per-file and per-addon limits in bytes.
  */
 export function parseMediaLimits(source: EnvSource = process.env): MediaLimits {
-	const parsed = mediaLimitsSchema.safeParse(source);
+	const parsed = safeParse(mediaLimitsSchema, source);
 
 	if (!parsed.success) {
-		throw new Error(`Invalid environment:\n${z.prettifyError(parsed.error)}`);
+		throw new Error(`Invalid environment:\n${parsed.error.message}`);
 	}
 
 	return parsed.data;

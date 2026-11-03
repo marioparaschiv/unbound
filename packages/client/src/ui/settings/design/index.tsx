@@ -1,28 +1,19 @@
-import type { AddonKind } from '@unbound-app/types/addons';
 import { Dimensions, View } from 'react-native';
-import type { ComponentType } from 'react';
 import { useMemo, useState } from 'react';
 
 import { installsFromManifest } from '~/addons/addons';
 import { Discord, SafeArea } from '~/metro/components';
 import InstallButton from '~/ui/addons/install-button';
+import AddonTab from '~/ui/settings/addon-tab';
 import { getBucket } from '~/storage/api';
 
-import ThemesTab from './themes';
 import FontsTab from './fonts';
-import IconsTab from './icons';
-
-type DesignTab = {
-	id: AddonKind;
-	label: string;
-	Page: ComponentType;
-};
 
 /** The segmented tabs in order; each tab's id is the manager kind its install button targets. */
-const TABS: DesignTab[] = [
-	{ id: 'theme', label: 'Themes', Page: ThemesTab },
-	{ id: 'icon-pack', label: 'Icons', Page: IconsTab },
-	{ id: 'font', label: 'Fonts', Page: FontsTab },
+const TABS: { id: 'theme' | 'icon-pack' | 'font'; label: string }[] = [
+	{ id: 'theme', label: 'Themes' },
+	{ id: 'icon-pack', label: 'Icons' },
+	{ id: 'font', label: 'Fonts' },
 ];
 
 /**
@@ -33,7 +24,12 @@ function DesignPage() {
 	const [tab, setTab] = useState(getBucket('design').get('tab', 0));
 
 	const items = useMemo(
-		() => TABS.map(({ id, label, Page }) => ({ id, label, page: <Page /> })),
+		() =>
+			TABS.map(({ id, label }) => ({
+				id,
+				label,
+				page: id === 'font' ? <FontsTab /> : <AddonTab kind={id} />,
+			})),
 		[],
 	);
 	const kind = TABS[tab]?.id;

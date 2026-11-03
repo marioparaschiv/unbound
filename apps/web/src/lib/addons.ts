@@ -14,15 +14,14 @@ import { and, desc, EmptyFilter, eq, gte, inArray, isNull, lt, or, sql } from 'd
 import { addonIdSchema, type PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { RepositoryDetails } from '@unbound-app/contracts/source';
 import type { AddonPage } from '@unbound-app/contracts/addon-page';
+import { Type, type TSchema } from '@unbound-app/contracts/schema';
 import type { PinnableField } from '@unbound-app/contracts/admin';
-import { z } from 'zod';
 
 import { OPEN_SUBMISSION_STATUSES, requireSourced, toSubmission } from '~/lib/submissions';
 import { afterKey, cursorTime, decodeCursor, toKeysetPage } from '~/lib/keyset';
 import type { AddonVersionRow, VersionSubmission } from '~/lib/artifacts';
 import { VERSION_SOURCE, toAddonVersion } from '~/lib/artifacts';
 import { MAINTAINERS, toMaintainers } from '~/lib/maintainers';
-import type { CursorKey, CursorPosition } from '~/lib/keyset';
 import { addon, addonTag, addonVersion } from '~/db/schema';
 import type { ActionMeta } from '~/lib/moderation-events';
 import { appendEvent } from '~/lib/moderation-events';
@@ -34,6 +33,7 @@ import type { Transaction } from '~/db/database';
 import { splitList } from '~/lib/addon-filters';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
+import type { CursorKey } from '~/lib/keyset';
 import { DAY_MS } from '~/lib/calendar-date';
 import { ApiError } from '~/lib/api/errors';
 import one from '~/db/one';
@@ -81,10 +81,10 @@ const SORT_COLUMNS = {
 } as const satisfies Record<AddonSort, keyof AddonRow>;
 
 const CURSOR_SCHEMAS = {
-	name: z.tuple([z.string(), addonIdSchema]),
-	created: z.tuple([cursorTime, addonIdSchema]),
-	updated: z.tuple([cursorTime, addonIdSchema]),
-} satisfies Record<AddonSort, z.ZodType<CursorPosition>>;
+	name: Type.Tuple([Type.String(), addonIdSchema]),
+	created: Type.Tuple([cursorTime, addonIdSchema]),
+	updated: Type.Tuple([cursorTime, addonIdSchema]),
+} satisfies Record<AddonSort, TSchema>;
 
 /** The `addon.pinned_fields` bit of each summary field a staff edit can own. */
 export const PINNED_FIELDS = {
@@ -325,7 +325,7 @@ function updatedFilter(ctx: AppContext, table: ListingTable, query: ListingFilte
 export function queryListedAddons(ctx: AppContext, query: ListAddonsQuery = {}) {
 	const { type, q, sort = 'name', order = 'asc', cursor } = query;
 	const column = SORT_COLUMNS[sort];
-	const after = cursor ? decodeCursor<CursorPosition>(cursor, CURSOR_SCHEMAS[sort]) : undefined;
+	const after = cursor ? decodeCursor(cursor, CURSOR_SCHEMAS[sort]) : undefined;
 
 	return ctx.db.query.addon.findMany({
 		where: {

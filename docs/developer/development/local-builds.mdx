@@ -1,32 +1,38 @@
 ---
-title: 'Local Builds'
-description: 'Build and serve the Unbound bundle locally so you can test your changes on a device.'
-icon: 'sitemap'
+title: 'Building Unbound'
+description: "Build Unbound's own bundle from source, and load it on your phone."
+icon: 'hammer'
 ---
 
+This page is for working on Unbound itself. To build an addon, see [Your First Plugin](/docs/developer/addons/creating) instead.
+
+The loader normally downloads Unbound's bundle from `https://builds.unbound.rip/`. To test your changes, build the bundle yourself, serve it on your network, and point the loader at it.
+
 <Steps>
-	<Step title='Install Dependencies'>
-		From the root of the Unbound repository, install the workspace dependencies.
+	<Step title='Install dependencies'>
+		From the root of the Unbound repository:
 
 		```bash
 		bun install
 		```
 	</Step>
-	<Step title='Start the Dev Server'>
-		Run the client's `dev` script. It rebuilds the bundle whenever the source changes and serves it over HTTP.
+	<Step title='Start the dev server'>
+		It rebuilds the bundle whenever the source changes, and serves it over HTTP.
 
 		```bash
 		bun run --filter @unbound-app/client dev
 		```
 
-		On startup it prints the address that devices on your network should connect to (`Devices on the LAN should connect to: ...`). Copy that address for the next step.
+		On startup it prints the address your phone should use: `Devices on the LAN should connect to: ...`.
 	</Step>
-	<Step title='Point the Loader at Your Bundle'>
-		Set the loader key `update.url` to the address from the previous step. See the [loader configuration page](/docs/developer/loader/configuration) for details.
+	<Step title='Point the loader at your bundle'>
+		Set `loader.update.url` in the phone's `settings.json` to that address. See the [settings reference](/docs/developer/loader/settings#keys) for where the file is and how keys nest.
+
+		Bundles from your local network skip the signature check, so no other key is needed.
 	</Step>
 </Steps>
 
-To build once without watching, run `build`, then `serve` to host the result:
+To build once without watching, build and then serve the result:
 
 ```bash
 bun run --filter @unbound-app/client build

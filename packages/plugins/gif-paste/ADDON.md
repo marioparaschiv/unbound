@@ -1,7 +1,9 @@
-When you pick a GIF in the GIF picker, GIF Paste puts the GIF's link into the chat input instead of sending it. The plugin adds a space after the link and closes the picker, so you can type a message and send both together.
+## :sparkle: What it does
 
-If you are replying to a message when you pick the GIF, the reply stays in place.
+- :link: Puts the GIF's link in the chat input when you pick it in the GIF picker, followed by a space.
+- :keyboard: Closes the picker so you can type and send both together.
+- :share-left: Keeps your reply in place if you were replying to a message.
 
-## Known issues
+## :gear: Settings
 
-- If the plugin cannot find the chat input for the channel, Discord sends the GIF right away as usual.
+None. Pick a GIF and start typing.

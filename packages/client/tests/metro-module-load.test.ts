@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 
 import { startFakeMetro } from './helpers/fake-metro';
+import { createCacheMock } from './helpers/cache';
 
 const IDS = [7, 8];
 
@@ -14,15 +15,14 @@ for (const id of IDS) {
 	});
 }
 
-mock.module('~/metro/cache', () => ({
-	default: {
+mock.module('~/metro/cache', () =>
+	createCacheMock({
 		state: { moduleFlags: {} },
 		moduleIds: IDS,
 		hasModuleFlag: () => false,
 		addModuleFlag: () => void 0,
-	},
-	ModuleFlags: { BLACKLISTED: 1 },
-}));
+	}),
+);
 
 const metro = await import('~/metro/search');
 

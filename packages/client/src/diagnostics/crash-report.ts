@@ -1,4 +1,4 @@
-import { CRASH_REPORT_LOG_LIMIT, crashReportSchema } from '@unbound-app/contracts/crash-reports';
+import { CRASH_REPORT_LOG_LIMIT } from '@unbound-app/contracts/crash-report-limits';
 import type { CrashReport } from '@unbound-app/contracts/crash-reports';
 
 import type { Addon } from '~/addons/addon';
@@ -97,15 +97,16 @@ export function crashLogExcerpt(log: string): string | undefined {
  * @param event The failure the manager saw.
  * @param environment The app, loader and device details.
  * @param log The loader's log file, whose newest lines go into the report scrubbed of secrets.
- * @returns The validated report, or `undefined` when the details don't validate.
+ * @returns The report; the server validates it.
  */
 export function buildCrashReport(
 	event: CrashEvent,
 	environment: CrashEnvironment,
 	log?: string,
-): CrashReport | undefined {
+): CrashReport {
 	const excerpt = log === undefined ? undefined : crashLogExcerpt(log);
-	const parsed = crashReportSchema.safeParse({
+
+	return {
 		...event,
 		...environment,
 		...(excerpt === undefined ? {} : { log: excerpt }),
@@ -115,7 +116,5 @@ export function buildCrashReport(
 		discordVersion: environment.discordVersion.slice(0, 64),
 		osVersion: environment.osVersion.slice(0, 64),
 		deviceModel: environment.deviceModel.slice(0, 64),
-	});
-
-	return parsed.success ? parsed.data : undefined;
+	};
 }

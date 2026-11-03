@@ -5,6 +5,7 @@ import {
 } from '@unbound-app/contracts/sponsors';
 import { IconCircleWarning, IconPhoto, IconPlus, IconXmark } from 'nucleo-micro-bold';
 import type { Badge } from '@unbound-app/contracts/sponsors';
+import { safeParse } from '@unbound-app/contracts/schema';
 
 import {
 	InputGroup,
@@ -43,7 +44,7 @@ type DraftRowProps = Pick<
 };
 
 function findNameProblem(name: string, taken: Set<string>): string | undefined {
-	const parsed = badgeNameSchema.safeParse(name);
+	const parsed = safeParse(badgeNameSchema, name);
 
 	if (!parsed.success) {
 		return name.trim() ? parsed.error.issues[0]?.message : 'Give the badge a name.';

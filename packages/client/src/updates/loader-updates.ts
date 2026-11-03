@@ -1,5 +1,5 @@
-import { loaderUpdateQuerySchema, loaderUpdateResponseSchema } from '@unbound-app/contracts/loader';
 import type { LoaderUpdate, LoaderUpdateQuery } from '@unbound-app/contracts/loader';
+import { isSemver } from '@unbound-app/contracts/manifest-patterns';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Api } from '@unbound-app/web/api';
 
@@ -24,9 +24,9 @@ export function buildLoaderUpdateQuery(
 ): LoaderUpdateQuery | undefined {
 	if (!loader) return;
 
-	const query = loaderUpdateQuerySchema.safeParse({ platform, version: loader.version });
+	if ((platform !== 'ios' && platform !== 'android') || !isSemver(loader.version)) return;
 
-	return query.success ? query.data : undefined;
+	return { platform, version: loader.version };
 }
 
 /**
@@ -45,7 +45,6 @@ export async function fetchLoaderUpdate(
 	const request = createApiClient<Api>({ baseUrl: options.baseUrl });
 	const { update } = await request('GET /api/v1/loader/updates', {
 		query,
-		response: loaderUpdateResponseSchema,
 	});
 
 	return update;

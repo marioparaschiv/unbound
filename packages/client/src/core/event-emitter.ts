@@ -1,7 +1,7 @@
 import noop from '@unbound-app/utils/noop';
 
-// A port of tseep 1.3.1's `EventEmitter` without its eval-baked callers. Plugins reach it through the
-// managers, so it keeps every observable tseep behavior, quirks included.
+// A port of the tseep 1.3.1 subset that managers hand to addons, without its eval-baked callers. Every
+// observable behavior of the kept surface matches tseep, quirks included.
 
 /** Any event listener. tseep's `any[]` parameters become `never[]`, which accepts every listener. */
 // UNKNOWN: emitters ignore what a listener's promise resolves to, so any async listener is allowed.
@@ -56,23 +56,6 @@ export class TaskCollection<Func extends Listener = Listener> {
 		}
 
 		this.length++;
-		this.call = rebuildOnFirstCall;
-	}
-
-	insert(index: number, task: Func) {
-		if (this.length === 0) {
-			this._tasks = [task];
-			this.length = 1;
-		} else if (this.length === 1) {
-			this._tasks = [this._tasks as Func, task];
-			this.length = 2;
-		} else {
-			const tasks = this._tasks as Func[];
-
-			tasks.splice(index, 0, task);
-			this.length = tasks.length;
-		}
-
 		this.call = rebuildOnFirstCall;
 	}
 
@@ -142,12 +125,11 @@ function rebuildOnFirstCall(this: TaskCollection, ...args: unknown[]) {
 }
 
 // tseep's generated callers pass exactly this many arguments, truncating or padding with undefined.
+// The array is always one this module just built, so resizing it in place is safe.
 function fit(args: unknown[], length: number) {
-	const fitted = args.slice(0, length);
+	args.length = length;
 
-	fitted.length = length;
-
-	return fitted;
+	return args;
 }
 
 function tail(args: IArguments, length: number) {
@@ -238,12 +220,6 @@ function bakeLive(tasks: Caller[], argsNum: number): Caller {
 			}
 		}
 	};
-}
-
-function warnMax(emitter: EventEmitter, length: number, event: EventName, kind: string) {
-	if (emitter.maxListeners !== Infinity && emitter.maxListeners <= length) {
-		console.warn(`Maximum event listeners for "${String(event)}" ${kind}event!`);
-	}
 }
 
 function emit(this: EventEmitter, event: EventName, ...args: unknown[]): boolean;
@@ -337,10 +313,6 @@ function emitHasOnce(
 	return true;
 }
 
-function hasOnce(emitter: EventEmitter) {
-	return emitter.emit !== emit;
-}
-
 function once(this: EventEmitter, event: EventName, listener: Listener) {
 	if (this.emit === emit) {
 		this.emit = emitHasOnce;
@@ -384,7 +356,6 @@ function addListener(
 	} else {
 		evtmap.push(listener);
 		evtmap.growArgsNum(argsNum);
-		warnMax(this, evtmap.length, event, '');
 	}
 
 	return this;
@@ -413,86 +384,6 @@ function removeListener(this: EventEmitter, event: EventName, listener: Listener
 	return this;
 }
 
-function addListenerBound(
-	this: EventEmitter,
-	event: EventName,
-	listener: Listener,
-	bindTo: unknown = this,
-	argsNum: number = listener.length,
-) {
-	this.boundFuncs ||= new Map();
-
-	const bound = listener.bind(bindTo);
-
-	this.boundFuncs.set(listener, bound);
-
-	return this.addListener(event, bound, argsNum);
-}
-
-function removeListenerBound(this: EventEmitter, event: EventName, listener: Listener) {
-	const bound = this.boundFuncs?.get(listener);
-
-	this.boundFuncs?.delete(listener);
-
-	return this.removeListener(event, bound as Listener);
-}
-
-function hasListeners(this: EventEmitter, event: EventName) {
-	return this.events[event] && !!this.events[event].length;
-}
-
-function prependListener(
-	this: EventEmitter,
-	event: EventName,
-	listener: Listener,
-	argsNum: number = listener.length,
-) {
-	if (typeof listener !== 'function') {
-		throw new TypeError('The listener must be a function');
-	}
-
-	const evtmap = this.events[event];
-
-	if (!evtmap || !(evtmap instanceof TaskCollection)) {
-		this.events[event] = new TaskCollection(argsNum, listener);
-
-		if (typeof event === 'symbol') {
-			this._symbolKeys.add(event);
-		}
-	} else {
-		evtmap.insert(0, listener);
-		evtmap.growArgsNum(argsNum);
-		warnMax(this, evtmap.length, event, '');
-	}
-
-	return this;
-}
-
-function prependOnceListener(this: EventEmitter, event: EventName, listener: Listener) {
-	if (this.emit === emit) {
-		this.emit = emitHasOnce;
-	}
-
-	const evtmap = this.onceEvents[event];
-
-	if (!evtmap) {
-		this.onceEvents[event] = [listener];
-	} else if (typeof evtmap !== 'object') {
-		this.onceEvents[event] = [listener, evtmap];
-	} else {
-		evtmap.unshift(listener);
-		warnMax(this, evtmap.length, event, 'once ');
-
-		return this;
-	}
-
-	if (typeof event === 'symbol') {
-		this._symbolKeys.add(event);
-	}
-
-	return this;
-}
-
 function removeAllListeners(this: EventEmitter, event?: EventName) {
 	if (event === undefined) {
 		this.events = Object.create(null);
@@ -510,68 +401,10 @@ function removeAllListeners(this: EventEmitter, event?: EventName) {
 	return this;
 }
 
-function setMaxListeners(this: EventEmitter, n: number) {
-	this.maxListeners = n;
-
-	return this;
-}
-
-function getMaxListeners(this: EventEmitter) {
-	return this.maxListeners;
-}
-
-function listeners(this: EventEmitter, event: EventName): Listener[] {
-	const ev = this.events[event];
-
-	if (!hasOnce(this)) {
-		return ev ? ev.tasksAsArray().slice() : [];
-	}
-
-	const oev = this.onceEvents[event];
-	const onceList = typeof oev === 'function' ? [oev] : oev;
-
-	// Matching tseep, the once-mode results alias the internal arrays rather than copying them.
-	if (!ev) {
-		return onceList ?? [];
-	}
-
-	return onceList ? [...ev.tasksAsArray(), ...onceList] : ev.tasksAsArray();
-}
-
-function eventNames(this: EventEmitter): EventName[] {
-	const { events, onceEvents } = this;
-	const symbols = [...this._symbolKeys];
-
-	if (!hasOnce(this)) {
-		return [...Object.keys(events), ...symbols].filter((x) => x in events && events[x]?.length);
-	}
-
-	// `length` of a lone once listener is its arity, so tseep skips zero-arity ones; so does this.
-	return [
-		...Object.keys(events).filter((x) => events[x]?.length),
-		...Object.keys(onceEvents).filter((x) => onceEvents[x]?.length),
-		...symbols.filter(
-			(x) => (x in events && events[x]?.length) || (x in onceEvents && onceEvents[x]?.length),
-		),
-	];
-}
-
-function listenerCount(this: EventEmitter, type: EventName) {
-	const count = this.events[type]?.length || 0;
-
-	return hasOnce(this) ? count + (this.onceEvents[type]?.length || 0) : count;
-}
-
-/**
- * @description A typed event emitter with tseep 1.3.1's API and semantics.
- * @template EventMap Maps each event name to its listener signature.
- */
 export class EventEmitter<EventMap extends DefaultEventMap = DefaultEventMap> {
 	declare events: EventCollections<EventMap>;
 	declare onceEvents: OnceCollections<EventMap>;
 	declare _symbolKeys: Set<symbol>;
-	declare maxListeners: number;
-	declare boundFuncs: undefined | Map<Listener, Listener>;
 
 	declare emit: <EventKey extends keyof EventMap>(
 		event: EventKey,
@@ -594,42 +427,12 @@ export class EventEmitter<EventMap extends DefaultEventMap = DefaultEventMap> {
 		event: EventKey,
 		listener: EventMap[EventKey],
 	) => this;
-	declare hasListeners: <EventKey extends keyof EventMap = string>(event: EventKey) => boolean;
-	declare prependListener: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => this;
-	declare prependOnceListener: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-	) => this;
 	declare off: <EventKey extends keyof EventMap = string>(
 		event: EventKey,
 		listener: EventMap[EventKey],
 	) => this;
 	declare removeAllListeners: <EventKey extends keyof EventMap = string>(
 		event?: EventKey,
-	) => this;
-	declare setMaxListeners: (n: number) => this;
-	declare getMaxListeners: () => number;
-	declare listeners: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-	) => EventMap[EventKey][];
-	declare rawListeners: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-	) => EventMap[EventKey][];
-	declare eventNames: () => Array<string | symbol>;
-	declare listenerCount: <EventKey extends keyof EventMap = string>(type: EventKey) => number;
-	declare addListenerBound: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
-		// UNKNOWN: any value can be a listener's `this`.
-		bindTo?: unknown,
-		argsNum?: ArgsNum<EventMap[EventKey]>,
-	) => this;
-	declare removeListenerBound: <EventKey extends keyof EventMap = string>(
-		event: EventKey,
-		listener: EventMap[EventKey],
 	) => this;
 
 	/**
@@ -639,34 +442,19 @@ export class EventEmitter<EventMap extends DefaultEventMap = DefaultEventMap> {
 		this.events = Object.create(null);
 		this.onceEvents = Object.create(null);
 		this._symbolKeys = new Set();
-		this.maxListeners = Infinity;
-	}
-
-	get _eventsCount(): number {
-		return this.eventNames().length;
 	}
 }
 
 // Assigned rather than declared as methods so they stay enumerable and `on`/`off` share identity
-// with `addListener`/`removeListener`, as in tseep. `rawListeners` is typed but never implemented.
+// with `addListener`/`removeListener`, as in tseep.
 Object.assign(EventEmitter.prototype, {
 	emit,
 	on: addListener,
 	once,
 	addListener,
 	removeListener,
-	addListenerBound,
-	removeListenerBound,
-	hasListeners,
-	prependListener,
-	prependOnceListener,
 	off: removeListener,
 	removeAllListeners,
-	setMaxListeners,
-	getMaxListeners,
-	listeners,
-	eventNames,
-	listenerCount,
 });
 
 export default EventEmitter;

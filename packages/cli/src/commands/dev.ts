@@ -1,12 +1,12 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { createReloadTransport } from '~/lib/reload-transport';
 import { bridgePortField } from '~/lib/context';
 import { DevServer } from '~/lib/dev-server';
 import { loadConfig } from '~/lib/config';
+import { Type } from '~/lib/schema';
 
-const schema = z.object({
+const schema = Type.Object({
 	port: bridgePortField,
 });
 

@@ -1,11 +1,11 @@
 import { meResponseSchema } from '@unbound-app/contracts/account';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { callerEndpoint } from '~/lib/api/endpoint';
 import { toCallerProfile } from '~/lib/api/caller';
 
 const me = callerEndpoint(
-	{ body: z.undefined(), query: z.undefined(), response: meResponseSchema },
+	{ body: Type.Undefined(), query: Type.Undefined(), response: meResponseSchema },
 	async ({ caller: { user } }) => ({ user: toCallerProfile(user) }),
 );
 

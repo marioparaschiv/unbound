@@ -1,3 +1,9 @@
-Clear URLs removes tracking parameters from the links in your messages. It cleans each link when you send a message and when you edit one. For example, `https://example.com/a?utm_source=x&id=7&fbclid=y` goes out as `https://example.com/a?id=7`.
+## :sparkle: What it does
 
-The plugin has a built-in list of 121 rules. Some rules apply to every link, such as `utm_source`, `fbclid`, and `gclid`. Others apply to one site, such as `si` on `youtu.be` and `open.spotify.com`, or `tag` on Amazon. Parameters that no rule matches stay in the link, and links without parameters stay exactly as you typed them. The plugin has no settings, so you cannot change the rule list.
+- :broom: Removes tracking parameters like `utm_source`, `fbclid` and `gclid` when you send or edit a message.
+- :globe: Handles site-specific ones too, like `si` on YouTube and Spotify links or `tag` on Amazon.
+- :link: Leaves everything else in the link exactly as you typed it.
+
+## :gear: Settings
+
+None. It comes with 121 rules and you don't need to set anything up.

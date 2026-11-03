@@ -2,7 +2,7 @@ import {
 	createSubmissionRequestSchema,
 	createSubmissionResponseSchema,
 } from '@unbound-app/contracts/publish';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { createSubmission } from '~/lib/submissions';
 import { callerEndpoint } from '~/lib/api/endpoint';
@@ -10,7 +10,7 @@ import { callerEndpoint } from '~/lib/api/endpoint';
 const createSubmissionEndpoint = callerEndpoint(
 	{
 		body: createSubmissionRequestSchema,
-		query: z.undefined(),
+		query: Type.Undefined(),
 		response: createSubmissionResponseSchema,
 	},
 	async ({ ctx, body, caller }) => {

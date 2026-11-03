@@ -19,5 +19,14 @@ describe('guide nav', () => {
 			expect(new Set(slugs).size).toBe(slugs.length);
 			expect([...slugs].sort()).toEqual(listGuideFiles(tab));
 		});
+
+		test(`redirects each old ${tab} slug to a page that exists, and never shadows one`, () => {
+			const slugs = new Set(getGuideSlugs(tab));
+
+			for (const [from, to] of Object.entries(GUIDE_NAV[tab].redirects ?? {})) {
+				expect(slugs.has(to)).toBe(true);
+				expect(slugs.has(from)).toBe(false);
+			}
+		});
 	}
 });
