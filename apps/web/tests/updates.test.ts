@@ -1,8 +1,8 @@
-import { parse } from '@unbound-app/contracts/schema';
 import { MAX_UPDATE_CHANGELOGS, updatesResponseSchema } from '@unbound-app/contracts/updates';
 import { afterAll, beforeAll, describe, expect, spyOn, test } from 'bun:test';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import type { UpdatesRequest } from '@unbound-app/contracts/updates';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import { findUpdates, newestCompatibleVersions } from '~/lib/updates';

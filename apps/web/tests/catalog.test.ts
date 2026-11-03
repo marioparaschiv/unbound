@@ -1,6 +1,6 @@
-import { parse } from '@unbound-app/contracts/schema';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import getCatalogEndpoint from '~/endpoints/get-catalog';

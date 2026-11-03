@@ -1,12 +1,11 @@
 import type {
+	JsonValue,
 	SyncDocument,
 	SyncInstall,
 	SyncKind,
 	SyncKindDocument,
 	SyncSettingsStore,
 } from '@unbound-app/contracts/sync';
-
-type JsonValue = SyncSettingsStore[string];
 
 /** A change merging made to the remote side that this device has to carry out. */
 export type SyncAction =

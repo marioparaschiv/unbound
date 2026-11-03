@@ -1,7 +1,7 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
 import type { Submission } from '@unbound-app/contracts/publish';
-import { useSuspenseQuery } from '@tanstack/react-query';
 import { Type, safeParse } from '@unbound-app/contracts/schema';
+import { useSuspenseQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { repositoryAddonsQuery, submitOverviewQuery } from '~/queries/submissions/submissions';
@@ -9,6 +9,10 @@ import SubmitForm from '~/components/submit/submit-form';
 import type { SubmitIntent } from '~/lib/dashboard';
 import PageHeader from '~/components/page-header';
 import Text from '~/components/ui/text';
+
+type SubmitSearch = {
+	addon?: string;
+};
 
 type HeaderCopy = {
 	title: string;
@@ -23,7 +27,7 @@ const addonIdSearch = Type.String({ minLength: 1, maxLength: 100 });
  * @param search The route's URL search.
  * @returns The addon id, absent when the URL carries none or a malformed one.
  */
-function submitSearch(search: Record<string, unknown>): { addon?: string } {
+function submitSearch(search: Record<string, string>): SubmitSearch {
 	const result = safeParse(addonIdSearch, search.addon);
 
 	return { addon: result.success ? result.data : undefined };

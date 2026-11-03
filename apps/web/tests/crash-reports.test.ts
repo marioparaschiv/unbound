@@ -1,8 +1,8 @@
-import { parse } from '@unbound-app/contracts/schema';
 import { crashReportResponseSchema } from '@unbound-app/contracts/crash-reports';
 import type { CrashReport } from '@unbound-app/contracts/crash-reports';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import { afterAll, describe, expect, test } from 'bun:test';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import reportCrashEndpoint from '~/endpoints/report-crash';

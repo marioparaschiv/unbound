@@ -1,6 +1,6 @@
-import { parse } from '@unbound-app/contracts/schema';
 import { createSubmissionResponseSchema } from '@unbound-app/contracts/publish';
 import { afterAll, describe, expect, test } from 'bun:test';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import createSubmissionEndpoint from '~/endpoints/create-submission';

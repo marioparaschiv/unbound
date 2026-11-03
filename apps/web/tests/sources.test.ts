@@ -1,7 +1,7 @@
-import { parse } from '@unbound-app/contracts/schema';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 import type { Changelog } from '@unbound-app/contracts/changelog';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import checkUpdatesEndpoint from '~/endpoints/check-updates';
@@ -225,6 +225,7 @@ describe('shipped clients', () => {
 		const updates = parse(shippedUpdatesResponseSchema, await response.json());
 
 		const mixed = updates.updates.find((update) => update.id === 'src.mixed');
+
 		expect(mixed?.changelog).toBe(SOURCED.changelog);
 		expect(mixed?.changelogs.map((entry) => entry.changelog)).toEqual([
 			SOURCED.changelog,

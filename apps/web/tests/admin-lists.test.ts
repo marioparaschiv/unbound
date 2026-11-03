@@ -1,8 +1,8 @@
-import { safeParse } from '@unbound-app/contracts/schema';
 import { adminAddonsSearchSchema, adminUsersSearchSchema } from '@unbound-app/contracts/admin';
 import type { AdminAddonsSearch, AdminUsersSearch } from '@unbound-app/contracts/admin';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import type { SortOrder } from '@unbound-app/contracts/addons';
+import { safeParse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import { listAdminAddons, queryAdminAddons } from '~/lib/admin-addons';

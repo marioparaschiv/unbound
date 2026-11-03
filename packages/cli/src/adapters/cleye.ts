@@ -83,6 +83,7 @@ export function toCleyeCommand(definition: CommandDefinition<TObject>): Command 
 			for (const [name, value] of Object.entries(flagInput)) {
 				input[name] = inputValue(value);
 			}
+
 			const booleans = Object.keys(flags).filter((name) => flags[name]!.type === Boolean);
 			const { off, unmatched } = negatedFlags(parsed.unknownFlags, booleans);
 

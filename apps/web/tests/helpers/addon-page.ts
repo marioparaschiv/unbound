@@ -1,9 +1,9 @@
-import { parse } from '@unbound-app/contracts/schema';
 import {
 	addonPageSchema,
 	type AddonPage,
 	type MeasuredMedia,
 } from '@unbound-app/contracts/addon-page';
+import { parse } from '@unbound-app/contracts/schema';
 
 import type { MarkdownPin } from '~/lib/markdown-url';
 

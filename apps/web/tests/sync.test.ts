@@ -1,4 +1,3 @@
-import { parse } from '@unbound-app/contracts/schema';
 import {
 	emptySyncDocument,
 	SYNC_CORE_STORE,
@@ -13,6 +12,7 @@ import {
 import type { AccountSignInResponse } from '@unbound-app/contracts/account';
 import type { SyncDocumentInput } from '@unbound-app/contracts/sync';
 import { afterAll, describe, expect, test } from 'bun:test';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import getDiscordOAuthEndpoint from '~/endpoints/get-discord-oauth';

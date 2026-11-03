@@ -37,8 +37,16 @@ export const syncKindDocumentSchema = Type.Object({
 	applied: Type.Union([Type.String(), Type.Null()]),
 });
 
+type JsonObject = { [key: string]: JsonValue };
+
+/** A value JSON can carry. */
+export type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
+
+// Values arrive as parsed JSON, so any value is already JSON; the type restores what `z.json()` gave.
+const jsonValueSchema = Type.Unsafe<JsonValue>(Type.Any());
+
 /** A settings store as JSON. */
-export const syncSettingsStoreSchema = Type.Record(Type.String(), Type.Any(), {
+export const syncSettingsStoreSchema = Type.Record(Type.String(), jsonValueSchema, {
 	additionalProperties: false,
 });
 

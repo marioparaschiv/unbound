@@ -1,9 +1,9 @@
-import { parse } from '@unbound-app/contracts/schema';
 import { loaderReleaseSchema, loaderUpdateResponseSchema } from '@unbound-app/contracts/loader';
 import type { PublishLoaderReleaseRequest } from '@unbound-app/contracts/loader';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import withdrawLoaderReleaseEndpoint from '~/endpoints/withdraw-loader-release';

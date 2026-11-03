@@ -1,7 +1,7 @@
-import { safeParse } from '@unbound-app/contracts/schema';
 import { editAddonRequestSchema } from '@unbound-app/contracts/admin';
 import type { EditAddonRequest } from '@unbound-app/contracts/admin';
 import { afterAll, describe, expect, test } from 'bun:test';
+import { safeParse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import { getAddonDetails, getCatalog, listAddons } from '~/lib/addons';
