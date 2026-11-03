@@ -2,6 +2,7 @@ import { createSubmissionResponseSchema } from '@unbound-app/contracts/publish';
 import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import { afterAll, describe, expect, spyOn, test } from 'bun:test';
+import { parse } from '@unbound-app/contracts/schema';
 
 import createSubmissionEndpoint from '~/endpoints/create-submission';
 import { MEDIA_READ_CONCURRENCY } from '~/lib/addon-page-source';
@@ -78,11 +79,11 @@ function submit(headers: Headers, request: CreateSubmissionRequest, target: AppC
 async function accepted(response: Response) {
 	expect(response.status).toBe(200);
 
-	return createSubmissionResponseSchema.parse(await response.json());
+	return parse(createSubmissionResponseSchema, await response.json());
 }
 
 async function refused(response: Response) {
-	const { error } = apiErrorResponseSchema.parse(await response.json());
+	const { error } = parse(apiErrorResponseSchema, await response.json());
 
 	return { status: response.status, code: error.code };
 }

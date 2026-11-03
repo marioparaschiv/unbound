@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import { parseRepository, repositoryInputSchema } from '../src/source';
+import { parse, safeParse } from '../src/schema';
 
 describe('parseRepository', () => {
 	test('reads every form a user pastes or git prints', () => {
@@ -49,14 +50,14 @@ describe('parseRepository', () => {
 
 describe('repositoryInputSchema', () => {
 	test('outputs owner/name and explains a refusal', () => {
-		expect(repositoryInputSchema.parse('https://github.com/acme/addons.git')).toBe(
+		expect(parse(repositoryInputSchema, 'https://github.com/acme/addons.git')).toBe(
 			'acme/addons',
 		);
 
-		const result = repositoryInputSchema.safeParse('https://gitlab.com/acme/addons');
+		const result = safeParse(repositoryInputSchema, 'https://gitlab.com/acme/addons');
 
 		expect(result.success).toBe(false);
-		expect(result.error?.issues).toHaveLength(1);
-		expect(result.error?.issues[0]?.message).toBeTruthy();
+		expect(result.success ? [] : result.error.issues).toHaveLength(1);
+		expect(result.success ? '' : (result.error.issues[0]?.message ?? '')).toBeTruthy();
 	});
 });

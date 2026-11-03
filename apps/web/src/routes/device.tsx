@@ -1,13 +1,14 @@
 import { IconCircleCheck, IconCircleXmark, IconMonitor } from 'nucleo-micro-bold';
 import { Link, createFileRoute } from '@tanstack/react-router';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { Type } from '@unbound-app/contracts/schema';
 import { useForm } from '@tanstack/react-form';
-import { z } from '@unbound-app/contracts/zod';
 import { useState } from 'react';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '~/components/ui/card';
 import { Field, FieldDescription, FieldError, FieldLabel } from '~/components/ui/field';
 import { decideDeviceMutation, deviceCodeQuery } from '~/queries/account/device';
+import { schemaValidator } from '~/lib/schema-validator';
 import type { SessionUser } from '~/lib/auth/session';
 import { Button } from '~/components/ui/button';
 import Logo from '~/components/icons/logo';
@@ -19,8 +20,8 @@ type DeviceApprovalProps = {
 	initialCode: string;
 };
 
-const deviceSearchSchema = z.object({
-	user_code: z.optional(z.string()),
+const deviceSearchSchema = Type.Object({
+	user_code: Type.Optional(Type.String()),
 });
 
 function DeviceApproval({ user, initialCode }: DeviceApprovalProps) {
@@ -165,6 +166,6 @@ function DevicePage() {
 
 export const Route = createFileRoute('/device')({
 	head: () => ({ meta: [{ title: 'Unbound | Authorize a device' }] }),
-	validateSearch: deviceSearchSchema,
+	validateSearch: schemaValidator(deviceSearchSchema),
 	component: DevicePage,
 });

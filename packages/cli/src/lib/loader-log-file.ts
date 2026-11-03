@@ -1,8 +1,7 @@
-import { z } from 'zod';
-
 import { discordDataContainer, PILOT, pilotShell, type PilotTarget } from '~/lib/pilot';
 import { parseLoaderLogLine, type LogEntry, type LogEvent } from '~/lib/log-lines';
 import { parseJson } from '~/lib/parse-json';
+import { Type } from '~/lib/schema';
 
 const LOADER_LOG_PATH = 'Documents/Unbound/Logs/unbound.log';
 const LOG_FILE_POLL_MS = 1_000;
@@ -10,7 +9,7 @@ const LOG_FILE_CHUNK_BYTES = 65_536;
 const LOG_FILE_TAIL_LINES = 200;
 const PILOT_TIMEOUT_MS = 15_000;
 
-const fileReadSchema = z.object({ data: z.string().optional(), size: z.number() });
+const fileReadSchema = Type.Object({ data: Type.Optional(Type.String()), size: Type.Number() });
 
 export type LoaderLogFileOptions = PilotTarget & {
 	emit: (event: LogEvent) => void;

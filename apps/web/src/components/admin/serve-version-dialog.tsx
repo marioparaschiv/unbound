@@ -1,10 +1,10 @@
 import { moderationReasonSchema } from '@unbound-app/contracts/admin';
+import { Type } from '@unbound-app/contracts/schema';
 import { useMutation } from '@tanstack/react-query';
 import { IconHistory } from 'nucleo-micro-bold';
 import { useForm } from '@tanstack/react-form';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { z } from 'zod/mini';
 
 import {
 	Dialog,
@@ -19,6 +19,7 @@ import { serveVersionMutation } from '~/queries/admin-addons/addon-mutations';
 import { Field, FieldError, FieldLabel } from '~/components/ui/field';
 import getApiErrorMessage from '~/lib/api/error-message';
 import type { AdminVersion } from '~/lib/admin-addon';
+import standardSchema from '~/lib/standard-schema';
 import { Button } from '~/components/ui/button';
 import Textarea from '~/components/ui/textarea';
 import { planServe } from '~/lib/serve-plan';
@@ -36,7 +37,7 @@ type VersionListProps = {
 	versions: string[];
 };
 
-const SERVE_FORM_SCHEMA = z.object({ reason: moderationReasonSchema });
+const SERVE_FORM_SCHEMA = Type.Object({ reason: moderationReasonSchema });
 
 function VersionList({ label, versions }: VersionListProps) {
 	if (versions.length === 0) return null;
@@ -53,7 +54,7 @@ function ServeVersionDialog({ addonId, versions, version }: ServeVersionDialogPr
 	const serve = useMutation(serveVersionMutation());
 	const form = useForm({
 		defaultValues: { reason: '' },
-		validators: { onSubmit: SERVE_FORM_SCHEMA },
+		validators: { onSubmit: standardSchema(SERVE_FORM_SCHEMA) },
 		onSubmit: async ({ value, formApi }) => {
 			try {
 				await serve.mutateAsync({

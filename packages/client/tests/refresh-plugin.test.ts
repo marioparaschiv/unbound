@@ -42,4 +42,22 @@ describe('refresh transform', () => {
 		expect(code.indexOf('export default Page', rebind)).toBeGreaterThan(rebind);
 		expect(code).toMatch(/Row = \w+\(Row, "src\/ui\/settings\/example\.tsx Row"\)/);
 	});
+
+	test('binds prelude names the hot runtime exports', async () => {
+		const code = transformModule(source, id, root, '~/hot-refresh/runtime');
+		const prelude = code.slice(0, code.indexOf('\n'));
+		const names = [...prelude.matchAll(/([\w$]+) as [\w$]+/g)].map(([, name]) => name);
+		const runtime = await import('~/hot-refresh/runtime');
+		const exported = new Set(
+			Object.entries(runtime)
+				.filter(([, value]) => typeof value === 'function')
+				.map(([name]) => name),
+		);
+
+		expect(names.length).toBeGreaterThan(0);
+
+		for (const name of names) {
+			expect(exported.has(name)).toBe(true);
+		}
+	});
 });

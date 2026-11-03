@@ -47,11 +47,6 @@ function PixelHeart({ size }: PixelHeartProps) {
 		return [StyleSheet.absoluteFill, { transform: [{ translateX }, { rotateY }] }];
 	}
 
-	// Each face hides once it turns away, so only the one facing the viewer is drawn over the body.
-	function face(at: number, turnedBy: number) {
-		return [slice(at, turnedBy), { backfaceVisibility: 'hidden' as const }];
-	}
-
 	// Side-on, every slice is a zero-width line that blinks in and out; a flat edge covers them there.
 	const edgeOpacity = spin.interpolate({
 		inputRange: [0, 0.235, 0.25, 0.265, 0.735, 0.75, 0.765, 1],
@@ -85,10 +80,10 @@ function PixelHeart({ size }: PixelHeartProps) {
 					))}
 				</SVG.Svg>
 			</Animated.View>
-			<Animated.View style={face(-1, 180)}>
+			<Animated.View style={[slice(-1, 180), { backfaceVisibility: 'hidden' as const }]}>
 				<PixelHeartLayer size={size} />
 			</Animated.View>
-			<Animated.View style={face(1, 0)}>
+			<Animated.View style={[slice(1, 0), { backfaceVisibility: 'hidden' as const }]}>
 				<PixelHeartLayer size={size} />
 				<SVG.Svg
 					width={size}

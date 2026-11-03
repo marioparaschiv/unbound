@@ -130,12 +130,12 @@ export const moves: Record<string, string> = {
 	'managers/builtins.ts': 'builtins/registry.ts',
 	'managers/builtins.test.ts': 'builtins/registry.test.ts',
 
-	'builtins/debugger.ts': 'debugger/builtin.ts',
-	'lib/reload-summary.ts': 'debugger/reload-summary.ts',
-	'lib/reload-summary.test.ts': 'debugger/reload-summary.test.ts',
+	'builtins/debugger.ts': 'debugger/builtin.dev.ts',
+	'lib/reload-summary.ts': 'debugger/reload-summary.dev.ts',
+	'lib/reload-summary.test.ts': 'debugger/reload-summary.dev.test.ts',
 
 	'lib/hot/': 'hot-refresh/',
-	'builtins/hot-refresh.ts': 'hot-refresh/builtin.ts',
+	'builtins/hot-refresh.ts': 'hot-refresh/builtin.dev.ts',
 
 	'api/dialogs.tsx': 'dialogs/api.tsx',
 	'lib/crash-reports.ts': 'diagnostics/crash-reports.ts',

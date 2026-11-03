@@ -148,7 +148,7 @@ export function getModuleCacheForKey(key: string) {
 }
 
 /**
- * @description Records a module id under a cache key, persisting if it was not already present. Twin of {@link removeCachedIDForKey}.
+ * @description Records a module id under a cache key, persisting if it was not already present.
  * @param key The cache key to add the id under.
  * @param item The module id to cache.
  * @returns `true` if the id was already cached under the key, otherwise `undefined`.
@@ -189,55 +189,12 @@ export function isKeyMissing(key: string | undefined) {
 }
 
 /**
- * @description Removes a module id from a cache key, dropping the key entirely once empty, and persists. Twin of {@link addCachedIDForKey}.
- * @param key The cache key to remove the id from.
- * @param item The module id to uncache.
- * @returns Always `true`.
- */
-function removeCachedIDForKey(key: string, item: number) {
-	const store = state.modules[key];
-
-	if (!store) {
-		return true;
-	}
-
-	const idx = store.indexOf(item);
-
-	if (~idx) {
-		store.splice(idx, 1);
-	}
-
-	if (!store.length) {
-		delete state.modules[key];
-	}
-
-	save('modules');
-
-	return true;
-}
-
-/**
- * @description Sets a {@link ModuleFlags} bit on a module and persists. Twin of {@link removeModuleFlag}.
+ * @description Sets a {@link ModuleFlags} bit on a module and persists.
  * @param id The id of the module to flag.
  * @param flag The flag bit to set.
  */
 export function addModuleFlag(id: number, flag: ModuleFlags) {
 	state.moduleFlags[id] |= flag;
-	save('moduleFlags');
-}
-
-/**
- * @description Clears a {@link ModuleFlags} bit from a module and persists. Twin of {@link addModuleFlag}.
- * @param id The id of the module to unflag.
- * @param flag The flag bit to clear.
- * @returns `true` if the module had no flags set, otherwise `undefined`.
- */
-function removeModuleFlag(id: number, flag: ModuleFlags) {
-	if (!state.moduleFlags[id]) {
-		return true;
-	}
-
-	state.moduleFlags[id] &= ~flag;
 	save('moduleFlags');
 }
 
@@ -294,22 +251,3 @@ function save(...fields: [keyof CacheState, ...(keyof CacheState)[]]) {
 		unsaved.clear();
 	}, SAVE_DELAY_MS);
 }
-
-export default {
-	state,
-	moduleIds,
-	getCachedAssetModule,
-	addAssetToCache,
-	removeAssetFromCache,
-	markAssetsComplete,
-	getModuleCacheForKey,
-	getHintsForKey,
-	addCachedIDForKey,
-	markKeyMissing,
-	isKeyMissing,
-	removeCachedIDForKey,
-	addModuleFlag,
-	hasModuleFlag,
-	removeModuleFlag,
-	save,
-};

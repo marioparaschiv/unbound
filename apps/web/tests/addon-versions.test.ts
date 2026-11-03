@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import listAddonVersionsEndpoint from '~/endpoints/list-addon-versions';
-import { createApiClient } from '~/api/client';
+import { createApiClient } from '~/api/schema-client';
 import { serveVersion } from '~/lib/rollback';
 import { addon, user } from '~/db/schema';
 import type { Api } from '~/api';

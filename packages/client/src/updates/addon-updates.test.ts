@@ -1,5 +1,6 @@
 import type { AddonUpdate, UpdateReason } from '@unbound-app/contracts/updates';
 import { addonUpdateSchema } from '@unbound-app/contracts/updates';
+import { parse } from '@unbound-app/contracts/schema';
 import { describe, expect, test } from 'bun:test';
 
 import type { UpdatableKind } from '~/addons/manager-of';
@@ -129,7 +130,7 @@ describe('autoApplies', () => {
 
 	test('reads an update from a server without reasons as newer', () => {
 		const { reason: _, ...legacy } = release('dev.alpha', '2.0.0');
-		const parsed = addonUpdateSchema.parse(legacy);
+		const parsed = parse(addonUpdateSchema, legacy);
 
 		expect(parsed.reason).toBe('newer');
 		expect(autoApplies(parsed, true)).toBe(false);

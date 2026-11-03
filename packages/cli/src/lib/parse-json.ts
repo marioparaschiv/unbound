@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { safeParse, type StaticDecode, type TSchema } from '~/lib/schema';
 
 export type ParsedJson<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -10,7 +10,11 @@ export type ParsedJson<T> = { ok: true; value: T } | { ok: false; error: string 
  * @param source Who printed it, for the error, such as `jb-p1lot` or `The device`.
  * @returns The parsed value, or why the text did not match.
  */
-export function parseJson<T>(text: string, schema: z.ZodType<T>, source: string): ParsedJson<T> {
+export function parseJson<T extends TSchema>(
+	text: string,
+	schema: T,
+	source: string,
+): ParsedJson<StaticDecode<T>> {
 	let json: unknown;
 
 	try {
@@ -22,13 +26,13 @@ export function parseJson<T>(text: string, schema: z.ZodType<T>, source: string)
 		};
 	}
 
-	const parsed = schema.safeParse(json);
+	const parsed = safeParse(schema, json);
 
 	return parsed.success
 		? { ok: true, value: parsed.data }
 		: {
 				ok: false,
-				error: `${source} answered with unexpected JSON:\n${z.prettifyError(parsed.error)}`,
+				error: `${source} answered with unexpected JSON:\n${parsed.error.message}`,
 			};
 }
 

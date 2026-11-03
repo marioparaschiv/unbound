@@ -14,7 +14,7 @@ import reviewSubmissionEndpoint from '~/endpoints/review-submission';
 import { addonMaintainer, submission, user } from '~/db/schema';
 import delistAddonEndpoint from '~/endpoints/delist-addon';
 import reviewQueueEndpoint from '~/endpoints/review-queue';
-import { createApiClient } from '~/api/client';
+import { createApiClient } from '~/api/schema-client';
 import type { Role } from '~/lib/auth/access';
 import type { Api } from '~/api';
 

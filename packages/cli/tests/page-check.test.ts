@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { addonPageSchema } from '@unbound-app/contracts/addon-page';
+import { parse, safeParse } from '@unbound-app/contracts/schema';
 import { afterEach, describe, expect, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
@@ -140,7 +141,7 @@ describe('ubd build measures ADDON.md media', () => {
 		expect(result.stderr).toBe('');
 		expect(result.exitCode).toBe(0);
 
-		const parsed = addonPageSchema.safeParse(JSON.parse(readFileSync(result.output, 'utf8')));
+		const parsed = safeParse(addonPageSchema, JSON.parse(readFileSync(result.output, 'utf8')));
 
 		if (!parsed.success) {
 			throw new Error(`page.json does not match the contract: ${parsed.error.message}`);
@@ -189,7 +190,7 @@ describe('ubd build measures ADDON.md media', () => {
 
 		expect(result.exitCode).toBe(0);
 		expect(
-			addonPageSchema.safeParse(JSON.parse(readFileSync(result.output, 'utf8'))).success,
+			safeParse(addonPageSchema, JSON.parse(readFileSync(result.output, 'utf8'))).success,
 		).toBe(true);
 	});
 
@@ -213,7 +214,7 @@ describe('ubd build measures ADDON.md media', () => {
 			'warning [page] The poster media/poster.png is 320x320 but its video media/demo.mp4 is 320x180',
 		);
 
-		const written = addonPageSchema.parse(JSON.parse(readFileSync(result.output, 'utf8')));
+		const written = parse(addonPageSchema, JSON.parse(readFileSync(result.output, 'utf8')));
 		const video = written.media.find((media) => media.path === 'media/demo.mp4');
 
 		expect(video).toMatchObject({ kind: 'video', width: 320, height: 180 });

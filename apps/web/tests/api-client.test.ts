@@ -1,7 +1,8 @@
 import { meResponseSchema } from '@unbound-app/contracts/account';
 import { afterAll, describe, expect, test } from 'bun:test';
 
-import { ApiRequestError, createApiClient } from '~/api/client';
+import { createApiClient } from '~/api/schema-client';
+import { ApiRequestError } from '~/api/client';
 import type { Api } from '~/api';
 import me from '~/endpoints/me';
 

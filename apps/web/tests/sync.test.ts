@@ -12,14 +12,15 @@ import {
 import type { AccountSignInResponse } from '@unbound-app/contracts/account';
 import type { SyncDocumentInput } from '@unbound-app/contracts/sync';
 import { afterAll, describe, expect, test } from 'bun:test';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import getDiscordOAuthEndpoint from '~/endpoints/get-discord-oauth';
 import discordSignInEndpoint from '~/endpoints/discord-sign-in';
 import deleteSyncEndpoint from '~/endpoints/delete-sync';
+import { createApiClient } from '~/api/schema-client';
 import getSyncEndpoint from '~/endpoints/get-sync';
 import putSyncEndpoint from '~/endpoints/put-sync';
-import { createApiClient } from '~/api/client';
 import { account, user } from '~/db/schema';
 import type { Api } from '~/api';
 
@@ -434,7 +435,7 @@ describe('stripping', () => {
 				},
 			}),
 		});
-		const state = syncStateSchema.parse(await response.json());
+		const state = parse(syncStateSchema, await response.json());
 
 		expect(Object.keys(state.document).toSorted()).toEqual(
 			Object.keys(emptySyncDocument()).toSorted(),

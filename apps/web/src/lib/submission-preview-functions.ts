@@ -6,12 +6,13 @@ import type { AddonPage } from '@unbound-app/contracts/addon-page';
 import type { Changelog } from '@unbound-app/contracts/changelog';
 import { getRequestHeaders } from '@tanstack/react-start/server';
 import { createServerFn } from '@tanstack/react-start';
-import { z } from 'zod/mini';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { getArtifactKeys, getCdnUrl, pinSource, toVersionChangelog } from '~/lib/artifacts';
 import type { MarketplaceAddonDetails } from '~/lib/marketplace';
 import { readAddonTags, readTags } from '~/lib/addon-tags';
 import { resolvePlatforms } from '~/lib/addon-platforms';
+import { schemaValidator } from '~/lib/schema-validator';
 import { getPinnedMediaBase } from '~/lib/markdown-url';
 import { previewSubmission } from '~/lib/submissions';
 import type { Permissions } from '~/lib/auth/access';
@@ -46,19 +47,17 @@ const PREVIEW_PERMISSIONS: Record<SubmissionKind, Permissions> = {
 	update: { update: ['review'] },
 };
 
-const previewRequestSchema = z.object({
-	addonId: z.string(),
-	submissionId: z.uuid(),
+const previewRequestSchema = Type.Object({
+	addonId: Type.String(),
+	submissionId: Type.String({ format: 'uuid' }),
 });
 
 // The pinned source plus the form's unsaved choices, so the preview shows what submitting now would.
-const sourcePreviewRequestSchema = z.extend(
-	z.omit(createSubmissionRequestSchema, { details: true }),
-	{
-		icon: z.optional(z.string()),
-		tags: z.optional(z.array(z.string())),
-	},
-);
+const sourcePreviewRequestSchema = Type.Object({
+	...Type.Omit(createSubmissionRequestSchema, ['details']).properties,
+	icon: Type.Optional(Type.String()),
+	tags: Type.Optional(Type.Array(Type.String())),
+});
 
 // The live addon's page with the pending version on top, as approving it would publish.
 async function toPreviewPage(pending: PendingVersion): Promise<MarketplaceAddonDetails> {
@@ -115,7 +114,7 @@ async function toPreviewPage(pending: PendingVersion): Promise<MarketplaceAddonD
  * @returns The page data, or `null` when the caller may not review that submission or it is not this addon's.
  */
 export const fetchSubmissionPreview = createServerFn({ method: 'GET' })
-	.validator(previewRequestSchema)
+	.validator(schemaValidator(previewRequestSchema))
 	.handler(async ({ data }): Promise<MarketplaceAddonDetails | null> => {
 		const caller = await resolveCaller(app, getRequestHeaders());
 
@@ -151,7 +150,7 @@ export const fetchSubmissionPreview = createServerFn({ method: 'GET' })
  * @returns The page data, or `null` when nobody is signed in. Throws what submitting would refuse.
  */
 export const fetchSourcePreview = createServerFn({ method: 'GET' })
-	.validator(sourcePreviewRequestSchema)
+	.validator(schemaValidator(sourcePreviewRequestSchema))
 	.handler(async ({ data }): Promise<MarketplaceAddonDetails | null> => {
 		const caller = await resolveCaller(app, getRequestHeaders());
 

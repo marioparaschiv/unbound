@@ -4,6 +4,7 @@
 #include <cctype>
 #include <limits>
 #include <nlohmann/json.hpp>
+#include <utility>
 
 #include "LoaderJSON.h"
 
@@ -163,16 +164,42 @@ bool BundleManifest::isSignable() const
            !sha512.empty();
 }
 
-std::string BundleManifest::bundleFile(uint32_t bytecodeVersion) const
+std::string BundleManifest::bundleFile(uint32_t bytecodeVersion, bool developerMode) const
 {
+    bool hermes = false;
     for (uint32_t version : bytecodeVersions)
     {
-        if (version == bytecodeVersion)
+        hermes = hermes || version == bytecodeVersion;
+    }
+
+    if (developerMode)
+    {
+        std::string development = "unbound-dev." + std::to_string(bytecodeVersion) + ".bundle";
+        if (hermes && sha512.find(development) != sha512.end())
         {
-            return "unbound." + std::to_string(bytecodeVersion) + ".bundle";
+            return development;
+        }
+        if (sha512.find("unbound-dev.js") != sha512.end())
+        {
+            return "unbound-dev.js";
         }
     }
-    return "unbound.js";
+    return hermes ? "unbound." + std::to_string(bytecodeVersion) + ".bundle" : "unbound.js";
+}
+
+std::optional<BundleFlavour> bundleFlavourNamed(std::string_view file)
+{
+    static constexpr std::pair<std::string_view, BundleFlavour> kFlavours[] = {
+        {"unbound-dev.", BundleFlavour::Development}, {"unbound.", BundleFlavour::Default}};
+    std::string_view name = file.substr(file.find_last_of('/') + 1);
+    for (const auto &[prefix, flavour] : kFlavours)
+    {
+        if (name.rfind(prefix, 0) == 0)
+        {
+            return flavour;
+        }
+    }
+    return std::nullopt;
 }
 
 std::string serializeBaseline(const BundleBaseline &baseline)

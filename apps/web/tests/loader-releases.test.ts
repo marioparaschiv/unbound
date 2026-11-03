@@ -3,6 +3,7 @@ import type { PublishLoaderReleaseRequest } from '@unbound-app/contracts/loader'
 import { apiErrorResponseSchema } from '@unbound-app/contracts/errors';
 import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { parse } from '@unbound-app/contracts/schema';
 import { eq } from 'drizzle-orm';
 
 import withdrawLoaderReleaseEndpoint from '~/endpoints/withdraw-loader-release';
@@ -100,11 +101,11 @@ async function updateFor(platform: string, version: string) {
 
 	expect(response.status).toBe(200);
 
-	return loaderUpdateResponseSchema.parse(await response.json()).update;
+	return parse(loaderUpdateResponseSchema, await response.json()).update;
 }
 
 async function refused(response: Response) {
-	const { error } = apiErrorResponseSchema.parse(await response.json());
+	const { error } = parse(apiErrorResponseSchema, await response.json());
 
 	return { status: response.status, code: error.code };
 }
@@ -143,11 +144,11 @@ describe('POST /api/v1/loader/releases', () => {
 		const again = { ...first, url: 'https://example.com/unbound-3.0.0.ipa', changelog: null };
 
 		try {
-			const created = loaderReleaseSchema.parse(await (await publish(admin, first)).json());
+			const created = parse(loaderReleaseSchema, await (await publish(admin, first)).json());
 
 			clock = new Date(NOW.getTime() + 60_000);
 
-			const replaced = loaderReleaseSchema.parse(await (await publish(admin, again)).json());
+			const replaced = parse(loaderReleaseSchema, await (await publish(admin, again)).json());
 
 			expect(created.publishedAt).toBe(NOW.toISOString());
 			expect(replaced).toEqual({ ...again, publishedAt: NOW.toISOString() });
@@ -170,7 +171,7 @@ describe('DELETE /api/v1/loader/releases/$platform/$version', () => {
 		const response = await withdraw(admin, 'ios', '4.0.0');
 
 		expect(response.status).toBe(200);
-		expect(loaderReleaseSchema.parse(await response.json()).version).toBe('4.0.0');
+		expect(parse(loaderReleaseSchema, await response.json()).version).toBe('4.0.0');
 		expect(await updateFor('ios', '1.10.0')).toBeNull();
 		expect(await refused(await withdraw(admin, 'ios', '4.0.0'))).toEqual({
 			status: 404,

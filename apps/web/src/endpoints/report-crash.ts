@@ -1,13 +1,13 @@
 import { crashReportResponseSchema, crashReportSchema } from '@unbound-app/contracts/crash-reports';
+import { Type } from '@unbound-app/contracts/schema';
 import { getIP } from 'better-auth/api';
-import { z } from 'zod';
 
 import { consumeRateLimit } from '~/lib/rate-limit';
 import { crashReport } from '~/db/schema';
 import endpoint from '~/lib/api/endpoint';
 
 const reportCrashEndpoint = endpoint(
-	{ body: crashReportSchema, query: z.undefined(), response: crashReportResponseSchema },
+	{ body: crashReportSchema, query: Type.Undefined(), response: crashReportResponseSchema },
 	async ({ ctx, request, body }) => {
 		const ip = getIP(request, ctx.auth.options) ?? 'unknown';
 

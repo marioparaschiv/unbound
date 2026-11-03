@@ -3,9 +3,7 @@ import { useState, useEffect } from 'react';
 
 import { Screens, CLIENT_NAME, CLIENT_VERSION } from '~/core/constants';
 import { createPatcher } from '~/patcher/create-patcher';
-import { useUnboundSettings } from '~/settings/unbound';
 import type { SectionEntry } from '~/settings/section';
-import DeveloperPage from '~/ui/settings/developer';
 import type { BuiltIn } from '~/builtins/registry';
 import LogoRowIcon from '~/ui/icons/logo-row-icon';
 import PanelHostScreen from '~/ui/settings/custom';
@@ -31,10 +29,6 @@ type SettingsSection = {
 
 type EntryMap = Record<string, SettingsEntry>;
 
-function useDeveloperMode(): boolean {
-	return useUnboundSettings(({ key }) => key === 'developer-mode').get('developer-mode');
-}
-
 export const generalSection: SectionEntry = {
 	key: Screens.General,
 	titleKey: 'UNBOUND_CLIENT',
@@ -45,14 +39,6 @@ export const generalSection: SectionEntry = {
 	 * @returns The overview row's trailing version.
 	 */
 	useTrailing: () => <Discord.TableRow.TrailingText text={CLIENT_VERSION} />,
-};
-
-export const developerSection: SectionEntry = {
-	key: Screens.Developer,
-	titleKey: 'UNBOUND_DEVELOPER',
-	component: DeveloperPage,
-	usePredicate: useDeveloperMode,
-	icon: 'WrenchIcon',
 };
 
 export const panelHostSection: SectionEntry = {
@@ -193,4 +179,4 @@ function patchOverviewScreen(Overview: MetroExport, builtIn: EntryMap) {
 	});
 }
 
-export default { generalSection, developerSection, panelHostSection, createSettings };
+export default { generalSection, panelHostSection, createSettings };

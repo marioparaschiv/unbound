@@ -4,7 +4,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { eq } from 'drizzle-orm';
 
 import createSubmissionEndpoint from '~/endpoints/create-submission';
-import { createApiClient } from '~/api/client';
+import { createApiClient } from '~/api/schema-client';
 import { submission } from '~/db/schema';
 import type { Api } from '~/api';
 

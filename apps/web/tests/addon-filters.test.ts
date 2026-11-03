@@ -4,9 +4,9 @@ import { eq } from 'drizzle-orm';
 
 import listAddonsEndpoint from '~/endpoints/list-addons';
 import { searchAuthors } from '~/lib/authors/directory';
+import { createApiClient } from '~/api/schema-client';
 import { addon, addonTag, tag } from '~/db/schema';
 import type { AppContext } from '~/lib/context';
-import { createApiClient } from '~/api/client';
 import type { DiscordId } from '~/db/schema';
 import { listTags } from '~/lib/addon-tags';
 import { listAddons } from '~/lib/addons';

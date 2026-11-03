@@ -13,8 +13,8 @@ import {
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
-import { z } from 'zod';
 
+import { parse, Type, type StaticDecode } from '~/lib/schema';
 import type { AddonMode, Variant } from '~/bench/plan';
 
 /** Release-configured loader: optimised and unsigned, with attestation off so it runs on the vphone. */
@@ -27,27 +27,30 @@ export const LOADER_FLAGS = [
 const BUILD_FILE = 'build.json';
 const LOADER_STAGE = 'packages/loader/ios/.theos/_/var/jb/Library';
 
-const buildSchema = z.object({
-	variant: z.string(),
-	ref: z.string(),
-	env: z.record(z.string(), z.string()),
-	sha: z.string(),
-	dir: z.string(),
-	bundleSha256: z.string(),
-	pluginSetHash: z.string(),
-	pluginIds: z.array(z.string()),
-	pluginCount: z.number(),
-	loaderSha256: z.string(),
-	loaderFlags: z.string(),
+const buildSchema = Type.Object({
+	variant: Type.String(),
+	ref: Type.String(),
+	env: Type.Record(Type.String(), Type.String()),
+	sha: Type.String(),
+	dir: Type.String(),
+	bundleSha256: Type.String(),
+	pluginSetHash: Type.String(),
+	pluginIds: Type.Array(Type.String()),
+	pluginCount: Type.Number(),
+	loaderSha256: Type.String(),
+	loaderFlags: Type.String(),
 });
 
 /** One variant's built artifacts and the hashes that identify them. */
-export type VariantBuild = z.infer<typeof buildSchema>;
+export type VariantBuild = StaticDecode<typeof buildSchema>;
 
-const pluginManifestSchema = z.object({
-	id: z.string(),
-	platforms: z.array(z.string()).optional(),
-});
+const pluginManifestSchema = Type.Object(
+	{
+		id: Type.String(),
+		platforms: Type.Optional(Type.Array(Type.String())),
+	},
+	{ additionalProperties: true },
+);
 
 function sha256(data: Uint8Array | string): string {
 	return createHash('sha256').update(data).digest('hex');
@@ -149,7 +152,7 @@ function stagePlugins(source: string, into: string): string[] {
 		}
 
 		const raw: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
-		const manifest = pluginManifestSchema.passthrough().parse(raw);
+		const manifest = parse(pluginManifestSchema, raw);
 
 		if (manifest.platforms && !manifest.platforms.includes('ios')) {
 			continue;
@@ -235,7 +238,7 @@ export async function buildVariant(
 	const cached = [full, dir].map((folder) => join(folder, BUILD_FILE)).find(existsSync);
 
 	if (cached) {
-		const build = buildSchema.parse(JSON.parse(readFileSync(cached, 'utf8')));
+		const build = parse(buildSchema, JSON.parse(readFileSync(cached, 'utf8')));
 		const reused = { ...build, variant: variant.name, ref: variant.ref };
 
 		progress(`${variant.name}: reusing the build of ${variant.ref} (${sha.slice(0, 9)})`);

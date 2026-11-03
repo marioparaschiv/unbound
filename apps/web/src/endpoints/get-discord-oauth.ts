@@ -1,11 +1,11 @@
 import { accountOAuthConfigSchema } from '@unbound-app/contracts/account';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { getDiscordOAuthConfig } from '~/lib/discord-sign-in';
 import endpoint from '~/lib/api/endpoint';
 
 const getDiscordOAuthEndpoint = endpoint(
-	{ body: z.undefined(), query: z.undefined(), response: accountOAuthConfigSchema },
+	{ body: Type.Undefined(), query: Type.Undefined(), response: accountOAuthConfigSchema },
 	async ({ ctx }) => getDiscordOAuthConfig(ctx.env),
 );
 

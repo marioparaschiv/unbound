@@ -9,6 +9,7 @@ import { Discord } from '~/metro/components';
 import { useAccount } from '~/account/api';
 import { showDialog } from '~/dialogs/api';
 import { useBucket } from '~/storage/api';
+import { reload } from '~/native/native';
 import { SYNC_STORE } from '~/sync/api';
 import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';
@@ -68,6 +69,22 @@ function GeneralPage() {
 	function setRecoveryMode(value: boolean) {
 		settings.set('recovery', value);
 		confirmRestart();
+	}
+
+	// The loader downloads the bundle a restart picks, so the switch only applies once the app restarts.
+	function setDeveloperMode(value: boolean) {
+		Discord.showConfirmModal({
+			title: messages.UNBOUND_DEVELOPER_MODE_RESTART_TITLE,
+			content: value
+				? messages.UNBOUND_DEVELOPER_MODE_ENABLE_RESTART
+				: messages.UNBOUND_DEVELOPER_MODE_DISABLE_RESTART,
+			confirmText: messages.UNBOUND_RESTART,
+			cancelText: messages.UNBOUND_CANCEL,
+			onConfirm() {
+				settings.set('developer-mode', value);
+				void reload();
+			},
+		});
 	}
 
 	function setCrashReports(value: boolean) {
@@ -132,7 +149,7 @@ function GeneralPage() {
 					subLabel={messages.UNBOUND_DEVELOPER_MODE_DESC}
 					icon={<Discord.TableRowIcon source={icons.WrenchIcon} />}
 					value={settings.get('developer-mode')}
-					onValueChange={() => settings.toggle('developer-mode')}
+					onValueChange={setDeveloperMode}
 				/>
 				<Discord.TableSwitchRow
 					label={messages.UNBOUND_STAFF_MODE}

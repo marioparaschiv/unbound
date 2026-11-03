@@ -36,6 +36,7 @@ Name things with `GLOSSARY.md` terms. `DESIGN.md` lists the design-system primit
 - `~/` across directories, `./` for siblings.
 - Import `@unbound-app/utils` per file: `@unbound-app/utils/noop`.
 - `import type` for type-only imports.
+- Developer-only client code lives in `*.dev.ts(x)`, reached only behind `import.meta.env.DEV_TOOLS`; it ships in the dev bundle alone, and a build test fails if one leaks.
 
 ## Functions
 
@@ -56,7 +57,7 @@ Name things with `GLOSSARY.md` terms. `DESIGN.md` lists the design-system primit
 - Constrain generics: `T extends Addon`.
 - `PropertyKey` for keys; `Record<K, V>` with a concrete `V`; `Map` at runtime.
 - Narrow with `value is T`. Mark a needed `unknown` with `// UNKNOWN: <reason>`.
-- Parse `JSON.parse` and `.json()` output with a schema.
+- Parse `JSON.parse` and `.json()` output with a schema. The server never trusts the client; the client trusts the server and reads its data with `readServerJson`.
 
 ## Errors
 

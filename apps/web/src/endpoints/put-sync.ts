@@ -1,5 +1,5 @@
 import { syncPutRequestSchema, syncStateSchema } from '@unbound-app/contracts/sync';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { saveSyncDocument } from '~/lib/sync-documents';
 import { callerEndpoint } from '~/lib/api/endpoint';
@@ -7,7 +7,7 @@ import { consumeRateLimit } from '~/lib/rate-limit';
 import { stripSyncDocument } from '~/lib/sync';
 
 const putSyncEndpoint = callerEndpoint(
-	{ body: syncPutRequestSchema, query: z.undefined(), response: syncStateSchema },
+	{ body: syncPutRequestSchema, query: Type.Undefined(), response: syncStateSchema },
 	async ({ ctx, body, caller: { user } }) => {
 		await consumeRateLimit(ctx, {
 			key: `api:sync:${user.id}`,

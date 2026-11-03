@@ -22,7 +22,7 @@ type AddonMdProps = {
 	page?: AddonPage | null;
 };
 
-const FRONTMATTER_KEYS = new Set(Object.keys(addonPageFrontmatterSchema.shape));
+const FRONTMATTER_KEYS = new Set(Object.keys(addonPageFrontmatterSchema.properties));
 const TOP_LEVEL_KEY = /^([^\s#:-][^:]*):(?:\s|$)/;
 
 function isPageFrontmatter(frontmatter: string): boolean {

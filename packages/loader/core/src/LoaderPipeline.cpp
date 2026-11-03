@@ -66,28 +66,43 @@ void LoaderPipeline::prepare()
     std::optional<std::string> bundle =
         !savedPath.empty() && fileExists(savedPath) ? readTextFile(savedPath) : std::nullopt;
     bool hasSaved = bundle && !bundle->empty();
+    // A saved bundle from the other flavour runs at the next launch anyway, so this launch waits
+    // for its replacement rather than leaving the switch to a second restart.
+    bool flavourSwitch   = hasSaved && !savedFlavourIsCurrent(savedPath);
+    bool waitForDownload = !hasSaved || flavourSwitch;
     {
         std::lock_guard<std::mutex> lock(savedMutex_);
-        if (hasSaved)
+        if (flavourSwitch)
+        {
+            firstDownload_.fallback = SavedBundle{std::move(*bundle), savedPath};
+        }
+        else if (hasSaved)
         {
             saved_ = SavedBundle{std::move(*bundle), savedPath};
         }
-        else
+        if (waitForDownload)
         {
             firstDownload_.pending = true;
         }
     }
 
-    updateInBackground(savedPath, hasSaved, token);
+    updateInBackground(savedPath, hasSaved, waitForDownload, token);
+}
+
+bool LoaderPipeline::savedFlavourIsCurrent(const std::string &path) const
+{
+    std::optional<bool> downloadedFor = updater_.recordedDeveloperMode(path);
+    return !downloadedFor || *downloadedFor == updater_.developerMode();
 }
 
 // Downloads the newest bundle for the next runtime. With no saved bundle, or with
 // `loader.update.hmr`, reloads once a new one arrives so it runs now, before Discord's bundle.
-void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, uint64_t token)
+void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bool waitForDownload,
+                                        uint64_t token)
 {
     bool reloadOnUpdate = !hasSaved || settings_.getBoolean("loader.update.hmr", false);
 
-    host_->runInBackground([this, savedPath, hasSaved, token, reloadOnUpdate]() {
+    host_->runInBackground([this, savedPath, hasSaved, waitForDownload, token, reloadOnUpdate]() {
         std::string downloaded;
         try
         {
@@ -99,7 +114,7 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, ui
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 std::string("Bundle download failed. (") + error.what() + ")" +
                     (hasSaved ? "; using the cached bundle" : ""));
-            if (!hasSaved)
+            if (waitForDownload)
             {
                 settleFirstDownload(token, std::nullopt);
             }
@@ -112,8 +127,9 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, ui
         }
 
         bool updated = downloaded != savedPath && fileExists(downloaded);
-        if (!hasSaved && settleFirstDownload(token, updated ? std::optional<std::string>(downloaded)
-                                                            : std::nullopt))
+        if (waitForDownload &&
+            settleFirstDownload(token,
+                                updated ? std::optional<std::string>(downloaded) : std::nullopt))
         {
             return;
         }
@@ -184,17 +200,7 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime)
 
 void LoaderPipeline::onRuntimeCreated(jsi::Runtime &runtime)
 {
-    std::optional<SavedBundle> saved;
-    {
-        std::lock_guard<std::mutex> lock(savedMutex_);
-        saved.swap(saved_);
-    }
-
-    if (!saved)
-    {
-        saved = awaitFirstDownload(token_.load());
-    }
-
+    std::optional<SavedBundle> saved = takeSavedBundle();
     if (!saved)
     {
         log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
@@ -203,6 +209,18 @@ void LoaderPipeline::onRuntimeCreated(jsi::Runtime &runtime)
     }
 
     evaluate(runtime, std::move(*saved), token_.load());
+}
+
+// Resolves the bundle this launch runs: the saved one, or the download it waited for.
+std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::takeSavedBundle()
+{
+    std::optional<SavedBundle> saved;
+    {
+        std::lock_guard<std::mutex> lock(savedMutex_);
+        saved.swap(saved_);
+    }
+
+    return saved ? saved : awaitFirstDownload(token_.load());
 }
 
 bool LoaderPipeline::settleFirstDownload(uint64_t token, std::optional<std::string> path)
@@ -232,21 +250,22 @@ std::optional<LoaderPipeline::SavedBundle> LoaderPipeline::awaitFirstDownload(ui
     {
         return std::nullopt;
     }
+    std::optional<SavedBundle> fallback = std::move(firstDownload_.fallback);
     if (!settled)
     {
         firstDownload_.abandoned = true;
-        return std::nullopt;
+        return fallback;
     }
     if (!firstDownload_.path)
     {
-        return std::nullopt;
+        return fallback;
     }
 
     std::optional<std::string> bundle = readTextFile(*firstDownload_.path);
     if (!bundle || bundle->empty())
     {
         firstDownload_.abandoned = true;
-        return std::nullopt;
+        return fallback;
     }
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT,
         "Downloaded Unbound's first bundle in time to run it before Discord's.");

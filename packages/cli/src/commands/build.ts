@@ -1,17 +1,18 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { BUILD_CHECKS, DECLARED_CAPABILITY_CHECKS, buildWithChecks } from '~/lib/build-checks';
 import { discoverAddons } from '~/lib/discovery';
+import { defaulted, Type } from '~/lib/schema';
 import { loadConfig } from '~/lib/config';
 
-const schema = z.object({
-	declaredCapabilities: z
-		.boolean()
-		.default(false)
-		.describe(
-			'Keep the hand-written platforms and Capabilities of plugins that still declare them, until they select platform code with native.definePlatform.',
-		),
+const schema = Type.Object({
+	declaredCapabilities: defaulted(
+		Type.Boolean({
+			description:
+				'Keep the hand-written platforms and Capabilities of plugins that still declare them, until they select platform code with native.definePlatform.',
+		}),
+		false,
+	),
 });
 
 const buildCommand: CommandDefinition<typeof schema> = {

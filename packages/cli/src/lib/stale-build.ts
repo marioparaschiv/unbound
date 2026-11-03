@@ -1,21 +1,26 @@
 import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join, relative, resolve } from 'node:path';
-import { z } from 'zod';
 
 import type { BuiltAddon } from '~/lib/reload-transport';
 import { readDevManifest } from '~/lib/manifest';
+
+import { safeParse, Type, type StaticDecode } from './schema';
 
 const SKIPPED = new Set(['node_modules', '.git']);
 
 type NewestFile = { path: string; modifiedMs: number };
 
-const packageManifestSchema = z.object({
-	dependencies: z.record(z.string(), z.string()).optional(),
-	devDependencies: z.record(z.string(), z.string()).optional(),
+const packageManifestSchema = Type.Object({
+	dependencies: Type.Optional(
+		Type.Record(Type.String(), Type.String(), { additionalProperties: false }),
+	),
+	devDependencies: Type.Optional(
+		Type.Record(Type.String(), Type.String(), { additionalProperties: false }),
+	),
 });
 
-type PackageManifest = z.infer<typeof packageManifestSchema>;
+type PackageManifest = StaticDecode<typeof packageManifestSchema>;
 
 type SharedPackage = { name: string; dir: string };
 
@@ -57,9 +62,13 @@ function newestFile(directory: string, skip: string, skipTests = false): NewestF
 function readPackageManifest(dir: string): PackageManifest | undefined {
 	const path = join(dir, 'package.json');
 
-	return existsSync(path)
-		? packageManifestSchema.safeParse(JSON.parse(readFileSync(path, 'utf8'))).data
-		: undefined;
+	if (!existsSync(path)) {
+		return undefined;
+	}
+
+	const parsed = safeParse(packageManifestSchema, JSON.parse(readFileSync(path, 'utf8')));
+
+	return parsed.success ? parsed.data : undefined;
 }
 
 function workspaceNames(dependencies: Record<string, string> | undefined) {

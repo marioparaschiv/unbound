@@ -1,4 +1,4 @@
-import type { z } from 'zod';
+import type { TSchema } from '@unbound-app/contracts/schema';
 
 import type { Endpoint, PathParams } from '~/lib/api/endpoint';
 import app from '~/lib/app';
@@ -18,11 +18,9 @@ export type ServedEndpoint<E> = ((args: ServerHandlerArgs) => Promise<Response>)
  * @param target The endpoint to serve.
  * @returns The handler to place under a method in `server.handlers`.
  */
-export function serve<
-	TBody extends z.core.$ZodType,
-	TResponse extends z.core.$ZodType,
-	TQuery extends z.core.$ZodType,
->(target: Endpoint<TBody, TResponse, TQuery>): ServedEndpoint<Endpoint<TBody, TResponse, TQuery>> {
+export function serve<TBody extends TSchema, TResponse extends TSchema, TQuery extends TSchema>(
+	target: Endpoint<TBody, TResponse, TQuery>,
+): ServedEndpoint<Endpoint<TBody, TResponse, TQuery>> {
 	return Object.assign(
 		({ request, params }: ServerHandlerArgs) => target.handle(app, request, params),
 		{

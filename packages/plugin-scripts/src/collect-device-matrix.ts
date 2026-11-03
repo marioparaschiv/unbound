@@ -1,3 +1,4 @@
+import { safeParse } from '@unbound-app/contracts/schema';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -113,7 +114,7 @@ function readBaseline(path: string): MeasuredCheck[] | undefined {
 	if (!existsSync(path)) return undefined;
 
 	try {
-		const parsed = measuredChecksSchema.safeParse(JSON.parse(readFileSync(path, 'utf8')));
+		const parsed = safeParse(measuredChecksSchema, JSON.parse(readFileSync(path, 'utf8')));
 
 		return parsed.success ? parsed.data : undefined;
 	} catch {

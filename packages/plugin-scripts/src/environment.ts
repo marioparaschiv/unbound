@@ -1,33 +1,33 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { z } from '@unbound-app/contracts/zod';
 
 import type { CommandRunner, DropTarget } from './device-drops';
 import { deviceScript } from './device-script';
+import { Type, safeParse, type Static } from '@unbound-app/contracts/schema';
 
 const ENVIRONMENT_FILE = 'environment.json';
 const IOS_TWEAK_DIRECTORY = '/var/jb/Library/MobileSubstrate/DynamicLibraries';
 const ANDROID_MODULES = ['app.unbound.android'];
 const SHA256 = /\b([0-9a-f]{64})\b/;
 
-export const deviceEnvironmentSchema = z.object({
-	loader: z.string(),
-	origin: z.string(),
-	client: z.string(),
-	discord: z.string(),
+export const deviceEnvironmentSchema = Type.Object({
+	loader: Type.String(),
+	origin: Type.String(),
+	client: Type.String(),
+	discord: Type.String(),
 });
 
-export type DeviceEnvironment = z.infer<typeof deviceEnvironmentSchema>;
+export type DeviceEnvironment = Static<typeof deviceEnvironmentSchema>;
 
-const environmentSchema = z.object({
-	loader: z.string(),
-	origin: z.string(),
-	client: z.string(),
-	discord: z.string(),
-	loaderFile: z.string(),
+const environmentSchema = Type.Object({
+	loader: Type.String(),
+	origin: Type.String(),
+	client: Type.String(),
+	discord: Type.String(),
+	loaderFile: Type.String(),
 });
 
-export type Environment = z.infer<typeof environmentSchema>;
+export type Environment = Static<typeof environmentSchema>;
 
 type LoaderGlobal = typeof globalThis & { UNBOUND_LOADER?: { version?: string; origin?: string } };
 
@@ -145,7 +145,7 @@ export function readEnvironment(out: string): Environment | undefined {
 	if (!existsSync(file)) return;
 
 	try {
-		const parsed = environmentSchema.safeParse(JSON.parse(readFileSync(file, 'utf8')));
+		const parsed = safeParse(environmentSchema, JSON.parse(readFileSync(file, 'utf8')));
 
 		return parsed.success ? parsed.data : undefined;
 	} catch {

@@ -7,7 +7,7 @@ import type { Client } from 'discord.js';
 import type { DispatcherContext } from '~/dispatchers/types';
 import { createAuditTelemetry } from '~/lib/audit-telemetry';
 import { createAuditDispatcher } from '~/dispatchers/audit';
-import { otelEnvSchema } from '~/lib/env';
+import { parseOtelEnv } from '~/lib/env';
 import { auditPost } from '~/db/schema';
 
 import { createBotTestDatabase, DATABASE_URL, type BotTestDatabase } from './helpers/database';
@@ -18,7 +18,7 @@ import { signUp } from './helpers/web';
 
 type EventColumns = Partial<AuditEvent>;
 
-const OTEL_OFF = otelEnvSchema.parse({});
+const OTEL_OFF = parseOtelEnv({});
 const NO_TELEMETRY = createAuditTelemetry({ env: OTEL_OFF });
 
 function deployOf(commitSha: string): EventColumns {

@@ -1,6 +1,7 @@
+import { Type, parse } from '@unbound-app/contracts/schema';
+import type { Static } from '@unbound-app/contracts/schema';
 import { createLogger } from '@unbound-app/logger';
 import { lt } from 'drizzle-orm';
-import { z } from 'zod';
 
 import type { SponsorshipLifecycle, SponsorshipValues } from '~/lib/sponsors/sponsorships';
 import { sponsorship, sponsorWebhookDelivery } from '~/db/schema';
@@ -35,27 +36,32 @@ const SPONSORSHIPS_QUERY = `query ($login: String!, $after: String) {
 	}
 }`;
 
-const pageSchema = z.object({
-	data: z.object({
-		repositoryOwner: z.object({
-			sponsorshipsAsMaintainer: z.object({
-				pageInfo: z.object({ hasNextPage: z.boolean(), endCursor: z.string().nullable() }),
-				nodes: z.array(
-					z.object({
-						createdAt: z.iso.datetime({ offset: true }),
-						isActive: z.boolean(),
-						isOneTimePayment: z.boolean(),
-						privacyLevel: z.enum(['PUBLIC', 'PRIVATE']),
-						tier: z
-							.object({
-								name: z.string(),
-								monthlyPriceInCents: z.int().nonnegative(),
-							})
-							.nullable(),
+const pageSchema = Type.Object({
+	data: Type.Object({
+		repositoryOwner: Type.Object({
+			sponsorshipsAsMaintainer: Type.Object({
+				pageInfo: Type.Object({
+					hasNextPage: Type.Boolean(),
+					endCursor: Type.Union([Type.String(), Type.Null()]),
+				}),
+				nodes: Type.Array(
+					Type.Object({
+						createdAt: Type.String({ format: 'date-time' }),
+						isActive: Type.Boolean(),
+						isOneTimePayment: Type.Boolean(),
+						privacyLevel: Type.Enum(['PUBLIC', 'PRIVATE']),
+						tier: Type.Union([
+							Type.Object({
+								name: Type.String(),
+								monthlyPriceInCents: Type.Integer({ minimum: 0 }),
+							}),
+							Type.Null(),
+						]),
 						// A deleted sponsor's account resolves to null.
-						sponsorEntity: z
-							.object({ databaseId: z.int(), login: z.string() })
-							.nullable(),
+						sponsorEntity: Type.Union([
+							Type.Object({ databaseId: Type.Integer(), login: Type.String() }),
+							Type.Null(),
+						]),
 					}),
 				),
 			}),
@@ -63,8 +69,8 @@ const pageSchema = z.object({
 	}),
 });
 
-const errorsSchema = z.object({
-	errors: z.array(z.object({ message: z.string() })).optional(),
+const errorsSchema = Type.Object({
+	errors: Type.Optional(Type.Array(Type.Object({ message: Type.String() }))),
 });
 
 type SponsorsConfig = {
@@ -73,7 +79,7 @@ type SponsorsConfig = {
 	token: string;
 };
 
-type SponsorshipsPage = z.infer<
+type SponsorshipsPage = Static<
 	typeof pageSchema
 >['data']['repositoryOwner']['sponsorshipsAsMaintainer'];
 
@@ -112,7 +118,7 @@ async function fetchPage(config: SponsorsConfig, after: string | null): Promise<
 	}
 
 	const body = await response.json();
-	const { errors } = errorsSchema.parse(body);
+	const { errors } = parse(errorsSchema, body);
 
 	if (errors?.length) {
 		throw new Error(
@@ -120,7 +126,7 @@ async function fetchPage(config: SponsorsConfig, after: string | null): Promise<
 		);
 	}
 
-	return pageSchema.parse(body).data.repositoryOwner.sponsorshipsAsMaintainer;
+	return parse(pageSchema, body).data.repositoryOwner.sponsorshipsAsMaintainer;
 }
 
 /**

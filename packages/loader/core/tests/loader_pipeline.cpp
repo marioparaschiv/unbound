@@ -10,6 +10,7 @@
 namespace {
 const std::string kBase   = "https://builds.unbound.rip/";
 const std::string kBundle = "unbound.98.bundle";
+const std::string kDev    = "unbound-dev.98.bundle";
 
 class CountingHost : public loader::LoaderHost
 {
@@ -102,6 +103,71 @@ void reloadsForAnUpdateWithHotReloadOn()
     assert(launch.host->reloads == 1);
 }
 
+void runsTheSavedBundleWhenItsFlavourMatches()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "default"}, {kDev, "dev"}});
+    launch.server.settings.set("unbound", "developer-mode", true);
+    assert(launch.server.install(launch.updater, std::nullopt));
+    assert(launch.server.activeContents() == "dev");
+
+    launch.pipeline.prepare();
+
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bundle == "dev");
+    assert(launch.server.lastDownload == kBase + kDev);
+    assert(launch.host->reloads == 0);
+}
+
+void runsTheDevBundleItDownloadedForTheSwitch()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "default"}, {kDev, "dev"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    assert(launch.server.activeContents() == "default");
+    launch.server.settings.set("unbound", "developer-mode", true);
+
+    launch.pipeline.prepare();
+
+    assert(launch.server.lastDownload == kBase + kDev);
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bundle == "dev");
+    assert(bundle->path == launch.server.candidate());
+    assert(launch.host->reloads == 0);
+}
+
+void runsTheSavedBundleWhenNoDevBundleIsPublished()
+{
+    Launch launch;
+    launch.server.settings.set("unbound", "developer-mode", true);
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "default"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.server.publish(kBase, "2026-10-03T00:00:00.000Z", {{kBundle, "next"}});
+
+    launch.pipeline.prepare();
+
+    // Not a pending switch: the saved bundle runs now and the update waits for the next launch.
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bundle == "default");
+    assert(bundle->path == launch.server.active());
+}
+
+void fallsBackToTheSavedBundleWhenTheSwitchDownloadFails()
+{
+    Launch launch;
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "default"}, {kDev, "dev"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+    launch.server.files.erase(kBase + kDev);
+    launch.server.settings.set("unbound", "developer-mode", true);
+
+    launch.pipeline.prepare();
+
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bundle == "default");
+    assert(bundle->path == launch.server.active());
+    assert(launch.server.activeContents() == "default");
+}
+
 void logsTheRuntimeBeforeAddonsLoadForIt()
 {
     Launch launch;
@@ -138,6 +204,10 @@ int main()
     leavesAFirstDownloadForTheRuntime();
     keepsTheSavedBundleUntilTheNextLaunch();
     reloadsForAnUpdateWithHotReloadOn();
+    runsTheSavedBundleWhenItsFlavourMatches();
+    runsTheDevBundleItDownloadedForTheSwitch();
+    fallsBackToTheSavedBundleWhenTheSwitchDownloadFails();
+    runsTheSavedBundleWhenNoDevBundleIsPublished();
     logsTheRuntimeBeforeAddonsLoadForIt();
     doesNothingWhenDisabled();
     return 0;

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import type { ModuleHint } from '~/metro/cache';
 
 import { startFakeMetro, type FakeFactory } from './helpers/fake-metro';
+import { createCacheMock } from './helpers/cache';
 
 type Asset = {
 	name: string;
@@ -91,9 +92,8 @@ metroRequire(3);
 
 const modules = globalThis.modules;
 
-mock.module('~/metro/cache', () => ({
-	ModuleFlags: { BLACKLISTED: 1 },
-	default: {
+mock.module('~/metro/cache', () =>
+	createCacheMock({
 		state: { moduleFlags: {} },
 		moduleIds,
 		hasModuleFlag: () => false,
@@ -108,8 +108,8 @@ mock.module('~/metro/cache', () => ({
 		markKeyMissing(key: string) {
 			cachedIds[key] = [];
 		},
-	},
-}));
+	}),
+);
 
 const metro = await import('~/metro/search');
 

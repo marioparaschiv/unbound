@@ -7,6 +7,7 @@ import type { PluginScope } from '~/addons/scope';
 import type { Addon } from '~/addons/addon';
 
 import { startFakeMetro } from './helpers/fake-metro';
+import { createCacheMock } from './helpers/cache';
 
 const LOADED_ID = 1;
 const loadedExports = { loaded: (value: number) => value };
@@ -45,8 +46,8 @@ Object.assign(globalThis, {
 	},
 });
 
-mock.module('~/metro/cache', () => ({
-	default: {
+mock.module('~/metro/cache', () =>
+	createCacheMock({
 		state: { moduleFlags: {} },
 		moduleIds: [...records.keys()],
 		hasModuleFlag: () => false,
@@ -56,9 +57,8 @@ mock.module('~/metro/cache', () => ({
 		getHintsForKey: () => void 0,
 		markKeyMissing: () => void 0,
 		addCachedIDForKey: () => void 0,
-	},
-	ModuleFlags: { BLACKLISTED: 1 },
-}));
+	}),
+);
 
 mock.module('~/metro/wrappers', () => ({
 	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),

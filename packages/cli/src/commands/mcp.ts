@@ -1,12 +1,12 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { DEFAULT_BRIDGE_PORT } from '@unbound-app/debugger-protocol';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { command, cli, type Command } from 'cleye';
 
 import { toCleyeCommand } from '~/adapters/cleye';
+import { registerTools } from '~/adapters/mcp';
 import { createContext } from '~/lib/context';
 import type { MenuEntry } from '~/lib/menu';
-import { toMcpTool } from '~/adapters/mcp';
 import { commands } from '~/registry';
 
 /** The agent-facing tools the CLI lists under `ubd mcp` instead of at the root. */
@@ -35,15 +35,16 @@ export const mcpCommand: Command = command(
 	(parsed) => {
 		const context = createContext(parsed.flags.port);
 
-		const server = new McpServer({ name: 'ubd', version: '1.0.0' });
+		const server = new Server(
+			{ name: 'ubd', version: '1.0.0' },
+			{ capabilities: { tools: {} } },
+		);
 
-		for (const definition of commands) {
-			if (!definition.surfaces.mcp) {
-				continue;
-			}
-
-			toMcpTool(server, definition, context);
-		}
+		registerTools(
+			server,
+			commands.filter((definition) => definition.surfaces.mcp),
+			context,
+		);
 
 		const transport = new StdioServerTransport();
 

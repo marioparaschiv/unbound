@@ -1,208 +1,219 @@
+import { ADDON_KINDS } from '@unbound-app/types/addons';
+
 import { addonIdSchema, addonManifestSchema, semverSchema } from './manifest';
+import { Type, type StaticDecode, trimmedString } from './schema';
 import { userSummarySchema } from './account';
 import { changelogSchema } from './changelog';
 import { submissionSchema } from './publish';
 import { sourcePinSchema } from './source';
 import { addonIconSchema } from './icons';
-import { z } from './zod';
 
 // Lives in icons.ts so publish.ts can use it without importing this module back.
 export { addonIconSchema };
 export type { AddonIcon } from './icons';
 
-export const sha256Schema = z
-	.string()
-	.check(z.regex(/^[0-9a-f]{64}$/, 'Must be a lowercase hex SHA-256 digest.'));
+export const sha256Schema = Type.String({
+	pattern: /^[0-9a-f]{64}$/,
+	errorMessage: 'Must be a lowercase hex SHA-256 digest.',
+});
 
 /** Owners manage maintainers; every maintainer may publish updates. */
-export const maintainerRoleSchema = z.enum(['owner', 'maintainer']);
+export const maintainerRoleSchema = Type.Enum(['owner', 'maintainer']);
 
 /** An approved, published version, served immutably from the CDN. */
-export const addonVersionSchema = z.object({
+export const addonVersionSchema = Type.Object({
 	version: semverSchema,
 	manifest: addonManifestSchema,
 	/** Plain text: a legacy upload's free text, or `changes` rendered for a version read from GitHub. */
-	changelog: z.nullable(z.string()),
+	changelog: Type.Union([Type.String(), Type.Null()]),
 	/** The version's parsed `CHANGELOG.md` entry; `null` for legacy uploads and versions without one. */
-	changes: z.nullable(changelogSchema),
+	changes: Type.Union([changelogSchema, Type.Null()]),
 	/** Where the version was read from; `null` for versions published before GitHub sources. */
-	source: z.nullable(sourcePinSchema),
-	bundleSize: z.int().check(z.positive()),
+	source: Type.Union([sourcePinSchema, Type.Null()]),
+	bundleSize: Type.Integer({ exclusiveMinimum: 0 }),
 	sha256: sha256Schema,
-	publishedAt: z.iso.datetime(),
-	manifestUrl: z.url(),
-	bundleUrl: z.url(),
+	publishedAt: Type.String({ format: 'date-time' }),
+	manifestUrl: Type.String({ format: 'url' }),
+	bundleUrl: Type.String({ format: 'url' }),
 	/**
 	 * The version's ADDON.md store page on the CDN; its `media/` paths resolve against this URL. `null`
 	 * when the version has no ADDON.md. Optional so catalogs stored before it still parse.
 	 */
-	pageUrl: z.optional(z.nullable(z.url())),
+	pageUrl: Type.Optional(Type.Union([Type.String({ format: 'url' }), Type.Null()])),
 });
 
-export const addonSchema = z.object({
+export const addonSchema = Type.Object({
 	id: addonIdSchema,
-	createdAt: z.iso.datetime(),
+	createdAt: Type.String({ format: 'date-time' }),
 	/** Hidden from listings and update checks; its published files stay up for existing installs. */
-	delistedAt: z.nullable(z.iso.datetime()),
+	delistedAt: Type.Union([Type.String({ format: 'date-time' }), Type.Null()]),
 });
 
-export const addonResponseSchema = z.object({
+export const addonResponseSchema = Type.Object({
 	addon: addonSchema,
 });
 
-export const addonTypeSchema = addonManifestSchema.shape.type.def.innerType;
+export const addonTypeSchema = Type.Enum(ADDON_KINDS);
 
 /** `created` is when the addon was first approved, `updated` when its newest version was. */
-export const addonSortSchema = z.enum(['name', 'created', 'updated']);
+export const addonSortSchema = Type.Enum(['name', 'created', 'updated']);
 
-export const sortOrderSchema = z.enum(['asc', 'desc']);
+export const sortOrderSchema = Type.Enum(['asc', 'desc']);
 
 /** How a filter's values combine: has any of them, has all of them, or has none of them. */
-export const filterMatchSchema = z.enum(['any', 'all', 'none']);
+export const filterMatchSchema = Type.Enum(['any', 'all', 'none']);
 
 /** A filter that compares one value per addon, which can match one of the values or none of them. */
-export const singleMatchSchema = z.enum(['any', 'none']);
+export const singleMatchSchema = Type.Enum(['any', 'none']);
 
 const TAG_LIST = /^[a-z\d]+(?:-[a-z\d]+)*(?:,[a-z\d]+(?:-[a-z\d]+)*)*$/;
 
 const SNOWFLAKE_LIST = /^[1-9]\d{0,19}(?:,[1-9]\d{0,19})*$/;
 
-export const listAddonsQuerySchema = z.optional(
-	z.object({
-		type: z.optional(addonTypeSchema),
-		/** Matches anywhere in the newest version's name or description, case-insensitively. */
-		q: z.optional(z.string().check(z.trim(), z.maxLength(100))),
-		/** Defaults to `name`; ties are ordered by id. */
-		sort: z.optional(addonSortSchema),
-		/** Defaults to `asc`. */
-		order: z.optional(sortOrderSchema),
-		/** Comma-separated tag ids, compared by `tagMatch`. */
-		tags: z.optional(
-			z
-				.string()
-				.check(z.regex(TAG_LIST, 'Must be comma-separated tag ids.'), z.maxLength(512)),
+export const listAddonsQuerySchema = Type.Object({
+	type: Type.Optional(addonTypeSchema),
+	/** Matches anywhere in the newest version's name or description, case-insensitively. */
+	q: Type.Optional(
+		trimmedString((value) =>
+			value.length > 100 ? 'Too big: expected string to have <=100 characters' : undefined,
 		),
-		/** Defaults to `any`: the addon has at least one of `tags`. */
-		tagMatch: z.optional(filterMatchSchema),
-		/** Comma-separated Discord ids, matched against the newest version's manifest `authors[].id`. */
-		authors: z.optional(
-			z
-				.string()
-				.check(
-					z.regex(SNOWFLAKE_LIST, 'Must be comma-separated Discord ids.'),
-					z.maxLength(512),
-				),
-		),
-		/** Defaults to `any`: one of `authors` is credited. `none` keeps addons crediting none of them. */
-		authorMatch: z.optional(singleMatchSchema),
-		/** A number of days, compared with when the newest version was approved by `updatedMatch`. */
-		updated: z.optional(
-			z.string().check(z.regex(/^[1-9]\d{0,3}$/, 'Must be a number of days up to 9999.')),
-		),
-		/** Defaults to `any`: updated within `updated` days. `none` keeps addons updated before then. */
-		updatedMatch: z.optional(singleMatchSchema),
-		/** The previous page's `nextCursor`, requested with the same filters and sort. */
-		cursor: z.optional(z.string().check(z.maxLength(512))),
-	}),
-);
+	),
+	/** Defaults to `name`; ties are ordered by id. */
+	sort: Type.Optional(addonSortSchema),
+	/** Defaults to `asc`. */
+	order: Type.Optional(sortOrderSchema),
+	/** Comma-separated tag ids, compared by `tagMatch`. */
+	tags: Type.Optional(
+		Type.String({
+			pattern: TAG_LIST,
+			errorMessage: 'Must be comma-separated tag ids.',
+			maxLength: 512,
+		}),
+	),
+	/** Defaults to `any`: the addon has at least one of `tags`. */
+	tagMatch: Type.Optional(filterMatchSchema),
+	/** Comma-separated Discord ids, matched against the newest version's manifest `authors[].id`. */
+	authors: Type.Optional(
+		Type.String({
+			pattern: SNOWFLAKE_LIST,
+			errorMessage: 'Must be comma-separated Discord ids.',
+			maxLength: 512,
+		}),
+	),
+	/** Defaults to `any`: one of `authors` is credited. `none` keeps addons crediting none of them. */
+	authorMatch: Type.Optional(singleMatchSchema),
+	/** A number of days, compared with when the newest version was approved by `updatedMatch`. */
+	updated: Type.Optional(
+		Type.String({
+			pattern: /^[1-9]\d{0,3}$/,
+			errorMessage: 'Must be a number of days up to 9999.',
+		}),
+	),
+	/** Defaults to `any`: updated within `updated` days. `none` keeps addons updated before then. */
+	updatedMatch: Type.Optional(singleMatchSchema),
+	/** The previous page's `nextCursor`, requested with the same filters and sort. */
+	cursor: Type.Optional(Type.String({ maxLength: 512 })),
+});
 
-export const listedAddonSchema = z.object({
+export const listedAddonSchema = Type.Object({
 	id: addonIdSchema,
 	type: addonTypeSchema,
 	/** The website icon a maintainer picked; `null` for the type's default. Optional so catalogs stored before it still parse. */
-	icon: z.optional(z.nullable(addonIconSchema)),
+	icon: Type.Optional(Type.Union([addonIconSchema, Type.Null()])),
 	/** The server-rendered SVG markup of `icon`; `null` when `icon` is null or unknown. Optional like `icon`. */
-	iconSvg: z.optional(z.nullable(z.string())),
+	iconSvg: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 	/** The display name: the served version's, unless staff pinned another. Optional so catalogs stored before it still parse. */
-	name: z.optional(z.string()),
+	name: Type.Optional(Type.String()),
 	/** The display description: the served version's, unless staff pinned another. Optional like `name`. */
-	description: z.optional(z.string()),
+	description: Type.Optional(Type.String()),
 	latestVersion: addonVersionSchema,
 });
 
 /** One page of listed addons, each with its newest version. */
-export const listAddonsResponseSchema = z.object({
-	addons: z.array(listedAddonSchema),
-	nextCursor: z.nullable(z.string()),
+export const listAddonsResponseSchema = Type.Object({
+	addons: Type.Array(listedAddonSchema),
+	nextCursor: Type.Union([Type.String(), Type.Null()]),
 });
 
 /**
  * Every listed addon in one snapshot. `revision` changes exactly when the snapshot does, and is served
  * as the response's `ETag`.
  */
-export const catalogResponseSchema = z.object({
-	revision: z.string().check(z.minLength(1)),
-	addons: z.array(listedAddonSchema),
+export const catalogResponseSchema = Type.Object({
+	revision: Type.String({ minLength: 1 }),
+	addons: Type.Array(listedAddonSchema),
 });
 
 /** Every live version of one listed addon, newest first. */
-export const addonVersionsResponseSchema = z.object({
-	versions: z.array(addonVersionSchema),
+export const addonVersionsResponseSchema = Type.Object({
+	versions: Type.Array(addonVersionSchema),
 });
 
 /** `null` resets the addon to its type's default icon. */
-export const setAddonIconRequestSchema = z.object({
-	icon: z.nullable(addonIconSchema),
+export const setAddonIconRequestSchema = Type.Object({
+	icon: Type.Union([addonIconSchema, Type.Null()]),
 });
 
-export const addonIconResponseSchema = z.object({
-	icon: z.nullable(addonIconSchema),
+export const addonIconResponseSchema = Type.Object({
+	icon: Type.Union([addonIconSchema, Type.Null()]),
 });
 
-export const maintainerSchema = z.extend(userSummarySchema, {
+export const maintainerSchema = Type.Object({
+	...userSummarySchema.properties,
 	role: maintainerRoleSchema,
-	addedAt: z.iso.datetime(),
+	addedAt: Type.String({ format: 'date-time' }),
 });
 
-export const addMaintainerRequestSchema = z.object({
-	userId: z.string().check(z.minLength(1)),
+export const addMaintainerRequestSchema = Type.Object({
+	userId: Type.String({ minLength: 1 }),
 });
 
-export const maintainersResponseSchema = z.object({
-	maintainers: z.array(maintainerSchema),
+export const maintainersResponseSchema = Type.Object({
+	maintainers: Type.Array(maintainerSchema),
 });
 
-export const transferAddonRequestSchema = z.object({
-	userId: z.string().check(z.minLength(1)),
+export const transferAddonRequestSchema = Type.Object({
+	userId: Type.String({ minLength: 1 }),
 	/** Whether the previous owner stays on as a maintainer. */
-	keepPreviousOwner: z._default(z.boolean(), true),
+	keepPreviousOwner: Type.Boolean({ default: true }),
 });
 
-export const maintainedAddonSchema = z.extend(addonSchema, {
+export const maintainedAddonSchema = Type.Object({
+	...addonSchema.properties,
 	role: maintainerRoleSchema,
-	latestVersion: z.nullable(addonVersionSchema),
+	latestVersion: Type.Union([addonVersionSchema, Type.Null()]),
 	/** Updates awaiting review or the author's changes. */
-	openSubmissions: z.array(submissionSchema),
+	openSubmissions: Type.Array(submissionSchema),
 });
 
 /** The caller's addons and the new listings they have waiting, for the developer dashboard. */
-export const myAddonsResponseSchema = z.object({
-	addons: z.array(maintainedAddonSchema),
-	openListings: z.array(submissionSchema),
+export const myAddonsResponseSchema = Type.Object({
+	addons: Type.Array(maintainedAddonSchema),
+	openListings: Type.Array(submissionSchema),
 });
 
-export type MaintainerRole = z.infer<typeof maintainerRoleSchema>;
-export type AddonVersion = z.infer<typeof addonVersionSchema>;
-export type Addon = z.infer<typeof addonSchema>;
-export type AddonResponse = z.infer<typeof addonResponseSchema>;
-export type AddonType = z.infer<typeof addonTypeSchema>;
-export type AddonSort = z.infer<typeof addonSortSchema>;
-export type SortOrder = z.infer<typeof sortOrderSchema>;
-export type FilterMatch = z.infer<typeof filterMatchSchema>;
-export type SingleMatch = z.infer<typeof singleMatchSchema>;
-export type ListAddonsQuery = z.infer<typeof listAddonsQuerySchema>;
-export type ListedAddon = z.infer<typeof listedAddonSchema>;
-export type SetAddonIconRequest = z.infer<typeof setAddonIconRequestSchema>;
-export type AddonIconResponse = z.infer<typeof addonIconResponseSchema>;
-export type ListAddonsResponse = z.infer<typeof listAddonsResponseSchema>;
-export type CatalogResponse = z.infer<typeof catalogResponseSchema>;
-export type AddonVersionsResponse = z.infer<typeof addonVersionsResponseSchema>;
-export type Maintainer = z.infer<typeof maintainerSchema>;
-export type AddMaintainerRequest = z.infer<typeof addMaintainerRequestSchema>;
-export type MaintainersResponse = z.infer<typeof maintainersResponseSchema>;
-export type TransferAddonRequest = z.infer<typeof transferAddonRequestSchema>;
-export type MaintainedAddon = z.infer<typeof maintainedAddonSchema>;
-export type MyAddonsResponse = z.infer<typeof myAddonsResponseSchema>;
+export type MaintainerRole = StaticDecode<typeof maintainerRoleSchema>;
+export type AddonVersion = StaticDecode<typeof addonVersionSchema>;
+export type Addon = StaticDecode<typeof addonSchema>;
+export type AddonResponse = StaticDecode<typeof addonResponseSchema>;
+export type AddonType = StaticDecode<typeof addonTypeSchema>;
+export type AddonSort = StaticDecode<typeof addonSortSchema>;
+export type SortOrder = StaticDecode<typeof sortOrderSchema>;
+export type FilterMatch = StaticDecode<typeof filterMatchSchema>;
+export type SingleMatch = StaticDecode<typeof singleMatchSchema>;
+export type ListAddonsQuery = StaticDecode<typeof listAddonsQuerySchema>;
+export type ListedAddon = StaticDecode<typeof listedAddonSchema>;
+export type SetAddonIconRequest = StaticDecode<typeof setAddonIconRequestSchema>;
+export type AddonIconResponse = StaticDecode<typeof addonIconResponseSchema>;
+export type ListAddonsResponse = StaticDecode<typeof listAddonsResponseSchema>;
+export type CatalogResponse = StaticDecode<typeof catalogResponseSchema>;
+export type AddonVersionsResponse = StaticDecode<typeof addonVersionsResponseSchema>;
+export type Maintainer = StaticDecode<typeof maintainerSchema>;
+export type AddMaintainerRequest = StaticDecode<typeof addMaintainerRequestSchema>;
+export type MaintainersResponse = StaticDecode<typeof maintainersResponseSchema>;
+export type TransferAddonRequest = StaticDecode<typeof transferAddonRequestSchema>;
+export type MaintainedAddon = StaticDecode<typeof maintainedAddonSchema>;
+export type MyAddonsResponse = StaticDecode<typeof myAddonsResponseSchema>;
 
 export default {
 	sha256Schema,

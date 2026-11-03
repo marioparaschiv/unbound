@@ -43,7 +43,7 @@ const REVIEW_PERMISSIONS: Record<SubmissionKind, Permissions> = {
 };
 
 function getReviewableKinds(caller: Caller): SubmissionKind[] {
-	return submissionKindSchema.options.filter((kind) =>
+	return submissionKindSchema.enum.filter((kind) =>
 		hasPermission(caller.user.role, REVIEW_PERMISSIONS[kind]),
 	);
 }

@@ -1,6 +1,7 @@
 import { join } from 'node:path';
 
 import { resolveDevServerUrl } from '../dev-host';
+import { BUNDLE_PATTERN } from '../build/sign';
 
 export const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 export const HOST = process.env.HOST || '0.0.0.0';
@@ -18,8 +19,7 @@ export const SOURCE_BUNDLE_NAME = 'unbound.js';
 /** Written after every bundle variant, so its change marks a finished build. */
 export const MANIFEST_NAME = 'manifest.json';
 
-/** Matches every bundle variant the loader may download: `unbound.js` or `unbound.<version>.bundle`. */
-export const BUNDLE_PATTERN = /^unbound\.(?:js|\d+\.bundle)$/;
+export { BUNDLE_PATTERN };
 
 export default {
 	PORT,

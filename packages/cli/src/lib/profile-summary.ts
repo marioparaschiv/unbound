@@ -1,21 +1,21 @@
-import { z } from 'zod';
+import { defaulted, Type, type StaticDecode } from '~/lib/schema';
 
-const frameId = z.union([z.string(), z.number()]);
+const frameId = Type.Union([Type.String(), Type.Number()]);
 
-const stackFrameSchema = z.object({
-	name: z.string().optional(),
-	category: z.string().optional(),
-	parent: frameId.optional(),
+const stackFrameSchema = Type.Object({
+	name: Type.Optional(Type.String()),
+	category: Type.Optional(Type.String()),
+	parent: Type.Optional(frameId),
 });
 
 /** The parts of a Hermes sampled Chrome trace the summary reads. */
-export const chromeTraceSchema = z.object({
-	samples: z.array(z.object({ sf: frameId.optional() })).default([]),
-	stackFrames: z.record(z.string(), stackFrameSchema).default({}),
+export const chromeTraceSchema = Type.Object({
+	samples: defaulted(Type.Array(Type.Object({ sf: Type.Optional(frameId) })), []),
+	stackFrames: defaulted(Type.Record(Type.String(), stackFrameSchema), {}),
 });
 
-type StackFrame = z.infer<typeof stackFrameSchema>;
-type ChromeTrace = z.infer<typeof chromeTraceSchema>;
+type StackFrame = StaticDecode<typeof stackFrameSchema>;
+type ChromeTrace = StaticDecode<typeof chromeTraceSchema>;
 
 /** A JavaScript function's share of the recorded samples. */
 export type ProfileEntry = {

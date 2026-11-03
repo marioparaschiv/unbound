@@ -29,7 +29,7 @@ function ToastIcon({ icon, tinted = true }: ToastIconProps) {
 			{tinted ? (
 				<TintedIcon source={source} />
 			) : (
-				<Image source={source} style={{ width: 24, aspectRatio: 1 }} />
+				<Image source={source} style={styles.image} />
 			)}
 		</View>
 	);

@@ -1,9 +1,9 @@
+import { parse, Type, type StaticDecode, type TSchema } from '@unbound-app/contracts/schema';
 import type { PageDirection } from '@unbound-app/contracts/admin';
 import type { SortOrder } from '@unbound-app/contracts/addons';
 import { isPostgresSafe } from '@unbound-app/contracts/text';
 import type { SQL, SQLWrapper } from 'drizzle-orm';
 import { sql } from 'drizzle-orm';
-import { z } from 'zod';
 
 import { ApiError } from '~/lib/api/errors';
 
@@ -17,11 +17,9 @@ export type CursorPosition = [value: string | number | Date, id: string];
 const MAX_DATE_MS = Date.UTC(10_000, 0, 1) - 1;
 
 /** A cursor's timestamp: epoch milliseconds up to the end of year 9999, decoded to a `Date`. */
-export const cursorTime = z
-	.int()
-	.min(0)
-	.max(MAX_DATE_MS)
-	.transform((ms) => new Date(ms));
+export const cursorTime = Type.Codec(Type.Integer({ minimum: 0, maximum: MAX_DATE_MS }))
+	.Decode((ms) => new Date(ms))
+	.Encode((date) => date.getTime());
 
 /** The sort column and the id column a keyset list is ordered by. */
 export type KeyColumns = [value: SQLWrapper, id: SQLWrapper];
@@ -51,12 +49,12 @@ export function encodeCursor(key: readonly CursorKey[number][]): string {
 /**
  * @description Parses a cursor from {@link encodeCursor}, failing with `invalid_request` on anything
  * that is not one or belongs to a list with another key shape.
- * @template T The list's decoded key.
+ * @template T The list's key schema.
  * @param cursor The cursor from the request.
  * @param schema The list's key shape.
  * @returns The row position.
  */
-export function decodeCursor<T>(cursor: string, schema: z.ZodType<T>): T {
+export function decodeCursor<T extends TSchema>(cursor: string, schema: T): StaticDecode<T> {
 	try {
 		const key = JSON.parse(Buffer.from(cursor, 'base64url').toString());
 
@@ -64,7 +62,7 @@ export function decodeCursor<T>(cursor: string, schema: z.ZodType<T>): T {
 			throw new Error('Text Postgres cannot store in a cursor.');
 		}
 
-		return schema.parse(key);
+		return parse(schema, key);
 	} catch {
 		throw new ApiError('invalid_request', 'The cursor does not belong to this list.');
 	}

@@ -1,20 +1,25 @@
 import type { CommandDefinition } from '@unbound-app/debugger-protocol/registry';
-import { z } from 'zod';
 
 import { runOnDevice, toDeviceCode } from '~/lib/device';
 import { bridgePortField } from '~/lib/context';
+import { defaulted, Type } from '~/lib/schema';
 import { viewTree } from '~/lib/probes';
 
-const schema = z.object({
-	filter: z
-		.string()
-		.default('')
-		.describe('Keep only views whose class name contains this text, plus their ancestors.'),
-	depth: z
-		.number()
-		.default(40)
-		.describe('How deep to print below each view; iOS caps this at 12 levels.'),
-	max: z.number().default(1500).describe('How many views to visit at most.'),
+const schema = Type.Object({
+	filter: defaulted(
+		Type.String({
+			description:
+				'Keep only views whose class name contains this text, plus their ancestors.',
+		}),
+		'',
+	),
+	depth: defaulted(
+		Type.Number({
+			description: 'How deep to print below each view; iOS caps this at 12 levels.',
+		}),
+		40,
+	),
+	max: defaulted(Type.Number({ description: 'How many views to visit at most.' }), 1500),
 	port: bridgePortField,
 });
 

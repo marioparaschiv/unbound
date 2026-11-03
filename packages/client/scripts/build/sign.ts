@@ -7,9 +7,9 @@ import {
 	type KeyObject,
 } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { safeParse, Type, type StaticDecode } from '@unbound-app/contracts/schema';
 import { join, resolve } from 'node:path';
 import Logger from '@unbound-app/logger';
-import { z } from 'zod';
 
 const logger = Logger.create('Build', 'Sign');
 
@@ -20,6 +20,12 @@ export const PR_SIGNING_KEY_VARIABLE = 'UNBOUND_PR_BUNDLE_SIGNING_KEY';
 export const SIGNATURE_SUFFIX = '.sig';
 
 export const MANIFEST_FILE = 'manifest.json';
+
+/**
+ * Matches every client bundle the loader may download: the default and dev flavours, as source or
+ * bytecode, e.g. `unbound.js`, `unbound.98.bundle`, `unbound-dev.js`, `unbound-dev.98.bundle`.
+ */
+export const BUNDLE_PATTERN = /^unbound(?:-dev)?\.(?:js|\d+\.bundle)$/;
 
 const BUILD_TIME_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/;
 
@@ -57,10 +63,7 @@ export function signedMessage(contents: Buffer, pullRequest = 0): Buffer {
  */
 export function signableBundles(dir: string): string[] {
 	return readdirSync(dir)
-		.filter(
-			(file) =>
-				file.startsWith('unbound.') && (file === 'unbound.js' || file.endsWith('.bundle')),
-		)
+		.filter((file) => BUNDLE_PATTERN.test(file))
 		.sort();
 }
 
@@ -95,14 +98,18 @@ export function parseSigningKey(pem: string): KeyObject {
 	return key;
 }
 
-const buildManifestSchema = z.looseObject({
-	revision: z.string().optional(),
-	channel: z.string().optional(),
-	buildTime: z.string().optional(),
-	sha512: z.record(z.string(), z.string()).optional(),
-});
+// Keys the build writes but signing only passes through, such as the bytecode versions, are kept.
+const buildManifestSchema = Type.Object(
+	{
+		revision: Type.Optional(Type.String()),
+		channel: Type.Optional(Type.String()),
+		buildTime: Type.Optional(Type.String()),
+		sha512: Type.Optional(Type.Record(Type.String(), Type.String())),
+	},
+	{ additionalProperties: true },
+);
 
-type BuildManifest = z.infer<typeof buildManifestSchema>;
+type BuildManifest = StaticDecode<typeof buildManifestSchema>;
 
 function readManifest(dir: string): BuildManifest {
 	const path = join(dir, MANIFEST_FILE);
@@ -111,7 +118,7 @@ function readManifest(dir: string): BuildManifest {
 		throw new Error(`${dir} has no ${MANIFEST_FILE} to sign.`);
 	}
 
-	const parsed = buildManifestSchema.safeParse(JSON.parse(readFileSync(path, 'utf8')));
+	const parsed = safeParse(buildManifestSchema, JSON.parse(readFileSync(path, 'utf8')));
 
 	if (!parsed.success) {
 		throw new Error(`${MANIFEST_FILE} is not a build manifest: ${parsed.error.message}`);

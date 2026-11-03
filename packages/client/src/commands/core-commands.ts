@@ -4,9 +4,9 @@ import { createCommands, option } from '~/commands/api';
 import { Discord } from '~/metro/components';
 import { findByProps } from '~/metro/search';
 import { Screens } from '~/core/constants';
+import debug from '~/debugger/builtin.dev';
 import { getBucket } from '~/storage/api';
 import { reload } from '~/native/native';
-import debug from '~/debugger/builtin';
 import { messages } from '~/i18n/api';
 import { Util } from '~/metro/common';
 
@@ -41,39 +41,6 @@ export function start() {
 			description: 'Send debug info',
 			execute: (_args, context) => sendDebugReport(context?.channel?.id),
 		},
-		debugger: {
-			description: 'Turn the WebSocket debugger on or off, or connect it to an address',
-			options: {
-				address: option.string({
-					description: 'The bridge address, such as 192.168.1.2:9090',
-				}),
-			},
-			execute({ address }) {
-				const enabled = address ? true : !getSetting('debugger.enabled');
-
-				if (address) {
-					setSetting('debugger.address', address.trim());
-				}
-
-				setSetting('debugger.enabled', enabled);
-
-				// The debugger only listens for these settings while it runs, so restart it directly.
-				debug.stop();
-
-				if (enabled) {
-					debug.start();
-				}
-
-				const target = getSetting('debugger.address') || 'the default address';
-
-				return {
-					ephemeral: true,
-					content: enabled
-						? `Debugger enabled, connecting to ${target}.`
-						: 'Debugger disabled.',
-				};
-			},
-		},
 		recovery: {
 			description: 'Turn recovery mode on or off and restart',
 			execute: () => confirmRecovery(),
@@ -91,6 +58,45 @@ export function start() {
 			},
 		},
 	});
+
+	// The default bundle carries no debugger, so its command would have nothing to toggle.
+	if (import.meta.env.DEV_TOOLS) {
+		Commands.register({
+			debugger: {
+				description: 'Turn the WebSocket debugger on or off, or connect it to an address',
+				options: {
+					address: option.string({
+						description: 'The bridge address, such as 192.168.1.2:9090',
+					}),
+				},
+				execute({ address }) {
+					const enabled = address ? true : !getSetting('debugger.enabled');
+
+					if (address) {
+						setSetting('debugger.address', address.trim());
+					}
+
+					setSetting('debugger.enabled', enabled);
+
+					// The debugger only listens for these settings while it runs, so restart it directly.
+					debug.stop();
+
+					if (enabled) {
+						debug.start();
+					}
+
+					const target = getSetting('debugger.address') || 'the default address';
+
+					return {
+						ephemeral: true,
+						content: enabled
+							? `Debugger enabled, connecting to ${target}.`
+							: 'Debugger disabled.',
+					};
+				},
+			},
+		});
+	}
 }
 
 /** Removes Unbound's slash commands. */

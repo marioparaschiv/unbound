@@ -9,6 +9,7 @@ import { addonManifestSchema, semverSchema } from '../src/manifest';
 import { reviewSubmissionRequestSchema } from '../src/review';
 import { apiErrorResponseSchema } from '../src/errors';
 import { catalogResponseSchema } from '../src/addons';
+import { parse, safeParse } from '../src/schema';
 import { isPostgresSafe } from '../src/text';
 import { apiUrlSchema } from '../src/api';
 
@@ -25,13 +26,13 @@ const sha256 = 'a'.repeat(64);
 
 describe('apiUrlSchema', () => {
 	test('reduces an http(s) URL to its origin and defaults to production', () => {
-		expect(apiUrlSchema.parse('http://localhost:3000/api/v1/')).toBe('http://localhost:3000');
-		expect(apiUrlSchema.parse(undefined)).toBe('https://unbound.rip');
+		expect(parse(apiUrlSchema, 'http://localhost:3000/api/v1/')).toBe('http://localhost:3000');
+		expect(parse(apiUrlSchema, undefined)).toBe('https://unbound.rip');
 	});
 
 	test('rejects other protocols and non-URLs', () => {
 		for (const url of ['ftp://unbound.rip', 'unbound.rip', '']) {
-			expect(apiUrlSchema.safeParse(url).success).toBe(false);
+			expect(safeParse(apiUrlSchema, url).success).toBe(false);
 		}
 	});
 });
@@ -39,57 +40,59 @@ describe('apiUrlSchema', () => {
 describe('semverSchema', () => {
 	test('accepts release, prerelease and build versions', () => {
 		for (const version of ['0.0.0', '1.2.3', '1.0.0-beta.1', '1.0.0+abc.1']) {
-			expect(semverSchema.safeParse(version).success).toBe(true);
+			expect(safeParse(semverSchema, version).success).toBe(true);
 		}
 	});
 
 	test('rejects partial, ranged, prefixed, zero-padded and non-version strings', () => {
 		for (const version of ['1.2', '1.x', '^1.2.3', 'v1.2.3', '=1.2.3', '01.2.3', 'latest', 3]) {
-			expect(semverSchema.safeParse(version).success).toBe(false);
+			expect(safeParse(semverSchema, version).success).toBe(false);
 		}
 	});
 });
 
 describe('addonManifestSchema', () => {
 	test('parses a manifest with and without unbound.min', () => {
-		expect(addonManifestSchema.parse(manifest).unbound).toBeUndefined();
+		expect(parse(addonManifestSchema, manifest).unbound).toBeUndefined();
 		expect(
-			addonManifestSchema.parse({ ...manifest, unbound: { min: '2.1.0' } }).unbound?.min,
+			parse(addonManifestSchema, { ...manifest, unbound: { min: '2.1.0' } }).unbound?.min,
 		).toBe('2.1.0');
 	});
 
 	test('keeps fields it does not validate', () => {
-		const parsed = addonManifestSchema.parse({ ...manifest, updates: 'https://example.test' });
+		const parsed = parse(addonManifestSchema, { ...manifest, updates: 'https://example.test' });
 
-		expect(parsed.updates).toBe('https://example.test');
+		expect(Reflect.get(parsed, 'updates')).toBe('https://example.test');
 	});
 
 	test('rejects a missing id, a bad unbound.min and a path-unsafe id', () => {
 		const { id, ...withoutId } = manifest;
 
-		expect(addonManifestSchema.safeParse(withoutId).success).toBe(false);
-		expect(addonManifestSchema.safeParse({ ...manifest, unbound: { min: '2' } }).success).toBe(
+		expect(safeParse(addonManifestSchema, withoutId).success).toBe(false);
+		expect(safeParse(addonManifestSchema, { ...manifest, unbound: { min: '2' } }).success).toBe(
 			false,
 		);
-		expect(addonManifestSchema.safeParse({ ...manifest, id: '../escape' }).success).toBe(false);
+		expect(safeParse(addonManifestSchema, { ...manifest, id: '../escape' }).success).toBe(
+			false,
+		);
 	});
 
 	test('accepts a main inside the addon and rejects one that leaves it', () => {
-		expect(addonManifestSchema.safeParse({ ...manifest, main: 'dist/index.js' }).success).toBe(
+		expect(safeParse(addonManifestSchema, { ...manifest, main: 'dist/index.js' }).success).toBe(
 			true,
 		);
 
 		for (const main of ['../other/index.js', '/index.js', 'https://example.test/index.js']) {
-			expect(addonManifestSchema.safeParse({ ...manifest, main }).success).toBe(false);
+			expect(safeParse(addonManifestSchema, { ...manifest, main }).success).toBe(false);
 		}
 	});
 
 	test('rejects non-numeric author ids and empty author lists', () => {
 		expect(
-			addonManifestSchema.safeParse({ ...manifest, authors: [{ name: 'M', id: 'abc' }] })
+			safeParse(addonManifestSchema, { ...manifest, authors: [{ name: 'M', id: 'abc' }] })
 				.success,
 		).toBe(false);
-		expect(addonManifestSchema.safeParse({ ...manifest, authors: [] }).success).toBe(false);
+		expect(safeParse(addonManifestSchema, { ...manifest, authors: [] }).success).toBe(false);
 	});
 
 	test('accepts platforms with per-platform capabilities, or none at all', () => {
@@ -100,12 +103,12 @@ describe('addonManifestSchema', () => {
 		];
 
 		for (const platforms of valid) {
-			expect(addonManifestSchema.parse({ ...manifest, platforms }).platforms).toEqual(
+			expect(parse(addonManifestSchema, { ...manifest, platforms }).platforms).toEqual(
 				platforms,
 			);
 		}
 
-		expect(addonManifestSchema.parse(manifest).platforms).toBeUndefined();
+		expect(parse(addonManifestSchema, manifest).platforms).toBeUndefined();
 	});
 
 	test('rejects platforms that are empty, unknown, carry extra keys or borrow capabilities', () => {
@@ -124,12 +127,12 @@ describe('addonManifestSchema', () => {
 		];
 
 		for (const platforms of invalid) {
-			expect(addonManifestSchema.safeParse({ ...manifest, platforms }).success).toBe(false);
+			expect(safeParse(addonManifestSchema, { ...manifest, platforms }).success).toBe(false);
 		}
 	});
 
 	test('still accepts the deprecated platform list and platformCapabilities', () => {
-		const parsed = addonManifestSchema.parse({
+		const parsed = parse(addonManifestSchema, {
 			...manifest,
 			platforms: ['ios', 'android'],
 			capabilities: [],
@@ -139,7 +142,7 @@ describe('addonManifestSchema', () => {
 		expect(parsed.platforms).toEqual(['ios', 'android']);
 		expect(parsed.platformCapabilities).toEqual({ ios: ['native.objc.invoke'] });
 		expect(
-			addonManifestSchema.safeParse({
+			safeParse(addonManifestSchema, {
 				...manifest,
 				platformCapabilities: { web: ['native.objc.invoke'] },
 			}).success,
@@ -153,9 +156,12 @@ describe('addonManifestSchema', () => {
 		expect(paths.length).toBeGreaterThan(0);
 
 		for (const path of paths) {
-			const result = addonManifestSchema.safeParse(await Bun.file(join(root, path)).json());
+			const result = safeParse(addonManifestSchema, await Bun.file(join(root, path)).json());
 
-			expect({ path, issues: result.error?.issues }).toEqual({ path, issues: undefined });
+			expect({ path, issues: result.success ? undefined : result.error.issues }).toEqual({
+				path,
+				issues: undefined,
+			});
 		}
 	});
 });
@@ -167,23 +173,23 @@ describe('updatesRequestSchema', () => {
 			addons: [{ id: 'mario.hello-world', version: '1.0.0' }],
 		};
 
-		expect(updatesRequestSchema.parse(request)).toEqual(request);
+		expect(parse(updatesRequestSchema, request)).toEqual(request);
 	});
 
 	test('rejects a bad client version, a bad addon version and a missing addon id', () => {
 		const addons = [{ id: 'a', version: '1.0.0' }];
 
-		expect(updatesRequestSchema.safeParse({ clientVersion: 'latest', addons }).success).toBe(
+		expect(safeParse(updatesRequestSchema, { clientVersion: 'latest', addons }).success).toBe(
 			false,
 		);
 		expect(
-			updatesRequestSchema.safeParse({
+			safeParse(updatesRequestSchema, {
 				clientVersion: '1.0.0',
 				addons: [{ id: 'a', version: '1.0' }],
 			}).success,
 		).toBe(false);
 		expect(
-			updatesRequestSchema.safeParse({
+			safeParse(updatesRequestSchema, {
 				clientVersion: '1.0.0',
 				addons: [{ version: '1.0.0' }],
 			}).success,
@@ -196,11 +202,11 @@ describe('updatesRequestSchema', () => {
 			version: '1.0.0',
 		}));
 
-		expect(updatesRequestSchema.safeParse({ clientVersion: '1.0.0', addons }).success).toBe(
+		expect(safeParse(updatesRequestSchema, { clientVersion: '1.0.0', addons }).success).toBe(
 			false,
 		);
 		expect(
-			updatesRequestSchema.safeParse({
+			safeParse(updatesRequestSchema, {
 				clientVersion: '1.0.0',
 				addons: addons.slice(0, 500),
 			}).success,
@@ -211,7 +217,7 @@ describe('updatesRequestSchema', () => {
 		const addon = { id: 'a', version: '1.0.0' };
 
 		expect(
-			updatesRequestSchema.safeParse({ clientVersion: '1.0.0', addons: [addon, addon] })
+			safeParse(updatesRequestSchema, { clientVersion: '1.0.0', addons: [addon, addon] })
 				.success,
 		).toBe(false);
 	});
@@ -231,19 +237,21 @@ describe('updatesResponseSchema', () => {
 	};
 
 	test('parses an update entry', () => {
-		expect(updatesResponseSchema.parse({ updates: [update] })).toEqual({ updates: [update] });
+		expect(parse(updatesResponseSchema, { updates: [update] })).toEqual({ updates: [update] });
 	});
 
 	test('reads an update without a reason as newer', () => {
 		const { reason: _, ...legacy } = update;
 
-		expect(updatesResponseSchema.parse({ updates: [legacy] }).updates[0]?.reason).toBe('newer');
+		expect(parse(updatesResponseSchema, { updates: [legacy] }).updates[0]?.reason).toBe(
+			'newer',
+		);
 	});
 
 	test('rejects an uppercase or short digest', () => {
 		for (const digest of ['A'.repeat(64), 'a'.repeat(63)]) {
 			expect(
-				updatesResponseSchema.safeParse({ updates: [{ ...update, sha256: digest }] })
+				safeParse(updatesResponseSchema, { updates: [{ ...update, sha256: digest }] })
 					.success,
 			).toBe(false);
 		}
@@ -274,7 +282,7 @@ describe('catalogResponseSchema', () => {
 
 	test('carries the store page URL, or null for a version without one', () => {
 		for (const pageUrl of [latestVersion.pageUrl, null]) {
-			const parsed = catalogResponseSchema.parse(catalogOf({ ...latestVersion, pageUrl }));
+			const parsed = parse(catalogResponseSchema, catalogOf({ ...latestVersion, pageUrl }));
 
 			expect(parsed.addons[0]?.latestVersion.pageUrl).toBe(pageUrl);
 		}
@@ -284,13 +292,13 @@ describe('catalogResponseSchema', () => {
 		const { pageUrl: _, ...stored } = latestVersion;
 
 		expect(
-			catalogResponseSchema.parse(catalogOf(stored)).addons[0]?.latestVersion.pageUrl,
+			parse(catalogResponseSchema, catalogOf(stored)).addons[0]?.latestVersion.pageUrl,
 		).toBe(undefined);
 	});
 
 	test('rejects a page URL that is not a URL', () => {
 		expect(
-			catalogResponseSchema.safeParse(catalogOf({ ...latestVersion, pageUrl: 'ADDON.md' }))
+			safeParse(catalogResponseSchema, catalogOf({ ...latestVersion, pageUrl: 'ADDON.md' }))
 				.success,
 		).toBe(false);
 	});
@@ -324,7 +332,7 @@ describe('publish contract', () => {
 			commitSha,
 		};
 
-		expect(createSubmissionRequestSchema.parse(request).repository).toBe(
+		expect(parse(createSubmissionRequestSchema, request).repository).toBe(
 			'marioparaschiv/unbound',
 		);
 	});
@@ -333,22 +341,22 @@ describe('publish contract', () => {
 		const request = { repository: 'a/b', path: 'plugins/hello', ref: 'main', commitSha };
 
 		expect(
-			createSubmissionRequestSchema.safeParse({ ...request, commitSha: 'abc1234' }).success,
+			safeParse(createSubmissionRequestSchema, { ...request, commitSha: 'abc1234' }).success,
 		).toBe(false);
-		expect(createSubmissionRequestSchema.safeParse({ ...request, path: '../x' }).success).toBe(
+		expect(safeParse(createSubmissionRequestSchema, { ...request, path: '../x' }).success).toBe(
 			false,
 		);
-		expect(createSubmissionRequestSchema.safeParse({ manifest, bundleSize: 1 }).success).toBe(
+		expect(safeParse(createSubmissionRequestSchema, { manifest, bundleSize: 1 }).success).toBe(
 			false,
 		);
 	});
 
 	test('parses a create response and refuses the retired upload status', () => {
-		expect<unknown>(createSubmissionResponseSchema.parse({ submission })).toEqual({
+		expect<unknown>(parse(createSubmissionResponseSchema, { submission })).toEqual({
 			submission,
 		});
 		expect(
-			createSubmissionResponseSchema.safeParse({
+			safeParse(createSubmissionResponseSchema, {
 				submission: { ...submission, status: 'awaiting_upload' },
 			}).success,
 		).toBe(false);
@@ -357,16 +365,16 @@ describe('publish contract', () => {
 
 describe('reviewSubmissionRequestSchema', () => {
 	test('approval takes an optional note; rejection and requested changes need one', () => {
-		expect(reviewSubmissionRequestSchema.safeParse({ decision: 'approved' }).success).toBe(
+		expect(safeParse(reviewSubmissionRequestSchema, { decision: 'approved' }).success).toBe(
 			true,
 		);
 
 		for (const decision of ['rejected', 'changes_requested']) {
-			expect(reviewSubmissionRequestSchema.safeParse({ decision }).success).toBe(false);
-			expect(reviewSubmissionRequestSchema.safeParse({ decision, note: '  ' }).success).toBe(
+			expect(safeParse(reviewSubmissionRequestSchema, { decision }).success).toBe(false);
+			expect(safeParse(reviewSubmissionRequestSchema, { decision, note: '  ' }).success).toBe(
 				false,
 			);
-			expect(reviewSubmissionRequestSchema.parse({ decision, note: ' Why. ' }).note).toBe(
+			expect(parse(reviewSubmissionRequestSchema, { decision, note: ' Why. ' }).note).toBe(
 				'Why.',
 			);
 		}
@@ -374,7 +382,7 @@ describe('reviewSubmissionRequestSchema', () => {
 
 	test('rejects a decision that is not a review outcome', () => {
 		expect(
-			reviewSubmissionRequestSchema.safeParse({ decision: 'superseded', note: 'x' }).success,
+			safeParse(reviewSubmissionRequestSchema, { decision: 'superseded', note: 'x' }).success,
 		).toBe(false);
 	});
 });
@@ -383,9 +391,9 @@ describe('apiErrorResponseSchema', () => {
 	test('parses a known error code and rejects an unknown one', () => {
 		const body = { error: { code: 'addon_id_taken', message: 'Taken.' } };
 
-		expect<unknown>(apiErrorResponseSchema.parse(body)).toEqual(body);
+		expect<unknown>(parse(apiErrorResponseSchema, body)).toEqual(body);
 		expect(
-			apiErrorResponseSchema.safeParse({ error: { code: 'teapot', message: '' } }).success,
+			safeParse(apiErrorResponseSchema, { error: { code: 'teapot', message: '' } }).success,
 		).toBe(false);
 	});
 });

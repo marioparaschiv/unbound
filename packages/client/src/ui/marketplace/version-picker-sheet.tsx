@@ -1,16 +1,18 @@
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
+import { fetchAddonVersions, toVersionChoices } from '~/addons/versions';
 import { getInstalledVersion } from '~/marketplace/install';
+import { CLIENT_VERSION, API_URL } from '~/core/constants';
 import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
-import { toVersionChoices } from '~/addons/versions';
-import { CLIENT_VERSION } from '~/core/constants';
 import { BottomSheets } from '~/metro/components';
 import { messages, format } from '~/i18n/api';
 import { Manager } from '~/addons/manager';
 
-import useAddonVersions from './use-addon-versions';
+import useResource from './use-resource';
 import VersionRow from './version-row';
+
+const loadVersions = (id: string) => fetchAddonVersions(id, { baseUrl: API_URL });
 
 type VersionPickerSheetProps = {
 	kind: UpdatableKind;
@@ -26,7 +28,7 @@ type VersionPickerSheetProps = {
  */
 function VersionPickerSheet({ kind, addon, onPick, onClose }: VersionPickerSheetProps) {
 	const { ActionSheet, ActionSheetRow, BottomSheetTitleHeader } = BottomSheets;
-	const { state, retry } = useAddonVersions(addon.id);
+	const { state, retry } = useResource(addon.id, loadVersions);
 	const { name } = addon.latestVersion.manifest;
 	const held = Manager.for(kind).getHeldVersion(addon.id);
 	const installed = getInstalledVersion(kind, addon);
@@ -54,7 +56,7 @@ function VersionPickerSheet({ kind, addon, onPick, onClose }: VersionPickerSheet
 					/>
 				) : null}
 				{state.status === 'ready'
-					? toVersionChoices(state.versions, installed, CLIENT_VERSION).map((choice) => (
+					? toVersionChoices(state.value, installed, CLIENT_VERSION).map((choice) => (
 							<VersionRow
 								key={choice.version.version}
 								choice={choice}

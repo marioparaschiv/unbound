@@ -7,7 +7,7 @@ import { isStub } from './index';
 
 const SOURCE = join(import.meta.dir, '../../src');
 const SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)['"]([^'"]+)['"]/g;
-const BUILTIN = /^[^/]+\/builtin\.tsx?$/;
+const BUILTIN = /^[^/]+\/builtin(?:\.dev)?\.tsx?$/;
 
 const DOMAINS = new Set([
 	'core',

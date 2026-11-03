@@ -1,11 +1,15 @@
 import { listFirstPartyAddonsResponseSchema } from '@unbound-app/contracts/publish';
-import { z } from 'zod';
+import { Type } from '@unbound-app/contracts/schema';
 
 import { listFirstPartyAddons } from '~/lib/first-party';
 import { callerEndpoint } from '~/lib/api/endpoint';
 
 const listFirstPartyAddonsEndpoint = callerEndpoint(
-	{ body: z.undefined(), query: z.undefined(), response: listFirstPartyAddonsResponseSchema },
+	{
+		body: Type.Undefined(),
+		query: Type.Undefined(),
+		response: listFirstPartyAddonsResponseSchema,
+	},
 	async ({ ctx, caller }) => {
 		return listFirstPartyAddons(ctx, caller);
 	},

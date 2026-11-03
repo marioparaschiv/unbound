@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 
 import { startFakeMetro, type FakeFactory } from './helpers/fake-metro';
+import { createCacheMock } from './helpers/cache';
 
 type Asset = {
 	__packager_asset: boolean;
@@ -97,9 +98,8 @@ metroRequire(2000);
 
 const cacheState = { assetsComplete: false, moduleFlags: {} };
 
-mock.module('~/metro/cache', () => ({
-	ModuleFlags: { BLACKLISTED: 1 },
-	default: {
+mock.module('~/metro/cache', () =>
+	createCacheMock({
 		state: cacheState,
 		moduleIds,
 		hasModuleFlag: () => false,
@@ -121,8 +121,8 @@ mock.module('~/metro/cache', () => ({
 		markAssetsComplete() {
 			cacheState.assetsComplete = true;
 		},
-	},
-}));
+	}),
+);
 
 mock.module('~/metro/wrappers', () => ({
 	findByPropsLazy: () => ({ getPublicInstanceFromRootTag: () => null }),

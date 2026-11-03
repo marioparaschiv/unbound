@@ -1,7 +1,7 @@
 import type { CatalogResponse, ListedAddon } from '@unbound-app/contracts/addons';
 import type { AddonAuthor, AddonKind } from '@unbound-app/types/addons';
-import { catalogResponseSchema } from '@unbound-app/contracts/addons';
 
+import { readServerJson } from '~/core/server-data';
 import { compareVersions } from '~/core/versions';
 
 /** The marketplace snapshot kept on device: every listed addon and the revision it was served at. */
@@ -68,15 +68,13 @@ const SORTERS: Record<CatalogSort, (a: ListedAddon, b: ListedAddon) => number> =
 };
 
 /**
- * @description Parses a stored or fetched catalog against the wire contract.
+ * @description Reads a catalog the server sent or this client cached from it.
  * @param text The catalog JSON.
- * @returns The catalog, or `undefined` when the text is not a whole, valid catalog.
+ * @returns The catalog, or `undefined` when the text is not whole JSON, as after an interrupted write.
  */
 export function parseCatalog(text: string): Catalog | undefined {
 	try {
-		const result = catalogResponseSchema.safeParse(JSON.parse(text));
-
-		return result.success ? result.data : undefined;
+		return readServerJson<Catalog>(text);
 	} catch {
 		return undefined;
 	}

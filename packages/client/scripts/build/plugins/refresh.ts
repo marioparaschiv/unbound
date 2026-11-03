@@ -1,9 +1,7 @@
 import { transformSync, type ESTree } from 'rolldown/utils';
-import { dirname, join, relative } from 'node:path';
-import { RolldownMagicString } from 'rolldown';
 import { parseAst } from 'rolldown/parseAst';
-import { createRequire } from 'node:module';
 import type { Plugin } from 'rolldown';
+import { relative } from 'node:path';
 
 type Program = ESTree.Program;
 type Statement = ESTree.Program['body'][number];
@@ -98,37 +96,6 @@ export function transformModule(source: string, id: string, root: string, runtim
 	}
 
 	return applyEdits(code, edits);
-}
-
-/**
- * @description Bundles `react-refresh/runtime`'s development build, inlining `process.env.NODE_ENV`
- * there alone so React's own entries stay on their production builds.
- * @param root The package directory `react-refresh` resolves from.
- * @returns A rolldown plugin for every build.
- */
-export function refreshRuntime(root: string): Plugin {
-	const entry = createRequire(join(root, 'package.json')).resolve('react-refresh/runtime');
-	const development = join(dirname(entry), 'cjs', 'react-refresh-runtime.development.js');
-
-	return {
-		name: 'refresh-runtime',
-		resolveId(source) {
-			return source === 'react-refresh/runtime' ? development : null;
-		},
-		transform(code, id) {
-			if (id !== development) return null;
-
-			const runtime = new RolldownMagicString(code).replaceAll(
-				'process.env.NODE_ENV',
-				'"development"',
-			);
-
-			return {
-				code: runtime.toString(),
-				map: runtime.generateMap({ hires: true }).toString(),
-			};
-		},
-	};
 }
 
 function prelude(runtime: string, module: string) {

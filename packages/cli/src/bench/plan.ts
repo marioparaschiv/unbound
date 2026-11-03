@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { defaulted, parse, safeParse, Type, type StaticDecode } from '~/lib/schema';
 
 /** `warm` keeps Unbound's module cache; `cold` empties it before the launch. */
 export type LaunchKind = 'warm' | 'cold';
@@ -9,34 +9,37 @@ export type LaunchKind = 'warm' | 'cold';
  */
 export type AddonMode = 'none' | 'all';
 
-const variantSchema = z.object({
-	name: z
-		.string()
-		.regex(
-			/^[A-Za-z0-9][\w.-]{0,31}$/,
-			'a variant name is up to 32 letters, digits, ".", "_" or "-"',
-		),
-	ref: z.string().min(1),
+const variantSchema = Type.Object({
+	name: Type.String({
+		pattern: '^[A-Za-z0-9][\\w.-]{0,31}$',
+		errorMessage: 'a variant name is up to 32 letters, digits, ".", "_" or "-"',
+	}),
+	ref: Type.String({ minLength: 1 }),
 	/** Extra environment for the client and plugin builds, such as a feature switch. */
-	env: z.record(z.string(), z.string()).default({}),
+	env: defaulted(Type.Record(Type.String(), Type.String()), {}),
 });
 
-const protocolSchema = z.object({
-	rounds: z.number().int().positive().default(3),
-	warm: z.number().int().nonnegative().default(2),
-	cold: z.number().int().nonnegative().default(1),
-	idleMs: z.number().int().positive().default(25_000),
-	addons: z.enum(['none', 'all']).default('none'),
+const protocolSchema = Type.Object({
+	rounds: defaulted(Type.Integer({ minimum: 1 }), 3),
+	warm: defaulted(Type.Integer({ minimum: 0 }), 2),
+	cold: defaulted(Type.Integer({ minimum: 0 }), 1),
+	idleMs: defaulted(Type.Integer({ minimum: 1 }), 25_000),
+	addons: defaulted(Type.Enum(['none', 'all']), 'none'),
 });
 
 /** The JSON a `--variants` file holds: two or more variants plus optional protocol overrides. */
-export const variantsFileSchema = protocolSchema.partial().extend({
-	variants: z.array(variantSchema).min(1),
+export const variantsFileSchema = Type.Object({
+	rounds: Type.Optional(Type.Integer({ minimum: 1 })),
+	warm: Type.Optional(Type.Integer({ minimum: 0 })),
+	cold: Type.Optional(Type.Integer({ minimum: 0 })),
+	idleMs: Type.Optional(Type.Integer({ minimum: 1 })),
+	addons: Type.Optional(Type.Enum(['none', 'all'])),
+	variants: Type.Array(variantSchema, { minItems: 1 }),
 });
 
-export type Variant = z.infer<typeof variantSchema>;
+export type Variant = StaticDecode<typeof variantSchema>;
 
-export type Protocol = z.infer<typeof protocolSchema>;
+export type Protocol = StaticDecode<typeof protocolSchema>;
 
 export type Plan = Protocol & { variants: Variant[] };
 
@@ -56,7 +59,7 @@ export function planFromRefs(refs: string[], protocol: Partial<Protocol> = {}): 
 		env: {},
 	}));
 
-	return { ...protocolSchema.parse(protocol), variants };
+	return { ...parse(protocolSchema, protocol), variants };
 }
 
 /**
@@ -70,10 +73,10 @@ export function planFromFile(
 	json: unknown,
 	overrides: Partial<Protocol> = {},
 ): Plan | { error: string } {
-	const parsed = variantsFileSchema.safeParse(json);
+	const parsed = safeParse(variantsFileSchema, json);
 
 	if (!parsed.success) {
-		return { error: `The variants file is invalid:\n${z.prettifyError(parsed.error)}` };
+		return { error: `The variants file is invalid:\n${parsed.error.message}` };
 	}
 
 	const { variants, ...protocol } = parsed.data;
@@ -83,7 +86,7 @@ export function planFromFile(
 		return { error: 'The variants file names a variant twice.' };
 	}
 
-	return { ...protocolSchema.parse({ ...protocol, ...overrides }), variants };
+	return { ...parse(protocolSchema, { ...protocol, ...overrides }), variants };
 }
 
 /**

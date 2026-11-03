@@ -1,13 +1,11 @@
 import type {
+	JsonValue,
 	SyncDocument,
 	SyncInstall,
 	SyncKind,
 	SyncKindDocument,
 	SyncSettingsStore,
 } from '@unbound-app/contracts/sync';
-import { syncDocumentSchema } from '@unbound-app/contracts/sync';
-
-type JsonValue = SyncSettingsStore[string];
 
 /** A change merging made to the remote side that this device has to carry out. */
 export type SyncAction =
@@ -85,15 +83,15 @@ function byId(installs: SyncInstall[]): Map<string, SyncInstall> {
 
 function mergeKind(
 	kind: SyncKind,
-	base: SyncKindDocument,
-	local: SyncKindDocument,
-	remote: SyncKindDocument,
+	base: SyncDocument,
+	local: SyncDocument,
+	remote: SyncDocument,
 	actions: SyncAction[],
 ): SyncKindDocument {
 	const [baseIds, localIds, remoteIds] = [
-		byId(base.installs),
-		byId(local.installs),
-		byId(remote.installs),
+		byId(base.addons[kind].installs),
+		byId(local.addons[kind].installs),
+		byId(remote.addons[kind].installs),
 	];
 	const installs: SyncInstall[] = [];
 
@@ -126,7 +124,11 @@ function mergeKind(
 		// Remote only but in the base: deleted on this device, so it stays deleted.
 	}
 
-	const applied = mergeValue(base.applied, local.applied, remote.applied);
+	const applied = mergeValue(
+		base.addons[kind].applied,
+		local.addons[kind].applied,
+		remote.addons[kind].applied,
+	);
 
 	if (applied.pull) {
 		actions.push({ type: 'apply', kind, id: applied.value });
@@ -182,34 +184,10 @@ export function merge(base: SyncDocument, local: SyncDocument, remote: SyncDocum
 	]);
 
 	const addons: Record<SyncKind, SyncKindDocument> = {
-		plugins: mergeKind(
-			'plugins',
-			base.addons.plugins,
-			local.addons.plugins,
-			remote.addons.plugins,
-			actions,
-		),
-		themes: mergeKind(
-			'themes',
-			base.addons.themes,
-			local.addons.themes,
-			remote.addons.themes,
-			actions,
-		),
-		icons: mergeKind(
-			'icons',
-			base.addons.icons,
-			local.addons.icons,
-			remote.addons.icons,
-			actions,
-		),
-		fonts: mergeKind(
-			'fonts',
-			base.addons.fonts,
-			local.addons.fonts,
-			remote.addons.fonts,
-			actions,
-		),
+		plugins: mergeKind('plugins', base, local, remote, actions),
+		themes: mergeKind('themes', base, local, remote, actions),
+		icons: mergeKind('icons', base, local, remote, actions),
+		fonts: mergeKind('fonts', base, local, remote, actions),
 	};
 
 	for (const name of names) {
@@ -252,6 +230,40 @@ export function plan(
 }
 
 /**
+ * @description Copies one kind's installs, so merging can change the copy without the original.
+ * @param entry The kind document to copy.
+ * @returns The copy.
+ */
+function copyKind(entry: SyncKindDocument): SyncKindDocument {
+	return {
+		applied: entry.applied,
+		installs: entry.installs.map((install) => ({ ...install })),
+	};
+}
+
+/**
+ * @description Copies a document, so merging can mutate it without writing through to the one the
+ * caller still holds: Hermes has no `structuredClone`.
+ * @param document The document to copy.
+ * @returns The copy.
+ */
+function copyDocument(document: SyncDocument): SyncDocument {
+	const addons: Record<SyncKind, SyncKindDocument> = {
+		plugins: copyKind(document.addons.plugins),
+		themes: copyKind(document.addons.themes),
+		icons: copyKind(document.addons.icons),
+		fonts: copyKind(document.addons.fonts),
+	};
+	const settings: Record<string, SyncSettingsStore> = {};
+
+	for (const [name, store] of Object.entries(document.settings)) {
+		settings[name] = { ...store };
+	}
+
+	return { addons, settings };
+}
+
+/**
  * @description Builds the base to keep after a sync whose actions partly failed: a failed install is
  * left out so the next sync retries it, and a failed delete is kept so the next sync deletes again.
  * Without this, a failed install would read as a delete on this device and remove it everywhere.
@@ -265,8 +277,7 @@ export function reconcileBase(
 	previous: SyncDocument,
 	failed: SyncAction[],
 ): SyncDocument {
-	// Parsing copies the document; Hermes has no `structuredClone`.
-	const result = syncDocumentSchema.parse(document);
+	const result = copyDocument(document);
 
 	for (const action of failed) {
 		if (action.type === 'install') {
@@ -288,5 +299,3 @@ export function reconcileBase(
 
 	return result;
 }
-
-export default { isJsonEqual, merge, plan, reconcileBase };

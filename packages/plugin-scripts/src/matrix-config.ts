@@ -1,29 +1,29 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { z } from '@unbound-app/contracts/zod';
 import { resolve } from 'node:path';
 
 import { REPO_ROOT } from './paths';
+import { Type, safeParse, type Static } from '@unbound-app/contracts/schema';
 
-const matrixDeviceSchema = z.object({
-	name: z.string(),
-	port: z.number(),
-	serial: z.optional(z.string()),
-	udid: z.optional(z.string()),
+const matrixDeviceSchema = Type.Object({
+	name: Type.String(),
+	port: Type.Number(),
+	serial: Type.Optional(Type.String()),
+	udid: Type.Optional(Type.String()),
 });
 
-const matrixConfigSchema = z.object({
-	channel: z.optional(z.string()),
-	devices: z._default(z.array(matrixDeviceSchema), []),
+const matrixConfigSchema = Type.Object({
+	channel: Type.Optional(Type.String()),
+	devices: Type.Array(matrixDeviceSchema, { default: [] }),
 });
 
-export type MatrixDevice = z.infer<typeof matrixDeviceSchema>;
+export type MatrixDevice = Static<typeof matrixDeviceSchema>;
 
-export type MatrixConfig = z.infer<typeof matrixConfigSchema>;
+export type MatrixConfig = Static<typeof matrixConfigSchema>;
 
 export const MATRIX_CONFIG_PATH = resolve(REPO_ROOT, '.device-matrix.json');
 
 export function parseMatrixConfig(text: string): MatrixConfig {
-	const result = matrixConfigSchema.safeParse(JSON.parse(text));
+	const result = safeParse(matrixConfigSchema, JSON.parse(text));
 
 	if (!result.success) {
 		throw new Error(

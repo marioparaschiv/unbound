@@ -1,5 +1,5 @@
+import { parse, safeParse, Type } from '@unbound-app/contracts/schema';
 import { addonAuthorSchema } from '@unbound-app/contracts/manifest';
-import { z } from 'zod';
 
 import type { DiscordUser } from '~/lib/authors/discord-users';
 import { isBotTokenHost } from '~/lib/discord';
@@ -21,19 +21,22 @@ const RATE_LIMIT_RETRIES = 3;
 // Unknown Member and Unknown User: not in the guild, or a deleted account.
 const ABSENT_CODES = new Set([10_007, 10_013]);
 
-const memberSchema = z.object({
-	user: z.object({
-		id: addonAuthorSchema.shape.id,
-		username: z.string().min(1),
-		global_name: z.string().nullish(),
-		avatar: z.string().nullish(),
-		banner: z.string().nullish(),
+const memberSchema = Type.Object({
+	user: Type.Object({
+		id: addonAuthorSchema.properties.id,
+		username: Type.String({ minLength: 1 }),
+		global_name: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+		avatar: Type.Optional(Type.Union([Type.String(), Type.Null()])),
+		banner: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 	}),
-	roles: z.array(z.string()),
-	banner: z.string().nullish(),
+	roles: Type.Array(Type.String()),
+	banner: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 });
 
-const errorSchema = z.object({ code: z.number().optional(), retry_after: z.number().optional() });
+const errorSchema = Type.Object({
+	code: Type.Optional(Type.Number()),
+	retry_after: Type.Optional(Type.Number()),
+});
 
 async function fetchMember(
 	env: Env,
@@ -58,7 +61,7 @@ async function fetchMember(
 		});
 
 		if (response.ok) {
-			const member = memberSchema.parse(await response.json());
+			const member = parse(memberSchema, await response.json());
 
 			return {
 				user: {
@@ -73,7 +76,7 @@ async function fetchMember(
 			};
 		}
 
-		const body = errorSchema.safeParse(await response.json().catch(() => ({})));
+		const body = safeParse(errorSchema, await response.json().catch(() => ({})));
 		const error = body.success ? body.data : {};
 
 		if (response.status === 404 && error.code !== undefined && ABSENT_CODES.has(error.code)) {

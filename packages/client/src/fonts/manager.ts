@@ -103,19 +103,6 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	}
 
 	/**
-	 * @description Overrides every font via the native `"*"` wildcard and emits `changed`.
-	 * @param name The font name to apply everywhere.
-	 */
-	setOverrideAll(name: string) {
-		this.setOverride('*', name);
-	}
-
-	/** @description Clears the wildcard override and emits `changed`. */
-	clearOverrideAll() {
-		this.clearOverride('*');
-	}
-
-	/**
 	 * @description Installs a font from a URL: saves the file to the Fonts folder. The native side
 	 * registers it and re-injects `UNBOUND_FONTS`; the new font appears after that push or a relaunch.
 	 * @param url The font file URL.

@@ -13,12 +13,13 @@ import {
 	readAddon,
 	workspaceConfigSchema,
 } from '../src/workspace';
+import { parse } from '../src/schema';
 
 type Tree = Record<string, string>;
 
 const plugin = (id: string, main: string = 'src/index.ts') => JSON.stringify({ id, main });
 const BUILD = JSON.stringify({ scripts: { build: 'tsdown' } });
-const DEFAULTS = workspaceConfigSchema.parse({});
+const DEFAULTS = parse(workspaceConfigSchema, {});
 
 function filesOf(tree: Tree): WorkspaceFiles {
 	return { read: (path) => tree[path] };
@@ -89,7 +90,7 @@ describe('discovery over a tree', () => {
 	});
 
 	test('custom globs and output select other directories', () => {
-		const config = workspaceConfigSchema.parse({
+		const config = parse(workspaceConfigSchema, {
 			addons: ['addons/**', 'addons/*'],
 			output: './out/',
 		});
@@ -212,7 +213,8 @@ describe('glob compatibility with node:fs/promises glob', () => {
 		const patterns: string[] = [];
 
 		for await (const path of glob('templates/**/unbound.config.json', { cwd: cli })) {
-			const config = workspaceConfigSchema.parse(
+			const config = parse(
+				workspaceConfigSchema,
 				JSON.parse(readFileSync(join(cli, path), 'utf8')),
 			);
 
@@ -257,7 +259,7 @@ describe('glob compatibility with node:fs/promises glob', () => {
 
 			expect(expected.size).toBeGreaterThan(0);
 
-			const config = workspaceConfigSchema.parse({ addons: [pattern] });
+			const config = parse(workspaceConfigSchema, { addons: [pattern] });
 
 			expect({ pattern, dirs: matchAddonDirs(config, false, dirs) }).toEqual({
 				pattern,
@@ -267,7 +269,7 @@ describe('glob compatibility with node:fs/promises glob', () => {
 	});
 
 	test('a globstar includes its root directory when no child segment is required', () => {
-		const config = workspaceConfigSchema.parse({ addons: ['packages/**'] });
+		const config = parse(workspaceConfigSchema, { addons: ['packages/**'] });
 
 		expect(matchAddonDirs(config, false, ['packages', 'packages/client'])).toEqual([
 			'packages',

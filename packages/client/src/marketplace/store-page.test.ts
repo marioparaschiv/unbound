@@ -82,8 +82,8 @@ describe('fetchStorePage', () => {
 		});
 	});
 
-	test('a page.json that is not a valid page counts as none', async () => {
-		serve({ [PAGE_URL]: 'Just text.', [`${FOLDER}page.json`]: '{"media": 1}' });
+	test('a page.json that is not whole JSON counts as none', async () => {
+		serve({ [PAGE_URL]: 'Just text.', [`${FOLDER}page.json`]: '{"media": ' });
 
 		expect((await fetchStorePage(PAGE_URL))?.measured).toBeNull();
 	});

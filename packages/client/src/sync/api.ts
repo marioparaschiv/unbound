@@ -1,8 +1,4 @@
-import {
-	emptySyncDocument,
-	syncDeleteResponseSchema,
-	syncStateSchema,
-} from '@unbound-app/contracts/sync';
+import { emptySyncDocument } from '@unbound-app/contracts/sync-stores';
 import type { SyncDocument } from '@unbound-app/contracts/sync';
 import { ApiRequestError } from '@unbound-app/web/client';
 import { createLogger } from '@unbound-app/logger';
@@ -92,7 +88,7 @@ function readBase(remoteRevision: number): SyncDocument {
 }
 
 async function attempt(request: ApiRequest, strategy: SyncStrategy) {
-	const remote = await request('GET /api/v1/sync', { response: syncStateSchema });
+	const remote = await request('GET /api/v1/sync');
 	const base = readBase(remote.revision);
 	const { document, actions } = plan(strategy, base, collectLocalDocument(), remote.document);
 
@@ -108,7 +104,6 @@ async function attempt(request: ApiRequest, strategy: SyncStrategy) {
 			? remote
 			: await request('PUT /api/v1/sync', {
 					body: { revision: remote.revision, document },
-					response: syncStateSchema,
 				});
 
 	Store.set('base', reconcileBase(saved.document, base, failed));
@@ -187,9 +182,7 @@ export function now(strategy: SyncStrategy = MODE_STRATEGIES[getMode()]): Promis
  */
 export async function connect(): Promise<boolean> {
 	try {
-		const remote = await account.createClient()('GET /api/v1/sync', {
-			response: syncStateSchema,
-		});
+		const remote = await account.createClient()('GET /api/v1/sync', {});
 
 		resetBase();
 		Store.set('enabled', true);
@@ -280,7 +273,7 @@ export function resolveFirstSync(strategy: SyncStrategy): Promise<boolean> {
  */
 export async function deleteData(): Promise<boolean> {
 	try {
-		await account.createClient()('DELETE /api/v1/sync', { response: syncDeleteResponseSchema });
+		await account.createClient()('DELETE /api/v1/sync');
 
 		Store.set('enabled', false);
 		Store.set('lastSyncedAt', null);
@@ -295,21 +288,3 @@ export async function deleteData(): Promise<boolean> {
 		return false;
 	}
 }
-
-export default {
-	SYNC_STORE,
-	getSession,
-	isEnabled,
-	isApplying,
-	getMode,
-	needsFirstSyncChoice,
-	setMode,
-	resolveFirstSync,
-	now,
-	signIn,
-	signOut,
-	connect,
-	disconnect,
-	setEnabled,
-	deleteData,
-};

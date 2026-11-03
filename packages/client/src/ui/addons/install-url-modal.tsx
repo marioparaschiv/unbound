@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
-import { format } from '~/i18n/api';
+import { messages } from '~/i18n/api';
 
 type InstallUrlModalProps = {
 	kind: AddonKind;
@@ -32,8 +32,8 @@ function InstallUrlModal({ kind, onClose }: InstallUrlModalProps) {
 
 	return (
 		<Discord.AlertModal
-			title={format('UNBOUND_INSTALL')}
-			content={format('UNBOUND_INSTALL_URL_HINT')}
+			title={messages.UNBOUND_INSTALL}
+			content={messages.UNBOUND_INSTALL_URL_HINT}
 			extraContent={
 				<Discord.TextField
 					value={url}
@@ -45,13 +45,13 @@ function InstallUrlModal({ kind, onClose }: InstallUrlModalProps) {
 			actions={
 				<>
 					<Discord.AlertActionButton
-						text={format('UNBOUND_INSTALL')}
+						text={messages.UNBOUND_INSTALL}
 						variant='primary'
 						loading={busy}
 						onPress={install}
 					/>
 					<Discord.AlertActionButton
-						text={format('UNBOUND_CANCEL')}
+						text={messages.UNBOUND_CANCEL}
 						variant='secondary'
 						onPress={onClose}
 					/>

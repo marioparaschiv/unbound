@@ -5,7 +5,6 @@ import noop from '@unbound-app/utils/noop';
 import { safeRelativePath, isSafeIconPackMain } from '~/addons/paths';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { getById, onAssetRegistered } from '~/assets/api';
-import { downloadManifest } from '~/addons/download';
 import { ImageSources } from '~/metro/common';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
@@ -63,8 +62,6 @@ const defaultPack: IconPack = {
  * the applied pack rewrites `Image` sources to the on-disk files. Single-select, like themes.
  */
 export class Icons extends Addons<Plugin> {
-	extension = 'png';
-
 	// Stops stamping assets that register after the applied pack.
 	private stopStamping = noop;
 
@@ -114,25 +111,10 @@ export class Icons extends Addons<Plugin> {
 	}
 
 	/**
-	 * @description Enables the pack if it isn't applied, disables it if it is, and emits `toggled`.
-	 * Icons are single-select: the applied pack lives in `applied`, not the base `states` map, so
-	 * {@link isEnabled} decides the direction here.
-	 * @param entity The pack to toggle, as its id or the entity itself.
+	 * @description Applies a pack, replacing the one applied before, and emits `enabled`. Icons are
+	 * single-select: the applied pack lives in `applied`, not the base `states` map.
+	 * @param entity The pack to enable, as its id or the entity itself.
 	 */
-	toggle(entity: AddonResolveable) {
-		const resolved = this.resolve(entity);
-
-		if (!resolved) return;
-
-		if (this.isEnabled(resolved.id)) {
-			this.disable(resolved);
-		} else {
-			this.enable(resolved);
-		}
-
-		this.emit('toggled', resolved);
-	}
-
 	async enable(entity: AddonResolveable) {
 		const resolved = this.resolve(entity);
 
@@ -149,8 +131,7 @@ export class Icons extends Addons<Plugin> {
 
 			this.emit('enabled', resolved);
 		} catch (error) {
-			this.logger.error(`Failed to enable icon pack ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('enable', resolved.id, error, 'icon pack');
 		}
 	}
 
@@ -165,8 +146,7 @@ export class Icons extends Addons<Plugin> {
 
 			this.emit('disabled', resolved);
 		} catch (error) {
-			this.logger.error(`Failed to disable icon pack ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('disable', resolved.id, error, 'icon pack');
 		}
 	}
 
@@ -183,8 +163,7 @@ export class Icons extends Addons<Plugin> {
 			this.removePack();
 			await this.applyPack(resolved.id);
 		} catch (error) {
-			this.logger.error(`Failed to restart icon pack ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('restart', resolved.id, error, 'icon pack');
 		}
 	}
 
@@ -211,8 +190,7 @@ export class Icons extends Addons<Plugin> {
 
 			this.emit('deleted', resolved);
 		} catch (error) {
-			this.logger.error(`Failed to delete icon pack ${resolved.id}:`, error);
-			this.errors.set(resolved.id, toError(error));
+			this.fail('delete', resolved.id, error, 'icon pack');
 		}
 	}
 
@@ -318,11 +296,7 @@ export class Icons extends Addons<Plugin> {
 	 */
 	async install(url: string, digest?: string): Promise<Addon | undefined> {
 		try {
-			const parsed = await downloadManifest(url, (raw) => this.validateManifest(raw));
-
-			if (parsed.type && parsed.type !== this.kind) {
-				throw new Error(`Expected a icon-pack manifest, got ${parsed.type}.`);
-			}
+			const parsed = await this.fetchManifest(url);
 
 			const declared: unknown = Reflect.get(parsed, 'source');
 			const manifest: IconPackManifest = {

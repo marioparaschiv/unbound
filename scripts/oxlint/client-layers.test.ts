@@ -8,7 +8,8 @@ import config from '../../.oxlintrc.json';
 
 const CLIENT = 'packages/client/src';
 const source = resolve(import.meta.dir, '../..', CLIENT);
-const builtins = [...new Glob('*/builtin.{ts,tsx}').scanSync({ cwd: source })].sort();
+// A domain's `builtin.dev.ts(x)` is its dev-bundle twin, wired in at startup the same way.
+const builtins = [...new Glob('*/builtin{,.dev}.{ts,tsx}').scanSync({ cwd: source })].sort();
 
 function clientLayers() {
 	const [, options] = config.rules['unbound/no-upward-imports'];
@@ -49,7 +50,7 @@ test('only the domain builtin files on disk and the public barrel may import ui/
 
 test('ui/ may not import any domain builtin on disk', () => {
 	expect([...ui.deny].sort()).toEqual(
-		['~/builtins', ...builtins.map((file) => `~/${dirname(file)}/builtin`)].sort(),
+		['~/builtins', ...new Set(builtins.map((file) => `~/${dirname(file)}/builtin`))].sort(),
 	);
 });
 

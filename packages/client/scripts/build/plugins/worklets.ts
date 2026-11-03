@@ -115,6 +115,9 @@ export default function worklets(): Plugin {
 				const result = await transformAsync(code, {
 					filename: id,
 					plugins: [reanimatedPlugin, blockScopingPlugin],
+					// The worklets plugin treats a release env as a shipped build and leaves out the source
+					// maps, source locations, version and error stack details it keeps for development.
+					envName: 'production',
 					parserOpts: { plugins: ['jsx', 'typescript'] },
 					sourceMaps: true,
 				});

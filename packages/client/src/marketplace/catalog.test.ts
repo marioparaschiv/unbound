@@ -130,12 +130,11 @@ describe('findIconSvg', () => {
 });
 
 describe('parseCatalog', () => {
-	test('accepts a whole catalog and rejects a torn or foreign one', () => {
+	test('reads a whole catalog and drops a torn one', () => {
 		const text = JSON.stringify({ revision: 'r1', addons });
 
 		expect(parseCatalog(text)?.addons).toHaveLength(4);
 		expect(parseCatalog(text.slice(0, -10))).toBeUndefined();
-		expect(parseCatalog('{"revision":"r1"}')).toBeUndefined();
 	});
 });
 

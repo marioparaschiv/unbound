@@ -3,14 +3,18 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import toError from '@unbound-app/utils/to-error';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { z } from 'zod';
+
+import { safeParse, Type, type StaticDecode, type TSchema } from './schema';
 
 // A dev build only needs what the CLI reads; the device validates the rest when it loads the push.
-const devManifestSchema = z.looseObject({ id: z.string(), main: z.string() });
+// `Unsafe` types the loose schema with the manifest fields the CLI can read from it.
+const devManifestSchema = Type.Unsafe<{ id: string; main: string } & Partial<PublishedManifest>>(
+	Type.Object({ id: Type.String(), main: Type.String() }, { additionalProperties: true }),
+);
 
-type DevManifest = z.infer<typeof devManifestSchema>;
+type DevManifest = StaticDecode<typeof devManifestSchema>;
 
-function readWith<T>(dir: string, schema: z.core.$ZodType<T>): T {
+function readWith<T extends TSchema>(dir: string, schema: T): StaticDecode<T> {
 	const path = join(dir, MANIFEST_FILENAME);
 	let json: unknown;
 
@@ -20,10 +24,10 @@ function readWith<T>(dir: string, schema: z.core.$ZodType<T>): T {
 		throw new Error(`Could not read ${path}: ${toError(error).message}`);
 	}
 
-	const parsed = z.safeParse(schema, json);
+	const parsed = safeParse(schema, json);
 
 	if (!parsed.success) {
-		throw new Error(`Invalid ${path}:\n${z.prettifyError(parsed.error)}`);
+		throw new Error(`Invalid ${path}:\n${parsed.error.message}`);
 	}
 
 	return parsed.data;
