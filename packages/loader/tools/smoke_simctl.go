@@ -26,10 +26,11 @@ const (
 )
 
 type iosSmokeTarget struct {
-	app     string
-	device  string
-	created bool
-	pid     int
+	app      string
+	bundleID string
+	device   string
+	created  bool
+	pid      int
 
 	samplesMutex sync.Mutex
 	samples      []string
@@ -72,7 +73,12 @@ func runIOSSmoke(args []string) error {
 		}
 		return skipSmokeTest("ios", options, reason)
 	}
-	target := &iosSmokeTarget{app: *app, device: *device}
+	// TestFlight builds ship as com.hammerandchisel.discord.testflight, so the installed app is addressed by its own identifier.
+	bundleID, err := runSmokeCommand(ctx, time.Minute, "plutil", "-extract", "CFBundleIdentifier", "raw", filepath.Join(*app, "Info.plist"))
+	if err != nil {
+		return err
+	}
+	target := &iosSmokeTarget{app: *app, bundleID: strings.TrimSpace(bundleID), device: *device}
 	defer target.cleanup()
 	return runSmokeTest(ctx, "ios", options, target)
 }
@@ -114,7 +120,7 @@ func (target *iosSmokeTarget) prepare(ctx context.Context, plugins []smokePlugin
 	if _, err := target.simctl(ctx, 10*time.Minute, "install", target.device, target.app); err != nil {
 		return err
 	}
-	container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, smokeIOSBundleID, "data")
+	container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, target.bundleID, "data")
 	if err != nil {
 		return err
 	}
@@ -258,7 +264,7 @@ func (target *iosSmokeTarget) streamLogs(ctx context.Context) (io.ReadCloser, fu
 }
 
 func (target *iosSmokeTarget) launch(ctx context.Context) error {
-	output, err := target.simctl(ctx, 2*time.Minute, "launch", target.device, smokeIOSBundleID)
+	output, err := target.simctl(ctx, 2*time.Minute, "launch", target.device, target.bundleID)
 	if err != nil {
 		return err
 	}
@@ -364,7 +370,7 @@ func (target *iosSmokeTarget) collect(ctx context.Context, artifacts string) {
 	}
 	target.samplesMutex.Unlock()
 	saveSmokeOutput(ctx, filepath.Join(artifacts, "ios-log-show.txt"), 2*time.Minute, "xcrun", "simctl", "spawn", target.device, "log", "show", "--last", "30m", "--info", "--style", "compact", "--predicate", smokeIOSLogPredicate)
-	if container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, smokeIOSBundleID, "data"); err == nil {
+	if container, err := target.simctl(ctx, time.Minute, "get_app_container", target.device, target.bundleID, "data"); err == nil {
 		saveSmokeOutput(ctx, filepath.Join(artifacts, "settings-after.json"), time.Minute, "cat", filepath.Join(strings.TrimSpace(container), "Documents", "Unbound", "settings.json"))
 	}
 	home, err := os.UserHomeDir()
