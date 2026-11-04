@@ -152,6 +152,10 @@ export class AnimatedValue {
 	}
 }
 
+type Finish = { finished: boolean };
+
+type Completion = (result: Finish) => void;
+
 type Animation = { start: (callback?: Completion) => void; stop: () => void; reset: () => void };
 
 function instant(run: () => void): Animation {
