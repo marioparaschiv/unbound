@@ -1,25 +1,23 @@
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { flux } from '@unbound-app/api';
 
-import { EditMessageStore, UserStore } from '~/discord/modules';
+import { EditMessageStore, UserStore } from '~/editing/modules';
+import { CloudUploader, REST } from '~/uploads/modules';
 import { canAddAttachments } from '~/uploads/eligibility';
 import { canAttachIn } from '~/uploads/permissions';
 import { addAttachments } from '~/uploads';
-import type { UploadItem } from '~/types';
-
-type AddFilesAction = {
-	channelId?: string;
-	files?: UploadItem[];
-};
+import { PLUGIN_NAME } from '~/constants';
 
 /**
  * @description While you edit a message, files you pick, take or paste in the chat input are added to that message instead of waiting for the next one.
- * Intercepts `UPLOAD_ATTACHMENT_ADD_FILES` and reads the edited message from `EditMessageStore`.
- * @returns A function that removes the interceptor.
+ * Intercepts `UPLOAD_ATTACHMENT_ADD_FILES` and reads the edited message from `EditMessageStore`. Uploads with `CloudUploader` and sends the edit through `REST`. The Addon scope removes the interceptor when the plugin stops.
  */
-export function interceptEditUploads(): () => void {
-	return flux.interceptAction('UPLOAD_ATTACHMENT_ADD_FILES', (action) => {
-		const { channelId, files } = action as AddFilesAction;
+export function startEditUploads(): void {
+	if (!ensureModules(`${PLUGIN_NAME}: editing`, { CloudUploader, EditMessageStore, REST }))
+		return;
 
+	flux.interceptAction('UPLOAD_ATTACHMENT_ADD_FILES', ({ channelId, files }) => {
 		if (!channelId || !Array.isArray(files) || !files.length) return false;
 
 		const message = EditMessageStore.getEditingMessage(channelId);
@@ -36,6 +34,6 @@ export function interceptEditUploads(): () => void {
 
 		return true;
 	});
-}
 
-export default interceptEditUploads;
+	recordApplied(1);
+}

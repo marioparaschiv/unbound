@@ -4,10 +4,14 @@ import {
 	insertSheetRows,
 	type SheetRowSpec,
 } from '@unbound-plugins/shared/action-sheets/sheet-rows';
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { patcher, toasts } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
 
 import { canAddAttachments, remainingAttachments } from '~/uploads/eligibility';
-import { ActionSheets, UserStore } from '~/discord/modules';
+import { ActionSheets, UserStore } from '~/sheet/modules';
+import { CloudUploader, REST } from '~/uploads/modules';
 import { canAttachIn } from '~/uploads/permissions';
 import { pickAttachments } from '~/uploads/picker';
 import { addAttachments } from '~/uploads';
@@ -27,7 +31,7 @@ async function chooseAndAdd(message: EditableMessage): Promise<void> {
 	} catch (error) {
 		toasts.show({
 			title: PLUGIN_NAME,
-			content: error instanceof Error ? error.message : 'The media picker failed.',
+			content: error instanceof Error ? error.message : messages.PICKER_FAILED,
 		});
 	}
 }
@@ -43,7 +47,7 @@ function rowsFor(message: EditableMessage, hide: () => void): SheetRowSpec[] {
 	return [
 		{
 			key: 'unbound-add-attachments',
-			label: 'Add Attachments',
+			label: messages.ADD_ATTACHMENTS,
 			icon: 'ImagePlusIcon',
 			onPress() {
 				hide();
@@ -56,9 +60,14 @@ function rowsFor(message: EditableMessage, hide: () => void): SheetRowSpec[] {
 /**
  * @description Adds an Add Attachments row to the long-press menu of your own messages, which opens the photo and video picker.
  * Patches the message long-press sheet through `patchLazySheets`.
+ * `stop` calls the returned function, because the scope cannot see a sheet that is still loading when the plugin stops.
  * @returns A function that removes the row and ignores sheets still loading.
  */
-export function patchActionSheets(): () => void {
+export function startSheet(): () => void {
+	if (!ensureModules(`${PLUGIN_NAME}: sheet`, { ActionSheets, CloudUploader, REST })) {
+		return () => undefined;
+	}
+
 	let specs: readonly SheetRowSpec[] = [];
 	const renderer = createSheetRenderer(patcher, (result) => insertSheetRows(result, specs));
 
@@ -77,10 +86,11 @@ export function patchActionSheets(): () => void {
 		return specs.length ? renderer.render : undefined;
 	});
 
+	recordApplied(1);
+
 	return () => {
+		recordApplied(-1);
 		unpatch();
 		renderer.dispose();
 	};
 }
-
-export default patchActionSheets;

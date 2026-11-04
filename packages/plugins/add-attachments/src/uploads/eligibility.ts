@@ -1,3 +1,5 @@
+import { format, messages } from '@unbound-app/i18n';
+
 import { IS_VOICE_MESSAGE_FLAG, MAX_ATTACHMENTS, MessageType } from '~/constants';
 import type { EditableMessage } from '~/types';
 
@@ -40,9 +42,9 @@ export function attachmentLimitProblem(message: EditableMessage, count: number):
 
 	if (count <= remaining) return null;
 
-	if (remaining === 0) return 'You cannot add more attachments to this message.';
+	if (remaining === 0) return messages.LIMIT_REACHED;
 
-	return `You can only add ${remaining} more attachment${remaining === 1 ? '' : 's'} to this message.`;
+	return format('LIMIT_REMAINING', { count: remaining });
 }
 
 export default canAddAttachments;
