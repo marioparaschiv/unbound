@@ -36,5 +36,7 @@
 	"REGION_JP": "Japan",
 	"REGION_IN": "India",
 	"REGION_AU": "Australia",
-	"CLEAR_CACHE_CONFIRM": "Clear the cache? Your saved words are removed."
+	"CLEAR_CACHE_CONFIRM": "Clear the cache? Your saved words are removed.",
+	"PLUGIN_NAME": "Settings Demo",
+	"CACHE_CLEARED": "clearCache ran: the word list is empty."
 }
