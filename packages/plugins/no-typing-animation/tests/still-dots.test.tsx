@@ -1,12 +1,7 @@
 import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
 import { View } from 'react-native';
-
-// The testing kit has no fake of Discord's design components yet, so give `createStyles` its shape.
-mock.module('@unbound-app/api/metro/components', () => ({
-	Discord: { createStyles: (styles: () => object) => () => styles() },
-}));
 
 function AnimatedEllipsisDot(_props: { delay: number }) {
 	return <View />;
