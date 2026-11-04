@@ -1,4 +1,4 @@
-import { recordApplied, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import {
@@ -33,22 +33,9 @@ export function startViewer(): void {
 
 	const state: SheetState = { open: null, profile: null };
 
-	const features = {
-		'action sheets': () => patchActionSheets(state),
-		'context menus': () => patchContextMenus(state),
-		'roles card': patchUserProfileRolesCard,
-	};
-	const failed: string[] = [];
-
-	for (const [name, patch] of Object.entries(features)) {
-		try {
-			patch();
-			recordApplied(1);
-		} catch (error) {
-			console.error(`[Permissions Viewer] Failed to patch the ${name}:`, error);
-			failed.push(name);
-		}
-	}
-
-	if (failed.length) recordFailure(`could not patch the ${failed.join(', ')}`);
+	startFeatures('Permissions Viewer', [
+		() => patchActionSheets(state),
+		() => patchContextMenus(state),
+		patchUserProfileRolesCard,
+	]);
 }
