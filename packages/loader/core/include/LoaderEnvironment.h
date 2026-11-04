@@ -5,6 +5,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace loader::environment {
 enum class Receipt
@@ -49,4 +50,8 @@ std::optional<HookFramework> hookFrameworkForImage(const std::string &imagePath,
 std::optional<std::string>   dpkgPackageVersion(const std::string &status,
                                                 const std::string &package);
 std::string                  frameworkLabel(const std::string &name, const std::string &version);
+
+std::string jailbreakName(const std::string &root, const std::vector<std::string> &markers,
+                          const std::vector<std::string> &images, bool roothide = false);
+std::string jailbreakLabel(const std::string &name, const std::string &version);
 }

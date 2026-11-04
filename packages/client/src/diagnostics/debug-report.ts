@@ -92,6 +92,7 @@ export function readDebugInfo(): DebugInfo {
 		discordBuild: String(bundle.Build ?? 'unknown'),
 		appSource,
 		framework: attempt(() => platform?.app.getFramework(), ''),
+		jailbreak: android ? '' : attempt(() => platform?.device.getJailbreak?.(), ''),
 		react: React.version,
 		reactNative: rn ? `${rn.major}.${rn.minor}.${rn.patch}` : 'unknown',
 		hermes: String(runtime['OSS Release Version'] ?? 'unknown'),
