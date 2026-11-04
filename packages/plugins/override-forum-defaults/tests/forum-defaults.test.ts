@@ -1,6 +1,8 @@
-import { metro, startPlugin } from '@unbound-app/api/testing';
+import { metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { describe, expect, test } from 'bun:test';
+
+import { selfTest } from '~/index';
 
 const DISCORD_LAYOUT = 2;
 const DISCORD_SORT_ORDER = 1;
@@ -72,5 +74,29 @@ describe('forum defaults', () => {
 		registerChannelRecord();
 
 		expect(new ChannelRecordBase().getDefaultLayout()).toBe(1);
+	});
+
+	test('reports its patches applied to the self test', async () => {
+		registerChannelRecord();
+		await startPlugin();
+
+		expect((await selfTest()).ok).toBe(true);
+	});
+
+	test('gives Discord its own defaults back once the plugin stops', async () => {
+		registerChannelRecord();
+		settings.defaultLayout = 'list';
+		settings.defaultSortOrder = 'recentlyActive';
+		await startPlugin();
+
+		expect(new ChannelRecordBase().getDefaultLayout()).toBe(1);
+		expect(new ChannelRecordBase().getDefaultSortOrder()).toBe(0);
+
+		await stopPlugin();
+
+		const forum = new ChannelRecordBase();
+
+		expect(forum.getDefaultLayout()).toBe(DISCORD_LAYOUT);
+		expect(forum.getDefaultSortOrder()).toBe(DISCORD_SORT_ORDER);
 	});
 });

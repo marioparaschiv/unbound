@@ -6,6 +6,10 @@
 
 - The settings labels and the typing text Discord does not translate, such as "Alice is typing...", can now be translated. The plugin works the same as before.
 
+### Fixed
+
+- A channel or thread row with an unexpected layout no longer stops the indicator on the other rows.
+
 ## [1.0.3] - 2026-11-03
 
 ### Changed

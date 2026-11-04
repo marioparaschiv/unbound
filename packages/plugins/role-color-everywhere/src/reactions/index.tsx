@@ -1,5 +1,4 @@
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
@@ -42,7 +41,10 @@ function colorReactionRow(row: Rendered, guildId: string): Rendered {
 }
 
 function patchMessageReactionsContent(): () => void {
-	return patcher.react.after(
+	// A list rendered while patched keeps calling this `renderItem` after the patch is removed.
+	let active = true;
+
+	const unpatch = patcher.react.after(
 		MessageReactionsContent,
 		'MessageReactionsContent',
 		({ props, result: rendered }) => {
@@ -56,21 +58,30 @@ function patchMessageReactionsContent(): () => void {
 			return cloneElement(result, {
 				children: cloneElement(list, {
 					renderItem: (section: number, index: number) =>
-						colorReactionRow(renderItem(section, index), guildId),
+						active
+							? colorReactionRow(renderItem(section, index), guildId)
+							: renderItem(section, index),
 				}),
 			});
 		},
 	);
+
+	return () => {
+		active = false;
+		unpatch();
+	};
 }
 
 /**
  * @description Paints the names in a message's reaction details list with their role colors while `reactorsList` is on.
  * Patches the render of `MessageReactionsContent` (`modules/reactions/native/MessageReactionsContent.tsx`) and reads
- * `GuildMemberStore` and `ChannelStore`. The Addon scope removes the patch when the plugin stops.
+ * `GuildMemberStore` and `ChannelStore`. The returned function removes the patch and plains the lists already drawn.
+ * @returns The function that ends the feature.
  */
-export function startReactions(): void {
-	if (!ensureModules(`${PLUGIN_NAME}: reactions`, { GuildMemberStore, ChannelStore })) return;
+export function startReactions(): () => void {
+	if (!ensureModules(`${PLUGIN_NAME}: reactions`, { GuildMemberStore, ChannelStore })) {
+		return () => {};
+	}
 
-	whileEnabled(settings, 'reactorsList', true, patchMessageReactionsContent);
-	recordApplied(1);
+	return whileEnabled(settings, 'reactorsList', true, patchMessageReactionsContent);
 }

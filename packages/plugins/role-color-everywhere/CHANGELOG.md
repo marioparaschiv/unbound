@@ -6,6 +6,11 @@
 
 - The settings labels can now be translated. The plugin works the same as before.
 
+### Fixed
+
+- Names in the member list, reaction details, poll results and typing indicator return to plain colors when the plugin stops, including in lists that were already open.
+- A feature that fails to start no longer stops the others.
+
 ## [1.2.4] - 2026-11-03
 
 ### Changed

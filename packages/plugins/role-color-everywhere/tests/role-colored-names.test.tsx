@@ -1,8 +1,11 @@
-import { flux, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
+
 import { createElement, memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
+
+import { selfTest } from '~/index';
 
 import { NO_NATIVE_CLASSES, registerFeatureModules } from './feature-modules';
 
@@ -87,29 +90,37 @@ describe('typing names', () => {
 
 describe('member list role headers', () => {
 	const Header = ({ title }: { title: ReactNode }) => createElement(Text, null, title);
+	// The list Discord drew keeps the `renderSectionHeader` it was given.
+	const drawn: { renderSectionHeader?: (section: number) => ReactNode } = {};
 	const Headers = ({
 		renderSectionHeader,
 	}: {
 		renderSectionHeader: (section: number) => ReactNode;
-	}) => call(renderSectionHeader, 0);
+	}) => {
+		drawn.renderSectionHeader = renderSectionHeader;
+
+		return call(renderSectionHeader, 0);
+	};
 	const module = {
 		UsersFastList: () =>
 			createElement(Headers, {
 				renderSectionHeader: () => createElement(Header, { title: 'Admins — 1' }),
 			}),
 	};
+	const props = {
+		getSectionProps: () => ({ props: { title: 'Admins — 1' } }),
+		getItemProps: () => ({ props: { guildId: 'guild', user: { id: 'red' } } }),
+	};
 
-	test('paints a role section title with the role color', async () => {
+	beforeEach(() => {
 		registerFeatureModules(
 			module,
 			'modules/main_tabs_v2/native/shared_components/user_list/UsersFastList.tsx',
 		);
-		await startPlugin(NO_NATIVE_CLASSES);
+	});
 
-		const props = {
-			getSectionProps: () => ({ props: { title: 'Admins — 1' } }),
-			getItemProps: () => ({ props: { guildId: 'guild', user: { id: 'red' } } }),
-		};
+	test('paints a role section title with the role color', async () => {
+		await startPlugin(NO_NATIVE_CLASSES);
 
 		expect(
 			colorsOf(
@@ -117,14 +128,37 @@ describe('member list role headers', () => {
 			),
 		).toEqual([undefined, { color: RED }]);
 	});
+
+	test('draws a plain title in a list drawn before the plugin stopped', async () => {
+		await startPlugin(NO_NATIVE_CLASSES);
+		render(createElement(module.UsersFastList as (p: object) => ReactNode, props));
+		await stopPlugin();
+
+		expect(
+			colorsOf(
+				render(
+					call(drawn.renderSectionHeader as (section: number) => ReactNode, 0) as never,
+				),
+			),
+		).toEqual([undefined]);
+	});
 });
 
 describe('reaction users', () => {
 	const Name = ({ user }: { user: { id: string; username: string } }) =>
 		createElement(Text, null, user.username);
 	const Item = ({ label }: { label: ReactNode }) => createElement(View, null, label);
-	const List = ({ renderItem }: { renderItem: (section: number, index: number) => ReactNode }) =>
-		call(renderItem, 0, 0);
+	// The list Discord drew keeps the `renderItem` it was given.
+	const drawn: { renderItem?: (section: number, index: number) => ReactNode } = {};
+	const List = ({
+		renderItem,
+	}: {
+		renderItem: (section: number, index: number) => ReactNode;
+	}) => {
+		drawn.renderItem = renderItem;
+
+		return call(renderItem, 0, 0);
+	};
 	const module = {
 		MessageReactionsContent: (_props: { channelId: string }) =>
 			createElement(
@@ -156,12 +190,32 @@ describe('reaction users', () => {
 
 		expect(colorsOf(view)).toEqual([{ color: RED }, undefined]);
 	});
+
+	test('draws plain names in a list drawn before the plugin stopped', async () => {
+		registerFeatureModules(module, 'modules/reactions/native/MessageReactionsContent.tsx');
+		await startPlugin(NO_NATIVE_CLASSES);
+		render(createElement(module.MessageReactionsContent, { channelId: 'channel' }));
+		await stopPlugin();
+
+		const row = call(drawn.renderItem as (section: number, index: number) => ReactNode, 0, 0);
+
+		expect(colorsOf(render(row as never))).toEqual([undefined, undefined]);
+	});
 });
 
 describe('poll voters', () => {
 	const Row = ({ label }: { label: ReactNode }) => createElement(Text, null, label);
-	const Rows = ({ renderItem }: { renderItem: (voter: { item: { id: string } }) => ReactNode }) =>
-		call(renderItem, { item: { id: 'red' } });
+	// The list Discord drew keeps the `renderItem` it was given.
+	const drawn: { renderItem?: (voter: { item: { id: string } }) => ReactNode } = {};
+	const Rows = ({
+		renderItem,
+	}: {
+		renderItem: (voter: { item: { id: string } }) => ReactNode;
+	}) => {
+		drawn.renderItem = renderItem;
+
+		return call(renderItem, { item: { id: 'red' } });
+	};
 	const VotersList = () =>
 		createElement(
 			View,
@@ -189,6 +243,19 @@ describe('poll voters', () => {
 		const view = render(createElement(module.default, { channelId: 'channel' }));
 
 		expect(colorsOf(view)).toEqual([undefined, undefined, { color: RED }]);
+	});
+
+	test('draws plain names in a list drawn before the plugin stopped', async () => {
+		registerFeatureModules(module, 'modules/polls/native/PollVotesActionSheet.tsx');
+		await startPlugin(NO_NATIVE_CLASSES);
+		render(createElement(module.default, { channelId: 'channel' }));
+		await stopPlugin();
+
+		const row = call(drawn.renderItem as (voter: { item: { id: string } }) => ReactNode, {
+			item: { id: 'red' },
+		});
+
+		expect(colorsOf(render(row as never))).toEqual([undefined]);
 	});
 });
 
@@ -223,5 +290,56 @@ describe('voice users', () => {
 		);
 
 		expect(colorsOf(view)).toEqual([undefined, undefined]);
+	});
+
+	test('draws a plain name once the plugin stopped', async () => {
+		registerFeatureModules(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
+		await startPlugin(NO_NATIVE_CLASSES);
+		await stopPlugin();
+
+		const view = render(
+			createElement(module.default, { guildId: 'guild', user: { id: 'red' } }),
+		);
+
+		expect(colorsOf(view)).toEqual([undefined, undefined, undefined]);
+	});
+});
+
+describe('self test', () => {
+	// UNKNOWN until kit 2's objc fake lands: the native painters skip, so only they are named as skipped.
+	test('names only the native painters as skipped after the plugin starts', async () => {
+		registerFeatureModules();
+		await startPlugin(NO_NATIVE_CLASSES);
+
+		const { ok, detail } = await selfTest();
+
+		expect(ok).toBe(false);
+		expect(detail).toBe(
+			'skipped: Role Color Everywhere: chat mentions: native classes not found: DCDMessageTableViewCell; Role Color Everywhere: composer mentions: native classes not found: DCDChatInputComponentView',
+		);
+	});
+
+	test('keeps the other features when one throws on start', async () => {
+		const voice = {
+			default: (props: { guildId: string; user: { id: string } }) =>
+				createElement(
+					View,
+					null,
+					createElement(Text, null, props.user.id),
+					createElement(Text, null, 'muted'),
+				),
+		};
+
+		// Patching a render function that is not there throws; the typing feature fails alone.
+		metro.register({ default: 'not a component' }, 'modules/chat/native/TypingIndicator.tsx');
+		registerFeatureModules(voice, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
+		await startPlugin(NO_NATIVE_CLASSES);
+
+		const view = render(
+			createElement(voice.default, { guildId: 'guild', user: { id: 'red' } }),
+		);
+
+		expect(colorsOf(view)).toEqual([undefined, { color: RED }, undefined]);
+		expect((await selfTest()).detail).toContain('start failed');
 	});
 });

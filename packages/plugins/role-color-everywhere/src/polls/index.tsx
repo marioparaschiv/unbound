@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
@@ -12,41 +11,60 @@ import { PLUGIN_NAME } from '~/constants';
 import type { Rendered } from '~/types';
 
 function patchPollVotesActionSheet(): () => void {
-	return patcher.react.after(PollVotesActionSheet, 'default', ({ props, result: rendered }) => {
-		const result: Rendered = rendered;
-		const guildId = guildIdOf((props as { channelId?: string } | undefined)?.channelId);
-		const sheet = result?.props?.children;
-		const children = sheet?.props?.children;
+	// A sheet rendered while patched keeps calling the voters list's `renderItem` after the patch is removed.
+	let active = true;
 
-		if (!guildId || !Array.isArray(children)) return;
+	const unpatch = patcher.react.after(
+		PollVotesActionSheet,
+		'default',
+		({ props, result: rendered }) => {
+			const result: Rendered = rendered;
+			const guildId = guildIdOf((props as { channelId?: string } | undefined)?.channelId);
+			const sheet = result?.props?.children;
+			const children = sheet?.props?.children;
 
-		const voters = children.find(
-			(child: Rendered) =>
-				typeof child?.type === 'function' && child.type.name === 'VotersList',
-		);
+			if (!guildId || !Array.isArray(children)) return;
 
-		if (!voters) return;
+			const voters = children.find(
+				(child: Rendered) =>
+					typeof child?.type === 'function' && child.type.name === 'VotersList',
+			);
 
-		const colored = (
-			<RoleColoredVotersList render={voters.type} props={voters.props} guildId={guildId} />
-		);
+			if (!voters) return;
 
-		return cloneElement(result, {
-			children: cloneElement(sheet, {
-				children: children.map((child) => (child === voters ? colored : child)),
-			}),
-		});
-	});
+			const colored = (
+				<RoleColoredVotersList
+					render={voters.type}
+					props={voters.props}
+					guildId={guildId}
+					isActive={() => active}
+				/>
+			);
+
+			return cloneElement(result, {
+				children: cloneElement(sheet, {
+					children: children.map((child) => (child === voters ? colored : child)),
+				}),
+			});
+		},
+	);
+
+	return () => {
+		active = false;
+		unpatch();
+	};
 }
 
 /**
  * @description Paints voters' names in poll result details with their role colors while `pollResults` is on.
  * Patches the render of `PollVotesActionSheet` (`modules/polls/native/PollVotesActionSheet.tsx`) and reads
- * `GuildMemberStore` and `ChannelStore`. The Addon scope removes the patch when the plugin stops.
+ * `GuildMemberStore` and `ChannelStore`. The returned function removes the patch and plains the sheets already drawn.
+ * @returns The function that ends the feature.
  */
-export function startPolls(): void {
-	if (!ensureModules(`${PLUGIN_NAME}: poll results`, { GuildMemberStore, ChannelStore })) return;
+export function startPolls(): () => void {
+	if (!ensureModules(`${PLUGIN_NAME}: poll results`, { GuildMemberStore, ChannelStore })) {
+		return () => {};
+	}
 
-	whileEnabled(settings, 'pollResults', true, patchPollVotesActionSheet);
-	recordApplied(1);
+	return whileEnabled(settings, 'pollResults', true, patchPollVotesActionSheet);
 }

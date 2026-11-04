@@ -1,8 +1,10 @@
-import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, memo, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
+
+import { selfTest } from '~/index';
 
 const typing: { ids: Record<string, number> } = { ids: {} };
 const users: Record<string, { id: string; username: string }> = {
@@ -94,21 +96,25 @@ function renderRow(channelId = 'general', muted = false) {
 }
 
 // The preset forgets registered modules before each test, so each test registers them again.
-beforeEach(async () => {
+function registerModules(thread: object) {
 	typing.ids = {};
 	metro.register({ colors: { TEXT_DEFAULT: '#fff' }, internal: {} });
 	metro.register(
 		{ default: TextChannel },
 		'modules/channel_list_v2/native/items/TextChannel.tsx',
 	);
-	metro.register(threadModule, 'modules/channel_list_v2/native/items/ThreadChannel.tsx');
+	metro.register(thread, 'modules/channel_list_v2/native/items/ThreadChannel.tsx');
 	metro.register({ default: UserSummaryItem }, 'components_native/common/UserSummaryItem.tsx');
 	seedStores();
 	settings.indicatorMode = 2;
-	await startPlugin();
-});
+}
 
 describe('typing indicators on channel rows', () => {
+	beforeEach(async () => {
+		registerModules(threadModule);
+		await startPlugin();
+	});
+
 	test('shows an avatar for each user typing in the channel', () => {
 		typing.ids = { alice: 1, bob: 1 };
 
@@ -168,5 +174,43 @@ describe('typing indicators on channel rows', () => {
 				.findAll('Text')
 				.map((text) => text.text()),
 		).toEqual(['thread', '3 messages', 'avatar:alice']);
+	});
+
+	test('draws channel and thread rows without the indicator after the plugin stops', async () => {
+		typing.ids = { alice: 1 };
+
+		await stopPlugin();
+
+		expect(
+			renderRow()
+				.findAll('Text')
+				.map((text) => text.text()),
+		).toEqual(['#', 'general']);
+		expect(
+			renderThread()
+				.findAll('Text')
+				.map((text) => text.text()),
+		).toEqual(['thread', '3 messages']);
+	});
+});
+
+describe('a thread row with an unexpected shape', () => {
+	beforeEach(async () => {
+		registerModules({ default: 'not a component' });
+		await startPlugin();
+	});
+
+	test('still shows the indicator on channel rows', () => {
+		typing.ids = { alice: 1 };
+
+		expect(
+			renderRow()
+				.findAll('Text')
+				.map((text) => text.text()),
+		).toEqual(['#', 'avatar:alice', 'general']);
+	});
+
+	test('fails the self test', async () => {
+		expect((await selfTest()).detail).toContain('start failed');
 	});
 });

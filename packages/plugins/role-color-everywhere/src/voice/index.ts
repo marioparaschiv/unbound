@@ -1,5 +1,4 @@
 import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colors';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
@@ -49,11 +48,11 @@ function patchVoiceUserNameItem(): () => void {
 /**
  * @description Paints members' names in voice channel user lists with their role colors while `voiceUsers` is on.
  * Patches the render of `VoiceUserNameItem` (`modules/guild_sidebar/native/VoiceUserNameItem.tsx`) and reads `GuildMemberStore`.
- * The Addon scope removes the patch when the plugin stops.
+ * The patch returns finished elements with no closures, so removing it plains every row.
+ * @returns The function that ends the feature.
  */
-export function startVoice(): void {
-	if (!ensureModules(`${PLUGIN_NAME}: voice users`, { GuildMemberStore })) return;
+export function startVoice(): () => void {
+	if (!ensureModules(`${PLUGIN_NAME}: voice users`, { GuildMemberStore })) return () => {};
 
-	whileEnabled(settings, 'voiceUsers', true, patchVoiceUserNameItem);
-	recordApplied(1);
+	return whileEnabled(settings, 'voiceUsers', true, patchVoiceUserNameItem);
 }

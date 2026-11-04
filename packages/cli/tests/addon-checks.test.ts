@@ -58,6 +58,7 @@ const STANDARD_LAYOUT = {
 	'src/constants.ts': 'export {};',
 	'src/types.ts': 'export {};',
 	'src/components/toggle.tsx': 'export {};',
+	'src/shared/names.ts': 'export {};',
 	'src/messages/index.ts': 'export {};',
 	'src/messages/platform.ts': 'export {};',
 	'src/messages/ios/hook.ts': 'export {};',

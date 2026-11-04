@@ -21,6 +21,7 @@ A plugin is split by **feature**: one thing the plugin does, in its own folder u
 			<File name='constants.ts' />
 			<File name='types.ts' />
 			<Folder name='components' note='Components several features share' />
+			<Folder name='shared' note='Helpers several features share' />
 			<Folder name='<feature>' note='One folder per feature'>
 				<File name='index.ts' note='Starts the feature, with its developer notes' />
 				<File name='platform.ts' note='Picks the iOS or Android handler, if the feature has one' />
@@ -32,7 +33,7 @@ A plugin is split by **feature**: one thing the plugin does, in its own folder u
 	</Folder>
 </FileTree>
 
-- The only files at the root of `src/` are `index.tsx`, `settings.tsx`, `constants.ts` and `types.ts`. Every other file goes in a feature folder.
+- The only files at the root of `src/` are `index.tsx`, `settings.tsx`, `constants.ts` and `types.ts`. Every other file goes in a feature folder, in `components/` when it is a component several features share, or in `shared/` when it is any other helper several features share. A helper only one feature uses stays in that feature's folder.
 - Platform code goes in the `ios/` and `android/` folders of the feature it belongs to, never at the root of `src/`.
 
 **Checked by** the build check `layout`. `ubd build` prints a warning for each departure. Warnings don't fail the build.
