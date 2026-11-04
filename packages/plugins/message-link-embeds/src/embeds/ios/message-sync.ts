@@ -12,8 +12,9 @@ import { MessageStore } from '~/embeds/modules';
 /**
  * @description Follows message store changes: keeps embeds in place when their message's reactions change, and scans for new cells when the loaded messages change.
  * @param session The running session.
+ * @returns A function that stops following the store and cancels the pending timers.
  */
-export function subscribeMessageStore(session: Session): void {
+export function subscribeMessageStore(session: Session): () => void {
 	let syncTimer: ReturnType<typeof setTimeout> | undefined;
 	let scanTimer: ReturnType<typeof setTimeout> | undefined;
 	let windowSignature = '';
@@ -73,5 +74,12 @@ export function subscribeMessageStore(session: Session): void {
 		scheduleWindowScan();
 	}
 
-	flux.onStoreChange(MessageStore, onChange);
+	const unsubscribe = flux.onStoreChange(MessageStore, onChange);
+
+	return () => {
+		unsubscribe();
+		clearTimeout(syncTimer);
+		clearTimeout(scanTimer);
+		syncTimer = scanTimer = undefined;
+	};
 }

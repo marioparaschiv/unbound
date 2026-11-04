@@ -1,5 +1,8 @@
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { render, startPlugin, toasts } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
+
+import { selfTest } from '~/index';
 
 import { ActivityButtons, registerDiscord, synced } from './fake-discord';
 
@@ -66,5 +69,14 @@ describe('Listen Along button', () => {
 			{ content: 'Listen along with someone else, not yourself.' },
 		]);
 		expect(synced).toEqual([]);
+	});
+});
+
+describe('self test', () => {
+	test('passes once the plugin has started', async () => {
+		resetHealth();
+		await startPlugin();
+
+		expect(selfTest()).toMatchObject({ ok: true });
 	});
 });

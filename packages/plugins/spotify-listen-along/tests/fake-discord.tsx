@@ -1,20 +1,6 @@
-import { metro as pluginMetro } from '@unbound-app/api';
 import { metro } from '@unbound-app/api/testing';
-import { mock } from 'bun:test';
 import { memo, type ReactElement } from 'react';
 import { Pressable, Text } from 'react-native';
-
-// The testing kit has no fake of Discord's design components or of `filters.byTypeName`; these stand in until it has.
-function IconButton(props: Record<string, unknown>) {
-	return <Pressable {...props} />;
-}
-
-mock.module('@unbound-app/api/metro/components', () => ({ Discord: { IconButton } }));
-
-Object.assign(pluginMetro.filters, {
-	byTypeName: (name: string) => (module: { type?: { name?: string } }) =>
-		module.type?.name === name,
-});
 
 export type OverflowButtons = { text: string; disabled?: boolean; onPress: () => void }[];
 
@@ -66,7 +52,7 @@ export function registerDiscord() {
 	metro.register({ SpotifyNeutralIcon: () => null });
 	metro.register({
 		sendMessage: (...args: unknown[]) => sent.push(args),
-		revealMessage: () => undefined,
+		receiveMessage: () => undefined,
 	});
 	metro.register({ clearDraft: (...args: unknown[]) => cleared.push(args) });
 }

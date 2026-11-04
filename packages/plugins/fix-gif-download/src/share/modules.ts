@@ -13,11 +13,10 @@ function asMediaShareActions(exports: MediaShareActions & { default?: MediaShare
 }
 
 /**
- * @description Passes every copy of the media viewer's share actions to `onLoad`: the loaded ones now, the rest as Discord loads them.
+ * @description Passes every copy of the media viewer's share actions to `onLoad`: the loaded ones now, the rest as Discord loads them. The Addon scope removes the load listener when the plugin stops.
  * @param onLoad Receives each module exporting `useMediaShareActions`, once.
- * @returns A function that stops waiting for more copies.
  */
-export function onMediaShareActions(onLoad: (module: MediaShareActions) => void): () => void {
+export function onMediaShareActions(onLoad: (module: MediaShareActions) => void): void {
 	const seen = new Set<MediaShareActions>();
 
 	function load(module: MediaShareActions | undefined) {
@@ -34,7 +33,5 @@ export function onMediaShareActions(onLoad: (module: MediaShareActions) => void)
 
 	for (const module of loaded) load(module);
 
-	const stop = metro.onModuleLoad((exports) => load(asMediaShareActions(exports)));
-
-	return () => stop();
+	metro.onModuleLoad((exports) => load(asMediaShareActions(exports)));
 }
