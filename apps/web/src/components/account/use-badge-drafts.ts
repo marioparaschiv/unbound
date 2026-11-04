@@ -27,7 +27,7 @@ export type BadgeDraft = {
  */
 export function nameFromFile(fileName: string): string {
 	return fileName
-		.replace(/\.png$/i, '')
+		.replace(/\.(png|gif)$/i, '')
 		.replaceAll(/[-_]+/g, ' ')
 		.replaceAll(/[^\p{Script=Latin}0-9 .,'!&+:]/gu, '')
 		.replace(/^[^\p{Script=Latin}0-9]+/u, '')
@@ -40,7 +40,7 @@ export function nameFromFile(fileName: string): string {
 }
 
 /**
- * @description Holds the badges being added or edited: each picked PNG is checked in the browser, then
+ * @description Holds the badges being added or edited: each picked PNG or GIF is checked in the browser, then
  * uploaded, and its draft follows along.
  * @returns The drafts and the operations on them.
  */

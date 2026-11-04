@@ -109,7 +109,7 @@ export async function createBadgeSuite(now: Date) {
 		return { userId, client: createApiClient<Api>({ baseUrl: server.url.href, headers }) };
 	}
 
-	const imageUrl = (image: string) => `${ctx.env.CDN_URL}/badges/${image}.png`;
+	const imageUrl = (image: string) => `${ctx.env.CDN_URL}/${getBadgeImageKey(image)}`;
 	const setBadges = (client: Client, badges: Badge[]) =>
 		client('PUT /api/v1/me/badges', { body: { badges }, response: badgeClaimResponseSchema });
 	const requestUpload = (client: Client, size: number) =>

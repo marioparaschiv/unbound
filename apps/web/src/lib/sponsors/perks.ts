@@ -18,7 +18,7 @@ export const PERKS = {
 	'custom-badge': {
 		name: 'Custom badge',
 		description:
-			'A badge of your own on your Discord profile, shown to everyone using Unbound.',
+			'A badge of your own on your Discord profile, shown to everyone using Unbound. Animated GIFs work too.',
 		minimumMonthlyCents: 500,
 		config: badgesSchema,
 	},

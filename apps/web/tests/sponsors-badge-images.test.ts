@@ -8,6 +8,7 @@ import { perkClaim } from '~/db/schema';
 
 import { createBadgeSuite } from './helpers/badges';
 import { failure } from './helpers/server';
+import { encodeGif } from './helpers/gif';
 import { encodePng } from './helpers/png';
 
 const NOW = new Date('2026-03-01T00:00:00Z');
@@ -60,6 +61,29 @@ describe('badge images', () => {
 		const pink = { name: 'Pink', image: first.image };
 
 		expect((await setBadges(sponsor.client, [pink])).claim?.badges).toEqual(owned(pink));
+	});
+
+	test('an animated GIF uploads, is served as a GIF and shows as a badge', async () => {
+		const sponsor = await signUp();
+		const bytes = encodeGif({
+			width: 128,
+			colors: [
+				[237, 66, 69],
+				[59, 165, 93],
+			],
+		});
+
+		const { image, url } = await uploadImage(sponsor.client, bytes);
+
+		expect(image).toBe(hashBadgeImage(bytes));
+		expect(url).toEndWith(`/badges/${image}`);
+		expect(url).toEndWith('.gif');
+		expect(bucket.objects.get(getBadgeImageKey(image))).toEqual(bytes);
+
+		const party = { name: 'Party', image };
+
+		await setBadges(sponsor.client, [party]);
+		expect(await publicBadges(sponsor.userId)).toEqual(shown(party));
 	});
 
 	test('uploading needs a linked, active, recurring sponsorship of at least $5', async () => {
