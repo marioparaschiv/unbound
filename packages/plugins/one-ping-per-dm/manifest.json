@@ -1,0 +1,18 @@
+{
+	"id": "unbound.one-ping-per-dm",
+	"name": "One Ping Per DM",
+	"description": "Plays the in-app message sound only for the first unread message in a DM, until you read it.",
+	"authors": [
+		{
+			"name": "ProffDea",
+			"id": "609329952180928513"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "BellZIcon",
+	"main": "index.tsx"
+}

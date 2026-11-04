@@ -70,6 +70,14 @@ jobs:
             - name: Check every bundle and the manifest are signed
               run: bun run --cwd packages/client verify-signatures
 
+            # The loader downloads the DevTools backend for `loader.devtools` by the manifest's hash.
+            - name: Check the DevTools backend is built for every bytecode version
+              run: |
+                  for version in $(jq -r '.bytecodeVersions[]' packages/client/scripts/build/hermes.json); do
+                      jq -e --arg file "devtools.$version.bundle" '.sha512[$file]' packages/client/dist/manifest.json > /dev/null \
+                          || { echo "::error::manifest.json lists no devtools.$version.bundle"; exit 1; }
+                  done
+
             - name: Check every bundle has a source map
               run: |
                   for bundle in packages/client/dist/unbound.*.bundle; do
