@@ -1,18 +1,8 @@
 import { assets } from '@unbound-app/api';
-import { flux, metro, startPlugin } from '@unbound-app/api/testing';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { flux, metro, native, startPlugin } from '@unbound-app/api/testing';
+import { beforeEach, describe, expect, test } from 'bun:test';
 
 type Row = { message: Record<string, unknown> };
-
-let platform: 'ios' | 'android' = 'ios';
-
-// The testing kit has no `native` namespace yet, so the platform picker is stubbed here.
-mock.module('@unbound-app/api/native', () => ({
-	definePlatform:
-		(handlers: Record<string, (...args: never[]) => unknown>) =>
-		(...args: never[]) =>
-			handlers[platform](...args),
-}));
 
 const MessageRowData = { generateMessageRowData: (message: Row['message']): Row => ({ message }) };
 
@@ -21,7 +11,7 @@ function row(message: Record<string, unknown>) {
 }
 
 beforeEach(() => {
-	platform = 'ios';
+	native.setPlatform('ios');
 	Object.assign(assets, {
 		getById: () => ({
 			httpServerLocation: '/assets/images/native/icons',
@@ -63,7 +53,7 @@ describe('the owner crown', () => {
 	});
 
 	test("uses the APK's drawable on Android", async () => {
-		platform = 'android';
+		native.setPlatform('android');
 		await startPlugin();
 
 		const source = row({ guildId: 'g1', authorId: 'owner' }).roleIcon as { source: string };
