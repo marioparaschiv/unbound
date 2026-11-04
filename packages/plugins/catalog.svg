@@ -308,7 +308,7 @@
 <a href="https://github.com/marioparaschiv/unbound/tree/main/packages/plugins/override-forum-defaults"><text x="80" y="2064" text-anchor="start" dominant-baseline="middle" fill="#f5f5f7" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="15" font-weight="600">Override Forum Defaults</text></a>
 <text x="346" y="2055" text-anchor="start" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">Sets your own default layout and sort order for forum channels. You can</text>
 <text x="346" y="2073" text-anchor="start" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">still change them per channel.</text>
-<text x="940" y="2064" text-anchor="middle" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">1.0.0</text>
+<text x="940" y="2064" text-anchor="middle" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">1.0.1</text>
 <text x="1002" y="2064" text-anchor="start" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">Inbestigator, adrian</text>
 <line x1="30" y1="2092" x2="1170" y2="2092" stroke="#2a2d33" stroke-width="1"/>
 <rect x="16" y="2092" width="1168" height="52" rx="8" fill="#17181c"/>

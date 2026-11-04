@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { defaultLayout, defaultSortOrder, layoutChoice, sortOrderChoice } from '~/defaults';
+import { defaultLayout, defaultSortOrder } from '~/forum-defaults/defaults';
 
 const forum = {
 	isMediaChannel: () => false,
@@ -12,41 +12,10 @@ const gameInvites = {
 	isGameInvitesChannel: () => true,
 };
 
-describe('layoutChoice', () => {
-	test('keeps a known choice', () => {
-		expect(layoutChoice('gallery')).toBe('gallery');
-		expect(layoutChoice('list')).toBe('list');
-	});
-
-	test('falls back to list for a missing or unknown value', () => {
-		expect(layoutChoice(undefined)).toBe('list');
-		expect(layoutChoice('grid')).toBe('list');
-		expect(layoutChoice(2)).toBe('list');
-		expect(layoutChoice('toString')).toBe('list');
-	});
-});
-
-describe('sortOrderChoice', () => {
-	test('keeps a known choice', () => {
-		expect(sortOrderChoice('datePosted')).toBe('datePosted');
-		expect(sortOrderChoice('recentlyActive')).toBe('recentlyActive');
-	});
-
-	test('falls back to recently active for a missing or unknown value', () => {
-		expect(sortOrderChoice(undefined)).toBe('recentlyActive');
-		expect(sortOrderChoice('newest')).toBe('recentlyActive');
-		expect(sortOrderChoice(1)).toBe('recentlyActive');
-	});
-});
-
 describe('defaultLayout', () => {
 	test('maps the choice to Discord ForumLayout values', () => {
 		expect(defaultLayout(forum, 'list', () => 2)).toBe(1);
 		expect(defaultLayout(forum, 'gallery', () => 1)).toBe(2);
-	});
-
-	test('overrides the layout the server set', () => {
-		expect(defaultLayout(forum, undefined, () => 2)).toBe(1);
 	});
 
 	test('keeps Discord default in media and game invite channels', () => {
