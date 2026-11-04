@@ -2,14 +2,12 @@ import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
-import { storage } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
 
 import { createNativeMentions } from '~/chat/native-mentions';
 import { patchRowManager } from '~/chat/row-manager';
 import { GuildMemberStore } from '~/chat/modules';
 import { PLUGIN_NAME } from '~/constants';
-
-const bucket = storage.getBucket();
 
 let stopNativeMentions = () => {};
 let settled = () => Promise.resolve();
@@ -28,7 +26,7 @@ export function startChat(context: PluginContext): void {
 
 	patchRowManager();
 	settled = nativeMentions.settled;
-	stopNativeMentions = whileEnabled(bucket, 'chatMentions', true, nativeMentions.enable);
+	stopNativeMentions = whileEnabled(settings, 'chatMentions', true, nativeMentions.enable);
 	recordApplied(1);
 }
 

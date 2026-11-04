@@ -5,7 +5,8 @@ import {
 import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { patcher, storage } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 import { Text } from 'react-native';
 
@@ -46,9 +47,7 @@ function sectionAppearance(props: UserListProps, section: number): RoleColorAppe
 	return appearance.colors.length ? appearance : null;
 }
 
-const bucket = storage.getBucket();
-
-function paintSectionHeaders(props: UserListProps, result: Rendered): Rendered | undefined {
+function paintSectionHeaders(props: UserListProps, result: Rendered): Rendered {
 	const renderHeader = result?.props?.renderSectionHeader;
 
 	if (typeof renderHeader !== 'function' || !props.getSectionProps || !props.getItemProps) {
@@ -83,6 +82,6 @@ function patchUsersFastList(): () => void {
 export function startMemberList(): void {
 	if (!ensureModules(`${PLUGIN_NAME}: member list`, { GuildMemberStore, GuildRoleStore })) return;
 
-	whileEnabled(bucket, 'memberList', true, patchUsersFastList);
+	whileEnabled(settings, 'memberList', true, patchUsersFastList);
 	recordApplied(1);
 }

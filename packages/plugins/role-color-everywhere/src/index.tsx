@@ -4,7 +4,7 @@ import type { PluginContext } from '@unbound-app/api/native';
 import { startMemberList } from '~/member-list';
 import { startReactions } from '~/reactions';
 import { startChat, stopChat } from '~/chat';
-import { startTyping } from '~/typing';
+import { startTyping, stopTyping } from '~/typing';
 import { startVoice } from '~/voice';
 import { startPolls } from '~/polls';
 
@@ -18,6 +18,8 @@ export function start(context: PluginContext) {
 }
 
 export function stop() {
+	stopTyping();
+
 	return stopChat();
 }
 

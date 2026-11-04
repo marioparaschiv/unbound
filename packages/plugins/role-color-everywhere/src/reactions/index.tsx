@@ -2,7 +2,8 @@ import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colo
 import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { patcher, storage } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 
 import { ChannelStore, GuildMemberStore, MessageReactionsContent } from '~/reactions/modules';
@@ -40,8 +41,6 @@ function colorReactionRow(row: Rendered, guildId: string): Rendered {
 	return cloneElement(row, { children: [cloneElement(item, { label: colored }), ...rest] });
 }
 
-const bucket = storage.getBucket();
-
 function patchMessageReactionsContent(): () => void {
 	return patcher.react.after(
 		MessageReactionsContent,
@@ -72,6 +71,6 @@ function patchMessageReactionsContent(): () => void {
 export function startReactions(): void {
 	if (!ensureModules(`${PLUGIN_NAME}: reactions`, { GuildMemberStore, ChannelStore })) return;
 
-	whileEnabled(bucket, 'reactorsList', true, patchMessageReactionsContent);
+	whileEnabled(settings, 'reactorsList', true, patchMessageReactionsContent);
 	recordApplied(1);
 }

@@ -1,14 +1,10 @@
-import { flux, metro, render } from '@unbound-app/api/testing';
+import { flux, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
-import { startMemberList } from '~/member-list';
-import { startReactions } from '~/reactions';
-import { startTyping } from '~/typing';
-import { startVoice } from '~/voice';
-import { startPolls } from '~/polls';
+import { NO_NATIVE_CLASSES, registerFeatureModules } from './feature-modules';
 
 const RED = '#ff0000';
 
@@ -45,8 +41,13 @@ beforeEach(() => {
 
 describe('typing names', () => {
 	const TypingUser = ({ name }: { name: string }) => createElement(Text, null, name);
-	const Rows = ({ renderItem }: { renderItem: () => ReactNode }) =>
-		createElement(View, null, call(renderItem));
+	// The list Discord drew keeps the `renderItem` it was given.
+	const drawn: { renderItem?: () => ReactNode } = {};
+	const Rows = ({ renderItem }: { renderItem: () => ReactNode }) => {
+		drawn.renderItem = renderItem;
+
+		return createElement(View, null, call(renderItem));
+	};
 	const TypingIndicator = memo(function TypingIndicator() {
 		return createElement(Rows, {
 			renderItem: () => createElement(TypingUser, { key: 'name', name: 'red' }),
@@ -54,18 +55,31 @@ describe('typing names', () => {
 	});
 
 	beforeEach(() => {
-		metro.register({ default: TypingIndicator }, 'modules/chat/native/TypingIndicator.tsx');
+		registerFeatureModules(
+			{ default: TypingIndicator },
+			'modules/chat/native/TypingIndicator.tsx',
+		);
 	});
 
-	test('paints the name of a typing member with their role color', () => {
-		startTyping();
+	test('paints the name of a typing member with their role color', async () => {
+		await startPlugin(NO_NATIVE_CLASSES);
 
 		expect(colorsOf(render(createElement(TypingIndicator)))).toEqual([{ color: RED }]);
 	});
 
-	test('leaves names plain while Typing Names is off', () => {
+	test('draws plain names in a list drawn before the plugin stopped', async () => {
+		await startPlugin(NO_NATIVE_CLASSES);
+		render(createElement(TypingIndicator));
+		await stopPlugin();
+
+		expect(colorsOf(render(call(drawn.renderItem as () => ReactNode) as never))).toEqual([
+			undefined,
+		]);
+	});
+
+	test('leaves names plain while Typing Names is off', async () => {
 		settings.typingUsers = false;
-		startTyping();
+		await startPlugin(NO_NATIVE_CLASSES);
 
 		expect(colorsOf(render(createElement(TypingIndicator)))).toEqual([undefined]);
 	});
@@ -85,12 +99,12 @@ describe('member list role headers', () => {
 			}),
 	};
 
-	test('paints a role section title with the role color', () => {
-		metro.register(
+	test('paints a role section title with the role color', async () => {
+		registerFeatureModules(
 			module,
 			'modules/main_tabs_v2/native/shared_components/user_list/UsersFastList.tsx',
 		);
-		startMemberList();
+		await startPlugin(NO_NATIVE_CLASSES);
 
 		const props = {
 			getSectionProps: () => ({ props: { title: 'Admins — 1' } }),
@@ -132,9 +146,9 @@ describe('reaction users', () => {
 			),
 	};
 
-	test('paints a reactor’s name with their role color', () => {
-		metro.register(module, 'modules/reactions/native/MessageReactionsContent.tsx');
-		startReactions();
+	test('paints a reactor’s name with their role color', async () => {
+		registerFeatureModules(module, 'modules/reactions/native/MessageReactionsContent.tsx');
+		await startPlugin(NO_NATIVE_CLASSES);
 
 		const view = render(
 			createElement(module.MessageReactionsContent, { channelId: 'channel' }),
@@ -168,9 +182,9 @@ describe('poll voters', () => {
 			),
 	};
 
-	test('paints a voter’s name with their role color', () => {
-		metro.register(module, 'modules/polls/native/PollVotesActionSheet.tsx');
-		startPolls();
+	test('paints a voter’s name with their role color', async () => {
+		registerFeatureModules(module, 'modules/polls/native/PollVotesActionSheet.tsx');
+		await startPlugin(NO_NATIVE_CLASSES);
 
 		const view = render(createElement(module.default, { channelId: 'channel' }));
 
@@ -189,9 +203,9 @@ describe('voice users', () => {
 			),
 	};
 
-	test('paints a voice member’s name with their role color', () => {
-		metro.register(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
-		startVoice();
+	test('paints a voice member’s name with their role color', async () => {
+		registerFeatureModules(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
+		await startPlugin(NO_NATIVE_CLASSES);
 
 		const view = render(
 			createElement(module.default, { guildId: 'guild', user: { id: 'red' } }),
@@ -200,9 +214,9 @@ describe('voice users', () => {
 		expect(colorsOf(view)).toEqual([undefined, { color: RED }, undefined]);
 	});
 
-	test('leaves a member with no role color plain', () => {
-		metro.register(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
-		startVoice();
+	test('leaves a member with no role color plain', async () => {
+		registerFeatureModules(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
+		await startPlugin(NO_NATIVE_CLASSES);
 
 		const view = render(
 			createElement(module.default, { guildId: 'guild', user: { id: 'plain' } }),

@@ -2,7 +2,8 @@ import { getRoleColorAppearance } from '@unbound-plugins/shared/colors/role-colo
 import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { patcher, storage } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 import { Text } from 'react-native';
 
@@ -16,8 +17,6 @@ type VoiceUserNameItemProps = {
 	user?: { id?: string };
 	member?: Member | null;
 };
-
-const bucket = storage.getBucket();
 
 function patchVoiceUserNameItem(): () => void {
 	return patcher.react.after(VoiceUserNameItem, 'default', ({ props, result }) => {
@@ -55,6 +54,6 @@ function patchVoiceUserNameItem(): () => void {
 export function startVoice(): void {
 	if (!ensureModules(`${PLUGIN_NAME}: voice users`, { GuildMemberStore })) return;
 
-	whileEnabled(bucket, 'voiceUsers', true, patchVoiceUserNameItem);
+	whileEnabled(settings, 'voiceUsers', true, patchVoiceUserNameItem);
 	recordApplied(1);
 }

@@ -1,8 +1,10 @@
-import { flux, metro } from '@unbound-app/api/testing';
+import { flux, metro, startPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 
 import type { MentionNode } from '~/chat/chat-rows';
+
+import { NO_NATIVE_CLASSES, registerFeatureModules } from './feature-modules';
 
 const GuildMemberStore = {
 	getMember: (guildId: string, userId: string) =>
@@ -80,13 +82,6 @@ class RowManager {
 	}
 }
 
-// The kit has no `native`, which `platform.ts` calls at import, so the iOS handler's value stands in.
-mock.module(new URL('../src/chat/platform.ts', import.meta.url).pathname, () => ({
-	roleMentionColors: true,
-}));
-
-const { patchRowManager } = await import('~/chat/row-manager');
-
 function mentionColors(row: Row) {
 	const { message } = row;
 	const paragraphs = [
@@ -106,14 +101,15 @@ function render(message: MessageRecord) {
 	return new RowManager().generate({ message });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
 	parsedEmbeds.clear();
 	metro.register(RowManager);
+	registerFeatureModules();
 	flux.seed({ GuildMember: GuildMemberStore });
-	patchRowManager();
+	await startPlugin(NO_NATIVE_CLASSES);
 });
 
-describe('patchRowManager', () => {
+describe('chat rows', () => {
 	test('colors mentions in message text, embeds and reply previews', () => {
 		const replied = { id: 'm1', content: '<@colored>' };
 		const row = render({

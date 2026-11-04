@@ -1,7 +1,8 @@
 import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { patcher, storage } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 
 import { ChannelStore, GuildMemberStore, PollVotesActionSheet } from '~/polls/modules';
@@ -9,8 +10,6 @@ import RoleColoredVotersList from '~/polls/voters-list';
 import { guildIdOf } from '~/shared/channel-guild';
 import { PLUGIN_NAME } from '~/constants';
 import type { Rendered } from '~/types';
-
-const bucket = storage.getBucket();
 
 function patchPollVotesActionSheet(): () => void {
 	return patcher.react.after(PollVotesActionSheet, 'default', ({ props, result: rendered }) => {
@@ -48,6 +47,6 @@ function patchPollVotesActionSheet(): () => void {
 export function startPolls(): void {
 	if (!ensureModules(`${PLUGIN_NAME}: poll results`, { GuildMemberStore, ChannelStore })) return;
 
-	whileEnabled(bucket, 'pollResults', true, patchPollVotesActionSheet);
+	whileEnabled(settings, 'pollResults', true, patchPollVotesActionSheet);
 	recordApplied(1);
 }

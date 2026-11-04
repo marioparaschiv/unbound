@@ -5,7 +5,8 @@ import {
 import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { patcher, storage } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+import { patcher } from '@unbound-app/api';
 import { cloneElement } from 'react';
 
 import {
@@ -54,7 +55,7 @@ function typingAppearances(): Map<string, RoleColorAppearance> {
 	return uniqueNames(owners);
 }
 
-const bucket = storage.getBucket();
+let stopTypingFeature = () => {};
 
 function patchTypingIndicator(): () => void {
 	// A list rendered while patched keeps calling this `renderItem` after the patch is removed.
@@ -94,7 +95,7 @@ function patchTypingIndicator(): () => void {
  * @description Paints the names in the channel typing indicator with their role colors while `typingUsers` is on.
  * Patches the render of `TypingIndicator` (`modules/chat/native/TypingIndicator.tsx`, which Android loads only when someone
  * first types) and reads `TypingStore`, `UserStore`, `GuildMemberStore`, `RelationshipStore` and `SelectedChannelStore`.
- * The Addon scope removes the patch when the plugin stops.
+ * The Addon scope removes the patch when the plugin stops; `stopTyping` plains the lists already drawn.
  */
 export function startTyping(): void {
 	const feature = `${PLUGIN_NAME}: typing`;
@@ -108,6 +109,15 @@ export function startTyping(): void {
 
 	if (!ensureModules(feature, modules)) return;
 
-	whileEnabled(bucket, 'typingUsers', true, patchTypingIndicator);
+	stopTypingFeature = whileEnabled(settings, 'typingUsers', true, patchTypingIndicator);
 	recordApplied(1);
+}
+
+/**
+ * @description Ends the feature, so typing lists Discord rendered while it ran draw plain names again.
+ * The scope removes the patch, but those lists keep calling the `renderItem` the patch gave them.
+ */
+export function stopTyping(): void {
+	stopTypingFeature();
+	stopTypingFeature = () => {};
 }
