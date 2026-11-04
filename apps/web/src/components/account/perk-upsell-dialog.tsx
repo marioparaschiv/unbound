@@ -64,7 +64,7 @@ function PerkUpsellDialog({ perk, sponsor, user, onClose }: PerkUpsellDialogProp
 						<DialogClose asChild>
 							<Button variant='outline'>Not now</Button>
 						</DialogClose>
-						<Button asChild className='gap-2'>
+						<Button asChild variant='sponsor' className='gap-2'>
 							<a href={sponsor.sponsorUrl} target='_blank' rel='noreferrer'>
 								<IconHeart size={14} />
 								Sponsor

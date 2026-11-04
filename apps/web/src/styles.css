@@ -336,7 +336,8 @@ only translate and shadow change, so a press never relayouts its neighbours. */
 @utility press {
 	--tw-shadow:
 		inset 0 1px 0 var(--highlight),
-		0 calc(var(--ledge-depth) - var(--press-y, 0) * 1px) 0 var(--ledge, transparent);
+		0 calc(var(--ledge-depth) - var(--press-y, 0) * 1px) 0 var(--ledge, transparent),
+		var(--press-glow, 0 0 #0000);
 	box-shadow:
 		var(--tw-inset-shadow, 0 0 #0000), var(--tw-inset-ring-shadow, 0 0 #0000),
 		var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
@@ -409,6 +410,99 @@ A wide control sets `--press-depth` below 1 so its edges move about as far as a 
 	background-position: 0 0;
 	background-clip: text;
 	animation: shine 5s ease-in-out 1s infinite;
+}
+
+/* A highlight sweeps across in the first part of each cycle, then the button rests. */
+@keyframes sweep {
+	from {
+		translate: -120% 0;
+	}
+
+	35%,
+	to {
+		translate: 260% 0;
+	}
+}
+
+@keyframes heartbeat {
+	0%,
+	30%,
+	to {
+		scale: 1;
+	}
+
+	15% {
+		scale: 1.28;
+	}
+
+	45% {
+		scale: 1.16;
+	}
+}
+
+/* The Sponsor call to action: a brand glow under the ledge, a recurring sheen, and a heart that beats on hover. */
+@utility sponsor {
+	--press-glow: 0 8px 22px -6px var(--glow);
+	position: relative;
+	overflow: hidden;
+	isolation: isolate;
+
+	&::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
+		width: 45%;
+		pointer-events: none;
+		background: linear-gradient(100deg, transparent, oklch(1 0 0 / 0.3), transparent);
+		translate: -120% 0;
+		animation: sweep 4s var(--ease-out) 1s infinite;
+	}
+
+	&:hover > svg:first-child {
+		animation: heartbeat 1s ease-in-out infinite;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		&::after,
+		&:hover > svg:first-child {
+			animation: none;
+		}
+	}
+}
+
+@property --shine-angle {
+	syntax: '<angle>';
+	inherits: false;
+	initial-value: 0deg;
+}
+
+@keyframes shine-spin {
+	to {
+		--shine-angle: 360deg;
+	}
+}
+
+/* A brand highlight that travels around a surface's border. The top layer repaints the card inside the border,
+so the conic gradient shows only through the transparent border. */
+@utility shine-border {
+	border-color: transparent;
+	background-image:
+		linear-gradient(var(--color-card), var(--color-card)),
+		conic-gradient(
+			from var(--shine-angle),
+			var(--color-border) 0deg 250deg,
+			var(--primary) 300deg,
+			oklch(from var(--primary) 0.85 0.08 h) 330deg,
+			var(--color-border) 360deg
+		);
+	background-origin: border-box;
+	background-clip: padding-box, border-box;
+	animation: shine-spin 6s linear infinite;
+
+	@media (prefers-reduced-motion: reduce) {
+		animation: none;
+	}
 }
 
 /*

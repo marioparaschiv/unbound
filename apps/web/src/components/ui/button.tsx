@@ -13,6 +13,8 @@ const buttonVariants = cva(
 			variant: {
 				default:
 					'press [--ledge:var(--ledge-primary)] bg-primary text-primary-foreground hover:bg-primary/90',
+				sponsor:
+					'press sponsor [--ledge:var(--ledge-primary)] bg-primary text-primary-foreground hover:bg-primary/90',
 				destructive:
 					'press [--ledge:var(--ledge-secondary)] bg-secondary text-destructive hover:bg-accent focus-visible:ring-destructive/30',
 				outline:
