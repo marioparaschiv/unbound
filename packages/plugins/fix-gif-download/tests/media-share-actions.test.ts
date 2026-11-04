@@ -1,5 +1,6 @@
+import { metro as pluginMetro } from '@unbound-app/api';
 import { metro, startPlugin } from '@unbound-app/api/testing';
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 
 type Source = Record<string, unknown>;
 
@@ -60,5 +61,24 @@ describe('share and save actions', () => {
 		});
 
 		expect(options[0]?.source.uri).toBe('https://media.tenor.com/abc123/AAAAC/example.gif');
+	});
+
+	test('patch a copy Discord exports as its default', async () => {
+		const wrapped = { default: newShareActions() };
+
+		metro.register(wrapped);
+		wrapped.default.useMediaShareActions({
+			source: { uri: 'https://media.tenor.com/abc123/AAAAC/example.mp4' },
+		});
+
+		expect(options[0]?.source.uri).toBe('https://media.tenor.com/abc123/AAAAC/example.gif');
+	});
+
+	test('look for loaded copies without loading any module', async () => {
+		const find = spyOn(pluginMetro, 'find');
+
+		await startPlugin();
+
+		expect(find).toHaveBeenCalledWith(expect.any(Function), { all: true, initialize: false });
 	});
 });
