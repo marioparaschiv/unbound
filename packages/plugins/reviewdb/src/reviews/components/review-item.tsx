@@ -1,16 +1,23 @@
-import { Users } from '@unbound-app/api/metro/stores';
 import { Image, Pressable, Text, View } from 'react-native';
+import { messages } from '@unbound-app/i18n';
 import { toasts } from '@unbound-app/api';
 import { useState } from 'react';
 
-import { deleteReview, getCurrentUser, reportReview, setReviewVote, setUserBlocked } from '~/api';
-import { getReviewColors, type ReviewColors } from '~/colors';
-import { ReviewType, UserType, type Review } from '~/entities';
-import ReviewActions from '~/components/review-actions';
-import VoteControls from '~/components/vote-controls';
-import { getReviewPermissions } from '~/permissions';
+import {
+	deleteReview,
+	getCurrentUser,
+	reportReview,
+	setReviewVote,
+	setUserBlocked,
+} from '~/reviews/api';
+import { getReviewColors, type ReviewColors } from '~/reviews/colors';
+import { ReviewType, UserType, type Review } from '~/reviews/entities';
+import { UserStore } from '~/reviews/modules';
+import ReviewActions from '~/reviews/components/review-actions';
+import VoteControls from '~/reviews/components/vote-controls';
+import { getReviewPermissions } from '~/reviews/permissions';
 import { COMMENT_PREVIEW_LENGTH } from '~/constants';
-import { changeVote, type Vote } from '~/votes';
+import { changeVote, type Vote } from '~/reviews/votes';
 
 type BadgeProps = {
 	label: string;
@@ -57,7 +64,7 @@ function ReviewItem({ review, profileId, hideTimestamps, onChanged }: ReviewItem
 	const [score, setScore] = useState(review.score ?? 0);
 	const [actionsVisible, setActionsVisible] = useState(false);
 
-	const myId = Users.getCurrentUser()?.id;
+	const myId = UserStore.getCurrentUser()?.id;
 	const account = getCurrentUser();
 	const author = review.sender.discordID;
 	const isAuthorBlocked = account?.blockedUsers?.includes(author) ?? false;
@@ -86,10 +93,7 @@ function ReviewItem({ review, profileId, hideTimestamps, onChanged }: ReviewItem
 	function handleVote(isUpvote: boolean) {
 		void run(async () => {
 			if (author === myId) {
-				toasts.show({
-					title: 'ReviewDB',
-					content: 'You cannot vote on your own review.',
-				});
+				toasts.show({ title: messages.REVIEWDB, content: messages.OWN_REVIEW_VOTE });
 
 				return;
 			}
@@ -173,10 +177,18 @@ function ReviewItem({ review, profileId, hideTimestamps, onChanged }: ReviewItem
 								{review.sender.username}
 							</Text>
 							{review.type === ReviewType.System ? (
-								<Badge color={colors.accent} colors={colors} label='SYSTEM' />
+								<Badge
+									color={colors.accent}
+									colors={colors}
+									label={messages.SYSTEM}
+								/>
 							) : null}
 							{isAuthorBlocked ? (
-								<Badge color={colors.danger} colors={colors} label='BLOCKED' />
+								<Badge
+									color={colors.danger}
+									colors={colors}
+									label={messages.BLOCKED}
+								/>
 							) : null}
 						</View>
 						{showTimestamp ? (
@@ -216,7 +228,7 @@ function ReviewItem({ review, profileId, hideTimestamps, onChanged }: ReviewItem
 						style={{ alignSelf: 'flex-start', marginTop: 6 }}
 					>
 						<Text style={{ color: colors.link, fontSize: 13, fontWeight: '700' }}>
-							{expanded ? 'Show less' : 'Read more'}
+							{expanded ? messages.SHOW_LESS : messages.READ_MORE}
 						</Text>
 					</Pressable>
 				) : null}

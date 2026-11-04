@@ -1,7 +1,8 @@
+import { messages } from '@unbound-app/i18n';
+import { settings } from '@unbound-app/settings';
 import { toasts } from '@unbound-app/api';
 
-import { fetchCurrentUser } from '~/api';
-import { settings } from '~/modules';
+import { fetchCurrentUser } from '~/reviews/api';
 
 /**
  * @description Fetches the signed-in account, then toasts when its profile got reviews since the last check and records the newest one.
@@ -10,15 +11,15 @@ import { settings } from '~/modules';
 export async function notifyNewReviews(): Promise<void> {
 	const user = await fetchCurrentUser();
 
-	if (!user || !settings.get('notifyReviews', true)) return;
+	if (!user || !settings.notifyReviews) return;
 
-	const lastReviewId = settings.get('lastReviewId', 0);
+	const { lastReviewId } = settings;
 
 	if (lastReviewId && lastReviewId < user.lastReviewID) {
-		toasts.show({ title: 'ReviewDB', content: 'You have new reviews on your profile!' });
+		toasts.show({ title: messages.REVIEWDB, content: messages.NEW_REVIEWS });
 	}
 
-	settings.set('lastReviewId', user.lastReviewID);
+	settings.lastReviewId = user.lastReviewID;
 }
 
 export default { notifyNewReviews };

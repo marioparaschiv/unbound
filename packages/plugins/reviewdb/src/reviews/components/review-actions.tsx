@@ -1,8 +1,9 @@
+import { messages } from '@unbound-app/i18n';
 import { Pressable, Text, View } from 'react-native';
 import { useState } from 'react';
 
-import type { ReviewPermissions } from '~/permissions';
-import type { ReviewColors } from '~/colors';
+import type { ReviewPermissions } from '~/reviews/permissions';
+import type { ReviewColors } from '~/reviews/colors';
 
 type ActionButtonProps = {
 	label: string;
@@ -80,16 +81,16 @@ function ReviewActions({
 					letterSpacing: 0.6,
 				}}
 			>
-				REVIEW ACTIONS
+				{messages.REVIEW_ACTIONS}
 			</Text>
 			<View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
 				{can.report ? (
-					<ActionButton colors={colors} label='Report' onPress={onReport} />
+					<ActionButton colors={colors} label={messages.REPORT} onPress={onReport} />
 				) : null}
 				{can.block ? (
 					<ActionButton
 						colors={colors}
-						label={isAuthorBlocked ? 'Unblock user' : 'Block user'}
+						label={isAuthorBlocked ? messages.UNBLOCK_USER : messages.BLOCK_USER}
 						onPress={onToggleBlock}
 					/>
 				) : null}
@@ -97,11 +98,11 @@ function ReviewActions({
 					<ActionButton
 						colors={colors}
 						danger
-						label={deleteArmed ? 'Confirm delete' : 'Delete review'}
+						label={deleteArmed ? messages.CONFIRM_DELETE : messages.DELETE_REVIEW}
 						onPress={deleteArmed ? onDelete : () => setDeleteArmed(true)}
 					/>
 				) : null}
-				<ActionButton colors={colors} label='Close' onPress={onClose} />
+				<ActionButton colors={colors} label={messages.CLOSE} onPress={onClose} />
 			</View>
 		</View>
 	);

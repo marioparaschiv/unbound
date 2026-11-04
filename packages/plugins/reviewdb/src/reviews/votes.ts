@@ -1,4 +1,4 @@
-import type { Review, ReviewVote } from '~/entities';
+import type { Review, ReviewVote } from '~/reviews/entities';
 
 /** `true` for an upvote, `false` for a downvote, `null` for no vote. */
 export type Vote = boolean | null;

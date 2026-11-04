@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 
-import type { ReviewColors } from '~/colors';
-import type { Vote } from '~/votes';
+import type { ReviewColors } from '~/reviews/colors';
+import type { Vote } from '~/reviews/votes';
 
 type VoteButtonProps = {
 	glyph: string;

@@ -1,18 +1,18 @@
 import { openSheet, type SheetProps } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
-import { Users } from '@unbound-app/api/metro/stores';
-import { storage } from '@unbound-app/api';
+import { useSetting } from '@unbound-app/settings';
+import { messages } from '@unbound-app/i18n';
 import { useCallback, useEffect, useState } from 'react';
 
-import ReviewComposer from '~/components/review-composer';
-import ReviewsHeader from '~/components/reviews-header';
-import { RelationshipStore } from '~/modules';
-import { getReviewColors } from '~/colors';
-import ReviewItem from '~/components/review-item';
-import type { UserReviewsData } from '~/entities';
-import { getReviews } from '~/api';
-import { signIn } from '~/login';
+import ReviewComposer from '~/reviews/components/review-composer';
+import ReviewsHeader from '~/reviews/components/reviews-header';
+import { RelationshipStore, UserStore } from '~/reviews/modules';
+import { getReviewColors } from '~/reviews/colors';
+import ReviewItem from '~/reviews/components/review-item';
+import type { UserReviewsData } from '~/reviews/entities';
+import { getReviews } from '~/reviews/api';
+import { signIn } from '~/reviews/login';
 
 type ReviewsSheetProps = {
 	discordId: string;
@@ -21,13 +21,13 @@ type ReviewsSheetProps = {
 
 function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 	const colors = getReviewColors();
-	const store = storage.useBucket(addon.id);
 	const [data, setData] = useState<UserReviewsData | null>(null);
 	const [loading, setLoading] = useState(true);
 
-	const myId = Users.getCurrentUser()?.id;
-	const authorized = Boolean(store.get('token', ''));
-	const hideBlockedUsers = store.get('hideBlockedUsers', true);
+	const myId = UserStore.getCurrentUser()?.id;
+	const authorized = Boolean(useSetting('token'));
+	const hideBlockedUsers = useSetting('hideBlockedUsers');
+	const hideTimestamps = useSetting('hideTimestamps');
 	const isOwnProfile = discordId === myId;
 
 	const load = useCallback(
@@ -102,7 +102,9 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 						}}
 					>
 						<ActivityIndicator color={colors.link} />
-						<Text style={{ color: colors.muted, fontSize: 14 }}>Loading reviews…</Text>
+						<Text style={{ color: colors.muted, fontSize: 14 }}>
+							{messages.LOADING_REVIEWS}
+						</Text>
 					</View>
 				) : null}
 
@@ -119,10 +121,10 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 						}}
 					>
 						<Text style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>
-							No reviews yet
+							{messages.NO_REVIEWS}
 						</Text>
 						<Text style={{ color: colors.muted, fontSize: 14, textAlign: 'center' }}>
-							Be the first person to leave feedback.
+							{messages.NO_REVIEWS_SUBTITLE}
 						</Text>
 					</View>
 				) : null}
@@ -132,7 +134,7 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 						key={review.id}
 						review={review}
 						profileId={discordId}
-						hideTimestamps={store.get('hideTimestamps', false)}
+						hideTimestamps={hideTimestamps}
 						onChanged={refetch}
 					/>
 				))}
@@ -151,7 +153,7 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 						})}
 					>
 						<Text style={{ color: colors.link, fontSize: 14, fontWeight: '800' }}>
-							Load more reviews
+							{messages.LOAD_MORE}
 						</Text>
 					</Pressable>
 				) : null}
@@ -186,7 +188,7 @@ function ReviewsSheet({ discordId, name, onClose }: ReviewsSheetProps) {
 								textAlign: 'center',
 							}}
 						>
-							Sign in to leave a review
+							{messages.SIGN_IN_TO_REVIEW}
 						</Text>
 					</Pressable>
 				) : null}

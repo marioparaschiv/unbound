@@ -1,4 +1,4 @@
-import type { Review } from '~/entities';
+import type { Review } from '~/reviews/entities';
 
 type Viewer = {
 	/** The viewer's Discord ID, `undefined` when it is unknown. */

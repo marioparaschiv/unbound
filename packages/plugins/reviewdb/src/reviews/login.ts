@@ -1,9 +1,10 @@
 import { authorize } from '@unbound-plugins/shared/oauth/authorize';
 import { readQuery } from '@unbound-plugins/shared/oauth/query';
+import { messages } from '@unbound-app/i18n';
+import { settings } from '@unbound-app/settings';
 import { toasts } from '@unbound-app/api';
 
 import { AUTH_REDIRECT_URI } from '~/constants';
-import { settings } from '~/modules';
 
 type AuthPayload = {
 	token?: unknown;
@@ -11,7 +12,7 @@ type AuthPayload = {
 };
 
 function notify(content: string) {
-	toasts.show({ title: 'ReviewDB', content });
+	toasts.show({ title: messages.REVIEWDB, content });
 }
 
 async function finishLogin(location: string): Promise<boolean> {
@@ -31,19 +32,19 @@ async function finishLogin(location: string): Promise<boolean> {
 	const payload = (await response.json().catch(() => null)) as AuthPayload | null;
 
 	if (!response.ok) {
-		notify(typeof payload?.message === 'string' ? payload.message : 'ReviewDB login failed.');
+		notify(typeof payload?.message === 'string' ? payload.message : messages.LOGIN_FAILED);
 
 		return false;
 	}
 
 	if (typeof payload?.token !== 'string') {
-		notify('ReviewDB login returned an invalid payload.');
+		notify(messages.LOGIN_INVALID_PAYLOAD);
 
 		return false;
 	}
 
-	settings.set('token', payload.token);
-	notify('Successfully authorized with ReviewDB.');
+	settings.token = payload.token;
+	notify(messages.LOGIN_SUCCESS);
 
 	return true;
 }
@@ -62,7 +63,7 @@ export async function signIn(onSuccess?: () => void): Promise<void> {
 
 		if (location && (await finishLogin(location))) onSuccess?.();
 	} catch (error) {
-		notify(error instanceof Error ? error.message : 'Authorization failed.');
+		notify(error instanceof Error ? error.message : messages.AUTHORIZATION_FAILED);
 	}
 }
 

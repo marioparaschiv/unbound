@@ -1,9 +1,10 @@
 import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-native';
+import { format, messages } from '@unbound-app/i18n';
 import { useState } from 'react';
 
-import type { ReviewColors } from '~/colors';
+import type { ReviewColors } from '~/reviews/colors';
 import { COMMENT_MAX_LENGTH } from '~/constants';
-import { addReview } from '~/api';
+import { addReview } from '~/reviews/api';
 
 type ReviewComposerProps = {
 	discordId: string;
@@ -48,19 +49,21 @@ function ReviewComposer({ discordId, name, isUpdate, colors, onSubmitted }: Revi
 		>
 			<View style={{ gap: 4 }}>
 				<Text style={{ color: colors.text, fontSize: 17, fontWeight: '800' }}>
-					{isUpdate ? 'Update your review' : 'Leave a review'}
+					{isUpdate ? messages.UPDATE_YOUR_REVIEW : messages.LEAVE_A_REVIEW}
 				</Text>
 				<Text style={{ color: colors.muted, fontSize: 13, lineHeight: 18 }}>
-					{isUpdate
-						? 'Your new text will replace your existing review.'
-						: `Share helpful feedback about @${name}.`}
+					{isUpdate ? messages.UPDATE_REPLACES : format('SHARE_FEEDBACK', { name })}
 				</Text>
 			</View>
 			<TextInput
 				maxLength={COMMENT_MAX_LENGTH}
 				multiline
 				onChangeText={setComment}
-				placeholder={isUpdate ? `Update review for @${name}` : `Review @${name}`}
+				placeholder={
+					isUpdate
+						? format('UPDATE_PLACEHOLDER', { name })
+						: format('REVIEW_PLACEHOLDER', { name })
+				}
 				placeholderTextColor={colors.muted}
 				style={{
 					backgroundColor: colors.input,
@@ -96,7 +99,7 @@ function ReviewComposer({ discordId, name, isUpdate, colors, onSubmitted }: Revi
 						<ActivityIndicator color={colors.accentText} />
 					) : (
 						<Text style={{ color: colors.accentText, fontSize: 14, fontWeight: '800' }}>
-							{isUpdate ? 'Update review' : 'Submit review'}
+							{isUpdate ? messages.UPDATE_REVIEW : messages.SUBMIT_REVIEW}
 						</Text>
 					)}
 				</Pressable>

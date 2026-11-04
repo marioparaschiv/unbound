@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.5] - 2026-11-04
+
+### Changed
+
+- Every label, button and message in the plugin can now be translated. Your saved choices and sign-in carry over.
+
 ## [1.0.4] - 2026-11-03
 
 ### Changed

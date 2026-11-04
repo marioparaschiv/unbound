@@ -1,10 +1,10 @@
-import { Theme } from '~/modules';
+import { metro } from '@unbound-app/api';
 
 export type ReviewColors = ReturnType<typeof getReviewColors>;
 
 function color(key: string, fallback: string): string {
 	// Optional: without the theme module, every color falls back.
-	const value = Theme.colors?.[key];
+	const value = metro.common.Theme.colors?.[key];
 
 	return typeof value === 'string' ? value : fallback;
 }

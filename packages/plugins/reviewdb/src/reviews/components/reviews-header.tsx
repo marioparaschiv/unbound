@@ -1,8 +1,9 @@
 import type { ReactNode } from 'react';
 
+import { format, messages } from '@unbound-app/i18n';
 import { Text, View } from 'react-native';
 
-import type { ReviewColors } from '~/colors';
+import type { ReviewColors } from '~/reviews/colors';
 
 type PillProps = {
 	color: string;
@@ -39,14 +40,14 @@ function ReviewsHeader({ name, reviewCount, authorized, colors }: ReviewsHeaderP
 	return (
 		<View style={{ gap: 8, paddingBottom: 4 }}>
 			<Text style={{ color: colors.text, fontSize: 24, fontWeight: '800' }}>
-				Reviews for @{name}
+				{format('REVIEWS_FOR', { name })}
 			</Text>
 			<Text style={{ color: colors.muted, fontSize: 14, lineHeight: 20 }}>
-				Community feedback shared through ReviewDB.
+				{messages.COMMUNITY_FEEDBACK}
 			</Text>
 			<View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
 				<Pill color={colors.text} background={colors.surfaceAlt} border={colors.border}>
-					{reviewCount} reviews
+					{format('REVIEW_COUNT', { count: reviewCount })}
 				</Pill>
 				{authorized ? (
 					<Pill
@@ -54,7 +55,7 @@ function ReviewsHeader({ name, reviewCount, authorized, colors }: ReviewsHeaderP
 						background={`${colors.positive}22`}
 						border={`${colors.positive}66`}
 					>
-						ReviewDB connected
+						{messages.CONNECTED}
 					</Pill>
 				) : null}
 			</View>

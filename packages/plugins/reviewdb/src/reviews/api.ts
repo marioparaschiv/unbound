@@ -1,9 +1,15 @@
-import type { ReviewDBCurrentUser, ReviewDBUser, ReviewVote, UserReviewsData } from '~/entities';
+import type {
+	ReviewDBCurrentUser,
+	ReviewDBUser,
+	ReviewVote,
+	UserReviewsData,
+} from '~/reviews/entities';
+import { format, messages } from '@unbound-app/i18n';
+import { settings } from '@unbound-app/settings';
 import { toasts } from '@unbound-app/api';
 
 import { API_URL } from '~/constants';
-import { withVotes } from '~/votes';
-import { settings } from '~/modules';
+import { withVotes } from '~/reviews/votes';
 
 type Body = Record<string, string | number | boolean>;
 
@@ -18,11 +24,11 @@ type VotesResponse = {
 let currentUser: ReviewDBCurrentUser | null = null;
 
 function getToken(): string {
-	return settings.get('token', '');
+	return settings.token;
 }
 
 function showToast(content: string) {
-	toasts.show({ title: 'ReviewDB', content });
+	toasts.show({ title: messages.REVIEWDB, content });
 }
 
 /**
@@ -53,7 +59,7 @@ async function request<T>(path: string, method: string = 'GET', body?: Body): Pr
 			body: body && JSON.stringify(body),
 		});
 	} catch {
-		showToast('Network error: Failed to connect to ReviewDB.');
+		showToast(messages.NETWORK_ERROR);
 
 		return null;
 	}
@@ -64,7 +70,7 @@ async function request<T>(path: string, method: string = 'GET', body?: Body): Pr
 		showToast(
 			typeof data?.message === 'string'
 				? data.message
-				: `ReviewDB: Request failed with status ${response.status}`,
+				: format('REQUEST_FAILED', { status: response.status }),
 		);
 
 		return null;
@@ -106,17 +112,13 @@ export async function getReviews(userId: string, offset: number): Promise<UserRe
 	try {
 		response = await fetch(`${API_URL}/users/${userId}/reviews?${params.toString()}`);
 	} catch {
-		showToast('Network error: Failed to connect to ReviewDB.');
+		showToast(messages.NETWORK_ERROR);
 
 		return noReviews();
 	}
 
 	if (!response.ok) {
-		showToast(
-			response.status === 429
-				? 'You are sending requests too fast. Wait a few seconds and try again.'
-				: 'An error occurred while fetching reviews. Please try again later.',
-		);
+		showToast(response.status === 429 ? messages.RATE_LIMITED : messages.FETCH_REVIEWS_FAILED);
 
 		return noReviews();
 	}
@@ -134,7 +136,7 @@ export async function getReviews(userId: string, offset: number): Promise<UserRe
  */
 export async function addReview(userId: string, comment: string): Promise<UserReviewsData | null> {
 	if (!getToken()) {
-		showToast('Please authorize to add a review.');
+		showToast(messages.AUTHORIZE_TO_REVIEW);
 
 		return null;
 	}
@@ -188,7 +190,7 @@ export async function reportReview(reviewId: number): Promise<void> {
  */
 export async function setReviewVote(reviewId: number, vote: boolean | null): Promise<boolean> {
 	if (!getToken()) {
-		showToast('Please authorize to vote on reviews.');
+		showToast(messages.AUTHORIZE_TO_VOTE);
 
 		return false;
 	}
@@ -212,7 +214,7 @@ export async function setUserBlocked(userId: string, blocked: boolean): Promise<
 
 	if (!data) return;
 
-	showToast(`Successfully ${action}ed user`);
+	showToast(blocked ? messages.USER_BLOCKED : messages.USER_UNBLOCKED);
 
 	if (!currentUser?.blockedUsers) return;
 

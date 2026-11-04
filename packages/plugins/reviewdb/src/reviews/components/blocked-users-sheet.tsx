@@ -1,10 +1,11 @@
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { ActivityIndicator, Image, Pressable, View } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
+import { messages } from '@unbound-app/i18n';
 import { useEffect, useState } from 'react';
 
-import { getBlockedUsers, setUserBlocked } from '~/api';
-import type { ReviewDBUser } from '~/entities';
+import { getBlockedUsers, setUserBlocked } from '~/reviews/api';
+import type { ReviewDBUser } from '~/reviews/entities';
 
 function BlockedUsersSheet() {
 	const [users, setUsers] = useState<ReviewDBUser[] | null>(null);
@@ -33,7 +34,7 @@ function BlockedUsersSheet() {
 				variant='heading-lg/semibold'
 				style={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8 }}
 			>
-				Blocked Users
+				{messages.BLOCKED_USERS}
 			</Discord.Text>
 
 			<View>
@@ -45,7 +46,7 @@ function BlockedUsersSheet() {
 
 				{users?.length === 0 ? (
 					<Discord.Text style={{ padding: 12 }} color='text-muted'>
-						No blocked users.
+						{messages.NO_BLOCKED_USERS}
 					</Discord.Text>
 				) : null}
 
@@ -75,7 +76,7 @@ function BlockedUsersSheet() {
 							onPress={() => void unblock(user.discordID)}
 						>
 							<Discord.Text variant='text-sm/semibold' color='text-danger'>
-								Unblock
+								{messages.UNBLOCK}
 							</Discord.Text>
 						</Pressable>
 					</Discord.Card>
