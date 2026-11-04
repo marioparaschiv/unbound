@@ -87,6 +87,7 @@ Each builder is a primitive: what is stored. `displayAs` picks how it is drawn, 
 | `array` | a list of `of` | `of: setting.string()`: `list`, or `user`/`channel`/`guild`/`role`; `of: setting.choice({ options })`: `checkboxes` (Discord's checkbox group, the default) | `minItems`, `maxItems` |
 | `section` | an object of settings | `group`, `collapsible` | |
 | `button` | nothing | `button`, `danger` | `action`: the name of a function `src/actions.ts` exports; `confirm`: a question to ask first |
+| `notice` | nothing | `notice` | `tone`: `info` (the default), `warning` or `danger`. Takes only `title`, `subtitle`, `tone` and `visibleWhen` |
 
 Each display is drawn with Discord's own components, as its settings screens draw them:
 
@@ -99,6 +100,7 @@ Each display is drawn with Discord's own components, as its settings screens dra
 | `color` | A swatch row opening Discord's own colour picker sheet |
 | `checkboxes` | Discord's checkbox group, with each option's subtitle |
 | `button`, `danger` | Discord's full-width Row Button; `danger` leads with a red trash icon |
+| `notice` | Discord's message box, in the style of its `tone`, with the title and subtitle as its text |
 | `stepper` | Unbound's own stepper, since Discord has none |
 
 The stored type follows the display: a `color` is a `` `#${string}` ``, a `url` is an http or https URL (or empty), an entity display holds a Discord id (or empty), and an `emoji` holds its `name`, or `name:id` for a custom emoji. Sections nest one level deep.
@@ -146,6 +148,21 @@ clear: setting.button({ title: 'CLEAR_STARRED', action: 'clearStarred', displayA
 
 The action runs in your plugin, with its own `unbound`. One that throws is logged as `Failed to run settings action <name> for <plugin id>:` and shown in a toast.
 
+## Notices
+
+A `setting.notice` shows a message in the panel and stores nothing, so it is not in `settings`. Use it to warn about a setting, and show it only while the warning applies:
+
+```ts settings.ts
+sizeWarning: setting.notice({
+	title: 'SIZE_WARNING',
+	subtitle: 'SIZE_WARNING_DETAIL',
+	tone: 'warning',
+	visibleWhen: (settings) => settings.size > 20,
+}),
+```
+
+`tone` is `info`, `warning` or `danger`, and picks the icon and colours of Discord's message box. A notice has no `hidden`, `disabledWhen` or `requiresRestart`. A notice stands alone in its section, not inside a shared group of rows.
+
 ## Types
 
 `@unbound-app/settings` also exports the types of your settings, for your own code.
@@ -153,7 +170,7 @@ The action runs in your plugin, with its own `unbound`. One that throws is logge
 | Type | What it is |
 | --- | --- |
 | `Settings` | The whole settings object, what `settings` is |
-| `SettingKey` | Every setting's and section's dot-separated key, hidden ones included; buttons are not settings |
+| `SettingKey` | Every setting's and section's dot-separated key, hidden ones included; buttons and notices are not settings |
 | `SettingsEntry<K>` | The value at `K`, such as a `` `#${string}` `` for a color or the union of a choice's keys |
 | `ActionName` | The functions `src/actions.ts` exports |
 

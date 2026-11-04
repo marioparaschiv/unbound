@@ -1,15 +1,18 @@
 import type {
 	ButtonSchema,
+	NoticeSchema,
 	SettingCommon,
 	SettingSchema,
 	SettingsSchema,
+	StorelessSchema,
 } from '@unbound-app/types/settings';
-import { isButton, isSettingsGroup } from '@unbound-app/contracts/settings-schema';
+import { isButton, isNotice, isSettingsGroup } from '@unbound-app/contracts/settings-schema';
 
-/** One row of a generated settings panel: a stored setting or an action, at its dot-separated key. */
+/** One row of a generated settings panel: a stored setting, an action or a notice, at its dot-separated key. */
 export type LayoutItem =
 	| { kind: 'setting'; path: string; field: SettingSchema }
-	| { kind: 'button'; path: string; field: ButtonSchema };
+	| { kind: 'button'; path: string; field: ButtonSchema }
+	| { kind: 'notice'; path: string; field: NoticeSchema };
 
 /** A row of a stored setting. */
 export type SettingItem = Extract<LayoutItem, SettingKind>;
@@ -29,8 +32,8 @@ export type LayoutSection = {
 };
 
 /**
- * @description Tells whether a row is drawn inside a shared group: every row but a radio group and an array, which
- * bring their own titled group.
+ * @description Tells whether a row is drawn inside a shared group: every row but a radio group, an array and a notice, which
+ * stand alone.
  * @param item The row.
  * @returns Whether it is inline.
  */
@@ -47,13 +50,18 @@ export function isInline(item: LayoutItem): boolean {
 		case 'choice':
 			return field.displayAs !== 'radio';
 		case 'array':
+		case 'notice':
 			return false;
 	}
 }
 
-function itemOf(path: string, node: SettingSchema | ButtonSchema): LayoutItem {
-	return isButton(node)
-		? { kind: 'button', path, field: node }
+function itemOf(path: string, node: SettingSchema | StorelessSchema): LayoutItem {
+	if (isButton(node)) {
+		return { kind: 'button', path, field: node };
+	}
+
+	return isNotice(node)
+		? { kind: 'notice', path, field: node }
 		: { kind: 'setting', path, field: node };
 }
 

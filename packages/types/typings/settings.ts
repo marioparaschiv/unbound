@@ -171,11 +171,22 @@ export type ButtonSchema = SettingCommon & {
 	confirm?: string;
 };
 
+/** A notice row: it stores nothing, and shows `title` and `subtitle` as a message of its `tone`. */
+export type NoticeSchema = SettingCommon & {
+	kind: 'notice';
+	displayAs: 'notice';
+	/** How the message reads: `info` plain, `warning` cautious, `danger` for something that cannot be undone. */
+	tone: 'info' | 'warning' | 'danger';
+};
+
+/** A row that stores nothing: a button or a notice. */
+export type StorelessSchema = ButtonSchema | NoticeSchema;
+
 /** A nested object: its settings, drawn as their own section titled by `title`. */
 export type SettingsGroupSchema = SettingCommon & {
 	kind: 'section';
 	displayAs: 'group' | 'collapsible';
-	properties: Record<string, SettingSchema | ButtonSchema>;
+	properties: Record<string, SettingSchema | StorelessSchema>;
 };
 
 /** A plugin's settings schema, the JSON its settings.ts `defineSettings(...)` evaluates to at build time. */
@@ -184,6 +195,6 @@ export type SettingsSchema = {
 	kind: 'settings';
 	/** The message key of the title of the section holding the top-level settings. */
 	title?: string;
-	/** The settings, buttons and sections by key, in the order they are drawn. */
-	properties: Record<string, SettingSchema | ButtonSchema | SettingsGroupSchema>;
+	/** The settings, buttons, notices and sections by key, in the order they are drawn. */
+	properties: Record<string, SettingSchema | StorelessSchema | SettingsGroupSchema>;
 };
