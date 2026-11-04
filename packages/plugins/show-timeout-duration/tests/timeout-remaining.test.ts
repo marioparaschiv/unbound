@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
+import { selfTest } from '~/index';
+
 const HOUR = 3_600_000;
 
 type Row = { message: { timestamp: string; timestampAccessibilityLabel: string } };
@@ -47,5 +49,11 @@ describe('the message timestamp', () => {
 		const row = await rowFor(null);
 
 		expect(row.message.timestamp).toBe('12:00');
+	});
+
+	test('is reported as applied to the self test', async () => {
+		await rowFor(null);
+
+		expect(selfTest()).toMatchObject({ ok: true });
 	});
 });
