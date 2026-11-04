@@ -14,6 +14,9 @@ CONSTANTS
     PublishAfterCommit,    \* TRUE = current code: public writes run after decide(); FALSE = before the fix
     CasOnStatus,           \* decide() WHERE status = 'pending_review' (review.ts:379)
     HashCheck,             \* publishArtifact re-hash check (review.ts readArtifact)
+    Recovery,              \* repeating an approved request republishes a live version's files (review.ts isRepublish)
+    MaxWriteFailures,      \* public writes that fail after decide() commits, over a whole run
+    AllowTamper,           \* Tamper may fire; FALSE only in the liveness config (see Fairness)
     None                   \* model value: no row, no object
 
 Subs     == SubsV1 \cup SubsV2
@@ -35,10 +38,11 @@ VARIABLES
     publicPage,     \* public bucket addons/{id}/{version}/ADDON.md, page.json, media/*: submission they came from
     publicFiles,    \* public bucket addons/{id}/{version}/assets/*, i18n/*: submission whose manifest listed them
     decisions,      \* committed decide() transactions per submission
+    fails,          \* public write failures so far
     pc, target, dec, rowSha, bytes, wroteB, wroteM, wroteP, wroteF \* per review request
 
 vars == <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-          publicManifest, publicPage, publicFiles, decisions, pc, target, dec, rowSha, bytes,
+          publicManifest, publicPage, publicFiles, decisions, fails, pc, target, dec, rowSha, bytes,
           wroteB, wroteM, wroteP, wroteF>>
 
 Init ==
@@ -53,6 +57,7 @@ Init ==
     /\ publicPage = [v \in Versions |-> None]
     /\ publicFiles = [v \in Versions |-> None]
     /\ decisions = [s \in Subs |-> 0]
+    /\ fails = 0
     /\ pc = [r \in Reviewers |-> "idle"]
     /\ target = [r \in Reviewers |-> None]
     /\ dec = [r \in Reviewers |-> None]
@@ -67,7 +72,7 @@ OpenSubs == {o \in Subs : status[o] \in Open}
 
 ReviewerVars == <<pc, target, dec, rowSha, bytes, wroteB, wroteM, wroteP, wroteF>>
 StoreVars    == <<addonExists, versionRow, publicBundle, publicManifest, publicPage, publicFiles,
-                 decisions>>
+                 decisions, fails>>
 
 (* ---------------- Authors and background jobs ---------------- *)
 
@@ -98,6 +103,7 @@ Create(s) ==
 \* No app path writes a staged object after create; this is a write outside the app (leaked bucket
 \* credentials, an operator), at any time, which the approval re-hash must catch.
 Tamper(s) ==
+    /\ AllowTamper
     /\ status[s] # None
     /\ staged' = [staged EXCEPT ![s] = Evil]
     /\ UNCHANGED <<status, kind, recordedSha, StoreVars, ReviewerVars>>
@@ -136,13 +142,32 @@ Start(r, s, d) ==
     /\ wroteF' = [wroteF EXCEPT ![r] = FALSE]
     /\ UNCHANGED <<status, kind, staged, recordedSha, StoreVars>>
 
+\* reviewSubmission repeated for an approved submission (review.ts requireReviewable, isRepublish): the
+\* row is approved and its addon_version row still names this submission. The code also needs the same
+\* reviewer; the model lets any request retry, which includes it. Skips decide() and goes to the reads.
+RetryStart(r, s) ==
+    /\ Recovery /\ PublishAfterCommit
+    /\ pc[r] = "idle"
+    /\ status[s] = "approved"
+    /\ versionRow[VersionOf(s)] # None /\ versionRow[VersionOf(s)].sub = s
+    /\ pc' = [pc EXCEPT ![r] = "read"]
+    /\ target' = [target EXCEPT ![r] = s]
+    /\ dec' = [dec EXCEPT ![r] = "republish"]
+    /\ rowSha' = [rowSha EXCEPT ![r] = recordedSha[s]]
+    /\ bytes' = [bytes EXCEPT ![r] = None]
+    /\ wroteB' = [wroteB EXCEPT ![r] = FALSE]
+    /\ wroteM' = [wroteM EXCEPT ![r] = FALSE]
+    /\ wroteP' = [wroteP EXCEPT ![r] = FALSE]
+    /\ wroteF' = [wroteF EXCEPT ![r] = FALSE]
+    /\ UNCHANGED <<status, kind, staged, recordedSha, StoreVars>>
+
 Done(r) ==
     /\ pc' = [pc EXCEPT ![r] = "idle"]
     /\ UNCHANGED <<target, dec, rowSha, bytes, wroteB, wroteM, wroteP, wroteF>>
 
 Got(r, b) ==
     /\ bytes' = [bytes EXCEPT ![r] = b]
-    /\ pc' = [pc EXCEPT ![r] = IF PublishAfterCommit THEN "decide" ELSE "write"]
+    /\ pc' = [pc EXCEPT ![r] = IF dec[r] = "republish" \/ ~PublishAfterCommit THEN "write" ELSE "decide"]
     /\ UNCHANGED <<target, dec, rowSha, wroteB, wroteM, wroteP, wroteF>>
 
 \* readArtifact (review.ts readBundle 215-219): the staged bytes, or, when the object
@@ -154,16 +179,22 @@ Got(r, b) ==
 \* row's manifest lists (a locale also against a JSON object of strings). Both read the pinned commit's
 \* content-addressed blobs, never staging, so Tamper cannot reach them: they yield the submitted bytes or
 \* throw, and a throw ends the request before any write (the Done branch).
-ReadStaged(r) ==
+ReadFail(r) ==
+    /\ pc[r] = "read"
+    /\ Done(r)
+    /\ UNCHANGED <<status, kind, staged, recordedSha, StoreVars>>
+
+ReadOk(r) ==
     LET s == target[r] IN
     /\ pc[r] = "read"
-    /\ \/ Done(r)
-       \/ IF staged[s] = None
-             THEN Got(r, s)
-             ELSE IF HashCheck /\ staged[s] # rowSha[r]
-                     THEN Done(r)
-                     ELSE Got(r, staged[s])
+    /\ IF staged[s] = None
+          THEN Got(r, s)
+          ELSE IF HashCheck /\ staged[s] # rowSha[r]
+                  THEN Done(r)
+                  ELSE Got(r, staged[s])
     /\ UNCHANGED <<status, kind, staged, recordedSha, StoreVars>>
+
+ReadStaged(r) == ReadFail(r) \/ ReadOk(r)
 
 AfterWrite == IF PublishAfterCommit THEN "cleanup" ELSE "decide"
 
@@ -179,7 +210,7 @@ WriteBundle(r) ==
     /\ wroteB' = [wroteB EXCEPT ![r] = TRUE]
     /\ pc' = [pc EXCEPT ![r] = IF wroteM[r] /\ wroteP[r] /\ wroteF[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicManifest,
-                   publicPage, publicFiles, decisions, target, dec, rowSha, bytes, wroteM, wroteP,
+                   publicPage, publicFiles, decisions, fails, target, dec, rowSha, bytes, wroteM, wroteP,
                    wroteF>>
 
 WriteManifest(r) ==
@@ -189,7 +220,7 @@ WriteManifest(r) ==
     /\ wroteM' = [wroteM EXCEPT ![r] = TRUE]
     /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteP[r] /\ wroteF[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-                   publicPage, publicFiles, decisions, target, dec, rowSha, bytes, wroteB, wroteP,
+                   publicPage, publicFiles, decisions, fails, target, dec, rowSha, bytes, wroteB, wroteP,
                    wroteF>>
 
 WritePage(r) ==
@@ -199,7 +230,7 @@ WritePage(r) ==
     /\ wroteP' = [wroteP EXCEPT ![r] = TRUE]
     /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteM[r] /\ wroteF[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-                   publicManifest, publicFiles, decisions, target, dec, rowSha, bytes, wroteB, wroteM,
+                   publicManifest, publicFiles, decisions, fails, target, dec, rowSha, bytes, wroteB, wroteM,
                    wroteF>>
 
 \* writeArtifact's PUTs of the extra files (artifacts.ts 112-118): the bytes readPinnedFiles read and
@@ -211,8 +242,20 @@ WriteFiles(r) ==
     /\ wroteF' = [wroteF EXCEPT ![r] = TRUE]
     /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteM[r] /\ wroteP[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-                   publicManifest, publicPage, decisions, target, dec, rowSha, bytes, wroteB, wroteM,
+                   publicManifest, publicPage, decisions, fails, target, dec, rowSha, bytes, wroteB, wroteM,
                    wroteP>>
+
+\* A public PUT fails after decide() committed (or during a republish): the request errors out of
+\* publishArtifact, so no cleanup runs, the version stays live and whichever writes landed stay public.
+\* At most MaxWriteFailures over a run.
+WriteFail(r) ==
+    /\ pc[r] = "write"
+    /\ PublishAfterCommit
+    /\ fails < MaxWriteFailures
+    /\ fails' = fails + 1
+    /\ Done(r)
+    /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
+                   publicManifest, publicPage, publicFiles, decisions>>
 
 \* decide (review.ts:363-410): one serializable transaction, retried whole on a serialization failure.
 \* CAS at 379, throw at 382-387. Approval runs publishVersion (395), which inserts addon (325, PK id)
@@ -236,7 +279,7 @@ Decide(r) ==
                      ELSE UNCHANGED <<versionRow, addonExists>>
                /\ pc' = [pc EXCEPT ![r] =
                         IF d = "approved" /\ PublishAfterCommit THEN "write" ELSE "cleanup"]
-               /\ UNCHANGED <<publicBundle, publicManifest, publicPage, publicFiles, target, dec,
+               /\ UNCHANGED <<publicBundle, publicManifest, publicPage, publicFiles, fails, target, dec,
                               rowSha, bytes, wroteB, wroteM, wroteP, wroteF>>
     /\ UNCHANGED <<kind, staged, recordedSha>>
 
@@ -251,10 +294,24 @@ Cleanup(r) ==
 Next ==
     \/ \E s \in Subs : Stage(s) \/ Create(s) \/ Tamper(s) \/ Purge(s) \/ Orphan(s)
     \/ \E r \in Reviewers, s \in Subs, d \in Decisions : Start(r, s, d)
+    \/ \E r \in Reviewers, s \in Subs : RetryStart(r, s)
     \/ \E r \in Reviewers : ReadStaged(r) \/ WriteBundle(r) \/ WriteManifest(r) \/ WritePage(r)
-                          \/ WriteFiles(r) \/ Decide(r) \/ Cleanup(r)
+                          \/ WriteFiles(r) \/ WriteFail(r) \/ Decide(r) \/ Cleanup(r)
+
+\* Fairness for the liveness check: a request in flight keeps moving (weak), and someone repeats the
+\* approval whenever it can be (strong: a failed read or write returns the request to idle, so the
+\* retry is enabled only intermittently). Environment steps (Tamper, Orphan, Purge, a failing read) get none.
+Fairness ==
+    /\ SF_vars(\E r \in Reviewers, s \in Subs : RetryStart(r, s))
+    /\ \A r \in Reviewers :
+          /\ SF_vars(ReadOk(r))
+          /\ WF_vars(WriteBundle(r)) /\ WF_vars(WriteManifest(r))
+          /\ WF_vars(WritePage(r)) /\ WF_vars(WriteFiles(r))
+          /\ WF_vars(Decide(r)) /\ WF_vars(Cleanup(r))
 
 Spec == Init /\ [][Next]_vars
+
+LiveSpec == Spec /\ Fairness
 
 \* Reviewers are interchangeable requests; TLC explores one ordering of their names.
 ReviewerSymmetry == Permutations(Reviewers)
@@ -297,5 +354,13 @@ RejectedNeverPublic ==
         /\ publicManifest[v] # None => status[publicManifest[v]] # "rejected"
         /\ publicPage[v] # None => status[publicPage[v]] # "rejected"
         /\ publicFiles[v] # None => status[publicFiles[v]] # "rejected"
+
+\* Every live version eventually has all its public files. Checked with LiveSpec (fair retries, at most
+\* MaxWriteFailures failed writes, no Tamper); fails when Recovery is FALSE.
+FilesPublic(v) ==
+    /\ publicBundle[v] # None /\ publicManifest[v] # None
+    /\ publicPage[v] # None /\ publicFiles[v] # None
+
+LiveEventuallyPublic == \A v \in Versions : (versionRow[v] # None) ~> FilesPublic(v)
 
 =============================================================================

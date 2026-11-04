@@ -1,18 +1,26 @@
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 
-import type { SourceSeed } from '../../../../apps/web/tests/helpers/addons.ts';
-import type { AppContext } from '../../../../apps/web/tests/helpers/index.ts';
-import type { Caller } from '../../../../apps/web/src/lib/api/caller.ts';
-import type { EnvSource } from '../../../../apps/web/src/lib/env.ts';
-
 import {
-	createTestContext,
+	ADDON,
+	PAGE_DIR,
+	REPOSITORY,
+	extraFiles,
+	holdApprovalRead,
+	isExtraFile,
+	setup,
+	settle,
+	sha256,
+	stage,
+	type Checks,
+	type Replay,
+} from './replay-support.ts';
+// Replays the TLC counterexamples against the real reviewSubmission (see replay-support.ts).
+import {
 	manifest,
 	schema,
 	seedApprovedAddon,
 	seedSubmission,
 	serveGitHub,
-	signInWithDiscord,
 } from '../../../../apps/web/tests/helpers/index.ts';
 import {
 	COMMITTED_ADDON_MD,
@@ -22,178 +30,7 @@ import {
 import { purgeUserSubmissions } from '../../../../apps/web/src/lib/staging.ts';
 import { reviewSubmission } from '../../../../apps/web/src/lib/review.ts';
 import { gitBlobSha } from '../../../../apps/web/src/lib/github.ts';
-
-// Replays the TLC counterexamples against the real reviewSubmission, real Postgres and an in-memory
-// object store whose public writes can be held open. Invariant names match spec/ReviewPublish.tla.
-type Checks = Record<string, boolean>;
-
-type Replay = {
-	name: string;
-	violated: string[];
-	run: () => Promise<Checks>;
-};
-
-type Seeded = {
-	ctx: AppContext;
-	staging: MemoryBucket;
-	public: MemoryBucket;
-	author: string;
-	reviewers: Caller[];
-	close: () => Promise<void>;
-};
-
-const ADDON = 'replay.addon';
-const REPOSITORY = 'acme/addons';
-const PAGE_DIR = 'plugins/replay';
-
-class MemoryBucket {
-	objects = new Map<string, Uint8Array>();
-	held: Promise<void> | undefined;
-	onWrite: (() => void) | undefined;
-	heldRead: Promise<void> | undefined;
-	onRead: (() => void) | undefined;
-
-	file(key: string) {
-		const objects = this.objects;
-		const bucket = this;
-
-		return {
-			exists: async () => objects.has(key),
-			bytes: async () => {
-				const bytes = objects.get(key);
-
-				if (!bytes) {
-					throw new Error(`No object ${key}.`);
-				}
-
-				bucket.onRead?.();
-				await bucket.heldRead;
-
-				return bytes;
-			},
-		};
-	}
-
-	async write(key: string, data: Uint8Array | string) {
-		this.onWrite?.();
-		await this.held;
-		this.objects.set(key, typeof data === 'string' ? new TextEncoder().encode(data) : data);
-	}
-
-	async delete(key: string) {
-		this.objects.delete(key);
-	}
-}
-
-function sha256(bytes: Uint8Array | string): string {
-	return new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
-}
-
-const LOCALE = JSON.stringify({ greeting: 'Hallo' });
-const IMAGE = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
-
-// The manifest fields listing one locale and one image, and their files as the build commits them
-// beside the bundle at `${dir}/dist/`. `locale` replaces the committed locale's bytes, not its digest.
-function extraFiles(dir: string, locale: string = LOCALE) {
-	const image = `assets/${sha256(IMAGE)}.png`;
-
-	return {
-		listing: {
-			locales: { de: sha256(LOCALE) },
-			assets: {
-				star: { type: 'png' as const, width: 1, height: 1, scales: { '1': sha256(IMAGE) } },
-			},
-		},
-		committed: { [`${dir}/dist/i18n/de.json`]: locale, [`${dir}/dist/${image}`]: IMAGE },
-		paths: { 'i18n/de.json': LOCALE, [image]: IMAGE },
-	};
-}
-
-function isExtraFile(key: string): boolean {
-	return key.includes('/assets/') || key.includes('/i18n/');
-}
-
-async function setup(env: EnvSource = {}): Promise<Seeded> {
-	const { ctx, close } = await createTestContext(env);
-	const staging = new MemoryBucket();
-	const bucket = new MemoryBucket();
-
-	// reviewSubmission only calls file/exists/bytes/write/delete; the fake covers exactly those.
-	ctx.storage = { staging: staging as never, public: bucket as never };
-
-	const ids: string[] = [];
-
-	for (const name of ['author', 'reviewer-a', 'reviewer-b']) {
-		const { userId } = await signInWithDiscord(ctx, {
-			id: '80351110224678912',
-			name,
-			email: `${name}@example.com`,
-		});
-
-		ids.push(userId);
-	}
-
-	const [author = '', ...reviewerIds] = ids;
-	const reviewers: Caller[] = [];
-
-	for (const id of reviewerIds) {
-		// drizzle-orm resolves only inside apps/web, so the role is set with the raw client.
-		await ctx.db.$client`update "user" set role = 'moderator' where id = ${id}`;
-
-		const user = await ctx.db.query.user.findFirst({ where: { id } });
-
-		if (!user) {
-			throw new Error(`User ${id} was not stored.`);
-		}
-
-		reviewers.push({ user, via: 'session' });
-	}
-
-	return { ctx, staging, public: bucket, author, reviewers, close };
-}
-
-async function stage(
-	seeded: Seeded,
-	version: string,
-	bundle: string,
-	kind: 'listing' | 'update',
-	source: SourceSeed = {},
-	listing: Partial<PublishedManifest> = {},
-) {
-	const row = await seedSubmission(
-		seeded.ctx,
-		seeded.author,
-		manifest(ADDON, version, listing),
-		{ kind, bundleSize: Buffer.byteLength(bundle), sha256: sha256(bundle) },
-		source,
-	);
-
-	seeded.staging.objects.set(row.stagingKey, new TextEncoder().encode(bundle));
-
-	return row;
-}
-
-async function settle(promise: Promise<unknown>): Promise<string> {
-	try {
-		await promise;
-
-		return 'ok';
-	} catch (error) {
-		return error instanceof Error ? (error.message.split('\n')[0] ?? '') : String(error);
-	}
-}
-
-// Holds the next staged-bundle read open, which is where an approval waits before `decide`, and
-// returns when it is waiting plus the function that lets it go.
-function holdApprovalRead(seeded: Seeded) {
-	let release = () => {};
-
-	seeded.staging.heldRead = new Promise((resolve) => (release = resolve));
-
-	const waiting = new Promise<void>((resolve) => (seeded.staging.onRead = resolve));
-
-	return { waiting, release };
-}
+import { failedPublishRecovers } from './replay-recovery.ts';
 
 // current.cfg RejectedNeverPublic: an approval is held in its read phase while a rejection of the
 // same submission commits. The submission has a store page and extra files.
@@ -261,8 +98,8 @@ async function approveRacesReject(): Promise<Checks> {
 	}
 }
 
-// current.cfg PublicMatchesLive: an approval of s1 is held in its read phase, s1's author is banned,
-// and a new listing s2 for the same id and version is approved and goes live; then s1's approval resumes.
+// current.cfg PublicMatchesLive: s1's approval is held in its read phase, s1's author is banned, s2
+// for the same version is approved and goes live; then s1's approval resumes.
 async function staleApprovalOverwrites(): Promise<Checks> {
 	const seeded = await setup();
 	const [a, b] = seeded.reviewers;
@@ -479,6 +316,11 @@ const REPLAYS: Replay[] = [
 		name: 'approval checks extra files',
 		violated: [],
 		run: checkExtraFiles,
+	},
+	{
+		name: 'failed publish recovers',
+		violated: [],
+		run: failedPublishRecovers,
 	},
 ];
 

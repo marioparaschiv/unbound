@@ -170,11 +170,18 @@ export async function listReviewQueue(
 	return { submissions };
 }
 
-async function requirePendingReview(
+type ReviewTarget = {
+	row: SourcedSubmissionRow;
+	// The approval already committed and its version is live: the request only republishes the files.
+	republish: boolean;
+};
+
+async function requireReviewable(
 	ctx: AppContext,
 	caller: Caller,
 	id: string,
-): Promise<SourcedSubmissionRow> {
+	request: ReviewSubmissionRequest,
+): Promise<ReviewTarget> {
 	if (getReviewableKinds(caller).length === 0) {
 		throw new ApiError('forbidden', 'You do not have permission to review submissions.');
 	}
@@ -187,7 +194,9 @@ async function requirePendingReview(
 
 	requirePermission(caller, REVIEW_PERMISSIONS[row.kind]);
 
-	if (row.status !== 'pending_review') {
+	const republish = await isRepublish(ctx, caller, row, request);
+
+	if (row.status !== 'pending_review' && !republish) {
 		throw new ApiError('submission_not_pending', `Submission ${id} is ${row.status}.`);
 	}
 
@@ -200,7 +209,31 @@ async function requirePendingReview(
 		throw new ApiError('self_review', `You cannot review ${row.addonId}: you maintain it.`);
 	}
 
-	return requireSourced(row);
+	return { row: requireSourced(row), republish };
+}
+
+// Repeating an approval whose files failed to write finishes the write. The version must still belong
+// to this submission, so a version another submission replaced is never touched.
+async function isRepublish(
+	ctx: AppContext,
+	caller: Caller,
+	row: SubmissionRow,
+	request: ReviewSubmissionRequest,
+): Promise<boolean> {
+	if (
+		request.decision !== 'approved' ||
+		row.status !== 'approved' ||
+		row.reviewerId !== caller.user.id
+	) {
+		return false;
+	}
+
+	const live = await ctx.db.query.addonVersion.findFirst({
+		where: { addonId: row.addonId, version: row.version },
+		columns: { submissionId: true },
+	});
+
+	return live?.submissionId === row.id;
 }
 
 // b2/staging-lifecycle.json hides staged objects after 14 days, so re-read the pinned blob
@@ -285,8 +318,8 @@ async function readArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise
 	return { sha256, bundle, page, files };
 }
 
-// Runs after `decide` committed the approval. Writing before the commit let a rejection, a ban or
-// another approval that won the race leave this submission's files under the version's keys.
+// Runs after `decide` commits, and again on a repeated approval: each key is overwritten with the same
+// verified bytes. Writing earlier let a losing request leave its files under the version's keys.
 async function publishArtifact(
 	ctx: AppContext,
 	row: SourcedSubmissionRow,
@@ -428,7 +461,8 @@ function decide(
 
 /**
  * @description Approves, rejects or requests changes on a pending submission. Reviewers need the
- * review permission for its kind and may not maintain the addon.
+ * review permission for its kind and may not maintain the addon. Repeating an approval that committed
+ * but failed to publish its files writes them again.
  * @param ctx The application context.
  * @param caller The reviewer.
  * @param id The submission id.
@@ -441,7 +475,7 @@ export async function reviewSubmission(
 	id: string,
 	request: ReviewSubmissionRequest,
 ): Promise<ReviewSubmissionResponse> {
-	const row = await requirePendingReview(ctx, caller, id);
+	const { row, republish } = await requireReviewable(ctx, caller, id, request);
 	const decision: Decision = {
 		decision: request.decision,
 		note: request.note ?? null,
@@ -450,7 +484,7 @@ export async function reviewSubmission(
 	};
 
 	const artifact = request.decision === 'approved' ? await readArtifact(ctx, row) : undefined;
-	const reviewed = await decide(ctx, row, decision, artifact?.sha256);
+	const reviewed = republish ? row : await decide(ctx, row, decision, artifact?.sha256);
 
 	if (artifact) {
 		await publishArtifact(ctx, row, artifact);

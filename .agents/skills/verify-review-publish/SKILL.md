@@ -17,22 +17,23 @@ git diff dcc0a9144ec097c8e7b6b986fa0657005e5abb72 -- apps/web/src/lib/review.ts 
 
 Empty output: the verification still describes the code. Otherwise map each hunk to the coverage table below and go on.
 
-| Code (at the sync commit)                                                                                                     | Model action in `spec/ReviewPublish.tla`     |
-| ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `submissions.ts` `stageAndReserve` 362-381 (staging write 372 before the row; only the bundle is staged)                      | `Stage`                                      |
-| `submissions.ts` `reserve` 285-360, `createSubmission` 391-432                                                                | `Create`; supersede is `Purge` then `Create` |
-| a staging write outside the app (no app path writes after create)                                                             | `Tamper` (`Evil` bytes, any time)            |
-| `staging.ts` `deleteOrphans` 24-64 (grace window `STAGING_ORPHAN_GRACE_SECONDS`)                                              | `Orphan`                                     |
-| `staging.ts` `purgeUserSubmissions` 105-144 (ban hook `auth.ts` 135)                                                          | `Purge`                                      |
-| `review.ts` `requirePendingReview` 173-204                                                                                    | `Start` (row snapshot incl. `sha256`)        |
-| `review.ts` `readArtifact` 266-291, `readBundle` 215-219, `refetchBundle` 208-213                                             | `ReadStaged`                                 |
-| `review.ts` `readPinnedStorePage` 221-238, `addon-page-source.ts` `readPageMedia` 220-233                                     | `ReadStaged` (its failure branch)            |
-| `review.ts` `readPinnedFiles` 241-255, `addon-files.ts` `readListedFiles` 47-104, contracts `addon-files.ts` `listAddonFiles` | `ReadStaged` (its failure branch)            |
-| `artifacts.ts` `writeArtifact` 102-127: bundle 122, `manifest.json` 123-125                                                   | `WriteBundle`, `WriteManifest`               |
-| `artifacts.ts` `writeArtifact` 112-118: each extra file (`assets/*`, `i18n/*`)                                                | `WriteFiles`                                 |
-| `artifacts.ts` `writeStorePage` 136-158 (`ADDON.md`, `page.json`, `media/*`)                                                  | `WritePage`                                  |
-| `review.ts` `decide` 383-430 (CAS 401, `publishVersion` 338-377, PKs from `db/schema/addons.ts`)                              | `Decide`                                     |
-| `review.ts` `reviewSubmission` 441-475 (read, `decide`, then `publishArtifact` 293-302, staged delete 463-465)                | `pc` sequence, `Cleanup`                     |
+| Code (at the sync commit)                                                                                                          | Model action in `spec/ReviewPublish.tla`     |
+| ---------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `submissions.ts` `stageAndReserve` 362-381 (staging write 372 before the row; only the bundle is staged)                           | `Stage`                                      |
+| `submissions.ts` `reserve` 285-360, `createSubmission` 391-432                                                                     | `Create`; supersede is `Purge` then `Create` |
+| a staging write outside the app (no app path writes after create)                                                                  | `Tamper` (`Evil` bytes, any time)            |
+| `staging.ts` `deleteOrphans` 24-64 (grace window `STAGING_ORPHAN_GRACE_SECONDS`)                                                   | `Orphan`                                     |
+| `staging.ts` `purgeUserSubmissions` 105-144 (ban hook `auth.ts` 135)                                                               | `Purge`                                      |
+| `review.ts` `requireReviewable` 179-210                                                                                            | `Start` (row snapshot incl. `sha256`)        |
+| `review.ts` `isRepublish` 218-237 (an approved submission whose `addon_version` row names it)                                      | `RetryStart`                                 |
+| `review.ts` `readArtifact` 300-325, `readBundle` 249-253, `refetchBundle` 242-247                                                  | `ReadOk`, `ReadFail`                         |
+| `review.ts` `readPinnedStorePage` 255-272, `addon-page-source.ts` `readPageMedia` 220-233                                          | `ReadFail`                                   |
+| `review.ts` `readPinnedFiles` 275-289, `addon-files.ts` `readListedFiles` 47-104, contracts `addon-files.ts` `listAddonFiles`      | `ReadFail`                                   |
+| `artifacts.ts` `writeArtifact` 102-127: bundle 122, `manifest.json` 123-125                                                        | `WriteBundle`, `WriteManifest`               |
+| `artifacts.ts` `writeArtifact` 112-118: each extra file (`assets/*`, `i18n/*`)                                                     | `WriteFiles`                                 |
+| `artifacts.ts` `writeStorePage` 136-158 (`ADDON.md`, `page.json`, `media/*`)                                                       | `WritePage`                                  |
+| `review.ts` `decide` 416-463 (CAS 432, `publishVersion` 448, PKs from `db/schema/addons.ts`)                                       | `Decide`                                     |
+| `review.ts` `reviewSubmission` 475-510 (read, `decide` unless republishing, then `publishArtifact` 326-335, staged delete 497-499) | `pc` sequence, `Cleanup`, `WriteFail`        |
 
 `reserve`, `decide` and the ban's cancel are each one Postgres SERIALIZABLE transaction that `createDatabase` retries whole on a serialization failure or deadlock, so each is still one indivisible step.
 
@@ -44,15 +45,15 @@ Sync commit: `dcc0a9144ec097c8e7b6b986fa0657005e5abb72`. Move it forward only af
 bun .agents/skills/verify-review-publish/scripts/check.ts
 ```
 
-About 20 s. It runs `scripts/replay.ts` first (under 1 s), then one TLC job per expected violation plus one job per config for all invariants expected to hold. It downloads TLC 1.7.4 once to `~/.cache/tlaplus/1.7.4/tla2tools.jar` and checks sha256 `936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88`. Needs `java` on the PATH.
+About 2 min (`current-liveness` is about 65 s). It runs `scripts/replay.ts` first (under 1 s), then one TLC job per expected violation plus one job per config for all invariants expected to hold. It downloads TLC 1.7.4 once to `~/.cache/tlaplus/1.7.4/tla2tools.jar` and checks sha256 `936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88`. Needs `java` on the PATH.
 
 The replay creates throwaway Postgres databases through the web test helpers, so it needs `DATABASE_URL` (or `DATABASE_DIRECT_URL` in `apps/web/.env`) for a role with `CREATEDB` that can connect to the `postgres` database. Without one it fails with `permission denied for database "postgres"` or `No Postgres URL`; start a `postgres:18` container and a role as `.github/workflows/ci.yml` does.
 
 Memory is shared with other services. The script runs one TLC at a time with `-Xmx3g -XX:+UseParallelGC -workers 2` and refuses to start a job under 8 GB `MemAvailable`. Never run two copies at once.
 
-Print one counterexample as numbered steps: `bun .agents/skills/verify-review-publish/scripts/check.ts --trace current:RejectedNeverPublic`.
+Print one counterexample as numbered steps: `bun .agents/skills/verify-review-publish/scripts/check.ts --trace current:RejectedNeverPublic` (or `broken-no-recovery:LiveEventuallyPublic`).
 
-Exit 0 means every outcome matches the `EXPECTED` table in `scripts/check.ts` and the `violated` lists in `scripts/replay.ts`. Both describe the code at the sync commit: `current*` and every replay hold; `before-fix*` and `broken-*` fail as listed.
+Exit 0 means every outcome matches the `EXPECTED` and `EXPECTED_LIVENESS` tables in `scripts/check.ts` and the `violated` lists in `scripts/replay.ts`. Both describe the code at the sync commit: `current*` and every replay hold; `before-fix*` and `broken-*` fail as listed.
 
 ## 3. Read a FAIL
 
@@ -75,7 +76,9 @@ The code once wrote `addons/{id}/{version}/` inside `publishArtifact` before `de
 2. **A stale approval overwrote a live version's files.** s1's approval was read, s1's author banned, s2 for the same version approved, then s1's writes landed under s2's row. Fixed the same way. Invariant `PublicMatchesLive`; replay `stale approval overwrites a live version`.
 3. **Two pending updates for one version** (`SUBMISSION_MAX_PENDING_UPDATES` >= 2): the second approval rewrote the first's live files and then failed on the `addon_version` key. Fixed: `decide` throws first. Replay `second pending update overwrites`.
 
-Cost of the order, not modelled: if a public write fails after `decide` commits, the version is live without (all of) its files and the request errors; the approval cannot be retried because the submission is no longer pending, and the staged bundle stays. Liveness is outside the model.
+4. **A public write that fails after `decide` committed left a live version without its files for good** (the cost of the order above). Fixed: the same reviewer repeating the approval on the approved submission, while its `addon_version` row still names it (`isRepublish`), skips `decide` and runs the same read, verify and `publishArtifact`, which overwrites every key with the verified bytes. No new write path or schema: the only writer is still `publishArtifact` after a verified read, for a row `decide` already committed, and a version another submission replaced is refused. Model: `WriteFail` (at most `MaxWriteFailures` per run, partial writes allowed) and `RetryStart`; `current*` keep all six invariants with failures. Liveness `LiveEventuallyPublic` (a live version eventually has all four public file groups) holds in `current-liveness` under fair retries and read, write, decide and cleanup steps (`LiveSpec`); `broken-no-recovery` (`Recovery = FALSE`) violates it. Replay `failed publish recovers`: the first public write fails, another reviewer and a rejection are refused, the same reviewer's repeat publishes every file with the live row's sha256, and a second repeat is a no-op.
+
+Limits of the recovery proof: `current-liveness` sets `AllowTamper = FALSE`, because a staged object changed outside the app and never replaced fails every re-hash and blocks any approval or retry (`readBundle` prefers the staged object over the pinned blob); and it needs someone to repeat the request, the fairness assumption, since nothing retries on its own. `deleteOrphans` sweeps the staged bundle of an approved submission (only open ones are kept); recovery does not need it, as `readBundle` refetches the pinned blob and `readArtifact` re-hashes it (`Orphan`, replay `approval refetches a lost bundle`). A repeat with a GitHub outage and a swept bundle fails and can be repeated. The model has no first-party `replaceVersion`: a repeat that races it is outside the model.
 
 `PublicOnlyIfLive` holds too: the files appear only after the row exists. The one window left is a live row whose files are not yet written.
 
@@ -83,13 +86,15 @@ Cost of the order, not modelled: if a public write fails after `decide` commits,
 
 One addon id, versions `v1`/`v2`, bytes are the honest bundle or `Evil`.
 
-| Config                                     | Subs                    | Reviewers | Flags                  | Role                      |
-| ------------------------------------------ | ----------------------- | --------- | ---------------------- | ------------------------- |
-| `current`                                  | 2 on v1                 | 2         | as the code            | all hold                  |
-| `current-pending-updates`                  | 1 on v1, 2 on v2, cap 2 | 1         | as the code            | all hold                  |
-| `before-fix`, `before-fix-pending-updates` | same as above           | same      | writes before `decide` | findings 1-3 reproduce    |
-| `broken-no-cas`                            | 2 on v1                 | 2         | fixed order, no CAS    | `DecidedOnce` can fail    |
-| `broken-no-hash-check`                     | 2 on v1                 | 2         | fixed, no re-hash      | `LiveIsReviewed` can fail |
+| Config                                     | Subs                    | Reviewers | Flags                                                 | Role                                                                                    |
+| ------------------------------------------ | ----------------------- | --------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `current`                                  | 2 on v1                 | 2         | as the code                                           | all hold                                                                                |
+| `current-pending-updates`                  | 1 on v1, 2 on v2, cap 2 | 1         | as the code                                           | all hold                                                                                |
+| `before-fix`, `before-fix-pending-updates` | same as above           | same      | writes before `decide`                                | findings 1-3 reproduce                                                                  |
+| `broken-no-cas`                            | 2 on v1                 | 2         | fixed order, no CAS                                   | `DecidedOnce` can fail                                                                  |
+| `broken-no-hash-check`                     | 2 on v1                 | 2         | fixed, no re-hash                                     | `LiveIsReviewed`, and a repeat publishing tampered bytes (`PublicMatchesLive`) can fail |
+| `current-liveness`                         | 2 on v1                 | 2         | as the code, `LiveSpec`, no `Tamper`, 1 write failure | `LiveEventuallyPublic` holds                                                            |
+| `broken-no-recovery`                       | same                    | same      | `Recovery = FALSE`                                    | `LiveEventuallyPublic` fails                                                            |
 
 Reviewers are symmetric (`SYMMETRY ReviewerSymmetry`). `current-pending-updates` with 2 reviewers took 126 s and 9.8 M states, so it runs with 1. Keep every job under 2 minutes: shrink bounds before raising heap.
 
@@ -97,4 +102,4 @@ Every modelled submission has a store page and extra files, the case with the mo
 
 The refetch is modelled as content-addressed: it yields the pinned bytes or fails, because `readBlob` checks the git blob SHA-1 (replay `approval refetches a lost bundle` runs both outcomes on the real code). `Orphan` may delete an object whose row is not inserted yet, over-approximating a create slower than the grace window.
 
-Not modelled: first-party publishing (`first-party.ts` `publishFirstParty` 212-272), which writes `addons/{id}/{version}/` through `writeArtifact` (with compiled `.hbc` bundles and the extra files `readAddonSource` read and checked with `readListedFiles` beside the bundle) and `writeStorePage` (the page and media `readAddonSource` read and checked at the build commit, via `readAddonPage`) before `commitApproved` 145-202 re-checks the claim, and since 2574b6b5 rewrites a live version's files and row in place (`review.ts` `replaceVersion` 292-305; a changed extra file also counts as a rebuild, `sameFiles` 46-53); S3 write failures and partial writes, GitHub outages beyond a failed refetch, user deletion cascades, delist/relist, `listReviewQueue`, author's listing caps, the per-request permission checks, and liveness (a live version having its files).
+Not modelled: first-party publishing (`first-party.ts` `publishFirstParty` 212-272), which writes `addons/{id}/{version}/` through `writeArtifact` (with compiled `.hbc` bundles and the extra files `readAddonSource` read and checked with `readListedFiles` beside the bundle) and `writeStorePage` (the page and media `readAddonSource` read and checked at the build commit, via `readAddonPage`) before `commitApproved` 145-202 re-checks the claim, and since 2574b6b5 rewrites a live version's files and row in place (`review.ts` `replaceVersion` 345-358; a changed extra file also counts as a rebuild, `sameFiles` 46-53); GitHub outages beyond a failed refetch, user deletion cascades, delist/relist, `listReviewQueue`, author's listing caps, the per-request permission checks, the Postgres side of a failed `decide` (it is one transaction).
