@@ -1,6 +1,9 @@
-import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
+
+import { selfTest } from '~/index';
 
 type Row = { username?: string; authorId?: string; referencedMessage?: { message?: Row } };
 type Author = { id: string; username: string; globalName?: string };
@@ -26,6 +29,7 @@ function rowFor(message: Message) {
 }
 
 beforeEach(async () => {
+	resetHealth();
 	flux.seed({
 		Relationship: { getNickname: (id: string) => (id === '1' ? 'Ally' : null) },
 		User: { getUser: (id: string) => [alice, bob].find((user) => user.id === id) },
@@ -79,5 +83,17 @@ describe('the reply preview', () => {
 		settings.inReplies = true;
 
 		expect(rowFor(message).referencedMessage?.message?.username).toBe('Bob (@bob42)');
+	});
+});
+
+describe('the plugin', () => {
+	test('reports healthy once it has patched the message rows', async () => {
+		expect((await selfTest()).ok).toBe(true);
+	});
+
+	test('leaves the names as Discord shows them once it stops', async () => {
+		await stopPlugin();
+
+		expect(rowFor({ author: bob }).username).toBe('Bob');
 	});
 });

@@ -67,11 +67,13 @@ export function generateRow(fields: Partial<typeof message> = {}) {
 	return new RowManager().generate({ message: immutable({ ...message, ...fields }) }).message;
 }
 
-/** Registers the Discord modules the plugin needs, seeds the stores it reads and starts the plugin. */
-export async function startLogger() {
+/** Registers the Discord modules the plugin needs (with the given action sheets, when a test brings its own), seeds the stores it reads and starts the plugin. */
+export async function startLogger(
+	sheets: object = { openLazy: () => {}, hideActionSheet: () => {} },
+) {
 	metro.register(RowManager);
 	metro.register(ChatManager);
-	metro.register({ openLazy: () => {}, hideActionSheet: () => {} });
+	metro.register(sheets);
 	flux.seed({
 		Message: {
 			getMessage: (_channel: string, id: string) => (id === message.id ? message : undefined),

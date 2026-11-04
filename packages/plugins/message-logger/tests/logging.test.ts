@@ -75,6 +75,54 @@ describe('a deleted message', () => {
 	});
 });
 
+describe('the plugin stopping', () => {
+	// What the chat would draw if it read the row at each action `stop` sends.
+	function drawnDuring(...types: string[]) {
+		const rows: ReturnType<typeof generateRow>[] = [];
+
+		for (const type of types) flux.onAction(type, () => void rows.push(generateRow()));
+
+		return rows;
+	}
+
+	test('draws a deleted message as a plain row while it is removed', async () => {
+		await del();
+		expect(isMarkedDeleted()).toBe(true);
+
+		const rows = drawnDuring('MESSAGE_DELETE');
+
+		await stopPlugin();
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.ephemeralIndication).toBeUndefined();
+		expect(rows[0]?.textColor).toBeUndefined();
+	});
+
+	test('draws a message plainly while its deleted attachments are removed', async () => {
+		await dispatch({
+			type: 'MESSAGE_UPDATE',
+			message: {
+				id: 'm1',
+				channel_id: 'c1',
+				content: 'hello',
+				edited_timestamp: '2026-01-01',
+				attachments: [{ id: 'a1' }],
+			},
+		});
+		expect(generateRow().attachments[1]?.filename).toBe('(deleted) dog.png');
+
+		const rows = drawnDuring('MESSAGE_UPDATE');
+
+		await stopPlugin();
+
+		expect(rows).toHaveLength(1);
+		expect(rows[0]?.attachments.map((attachment) => attachment.filename)).toEqual([
+			'cat.png',
+			'dog.png',
+		]);
+	});
+});
+
 describe('an edited message', () => {
 	const edit = (extra: Record<string, unknown>) =>
 		dispatch({

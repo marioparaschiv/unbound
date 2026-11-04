@@ -31,8 +31,8 @@ export function dispatch(action: Action) {
 	return flux.dispatch(action);
 }
 
-/** Registers the Discord modules the plugin patches, seeds the stores it reads and starts the plugin. */
-export async function startGuildSettings(optIn = false) {
+/** Registers the Discord modules the plugin patches (leaving out the context menus when asked), seeds the stores it reads and starts the plugin. */
+export async function startGuildSettings(optIn = false, withContextMenus = true) {
 	applied.length = 0;
 	toggled.length = 0;
 	hidden.length = 0;
@@ -45,7 +45,7 @@ export async function startGuildSettings(optIn = false) {
 	metro.register({ toggleShowAllChannels: (guildId: string) => void toggled.push(guildId) });
 	metro.register(guildActions);
 	metro.register(sheets);
-	metro.register(contextMenus);
+	if (withContextMenus) metro.register(contextMenus);
 	metro.register({ SettingsIcon: () => null });
 	flux.seed({
 		User: { getCurrentUser: () => ({ id: ME }) },

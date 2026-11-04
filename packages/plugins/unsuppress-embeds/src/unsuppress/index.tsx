@@ -9,6 +9,7 @@ import { ActionSheets, ChannelStore, PermissionStore, REST, UserStore } from '~/
 import { actionLabel, getEmbedAction, type Message } from '~/unsuppress/embeds';
 import { findTargetRows, insertionIndex } from '~/unsuppress/row-groups';
 import { ICONS, PLUGIN_NAME, SHEET_ROW_KEY } from '~/constants';
+import { getDeleteLabel } from '~/unsuppress/delete-label';
 import { getChannelAccess } from '~/unsuppress/access';
 import { changeEmbeds } from '~/unsuppress/suppress';
 
@@ -26,7 +27,8 @@ let stopSheets: (() => void) | undefined;
 
 // UNKNOWN: an action sheet may render any node.
 function addRow(result: unknown) {
-	const rows = findTargetRows(result);
+	const deleteLabel = getDeleteLabel();
+	const rows = findTargetRows(result, deleteLabel);
 	const current = open;
 
 	if (!current || !Array.isArray(rows)) return result;
@@ -50,7 +52,7 @@ function addRow(result: unknown) {
 	};
 
 	rows.splice(
-		insertionIndex(rows),
+		insertionIndex(rows, deleteLabel),
 		0,
 		<ActionSheetRow
 			key={SHEET_ROW_KEY}

@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { flux, patcher } from '@unbound-app/api';
 
 import {
@@ -19,8 +18,9 @@ import { REPEAT_WINDOW_MS } from '~/constants';
  * and patches `joinGuild` on Discord's guild actions module (`joinGuild`, `waitForGuild`) to apply after a non-lurking join resolves.
  * A server reported by more than one path within ten seconds is changed once.
  * The Addon scope removes the listeners and the patch when the plugin stops.
+ * @returns A function with nothing to undo, for `applyFeatures`.
  */
-export function startJoins(): void {
+export function startJoins(): () => void {
 	const isFirst = createRepeatGuard(REPEAT_WINDOW_MS);
 
 	function applyOnce(guildId: string | undefined) {
@@ -48,5 +48,5 @@ export function startJoins(): void {
 		);
 	});
 
-	recordApplied(3);
+	return () => {};
 }

@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import patchLazySheets from '@unbound-plugins/shared/action-sheets/patch-lazy-sheets';
 import { createSheetRenderer } from '@unbound-plugins/shared/action-sheets/sheet-renderer';
 import {
@@ -89,8 +88,9 @@ let renderer: ReturnType<typeof createSheetRenderer> | undefined;
  * @description Adds View Edit History and Clear Message History to a logged message's long-press sheet, and Clear Message Log to a channel's sheet.
  * Patches `openLazy` on Discord's action sheets (`metro.api.ActionSheets`) and the render of each message and channel sheet.
  * @param log The message log.
+ * @returns A function that ignores sheets that are still loading, unwraps the rendered rows and closes the history sheet, which the Addon scope can't see.
  */
-export function startHistory(log: MessageLog): void {
+export function startHistory(log: MessageLog): () => void {
 	let specs: readonly SheetRowSpec[] = [];
 
 	renderer = createSheetRenderer(patcher, (result) => insertSheetRows(result, specs));
@@ -118,16 +118,11 @@ export function startHistory(log: MessageLog): void {
 		return specs.length ? render : undefined;
 	});
 
-	recordApplied(1);
-}
-
-/**
- * @description Ignores sheets that are still loading, unwraps the rendered rows and closes the history sheet, which the Addon scope can't see.
- */
-export function stopHistory(): void {
-	stopSheets?.();
-	stopSheets = undefined;
-	renderer?.dispose();
-	renderer = undefined;
-	closeHistorySheet();
+	return () => {
+		stopSheets?.();
+		stopSheets = undefined;
+		renderer?.dispose();
+		renderer = undefined;
+		closeHistorySheet();
+	};
 }

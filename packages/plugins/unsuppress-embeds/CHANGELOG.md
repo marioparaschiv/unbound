@@ -4,7 +4,7 @@
 
 ### Changed
 
-- The row label and the error toast can now be translated. The row now finds Discord's delete row by its style instead of its English label, so it sits above Delete in every language.
+- The row label and the error toast can now be translated. The row now finds Discord's delete row by its label in your language, falling back to the English label, so it sits above Delete Message in every language and no longer above Report Message.
 
 ## [1.0.0] - 2026-11-03
 
