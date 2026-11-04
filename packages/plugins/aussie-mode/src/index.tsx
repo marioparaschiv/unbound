@@ -3,18 +3,22 @@ import type { PluginContext } from '@unbound-app/api/native';
 
 import { isAussieDevice } from '~/locale';
 import { startRotation } from '~/rotation';
+import { startUpsideDownText } from '~/text';
 
 let dispose = () => {};
 
-export function start(context: PluginContext) {
+function start(context: PluginContext) {
 	if (!isAussieDevice()) return;
 
 	dispose = applyFeatures('Aussie Mode', [
 		() => startRotation(context.native, (error) => console.error('[Aussie Mode]', error)),
+		startUpsideDownText,
 	]);
 }
 
-export function stop() {
+function stop() {
 	dispose();
 	dispose = () => {};
 }
+
+export default { start, stop };
