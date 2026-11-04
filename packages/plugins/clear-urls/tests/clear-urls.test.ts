@@ -1,6 +1,8 @@
 import { metro, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
+import { selfTest } from '~/index';
+
 type Draft = { content: string };
 
 const sent: Draft[] = [];
@@ -37,5 +39,11 @@ describe('editing a message', () => {
 		MessageActions.editMessage('c1', 'm1', { content: 'https://example.com/?fbclid=y' });
 
 		expect(edited.at(-1)?.content).toBe('https://example.com/');
+	});
+});
+
+describe('the self test', () => {
+	test('reports the patches and a cleaned sample once the plugin starts', () => {
+		expect(selfTest().ok).toBe(true);
 	});
 });
