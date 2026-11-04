@@ -5,8 +5,14 @@ import {
 	createRecordingPatcher,
 	installAddonGlobals,
 	createMemoryStorage,
+	createListenerRegistry,
+	createFakeSettings,
 	createFakeMetro,
 	createFakeReact,
+	createFakeFlux,
+	createFakeTimers,
+	defineSettings,
+	setting,
 } from '../testing';
 
 type LabelProps = { text: string };
@@ -254,5 +260,115 @@ describe('installAddonGlobals', () => {
 		scope.uninstall();
 
 		expect('addon' in globalThis).toBe(false);
+	});
+});
+
+describe('setting.button', () => {
+	test('builds the button the client builds, which stores nothing', () => {
+		const storage = createMemoryStorage('my-plugin');
+		const schema = defineSettings({
+			enabled: setting.boolean({ default: true, title: 'ENABLED' }),
+			clear: setting.button({ title: 'CLEAR', action: 'clear', confirm: 'CLEAR_CONFIRM' }),
+		});
+		const settings = createFakeSettings(schema, storage, 'my-plugin');
+
+		expect(schema.properties.clear).toEqual({
+			kind: 'button',
+			displayAs: 'button',
+			title: 'CLEAR',
+			action: 'clear',
+			confirm: 'CLEAR_CONFIRM',
+		});
+		expect(settings.settings.enabled).toBe(true);
+		expect(() => settings.set('clear', true)).toThrow(/not in the schema/);
+		expect(Object.keys(settings.settings)).toEqual(['enabled']);
+	});
+});
+
+describe('createFakeMetro', () => {
+	test('finds every match with all, and finds by type name and the API props', () => {
+		const metro = createFakeMetro();
+		const first = { tag: 'x' };
+		const second = { tag: 'x', type: { name: 'Chat' } };
+
+		metro.register(first);
+		metro.register(second);
+		metro.register({ sendMessage: () => 'sent', receiveMessage: () => 'received' });
+
+		expect(metro.find(metro.filters.byProps('tag'), { all: true })).toEqual([first, second]);
+		expect(metro.find(metro.filters.byTypeName('Chat'))).toBe(second);
+		expect(metro.api.Messages.sendMessage()).toBe('sent');
+		expect(metro.findByProps('tag', { all: true })).toEqual([first, second]);
+	});
+
+	test('forgets its modules and waits on reset, and a handle made before finds the next ones', () => {
+		const metro = createFakeMetro();
+		const handle = metro.findByProps('late');
+		let loaded = 0;
+
+		metro.register({ late: 1 });
+		metro.onModuleLoaded(metro.filters.byProps('never'), () => void loaded++);
+		metro.reset();
+		metro.register({ never: true });
+
+		expect(loaded).toBe(0);
+		expect(handle?.late).toBeUndefined();
+
+		metro.register({ late: 2 });
+
+		expect(handle?.late).toBe(2);
+	});
+});
+
+describe('createFakeFlux', () => {
+	test('serves a patch made through getStore in later reads', () => {
+		const flux = createFakeFlux(createListenerRegistry());
+		const patcher = createRecordingPatcher();
+
+		flux.seed({ User: { getCurrentUser: () => 'wumpus' } });
+		patcher.after(flux.getStore('User'), 'getCurrentUser', () => 'patched');
+
+		expect(flux.getStore('User').getCurrentUser()).toBe('patched');
+
+		patcher.unpatchAll();
+
+		expect(flux.getStore('User').getCurrentUser()).toBe('wumpus');
+	});
+
+	test('lists a change listener added directly, not one the kit adds for a hook or onStoreChange', () => {
+		const flux = createFakeFlux(createListenerRegistry());
+
+		flux.seed({ User: {} });
+		flux.onStoreChange(flux.getStore('User'), () => {});
+
+		expect(flux.directListeners()).toEqual([]);
+
+		flux.getStore('User').addChangeListener(() => {});
+
+		expect(flux.directListeners()).toEqual(['UserStore.addChangeListener']);
+	});
+});
+
+describe('createFakeTimers', () => {
+	test('runs timers for real and clears what is pending', async () => {
+		const timers = createFakeTimers();
+		let fired = 0;
+
+		timers.setTimeout(() => void fired++, 1);
+		timers.setTimeout(() => void fired++, 5);
+		timers.setInterval(() => void fired++, 1_000);
+
+		expect(timers.pending()).toBe(3);
+
+		await Bun.sleep(3);
+
+		expect(fired).toBe(1);
+		expect(timers.pending()).toBe(2);
+
+		timers.clearAll();
+		await Bun.sleep(8);
+
+		expect(fired).toBe(1);
+		expect(timers.pending()).toBe(0);
 	});
 });
