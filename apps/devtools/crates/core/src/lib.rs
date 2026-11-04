@@ -1,6 +1,6 @@
 //! The frontend half of React DevTools for Unbound.
 //!
-//! A device runs `packages/loader/bootstrap/devtools.js` (react-devtools-core's backend) and dials
+//! A device runs the client build's `devtools.<bytecode>.bundle` (react-devtools-core's backend) and dials
 //! this frontend over a WebSocket. [`Devtools`] owns that socket, decodes the backend's frames into
 //! an element [`Store`], and answers inspection and edit requests. The GUI and the MCP server are
 //! both thin front-ends over one [`Devtools`] handle, so an agent sees exactly what the user sees.

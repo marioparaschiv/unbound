@@ -28,6 +28,8 @@ struct BundleManifest {
 
     bool        isSignable() const;
     std::string bundleFile(uint32_t bytecodeVersion, bool developerMode) const;
+    // The DevTools backend's file for this runtime, or nothing when the build ships none.
+    std::optional<std::string> devtoolsFile(uint32_t bytecodeVersion) const;
 };
 
 std::optional<BundleFlavour> bundleFlavourNamed(std::string_view file);

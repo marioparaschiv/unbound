@@ -107,13 +107,18 @@ describe('bundle signing', () => {
 		expect(bundleHashes(dir)).toEqual(manifest.sha512);
 	});
 
-	test('lists both flavours and nothing else', () => {
+	test('lists both flavours and the DevTools backend, and nothing else', () => {
 		const dir = makeDist();
 
 		writeFileSync(join(dir, 'unbound.js.map'), '{}');
 		writeFileSync(join(dir, 'manifest.json.sig'), 'signature');
+		writeFileSync(join(dir, 'devtools.js'), 'console.log(3);');
+		writeFileSync(join(dir, 'devtools.98.bundle'), DEV_BYTECODE);
+		writeFileSync(join(dir, 'devtools.98.bundle.map'), '{}');
 
 		expect(signableBundles(dir)).toEqual([
+			'devtools.98.bundle',
+			'devtools.js',
 			'unbound-dev.98.bundle',
 			'unbound-dev.js',
 			'unbound.98.bundle',
