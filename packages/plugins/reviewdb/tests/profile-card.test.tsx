@@ -1,6 +1,8 @@
 import { render, stopPlugin } from '@unbound-app/api/testing';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
+import { selfTest } from '~/index';
+
 import { card, type CardProps, startReviewdb } from './start-reviewdb';
 
 function UserInfo(_: { userId: string }) {
@@ -25,5 +27,9 @@ describe('a user profile card', () => {
 		const view = renderCard({ children: ['nothing'] });
 
 		expect(view.findAll('Button')).toEqual([]);
+	});
+
+	test('reports the profile card patch as applied', async () => {
+		expect((await selfTest()).ok).toBe(true);
 	});
 });
