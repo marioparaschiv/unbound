@@ -1,8 +1,11 @@
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { assets, patcher } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
 import { Image } from 'react-native';
 
-import { AssetUris, GuildStore, MessageRowData } from '~/modules';
-import { platformCrownSource } from '~/patches/platform';
+import { AssetUris, GuildStore, MessageRowData } from '~/crown/modules';
+import { platformCrownSource } from '~/crown/platform';
 
 type RoleIcon = {
 	source: string | number;
@@ -31,8 +34,12 @@ function getCrownSource(): string | number | undefined {
 
 /**
  * @description Shows the owner crown as the role icon on the server owner's messages that have none.
+ * Patches `generateMessageRowData` on Discord's message row module, and reads the owner from
+ * `GuildStore` and the crown's URI from the asset URI module. The Addon scope removes the patch when the plugin stops.
  */
-export function patchOwnerCrown(): void {
+export function startCrown(): void {
+	if (!ensureModules('Force Owner Crown', { MessageRowData, GuildStore })) return;
+
 	// Resolved on the first owner row rather than at start, since the asset may register later.
 	let source: string | number | undefined;
 
@@ -47,6 +54,13 @@ export function patchOwnerCrown(): void {
 
 		if (source === undefined) return;
 
-		row.roleIcon = { source, name: 'Server Owner', size: 18, alt: 'Server Owner' };
+		row.roleIcon = {
+			source,
+			name: messages.SERVER_OWNER,
+			size: 18,
+			alt: messages.SERVER_OWNER,
+		};
 	});
+
+	recordApplied(1);
 }
