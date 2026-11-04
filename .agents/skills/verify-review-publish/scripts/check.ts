@@ -53,22 +53,23 @@ const INVARIANTS = [
 ];
 
 // Invariants each config is expected to violate; every other one must hold. `current*` describe the
-// code at the sync commit, so a violation there is a known finding (see ../SKILL.md).
+// code at the sync commit, so a violation there is a bug; `before-fix*` keep the old order as witnesses.
 const EXPECTED: Record<string, string[]> = {
-	current: [
+	current: [],
+	'current-pending-updates': [],
+	// The code before approval published after `decide`: the same findings the replays showed on it.
+	'before-fix': [
 		'PublicOnlyIfLive',
 		'PublicOnlyIfLiveAtRest',
 		'PublicMatchesLive',
 		'RejectedNeverPublic',
 	],
-	'current-pending-updates': [
+	'before-fix-pending-updates': [
 		'PublicOnlyIfLive',
 		'PublicOnlyIfLiveAtRest',
 		'PublicMatchesLive',
 		'RejectedNeverPublic',
 	],
-	reordered: [],
-	'reordered-pending-updates': [],
 	// Without the CAS a late reject also overwrites an approval whose files are already public.
 	'broken-no-cas': ['DecidedOnce', 'RejectedNeverPublic'],
 	'broken-no-hash-check': ['LiveIsReviewed'],
@@ -82,11 +83,11 @@ const LABELS: Record<string, string> = {
 	Orphan: 'sweepStaging deletes an orphaned staged object',
 	Start: 'reviewSubmission -> requirePendingReview passes',
 	ReadStaged:
-		'publishArtifact reads (or refetches from the pin) and re-hashes the bundle, and reads the pinned media and extra files',
-	WriteBundle: 'publishArtifact writes the public bundle',
-	WriteManifest: 'publishArtifact writes the public manifest.json',
-	WritePage: 'publishArtifact writes the public ADDON.md, page.json and media/',
-	WriteFiles: 'publishArtifact writes the public extra files (assets/, i18n/)',
+		'readArtifact reads (or refetches from the pin) and re-hashes the bundle, and reads the pinned media and extra files',
+	WriteBundle: 'publishArtifact (after decide) writes the public bundle',
+	WriteManifest: 'publishArtifact (after decide) writes the public manifest.json',
+	WritePage: 'publishArtifact (after decide) writes the public ADDON.md, page.json and media/',
+	WriteFiles: 'publishArtifact (after decide) writes the public extra files (assets/, i18n/)',
 	Decide: 'decide() transaction',
 	Cleanup: 'staging.delete(row.stagingKey)',
 };

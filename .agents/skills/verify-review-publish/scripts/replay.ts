@@ -19,6 +19,7 @@ import {
 	committedPage,
 	committedPageFiles,
 } from '../../../../apps/web/tests/helpers/addon-page.ts';
+import { purgeUserSubmissions } from '../../../../apps/web/src/lib/staging.ts';
 import { reviewSubmission } from '../../../../apps/web/src/lib/review.ts';
 import { gitBlobSha } from '../../../../apps/web/src/lib/github.ts';
 
@@ -49,9 +50,12 @@ class MemoryBucket {
 	objects = new Map<string, Uint8Array>();
 	held: Promise<void> | undefined;
 	onWrite: (() => void) | undefined;
+	heldRead: Promise<void> | undefined;
+	onRead: (() => void) | undefined;
 
 	file(key: string) {
 		const objects = this.objects;
+		const bucket = this;
 
 		return {
 			exists: async () => objects.has(key),
@@ -61,6 +65,9 @@ class MemoryBucket {
 				if (!bytes) {
 					throw new Error(`No object ${key}.`);
 				}
+
+				bucket.onRead?.();
+				await bucket.heldRead;
 
 				return bytes;
 			},
@@ -176,8 +183,20 @@ async function settle(promise: Promise<unknown>): Promise<string> {
 	}
 }
 
-// current.cfg RejectedNeverPublic: an approval is held inside publishArtifact's writes while a
-// rejection of the same submission commits. The submission has a store page and extra files.
+// Holds the next staged-bundle read open, which is where an approval waits before `decide`, and
+// returns when it is waiting plus the function that lets it go.
+function holdApprovalRead(seeded: Seeded) {
+	let release = () => {};
+
+	seeded.staging.heldRead = new Promise((resolve) => (release = resolve));
+
+	const waiting = new Promise<void>((resolve) => (seeded.staging.onRead = resolve));
+
+	return { waiting, release };
+}
+
+// current.cfg RejectedNeverPublic: an approval is held in its read phase while a rejection of the
+// same submission commits. The submission has a store page and extra files.
 async function approveRacesReject(): Promise<Checks> {
 	const github = serveGitHub({ repositories: { [REPOSITORY]: {} }, tokens: {} });
 	const seeded = await setup({ GITHUB_API_URL: github.url.href });
@@ -206,14 +225,10 @@ async function approveRacesReject(): Promise<Checks> {
 			},
 			extras.listing,
 		);
-		let release = () => {};
-
-		seeded.public.held = new Promise((resolve) => (release = resolve));
-
-		const writing = new Promise<void>((resolve) => (seeded.public.onWrite = resolve));
+		const { waiting, release } = holdApprovalRead(seeded);
 		const approving = settle(reviewSubmission(seeded.ctx, a, row.id, { decision: 'approved' }));
 
-		await writing;
+		await waiting;
 
 		const rejected = await settle(
 			reviewSubmission(seeded.ctx, b, row.id, { decision: 'rejected', note: 'No.' }),
@@ -243,6 +258,48 @@ async function approveRacesReject(): Promise<Checks> {
 	} finally {
 		await seeded.close();
 		await github.stop();
+	}
+}
+
+// current.cfg PublicMatchesLive: an approval of s1 is held in its read phase, s1's author is banned,
+// and a new listing s2 for the same id and version is approved and goes live; then s1's approval resumes.
+async function staleApprovalOverwrites(): Promise<Checks> {
+	const seeded = await setup();
+	const [a, b] = seeded.reviewers;
+
+	try {
+		const first = await stage(seeded, '1.0.0', 'export default "first";', 'listing');
+		const { waiting, release } = holdApprovalRead(seeded);
+		const stale = settle(reviewSubmission(seeded.ctx, a, first.id, { decision: 'approved' }));
+
+		await waiting;
+		await purgeUserSubmissions(seeded.ctx, seeded.author);
+
+		seeded.staging.heldRead = undefined;
+		seeded.staging.onRead = undefined;
+
+		const second = await stage(seeded, '1.0.0', 'export default "second";', 'listing');
+		const approved = await settle(
+			reviewSubmission(seeded.ctx, b, second.id, { decision: 'approved' }),
+		);
+
+		release();
+
+		const resumed = await stale;
+		const live = await seeded.ctx.db.query.addonVersion.findFirst({
+			where: { addonId: ADDON, version: '1.0.0' },
+		});
+		const bundle = seeded.public.objects.get(`addons/${ADDON}/1.0.0/index.js`);
+		const served = bundle ? sha256(bundle) : '(none)';
+
+		console.log(`    approve s2 (B):         ${approved}`);
+		console.log(`    stale approve s1 (A):   ${resumed}`);
+		console.log(`    addon_version sha256    = ${live?.sha256}`);
+		console.log(`    public bundle sha256    = ${served}`);
+
+		return { PublicMatchesLive: !live || !bundle || served === live.sha256 };
+	} finally {
+		await seeded.close();
 	}
 }
 
@@ -396,15 +453,21 @@ async function checkExtraFiles(): Promise<Checks> {
 }
 
 // `violated` is what the code at the sync commit does; change it only with ../SKILL.md's findings.
+// Every replay failed on the code before publishArtifact moved after decide (SKILL.md, Findings).
 const REPLAYS: Replay[] = [
 	{
 		name: 'approve races reject',
-		violated: ['PublicOnlyIfLiveAtRest', 'RejectedNeverPublic'],
+		violated: [],
 		run: approveRacesReject,
 	},
 	{
+		name: 'stale approval overwrites a live version',
+		violated: [],
+		run: staleApprovalOverwrites,
+	},
+	{
 		name: 'second pending update overwrites',
-		violated: ['PublicMatchesLive'],
+		violated: [],
 		run: secondUpdateOverwrites,
 	},
 	{

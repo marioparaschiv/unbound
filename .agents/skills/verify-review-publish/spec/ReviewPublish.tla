@@ -11,9 +11,9 @@ CONSTANTS
     SubsV1, SubsV2,        \* submission ids, by the version their manifest names
     Reviewers,             \* concurrent POST /api/v1/submissions/$id/review requests
     MaxPendingUpdates,     \* env SUBMISSION_MAX_PENDING_UPDATES (default 1)
-    PublishAfterCommit,    \* FALSE = current code; TRUE = public writes moved after decide()
+    PublishAfterCommit,    \* TRUE = current code: public writes run after decide(); FALSE = before the fix
     CasOnStatus,           \* decide() WHERE status = 'pending_review' (review.ts:379)
-    HashCheck,             \* publishArtifact re-hash check (review.ts:263-274)
+    HashCheck,             \* publishArtifact re-hash check (review.ts readArtifact)
     None                   \* model value: no row, no object
 
 Subs     == SubsV1 \cup SubsV2
@@ -145,7 +145,7 @@ Got(r, b) ==
     /\ pc' = [pc EXCEPT ![r] = IF PublishAfterCommit THEN "decide" ELSE "write"]
     /\ UNCHANGED <<target, dec, rowSha, wroteB, wroteM, wroteP, wroteF>>
 
-\* publishArtifact read (review.ts:257-274, readBundle 215-219): the staged bytes, or, when the object
+\* readArtifact (review.ts readBundle 215-219): the staged bytes, or, when the object
 \* is gone, the pinned blob read again (refetchBundle 208-213). The blob is content-addressed and readBlob checks its
 \* SHA-1, so a refetch yields the honest bytes or fails with github_unavailable. Then the re-hash; a
 \* mismatch throws artifact_mismatch and the request ends. Two reads run alongside in one Promise.all:
@@ -167,7 +167,7 @@ ReadStaged(r) ==
 
 AfterWrite == IF PublishAfterCommit THEN "cleanup" ELSE "decide"
 
-\* publishArtifact writes (review.ts:276-279): writeArtifact (artifacts.ts 102-127) PUTs the bundle, the
+\* publishArtifact writes after decide commits (review.ts 293-302): writeArtifact (artifacts.ts 102-127) PUTs the bundle, the
 \* manifest and each extra file at addons/{id}/{version}/<path>; the review path passes no compiled
 \* bytecode. writeStorePage (artifacts.ts 136-158) PUTs ADDON.md, page.json and each media file. All run
 \* at once. Every submission here has a store page and extra files, the case with the most writes. The

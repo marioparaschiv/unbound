@@ -254,7 +254,16 @@ async function readPinnedFiles(
 	return readListedFiles(ctx.env, github, location, row.manifest);
 }
 
-async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<string> {
+type VerifiedArtifact = {
+	sha256: string;
+	bundle: Uint8Array;
+	page: StorePage | undefined;
+	files: ReadonlyMap<string, Uint8Array>;
+};
+
+// Reads and verifies everything an approval publishes without writing it: the files go public only
+// once `decide` has committed the approval (see publishArtifact).
+async function readArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<VerifiedArtifact> {
 	const [bundle, page, files] = await Promise.all([
 		readBundle(ctx, row),
 		readPinnedStorePage(ctx, row),
@@ -273,12 +282,20 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
 		);
 	}
 
+	return { sha256, bundle, page, files };
+}
+
+// Runs after `decide` committed the approval. Writing before the commit let a rejection, a ban or
+// another approval that won the race leave this submission's files under the version's keys.
+async function publishArtifact(
+	ctx: AppContext,
+	row: SourcedSubmissionRow,
+	{ bundle, page, files }: VerifiedArtifact,
+): Promise<void> {
 	await Promise.all([
 		writeArtifact(ctx, row, bundle, { files }),
 		page ? writeStorePage(ctx, row, page) : undefined,
 	]);
-
-	return sha256;
 }
 
 /**
@@ -358,7 +375,7 @@ export async function publishVersion(
 
 /**
  * Records the decision on a submission still pending review; anything else means another reviewer
- * decided first. Approval goes live in the same transaction, after its files are public.
+ * decided first. Approval goes live in the same transaction; its files are written after this commits.
  */
 function decide(
 	ctx: AppContext,
@@ -432,10 +449,11 @@ export async function reviewSubmission(
 		reviewedAt: ctx.now(),
 	};
 
-	const sha256 = request.decision === 'approved' ? await publishArtifact(ctx, row) : undefined;
-	const reviewed = await decide(ctx, row, decision, sha256);
+	const artifact = request.decision === 'approved' ? await readArtifact(ctx, row) : undefined;
+	const reviewed = await decide(ctx, row, decision, artifact?.sha256);
 
-	if (sha256) {
+	if (artifact) {
+		await publishArtifact(ctx, row, artifact);
 		requestProfileRefresh();
 	}
 
