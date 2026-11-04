@@ -14,6 +14,9 @@ const hotClients = new Set<ReadableStreamDefaultController<Uint8Array>>();
 
 let etag = bundleEtag();
 
+// Hot dev builds narrow this to a change no patch covered, so a reconnecting loader never reloads over a patch.
+let sendOnConnect: () => boolean = () => true;
+
 /**
  * @description Hashes the built bundle into a quoted etag, so an identical rebuild doesn't reload clients.
  * @returns The quoted content hash, or '' if it has not been built yet.
@@ -50,16 +53,33 @@ function send(controller: ReadableStreamDefaultController<Uint8Array>, payload: 
 	}
 }
 
-/** @description Broadcasts the current bundle etag to every connected hot-reload client. */
-function broadcast() {
+/**
+ * @description Broadcasts the bundle's etag on disk to every connected loader; one storing another etag reloads.
+ * @returns How many loaders it was sent to.
+ */
+export function broadcast(): number {
+	etag = bundleEtag();
+
 	const payload = frame('reload', { etag });
 
 	for (const controller of hotClients) send(controller, payload);
+
+	logger.info(`Sent the bundle etag ${etag} to ${hotClients.size} loader(s).`);
+
+	return hotClients.size;
+}
+
+/**
+ * @description Sends a connecting loader the etag only while `reloadPending` says a reload is owed. For hot dev builds.
+ * @param reloadPending Whether a change no patch covered still waits for a reload.
+ */
+export function gateReloads(reloadPending: () => boolean) {
+	sendOnConnect = reloadPending;
 }
 
 /**
  * @description Handles an SSE connection on `/__hot`: registers the client's stream, sends it the
- * current etag so it catches up on any build it missed, and deregisters it when the request aborts.
+ * current etag so it catches up on a build it missed (see {@link gateReloads}), and deregisters it on abort.
  * @param req The inbound request.
  * @returns A streaming `text/event-stream` response.
  */
@@ -73,7 +93,12 @@ export function handleHot(req: Request): Response {
 			logger.info(`Hot-reload client connected (${hotClients.size} total).`);
 
 			etag = bundleEtag();
-			send(controller, frame('reload', { etag }));
+
+			// Bun sends the headers with the first chunk, and the loader drops a stream that has not answered in 5 s.
+			send(
+				controller,
+				sendOnConnect() ? frame('reload', { etag }) : encoder.encode(': connected\n\n'),
+			);
 		},
 		cancel() {
 			hotClients.delete(controller);
@@ -100,10 +125,9 @@ export function handleHot(req: Request): Response {
  * @description Polls the build manifest, which the build writes last, and broadcasts a reload when the
  * bundle's content hash changes. Recomputes the hash even with no clients connected so a later-connecting
  * client catches up. Polls because `fs.watch` coalesces events on macOS and can miss the manifest write.
- * @param reloadOnRebuild Whether to broadcast the new hash. Without it, only clients connecting later catch up.
  * @returns A handle whose `close` stops polling.
  */
-export function watchBundle(reloadOnRebuild: boolean = true) {
+export function watchBundle() {
 	mkdirSync(DIST_DIR, { recursive: true });
 
 	let manifestTime = manifestModifiedTime();
@@ -121,7 +145,7 @@ export function watchBundle(reloadOnRebuild: boolean = true) {
 
 		etag = next;
 
-		if (!reloadOnRebuild || hotClients.size === 0) return;
+		if (hotClients.size === 0) return;
 
 		logger.info(`Bundle changed - reloading ${hotClients.size} client(s).`);
 		broadcast();
@@ -138,4 +162,4 @@ function manifestModifiedTime(): number {
 	}
 }
 
-export default { bundleEtag, handleHot, watchBundle };
+export default { bundleEtag, broadcast, gateReloads, handleHot, watchBundle };

@@ -3,9 +3,9 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { cp, mkdir, rm } from 'node:fs/promises';
 import replace from '@rollup/plugin-replace';
 import { dev } from 'rolldown/experimental';
+import { join, relative } from 'node:path';
 import Logger from '@unbound-app/logger';
 import { swc } from 'rollup-plugin-swc3';
-import { join } from 'node:path';
 
 import {
 	API_URL,
@@ -38,8 +38,11 @@ import signBundles from './sign';
 
 /** What the dev engine reports after a source change. */
 export type HotUpdate =
+	| { type: 'change'; file: string }
 	| { type: 'patch'; clientId: string; code: string; filename: string; changedIds: string[] }
-	| { type: 'reload' };
+	| { type: 'reload'; reason: string }
+	| { type: 'failed'; error: string }
+	| { type: 'built' };
 
 const logger = Logger.create('Build');
 const pluginLoggers: Map<PropertyKey, Logger> = new Map();
@@ -324,7 +327,14 @@ async function hotBuild(onUpdate: (update: HotUpdate) => void) {
 	const engine = await dev(
 		{
 			...config,
-			plugins: [refresh(root, '~/hot-refresh/runtime'), config.plugins],
+			plugins: [
+				refresh(root, '~/hot-refresh/runtime'),
+				config.plugins,
+				{
+					name: 'hot-changes',
+					watchChange: (id) => onUpdate({ type: 'change', file: relative(root, id) }),
+				},
+			],
 			experimental: {
 				devMode: {
 					implement: readFileSync(join(__dirname, 'dev-runtime.js'), 'utf8'),
@@ -339,6 +349,7 @@ async function hotBuild(onUpdate: (update: HotUpdate) => void) {
 			onHmrUpdates(result) {
 				if (result instanceof Error) {
 					logger.error('Hot update failed:', result);
+					onUpdate({ type: 'failed', error: `Hot update failed: ${result.message}` });
 
 					return;
 				}
@@ -354,19 +365,23 @@ async function hotBuild(onUpdate: (update: HotUpdate) => void) {
 							changedIds: update.changedIds,
 						});
 					} else if (update.type === 'FullReload') {
-						logger.info(`Full reload: ${update.reason ?? 'no reason given'}`);
-						onUpdate({ type: 'reload' });
+						const reason = update.reason ?? 'no reason given';
+
+						logger.info(`Full reload: ${reason}`);
+						onUpdate({ type: 'reload', reason });
 					}
 				}
 			},
 			onOutput(result) {
 				if (result instanceof Error) {
 					logger.error('Build failed:', result);
+					onUpdate({ type: 'failed', error: `Build failed: ${result.message}` });
 
 					return;
 				}
 
 				logger.success('Build completed successfully');
+				onUpdate({ type: 'built' });
 			},
 		},
 	);

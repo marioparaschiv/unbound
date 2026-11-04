@@ -25,7 +25,7 @@ Match the doctor's `FAIL` line.
 | bundle server, bridge | `scripts/up.sh`. If the session runs but the check fails, read its log in `UNBOUND_LOG_DIR`, then `scripts/up.sh --restart`. The dev server is ready when its log shows `Build completed successfully`.                                                         |
 | catalog               | `scripts/up.sh --restart=catalog catalog`.                                                                                                                                                                                                                      |
 | unbound-dev serves    | Another checkout is served. `scripts/up.sh --restart=dev` moves it here, then relaunch or `ubd reload`. When done, run `up.sh --restart=dev` from the checkout it served before (with an older `up.sh`, `tmux kill-session -t =unbound-dev`, then its `up.sh`). |
-| device loads          | Another agent pointed the loader elsewhere. Note the URL, run `ubd eval 'unbound.storage.set("unbound", "loader.update.url", "http://<DEV_HOST>:<UNBOUND_DEV_PORT>/unbound.bundle")'`, relaunch, and set it back when done.                                     |
+| device loads          | Another agent pointed the loader elsewhere. Note the URL, run `ubd eval 'unbound.storage.getBucket("unbound").set("loader.update.url", "http://<DEV_HOST>:<UNBOUND_DEV_PORT>/unbound.bundle")'`, relaunch, and set it back when done.                           |
 | device eval           | Relaunch Discord (SKILL.md loop step 3). Still failing: the vphone tool is missing (see the `vphone` skill), Discord is frozen ([UnboundResources](#unboundresources)), or `settings.json` lost its debugger keys ([Settings](#settings)).                      |
 
 ## Known faults

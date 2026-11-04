@@ -164,6 +164,6 @@ describe('release runtime', () => {
 		expect(releaseRuntime.canonical(Card, 'plugin.card Card')).toBe(Card);
 		expect(releaseRuntime.stableType(Card)).toBe(Card);
 		expect(releaseRuntime.withRefreshScope('plugin.card', () => Card)).toBe(Card);
-		expect(releaseRuntime.performRefresh()).toEqual({ count: 0, needsRemount: false });
+		expect(releaseRuntime.performRefresh()).toEqual({ count: 0, remounted: 0 });
 	});
 });

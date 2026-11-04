@@ -40,11 +40,11 @@ export const stableType: Runtime['stableType'] = (type) => type;
 
 /**
  * @description Reports no refresh, since nothing registered a component.
- * @returns No fibers re-rendered and no remount needed.
+ * @returns No fibers re-rendered or remounted.
  */
 export const performRefresh: Runtime['performRefresh'] = () => ({
 	count: 0,
-	needsRemount: false,
+	remounted: 0,
 });
 
 /**

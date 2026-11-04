@@ -49,7 +49,11 @@ export default function refresh(root: string, runtime: string): Plugin {
 export function transformModule(source: string, id: string, root: string, runtime: string): string {
 	// Classic `React.createElement` resolves to Discord's React. The automatic runtime would bundle
 	// `react/jsx-runtime`, whose development build calls dispatcher methods production React lacks.
-	const transformed = transformSync(id, source, { jsx: { runtime: 'classic', refresh: true } });
+
+	// Full signatures list each hook call, so a hook-order change can splice mounted hooks in place.
+	const transformed = transformSync(id, source, {
+		jsx: { runtime: 'classic', refresh: { emitFullSignatures: true } },
+	});
 
 	if (transformed.errors.length) {
 		throw new Error(transformed.errors.map((error) => error.message).join('\n'));

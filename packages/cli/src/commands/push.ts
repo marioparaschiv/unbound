@@ -4,6 +4,7 @@ import { bridgePortField, waitForDevice } from '~/lib/context';
 import { resolveAddonTarget } from '~/lib/addon-target';
 import { readBuiltAddon } from '~/lib/reload-transport';
 import { staleBuildReason } from '~/lib/stale-build';
+import { HOT_BUILD_ENV } from '~/lib/build-addon';
 import { defaulted, Type } from '~/lib/schema';
 import { NOT_CONNECTED } from '~/lib/device';
 
@@ -26,7 +27,7 @@ const pushCommand: CommandDefinition<typeof schema> = {
 	cli: { positionals: ['addon'] },
 	async handler({ addon: target, build }, { client }) {
 		const startedAt = Date.now();
-		const resolved = await resolveAddonTarget(target, build);
+		const resolved = await resolveAddonTarget(target, build, void 0, HOT_BUILD_ENV);
 
 		if ('error' in resolved) {
 			return { ok: false, text: resolved.error };

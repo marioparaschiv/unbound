@@ -1,15 +1,16 @@
 import type { Attributes, ElementType, ReactElement, ReactNode } from 'react';
 
-import type { Family, RefreshType } from '~/hot-refresh/families';
-import type { Component, FiberType } from '~/hot-refresh/refresh';
+import type { Component, Decision, Fiber, FiberType } from '~/hot-refresh/refresh';
+import { HOOK_FIBERS, reconcile, withAlternates } from '~/hot-refresh/refresh';
+import type { RefreshType, RefreshUpdate } from '~/hot-refresh/families';
+import { splicePlanned, unplanned } from '~/hot-refresh/hook-splice';
 import * as Refresh from '~/hot-refresh/families';
-import { rerender } from '~/hot-refresh/refresh';
 
 export { register, createSignatureFunctionForTransform } from '~/hot-refresh/families';
 
 type RefreshResult = {
 	count: number;
-	needsRemount: boolean;
+	remounted: number;
 };
 
 type RegisterRefresh = (type: RefreshType, name: string) => void;
@@ -86,10 +87,13 @@ export function withRefreshScope<T>(scope: string, evaluate: () => T): T {
 	try {
 		return evaluate();
 	} finally {
-		globalThis.$RefreshReg$ = previousRegister;
-		globalThis.$RefreshSig$ = previousSignature;
+		// A plugin's lazy module runs after its bundle and still calls both; outside a scope it registers nothing.
+		globalThis.$RefreshReg$ = previousRegister ?? ignoreRegistration;
+		globalThis.$RefreshSig$ = previousSignature ?? Refresh.createSignatureFunctionForTransform;
 	}
 }
+
+function ignoreRegistration() {}
 
 /**
  * @description Creates a React whose `createElement` swaps each component registered in {@link withRefreshScope}
@@ -127,36 +131,77 @@ export function stableType<T extends WeakKey>(type: T): T {
 }
 
 /**
- * @description Applies the components registered since the last call to every mounted fiber.
- * @returns How many fibers re-rendered, and whether a component changed its hooks and needs a remount.
+ * @description Applies the components registered since the last call to every mounted fiber. A component whose
+ * hooks changed has its hook list spliced in place, keeping the state of the hooks it kept, or else is remounted.
+ * @returns How many fibers re-rendered or remounted, and how many of them remounted.
  */
 export function performRefresh(): RefreshResult {
 	const update = Refresh.performReactRefresh();
 
 	if (!update) {
-		return { count: 0, needsRemount: false };
+		return { count: 0, remounted: 0 };
 	}
 
-	if (update.staleFamilies.size) {
-		return { count: 0, needsRemount: true };
-	}
+	let remounted = 0;
 
-	const count = rerender((type) => latestType(type, update.updatedFamilies));
+	const count = reconcile((fiber) => {
+		const decision = decide(fiber, update);
 
-	return { count, needsRemount: false };
+		if (decision === 'remount') {
+			remounted++;
+		}
+
+		return decision;
+	});
+
+	return { count, remounted };
 }
 
 // A stable forwarder already calls its family's latest version, so it stays; any other registered
 // type is replaced by the latest version. Host components (strings) are never registered.
-function latestType(type: FiberType, updated: Set<Family>): FiberType | null {
-	if (typeof type === 'string') return null;
+function decide(fiber: Fiber, update: RefreshUpdate): Decision {
+	const type = fiber.type && unplanned(fiber.type);
+
+	if (!type || typeof type === 'string') return null;
 
 	const id = familyIds.get(type);
 	const family = id ? Refresh.getFamilyByID(id) : Refresh.getFamilyByType(type);
 
-	if (!family || !updated.has(family)) return null;
+	if (!family) return null;
 
-	return id ? type : family.current;
+	const latest = id ? type : family.current;
+
+	if (update.updatedFamilies.has(family)) {
+		retype(fiber, latest);
+
+		return 'render';
+	}
+
+	if (!update.staleFamilies.has(family)) return null;
+
+	const plan = update.plans.get(family);
+
+	if (plan && HOOK_FIBERS.has(fiber.tag) && typeof latest === 'function') {
+		const planned = splicePlanned(fiber, latest, plan);
+
+		if (planned) {
+			retype(fiber, planned);
+
+			return 'render';
+		}
+	}
+
+	retype(fiber, latest);
+
+	return 'remount';
+}
+
+// Only `type` changes: parents still create elements of the old type, which React matches against
+// `elementType`, so the fiber is reused and renders the new function.
+function retype(fiber: Fiber, type: FiberType) {
+	for (const node of withAlternates([fiber])) {
+		node.type = type;
+	}
 }
 
 function forward(id: string, initial: Component): Component {

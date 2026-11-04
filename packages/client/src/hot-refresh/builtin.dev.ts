@@ -2,15 +2,13 @@ import { createLogger } from '@unbound-app/logger';
 
 import { DEV, DEV_SERVER_URL } from '~/core/constants';
 import { performRefresh } from '~/hot-refresh/runtime';
-import { reload } from '~/native/native';
 
 type DevRuntime = {
 	applyPatch(code: string, changedIds: string[]): 'applied' | 'needs-reload';
 };
 
-type ServerMessage =
-	| { type: 'patch'; code: string; filename: string; changedIds: string[] }
-	| { type: 'reload' };
+// Patches only: a change no patch covers is reloaded by the loader's `/__hot` stream, which outlives a JS reload.
+type ServerMessage = { type: 'patch'; code: string; filename: string; changedIds: string[] };
 
 declare global {
 	var __rolldown_runtime__: DevRuntime | undefined;
@@ -99,10 +97,6 @@ function isServerMessage(value: unknown): value is ServerMessage {
 		return false;
 	}
 
-	if (value.type === 'reload') {
-		return true;
-	}
-
 	return (
 		value.type === 'patch' &&
 		'code' in value &&
@@ -130,12 +124,6 @@ function parseServerMessage(data: unknown): ServerMessage | undefined {
 }
 
 function handle(socket: WebSocket, message: ServerMessage) {
-	if (message.type === 'reload') {
-		reload();
-
-		return;
-	}
-
 	const started = Date.now();
 
 	try {
@@ -146,35 +134,30 @@ function handle(socket: WebSocket, message: ServerMessage) {
 
 		if (outcome !== 'applied') {
 			Logger.info(`${message.changedIds.join(', ')} can't be patched in place; reloading.`);
-			rejectPatch(socket);
+			rejectPatch(socket, `${message.changedIds.join(', ')} can't be patched in place`);
 
 			return;
 		}
 	} catch (error) {
 		Logger.error(`Failed to patch ${message.changedIds.join(', ')}; reloading:`, error);
-		rejectPatch(socket);
+		rejectPatch(socket, `Failed to patch ${message.changedIds.join(', ')}: ${String(error)}`);
 
 		return;
 	}
 
 	socket.send(JSON.stringify({ type: 'applied', filename: message.filename }));
 
-	const { count, needsRemount } = performRefresh();
+	const { count, remounted } = performRefresh();
+	const ms = Date.now() - started;
 
-	if (needsRemount) {
-		Logger.info('A component changed its hooks; reloading.');
-		rejectPatch(socket);
-
-		return;
-	}
-
+	socket.send(JSON.stringify({ type: 'refreshed', fibers: count, remounted, ms }));
 	Logger.success(
-		`Patched ${message.changedIds.join(', ')}: ${count} fibers in ${Date.now() - started}ms`,
+		`Patched ${message.changedIds.join(', ')}: ${count} fibers (${remounted} remounted) in ${ms}ms`,
 	);
 }
 
-function rejectPatch(socket: WebSocket) {
-	socket.send(JSON.stringify({ type: 'rejected' }));
+function rejectPatch(socket: WebSocket, reason: string) {
+	socket.send(JSON.stringify({ type: 'rejected', reason }));
 }
 
 export default { start, stop, shouldStart };

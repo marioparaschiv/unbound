@@ -18,7 +18,7 @@ Discord (`com.hammerandchisel.discord`) runs on the vphone (see the `vphone` ski
 5. **Act** with `ubd eval` for state and vphone gestures for input.
 6. **Capture evidence** under `/tmp/<task>-evidence/`: a vphone screenshot after a `wait` for the expected text (the vphone skill's `shot()`), plus eval output proving side effects.
 
-`scripts/ready.sh [--fresh] [--timeout <s>]` blocks until `typeof unbound` is `object`, then prints the route. `--fresh` also waits for a bundle fetch newer than the served build. Use it instead of a hand-written poll.
+`scripts/ready.sh [--fresh] [--timeout <s>]` blocks until `typeof unbound` is `object`, then prints the route. `--fresh` also waits until the device's loader etag matches the served bundle, so it returns at once when the app already runs the current build. Use it instead of a hand-written poll.
 
 ## Relaunch
 
@@ -61,12 +61,11 @@ return await relaunch();
 
 ## Hot updates
 
-`scripts/hot.sh mark` before saving an edit, then `scripts/hot.sh wait <mark>` after. It prints `patched` (with the fiber count), `reloaded` or `failed` from lines logged since the mark, so it cannot miss a fast update. The logs are `<UNBOUND_LOG_DIR>/<tmux session>.log`:
+The client's `/__refresh` socket only patches. A change no patch covered (no client connected, mid-reload, hooks changed, a full reload) is reloaded by the loader's `/__hot` stream once its build is on disk, so it needs `loader.update.hmr` on.
 
-- `unbound-debugger.log` is the device console: `[HotRefresh] Patched <ids>: N fibers`, `... reloading.` and `[HotRefresh] Connected`.
-- `unbound-dev.log` is the server: `Patching <ids>`, `Full reload: <reason>`, `Build failed`, and each `GET /unbound.<v>.bundle`.
+After saving an edit, `curl -s localhost:<UNBOUND_DEV_PORT>/__outcome`. It waits for the edit in flight, then prints `patched: <files>: N fibers in Mms`, `reloaded: <files>: <reason>` (once the fresh bundle reconnects), `failed: <files>: <error>` (status 500) or `unchanged` when no loader is connected. Each outcome is also a `Hot update <result>` line in `<UNBOUND_LOG_DIR>/unbound-dev.log`.
 
-`0 fibers` means no mounted component re-rendered: open the screen that shows it. Edits under `scripts/build/**` are not watched: `scripts/up.sh --restart=dev`.
+`0 fibers` means no mounted component re-rendered: open the screen that shows it. Edits under `scripts/**` are not watched: `scripts/up.sh --restart=dev`.
 
 ## ubd
 

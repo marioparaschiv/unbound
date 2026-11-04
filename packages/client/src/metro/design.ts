@@ -55,12 +55,13 @@ export function registerDesignFallback<K extends DesignComponentName>(
 function createStyles<T extends StyleSheetSpec>(
 	styles: StyleSheetSpecOrFactory<T>,
 ): () => ResolvedStyles<T> {
-	let useStyles: (() => ResolvedStyles<T>) | undefined;
+	// Not `use*`: hot refresh would sign the wrapper with this hook while unset, forcing a remount on every edit.
+	let resolveStyles: (() => ResolvedStyles<T>) | undefined;
 
 	return () => {
-		useStyles ??= designModule.createStyles(styles);
+		resolveStyles ??= designModule.createStyles(styles);
 
-		return useStyles();
+		return resolveStyles();
 	};
 }
 
