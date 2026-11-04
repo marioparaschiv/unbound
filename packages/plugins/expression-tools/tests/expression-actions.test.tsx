@@ -35,10 +35,15 @@ function createSheet() {
 	};
 }
 
+// Lets the sheet's lazy load and the button's async work finish.
+async function settle() {
+	for (let i = 0; i < 10; i++) await Promise.resolve();
+}
+
 // Opens a sheet the way Discord does, then draws its patched component.
 async function openSheet(key: string, module: ReturnType<typeof createSheet>, props: object) {
 	ActionSheets.openLazy(Promise.resolve(module), key);
-	await Bun.sleep(0);
+	await settle();
 
 	return render(createElement(module.default, props));
 }
@@ -97,7 +102,7 @@ describe('the emoji sheet', () => {
 		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
 
 		press(view, 'Copy markup');
-		await Bun.sleep(0);
+		await settle();
 
 		expect(copied).toEqual(['<a:moai:123>']);
 		expect(toasts.shown).toMatchObject([
@@ -109,7 +114,7 @@ describe('the emoji sheet', () => {
 		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
 
 		press(view, 'Copy URL');
-		await Bun.sleep(0);
+		await settle();
 
 		expect(copied).toEqual([
 			'https://cdn.discordapp.com/emojis/123.gif?size=160&quality=lossless',
@@ -124,7 +129,7 @@ describe('the sticker sheet', () => {
 		const view = await openSheet('StickerDetailActionSheet', createSheet(), sticker);
 
 		press(view, 'Favorite');
-		await Bun.sleep(0);
+		await settle();
 
 		expect(toasts.shown).toMatchObject([{ content: 'wave added to favorites.' }]);
 		expect(view.findAll('Pressable').map((node) => node.text())).toContain('Unfavorite');
