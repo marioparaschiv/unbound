@@ -6,7 +6,7 @@ import { settings } from '@unbound-app/settings';
 
 import { selfTest } from '~/index';
 
-const clipboard = { text: '', copied: Promise.withResolvers<void>() };
+const clipboard = { text: '' };
 const hidden: string[] = [];
 const realFetch = globalThis.fetch;
 
@@ -40,18 +40,11 @@ const labels = (sheet: Awaited<ReturnType<typeof openSheet>>) =>
 
 beforeEach(async () => {
 	clipboard.text = '';
-	clipboard.copied = Promise.withResolvers<void>();
 	resetHealth();
 	hidden.length = 0;
 	metro.register(ActionSheets);
 	metro.register({
-		setString: (text: string) => {
-			clipboard.text = text;
-			clipboard.copied.resolve();
-
-			// The plugin awaits this, so the test's own await on it runs after the plugin carries on to its toast.
-			return clipboard.copied.promise;
-		},
+		setString: (text: string) => (clipboard.text = text),
 		getString: () => '',
 		setImage: () => undefined,
 		getImage: () => undefined,
@@ -77,7 +70,8 @@ describe('the message long-press menu', () => {
 		expect(labels(sheet)).toEqual(['Translate']);
 
 		sheet.act(() => sheet.find('ActionSheetRow').props.onPress?.());
-		await clipboard.copied.promise;
+		// The copy and the toast follow a chain of awaits; one macrotask lets them all finish.
+		await new Promise((resolve) => setTimeout(resolve));
 
 		expect(hidden).toEqual(['MessageLongPressActionSheet']);
 		expect(clipboard.text).toBe('Hallo');
