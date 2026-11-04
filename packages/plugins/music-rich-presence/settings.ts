@@ -33,7 +33,7 @@ export default defineSettings(
 		instanceIncomplete: setting.button({
 			title: 'INSTANCE_INCOMPLETE',
 			subtitle: 'INSTANCE_INCOMPLETE_SUBTITLE',
-			action: 'useListenBrainz',
+			action: 'switchToListenBrainz',
 			visibleWhen: (settings) =>
 				settings.scrobblerBackend === 'listenbrainz-compatible' &&
 				(!settings.instanceBaseURL.trim() || !settings.instanceAPIBaseUrl.trim()),

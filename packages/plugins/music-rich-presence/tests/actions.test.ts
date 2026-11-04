@@ -2,7 +2,7 @@ import { metro } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { describe, expect, test } from 'bun:test';
 
-import { createApiKey, useListenBrainz } from '~/actions';
+import { createApiKey, switchToListenBrainz } from '~/actions';
 import { readPreferences } from '~/presence/preferences';
 
 describe('the settings buttons', () => {
@@ -17,7 +17,7 @@ describe('the settings buttons', () => {
 
 	test('Instance Incomplete switches back to ListenBrainz', () => {
 		settings.scrobblerBackend = 'listenbrainz-compatible';
-		useListenBrainz();
+		switchToListenBrainz();
 
 		expect(readPreferences(settings).scrobblerBackend).toBe('listenbrainz');
 	});

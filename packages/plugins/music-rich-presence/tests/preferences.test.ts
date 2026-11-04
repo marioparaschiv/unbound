@@ -38,7 +38,7 @@ describe('readPreferences', () => {
 		expect(preferences.instanceAPIBaseUrl).toBe('https://api.lb.example.org');
 		expect(preferences.username).toBe('rini');
 		expect(preferences.apiKey).toBe('key');
-		expect(preferences.statusName).toBe(' {title} ');
+		expect(preferences.statusName).toBe('{title}');
 		expect(preferences.useListeningStatus).toBe(true);
 	});
 });

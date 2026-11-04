@@ -9,6 +9,6 @@ export function createApiKey() {
 }
 
 /** @description Leaves an incomplete self-hosted instance for ListenBrainz; the Instance Incomplete button runs it. */
-export function useListenBrainz() {
+export function switchToListenBrainz() {
 	settings.scrobblerBackend = 'listenbrainz';
 }
