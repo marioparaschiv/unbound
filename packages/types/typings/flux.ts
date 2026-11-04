@@ -29,6 +29,8 @@ export type FluxUser = {
 	avatar: string | null;
 	/** `true` for bot accounts. */
 	bot: boolean;
+	/** The user's Nitro tier: `1` Nitro Classic, `2` Nitro, `3` Nitro Basic; `null` or `0` without Nitro. */
+	premiumType?: number | null;
 };
 
 /** A Discord guild record. */
@@ -67,6 +69,8 @@ export type FluxChannel = {
 	name: string;
 	/** The id of the guild the channel belongs to; `null` for DMs and group DMs. */
 	guild_id: string | null;
+	/** The slowmode delay in seconds; `0` when the channel has no slowmode. */
+	rateLimitPerUser?: number;
 };
 
 /** A Discord message record. */
