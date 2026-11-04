@@ -1,4 +1,4 @@
-import { startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { native, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { afterEach, describe, expect, test } from 'bun:test';
 import { settings } from '@unbound-app/settings';
 
@@ -73,5 +73,50 @@ describe('avatar radius on iOS', () => {
 
 		expect(runs).toEqual([]);
 		expect((await selfTest()).ok).toBe(false);
+	});
+});
+
+describe('avatar radius on Android', () => {
+	afterEach(() => stop());
+
+	function registerAvatarClasses() {
+		native.java.registerClass('com.facebook.drawee.view.SimpleDraweeView', {
+			superclass: 'android.view.View',
+		});
+		native.java.registerClass('android.view.View');
+		native.java.registerClass('app.unbound.android.ActivityTracker', {
+			methods: { currentActivity: () => null },
+			staticFields: { INSTANCE: native.java.create('app.unbound.android.ActivityTracker') },
+		});
+		native.java.registerClass('android.view.ViewOutlineProvider', {
+			staticFields: { BACKGROUND: native.java.create('android.view.ViewOutlineProvider') },
+		});
+	}
+
+	test('hooks the avatar views and brings the circles back when it stops', async () => {
+		const { runs, scope, ui } = fakeUI();
+
+		native.setPlatform('android');
+		registerAvatarClasses();
+		await startPlugin({ native: { ui: ui as never } });
+
+		expect(native.calls.some((call) => call.bridge === 'hooks' && call.method === 'hook')).toBe(
+			true,
+		);
+
+		await stopPlugin();
+
+		expect(scope.disposed).toBe(true);
+		expect(runs.length).toBeGreaterThan(0);
+	});
+
+	test('reports the avatars it rounded', async () => {
+		const { ui } = fakeUI();
+
+		native.setPlatform('android');
+		registerAvatarClasses();
+		await startPlugin({ native: { ui: ui as never } });
+
+		expect((await selfTest()).ok).toBe(true);
 	});
 });
