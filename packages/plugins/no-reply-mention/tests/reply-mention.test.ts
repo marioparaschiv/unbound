@@ -1,9 +1,6 @@
 import { metro, startPlugin } from '@unbound-app/api/testing';
-import { beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { settings } from '@unbound-app/settings';
-
-// The testing kit fakes neither `ui` nor Discord's design components, which only the settings panel draws.
-mock.module('~/settings', () => ({ default: () => null }));
 
 type Reply = { message: { author: { id: string } }; shouldMention: boolean };
 
@@ -21,11 +18,8 @@ function createReply(authorId: string): Reply {
 	});
 }
 
-beforeAll(() => {
-	metro.register(PendingReplyActions);
-});
-
 beforeEach(async () => {
+	metro.register(PendingReplyActions);
 	await startPlugin();
 });
 
