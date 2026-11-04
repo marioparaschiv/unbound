@@ -1,6 +1,6 @@
 ## :sparkle: What it does
 
-- :eye: Attachments in age-restricted channels and their threads show blurred, behind Discord's own spoiler cover.
+- :eye-slash: Attachments in age-restricted channels and their threads show blurred, behind Discord's own spoiler cover.
 - :photo: Images, GIFs and videos in link embeds there are blurred the same way.
 - :pointer: Tap a blurred item to reveal it. Mobile has no hover, so a tap takes the place of hovering on desktop.
 - :share-up-right: Media inside forwarded messages there is blurred too, as on desktop.

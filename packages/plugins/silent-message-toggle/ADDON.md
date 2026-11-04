@@ -10,9 +10,9 @@
 ## :gear: Settings
 
 - :pin: **Persist State**: keeps the toggle on when you open another channel. Off by default, so the toggle turns off when you leave the channel.
-- :arrow-rotate-clockwise: **Auto Disable**: turns the toggle off again after one silent message. On by default.
+- :refresh: **Auto Disable**: turns the toggle off again after one silent message. On by default.
 
 ## :circle-info: Differences from Vencord
 
-- :bookmark: Vencord adds `@silent ` to the text and lets Discord turn it into the silent flag. Here the flag is set directly on the message, so nothing depends on where mobile reads the prefix.
+- :flag-2: Vencord adds `@silent ` to the text and lets Discord turn it into the silent flag. Here the flag is set directly on the message, so nothing depends on where mobile reads the prefix.
 - :pointer: Mobile has no hover, so a toast replaces the tooltip.

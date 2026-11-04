@@ -73,8 +73,10 @@ export function detectLanIp(): string {
 export function resolveDevHost(): string {
 	const flagIndex = process.argv.indexOf('--host');
 
-	if (~flagIndex && process.argv[flagIndex + 1]) {
-		return process.argv[flagIndex + 1];
+	const flagValue = ~flagIndex ? process.argv[flagIndex + 1] : undefined;
+
+	if (flagValue) {
+		return flagValue;
 	}
 
 	if (process.env.DEV_HOST) {

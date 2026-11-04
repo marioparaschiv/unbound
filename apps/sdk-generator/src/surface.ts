@@ -79,7 +79,8 @@ function isPublic(property: MorphSymbol): boolean {
 		return false;
 	}
 
-	const flags = ts.getDeclarationModifierFlagsFromSymbol(property.compilerSymbol);
+	const declaration = property.compilerSymbol.valueDeclaration;
+	const flags = declaration ? ts.getCombinedModifierFlags(declaration) : ts.ModifierFlags.None;
 
 	if ((flags & (ts.ModifierFlags.Private | ts.ModifierFlags.Protected)) !== 0) {
 		return false;
