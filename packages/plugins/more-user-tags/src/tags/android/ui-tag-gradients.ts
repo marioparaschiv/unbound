@@ -13,7 +13,7 @@ import {
 	javaText,
 } from '@unbound-plugins/shared/native/android/java-values';
 
-import type { TagAppearanceTable } from '~/ios/ui-tag-gradients';
+import type { TagAppearanceTable } from '~/tags/ios/ui-tag-gradients';
 
 const STATE_KEY = '__unboundMoreUserTagsAndroid';
 const TAG_VIEW = 'com.discord.chat.presentation.message.MessageTagView';

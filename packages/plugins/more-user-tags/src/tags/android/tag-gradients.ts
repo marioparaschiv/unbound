@@ -21,9 +21,9 @@ import {
 	installAndroidTagGradients,
 	removeAndroidTagGradients,
 	setAndroidTagAppearances,
-} from '~/android/ui-tag-gradients';
-import type { LabelAppearances } from '~/label-appearances';
-import type { TagGradients } from '~/tag-gradients';
+} from '~/tags/android/ui-tag-gradients';
+import type { LabelAppearances } from '~/tags/label-appearances';
+import type { TagGradients } from '~/types';
 import { HEX_COLOR } from '~/constants';
 
 const TAG_VIEW = 'com.discord.chat.presentation.message.MessageTagView';

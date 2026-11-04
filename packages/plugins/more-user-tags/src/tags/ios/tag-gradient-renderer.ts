@@ -9,9 +9,9 @@ import {
 	removeTagGradients,
 	setTagSettings,
 	type TagSettings,
-} from '~/ios/ui-tag-gradients';
-import type { LabelAppearances } from '~/label-appearances';
-import type { TagGradients } from '~/tag-gradients';
+} from '~/tags/ios/ui-tag-gradients';
+import type { LabelAppearances } from '~/tags/label-appearances';
+import type { TagGradients } from '~/types';
 
 const PUSH_DELAY_MS = 0;
 const TAG_VIEW_CLASS = 'DiscordChat.MessageTagView';

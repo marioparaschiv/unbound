@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.4] - 2026-11-04
+
+### Changed
+
+- The tag names and the settings can now be translated. Your choices carry over.
+
 ## [1.3.3] - 2026-11-03
 
 ### Changed

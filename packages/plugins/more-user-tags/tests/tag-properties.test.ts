@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { toRendererColor as androidColor } from '~/android/renderer-color';
-import { combineTagText, withTag } from '~/tag-properties';
-import { toRendererColor as iosColor } from '~/ios/renderer-color';
+import { toRendererColor as androidColor } from '~/tags/android/renderer-color';
+import { combineTagText, withTag } from '~/tags/tag-properties';
+import { toRendererColor as iosColor } from '~/tags/ios/renderer-color';
 
 const colors = { background: '#248046', text: '#ffffff' };
 

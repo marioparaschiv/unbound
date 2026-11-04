@@ -1,4 +1,4 @@
-import type { NativeColor } from '~/tag-properties';
+import type { NativeColor } from '~/tags/tag-properties';
 
 /**
  * @description Android's tag renderer reads colors as signed 32-bit integers, but `processColor` returns unsigned ones.

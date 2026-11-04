@@ -1,4 +1,4 @@
-import type { NativeColor } from '~/tag-properties';
+import type { NativeColor } from '~/tags/tag-properties';
 
 /**
  * @description iOS's tag renderer accepts colors exactly as `processColor` returns them.
