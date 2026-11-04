@@ -1,5 +1,5 @@
-import { ChannelStore, UserProfileStore, UserStore } from '~/modules';
-import { cleanMessage, isRawObject, sortKeys, type RawObject } from '~/raw-data';
+import { ChannelStore, UserProfileStore, UserStore } from '~/raw/modules';
+import { cleanMessage, isRawObject, sortKeys, type RawObject } from '~/raw/raw-data';
 
 export type RawItem = {
 	type: 'Message' | 'Profile' | 'Channel' | 'Guild' | 'User';

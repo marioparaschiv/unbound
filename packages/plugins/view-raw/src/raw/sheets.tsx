@@ -1,12 +1,13 @@
-import { toasts } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
+import { metro, toasts } from '@unbound-app/api';
 
-import { ActionSheets, Clipboard } from '~/modules';
-import RawSheet from '~/components/raw-sheet';
-import type { RawItem } from '~/raw-items';
+import RawSheet from '~/raw/components/raw-sheet';
+import type { RawItem } from '~/raw/raw-items';
+import { ActionSheets } from '~/raw/modules';
 
-function copy(value: string, label: string) {
-	void Promise.resolve(Clipboard.setString(value)).then(() =>
-		toasts.show({ title: 'View Raw', content: `${label} copied to clipboard.` }),
+function copy(value: string, content: string) {
+	void Promise.resolve(metro.common.Clipboard.setString(value)).then(() =>
+		toasts.show({ title: messages.VIEW_RAW, content }),
 	);
 }
 

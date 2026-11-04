@@ -3,14 +3,13 @@ import { patchLazySheets } from '@unbound-plugins/shared/action-sheets/patch-laz
 import { findElement, isElementNode } from '@unbound-plugins/shared/react/find-element';
 import { createSheetRenderer } from '@unbound-plugins/shared/action-sheets/sheet-renderer';
 import { isActionSheetRowGroup } from '@unbound-plugins/shared/action-sheets/row-group';
+import { messages } from '@unbound-app/i18n';
 import { patcher } from '@unbound-app/api';
 
-import { getRawItem, type RawItem, type SheetProps } from '~/raw-items';
-import { ActionSheets } from '~/modules';
-import RawIcon from '~/components/raw-icon';
-import { openRawSheet } from '~/sheets';
-
-type Cleanup = () => void;
+import { getRawItem, type RawItem, type SheetProps } from '~/raw/raw-items';
+import RawIcon from '~/raw/components/raw-icon';
+import { ActionSheets } from '~/raw/modules';
+import { openRawSheet } from '~/raw/sheets';
 
 type OpenSheet = {
 	key: string;
@@ -26,9 +25,8 @@ export type SheetState = {
 /**
  * @description Adds a View Raw row to the message, profile, channel and guild action sheets.
  * @param state Where the patch records the open sheet for the context menu patch.
- * @returns A function that removes the row and every sheet patch.
  */
-export function patchActionSheets(state: SheetState): Cleanup {
+export function patchActionSheets(state: SheetState): void {
 	// UNKNOWN: an action sheet may render any node.
 	function addRow(result: unknown) {
 		const { open } = state;
@@ -51,7 +49,7 @@ export function patchActionSheets(state: SheetState): Cleanup {
 			0,
 			<ActionSheetRow
 				key='unbound-view-raw'
-				label='View Raw'
+				label={messages.VIEW_RAW}
 				icon={<RawIcon />}
 				onPress={() => {
 					ActionSheets.hideActionSheet(open.key);
@@ -62,7 +60,7 @@ export function patchActionSheets(state: SheetState): Cleanup {
 	}
 
 	const renderer = createSheetRenderer(patcher, addRow);
-	const unpatchSheets = patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
+	patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
 		if (key.startsWith('UserProfile') && typeof props.userId === 'string') {
 			state.profileUserId = props.userId;
 		}
@@ -75,12 +73,6 @@ export function patchActionSheets(state: SheetState): Cleanup {
 
 		return renderer.render;
 	});
-
-	return () => {
-		unpatchSheets();
-
-		renderer.dispose();
-	};
 }
 
 export default patchActionSheets;

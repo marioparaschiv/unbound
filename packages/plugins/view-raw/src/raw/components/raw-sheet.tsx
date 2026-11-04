@@ -1,13 +1,15 @@
 import { Pressable, Text, TextInput, View, type TextStyle } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
+import { format, messages } from '@unbound-app/i18n';
 
-import type { RawItem } from '~/raw-items';
+import type { RawItem } from '~/raw/raw-items';
+import { typeName } from '~/raw/type-name';
 
 type RawSheetProps = {
 	type: RawItem['type'];
 	json: string;
 	content: string;
-	onCopy: (value: string, label: string) => void;
+	onCopy: (value: string, message: string) => void;
 	onClose: () => void;
 };
 
@@ -80,18 +82,20 @@ function RawSheet({ type, json, content, onCopy, onClose }: RawSheetProps) {
 					paddingBottom: 18,
 				}}
 			>
-				<Discord.Text variant='text-lg/semibold'>{`Raw ${type} Data`}</Discord.Text>
+				<Discord.Text variant='text-lg/semibold'>
+					{format('RAW_TITLE', { type: typeName(type) })}
+				</Discord.Text>
 				{content ? (
 					<>
 						<Discord.Text style={{ marginTop: 16 }} variant='text-sm/semibold'>
-							Message Content
+							{messages.MESSAGE_CONTENT}
 						</Discord.Text>
 						<CodeField
 							value={content}
 							style={{ fontSize: 13, height: 96, marginTop: 6 }}
 						/>
 						<Discord.Text style={{ marginTop: 16 }} variant='text-sm/semibold'>
-							Message Data
+							{messages.MESSAGE_DATA}
 						</Discord.Text>
 					</>
 				) : null}
@@ -100,14 +104,19 @@ function RawSheet({ type, json, content, onCopy, onClose }: RawSheetProps) {
 					style={{ fontSize: 12, marginTop: content ? 6 : 16, maxHeight: 480 }}
 				/>
 				<View style={{ flexDirection: 'row', gap: 6, marginTop: 16 }}>
-					<SheetButton label='Copy data' onPress={() => onCopy(json, `${type} data`)} />
+					<SheetButton
+						label={messages.COPY_DATA}
+						onPress={() =>
+							onCopy(json, format('DATA_COPIED', { type: typeName(type) }))
+						}
+					/>
 					{content ? (
 						<SheetButton
-							label='Copy content'
-							onPress={() => onCopy(content, 'Raw content')}
+							label={messages.COPY_CONTENT}
+							onPress={() => onCopy(content, messages.CONTENT_COPIED)}
 						/>
 					) : null}
-					<SheetButton label='Close' onPress={onClose} />
+					<SheetButton label={messages.CLOSE} onPress={onClose} />
 				</View>
 			</View>
 		</Discord.ActionSheet>

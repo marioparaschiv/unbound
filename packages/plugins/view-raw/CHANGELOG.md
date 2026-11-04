@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.5] - 2026-11-05
+
+### Changed
+
+- The View Raw row, the raw data sheet and its copy notices can now be translated. The plugin works the same as before.
+
 ## [1.0.4] - 2026-11-03
 
 ### Changed
