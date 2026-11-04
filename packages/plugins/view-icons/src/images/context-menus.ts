@@ -15,6 +15,7 @@ import { ChannelStore, ContextMenus, GuildStore, Theme, UserStore } from '~/imag
 import ViewIcon from '~/images/components/view-icon';
 import { openImage } from '~/images/open-image';
 import { viewLabel } from '~/images/labels';
+import { isProfileMenu } from '~/images/profile-menu';
 
 type MenuItem = {
 	label?: string;
@@ -61,13 +62,7 @@ function resolveTargets(menu: ContextMenu, opened: OpenedSheet | null): ImageTar
 	if (channel?.icon) return getChannelTargets(channel);
 
 	// The overflow menu inside a profile sheet carries no user, so it is recognized by its items.
-	const isProfileMenu = menu.items?.some((item) =>
-		/^(?:View (?:Main )?Profile|Message|Change Friend Nickname|Copy Username|Copy User ID|Report User Profile)$/.test(
-			item.label ?? '',
-		),
-	);
-
-	return profile && isProfileMenu ? getUserTargets(profile.userId, guildId) : [];
+	return profile && isProfileMenu(menu.items) ? getUserTargets(profile.userId, guildId) : [];
 }
 
 /**

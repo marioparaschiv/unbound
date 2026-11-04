@@ -1,7 +1,7 @@
-import { startPlugin } from '@unbound-app/api/testing';
+import { metro, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { ContextMenus, hidden, opened, registerDiscord } from './discord';
+import { ActionSheets, ContextMenus, hidden, opened, registerDiscord } from './discord';
 
 type MenuItem = { label?: string; action?: () => void };
 type Menu = { items: MenuItem[]; user?: { id: string }; guild?: { id: string; icon?: string } };
@@ -55,5 +55,30 @@ describe('the View rows in a context menu', () => {
 				],
 			},
 		]);
+	});
+});
+
+describe('the overflow menu of a profile', () => {
+	// Discord's own messages, as it shows them in German.
+	const german: Record<string, string> = { y5MwJy: 'Benutzernamen kopieren' };
+
+	beforeEach(() => {
+		metro.register({
+			getLanguages: () => [],
+			getSystemLocale: () => 'de',
+			t: { y5MwJy: 'y5MwJy' },
+			intl: { formatToPlainString: (id: string) => german[id] },
+		});
+		ActionSheets.openLazy(Promise.resolve({}), 'UserProfileActionSheet', { userId: '1' });
+	});
+
+	test('is recognized by Discord’s own wording, whatever the language', () => {
+		expect(
+			open({ items: [{ label: 'Benutzernamen kopieren' }] }).map((item) => item.label),
+		).toEqual(['Benutzernamen kopieren', 'View Avatar', 'View Banner']);
+	});
+
+	test('leaves a menu with other rows alone', () => {
+		expect(open({ items: [{ label: 'Something else' }] })).toHaveLength(1);
 	});
 });

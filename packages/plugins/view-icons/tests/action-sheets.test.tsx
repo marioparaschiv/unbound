@@ -1,14 +1,17 @@
+import { BottomSheets } from '@unbound-app/api/metro/components';
 import { render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
 
 import type { ReactNode } from 'react';
 
-import { ActionSheetRow, ActionSheets, hidden, registerDiscord } from './discord';
+import { ActionSheets, hidden, registerDiscord } from './discord';
 
 function ActionSheetRowGroup({ children }: { children?: ReactNode }) {
 	return <View>{children}</View>;
 }
+
+const { ActionSheetRow } = BottomSheets;
 
 function ProfileSheet() {
 	return (
@@ -34,9 +37,9 @@ describe('the View rows in a profile sheet', () => {
 	test('follow the sheet’s own rows, one per image the user has', async () => {
 		await openSheet('UserProfileActionSheet');
 
-		const rows = render(<sheet.default />).findAll('Text');
+		const rows = render(<sheet.default />).findAll('ActionSheetRow');
 
-		expect(rows.map((row) => row.props.accessibilityLabel)).toEqual([
+		expect(rows.map((row) => row.props.label)).toEqual([
 			'Message',
 			'View Avatar',
 			'View Banner',
@@ -48,7 +51,7 @@ describe('the View rows in a profile sheet', () => {
 
 		const view = render(<sheet.default />);
 
-		view.act(() => view.findAll('Text')[1]?.props.onPress?.(Object.create(null)));
+		view.act(() => view.findAll('ActionSheetRow')[1]?.props.onPress?.(Object.create(null)));
 
 		expect(hidden).toContain('UserProfileActionSheet');
 	});
@@ -56,6 +59,6 @@ describe('the View rows in a profile sheet', () => {
 	test('stay out of other sheets', async () => {
 		await openSheet('SomeOtherSheet');
 
-		expect(render(<sheet.default />).findAll('Text')).toHaveLength(1);
+		expect(render(<sheet.default />).findAll('ActionSheetRow')).toHaveLength(1);
 	});
 });

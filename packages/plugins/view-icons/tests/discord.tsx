@@ -1,28 +1,15 @@
-import { flux, metro } from '@unbound-app/api/testing';
-import { mock } from 'bun:test';
-import { Text, View } from 'react-native';
+import { extendApi, flux, metro } from '@unbound-app/api/testing';
 
 // Lookups stay resolved across test files, so every file shares these modules.
 export const opened: unknown[] = [];
 export const hidden: string[] = [];
 
-export function ActionSheetRow({ label, onPress }: { label: string; onPress?: () => void }) {
-	return (
-		<Text accessibilityLabel={label} onPress={onPress}>
-			{label}
-		</Text>
-	);
+// The media viewer is a module of functions, which the kit's component fakes do not give.
+export function registerMedia() {
+	extendApi('metro.components.Media', {
+		openMediaModal: (options: unknown) => void opened.push(options),
+	});
 }
-ActionSheetRow.Icon = function Icon(_props: { source: number }) {
-	return <View />;
-};
-
-// The testing kit cannot serve `@unbound-app/api/metro/components` yet, so the pieces the plugin reads are stubbed here.
-mock.module('@unbound-app/api/metro/components', () => ({
-	Media: { openMediaModal: (options: unknown) => void opened.push(options) },
-	Discord: { createStyles: (factory: () => unknown) => factory },
-	BottomSheets: { ActionSheetRow },
-}));
 
 export const ContextMenus = {
 	showContextMenu: (_menu?: unknown) => {},
@@ -46,6 +33,7 @@ const IconUtils = {
 export function registerDiscord() {
 	opened.length = 0;
 	hidden.length = 0;
+	registerMedia();
 	metro.register(ContextMenus);
 	metro.register(ActionSheets);
 	metro.register(IconUtils);
