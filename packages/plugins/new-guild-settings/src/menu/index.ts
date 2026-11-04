@@ -1,7 +1,6 @@
 import { patchLazySheets } from '@unbound-plugins/shared/action-sheets/patch-lazy-sheets';
 import { createSheetRenderer } from '@unbound-plugins/shared/action-sheets/sheet-renderer';
 import { insertSheetRows } from '@unbound-plugins/shared/action-sheets/sheet-rows';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { format, messages } from '@unbound-app/i18n';
 import { patcher, toasts } from '@unbound-app/api';
 
@@ -27,7 +26,12 @@ function applyFromMenu(guildId: string): void {
 	});
 }
 
-function patchGuildSheets(): void {
+/**
+ * @description Adds an Apply New Guild Settings row to each server's long-press action sheet, the mobile counterpart of Vencord's `guild-context` menu item.
+ * Patches `openLazy` on Discord's action sheets module (`metro.api.ActionSheets`) for `GuildActionSheet:<id>` sheets and the row group they render.
+ * @returns A function that ignores action sheets that are still loading and unwraps the rendered rows, which the Addon scope can't see.
+ */
+export function startGuildSheets(): () => void {
 	renderer = createSheetRenderer(patcher, (result) => {
 		const current = open;
 
@@ -55,9 +59,23 @@ function patchGuildSheets(): void {
 
 		return guildId ? render : undefined;
 	});
+
+	return () => {
+		stopSheets?.();
+		stopSheets = undefined;
+		renderer?.dispose();
+		renderer = undefined;
+		open = null;
+	};
 }
 
-function patchGuildContextMenus(): void {
+/**
+ * @description Adds an Apply New Guild Settings item to each server's context menu, the mobile counterpart of Vencord's `guild-header-popout` menu item.
+ * Patches `showContextMenu` on the context menu module (`showContextMenu`, `hideContextMenu`) for menus keyed by a server ID in `GuildStore`.
+ * The Addon scope removes the patch when the plugin stops.
+ * @returns A function with nothing to undo, for `applyFeatures`.
+ */
+export function startGuildContextMenus(): () => void {
 	patcher.before(ContextMenus, 'showContextMenu', ({ args: [menu] }) => {
 		const guildId = typeof menu?.key === 'string' ? menu.key : undefined;
 
@@ -74,27 +92,6 @@ function patchGuildContextMenus(): void {
 			},
 		});
 	});
-}
 
-/**
- * @description Adds an Apply New Guild Settings row to each server's long-press action sheet and context menu, the mobile counterparts of Vencord's `guild-context` and `guild-header-popout` menu items.
- * Patches `openLazy` on Discord's action sheets module (`metro.api.ActionSheets`) for `GuildActionSheet:<id>` sheets and the row group they render,
- * and `showContextMenu` on the context menu module (`showContextMenu`, `hideContextMenu`) for menus keyed by a server ID in `GuildStore`.
- */
-export function startMenu(): void {
-	patchGuildSheets();
-	patchGuildContextMenus();
-
-	recordApplied(2);
-}
-
-/**
- * @description Ignores action sheets that are still loading and unwraps the rendered rows, which the Addon scope can't see.
- */
-export function stopMenu(): void {
-	stopSheets?.();
-	stopSheets = undefined;
-	renderer?.dispose();
-	renderer = undefined;
-	open = null;
+	return () => {};
 }
