@@ -74,7 +74,7 @@ function HttpSearch({ operations, open, onOpenChange }: HttpSearchProps) {
 
 		event.preventDefault();
 		close();
-		void navigate({ to: '/docs/http', hash: selected.anchor });
+		void navigate({ to: '/docs/api', hash: selected.anchor });
 	}
 
 	return (
@@ -114,7 +114,7 @@ function HttpSearch({ operations, open, onOpenChange }: HttpSearchProps) {
 					{results.map((entry, index) => (
 						<li key={entry.anchor} role='option' aria-selected={index === active}>
 							<Link
-								to='/docs/http'
+								to='/docs/api'
 								hash={entry.anchor}
 								onClick={close}
 								onMouseMove={() => setActive(index)}

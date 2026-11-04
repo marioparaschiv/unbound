@@ -31,7 +31,7 @@ function versionLabel(version: DocsVersion): string {
 }
 
 /**
- * @description The API reference's package and version selects; switching version keeps the open symbol if it exists there.
+ * @description The SDK reference's package and version selects; switching version keeps the open symbol if it exists there.
  * @param props The version's navigation and the open symbol.
  * @returns The selects.
  */
@@ -52,16 +52,16 @@ function DocsVersionPicker({ nav, symbol }: DocsVersionPickerProps) {
 
 		if (symbol && kept) {
 			await navigate({
-				to: '/docs/$package/$version/$symbol',
-				params: { package: nav.package, version, symbol },
+				to: '/docs/sdk/$version/$symbol',
+				params: { version, symbol },
 			});
 
 			return;
 		}
 
 		await navigate({
-			to: '/docs/$package/$version',
-			params: { package: nav.package, version },
+			to: '/docs/sdk/$version',
+			params: { version },
 		});
 	}
 

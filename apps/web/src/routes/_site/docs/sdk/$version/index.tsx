@@ -13,7 +13,7 @@ type NamespaceSummary = {
 	counts: { group: DocsGroupKey; count: number }[];
 };
 
-const layout = getRouteApi('/_site/docs/$package/$version');
+const layout = getRouteApi('/_site/docs/sdk/$version');
 
 /** Counts each namespace's direct members per kind, from the sidebar's flat symbol list. */
 function summarizeNamespaces(nav: DocsNav): NamespaceSummary[] {
@@ -66,8 +66,8 @@ function DocsOverview() {
 				{namespaces.map((namespace) => (
 					<Link
 						key={namespace.name}
-						to='/docs/$package/$version/$symbol'
-						params={{ ...route, symbol: namespace.name }}
+						to='/docs/sdk/$version/$symbol'
+						params={{ version: route.version, symbol: namespace.name }}
 						className='flex flex-col gap-3 bg-card hover:bg-accent dark:hover:bg-accent/50 shadow-surface hover:shadow-float p-4 border rounded-surface transition-[translate,box-shadow,background-color] hover:-translate-y-0.5 motion-reduce:hover:translate-y-0 duration-(--press-duration) ease-spring'
 					>
 						<div className='flex items-center gap-2'>
@@ -94,7 +94,7 @@ function DocsOverview() {
 	);
 }
 
-export const Route = createFileRoute('/_site/docs/$package/$version/')({
-	head: ({ params }) => ({ meta: [{ title: `Unbound | API reference · ${params.version}` }] }),
+export const Route = createFileRoute('/_site/docs/sdk/$version/')({
+	head: ({ params }) => ({ meta: [{ title: `Unbound | SDK reference · ${params.version}` }] }),
 	component: DocsOverview,
 });

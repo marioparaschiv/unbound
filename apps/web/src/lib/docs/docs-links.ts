@@ -1,9 +1,4 @@
-import {
-	docsPackageSchema,
-	docsVersionSchema,
-	type DocsPackage,
-	type DocsVersion,
-} from '@unbound-app/contracts/docs';
+import { docsVersionSchema, type DocsPackage, type DocsVersion } from '@unbound-app/contracts/docs';
 import { safeParse } from '@unbound-app/contracts/schema';
 
 import type { MarkdownUrl, MarkdownUrlKind } from '~/lib/markdown-url';
@@ -17,33 +12,33 @@ export type DocsRoute = {
 	version: DocsVersion;
 };
 
-/** A docs URL's `$package` and `$version`, as the router hands them over. */
-export type DocsRouteParams = Record<keyof DocsRoute, string>;
+/** The package `/docs/sdk` documents, the only one the docs publish. */
+export const SDK_DOCS_PACKAGE: DocsPackage = 'api';
+
+/** A docs URL's `$version`, as the router hands it over. */
+export type DocsRouteParams = { version: string };
 
 export type DocsRenderContext = TypeContext & CommentContext & { route: DocsRoute };
 
 /**
- * @description Reads a docs URL's package and version.
- * @param params The route's `$package` and `$version`.
- * @returns The route, or `undefined` when either is not one the docs publish.
+ * @description Reads a `/docs/sdk` URL's version.
+ * @param params The route's `$version`.
+ * @returns The route, or `undefined` when the version is not one the docs publish.
  */
 export function parseDocsRoute(params: DocsRouteParams): DocsRoute | undefined {
-	const pkg = safeParse(docsPackageSchema, params.package);
 	const version = safeParse(docsVersionSchema, params.version);
 
-	return pkg.success && version.success
-		? { package: pkg.data, version: version.data }
-		: undefined;
+	return version.success ? { package: SDK_DOCS_PACKAGE, version: version.data } : undefined;
 }
 
 /**
  * @description Builds the path of a location in one docs version.
  * @param route The package and version.
  * @param location The page and anchor.
- * @returns `/docs/<package>/<version>/<symbol>`, with `#<anchor>` for a member.
+ * @returns `/docs/sdk/<version>/<symbol>`, with `#<anchor>` for a member.
  */
 export function getDocsPath(route: DocsRoute, location: DocsLocation): string {
-	const path = `/docs/${route.package}/${route.version}/${encodeURIComponent(location.symbol)}`;
+	const path = `/docs/sdk/${route.version}/${encodeURIComponent(location.symbol)}`;
 
 	return location.anchor ? `${path}#${encodeURIComponent(location.anchor)}` : path;
 }

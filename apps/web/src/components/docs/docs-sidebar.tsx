@@ -43,7 +43,7 @@ async function revealActiveItem(nav: HTMLElement | null) {
 }
 
 /**
- * @description The API reference sidebar: every symbol in collapsible kind groups.
+ * @description The SDK reference sidebar: every symbol in collapsible kind groups.
  * @param props The version's navigation and the open symbol.
  * @returns The sidebar.
  */
@@ -77,7 +77,7 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 	}, [router]);
 
 	return (
-		<nav ref={navRef} aria-label='API reference'>
+		<nav ref={navRef} aria-label='SDK reference'>
 			<Accordion type='multiple' value={openGroups} onValueChange={setOpenGroups}>
 				{nav.groups.map((group) => (
 					<AccordionItem key={group.key} value={group.key} className='border-b-0'>
@@ -93,8 +93,8 @@ function DocsSidebar({ nav, symbol }: DocsSidebarProps) {
 							{group.symbols.map((entry) => (
 								<Link
 									key={entry.qualifiedName}
-									to='/docs/$package/$version/$symbol'
-									params={{ ...route, symbol: entry.qualifiedName }}
+									to='/docs/sdk/$version/$symbol'
+									params={{ version: route.version, symbol: entry.qualifiedName }}
 									title={entry.qualifiedName}
 									// Loads each page the sidebar shows, so a click or tap renders without waiting on the server.
 									preload='viewport'

@@ -46,8 +46,8 @@ function TypeView({ parts, route, className }: TypeViewProps) {
 				part.kind === 'link' ? (
 					<Link
 						key={index}
-						to='/docs/$package/$version/$symbol'
-						params={{ ...route, symbol: part.location.symbol }}
+						to='/docs/sdk/$version/$symbol'
+						params={{ version: route.version, symbol: part.location.symbol }}
 						hash={part.location.anchor}
 						className='text-link underline underline-offset-4 decoration-link/40 hover:decoration-link'
 					>

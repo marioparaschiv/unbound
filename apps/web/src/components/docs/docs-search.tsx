@@ -66,8 +66,8 @@ function DocsSearch({ entries, route, open, onOpenChange }: DocsSearchProps) {
 		event.preventDefault();
 		close();
 		void navigate({
-			to: '/docs/$package/$version/$symbol',
-			params: { ...route, symbol: selected.location.symbol },
+			to: '/docs/sdk/$version/$symbol',
+			params: { version: route.version, symbol: selected.location.symbol },
 			hash: selected.location.anchor,
 		});
 	}
@@ -113,8 +113,8 @@ function DocsSearch({ entries, route, open, onOpenChange }: DocsSearchProps) {
 							aria-selected={index === active}
 						>
 							<Link
-								to='/docs/$package/$version/$symbol'
-								params={{ ...route, symbol: entry.location.symbol }}
+								to='/docs/sdk/$version/$symbol'
+								params={{ version: route.version, symbol: entry.location.symbol }}
 								hash={entry.location.anchor}
 								onClick={close}
 								onMouseMove={() => setActive(index)}

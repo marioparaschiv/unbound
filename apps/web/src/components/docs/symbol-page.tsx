@@ -32,8 +32,8 @@ function Breadcrumbs({ qualifiedName, route, pages }: BreadcrumbsProps) {
 	return (
 		<div className='flex flex-wrap items-center gap-1 font-mono text-muted-foreground text-sm'>
 			<Link
-				to='/docs/$package/$version'
-				params={route}
+				to='/docs/sdk/$version'
+				params={{ version: route.version }}
 				className='hover:text-foreground underline-offset-4 hover:underline'
 			>
 				@unbound-app/{route.package}
@@ -46,8 +46,8 @@ function Breadcrumbs({ qualifiedName, route, pages }: BreadcrumbsProps) {
 						<span aria-hidden>/</span>
 						{pages.has(symbol) ? (
 							<Link
-								to='/docs/$package/$version/$symbol'
-								params={{ ...route, symbol }}
+								to='/docs/sdk/$version/$symbol'
+								params={{ version: route.version, symbol }}
 								className='hover:text-foreground underline-offset-4 hover:underline'
 							>
 								{segment}
