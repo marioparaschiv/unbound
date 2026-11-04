@@ -5,22 +5,33 @@ import {
 	type ElementNode,
 } from '@unbound-plugins/shared/react/find-element';
 
-import { isDeleteLabel } from '~/unsuppress/embeds';
-
 /**
- * @description Reads the label of an action sheet row.
+ * @description Recognizes Discord's delete row without its label, which changes with the language. Discord builds the delete row, and the other destructive rows, with `variant: 'danger'`.
  * @param row Any child of a row group.
- * @returns The row's label, or `undefined` when it has none.
+ * @returns `true` for a destructive row.
  */
-export function rowLabel(
+export function isDeleteRow(
 	// UNKNOWN: sheet rows are untyped React elements.
 	row: unknown,
-): string | undefined {
-	if (!isElementNode(row) || Array.isArray(row)) return undefined;
+): boolean {
+	if (!isElementNode(row) || Array.isArray(row)) return false;
 
-	const label = row.props?.label;
+	// UNKNOWN: the shared element type does not list `variant`.
+	return (row.props as { variant?: unknown } | undefined)?.variant === 'danger';
+}
 
-	return typeof label === 'string' ? label : undefined;
+/**
+ * @description Finds where the row goes: just above Discord's delete row, or at the end when there is none.
+ * @param rows The rows of the sheet's group, in order.
+ * @returns The index to insert the row at.
+ */
+export function insertionIndex(
+	// UNKNOWN: sheet rows are untyped React elements.
+	rows: readonly unknown[],
+): number {
+	const deleteIndex = rows.findIndex(isDeleteRow);
+
+	return deleteIndex === -1 ? rows.length : deleteIndex;
 }
 
 function holdsDeleteRow(element: ElementNode): boolean {
@@ -28,7 +39,7 @@ function holdsDeleteRow(element: ElementNode): boolean {
 
 	const children = element.props?.children;
 
-	return Array.isArray(children) && children.some((row) => isDeleteLabel(rowLabel(row)));
+	return Array.isArray(children) && children.some(isDeleteRow);
 }
 
 /**
@@ -47,4 +58,4 @@ export function findTargetRows(
 	return Array.isArray(rows) ? rows : undefined;
 }
 
-export default { rowLabel, findTargetRows };
+export default { isDeleteRow, insertionIndex, findTargetRows };

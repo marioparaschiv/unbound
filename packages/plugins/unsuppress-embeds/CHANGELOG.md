@@ -4,7 +4,7 @@
 
 ### Changed
 
-- The row label and the error toast can now be translated. The plugin works the same as before.
+- The row label and the error toast can now be translated. The row now finds Discord's delete row by its style instead of its English label, so it sits above Delete in every language.
 
 ## [1.0.0] - 2026-11-03
 

@@ -93,32 +93,10 @@ export function actionLabel(action: EmbedAction): string {
 	return action === 'suppress' ? messages.SUPPRESS_EMBEDS : messages.UNSUPPRESS_EMBEDS;
 }
 
-/**
- * @description Recognizes Discord's delete row by its label.
- * @param label A row label.
- * @returns `true` for a label that starts with the word Delete.
- */
-export function isDeleteLabel(label: string | undefined): boolean {
-	return !!label && /^delete\b/i.test(label);
-}
-
-/**
- * @description Finds where the row goes: just above Discord's delete row, or at the end when there is none.
- * @param labels The labels of the sheet's rows, in order.
- * @returns The index to insert the row at.
- */
-export function insertionIndex(labels: readonly (string | undefined)[]): number {
-	const deleteIndex = labels.findIndex(isDeleteLabel);
-
-	return deleteIndex === -1 ? labels.length : deleteIndex;
-}
-
 export default {
 	isSuppressed,
 	hasEmbeds,
 	getEmbedAction,
 	applyAction,
 	actionLabel,
-	isDeleteLabel,
-	insertionIndex,
 };

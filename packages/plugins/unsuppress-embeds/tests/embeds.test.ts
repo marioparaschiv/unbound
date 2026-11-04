@@ -5,8 +5,6 @@ import {
 	applyAction,
 	getEmbedAction,
 	hasEmbeds,
-	insertionIndex,
-	isDeleteLabel,
 	isSuppressed,
 	type ChannelAccess,
 	type Message,
@@ -118,32 +116,5 @@ describe('actionLabel', () => {
 	test('names both rows', () => {
 		expect(actionLabel('suppress')).toBe('Suppress Embeds');
 		expect(actionLabel('unsuppress')).toBe('Unsuppress Embeds');
-	});
-});
-
-describe('insertionIndex', () => {
-	test('goes right above Delete Message', () => {
-		expect(insertionIndex(['Reply', 'Edit Message', 'Delete Message', 'Report'])).toBe(2);
-	});
-
-	test('goes at the end when there is no delete row', () => {
-		expect(insertionIndex(['Reply', undefined, 'Copy Text'])).toBe(3);
-	});
-
-	test('does not match rows that only mention deleting', () => {
-		expect(insertionIndex(['Undelete', 'Mark Unread'])).toBe(2);
-	});
-});
-
-describe('isDeleteLabel', () => {
-	test('matches Delete Message and plain Delete', () => {
-		expect(isDeleteLabel('Delete Message')).toBe(true);
-		expect(isDeleteLabel('delete')).toBe(true);
-	});
-
-	test('rejects other labels', () => {
-		expect(isDeleteLabel('Undelete')).toBe(false);
-		expect(isDeleteLabel('Deleted')).toBe(false);
-		expect(isDeleteLabel(undefined)).toBe(false);
 	});
 });

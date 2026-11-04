@@ -6,8 +6,8 @@ import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { assets, patcher } from '@unbound-app/api';
 
 import { ActionSheets, ChannelStore, PermissionStore, REST, UserStore } from '~/unsuppress/modules';
-import { actionLabel, getEmbedAction, insertionIndex, type Message } from '~/unsuppress/embeds';
-import { findTargetRows, rowLabel } from '~/unsuppress/row-groups';
+import { actionLabel, getEmbedAction, type Message } from '~/unsuppress/embeds';
+import { findTargetRows, insertionIndex } from '~/unsuppress/row-groups';
 import { ICONS, PLUGIN_NAME, SHEET_ROW_KEY } from '~/constants';
 import { getChannelAccess } from '~/unsuppress/access';
 import { changeEmbeds } from '~/unsuppress/suppress';
@@ -50,7 +50,7 @@ function addRow(result: unknown) {
 	};
 
 	rows.splice(
-		insertionIndex(rows.map(rowLabel)),
+		insertionIndex(rows),
 		0,
 		<ActionSheetRow
 			key={SHEET_ROW_KEY}
