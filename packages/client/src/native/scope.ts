@@ -1,8 +1,6 @@
 import type {
 	NativeAssociationKey,
-	NativeCallOptions,
 	NativeCancelablePromise,
-	NativeClassHandle,
 	NativeFabricBridge,
 	NativeFabricSurface,
 	NativeFFIBridge,
@@ -28,9 +26,9 @@ import type {
 
 import { NativePluginDisposedError, NativePluginUnavailableError } from '~/native/errors';
 import { createScopeGate, type ScopeLifecycle } from '~/native/scope-gate';
-import { createMainThreadAlloc } from '~/native/main-thread-alloc';
 import { createFluxRuntimeBridge } from '~/flux/runtime-bridge';
 import { unavailableNativePlugin } from '~/native/capabilities';
+import { createObjectFactory } from '~/native/object-factory';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import { createScopedJavaBridge } from '~/native/scope-java';
 import { getNativePlugin } from '~/native/plugin-bridge';
@@ -46,10 +44,6 @@ type ScopedNativePlugin = {
 	beginStop: () => void;
 	dispose: () => void;
 };
-
-function isObjectHandle(value: unknown): value is NativeObjectHandle {
-	return typeof value === 'object' && value !== null;
-}
 
 function withFallback<T extends object>(bridge: Partial<T> | undefined, fallback: T): T {
 	return new Proxy(fallback, {
@@ -207,29 +201,12 @@ export function createScopedNativePlugin(
 	);
 	const removeJavaHook = scopeBridgeMethod(hooksSource, 'remove', 'hooks.remove');
 
-	const allocObject = createMainThreadAlloc(objcBridge);
+	const objects = createObjectFactory(objcBridge);
 
 	const objc: NativeObjCBridge = {
 		getClass: scopeBridgeMethod(objcSource, 'getClass', 'objc.getClass'),
-		alloc: scopeMethod(allocObject, 'objc.alloc'),
-		create: scopeMethod(
-			(
-				classOrName: string | NativeClassHandle,
-				initSelector: string,
-				args: unknown[] = [],
-				options?: NativeCallOptions,
-			) => {
-				const instance = allocObject(classOrName);
-				const initialized = objcBridge.invoke(instance, initSelector, args, options);
-
-				if (!isObjectHandle(initialized)) {
-					throw new Error(`${initSelector} returned nil.`);
-				}
-
-				return initialized;
-			},
-			'objc.create',
-		),
+		alloc: scopeMethod(objects.alloc, 'objc.alloc'),
+		create: scopeMethod(objects.create, 'objc.create'),
 		className: scopeBridgeMethod(objcSource, 'className', 'objc.className'),
 		respondsTo: scopeBridgeMethod(objcSource, 'respondsTo', 'objc.respondsTo'),
 		call: scopeBridgeMethod(objcSource, 'call', 'objc.call'),

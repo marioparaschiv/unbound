@@ -2726,9 +2726,9 @@ export type NativeMainWorkCounts = {
 export type NativeObjCBridge = {
 	/** Looks up a class by name, or returns `null` when none is registered. */
 	getClass(name: string): NativeClassHandle | null;
-	/** Allocates an uninitialized instance, UIKit classes on the main thread; send it an `init` selector next, or use `create`. */
+	/** Allocates an instance and initializes it with `init`, UIKit classes on the main thread; use `create` for any other initializer. */
 	alloc(classOrName: string | NativeClassHandle): NativeObjectHandle;
-	/** Allocates an instance and returns what `initSelector` initializes; throws when that is nil. */
+	/** Allocates an uninitialized instance, UIKit classes on the main thread unless `options.thread` says otherwise, and returns what `initSelector` initializes; throws when that is nil. */
 	create(
 		classOrName: string | NativeClassHandle,
 		initSelector: string,
@@ -2748,7 +2748,7 @@ export type NativeObjCBridge = {
 		selector: string,
 		...args: unknown[]
 	): NativeObjCResult;
-	/** Sends a selector on the thread `options.thread` names; `main` blocks, `main-post` queues `void` methods, so prefer `invokeAsync` or `main-post` for UI work. */
+	/** Sends a selector on the thread `options.thread` names; `main` blocks, `main-post` queues `void` methods, so prefer `invokeAsync` or `main-post` for UI work. Ownership follows Cocoa naming: an `alloc`, `new`, `copy`, `mutableCopy` or `init` result is owned by its handle without an extra reference, and the receiver of an `init` selector stays valid. */
 	invoke(
 		handle: NativeObjectHandle,
 		selector: string,

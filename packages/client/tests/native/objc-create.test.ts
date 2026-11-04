@@ -12,6 +12,7 @@ import {
 
 type Invocation = [handle: NativeObjectHandle, selector: string, args: unknown[]];
 
+const cls: NativeObjectHandle = Object.create(null);
 const allocated: NativeObjectHandle = Object.create(null);
 const initialized: NativeObjectHandle = Object.create(null);
 
@@ -22,11 +23,16 @@ function bridgeInitReturning(result: NativeObjectHandle | null) {
 	Object.assign(bridge, {
 		objc: {
 			...iosSpecificBridges.objc,
-			alloc: () => allocated,
+			getClass: () => cls,
+			className: () => 'NSObject',
+			call: () => false,
+			alloc: () => {
+				throw new Error('create must not send init through alloc');
+			},
 			invoke: (handle: NativeObjectHandle, selector: string, args: unknown[]) => {
 				invocations.push([handle, selector, args]);
 
-				return result;
+				return selector === 'alloc' ? allocated : result;
 			},
 		},
 	});
@@ -35,7 +41,7 @@ function bridgeInitReturning(result: NativeObjectHandle | null) {
 afterEach(resetNativeFixtures);
 
 describe('objc.create', () => {
-	test('allocates, initializes and returns what the initializer returned', () => {
+	test('allocates without init, sends only the initializer and returns what it returned', () => {
 		bridgeInitReturning(initialized);
 		const context = createPluginContext({ ...manifest, capabilities: ['native.objc.invoke'] });
 		const created: NativeObjectHandle = context.native.objc.create(
@@ -45,7 +51,10 @@ describe('objc.create', () => {
 		);
 
 		expect(created).toBe(initialized);
-		expect(invocations).toEqual([[allocated, 'initWithString:', ['code']]]);
+		expect(invocations).toEqual([
+			[cls, 'alloc', []],
+			[allocated, 'initWithString:', ['code']],
+		]);
 		context.dispose();
 	});
 

@@ -1739,6 +1739,73 @@ prepareInvocationWithSignature(id target, SEL selector, NSArray *arguments,
     return invocation;
 }
 
+typedef NS_ENUM(NSInteger, NativeMethodFamily) {
+    NativeMethodFamilyNone,
+    NativeMethodFamilyOwned,
+    NativeMethodFamilyInit,
+};
+
+static bool selectorHasFamilyPrefix(const char *name, const char *prefix)
+{
+    size_t length = strlen(prefix);
+    if (strncmp(name, prefix, length) != 0)
+        return false;
+    char next = name[length];
+    return next == '\0' || next == ':' || !(next >= 'a' && next <= 'z');
+}
+
+static NativeMethodFamily nativeMethodFamily(SEL selector)
+{
+    const char *name = selector ? sel_getName(selector) : nullptr;
+    if (!name)
+        return NativeMethodFamilyNone;
+    while (*name == '_')
+        name++;
+    if (selectorHasFamilyPrefix(name, "init"))
+        return NativeMethodFamilyInit;
+    if (selectorHasFamilyPrefix(name, "alloc") || selectorHasFamilyPrefix(name, "new") ||
+        selectorHasFamilyPrefix(name, "copy") || selectorHasFamilyPrefix(name, "mutableCopy"))
+    {
+        return NativeMethodFamilyOwned;
+    }
+    return NativeMethodFamilyNone;
+}
+
+static bool returnsRetainableObject(const char *encoding)
+{
+    return encoding && normalizedType(encoding) == '@';
+}
+
+static void retainConsumedReceiver(NativeMethodFamily family, bool returnsObject, id receiver)
+{
+    if (family == NativeMethodFamilyInit && returnsObject && receiver)
+        CFRetain((__bridge CFTypeRef) receiver);
+}
+
+static void autoreleaseOwnedResult(NativeMethodFamily family, bool returnsObject,
+                                   const void *result)
+{
+    if (family == NativeMethodFamilyNone || !returnsObject || !result)
+        return;
+    __unsafe_unretained id object = nil;
+    memcpy(&object, result, sizeof(object));
+    if (object)
+        CFAutorelease((__bridge CFTypeRef) object);
+}
+
+static void invokeFollowingOwnership(NSInvocation *invocation)
+{
+    NativeMethodFamily family = nativeMethodFamily(invocation.selector);
+    bool returnsObject = returnsRetainableObject(invocation.methodSignature.methodReturnType);
+    retainConsumedReceiver(family, returnsObject, invocation.target);
+    [invocation invoke];
+    if (family == NativeMethodFamilyNone || !returnsObject)
+        return;
+    __unsafe_unretained id object = nil;
+    [invocation getReturnValue:&object];
+    autoreleaseOwnedResult(family, returnsObject, &object);
+}
+
 static NSInvocation *prepareInvocation(id target, SEL selector, NSArray *arguments)
 {
     if (!target || !selector)
@@ -1837,7 +1904,7 @@ static std::shared_ptr<ObjCCallPlanHost> prepareObjCCallPlan(Runtime &runtime, i
 static Value invokeObject(Runtime &runtime, id target, SEL selector, NSArray *arguments)
 {
     NSInvocation *invocation = prepareInvocation(target, selector, arguments);
-    [invocation invoke];
+    invokeFollowingOwnership(invocation);
     return returnValue(runtime, invocation, invocation.methodSignature);
 }
 
@@ -2016,7 +2083,11 @@ static Value invokeSuperObject(Runtime &runtime, id target, Class currentClass, 
     std::vector<id>                         retained;
     struct objc_super                       superInfo = {target, currentClass};
     setSuperFFIArguments(runtime, signature, arguments, &superInfo, selector, *frame, retained);
+    NativeMethodFamily family        = nativeMethodFamily(selector);
+    bool               returnsObject = returnsRetainableObject(signature.methodReturnType);
+    retainConsumedReceiver(family, returnsObject, target);
     frame->invoke((void *) objc_msgSendSuper);
+    autoreleaseOwnedResult(family, returnsObject, frame->result());
     return loader::ffi::readValue(runtime, frame->interface().result, frame->result());
 }
 
@@ -2046,7 +2117,7 @@ static std::string invocationDescription(NSInvocation *invocation)
 static void postInvocation(NSInvocation *invocation)
 {
     loader::native::postMainOperation(objcGuarded([invocation]() {
-                                          [invocation invoke];
+                                          invokeFollowingOwnership(invocation);
                                       }),
                                       invocationDescription(invocation));
 }
@@ -2058,7 +2129,7 @@ static Value invokeInvocationWithThreadPolicy(Runtime &runtime, NSInvocation *in
     std::string policy = threadPolicy(runtime, options);
     if (policy == "current" || ([NSThread isMainThread] && crossesToMain(policy)))
     {
-        [invocation invoke];
+        invokeFollowingOwnership(invocation);
         return returnValue(runtime, invocation, invocation.methodSignature, preparedResult);
     }
     if (!crossesToMain(policy))
@@ -2080,7 +2151,7 @@ static Value invokeInvocationWithThreadPolicy(Runtime &runtime, NSInvocation *in
     executeMainSynchronouslyUnlessMainWaits([&]() {
         @try
         {
-            [invocation invoke];
+            invokeFollowingOwnership(invocation);
             char code = normalizedType(invocation.methodSignature.methodReturnType);
             if (code == '@' || code == '#')
             {
@@ -2403,7 +2474,7 @@ static Value invokeBatch(Runtime &runtime, const Value *args, size_t count)
                                           [signature getArgumentTypeAtIndex:index]);
                 }
                 NSInvocation *invocation = prepareInvocation(target, selector, arguments);
-                [invocation invoke];
+                invokeFollowingOwnership(invocation);
                 [invocations addObject:invocation];
                 [values addObject:batchNativeResult(invocation)];
             }
@@ -2608,7 +2679,7 @@ static Value invokeInvocationAsync(Runtime &runtime, NSInvocation *invocation,
     return executeMainAsynchronously(
         runtime,
         [invocation, retainedResult]() {
-            [invocation invoke];
+            invokeFollowingOwnership(invocation);
             char code = normalizedType(invocation.methodSignature.methodReturnType);
             if (code == '@' || code == '#')
             {
@@ -2634,6 +2705,8 @@ struct AsyncSuperCall {
     std::vector<id>                         retainedArguments;
     __strong id                             retainedTarget = nil;
     __strong id                             retainedResult = nil;
+    NativeMethodFamily                      family         = NativeMethodFamilyNone;
+    bool                                    returnsObject  = false;
 };
 
 static Value invokeSuperAsync(Runtime &runtime, id target, Class currentClass, SEL selector,
@@ -2666,11 +2739,15 @@ static Value invokeSuperAsync(Runtime &runtime, id target, Class currentClass, S
     call->frame          = superCallFrame(runtime, signature);
     setSuperFFIArguments(runtime, signature, arguments, &call->superInfo, selector, *call->frame,
                          call->retainedArguments);
+    call->family        = nativeMethodFamily(selector);
+    call->returnsObject = returnsRetainableObject(signature.methodReturnType);
 
     return executeMainAsynchronously(
         runtime,
         [call]() {
+            retainConsumedReceiver(call->family, call->returnsObject, call->retainedTarget);
             call->frame->invoke((void *) objc_msgSendSuper);
+            autoreleaseOwnedResult(call->family, call->returnsObject, call->frame->result());
             const loader::ffi::Type &result = call->frame->interface().result;
             if (result.name == "object" || result.name == "class")
             {
@@ -2956,6 +3033,7 @@ struct HookInvocation {
     std::atomic_bool                             originalCalled{false};
     std::atomic_bool                             deferredOriginalRequested{false};
     std::vector<std::pair<size_t, void *>>       deferredReplacements;
+    void                                        *originalObject = nullptr;
 };
 
 static std::shared_ptr<HookInvocation>
@@ -3030,6 +3108,38 @@ static void applyDeferredHookReplacements(const std::shared_ptr<HookInvocation> 
     invocation->deferredReplacements.clear();
 }
 
+static void recordHookOriginalObject(const std::shared_ptr<HookInvocation> &invocation)
+{
+    if (invocation->dispatcher->signature->result.name != "object" || !invocation->returnValue)
+        return;
+    memcpy(&invocation->originalObject, invocation->returnValue, sizeof(void *));
+}
+
+static void balanceReplacedHookReturn(SEL                                    selector,
+                                      const std::shared_ptr<HookDispatcher> &dispatcher,
+                                      id receiver, void *originalObject, bool originalRan,
+                                      void *returnValue)
+{
+    NativeMethodFamily family = nativeMethodFamily(selector);
+    if (family == NativeMethodFamilyNone || dispatcher->signature->result.name != "object" ||
+        !returnValue)
+    {
+        return;
+    }
+    void *replacement = nullptr;
+    memcpy(&replacement, returnValue, sizeof(replacement));
+    if (replacement)
+        CFRetain(replacement);
+    if (originalRan)
+    {
+        if (originalObject)
+            CFRelease(originalObject);
+        return;
+    }
+    if (family == NativeMethodFamilyInit && receiver)
+        CFRelease((__bridge CFTypeRef) receiver);
+}
+
 static bool invokeDeferredHookOriginal(const std::shared_ptr<HookInvocation> &invocation)
 {
     applyDeferredHookReplacements(invocation);
@@ -3040,6 +3150,7 @@ static bool invokeDeferredHookOriginal(const std::shared_ptr<HookInvocation> &in
 
     invokeHookOriginal(invocation->dispatcher, invocation->nativeArguments,
                        invocation->returnValue);
+    recordHookOriginalObject(invocation);
     copyHookResult(invocation, invocation->returnValue);
     invocation->originalCalled.store(true);
     return true;
@@ -3321,6 +3432,7 @@ static Object hookContext(Runtime &runtime, const std::shared_ptr<HookInvocation
 
                     invokeHookOriginal(original->dispatcher, original->nativeArguments,
                                        original->returnValue);
+                    recordHookOriginalObject(original);
                     copyHookResult(original, original->returnValue);
                     original->originalCalled.store(true);
                 }
@@ -3705,6 +3817,10 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
         {
             invokeHookOriginal(dispatcher, arguments, returnValue);
         }
+        else
+        {
+            balanceReplacedHookReturn(selector, dispatcher, object, nullptr, false, returnValue);
+        }
         for (const std::shared_ptr<HookState> &state : onceHooks)
         {
             removeHook(state);
@@ -3826,6 +3942,11 @@ static void dispatchFFIHookBody(ffi_cif *, void *returnValue, void **arguments, 
     {
         invokeHookOriginal(dispatcher, arguments, returnValue);
         copyHookResult(invocation, returnValue);
+    }
+    else if (replacementApplied)
+    {
+        balanceReplacedHookReturn(selector, dispatcher, object, invocation->originalObject,
+                                  invocation->originalCalled.load(), returnValue);
     }
 
     for (const std::shared_ptr<HookState> &state : hooks)
