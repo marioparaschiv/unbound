@@ -1,6 +1,9 @@
 import { assets } from '@unbound-app/api';
-import { flux, metro, native, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import type { UnboundAsset } from '@unbound-app/api/assets';
 import { beforeEach, describe, expect, test } from 'bun:test';
+
+import { platformCrownSource } from '~/crown/android/crown-source';
 
 type Row = { message: Record<string, unknown> };
 
@@ -11,7 +14,6 @@ function row(message: Record<string, unknown>) {
 }
 
 beforeEach(() => {
-	native.setPlatform('ios');
 	Object.assign(assets, {
 		getById: () => ({
 			httpServerLocation: '/assets/images/native/icons',
@@ -51,13 +53,19 @@ describe('the owner crown', () => {
 		expect(row({ authorId: 'owner' }).roleIcon).toBeUndefined();
 		expect(row({ guildId: 'g2', authorId: 'owner' }).roleIcon).toBeUndefined();
 	});
+});
 
-	test("uses the APK's drawable on Android", async () => {
-		native.setPlatform('android');
-		await startPlugin();
+describe('the Android crown source', () => {
+	test("points at the APK's drawable", () => {
+		expect(
+			platformCrownSource({
+				httpServerLocation: '/assets/images/native/icons',
+				name: 'ic_crown_16px',
+			} as UnboundAsset),
+		).toStartWith('android.resource://');
+	});
 
-		const source = row({ guildId: 'g1', authorId: 'owner' }).roleIcon as { source: string };
-
-		expect(source.source).toStartWith('android.resource://');
+	test('falls back to the embed URI without a packager location', () => {
+		expect(platformCrownSource({ name: 'ic_crown_16px' } as UnboundAsset)).toBeUndefined();
 	});
 });
