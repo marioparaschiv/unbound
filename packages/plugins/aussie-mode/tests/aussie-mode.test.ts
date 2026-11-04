@@ -1,43 +1,38 @@
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import {
-	metro,
-	patches,
-	startPlugin,
-	stopPlugin,
-	createFakeReactNative,
-} from '@unbound-app/api/testing';
-
-// The testing kit's react-native has no AppState or NativeModules, which this plugin reads for the
-// foreground event and the device locale. Waiting on kit 2: drop this mock once the kit has them.
-const kitReactNative = createFakeReactNative();
-const appState = new Set<(state: string) => void>();
-const device = { locale: 'en_AU' };
-
-mock.module('react-native', () => ({
-	...kitReactNative,
-	NativeModules: {
-		get SettingsManager() {
-			return { settings: { AppleLocale: device.locale } };
-		},
-	},
-	AppState: {
-		addEventListener: (_event: string, listener: (state: string) => void) => {
-			appState.add(listener);
-
-			return { remove: () => appState.delete(listener) };
-		},
-	},
-}));
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { metro, native, patches, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { AppState, NativeModules } from 'react-native';
 
 const sent: string[] = [];
-const rotations: number[] = [];
-const objc = {
-	getClass: () => ({}),
-	batch: async () => [{}, {}, {}],
-	invokeAsync: async (_layer: unknown, _selector: string, [radians]: [number, string]) => {
-		rotations.push(Math.round((radians * 180) / Math.PI));
-	},
-};
+const appState = new Set<(state: string) => void>();
+
+function setDeviceLocale(locale: string) {
+	Object.assign(NativeModules, { SettingsManager: { settings: { AppleLocale: locale } } });
+}
+
+// A root view whose layer takes the rotation the plugin sets.
+function registerScreen() {
+	native.objc.registerClass('CALayer', { methods: { 'setValue:forKeyPath:': () => {} } });
+
+	const layer = native.objc.create('CALayer');
+
+	native.objc.registerClass('UIView', { methods: { layer: () => layer } });
+	native.objc.registerClass('UIViewController', {
+		methods: { view: () => native.objc.create('UIView') },
+	});
+	native.objc.registerClass('UIWindow', {
+		methods: { rootViewController: () => native.objc.create('UIViewController') },
+	});
+	native.objc.registerClass('UIApplication', {
+		classMethods: { sharedApplication: () => native.objc.create('UIApplication') },
+		methods: { keyWindow: () => native.objc.create('UIWindow') },
+	});
+}
+
+function rotations() {
+	return native.calls
+		.filter(({ name }) => name === 'setValue:forKeyPath:')
+		.map(({ args }) => Math.round(((args[0] as number) * 180) / Math.PI));
+}
 
 const Messages = {
 	sendMessage: (_channelId: string, message: { content: string }) =>
@@ -49,16 +44,30 @@ const Messages = {
 
 beforeEach(() => {
 	sent.length = 0;
-	rotations.length = 0;
 	appState.clear();
-	device.locale = 'en_AU';
+	setDeviceLocale('en_AU');
+	registerScreen();
 	metro.register(Messages);
+	// The kit's AppState never fires, so a test collects the listener to fire it.
+	spyOn(AppState, 'addEventListener').mockImplementation(((
+		_event: string,
+		listener: (state: string) => void,
+	) => {
+		appState.add(listener);
+
+		return { remove: () => appState.delete(listener) };
+	}) as never);
 });
 
-const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+afterEach(() => void delete (NativeModules as Record<string, unknown>).SettingsManager);
+
+// The rotation awaits the bridge a few times, so a test lets those settle.
+async function settle() {
+	for (let i = 0; i < 20; i++) await Promise.resolve();
+}
 
 async function startAussie() {
-	await startPlugin({ native: { objc } as never });
+	await startPlugin();
 	await settle();
 }
 
@@ -88,45 +97,37 @@ describe('on an Australian device', () => {
 		await stopPlugin();
 		await settle();
 
-		expect(rotations).toEqual([180, 180, 0]);
+		expect(rotations()).toEqual([180, 180, 0]);
 		expect(appState.size).toBe(0);
 	});
 
 	test('reports a rotation that fails instead of throwing', async () => {
-		const error = console.error;
-		const reported: unknown[][] = [];
+		const error = spyOn(console, 'error').mockImplementation(() => {});
 
-		console.error = (...args) => void reported.push(args);
+		// A device whose key window cannot be found.
+		native.objc.registerClass('UIApplication', {
+			classMethods: {
+				sharedApplication: () => {
+					throw new Error('no decor view');
+				},
+			},
+		});
+		await startAussie();
+		await stopPlugin();
 
-		try {
-			await startPlugin({
-				native: {
-					objc: {
-						...objc,
-						getClass: () => {
-							throw new Error('no decor view');
-						},
-					},
-				} as never,
-			});
-			await settle();
-			await stopPlugin();
-		} finally {
-			console.error = error;
-		}
-
-		expect(reported.length).toBeGreaterThan(0);
+		expect(error).toHaveBeenCalled();
+		error.mockRestore();
 	});
 });
 
 test('does nothing on a device that is not set to Australian English', async () => {
-	device.locale = 'en_US';
+	setDeviceLocale('en_US');
 	await startAussie();
 
 	Messages.sendMessage('1', { content: 'hello' });
 
 	expect(sent).toEqual(['hello']);
-	expect(rotations).toEqual([]);
+	expect(rotations()).toEqual([]);
 	expect(patches.applied).toEqual([]);
 	await stopPlugin();
 });
@@ -142,24 +143,45 @@ test('accepts Australian English in either separator form and with extensions', 
 	}
 });
 
-test('reads the locale from the TurboModule constants when the property is missing', async () => {
-	const { deviceLocale } = await import('~/locale/android/device-locale');
+describe('on Android', () => {
+	beforeEach(() => {
+		native.setPlatform('android');
+		spyOn(console, 'error').mockImplementation(() => {});
+	});
 
-	expect(
-		deviceLocale({ I18nManager: { getConstants: () => ({ localeIdentifier: 'en_AU' }) } }),
-	).toBe('en_AU');
-});
+	afterEach(() => void delete (NativeModules as Record<string, unknown>).I18nManager);
 
-test('prefers the legacy property and survives a missing module', async () => {
-	const { deviceLocale } = await import('~/locale/android/device-locale');
+	async function startWith(modules: Record<string, unknown>) {
+		Object.assign(NativeModules, modules);
+		await startAussie();
 
-	expect(
-		deviceLocale({
+		const applied = patches.applied.length;
+
+		await stopPlugin();
+
+		return applied;
+	}
+
+	test('reads the locale from the TurboModule constants when the property is missing', async () => {
+		const applied = await startWith({
+			I18nManager: { getConstants: () => ({ localeIdentifier: 'en_AU' }) },
+		});
+
+		expect(applied).toBe(2);
+	});
+
+	test('prefers the legacy property', async () => {
+		const applied = await startWith({
 			I18nManager: {
 				localeIdentifier: 'en_GB',
 				getConstants: () => ({ localeIdentifier: 'en_AU' }),
 			},
-		}),
-	).toBe('en_GB');
-	expect(deviceLocale({})).toBeUndefined();
+		});
+
+		expect(applied).toBe(0);
+	});
+
+	test('survives a missing module', async () => {
+		expect(await startWith({})).toBe(0);
+	});
 });
