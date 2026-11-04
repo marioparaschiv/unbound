@@ -11,13 +11,15 @@ import { PLUGIN_NAME } from '~/constants';
 
 /**
  * @description While you edit a message, files you pick, take or paste in the chat input are added to that message instead of waiting for the next one.
- * Intercepts `UPLOAD_ATTACHMENT_ADD_FILES` and reads the edited message from `EditMessageStore`. Uploads with `CloudUploader` and sends the edit through `REST`. The Addon scope removes the interceptor when the plugin stops.
+ * Intercepts `UPLOAD_ATTACHMENT_ADD_FILES` and reads the edited message from `EditMessageStore`. Uploads with `CloudUploader` and sends the edit through `REST`. `stop` calls the returned function, which keeps the health count in step with what is applied.
+ * @returns A function that removes the interceptor.
  */
-export function startEditUploads(): void {
-	if (!ensureModules(`${PLUGIN_NAME}: editing`, { CloudUploader, EditMessageStore, REST }))
-		return;
+export function startEditUploads(): () => void {
+	if (!ensureModules(`${PLUGIN_NAME}: editing`, { CloudUploader, EditMessageStore, REST })) {
+		return () => undefined;
+	}
 
-	flux.interceptAction('UPLOAD_ATTACHMENT_ADD_FILES', ({ channelId, files }) => {
+	const remove = flux.interceptAction('UPLOAD_ATTACHMENT_ADD_FILES', ({ channelId, files }) => {
 		if (!channelId || !Array.isArray(files) || !files.length) return false;
 
 		const message = EditMessageStore.getEditingMessage(channelId);
@@ -36,4 +38,9 @@ export function startEditUploads(): void {
 	});
 
 	recordApplied(1);
+
+	return () => {
+		recordApplied(-1);
+		remove();
+	};
 }
