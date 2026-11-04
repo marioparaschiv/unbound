@@ -1,7 +1,5 @@
-import './fake-discord';
-
 import { metro, render } from '@unbound-app/api/testing';
-import { beforeAll, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo, type ReactNode } from 'react';
 import type { ViewProps } from 'react-native';
 import { View } from 'react-native';
@@ -26,8 +24,12 @@ const NativeLottieView = { default: (props: LottieProps) => drawn(props) };
 
 const animated = { uri: 'https://cdn.discordapp.com/emojis/123.webp?animated=true' };
 
-// The fake metro keeps its modules between tests, so register Discord's modules once.
-beforeAll(() => {
+beforeEach(() => {
+	metro.register({
+		sendMessage: () => undefined,
+		receiveMessage: () => undefined,
+		fetchMessage: async () => null,
+	});
 	metro.register(FastImage, 'components_native/common/FastImage.tsx');
 	metro.register(LottieAnimationView, 'components_native/common/LottieAnimationView.tsx');
 	metro.register(NativeLottieView, 'modules/stickers/native/NativeLottieView.tsx');
