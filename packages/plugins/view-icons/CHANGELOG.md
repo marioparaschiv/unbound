@@ -4,7 +4,8 @@
 
 ### Changed
 
-- The names of the View rows and the error toast can now be translated. The plugin works the same as before.
+- The names of the View rows and the error toast can now be translated.
+- The View rows in a profile's menu now show in every language, and also when Discord renames the menu's own wording.
 
 ## [1.0.3] - 2026-11-03
 

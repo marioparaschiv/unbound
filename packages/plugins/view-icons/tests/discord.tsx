@@ -21,6 +21,14 @@ export const ActionSheets = {
 	hideActionSheet: (key: string) => void hidden.push(key),
 };
 
+// A module Discord changed so that its method cannot be read, which a patch on it throws on.
+const BrokenContextMenus = {
+	get showContextMenu(): never {
+		throw new Error('The menu module changed shape.');
+	},
+	hideContextMenu: () => {},
+};
+
 const IconUtils = {
 	getUserAvatarURL: () => 'https://cdn.discordapp.com/avatars/1/abc.png',
 	getUserBannerURL: () => 'https://cdn.discordapp.com/banners/1/def.png',
@@ -30,11 +38,11 @@ const IconUtils = {
 	getGuildMemberAvatarURLSimple: () => null,
 };
 
-export function registerDiscord() {
+export function registerDiscord({ brokenContextMenus = false } = {}) {
 	opened.length = 0;
 	hidden.length = 0;
 	registerMedia();
-	metro.register(ContextMenus);
+	metro.register(brokenContextMenus ? BrokenContextMenus : ContextMenus);
 	metro.register(ActionSheets);
 	metro.register(IconUtils);
 	metro.register({ colors: { TEXT_DEFAULT: '#fff' }, internal: {} });
