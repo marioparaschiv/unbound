@@ -19,7 +19,11 @@ export type FakeFlux = {
 	/** Calls a seeded store's change listeners, re-rendering each `useStore` reading it. */
 	emit: (name: string) => void;
 	getStore: (name: string) => FluxStore & StoreSeed;
-	useStore: <T>(stores: FluxStore | FluxStore[], getter: () => T, deps?: readonly unknown[]) => T;
+	/** Reads `selector(stores)` on each render, and re-renders when a store emits; `deps` and `isEqual` change nothing a test sees. */
+	useStore: <S extends FluxStore | readonly FluxStore[], T>(
+		stores: S,
+		selector: (stores: S) => T,
+	) => T;
 	onStoreChange: (store: FluxStore, listener: () => void) => () => void;
 	onAction: (type: string, listener: (action: FluxAction) => void) => () => void;
 	interceptAction: (
@@ -141,7 +145,7 @@ export function createFakeFlux(listeners: ListenerRegistry): FakeFlux {
 				get: (_target, key) => Reflect.get(seeded(name), key),
 				has: (_target, key) => key in seeded(name),
 			}),
-		useStore(watched, getter) {
+		useStore(watched, selector) {
 			const [, forceUpdate] = useState({});
 			const list = [watched].flat();
 
@@ -155,7 +159,7 @@ export function createFakeFlux(listeners: ListenerRegistry): FakeFlux {
 				};
 			}, list);
 
-			return getter();
+			return selector(watched);
 		},
 		onStoreChange(store, listener) {
 			store.addChangeListener(listener);

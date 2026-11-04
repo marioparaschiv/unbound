@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
+import type { ReactNode } from 'react';
 
 import {
 	createRecordingPatcher,
@@ -7,6 +8,8 @@ import {
 	createFakeMetro,
 	createFakeReact,
 } from '../testing';
+
+type LabelProps = { text: string };
 
 describe('createMemoryStorage', () => {
 	test('keeps nested settings per Bucket and serves the default Bucket without a name', () => {
@@ -132,6 +135,29 @@ describe('createRecordingPatcher', () => {
 		expect(greeter.wave()).toBe('wave');
 		expect(patcher.patches).toEqual([]);
 	});
+
+	test('patches the render inside a memo with patcher.react, typed props in, tree out', () => {
+		const patcher = createRecordingPatcher();
+		const Label = {
+			$$typeof: Symbol.for('react.memo'),
+			type: (props: LabelProps): ReactNode => props.text,
+		};
+		const module = { default: Label };
+
+		patcher.react.before(module, 'default', ({ props }) => ({
+			text: props.text.toUpperCase(),
+		}));
+		patcher.react.after(module, 'default', ({ result }) => [result, '!']);
+
+		expect(Label.type({ text: 'hi' })).toEqual(['HI', '!']);
+		expect(patcher.patches).toMatchObject([
+			{ kind: 'before', target: Label, method: 'type' },
+			{ kind: 'after', target: Label, method: 'type' },
+		]);
+
+		patcher.unpatchAll();
+		expect(Label.type({ text: 'hi' })).toBe('hi');
+	});
 });
 
 describe('createFakeMetro', () => {
@@ -148,9 +174,30 @@ describe('createFakeMetro', () => {
 		metro.register(typing, 'modules/typing.tsx');
 
 		expect(metro.findByProps('getUser', { lazy: true })).toEqual(loaded[0]);
-		expect(metro.findByName('Typing')).toBe(typing);
+		expect(metro.findByName('Typing', { lazy: false })).toBe(typing);
 		expect(await waiting).toBe(typing);
 		expect(loaded).toHaveLength(2);
+	});
+
+	test('serves a lookup made before its module registers, as a lazy handle does on device', () => {
+		const metro = createFakeMetro();
+		const Container = metro.findByFilePath('modules/Container.tsx');
+		const { Theme } = metro.common;
+
+		if (!Container) {
+			throw new Error('A lazy lookup always returns a handle.');
+		}
+
+		expect(metro.getModulePresence(Container)).toBe('missing');
+		expect(() => Reflect.set(Container, 'default', null)).toThrow(/Call metro.register\(\)/);
+
+		metro.register({ default: 'container' }, 'modules/Container.tsx');
+		metro.register({ colors: { RED_400: '#f00' }, internal: {} });
+
+		expect(Container.default).toBe('container');
+		expect(Theme.colors.RED_400).toBe('#f00');
+		expect(metro.getModulePresence(Container)).toBe('loaded');
+		expect(metro.getModulePresence({})).toBeUndefined();
 	});
 
 	test('resolves an aborted wait with undefined', async () => {

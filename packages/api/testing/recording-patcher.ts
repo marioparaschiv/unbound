@@ -1,4 +1,6 @@
-import type { PatchParent, after, before, instead } from '../src/patcher';
+import type { PatchParent, ReactPatcher, after, before, instead } from '../src/patcher';
+
+import { createReactPatcher, type MethodContext } from './react-patcher';
 
 type PatchKind = 'before' | 'instead' | 'after';
 
@@ -14,6 +16,8 @@ export type RecordingPatcher = {
 	before: typeof before;
 	instead: typeof instead;
 	after: typeof after;
+	/** React patches, which record the render they wrap: a `memo`'s `type`, a `forwardRef`'s or class's `render`. */
+	react: ReactPatcher;
 	/** Removes every patch this patcher holds. */
 	unpatchAll: () => void;
 	patches: PatchRecord[];
@@ -22,12 +26,7 @@ export type RecordingPatcher = {
 // UNKNOWN: a patched method returns whatever the code under test returns.
 type Method = (...args: never[]) => unknown;
 
-type Context = {
-	args: never[];
-	this: PatchParent;
-	original: Method;
-	result: unknown;
-};
+type Context = MethodContext;
 
 // UNKNOWN: a patch callback returns whatever the test's patch returns.
 type Callback = (context: Context) => unknown;
@@ -126,6 +125,7 @@ export function createRecordingPatcher(): RecordingPatcher {
 		before: patch('before') as RecordingPatcher['before'],
 		instead: patch('instead') as RecordingPatcher['instead'],
 		after: patch('after') as RecordingPatcher['after'],
+		react: createReactPatcher(patch),
 		unpatchAll: () => {
 			// `unpatch` splices `patches`, so walk a copy.
 			for (const record of patches.slice()) unpatch(record);
