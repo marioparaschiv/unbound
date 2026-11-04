@@ -4,8 +4,6 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 
 import type { MentionNode } from '~/chat/chat-rows';
 
-import { NO_NATIVE_CLASSES, registerFeatureModules } from './feature-modules';
-
 const GuildMemberStore = {
 	getMember: (guildId: string, userId: string) =>
 		guildId === 'g1' && userId === 'colored'
@@ -104,9 +102,8 @@ function render(message: MessageRecord) {
 beforeEach(async () => {
 	parsedEmbeds.clear();
 	metro.register(RowManager);
-	registerFeatureModules();
 	flux.seed({ GuildMember: GuildMemberStore });
-	await startPlugin(NO_NATIVE_CLASSES);
+	await startPlugin();
 });
 
 describe('chat rows', () => {
