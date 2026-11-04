@@ -1,10 +1,5 @@
-import type {
-	ButtonSchema,
-	SettingCommon,
-	SettingSchema,
-	SettingsSchema,
-} from '@unbound-app/types/settings';
-import { isButton, isSettingsGroup } from '@unbound-app/contracts/settings-schema';
+import type { SettingCommon, SettingSchema, SettingsSchema } from '@unbound-app/types/settings';
+import { isSettingsGroup, isStored } from '@unbound-app/contracts/settings-schema';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
@@ -50,6 +45,7 @@ const SCHEMA_TYPINGS = `declare module '${SETTINGS_SCHEMA_MODULE}' {
 	const item: unique symbol;
 	const section: unique symbol;
 	const button: unique symbol;
+	const notice: unique symbol;
 	const definition: unique symbol;
 
 	/** A stored setting, from one of the \`setting\` builders. */
@@ -60,6 +56,8 @@ const SCHEMA_TYPINGS = `declare module '${SETTINGS_SCHEMA_MODULE}' {
 	export type Section = { readonly [section]: true };
 	/** A button row from \`setting.button\`; it stores nothing. */
 	export type Button = { readonly [button]: true };
+	/** A notice row from \`setting.notice\`; it stores nothing. */
+	export type Notice = { readonly [notice]: true };
 	/** What \`defineSettings\` returns: the default export of settings.ts. */
 	export type SettingsDefinition = { readonly [definition]: true };
 
@@ -132,17 +130,24 @@ const SCHEMA_TYPINGS = `declare module '${SETTINGS_SCHEMA_MODULE}' {
 		/** A section of settings, titled by \`title\`. */
 		section(
 			options: Common & { displayAs?: 'group' | 'collapsible' },
-			properties: Record<string, Setting | Button>,
+			properties: Record<string, Setting | Button | Notice>,
 		): Section;
 		/** A button row that calls \`action\`, a function src/actions.ts exports, asking \`confirm\` first when set. */
 		button(
 			options: Common & { action: ActionName; confirm?: MessageKey; displayAs?: 'button' | 'danger' },
 		): Button;
+		/** A message row, shown while \`visibleWhen\` holds; it stores nothing. \`tone\` is \`info\` unless set. */
+		notice(options: {
+			title: MessageKey;
+			subtitle?: MessageKey;
+			tone?: 'info' | 'warning' | 'danger';
+			visibleWhen?: Condition;
+		}): Notice;
 	};
 
 	/** Declares the plugin's settings; \`title\` names the section holding the top-level ones. */
 	export function defineSettings(
-		properties: Record<string, Setting | Section | Button>,
+		properties: Record<string, Setting | Section | Button | Notice>,
 		options?: { title?: MessageKey },
 	): SettingsDefinition;
 }`;
@@ -224,10 +229,6 @@ function key(name: string): string {
 	return /^[A-Za-z_$][\w$]*$/.test(name) ? name : JSON.stringify(name);
 }
 
-function isStored(node: SettingSchema | ButtonSchema): node is SettingSchema {
-	return !isButton(node);
-}
-
 // The functions src/actions.ts exports, read from its types, so the typings never import its code.
 const ACTION_NAME =
 	'Extract<{ [K in keyof Actions]: Actions[K] extends () => void | Promise<void> ? K : never }[keyof Actions], string>';
@@ -297,7 +298,7 @@ export function settingsTypings(
 		'\t/** Each setting and section by its dot-separated key. */',
 		`\ttype SettingValues = {\n${paths.join('\n')}\n\t};`,
 		'',
-		'\t/** Every setting and section by its dot-separated key; buttons are not settings. */',
+		'\t/** Every setting and section by its dot-separated key; buttons and notices are not settings. */',
 		'\texport type SettingKey = keyof SettingValues;',
 		'\t/** The value of the setting or section at `K`. */',
 		'\texport type SettingsEntry<K extends SettingKey> = SettingValues[K];',

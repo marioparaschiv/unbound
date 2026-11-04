@@ -59,6 +59,12 @@ const API_PROPS = {
 	UserProfiles: ['getUserProfileActionSheetKey', 'showUserProfileActionSheetPostConnection'],
 };
 
+/** What a lazy handle looks its module up by. */
+type LazyLookup = {
+	resolve: () => FakeModule | undefined;
+	filter: FakeFilter;
+};
+
 type Wait = {
 	filter: FakeFilter;
 	onLoad: (module: FakeModule) => void;
@@ -107,6 +113,8 @@ export type FakeMetro = {
 		options?: LazyOptions,
 	) => FakeModule | Promise<FakeModule | undefined>;
 	onModuleLoaded: (filter: FakeFilter, onLoad: (module: FakeModule) => void) => () => void;
+	/** Calls `onLoad` with the module a lazy handle finds, at once when one is registered, else when it registers; a plain object is passed at once. Returns what stops waiting. */
+	whenLoaded: (target: FakeModule, onLoad: (module: FakeModule) => void) => () => void;
 	onModuleLoad: (listener: (module: FakeModule) => void) => () => void;
 };
 
@@ -183,7 +191,7 @@ export function createFakeMetro(): FakeMetro {
 		not: (part) => (module) => !part(module),
 	};
 
-	const handles = new WeakMap<FakeModule, () => FakeModule | undefined>();
+	const handles = new WeakMap<FakeModule, LazyLookup>();
 
 	function first(filter: FakeFilter): FakeModule | undefined {
 		return modules.find((module) => filter(module));
@@ -207,7 +215,7 @@ export function createFakeMetro(): FakeMetro {
 		const resolve = () => first(filter);
 		const handle = lazyHandle(resolve, description);
 
-		handles.set(handle, resolve);
+		handles.set(handle, { resolve, filter });
 
 		return handle;
 	}
@@ -219,6 +227,22 @@ export function createFakeMetro(): FakeMetro {
 				lookup(filters.byProps(...props), `metro.${namespace}.${name}`, []),
 			]),
 		) as Record<keyof T, FakeModule>;
+	}
+
+	function onModuleLoaded(filter: FakeFilter, onLoad: (module: FakeModule) => void) {
+		const found = first(filter);
+
+		if (found) {
+			onLoad(found);
+
+			return () => void 0;
+		}
+
+		const wait: Wait = { filter, onLoad };
+
+		waits.add(wait);
+
+		return () => void waits.delete(wait);
 	}
 
 	const common = {
@@ -241,11 +265,11 @@ export function createFakeMetro(): FakeMetro {
 		findByFilePath: (...args) =>
 			lookup(filters.byFilePath(names(args)[0]), `path ${names(args)[0]}`, args),
 		getModulePresence(handle) {
-			const resolve = typeof handle === 'object' && handle ? handles.get(handle) : undefined;
+			const lazy = typeof handle === 'object' && handle ? handles.get(handle) : undefined;
 
-			if (!resolve) return;
+			if (!lazy) return;
 
-			return resolve() ? 'loaded' : 'missing';
+			return lazy.resolve() ? 'loaded' : 'missing';
 		},
 		findLazy(filter, { signal } = {}) {
 			const found = first(filter);
@@ -264,25 +288,22 @@ export function createFakeMetro(): FakeMetro {
 				});
 			});
 		},
-		onModuleLoaded(filter, onLoad) {
-			const found = first(filter);
-
-			if (found) {
-				onLoad(found);
-
-				return () => void 0;
-			}
-
-			const wait: Wait = { filter, onLoad };
-
-			waits.add(wait);
-
-			return () => void waits.delete(wait);
-		},
+		onModuleLoaded,
 		onModuleLoad(listener) {
 			listeners.add(listener);
 
 			return () => void listeners.delete(listener);
+		},
+		whenLoaded(target, onLoad) {
+			const lazy = handles.get(target);
+
+			if (!lazy) {
+				onLoad(target);
+
+				return () => void 0;
+			}
+
+			return onModuleLoaded(lazy.filter, onLoad);
 		},
 		reset() {
 			modules.length = 0;

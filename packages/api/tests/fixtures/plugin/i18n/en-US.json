@@ -13,5 +13,8 @@
 	"ACCENT": "Accent",
 	"STAR_DESCRIPTION": "Stars a user.",
 	"UNSTAR_TITLE": "Unstar?",
-	"UNSTAR": "Unstar"
+	"UNSTAR": "Unstar",
+	"SIZE_NOTICE": "Large text",
+	"SIZE_NOTICE_SUBTITLE": "Sizes above 20 may clip.",
+	"RESET_ACCENT": "Reset accent"
 }

@@ -26,6 +26,8 @@
 	"WORDS": "Words",
 	"FRIENDS": "Friends",
 	"CLEAR_CACHE": "Clear cache",
+	"CACHE_NOTICE": "The cache is large",
+	"CACHE_NOTICE_SUBTITLE": "Clearing it frees space.",
 	"APPEARANCE": "Appearance",
 	"ACCENT": "Accent",
 	"BADGE": "Badge"

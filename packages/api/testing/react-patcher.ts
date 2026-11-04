@@ -16,9 +16,17 @@ export type MethodContext = {
 // UNKNOWN: a method patch returns whatever the test's patch returns.
 type MethodCallback = (context: MethodContext) => unknown;
 
-type MethodPatch = (
+/** Where a patch lands once its target is known: the object holding the method, the method, and the callback to run. */
+export type Placement = { parent: PatchParent; method: string; callback: MethodCallback };
+
+/** Patches what `place` finds on the target, waiting for a lazy handle's module as the client's `patchWhenLoaded` does. */
+export type Install = (
 	kind: PatchKind,
-) => (target: PatchParent, method: string, callback: MethodCallback) => () => void;
+	target: PatchParent,
+	place: (module: PatchParent) => Placement,
+	/** The method's name, listed for the patch while it waits for its module. */
+	method?: string,
+) => () => void;
 
 type Render = { parent: PatchParent; method: string; isClass: boolean };
 
@@ -83,10 +91,10 @@ function locate(target: AnyObject, key: string | undefined): Render {
 
 /**
  * @description Builds `patcher.react` on a recording patcher, so React patches wrap the render for real and are listed with the others.
- * @param patch The recording patcher's method patch, by kind.
+ * @param install The recording patcher's install, which defers a patch on a lazy handle until its module registers.
  * @returns The `before`, `instead` and `after` hooks for React components.
  */
-export function createReactPatcher(patch: MethodPatch): ReactPatcher {
+export function createReactPatcher(install: Install): ReactPatcher {
 	function hook(kind: PatchKind) {
 		return (target: AnyObject, ...args: unknown[]) => {
 			const [key, callback] = isCallback(args[0])
@@ -97,27 +105,42 @@ export function createReactPatcher(patch: MethodPatch): ReactPatcher {
 				throw new TypeError('Failed to patch a component: pass a callback.');
 			}
 
-			const render = locate(target, key);
+			return install(
+				kind,
+				target,
+				(module) => {
+					const render = locate(module, key);
 
-			return patch(kind)(render.parent, render.method, (context) => {
-				const props = render.isClass ? Reflect.get(context.this, 'props') : context.args[0];
-				const rest = context.args.slice(1);
-				const value = callback({
-					props,
-					this: render.isClass ? context.this : undefined,
-					result: context.result,
-					original: (next = props) =>
-						render.isClass
-							? context.original()
-							: context.original(...([next, ...rest] as never[])),
-				});
+					return {
+						parent: render.parent,
+						method: render.method,
+						callback(context) {
+							const props = render.isClass
+								? Reflect.get(context.this, 'props')
+								: context.args[0];
+							const rest = context.args.slice(1);
+							const value = callback({
+								props,
+								this: render.isClass ? context.this : undefined,
+								result: context.result,
+								original: (next = props) =>
+									render.isClass
+										? context.original()
+										: context.original(...([next, ...rest] as never[])),
+							});
 
-				if (kind !== 'before') {
-					return value;
-				}
+							if (kind !== 'before') {
+								return value;
+							}
 
-				return !render.isClass && value !== undefined ? [value, ...rest] : undefined;
-			});
+							return !render.isClass && value !== undefined
+								? [value, ...rest]
+								: undefined;
+						},
+					};
+				},
+				key,
+			);
 		};
 	}
 

@@ -33,6 +33,12 @@ declare module '@unbound-app/i18n' {
 		readonly UNSTAR_TITLE: string;
 		/** Unstar */
 		readonly UNSTAR: string;
+		/** Large text */
+		readonly SIZE_NOTICE: string;
+		/** Sizes above 20 may clip. */
+		readonly SIZE_NOTICE_SUBTITLE: string;
+		/** Reset accent */
+		readonly RESET_ACCENT: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */

@@ -21,9 +21,9 @@ Before your tests load, the preset reads your plugin's files and serves:
 | --- | --- |
 | `@unbound-app/i18n` | Your real `i18n/*.json`, with an ICU formatter for `format`. en-US until you switch |
 | `@unbound-app/settings` | Your `settings.ts`, with its defaults, saved to an in-memory Bucket |
-| `@unbound-app/api` | A fake Unbound that records what your plugin did: patches, commands, toasts, dialogs, Flux, assets. It also fakes `metro` (with `api`, `stores`, `common`, `components` and `filters`), `native`, `ui`, `utils` and `fs` |
+| `@unbound-app/api` | A fake Unbound that records what your plugin did: patches, commands, toasts, dialogs, Flux, assets. It also fakes `metro` (with `api`, `stores`, `common`, `components` and `filters`), `native`, `plugins`, `ui`, `utils` and `fs` |
 | `@unbound-app/api/metro/components` and every other subpath, such as `/ui` and `/utils/react` | The same fakes, imported by path |
-| `react-native` | Each primitive, such as `View` and `Text`, as a plain node a test can find by name, with `Animated`, `Share`, `Dimensions`, `NativeEventEmitter` and `processColor`. Your plugin needs no `react-native` install to run tests |
+| `react-native` | Each primitive, such as `View` and `Text`, as a plain node a test can find by name, with `Animated`, `Share`, `Dimensions`, `NativeEventEmitter`, `processColor`, `AccessibilityInfo`, `AppRegistry`, `AppState` and `NativeModules`. Your plugin needs no `react-native` install to run tests |
 | `*.png`, `*.svg`, `*.svg?asset` | A stable asset id for an image, and a component for an SVG |
 
 It also installs the plugin scope: `addon` from your manifest, `patcher`, `commands`, `logger`, `React`, and the scoped `setTimeout`, `setInterval` and their clears.
@@ -98,7 +98,7 @@ Import these from `@unbound-app/api/testing`. Each one shows only the current te
 | `toasts.shown` | The options of each toast, in order. A shorthand such as `toasts.success('SAVED', vars)` also records its `key` and `vars`, with `title` in the active locale |
 | `dialogs.opened` | Each dialog, with its title `key` for `confirm` and `alert`, and `respond(answer)` to press a button |
 | `commands.registered` | The commands, by name, and `commands.run` to send one |
-| `patches.applied` | Each patch still applied: its `kind`, `target` and `method` |
+| `patches.applied` | Each patch still held: its `kind`, `target` and `method`, and `pending`, which is `true` while it waits for its module |
 | `flux.dispatched` | Each action the plugin dispatched |
 | `logs.entries` | Each line the plugin's `logger` wrote |
 
@@ -131,6 +131,15 @@ await startPlugin();
 expect(patches.applied).toMatchObject([{ kind: 'before', method: 'sendMessage' }]);
 ```
 
+Patch a lookup made before its module registers, and the patch waits as it does on a phone. It applies when a test registers a module the lookup finds, in this test or a later one, and a patch removed first never applies. `patches.applied` lists it with `pending: true` until then, and `stopPlugin` removes it like any other. `patcher.react` waits the same way.
+
+```ts
+const Messages = metro.findByProps('sendMessage'); // at import, or in start()
+
+patcher.after(Messages, 'sendMessage', () => 'patched'); // waits: no module yet
+metro.register({ sendMessage: () => 'sent' }); // applies now
+```
+
 ## Fake Discord
 
 Your plugin finds Discord's code with `metro`. In a test, `metro` finds only what the test registers. Each module the plugin reaches by name is found by the same props as on a phone:
@@ -152,7 +161,7 @@ metro.register({ sendMessage: () => {}, receiveMessage: () => {} });
 // Messages from `metro.api` is now the module above.
 ```
 
-`@unbound-app/api/metro/components` imports in tests. `Discord`, `Forms`, `BottomSheets` and the other modules give any component by name, such as `Discord.Text` or `BottomSheets.ActionSheetRow.Icon`. Each draws its children, and `find('Text')` or `find('ActionSheetRow.Icon')` reaches it with its props. `Discord.createStyles(styles)` returns a hook that gives `styles`, calling a factory with no theme. To replace one, assign it: `Discord.Text = MyText`.
+`@unbound-app/api/metro/components` imports in tests. `Discord`, `Forms`, `BottomSheets` and the other modules give any component by name, such as `Discord.Text` or `BottomSheets.ActionSheetRow.Icon`. Each draws its children, and `find('Text')` or `find('ActionSheetRow.Icon')` reaches it with its props. A `Discord.Button` also draws its `text`, and a `RowButton` or `TableRow` its `label` and `subLabel`, so `text()` and `find` see them. `Discord.createStyles(styles)` returns a hook that gives `styles`, calling a factory with no theme. To replace one, assign it: `Discord.Text = MyText`.
 
 `@unbound-app/api/ui` works the same: `SwitchRow`, `Page`, `SchemaPanel` and the other rows draw their children and are found by name.
 
@@ -170,7 +179,53 @@ native.registerModule('NativeFileModule', { readFile: async () => '' });
 native.setCapabilities(['native.java.hooks']);
 ```
 
-`definePlatform` picks the handler for that platform, and throws `NativePluginUnsupportedPlatformError` when there is none. `getNativeModule(...names)` returns the first module registered under one of the names. `native.has` reports the capabilities set.
+`definePlatform` picks the handler for that platform, and throws `NativePluginUnsupportedPlatformError` when there is none. A plugin calls it as it imports its `platform.ts`, before any test sets the platform, so a function handler comes back as a function that calls the current platform's handler each time it runs. Any other handler is read when `definePlatform` runs. `getNativeModule(...names)` returns the first module registered under one of the names. `native.has` reports the capabilities set.
+
+`startPlugin` gives `context.native.objc` on iOS, and `context.native.java` and `hooks` on Android. Fill them with the classes your handlers reach:
+
+```ts
+import { native, startPlugin } from '@unbound-app/api/testing';
+
+native.objc.registerClass('UIView', {
+	superclass: 'NSObject',
+	methods: { 'setAlpha:': (self, alpha) => {}, 'tag': () => 7 },
+	classMethods: { sharedView: () => native.objc.create('UIView') },
+});
+await startPlugin();
+
+native.setPlatform('android');
+native.java.registerClass('android.view.View', {
+	methods: { getWidth: () => 120 },
+	fields: { mLeft: 4 },
+	staticMethods: { create: () => native.java.create('android.view.View') },
+	staticFields: { INSTANCE: native.java.create('android.view.View') },
+});
+```
+
+| Fake | Does |
+| --- | --- |
+| `native.objc.registerClass(name, { superclass?, methods?, classMethods? })` | Adds a class. A method takes the object and the call's arguments; `callSuper` reaches the superclass's |
+| `native.objc.create(name, ivars?)` | Makes an object, with the instance variables `getIvar` reads |
+| `native.java.registerClass(name, { superclass?, methods?, staticMethods?, fields?, staticFields?, construct? })` | Adds a class. A method takes the object and the call's plain arguments, and returns a plain value, which the bridge tags as `string`, `int`, `double`, `boolean`, `null`, `handle` or `array`. `construct` runs for `java.construct` |
+| `native.java.create(name, fields?)` | Makes an object, as a `handle` value |
+| `native.calls` | Every `objc`, `java` and `hooks` call the plugin made this test: its `bridge`, `method`, `target` class, `name` (selector or method) and `args` |
+
+`objc` fakes `getClass`, `alloc`, `create`, `className`, `respondsTo`, `call`, `invoke`, `invokeAsync`, `callSuper`, `invokeSuper`, `batch`, `prepare`, `invokePrepared`, `getIvar`, `setIvar`, the associated objects, `struct` and `hook`. `java` fakes `getClass`, `construct`, `describe`, `className`, `respondsTo`, `invoke`, `invokeAsync`, `getField`, `setField`, `batch`, `batchAsync`, `prepare`, `invokePrepared`, the associated objects and `release`, and `hooks` fakes `hook`, `remove` and the return values. A hook runs when a registered method is called, as `objc.hook`'s `before`, `replace` and `after` do. A class, selector, method or field a test did not register throws, naming how to add it. A member the kit does not fake throws too; give your own with `startPlugin({ native: { objc: { snapshot } } })`.
+
+### Other plugins
+
+`plugins.get(id)`, `getAll`, `isEnabled`, `entities` and `errors` read the plugins a test sets. The plugin under test is there, started and enabled. Add or change another with the `plugins` recorder:
+
+```ts
+import { plugins } from '@unbound-app/api/testing';
+
+plugins.set('chat-bubbles', { name: 'Chat Bubbles', enabled: true });
+plugins.set('chat-bubbles', { started: false });
+plugins.set('broken', { error: new Error('boom') }); // `failed`, and in `plugins.errors`
+plugins.remove('chat-bubbles');
+```
+
+`enable`, `disable`, `toggle`, `start` and `stop` change what the handles report. `install`, `reload` and `update` settle at once and change nothing.
 
 ### Files
 
@@ -242,6 +297,23 @@ Elements are not frozen. React freezes them only in development, and on a phone 
 A component re-renders when its state changes, when a setting it reads with `useSetting` changes, and when a store it reads changes. To change a store during a test, seed it again with `flux.seed` from `@unbound-app/api/testing`. That also tells each `flux.useStore` reading it. Import it under another name, such as `import { flux as fakeFlux }`, in a file that also imports your plugin's `flux`.
 
 An SVG import renders as an `SvgXml` node inside a component named after the file, such as `Svg(star)`. An image import is the same id as `assets.getIdByName` with its asset name, which `fakeAssetId('icon')` also returns.
+
+## The generated settings panel
+
+With a `settings.ts`, `SettingsPanel` from `@unbound-app/settings` draws the generated panel as named nodes, so a test can assert which rows show:
+
+```tsx
+import { SettingsPanel } from '@unbound-app/settings';
+
+const view = render(<SettingsPanel />, { settings: { size: 22 } });
+
+expect(view.findAll('NoticeRow')).toHaveLength(1);
+expect(view.find('SliderRow').props.value).toBe(22);
+```
+
+Each setting is its row, such as `SwitchRow`, `SliderRow` or `ColorRow`, and a `setting.button` is a `ButtonRow` and a `setting.notice` a `NoticeRow`. A `setting.section` is a `Section` with its `title`. Each row has `path`, `title`, `subtitle`, `disabled`, and for a setting `value` and `onChange(value)`. A button has `onPress()`, which runs its action from `src/actions.ts`, and `confirm`, the question the client asks first. A notice has `tone`. The title and subtitle are the plugin's messages in the active locale, and are also the row's text.
+
+The panel follows the client's: a `hidden` setting or section draws nothing, and a row draws only while its `visibleWhen` holds. A row is `disabled` while its `disabledWhen` holds. Predicates run on the live settings, and the panel draws again when one changes.
 
 ## Switch the language
 
