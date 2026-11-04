@@ -1,3 +1,3 @@
 import { metro } from '@unbound-app/api';
 
-export const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+export const Messages = metro.api.Messages;
