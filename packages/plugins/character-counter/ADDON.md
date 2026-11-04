@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :text: Shows length over your limit, like `120/2000`, while you type.

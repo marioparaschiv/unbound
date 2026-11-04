@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :dots: Shows up to three avatars, a `+N` badge for the rest, and animated dots on channel and thread rows.

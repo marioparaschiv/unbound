@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :award: Adds Discord's own crown icon, labeled "Server Owner", next to the owner's name on their messages.

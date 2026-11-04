@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :file: Files you upload are sent under an anonymous name, so the original name never reaches Discord.

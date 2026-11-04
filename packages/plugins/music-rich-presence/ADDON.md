@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :music: While Last.fm or ListenBrainz says you are playing something, your Discord activity shows the track, artist and album cover, like it does on desktop.

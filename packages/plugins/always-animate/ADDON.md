@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :circle-user: Animated avatars and profile banners play everywhere, not only on profiles.

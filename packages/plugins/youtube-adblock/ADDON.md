@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :video: YouTube videos you open from a message play without ads. Ads are removed before the player sees them, and an ad that still starts is skipped.

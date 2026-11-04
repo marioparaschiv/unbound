@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :link: **Copy URL** copies an emoji's image link at 160 pixels (GIF if animated, PNG otherwise) or a sticker's `discord.com` page.

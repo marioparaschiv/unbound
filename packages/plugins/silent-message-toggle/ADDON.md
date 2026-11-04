@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :bell-slash: Adds a bell button to the chat input. Tap it to send your next message as a silent message, which skips push and desktop notifications.

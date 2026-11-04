@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :stopwatch: Measures the gap between the time in the message ID and the nonce the sender's client created. Bots and messages without a nonce are skipped.

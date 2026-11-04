@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :face-smile: Shows up to five faces per reaction, with a `+N` badge for the rest.

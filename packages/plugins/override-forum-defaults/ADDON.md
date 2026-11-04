@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :list: Forum channels open in the layout you pick, **List** or **Gallery**, instead of the one the server set.

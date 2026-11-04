@@ -68,6 +68,7 @@
 		"plugins:lint": "bun run --filter @unbound-app/plugins --filter @unbound-app/plugin-scripts lint",
 		"plugins:typecheck": "bun packages/plugin-scripts/src/typecheck-plugins.ts",
 		"plugins:build": "cd packages/plugins && bun run build",
+		"plugins:banners": "bun packages/plugin-scripts/src/generate-plugin-banners.ts",
 		"plugins:catalog": "bun packages/plugin-scripts/src/generate-plugins-readme.ts",
 		"plugins:sync-icons": "bun packages/plugin-scripts/src/sync-plugin-icons.ts",
 		"plugins:device-matrix": "bun packages/plugin-scripts/src/device-matrix.ts",
