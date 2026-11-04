@@ -1,24 +1,7 @@
-import type { ReactElement } from 'react';
+import { messages } from '@unbound-app/i18n';
 
+import type { FileSizeLookup, MediaItemElement, SizeBadge } from '~/types';
 import { BADGE_INSET, BYTE_FORMAT, BYTE_UNITS } from '~/constants';
-
-export type MediaItemElement = ReactElement<{
-	item?: { node?: { image?: { fileSize?: number; uri?: string } } };
-	size?: number;
-}>;
-
-export type FileSizeLookup = (uri: string) => number | undefined;
-
-export type FileSizes = {
-	lookup?: FileSizeLookup;
-	release: () => void;
-};
-
-export type SizeBadge = {
-	key: string;
-	label: string;
-	left: number;
-};
 
 /**
  * @description Formats a byte count in binary (1024-based) units with up to two decimals.
@@ -26,11 +9,13 @@ export type SizeBadge = {
  * @returns A label such as `1.5 MB`, or `0 Bytes` for an empty file.
  */
 export function formatBytes(bytes: number): string {
-	if (!bytes) return '0 Bytes';
+	if (!bytes) return `0 ${messages.BYTES}`;
 
-	const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), BYTE_UNITS.length - 1);
+	const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), BYTE_UNITS.length);
 
-	return `${BYTE_FORMAT.format(bytes / 1024 ** index)} ${BYTE_UNITS[index]}`;
+	const unit = index ? BYTE_UNITS[index - 1] : messages.BYTES;
+
+	return `${BYTE_FORMAT.format(bytes / 1024 ** index)} ${unit}`;
 }
 
 /**

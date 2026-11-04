@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.8] - 2026-11-05
+
+### Changed
+
+- The "Bytes" unit on the size badge can now be translated. The plugin works the same as before.
+
 ## [1.0.7] - 2026-11-03
 
 ### Changed
