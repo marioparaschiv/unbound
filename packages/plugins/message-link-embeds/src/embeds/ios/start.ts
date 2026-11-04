@@ -38,12 +38,11 @@ export function startEmbeds(native: NativePluginBridge, renderers: Renderers): E
 
 	const { session } = embeds;
 
-	subscribeMessageStore(session);
-
 	return {
 		drawn: embeds.drawn,
 		dispose: applyFeatures('Message Link Embeds', [
 			() => embeds.dispose,
+			() => subscribeMessageStore(session),
 			() => hookMessageCells(session),
 			() => {
 				const scope = ui.createScope();

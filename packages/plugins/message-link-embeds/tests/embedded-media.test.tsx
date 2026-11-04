@@ -1,6 +1,6 @@
 import { metro, render } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { memo, type ReactNode } from 'react';
+import { Component, memo, type ReactNode } from 'react';
 import type { ViewProps } from 'react-native';
 import { View } from 'react-native';
 
@@ -19,17 +19,18 @@ type LottieProps = { source?: unknown; autoPlay?: boolean; loop?: boolean };
 const drawn = (props: object) => <View {...(props as ViewProps)} />;
 
 const FastImage = { default: memo((props: ImageProps) => drawn(props)) };
-const LottieAnimationView = { default: (props: LottieProps) => drawn(props) };
+// Discord's Lottie view is a class that reads `this.props`, so it cannot be rendered as a function.
+class LottieClass extends Component<LottieProps> {
+	override render() {
+		return drawn(this.props);
+	}
+}
+const LottieAnimationView = { default: LottieClass };
 const NativeLottieView = { default: (props: LottieProps) => drawn(props) };
 
 const animated = { uri: 'https://cdn.discordapp.com/emojis/123.webp?animated=true' };
 
 beforeEach(() => {
-	metro.register({
-		sendMessage: () => undefined,
-		receiveMessage: () => undefined,
-		fetchMessage: async () => null,
-	});
 	metro.register(FastImage, 'components_native/common/FastImage.tsx');
 	metro.register(LottieAnimationView, 'components_native/common/LottieAnimationView.tsx');
 	metro.register(NativeLottieView, 'modules/stickers/native/NativeLottieView.tsx');
@@ -90,6 +91,35 @@ describe('media inside an embed', () => {
 
 		expect(inEmbed(false, <Animation source='a' />).find('View').props).not.toHaveProperty(
 			'autoPlay',
+		);
+	});
+
+	test('a Lottie class component gets the new props', () => {
+		startMediaPatches();
+
+		const Animation = LottieAnimationView.default;
+
+		expect(inEmbed(true, <Animation source='a' />).find('View').props).toMatchObject({
+			source: 'a',
+			autoPlay: true,
+			loop: true,
+		});
+	});
+
+	test('stopping puts every media component back', () => {
+		const originals = [
+			FastImage.default,
+			LottieAnimationView.default,
+			NativeLottieView.default,
+		];
+		const stop = startMediaPatches();
+
+		expect(LottieAnimationView.default).not.toBe(originals[1]);
+
+		stop();
+
+		expect([FastImage.default, LottieAnimationView.default, NativeLottieView.default]).toEqual(
+			originals,
 		);
 	});
 });

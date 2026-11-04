@@ -83,16 +83,9 @@ export const MessageActions = metro.api.Messages as MessageActionsType;
 export const FastImage = metro.findByFilePath('components_native/common/FastImage.tsx', {
 	interop: false,
 });
-export const LottieAnimationView = metro.findByFilePath(
-	'components_native/common/LottieAnimationView.tsx',
-	{ interop: false },
-);
-export const NativeLottieView = metro.findByFilePath(
-	'modules/stickers/native/NativeLottieView.tsx',
-	{
-		interop: false,
-	},
-);
+// The Lottie views can be classes, so they are swapped by file path when they load rather than patched.
+export const LottieAnimationViewSource = 'components_native/common/LottieAnimationView.tsx';
+export const NativeLottieViewSource = 'modules/stickers/native/NativeLottieView.tsx';
 
 // ChatItem is exported wrapped in `memo`, `forwardRef`, or a module default, a few layers deep.
 function unwrapComponent(

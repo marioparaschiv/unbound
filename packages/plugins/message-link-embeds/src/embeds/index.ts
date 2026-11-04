@@ -1,3 +1,4 @@
+import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import { drawnSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
@@ -20,7 +21,7 @@ import { startEmbeds } from '~/embeds/platform';
 /**
  * @description Draws the message a Discord message link points at as a chat row under the message that links it, and lets GIFs, animated emoji, stickers and Lottie animations play inside it.
  * Depends on `MessageStore`, `ChannelStore`, `SelectedChannelStore`, the `Messages` actions, and Discord's `MessageRecord`, `RowManager` and `ChatItem` renderers.
- * On iOS it hooks `DCDMessageTableViewCell`; on Android it rewrites the message text views. Patches the render of `FastImage`, `LottieAnimationView` and `NativeLottieView`.
+ * On iOS it hooks `DCDMessageTableViewCell`; on Android it rewrites the message text views. Patches the render of `FastImage` and swaps `LottieAnimationView` and `NativeLottieView`, which can be classes.
  * @param context The plugin's start context, with its native bridge and capabilities.
  * @returns The embeds, whose `dispose` the plugin's `stop` returns, or `undefined` when the plugin cannot run here.
  */
@@ -44,9 +45,12 @@ export function startMessageLinkEmbeds(context: PluginContext): Embeds | undefin
 
 	const embeds = startEmbeds(context.native, renderers);
 
-	if (embeds) startMediaPatches();
+	if (!embeds) return;
 
-	return embeds;
+	return {
+		drawn: embeds.drawn,
+		dispose: applyFeatures('Message Link Embeds', [() => embeds.dispose, startMediaPatches]),
+	};
 }
 
 /**
