@@ -11,7 +11,7 @@ import { PLUGIN_NAME, START_TIMEOUT_MS } from '~/constants';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	const sessions = createSessionStore<string>();
 
 	dispose = applyFeatures(PLUGIN_NAME, [
@@ -32,7 +32,7 @@ function start(context: PluginContext) {
 	]);
 }
 
-function stop() {
+export function stop() {
 	const pending = dispose();
 
 	dispose = () => undefined;
@@ -40,8 +40,4 @@ function stop() {
 	return pending;
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-};
+export const selfTest = featureSelfTest;
