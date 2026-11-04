@@ -6,7 +6,7 @@ import type { FakeModule } from './fake-metro';
 
 /**
  * One node of a settings schema, as `@unbound-app/settings/schema`'s builders produce it once read as JSON. The
- * options a builder copies that only the panel reads, such as `placeholder` or `run`, stay untyped.
+ * options a builder copies that only the panel reads, such as `placeholder` or `action`, stay untyped.
  */
 export type SchemaNode = FakeModule & {
 	kind: string;
@@ -107,7 +107,7 @@ function choices(options: Options): SchemaChoice[] {
 	);
 }
 
-/** The `setting` builders of `@unbound-app/settings/schema`, one per stored primitive; `displayAs` picks the widget. */
+/** The `setting` builders of `@unbound-app/settings/schema`: one per stored primitive, `section` and `button`; `displayAs` picks the widget. */
 export const setting = createSettingBuilders();
 
 function createSettingBuilders() {
@@ -139,8 +139,8 @@ function createSettingBuilders() {
 			...meta('section', options.displayAs ?? 'group', options),
 			properties,
 		}),
-		action: (options: Options) =>
-			meta('action', options.displayAs ?? 'button', options, ['run', 'confirm']),
+		button: (options: Options) =>
+			meta('button', options.displayAs ?? 'button', options, ['action', 'confirm']),
 	};
 }
 
@@ -226,7 +226,7 @@ function entries(schema: SettingsSchema): [string, SchemaNode][] {
 					])
 				: [[key, node]],
 		)
-		.filter(([, field]) => field.kind !== 'action');
+		.filter(([, field]) => field.kind !== 'button');
 }
 
 function affects(payload: SettingsPayload, key: string): boolean {
@@ -284,8 +284,11 @@ export function createFakeSettings(
 	function view(prefix: string, properties: Record<string, SchemaNode>): SettingsValues {
 		const sections = new Map<string, SettingsValues>();
 		const pathOf = (key: PropertyKey) => (prefix ? `${prefix}.${String(key)}` : String(key));
+		// A button stores nothing, so it is not one of the settings.
 		const owns = (key: PropertyKey) =>
-			typeof key === 'string' && Object.hasOwn(properties, key);
+			typeof key === 'string' &&
+			Object.hasOwn(properties, key) &&
+			properties[key]?.kind !== 'button';
 
 		function read(key: string) {
 			const node = properties[key];
@@ -322,7 +325,7 @@ export function createFakeSettings(
 					return true;
 				},
 				has: (_target, key) => owns(key),
-				ownKeys: () => Object.keys(properties),
+				ownKeys: () => Object.keys(properties).filter(owns),
 				getOwnPropertyDescriptor: (_target, key) =>
 					owns(key)
 						? {

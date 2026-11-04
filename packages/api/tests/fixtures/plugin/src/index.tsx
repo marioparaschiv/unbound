@@ -1,3 +1,4 @@
+import type { PluginContext } from '@unbound-app/api/native';
 import { flux, metro, toasts } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 import { format } from '@unbound-app/i18n';
@@ -6,8 +7,13 @@ import GreetingTitle from '~/components/greeting-title';
 
 let stopListening: (() => void) | undefined;
 
+/** The contexts `start` received, for a test to read. */
+export const received: PluginContext[] = [];
+
 /** Patches sending, registers `/star`, and greets when the setting is on. */
-export function start() {
+export function start(context: PluginContext) {
+	received.push(context);
+
 	const MessageActions = metro.findByProps('sendMessage');
 
 	if (MessageActions) {
