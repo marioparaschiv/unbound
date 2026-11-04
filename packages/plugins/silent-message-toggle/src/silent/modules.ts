@@ -1,6 +1,6 @@
 import { flux, metro } from '@unbound-app/api';
 
-export const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+export const { Messages } = metro.api;
 export const SelectedChannelStore = flux.getStore('SelectedChannel');
 export const Theme = metro.common.Theme;
 export const ChatInputRightActions = metro.findByFilePath(
