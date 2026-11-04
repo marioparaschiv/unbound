@@ -1,0 +1,22 @@
+{
+	"name": "picture-in-picture",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Adds a picture in picture button to videos and video embeds such as YouTube in the media viewer, so they keep playing in a floating window.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@unbound-plugins/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-app/cli": "workspace:*",
+		"react-native": "^0.86.0",
+		"rollup": "^4.66.0"
+	}
+}

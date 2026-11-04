@@ -10,7 +10,6 @@ import type { PerkStatus } from '~/lib/sponsors/overview';
 import { formatMonthlyPrice } from '~/lib/sponsors/price';
 import type { SessionUser } from '~/lib/auth/session';
 import { GHOST_ROW } from '~/components/ghost-row';
-import Separator from '~/components/ui/separator';
 import Text from '~/components/ui/text';
 import cn from '~/lib/cn';
 
@@ -80,8 +79,15 @@ function PerkRow({ perk, onOpenLocked }: PerkRowProps) {
 function PerksCard({ user }: PerksCardProps) {
 	const { sponsor } = useSuspenseQuery(accountOverviewQuery()).data;
 	const [upsell, setUpsell] = useState<PerkStatus | null>(null);
-	const badgePerk = sponsor.perks.find((perk) => perk.id === 'custom-badge');
+	// "Custom badge" reads "Custom badges" once the user has set more than one.
+	const plural = (sponsor.badge?.badges.length ?? 0) > 1;
+	const perks = sponsor.perks.map((perk) =>
+		perk.id === 'custom-badge' && plural ? { ...perk, name: `${perk.name}s` } : perk,
+	);
+	const badgePerk = perks.find((perk) => perk.id === 'custom-badge');
 	const showEditor = Boolean(badgePerk && (badgePerk.unlocked || sponsor.badge));
+	// While badges are editable, the editor shows the perk itself, with the upload button as its status.
+	const editorOwnsRow = Boolean(showEditor && badgePerk?.claimable);
 
 	return (
 		<Card className='gap-4'>
@@ -92,19 +98,19 @@ function PerksCard({ user }: PerksCardProps) {
 				</Text>
 			</CardHeader>
 			<CardContent className='flex flex-col gap-3'>
-				{sponsor.perks.map((perk) => (
-					<PerkRow key={perk.id} perk={perk} onOpenLocked={setUpsell} />
-				))}
+				{perks.map((perk) =>
+					perk === badgePerk && editorOwnsRow ? null : (
+						<PerkRow key={perk.id} perk={perk} onOpenLocked={setUpsell} />
+					),
+				)}
 
 				{badgePerk && showEditor ? (
-					<>
-						<Separator />
-						<BadgeEditor
-							claim={sponsor.badge}
-							perk={badgePerk}
-							editable={badgePerk.claimable}
-						/>
-					</>
+					<BadgeEditor
+						claim={sponsor.badge}
+						perk={badgePerk}
+						editable={badgePerk.claimable}
+						heading={<PerkText perk={badgePerk} />}
+					/>
 				) : null}
 			</CardContent>
 
