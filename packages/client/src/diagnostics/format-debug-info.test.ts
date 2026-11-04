@@ -23,6 +23,12 @@ const info = {
 };
 
 describe('formatDebugInfo', () => {
+	test('inserts the detected jailbreak between loader identity and injection framework', () => {
+		expect(formatDebugInfo({ ...info, jailbreak: 'Dopamine' })).toContain(
+			'loader 1.0.0 (`Unbound.dylib`) (`Dopamine`) (`ElleKit`)',
+		);
+	});
+
 	test('puts every detail under a heading, one labelled line per component', () => {
 		expect(formatDebugInfo(info)).toBe(
 			[

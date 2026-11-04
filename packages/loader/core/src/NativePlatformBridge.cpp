@@ -374,6 +374,8 @@ void installNativePlatform(jsi::Runtime &runtime, std::shared_ptr<NativePlatform
     device.setProperty(runtime, "getOSVersionString",
                        stringGetter(runtime, "getOSVersionString", provider->osVersion));
     device.setProperty(runtime, "isRooted", booleanGetter(runtime, "isRooted", provider->isRooted));
+    device.setProperty(runtime, "getJailbreak",
+                       stringGetter(runtime, "getJailbreak", provider->jailbreak));
     device.setProperty(runtime, "isSystemApp",
                        booleanGetter(runtime, "isSystemApp", provider->isSystemApp));
     device.setProperty(runtime, "isVirtualDevice",

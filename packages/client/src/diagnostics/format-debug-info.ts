@@ -5,6 +5,7 @@ export type DebugInfo = {
 	loader: string;
 	loaderOrigin: string;
 	framework: string;
+	jailbreak?: string;
 	discord: string;
 	discordChannel: string;
 	discordBuild: string;
@@ -25,7 +26,7 @@ export type DebugInfo = {
  * @returns The lines, shared by `/debug` and the GitHub issue report.
  */
 export function debugLines(info: DebugInfo): string[] {
-	const loader = [info.loaderOrigin, info.framework]
+	const loader = [info.loaderOrigin, info.jailbreak, info.framework]
 		.filter(Boolean)
 		.map((part) => `(\`${part}\`)`)
 		.join(' ');

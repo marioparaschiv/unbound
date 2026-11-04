@@ -234,4 +234,59 @@ std::string frameworkLabel(const std::string &name, const std::string &version)
     }
     return name + " " + version;
 }
+
+std::string jailbreakName(const std::string &root, const std::vector<std::string> &markers,
+                          const std::vector<std::string> &images, bool roothide)
+{
+    if (root.empty())
+        return "";
+    const bool hidden = roothide || root.find("/.jbroot-") != std::string::npos;
+    if (std::find(markers.begin(), markers.end(), ".installed_relaxin") != markers.end())
+        return "Relaxin";
+    for (const auto &image : images)
+    {
+        if (image.rfind(root + "/", 0) == 0 && (image.find("/relaxin") != std::string::npos ||
+                                                image.find("/librelaxin") != std::string::npos))
+            return "Relaxin";
+    }
+    if (std::find(markers.begin(), markers.end(), ".xia0o0o0o_jb_installed") != markers.end())
+        return hidden ? "roothide" : "";
+    const std::vector<std::pair<std::string, std::string>> names = {
+        {".installed_nekojb", "nekoJB"},      {".installed_nathanlr", "nathanlr"},
+        {".palecursus_strapped", "palera1n"}, {".installed_palera1n", "palera1n"},
+        {".installed_dopamine", "Dopamine"},
+    };
+    for (const auto &[marker, name] : names)
+    {
+        if (std::find(markers.begin(), markers.end(), marker) != markers.end())
+            return hidden ? name + " (roothide)" : name;
+    }
+    return hidden ? "roothide" : "";
+}
+
+std::string jailbreakLabel(const std::string &name, const std::string &version)
+{
+    if (name != "Dopamine" || version.empty())
+        return name;
+    bool previousDot = true;
+    int  parts       = 1;
+    for (char character : version)
+    {
+        if (character == '.')
+        {
+            if (previousDot || ++parts > 4)
+                return name;
+            previousDot = true;
+        }
+        else if (character >= '0' && character <= '9')
+        {
+            previousDot = false;
+        }
+        else
+        {
+            return name;
+        }
+    }
+    return previousDot || parts < 2 ? name : name + " " + version;
+}
 }

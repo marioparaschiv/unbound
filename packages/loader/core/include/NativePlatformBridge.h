@@ -15,6 +15,7 @@ struct NativePlatformProvider {
     std::function<std::string()>                deviceModel;
     std::function<std::string()>                osVersion;
     std::function<bool()>                       isRooted;
+    std::function<std::string()>                jailbreak;
     std::function<bool()>                       isSystemApp;
     std::function<bool()>                       isVerifiedBuild;
     std::function<nlohmann::json()>             entitlements;

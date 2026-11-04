@@ -172,6 +172,29 @@ static void checkHookFrameworks()
 
 int main()
 {
+    assert(jailbreakName("", {".installed_dopamine"}, {}).empty());
+    assert(jailbreakName("/var/jb", {}, {}).empty());
+    assert(jailbreakName("/var/jb", {".installed_dopamine"}, {}) == "Dopamine");
+    assert(jailbreakName("/var/jb", {".installed_dopamine", ".installed_nekojb"}, {}) == "nekoJB");
+    assert(jailbreakName("/var/jb", {".installed_dopamine", ".installed_nathanlr"}, {}) ==
+           "nathanlr");
+    assert(jailbreakName("/var/jb", {".installed_dopamine", ".palecursus_strapped"}, {}) ==
+           "palera1n");
+    assert(jailbreakName("/var/jb", {".installed_relaxin", ".installed_palera1n"}, {}) ==
+           "Relaxin");
+    assert(jailbreakName("/private/var/containers/Bundle/Application/.jbroot-123", {}, {}) ==
+           "roothide");
+    assert(jailbreakName("/private/preboot/root/procursus", {".installed_dopamine"}, {}, true) ==
+           "Dopamine (roothide)");
+    assert(jailbreakName("/private/preboot/root/procursus",
+                         {".installed_dopamine", ".xia0o0o0o_jb_installed"}, {})
+               .empty());
+    assert(jailbreakName("/var/jb", {}, {"/var/jb/basebin/relaxin.dylib"}) == "Relaxin");
+    assert(jailbreakName("/var/jb", {}, {"/other/basebin/relaxin.dylib"}).empty());
+    assert(jailbreakLabel("Dopamine", "3.0.9") == "Dopamine 3.0.9");
+    assert(jailbreakLabel("Dopamine", "3.0.9\n") == "Dopamine");
+    assert(jailbreakLabel("Dopamine", "3..9") == "Dopamine");
+    assert(jailbreakLabel("palera1n", "3.0.9") == "palera1n");
     checkHookFrameworks();
     checkInstallSources();
     checkRoutingTable();

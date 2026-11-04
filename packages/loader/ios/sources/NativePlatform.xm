@@ -7,6 +7,7 @@
 #import "AddonsCore.h"
 #import "CoreConversions.h"
 #import "FileSystem.h"
+#include "JailbreakDetection.h"
 #include "NativePlatformBridge.h"
 #import "SettingsCore.h"
 #import "Utilities+CodeSignature.h"
@@ -36,6 +37,7 @@ void registerNativePlatformProvider(void)
     provider->isRooted = []() {
         return static_cast<bool>([Utilities isJailbroken]);
     };
+    provider->jailbreak   = detectedJailbreak;
     provider->isSystemApp = []() {
         return static_cast<bool>([Utilities isSystemApp]);
     };

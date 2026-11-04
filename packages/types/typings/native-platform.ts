@@ -14,6 +14,7 @@ export type NativePlatformDevice = {
 	getOSVersionString(): string;
 	/** Whether the device is jailbroken on iOS or has an `su` binary on Android. */
 	isRooted(): boolean;
+	getJailbreak?(): string;
 	/** Whether Discord is installed as a system app. */
 	isSystemApp(): boolean;
 	/** Whether Discord runs in a simulator, emulator or virtual machine. */
