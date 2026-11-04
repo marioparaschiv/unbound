@@ -3,6 +3,7 @@ import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
 
+import { selfTest } from '~/index';
 import { UPLOAD_PREVIEW_SHEET } from '~/constants';
 
 type Upload = { id: string; filename: string };
@@ -37,14 +38,18 @@ function UploadPreviewActionSheet({ upload }: { upload: Upload }) {
 const sheet = { default: UploadPreviewActionSheet };
 
 // The preset forgets registered modules before each test, so each test registers them again.
-beforeEach(async () => {
+function registerModules(sheetModule: object) {
 	metro.register({ CloudUpload });
 	metro.register(Messages);
-	metro.register(sheet, UPLOAD_PREVIEW_SHEET);
-	await startPlugin();
-});
+	metro.register(sheetModule, UPLOAD_PREVIEW_SHEET);
+}
 
 describe('anonymising uploads', () => {
+	beforeEach(async () => {
+		registerModules(sheet);
+		await startPlugin();
+	});
+
 	test('Discord starts an upload under an anonymous name that keeps the extension', () => {
 		settings.method = 'consistent';
 
@@ -91,6 +96,11 @@ describe('anonymising uploads', () => {
 });
 
 describe('the upload preview sheet', () => {
+	beforeEach(async () => {
+		registerModules(sheet);
+		await startPlugin();
+	});
+
 	function renderSheet(upload: Upload) {
 		const Sheet = sheet.default;
 
@@ -124,5 +134,30 @@ describe('the upload preview sheet', () => {
 		expect(view.find('ActionSheetSwitchRow').props.value).toBe(false);
 		expect(new CloudUpload('1', 'holiday.png').upload()).toBe('holiday.png');
 		expect(new CloudUpload('2', 'holiday.png').upload()).not.toBe('holiday.png');
+	});
+});
+
+describe('the plugin as a whole', () => {
+	test('reports every patch applied to the self test', async () => {
+		registerModules(sheet);
+		await startPlugin();
+
+		expect((await selfTest()).ok).toBe(true);
+	});
+
+	test('keeps anonymising uploads when the preview sheet has an unexpected shape', async () => {
+		registerModules({ default: 'not a component' });
+		await startPlugin();
+
+		expect(new CloudUpload('1', 'passport scan.png').upload()).not.toBe('passport scan.png');
+		expect((await selfTest()).detail).toContain('start failed');
+	});
+
+	test('sends files under their original names again once the plugin stops', async () => {
+		registerModules(sheet);
+		await startPlugin();
+		await stopPlugin();
+
+		expect(new CloudUpload('1', 'passport scan.png').upload()).toBe('passport scan.png');
 	});
 });
