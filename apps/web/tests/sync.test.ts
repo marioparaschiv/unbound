@@ -32,8 +32,6 @@ type FakeDiscordUser = {
 	username: string;
 	global_name: string | null;
 	avatar: string | null;
-	email: string;
-	verified: boolean;
 };
 
 const ALICE_ID = '80351110224678912';
@@ -44,16 +42,12 @@ const DISCORD_USERS: Record<string, FakeDiscordUser> = {
 		username: 'alice',
 		global_name: 'Alice',
 		avatar: null,
-		email: 'alice@example.com',
-		verified: true,
 	},
 	'code-banned': {
 		id: '80351110224678913',
 		username: 'mallory',
 		global_name: null,
 		avatar: 'abc',
-		email: 'mallory@example.com',
-		verified: true,
 	},
 };
 
@@ -77,7 +71,7 @@ const discord = Bun.serve({
 				return Response.json({
 					access_token: code,
 					token_type: 'Bearer',
-					scope: 'identify email',
+					scope: 'identify',
 				});
 			},
 		},
@@ -174,7 +168,7 @@ describe('GET /api/v1/auth/discord', () => {
 		expect(config).toEqual({
 			clientId: 'discord-client',
 			redirectUri: 'http://localhost:3000/api/auth/callback/discord',
-			scopes: ['identify', 'email'],
+			scopes: ['identify'],
 		});
 	});
 });
@@ -211,6 +205,10 @@ describe('POST /api/v1/auth/discord', () => {
 		expect(accounts.map((row) => [row.providerId, row.userId])).toEqual([
 			['discord', first.user.id],
 		]);
+
+		const stored = await ctx.db.query.user.findFirst({ where: { id: first.user.id } });
+
+		expect(stored?.email).toBe(`${ALICE_ID}@discord.invalid`);
 
 		const state = await getState(new Headers({ authorization: `Bearer ${second.token}` }));
 

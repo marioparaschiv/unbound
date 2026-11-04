@@ -140,6 +140,35 @@ async function writeProfile(ctx: AppContext, id: DiscordId, lookup: StoredLookup
 }
 
 /**
+ * @description Reads one Discord user from the profile cache, fetching and caching it first when it
+ * is missing or stale. A failed fetch falls back to the stale copy.
+ * @param ctx The application context.
+ * @param id The Discord id.
+ * @returns The Discord user, or `undefined` when Discord has no such user or never answered.
+ */
+export async function readDiscordUser(
+	ctx: AppContext,
+	id: DiscordId,
+): Promise<DiscordUser | undefined> {
+	const cached = (await readProfiles(ctx, [id])).get(id);
+	const stale = cached?.kind === 'found' ? cached.user : undefined;
+
+	if (!isStale(ctx, cached)) {
+		return stale;
+	}
+
+	const lookup = await fetchDiscordUser(ctx.env, id);
+
+	if (lookup.kind === 'rate_limited' || lookup.kind === 'failed') {
+		return stale;
+	}
+
+	await writeProfile(ctx, id, lookup);
+
+	return lookup.kind === 'found' ? lookup.user : undefined;
+}
+
+/**
  * @description Fetches every listed author whose profile is missing or stale, oldest first.
  * @param ctx The application context.
  * @param signal Stops the sweep before its next lookup.
@@ -305,6 +334,7 @@ export function requestProfileRefresh() {
 
 export default {
 	readProfiles,
+	readDiscordUser,
 	isStale,
 	refreshDiscordProfiles,
 	startProfileRefresher,

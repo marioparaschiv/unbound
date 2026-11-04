@@ -18,8 +18,8 @@ function PrivacyPage() {
 				</ProseParagraph>
 				<ProseList>
 					<ProseItem>
-						<strong>Account Information:</strong> Email address, username, and
-						authentication credentials
+						<strong>Account Information:</strong> Username and authentication
+						credentials
 					</ProseItem>
 					<ProseItem>
 						<strong>OAuth Credentials:</strong> If you sign in using GitHub or Discord,

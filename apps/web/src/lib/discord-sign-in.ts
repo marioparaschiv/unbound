@@ -1,14 +1,15 @@
 import type { AccountOAuthConfig, AccountSignInResponse } from '@unbound-app/contracts/account';
 import { parse, Type, type StaticDecode } from '@unbound-app/contracts/schema';
 
+import { getPlaceholderEmail } from '~/lib/auth/placeholder-email';
 import { getAvatarUrl, getDefaultAvatarUrl } from '~/lib/discord';
 import { isBanned, toCallerProfile } from '~/lib/api/caller';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
 import type { Env } from '~/lib/env';
 
-// `email` lets a first sign-in create the account exactly as the web's Discord sign-in would.
-const SCOPES = ['identify', 'email'];
+/** The Discord scopes both web and in-app sign-in request; no email, so sign-up never needs one. */
+export const DISCORD_SCOPES = ['identify'];
 
 const tokenResponseSchema = Type.Object({
 	access_token: Type.String({ minLength: 1 }),
@@ -21,8 +22,6 @@ const discordUserSchema = Type.Object({
 	global_name: Type.Optional(Type.Union([Type.String(), Type.Null()])),
 	discriminator: Type.Optional(Type.String()),
 	avatar: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-	email: Type.Optional(Type.Union([Type.String(), Type.Null()])),
-	verified: Type.Optional(Type.Boolean()),
 });
 
 type DiscordUser = StaticDecode<typeof discordUserSchema>;
@@ -59,7 +58,7 @@ export function getDiscordOAuthConfig(env: Env): AccountOAuthConfig {
 	return {
 		clientId: env.DISCORD_CLIENT_ID,
 		redirectUri: new URL('/api/auth/callback/discord', env.PUBLIC_URL).href,
-		scopes: SCOPES,
+		scopes: DISCORD_SCOPES,
 	};
 }
 
@@ -111,20 +110,11 @@ async function findOrCreateUser(ctx: AppContext, profile: DiscordProfile): Promi
 		return owner.user.id;
 	}
 
-	if (!user.email) {
-		throw new ApiError('invalid_request', 'Discord did not share an email address.');
-	}
-
-	// Web sign-in never links by email either, so a taken email is someone else's account.
-	if (await internalAdapter.findUserByEmail(user.email)) {
-		throw new ApiError('forbidden', 'Another Unbound account uses this email address.');
-	}
-
 	const created = await internalAdapter.createOAuthUser(
 		{
 			name: user.global_name || user.username,
-			email: user.email,
-			emailVerified: user.verified ?? false,
+			email: getPlaceholderEmail(user.id),
+			emailVerified: false,
 			image: avatarUrl(user),
 		},
 		{ providerId: 'discord', accountId: user.id, scope },
