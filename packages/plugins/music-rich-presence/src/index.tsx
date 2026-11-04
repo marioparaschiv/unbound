@@ -23,4 +23,5 @@ export function stop() {
 	return pending;
 }
 
-export { featureSelfTest as selfTest, SettingsPanel };
+export const selfTest = featureSelfTest;
+export { SettingsPanel };

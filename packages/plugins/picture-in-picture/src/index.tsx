@@ -40,4 +40,4 @@ export function stop() {
 	return pending;
 }
 
-export { featureSelfTest as selfTest };
+export const selfTest = featureSelfTest;
