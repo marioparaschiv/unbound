@@ -1,25 +1,9 @@
 import { flux, metro, render, startPlugin, toasts } from '@unbound-app/api/testing';
-import { beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { Pressable, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 
-// The testing kit has no fake for Discord's design components, so these stand in for the few the plugin draws.
-mock.module('@unbound-app/api/metro/components', () => ({
-	Discord: {
-		ActionSheet: ({ children }: { children?: ReactNode }) => <View>{children}</View>,
-		Text: ({ children }: { children?: ReactNode }) => <Text>{children}</Text>,
-		createStyles: () => () => ({ icon: { color: '#fff' } }),
-	},
-	BottomSheets: {
-		ActionSheetRow: ({ label, onPress }: { label: string; onPress: () => void }) => (
-			<Pressable onPress={onPress}>
-				<Text>{label}</Text>
-			</Pressable>
-		),
-	},
-}));
-
-type MenuItem = { label: string; action: () => void };
+type MenuItem = { label: string; action?: () => void };
 type Menu = { key: string; items: MenuItem[] };
 type Opened = { key: string; Sheet: () => ReactNode };
 
@@ -38,9 +22,20 @@ const ActionSheets = {
 	hideActionSheet: (_key: string) => undefined,
 };
 
+// Discord's localisation module: `intl.string` turns the "View Main Profile" message into the user's language.
+let mainProfileLabel = 'View Main Profile';
+
+const i18n = {
+	getLanguages: () => [],
+	getSystemLocale: () => 'en-US',
+	intl: { string: (message: string) => (message === 'GISTta' ? mainProfileLabel : message) },
+	t: { GISTta: 'GISTta' },
+};
+
+const user = { id: '2', username: 'wumpus' };
 const guild = { id: '1', name: 'Wumpus Club', ownerId: '2' };
 
-beforeAll(() => {
+beforeEach(async () => {
 	metro.register(ContextMenus);
 	metro.register(ActionSheets);
 	metro.register({
@@ -49,14 +44,13 @@ beforeAll(() => {
 		setImage: () => undefined,
 		getImage: () => undefined,
 	});
-});
-
-beforeEach(async () => {
+	metro.register(i18n);
+	mainProfileLabel = 'View Main Profile';
 	opened.length = 0;
 	copied.length = 0;
 	flux.seed({
 		Guild: { getGuild: (id: string) => (id === guild.id ? guild : undefined) },
-		User: { getUser: () => undefined },
+		User: { getUser: (id: string) => (id === user.id ? user : undefined) },
 		Channel: { getChannel: () => undefined },
 		UserProfile: {},
 	});
@@ -74,7 +68,7 @@ describe("a server's context menu", () => {
 		ContextMenus.showContextMenu(menu);
 		expect(menu.items.map((item) => item.label)).toEqual(['View Raw']);
 
-		menu.items[0]?.action();
+		menu.items[0]?.action?.();
 		await settle();
 
 		expect(opened).toHaveLength(1);
@@ -91,7 +85,7 @@ describe("a server's context menu", () => {
 		const menu: Menu = { key: guild.id, items: [] };
 
 		ContextMenus.showContextMenu(menu);
-		menu.items[0]?.action();
+		menu.items[0]?.action?.();
 		await settle();
 
 		const sheet = render(opened[0]?.Sheet() as ReactNode);
@@ -123,6 +117,54 @@ describe("a server's context menu", () => {
 		ContextMenus.showContextMenu(menu);
 
 		expect(menu.items).toEqual([]);
+	});
+});
+
+describe("a profile's overflow menu", () => {
+	async function openProfile() {
+		ActionSheets.openLazy(Promise.resolve({ default: () => null }), 'UserProfileActionSheet', {
+			userId: user.id,
+			user,
+		});
+		await settle();
+	}
+
+	function overflowMenu(label: string): Menu {
+		return { key: 'overflow', items: [{ label, action: () => undefined }] };
+	}
+
+	test('gets a View Raw item next to View Main Profile', async () => {
+		await openProfile();
+
+		const menu = overflowMenu('View Main Profile');
+
+		ContextMenus.showContextMenu(menu);
+
+		expect(menu.items.map((item) => item.label)).toEqual(['View Main Profile', 'View Raw']);
+	});
+
+	test('gets the item whatever language Discord shows the label in', async () => {
+		mainProfileLabel = 'Voir le profil principal';
+		await openProfile();
+
+		const menu = overflowMenu('Voir le profil principal');
+
+		ContextMenus.showContextMenu(menu);
+
+		expect(menu.items.map((item) => item.label)).toEqual([
+			'Voir le profil principal',
+			'View Raw',
+		]);
+	});
+
+	test('stays unchanged for a menu without the main profile item', async () => {
+		await openProfile();
+
+		const menu = overflowMenu('Block');
+
+		ContextMenus.showContextMenu(menu);
+
+		expect(menu.items.map((item) => item.label)).toEqual(['Block']);
 	});
 });
 
@@ -169,13 +211,13 @@ describe("a message's action sheet", () => {
 		await settle();
 
 		const sheet = render(opened[0]?.Sheet() as ReactNode);
-		const labels = sheet.findAll('Text').map((node) => node.text());
+		const labels = sheet
+			.findAll((node) => node.name === 'Row' || node.name === 'ActionSheetRow')
+			.map((node) => node.props.label);
 
 		expect(labels).toEqual(['Reply', 'View Raw', 'Copy Text']);
 
-		const row = sheet.findAll('Pressable').find((node) => node.text() === 'View Raw');
-
-		row?.props.onPress?.(Object.create(null));
+		sheet.find('ActionSheetRow').props.onPress?.();
 		await settle();
 
 		const raw = render(opened[1]?.Sheet() as ReactNode);

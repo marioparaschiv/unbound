@@ -2,7 +2,7 @@ import { messages } from '@unbound-app/i18n';
 import { patcher } from '@unbound-app/api';
 
 import { getRawItem, type RawItem } from '~/raw/raw-items';
-import { ContextMenus, GuildStore } from '~/raw/modules';
+import { ContextMenus, GuildStore, getViewMainProfileLabel } from '~/raw/modules';
 import type { SheetState } from '~/raw/action-sheets';
 import RawIcon from '~/raw/components/raw-icon';
 import { openRawSheet } from '~/raw/sheets';
@@ -51,9 +51,12 @@ export function patchContextMenus(state: SheetState): void {
 
 		const { profileUserId } = state;
 
+		const mainProfileLabel = getViewMainProfileLabel();
+
 		if (
 			!profileUserId ||
-			!menu.items?.some((item: MenuItem) => item.label === 'View Main Profile')
+			!mainProfileLabel ||
+			!menu.items?.some((item: MenuItem) => item.label === mainProfileLabel)
 		) {
 			return;
 		}
