@@ -1,6 +1,5 @@
 import { settings } from '@unbound-app/settings';
-import { patcher } from '@unbound-app/api';
-import { Dimensions } from 'react-native';
+import { metro, patcher } from '@unbound-app/api';
 
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
@@ -73,7 +72,12 @@ export function startPronouns(): void {
 
 		if (!pronouns || typeof row?.timestamp !== 'string') return;
 
-		addPronouns(row, pronouns, username, Dimensions.get('window').width);
+		addPronouns(
+			row,
+			pronouns,
+			username,
+			metro.common.ReactNative.Dimensions.get('window').width,
+		);
 	});
 
 	recordApplied(1);
