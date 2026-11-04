@@ -2,12 +2,14 @@ import { sharedStagedStickers } from '@unbound-plugins/shared/stickers/staged-st
 import { Animated, Pressable, type PressableStateCallbackType } from 'react-native';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { Portal } from '@unbound-app/api/metro/components';
+import { messages } from '@unbound-app/i18n';
 import { flux } from '@unbound-app/api';
 
-import { DraftStore, Haptics, PreviewRunning, type Sticker } from '~/modules';
+import type { Sticker } from '~/types';
+import { DraftStore, Haptics } from '~/preview/modules';
 import { Button, CHANNEL_MESSAGE_DRAFT_TYPE, Timing } from '~/constants';
-import PreviewOverlay from '~/components/preview-overlay';
-import { dismissKeyboard } from '~/keyboard';
+import PreviewOverlay from '~/preview/components/preview-overlay';
+import { dismissKeyboard } from '~/preview/keyboard';
 
 type PreviewButtonProps = {
 	channelId: string;
@@ -78,7 +80,6 @@ function useSlotAnimation(visible: boolean) {
 }
 
 function PreviewButton({ channelId, icon, trailingGap = 0 }: PreviewButtonProps) {
-	const running = PreviewRunning.useRunning();
 	const [open, setOpen] = useState(false);
 	const cancelOpen = useRef<() => void>(undefined);
 	const draft = useDraft(channelId);
@@ -91,9 +92,6 @@ function PreviewButton({ channelId, icon, trailingGap = 0 }: PreviewButtonProps)
 	function openPreview() {
 		cancelOpen.current = dismissKeyboard(channelId, () => setOpen(true));
 	}
-
-	// The patch is gone once the plugin stops, but the chat input keeps this element until it re-renders.
-	if (!running) return null;
 
 	return (
 		<>
@@ -110,7 +108,7 @@ function PreviewButton({ channelId, icon, trailingGap = 0 }: PreviewButtonProps)
 			>
 				<Pressable
 					accessibilityRole='button'
-					accessibilityLabel='Preview message'
+					accessibilityLabel={messages.PREVIEW_MESSAGE}
 					onPress={openPreview}
 					onPressIn={() =>
 						Haptics.triggerHapticFeedback?.(Haptics.HapticFeedbackTypes?.IMPACT_LIGHT)

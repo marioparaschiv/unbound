@@ -1,12 +1,14 @@
 import { Animated, KeyboardAvoidingView, Pressable, Text, View } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
+import { format, messages } from '@unbound-app/i18n';
 import { metro } from '@unbound-app/api';
 
-import { extractUrls, fetchLinkEmbed, type LinkEmbed } from '~/embeds';
-import { ChatItem, Haptics, RowManager, type Sticker } from '~/modules';
+import { ChatItem, Haptics, RowManager } from '~/preview/modules';
+import { extractUrls, fetchLinkEmbed, type LinkEmbed } from '~/preview/embeds';
+import type { Sticker } from '~/types';
 import { MAX_PREVIEW_URLS, MESSAGE_ROW_TYPE, Timing } from '~/constants';
-import { createDraftMessage } from '~/draft-message';
-import { applyTextReplace } from '~/text-replace';
+import { createDraftMessage } from '~/preview/draft-message';
+import { applyTextReplace } from '~/preview/text-replace';
 
 type PreviewOverlayProps = {
 	channelId: string;
@@ -60,7 +62,7 @@ function MessagePreview({ channelId, content, stickers, embeds }: MessagePreview
 	} catch (error) {
 		return (
 			<Text style={{ color: '#ff7b72', paddingHorizontal: 14 }}>
-				{`Preview failed: ${(error as Error)?.message}`}
+				{format('PREVIEW_FAILED', { reason: (error as Error)?.message })}
 			</Text>
 		);
 	}
@@ -127,7 +129,7 @@ function PreviewOverlay({ content, onClose, ...props }: PreviewOverlayProps) {
 							paddingBottom: 10,
 						}}
 					>
-						Message Preview
+						{messages.MESSAGE_PREVIEW}
 					</Text>
 					<MessagePreview {...props} content={rendered} embeds={embeds} />
 				</View>

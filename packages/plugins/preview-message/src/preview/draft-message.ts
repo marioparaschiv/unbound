@@ -1,5 +1,7 @@
-import { MessageRecord, Users, type Sticker } from '~/modules';
-import type { LinkEmbed } from '~/embeds';
+import type { LinkEmbed } from '~/preview/embeds';
+import type { Sticker } from '~/types';
+
+import { MessageRecord, Users } from '~/preview/modules';
 
 type DraftMessage = {
 	channelId: string;

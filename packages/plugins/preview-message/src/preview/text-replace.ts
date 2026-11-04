@@ -2,7 +2,7 @@ import { applyRules, normalizeRules } from '@unbound-plugins/shared/text-replace
 
 import { plugins } from '@unbound-app/api';
 
-import { textReplaceSettings } from '~/modules';
+import { textReplaceSettings } from '~/preview/modules';
 
 /**
  * @description Rewrites a draft the way Text Replace will rewrite it on send.

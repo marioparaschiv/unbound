@@ -1,7 +1,7 @@
 import { Keyboard, TextInput } from 'react-native';
 
 import { Timing } from '~/constants';
-import { ChatInputs } from '~/modules';
+import { ChatInputs } from '~/preview/modules';
 
 /**
  * @description Closes the chat's keyboard and custom keyboards, then calls back once it has hidden.
