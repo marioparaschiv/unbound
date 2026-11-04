@@ -1,9 +1,4 @@
-import { isActionSheetRowGroup } from '@unbound-plugins/shared/action-sheets/row-group';
-import {
-	findElement,
-	isElementNode,
-	type ElementNode,
-} from '@unbound-plugins/shared/react/find-element';
+import { isElementNode } from '@unbound-plugins/shared/react/find-element';
 
 type RowProps = {
 	label?: unknown;
@@ -22,22 +17,15 @@ function isLabelledRow(value: unknown): boolean {
 	);
 }
 
-function holdsRows(element: ElementNode): boolean {
+/**
+ * @description Recognizes an element whose children include pressable or switchable labelled rows, as an action sheet's row list does.
+ * @param element Any element from an action sheet's render result.
+ * @returns `true` when at least one child is a labelled row.
+ */
+export function holdsRows(element: { props?: { children?: unknown } }): boolean {
 	const children = element.props?.children;
 
 	return Array.isArray(children) && children.some(isLabelledRow);
-}
-
-/**
- * @description Finds the list of rows an action sheet renders: its row group, or else the first element whose children include pressable or switchable rows.
- * @param result The sheet's render result.
- * @returns The mutable array of rows, or `undefined` when the sheet has none.
- */
-export function findSheetRows(result: unknown): unknown[] | undefined {
-	const group = findElement(result, isActionSheetRowGroup) ?? findElement(result, holdsRows);
-	const rows = group?.props?.children;
-
-	return Array.isArray(rows) ? rows : undefined;
 }
 
 /**
@@ -51,5 +39,3 @@ export function insertRowOnce(rows: unknown[], row: unknown, key: string): void 
 
 	rows.push(row);
 }
-
-export default { findSheetRows, insertRowOnce };

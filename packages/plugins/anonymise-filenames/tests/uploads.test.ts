@@ -1,7 +1,15 @@
 import { describe, expect, test } from 'bun:test';
 
-import { SETTINGS, type Settings } from '~/constants';
-import { createUploadChoices } from '~/uploads';
+import type { Settings } from '@unbound-app/settings';
+
+import { createUploadChoices } from '~/anonymise/uploads';
+
+const SETTINGS: Settings = {
+	anonymiseByDefault: true,
+	method: 'random',
+	randomisedLength: 7,
+	consistent: 'image',
+};
 
 function setup(overrides: Partial<Settings> = {}) {
 	const settings: Settings = { ...SETTINGS, method: 'consistent', ...overrides };

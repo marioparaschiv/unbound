@@ -1,5 +1,6 @@
-import { anonymiseFilename, fileExtension, type NameSources } from '~/filenames';
-import type { Settings } from '~/constants';
+import type { Settings } from '@unbound-app/settings';
+
+import { anonymiseFilename, fileExtension, type NameSources } from '~/anonymise/filenames';
 
 export type Upload = {
 	id?: unknown;

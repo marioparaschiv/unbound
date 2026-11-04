@@ -1,9 +1,10 @@
 import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-sheet-row';
 import { Discord } from '@unbound-app/api/metro/components';
+import { messages } from '@unbound-app/i18n';
 import { assets } from '@unbound-app/api';
 import { useState } from 'react';
 
-import type { Upload, UploadChoices } from '~/uploads';
+import type { Upload, UploadChoices } from '~/anonymise/uploads';
 
 type Props = {
 	upload: Upload;
@@ -28,10 +29,8 @@ export function AnonymiseRow({ upload, choices }: Props) {
 	if (SwitchRow) {
 		return (
 			<SwitchRow
-				label='Anonymise File Name'
-				subLabel={
-					anonymise ? 'Using an anonymous file name' : 'Using the original file name'
-				}
+				label={messages.ANONYMISE_FILE_NAME}
+				subLabel={anonymise ? messages.USING_ANONYMOUS_NAME : messages.USING_ORIGINAL_NAME}
 				value={anonymise}
 				onValueChange={onValueChange}
 			/>
@@ -42,7 +41,7 @@ export function AnonymiseRow({ upload, choices }: Props) {
 
 	return (
 		<ActionSheetRow
-			label={anonymise ? 'Use Original File Name' : 'Anonymise File Name'}
+			label={anonymise ? messages.USE_ORIGINAL_FILE_NAME : messages.ANONYMISE_FILE_NAME}
 			icon={icon ? <ActionSheetRow.Icon source={icon} /> : undefined}
 			onPress={() => onValueChange(!anonymise)}
 		/>

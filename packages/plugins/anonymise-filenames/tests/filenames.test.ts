@@ -1,14 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-	anonymiseFilename,
-	fileExtension,
-	readSettings,
-	toConsistentName,
-	toMethod,
-	toRandomLength,
-} from '~/filenames';
-import { RANDOM_CHARACTERS, SETTINGS } from '~/constants';
+import { anonymiseFilename, fileExtension, toConsistentName } from '~/anonymise/filenames';
+import { RANDOM_CHARACTERS } from '~/constants';
+
+const SETTINGS = {
+	anonymiseByDefault: true,
+	method: 'random',
+	randomisedLength: 7,
+	consistent: 'image',
+} as const;
 
 const fixed = { random: () => 0, now: () => 1730000000000 };
 
@@ -75,43 +75,16 @@ describe('anonymiseFilename', () => {
 	});
 });
 
-describe('settings', () => {
-	test('unknown methods fall back to random', () => {
-		expect(toMethod('timestamp')).toBe('timestamp');
-		expect(toMethod(2)).toBe('random');
-		expect(toMethod(undefined)).toBe('random');
-	});
-
-	test('lengths are whole numbers within range', () => {
-		expect(toRandomLength(7.4)).toBe(7);
-		expect(toRandomLength(0)).toBe(1);
-		expect(toRandomLength(500)).toBe(32);
-		expect(toRandomLength('abc')).toBe(SETTINGS.randomisedLength);
-	});
-
+describe('toConsistentName', () => {
 	test('a blank fixed name falls back to the default', () => {
 		expect(toConsistentName('  scan ')).toBe('scan');
 		expect(toConsistentName('   ')).toBe('image');
-		expect(toConsistentName(null)).toBe('image');
+		expect(toConsistentName('')).toBe('image');
 	});
 
-	test('readSettings normalises every stored value', () => {
-		const stored: Record<string, unknown> = {
-			anonymiseByDefault: false,
-			method: 'bogus',
-			randomisedLength: 99,
-			consistent: '',
-		};
-
-		expect(readSettings((key, fallback) => (key in stored ? stored[key] : fallback))).toEqual({
-			anonymiseByDefault: false,
-			method: 'random',
-			randomisedLength: 32,
-			consistent: 'image',
-		});
-	});
-
-	test('readSettings uses the defaults when nothing is stored', () => {
-		expect(readSettings((_, fallback) => fallback)).toEqual(SETTINGS);
+	test('a blank fixed name names files image', () => {
+		expect(
+			anonymiseFilename('a.png', { ...SETTINGS, method: 'consistent', consistent: ' ' }),
+		).toBe('image.png');
 	});
 });
