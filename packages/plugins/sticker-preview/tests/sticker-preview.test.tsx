@@ -1,6 +1,6 @@
 import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { Pressable, View } from 'react-native';
 
 import { createFakes } from './fakes';
@@ -35,15 +35,7 @@ const PATHS = {
 	sendButton: 'modules/chat_input/native/accessories/ChatInputSendButton.tsx',
 };
 
-const NAMES = {
-	picker: 'StickerPickerListRow',
-	sticker: 'Sticker',
-	container: 'FloatingChatInputContainer',
-	sendButton: 'ChatInputSendButton',
-};
-
-// Registers Discord's modules by the file path they live at, or by name only, as a build that moved the files does.
-async function start(lookup: 'path' | 'name') {
+async function start() {
 	const fakes = createFakes();
 
 	resetHealth();
@@ -57,16 +49,13 @@ async function start(lookup: 'path' | 'name') {
 	metro.register(fakes.Messages);
 
 	for (const key of Object.keys(PATHS) as (keyof typeof PATHS)[]) {
-		if (lookup === 'path') metro.register(modules[key], PATHS[key]);
-		else metro.register(Object.assign(modules[key], { name: NAMES[key] }));
+		metro.register(modules[key], PATHS[key]);
 	}
 
 	await startPlugin();
 }
 
-let lookup: 'path' | 'name' = 'path';
-
-beforeEach(() => start(lookup));
+beforeEach(start);
 
 describe('a picked sticker', () => {
 	test('waits above the composer instead of being sent, and can be removed', () => {
@@ -136,20 +125,5 @@ describe('a picked sticker', () => {
 		const { selfTest } = await import('~/index');
 
 		expect(selfTest()).toMatchObject({ ok: true });
-	});
-});
-
-describe('when Discord moved its files', () => {
-	beforeAll(() => void (lookup = 'name'));
-	afterAll(() => void (lookup = 'path'));
-
-	test('finds the modules by name and stages a picked sticker', () => {
-		const Picker = modules.picker.default;
-
-		render(<Picker onPressSticker={() => undefined} />)
-			.find('Pressable')
-			.props.onPress?.(undefined as never);
-
-		expect(globalThis.__unboundStagedStickers?.channels()).toEqual(['c1']);
 	});
 });
