@@ -44,7 +44,17 @@ export type Fiber = {
 	children: Fiber[];
 	parent: Fiber | undefined;
 	unmounted: boolean;
+	/** The instance of a class component, kept across renders as its state is. */
+	instance?: ClassInstance;
 };
+
+type ClassInstance = AnyObject & {
+	props: Props;
+	state: AnyObject | null;
+	context: ReactValue;
+};
+
+type ClassComponent = new (props: Props, context: ReactValue) => ClassInstance;
 
 /** A mounted tree: its root fiber, and the operations a test drives it with. */
 export type TestRenderer = {
@@ -387,12 +397,6 @@ function callComponent(root: Root, fiber: Fiber, render: () => ReactValue): Reac
 // Unwraps `memo` and `forwardRef` down to the function that renders.
 function renderFunction(type: ReactValue): RenderFunction | undefined {
 	if (typeof type === 'function') {
-		if (isObject(type.prototype) && 'isReactComponent' in type.prototype) {
-			throw new Error(
-				`The test renderer renders function components only, not the class ${typeName(type)}.`,
-			);
-		}
-
 		return (props) => type(props);
 	}
 
@@ -407,6 +411,84 @@ function renderFunction(type: ReactValue): RenderFunction | undefined {
 	}
 
 	return undefined;
+}
+
+// Unwraps `memo` down to a class component, which `renderFunction` cannot call.
+function classOf(type: ReactValue): ClassComponent | undefined {
+	if (typeof type === 'function') {
+		return isObject(type.prototype) && 'isReactComponent' in type.prototype
+			? (type as ClassComponent)
+			: undefined;
+	}
+
+	const { $$typeof, type: inner } = exotic(type);
+
+	return $$typeof === MEMO ? classOf(inner) : undefined;
+}
+
+// Creates the instance on mount, with the `setState` and `forceUpdate` React gives it.
+function mountClass(root: Root, fiber: Fiber, Class: ClassComponent, props: Props): ClassInstance {
+	const { contextType } = Class as AnyObject;
+	const context = contextType ? readContext(contextType) : {};
+	const instance = new Class(props, context);
+
+	instance.props = props;
+	instance.context = context;
+	instance.state ??= null;
+	instance.setState = (partial: ReactValue, callback?: () => void) => {
+		const next =
+			typeof partial === 'function' ? partial(instance.state, instance.props) : partial;
+
+		if (fiber.unmounted || next === null || next === undefined) return;
+
+		instance.state = { ...instance.state, ...next };
+
+		if (callback) {
+			root.layoutEffects.push(callback);
+		}
+
+		schedule(root);
+	};
+	instance.forceUpdate = (callback?: () => void) => {
+		if (fiber.unmounted) return;
+
+		if (callback) {
+			root.layoutEffects.push(callback);
+		}
+
+		schedule(root);
+	};
+
+	return instance;
+}
+
+function renderClass(root: Root, fiber: Fiber, Class: ClassComponent, props: Props): ReactValue {
+	return callComponent(root, fiber, () => {
+		const mounting = !fiber.instance;
+		const instance = (fiber.instance ??= mountClass(root, fiber, Class, props));
+		const previous = { props: instance.props, state: instance.state };
+		const derive = (Class as AnyObject).getDerivedStateFromProps;
+
+		instance.props = props;
+
+		if (typeof derive === 'function') {
+			const derived = derive(props, instance.state);
+
+			if (derived) {
+				instance.state = { ...instance.state, ...derived };
+			}
+		}
+
+		const output = instance.render();
+
+		root.layoutEffects.push(() =>
+			mounting
+				? instance.componentDidMount?.()
+				: instance.componentDidUpdate?.(previous.props, previous.state),
+		);
+
+		return output;
+	});
 }
 
 function flatten(node: ReactValue, into: ReactValue[] = []): ReactValue[] {
@@ -460,6 +542,7 @@ function unmountFiber(fiber: Fiber) {
 	for (const child of fiber.children) unmountFiber(child);
 
 	fiber.unmounted = true;
+	fiber.instance?.componentWillUnmount?.();
 
 	for (const hook of fiber.hooks) hook.cleanup?.();
 }
@@ -536,6 +619,14 @@ function renderFiber(root: Root, fiber: Fiber, node: ReactValue) {
 		);
 
 		reconcileChildren(root, fiber, output);
+
+		return;
+	}
+
+	const Class = classOf(type);
+
+	if (Class) {
+		reconcileChildren(root, fiber, renderClass(root, fiber, Class, props));
 
 		return;
 	}
