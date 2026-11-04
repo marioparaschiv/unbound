@@ -5,10 +5,8 @@ import { createServerFn } from '@tanstack/react-start';
 import { toCallerProfile } from '~/lib/api/caller';
 import app from '~/lib/app';
 
-/** The signed-in user as pages see them: the API's caller shape plus the email shown on `/account`. */
-export type SessionUser = Caller & {
-	email: string;
-};
+/** The signed-in user as pages see them: the API's caller shape. */
+export type SessionUser = Caller;
 
 export type PageSession = {
 	user: SessionUser;
@@ -25,7 +23,7 @@ export const getSession = createServerFn({ method: 'GET' }).handler(
 
 		if (!session) return null;
 
-		return { user: { ...toCallerProfile(session.user), email: session.user.email } };
+		return { user: toCallerProfile(session.user) };
 	},
 );
 

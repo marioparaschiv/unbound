@@ -1,3 +1,5 @@
+import type { DiscordId } from '~/db/schema';
+
 /** The start of 2015 in Unix milliseconds: the zero point of Discord snowflake timestamps. */
 export const DISCORD_EPOCH = 1_420_070_400_000n;
 
@@ -23,7 +25,7 @@ export function getSnowflakeDate(id: string): Date {
  * @param id The manifest author id.
  * @returns Whether the id is a snowflake worth looking up.
  */
-export function isDiscordId(id: string): boolean {
+export function isDiscordId(id: string): id is DiscordId {
 	return SNOWFLAKE_PATTERN.test(id) && BigInt(id) < SNOWFLAKE_LIMIT;
 }
 

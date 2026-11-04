@@ -5,6 +5,8 @@ import type { Account } from 'better-auth';
 
 import type { SponsorOverview } from '~/lib/sponsors/overview';
 import { getSponsorOverview } from '~/lib/sponsors/overview';
+import { readDiscordUser } from '~/lib/authors/profiles';
+import { isDiscordId } from '~/lib/discord';
 import app from '~/lib/app';
 
 export type AccountApiKey = Pick<
@@ -16,15 +18,17 @@ export type AccountApiKey = Pick<
 export type LinkedAccount = Pick<Account, 'id' | 'providerId'>;
 
 export type AccountOverview = {
+	/** The Discord username shown under the profile name; `null` when Discord did not answer. */
+	username: string | null;
 	accounts: LinkedAccount[];
 	apiKeys: AccountApiKey[];
 	sponsor: SponsorOverview;
 };
 
 /**
- * @description Loads what `/account` manages for the signed-in user: linked accounts, API keys and
- * their GitHub sponsorship.
- * @returns The linked accounts, the user's API keys, newest first, and their sponsorship and perks.
+ * @description Loads what `/account` manages for the signed-in user: their Discord username, linked
+ * accounts, API keys and their GitHub sponsorship.
+ * @returns The username, the linked accounts, the user's API keys, newest first, and their sponsorship and perks.
  */
 export const getAccountOverview = createServerFn({ method: 'GET' }).handler(
 	async (): Promise<AccountOverview> => {
@@ -42,7 +46,16 @@ export const getAccountOverview = createServerFn({ method: 'GET' }).handler(
 			throw new Error('Sign in to see your account.');
 		}
 
+		const discord = accounts.find((account) => account.providerId === 'discord');
+		const [discordUser, sponsor] = await Promise.all([
+			discord && isDiscordId(discord.accountId)
+				? readDiscordUser(app, discord.accountId)
+				: undefined,
+			getSponsorOverview(app, session.user.id),
+		]);
+
 		return {
+			username: discordUser?.username ?? null,
 			accounts: accounts.map((account) => ({
 				id: account.id,
 				providerId: account.providerId,
@@ -55,7 +68,7 @@ export const getAccountOverview = createServerFn({ method: 'GET' }).handler(
 				expiresAt: key.expiresAt,
 				lastRequest: key.lastRequest,
 			})),
-			sponsor: await getSponsorOverview(app, session.user.id),
+			sponsor,
 		};
 	},
 );

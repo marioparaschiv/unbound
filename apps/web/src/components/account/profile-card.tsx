@@ -1,9 +1,10 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query';
 import { useRouter } from '@tanstack/react-router';
 import { IconRectLogout } from 'nucleo-micro-bold';
 import { toast } from 'sonner';
 
 import { Card, CardContent, CardHeader, CardTitle } from '~/components/ui/card';
+import { accountOverviewQuery } from '~/queries/account/account';
 import { signOutMutation } from '~/queries/account/session';
 import type { SessionUser } from '~/lib/auth/session';
 import UserAvatar from '~/components/user-avatar';
@@ -17,6 +18,7 @@ type ProfileCardProps = {
 function ProfileCard({ user }: ProfileCardProps) {
 	const router = useRouter();
 	const { mutate, isPending } = useMutation(signOutMutation(router, '/'));
+	const { username } = useSuspenseQuery(accountOverviewQuery()).data;
 
 	function signOut() {
 		mutate(undefined, { onError: (error) => toast.error(error.message) });
@@ -34,9 +36,11 @@ function ProfileCard({ user }: ProfileCardProps) {
 						<Text variant='text-md' className='font-semibold'>
 							{user.name}
 						</Text>
-						<Text variant='text-sm' color='muted'>
-							{user.email}
-						</Text>
+						{username ? (
+							<Text variant='text-sm' color='muted'>
+								@{username}
+							</Text>
+						) : null}
 					</div>
 					<Button
 						className='ml-auto'

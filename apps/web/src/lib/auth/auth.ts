@@ -10,9 +10,11 @@ import { betterAuth } from 'better-auth';
 
 import { deleteUserWithRecord, recordAuthAdminAction } from '~/lib/moderation-events';
 import { guardAdminEndpoint, guardOwnRoleChange } from '~/lib/auth/admin-guard';
+import { getPlaceholderEmail } from '~/lib/auth/placeholder-email';
 import { API_KEY_HEADER, CLI_CLIENT_ID } from '~/api/client';
 import { DEFAULT_ROLE, ac, roles } from '~/lib/auth/access';
 import { AUTH_ERROR_PATH } from '~/lib/auth/auth-errors';
+import { DISCORD_SCOPES } from '~/lib/discord-sign-in';
 import { grantTeamRole } from '~/lib/team/site-roles';
 import type { FileRoutesByTo } from '~/routeTree.gen';
 import { purgeUserSubmissions } from '~/lib/staging';
@@ -75,6 +77,13 @@ export function createAuth(db: Database, env: Env, storage: Storage): Auth {
 			discord: {
 				clientId: env.DISCORD_CLIENT_ID,
 				clientSecret: env.DISCORD_CLIENT_SECRET,
+				// Sign-up never asks for an email; Better Auth still needs one, so it stores a placeholder.
+				disableDefaultScope: true,
+				scope: DISCORD_SCOPES,
+				mapProfileToUser: (profile) => ({
+					email: getPlaceholderEmail(profile.id),
+					emailVerified: false,
+				}),
 			},
 			github: {
 				clientId: env.GITHUB_CLIENT_ID,

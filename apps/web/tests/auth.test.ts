@@ -16,7 +16,7 @@ function meRequest(headers: Headers) {
 }
 
 describe('Discord sign-in', () => {
-	test('redirects to Discord with the identify and email scopes', async () => {
+	test('redirects to Discord asking for identify alone, not email', async () => {
 		const response = await authRequest(ctx, '/sign-in/social', {
 			method: 'POST',
 			body: JSON.stringify({ provider: 'discord', callbackURL: '/' }),
@@ -29,9 +29,7 @@ describe('Discord sign-in', () => {
 
 		expect(authorize.origin).toBe('https://discord.com');
 		expect(authorize.searchParams.get('client_id')).toBe(ctx.env.DISCORD_CLIENT_ID);
-		expect(authorize.searchParams.get('scope')?.split(' ')).toEqual(
-			expect.arrayContaining(['identify', 'email']),
-		);
+		expect(authorize.searchParams.get('scope')?.split(' ')).toEqual(['identify']);
 	});
 
 	test('creates a user with the user role, returned by get-session', async () => {
