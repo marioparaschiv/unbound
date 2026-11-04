@@ -8,4 +8,4 @@ type ChannelStoreType = {
 
 export const ChannelStore = flux.getStore('Channel') as unknown as ChannelStoreType;
 
-export const RowManager = metro.findByName('RowManager');
+export const byRowManager = metro.filters.byName('RowManager');

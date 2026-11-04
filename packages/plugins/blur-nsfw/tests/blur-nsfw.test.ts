@@ -2,6 +2,8 @@ import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
+import { selfTest } from '~/index';
+
 type Row = {
 	message: {
 		channelId: string;
@@ -32,13 +34,32 @@ function generate(channelId: string) {
 	return new RowManager().generate({ message: { channel_id: channelId } });
 }
 
-beforeEach(async () => {
-	metro.register(RowManager);
+beforeEach(() => {
 	flux.seed({ Channel: { getChannel: (id: string) => channels[id] } });
-	await startPlugin();
+});
+
+describe('starting', () => {
+	test('blurs rows of a RowManager that loads after the plugin starts', async () => {
+		await startPlugin();
+		metro.register(RowManager);
+
+		expect(generate('adult').message.attachments).toMatchObject([{ isSpoiler: true }]);
+	});
+
+	test('reports the row patch as applied', async () => {
+		metro.register(RowManager);
+		await startPlugin();
+
+		expect((await selfTest()).ok).toBe(true);
+	});
 });
 
 describe('rows in channels', () => {
+	beforeEach(async () => {
+		metro.register(RowManager);
+		await startPlugin();
+	});
+
 	test('blur attachments and embed media in an age-restricted channel', () => {
 		const { message } = generate('adult');
 
@@ -69,5 +90,11 @@ describe('rows in channels', () => {
 		await stopPlugin();
 
 		expect(message.attachments).toEqual([{ id: 'a' }]);
+	});
+
+	test('leave rows generated after the plugin stops as sent', async () => {
+		await stopPlugin();
+
+		expect(generate('adult').message.attachments).toEqual([{ id: 'a' }]);
 	});
 });

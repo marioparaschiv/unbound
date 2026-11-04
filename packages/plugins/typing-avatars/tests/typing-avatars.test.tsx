@@ -1,5 +1,7 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
+
+import { selfTest } from '~/index';
 import type { ReactNode } from 'react';
 import { Text } from 'react-native';
 
@@ -57,5 +59,9 @@ describe('the typing indicator', () => {
 
 	test('stays as Discord drew it when no typing user is cached', () => {
 		expect(renderIndicator(['x', 'y']).text()).toBe('typing');
+	});
+
+	test('reports the typing indicator patch as applied', async () => {
+		expect((await selfTest()).ok).toBe(true);
 	});
 });

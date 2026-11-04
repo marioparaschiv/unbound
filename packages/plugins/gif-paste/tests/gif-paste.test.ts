@@ -1,6 +1,8 @@
 import { metro, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
+import { selfTest } from '~/index';
+
 const channelId = 'channel';
 const gifSelection = [
 	channelId,
@@ -70,5 +72,11 @@ describe('selecting a GIF from a reply', () => {
 		expect(reply.sent).toHaveLength(1);
 		expect(composer.text).toBe('');
 		expect(reply.pending).toBe(false);
+	});
+});
+
+describe('starting', () => {
+	test('reports both patches as applied', async () => {
+		expect((await selfTest()).ok).toBe(true);
 	});
 });
