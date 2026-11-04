@@ -1,4 +1,4 @@
-import { ActionSheets } from '~/discord/modules';
+import { ActionSheets } from '~/history/modules';
 import HistorySheet from '~/history/components/history-sheet';
 import type { EditEntry } from '~/log';
 

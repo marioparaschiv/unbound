@@ -1,4 +1,6 @@
-import { DELETED_ATTACHMENT_PREFIX, HELP_ARTICLE_URL } from '~/constants';
+import { messages } from '@unbound-app/i18n';
+
+import { HELP_ARTICLE_URL } from '~/constants';
 
 export type ContentNode = {
 	type: string;
@@ -40,15 +42,15 @@ function deletedIndication(dismissTarget: object | null) {
 				{
 					type: 'link',
 					target: { action: 'bindDismissMessage', message: dismissTarget },
-					content: [{ type: 'text', content: 'Dismiss message' }],
+					content: [{ type: 'text', content: messages.DISMISS_MESSAGE }],
 				},
 			]
 		: [];
 
 	return {
-		content: [{ type: 'text', content: 'This message was deleted' }, ...dismiss],
+		content: [{ type: 'text', content: messages.MESSAGE_DELETED }, ...dismiss],
 		helpArticleLink: HELP_ARTICLE_URL,
-		helpButtonAccessibilityLabel: 'About Message Logger',
+		helpButtonAccessibilityLabel: messages.ABOUT_MESSAGE_LOGGER,
 	};
 }
 
@@ -57,7 +59,10 @@ function withPreviousVersions(
 	versions: readonly ContentNode[][],
 ): ContentNode[] {
 	return [
-		...versions.flatMap((version) => [...version, { type: 'text', content: ' (edited)\n' }]),
+		...versions.flatMap((version) => [
+			...version,
+			{ type: 'text', content: `${messages.EDITED_SUFFIX}\n` },
+		]),
 		...content,
 	];
 }
@@ -65,9 +70,12 @@ function withPreviousVersions(
 function markAttachment(attachment: RowAttachment, deletedIds: ReadonlySet<string>, all: boolean) {
 	if (!all && !(attachment.id && deletedIds.has(attachment.id))) return attachment;
 
-	if (attachment.filename?.startsWith(DELETED_ATTACHMENT_PREFIX)) return attachment;
+	if (attachment.filename?.startsWith(messages.DELETED_ATTACHMENT_PREFIX)) return attachment;
 
-	return { ...attachment, filename: `${DELETED_ATTACHMENT_PREFIX}${attachment.filename ?? ''}` };
+	return {
+		...attachment,
+		filename: `${messages.DELETED_ATTACHMENT_PREFIX}${attachment.filename ?? ''}`,
+	};
 }
 
 /**

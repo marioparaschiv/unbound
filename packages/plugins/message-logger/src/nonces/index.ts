@@ -1,6 +1,7 @@
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { flux } from '@unbound-app/api';
 
-import { MessageStore, UserStore } from '~/discord/modules';
+import { MessageStore, UserStore } from '~/log/modules';
 
 type CreatedMessage = {
 	id?: string;
@@ -11,10 +12,10 @@ type CreatedMessage = {
 
 /**
  * @description Stops another user's message from replacing an earlier sent message through a reused nonce, which would hide that message without a deletion to log.
- * @returns A function that removes the interceptor.
+ * The Addon scope removes the interceptor on `MESSAGE_CREATE` when the plugin stops.
  */
-export function interceptNonceReplacements(): () => void {
-	return flux.interceptAction('MESSAGE_CREATE', (action) => {
+export function startNonces(): void {
+	flux.interceptAction('MESSAGE_CREATE', (action) => {
 		const message = (action as { message?: CreatedMessage }).message;
 
 		if (!message?.nonce || !message.channel_id) return false;
@@ -27,6 +28,6 @@ export function interceptNonceReplacements(): () => void {
 
 		return false;
 	});
-}
 
-export default interceptNonceReplacements;
+	recordApplied(1);
+}
