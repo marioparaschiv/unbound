@@ -30,7 +30,7 @@ function SchemaFieldEntry({ field }: SchemaFieldEntryProps) {
 							{field.constraints.map((constraint) => (
 								<li
 									key={constraint}
-									className='bg-muted px-1.5 py-0.5 rounded-md font-mono text-xs break-all'
+									className='bg-muted px-1.5 py-0.5 rounded-[4px] font-mono text-xs break-all'
 								>
 									{constraint}
 								</li>
