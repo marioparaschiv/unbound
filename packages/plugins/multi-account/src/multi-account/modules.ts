@@ -5,6 +5,4 @@ type MultiAccountStoreType = FluxStore & {
 	getCanUseMultiAccountMobile(): boolean;
 };
 
-export const MultiAccountStore = flux.getStore('MultiAccount', {
-	lazy: true,
-}) as MultiAccountStoreType;
+export const MultiAccountStore = flux.getStore('MultiAccount') as MultiAccountStoreType;

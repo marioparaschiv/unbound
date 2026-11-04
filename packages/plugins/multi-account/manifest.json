@@ -10,6 +10,6 @@
 	],
 	"version": "1.0.4",
 	"icon": "UserCircleIcon",
-	"main": "index.ts",
+	"main": "index.tsx",
 	"startAfterFirstFrame": true
 }
