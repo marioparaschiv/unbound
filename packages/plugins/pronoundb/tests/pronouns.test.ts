@@ -1,6 +1,8 @@
-import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+
+import { selfTest } from '~/index';
 
 type Author = { id: string; username: string; bot?: boolean };
 type Row = { message: { timestamp: string; timestampAccessibilityLabel: string } };
@@ -23,7 +25,7 @@ function seedStores(profilePronouns?: string) {
 	flux.seed({
 		Channel: { getChannel: () => undefined },
 		User: { getCurrentUser: () => ({ id: 'me' }) },
-		Message: { emitChange: () => {} },
+		Message: { emitChange: () => resolveLookup() },
 		UserProfile: {
 			getUserProfile: () => ({ pronouns: profilePronouns }),
 			getGuildMemberProfile: () => undefined,
@@ -38,8 +40,13 @@ function answerPronounDB(sets: Record<string, string[]>) {
 		)) as unknown as typeof fetch;
 }
 
-async function lookupSettles() {
-	await Bun.sleep(20);
+// The plugin redraws rows through `MessageStore.emitChange` once a batch of lookups lands, so that call is the signal to wait for.
+let resolveLookup: () => void = () => {};
+
+function lookupLands(): Promise<void> {
+	return new Promise((resolve) => {
+		resolveLookup = resolve;
+	});
 }
 
 beforeEach(async () => {
@@ -66,9 +73,11 @@ describe('pronouns in the message header', () => {
 	test('shows PronounDB pronouns once they are fetched', async () => {
 		answerPronounDB({ u1: ['he'] });
 
+		const landed = lookupLands();
+
 		expect(render({ id: 'u1', username: 'u1' }).timestamp).toBe('21:02');
 
-		await lookupSettles();
+		await landed;
 
 		expect(render({ id: 'u1', username: 'u1' }).timestamp).toBe('21:02 • he/him');
 	});
@@ -76,8 +85,11 @@ describe('pronouns in the message header', () => {
 	test('capitalizes them on request', async () => {
 		settings.format = 'capitalized';
 		answerPronounDB({ u1: ['they'] });
+
+		const landed = lookupLands();
+
 		render({ id: 'u1', username: 'u1' });
-		await lookupSettles();
+		await landed;
 
 		expect(render({ id: 'u1', username: 'u1' }).timestamp).toBe('21:02 • They/Them');
 	});
@@ -86,8 +98,11 @@ describe('pronouns in the message header', () => {
 		settings.priority = 'discord';
 		seedStores('xe/xem');
 		answerPronounDB({ u1: ['he'] });
+
+		const landed = lookupLands();
+
 		render({ id: 'u1', username: 'u1' });
-		await lookupSettles();
+		await landed;
 
 		expect(render({ id: 'u1', username: 'u1' }).timestamp).toBe('21:02 • xe/xem');
 	});
@@ -105,5 +120,16 @@ describe('pronouns in the message header', () => {
 
 		expect(render({ id: 'b1', username: 'b1', bot: true }).timestamp).toBe('21:02');
 		expect(render({ id: 'u1', username: 'u1' }, 46).timestamp).toBe('21:02');
+	});
+
+	test('shows no pronouns in headers built after the plugin stops', async () => {
+		seedStores('she/her');
+		await stopPlugin();
+
+		expect(render({ id: 'u1', username: 'u1' }).timestamp).toBe('21:02');
+	});
+
+	test('reports its patch applied to the self test', async () => {
+		expect((await selfTest()).ok).toBe(true);
 	});
 });

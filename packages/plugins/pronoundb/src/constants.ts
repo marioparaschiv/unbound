@@ -1,6 +1,6 @@
 import { messages } from '@unbound-app/i18n';
 
-// Each label is read when it is shown, so it follows the user's language.
+// Each entry returns its label when called, so the label follows the language the user has at that moment.
 export const PRONOUN_LABELS: Record<string, () => string> = {
 	any: () => messages.PRONOUN_ANY,
 	ask: () => messages.PRONOUN_ASK,
