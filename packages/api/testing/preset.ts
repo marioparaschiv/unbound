@@ -20,11 +20,22 @@ import { createFakeReactNative, type HostPropsByName } from './fake-react-native
 import { installAddonGlobals, type FakeUnbound } from './install-addon-globals';
 import { createFakeLocales, SOURCE_LOCALE } from './fake-locales';
 import { createFakeAssets, createFakeFlux } from './fake-api';
+import { createJsxRuntimes } from './unfrozen-elements';
 import { resetSession, startSession } from './session';
 import { forgetPlugin } from './plugin-lifecycle';
+import { createFakeUi } from './fake-components';
+import { createFakeNative } from './fake-native';
+import { createFakeUtils } from './fake-utils';
 import { unmountAll } from './test-renderer';
+import { createFakeFs } from './fake-fs';
 
 type SvgProps = Omit<HostPropsByName['SvgXml'], 'xml' | 'asset'>;
+
+// The namespaces that serve nested modules, as `unbound.metro.components` is `@unbound-app/api/metro/components`.
+const NESTED = new Map([
+	['metro', ['api', 'common', 'components', 'filters', 'stores']],
+	['utils', ['react']],
+]);
 
 const IMAGE = /\.(png|jpe?g|webp|gif)$/i;
 const SVG = /\.svg$/i;
@@ -105,17 +116,50 @@ const toasts = createFakeToasts(() => lookup);
 const dialogs = createFakeDialogs(() => lookup);
 const flux = createFakeFlux(listeners);
 const assets = createFakeAssets(listeners);
-const scope = installAddonGlobals({ manifest, unbound: { toasts, dialogs, flux, assets } });
+const native = createFakeNative();
+const fs = createFakeFs();
+const reactNative = createFakeReactNative(() => native.state.platform);
+const scope = installAddonGlobals({
+	manifest,
+	unbound: {
+		toasts,
+		dialogs,
+		flux,
+		assets,
+		native: native.namespace,
+		ui: createFakeUi(),
+		utils: createFakeUtils(),
+		fs,
+	},
+});
 
 Object.assign(scope.unbound, trackedNamespaces(scope.unbound, listeners));
 // On device the scope's `React` is Discord's real one; the fake one cannot re-render.
 Reflect.set(globalThis, 'React', React);
+Object.assign(scope.metro.common, { React, ReactNative: reactNative });
+Object.assign(scope.metro.stores, {
+	Accessibility: flux.getStore('Accessibility'),
+	Theme: flux.getStore('Theme'),
+	Users: flux.getStore('User'),
+	Guilds: flux.getStore('Guild'),
+});
 
-mock.module('react-native', () => createFakeReactNative());
+mock.module('react-native', () => reactNative);
 mock.module('@unbound-app/api', () => scope.unbound);
 
 for (const [name, namespace] of Object.entries(scope.unbound)) {
 	mock.module(`@unbound-app/api/${name}`, () => namespace);
+
+	// A namespace that nests others serves each one at its own path, such as `@unbound-app/api/metro/components`.
+	for (const [nested, members] of Object.entries(namespace)) {
+		if (NESTED.get(name)?.includes(nested)) {
+			mock.module(`@unbound-app/api/${name}/${nested}`, () => members);
+		}
+	}
+}
+
+for (const [specifier, runtime] of Object.entries(createJsxRuntimes())) {
+	mock.module(specifier, () => runtime);
 }
 
 if (locales) {
@@ -178,6 +222,8 @@ startSession({
 	assets,
 	locales,
 	settings,
+	native,
+	fs,
 });
 
 beforeEach(() => {
