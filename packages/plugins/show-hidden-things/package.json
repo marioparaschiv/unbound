@@ -5,7 +5,8 @@
 	"description": "Displays hidden and moderator-only features regardless of permissions.",
 	"type": "module",
 	"scripts": {
-		"build": "rollup -c"
+		"build": "rollup -c",
+		"test": "bun test"
 	},
 	"dependencies": {
 		"@unbound-plugins/shared": "workspace:*"

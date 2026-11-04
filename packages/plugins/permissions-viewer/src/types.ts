@@ -1,6 +1,6 @@
 import type { FluxChannel, FluxGuild, FluxStore, FluxUser } from '@unbound-app/api/flux';
 
-import type { Overwrite, Role } from '~/permissions/model';
+import type { Overwrite, Role } from '~/viewer/permissions/model';
 
 export type GuildRole = Role & {
 	icon?: string | null;

@@ -1,27 +1,14 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
-import { UserStore } from '~/modules';
-import { syncPresence } from '~/presence';
-import { PLUGIN_NAME } from '~/constants';
-import SettingsPanel from '~/components/settings-panel';
-
-let dispose: () => Promise<void> | undefined = () => undefined;
+import { startPresence, stopPresence } from '~/presence';
 
 export function start() {
-	if (!ensureModules(PLUGIN_NAME, { UserStore })) return;
-
-	dispose = applyFeatures(PLUGIN_NAME, [syncPresence]);
+	startPresence();
 }
 
+/** Clears the activity the plugin sent, which the Addon scope cannot see. */
 export function stop() {
-	const pending = dispose();
-
-	dispose = () => undefined;
-
-	return pending;
+	stopPresence();
 }
 
-export const selfTest = featureSelfTest;
-export { SettingsPanel };
+export { featureSelfTest as selfTest };

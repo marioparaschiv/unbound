@@ -10,7 +10,7 @@
 
 - :music: **Scrobbler** picks **Last.fm**, **ListenBrainz** or a self-hosted **ListenBrainz Compatible** instance. Last.fm by default.
 - :user: **Username** is your name on that scrobbler. Nothing shows until it is set.
-- :lock: **API Key** is your own Last.fm API key, which avoids the rate limit of the shared key. **Create an API Key** opens the Last.fm page that makes one.
+- :lock: **API Key** is your own Last.fm API key, which avoids the rate limit of the shared key. Its description links the Last.fm page that makes one.
 - :server: **Instance URL** and **API URL** point at a self-hosted ListenBrainz. Both are needed.
 - :text: **Custom Status Text** is the activity name, with `{artist}`, `{album}` and `{title}` for the playing track. "some music" by default.
 - :pen: **Activity Name** uses the custom text, the music service name, **Artist - Song**, **Song - Artist**, the artist, the song, or the album.
