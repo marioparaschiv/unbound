@@ -24,18 +24,18 @@ function isGiftItem(child: ReactNode): boolean {
 
 /**
  * @description Removes the animated slot that holds the gift button from the composer's right-hand actions.
- * @param element The rendered right-hand actions.
+ * @param node The rendered right-hand actions.
  * @returns A copy without the gift slot, or `undefined` when there was none to remove.
  */
-export function withoutGiftItem(
-	element: ReactElement<ParentProps>,
-): ReactElement<ParentProps> | undefined {
-	const children = Children.toArray(element.props.children);
+export function withoutGiftItem(node: ReactNode): ReactElement<ParentProps> | undefined {
+	if (!isValidElement<ParentProps>(node)) return;
+
+	const children = Children.toArray(node.props.children);
 	const kept = children.filter((child) => !isGiftItem(child));
 
 	if (kept.length === children.length) return;
 
-	return cloneElement(element, undefined, ...kept);
+	return cloneElement(node, undefined, ...kept);
 }
 
 export default withoutGiftItem;
