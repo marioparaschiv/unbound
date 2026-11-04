@@ -31,6 +31,7 @@ import hermesVersions from './plugins/hermes-versions';
 import releaseModules from './plugins/release-modules';
 import staticAssets from './plugins/static-assets';
 import { bytecodeVersions } from './hermes.json';
+import { buildDevtools } from './devtools';
 import worklets from './plugins/worklets';
 import libraries from './shim-libraries';
 import refresh from './plugins/refresh';
@@ -260,6 +261,8 @@ async function build() {
 		for (const flavour of [DEFAULT_FLAVOUR, DEV_FLAVOUR]) {
 			await writeFlavour(flavour);
 		}
+
+		await buildDevtools();
 
 		const problem = writeManifest({
 			revision: GIT_REVISION,

@@ -57,6 +57,11 @@ public:
                                uint32_t                          bytecodeVersion);
     std::string downloadURL(const std::optional<std::string> &updateURL, uint32_t bytecodeVersion);
 
+    // The DevTools backend the bundle at `bundlePath` was built with, verified against that
+    // bundle's manifest and cached beside it; downloads it on first use.
+    std::optional<std::string> devtoolsScript(const std::string &bundlePath,
+                                              uint32_t           bytecodeVersion);
+
     bool markBundleAttempted(const std::string &path);
     bool acceptBundle(const std::string &path);
     void rejectBundle(const std::string &path);

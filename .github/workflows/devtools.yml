@@ -10,7 +10,6 @@ on:
     pull_request:
         paths:
             - 'apps/devtools/**'
-            - 'packages/loader/bootstrap/devtools.js'
             - '.github/workflows/devtools.yml'
     workflow_call:
         inputs:

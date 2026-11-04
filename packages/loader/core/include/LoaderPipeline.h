@@ -66,7 +66,7 @@ private:
     bool settleFirstDownload(uint64_t token, std::optional<std::string> path);
     std::optional<SavedBundle> awaitFirstDownload(uint64_t token);
     bool evaluate(facebook::jsi::Runtime &runtime, SavedBundle saved, uint64_t token);
-    void injectPreBundle(facebook::jsi::Runtime &runtime);
+    void injectPreBundle(facebook::jsi::Runtime &runtime, const std::string &bundlePath);
     void announceCrashDisabledAddons();
 
     std::shared_ptr<LoaderHost> host_;

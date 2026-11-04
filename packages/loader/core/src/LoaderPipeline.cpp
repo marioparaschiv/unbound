@@ -166,18 +166,21 @@ void LoaderPipeline::announceCrashDisabledAddons()
     }
 }
 
-void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime)
+void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime, const std::string &bundlePath)
 {
     host_->installNativeModules(runtime);
     installConsoleCapture(runtime);
     announceCrashDisabledAddons();
 
+    // Before the bundle and Discord's, so the backend installs React's DevTools hook before React
+    // loads.
     if (settings_.getBoolean("loader.devtools", false))
     {
-        if (std::optional<std::string> devtools = bootstrap::script(bootstrap::kDevtools))
+        if (std::optional<std::string> devtools =
+                updater_.devtoolsScript(bundlePath, host_->runtimeBytecodeVersion()))
         {
             log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Executing DevTools bundle...");
-            evaluateScript(runtime, *devtools, "unbound:devtools");
+            evaluateScript(runtime, std::move(*devtools), "unbound:devtools");
         }
     }
 
@@ -277,7 +280,7 @@ bool LoaderPipeline::evaluate(jsi::Runtime &runtime, SavedBundle saved, uint64_t
     }
 
     global.setProperty(runtime, "__loaderBundleInstalled", jsi::Value(true));
-    injectPreBundle(runtime);
+    injectPreBundle(runtime, saved.path);
 
     log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Evaluating Unbound's bundle before Discord's...");
     if (!evaluateScript(runtime, std::move(saved.bundle), "unbound"))

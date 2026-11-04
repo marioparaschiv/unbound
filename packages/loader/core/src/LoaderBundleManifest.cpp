@@ -187,6 +187,20 @@ std::string BundleManifest::bundleFile(uint32_t bytecodeVersion, bool developerM
     return hermes ? "unbound." + std::to_string(bytecodeVersion) + ".bundle" : "unbound.js";
 }
 
+std::optional<std::string> BundleManifest::devtoolsFile(uint32_t bytecodeVersion) const
+{
+    std::string bytecode = "devtools." + std::to_string(bytecodeVersion) + ".bundle";
+    if (sha512.find(bytecode) != sha512.end())
+    {
+        return bytecode;
+    }
+    if (sha512.find("devtools.js") != sha512.end())
+    {
+        return std::string("devtools.js");
+    }
+    return std::nullopt;
+}
+
 std::optional<BundleFlavour> bundleFlavourNamed(std::string_view file)
 {
     static constexpr std::pair<std::string_view, BundleFlavour> kFlavours[] = {
