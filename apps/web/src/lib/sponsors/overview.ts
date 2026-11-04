@@ -1,10 +1,10 @@
 import type { BadgeClaim, PerkId } from '@unbound-app/contracts/sponsors';
 import { perkIdSchema } from '@unbound-app/contracts/sponsors';
 
+import { canClaimPerk, isPerkUnlocked, PERKS, roleGrantsPerks } from '~/lib/sponsors/perks';
 import type { SponsorStanding, Sponsorship } from '~/lib/sponsors/standing';
 import { findBadgeClaim, toBadgeClaim } from '~/lib/sponsors/badges';
 import { getUserSponsorship } from '~/lib/sponsors/sponsorships';
-import { isPerkUnlocked, PERKS } from '~/lib/sponsors/perks';
 import type { AppContext } from '~/lib/context';
 
 // The account in `.github/FUNDING.yml`, so the sponsor link shows before the sponsors integration is configured.
@@ -17,6 +17,8 @@ export type PerkStatus = {
 	/** The smallest recurring monthly tier that unlocks the perk, in cents. */
 	minimumMonthlyCents: number;
 	unlocked: boolean;
+	/** Whether the user can set up or change the perk now, which a grace period alone does not allow. */
+	claimable: boolean;
 };
 
 export type SponsorOverview = {
@@ -33,12 +35,15 @@ export type SponsorOverview = {
  * @description Loads what `/account` shows about a user's sponsorship and the perks it unlocks.
  * @param ctx The application context.
  * @param userId The user.
+ * @param role The user's `role` column; staff roles unlock every perk without a sponsorship.
  * @returns The overview.
  */
 export async function getSponsorOverview(
 	ctx: AppContext,
 	userId: string,
+	role: string | null | undefined,
 ): Promise<SponsorOverview> {
+	const granted = roleGrantsPerks(role);
 	const [{ githubLinked, standing }, claim] = await Promise.all([
 		getUserSponsorship(ctx, userId),
 		findBadgeClaim(ctx, userId),
@@ -49,7 +54,8 @@ export async function getSponsorOverview(
 		name: PERKS[id].name,
 		description: PERKS[id].description,
 		minimumMonthlyCents: PERKS[id].minimumMonthlyCents,
-		unlocked: isPerkUnlocked(id, standing),
+		unlocked: granted || isPerkUnlocked(id, standing),
+		claimable: granted || canClaimPerk(id, standing),
 	}));
 
 	return {

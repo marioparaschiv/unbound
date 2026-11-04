@@ -51,7 +51,7 @@ export const getAccountOverview = createServerFn({ method: 'GET' }).handler(
 			discord && isDiscordId(discord.accountId)
 				? readDiscordUser(app, discord.accountId)
 				: undefined,
-			getSponsorOverview(app, session.user.id),
+			getSponsorOverview(app, session.user.id, session.user.role),
 		]);
 
 		return {
