@@ -2,9 +2,9 @@ import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 
 import { combineCleanups, forceAnimateArguments, forceProps } from '~/force/patches';
+import { GuildIcon } from '~/servers/modules';
 import {
 	AVATAR_UTILS_PATH,
-	GUILD_ICON_PATH,
 	GUILD_RECORD_ARGUMENTS,
 	GUILD_RECORD_PATH,
 	SERVER_ARGUMENTS,
@@ -24,6 +24,6 @@ export function animateServers(): () => void {
 		whenLoaded<AnyProps>(GUILD_RECORD_PATH, (module) =>
 			forceAnimateArguments(module, GUILD_RECORD_ARGUMENTS),
 		),
-		forceProps(GUILD_ICON_PATH, { animate: true }),
+		forceProps(GuildIcon, { animate: true }),
 	]);
 }

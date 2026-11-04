@@ -1,15 +1,13 @@
-import { findRenderTarget } from '@unbound-plugins/shared/react/render-target';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 import { metro, patcher } from '@unbound-app/api';
 
 import { forceAnimateArgument, type AnimateArgument } from '~/force/arguments';
 import { rowMessageId, withRowFields } from '~/force/row-fields';
+import { MessageRowData } from '~/force/modules';
 import { USER_SETTINGS_PATH } from '~/constants';
 
 type Cleanup = () => void;
-
-const MessageRowData = metro.findByProps('generateMessageRowData', { lazy: true });
 
 /**
  * @description Combines cleanups into one that runs them in reverse order.
@@ -75,23 +73,19 @@ export function forceResult(module: AnyProps, method: string, value: unknown): C
 }
 
 /**
- * @description Renders a component with some props always set, once its module loads.
- * @param path The component module's file path; the component is its `default` export.
+ * @description Renders a component with some props always set.
+ * @param component The module that holds the component as its `default` export.
  * @param props The props to set.
- * @returns A function that stops waiting and removes the patch.
+ * @returns A function that removes the patch.
  */
-export function forceProps(path: string, props: Record<string, unknown>): Cleanup {
-	return whenLoaded<AnyProps>(path, (module) => {
-		const target = findRenderTarget(module);
-
-		if (!target) return;
-
-		return patcher.before(target.holder, target.key, ({ args }) => {
-			const [current, ...rest] = args;
-
-			return [{ ...(current as object), ...props }, ...rest];
-		});
-	});
+export function forceProps(
+	component: ReturnType<typeof metro.findByFilePath>,
+	props: Record<string, unknown>,
+): Cleanup {
+	return patcher.react.before(component, 'default', ({ props: current }) => ({
+		...current,
+		...props,
+	}));
 }
 
 /**

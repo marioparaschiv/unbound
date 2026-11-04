@@ -24,7 +24,7 @@
 <a href="https://github.com/marioparaschiv/unbound/tree/main/packages/plugins/always-animate"><text x="80" y="234" text-anchor="start" dominant-baseline="middle" fill="#f5f5f7" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="15" font-weight="600">Always Animate</text></a>
 <text x="346" y="225" text-anchor="start" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">Animates anything that can be animated: avatars, decorations,</text>
 <text x="346" y="243" text-anchor="start" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">nameplates, profile effects, server icons, emojis, stickers and GIFs.</text>
-<text x="940" y="234" text-anchor="middle" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">1.0.1</text>
+<text x="940" y="234" text-anchor="middle" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">1.0.2</text>
 <text x="1002" y="234" text-anchor="start" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">Fiery, adrian</text>
 <line x1="30" y1="262" x2="1170" y2="262" stroke="#2a2d33" stroke-width="1"/>
 <rect x="16" y="262" width="1168" height="56" rx="8" fill="#17181c"/>

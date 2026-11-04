@@ -12,8 +12,4 @@
 
 ## :gear: Settings
 
-Each part has its own switch, and all are on by default.
-
-- :circle-user: **Profiles**: **Avatars**, **Avatar Decorations**, **Nameplates** and **Profile Effects**.
-- :server: **Servers**: **Server Icons**, which covers server banners too.
-- :face-smile: **Expressions**: **Emojis**, **Stickers** and **GIFs**.
+Each part has its own switch, and all are on by default: **Avatars**, **Avatar Decorations**, **Nameplates**, **Profile Effects**, **Server Icons** (which covers server banners too), **Emojis**, **Stickers** and **GIFs**.
