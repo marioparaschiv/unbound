@@ -1,4 +1,5 @@
 import { metro, startPlugin } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
@@ -21,6 +22,7 @@ const messages = {
 const replies = { deletePendingReply: (_channelId: string) => void (reply.pending = false) };
 
 beforeEach(async () => {
+	resetHealth();
 	composer.text = '';
 	composer.keyboardClosed = false;
 	composer.hasInput = true;
