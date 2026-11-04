@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
@@ -16,6 +15,4 @@ export function startInvitePermissions(): void {
 	patcher.after(InvitePermissions, 'useInvitesDisabledPermission', ({ result }) =>
 		settings.showInvitesPaused ? true : result,
 	);
-
-	recordApplied(1);
 }

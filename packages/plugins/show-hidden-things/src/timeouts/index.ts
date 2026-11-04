@@ -1,5 +1,4 @@
 import getTimeoutDeadline from '@unbound-plugins/shared/members/timeout-deadline';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { FluxGuildMember } from '@unbound-app/api/flux';
 import { settings } from '@unbound-app/settings';
@@ -61,6 +60,4 @@ export function startTimeoutIcons(): void {
 		if (getTimeoutDeadline(member?.communicationDisabledUntil))
 			row.communicationDisabled = true;
 	});
-
-	recordApplied(1);
 }
