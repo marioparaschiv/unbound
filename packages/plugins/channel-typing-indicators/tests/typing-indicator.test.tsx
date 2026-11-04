@@ -1,3 +1,4 @@
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
@@ -5,6 +6,11 @@ import { createElement, memo, type ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { selfTest } from '~/index';
+
+// Health is module state that earlier tests in this process left behind.
+beforeEach(() => {
+	resetHealth();
+});
 
 const typing: { ids: Record<string, number> } = { ids: {} };
 const users: Record<string, { id: string; username: string }> = {

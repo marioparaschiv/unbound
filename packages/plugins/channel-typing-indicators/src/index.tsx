@@ -4,8 +4,14 @@ import { startTypingIndicators } from '~/typing-indicator';
 
 export { SettingsPanel } from '~/settings';
 
+let stopIndicators = async () => {};
+
 export function start() {
-	startTypingIndicators();
+	stopIndicators = startTypingIndicators();
+}
+
+export function stop() {
+	return stopIndicators();
 }
 
 export { featureSelfTest as selfTest };
