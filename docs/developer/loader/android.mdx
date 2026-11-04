@@ -61,6 +61,8 @@ Just before Unbound's bundle runs, the loader installs the native modules and co
 | `getFonts()`          | The font files in `Fonts`.                                                                                                               |
 | `getAvailableFonts()` | The font names Discord can already use. The loader lists them on the first call only, so a launch that never opens the font picker skips it. |
 | `getLoader()`         | `origin` (`libunbound.so`), the loader `version`, and the runtime's `bytecodeVersion`.                                                   |
+| `getSha256(text)`     | The SHA-256 of the text's UTF-8 bytes, in hex. Update checks and installs use it to check bundles.                                        |
+| `downloadFile(url, path)` | Saves the response to `path` inside the Unbound folder on a background thread. Fonts and icon packs install through it.             |
 
 If no bundle is ready, the loader shows `Failed to load Unbound's bundle. Please report this to the developers.` and Discord runs without Unbound.
 

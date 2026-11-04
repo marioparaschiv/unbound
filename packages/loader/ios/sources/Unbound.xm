@@ -158,9 +158,9 @@ public:
 
     loader::UnboundNativeProvider unboundNativeProvider() override
     {
-        return loader::makeUnboundNativeProvider(UnboundAddonState(), platformFontNames,
-                                                 toStdString([Utilities getCurrentDylibName]),
-                                                 runtimeBytecodeVersion());
+        return loader::makeUnboundNativeProvider(
+            UnboundAddonState(), platformFontNames, toStdString([Utilities getCurrentDylibName]),
+            runtimeBytecodeVersion(), toStdString(FileSystem.documents), UnboundDownload);
     }
 
     void installNativeModules(jsi::Runtime &runtime) override
