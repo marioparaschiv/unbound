@@ -18,5 +18,5 @@
 	],
 	"version": "1.0.0",
 	"icon": "EyeSlashIcon",
-	"main": "index.ts"
+	"main": "index.tsx"
 }

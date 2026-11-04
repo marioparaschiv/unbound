@@ -5,7 +5,8 @@
 	"description": "Shows every generated settings row.",
 	"type": "module",
 	"scripts": {
-		"build": "rollup -c"
+		"build": "rollup -c",
+		"test": "bun test"
 	},
 	"devDependencies": {
 		"@unbound-app/api": "workspace:*",

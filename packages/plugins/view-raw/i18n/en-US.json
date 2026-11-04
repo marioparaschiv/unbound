@@ -1,0 +1,16 @@
+{
+	"CLOSE": "Close",
+	"CONTENT_COPIED": "Raw content copied to clipboard.",
+	"COPY_CONTENT": "Copy content",
+	"COPY_DATA": "Copy data",
+	"DATA_COPIED": "{type} data copied to clipboard.",
+	"MESSAGE_CONTENT": "Message Content",
+	"MESSAGE_DATA": "Message Data",
+	"RAW_TITLE": "Raw {type} Data",
+	"TYPE_CHANNEL": "Channel",
+	"TYPE_GUILD": "Guild",
+	"TYPE_MESSAGE": "Message",
+	"TYPE_PROFILE": "Profile",
+	"TYPE_USER": "User",
+	"VIEW_RAW": "View Raw"
+}

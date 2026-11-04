@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.5] - 2026-11-05
+
+### Changed
+
+- The settings screen, the notices and errors it shows, and the text of the slash commands you save can now be translated. Deleting a command now asks in Discord's own dialog. The plugin works the same otherwise.
+
 ## [1.0.4] - 2026-11-03
 
 ### Changed

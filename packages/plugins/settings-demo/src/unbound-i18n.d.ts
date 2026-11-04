@@ -79,6 +79,10 @@ declare module '@unbound-app/i18n' {
 		readonly REGION_AU: string;
 		/** Clear the cache? Your saved words are removed. */
 		readonly CLEAR_CACHE_CONFIRM: string;
+		/** Settings Demo */
+		readonly PLUGIN_NAME: string;
+		/** clearCache ran: the word list is empty. */
+		readonly CACHE_CLEARED: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
