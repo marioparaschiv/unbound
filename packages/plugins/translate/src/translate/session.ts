@@ -1,4 +1,5 @@
-import { settings } from '~/modules';
+import { settings } from '@unbound-app/settings';
+import { format, messages } from '@unbound-app/i18n';
 
 export type TokenPayload = {
 	accessToken?: unknown;
@@ -19,7 +20,7 @@ type Session = {
  * @returns The absolute endpoint URL.
  */
 export function endpoint(path: string): string {
-	return settings.get('apiBaseUrl', 'https://translate.unbound.rip') + path;
+	return settings.apiBaseUrl + path;
 }
 
 /**
@@ -40,17 +41,15 @@ export function saveSession({
 		return;
 	}
 
-	settings.set('accessToken', accessToken);
-	settings.set('refreshToken', refreshToken);
-	settings.set('expiresAt', Date.now() + expiresIn * 1000);
+	settings.accessToken = accessToken;
+	settings.refreshToken = refreshToken;
+	settings.expiresAt = Date.now() + expiresIn * 1000;
 
 	return accessToken;
 }
 
 function readSession(): Session | null {
-	const accessToken = settings.get('accessToken', '');
-	const refreshToken = settings.get('refreshToken', '');
-	const expiresAt = settings.get('expiresAt', 0);
+	const { accessToken, refreshToken, expiresAt } = settings;
 
 	if (!accessToken || !refreshToken || !expiresAt) return null;
 
@@ -58,9 +57,9 @@ function readSession(): Session | null {
 }
 
 function clearSession() {
-	settings.remove('accessToken');
-	settings.remove('refreshToken');
-	settings.remove('expiresAt');
+	settings.accessToken = '';
+	settings.refreshToken = '';
+	settings.expiresAt = 0;
 }
 
 /**
@@ -68,11 +67,9 @@ function clearSession() {
  * @returns The new access token.
  */
 export async function refreshSession(): Promise<string> {
-	const refreshToken = settings.get('refreshToken', '');
+	const { refreshToken } = settings;
 
-	if (!refreshToken) {
-		throw new Error('No refresh token configured. Open plugin settings and complete login.');
-	}
+	if (!refreshToken) throw new Error(messages.NO_REFRESH_TOKEN);
 
 	const response = await fetch(endpoint('/auth/refresh'), {
 		method: 'POST',
@@ -83,16 +80,14 @@ export async function refreshSession(): Promise<string> {
 	if (!response.ok) {
 		if (response.status === 401) clearSession();
 
-		const reason = await response.text().catch(() => 'refresh failed');
+		const reason = await response.text().catch(() => messages.REFRESH_FAILED_REASON);
 
-		throw new Error(`Auth refresh failed (${response.status}): ${reason}`);
+		throw new Error(format('REFRESH_FAILED', { status: response.status, reason }));
 	}
 
 	const accessToken = saveSession((await response.json()) as TokenPayload);
 
-	if (!accessToken) {
-		throw new Error('Auth refresh returned an invalid payload.');
-	}
+	if (!accessToken) throw new Error(messages.REFRESH_INVALID_PAYLOAD);
 
 	return accessToken;
 }

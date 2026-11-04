@@ -2,10 +2,11 @@ import { getActionSheetRow } from '@unbound-plugins/shared/action-sheets/action-
 import { openSheet } from '@unbound-plugins/shared/action-sheets/open-sheet';
 import { Discord } from '@unbound-app/api/metro/components';
 import { assets } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
 import { View } from 'react-native';
 import { useState } from 'react';
 
-import { languageLabel, searchLanguages } from '~/languages';
+import { languageLabel, searchLanguages } from '~/translate/languages';
 
 type LanguagePickerOptions = {
 	title: string;
@@ -48,7 +49,7 @@ function LanguagePickerSheet({
 					onChange={setQuery}
 					isClearable
 					isRound
-					placeholder='Search languages'
+					placeholder={messages.SEARCH_LANGUAGES}
 				/>
 			</View>
 			<ActionSheetRow.Group>
@@ -68,7 +69,9 @@ function LanguagePickerSheet({
 						}}
 					/>
 				))}
-				{rows.length ? null : <ActionSheetRow label='No matches' onPress={onClose} />}
+				{rows.length ? null : (
+					<ActionSheetRow label={messages.NO_MATCHES} onPress={onClose} />
+				)}
 			</ActionSheetRow.Group>
 		</Discord.ActionSheet>
 	);

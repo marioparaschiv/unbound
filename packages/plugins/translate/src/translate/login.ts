@@ -1,11 +1,12 @@
 import { authorize } from '@unbound-plugins/shared/oauth/authorize';
 import { readQuery } from '@unbound-plugins/shared/oauth/query';
+import { messages, format } from '@unbound-app/i18n';
 import { toasts } from '@unbound-app/api';
 
-import { endpoint, saveSession, type TokenPayload } from '~/session';
+import { endpoint, saveSession, type TokenPayload } from '~/translate/session';
 
 function notify(content: string) {
-	toasts.show({ title: 'Translate', content });
+	toasts.show({ title: messages.TRANSLATE, content });
 }
 
 async function finishLogin(location: string, redirectUri: string) {
@@ -27,23 +28,17 @@ async function finishLogin(location: string, redirectUri: string) {
 		payload = JSON.parse(raw);
 	} catch {
 		throw new Error(
-			response.ok
-				? 'Discord login returned an invalid payload.'
-				: raw.trim() || 'Discord login failed.',
+			response.ok ? messages.LOGIN_INVALID_PAYLOAD : raw.trim() || messages.LOGIN_FAILED,
 		);
 	}
 
 	if (!response.ok) {
-		throw new Error(
-			typeof payload.error === 'string' ? payload.error : 'Discord login failed.',
-		);
+		throw new Error(typeof payload.error === 'string' ? payload.error : messages.LOGIN_FAILED);
 	}
 
-	if (!saveSession(payload)) {
-		throw new Error('Discord login returned an invalid payload.');
-	}
+	if (!saveSession(payload)) throw new Error(messages.LOGIN_INVALID_PAYLOAD);
 
-	notify('Discord login completed.');
+	notify(messages.LOGIN_COMPLETED);
 }
 
 /**
@@ -62,8 +57,8 @@ export async function connectDiscord(): Promise<void> {
 		if (!clientId || !state) {
 			notify(
 				login.ok
-					? 'OAuth configuration is incomplete.'
-					: `The translate service is unavailable (HTTP ${login.status}).`,
+					? messages.OAUTH_INCOMPLETE
+					: format('SERVICE_UNAVAILABLE', { status: login.status }),
 			);
 
 			return;
@@ -78,7 +73,7 @@ export async function connectDiscord(): Promise<void> {
 
 		if (location) await finishLogin(location, redirectUri);
 	} catch (error) {
-		notify(error instanceof Error ? error.message : 'Connect flow failed unexpectedly.');
+		notify(error instanceof Error ? error.message : messages.LOGIN_UNEXPECTED_FAILURE);
 	}
 }
 

@@ -1,10 +1,7 @@
-import { LANGUAGES } from '~/constants';
+import { messages } from '@unbound-app/i18n';
 
-export type Language = {
-	code: string;
-	name: string;
-	nativeName?: string;
-};
+import type { Language } from '~/types';
+import { LANGUAGES } from '~/constants';
 
 /**
  * @description Formats a language for the picker, adding its native name when it differs.
@@ -30,5 +27,5 @@ export function searchLanguages(query: string, includeAuto: boolean = false): La
 			nativeName?.toLowerCase().includes(needle),
 	);
 
-	return includeAuto ? [{ code: 'auto', name: 'Auto detect' }, ...matches] : matches;
+	return includeAuto ? [{ code: 'auto', name: messages.AUTO_DETECT }, ...matches] : matches;
 }

@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { LANGUAGES } from '~/constants';
 
-import { languageLabel, searchLanguages } from '~/languages';
+import { languageLabel, searchLanguages } from '~/translate/languages';
 
 describe('languageLabel', () => {
 	test('adds the native name when it differs', () => {

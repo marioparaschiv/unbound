@@ -3,9 +3,10 @@ import patchLazySheets from '@unbound-plugins/shared/action-sheets/patch-lazy-sh
 import { isActionSheetRowGroup } from '@unbound-plugins/shared/action-sheets/row-group';
 import { findElement } from '@unbound-plugins/shared/react/find-element';
 import { assets, patcher } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
 
-import { ActionSheets } from '~/modules';
-import { copyTranslation } from '~/translate';
+import { copyTranslation } from '~/translate/translate';
+import { ActionSheets } from '~/translate/modules';
 
 type Message = {
 	content: string;
@@ -46,7 +47,7 @@ export function patchActionSheets(): () => void {
 			0,
 			<ActionSheetRow
 				key='unbound-translate'
-				label='Translate'
+				label={messages.TRANSLATE}
 				icon={icon ? <ActionSheetRow.Icon source={icon} /> : undefined}
 				onPress={onPress}
 			/>,

@@ -1,7 +1,8 @@
+import { format, messages } from '@unbound-app/i18n';
+import { settings } from '@unbound-app/settings';
 import { metro, toasts } from '@unbound-app/api';
 
-import { endpoint, getAccessToken, refreshSession } from '~/session';
-import { settings } from '~/modules';
+import { endpoint, getAccessToken, refreshSession } from '~/translate/session';
 
 type Translation = {
 	text?: unknown;
@@ -28,8 +29,8 @@ function readTranslation({ translatedText, translations }: TranslationResponse) 
 async function translateText(text: string): Promise<string> {
 	const body = JSON.stringify({
 		q: text,
-		source: settings.get('sourceLanguage', 'auto'),
-		target: settings.get('targetLanguage', 'en'),
+		source: settings.sourceLanguage,
+		target: settings.targetLanguage,
 	});
 
 	function request(token: string) {
@@ -47,16 +48,14 @@ async function translateText(text: string): Promise<string> {
 	}
 
 	if (!response.ok) {
-		const reason = await response.text().catch(() => 'translation failed');
+		const reason = await response.text().catch(() => messages.TRANSLATE_FAILED_REASON);
 
-		throw new Error(`Translate failed (${response.status}): ${reason}`);
+		throw new Error(format('TRANSLATE_FAILED', { status: response.status, reason }));
 	}
 
 	const translation = readTranslation((await response.json()) as TranslationResponse);
 
-	if (translation === undefined) {
-		throw new Error('Translation API returned an unexpected payload.');
-	}
+	if (translation === undefined) throw new Error(messages.TRANSLATE_INVALID_PAYLOAD);
 
 	return translation;
 }
@@ -71,10 +70,10 @@ export async function copyTranslation(content: string): Promise<void> {
 		const translated = await translateText(content);
 
 		await metro.common.Clipboard.setString(translated);
-		toasts.show({ title: 'Translated', content: translated });
+		toasts.show({ title: messages.TRANSLATED, content: translated });
 	} catch (error) {
 		toasts.show({
-			title: 'Translate Error',
+			title: messages.TRANSLATE_ERROR,
 			content: error instanceof Error ? error.message : String(error),
 		});
 	}
