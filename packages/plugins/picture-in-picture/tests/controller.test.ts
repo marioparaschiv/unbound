@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, jest, test } from 'bun:test';
 
 import { createController } from '~/picture-in-picture/session/controller';
 import { createSessionStore } from '~/picture-in-picture/session/store';
@@ -41,7 +41,19 @@ function setup(enter: EnterResult | Promise<EnterResult>, exit: 'pending' | 'end
 	return { sessions, calls, failures, controller };
 }
 
-const wait = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
+const MICROTASK_TURNS = 10;
+
+// Settles the promise chains, runs the timers due within `ms` of fake time, then settles what they started.
+async function wait(ms = 0) {
+	for (let turn = 0; turn < MICROTASK_TURNS; turn++) await Promise.resolve();
+
+	jest.advanceTimersByTime(ms);
+
+	for (let turn = 0; turn < MICROTASK_TURNS; turn++) await Promise.resolve();
+}
+
+beforeEach(() => void jest.useFakeTimers());
+afterEach(() => void jest.useRealTimers());
 
 describe('createController', () => {
 	test('a window that opens at once activates the session with the video shape', async () => {

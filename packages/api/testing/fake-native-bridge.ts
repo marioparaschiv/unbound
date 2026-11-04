@@ -68,6 +68,22 @@ export function withMissingMembers<T extends object>(name: string, members: Part
 	}) as T;
 }
 
+/**
+ * @description Lays a test's own members over a fake bridge: a member the test gave wins, and every other one is the fake's.
+ * @template T The bridge type.
+ * @param base The fake bridge.
+ * @param overrides The members the test gave.
+ * @returns A new bridge, which a plugin sees in place of the fake.
+ */
+export function overlayBridge<T extends object>(base: T, overrides: Partial<T> = {}): T {
+	// A new object each time, so what a plugin keys by its bridge, such as cached class descriptions, starts empty for each start.
+	return new Proxy(base, {
+		get: (target, key, receiver) =>
+			Reflect.get(key in overrides ? overrides : target, key, receiver),
+		has: (target, key) => key in overrides || key in target,
+	});
+}
+
 /** Any fake object that stands for a native handle. */
 export type Brandable = { constructor: { name: string } };
 
