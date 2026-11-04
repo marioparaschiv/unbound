@@ -90,8 +90,9 @@ export async function createBadgeSuite(now: Date) {
 	async function signUp({ role = 'user', github = true, sponsorship = {} }: SponsorOptions = {}) {
 		users += 1;
 
+		const discordId = `8035111022469${String(users).padStart(4, '0')}`;
 		const { userId, headers } = await signInWithDiscord(ctx, {
-			id: `8035111022469${String(users).padStart(4, '0')}`,
+			id: discordId,
 			name: `Sponsor ${users}`,
 			email: `sponsor-${users}@example.com`,
 		});
@@ -106,10 +107,14 @@ export async function createBadgeSuite(now: Date) {
 			await seedSponsorship(ctx, { githubId: userId, ...sponsorship });
 		}
 
-		return { userId, client: createApiClient<Api>({ baseUrl: server.url.href, headers }) };
+		return {
+			userId,
+			discordId,
+			client: createApiClient<Api>({ baseUrl: server.url.href, headers }),
+		};
 	}
 
-	const imageUrl = (image: string) => `${ctx.env.CDN_URL}/badges/${image}.png`;
+	const imageUrl = (image: string) => `${ctx.env.CDN_URL}/${getBadgeImageKey(image)}`;
 	const setBadges = (client: Client, badges: Badge[]) =>
 		client('PUT /api/v1/me/badges', { body: { badges }, response: badgeClaimResponseSchema });
 	const requestUpload = (client: Client, size: number) =>

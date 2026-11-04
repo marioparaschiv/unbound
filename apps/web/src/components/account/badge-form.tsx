@@ -25,7 +25,7 @@ type BadgeFormProps = {
 	/** Names of the saved badges the drafts sit beside, which a draft must not repeat. */
 	takenNames: string[];
 	disabled: boolean;
-	/** Opens the picker for more PNGs; absent when no slot is left or a single badge is edited. */
+	/** Opens the picker for more images; absent when no slot is left or a single badge is edited. */
 	onAddMore?: () => void;
 	onReplaceImage: (id: string) => void;
 	onRename: (id: string, name: string) => void;

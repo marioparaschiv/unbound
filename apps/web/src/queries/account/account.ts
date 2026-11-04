@@ -40,14 +40,14 @@ export function saveBadgesMutation() {
 }
 
 /**
- * @description Uploads a PNG for one of the signed-in user's sponsor badges: asks for a presigned URL,
+ * @description Uploads a PNG or GIF for one of the signed-in user's sponsor badges: asks for a presigned URL,
  * PUTs the file straight to storage, then has the server check and store it.
  * @returns Mutation options taking the file, resolving to the image's hash and URL.
  */
 export function uploadBadgeImageMutation() {
 	return mutationOptions({
 		mutationFn: async (file: File) => {
-			const { BADGE_IMAGE_TYPE, presignedBadgeUploadSchema, uploadBadgeImageResponseSchema } =
+			const { presignedBadgeUploadSchema, uploadBadgeImageResponseSchema } =
 				await import('@unbound-app/contracts/sponsors');
 			const client = createBrowserClient();
 			const { uploadId, url } = await client('POST /api/v1/me/badges/uploads', {
@@ -58,7 +58,7 @@ export function uploadBadgeImageMutation() {
 			const sent = await fetch(url, {
 				method: 'PUT',
 				body: file,
-				headers: { 'content-type': BADGE_IMAGE_TYPE },
+				headers: { 'content-type': file.type },
 				credentials: 'omit',
 			}).catch(() => undefined);
 

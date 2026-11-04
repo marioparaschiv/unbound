@@ -1,4 +1,4 @@
-import { BADGE_IMAGE_TYPE, BADGE_LIMIT } from '@unbound-app/contracts/sponsors';
+import { BADGE_IMAGE_TYPES, BADGE_LIMIT } from '@unbound-app/contracts/sponsors';
 import type { Badge, BadgeClaim } from '@unbound-app/contracts/sponsors';
 import { IconPen, IconTrash, IconUpload } from 'nucleo-micro-bold';
 import { useMutation } from '@tanstack/react-query';
@@ -154,7 +154,7 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 			<input
 				ref={addPicker}
 				type='file'
-				accept={BADGE_IMAGE_TYPE}
+				accept={BADGE_IMAGE_TYPES.join(',')}
 				multiple
 				className='hidden'
 				onChange={(event) => {
@@ -165,7 +165,7 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 			<input
 				ref={replacePicker}
 				type='file'
-				accept={BADGE_IMAGE_TYPE}
+				accept={BADGE_IMAGE_TYPES.join(',')}
 				className='hidden'
 				onChange={(event) => {
 					onReplacementPicked(event.target.files?.[0]);
@@ -210,7 +210,8 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 
 			{badges.length === 0 && mode.kind === 'closed' ? (
 				<Text variant='text-sm' color='muted'>
-					No badges yet. Upload up to {BADGE_LIMIT} PNGs and name each one.
+					No badges yet. Upload up to {BADGE_LIMIT} PNGs or animated GIFs and name each
+					one.
 				</Text>
 			) : null}
 

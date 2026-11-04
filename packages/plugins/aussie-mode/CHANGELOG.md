@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.0] - 2026-11-04
+
+### Added
+
+- Messages you send or edit are turned upside down, like the rest of Discord. Mentions, emoji, timestamps and links stay readable.
+
 ## [1.0.5] - 2026-11-03
 
 ### Changed

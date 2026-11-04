@@ -44,6 +44,7 @@ function SponsorCard() {
 						text={messages.UNBOUND_SPONSOR}
 						variant='primary'
 						size='md'
+						shiny
 						onPress={() => Linking.openURL(SOCIAL_LINKS.Sponsor)}
 					/>
 				</View>

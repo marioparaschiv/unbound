@@ -4,6 +4,7 @@ import type { TSchema } from '@unbound-app/contracts/schema';
 
 import type { SponsorStanding } from '~/lib/sponsors/standing';
 import { isSponsoring } from '~/lib/sponsors/standing';
+import { hasPermission } from '~/lib/auth/access';
 
 export type PerkDefinition = {
 	name: string;
@@ -17,7 +18,7 @@ export const PERKS = {
 	'custom-badge': {
 		name: 'Custom badge',
 		description:
-			'A badge of your own on your Discord profile, shown to everyone using Unbound.',
+			'A badge of your own on your Discord profile, shown to everyone using Unbound. Animated GIFs work too.',
 		minimumMonthlyCents: 500,
 		config: badgesSchema,
 	},
@@ -48,4 +49,13 @@ export function canClaimPerk(perkId: PerkId, standing: SponsorStanding): boolean
 	return standing.kind === 'active' && isPerkUnlocked(perkId, standing);
 }
 
-export default { PERKS, isPerkUnlocked, canClaimPerk };
+/**
+ * @description Checks whether a role grants every perk without a sponsorship, as staff roles do.
+ * @param role The user's `role` column.
+ * @returns Whether the role grants perks.
+ */
+export function roleGrantsPerks(role: string | null | undefined): boolean {
+	return hasPermission(role, { perk: ['claim'] });
+}
+
+export default { PERKS, isPerkUnlocked, canClaimPerk, roleGrantsPerks };

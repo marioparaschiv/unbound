@@ -15,9 +15,10 @@ import { createLogger } from '@unbound-app/logger';
 import {
 	findBadgeImageProblem,
 	getBadgeImageKey,
+	getBadgeImageType,
 	hashBadgeImage,
 } from '~/lib/sponsors/badge-image';
-import { canClaimPerk, isPerkUnlocked, PERKS } from '~/lib/sponsors/perks';
+import { canClaimPerk, isPerkUnlocked, PERKS, roleGrantsPerks } from '~/lib/sponsors/perks';
 import { getUserSponsorship, graceMs } from '~/lib/sponsors/sponsorships';
 import { account, perkClaim, sponsorship, user } from '~/db/schema';
 import { findBadgeNameProblem } from '~/lib/sponsors/moderation';
@@ -29,6 +30,7 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
 import { getCdnUrl } from '~/lib/artifacts';
+import { isDiscordId } from '~/lib/discord';
 import type { Env } from '~/lib/env';
 
 const logger = createLogger('Web', 'Sponsors');
@@ -110,9 +112,12 @@ async function claimResponse(ctx: AppContext, userId: string): Promise<BadgeClai
 }
 
 async function requireClaimable(ctx: AppContext, userId: string): Promise<void> {
-	const { standing } = await getUserSponsorship(ctx, userId);
+	const [{ standing }, [owner]] = await Promise.all([
+		getUserSponsorship(ctx, userId),
+		ctx.db.select({ role: user.role }).from(user).where(eq(user.id, userId)),
+	]);
 
-	if (!canClaimPerk(PERK_ID, standing)) {
+	if (!canClaimPerk(PERK_ID, standing) && !roleGrantsPerks(owner?.role)) {
 		throw new ApiError(
 			'sponsorship_required',
 			`A monthly GitHub sponsorship of ${formatPrice(PERKS[PERK_ID].minimumMonthlyCents)} or more unlocks a custom badge.`,
@@ -159,7 +164,7 @@ function getBadgeUploadKey(userId: string, uploadId: string): string {
  * @param ctx The application context.
  * @param userId The uploader.
  * @param size The file's length in bytes, refused above {@link BADGE_IMAGE_MAX_BYTES}.
- * @returns The upload id to complete, the URL to PUT the PNG to, and when that URL expires.
+ * @returns The upload id to complete, the URL to PUT the PNG or GIF to, and when that URL expires.
  */
 export async function createBadgeUpload(
 	ctx: AppContext,
@@ -205,13 +210,13 @@ async function readStagedBadge(staged: Bun.S3File): Promise<Uint8Array> {
 }
 
 /**
- * @description Completes a badge image upload: checks the staged file is a square, still PNG within
+ * @description Completes a badge image upload: checks the staged file is a square still PNG or GIF within
  * the size limits, stores it in the public bucket under its hash, and deletes the staged file
  * whether it passed or not. The same bytes again store nothing new.
  * @param ctx The application context.
  * @param userId The uploader, whose own upload is completed.
  * @param uploadId The id {@link createBadgeUpload} returned.
- * @returns The image's hash, which a badge refers to, and its URL.
+ * @returns The image's name, which a badge refers to, and its URL.
  */
 export async function completeBadgeUpload(
 	ctx: AppContext,
@@ -234,7 +239,7 @@ export async function completeBadgeUpload(
 		const key = getBadgeImageKey(image);
 
 		if (!(await ctx.storage.public.exists(key))) {
-			await ctx.storage.public.write(key, bytes, { type: 'image/png' });
+			await ctx.storage.public.write(key, bytes, { type: getBadgeImageType(image) });
 		}
 
 		return { image, url: getBadgeImageUrl(ctx.env, image) };
@@ -359,7 +364,7 @@ async function setRevocation(
 
 /**
  * @description Finds the badges to show on users' profiles: set, not revoked, owned by a user who is
- * not banned and whose linked GitHub sponsorship still unlocks them.
+ * not banned and whose linked GitHub sponsorship still unlocks them, or whose role grants perks.
  * @param ctx The application context.
  * @param userIds The users.
  * @returns Each user's shown badges, in their order, by user id.
@@ -376,14 +381,14 @@ export async function getVisibleBadges(
 
 	const now = ctx.now();
 	const rows = await ctx.db
-		.select({ claim: perkClaim, sponsorship })
+		.select({ claim: perkClaim, sponsorship, role: user.role })
 		.from(perkClaim)
 		.innerJoin(user, eq(user.id, perkClaim.userId))
-		.innerJoin(
+		.leftJoin(
 			account,
 			and(eq(account.userId, perkClaim.userId), eq(account.providerId, 'github')),
 		)
-		.innerJoin(sponsorship, eq(sponsorship.githubId, account.accountId))
+		.leftJoin(sponsorship, eq(sponsorship.githubId, account.accountId))
 		.where(
 			and(
 				inArray(perkClaim.userId, userIds),
@@ -394,8 +399,9 @@ export async function getVisibleBadges(
 		);
 
 	for (const row of rows) {
-		const standing = standingOf(row.sponsorship, now, graceMs(ctx.env));
-		const shown = isPerkUnlocked(PERK_ID, standing) ? parseBadges(row.claim) : undefined;
+		const standing = standingOf(row.sponsorship ?? undefined, now, graceMs(ctx.env));
+		const unlocked = isPerkUnlocked(PERK_ID, standing) || roleGrantsPerks(row.role);
+		const shown = unlocked ? parseBadges(row.claim) : undefined;
 
 		if (!shown) {
 			continue;
@@ -414,6 +420,27 @@ export async function getVisibleBadges(
 	return badges;
 }
 
+/**
+ * @description Finds the badges one user shows, named by their site id or by the Discord id of their
+ * linked Discord account, as the Discord client knows them.
+ * @param ctx The application context.
+ * @param id A site user id, or a Discord user id.
+ * @returns The user's shown badges, in their order; empty when nobody with that id has any.
+ */
+export async function getUserBadges(ctx: AppContext, id: string): Promise<PublicBadge[]> {
+	const userIds = isDiscordId(id)
+		? (
+				await ctx.db
+					.select({ userId: account.userId })
+					.from(account)
+					.where(and(eq(account.providerId, 'discord'), eq(account.accountId, id)))
+			).map((row) => row.userId)
+		: [id];
+	const badges = await getVisibleBadges(ctx, userIds);
+
+	return userIds.map((userId) => badges.get(userId)).find(Boolean) ?? [];
+}
+
 export default {
 	toBadgeClaim,
 	findBadgeClaim,
@@ -424,4 +451,5 @@ export default {
 	revokeBadge,
 	restoreBadge,
 	getVisibleBadges,
+	getUserBadges,
 };

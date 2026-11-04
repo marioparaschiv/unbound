@@ -163,6 +163,36 @@ describe('claiming a badge', () => {
 		expect(await failure(setBadge(anonymous))).toEqual({ status: 401, code: 'unauthorized' });
 	});
 
+	test('lists the badges under the Discord id of the linked account, as the Discord client asks', async () => {
+		const sponsor = await signUp();
+
+		await setBadge(sponsor.client);
+
+		expect(await publicBadges(sponsor.discordId)).toEqual(shown(BADGE));
+		expect(await publicBadges('803511102246999999')).toEqual({ badges: [] });
+	});
+
+	test('staff and above set and show badges without a sponsorship or a linked GitHub', async () => {
+		const staff = await Promise.all([
+			signUp({ role: 'moderator', github: false }),
+			signUp({ role: 'admin', sponsorship: null }),
+		]);
+
+		for (const member of staff) {
+			expect(await setBadge(member.client)).toEqual({
+				claim: { badges: owned(BADGE), revokedAt: null, revokeReason: null },
+			});
+			expect(await publicBadges(member.userId)).toEqual(shown(BADGE));
+		}
+
+		const developer = await signUp({ role: 'developer', sponsorship: null });
+
+		expect(await failure(setBadge(developer.client))).toEqual({
+			status: 403,
+			code: 'sponsorship_required',
+		});
+	});
+
 	test('refuses names outside the allowed characters and length, and malformed image hashes', async () => {
 		const sponsor = await signUp();
 		const names = ['', 'x'.repeat(25), 'Cool 😎', 'st\u0430ff', 'Line\nBreak', ' - lead'];
