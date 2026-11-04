@@ -1,0 +1,34 @@
+{
+	"id": "unbound.new-guild-settings",
+	"name": "New Guild Settings",
+	"description": "Mutes new servers and applies your notification and channel defaults as soon as you join them.",
+	"authors": [
+		{
+			"name": "Glitchy",
+			"id": "269567451199569920"
+		},
+		{
+			"name": "Nuckyz",
+			"id": "235834946571337729"
+		},
+		{
+			"name": "carince",
+			"id": "818323528755314698"
+		},
+		{
+			"name": "Mopi",
+			"id": "1022189106614243350"
+		},
+		{
+			"name": "GabiRP",
+			"id": "507955112027750401"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "BellIcon",
+	"main": "index.tsx"
+}
