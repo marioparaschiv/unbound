@@ -30,6 +30,7 @@ import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
 import { ApiError } from '~/lib/api/errors';
 import { getCdnUrl } from '~/lib/artifacts';
+import { isDiscordId } from '~/lib/discord';
 import type { Env } from '~/lib/env';
 
 const logger = createLogger('Web', 'Sponsors');
@@ -419,6 +420,27 @@ export async function getVisibleBadges(
 	return badges;
 }
 
+/**
+ * @description Finds the badges one user shows, named by their site id or by the Discord id of their
+ * linked Discord account, as the Discord client knows them.
+ * @param ctx The application context.
+ * @param id A site user id, or a Discord user id.
+ * @returns The user's shown badges, in their order; empty when nobody with that id has any.
+ */
+export async function getUserBadges(ctx: AppContext, id: string): Promise<PublicBadge[]> {
+	const userIds = isDiscordId(id)
+		? (
+				await ctx.db
+					.select({ userId: account.userId })
+					.from(account)
+					.where(and(eq(account.providerId, 'discord'), eq(account.accountId, id)))
+			).map((row) => row.userId)
+		: [id];
+	const badges = await getVisibleBadges(ctx, userIds);
+
+	return userIds.map((userId) => badges.get(userId)).find(Boolean) ?? [];
+}
+
 export default {
 	toBadgeClaim,
 	findBadgeClaim,
@@ -429,4 +451,5 @@ export default {
 	revokeBadge,
 	restoreBadge,
 	getVisibleBadges,
+	getUserBadges,
 };

@@ -83,7 +83,9 @@ export const PUBLIC_OPERATIONS = {
 		tag: 'Users',
 		summary: "List a user's badges",
 		description: 'The sponsor badges a user shows on their profile, in order.',
-		parameters: { id: "The user's id, as the maintainers list returns it." },
+		parameters: {
+			id: "The user's id, as the maintainers list returns it, or the Discord id of their linked Discord account.",
+		},
 	},
 } satisfies Partial<Record<PublicOperationKey, PublicOperation>>;
 
