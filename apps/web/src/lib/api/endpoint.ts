@@ -63,8 +63,12 @@ type Handler<TInput, TResponse extends TSchema> = (
 	input: TInput,
 ) => Promise<StaticEncode<TResponse>>;
 
+/** Who may call an endpoint: anyone, or only a signed-in caller or an API key. */
+export type EndpointAccess = 'public' | 'caller';
+
 /** A `/api/v1` handler bound to the contract schemas its request and response follow. */
 export type Endpoint<TBody extends TSchema, TResponse extends TSchema, TQuery extends TSchema> = {
+	access: EndpointAccess;
 	schemas: EndpointSchemas<TBody, TResponse, TQuery>;
 	handle(ctx: AppContext, request: Request, params?: PathParams): Promise<Response>;
 };
@@ -133,6 +137,7 @@ export function endpoint<TBody extends TSchema, TResponse extends TSchema, TQuer
 	options: EndpointOptions<TResponse> = {},
 ): Endpoint<TBody, TResponse, TQuery> {
 	return {
+		access: 'public',
 		schemas,
 		async handle(ctx, request, params = {}) {
 			const { pathname, searchParams } = new URL(request.url);
@@ -202,12 +207,18 @@ export function callerEndpoint<
 	handler: Handler<CallerEndpointInput<StaticDecode<TBody>, StaticDecode<TQuery>>, TResponse>,
 	options: EndpointOptions<TResponse> = {},
 ): Endpoint<TBody, TResponse, TQuery> {
-	return endpoint(
-		schemas,
-		async (input) =>
-			handler({ ...input, caller: await requireCaller(input.ctx, input.request.headers) }),
-		options,
-	);
+	return {
+		...endpoint(
+			schemas,
+			async (input) =>
+				handler({
+					...input,
+					caller: await requireCaller(input.ctx, input.request.headers),
+				}),
+			options,
+		),
+		access: 'caller',
+	};
 }
 
 /**
