@@ -1,8 +1,11 @@
 # Plugin conventions
 
-Every first-party plugin follows the same layout, so a contributor who has read one plugin can find their way around all of them. `moyai` is the reference implementation. The repository [code style](../../AGENTS.md) applies to plugin code too.
+This file holds the rules that apply to first-party plugins only. Everything a plugin author needs is in the developer guide, and the guide wins where it differs from a habit of one plugin.
 
-The [addon authoring standards](../../docs/addons/standards.mdx) apply to every plugin, first-party ones included. They set the layout, the loading rules, and the lint rules and `ubd build` checks that enforce them. Where this file and the standards differ, follow the standards. First-party plugins move to the standard layout one plugin at a time.
+- [Anatomy of a Plugin](../../docs/developer/plugins/anatomy.mdx) shows every file of a plugin in the code of `character-counter`, the reference plugin. Copy its layout.
+- [Project Layout](../../docs/developer/addons/standards.mdx) lists the layout rules and the lint rule or build check behind each one.
+- [How Plugins Run](../../docs/developer/plugins/introduction.mdx) covers the lifecycle and the Addon scope, and the guide's other pages cover each API. Its code blocks are typechecked by `bun test packages/plugin-scripts/src/docs-examples.test.ts`.
+- The repository [code style](../../AGENTS.md) applies to plugin code too.
 
 ## Naming
 
@@ -16,130 +19,52 @@ Descriptions are concise, user-facing sentences with a maximum of 160 characters
 
 The pre-commit hook validates every plugin folder, manifest, naming collision, and description limit before allowing a commit.
 
-## Layout
-
-```
-my-plugin/
-├── manifest.json
-├── package.json
-├── rollup.config.mjs     # unbound(import.meta.url)
-├── settings.ts           # defineSettings(...), when the plugin has settings
-├── tsconfig.json         # maps ~/* to ./src/*
-└── src/
-    ├── index.ts(x)       # named exports start, stop, SettingsPanel. Nothing else.
-    ├── constants.ts      # every module-level constant
-    ├── modules.ts        # every metro lookup and the settings store, all lazy
-    ├── patches/          # one file per patched module, named after it
-    ├── events/           # one file per dispatcher action, named after it
-    ├── stores/           # flux stores the plugin defines
-    ├── components/       # React components, including settings-panel.tsx
-    ├── native/           # code that uses the Objective-C bridge (context.native)
-    └── <domain>.ts       # pure logic, named after what it does (matchers.ts, rules.ts)
-```
-
-Create only the folders a plugin needs. Import across folders with `~/`, such as `~/modules`. Never import from another plugin. Code two plugins need lives in `@unbound-plugins/shared`.
-
-## The entry file
-
-`src/index.ts` is the cleanest file in the plugin. It wires features together and owns the lifecycle. It holds no logic of its own.
-
-```tsx
-let dispose = () => {};
-
-export function start() {
-	const DCDSoundManager = native.getNativeModule<SoundManager>('DCDSoundManager');
-
-	if (!ensureModules('Moyai', { DCDSoundManager, SelectedChannelStore })) return;
-
-	const player = createPlayer(DCDSoundManager);
-
-	dispose = applyFeatures('Moyai', [
-		() => player.dispose,
-		() => subscribeMessages(player),
-		() => whileEnabled(settings, 'allowReactions', true, () => subscribeReactions(player)),
-	]);
-}
-
-export function stop() {
-	dispose();
-	dispose = () => {};
-}
-
-export { SettingsPanel };
-```
-
-- Each feature function (`subscribeX`, `patchX`, `createX`) applies itself and returns the function that removes it.
-- `applyFeatures` (`@unbound-plugins/shared/lifecycle/apply-features`) applies them in order and returns one cleanup that removes them in reverse. If a feature throws, it removes the features already applied. Unbound never calls `stop` after a failed `start`, so this is the only thing that prevents a leaked patch.
-- A plugin with patches creates one patcher named after its ID, in `modules.ts`.
-- `stop` must leave nothing behind: no patch, listener, timer, native hook, or registered setting. Force a re-render after unpatching a component that is on screen.
-
-## Failing safely
-
-A feature never runs half-working. When anything it depends on is missing, it logs one line and does nothing. The rest of the plugin keeps working.
-
-- Call `ensureModules(name, { ...handles })` from `@unbound-plugins/shared/metro/ensure-modules`. It returns `false` and logs the missing names. It never loads a module: a lazy handle counts as missing only when a search of this build found nothing for it, and as present while that is unknown. Pass it the handles themselves. A property read such as `{ send: MessageActions.sendMessage }` loads the module before the check runs. Check in `start` only the modules every feature needs. Check a module that one feature needs at the top of that feature's apply function, and return a no-op cleanup when it is missing.
-- A module that only makes a feature nicer, such as haptics or a theme color, is optional: use it with `?.` and keep working without it.
-- Check that a patched method exists and has the expected shape before patching it. The patcher throws on a missing method.
-- A missing native bridge is a truthy object whose methods throw. Check the capabilities in `context.native` before using it, not `ensureModules`.
-- Never wrap the happy path in `try/catch` to hide a broken lookup. Catch only around calls that can fail at runtime for reasons outside the plugin, such as network requests and native calls.
-
-## Modules
-
-`src/modules.ts` holds every handle to something outside the plugin. A Discord rename then needs a one-line fix in one place.
-
-```ts
-export const SelectedChannelStore = flux.getStore('SelectedChannel', { lazy: true });
-export const MessageActions = metro.findByProps('sendMessage', 'receiveMessage', { lazy: true });
-export const settings = storage.getBucket('unbound.my-plugin');
-```
-
-- Pass `{ lazy: true }` to every lookup so the search runs on first use. Nothing in `start` or at module scope may read a property of a handle, or call a lookup without `{ lazy: true }`. Either one loads the module, and every module it imports, at plugin start.
-- A class to construct or a component to render cannot be a lazy handle. Read the handle's `module` where the class or component is used, such as when an embed renders, not in `start`.
-- To patch every module that matches a filter, not just the first, pass loaded ones from `metro.find(filter, { all: true, initialize: false })` and later ones from `metro.onModuleLoad`. A plain `{ all: true }` search loads every module in the build.
-- Import a library Discord ships by its package name: `import moment from 'moment'`, `import { Svg, Path } from 'react-native-svg'`. The build reads each import from Discord's copy where it is used, so importing loads nothing at start. `packages/client/src/core/shim-libraries.json` lists the libraries. Add the package as a devDependency only for its types.
-- Prefer what Unbound already resolves: `metro.common` (`Clipboard`, `Constants`, `Theme`, `Moment`, `Reanimated`), `metro.stores`, `metro.api`, and `metro.components` (`Discord`, `Forms`, `Media`).
-- Prefer `flux.getStore`, `metro.findByProps`, and `metro.findByName` over a hand-written filter. A custom filter is keyed for the cache by the build; it reads only its parameters, so pass outside values through `metro.filter((m, value) => …)(value)`.
-- Resolve React Native native modules with `native.getNativeModule(...names)`.
-
-## Patches
-
-Put all patches on one module in `src/patches/<module>.ts`, named after the module in kebab-case, such as `patches/message-store.ts` or `patches/chat-input.ts`. The file exports one function that applies its patches and returns the unpatch function.
-
-```ts
-export function patchMessageStore(): () => void {
-	return patcher.after(MessageStore, 'getMessages', ({ result }) => filterBlocked(result));
-}
-```
-
-- **Lazy patching.** Patch a module when it loads, not before. Patch the lazy handle from `modules.ts` directly, as above: the patch waits for the module instead of loading it, and lands before Discord reads the method. When the patch target is computed from the module, such as a render function or a prototype, or the patch first checks the module's shape (`typeof Module.default === 'function'`), use `whenLoaded(source, apply)` from `@unbound-plugins/shared/metro/when-loaded`, where `source` is a metro filter, a file path, or an array of candidates in order of preference. Use `whenAllLoaded(sources, apply)` from the same file for a feature that needs several such modules. Both return the cleanup for `stop`.
-- **Setting-gated patching.** When a feature is behind a setting, apply its patch only while the setting is on. Use `whileEnabled(settings, key, default, apply)` from `@unbound-plugins/shared/settings/while-enabled`. It listens to the store through Unbound's settings listener, applies the feature when the key turns on, and removes it when the key turns off. Do not check the setting inside an always-on patch.
-
-## Native code
-
-Code that uses the Objective-C ABI (`context.native.objc`, `ffi`, `fabric`) lives in `src/native/`. `start(context)` passes `context.native` into it. Declare the capabilities the plugin uses in `manifest.json`. When the bridge or a capability is missing, the native feature does not start.
-
-## Settings
-
-- Declare settings in `settings.ts` beside `src/`, with `defineSettings` and `setting` from `@unbound-app/settings/schema`; labels are keys of `i18n/en-US.json`. The build generates the panel from it. See `docs/developer/plugins/settings.mdx`.
-- Read and write settings through `settings` and `useSetting` from `@unbound-app/settings`.
-- Write a custom panel, `src/components/settings-panel.tsx` exported from the entry as `SettingsPanel` (`export { SettingsPanel }`), only when the generated one cannot express it. Build it from the SDK's `ui` namespace and the rest of `metro.components.Discord`.
-
-## Constants and text
-
-- A module-level constant goes in `src/constants.ts`. A string used in one or two places is written inline. The plugin ID is written inline where it is needed.
-- Format numbers, dates, durations, lists, and plurals with `Intl` (`NumberFormat`, `DateTimeFormat`, `RelativeTimeFormat`, `ListFormat`, `PluralRules`). Do not build them by hand.
-- Use built-in runtime features before writing a helper: `Array.prototype.at`, `structuredClone`, `URL`, `URLSearchParams`, `AbortController`, `Promise.allSettled`.
-
 ## Shared code
 
-`@unbound-plugins/shared` (`packages/plugins-shared`) holds code that more than one plugin uses, or logic large and critical enough to deserve its own tests. Add it to the plugin's `dependencies` as `workspace:*` and import a module by its path, such as `@unbound-plugins/shared/settings/while-enabled`. Shared modules are grouped by domain: `action-sheets/`, `components/`, `colors/`, `metro/`, `native/`, `react/`, `settings/`.
+`@unbound-plugins/shared` (`packages/plugins-shared`) holds code that more than one plugin uses, or logic large and critical enough to deserve its own tests. Add it to the plugin's `dependencies` as `workspace:*` and import a module by its path, such as `@unbound-plugins/shared/settings/while-enabled`. Never import from another plugin.
 
-The lifecycle primitives are `ensureModules` (`metro/ensure-modules`) to bail out of `start`, `whenLoaded` and `whenAllLoaded` (`metro/when-loaded`) to wait for late modules, and `whileEnabled` (`settings/while-enabled`) to gate a feature on a setting. Settings panels use `Page` (`components/page`). Generic React tree helpers live in `react/`: `findRenderTarget` (`react/render-target`) finds the render function behind a module or element, through `memo` and `forwardRef`, and `findElement` (`react/find-element`) searches a render result.
+Shared modules are grouped by domain: `action-sheets/`, `assets/`, `colors/`, `composer/`, `context-menus/`, `lifecycle/`, `members/`, `metro/`, `native/`, `oauth/`, `react/`, `settings/`, `stickers/` and `text-replace/`. The ones every plugin reaches for:
+
+| Module                                      | Use it to                                                                                                                                                                                                                         |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lifecycle/start-features`                  | Start features that are independent. A feature that throws is logged and recorded, and the others still start                                                                                                                     |
+| `lifecycle/apply-features`                  | Apply features that depend on each other. A feature that throws removes the ones already applied, so the plugin is never half applied. Unbound never calls `stop` after a failed `start`, so this is what prevents a leaked patch |
+| `lifecycle/health`                          | Count applied features with `recordApplied`, and record `recordSkip` and `recordFailure`. Export `featureSelfTest` from the entry as `selfTest`. Call `resetHealth` in a test's `beforeEach`                                      |
+| `metro/ensure-modules`                      | Bail out of a feature, with one log line, when a module it needs is missing. It never loads a lazy handle                                                                                                                         |
+| `metro/when-loaded`                         | Patch a module whose patch target is computed from the module, once it loads                                                                                                                                                      |
+| `settings/while-enabled`                    | Apply a feature only while a setting is on                                                                                                                                                                                        |
+| `react/render-target`, `react/find-element` | Find the render function behind a module, and search a render result                                                                                                                                                              |
 
 Before writing a helper, check Unbound's API (`@unbound-app/api`) and the shared package. Use what exists.
 
+## Failing safely
+
+A feature never runs half-working. When anything it depends on is missing, it checks with `ensureModules` at the top of its start function, logs one line, and does nothing. The rest of the plugin keeps working. Call `ensureModules` in `start` for the modules every feature needs, and at the top of a feature for the modules only it needs.
+
+- Pass `ensureModules` the handles themselves. A property read such as `{ send: Messages.sendMessage }` loads the module before the check runs.
+- A module that only makes a feature nicer, such as haptics or a theme color, is optional: use it with `?.`.
+- A missing native bridge is a truthy object whose methods throw. Check `context.native` capabilities before using it, not `ensureModules`.
+- Never wrap the happy path in `try`/`catch` to hide a broken lookup. Catch only around calls that can fail for reasons outside the plugin, such as network requests and native calls.
+
+## Self-test and device matrix
+
+Export `selfTest` from the plugin's entry, usually as `export { featureSelfTest as selfTest }`. A plugin that draws its own UI exports a test built on `drawnSelfTest`, which also checks that something is on screen.
+
+The device matrix runs the plugins on real devices. It restarts Discord, calls each `selfTest`, and cycles each plugin through stop, start and reload to look for leaked hooks. Configure the devices in `.device-matrix.json` (see `.device-matrix.example.json`), then run `bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir>`. Use `--only <id,id>` for a few plugins and `--lenient` to fail only on problems that are new since the last run.
+
+A plugin fails the matrix when its self-test is not `ok`, when it will not start again after `stop`, when `stop` or a reload leaves native hooks behind, or when it makes a view call from the JavaScript thread that the [UI thread](../../docs/developer/plugins/ui-thread.mdx) page tells you to avoid. A unit test cannot see these, so run the matrix before you ship a change to a plugin's patches or native code.
+
 ## Tests
 
-Test behavior a user or caller can observe through pure logic: parsing, matching, formatting, rule evaluation. Name the test after the file it covers, such as `matchers.test.ts`.
+Test behavior a user can see: what the started plugin draws, shows or sends, and the pure logic under it. Use the testing preset and its fakes, as `character-counter` does, so a test runs the plugin's real entry. Name a test after the file it covers, such as `limit.test.ts`. The [Testing](../../docs/developer/plugins/testing.mdx) page covers the preset.
 
-Do not write tests that mock Discord modules and then assert the mock was called. They pass when the plugin is broken on device and fail when Discord changes nothing. Verify integration on a device instead.
+Do not write tests that mock Discord modules and then assert the mock was called. They pass when the plugin is broken on a device and fail when Discord changes nothing.
+
+## Versions and the changelog
+
+Each plugin ships `ADDON.md`, `CHANGELOG.md` and a `version` in its manifest. `bun run plugins:validate` fails when `ADDON.md` is missing or empty, when `CHANGELOG.md` does not parse, and when the changelog has no entry for the manifest's version.
+
+- Raise `version` in `manifest.json` in the same change that alters what the plugin does, and add that version's entry to `CHANGELOG.md`. The `plugins-publish` workflow publishes every plugin whose manifest version is newer than the live one.
+- A changelog entry has `Added`, `Changed`, `Fixed` and `Removed` sections. Write what a user notices. A change with no visible effect says so: "The plugin works the same as before."
+- Commit as `type(scope): subject`, with the plugin's folder name as the scope, such as `fix(moyai): play the sound once`. `feat`, `fix` and `perf` commits feed the changelog, and every other type is left out.
+- A change to `ADDON.md` alone ships as a patch release too, with the entry "The plugin works the same as before." See `character-counter`'s `CHANGELOG.md` for examples.

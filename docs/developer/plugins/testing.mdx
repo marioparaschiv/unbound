@@ -6,6 +6,30 @@ icon: 'circle-check'
 
 Your plugin's tests run with `bun test`, on your computer, not on a phone. The testing preset of `@unbound-app/api` stands in for everything a plugin gets at runtime, so a test imports your code as it is and checks what it did.
 
+## Reference
+
+Import these from `@unbound-app/api/testing`.
+
+| Export | What it does |
+| --- | --- |
+| `startPlugin(context?)` | Imports `src/index.tsx` and runs its `start` with a `PluginContext`, as Unbound does |
+| `stopPlugin()` | Runs `stop`, then removes what the Addon scope recorded. Rejects when something is left |
+| `pluginHolds()` | Lists each patch, command, listener and timer added since `startPlugin()` and still held |
+| `render(element, options?)` | Draws a component with React's real hooks. `options`: `settings`, `locale`, `stores`. Returns `find`, `findAll`, `text`, `rerender`, `unmount`, `act` |
+| `setLocale(locale)` | Changes the language for the rest of the test |
+| `extendApi(namespace, members)` | Adds or replaces members of a fake, such as `'metro.components'` |
+| `toasts.shown` | The options of each toast, in order. A shorthand such as `toasts.success('SAVED', vars)` also records its `key` and `vars`, with `title` in the active locale |
+| `dialogs.opened` | Each dialog, with its title `key` for `confirm` and `alert`, and `respond(answer)` to press a button |
+| `commands.registered`, `commands.run(path, options?, context?)` | The registered commands by name, and a call as if the user sent it |
+| `patches.applied` | Each patch still held: its `kind`, `target` and `method`, and `pending`, which is `true` while it waits for its module |
+| `flux.dispatched`, `flux.seed(stores)`, `flux.emit(name)`, `flux.dispatch(action)` | The actions the plugin dispatched, the stores a test seeds, and a way to send an action to the plugin's listeners |
+| `logs.entries` | Each line the plugin's `logger` wrote |
+| `metro.register(module, path?)` | Gives the plugin a Discord module to find |
+| `native` | The fake native bridge. See [Testing Native Code](/docs/developer/plugins/testing-native) |
+| `plugins`, `fs` | The plugins a test sets, and the in-memory files. See [Other plugins](#other-plugins) and [Files](#files) |
+
+Each recorder shows only the current test. The rest of this page says when to use each.
+
 ## Turn on the preset
 
 Add one line to `bunfig.toml` beside your `manifest.json`:
@@ -75,6 +99,7 @@ To check that a feature undid itself without stopping the plugin, such as when a
 ```ts
 import { pluginHolds, startPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
+import { expect } from 'bun:test';
 
 await startPlugin();
 expect(pluginHolds()).toContain('flux.onAction(MESSAGE_CREATE)');
@@ -86,25 +111,58 @@ expect(pluginHolds()).toEqual([]);
 Pass a context to `startPlugin` to change what `start` receives: its `platform`, its `capabilities`, or the members of the `native` bridge your plugin calls. Every other bridge member is an empty object.
 
 ```ts
+import { startPlugin } from '@unbound-app/api/testing';
+
 await startPlugin({ capabilities: ['native.ffi.call'], native: { apiVersion: '2.0.0' } });
 ```
 
+## Test the self-test
+
+A plugin can export `selfTest`, which the device matrix calls after a restart to learn whether the plugin works. A plugin whose features all skipped, because Discord renamed a module, still passes `start`, so the self-test is what fails it. First-party plugins count their applied features with `recordApplied` and export `featureSelfTest` from `@unbound-plugins/shared`, as [Anatomy of a Plugin](/docs/developer/plugins/anatomy#the-entry) shows. The same idea needs no helper:
+
+```tsx src/index.tsx
+import { flux, patcher } from '@unbound-app/api';
+
+const UserStore = flux.getStore('User');
+let applied = 0;
+
+export function start() {
+	patcher.after(UserStore, 'getCurrentUser', ({ result }) => result);
+	applied++;
+}
+
+export function selfTest() {
+	return { ok: applied > 0, detail: `${applied} features applied` };
+}
+```
+
+Import `selfTest` from `~/index` in a test, start the plugin, and read the result:
+
+```ts tests/self-test.test.ts
+import { startPlugin } from '@unbound-app/api/testing';
+import { expect, test } from 'bun:test';
+
+import { selfTest } from '~/index';
+
+test('reports that a feature applied', async () => {
+	await startPlugin();
+
+	expect(await selfTest()).toMatchObject({ ok: true });
+});
+```
+
+State kept in a module, such as `applied`, survives from one test to the next. Reset it in `beforeEach`. The shared helper does this with `resetHealth()` from `@unbound-plugins/shared/lifecycle/health`.
+
 ## Check what the plugin did
 
-Import these from `@unbound-app/api/testing`. Each one shows only the current test.
-
-| Recorder | Holds |
-| --- | --- |
-| `toasts.shown` | The options of each toast, in order. A shorthand such as `toasts.success('SAVED', vars)` also records its `key` and `vars`, with `title` in the active locale |
-| `dialogs.opened` | Each dialog, with its title `key` for `confirm` and `alert`, and `respond(answer)` to press a button |
-| `commands.registered` | The commands, by name, and `commands.run` to send one |
-| `patches.applied` | Each patch still held: its `kind`, `target` and `method`, and `pending`, which is `true` while it waits for its module |
-| `flux.dispatched` | Each action the plugin dispatched |
-| `logs.entries` | Each line the plugin's `logger` wrote |
+Each recorder in the [reference](#reference) shows only the current test.
 
 Run a command as if the user sent it. `run` takes its name, its options already parsed, and, optionally, the channel and guild:
 
 ```ts
+import { commands, startPlugin } from '@unbound-app/api/testing';
+import { expect } from 'bun:test';
+
 const user = { id: '1', username: 'wumpus' };
 
 await startPlugin();
@@ -114,6 +172,11 @@ expect(await commands.run('star', { user })).toEqual({ ephemeral: true, content:
 Answer a dialog with `respond`. `true` confirms, or presses the first button. `false` cancels. A string presses the button with that label.
 
 ```ts
+import { dialogs } from '@unbound-app/api/testing';
+import { expect } from 'bun:test';
+
+declare function clearHistory(): Promise<boolean>;
+
 // clearHistory() asks with dialogs.confirm before it deletes.
 const cleared = clearHistory();
 
@@ -124,6 +187,9 @@ expect(await cleared).toBe(true);
 Give the plugin a Discord module to find with `metro.register`, before it starts:
 
 ```ts
+import { metro, patches, startPlugin } from '@unbound-app/api/testing';
+import { expect } from 'bun:test';
+
 const MessageActions = { sendMessage: (content: string) => content };
 
 metro.register(MessageActions);
@@ -134,10 +200,13 @@ expect(patches.applied).toMatchObject([{ kind: 'before', method: 'sendMessage' }
 Patch a lookup made before its module registers, and the patch waits as it does on a phone. It applies when a test registers a module the lookup finds, in this test or a later one, and a patch removed first never applies. `patches.applied` lists it with `pending: true` until then, and `stopPlugin` removes it like any other. `patcher.react` waits the same way.
 
 ```ts
+import { metro as fake } from '@unbound-app/api/testing';
+import { metro, patcher } from '@unbound-app/api';
+
 const Messages = metro.findByProps('sendMessage'); // at import, or in start()
 
 patcher.after(Messages, 'sendMessage', () => 'patched'); // waits: no module yet
-metro.register({ sendMessage: () => 'sent' }); // applies now
+fake.register({ sendMessage: () => 'sent' }); // applies now
 ```
 
 ## Fake Discord
@@ -152,7 +221,7 @@ Your plugin finds Discord's code with `metro`. In a test, `metro` finds only wha
 | `metro.components` | See below |
 | `metro.filters` | `byProps`, `byName`, `byDisplayName`, `byTypeName`, `byFilePath`, `all`, `any` and `not` |
 
-`metro.find(filter)` and the `findBy*` finders return a lazy handle, as on device: it looks the module up on each access, so a module a later test registers is found. `{ lazy: false }` returns the module registered now, or `undefined`. `metro.find(filter, { all: true })` and `metro.findByProps(..., { all: true })` return every match now.
+Finders return a lazy handle, as on device, so a module a later test registers is found. `{ lazy: false }` returns the module now, and `{ all: true }` every match. `any`, `all` and `not` reject a `byFilePath` filter, as the client does.
 
 ```ts
 import { metro } from '@unbound-app/api/testing';
@@ -169,48 +238,7 @@ metro.register({ sendMessage: () => {}, receiveMessage: () => {} });
 
 ### Native
 
-`native` follows the platform a test sets. It is iOS until `native.setPlatform` says otherwise, and `Platform.OS` from `react-native` follows it too.
-
-```ts
-import { native } from '@unbound-app/api/testing';
-
-native.setPlatform('android');
-native.registerModule('NativeFileModule', { readFile: async () => '' });
-native.setCapabilities(['native.java.hooks']);
-```
-
-`definePlatform` picks the handler for that platform, and throws `NativePluginUnsupportedPlatformError` when there is none. A plugin calls it as it imports its `platform.ts`, before any test sets the platform, so a function handler comes back as a function that calls the current platform's handler each time it runs. Any other handler is read when `definePlatform` runs. `getNativeModule(...names)` returns the first module registered under one of the names. `native.has` reports the capabilities set.
-
-`startPlugin` gives `context.native.objc` on iOS, and `context.native.java` and `hooks` on Android. Fill them with the classes your handlers reach:
-
-```ts
-import { native, startPlugin } from '@unbound-app/api/testing';
-
-native.objc.registerClass('UIView', {
-	superclass: 'NSObject',
-	methods: { 'setAlpha:': (self, alpha) => {}, 'tag': () => 7 },
-	classMethods: { sharedView: () => native.objc.create('UIView') },
-});
-await startPlugin();
-
-native.setPlatform('android');
-native.java.registerClass('android.view.View', {
-	methods: { getWidth: () => 120 },
-	fields: { mLeft: 4 },
-	staticMethods: { create: () => native.java.create('android.view.View') },
-	staticFields: { INSTANCE: native.java.create('android.view.View') },
-});
-```
-
-| Fake | Does |
-| --- | --- |
-| `native.objc.registerClass(name, { superclass?, methods?, classMethods? })` | Adds a class. A method takes the object and the call's arguments; `callSuper` reaches the superclass's |
-| `native.objc.create(name, ivars?)` | Makes an object, with the instance variables `getIvar` reads |
-| `native.java.registerClass(name, { superclass?, methods?, staticMethods?, fields?, staticFields?, signatures?, fieldTypes?, construct? })` | Adds a class. A method takes the object and the call's plain arguments, and returns a plain value, which the bridge tags as `string`, `int`, `double`, `boolean`, `null`, `handle` or `array`. `construct` runs for `java.construct`. `signatures` gives each method's `{ parameters?, returnType? }` and `fieldTypes` each field's type, by name; `java.describe` returns them in the bridge's shape, so code that finds a member by its types, such as Discord's `MessageView` bind method, runs. A type left out is `java.lang.Object` |
-| `native.java.create(name, fields?)` | Makes an object, as a `handle` value |
-| `native.calls` | Every `objc`, `java` and `hooks` call the plugin made this test: its `bridge`, `method`, `target` class, `name` (selector or method) and `args` |
-
-`objc` fakes `getClass`, `alloc`, `create`, `className`, `respondsTo`, `call`, `invoke`, `invokeAsync`, `callSuper`, `invokeSuper`, `batch`, `prepare`, `invokePrepared`, `getIvar`, `setIvar`, the associated objects, `struct` and `hook`. `java` fakes `getClass`, `construct`, `describe`, `className`, `respondsTo`, `invoke`, `invokeAsync`, `getField`, `setField`, `batch`, `batchAsync`, `prepare`, `invokePrepared`, the associated objects and `release`, and `hooks` fakes `hook`, `remove` and the return values. A hook runs when a registered method is called, as `objc.hook`'s `before`, `replace` and `after` do. A class, selector, method or field a test did not register throws, naming how to add it. A member the kit does not fake throws too; give your own with `startPlugin({ native: { objc: { snapshot } } })`. Members you pass for `objc`, `java` or `hooks` are laid over the fake: yours win, and the fake's others stay.
+`native` follows the platform a test sets, and fakes the Objective-C and Java bridges. [Testing Native Code](/docs/developer/plugins/testing-native) covers them.
 
 ### Other plugins
 
@@ -244,6 +272,8 @@ fs.files.set('/documents/notes.txt', 'hi');
 ```ts
 import { extendApi } from '@unbound-app/api/testing';
 
+declare const MyComponent: () => null;
+
 extendApi('metro.components', { Extra: MyComponent });
 extendApi('metro', { custom: { value: 1 } });
 ```
@@ -265,6 +295,29 @@ It throws when the fake has no such namespace.
 
 `match` is a name or a function. A name is a `react-native` primitive, such as `'Text'`, or a component's `displayName` or function name. A function gets each node and returns `true` for a match. Each node has `props`, `children`, `parent`, and its own `find`, `findAll` and `text`.
 
+```tsx src/components/star-count.tsx
+import { useSetting } from '@unbound-app/settings';
+import { Pressable, Text } from 'react-native';
+import { flux } from '@unbound-app/api';
+import { useState } from 'react';
+
+const UserStore = flux.getStore('User');
+
+export default function StarCount() {
+	const [stars, setStars] = useState(0);
+	const accent = useSetting('appearance.accent');
+	const username = flux.useStore(UserStore, (store) => store.getCurrentUser()?.username);
+
+	return (
+		<Pressable onPress={() => setStars(stars + 1)}>
+			<Text style={{ color: accent }}>
+				{username}: {stars} {stars === 1 ? 'star' : 'stars'}
+			</Text>
+		</Pressable>
+	);
+}
+```
+
 ```tsx tests/star-count.test.tsx
 import { render } from '@unbound-app/api/testing';
 import { expect, test } from 'bun:test';
@@ -273,14 +326,14 @@ import StarCount from '~/components/star-count';
 
 test('counts each press', () => {
 	const view = render(<StarCount />, {
-		settings: { appearance: { size: 18 } },
+		settings: { appearance: { accent: '#FF0000' } },
 		stores: { User: { getCurrentUser: () => ({ id: '1', username: 'wumpus' }) } },
 	});
 
 	view.act(() => view.find('Pressable').props.onPress?.(Object.create(null)));
 
 	expect(view.text()).toBe('wumpus: 1 star');
-	expect(view.find('Text').props.style).toMatchObject({ fontSize: 18 });
+	expect(view.find('Text').props.style).toMatchObject({ color: '#FF0000' });
 });
 ```
 
@@ -303,7 +356,9 @@ An SVG import renders as an `SvgXml` node inside a component named after the fil
 With a `settings.ts`, `SettingsPanel` from `@unbound-app/settings` draws the generated panel as named nodes, so a test can assert which rows show:
 
 ```tsx
+import { render } from '@unbound-app/api/testing';
 import { SettingsPanel } from '@unbound-app/settings';
+import { expect } from 'bun:test';
 
 const view = render(<SettingsPanel />, { settings: { size: 22 } });
 
@@ -321,12 +376,19 @@ The panel follows the client's: a `hidden` setting or section draws nothing, and
 
 ```tsx
 import { render, setLocale } from '@unbound-app/api/testing';
+import { expect, test } from 'bun:test';
+import { messages } from '@unbound-app/i18n';
+import { Text } from 'react-native';
+
+function GreetingTitle() {
+	return <Text>{messages.GREETING_TITLE}</Text>;
+}
 
 test('shows the title in German', () => {
 	const view = render(<GreetingTitle />);
 
 	setLocale('de');
-	expect(view.text()).toBe('Hallo!');
+	expect(view.text()).toBe('Willkommen zurück');
 });
 ```
 

@@ -1,0 +1,10 @@
+{
+	"extends": "../../plugins/tsconfig.json",
+	"compilerOptions": {
+		"types": ["bun", "@unbound-app/api/global"],
+		"paths": {
+			"~/*": ["./src/*"]
+		}
+	},
+	"include": ["src", "settings.ts"]
+}
