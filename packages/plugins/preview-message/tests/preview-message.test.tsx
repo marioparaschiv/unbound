@@ -1,20 +1,20 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import { memo, type ComponentType } from 'react';
+import { beforeEach, describe, expect, jest, mock, test } from 'bun:test';
+import { memo } from 'react';
+import { Text, View } from 'react-native';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
+
+import { Timing } from '~/constants';
 
 // The kit has no fake for `plugins`, which `applyTextReplace` reads to see whether Text Replace runs.
 mock.module('~/preview/text-replace', () => ({ applyTextReplace: (content: string) => content }));
 
 const ChatInputRightActions = {
-	default: memo((_props: { channel: { id: string } }) => <ActionsView />),
+	default: memo((_props: { channel: { id: string } }) => <View />),
 };
 
-// Host components by name.
-const ActionsView = 'View' as unknown as ComponentType;
-const HostText = 'Text' as unknown as ComponentType<{ children?: string }>;
-const Message = ({ content }: { content: string }) => <HostText>{content}</HostText>;
+const Message = ({ content }: { content: string }) => <Text>{content}</Text>;
 
 function stores(draft: string): StoreSeeds {
 	return {
@@ -59,6 +59,13 @@ beforeEach(async () => {
 });
 
 describe('the chat input', () => {
+	test('reports itself applied once started', async () => {
+		// Imported after the mock above, which a static import would load first.
+		const { selfTest } = await import('~/index');
+
+		expect(selfTest().ok).toBe(true);
+	});
+
 	test('offers to preview a draft', () => {
 		const button = renderActions('hello').find('Pressable');
 
@@ -66,12 +73,16 @@ describe('the chat input', () => {
 	});
 
 	test('previews the draft as a message once the button is pressed', async () => {
+		jest.useFakeTimers();
+
 		const view = renderActions('hello **there**');
 
 		await view.act(async () => {
 			view.find('Pressable').props.onPress?.(Object.create(null));
-			await new Promise((resolve) => setTimeout(resolve, 400));
+			jest.advanceTimersByTime(Timing.keyboardDismissFallback);
 		});
+
+		jest.useRealTimers();
 
 		expect(view.text()).toContain('Message Preview');
 		expect(view.text()).toContain('hello **there**');

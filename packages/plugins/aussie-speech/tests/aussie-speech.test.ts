@@ -1,6 +1,8 @@
 import { metro, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, expect, test } from 'bun:test';
 
+import { selfTest } from '~/index';
+
 const sent: string[] = [];
 const Messages = {
 	sendMessage: (_channelId: string, message: { content: string }) => {
@@ -28,4 +30,8 @@ test('edits a message in Aussie English', () => {
 	Messages.editMessage('1', '2', { content: 'thank you' });
 
 	expect(sent).toEqual(['cheers, legend']);
+});
+
+test('reports the translation applied once the plugin starts', () => {
+	expect(selfTest().ok).toBe(true);
 });
