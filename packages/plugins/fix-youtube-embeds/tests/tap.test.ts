@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isTap } from '~/tap';
+import { isTap } from '~/youtube-embeds/tap';
 
 const START = { x: 100, y: 200, time: 1000 };
 

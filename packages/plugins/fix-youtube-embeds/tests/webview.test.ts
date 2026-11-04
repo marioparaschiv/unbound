@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { pickWebView } from '~/webview';
+import { pickWebView } from '~/youtube-embeds/webview';
 
 function WebView() {
 	return null;

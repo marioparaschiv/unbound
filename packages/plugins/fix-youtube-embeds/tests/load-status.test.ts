@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createLoadStatus, loadSelfTest } from '~/load-status';
+import { createLoadStatus, loadSelfTest } from '~/youtube-embeds/load-status';
 
 describe('createLoadStatus', () => {
 	test('lists the modules not patched yet, in order', () => {

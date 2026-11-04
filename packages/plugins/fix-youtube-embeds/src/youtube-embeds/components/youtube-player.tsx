@@ -1,10 +1,10 @@
 import { type GestureResponderEvent, Linking, StyleSheet, View } from 'react-native';
 import { type ComponentType, useContext, useEffect, useRef } from 'react';
 
-import type { WebViewHandle, WebViewNavigation, WebViewProps } from '~/webview';
-import { pauseScript, playerHtml, staysInPlayer } from '~/player';
-import { isTap, type TouchPoint } from '~/tap';
-import { ViewerContext } from '~/viewer-state';
+import type { WebViewHandle, WebViewNavigation, WebViewProps } from '~/youtube-embeds/webview';
+import { pauseScript, playerHtml, staysInPlayer } from '~/youtube-embeds/player';
+import { isTap, type TouchPoint } from '~/youtube-embeds/tap';
+import { ViewerContext } from '~/youtube-embeds/viewer-state';
 import { PLAYER_BASE_URL } from '~/constants';
 
 const styles = StyleSheet.create({

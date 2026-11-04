@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { embedUrl, pauseScript, playerHtml, staysInPlayer, toVideoId } from '~/player';
+import {
+	embedUrl,
+	pauseScript,
+	playerHtml,
+	staysInPlayer,
+	toVideoId,
+} from '~/youtube-embeds/player';
 
 const ID = 'dQw4w9WgXcQ';
 

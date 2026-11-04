@@ -1,6 +1,6 @@
 import { createContext } from 'react';
 
-import { createLoadStatus } from '~/load-status';
+import { createLoadStatus } from '~/youtube-embeds/load-status';
 import { EMBED_ERROR_MODULE, YOUTUBE_MODULE } from '~/constants';
 
 export type ViewerState = {
