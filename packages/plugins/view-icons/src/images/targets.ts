@@ -1,7 +1,7 @@
 import type { FluxGuildMember } from '@unbound-app/api/flux';
 
-import { GuildMemberStore, IconUtils, UserProfileStore, UserStore } from '~/modules';
-import type { OpenedSheet } from '~/opened-sheet';
+import { GuildMemberStore, IconUtils, UserProfileStore, UserStore } from '~/images/modules';
+import type { OpenedSheet } from '~/images/opened-sheet';
 import { AVATAR_SIZE, BANNER_SIZE } from '~/constants';
 
 export type User = {
@@ -30,15 +30,24 @@ type ImageSize = {
 	height: number;
 };
 
+/** What an image shows, which names its row in the user's language. */
+export type ImageKind =
+	| 'avatar'
+	| 'banner'
+	| 'serverAvatar'
+	| 'serverIcon'
+	| 'serverBanner'
+	| 'groupIcon';
+
 /** An image the user can open, with the size to show while its real size is unknown. */
 export type ImageTarget = {
-	label: string;
+	kind: ImageKind;
 	url: string;
 	size: ImageSize;
 };
 
 type Candidate = {
-	label: string;
+	kind: ImageKind;
 	url: string | null | undefined;
 	size: ImageSize;
 };
@@ -75,9 +84,9 @@ export function getUserTargets(userId: string, guildId?: string): ImageTarget[] 
 			: null;
 
 	return toTargets([
-		{ label: 'Avatar', url: IconUtils.getUserAvatarURL(merged, true), size: AVATAR_SIZE },
-		{ label: 'Banner', url: IconUtils.getUserBannerURL(merged, true), size: BANNER_SIZE },
-		{ label: 'Server Avatar', url: serverAvatar, size: AVATAR_SIZE },
+		{ kind: 'avatar', url: IconUtils.getUserAvatarURL(merged, true), size: AVATAR_SIZE },
+		{ kind: 'banner', url: IconUtils.getUserBannerURL(merged, true), size: BANNER_SIZE },
+		{ kind: 'serverAvatar', url: serverAvatar, size: AVATAR_SIZE },
 	]);
 }
 
@@ -91,12 +100,12 @@ export function getGuildTargets(guild: Guild): ImageTarget[] {
 
 	return toTargets([
 		{
-			label: 'Server Icon',
+			kind: 'serverIcon',
 			url: icon ? IconUtils.getGuildIconURL({ id, icon, canAnimate: true }) : null,
 			size: AVATAR_SIZE,
 		},
 		{
-			label: 'Server Banner',
+			kind: 'serverBanner',
 			url: banner ? IconUtils.getGuildBannerURL(guild, true) : null,
 			size: BANNER_SIZE,
 		},
@@ -111,7 +120,7 @@ export function getGuildTargets(guild: Guild): ImageTarget[] {
 export function getChannelTargets(channel: Channel): ImageTarget[] {
 	return toTargets([
 		{
-			label: 'Group DM Icon',
+			kind: 'groupIcon',
 			url: channel.icon ? IconUtils.getChannelIconURL(channel) : null,
 			size: AVATAR_SIZE,
 		},

@@ -1,9 +1,10 @@
+import { format, messages } from '@unbound-app/i18n';
 import { toasts } from '@unbound-app/api';
 import { Image } from 'react-native';
 
-import type { ImageTarget } from '~/targets';
-import { normalizeImageUrl } from '~/image-url';
-import { Media } from '~/modules';
+import { normalizeImageUrl } from '~/images/image-url';
+import type { ImageTarget } from '~/images/targets';
+import { Media } from '~/images/modules';
 
 /**
  * @description Opens an image in Discord's media viewer at full resolution.
@@ -20,8 +21,8 @@ export function openImage(target: ImageTarget): void {
 			});
 		} catch {
 			toasts.show({
-				title: 'View Icons',
-				content: `Unable to open ${target.label.toLowerCase()}.`,
+				title: messages.VIEW_ICONS,
+				content: format('UNABLE_TO_OPEN', { image: target.kind }),
 			});
 		}
 	}

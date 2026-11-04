@@ -1,5 +1,4 @@
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import { patcher } from '@unbound-app/api';
 
 import {
@@ -10,11 +9,12 @@ import {
 	type Guild,
 	type ImageTarget,
 	type User,
-} from '~/targets';
-import { ChannelStore, ContextMenusFilter, GuildStore, Theme, UserStore } from '~/modules';
-import { asId, type OpenedSheet, type SheetRef } from '~/opened-sheet';
-import ViewIcon from '~/components/view-icon';
-import { openImage } from '~/open-image';
+} from '~/images/targets';
+import { asId, type OpenedSheet, type SheetRef } from '~/images/opened-sheet';
+import { ChannelStore, ContextMenus, GuildStore, Theme, UserStore } from '~/images/modules';
+import ViewIcon from '~/images/components/view-icon';
+import { openImage } from '~/images/open-image';
+import { viewLabel } from '~/images/labels';
 
 type MenuItem = {
 	label?: string;
@@ -36,11 +36,6 @@ type ContextMenu = {
 	guildId?: unknown;
 	channel?: Channel;
 	context?: MenuContext;
-};
-
-type ContextMenuHost = {
-	showContextMenu: (menu?: ContextMenu) => void;
-	hideContextMenu: () => void;
 };
 
 function resolveTargets(menu: ContextMenu, opened: OpenedSheet | null): ImageTarget[] {
@@ -78,19 +73,20 @@ function resolveTargets(menu: ContextMenu, opened: OpenedSheet | null): ImageTar
 /**
  * @description Adds View items for avatars, banners and icons to user, guild and group DM context menus.
  * @param opened The last opened profile or guild sheet, for menus opened from inside it.
- * @returns A function that removes the patch, or stops waiting for Discord's context menu module.
  */
-export function patchContextMenus(opened: SheetRef): () => void {
-	if (!ensureModules('View Icons: context menus', { Theme })) return () => {};
+export function patchContextMenus(opened: SheetRef): void {
+	if (!ensureModules('View Icons: context menus', { Theme })) return;
 
-	return whenLoaded<ContextMenuHost>(ContextMenusFilter, (ContextMenus) =>
-		patcher.before(ContextMenus, 'showContextMenu', ({ args: [menu] }) => {
+	patcher.before(
+		ContextMenus,
+		'showContextMenu',
+		({ args: [menu] }: { args: [ContextMenu?] }) => {
 			const items = menu?.items;
 
 			if (!menu || !items) return;
 
 			for (const target of resolveTargets(menu, opened.current)) {
-				const label = `View ${target.label}`;
+				const label = viewLabel(target.kind);
 
 				if (items.some((item) => item.label === label)) {
 					continue;
@@ -105,7 +101,7 @@ export function patchContextMenus(opened: SheetRef): () => void {
 					},
 				});
 			}
-		}),
+		},
 	);
 }
 

@@ -1,4 +1,4 @@
-import type { Guild } from '~/targets';
+import type { Guild } from '~/images/targets';
 
 export type OpenedSheet =
 	| { kind: 'profile'; userId: string; guildId?: string }
