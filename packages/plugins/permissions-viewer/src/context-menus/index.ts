@@ -3,7 +3,7 @@ import { patcher } from '@unbound-app/api';
 
 import { contextMenuTarget, type ContextMenu } from '~/context-menus/targets';
 import { hasPermissionsView, viewForTarget } from '~/permissions/views';
-import { ContextMenusFilter, GuildStore } from '~/discord/modules';
+import { ContextMenusFilter, GuildStore, Icons } from '~/discord/modules';
 import type { SheetState } from '~/action-sheets';
 import { openPermissionsSheet } from '~/sheets';
 import { ROW_LABEL } from '~/constants';
@@ -34,6 +34,7 @@ export function patchContextMenus(state: SheetState): () => void {
 
 			menu.items.push({
 				label: ROW_LABEL,
+				IconComponent: Icons.ShieldUserIcon,
 				action: () => {
 					ContextMenus.hideContextMenu();
 
