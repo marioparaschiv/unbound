@@ -1,32 +1,37 @@
-import findRenderTarget from '@unbound-plugins/shared/react/render-target';
-import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
-import type { AnyProps } from '@unbound-app/api/metro';
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { patcher } from '@unbound-app/api';
 
-import { findSearchField } from '~/picker/search-field';
+import { GIFPickerHeader, PickerRunning } from '~/picker/modules';
 import ProviderHeader from '~/picker/components/provider-header';
-import { GIF_PICKER_HEADER_PATH, PLUGIN_NAME } from '~/constants';
+import { findSearchField } from '~/picker/search-field';
+
+let markStopped = () => {};
 
 /**
  * @description Adds a provider button to the GIF picker's search header, which cycles Tenor, Giphy and Klipy, and names the provider in the search field.
- * Patches the render function of `modules/gif_picker/native/GIFPickerHeader.tsx` (a memo) and wraps its result in `ProviderHeader` only when it renders a field with a `placeholder`.
+ * Patches the render of `GIFPickerHeader` (a memo) and wraps its result in `ProviderHeader` only when it renders a field with a `placeholder`.
  * Uses the header's `onQueryChange` prop to search again after a switch.
- * @returns A function that stops waiting for the header's module, or removes the patch.
+ * The Addon scope removes the patch, but a header already on screen only drops the button without remounting its search field while `PickerRunning` says so, so `stopPicker` marks it stopped.
  */
-export function patchGifPickerHeader(): () => void {
-	return whenLoaded(GIF_PICKER_HEADER_PATH, (module: AnyProps) => {
-		const target = findRenderTarget(module);
+export function startPicker(): void {
+	if (!ensureModules('GIF Provider Switcher', { GIFPickerHeader })) return;
 
-		if (!target) {
-			console.error(`[${PLUGIN_NAME}] GIF picker header component not found.`);
+	markStopped = PickerRunning.markRunning();
 
-			return () => {};
-		}
+	patcher.react.after(GIFPickerHeader, 'default', ({ props, result }) => {
+		if (!result || !findSearchField(result)) return;
 
-		return patcher.after(target.holder, target.key, ({ args: [props], result }) => {
-			if (!result || !findSearchField(result)) return;
-
-			return <ProviderHeader header={result} onQueryChange={props?.onQueryChange} />;
-		});
+		return <ProviderHeader header={result} onQueryChange={props?.onQueryChange} />;
 	});
+
+	recordApplied(1);
+}
+
+/**
+ * @description Hides the provider button from a GIF picker header that is already on screen.
+ */
+export function stopPicker(): void {
+	markStopped();
+	markStopped = () => {};
 }

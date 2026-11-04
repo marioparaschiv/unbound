@@ -1,14 +1,5 @@
-import { DEFAULT_PROVIDER, PROVIDERS } from '~/constants';
+import { PROVIDERS } from '~/constants';
 import type { ProviderId, ReplacementProviderId } from '~/types';
-
-/**
- * @description Reads a stored provider value, falling back to Tenor for anything unknown.
- * @param value The stored value.
- * @returns A known provider.
- */
-export function normalizeProvider(value: unknown): ProviderId {
-	return PROVIDERS.find((provider) => provider.id === value)?.id ?? DEFAULT_PROVIDER;
-}
 
 /**
  * @description Checks whether a provider replaces Discord's own Klipy search.

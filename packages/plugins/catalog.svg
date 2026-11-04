@@ -179,7 +179,7 @@
 <a href="https://github.com/marioparaschiv/unbound/tree/main/packages/plugins/gif-provider-switcher"><text x="80" y="1206" text-anchor="start" dominant-baseline="middle" fill="#f5f5f7" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="15" font-weight="600">GIF Provider Switcher</text></a>
 <text x="346" y="1197" text-anchor="start" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">Search GIFs from Tenor or Giphy instead of Klipy, and switch providers</text>
 <text x="346" y="1215" text-anchor="start" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">right from the GIF picker.</text>
-<text x="940" y="1206" text-anchor="middle" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">1.0.0</text>
+<text x="940" y="1206" text-anchor="middle" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">1.0.1</text>
 <text x="1002" y="1206" text-anchor="start" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">Lunascape, V, adrian</text>
 <line x1="30" y1="1234" x2="1170" y2="1234" stroke="#2a2d33" stroke-width="1"/>
 <rect x="16" y="1234" width="1168" height="52" rx="8" fill="#17181c"/>

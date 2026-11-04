@@ -1,5 +1,6 @@
 import { Discord } from '@unbound-app/api/metro/components';
-import { storage } from '@unbound-app/api';
+import { format } from '@unbound-app/i18n';
+import { useSetting } from '@unbound-app/settings';
 import { cloneElement, type ReactElement, type ReactNode } from 'react';
 import { View } from 'react-native';
 
@@ -10,15 +11,9 @@ import {
 	renameSearchField,
 	toggleLeadingSpace,
 } from '~/picker/search-field';
-import {
-	isReplacement,
-	nextProvider,
-	normalizeProvider,
-	providerLabel,
-} from '~/providers/selection';
+import { isReplacement, nextProvider, providerLabel } from '~/providers/selection';
 import { setSelectedProvider } from '~/providers/selected';
-import { GIFPickerViewStore, PickerRunning } from '~/modules';
-import { DEFAULT_PROVIDER } from '~/constants';
+import { GIFPickerViewStore, PickerRunning } from '~/picker/modules';
 
 type ProviderHeaderProps = {
 	header: ReactNode;
@@ -38,8 +33,7 @@ function clone(element: object, props: Record<string, unknown>) {
  */
 export function ProviderHeader({ header, onQueryChange }: ProviderHeaderProps) {
 	const running = PickerRunning.useRunning();
-	const settings = storage.useBucket(addon.id);
-	const provider = normalizeProvider(settings.get<string>('provider', DEFAULT_PROVIDER));
+	const provider = useSetting('provider');
 	const label = providerLabel(provider);
 	const next = nextProvider(provider);
 
@@ -68,7 +62,10 @@ export function ProviderHeader({ header, onQueryChange }: ProviderHeaderProps) {
 					size='sm'
 					variant='secondary'
 					text={label}
-					accessibilityLabel={`GIF provider: ${label}. Switch to ${providerLabel(next)}`}
+					accessibilityLabel={format('PROVIDER_BUTTON_LABEL', {
+						provider: label,
+						next: providerLabel(next),
+					})}
 					onPress={switchProvider}
 				/>
 			)}

@@ -1,28 +1,16 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 
-import { interceptGifRequests } from '~/requests';
-import { patchGifPickerHeader } from '~/picker';
-import SettingsPanel from '~/settings';
-import { PickerRunning } from '~/modules';
-import { PLUGIN_NAME } from '~/constants';
-
-let dispose: () => Promise<void> | undefined = () => undefined;
+import { startRequests, stopRequests } from '~/requests';
+import { startPicker, stopPicker } from '~/picker';
 
 export function start() {
-	dispose = applyFeatures(PLUGIN_NAME, [
-		PickerRunning.markRunning,
-		interceptGifRequests,
-		patchGifPickerHeader,
-	]);
+	startPicker();
+	startRequests();
 }
 
 export function stop() {
-	const pending = dispose();
-
-	dispose = () => undefined;
-
-	return pending;
+	stopRequests();
+	stopPicker();
 }
 
-export { featureSelfTest as selfTest, SettingsPanel };
+export { featureSelfTest as selfTest };

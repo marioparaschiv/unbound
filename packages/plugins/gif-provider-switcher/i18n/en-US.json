@@ -1,0 +1,10 @@
+{
+	"PROVIDER": "Provider",
+	"PROVIDER_TENOR": "Tenor",
+	"PROVIDER_TENOR_SUBTITLE": "Search GIFs on Tenor",
+	"PROVIDER_GIPHY": "Giphy",
+	"PROVIDER_GIPHY_SUBTITLE": "Search GIFs on Giphy",
+	"PROVIDER_KLIPY": "Klipy",
+	"PROVIDER_KLIPY_SUBTITLE": "Discord's own GIF search",
+	"PROVIDER_BUTTON_LABEL": "GIF provider: {provider}. Switch to {next}"
+}
