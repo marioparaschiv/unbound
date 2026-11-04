@@ -16,9 +16,15 @@
 		"typecheck": "tsc --noEmit -p ."
 	},
 	"devDependencies": {
+		"@mdx-js/mdx": "^3.1.1",
 		"@types/bun": "catalog:",
+		"@types/react": "catalog:react",
+		"@unbound-app/api": "workspace:*",
 		"@unbound-app/contracts": "workspace:*",
 		"@unbound-app/types": "workspace:*",
+		"react": "catalog:react",
+		"react-native": "catalog:react",
+		"remark-frontmatter": "^5.0.0",
 		"typescript": "catalog:"
 	}
 }
