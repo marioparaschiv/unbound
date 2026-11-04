@@ -1,7 +1,7 @@
 import type { NativeCallOptions, NativeHandle, NativeObjectHandle } from '@unbound-app/types';
 import { describe, expect, test } from 'bun:test';
 
-import { createMainThreadAlloc } from './main-thread-alloc';
+import { createObjectFactory } from './object-factory';
 
 type Named = { name?: string };
 
@@ -55,7 +55,7 @@ function fakeBridge(options: FakeOptions = {}) {
 					throw new Error('main thread is waiting');
 				}
 
-				return handle(nameOf(target));
+				return selector === 'initReturningNil' ? null : handle(nameOf(target));
 			},
 		},
 	};
@@ -64,7 +64,7 @@ function fakeBridge(options: FakeOptions = {}) {
 describe('main-thread alloc', () => {
 	test('creates views on the main thread', () => {
 		const { bridge, calls } = fakeBridge();
-		const alloc = createMainThreadAlloc(bridge);
+		const { alloc } = createObjectFactory(bridge);
 
 		expect(nameOf(alloc('UILabel'))).toBe('UILabel');
 		expect(calls).toEqual([
@@ -75,7 +75,7 @@ describe('main-thread alloc', () => {
 
 	test('keeps other classes on the calling thread', () => {
 		const { bridge, calls } = fakeBridge();
-		const alloc = createMainThreadAlloc(bridge);
+		const { alloc } = createObjectFactory(bridge);
 
 		alloc('NSMutableAttributedString');
 
@@ -87,7 +87,7 @@ describe('main-thread alloc', () => {
 
 	test('remembers each class', () => {
 		const { bridge, calls } = fakeBridge();
-		const alloc = createMainThreadAlloc(bridge);
+		const { alloc } = createObjectFactory(bridge);
 
 		alloc('UIView');
 		alloc('UIView');
@@ -97,9 +97,59 @@ describe('main-thread alloc', () => {
 
 	test('falls back when the main thread cannot be reached', () => {
 		const { bridge, calls } = fakeBridge({ mainFails: true });
-		const alloc = createMainThreadAlloc(bridge);
+		const { alloc } = createObjectFactory(bridge);
 
 		expect(nameOf(alloc('UIView'))).toBe('UIView');
 		expect(calls.at(-1)).toBe('alloc UIView');
+	});
+});
+
+describe('object create', () => {
+	test('allocates without init and sends only the init selector', () => {
+		const { bridge, calls } = fakeBridge();
+		const { create } = createObjectFactory(bridge);
+
+		expect(nameOf(create('AVPictureInPictureController', 'initWithPlayerLayer:', []))).toBe(
+			'AVPictureInPictureController',
+		);
+		expect(calls).toEqual([
+			'call AVPictureInPictureController isSubclassOfClass:',
+			'invoke AVPictureInPictureController alloc {"thread":"current"}',
+			'invoke AVPictureInPictureController initWithPlayerLayer: {"thread":"current"}',
+		]);
+		expect(calls.some((call) => call.startsWith('alloc'))).toBe(false);
+	});
+
+	test('creates views on the main thread', () => {
+		const { bridge, calls } = fakeBridge();
+		const { create } = createObjectFactory(bridge);
+
+		create('UIView', 'initWithFrame:', [{}]);
+
+		expect(calls.slice(1)).toEqual([
+			'invoke UIView alloc {"thread":"main"}',
+			'invoke UIView initWithFrame: {"thread":"main"}',
+		]);
+	});
+
+	test('uses the thread the caller asks for', () => {
+		const { bridge, calls } = fakeBridge();
+		const { create } = createObjectFactory(bridge);
+
+		create('UIView', 'init', [], { thread: 'main-post' });
+
+		expect(calls).toEqual([
+			'invoke UIView alloc {"thread":"main-post"}',
+			'invoke UIView init {"thread":"main-post"}',
+		]);
+	});
+
+	test('throws when the initializer returns nil', () => {
+		const { bridge } = fakeBridge();
+		const { create } = createObjectFactory(bridge);
+
+		expect(() => create('NSObject', 'initReturningNil')).toThrow(
+			'initReturningNil returned nil.',
+		);
 	});
 });
