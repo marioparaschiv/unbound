@@ -29,4 +29,4 @@ export const UserProfileActionSheet = metro.findByFilePath(
 
 export const Tooltips = metro.findByProps('TooltipArrowDirections', 'TooltipArrowPositions');
 export const Icons = metro.findByProps('UserIcon');
-export const ActionSheets = metro.findByProps('openLazy', 'hideActionSheet');
+export const ActionSheets = metro.api.ActionSheets;

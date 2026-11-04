@@ -1,7 +1,8 @@
-import { createFakeReactNative, flux, metro, render } from '@unbound-app/api/testing';
+import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, memo, type ReactNode } from 'react';
+import { Pressable, Text, View } from 'react-native';
 
 const typing: { ids: Record<string, number> } = { ids: {} };
 const users: Record<string, { id: string; username: string }> = {
@@ -9,30 +10,6 @@ const users: Record<string, { id: string; username: string }> = {
 	alice: { id: 'alice', username: 'alice' },
 	bob: { id: 'bob', username: 'bob' },
 };
-
-// The design components are not in the kit's fakes; styles only need their factories called.
-mock.module('@unbound-app/api/metro/components', () => ({
-	Discord: {
-		createStyles: (styles: object | (() => object)) => () =>
-			typeof styles === 'function' ? styles() : styles,
-	},
-}));
-
-// The kit's `react-native` has no `Animated`; the dots only import it, and these tests draw avatars.
-mock.module('react-native', () => ({
-	...createFakeReactNative(),
-	Animated: {},
-	Easing: {},
-}));
-
-// The kit's renderer draws function components only, and the error boundary is a class.
-mock.module(
-	new URL('../src/typing-indicator/components/indicator-boundary.tsx', import.meta.url).pathname,
-	() => ({ default: (props: { children: ReactNode }) => props.children }),
-);
-
-const { Pressable, Text, View } = await import('react-native');
-const { startTypingIndicators } = await import('~/typing-indicator');
 
 function ChannelInfo(_props: { channel: { id: string } }) {
 	return createElement(Text, null, 'general');
@@ -116,12 +93,10 @@ function renderRow(channelId = 'general', muted = false) {
 	return render(createElement(TextChannel, { channel: { id: channelId }, muted }));
 }
 
-beforeAll(() => {
-	metro.register({ colors: { TEXT_DEFAULT: '#fff' }, internal: {} });
-});
-
-beforeEach(() => {
+// The preset forgets registered modules before each test, so each test registers them again.
+beforeEach(async () => {
 	typing.ids = {};
+	metro.register({ colors: { TEXT_DEFAULT: '#fff' }, internal: {} });
 	metro.register(
 		{ default: TextChannel },
 		'modules/channel_list_v2/native/items/TextChannel.tsx',
@@ -130,7 +105,7 @@ beforeEach(() => {
 	metro.register({ default: UserSummaryItem }, 'components_native/common/UserSummaryItem.tsx');
 	seedStores();
 	settings.indicatorMode = 2;
-	startTypingIndicators();
+	await startPlugin();
 });
 
 describe('typing indicators on channel rows', () => {
