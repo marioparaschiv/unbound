@@ -1,4 +1,5 @@
 import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
@@ -32,6 +33,7 @@ async function rowFor(timedOutUntil: string | null): Promise<Row> {
 }
 
 beforeEach(() => {
+	resetHealth();
 	metro.register(MessageRowData);
 });
 

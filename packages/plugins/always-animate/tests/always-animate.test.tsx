@@ -1,7 +1,7 @@
-import { logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { settings } from '@unbound-app/settings';
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 import { memo, type ReactNode } from 'react';
@@ -177,6 +177,8 @@ describe('health', () => {
 	});
 
 	test('a part that cannot start leaves the others animating', async () => {
+		const error = spyOn(console, 'error').mockImplementation(() => {});
+
 		modules.nameplate.default = 'not a component';
 
 		await startPlugin();
@@ -184,6 +186,7 @@ describe('health', () => {
 		expect(rendered(components.decoration)).toBe('animate:true loop:false');
 		expect(avatarUtils.getGuildIconURL({ canAnimate: false })).toBe('icon.gif');
 		expect(selfTest()).toMatchObject({ ok: false });
-		expect(logs.entries.some((entry) => entry.level === 'error')).toBe(true);
+		expect(error).toHaveBeenCalled();
+		error.mockRestore();
 	});
 });

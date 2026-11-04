@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { patcher } from '@unbound-app/api';
 
@@ -24,8 +23,6 @@ export function startPicker(): void {
 
 		return <ProviderHeader header={result} onQueryChange={props?.onQueryChange} />;
 	});
-
-	recordApplied(1);
 }
 
 /**

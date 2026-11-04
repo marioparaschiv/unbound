@@ -1,5 +1,6 @@
 import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import { Pressable, View } from 'react-native';
 
 import { createFakes } from './fakes';
@@ -27,9 +28,25 @@ const modules = {
 
 let { drafts, stickerSends } = createFakes();
 
-beforeEach(async () => {
+const PATHS = {
+	picker: 'modules/stickers/native/StickerPickerListRow.tsx',
+	sticker: 'modules/stickers/native/Sticker.tsx',
+	container: 'modules/chat_input/native/FloatingChatInputContainer.tsx',
+	sendButton: 'modules/chat_input/native/accessories/ChatInputSendButton.tsx',
+};
+
+const NAMES = {
+	picker: 'StickerPickerListRow',
+	sticker: 'Sticker',
+	container: 'FloatingChatInputContainer',
+	sendButton: 'ChatInputSendButton',
+};
+
+// Registers Discord's modules by the file path they live at, or by name only, as a build that moved the files does.
+async function start(lookup: 'path' | 'name') {
 	const fakes = createFakes();
 
+	resetHealth();
 	({ drafts, stickerSends } = fakes);
 	flux.seed({
 		Draft: { getDraft: (channelId: string) => drafts.get(channelId) ?? '' },
@@ -38,15 +55,18 @@ beforeEach(async () => {
 	});
 	metro.register(fakes.ChatInputs);
 	metro.register(fakes.Messages);
-	metro.register(modules.picker, 'modules/stickers/native/StickerPickerListRow.tsx');
-	metro.register(modules.sticker, 'modules/stickers/native/Sticker.tsx');
-	metro.register(modules.container, 'modules/chat_input/native/FloatingChatInputContainer.tsx');
-	metro.register(
-		modules.sendButton,
-		'modules/chat_input/native/accessories/ChatInputSendButton.tsx',
-	);
+
+	for (const key of Object.keys(PATHS) as (keyof typeof PATHS)[]) {
+		if (lookup === 'path') metro.register(modules[key], PATHS[key]);
+		else metro.register(Object.assign(modules[key], { name: NAMES[key] }));
+	}
+
 	await startPlugin();
-});
+}
+
+let lookup: 'path' | 'name' = 'path';
+
+beforeEach(() => start(lookup));
 
 describe('a picked sticker', () => {
 	test('waits above the composer instead of being sent, and can be removed', () => {
@@ -99,10 +119,37 @@ describe('a picked sticker', () => {
 		expect(globalThis.__unboundStagedStickers?.channels()).toEqual([]);
 	});
 
+	test('is still gone after the plugin stops and starts again', async () => {
+		const Picker = modules.picker.default;
+
+		render(<Picker onPressSticker={() => undefined} />)
+			.find('Pressable')
+			.props.onPress?.(undefined as never);
+		await stopPlugin();
+		await startPlugin();
+
+		expect(globalThis.__unboundStagedStickers?.channels()).toEqual([]);
+	});
+
 	test('is reported as applied by the self test', async () => {
 		// Imported late: the plugin looks its modules up when it first loads, after the test registered them.
 		const { selfTest } = await import('~/index');
 
 		expect(selfTest()).toMatchObject({ ok: true });
+	});
+});
+
+describe('when Discord moved its files', () => {
+	beforeAll(() => void (lookup = 'name'));
+	afterAll(() => void (lookup = 'path'));
+
+	test('finds the modules by name and stages a picked sticker', () => {
+		const Picker = modules.picker.default;
+
+		render(<Picker onPressSticker={() => undefined} />)
+			.find('Pressable')
+			.props.onPress?.(undefined as never);
+
+		expect(globalThis.__unboundStagedStickers?.channels()).toEqual(['c1']);
 	});
 });

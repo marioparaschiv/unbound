@@ -1,7 +1,13 @@
 import { selfTestYoutubeEmbeds, startYoutubeEmbeds } from '~/youtube-embeds';
 
+let stopEmbeds = async () => {};
+
 export function start() {
-	startYoutubeEmbeds();
+	stopEmbeds = startYoutubeEmbeds();
+}
+
+export function stop() {
+	return stopEmbeds();
 }
 
 export { selfTestYoutubeEmbeds as selfTest };

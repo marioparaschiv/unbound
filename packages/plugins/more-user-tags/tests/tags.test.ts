@@ -1,20 +1,12 @@
-import {
-	createFakeReactNative,
-	flux,
-	metro,
-	startPlugin,
-	stopPlugin,
-} from '@unbound-app/api/testing';
+import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { storage } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, jest, test } from 'bun:test';
 
-// The testing kit's `react-native` has no `AccessibilityInfo`, which the iOS gradient renderer reads at import.
-mock.module('react-native', () => ({
-	...createFakeReactNative(),
-	AccessibilityInfo: { isReduceMotionEnabled: () => Promise.resolve(false) },
-}));
+import { selfTest } from '~/index';
+
+const SAVE_DELAY_MS = 1_000;
 
 type TagProperties = { opTagText: string | null; tagText: string | null };
 
@@ -112,11 +104,12 @@ describe('tags', () => {
 });
 
 describe('the cached tag colors', () => {
-	const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+	beforeEach(() => void jest.useFakeTimers());
+	afterEach(() => void jest.useRealTimers());
 
-	test('are saved a moment after a tag appears', async () => {
+	test('are saved a moment after a tag appears', () => {
 		tagFor(webhookMessage());
-		await wait(1100);
+		jest.advanceTimersByTime(SAVE_DELAY_MS);
 
 		expect(storage.getBucket().get('appearanceCache', undefined)).toBeDefined();
 	});
@@ -124,7 +117,7 @@ describe('the cached tag colors', () => {
 	test('are not written once the plugin stops', async () => {
 		tagFor(webhookMessage());
 		await stopPlugin();
-		await wait(1100);
+		jest.advanceTimersByTime(SAVE_DELAY_MS);
 
 		expect(storage.getBucket().get('appearanceCache', undefined)).toBeUndefined();
 	});
@@ -132,9 +125,6 @@ describe('the cached tag colors', () => {
 
 describe('health', () => {
 	test('the self test passes once started', async () => {
-		// Imported here so the mocked `react-native` above is in place first.
-		const { selfTest } = await import('~/index');
-
 		expect((await selfTest()).ok).toBe(true);
 	});
 });

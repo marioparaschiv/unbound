@@ -34,11 +34,14 @@ async function typecheck(plugin: string): Promise<PluginTypeErrors> {
 async function main(): Promise<void> {
 	const queue = pluginDirectories();
 	const results: PluginTypeErrors[] = [];
-	const workers = Array.from({ length: Math.max(1, navigator.hardwareConcurrency) }, async () => {
-		for (let plugin = queue.shift(); plugin; plugin = queue.shift()) {
-			results.push(await typecheck(plugin));
-		}
-	});
+	const workers = Array.from(
+		{ length: Math.max(1, Math.floor(navigator.hardwareConcurrency / 2)) },
+		async () => {
+			for (let plugin = queue.shift(); plugin; plugin = queue.shift()) {
+				results.push(await typecheck(plugin));
+			}
+		},
+	);
 
 	await Promise.all(workers);
 

@@ -33,11 +33,14 @@ async function test(plugin: string): Promise<PluginTestRun> {
 async function main(): Promise<void> {
 	const queue = pluginsWithTests();
 	const results: PluginTestRun[] = [];
-	const workers = Array.from({ length: Math.max(1, navigator.hardwareConcurrency) }, async () => {
-		for (let plugin = queue.shift(); plugin; plugin = queue.shift()) {
-			results.push(await test(plugin));
-		}
-	});
+	const workers = Array.from(
+		{ length: Math.max(1, Math.floor(navigator.hardwareConcurrency / 2)) },
+		async () => {
+			for (let plugin = queue.shift(); plugin; plugin = queue.shift()) {
+				results.push(await test(plugin));
+			}
+		},
+	);
 
 	await Promise.all(workers);
 

@@ -1,31 +1,29 @@
-import { featureSelfTest, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import startFeatures from '@unbound-plugins/shared/lifecycle/start-features';
 
 import { startRequests, stopRequests } from '~/requests';
 import { startPicker, stopPicker } from '~/picker';
 
+let stopFeatures = async () => {};
+
 export function start() {
-	const failures: string[] = [];
-
 	// One feature throwing must not cost the other.
-	for (const [name, startFeature] of [
-		['picker', startPicker],
-		['requests', startRequests],
-	] as const) {
-		try {
-			startFeature();
-		} catch (error) {
-			logger.error(`Failed to start the ${name}:`, error);
-			failures.push(`${name}: ${error instanceof Error ? error.message : String(error)}`);
-		}
-	}
+	stopFeatures = startFeatures('GIF Provider Switcher', [
+		() => {
+			startPicker();
 
-	// Recorded last, because recording an applied feature clears an earlier failure.
-	if (failures.length) recordFailure(failures.join('; '));
+			return stopPicker;
+		},
+		() => {
+			startRequests();
+
+			return stopRequests;
+		},
+	]);
 }
 
 export function stop() {
-	stopRequests();
-	stopPicker();
+	return stopFeatures();
 }
 
 export { featureSelfTest as selfTest };

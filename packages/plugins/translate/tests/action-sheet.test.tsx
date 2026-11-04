@@ -1,4 +1,5 @@
 import { metro, render, startPlugin, toasts } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import { settings } from '@unbound-app/settings';
@@ -39,6 +40,7 @@ const labels = (sheet: Awaited<ReturnType<typeof openSheet>>) =>
 
 beforeEach(async () => {
 	clipboard.text = '';
+	resetHealth();
 	hidden.length = 0;
 	metro.register(ActionSheets);
 	metro.register({
@@ -68,6 +70,7 @@ describe('the message long-press menu', () => {
 		expect(labels(sheet)).toEqual(['Translate']);
 
 		sheet.act(() => sheet.find('ActionSheetRow').props.onPress?.());
+		// The copy and the toast follow a chain of awaits; one macrotask lets them all finish.
 		await new Promise((resolve) => setTimeout(resolve));
 
 		expect(hidden).toEqual(['MessageLongPressActionSheet']);
