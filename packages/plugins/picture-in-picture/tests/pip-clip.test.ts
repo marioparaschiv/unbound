@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createPipClipStore } from '~/window/android/pip-clip';
+import { createPipClipStore } from '~/picture-in-picture/android/pip-clip';
 
 describe('createPipClipStore', () => {
 	test('shows a clip, records its time and hands it back when hidden', () => {

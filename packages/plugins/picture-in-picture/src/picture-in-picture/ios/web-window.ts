@@ -1,5 +1,5 @@
-import { playerKind } from '~/source';
-import type { WebPlayers } from '~/web/web-players';
+import { playerKind } from '~/picture-in-picture/source';
+import type { WebPlayers } from '~/picture-in-picture/web/web-players';
 import type { PipWindow, WindowEvents } from '~/types';
 
 /**

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { windowAspect } from '~/window/aspect';
+import { windowAspect } from '~/picture-in-picture/aspect';
 
 describe('windowAspect', () => {
 	test('uses the video size as it is when Android allows it', () => {

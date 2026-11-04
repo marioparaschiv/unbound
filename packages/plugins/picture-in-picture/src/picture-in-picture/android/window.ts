@@ -9,10 +9,10 @@ import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 import type { NativeJavaHookToken } from '@unbound-app/api/native';
 import { AppState } from 'react-native';
 
-import { createViewerPlayback } from '~/window/android/viewer-playback';
-import { playerKind } from '~/source';
-import { createPipClipStore } from '~/window/android/pip-clip';
-import { patchPipSurface } from '~/window/android/pip-surface';
+import { createViewerPlayback } from '~/picture-in-picture/android/viewer-playback';
+import { playerKind } from '~/picture-in-picture/source';
+import { createPipClipStore } from '~/picture-in-picture/android/pip-clip';
+import { patchPipSurface } from '~/picture-in-picture/android/pip-surface';
 import { ANDROID_SETTLE_MS, PLUGIN_NAME } from '~/constants';
 import type { CreateWindow, MediaSource, PipWindow } from '~/types';
 

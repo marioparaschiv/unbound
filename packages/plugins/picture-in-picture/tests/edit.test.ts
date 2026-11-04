@@ -6,7 +6,7 @@ import {
 	withElementProps,
 	type CloneElement,
 	type TreeElement,
-} from '~/tree/edit';
+} from '~/picture-in-picture/tree/edit';
 
 const clone: CloneElement = (element, props) => ({
 	...element,

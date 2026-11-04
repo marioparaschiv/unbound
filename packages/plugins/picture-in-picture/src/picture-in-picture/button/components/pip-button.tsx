@@ -1,11 +1,12 @@
+import { messages } from '@unbound-app/i18n';
 import { assets } from '@unbound-app/api';
 import { useSyncExternalStore, type ComponentType } from 'react';
 
-import type { OverlayButtonProps } from '~/button/modules';
-import type { Controller } from '~/session/controller';
-import type { SessionStore } from '~/session/store';
+import type { OverlayButtonProps } from '~/picture-in-picture/button/modules';
+import type { Controller } from '~/picture-in-picture/session/controller';
+import type { SessionStore } from '~/picture-in-picture/session/store';
 import { ICON_NAMES } from '~/constants';
-import { videoKey } from '~/source';
+import { videoKey } from '~/picture-in-picture/source';
 import type { MediaSource } from '~/types';
 
 type PipButtonProps = {
@@ -40,7 +41,9 @@ export function PipButton({ source, Button, sessions, controller }: PipButtonPro
 	return (
 		<Button
 			icon={pipIcon()}
-			accessibilityLabel={active ? 'Close Picture in Picture' : 'Picture in Picture'}
+			accessibilityLabel={
+				active ? messages.CLOSE_PICTURE_IN_PICTURE : messages.PICTURE_IN_PICTURE
+			}
 			accessibilityState={{ selected: active }}
 			onPress={() => controller.toggle(target, source)}
 		/>

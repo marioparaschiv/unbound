@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createController } from '~/session/controller';
-import { createSessionStore } from '~/session/store';
+import { createController } from '~/picture-in-picture/session/controller';
+import { createSessionStore } from '~/picture-in-picture/session/store';
 import type { EnterResult, PipWindow } from '~/types';
 
 const GIVE_UP_MS = 20;

@@ -4,7 +4,7 @@ import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 import { metro, patcher } from '@unbound-app/api';
 
-import { frameScript, readPipResult, requestScript } from '~/web/scripts';
+import { frameScript, readPipResult, requestScript } from '~/picture-in-picture/web/scripts';
 import { PLUGIN_NAME, WEB_PIP_TIMEOUT_MS } from '~/constants';
 
 type WebViewHandle = { injectJavaScript?: (script: string) => void };

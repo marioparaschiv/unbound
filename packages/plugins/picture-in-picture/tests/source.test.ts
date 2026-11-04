@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isVideoSource, mediaKey, playerKind, sourceKeys, videoKey } from '~/source';
+import {
+	isVideoSource,
+	mediaKey,
+	playerKind,
+	sourceKeys,
+	videoKey,
+} from '~/picture-in-picture/source';
 
 describe('mediaKey', () => {
 	test('gives the CDN and media proxy copies of one attachment the same key', () => {

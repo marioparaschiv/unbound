@@ -6,7 +6,7 @@ import { metro, patcher } from '@unbound-app/api';
 import { useRef, useSyncExternalStore, type ComponentType, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import type { PipClip, PipClipStore } from '~/window/android/pip-clip';
+import type { PipClip, PipClipStore } from '~/picture-in-picture/android/pip-clip';
 import { EXTERNAL_PIP_VIEW_PATH, OVERLAY_PATH, PLUGIN_NAME, VIDEO_PROTOTYPE } from '~/constants';
 
 type VideoHandle = { seek?: (seconds: number) => void };

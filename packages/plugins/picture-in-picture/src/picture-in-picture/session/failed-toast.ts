@@ -1,3 +1,4 @@
+import { messages } from '@unbound-app/i18n';
 import { toasts } from '@unbound-app/api';
 
 import { PLUGIN_NAME } from '~/constants';
@@ -8,6 +9,6 @@ import { PLUGIN_NAME } from '~/constants';
 export function showStartFailed(): void {
 	toasts.show({
 		title: PLUGIN_NAME,
-		content: "Picture in picture didn't start for this video.",
+		content: messages.START_FAILED,
 	});
 }

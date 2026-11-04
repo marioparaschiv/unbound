@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { PIP_REQUEST, PIP_RESULT, frameScript, readPipResult, requestScript } from '~/web/scripts';
+import {
+	PIP_REQUEST,
+	PIP_RESULT,
+	frameScript,
+	readPipResult,
+	requestScript,
+} from '~/picture-in-picture/web/scripts';
 
 describe('web player scripts', () => {
 	test('scripts are valid JavaScript that end in true', () => {

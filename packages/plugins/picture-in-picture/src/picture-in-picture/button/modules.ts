@@ -1,7 +1,7 @@
 import { metro } from '@unbound-app/api';
 import type { ComponentType } from 'react';
 
-import { OVERLAY_BUTTON_PATH } from '~/constants';
+import { OVERLAY_BUTTON_PATH, OVERLAY_HEADER_PATH } from '~/constants';
 
 export type OverlayButtonProps = {
 	icon?: number;
@@ -10,17 +10,16 @@ export type OverlayButtonProps = {
 	accessibilityState?: { selected?: boolean };
 };
 
-const OverlayButtonModule = metro.findByFilePath(OVERLAY_BUTTON_PATH, {
-	lazy: true,
-	interop: false,
-});
+export const OverlayHeaderModule = metro.findByFilePath(OVERLAY_HEADER_PATH, { interop: false });
+
+const OverlayButtonModule = metro.findByFilePath(OVERLAY_BUTTON_PATH, { interop: false });
 
 /**
- * @description Reads Discord's `MediaViewerOverlayButton` when the media viewer's header renders, since a lazy handle cannot be rendered.
+ * @description Reads Discord's `MediaViewerOverlayButton` when the media viewer's header renders.
  * @returns The button, or `undefined` when this build has none.
  */
 export function overlayButton(): ComponentType<OverlayButtonProps> | undefined {
-	const exported = (OverlayButtonModule.module as { default?: unknown } | undefined)?.default;
+	const exported = (OverlayButtonModule as { default?: unknown }).default;
 
 	return typeof exported === 'function'
 		? (exported as ComponentType<OverlayButtonProps>)

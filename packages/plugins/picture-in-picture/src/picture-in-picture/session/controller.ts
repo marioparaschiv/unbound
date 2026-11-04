@@ -1,5 +1,5 @@
-import type { SessionStore } from '~/session/store';
-import { windowAspect } from '~/window/aspect';
+import type { SessionStore } from '~/picture-in-picture/session/store';
+import { windowAspect } from '~/picture-in-picture/aspect';
 import { PLUGIN_NAME } from '~/constants';
 import type { MediaSource, PipWindow } from '~/types';
 
