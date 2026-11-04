@@ -31,6 +31,4 @@ export type SettingKey = keyof NewGuildSettings;
 
 export const REPEAT_WINDOW_MS = 10_000;
 
-export const MENU_LABEL = 'Apply New Guild Settings';
-
 export const MENU_ROW_KEY = 'unbound-new-guild-settings-apply';

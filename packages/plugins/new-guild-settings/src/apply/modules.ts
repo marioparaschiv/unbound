@@ -17,15 +17,13 @@ type UserGuildSettings = {
 
 export const NotificationSettings: NotificationSettingsActions = metro.findByProps(
 	'updateGuildNotificationSettings',
-	{ lazy: true },
 );
 
-export const OptInChannels: OptInChannelsActions = metro.findByProps('toggleShowAllChannels', {
-	lazy: true,
-});
+export const OptInChannels: OptInChannelsActions = metro.findByProps('toggleShowAllChannels');
 
-export const UserGuildSettingsStore = flux.getStore('UserGuildSettings', {
-	lazy: true,
-}) as ReturnType<typeof flux.getStore> & UserGuildSettings;
+export const UserGuildSettingsStore = flux.getStore('UserGuildSettings') as ReturnType<
+	typeof flux.getStore
+> &
+	UserGuildSettings;
 
 export const settings = storage.getBucket(PLUGIN_ID);
