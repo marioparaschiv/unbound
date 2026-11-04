@@ -61,7 +61,7 @@ jobs:
               id: ios
               if: env.IOS_SOURCE != 'none'
               continue-on-error: true
-              timeout-minutes: 32
+              timeout-minutes: 42
               uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
               with:
                   api-url: ${{ env.DKRYPT_BASE_URL }}

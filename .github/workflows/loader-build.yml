@@ -266,7 +266,7 @@ jobs:
               id: decrypt
               if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == '' && steps.ipa-cache.outputs.cache-hit != 'true'
               continue-on-error: true
-              timeout-minutes: 32
+              timeout-minutes: 36
               uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
@@ -282,7 +282,7 @@ jobs:
               id: decrypt-latest
               if: steps.decrypt.outcome == 'failure' && inputs.release_dry_run == true && steps.select.outputs.requested_version != ''
               continue-on-error: true
-              timeout-minutes: 32
+              timeout-minutes: 36
               uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
