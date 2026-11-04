@@ -1,17 +1,8 @@
-import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { afterEach, beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { memo } from 'react';
-import { Text, TextInput, View } from 'react-native';
-
-// The testing kit has no fake of Discord's design components, so the button is a plain component.
-mock.module('@unbound-app/api/metro/components', () => ({
-	Discord: {
-		Button: function Button({ text, onPress }: { text: string; onPress: () => void }) {
-			return <Text onPress={onPress}>{text}</Text>;
-		},
-	},
-}));
+import { TextInput, View } from 'react-native';
 
 type Request = { url: string; query?: Record<string, unknown> };
 
@@ -36,12 +27,9 @@ const GIFPickerHeader = memo(
 
 const realFetch = globalThis.fetch;
 
-beforeAll(() => {
+beforeEach(() => {
 	metro.register(REST);
 	metro.register({ default: GIFPickerHeader }, 'modules/gif_picker/native/GIFPickerHeader.tsx');
-});
-
-beforeEach(() => {
 	calls.length = 0;
 	flux.seed({ Locale: { locale: 'en-US' }, GIFPickerView: { getQuery: () => '' } });
 	globalThis.fetch = (async (url: string) => {
@@ -96,7 +84,7 @@ describe('the GIF picker header', () => {
 		const view = render(<GIFPickerHeader />);
 
 		expect(view.find('TextInput').props.placeholder).toBe('Search Tenor');
-		expect(view.find('Button').text()).toBe('Tenor');
+		expect(view.find('Button').props.text).toBe('Tenor');
 	});
 
 	test('switches to the next provider when the button is pressed', async () => {
@@ -115,9 +103,8 @@ describe('the GIF picker header', () => {
 
 		const view = render(<GIFPickerHeader />);
 
-		const { stop } = await import('~/index');
-
-		view.act(() => stop());
+		await stopPlugin();
+		view.rerender(<GIFPickerHeader />);
 
 		expect(view.find('TextInput').props.placeholder).toBe('Search Klipy');
 		expect(() => view.find('Button')).toThrow();
