@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :user: **View Avatar** and **View Banner** for a user, plus **View Server Avatar** when they have one in the server you're viewing.

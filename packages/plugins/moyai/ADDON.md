@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :volume-up: Plays a thud for every Moyai in the channel you have open, custom "moyai" and "moai" emojis included.

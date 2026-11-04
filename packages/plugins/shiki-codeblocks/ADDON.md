@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :code: Shows code with line numbers and syntax colors under a header with a language icon and name.

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :bell-slash: When you join a server, it is muted and set to your notification defaults as soon as you join.

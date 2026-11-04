@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :users: Shows up to three small, overlapping avatars of the people typing.

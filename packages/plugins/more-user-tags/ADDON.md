@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :tag: Each author gets one tag, the first enabled one that applies: Webhook, Owner, Admin, Staff, Mod or VC Mod.

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :star: Adds a **View Reviews** button under the user info card on a profile, opening a sheet of that user's reviews.

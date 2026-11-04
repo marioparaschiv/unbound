@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :image: Replaces the clickbait title and thumbnail of YouTube embeds with the ones the DeArrow community voted for.

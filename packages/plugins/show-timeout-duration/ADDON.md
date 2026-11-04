@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :timer: The timestamp reads, for example, "• 2d 3h timeout remaining".

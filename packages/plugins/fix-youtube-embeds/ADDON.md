@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :video: When Discord says a YouTube video can't be played here, the video plays in its place instead. This covers videos whose owners block them on other sites, such as many music videos from UMG.

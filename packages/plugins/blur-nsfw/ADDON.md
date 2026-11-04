@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :eye-slash: Attachments in age-restricted channels and their threads show blurred, behind Discord's own spoiler cover.

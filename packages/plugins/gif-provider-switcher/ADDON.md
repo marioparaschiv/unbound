@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :magnifier: Searches GIFs on **Tenor** or **Giphy** instead of Klipy, Discord's own GIF provider.
