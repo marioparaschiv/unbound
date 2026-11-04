@@ -142,6 +142,16 @@ declare module '@unbound-app/settings' {
 		 * Hide reviews from users you have blocked on Discord
 		 */
 		hideBlockedUsers: boolean;
+		/**
+		 * Account
+		 */
+		readonly account: {
+		};
+		/**
+		 * Links
+		 */
+		readonly links: {
+		};
 	};
 
 	/** Each setting and section by its dot-separated key. */
@@ -164,6 +174,14 @@ declare module '@unbound-app/settings' {
 		 * Hide reviews from users you have blocked on Discord
 		 */
 		"hideBlockedUsers": boolean;
+		/**
+		 * Account
+		 */
+		"account": Settings["account"];
+		/**
+		 * Links
+		 */
+		"links": Settings["links"];
 	};
 
 	/** Every setting and section by its dot-separated key; buttons are not settings. */
@@ -172,7 +190,8 @@ declare module '@unbound-app/settings' {
 	export type SettingsEntry<K extends SettingKey> = SettingValues[K];
 
 	/** The functions src/actions.ts exports, which a `setting.button` can run. */
-	export type ActionName = never;
+	type Actions = typeof import('./actions');
+	export type ActionName = Extract<{ [K in keyof Actions]: Actions[K] extends () => void | Promise<void> ? K : never }[keyof Actions], string>;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
 	export type BooleanSettingKey = "notifyReviews" | "hideTimestamps" | "hideBlockedUsers";

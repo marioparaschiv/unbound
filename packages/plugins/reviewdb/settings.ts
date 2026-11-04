@@ -15,6 +15,43 @@ export default defineSettings(
 			title: 'HIDE_BLOCKED_USERS',
 			subtitle: 'HIDE_BLOCKED_USERS_SUBTITLE',
 		}),
+		account: setting.section(
+			{ title: 'ACCOUNT' },
+			{
+				authorize: setting.button({
+					title: 'AUTHORIZE',
+					subtitle: 'AUTHORIZE_SUBTITLE',
+					action: 'authorize',
+					visibleWhen: (settings) => !settings.token,
+				}),
+				reauthorize: setting.button({
+					title: 'REAUTHORIZE',
+					subtitle: 'REAUTHORIZE_SUBTITLE',
+					action: 'authorize',
+					visibleWhen: (settings) => Boolean(settings.token),
+				}),
+				viewMyReviews: setting.button({
+					title: 'VIEW_MY_REVIEWS',
+					action: 'viewMyReviews',
+				}),
+				manageBlockedUsers: setting.button({
+					title: 'MANAGE_BLOCKED_USERS',
+					subtitle: 'MANAGE_BLOCKED_USERS_SUBTITLE',
+					action: 'manageBlockedUsers',
+					disabledWhen: (settings) => !settings.token,
+				}),
+			},
+		),
+		links: setting.section(
+			{ title: 'LINKS' },
+			{
+				website: setting.button({ title: 'WEBSITE', action: 'openWebsite' }),
+				supportServer: setting.button({
+					title: 'SUPPORT_SERVER',
+					action: 'openSupportServer',
+				}),
+			},
+		),
 	},
 	{ title: 'PREFERENCES' },
 );

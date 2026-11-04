@@ -47,7 +47,7 @@
 	"CLOSE": "Close",
 	"REVIEWS_FOR": "Reviews for @{name}",
 	"COMMUNITY_FEEDBACK": "Community feedback shared through ReviewDB.",
-	"REVIEW_COUNT": "{count} reviews",
+	"REVIEW_COUNT": "{count, plural, one {# review} other {# reviews}}",
 	"CONNECTED": "ReviewDB connected",
 	"LOADING_REVIEWS": "Loading reviews…",
 	"NO_REVIEWS": "No reviews yet",

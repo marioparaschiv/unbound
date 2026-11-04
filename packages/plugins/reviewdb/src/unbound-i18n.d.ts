@@ -99,7 +99,7 @@ declare module '@unbound-app/i18n' {
 		readonly REVIEWS_FOR: string;
 		/** Community feedback shared through ReviewDB. */
 		readonly COMMUNITY_FEEDBACK: string;
-		/** {count} reviews */
+		/** {count, plural, one {# review} other {# reviews}} */
 		readonly REVIEW_COUNT: string;
 		/** ReviewDB connected */
 		readonly CONNECTED: string;
@@ -141,7 +141,7 @@ declare module '@unbound-app/i18n' {
 	export type FormatVars = {
 		REQUEST_FAILED: { status: string | number };
 		REVIEWS_FOR: { name: string | number };
-		REVIEW_COUNT: { count: string | number };
+		REVIEW_COUNT: { count: number };
 		SHARE_FEEDBACK: { name: string | number };
 		UPDATE_PLACEHOLDER: { name: string | number };
 		REVIEW_PLACEHOLDER: { name: string | number };

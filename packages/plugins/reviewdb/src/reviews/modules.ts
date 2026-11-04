@@ -10,4 +10,4 @@ export const UserProfileCard = metro.find(
 );
 
 export const RelationshipStore = flux.getStore('Relationship');
-export const UserStore = flux.getStore('User');
+export const UserStore = metro.stores.Users;
