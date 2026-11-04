@@ -45,6 +45,19 @@ test('tells sponsor badge ids from the ids of Discord badges', () => {
 	expect(isSponsorBadgeId(18)).toBe(false);
 });
 
+test('gives a GIF badge the URLs Discord plays in the directory and details sheet, and a PNG still ones', () => {
+	const gif = 'https://cdn.unbound.rip/badges/0a1b.gif';
+	const [still, animated] = toSponsorBadges(
+		[BADGES[0], { name: 'Party', imageUrl: gif, kind: 'custom-badge' }],
+		'',
+	).catalog;
+
+	expect(still).not.toHaveProperty('complex_icon_animated_url');
+	expect(still).toMatchObject({ simple_icon_url: BADGES[0].imageUrl });
+	expect(animated).not.toHaveProperty('simple_icon_url');
+	expect(animated).toMatchObject({ complex_icon_animated_url: gif, simple_icon_raster_url: gif });
+});
+
 test('maps no badges to empty lists', () => {
 	expect(toSponsorBadges([], 'From sponsoring Unbound')).toEqual({ profile: [], catalog: [] });
 });
