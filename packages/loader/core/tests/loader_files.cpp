@@ -40,7 +40,6 @@ static void readsWholeFiles(const std::filesystem::path &parent)
     assert(loader::writeTextFileAtomically(large.string(), binary));
     assert(loader::readTextFile(large.string()) == binary);
 
-    // A FIFO reports no size, so this covers the read-to-EOF path past the initial buffer.
     const auto fifo = parent / "pipe";
     assert(mkfifo(fifo.c_str(), 0600) == 0);
     const std::string streamed(200 * 1024, 'p');

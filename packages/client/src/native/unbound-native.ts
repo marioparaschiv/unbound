@@ -9,7 +9,6 @@ import { createLogger } from '@unbound-app/logger';
 
 const logger = createLogger('Native', 'UnboundNative');
 
-// Reads `globalThis.UnboundNative` at each call, so a loader that installs it late (or a test) is seen.
 function read<T>(method: keyof UnboundNativeBridge, call: (bridge: UnboundNativeBridge) => T) {
 	const bridge = globalThis.UnboundNative;
 

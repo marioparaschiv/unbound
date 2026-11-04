@@ -71,7 +71,6 @@ static std::string compiledPlugin(const fs::path &documents, uint32_t &version)
     return contents.str();
 }
 
-// Kept byte for byte: the spacing, key order and trailing newline would all change on a re-dump.
 static const std::string kThemeBundle = "{ \"semantic\": {},\n  \"raw\":{ }, \"ü\": \"名前\" }\n";
 
 static const char *const kUnboundNativeChecks = R"JS((function () {

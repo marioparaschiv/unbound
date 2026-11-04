@@ -16,7 +16,6 @@ namespace jsi = facebook::jsi;
 static const std::string kBase   = "https://builds.unbound.rip/";
 static const std::string kBundle = "unbound.98.bundle";
 
-// Stands in for Unbound's bundle: it records whether Metro and UnboundNative existed when it ran.
 static const std::string kUnbound =
     "globalThis.order = ['unbound:' + typeof globalThis.__d + ':' + "
     "typeof globalThis.UnboundNative];";
