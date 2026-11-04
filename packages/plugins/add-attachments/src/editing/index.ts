@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { flux } from '@unbound-app/api';
 
@@ -37,10 +36,7 @@ export function startEditUploads(): () => void {
 		return true;
 	});
 
-	recordApplied(1);
-
 	return () => {
-		recordApplied(-1);
 		remove();
 	};
 }

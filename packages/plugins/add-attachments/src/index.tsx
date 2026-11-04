@@ -1,29 +1,18 @@
-import { featureSelfTest, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 
 import { startEditUploads } from '~/editing';
 import { startSheet } from '~/sheet';
+import { PLUGIN_NAME } from '~/constants';
 
-let stops: (() => void)[] = [];
-
-// One feature failing to start must not take the other down.
-function startFeature(name: string, feature: () => () => void) {
-	try {
-		stops.push(feature());
-	} catch (error) {
-		recordFailure(`${name}: ${error instanceof Error ? error.message : String(error)}`);
-		console.error(`[Add Attachments] Failed to start ${name}:`, error);
-	}
-}
+let stopFeatures = async () => {};
 
 export function start() {
-	startFeature('editing', startEditUploads);
-	startFeature('sheet', startSheet);
+	stopFeatures = startFeatures(PLUGIN_NAME, [startEditUploads, startSheet]);
 }
 
 export function stop() {
-	for (const stopFeature of stops.reverse()) stopFeature();
-
-	stops = [];
+	return stopFeatures();
 }
 
 export { featureSelfTest as selfTest };

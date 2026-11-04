@@ -4,7 +4,6 @@ import {
 	insertSheetRows,
 	type SheetRowSpec,
 } from '@unbound-plugins/shared/action-sheets/sheet-rows';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { patcher, toasts } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
@@ -86,10 +85,7 @@ export function startSheet(): () => void {
 		return specs.length ? renderer.render : undefined;
 	});
 
-	recordApplied(1);
-
 	return () => {
-		recordApplied(-1);
 		unpatch();
 		renderer.dispose();
 	};
