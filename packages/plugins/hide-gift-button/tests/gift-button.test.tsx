@@ -1,5 +1,5 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
-import { beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
@@ -27,15 +27,13 @@ const ChatInputRightActions = memo(({ shouldShowGiftButton }: ActionsProps) => (
 
 const folder = 'modules/chat_input/native/action_buttons/';
 
-beforeAll(() => {
+beforeEach(async () => {
 	metro.register(
 		{ default: GiftOrThreadButton },
 		`${folder}ChatInputActionButtonGiftOrThread.tsx`,
 	);
 	metro.register({ default: ChatInputRightActions }, `${folder}ChatInputRightActions.tsx`);
-});
 
-beforeEach(async () => {
 	await startPlugin();
 });
 
