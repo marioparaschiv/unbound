@@ -21,13 +21,14 @@ Before your tests load, the preset reads your plugin's files and serves:
 | --- | --- |
 | `@unbound-app/i18n` | Your real `i18n/*.json`, with an ICU formatter for `format`. en-US until you switch |
 | `@unbound-app/settings` | Your `settings.ts`, with its defaults, saved to an in-memory Bucket |
-| `@unbound-app/api` | A fake Unbound that records what your plugin did: patches, commands, toasts, dialogs, Flux, assets |
-| `react-native` | Each primitive, such as `View` and `Text`, as a plain node a test can find by name |
+| `@unbound-app/api` | A fake Unbound that records what your plugin did: patches, commands, toasts, dialogs, Flux, assets. It also fakes `metro` (with `api`, `stores`, `common`, `components` and `filters`), `native`, `ui`, `utils` and `fs` |
+| `@unbound-app/api/metro/components` and every other subpath, such as `/ui` and `/utils/react` | The same fakes, imported by path |
+| `react-native` | Each primitive, such as `View` and `Text`, as a plain node a test can find by name, with `Animated`, `Share`, `Dimensions`, `NativeEventEmitter` and `processColor`. Your plugin needs no `react-native` install to run tests |
 | `*.png`, `*.svg`, `*.svg?asset` | A stable asset id for an image, and a component for an SVG |
 
-It also installs the plugin scope: `addon` from your manifest, `patcher`, `commands`, `logger` and `React`.
+It also installs the plugin scope: `addon` from your manifest, `patcher`, `commands`, `logger`, `React`, and the scoped `setTimeout`, `setInterval` and their clears.
 
-Before each test, it puts every fake back: no patches, commands, listeners, toasts or dialogs, settings at their defaults, and en-US. You write no setup of your own.
+Before each test, it puts every fake back: no patches, commands, listeners, timers, Discord modules registered with `metro.register`, files, toasts or dialogs, settings at their defaults, the platform iOS, and en-US. A lookup your plugin made at import, such as `metro.findByProps('sendMessage')`, finds the modules a test registers next. You write no setup of your own.
 
 ## A first test
 
@@ -56,16 +57,37 @@ The second test turns `greetOnStart` off. The first test is not affected, and ne
 
 ## Start and stop the plugin
 
-`startPlugin()` imports `src/index.tsx` (or `src/index.ts`) and runs its `start`, as Unbound does when the plugin is turned on. `stopPlugin()` runs its `stop`.
+`startPlugin()` imports `src/index.tsx` (or `src/index.ts`) and runs its `start` with a `PluginContext`, as Unbound does when the plugin is turned on. `stopPlugin()` runs its `stop`.
 
-`stopPlugin()` then checks that `stop` undid what `start` did. Every patch, command and listener added since `startPlugin()` must be gone. If one is left, `stopPlugin()` rejects, which fails the test, and lists each one:
+`stopPlugin()` then does what Unbound does after `stop`: it removes what the plugin scope recorded. That is every patch made with `patcher`, every command, every `flux`, `metro`, `storage` and `assets` listener, and every timer from the scoped `setTimeout` and `setInterval`. A plugin whose `stop` forgets one of these passes, as it does on a phone.
+
+What the scope does not remove is a leak. `stopPlugin()` rejects, which fails the test, when something is left. The one thing the fake can see is a change listener added straight to a Flux store:
 
 ```txt
 My Plugin left 1 thing(s) behind after stop():
-  - flux.onAction(MESSAGE_CREATE)
+  - UserStore.addChangeListener
 ```
 
-Unbound removes these for you when a plugin stops. The check is stricter, so a plugin that turns off a feature on its own, without stopping, leaves nothing behind either.
+Use `flux.onStoreChange(store, listener)` instead, which Unbound removes for you.
+
+To check that a feature undid itself without stopping the plugin, such as when a setting turns it off, read `pluginHolds()`. It lists each patch, command, listener and timer added since `startPlugin()` and still held:
+
+```ts
+import { pluginHolds, startPlugin } from '@unbound-app/api/testing';
+import { settings } from '@unbound-app/settings';
+
+await startPlugin();
+expect(pluginHolds()).toContain('flux.onAction(MESSAGE_CREATE)');
+
+settings.greetOnStart = false;
+expect(pluginHolds()).toEqual([]);
+```
+
+Pass a context to `startPlugin` to change what `start` receives: its `platform`, its `capabilities`, or the members of the `native` bridge your plugin calls. Every other bridge member is an empty object.
+
+```ts
+await startPlugin({ capabilities: ['native.ffi.call'], native: { apiVersion: '2.0.0' } });
+```
 
 ## Check what the plugin did
 
@@ -109,6 +131,70 @@ await startPlugin();
 expect(patches.applied).toMatchObject([{ kind: 'before', method: 'sendMessage' }]);
 ```
 
+## Fake Discord
+
+Your plugin finds Discord's code with `metro`. In a test, `metro` finds only what the test registers. Each module the plugin reaches by name is found by the same props as on a phone:
+
+| Namespace | Fake |
+| --- | --- |
+| `metro.api` | `Messages`, `Linking`, `Profiles`, `AsyncUsers`, `Invites`, `OAuth2`, `ActionSheets` and `UserProfiles`, each found once a test registers a module with those props |
+| `metro.common` | The same, such as `Theme`, `Clipboard` and `Moment`. `React` and `ReactNative` are the fakes |
+| `metro.stores` | `Accessibility`, `Theme`, `Users` and `Guilds`, the stores a test seeds with `flux.seed` |
+| `metro.components` | See below |
+| `metro.filters` | `byProps`, `byName`, `byDisplayName`, `byTypeName`, `byFilePath`, `all`, `any` and `not` |
+
+`metro.find(filter, { all: true })` and `metro.findByProps(..., { all: true })` return every match.
+
+```ts
+import { metro } from '@unbound-app/api/testing';
+
+metro.register({ sendMessage: () => {}, receiveMessage: () => {} });
+// Messages from `metro.api` is now the module above.
+```
+
+`@unbound-app/api/metro/components` imports in tests. `Discord`, `Forms`, `BottomSheets` and the other modules give any component by name, such as `Discord.Text` or `BottomSheets.ActionSheetRow.Icon`. Each draws its children, and `find('Text')` or `find('ActionSheetRow.Icon')` reaches it with its props. `Discord.createStyles(styles)` returns a hook that gives `styles`, calling a factory with no theme. To replace one, assign it: `Discord.Text = MyText`.
+
+`@unbound-app/api/ui` works the same: `SwitchRow`, `Page`, `SchemaPanel` and the other rows draw their children and are found by name.
+
+`utils` and `utils.react` are the client's own: `findComponent`, `filterComponents`, `findInTree`, `filterInTree`, `shallow` and `useShallow`.
+
+### Native
+
+`native` follows the platform a test sets. It is iOS until `native.setPlatform` says otherwise, and `Platform.OS` from `react-native` follows it too.
+
+```ts
+import { native } from '@unbound-app/api/testing';
+
+native.setPlatform('android');
+native.registerModule('NativeFileModule', { readFile: async () => '' });
+native.setCapabilities(['native.java.hooks']);
+```
+
+`definePlatform` picks the handler for that platform, and throws `NativePluginUnsupportedPlatformError` when there is none. `getNativeModule(...names)` returns the first module registered under one of the names. `native.has` reports the capabilities set.
+
+### Files
+
+`fs` keeps files in memory, under `/documents`, which is `fs.documentsPath` for the plugin. Read or add to them in a test with the `fs` recorder:
+
+```ts
+import { fs } from '@unbound-app/api/testing';
+
+fs.files.set('/documents/notes.txt', 'hi');
+```
+
+### Add to a fake
+
+`mock.module('@unbound-app/api', ...)` in a test replaces the whole module, and with it every fake above. To add or replace members, use `extendApi` with the namespace, or a nested one with dots:
+
+```ts
+import { extendApi } from '@unbound-app/api/testing';
+
+extendApi('metro.components', { Extra: MyComponent });
+extendApi('metro', { custom: { value: 1 } });
+```
+
+It throws when the fake has no such namespace.
+
 ## Render a component
 
 `render` draws a component with React's real hooks. It returns:
@@ -148,6 +234,10 @@ test('counts each press', () => {
 - `settings`: some of your settings. A section can be given in part. The rest keep their defaults.
 - `locale`: the language `@unbound-app/i18n` reads.
 - `stores`: Flux stores, by name with or without `Store`. `flux.getStore` and `flux.useStore` read them.
+
+`render` draws function components, `memo`, `forwardRef`, context, and class components with `setState`, `getDerivedStateFromProps` and the mount, update and unmount methods.
+
+Elements are not frozen. React freezes them only in development, and on a phone they are not, so code that assigns `element.type` works in a test too.
 
 A component re-renders when its state changes, when a setting it reads with `useSetting` changes, and when a store it reads changes. To change a store during a test, seed it again with `flux.seed` from `@unbound-app/api/testing`. That also tells each `flux.useStore` reading it. Import it under another name, such as `import { flux as fakeFlux }`, in a file that also imports your plugin's `flux`.
 
