@@ -7,9 +7,14 @@ import type { AnyProps } from '@unbound-app/api/metro';
 import { patcher } from '@unbound-app/api';
 import { createElement } from 'react';
 
-import { getSheetKind, parseExpression, type Expression, type ExpressionKind } from '~/expression';
-import ExpressionActionBar from '~/components/expression-action-bar';
-import { ActionSheets } from '~/modules';
+import {
+	getSheetKind,
+	parseExpression,
+	type Expression,
+	type ExpressionKind,
+} from '~/expression-actions/expression';
+import ExpressionActionBar from '~/expression-actions/components/expression-action-bar';
+import { ActionSheets } from '~/expression-actions/modules';
 
 export type ExpressionSheetPatches = ReturnType<typeof createExpressionSheetPatches>;
 

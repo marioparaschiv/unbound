@@ -1,3 +1,5 @@
+import { messages } from '@unbound-app/i18n';
+
 type ErrorLike = {
 	body?: { message?: unknown };
 	message?: unknown;
@@ -13,7 +15,7 @@ type ErrorLike = {
 export function getErrorMessage(error: unknown): string {
 	if (error instanceof Error) return error.message;
 
-	if (!error || typeof error !== 'object') return 'The operation could not be completed.';
+	if (!error || typeof error !== 'object') return messages.OPERATION_FAILED;
 
 	const { body, message, text }: ErrorLike = error;
 
@@ -21,7 +23,7 @@ export function getErrorMessage(error: unknown): string {
 		if (typeof candidate === 'string') return candidate;
 	}
 
-	return 'The operation could not be completed.';
+	return messages.OPERATION_FAILED;
 }
 
 export default getErrorMessage;

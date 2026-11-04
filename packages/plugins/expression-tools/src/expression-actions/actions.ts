@@ -1,6 +1,8 @@
-import { Clipboard, StickerActions, StickerFavorites } from '~/modules';
-import { notify, notifyError } from '~/notify';
-import type { Sticker } from '~/expression';
+import { format, messages } from '@unbound-app/i18n';
+
+import { Clipboard, StickerActions, StickerFavorites } from '~/expression-actions/modules';
+import { notify, notifyError } from '~/expression-actions/notify';
+import type { Sticker } from '~/expression-actions/expression';
 
 /**
  * @description Copies text to the clipboard and confirms it with a toast.
@@ -30,15 +32,15 @@ export function isFavoriteSticker(sticker: Sticker): boolean {
  */
 export async function setFavoriteSticker(sticker: Sticker, favorite: boolean): Promise<void> {
 	if (!StickerActions.favoriteSticker) {
-		throw new Error('Favorites are unavailable on this client build.');
+		throw new Error(messages.FAVORITES_UNAVAILABLE);
 	}
 
 	if (favorite) {
 		await StickerActions.favoriteSticker(sticker.id);
-		notify(`${sticker.name} added to favorites.`);
+		notify(format('ADDED_TO_FAVORITES', { name: sticker.name }));
 	} else {
 		await StickerActions.unfavoriteSticker(sticker.id);
-		notify(`${sticker.name} removed from favorites.`);
+		notify(format('REMOVED_FROM_FAVORITES', { name: sticker.name }));
 	}
 }
 

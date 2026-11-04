@@ -1,14 +1,15 @@
 import { Discord } from '@unbound-app/api/metro/components';
+import { messages } from '@unbound-app/i18n';
 import { Image, Text, View } from 'react-native';
 import { useMemo, useState } from 'react';
 
-import { getAssetUrl, type Expression } from '~/expression';
-import { getOwnedGuilds, type Guild } from '~/guilds';
-import { cloneExpression } from '~/clone';
-import { notifyError } from '~/notify';
+import { getAssetUrl, type Expression } from '~/expression-actions/expression';
+import { getOwnedGuilds, type Guild } from '~/expression-actions/guilds';
+import { cloneExpression } from '~/expression-actions/clone';
+import { notifyError } from '~/expression-actions/notify';
 
-import styles from '~/components/clone-sheet.style';
-import GuildRow from '~/components/guild-row';
+import styles from '~/expression-actions/components/clone-sheet.style';
+import GuildRow from '~/expression-actions/components/guild-row';
 
 type CloneSheetProps = {
 	expression: Expression;
@@ -45,19 +46,23 @@ function CloneSheet({ expression, onClose }: CloneSheetProps) {
 				<View style={styles.header}>
 					<Image source={{ uri: getAssetUrl(expression) }} style={styles.preview} />
 					<View style={styles.headerText}>
-						<Text style={styles.title}>Clone to a server</Text>
+						<Text style={styles.title}>{messages.CLONE_TO_SERVER}</Text>
 						<Text numberOfLines={1} style={styles.subtitle}>
 							{expression.name}
 						</Text>
 					</View>
 				</View>
-				<Text style={styles.label}>NAME</Text>
-				<Discord.TextField value={name} onChange={setName} placeholder='Expression name' />
-				<Text style={[styles.label, styles.spacedLabel]}>YOUR SERVERS</Text>
+				<Text style={styles.label}>{messages.NAME}</Text>
+				<Discord.TextField
+					value={name}
+					onChange={setName}
+					placeholder={messages.EXPRESSION_NAME_PLACEHOLDER}
+				/>
+				<Text style={[styles.label, styles.spacedLabel]}>{messages.YOUR_SERVERS}</Text>
 				<Discord.TextField
 					value={query}
 					onChange={setQuery}
-					placeholder='Search servers'
+					placeholder={messages.SEARCH_SERVERS}
 					isClearable
 				/>
 				<View style={styles.guilds}>
@@ -71,10 +76,10 @@ function CloneSheet({ expression, onClose }: CloneSheetProps) {
 						/>
 					))}
 					{guilds.length === 0 ? (
-						<Text style={styles.empty}>You do not own any servers.</Text>
+						<Text style={styles.empty}>{messages.NO_OWNED_SERVERS}</Text>
 					) : null}
 					{guilds.length > 0 && visibleGuilds.length === 0 ? (
-						<Text style={styles.empty}>No servers match that search.</Text>
+						<Text style={styles.empty}>{messages.NO_SERVERS_MATCH}</Text>
 					) : null}
 				</View>
 			</View>

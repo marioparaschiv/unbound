@@ -1,12 +1,17 @@
+import { messages } from '@unbound-app/i18n';
 import { Pressable, Text, View } from 'react-native';
 import { useState } from 'react';
 
-import { getEmojiMarkup, getExpressionLink, type Expression } from '~/expression';
-import { copyText, isFavoriteSticker, setFavoriteSticker } from '~/actions';
-import { closeExpressionSheet, openCloneSheet } from '~/sheets';
-import { notifyError } from '~/notify';
+import {
+	getEmojiMarkup,
+	getExpressionLink,
+	type Expression,
+} from '~/expression-actions/expression';
+import { copyText, isFavoriteSticker, setFavoriteSticker } from '~/expression-actions/actions';
+import { closeExpressionSheet, openCloneSheet } from '~/expression-actions/sheets';
+import { notifyError } from '~/expression-actions/notify';
 
-import styles from '~/components/expression-action-bar.style';
+import styles from '~/expression-actions/components/expression-action-bar.style';
 
 type ExpressionActionBarProps = {
 	expression: Expression;
@@ -50,26 +55,23 @@ function ExpressionActionBar({ expression, sheetKey }: ExpressionActionBarProps)
 	return (
 		<View style={styles.bar}>
 			<BarButton
-				label='Copy URL'
+				label={messages.COPY_URL}
 				onPress={() => {
 					close();
-					copyText(getExpressionLink(expression), 'URL copied to the clipboard.');
+					copyText(getExpressionLink(expression), messages.URL_COPIED);
 				}}
 			/>
 			{expression.kind === 'emoji' ? (
 				<BarButton
-					label='Copy markup'
+					label={messages.COPY_MARKUP}
 					onPress={() => {
 						close();
-						copyText(
-							getEmojiMarkup(expression),
-							'Emoji markup copied to the clipboard.',
-						);
+						copyText(getEmojiMarkup(expression), messages.MARKUP_COPIED);
 					}}
 				/>
 			) : (
 				<BarButton
-					label={favorite ? 'Unfavorite' : 'Favorite'}
+					label={favorite ? messages.UNFAVORITE : messages.FAVORITE}
 					disabled={updatingFavorite}
 					onPress={() => {
 						if (updatingFavorite) return;
@@ -84,7 +86,7 @@ function ExpressionActionBar({ expression, sheetKey }: ExpressionActionBarProps)
 				/>
 			)}
 			<BarButton
-				label='Clone'
+				label={messages.CLONE}
 				onPress={() => {
 					close();
 					openCloneSheet(expression);

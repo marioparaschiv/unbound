@@ -1,14 +1,14 @@
 import { toasts } from '@unbound-app/api';
 
-import { getErrorMessage } from '~/errors';
-import { PLUGIN_NAME } from '~/constants';
+import { getErrorMessage } from '~/expression-actions/errors';
+import { messages } from '@unbound-app/i18n';
 
 /**
  * @description Shows a toast titled with the plugin's name.
  * @param content The toast's text.
  */
 export function notify(content: string): void {
-	toasts.show({ title: PLUGIN_NAME, content });
+	toasts.show({ title: messages.EXPRESSION_TOOLS, content });
 }
 
 /**

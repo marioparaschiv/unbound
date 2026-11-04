@@ -1,3 +1,4 @@
+import { format, messages } from '@unbound-app/i18n';
 import { flux } from '@unbound-app/api';
 
 import {
@@ -6,11 +7,11 @@ import {
 	type Emoji,
 	type Expression,
 	type Sticker,
-} from '~/expression';
-import { Auth, EmojiActions, Users } from '~/modules';
-import { getErrorMessage } from '~/errors';
-import type { Guild } from '~/guilds';
-import { notify } from '~/notify';
+} from '~/expression-actions/expression';
+import { Auth, EmojiActions, Users } from '~/expression-actions/modules';
+import { getErrorMessage } from '~/expression-actions/errors';
+import type { Guild } from '~/expression-actions/guilds';
+import { notify } from '~/expression-actions/notify';
 
 type StickerResponse = {
 	message?: string;
@@ -26,15 +27,14 @@ async function readDataUrl(emoji: Emoji): Promise<string> {
 	const response = await fetch(getAssetUrl(emoji));
 
 	if (!response.ok) {
-		throw new Error(`Could not fetch ${emoji.name}.`);
+		throw new Error(format('COULD_NOT_FETCH', { name: emoji.name }));
 	}
 
 	const blob = await response.blob();
 	const reader = new FileReader();
 
 	return new Promise((resolve, reject) => {
-		reader.onerror = () =>
-			reject(reader.error ?? new Error('Could not read the expression file.'));
+		reader.onerror = () => reject(reader.error ?? new Error(messages.COULD_NOT_READ_FILE));
 		// `readAsDataURL` always produces a string result.
 		reader.onload = () => resolve(reader.result as string);
 		reader.readAsDataURL(blob);
@@ -43,7 +43,7 @@ async function readDataUrl(emoji: Emoji): Promise<string> {
 
 async function uploadEmoji(emoji: Emoji, guild: Guild, name: string): Promise<void> {
 	if (!EmojiActions.uploadEmoji) {
-		throw new Error('Emoji uploads are unavailable on this client build.');
+		throw new Error(messages.EMOJI_UPLOADS_UNAVAILABLE);
 	}
 
 	await EmojiActions.uploadEmoji({ guildId: guild.id, image: await readDataUrl(emoji), name });
@@ -55,14 +55,14 @@ function postSticker(guild: Guild, form: FormData, token: string): Promise<Stick
 
 		request.open('POST', `https://discord.com/api/v10/guilds/${guild.id}/stickers`);
 		request.setRequestHeader('Authorization', token);
-		request.onerror = () => reject(new Error('Sticker upload failed.'));
+		request.onerror = () => reject(new Error(messages.STICKER_UPLOAD_FAILED));
 		request.onload = () => {
 			let body: StickerResponse;
 
 			try {
 				body = JSON.parse(request.responseText);
 			} catch {
-				reject(new Error('Sticker upload returned an invalid response.'));
+				reject(new Error(messages.STICKER_UPLOAD_INVALID_RESPONSE));
 
 				return;
 			}
@@ -82,7 +82,7 @@ async function uploadSticker(sticker: Sticker, guild: Guild, name: string): Prom
 	const token = Auth.getToken?.();
 
 	if (!token) {
-		throw new Error('Sticker uploads are unavailable on this client build.');
+		throw new Error(messages.STICKER_UPLOADS_UNAVAILABLE);
 	}
 
 	const { extension, mimeType } = getStickerFile(sticker.formatType);
@@ -128,7 +128,7 @@ export async function cloneExpression(
 		await uploadSticker(expression, guild, name);
 	}
 
-	notify(`Cloned ${expression.name} to ${guild.name}.`);
+	notify(format('CLONED', { name: expression.name, guild: guild.name }));
 }
 
 export default cloneExpression;

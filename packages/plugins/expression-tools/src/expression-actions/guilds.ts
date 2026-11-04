@@ -1,4 +1,4 @@
-import { Guilds, Users } from '~/modules';
+import { Guilds, Users } from '~/expression-actions/modules';
 
 export type Guild = {
 	id: string;

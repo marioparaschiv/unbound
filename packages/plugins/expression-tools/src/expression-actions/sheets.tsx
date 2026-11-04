@@ -1,6 +1,6 @@
-import { ActionSheets, StickerSheets } from '~/modules';
-import type { Expression } from '~/expression';
-import CloneSheet from '~/components/clone-sheet';
+import { ActionSheets, StickerSheets } from '~/expression-actions/modules';
+import type { Expression } from '~/expression-actions/expression';
+import CloneSheet from '~/expression-actions/components/clone-sheet';
 
 /**
  * @description Opens the sheet that clones an expression to one of the user's servers.
