@@ -90,3 +90,14 @@ describe('the media picker', () => {
 		expect(await badges()).toEqual([]);
 	});
 });
+
+describe('the self test', () => {
+	test('reports the badges applied once the plugin starts', async () => {
+		// Imported after `setPlatform`, since `definePlatform` picks the platform when the plugin is first imported.
+		const { selfTest } = await import('~/index');
+
+		await startPlugin({ native: { java: java as unknown as NativeJavaBridge } });
+
+		expect(selfTest().ok).toBe(true);
+	});
+});
