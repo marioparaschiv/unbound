@@ -1,6 +1,6 @@
 import { metro } from '@unbound-app/api';
 
-import type { TypingLabelValues } from '~/typing-label';
+import type { TypingLabelValues } from '~/typing-indicator/typing-label';
 
 /**
  * @description Formats one of Discord's own messages in the user's locale.

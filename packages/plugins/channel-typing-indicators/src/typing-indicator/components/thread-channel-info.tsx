@@ -1,10 +1,10 @@
 import { View } from 'react-native';
 import type { ReactNode } from 'react';
 
-import type { RenderNode } from '~/row-layout';
+import type { RenderNode } from '~/typing-indicator/row-layout';
 import type { Channel } from '~/types';
 
-import ChannelTypingIndicator from '~/components/channel-typing-indicator';
+import ChannelTypingIndicator from '~/typing-indicator/components/channel-typing-indicator';
 
 type ThreadChannelInfoProps = {
 	info: RenderNode | null | undefined;

@@ -1,6 +1,6 @@
 import { cloneElement, type ReactElement, type ReactNode } from 'react';
 
-import { childrenOf, type RenderNode } from '~/row-layout';
+import { childrenOf, type RenderNode } from '~/typing-indicator/row-layout';
 
 type Child = RenderNode | ReactNode;
 

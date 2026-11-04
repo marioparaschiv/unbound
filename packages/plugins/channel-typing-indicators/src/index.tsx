@@ -1,34 +1,11 @@
-import { featureSelfTest, recordApplied } from '@unbound-plugins/shared/lifecycle/health';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { whenAllLoaded } from '@unbound-plugins/shared/metro/when-loaded';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 
-import { patchThreadChannel } from '~/patches/thread-channel';
-import SettingsPanel from '~/components/settings-panel';
-import { patchTextChannel } from '~/patches/text-channel';
-import {
-	IndicatorsRunning,
-	TextChannelPath,
-	Theme,
-	ThreadChannelPath,
-	TypingStoreFilter,
-	UserStoreFilter,
-} from '~/modules';
+import { startTypingIndicators } from '~/typing-indicator';
 
-let markStopped = () => {};
+export { SettingsPanel } from '~/settings';
 
 export function start() {
-	if (!ensureModules('Channel Typing Indicators', { Theme })) return;
-
-	const stores = [TypingStoreFilter, UserStoreFilter];
-
-	markStopped = IndicatorsRunning.markRunning();
-	whenAllLoaded([...stores, TextChannelPath], patchTextChannel);
-	whenAllLoaded([...stores, ThreadChannelPath], patchThreadChannel);
-	recordApplied(3);
+	startTypingIndicators();
 }
 
-export function stop() {
-	markStopped();
-}
-
-export { featureSelfTest as selfTest, SettingsPanel };
+export { featureSelfTest as selfTest };

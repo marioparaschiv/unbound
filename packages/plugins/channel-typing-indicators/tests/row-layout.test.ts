@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 
-import { findTextChannelSlot, findThreadChannelSlot, type RenderNode } from '~/row-layout';
+import {
+	findTextChannelSlot,
+	findThreadChannelSlot,
+	type RenderNode,
+} from '~/typing-indicator/row-layout';
 import { INDICATOR_KEY } from '~/constants';
 
 function textRow(channelId: string, parts: RenderNode[] = []) {

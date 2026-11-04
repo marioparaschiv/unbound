@@ -1,20 +1,21 @@
 import { useRef, useState, type RefObject } from 'react';
 import type { FluxUser } from '@unbound-app/api/flux';
 import { Pressable, View } from 'react-native';
-import { storage } from '@unbound-app/api';
+import { useSetting } from '@unbound-app/settings';
+import { messages } from '@unbound-app/i18n';
 
-import type { TooltipAnchor } from '~/tooltip-placement';
-import { GuildMemberStore, Tooltips, UserStore } from '~/modules';
-import { formatDiscordMessage } from '~/i18n';
+import { GuildMemberStore, Tooltips, UserStore } from '~/typing-indicator/modules';
+import { formatDiscordMessage } from '~/typing-indicator/discord-messages';
+import type { TooltipAnchor } from '~/typing-indicator/tooltip-placement';
+import { typingLabel } from '~/typing-indicator/typing-label';
 import { IndicatorMode } from '~/constants';
-import { typingLabel } from '~/typing-label';
 import type { Channel } from '~/types';
 
-import useStyles from '~/components/typing-indicator.style';
-import TypingTooltip from '~/components/typing-tooltip';
-import TypingAvatars from '~/components/typing-avatars';
-import useTypingIds from '~/components/use-typing-ids';
-import TypingDots from '~/components/typing-dots';
+import useStyles from '~/typing-indicator/components/typing-indicator.style';
+import TypingTooltip from '~/typing-indicator/components/typing-tooltip';
+import TypingAvatars from '~/typing-indicator/components/typing-avatars';
+import useTypingIds from '~/typing-indicator/components/use-typing-ids';
+import TypingDots from '~/typing-indicator/components/typing-dots';
 
 type TypingIndicatorProps = {
 	channel: Channel;
@@ -35,15 +36,15 @@ function TypingIndicator({ channel, muted }: TypingIndicatorProps) {
 	const avatarsRef = useRef<View>(null);
 	const dotsRef = useRef<View>(null);
 	const [anchor, setAnchor] = useState<TooltipAnchor | null>(null);
-	const mode = storage
-		.useBucket(addon.id)
-		.get('indicatorMode', IndicatorMode.Dots | IndicatorMode.Avatars);
+	const mode = useSetting('indicatorMode');
 	const typingIds = useTypingIds(channel, muted);
 
 	if (!typingIds.length) return null;
 
 	const users: (FluxUser | null)[] = typingIds.map((id) => UserStore.getUser(id) ?? null);
-	const names = users.map((user) => (user ? displayName(user, channel.guild_id) : 'Someone'));
+	const names = users.map((user) =>
+		user ? displayName(user, channel.guild_id) : messages.SOMEONE,
+	);
 	const label = typingLabel(names, formatDiscordMessage);
 
 	function showTooltip(target: RefObject<View | null>) {

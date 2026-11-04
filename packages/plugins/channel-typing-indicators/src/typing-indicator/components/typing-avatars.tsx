@@ -8,8 +8,8 @@ import {
 	UserProfileActionSheet,
 	UserSummaryItem,
 	UserSummaryItemByName,
-} from '~/modules';
-import useStyles from '~/components/typing-avatars.style';
+} from '~/typing-indicator/modules';
+import useStyles from '~/typing-indicator/components/typing-avatars.style';
 import { MAX_AVATARS } from '~/constants';
 
 type TypingAvatarsProps = {

@@ -1,6 +1,5 @@
 import { Discord } from '@unbound-app/api/metro/components';
-
-import { Theme } from '~/modules';
+import { metro } from '@unbound-app/api';
 
 // A factory, so the theme is read when an indicator renders rather than when the plugin loads.
 export default Discord.createStyles(() => ({
@@ -12,13 +11,13 @@ export default Discord.createStyles(() => ({
 		top: 0,
 	},
 	arrow: {
-		borderBottomColor: Theme.colors.BACKGROUND_SURFACE_HIGHEST,
-		borderTopColor: Theme.colors.BACKGROUND_SURFACE_HIGHEST,
+		borderBottomColor: metro.common.Theme.colors.BACKGROUND_SURFACE_HIGHEST,
+		borderTopColor: metro.common.Theme.colors.BACKGROUND_SURFACE_HIGHEST,
 	},
 	bubble: {
-		backgroundColor: Theme.colors.BACKGROUND_SURFACE_HIGHEST,
+		backgroundColor: metro.common.Theme.colors.BACKGROUND_SURFACE_HIGHEST,
 	},
 	label: {
-		color: Theme.colors.TEXT_DEFAULT,
+		color: metro.common.Theme.colors.TEXT_DEFAULT,
 	},
 }));

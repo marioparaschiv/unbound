@@ -1,24 +1,19 @@
 import { patcher } from '@unbound-app/api';
 
-import ChannelTypingIndicator from '~/components/channel-typing-indicator';
-import { findTextChannelSlot } from '~/row-layout';
+import ChannelTypingIndicator from '~/typing-indicator/components/channel-typing-indicator';
+import { replaceChild, withChildren } from '~/typing-indicator/elements';
+import { findTextChannelSlot, type RenderNode } from '~/typing-indicator/row-layout';
+import { TextChannel } from '~/typing-indicator/modules';
 import type { ChannelRowProps } from '~/types';
 import { INDICATOR_KEY } from '~/constants';
-import { replaceChild, withChildren } from '~/elements';
-import { TextChannel } from '~/modules';
 
 /**
  * @description Shows the typing indicator in text channel rows, just before the channel info.
  */
 export function patchTextChannel(): void {
-	if (typeof TextChannel.default?.type !== 'function') {
-		console.error('[Channel Typing Indicators] Skipped text channels, the row is not a memo.');
-
-		return;
-	}
-
-	patcher.after(TextChannel.default, 'type', ({ args: [props], result }) => {
+	patcher.react.after(TextChannel, 'default', ({ props, result: rendered }) => {
 		const { channel, muted } = props as ChannelRowProps;
+		const result = rendered as RenderNode;
 
 		if (!channel?.id) return;
 

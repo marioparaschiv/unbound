@@ -1,6 +1,7 @@
-import { flux, storage } from '@unbound-app/api';
+import { useSetting } from '@unbound-app/settings';
+import { flux } from '@unbound-app/api';
 
-import { sameIds, visibleTypingIds } from '~/typing-users';
+import { sameIds, visibleTypingIds } from '~/typing-indicator/typing-users';
 import type { Channel } from '~/types';
 import {
 	RelationshipStore,
@@ -8,7 +9,7 @@ import {
 	TypingStore,
 	UserGuildSettingsStore,
 	UserStore,
-} from '~/modules';
+} from '~/typing-indicator/modules';
 
 /**
  * @description Tracks who is typing in a channel, filtered by the plugin's settings.
@@ -17,11 +18,10 @@ import {
  * @returns The IDs of the typing users to show.
  */
 function useTypingIds(channel: Channel, muted: boolean): string[] {
-	const store = storage.useBucket(addon.id);
-	const includeCurrent = store.get('includeCurrentChannel', true);
-	const includeMuted = store.get('includeMutedChannels', false);
-	const includeBlocked = store.get('includeBlockedUsers', false);
-	const includeIgnored = store.get('includeIgnoredUsers', false);
+	const includeCurrent = useSetting('includeCurrentChannel');
+	const includeMuted = useSetting('includeMutedChannels');
+	const includeBlocked = useSetting('includeBlockedUsers');
+	const includeIgnored = useSetting('includeIgnoredUsers');
 
 	// The optional stores are called with `?.`: a missing one reads as no filter.
 	function visible(): string[] {

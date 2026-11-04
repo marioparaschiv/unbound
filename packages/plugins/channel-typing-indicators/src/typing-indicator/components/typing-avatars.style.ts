@@ -1,7 +1,7 @@
 import { Discord } from '@unbound-app/api/metro/components';
+import { metro } from '@unbound-app/api';
 
 import { MAX_AVATARS } from '~/constants';
-import { Theme } from '~/modules';
 
 // A factory, so the theme is read when an indicator renders rather than when the plugin loads.
 export default Discord.createStyles(() => ({
@@ -12,14 +12,14 @@ export default Discord.createStyles(() => ({
 	},
 	unknownAvatar: {
 		alignItems: 'center',
-		backgroundColor: Theme.colors.BACKGROUND_ACCENT,
+		backgroundColor: metro.common.Theme.colors.BACKGROUND_ACCENT,
 		borderRadius: 8,
 		height: 16,
 		justifyContent: 'center',
 		width: 16,
 	},
 	unknownIcon: {
-		color: Theme.colors.TEXT_DEFAULT,
+		color: metro.common.Theme.colors.TEXT_DEFAULT,
 	},
 	overflow: {
 		marginLeft: -6,

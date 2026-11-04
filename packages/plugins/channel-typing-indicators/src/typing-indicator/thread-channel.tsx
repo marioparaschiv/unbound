@@ -1,12 +1,12 @@
 import { cloneElement, type ReactElement, type ReactNode } from 'react';
 import { patcher } from '@unbound-app/api';
 
-import ThreadChannelInfo from '~/components/thread-channel-info';
-import { findThreadChannelSlot, type RenderNode } from '~/row-layout';
+import ThreadChannelInfo from '~/typing-indicator/components/thread-channel-info';
+import { findThreadChannelSlot, type RenderNode } from '~/typing-indicator/row-layout';
+import { ThreadChannel } from '~/typing-indicator/modules';
+import { replaceChild } from '~/typing-indicator/elements';
 import type { ChannelRowProps } from '~/types';
 import { INDICATOR_KEY } from '~/constants';
-import { ThreadChannel } from '~/modules';
-import { replaceChild } from '~/elements';
 
 type RowRenderer = (props: ChannelRowProps) => ReactNode;
 type ThreadRowProps = { channelInfo: ReactNode };
@@ -41,12 +41,6 @@ function addIndicator(result: RenderNode, { channel, muted }: ChannelRowProps) {
  * @description Shows the typing indicator in thread rows, after the thread's channel info.
  */
 export function patchThreadChannel(): void {
-	if (typeof ThreadChannel.default !== 'function') {
-		console.error('[Channel Typing Indicators] Skipped threads, the row is not a function.');
-
-		return;
-	}
-
 	let hooked: HookedRenderer | undefined;
 
 	// The row renders an inner function component, which the patcher can only hook through a
@@ -66,10 +60,12 @@ export function patchThreadChannel(): void {
 		return hooked.host.render;
 	}
 
-	patcher.after(ThreadChannel, 'default', ({ result }) => {
+	patcher.react.after(ThreadChannel, 'default', ({ result: rendered }) => {
+		const result = rendered as ReactElement<ChannelRowProps> | null | undefined;
+
 		if (typeof result?.type !== 'function') return;
 
-		const Renderer = hookedRenderer(result.type);
+		const Renderer = hookedRenderer(result.type as RowRenderer);
 
 		return <Renderer {...result.props} key={result.key} />;
 	});
