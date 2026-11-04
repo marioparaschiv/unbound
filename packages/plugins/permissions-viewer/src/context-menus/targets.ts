@@ -2,6 +2,7 @@ import { asId, type Target } from '~/action-sheets/targets';
 
 export type MenuItem = {
 	label?: string;
+	IconComponent?: unknown;
 	action?: () => void;
 };
 

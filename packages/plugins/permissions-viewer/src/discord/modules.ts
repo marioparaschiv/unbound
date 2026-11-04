@@ -3,6 +3,7 @@ import { flux, metro, storage } from '@unbound-app/api';
 import type { GuildRoleStore as GuildRoles, PermissionSpecModule } from '~/types';
 
 export const { ActionSheets } = metro.api;
+export const Icons = metro.findByProps('ShieldUserIcon', { lazy: true });
 export const { Clipboard, Constants, i18n } = metro.common;
 export const ContextMenusFilter = metro.filters.byProps('showContextMenu', 'hideContextMenu');
 export const PermissionSpecs = metro.findByProps('getGuildPermissionSpecMap', {
