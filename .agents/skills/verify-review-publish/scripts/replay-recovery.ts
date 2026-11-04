@@ -14,11 +14,11 @@ import {
 	committedPage,
 	committedPageFiles,
 } from '../../../../apps/web/tests/helpers/addon-page.ts';
+import { listReviewQueue, reviewSubmission } from '../../../../apps/web/src/lib/review.ts';
 import { schema, serveGitHub } from '../../../../apps/web/tests/helpers/index.ts';
-import { reviewSubmission } from '../../../../apps/web/src/lib/review.ts';
 
 /**
- * @description Replays a public write failing after `decide`: only the same reviewer repeating the approval republishes the files.
+ * @description Replays a public write failing after `decide`: the review queue still lists the approval after a reload, and any reviewer's repeat republishes the files.
  * @returns The invariants and whether each held.
  */
 export async function failedPublishRecovers(): Promise<Checks> {
@@ -67,19 +67,20 @@ export async function failedPublishRecovers(): Promise<Checks> {
 			where: { addonId: ADDON, version: '1.0.0' },
 		});
 		const incomplete = !complete();
-		const stranger = await settle(
-			reviewSubmission(seeded.ctx, b, row.id, { decision: 'approved' }),
+		// A reload: a fresh request reads the queue with no dialog state.
+		const queue = await listReviewQueue(seeded.ctx, b);
+		const queued = queue.submissions.some(
+			(entry) => entry.submission.id === row.id && entry.submission.status === 'approved',
 		);
 		const rejection = await settle(
 			reviewSubmission(seeded.ctx, a, row.id, { decision: 'rejected', note: 'No.' }),
 		);
 		const recovered = await settle(
-			reviewSubmission(seeded.ctx, a, row.id, { decision: 'approved' }),
+			reviewSubmission(seeded.ctx, b, row.id, { decision: 'approved' }),
 		);
-
-		// The success deleted the staged bundle and the seeded blob is not served, so stage it again.
-		seeded.staging.objects.set(row.stagingKey, new TextEncoder().encode('export default 1;'));
-
+		const requeued = (await listReviewQueue(seeded.ctx, b)).submissions.some(
+			(entry) => entry.submission.id === row.id,
+		);
 		const again = await settle(
 			reviewSubmission(seeded.ctx, a, row.id, { decision: 'approved' }),
 		);
@@ -96,22 +97,24 @@ export async function failedPublishRecovers(): Promise<Checks> {
 
 		console.log(`    approve, first write fails: ${failed}`);
 		console.log(`    live row, files incomplete: ${Boolean(afterFailure)}, ${incomplete}`);
-		console.log(`    other reviewer repeats:     ${stranger}`);
+		console.log(`    queued after reload:        ${queued}`);
 		console.log(`    reject after approval:      ${rejection}`);
-		console.log(`    same reviewer repeats:      ${recovered}, then ${again}`);
+		console.log(`    other reviewer retries:     ${recovered}, then ${again}`);
 		console.log(`    addon_version sha256        = ${live?.sha256}`);
 		console.log(`    public bundle sha256        = ${bundle ? sha256(bundle) : '(none)'}`);
 
 		return {
-			DecidedOnce: versions.length === 1 && stranger !== 'ok' && rejection !== 'ok',
+			DecidedOnce: versions.length === 1 && rejection !== 'ok',
 			LiveEventuallyPublic:
 				failed !== 'ok' &&
 				Boolean(afterFailure) &&
 				incomplete &&
+				queued &&
 				recovered === 'ok' &&
+				!requeued &&
 				complete(),
 			PublicMatchesLive: Boolean(bundle) && sha256(bundle ?? '') === live?.sha256 && extra,
-			RecoveryIdempotent: again === 'ok' && versions.length === 1,
+			RecoveryIdempotent: again !== 'ok' && versions.length === 1,
 		};
 	} finally {
 		await seeded.close();

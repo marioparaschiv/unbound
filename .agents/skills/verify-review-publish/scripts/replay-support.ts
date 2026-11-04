@@ -78,6 +78,11 @@ export class MemoryBucket {
 	async delete(key: string) {
 		this.objects.delete(key);
 	}
+
+	// The review queue presigns a download of the staged bundle; the replay never fetches it.
+	presign(key: string) {
+		return `memory:///${key}`;
+	}
 }
 
 /**

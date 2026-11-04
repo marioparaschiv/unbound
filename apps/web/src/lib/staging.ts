@@ -1,10 +1,10 @@
 import { createLogger } from '@unbound-app/logger';
-import { and, eq, inArray } from 'drizzle-orm';
+import { and, eq, inArray, isNotNull, or } from 'drizzle-orm';
 
 import { OPEN_SUBMISSION_STATUSES } from '~/lib/submissions';
 import { appendEvent } from '~/lib/moderation-events';
 import type { AppContext } from '~/lib/context';
-import { submission } from '~/db/schema';
+import { addonVersion, submission } from '~/db/schema';
 
 const logger = createLogger('Web', 'Staging');
 
@@ -40,13 +40,24 @@ async function deleteOrphans(ctx: AppContext): Promise<number> {
 			.filter((object) => new Date(object.lastModified ?? 0).getTime() <= settled)
 			.map((object) => object.key);
 
+		// An approved submission keeps its bundle until its version's files are published.
 		const owned = await ctx.db
 			.select({ key: submission.stagingKey })
 			.from(submission)
+			.leftJoin(
+				addonVersion,
+				and(
+					eq(addonVersion.submissionId, submission.id),
+					isNotNull(addonVersion.filesPendingSince),
+				),
+			)
 			.where(
 				and(
 					inArray(submission.stagingKey, keys),
-					inArray(submission.status, OPEN_SUBMISSION_STATUSES),
+					or(
+						inArray(submission.status, OPEN_SUBMISSION_STATUSES),
+						isNotNull(addonVersion.submissionId),
+					),
 				),
 			);
 
@@ -64,7 +75,7 @@ async function deleteOrphans(ctx: AppContext): Promise<number> {
 }
 
 /**
- * @description Deletes every staged object no open submission owns, except those younger than
+ * @description Deletes every staged object no open or unpublished submission owns, except those younger than
  * `STAGING_ORPHAN_GRACE_SECONDS`.
  * @param ctx The application context.
  * @returns How many orphaned objects were deleted.

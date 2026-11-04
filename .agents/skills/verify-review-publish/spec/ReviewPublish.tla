@@ -143,8 +143,9 @@ Start(r, s, d) ==
     /\ UNCHANGED <<status, kind, staged, recordedSha, StoreVars>>
 
 \* reviewSubmission repeated for an approved submission (review.ts requireReviewable, isRepublish): the
-\* row is approved and its addon_version row still names this submission. The code also needs the same
-\* reviewer; the model lets any request retry, which includes it. Skips decide() and goes to the reads.
+\* row is approved and its addon_version row still names this submission. The code also needs the row's
+\* files_pending_since set (not modelled; it only narrows the retry) and allows any reviewer. Skips
+\* decide() and goes to the reads.
 RetryStart(r, s) ==
     /\ Recovery /\ PublishAfterCommit
     /\ pc[r] = "idle"
