@@ -69,7 +69,7 @@ describe('starting', () => {
 		).toHaveLength(1);
 		expect(selfTest()).toMatchObject({
 			ok: false,
-			detail: expect.stringContaining('profiles'),
+			detail: expect.stringContaining('Failed to patch component'),
 		});
 		await stopPlugin();
 	});

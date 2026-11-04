@@ -75,12 +75,12 @@ describe('the member list', () => {
 });
 
 describe('the screen-reader list', () => {
-	test('follows the language of the plugin', () => {
+	test('joins in English when the plugin has no messages for the language', () => {
 		setLocale('de');
 
 		const view = render(createElement(userRow.default, { user: { id: 'wumpus' } }), { stores });
 
-		expect(labels(view)).toEqual(['Online on Desktop und Mobile']);
+		expect(labels(view)).toEqual(['Online on Desktop and Mobile']);
 	});
 });
 
@@ -129,12 +129,12 @@ describe('messages', () => {
 		});
 	});
 
-	test('join the list in the language Discord shows', () => {
+	test('join the list in English when the plugin has no messages for the language', () => {
 		discord.intl.currentLocale = 'de';
 
 		expect(
 			rowData.generateMessageRowData({ message }).message.timestampAccessibilityLabel,
-		).toBe('Today at 12:00 • Online on Desktop und Mobile');
+		).toBe('Today at 12:00 • Online on Desktop and Mobile');
 	});
 
 	test('stay as they were when Messages is off', () => {

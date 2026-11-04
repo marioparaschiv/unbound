@@ -1,5 +1,8 @@
 export const PLUGIN_NAME = 'Platform Indicators';
 
+/** The locales with an `i18n/<code>.json` beside the bundle; a test keeps it in step with that folder. */
+export const MESSAGE_LOCALES: readonly string[] = ['en-US'];
+
 export type Platform = 'desktop' | 'mobile' | 'web' | 'embedded' | 'vr';
 
 export const PLATFORM_GLYPHS: Record<Platform, string> = {

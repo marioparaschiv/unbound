@@ -1,4 +1,5 @@
-import { recordApplied, recordFailure, recordSkip } from '@unbound-plugins/shared/lifecycle/health';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
+import { recordSkip } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import { patchUserProfilePrimaryInfo } from '~/indicators/profile';
@@ -26,39 +27,25 @@ import {
 export function startIndicators(): void {
 	if (!ensureModules(PLUGIN_NAME, { PresenceStore, SessionsStore, UserStore })) return;
 
-	const failed: string[] = [];
-	let applied = 0;
-
-	function startFeature(name: string, start: () => void): void {
-		try {
-			start();
-			applied++;
-		} catch (error) {
-			failed.push(name);
-			console.error(`[${PLUGIN_NAME}] Failed to start ${name}:`, error);
-		}
-	}
+	const features: (() => void)[] = [];
 
 	if (ensureModules(`${PLUGIN_NAME}: member list`, { Theme, ThemeStore })) {
-		startFeature('member list', patchUserRow);
+		features.push(patchUserRow);
 	}
 
 	if (ensureModules(`${PLUGIN_NAME}: profiles`, { Theme, ThemeStore })) {
-		startFeature('profiles', patchUserProfilePrimaryInfo);
+		features.push(patchUserProfilePrimaryInfo);
 	}
 
 	if (ensureModules(`${PLUGIN_NAME}: messages`, { MessageRowData })) {
-		startFeature('messages', patchMessageRow);
+		features.push(patchMessageRow);
 	}
 
 	if (typeof PresenceStore.isMobileOnline === 'function') {
-		startFeature('mobile status', patchMobileStatus);
+		features.push(patchMobileStatus);
 	} else {
 		recordSkip(`${PLUGIN_NAME}: mobile status needs PresenceStore.isMobileOnline`);
 	}
 
-	// After the successes, since recording an applied feature clears a recorded failure.
-	recordApplied(applied);
-
-	if (failed.length) recordFailure(`${failed.join(', ')} failed to start`);
+	startFeatures(PLUGIN_NAME, features);
 }

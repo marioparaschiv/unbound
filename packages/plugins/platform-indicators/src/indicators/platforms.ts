@@ -1,6 +1,6 @@
 import { format, messages } from '@unbound-app/i18n';
 
-import { PLATFORM_GLYPHS, type Platform } from '~/constants';
+import { MESSAGE_LOCALES, PLATFORM_GLYPHS, type Platform } from '~/constants';
 
 export type ClientStatusMap = Partial<Record<string, string>>;
 
@@ -118,17 +118,28 @@ export function platformGlyph(platform: string): string {
 }
 
 /**
- * @description Describes where a user is online for screen readers.
+ * @description Picks the locale that joins platform names, so the list matches the language of the plugin's own strings.
+ * @param locale The user's locale.
+ * @param shipped The locales the plugin ships messages for.
+ * @returns The user's locale when the plugin ships it, else en-US.
+ */
+export function listLocale(locale: string, shipped: readonly string[] = MESSAGE_LOCALES): string {
+	return shipped.includes(locale) ? locale : 'en-US';
+}
+
+/**
+ * @description Words the platforms of a user for a screen reader.
  * @param statuses The user's platforms.
- * @param locale The locale code that joins the platform names into a list.
+ * @param locale The user's locale; the list joins in it only when the plugin ships messages for it, so the sentence stays in one language.
  * @returns Text such as `Online on Desktop and Mobile`, or an empty string for no platforms.
  */
 export function describePlatforms(statuses: PlatformStatus[], locale: string): string {
 	if (!statuses.length) return '';
 
-	const list = new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }).format(
-		statuses.map(({ platform }) => platformLabel(platform)),
-	);
+	const list = new Intl.ListFormat(listLocale(locale), {
+		style: 'long',
+		type: 'conjunction',
+	}).format(statuses.map(({ platform }) => platformLabel(platform)));
 
 	return format('ONLINE_ON', { platforms: list });
 }

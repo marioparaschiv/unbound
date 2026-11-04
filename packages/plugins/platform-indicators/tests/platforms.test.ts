@@ -1,7 +1,10 @@
 import { describe, expect, test } from 'bun:test';
+import { readdirSync } from 'node:fs';
 
+import { MESSAGE_LOCALES } from '~/constants';
 import {
 	describePlatforms,
+	listLocale,
 	isMobileShown,
 	ownClientStatus,
 	parseStatusesKey,
@@ -106,7 +109,7 @@ describe('describePlatforms', () => {
 		expect(describePlatforms([], 'en-US')).toBe('');
 	});
 
-	test('joins the list the way the locale does', () => {
+	test('joins in English when the plugin has no messages for the locale', () => {
 		expect(
 			describePlatforms(
 				[
@@ -115,7 +118,7 @@ describe('describePlatforms', () => {
 				],
 				'de',
 			),
-		).toBe('Online on Desktop und Mobile');
+		).toBe('Online on Desktop and Mobile');
 	});
 });
 
@@ -123,5 +126,20 @@ describe('platformGlyph', () => {
 	test('falls back to the desktop symbol', () => {
 		expect(platformGlyph('mobile')).toBe('📱');
 		expect(platformGlyph('console')).toBe(platformGlyph('desktop'));
+	});
+});
+
+describe('listLocale', () => {
+	test('follows the user only for a locale the plugin ships', () => {
+		expect(listLocale('de', ['en-US', 'de'])).toBe('de');
+		expect(listLocale('fr', ['en-US', 'de'])).toBe('en-US');
+	});
+
+	test('names every locale in the i18n folder', () => {
+		const files = readdirSync(`${import.meta.dir}/../i18n`).map((name) =>
+			name.replace('.json', ''),
+		);
+
+		expect(MESSAGE_LOCALES).toEqual(files.sort());
 	});
 });
