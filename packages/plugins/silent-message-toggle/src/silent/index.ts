@@ -1,4 +1,4 @@
-import { recordApplied, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { assets } from '@unbound-app/api';
 
@@ -25,22 +25,9 @@ export function startSilent(): void {
 		return;
 	}
 
-	const features = {
-		'message flag': patchMessageActions,
-		'channel reset': resetOnChannelSwitch,
-		button: () => startToggleButton({ on, off }),
-	};
-	const failed: string[] = [];
-
-	for (const [name, start] of Object.entries(features)) {
-		try {
-			start();
-			recordApplied(1);
-		} catch (error) {
-			console.error(`[${PLUGIN_NAME}] Failed to start the ${name}:`, error);
-			failed.push(name);
-		}
-	}
-
-	if (failed.length) recordFailure(`could not start the ${failed.join(', ')}`);
+	startFeatures(PLUGIN_NAME, [
+		patchMessageActions,
+		resetOnChannelSwitch,
+		() => startToggleButton({ on, off }),
+	]);
 }

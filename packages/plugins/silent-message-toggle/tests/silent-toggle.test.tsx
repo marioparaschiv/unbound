@@ -1,5 +1,5 @@
 import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { flux, metro, render, startPlugin, toasts } from '@unbound-app/api/testing';
+import { flux, metro, native, render, startPlugin, toasts } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { View } from 'react-native';
@@ -7,7 +7,6 @@ import { View } from 'react-native';
 import type { ReactNode } from 'react';
 
 import { selfTest } from '~/index';
-import { patchChatInputSendButton } from '~/silent/android/send-button';
 
 let channelId = 'a';
 
@@ -125,10 +124,10 @@ describe('the silent toggle on iOS', () => {
 });
 
 describe('the silent toggle on Android', () => {
-	test('sits in front of the send button', () => {
+	test('sits in front of the send button', async () => {
+		native.setPlatform('android');
 		register();
-		// `definePlatform` picks the platform when the entry loads, so the Android patch is applied directly.
-		patchChatInputSendButton({ on: 1, off: 2 });
+		await startPlugin();
 
 		const view = render(<sendButton.default channel={{ id: 'a' }} />);
 
