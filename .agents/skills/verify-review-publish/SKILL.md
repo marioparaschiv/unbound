@@ -12,7 +12,7 @@ description: "Model-check addon review publishing in apps/web (TLA+/TLC plus a r
 ## 1. Does your change touch the verified code?
 
 ```sh
-git diff f2ee379cff17c849156404b5f9c077dc1f50e881 -- apps/web/src/lib/review.ts apps/web/src/lib/submissions.ts apps/web/src/lib/staging.ts apps/web/src/lib/github.ts apps/web/src/lib/auth/auth.ts apps/web/src/db/schema/addons.ts apps/web/src/lib/artifacts.ts apps/web/src/lib/addon-page-source.ts apps/web/src/lib/addon-files.ts packages/contracts/src/addon-files.ts
+git diff dcc0a9144ec097c8e7b6b986fa0657005e5abb72 -- apps/web/src/lib/review.ts apps/web/src/lib/submissions.ts apps/web/src/lib/staging.ts apps/web/src/lib/github.ts apps/web/src/lib/auth/auth.ts apps/web/src/db/schema/addons.ts apps/web/src/lib/artifacts.ts apps/web/src/lib/addon-page-source.ts apps/web/src/lib/addon-files.ts packages/contracts/src/addon-files.ts
 ```
 
 Empty output: the verification still describes the code. Otherwise map each hunk to the coverage table below and go on.
@@ -36,7 +36,7 @@ Empty output: the verification still describes the code. Otherwise map each hunk
 
 `reserve`, `decide` and the ban's cancel are each one Postgres SERIALIZABLE transaction that `createDatabase` retries whole on a serialization failure or deadlock, so each is still one indivisible step.
 
-Sync commit: `f2ee379cff17c849156404b5f9c077dc1f50e881`. Move it forward only after you confirm, hunk by hunk, that every row above still describes the code at the new commit, and update the line numbers in the table and in the spec comments.
+Sync commit: `dcc0a9144ec097c8e7b6b986fa0657005e5abb72`. Move it forward only after you confirm, hunk by hunk, that every row above still describes the code at the new commit, and update the line numbers in the table and in the spec comments.
 
 ## 2. Run the check
 
