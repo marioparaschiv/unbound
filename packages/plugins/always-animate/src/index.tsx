@@ -2,15 +2,14 @@ import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 
 import { startAnimate } from '~/animate';
 
-let stopAnimate: (() => void) | undefined;
+let stopAnimate = async () => {};
 
 export function start() {
 	stopAnimate = startAnimate();
 }
 
 export function stop() {
-	stopAnimate?.();
-	stopAnimate = undefined;
+	return stopAnimate();
 }
 
 export { featureSelfTest as selfTest };
