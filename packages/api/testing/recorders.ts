@@ -1,3 +1,4 @@
+import type { NativePluginCapability, NativePluginPlatform } from '../src/native';
 import type { CommandArgs, LogEntry } from './install-addon-globals';
 import type { OpenedDialog, ShownToast } from './fake-feedback';
 import type { CommandContext, Reply } from '../src/commands';
@@ -39,6 +40,20 @@ export type FluxRecorder = {
 /** The fake metro's modules: `register` one for the plugin to find, such as `{ sendMessage }`. */
 export type MetroRecorder = { register: (module: FakeModule, path?: string) => void };
 
+/** The fake `native`: the platform `definePlatform` selects by, and the modules and capabilities it reports. */
+export type NativeRecorder = {
+	/** Switches the host platform, `ios` until set; `definePlatform` and `Platform.OS` follow it. */
+	setPlatform: (platform: NativePluginPlatform) => void;
+	/** Gives `getNativeModule(name)` a module to return. */
+	// UNKNOWN: a native module has whatever shape the plugin reads.
+	registerModule: (name: string, module: unknown) => void;
+	/** Sets what `native.has` reports. */
+	setCapabilities: (capabilities: NativePluginCapability[]) => void;
+};
+
+/** The fake `fs`: its in-memory files, by absolute path; a test may read, add or remove them. */
+export type FsRecorder = { readonly files: Map<string, string> };
+
 /** Every line the plugin's `logger` received this test. */
 export type LogRecorder = { readonly entries: readonly LogEntry[] };
 
@@ -76,16 +91,28 @@ function createRecorders() {
 	const metro: MetroRecorder = {
 		register: (module, path) => getSession().scope.metro.register(module, path),
 	};
+	const native: NativeRecorder = {
+		setPlatform: (platform) => void (getSession().native.state.platform = platform),
+		registerModule: (name, module) => void getSession().native.state.modules.set(name, module),
+		setCapabilities: (capabilities) =>
+			void (getSession().native.state.capabilities = capabilities),
+	};
+	const fs: FsRecorder = {
+		get files() {
+			return getSession().fs.files;
+		},
+	};
 	const logs: LogRecorder = {
 		get entries() {
 			return getSession().scope.logs;
 		},
 	};
 
-	return { toasts, dialogs, commands, patches, flux, metro, logs };
+	return { toasts, dialogs, commands, patches, flux, metro, native, fs, logs };
 }
 
-export const { toasts, dialogs, commands, patches, flux, metro, logs } = createRecorders();
+export const { toasts, dialogs, commands, patches, flux, metro, native, fs, logs } =
+	createRecorders();
 
 /**
  * @description Switches the locale `@unbound-app/i18n` reads, re-rendering every mounted component that reads it.
@@ -100,4 +127,26 @@ export function setLocale(code: PluginLocale): void {
 	}
 
 	locales.setLocale(String(code));
+}
+
+/**
+ * @description Adds members to a fake of `@unbound-app/api`, so the plugin reads them. `mock.module('@unbound-app/api')` in a test
+ * replaces the whole module instead, dropping every fake the preset installed.
+ * @param path The namespace, or a nested one with dots, such as `ui` or `metro.components`.
+ * @param members The members to add or replace.
+ */
+export function extendApi(path: string, members: FakeModule): void {
+	let target: unknown = getSession().scope.unbound;
+
+	for (const name of path.split('.')) {
+		target = typeof target === 'object' && target !== null ? Reflect.get(target, name) : void 0;
+	}
+
+	if (typeof target !== 'object' || target === null) {
+		throw new Error(
+			`Failed to extend @unbound-app/api ${path}: the fake has no such namespace.`,
+		);
+	}
+
+	Object.assign(target, members);
 }
