@@ -17,12 +17,18 @@ export function currentAppearance(): BubbleAppearance {
 }
 
 /**
- * @description Calls `listener` whenever the theme or a bubble setting changes. The Addon scope stops both listeners when the plugin stops.
+ * @description Calls `listener` whenever the theme or a bubble setting changes. The Addon scope also stops both listeners when the plugin stops.
  * @param listener The function to call.
+ * @returns A function that stops both listeners.
  */
-export function watchAppearance(listener: () => void): void {
-	storage.onChange(({ store }) => store === addon.id, listener);
-	flux.onStoreChange(ThemeStore, listener);
+export function watchAppearance(listener: () => void): () => void {
+	const stopSettings = storage.onChange(({ store }) => store === addon.id, listener);
+	const stopTheme = flux.onStoreChange(ThemeStore, listener);
+
+	return () => {
+		stopSettings();
+		stopTheme();
+	};
 }
 
 export default { currentAppearance, watchAppearance };
