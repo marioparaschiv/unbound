@@ -22,5 +22,5 @@
 	],
 	"version": "1.0.3",
 	"icon": "EyeSlashIcon",
-	"main": "index.ts"
+	"main": "index.tsx"
 }
