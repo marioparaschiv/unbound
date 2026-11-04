@@ -96,7 +96,7 @@ describe('the report', () => {
 	];
 
 	test('groups lines by file, relative to the working directory', () => {
-		expect(formatReport(results, '/work')).toBe(
+		expect(Bun.stripANSI(formatReport(results, '/work'))).toBe(
 			[
 				'error    plugins/demo/manifest.json:2:1  bad version.',
 				'',

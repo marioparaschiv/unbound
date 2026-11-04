@@ -1,0 +1,22 @@
+{
+	"id": "unbound.super-reaction-tweaks",
+	"name": "Super Reaction Tweaks",
+	"description": "Opens the reaction picker on Super Reactions and caps how many Super Reaction animations play at once.",
+	"authors": [
+		{
+			"name": "Fiery",
+			"id": "890228870559698955"
+		},
+		{
+			"name": "ant0n",
+			"id": "145224646868860928"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "SuperReactionIcon",
+	"main": "index.tsx"
+}

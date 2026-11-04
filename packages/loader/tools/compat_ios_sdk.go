@@ -322,14 +322,20 @@ func objcPropertySelectors(statement string) []string {
 	}
 	getter, setter, readonly := name, "set"+strings.ToUpper(name[:1])+name[1:]+":", false
 	for _, attribute := range strings.Split(attributes, ",") {
-		attribute = strings.TrimSpace(attribute)
-		switch {
-		case attribute == "readonly":
+		key, value, hasValue := strings.Cut(attribute, "=")
+		key = strings.TrimSpace(key)
+		value = strings.TrimSpace(value)
+		switch key {
+		case "readonly":
 			readonly = true
-		case strings.HasPrefix(attribute, "getter="):
-			getter = strings.TrimSpace(strings.TrimPrefix(attribute, "getter="))
-		case strings.HasPrefix(attribute, "setter="):
-			setter = strings.TrimSpace(strings.TrimPrefix(attribute, "setter="))
+		case "getter":
+			if hasValue && value != "" {
+				getter = value
+			}
+		case "setter":
+			if hasValue && value != "" {
+				setter = value
+			}
 		}
 	}
 	if readonly {

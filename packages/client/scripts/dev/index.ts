@@ -1,6 +1,7 @@
 import Logger from '@unbound-app/logger';
 
 import { IS_DEV_BUILD } from '../build/constants';
+import { buildDevtools } from '../build/devtools';
 import * as refresh from '../serve/refresh';
 import { startServer } from '../serve';
 import { hotBuild } from '../build';
@@ -12,6 +13,9 @@ if (!IS_DEV_BUILD) {
 	logger.error('Run the dev server with `--dev` (as `bun run dev` does) or `UNBOUND_DEV=1`.');
 	process.exit(1);
 }
+
+// Built once, before the client, so the client build's manifest lists it for `loader.devtools`.
+await buildDevtools();
 
 const engine = await hotBuild((update) => void refresh.deliver(update));
 
