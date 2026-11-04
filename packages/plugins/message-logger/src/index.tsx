@@ -1,4 +1,4 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
@@ -27,12 +27,14 @@ export function start() {
 
 	log = current;
 
-	// One call per feature, so a feature that throws is logged and recorded while the others still start.
-	disposeRows = applyFeatures(PLUGIN_NAME, [() => startRows(current)]);
-	applyFeatures(PLUGIN_NAME, [() => startDeletions(current)]);
-	applyFeatures(PLUGIN_NAME, [() => startEdits(current)]);
-	applyFeatures(PLUGIN_NAME, [startNonces]);
-	disposeHistory = applyFeatures(PLUGIN_NAME, [() => startHistory(current)]);
+	// Rows and history keep their stop for `stop`; the interceptors stay on until the Addon scope removes them.
+	disposeRows = startFeatures(PLUGIN_NAME, [() => startRows(current)]);
+	startFeatures(PLUGIN_NAME, [
+		() => startDeletions(current),
+		() => startEdits(current),
+		startNonces,
+	]);
+	disposeHistory = startFeatures(PLUGIN_NAME, [() => startHistory(current)]);
 }
 
 export function stop() {
