@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :eye-slash: An **Unsuppress Embeds** row in a message's long-press menu brings back link embeds that were removed from it.

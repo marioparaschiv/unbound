@@ -4,7 +4,26 @@ description: "Read Discord's state, and run code when something happens."
 icon: 'signal'
 ---
 
-Flux is how Discord manages its state. When something happens, such as a message arriving or the user switching channels, Discord **dispatches an action**. **Stores** listen for actions and update the state they hold.
+A plugin has two ways into Discord's state. It reads a **Flux store** to get what Discord knows right now, and it listens for a **Flux action** to run code when something happens.
+
+## Reference
+
+Every function is on `flux`, from `@unbound-app/api`.
+
+| Function | Does |
+| --- | --- |
+| `flux.getStore(name, options?)` | Returns the typed store named `name`, such as `'User'` for `UserStore`. Lazy by default. `options`: `lazy`, and `short: false` to match the full name |
+| `flux.useStore(stores, selector, options?)` | In a component, returns `selector(stores)`. Re-renders only when the result changes. `options`: `deps`, `isEqual` |
+| `flux.onAction(type, listener)` | Calls `listener` with each action of `type`, after Discord's stores handle it. Returns a function that removes it |
+| `flux.interceptAction(type, interceptor)` | Calls `interceptor` before Discord handles each action of `type`. It may change the action, or return `true` to drop it. Returns a function that removes it |
+| `flux.onStoreChange(store, listener)` | Calls `listener` after each change to `store`. Returns a function that removes it |
+| `flux.dispatch(action)` | Sends an action through Discord's dispatcher. Resolves once the stores handled it |
+
+The typed stores are `User`, `Guild`, `GuildMember`, `Channel`, `SelectedChannel`, `Typing`, `Relationship`, `UserProfile` and `GuildSettings`. Any other name returns a base store with `getName`, `addChangeListener`, `removeChangeListener` and `emitChange`. The scope removes every listener and interceptor when the plugin stops.
+
+## How Flux works
+
+When something happens, such as a message arriving or the user switching channel, Discord **dispatches an action**. **Stores** listen for actions and update the state they hold.
 
 <Flow>
 	<FlowStep title='Something happens' detail='A message arrives' />
@@ -13,14 +32,9 @@ Flux is how Discord manages its state. When something happens, such as a message
 	<FlowStep title='Screens re-render' />
 </Flow>
 
-So a plugin has two ways in:
-
-- Read a **store** to get what Discord knows right now: the current user, a server, the selected channel.
-- Listen for an **action** to run code when something happens.
-
 ## Reading a store
 
-A store is a single object with getters for its state. `flux.getStore` is lazy, so you can declare the store at the top of a file.
+A store is a single object with getters for its state. `flux.getStore` is lazy, so you can declare the store at the top of a file. It is also typed. Prefer it to `metro.stores`, which holds the same stores without their types. See [Pick the lookup that costs least](/docs/developer/plugins/metro#pick-the-lookup-that-costs-least).
 
 ```ts
 import { flux } from '@unbound-app/api';
@@ -50,21 +64,37 @@ function Username() {
 To read several stores, pass them as an array. The selector gets the same array. If the selector uses a prop, pass it in `deps`, so the value is read again when it changes.
 
 ```ts
-const status = flux.useStore([PresenceStore, UserStore], ([presence]) => presence.getStatus(userId), {
-	deps: [userId],
-});
+import { flux } from '@unbound-app/api';
+
+const ChannelStore = flux.getStore('Channel');
+const UserStore = flux.getStore('User');
+
+export function useChannelLabel(channelId: string) {
+	return flux.useStore(
+		[ChannelStore, UserStore],
+		([channels, users]) =>
+			`${channels.getChannel(channelId)?.name} as ${users.getCurrentUser()?.username}`,
+		{ deps: [channelId] },
+	);
+}
 ```
 
 A selector that returns a new object or array re-renders the component on every store change, because the new value is never `===` the old one. Wrap it in `utils.react.useShallow`. The component then re-renders only when a top-level field changes.
 
 ```ts
-const { username, avatar } = flux.useStore(
-	UserStore,
-	utils.react.useShallow((store) => ({
-		username: store.getCurrentUser()?.username,
-		avatar: store.getCurrentUser()?.avatar,
-	})),
-);
+import { flux, utils } from '@unbound-app/api';
+
+const UserStore = flux.getStore('User');
+
+export function useIdentity() {
+	return flux.useStore(
+		UserStore,
+		utils.react.useShallow((store) => ({
+			username: store.getCurrentUser()?.username,
+			avatar: store.getCurrentUser()?.avatar,
+		})),
+	);
+}
 ```
 
 For any other comparison, pass `isEqual`. It gets the old and new values, and returns `true` to skip the re-render. `utils.react.shallow` is the comparison `useShallow` uses. See [flux](/docs/sdk/latest/flux) in the SDK reference.

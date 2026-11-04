@@ -1,22 +1,20 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import type { PluginContext } from '@unbound-app/api/native';
 
 import { isAussieDevice } from '~/locale';
 import { startRotation } from '~/rotation';
 import { startUpsideDownText } from '~/text';
 
-let dispose = () => {};
+let stopRotation = () => {};
 
 export function start(context: PluginContext) {
 	if (!isAussieDevice()) return;
 
-	dispose = applyFeatures('Aussie Mode', [
-		() => startRotation(context.native, (error) => console.error('[Aussie Mode]', error)),
-		startUpsideDownText,
-	]);
+	// Last, so a failure in the text feature never leaves the screen turned over.
+	startUpsideDownText();
+	stopRotation = startRotation(context.native, (error) => console.error('[Aussie Mode]', error));
 }
 
 export function stop() {
-	dispose();
-	dispose = () => {};
+	stopRotation();
+	stopRotation = () => {};
 }

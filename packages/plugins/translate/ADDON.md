@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :language: Adds a **Translate** row to the long-press menu on messages that have text.

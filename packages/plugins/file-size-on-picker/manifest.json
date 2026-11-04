@@ -12,9 +12,9 @@
 			"id": "224617799434108928"
 		}
 	],
-	"version": "1.0.7",
+	"version": "1.0.8",
 	"icon": "ImageIcon",
 	"minNativePluginApi": "1.0.0",
-	"main": "index.ts",
+	"main": "index.tsx",
 	"startAfterFirstFrame": true
 }

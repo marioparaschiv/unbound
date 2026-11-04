@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :arrows-rotate-center: Turns all of Discord upside down, menus, sheets and pop-ups included.

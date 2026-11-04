@@ -6,6 +6,22 @@ icon: 'layers'
 
 A **patch** wraps a function that belongs to someone else. You give the patcher an object and the name of a function on it. From then on, every call to that function runs your callback too. Discord doesn't know it was patched, so your code runs wherever Discord calls it.
 
+## Reference
+
+Every function is on `patcher`, from `@unbound-app/api`. Each returns a function that removes the patch.
+
+| Function | Runs your callback | Callback gets | Callback returns |
+| --- | --- | --- | --- |
+| `patcher.before(parent, key, callback, options?)` | Before the original | `{ args, this }` | A new `args` array, or nothing |
+| `patcher.instead(parent, key, callback, options?)` | In place of the original | `{ args, original, this }` | The result |
+| `patcher.after(parent, key, callback, options?)` | After the original | `{ args, result, this }` | A new `result`, or nothing |
+| `patcher.react.before\|instead\|after(...)` | The same, for a component's render | See [Patching Components](/docs/developer/plugins/react-patching#reference) | |
+| `patcher.unpatchAll()` | | | Removes every patch your plugin made |
+
+| Option | Does |
+| --- | --- |
+| `once: true` | Removes the patch after it runs once |
+
 ## A first patch
 
 ```ts src/message-log/index.ts
@@ -24,11 +40,7 @@ The patcher takes the object, the function's name on it, and your callback. It s
 
 ## The three kinds of patch
 
-Each kind runs at a different point of the call, and gets the parts of the call that exist at that point. The examples below use the `Messages` lookup from above, and Discord's user store:
-
-```ts
-const UserStore = flux.getStore('User');
-```
+Each kind runs at a different point of the call, and gets the parts of the call that exist at that point.
 
 <Flow>
 	<FlowStep title='before' detail='args' />
@@ -41,6 +53,10 @@ const UserStore = flux.getStore('User');
 		Runs before the original, with its `args`. Return a new array to replace the arguments.
 
 		```ts
+		import { metro, patcher } from '@unbound-app/api';
+
+		const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+
 		patcher.before(Messages, 'sendMessage', ({ args }) => {
 			const [channelId, message] = args;
 
@@ -52,6 +68,10 @@ const UserStore = flux.getStore('User');
 		Runs after the original, with its `result`. Return a value to replace the result. This is the usual choice for changing what a component renders.
 
 		```ts
+		import { flux, patcher } from '@unbound-app/api';
+
+		const UserStore = flux.getStore('User');
+
 		patcher.after(UserStore, 'getCurrentUser', ({ result }) => {
 			logger.log('Current user is', result?.username);
 		});
@@ -61,6 +81,9 @@ const UserStore = flux.getStore('User');
 		Runs in place of the original. Call `original` yourself when you want Discord's behavior, or skip it to replace the function entirely.
 
 		```ts
+		import { metro, patcher } from '@unbound-app/api';
+
+		const Messages = metro.findByProps('sendMessage', 'receiveMessage');
 		const quietChannels = new Set(['1234567890']);
 
 		patcher.instead(Messages, 'sendMessage', ({ args, original }) => {
@@ -76,9 +99,13 @@ Every callback also gets `this`, the object the function was called on.
 
 ## Undoing a patch
 
-A plugin's patches are removed when it stops, so most plugins never undo one by hand. To remove one sooner, call the function the patch returns.
+The Addon scope removes a plugin's patches after `stop` returns, so most plugins never undo one by hand. To remove one sooner, call the function the patch returns.
 
 ```ts
+import { flux, patcher } from '@unbound-app/api';
+
+const UserStore = flux.getStore('User');
+
 const unpatch = patcher.after(UserStore, 'getCurrentUser', ({ result }) => {
 	logger.log('Current user is', result?.username);
 });
@@ -88,6 +115,10 @@ unpatch();
 ```
 
 Pass `{ once: true }` as the last argument to remove a patch after it runs once. `patcher.unpatchAll()` removes every patch your plugin made.
+
+<Warning>
+	A `stop` that makes Discord draw again, such as one that calls `emitChange`, must call `unpatch()` first. The scope removes patches only after `stop` returns, so a redraw inside `stop` still sees them. [How Plugins Run](/docs/developer/plugins/introduction#remove-your-own-patch-before-you-redraw) has the example.
+</Warning>
 
 ## Patching a module that hasn't loaded
 

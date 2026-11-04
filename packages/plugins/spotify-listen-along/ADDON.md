@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :headphones: A headphones button next to **Play on Spotify** on someone's Spotify activity plays the same track at the same position and keeps following what they play.

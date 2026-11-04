@@ -226,6 +226,58 @@ describe('buttons', () => {
 	});
 });
 
+describe('notices', () => {
+	const notice = (options: string) =>
+		`export default defineSettings({ a: setting.notice({ ${options} }) });`;
+
+	test('read as a row that stores nothing, with the info tone by default', async () => {
+		const read = await readPluginSettings(
+			createPlugin({ settings: IMPORT + notice("title: 'A'"), messages: MESSAGES }),
+		);
+
+		expect(read?.issues).toEqual([]);
+		expect(read?.schema.properties.a).toEqual({
+			kind: 'notice',
+			displayAs: 'notice',
+			title: 'A',
+			tone: 'info',
+		});
+		expect(settingsTypings(read!.schema, read!.messages)).not.toContain('a: ');
+	});
+
+	test('keep their tone, subtitle and condition', async () => {
+		const read = await readPluginSettings(
+			createPlugin({
+				settings: `${IMPORT}export default defineSettings({ on: setting.boolean({ default: true, title: 'B' }), a: setting.notice({ title: 'A', subtitle: 'C', tone: 'danger', visibleWhen: 'on' }) });`,
+				messages: MESSAGES,
+			}),
+		);
+
+		expect(read?.issues).toEqual([]);
+		expect(read?.schema.properties.a).toMatchObject({
+			subtitle: 'C',
+			tone: 'danger',
+			visibleWhen: 'on',
+		});
+	});
+
+	test('reject a tone the panel cannot draw, and a missing title', async () => {
+		expect(await issues(notice("title: 'A', tone: 'loud' as never"))).toEqual([
+			"settings.ts:2:33  a  has the tone loud.  Fix: set `tone` to 'info', 'warning' or 'danger'.",
+		]);
+		expect(await issues(notice(''))).toEqual([
+			'settings.ts:2:33  a  has no title.  Fix: add `title: <message key>`, or `hidden: true`.',
+		]);
+	});
+
+	test('type their builder in the generated typings', () => {
+		const typings = settingsTypings({ kind: 'settings', properties: {} }, {});
+
+		expect(typings).toContain('notice(options: {');
+		expect(typings).toContain('export type Notice');
+	});
+});
+
 describe('choice', () => {
 	test('shows up to five options as a radio group and more as a picker', async () => {
 		const options = (count: number) =>

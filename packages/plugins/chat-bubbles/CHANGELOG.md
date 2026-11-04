@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.3] - 2026-11-05
+
+### Changed
+
+- The settings screen's text can now be translated. The plugin works the same as before.
+
 ## [1.5.2] - 2026-11-03
 
 ### Changed

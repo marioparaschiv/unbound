@@ -1,4 +1,4 @@
-import type { FileSizes } from '~/badges';
+import type { FileSizes } from '~/types';
 
 /**
  * @description Discord's picker already reports file sizes on iOS, so no lookup is needed.

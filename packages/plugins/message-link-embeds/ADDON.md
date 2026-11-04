@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :msgs: Draws the linked message as a Discord chat row, on a new line after the channel mention Discord shows for the link.

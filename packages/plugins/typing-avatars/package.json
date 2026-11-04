@@ -5,7 +5,8 @@
 	"description": "Shows the avatars of people typing in the channel.",
 	"type": "module",
 	"scripts": {
-		"build": "rollup -c"
+		"build": "rollup -c",
+		"test": "bun test"
 	},
 	"dependencies": {
 		"@unbound-plugins/shared": "workspace:*"

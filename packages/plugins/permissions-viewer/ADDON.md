@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :shield-user: A **View Permissions** row opens what a member, channel or server allows and denies.

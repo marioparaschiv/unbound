@@ -1,7 +1,5 @@
 export const PLUGIN_NAME = 'Shiki Codeblocks';
 
-export const DEFAULT_THEME = 'dark-plus';
-
 /** Settings that change how mounted cards look, so the renderer repaints or rebuilds them. */
 export const CARD_SETTINGS = [
 	'theme',
@@ -133,7 +131,6 @@ export const LANGUAGE_LABELS: Record<string, string> = {
 	jsonc: 'JSONC',
 	kotlin: 'Kotlin',
 	markdown: 'Markdown',
-	plain: 'Text',
 	python: 'Python',
 	rust: 'Rust',
 	sql: 'SQL',
@@ -143,14 +140,9 @@ export const LANGUAGE_LABELS: Record<string, string> = {
 	yaml: 'YAML',
 };
 
-export const ICON_MODES = ['disabled', 'greyscale', 'colored'];
+export const ICON_MODES = ['disabled', 'greyscale', 'colored'] as const;
 
-export const HLJS_PREFERENCES = [
-	{ label: 'Never', value: 'never' },
-	{ label: 'Prefer Shiki', value: 'secondary' },
-	{ label: 'Prefer Highlight.js', value: 'primary' },
-	{ label: 'Always use Highlight.js', value: 'always' },
-];
+export const HLJS_PREFERENCES = ['never', 'secondary', 'primary', 'always'] as const;
 
 export const THEME_IDS = [
 	'dark-plus',

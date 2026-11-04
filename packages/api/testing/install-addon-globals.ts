@@ -17,6 +17,7 @@ import type { AddonHandle, AddonLogger, AddonManifest } from '../src/global';
 import { createRecordingPatcher, type RecordingPatcher } from './recording-patcher';
 import { createFakeMetro, type FakeMetro, type FakeModule } from './fake-metro';
 import { createMemoryStorage, type MemoryStorage } from './memory-storage';
+import { createFakeTimers, type FakeTimers } from './fake-timers';
 import { createFakeReact, type FakeReact } from './fake-react';
 
 type LogLevel = keyof AddonLogger;
@@ -76,6 +77,8 @@ export type InstalledAddonGlobals = {
 	logs: LogEntry[];
 	storage: MemoryStorage;
 	metro: FakeMetro;
+	/** The scoped `setTimeout`, `setInterval` and their clears, installed as globals. */
+	timers: FakeTimers;
 	uninstall: () => void;
 };
 
@@ -203,7 +206,7 @@ function createAddon(manifest: AddonManifest): AddonHandle {
 
 /**
  * @description Installs a fake Addon scope on `globalThis`, so plugin code under test reads `addon`, `patcher`,
- * `logger`, `commands`, `unbound` and `React` as it would on device. Pass `unbound` to `mock.module('@unbound-app/api')`.
+ * `logger`, `commands`, `unbound`, `React` and the scoped timers as it would on device. Pass `unbound` to `mock.module('@unbound-app/api')`.
  * @param options The fake addon's manifest and extra `unbound` namespaces.
  * @returns The globals, the recorded logs, and `uninstall` to restore what was there before.
  */
@@ -219,9 +222,10 @@ export function installAddonGlobals(options: InstallOptions = {}): InstalledAddo
 	};
 	const logs: LogEntry[] = [];
 	const storage = createMemoryStorage(manifest.id);
-	const patcher = createRecordingPatcher();
 	const metro = createFakeMetro();
+	const patcher = createRecordingPatcher(metro.whenLoaded);
 	const commands = createCommands();
+	const timers = createFakeTimers();
 	const unbound: FakeUnbound = { storage, patcher, metro, commands, ...options.unbound };
 	const globals = {
 		React: createFakeReact(),
@@ -230,6 +234,10 @@ export function installAddonGlobals(options: InstallOptions = {}): InstalledAddo
 		patcher,
 		logger: createLogger(logs),
 		commands,
+		setTimeout: timers.setTimeout,
+		setInterval: timers.setInterval,
+		clearTimeout: timers.clearTimeout,
+		clearInterval: timers.clearInterval,
 	};
 	const previous = new Map<string, PropertyDescriptor | undefined>();
 
@@ -248,5 +256,5 @@ export function installAddonGlobals(options: InstallOptions = {}): InstalledAddo
 		}
 	}
 
-	return { ...globals, logs, storage, metro, uninstall };
+	return { ...globals, logs, storage, metro, timers, uninstall };
 }

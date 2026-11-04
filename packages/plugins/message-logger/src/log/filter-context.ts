@@ -1,5 +1,5 @@
 import type { FilterContext } from '~/log/filters';
-import { ChannelStore, UserStore } from '~/discord/modules';
+import { ChannelStore, UserStore } from '~/log/modules';
 
 /**
  * @description Looks up the current user and a channel for the ignore rules.

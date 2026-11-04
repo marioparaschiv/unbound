@@ -25,8 +25,7 @@
 		],
 		"unbound/no-window-unbound": "error",
 		"unbound/platform-check-only-in-platform-file": "error",
-		// Lookups stay eager by default until slice 36 (UB-142) makes addon lookups lazy; flip this then.
-		"unbound/no-module-scope-lookup": ["error", { "lazyByDefault": false }]
+		"unbound/no-module-scope-lookup": ["error", { "lazyByDefault": true }]
 	},
 	"overrides": [
 		{
@@ -34,9 +33,7 @@
 			"files": [
 				"avatar-radius/src/index.tsx",
 				"chat-bubbles/src/index.tsx",
-				"mention-avatars/src/index.ts",
 				"message-latency/src/index.tsx",
-				"message-link-embeds/src/index.ts",
 				"more-user-tags/src/index.tsx",
 				"more-user-tags/src/ios/tag-gradient-renderer.ts",
 				"moyai/src/index.tsx",

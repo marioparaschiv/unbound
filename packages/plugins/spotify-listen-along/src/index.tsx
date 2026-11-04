@@ -1,25 +1,18 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 
 import { startListenAlongInvite } from '~/invite';
 import { startListenAlong } from '~/listen';
 import { PLUGIN_NAME } from '~/constants';
 
-let dispose: () => Promise<void> | undefined = () => undefined;
+let stopFeatures = async () => {};
 
 export function start() {
-	dispose = applyFeatures(PLUGIN_NAME, [
-		() => startListenAlong(),
-		() => startListenAlongInvite(),
-	]);
+	stopFeatures = startFeatures(PLUGIN_NAME, [startListenAlong, startListenAlongInvite]);
 }
 
 export function stop() {
-	const pending = dispose();
-
-	dispose = () => undefined;
-
-	return pending;
+	return stopFeatures();
 }
 
 export { featureSelfTest as selfTest };

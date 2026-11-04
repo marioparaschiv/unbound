@@ -1,27 +1,18 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 
-import { ActionSheets, CloudUploader, EditMessageStore, REST } from '~/discord/modules';
-import { interceptEditUploads } from '~/editing';
-import { patchActionSheets } from '~/sheet';
+import { startEditUploads } from '~/editing';
+import { startSheet } from '~/sheet';
 import { PLUGIN_NAME } from '~/constants';
 
-let dispose: () => Promise<void> | undefined = () => undefined;
+let stopFeatures = async () => {};
 
 export function start() {
-	if (!ensureModules(PLUGIN_NAME, { ActionSheets, CloudUploader, EditMessageStore, REST }))
-		return;
-
-	dispose = applyFeatures(PLUGIN_NAME, [() => interceptEditUploads(), () => patchActionSheets()]);
+	stopFeatures = startFeatures(PLUGIN_NAME, [startEditUploads, startSheet]);
 }
 
 export function stop() {
-	const pending = dispose();
-
-	dispose = () => undefined;
-
-	return pending;
+	return stopFeatures();
 }
 
 export { featureSelfTest as selfTest };

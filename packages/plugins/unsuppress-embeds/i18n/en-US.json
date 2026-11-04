@@ -1,0 +1,6 @@
+{
+	"SUPPRESS_EMBEDS": "Suppress Embeds",
+	"UNSUPPRESS_EMBEDS": "Unsuppress Embeds",
+	"CHANGE_FAILED": "{action} failed: {reason}",
+	"CHANGE_REFUSED": "Discord refused the change."
+}

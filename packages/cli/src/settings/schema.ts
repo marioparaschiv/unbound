@@ -34,6 +34,7 @@ export type BuilderOptions = {
 	maxItems?: number;
 	action?: string;
 	confirm?: string;
+	tone?: string;
 };
 
 /** The options of `defineSettings`. */
@@ -205,8 +206,17 @@ function button(options: BuilderOptions): TSchema {
 	);
 }
 
+/**
+ * @description Builds a notice row that shows a message in its panel; it stores nothing.
+ * @param options Its labels, tone and `visibleWhen`.
+ * @returns Its schema.
+ */
+function notice(options: BuilderOptions): TSchema {
+	return Type.Null(meta('notice', 'notice', options, { tone: options.tone ?? 'info' }));
+}
+
 /** The setting builders, one per stored primitive; `displayAs` picks the widget. */
-export const setting = { boolean, number, integer, string, choice, array, section, button };
+export const setting = { boolean, number, integer, string, choice, array, section, button, notice };
 
 /**
  * @description Declares a plugin's settings: the default export of its settings.ts.

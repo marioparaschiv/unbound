@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.5] - 2026-11-04
+
+### Changed
+
+- The settings screen, the Copy button and the copy toasts can now be translated. The plugin works the same as before.
+
 ## [1.1.4] - 2026-11-03
 
 ### Changed

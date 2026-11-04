@@ -6,6 +6,20 @@ icon: 'language'
 
 Discord lets each user pick a language. Your plugin can follow that choice. You write every string once per language in a JSON file, and Unbound picks the right one each time you read it.
 
+## Reference
+
+The build makes `@unbound-app/i18n` from your `i18n` folder. It exports:
+
+| Export | Signature | What it is |
+| --- | --- | --- |
+| `messages` | `Messages` | Every en-US string without placeholders, read in the user's language on each access |
+| `format` | `format(key, vars?) => string` | A string with its placeholders filled. `vars` is required when the key has placeholders and rejected when it has none |
+| `useMessages` | `() => string` | Re-renders the component when the language changes, and returns the locale code. The build adds it for you |
+| `MessageKey` | `type` | The union of your en-US keys |
+| `Messages`, `FormatVars` | `type` | The en-US strings, and each key's placeholders |
+
+`@unbound-app/api` accepts these keys where it shows text: `title` and `subtitle` of a [setting](/docs/developer/plugins/settings), `description` of a [command](/docs/developer/plugins/commands), and the text of a [toast or dialog](/docs/developer/plugins/feedback). `@unbound-app/api/testing` adds `setLocale(locale)` for [tests](/docs/developer/plugins/testing#switch-the-language).
+
 ## How a string is chosen
 
 Each string has a **key**, such as `GREETING_TITLE`. When your plugin reads a key, Unbound looks for it in this order, and uses the first match:
@@ -135,6 +149,39 @@ export function Greeting({ name }: { name: string }) {
 ```
 
 A `React.memo` child that shows strings gets `useMessages()` itself, so it renders again on a language change even when its props stay the same. A class component cannot use hooks: the build warns, with its file and line, when one reads `messages` or `format`.
+
+## Match Discord's own text
+
+Some labels belong to Discord, such as the "Delete Message" row in a message's menu. To find that row, or to reuse its wording, read the label in the user's language from Discord's i18n module, and fall back to English when the module or the message is missing. Discord names each message by a hashed id, which you find in the decompiled bundle.
+
+```ts src/unsuppress/delete-label.ts
+import { metro } from '@unbound-app/api';
+
+/** Discord's hashed message ID for "Delete Message", the label of the delete row in the message sheet. */
+const DELETE_MESSAGE_MESSAGE = 'xwMqD7';
+const ENGLISH_LABEL = 'Delete Message';
+
+/**
+ * @description Reads Discord's "Delete Message" label in the user's language.
+ * @returns The label, or the English one when Discord's i18n module or the message is missing.
+ */
+export function getDeleteLabel(): string {
+	const { i18n } = metro.common;
+	const message = i18n?.t?.[DELETE_MESSAGE_MESSAGE];
+
+	if (!message) return ENGLISH_LABEL;
+
+	try {
+		return i18n.intl.string(message) || ENGLISH_LABEL;
+	} catch (error) {
+		logger.error('Failed to read the Delete Message label:', error);
+
+		return ENGLISH_LABEL;
+	}
+}
+```
+
+Three habits keep this safe. Look the message up at the moment you need it, so a language change takes effect. Guard every step, because a Discord update can rename the id or the module. And keep the English label as a constant, so a plugin that matches the text still works when Discord's module is gone. Strings that are yours go in `i18n/`. Only text that has to equal Discord's belongs here.
 
 ## What ships to the user
 

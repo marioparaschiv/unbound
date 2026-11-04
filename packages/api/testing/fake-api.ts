@@ -19,7 +19,13 @@ export type FakeFlux = {
 	/** Calls a seeded store's change listeners, re-rendering each `useStore` reading it. */
 	emit: (name: string) => void;
 	getStore: (name: string) => FluxStore & StoreSeed;
-	useStore: <T>(stores: FluxStore | FluxStore[], getter: () => T, deps?: readonly unknown[]) => T;
+	/** The seeded stores that have a change listener added with `addChangeListener` rather than `onStoreChange`, which Unbound does not remove when a plugin stops. */
+	directListeners: () => string[];
+	/** Reads `selector(stores)` on each render, and re-renders when a store emits; `deps` and `isEqual` change nothing a test sees. */
+	useStore: <S extends FluxStore | readonly FluxStore[], T>(
+		stores: S,
+		selector: (stores: S) => T,
+	) => T;
 	onStoreChange: (store: FluxStore, listener: () => void) => () => void;
 	onAction: (type: string, listener: (action: FluxAction) => void) => () => void;
 	interceptAction: (
@@ -83,14 +89,36 @@ export function createFakeFlux(listeners: ListenerRegistry): FakeFlux {
 	const actionListeners = new Map<string, Set<(action: FluxAction) => void>>();
 	const interceptors = new Map<string, Set<(action: FluxAction) => boolean | void>>();
 	const dispatched: FluxAction[] = [];
+	const direct = new Map<() => void, string>();
+	let internal = 0;
+
+	// The kit's own subscriptions (`useStore`, `onStoreChange`) go through here, so only a plugin's own count as direct.
+	function subscribed<T>(run: () => T): T {
+		internal++;
+
+		try {
+			return run();
+		} finally {
+			internal--;
+		}
+	}
 
 	function storeOf(name: string, seed: StoreSeed): FluxStore & StoreSeed {
 		const changeListeners = new Set<() => void>();
 
 		return {
 			getName: () => `${name}Store`,
-			addChangeListener: (listener) => void changeListeners.add(listener),
-			removeChangeListener: (listener) => void changeListeners.delete(listener),
+			addChangeListener(listener) {
+				changeListeners.add(listener);
+
+				if (internal === 0) {
+					direct.set(listener, `${name}Store.addChangeListener`);
+				}
+			},
+			removeChangeListener(listener) {
+				changeListeners.delete(listener);
+				direct.delete(listener);
+			},
 			emitChange: () => {
 				for (const listener of changeListeners) listener();
 			},
@@ -136,29 +164,37 @@ export function createFakeFlux(listeners: ListenerRegistry): FakeFlux {
 		},
 		emit: (name) => seeded(name).emitChange(),
 		// Lazy, as on device: a store read at import resolves on first property access.
+		// Every operation lands on the seeded store, so a patch made through the proxy shows in later reads.
 		getStore: (name) =>
 			new Proxy<FluxStore & StoreSeed>(storeOf(shortName(name), {}), {
 				get: (_target, key) => Reflect.get(seeded(name), key),
+				set: (_target, key, value) => Reflect.set(seeded(name), key, value),
 				has: (_target, key) => key in seeded(name),
+				deleteProperty: (_target, key) => Reflect.deleteProperty(seeded(name), key),
+				defineProperty: (_target, key, descriptor) =>
+					Reflect.defineProperty(seeded(name), key, descriptor),
 			}),
-		useStore(watched, getter) {
+		directListeners: () => [...direct.values()],
+		useStore(watched, selector) {
 			const [, forceUpdate] = useState({});
 			const list = [watched].flat();
 
 			useEffect(() => {
 				const update = () => forceUpdate({});
 
-				for (const store of list) store.addChangeListener(update);
+				subscribed(() => {
+					for (const store of list) store.addChangeListener(update);
+				});
 
 				return () => {
 					for (const store of list) store.removeChangeListener(update);
 				};
 			}, list);
 
-			return getter();
+			return selector(watched);
 		},
 		onStoreChange(store, listener) {
-			store.addChangeListener(listener);
+			subscribed(() => store.addChangeListener(listener));
 
 			return listeners.track(`flux.onStoreChange(${store.getName()})`, () =>
 				store.removeChangeListener(listener),
@@ -179,6 +215,7 @@ export function createFakeFlux(listeners: ListenerRegistry): FakeFlux {
 		},
 		reset() {
 			stores.clear();
+			direct.clear();
 			actionListeners.clear();
 			interceptors.clear();
 			dispatched.length = 0;

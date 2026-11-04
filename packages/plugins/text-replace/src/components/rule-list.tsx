@@ -1,9 +1,11 @@
 import type { TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
 import { Discord } from '@unbound-app/api/metro/components';
+import { format, messages } from '@unbound-app/i18n';
 import { ui } from '@unbound-app/api';
 import { View } from 'react-native';
 
-import { RuleKinds, type RuleKind } from '~/constants';
+import { ruleKindMessages } from '~/components/rule-kind-messages';
+import type { RuleKind } from '~/constants';
 
 type RuleListProps = {
 	kind: RuleKind;
@@ -19,13 +21,13 @@ type RuleSummaryProps = {
 
 function RuleSummary({ rule, tag }: RuleSummaryProps) {
 	const condition = rule.onlyIfIncludes
-		? `Only when it includes “${rule.onlyIfIncludes}”`
-		: 'Applies to every message';
+		? format('ONLY_WHEN_INCLUDES', { text: rule.onlyIfIncludes })
+		: messages.APPLIES_TO_EVERY_MESSAGE;
 
 	return (
 		<View>
 			<Discord.Text variant='text-xs/medium' color='text-muted' lineClamp={1}>
-				→ {rule.replace || 'Remove it'}
+				→ {rule.replace || messages.REMOVE_IT}
 			</Discord.Text>
 			<Discord.Text variant='text-xs/medium' color='text-muted' lineClamp={1}>
 				{tag}
@@ -36,10 +38,13 @@ function RuleSummary({ rule, tag }: RuleSummaryProps) {
 }
 
 function RuleList({ kind, rules, onAdd, onEdit }: RuleListProps) {
-	const { noun, title, description, tag } = RuleKinds[kind];
+	const { title, description, tag, addRule } = ruleKindMessages(kind);
 
 	return (
-		<ui.Section title={`${title} · ${rules.length}`} description={description}>
+		<ui.Section
+			title={format('RULES_SECTION_TITLE', { title: title, count: rules.length })}
+			description={description}
+		>
 			{rules.length ? (
 				rules.map((rule) => (
 					<ui.Row
@@ -52,9 +57,9 @@ function RuleList({ kind, rules, onAdd, onEdit }: RuleListProps) {
 					/>
 				))
 			) : (
-				<ui.Row label='No rules yet' subLabel='Add one when you are ready.' />
+				<ui.Row label={messages.NO_RULES_YET} subLabel={messages.NO_RULES_SUBTITLE} />
 			)}
-			<ui.Row label={`Add ${noun} rule`} onPress={onAdd} />
+			<ui.Row label={addRule} onPress={onAdd} />
 		</ui.Section>
 	);
 }

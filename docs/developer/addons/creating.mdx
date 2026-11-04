@@ -52,7 +52,7 @@ This guide takes you from an empty folder to a plugin running on your phone. You
 
 ## What you got
 
-The plugin lives in `plugins/hello-world`. Each feature gets its own folder under `src/`, and `src/index.tsx` only starts them.
+The plugin lives in `plugins/hello-world`. Each feature gets its own folder under `src/`, and `src/index.tsx` only starts them. [Anatomy of a Plugin](/docs/developer/plugins/anatomy) explains every file of this layout in the code of a finished plugin.
 
 <FileTree>
 	<Folder name='hello-world'>
@@ -133,7 +133,7 @@ describe('start', () => {
 });
 ```
 
-[Translations](/docs/developer/plugins/i18n), [Images](/docs/developer/plugins/assets) and [Settings and Storage](/docs/developer/plugins/settings) cover each in full.
+[Translations](/docs/developer/plugins/i18n), [Images](/docs/developer/plugins/assets) and [Settings and Storage](/docs/developer/plugins/settings) cover each in full. The scaffold also has a `.gitignore` and an `.oxlintrc.json` that turns on the [lint rules](/docs/developer/addons/standards#every-check-at-a-glance).
 
 ## Make it change Discord
 
@@ -177,7 +177,7 @@ export function start() {
 Save, and `dev` reloads the plugin. Send a message on your phone, and the log line appears in the bridge's terminal.
 
 <Note>
-	The plugin has no `stop`. Unbound records every patch a plugin makes, and removes them all when the plugin is turned off. [How Plugins Run](/docs/developer/plugins/introduction) explains what it cleans up for you.
+	The plugin has no `stop`. The Addon scope records every patch a plugin makes, and removes them all after the plugin is turned off. [How Plugins Run](/docs/developer/plugins/introduction) explains what it cleans up for you, and the few cases where a `stop` still matters.
 </Note>
 
 ## Where to go next
@@ -186,8 +186,8 @@ Save, and `dev` reloads the plugin. Send a message on your phone, and the log li
 	<Card title='How Plugins Run' icon='plug' href='/docs/developer/plugins/introduction'>
 		The lifecycle, the Addon scope, and keeping a plugin fast.
 	</Card>
-	<Card title='Project Layout' icon='folder-tree' href='/docs/developer/addons/standards'>
-		Where each file goes, and the checks that enforce it.
+	<Card title='Anatomy of a Plugin' icon='folder-tree' href='/docs/developer/plugins/anatomy'>
+		Every file of a real plugin, and why it is there.
 	</Card>
 	<Card title='Settings and Storage' icon='toggle' href='/docs/developer/plugins/settings'>
 		Save options and build a settings panel.

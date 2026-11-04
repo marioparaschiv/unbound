@@ -5,7 +5,8 @@
 	"description": "Force the owner crown next to usernames even in large servers.",
 	"type": "module",
 	"scripts": {
-		"build": "rollup -c"
+		"build": "rollup -c",
+		"test": "bun test"
 	},
 	"dependencies": {
 		"@unbound-plugins/shared": "workspace:*"

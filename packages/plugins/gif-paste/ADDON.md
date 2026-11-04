@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :link: Puts the GIF's link in the chat input when you pick it in the GIF picker, followed by a space.

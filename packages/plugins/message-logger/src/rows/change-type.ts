@@ -1,7 +1,7 @@
 import { patcher } from '@unbound-app/api';
 
 import { CHANGE_TYPE_NONE, CHANGE_TYPE_UPDATE, PLUGIN_NAME } from '~/constants';
-import { ChatManager } from '~/discord/modules';
+import { ChatManager } from '~/rows/modules';
 import type { MessageLog } from '~/log';
 
 type ChangeInput = {
@@ -11,6 +11,7 @@ type ChangeInput = {
 /**
  * @description Makes the chat send a row to the native list when only its log changed, which Discord would otherwise see as unchanged.
  * @param log The message log.
+ * Patches `determineChangeType` on Discord's `ChatManager`.
  * @returns A function that removes the patch.
  */
 export function patchChatManager(log: MessageLog): () => void {
@@ -32,5 +33,3 @@ export function patchChatManager(log: MessageLog): () => void {
 		},
 	);
 }
-
-export default patchChatManager;

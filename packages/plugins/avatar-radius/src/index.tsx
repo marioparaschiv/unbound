@@ -1,63 +1,15 @@
-import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { PluginContext } from '@unbound-app/api/native';
-import { storage } from '@unbound-app/api';
 
-import SettingsPanel from '~/components/settings-panel';
-import { PLUGIN_NAME } from '~/constants';
-import { roundAvatars } from '~/platform';
-import { storedRadius } from '~/radius';
-import { settings, SETTINGS_BUCKET } from '~/modules';
-
-let dispose: () => void | Promise<void> = () => {};
-
-const radiusSetting = () => storedRadius(settings.get('radius', undefined));
-let rounded: (() => number | Promise<number>) | null = null;
-let unrounded: (() => Promise<number>) | null = null;
+import { selfTestAvatars, startAvatars, stopAvatars } from '~/avatars';
 
 export function start(context: PluginContext) {
-	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
-
-	const radius = radiusSetting;
-	const avatars = roundAvatars(context.native, radius);
-	const unsubscribe = storage.onChange(
-		({ store, key }) => store === SETTINGS_BUCKET && key === 'radius',
-		() => avatars.refresh(),
-	);
-
-	rounded = avatars.rounded;
-	unrounded = avatars.unrounded;
-	dispose = () => {
-		unsubscribe();
-		rounded = null;
-		unrounded = null;
-
-		return avatars.dispose();
-	};
+	startAvatars(context);
 }
 
 export function stop() {
-	const stopping = dispose();
-
-	dispose = () => {};
-
-	return stopping;
+	return stopAvatars();
 }
 
-export async function selfTest() {
-	if (!rounded) {
-		return { ok: false, detail: 'avatars are not being rounded' };
-	}
-
-	const wrong = (await unrounded?.()) ?? 0;
-
-	if (wrong) {
-		return {
-			ok: false,
-			detail: `${wrong} avatars lost their ${radiusSetting()} point corners`,
-		};
-	}
-
-	return { ok: true, detail: `${await rounded()} avatars rounded to ${radiusSetting()} points` };
+export function selfTest() {
+	return selfTestAvatars();
 }
-
-export { SettingsPanel };

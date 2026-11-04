@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :mobile: Shows icons for every platform someone is online on: desktop, mobile, web, console or game (embedded) and VR.

@@ -8,32 +8,12 @@ Every plugin follows the same layout and loading rules, so anyone can open one a
 
 ## The layout
 
-A plugin is split by **feature**: one thing the plugin does, in its own folder under `src/`. The entry file only starts features.
+A plugin is split by **feature**: one thing the plugin does, in its own folder under `src/`. The entry file only starts features. [Anatomy of a Plugin](/docs/developer/plugins/anatomy) shows the whole layout in a real plugin.
 
-<FileTree>
-	<Folder name='my-plugin'>
-		<File name='manifest.json' note='The metadata Unbound reads' />
-		<File name='ADDON.md' note='The store page' />
-		<Folder name='media' note='Images and videos ADDON.md shows' />
-		<Folder name='src'>
-			<File name='index.tsx' note='Starts each feature. Nothing else' />
-			<File name='settings.tsx' note='The settings panel' />
-			<File name='constants.ts' />
-			<File name='types.ts' />
-			<Folder name='components' note='Components several features share' />
-			<Folder name='<feature>' note='One folder per feature'>
-				<File name='index.ts' note='Starts the feature, with its developer notes' />
-				<File name='platform.ts' note='Picks the iOS or Android handler, if the feature has one' />
-				<Folder name='ios' />
-				<Folder name='android' />
-				<Folder name='components' note="This feature's own components" />
-			</Folder>
-		</Folder>
-	</Folder>
-</FileTree>
-
-- The only files at the root of `src/` are `index.tsx`, `settings.tsx`, `constants.ts` and `types.ts`. Every other file goes in a feature folder.
+- The only files at the root of `src/` are `index.tsx`, `settings.tsx`, `actions.ts`, `constants.ts` and `types.ts`, plus the `unbound-settings.d.ts` and `unbound-i18n.d.ts` that the build generates.
+- Every other file goes in a feature folder. A component that several features share goes in `components/`, and any other helper they share goes in `shared/`. A helper that one feature uses stays in that feature's folder.
 - Platform code goes in the `ios/` and `android/` folders of the feature it belongs to, never at the root of `src/`.
+- `settings.ts`, `i18n/`, `assets/`, `tests/`, `ADDON.md` and `media/` sit beside `src/`, not in it.
 
 **Checked by** the build check `layout`. `ubd build` prints a warning for each departure. Warnings don't fail the build.
 
@@ -79,6 +59,18 @@ const Button = metro.findByName('Button', { lazy: false });
 ## `platform.ts` is the only platform check
 
 A feature with platform code picks its handler once, in `platform.ts`. The rest of the feature calls the handler, and never checks the platform itself.
+
+```ts src/greeting/android/platform-name.ts
+export function platformName() {
+	return 'Android';
+}
+```
+
+```ts src/greeting/ios/platform-name.ts
+export function platformName() {
+	return 'iOS';
+}
+```
 
 ```ts src/greeting/platform.ts
 import { definePlatform } from '@unbound-app/api/native';

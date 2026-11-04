@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :floppy-disk: Changes the share and save actions in Discord's media viewer, and the download Discord's media manager runs, to use the GIF.

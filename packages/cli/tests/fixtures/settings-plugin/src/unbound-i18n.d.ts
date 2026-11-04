@@ -57,6 +57,10 @@ declare module '@unbound-app/i18n' {
 		readonly FRIENDS: string;
 		/** Clear cache */
 		readonly CLEAR_CACHE: string;
+		/** The cache is large */
+		readonly CACHE_NOTICE: string;
+		/** Clearing it frees space. */
+		readonly CACHE_NOTICE_SUBTITLE: string;
 		/** Appearance */
 		readonly APPEARANCE: string;
 		/** Accent */

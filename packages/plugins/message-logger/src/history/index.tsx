@@ -4,12 +4,13 @@ import {
 	insertSheetRows,
 	type SheetRowSpec,
 } from '@unbound-plugins/shared/action-sheets/sheet-rows';
+import { format, messages } from '@unbound-app/i18n';
 import { patcher, toasts } from '@unbound-app/api';
 
 import { channelHasLog, clearChannelLog, clearMessageHistory } from '~/history/actions';
 import { PLUGIN_NAME } from '~/constants';
 import type { MessageLog } from '~/log';
-import { ActionSheets } from '~/discord/modules';
+import { ActionSheets } from '~/history/modules';
 import { closeHistorySheet, openHistorySheet } from '~/history/sheet';
 
 type SheetMessage = {
@@ -36,7 +37,7 @@ function messageRows(log: MessageLog, hide: () => void, message: SheetMessage): 
 	if (edits.length) {
 		specs.push({
 			key: 'unbound-message-logger-history',
-			label: 'View Edit History',
+			label: messages.VIEW_EDIT_HISTORY,
 			icon: 'ClockIcon',
 			onPress() {
 				hide();
@@ -47,7 +48,7 @@ function messageRows(log: MessageLog, hide: () => void, message: SheetMessage): 
 
 	specs.push({
 		key: 'unbound-message-logger-clear',
-		label: 'Clear Message History',
+		label: messages.CLEAR_MESSAGE_HISTORY,
 		icon: 'TrashIcon',
 		onPress() {
 			hide();
@@ -64,7 +65,7 @@ function channelRows(log: MessageLog, hide: () => void, channelId: string): Shee
 	return [
 		{
 			key: 'unbound-message-logger-clear-channel',
-			label: 'Clear Message Log',
+			label: messages.CLEAR_MESSAGE_LOG,
 			icon: 'TrashIcon',
 			onPress() {
 				hide();
@@ -73,23 +74,30 @@ function channelRows(log: MessageLog, hide: () => void, channelId: string): Shee
 
 				toasts.show({
 					title: PLUGIN_NAME,
-					content: `Cleared the log of ${cleared} message${cleared === 1 ? '' : 's'}.`,
+					content: format('LOG_CLEARED', { count: cleared }),
 				});
 			},
 		},
 	];
 }
 
+let stopSheets: (() => void) | undefined;
+let renderer: ReturnType<typeof createSheetRenderer> | undefined;
+
 /**
  * @description Adds View Edit History and Clear Message History to a logged message's long-press sheet, and Clear Message Log to a channel's sheet.
+ * Patches `openLazy` on Discord's action sheets (`metro.api.ActionSheets`) and the render of each message and channel sheet.
  * @param log The message log.
- * @returns A function that removes the rows and ignores sheets still loading.
+ * @returns A function that ignores sheets that are still loading, unwraps the rendered rows and closes the history sheet, which the Addon scope can't see.
  */
-export function patchActionSheets(log: MessageLog): () => void {
+export function startHistory(log: MessageLog): () => void {
 	let specs: readonly SheetRowSpec[] = [];
-	const renderer = createSheetRenderer(patcher, (result) => insertSheetRows(result, specs));
 
-	const unpatch = patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
+	renderer = createSheetRenderer(patcher, (result) => insertSheetRows(result, specs));
+
+	const { render } = renderer;
+
+	stopSheets = patchLazySheets<SheetProps>(patcher, ActionSheets, (key, props) => {
 		const channelId = props.channel?.id ?? props.channelId;
 		const hide = () => {
 			props.onClose?.();
@@ -107,14 +115,14 @@ export function patchActionSheets(log: MessageLog): () => void {
 			specs = [];
 		}
 
-		return specs.length ? renderer.render : undefined;
+		return specs.length ? render : undefined;
 	});
 
 	return () => {
-		unpatch();
-		renderer.dispose();
+		stopSheets?.();
+		stopSheets = undefined;
+		renderer?.dispose();
+		renderer = undefined;
 		closeHistorySheet();
 	};
 }
-
-export default patchActionSheets;

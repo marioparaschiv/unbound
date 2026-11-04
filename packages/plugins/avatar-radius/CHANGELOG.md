@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.9] - 2026-11-05
+
+### Changed
+
+- The settings screen can now be translated, and shows the corner radius slider as Unbound's generated settings do. Your saved radius carries over.
+
 ## [1.1.8] - 2026-11-03
 
 ### Changed

@@ -6,6 +6,49 @@ icon: 'magnifier'
 
 Discord's JavaScript is split into thousands of Metro modules, each with a number. The numbers change with every Discord update, so a plugin never uses them. It searches by what a module exports instead: its property names, its name, or its file path.
 
+## Reference
+
+Every function below is on `metro`, from `@unbound-app/api`. Each `findBy*` helper and `find` is lazy by default.
+
+| Function | Finds |
+| --- | --- |
+| `findByProps(...props, options?)` | The module that exposes every name in `props` |
+| `findByName(name, options?)` | The module whose default export is named `name` |
+| `findByFilePath(path, options?)` | The module whose source file path contains `path` |
+| `findByPrototypes(...methods, options?)` | The module whose default export's prototype has every method |
+| `find(filter, options?)` | The module that matches a [filter](#custom-filters) |
+| `findLazy(filter, options?)` | A promise of the module matching `filter`, resolved once Discord loads it. It never loads the module |
+| `bulk(...items)` | Several searches in one pass. Returns one result per item |
+| `filter(predicate)` | Defines a reusable filter that takes arguments |
+| `onModuleLoad(listener)` | Calls `listener` with every module as it loads. Returns a function that removes it |
+| `onModuleLoaded(filter, onLoad, options?)` | Calls `onLoad` once with the module matching `filter`, when it loads |
+| `getLoadedModule(handle)` | The module a lazy handle stands for, or `undefined` while it has not loaded. Never loads it |
+| `getModulePresence(handle)` | `'loaded'`, `'present'`, `'missing'` or `'unknown'`, without loading the module |
+
+`metro.filters` builds filters: `byProps`, `byName`, `byDisplayName`, `byTypeName`, `byFilePath`, `byPrototypes`, `byFluxStore`, `all`, `any` and `not`.
+
+Four namespaces hold modules Unbound already found:
+
+| Namespace | Holds |
+| --- | --- |
+| `metro.api` | Discord's action modules: `Messages`, `Linking`, `Profiles`, `AsyncUsers`, `Invites`, `OAuth2`, `ActionSheets`, `UserProfiles` |
+| `metro.common` | Shared modules: `i18n`, `Moment`, `REST`, `Theme`, `Clipboard`, `Constants`, `Reanimated` and others |
+| `metro.stores` | `Accessibility`, `Guilds`, `Theme`, `Users` |
+| `metro.components` | Discord's components, such as `Discord`, `Forms` and `Media` |
+
+Every search takes these options as its last argument:
+
+| Option | Default | Does |
+| --- | --- | --- |
+| `lazy` | `true` | Returns a stand-in at once and searches on first read. `false` searches now |
+| `all` | `false` | Returns every match as an array. The search runs at once |
+| `esModules` | `true` | Also tests each module's `default` export |
+| `interop` | `true` | Returns the `default` export when it matched |
+| `cache` | `true` | Tries the modules earlier searches found before scanning |
+| `cacheOnly` | `false` | Searches only the cached modules, and never scans the registry |
+| `initialize` | `true` | Runs modules that have not loaded yet so they can be searched. `false` skips them |
+| `raw` | `false` | Returns the Metro module record instead of its exports |
+
 ## Search by what a module exports
 
 Most searches use `findByProps`. It finds the module that has **all** the property names you pass. Pass two or three names that only that module has, so the search can't match the wrong one.
@@ -26,11 +69,24 @@ Each helper searches a different part of a module:
 | `findByPrototypes('method')` | Default export's prototype has every method | Classes |
 | `flux.getStore('User')` | Flux store is named `UserStore` | Stores. See [Flux Stores](/docs/developer/plugins/flux) |
 
+### Pick the lookup that costs least
+
+Reach for these in order. Each earlier one is cheaper or typed better than the one after it.
+
+1. **A namespace that already holds it.** `metro.api`, `metro.common`, `metro.stores` and `metro.components` are resolved once for every plugin. `metro.common.Theme` and `metro.api.Messages` need no search of your own.
+2. **`flux.getStore` for a store.** It is typed: `flux.getStore('User').getCurrentUser()` knows its result. `metro.stores.Users` is the same store without the types.
+3. **`findByProps`, `findByName` or `findByFilePath`.** They take the cache, and suggest Discord's names as you type.
+4. **A custom filter.** Write one only when no helper says what you mean.
+
+A file path is a good key for a component. It is the module's source path in Discord's repository, so renaming an export does not change it. `findByFilePath('modules/chat_input/native/FloatingChatInputContainer.tsx')` finds the one module that lives there.
+
 ## Typed results
 
 `findByProps`, `findByName` and `findByFilePath` suggest Discord's export names, component names and file paths as you type, and still take any string. A result is typed where Discord's types are known, the design components, and open everywhere else:
 
 ```ts
+import { metro } from '@unbound-app/api';
+
 // Typed: the design module's components, with their props.
 const { TableRow } = metro.findByProps('TableRow', 'TableRowGroup');
 
@@ -65,6 +121,14 @@ Pass `{ lazy: false }` as the last argument to search right away. Do that only i
 
 Results are cached, so a repeat search for the same names is cheap.
 
+Three things load the module a stand-in holds, and each one is a mistake at the top of a file or in `start`:
+
+- Reading a property of it, such as `Messages.sendMessage`.
+- Passing the stand-in itself to a function that reads it, such as `patcher.react.after(Component, callback)`. Pass the module and the key instead: `patcher.react.after(Module, 'default', callback)`.
+- Searching with `{ all: true }`. It walks every module, so use `onModuleLoad` to catch later ones, and `find(filter, { all: true, initialize: false })` for the loaded ones.
+
+To ask whether a module exists without loading it, use `getModulePresence(handle)`. First-party plugins call `ensureModules` from `@unbound-plugins/shared`, which does this for a group of handles and logs the missing names.
+
 ## Custom filters
 
 When no helper fits, write the test yourself. Caching is automatic and shared: write any filter, and the build gives it a cache key. Only a dynamic filter searches uncached.
@@ -80,9 +144,32 @@ const { all, byProps } = metro.filters;
 const Tokens = metro.find(all(byProps('colors'), (m) => typeof m.unsafe_rawColors === 'object'));
 ```
 
+<Warning>
+	`all`, `any` and `not` cannot take `byFilePath`. A file path is matched against the module's record, not its exports, so the combination throws on the device. The test kit's fake accepts it, which hides the mistake until the plugin runs. To try a file path and then a name, run two lookups and keep the first that exists.
+</Warning>
+
+```ts
+import { metro } from '@unbound-app/api';
+
+// Throws on the device: any() cannot take a raw filter such as byFilePath.
+export const Broken = metro.find(
+	metro.filters.any(
+		metro.filters.byFilePath('modules/chat_input/native/FloatingChatInputContainer.tsx'),
+		metro.filters.byName('FloatingChatInputContainer'),
+	),
+);
+
+// Works: one lookup per key. Use the file path alone when the path is stable.
+export const Container = metro.findByFilePath(
+	'modules/chat_input/native/FloatingChatInputContainer.tsx',
+);
+```
+
 To reuse one filter with different values, define it with `metro.filter`. Its parameters after the module are its arguments:
 
 ```ts
+import { metro } from '@unbound-app/api';
+
 const byRoute = metro.filter((m, route: string) => m.route === route);
 
 const Settings = metro.find(byRoute('SETTINGS'));
@@ -93,6 +180,9 @@ The build hashes each filter's code, ignoring names, quotes and formatting. Ever
 A filter can read only its parameters and built-in globals such as `Object`. If it reads a variable from outside, two plugins could share a key while matching different modules, so the build fails. Pass the value as an argument instead:
 
 ```ts
+import { metro } from '@unbound-app/api';
+
+const byRoute = metro.filter((m, route: string) => m.route === route);
 const wanted = 'SETTINGS';
 
 // Fails the build: the filter reads `wanted`.
@@ -136,19 +226,15 @@ export async function startMessageFeature() {
 
 ## Modules Unbound already found
 
-Unbound looks up some modules every plugin needs. Import them instead of searching again:
-
-| Import | What it holds |
-| --- | --- |
-| `metro.common` | Shared Discord modules, such as `i18n`, `Moment`, `REST` and `Util` |
-| `@unbound-app/api/metro/stores` | Common stores, such as `Users` and `Guilds` |
-| `@unbound-app/api/metro/components` | Discord's components, such as `Discord.TableRowGroup` |
+Import the stores and components Unbound looked up instead of searching again:
 
 ```ts
 import { Users } from '@unbound-app/api/metro/stores';
 
 const me = Users.getCurrentUser();
 ```
+
+`metro.common` and `metro.api` hold the shared modules and action modules listed in the [reference](#reference).
 
 ## Exploring Discord's modules
 
@@ -160,7 +246,7 @@ bunx @unbound-app/cli modules sendMessage
 
 It lists each matching module's id, whether it has loaded, and its exports. To try a search before you write it, run it in the debugger's REPL:
 
-```js
+```text
 » unbound.metro.findByProps('sendMessage', 'receiveMessage', { lazy: false })
 ```
 

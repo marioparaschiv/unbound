@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :at-sign: Colors mentions in messages, embeds, reply previews and the chat input.

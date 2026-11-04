@@ -1,5 +1,5 @@
+import { Nameplate } from '~/nameplates/modules';
 import { forceProps } from '~/force/patches';
-import { NAMEPLATE_PATH } from '~/constants';
 
 /**
  * @description Plays nameplates on a loop instead of only while they are pressed or focused.
@@ -7,5 +7,5 @@ import { NAMEPLATE_PATH } from '~/constants';
  * @returns A function that removes the patch.
  */
 export function animateNameplates(): () => void {
-	return forceProps(NAMEPLATE_PATH, { animate: true, loop: true });
+	return forceProps(Nameplate, { animate: true, loop: true });
 }

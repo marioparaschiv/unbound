@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :command: Your commands show in Discord's slash-command list, next to the built-in ones.

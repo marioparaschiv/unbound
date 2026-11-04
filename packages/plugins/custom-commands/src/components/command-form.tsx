@@ -1,15 +1,16 @@
 import { Discord } from '@unbound-app/api/metro/components';
+import { format, messages } from '@unbound-app/i18n';
 import { useState } from 'react';
 
 import { MAX_ATTACHMENTS, MAX_DESCRIPTION_LENGTH } from '~/constants';
-import { parseTagArguments, validateTag } from '~/tags';
-import { saveTag } from '~/saved-commands';
+import { parseTagArguments, validateTag } from '~/commands/tags';
+import { saveTag } from '~/commands/saved-commands';
 import MediaRow from '~/components/media-row';
-import { notify, notifyError } from '~/notify';
-import { isSaved, pickMedia } from '~/media';
-import type { DraftMedia } from '~/media';
-import type { Tag } from '~/tags';
-import { Commands } from '~/modules';
+import { notify, notifyError } from '~/commands/notify';
+import { isSaved, pickMedia } from '~/commands/media';
+import type { DraftMedia } from '~/commands/media';
+import type { Tag } from '~/commands/tags';
+import { Commands } from '~/commands/modules';
 
 type DiscordCommand = {
 	displayName: string;
@@ -45,12 +46,12 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 			const picked = await pickMedia();
 
 			if (media.length + picked.length > MAX_ATTACHMENTS) {
-				throw new Error(`A command can have at most ${MAX_ATTACHMENTS} attachments.`);
+				throw new Error(format('TOO_MANY_ATTACHMENTS', { max: MAX_ATTACHMENTS }));
 			}
 
 			setMedia((current) => [...current, ...picked]);
 		} catch (error) {
-			notifyError(error, 'The command could not be saved.');
+			notifyError(error, messages.SAVE_FAILED);
 		} finally {
 			setPicking(false);
 		}
@@ -70,10 +71,7 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 				tags,
 				original?.name,
 				media.length,
-			) ??
-			(isBuiltInCommand(fields.name)
-				? 'This command name is already used by Discord.'
-				: null);
+			) ?? (isBuiltInCommand(fields.name) ? messages.NAME_TAKEN_BY_DISCORD : null);
 
 		if (problem) {
 			notify(problem);
@@ -86,9 +84,9 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 		try {
 			await saveTag(fields, media, original);
 			onClose();
-			notify(`Saved /${fields.name}.`);
+			notify(format('COMMAND_SAVED', { name: fields.name }));
 		} catch (error) {
-			notifyError(error, 'The command could not be saved.');
+			notifyError(error, messages.SAVE_FAILED);
 		} finally {
 			setSaving(false);
 		}
@@ -96,18 +94,20 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 
 	return (
 		<Discord.Stack spacing={16}>
-			<Discord.TableRowGroupTitle title={original ? 'Edit command' : 'Create command'} />
+			<Discord.TableRowGroupTitle
+				title={original ? messages.EDIT_COMMAND : messages.CREATE_COMMAND}
+			/>
 			<Discord.TextInput
-				label='Command name'
-				placeholder='greet'
+				label={messages.COMMAND_NAME}
+				placeholder={messages.COMMAND_NAME_PLACEHOLDER}
 				autoCapitalize='none'
 				autoCorrect={false}
 				value={name}
 				onChange={setName}
 			/>
 			<Discord.TextInput
-				label='Description (optional)'
-				placeholder='Shown in the slash-command list'
+				label={messages.DESCRIPTION_OPTIONAL}
+				placeholder={messages.DESCRIPTION_PLACEHOLDER}
 				autoCapitalize='none'
 				autoCorrect={false}
 				maxLength={MAX_DESCRIPTION_LENGTH}
@@ -115,9 +115,9 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 				onChange={setDescription}
 			/>
 			<Discord.TextInput
-				label='Response'
-				placeholder='Hello {{user}}! I am feeling {{mood = great}}.'
-				description='Use {{argument}} for required text or {{argument = default}} for optional text. Type \n for a line break. Every command also has an optional ephemeral switch.'
+				label={messages.RESPONSE}
+				placeholder={format('RESPONSE_PLACEHOLDER')}
+				description={format('RESPONSE_HELP')}
 				autoCapitalize='none'
 				autoCorrect={false}
 				multiline
@@ -126,7 +126,9 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 			/>
 			{detectedArguments.length ? (
 				<Discord.Text variant='text-sm/normal' color='text-muted'>
-					Arguments: {detectedArguments.map((argument) => argument.name).join(', ')}
+					{format('ARGUMENTS', {
+						names: detectedArguments.map((argument) => argument.name).join(', '),
+					})}
 				</Discord.Text>
 			) : null}
 			{media.length ? (
@@ -146,14 +148,20 @@ function CommandForm({ original, tags, onClose }: CommandFormProps) {
 			) : null}
 			<Discord.Button
 				variant='secondary'
-				text={picking ? 'Opening Photos…' : 'Attach media'}
+				text={picking ? messages.OPENING_PHOTOS : messages.ATTACH_MEDIA}
 				onPress={() => void addMedia()}
 			/>
 			<Discord.Button
-				text={saving ? 'Saving…' : original ? 'Save command' : 'Create command'}
+				text={
+					saving
+						? messages.SAVING
+						: original
+							? messages.SAVE_COMMAND
+							: messages.CREATE_COMMAND
+				}
 				onPress={() => void save()}
 			/>
-			<Discord.Button variant='tertiary' text='Cancel' onPress={onClose} />
+			<Discord.Button variant='tertiary' text={messages.CANCEL} onPress={onClose} />
 		</Discord.Stack>
 	);
 }

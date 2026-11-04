@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-04
+
+### Changed
+
+- The settings screen and its messages can now be translated. The import and share messages show as toasts with an icon, and a failed import shows the reason under "Could not import ruleset.". Your rules carry over.
+
 ## [1.0.3] - 2026-11-03
 
 ### Changed

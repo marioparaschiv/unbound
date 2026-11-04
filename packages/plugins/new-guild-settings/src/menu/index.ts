@@ -1,31 +1,19 @@
 import { patchLazySheets } from '@unbound-plugins/shared/action-sheets/patch-lazy-sheets';
 import { createSheetRenderer } from '@unbound-plugins/shared/action-sheets/sheet-renderer';
 import { insertSheetRows } from '@unbound-plugins/shared/action-sheets/sheet-rows';
-import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
-import { flux, metro, patcher, toasts } from '@unbound-app/api';
+import { format, messages } from '@unbound-app/i18n';
+import { patcher, toasts } from '@unbound-app/api';
 
-import {
-	addMenuItemOnce,
-	guildSheetId,
-	type GuildSheetProps,
-	type MenuItem,
-} from '~/menu/menu-targets';
-import { MENU_LABEL, MENU_ROW_KEY, PLUGIN_NAME } from '~/constants';
+import { ActionSheets, ContextMenus, GuildStore, Icons } from '~/menu/modules';
+import { addMenuItemOnce, guildSheetId, type GuildSheetProps } from '~/menu/menu-targets';
 import { applyNewGuildSettings } from '~/apply';
+import { MENU_ROW_KEY, PLUGIN_NAME } from '~/constants';
 
-type ContextMenu = {
-	key?: unknown;
-	items?: MenuItem[];
-};
+type Renderer = ReturnType<typeof createSheetRenderer>;
 
-type ContextMenuHost = {
-	showContextMenu: (menu?: ContextMenu) => void;
-	hideContextMenu: () => void;
-};
-
-const GuildStore = flux.getStore('Guild', { lazy: true });
-const ContextMenusFilter = metro.filters.byProps('showContextMenu', 'hideContextMenu');
-const Icons = metro.findByProps('SettingsIcon', { lazy: true });
+let open: { key: string; guildId: string } | null = null;
+let stopSheets: (() => void) | undefined;
+let renderer: Renderer | undefined;
 
 function applyFromMenu(guildId: string): void {
 	if (!applyNewGuildSettings(guildId)) return;
@@ -34,15 +22,17 @@ function applyFromMenu(guildId: string): void {
 
 	toasts.show({
 		title: PLUGIN_NAME,
-		content: name ? `Applied to ${name}.` : 'Applied to this server.',
+		content: name ? format('APPLIED_TO_GUILD', { name }) : messages.APPLIED_TO_THIS_SERVER,
 	});
 }
 
-function patchGuildSheets(): () => void {
-	const { ActionSheets } = metro.api;
-	let open: { key: string; guildId: string } | null = null;
-
-	const renderer = createSheetRenderer(patcher, (result) => {
+/**
+ * @description Adds an Apply New Guild Settings row to each server's long-press action sheet, the mobile counterpart of Vencord's `guild-context` menu item.
+ * Patches `openLazy` on Discord's action sheets module (`metro.api.ActionSheets`) for `GuildActionSheet:<id>` sheets and the row group they render.
+ * @returns A function that ignores action sheets that are still loading and unwraps the rendered rows, which the Addon scope can't see.
+ */
+export function startGuildSheets(): () => void {
+	renderer = createSheetRenderer(patcher, (result) => {
 		const current = open;
 
 		if (!current) return;
@@ -50,7 +40,7 @@ function patchGuildSheets(): () => void {
 		insertSheetRows(result, [
 			{
 				key: MENU_ROW_KEY,
-				label: MENU_LABEL,
+				label: messages.APPLY_NEW_GUILD_SETTINGS,
 				icon: 'SettingsIcon',
 				onPress: () => {
 					ActionSheets.hideActionSheet(current.key);
@@ -60,56 +50,48 @@ function patchGuildSheets(): () => void {
 		]);
 	});
 
-	const unpatchSheets = patchLazySheets<GuildSheetProps>(patcher, ActionSheets, (key, props) => {
+	const { render } = renderer;
+
+	stopSheets = patchLazySheets<GuildSheetProps>(patcher, ActionSheets, (key, props) => {
 		const guildId = guildSheetId(key, props);
 
 		open = guildId ? { key, guildId } : null;
 
-		return guildId ? renderer.render : undefined;
+		return guildId ? render : undefined;
 	});
 
 	return () => {
-		unpatchSheets();
-		renderer.dispose();
+		stopSheets?.();
+		stopSheets = undefined;
+		renderer?.dispose();
+		renderer = undefined;
 		open = null;
 	};
 }
 
-function patchGuildContextMenus(): () => void {
-	return whenLoaded<ContextMenuHost>(ContextMenusFilter, (ContextMenus) =>
-		patcher.before(ContextMenus, 'showContextMenu', ({ args: [menu] }) => {
-			const guildId = typeof menu?.key === 'string' ? menu.key : undefined;
-
-			if (!menu || !Array.isArray(menu.items) || !guildId || !GuildStore.getGuild(guildId)) {
-				return;
-			}
-
-			addMenuItemOnce(menu.items, {
-				label: MENU_LABEL,
-				IconComponent: Icons.SettingsIcon,
-				action: () => {
-					ContextMenus.hideContextMenu();
-					applyFromMenu(guildId);
-				},
-			});
-		}),
-	);
-}
-
 /**
- * @description Adds an Apply New Guild Settings row to each server's long-press action sheet and context menu, the mobile counterparts of Vencord's `guild-context` and `guild-header-popout` menu items.
- * Patches `openLazy` on Discord's action sheets module (`metro.api.ActionSheets`) for `GuildActionSheet:<id>` sheets and the row group they render,
- * and `showContextMenu` on the context menu module (`showContextMenu`, `hideContextMenu`) for menus keyed by a server ID in `GuildStore`.
- * @returns A function that removes the rows and patches.
+ * @description Adds an Apply New Guild Settings item to each server's context menu, the mobile counterpart of Vencord's `guild-header-popout` menu item.
+ * Patches `showContextMenu` on the context menu module (`showContextMenu`, `hideContextMenu`) for menus keyed by a server ID in `GuildStore`.
+ * The Addon scope removes the patch when the plugin stops.
+ * @returns A function with nothing to undo, for `applyFeatures`.
  */
-export function addApplyMenuItems(): () => void {
-	const unpatchSheets = patchGuildSheets();
-	const unpatchMenus = patchGuildContextMenus();
+export function startGuildContextMenus(): () => void {
+	patcher.before(ContextMenus, 'showContextMenu', ({ args: [menu] }) => {
+		const guildId = typeof menu?.key === 'string' ? menu.key : undefined;
 
-	return () => {
-		unpatchMenus();
-		unpatchSheets();
-	};
+		if (!menu || !Array.isArray(menu.items) || !guildId || !GuildStore.getGuild(guildId)) {
+			return;
+		}
+
+		addMenuItemOnce(menu.items, {
+			label: messages.APPLY_NEW_GUILD_SETTINGS,
+			IconComponent: Icons.SettingsIcon,
+			action: () => {
+				ContextMenus.hideContextMenu();
+				applyFromMenu(guildId);
+			},
+		});
+	});
+
+	return () => {};
 }
-
-export default addApplyMenuItems;

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :user-change: Unlocks the multi-account switcher Discord already ships but doesn't offer in its mobile app.

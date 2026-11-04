@@ -4966,6 +4966,13 @@ export type NitroGem9LottieComponent = React$1.ComponentType<
 export type NitroGem9LottieProps = Omit<LottieIconProps, 'ref'> & {
 	ref?: LottieIconProps['ref'];
 };
+/** A notice row: it stores nothing, and shows `title` and `subtitle` as a message of its `tone`. */
+export type NoticeSchema = SettingCommon & {
+	kind: 'notice';
+	displayAs: 'notice';
+	/** How the message reads: `info` plain, `warning` cautious, `danger` for something that cannot be undone. */
+	tone: 'info' | 'warning' | 'danger';
+};
 export type NotificationsTabLottieComponent = React$1.ComponentType<
 	NotificationsTabLottieProps & Record<string, unknown>
 >;
@@ -5415,7 +5422,7 @@ export type SettingsEntry = {
 export type SettingsGroupSchema = SettingCommon & {
 	kind: 'section';
 	displayAs: 'group' | 'collapsible';
-	properties: Record<string, SettingSchema | ButtonSchema>;
+	properties: Record<string, SettingSchema | StorelessSchema>;
 };
 /** A settings store, or a nested group of settings within one. */
 export type SettingsObject = {
@@ -5427,8 +5434,8 @@ export type SettingsSchema = {
 	kind: 'settings';
 	/** The message key of the title of the section holding the top-level settings. */
 	title?: string;
-	/** The settings, buttons and sections by key, in the order they are drawn. */
-	properties: Record<string, SettingSchema | ButtonSchema | SettingsGroupSchema>;
+	/** The settings, buttons, notices and sections by key, in the order they are drawn. */
+	properties: Record<string, SettingSchema | StorelessSchema | SettingsGroupSchema>;
 };
 /** The screen descriptor a settings route entry renders. */
 export type SettingsScreen = {
@@ -5665,6 +5672,8 @@ export type StickyWrapperProps = {
 	pointerEvents?: React$1.ComponentProps<typeof RN.View>['pointerEvents'];
 	style?: React$1.ComponentProps<typeof RN.View>['style'];
 };
+/** A row that stores nothing: a button or a notice. */
+export type StorelessSchema = ButtonSchema | NoticeSchema;
 /** How a `string` setting displays; each validates the text its own way. */
 export type StringDisplay =
 	| 'input'

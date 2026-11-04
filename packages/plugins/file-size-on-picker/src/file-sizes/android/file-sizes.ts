@@ -8,7 +8,7 @@ import type { NativeJavaReference, PluginContext } from '@unbound-app/api/native
 import { currentActivity } from '@unbound-plugins/shared/native/android/views';
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 
-import type { FileSizes } from '~/badges';
+import type { FileSizes } from '~/types';
 import { PLUGIN_NAME } from '~/constants';
 
 /**

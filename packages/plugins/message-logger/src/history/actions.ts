@@ -2,14 +2,16 @@ import { flux } from '@unbound-app/api';
 
 import type { AttachmentLike } from '~/edits/attachments';
 import type { MessageLog } from '~/log';
-import { MessageStore } from '~/discord/modules';
+import { MessageStore } from '~/log/modules';
 import { redrawMessage } from '~/rows/redraw';
 
 export const CLEARING_FLAG = 'messageLoggerClearing';
 
-function stripDeletedAttachments(log: MessageLog, channelId: string, messageId: string): void {
-	const deletedIds = new Set(log.deletedAttachmentIds(messageId));
-
+function stripDeletedAttachments(
+	channelId: string,
+	messageId: string,
+	deletedIds: ReadonlySet<string>,
+): void {
 	if (!deletedIds.size) return;
 
 	const message = MessageStore.getMessage(channelId, messageId);
@@ -44,7 +46,7 @@ export function clearMessageHistory(log: MessageLog, channelId: string, messageI
 		return;
 	}
 
-	stripDeletedAttachments(log, channelId, messageId);
+	stripDeletedAttachments(channelId, messageId, new Set(log.deletedAttachmentIds(messageId)));
 	log.forgetEdits(messageId);
 	redrawMessage(log, channelId, messageId);
 }
@@ -78,17 +80,23 @@ export function channelHasLog(log: MessageLog, channelId: string): boolean {
 
 /**
  * @description Removes the deleted messages and attachments the log kept, for `stop`, so none of them is left looking like a live message.
+ * Runs while the deletion interceptor is still on, which lets a second deletion of a logged message through and forgets it.
+ * The row patches must already be removed, so the chat draws the rows without the log.
  * @param log The message log.
  */
 export function purgeLog(log: MessageLog): void {
+	const attachments = log.messagesWithDeletedAttachments().map((target) => ({
+		...target,
+		deletedIds: new Set(log.deletedAttachmentIds(target.messageId)),
+	}));
+
 	for (const { channelId, messageId } of log.deletedMessages()) {
-		log.forget(messageId);
 		void flux.dispatch({ type: 'MESSAGE_DELETE', id: messageId, channelId });
 	}
 
-	for (const { channelId, messageId } of log.messagesWithDeletedAttachments()) {
-		stripDeletedAttachments(log, channelId, messageId);
-	}
-
 	log.clear();
+
+	for (const { channelId, messageId, deletedIds } of attachments) {
+		stripDeletedAttachments(channelId, messageId, deletedIds);
+	}
 }

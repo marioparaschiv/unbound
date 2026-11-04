@@ -1,8 +1,9 @@
 import { Discord } from '@unbound-app/api/metro/components';
-import { Alert } from 'react-native';
+import { format, messages } from '@unbound-app/i18n';
+import { dialogs } from '@unbound-app/api';
 
-import { deleteTag } from '~/saved-commands';
-import type { Tag } from '~/tags';
+import { deleteTag } from '~/commands/saved-commands';
+import type { Tag } from '~/commands/tags';
 
 type CommandListProps = {
 	tags: Tag[];
@@ -13,20 +14,24 @@ type CommandListProps = {
 function summarize(tag: Tag): string {
 	const count = tag.media.length;
 
-	return tag.description || tag.message || `${count} attachment${count === 1 ? '' : 's'}`;
+	return tag.description || tag.message || format('ATTACHMENT_COUNT', { count });
 }
 
-function confirmDelete(tag: Tag) {
-	Alert.alert('Delete command', `Delete /${tag.name} and its saved attachments?`, [
-		{ text: 'Cancel', style: 'cancel' },
-		{ text: 'Delete', style: 'destructive', onPress: () => deleteTag(tag) },
-	]);
+async function confirmDelete(tag: Tag) {
+	const confirmed = await dialogs.confirm('DELETE_COMMAND', {
+		body: 'DELETE_COMMAND_BODY',
+		bodyVars: { name: tag.name },
+		confirm: 'DELETE',
+		destructive: true,
+	});
+
+	if (confirmed) deleteTag(tag);
 }
 
 function CommandList({ tags, onCreate, onEdit }: CommandListProps) {
 	return (
 		<>
-			<Discord.TableRowGroup title='Registered commands'>
+			<Discord.TableRowGroup title={messages.REGISTERED_COMMANDS}>
 				{tags.length ? (
 					tags.map((tag) => (
 						<Discord.TableRow
@@ -39,26 +44,30 @@ function CommandList({ tags, onCreate, onEdit }: CommandListProps) {
 									<Discord.Button
 										size='sm'
 										variant='secondary'
-										text='Edit'
-										accessibilityLabel={`Edit ${tag.name}`}
+										text={messages.EDIT}
+										accessibilityLabel={format('EDIT_COMMAND_LABEL', {
+											name: tag.name,
+										})}
 										onPress={() => onEdit(tag)}
 									/>
 									<Discord.Button
 										size='sm'
 										variant='destructive'
-										text='Delete'
-										accessibilityLabel={`Delete ${tag.name}`}
-										onPress={() => confirmDelete(tag)}
+										text={messages.DELETE}
+										accessibilityLabel={format('DELETE_COMMAND_LABEL', {
+											name: tag.name,
+										})}
+										onPress={() => void confirmDelete(tag)}
 									/>
 								</Discord.Stack>
 							}
 						/>
 					))
 				) : (
-					<Discord.TableRow label='No custom commands yet.' />
+					<Discord.TableRow label={messages.NO_COMMANDS} />
 				)}
 			</Discord.TableRowGroup>
-			<Discord.Button text='Create command' onPress={onCreate} />
+			<Discord.Button text={messages.CREATE_COMMAND} onPress={onCreate} />
 		</>
 	);
 }

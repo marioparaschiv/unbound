@@ -6,7 +6,7 @@
 		"dev": "bun ../../packages/cli/src/index.ts dev",
 		"build": "bun ../../packages/cli/src/index.ts build --declared-capabilities",
 		"check": "bun ../../packages/cli/src/index.ts check --all --declared-capabilities",
-		"test": "bun test --isolate",
+		"test": "bun ../plugin-scripts/src/test-plugins.ts",
 		"typecheck": "bun ../plugin-scripts/src/typecheck-plugins.ts",
 		"lint": "oxlint --config .oxlintrc.json ."
 	},

@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :stopwatch: Measures the gap between the time in the message ID and the nonce the sender's client created. Bots and messages without a nonce are skipped.
@@ -8,7 +12,7 @@
 
 ## :gear: Settings
 
-- :timer: **Latency threshold** sets the shortest delay that gets an icon. Tap to step through 1, 2, 3, 5 and 10 seconds. 2 seconds by default.
+- :timer: **Latency threshold** sets the shortest delay that gets an icon. Drag from 1 to 10 seconds. 2 seconds by default.
 - :hourglass: **Show milliseconds** adds milliseconds to the tooltip instead of rounding to the second. Off by default.
 - :user: **Ignore my messages** marks only messages other people send. Off by default.
 - :magnifier: **Detect legacy Android clients** marks messages with the fixed time offset older Android clients add. On by default.

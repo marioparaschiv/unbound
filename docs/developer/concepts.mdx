@@ -51,7 +51,7 @@ Discord keeps its state in **stores**: the current user, the servers you're in, 
 
 ## Unbound cleans up after you
 
-While your plugin runs, Unbound records every patch, command and listener it makes. When the user turns the plugin off, Unbound removes them all. So most plugins only write a `start` function. [How Plugins Run](/docs/developer/plugins/introduction) covers the few things you clean up yourself.
+While your plugin runs, Unbound records every patch, command and listener it makes. After the user turns the plugin off, Unbound removes them all. So most plugins only write a `start` function. [How Plugins Run](/docs/developer/plugins/introduction) covers the few things you clean up yourself.
 
 ## Where to go next
 
@@ -61,6 +61,9 @@ While your plugin runs, Unbound records every patch, command and listener it mak
 	</Card>
 	<Card title='How Plugins Run' icon='plug' href='/docs/developer/plugins/introduction'>
 		The lifecycle, the Addon scope, and what to clean up.
+	</Card>
+	<Card title='Anatomy of a Plugin' icon='folder-tree' href='/docs/developer/plugins/anatomy'>
+		Every file of a real plugin, and why it is there.
 	</Card>
 	<Card title='How Themes Work' icon='paintbrush' href='/docs/developer/themes/introduction'>
 		Recolor Discord with a palette and no code.

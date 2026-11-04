@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.5] - 2026-11-04
+
+### Changed
+
+- Every label, button and message in the plugin can now be translated. Your saved choices and sign-in carry over.
+- The settings screen now lists Preferences first, then Account and Links.
+
+### Fixed
+
+- One review now reads "1 review" instead of "1 reviews".
+
 ## [1.0.4] - 2026-11-03
 
 ### Changed

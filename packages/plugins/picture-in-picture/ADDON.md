@@ -1,3 +1,7 @@
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :video: Adds a picture in picture button to the header of Discord's media viewer for every video: attachments, video links and embeds, and web players such as YouTube.
