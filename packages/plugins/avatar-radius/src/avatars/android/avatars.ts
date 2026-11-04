@@ -27,9 +27,9 @@ import {
 	installOutlineHook,
 	restoreOutlines,
 	setOutlineRadius,
-} from '~/android/ui-avatars';
+} from '~/avatars/android/ui-avatars';
 import { AvatarClass, PLUGIN_NAME } from '~/constants';
-import { mayBeAvatar } from '~/image-sources';
+import { mayBeAvatar } from '~/avatars/image-sources';
 import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 type AndroidNative = {

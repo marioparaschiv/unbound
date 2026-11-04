@@ -6,7 +6,7 @@ import {
 	installAvatarHooks,
 	restoreAvatars,
 	setAvatarRadius,
-} from '~/ios/ui-avatars';
+} from '~/avatars/ios/ui-avatars';
 import { AvatarClass } from '~/constants';
 
 const IMAGE_SEARCH = { maxDepth: 96, maxVisited: 8_000 };
