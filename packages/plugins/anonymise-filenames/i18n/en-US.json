@@ -7,6 +7,7 @@
 	"METHOD_TIMESTAMP": "Timestamp",
 	"LENGTH": "Length",
 	"FILE_NAME": "File Name",
+	"FILE_NAME_PLACEHOLDER": "image",
 	"FILE_NAME_SUBTITLE": "Every file is uploaded with this name and its own extension.",
 	"ANONYMISE_FILE_NAME": "Anonymise File Name",
 	"USING_ANONYMOUS_NAME": "Using an anonymous file name",

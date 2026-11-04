@@ -19,6 +19,8 @@ declare module '@unbound-app/i18n' {
 		readonly LENGTH: string;
 		/** File Name */
 		readonly FILE_NAME: string;
+		/** image */
+		readonly FILE_NAME_PLACEHOLDER: string;
 		/** Every file is uploaded with this name and its own extension. */
 		readonly FILE_NAME_SUBTITLE: string;
 		/** Anonymise File Name */

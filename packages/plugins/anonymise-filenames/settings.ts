@@ -26,6 +26,7 @@ export default defineSettings({
 		default: 'image',
 		title: 'FILE_NAME',
 		subtitle: 'FILE_NAME_SUBTITLE',
+		placeholder: 'FILE_NAME_PLACEHOLDER',
 		visibleWhen: (settings) => settings.method === 'consistent',
 	}),
 });
