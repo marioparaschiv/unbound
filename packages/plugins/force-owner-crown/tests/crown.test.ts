@@ -1,11 +1,9 @@
 import { assets } from '@unbound-app/api';
 import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
-import { flux, metro, startPlugin } from '@unbound-app/api/testing';
-import type { UnboundAsset } from '@unbound-app/api/assets';
+import { flux, metro, native, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
-import { platformCrownSource } from '~/crown/android/crown-source';
 
 type Row = { message: Record<string, unknown> };
 
@@ -63,16 +61,22 @@ describe('the owner crown', () => {
 });
 
 describe('the Android crown source', () => {
-	test("points at the APK's drawable", () => {
-		expect(
-			platformCrownSource({
-				httpServerLocation: '/assets/images/native/icons',
-				name: 'ic_crown_16px',
-			} as UnboundAsset),
-		).toStartWith('android.resource://');
+	beforeEach(() => native.setPlatform('android'));
+
+	test("points at the APK's drawable", async () => {
+		await startPlugin();
+
+		expect(row({ guildId: 'g1', authorId: 'owner' }).roleIcon).toMatchObject({
+			source: expect.stringMatching(/^android\.resource:\/\//),
+		});
 	});
 
-	test('falls back to the embed URI without a packager location', () => {
-		expect(platformCrownSource({ name: 'ic_crown_16px' } as UnboundAsset)).toBeUndefined();
+	test('falls back to the embed URI without a packager location', async () => {
+		Object.assign(assets, { getById: () => ({ name: 'ic_crown_16px' }) });
+		await startPlugin();
+
+		expect(row({ guildId: 'g1', authorId: 'owner' }).roleIcon).toMatchObject({
+			source: `embed://${assets.getIdByName('ic_crown_16px')}`,
+		});
 	});
 });
