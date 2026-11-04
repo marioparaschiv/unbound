@@ -1,9 +1,8 @@
-import { flux, metro } from '@unbound-app/api';
+import { metro } from '@unbound-app/api';
 
 export const { ActionSheets } = metro.api;
 export const { Clipboard } = metro.common;
-export const Guilds = flux.getStore('Guild');
-export const Users = flux.getStore('User');
+export const { Guilds, Users } = metro.stores;
 
 export const StickerDetailActionSheet = metro.findByFilePath(
 	'modules/stickers/native/StickerDetailActionSheet.tsx',
