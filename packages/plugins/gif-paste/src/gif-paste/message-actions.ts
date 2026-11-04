@@ -1,7 +1,7 @@
 import { patcher } from '@unbound-app/api';
 
-import { ChatInputRegistry, MessageActions, PendingReplyStore } from '~/modules';
-import type { KeptReplies } from '~/kept-replies';
+import { ChatInputRegistry, MessageActions, PendingReplyStore } from '~/gif-paste/modules';
+import type { KeptReplies } from '~/gif-paste/kept-replies';
 
 type ChatInput = {
 	insertText?: (text: string) => void;
@@ -25,10 +25,9 @@ function isGifSelection(args: unknown[]): args is GifSelection {
 /**
  * @description Pastes a GIF picker selection into the chat input instead of sending it.
  * @param keptReplies Marks the channel's pending reply so the picker's clear right after does not drop it.
- * @returns A function that removes the patch.
  */
-export function patchMessageActions(keptReplies: KeptReplies): () => void {
-	return patcher.instead(MessageActions, 'sendMessage', ({ args, original, this: self }) => {
+export function patchMessageActions(keptReplies: KeptReplies): void {
+	patcher.instead(MessageActions, 'sendMessage', ({ args, original, this: self }) => {
 		if (!isGifSelection(args)) return original.apply(self, args);
 
 		const [channelId, message] = args;
