@@ -6,6 +6,7 @@ type RestMethod = (request: unknown) => Promise<unknown>;
 export type RestClient = {
 	get: RestMethod;
 	post: RestMethod;
+	HTTP?: Pick<RestClient, 'get' | 'post'>;
 };
 
 export type GifPickerViewStoreType = {

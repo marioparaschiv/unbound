@@ -51,7 +51,11 @@ describe('ownClientStatus', () => {
 		expect(ownClientStatus(undefined)).toBeNull();
 		expect(ownClientStatus(null)).toBeNull();
 		expect(ownClientStatus('x')).toBeNull();
-		expect(ownClientStatus({})).toEqual({});
+	});
+
+	test('reports the current device as online mobile when Discord lists no sessions', () => {
+		expect(ownClientStatus({})).toEqual({ mobile: 'online' });
+		expect(ownClientStatus({ a: session('unknown', 'online') })).toEqual({ mobile: 'online' });
 	});
 });
 

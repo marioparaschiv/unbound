@@ -1,4 +1,4 @@
-import { EMBED_MEDIA_FIELDS, SNAPSHOT_FIELDS, type BlurPart } from '~/constants';
+import { EMBED_MEDIA_FIELDS, SNAPSHOT_FIELDS, SPOILER_LABEL, type BlurPart } from '~/constants';
 
 type Entry = Record<string, unknown>;
 
@@ -45,10 +45,20 @@ export function hasEmbedMedia(embed: unknown): boolean {
 	return isEntry(embed) && EMBED_MEDIA_FIELDS.some((field) => hasValue(embed[field]));
 }
 
-function asSpoiler(entry: unknown): unknown {
-	if (!isEntry(entry) || entry.spoiler === true) return entry;
+function isSpoilered(entry: Entry): boolean {
+	return entry.isSpoiler === true || (typeof entry.spoiler === 'string' && entry.spoiler !== '');
+}
 
-	return { ...entry, spoiler: true };
+function asSpoilerAttachment(entry: unknown): unknown {
+	if (!isEntry(entry) || isSpoilered(entry)) return entry;
+
+	return { ...entry, isSpoiler: true, spoiler: SPOILER_LABEL };
+}
+
+function asSpoilerEmbed(entry: unknown): unknown {
+	if (!isEntry(entry) || isSpoilered(entry)) return entry;
+
+	return { ...entry, spoiler: SPOILER_LABEL };
 }
 
 /**
@@ -57,7 +67,7 @@ function asSpoiler(entry: unknown): unknown {
  * @returns The attachments marked as spoilers, or the value unchanged when it is not a list.
  */
 export function blurAttachments(attachments: unknown): unknown {
-	return Array.isArray(attachments) ? attachments.map(asSpoiler) : attachments;
+	return Array.isArray(attachments) ? attachments.map(asSpoilerAttachment) : attachments;
 }
 
 /**
@@ -67,7 +77,7 @@ export function blurAttachments(attachments: unknown): unknown {
  */
 export function blurEmbeds(embeds: unknown): unknown {
 	return Array.isArray(embeds)
-		? embeds.map((embed) => (hasEmbedMedia(embed) ? asSpoiler(embed) : embed))
+		? embeds.map((embed) => (hasEmbedMedia(embed) ? asSpoilerEmbed(embed) : embed))
 		: embeds;
 }
 

@@ -24,10 +24,10 @@ export async function requestBranding(videoId: string): Promise<unknown> {
 /**
  * @description Fetches each video's DeArrow branding once and caches it for the session.
  * @param request Fetches a video's raw branding response.
- * @param onResolved Called after a video got branding to show.
+ * @param onResolved Called with the video id after a video got branding to show.
  * @returns `get` reads a video's cached branding and queues a fetch on a miss, `dispose` drops late results.
  */
-export function createLookup(request: FetchBranding, onResolved: () => void) {
+export function createLookup(request: FetchBranding, onResolved: (videoId: string) => void) {
 	const cache = new Map<string, Branding | null>();
 	const pending = new Set<string>();
 	let disposed = false;
@@ -43,7 +43,7 @@ export function createLookup(request: FetchBranding, onResolved: () => void) {
 
 		cache.set(videoId, branding);
 
-		if (branding) onResolved();
+		if (branding) onResolved(videoId);
 	}
 
 	function get(videoId: string): Branding | null | undefined {

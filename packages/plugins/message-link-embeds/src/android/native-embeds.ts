@@ -240,6 +240,12 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		const textView = found?.view;
 		const content = found?.text;
 
+		if (channelName && !found && !disposed) {
+			retries.retry(key, () => schedule(messageView, messageId));
+
+			return;
+		}
+
 		if (disposed || !channelName || !textView || !content || inline.isDefined(content.string)) {
 			return;
 		}

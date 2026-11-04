@@ -25,6 +25,7 @@ type ContextMenuHost = {
 
 const GuildStore = flux.getStore('Guild', { lazy: true });
 const ContextMenusFilter = metro.filters.byProps('showContextMenu', 'hideContextMenu');
+const Icons = metro.findByProps('SettingsIcon', { lazy: true });
 
 function applyFromMenu(guildId: string): void {
 	if (!applyNewGuildSettings(guildId)) return;
@@ -85,6 +86,7 @@ function patchGuildContextMenus(): () => void {
 
 			addMenuItemOnce(menu.items, {
 				label: MENU_LABEL,
+				IconComponent: Icons.SettingsIcon,
 				action: () => {
 					ContextMenus.hideContextMenu();
 					applyFromMenu(guildId);

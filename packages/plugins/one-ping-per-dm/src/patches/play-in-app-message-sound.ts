@@ -10,7 +10,14 @@ import { findSoundTarget, type RecentMessages } from '~/sound-target';
 
 type PlaySound = (...args: unknown[]) => unknown;
 
-type SoundModule = { default?: PlaySound };
+type SoundModule = { default?: PlaySound; playInAppMessageSound?: PlaySound };
+
+type SoundExport = 'default' | 'playInAppMessageSound';
+
+function soundExport(module: SoundModule): SoundExport | undefined {
+	if (typeof module.playInAppMessageSound === 'function') return 'playInAppMessageSound';
+	if (typeof module.default === 'function') return 'default';
+}
 
 const lookups: PingLookups = {
 	channelType: (channelId) => ChannelStore.getChannel(channelId)?.type,
@@ -32,13 +39,13 @@ function skip(reason: string): void {
  */
 export function patchPlayInAppMessageSound(recent: RecentMessages): () => void {
 	return whenLoaded<SoundModule>(PLAY_IN_APP_MESSAGE_SOUND_PATH, (module: SoundModule) => {
-		if (typeof module.default !== 'function') {
-			return skip('playInAppMessageSound has no default function');
-		}
+		const name = soundExport(module);
+
+		if (!name) return skip('playInAppMessageSound has no sound function');
 
 		return patcher.instead(
-			module as { default: PlaySound },
-			'default',
+			module as Record<SoundExport, PlaySound>,
+			name,
 			({ args, original, this: self }) => {
 				if (!verifyReadState()) return original.apply(self, args);
 

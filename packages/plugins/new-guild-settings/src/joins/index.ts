@@ -19,7 +19,7 @@ type GuildActions = {
 };
 
 const UserStore = flux.getStore('User', { lazy: true });
-const GuildActionsFilter = metro.filters.byProps('joinGuild', 'leaveGuild');
+const GuildActionsFilter = metro.filters.byProps('joinGuild', 'waitForGuild');
 
 function patchJoinGuild(applyOnce: (guildId: string | undefined) => void): () => void {
 	return whenLoaded<GuildActions>(GuildActionsFilter, (GuildActions) => {
@@ -41,7 +41,7 @@ function patchJoinGuild(applyOnce: (guildId: string | undefined) => void): () =>
 /**
  * @description Applies the plugin's defaults to every server the user joins, on the three paths Vencord covers.
  * Listens for `INVITE_ACCEPT_SUCCESS` (invites, where Vencord patches `acceptInvite`) and `GUILD_JOIN_REQUEST_UPDATE` with an approved request for the signed-in user from `UserStore`,
- * and patches `joinGuild` on Discord's guild actions module (`joinGuild`, `leaveGuild`) to apply after a non-lurking join resolves.
+ * and patches `joinGuild` on Discord's guild actions module (`joinGuild`, `waitForGuild`) to apply after a non-lurking join resolves.
  * A server reported by more than one path within ten seconds is changed once.
  * @returns A function that removes the listeners and the patch.
  */

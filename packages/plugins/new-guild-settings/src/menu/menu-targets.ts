@@ -5,6 +5,7 @@ export type GuildSheetProps = {
 
 export type MenuItem = {
 	label?: string;
+	IconComponent?: unknown;
 	action?: () => void;
 };
 

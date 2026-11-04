@@ -15,8 +15,7 @@ type releasePairing struct {
 }
 
 func pairStableRelease(iosVersion, requestedVersion string, androidCode int) (releasePairing, error) {
-	iosCode, err := androidCodeForDiscordVersion(iosVersion)
-	if err != nil {
+	if _, err := androidCodeForDiscordVersion(iosVersion); err != nil {
 		return releasePairing{}, fmt.Errorf("read the iOS version: %w", err)
 	}
 	androidVersion, err := discordVersionForAndroidCode(androidCode)
@@ -24,11 +23,8 @@ func pairStableRelease(iosVersion, requestedVersion string, androidCode int) (re
 		return releasePairing{}, err
 	}
 	pairing := releasePairing{AndroidCode: androidCode, AndroidVersion: androidVersion}
-	switch {
-	case requestedVersion != "" && iosVersion != requestedVersion:
+	if requestedVersion != "" && iosVersion != requestedVersion {
 		pairing.Mismatch = fmt.Sprintf("The iOS IPA is %s but the requested release is %s", iosVersion, requestedVersion)
-	case iosCode/1000 != androidCode/1000:
-		pairing.Mismatch = fmt.Sprintf("iOS %s and Android stable %d are different Discord releases", iosVersion, androidCode)
 	}
 	return pairing, nil
 }
@@ -37,7 +33,7 @@ func runReleasePairing(args []string) error {
 	set := flag.NewFlagSet("release-pairing", flag.ContinueOnError)
 	iosVersion := set.String("ios-version", "", "version of the iOS IPA being released")
 	requestedVersion := set.String("requested-version", "", "iOS version the release asked for, if any")
-	androidCode := set.Int("android-code", 0, "Android stable version code to pair with")
+	androidCode := set.Int("android-code", 0, "latest Android stable version code, released alongside the iOS build whatever its Discord version")
 	dryRun := set.Bool("dry-run", false, "report a mismatch as a warning instead of failing")
 	output := set.String("output", os.Getenv("GITHUB_OUTPUT"), "file to append android_code and android_version to")
 	if err := set.Parse(args); err != nil {

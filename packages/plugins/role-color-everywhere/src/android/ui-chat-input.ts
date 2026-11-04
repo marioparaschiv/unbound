@@ -14,6 +14,15 @@ import {
 
 const STATE_KEY = '__unboundRoleColorComposerAndroid';
 const CHAT_INPUT = 'com.discord.chat.input.views.DCDChatInput';
+const CHAT_INPUT_MANAGER = 'com.discord.chat.input.ChatInputViewManager';
+const TEXT_COMMAND: HookedMethod = {
+	name: 'receiveCommand',
+	parameters: [
+		'android.view.View',
+		'java.lang.String',
+		'com.facebook.react.bridge.ReadableArray',
+	],
+};
 const MENTION_SPAN = 'com.discord.chat.input.spans.DCDColorSpan';
 const COLOR_FIELD = 'mColor';
 const MENTION_BOUNDARY = /[\s,.!?;:]/u;
@@ -169,8 +178,20 @@ function paint(current: ComposerState, input: NativeJavaReference) {
 	}
 }
 
+function repaintKnownInputs(current: ComposerState) {
+	'worklet';
+
+	for (const input of current.inputs.values()) {
+		try {
+			paint(current, input);
+		} catch (error) {
+			console.error(`[Role Color Everywhere] ${String(error)}`);
+		}
+	}
+}
+
 /**
- * @description Recolors the mention spans in Discord's native chat input from hooks that run on the UI thread, in the same pass that changes the text or selection.
+ * @description Recolors the mention spans in Discord's native chat input from hooks that run on the UI thread, in the same pass that changes the text or selection, and again after Discord's JavaScript rebuilds the input's mention spans with a view command.
  * @param scope The plugin's UI scope.
  * @param mentions The names to color, longest first, with their ARGB colors.
  * @returns Whether the input's mention span class exists.
@@ -221,6 +242,14 @@ export function installAndroidComposerHooks(
 			},
 		);
 	}
+
+	hooks.hook(
+		CHAT_INPUT_MANAGER,
+		TEXT_COMMAND.name,
+		TEXT_COMMAND.parameters,
+		{ notify: 'after', payload: { receiver: false, arguments: [] } },
+		() => repaintKnownInputs(current),
+	);
 
 	return true;
 }

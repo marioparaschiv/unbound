@@ -124,7 +124,7 @@ export async function restoreLayout(objc: NativeObjCBridge, layout: Layout): Pro
  * @param objc The Objective-C bridge from `context.native`.
  * @param icon The icon from `createIcon`.
  * @param label The username label.
- * @param row The header row that holds the name group and timestamp.
+ * @param row The header row that holds the name group and timestamp, or the name group itself.
  * @returns What was changed, for `restoreLayout`.
  * @throws When the header does not have the expected native layout. Nothing is left changed.
  */
@@ -142,13 +142,20 @@ export async function installLayout(
 		? ((await safeInvokeAsync(objc, group, 'superview')) as NativeObjectHandle | null)
 		: null;
 
-	if (!username || !group || !groupRow || viewKey(objc, groupRow) !== viewKey(objc, row)) {
+	const rowKey = viewKey(objc, row);
+
+	if (
+		!username ||
+		!group ||
+		!groupRow ||
+		(viewKey(objc, groupRow) !== rowKey && viewKey(objc, group) !== rowKey)
+	) {
 		throw new Error('Message latency username row has an unsupported native layout');
 	}
 
 	const [groupFrame, rowFrame, usernameFrame] = await Promise.all([
 		getFrame(objc, group),
-		getFrame(objc, row),
+		getFrame(objc, groupRow),
 		getFrame(objc, username),
 	]);
 
@@ -167,14 +174,14 @@ export async function installLayout(
 		.filter(hasFrame)
 		.filter(({ frame }) => frame.x >= usernameEnd)
 		.sort((left, right) => left.frame.x - right.frame.x);
-	const timestamp = (await placed(objc, await getSubviews(objc, row)))
+	const timestamp = (await placed(objc, await getSubviews(objc, groupRow)))
 		.filter(hasFrame)
 		.find(({ view, frame }) => objc.className(view) === 'DCDLabel' && frame.x >= groupEnd);
 
 	if (!timestamp) throw new Error('Message latency timestamp row is unavailable');
 
 	const header = headerLayout({
-		row: { view: row, frame: rowFrame },
+		row: { view: groupRow, frame: rowFrame },
 		group: { view: group, frame: groupFrame },
 		username: { view: username, frame: usernameFrame },
 		trailing,
@@ -202,7 +209,7 @@ export async function installLayout(
 
 		await safeInvokeAsync(objc, icon, 'setTranslatesAutoresizingMaskIntoConstraints:', false);
 		await safeInvokeAsync(objc, group, 'addSubview:', icon);
-		await constrain(objc, row, header.row, layout);
+		await constrain(objc, groupRow, header.row, layout);
 		await constrain(objc, group, header.group, layout);
 	} catch (error) {
 		await restoreLayout(objc, layout);

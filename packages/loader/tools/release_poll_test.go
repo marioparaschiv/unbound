@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestDiscoverStableCandidateSelectsLatestSharedAndroidVersion(t *testing.T) {
+func TestDiscoverStableCandidateSelectsLatestAndroidVersion(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		switch request.URL.Path {
 		case "/lookup":
@@ -48,7 +48,7 @@ func TestDiscoverStableCandidateSelectsLatestSharedAndroidVersion(t *testing.T) 
 	}
 }
 
-func TestDiscoverStableCandidateSelectsLatestSharedVersionWhenAndroidIsAhead(t *testing.T) {
+func TestDiscoverStableCandidateSelectsLatestOfEachWhenAndroidIsAhead(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		switch request.URL.Path {
 		case "/lookup":
@@ -80,7 +80,7 @@ func TestDiscoverStableCandidateSelectsLatestSharedVersionWhenAndroidIsAhead(t *
 	}
 }
 
-func TestDiscoverStableCandidateSkipsUnavailableMatchingAndroidVersion(t *testing.T) {
+func TestDiscoverStableCandidateSkipsUnavailableAndroidVersion(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		switch request.URL.Path {
 		case "/lookup":
@@ -254,22 +254,57 @@ func TestWriteReleaseCandidateOutputIncludesTheAndroidCode(t *testing.T) {
 	}
 }
 
-func TestLoaderReleaseTagsNameThePlatformOfPrereleases(t *testing.T) {
-	for channel, want := range map[string]string{
-		"stable":        "discord-350.8-ios",
-		"testflight":    "discord-352.0_118977-ios-testflight",
-		"android-beta":  "discord-351.12-android-beta",
-		"android-alpha": "discord-352.8-android-alpha",
+func TestLoaderReleaseTagsNameEachPlatformsOwnVersion(t *testing.T) {
+	for channel, test := range map[string]struct {
+		candidate releaseCandidate
+		want      string
+	}{
+		"stable":        {releaseCandidate{Version: "352.0", AndroidCode: 351011}, "discord-352.0-ios discord-351.11-android"},
+		"testflight":    {releaseCandidate{Version: "352.0_118977"}, "discord-352.0_118977-ios-testflight"},
+		"android-beta":  {releaseCandidate{Version: "351.12-android-beta", AndroidCode: 351112}, "discord-351.12-android-beta"},
+		"android-alpha": {releaseCandidate{Version: "352.8-android-alpha", AndroidCode: 352208}, "discord-352.8-android-alpha"},
 	} {
-		version := map[string]string{
-			"stable":        "350.8",
-			"testflight":    "352.0_118977",
-			"android-beta":  "351.12-android-beta",
-			"android-alpha": "352.8-android-alpha",
-		}[channel]
-		if got := loaderReleaseTag(channel, version); got != want {
-			t.Fatalf("%s release tag is %s, want %s", channel, got, want)
+		tags, err := loaderReleaseTags(channel, test.candidate)
+		if err != nil {
+			t.Fatal(err)
 		}
+		if got := strings.Join(tags, " "); got != test.want {
+			t.Fatalf("%s release tags are %s, want %s", channel, got, test.want)
+		}
+	}
+}
+
+func TestUnreleasedLoaderTagsReleaseWhenEitherPlatformIsNew(t *testing.T) {
+	for _, test := range []struct {
+		name     string
+		released []string
+		want     string
+	}{
+		{name: "both new", want: "discord-352.0-ios discord-351.11-android"},
+		{name: "new Android only", released: []string{"discord-352.0-ios"}, want: "discord-351.11-android"},
+		{name: "new iOS only", released: []string{"discord-351.11-android"}, want: "discord-352.0-ios"},
+		{name: "both released", released: []string{"discord-352.0-ios", "discord-351.11-android"}, want: ""},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				for _, tag := range test.released {
+					if strings.HasSuffix(request.URL.Path, "/releases/tags/"+tag) {
+						writer.WriteHeader(http.StatusOK)
+						return
+					}
+				}
+				writer.WriteHeader(http.StatusNotFound)
+			}))
+			defer server.Close()
+			config := releasePollConfig{channel: "stable", githubAPIURL: server.URL, githubRepository: "owner/repo", githubToken: "token", httpClient: server.Client()}
+			unreleased, err := unreleasedLoaderTags(context.Background(), config, releaseCandidate{Version: "352.0", AndroidCode: 351011})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := strings.Join(unreleased, " "); got != test.want {
+				t.Fatalf("unreleased tags are %q, want %q", got, test.want)
+			}
+		})
 	}
 }
 
@@ -306,14 +341,14 @@ func stableCandidateFor(t *testing.T, itunesVersion, androidStable string, downl
 	return candidate
 }
 
-func TestDiscoverStableCandidatePairsTheSameDiscordRelease(t *testing.T) {
+func TestDiscoverStableCandidateTakesTheSameDiscordRelease(t *testing.T) {
 	if candidate := stableCandidateFor(t, "351.0", "351011", true); candidate.Version != "351.0" || candidate.AndroidCode != 351011 {
 		t.Fatalf("selected %+v, want iOS 351.0 with Android 351011", candidate)
 	}
 }
 
-func TestDiscoverStableCandidateWaitsForBothPlatformsToShipTheSameRelease(t *testing.T) {
-	if candidate := stableCandidateFor(t, "352.0", "351011", true); candidate.Version != "" {
-		t.Fatalf("selected %+v, want no candidate while iOS is on 352 and Android on 351", candidate)
+func TestDiscoverStableCandidateTakesTheLatestOfEachPlatform(t *testing.T) {
+	if candidate := stableCandidateFor(t, "352.0", "351011", true); candidate.Version != "352.0" || candidate.AndroidCode != 351011 {
+		t.Fatalf("selected %+v, want iOS 352.0 with Android 351011", candidate)
 	}
 }

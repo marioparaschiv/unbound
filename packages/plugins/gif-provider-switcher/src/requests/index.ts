@@ -4,7 +4,7 @@ import { answerRoute, PASS_THROUGH, toErrorResponse, toResponse } from '~/reques
 import { matchGifRoute, resolveContext, type HttpMethod } from '~/requests/routes';
 import { getSelectedProvider, onProviderChange } from '~/providers/selected';
 import { isReplacement } from '~/providers/selection';
-import { LocaleStore, REST } from '~/modules';
+import { LocaleStore, REST, type RestClient } from '~/modules';
 import { getProvider } from '~/providers';
 import type { ProviderContext, ProviderId, TrendingData } from '~/types';
 
@@ -17,8 +17,8 @@ function contextFor(context: Partial<ProviderContext>): ProviderContext {
 	return resolveContext(lastContext, { locale: LocaleStore.locale });
 }
 
-function patchMethod(method: HttpMethod): () => void {
-	return patcher.instead(REST, method, ({ args, original, this: self }) => {
+function patchMethod(client: Pick<RestClient, HttpMethod>, method: HttpMethod): () => void {
+	return patcher.instead(client, method, ({ args, original, this: self }) => {
 		const providerId = getSelectedProvider();
 		const matched = isReplacement(providerId) ? matchGifRoute(method, args[0]) : null;
 
@@ -60,7 +60,7 @@ async function refreshTrending(): Promise<void> {
 
 /**
  * @description Serves the GIF picker and GIF search from the provider the user picked, in place of Discord's Klipy results.
- * Patches `get` and `post` on Discord's HTTP client (`metro.common.REST`, found by `getAPIBaseURL`) and answers `/gifs/search`, `/gifs/suggest`, `/gifs/trending`, `/gifs/trending-gifs`, `/integrations/<id>/search` and `POST /gifs/select` itself, with the bodies those endpoints send.
+ * Patches `get` and `post` on Discord's HTTP client (`metro.common.REST`, found by `getAPIBaseURL`) and on its `HTTP` object, which the mobile GIF picker calls, and answers `/gifs/search`, `/gifs/suggest`, `/gifs/trending`, `/gifs/trending-gifs`, `/integrations/<id>/search` and `POST /gifs/select` itself, with the bodies those endpoints send.
  * Discord's GIF picker actions then dispatch `GIF_PICKER_QUERY_SUCCESS`, `GIF_PICKER_SUGGESTIONS_SUCCESS`, `GIF_PICKER_TRENDING_FETCH_SUCCESS` and `INTEGRATION_QUERY_SUCCESS` as usual.
  * With Klipy picked, every request goes to Discord unchanged.
  * When the provider changes, the cached categories are dropped and `GIF_PICKER_TRENDING_FETCH_SUCCESS` is dispatched with the new provider's; stopping does the same with Klipy's.
@@ -68,8 +68,11 @@ async function refreshTrending(): Promise<void> {
  * @returns A function that removes the patches.
  */
 export function interceptGifRequests(): () => void {
-	const unpatchGet = patchMethod('get');
-	const unpatchPost = patchMethod('post');
+	const clients = REST.HTTP ? [REST, REST.HTTP] : [REST];
+	const unpatches = clients.flatMap((client) => [
+		patchMethod(client, 'get'),
+		patchMethod(client, 'post'),
+	]);
 	const stopListening = onProviderChange(() => {
 		trending.clear();
 		void refreshTrending();
@@ -79,8 +82,7 @@ export function interceptGifRequests(): () => void {
 		const servedTrending = trending.size > 0;
 
 		stopListening();
-		unpatchPost();
-		unpatchGet();
+		for (const unpatch of unpatches) unpatch();
 		trending.clear();
 
 		if (servedTrending) void refreshTrending();

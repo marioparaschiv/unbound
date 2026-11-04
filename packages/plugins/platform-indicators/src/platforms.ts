@@ -30,7 +30,7 @@ export function platformLabel(platform: string): string {
 /**
  * @description Builds the signed-in user's client status from their sessions, since Discord sends no presence for the current user.
  * @param sessions The sessions from Discord's `SessionsStore`, keyed by session ID.
- * @returns Each client's most present status, or `null` when the sessions are unreadable.
+ * @returns Each client's most present status, the current device as online mobile when Discord lists no sessions, or `null` when the sessions are unreadable.
  */
 export function ownClientStatus(sessions: unknown): ClientStatusMap | null {
 	if (typeof sessions !== 'object' || sessions === null) return null;
@@ -46,7 +46,7 @@ export function ownClientStatus(sessions: unknown): ClientStatusMap | null {
 		if (client && client !== 'unknown' && session.status) statuses[client] = session.status;
 	}
 
-	return statuses;
+	return Object.keys(statuses).length ? statuses : { mobile: 'online' };
 }
 
 /**

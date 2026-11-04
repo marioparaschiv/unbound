@@ -16,19 +16,19 @@ describe('blurAttachments', () => {
 	test('marks every attachment as a spoiler without changing the original', () => {
 		const original = [
 			{ id: '1', filename: 'a.png' },
-			{ id: '2', spoiler: false },
+			{ id: '2', isSpoiler: false, spoiler: '' },
 		];
 		const blurred = blurAttachments(original);
 
 		expect(blurred).toEqual([
-			{ id: '1', filename: 'a.png', spoiler: true },
-			{ id: '2', spoiler: true },
+			{ id: '1', filename: 'a.png', isSpoiler: true, spoiler: 'SPOILER' },
+			{ id: '2', isSpoiler: true, spoiler: 'SPOILER' },
 		]);
 		expect(original[0]).not.toHaveProperty('spoiler');
 	});
 
 	test('keeps an attachment that is already a spoiler as it is', () => {
-		const spoiler = { id: '1', spoiler: true };
+		const spoiler = { id: '1', isSpoiler: true, spoiler: 'SPOILER' };
 
 		expect((blurAttachments([spoiler]) as unknown[])[0]).toBe(spoiler);
 	});
@@ -60,7 +60,7 @@ describe('blurEmbeds', () => {
 
 		expect(blurEmbeds([text, { video: { url: 'v' } }])).toEqual([
 			text,
-			{ video: { url: 'v' }, spoiler: true },
+			{ video: { url: 'v' }, spoiler: 'SPOILER' },
 		]);
 	});
 });
@@ -113,7 +113,9 @@ describe('RowBlurrer', () => {
 
 		new RowBlurrer().apply(target, { attachments: true, embeds: false }, true);
 
-		expect(target.message?.attachments).toEqual([{ id: '1', spoiler: true }]);
+		expect(target.message?.attachments).toEqual([
+			{ id: '1', isSpoiler: true, spoiler: 'SPOILER' },
+		]);
 		expect(target.message?.embeds).toEqual([{ image: { url: 'i' } }]);
 	});
 
@@ -140,8 +142,8 @@ describe('RowBlurrer', () => {
 		expect(target.message?.messageSnapshots).toEqual([
 			{
 				message: {
-					attachments: [{ id: 'f', spoiler: true }],
-					embeds: [{ video: { url: 'v' }, spoiler: true }],
+					attachments: [{ id: 'f', isSpoiler: true, spoiler: 'SPOILER' }],
+					embeds: [{ video: { url: 'v' }, spoiler: 'SPOILER' }],
 				},
 			},
 		]);
@@ -156,7 +158,9 @@ describe('RowBlurrer', () => {
 		blurrer.apply(target, { attachments: true, embeds: false }, true);
 
 		expect(target.message?.embeds).toBe(original);
-		expect(target.message?.attachments).toEqual([{ id: '1', spoiler: true }]);
+		expect(target.message?.attachments).toEqual([
+			{ id: '1', isSpoiler: true, spoiler: 'SPOILER' },
+		]);
 
 		blurrer.apply(target, NONE, true);
 
