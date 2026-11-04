@@ -5,6 +5,7 @@ import noop from '@unbound-app/utils/noop';
 import { safeRelativePath, isSafeIconPackMain } from '~/addons/paths';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { getById, onAssetRegistered } from '~/assets/api';
+import { downloadFile } from '~/native/download-file';
 import { ImageSources } from '~/metro/common';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
@@ -382,14 +383,7 @@ export class Icons extends Addons<Plugin> {
 						return;
 					}
 
-					const buf = await fetch(raw).then((res) => res.arrayBuffer());
-					const data = Buffer.from(buf).toString('base64');
-
-					await fs.writeFile(
-						`${this.directoryOf(manifest.id)}/${relative}`,
-						data,
-						'base64',
-					);
+					await downloadFile(raw, `${this.directoryOf(manifest.id)}/${relative}`);
 				}),
 			);
 		}

@@ -6,6 +6,7 @@ import type {
 	UnboundPluginBundle,
 } from '@unbound-app/types';
 import { createLogger } from '@unbound-app/logger';
+import sha256 from '@unbound-app/utils/sha256';
 
 const logger = createLogger('Native', 'UnboundNative');
 
@@ -59,4 +60,13 @@ export function getFonts(): UnboundFontFile[] {
  */
 export function getAvailableFonts(): string[] {
 	return read('getAvailableFonts', (bridge) => bridge.getAvailableFonts()) ?? [];
+}
+
+/**
+ * @description Hashes a string's UTF-8 bytes natively, or in JS when no loader installed `UnboundNative`.
+ * @param text The string to hash.
+ * @returns The SHA-256 digest as 64 lowercase hexadecimal characters.
+ */
+export function getSha256(text: string): string {
+	return read('getSha256', (bridge) => bridge.getSha256(text)) ?? sha256(text);
 }

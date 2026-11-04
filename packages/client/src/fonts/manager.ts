@@ -3,6 +3,7 @@ import type { FontEntity } from '@unbound-app/types';
 
 import { getAvailableFonts, getFonts } from '~/native/unbound-native';
 import { getSetting, setSetting } from '~/settings/unbound';
+import { downloadFile } from '~/native/download-file';
 import { safeFontFileName } from '~/addons/paths';
 import { Manager } from '~/addons/manager';
 import { Constants } from '~/metro/common';
@@ -113,17 +114,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 		try {
 			const file = safeFontFileName(url, `font-${Date.now()}.ttf`);
 
-			const data = await fetch(url, { cache: 'no-cache' }).then((res) => {
-				if (!res.ok) {
-					throw new Error(`Failed to fetch font (${res.status}).`);
-				}
-
-				return res.arrayBuffer();
-			});
-
-			const base64 = Buffer.from(data).toString('base64');
-
-			await fs.writeFile(`${this.directory}/${file}`, base64, 'base64');
+			await downloadFile(url, `${this.directory}/${file}`);
 
 			this.recordSource(file, url);
 			this.emit('changed');

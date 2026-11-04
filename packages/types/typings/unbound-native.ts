@@ -53,4 +53,14 @@ export type UnboundNativeBridge = {
 	getFonts(): UnboundFontFile[];
 	/** The font names Discord can already use, computed on the first call and cached natively. */
 	getAvailableFonts(): string[];
+	/**
+	 * The SHA-256 of a string's UTF-8 bytes in lowercase hex, lone surrogates as U+FFFD. The startup update
+	 * check hashes every source-run plugin: 2.5 MB took 1.7 s in JS and 14 ms here on the vphone.
+	 */
+	getSha256(text: string): string;
+	/**
+	 * Saves a URL's response to a path inside Unbound's folder, off the JS thread, so the bytes never
+	 * cross to JS as base64. Rejects on a path that leaves the folder or a status other than 200.
+	 */
+	downloadFile(url: string, path: string): Promise<void>;
 };
