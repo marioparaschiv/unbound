@@ -1,7 +1,5 @@
-import { flux, startPlugin, toasts } from '@unbound-app/api/testing';
+import { flux, metro, startPlugin, toasts } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { patched, registerDiscord } from './fake-discord';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
@@ -33,7 +31,30 @@ async function dropFile(seeds: StoreSeeds) {
 	await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
-beforeEach(() => registerDiscord());
+const patched: unknown[] = [];
+
+class CloudUpload {
+	status = 'COMPLETED';
+	uploadedFilename: string;
+	filename: string;
+
+	constructor(item: { filename: string }) {
+		this.filename = item.filename;
+		this.uploadedFilename = `cdn-${item.filename}`;
+	}
+
+	async upload() {}
+}
+
+beforeEach(() => {
+	patched.length = 0;
+	metro.register({ CloudUpload });
+	metro.register({ launchImageLibraryAsync: async () => ({ assets: [] }) });
+	metro.register({
+		getAPIBaseURL: () => '',
+		patch: async (request: unknown) => patched.push(request),
+	});
+});
 
 describe('files added while editing a message', () => {
 	test('join the edited message and keep its attachments', async () => {

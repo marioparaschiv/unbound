@@ -1,8 +1,6 @@
-import { flux, render, startPlugin, toasts } from '@unbound-app/api/testing';
+import { flux, metro, render, startPlugin, toasts } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { createElement } from 'react';
-
-import { ActionSheets, hidden, patched, picked, registerDiscord } from './fake-discord';
+import { createElement, type ReactNode } from 'react';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
@@ -11,9 +9,12 @@ const message = { id: 'm1', channel_id: 'c1', type: 0, author: { id: 'me' }, att
 // Discord's own row: the plugin adds its row to this group.
 const copy = { key: 'copy', label: 'Copy Text', onPress: () => undefined };
 
-// A host element, so the plugin's sheet renderer has no function component to wrap: the fake renderer freezes elements.
+function ActionSheetRowGroup({ children }: { hasIcons: boolean; children?: ReactNode }) {
+	return children;
+}
+
 function MessageLongPressActionSheet() {
-	return createElement('ActionSheetRowGroup', { hasIcons: false }, [createElement('Row', copy)]);
+	return createElement(ActionSheetRowGroup, { hasIcons: false }, [createElement('Row', copy)]);
 }
 
 const stores: StoreSeeds = {
@@ -21,6 +22,27 @@ const stores: StoreSeeds = {
 	Message: { getMessage: () => ({ ...message, attachments: [{ id: '1' }, { id: '2' }] }) },
 	Channel: { getChannel: () => ({ id: 'c1', isPrivate: () => true }) },
 };
+
+const hidden: string[] = [];
+const patched: unknown[] = [];
+const picked: unknown[] = [];
+const ActionSheets = {
+	openLazy: (..._args: unknown[]) => undefined,
+	hideActionSheet: (key: string) => hidden.push(key),
+};
+
+class CloudUpload {
+	status = 'COMPLETED';
+	uploadedFilename: string;
+	filename: string;
+
+	constructor(item: { filename: string }) {
+		this.filename = item.filename;
+		this.uploadedFilename = `cdn-${item.filename}`;
+	}
+
+	async upload() {}
+}
 
 async function openSheet(sheetMessage: typeof message) {
 	const module = { default: MessageLongPressActionSheet };
@@ -37,9 +59,27 @@ async function openSheet(sheetMessage: typeof message) {
 }
 
 const addRow = (sheet: Awaited<ReturnType<typeof openSheet>>) =>
-	sheet.findAll((node) => node.props.accessibilityLabel === 'Add Attachments');
+	sheet.findAll(
+		(node) => node.name === 'ActionSheetRow' && node.props.label === 'Add Attachments',
+	);
 
-beforeEach(() => registerDiscord({ assets: [{ uri: 'file:///dog.png', fileName: 'dog.png' }] }));
+beforeEach(() => {
+	for (const list of [hidden, patched, picked]) list.length = 0;
+
+	metro.register(ActionSheets);
+	metro.register({ CloudUpload });
+	metro.register({
+		launchImageLibraryAsync: async (options: unknown) => {
+			picked.push(options);
+
+			return { assets: [{ uri: 'file:///dog.png', fileName: 'dog.png' }] };
+		},
+	});
+	metro.register({
+		getAPIBaseURL: () => '',
+		patch: async (request: unknown) => patched.push(request),
+	});
+});
 
 describe('Add Attachments row', () => {
 	test('joins the long-press menu of your own message', async () => {
