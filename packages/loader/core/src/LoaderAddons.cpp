@@ -295,6 +295,8 @@ nlohmann::json scanThemes(const std::string &documents)
                 return;
             }
 
+            // Kept as the file's text, not a parsed object: the client's JSON.parse beats building
+            // it over JSI, and update checks hash these exact bytes.
             std::optional<std::string> bundle = readTextFile(bundlePath);
             if (!bundle)
             {

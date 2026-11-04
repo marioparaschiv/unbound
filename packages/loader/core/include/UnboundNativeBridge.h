@@ -12,11 +12,11 @@ namespace loader {
 // The launch data `globalThis.UnboundNative` reads. Each member runs when the client calls its
 // getter; an empty member reads as an empty array, or an empty object for the loader.
 struct UnboundNativeProvider {
-    std::function<nlohmann::json()> loader;
-    std::function<nlohmann::json()> plugins;
-    std::function<nlohmann::json()> themes;
-    std::function<nlohmann::json()> fonts;
-    std::function<nlohmann::json()> availableFonts;
+    std::function<nlohmann::json()> getLoader;
+    std::function<nlohmann::json()> getPlugins;
+    std::function<nlohmann::json()> getThemes;
+    std::function<nlohmann::json()> getFonts;
+    std::function<nlohmann::json()> getAvailableFonts;
 };
 
 // Reads `addons` live at each call, so it must outlive every runtime the provider is installed in.

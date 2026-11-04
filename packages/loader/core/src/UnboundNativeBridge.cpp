@@ -16,20 +16,20 @@ UnboundNativeProvider makeUnboundNativeProvider(const AddonState               &
                                                 std::string origin, uint32_t bytecodeVersion)
 {
     UnboundNativeProvider provider;
-    provider.loader = [origin = std::move(origin), bytecodeVersion]() -> nlohmann::json {
+    provider.getLoader = [origin = std::move(origin), bytecodeVersion]() -> nlohmann::json {
         return {
             {"origin", origin}, {"version", loaderVersion()}, {"bytecodeVersion", bytecodeVersion}};
     };
-    provider.plugins = [&addons] {
+    provider.getPlugins = [&addons] {
         return addons.plugins();
     };
-    provider.themes = [&addons] {
+    provider.getThemes = [&addons] {
         return addons.themes();
     };
-    provider.fonts = [&addons] {
+    provider.getFonts = [&addons] {
         return addons.fonts();
     };
-    provider.availableFonts = std::move(availableFonts);
+    provider.getAvailableFonts = std::move(availableFonts);
     return provider;
 }
 
@@ -66,16 +66,16 @@ void installUnboundNative(jsi::Runtime &runtime, UnboundNativeProvider provider)
     jsi::Object          bridge(runtime);
     bridge.setProperty(
         runtime, "getLoader",
-        getter(runtime, "getLoader", std::move(provider.loader), nlohmann::json::object()));
+        getter(runtime, "getLoader", std::move(provider.getLoader), nlohmann::json::object()));
     bridge.setProperty(runtime, "getPlugins",
-                       getter(runtime, "getPlugins", std::move(provider.plugins), none));
+                       getter(runtime, "getPlugins", std::move(provider.getPlugins), none));
     bridge.setProperty(runtime, "getThemes",
-                       getter(runtime, "getThemes", std::move(provider.themes), none));
+                       getter(runtime, "getThemes", std::move(provider.getThemes), none));
     bridge.setProperty(runtime, "getFonts",
-                       getter(runtime, "getFonts", std::move(provider.fonts), none));
-    bridge.setProperty(
-        runtime, "getAvailableFonts",
-        getter(runtime, "getAvailableFonts", cachedOnce(std::move(provider.availableFonts)), none));
+                       getter(runtime, "getFonts", std::move(provider.getFonts), none));
+    bridge.setProperty(runtime, "getAvailableFonts",
+                       getter(runtime, "getAvailableFonts",
+                              cachedOnce(std::move(provider.getAvailableFonts)), none));
     runtime.global().setProperty(runtime, "UnboundNative", std::move(bridge));
 }
 }

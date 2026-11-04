@@ -196,13 +196,13 @@ int main()
             return nlohmann::json::array({"Ginto"});
         },
         "Unbound.dylib", 98);
-    assert(provider.loader() == nlohmann::json({{"origin", "Unbound.dylib"},
-                                                {"version", loader::loaderVersion()},
-                                                {"bytecodeVersion", 98}}));
-    assert(provider.plugins()[0]["manifest"]["id"] == "a.good");
-    assert(provider.themes()[0]["bundle"] == R"({"semantic":{}})");
-    assert(provider.fonts()[0]["name"] == "Inter");
-    assert(provider.availableFonts() == nlohmann::json::array({"Ginto"}));
+    assert(provider.getLoader() == nlohmann::json({{"origin", "Unbound.dylib"},
+                                                   {"version", loader::loaderVersion()},
+                                                   {"bytecodeVersion", 98}}));
+    assert(provider.getPlugins()[0]["manifest"]["id"] == "a.good");
+    assert(provider.getThemes()[0]["bundle"] == R"({"semantic":{}})");
+    assert(provider.getFonts()[0]["name"] == "Inter");
+    assert(provider.getAvailableFonts() == nlohmann::json::array({"Ginto"}));
 
     std::filesystem::remove_all(root);
     return 0;

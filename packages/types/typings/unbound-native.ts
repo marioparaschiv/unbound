@@ -44,7 +44,10 @@ export type UnboundNativeBridge = {
 	getLoader(): UnboundLoaderInfo;
 	/** The installed plugins the loader scanned. */
 	getPlugins(): UnboundPluginBundle[];
-	/** The installed themes; each `bundle` is the raw `bundle.json` text. */
+	/**
+	 * The installed themes; each `bundle` is the raw `bundle.json` text, not an object. `JSON.parse` of it
+	 * beat building the object over JSI (0.28 vs 0.41 ms, 800 colours), and update checks hash its exact bytes.
+	 */
 	getThemes(): UnboundAddonBundle[];
 	/** The custom font files in Unbound's `Fonts` folder. */
 	getFonts(): UnboundFontFile[];

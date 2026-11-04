@@ -205,7 +205,7 @@ static void exercise(loader::SettingsStore &store)
     loader::toolbox::menuJSON(store, loader::toolbox::MenuOptions{});
     loader::devoverlay::menuJSON(store);
     loader::AddonState addons;
-    loader::makeUnboundNativeProvider(addons, nullptr, "https://example.invalid", 98).loader();
+    loader::makeUnboundNativeProvider(addons, nullptr, "https://example.invalid", 98).getLoader();
     store.serialize();
     store.snapshot();
     store.getString("unbound", "loader.update.url", "");
