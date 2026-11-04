@@ -7,7 +7,7 @@ import {
 	showsYoutube,
 	withAdblock,
 	youtubeOriginRules,
-} from '~/injection';
+} from '~/webview/injection';
 
 const ADBLOCK = 'adblock();';
 
