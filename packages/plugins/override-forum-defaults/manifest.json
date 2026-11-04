@@ -1,0 +1,18 @@
+{
+	"id": "unbound.override-forum-defaults",
+	"name": "Override Forum Defaults",
+	"description": "Sets your own default layout and sort order for forum channels. You can still change them per channel.",
+	"authors": [
+		{
+			"name": "Inbestigator",
+			"id": "761777382041714690"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "ForumIcon",
+	"main": "index.tsx"
+}
