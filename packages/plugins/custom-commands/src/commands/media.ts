@@ -1,10 +1,11 @@
+import { messages } from '@unbound-app/i18n';
 import { fs } from '@unbound-app/api';
 
-import { fileExtension, localPath, resolvePickedMedia } from '~/picked-media';
-import type { PickedMedia, PickerAsset } from '~/picked-media';
+import { fileExtension, localPath, resolvePickedMedia } from '~/commands/picked-media';
+import type { PickedMedia, PickerAsset } from '~/commands/picked-media';
 import { MAX_ATTACHMENTS } from '~/constants';
-import type { TagMedia } from '~/tags';
-import { ImagePicker } from '~/modules';
+import type { TagMedia } from '~/commands/tags';
+import { ImagePicker } from '~/commands/modules';
 
 /** An attachment in the command form: already saved, or just picked and not yet copied. */
 export type DraftMedia = PickedMedia | TagMedia;
@@ -40,7 +41,7 @@ export function mediaUri(media: TagMedia): string {
  */
 export async function pickMedia(): Promise<PickedMedia[]> {
 	if (!ImagePicker.launchImageLibraryAsync) {
-		throw new Error('The media picker is unavailable on this Discord build.');
+		throw new Error(messages.PICKER_UNAVAILABLE);
 	}
 
 	const result: PickerResult = await ImagePicker.launchImageLibraryAsync({

@@ -1,3 +1,5 @@
+import { format, messages } from '@unbound-app/i18n';
+
 import { ARGUMENT_PATTERN, MAX_ATTACHMENTS, MAX_DESCRIPTION_LENGTH } from '~/constants';
 
 export type TagMedia = {
@@ -75,7 +77,7 @@ function isStoredMedia(item: unknown): item is TagMedia {
  * @returns The tag's own description, or a generated one when it has none.
  */
 export function getTagDescription(tag: Tag): string {
-	return tag.description?.trim() || `Send the ${tag.name} command`;
+	return tag.description?.trim() || format('DEFAULT_DESCRIPTION', { name: tag.name });
 }
 
 /**
@@ -114,27 +116,27 @@ export function validateTag(
 	mediaCount: number = tag.media.length,
 ): string | null {
 	if (!/^[a-z0-9_-]{1,32}$/.test(tag.name)) {
-		return 'Use 1–32 lowercase letters, numbers, hyphens, or underscores for the command name.';
+		return messages.INVALID_NAME;
 	}
 
 	if (tag.description && tag.description.trim().length > MAX_DESCRIPTION_LENGTH) {
-		return `Use at most ${MAX_DESCRIPTION_LENGTH} characters for the command description.`;
+		return format('DESCRIPTION_TOO_LONG', { max: MAX_DESCRIPTION_LENGTH });
 	}
 
 	if (!tag.message.trim() && !mediaCount) {
-		return 'Add a response or at least one image or video.';
+		return messages.EMPTY_COMMAND;
 	}
 
 	if (parseTagArguments(tag.message).some((argument) => argument.name === 'ephemeral')) {
-		return 'The argument name “ephemeral” is reserved.';
+		return messages.RESERVED_ARGUMENT;
 	}
 
 	if (mediaCount > MAX_ATTACHMENTS) {
-		return `A command can have at most ${MAX_ATTACHMENTS} attachments.`;
+		return format('TOO_MANY_ATTACHMENTS', { max: MAX_ATTACHMENTS });
 	}
 
 	if (existing.some((entry) => entry.name === tag.name && entry.name !== originalName)) {
-		return 'A command with this name already exists.';
+		return messages.DUPLICATE_NAME;
 	}
 
 	return null;

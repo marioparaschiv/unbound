@@ -1,12 +1,13 @@
+import { format, messages } from '@unbound-app/i18n';
 import { flux } from '@unbound-app/api';
 
-import { CloudUploader, Messages, PendingReplyStore } from '~/modules';
-import { getOptionValue, renderTagMessage } from '~/tags';
-import type { CommandOption, TagMedia } from '~/tags';
-import type { CommandContext } from '~/commands';
-import { notify, notifyError } from '~/notify';
-import { getTags } from '~/saved-commands';
-import { mediaUri } from '~/media';
+import { CloudUploader, Messages, PendingReplyStore } from '~/commands/modules';
+import { getOptionValue, renderTagMessage } from '~/commands/tags';
+import type { CommandOption, TagMedia } from '~/commands/tags';
+import type { CommandContext } from '~/commands/commands';
+import { notify, notifyError } from '~/commands/notify';
+import { getTags } from '~/commands/saved-commands';
+import { mediaUri } from '~/commands/media';
 
 type CloudUpload = {
 	status: string;
@@ -17,7 +18,7 @@ async function uploadMedia(media: TagMedia[], channelId: string): Promise<CloudU
 	if (!media.length) return [];
 
 	if (!CloudUploader.CloudUpload) {
-		throw new Error('Discord file uploads are unavailable.');
+		throw new Error(messages.UPLOADS_UNAVAILABLE);
 	}
 
 	const uploads: CloudUpload[] = media.map((item, index) => {
@@ -43,7 +44,7 @@ async function uploadMedia(media: TagMedia[], channelId: string): Promise<CloudU
 	await Promise.all(uploads.map((upload) => upload.upload()));
 
 	if (uploads.some((upload) => upload.status !== 'COMPLETED')) {
-		throw new Error('An attachment failed to upload.');
+		throw new Error(messages.UPLOAD_FAILED);
 	}
 
 	return uploads;
@@ -70,7 +71,7 @@ export async function sendTag(
 	const content = renderTagMessage(tag.message, options);
 
 	if (ephemeral && tag.media.length) {
-		notify('Commands with attachments cannot be sent ephemerally.');
+		notify(messages.EPHEMERAL_WITH_ATTACHMENTS);
 
 		return;
 	}
@@ -93,14 +94,14 @@ export async function sendTag(
 		);
 
 		if (result?.ok === false) {
-			throw new Error(`Discord rejected the message (${result.status}).`);
+			throw new Error(format('MESSAGE_REJECTED', { status: result.status }));
 		}
 
 		if (pendingReply) {
 			void flux.dispatch({ type: 'DELETE_PENDING_REPLY', channelId });
 		}
 	} catch (error) {
-		notifyError(error, 'The command could not be sent.');
+		notifyError(error, messages.SEND_FAILED);
 
 		throw error;
 	}

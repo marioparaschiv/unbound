@@ -3,8 +3,10 @@ import {
 	ApplicationCommandOptionType,
 	ApplicationCommandType,
 } from '~/constants';
-import type { CommandOption, Tag } from '~/tags';
-import { getTagDescription, parseTagArguments } from '~/tags';
+import { messages } from '@unbound-app/i18n';
+
+import type { CommandOption, Tag } from '~/commands/tags';
+import { getTagDescription, parseTagArguments } from '~/commands/tags';
 
 export type CommandContext = {
 	channel?: { id?: string };
@@ -86,7 +88,7 @@ export function createCommand(tag: Tag, send: SendTag): BuiltInCommand {
 		createOption(
 			'ephemeral',
 			ApplicationCommandOptionType.Boolean,
-			'Only show the response to you',
+			messages.EPHEMERAL_DESCRIPTION,
 			false,
 		),
 	);

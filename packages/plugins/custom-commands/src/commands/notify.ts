@@ -1,3 +1,4 @@
+import { messages } from '@unbound-app/i18n';
 import { toasts } from '@unbound-app/api';
 
 /**
@@ -5,7 +6,7 @@ import { toasts } from '@unbound-app/api';
  * @param content The toast's text.
  */
 export function notify(content: string): void {
-	toasts.show({ title: 'Custom Commands', content });
+	toasts.show({ title: messages.PLUGIN_NAME, content });
 }
 
 // UNKNOWN: a caught error can be any thrown value.

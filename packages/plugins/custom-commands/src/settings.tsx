@@ -1,12 +1,13 @@
 import { Keyboard, TextInput, View, type GestureResponderEvent } from 'react-native';
 import { Discord } from '@unbound-app/api/metro/components';
+import { messages } from '@unbound-app/i18n';
 import { storage, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
 import CommandList from '~/components/command-list';
 import CommandForm from '~/components/command-form';
-import { getTags } from '~/saved-commands';
-import type { Tag } from '~/tags';
+import { getTags } from '~/commands/saved-commands';
+import type { Tag } from '~/commands/tags';
 
 // The multiline response field can cover Save and Cancel, so a tap anywhere else closes the keyboard.
 function dismissKeyboardOutsideInput({ target }: GestureResponderEvent) {
@@ -29,7 +30,7 @@ function SettingsPanel() {
 		<ui.Page>
 			<View style={{ gap: 24 }} onTouchStart={dismissKeyboardOutsideInput}>
 				<Discord.Text variant='text-md/normal' color='text-muted'>
-					Create slash commands that send saved text, images, and videos.
+					{messages.SETTINGS_INTRO}
 				</Discord.Text>
 				{editing ? (
 					<CommandForm

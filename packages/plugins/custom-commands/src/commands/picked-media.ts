@@ -1,3 +1,5 @@
+import { messages } from '@unbound-app/i18n';
+
 import { MIME_TYPES } from '~/constants';
 
 export type PickedMedia = {
@@ -43,19 +45,19 @@ export function localPath(uri: string): string {
  */
 export function resolvePickedMedia(asset: PickerAsset): PickedMedia {
 	if (!asset.uri?.startsWith('file://')) {
-		throw new Error('The selected media is unavailable. Choose a local photo or video.');
+		throw new Error(messages.MEDIA_UNAVAILABLE);
 	}
 
 	const fileName = asset.fileName?.trim() || localPath(asset.uri).split('/').pop();
 
 	if (!fileName) {
-		throw new Error('The selected media is unavailable. Choose a local photo or video.');
+		throw new Error(messages.MEDIA_UNAVAILABLE);
 	}
 
 	const { fileSize } = asset;
 
 	if (fileSize === undefined || !Number.isSafeInteger(fileSize) || fileSize < 0) {
-		throw new Error('The media picker did not provide a valid file size.');
+		throw new Error(messages.INVALID_FILE_SIZE);
 	}
 
 	const type =
@@ -63,7 +65,7 @@ export function resolvePickedMedia(asset: PickerAsset): PickedMedia {
 		MIME_TYPES[fileExtension(fileName)?.toLowerCase() ?? ''];
 
 	if (!type) {
-		throw new Error('Choose an image or video attachment.');
+		throw new Error(messages.NOT_IMAGE_OR_VIDEO);
 	}
 
 	return {
