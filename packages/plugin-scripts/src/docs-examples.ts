@@ -208,9 +208,9 @@ export function parseErrors(output: string, snippets: Snippet[], page: string): 
 }
 
 async function typecheck(snippets: Snippet[], page: string): Promise<ExampleError[]> {
-	const sandbox = join(FIXTURE_DIR, '.sandbox', page.replaceAll('/', '-').replace('.mdx', ''));
-
-	await rm(sandbox, { recursive: true, force: true });
+	// Unique per run: the pre-push hook and a test run can check the same page at once.
+	const name = `${page.replaceAll('/', '-').replace('.mdx', '')}-${crypto.randomUUID()}`;
+	const sandbox = join(FIXTURE_DIR, '.sandbox', name);
 
 	try {
 		await Promise.all(
