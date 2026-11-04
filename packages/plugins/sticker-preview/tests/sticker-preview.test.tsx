@@ -86,13 +86,23 @@ describe('a picked sticker', () => {
 
 	test('is dropped when the plugin stops', async () => {
 		const Picker = modules.picker.default;
-		const Container = modules.container.default;
 
 		render(<Picker onPressSticker={() => undefined} />)
 			.find('Pressable')
 			.props.onPress?.(undefined as never);
+
+		// Preview Message reads this shared store, so a sticker left in it would show after the plugin stopped.
+		expect(globalThis.__unboundStagedStickers?.channels()).toEqual(['c1']);
+
 		await stopPlugin();
 
-		expect(render(<Container channel={{ id: 'c1' }} />).findAll('Pressable')).toEqual([]);
+		expect(globalThis.__unboundStagedStickers?.channels()).toEqual([]);
+	});
+
+	test('is reported as applied by the self test', async () => {
+		// Imported late: the plugin looks its modules up when it first loads, after the test registered them.
+		const { selfTest } = await import('~/index');
+
+		expect(selfTest()).toMatchObject({ ok: true });
 	});
 });
