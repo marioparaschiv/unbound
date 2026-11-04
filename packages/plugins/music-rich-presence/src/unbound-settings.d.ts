@@ -137,7 +137,7 @@ declare module '@unbound-app/settings' {
 		/**
 		 * API Key
 		 *
-		 * Your own Last.fm API key, which avoids the rate limit of the shared key. Create one at https://www.last.fm/api/account/create with any name and description. Leave empty to use the shared key.
+		 * Your own Last.fm API key, which avoids the rate limit of the shared key. Leave empty to use the shared key.
 		 */
 		apiKey: string;
 		/**
@@ -229,7 +229,7 @@ declare module '@unbound-app/settings' {
 		/**
 		 * API Key
 		 *
-		 * Your own Last.fm API key, which avoids the rate limit of the shared key. Create one at https://www.last.fm/api/account/create with any name and description. Leave empty to use the shared key.
+		 * Your own Last.fm API key, which avoids the rate limit of the shared key. Leave empty to use the shared key.
 		 */
 		"apiKey": string;
 		/**
@@ -312,7 +312,8 @@ declare module '@unbound-app/settings' {
 	export type SettingsEntry<K extends SettingKey> = SettingValues[K];
 
 	/** The functions src/actions.ts exports, which a `setting.button` can run. */
-	export type ActionName = never;
+	type Actions = typeof import('./actions');
+	export type ActionName = Extract<{ [K in keyof Actions]: Actions[K] extends () => void | Promise<void> ? K : never }[keyof Actions], string>;
 
 	/** The keys of the boolean settings, which `visibleWhen` and `disabledWhen` can name. */
 	export type BooleanSettingKey = "useListeningStatus" | "clickableLinks" | "shareUsername" | "showAlbumCover" | "showLogo" | "hideWithSpotify" | "hideWithActivity";

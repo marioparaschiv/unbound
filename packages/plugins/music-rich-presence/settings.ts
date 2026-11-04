@@ -24,10 +24,25 @@ export default defineSettings(
 			displayAs: 'input',
 			visibleWhen: (settings) => settings.scrobblerBackend === 'lastfm',
 		}),
+		createApiKey: setting.button({
+			title: 'CREATE_API_KEY',
+			subtitle: 'CREATE_API_KEY_SUBTITLE',
+			action: 'createApiKey',
+			visibleWhen: (settings) => settings.scrobblerBackend === 'lastfm',
+		}),
+		instanceIncomplete: setting.button({
+			title: 'INSTANCE_INCOMPLETE',
+			subtitle: 'INSTANCE_INCOMPLETE_SUBTITLE',
+			action: 'useListenBrainz',
+			visibleWhen: (settings) =>
+				settings.scrobblerBackend === 'listenbrainz-compatible' &&
+				(!settings.instanceBaseURL.trim() || !settings.instanceAPIBaseUrl.trim()),
+		}),
 		instanceBaseURL: setting.string({
 			default: '',
 			title: 'INSTANCE_URL',
 			subtitle: 'INSTANCE_SUBTITLE',
+			placeholder: 'INSTANCE_URL_PLACEHOLDER',
 			displayAs: 'input',
 			visibleWhen: (settings) => settings.scrobblerBackend === 'listenbrainz-compatible',
 		}),
@@ -35,6 +50,7 @@ export default defineSettings(
 			default: '',
 			title: 'API_URL',
 			subtitle: 'INSTANCE_SUBTITLE',
+			placeholder: 'API_URL_PLACEHOLDER',
 			displayAs: 'input',
 			visibleWhen: (settings) => settings.scrobblerBackend === 'listenbrainz-compatible',
 		}),

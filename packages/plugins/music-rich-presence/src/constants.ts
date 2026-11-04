@@ -6,6 +6,8 @@ export const DISCORD_APP_ID = '1108588077900898414';
 
 export const LASTFM_API_KEY = '790c37d90400163a5a5fe00d6ca32ef0';
 
+export const LASTFM_API_KEY_URL = 'https://www.last.fm/api/account/create';
+
 export const LASTFM_PLACEHOLDER_IMAGE_HASH = '2a96cbd8b46e442fc41c2b86b821562f';
 
 export const SOCKET_ID = 'MusicRichPresence@Unbound';

@@ -9,14 +9,20 @@ declare module '@unbound-app/i18n' {
 		readonly ALBUM_COVER_SUBTITLE: string;
 		/** API Key */
 		readonly API_KEY: string;
-		/** Your own Last.fm API key, which avoids the rate limit of the shared key. Create one at https://www.last.fm/api/account/create with any name and description. Leave empty to use the shared key. */
+		/** Your own Last.fm API key, which avoids the rate limit of the shared key. Leave empty to use the shared key. */
 		readonly API_KEY_SUBTITLE: string;
 		/** API URL */
 		readonly API_URL: string;
+		/** https://api.example.org */
+		readonly API_URL_PLACEHOLDER: string;
 		/** Clickable Links */
 		readonly CLICKABLE_LINKS: string;
 		/** Link the track, artist and album names */
 		readonly CLICKABLE_LINKS_SUBTITLE: string;
+		/** Create an API Key */
+		readonly CREATE_API_KEY: string;
+		/** Optional, but avoids the rate limit of the shared key. Set any name and description and leave the rest blank. */
+		readonly CREATE_API_KEY_SUBTITLE: string;
 		/** Hide With Other Activities */
 		readonly HIDE_WITH_ACTIVITY: string;
 		/** Hide while you have any other activity */
@@ -25,10 +31,16 @@ declare module '@unbound-app/i18n' {
 		readonly HIDE_WITH_SPOTIFY: string;
 		/** Hide while Spotify or another app shows what you are listening to */
 		readonly HIDE_WITH_SPOTIFY_SUBTITLE: string;
+		/** Instance Incomplete */
+		readonly INSTANCE_INCOMPLETE: string;
+		/** Set both the instance URL and the API URL, or tap here to switch back to ListenBrainz. */
+		readonly INSTANCE_INCOMPLETE_SUBTITLE: string;
 		/** Both the instance URL, such as https://example.org, and the API URL, such as https://api.example.org, are needed. Without them, nothing shows. */
 		readonly INSTANCE_SUBTITLE: string;
 		/** Instance URL */
 		readonly INSTANCE_URL: string;
+		/** https://example.org */
+		readonly INSTANCE_URL_PLACEHOLDER: string;
 		/** Listening Status */
 		readonly LISTENING_STATUS: string;
 		/** Show "Listening to" instead of "Playing" */

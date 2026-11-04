@@ -1,0 +1,14 @@
+import { metro } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
+
+import { LASTFM_API_KEY_URL } from '~/constants';
+
+/** @description Opens the Last.fm page that makes an API key; the Create an API Key button runs it. */
+export function createApiKey() {
+	void metro.api.Linking.openURL(LASTFM_API_KEY_URL);
+}
+
+/** @description Leaves an incomplete self-hosted instance for ListenBrainz; the Instance Incomplete button runs it. */
+export function useListenBrainz() {
+	settings.scrobblerBackend = 'listenbrainz';
+}

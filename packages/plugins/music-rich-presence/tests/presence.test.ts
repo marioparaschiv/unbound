@@ -1,8 +1,6 @@
-import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-
-import { stop } from '~/index';
 
 const nowPlaying = {
 	recenttracks: {
@@ -70,8 +68,7 @@ describe('the presence', () => {
 		settings.username = 'rini';
 		await startPlugin();
 		await flush();
-		// `stopPlugin` would also report the timer and listener the Addon scope removes on a device.
-		stop();
+		await stopPlugin();
 
 		expect(flux.dispatched.at(-1)).toMatchObject({
 			type: 'LOCAL_ACTIVITY_UPDATE',
