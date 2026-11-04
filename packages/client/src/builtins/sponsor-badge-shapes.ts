@@ -14,8 +14,11 @@ export type CatalogBadge = {
 	name: string;
 	description: string;
 	rarity: number;
-	simple_icon_url: string;
+	/** Unset for a GIF: the directory draws this URL as a still vector, and an unset one as an image that plays. */
+	simple_icon_url?: string;
 	simple_icon_raster_url: string;
+	/** Set for a GIF: the details sheet plays only this, larger, and shows the other URLs still. */
+	complex_icon_animated_url?: string;
 	is_earnable: false;
 	owned: true;
 	hidden: false;
@@ -29,6 +32,9 @@ export type SponsorBadges = {
 
 // Discord's own badge ids are numbers or snake_case words, so this prefix never collides with one.
 const ID_PREFIX = 'unbound-sponsor-';
+
+// The server names a GIF badge image `<hash>.gif`, and a PNG by its bare hash.
+const isGif = (url: string) => url.endsWith('.gif');
 
 /**
  * @description Tells a sponsor badge's id from the ids of Discord's own badges.
@@ -57,8 +63,10 @@ export function toSponsorBadges(badges: PublicBadge[], description: string): Spo
 		name: badge.description,
 		description,
 		rarity: 1,
-		simple_icon_url: badge.iconSrc,
 		simple_icon_raster_url: badge.iconSrc,
+		...(isGif(badge.iconSrc)
+			? { complex_icon_animated_url: badge.iconSrc }
+			: { simple_icon_url: badge.iconSrc }),
 		is_earnable: false,
 		owned: true,
 		hidden: false,
