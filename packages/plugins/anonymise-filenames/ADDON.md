@@ -2,7 +2,7 @@
 
 - :file: Files you upload are sent under an anonymous name, so the original name never reaches Discord.
 - :puzzle-piece: The extension is kept, including both parts of tarballs such as `.tar.gz`, so files still open and preview as usual.
-- :eye: Tap a file waiting in the chat input and its sheet gets an **Anonymise File Name** switch, to keep the original name for that one file or anonymise it when the default is off.
+- :eye-slash: Tap a file waiting in the chat input and its sheet gets an **Anonymise File Name** switch, to keep the original name for that one file or anonymise it when the default is off.
 - :paperclip: Files other plugins upload, such as those from Add Attachments, are anonymised too.
 - :code-fork: A port of Vencord's AnonymiseFileNames.
 

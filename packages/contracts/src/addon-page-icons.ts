@@ -47,6 +47,7 @@ export const ADDON_PAGE_ICON_NAMES = [
 	'download',
 	'droplet',
 	'eye',
+	'eye-slash',
 	'face-smile',
 	'file',
 	'file-content',
