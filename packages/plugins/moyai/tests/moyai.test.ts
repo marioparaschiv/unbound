@@ -1,8 +1,11 @@
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import { flux, startPlugin } from '@unbound-app/api/testing';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { flux, native, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 
+import { Sound } from '~/constants';
+
 const played: number[] = [];
+const released: number[] = [];
 
 const soundManager = {
 	prepare: (
@@ -13,17 +16,14 @@ const soundManager = {
 	) => done(null, { duration: 1 }),
 	play: async (id: number) => void played.push(id),
 	stop: () => {},
+	release: (id: number) => void released.push(id),
 };
-
-// The testing kit has no fake `native`, so the two files that touch it are replaced.
-mock.module('~/moyai/platform', () => ({ msPerDurationUnit: 1000 }));
-mock.module('~/moyai/modules', () => ({
-	DCDSoundManager: soundManager,
-	SelectedChannelStore: { getChannelId: () => 'selected' },
-}));
 
 beforeEach(async () => {
 	played.length = 0;
+	released.length = 0;
+	native.registerModule('DCDSoundManager', soundManager);
+	flux.seed({ SelectedChannel: { getChannelId: () => 'selected' } });
 	await startPlugin();
 });
 
@@ -74,4 +74,11 @@ describe('reactions', () => {
 
 		expect(played).toHaveLength(0);
 	});
+});
+
+test('releases the sound when the plugin stops', async () => {
+	await message('selected', '🗿');
+	await stopPlugin();
+
+	expect(released).toEqual([Sound.id]);
 });
