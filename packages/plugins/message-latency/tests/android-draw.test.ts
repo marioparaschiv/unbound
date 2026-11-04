@@ -40,7 +40,17 @@ function fakeUi() {
 
 const shown = { id: SENT };
 
-const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+const POLL_MS = 5;
+const GIVE_UP_MS = 2000;
+
+// Waits until the draw has mounted the icon, which is the last step the first placement takes.
+async function settle(fabric: { mounted: unknown[] }) {
+	const deadline = Date.now() + GIVE_UP_MS;
+
+	while (fabric.mounted.length === 0 && Date.now() < deadline) {
+		await new Promise((resolve) => setTimeout(resolve, POLL_MS));
+	}
+}
 
 const calls = (name: string) =>
 	native.calls.filter((call) => call.bridge === 'java' && call.name === name);
@@ -216,7 +226,7 @@ describe('the latency indicator on Android', () => {
 		const { row, fabric } = await startAndroid();
 
 		native.java.bridge.invoke(row as never, 'setMessage', [native.java.create(MESSAGE)]);
-		await settle();
+		await settle(fabric);
 
 		expect(calls('setCompoundDrawablesRelative')).toHaveLength(1);
 		expect(calls('setBounds')).toHaveLength(1);
@@ -227,10 +237,10 @@ describe('the latency indicator on Android', () => {
 	});
 
 	test('hides the icon when the row rebinds to a message it was not drawn for', async () => {
-		const { row } = await startAndroid();
+		const { row, fabric } = await startAndroid();
 
 		native.java.bridge.invoke(row as never, 'setMessage', [native.java.create(MESSAGE)]);
-		await settle();
+		await settle(fabric);
 		shown.id = 'another';
 		native.java.bridge.invoke(row as never, 'setMessage', [native.java.create(MESSAGE)]);
 
@@ -238,10 +248,10 @@ describe('the latency indicator on Android', () => {
 	});
 
 	test('takes the spacer back out when the plugin stops', async () => {
-		const { row } = await startAndroid();
+		const { row, fabric } = await startAndroid();
 
 		native.java.bridge.invoke(row as never, 'setMessage', [native.java.create(MESSAGE)]);
-		await settle();
+		await settle(fabric);
 		await stopPlugin();
 		running.stopped = true;
 
