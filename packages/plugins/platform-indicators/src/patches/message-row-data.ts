@@ -1,4 +1,4 @@
-import { metro, patcher } from '@unbound-app/api';
+import { patcher } from '@unbound-app/api';
 
 import { getPlatformStatuses } from '~/status-map';
 import { MessageRowData } from '~/modules';
@@ -26,11 +26,7 @@ export function patchMessageRowData(): () => void {
 
 		if (!row) return;
 
-		addPlatforms(
-			row,
-			getPlatformStatuses(author.id),
-			metro.common.ReactNative.Dimensions.get('window').width,
-		);
+		addPlatforms(row, getPlatformStatuses(author.id));
 	});
 }
 

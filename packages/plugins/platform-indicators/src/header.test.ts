@@ -27,7 +27,7 @@ describe('addPlatforms', () => {
 	test('adds symbols to the timestamp and words to its label', () => {
 		const message = row();
 
-		addPlatforms(message, desktopAndMobile, 390);
+		addPlatforms(message, desktopAndMobile);
 
 		expect(message.timestamp).toBe('Today at 12:00 • 🖥️📱');
 		expect(message.timestampAccessibilityLabel).toBe(
@@ -38,8 +38,8 @@ describe('addPlatforms', () => {
 	test('is idempotent', () => {
 		const message = row();
 
-		addPlatforms(message, desktopAndMobile, 390);
-		addPlatforms(message, desktopAndMobile, 390);
+		addPlatforms(message, desktopAndMobile);
+		addPlatforms(message, desktopAndMobile);
 
 		expect(message.timestamp).toBe('Today at 12:00 • 🖥️📱');
 		expect(message.timestampAccessibilityLabel).toBe(
@@ -47,21 +47,20 @@ describe('addPlatforms', () => {
 		);
 	});
 
-	test('keeps the label but skips the symbols when the header is full', () => {
-		const message = row({ username: 'a'.repeat(30), tagText: 'BOT' });
+	test('adds the symbols even when the name is long, since Discord shortens the name', () => {
+		const message = row({ username: 'a'.repeat(30) });
 
-		addPlatforms(message, desktopAndMobile, 390);
+		addPlatforms(message, desktopAndMobile);
 
-		expect(message.timestamp).toBe('Today at 12:00');
-		expect(message.timestampAccessibilityLabel).toEndWith('Online on Desktop and Mobile');
+		expect(message.timestamp).toBe('Today at 12:00 • 🖥️📱');
 	});
 
 	test('leaves rows without platforms or a timestamp alone', () => {
 		const empty = row();
 		const timeless = row({ timestamp: undefined });
 
-		addPlatforms(empty, [], 390);
-		addPlatforms(timeless, desktopAndMobile, 390);
+		addPlatforms(empty, []);
+		addPlatforms(timeless, desktopAndMobile);
 
 		expect(empty).toEqual(row());
 		expect(timeless).toEqual(row({ timestamp: undefined }));
