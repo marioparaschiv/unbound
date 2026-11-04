@@ -4,14 +4,6 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
-// The iOS bridge the renderer hooks into; no Discord view exists in a test, so it finds no class.
-// UNKNOWN: the test gives only the members the renderer calls, not the whole bridge type.
-const objc = {
-	hook: () => ({ remove() {} }),
-	getClass: () => null,
-	invokeAsync: async () => null,
-} as never;
-
 beforeEach(() => {
 	resetHealth();
 	flux.seed({
@@ -26,7 +18,7 @@ beforeEach(() => {
 describe('starting', () => {
 	test('indexes mentions as Discord builds each row, and leaves when stopped', async () => {
 		metro.register({ generateMessageRowData: (_input: unknown) => ({}) });
-		await startPlugin({ native: { objc } });
+		await startPlugin();
 
 		expect(patches.applied).toMatchObject([{ method: 'generateMessageRowData' }]);
 
@@ -37,7 +29,7 @@ describe('starting', () => {
 	test('reports its features applied, though no mention is on screen yet', async () => {
 		metro.register({ generateMessageRowData: (_input: unknown) => ({}) });
 		metro.register({ getRole: () => undefined, getSortedRoles: () => [] });
-		await startPlugin({ native: { objc } });
+		await startPlugin();
 
 		expect(await selfTest()).toMatchObject({
 			ok: false,
@@ -47,7 +39,7 @@ describe('starting', () => {
 	});
 
 	test('does nothing while Discord has no row generator', async () => {
-		await startPlugin({ native: { objc } });
+		await startPlugin();
 
 		expect(patches.applied).toEqual([]);
 		await stopPlugin();
