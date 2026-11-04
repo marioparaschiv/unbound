@@ -6,7 +6,26 @@ icon: 'command'
 
 A plugin can add its own slash commands. They show in Discord's `/` picker, in an **Unbound** section. When the user sends one, your plugin runs it on the phone, so it works in every channel and DM without a bot.
 
-Every text the picker shows is a message key from your plugin's `i18n/en-US.json`, so the picker shows it in the user's language and falls back to en-US. See [Translations](/developer/plugins/i18n) for the `i18n/` folder.
+Every text the picker shows is a message key from your plugin's `i18n/en-US.json`, so the picker shows it in the user's language and falls back to en-US. See [Translations](/docs/developer/plugins/i18n) for the `i18n/` folder.
+
+## Reference
+
+| Export | Signature | What it does |
+| --- | --- | --- |
+| `commands.register` | `register(tree) => () => void` | Registers an object of commands, keyed by name. Returns a function that removes them |
+| `commands.unregister` | `unregister(name) => void` | Removes one command by name |
+| `commands.option` | `string`, `integer`, `number`, `boolean`, `user`, `channel`, `role`, `choice` | Builders for a command's options |
+
+A command in the tree has these fields:
+
+| Field | Type | Meaning |
+| --- | --- | --- |
+| `description` | A key of `i18n/en-US.json` | The text under the name in the picker |
+| `options` | `Record<string, OptionSpec>` | The options, keyed by name |
+| `execute` | `(options, { channel, guild }) => Reply \| Promise<Reply>` | Runs when the user sends the command |
+| `subcommands` | A tree of commands | Groups related commands. Replaces `execute` |
+
+An option builder takes `{ description, required }`. `commands.option.choice(map, settings)` takes the map first. [Options](#options) lists each builder's extra settings. The scope removes your commands when the plugin stops.
 
 ## A first command
 
