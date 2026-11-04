@@ -49,6 +49,8 @@ declare module '@unbound-app/i18n' {
 		readonly IGNORE_GUILDS: string;
 		/** Server IDs that are not logged. Separate IDs with commas or spaces. */
 		readonly IGNORE_GUILDS_SUBTITLE: string;
+		/** 123456789012345678 */
+		readonly ID_PLACEHOLDER: string;
 		/** This message was deleted */
 		readonly MESSAGE_DELETED: string;
 		/** Dismiss message */

@@ -1,9 +1,10 @@
 import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
+import { processColor } from 'react-native';
 
 import { DELETED_TEXT_COLOR, EPHEMERAL_FLAG, PLUGIN_NAME } from '~/constants';
 import { decorateRow, type ChatRow, type ContentNode } from '~/rows/decorate';
-import { ReactNative, RowManager } from '~/rows/modules';
+import { RowManager } from '~/rows/modules';
 import { MessageStore } from '~/log/modules';
 import type { MessageLog } from '~/log';
 
@@ -73,6 +74,7 @@ export function patchRowManager(log: MessageLog): void {
 		if (renderingVersion || !row || !messageId || !log.hasHistory(messageId)) return;
 
 		const deleted = log.isDeleted(messageId);
+		const color = deleted ? processColor(DELETED_TEXT_COLOR) : null;
 		const channelId = row.message?.channelId;
 		const previousVersions = settings.inlineEdits
 			? log
@@ -87,7 +89,7 @@ export function patchRowManager(log: MessageLog): void {
 			deleted,
 			redText: settings.redText,
 			deletedMarker: settings.deletedMarker,
-			deletedColor: deleted ? (ReactNative.processColor?.(DELETED_TEXT_COLOR) ?? null) : null,
+			deletedColor: typeof color === 'number' ? color : null,
 			dismissTarget:
 				deleted && channelId
 					? dismissTarget(MessageStore.getMessage(channelId, messageId))

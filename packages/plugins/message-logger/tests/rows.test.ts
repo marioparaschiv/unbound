@@ -1,84 +1,56 @@
-import { flux, metro } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { createMessageLog, type MessageLog } from '~/log';
-import { startRows } from '~/rows';
-
-type Row = { message: Record<string, unknown> };
-
-class RowManager {
-	generate(_input: unknown): Row {
-		return {
-			message: {
-				id: 'm1',
-				channelId: 'c1',
-				content: [{ type: 'text', content: 'hello' }],
-				attachments: [{ id: 'a1', filename: 'cat.png' }],
-			},
-		};
-	}
-}
-
-class ChatManager {
-	determineChangeType(_input: unknown): number {
-		return 0;
-	}
-}
+import { ChatManager, dispatch, generateRow, startLogger } from './discord';
 
 const RED = 0xfff23f42;
 
-let log: MessageLog;
+const del = () => dispatch({ type: 'MESSAGE_DELETE', id: 'm1', channelId: 'c1' });
 
-beforeEach(() => {
-	log = createMessageLog();
-
-	metro.register(RowManager);
-	metro.register(ChatManager);
-	metro.register({ processColor: () => RED, View: {} });
-	flux.seed({ Message: { getMessage: () => ({ id: 'm1', flags: 0 }) } });
-	startRows(log);
-});
+beforeEach(startLogger);
 
 describe('a message row', () => {
 	test('is left alone while the log knows nothing about its message', () => {
-		const { message } = new RowManager().generate({});
+		const row = generateRow();
 
-		expect(message.textColor).toBeUndefined();
-		expect(message.ephemeralIndication).toBeUndefined();
+		expect(row.textColor).toBeUndefined();
+		expect(row.ephemeralIndication).toBeUndefined();
 	});
 
-	test('turns red with a deleted marker once its message is deleted', () => {
-		log.markDeleted('c1', 'm1');
+	test('turns red with a deleted marker once its message is deleted', async () => {
+		await del();
 
-		const { message } = new RowManager().generate({});
+		const row = generateRow();
 
-		expect(message.textColor).toBe(RED);
-		expect(message.ephemeralIndication).toMatchObject({
+		expect(row.textColor).toBe(RED);
+		expect(row.ephemeralIndication).toMatchObject({
 			content: [
 				{ type: 'text', content: 'This message was deleted' },
 				{ type: 'text', content: ' • ' },
 				{ type: 'link', content: [{ type: 'text', content: 'Dismiss message' }] },
 			],
 		});
-		expect(message.attachments).toEqual([{ id: 'a1', filename: '(deleted) cat.png' }]);
+		expect(row.attachments).toEqual([
+			{ id: 'a1', filename: '(deleted) cat.png' },
+			{ id: 'a2', filename: '(deleted) dog.png' },
+		]);
 	});
 
-	test('stays plain with red text and the deleted marker off', () => {
+	test('stays plain with red text and the deleted marker off', async () => {
 		settings.redText = false;
 		settings.deletedMarker = false;
-		log.markDeleted('c1', 'm1');
+		await del();
 
-		const { message } = new RowManager().generate({});
+		const row = generateRow();
 
-		expect(message.textColor).toBeUndefined();
-		expect(message.ephemeralIndication).toBeUndefined();
+		expect(row.textColor).toBeUndefined();
+		expect(row.ephemeralIndication).toBeUndefined();
 	});
 
-	test('is drawn again once, after its log changes', () => {
+	test('is drawn again once, after its log changes', async () => {
 		const chat = new ChatManager();
 
-		log.requestRender('m1');
+		await del();
 
 		expect(chat.determineChangeType({ message: { id: 'm1' } })).toBe(2);
 		expect(chat.determineChangeType({ message: { id: 'm1' } })).toBe(0);

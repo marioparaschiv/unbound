@@ -4,7 +4,7 @@
 
 ### Changed
 
-- The settings screen, the long-press rows, the deleted marker and the edit history sheet can now be translated. Your saved settings stay as they are. The ID list fields no longer show an example ID as a hint.
+- The settings screen, the long-press rows, the deleted marker and the edit history sheet can now be translated. Your saved settings stay as they are.
 
 ## [1.0.3] - 2026-11-03
 

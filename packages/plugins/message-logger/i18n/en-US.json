@@ -22,6 +22,7 @@
 	"IGNORE_CHANNELS_SUBTITLE": "Channel or category IDs that are not logged. Separate IDs with commas or spaces.",
 	"IGNORE_GUILDS": "Ignored servers",
 	"IGNORE_GUILDS_SUBTITLE": "Server IDs that are not logged. Separate IDs with commas or spaces.",
+	"ID_PLACEHOLDER": "123456789012345678",
 	"MESSAGE_DELETED": "This message was deleted",
 	"DISMISS_MESSAGE": "Dismiss message",
 	"EDITED_SUFFIX": " (edited)",

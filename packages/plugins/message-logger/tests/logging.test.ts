@@ -1,41 +1,16 @@
-import { flux as fakeFlux } from '@unbound-app/api/testing';
+import { stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { flux } from '@unbound-app/api';
 
-import { createMessageLog, type MessageLog } from '~/log';
-import { purgeLog } from '~/history/actions';
-import { startDeletions } from '~/deletions';
-import { startNonces } from '~/nonces';
-import { startEdits } from '~/edits';
+import { ME, dispatch, generateRow, message, startLogger, type Action } from './discord';
 
-// UNKNOWN: a test sends Discord's action payloads, which FluxAction does not type.
-type Action = { type: string } & Record<string, unknown>;
-
-const ME = '1';
-const message = {
-	id: 'm1',
-	channel_id: 'c1',
-	content: 'hello',
-	author: { id: '2' },
-	attachments: [{ id: 'a1' }, { id: 'a2' }],
-	state: 'SENT',
-};
-
-let log: MessageLog;
 let reached: Action[];
 
-beforeEach(() => {
-	log = createMessageLog();
+beforeEach(async () => {
 	reached = [];
 
-	fakeFlux.seed({
-		Message: {
-			getMessage: (_channel: string, id: string) => (id === message.id ? message : undefined),
-		},
-		Channel: { getChannel: () => ({ guild_id: 'g1' }) },
-		User: { getCurrentUser: () => ({ id: ME }) },
-	});
+	await startLogger();
 
 	for (const type of [
 		'MESSAGE_DELETE',
@@ -47,105 +22,109 @@ beforeEach(() => {
 	}
 });
 
-function dispatch(action: Action) {
-	return fakeFlux.dispatch(action);
-}
+const isMarkedDeleted = () => generateRow().ephemeralIndication !== undefined;
+
+const del = (extra: Record<string, unknown> = {}) =>
+	dispatch({ type: 'MESSAGE_DELETE', id: 'm1', channelId: 'c1', ...extra });
 
 describe('a deleted message', () => {
-	beforeEach(() => startDeletions(log));
-
 	test('stays in the chat and is logged as deleted', async () => {
-		await dispatch({ type: 'MESSAGE_DELETE', id: 'm1', channelId: 'c1' });
+		await del();
 
 		expect(reached).toEqual([]);
-		expect(log.isDeleted('m1')).toBe(true);
+		expect(isMarkedDeleted()).toBe(true);
 	});
 
 	test('goes through the second time, as with Dismiss message', async () => {
-		await dispatch({ type: 'MESSAGE_DELETE', id: 'm1', channelId: 'c1' });
-		await dispatch({ type: 'MESSAGE_DELETE', id: 'm1', channelId: 'c1' });
+		await del();
+		await del();
 
 		expect(reached).toMatchObject([{ type: 'MESSAGE_DELETE', id: 'm1' }]);
-		expect(log.isDeleted('m1')).toBe(false);
+		expect(isMarkedDeleted()).toBe(false);
 	});
 
 	test('is not kept when it came from a bot, which is ignored by default', async () => {
-		message.author = { id: '2', bot: true } as never;
-		await dispatch({ type: 'MESSAGE_DELETE', id: 'm1', channelId: 'c1' });
+		message.author = { id: '2', bot: true };
+		await del();
 		message.author = { id: '2' };
 
 		expect(reached).toMatchObject([{ type: 'MESSAGE_DELETE' }]);
-		expect(log.isDeleted('m1')).toBe(false);
+		expect(isMarkedDeleted()).toBe(false);
 	});
 
 	test('is not kept when logging deletions is off', async () => {
 		settings.logDeletes = false;
-		await dispatch({ type: 'MESSAGE_DELETE', id: 'm1', channelId: 'c1' });
+		await del();
 
 		expect(reached).toMatchObject([{ type: 'MESSAGE_DELETE' }]);
+		expect(isMarkedDeleted()).toBe(false);
 	});
 
 	test('lets the rest of a bulk delete through', async () => {
 		await dispatch({ type: 'MESSAGE_DELETE_BULK', ids: ['m1', 'm2'], channelId: 'c1' });
 
 		expect(reached).toMatchObject([{ type: 'MESSAGE_DELETE_BULK', ids: ['m2'] }]);
-		expect(log.isDeleted('m1')).toBe(true);
+		expect(isMarkedDeleted()).toBe(true);
 	});
 
 	test('is removed from the chat when the plugin stops', async () => {
-		await dispatch({ type: 'MESSAGE_DELETE', id: 'm1', channelId: 'c1' });
-		purgeLog(log);
-		await Promise.resolve();
+		await del();
+		await stopPlugin();
 
 		expect(reached).toMatchObject([{ type: 'MESSAGE_DELETE', id: 'm1', channelId: 'c1' }]);
-		expect(log.hasHistory('m1')).toBe(false);
 	});
 });
 
 describe('an edited message', () => {
-	beforeEach(() => startEdits(log));
-
 	const edit = (extra: Record<string, unknown>) =>
 		dispatch({
 			type: 'MESSAGE_UPDATE',
 			message: { id: 'm1', channel_id: 'c1', edited_timestamp: '2026-01-01', ...extra },
 		});
 
-	test('keeps its earlier text', async () => {
+	const texts = (content: { content?: unknown }[] | undefined) =>
+		content?.map((node) => node.content);
+
+	test('keeps its earlier text above the new text', async () => {
 		await edit({ content: 'hello world' });
 
-		expect(log.editsOf('m1')).toEqual([{ content: 'hello', timestamp: '2026-01-01' }]);
 		expect(reached).toHaveLength(1);
+		expect(texts(generateRow({ content: 'hello world' }).content)).toEqual([
+			'hello',
+			' (edited)\n',
+			'hello world',
+		]);
 	});
 
 	test('keeps an attachment the edit removed, marked as deleted', async () => {
 		await edit({ content: 'hello', attachments: [{ id: 'a1' }] });
 
-		expect(log.deletedAttachmentIds('m1')).toEqual(['a2']);
 		expect(reached[0]).toMatchObject({
 			message: { attachments: [{ id: 'a1' }, { id: 'a2' }] },
 		});
+		expect(generateRow().attachments).toEqual([
+			{ id: 'a1', filename: 'cat.png' },
+			{ id: 'a2', filename: '(deleted) dog.png' },
+		]);
 	});
 
 	test('drops the attachment once logging deleted attachments is off', async () => {
 		settings.logDeletedAttachments = false;
 		await edit({ content: 'hello', attachments: [{ id: 'a1' }] });
 
-		expect(log.deletedAttachmentIds('m1')).toEqual([]);
 		expect(reached[0]).toMatchObject({ message: { attachments: [{ id: 'a1' }] } });
+		expect(generateRow().attachments).toEqual(message.attachments);
 	});
 
 	test('logs nothing while edits are not logged', async () => {
 		settings.logEdits = false;
 		await edit({ content: 'hello world' });
 
-		expect(log.editsOf('m1')).toEqual([]);
+		expect(texts(generateRow({ content: 'hello world' }).content)).toEqual(['hello world']);
 	});
 });
 
 describe('a reused nonce', () => {
-	beforeEach(() => startNonces());
-
 	test('no longer replaces an earlier sent message from someone else', async () => {
 		await dispatch({
 			type: 'MESSAGE_CREATE',
@@ -153,7 +132,7 @@ describe('a reused nonce', () => {
 		});
 
 		expect(reached[0]).toMatchObject({ message: { id: 'm9' } });
-		expect((reached[0]?.message as { nonce?: string }).nonce).toBeUndefined();
+		expect((reached[0]?.message as { nonce?: string } | undefined)?.nonce).toBeUndefined();
 	});
 
 	test('is left alone on your own message', async () => {
@@ -162,6 +141,6 @@ describe('a reused nonce', () => {
 			message: { id: 'm9', channel_id: 'c1', nonce: 'm1', author: { id: ME } },
 		});
 
-		expect((reached[0]?.message as { nonce?: string }).nonce).toBe('m1');
+		expect((reached[0]?.message as { nonce?: string } | undefined)?.nonce).toBe('m1');
 	});
 });
