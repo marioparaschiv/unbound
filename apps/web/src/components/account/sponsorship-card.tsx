@@ -36,7 +36,7 @@ const STANDING_LABELS: Record<SponsorOverview['standing'], StandingLabel> = {
 
 function SponsorCta({ url, label }: SponsorCtaProps) {
 	return (
-		<Button asChild variant='outline' size='sm' className='gap-2 self-start'>
+		<Button asChild variant='sponsor' size='sm' className='gap-2 self-end'>
 			<a href={url} target='_blank' rel='noreferrer'>
 				<IconHeart size={14} />
 				{label}
@@ -95,13 +95,27 @@ function SponsorshipDetails({ sponsor, sponsorship }: SponsorshipDetailsProps) {
 
 function SponsorshipCard() {
 	const { sponsor } = useSuspenseQuery(accountOverviewQuery()).data;
+	const active = sponsor.standing === 'active';
 
 	return (
-		<Card className='gap-4'>
-			<CardHeader>
-				<CardTitle>GitHub Sponsors</CardTitle>
-				<Text variant='text-sm' color='muted' className='mb-2'>
-					Sponsoring Unbound on GitHub funds its development and unlocks perks.
+		<Card className='shine-border gap-5'>
+			<CardHeader className='gap-3'>
+				<div className='flex items-center gap-3'>
+					<span className='flex size-7.5 items-center justify-center rounded-[9px] bg-primary text-primary-foreground shadow-[0_4px_14px_-4px_var(--glow)]'>
+						<IconHeart size={16} />
+					</span>
+					<CardTitle>
+						{active ? 'Thanks for sponsoring Unbound' : 'Support Unbound'}
+					</CardTitle>
+				</div>
+				<Text
+					variant='text-sm'
+					color='muted'
+					className='max-w-prose leading-relaxed text-pretty'
+				>
+					{active
+						? 'Your sponsorship keeps Unbound free and built in the open. Your perks are active on your Discord profile.'
+						: 'Unbound is free and built in the open. Sponsor it on GitHub to keep it going, and from $5 a month get your own badge on your Discord profile, shown to everyone using Unbound.'}
 				</Text>
 			</CardHeader>
 			<CardContent className='flex flex-col gap-3'>
@@ -109,7 +123,7 @@ function SponsorshipCard() {
 					<SponsorshipDetails sponsor={sponsor} sponsorship={sponsor.sponsorship} />
 				) : (
 					<>
-						<Text variant='text-sm' color='muted'>
+						<Text variant='text-xs' color='muted' className='leading-relaxed'>
 							{sponsor.githubLinked
 								? 'No sponsorship from your GitHub account yet. It shows up here a few moments after you sponsor.'
 								: 'Link your GitHub account above so a sponsorship from it reaches this account.'}
