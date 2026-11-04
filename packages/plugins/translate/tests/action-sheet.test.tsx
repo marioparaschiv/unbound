@@ -1,11 +1,12 @@
 import { metro, render, startPlugin, toasts } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 import { settings } from '@unbound-app/settings';
 
 import { selfTest } from '~/index';
 
-const clipboard = { text: '' };
+const clipboard = { text: '', copied: Promise.withResolvers<void>() };
 const hidden: string[] = [];
 const realFetch = globalThis.fetch;
 
@@ -39,10 +40,18 @@ const labels = (sheet: Awaited<ReturnType<typeof openSheet>>) =>
 
 beforeEach(async () => {
 	clipboard.text = '';
+	clipboard.copied = Promise.withResolvers<void>();
+	resetHealth();
 	hidden.length = 0;
 	metro.register(ActionSheets);
 	metro.register({
-		setString: (text: string) => (clipboard.text = text),
+		setString: (text: string) => {
+			clipboard.text = text;
+			clipboard.copied.resolve();
+
+			// The plugin awaits this, so the test's own await on it runs after the plugin carries on to its toast.
+			return clipboard.copied.promise;
+		},
 		getString: () => '',
 		setImage: () => undefined,
 		getImage: () => undefined,
@@ -68,7 +77,7 @@ describe('the message long-press menu', () => {
 		expect(labels(sheet)).toEqual(['Translate']);
 
 		sheet.act(() => sheet.find('ActionSheetRow').props.onPress?.());
-		await new Promise((resolve) => setTimeout(resolve));
+		await clipboard.copied.promise;
 
 		expect(hidden).toEqual(['MessageLongPressActionSheet']);
 		expect(clipboard.text).toBe('Hallo');
