@@ -18,4 +18,4 @@
 
 - :mobile: Discord mobile has no desktop notifications or notice bar, so notifications are Unbound toasts. **Persistent Notices** stands in for Vencord's notice bar.
 - :server: If this Discord build does not say which servers are in an outage, servers missing while Discord was closed are not reported, so an outage never shows up as a removal. Live removals are still reported.
-- :hard-drive: The record of your servers, groups and friends is saved under `Unbound/Data/relationship-notifier/` in Discord's documents folder instead of Discord's desktop storage, so offline removals start counting from the first time the plugin runs.
+- :database: The record of your servers, groups and friends is saved under `Unbound/Data/relationship-notifier/` in Discord's documents folder instead of Discord's desktop storage, so offline removals start counting from the first time the plugin runs.

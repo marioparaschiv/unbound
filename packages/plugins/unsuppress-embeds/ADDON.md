@@ -1,8 +1,8 @@
 ## :sparkle: What it does
 
 - :eye: An **Unsuppress Embeds** row in a message's long-press menu brings back link embeds that were removed from it.
-- :eye-slash: On a message that shows embeds, the row reads **Suppress Embeds** and removes them instead.
-- :share: Forwarded messages count too: the row shows when the forwarded message carries embeds.
+- :eye: On a message that shows embeds, the row reads **Suppress Embeds** and removes them instead.
+- :share-up-right: Forwarded messages count too: the row shows when the forwarded message carries embeds.
 - :arrow-down: The row sits just above **Delete Message**, in the same group. On a sheet without Delete it goes at the end of the first group.
 - :code-fork: A port of Vencord's UnsuppressEmbeds.
 
