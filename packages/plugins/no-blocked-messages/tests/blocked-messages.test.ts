@@ -1,7 +1,8 @@
-import { metro, startPlugin } from '@unbound-app/api/testing';
+import { metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { stop } from '~/index';
+import { selfTest } from '~/index';
 
 type Row = { type: number };
 
@@ -47,6 +48,7 @@ function openChat() {
 }
 
 beforeEach(() => {
+	resetHealth();
 	shown.length = 0;
 	metro.register(ChatManager);
 	metro.register(RowManager);
@@ -61,11 +63,17 @@ describe('blocked messages', () => {
 		expect(shown).toEqual([0, 0]);
 	});
 
+	test('reports itself applied once started', async () => {
+		await startPlugin();
+
+		expect(selfTest().ok).toBe(true);
+	});
+
 	test('shows them again in the open chat when the plugin stops', async () => {
 		await startPlugin();
 		openChat();
 		shown.length = 0;
-		stop();
+		await stopPlugin();
 
 		expect(shown).toEqual([0, BLOCKED, 0]);
 	});
