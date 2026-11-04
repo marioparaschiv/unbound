@@ -5,7 +5,7 @@ import { createFakeMetro, createFakeNative } from '../testing';
 const manifest = { id: 'third-pass' } as never;
 
 // A bridge with only the members a test gives, as `startPlugin({ native })` takes.
-const own = (members: Record<string, () => unknown>) => members as never;
+const own = (members: Record<string, () => string | { id: string }>) => members as never;
 
 describe('metro.find', () => {
 	test('serves a module registered after the lookup, for plain, any and all filters', () => {
