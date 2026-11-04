@@ -1,13 +1,8 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { beforeAll, describe, expect, mock, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo, type ReactNode } from 'react';
 import { Text } from 'react-native';
-
-// The testing kit has no fake of `@unbound-app/api/native`; the tests run as on iOS.
-mock.module('@unbound-app/api/native', () => ({
-	definePlatform: ({ ios }: { ios: unknown }) => ios,
-}));
 
 type AnimatedProps = { animate?: boolean; loop?: boolean };
 
@@ -41,7 +36,7 @@ function createComponent() {
 	));
 }
 
-beforeAll(() => {
+beforeEach(() => {
 	for (const name of Object.keys(PATHS) as (keyof typeof PATHS)[]) {
 		components[name] = createComponent();
 		metro.register({ default: components[name] }, PATHS[name]);
@@ -59,7 +54,7 @@ const userSettings = {
 
 const stickerUtils = { shouldAnimateSticker: () => false };
 
-beforeAll(() => {
+beforeEach(() => {
 	metro.register(stickerUtils, 'modules/stickers/StickersUtils.tsx');
 	metro.register(rowData);
 	metro.register(userSettings, 'modules/user_settings/UserSettings.tsx');
