@@ -17,7 +17,7 @@ import {
 	getBadgeImageKey,
 	hashBadgeImage,
 } from '~/lib/sponsors/badge-image';
-import { canClaimPerk, isPerkUnlocked, PERKS } from '~/lib/sponsors/perks';
+import { canClaimPerk, isPerkUnlocked, PERKS, roleGrantsPerks } from '~/lib/sponsors/perks';
 import { getUserSponsorship, graceMs } from '~/lib/sponsors/sponsorships';
 import { account, perkClaim, sponsorship, user } from '~/db/schema';
 import { findBadgeNameProblem } from '~/lib/sponsors/moderation';
@@ -110,9 +110,12 @@ async function claimResponse(ctx: AppContext, userId: string): Promise<BadgeClai
 }
 
 async function requireClaimable(ctx: AppContext, userId: string): Promise<void> {
-	const { standing } = await getUserSponsorship(ctx, userId);
+	const [{ standing }, [owner]] = await Promise.all([
+		getUserSponsorship(ctx, userId),
+		ctx.db.select({ role: user.role }).from(user).where(eq(user.id, userId)),
+	]);
 
-	if (!canClaimPerk(PERK_ID, standing)) {
+	if (!canClaimPerk(PERK_ID, standing) && !roleGrantsPerks(owner?.role)) {
 		throw new ApiError(
 			'sponsorship_required',
 			`A monthly GitHub sponsorship of ${formatPrice(PERKS[PERK_ID].minimumMonthlyCents)} or more unlocks a custom badge.`,
@@ -359,7 +362,7 @@ async function setRevocation(
 
 /**
  * @description Finds the badges to show on users' profiles: set, not revoked, owned by a user who is
- * not banned and whose linked GitHub sponsorship still unlocks them.
+ * not banned and whose linked GitHub sponsorship still unlocks them, or whose role grants perks.
  * @param ctx The application context.
  * @param userIds The users.
  * @returns Each user's shown badges, in their order, by user id.
@@ -376,14 +379,14 @@ export async function getVisibleBadges(
 
 	const now = ctx.now();
 	const rows = await ctx.db
-		.select({ claim: perkClaim, sponsorship })
+		.select({ claim: perkClaim, sponsorship, role: user.role })
 		.from(perkClaim)
 		.innerJoin(user, eq(user.id, perkClaim.userId))
-		.innerJoin(
+		.leftJoin(
 			account,
 			and(eq(account.userId, perkClaim.userId), eq(account.providerId, 'github')),
 		)
-		.innerJoin(sponsorship, eq(sponsorship.githubId, account.accountId))
+		.leftJoin(sponsorship, eq(sponsorship.githubId, account.accountId))
 		.where(
 			and(
 				inArray(perkClaim.userId, userIds),
@@ -394,8 +397,9 @@ export async function getVisibleBadges(
 		);
 
 	for (const row of rows) {
-		const standing = standingOf(row.sponsorship, now, graceMs(ctx.env));
-		const shown = isPerkUnlocked(PERK_ID, standing) ? parseBadges(row.claim) : undefined;
+		const standing = standingOf(row.sponsorship ?? undefined, now, graceMs(ctx.env));
+		const unlocked = isPerkUnlocked(PERK_ID, standing) || roleGrantsPerks(row.role);
+		const shown = unlocked ? parseBadges(row.claim) : undefined;
 
 		if (!shown) {
 			continue;

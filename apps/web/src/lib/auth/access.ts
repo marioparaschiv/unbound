@@ -12,7 +12,8 @@ export const statements = {
 	addon: ['delist', 'transfer', 'rollback', 'edit'],
 	loader: ['publish'],
 	firstParty: ['publish'],
-	perk: ['revoke'],
+	// `claim` sets up sponsor perks without a sponsorship.
+	perk: ['revoke', 'claim'],
 	note: ['read', 'write'],
 } as const;
 
@@ -33,7 +34,7 @@ export const moderator = ac.newRole({
 	submission: ['create', 'review'],
 	update: ['create', 'review'],
 	addon: ['delist'],
-	perk: ['revoke'],
+	perk: ['revoke', 'claim'],
 	user: ['list', 'get', 'ban'],
 	session: ['list', 'revoke'],
 	note: ['read', 'write'],

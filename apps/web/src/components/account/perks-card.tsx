@@ -102,7 +102,7 @@ function PerksCard({ user }: PerksCardProps) {
 						<BadgeEditor
 							claim={sponsor.badge}
 							perk={badgePerk}
-							editable={badgePerk.unlocked && sponsor.standing === 'active'}
+							editable={badgePerk.claimable}
 						/>
 					</>
 				) : null}
