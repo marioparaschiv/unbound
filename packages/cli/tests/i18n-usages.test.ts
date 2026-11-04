@@ -85,6 +85,23 @@ describe('collectModuleKeys', () => {
 		]);
 	});
 
+	test('reads a setting placeholder and a button confirmation', () => {
+		const code = `import { defineSettings, setting } from '@unbound-app/settings/schema';
+
+export default defineSettings({
+	name: setting.string({ default: '', title: 'NAME_TITLE', placeholder: 'NAME_PLACEHOLDER' }),
+	clear: setting.button({ title: 'CLEAR_TITLE', action: 'clear', confirm: 'CLEAR_CONFIRM' }),
+});
+`;
+
+		expect(collectModuleKeys('settings.ts', code).usages.map((usage) => usage.key)).toEqual([
+			'NAME_TITLE',
+			'NAME_PLACEHOLDER',
+			'CLEAR_TITLE',
+			'CLEAR_CONFIRM',
+		]);
+	});
+
 	test('ignores format and messages that are not from @unbound-app/i18n', () => {
 		const code = "const messages = {};\nconst format = (k) => k;\nformat('A');\nmessages.B;\n";
 

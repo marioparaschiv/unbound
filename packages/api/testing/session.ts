@@ -4,6 +4,8 @@ import type { ListenerRegistry } from './listener-registry';
 import type { FakeAssets, FakeFlux } from './fake-api';
 import type { FakeSettings } from './fake-settings';
 import type { FakeLocales } from './fake-locales';
+import type { FakeNative } from './fake-native';
+import type { FakeFs } from './fake-fs';
 
 import { unmountAll } from './test-renderer';
 
@@ -19,6 +21,8 @@ export type TestSession = {
 	assets: FakeAssets;
 	locales: FakeLocales | undefined;
 	settings: FakeSettings | undefined;
+	native: FakeNative;
+	fs: FakeFs;
 };
 
 let active: TestSession | undefined;
@@ -46,8 +50,8 @@ export function getSession(): TestSession {
 }
 
 /**
- * @description Puts every fake back to how the preset made it: no mounted trees, patches, commands, listeners,
- * stored settings, toasts, dialogs, stores or logs, and en-US.
+ * @description Puts every fake back to how the preset made it: no mounted trees, patches, commands, listeners, timers,
+ * metro modules, files, stored settings, toasts, dialogs, stores or logs, the platform iOS, and en-US.
  */
 export function resetSession(): void {
 	const session = getSession();
@@ -56,7 +60,11 @@ export function resetSession(): void {
 	unmountAll();
 	scope.patcher.unpatchAll();
 	scope.commands.unregisterAll();
+	scope.timers.clearAll();
+	scope.metro.reset();
 	session.listeners.clear();
+	session.native.reset();
+	session.fs.files.clear();
 	scope.storage.data.clear();
 	scope.logs.length = 0;
 	session.flux.reset();
