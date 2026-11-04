@@ -1,10 +1,10 @@
-import { metro, patcher } from '@unbound-app/api';
+import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { patcher } from '@unbound-app/api';
 
+import { Messages } from '~/translation/modules';
 import { translate } from '~/translation/translator';
 
 type Message = { content: string };
-
-const Messages = metro.api.Messages;
 
 let patched = false;
 
@@ -24,7 +24,7 @@ function translateOutgoing({ args }: { args: unknown[] }) {
 
 /**
  * @description Tells whether outgoing messages are being translated.
- * @returns `true` while the patches are installed.
+ * @returns `true` once the patches are installed.
  */
 export function isTranslating(): boolean {
 	return patched;
@@ -33,17 +33,15 @@ export function isTranslating(): boolean {
 /**
  * @description Rewrites each message the user sends or edits into Aussie English before Discord sends it.
  * Patches `sendMessage` and `editMessage` on Discord's message actions, which both platforms share.
- * @returns A function that removes the patches.
+ * The Addon scope removes the patches when the plugin stops.
  */
-export function startTranslation(): () => void {
-	const unpatches = (['sendMessage', 'editMessage'] as const)
-		.filter((method) => typeof Messages[method] === 'function')
-		.map((method) => patcher.before(Messages, method, translateOutgoing));
+export function startTranslation(): void {
+	if (!ensureModules('Aussie Speech', { Messages })) return;
 
-	patched = unpatches.length > 0;
+	for (const method of ['sendMessage', 'editMessage'] as const) {
+		if (typeof Messages[method] !== 'function') continue;
 
-	return () => {
-		for (const unpatch of unpatches) unpatch();
-		patched = false;
-	};
+		patcher.before(Messages, method, translateOutgoing);
+		patched = true;
+	}
 }
