@@ -1,8 +1,9 @@
-import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { createElement, type ReactNode } from 'react';
 
+import { selfTest } from '~/index';
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
 const VIDEO = 'dQw4w9WgXcQ';
@@ -109,6 +110,41 @@ describe('YouTube embeds', () => {
 		MessageRowData.generateMessageRowData({ message: plain });
 
 		expect(rows[0]?.message).toBe(plain);
+	});
+});
+
+describe('self test', () => {
+	test('passes once the plugin has started', async () => {
+		await startPlugin();
+
+		expect(selfTest()).toMatchObject({ ok: true });
+	});
+});
+
+describe('stopping', () => {
+	test('redraws the original embeds, with the patch already gone', async () => {
+		const seen: string[] = [];
+
+		await startPlugin();
+		await buildRow();
+		flux.seed({
+			Message: {
+				emitChange: () => {
+					const built = MessageRowData.generateMessageRowData({
+						message,
+					}) as (typeof rows)[number];
+
+					seen.push(
+						(built.message?.embeds.at(0) as typeof embed | undefined)?.rawTitle ?? '',
+					);
+				},
+			},
+		});
+		seen.length = 0;
+
+		await stopPlugin();
+
+		expect(seen).toEqual(['YOU WONT BELIEVE THIS']);
 	});
 });
 
