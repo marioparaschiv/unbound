@@ -1,9 +1,10 @@
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { patcher } from '@unbound-app/api';
 
-import { onMediaShareActions, type MediaShareActions } from '~/modules';
-import { isRecord, type MediaRecord } from '~/media-record';
-import { getPreferredGifUrl } from '~/gif-url';
-import { resolveKlipyGifUrl } from '~/klipy';
+import { onMediaShareActions, type MediaShareActions } from '~/share/modules';
+import { isRecord, type MediaRecord } from '~/gif/media-record';
+import { getPreferredGifUrl } from '~/gif/gif-url';
+import { resolveKlipyGifUrl } from '~/gif/klipy';
 
 function pointAtGif(source: MediaRecord, gifUrl: string) {
 	source.uri = gifUrl;
@@ -36,7 +37,9 @@ function patch(module: MediaShareActions) {
 
 /**
  * @description Points the media viewer's share and save actions at the GIF instead of its video rendition, patching each copy as Discord loads it.
+ * Patches `useMediaShareActions` in every copy of the media viewer's share actions module. The Addon scope removes the patches and the load listener when the plugin stops.
  */
-export function patchMediaShareActions(): void {
+export function startShareActions(): void {
 	onMediaShareActions(patch);
+	recordApplied(1);
 }

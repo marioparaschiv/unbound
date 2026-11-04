@@ -1,6 +1,6 @@
 import { KLIPY_API_KEY, NESTED_KEYS, SOURCE_KEYS } from '~/constants';
-import { getDiscordProxyTarget } from '~/discord-proxy';
-import { findDeep, isRecord } from '~/media-record';
+import { getDiscordProxyTarget } from '~/gif/discord-proxy';
+import { findDeep, isRecord } from '~/gif/media-record';
 
 const resolved = new Map<string, string>();
 const requests = new Map<string, Promise<string | null>>();

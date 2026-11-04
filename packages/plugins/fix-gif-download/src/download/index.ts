@@ -1,10 +1,11 @@
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import { patcher } from '@unbound-app/api';
 
-import { MediaManagerFilters, MediaTypes, MediaTypesFile } from '~/modules';
-import { getPreferredGifUrl, isGifSource } from '~/gif-url';
-import type { MediaManager } from '~/modules';
-import { resolveKlipyGifUrl } from '~/klipy';
+import { MediaManagerFilters, MediaTypes, MediaTypesFile } from '~/download/modules';
+import { getPreferredGifUrl, isGifSource } from '~/gif/gif-url';
+import type { MediaManager } from '~/download/modules';
+import { resolveKlipyGifUrl } from '~/gif/klipy';
 
 type DownloadMethod = 'downloadMediaAsset' | 'downloadMediaAssetWithContentType';
 
@@ -80,7 +81,9 @@ function patchManager(manager: MediaManager) {
 
 /**
  * @description Makes Discord treat GIF provider media as GIFs and save them as GIF files instead of videos, once its media manager loads.
+ * Patches the media manager's download and media-extraction methods, and `isGIFSource`. The Addon scope removes the patches and the load wait when the plugin stops.
  */
-export function patchMediaManager(): void {
+export function startDownloads(): void {
 	whenLoaded(MediaManagerFilters, patchManager);
+	recordApplied(1);
 }
