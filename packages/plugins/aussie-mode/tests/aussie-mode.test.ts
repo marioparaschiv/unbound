@@ -1,13 +1,20 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import { metro, patches, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import {
+	metro,
+	patches,
+	startPlugin,
+	stopPlugin,
+	createFakeReactNative,
+} from '@unbound-app/api/testing';
 
 // The testing kit's react-native has no AppState or NativeModules, which this plugin reads for the
-// foreground event and the device locale.
+// foreground event and the device locale. Waiting on kit 2: drop this mock once the kit has them.
+const kitReactNative = createFakeReactNative();
 const appState = new Set<(state: string) => void>();
 const device = { locale: 'en_AU' };
 
 mock.module('react-native', () => ({
-	View: 'View',
+	...kitReactNative,
 	NativeModules: {
 		get SettingsManager() {
 			return { settings: { AppleLocale: device.locale } };
