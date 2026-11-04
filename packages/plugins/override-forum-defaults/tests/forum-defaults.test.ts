@@ -1,8 +1,14 @@
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
+
+// Health is module state that earlier tests in this process left behind.
+beforeEach(() => {
+	resetHealth();
+});
 
 const DISCORD_LAYOUT = 2;
 const DISCORD_SORT_ORDER = 1;
