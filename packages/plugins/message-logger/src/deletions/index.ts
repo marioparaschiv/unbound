@@ -1,11 +1,12 @@
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import { settings } from '@unbound-app/settings';
 import { flux } from '@unbound-app/api';
 
 import { filterContext } from '~/log/filter-context';
 import { shouldIgnore } from '~/log/filters';
 import type { MessageLog } from '~/log';
-import { MessageStore } from '~/discord/modules';
+import { MessageStore } from '~/log/modules';
 import { redrawMessage } from '~/rows/redraw';
-import { readSettings } from '~/log/read-settings';
 
 type DeleteAction = {
 	id?: string;
@@ -22,7 +23,7 @@ function keepDeleted(log: MessageLog, channelId: string, messageId: string): boo
 
 	const message = MessageStore.getMessage(channelId, messageId);
 
-	if (!message || shouldIgnore(message, readSettings(), filterContext(channelId), false)) {
+	if (!message || shouldIgnore(message, settings, filterContext(channelId), false)) {
 		return false;
 	}
 
@@ -35,16 +36,16 @@ function keepDeleted(log: MessageLog, channelId: string, messageId: string): boo
 /**
  * @description Keeps deleted messages in the chat by dropping the deletions the log records. A second deletion of a logged message, such as Dismiss message, goes through.
  * @param log The message log.
- * @returns A function that removes the interceptors.
+ * The Addon scope removes the interceptors on `MESSAGE_DELETE` and `MESSAGE_DELETE_BULK` when the plugin stops.
  */
-export function interceptDeletes(log: MessageLog): () => void {
-	const removeSingle = flux.interceptAction('MESSAGE_DELETE', (action) => {
+export function startDeletions(log: MessageLog): void {
+	flux.interceptAction('MESSAGE_DELETE', (action) => {
 		const { id, channelId } = action as DeleteAction;
 
 		return !!id && !!channelId && keepDeleted(log, channelId, id);
 	});
 
-	const removeBulk = flux.interceptAction('MESSAGE_DELETE_BULK', (action) => {
+	flux.interceptAction('MESSAGE_DELETE_BULK', (action) => {
 		const bulk = action as DeleteAction;
 		const { channelId } = bulk;
 
@@ -59,10 +60,5 @@ export function interceptDeletes(log: MessageLog): () => void {
 		return false;
 	});
 
-	return () => {
-		removeBulk();
-		removeSingle();
-	};
+	recordApplied(2);
 }
-
-export default interceptDeletes;

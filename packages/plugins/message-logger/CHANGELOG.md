@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 2026-11-05
+
+### Changed
+
+- The settings screen, the long-press rows, the deleted marker and the edit history sheet can now be translated. Your saved settings stay as they are.
+
 ## [1.0.3] - 2026-11-03
 
 ### Changed

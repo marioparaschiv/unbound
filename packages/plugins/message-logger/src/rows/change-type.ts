@@ -1,7 +1,7 @@
 import { patcher } from '@unbound-app/api';
 
 import { CHANGE_TYPE_NONE, CHANGE_TYPE_UPDATE, PLUGIN_NAME } from '~/constants';
-import { ChatManager } from '~/discord/modules';
+import { ChatManager } from '~/rows/modules';
 import type { MessageLog } from '~/log';
 
 type ChangeInput = {
@@ -11,26 +11,20 @@ type ChangeInput = {
 /**
  * @description Makes the chat send a row to the native list when only its log changed, which Discord would otherwise see as unchanged.
  * @param log The message log.
- * @returns A function that removes the patch.
+ * Patches `determineChangeType` on Discord's `ChatManager`. The Addon scope removes the patch.
  */
-export function patchChatManager(log: MessageLog): () => void {
+export function patchChatManager(log: MessageLog): void {
 	if (typeof ChatManager.prototype?.determineChangeType !== 'function') {
 		console.error(`[${PLUGIN_NAME}] Skipped, ChatManager.determineChangeType not found.`);
 
-		return () => {};
+		return;
 	}
 
-	return patcher.after(
-		ChatManager.prototype,
-		'determineChangeType',
-		({ args: [input], result }) => {
-			const messageId = (input as ChangeInput | undefined)?.message?.id;
+	patcher.after(ChatManager.prototype, 'determineChangeType', ({ args: [input], result }) => {
+		const messageId = (input as ChangeInput | undefined)?.message?.id;
 
-			if (result !== CHANGE_TYPE_NONE || !messageId || !log.takeRender(messageId)) return;
+		if (result !== CHANGE_TYPE_NONE || !messageId || !log.takeRender(messageId)) return;
 
-			return CHANGE_TYPE_UPDATE;
-		},
-	);
+		return CHANGE_TYPE_UPDATE;
+	});
 }
-
-export default patchChatManager;

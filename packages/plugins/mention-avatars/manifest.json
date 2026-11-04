@@ -19,5 +19,5 @@
 	"version": "1.0.9",
 	"icon": "UserCircleIcon",
 	"minNativePluginApi": "1.0.0",
-	"main": "index.ts"
+	"main": "index.tsx"
 }

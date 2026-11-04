@@ -1,3 +1,4 @@
+import { messages } from '@unbound-app/i18n';
 import { Discord } from '@unbound-app/api/metro/components';
 import { storage, ui } from '@unbound-app/api';
 
@@ -9,45 +10,41 @@ type Toggle = {
 	subLabel: string;
 };
 
-const TOGGLES: Toggle[] = [
-	{ key: 'guild', label: 'Mute Server', subLabel: 'Mute new servers automatically' },
-	{
-		key: 'everyone',
-		label: 'Suppress @everyone and @here',
-		subLabel: 'Ignore @everyone and @here in new servers',
-	},
-	{
-		key: 'role',
-		label: 'Suppress All Role @mentions',
-		subLabel: 'Ignore role mentions in new servers',
-	},
-	{
-		key: 'highlights',
-		label: 'Suppress Highlights',
-		subLabel: 'Turn off highlight notifications in new servers',
-	},
-	{ key: 'events', label: 'Mute New Events', subLabel: 'Mute scheduled event notifications' },
-	{
-		key: 'showAllChannels',
-		label: 'Show All Channels',
-		subLabel: 'Show every channel in servers that let you pick channels',
-	},
-];
-
-const MESSAGE_OPTIONS = [
-	{ label: 'All Messages', value: MessageNotifications.All },
-	{ label: 'Only @mentions', value: MessageNotifications.Mentions },
-	{ label: 'Nothing', value: MessageNotifications.Nothing },
-	{ label: 'Server Default', value: MessageNotifications.ServerDefault },
-];
-
 function SettingsPanel() {
 	const settings = storage.useBucket(PLUGIN_ID);
 
+	const toggles: Toggle[] = [
+		{ key: 'guild', label: messages.MUTE_SERVER, subLabel: messages.MUTE_SERVER_SUBTITLE },
+		{
+			key: 'everyone',
+			label: messages.SUPPRESS_EVERYONE,
+			subLabel: messages.SUPPRESS_EVERYONE_SUBTITLE,
+		},
+		{ key: 'role', label: messages.SUPPRESS_ROLES, subLabel: messages.SUPPRESS_ROLES_SUBTITLE },
+		{
+			key: 'highlights',
+			label: messages.SUPPRESS_HIGHLIGHTS,
+			subLabel: messages.SUPPRESS_HIGHLIGHTS_SUBTITLE,
+		},
+		{ key: 'events', label: messages.MUTE_EVENTS, subLabel: messages.MUTE_EVENTS_SUBTITLE },
+		{
+			key: 'showAllChannels',
+			label: messages.SHOW_ALL_CHANNELS,
+			subLabel: messages.SHOW_ALL_CHANNELS_SUBTITLE,
+		},
+	];
+
+	const messageOptions = [
+		{ label: messages.NOTIFY_ALL, value: MessageNotifications.All },
+		{ label: messages.NOTIFY_MENTIONS, value: MessageNotifications.Mentions },
+		{ label: messages.NOTIFY_NOTHING, value: MessageNotifications.Nothing },
+		{ label: messages.NOTIFY_DEFAULT, value: MessageNotifications.ServerDefault },
+	];
+
 	return (
 		<ui.Page>
-			<ui.Section title='When you join a server'>
-				{TOGGLES.map(({ key, label, subLabel }) => (
+			<ui.Section title={messages.WHEN_YOU_JOIN}>
+				{toggles.map(({ key, label, subLabel }) => (
 					<ui.SwitchRow
 						key={key}
 						label={label}
@@ -58,11 +55,11 @@ function SettingsPanel() {
 				))}
 			</ui.Section>
 			<Discord.TableRadioGroup
-				title='Server Notification Settings'
+				title={messages.SERVER_NOTIFICATION_SETTINGS}
 				value={String(settings.get('messages', DEFAULTS.messages))}
 				onChange={(value) => settings.set('messages', Number(value))}
 			>
-				{MESSAGE_OPTIONS.map(({ label, value }) => (
+				{messageOptions.map(({ label, value }) => (
 					<Discord.TableRadioRow key={value} label={label} value={String(value)} />
 				))}
 			</Discord.TableRadioGroup>

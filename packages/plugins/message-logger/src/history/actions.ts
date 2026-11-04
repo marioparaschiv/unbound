@@ -2,7 +2,7 @@ import { flux } from '@unbound-app/api';
 
 import type { AttachmentLike } from '~/edits/attachments';
 import type { MessageLog } from '~/log';
-import { MessageStore } from '~/discord/modules';
+import { MessageStore } from '~/log/modules';
 import { redrawMessage } from '~/rows/redraw';
 
 export const CLEARING_FLAG = 'messageLoggerClearing';
@@ -78,11 +78,11 @@ export function channelHasLog(log: MessageLog, channelId: string): boolean {
 
 /**
  * @description Removes the deleted messages and attachments the log kept, for `stop`, so none of them is left looking like a live message.
+ * Runs while the deletion interceptor is still on, which lets a second deletion of a logged message through and forgets it.
  * @param log The message log.
  */
 export function purgeLog(log: MessageLog): void {
 	for (const { channelId, messageId } of log.deletedMessages()) {
-		log.forget(messageId);
 		void flux.dispatch({ type: 'MESSAGE_DELETE', id: messageId, channelId });
 	}
 
