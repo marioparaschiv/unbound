@@ -1,5 +1,5 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
-import { beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { forwardRef } from 'react';
 import { View, type ViewProps } from 'react-native';
 
@@ -15,11 +15,8 @@ function renderWebView(props: WebViewProps) {
 	return render(<WebView {...props} />).find('View').props as WebViewProps;
 }
 
-beforeAll(() => {
-	metro.register({ WebView });
-});
-
 beforeEach(async () => {
+	metro.register({ WebView });
 	await startPlugin();
 });
 
