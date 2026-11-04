@@ -27,12 +27,20 @@ export const contextMenus = {
 	hideContextMenu: () => void hiddenMenus.push(hiddenMenus.length),
 };
 
+// A module Discord changed so that its method cannot be read, which a patch on it throws on.
+const BrokenContextMenus = {
+	get showContextMenu(): never {
+		throw new Error('The menu module changed shape.');
+	},
+	hideContextMenu: () => {},
+};
+
 export function dispatch(action: Action) {
 	return flux.dispatch(action);
 }
 
 /** Registers the Discord modules the plugin patches (leaving out the context menus when asked), seeds the stores it reads and starts the plugin. */
-export async function startGuildSettings(optIn = false, withContextMenus = true) {
+export async function startGuildSettings(optIn = false, brokenContextMenus = false) {
 	applied.length = 0;
 	toggled.length = 0;
 	hidden.length = 0;
@@ -45,7 +53,7 @@ export async function startGuildSettings(optIn = false, withContextMenus = true)
 	metro.register({ toggleShowAllChannels: (guildId: string) => void toggled.push(guildId) });
 	metro.register(guildActions);
 	metro.register(sheets);
-	if (withContextMenus) metro.register(contextMenus);
+	metro.register(brokenContextMenus ? BrokenContextMenus : contextMenus);
 	metro.register({ SettingsIcon: () => null });
 	flux.seed({
 		User: { getCurrentUser: () => ({ id: ME }) },

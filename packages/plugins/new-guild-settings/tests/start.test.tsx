@@ -1,5 +1,5 @@
 import { render } from '@unbound-app/api/testing';
-import { beforeEach, expect, test } from 'bun:test';
+import { beforeEach, expect, spyOn, test } from 'bun:test';
 import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { View } from 'react-native';
 import { createElement } from 'react';
@@ -35,8 +35,9 @@ test('reports healthy once every feature has started', async () => {
 });
 
 test('keeps the action sheet row when the context menu cannot be patched', async () => {
-	// A Discord build with no context menu module to patch.
-	await startGuildSettings(false, false);
+	const error = spyOn(console, 'error').mockImplementation(() => {});
+
+	await startGuildSettings(false, true);
 
 	const module = { default: GuildSheet };
 
@@ -50,4 +51,7 @@ test('keeps the action sheet row when the context menu cannot be patched', async
 		'Apply New Guild Settings',
 	);
 	expect((await selfTest()).ok).toBe(false);
+	expect(error).toHaveBeenCalled();
+
+	error.mockRestore();
 });
