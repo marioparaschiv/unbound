@@ -362,6 +362,7 @@
     "packages/plugin-scripts": {
       "name": "@unbound-app/plugin-scripts",
       "devDependencies": {
+        "@resvg/resvg-js": "^2.6.2",
         "@types/bun": "catalog:",
         "@unbound-app/contracts": "workspace:*",
         "@unbound-app/types": "workspace:*",
