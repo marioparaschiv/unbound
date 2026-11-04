@@ -1,10 +1,10 @@
-import { createLogger } from '@unbound-app/logger';
 import { and, eq, inArray, isNotNull, or } from 'drizzle-orm';
+import { createLogger } from '@unbound-app/logger';
 
 import { OPEN_SUBMISSION_STATUSES } from '~/lib/submissions';
+import { addonVersion, submission } from '~/db/schema';
 import { appendEvent } from '~/lib/moderation-events';
 import type { AppContext } from '~/lib/context';
-import { addonVersion, submission } from '~/db/schema';
 
 const logger = createLogger('Web', 'Staging');
 

@@ -3,9 +3,9 @@ import { eq } from 'drizzle-orm';
 
 import { listReviewQueue, reviewSubmission } from '~/lib/review';
 import { createSubmission } from '~/lib/submissions';
-import { user } from '~/db/schema';
 import type { Caller } from '~/lib/api/caller';
 import type { Role } from '~/lib/auth/access';
+import { user } from '~/db/schema';
 
 import { createTestContext, linkGitHub, signInWithDiscord, snowflakeAt } from './helpers/context';
 import { commitPlugin, serveGitHub } from './helpers/github';

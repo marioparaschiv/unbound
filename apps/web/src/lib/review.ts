@@ -223,9 +223,7 @@ async function requireReviewable(
 	return { row: requireSourced(row), republish };
 }
 
-// Repeating an approval whose files failed to write finishes the write, for any reviewer. The version
-// must still belong to this submission and be unpublished, so a version another submission replaced
-// or one already published is never touched.
+// A repeated approval finishes a failed write only while the version is still this submission's and unpublished.
 async function isRepublish(
 	ctx: AppContext,
 	row: SubmissionRow,
@@ -325,8 +323,7 @@ async function readArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise
 	return { sha256, bundle, page, files };
 }
 
-// Runs after `decide` commits, and again on a repeated approval: each key is overwritten with the same
-// verified bytes, then the version stops being pending, which takes it off the review queue. Writing earlier let a losing request leave its files under the version's keys.
+// Runs after `decide` commits, and again on a repeated approval. Writing earlier let a losing request leave files under the version's keys.
 async function publishArtifact(
 	ctx: AppContext,
 	row: SourcedSubmissionRow,
