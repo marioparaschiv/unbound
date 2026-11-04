@@ -1,5 +1,6 @@
 import {
 	createContext,
+	Component,
 	createElement,
 	forwardRef,
 	memo,
@@ -18,6 +19,12 @@ function render(element: ReactNode) {
 
 	return { ...renderer, ...queriesOf(renderer.root) };
 }
+
+type LabelState = { clicks: number; seen: string };
+
+type PrefixProps = { prefix: string };
+
+type PressProps = { onPress: () => void };
 
 describe('createTestRenderer', () => {
 	test('keeps hook state across re-renders and batches updates in act', () => {
@@ -135,5 +142,53 @@ describe('formatIcu', () => {
 			'{count} has no "other" branch',
 		);
 		expect(() => formatIcu('{count, plural, one {#}')).toThrow('Expected "}" at character 24');
+	});
+
+	test('renders class components with state, context, derived state and lifecycle', () => {
+		const log: string[] = [];
+		const Theme = createContext('dark');
+
+		class Label extends Component<PrefixProps, LabelState> {
+			static contextType = Theme;
+			declare context: string;
+			state = { clicks: 0, seen: '' };
+
+			static getDerivedStateFromProps(props: PrefixProps) {
+				return { seen: props.prefix };
+			}
+
+			componentDidMount() {
+				log.push('mount');
+			}
+
+			componentDidUpdate(previous: PrefixProps) {
+				log.push(`update ${previous.prefix}->${this.props.prefix}`);
+			}
+
+			componentWillUnmount() {
+				log.push('unmount');
+			}
+
+			render() {
+				return createElement(
+					'Pressable',
+					{ onPress: () => this.setState({ clicks: this.state.clicks + 1 }) },
+					`${this.state.seen}:${this.context}:${this.state.clicks}`,
+				);
+			}
+		}
+
+		const { find, text, update, unmount } = render(createElement(Label, { prefix: 'a' }));
+
+		expect(text()).toBe('a:dark:0');
+
+		act(() => find<PressProps>('Pressable').props.onPress());
+		expect(text()).toBe('a:dark:1');
+
+		update(createElement(Label, { prefix: 'b' }));
+		expect(text()).toBe('b:dark:1');
+
+		unmount();
+		expect(log).toEqual(['mount', 'update a->a', 'update a->b', 'unmount']);
 	});
 });

@@ -1,5 +1,5 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
-import { beforeAll, beforeEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo } from 'react';
 import { View } from 'react-native';
 
@@ -24,17 +24,15 @@ function renderComposer(options: { premiumType?: number; colorEffects?: boolean 
 	});
 }
 
-beforeAll(() => {
+// The preset forgets registered modules before each test, so each test registers them again.
+beforeEach(async () => {
+	draft.text = '';
 	metro.register({ getBestActiveInputForChannelId: () => ({ getText: () => draft.text }) });
 	metro.register(
 		{ default: FloatingChatInputContainer },
 		'modules/chat_input/native/FloatingChatInputContainer.tsx',
 	);
 	metro.register({ colors: { TEXT_NORMAL: '#f2f3f5', RED_400: '#ed4245' }, internal: {} });
-});
-
-beforeEach(async () => {
-	draft.text = '';
 	await startPlugin();
 });
 
