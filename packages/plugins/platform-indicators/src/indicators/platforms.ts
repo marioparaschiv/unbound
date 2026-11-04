@@ -1,4 +1,6 @@
-import { PLATFORM_LABELS, PLATFORM_GLYPHS, type Platform } from '~/constants';
+import { format, messages } from '@unbound-app/i18n';
+
+import { PLATFORM_GLYPHS, type Platform } from '~/constants';
 
 export type ClientStatusMap = Partial<Record<string, string>>;
 
@@ -12,6 +14,15 @@ export type PlatformStatus = {
 	status: string;
 };
 
+// Read when a label is shown, so each follows the user's language.
+const PLATFORM_LABELS: Record<Platform, () => string> = {
+	desktop: () => messages.PLATFORM_DESKTOP,
+	mobile: () => messages.PLATFORM_MOBILE,
+	web: () => messages.PLATFORM_WEB,
+	embedded: () => messages.PLATFORM_EMBEDDED,
+	vr: () => messages.PLATFORM_VR,
+};
+
 const STATUS_RANK: Record<string, number> = { online: 2, idle: 1 };
 
 function rank(status: string | undefined): number {
@@ -19,12 +30,14 @@ function rank(status: string | undefined): number {
 }
 
 /**
- * @description Names a platform the way Vencord's tooltips do.
+ * @description Names a platform the way Vencord's tooltips do, in the user's language.
  * @param platform A client status key, such as `desktop` or `embedded`.
  * @returns The platform's label, such as `Desktop` or `Embedded (Console or Game)`.
  */
 export function platformLabel(platform: string): string {
-	return PLATFORM_LABELS[platform] ?? platform.charAt(0).toUpperCase() + platform.slice(1);
+	const label = PLATFORM_LABELS[platform as Platform];
+
+	return label ? label() : platform.charAt(0).toUpperCase() + platform.slice(1);
 }
 
 /**
@@ -116,5 +129,5 @@ export function describePlatforms(statuses: PlatformStatus[]): string {
 		statuses.map(({ platform }) => platformLabel(platform)),
 	);
 
-	return `Online on ${list}`;
+	return format('ONLINE_ON', { platforms: list });
 }

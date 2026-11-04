@@ -1,11 +1,14 @@
+import { useSetting } from '@unbound-app/settings';
 import { toasts } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import PlatformIcon from '~/components/platform-icon';
-import { describePlatforms, platformLabel } from '~/platforms';
-import { usePlatformStatuses } from '~/status-map';
+import PlatformIcon from '~/indicators/components/platform-icon';
+import { describePlatforms, platformLabel } from '~/indicators/platforms';
+import { usePlatformStatuses } from '~/indicators/status-map';
 
 type PlatformIndicatorsProps = {
+	setting: 'memberList' | 'profiles';
 	userId: string;
 	small: boolean;
 	pressable: boolean;
@@ -15,15 +18,17 @@ type PlatformIndicatorsProps = {
 function showPlatform(platform: string) {
 	toasts.show({
 		id: 'platform-indicators',
-		title: 'Platform Indicators',
+		title: messages.PLATFORM_INDICATORS,
 		content: platformLabel(platform),
 	});
 }
 
-function PlatformIndicators({ userId, small, pressable, style }: PlatformIndicatorsProps) {
+function PlatformIndicators({ setting, userId, small, pressable, style }: PlatformIndicatorsProps) {
+	const enabled = useSetting(setting);
 	const statuses = usePlatformStatuses(userId);
 
-	if (!statuses.length) return null;
+	// Hides itself when its switch turns off, so rows already on screen follow it.
+	if (!enabled || !statuses.length) return null;
 
 	return (
 		<View

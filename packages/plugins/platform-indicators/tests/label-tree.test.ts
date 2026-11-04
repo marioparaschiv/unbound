@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { appendToLabel, type TreeNode } from '~/label-tree';
+import { appendToLabel, type TreeNode } from '~/indicators/label-tree';
 
 function clone(node: TreeNode, props: Record<string, unknown>) {
 	return { ...node, props: { ...node.props, ...props } };

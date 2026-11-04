@@ -1,24 +1,6 @@
 export const PLUGIN_NAME = 'Platform Indicators';
 
-export const SETTINGS = {
-	memberList: true,
-	profiles: true,
-	messages: true,
-	colorMobileIndicator: true,
-} as const;
-
-export type SettingKey = keyof typeof SETTINGS;
-
-export const USER_ROW_PATH = 'modules/main_tabs_v2/native/shared_components/user_list/UserRow.tsx';
-export const USER_PROFILE_PRIMARY_INFO_PATH =
-	'modules/user_profile/native/UserProfilePrimaryInfo.tsx';
-
 export type Platform = 'desktop' | 'mobile' | 'web' | 'embedded' | 'vr';
-
-export const PLATFORM_LABELS: Partial<Record<string, string>> = {
-	embedded: 'Embedded (Console or Game)',
-	vr: 'VR',
-};
 
 export const PLATFORM_GLYPHS: Record<Platform, string> = {
 	desktop: '🖥️',

@@ -1,8 +1,9 @@
+import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 
-import { getPlatformStatuses } from '~/status-map';
-import { MessageRowData } from '~/modules';
-import { addPlatforms } from '~/header';
+import { getPlatformStatuses } from '~/indicators/status-map';
+import { MessageRowData } from '~/indicators/modules';
+import { addPlatforms } from '~/indicators/header';
 
 type Author = { id?: string; bot?: boolean; system?: boolean };
 type Message = { author?: Author; type?: number };
@@ -13,10 +14,11 @@ function isChatMessage(message: Message) {
 
 /**
  * @description Shows each message author's platforms after the message timestamp.
- * @returns A function that removes the patch.
  */
-export function patchMessageRowData(): () => void {
-	return patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+export function patchMessageRow(): void {
+	patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+		if (!settings.messages) return;
+
 		const message: Message | undefined = args[0]?.message;
 		const author = message?.author;
 		const row = result?.message;
@@ -29,5 +31,3 @@ export function patchMessageRowData(): () => void {
 		addPlatforms(row, getPlatformStatuses(author.id));
 	});
 }
-
-export default patchMessageRowData;

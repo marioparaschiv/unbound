@@ -9,7 +9,7 @@ import {
 	platformLabel,
 	platformStatuses,
 	statusesKey,
-} from '~/platforms';
+} from '~/indicators/platforms';
 
 function session(client: string, status: string) {
 	return { status, clientInfo: { client, os: 'x', version: 0 } };
