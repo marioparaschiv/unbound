@@ -122,6 +122,15 @@ function names(args: (string | FindOptions)[]): string[] {
 	return args.filter((arg) => typeof arg === 'string');
 }
 
+// The client rejects a file-path filter inside a combination, because it matches the raw module record, not exports.
+function assertCombinable(kind: 'all' | 'any' | 'not', part: FakeFilter) {
+	if (part.path !== undefined) {
+		throw new TypeError(
+			`Failed to combine filters: ${kind}() cannot take a raw filter such as byFilePath.`,
+		);
+	}
+}
+
 function isEager(args: (string | FindOptions)[]): boolean {
 	return args.some((arg) => typeof arg === 'object' && arg.lazy === false);
 }
@@ -180,15 +189,21 @@ export function createFakeMetro(): FakeMetro {
 		byTypeName: (name) => (module) => module.type?.name === name,
 		byFilePath: (path) =>
 			Object.assign((module: FakeModule) => paths.get(module) === path, { path }),
-		all:
-			(...parts) =>
-			(module) =>
-				parts.every((part) => part(module)),
-		any:
-			(...parts) =>
-			(module) =>
-				parts.some((part) => part(module)),
-		not: (part) => (module) => !part(module),
+		all: (...parts) => {
+			for (const part of parts) assertCombinable('all', part);
+
+			return (module) => parts.every((part) => part(module));
+		},
+		any: (...parts) => {
+			for (const part of parts) assertCombinable('any', part);
+
+			return (module) => parts.some((part) => part(module));
+		},
+		not: (part) => {
+			assertCombinable('not', part);
+
+			return (module) => !part(module);
+		},
 	};
 
 	const handles = new WeakMap<FakeModule, LazyLookup>();

@@ -167,6 +167,17 @@ describe('createRecordingPatcher', () => {
 });
 
 describe('createFakeMetro', () => {
+	test('rejects a file-path filter inside a combination, as the client does', () => {
+		const { filters } = createFakeMetro();
+		const path = filters.byFilePath('modules/Sticker.tsx');
+
+		expect(() => filters.any(path, filters.byName('Sticker'))).toThrow(
+			/cannot take a raw filter/,
+		);
+		expect(() => filters.all(path)).toThrow(/cannot take a raw filter/);
+		expect(() => filters.not(path)).toThrow(/cannot take a raw filter/);
+	});
+
 	test('finds registered modules and settles a lazy wait when its module registers', async () => {
 		const metro = createFakeMetro();
 		const loaded: object[] = [];
