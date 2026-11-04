@@ -53,4 +53,8 @@ declare module '@unbound-app/api/flux' {
 		Permission: PermissionStore;
 		EditMessage: EditMessageStore;
 	}
+
+	interface FluxActions {
+		UPLOAD_ATTACHMENT_ADD_FILES: { channelId?: string; files?: UploadItem[] };
+	}
 }

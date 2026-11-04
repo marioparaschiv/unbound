@@ -1,4 +1,6 @@
-import { ImagePicker } from '~/discord/modules';
+import { messages } from '@unbound-app/i18n';
+
+import { ImagePicker } from '~/uploads/modules';
 import type { UploadItem } from '~/types';
 
 type PickerAsset = {
@@ -46,7 +48,7 @@ function toUploadItem(asset: PickerAsset): UploadItem | null {
  */
 export async function pickAttachments(limit: number): Promise<UploadItem[]> {
 	if (typeof ImagePicker.launchImageLibraryAsync !== 'function') {
-		throw new Error('The media picker is unavailable on this Discord build.');
+		throw new Error(messages.PICKER_UNAVAILABLE);
 	}
 
 	const result: PickerResult = await ImagePicker.launchImageLibraryAsync({

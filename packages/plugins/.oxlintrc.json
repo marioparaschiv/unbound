@@ -35,7 +35,6 @@
 				"chat-bubbles/src/index.tsx",
 				"mention-avatars/src/index.ts",
 				"message-latency/src/index.tsx",
-				"message-link-embeds/src/index.ts",
 				"more-user-tags/src/index.tsx",
 				"more-user-tags/src/ios/tag-gradient-renderer.ts",
 				"moyai/src/index.tsx",

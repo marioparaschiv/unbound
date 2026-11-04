@@ -1,12 +1,15 @@
 import { flux, toasts } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
 import { useEffect, useState } from 'react';
 
-import { SpotifyActions, SpotifyProtocolStore, SpotifyStore, UserStore } from '~/discord/modules';
+import { SpotifyActions, SpotifyProtocolStore, SpotifyStore, UserStore } from '~/listen/modules';
 import type { SpotifyActivity } from '~/types';
-import { LOADING_MS, PLUGIN_NAME, Reasons } from '~/constants';
+import { LOADING_MS, PLUGIN_NAME } from '~/constants';
+
+export type DisabledReason = 'YOURSELF' | 'ALREADY_LISTENING' | 'NOT_DETECTED';
 
 export type ListenState = {
-	disabledReason: string | null;
+	disabledReason: DisabledReason | null;
 	userId: string | undefined;
 };
 
@@ -19,20 +22,23 @@ export function partyUserId(activity: SpotifyActivity): string | undefined {
 	return activity.party?.id?.split(':')[1];
 }
 
-function disabledReason(activity: SpotifyActivity, userId: string | undefined): string | null {
-	if (!userId || userId === UserStore.getCurrentUser?.()?.id) return Reasons.YOURSELF;
+function disabledReason(
+	activity: SpotifyActivity,
+	userId: string | undefined,
+): DisabledReason | null {
+	if (!userId || userId === UserStore.getCurrentUser?.()?.id) return 'YOURSELF';
 
 	const listening = SpotifyStore.getActivity();
 
 	if (listening?.party?.id && listening.party.id === activity.party?.id) {
-		return Reasons.ALREADY_LISTENING;
+		return 'ALREADY_LISTENING';
 	}
 
 	const canPlay =
 		Boolean(SpotifyStore.getActiveSocketAndDevice()) ||
 		Boolean(SpotifyProtocolStore.isProtocolRegistered());
 
-	if (!SpotifyStore.hasConnectedAccount() || !canPlay) return Reasons.NOT_DETECTED;
+	if (!SpotifyStore.hasConnectedAccount() || !canPlay) return 'NOT_DETECTED';
 
 	return null;
 }
@@ -71,6 +77,17 @@ export function useLoading(): { loading: boolean; start: () => void } {
 	return { loading, start: () => setLoading(true) };
 }
 
+function reasonText(reason: DisabledReason | null): string {
+	switch (reason) {
+		case 'ALREADY_LISTENING':
+			return messages.ALREADY_LISTENING;
+		case 'NOT_DETECTED':
+			return messages.NOT_DETECTED;
+		default:
+			return messages.YOURSELF;
+	}
+}
+
 function syncOnNextPlayerState(activity: SpotifyActivity, userId: string) {
 	const stop = flux.onAction('SPOTIFY_PLAYER_STATE', () => {
 		stop();
@@ -86,7 +103,7 @@ function syncOnNextPlayerState(activity: SpotifyActivity, userId: string) {
  */
 export function listenAlong(state: ListenState, activity: SpotifyActivity): boolean {
 	if (state.disabledReason || !state.userId) {
-		toasts.show({ title: PLUGIN_NAME, content: state.disabledReason ?? Reasons.YOURSELF });
+		toasts.show({ title: PLUGIN_NAME, content: reasonText(state.disabledReason) });
 
 		return false;
 	}
