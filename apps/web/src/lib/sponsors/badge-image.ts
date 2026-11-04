@@ -40,9 +40,57 @@ function readChunks(bytes: Uint8Array): Chunk[] | undefined {
 	}
 }
 
+/** The formats a badge image can be stored as. */
+export type BadgeImageFormat = 'png' | 'gif';
+
+const CONTENT_TYPES: Record<BadgeImageFormat, string> = {
+	png: 'image/png',
+	gif: 'image/gif',
+};
+
+// A GIF's logical screen size follows its 6-byte `GIF87a`/`GIF89a` header, as two little-endian words.
+const GIF_HEADER_BYTES = 10;
+const GIF_TRAILER = 0x3b;
+
 /**
- * @description Checks an uploaded badge image: a complete, still PNG, square, with sides from
- * {@link BADGE_IMAGE_MIN_SIZE} to {@link BADGE_IMAGE_MAX_SIZE} px and at most {@link BADGE_IMAGE_MAX_BYTES}.
+ * @description Reads which badge image format a file's bytes are.
+ * @param bytes The file's bytes.
+ * @returns The format, or `undefined` when it is neither a PNG nor a GIF.
+ */
+export function readBadgeImageFormat(bytes: Uint8Array): BadgeImageFormat | undefined {
+	if (matchesMediaFormat('badge.png', bytes)) {
+		return 'png';
+	}
+
+	if (matchesMediaFormat('badge.gif', bytes)) {
+		return 'gif';
+	}
+}
+
+function findSizeProblem(width: number, height: number): string | undefined {
+	if (width !== height) {
+		return `Badge images must be square; this one is ${width}×${height} px.`;
+	}
+
+	if (width < BADGE_IMAGE_MIN_SIZE || width > BADGE_IMAGE_MAX_SIZE) {
+		return `Badge images must be ${BADGE_IMAGE_MIN_SIZE} to ${BADGE_IMAGE_MAX_SIZE} px wide; this one is ${width} px.`;
+	}
+}
+
+function findGifProblem(bytes: Uint8Array): string | undefined {
+	if (bytes.byteLength <= GIF_HEADER_BYTES || bytes.at(-1) !== GIF_TRAILER) {
+		return 'The badge image is not a complete GIF file.';
+	}
+
+	const view = new DataView(bytes.buffer, bytes.byteOffset, GIF_HEADER_BYTES);
+
+	return findSizeProblem(view.getUint16(6, true), view.getUint16(8, true));
+}
+
+/**
+ * @description Checks an uploaded badge image: a complete still PNG or a GIF, which may be animated,
+ * square, with sides from {@link BADGE_IMAGE_MIN_SIZE} to {@link BADGE_IMAGE_MAX_SIZE} px and at most
+ * {@link BADGE_IMAGE_MAX_BYTES}.
  * @param bytes The file's bytes.
  * @returns The rule the image breaks, or `undefined` when it is a valid badge image.
  */
@@ -51,8 +99,14 @@ export function findBadgeImageProblem(bytes: Uint8Array): string | undefined {
 		return `Badge images must be ${BADGE_IMAGE_MAX_LABEL} or smaller.`;
 	}
 
-	if (!matchesMediaFormat('badge.png', bytes)) {
-		return 'Badge images must be PNG files.';
+	const format = readBadgeImageFormat(bytes);
+
+	if (format === 'gif') {
+		return findGifProblem(bytes);
+	}
+
+	if (format !== 'png') {
+		return 'Badge images must be PNG or GIF files.';
 	}
 
 	const chunks = readChunks(bytes);
@@ -65,39 +119,53 @@ export function findBadgeImageProblem(bytes: Uint8Array): string | undefined {
 
 	// APNG declares its frames in an `acTL` chunk ahead of the image data.
 	if (chunks.slice(0, firstData).some((chunk) => chunk.type === 'acTL')) {
-		return 'Badge images must be still; animated PNGs are not allowed.';
+		return 'Animated PNGs are not allowed; upload the animation as a GIF.';
 	}
 
 	const view = new DataView(header.data.buffer, header.data.byteOffset, 8);
-	const width = view.getUint32(0);
-	const height = view.getUint32(4);
 
-	if (width !== height) {
-		return `Badge images must be square; this one is ${width}×${height} px.`;
-	}
-
-	if (width < BADGE_IMAGE_MIN_SIZE || width > BADGE_IMAGE_MAX_SIZE) {
-		return `Badge images must be ${BADGE_IMAGE_MIN_SIZE} to ${BADGE_IMAGE_MAX_SIZE} px wide; this one is ${width} px.`;
-	}
+	return findSizeProblem(view.getUint32(0), view.getUint32(4));
 }
 
 /**
- * @description Names a badge image: the lowercase hex SHA-256 of its bytes.
- * @param bytes The PNG's bytes.
- * @returns The image's hash.
+ * @description Names a badge image: the lowercase hex SHA-256 of its bytes, then `.gif` for a GIF.
+ * PNGs keep the bare hash every badge stored before GIFs refers to.
+ * @param bytes The image's bytes.
+ * @returns The image's name.
  */
 export function hashBadgeImage(bytes: Uint8Array): string {
-	return new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
+	const hash = new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
+
+	return readBadgeImageFormat(bytes) === 'gif' ? `${hash}.gif` : hash;
+}
+
+function formatOf(image: string): BadgeImageFormat {
+	return image.endsWith('.gif') ? 'gif' : 'png';
 }
 
 /**
- * @description The public bucket key a badge image is stored at, derived from its hash so the same
+ * @description The public bucket key a badge image is stored at, derived from its name so the same
  * bytes always land on the same key.
- * @param image The image's hash.
+ * @param image The image's name, from {@link hashBadgeImage}.
  * @returns The key.
  */
 export function getBadgeImageKey(image: string): string {
-	return `badges/${image}.png`;
+	return formatOf(image) === 'gif' ? `badges/${image}` : `badges/${image}.png`;
 }
 
-export default { findBadgeImageProblem, hashBadgeImage, getBadgeImageKey };
+/**
+ * @description The content type a stored badge image is served with.
+ * @param image The image's name, from {@link hashBadgeImage}.
+ * @returns `image/png` or `image/gif`.
+ */
+export function getBadgeImageType(image: string): string {
+	return CONTENT_TYPES[formatOf(image)];
+}
+
+export default {
+	readBadgeImageFormat,
+	findBadgeImageProblem,
+	hashBadgeImage,
+	getBadgeImageKey,
+	getBadgeImageType,
+};

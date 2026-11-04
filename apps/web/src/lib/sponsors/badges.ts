@@ -15,6 +15,7 @@ import { createLogger } from '@unbound-app/logger';
 import {
 	findBadgeImageProblem,
 	getBadgeImageKey,
+	getBadgeImageType,
 	hashBadgeImage,
 } from '~/lib/sponsors/badge-image';
 import { canClaimPerk, isPerkUnlocked, PERKS, roleGrantsPerks } from '~/lib/sponsors/perks';
@@ -162,7 +163,7 @@ function getBadgeUploadKey(userId: string, uploadId: string): string {
  * @param ctx The application context.
  * @param userId The uploader.
  * @param size The file's length in bytes, refused above {@link BADGE_IMAGE_MAX_BYTES}.
- * @returns The upload id to complete, the URL to PUT the PNG to, and when that URL expires.
+ * @returns The upload id to complete, the URL to PUT the PNG or GIF to, and when that URL expires.
  */
 export async function createBadgeUpload(
 	ctx: AppContext,
@@ -208,13 +209,13 @@ async function readStagedBadge(staged: Bun.S3File): Promise<Uint8Array> {
 }
 
 /**
- * @description Completes a badge image upload: checks the staged file is a square, still PNG within
+ * @description Completes a badge image upload: checks the staged file is a square still PNG or GIF within
  * the size limits, stores it in the public bucket under its hash, and deletes the staged file
  * whether it passed or not. The same bytes again store nothing new.
  * @param ctx The application context.
  * @param userId The uploader, whose own upload is completed.
  * @param uploadId The id {@link createBadgeUpload} returned.
- * @returns The image's hash, which a badge refers to, and its URL.
+ * @returns The image's name, which a badge refers to, and its URL.
  */
 export async function completeBadgeUpload(
 	ctx: AppContext,
@@ -237,7 +238,7 @@ export async function completeBadgeUpload(
 		const key = getBadgeImageKey(image);
 
 		if (!(await ctx.storage.public.exists(key))) {
-			await ctx.storage.public.write(key, bytes, { type: 'image/png' });
+			await ctx.storage.public.write(key, bytes, { type: getBadgeImageType(image) });
 		}
 
 		return { image, url: getBadgeImageUrl(ctx.env, image) };

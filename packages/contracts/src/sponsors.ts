@@ -2,7 +2,7 @@ import { Type, type StaticDecode, trimmedString } from './schema';
 
 export const BADGE_NAME_MAX_LENGTH = 24;
 
-/** Badge images are square PNGs with sides in this range, in pixels. */
+/** Badge images are square PNGs or GIFs with sides in this range, in pixels. */
 export const BADGE_IMAGE_MIN_SIZE = 64;
 
 export const BADGE_IMAGE_MAX_SIZE = 256;
@@ -12,10 +12,11 @@ export const BADGE_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 /** {@link BADGE_IMAGE_MAX_BYTES} as every message and hint shows it. */
 export const BADGE_IMAGE_MAX_LABEL = `${BADGE_IMAGE_MAX_BYTES / 1024 / 1024} MB`;
 
-export const BADGE_IMAGE_TYPE = 'image/png';
+/** The file types a badge image can be; a GIF may be animated. */
+export const BADGE_IMAGE_TYPES = ['image/png', 'image/gif'];
 
 /** The rules a badge image follows, in one line. */
-export const BADGE_IMAGE_RULES = `Square PNG, ${BADGE_IMAGE_MIN_SIZE} to ${BADGE_IMAGE_MAX_SIZE} px, up to ${BADGE_IMAGE_MAX_LABEL}`;
+export const BADGE_IMAGE_RULES = `Square PNG or GIF (animated GIFs play on your profile), ${BADGE_IMAGE_MIN_SIZE} to ${BADGE_IMAGE_MAX_SIZE} px, up to ${BADGE_IMAGE_MAX_LABEL}`;
 
 /** How many badges one sponsor shows; as many as fit on a Discord profile. */
 export const BADGE_LIMIT = 3;
@@ -36,9 +37,9 @@ export const badgeNameSchema = trimmedString(
 			: "Use Latin letters, digits, spaces and . , ' ! & + - _ : only, starting with a letter or digit.",
 );
 
-/** A badge image: the lowercase hex SHA-256 of its PNG bytes, which also names it in storage. */
+/** A badge image: the lowercase hex SHA-256 of its bytes, then `.gif` for a GIF, which also names it in storage. */
 export const badgeImageSchema = Type.String({
-	pattern: /^[0-9a-f]{64}$/,
+	pattern: /^[0-9a-f]{64}(\.gif)?$/,
 	errorMessage: 'Upload the badge image first.',
 });
 
@@ -135,7 +136,7 @@ export default {
 	BADGE_IMAGE_MAX_SIZE,
 	BADGE_IMAGE_MAX_BYTES,
 	BADGE_IMAGE_MAX_LABEL,
-	BADGE_IMAGE_TYPE,
+	BADGE_IMAGE_TYPES,
 	BADGE_IMAGE_RULES,
 	BADGE_LIMIT,
 	perkIdSchema,

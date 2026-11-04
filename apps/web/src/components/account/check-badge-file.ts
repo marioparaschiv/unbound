@@ -3,18 +3,18 @@ import {
 	BADGE_IMAGE_MAX_LABEL,
 	BADGE_IMAGE_MAX_SIZE,
 	BADGE_IMAGE_MIN_SIZE,
-	BADGE_IMAGE_TYPE,
+	BADGE_IMAGE_TYPES,
 } from '@unbound-app/contracts/sponsors';
 
 /**
  * @description Checks a picked badge image in the browser before uploading it, by the rules the server
- * enforces: PNG, at most the byte limit, square, with sides in the allowed range.
+ * enforces: PNG or GIF, at most the byte limit, square, with sides in the allowed range.
  * @param file The picked file.
  * @returns The rule it breaks, or `undefined` when it can be uploaded.
  */
 export async function checkBadgeFile(file: File): Promise<string | undefined> {
-	if (file.type !== BADGE_IMAGE_TYPE) {
-		return 'Badge images must be PNG files.';
+	if (!BADGE_IMAGE_TYPES.includes(file.type)) {
+		return 'Badge images must be PNG or GIF files.';
 	}
 
 	if (file.size > BADGE_IMAGE_MAX_BYTES) {
@@ -24,7 +24,7 @@ export async function checkBadgeFile(file: File): Promise<string | undefined> {
 	const bitmap = await createImageBitmap(file).catch(() => undefined);
 
 	if (!bitmap) {
-		return 'This PNG could not be opened.';
+		return 'This image could not be opened.';
 	}
 
 	const { width, height } = bitmap;
