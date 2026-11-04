@@ -1,20 +1,12 @@
-import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import { createFakeReactNative, flux, metro, startPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
-// The testing kit has no fake of `@unbound-app/api/native`, and the gradients draw natively.
-mock.module(new URL('../src/tags/platform.ts', import.meta.url).pathname, () => ({
-	createTagGradients: () => ({
-		start: () => () => {},
-		settled: () => Promise.resolve(),
-		problems: () => Promise.resolve([]),
-		drawn: () => 0,
-	}),
-	toRendererColor: (color: unknown) => color,
+// The testing kit's `react-native` has no `AccessibilityInfo`, which the iOS gradient renderer reads at import.
+mock.module('react-native', () => ({
+	...createFakeReactNative(),
+	AccessibilityInfo: { isReduceMotionEnabled: () => Promise.resolve(false) },
 }));
-
-// The testing kit's `react-native` has no `processColor`.
-mock.module('react-native', () => ({ processColor: (color: unknown) => color }));
 
 type TagProperties = { opTagText: string | null; tagText: string | null };
 
@@ -40,20 +32,28 @@ function memberMessage(id: string) {
 	return { id: 'm2', channel_id: 'c1', author: { id } };
 }
 
-beforeAll(() => {
+beforeEach(async () => {
+	permissionsOf.value = 0n;
 	metro.register({ Permissions: PERMISSIONS, ThemeTypes: {} });
 	metro.register({ computePermissions: () => permissionsOf.value, canEveryoneRole: () => false });
 	metro.register(getTagProperties);
-});
 
-beforeEach(async () => {
-	permissionsOf.value = 0n;
 	flux.seed({
 		Channel: { getChannel: () => ({ id: 'c1', guild_id: 'g1' }) },
 		Guild: { getGuild: () => ({ id: 'g1', ownerId: OWNER_ID }) },
 		GuildMember: { getMember: () => undefined },
 	});
-	await startPlugin();
+	// The gradients draw natively; these tests read tag text only, so the bridge runs nothing.
+	await startPlugin({
+		native: {
+			ui: {
+				createScope: () => ({ dispose() {} }),
+				call: () => Object.assign(Promise.resolve(true as never), { cancel() {} }),
+				run() {},
+				callback: () => () => {},
+			},
+		},
+	});
 });
 
 describe('tags', () => {
