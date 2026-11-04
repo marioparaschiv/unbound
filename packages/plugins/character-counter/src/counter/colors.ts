@@ -1,5 +1,5 @@
+import type { CounterTone } from '~/counter/limit';
 import { TONE_COLORS } from '~/constants';
-import type { CounterTone } from '~/counter';
 
 export type ThemeColors = Partial<Record<string, string>>;
 
@@ -31,8 +31,8 @@ export function toneColor(tone: CounterTone, colors: ThemeColors): string {
  * @param textColor The theme's text color, as hex or `rgb()`.
  * @returns A light tint behind light text or an unreadable color, a dark tint behind dark text.
  */
-export function counterSurface(textColor: unknown): string {
-	const channels = typeof textColor === 'string' ? rgbChannels(textColor) : undefined;
+export function counterSurface(textColor: string | undefined): string {
+	const channels = textColor ? rgbChannels(textColor) : undefined;
 	const darkText =
 		channels && (channels[0] * 299 + channels[1] * 587 + channels[2] * 114) / 1000 <= 160;
 

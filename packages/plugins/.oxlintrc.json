@@ -25,8 +25,7 @@
 		],
 		"unbound/no-window-unbound": "error",
 		"unbound/platform-check-only-in-platform-file": "error",
-		// Lookups stay eager by default until slice 36 (UB-142) makes addon lookups lazy; flip this then.
-		"unbound/no-module-scope-lookup": ["error", { "lazyByDefault": false }]
+		"unbound/no-module-scope-lookup": ["error", { "lazyByDefault": true }]
 	},
 	"overrides": [
 		{

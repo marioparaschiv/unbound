@@ -9,10 +9,14 @@ declare module '@unbound-app/i18n' {
 		readonly COLOR_THRESHOLDS: string;
 		/** Warn as the message approaches Discord’s character limit. */
 		readonly COLOR_THRESHOLDS_SUBTITLE: string;
+		/** {length} of {limit} characters */
+		readonly COUNTER_LABEL: string;
 	};
 
 	/** The placeholder values each message that has placeholders takes. */
-	export type FormatVars = Record<never, never>;
+	export type FormatVars = {
+		COUNTER_LABEL: { length: string | number; limit: string | number };
+	};
 
 	/** Each message in the user's locale, falling back to en-US. */
 	export const messages: Messages;

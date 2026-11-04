@@ -1,12 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
-import { characterLimit, counterTone } from '~/counter';
+import { characterLimit, counterTone } from '~/counter/limit';
 
 describe('characterLimit', () => {
 	test('uses Discord message limits for standard and Nitro accounts', () => {
-		expect(characterLimit(0)).toBe(2000);
+		expect(characterLimit({ premiumType: 0 })).toBe(2000);
 		expect(characterLimit(undefined)).toBe(2000);
-		expect(characterLimit(2)).toBe(4000);
+		expect(characterLimit({ premiumType: 2 })).toBe(4000);
 	});
 });
 

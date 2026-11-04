@@ -1,24 +1,27 @@
 import { COMPOSER_ROW_RIGHT, useComposerRow } from '@unbound-plugins/shared/composer/overlay-rows';
-import type { FluxChannel } from '@unbound-app/api/flux';
-import { Text, View } from 'react-native';
 import { useSetting } from '@unbound-app/settings';
+import { flux, metro } from '@unbound-app/api';
+import { format } from '@unbound-app/i18n';
+import { Text, View } from 'react-native';
 
-import useMessageCount from '~/components/use-message-count';
-import { counterSurface, toneColor } from '~/colors';
-import { ChannelStore, Theme } from '~/modules';
-import { counterTone } from '~/counter';
+import { characterLimit, counterTone } from '~/counter/limit';
+import { counterSurface, toneColor } from '~/counter/colors';
+import { ChannelStore, UserStore } from '~/counter/modules';
+import { useDraftLength } from '~/counter/use-draft-length';
 import { COUNTER_HEIGHT } from '~/constants';
 
 type CharacterCounterProps = { channelId: string };
 
-type SlowmodeChannel = FluxChannel & { rateLimitPerUser?: number };
-
-function CharacterCounter({ channelId }: CharacterCounterProps) {
-	const { length, limit } = useMessageCount(channelId);
+/**
+ * @description The `length/limit` pill above a channel's composer, shown while a message is being written.
+ * @param props The channel whose draft it counts.
+ */
+export function CharacterCounter({ channelId }: CharacterCounterProps) {
+	const length = useDraftLength(channelId);
+	const limit = flux.useStore(UserStore, (store) => characterLimit(store.getCurrentUser()));
 	const colorEffects = useSetting('colorEffects');
-	const channel: SlowmodeChannel | undefined = ChannelStore.getChannel(channelId);
 	const top = useComposerRow({
-		channel,
+		channel: ChannelStore.getChannel(channelId),
 		channelId,
 		id: 'character-counter',
 		order: 0,
@@ -28,18 +31,13 @@ function CharacterCounter({ channelId }: CharacterCounterProps) {
 
 	if (!length) return null;
 
-	const colors = Theme.colors ?? {};
+	const colors = metro.common.Theme.colors ?? {};
 	const tone = counterTone(length, limit, colorEffects);
 
 	return (
 		<View
 			pointerEvents='none'
-			style={{
-				position: 'absolute',
-				top,
-				right: COMPOSER_ROW_RIGHT,
-				zIndex: 10,
-			}}
+			style={{ position: 'absolute', top, right: COMPOSER_ROW_RIGHT, zIndex: 10 }}
 		>
 			<View
 				style={{
@@ -52,7 +50,7 @@ function CharacterCounter({ channelId }: CharacterCounterProps) {
 				}}
 			>
 				<Text
-					accessibilityLabel={`${length} of ${limit} characters`}
+					accessibilityLabel={format('COUNTER_LABEL', { length, limit })}
 					style={{
 						color: toneColor(tone, colors),
 						fontSize: 11,
@@ -68,5 +66,3 @@ function CharacterCounter({ channelId }: CharacterCounterProps) {
 		</View>
 	);
 }
-
-export default CharacterCounter;
