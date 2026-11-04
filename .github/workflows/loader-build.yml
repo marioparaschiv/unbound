@@ -372,7 +372,7 @@ jobs:
 
             - name: Name the releases
               id: names
-              if: inputs.release == true
+              if: inputs.release == true && steps.source.outputs.missing != 'true'
               env:
                   RELEASE_VERSION: ${{ steps.resolve.outputs.release_version || steps.select.outputs.release_version }}
                   ANDROID_VERSION: ${{ steps.resolve.outputs.android_version }}
