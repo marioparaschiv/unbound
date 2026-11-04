@@ -2,7 +2,7 @@
 
 - :circle-user: Animated avatars and profile banners play everywhere, not only on profiles.
 - :award: Avatar decorations and nameplates play on a loop instead of only when you press them.
-- :wand-magic-sparkles: Profile effects play when you open a profile.
+- :wand-sparkle: Profile effects play when you open a profile.
 - :server: Animated server icons and banners play in the server list, not only for the server you have open.
 - :face-smile: Animated emojis play in messages, reactions and custom statuses.
 - :sticker: Animated stickers loop instead of playing once.
