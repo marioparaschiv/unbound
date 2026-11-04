@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.6] - 2026-11-03
+
+### Changed
+
+- On iOS, the plugin reads a message cell's views only when that message has a latency record, and checks whether a cell left the screen without reading its views at all.
+
+### Fixed
+
+- On iOS, the icon also shows for authors with a short name and server tags or role badges next to it, whose header the plugin used to give up on.
+
+## [1.2.5] - 2026-11-03
+
+### Changed
+
+- Publish the plugin's native capabilities in the current manifest format, so Unbound keeps granting them. The plugin works the same as before.
+
 ## [1.2.4] - 2026-11-03
 
 ### Changed

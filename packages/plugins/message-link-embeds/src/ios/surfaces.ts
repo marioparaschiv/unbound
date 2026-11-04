@@ -413,6 +413,7 @@ async function createHost(
 		const view = objc.alloc('UIView');
 
 		await objc.invokeAsync(view, 'setTag:', [EMBED_HOST_TAG]);
+		await objc.invokeAsync(view, 'setClipsToBounds:', [true]);
 		await objc.invokeAsync(view, 'setFrame:', [toRect(objc, { x: 0, y: 0, width, height })]);
 
 		return view;
@@ -430,9 +431,12 @@ async function createHost(
 export function reportSurfaceLayout(session: Session, surfaceId: string, height: number) {
 	const surface = session.surfacesById.get(surfaceId);
 
-	if (!surface || !Number.isFinite(height) || height <= 0 || height > Surface.maxHeight) return;
+	if (!surface || !Number.isFinite(height) || height <= 0) return;
 
-	const fittedHeight = Math.max(Surface.minHeight, height - Surface.bottomTrim);
+	const fittedHeight = Math.max(
+		Surface.minHeight,
+		Math.min(height, Surface.maxHeight) - Surface.bottomTrim,
+	);
 
 	if (Math.abs((surface.pendingHeight ?? surface.height) - fittedHeight) < 2) return;
 

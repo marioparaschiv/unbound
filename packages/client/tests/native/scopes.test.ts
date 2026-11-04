@@ -15,16 +15,13 @@ import {
 	unmounted,
 	asynchronouslyUnmounted,
 	cancelled,
-	removedSubscriptions,
 	javaInvokeArguments,
 	javaPlansDisposed,
 	javaHandle,
 	javaReleased,
 	objcPlansDisposed,
 	nativeHandle,
-	bridge,
 	manifest,
-	nativePlatformBridge,
 	resetNativeFixtures,
 } from '../helpers/native-bridge';
 
@@ -275,20 +272,12 @@ describe('native plugin capability scopes', () => {
 		const token = context.native.runtime.subscribe('message.created', () => undefined);
 
 		expect(token.active).toBe(true);
+		expect(fluxSubscriptions.has('MESSAGE_CREATE')).toBe(true);
 		context.dispose();
-		expect(removedSubscriptions).toEqual(['message.created']);
+		expect(fluxSubscriptions.has('MESSAGE_CREATE')).toBe(false);
 	});
 
-	test('uses the Flux dispatcher for bounded runtime events when the loader has no event adapter', () => {
-		Object.assign(nativePlatformBridge.device, { platform: 'android' });
-		Object.assign(bridge, {
-			capabilities: ['native.runtime.events'],
-			runtime: {
-				subscribe: () => {
-					throw new Error('unexpected host runtime adapter');
-				},
-			},
-		});
+	test('uses the Flux dispatcher for bounded runtime events', () => {
 		const context = createPluginContext({
 			...manifest,
 			capabilities: ['native.runtime.events'],

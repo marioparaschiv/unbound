@@ -18,6 +18,21 @@ int main()
     assert(loader::debugEnvironment(provider)["resources"]["handles"] == 3);
     loader::native::setPlatformHandleCounter(nullptr);
 
+    nlohmann::json kinds = loader::debugEnvironment(provider)["resources"];
+    for (const char *name : {"objcHandles", "objcPlans", "objcRetains", "javaHandles", "leases"})
+    {
+        assert(kinds[name] == 0);
+    }
+    assert(kinds["mainWork"]["drains"].is_number());
+    assert(kinds["mainWaits"].is_array());
+    loader::native::setPlatformResourceCounter(loader::native::kJavaHandleCounter, [] {
+        return size_t(7);
+    });
+    assert(loader::debugEnvironment(provider)["resources"]["javaHandles"] == 7);
+    assert(loader::debugEnvironment(provider)["resources"]["handles"] == 0);
+    loader::native::setPlatformResourceCounter(loader::native::kJavaHandleCounter, nullptr);
+    assert(loader::debugEnvironment(provider)["resources"]["javaHandles"] == 0);
+
     provider.isVirtualDevice = [] {
         return true;
     };

@@ -13,7 +13,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
-	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -171,9 +170,9 @@ func discoverSmokePlugins(directory, platform string) ([]smokePlugin, error) {
 			return nil, err
 		}
 		var manifest struct {
-			ID        string   `json:"id"`
-			Main      string   `json:"main"`
-			Platforms []string `json:"platforms"`
+			ID        string                     `json:"id"`
+			Main      string                     `json:"main"`
+			Platforms map[string]json.RawMessage `json:"platforms"`
 		}
 		if err := json.Unmarshal(data, &manifest); err != nil {
 			return nil, fmt.Errorf("%s: %w", manifestPath, err)
@@ -181,7 +180,7 @@ func discoverSmokePlugins(directory, platform string) ([]smokePlugin, error) {
 		if !smokePluginID.MatchString(manifest.ID) {
 			return nil, fmt.Errorf("%s has an unusable plugin id %q", manifestPath, manifest.ID)
 		}
-		if len(manifest.Platforms) > 0 && !slices.Contains(manifest.Platforms, platform) {
+		if _, listed := manifest.Platforms[platform]; manifest.Platforms != nil && !listed {
 			continue
 		}
 		dist := filepath.Dir(manifestPath)

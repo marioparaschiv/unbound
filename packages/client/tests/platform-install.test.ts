@@ -65,16 +65,6 @@ describe('installing an addon', () => {
 		expect(writes).toEqual([]);
 	});
 
-	test('refuses a platform its older platforms list leaves out', async () => {
-		served = { ...makeManifest(ID), platforms: ['ios'] };
-		runOn('android');
-
-		const { installed, errors } = await install();
-
-		expect(installed).toBeUndefined();
-		expect(errors[0]).toBeInstanceOf(NativePluginUnsupportedPlatformError);
-	});
-
 	test('installs on a platform it lists', async () => {
 		served = { ...makeManifest(ID), platforms: { ios: {} } };
 		runOn('ios');

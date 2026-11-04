@@ -115,24 +115,47 @@ export function dispatcherKind(): DispatcherKind {
  * @returns What the callback returned.
  */
 export function runWithBudget<T>(budget: Budget, run: () => T): T {
+	const base = enterBudget(budget);
+
+	try {
+		return run();
+	} finally {
+		leaveBudget(budget, base);
+	}
+}
+
+/**
+ * @description Starts metering hook calls against a budget, as {@link runWithBudget} does, for a caller that runs
+ * the callback itself. Every call must be paired with {@link leaveBudget} in a `finally`.
+ * @param budget The callback's budget.
+ * @returns React's dispatcher to restore, or `null` outside a render.
+ */
+export function enterBudget(budget: Budget): Dispatcher | null {
 	const base = internals.H;
 
 	if (!base) {
-		return run();
+		return null;
 	}
 
 	frames.push({ budget, base });
 	internals.H = shimFor(base);
 
+	return base;
+}
+
+/**
+ * @description Pads a budget's unused slots and restores React's dispatcher after {@link enterBudget}.
+ * @param budget The budget passed to {@link enterBudget}.
+ * @param base What {@link enterBudget} returned.
+ */
+export function leaveBudget(budget: Budget, base: Dispatcher | null): void {
+	if (!base) return;
+
 	try {
-		return run();
+		settle(budget);
 	} finally {
-		try {
-			settle(budget);
-		} finally {
-			frames.pop();
-			internals.H = base;
-		}
+		frames.pop();
+		internals.H = base;
 	}
 }
 
@@ -329,6 +352,8 @@ export default {
 	LateHook,
 	dispatcherKind,
 	runWithBudget,
+	enterBudget,
+	leaveBudget,
 	runUnbudgeted,
 	settle,
 	hookList,

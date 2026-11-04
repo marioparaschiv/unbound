@@ -1,5 +1,7 @@
 #import "Themes.h"
 
+#include <mach/mach_time.h>
+
 #import "AddonsCore.h"
 #import "CoreBridge.h"
 #import "CoreConversions.h"
@@ -10,8 +12,8 @@ using unbound::ios::toStdString;
 
 @interface Themes ()
 + (void)refreshDiscordTheme;
-+ (void)applyThemeOnMainThread:(NSString *)manifestId;
-+ (BOOL)setThemeOnMainThread:(NSString *)manifestId;
++ (void)refreshDiscordThemeOnMainThread;
++ (void)ensureSemanticColorsSwizzled;
 @end
 
 @implementation Themes
@@ -35,6 +37,25 @@ static NSString *optionalThemeId(const std::optional<std::string> &themeId)
     return themeId ? toNSString(*themeId) : nil;
 }
 
+static NSObject *themeApplicationLock(void)
+{
+    static NSObject       *lock = nil;
+    static dispatch_once_t once;
+    dispatch_once(&once, ^{
+        lock                       = [[NSObject alloc] init];
+        originalRawImplementations = [[NSMutableDictionary alloc] init];
+    });
+    return lock;
+}
+
+static double millisecondsSince(uint64_t start)
+{
+    static mach_timebase_info_data_t timebase;
+    static dispatch_once_t           once;
+    dispatch_once(&once, ^{ mach_timebase_info(&timebase); });
+    return (double) (mach_absolute_time() - start) * timebase.numer / timebase.denom / 1e6;
+}
+
 + (BOOL)isValidCustomTheme:(NSString *)manifestId
 {
     return [CoreBridge hasTheme:manifestId];
@@ -52,37 +73,52 @@ static NSString *optionalThemeId(const std::optional<std::string> &themeId)
 
 + (void)applyTheme:(NSString *)manifestId
 {
-    [Utilities runOnMainThread:^{ [Themes applyThemeOnMainThread:manifestId]; }];
-}
-
-+ (void)applyThemeOnMainThread:(NSString *)manifestId
-{
-    NSString *themeId = optionalThemeId(themeSelection().apply(toStdString(manifestId)));
-
-    [Logger info:LOG_CATEGORY_THEMES format:@"Theme updated. (%@)", themeId ?: @"default"];
-
-    [Themes restoreOriginalRawColors];
-
-    NSDictionary *colors = nil;
-    if (themeId)
+    @synchronized(themeApplicationLock())
     {
-        colors = [CoreBridge themeColorsForId:themeId];
-    }
+        NSString *themeId = optionalThemeId(themeSelection().apply(toStdString(manifestId)));
 
-    @synchronized([Themes class])
-    {
-        semanticColors = colors[@"semantic"];
-        rawFallbacks   = colors[@"rawFallbacks"];
-    }
+        [Logger info:LOG_CATEGORY_THEMES format:@"Theme updated. (%@)", themeId ?: @"default"];
 
-    NSDictionary *raw = colors[@"raw"];
-    if (raw.count)
-    {
-        [Themes swizzleRawColors:raw];
+        [Themes restoreOriginalRawColors];
+
+        NSDictionary *colors = nil;
+        if (themeId)
+        {
+            colors = [CoreBridge themeColorsForId:themeId];
+        }
+
+        NSDictionary *semantic  = colors[@"semantic"];
+        NSDictionary *fallbacks = colors[@"rawFallbacks"];
+        if (semantic.count || fallbacks.count)
+        {
+            [Themes ensureSemanticColorsSwizzled];
+        }
+
+        @synchronized([Themes class])
+        {
+            semanticColors = semantic;
+            rawFallbacks   = fallbacks;
+        }
+
+        NSDictionary *raw = colors[@"raw"];
+        if (raw.count)
+        {
+            [Themes swizzleRawColors:raw];
+        }
     }
 }
 
 + (void)refreshDiscordTheme
+{
+    if ([NSThread isMainThread])
+    {
+        [Themes refreshDiscordThemeOnMainThread];
+        return;
+    }
+    dispatch_async(dispatch_get_main_queue(), ^{ [Themes refreshDiscordThemeOnMainThread]; });
+}
+
++ (void)refreshDiscordThemeOnMainThread
 {
     DCDThemeModule *theme        = currentDiscordTheme;
     NSString       *discordTheme = optionalThemeId(themeSelection().discordTheme());
@@ -104,19 +140,15 @@ static NSString *optionalThemeId(const std::optional<std::string> &themeId)
 
 + (BOOL)setTheme:(NSString *)manifestId
 {
-    __block BOOL applied = NO;
-    [Utilities runOnMainThread:^{ applied = [Themes setThemeOnMainThread:manifestId]; }];
-    return applied;
-}
-
-+ (BOOL)setThemeOnMainThread:(NSString *)manifestId
-{
-    if (!themeSelection().select(toStdString(manifestId)))
+    @synchronized(themeApplicationLock())
     {
-        return NO;
-    }
+        if (!themeSelection().select(toStdString(manifestId)))
+        {
+            return NO;
+        }
 
-    [Themes applyThemeOnMainThread:manifestId];
+        [Themes applyTheme:manifestId];
+    }
     [Themes refreshDiscordTheme];
     return YES;
 }
@@ -140,18 +172,8 @@ static NSString *optionalThemeId(const std::optional<std::string> &themeId)
 
 + (void)init
 {
-    if (!originalRawImplementations)
-    {
-        originalRawImplementations = [[NSMutableDictionary alloc] init];
-    }
-
+    uint64_t started = mach_absolute_time();
     [Themes refreshThemes];
-
-    if (!semanticColorsSwizzled)
-    {
-        [Themes swizzleSemanticColors];
-        semanticColorsSwizzled = YES;
-    }
 
     static dispatch_once_t observeOnce;
     dispatch_once(&observeOnce, ^{
@@ -162,6 +184,11 @@ static NSString *optionalThemeId(const std::optional<std::string> &themeId)
                     usingBlock:^(NSNotification *notification) { [Themes applySelectedTheme]; }];
     });
     [Themes applySelectedTheme];
+
+    [Logger
+          info:LOG_CATEGORY_THEMES
+        format:@"Themes initialized in %.2f ms on the %@ thread. (%@)", millisecondsSince(started),
+               [NSThread isMainThread] ? @"main" : @"runtime", [Themes getTheme] ?: @"default"];
 };
 
 + (void)applySelectedTheme
@@ -235,9 +262,24 @@ static NSString *optionalThemeId(const std::optional<std::string> &themeId)
     [originalRawImplementations removeAllObjects];
 }
 
++ (void)ensureSemanticColorsSwizzled
+{
+    @synchronized(themeApplicationLock())
+    {
+        if (semanticColorsSwizzled)
+        {
+            return;
+        }
+        semanticColorsSwizzled = YES;
+        [Themes swizzleSemanticColors];
+    }
+}
+
 + (void)swizzleSemanticColors
 {
     [Logger info:LOG_CATEGORY_THEMES format:@"Attempting swizzle semantic colors..."];
+    uint64_t started  = mach_absolute_time();
+    unsigned swizzled = 0;
 
     @try
     {
@@ -265,8 +307,9 @@ static NSString *optionalThemeId(const std::optional<std::string> &themeId)
             SEL       selector = method_getName(method);
             NSString *name     = NSStringFromSelector(selector);
 
-            __block id (*original)(Class, SEL);
-            IMP     replacement = imp_implementationWithBlock(^UIColor *(id self) {
+            __block id (*original)(Class, SEL) =
+                (id (*)(Class, SEL)) method_getImplementation(method);
+            IMP replacement = imp_implementationWithBlock(^UIColor *(id self) {
                 UIColor  *themed   = nil;
                 NSString *fallback = nil;
                 @synchronized([Themes class])
@@ -296,10 +339,13 @@ static NSString *optionalThemeId(const std::optional<std::string> &themeId)
             });
 
             MSHookMessageEx(instance, selector, replacement, (IMP *) &original);
+            swizzled++;
         }
 
         free(methods);
-        [Logger info:LOG_CATEGORY_THEMES format:@"Semantic color swizzle completed."];
+        [Logger info:LOG_CATEGORY_THEMES
+              format:@"Semantic color swizzle completed: %u of %u getters in %.2f ms.", swizzled,
+                     methodCount, millisecondsSince(started)];
     }
     @catch (NSException *e)
     {

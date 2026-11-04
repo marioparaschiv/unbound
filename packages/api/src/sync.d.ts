@@ -22,11 +22,6 @@ export declare function disconnect(): void;
 /** @returns Which way automatic syncs move changes on this device. */
 export declare function getMode(): SyncMode;
 /**
- * @deprecated Use account.getAccount
- * @returns The signed-in account, or `null`.
- */
-export declare function getSession(): Account | null;
-/**
  * @returns Whether a sync is applying remote changes right now, so the changes it makes can be told apart.
  */
 export declare function isApplying(): boolean;
@@ -56,27 +51,6 @@ export declare function setEnabled(enabled: boolean): void;
  * @param mode The new mode.
  */
 export declare function setMode(mode: SyncMode): void;
-/**
- * @deprecated Use account.signIn
- * @returns Whether the account signed in.
- */
-export declare function signIn(): Promise<boolean>;
-/**
- * @deprecated Use account.signOut
- * @returns Once the account signed out.
- */
-export declare function signOut(): Promise<void>;
-/** The Unbound account signed in on this device. */
-export type Account = {
-	/** The account's id on Unbound's servers. */
-	id: string;
-	/** The account's display name, refreshed from Unbound's servers at each launch. */
-	name: string;
-	/** The account's avatar image URL, or `null` when it has none. */
-	image: string | null;
-};
-/** @deprecated Use account.Account */
-export type SyncAccount = Account;
 /** Which way automatic syncs move changes on this device. */
 export type SyncMode = 'two-way' | 'download' | 'upload';
 /**

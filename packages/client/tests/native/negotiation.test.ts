@@ -2,7 +2,6 @@ import { afterEach, describe, expect, test } from 'bun:test';
 
 import {
 	NativePluginCapabilityError,
-	NativePluginPlatformError,
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,
 	createPluginContext,
@@ -18,19 +17,17 @@ import {
 afterEach(resetNativeFixtures);
 
 describe('native plugin negotiation', () => {
-	test('supports a generic bridge without Objective-C, FFI, or Fabric namespaces', () => {
+	test('supports an Android bridge without the Objective-C namespace', () => {
 		Object.assign(nativePlatformBridge.device, { platform: 'android' });
 		Object.assign(nativePlatformBridge, { platform: 'android' });
 		Object.assign(bridge, {
 			capabilities: ['native.runtime.events'],
 			objc: undefined,
-			ffi: undefined,
-			fabric: undefined,
 		});
 
 		const context = createPluginContext({
 			...manifest,
-			platformCapabilities: { android: ['native.runtime.events'] },
+			platforms: { android: { capabilities: ['native.runtime.events'] } },
 		});
 
 		expect(context.native.objc).toBeDefined();
@@ -51,9 +48,9 @@ describe('native plugin negotiation', () => {
 		const context = createPluginContext({
 			...manifest,
 			capabilities: ['native.runtime.events'],
-			platformCapabilities: {
-				ios: ['native.objc.classes'],
-				android: ['native.java.classes'],
+			platforms: {
+				ios: { capabilities: ['native.objc.classes'] },
+				android: { capabilities: ['native.java.classes'] },
 			},
 		});
 
@@ -69,9 +66,9 @@ describe('native plugin negotiation', () => {
 		const androidContext = createPluginContext({
 			...manifest,
 			capabilities: ['native.runtime.events'],
-			platformCapabilities: {
-				ios: ['native.objc.classes'],
-				android: ['native.java.classes'],
+			platforms: {
+				ios: { capabilities: ['native.objc.classes'] },
+				android: { capabilities: ['native.java.classes'] },
 			},
 		});
 
@@ -93,9 +90,7 @@ describe('native plugin negotiation', () => {
 		expect(() =>
 			createPluginContext({
 				...manifest,
-				platformCapabilities: {
-					android: ['native.java.hooks'],
-				},
+				platforms: { android: { capabilities: ['native.java.hooks'] } },
 			}),
 		).toThrow(NativePluginCapabilityError);
 	});
@@ -108,8 +103,7 @@ describe('native plugin negotiation', () => {
 		const build = () =>
 			createPluginContext({
 				...manifest,
-				platforms: ['ios'],
-				capabilities: ['native.objc.classes'],
+				platforms: { ios: { capabilities: ['native.objc.classes'] } },
 			});
 
 		expect(build).toThrow(NativePluginUnsupportedPlatformError);
@@ -120,8 +114,7 @@ describe('native plugin negotiation', () => {
 	test('builds a context for a plugin that supports the host platform', () => {
 		const context = createPluginContext({
 			...manifest,
-			platforms: ['ios'],
-			capabilities: ['native.objc.classes'],
+			platforms: { ios: { capabilities: ['native.objc.classes'] } },
 		});
 
 		expect(context.platform).toBe('ios');
@@ -136,11 +129,9 @@ describe('native plugin negotiation', () => {
 		expect(() =>
 			createPluginContext({
 				...manifest,
-				platformCapabilities: {
-					android: ['native.java.classes'],
-				},
+				platforms: { android: { capabilities: ['native.java.classes'] } },
 			}),
-		).toThrow(NativePluginPlatformError);
+		).toThrow(NativePluginUnsupportedPlatformError);
 	});
 
 	test('rejects capabilities that the bridge does not advertise', () => {

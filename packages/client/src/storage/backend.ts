@@ -16,19 +16,8 @@ export type SettingsBackend = {
 	flush: () => void;
 };
 
-type LazyNativeSettings = NativePlatformSettings &
-	Required<Pick<NativePlatformSettings, 'get' | 'stage' | 'flush'>>;
-
 function isSettingsObject(value: SettingsValue | undefined): value is SettingsObject {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function hasLazyAccess(bridge: NativePlatformSettings | undefined): bridge is LazyNativeSettings {
-	return (
-		typeof bridge?.get === 'function' &&
-		typeof bridge.stage === 'function' &&
-		typeof bridge.flush === 'function'
-	);
 }
 
 /**
@@ -36,7 +25,7 @@ function hasLazyAccess(bridge: NativePlatformSettings | undefined): bridge is La
  * @param bridge The loader's settings bridge.
  * @returns The backend.
  */
-export function createNativeBackend(bridge: LazyNativeSettings): SettingsBackend {
+export function createNativeBackend(bridge: NativePlatformSettings): SettingsBackend {
 	return {
 		read: (store, key) => bridge.get(store, key),
 		readAll() {
@@ -131,58 +120,35 @@ function removePath(stores: SettingsStores, store: string, key: string): boolean
 }
 
 /**
- * @description Keeps settings in a JS object and hands the changes to the loader on flush, for loaders without lazy native access.
- * @param stores The settings the loader injected.
- * @param getBridge Reads the loader's settings bridge when changes are flushed.
+ * @description Keeps settings in a JS object only, for runtimes without the loader such as tests.
+ * @param stores The initial settings.
  * @returns The backend.
  */
-export function createMemoryBackend(
-	stores: SettingsStores,
-	getBridge: () => NativePlatformSettings | undefined,
-): SettingsBackend {
-	const pending: NativeSettingsChange[] = [];
-
+export function createMemoryBackend(stores: SettingsStores = {}): SettingsBackend {
 	return {
 		read: (store, key) => readPath(stores, store, key),
 		readAll: () => stores,
 		write(change) {
 			if ('clear' in change) {
-				if (!stores[change.store]) return;
-
 				delete stores[change.store];
 			} else if ('remove' in change) {
-				if (!removePath(stores, change.store, change.key)) return;
+				removePath(stores, change.store, change.key);
 			} else {
 				writePath(stores, change.store, change.key, change.value);
 			}
-
-			pending.push(change);
 		},
-		flush() {
-			const bridge = getBridge();
-
-			if (!bridge || !pending.length) return;
-
-			bridge.apply(pending.splice(0));
-		},
+		flush() {},
 	};
 }
 
 /**
- * @description Picks the native backend when the loader reads settings lazily, else the JS copy it injected.
+ * @description Picks the loader's native settings store, or a JS-only one when no loader is present.
  * @returns The backend.
  */
 export function createSettingsBackend(): SettingsBackend {
 	const bridge = globalThis.NativePlatform?.settings;
 
-	if (hasLazyAccess(bridge)) {
-		return createNativeBackend(bridge);
-	}
-
-	return createMemoryBackend(
-		globalThis.UNBOUND_SETTINGS ?? {},
-		() => globalThis.NativePlatform?.settings,
-	);
+	return bridge ? createNativeBackend(bridge) : createMemoryBackend();
 }
 
 export default createSettingsBackend;

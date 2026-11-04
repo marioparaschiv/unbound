@@ -442,6 +442,18 @@ class NativeJavaTest {
     }
 
     @Test
+    fun staleReleaseAfterReleaseAllLeavesNewHandlesLive() {
+        val stale = handleId(NativeJava.construct("java.lang.StringBuilder", "[]"))
+
+        NativeJava.releaseAll()
+        val fresh = NativeJava.construct("java.lang.StringBuilder", "[]")
+        NativeJava.release(JSONObject().put("id", stale).put("issues", 1).toString())
+
+        assertNotEquals(stale, handleId(fresh))
+        assertEquals("java.lang.StringBuilder", value(NativeJava.className(fresh)).getString("value"))
+    }
+
+    @Test
     fun invokeListsTheOverloadsWhenNoneAcceptTheArguments() {
         val builder = NativeJava.construct("java.lang.StringBuilder", "[]")
 

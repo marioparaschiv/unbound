@@ -132,36 +132,52 @@ object ReactSurfaces {
         override fun activityContext(): Context? = ActivityTracker.currentActivity()
     }
 
+    private class StructuralMethods(classLoader: ClassLoader, val fabricClass: Class<*>) {
+        private val handlerClass = classLoader.loadClass(SURFACE_HANDLER)
+        val startSurface: Method = fabricClass.getMethod("startSurface", handlerClass, Context::class.java, View::class.java)
+        val stopSurface: Method = fabricClass.getMethod("stopSurface", handlerClass)
+        val fromBundle: Method = classLoader.loadClass(ARGUMENTS).getMethod("fromBundle", Bundle::class.java)
+        val setProps: Method = handlerClass.getMethod("setProps", classLoader.loadClass(NATIVE_MAP))
+        val isRunning: Method = handlerClass.getMethod("isRunning")
+    }
+
     private class StructuralSurface(
         private val view: View,
         private val handler: Any,
         private val fabric: Any,
-        private val classLoader: ClassLoader,
+        private val methods: StructuralMethods,
     ) : NativeFabric.Surface {
-        private val handlerClass = classLoader.loadClass(SURFACE_HANDLER)
-
         override fun view(): View = view
 
         override fun start() {
             view.id = View.NO_ID
-            fabric.javaClass.getMethod("startSurface", handlerClass, Context::class.java, View::class.java)
-                .invoke(fabric, handler, view.context, view)
+            methods.startSurface.invoke(fabric, handler, view.context, view)
         }
 
         override fun stop() {
-            fabric.javaClass.getMethod("stopSurface", handlerClass).invoke(fabric, handler)
+            methods.stopSurface.invoke(fabric, handler)
         }
 
         override fun updateProps(props: Bundle) {
-            val nativeMap = classLoader.loadClass(ARGUMENTS).getMethod("fromBundle", Bundle::class.java).invoke(null, props)
-            handlerClass.getMethod("setProps", classLoader.loadClass(NATIVE_MAP)).invoke(handler, nativeMap)
+            methods.setProps.invoke(handler, methods.fromBundle.invoke(null, props))
         }
 
-        override fun isRunning(): Boolean = handlerClass.getMethod("isRunning").invoke(handler) as? Boolean ?: false
+        override fun isRunning(): Boolean = methods.isRunning.invoke(handler) as? Boolean ?: false
     }
 
     private class StructuralHost(private val classLoader: ClassLoader) : NativeFabric.Host {
         private val shapes = DiscordShapes.forClassLoader(classLoader)
+        private val structure by lazy { structuralShapes(shapes) }
+        private val surfaceConstructor by lazy {
+            structure.surface.getConstructor(Context::class.java, String::class.java, Bundle::class.java)
+        }
+        private val factoryInvoke by lazy {
+            classLoader.loadClass(FUNCTION_2).getMethod("invoke", Any::class.java, Any::class.java)
+        }
+
+        @Volatile private var references: SurfaceReferences? = null
+
+        @Volatile private var methods: StructuralMethods? = null
 
         override fun createSurface(
             context: Context,
@@ -170,36 +186,36 @@ object ReactSurfaces {
         ): NativeFabric.Surface {
             val host = reactHost?.get() ?: throw IllegalStateException("The React host is unavailable")
             val instance = ReactRuntime.currentInstance() ?: throw IllegalStateException("The React instance is unavailable")
-            val structure = structuralShapes(shapes)
-            val surface = structure.surface.getConstructor(Context::class.java, String::class.java, Bundle::class.java)
-                .newInstance(context, moduleName, props)
-            val view = createView(structure, host, context, surface)
-            attach(structure, surface, view, host)
+            val surface = surfaceConstructor.newInstance(context, moduleName, props)
+            val view = createView(host, context, surface)
+            attach(surface, view, host)
             val handler = structure.handler.get(surface)
                 ?: throw IllegalStateException("The React surface has no surface handler")
             val fabric = structure.fabric.get(instance)
                 ?: throw IllegalStateException("The React instance has no Fabric UI manager")
-            return StructuralSurface(view, handler, fabric, classLoader)
+            return StructuralSurface(view, handler, fabric, methodsFor(fabric.javaClass))
         }
 
         override fun activityContext(): Context? = ActivityTracker.currentActivity()
 
-        private fun createView(structure: StructuralShapes, host: Any, context: Context, surface: Any): View {
+        private fun methodsFor(fabricClass: Class<*>): StructuralMethods =
+            methods?.takeIf { it.fabricClass == fabricClass } ?: StructuralMethods(classLoader, fabricClass).also { methods = it }
+
+        private fun createView(host: Any, context: Context, surface: Any): View {
             val delegate = structure.delegate.get(host)
                 ?: throw IllegalStateException("The React host has no delegate")
             val factory = structure.viewFactory.get(delegate)
                 ?: throw IllegalStateException("The React host delegate has no surface view factory")
-            val invoke = classLoader.loadClass(FUNCTION_2).getMethod("invoke", Any::class.java, Any::class.java)
-            return invoke.invoke(factory, context, surface) as? View
+            return factoryInvoke.invoke(factory, context, surface) as? View
                 ?: throw IllegalStateException("The surface view factory did not return a view")
         }
 
-        private fun attach(structure: StructuralShapes, surface: Any, view: View, host: Any) {
-            val references = surfaceReferences(surface, structure.references, structure.hostGetter, host)
+        private fun attach(surface: Any, view: View, host: Any) {
+            val found = references ?: surfaceReferences(surface, structure.references, structure.hostGetter, host).also { references = it }
             @Suppress("UNCHECKED_CAST")
-            (references.view.get(surface) as AtomicReference<Any?>).set(view)
+            (found.view.get(surface) as AtomicReference<Any?>).set(view)
             @Suppress("UNCHECKED_CAST")
-            (references.host.get(surface) as AtomicReference<Any?>).set(host)
+            (found.host.get(surface) as AtomicReference<Any?>).set(host)
         }
     }
 }

@@ -28,6 +28,8 @@ beforeEach(() => {
 				begin: (id: string, name: string) => (calls.push(['begin', id, name]), true),
 				end: (id: string) => (calls.push(['end', id]), true),
 				disabled: () => disabled,
+				register: () => 0,
+				activity: () => undefined,
 			},
 		},
 	});
@@ -86,7 +88,7 @@ describe('addon crash guard', () => {
 	test('disables an addon the loader reported crashing, and persists it', () => {
 		states.a = true;
 		states.b = true;
-		disabled = [{ id: 'plugins:a', name: 'a' }];
+		disabled = [{ id: 'plugins:a', name: 'a', phase: 'starting' }];
 
 		manager.load('bundle-a', makeManifest('a'));
 		manager.load('bundle-b', makeManifest('b'));
@@ -104,7 +106,7 @@ describe('addon crash guard', () => {
 
 	test('ignores a crash reported for another addon kind', () => {
 		states.a = true;
-		disabled = [{ id: 'themes:a', name: 'a' }];
+		disabled = [{ id: 'themes:a', name: 'a', phase: 'starting' }];
 
 		manager.load('bundle-a', makeManifest('a'));
 
@@ -114,7 +116,7 @@ describe('addon crash guard', () => {
 
 	test('leaves an addon the user already disabled alone', () => {
 		states.a = false;
-		disabled = [{ id: 'plugins:a', name: 'a' }];
+		disabled = [{ id: 'plugins:a', name: 'a', phase: 'starting' }];
 
 		manager.load('bundle-a', makeManifest('a'));
 
@@ -181,7 +183,10 @@ describe('addon crash attribution', () => {
 
 	test('names the phase the addon crashed in', () => {
 		const running = crashDisabledNotice({ id: 'plugins:a', name: 'a', phase: 'running' }, 'A');
-		const starting = crashDisabledNotice({ id: 'plugins:a', name: 'a' }, 'A');
+		const starting = crashDisabledNotice(
+			{ id: 'plugins:a', name: 'a', phase: 'starting' },
+			'A',
+		);
 
 		expect(running).toContain('Disabled A');
 		expect(running).toMatch(/running/);

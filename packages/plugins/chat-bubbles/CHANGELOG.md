@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.2] - 2026-11-03
+
+### Changed
+
+- On iOS, each bubble is measured with about half as many native calls: the plugin reads a message in batched calls, draws its bubble in one pass on the UI thread, and remembers which cells sit inside other message cells until the cell moves to a different parent view. A reused cell is measured a second time only when its layout or text changed after the first measure, and a bubble that would come out the same is not drawn again.
+
+## [1.5.1] - 2026-11-03
+
+### Changed
+
+- Publish the plugin's native capabilities in the current manifest format, so Unbound keeps granting them. The plugin works the same as before.
+
 ## [1.5.0] - 2026-11-03
 
 ### Added

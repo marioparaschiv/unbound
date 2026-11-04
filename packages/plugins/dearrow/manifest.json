@@ -1,0 +1,19 @@
+{
+	"id": "unbound.dearrow",
+	"name": "Dearrow",
+	"description": "Makes YouTube embed titles and thumbnails less sensationalist, powered by DeArrow.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "ImageIcon",
+	"main": "index.tsx",
+	"startAfterFirstFrame": true
+}

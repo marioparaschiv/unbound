@@ -1,0 +1,18 @@
+{
+	"id": "unbound.blur-nsfw",
+	"name": "Blur NSFW",
+	"description": "Blurs attachments and embedded media in age-restricted channels until you tap them.",
+	"authors": [
+		{
+			"name": "V",
+			"id": "343383572805058560"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "EyeSlashIcon",
+	"main": "index.tsx"
+}

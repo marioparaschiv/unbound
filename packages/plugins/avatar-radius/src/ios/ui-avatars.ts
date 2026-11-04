@@ -19,6 +19,7 @@ const NON_AVATAR_PATHS = [
 ];
 
 type Clip = {
+	key: string;
 	view: NativeObjectHandle;
 	mask: NativeObjectHandle | null;
 };
@@ -40,6 +41,7 @@ type AvatarState = {
 	radius: number;
 	images: Map<string, TrackedImage>;
 	avatars: Map<string, TrackedAvatar>;
+	clips: Map<string, string>;
 };
 
 type StateHolder = Record<typeof STATE_KEY, AvatarState | undefined>;
@@ -213,7 +215,11 @@ function circleClip(objc: NativeObjCBridge, frame: NativeObjectHandle | null): C
 		return undefined;
 	}
 
-	return { view, mask: (objc.invoke(layer, 'mask', []) as NativeObjectHandle | null) ?? null };
+	return {
+		key: keyOf(objc, view),
+		view,
+		mask: (objc.invoke(layer, 'mask', []) as NativeObjectHandle | null) ?? null,
+	};
 }
 
 function adoptImage(objc: NativeObjCBridge, core: NativeObjectHandle): TrackedImage | null {
@@ -271,23 +277,35 @@ function roundImage(current: AvatarState, core: NativeObjectHandle) {
 	}
 
 	remember(current.images, key, image);
+
+	if (image.clip) {
+		remember(current.clips, image.clip.key, key);
+	}
+
 	applyImage(objc, image, cornerFor(current.radius, image.width));
 }
 
 function unmaskClip(current: AvatarState, clip: NativeObjectHandle) {
 	'worklet';
 	const key = keyOf(current.objc, clip);
+	const imageKey = current.clips.get(key);
 
-	for (const image of current.images.values()) {
-		if (image.clip && keyOf(current.objc, image.clip.view) === key) {
-			const layer = layerOf(current.objc, image.clip.view);
+	if (imageKey === undefined) {
+		return;
+	}
 
-			if (layer) {
-				current.objc.invoke(layer, 'setMask:', [null]);
-			}
+	const image = current.images.get(imageKey);
 
-			return;
-		}
+	if (image?.clip?.key !== key) {
+		current.clips.delete(key);
+
+		return;
+	}
+
+	const layer = layerOf(current.objc, image.clip.view);
+
+	if (layer) {
+		current.objc.invoke(layer, 'setMask:', [null]);
 	}
 }
 
@@ -309,7 +327,13 @@ function guarded(action: () => void) {
 export function installAvatarHooks(scope: NativeUIScope, radius: number) {
 	'worklet';
 	const objc = scope.objc as NativeObjCBridge;
-	const current: AvatarState = { objc, radius, images: new Map(), avatars: new Map() };
+	const current: AvatarState = {
+		objc,
+		radius,
+		images: new Map(),
+		avatars: new Map(),
+		clips: new Map(),
+	};
 
 	holder()[STATE_KEY] = current;
 

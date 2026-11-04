@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.9] - 2026-11-03
+
+### Changed
+
+- On iOS, the plugin indexes only messages that are new or changed, skips cells whose message has no mentions, and redraws a waiting cell only when one of its mentions resolved. A mention that never resolves stops being retried after 20 store changes, so cells redraw about 40% less while scrolling. It is checked again whenever its message comes back on screen.
+- On Android, a store change rechecks only the selected channel's unresolved messages instead of indexing the whole channel again.
+
+## [1.0.8] - 2026-11-03
+
+### Changed
+
+- Publish the plugin's native capabilities in the current manifest format, so Unbound keeps granting them. The plugin works the same as before.
+
 ## [1.0.7] - 2026-11-03
 
 ### Changed

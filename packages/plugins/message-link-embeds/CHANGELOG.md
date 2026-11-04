@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.3] - 2026-11-03
+
+### Changed
+
+- Publish the plugin's native capabilities in the current manifest format, so Unbound keeps granting them. The plugin works the same as before.
+
+### Fixed
+
+- On iOS, a linked message taller than the embed's limit is cut off at that height instead of spilling over the rest of the message and the messages below it.
+- On Android, a message whose text is not laid out yet when it is bound is tried again shortly after, instead of staying without its embed.
+
 ## [1.1.2] - 2026-11-03
 
 ### Changed

@@ -19,7 +19,7 @@ static const std::string kBundle = "unbound.98.bundle";
 // Stands in for Unbound's bundle: it records whether Metro and the preload existed when it ran.
 static const std::string kUnbound =
     "globalThis.order = ['unbound:' + typeof globalThis.__d + ':' + "
-    "typeof Object.getOwnPropertyDescriptor(globalThis, 'UNBOUND_SETTINGS')];";
+    "typeof globalThis.UNBOUND_LOADER];";
 static const std::string kDiscord = "globalThis.__d = function () {}; "
                                     "(globalThis.order = globalThis.order || []).push('discord');";
 

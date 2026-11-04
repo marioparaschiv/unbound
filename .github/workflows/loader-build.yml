@@ -239,7 +239,7 @@ jobs:
                   android_code="$INPUT_ANDROID_CODE"
                   if [ "$INPUT_RELEASE" = true ] && [ "$INPUT_IS_TESTFLIGHT" != true ] && [ -z "$android_code" ]; then
                     android_code=$(curl -fsSL "$INPUT_ANDROID_TRACKER/index" | jq -er '.latest.stable | tonumber')
-                    echo "::notice::Pairing the iOS build with the latest Android stable, $android_code"
+                    echo "::notice::Releasing the latest Android stable, $android_code, alongside the latest iOS build"
                   fi
                   {
                     echo "platform=ios"
@@ -275,6 +275,8 @@ jobs:
                   channel: ${{ inputs.is_testflight && 'testflight' || 'appstore' }}
                   version: ${{ steps.select.outputs.requested_version }}
                   output: packages/loader/source.ipa
+                  timeout-seconds: '420'
+                  download-timeout-seconds: '240'
 
             - name: Decrypt the latest source IPA for a dry run
               id: decrypt-latest
@@ -288,6 +290,8 @@ jobs:
                   bundle-id: com.hammerandchisel.discord
                   channel: ${{ inputs.is_testflight && 'testflight' || 'appstore' }}
                   output: packages/loader/source.ipa
+                  timeout-seconds: '420'
+                  download-timeout-seconds: '240'
 
             - name: Settle the source IPA
               id: source
@@ -573,7 +577,6 @@ jobs:
         uses: ./.github/workflows/loader-android.yml
         with:
             ios_version: ${{ needs.resolve-source.outputs.version }}
-            require_matching_version: ${{ inputs.release == true && inputs.is_testflight != true }}
             release: ${{ inputs.release || false }}
             discord_channel: ${{ inputs.android_channel || 'stable' }}
             android_code: ${{ needs.resolve-source.outputs.android_code }}
@@ -628,6 +631,7 @@ jobs:
               with:
                   persist-credentials: false
                   fetch-depth: 0
+                  submodules: recursive
 
             - name: Setup Go tools for loader update publishing
               if: needs.resolve-source.outputs.is_testflight != 'true'

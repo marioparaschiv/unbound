@@ -1,4 +1,8 @@
-import type { NativeCancelablePromise, NativeObjectHandle } from '@unbound-app/api/native';
+import type {
+	NativeCancelablePromise,
+	NativeHookToken,
+	NativeObjectHandle,
+} from '@unbound-app/api/native';
 import { safeInvoke } from '@unbound-plugins/shared/native/ios/safe-invoke';
 
 import type { Session } from '~/ios/session';
@@ -8,7 +12,7 @@ import { key } from '~/ios/views';
 // A table re-measures its rows on an empty `beginUpdates`/`endUpdates` pair; `dirty` marks one as needed.
 export type TableLayout = {
 	dirty: boolean;
-	hooked: boolean;
+	hook: NativeHookToken | null;
 	pending: NativeCancelablePromise<unknown[]> | null;
 	scheduled: boolean;
 	table: NativeObjectHandle;
@@ -26,7 +30,7 @@ export function tableLayout(session: Session, table: NativeObjectHandle): TableL
 
 	if (existing) return existing;
 
-	const entry = { dirty: true, hooked: false, pending: null, scheduled: false, table };
+	const entry: TableLayout = { dirty: true, hook: null, pending: null, scheduled: false, table };
 
 	session.tables.set(tableKey, entry);
 
@@ -42,9 +46,36 @@ export function tableLayout(session: Session, table: NativeObjectHandle): TableL
 export function markTableDirty(session: Session, tableKey: string): TableLayout | undefined {
 	const entry = session.tables.get(tableKey);
 
-	if (entry) entry.dirty = true;
+	if (entry) {
+		entry.dirty = true;
+		watchTableLayout(session, entry);
+	}
 
 	return entry;
+}
+
+function watchTableLayout(session: Session, entry: TableLayout): void {
+	if (entry.hook || session.signal.aborted) return;
+
+	try {
+		entry.hook = session.objc.hook(
+			NativeClass.table,
+			'layoutSubviews',
+			{
+				after: () => {
+					if (entry.dirty) scheduleTableLayout(session, entry);
+				},
+			},
+			{ instance: entry.table, thread: 'main' },
+		);
+	} catch {
+		// Without the hook the rows still re-measure when a reaction layout schedules it.
+	}
+}
+
+function unwatchTableLayout(entry: TableLayout): void {
+	entry.hook?.remove();
+	entry.hook = null;
 }
 
 function applyTableLayout(session: Session, entry: TableLayout): void {
@@ -67,7 +98,10 @@ function applyTableLayout(session: Session, entry: TableLayout): void {
 
 				entry.pending = null;
 
-				if (!signal.aborted && entry.dirty) scheduleTableLayout(session, entry);
+				if (signal.aborted) return;
+
+				if (entry.dirty) scheduleTableLayout(session, entry);
+				else unwatchTableLayout(entry);
 			},
 			() => {
 				if (entry.pending !== pending) return;
@@ -111,32 +145,14 @@ export function flushTableLayout(session: Session, tableKey: string): void {
 }
 
 /**
- * @description Re-measures a table's stale rows after each of its own layout passes.
+ * @description Re-measures a table's stale rows after each of its own layout passes, hooking the table only while its rows are stale.
  * @param session The running session.
  * @param table The `DCDTableView`.
  */
 export function hookTableLayout(session: Session, table: NativeObjectHandle): void {
 	const entry = tableLayout(session, table);
 
-	if (entry.hooked) return;
-
-	try {
-		session.tableHooks.push(
-			session.objc.hook(
-				NativeClass.table,
-				'layoutSubviews',
-				{
-					after: () => {
-						if (entry.dirty) scheduleTableLayout(session, entry);
-					},
-				},
-				{ instance: table, thread: 'main' },
-			),
-		);
-		entry.hooked = true;
-	} catch {
-		// Without the hook the rows still re-measure when a reaction layout schedules it.
-	}
+	if (entry.dirty) watchTableLayout(session, entry);
 }
 
 /**
@@ -145,9 +161,8 @@ export function hookTableLayout(session: Session, table: NativeObjectHandle): vo
  * @param restoreRows Restores the reaction layouts inside one table.
  */
 export function restoreTables(session: Session, restoreRows: (tableKey: string) => void): void {
-	for (const hook of session.tableHooks.splice(0)) hook.remove();
-
 	for (const [tableKey, entry] of session.tables) {
+		unwatchTableLayout(entry);
 		entry.pending?.cancel();
 		entry.pending = null;
 		restoreRows(tableKey);

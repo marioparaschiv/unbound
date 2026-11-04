@@ -372,12 +372,14 @@ describe('find', () => {
 		expect(loadedIds()).toEqual(before);
 	});
 
-	test('prefers an initialized module over an uninitialized cached id', () => {
+	test('trusts a cached id over another initialized match, without scanning the registry', () => {
 		cachedIds['byProps::remembered'] = [18];
 		metroRequire(19);
 
-		expect(metro.findByProps('remembered').remembered()).toBe(19);
-		expect(isLoaded(18)).toBe(false);
+		const before = loadedIds();
+
+		expect(metro.findByProps('remembered').remembered()).toBe(18);
+		expect(loadedIds()).toEqual([...before, 18].sort((a, b) => a - b));
 	});
 
 	test('loads only the cached module when no initialized module matches', () => {

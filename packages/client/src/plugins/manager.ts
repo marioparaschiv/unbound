@@ -170,7 +170,7 @@ export class Plugins extends Addons<Plugin> {
 			return bundle;
 		}
 
-		const source = globalThis.NativePlatform?.addons?.readSource?.(scanned.folder);
+		const source = globalThis.NativePlatform?.addons.readSource(scanned.folder);
 
 		if (source === undefined || source === '') {
 			throw new Error(`The loader kept ${id}'s source back, and it could not be read.`);
@@ -196,8 +196,7 @@ export class Plugins extends Addons<Plugin> {
 		const bytecodeVersion = window.UNBOUND_LOADER?.bytecodeVersion;
 		const addons = globalThis.NativePlatform?.addons;
 
-		if (!scanned || scanned.bundle !== bundle || !bytecodeVersion || !addons?.evaluateBytecode)
-			return;
+		if (!scanned || scanned.bundle !== bundle || !bytecodeVersion || !addons) return;
 
 		try {
 			const factory = addons.evaluateBytecode(scanned.folder, bytecodeVersion);

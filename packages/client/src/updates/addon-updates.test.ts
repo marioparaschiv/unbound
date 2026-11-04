@@ -1,6 +1,4 @@
 import type { AddonUpdate, UpdateReason } from '@unbound-app/contracts/updates';
-import { addonUpdateSchema } from '@unbound-app/contracts/updates';
-import { parse } from '@unbound-app/contracts/schema';
 import { describe, expect, test } from 'bun:test';
 
 import type { UpdatableKind } from '~/addons/manager-of';
@@ -126,14 +124,6 @@ describe('autoApplies', () => {
 	test('still replaces a held version that was withdrawn or rebuilt', () => {
 		expect(autoApplies(release('dev.alpha', '2.0.0', 'withdrawn'), true)).toBe(true);
 		expect(autoApplies(release('dev.alpha', '1.0.0', 'rebuilt'), true)).toBe(true);
-	});
-
-	test('reads an update from a server without reasons as newer', () => {
-		const { reason: _, ...legacy } = release('dev.alpha', '2.0.0');
-		const parsed = parse(addonUpdateSchema, legacy);
-
-		expect(parsed.reason).toBe('newer');
-		expect(autoApplies(parsed, true)).toBe(false);
 	});
 });
 

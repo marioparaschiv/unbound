@@ -1,4 +1,4 @@
-import { NATIVE_PLUGIN_CAPABILITIES } from '@unbound-app/types/native';
+import { validateAddonCapabilities } from '@unbound-app/contracts/addon-conventions';
 import { afterEach, describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -38,7 +38,14 @@ export const paint = definePlatform({ ios, android });`;
 
 type Files = Record<string, string>;
 
-function plugin(files: Files, fields: Record<string, string[]> = {}): TempDir {
+type PlatformFields = { capabilities?: string[] };
+
+type ManifestFields = {
+	capabilities?: string[];
+	platforms?: string[] | Record<string, PlatformFields>;
+};
+
+function plugin(files: Files, fields: ManifestFields = {}): TempDir {
 	const dir = createTempDir({
 		'manifest.json': JSON.stringify({ id: 'example.paint', main: 'index.ts', ...fields }),
 		'package.json': JSON.stringify({ scripts: { build: 'true' } }),
@@ -69,77 +76,15 @@ async function check(dir: TempDir, buildCheck: BuildCheck = capabilitiesCheck) {
 	return (await buildCheck.run(addon)).map((issue) => issue.message);
 }
 
-const KNOWN_PLATFORMS: unknown[] = ['ios', 'android'];
-const KNOWN_CAPABILITIES: unknown[] = [...NATIVE_PLUGIN_CAPABILITIES];
-
-type PlatformFields = {
-	capabilities?: unknown;
-	platforms?: unknown;
-	platformCapabilities?: unknown;
-};
-
-function isPlainObject(value: unknown): value is PlatformFields {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-// UNKNOWN: a built manifest is JSON read back from disk.
-function legacyManifestErrors(manifest: unknown): string[] {
-	if (!isPlainObject(manifest)) {
-		return ['Manifest must be an object'];
-	}
-
-	const { capabilities, platforms, platformCapabilities } = manifest;
-	const errors: string[] = [];
-
-	if (capabilities !== void 0 && !Array.isArray(capabilities)) {
-		errors.push('Manifest capabilities must be an array');
-	}
-
-	if (
-		platforms !== void 0 &&
-		(!Array.isArray(platforms) ||
-			!platforms.length ||
-			!platforms.every((platform) => KNOWN_PLATFORMS.includes(platform)))
-	) {
-		errors.push('Manifest platforms must be a non-empty array of known platforms');
-	}
-
-	if (platformCapabilities === void 0) {
-		return errors;
-	}
-
-	if (!isPlainObject(platformCapabilities)) {
-		return [...errors, 'Manifest platformCapabilities must be an object'];
-	}
-
-	for (const [platform, declared] of Object.entries(platformCapabilities)) {
-		if (
-			!KNOWN_PLATFORMS.includes(platform) ||
-			!Array.isArray(declared) ||
-			!declared.every((capability) => KNOWN_CAPABILITIES.includes(capability))
-		) {
-			errors.push(`Manifest platformCapabilities.${platform} is invalid`);
-		}
-	}
-
-	return errors;
-}
-
 function builtManifest(dir: TempDir) {
 	const manifest = JSON.parse(readFileSync(join(dir.path, 'dist', 'manifest.json'), 'utf8'));
 
-	expect(legacyManifestErrors(manifest)).toEqual([]);
+	expect(validateAddonCapabilities(manifest)).toEqual([]);
 
 	return manifest;
 }
 
 describe('capabilities check', () => {
-	test('the legacy manifest rules reject the object form of platforms', () => {
-		expect(legacyManifestErrors({ platforms: { ios: { capabilities: [] } } })).toEqual([
-			'Manifest platforms must be a non-empty array of known platforms',
-		]);
-	});
-
 	test('writes each definePlatform handler’s Capabilities into the built manifest', async () => {
 		const dir = plugin({
 			'src/index.ts': `${NATIVE_IMPORT}
@@ -154,9 +99,9 @@ export function start(context: PluginContext) { paint(context); }`,
 		expect(builtManifest(dir)).toEqual({
 			id: 'example.paint',
 			main: 'index.js',
-			platformCapabilities: {
-				ios: ['native.objc.classes', 'native.objc.invoke'],
-				android: ['native.java.classes'],
+			platforms: {
+				ios: { capabilities: ['native.objc.classes', 'native.objc.invoke'] },
+				android: { capabilities: ['native.java.classes'] },
 			},
 		});
 	});
@@ -171,8 +116,7 @@ export const start = definePlatform({ ios });`,
 
 		expect(await check(dir)).toEqual([]);
 		expect(builtManifest(dir)).toMatchObject({
-			platforms: ['ios'],
-			platformCapabilities: { ios: ['native.objc.classes', 'native.objc.invoke'] },
+			platforms: { ios: { capabilities: ['native.objc.classes', 'native.objc.invoke'] } },
 		});
 	});
 
@@ -188,7 +132,7 @@ export const start = definePlatform({ android });`,
 		expect(builtManifest(dir)).toEqual({
 			id: 'example.paint',
 			main: 'index.js',
-			platforms: ['android'],
+			platforms: { android: {} },
 		});
 	});
 
@@ -223,22 +167,19 @@ export const start = definePlatform({ android });`,
 		});
 	});
 
-	test.each(['capabilities', 'platforms', 'platformCapabilities'])(
-		'a hand-written %s fails the build',
-		async (field) => {
-			const dir = plugin({ 'src/index.ts': 'export function start() {}' }, { [field]: [] });
+	test.each(['capabilities', 'platforms'])('a hand-written %s fails the build', async (field) => {
+		const dir = plugin({ 'src/index.ts': 'export function start() {}' }, { [field]: [] });
 
-			expect(await check(dir)).toEqual([
-				`manifest.json declares "${field}"; ubd build generates platforms and Capabilities from the code, so remove it.`,
-			]);
-			expect(existsSync(join(dir.path, 'dist', 'manifest.json'))).toBe(false);
-		},
-	);
+		expect(await check(dir)).toEqual([
+			`manifest.json declares "${field}"; ubd build generates platforms and Capabilities from the code, so remove it.`,
+		]);
+		expect(existsSync(join(dir.path, 'dist', 'manifest.json'))).toBe(false);
+	});
 
 	test('the declared variant keeps a valid hand-written list and checks an invalid one', async () => {
 		const valid = plugin(
 			{ 'src/index.ts': IOS_HANDLER },
-			{ platforms: ['ios'], capabilities: ['native.objc.invoke'] },
+			{ platforms: { ios: { capabilities: ['native.objc.invoke'] } } },
 		);
 		const invalid = plugin(
 			{ 'src/index.ts': IOS_HANDLER },

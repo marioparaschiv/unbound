@@ -4,12 +4,7 @@ import type {
 	NativeJavaReference,
 	NativeJavaValue,
 } from '@unbound-app/api/native';
-import {
-	javaFlag,
-	javaInt,
-	javaNumber,
-	javaReference,
-} from '@unbound-plugins/shared/native/android/java-values';
+import { javaNumber, javaReference } from '@unbound-plugins/shared/native/android/java-values';
 import { isCancellation } from '@unbound-plugins/shared/native/cancellation';
 
 export type ViewBridge = Pick<
@@ -17,7 +12,6 @@ export type ViewBridge = Pick<
 	'getClass' | 'invoke' | 'getField' | 'batch' | 'batchAsync' | 'findViews'
 >;
 
-const MAX_VISITED = 4_000;
 const BATCH_STEPS = 64;
 const VIEW_SEARCH = { maxDepth: 128, maxVisited: 8_192, maxResults: 256 };
 
@@ -91,13 +85,13 @@ export function readCalls(view: NativeJavaReference, names: string[]): NativeJav
 }
 
 /**
- * @description Runs Java operations on the main thread in batches the bridge accepts, or on the calling thread with a loader that cannot.
+ * @description Runs Java operations on the main thread in batches the bridge accepts.
  * @param java The plugin's Java bridge.
  * @param operations The operations.
  * @returns Each operation's result, in order.
  */
 export async function runOnMain(
-	java: Pick<NativeJavaBridge, 'batch' | 'batchAsync'>,
+	java: Pick<NativeJavaBridge, 'batchAsync'>,
 	operations: NativeJavaBatchOperation[],
 ): Promise<NativeJavaValue[]> {
 	const results: NativeJavaValue[] = [];
@@ -105,49 +99,14 @@ export async function runOnMain(
 	for (let start = 0; start < operations.length; start += BATCH_STEPS) {
 		const chunk = operations.slice(start, start + BATCH_STEPS);
 
-		results.push(...(java.batchAsync ? await java.batchAsync(chunk) : java.batch(chunk)));
+		results.push(...(await java.batchAsync(chunk)));
 	}
 
 	return results;
 }
 
-function walkOnCallingThread(
-	java: ViewBridge,
-	root: NativeJavaReference,
-	className: string,
-): NativeJavaReference[] {
-	const target = java.getClass(className);
-	const group = java.getClass('android.view.ViewGroup');
-	const found: NativeJavaReference[] = [];
-	const queue: NativeJavaReference[] = [root];
-
-	for (let visited = 0; queue.length && visited < MAX_VISITED; visited++) {
-		const view = queue.shift()!;
-
-		if (javaFlag(java.invoke(target, 'isInstance', [view]))) {
-			found.push(view);
-		}
-
-		if (!javaFlag(java.invoke(group, 'isInstance', [view]))) {
-			continue;
-		}
-
-		const count = javaNumber(java.invoke(view, 'getChildCount', [])) ?? 0;
-
-		for (let index = 0; index < count; index++) {
-			const child = javaReference(java.invoke(view, 'getChildAt', [javaInt(index)]));
-
-			if (child) {
-				queue.push(child);
-			}
-		}
-	}
-
-	return found;
-}
-
 /**
- * @description Finds the attached views of a class under a root, for views bound before a plugin's hooks were installed. The search runs on the main thread in one call; loaders without it walk the tree on the calling thread.
+ * @description Finds the attached views of a class under a root, for views bound before a plugin's hooks were installed. The search runs on the main thread in one call.
  * @param java The plugin's Java bridge.
  * @param root The view to search under.
  * @param className The view class, such as `com.discord.chat.presentation.message.MessageView`.
@@ -158,10 +117,6 @@ export async function findViewsOfClass(
 	root: NativeJavaReference,
 	className: string,
 ): Promise<NativeJavaReference[]> {
-	if (!java.findViews) {
-		return walkOnCallingThread(java, root, className);
-	}
-
 	const found = await java.findViews(root, className, VIEW_SEARCH);
 
 	return found

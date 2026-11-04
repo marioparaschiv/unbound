@@ -19,7 +19,10 @@ describe('native consent', () => {
 	test('collects FFI capabilities from every platform', () => {
 		const requested = manifest({
 			capabilities: ['native.ffi.call', 'native.objc.invoke'],
-			platformCapabilities: { android: ['native.ffi.symbols'], ios: ['native.ffi.call'] },
+			platforms: {
+				android: { capabilities: ['native.ffi.symbols'] },
+				ios: { capabilities: ['native.ffi.call'] },
+			},
 		});
 
 		expect(consentCapabilities(requested)).toEqual(['native.ffi.call', 'native.ffi.symbols']);

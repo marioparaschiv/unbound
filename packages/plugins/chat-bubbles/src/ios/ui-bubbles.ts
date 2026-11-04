@@ -1,4 +1,9 @@
-import type { NativeObjCBridge, NativeObjectHandle, NativeUIScope } from '@unbound-app/api/native';
+import type {
+	NativeObjCBridge,
+	NativeObjectHandle,
+	NativeUICallback,
+	NativeUIScope,
+} from '@unbound-app/api/native';
 
 import type { BubbleColor } from '~/style';
 
@@ -35,6 +40,9 @@ type BoxedRect = {
 
 type BubbleState = {
 	cache: Map<string, CachedBubble>;
+	objc: NativeObjCBridge;
+	clear: NativeObjectHandle | null;
+	remeasure: NativeUICallback<[string]>;
 };
 
 type StateHolder = Record<typeof STATE_KEY, BubbleState | undefined>;
@@ -57,9 +65,11 @@ function report(error: unknown) {
 	console.error(`[Chat Bubbles] ${String(error)}`);
 }
 
-function messageIdOf(objc: NativeObjCBridge, cell: NativeObjectHandle): string | undefined {
+function messageIdOfViewModel(
+	objc: NativeObjCBridge,
+	viewModel: NativeObjectHandle | null,
+): string | undefined {
 	'worklet';
-	const viewModel = objc.getIvar(cell, 'viewModel') as NativeObjectHandle | null;
 	const message = viewModel
 		? (objc.call(viewModel, 'message') as NativeObjectHandle | null)
 		: null;
@@ -76,6 +86,12 @@ function messageIdOf(objc: NativeObjCBridge, cell: NativeObjectHandle): string |
 	}
 
 	return undefined;
+}
+
+function messageIdOf(objc: NativeObjCBridge, cell: NativeObjectHandle): string | undefined {
+	'worklet';
+
+	return messageIdOfViewModel(objc, objc.getIvar(cell, 'viewModel') as NativeObjectHandle | null);
 }
 
 function cellWidthOf(objc: NativeObjCBridge, cell: NativeObjectHandle): number {
@@ -117,6 +133,31 @@ function bubbleIn(
 	return bubble;
 }
 
+function paintBubble(objc: NativeObjCBridge, bubble: NativeObjectHandle, drawn: CachedBubble) {
+	'worklet';
+	const UIColor = objc.getClass('UIColor');
+
+	if (!UIColor) {
+		return;
+	}
+
+	const { red, green, blue, alpha } = drawn.color;
+
+	objc.invoke(objc.invoke(bubble, 'layer', []) as NativeObjectHandle, 'setCornerRadius:', [
+		drawn.radius,
+	]);
+	objc.invoke(bubble, 'setBackgroundColor:', [
+		objc.call(UIColor, 'colorWithRed:green:blue:alpha:', red, green, blue, alpha),
+	]);
+	objc.invoke(bubble, 'setFrame:', [
+		objc.struct('CGRect', {
+			origin: { x: drawn.x, y: drawn.y },
+			size: { width: drawn.width, height: drawn.height },
+		}),
+	]);
+	objc.invoke(bubble, 'setHidden:', [false]);
+}
+
 function placeCached(
 	objc: NativeObjCBridge,
 	current: BubbleState,
@@ -132,39 +173,37 @@ function placeCached(
 	}
 
 	const bubble = bubbleIn(objc, cell, tag);
-	const UIColor = objc.getClass('UIColor');
 
-	if (!bubble || !UIColor) {
-		return;
+	if (bubble) {
+		paintBubble(objc, bubble, cached);
 	}
+}
 
-	const { red, green, blue, alpha } = cached.color;
+function remember(current: BubbleState, messageId: string, bubble: CachedBubble) {
+	'worklet';
+	current.cache.delete(messageId);
+	current.cache.set(messageId, bubble);
 
-	objc.invoke(objc.invoke(bubble, 'layer', []) as NativeObjectHandle, 'setCornerRadius:', [
-		cached.radius,
-	]);
-	objc.invoke(bubble, 'setBackgroundColor:', [
-		objc.call(UIColor, 'colorWithRed:green:blue:alpha:', red, green, blue, alpha),
-	]);
-	objc.invoke(bubble, 'setFrame:', [
-		objc.struct('CGRect', {
-			origin: { x: cached.x, y: cached.y },
-			size: { width: cached.width, height: cached.height },
-		}),
-	]);
-	objc.invoke(bubble, 'setHidden:', [false]);
+	if (current.cache.size > MAX_CACHED) {
+		current.cache.delete(current.cache.keys().next().value as string);
+	}
 }
 
 /**
  * @description Keeps message and separator cells transparent, hides a reused cell's old bubble, and draws a bubble at once for a message whose layout is already known, from hooks that run on the UI thread, so bubbles never flash or pop in while scrolling back over messages.
  * @param scope The plugin's UI scope.
  * @param classes The cell classes and the bubble view's tag.
+ * @param remeasure Called with a cell's key when a bubble measured for it was not drawn, because the cell shows another message by then.
  */
-export function installBubbleGuards(scope: NativeUIScope, classes: BubbleClasses) {
+export function installBubbleGuards(
+	scope: NativeUIScope,
+	classes: BubbleClasses,
+	remeasure: NativeUICallback<[string]>,
+) {
 	'worklet';
 	const objc = scope.objc as NativeObjCBridge;
 	const clear = clearColor(objc);
-	const current: BubbleState = { cache: new Map() };
+	const current: BubbleState = { cache: new Map(), objc, clear, remeasure };
 
 	holder()[STATE_KEY] = current;
 
@@ -222,11 +261,20 @@ export function installBubbleGuards(scope: NativeUIScope, classes: BubbleClasses
 }
 
 /**
- * @description Remembers where a message's bubble goes, so the next layout of that message draws it at once.
- * @param messageId The message.
- * @param bubble The bubble's frame in its cell, the cell's width, the corner radius and the color.
+ * @description Draws a measured bubble in one pass on the UI thread and remembers it for the message's next layout. When the cell shows another message by then, it asks for the cell to be measured again instead.
+ * @param key The cell's key.
+ * @param cell The message cell.
+ * @param bubble The cell's bubble view.
+ * @param viewModel The cell's view model when it was measured, or `null` when it had none.
+ * @param drawn The bubble's frame in its cell, the cell's width, the corner radius and the color.
  */
-export function rememberBubble(messageId: string, bubble: CachedBubble) {
+export function drawBubble(
+	key: string,
+	cell: NativeObjectHandle,
+	bubble: NativeObjectHandle,
+	viewModel: NativeObjectHandle | null,
+	drawn: CachedBubble,
+) {
 	'worklet';
 	const current = holder()[STATE_KEY];
 
@@ -234,11 +282,28 @@ export function rememberBubble(messageId: string, bubble: CachedBubble) {
 		return;
 	}
 
-	current.cache.delete(messageId);
-	current.cache.set(messageId, bubble);
+	const { objc, clear } = current;
 
-	if (current.cache.size > MAX_CACHED) {
-		current.cache.delete(current.cache.keys().next().value as string);
+	try {
+		const messageId = messageIdOf(objc, cell);
+
+		if (viewModel && messageId !== messageIdOfViewModel(objc, viewModel)) {
+			current.remeasure(key);
+
+			return;
+		}
+
+		if (clear) {
+			objc.invoke(cell, 'setBackgroundColor:', [clear]);
+		}
+
+		paintBubble(objc, bubble, drawn);
+
+		if (messageId) {
+			remember(current, messageId, drawn);
+		}
+	} catch (error) {
+		report(error);
 	}
 }
 
@@ -250,4 +315,4 @@ export function forgetBubbles() {
 	holder()[STATE_KEY]?.cache.clear();
 }
 
-export default { installBubbleGuards, rememberBubble, forgetBubbles };
+export default { installBubbleGuards, drawBubble, forgetBubbles };

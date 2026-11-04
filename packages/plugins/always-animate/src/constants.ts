@@ -16,8 +16,6 @@ export const NAMEPLATE_PATH = 'modules/collectibles/nameplates/native/Nameplate.
 export const GUILD_ICON_PATH = 'modules/guild/native/GuildIcon.tsx';
 export const GROUP_DM_AVATAR_PATH = 'modules/group_dm/native/GroupDMAvatar.tsx';
 export const ACTIVITY_EMOJI_PATH = 'modules/activity_status/native/ActivityEmoji.tsx';
-export const PROFILE_EFFECT_LAYER_PATH =
-	'modules/collectibles/profile_effects/native/ProfileEffectLayer.ios.tsx';
 
 export const ALWAYS_ANIMATE_STICKERS = 0;
 

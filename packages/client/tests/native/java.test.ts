@@ -30,7 +30,7 @@ describe('native Java bridge', () => {
 
 		const context = createPluginContext({
 			...manifest,
-			platforms: ['android'],
+			platforms: { android: {} },
 			capabilities: ['native.java.classes', 'native.java.invoke'],
 		});
 
@@ -55,7 +55,7 @@ describe('native Java bridge', () => {
 
 		const context = createPluginContext({
 			...manifest,
-			platforms: ['android'],
+			platforms: { android: {} },
 			capabilities: ['native.java.classes', 'native.java.invoke'],
 		});
 
@@ -72,7 +72,7 @@ describe('native Java bridge', () => {
 
 		const context = createPluginContext({
 			...manifest,
-			platforms: ['android'],
+			platforms: { android: {} },
 			capabilities: ['native.java.classes', 'native.java.construct'],
 		});
 
@@ -90,7 +90,7 @@ describe('native Java bridge', () => {
 
 		const scoped = {
 			...manifest,
-			platforms: ['android' as const],
+			platforms: { android: {} },
 			capabilities: ['native.java.classes' as const],
 		};
 		const first = createPluginContext(scoped);
@@ -114,7 +114,7 @@ describe('native Java bridge', () => {
 
 		const context = createPluginContext({
 			...manifest,
-			platforms: ['android'],
+			platforms: { android: {} },
 			capabilities: ['native.java.classes'],
 		});
 
@@ -132,7 +132,7 @@ describe('native Java bridge', () => {
 
 		const context = createPluginContext({
 			...manifest,
-			platforms: ['android'],
+			platforms: { android: {} },
 			capabilities: ['native.java.invoke'],
 		});
 
@@ -175,7 +175,7 @@ describe('native Java bridge', () => {
 
 		const context = createPluginContext({
 			...manifest,
-			platforms: ['android'],
+			platforms: { android: {} },
 			capabilities: ['native.fabric.async'],
 		});
 
@@ -206,7 +206,7 @@ describe('native Java bridge', () => {
 
 		const denied = createPluginContext({
 			...manifest,
-			platforms: ['android'],
+			platforms: { android: {} },
 			capabilities: ['native.java.classes'],
 		});
 
@@ -217,7 +217,7 @@ describe('native Java bridge', () => {
 
 		const context = createPluginContext({
 			...manifest,
-			platforms: ['android'],
+			platforms: { android: {} },
 			capabilities: ['native.java.hooks'],
 		});
 
@@ -233,7 +233,7 @@ describe('native Java bridge', () => {
 
 		const denied = createPluginContext({
 			...manifest,
-			platforms: ['android'],
+			platforms: { android: {} },
 			capabilities: ['native.java.classes'],
 		});
 
@@ -246,7 +246,7 @@ describe('native Java bridge', () => {
 
 		const context = createPluginContext({
 			...manifest,
-			platforms: ['android'],
+			platforms: { android: {} },
 			capabilities: [
 				'native.java.batch',
 				'native.java.associations',
@@ -260,7 +260,7 @@ describe('native Java bridge', () => {
 			type: 'string',
 			value: 'kept',
 		});
-		expect(context.native.debug.environment()).toEqual({
+		expect(context.native.debug.environment()).toMatchObject({
 			isVirtualDevice: true,
 			hostAddress: '10.0.2.2',
 		});

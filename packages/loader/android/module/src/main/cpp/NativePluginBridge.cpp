@@ -4,6 +4,7 @@
 #include <cmath>
 #include <functional>
 #include <iterator>
+#include <jsi/instrumentation.h>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -14,6 +15,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "JavaHandleRelease.h"
 #include "JniEnvironment.h"
 #include "LoaderAddonActivity.h"
 #include "LoaderBootstrap.h"
@@ -207,6 +209,22 @@ static bool callJavaBoolean(const JavaCallbacks &callbacks, jmethodID method,
     return output == JNI_TRUE;
 }
 
+static size_t callJavaCount(const JavaCallbacks &callbacks, jmethodID method)
+{
+    JNIEnv *env = currentEnvironment();
+    if (!env || !callbacks.bridgeClass || !method)
+    {
+        return 0;
+    }
+    jint output = env->CallStaticIntMethod(callbacks.bridgeClass, method);
+    if (env->ExceptionCheck())
+    {
+        env->ExceptionClear();
+        return 0;
+    }
+    return output > 0 ? static_cast<size_t>(output) : 0;
+}
+
 static std::string callJavaStringNoArguments(const JavaCallbacks &callbacks, jmethodID method)
 {
     JNIEnv *env = currentEnvironment();
@@ -364,6 +382,13 @@ static std::optional<std::string> javaHandleId(const nlohmann::json &value)
 
 static std::mutex                                    gJavaLeasesMutex;
 static std::shared_ptr<loader::native::HandleLeases> gJavaLeases;
+static std::optional<JavaCallbacks>                  gJavaReleaseCallbacks;
+
+static std::optional<JavaCallbacks> javaReleaseCallbacks()
+{
+    std::lock_guard<std::mutex> lock(gJavaLeasesMutex);
+    return gJavaReleaseCallbacks;
+}
 
 static void leaseJavaHandles(const JavaCallbacks &callbacks)
 {
@@ -372,7 +397,8 @@ static void leaseJavaHandles(const JavaCallbacks &callbacks)
     {
         return;
     }
-    gJavaLeases = std::make_shared<loader::native::HandleLeases>(
+    gJavaReleaseCallbacks = callbacks;
+    gJavaLeases           = std::make_shared<loader::native::HandleLeases>(
         javaHandleId, [callbacks](const std::string &id, uint64_t issues) {
             callJavaVoid(callbacks, callbacks.javaRelease,
                          {nlohmann::json{{"id", id}, {"issues", issues}}.dump()});
@@ -474,20 +500,51 @@ static jsi::Value parseJavaResult(jsi::Runtime &runtime, const std::string &resp
     return adoptJavaValue(runtime, result);
 }
 
-static jsi::Value javaAsynchronously(jsi::Runtime &runtime, std::function<std::string()> work)
+static JavaHandleReleaser javaHandleReleaser(JavaCallbacks callbacks)
 {
-    auto response = std::make_shared<std::string>();
+    return [callbacks](const std::string &id) {
+        try
+        {
+            callJavaVoid(callbacks, callbacks.javaRelease,
+                         {nlohmann::json{{"id", id}, {"issues", 1}}.dump()});
+        }
+        catch (const std::exception &error)
+        {
+            loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                        std::string("Failed to release an undelivered Java handle: ") +
+                            error.what());
+        }
+        catch (...)
+        {
+            loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
+                        "Failed to release an undelivered Java handle.");
+        }
+    };
+}
+
+static std::shared_ptr<PendingJavaPayload> pendingJavaPayload(const JavaCallbacks &callbacks,
+                                                              std::string          payload = {})
+{
+    return std::make_shared<PendingJavaPayload>(
+        javaHandleReleaser(callbacks), loader::native::runtimeGeneration, std::move(payload));
+}
+
+static jsi::Value javaAsynchronously(jsi::Runtime &runtime, const JavaCallbacks &callbacks,
+                                     std::function<std::string()> work)
+{
+    auto response = pendingJavaPayload(callbacks);
     return loader::native::executeMainAsynchronously(
         runtime,
         [work = std::move(work), response]() {
-            *response = work();
+            response->receive(work());
         },
         [response](jsi::Runtime &completion) -> jsi::Value {
-            if (response->empty())
+            std::string payload = response->take();
+            if (payload.empty())
             {
                 return jsi::Value::undefined();
             }
-            return parseJavaResult(completion, *response);
+            return parseJavaResult(completion, payload);
         });
 }
 
@@ -562,109 +619,34 @@ static std::optional<std::string> coalescedHookKey(const std::string &token,
     return "android-hook:" + token + ":" + value->get<std::string>();
 }
 
-static void collectJavaHandleIssues(const nlohmann::json &value, std::vector<std::string> &issues)
-{
-    if (value.is_array())
-    {
-        for (const nlohmann::json &child : value)
-        {
-            collectJavaHandleIssues(child, issues);
-        }
-        return;
-    }
-    if (!value.is_object())
-    {
-        return;
-    }
-    auto type = value.find("type");
-    auto id   = value.find("value");
-    if (type != value.end() && type->is_string() && *type == "handle" && id != value.end() &&
-        id->is_string() && id->get<std::string>().rfind("java-", 0) == 0)
-    {
-        issues.push_back(id->get<std::string>());
-        return;
-    }
-    for (auto iterator = value.begin(); iterator != value.end(); ++iterator)
-    {
-        collectJavaHandleIssues(iterator.value(), issues);
-    }
-}
-
-class PendingJavaHookEvent final
-{
-public:
-    PendingJavaHookEvent(JavaCallbacks callbacks, std::string payload)
-        : callbacks_(callbacks), payload_(std::move(payload))
-    {
-    }
-
-    ~PendingJavaHookEvent()
-    {
-        if (transferred_.load(std::memory_order_acquire))
-        {
-            return;
-        }
-        nlohmann::json parsed = nlohmann::json::parse(payload_, nullptr, false);
-        if (parsed.is_discarded())
-        {
-            return;
-        }
-        std::vector<std::string> issues;
-        collectJavaHandleIssues(parsed, issues);
-        for (const std::string &id : issues)
-        {
-            try
-            {
-                callJavaVoid(callbacks_, callbacks_.javaRelease,
-                             {nlohmann::json{{"id", id}, {"issues", 1}}.dump()});
-            }
-            catch (const std::exception &error)
-            {
-                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                            std::string("Failed to release a coalesced Java hook handle: ") +
-                                error.what());
-            }
-            catch (...)
-            {
-                loader::log(loader::LogLevel::Error, LOG_CATEGORY_PLUGINS,
-                            "Failed to release a coalesced Java hook handle.");
-            }
-        }
-    }
-
-    const std::string &payload() const
-    {
-        return payload_;
-    }
-
-    void transfer()
-    {
-        transferred_.store(true, std::memory_order_release);
-    }
-
-private:
-    JavaCallbacks    callbacks_;
-    std::string      payload_;
-    std::atomic_bool transferred_{false};
-};
-
 void dispatchHookEvent(const std::string &token, const std::string &payload)
 {
+    uint64_t     dispatchGeneration = loader::native::runtimeGeneration();
     HookListener listener;
+    bool         listening = false;
     {
         std::lock_guard<std::mutex> lock(gHookMutex);
         auto                        found = gHookListeners.find(token);
-        if (found == gHookListeners.end())
+        if (found != gHookListeners.end())
         {
-            return;
+            listener  = found->second;
+            listening = true;
         }
-        listener = found->second;
     }
+    if (!listening)
+    {
+        std::optional<JavaCallbacks> callbacks = javaReleaseCallbacks();
+        if (callbacks && dispatchGeneration == loader::native::runtimeGeneration())
+        {
+            releaseJavaHandleIssues(javaHandleReleaser(*callbacks), payload);
+        }
+        return;
+    }
+    auto pendingEvent = pendingJavaPayload(listener.callbacks, payload);
     if (!listener.operations || !listener.operations->active())
     {
         return;
     }
-    auto pendingEvent = std::make_shared<PendingJavaHookEvent>(listener.callbacks, payload);
 
     auto operation =
         loader::native::beginRuntimeResourceOperation(listener.resources, listener.runtimeIdentity);
@@ -1062,9 +1044,10 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
                std::vector<std::string> arguments{serializeJavaHandle(rt, args[0]),
                                                   javaName(rt, args[1]),
                                                   serializeJavaArguments(rt, args, count, 2)};
-               return javaAsynchronously(rt, [callbacks, arguments = std::move(arguments)]() {
-                   return callJavaString(callbacks, callbacks.javaInvoke, arguments);
-               });
+               return javaAsynchronously(
+                   rt, callbacks, [callbacks, arguments = std::move(arguments)]() {
+                       return callJavaString(callbacks, callbacks.javaInvoke, arguments);
+                   });
            });
     define(runtime, java, "prepare", 3,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
@@ -1088,9 +1071,10 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
                std::vector<std::string> arguments{serializeJavaHandle(rt, args[0]),
                                                   serializeJavaHandle(rt, args[1]),
                                                   serializeJavaArguments(rt, args, count, 2)};
-               return javaAsynchronously(rt, [callbacks, arguments = std::move(arguments)]() {
-                   return callJavaString(callbacks, callbacks.javaInvokePrepared, arguments);
-               });
+               return javaAsynchronously(
+                   rt, callbacks, [callbacks, arguments = std::move(arguments)]() {
+                       return callJavaString(callbacks, callbacks.javaInvokePrepared, arguments);
+                   });
            });
     define(runtime, java, "disposePlan", 1,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
@@ -1130,9 +1114,10 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
                requireArguments(count, 1, "A Java batch requires an operation list");
                std::vector<std::string> arguments{serializeJavaBatch(rt, args[0])};
-               return javaAsynchronously(rt, [callbacks, arguments = std::move(arguments)]() {
-                   return callJavaString(callbacks, callbacks.javaBatch, arguments);
-               });
+               return javaAsynchronously(
+                   rt, callbacks, [callbacks, arguments = std::move(arguments)]() {
+                       return callJavaString(callbacks, callbacks.javaBatch, arguments);
+                   });
            });
     define(runtime, java, "findViews", 3,
            [callbacks](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
@@ -1152,9 +1137,10 @@ static jsi::Object makeJavaNamespace(jsi::Runtime &runtime, const JavaCallbacks 
                };
                std::vector<std::string> arguments{serializeJavaHandle(rt, args[0]),
                                                   javaName(rt, args[1]), normalized.dump()};
-               return javaAsynchronously(rt, [callbacks, arguments = std::move(arguments)]() {
-                   return callJavaString(callbacks, callbacks.javaFindViews, arguments);
-               });
+               return javaAsynchronously(
+                   rt, callbacks, [callbacks, arguments = std::move(arguments)]() {
+                       return callJavaString(callbacks, callbacks.javaFindViews, arguments);
+                   });
            });
     define(runtime, java, "createAssociationKey", 0,
            [callbacks](jsi::Runtime &rt, const jsi::Value *, size_t) {
@@ -1288,9 +1274,10 @@ static jsi::Object makeDebugNamespace(jsi::Runtime &runtime, const JavaCallbacks
     jsi::Object debug(runtime);
     debug.setProperty(runtime, "recordEvaluation",
                       loader::native::makeRecordEvaluationFunction(runtime));
-    define(runtime, debug, "environment", 0, [](jsi::Runtime &rt, const jsi::Value *, size_t) {
-        return loader::toJSIValue(rt, loader::currentDebugEnvironment());
-    });
+    define(runtime, debug, "environment", 0,
+           [](jsi::Runtime &rt, const jsi::Value *args, size_t count) {
+               return loader::native::readDebugEnvironment(rt, args, count);
+           });
     return debug;
 }
 
@@ -1328,10 +1315,11 @@ public:
         return parsed["id"].get<std::string>();
     }
 
-    void update(const std::string &surface, const nlohmann::json &properties) override
+    bool update(const std::string &surface, const nlohmann::json &properties) override
     {
         callJavaVoid(callbacks_, callbacks_.fabricUpdate,
                      {loader::native::handleJSON(surface), properties.dump()});
+        return true;
     }
 
     void setSize(const std::string &surface, const loader::native::NativeSize &minimum,
@@ -1490,6 +1478,54 @@ static jsi::Object makeScopedHooks(jsi::Runtime                        &runtime,
     return hooks;
 }
 
+struct UIRuntimeRecord {
+    jsi::Runtime                                          *runtime = nullptr;
+    std::weak_ptr<loader::native::RuntimeResourceRegistry> resources;
+    uint64_t                                               identity = 0;
+};
+
+static std::mutex      gUIRuntimeMutex;
+static UIRuntimeRecord gUIRuntime;
+
+static void rememberUIRuntime(jsi::Runtime &runtime)
+{
+    if (!onMainThread())
+    {
+        return;
+    }
+    {
+        std::lock_guard<std::mutex> lock(gUIRuntimeMutex);
+        if (gUIRuntime.runtime == &runtime && !gUIRuntime.resources.expired())
+        {
+            return;
+        }
+    }
+    auto                        resources = loader::native::runtimeResourceRegistry(runtime);
+    std::lock_guard<std::mutex> lock(gUIRuntimeMutex);
+    gUIRuntime = {&runtime, resources, resources->identity()};
+}
+
+static bool collectUIRuntimeGarbage()
+{
+    UIRuntimeRecord record;
+    {
+        std::lock_guard<std::mutex> lock(gUIRuntimeMutex);
+        record = gUIRuntime;
+    }
+    if (!record.runtime)
+    {
+        return false;
+    }
+    bool collected = false;
+    loader::native::executeMainSynchronouslyUnlessMainWaits([&] {
+        collected = loader::native::withRuntimeResource(
+            record.resources, record.identity, [&](loader::native::RuntimeResourceRegistry &) {
+                record.runtime->instrumentation().collectGarbage("unbound debug");
+            });
+    });
+    return collected;
+}
+
 class UIScopeHost final : public jsi::HostObject
 {
 public:
@@ -1505,6 +1541,7 @@ public:
     {
         return loader::native::guard(runtime, [&]() -> jsi::Value {
             std::string name = property.utf8(runtime);
+            rememberUIRuntime(runtime);
             if (name == "dispose")
             {
                 auto scope = scope_;
@@ -1569,6 +1606,10 @@ void registerNativePluginBridge(jsi::Runtime &runtime, const JavaCallbacks &call
 {
     watchRuntimeGenerations(callbacks);
     leaseJavaHandles(callbacks);
+    loader::native::setPlatformResourceCounter(loader::native::kJavaHandleCounter, [callbacks] {
+        return callJavaCount(callbacks, callbacks.javaLiveHandles);
+    });
+    loader::native::setUIRuntimeGarbageCollector(collectUIRuntimeGarbage);
 
     loader::native::NativePluginRootBuilder bridge(runtime,
                                                    loader::native::NativePluginPlatform::Android);

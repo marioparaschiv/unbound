@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
+import type { MetroFilter } from '~/metro/filters';
 import type { ModuleHint } from '~/metro/cache';
 
 import { startFakeMetro, type FakeFactory } from './helpers/fake-metro';
@@ -84,6 +85,8 @@ define(45, [], (_, __, ___, ____, module) => {
 define(47, [], (_, __, ___, ____, module) => {
 	module.exports = { pathless: 'other' };
 });
+defineDiscord(60, 'modules/cached-a.tsx', { cachedA: true });
+defineDiscord(61, 'modules/cached-b.tsx', { cachedB: true });
 
 // Discord's startup loads the registries and the renderer before Unbound runs.
 metroRequire(REGISTRY);
@@ -112,6 +115,7 @@ mock.module('~/metro/cache', () =>
 );
 
 const metro = await import('~/metro/search');
+const { CACHE_KEY } = await import('~/core/constants');
 
 function initialized() {
 	return moduleIds.filter((id) => modules.get(id)?.isInitialized);
@@ -180,5 +184,41 @@ describe('a forcing search with a hint from an earlier build', () => {
 
 		expect(loadedBy(() => (found = metro.findByProps('pathless')))).toEqual([45]);
 		expect(found?.pathless).toBe('kept');
+	});
+});
+
+describe('a search with cached ids', () => {
+	function countingFilter(key: string, matches: (mdl: MetroExport) => boolean) {
+		const tested: number[] = [];
+		const filter: MetroFilter = (mdl, id) => {
+			tested.push(Number(id));
+
+			return matches(mdl);
+		};
+
+		filter[CACHE_KEY] = key;
+
+		return { filter, tested };
+	}
+
+	test('tests only the cached module, initializing it, without scanning the registry', () => {
+		cachedIds['custom::cachedA'] = [60];
+
+		const { filter, tested } = countingFilter('custom::cachedA', (mdl) => mdl?.cachedA);
+		let found: MetroExport;
+
+		expect(loadedBy(() => (found = metro.find(filter)))).toEqual([60]);
+		expect(found?.cachedA).toBe(true);
+		expect(tested).toEqual([60]);
+	});
+
+	test('returns nothing without scanning when the cached module is not loaded and initializing is off', () => {
+		cachedIds['custom::cachedB'] = [61];
+
+		const { filter, tested } = countingFilter('custom::cachedB', (mdl) => mdl?.cachedB);
+
+		expect(metro.find(filter, { initialize: false })).toBeNull();
+		expect(tested).toEqual([]);
+		expect(modules.get(61)?.isInitialized).toBe(false);
 	});
 });

@@ -188,6 +188,9 @@ func evaluateJavaReference(reference *compatReference, target *compatTarget, unl
 		if hasJavaFieldName(target, reference.Name) {
 			return compatOK, "", true
 		}
+		if reason, ok := compatEnvironmentFields[reference.Name]; ok {
+			return compatExternal, reason, true
+		}
 		if framework != nil {
 			status, reason := unlessSeen("no Discord, Android SDK or loader code defines or reads the field `" + reference.Name + "`")
 			return status, reason, true

@@ -154,7 +154,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 		javaFlag(java.invoke(type, 'isInstance', [view]));
 
 	async function directChildren(group: NativeJavaReference, className: string) {
-		const found = await java.findViews!(group, className, { maxDepth: 1, maxResults: 256 });
+		const found = await java.findViews(group, className, { maxDepth: 1, maxResults: 256 });
 
 		return found
 			.map((child) => javaReference(child))
@@ -411,7 +411,7 @@ export function drawAndroidBubbles({ java, hooks, ui }: AndroidNative) {
 	}
 
 	async function isNested(row: NativeJavaReference): Promise<boolean> {
-		const [outer] = await java.findViews!(row, AndroidClass.messageView, {
+		const [outer] = await java.findViews(row, AndroidClass.messageView, {
 			direction: 'ancestors',
 			maxDepth: MAX_ANCESTORS,
 			maxResults: 1,

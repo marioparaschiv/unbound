@@ -53,7 +53,8 @@ function intercept(action: FluxAction): boolean {
 }
 
 /**
- * @description Finds one of Discord's Flux stores by name. Lazy unless `{ lazy: false }` is passed: the search runs on first access.
+ * @description Finds one of Discord's Flux stores by name. A store already loaded and cached is returned as itself; otherwise the
+ * search is lazy unless `{ lazy: false }` is passed, and runs on first access.
  * @template K The store name, typed from {@link FluxStores}.
  * @param name The store name without its `Store` suffix, like `'User'`.
  * @param options Whether to search lazily, and whether to append `Store` to the name.
@@ -63,7 +64,16 @@ export function getStore<K extends FluxStoreName>(
 	name: K,
 	options: GetStoreOptions = {},
 ): FluxStoreOf<K> {
-	return finder('findStore')(name, { ...options, lazy: options.lazy ?? true });
+	const findStore = finder('findStore');
+
+	if (options.lazy === false) {
+		return findStore(name, options);
+	}
+
+	return (
+		findStore(name, { ...options, lazy: false, initialize: false, cacheOnly: true }) ??
+		findStore(name, { ...options, lazy: true })
+	);
 }
 
 /**

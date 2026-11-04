@@ -5,8 +5,9 @@ import { createLogger } from '@unbound-app/logger';
 
 import {
 	dispatcherKind,
+	enterBudget,
+	leaveBudget,
 	runUnbudgeted,
-	runWithBudget,
 	spliceHooks,
 	LateHook,
 	hookList,
@@ -40,9 +41,8 @@ type CallScope = {
 	original: Called | null;
 };
 
-type Active = {
+type Active = Budget & {
 	live: LivePatch;
-	budget: Budget;
 	index: number;
 };
 
@@ -116,12 +116,16 @@ let batch: Batch | null = null;
  * @returns The attributed callback, called with the patched method's `this`.
  */
 function attributedCallback(callback: PatchCallback, attribution: AddonAttribution): PatchCallback {
+	const call = attribution((self: PatchContext['this'], ctx: PatchContext) =>
+		callback.call(self, ctx),
+	);
+
 	return function attributed(
 		// UNKNOWN: possess calls patch callbacks with the patched method's `this`.
 		this: unknown,
 		ctx: PatchContext,
 	) {
-		return attribution(() => callback.call(this, ctx))();
+		return call(this, ctx);
 	};
 }
 
@@ -243,28 +247,30 @@ function createRun(live: LivePatch): PatchCallback {
 		}
 
 		const scope = scopeOf(ctx, live, kind === 'mount');
-		const active: Active = { live, budget: createBudget(scope), index: 0 };
+		const active = createActive(scope, live);
 		const previous = scope.active;
 
 		begin(scope, active);
 		scope.active = active;
 
 		try {
-			return runWithBudget(active.budget, () => {
-				try {
-					return live.callback.call(this, ctx);
-				} catch (error) {
-					if (!(error instanceof LateHook)) {
-						throw error;
-					}
+			const base = enterBudget(active);
 
-					if (scope.instance) {
-						open().remounts.add(scope.instance);
-					}
-
-					return live.phase === PatchType.Instead ? originalResult(ctx, scope) : void 0;
+			try {
+				return live.callback.call(this, ctx);
+			} catch (error) {
+				if (!(error instanceof LateHook)) {
+					throw error;
 				}
-			});
+
+				if (scope.instance) {
+					open().remounts.add(scope.instance);
+				}
+
+				return live.phase === PatchType.Instead ? originalResult(ctx, scope) : void 0;
+			} finally {
+				leaveBudget(active, base);
+			}
 		} finally {
 			end(scope, active);
 			scope.active = previous;
@@ -348,27 +354,27 @@ function originalResult(ctx: PatchContext, scope: CallScope) {
 	return scope.original ? scope.original.result : ctx.original(...ctx.args);
 }
 
-function createBudget(scope: CallScope): Budget {
-	return { limit: null, used: 0, unknown: false, strict: scope.strict };
+function createActive(scope: CallScope, live: LivePatch): Active {
+	return { live, index: 0, limit: null, used: 0, unknown: false, strict: scope.strict };
 }
 
 function begin(scope: CallScope, active: Active) {
-	const { live, budget } = active;
+	const { live } = active;
 	const index = scope.opened.get(live) ?? 0;
 
 	scope.opened.set(live, index + 1);
 	active.index = index;
-	budget.used = 0;
-	budget.unknown = false;
-	budget.limit = scope.mount ? null : heldHooks(scope, live, index);
+	active.used = 0;
+	active.unknown = false;
+	active.limit = scope.mount ? null : heldHooks(scope, live, index);
 }
 
 function end(scope: CallScope, active: Active) {
-	const { live, budget, index } = active;
+	const { live, index } = active;
 
-	settle(budget);
+	settle(active);
 
-	const count = budget.unknown ? null : budget.used;
+	const count = active.unknown ? null : active.used;
 
 	live.untrackedCounts[index] = count;
 	scope.record.push({ owner: live, count });

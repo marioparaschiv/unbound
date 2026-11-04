@@ -24,7 +24,7 @@ public:
 
     virtual std::string mount(const FabricView &container, const std::string &moduleName,
                               const nlohmann::json &properties)                              = 0;
-    virtual void        update(const std::string &surface, const nlohmann::json &properties) = 0;
+    virtual bool        update(const std::string &surface, const nlohmann::json &properties) = 0;
     virtual void        setSize(const std::string &surface, const NativeSize &minimum,
                                 const NativeSize &maximum)                                   = 0;
     virtual void        setFrame(const std::string &surface, const NativeFrame &frame)       = 0;
@@ -33,6 +33,7 @@ public:
     virtual void        unmount(const std::string &surface)                                  = 0;
     virtual bool        detach(const std::string &surface);
     virtual bool        attach(const std::string &surface, const FabricView &container);
+    virtual bool        detachesEverySurface() const;
     virtual bool        postsVoidCalls() const;
     virtual bool        measuresLastSetFrame() const;
 };
@@ -47,12 +48,13 @@ facebook::jsi::Object makeFabricNamespace(facebook::jsi::Runtime        &runtime
                                           std::shared_ptr<FabricAdapter> adapter,
                                           FabricCalls                    calls);
 
-inline constexpr size_t kIdleFabricSurfacesPerModule = 2;
-inline constexpr size_t kIdleFabricSurfaces          = 8;
+inline constexpr size_t kIdleFabricSurfacesPerModule = 12;
+inline constexpr size_t kIdleFabricSurfaces          = 24;
 
 size_t mountedFabricSurfaces();
 size_t idleFabricSurfaces();
 size_t createdFabricSurfaces();
 size_t reusedFabricSurfaces();
+size_t missedFabricSurfaces();
 void   evictIdleFabricSurfaces(const std::string &keyPrefix = "");
 }

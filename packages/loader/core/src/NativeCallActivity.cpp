@@ -109,6 +109,16 @@ std::optional<NativeCallSnapshot> nativeCallOnThread(uintptr_t thread)
     return std::nullopt;
 }
 
+CurrentNativeCall currentNativeCall()
+{
+    NativeCallSlot *slot = tClaim.slot;
+    if (!slot || slot->startedAt.load(std::memory_order_relaxed) == 0)
+    {
+        return {};
+    }
+    return {std::string_view(slot->label), slot->sequence.load(std::memory_order_relaxed)};
+}
+
 std::string describeNativeCall(const std::optional<NativeCallSnapshot> &call, int64_t now)
 {
     if (!call)

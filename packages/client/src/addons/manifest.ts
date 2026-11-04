@@ -5,11 +5,7 @@ import type {
 } from '@unbound-app/types';
 import { NATIVE_PLUGIN_CAPABILITIES, NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
 
-import {
-	NativePluginCapabilityError,
-	NativePluginPlatformError,
-	NativePluginUnsupportedPlatformError,
-} from '~/native/errors';
+import { NativePluginCapabilityError, NativePluginUnsupportedPlatformError } from '~/native/errors';
 import { isSafeAddonId, isSafeAddonMain } from '~/addons/paths';
 
 /** Checks a manifest's `main`; icon packs accept more than a relative path. */
@@ -49,21 +45,7 @@ function assertCapabilityList(declared: unknown, field: string): void {
 
 // UNKNOWN: the manifest arrives as JSON from the network, the loader or the debugger socket.
 function assertPlatforms(platforms: unknown): void {
-	if (Array.isArray(platforms)) {
-		if (platforms.length === 0) {
-			throw new Error('Manifest platforms must not be empty');
-		}
-
-		const unsupported = platforms.find((platform) => !isKnownPlatform(platform));
-
-		if (unsupported !== undefined) {
-			throw new Error(`Manifest platforms has unsupported platform: ${unsupported}`);
-		}
-
-		return;
-	}
-
-	if (typeof platforms !== 'object' || platforms === null) {
+	if (typeof platforms !== 'object' || platforms === null || Array.isArray(platforms)) {
 		throw new Error('Manifest platforms must be an object');
 	}
 
@@ -131,28 +113,6 @@ function assertAddonManifest(
 		assertPlatforms(platforms);
 	}
 
-	const platformCapabilities: unknown = Reflect.get(raw, 'platformCapabilities');
-
-	if (platformCapabilities !== undefined) {
-		if (
-			typeof platformCapabilities !== 'object' ||
-			platformCapabilities === null ||
-			Array.isArray(platformCapabilities)
-		) {
-			throw new Error('Manifest platformCapabilities must be an object');
-		}
-
-		for (const [platform, declared] of Object.entries(platformCapabilities)) {
-			if (!isKnownPlatform(platform)) {
-				throw new Error(
-					`Manifest platformCapabilities has unsupported platform: ${platform}`,
-				);
-			}
-
-			assertCapabilityList(declared, `platformCapabilities.${platform}`);
-		}
-	}
-
 	const unbound: unknown = Reflect.get(raw, 'unbound');
 
 	if (unbound === undefined) return;
@@ -186,28 +146,23 @@ export function parseAddonManifest(
 
 /**
  * @description Reads the platforms a manifest supports and the capabilities it needs on each, from the
- * `platforms` object or list, the older `platformCapabilities` and the flat `capabilities`.
+ * `platforms` object and the flat `capabilities`.
  * @param manifest The parsed manifest.
  * @returns Its platforms, and per platform its flat capabilities followed by that platform's, without duplicates.
  */
 export function resolveManifestPlatforms(manifest: AddonManifest): ManifestPlatforms {
 	const listed = manifest.platforms;
-	const platforms = Array.isArray(listed)
-		? listed
-		: listed
-			? NATIVE_PLUGIN_PLATFORMS.filter((platform) => listed[platform])
-			: NATIVE_PLUGIN_PLATFORMS;
+	const platforms = listed
+		? NATIVE_PLUGIN_PLATFORMS.filter((platform) => listed[platform])
+		: NATIVE_PLUGIN_PLATFORMS;
 	const capabilities: Partial<Record<NativePluginPlatform, readonly NativePluginCapability[]>> =
 		{};
 
 	for (const platform of platforms) {
-		const declared = Array.isArray(listed) ? undefined : listed?.[platform]?.capabilities;
-
 		capabilities[platform] = Object.freeze([
 			...new Set([
 				...(manifest.capabilities ?? []),
-				...(declared ?? []),
-				...(manifest.platformCapabilities?.[platform] ?? []),
+				...(listed?.[platform]?.capabilities ?? []),
 			]),
 		]);
 	}
@@ -237,10 +192,6 @@ export function resolveManifestCapabilities(
 
 	if (manifest.platforms) {
 		throw new NativePluginUnsupportedPlatformError(platforms, String(platform));
-	}
-
-	if (Object.keys(manifest.platformCapabilities ?? {}).length > 0) {
-		throw new NativePluginPlatformError();
 	}
 
 	return Object.freeze([...new Set(manifest.capabilities ?? [])]);

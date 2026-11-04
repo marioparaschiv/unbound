@@ -260,7 +260,7 @@ export function createAndroidRenderer(
 	function retryWaiting() {
 		if (!waiting.size) return;
 
-		index.hydrateChannel();
+		index.recheckChannel();
 
 		const count = index.all().length;
 

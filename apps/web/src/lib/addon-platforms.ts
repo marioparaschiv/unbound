@@ -1,13 +1,10 @@
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 
-export type AddonPlatform = keyof NonNullable<PublishedManifest['platformCapabilities']>;
+export type AddonPlatform = keyof NonNullable<PublishedManifest['platforms']>;
 
 export type AddonCapability = NonNullable<PublishedManifest['capabilities']>[number];
 
-type PlatformFields = Pick<
-	PublishedManifest,
-	'platforms' | 'platformCapabilities' | 'capabilities'
->;
+type PlatformFields = Pick<PublishedManifest, 'platforms' | 'capabilities'>;
 
 export type PlatformSupport = {
 	platform: AddonPlatform;
@@ -22,26 +19,21 @@ export const PLATFORM_LABELS: Record<AddonPlatform, string> = {
 const PLATFORM_ORDER: AddonPlatform[] = ['ios', 'android'];
 
 /**
- * @description Reads the platforms a manifest runs on and the Capabilities each needs, for manifests of any age.
- * @param manifest The manifest's `platforms`, `platformCapabilities` and flat `capabilities`.
- * @returns The platforms in display order. Older manifests get the flat `capabilities` on every platform they list, plus that platform's `platformCapabilities`.
+ * @description Reads the platforms a manifest runs on and the Capabilities each needs.
+ * @param manifest The manifest's `platforms` and flat `capabilities`.
+ * @returns The platforms in display order, each with the flat `capabilities` followed by its own.
  */
 export function resolvePlatforms(manifest: PlatformFields): PlatformSupport[] {
-	const { platforms, platformCapabilities, capabilities = [] } = manifest;
+	const { platforms, capabilities = [] } = manifest;
 
-	if (platforms && !Array.isArray(platforms)) {
-		return PLATFORM_ORDER.filter((platform) => platforms[platform]).map((platform) => ({
+	return PLATFORM_ORDER.filter((platform) => !platforms || platforms[platform]).map(
+		(platform) => ({
 			platform,
-			capabilities: platforms[platform]?.capabilities ?? [],
-		}));
-	}
-
-	const listed = platforms ?? PLATFORM_ORDER;
-
-	return PLATFORM_ORDER.filter((platform) => listed.includes(platform)).map((platform) => ({
-		platform,
-		capabilities: [...new Set([...capabilities, ...(platformCapabilities?.[platform] ?? [])])],
-	}));
+			capabilities: [
+				...new Set([...capabilities, ...(platforms?.[platform]?.capabilities ?? [])]),
+			],
+		}),
+	);
 }
 
 export default { PLATFORM_LABELS, resolvePlatforms };

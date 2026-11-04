@@ -73,15 +73,10 @@ export type AuthoredAddonManifest = {
 	main: string;
 	/** The addon's version, in strict SemVer 2.0.0 with no `v` prefix. */
 	version: string;
-	/**
-	 * The platforms the addon runs on, each with the capabilities it needs there; absent means every platform.
-	 * Published addons may still carry the older array of platform names.
-	 */
-	platforms?: AddonPlatforms | NativePluginPlatform[];
+	/** The platforms the addon runs on, each with the capabilities it needs there; absent means every platform. */
+	platforms?: AddonPlatforms;
 	/** Capabilities the addon needs on every platform it runs on. */
 	capabilities?: NativePluginCapability[];
-	/** @deprecated Use `platforms.<platform>.capabilities`. Still read for published addons. */
-	platformCapabilities?: Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
 	/** The lowest native plugin API version the addon supports; an older native bridge fails its start. */
 	minNativePluginApi?: string;
 	/** The Ed25519 signature the Unbound team's publish pipeline puts on first-party plugins. */

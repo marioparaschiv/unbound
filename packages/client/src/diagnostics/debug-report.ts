@@ -55,7 +55,7 @@ function deviceFlags(android: boolean): string[] {
 	const rooted = attempt(() => device?.isRooted(), false);
 	const flags = [
 		android ? (rooted ? 'rooted' : 'stock') : rooted ? 'jailbroken' : 'jailed',
-		attempt(() => globalThis.NativePlatform?.app.isVerifiedBuild?.(), false)
+		attempt(() => globalThis.NativePlatform?.app.isVerifiedBuild(), false)
 			? 'verified'
 			: 'unverified',
 		attempt(() => device?.isVirtualDevice(), false) && (android ? 'emulator' : 'simulator'),
@@ -90,7 +90,7 @@ export function readDebugInfo(): DebugInfo {
 		...channelOf(String(bundle.Version ?? 'unknown'), appSource),
 		discordBuild: String(bundle.Build ?? 'unknown'),
 		appSource,
-		framework: attempt(() => platform?.app.getFramework?.(), ''),
+		framework: attempt(() => platform?.app.getFramework(), ''),
 		react: React.version,
 		reactNative: rn ? `${rn.major}.${rn.minor}.${rn.patch}` : 'unknown',
 		hermes: String(runtime['OSS Release Version'] ?? 'unknown'),

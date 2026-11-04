@@ -1,5 +1,7 @@
 #include "NativeResourceBudget.h"
 
+#include <map>
+
 #include "NativeFabric.h"
 #include "NativeHandleLeases.h"
 #include "NativeLimits.h"
@@ -144,14 +146,55 @@ static size_t platformHandleCount()
     return platformHandleCounter() ? platformHandleCounter()() : 0;
 }
 
+static std::map<std::string, std::function<size_t()>> &platformResourceCounters()
+{
+    static std::map<std::string, std::function<size_t()>> counters;
+    return counters;
+}
+
+void setPlatformResourceCounter(const std::string &name, std::function<size_t()> counter)
+{
+    std::lock_guard<std::mutex> lock(platformHandleCounterMutex());
+    if (counter)
+    {
+        platformResourceCounters()[name] = std::move(counter);
+        return;
+    }
+    platformResourceCounters().erase(name);
+}
+
+static std::map<std::string, size_t> platformResourceCounts()
+{
+    std::map<std::string, size_t> counts = {{kObjCHandleCounter, 0},
+                                            {kObjCPlanCounter, 0},
+                                            {kObjCRetainCounter, 0},
+                                            {kJavaHandleCounter, 0}};
+    std::lock_guard<std::mutex>   lock(platformHandleCounterMutex());
+    for (const auto &[name, counter] : platformResourceCounters())
+    {
+        counts[name] = counter();
+    }
+    return counts;
+}
+
 nlohmann::json nativeResourceCounts()
 {
-    return {{"hooks", nativeHookBudget().used()},
-            {"surfaces", nativeSurfaceBudget().used()},
-            {"cachedReturns", nativeCachedReturnBudget().used()},
-            {"handles", leasedHandleCount() + platformHandleCount()},
-            {"idleSurfaces", idleFabricSurfaces()},
-            {"createdSurfaces", createdFabricSurfaces()},
-            {"reusedSurfaces", reusedFabricSurfaces()}};
+    size_t         leases = leasedHandleCount();
+    nlohmann::json counts = {{"hooks", nativeHookBudget().used()},
+                             {"surfaces", nativeSurfaceBudget().used()},
+                             {"cachedReturns", nativeCachedReturnBudget().used()},
+                             {"handles", leases + platformHandleCount()},
+                             {"leases", leases},
+                             {"idleSurfaces", idleFabricSurfaces()},
+                             {"createdSurfaces", createdFabricSurfaces()},
+                             {"reusedSurfaces", reusedFabricSurfaces()},
+                             {"missedSurfaces", missedFabricSurfaces()},
+                             {"mainWork", mainWorkCounts()},
+                             {"mainWaits", mainWaitCounts()}};
+    for (const auto &[name, count] : platformResourceCounts())
+    {
+        counts[name] = count;
+    }
+    return counts;
 }
 }

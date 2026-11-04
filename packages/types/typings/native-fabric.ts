@@ -87,5 +87,5 @@ export type NativeFabricBridge = {
 	/** Destroys the idle surfaces this plugin left for reuse. */
 	releaseIdle?(): void;
 	/** Like `releaseIdle`, on the main thread; the plugin scope calls it when the plugin stops. */
-	releaseIdleAsync?(): NativeCancelablePromise<void>;
+	releaseIdleAsync(): NativeCancelablePromise<void>;
 };

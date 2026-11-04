@@ -109,17 +109,16 @@ func runReleaseCandidate(args []string) error {
 	if err != nil {
 		return err
 	}
-	if version := candidate.Version; version != "" {
-		tag := loaderReleaseTag(config.channel, version)
-		exists, err := githubReleaseExists(context.Background(), config.httpClient, config.githubAPIURL, config.githubRepository, tag, config.githubToken)
+	if candidate.Version != "" {
+		unreleased, err := unreleasedLoaderTags(context.Background(), config, candidate)
 		if err != nil {
 			return err
 		}
-		if exists {
-			fmt.Printf("::notice title=release poll::%s already exists; no build is needed\n", tag)
+		if len(unreleased) == 0 {
+			fmt.Printf("::notice title=release poll::the latest %s builds are already released; no build is needed\n", config.channel)
 			candidate = releaseCandidate{}
 		} else {
-			fmt.Printf("::notice title=release poll::new %s candidate: %s\n", config.channel, version)
+			fmt.Printf("::notice title=release poll::new %s candidate: %s (unreleased: %s)\n", config.channel, candidate.Version, strings.Join(unreleased, ", "))
 		}
 	} else {
 		fmt.Printf("::notice title=release poll::no %s candidate is available\n", config.channel)
@@ -141,14 +140,38 @@ func discoverReleaseCandidate(ctx context.Context, config releasePollConfig) (re
 	return discoverStableCandidate(ctx, config, lookup.Version)
 }
 
-func loaderReleaseTag(channel, version string) string {
+func loaderReleaseTags(channel string, candidate releaseCandidate) ([]string, error) {
 	switch channel {
 	case "stable":
-		return releaseTag(version, "ios")
+		androidVersion, err := discordVersionForAndroidCode(candidate.AndroidCode)
+		if err != nil {
+			return nil, err
+		}
+		return []string{releaseTag(candidate.Version, "ios"), releaseTag(androidVersion, "android")}, nil
 	case "testflight":
-		return releaseTag(version, "ios-testflight")
+		return []string{releaseTag(candidate.Version, "ios-testflight")}, nil
 	}
-	return "discord-" + version
+	return []string{"discord-" + candidate.Version}, nil
+}
+
+func unreleasedLoaderTags(ctx context.Context, config releasePollConfig, candidate releaseCandidate) ([]string, error) {
+	tags, err := loaderReleaseTags(config.channel, candidate)
+	if err != nil {
+		return nil, err
+	}
+	var unreleased []string
+	for _, tag := range tags {
+		exists, err := githubReleaseExists(ctx, config.httpClient, config.githubAPIURL, config.githubRepository, tag, config.githubToken)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			fmt.Printf("::notice title=release poll::%s is already released\n", tag)
+			continue
+		}
+		unreleased = append(unreleased, tag)
+	}
+	return unreleased, nil
 }
 
 var testflightVersionPattern = regexp.MustCompile(`^[0-9]+(\.[0-9]+)+_[0-9]+$`)
@@ -215,27 +238,22 @@ func lookupItunesApp(ctx context.Context, client *http.Client, endpoint, bundleI
 }
 
 func discoverStableCandidate(ctx context.Context, config releasePollConfig, itunesVersion string) (releaseCandidate, error) {
-	iosCode, err := androidCodeForDiscordVersion(itunesVersion)
-	if err != nil {
+	if _, err := androidCodeForDiscordVersion(itunesVersion); err != nil {
 		return releaseCandidate{}, fmt.Errorf("read the iTunes version %q: %w", itunesVersion, err)
 	}
 	androidCode, err := lookupAndroidStable(ctx, config.httpClient, config.androidTrackerURL)
 	if err != nil {
 		return releaseCandidate{}, err
 	}
-	if iosCode/1000 != androidCode/1000 {
-		fmt.Printf("::notice title=release poll::iTunes stable %s and Android stable %d are different Discord releases; waiting until both ship the same one\n", itunesVersion, androidCode)
-		return releaseCandidate{}, nil
-	}
 	available, err := verifyAndroidBasePackage(ctx, config.httpClient, config.androidTrackerURL, androidCode)
 	if err != nil {
 		return releaseCandidate{}, err
 	}
 	if !available {
-		fmt.Printf("::notice title=release poll::Android version %d is not downloadable; no common release is available\n", androidCode)
+		fmt.Printf("::notice title=release poll::Android stable version %d is not downloadable yet; waiting for it\n", androidCode)
 		return releaseCandidate{}, nil
 	}
-	fmt.Printf("::notice title=release poll::iTunes stable %s pairs with Android stable %d\n", itunesVersion, androidCode)
+	fmt.Printf("::notice title=release poll::latest stable is iTunes %s and Android %d\n", itunesVersion, androidCode)
 	return releaseCandidate{Version: itunesVersion, AndroidCode: androidCode}, nil
 }
 

@@ -47,7 +47,9 @@ export type VariantBuild = StaticDecode<typeof buildSchema>;
 const pluginManifestSchema = Type.Object(
 	{
 		id: Type.String(),
-		platforms: Type.Optional(Type.Array(Type.String())),
+		platforms: Type.Optional(
+			Type.Object({ ios: Type.Optional(Type.Unknown()) }, { additionalProperties: true }),
+		),
 	},
 	{ additionalProperties: true },
 );
@@ -154,7 +156,7 @@ function stagePlugins(source: string, into: string): string[] {
 		const raw: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
 		const manifest = parse(pluginManifestSchema, raw);
 
-		if (manifest.platforms && !manifest.platforms.includes('ios')) {
+		if (manifest.platforms && !manifest.platforms.ios) {
 			continue;
 		}
 

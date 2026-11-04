@@ -225,6 +225,8 @@ func TestEvaluateCompatAgainstSDKs(t *testing.T) {
 		{Kind: referenceJavaClass, Name: "android.app.ActivityThread", Component: "plugin:demo", Locations: location},
 		{Kind: referenceJavaClass, Name: "android.os.SystemProperties", Component: "loader-android", Locations: location},
 		{Kind: referenceJavaClass, Name: "org.lsposed.lspatch.loader.LSPApplication", Component: "loader-android", Locations: location},
+		{Kind: referenceJavaField, Name: "mColor", Component: "plugin:demo", Locations: location},
+		{Kind: referenceJavaField, Name: "mOuterRadii", Component: "plugin:demo", Locations: location},
 	}
 	results := evaluateCompat(references, targets, nil)
 	expect := func(platform, kind, name, status string) {
@@ -245,9 +247,11 @@ func TestEvaluateCompatAgainstSDKs(t *testing.T) {
 	expect("android", referenceJavaClass, "android.app.ActivityThread", compatBroken)
 	expect("android", referenceJavaClass, "android.os.SystemProperties", compatExternal)
 	expect("android", referenceJavaClass, "org.lsposed.lspatch.loader.LSPApplication", compatExternal)
+	expect("android", referenceJavaField, "mColor", compatExternal)
+	expect("android", referenceJavaField, "mOuterRadii", compatExternal)
 
 	report := renderCompatReport(results)
-	if !strings.Contains(report, "Outside Discord and the SDKs (3)") {
+	if !strings.Contains(report, "Outside Discord and the SDKs (5)") {
 		t.Fatalf("environment-only classes must be listed:\n%s", report)
 	}
 }

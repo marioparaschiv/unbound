@@ -67,7 +67,6 @@ export type {
 export {
 	NativePluginCapabilityError,
 	NativePluginDisposedError,
-	NativePluginPlatformError,
 	NativePluginUnavailableError,
 	NativePluginUnsupportedPlatformError,
 	NativePluginVersionError,

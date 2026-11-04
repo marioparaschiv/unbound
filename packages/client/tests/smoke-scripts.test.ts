@@ -47,6 +47,8 @@ Object.assign(globalThis, {
 		apiVersion: '1.0.0',
 		capabilities: ['native.ffi.call', 'native.ffi.symbols'],
 		ffi: { symbol: () => ({}), call: () => undefined },
+		fabric: {},
+		debug: {},
 	},
 	window: globalThis,
 	modules: new Map(),

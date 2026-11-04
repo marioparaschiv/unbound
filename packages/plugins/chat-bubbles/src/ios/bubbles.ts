@@ -9,22 +9,27 @@ import { findVisibleCells } from '@unbound-plugins/shared/native/ios/visible-cel
 import { MESSAGE_TEXT_VIEW_CLASSES } from '@unbound-plugins/shared/native/ios/text-attachments';
 import { readRect } from '@unbound-plugins/shared/native/ios/rect';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
-import {
-	readNativeMessageInfo,
-	type NativeMessageInfo,
-} from '@unbound-plugins/shared/native/ios/message-info';
+import { readNativeMessageInfo } from '@unbound-plugins/shared/native/ios/message-info';
 
 import { messageLayout, type SnapshotNode } from '~/message-layout';
-import { forgetBubbles, installBubbleGuards, rememberBubble } from '~/ios/ui-bubbles';
+import { drawBubble, forgetBubbles, installBubbleGuards } from '~/ios/ui-bubbles';
 import { BubbleLayout, CARD_INSET, IOSClass, PLUGIN_NAME } from '~/constants';
 import { bubbleFrame, bubbleProblem, cardFrame, frameDrift } from '~/geometry';
-import type { BubbleColor } from '~/style';
 import { currentAppearance } from '~/theme';
 import { messageOwnership } from '~/author';
+import {
+	createDrawnSignatures,
+	needsSettle,
+	noteChange,
+	notePlaced,
+	startSettle,
+	type ReuseSettle,
+} from '~/reuse-settle';
 
 const SNAPSHOT = { maxDepth: 12, maxNodes: 512 };
 const BUBBLE_TAG = 0x0b0b1e;
 const FRAME_TOLERANCE = 2;
+const MAX_NESTED_CHECKS = 256;
 
 function describeBox({
 	x,
@@ -54,20 +59,27 @@ async function textWidth(
 	view: NativeObjectHandle,
 	limit: number,
 ): Promise<number> {
-	const text = (await objc.invokeAsync(view, 'attributedText', [])) as NativeObjectHandle | null;
+	const [text, measured] = await objc
+		.batch([
+			{ target: view, selector: 'attributedText', args: [] },
+			{
+				target: { $nativeBatchResult: 0 },
+				selector: 'boundingRectWithSize:options:context:',
+				args: [
+					objc.struct('CGSize', { width: limit, height: TEXT_MEASURE_HEIGHT }),
+					USES_LINE_FRAGMENT_ORIGIN,
+					null,
+				],
+			},
+		])
+		.catch(() => [null, null]);
 
-	if (!text) return 0;
-
-	const measured = await objc.invokeAsync(text, 'boundingRectWithSize:options:context:', [
-		objc.struct('CGSize', { width: limit, height: TEXT_MEASURE_HEIGHT }),
-		USES_LINE_FRAGMENT_ORIGIN,
-		null,
-	]);
-
-	return Math.ceil(readRect(measured).width);
+	return text ? Math.ceil(readRect(measured).width) : 0;
 }
 
 type PendingCell = { cell: NativeObjectHandle; onlyWhenResized: boolean };
+
+type NestedCheck = { parent: string | undefined; nested: boolean };
 
 /**
  * @description Draws a rounded bubble behind each iOS message, sized to its text and media, or in the card layout one card behind its whole content column.
@@ -82,21 +94,12 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 	const failedMeasures = new Map<string, number>();
 	const ownership = new Map<string, boolean>();
 	const problems = new Map<string, string>();
-	const settlingReuse = new Set<string>();
+	const nested = new Map<string, NestedCheck>();
+	const settlingReuse = new Map<string, ReuseSettle>();
+	const drawnBubbles = createDrawnSignatures();
 	const clear = clearColor(objc);
 	let flushing = false;
 	let disposed = false;
-
-	function color({ red, green, blue, alpha }: BubbleColor) {
-		return objc.call(
-			objc.getClass('UIColor')!,
-			'colorWithRed:green:blue:alpha:',
-			red,
-			green,
-			blue,
-			alpha,
-		) as NativeObjectHandle;
-	}
 
 	async function bubbleFor(key: string, cell: NativeObjectHandle): Promise<NativeObjectHandle> {
 		const existing = bubbles.get(key);
@@ -114,23 +117,31 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 		}
 
 		const bubble = objc.alloc('UIView');
-		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
 
 		bubbles.set(key, { cell, bubble });
-		await objc.invokeAsync(bubble, 'setTag:', [BUBBLE_TAG]);
-		await objc.invokeAsync(layer, 'setMasksToBounds:', [true]);
-		await objc.invokeAsync(bubble, 'setUserInteractionEnabled:', [false]);
-		await objc.invokeAsync(cell, 'insertSubview:atIndex:', [bubble, 0]);
+		await objc.batch([
+			{ target: bubble, selector: 'setTag:', args: [BUBBLE_TAG] },
+			{ target: bubble, selector: 'setHidden:', args: [true] },
+			{ target: bubble, selector: 'setUserInteractionEnabled:', args: [false] },
+			{ target: bubble, selector: 'layer', args: [] },
+			{ target: { $nativeBatchResult: 3 }, selector: 'setMasksToBounds:', args: [true] },
+			{ target: cell, selector: 'insertSubview:atIndex:', args: [bubble, 0] },
+		]);
 
 		if (disposed) await objc.invokeAsync(bubble, 'removeFromSuperview', []);
 
 		return bubble;
 	}
 
-	async function isNested(cell: NativeObjectHandle): Promise<boolean> {
+	async function isNested(key: string, cell: NativeObjectHandle): Promise<boolean> {
 		const parent = (await objc.invokeAsync(cell, 'superview', [])) as NativeObjectHandle | null;
 
 		if (!parent) return false;
+
+		const parentKey = viewKey(objc, parent);
+		const known = nested.get(key);
+
+		if (known && parentKey !== undefined && known.parent === parentKey) return known.nested;
 
 		const [outer] = await objc.findViews(parent, IOSClass.messageCell, {
 			direction: 'ancestors',
@@ -138,6 +149,11 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 			maxResults: 1,
 			stopAtMatch: true,
 		});
+
+		nested.delete(key);
+		nested.set(key, { parent: parentKey, nested: Boolean(outer) });
+
+		if (nested.size > MAX_NESTED_CHECKS) nested.delete(nested.keys().next().value!);
 
 		return Boolean(outer);
 	}
@@ -148,15 +164,12 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 		return `${Math.round(width)}x${Math.round(height)}`;
 	}
 
-	async function isOwn(
-		key: string,
-		cell: NativeObjectHandle,
-		info: NativeMessageInfo | undefined,
-	): Promise<boolean> {
+	async function isOwn(key: string, cell: NativeObjectHandle): Promise<boolean> {
 		const known = ownership.get(key);
 
 		if (known !== undefined) return known;
 
+		const info = await readNativeMessageInfo(cell, objc).catch(() => undefined);
 		const own = messageOwnership(info?.messageId, info?.channelId);
 
 		if (own !== undefined) ownership.set(key, own);
@@ -200,7 +213,7 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 		for (const cell of await findVisibleCells(objc, IOSClass.messageCell)) {
 			const key = viewKey(objc, cell);
 
-			if (key === undefined || pending.has(key) || (await isNested(cell))) continue;
+			if (key === undefined || pending.has(key) || (await isNested(key, cell))) continue;
 
 			const bubble = bubbles.get(key)?.bubble;
 			const shown = bubble && !(await objc.invokeAsync(bubble, 'isHidden', []));
@@ -241,16 +254,24 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 		if (onlyWhenResized && bubbles.has(key) && placedSizes.get(key) === size) return;
 
 		placedSizes.set(key, size);
-		await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]);
 
-		if (await isNested(cell)) return;
+		notePlaced(settlingReuse.get(key));
 
-		const measured = await measure(cell);
+		if (await isNested(key, cell)) {
+			await objc.invokeAsync(cell, 'setBackgroundColor:', [clear]);
+
+			return;
+		}
+
+		const viewModel = objc.getIvar(cell, 'viewModel') as NativeObjectHandle | null;
+		const [measured, own] = await Promise.all([measure(cell), isOwn(key, cell)]);
 
 		if (disposed) return;
 
 		if (!measured) {
 			const existing = bubbles.get(key);
+
+			drawnBubbles.forget(key);
 
 			if (existing) await objc.invokeAsync(existing.bubble, 'setHidden:', [true]);
 
@@ -269,31 +290,18 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 		else problems.delete(key);
 
 		const bubble = await bubbleFor(key, cell);
-		const layer = (await objc.invokeAsync(bubble, 'layer', [])) as NativeObjectHandle;
 
-		await objc.invokeAsync(layer, 'setCornerRadius:', [style.radius]);
-		const info = await readNativeMessageInfo(cell, objc).catch(() => undefined);
-		const own = await isOwn(key, cell, info);
+		if (disposed) return;
 
-		await objc.invokeAsync(bubble, 'setBackgroundColor:', [
-			color(own ? style.ownColor : style.color),
-		]);
-		await objc.invokeAsync(bubble, 'setFrame:', [
-			objc.struct('CGRect', {
-				origin: { x: frame.x, y: frame.y },
-				size: { width: frame.width, height: frame.height },
-			}),
-		]);
-		await objc.invokeAsync(bubble, 'setHidden:', [false]);
+		const drawn = {
+			...frame,
+			cellWidth: Number(size.split('x')[0]),
+			radius: style.radius,
+			color: own ? style.ownColor : style.color,
+		};
+		if (!drawnBubbles.changed(key, drawn)) return;
 
-		if (info?.messageId) {
-			ui.run(rememberBubble, info.messageId, {
-				...frame,
-				cellWidth: Number(size.split('x')[0]),
-				radius: style.radius,
-				color: own ? style.ownColor : style.color,
-			});
-		}
+		ui.run(drawBubble, key, cell, bubble, viewModel, drawn);
 	}
 
 	async function flush() {
@@ -324,13 +332,15 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 
 		placedSizes.delete(key);
 		setTimeout(() => {
-			if (!disposed) schedule(cell);
+			if (!disposed) schedule(cell, false, key);
 		}, MEASURE_RETRY_MS);
 	}
 
-	function schedule(cell: NativeObjectHandle, onlyWhenResized = false) {
-		const key = viewKey(objc, cell);
-
+	function schedule(
+		cell: NativeObjectHandle,
+		onlyWhenResized = false,
+		key: string | undefined = viewKey(objc, cell),
+	) {
 		if (disposed || key === undefined) return;
 
 		const queued = pending.get(key);
@@ -343,17 +353,35 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 		if (!flushing) setTimeout(() => void flush(), 0);
 	}
 
-	ui.run(installBubbleGuards, scope, {
-		messageCell: IOSClass.messageCell,
-		separatorCell: IOSClass.separatorCell,
-		bubbleTag: BUBBLE_TAG,
-	});
+	ui.run(
+		installBubbleGuards,
+		scope,
+		{
+			messageCell: IOSClass.messageCell,
+			separatorCell: IOSClass.separatorCell,
+			bubbleTag: BUBBLE_TAG,
+		},
+		ui.callback((key: string) => {
+			const cell = bubbles.get(key)?.cell;
+
+			drawnBubbles.forget(key);
+
+			if (cell) schedule(cell, false, key);
+		}),
+	);
 
 	const hooks = [
 		objc.hook(
 			IOSClass.messageCell,
 			'layoutSubviews',
-			{ after: ({ self }) => schedule(self, true) },
+			{
+				after: ({ self }) => {
+					const key = viewKey(objc, self);
+
+					markSettlingDirty(key);
+					schedule(self, true, key);
+				},
+			},
 			LATEST_CALL_PER_RECEIVER,
 		),
 		...textChangeHooks(),
@@ -364,16 +392,20 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 				if (key === undefined) return;
 
 				placedSizes.delete(key);
+				drawnBubbles.forget(key);
 				failedMeasures.delete(key);
 				ownership.delete(key);
 				problems.delete(key);
 				pending.delete(key);
-				settlingReuse.add(key);
+
+				const settle = startSettle();
+
+				settlingReuse.set(key, settle);
 
 				setTimeout(() => {
-					settlingReuse.delete(key);
+					if (settlingReuse.get(key) === settle) settlingReuse.delete(key);
 
-					if (!disposed) schedule(self);
+					if (!disposed && needsSettle(settle)) schedule(self, false, key);
 				}, REUSE_SETTLE_MS);
 			},
 		}),
@@ -413,11 +445,19 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 
 		const key = viewKey(objc, cell as NativeObjectHandle);
 
-		if (key !== undefined && !settlingReuse.has(key)) schedule(cell as NativeObjectHandle);
+		if (key === undefined) return;
+
+		if (noteChange(settlingReuse.get(key))) schedule(cell as NativeObjectHandle, false, key);
+	}
+
+	function markSettlingDirty(key: string | undefined) {
+		if (key !== undefined) noteChange(settlingReuse.get(key));
 	}
 
 	async function refresh() {
 		ui.run(forgetBubbles);
+		drawnBubbles.clear();
+		nested.clear();
 
 		for (const className of [IOSClass.messageCell, IOSClass.separatorCell]) {
 			for (const cell of await findVisibleCells(objc, className)) {
@@ -447,9 +487,11 @@ export function drawIOSBubbles({ objc, ui }: NativePluginBridge) {
 
 			pending.clear();
 			placedSizes.clear();
+			drawnBubbles.clear();
 			failedMeasures.clear();
 			ownership.clear();
 			problems.clear();
+			nested.clear();
 			settlingReuse.clear();
 			await Promise.all(
 				[...bubbles.values()].map(({ bubble }) =>

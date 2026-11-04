@@ -340,10 +340,9 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 			return scan([id], initializeModules);
 		}
 	} else {
-		// Modules Discord has already initialized come first, so a search forces nothing it does not need.
 		found = cached ? scan(cached, false) : null;
 
-		if (!found && !cacheOnly) {
+		if (!found && !cached && !cacheOnly) {
 			found =
 				(useCache ? scan([...data.cache.keys()], false) : null) ?? scan(moduleIds, false);
 		}

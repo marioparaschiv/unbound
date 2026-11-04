@@ -110,7 +110,6 @@ describe('the scaffolded plugin', () => {
 
 			expect(manifest).toMatchObject({ id: 'wumpus.hello-world', main: 'index.js' });
 			expect(Object.keys(manifest)).not.toContain('platforms');
-			expect(Object.keys(manifest)).not.toContain('platformCapabilities');
 			expect(existsSync(join(addon.output, 'page.json'))).toBe(true);
 		},
 		{ timeout: 120_000 },

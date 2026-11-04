@@ -1,7 +1,6 @@
 import {
 	NATIVE_PLUGIN_CAPABILITIES,
 	NATIVE_PLUGIN_PLATFORM_CAPABILITIES,
-	NATIVE_PLUGIN_PLATFORMS,
 } from '@unbound-app/types/native';
 import { ADDON_KINDS } from '@unbound-app/types/addons';
 
@@ -88,8 +87,6 @@ export const addonPlatformsSchema = Type.Refine(
 	() => 'Must list a platform.',
 );
 
-const legacyPlatformListSchema = Type.Array(Type.Enum(NATIVE_PLUGIN_PLATFORMS), { minItems: 1 });
-
 export const addonAuthorSchema = Type.Object({
 	name: Type.String({ minLength: 1 }),
 	// A string of digits, typed as the template literal Discord user ids use.
@@ -111,18 +108,8 @@ export const addonManifestSchema = Type.Object(
 		main: addonMainSchema,
 		version: semverSchema,
 		/** The platforms the addon runs on, each with its capabilities; absent means every platform. */
-		platforms: Type.Optional(Type.Union([addonPlatformsSchema, legacyPlatformListSchema])),
+		platforms: Type.Optional(addonPlatformsSchema),
 		capabilities: Type.Optional(Type.Array(Type.Enum(NATIVE_PLUGIN_CAPABILITIES))),
-		/** @deprecated Use `platforms.<platform>.capabilities`. Still accepted for published addons. */
-		platformCapabilities: Type.Optional(
-			Type.Partial(
-				Type.Record(
-					Type.Enum(NATIVE_PLUGIN_PLATFORMS),
-					Type.Array(Type.Enum(NATIVE_PLUGIN_CAPABILITIES)),
-				),
-				{ additionalProperties: false },
-			),
-		),
 		minNativePluginApi: Type.Optional(Type.String()),
 		unbound: Type.Optional(Type.Object({ min: Type.Optional(semverSchema) })),
 		bytecode: Type.Optional(bytecodeDigestsSchema),

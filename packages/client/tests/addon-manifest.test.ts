@@ -2,15 +2,11 @@ import type { AddonManifest } from '@unbound-app/types';
 import { describe, expect, test } from 'bun:test';
 
 import {
-	NativePluginCapabilityError,
-	NativePluginPlatformError,
-	NativePluginUnsupportedPlatformError,
-} from '~/native/errors';
-import {
 	parseAddonManifest,
 	resolveManifestCapabilities,
 	resolveManifestPlatforms,
 } from '~/addons/manifest';
+import { NativePluginCapabilityError, NativePluginUnsupportedPlatformError } from '~/native/errors';
 
 const base: AddonManifest = {
 	id: 'unbound.example',
@@ -32,19 +28,13 @@ describe('parseAddonManifest', () => {
 			'Manifest missing required field: version',
 		);
 		expect(() => parseAddonManifest({ ...base, authors: [] })).toThrow('Manifest authors');
-		expect(() => parseAddonManifest({ ...base, platforms: ['web'] })).toThrow(
-			'unsupported platform: web',
-		);
-		expect(() => parseAddonManifest({ ...base, platformCapabilities: [] })).toThrow(
-			'Manifest platformCapabilities must be an object',
+		expect(() => parseAddonManifest({ ...base, platforms: ['ios'] })).toThrow(
+			'Manifest platforms must be an object',
 		);
 		expect(() => parseAddonManifest({ ...base, unbound: { min: 1 } })).toThrow('unbound.min');
 	});
 
 	test('refuses a platform capability Unbound does not know', () => {
-		expect(() =>
-			parseAddonManifest({ ...base, platformCapabilities: { ios: ['native.unknown'] } }),
-		).toThrow(NativePluginCapabilityError);
 		expect(() =>
 			parseAddonManifest({
 				...base,
@@ -76,27 +66,13 @@ describe('resolveManifestPlatforms', () => {
 			resolveManifestPlatforms({
 				...base,
 				capabilities: ['native.runtime.events'],
-				platforms: { ios: { capabilities: ['native.objc.classes'] } },
+				platforms: {
+					ios: { capabilities: ['native.objc.classes', 'native.objc.classes'] },
+				},
 			}),
 		).toEqual({
 			platforms: ['ios'],
 			capabilities: { ios: ['native.runtime.events', 'native.objc.classes'] },
-		});
-	});
-
-	test('reads the older platforms list with platformCapabilities', () => {
-		expect(
-			resolveManifestPlatforms({
-				...base,
-				platforms: ['android'],
-				platformCapabilities: {
-					ios: ['native.objc.classes'],
-					android: ['native.java.classes'],
-				},
-			}),
-		).toEqual({
-			platforms: ['android'],
-			capabilities: { android: ['native.java.classes'] },
 		});
 	});
 
@@ -111,15 +87,22 @@ describe('resolveManifestPlatforms', () => {
 			},
 		});
 	});
+
+	test('runs on every platform without capabilities when platforms is absent', () => {
+		expect(resolveManifestPlatforms(base)).toEqual({
+			platforms: ['ios', 'android'],
+			capabilities: { ios: [], android: [] },
+		});
+	});
 });
 
 describe('resolveManifestCapabilities', () => {
 	const manifest: AddonManifest = {
 		...base,
 		capabilities: ['native.runtime.events', 'native.objc.classes'],
-		platformCapabilities: {
-			ios: ['native.objc.classes', 'native.objc.invoke'],
-			android: ['native.java.classes'],
+		platforms: {
+			ios: { capabilities: ['native.objc.classes', 'native.objc.invoke'] },
+			android: { capabilities: ['native.java.classes'] },
 		},
 	};
 
@@ -138,20 +121,19 @@ describe('resolveManifestCapabilities', () => {
 
 	test('refuses a host the manifest does not support', () => {
 		expect(() =>
-			resolveManifestCapabilities({ ...base, platforms: ['ios'] }, 'android'),
-		).toThrow(NativePluginUnsupportedPlatformError);
-		expect(() =>
 			resolveManifestCapabilities({ ...base, platforms: { ios: {} } }, 'android'),
 		).toThrow(NativePluginUnsupportedPlatformError);
-		expect(() =>
-			resolveManifestCapabilities({ ...base, platforms: ['ios'] }, undefined),
-		).toThrow(NativePluginUnsupportedPlatformError);
+		expect(() => resolveManifestCapabilities(manifest, 'web')).toThrow(
+			NativePluginUnsupportedPlatformError,
+		);
 	});
 
-	test('needs a known host only when capabilities depend on the platform', () => {
-		expect(() => resolveManifestCapabilities(manifest, 'web')).toThrow(
-			NativePluginPlatformError,
-		);
-		expect(resolveManifestCapabilities({ ...base, capabilities: [] }, 'web')).toEqual([]);
+	test('needs no known host when the manifest lists no platforms', () => {
+		expect(
+			resolveManifestCapabilities(
+				{ ...base, capabilities: ['native.runtime.events'] },
+				'web',
+			),
+		).toEqual(['native.runtime.events']);
 	});
 });

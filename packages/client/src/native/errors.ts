@@ -19,16 +19,6 @@ export class NativePluginCapabilityError extends Error {
 	}
 }
 
-/** Thrown when a manifest declares per-platform capabilities but the loader reports an unrecognised host platform. */
-export class NativePluginPlatformError extends Error {
-	/** A stable code to match on instead of the message. */
-	readonly code = 'NATIVE_PLUGIN_PLATFORM_UNSUPPORTED';
-
-	constructor() {
-		super('Platform-specific native plugin capabilities require a recognized host platform.');
-	}
-}
-
 /** Thrown when the host platform is not one the addon runs on, by its manifest or the handlers given to `definePlatform`. */
 export class NativePluginUnsupportedPlatformError extends Error {
 	/** A stable code to match on instead of the message. */

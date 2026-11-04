@@ -74,8 +74,6 @@ declare global {
 	/** @internal */
 	var UNBOUND_LOADER: UnboundLoaderInfo;
 	/** @internal */
-	var UNBOUND_SETTINGS: Record<string, SettingsObject> | undefined;
-	/** @internal */
 	var UNBOUND_PLUGINS: UnboundPluginBundle[];
 	/** @internal */
 	var UNBOUND_THEMES: UnboundAddonBundle[];
@@ -93,7 +91,7 @@ declare global {
 	type UnboundLoaderInfo = {
 		origin: string;
 		version: string;
-		bytecodeVersion?: number;
+		bytecodeVersion: number;
 	};
 
 	/**

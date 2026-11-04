@@ -1,5 +1,4 @@
 import type {
-	NativeCancelablePromise,
 	NativeJavaBridge,
 	NativeJavaCallPlan,
 	NativeJavaHandle,
@@ -30,28 +29,18 @@ function dropJavaHandle(handle: NativeJavaReference): boolean {
 	return true;
 }
 
-type ScopeMethod = <A extends unknown[], R>(
-	method: (...args: A) => R,
+type ScopeBridgeMethod = <K extends keyof NativeJavaBridge>(
+	source: NativeJavaBridge,
+	name: K,
 	path: NativePluginMethod,
-) => (...args: A) => R;
-
-type ScopeOptionalMethod = <A extends unknown[], R>(
-	method: ((...args: A) => R) | undefined,
-	path: NativePluginMethod,
-	unavailableMessage: string,
-) => (...args: A) => R;
-
-type ScopeAsyncMethod = <A extends unknown[], R>(
-	method: ((...args: A) => NativeCancelablePromise<R>) | undefined,
-	path: NativePluginMethod,
-	unavailableMessage: string,
-) => (...args: A) => NativeCancelablePromise<R>;
+	unavailableMessage?: string,
+) => Exclude<NativeJavaBridge[K], undefined>;
 
 type CreateScopedJavaBridgeOptions = {
 	bridge: NativeJavaBridge;
-	scopeMethod: ScopeMethod;
-	scopeOptionalMethod: ScopeOptionalMethod;
-	scopeAsyncMethod: ScopeAsyncMethod;
+	source: NativeJavaBridge;
+	scopeBridgeMethod: ScopeBridgeMethod;
+	scopeBridgeAsyncMethod: ScopeBridgeMethod;
 };
 
 type ScopedJavaBridge = {
@@ -61,14 +50,14 @@ type ScopedJavaBridge = {
 
 /**
  * @description Builds a plugin's Java bridge, which tracks the handles and call plans it hands out so they are released when the plugin stops.
- * @param options The loader's Java bridge and the scope's method wrappers.
+ * @param options The loader's Java bridge, attributed and as the loader gave it, and the scope's method wrappers.
  * @returns The scoped bridge and its `dispose`.
  */
 export function createScopedJavaBridge({
 	bridge,
-	scopeMethod,
-	scopeOptionalMethod,
-	scopeAsyncMethod,
+	source,
+	scopeBridgeMethod,
+	scopeBridgeAsyncMethod,
 }: CreateScopedJavaBridgeOptions): ScopedJavaBridge {
 	const plans = new Set<NativeJavaCallPlan>();
 	const handles = new Set<WeakRef<NativeJavaReference>>();
@@ -113,31 +102,57 @@ export function createScopedJavaBridge({
 		return held;
 	}
 
+	const getClass = scopeBridgeMethod(source, 'getClass', 'java.getClass');
+	const construct = scopeBridgeMethod(source, 'construct', 'java.construct');
+	const respondsTo = scopeBridgeMethod(source, 'respondsTo', 'java.respondsTo');
+	const invoke = scopeBridgeMethod(source, 'invoke', 'java.invoke');
+	const prepare = scopeBridgeMethod(
+		source,
+		'prepare',
+		'java.prepare',
+		'Prepared Java calls are unavailable.',
+	);
+	const invokePrepared = scopeBridgeMethod(
+		source,
+		'invokePrepared',
+		'java.invokePrepared',
+		'Prepared Java calls are unavailable.',
+	);
+	const invokePreparedAsync = scopeBridgeAsyncMethod(
+		source,
+		'invokePreparedAsync',
+		'java.invokePreparedAsync',
+		'Prepared asynchronous Java invocation is unavailable.',
+	);
+	const disposePlan = scopeBridgeMethod(
+		source,
+		'disposePlan',
+		'java.disposePlan',
+		'Prepared Java calls are unavailable.',
+	);
+	const invokeAsync = scopeBridgeAsyncMethod(
+		source,
+		'invokeAsync',
+		'java.invokeAsync',
+		'Asynchronous Java invocation is unavailable.',
+	);
+	const findViews = scopeBridgeAsyncMethod(
+		source,
+		'findViews',
+		'java.findViews',
+		'Java view searches are unavailable.',
+	);
+	const release = scopeBridgeMethod(source, 'release', 'java.release');
+
 	const scopedBridge: NativeJavaBridge = {
-		getClass: (name) =>
-			trackHandle(scopeMethod(bridge.getClass.bind(bridge), 'java.getClass')(name)),
-		className: scopeMethod(bridge.className.bind(bridge), 'java.className'),
-		describe: scopeMethod(bridge.describe.bind(bridge), 'java.describe'),
-		construct: (name, args) =>
-			trackHandle(
-				scopeMethod(bridge.construct.bind(bridge), 'java.construct')(name, args ?? []),
-			),
-		respondsTo: (handle, name, args) =>
-			scopeMethod(bridge.respondsTo.bind(bridge), 'java.respondsTo')(
-				handle,
-				name,
-				args ?? [],
-			),
-		invoke: (handle, name, args) =>
-			scopeMethod(bridge.invoke.bind(bridge), 'java.invoke')(handle, name, args ?? []),
+		getClass: (name) => trackHandle(getClass(name)),
+		className: scopeBridgeMethod(source, 'className', 'java.className'),
+		describe: scopeBridgeMethod(source, 'describe', 'java.describe'),
+		construct: (name, args) => trackHandle(construct(name, args ?? [])),
+		respondsTo: (handle, name, args) => respondsTo(handle, name, args ?? []),
+		invoke: (handle, name, args) => invoke(handle, name, args ?? []),
 		prepare: (target, name, parameterTypes) => {
-			const plan = trackHandle(
-				scopeOptionalMethod(
-					bridge.prepare?.bind(bridge),
-					'java.prepare',
-					'Prepared Java calls are unavailable.',
-				)(target, name, parameterTypes),
-			);
+			const plan = trackHandle(prepare(target, name, parameterTypes));
 
 			plans.add(plan);
 
@@ -150,11 +165,7 @@ export function createScopedJavaBridge({
 				);
 			}
 
-			return scopeOptionalMethod(
-				bridge.invokePrepared?.bind(bridge),
-				'java.invokePrepared',
-				'Prepared Java calls are unavailable.',
-			)(plan, target, args ?? []);
+			return invokePrepared(plan, target, args ?? []);
 		},
 		invokePreparedAsync: (plan, target, args) => {
 			if (!plans.has(plan)) {
@@ -163,11 +174,7 @@ export function createScopedJavaBridge({
 				);
 			}
 
-			return scopeAsyncMethod(
-				bridge.invokePreparedAsync?.bind(bridge),
-				'java.invokePreparedAsync',
-				'Prepared asynchronous Java invocation is unavailable.',
-			)(plan, target, args ?? []);
+			return invokePreparedAsync(plan, target, args ?? []);
 		},
 		disposePlan: (plan) => {
 			if (!plans.has(plan)) {
@@ -176,51 +183,40 @@ export function createScopedJavaBridge({
 				);
 			}
 
-			scopeOptionalMethod(
-				bridge.disposePlan?.bind(bridge),
-				'java.disposePlan',
-				'Prepared Java calls are unavailable.',
-			)(plan);
+			disposePlan(plan);
 			plans.delete(plan);
 
 			if (untrackHandle(plan)) {
 				dropJavaHandle(plan);
 			}
 		},
-		invokeAsync: (handle, name, args) =>
-			scopeAsyncMethod(
-				bridge.invokeAsync?.bind(bridge),
-				'java.invokeAsync',
-				'Asynchronous Java invocation is unavailable.',
-			)(handle, name, args ?? []),
-		getField: scopeMethod(bridge.getField.bind(bridge), 'java.getField'),
-		setField: scopeMethod(bridge.setField.bind(bridge), 'java.setField'),
-		batch: scopeMethod(bridge.batch.bind(bridge), 'java.batch'),
-		batchAsync: scopeAsyncMethod(
-			bridge.batchAsync?.bind(bridge),
+		invokeAsync: (handle, name, args) => invokeAsync(handle, name, args ?? []),
+		getField: scopeBridgeMethod(source, 'getField', 'java.getField'),
+		setField: scopeBridgeMethod(source, 'setField', 'java.setField'),
+		batch: scopeBridgeMethod(source, 'batch', 'java.batch'),
+		batchAsync: scopeBridgeAsyncMethod(
+			source,
+			'batchAsync',
 			'java.batchAsync',
 			'Asynchronous Java batches are unavailable.',
 		),
-		findViews: (root, className, options) =>
-			scopeAsyncMethod(
-				bridge.findViews?.bind(bridge),
-				'java.findViews',
-				'Java view searches are unavailable.',
-			)(root, className, options),
-		createAssociationKey: scopeMethod(
-			bridge.createAssociationKey.bind(bridge),
+		findViews: (root, className, options) => findViews(root, className, options),
+		createAssociationKey: scopeBridgeMethod(
+			source,
+			'createAssociationKey',
 			'java.createAssociationKey',
 		),
-		getAssociatedObject: scopeMethod(
-			bridge.getAssociatedObject.bind(bridge),
+		getAssociatedObject: scopeBridgeMethod(
+			source,
+			'getAssociatedObject',
 			'java.getAssociatedObject',
 		),
-		setAssociatedObject: scopeMethod(
-			bridge.setAssociatedObject.bind(bridge),
+		setAssociatedObject: scopeBridgeMethod(
+			source,
+			'setAssociatedObject',
 			'java.setAssociatedObject',
 		),
 		release: (handle) => {
-			const release = scopeMethod(bridge.release.bind(bridge), 'java.release');
 			const held = untrackHandle(handle);
 
 			if (held ? dropJavaHandle(handle) : !javaHandleHolders.has(handle)) {

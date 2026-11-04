@@ -340,7 +340,7 @@ function readSigningKey(): KeyObject | undefined {
 	return parsePluginSigningKey(pem);
 }
 
-const GENERATED_MANIFEST_FIELDS = ['platforms', 'platformCapabilities', 'capabilities'] as const;
+const GENERATED_MANIFEST_FIELDS = ['platforms', 'capabilities'] as const;
 
 /**
  * @description Builds the manifest to publish: the source manifest with the platforms and Capabilities `ubd build` generated into `dist/manifest.json`, which the source never holds.

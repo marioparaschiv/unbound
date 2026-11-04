@@ -13,7 +13,6 @@ import {
 const { uiScopePaths } = await import('~/native/ui');
 
 afterEach(() => {
-	Reflect.deleteProperty(bridge.objc, 'createUIScope');
 	resetNativeFixtures();
 });
 
@@ -66,7 +65,8 @@ describe('native UI scopes', () => {
 		expect(() => context.native.ui.createScope()).toThrow(NativePluginDisposedError);
 	});
 
-	test('reports a loader without UI scopes as unavailable', () => {
+	test('reports a platform without a native namespace as unavailable', () => {
+		Object.assign(bridge, { objc: undefined });
 		const context = createPluginContext({ ...manifest, capabilities: [] });
 
 		expect(() => context.native.ui.createScope()).toThrow(NativePluginUnavailableError);

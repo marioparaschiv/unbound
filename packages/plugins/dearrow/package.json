@@ -1,0 +1,21 @@
+{
+	"name": "dearrow",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Makes YouTube embed titles and thumbnails less sensationalist, powered by DeArrow.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@unbound-plugins/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-app/cli": "workspace:*",
+		"rollup": "^4.66.0"
+	}
+}

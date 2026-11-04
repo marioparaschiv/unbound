@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.2.4] - 2026-11-03
+
+### Changed
+
+- Publish the plugin's native capabilities in the current manifest format, so Unbound keeps granting them. The plugin works the same as before.
+
+### Fixed
+
+- Keep the role color on mentions typed in the Android chat input after Discord rebuilds the input's mention styling a moment later.
+
 ## [1.2.3] - 2026-11-03
 
 ### Changed

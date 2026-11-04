@@ -184,7 +184,7 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		messageView: NativeJavaReference,
 		channelName: string,
 	): Promise<{ view: NativeJavaReference; text: ViewText } | null> {
-		const views = await java.findViews!(messageView, MESSAGE_CONTENT_VIEW, {
+		const views = await java.findViews(messageView, MESSAGE_CONTENT_VIEW, {
 			maxDepth: 64,
 			maxVisited: 2_000,
 			maxResults: 32,
@@ -239,6 +239,12 @@ export function createNativeEmbeds(native: Native, renderers: Renderers) {
 		const found = channelName ? await contentTextView(messageView, channelName) : null;
 		const textView = found?.view;
 		const content = found?.text;
+
+		if (channelName && !found && !disposed) {
+			retries.retry(key, () => schedule(messageView, messageId));
+
+			return;
+		}
 
 		if (disposed || !channelName || !textView || !content || inline.isDefined(content.string)) {
 			return;

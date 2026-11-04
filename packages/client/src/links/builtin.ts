@@ -331,7 +331,7 @@ async function readLaunchURL(): Promise<string | null> {
 }
 
 function claimLaunchURL(subject: string): boolean {
-	if (globalThis.NativePlatform?.app.claimLaunchURL?.() ?? true) {
+	if (globalThis.NativePlatform?.app.claimLaunchURL() ?? true) {
 		return true;
 	}
 

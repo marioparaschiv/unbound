@@ -181,7 +181,6 @@ func TestBuildWorkflowCoordinatesBothPlatforms(t *testing.T) {
 		"needs: resolve-source",
 		"needs: [resolve-source, ios, android]",
 		"ios_version: ${{ needs.resolve-source.outputs.version }}",
-		"require_matching_version: ${{ inputs.release == true && inputs.is_testflight != true }}",
 		"version: ${{ needs.resolve-source.outputs.release_version || inputs.version }}",
 		"android_code=$(curl -fsSL \"$INPUT_ANDROID_TRACKER/index\" | jq -er '.latest.stable | tonumber')",
 		"unbound-tools release-pairing \"${pairing_args[@]}\"",
@@ -527,7 +526,7 @@ func TestLoaderReleasesUseTheirOwnTagNamespace(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(poll), `return "discord-" + version`) {
+	if !strings.Contains(string(poll), `return []string{"discord-" + candidate.Version}, nil`) {
 		t.Fatal("the release poll must look for discord-<version>-<platform> releases")
 	}
 }

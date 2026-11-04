@@ -154,4 +154,32 @@ describe('addon attribution', () => {
 		expect(calls).toEqual([]);
 		untracked();
 	});
+
+	test('wraps a patch callback in its addon attribution once, however often it runs', () => {
+		const target = { read: () => 1 };
+		let wrapped = 0;
+		let ran = 0;
+		const attribution: AddonAttribution = (method) => {
+			wrapped++;
+
+			return (...args) => {
+				ran++;
+
+				return method(...args);
+			};
+		};
+		const unpatch = withAddonAttribution(attribution, () =>
+			before(target, 'read', () => undefined),
+		);
+		const wrappedAtRegistration = wrapped;
+		const ranAtRegistration = ran;
+
+		target.read();
+		target.read();
+		target.read();
+
+		expect(wrapped).toBe(wrappedAtRegistration);
+		expect(ran - ranAtRegistration).toBe(3);
+		unpatch();
+	});
 });

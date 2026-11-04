@@ -16,6 +16,7 @@ export type LazyModuleSource = {
 const LAZY_MARKER = '__METRO_LAZY__';
 
 const lazyModules = new WeakMap<WeakKey, LazyModuleSource>();
+const loadedModules = new WeakMap<WeakKey, () => MetroExport>();
 
 /**
  * @description Creates the proxy a lazy lookup returns, which runs the search on first use and forwards every operation to the result.
@@ -82,6 +83,14 @@ export function createLazyModule(
 		},
 	});
 
+	loadedModules.set(proxy, () => {
+		if (cache || source?.presence() !== 'loaded') {
+			return cache ?? void 0;
+		}
+
+		return resolve() ?? void 0;
+	});
+
 	if (!source) {
 		return proxy;
 	}
@@ -134,8 +143,22 @@ export function getModulePresence(handle: MetroExport): MetroModulePresence | un
 	return lazyModuleOf(handle)?.presence();
 }
 
+/**
+ * @description Gives the module a lazy handle stands for once it has loaded, so a caller can keep the real object
+ * instead of reading through the proxy. It never loads a module.
+ * @template T The handle's type.
+ * @param handle A lazy handle, or any other value.
+ * @returns The loaded module, `undefined` while the handle's module has not loaded, or `handle` itself when it is not a lazy handle.
+ */
+export function getLoadedModule<T>(handle: T): T | undefined {
+	const loaded =
+		typeof handle === 'object' && handle !== null ? loadedModules.get(handle) : void 0;
+
+	return loaded ? loaded() : handle;
+}
+
 function lazyModuleOf(value: MetroExport) {
 	return typeof value === 'object' && value !== null ? lazyModules.get(value) : void 0;
 }
 
-export default { createLazyModule, whenModuleLoads, getModulePresence };
+export default { createLazyModule, whenModuleLoads, getModulePresence, getLoadedModule };

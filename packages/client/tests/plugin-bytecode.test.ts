@@ -171,7 +171,7 @@ describe('plugin bytecode', () => {
 	test('reads a kept source from the loader when its bytecode fails', () => {
 		compiled = undefined;
 		Reflect.set(
-			globalThis.NativePlatform!.addons!,
+			globalThis.NativePlatform!.addons,
 			'readSource',
 			(folder: string) =>
 				`({ start() { globalThis.__bytecodeTestKept = '${folder}'; }, stop() {} })`,

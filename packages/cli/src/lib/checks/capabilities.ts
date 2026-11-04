@@ -15,12 +15,11 @@ import { findFile } from '~/rollup/source-alias';
 
 type DevManifest = ReturnType<typeof readDevManifest>;
 
-type LegacyPlatformFields = {
-	platforms?: NativePluginPlatform[];
-	platformCapabilities?: PlatformCapabilities;
-};
+type GeneratedPlatform = { capabilities?: NativePluginCapability[] };
 
-const GENERATED_FIELDS = ['capabilities', 'platforms', 'platformCapabilities'] as const;
+type GeneratedPlatforms = Partial<Record<NativePluginPlatform, GeneratedPlatform>>;
+
+const GENERATED_FIELDS = ['capabilities', 'platforms'] as const;
 
 function error(message: string): BuildCheckIssue {
 	return { severity: 'error', message };
@@ -30,20 +29,23 @@ function findEntry(dir: string, main: string): string | null {
 	return findFile(join(dir, 'src', 'index')) ?? findFile(join(dir, main));
 }
 
-function toLegacyFields(platforms: PlatformCapabilities): LegacyPlatformFields {
+function toPlatformsField(platforms: PlatformCapabilities): GeneratedPlatforms | undefined {
 	const listed = NATIVE_PLUGIN_PLATFORMS.filter((platform) => platforms[platform]);
-	const needed = listed.flatMap(
-		(platform): [NativePluginPlatform, NativePluginCapability[]][] => {
-			const capabilities = platforms[platform] ?? [];
+	const needsCapabilities = listed.some((platform) => platforms[platform]?.length);
 
-			return capabilities.length ? [[platform, capabilities]] : [];
-		},
-	);
+	if (listed.length === NATIVE_PLUGIN_PLATFORMS.length && !needsCapabilities) {
+		return void 0;
+	}
 
-	return {
-		platforms: listed.length < NATIVE_PLUGIN_PLATFORMS.length ? listed : void 0,
-		platformCapabilities: needed.length ? Object.fromEntries(needed) : void 0,
-	};
+	const generated: GeneratedPlatforms = {};
+
+	for (const platform of listed) {
+		const capabilities = platforms[platform] ?? [];
+
+		generated[platform] = capabilities.length ? { capabilities } : {};
+	}
+
+	return generated;
 }
 
 function writeBuiltManifest(
@@ -56,12 +58,12 @@ function writeBuiltManifest(
 	const built = existsSync(target)
 		? readDevManifest(addon.output)
 		: { ...manifest, main: getBundleName(false, manifest.main) };
-	const { capabilities, platforms, platformCapabilities, ...rest } = built;
+	const { capabilities, platforms, ...rest } = built;
 
 	mkdirSync(addon.output, { recursive: true });
 	writeFileSync(
 		temporary,
-		`${JSON.stringify({ ...rest, id: manifest.id, ...toLegacyFields(generated) }, null, '\t')}\n`,
+		`${JSON.stringify({ ...rest, id: manifest.id, platforms: toPlatformsField(generated) }, null, '\t')}\n`,
 	);
 	renameSync(temporary, target);
 }

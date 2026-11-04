@@ -126,7 +126,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 	}
 
 	async function children(view: NativeJavaReference): Promise<NativeJavaReference[]> {
-		const found = await java.findViews!(view, 'android.view.View', {
+		const found = await java.findViews(view, 'android.view.View', {
 			maxDepth: 1,
 			maxResults: 256,
 		});
@@ -182,7 +182,7 @@ export function createAndroidReactions({ java, hooks, fabric, ui }: Native, surf
 
 		if (!accessories) return null;
 
-		const [row] = await java.findViews!(accessories, REACTION_ROW, {
+		const [row] = await java.findViews(accessories, REACTION_ROW, {
 			maxDepth: MAX_SEARCH_DEPTH,
 			maxResults: 1,
 			stopAtMatch: true,

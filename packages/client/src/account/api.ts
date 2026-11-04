@@ -119,15 +119,14 @@ export function createClient(): ApiRequest {
 export async function signIn(): Promise<SignInResult> {
 	try {
 		const request = createApiClient<Api>({ baseUrl: API_URL });
-		// Production serves only the deprecated path until `/api/v1/auth/discord` deploys; switch then.
-		const config = await request('GET /api/v1/sync/oauth', {});
+		const config = await request('GET /api/v1/auth/discord', {});
 		const code = await authorizeWithDiscord(config);
 
 		if (!code) {
 			return { status: 'cancelled' };
 		}
 
-		const session = await request('POST /api/v1/sync/oauth', {
+		const session = await request('POST /api/v1/auth/discord', {
 			body: { code },
 		});
 		const account = toAccount(session.user);

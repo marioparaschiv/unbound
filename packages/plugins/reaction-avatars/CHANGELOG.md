@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.2.5] - 2026-11-03
+
+### Changed
+
+- On iOS, the plugin watches a message list's layout passes only while its rows still need re-measuring, and skips looking for reaction views in messages that have no reactions.
+
+## [1.2.4] - 2026-11-03
+
+### Changed
+
+- Publish the plugin's native capabilities in the current manifest format, so Unbound keeps granting them. The plugin works the same as before.
+
 ## [1.2.3] - 2026-11-03
 
 ### Changed

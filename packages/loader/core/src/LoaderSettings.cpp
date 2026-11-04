@@ -106,7 +106,7 @@ void SettingsStore::load()
 bool SettingsStore::save() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    if (!writeTextFileAtomically(path_, data_.dump(2)))
+    if (!writeTextFileAtomically(path_, data_.dump()))
     {
         return false;
     }

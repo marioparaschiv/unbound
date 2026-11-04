@@ -178,7 +178,7 @@ export function getRuntimeProperties(): HermesRuntimeProperties {
  */
 export function getNativeResources(): NativeResourceCounts | undefined {
 	try {
-		return getNativePlugin()?.debug?.environment().resources;
+		return getNativePlugin()?.debug.environment().resources;
 	} catch {
 		return undefined;
 	}

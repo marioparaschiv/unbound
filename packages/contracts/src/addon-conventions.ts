@@ -14,7 +14,6 @@ export type ConventionManifest = {
 	description?: unknown;
 	capabilities?: unknown;
 	platforms?: unknown;
-	platformCapabilities?: unknown;
 };
 
 const SUPPORTED_CAPABILITIES: readonly string[] = NATIVE_PLUGIN_CAPABILITIES;
@@ -79,8 +78,8 @@ export function validateAddonNaming(manifest: ConventionManifest, folder?: strin
 }
 
 /**
- * @description Checks that an addon's `platforms`, `capabilities` and `platformCapabilities` name
- * supported values, and that each platform can provide every Capability declared for it.
+ * @description Checks that an addon's `platforms` and `capabilities` name supported values, and that
+ * each platform can provide every Capability declared for it.
  * @param manifest The addon's parsed manifest.
  * @returns Every problem found, empty when the declarations are consistent.
  */
@@ -89,7 +88,6 @@ export function validateAddonCapabilities(manifest: ConventionManifest): string[
 	const platforms = validatePlatforms(manifest, errors);
 
 	validateFlatCapabilities(manifest, platforms, errors);
-	validatePlatformCapabilities(manifest, platforms, errors);
 
 	return errors;
 }
@@ -146,39 +144,13 @@ function validatePlatforms(manifest: ConventionManifest, errors: string[]): stri
 		return SUPPORTED_PLATFORMS;
 	}
 
-	if (isPlainObject(value)) {
-		return validatePlatformEntries(Object.entries(value), errors);
-	}
-
-	if (!Array.isArray(value)) {
-		errors.push('platforms must be an array or an object');
+	if (!isPlainObject(value)) {
+		errors.push('platforms must be an object');
 
 		return SUPPORTED_PLATFORMS;
 	}
 
-	if (value.length === 0) {
-		errors.push('platforms must not be empty');
-	}
-
-	const seen: string[] = [];
-
-	for (const platform of value) {
-		if (typeof platform !== 'string' || !SUPPORTED_PLATFORMS.includes(platform)) {
-			errors.push(`platforms contains an unsupported value: ${String(platform)}`);
-
-			continue;
-		}
-
-		if (seen.includes(platform)) {
-			errors.push(`platforms must not repeat ${platform}`);
-
-			continue;
-		}
-
-		seen.push(platform);
-	}
-
-	return seen.length > 0 ? seen.sort() : SUPPORTED_PLATFORMS;
+	return validatePlatformEntries(Object.entries(value), errors);
 }
 
 function isPlainObject(value: unknown): value is object {
@@ -274,45 +246,12 @@ function validateFlatCapabilities(
 
 		const providers = providingPlatforms(capability);
 		const suggestion = providers.length
-			? `; declare it under ${providers.map((platform) => `platformCapabilities.${platform}`).join(' and ')}`
+			? `; declare it under ${providers.map((platform) => `platforms.${platform}.capabilities`).join(' and ')}`
 			: '';
 
 		errors.push(
 			`capabilities contains ${capability}, which ${missing.join(', ')} cannot provide${suggestion}`,
 		);
-	}
-}
-
-function validatePlatformCapabilities(
-	manifest: ConventionManifest,
-	platforms: string[],
-	errors: string[],
-) {
-	const value = manifest.platformCapabilities;
-	const declaredPlatforms = manifest.platforms !== void 0;
-
-	if (value === void 0) return;
-
-	if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-		errors.push('platformCapabilities must be an object');
-
-		return;
-	}
-
-	for (const [platform, requirements] of Object.entries(value)) {
-		if (!SUPPORTED_PLATFORMS.includes(platform)) {
-			errors.push(`platformCapabilities contains an unsupported platform: ${platform}`);
-
-			continue;
-		}
-
-		if (declaredPlatforms && !platforms.includes(platform)) {
-			errors.push(`platformCapabilities declares ${platform}, which is not in platforms`);
-
-			continue;
-		}
-
-		validateCapabilityList(requirements, platform, `platformCapabilities.${platform}`, errors);
 	}
 }
 

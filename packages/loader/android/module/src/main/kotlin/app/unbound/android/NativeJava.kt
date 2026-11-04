@@ -340,7 +340,6 @@ object NativeJava {
             handlesByIdentity.clear()
             issuesByHandle.clear()
             associations.clear()
-            nextHandle = 1L
             nextAssociation = 1L
         }
     }

@@ -161,10 +161,10 @@ export type NativeJavaBridge = {
 	describe(name: string): NativeJavaClassDescription;
 	/** Runs independent operations in one call on the JavaScript thread and returns every result in order. */
 	batch(operations: NativeJavaBatchOperation[]): NativeJavaValue[];
-	/** Runs the operations like `batch`, on the main thread, so views can be read safely. Missing on older loaders. */
-	batchAsync?(operations: NativeJavaBatchOperation[]): NativeCancelablePromise<NativeJavaValue[]>;
-	/** Finds the views of a class under or above a view, on the main thread, like `objc.findViews`. Missing on older loaders. */
-	findViews?(
+	/** Runs the operations like `batch`, on the main thread, so views can be read safely. */
+	batchAsync(operations: NativeJavaBatchOperation[]): NativeCancelablePromise<NativeJavaValue[]>;
+	/** Finds the views of a class under or above a view, on the main thread, like `objc.findViews`. */
+	findViews(
 		root: NativeJavaReference,
 		className: string,
 		options?: NativeViewSearchOptions,
