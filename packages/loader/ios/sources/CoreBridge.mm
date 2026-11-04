@@ -17,7 +17,6 @@
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
 #include "LoaderPreferences.h"
-#include "LoaderPreload.h"
 #include "LoaderThemes.h"
 #include "LoaderToolbox.h"
 #import "Logger.h"

@@ -1,4 +1,5 @@
 import type { CrashEnvironment } from '~/diagnostics/crash-report';
+import { getLoader } from '~/native/unbound-native';
 import { BundleInfo } from '~/native/native';
 
 /**
@@ -16,7 +17,7 @@ export function currentEnvironment(clientVersion: string): CrashEnvironment | un
 	return {
 		platform: platform.platform,
 		clientVersion,
-		loaderVersion: String(globalThis.UNBOUND_LOADER?.version ?? 'unknown'),
+		loaderVersion: String(getLoader()?.version ?? 'unknown'),
 		discordVersion: String(BundleInfo?.Version ?? 'unknown'),
 		osVersion: platform.device.getOSVersionString(),
 		deviceModel: platform.device.getDeviceModel(),

@@ -2,6 +2,7 @@ import toError from '@unbound-app/utils/to-error';
 import type { Theme } from '@unbound-app/types';
 
 import type { AddonResolveable } from '~/addons/addon';
+import { getThemes } from '~/native/unbound-native';
 import { parseThemeBundle } from '~/themes/bundle';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
@@ -26,10 +27,10 @@ export class Themes extends Addons<Theme> {
 	}
 
 	/**
-	 * @description Loads every theme exposed on `window.UNBOUND_THEMES`, then marks the manager initialised.
+	 * @description Loads every theme the loader scanned (`UnboundNative.getThemes()`), then marks the manager initialised.
 	 */
 	initialize() {
-		for (const { bundle, manifest } of window.UNBOUND_THEMES ?? []) {
+		for (const { bundle, manifest } of getThemes()) {
 			this.load(bundle, manifest);
 		}
 

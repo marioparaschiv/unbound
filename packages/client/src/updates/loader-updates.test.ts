@@ -1,4 +1,5 @@
 import type { LoaderUpdateResponse } from '@unbound-app/contracts/loader';
+import type { UnboundLoaderInfo } from '@unbound-app/types';
 import { afterAll, describe, expect, test } from 'bun:test';
 
 import { buildLoaderUpdateQuery, fetchLoaderUpdate } from './loader-updates';

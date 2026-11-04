@@ -7,8 +7,8 @@
 #include "LoaderBundleSignature.h"
 #include "LoaderCrypto.h"
 #include "LoaderFiles.h"
-#include "LoaderPreload.h"
 #include "LoaderVersion.h"
+#include "UnboundNativeBridge.h"
 
 static std::filesystem::path makeTemporaryDirectory()
 {
@@ -165,11 +165,13 @@ int main()
     write(root / "Themes" / "dark" / "manifest.json", R"({"id":"t.dark"})");
     write(root / "Themes" / "dark" / "bundle.json", R"({"semantic":{}})");
     write(root / "Themes" / "no-bundle" / "manifest.json", R"({"id":"t.none"})");
+    write(root / "Themes" / "array-bundle" / "manifest.json", R"({"id":"t.array"})");
+    write(root / "Themes" / "array-bundle" / "bundle.json", "[]");
 
     nlohmann::json themes = loader::scanThemes(root.string());
     assert(themes.size() == 1);
     assert(themes[0]["manifest"]["path"] == (root / "Themes" / "dark").string());
-    assert(themes[0]["bundle"].contains("semantic"));
+    assert(themes[0]["bundle"] == R"({"semantic":{}})");
 
     write(root / "Fonts" / "Inter.ttf", "font");
     nlohmann::json fonts = loader::scanFonts(root.string());
@@ -179,37 +181,28 @@ int main()
     assert(fonts[0]["source"] == "custom");
     assert(fonts[0]["file"] == "Inter.ttf");
 
-    loader::PreloadPayload payload;
-    payload.plugins     = plugins;
-    payload.origin      = "libunbound.so";
-    payload.version     = "1.0.0";
-    nlohmann::json data = loader::preloadData(payload);
-    assert(!data.contains("settings"));
-    assert(data["themes"] == nlohmann::json::array());
-    assert(data["loader"]["origin"] == "libunbound.so" && data["loader"]["version"] == "1.0.0");
-    assert(data["plugins"][0]["manifest"]["id"] == "a.good");
-
-    payload.themes = nlohmann::json::parse(
-        R"([{"manifest":{"id":"t"},"bundle":{"semantic":{}}},{"manifest":{"id":"s"},"bundle":"{}"}])");
-    data = loader::preloadData(payload);
-    assert(data["themes"][0]["bundle"] == R"({"semantic":{}})");
-    assert(data["themes"][1]["bundle"] == "{}");
-
     loader::AddonState addons;
     assert(addons.plugins().empty() && !addons.theme("t.dark"));
     addons.scan(root.string());
     assert(addons.plugins().size() == 1 && addons.themes().size() == 1 &&
            addons.fonts().size() == 1);
     assert(addons.theme("t.dark") && (*addons.theme("t.dark"))["manifest"]["id"] == "t.dark");
+    assert((*addons.theme("t.dark"))["bundle"] == nlohmann::json::parse(R"({"semantic":{}})"));
     assert(!addons.theme("t.none"));
 
-    loader::PreloadPayload made =
-        loader::makePreloadPayload(addons, nlohmann::json::array({"Ginto"}), "Unbound.dylib", 98);
-    assert(made.bytecodeVersion == 98);
-    assert(loader::preloadData(made)["loader"]["bytecodeVersion"] == 98);
-    assert(made.plugins[0]["manifest"]["id"] == "a.good");
-    assert(made.availableFonts == nlohmann::json::array({"Ginto"}));
-    assert(made.origin == "Unbound.dylib" && made.version == loader::loaderVersion());
+    loader::UnboundNativeProvider provider = loader::makeUnboundNativeProvider(
+        addons,
+        [] {
+            return nlohmann::json::array({"Ginto"});
+        },
+        "Unbound.dylib", 98);
+    assert(provider.getLoader() == nlohmann::json({{"origin", "Unbound.dylib"},
+                                                   {"version", loader::loaderVersion()},
+                                                   {"bytecodeVersion", 98}}));
+    assert(provider.getPlugins()[0]["manifest"]["id"] == "a.good");
+    assert(provider.getThemes()[0]["bundle"] == R"({"semantic":{}})");
+    assert(provider.getFonts()[0]["name"] == "Inter");
+    assert(provider.getAvailableFonts() == nlohmann::json::array({"Ginto"}));
 
     std::filesystem::remove_all(root);
     return 0;

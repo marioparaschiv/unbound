@@ -1,9 +1,8 @@
 import type * as ReactNativeModule from 'react-native';
 import type * as ReactModule from 'react';
 
-import type { NativePlatformBridge } from './typings/native';
+import type { NativePlatformBridge, UnboundNativeBridge } from './typings/native';
 import type { SettingsObject } from './typings/settings';
-import type { AddonManifest } from './typings/addons';
 
 declare global {
 	/**
@@ -72,50 +71,5 @@ declare global {
 	var RN$AppRegistry: RNAppRegistry | undefined;
 
 	/** @internal */
-	var UNBOUND_LOADER: UnboundLoaderInfo;
-	/** @internal */
-	var UNBOUND_PLUGINS: UnboundPluginBundle[];
-	/** @internal */
-	var UNBOUND_THEMES: UnboundAddonBundle[];
-	/** @internal */
-	var UNBOUND_FONTS: UnboundFontFile[];
-	/** @internal */
-	var UNBOUND_AVAILABLE_FONTS: string[];
-	/** @internal */
-	var UNBOUND_ICONS: UnboundAddonBundle[];
-
-	/**
-	 * The native loader's origin and version.
-	 * @internal
-	 */
-	type UnboundLoaderInfo = {
-		origin: string;
-		version: string;
-		bytecodeVersion: number;
-	};
-
-	/**
-	 * An installed addon's manifest and bundle source, as injected by the native loader.
-	 * @internal
-	 */
-	type UnboundAddonBundle = {
-		manifest: AddonManifest;
-		bundle: string;
-	};
-
-	/**
-	 * A plugin the native loader read: its source, or only the source's SHA-256 when it runs from bytecode.
-	 * @internal
-	 */
-	type UnboundPluginBundle = UnboundAddonBundle | { manifest: AddonManifest; sha256: string };
-
-	/**
-	 * A custom font file the native loader registered.
-	 * @internal
-	 */
-	type UnboundFontFile = {
-		name: string;
-		file: string;
-		path: string;
-	};
+	var UnboundNative: UnboundNativeBridge | undefined;
 }

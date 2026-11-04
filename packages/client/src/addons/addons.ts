@@ -17,6 +17,7 @@ import type { InstalledEntry } from '~/updates/addon-updates';
 import type { UpdatableKind } from '~/addons/manager-of';
 import { AddonLifecycle } from '~/addons/lifecycle';
 import { compiledBundlePath } from '~/addons/paths';
+import { getLoader } from '~/native/unbound-native';
 import { toRelease } from '~/addons/versions';
 import { Manager } from '~/addons/manager';
 import fs from '~/native/fs';
@@ -481,7 +482,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 		manifest: AddonManifest,
 		bytecode: string | undefined,
 	): Promise<void> {
-		const bytecodeVersion = globalThis.UNBOUND_LOADER?.bytecodeVersion;
+		const bytecodeVersion = getLoader()?.bytecodeVersion;
 
 		if (!bytecode || !bytecodeVersion) return;
 

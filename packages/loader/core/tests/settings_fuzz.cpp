@@ -12,9 +12,9 @@
 #include "LoaderAddons.h"
 #include "LoaderDevOverlay.h"
 #include "LoaderPreferences.h"
-#include "LoaderPreload.h"
 #include "LoaderSettings.h"
 #include "LoaderToolbox.h"
+#include "UnboundNativeBridge.h"
 
 namespace fs = std::filesystem;
 
@@ -205,7 +205,7 @@ static void exercise(loader::SettingsStore &store)
     loader::toolbox::menuJSON(store, loader::toolbox::MenuOptions{});
     loader::devoverlay::menuJSON(store);
     loader::AddonState addons;
-    loader::makePreloadPayload(addons, nlohmann::json::array(), "https://example.invalid", 98);
+    loader::makeUnboundNativeProvider(addons, nullptr, "https://example.invalid", 98).getLoader();
     store.serialize();
     store.snapshot();
     store.getString("unbound", "loader.update.url", "");

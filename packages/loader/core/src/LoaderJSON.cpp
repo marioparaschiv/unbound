@@ -150,4 +150,9 @@ nlohmann::json parseBoundedJSON(const std::string &text, size_t maximumDepth)
     }
     return nlohmann::json::parse(text, nullptr, false);
 }
+
+std::string toJSON(const nlohmann::json &value)
+{
+    return value.dump(-1, ' ', false, nlohmann::json::error_handler_t::replace);
+}
 }

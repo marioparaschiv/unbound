@@ -1,4 +1,10 @@
-import type { AddonManifest, Plugin, PluginContext } from '@unbound-app/types';
+import type {
+	AddonManifest,
+	Plugin,
+	PluginContext,
+	UnboundNativeBridge,
+	UnboundPluginBundle,
+} from '@unbound-app/types';
 import { mock } from 'bun:test';
 
 import type { Addon, AddonState } from '~/addons/addon';
@@ -137,6 +143,23 @@ export function makeManifest(id: string, version: string = '1.0.0'): AddonManife
 		main: 'index.js',
 		version,
 	};
+}
+
+/**
+ * @description Installs a test `globalThis.UnboundNative` reporting these plugins and bytecode version.
+ * @param plugins The plugins the loader scanned.
+ * @param bytecodeVersion The runtime's Hermes bytecode version.
+ */
+export function installUnboundNative(plugins: UnboundPluginBundle[], bytecodeVersion: number = 98) {
+	const bridge: UnboundNativeBridge = {
+		getLoader: () => ({ origin: 'test', version: '1.0.0', bytecodeVersion }),
+		getPlugins: () => plugins,
+		getThemes: () => [],
+		getFonts: () => [],
+		getAvailableFonts: () => [],
+	};
+
+	globalThis.UnboundNative = bridge;
 }
 
 /**

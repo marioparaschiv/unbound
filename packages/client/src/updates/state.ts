@@ -10,6 +10,7 @@ import type { PendingUpdate } from '~/updates/addon-updates';
 import { fetchLoaderUpdate } from '~/updates/loader-updates';
 import { API_URL, CLIENT_VERSION } from '~/core/constants';
 import { installsFromManifest } from '~/addons/addons';
+import { getLoader } from '~/native/unbound-native';
 import { Manager } from '~/addons/manager';
 
 const logger = createLogger('Updater');
@@ -53,7 +54,7 @@ export async function findLoaderUpdate(): Promise<LoaderUpdate | null> {
 		return await fetchLoaderUpdate({
 			baseUrl: API_URL,
 			platform: Platform.OS,
-			loader: globalThis.UNBOUND_LOADER,
+			loader: getLoader(),
 		});
 	} catch (error) {
 		logger.error('Failed to check for a loader update:', error);

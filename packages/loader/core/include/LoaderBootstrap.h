@@ -8,7 +8,6 @@
 namespace loader::bootstrap {
 inline constexpr const char *kNativeFailureGuard = "native-failure-guard";
 inline constexpr const char *kNativeUIScopeCache = "native-ui-scope-cache";
-inline constexpr const char *kPreload            = "preload";
 inline constexpr const char *kBrowserLogin       = "browser-login";
 inline constexpr const char *kDevtools           = "devtools";
 inline constexpr const char *kCatchingCall       = "catching-call";

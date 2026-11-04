@@ -13,6 +13,7 @@ import { getSetting, isSettingChange } from '~/settings/unbound';
 import { reloadSummary } from '~/debugger/reload-summary.dev';
 import { createPatcher } from '~/patcher/create-patcher';
 import { currentEnvironment } from '~/core/environment';
+import { getLoader } from '~/native/unbound-native';
 import type { Addon } from '~/addons/addon';
 import { plugins } from '~/plugins/manager';
 import { onChange } from '~/storage/api';
@@ -181,7 +182,7 @@ async function handleEvalRequest(id: string, code: string) {
 // A thin transport caller: the reload lifecycle lives on the Plugins manager. Report the manager's
 // own returned outcome straight back over the wire so the CLI stages the reload result.
 function runtimeBytecode(request: PluginPushRequest): string | undefined {
-	const version = window.UNBOUND_LOADER?.bytecodeVersion;
+	const version = getLoader()?.bytecodeVersion;
 
 	return version ? request.bytecode?.[String(version)] : void 0;
 }

@@ -8,15 +8,15 @@ Unbound Loader injects [Unbound](https://github.com/marioparaschiv/unbound) into
 
 ## Layout
 
-| Path         | What it is                                                                                                                                                 |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `core/`      | Shared C++20 core: settings store, addon scanning, preload script, bundle updater, load pipeline, `NativePlatform` JSI bridge, native plugin async runtime |
-| `ios/`       | The Theos tweak (ElleKit, rootless) and its iOS app-extension submodules                                                                                   |
-| `android/`   | The Xposed module (modern libxposed API) and its NDK library, built with Gradle                                                                            |
-| `bootstrap/` | The shared optional React DevTools bundle (`devtools.js`) for both platforms                                                                               |
-| `vendor/`    | Third-party code: the pinned libffi submodule, nlohmann/json, the React Native JSI headers, Monocypher and a BearSSL subset                                |
-| `apt-repo/`  | Debian package and SideStore-compatible iOS distribution feeds                                                                                             |
-| `tools/`     | Go build, test, validation and packaging commands for the monorepo                                                                                         |
+| Path         | What it is                                                                                                                                                      |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/`      | Shared C++20 core: settings store, addon scanning, bundle updater, load pipeline, `NativePlatform` and `UnboundNative` JSI bridges, native plugin async runtime |
+| `ios/`       | The Theos tweak (ElleKit, rootless) and its iOS app-extension submodules                                                                                        |
+| `android/`   | The Xposed module (modern libxposed API) and its NDK library, built with Gradle                                                                                 |
+| `bootstrap/` | The shared optional React DevTools bundle (`devtools.js`) for both platforms                                                                                    |
+| `vendor/`    | Third-party code: the pinned libffi submodule, nlohmann/json, the React Native JSI headers, Monocypher and a BearSSL subset                                     |
+| `apt-repo/`  | Debian package and SideStore-compatible iOS distribution feeds                                                                                                  |
+| `tools/`     | Go build, test, validation and packaging commands for the monorepo                                                                                              |
 
 `manifest.json` is the workspace catalog for the package roots and their dependencies. The Go manager validates the catalog against the checkout and lists packages without requiring a second runtime or package manager.
 

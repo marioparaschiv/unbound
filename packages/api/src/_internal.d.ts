@@ -1570,7 +1570,7 @@ export type FloatingActionButtonProps = Omit<
 	/** @default 16 */
 	positionRight?: number;
 };
-/** A custom font the native loader has registered, as injected on `window.UNBOUND_FONTS`. */
+/** A custom font the native loader has registered, as `UnboundNative.getFonts()` returns it. */
 export type FontDescriptor = {
 	/** The font's PostScript name, else its full name, else its file name without extension; the Fonts manager keys by it. */
 	name: string;

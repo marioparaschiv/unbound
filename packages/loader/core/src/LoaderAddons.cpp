@@ -262,50 +262,60 @@ nlohmann::json scanThemes(const std::string &documents)
 {
     nlohmann::json themes = nlohmann::json::array();
 
-    scanAddonDirectory(documents, "Themes", "themes",
-                       [&](const std::string &folder, const std::string &directory) {
-                           if (!isDirectory(directory))
-                           {
-                               log(LogLevel::Info, LOG_CATEGORY_THEMES,
-                                   "Skipping " + folder + " as it is not a directory.");
-                               return;
-                           }
+    scanAddonDirectory(
+        documents, "Themes", "themes",
+        [&](const std::string &folder, const std::string &directory) {
+            if (!isDirectory(directory))
+            {
+                log(LogLevel::Info, LOG_CATEGORY_THEMES,
+                    "Skipping " + folder + " as it is not a directory.");
+                return;
+            }
 
-                           std::string manifestPath = joinPath(directory, "manifest.json");
-                           if (!fileExists(manifestPath))
-                           {
-                               log(LogLevel::Info, LOG_CATEGORY_THEMES,
-                                   "Skipping " + folder + " as it is missing a manifest.");
-                               return;
-                           }
+            std::string manifestPath = joinPath(directory, "manifest.json");
+            if (!fileExists(manifestPath))
+            {
+                log(LogLevel::Info, LOG_CATEGORY_THEMES,
+                    "Skipping " + folder + " as it is missing a manifest.");
+                return;
+            }
 
-                           std::optional<nlohmann::json> manifest =
-                               parseObjectFile(manifestPath, folder, "themes", "manifest");
-                           if (!manifest)
-                           {
-                               return;
-                           }
+            std::optional<nlohmann::json> manifest =
+                parseObjectFile(manifestPath, folder, "themes", "manifest");
+            if (!manifest)
+            {
+                return;
+            }
 
-                           std::string bundlePath = joinPath(directory, "bundle.json");
-                           if (!fileExists(bundlePath))
-                           {
-                               log(LogLevel::Info, LOG_CATEGORY_THEMES,
-                                   "Skipping " + folder + " as it is missing a bundle.");
-                               return;
-                           }
+            std::string bundlePath = joinPath(directory, "bundle.json");
+            if (!fileExists(bundlePath))
+            {
+                log(LogLevel::Info, LOG_CATEGORY_THEMES,
+                    "Skipping " + folder + " as it is missing a bundle.");
+                return;
+            }
 
-                           std::optional<nlohmann::json> bundle =
-                               parseObjectFile(bundlePath, folder, "themes", "bundle");
-                           if (!bundle)
-                           {
-                               return;
-                           }
+            // Kept as the file's text, not a parsed object: the client's JSON.parse beats building
+            // it over JSI, and update checks hash these exact bytes.
+            std::optional<std::string> bundle = readTextFile(bundlePath);
+            if (!bundle)
+            {
+                log(LogLevel::Error, LOG_CATEGORY_THEMES,
+                    "Skipping " + folder + " as its bundle failed to be read.");
+                return;
+            }
+            if (!parseBoundedJSON(*bundle).is_object())
+            {
+                log(LogLevel::Info, LOG_CATEGORY_THEMES,
+                    "Skipping " + folder + " as its bundle is invalid.");
+                return;
+            }
 
-                           (*manifest)["folder"] = folder;
-                           (*manifest)["path"]   = directory;
+            (*manifest)["folder"] = folder;
+            (*manifest)["path"]   = directory;
 
-                           themes.push_back({{"manifest", *manifest}, {"bundle", *bundle}});
-                       });
+            themes.push_back({{"manifest", std::move(*manifest)}, {"bundle", std::move(*bundle)}});
+        });
 
     return themes;
 }
@@ -407,8 +417,18 @@ nlohmann::json AddonState::fonts() const
 
 std::optional<nlohmann::json> AddonState::theme(const std::string &id) const
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    const nlohmann::json       *found = findTheme(themes_, id);
-    return found ? std::optional<nlohmann::json>(*found) : std::nullopt;
+    nlohmann::json theme;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        const nlohmann::json       *found = findTheme(themes_, id);
+        if (!found)
+        {
+            return std::nullopt;
+        }
+        theme = *found;
+    }
+    // Scanning keeps the bundle as its file text for the client; native colours need it parsed.
+    theme["bundle"] = parseBoundedJSON(theme["bundle"].get<std::string>());
+    return theme;
 }
 }

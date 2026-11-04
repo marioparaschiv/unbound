@@ -9,6 +9,7 @@ import type { AddonManifest } from './addons';
 export * from './native-platform';
 export * from './native-handles';
 export * from './native-methods';
+export * from './unbound-native';
 export * from './native-fabric';
 export * from './native-java';
 export * from './native-objc';

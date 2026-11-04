@@ -181,20 +181,14 @@ void LoaderPipeline::injectPreBundle(jsi::Runtime &runtime)
         }
     }
 
-    log(LogLevel::Info, LOG_CATEGORY_DEFAULT, "Pre-loading settings, plugins, fonts and themes...");
-    auto preload = bootstrap::function(runtime, bootstrap::kPreload);
-    if (!preload)
-    {
-        return;
-    }
     try
     {
-        preload->call(runtime, toJSIValue(runtime, preloadData(host_->preloadPayload())));
+        installUnboundNative(runtime, host_->unboundNativeProvider());
     }
     catch (const std::exception &error)
     {
         log(LogLevel::Error, LOG_CATEGORY_DEFAULT,
-            std::string("Pre-loading failed: ") + error.what());
+            std::string("Failed to install UnboundNative: ") + error.what());
     }
 }
 

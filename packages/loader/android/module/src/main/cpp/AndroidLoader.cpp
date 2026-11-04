@@ -10,6 +10,7 @@
 #include "LoaderColor.h"
 #include "LoaderFiles.h"
 #include "LoaderFonts.h"
+#include "LoaderJSON.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
 #include "LoaderThemes.h"
@@ -485,10 +486,14 @@ uint32_t AndroidLoader::runtimeBytecodeVersion()
     return configuration_.bytecodeVersion;
 }
 
-loader::PreloadPayload AndroidLoader::preloadPayload()
+loader::UnboundNativeProvider AndroidLoader::unboundNativeProvider()
 {
-    return loader::makePreloadPayload(addons_, availableFonts(), configuration_.origin,
-                                      runtimeBytecodeVersion());
+    return loader::makeUnboundNativeProvider(
+        addons_,
+        [self = shared_from_this()] {
+            return self->availableFonts();
+        },
+        configuration_.origin, runtimeBytecodeVersion());
 }
 
 void AndroidLoader::installNativeModules(jsi::Runtime &runtime)

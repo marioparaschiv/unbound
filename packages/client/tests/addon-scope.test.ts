@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
-import { makeManifest, resetDevice, states } from './helpers/addons';
+import { installUnboundNative, makeManifest, resetDevice, states } from './helpers/addons';
 
 const patcherApi = await import('~/patcher/api');
 const { Plugins } = await import('~/plugins/manager');
@@ -86,7 +86,7 @@ afterEach(() => {
 		'window',
 		'__scopeTarget',
 		'__scopeSeen',
-		'UNBOUND_LOADER',
+		'UnboundNative',
 	]) {
 		Reflect.deleteProperty(globalThis, key);
 	}
@@ -180,10 +180,7 @@ describe('addon scope', () => {
 			patcher: typeof patcherApi,
 		];
 
-		globalThis.UNBOUND_LOADER = { origin: 'test', version: '1.0.0', bytecodeVersion: 98 };
-		globalThis.UNBOUND_PLUGINS = [
-			{ manifest: { ...makeManifest(ID), folder: ID }, bundle: '({})' },
-		];
+		installUnboundNative([{ manifest: { ...makeManifest(ID), folder: ID }, bundle: '({})' }]);
 		Object.defineProperty(globalThis, 'NativePlatform', {
 			configurable: true,
 			writable: true,
@@ -204,7 +201,7 @@ describe('addon scope', () => {
 		const plugins = new Plugins();
 
 		plugins.initialize();
-		globalThis.UNBOUND_PLUGINS = [];
+		installUnboundNative([]);
 
 		expect(target.greet('you')).toBe('hello you#');
 

@@ -52,21 +52,21 @@ Each time Discord loads its JavaScript bundle, the loader:
 4. Runs the cached bundle before Discord's bundle, so Unbound hooks Metro before Discord defines its modules.
 5. Lets Discord's bundle run.
 
-Just before Unbound's bundle runs, the loader installs the native modules and console capture. It then runs the DevTools script when `loader.devtools` is `true`, and finally a preload script that defines these globals:
+Just before Unbound's bundle runs, the loader installs the native modules and console capture. It then runs the DevTools script when `loader.devtools` is `true`, and finally installs the `UnboundNative` object. Each of its methods reads the data when Unbound calls it:
 
-| Global                    | Contents                                                                                         |
-| ------------------------- | ------------------------------------------------------------------------------------------------ |
-| `UNBOUND_PLUGINS`         | The installed plugins. Each entry has a `manifest` and a `bundle` string with the plugin's code. |
-| `UNBOUND_THEMES`          | The installed themes. Each entry has a `manifest` and the theme's `bundle.json` as a string.     |
-| `UNBOUND_FONTS`           | The font files in `Fonts`.                                                                       |
-| `UNBOUND_AVAILABLE_FONTS` | The font names Discord can already use.                                                          |
-| `UNBOUND_LOADER`          | `origin` (`libunbound.so`), the loader `version`, and the runtime's `bytecodeVersion`.           |
+| Method                | Returns                                                                                                                                  |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `getPlugins()`        | The installed plugins. Each entry has a `manifest` and a `bundle` string with the plugin's code.                                         |
+| `getThemes()`         | The installed themes. Each entry has a `manifest` and the theme's `bundle.json` text.                                                    |
+| `getFonts()`          | The font files in `Fonts`.                                                                                                               |
+| `getAvailableFonts()` | The font names Discord can already use. The loader lists them on the first call only, so a launch that never opens the font picker skips it. |
+| `getLoader()`         | `origin` (`libunbound.so`), the loader `version`, and the runtime's `bytecodeVersion`.                                                   |
 
 If no bundle is ready, the loader shows `Failed to load Unbound's bundle. Please report this to the developers.` and Discord runs without Unbound.
 
 <Note>
 	The loader never starts plugins itself. It reads them from disk and hands them to Unbound's
-	JavaScript through `UNBOUND_PLUGINS`, and the bundle starts and stops them.
+	JavaScript through `UnboundNative.getPlugins()`, and the bundle starts and stops them.
 </Note>
 
 ## Storage
