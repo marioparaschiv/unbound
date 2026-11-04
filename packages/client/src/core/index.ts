@@ -16,6 +16,7 @@ import discordSupport from '~/builtins/discord-support';
 import type { BuiltInEntry } from '~/builtins/registry';
 import type { SectionEntry } from '~/settings/section';
 import errorBoundary from '~/builtins/error-boundary';
+import sponsorBadges from '~/builtins/sponsor-badges';
 import { assetsSection } from '~/assets/builtin.dev';
 import coreCommands from '~/commands/core-commands';
 import hotRefresh from '~/hot-refresh/builtin.dev';
@@ -77,6 +78,7 @@ const BUILT_INS: BuiltInEntry[] = [
 	['links', links],
 	['nativeConsent', nativeConsent],
 	['settings', createSettings(SECTIONS_IN_OVERVIEW_ORDER)],
+	['sponsorBadges', sponsorBadges],
 	['staffMode', staffMode],
 	['themes', themes],
 	['toasts', toasts],
