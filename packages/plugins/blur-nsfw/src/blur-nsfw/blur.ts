@@ -1,4 +1,5 @@
-import { EMBED_MEDIA_FIELDS, SNAPSHOT_FIELDS, SPOILER_LABEL, type BlurPart } from '~/constants';
+import { EMBED_MEDIA_FIELDS, SNAPSHOT_FIELDS, SPOILER_LABEL } from '~/constants';
+import type { BlurPart } from '~/types';
 
 type Entry = Record<string, unknown>;
 

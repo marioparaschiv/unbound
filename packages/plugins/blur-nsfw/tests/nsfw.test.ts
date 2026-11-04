@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isNsfwChannel, type ChannelLike } from '~/nsfw';
+import { isNsfwChannel, type ChannelLike } from '~/blur-nsfw/nsfw';
 
 const CHANNELS: Record<string, ChannelLike> = {
 	nsfw: { nsfw: true },

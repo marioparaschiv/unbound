@@ -10,7 +10,7 @@ import {
 	type BlurParts,
 	type ChatRow,
 	type RowMessage,
-} from '~/blur';
+} from '~/blur-nsfw/blur';
 
 describe('blurAttachments', () => {
 	test('marks every attachment as a spoiler without changing the original', () => {
