@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, jest, test } from 'bun:test';
 
 import { createFlatRecovery } from '~/codeblocks/flat-recovery';
 
@@ -42,7 +42,9 @@ describe('createFlatRecovery', () => {
 		expect(app.count()).toBe(0);
 	});
 
-	test('repaints flat cards on the interval', async () => {
+	test('repaints flat cards on the interval', () => {
+		jest.useFakeTimers();
+
 		const app = foreground();
 		const repainted: string[] = [];
 		const recovery = createFlatRecovery(
@@ -52,15 +54,11 @@ describe('createFlatRecovery', () => {
 		);
 
 		recovery.mark('a', true);
-
-		// Waits on the repaints, not a fixed time, so a loaded machine cannot starve the interval.
-		for (let waited = 0; repainted.length < 2 && waited < 1000; waited += 5) {
-			await new Promise((resolve) => setTimeout(resolve, 5));
-		}
-
+		jest.advanceTimersByTime(10);
 		recovery.dispose();
+		jest.useRealTimers();
 
-		expect(repainted.length).toBeGreaterThan(1);
+		expect(repainted).toEqual(['a', 'a']);
 		expect(app.count()).toBe(0);
 	});
 });
