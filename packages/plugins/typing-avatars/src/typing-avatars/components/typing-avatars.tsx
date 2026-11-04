@@ -2,7 +2,7 @@ import type { FluxUser } from '@unbound-app/api/flux';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
-import { Avatars, UserStore } from '~/modules';
+import { Avatars, UserStore } from '~/typing-avatars/modules';
 import { Avatar } from '~/constants';
 
 type User = { id: string };
