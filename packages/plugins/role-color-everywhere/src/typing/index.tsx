@@ -2,7 +2,6 @@ import {
 	getRoleColorAppearance,
 	type RoleColorAppearance,
 } from '@unbound-plugins/shared/colors/role-colors';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
@@ -55,8 +54,6 @@ function typingAppearances(): Map<string, RoleColorAppearance> {
 	return uniqueNames(owners);
 }
 
-let stopTypingFeature = () => {};
-
 function patchTypingIndicator(): () => void {
 	// A list rendered while patched keeps calling this `renderItem` after the patch is removed.
 	let active = true;
@@ -95,9 +92,10 @@ function patchTypingIndicator(): () => void {
  * @description Paints the names in the channel typing indicator with their role colors while `typingUsers` is on.
  * Patches the render of `TypingIndicator` (`modules/chat/native/TypingIndicator.tsx`, which Android loads only when someone
  * first types) and reads `TypingStore`, `UserStore`, `GuildMemberStore`, `RelationshipStore` and `SelectedChannelStore`.
- * The Addon scope removes the patch when the plugin stops; `stopTyping` plains the lists already drawn.
+ * The returned function removes the patch and plains the lists already drawn, which keep calling the `renderItem` the patch gave them.
+ * @returns The function that ends the feature.
  */
-export function startTyping(): void {
+export function startTyping(): () => void {
 	const feature = `${PLUGIN_NAME}: typing`;
 	const modules = {
 		GuildMemberStore,
@@ -107,17 +105,7 @@ export function startTyping(): void {
 		SelectedChannelStore,
 	};
 
-	if (!ensureModules(feature, modules)) return;
+	if (!ensureModules(feature, modules)) return () => {};
 
-	stopTypingFeature = whileEnabled(settings, 'typingUsers', true, patchTypingIndicator);
-	recordApplied(1);
-}
-
-/**
- * @description Ends the feature, so typing lists Discord rendered while it ran draw plain names again.
- * The scope removes the patch, but those lists keep calling the `renderItem` the patch gave them.
- */
-export function stopTyping(): void {
-	stopTypingFeature();
-	stopTypingFeature = () => {};
+	return whileEnabled(settings, 'typingUsers', true, patchTypingIndicator);
 }

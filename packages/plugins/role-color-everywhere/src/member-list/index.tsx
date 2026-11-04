@@ -2,7 +2,6 @@ import {
 	getRoleColorAppearance,
 	type RoleColorAppearance,
 } from '@unbound-plugins/shared/colors/role-colors';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
@@ -47,7 +46,11 @@ function sectionAppearance(props: UserListProps, section: number): RoleColorAppe
 	return appearance.colors.length ? appearance : null;
 }
 
-function paintSectionHeaders(props: UserListProps, result: Rendered): Rendered {
+function paintSectionHeaders(
+	props: UserListProps,
+	result: Rendered,
+	isActive: () => boolean,
+): Rendered {
 	const renderHeader = result?.props?.renderSectionHeader;
 
 	if (typeof renderHeader !== 'function' || !props.getSectionProps || !props.getItemProps) {
@@ -58,7 +61,7 @@ function paintSectionHeaders(props: UserListProps, result: Rendered): Rendered {
 		renderSectionHeader: (section: number, ...rest: unknown[]) => {
 			const header: Rendered = renderHeader(section, ...rest);
 			const title = header?.props?.title;
-			const appearance = sectionAppearance(props, section);
+			const appearance = isActive() ? sectionAppearance(props, section) : null;
 
 			if (!appearance || typeof title !== 'string') return header;
 
@@ -68,20 +71,30 @@ function paintSectionHeaders(props: UserListProps, result: Rendered): Rendered {
 }
 
 function patchUsersFastList(): () => void {
-	return patcher.react.after(UsersFastList, 'UsersFastList', ({ props, result }) =>
-		paintSectionHeaders(props as UserListProps, result),
+	// A list rendered while patched keeps calling this `renderSectionHeader` after the patch is removed.
+	let active = true;
+
+	const unpatch = patcher.react.after(UsersFastList, 'UsersFastList', ({ props, result }) =>
+		paintSectionHeaders(props as UserListProps, result, () => active),
 	);
+
+	return () => {
+		active = false;
+		unpatch();
+	};
 }
 
 /**
  * @description Paints role section titles in the member list with the role's colors while `memberList` is on.
  * Patches the render of `UsersFastList` (`modules/main_tabs_v2/native/shared_components/user_list/UsersFastList.tsx`),
  * a function or `forwardRef` component, and reads `GuildMemberStore` and `GuildRoleStore`.
- * The Addon scope removes the patch when the plugin stops.
+ * The returned function removes the patch and plains the lists already drawn.
+ * @returns The function that ends the feature.
  */
-export function startMemberList(): void {
-	if (!ensureModules(`${PLUGIN_NAME}: member list`, { GuildMemberStore, GuildRoleStore })) return;
+export function startMemberList(): () => void {
+	if (!ensureModules(`${PLUGIN_NAME}: member list`, { GuildMemberStore, GuildRoleStore })) {
+		return () => {};
+	}
 
-	whileEnabled(settings, 'memberList', true, patchUsersFastList);
-	recordApplied(1);
+	return whileEnabled(settings, 'memberList', true, patchUsersFastList);
 }

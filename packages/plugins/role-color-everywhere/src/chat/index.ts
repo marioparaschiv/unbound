@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import whileEnabled from '@unbound-plugins/shared/settings/while-enabled';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { PluginContext } from '@unbound-app/api/native';
@@ -9,34 +8,25 @@ import { patchRowManager } from '~/chat/row-manager';
 import { GuildMemberStore } from '~/chat/modules';
 import { PLUGIN_NAME } from '~/constants';
 
-let stopNativeMentions = () => {};
-let settled = () => Promise.resolve();
-
 /**
  * @description Colors mentions and message text in chat rows, and mentions in native message cells and the chat input.
  * Patches `RowManager.prototype.generate`, and on iOS and Android hooks native views through the plugin's native bridge;
  * reads `GuildMemberStore`, `UserStore`, `ChannelStore`, `MessageStore` and `SelectedChannelStore`.
- * The Addon scope removes the patch, but native views are restored by `stopChat`.
+ * The Addon scope removes the patch, but the returned function restores the native views and waits for it to finish.
  * @param context The plugin context, whose native bridge paints the mentions.
+ * @returns The function that ends the feature; its promise settles once every queued native step has.
  */
-export function startChat(context: PluginContext): void {
-	if (!ensureModules(PLUGIN_NAME, { GuildMemberStore })) return;
+export function startChat(context: PluginContext): () => Promise<void> {
+	if (!ensureModules(PLUGIN_NAME, { GuildMemberStore })) return () => Promise.resolve();
 
 	const nativeMentions = createNativeMentions(context);
 
 	patchRowManager();
-	settled = nativeMentions.settled;
-	stopNativeMentions = whileEnabled(settings, 'chatMentions', true, nativeMentions.enable);
-	recordApplied(1);
-}
+	const stopNativeMentions = whileEnabled(settings, 'chatMentions', true, nativeMentions.enable);
 
-/**
- * @description Restores the native views the plugin painted, and waits for the restore to finish.
- * @returns A promise that settles once every queued native step has.
- */
-export function stopChat(): Promise<void> {
-	stopNativeMentions();
-	stopNativeMentions = () => {};
+	return () => {
+		stopNativeMentions();
 
-	return settled();
+		return nativeMentions.settled();
+	};
 }
