@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.2] - 2026-11-04
+
+### Changed
+
+- Every label, the permission names, the settings and the copy toasts can now be translated. The Roles Card Button setting now takes effect on a profile that is already open.
+
 ## [1.0.1] - 2026-11-04
 
 ### Fixed
