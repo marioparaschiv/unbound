@@ -1,26 +1,33 @@
 import { COMPOSER_ROW_RIGHT, useComposerRow } from '@unbound-plugins/shared/composer/overlay-rows';
 import { Pressable, View } from 'react-native';
-import { useSyncExternalStore, type ComponentType } from 'react';
+import { useSyncExternalStore } from 'react';
+import { messages } from '@unbound-app/i18n';
+import { flux } from '@unbound-app/api';
 
+import { ChannelStore, SelectedChannelStore, StickerModule } from '~/sticker-staging/modules';
+import { selectedChannelId } from '~/sticker-staging/selected-channel';
 import { PREVIEW_SIZE, STICKER_SIZE } from '~/constants';
-import { ChannelStore, type SlowmodeChannel, type StickerProps } from '~/modules';
-import { selectedChannelId } from '~/selected-channel';
-import type { Staging } from '~/staging';
+import type { Staging } from '~/sticker-staging/staging';
+import type { SlowmodeChannel } from '~/types';
 
 type StickerPreviewProps = {
 	channelId: string;
 	staging: Staging;
-	Sticker: ComponentType<StickerProps>;
 };
 
-function StickerPreview({ channelId, staging, Sticker }: StickerPreviewProps) {
+function StickerPreview({ channelId, staging }: StickerPreviewProps) {
 	const sticker = useSyncExternalStore(
 		(onChange) => staging.subscribe(channelId, onChange),
 		() => staging.get(channelId)[0],
 	);
-	const selectedId = selectedChannelId();
+	const selectedId = flux.useStore(SelectedChannelStore, selectedChannelId);
 	const shown = Boolean(sticker) && (!selectedId || selectedId === channelId);
-	const channel: SlowmodeChannel | undefined = ChannelStore.getChannel?.(channelId);
+	const channel: SlowmodeChannel | undefined = flux.useStore(
+		ChannelStore,
+		(store) => store.getChannel?.(channelId),
+		{ deps: [channelId] },
+	);
+	const Sticker = StickerModule.default;
 	const top = useComposerRow({
 		channel,
 		channelId,
@@ -43,7 +50,7 @@ function StickerPreview({ channelId, staging, Sticker }: StickerPreviewProps) {
 			}}
 		>
 			<Pressable
-				accessibilityLabel='Remove sticker preview'
+				accessibilityLabel={messages.REMOVE_STICKER_PREVIEW}
 				accessibilityRole='button'
 				hitSlop={8}
 				onPress={() => staging.clear(channelId)}

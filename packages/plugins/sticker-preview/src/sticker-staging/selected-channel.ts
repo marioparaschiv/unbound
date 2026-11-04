@@ -1,4 +1,4 @@
-import { SelectedChannelStore } from '~/modules';
+import { SelectedChannelStore } from '~/sticker-staging/modules';
 
 /**
  * @description The channel the user is looking at.

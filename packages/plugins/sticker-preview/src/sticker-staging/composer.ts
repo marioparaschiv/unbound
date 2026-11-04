@@ -1,4 +1,4 @@
-import { DraftStore } from '~/modules';
+import { DraftStore } from '~/sticker-staging/modules';
 
 export type ChatInput = {
 	handleSend?: (...args: unknown[]) => unknown;

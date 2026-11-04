@@ -1,84 +1,18 @@
-import { installAddonGlobals } from '@unbound-app/api/testing';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { flux, metro } from '@unbound-app/api/testing';
+import { beforeEach, describe, expect, test } from 'bun:test';
 
-type SentMessage = { channelId: string; content: string; stickerIds: string[] };
-
-const sent: SentMessage[] = [];
-const stickerSends: { channelId: string; stickerIds: string[] }[] = [];
-const drafts = new Map<string, string>();
-let activeInput: FakeInput | undefined;
-let sendResult: () => unknown = () => undefined;
-
-type FakeInput = {
-	text: string;
-	ownSends: number;
-	keyboardOpened: boolean;
-	handleSend: (...args: unknown[]) => unknown;
-	getText: () => string;
-	setText: (text: string) => void;
-	openSystemKeyboard: () => void;
-};
-
-const DraftStore = { getDraft: (channelId: string) => drafts.get(channelId) ?? '' };
-const Messages = {
-	_sendMessage(
-		channelId: string,
-		message: { content: string },
-		options: { stickerIds: string[] },
-	) {
-		sent.push({ channelId, content: message.content, stickerIds: options.stickerIds });
-
-		return sendResult();
-	},
-	sendStickers(channelId: string, stickerIds: string[]) {
-		stickerSends.push({ channelId, stickerIds });
-
-		return sendResult();
-	},
-};
-
-const scope = installAddonGlobals({
-	manifest: { id: 'unbound.sticker-preview' },
-	unbound: { flux: { getStore: (name: string) => (name === 'Draft' ? DraftStore : {}) } },
-});
-
-Object.assign(scope.metro, {
-	api: { Messages },
-	findByFilePath: () => undefined,
-	filters: { ...scope.metro.filters, byFluxStore: scope.metro.filters.byName },
-});
-scope.metro.register({ getBestActiveInputForChannelId: () => activeInput });
-
-mock.module('@unbound-app/api', () => scope.unbound);
-
-const { createStaging } = await import('~/staging');
-
-function fakeInput(text = ''): FakeInput {
-	const input: FakeInput = {
-		text,
-		ownSends: 0,
-		keyboardOpened: false,
-		handleSend: () => {
-			input.ownSends++;
-		},
-		getText: () => input.text,
-		setText: (next) => {
-			input.text = next;
-		},
-		openSystemKeyboard: () => {
-			input.keyboardOpened = true;
-		},
-	};
-
-	return input;
-}
+import { behaviour, ChatInputs, drafts, fakeInput, Messages, sent, stickerSends } from './fakes';
+import { createStaging } from '~/sticker-staging/staging';
 
 beforeEach(() => {
+	flux.seed({ Draft: { getDraft: (channelId: string) => drafts.get(channelId) ?? '' } });
+	metro.register(ChatInputs);
+	metro.register(Messages);
 	sent.length = 0;
 	stickerSends.length = 0;
 	drafts.clear();
-	activeInput = fakeInput();
-	sendResult = () => undefined;
+	behaviour.activeInput = fakeInput();
+	behaviour.sendResult = () => undefined;
 	globalThis.__unboundStagedStickers = undefined;
 });
 
@@ -90,7 +24,7 @@ describe('createStaging', () => {
 		staging.stage('c1', { id: 7 });
 
 		expect(staging.get('c1')).toEqual([{ id: 7 }]);
-		expect(activeInput?.keyboardOpened).toBe(true);
+		expect(behaviour.activeInput?.keyboardOpened).toBe(true);
 		staging.dispose();
 	});
 
@@ -109,7 +43,7 @@ describe('createStaging', () => {
 
 		staging.stage('c1', { id: 1 });
 		staging.stage('c1', { id: 2 });
-		activeInput?.handleSend();
+		behaviour.activeInput?.handleSend();
 
 		expect(stickerSends).toEqual([{ channelId: 'c1', stickerIds: ['1', '2'] }]);
 		expect(sent).toEqual([]);
@@ -121,11 +55,11 @@ describe('createStaging', () => {
 		const staging = createStaging();
 
 		staging.stage('c1', { id: 3 });
-		activeInput!.text = 'look at this';
-		activeInput?.handleSend();
+		behaviour.activeInput!.text = 'look at this';
+		behaviour.activeInput?.handleSend();
 
 		expect(sent).toEqual([{ channelId: 'c1', content: 'look at this', stickerIds: ['3'] }]);
-		expect(activeInput?.text).toBe('');
+		expect(behaviour.activeInput?.text).toBe('');
 		staging.dispose();
 	});
 
@@ -134,7 +68,7 @@ describe('createStaging', () => {
 
 		drafts.set('c1', 'from the draft');
 		staging.stage('c1', { id: 4 });
-		activeInput?.handleSend();
+		behaviour.activeInput?.handleSend();
 
 		expect(sent[0]?.content).toBe('from the draft');
 		staging.dispose();
@@ -142,7 +76,7 @@ describe('createStaging', () => {
 
 	test("restores Discord's own send once nothing is staged", () => {
 		const staging = createStaging();
-		const input = activeInput!;
+		const input = behaviour.activeInput!;
 		const original = input.handleSend;
 
 		staging.stage('c1', { id: 5 });
@@ -159,7 +93,7 @@ describe('createStaging', () => {
 	test('keeps the stickers staged when a send fails', async () => {
 		const staging = createStaging();
 
-		sendResult = () => Promise.reject(new Error('offline'));
+		behaviour.sendResult = () => Promise.reject(new Error('offline'));
 		staging.stage('c1', { id: 6 });
 
 		await expect(Promise.resolve(staging.send('c1'))).rejects.toThrow('offline');
@@ -171,7 +105,7 @@ describe('createStaging', () => {
 		const staging = createStaging();
 		let resolve: (value: unknown) => void = () => {};
 
-		sendResult = () => new Promise((done) => (resolve = done));
+		behaviour.sendResult = () => new Promise((done) => (resolve = done));
 		staging.stage('c1', { id: 8 });
 
 		const first = staging.send('c1');
@@ -185,7 +119,7 @@ describe('createStaging', () => {
 
 	test('dispose clears every channel and unhooks every input', () => {
 		const staging = createStaging();
-		const input = activeInput!;
+		const input = behaviour.activeInput!;
 		const original = input.handleSend;
 
 		staging.stage('c1', { id: 9 });

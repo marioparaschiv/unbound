@@ -1,9 +1,9 @@
-import { clearComposer, composerText, type ChatInput } from '~/composer';
+import { clearComposer, composerText, type ChatInput } from '~/sticker-staging/composer';
 import {
 	sharedStagedStickers,
 	type Sticker,
 } from '@unbound-plugins/shared/stickers/staged-stickers';
-import { ChatInputs, MessageActions } from '~/modules';
+import { ChatInputs, MessageActions } from '~/sticker-staging/modules';
 
 type SendHandler = (...args: unknown[]) => unknown;
 type SendableInput = ChatInput & { handleSend: SendHandler };
