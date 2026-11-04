@@ -1,5 +1,5 @@
 import type { LanguageRegistration } from 'shiki';
-import { fs } from '~/codeblocks/fs';
+import { fs } from '@unbound-app/api';
 
 import { SHIKI_LANGS_VERSION } from '~/constants';
 import { grammarOrder } from '~/codeblocks/bundled';

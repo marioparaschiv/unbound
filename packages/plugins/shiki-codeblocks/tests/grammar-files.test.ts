@@ -1,22 +1,16 @@
-import { afterEach, describe, expect, mock, test } from 'bun:test';
+import { afterEach, describe, expect, test } from 'bun:test';
+import { fs } from '@unbound-app/api/testing';
 import type { LanguageRegistration } from 'shiki';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-const files = new Map<string, string>();
-
-// The testing kit has no `fs`, so the file the plugin reads it from gives a memory one.
-mock.module('~/codeblocks/fs', () => ({
-	fs: {
-		exists: async (path: string) => files.has(path),
-		readFile: async (path: string) => files.get(path) ?? '',
-		writeFile: async (path: string, content: string) => void files.set(path, content),
-	},
-}));
-
-const { cachedRegistration, grammarModuleUrl, loadBundledGrammar, registrationFromModule } =
-	await import('~/codeblocks/grammar-files');
-const { SHIKI_LANGS_VERSION } = await import('~/constants');
+import { SHIKI_LANGS_VERSION } from '~/constants';
+import {
+	cachedRegistration,
+	grammarModuleUrl,
+	loadBundledGrammar,
+	registrationFromModule,
+} from '~/codeblocks/grammar-files';
 
 const langs = dirname(require.resolve('@shikijs/langs/package.json'));
 const realFetch = globalThis.fetch;
@@ -32,7 +26,6 @@ async function localRegistration(name: string): Promise<LanguageRegistration> {
 }
 
 afterEach(() => {
-	files.clear();
 	globalThis.fetch = realFetch;
 });
 
@@ -68,8 +61,8 @@ describe('grammar files', () => {
 
 		expect(requests).toEqual([grammarModuleUrl('css')]);
 		expect(second).toEqual(first);
-		expect([...files.keys()]).toEqual([
-			`Unbound/cache/shiki-codeblocks/langs-${SHIKI_LANGS_VERSION}/css.json`,
+		expect([...fs.files.keys()]).toEqual([
+			`/documents/Unbound/cache/shiki-codeblocks/langs-${SHIKI_LANGS_VERSION}/css.json`,
 		]);
 	});
 

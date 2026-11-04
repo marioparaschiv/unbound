@@ -1,9 +1,6 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 
-// The testing kit has no `fs`, so the file the plugin reads it from is replaced.
-mock.module('~/codeblocks/fs', () => ({ fs: {} }));
-
-const { createTokenStore } = await import('~/codeblocks/token-store');
+import { createTokenStore } from '~/codeblocks/token-store';
 
 function memoryFiles(initial: Record<string, string> = {}) {
 	const files = new Map(Object.entries(initial));

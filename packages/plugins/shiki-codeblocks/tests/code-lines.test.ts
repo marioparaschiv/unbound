@@ -1,8 +1,6 @@
-import { expect, mock, test } from 'bun:test';
+import { expect, test } from 'bun:test';
 
-mock.module('~/codeblocks/modules', () => ({ MessageStore: {} }));
-
-const { codeLinesOf, mayShowCode } = await import('~/codeblocks/ios/code-lines');
+import { codeLinesOf, mayShowCode } from '~/codeblocks/ios/code-lines';
 
 test('collects the first code line of every fence, forwarded messages included', () => {
 	const lines = codeLinesOf([

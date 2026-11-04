@@ -1,5 +1,5 @@
 import type { ThemedToken } from 'shiki';
-import { fs } from '~/codeblocks/fs';
+import { fs } from '@unbound-app/api';
 
 type TokenLines = ThemedToken[][];
 

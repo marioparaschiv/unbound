@@ -1,10 +1,9 @@
-import { describe, expect, mock, spyOn, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import type { LanguageRegistration } from 'shiki';
+import { fs } from '@unbound-app/api';
 
-// The testing kit has no `fs`, so the file the plugin reads it from is replaced.
-mock.module('~/codeblocks/fs', () => ({ fs: {} }));
-
-const { createHighlighter: createWithSource } = await import('~/codeblocks/highlighter');
+import { createHighlighter as createWithSource } from '~/codeblocks/highlighter';
+import { createTokenStore } from '~/codeblocks/token-store';
 
 async function localRegistration(name: string): Promise<LanguageRegistration> {
 	const grammar: LanguageRegistration[] = (await import(`@shikijs/langs/${name}`)).default;
@@ -16,7 +15,8 @@ async function localRegistration(name: string): Promise<LanguageRegistration> {
 }
 
 function createHighlighter() {
-	return createWithSource(localRegistration);
+	// Each highlighter keeps its results in its own store, so one test's tokens never answer another's.
+	return createWithSource(localRegistration, undefined, createTokenStore(fs));
 }
 
 function text(tokens: { content: string }[] | undefined) {
@@ -74,7 +74,7 @@ describe('createHighlighter', () => {
 
 			return localRegistration(name);
 		};
-		const tokens = await createWithSource(flaky, [0]).tokenize(
+		const tokens = await createWithSource(flaky, [0], createTokenStore(fs)).tokenize(
 			{ code: 'const answer = 42;', language: 'typescript' },
 			'dark-plus',
 			'secondary',
@@ -104,7 +104,7 @@ describe('createHighlighter', () => {
 			attempts++;
 			throw new TypeError('Network request failed');
 		};
-		const highlighter = createWithSource(offline, [0]);
+		const highlighter = createWithSource(offline, [0], createTokenStore(fs));
 		const block = { code: 'const answer = 42;', language: 'typescript' };
 
 		await expect(highlighter.tokenize(block, 'dark-plus', 'secondary')).rejects.toThrow();
