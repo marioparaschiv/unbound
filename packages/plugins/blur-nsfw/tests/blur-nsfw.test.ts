@@ -1,8 +1,6 @@
-import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { stop } from '~/index';
 
 type Row = {
 	message: {
@@ -65,10 +63,10 @@ describe('rows in channels', () => {
 		expect(message.embeds).toEqual([{ image: { url: 'x' } }, { title: 'text only' }]);
 	});
 
-	test('are put back as Discord drew them when the plugin stops', () => {
+	test('are put back as Discord drew them when the plugin stops', async () => {
 		const { message } = generate('adult');
 
-		stop();
+		await stopPlugin();
 
 		expect(message.attachments).toEqual([{ id: 'a' }]);
 	});
