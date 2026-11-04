@@ -1,0 +1,22 @@
+{
+	"name": "super-reaction-tweaks",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Opens the reaction picker on Super Reactions and caps how many Super Reaction animations play at once.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c",
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@unbound-plugins/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/react": "^19.2.7",
+		"@unbound-app/api": "workspace:*",
+		"@unbound-app/cli": "workspace:*",
+		"react-native": "^0.86.0",
+		"rollup": "^4.66.0"
+	}
+}
