@@ -805,6 +805,21 @@
         "rollup": "^4.66.0",
       },
     },
+    "packages/plugins/no-typing-animation": {
+      "name": "no-typing-animation",
+      "version": "1.0.0",
+      "dependencies": {
+        "@unbound-plugins/shared": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "latest",
+        "@types/react": "^19.2.7",
+        "@unbound-app/api": "workspace:*",
+        "@unbound-app/cli": "workspace:*",
+        "react-native": "^0.86.0",
+        "rollup": "^4.66.0",
+      },
+    },
     "packages/plugins/platform-indicators": {
       "name": "platform-indicators",
       "version": "1.0.0",
@@ -3276,6 +3291,8 @@
     "no-blocked-messages": ["no-blocked-messages@workspace:packages/plugins/no-blocked-messages"],
 
     "no-reply-mention": ["no-reply-mention@workspace:packages/plugins/no-reply-mention"],
+
+    "no-typing-animation": ["no-typing-animation@workspace:packages/plugins/no-typing-animation"],
 
     "node-bitmap": ["node-bitmap@0.0.1", "", {}, "sha512-Jx5lPaaLdIaOsj2mVLWMWulXF6GQVdyLvNSxmiYCvZ8Ma2hfKX0POoR2kgKOqz+oFsRreq0yYZjQ2wjE9VNzCA=="],
 
