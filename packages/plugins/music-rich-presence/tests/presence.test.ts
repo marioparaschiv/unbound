@@ -23,7 +23,8 @@ const nowPlaying = {
 const realFetch = globalThis.fetch;
 
 async function flush() {
-	await Bun.sleep(10);
+	// The poll awaits the fetch and its JSON before it dispatches.
+	for (let i = 0; i < 20; i++) await Promise.resolve();
 }
 
 beforeEach(() => {

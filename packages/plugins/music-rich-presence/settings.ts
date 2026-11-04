@@ -30,10 +30,10 @@ export default defineSettings(
 			action: 'createApiKey',
 			visibleWhen: (settings) => settings.scrobblerBackend === 'lastfm',
 		}),
-		instanceIncomplete: setting.button({
+		instanceIncomplete: setting.notice({
 			title: 'INSTANCE_INCOMPLETE',
 			subtitle: 'INSTANCE_INCOMPLETE_SUBTITLE',
-			action: 'switchToListenBrainz',
+			tone: 'warning',
 			visibleWhen: (settings) =>
 				settings.scrobblerBackend === 'listenbrainz-compatible' &&
 				(!settings.instanceBaseURL.trim() || !settings.instanceAPIBaseUrl.trim()),

@@ -14,7 +14,7 @@
 	"HIDE_WITH_SPOTIFY": "Hide With Spotify",
 	"HIDE_WITH_SPOTIFY_SUBTITLE": "Hide while Spotify or another app shows what you are listening to",
 	"INSTANCE_INCOMPLETE": "Instance Incomplete",
-	"INSTANCE_INCOMPLETE_SUBTITLE": "Set both the instance URL and the API URL, or tap here to switch back to ListenBrainz.",
+	"INSTANCE_INCOMPLETE_SUBTITLE": "Set both the instance URL and the API URL, or switch the scrobbler back to ListenBrainz.",
 	"INSTANCE_SUBTITLE": "Both the instance URL, such as https://example.org, and the API URL, such as https://api.example.org, are needed. Without them, nothing shows.",
 	"INSTANCE_URL": "Instance URL",
 	"INSTANCE_URL_PLACEHOLDER": "https://example.org",

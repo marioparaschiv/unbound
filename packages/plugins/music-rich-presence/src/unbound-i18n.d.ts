@@ -33,7 +33,7 @@ declare module '@unbound-app/i18n' {
 		readonly HIDE_WITH_SPOTIFY_SUBTITLE: string;
 		/** Instance Incomplete */
 		readonly INSTANCE_INCOMPLETE: string;
-		/** Set both the instance URL and the API URL, or tap here to switch back to ListenBrainz. */
+		/** Set both the instance URL and the API URL, or switch the scrobbler back to ListenBrainz. */
 		readonly INSTANCE_INCOMPLETE_SUBTITLE: string;
 		/** Both the instance URL, such as https://example.org, and the API URL, such as https://api.example.org, are needed. Without them, nothing shows. */
 		readonly INSTANCE_SUBTITLE: string;
