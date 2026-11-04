@@ -133,6 +133,12 @@ facebook::jsi::Value
 executeMainAsynchronously(facebook::jsi::Runtime &runtime, std::function<void()> operation,
                           std::function<facebook::jsi::Value(facebook::jsi::Runtime &)> result);
 
+// Runs `operation` on its own thread, then settles the returned promise on the runtime thread with
+// `result`, or rejects it with what `operation` threw.
+facebook::jsi::Value executeBackgroundAsynchronously(
+    facebook::jsi::Runtime &runtime, std::function<void()> operation,
+    std::function<facebook::jsi::Value(facebook::jsi::Runtime &)> result);
+
 void executeRuntimeAsynchronously(std::function<void(facebook::jsi::Runtime &)> callback);
 void executeRuntimeCoalesced(std::string                                   key,
                              std::function<void(facebook::jsi::Runtime &)> callback);

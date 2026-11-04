@@ -493,7 +493,12 @@ loader::UnboundNativeProvider AndroidLoader::unboundNativeProvider()
         [self = shared_from_this()] {
             return self->availableFonts();
         },
-        configuration_.origin, runtimeBytecodeVersion());
+        configuration_.origin, runtimeBytecodeVersion(), configuration_.documents,
+        [self = shared_from_this()](const std::string &url, const std::string &destination,
+                                    const std::map<std::string, std::string> &headers,
+                                    const loader::DownloadPolicy             &policy) {
+            return self->download(url, destination, headers, policy);
+        });
 }
 
 void AndroidLoader::installNativeModules(jsi::Runtime &runtime)

@@ -4,7 +4,6 @@ import type { AddonManifest, PushedManifest } from '@unbound-app/types';
 import type { AddonRelease } from '@unbound-app/contracts/updates';
 import type { AddonKind } from '@unbound-app/types/addons';
 import toError from '@unbound-app/utils/to-error';
-import sha256 from '@unbound-app/utils/sha256';
 
 import {
 	downloadBundle,
@@ -12,12 +11,12 @@ import {
 	downloadManifest,
 	verifySignature,
 } from '~/addons/download';
+import { getLoader, getSha256 } from '~/native/unbound-native';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import type { InstalledEntry } from '~/updates/addon-updates';
 import type { UpdatableKind } from '~/addons/manager-of';
 import { AddonLifecycle } from '~/addons/lifecycle';
 import { compiledBundlePath } from '~/addons/paths';
-import { getLoader } from '~/native/unbound-native';
 import { toRelease } from '~/addons/versions';
 import { Manager } from '~/addons/manager';
 import fs from '~/native/fs';
@@ -51,7 +50,7 @@ function cachedDigest(id: string, bundle: string): string {
 		return cached.digest;
 	}
 
-	const digest = sha256(bundle);
+	const digest = getSha256(bundle);
 
 	bundleDigests.set(id, { bundle, digest });
 
@@ -59,7 +58,7 @@ function cachedDigest(id: string, bundle: string): string {
 }
 
 function assertTextDigest(bundle: string, expected: string): void {
-	const digest = sha256(bundle);
+	const digest = getSha256(bundle);
 
 	if (digest !== expected) {
 		throw new Error(`Bundle SHA-256 ${digest} does not match ${expected}.`);

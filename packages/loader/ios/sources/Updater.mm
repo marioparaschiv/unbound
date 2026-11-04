@@ -125,3 +125,11 @@ std::optional<std::string> UnboundUpdateURL()
 {
     return optionalUpdateURL();
 }
+
+std::optional<loader::DownloadResult>
+UnboundDownload(const std::string &url, const std::string &destination,
+                const std::map<std::string, std::string> &headers,
+                const loader::DownloadPolicy             &policy)
+{
+    return download(url, destination, headers, policy);
+}

@@ -883,25 +883,62 @@ void postMainOperation(std::function<void()> operation, std::string description)
         });
 }
 
-static void rejectPending(jsi::Runtime &runtime, const std::string &identifier, const char *code,
-                          const std::string &message)
+static std::optional<jsi::Object> takePending(jsi::Runtime &runtime, const std::string &identifier)
 {
     jsi::Value pendingValue = runtime.global().getProperty(runtime, kPendingInvocations);
     if (!pendingValue.isObject())
     {
-        return;
+        return std::nullopt;
     }
 
     jsi::Object pending   = pendingValue.asObject(runtime);
     jsi::Value  pairValue = pending.getProperty(runtime, identifier.c_str());
     if (!pairValue.isObject())
     {
+        return std::nullopt;
+    }
+
+    pending.deleteProperty(runtime, identifier.c_str());
+    return pairValue.asObject(runtime);
+}
+
+static void settlePending(jsi::Runtime &runtime, const jsi::Object &pair,
+                          const std::optional<NativeFailure>              &failure,
+                          const std::function<jsi::Value(jsi::Runtime &)> &result)
+{
+    jsi::Function reject = pair.getPropertyAsFunction(runtime, "reject");
+    if (failure)
+    {
+        reject.call(runtime, makeError(runtime, failure->code.c_str(), failure->message));
+        return;
+    }
+    try
+    {
+        jsi::Value value = result(runtime);
+        pair.getPropertyAsFunction(runtime, "resolve").call(runtime, value);
+    }
+    catch (const jsi::JSError &error)
+    {
+        attachDefaultCode(runtime, error);
+        reject.call(runtime, error.value());
+    }
+    catch (...)
+    {
+        NativeFailure described = describeFailure(std::current_exception());
+        reject.call(runtime, makeError(runtime, described.code.c_str(), described.message));
+    }
+}
+
+static void rejectPending(jsi::Runtime &runtime, const std::string &identifier, const char *code,
+                          const std::string &message)
+{
+    std::optional<jsi::Object> pair = takePending(runtime, identifier);
+    if (!pair)
+    {
         return;
     }
 
-    jsi::Object pair = pairValue.asObject(runtime);
-    pending.deleteProperty(runtime, identifier.c_str());
-    pair.getPropertyAsFunction(runtime, "reject").call(runtime, makeError(runtime, code, message));
+    pair->getPropertyAsFunction(runtime, "reject").call(runtime, makeError(runtime, code, message));
 }
 
 static thread_local bool tRunningAsynchronousMainOperation = false;
@@ -994,52 +1031,20 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                 timing.finished(startedAt);
                 gate->finish();
 
-                executeRuntimeAsynchronously([identifier, cancelled, generation, result,
-                                              failure](jsi::Runtime &completion) {
-                    if (generation != gGenerations.generation())
-                    {
-                        return;
-                    }
+                executeRuntimeAsynchronously(
+                    [identifier, cancelled, generation, result, failure](jsi::Runtime &completion) {
+                        if (generation != gGenerations.generation())
+                        {
+                            return;
+                        }
 
-                    jsi::Object pending =
-                        completion.global().getPropertyAsObject(completion, kPendingInvocations);
-                    jsi::Value pairValue = pending.getProperty(completion, identifier.c_str());
-                    if (!pairValue.isObject())
-                    {
-                        return;
-                    }
-
-                    jsi::Object pair = pairValue.asObject(completion);
-                    pending.deleteProperty(completion, identifier.c_str());
-                    if (cancelled->load())
-                    {
-                        return;
-                    }
-
-                    jsi::Function reject = pair.getPropertyAsFunction(completion, "reject");
-                    if (failure)
-                    {
-                        reject.call(completion,
-                                    makeError(completion, failure->code.c_str(), failure->message));
-                        return;
-                    }
-                    try
-                    {
-                        jsi::Value value = result(completion);
-                        pair.getPropertyAsFunction(completion, "resolve").call(completion, value);
-                    }
-                    catch (const jsi::JSError &error)
-                    {
-                        attachDefaultCode(completion, error);
-                        reject.call(completion, error.value());
-                    }
-                    catch (...)
-                    {
-                        NativeFailure described = describeFailure(std::current_exception());
-                        reject.call(completion, makeError(completion, described.code.c_str(),
-                                                          described.message));
-                    }
-                });
+                        std::optional<jsi::Object> pair = takePending(completion, identifier);
+                        if (!pair || cancelled->load())
+                        {
+                            return;
+                        }
+                        settlePending(completion, *pair, failure, result);
+                    });
             });
 
             target->runAfter(1.0, [identifier, cancelled, gate, generation, timing]() {
@@ -1082,6 +1087,72 @@ jsi::Value executeMainAsynchronously(jsi::Runtime &runtime, std::function<void()
                      }));
 
     return promise;
+}
+
+jsi::Value executeBackgroundAsynchronously(jsi::Runtime &runtime, std::function<void()> operation,
+                                           std::function<jsi::Value(jsi::Runtime &)> result)
+{
+    if (!executor())
+    {
+        throwCoded(runtime, "NATIVE_PLUGIN_UNAVAILABLE", "Native executor is unavailable");
+    }
+
+    uint64_t    generation = gGenerations.generation();
+    std::string identifier = std::to_string(gNextInvocation.fetch_add(1));
+    jsi::Object global     = runtime.global();
+    if (!global.getProperty(runtime, kPendingInvocations).isObject())
+    {
+        global.setProperty(runtime, kPendingInvocations, jsi::Object(runtime));
+    }
+
+    jsi::Function executorFunction = makeFunction(
+        runtime, "nativeBackgroundExecutor", 2,
+        [operation = std::move(operation), result = std::move(result), identifier,
+         generation](jsi::Runtime &rt, const jsi::Value &, const jsi::Value *callbacks,
+                     size_t count) -> jsi::Value {
+            if (count < 2 || !callbacks[0].isObject() || !callbacks[1].isObject())
+            {
+                throw NativeCodedError(
+                    kNativeBridgeErrorCode,
+                    "Native asynchronous operation could not create its promise");
+            }
+
+            jsi::Object pair(rt);
+            pair.setProperty(rt, "resolve", callbacks[0].asObject(rt));
+            pair.setProperty(rt, "reject", callbacks[1].asObject(rt));
+            rt.global()
+                .getPropertyAsObject(rt, kPendingInvocations)
+                .setProperty(rt, identifier.c_str(), pair);
+
+            std::thread([operation, result, identifier, generation] {
+                std::optional<NativeFailure> failure;
+                try
+                {
+                    operation();
+                }
+                catch (...)
+                {
+                    failure = describeFailure(std::current_exception());
+                }
+                executeRuntimeAsynchronously(
+                    [identifier, generation, result, failure](jsi::Runtime &completion) {
+                        if (generation != gGenerations.generation())
+                        {
+                            return;
+                        }
+                        std::optional<jsi::Object> pair = takePending(completion, identifier);
+                        if (pair)
+                        {
+                            settlePending(completion, *pair, failure, result);
+                        }
+                    });
+            }).detach();
+
+            return jsi::Value::undefined();
+        });
+
+    jsi::Function constructor = global.getPropertyAsFunction(runtime, "Promise");
+    return constructor.callAsConstructor(runtime, std::move(executorFunction));
 }
 
 void executeRuntimeAsynchronously(std::function<void(jsi::Runtime &)> callback)

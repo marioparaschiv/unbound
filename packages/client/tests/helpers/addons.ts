@@ -5,6 +5,7 @@ import type {
 	UnboundNativeBridge,
 	UnboundPluginBundle,
 } from '@unbound-app/types';
+import sha256 from '@unbound-app/utils/sha256';
 import { mock } from 'bun:test';
 
 import type { Addon, AddonState } from '~/addons/addon';
@@ -157,6 +158,8 @@ export function installUnboundNative(plugins: UnboundPluginBundle[], bytecodeVer
 		getThemes: () => [],
 		getFonts: () => [],
 		getAvailableFonts: () => [],
+		getSha256: (text) => sha256(text),
+		downloadFile: async () => undefined,
 	};
 
 	globalThis.UnboundNative = bridge;

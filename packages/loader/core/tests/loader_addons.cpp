@@ -1,5 +1,9 @@
 #include <cassert>
 #include <filesystem>
+#include <fstream>
+#include <map>
+#include <optional>
+#include <stdexcept>
 #include <string>
 #include <unistd.h>
 
@@ -195,7 +199,43 @@ int main()
         [] {
             return nlohmann::json::array({"Ginto"});
         },
-        "Unbound.dylib", 98);
+        "Unbound.dylib", 98, root.string(),
+        [](const std::string &url, const std::string &destination,
+           const std::map<std::string, std::string> &,
+           const loader::DownloadPolicy &) -> std::optional<loader::DownloadResult> {
+            if (url == "https://offline.invalid")
+            {
+                return std::nullopt;
+            }
+            if (url == "https://missing.invalid")
+            {
+                return loader::DownloadResult{404, ""};
+            }
+            std::ofstream(destination, std::ios::binary) << url;
+            return loader::DownloadResult{200, ""};
+        });
+    auto refuses = [&](const std::string &url, const std::string &path) {
+        try
+        {
+            provider.downloadFile(url, path);
+        }
+        catch (const std::runtime_error &)
+        {
+            return true;
+        }
+        return false;
+    };
+    provider.downloadFile("https://fonts.invalid/a.ttf", "Fonts/Icons/a.ttf");
+    assert(loader::readTextFile((root / "Fonts" / "Icons" / "a.ttf").string()) ==
+           "https://fonts.invalid/a.ttf");
+    assert(refuses("https://fonts.invalid/b.ttf", "../b.ttf"));
+    assert(refuses("https://fonts.invalid/b.ttf", "Fonts/../../b.ttf"));
+    assert(refuses("https://fonts.invalid/b.ttf", (root / "b.ttf").string()));
+    assert(refuses("https://fonts.invalid/b.ttf", std::string("Fonts/b.ttf\0x", 13)));
+    assert(refuses("https://fonts.invalid/b.ttf", ""));
+    assert(refuses("https://offline.invalid", "Fonts/c.ttf"));
+    assert(refuses("https://missing.invalid", "Fonts/c.ttf"));
+    assert(!loader::fileExists((root.parent_path() / "b.ttf").string()));
     assert(provider.getLoader() == nlohmann::json({{"origin", "Unbound.dylib"},
                                                    {"version", loader::loaderVersion()},
                                                    {"bytecodeVersion", 98}}));

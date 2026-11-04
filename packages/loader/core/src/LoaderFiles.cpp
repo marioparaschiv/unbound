@@ -98,7 +98,7 @@ bool removeFile(const std::string &path)
     return std::filesystem::remove(path, error);
 }
 
-static bool staysInside(const std::filesystem::path &relative)
+bool isContainedRelativePath(const std::filesystem::path &relative)
 {
     if (relative.empty() || relative.is_absolute())
     {
@@ -118,7 +118,7 @@ static bool staysInside(const std::filesystem::path &relative)
 bool removeTree(const std::string &root, const std::string &relative)
 {
     const std::filesystem::path path(relative);
-    if (root.empty() || !staysInside(path))
+    if (root.empty() || !isContainedRelativePath(path))
     {
         return false;
     }
