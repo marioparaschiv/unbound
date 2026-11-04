@@ -22,7 +22,7 @@ jobs:
     scan:
         name: scan (${{ matrix.channel }})
         runs-on: macos-15
-        timeout-minutes: 45
+        timeout-minutes: 60
         permissions:
             actions: read
             contents: read
@@ -61,7 +61,7 @@ jobs:
               id: ios
               if: env.IOS_SOURCE != 'none'
               continue-on-error: true
-              timeout-minutes: 12
+              timeout-minutes: 42
               uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
               with:
                   api-url: ${{ env.DKRYPT_BASE_URL }}
@@ -69,6 +69,7 @@ jobs:
                   bundle-id: com.hammerandchisel.discord
                   channel: ${{ env.IOS_SOURCE }}
                   output: packages/loader/discord.ipa
+                  timeout-seconds: '1800'
 
             - name: Keep or reuse the last decrypted iOS build
               if: env.IOS_SOURCE != 'none'
