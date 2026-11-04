@@ -1,6 +1,7 @@
 import type { AddonManifest, AddonTrust } from '@unbound-app/types';
 
 import { compiledBundlePath } from '~/addons/paths';
+import { getLoader } from '~/native/unbound-native';
 
 /** Turns the JSON a manifest URL served into a manifest, throwing when it is malformed. */
 // UNKNOWN: the parser receives whatever JSON the server sent.
@@ -47,7 +48,7 @@ export async function downloadBytecode(
 	manifest: AddonManifest,
 	bundleUrl: string,
 ): Promise<string | undefined> {
-	const bytecodeVersion = globalThis.UNBOUND_LOADER?.bytecodeVersion;
+	const bytecodeVersion = getLoader()?.bytecodeVersion;
 
 	if (!bytecodeVersion || !manifest.bytecode?.[String(bytecodeVersion)]) return;
 

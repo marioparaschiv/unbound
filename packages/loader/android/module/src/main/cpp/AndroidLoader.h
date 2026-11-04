@@ -102,15 +102,15 @@ public:
     void runOnMain(std::function<void()> work) override;
     void runAfter(double seconds, std::function<void()> work) override;
     void runInBackground(std::function<void()> work) override;
-    std::optional<std::string> resource(const std::string &name) override;
-    std::optional<std::string> resolveUpdateURL() override;
-    uint32_t                   runtimeBytecodeVersion() override;
-    loader::PreloadPayload     preloadPayload() override;
-    void                       installNativeModules(facebook::jsi::Runtime &runtime) override;
-    void                       onAddonsPrepared() override;
-    void                       onBundleExecuted() override;
-    void                       alert(const std::string &message) override;
-    void                       reload() override;
+    std::optional<std::string>    resource(const std::string &name) override;
+    std::optional<std::string>    resolveUpdateURL() override;
+    uint32_t                      runtimeBytecodeVersion() override;
+    loader::UnboundNativeProvider unboundNativeProvider() override;
+    void                          installNativeModules(facebook::jsi::Runtime &runtime) override;
+    void                          onAddonsPrepared() override;
+    void                          onBundleExecuted() override;
+    void                          alert(const std::string &message) override;
+    void                          reload() override;
 
 private:
     void                       enqueueRuntime(std::function<void(facebook::jsi::Runtime &)> work,

@@ -14,9 +14,9 @@
 #include "LoaderAddons.h"
 #include "LoaderBootstrap.h"
 #include "LoaderBundleSignature.h"
-#include "LoaderPreload.h"
 #include "LoaderSettings.h"
 #include "NativePlatformBridge.h"
+#include "UnboundNativeBridge.h"
 
 namespace fs  = std::filesystem;
 namespace jsi = facebook::jsi;
@@ -25,7 +25,7 @@ static void require(bool condition, const std::string &check)
 {
     if (!condition)
     {
-        std::fprintf(stderr, "preload check failed: %s\n", check.c_str());
+        std::fprintf(stderr, "UnboundNative check failed: %s\n", check.c_str());
         std::exit(1);
     }
 }
@@ -71,13 +71,16 @@ static std::string compiledPlugin(const fs::path &documents, uint32_t &version)
     return contents.str();
 }
 
-static const char *const kPreloadChecks = R"JS((function () {
+// Kept byte for byte: the spacing, key order and trailing newline would all change on a re-dump.
+static const std::string kThemeBundle = "{ \"semantic\": {},\n  \"raw\":{ }, \"ü\": \"名前\" }\n";
+
+static const char *const kUnboundNativeChecks = R"JS((function () {
 	var failures = [];
 	function check(condition, name) {
 		if (!condition) failures.push(name);
 	}
-	var plugins = globalThis.UNBOUND_PLUGINS;
-	check(Array.isArray(plugins), 'UNBOUND_PLUGINS is an array');
+	var plugins = UnboundNative.getPlugins();
+	check(Array.isArray(plugins), 'getPlugins returns an array');
 	var ids = plugins.map(function (entry) { return entry.manifest.id; }).sort();
 	check(JSON.stringify(ids) === JSON.stringify(['a.binary', 'a.compiled', 'a.large', 'a.plain', 'a.tampered', 'a.unicode']), 'exactly the loadable plugins arrive, got ' + JSON.stringify(ids));
 	var byId = {};
@@ -88,13 +91,18 @@ static const char *const kPreloadChecks = R"JS((function () {
 	check(binary === 'a\uFFFD\uFFFD\uFFFDz', 'invalid UTF-8 in a bundle is replaced, not truncated, got ' + JSON.stringify(binary));
 	check(byId['a.large'].bundle.length === 3 * 1024 * 1024, 'a 3 MiB bundle arrives whole');
 	check(byId['a.plain'].manifest.trust === 'unsigned' && typeof byId['a.plain'].manifest.entry === 'string', 'the loader adds trust and entry');
-	check(Array.isArray(globalThis.UNBOUND_THEMES) && globalThis.UNBOUND_THEMES.length === 1, 'the valid theme arrives');
+	var themes = UnboundNative.getThemes();
+	check(Array.isArray(themes) && themes.length === 1, 'the valid theme arrives');
+	check(themes[0].bundle === expectedThemeBundle, 'a theme bundle arrives as its file text, got ' + JSON.stringify(themes[0].bundle));
 	check(NativePlatform.settings.get('unbound', 'answer') === 42, 'a setting is read lazily');
 	check(NativePlatform.settings.get('名前', 'ü') === 1, 'unicode settings keys are read intact');
-	check(Array.isArray(globalThis.UNBOUND_FONTS), 'UNBOUND_FONTS is an array');
-	check(Array.isArray(globalThis.UNBOUND_AVAILABLE_FONTS) && globalThis.UNBOUND_AVAILABLE_FONTS[0] === 'System', 'available fonts arrive');
-	check(globalThis.UNBOUND_LOADER.origin === 'https://example.invalid' && typeof globalThis.UNBOUND_LOADER.version === 'string', 'loader info arrives');
-	var version = globalThis.UNBOUND_LOADER.bytecodeVersion;
+	check(Array.isArray(UnboundNative.getFonts()), 'getFonts returns an array');
+	var available = UnboundNative.getAvailableFonts();
+	check(Array.isArray(available) && available[0] === 'System', 'available fonts arrive');
+	check(UnboundNative.getAvailableFonts()[0] === 'System', 'available fonts arrive again from the cache');
+	var loader = UnboundNative.getLoader();
+	check(loader.origin === 'https://example.invalid' && typeof loader.version === 'string', 'loader info arrives');
+	var version = loader.bytecodeVersion;
 	check(typeof version === 'number' && version > 0, 'the runtime bytecode version arrives');
 	var addons = globalThis.NativePlatform.addons;
 	var factory = addons.evaluateBytecode('compiled', version);
@@ -112,7 +120,7 @@ static const char *const kPreloadChecks = R"JS((function () {
 int main()
 {
     loader::bootstrap::setScriptSource(bootstrapScript);
-    fs::path documents = fs::temp_directory_path() / "unbound-preload-hermes";
+    fs::path documents = fs::temp_directory_path() / "unbound-native-hermes";
     fs::remove_all(documents);
 
     plugin(documents, "plain", R"({"id":"a.plain","name":"Plain","main":"index.js"})",
@@ -132,7 +140,9 @@ int main()
     plugin(documents, "deep", deep, "module.exports = 3;");
     plugin(documents, "broken", "{\"id\":", "module.exports = 4;");
     write(documents / "Themes" / "good" / "manifest.json", R"({"id":"theme.good","name":"Good"})");
-    write(documents / "Themes" / "good" / "bundle.json", R"({"semantic":{},"raw":{}})");
+    write(documents / "Themes" / "good" / "bundle.json", kThemeBundle);
+    write(documents / "Themes" / "list" / "manifest.json", R"({"id":"theme.list"})");
+    write(documents / "Themes" / "list" / "bundle.json", "[]");
     write(documents / "settings.json", R"({"unbound":{"answer":42},"名前":{"ü":1}})");
     uint32_t    version  = 0;
     std::string bytecode = compiledPlugin(documents, version);
@@ -153,8 +163,14 @@ int main()
     settings.load();
     loader::AddonState addons;
     addons.scan(documents.string());
-    loader::PreloadPayload payload = loader::makePreloadPayload(
-        addons, nlohmann::json::array({"System"}), "https://example.invalid", version);
+    int  fontReads  = 0;
+    auto launchData = loader::makeUnboundNativeProvider(
+        addons,
+        [&fontReads] {
+            fontReads++;
+            return nlohmann::json::array({"System"});
+        },
+        "https://example.invalid", version);
 
     auto runtime        = facebook::hermes::makeHermesRuntime();
     auto provider       = std::make_shared<loader::NativePlatformProvider>();
@@ -162,19 +178,22 @@ int main()
     provider->documents = documents.string();
     provider->settings  = &settings;
     loader::installNativePlatform(*runtime, provider);
-    auto preload = loader::bootstrap::function(*runtime, loader::bootstrap::kPreload);
-    require(preload.has_value(), "the preload bootstrap evaluates to a function");
-    preload->call(*runtime, loader::toJSIValue(*runtime, loader::preloadData(payload)));
+    loader::installUnboundNative(*runtime, launchData);
+    runtime->global().setProperty(*runtime, "expectedThemeBundle",
+                                  jsi::String::createFromUtf8(*runtime, kThemeBundle));
+    require(fontReads == 0, "installing UnboundNative reads no fonts");
 
     jsi::Value result = runtime->evaluateJavaScript(
-        std::make_shared<jsi::StringBuffer>(kPreloadChecks), "preload-checks.js");
+        std::make_shared<jsi::StringBuffer>(kUnboundNativeChecks), "unbound-native-checks.js");
     nlohmann::json failures = nlohmann::json::parse(result.getString(*runtime).utf8(*runtime));
     for (const auto &failure : failures)
     {
-        std::fprintf(stderr, "preload check failed: %s\n", failure.get<std::string>().c_str());
+        std::fprintf(stderr, "UnboundNative check failed: %s\n",
+                     failure.get<std::string>().c_str());
     }
     require(failures.empty(), "every JavaScript check passes");
+    require(fontReads == 1, "getAvailableFonts reads its provider once across two calls");
     fs::remove_all(documents);
-    std::printf("preload: the real scan, payload and preload.js all agree on Hermes\n");
+    std::printf("UnboundNative: the real scan and the bridge agree on Hermes\n");
     return 0;
 }

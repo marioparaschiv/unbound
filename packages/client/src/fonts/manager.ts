@@ -1,6 +1,7 @@
 import type { AddonVersion, ListedAddon } from '@unbound-app/contracts/addons';
 import type { FontEntity } from '@unbound-app/types';
 
+import { getAvailableFonts, getFonts } from '~/native/unbound-native';
 import { getSetting, setSetting } from '~/settings/unbound';
 import { safeFontFileName } from '~/addons/paths';
 import { Manager } from '~/addons/manager';
@@ -37,7 +38,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 	}
 
 	initialize() {
-		for (const font of window.UNBOUND_FONTS ?? []) {
+		for (const font of getFonts()) {
 			this.entities.set(font.name, font);
 		}
 
@@ -51,7 +52,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 
 	/** @returns The system font family names available to override with. */
 	getAvailableFonts(): string[] {
-		return window.UNBOUND_AVAILABLE_FONTS ?? [];
+		return getAvailableFonts();
 	}
 
 	/**
@@ -104,7 +105,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 
 	/**
 	 * @description Installs a font from a URL: saves the file to the Fonts folder. The native side
-	 * registers it and re-injects `UNBOUND_FONTS`; the new font appears after that push or a relaunch.
+	 * registers it; the manager lists it once a launch reads it from `UnboundNative.getFonts()`.
 	 * @param url The font file URL.
 	 * @returns The saved file name, or `undefined` on failure.
 	 */
@@ -170,7 +171,7 @@ export class Fonts extends Manager<FontEntity, FontsEvents> {
 
 	/**
 	 * @description Deletes an installed font file and emits `changed`. Twin of {@link install}. The
-	 * native side drops it from `UNBOUND_FONTS` on the next push or relaunch.
+	 * native side drops it from `UnboundNative.getFonts()` on the next launch.
 	 * @param file The installed file name, as {@link install} returned it.
 	 */
 	async delete(file: string): Promise<void> {

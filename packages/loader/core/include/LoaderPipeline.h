@@ -9,8 +9,8 @@
 #include <optional>
 #include <string>
 
-#include "LoaderPreload.h"
 #include "LoaderUpdater.h"
+#include "UnboundNativeBridge.h"
 
 namespace loader {
 class LoaderHost
@@ -23,7 +23,7 @@ public:
     virtual std::optional<std::string> resource(const std::string &name) = 0;
     virtual std::optional<std::string> resolveUpdateURL()                = 0;
     virtual uint32_t                   runtimeBytecodeVersion()          = 0;
-    virtual PreloadPayload             preloadPayload()                  = 0;
+    virtual UnboundNativeProvider      unboundNativeProvider()           = 0;
 
     virtual void installNativeModules(facebook::jsi::Runtime &runtime) = 0;
     virtual void onAddonsPrepared() {}

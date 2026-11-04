@@ -156,12 +156,11 @@ public:
         return [CoreBridge mainBundleBytecodeVersion];
     }
 
-    loader::PreloadPayload preloadPayload() override
+    loader::UnboundNativeProvider unboundNativeProvider() override
     {
-        nlohmann::json availableFonts = platformFontNames();
-        return loader::makePreloadPayload(UnboundAddonState(), availableFonts,
-                                          toStdString([Utilities getCurrentDylibName]),
-                                          runtimeBytecodeVersion());
+        return loader::makeUnboundNativeProvider(UnboundAddonState(), platformFontNames,
+                                                 toStdString([Utilities getCurrentDylibName]),
+                                                 runtimeBytecodeVersion());
     }
 
     void installNativeModules(jsi::Runtime &runtime) override

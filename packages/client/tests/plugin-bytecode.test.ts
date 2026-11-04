@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import type { Plugin } from '@unbound-app/types';
 
-import { makeManifest, resetDevice, states, writes } from './helpers/addons';
+import { installUnboundNative, makeManifest, resetDevice, states, writes } from './helpers/addons';
 
 const { Plugins } = await import('~/plugins/manager');
 
@@ -20,13 +20,13 @@ function compiledPlugin(marker: string): Plugin {
 function scanCompiled(sha256: string) {
 	const manifest = { ...makeManifest('bytecode.example'), folder: 'bytecode.example' };
 
-	globalThis.UNBOUND_PLUGINS = [{ manifest, sha256 }];
+	installUnboundNative([{ manifest, sha256 }]);
 }
 
 function scan(bundle: string) {
 	const manifest = { ...makeManifest('bytecode.example'), folder: 'bytecode.example' };
 
-	globalThis.UNBOUND_PLUGINS = [{ manifest, bundle }];
+	installUnboundNative([{ manifest, bundle }]);
 }
 
 beforeEach(() => {
@@ -36,7 +36,7 @@ beforeEach(() => {
 	states['bytecode.example'] = true;
 	evaluations = [];
 	compiled = () => ({ default: compiledPlugin('bytecode') });
-	globalThis.UNBOUND_LOADER = { origin: 'test', version: '1.0.0', bytecodeVersion: 98 };
+	installUnboundNative([]);
 	Object.defineProperty(globalThis, 'NativePlatform', {
 		configurable: true,
 		writable: true,
@@ -55,7 +55,7 @@ beforeEach(() => {
 
 afterEach(() => {
 	globalThis.NativePlatform = undefined;
-	globalThis.UNBOUND_PLUGINS = [];
+	globalThis.UnboundNative = undefined;
 	Reflect.deleteProperty(globalThis, 'React');
 	Reflect.deleteProperty(globalThis, 'window');
 });

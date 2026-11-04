@@ -39,7 +39,7 @@ public:
         return 98;
     }
 
-    loader::PreloadPayload preloadPayload() override
+    loader::UnboundNativeProvider unboundNativeProvider() override
     {
         return {};
     }

@@ -29,10 +29,12 @@ const environmentSchema = Type.Object({
 
 export type Environment = Static<typeof environmentSchema>;
 
-type LoaderGlobal = typeof globalThis & { UNBOUND_LOADER?: { version?: string; origin?: string } };
+type LoaderGlobal = typeof globalThis & {
+	UnboundNative?: { getLoader(): { version?: string; origin?: string } };
+};
 
 function readDeviceEnvironment(clientPath: string) {
-	const loader = (globalThis as LoaderGlobal).UNBOUND_LOADER;
+	const loader = (globalThis as LoaderGlobal).UnboundNative?.getLoader();
 	const info = unbound.native?.BundleInfo;
 	const hash = (text: string) => {
 		let value = 0x811c9dc5;

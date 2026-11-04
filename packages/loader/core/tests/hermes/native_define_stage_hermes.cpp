@@ -16,10 +16,10 @@ namespace jsi = facebook::jsi;
 static const std::string kBase   = "https://builds.unbound.rip/";
 static const std::string kBundle = "unbound.98.bundle";
 
-// Stands in for Unbound's bundle: it records whether Metro and the preload existed when it ran.
+// Stands in for Unbound's bundle: it records whether Metro and UnboundNative existed when it ran.
 static const std::string kUnbound =
     "globalThis.order = ['unbound:' + typeof globalThis.__d + ':' + "
-    "typeof globalThis.UNBOUND_LOADER];";
+    "typeof globalThis.UnboundNative];";
 static const std::string kDiscord = "globalThis.__d = function () {}; "
                                     "(globalThis.order = globalThis.order || []).push('discord');";
 
@@ -64,7 +64,7 @@ public:
         return 98;
     }
 
-    loader::PreloadPayload preloadPayload() override
+    loader::UnboundNativeProvider unboundNativeProvider() override
     {
         return {};
     }
@@ -100,7 +100,7 @@ static void runsTheSavedBundleBeforeDiscords()
     std::string order = launch(pipeline);
 
     require(order == R"(["unbound:undefined:object","discord"])",
-            "Unbound runs before Discord's bundle, after the preload; got " + order);
+            "Unbound runs before Discord's bundle, after UnboundNative; got " + order);
     require(pipeline.isBundleReady(), "the bundle is marked ready");
     require(server.activeContents() == kUnbound, "the candidate that ran is promoted");
     require(host->reloads == 0, "a saved bundle needs no reload");

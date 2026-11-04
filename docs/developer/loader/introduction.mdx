@@ -17,7 +17,7 @@ Each time Discord loads its JavaScript, the loader runs these steps first.
 	<FlowStep title="Run Discord's bundle" />
 </Flow>
 
-The loader never runs plugins itself. It reads them from disk, and hands them to Unbound's JavaScript in globals such as `UNBOUND_PLUGINS` and `UNBOUND_THEMES`. Unbound's bundle starts and stops them.
+The loader never runs plugins itself. It reads them from disk, and hands them to Unbound's JavaScript through the `UnboundNative` object, such as `UnboundNative.getPlugins()` and `UnboundNative.getThemes()`. Unbound's bundle starts and stops them.
 
 Running first is what lets Unbound hook Metro before Discord defines its modules. See [Concepts](/docs/developer/concepts).
 

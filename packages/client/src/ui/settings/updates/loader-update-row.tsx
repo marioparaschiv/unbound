@@ -1,5 +1,6 @@
 import type { LoaderUpdate } from '@unbound-app/contracts/loader';
 
+import { getLoader } from '~/native/unbound-native';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Linking } from '~/metro/api';
@@ -19,7 +20,7 @@ function LoaderUpdateRow({ update }: LoaderUpdateRowProps) {
 		<UpdateRowShell
 			name={messages.UNBOUND_UPDATES_LOADER}
 			icon={icons.WrenchIcon}
-			installed={globalThis.UNBOUND_LOADER.version}
+			installed={getLoader()?.version ?? 'unknown'}
 			update={update}
 			action={
 				<Discord.Button

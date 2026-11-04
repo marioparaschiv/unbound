@@ -5,6 +5,7 @@ import { Messages as MessageActions } from '~/metro/api';
 import { discordChannel } from '~/core/discord-support';
 import type { BundleInfoType } from '~/native/native';
 import { React, ReactNative } from '~/metro/common';
+import { getLoader } from '~/native/unbound-native';
 import { messages } from '~/i18n/api';
 import { show } from '~/toasts/api';
 import fs from '~/native/fs';
@@ -71,7 +72,7 @@ function deviceFlags(android: boolean): string[] {
  */
 export function readDebugInfo(): DebugInfo {
 	const platform = globalThis.NativePlatform;
-	const loader = globalThis.UNBOUND_LOADER;
+	const loader = getLoader();
 	const bundle = readBundleInfo();
 	const { Platform } = ReactNative;
 	const android = Platform.OS === 'android';

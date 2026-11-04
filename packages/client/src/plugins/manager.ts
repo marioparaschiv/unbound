@@ -4,6 +4,7 @@ import { ADDON_SCOPE_GLOBALS } from '@unbound-app/types/addons';
 import { attributeAddon, crashGuardKey, setFreezeListener } from '~/addons/crash-guard';
 import { performRefresh, withRefreshScope } from '~/hot-refresh/runtime';
 import type { AddonGlobals, PluginScope } from '~/addons/scope';
+import { getLoader, getPlugins } from '~/native/unbound-native';
 import { Addons, rememberSourceDigest } from '~/addons/addons';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
@@ -62,13 +63,13 @@ export class Plugins extends Addons<Plugin> {
 	}
 
 	/**
-	 * @description Loads every plugin exposed on `window.UNBOUND_PLUGINS`, then marks the manager initialised.
+	 * @description Loads every plugin the loader scanned (`UnboundNative.getPlugins()`), then marks the manager initialised.
 	 */
 	initialize() {
 		setFreezeListener((freeze) => this.handleFreeze(freeze));
 		setOwnerCheck((owner) => Boolean(this.getEntity(owner)));
 
-		for (const entry of window.UNBOUND_PLUGINS ?? []) {
+		for (const entry of getPlugins()) {
 			const { manifest } = entry;
 			const bundle = 'bundle' in entry ? entry.bundle : '';
 
@@ -216,7 +217,7 @@ export class Plugins extends Addons<Plugin> {
 	 */
 	private compiledFactory(bundle: string, id: string): PluginFactory | undefined {
 		const scanned = this.scanned.get(id);
-		const bytecodeVersion = window.UNBOUND_LOADER?.bytecodeVersion;
+		const bytecodeVersion = getLoader()?.bytecodeVersion;
 		const addons = globalThis.NativePlatform?.addons;
 
 		if (!scanned || scanned.bundle !== bundle || !bytecodeVersion || !addons) return;

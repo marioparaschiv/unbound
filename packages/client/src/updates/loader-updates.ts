@@ -1,5 +1,6 @@
 import type { LoaderUpdate, LoaderUpdateQuery } from '@unbound-app/contracts/loader';
 import { isSemver } from '@unbound-app/contracts/manifest-patterns';
+import type { UnboundLoaderInfo } from '@unbound-app/types';
 import { createApiClient } from '@unbound-app/web/client';
 import type { Api } from '@unbound-app/web/api';
 
@@ -7,7 +8,7 @@ export type LoaderUpdateCheckOptions = {
 	baseUrl: string;
 	/** The OS the client runs on, as React Native's `Platform.OS` names it. */
 	platform: string;
-	/** The native loader the client runs on; absent when no loader injected its info. */
+	/** The native loader the client runs on; absent when no loader installed `UnboundNative`. */
 	loader: UnboundLoaderInfo | undefined;
 };
 
