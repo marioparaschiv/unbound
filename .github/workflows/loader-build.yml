@@ -266,7 +266,7 @@ jobs:
               id: decrypt
               if: steps.select.outputs.platform == 'ios' && inputs.ipa_url == '' && steps.ipa-cache.outputs.cache-hit != 'true'
               continue-on-error: true
-              timeout-minutes: 12
+              timeout-minutes: 32
               uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
@@ -275,14 +275,14 @@ jobs:
                   channel: ${{ inputs.is_testflight && 'testflight' || 'appstore' }}
                   version: ${{ steps.select.outputs.requested_version }}
                   output: packages/loader/source.ipa
-                  timeout-seconds: '420'
+                  timeout-seconds: '1800'
                   download-timeout-seconds: '240'
 
             - name: Decrypt the latest source IPA for a dry run
               id: decrypt-latest
               if: steps.decrypt.outcome == 'failure' && inputs.release_dry_run == true && steps.select.outputs.requested_version != ''
               continue-on-error: true
-              timeout-minutes: 12
+              timeout-minutes: 32
               uses: castdrian/dkrypt@90e77358afff7fc913376dd732d30b222f922e0d
               with:
                   api-url: ${{ inputs.dkrypt_base_url || 'https://ipa.dylib.dev' }}
@@ -290,7 +290,7 @@ jobs:
                   bundle-id: com.hammerandchisel.discord
                   channel: ${{ inputs.is_testflight && 'testflight' || 'appstore' }}
                   output: packages/loader/source.ipa
-                  timeout-seconds: '420'
+                  timeout-seconds: '1800'
                   download-timeout-seconds: '240'
 
             - name: Settle the source IPA
