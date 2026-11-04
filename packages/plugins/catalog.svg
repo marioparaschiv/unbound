@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="3166" viewBox="0 0 1200 3166" role="img" aria-labelledby="title description">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="3222" viewBox="0 0 1200 3222" role="img" aria-labelledby="title description">
 <title id="title">marioparaschiv/unbound plugin catalog</title>
-<desc id="description">53 Unbound plugins with their descriptions, versions, authors, and Discord icons.</desc>
+<desc id="description">54 Unbound plugins with their descriptions, versions, authors, and Discord icons.</desc>
 <rect width="100%" height="100%" rx="24" fill="#121316" stroke="#2a2d33" stroke-width="2"/>
 <text x="42" y="47" dominant-baseline="middle" fill="#f5f5f7" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="27" font-weight="700">marioparaschiv/unbound</text>
-<text x="42" y="80" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="14">53 plugins in this workspace</text>
+<text x="42" y="80" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="14">54 plugins in this workspace</text>
 <text x="42" y="132" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="11" font-weight="600" letter-spacing="1">PLUGIN</text>
 <text x="346" y="132" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="11" font-weight="600" letter-spacing="1">DESCRIPTION</text>
 <text x="940" y="132" text-anchor="middle" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="11" font-weight="600" letter-spacing="1">VERSION</text>
@@ -479,4 +479,13 @@
 <text x="1002" y="3109" text-anchor="start" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">King Fish, V, rad,</text>
 <text x="1002" y="3127" text-anchor="start" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">lillith &lt;3, adrian</text>
 <line x1="30" y1="3146" x2="1170" y2="3146" stroke="#2a2d33" stroke-width="1"/>
+<rect x="16" y="3146" width="1168" height="56" rx="8" fill="#121316"/>
+<rect x="40" y="3159" width="30" height="30" rx="7" fill="#313338"/>
+<image x="43" y="3162" width="24" height="24" preserveAspectRatio="xMidYMid meet" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAOVBMVEVMaXHv7/Hv7+/v7/Hv7/Hv7/Hv7/H8/P/u7vDu7vDv7/Hv7/Hv7/Hv7/Hv7/Hv7/Hv7/Hw8PHv7/HzrI8hAAAAEnRSTlMAgQ8vtXAaBa795fNDlKPRwVYbzKATAAAACXBIWXMAAAsTAAALEwEAmpwYAAACSElEQVRYw+2YzbarIAyFEUyQf+T9H/YORCs1oBRHZ12Gretzk+yEIGP/V2VJ8A7f4CwpJY3vcFKaXuIk/xInwUucRd49yi34GLRRRkc/Wf4bByGqVCwVAbs5YvmibMtgH0fERC+FPRx0qsLZHfOMY3V6gyOnkxztwQqUEoWFRRvo4PBPdIyzv/sHwyEG+IAPcQ+PcnzEz4ceLYbqQu6cmY/Vl88POXnLmVucqTTLz3ps9o9jj/XAQsSSa7LbIYiqniklzWsBCoVo9CqFmp6J1J83Vh4Iq/n00QtHbIazZObLn0G16lTkV0sqY4XQleKc8u6Izs/NRj+HDk2bs6fH4FWQ/Y5+u/+sl23gJmguEqbaehhjbP6WtO1WFe6CB/0wx3v6ilBpRREe9MPtL8M/L78IelanWdKeuHiN0NM63aIU70F39V6C6lu76z9fW8vBXu71QBBEpR/Bzn68SKLqHVrpJw1J9x+FTUPu9bfecUqv2WtrJoqW7GNFgVJFmxN3qj+SowrJVBthUpfxJvelgOipQZKtVtTynlIyK3G6q8ug4ZrzT0jKI3UqO/I4qvcfAUgeOsRxxMTSMUfllqrskzl8vuU0R/4HHOl2yWMcPudHohziHENv4CMcfszgAQc4HI4ZfIAjrTPH7Dz37AuUXj4Duz9dCNTUE+epepPQXT6scuozOD1H1W5IUbAuH6Ih1XjBWKefiavoDMi6OdvlePJRG2V0iB4sf/He3V7+JY54ibOfc8OcfDqOc7YB37/AYYxb8Qc/tv0DkRxekALp800AAAAASUVORK5CYII="/>
+<a href="https://github.com/marioparaschiv/unbound/tree/main/packages/plugins/youtube-adblock"><text x="80" y="3174" text-anchor="start" dominant-baseline="middle" fill="#f5f5f7" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="15" font-weight="600">Youtube Adblock</text></a>
+<text x="346" y="3165" text-anchor="start" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">Blocks ads in YouTube videos played inside Discord and in the Watch</text>
+<text x="346" y="3183" text-anchor="start" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">Together activity, using AdGuard&apos;s YouTube ad blocker.</text>
+<text x="940" y="3174" text-anchor="middle" dominant-baseline="middle" fill="#c6c6cc" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">1.0.0</text>
+<text x="1002" y="3174" text-anchor="start" dominant-baseline="middle" fill="#98989f" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="13" font-weight="400">lillith &lt;3, V, adrian</text>
+<line x1="30" y1="3202" x2="1170" y2="3202" stroke="#2a2d33" stroke-width="1"/>
 </svg>
