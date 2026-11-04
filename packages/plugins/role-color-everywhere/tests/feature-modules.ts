@@ -4,9 +4,10 @@ import { metro } from '@unbound-app/api/testing';
 type FeatureModule = Record<string, unknown>;
 
 // The tests draw components and rows, so the native mention painters find no Discord classes and stay off.
-export const NO_NATIVE_CLASSES = {
-	native: { objc: { getClass: () => undefined } as NativeObjCBridge },
-};
+// UNKNOWN: the bridge has 20+ members and only `getClass` is read before the painters stop.
+const objc = { getClass: () => undefined } as unknown as NativeObjCBridge;
+
+export const NO_NATIVE_CLASSES = { native: { objc } };
 
 const placeholder = () => null;
 
