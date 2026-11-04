@@ -2,13 +2,6 @@ export const PLUGIN_NAME = 'Silent Message Toggle';
 
 export const SUPPRESS_NOTIFICATIONS = 1 << 12;
 
-export const SETTINGS = {
-	persistState: false,
-	autoDisable: true,
-};
-
-export type SettingKey = keyof typeof SETTINGS;
-
 export const Button = {
 	size: 32,
 	gap: 8,

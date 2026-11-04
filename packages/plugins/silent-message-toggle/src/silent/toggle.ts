@@ -84,16 +84,5 @@ export function createSilentToggle(
 	};
 }
 
-/**
- * @description Reads the toggle kept on a global key, so buttons still mounted from an earlier evaluation of the bundle share it.
- * @param pluginId The plugin's ID, which keys the state.
- * @returns The shared toggle.
- */
-export function sharedSilentToggle(pluginId: string): SilentToggle {
-	const host: Record<symbol, ToggleState | undefined> = globalThis;
-	const key = Symbol.for(`${pluginId}.silent-toggle`);
-
-	return createSilentToggle(
-		(host[key] ??= { enabled: false, channelId: null, listeners: new Set() }),
-	);
-}
+/** The toggle every button shares. `startSilent` turns it off, so each start begins off. */
+export const silentToggle = createSilentToggle();

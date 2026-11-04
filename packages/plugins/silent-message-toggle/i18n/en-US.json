@@ -1,0 +1,12 @@
+{
+	"AUTO_DISABLE": "Auto Disable",
+	"AUTO_DISABLE_SUBTITLE": "Turn the toggle off again after sending one silent message",
+	"DISABLE_SILENT_MESSAGE": "Disable Silent Message",
+	"ENABLE_SILENT_MESSAGE": "Enable Silent Message",
+	"PERSIST_STATE": "Persist State",
+	"PERSIST_STATE_SUBTITLE": "Keep the toggle on when you open another channel",
+	"SILENT_MESSAGE_TOGGLE": "Silent Message Toggle",
+	"TOGGLE": "Toggle",
+	"TOGGLED_OFF": "Your messages here notify people again.",
+	"TOGGLED_ON": "Your messages here are sent without notifications."
+}

@@ -1,10 +1,12 @@
 import { Image, Pressable, View, type PressableStateCallbackType } from 'react-native';
 import { useSyncExternalStore } from 'react';
-import { storage, toasts } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
+import { useSetting } from '@unbound-app/settings';
+import { toasts } from '@unbound-app/api';
 
-import { Haptics, SilentToggle, Theme, ToggleRunning } from '~/modules';
-import { Button, FallbackColors, PLUGIN_NAME, SETTINGS } from '~/constants';
-import { toggleLabel, toggledMessage } from '~/labels';
+import { Button, FallbackColors } from '~/constants';
+import { Haptics, Theme } from '~/silent/modules';
+import { silentToggle } from '~/silent/toggle';
 
 export type ToggleIcons = {
 	on: number;
@@ -18,23 +20,22 @@ type SilentToggleButtonProps = {
 };
 
 function useActive(channelId: string, persist: boolean): boolean {
-	return useSyncExternalStore(SilentToggle.subscribe, () =>
-		SilentToggle.isActive(channelId, persist),
+	return useSyncExternalStore(silentToggle.subscribe, () =>
+		silentToggle.isActive(channelId, persist),
 	);
 }
 
 function SilentToggleButton({ channelId, icons, trailingGap = 0 }: SilentToggleButtonProps) {
-	const running = ToggleRunning.useRunning();
-	const settings = storage.useBucket('unbound.silent-message-toggle');
-	const persist = settings.get('persistState', SETTINGS.persistState);
+	const persist = useSetting('persistState');
 	const active = useActive(channelId, persist);
 
-	if (!running) return null;
-
 	function toggle() {
-		const enabled = SilentToggle.toggle(channelId, persist);
+		const enabled = silentToggle.toggle(channelId, persist);
 
-		toasts.show({ title: PLUGIN_NAME, content: toggledMessage(enabled) });
+		toasts.show({
+			title: messages.SILENT_MESSAGE_TOGGLE,
+			content: enabled ? messages.TOGGLED_ON : messages.TOGGLED_OFF,
+		});
 	}
 
 	return (
@@ -42,7 +43,9 @@ function SilentToggleButton({ channelId, icons, trailingGap = 0 }: SilentToggleB
 			<Pressable
 				accessibilityRole='switch'
 				accessibilityState={{ checked: active }}
-				accessibilityLabel={toggleLabel(active)}
+				accessibilityLabel={
+					active ? messages.DISABLE_SILENT_MESSAGE : messages.ENABLE_SILENT_MESSAGE
+				}
 				onPress={toggle}
 				onPressIn={() =>
 					Haptics.triggerHapticFeedback?.(Haptics.HapticFeedbackTypes?.IMPACT_LIGHT)

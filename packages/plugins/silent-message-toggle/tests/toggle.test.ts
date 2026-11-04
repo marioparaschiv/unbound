@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createSilentToggle, sharedSilentToggle, withSilentFlag } from '~/silent';
+import { createSilentToggle, withSilentFlag } from '~/silent/toggle';
 
 const DEFAULTS = { persist: false, autoDisable: true };
 
@@ -136,17 +136,5 @@ describe('createSilentToggle', () => {
 		toggle.toggle('a', false);
 
 		expect(calls).toBe(2);
-	});
-});
-
-describe('sharedSilentToggle', () => {
-	test('shares state between evaluations', () => {
-		const first = sharedSilentToggle('test.shared-toggle');
-		const second = sharedSilentToggle('test.shared-toggle');
-
-		first.toggle('a', false);
-
-		expect(second.isActive('a', false)).toBe(true);
-		second.reset();
 	});
 });
