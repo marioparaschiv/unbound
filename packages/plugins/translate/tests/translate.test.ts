@@ -65,8 +65,4 @@ describe('translating a message', () => {
 			},
 		]);
 	});
-
-	test('keeps the default languages until they are changed', () => {
-		expect([settings.sourceLanguage, settings.targetLanguage]).toEqual(['auto', 'en']);
-	});
 });

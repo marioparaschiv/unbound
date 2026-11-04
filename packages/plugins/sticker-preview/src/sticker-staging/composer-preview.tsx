@@ -11,9 +11,10 @@ type ContainerProps = { channel?: { id?: string } };
 /**
  * @description Shows the staged sticker above the composer.
  * @param staging The plugin's staged stickers.
+ * @returns A function that removes the patch.
  */
-export function patchFloatingChatInputContainer(staging: Staging): void {
-	patcher.react.after(
+export function patchFloatingChatInputContainer(staging: Staging): () => void {
+	return patcher.react.after(
 		FloatingChatInputContainer,
 		'default',
 		({ props, result }: { props: ContainerProps; result: ReactNode }) => {

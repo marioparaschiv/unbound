@@ -10,9 +10,10 @@ type RowResult = { message?: { username?: string } } | undefined;
 /**
  * @description Measures each message Discord builds a chat row for, once the row module loads. The row itself is not changed.
  * @param records The latency cache to fill.
+ * @returns A function that removes the patch.
  */
-export function patchMessageRowData(records: LatencyRecords): void {
-	patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+export function patchMessageRowData(records: LatencyRecords): () => void {
+	return patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const [input] = args as RowArgs;
 		const username = (result as RowResult)?.message?.username;
 

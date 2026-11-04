@@ -13,8 +13,8 @@ let dispose: () => Promise<void> | undefined = () => undefined;
 /**
  * @description Marks messages that took a long time to send with an indicator beside their author.
  * Patches `generateMessageRowData` on Discord's message row module to measure each row, reads `UserStore`
- * and `Theme`, and draws the indicator through native views. The Addon scope removes the patch and the
- * Flux listener, but the native views and the runtime subscription need `stopLatencyIndicator`.
+ * and `Theme`, and draws the indicator through native views. Stopping removes the indicators, the Flux
+ * listener and the patch, and the native views and the runtime subscription need `stopLatencyIndicator`.
  * @param context The plugin's native bridge and capabilities.
  */
 export function startLatencyIndicator(context: PluginContext): void {
@@ -25,9 +25,8 @@ export function startLatencyIndicator(context: PluginContext): void {
 
 	if (!indicators) return;
 
-	patchMessageRowData(records);
-
 	dispose = applyFeatures('Message Latency', [
+		() => patchMessageRowData(records),
 		indicators,
 		() => subscribeMessageCreate(records, context.native.runtime),
 	]);

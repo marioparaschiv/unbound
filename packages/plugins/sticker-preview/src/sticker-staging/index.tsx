@@ -1,4 +1,4 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import {
@@ -12,15 +12,15 @@ import {
 import { patchFloatingChatInputContainer } from '~/sticker-staging/composer-preview';
 import { patchStickerPickerListRow } from '~/sticker-staging/picker-row';
 import { patchChatInputSendButton } from '~/sticker-staging/send-button';
-import { createStaging, type Staging } from '~/sticker-staging/staging';
+import { createStaging } from '~/sticker-staging/staging';
 
-let staging: Staging | undefined;
+let dispose: () => Promise<void> | undefined = () => undefined;
 
 /**
  * @description Stages picked stickers in the composer with a preview, and sends them with the message.
  * Patches the renders of `StickerPickerListRow`, `ChatInputSendButton` and `FloatingChatInputContainer`,
  * draws the preview with `Sticker`, and sends through `ChatInputs` and the message actions.
- * The Addon scope removes the patches, but the hooks put on Discord's inputs and send buttons need `stopStickerStaging`.
+ * The hooks put on Discord's inputs and send buttons need `stopStickerStaging`, which removes the patches before it clears the staged stickers.
  */
 export function startStickerStaging(): void {
 	if (
@@ -36,18 +36,21 @@ export function startStickerStaging(): void {
 		return;
 	}
 
-	staging = createStaging();
+	const staging = createStaging();
 
-	patchStickerPickerListRow(staging);
-	patchChatInputSendButton(staging);
-	patchFloatingChatInputContainer(staging);
-	recordApplied(3);
+	// The staging goes first so it is cleared last, once the patches that read it are gone.
+	dispose = applyFeatures('Sticker Preview', [
+		() => staging.dispose,
+		() => patchStickerPickerListRow(staging),
+		() => patchChatInputSendButton(staging),
+		() => patchFloatingChatInputContainer(staging),
+	]);
 }
 
 /**
  * @description Clears every staged sticker and puts back the send handlers and send buttons the plugin hooked.
  */
 export function stopStickerStaging(): void {
-	staging?.dispose();
-	staging = undefined;
+	dispose();
+	dispose = () => undefined;
 }

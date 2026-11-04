@@ -8,9 +8,10 @@ type SendButtonProps = { channel?: { id?: string }; ref?: SendButtonRef };
 /**
  * @description Lets the send button send a staged sticker, and keeps its ref so the plugin can update it.
  * @param staging The plugin's staged stickers.
+ * @returns A function that removes the patch.
  */
-export function patchChatInputSendButton(staging: Staging): void {
-	patcher.react.before(
+export function patchChatInputSendButton(staging: Staging): () => void {
+	return patcher.react.before(
 		ChatInputSendButton,
 		'default',
 		({ props }: { props: SendButtonProps }) => {

@@ -45,6 +45,13 @@ function seedDiscord() {
 	metro.register({ generateMessageRowData: () => ({ message: {} }) });
 }
 
+// Imported late, because the entry loads the Android tooltip, which needs the AppRegistry `seedDiscord` gives the fake.
+async function readSelfTest() {
+	const { selfTest } = await import('~/index');
+
+	return selfTest();
+}
+
 describe('the latency indicator on iOS', () => {
 	test('hooks the message cells and measures rows while running', async () => {
 		const { bridge, hooks } = fakeNative();
@@ -89,6 +96,35 @@ describe('the latency indicator on iOS', () => {
 
 		expect(subscriptions).toEqual(['message.created']);
 		expect(pluginHolds().some((held) => held.includes('MESSAGE_CREATE'))).toBe(false);
+	});
+
+	test('reports its features as applied to the self test', async () => {
+		const { bridge } = fakeNative();
+
+		seedDiscord();
+		await startPlugin({ native: bridge as never });
+
+		expect(await readSelfTest()).toMatchObject({ ok: true });
+	});
+
+	test('takes the row patch back when a later feature fails to start', async () => {
+		const { bridge } = fakeNative();
+
+		seedDiscord();
+		await startPlugin({
+			native: {
+				...bridge,
+				objc: {
+					...bridge.objc,
+					hook: () => {
+						throw new Error('no hook');
+					},
+				},
+			} as never,
+		});
+
+		expect(pluginHolds().some((held) => held.includes('generateMessageRowData'))).toBe(false);
+		expect(await readSelfTest()).toMatchObject({ ok: false });
 	});
 
 	test('does not start without the native classes it draws with', async () => {

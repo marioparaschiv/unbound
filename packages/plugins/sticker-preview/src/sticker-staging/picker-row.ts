@@ -13,9 +13,10 @@ type PickerRowProps = {
 /**
  * @description Stages a sticker picked from the picker instead of sending it.
  * @param staging The plugin's staged stickers.
+ * @returns A function that removes the patch.
  */
-export function patchStickerPickerListRow(staging: Staging): void {
-	patcher.react.before(
+export function patchStickerPickerListRow(staging: Staging): () => void {
+	return patcher.react.before(
 		StickerPickerListRow,
 		'default',
 		({ props }: { props: PickerRowProps }) => {
