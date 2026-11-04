@@ -10,7 +10,7 @@ import {
 	isSuppressed,
 	type ChannelAccess,
 	type Message,
-} from '~/embeds';
+} from '~/unsuppress/embeds';
 
 const ME = '1';
 const OTHER = '2';

@@ -1,7 +1,7 @@
 import type { FluxChannel } from '@unbound-app/api/flux';
 
-import type { ChannelAccess } from '~/embeds';
-import { ChannelStore, Constants, PermissionStore, UserStore } from '~/modules';
+import type { ChannelAccess } from '~/unsuppress/embeds';
+import { ChannelStore, Constants, PermissionStore, UserStore } from '~/unsuppress/modules';
 
 type Channel = FluxChannel & {
 	isPrivate?: () => boolean;

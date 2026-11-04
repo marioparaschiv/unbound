@@ -7,6 +7,6 @@ type PermissionStore = FluxStore & {
 
 export const { ActionSheets } = metro.api;
 export const { REST, Constants } = metro.common;
-export const ChannelStore = flux.getStore('Channel', { lazy: true });
-export const UserStore = flux.getStore('User', { lazy: true });
-export const PermissionStore = flux.getStore('Permission', { lazy: true }) as PermissionStore;
+export const ChannelStore = flux.getStore('Channel');
+export const UserStore = flux.getStore('User');
+export const PermissionStore = flux.getStore('Permission') as PermissionStore;

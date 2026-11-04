@@ -5,7 +5,7 @@ import {
 	type ElementNode,
 } from '@unbound-plugins/shared/react/find-element';
 
-import { isDeleteLabel } from '~/embeds';
+import { isDeleteLabel } from '~/unsuppress/embeds';
 
 /**
  * @description Reads the label of an action sheet row.

@@ -1,8 +1,9 @@
+import { format, messages } from '@unbound-app/i18n';
 import { toasts } from '@unbound-app/api';
 
-import { actionLabel, applyAction, type EmbedAction } from '~/embeds';
+import { actionLabel, applyAction, type EmbedAction } from '~/unsuppress/embeds';
 import { PLUGIN_NAME } from '~/constants';
-import { REST } from '~/modules';
+import { REST } from '~/unsuppress/modules';
 
 // UNKNOWN: Discord's REST client rejects with an untyped error.
 function errorText(error: unknown): string {
@@ -10,7 +11,7 @@ function errorText(error: unknown): string {
 
 	if (typeof body?.message === 'string') return body.message;
 
-	return error instanceof Error ? error.message : 'Discord refused the change.';
+	return error instanceof Error ? error.message : messages.CHANGE_REFUSED;
 }
 
 /**
@@ -35,7 +36,10 @@ export async function changeEmbeds(
 	} catch (error) {
 		toasts.show({
 			title: PLUGIN_NAME,
-			content: `${actionLabel(action)} failed: ${errorText(error)}`,
+			content: format('CHANGE_FAILED', {
+				action: actionLabel(action),
+				reason: errorText(error),
+			}),
 		});
 	}
 }

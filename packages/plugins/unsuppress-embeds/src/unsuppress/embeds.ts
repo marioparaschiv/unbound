@@ -1,3 +1,5 @@
+import { messages } from '@unbound-app/i18n';
+
 import { SUPPRESS_EMBEDS } from '~/constants';
 
 type Embeds = {
@@ -85,10 +87,10 @@ export function applyAction(flags: number | undefined, action: EmbedAction): num
 /**
  * @description Names the row for an action.
  * @param action The change the row makes.
- * @returns The row label.
+ * @returns The row label, in the user's language.
  */
 export function actionLabel(action: EmbedAction): string {
-	return action === 'suppress' ? 'Suppress Embeds' : 'Unsuppress Embeds';
+	return action === 'suppress' ? messages.SUPPRESS_EMBEDS : messages.UNSUPPRESS_EMBEDS;
 }
 
 /**

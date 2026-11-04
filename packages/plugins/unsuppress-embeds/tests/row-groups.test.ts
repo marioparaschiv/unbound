@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { findTargetRows, rowLabel } from '~/row-groups';
+import { findTargetRows, rowLabel } from '~/unsuppress/row-groups';
 
 const noop = () => {};
 
