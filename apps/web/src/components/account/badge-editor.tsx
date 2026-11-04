@@ -1,8 +1,8 @@
 import { BADGE_IMAGE_TYPES, BADGE_LIMIT } from '@unbound-app/contracts/sponsors';
 import type { Badge, BadgeClaim } from '@unbound-app/contracts/sponsors';
 import { IconPen, IconTrash, IconUpload } from 'nucleo-micro-bold';
+import { useRef, useState, type ReactNode } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { removeBadgesMutation, saveBadgesMutation } from '~/queries/account/account';
@@ -20,6 +20,8 @@ type BadgeEditorProps = {
 	claim: BadgeClaim | null;
 	perk: PerkStatus;
 	editable: boolean;
+	/** The perk's name and description, which the upload button sits beside while badges are editable. */
+	heading: ReactNode;
 };
 
 type Mode = { kind: 'closed' } | { kind: 'adding' } | { kind: 'editing'; index: number };
@@ -34,7 +36,7 @@ function lockedNote(perk: PerkStatus, editable: boolean): string | null {
 	return editable ? null : 'Sponsor again to change your badges.';
 }
 
-function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
+function BadgeEditor({ claim, perk, editable, heading }: BadgeEditorProps) {
 	const [mode, setMode] = useState<Mode>(CLOSED);
 	const addPicker = useRef<HTMLInputElement>(null);
 	const replacePicker = useRef<HTMLInputElement>(null);
@@ -173,16 +175,9 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 				}}
 			/>
 
-			<div className='flex items-center justify-between gap-4'>
-				<div className='flex flex-col'>
-					<Text variant='text-sm' className='font-medium'>
-						Your badges
-					</Text>
-					<Text variant='text-xs' color='muted'>
-						They show on your Discord profile for everyone using Unbound.
-					</Text>
-				</div>
-				{editable ? (
+			{editable ? (
+				<div className='flex items-center justify-between gap-4'>
+					{heading}
 					<Button
 						type='button'
 						variant='outline'
@@ -199,8 +194,8 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 							{BADGE_LIMIT - freeSlots} of {BADGE_LIMIT}
 						</span>
 					</Button>
-				) : null}
-			</div>
+				</div>
+			) : null}
 
 			{note ? (
 				<Text variant='text-xs' color='muted'>
