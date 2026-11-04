@@ -36,8 +36,8 @@ export function isAnimatedDot(value: unknown): value is DotElement {
  * @param still Renders the still dot that replaces an animated one.
  * @returns New children when a dot was swapped, otherwise the same `children`.
  */
-export function stillDots<T>(children: T, still: (dot: DotElement) => unknown): T | unknown[] {
+export function stillDots<T, R>(children: T, still: (dot: DotElement) => R): T | R[] {
 	if (!Array.isArray(children) || !children.some(isAnimatedDot)) return children;
 
-	return children.map((child: unknown) => (isAnimatedDot(child) ? still(child) : child));
+	return children.map((child) => (isAnimatedDot(child) ? still(child) : child));
 }

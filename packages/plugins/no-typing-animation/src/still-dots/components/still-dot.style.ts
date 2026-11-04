@@ -1,11 +1,11 @@
 import { Discord } from '@unbound-app/api/metro/components';
+import { metro } from '@unbound-app/api';
 
 import { STILL_DOT_OPACITY } from '~/constants';
-import { Theme } from '~/modules';
 
 export default Discord.createStyles(() => ({
 	dot: {
-		backgroundColor: Theme.colors?.TEXT_DEFAULT,
+		backgroundColor: metro.common.Theme.colors?.TEXT_DEFAULT,
 		borderRadius: 3,
 		marginRight: 2,
 		height: 6,
