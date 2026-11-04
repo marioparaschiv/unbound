@@ -52,7 +52,12 @@ describe('createFlatRecovery', () => {
 		);
 
 		recovery.mark('a', true);
-		await new Promise((resolve) => setTimeout(resolve, 30));
+
+		// Waits on the repaints, not a fixed time, so a loaded machine cannot starve the interval.
+		for (let waited = 0; repainted.length < 2 && waited < 1000; waited += 5) {
+			await new Promise((resolve) => setTimeout(resolve, 5));
+		}
+
 		recovery.dispose();
 
 		expect(repainted.length).toBeGreaterThan(1);
