@@ -15,7 +15,7 @@ import {
 	listPublicOperations,
 	toRoutePath,
 } from '~/lib/api/openapi/served-operations';
-import { getCurlExample, getSchemaFields, groupOperations } from '~/lib/docs/http-reference';
+import { getSchemaFields, groupOperations } from '~/lib/docs/http-reference';
 import { PUBLIC_OPERATIONS } from '~/lib/api/openapi/public-operations';
 
 // `serve` binds handlers to the process-wide app, which reads the deployment's env; no handler runs here.
@@ -227,21 +227,5 @@ describe('the HTTP reference', () => {
 		expect(addons?.fields.find((field) => field.name === 'sha256')?.constraints).toEqual([
 			'pattern ^[\\da-f]{64}$',
 		]);
-	});
-
-	test('writes a curl call with the required query and body filled in', () => {
-		const loader = operations.find((entry) => entry.path === '/api/v1/loader/updates');
-		const updates = operations.find((entry) => entry.path === '/api/v1/updates');
-
-		expect(loader && getCurlExample('https://unbound.rip', loader)).toBe(
-			"curl 'https://unbound.rip/api/v1/loader/updates?platform=ios&version=<version>'",
-		);
-		expect(updates && getCurlExample('https://unbound.rip', updates)).toBe(
-			[
-				"curl -X POST 'https://unbound.rip/api/v1/updates' \\",
-				"  -H 'content-type: application/json' \\",
-				`  -d '{"clientVersion":"<clientVersion>","addons":[{"id":"<id>","version":"<version>"}]}'`,
-			].join('\n'),
-		);
 	});
 });

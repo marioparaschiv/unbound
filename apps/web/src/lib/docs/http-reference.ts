@@ -205,81 +205,10 @@ export function getParameterField(parameter: OpenApiParameter): SchemaField {
 	};
 }
 
-// Required keys only, with `<name>` for text, so the example stays short and plainly a template.
-function exampleValue(name: string, schema: JsonSchema): JsonValue {
-	if (schema.enum?.[0] !== undefined) {
-		return schema.enum[0];
-	}
-
-	const member = withoutNull(schema.anyOf ?? [])[0];
-
-	if (member) {
-		return exampleValue(name, member);
-	}
-
-	if (schema.type === 'array') {
-		return schema.items ? [exampleValue(name, schema.items)] : [];
-	}
-
-	if (schema.type === 'object') {
-		const required = new Set(schema.required);
-
-		return Object.fromEntries(
-			Object.entries(schema.properties ?? {})
-				.filter(([key]) => required.has(key))
-				.map(([key, property]) => [key, exampleValue(key, property)]),
-		);
-	}
-
-	if (schema.type === 'integer' || schema.type === 'number') {
-		return 0;
-	}
-
-	return schema.type === 'boolean' ? true : `<${name}>`;
-}
-
-// A query value is text: a string as is, anything else as its JSON.
-function formatQueryValue(value: JsonValue): string {
-	return typeof value === 'string' ? value : JSON.stringify(value);
-}
-
-/**
- * @description Writes a `curl` call of an operation with its required parameters and body filled in
- * with placeholders.
- * @param serverUrl The origin the API is served from.
- * @param entry The operation.
- * @returns The command.
- */
-export function getCurlExample(serverUrl: string, entry: HttpOperationEntry): string {
-	const parameters = entry.operation.parameters ?? [];
-	const path = entry.path.replaceAll(/\{(\w+)\}/g, '<$1>');
-	const query = new URLSearchParams(
-		parameters
-			.filter((parameter) => parameter.in === 'query' && parameter.required)
-			.map((parameter) => [
-				parameter.name,
-				formatQueryValue(exampleValue(parameter.name, parameter.schema)),
-			]),
-	).toString();
-	const url = `${serverUrl.replace(/\/$/, '')}${path}${query ? `?${decodeURIComponent(query)}` : ''}`;
-	const body = entry.operation.requestBody?.content['application/json'].schema;
-	const lines = [entry.method === 'GET' ? `curl '${url}'` : `curl -X ${entry.method} '${url}'`];
-
-	if (body) {
-		lines.push(
-			"  -H 'content-type: application/json'",
-			`  -d '${JSON.stringify(exampleValue('body', body))}'`,
-		);
-	}
-
-	return lines.join(' \\\n');
-}
-
 export default {
 	groupOperations,
 	getTypeLabel,
 	getConstraints,
 	getSchemaFields,
 	getParameterField,
-	getCurlExample,
 };

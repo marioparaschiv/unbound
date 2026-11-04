@@ -1,7 +1,4 @@
-import type { ReactNode } from 'react';
-
 import {
-	getCurlExample,
 	getParameterField,
 	getSchemaFields,
 	type HttpOperationEntry,
@@ -9,24 +6,21 @@ import {
 } from '~/lib/docs/http-reference';
 import SchemaFields from '~/components/http/schema-fields';
 import MethodBadge from '~/components/http/method-badge';
-import CodeBlock from '~/components/guides/code-block';
 import Heading from '~/components/guides/heading';
 import Prose from '~/components/http/prose';
 import Text from '~/components/ui/text';
 
 type HttpOperationProps = {
 	entry: HttpOperationEntry;
-	serverUrl: string;
 };
 
 type FieldGroupProps = {
 	title: string;
 	fields: SchemaField[];
-	children?: ReactNode;
 };
 
-function FieldGroup({ title, fields, children }: FieldGroupProps) {
-	if (!fields.length && !children) return null;
+function FieldGroup({ title, fields }: FieldGroupProps) {
+	if (!fields.length) return null;
 
 	return (
 		<div className='flex flex-col gap-3'>
@@ -38,19 +32,18 @@ function FieldGroup({ title, fields, children }: FieldGroupProps) {
 			>
 				{title}
 			</Text>
-			{children}
-			{fields.length ? <SchemaFields fields={fields} /> : null}
+			<SchemaFields fields={fields} />
 		</div>
 	);
 }
 
 /**
  * @description One operation's section of the HTTP reference: its method and path, prose, parameters,
- * request body, response and a `curl` call.
- * @param props The operation and the origin it is served from.
+ * request body and response.
+ * @param props The operation.
  * @returns The section.
  */
-function HttpOperation({ entry, serverUrl }: HttpOperationProps) {
+function HttpOperation({ entry }: HttpOperationProps) {
 	const { operation } = entry;
 	const parameters = operation.parameters ?? [];
 	const body = operation.requestBody?.content['application/json'].schema;
@@ -78,11 +71,6 @@ function HttpOperation({ entry, serverUrl }: HttpOperationProps) {
 			/>
 			<FieldGroup title='Request body' fields={body ? getSchemaFields(body) : []} />
 			<FieldGroup title='Response' fields={getSchemaFields(response)} />
-			<FieldGroup title='Example' fields={[]}>
-				<CodeBlock data-language='bash'>
-					<code>{getCurlExample(serverUrl, entry)}</code>
-				</CodeBlock>
-			</FieldGroup>
 		</section>
 	);
 }

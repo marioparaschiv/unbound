@@ -32,7 +32,6 @@ function HttpReference({ document }: HttpReferenceProps) {
 	const operations = useMemo(() => groups.flatMap((group) => group.operations), [groups]);
 	const anchors = useMemo(() => operations.map((entry) => entry.anchor), [operations]);
 	const active = useActiveHeading(anchors);
-	const serverUrl = document.servers[0]?.url ?? '';
 
 	return (
 		<DocsShell
@@ -56,7 +55,6 @@ function HttpReference({ document }: HttpReferenceProps) {
 					</Button>
 				</PageHeader>
 				<Prose text='A failure returns a non-2xx status with `{ error: { code, message } }`.' />
-				{/* The page header's 32px already opens the page, so the first group's h2 drops its top margin. */}
 				{groups.map((group) => (
 					<section key={group.name} className='flex flex-col gap-6'>
 						<div className='flex flex-col gap-2'>
@@ -68,7 +66,7 @@ function HttpReference({ document }: HttpReferenceProps) {
 							</Text>
 						</div>
 						{group.operations.map((entry) => (
-							<HttpOperation key={entry.anchor} entry={entry} serverUrl={serverUrl} />
+							<HttpOperation key={entry.anchor} entry={entry} />
 						))}
 					</section>
 				))}
