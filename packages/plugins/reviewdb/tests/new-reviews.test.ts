@@ -15,7 +15,8 @@ function account(lastReviewID: number) {
 
 async function start() {
 	await startReviewdb();
-	await Bun.sleep(5);
+	// The check runs unawaited from `start` and only touches fakes, so one macrotask lets it finish.
+	await new Promise((resolve) => setImmediate(resolve));
 }
 
 beforeEach(() => {

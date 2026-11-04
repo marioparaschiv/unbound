@@ -5,8 +5,8 @@ import { Text } from 'react-native';
 export type CardProps = { title?: ReactNode; children?: ReactNode };
 
 /**
- * Discord's profile card. Every test registers this one object, because the plugin keeps the lookup it made when it first
- * loaded and the testing kit's patcher keeps a patch by that lookup.
+ * Discord's profile card. Every test registers this one object, because the plugin finds it with `metro.find`, which the
+ * kit resolves once, when the plugin first loads, instead of on each access as the client does.
  */
 export const card = {
 	default: ({ title, children }: CardProps) => <Text>{title ?? children}</Text>,

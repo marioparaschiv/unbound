@@ -1,4 +1,5 @@
 import { render, stopPlugin } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
@@ -13,7 +14,11 @@ function renderCard(props: CardProps) {
 	return render(<card.default {...props} />, { stores: { User: { getUser: () => undefined } } });
 }
 
-beforeEach(startReviewdb);
+beforeEach(() => {
+	resetHealth();
+
+	return startReviewdb();
+});
 afterEach(stopPlugin);
 
 describe('a user profile card', () => {
