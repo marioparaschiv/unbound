@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.7] - 2026-11-05
+
+### Changed
+
+- The settings screen, the tooltip text and the screen reader label can now be translated.
+- **Latency threshold** is now a slider from 1 to 10 seconds instead of stepping through 1, 2, 3, 5 and 10. Your saved threshold carries over.
+
 ## [1.2.6] - 2026-11-03
 
 ### Changed

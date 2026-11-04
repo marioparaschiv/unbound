@@ -1,15 +1,15 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
-import { patchActionSheets } from '~/patches/action-sheets';
-import SettingsPanel from '~/components/settings-panel';
-import { ActionSheets } from '~/modules';
+import { startTranslate, stopTranslate } from '~/translate';
+
+export { SettingsPanel } from '~/settings';
 
 export function start() {
-	if (!ensureModules('Translate', { ActionSheets })) return;
-
-	applyFeatures('Translate', [patchActionSheets]);
+	startTranslate();
 }
 
-export { featureSelfTest as selfTest, SettingsPanel };
+export function stop() {
+	stopTranslate();
+}
+
+export { featureSelfTest as selfTest };

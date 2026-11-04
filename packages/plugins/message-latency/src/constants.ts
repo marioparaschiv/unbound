@@ -1,13 +1,4 @@
-import type { LatencyColor, LatencyOptions } from '~/latency';
-
-export const Defaults: LatencyOptions = {
-	latency: 2,
-	showMillis: false,
-	ignoreSelf: false,
-	detectDiscordKotlin: true,
-};
-
-export const LATENCY_OPTIONS = [1, 2, 3, 5, 10];
+import type { LatencyColor } from '~/latency-indicator/latency';
 
 export const ICON_TAG = 0x1a7e9c;
 
