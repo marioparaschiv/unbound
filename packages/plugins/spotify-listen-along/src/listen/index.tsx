@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { patcher } from '@unbound-app/api';
 import type { ReactElement } from 'react';
@@ -32,6 +31,4 @@ export function startListenAlong(): void {
 	patcher.react.after(SpotifyComponents, 'SpotifyPlayButton', ({ props, result }) =>
 		withListenAlong(props as ButtonProps, result as ReactElement | null),
 	);
-
-	recordApplied(2);
 }

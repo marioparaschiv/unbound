@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { patcher } from '@unbound-app/api';
 import { messages } from '@unbound-app/i18n';
@@ -47,6 +46,4 @@ export function startListenAlongInvite(): void {
 
 		return { ...props, overflowButtons: [...props.overflowButtons, spotifyButton()] };
 	});
-
-	recordApplied(1);
 }
