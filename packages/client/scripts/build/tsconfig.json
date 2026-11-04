@@ -5,10 +5,13 @@
 		"composite": false,
 		"module": "Preserve",
 		"verbatimModuleSyntax": true,
+		"noImplicitAny": true,
+		"noUncheckedIndexedAccess": true,
 		"types": ["bun", "@unbound-app/types"],
 		"paths": {
 			"~/*": ["../../src/*"],
 			"@i18n/*": ["../../../../i18n/*"]
 		}
-	}
+	},
+	"exclude": ["build-output.test.ts"]
 }
