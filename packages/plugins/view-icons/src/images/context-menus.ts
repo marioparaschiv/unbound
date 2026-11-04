@@ -15,7 +15,7 @@ import { ChannelStore, ContextMenus, GuildStore, Theme, UserStore } from '~/imag
 import ViewIcon from '~/images/components/view-icon';
 import { openImage } from '~/images/open-image';
 import { viewLabel } from '~/images/labels';
-import { isProfileMenu } from '~/images/profile-menu';
+import isProfileMenu from '@unbound-plugins/shared/context-menus/profile-menu';
 
 type MenuItem = {
 	label?: string;

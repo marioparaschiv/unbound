@@ -130,8 +130,8 @@ describe('createSilentToggle', () => {
 
 		toggle.toggle('a', false);
 		toggle.switchChannel('a', false);
-		toggle.reset();
-		toggle.reset();
+		toggle.switchChannel('b', false);
+		toggle.switchChannel('b', false);
 		unsubscribe();
 		toggle.toggle('a', false);
 

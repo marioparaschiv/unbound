@@ -16,7 +16,6 @@ export type SilentToggle = {
 	toggle: (channelId: string, persist: boolean) => boolean;
 	takeForSend: (channelId: string, options: ToggleOptions) => boolean;
 	switchChannel: (channelId: string | null | undefined, persist: boolean) => void;
-	reset: () => void;
 	subscribe: (listener: () => void) => () => void;
 };
 
@@ -73,9 +72,6 @@ export function createSilentToggle(
 
 			update(false, null);
 		},
-		reset() {
-			update(false, null);
-		},
 		subscribe(listener) {
 			state.listeners.add(listener);
 
@@ -84,5 +80,5 @@ export function createSilentToggle(
 	};
 }
 
-/** The toggle every button shares. `startSilent` turns it off, so each start begins off. */
+/** The toggle every button shares. */
 export const silentToggle = createSilentToggle();

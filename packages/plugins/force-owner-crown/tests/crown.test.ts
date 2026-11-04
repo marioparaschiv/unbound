@@ -1,8 +1,10 @@
 import { assets } from '@unbound-app/api';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { flux, metro, startPlugin } from '@unbound-app/api/testing';
 import type { UnboundAsset } from '@unbound-app/api/assets';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
+import { selfTest } from '~/index';
 import { platformCrownSource } from '~/crown/android/crown-source';
 
 type Row = { message: Record<string, unknown> };
@@ -14,6 +16,7 @@ function row(message: Record<string, unknown>) {
 }
 
 beforeEach(() => {
+	resetHealth();
 	Object.assign(assets, {
 		getById: () => ({
 			httpServerLocation: '/assets/images/native/icons',
@@ -37,6 +40,10 @@ describe('the owner crown', () => {
 			size: 18,
 			alt: 'Server Owner',
 		});
+	});
+
+	test('reports the crown in its self-test once started', async () => {
+		expect(selfTest()).toEqual({ ok: true, detail: '1 feature applied' });
 	});
 
 	test('leaves other members alone', () => {

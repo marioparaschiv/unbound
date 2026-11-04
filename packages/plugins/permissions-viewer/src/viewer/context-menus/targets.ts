@@ -1,4 +1,5 @@
-import { isProfileMenu } from '~/viewer/context-menus/profile-menu';
+import isProfileMenu from '@unbound-plugins/shared/context-menus/profile-menu';
+
 import { asId, type Target } from '~/viewer/action-sheets/targets';
 
 export type MenuItem = {

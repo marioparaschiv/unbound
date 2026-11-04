@@ -1,7 +1,10 @@
-import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, pluginHolds, render, startPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { beforeEach, describe, expect, test } from 'bun:test';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
+import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { View } from 'react-native';
+
+import { selfTest } from '~/index';
 
 type MenuItem = { label?: string; action?: () => void };
 type Menu = { items: MenuItem[]; key?: string; guild?: { id: string } };
@@ -29,8 +32,17 @@ function open(menu: Menu) {
 	return menu.items.map((item) => item.label);
 }
 
-beforeEach(async () => {
-	metro.register(ContextMenus);
+// A module Discord changed so that its method cannot be read, which a patch on it throws on.
+const BrokenContextMenus = {
+	get showContextMenu(): never {
+		throw new Error('The menu module changed shape.');
+	},
+	hideContextMenu: () => {},
+};
+
+function registerDiscord({ brokenContextMenus = false } = {}) {
+	metro.register(brokenContextMenus ? BrokenContextMenus : ContextMenus);
+
 	metro.register(ActionSheets);
 	metro.register({ ShieldUserIcon });
 	metro.register(rolesCard, 'modules/user_profile/native/UserProfileRolesCard.tsx');
@@ -46,10 +58,17 @@ beforeEach(async () => {
 		Channel: { getChannel: () => undefined },
 		User: { getUser: () => undefined },
 	});
+}
+
+async function launch() {
+	resetHealth();
+	registerDiscord();
 	await startPlugin();
-});
+}
 
 describe('the View Permissions item in a context menu', () => {
+	beforeEach(launch);
+
 	test("is added to a server's menu", () => {
 		expect(open({ items: [], key: 'g' })).toEqual(['View Permissions']);
 	});
@@ -68,6 +87,8 @@ describe('the View Permissions item in a context menu', () => {
 });
 
 describe('the View Permissions button under the roles card', () => {
+	beforeEach(launch);
+
 	test('follows the roles of a server profile', () => {
 		const view = render(<rolesCard.default guildId='g' userId='u' />);
 
@@ -84,5 +105,63 @@ describe('the View Permissions button under the roles card', () => {
 		expect(render(<rolesCard.default guildId='g' userId='u' />).findAll('Pressable')).toEqual(
 			[],
 		);
+	});
+});
+
+describe('the overflow menu of a server profile', () => {
+	beforeEach(async () => {
+		await launch();
+		ActionSheets.openLazy(Promise.resolve({}), 'UserProfileActionSheet', {
+			userId: 'u',
+			guildId: 'g',
+		});
+	});
+
+	test("is recognized by Discord's own wording, whatever the language", () => {
+		metro.register({
+			getLanguages: () => [],
+			getSystemLocale: () => 'de',
+			t: { y5MwJy: 'y5MwJy' },
+			intl: { formatToPlainString: () => 'Benutzernamen kopieren' },
+		});
+
+		expect(open({ items: [{ label: 'Benutzernamen kopieren' }] })).toEqual([
+			'Benutzernamen kopieren',
+			'View Permissions',
+		]);
+	});
+
+	test('is recognized by the English wording when Discord has no such message', () => {
+		expect(open({ items: [{ label: 'Copy User ID' }] })).toEqual([
+			'Copy User ID',
+			'View Permissions',
+		]);
+	});
+
+	test('leaves a menu with other rows alone', () => {
+		expect(open({ items: [{ label: 'Something else' }] })).toEqual(['Something else']);
+	});
+});
+
+describe('the plugin on start', () => {
+	test('reports its three patches in its self-test', async () => {
+		await launch();
+
+		expect(selfTest()).toEqual({ ok: true, detail: '3 features applied' });
+	});
+
+	test('keeps the other patches when one cannot be applied', async () => {
+		const error = spyOn(console, 'error').mockImplementation(() => {});
+
+		resetHealth();
+		registerDiscord({ brokenContextMenus: true });
+		await startPlugin();
+
+		expect(pluginHolds().join()).toContain('openLazy');
+		expect(pluginHolds().join()).not.toContain('showContextMenu');
+		expect(selfTest()).toMatchObject({ ok: false });
+		expect(error).toHaveBeenCalled();
+
+		error.mockRestore();
 	});
 });

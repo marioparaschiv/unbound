@@ -82,3 +82,23 @@ describe('the overflow menu of a profile', () => {
 		expect(open({ items: [{ label: 'Something else' }] })).toHaveLength(1);
 	});
 });
+
+describe('the overflow menu of a profile without Discord’s messages', () => {
+	beforeEach(() => {
+		metro.register({
+			getLanguages: () => [],
+			getSystemLocale: () => 'en',
+			t: {},
+			intl: { formatToPlainString: (id: string) => id },
+		});
+		ActionSheets.openLazy(Promise.resolve({}), 'UserProfileActionSheet', { userId: '1' });
+	});
+
+	test('is recognized by the English wording', () => {
+		expect(open({ items: [{ label: 'Copy Username' }] }).map((item) => item.label)).toEqual([
+			'Copy Username',
+			'View Avatar',
+			'View Banner',
+		]);
+	});
+});

@@ -1,20 +1,15 @@
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { flux, metro, render, startPlugin, toasts } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { View } from 'react-native';
 
 import type { ReactNode } from 'react';
 
-let platform: 'ios' | 'android' = 'ios';
-let channelId = 'a';
+import { selfTest } from '~/index';
+import { patchChatInputSendButton } from '~/silent/android/send-button';
 
-// The testing kit has no `native` namespace yet, so the platform picker is stubbed here.
-mock.module('@unbound-app/api/native', () => ({
-	definePlatform:
-		(handlers: Record<string, (...args: never[]) => unknown>) =>
-		(...args: never[]) =>
-			handlers[platform](...args),
-}));
+let channelId = 'a';
 
 const sent: unknown[][] = [];
 const Messages = {
@@ -35,8 +30,17 @@ function SendButton(_props: { channel: { id: string } }) {
 const rightActions = { default: RightActions };
 const sendButton = { default: SendButton };
 
-function register() {
-	metro.register(Messages);
+// A module Discord changed so that its send method cannot be read, which a patch on it throws on.
+const BrokenMessages = {
+	sendMessage: () => {},
+	receiveMessage: () => {},
+	get _sendMessage(): never {
+		throw new Error('The message module changed shape.');
+	},
+};
+
+function register({ brokenMessages = false } = {}) {
+	metro.register(brokenMessages ? BrokenMessages : Messages);
 	metro.register(
 		rightActions,
 		'modules/chat_input/native/action_buttons/ChatInputRightActions.tsx',
@@ -57,7 +61,7 @@ function send(text: string, channel = 'a') {
 }
 
 beforeEach(() => {
-	platform = 'ios';
+	resetHealth();
 	channelId = 'a';
 	sent.length = 0;
 });
@@ -66,6 +70,11 @@ describe('the silent toggle on iOS', () => {
 	beforeEach(async () => {
 		register();
 		await startPlugin();
+
+		// The toggle lives in the entry's module, which tests share, so a switch of channel turns off what an earlier test left on.
+		channelId = 'elsewhere';
+		flux.emit('SelectedChannel');
+		channelId = 'a';
 	});
 
 	test('sits beside the right-hand actions and labels itself by state', () => {
@@ -116,13 +125,37 @@ describe('the silent toggle on iOS', () => {
 });
 
 describe('the silent toggle on Android', () => {
-	test('sits in front of the send button', async () => {
-		platform = 'android';
+	test('sits in front of the send button', () => {
 		register();
-		await startPlugin();
+		// `definePlatform` picks the platform when the entry loads, so the Android patch is applied directly.
+		patchChatInputSendButton({ on: 1, off: 2 });
 
 		const view = render(<sendButton.default channel={{ id: 'a' }} />);
 
 		expect(view.find('Pressable').props.accessibilityLabel).toBe('Enable Silent Message');
+	});
+});
+
+describe('the plugin on start', () => {
+	test('reports its three features in its self-test', async () => {
+		register();
+		await startPlugin();
+
+		expect(selfTest()).toEqual({ ok: true, detail: '3 features applied' });
+	});
+
+	test('keeps the other features when one cannot start', async () => {
+		const error = spyOn(console, 'error').mockImplementation(() => {});
+
+		register({ brokenMessages: true });
+		await startPlugin();
+
+		expect(
+			render(<rightActions.default channel={{ id: 'a' }} />).find('Pressable'),
+		).toBeDefined();
+		expect(selfTest()).toMatchObject({ ok: false });
+		expect(error).toHaveBeenCalled();
+
+		error.mockRestore();
 	});
 });

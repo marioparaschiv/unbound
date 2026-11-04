@@ -1,6 +1,9 @@
 import { flux, metro, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+
+import { selfTest } from '~/index';
 
 const nowPlaying = {
 	recenttracks: {
@@ -24,6 +27,7 @@ async function flush() {
 }
 
 beforeEach(() => {
+	resetHealth();
 	globalThis.fetch = (async () => ({
 		ok: true,
 		status: 200,
@@ -74,5 +78,11 @@ describe('the presence', () => {
 			type: 'LOCAL_ACTIVITY_UPDATE',
 			activity: null,
 		});
+	});
+
+	test('reports the presence in its self-test once started', async () => {
+		await startPlugin();
+
+		expect(selfTest()).toEqual({ ok: true, detail: '1 feature applied' });
 	});
 });

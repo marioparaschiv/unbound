@@ -27,7 +27,7 @@ export function readPreferences(settings: Settings): Preferences {
 		clickableLinks: settings.clickableLinks,
 		hideWithSpotify: settings.hideWithSpotify,
 		hideWithActivity: settings.hideWithActivity,
-		statusName: settings.statusName,
+		statusName: settings.statusName.trim(),
 		statusDisplayType: settings.statusDisplayType,
 		nameFormat: settings.nameFormat,
 		useListeningStatus: settings.useListeningStatus,

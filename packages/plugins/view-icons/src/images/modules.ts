@@ -5,7 +5,7 @@ export { Media } from '@unbound-app/api/metro/components';
 export const IconUtils = metro.findByProps('getUserAvatarURL', 'getGuildIconURL');
 export const { ActionSheets } = metro.api;
 export const ContextMenus = metro.findByProps('showContextMenu', 'hideContextMenu');
-export const { Theme, i18n } = metro.common;
+export const { Theme } = metro.common;
 
 export const ChannelStore = flux.getStore('Channel');
 export const GuildMemberStore = flux.getStore('GuildMember');

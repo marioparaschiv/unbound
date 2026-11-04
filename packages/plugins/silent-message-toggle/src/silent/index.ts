@@ -1,4 +1,4 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import { recordApplied, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { assets } from '@unbound-app/api';
 
@@ -6,13 +6,12 @@ import { Messages, SelectedChannelStore } from '~/silent/modules';
 import { resetOnChannelSwitch } from '~/silent/channel-switch';
 import { patchMessageActions } from '~/silent/message-actions';
 import { startToggleButton } from '~/silent/platform';
-import { silentToggle } from '~/silent/toggle';
 import { Icons, PLUGIN_NAME } from '~/constants';
 
 /**
  * @description Adds the silent toggle to the chat input and flags the messages sent while it is on.
  * Patches `_sendMessage` on Discord's message actions, listens to `SelectedChannelStore`, and patches the
- * render of `ChatInputRightActions` on iOS or `ChatInputSendButton` on Android. The Addon scope removes all of it when the plugin stops.
+ * render of `ChatInputRightActions` on iOS or `ChatInputSendButton` on Android. The Addon scope removes all of it when the plugin stops. One feature failing is logged and recorded, and the others still start.
  */
 export function startSilent(): void {
 	const on = assets.getIdByName(Icons.on);
@@ -26,9 +25,22 @@ export function startSilent(): void {
 		return;
 	}
 
-	silentToggle.reset();
-	patchMessageActions();
-	resetOnChannelSwitch();
-	startToggleButton({ on, off });
-	recordApplied(3);
+	const features = {
+		'message flag': patchMessageActions,
+		'channel reset': resetOnChannelSwitch,
+		button: () => startToggleButton({ on, off }),
+	};
+	const failed: string[] = [];
+
+	for (const [name, start] of Object.entries(features)) {
+		try {
+			start();
+			recordApplied(1);
+		} catch (error) {
+			console.error(`[${PLUGIN_NAME}] Failed to start the ${name}:`, error);
+			failed.push(name);
+		}
+	}
+
+	if (failed.length) recordFailure(`could not start the ${failed.join(', ')}`);
 }
