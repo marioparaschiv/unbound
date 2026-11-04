@@ -25,7 +25,7 @@ function DocsSymbolPage() {
 	return <SymbolPage page={page} route={route} pages={pages} />;
 }
 
-export const Route = createFileRoute('/_site/docs/$package/$version/$symbol')({
+export const Route = createFileRoute('/_site/docs/sdk/$version/$symbol')({
 	loader: async ({ context, params }) => {
 		const route = parseDocsRoute(params);
 		const page = route

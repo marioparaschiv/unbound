@@ -166,9 +166,9 @@ export function NamespaceMembers({ members, ctx }: NamespaceMembersProps) {
 											<p className='flex-1 min-w-0'>
 												{location ? (
 													<Link
-														to='/docs/$package/$version/$symbol'
+														to='/docs/sdk/$version/$symbol'
 														params={{
-															...ctx.route,
+															version: ctx.route.version,
 															symbol: location.symbol,
 														}}
 														hash={location.anchor}

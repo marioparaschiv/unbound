@@ -16,7 +16,7 @@ If the file doesn't exist when the loader starts, the loader creates it with the
 
 The root of the file is an object of **stores**. Each store is a namespace. The loader reads from the store named `unbound`, and the applied theme's id from `applied` in the `themes` store.
 
-Each addon gets its own store, keyed by its id, so an addon's storage can never collide with the loader's keys. See [storage](/docs/api/latest/storage) for how addons use the same file.
+Each addon gets its own store, keyed by its id, so an addon's storage can never collide with the loader's keys. See [storage](/docs/sdk/latest/storage) for how addons use the same file.
 
 Inside a store, keys are dot-paths that map to nested objects. For example, `loader.update.url` is stored as:
 

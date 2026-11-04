@@ -32,7 +32,7 @@ export function currentUsername() {
 }
 ```
 
-In a component, read the store with `flux.useStore` instead. The component then re-renders when the store changes. See [flux](/docs/api/latest/flux) in the API reference.
+In a component, read the store with `flux.useStore` instead. The component then re-renders when the store changes. See [flux](/docs/sdk/latest/flux) in the SDK reference.
 
 ## Listening for an action
 
@@ -61,4 +61,4 @@ Discord dispatches hundreds of action types. These are the ones you'll use most:
 | `TYPING_START`, `TYPING_STOP` | Someone starts or stops typing |
 | `CONNECTION_OPEN` | The client connects and the stores fill. Use it for setup that needs live state |
 
-All of these except `GUILD_SELECT` have typed payloads. To type another action, see [Typing your own stores and actions](/docs/api/latest/flux).
+All of these except `GUILD_SELECT` have typed payloads. To type another action, see [Typing your own stores and actions](/docs/sdk/latest/flux).

@@ -1,24 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, redirect } from '@tanstack/react-router';
 
-import { fetchOpenApiDocument } from '~/lib/docs/http-functions';
-import HttpReference from '~/components/http/http-reference';
-
-function HttpReferencePage() {
-	return <HttpReference document={Route.useLoaderData()} />;
-}
-
+/** The HTTP reference's first home; it now lives at `/docs/api`. */
 export const Route = createFileRoute('/_site/docs/http/')({
-	loader: () => fetchOpenApiDocument(),
-	// The document changes only with a deploy, so a revisit reuses it.
-	staleTime: Infinity,
-	head: () => ({
-		meta: [
-			{ title: 'Unbound | HTTP API' },
-			{
-				name: 'description',
-				content: 'The public Unbound HTTP API and its OpenAPI document.',
-			},
-		],
-	}),
-	component: HttpReferencePage,
+	loader: () => {
+		throw redirect({ to: '/docs/api', statusCode: 301 });
+	},
 });

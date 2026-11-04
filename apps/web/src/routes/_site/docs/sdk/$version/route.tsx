@@ -23,7 +23,7 @@ function DocsLayout() {
 
 	return (
 		<DocsShell
-			label='API reference'
+			label='SDK reference'
 			title={symbol ?? `@unbound-app/${route.package}`}
 			sidebar={<DocsSidebar nav={nav} symbol={symbol} />}
 			sidebarHeader={<DocsVersionPicker nav={nav} symbol={symbol} />}
@@ -34,7 +34,7 @@ function DocsLayout() {
 	);
 }
 
-export const Route = createFileRoute('/_site/docs/$package/$version')({
+export const Route = createFileRoute('/_site/docs/sdk/$version')({
 	// Before any loader, so the child pages never try to read `latest` as a version.
 	beforeLoad: async ({ context, params }) => {
 		if (params.version !== LATEST_DOCS_ALIAS) return;
@@ -45,7 +45,6 @@ export const Route = createFileRoute('/_site/docs/$package/$version')({
 
 		await redirectToLatestDocs(
 			(pkg) => context.queryClient.ensureQueryData(docsManifestQuery(pkg)),
-			params.package,
 			symbol,
 		);
 	},
