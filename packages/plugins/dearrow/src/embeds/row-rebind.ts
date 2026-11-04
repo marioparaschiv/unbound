@@ -6,6 +6,9 @@ import type { PendingRows } from '~/embeds/redraw';
 import { byRowManager } from '~/embeds/modules';
 
 const CHANGE_TYPE_UPDATE = 1;
+// Discord's native chat list calls `RowManager.generate` for one row at a time, on its own schedule, after
+// `MessageStore` changes. Nothing in JS says when the last redrawn row was generated (no event, promise or
+// batch), so no ordering can hold `stop` open exactly long enough. It outlasts `REBIND_ALL_MS` in redraw.ts.
 const REBIND_GRACE_MS = 1600;
 
 type GeneratedRow = {

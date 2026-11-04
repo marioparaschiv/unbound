@@ -1,9 +1,7 @@
-import { flux, render, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { createElement } from 'react';
-
-import { ActionSheets, hidden, MessageRowData, rows } from './fake-discord';
+import { createElement, type ReactNode } from 'react';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
@@ -26,6 +24,24 @@ const stores: StoreSeeds = {
 	Message: { getMessage: () => undefined, emitChange: () => undefined },
 };
 
+type RowInput = { message?: { id: string; channel_id: string; embeds: unknown[] } };
+
+const rows: RowInput[] = [];
+const hidden: string[] = [];
+
+const ActionSheets = {
+	openLazy: (..._args: unknown[]) => undefined,
+	hideActionSheet: (key: string) => hidden.push(key),
+};
+
+const MessageRowData = {
+	generateMessageRowData: (input: RowInput) => {
+		rows.push(input);
+
+		return input;
+	},
+};
+
 const realFetch = globalThis.fetch;
 
 function respondWith(body: unknown) {
@@ -37,6 +53,8 @@ function respondWith(body: unknown) {
 beforeEach(() => {
 	rows.length = 0;
 	hidden.length = 0;
+	metro.register(MessageRowData);
+	metro.register(ActionSheets);
 	flux.seed(stores);
 	respondWith(BRANDING);
 });
@@ -94,9 +112,13 @@ describe('YouTube embeds', () => {
 	});
 });
 
+function ActionSheetRowGroup({ children }: { hasIcons: boolean; children?: ReactNode }) {
+	return children;
+}
+
 // Discord's own row: the plugin adds its row to this group.
 function MessageLongPressActionSheet() {
-	return createElement('ActionSheetRowGroup', { hasIcons: false }, [
+	return createElement(ActionSheetRowGroup, { hasIcons: false }, [
 		createElement('Row', { key: 'copy', label: 'Copy Text', onPress: () => undefined }),
 	]);
 }
@@ -113,9 +135,7 @@ async function openSheet() {
 }
 
 const labels = (sheet: Awaited<ReturnType<typeof openSheet>>) =>
-	sheet
-		.findAll((node) => typeof node.props.accessibilityLabel === 'string')
-		.map((node) => node.props.accessibilityLabel);
+	sheet.findAll('ActionSheetRow').map((node) => node.props.label);
 
 describe('message menu', () => {
 	test('offers to show the original embed, and switches the embed back when pressed', async () => {
@@ -123,7 +143,7 @@ describe('message menu', () => {
 
 		expect(labels(sheet)).toEqual(['Show Original Embed']);
 
-		sheet.act(() => sheet.find('Pressable').props.onPress?.(Object.create(null)));
+		sheet.act(() => sheet.find('ActionSheetRow').props.onPress?.());
 
 		expect(hidden).toEqual(['MessageLongPressActionSheet']);
 		expect(
