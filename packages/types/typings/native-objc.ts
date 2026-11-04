@@ -14,10 +14,12 @@ import type {
 } from './native-handles';
 import type { NativeUIScopeFactory } from './native-ui';
 
+/** What an Objective-C call returns: a plain value, a handle to an object, a 64-bit integer, or nothing for `void`. */
 export type NativeObjCResult = NativeSerializable | NativeHandle | bigint | undefined;
 
 declare const nativeObjCCallPlan: unique symbol;
 
+/** A selector and method signature resolved once by `objc.prepare`, for calling many times without the lookup. */
 export type NativeObjCCallPlan = NativeHandle & {
 	readonly [nativeObjCCallPlan]: true;
 };
@@ -38,12 +40,17 @@ export type NativeBatchStep = {
 	args: unknown[];
 };
 
+/** Trims what a hook sends to JavaScript per call, to cut crossing cost on hot methods. */
 export type NativeHookPayload<Receiver extends boolean = boolean> = {
+	/** Whether handlers receive `self`. Defaults to true. */
 	receiver?: Receiver;
+	/** The zero-based indexes of the arguments to send; every argument when omitted. */
 	arguments?: number[];
+	/** Sends only the `before` or only the `after` call; both when omitted. */
 	phase?: 'before' | 'after';
 };
 
+/** What an Objective-C hook handler receives for one call of the hooked method. */
 export type NativeHookContext<Receiver extends boolean = true> = {
 	/** The receiver, borrowed until the handler returns. */
 	self: Receiver extends true ? NativeObjectHandle : undefined;
@@ -51,7 +58,9 @@ export type NativeHookContext<Receiver extends boolean = true> = {
 	selector: string;
 	/** The method's explicit arguments, without `self` and `_cmd`, borrowed until the handler returns. */
 	args: unknown[];
+	/** The method argument index each entry of `args` came from, as trimmed by `payload.arguments`. */
 	argumentIndexes: number[];
+	/** Which handler is running. */
 	phase: 'before' | 'after' | 'replace';
 	/** Runs the original implementation; it works only synchronously on the hook's thread. */
 	original: (...args: unknown[]) => NativeObjCResult;
@@ -134,18 +143,22 @@ export type NativeObjCBridge = {
 		selector: string,
 		args: unknown[],
 	): NativeCancelablePromise<NativeObjCResult>;
+	/** Resolves a selector's method signature on an object once, for repeated calls through `invokePrepared`. */
 	prepare(handle: NativeHandle, selector: string): NativeObjCCallPlan;
+	/** Calls a prepared selector on an object, on the thread `options.thread` names, like `invoke`. */
 	invokePrepared(
 		plan: NativeObjCCallPlan,
 		handle: NativeHandle,
 		args: unknown[],
 		options?: NativeCallOptions,
 	): NativeObjCResult;
+	/** Calls a prepared selector on the main thread and resolves with its result, like `invokeAsync`. */
 	invokePreparedAsync(
 		plan: NativeObjCCallPlan,
 		handle: NativeHandle,
 		args: unknown[],
 	): NativeCancelablePromise<NativeObjCResult>;
+	/** Frees a call plan; using it afterwards throws. */
 	disposePlan(plan: NativeObjCCallPlan): void;
 	/** Runs dependent calls in one main-thread pass; a failed step rejects it without undoing earlier steps. */
 	batch(steps: readonly NativeBatchStep[]): NativeCancelablePromise<NativeObjCResult[]>;

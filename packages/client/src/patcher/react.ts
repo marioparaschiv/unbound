@@ -96,6 +96,7 @@ export type ReactPatch<Kind extends PatchType> = {
 	): () => void;
 };
 
+/** The callback a React patch of `Kind` takes, typed with the component's props and `this`. */
 type ReactCallbackOf<Kind extends PatchType, P, Self> = Kind extends PatchType.Before
 	? ReactBeforeCallback<P, Self>
 	: Kind extends PatchType.Instead

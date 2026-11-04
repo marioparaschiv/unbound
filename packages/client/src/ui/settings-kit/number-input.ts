@@ -1,8 +1,12 @@
 /** The constraints a numeric input checks typed text against. */
 export type NumberConstraints = {
+	/** Rejects text with a fractional part. Defaults to false. */
 	integer?: boolean;
+	/** The smallest accepted value. */
 	minimum?: number;
+	/** The largest accepted value. */
 	maximum?: number;
+	/** Accepts only whole multiples of this. */
 	step?: number;
 };
 

@@ -11,6 +11,7 @@ export type PickerRowProps = {
 	value: string;
 	/** The options, in order; their sub-labels are not drawn. */
 	options: ChoiceOption[];
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the value of the option the user picks. */
 	onChange: (value: string) => void;

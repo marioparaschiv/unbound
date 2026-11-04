@@ -13,6 +13,7 @@ export type PaletteRowProps = {
 	value: string;
 	/** The colors offered, `#RRGGBB`. */
 	presets: string[];
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the color the user presses. */
 	onChange: (color: string) => void;

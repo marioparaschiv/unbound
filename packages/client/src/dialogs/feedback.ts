@@ -8,6 +8,7 @@ import type {
 } from '~/i18n/message';
 import type { AlertDialogProps, DialogHandle } from '~/dialogs/api';
 
+/** The optional body key of a dialog, and its vars when the message has placeholders. */
 type BodyOptions<B extends MessageKey> = {
 	/** The key of the text shown below the title. */
 	body?: B;

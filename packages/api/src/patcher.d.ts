@@ -221,6 +221,7 @@ export type ReactBeforeContext<P, Self> = {
 	/** Renders the unpatched component; a class component ignores `props`. */
 	original: (props?: P) => React$1.ReactNode;
 };
+/** The callback a React patch of `Kind` takes, typed with the component's props and `this`. */
 export type ReactCallbackOf<Kind extends PatchType, P, Self> = Kind extends PatchType.Before
 	? ReactBeforeCallback<P, Self>
 	: Kind extends PatchType.Instead

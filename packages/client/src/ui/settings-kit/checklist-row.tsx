@@ -15,6 +15,7 @@ export type ChecklistRowProps = {
 	options: ChoiceOption[];
 	/** The most options that can be checked; none when omitted. */
 	maxItems?: number;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the checked values, in the options' order, after each press. */
 	onChange: (value: string[]) => void;

@@ -14,6 +14,7 @@ export type EntityRowProps = {
 	label: string;
 	/** The saved id; empty for none. */
 	value: string;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with a typed id, or an empty string to clear it. */
 	onChange: (value: string) => void;

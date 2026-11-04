@@ -71,6 +71,7 @@ export type SettingCommon = {
 
 /** One option of a `choice` setting. */
 export type SettingChoice = {
+	/** The value stored when the option is picked. */
 	const: string;
 	/** The message key of the option's label. */
 	title: string;
@@ -98,10 +99,15 @@ export type DurationUnit = 'ms' | 's' | 'm' | 'h' | 'd';
 
 /** A string setting: the primitive `array` items can be too. */
 export type StringSettingSchema = {
+	/** Marks a text setting. */
 	kind: 'string';
+	/** The row that edits the text, and the validation it applies. */
 	displayAs: StringDisplay;
+	/** The value before the user changes it. */
 	default: string;
+	/** The fewest characters the text may have. */
 	minLength?: number;
+	/** The most characters the text may have. */
 	maxLength?: number;
 	/** The message key of the text shown while the input is empty. */
 	placeholder?: string;
@@ -117,9 +123,13 @@ export type StringSettingSchema = {
 
 /** A choice setting: one of its options' keys. */
 export type ChoiceSettingSchema = {
+	/** Marks a setting that stores one of a fixed set of options. */
 	kind: 'choice';
+	/** Draws the options as a radio group, a picker sheet or a segmented control. */
 	displayAs: 'radio' | 'picker' | 'segmented';
+	/** The `const` of the option picked before the user changes it. */
 	default: string;
+	/** The options, in the order they are drawn. */
 	options: SettingChoice[];
 };
 
@@ -170,8 +180,10 @@ export type SettingsGroupSchema = SettingCommon & {
 
 /** A plugin's settings schema, the JSON its settings.ts `defineSettings(...)` evaluates to at build time. */
 export type SettingsSchema = {
+	/** Marks the schema's root. */
 	kind: 'settings';
 	/** The message key of the title of the section holding the top-level settings. */
 	title?: string;
+	/** The settings, buttons and sections by key, in the order they are drawn. */
 	properties: Record<string, SettingSchema | ButtonSchema | SettingsGroupSchema>;
 };

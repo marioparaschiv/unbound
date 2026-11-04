@@ -1013,9 +1013,13 @@ export type CameraLottieProps = Omit<LottieIconProps, 'ref'> & {
 };
 /** A choice setting: one of its options' keys. */
 export type ChoiceSettingSchema = {
+	/** Marks a setting that stores one of a fixed set of options. */
 	kind: 'choice';
+	/** Draws the options as a radio group, a picker sheet or a segmented control. */
 	displayAs: 'radio' | 'picker' | 'segmented';
+	/** The `const` of the option picked before the user changes it. */
 	default: string;
+	/** The options, in the order they are drawn. */
 	options: SettingChoice[];
 };
 export type CoachmarkComponent = React$1.ComponentType<CoachmarkProps>;
@@ -3924,7 +3928,9 @@ export type NativeFontEntry = {
 export type NativeFontSource = 'app' | 'system' | 'custom';
 /** Which runtimes a debug garbage collection reached. */
 export type NativeGarbageCollection = {
+	/** Whether garbage was collected on the runtime that made the call. */
 	runtime: boolean;
+	/** Whether garbage was collected on the UI runtime; false when no UI runtime is registered or collection failed. */
 	uiRuntime: boolean;
 };
 /** An opaque reference to a native object. Only the bridge creates handles; plugins pass them back. */
@@ -3932,6 +3938,7 @@ export type NativeHandle = {
 	/** A type-only brand, absent at runtime, so plain objects cannot pass as handles. */
 	readonly [nativeHandle]: true;
 };
+/** What an Objective-C hook handler receives for one call of the hooked method. */
 export type NativeHookContext<Receiver extends boolean = true> = {
 	/** The receiver, borrowed until the handler returns. */
 	self: Receiver extends true ? NativeObjectHandle : undefined;
@@ -3939,7 +3946,9 @@ export type NativeHookContext<Receiver extends boolean = true> = {
 	selector: string;
 	/** The method's explicit arguments, without `self` and `_cmd`, borrowed until the handler returns. */
 	args: unknown[];
+	/** The method argument index each entry of `args` came from, as trimmed by `payload.arguments`. */
 	argumentIndexes: number[];
+	/** Which handler is running. */
 	phase: 'before' | 'after' | 'replace';
 	/** Runs the original implementation; it works only synchronously on the hook's thread. */
 	original: (...args: unknown[]) => NativeObjCResult;
@@ -3966,9 +3975,13 @@ export type NativeHookOptions<Receiver extends boolean = boolean> = {
 	once?: boolean;
 	payload?: NativeHookPayload<Receiver>;
 } & NativeCallOptions;
+/** Trims what a hook sends to JavaScript per call, to cut crossing cost on hot methods. */
 export type NativeHookPayload<Receiver extends boolean = boolean> = {
+	/** Whether handlers receive `self`. Defaults to true. */
 	receiver?: Receiver;
+	/** The zero-based indexes of the arguments to send; every argument when omitted. */
 	arguments?: number[];
+	/** Sends only the `before` or only the `after` call; both when omitted. */
 	phase?: 'before' | 'after';
 };
 /** An installed Objective-C hook; the plugin scope removes it on dispose. */
@@ -4042,21 +4055,25 @@ export type NativeJavaBridge = {
 	): NativeJavaValue;
 	/** Calls a method on the JavaScript thread. */
 	invoke(handle: NativeJavaReference, name: string, args?: NativeJavaArgument[]): NativeJavaValue;
+	/** Resolves a method by name and parameter types once, for repeated calls through `invokePrepared`. */
 	prepare(
 		target: NativeJavaReference,
 		name: string,
 		parameterTypes: readonly string[],
 	): NativeJavaCallPlan;
+	/** Calls a prepared method on the JavaScript thread, like `invoke`. */
 	invokePrepared(
 		plan: NativeJavaCallPlan,
 		target: NativeJavaReference,
 		args?: NativeJavaArgument[],
 	): NativeJavaValue;
+	/** Calls a prepared method on the main thread and resolves with its result, like `invokeAsync`. */
 	invokePreparedAsync(
 		plan: NativeJavaCallPlan,
 		target: NativeJavaReference,
 		args?: NativeJavaArgument[],
 	): NativeCancelablePromise<NativeJavaValue>;
+	/** Frees a call plan; using it afterwards throws. */
 	disposePlan(plan: NativeJavaCallPlan): void;
 	/** Calls a method on the main thread and resolves with its result. Needs `native.java.invokeAsync`. */
 	invokeAsync(
@@ -4071,6 +4088,7 @@ export type NativeJavaBridge = {
 	/** Drops the plugin's hold on a handle so the loader can free the object. */
 	release(handle: NativeJavaReference): void;
 };
+/** A method resolved once by `java.prepare`, for calling many times without the lookup. */
 export type NativeJavaCallPlan = NativeJavaHandle & {
 	readonly [nativeJavaCallPlan]: true;
 };
@@ -4113,16 +4131,20 @@ export type NativeJavaHookEvent<Receiver extends boolean = true> = {
 	self: Receiver extends true ? NativeJavaValue : undefined;
 	/** The call's arguments. */
 	args: NativeJavaValue[];
+	/** The method argument index each entry of `args` came from, as trimmed by `payload.arguments`. */
 	argumentIndexes: number[];
+	/** Whether the listener heard the call before or after the method ran. */
 	phase: 'before' | 'after';
 };
 /** Options for `hooks.hook`. */
 export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
+	/** Collapses queued `after` events for the same receiver into one; needs a non-static method and an `after` payload. */
 	coalesce?: 'receiver';
 	/** Returns a value set with `setReturnValue` for a matching call instead of running the method. Defaults to false. */
 	replace?: boolean;
 	/** Whether the listener hears calls: before the method by default, `after` once it has run, `false` never. */
 	notify?: boolean | 'after';
+	/** Trims the receiver, arguments and phase each event sends, to cut crossing cost on hot methods. */
 	payload?: NativeHookPayload<Receiver>;
 };
 /** An installed Java hook; the plugin scope removes it on dispose. */
@@ -4205,27 +4227,40 @@ export type NativeJavaValue =
 	  };
 /** How long main-thread crossings for one addon, kind and call label waited and ran. */
 export type NativeMainWaitCounts = {
+	/** The id of the addon that made the crossings. */
 	addon: string;
+	/** How the caller crossed: blocking (`sync`), fire-and-forget (`posted`) or awaiting a promise (`async`). */
 	kind: 'sync' | 'posted' | 'async' | 'unknown';
+	/** The call label the crossings ran under, `(other)` once the table is full. */
 	label: string;
+	/** Crossings queued for the main thread. */
 	posted: number;
+	/** Crossings that began running on the main thread. */
 	started: number;
+	/** Crossings that finished running on the main thread. */
 	finished: number;
 	/** Crossings that timed out or were refused before they started. */
 	expired: number;
 	/** Total time between posting and starting on the main thread. */
 	queuedMs: number;
+	/** The longest wait between posting and starting. */
 	maxQueuedMs: number;
 	/** Total time spent running on the main thread. */
 	runMs: number;
+	/** The longest single run on the main thread. */
 	maxRunMs: number;
 };
 /** Main-thread drains since launch or the last counter reset. */
 export type NativeMainWorkCounts = {
+	/** Times the loader drained its main-thread queue. */
 	drains: number;
+	/** Work items run across every drain. */
 	items: number;
+	/** Total time spent draining. */
 	drainMs: number;
+	/** The longest single drain. */
 	maxDrainMs: number;
+	/** The most items one drain ran. */
 	maxDrainItems: number;
 };
 /** The iOS bridge to the Objective-C runtime, scoped to the plugin's capabilities. */
@@ -4267,18 +4302,22 @@ export type NativeObjCBridge = {
 		selector: string,
 		args: unknown[],
 	): NativeCancelablePromise<NativeObjCResult>;
+	/** Resolves a selector's method signature on an object once, for repeated calls through `invokePrepared`. */
 	prepare(handle: NativeHandle, selector: string): NativeObjCCallPlan;
+	/** Calls a prepared selector on an object, on the thread `options.thread` names, like `invoke`. */
 	invokePrepared(
 		plan: NativeObjCCallPlan,
 		handle: NativeHandle,
 		args: unknown[],
 		options?: NativeCallOptions,
 	): NativeObjCResult;
+	/** Calls a prepared selector on the main thread and resolves with its result, like `invokeAsync`. */
 	invokePreparedAsync(
 		plan: NativeObjCCallPlan,
 		handle: NativeHandle,
 		args: unknown[],
 	): NativeCancelablePromise<NativeObjCResult>;
+	/** Frees a call plan; using it afterwards throws. */
 	disposePlan(plan: NativeObjCCallPlan): void;
 	/** Runs dependent calls in one main-thread pass; a failed step rejects it without undoing earlier steps. */
 	batch(steps: readonly NativeBatchStep[]): NativeCancelablePromise<NativeObjCResult[]>;
@@ -4340,9 +4379,11 @@ export type NativeObjCBridge = {
 		options?: NativeHookOptions<Receiver>,
 	): NativeHookToken;
 };
+/** A selector and method signature resolved once by `objc.prepare`, for calling many times without the lookup. */
 export type NativeObjCCallPlan = NativeHandle & {
 	readonly [nativeObjCCallPlan]: true;
 };
+/** What an Objective-C call returns: a plain value, a handle to an object, a 64-bit integer, or nothing for `void`. */
 export type NativeObjCResult = NativeSerializable | NativeHandle | bigint | undefined;
 /** A retained handle to an Objective-C object. */
 export type NativeObjectHandle = NativeHandle;
@@ -4414,6 +4455,7 @@ export type NativePlatformDevice = {
 	getOSVersionString(): string;
 	/** Whether the device is jailbroken on iOS or has an `su` binary on Android. */
 	isRooted(): boolean;
+	/** The active iOS jailbreak's name, such as `Dopamine 2.4`, or an empty string on Android and when none is found; older loaders lack it. */
 	getJailbreak?(): string;
 	/** Whether Discord is installed as a system app. */
 	isSystemApp(): boolean;
@@ -5059,6 +5101,7 @@ export type PressableOpacityProps = Omit<PressableBaseProps, 'activeOpacity' | '
 	activeOpacity?: PressableBaseProps['activeOpacity'];
 	ref?: PressableBaseProps['innerRef'];
 };
+/** A value that is not an object or a function. */
 export type Primitive = string | number | boolean | bigint | null | undefined;
 export type PromoSheetComponent = React$1.ComponentType<PromoSheetProps & Record<string, unknown>>;
 /**
@@ -5278,6 +5321,7 @@ export type ServerTabLottieProps = Omit<LottieIconProps, 'ref'> & {
 };
 /** One option of a `choice` setting. */
 export type SettingChoice = {
+	/** The value stored when the option is picked. */
 	const: string;
 	/** The message key of the option's label. */
 	title: string;
@@ -5379,9 +5423,11 @@ export type SettingsObject = {
 };
 /** A plugin's settings schema, the JSON its settings.ts `defineSettings(...)` evaluates to at build time. */
 export type SettingsSchema = {
+	/** Marks the schema's root. */
 	kind: 'settings';
 	/** The message key of the title of the section holding the top-level settings. */
 	title?: string;
+	/** The settings, buttons and sections by key, in the order they are drawn. */
 	properties: Record<string, SettingSchema | ButtonSchema | SettingsGroupSchema>;
 };
 /** The screen descriptor a settings route entry renders. */
@@ -5632,10 +5678,15 @@ export type StringDisplay =
 	| EntityDisplay;
 /** A string setting: the primitive `array` items can be too. */
 export type StringSettingSchema = {
+	/** Marks a text setting. */
 	kind: 'string';
+	/** The row that edits the text, and the validation it applies. */
 	displayAs: StringDisplay;
+	/** The value before the user changes it. */
 	default: string;
+	/** The fewest characters the text may have. */
 	minLength?: number;
+	/** The most characters the text may have. */
 	maxLength?: number;
 	/** The message key of the text shown while the input is empty. */
 	placeholder?: string;

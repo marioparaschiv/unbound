@@ -16,6 +16,7 @@ export type ButtonRowProps = {
 	variant?: 'button' | 'danger';
 	/** A question asked before `onPress` runs; none when omitted. */
 	confirmation?: string;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called when the row is pressed, after the user confirms. */
 	onPress: () => void;

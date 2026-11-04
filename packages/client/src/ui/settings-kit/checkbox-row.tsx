@@ -10,6 +10,7 @@ export type CheckboxRowProps = {
 	subLabel?: string;
 	/** Whether the box is checked. */
 	value: boolean;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the new state when the row is pressed. */
 	onValueChange: (value: boolean) => void;

@@ -7,7 +7,12 @@ import type { DefinedSettings, SettingsValues } from '~/storage/define';
 export type SettingPredicate = (settings: SettingsValues) => boolean;
 
 /** One setting's lifted predicates. */
-export type SettingConditions = { visibleWhen?: SettingPredicate; disabledWhen?: SettingPredicate };
+export type SettingConditions = {
+	/** Draws the row only while this returns true. */
+	visibleWhen?: SettingPredicate;
+	/** Draws the row disabled while this returns true. */
+	disabledWhen?: SettingPredicate;
+};
 
 /** Each setting's lifted predicates, by its dot-separated key. */
 export type SettingPredicates = Record<string, SettingConditions>;

@@ -1,5 +1,6 @@
 import type { ComponentType, FunctionComponent } from 'react';
 
+/** A value that is not an object or a function. */
 type Primitive = string | number | boolean | bigint | null | undefined;
 
 /** A callback the generator typed: kept as is, since its parameters and arity are what a caller relies on. */

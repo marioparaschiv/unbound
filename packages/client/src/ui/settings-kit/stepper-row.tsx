@@ -17,6 +17,7 @@ export type StepperRowProps = {
 	maximum?: number;
 	/** How much each press adds or takes away; `1` when omitted. */
 	step?: number;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the new number on each press. */
 	onChange: (value: number) => void;

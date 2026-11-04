@@ -300,6 +300,7 @@ export type ButtonRowProps = {
 	variant?: 'button' | 'danger';
 	/** A question asked before `onPress` runs; none when omitted. */
 	confirmation?: string;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called when the row is pressed, after the user confirms. */
 	onPress: () => void;
@@ -312,6 +313,7 @@ export type CheckboxRowProps = {
 	subLabel?: string;
 	/** Whether the box is checked. */
 	value: boolean;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the new state when the row is pressed. */
 	onValueChange: (value: boolean) => void;
@@ -328,6 +330,7 @@ export type ChecklistRowProps = {
 	options: ChoiceOption[];
 	/** The most options that can be checked; none when omitted. */
 	maxItems?: number;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the checked values, in the options' order, after each press. */
 	onChange: (value: string[]) => void;
@@ -385,6 +388,7 @@ export type DurationRowProps = {
 	maximum?: number;
 	/** The units offered, smallest first; seconds, minutes and hours when omitted. */
 	units?: DurationUnit[];
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the new duration, in milliseconds. */
 	onChange: (value: number) => void;
@@ -397,6 +401,7 @@ export type EntityRowProps = {
 	label: string;
 	/** The saved id; empty for none. */
 	value: string;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with a typed id, or an empty string to clear it. */
 	onChange: (value: string) => void;
@@ -445,6 +450,7 @@ export type ListRowProps = {
 	maxItems?: number;
 	/** Returns why a string cannot be added, or `undefined` when it can. */
 	validate?: (text: string) => string | undefined;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the new list after each add, remove or move. */
 	onChange: (value: string[]) => void;
@@ -453,9 +459,13 @@ export type ListRowProps = {
 export type MultilineRowProps = Omit<InputRowProps, 'variant' | 'keyboardType'>;
 /** The constraints a numeric input checks typed text against. */
 export type NumberConstraints = {
+	/** Rejects text with a fractional part. Defaults to false. */
 	integer?: boolean;
+	/** The smallest accepted value. */
 	minimum?: number;
+	/** The largest accepted value. */
 	maximum?: number;
+	/** Accepts only whole multiples of this. */
 	step?: number;
 };
 /** Props for `NumberRow`. */
@@ -485,6 +495,7 @@ export type PaletteRowProps = {
 	value: string;
 	/** The colors offered, `#RRGGBB`. */
 	presets: string[];
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the color the user presses. */
 	onChange: (color: string) => void;
@@ -497,6 +508,7 @@ export type PickerRowProps = {
 	value: string;
 	/** The options, in order; their sub-labels are not drawn. */
 	options: ChoiceOption[];
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the value of the option the user picks. */
 	onChange: (value: string) => void;
@@ -557,6 +569,7 @@ export type SegmentedRowProps = {
 	value: string;
 	/** Up to four options; their sub-labels are not drawn. */
 	options: ChoiceOption[];
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the value of the segment the user presses. */
 	onChange: (value: string) => void;
@@ -567,7 +580,9 @@ export type SettingAction = () => void | Promise<void>;
 export type SettingActions = Record<string, SettingAction | undefined>;
 /** One setting's lifted predicates. */
 export type SettingConditions = {
+	/** Draws the row only while this returns true. */
 	visibleWhen?: SettingPredicate;
+	/** Draws the row disabled while this returns true. */
 	disabledWhen?: SettingPredicate;
 };
 /** A predicate the build lifted out of settings.ts: it reads every setting and returns whether its row shows or is enabled. */
@@ -615,6 +630,7 @@ export type StepperRowProps = {
 	maximum?: number;
 	/** How much each press adds or takes away; `1` when omitted. */
 	step?: number;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the new number on each press. */
 	onChange: (value: number) => void;

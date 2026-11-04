@@ -19,6 +19,7 @@ export type DurationRowProps = {
 	maximum?: number;
 	/** The units offered, smallest first; seconds, minutes and hours when omitted. */
 	units?: DurationUnit[];
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the new duration, in milliseconds. */
 	onChange: (value: number) => void;

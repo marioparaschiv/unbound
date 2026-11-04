@@ -74,6 +74,7 @@ export type AlertOptions<T extends MessageKey, B extends MessageKey = never> = B
 		/** The key of the button that closes the dialog; Unbound's `OK` when omitted. */
 		confirm?: PlainMessageKey;
 	};
+/** The optional body key of a dialog, and its vars when the message has placeholders. */
 export type BodyOptions<B extends MessageKey> = {
 	/** The key of the text shown below the title. */
 	body?: B;

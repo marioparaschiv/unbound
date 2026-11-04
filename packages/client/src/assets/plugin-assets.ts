@@ -27,7 +27,9 @@ export type AssetRegistration = {
 
 /** A registered asset: its id, and the function that takes it out of the registry. */
 export type RegisteredAsset = {
+	/** The asset registry id, which an image `source` or an `icon` option takes. */
 	id: number;
+	/** Takes the asset out of the registry; registering its name again reuses the id. */
 	unregister: () => void;
 };
 

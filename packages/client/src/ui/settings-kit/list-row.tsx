@@ -16,6 +16,7 @@ export type ListRowProps = {
 	maxItems?: number;
 	/** Returns why a string cannot be added, or `undefined` when it can. */
 	validate?: (text: string) => string | undefined;
+	/** Dims the row and ignores input. Defaults to false. */
 	disabled?: boolean;
 	/** Called with the new list after each add, remove or move. */
 	onChange: (value: string[]) => void;
