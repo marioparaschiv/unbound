@@ -1,4 +1,4 @@
-import { recordApplied, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import { patchActionSheets, type SheetState } from '~/raw/action-sheets';
@@ -14,8 +14,8 @@ const PLUGIN_NAME = 'View Raw';
  * The rows need only the action sheet module; the menu items start when the context menu module is there, and each feature starts on its own so one failure leaves the other running.
  * The Addon scope removes every patch when the plugin stops.
  */
-export function startViewRaw(): void {
-	if (!ensureModules(PLUGIN_NAME, { ActionSheets })) return;
+export function startViewRaw(): () => Promise<void> {
+	if (!ensureModules(PLUGIN_NAME, { ActionSheets })) return async () => {};
 
 	const state: SheetState = { open: null, profileUserId: null };
 	const features = [() => patchActionSheets(state)];
@@ -24,20 +24,5 @@ export function startViewRaw(): void {
 		features.push(() => patchContextMenus(state));
 	}
 
-	const failures: string[] = [];
-	let applied = 0;
-
-	for (const start of features) {
-		try {
-			start();
-			applied++;
-		} catch (error) {
-			console.error(`[${PLUGIN_NAME}] Failed to start a feature:`, error);
-			failures.push(error instanceof Error ? error.message : String(error));
-		}
-	}
-
-	recordApplied(applied);
-
-	for (const failure of failures) recordFailure(failure);
+	return startFeatures(PLUGIN_NAME, features);
 }

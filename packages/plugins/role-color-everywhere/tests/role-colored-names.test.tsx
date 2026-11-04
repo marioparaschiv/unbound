@@ -1,4 +1,5 @@
-import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
+import { flux, metro, native, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
@@ -6,8 +7,6 @@ import { createElement, memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
 
 import { selfTest } from '~/index';
-
-import { NO_NATIVE_CLASSES, registerFeatureModules } from './feature-modules';
 
 const RED = '#ff0000';
 
@@ -58,20 +57,17 @@ describe('typing names', () => {
 	});
 
 	beforeEach(() => {
-		registerFeatureModules(
-			{ default: TypingIndicator },
-			'modules/chat/native/TypingIndicator.tsx',
-		);
+		metro.register({ default: TypingIndicator }, 'modules/chat/native/TypingIndicator.tsx');
 	});
 
 	test('paints the name of a typing member with their role color', async () => {
-		await startPlugin(NO_NATIVE_CLASSES);
+		await startPlugin();
 
 		expect(colorsOf(render(createElement(TypingIndicator)))).toEqual([{ color: RED }]);
 	});
 
 	test('draws plain names in a list drawn before the plugin stopped', async () => {
-		await startPlugin(NO_NATIVE_CLASSES);
+		await startPlugin();
 		render(createElement(TypingIndicator));
 		await stopPlugin();
 
@@ -82,7 +78,7 @@ describe('typing names', () => {
 
 	test('leaves names plain while Typing Names is off', async () => {
 		settings.typingUsers = false;
-		await startPlugin(NO_NATIVE_CLASSES);
+		await startPlugin();
 
 		expect(colorsOf(render(createElement(TypingIndicator)))).toEqual([undefined]);
 	});
@@ -113,14 +109,14 @@ describe('member list role headers', () => {
 	};
 
 	beforeEach(() => {
-		registerFeatureModules(
+		metro.register(
 			module,
 			'modules/main_tabs_v2/native/shared_components/user_list/UsersFastList.tsx',
 		);
 	});
 
 	test('paints a role section title with the role color', async () => {
-		await startPlugin(NO_NATIVE_CLASSES);
+		await startPlugin();
 
 		expect(
 			colorsOf(
@@ -130,7 +126,7 @@ describe('member list role headers', () => {
 	});
 
 	test('draws a plain title in a list drawn before the plugin stopped', async () => {
-		await startPlugin(NO_NATIVE_CLASSES);
+		await startPlugin();
 		render(createElement(module.UsersFastList as (p: object) => ReactNode, props));
 		await stopPlugin();
 
@@ -181,8 +177,8 @@ describe('reaction users', () => {
 	};
 
 	test('paints a reactor’s name with their role color', async () => {
-		registerFeatureModules(module, 'modules/reactions/native/MessageReactionsContent.tsx');
-		await startPlugin(NO_NATIVE_CLASSES);
+		metro.register(module, 'modules/reactions/native/MessageReactionsContent.tsx');
+		await startPlugin();
 
 		const view = render(
 			createElement(module.MessageReactionsContent, { channelId: 'channel' }),
@@ -192,8 +188,8 @@ describe('reaction users', () => {
 	});
 
 	test('draws plain names in a list drawn before the plugin stopped', async () => {
-		registerFeatureModules(module, 'modules/reactions/native/MessageReactionsContent.tsx');
-		await startPlugin(NO_NATIVE_CLASSES);
+		metro.register(module, 'modules/reactions/native/MessageReactionsContent.tsx');
+		await startPlugin();
 		render(createElement(module.MessageReactionsContent, { channelId: 'channel' }));
 		await stopPlugin();
 
@@ -237,8 +233,8 @@ describe('poll voters', () => {
 	};
 
 	test('paints a voter’s name with their role color', async () => {
-		registerFeatureModules(module, 'modules/polls/native/PollVotesActionSheet.tsx');
-		await startPlugin(NO_NATIVE_CLASSES);
+		metro.register(module, 'modules/polls/native/PollVotesActionSheet.tsx');
+		await startPlugin();
 
 		const view = render(createElement(module.default, { channelId: 'channel' }));
 
@@ -246,8 +242,8 @@ describe('poll voters', () => {
 	});
 
 	test('draws plain names in a list drawn before the plugin stopped', async () => {
-		registerFeatureModules(module, 'modules/polls/native/PollVotesActionSheet.tsx');
-		await startPlugin(NO_NATIVE_CLASSES);
+		metro.register(module, 'modules/polls/native/PollVotesActionSheet.tsx');
+		await startPlugin();
 		render(createElement(module.default, { channelId: 'channel' }));
 		await stopPlugin();
 
@@ -271,8 +267,8 @@ describe('voice users', () => {
 	};
 
 	test('paints a voice member’s name with their role color', async () => {
-		registerFeatureModules(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
-		await startPlugin(NO_NATIVE_CLASSES);
+		metro.register(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
+		await startPlugin();
 
 		const view = render(
 			createElement(module.default, { guildId: 'guild', user: { id: 'red' } }),
@@ -282,8 +278,8 @@ describe('voice users', () => {
 	});
 
 	test('leaves a member with no role color plain', async () => {
-		registerFeatureModules(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
-		await startPlugin(NO_NATIVE_CLASSES);
+		metro.register(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
+		await startPlugin();
 
 		const view = render(
 			createElement(module.default, { guildId: 'guild', user: { id: 'plain' } }),
@@ -293,8 +289,8 @@ describe('voice users', () => {
 	});
 
 	test('draws a plain name once the plugin stopped', async () => {
-		registerFeatureModules(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
-		await startPlugin(NO_NATIVE_CLASSES);
+		metro.register(module, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
+		await startPlugin();
 		await stopPlugin();
 
 		const view = render(
@@ -306,10 +302,20 @@ describe('voice users', () => {
 });
 
 describe('self test', () => {
-	// UNKNOWN until kit 2's objc fake lands: the native painters skip, so only they are named as skipped.
-	test('names only the native painters as skipped after the plugin starts', async () => {
-		registerFeatureModules();
-		await startPlugin(NO_NATIVE_CLASSES);
+	beforeEach(() => {
+		resetHealth();
+	});
+
+	test('reports ok once the native painters find their Discord classes', async () => {
+		native.objc.registerClass('DCDMessageTableViewCell');
+		native.objc.registerClass('DCDChatInputComponentView');
+		await startPlugin();
+
+		expect(await selfTest()).toMatchObject({ ok: true });
+	});
+
+	test('names only the native painters as skipped when Discord lacks their classes', async () => {
+		await startPlugin();
 
 		const { ok, detail } = await selfTest();
 
@@ -332,8 +338,8 @@ describe('self test', () => {
 
 		// Patching a render function that is not there throws; the typing feature fails alone.
 		metro.register({ default: 'not a component' }, 'modules/chat/native/TypingIndicator.tsx');
-		registerFeatureModules(voice, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
-		await startPlugin(NO_NATIVE_CLASSES);
+		metro.register(voice, 'modules/guild_sidebar/native/VoiceUserNameItem.tsx');
+		await startPlugin();
 
 		const view = render(
 			createElement(voice.default, { guildId: 'guild', user: { id: 'red' } }),

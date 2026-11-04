@@ -1,3 +1,4 @@
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
@@ -5,6 +6,11 @@ import { View } from 'react-native';
 
 import { selfTest } from '~/index';
 import { UPLOAD_PREVIEW_SHEET } from '~/constants';
+
+// Health is module state that earlier tests in this process left behind.
+beforeEach(() => {
+	resetHealth();
+});
 
 type Upload = { id: string; filename: string };
 

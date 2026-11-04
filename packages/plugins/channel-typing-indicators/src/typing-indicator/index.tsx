@@ -1,5 +1,5 @@
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { recordApplied, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 import { metro } from '@unbound-app/api';
 
 import { PLUGIN_NAME } from '~/constants';
@@ -14,24 +14,8 @@ import { patchTextChannel } from '~/typing-indicator/text-channel';
  * The Addon scope removes both patches when the plugin stops, and the rows draw without the indicator again.
  * A patch that throws on an unexpected component is logged and recorded, and the other still applies.
  */
-export function startTypingIndicators(): void {
-	if (!ensureModules(PLUGIN_NAME, { Theme: metro.common.Theme })) return;
+export function startTypingIndicators(): () => Promise<void> {
+	if (!ensureModules(PLUGIN_NAME, { Theme: metro.common.Theme })) return async () => {};
 
-	const failures: string[] = [];
-	let applied = 0;
-
-	for (const patch of [patchTextChannel, patchThreadChannel]) {
-		try {
-			patch();
-			applied++;
-		} catch (error) {
-			console.error(`[${PLUGIN_NAME}] Failed to apply ${patch.name}:`, error);
-			failures.push(error instanceof Error ? error.message : String(error));
-		}
-	}
-
-	recordApplied(applied);
-
-	// Recorded last: counting applied patches clears a recorded failure.
-	if (failures.length) recordFailure(failures.join('; '));
+	return startFeatures(PLUGIN_NAME, [patchTextChannel, patchThreadChannel]);
 }

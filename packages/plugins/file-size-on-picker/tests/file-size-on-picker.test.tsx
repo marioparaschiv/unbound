@@ -1,32 +1,50 @@
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { metro, native, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { memo, type ReactElement } from 'react';
 import { View } from 'react-native';
 
-import type { NativeJavaBridge } from '@unbound-app/api/native';
+import { selfTest } from '~/index';
 
-type Handle = { type: 'handle'; value: string };
-
-// Android's content resolver as the Java bridge reaches it: a URI is looked up by its descriptor's size.
 const sizes = new Map<string, number>();
 
-function handle(value: string): Handle {
-	return { type: 'handle', value };
+// A method receives the object a test made, whose fields are the ones it was created with.
+function uriOf(made: unknown) {
+	return (made as { fields: Map<string, string> }).fields.get('uri') ?? '';
 }
 
-// UNKNOWN: the plugin calls only these members of the bridge, so the test gives only these.
-const java = {
-	getClass: (name: string) => handle(`class:${name}`),
-	getField: () => handle('tracker'),
-	release: () => {},
-	invoke(target: Handle, name: string, args: { value?: unknown }[]) {
-		if (name === 'parse') return handle(`uri:${args[0]?.value}`);
-		if (name === 'openFileDescriptor') return handle(`file:${String(args[0]?.value).slice(4)}`);
-		if (name === 'getStatSize')
-			return { type: 'long', value: sizes.get(target.value.slice(5)) ?? -1 };
-		return handle(name);
-	},
-};
+// Android's content resolver as the plugin reaches it: a URI is looked up by its descriptor's size.
+function registerContentResolver() {
+	const { java } = native;
+
+	java.registerClass('android.net.Uri', {
+		staticMethods: { parse: (_self, uri) => java.create('android.net.Uri', { uri }) },
+	});
+	java.registerClass('android.os.ParcelFileDescriptor', {
+		methods: {
+			getStatSize: (self) => sizes.get(uriOf(self)) ?? -1,
+			close: () => null,
+		},
+	});
+	java.registerClass('android.content.ContentResolver', {
+		methods: {
+			openFileDescriptor: (_self, uri) =>
+				java.create('android.os.ParcelFileDescriptor', {
+					uri: uriOf(uri),
+				}),
+		},
+	});
+	java.registerClass('android.content.Context', {
+		methods: { getContentResolver: () => java.create('android.content.ContentResolver') },
+	});
+	java.registerClass('android.app.Activity', {
+		methods: { getApplicationContext: () => java.create('android.content.Context') },
+	});
+	java.registerClass('app.unbound.android.ActivityTracker', {
+		methods: { currentActivity: () => java.create('android.app.Activity') },
+		staticFields: { INSTANCE: java.create('app.unbound.android.ActivityTracker') },
+	});
+}
 
 const PICKER_PATH = 'modules/media_keyboard/native/components/MediaKeyboardItem.tsx';
 
@@ -48,7 +66,7 @@ const picker = {
 };
 
 async function badges() {
-	await startPlugin({ native: { java: java as unknown as NativeJavaBridge } });
+	await startPlugin();
 
 	return render(<picker.default />)
 		.findAll('Text')
@@ -58,8 +76,10 @@ async function badges() {
 beforeEach(async () => {
 	items = [];
 	sizes.clear();
-	// Android is the platform whose picker needs a lookup; `definePlatform` picks it once, when the plugin is first imported.
+	resetHealth();
+	// Android is the platform whose picker needs a lookup.
 	native.setPlatform('android');
+	registerContentResolver();
 	metro.register({ Fonts: { PRIMARY_BOLD: 'ggsans-Bold' }, Endpoints: {} });
 	metro.register(picker, PICKER_PATH);
 });
@@ -91,12 +111,20 @@ describe('the media picker', () => {
 	});
 });
 
+describe('on iOS', () => {
+	test('leaves the badge to the size Discord reports and never looks one up', async () => {
+		native.setPlatform('ios');
+		sizes.set('content://media/1', 3 * 1024 ** 2);
+		items = [image('a', 2048), image('content://media/1')];
+
+		expect(await badges()).toEqual(['2 KB']);
+		expect(native.calls).toEqual([]);
+	});
+});
+
 describe('the self test', () => {
 	test('reports the badges applied once the plugin starts', async () => {
-		// Imported after `setPlatform`, since `definePlatform` picks the platform when the plugin is first imported.
-		const { selfTest } = await import('~/index');
-
-		await startPlugin({ native: { java: java as unknown as NativeJavaBridge } });
+		await startPlugin();
 
 		expect(selfTest().ok).toBe(true);
 	});

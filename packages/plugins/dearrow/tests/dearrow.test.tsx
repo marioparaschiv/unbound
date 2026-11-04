@@ -1,3 +1,4 @@
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
@@ -5,6 +6,11 @@ import { createElement, type ReactNode } from 'react';
 
 import { selfTest } from '~/index';
 import type { StoreSeeds } from '@unbound-app/api/testing';
+
+// Health is module state that earlier tests in this process left behind.
+beforeEach(() => {
+	resetHealth();
+});
 
 const VIDEO = 'dQw4w9WgXcQ';
 const BRANDING = {

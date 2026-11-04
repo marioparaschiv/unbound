@@ -1023,6 +1023,7 @@
       "name": "settings-demo",
       "version": "1.0.0",
       "devDependencies": {
+        "@types/react": "^19.2.7",
         "@unbound-app/api": "workspace:*",
         "@unbound-app/cli": "workspace:*",
         "rollup": "^4.66.0",
