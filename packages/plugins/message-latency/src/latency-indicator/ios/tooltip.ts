@@ -10,11 +10,11 @@ import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke'
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
-import { setFrame } from '~/ios/views';
-import LatencyTooltip from '~/components/latency-tooltip';
-import { placeTooltip, tooltipTextWidth } from '~/tooltip-layout';
+import { setFrame } from '~/latency-indicator/ios/views';
+import LatencyTooltip from '~/latency-indicator/components/latency-tooltip';
+import { placeTooltip, tooltipTextWidth } from '~/latency-indicator/tooltip-layout';
 import { Icon, Tooltip } from '~/constants';
-import { Tooltips } from '~/modules';
+import { Tooltips } from '~/latency-indicator/modules';
 
 export type TooltipAnchor = {
 	cellKey: string;

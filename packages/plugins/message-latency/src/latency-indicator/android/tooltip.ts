@@ -23,10 +23,10 @@ import { currentDecorView } from '@unbound-plugins/shared/native/android/views';
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
-import { placeTooltip, tooltipTextWidth } from '~/tooltip-layout';
-import LatencyTooltip from '~/components/latency-tooltip';
+import { placeTooltip, tooltipTextWidth } from '~/latency-indicator/tooltip-layout';
+import LatencyTooltip from '~/latency-indicator/components/latency-tooltip';
 import { Icon, Tooltip } from '~/constants';
-import { Tooltips } from '~/modules';
+import { Tooltips } from '~/latency-indicator/modules';
 
 type Native = {
 	java: NativeJavaBridge;

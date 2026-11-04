@@ -41,12 +41,12 @@ import {
 	scheduleStartupScans,
 } from '@unbound-plugins/shared/native/android/views';
 
-import { registerLatencyIconSurface } from '~/components/latency-icon';
-import type { LatencyRecord, LatencyRecords } from '~/records';
-import type { AndroidTooltips } from '~/android/tooltip';
-import { subscribeTheme } from '~/theme';
+import { registerLatencyIconSurface } from '~/latency-indicator/components/latency-icon';
+import type { LatencyRecord, LatencyRecords } from '~/latency-indicator/records';
+import type { AndroidTooltips } from '~/latency-indicator/android/tooltip';
+import { subscribeTheme } from '~/latency-indicator/theme';
 import { Icon } from '~/constants';
-import { installRebindGuard } from '~/android/rebind-guard';
+import { installRebindGuard } from '~/latency-indicator/android/rebind-guard';
 import { FIRST_ARGUMENT_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 const DRAWABLE = 'android.graphics.drawable.Drawable';

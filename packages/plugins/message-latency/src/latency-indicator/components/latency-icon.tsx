@@ -1,10 +1,11 @@
 import registerAppSurface from '@unbound-plugins/shared/native/app-surface';
 import { Pressable, View } from 'react-native';
+import { messages } from '@unbound-app/i18n';
 import { useSyncExternalStore } from 'react';
 
-import type { LatencyRecord } from '~/records';
+import type { LatencyRecord } from '~/latency-indicator/records';
 import { FILL_TOKENS, Icon } from '~/constants';
-import { resolveColor } from '~/theme';
+import { resolveColor } from '~/latency-indicator/theme';
 
 export type IconSource = {
 	record(surfaceId: string): LatencyRecord | undefined;
@@ -37,7 +38,7 @@ export function registerLatencyIconSurface(source: IconSource): string | undefin
 		return (
 			<Pressable
 				accessibilityRole='button'
-				accessibilityLabel={record.details.displayDelta ?? 'Old Discord Android client'}
+				accessibilityLabel={record.details.displayDelta ?? messages.OLD_ANDROID_CLIENT}
 				accessibilityHint={record.tooltip}
 				onPress={() => source.press(surfaceId)}
 				style={size}

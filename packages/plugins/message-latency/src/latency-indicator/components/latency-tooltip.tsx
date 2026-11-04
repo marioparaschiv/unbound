@@ -1,5 +1,5 @@
-import { Tooltips } from '~/modules';
-import { resolveColor } from '~/theme';
+import { Tooltips } from '~/latency-indicator/modules';
+import { resolveColor } from '~/latency-indicator/theme';
 
 export type LatencyTooltipProps = {
 	arrowDirection: 'UP' | 'DOWN';

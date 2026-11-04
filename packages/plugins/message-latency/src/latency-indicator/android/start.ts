@@ -1,9 +1,9 @@
 import ensureCapabilities from '@unbound-plugins/shared/native/ensure-capabilities';
 import type { PluginContext } from '@unbound-app/api/native';
 
-import { createAndroidIndicators } from '~/android/indicators';
-import { createAndroidTooltips } from '~/android/tooltip';
-import type { LatencyRecords } from '~/records';
+import { createAndroidIndicators } from '~/latency-indicator/android/indicators';
+import { createAndroidTooltips } from '~/latency-indicator/android/tooltip';
+import type { LatencyRecords } from '~/latency-indicator/records';
 
 /**
  * @description Draws the indicator in Discord's Android message rows.

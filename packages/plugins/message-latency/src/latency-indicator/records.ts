@@ -1,11 +1,13 @@
+import { settings } from '@unbound-app/settings';
+
 import {
 	latencyDetails,
 	latencyTooltip,
 	type LatencyDetails,
 	type LatencyMessage,
-} from '~/latency';
-import { Defaults, MAX_LATENCY_RECORDS } from '~/constants';
-import { settings, UserStore } from '~/modules';
+} from '~/latency-indicator/latency';
+import { UserStore } from '~/latency-indicator/modules';
+import { MAX_LATENCY_RECORDS } from '~/constants';
 
 export type LatencyRecord = {
 	details: LatencyDetails;
@@ -21,10 +23,10 @@ export type LatencyRecords = {
 
 function readOptions() {
 	return {
-		latency: settings.get('latency', Defaults.latency),
-		showMillis: settings.get('showMillis', Defaults.showMillis),
-		ignoreSelf: settings.get('ignoreSelf', Defaults.ignoreSelf),
-		detectDiscordKotlin: settings.get('detectDiscordKotlin', Defaults.detectDiscordKotlin),
+		latency: settings.latency,
+		showMillis: settings.showMillis,
+		ignoreSelf: settings.ignoreSelf,
+		detectDiscordKotlin: settings.detectDiscordKotlin,
 	};
 }
 

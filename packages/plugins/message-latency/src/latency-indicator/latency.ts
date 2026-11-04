@@ -1,3 +1,5 @@
+import { format, messages } from '@unbound-app/i18n';
+
 import {
 	ANDROID_NONCE_OFFSET,
 	ANDROID_OFFSET_TOLERANCE,
@@ -64,29 +66,47 @@ export function snowflakeTimestamp(value: string | number | null | undefined): n
  * @description Spells out a duration the way Vencord's MessageLatency does, such as "2 minutes and 3 seconds".
  * @param delta The duration in milliseconds.
  * @param showMillis Whether milliseconds are shown, which moves the "and" before them.
- * @returns The English duration text.
+ * @returns The duration text in the user's language.
  */
 export function formatLatency(delta: number, showMillis: boolean): string {
 	// Vencord's joining rule ("1 hour 2 minutes and 3 seconds") has no `Intl.ListFormat` equivalent.
-	const parts: [number, string][] = [
-		[Math.floor(delta / 86_400_000), 'day'],
-		[Math.floor((delta / 3_600_000) % 24), 'hour'],
-		[Math.floor((delta / 60_000) % 60), 'minute'],
-		[Math.floor((delta / 1000) % 60), 'second'],
-		[Math.floor(delta % 1000), 'millisecond'],
+	const parts: [count: number, text: string][] = [
+		[
+			Math.floor(delta / 86_400_000),
+			format('DURATION_DAYS', { count: Math.floor(delta / 86_400_000) }),
+		],
+		[
+			Math.floor((delta / 3_600_000) % 24),
+			format('DURATION_HOURS', { count: Math.floor((delta / 3_600_000) % 24) }),
+		],
+		[
+			Math.floor((delta / 60_000) % 60),
+			format('DURATION_MINUTES', { count: Math.floor((delta / 60_000) % 60) }),
+		],
+		[
+			Math.floor((delta / 1000) % 60),
+			format('DURATION_SECONDS', { count: Math.floor((delta / 1000) % 60) }),
+		],
+		[
+			Math.floor(delta % 1000),
+			format('DURATION_MILLISECONDS', { count: Math.floor(delta % 1000) }),
+		],
 	];
-	const lastJoined = showMillis ? 'millisecond' : 'second';
+	const lastJoined = showMillis ? parts.length - 1 : parts.length - 2;
 	let result = '';
 
-	for (const [value, unit] of parts) {
-		if (!value) continue;
+	for (const [index, [count, text]] of parts.entries()) {
+		if (!count) continue;
 
-		if (result) result += unit === lastJoined ? ' and ' : ' ';
-
-		result += `${value} ${unit}${value > 1 ? 's' : ''}`;
+		result = result
+			? format(index === lastJoined ? 'DURATION_JOIN_LAST' : 'DURATION_JOIN', {
+					earlier: result,
+					later: text,
+				})
+			: text;
 	}
 
-	return result || '0 seconds';
+	return result || format('DURATION_SECONDS', { count: 0 });
 }
 
 /**
@@ -149,15 +169,14 @@ export function latencyDetails(
  * @returns The tooltip sentence.
  */
 export function latencyTooltip(details: LatencyDetails): string {
-	if (!details.displayDelta) return 'User is suspected to be on an old Discord Android client';
+	if (!details.displayDelta) return messages.TOOLTIP_OLD_ANDROID_CLIENT;
 
+	const duration = details.displayDelta;
 	const message = details.ahead
-		? `This user's clock is ${details.displayDelta} ahead.`
-		: `This message was sent with a delay of ${details.displayDelta}.`;
+		? format('TOOLTIP_CLOCK_AHEAD', { duration })
+		: format('TOOLTIP_DELAYED', { duration });
 
-	return details.androidClient
-		? `${message} User is suspected to be on an old Discord Android client.`
-		: message;
+	return details.androidClient ? format('TOOLTIP_WITH_OLD_ANDROID_CLIENT', { message }) : message;
 }
 
 export default { snowflakeTimestamp, formatLatency, latencyDetails, latencyTooltip };

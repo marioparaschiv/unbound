@@ -1,10 +1,10 @@
 import ensureClasses from '@unbound-plugins/shared/native/ios/ensure-classes';
 import type { PluginContext } from '@unbound-app/api/native';
 
-import { createMessageCells } from '~/ios/message-cells';
-import { installReuseGuard } from '~/ios/reuse-guard';
-import type { LatencyRecords } from '~/records';
-import { createTooltips } from '~/ios/tooltip';
+import { createMessageCells } from '~/latency-indicator/ios/message-cells';
+import { installReuseGuard } from '~/latency-indicator/ios/reuse-guard';
+import type { LatencyRecords } from '~/latency-indicator/records';
+import { createTooltips } from '~/latency-indicator/ios/tooltip';
 
 /**
  * @description Prepares the indicator for Discord's iOS message cells.

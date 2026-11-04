@@ -1,8 +1,8 @@
 import type { NativeRuntimeBridge } from '@unbound-app/api/native';
 import { flux, native } from '@unbound-app/api';
 
-import type { LatencyRecords } from '~/records';
-import type { LatencyMessage } from '~/latency';
+import type { LatencyRecords } from '~/latency-indicator/records';
+import type { LatencyMessage } from '~/latency-indicator/latency';
 
 type MessageCreate = {
 	message?: LatencyMessage | null;

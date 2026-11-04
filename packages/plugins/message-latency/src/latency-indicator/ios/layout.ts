@@ -6,9 +6,9 @@ import type {
 import { safeInvokeAsync } from '@unbound-plugins/shared/native/ios/safe-invoke';
 import { viewKey } from '@unbound-plugins/shared/native/ios/view-key';
 
-import { headerLayout, type Placed, type Placement } from '~/header-layout';
+import { headerLayout, type Placed, type Placement } from '~/latency-indicator/header-layout';
 import { LAYOUT_RELATION_EQUAL, LayoutAttribute } from '~/constants';
-import { getFrame, getSubviews, setFrame } from '~/ios/views';
+import { getFrame, getSubviews, setFrame } from '~/latency-indicator/ios/views';
 
 type SavedView = {
 	view: NativeObjectHandle;
