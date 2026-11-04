@@ -1,14 +1,9 @@
-import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-
-import { patchedMethods, patchMessageActions } from '~/patches/message-actions';
-import { cleanUrls, compileRules } from '~/clean-urls';
+import { patchedMethods, startCleanUrls } from '~/clean-urls';
+import { cleanUrls, compileRules } from '~/clean-urls/rules';
 import { DEFAULT_RULES } from '~/constants';
-import { MessageActions } from '~/modules';
 
 export function start() {
-	if (!ensureModules('Clear URLs', { MessageActions })) return;
-
-	patchMessageActions();
+	startCleanUrls();
 }
 
 const SAMPLE = 'https://example.com/a?utm_source=x&id=7&fbclid=y';

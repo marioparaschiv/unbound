@@ -1,8 +1,9 @@
+import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { patcher } from '@unbound-app/api';
 
-import { cleanUrls, compileRules } from '~/clean-urls';
+import { MessageActions } from '~/clean-urls/modules';
+import { cleanUrls, compileRules } from '~/clean-urls/rules';
 import { DEFAULT_RULES } from '~/constants';
-import { MessageActions } from '~/modules';
 
 type Draft = {
 	content: string;
@@ -27,8 +28,12 @@ export function patchedMethods(): string[] {
 
 /**
  * @description Removes tracking parameters from links in messages as they are sent or edited.
+ * Patches `sendMessage` and `editMessage` on Discord's message actions module. The Addon scope
+ * removes the patches when the plugin stops.
  */
-export function patchMessageActions(): void {
+export function startCleanUrls(): void {
+	if (!ensureModules('Clear URLs', { MessageActions })) return;
+
 	const rules = compileRules(DEFAULT_RULES);
 
 	// Patching the lazy handle waits for Discord to load the module; reading a method first would load it at start.
