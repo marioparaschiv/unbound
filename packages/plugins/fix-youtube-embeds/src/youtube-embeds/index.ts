@@ -1,8 +1,5 @@
-import {
-	featureSelfTest,
-	recordApplied,
-	recordFailure,
-} from '@unbound-plugins/shared/lifecycle/health';
+import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
+import startFeatures from '@unbound-plugins/shared/lifecycle/start-features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { metro } from '@unbound-app/api';
 
@@ -30,38 +27,28 @@ function trackLoad(path: string, name: string) {
  * Patches the render of `MediaModalYoutube` and `MediaModalYoutubeEmbedError`, and reads `WebView` from
  * `react-native-webview`. The Addon scope removes the patches and load listeners when the plugin stops.
  */
-export function startYoutubeEmbeds(): void {
-	const failures = [
-		startPatch(YOUTUBE_MODULE, { MediaModalYoutube }, () => {
+export function startYoutubeEmbeds(): () => Promise<void> {
+	// One patch throwing, for example on an unexpected component shape, must not stop the other.
+	return startFeatures(PLUGIN_NAME, [
+		() => {
+			if (!ensureModules(`${PLUGIN_NAME}: ${YOUTUBE_MODULE}`, { MediaModalYoutube })) return;
+
 			patchMediaModalYoutube();
 			trackLoad(YOUTUBE_PATH, YOUTUBE_MODULE);
-		}),
-		startPatch(EMBED_ERROR_MODULE, { MediaModalYoutubeEmbedError }, () => {
+		},
+		() => {
+			if (
+				!ensureModules(`${PLUGIN_NAME}: ${EMBED_ERROR_MODULE}`, {
+					MediaModalYoutubeEmbedError,
+				})
+			) {
+				return;
+			}
+
 			patchMediaModalYoutubeEmbedError();
 			trackLoad(EMBED_ERROR_PATH, EMBED_ERROR_MODULE);
-		}),
-	];
-
-	// Recorded last: applying a feature clears an earlier failure.
-	for (const failure of failures) if (failure) recordFailure(failure);
-}
-
-// One patch throwing, for example on an unexpected component shape, must not stop the other.
-function startPatch(
-	name: string,
-	modules: Record<string, unknown>,
-	patch: () => void,
-): string | undefined {
-	if (!ensureModules(`${PLUGIN_NAME}: ${name}`, modules)) return;
-
-	try {
-		patch();
-		recordApplied(1);
-	} catch (error) {
-		console.error(`[${PLUGIN_NAME}] Failed to patch ${name}:`, error);
-
-		return `${name}: ${error instanceof Error ? error.message : String(error)}`;
-	}
+		},
+	]);
 }
 
 /**
