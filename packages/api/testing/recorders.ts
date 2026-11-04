@@ -2,11 +2,15 @@ import type { NativePluginCapability, NativePluginPlatform } from '../src/native
 import type { CommandArgs, LogEntry } from './install-addon-globals';
 import type { OpenedDialog, ShownToast } from './fake-feedback';
 import type { CommandContext, Reply } from '../src/commands';
+import type { NativeCall } from './fake-native-bridge';
 import type { PatchRecord } from './recording-patcher';
 import type { PluginLocale } from './plugin-types';
+import type { PluginSpec } from './fake-plugins';
 import type { FakeModule } from './fake-metro';
 import type { FluxAction } from '../src/flux';
 import type { StoreSeeds } from './fake-api';
+import type { FakeJava } from './fake-java';
+import type { FakeObjc } from './fake-objc';
 
 import { getSession } from './session';
 
@@ -49,6 +53,20 @@ export type NativeRecorder = {
 	registerModule: (name: string, module: unknown) => void;
 	/** Sets what `native.has` reports. */
 	setCapabilities: (capabilities: NativePluginCapability[]) => void;
+	/** The Objective-C bridge a plugin gets on iOS: register classes and objects for its calls to reach. */
+	readonly objc: FakeObjc;
+	/** The Java bridge a plugin gets on Android: register classes and objects for its calls to reach. */
+	readonly java: FakeJava;
+	/** Every `objc`, `java` and `hooks` call the plugin made this test, in order. */
+	readonly calls: readonly NativeCall[];
+};
+
+/** The plugins the fake `plugins` lists: the plugin under test is there, started; a test sets the others. */
+export type PluginRecorder = {
+	/** Adds an installed plugin, or changes the one with this id; `plugins.get(id)` reads it. */
+	set: (id: string, spec?: PluginSpec) => void;
+	/** Removes an installed plugin. */
+	remove: (id: string) => void;
 };
 
 /** The fake `fs`: its in-memory files, by absolute path; a test may read, add or remove them. */
@@ -96,6 +114,19 @@ function createRecorders() {
 		registerModule: (name, module) => void getSession().native.state.modules.set(name, module),
 		setCapabilities: (capabilities) =>
 			void (getSession().native.state.capabilities = capabilities),
+		get objc() {
+			return getSession().native.objc;
+		},
+		get java() {
+			return getSession().native.java;
+		},
+		get calls() {
+			return getSession().native.calls;
+		},
+	};
+	const plugins: PluginRecorder = {
+		set: (id, spec) => getSession().plugins.set(id, spec),
+		remove: (id) => getSession().plugins.remove(id),
 	};
 	const fs: FsRecorder = {
 		get files() {
@@ -108,10 +139,10 @@ function createRecorders() {
 		},
 	};
 
-	return { toasts, dialogs, commands, patches, flux, metro, native, fs, logs };
+	return { toasts, dialogs, commands, patches, flux, metro, native, plugins, fs, logs };
 }
 
-export const { toasts, dialogs, commands, patches, flux, metro, native, fs, logs } =
+export const { toasts, dialogs, commands, patches, flux, metro, native, plugins, fs, logs } =
 	createRecorders();
 
 /**

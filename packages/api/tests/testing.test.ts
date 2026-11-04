@@ -285,6 +285,28 @@ describe('setting.button', () => {
 	});
 });
 
+describe('setting.notice', () => {
+	test('builds the notice the CLI builds, which stores nothing', () => {
+		const schema = defineSettings({
+			enabled: setting.boolean({ default: true, title: 'ENABLED' }),
+			note: setting.notice({ title: 'NOTE', tone: 'danger', visibleWhen: 'enabled' }),
+			plain: setting.notice({ title: 'PLAIN' }),
+		});
+		const settings = createFakeSettings(schema, createMemoryStorage('my-plugin'), 'my-plugin');
+
+		expect(schema.properties.note).toEqual({
+			kind: 'notice',
+			displayAs: 'notice',
+			title: 'NOTE',
+			tone: 'danger',
+			visibleWhen: 'enabled',
+		});
+		expect(schema.properties.plain?.tone).toBe('info');
+		expect(() => settings.set('note', true)).toThrow(/not in the schema/);
+		expect(Object.keys(settings.settings)).toEqual(['enabled']);
+	});
+});
+
 describe('createFakeMetro', () => {
 	test('finds every match with all, and finds by type name and the API props', () => {
 		const metro = createFakeMetro();

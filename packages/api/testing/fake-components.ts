@@ -2,9 +2,9 @@ import type { ReactNode } from 'react';
 
 import type { FakeModule } from './fake-metro';
 
-type ComponentProps = { children?: ReactNode };
+type ComponentProps = { children?: ReactNode } & FakeModule;
 
-/** A fake Discord component: it draws its children, and `find` reaches it by the name it was made with. */
+/** A fake Discord component: it draws its children, and the text prop of a button or row, and `find` reaches it by the name it was made with. */
 export type FakeComponent = ((props: ComponentProps) => ReactNode) & FakeModule;
 
 const BAGS = [
@@ -50,6 +50,16 @@ const UI = [
 	'UrlRow',
 ] as const;
 
+// The components that draw a string prop as their text on device, so `text()` and `find` see it.
+const TEXT_PROPS: Record<string, string[]> = {
+	Button: ['text'],
+	RowButton: ['label', 'subLabel'],
+	TableRow: ['label', 'subLabel'],
+	TableRadioRow: ['label', 'subLabel'],
+	TableSwitchRow: ['label', 'subLabel'],
+	TableCheckboxRow: ['label', 'subLabel'],
+};
+
 function isCapitalised(key: string): boolean {
 	return key !== '' && key[0] === key[0]?.toUpperCase() && key[0] !== key[0]?.toLowerCase();
 }
@@ -63,8 +73,12 @@ function isCapitalised(key: string): boolean {
 export function createFakeComponent(name: string): FakeComponent {
 	const members = new Map<string, FakeComponent>();
 
-	function Component({ children }: ComponentProps) {
-		return children ?? null;
+	const textProps = TEXT_PROPS[name] ?? [];
+
+	function Component(props: ComponentProps): ReactNode {
+		const drawn = textProps.map((key) => props[key]).filter((text) => typeof text === 'string');
+
+		return drawn.length ? [...drawn, props.children] : (props.children ?? null);
 	}
 
 	Component.displayName = name;

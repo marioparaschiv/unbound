@@ -4,6 +4,7 @@ import type { ListenerRegistry } from './listener-registry';
 import type { FakeAssets, FakeFlux } from './fake-api';
 import type { FakeSettings } from './fake-settings';
 import type { FakeLocales } from './fake-locales';
+import type { FakePlugins } from './fake-plugins';
 import type { FakeNative } from './fake-native';
 import type { FakeFs } from './fake-fs';
 
@@ -22,6 +23,7 @@ export type TestSession = {
 	locales: FakeLocales | undefined;
 	settings: FakeSettings | undefined;
 	native: FakeNative;
+	plugins: FakePlugins;
 	fs: FakeFs;
 };
 
@@ -64,6 +66,7 @@ export function resetSession(): void {
 	scope.metro.reset();
 	session.listeners.clear();
 	session.native.reset();
+	session.plugins.reset();
 	session.fs.files.clear();
 	scope.storage.data.clear();
 	scope.logs.length = 0;

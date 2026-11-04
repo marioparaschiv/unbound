@@ -7,6 +7,10 @@ import type {
 import type { AddonManifest } from '../src/global';
 import type { FakeModule } from './fake-metro';
 
+import { createCallLog, type NativeCallLog } from './fake-native-bridge';
+import { createFakeJava, type FakeJava } from './fake-java';
+import { createFakeObjc, type FakeObjc } from './fake-objc';
+
 /** What `startPlugin` takes to build the `PluginContext` its `start` receives; the rest is filled in as the client would. */
 export type StartContext = Partial<Omit<PluginContext, 'native'>> & {
 	/** The bridge members the plugin calls; the others are empty objects. */
@@ -27,7 +31,13 @@ export type NativeState = {
 export type FakeNative = {
 	namespace: FakeModule;
 	state: NativeState;
-	/** Puts the platform back to `ios` and forgets modules and capabilities. */
+	/** The fake Objective-C bridge a plugin gets as `context.native.objc` on iOS. */
+	objc: FakeObjc;
+	/** The fake Java and hooks bridges a plugin gets as `context.native.java` and `hooks` on Android. */
+	java: FakeJava;
+	/** Every call a plugin made to the fake bridges, in order. */
+	calls: NativeCallLog['calls'];
+	/** Puts the platform back to `ios` and forgets modules, capabilities, classes, objects, hooks and calls. */
 	reset: () => void;
 	/** Builds the context `start` receives: the manifest, the platform and capabilities from the state, and `overrides` on top. */
 	context: (manifest: AddonManifest, overrides?: StartContext) => PluginContext;
@@ -85,12 +95,47 @@ class NativePluginDisposedError extends Error {
 }
 
 /**
- * @description Creates the fake `native`: `definePlatform` selects by the state's platform, `getNativeModule` reads its modules,
+ * @description Creates the fake `native`: `definePlatform` selects by the state's platform on each call of a function handler, `getNativeModule` reads its modules,
  * and the error classes and metadata modules exist as on device.
  * @returns The namespace, its state, and the context builder.
  */
 export function createFakeNative(): FakeNative {
 	const state: NativeState = { platform: 'ios', modules: new Map(), capabilities: [] };
+	const log = createCallLog();
+	const objc = createFakeObjc(log);
+	const java = createFakeJava(log);
+
+	function select<Handler>(handlers: Partial<Record<NativePluginPlatform, Handler>>): Handler {
+		const handler = handlers[state.platform];
+
+		if (handler === undefined) {
+			throw new NativePluginUnsupportedPlatformError(
+				PLATFORMS.filter((name) => handlers[name] !== undefined),
+				state.platform,
+			);
+		}
+
+		return handler;
+	}
+
+	// A plugin selects as it imports platform.ts, before a test sets the platform, so a function handler
+	// is a forwarder to the current platform's handler. Any other value is read now.
+	function definePlatform<Handler>(
+		handlers: Partial<Record<NativePluginPlatform, Handler>>,
+	): Handler {
+		const selected = select(handlers);
+
+		if (typeof selected !== 'function') {
+			return selected;
+		}
+
+		return new Proxy(selected, {
+			apply: (_target, self, args) => Reflect.apply(select(handlers) as never, self, args),
+			construct: (_target, args) => Reflect.construct(select(handlers) as never, args),
+			get: (_target, key) => Reflect.get(select(handlers) as never, key),
+			has: (_target, key) => Reflect.has(select(handlers) as never, key),
+		});
+	}
 
 	const namespace: FakeModule = {
 		NativePluginUnavailableError,
@@ -101,18 +146,7 @@ export function createFakeNative(): FakeNative {
 		BundleInfo: {},
 		BundleManager: {},
 		DeviceInfo: {},
-		definePlatform<Handler>(handlers: Partial<Record<NativePluginPlatform, Handler>>) {
-			const handler = handlers[state.platform];
-
-			if (handler === undefined) {
-				throw new NativePluginUnsupportedPlatformError(
-					PLATFORMS.filter((name) => handlers[name] !== undefined),
-					state.platform,
-				);
-			}
-
-			return handler;
-		},
+		definePlatform,
 		getNativeModule: (...names: string[]) =>
 			names.map((name) => state.modules.get(name)).find(Boolean),
 		getNativeResources: () => undefined,
@@ -124,7 +158,13 @@ export function createFakeNative(): FakeNative {
 	return {
 		namespace,
 		state,
+		objc,
+		java,
+		calls: log.calls,
 		reset() {
+			objc.reset();
+			java.reset();
+			log.calls.length = 0;
 			state.platform = 'ios';
 			state.modules.clear();
 			state.capabilities = [];
@@ -136,12 +176,12 @@ export function createFakeNative(): FakeNative {
 				apiVersion: '1.0.0',
 				abiVersion: '1',
 				capabilities,
-				objc: emptyMember(),
+				objc: state.platform === 'ios' ? objc.bridge : emptyMember(),
 				ffi: emptyMember(),
 				fabric: emptyMember(),
 				runtime: emptyMember(),
-				java: emptyMember(),
-				hooks: emptyMember(),
+				java: state.platform === 'android' ? java.bridge : emptyMember(),
+				hooks: state.platform === 'android' ? java.hooks : emptyMember(),
 				debug: emptyMember(),
 				ui: emptyMember(),
 				...native,

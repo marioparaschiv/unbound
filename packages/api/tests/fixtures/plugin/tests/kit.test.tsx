@@ -4,6 +4,7 @@ import {
 	fs as pluginFs,
 	metro as pluginMetro,
 	native as pluginNative,
+	plugins as pluginPlugins,
 	utils,
 } from '@unbound-app/api';
 import {
@@ -15,12 +16,14 @@ import {
 	native,
 	patches,
 	pluginHolds,
+	plugins,
 	render,
 	startPlugin,
 	stopPlugin,
 } from '@unbound-app/api/testing';
 import { BottomSheets, Discord, Forms, HelpMessageTypes } from '@unbound-app/api/metro/components';
 import { createElement, Component, type ReactNode } from 'react';
+import { SettingsPanel } from '@unbound-app/settings';
 import { describe, expect, test } from 'bun:test';
 
 import * as plugin from '~/index';
@@ -35,6 +38,14 @@ const user = { id: '1', username: 'wumpus' };
 
 // A lookup made at import, before any test registers the module.
 const lateModule = pluginMetro.findByProps('lateProp');
+const patchedModule = pluginMetro.findByProps('lazyPatchProp');
+const patchedComponent = pluginMetro.findByProps('LazyPatched');
+
+// Selected as the plugin's platform.ts does, when it imports, before any test sets the platform.
+const choosePlatform = pluginNative.definePlatform({
+	ios: (suffix: string) => `iOS${suffix}`,
+	android: (suffix: string) => `Android${suffix}`,
+});
 
 describe('stopPlugin', () => {
 	test('disposes what the plugin scope recorded, as Unbound does on stop', async () => {
@@ -358,5 +369,253 @@ describe('commands', () => {
 		expect([...commands.registered.keys()].sort()).toEqual(['extra', 'star']);
 		await stopPlugin();
 		expect(commands.registered.size).toBe(0);
+	});
+});
+
+describe('lazy patching', () => {
+	test('waits for the module a handle finds, applies when it registers, and removes on unpatch', () => {
+		const unpatch = patcher.after(patchedModule, 'run', () => 'patched');
+
+		expect(patches.applied.map(({ pending }) => pending)).toEqual([true]);
+
+		const module = { lazyPatchProp: 1, run: () => 'original' };
+
+		metro.register(module);
+
+		expect(module.run()).toBe('patched');
+		expect(patches.applied.map(({ pending }) => pending)).toEqual([false]);
+
+		unpatch();
+
+		expect(module.run()).toBe('original');
+		expect(patches.applied).toEqual([]);
+	});
+
+	test('patches a module registered in a later test through the same handle', () => {
+		patcher.after(patchedModule, 'run', () => 'patched again');
+
+		const module = { lazyPatchProp: 2, run: () => 'original' };
+
+		metro.register(module);
+
+		expect(module.run()).toBe('patched again');
+	});
+
+	test('never applies a patch removed while it waited', () => {
+		patcher.after(patchedModule, 'run', () => 'changed');
+		patcher.unpatchAll();
+
+		const module = { lazyPatchProp: 3, run: (value = 'original') => value };
+
+		metro.register(module);
+
+		expect(module.run()).toBe('original');
+	});
+
+	test('lists a pending patch as held, so stopPlugin sees one the plugin forgot', async () => {
+		await startPlugin();
+		patcher.after(patchedModule, 'run', () => 'late');
+
+		expect(pluginHolds()).toContain('patcher.after on run');
+		patcher.unpatchAll();
+	});
+
+	test('patches a component of a module that registers later, as patcher.react does', () => {
+		patcher.react.after(patchedComponent, 'LazyPatched', ({ result }) => [result, 'extra']);
+
+		const module = { LazyPatched: (): string | string[] => 'body' };
+
+		metro.register(module);
+
+		expect(module.LazyPatched()).toEqual(['body', 'extra']);
+	});
+});
+
+describe('definePlatform', () => {
+	test('selects the handler of the platform at each call, not the one at import', () => {
+		expect(choosePlatform('!')).toBe('iOS!');
+
+		native.setPlatform('android');
+
+		expect(choosePlatform('!')).toBe('Android!');
+	});
+});
+
+describe('plugins', () => {
+	test('lists the plugin under test, and the plugins a test sets', () => {
+		expect(pluginPlugins.get('fixture-plugin')?.started).toBe(true);
+		expect(pluginPlugins.get('other')).toBeUndefined();
+
+		plugins.set('other', { name: 'Other', enabled: false });
+
+		expect(pluginPlugins.get('other')?.name).toBe('Other');
+		expect(pluginPlugins.get('other')?.started).toBe(false);
+		expect(pluginPlugins.isEnabled('other')).toBe(false);
+		expect(pluginPlugins.getAll().map(({ id }) => id)).toEqual(['fixture-plugin', 'other']);
+
+		pluginPlugins.enable('other');
+
+		expect(pluginPlugins.get('other')?.started).toBe(true);
+
+		plugins.set('other', { error: new Error('boom') });
+
+		expect(pluginPlugins.get('other')?.failed).toBe(true);
+		expect(pluginPlugins.errors.get('other')?.message).toBe('boom');
+	});
+
+	test('forgets the plugins a test set before the next test', () => {
+		expect(pluginPlugins.get('other')).toBeUndefined();
+	});
+});
+
+describe('native bridges', () => {
+	test('run an iOS handler against the classes a test registers, and record each call', async () => {
+		const seen: string[] = [];
+
+		native.objc.registerClass('NSObject');
+		native.objc.registerClass('UIView', {
+			superclass: 'NSObject',
+			methods: {
+				'setAlpha:': () => {},
+				layoutSubviews: () => void seen.push('layout'),
+				tag: () => 7,
+			},
+		});
+
+		await startPlugin();
+
+		const { objc } = plugin.received.at(-1)!.native;
+		const view = objc.create('UIView', 'init');
+
+		objc.hook('UIView', 'layoutSubviews', {
+			after: ({ selector }) => void seen.push(selector),
+		});
+
+		expect(objc.getClass('Missing')).toBeNull();
+		expect(objc.respondsTo(view, 'tag')).toBe(true);
+		expect(objc.invoke(view, 'tag', [])).toBe(7);
+
+		objc.invoke(view, 'layoutSubviews', []);
+
+		expect(seen).toEqual(['layout', 'layoutSubviews']);
+		expect(() => objc.invoke(view, 'nothing', [])).toThrow(/registered no such method/);
+		expect(
+			native.calls.map(({ method, target, name }) => [method, target, name]),
+		).toContainEqual(['invoke', 'UIView', 'tag']);
+	});
+
+	test('run an Android handler against the Java classes a test registers', async () => {
+		native.setPlatform('android');
+		native.java.registerClass('android.view.View', {
+			methods: { getWidth: () => 120, getTag: () => 'row' },
+			fields: { mLeft: 4 },
+		});
+		native.java.registerClass('app.Tracker', {
+			staticFields: { INSTANCE: native.java.create('android.view.View') },
+			staticMethods: {
+				parse: (_self, text) => `parsed ${typeof text === 'string' ? text : ''}`,
+			},
+		});
+
+		await startPlugin();
+
+		const { java } = plugin.received.at(-1)!.native;
+		const tracker = java.getField(java.getClass('app.Tracker'), 'INSTANCE');
+
+		if (tracker.type !== 'handle') {
+			throw new Error('INSTANCE is not an object');
+		}
+
+		expect(java.invoke(tracker, 'getWidth', [])).toEqual({ type: 'int', value: 120 });
+		expect(java.invoke(tracker, 'getTag', [])).toEqual({ type: 'string', value: 'row' });
+		expect(java.getField(tracker, 'mLeft')).toEqual({ type: 'int', value: 4 });
+		expect(
+			java.invoke(java.getClass('app.Tracker'), 'parse', [{ type: 'string', value: 'x' }]),
+		).toEqual({ type: 'string', value: 'parsed x' });
+		expect(java.batch([{ op: 'invoke', handle: tracker, name: 'getWidth' }])).toEqual([
+			{ type: 'int', value: 120 },
+		]);
+		expect(native.calls.some(({ method }) => method === 'getField')).toBe(true);
+	});
+
+	test('give the platform that is not running an empty bridge', async () => {
+		await startPlugin();
+
+		expect(Object.keys(plugin.received.at(-1)!.native.java)).toEqual([]);
+	});
+});
+
+describe('react-native modules', () => {
+	test('serve AccessibilityInfo, AppRegistry, AppState and NativeModules', async () => {
+		const { AccessibilityInfo, AppRegistry, AppState, NativeModules } =
+			await import('react-native');
+
+		expect(await AccessibilityInfo.isReduceMotionEnabled()).toBe(false);
+		expect(AccessibilityInfo.addEventListener('change', () => {})).toHaveProperty('remove');
+		expect(AppRegistry.registerComponent('App', () => Discord.Text)).toBe('App');
+		expect(AppRegistry.getAppKeys()).toEqual(['App']);
+		expect(AppState.currentState).toBe('active');
+		expect(NativeModules).toEqual({});
+	});
+});
+
+describe('text props', () => {
+	test('draw the text of a Discord.Button and a row label, so text() and find see them', () => {
+		const view = render(
+			<>
+				<Discord.Button text='Save' />
+				<Discord.TableRow label='Label' subLabel='Sub' />
+			</>,
+		);
+
+		expect(view.find('Button').text()).toBe('Save');
+		expect(view.find('TableRow').text()).toBe('LabelSub');
+	});
+});
+
+describe('generated settings panel', () => {
+	test('draws a row per setting with its title and value, and none for a hidden one', () => {
+		const view = render(<SettingsPanel />);
+
+		expect(view.find('SwitchRow').props.value).toBe(true);
+		expect(view.find('SwitchRow').text()).toBe(
+			'Greet on startShow a greeting when the plugin starts.',
+		);
+		expect(view.find('SliderRow').props.value).toBe(14);
+		expect(view.findAll('SwitchRow')).toHaveLength(1);
+		expect(view.find('ButtonRow').text()).toBe('Reset accent');
+		expect(view.findAll('Section').map((node) => node.props.title)).toEqual([
+			undefined,
+			'Appearance',
+		]);
+	});
+
+	test('shows a notice while its visibleWhen predicate holds, and follows the setting live', () => {
+		const view = render(<SettingsPanel />);
+
+		expect(view.findAll('NoticeRow')).toHaveLength(0);
+
+		view.act(() => view.find('SliderRow').props.onChange?.(22));
+
+		expect(view.find('NoticeRow').props.tone).toBe('warning');
+		expect(view.find('NoticeRow').text()).toBe('Large textSizes above 20 may clip.');
+	});
+
+	test('disables a row while its disabledWhen key holds', () => {
+		const view = render(<SettingsPanel />);
+
+		expect(view.find('ColorRow').props.disabled).toBe(true);
+
+		view.act(() => view.find('SwitchRow').props.onChange?.(false));
+
+		expect(view.find('ColorRow').props.disabled).toBe(false);
+	});
+
+	test('runs the action a button names from src/actions.ts', async () => {
+		const view = render(<SettingsPanel />, { settings: { appearance: { accent: '#ffffff' } } });
+
+		await view.find('ButtonRow').props.onPress?.();
+
+		expect(view.find('ColorRow').props.value).toBe('#5865f2');
 	});
 });

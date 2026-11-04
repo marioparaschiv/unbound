@@ -222,8 +222,8 @@ export function installAddonGlobals(options: InstallOptions = {}): InstalledAddo
 	};
 	const logs: LogEntry[] = [];
 	const storage = createMemoryStorage(manifest.id);
-	const patcher = createRecordingPatcher();
 	const metro = createFakeMetro();
+	const patcher = createRecordingPatcher(metro.whenLoaded);
 	const commands = createCommands();
 	const timers = createFakeTimers();
 	const unbound: FakeUnbound = { storage, patcher, metro, commands, ...options.unbound };

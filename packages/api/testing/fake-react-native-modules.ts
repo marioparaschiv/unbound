@@ -271,3 +271,92 @@ export const Share = {
 	dismissedAction: 'dismissedAction',
 	share,
 };
+
+const SUBSCRIPTION: EmitterSubscription = { remove: () => {} };
+
+/** `react-native`'s `AccessibilityInfo`: every system setting reads as off, and no event fires. */
+export const AccessibilityInfo = {
+	/**
+	 * @description Reads whether reduce motion is on.
+	 * @returns Always `false`.
+	 */
+	isReduceMotionEnabled: async () => false,
+	/**
+	 * @description Reads whether reduce transparency is on.
+	 * @returns Always `false`.
+	 */
+	isReduceTransparencyEnabled: async () => false,
+	/**
+	 * @description Reads whether a screen reader is on.
+	 * @returns Always `false`.
+	 */
+	isScreenReaderEnabled: async () => false,
+	/**
+	 * @description Reads whether bold text is on.
+	 * @returns Always `false`.
+	 */
+	isBoldTextEnabled: async () => false,
+	/**
+	 * @description Reads whether grayscale is on.
+	 * @returns Always `false`.
+	 */
+	isGrayscaleEnabled: async () => false,
+	/**
+	 * @description Reads whether inverted colours is on.
+	 * @returns Always `false`.
+	 */
+	isInvertColorsEnabled: async () => false,
+	/**
+	 * @description Announces nothing.
+	 * @returns Nothing.
+	 */
+	announceForAccessibility: () => {},
+	/**
+	 * @description Focuses nothing.
+	 * @returns Nothing.
+	 */
+	setAccessibilityFocus: () => {},
+	/**
+	 * @description Subscribes to an event that never fires.
+	 * @returns A subscription whose `remove` does nothing.
+	 */
+	addEventListener: () => SUBSCRIPTION,
+};
+
+/** `react-native`'s `AppState`: the app is always `active`, and no event fires. */
+export const AppState = {
+	currentState: 'active',
+	isAvailable: true,
+	/**
+	 * @description Subscribes to an event that never fires.
+	 * @returns A subscription whose `remove` does nothing.
+	 */
+	addEventListener: () => SUBSCRIPTION,
+};
+
+/** What `AppRegistry` keeps for a name: the component getter or runnable it was registered with. */
+// UNKNOWN: a registered component getter or runnable returns whatever React Native's does.
+type Registered = () => unknown;
+
+/**
+ * @description Creates `react-native`'s `AppRegistry`, which keeps each component registered under its name.
+ * @returns The registry; `runApplication` does nothing.
+ */
+export function createAppRegistry() {
+	const components = new Map<string, Registered>();
+
+	return {
+		registerComponent(name: string, getComponent: Registered) {
+			components.set(name, getComponent);
+
+			return name;
+		},
+		registerRunnable(name: string, runnable: Registered) {
+			components.set(name, runnable);
+
+			return name;
+		},
+		getAppKeys: () => [...components.keys()],
+		runApplication: () => {},
+	};
+}

@@ -3,7 +3,12 @@
 
 declare module '@unbound-app/settings/schema' {
 	type MessageKey = keyof import('@unbound-app/i18n').Messages;
-	type Common = { title: MessageKey; subtitle?: MessageKey; hidden?: boolean };
+	type Condition = ((settings: import('@unbound-app/settings').Settings) => boolean) | 'greetOnStart';
+	type Common = {
+		subtitle?: MessageKey;
+		visibleWhen?: Condition;
+		disabledWhen?: Condition;
+	} & ({ hidden: true; title?: MessageKey } | { hidden?: false; title: MessageKey });
 	type Setting = { readonly kind: string };
 	type DefineOptions = { title?: MessageKey };
 
@@ -15,6 +20,13 @@ declare module '@unbound-app/settings/schema' {
 		): Setting;
 		string(options: Common & { default: string; displayAs?: 'input' | 'color' }): Setting;
 		section(options: Common, properties: Record<string, Setting>): Setting;
+		button(options: Common & { action: 'resetAccent' }): Setting;
+		notice(options: {
+			title: MessageKey;
+			subtitle?: MessageKey;
+			tone?: 'info' | 'warning' | 'danger';
+			visibleWhen?: Condition;
+		}): Setting;
 	};
 
 	/** Declares the plugin's settings: the default export of settings.ts. */
@@ -29,6 +41,7 @@ declare module '@unbound-app/settings' {
 	export type Settings = {
 		/** Greet on start */
 		greetOnStart: boolean;
+		debug: boolean;
 		/** Appearance */
 		readonly appearance: {
 			/** Size */
@@ -41,6 +54,7 @@ declare module '@unbound-app/settings' {
 	/** Every setting and section by its dot-separated key. */
 	export type SettingPaths = {
 		greetOnStart: Settings['greetOnStart'];
+		debug: Settings['debug'];
 		appearance: Settings['appearance'];
 		'appearance.size': Settings['appearance']['size'];
 		'appearance.accent': Settings['appearance']['accent'];

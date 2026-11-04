@@ -22,6 +22,7 @@ import { createFakeLocales, SOURCE_LOCALE } from './fake-locales';
 import { createFakeAssets, createFakeFlux } from './fake-api';
 import { createJsxRuntimes } from './unfrozen-elements';
 import { resetSession, startSession } from './session';
+import { createFakePlugins } from './fake-plugins';
 import { forgetPlugin } from './plugin-lifecycle';
 import { createFakeUi } from './fake-components';
 import { createFakeNative } from './fake-native';
@@ -69,6 +70,25 @@ function trackedNamespaces(unbound: FakeUnbound, listeners: ListenerRegistry) {
 				listeners.track('metro.onModuleLoaded', metro.onModuleLoaded(...args)),
 		},
 	};
+}
+
+// Runs the export of the plugin's src/actions.ts a settings button names, as the client's panel does.
+async function runAction(pluginRoot: string, name: string): Promise<void> {
+	const path = join(pluginRoot, 'src', 'actions.ts');
+
+	if (!existsSync(path)) {
+		throw new Error(`Failed to run action ${name}: ${pluginRoot} has no src/actions.ts.`);
+	}
+
+	const actions: unknown = await import(path);
+	const action =
+		typeof actions === 'object' && actions !== null ? Reflect.get(actions, name) : void 0;
+
+	if (typeof action !== 'function') {
+		throw new Error(`Failed to run action ${name}: src/actions.ts exports no such function.`);
+	}
+
+	await action();
 }
 
 function resolveImport(root: string, path: string, importer: string): string {
@@ -133,6 +153,9 @@ const scope = installAddonGlobals({
 	},
 });
 
+const plugins = createFakePlugins(scope.addon.manifest);
+
+scope.unbound.plugins = plugins.namespace;
 Object.assign(scope.unbound, trackedNamespaces(scope.unbound, listeners));
 // On device the scope's `React` is Discord's real one; the fake one cannot re-render.
 Reflect.set(globalThis, 'React', React);
@@ -177,7 +200,12 @@ mock.module('@unbound-app/settings/schema', () => ({
 }));
 
 const schema = await readSettings(root);
-const settings = schema ? createFakeSettings(schema, scope.storage, scope.addon.id) : undefined;
+const settings = schema
+	? createFakeSettings(schema, scope.storage, scope.addon.id, {
+			translate: (key) => locales?.messages[key] ?? key,
+			runAction: (name) => runAction(root, name),
+		})
+	: undefined;
 
 if (settings) {
 	mock.module('@unbound-app/settings', () => ({
@@ -223,6 +251,7 @@ startSession({
 	locales,
 	settings,
 	native,
+	plugins,
 	fs,
 });
 

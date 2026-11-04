@@ -17,6 +17,9 @@ import type { ReactValue } from './react-value';
 import type { FakeModule } from './fake-metro';
 
 import {
+	AccessibilityInfo,
+	AppState,
+	createAppRegistry,
 	createFakeAnimated,
 	Easing,
 	NativeEventEmitter,
@@ -119,16 +122,22 @@ function FlatList({ data, renderItem, keyExtractor, ...rest }: ListProps) {
 
 /**
  * @description Creates the `react-native` a test imports: each primitive a host component named after itself,
- * and the plain modules (`StyleSheet`, `Platform`, `Dimensions`, `Animated`, `Share`) plugins read at import.
+ * and the plain modules (`StyleSheet`, `Platform`, `Dimensions`, `Animated`, `Share`, `AccessibilityInfo`, `AppRegistry`, `AppState`, `NativeModules`) plugins read at import.
  * @param os The platform `Platform.OS` reports, read on each access so a test can switch it.
  * @returns The module's exports.
  */
 export function createFakeReactNative(os: () => 'ios' | 'android' = () => 'ios') {
 	const hosts = Object.fromEntries(HOSTS.map((name) => [name, name]));
+	// Empty: a test adds the modules a plugin reads.
+	const nativeModules: Record<string, FakeModule> = {};
 	const window = { width: 390, height: 844, scale: 3, fontScale: 1 };
 
 	return {
 		...hosts,
+		AccessibilityInfo,
+		AppRegistry: createAppRegistry(),
+		AppState,
+		NativeModules: nativeModules,
 		FlatList,
 		Animated: createFakeAnimated(),
 		Easing,
