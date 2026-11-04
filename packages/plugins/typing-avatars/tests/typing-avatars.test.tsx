@@ -1,4 +1,5 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
@@ -43,6 +44,7 @@ function renderIndicator(typingUserIds: string[]) {
 }
 
 beforeEach(async () => {
+	resetHealth();
 	metro.register({ SummarizedIconRow: {}, Avatar, AvatarSizes: { SIZE_16: 'SIZE_16' } });
 	metro.register(indicator, 'modules/chat/native/TypingIndicator.tsx');
 	await startPlugin();
