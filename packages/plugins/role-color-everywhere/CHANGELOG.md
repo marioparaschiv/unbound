@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.5] - 2026-11-05
+
+### Changed
+
+- The settings labels can now be translated. The plugin works the same as before.
+
 ## [1.2.4] - 2026-11-03
 
 ### Changed

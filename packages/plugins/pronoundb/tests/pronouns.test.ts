@@ -1,0 +1,109 @@
+import { flux, metro, startPlugin } from '@unbound-app/api/testing';
+import { settings } from '@unbound-app/settings';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+
+type Author = { id: string; username: string; bot?: boolean };
+type Row = { message: { timestamp: string; timestampAccessibilityLabel: string } };
+
+const realFetch = globalThis.fetch;
+
+const MessageRowData = {
+	generateMessageRowData: (_data: { message: unknown }): Row => ({
+		message: { timestamp: '21:02', timestampAccessibilityLabel: '21:02' },
+	}),
+};
+
+function render(author: Author, type = 0) {
+	return MessageRowData.generateMessageRowData({
+		message: { id: 'm1', channel_id: 'c1', type, author },
+	}).message;
+}
+
+function seedStores(profilePronouns?: string) {
+	flux.seed({
+		Channel: { getChannel: () => undefined },
+		User: { getCurrentUser: () => ({ id: 'me' }) },
+		Message: { emitChange: () => {} },
+		UserProfile: {
+			getUserProfile: () => ({ pronouns: profilePronouns }),
+			getGuildMemberProfile: () => undefined,
+		},
+	});
+}
+
+function answerPronounDB(sets: Record<string, string[]>) {
+	globalThis.fetch = (async () =>
+		Response.json(
+			Object.fromEntries(Object.entries(sets).map(([id, en]) => [id, { sets: { en } }])),
+		)) as unknown as typeof fetch;
+}
+
+async function lookupSettles() {
+	await Bun.sleep(20);
+}
+
+beforeEach(async () => {
+	metro.register(MessageRowData);
+	seedStores();
+	answerPronounDB({});
+	await startPlugin();
+});
+
+afterEach(() => {
+	globalThis.fetch = realFetch;
+});
+
+describe('pronouns in the message header', () => {
+	test('shows the pronouns from the author’s Discord profile', () => {
+		seedStores('she/her');
+
+		expect(render({ id: 'u1', username: 'u1' })).toEqual({
+			timestamp: '21:02 • she/her',
+			timestampAccessibilityLabel: '21:02 • she/her',
+		});
+	});
+
+	test('shows PronounDB pronouns once they are fetched', async () => {
+		answerPronounDB({ u1: ['he'] });
+
+		expect(render({ id: 'u1', username: 'u1' }).timestamp).toBe('21:02');
+
+		await lookupSettles();
+
+		expect(render({ id: 'u1', username: 'u1' }).timestamp).toBe('21:02 • he/him');
+	});
+
+	test('capitalizes them on request', async () => {
+		settings.format = 'capitalized';
+		answerPronounDB({ u1: ['they'] });
+		render({ id: 'u1', username: 'u1' });
+		await lookupSettles();
+
+		expect(render({ id: 'u1', username: 'u1' }).timestamp).toBe('21:02 • They/Them');
+	});
+
+	test('prefers the Discord profile when the source is Discord', async () => {
+		settings.priority = 'discord';
+		seedStores('xe/xem');
+		answerPronounDB({ u1: ['he'] });
+		render({ id: 'u1', username: 'u1' });
+		await lookupSettles();
+
+		expect(render({ id: 'u1', username: 'u1' }).timestamp).toBe('21:02 • xe/xem');
+	});
+
+	test('hides your own pronouns when Show for Yourself is off', () => {
+		seedStores('she/her');
+		settings.showSelf = false;
+
+		expect(render({ id: 'me', username: 'me' }).timestamp).toBe('21:02');
+		expect(render({ id: 'u1', username: 'u1' }).timestamp).toBe('21:02 • she/her');
+	});
+
+	test('skips bots and messages without an author header', () => {
+		seedStores('she/her');
+
+		expect(render({ id: 'b1', username: 'b1', bot: true }).timestamp).toBe('21:02');
+		expect(render({ id: 'u1', username: 'u1' }, 46).timestamp).toBe('21:02');
+	});
+});

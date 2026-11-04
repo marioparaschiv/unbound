@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.3] - 2026-11-05
+
+### Changed
+
+- The settings labels and the names of pronoun sets, such as "Ask me my pronouns", can now be translated. The plugin works the same as before.
+
 ## [1.0.2] - 2026-11-03
 
 ### Changed
