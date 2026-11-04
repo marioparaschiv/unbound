@@ -1,12 +1,11 @@
 import { patcher } from '@unbound-app/api';
+import { settings } from '@unbound-app/settings';
 
-import { copyWith, dearrowMessage, messageVideoIds, type Message } from '~/embeds';
-import { MessageRowData, settings } from '~/modules';
-import type { PendingRows } from '~/redraw';
-import { toReplaceMode } from '~/preferences';
-import type { BrandingLookup } from '~/lookup';
-import type { Toggles } from '~/toggles';
-import { SETTINGS } from '~/constants';
+import { copyWith, dearrowMessage, messageVideoIds, type Message } from '~/embeds/message-embeds';
+import type { PendingRows } from '~/embeds/redraw';
+import type { BrandingLookup } from '~/embeds/lookup';
+import { MessageRowData } from '~/embeds/modules';
+import type { Toggles } from '~/embeds/toggles';
 
 type RowMessage = Message & {
 	channel_id?: unknown;
@@ -31,7 +30,7 @@ export function patchMessageRowData(
 	const unpatch = patcher.before(MessageRowData, 'generateMessageRowData', ({ args }) => {
 		const [input, ...rest] = args as [RowInput | undefined, ...unknown[]];
 		const message = input?.message;
-		const mode = toReplaceMode(settings.get('replaceElements', SETTINGS.replaceElements));
+		const mode = settings.replaceElements;
 		const loading = messageVideoIds(message).filter((id) => lookup.get(id) === undefined);
 
 		if (loading.length) pending.track(loading, message?.channel_id, message?.id);

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createLookup } from '~/lookup';
-import { thumbnailUrl } from '~/branding';
+import { createLookup } from '~/embeds/lookup';
+import { thumbnailUrl } from '~/embeds/branding';
 
 const ID = 'dQw4w9WgXcQ';
 

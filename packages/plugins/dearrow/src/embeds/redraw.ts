@@ -1,6 +1,6 @@
 import { flux, storage } from '@unbound-app/api';
 
-import { MessageStore } from '~/modules';
+import { MessageStore } from '~/embeds/modules';
 
 const REDRAW_KEYS: readonly (string | null)[] = ['replaceElements', 'dearrowByDefault', null];
 const REBIND_ALL_MS = 1500;

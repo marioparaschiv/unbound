@@ -2,8 +2,8 @@ import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { MetroFunction } from '@unbound-app/api/metro';
 import { patcher } from '@unbound-app/api';
 
-import { byRowManager } from '~/modules';
-import type { PendingRows } from '~/redraw';
+import type { PendingRows } from '~/embeds/redraw';
+import { byRowManager } from '~/embeds/modules';
 
 const CHANGE_TYPE_UPDATE = 1;
 const REBIND_GRACE_MS = 1600;
@@ -16,10 +16,11 @@ type GeneratedRow = {
 /**
  * @description Marks the rows of messages whose branding just arrived as changed, so the native chat list binds them again instead of keeping the drawn embed.
  * @param pending The rows waiting for branding that is still loading.
- * @returns A function that removes the patch once the rows drawn with DeArrow branding were bound again.
+ * The Addon scope removes the patch when the plugin stops, so the returned function holds `stop` open until the redrawn rows were bound.
+ * @returns A function that resolves once the rows drawn with DeArrow branding were bound again.
  */
-export function patchRowRebind(pending: PendingRows): () => void {
-	const unpatch = whenLoaded(byRowManager, (RowManager: MetroFunction) => {
+export function patchRowRebind(pending: PendingRows): () => Promise<void> {
+	whenLoaded(byRowManager, (RowManager: MetroFunction) => {
 		if (typeof RowManager.prototype?.generate !== 'function') return;
 
 		return patcher.after(RowManager.prototype, 'generate', ({ result }) => {
@@ -31,7 +32,5 @@ export function patchRowRebind(pending: PendingRows): () => void {
 		});
 	});
 
-	return () => {
-		setTimeout(unpatch, REBIND_GRACE_MS);
-	};
+	return () => new Promise((resolve) => setTimeout(resolve, REBIND_GRACE_MS));
 }

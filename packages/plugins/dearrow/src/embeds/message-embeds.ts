@@ -1,5 +1,5 @@
-import { embedVideoId, type Branding } from '~/branding';
-import type { ReplaceMode } from '~/constants';
+import { embedVideoId, type Branding } from '~/embeds/branding';
+import type { ReplaceMode } from '~/types';
 
 type Media = {
 	url?: unknown;

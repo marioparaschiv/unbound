@@ -6,14 +6,15 @@ import { isActionSheetRowGroup } from '@unbound-plugins/shared/action-sheets/row
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { findElement, isElementNode } from '@unbound-plugins/shared/react/find-element';
 import { assets, patcher } from '@unbound-app/api';
+import { messages } from '@unbound-app/i18n';
+import { settings } from '@unbound-app/settings';
 
-import { ActionSheets, settings } from '~/modules';
-import type { PendingRows } from '~/redraw';
-import { canDearrow, type Message } from '~/embeds';
-import { toReplaceMode } from '~/preferences';
-import type { BrandingLookup } from '~/lookup';
-import { PLUGIN_NAME, SETTINGS, SHEET_ROW_KEY } from '~/constants';
-import type { Toggles } from '~/toggles';
+import { canDearrow, type Message } from '~/embeds/message-embeds';
+import type { PendingRows } from '~/embeds/redraw';
+import type { BrandingLookup } from '~/embeds/lookup';
+import type { Toggles } from '~/embeds/toggles';
+import { ActionSheets } from '~/embeds/modules';
+import { PLUGIN_NAME, SHEET_ROW_KEY } from '~/constants';
 
 type SheetProps = {
 	message?: Message;
@@ -21,12 +22,13 @@ type SheetProps = {
 
 /**
  * @description Adds a row to the message long-press action sheet that switches the message's YouTube embeds between dearrowed and original.
+ * The row shows only while `showToggle` is on. `stop` calls the returned function, because the scope cannot see a sheet that is still loading when the plugin stops.
  * @param lookup The cached DeArrow branding.
  * @param toggles The messages the user switched between dearrowed and original.
  * @param pending The rows waiting for branding, used to bind the switched row again.
  * @returns A function that removes the row and ignores sheets still loading.
  */
-export function patchActionSheets(
+export function patchToggleRow(
 	lookup: BrandingLookup,
 	toggles: Toggles,
 	pending: PendingRows,
@@ -37,10 +39,12 @@ export function patchActionSheets(
 	let sheetKey: string | undefined;
 
 	const addToggleRow: SheetRender = (result) => {
+		if (!settings.showToggle) return result;
+
 		const rows = findElement(result, isActionSheetRowGroup)?.props?.children;
 		const messageId = message?.id;
 		const channelId = (message as { channel_id?: unknown } | undefined)?.channel_id;
-		const mode = toReplaceMode(settings.get('replaceElements', SETTINGS.replaceElements));
+		const mode = settings.replaceElements;
 
 		if (typeof messageId !== 'string' || !Array.isArray(rows)) return result;
 
@@ -67,7 +71,7 @@ export function patchActionSheets(
 			0,
 			<ActionSheetRow
 				key={SHEET_ROW_KEY}
-				label={dearrowed ? 'Show Original Embed' : 'Dearrow Embed'}
+				label={dearrowed ? messages.SHOW_ORIGINAL_EMBED : messages.DEARROW_EMBED}
 				icon={icon ? <ActionSheetRow.Icon source={icon} /> : undefined}
 				onPress={onPress}
 			/>,
