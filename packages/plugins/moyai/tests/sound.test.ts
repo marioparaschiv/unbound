@@ -7,7 +7,7 @@ mock.module('~/constants', () => ({
 	Sound: { fallbackDuration: 3000, id: 1, url: 'sound.mp3' },
 }));
 
-const { createPlayer, soundDuration } = await import('~/sound');
+const { createPlayer, soundDuration } = await import('~/moyai/sound');
 
 describe('soundDuration', () => {
 	test('converts the reported duration to milliseconds', () => {
