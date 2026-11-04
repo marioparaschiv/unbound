@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -85,6 +86,21 @@ func TestRenderLoaderChangelogGroupsBreakingAndMaintenanceChanges(t *testing.T) 
 	}
 	if strings.Contains(changelog, "## Features") || strings.Contains(changelog, "## Other Changes") {
 		t.Fatalf("loader changelog contains an empty or unneeded category: %s", changelog)
+	}
+}
+
+func TestRenderLoaderChangelogFitsTheReleaseAPILimit(t *testing.T) {
+	subjects := make([]string, 0, 1000)
+	subjects = append(subjects, "feat(native): newest change")
+	for index := 1; index < 1000; index++ {
+		subjects = append(subjects, fmt.Sprintf("fix(native): change number %d with a long enough summary to add up", index))
+	}
+	changelog := renderLoaderChangelog("1.0.0", subjects)
+	if length := len([]rune(changelog)); length > loaderChangelogMaxLength {
+		t.Fatalf("loader changelog is %d characters, over the %d the release API accepts", length, loaderChangelogMaxLength)
+	}
+	if !strings.Contains(changelog, "**native:** Newest change") || !strings.Contains(changelog, "earlier changes.") {
+		t.Fatalf("a trimmed changelog keeps the newest changes and counts the dropped ones: %s", changelog)
 	}
 }
 

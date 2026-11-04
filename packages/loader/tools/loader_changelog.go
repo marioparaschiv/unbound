@@ -8,7 +8,11 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 )
+
+// loaderChangelogMaxLength mirrors MAX_CHANGELOG_LENGTH in packages/contracts/src/publish.ts; the release API rejects longer changelogs.
+const loaderChangelogMaxLength = 10_000
 
 var loaderConventionalCommitPattern = regexp.MustCompile("(?i)^([a-z]+)(?:\\(([^)]*)\\))?(!)?:\\s*(.+)$")
 
@@ -84,7 +88,8 @@ func generateLoaderChangelog(root string, version string) (string, error) {
 	if len(commits) > 1 {
 		baseCommit = commits[1]
 	}
-	subjects, err := gitOutput(root, defaultRunner, "log", "--format=%s", "--no-merges", baseCommit+"..HEAD")
+	// Only commits touching the loader, not the whole monorepo.
+	subjects, err := gitOutput(root, defaultRunner, "log", "--format=%s", "--no-merges", baseCommit+"..HEAD", "--", ".")
 	if err != nil {
 		return "", fmt.Errorf("read loader changes since the previous semantic version: %w", err)
 	}
@@ -94,7 +99,6 @@ func generateLoaderChangelog(root string, version string) (string, error) {
 
 func renderLoaderChangelog(version string, subjects []string) string {
 	entries := make([]loaderChangelogEntry, 0, len(subjects))
-	categories := map[string]bool{}
 	for _, subject := range subjects {
 		match := loaderConventionalCommitPattern.FindStringSubmatch(strings.TrimSpace(subject))
 		if match == nil {
@@ -108,10 +112,24 @@ func renderLoaderChangelog(version string, subjects []string) string {
 			breaking: match[3] == "!",
 		}
 		entries = append(entries, entry)
+	}
+
+	// Subjects arrive newest first, so a changelog over the API limit drops the oldest changes.
+	for kept := len(entries); ; kept-- {
+		changelog := renderLoaderChangelogEntries(version, entries[:kept], len(entries)-kept)
+		if kept == 0 || utf8.RuneCountInString(changelog) <= loaderChangelogMaxLength {
+			return changelog
+		}
+	}
+}
+
+func renderLoaderChangelogEntries(version string, entries []loaderChangelogEntry, omitted int) string {
+	categories := map[string]bool{}
+	for _, entry := range entries {
 		if entry.breaking {
 			categories["Breaking Changes"] = true
 		} else {
-			categories[category] = true
+			categories[entry.category] = true
 		}
 	}
 
@@ -139,7 +157,9 @@ func renderLoaderChangelog(version string, subjects []string) string {
 			}
 		}
 	}
-	if len(entries) == 0 {
+	if omitted > 0 {
+		result = append(result, "", fmt.Sprintf("And %d earlier changes.", omitted))
+	} else if len(entries) == 0 {
 		result = append(result, "", "No conventional loader changes were recorded for this version.")
 	}
 	return strings.Join(result, "\n")
