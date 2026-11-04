@@ -1,20 +1,6 @@
 import { flux, metro, startPlugin, toasts } from '@unbound-app/api/testing';
-import { beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { storage } from '@unbound-app/api';
-
-// The testing kit fakes neither `ui` nor Discord's design components, which only the settings panel draws.
-mock.module('~/settings', () => ({ default: () => null }));
-
-// ...and it has no `fs`, which only the attachment files use.
-mock.module('~/commands/media', () => ({
-	isSaved: (media: object) => 'storedName' in media,
-	mediaUri: (media: { storedName: string }) => `file:///documents/${media.storedName}`,
-	pickMedia: async () => [],
-	persistMedia: async () => {
-		throw new Error('The testing kit has no file system.');
-	},
-	removeStoredMedia: async () => undefined,
-}));
 
 type BuiltIn = {
 	displayName: string;
@@ -72,12 +58,9 @@ function command(name: string): BuiltIn {
 	return found;
 }
 
-beforeAll(() => {
+beforeEach(async () => {
 	metro.register(Commands);
 	metro.register(Messages);
-});
-
-beforeEach(async () => {
 	sent.length = 0;
 	botMessages.length = 0;
 	flux.seed({ PendingReply: { getPendingReply: () => undefined } });
