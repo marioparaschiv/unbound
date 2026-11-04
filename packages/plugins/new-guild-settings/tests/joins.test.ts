@@ -1,39 +1,13 @@
-import { flux, metro } from '@unbound-app/api/testing';
+import { storage } from '@unbound-app/api';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { startJoins } from '~/joins';
+import { PLUGIN_ID } from '~/constants';
 
-type Update = Record<string, unknown>;
-
-const ME = '1';
-const guildActions = {
-	joinGuild: async (..._args: unknown[]) => undefined,
-	waitForGuild: async () => undefined,
-};
-// UNKNOWN: a test sends Discord's action payloads, which FluxAction does not type.
-function dispatch(action: { type: string } & Record<string, unknown>) {
-	return flux.dispatch(action);
-}
-
-const applied: { guildId: string; update: Update }[] = [];
-
-beforeEach(() => {
-	applied.length = 0;
-
-	metro.register({
-		updateGuildNotificationSettings: (guildId: string, update: Update) =>
-			void applied.push({ guildId, update }),
-	});
-	metro.register({ toggleShowAllChannels: () => undefined });
-	metro.register(guildActions);
-	flux.seed({
-		User: { getCurrentUser: () => ({ id: ME }) },
-		UserGuildSettings: { isOptInEnabled: () => false },
-	});
-	startJoins();
-});
+import { ME, applied, dispatch, guildActions, startGuildSettings, toggled } from './discord';
 
 describe('joining a server', () => {
+	beforeEach(() => startGuildSettings());
+
 	test('applies the defaults after an accepted invite', async () => {
 		await dispatch({ type: 'INVITE_ACCEPT_SUCCESS', invite: { guild: { id: '100' } } });
 
@@ -90,5 +64,22 @@ describe('joining a server', () => {
 		await guildActions.joinGuild('400');
 
 		expect(applied.map(({ guildId }) => guildId)).toEqual(['400']);
+	});
+
+	test('follows the saved settings', async () => {
+		storage.getBucket(PLUGIN_ID).set('guild', false);
+		await dispatch({ type: 'INVITE_ACCEPT_SUCCESS', invite: { guild: { id: '100' } } });
+
+		expect(applied[0]?.update).toMatchObject({ muted: false });
+	});
+});
+
+describe('a server that hides channels', () => {
+	beforeEach(() => startGuildSettings(true));
+
+	test('shows all its channels once joined', async () => {
+		await dispatch({ type: 'INVITE_ACCEPT_SUCCESS', invite: { guild: { id: '100' } } });
+
+		expect(toggled).toEqual(['100']);
 	});
 });
