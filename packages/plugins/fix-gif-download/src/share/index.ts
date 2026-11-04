@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { patcher } from '@unbound-app/api';
 
 import { onMediaShareActions, type MediaShareActions } from '~/share/modules';
@@ -41,5 +40,4 @@ function patch(module: MediaShareActions) {
  */
 export function startShareActions(): void {
 	onMediaShareActions(patch);
-	recordApplied(1);
 }

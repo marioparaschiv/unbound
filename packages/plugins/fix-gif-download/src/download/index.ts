@@ -1,4 +1,3 @@
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import { patcher } from '@unbound-app/api';
 
@@ -85,5 +84,4 @@ function patchManager(manager: MediaManager) {
  */
 export function startDownloads(): void {
 	whenLoaded(MediaManagerFilters, patchManager);
-	recordApplied(1);
 }
