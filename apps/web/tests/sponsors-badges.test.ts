@@ -163,6 +163,15 @@ describe('claiming a badge', () => {
 		expect(await failure(setBadge(anonymous))).toEqual({ status: 401, code: 'unauthorized' });
 	});
 
+	test('lists the badges under the Discord id of the linked account, as the Discord client asks', async () => {
+		const sponsor = await signUp();
+
+		await setBadge(sponsor.client);
+
+		expect(await publicBadges(sponsor.discordId)).toEqual(shown(BADGE));
+		expect(await publicBadges('803511102246999999')).toEqual({ badges: [] });
+	});
+
 	test('staff and above set and show badges without a sponsorship or a linked GitHub', async () => {
 		const staff = await Promise.all([
 			signUp({ role: 'moderator', github: false }),
