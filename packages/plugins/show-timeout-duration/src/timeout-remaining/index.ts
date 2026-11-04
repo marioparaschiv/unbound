@@ -1,9 +1,12 @@
 import getTimeoutDeadline from '@unbound-plugins/shared/members/timeout-deadline';
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { FluxGuildMember, FluxMessage } from '@unbound-app/api/flux';
+import { format } from '@unbound-app/i18n';
 import { flux, patcher } from '@unbound-app/api';
 
-import { ChannelStore, GuildMemberStore, MessageRowData } from '~/modules';
-import { formatRemaining } from '~/format-remaining';
+import { ChannelStore, GuildMemberStore, MessageRowData } from '~/timeout-remaining/modules';
+import { formatRemaining } from '~/timeout-remaining/format-remaining';
 
 type Member = FluxGuildMember & {
 	communicationDisabledUntil?: string | null;
@@ -26,12 +29,20 @@ function getDeadline({ channel_id, author }: FluxMessage): number | null {
 
 /**
  * @description Appends the time left on the author's timeout to the timestamp of their messages.
- * @returns A function that removes the patch and stops refreshing the countdown.
+ * Patches `generateMessageRowData` on Discord's message row module, and reads `GuildMemberStore`
+ * and `ChannelStore`. The Addon scope removes the patch and the refresh timer when the plugin stops.
  */
-export function patchTimeoutDurations(): () => void {
-	const timedOut = new Map<string, FluxMessage>();
+export function startTimeoutRemaining(): void {
+	if (
+		!ensureModules('Show Timeout Duration', { MessageRowData, GuildMemberStore, ChannelStore })
+	) {
+		return;
+	}
 
-	const unpatch = patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+	const timedOut = new Map<string, FluxMessage>();
+	const stamped = new WeakSet<Row>();
+
+	patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const message: FluxMessage | undefined = args[0]?.message;
 
 		if (!message?.id) return;
@@ -48,20 +59,21 @@ export function patchTimeoutDurations(): () => void {
 
 		const row: Row | undefined = result?.message;
 
-		if (typeof row?.timestamp !== 'string' || row.timestamp.includes('timeout remaining'))
-			return;
+		if (typeof row?.timestamp !== 'string' || stamped.has(row)) return;
+
+		stamped.add(row);
 
 		const remaining = formatRemaining(deadline);
 
-		row.timestamp = `${row.timestamp} • ${remaining} timeout remaining`;
+		row.timestamp = `${row.timestamp} • ${format('TIMEOUT_REMAINING', { remaining })}`;
 
 		if (typeof row.timestampAccessibilityLabel === 'string') {
-			row.timestampAccessibilityLabel = `${row.timestampAccessibilityLabel} • Timeout expires in ${remaining}`;
+			row.timestampAccessibilityLabel = `${row.timestampAccessibilityLabel} • ${format('TIMEOUT_EXPIRES_IN', { remaining })}`;
 		}
 	});
 
 	// Rows are only regenerated on an update, so re-dispatch each timed-out message to tick its countdown.
-	const refresh = setInterval(() => {
+	setInterval(() => {
 		for (const message of timedOut.values()) {
 			void flux.dispatch({
 				type: 'MESSAGE_UPDATE',
@@ -71,9 +83,5 @@ export function patchTimeoutDurations(): () => void {
 		}
 	}, 30_000);
 
-	return () => {
-		clearInterval(refresh);
-		unpatch();
-		timedOut.clear();
-	};
+	recordApplied(1);
 }
