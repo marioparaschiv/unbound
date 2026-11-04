@@ -1,37 +1,59 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { metro, native, patches, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import type { NativeObjectHandle } from '@unbound-app/api/native';
 import { AppState, NativeModules } from 'react-native';
 
 const sent: string[] = [];
 const appState = new Set<(state: string) => void>();
+const runtimeListeners = new Set<(payload: unknown) => void>();
+const rotations: number[] = [];
+let inputTop = 601;
+let inputView: NativeObjectHandle | undefined;
 
 function setDeviceLocale(locale: string) {
 	Object.assign(NativeModules, { SettingsManager: { settings: { AppleLocale: locale } } });
 }
 
-// A root view whose layer takes the rotation the plugin sets.
 function registerScreen() {
-	native.objc.registerClass('CALayer', { methods: { 'setValue:forKeyPath:': () => {} } });
-
-	const layer = native.objc.create('CALayer');
-
-	native.objc.registerClass('UIView', { methods: { layer: () => layer } });
+	let rootView: NativeObjectHandle;
+	let viewController: NativeObjectHandle;
+	let window: NativeObjectHandle;
+	let application: NativeObjectHandle;
+	native.objc.registerClass('UIView', {
+		methods: {
+			bounds: (self) => (self === rootView ? rect(0, 667) : rect(0, 32)),
+			'setTransform:': (_self, transform) => {
+				const value = Reflect.get(transform as object, 'value');
+				rotations.push(Reflect.get(value as object, 'a') === -1 ? 180 : 0);
+			},
+		},
+	});
+	native.objc.registerClass('DCDChatInputComponentView', {
+		superclass: 'UIView',
+		methods: { 'convertRect:toView:': () => rect(inputTop, 32) },
+	});
 	native.objc.registerClass('UIViewController', {
-		methods: { view: () => native.objc.create('UIView') },
+		methods: { view: () => rootView },
 	});
 	native.objc.registerClass('UIWindow', {
-		methods: { rootViewController: () => native.objc.create('UIViewController') },
+		methods: { rootViewController: () => viewController },
 	});
 	native.objc.registerClass('UIApplication', {
-		classMethods: { sharedApplication: () => native.objc.create('UIApplication') },
-		methods: { keyWindow: () => native.objc.create('UIWindow') },
+		classMethods: { sharedApplication: () => application },
+		methods: { keyWindow: () => window },
 	});
+	rootView = native.objc.create('UIView');
+	inputView = native.objc.create('DCDChatInputComponentView');
+	viewController = native.objc.create('UIViewController');
+	window = native.objc.create('UIWindow');
+	application = native.objc.create('UIApplication');
 }
 
-function rotations() {
-	return native.calls
-		.filter(({ name }) => name === 'setValue:forKeyPath:')
-		.map(({ args }) => Math.round(((args[0] as number) * 180) / Math.PI));
+function rect(y: number, height: number) {
+	return {
+		name: 'CGRect',
+		value: { origin: { x: 0, y }, size: { width: 375, height } },
+	};
 }
 
 const Messages = {
@@ -45,6 +67,9 @@ const Messages = {
 beforeEach(() => {
 	sent.length = 0;
 	appState.clear();
+	runtimeListeners.clear();
+	rotations.length = 0;
+	inputTop = 601;
 	setDeviceLocale('en_AU');
 	registerScreen();
 	metro.register(Messages);
@@ -67,7 +92,18 @@ async function settle() {
 }
 
 async function startAussie() {
-	await startPlugin();
+	await startPlugin({
+		native: {
+			objc: { findViews: async () => (inputView ? [inputView] : []) } as never,
+			runtime: {
+				subscribe: (_event: string, listener: (payload: unknown) => void) => {
+					runtimeListeners.add(listener);
+
+					return { active: true, remove: () => runtimeListeners.delete(listener) };
+				},
+			} as never,
+		},
+	});
 	await settle();
 }
 
@@ -94,11 +130,22 @@ describe('on an Australian device', () => {
 			listener('active');
 		}
 
+		await settle();
 		await stopPlugin();
 		await settle();
 
-		expect(rotations()).toEqual([180, 180, 0]);
+		expect(rotations).toEqual([180, 180, 0]);
 		expect(appState.size).toBe(0);
+		expect(runtimeListeners.size).toBe(0);
+	});
+
+	test('does not rotate again when stop races with foreground activation', async () => {
+		await startAussie();
+		for (const listener of appState) listener('active');
+
+		await stopPlugin();
+
+		expect(rotations).toEqual([180, 0]);
 	});
 
 	test('reports a rotation that fails instead of throwing', async () => {
@@ -127,7 +174,7 @@ test('does nothing on a device that is not set to Australian English', async () 
 	Messages.sendMessage('1', { content: 'hello' });
 
 	expect(sent).toEqual(['hello']);
-	expect(rotations()).toEqual([]);
+	expect(rotations).toEqual([]);
 	expect(patches.applied).toEqual([]);
 	await stopPlugin();
 });
