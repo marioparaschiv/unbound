@@ -1,19 +1,22 @@
-import { startPlugin } from '@unbound-app/api/testing';
+import { metro, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { register } from './fake-discord';
 
 type Source = Record<string, unknown>;
 
 const options: { source: Source }[] = [];
 
-// The fake metro keeps its modules between tests, so register Discord's module once.
-const shareActions = register({
-	useMediaShareActions: (given: { source: Source }) => options.push(given),
-}) as { useMediaShareActions: (given: { source: Source }) => void };
+type ShareActions = { useMediaShareActions: (given: { source: Source }) => void };
+
+const newShareActions = (): ShareActions => ({
+	useMediaShareActions: (given) => options.push(given),
+});
+
+let shareActions = newShareActions();
 
 beforeEach(async () => {
 	options.length = 0;
+	shareActions = newShareActions();
+	metro.register(shareActions);
 	await startPlugin();
 });
 
@@ -49,11 +52,10 @@ describe('share and save actions', () => {
 	});
 
 	test('reach a copy of the module Discord loads later', async () => {
-		const { useMediaShareActions } = register({
-			useMediaShareActions: (given: { source: Source }) => options.push(given),
-		});
+		const later = newShareActions();
 
-		(useMediaShareActions as (given: { source: Source }) => void)({
+		metro.register(later);
+		later.useMediaShareActions({
 			source: { uri: 'https://media.tenor.com/abc123/AAAAC/example.mp4' },
 		});
 

@@ -1,27 +1,29 @@
-import { startPlugin } from '@unbound-app/api/testing';
+import { metro, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
-
-import { register } from './fake-discord';
 
 type Download = (source: unknown, mediaType: number, contentType?: string) => void;
 
 const downloads: unknown[][] = [];
 
-// The fake metro keeps its modules between tests, so register Discord's modules once.
-const manager = register({
-	downloadMediaAsset: (...args: unknown[]) => downloads.push(args),
-	downloadMediaAssetWithContentType: (...args: unknown[]) => downloads.push(args),
-	isGIFSource: () => false,
-}) as {
+type Manager = {
 	downloadMediaAsset: Download;
 	downloadMediaAssetWithContentType: Download;
 	isGIFSource: (source: unknown, contentType?: string) => boolean;
 };
 
-register({ GIF_RE_IOS: /gif/, MediaType: { GIF: 7 } });
+const newManager = (): Manager => ({
+	downloadMediaAsset: (...args) => downloads.push(args),
+	downloadMediaAssetWithContentType: (...args) => downloads.push(args),
+	isGIFSource: () => false,
+});
+
+let manager = newManager();
 
 beforeEach(async () => {
 	downloads.length = 0;
+	manager = newManager();
+	metro.register(manager);
+	metro.register({ GIF_RE_IOS: /gif/, MediaType: { GIF: 7 } });
 	await startPlugin();
 });
 
