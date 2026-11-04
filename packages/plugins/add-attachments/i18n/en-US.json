@@ -1,0 +1,11 @@
+{
+	"ADD_ATTACHMENTS": "Add Attachments",
+	"UPLOADING": "Uploading, this can take a while...",
+	"ATTACHMENTS_ADDED": "{count, plural, one {Attachment added successfully!} other {Attachments added successfully!}}",
+	"UPLOAD_FAILED": "An attachment failed to upload.",
+	"NOT_ADDED": "The attachments could not be added.",
+	"PICKER_UNAVAILABLE": "The media picker is unavailable on this Discord build.",
+	"PICKER_FAILED": "The media picker failed.",
+	"LIMIT_REACHED": "You cannot add more attachments to this message.",
+	"LIMIT_REMAINING": "You can only add {count, plural, one {# more attachment} other {# more attachments}} to this message."
+}

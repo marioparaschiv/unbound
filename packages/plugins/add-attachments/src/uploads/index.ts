@@ -1,7 +1,8 @@
 import { toasts } from '@unbound-app/api';
+import { format, messages } from '@unbound-app/i18n';
 
 import { COMPLETED_UPLOAD, PLUGIN_NAME } from '~/constants';
-import { CloudUploader, MessageStore, REST } from '~/discord/modules';
+import { CloudUploader, MessageStore, REST } from '~/uploads/modules';
 import { attachmentLimitProblem } from '~/uploads/eligibility';
 import type { UploadItem } from '~/types';
 
@@ -27,7 +28,7 @@ async function uploadFiles(
 	await Promise.all(uploads.map((upload) => upload.upload()));
 
 	if (uploads.some((upload) => upload.status !== COMPLETED_UPLOAD || !upload.uploadedFilename)) {
-		throw new Error('An attachment failed to upload.');
+		throw new Error(messages.UPLOAD_FAILED);
 	}
 
 	return uploads;
@@ -58,7 +59,7 @@ export async function addAttachments(
 		return;
 	}
 
-	notify('Uploading, this can take a while...');
+	notify(messages.UPLOADING);
 
 	try {
 		const uploads = await uploadFiles(channelId, items);
@@ -78,9 +79,9 @@ export async function addAttachments(
 			},
 		});
 
-		notify(`${items.length === 1 ? 'Attachment' : 'Attachments'} added successfully!`);
+		notify(format('ATTACHMENTS_ADDED', { count: items.length }));
 	} catch (error) {
-		notify(error instanceof Error ? error.message : 'The attachments could not be added.');
+		notify(error instanceof Error ? error.message : messages.NOT_ADDED);
 	}
 }
 
