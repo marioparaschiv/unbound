@@ -375,14 +375,18 @@ describe('createFakeTimers', () => {
 	test('runs timers for real and clears what is pending', async () => {
 		const timers = createFakeTimers();
 		let fired = 0;
+		const first = Promise.withResolvers<void>();
 
-		timers.setTimeout(() => void fired++, 1);
-		timers.setTimeout(() => void fired++, 5);
+		timers.setTimeout(() => {
+			fired++;
+			first.resolve();
+		}, 1);
+		timers.setTimeout(() => void fired++, 60_000);
 		timers.setInterval(() => void fired++, 1_000);
 
 		expect(timers.pending()).toBe(3);
 
-		await Bun.sleep(3);
+		await first.promise;
 
 		expect(fired).toBe(1);
 		expect(timers.pending()).toBe(2);

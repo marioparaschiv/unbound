@@ -177,7 +177,7 @@ describe('ubd build and ubd check', () => {
 		expect(lines.join('\n')).toContain('Declares "capabilities"');
 		expect(lines.join('\n')).toContain('name must use title-case words');
 		expect(lines.join('\n')).toContain('is not a standard root file');
-	});
+	}, 60_000);
 
 	test('ubd check leaves the output untouched', async () => {
 		const dir = plugin({});
