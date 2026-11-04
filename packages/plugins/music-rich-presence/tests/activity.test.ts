@@ -7,8 +7,9 @@ import {
 	pickLargeImage,
 	resolveActivity,
 	shouldHide,
-} from '~/activity';
-import { DISCORD_APP_ID, LASTFM_PLACEHOLDER_IMAGE_HASH, SETTINGS } from '~/constants';
+} from '~/presence/activity';
+import { DISCORD_APP_ID, LASTFM_PLACEHOLDER_IMAGE_HASH } from '~/constants';
+import { SETTINGS } from './defaults';
 import type { Scrobbler, TrackData } from '~/types';
 
 const track: TrackData = {

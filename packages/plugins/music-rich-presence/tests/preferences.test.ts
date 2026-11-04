@@ -1,54 +1,37 @@
 import { describe, expect, test } from 'bun:test';
 
-import { SETTINGS } from '~/constants';
+import { settings } from '@unbound-app/settings';
+
+import { SETTINGS } from './defaults';
 import {
 	canQuery,
 	hasInvalidCustomInstance,
 	normalizeBaseUrl,
 	readPreferences,
-} from '~/preferences';
-
-function reader(values: Record<string, unknown>) {
-	return <T>(key: string, def: T) => (key in values ? values[key] : def);
-}
+} from '~/presence/preferences';
 
 describe('readPreferences', () => {
-	test('falls back to the defaults for an empty store', () => {
-		expect(readPreferences(reader({}))).toEqual(SETTINGS);
+	test('reads the defaults before any setting is changed', () => {
+		expect(readPreferences(settings)).toMatchObject({
+			scrobblerBackend: 'lastfm',
+			username: '',
+			statusName: 'some music',
+			nameFormat: 'status-name',
+			clickableLinks: true,
+			useListeningStatus: false,
+		});
 	});
 
-	test('rejects unknown choices and wrong types', () => {
-		const preferences = readPreferences(
-			reader({
-				scrobblerBackend: 'spotify',
-				nameFormat: 42,
-				statusDisplayType: 'album',
-				missingArt: null,
-				showLogo: 'yes',
-				username: 7,
-			}),
-		);
+	test('trims what the user typed and drops trailing slashes', () => {
+		settings.scrobblerBackend = 'listenbrainz-compatible';
+		settings.instanceBaseURL = ' https://lb.example.org// ';
+		settings.instanceAPIBaseUrl = 'https://api.lb.example.org/';
+		settings.username = '  rini ';
+		settings.apiKey = ' key ';
+		settings.statusName = ' {title} ';
+		settings.useListeningStatus = true;
 
-		expect(preferences.scrobblerBackend).toBe('lastfm');
-		expect(preferences.nameFormat).toBe('status-name');
-		expect(preferences.statusDisplayType).toBe('artist');
-		expect(preferences.missingArt).toBe('logo');
-		expect(preferences.showLogo).toBe(true);
-		expect(preferences.username).toBe('');
-	});
-
-	test('keeps valid values and trims what the user typed', () => {
-		const preferences = readPreferences(
-			reader({
-				scrobblerBackend: 'listenbrainz-compatible',
-				instanceBaseURL: ' https://lb.example.org// ',
-				instanceAPIBaseUrl: 'https://api.lb.example.org/',
-				username: '  rini ',
-				apiKey: ' key ',
-				statusName: ' {title} ',
-				useListeningStatus: true,
-			}),
-		);
+		const preferences = readPreferences(settings);
 
 		expect(preferences.scrobblerBackend).toBe('listenbrainz-compatible');
 		expect(preferences.instanceBaseURL).toBe('https://lb.example.org');

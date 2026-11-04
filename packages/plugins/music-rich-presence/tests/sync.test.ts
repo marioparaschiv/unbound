@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createPresenceSync } from '~/sync';
+import { createPresenceSync } from '~/presence/sync';
 import type { Activity } from '~/types';
 
 function deferred<T>() {

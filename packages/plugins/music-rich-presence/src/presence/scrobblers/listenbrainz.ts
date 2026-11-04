@@ -1,4 +1,4 @@
-import { createTtlCache } from '~/cache';
+import { createTtlCache } from '~/presence/cache';
 import { LOOKUP_CACHE_TTL_MS, MUSICBRAINZ_USER_AGENT, type Preferences } from '~/constants';
 import type { Fetcher, Scrobbler, TrackData } from '~/types';
 

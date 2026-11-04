@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { SETTINGS } from '~/constants';
+import { SETTINGS } from './defaults';
 import {
 	apiUrl,
 	coverArtFromResponse,
@@ -11,7 +11,7 @@ import {
 	recordingQueries,
 	siteUrl,
 	youtubeThumbnail,
-} from '~/scrobblers/listenbrainz';
+} from '~/presence/scrobblers/listenbrainz';
 import type { Fetcher } from '~/types';
 
 const official = { ...SETTINGS, scrobblerBackend: 'listenbrainz' as const, username: 'rini' };

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createTtlCache } from '~/cache';
+import { createTtlCache } from '~/presence/cache';
 
 describe('createTtlCache', () => {
 	test('expires entries after the TTL', () => {

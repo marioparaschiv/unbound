@@ -1,12 +1,15 @@
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { settings } from '@unbound-app/settings';
 import { flux, storage } from '@unbound-app/api';
 
-import { resolveActivity } from '~/activity';
+import { resolveActivity } from '~/presence/activity';
 import { DISCORD_APP_ID, PLUGIN_NAME, POLL_INTERVAL_MS, SOCKET_ID } from '~/constants';
-import { AssetManager, PresenceStore, SelfPresenceStore, UserStore, settings } from '~/modules';
-import { canQuery, readPreferences } from '~/preferences';
-import { LastFmScrobbler } from '~/scrobblers/lastfm';
-import { createListenBrainz } from '~/scrobblers/listenbrainz';
-import { createPresenceSync, type Schedule } from '~/sync';
+import { AssetManager, PresenceStore, SelfPresenceStore, UserStore } from '~/presence/modules';
+import { canQuery, readPreferences } from '~/presence/preferences';
+import { LastFmScrobbler } from '~/presence/scrobblers/lastfm';
+import { createListenBrainz } from '~/presence/scrobblers/listenbrainz';
+import { createPresenceSync, type Schedule } from '~/presence/sync';
 import type { Activity, Fetcher, PresenceActivity } from '~/types';
 
 const SETTINGS_REFRESH_MS = 750;
@@ -47,16 +50,21 @@ const scheduleTimeout: Schedule = (callback, delay) => {
 	return () => clearTimeout(timer);
 };
 
+let sync: ReturnType<typeof createPresenceSync> | undefined;
+
 /**
  * @description Polls the chosen scrobbler and keeps the Rich Presence activity in sync with what is playing.
- * @returns A function that stops polling and clears the activity.
+ * Reads the user and presence stores and Discord's asset manager, and sends activities as `LOCAL_ACTIVITY_UPDATE`
+ * actions. The Addon scope clears the poll timer and the settings listener; `stopPresence` clears the activity.
  */
-export function syncPresence(): () => void {
+export function startPresence(): void {
+	if (!ensureModules(PLUGIN_NAME, { UserStore })) return;
+
 	const listenBrainz = createListenBrainz();
 	const fetcher = fetch as unknown as Fetcher;
 
 	async function query(): Promise<Activity | null> {
-		const preferences = readPreferences(settings.get);
+		const preferences = readPreferences(settings);
 
 		if (!canQuery(preferences)) return null;
 
@@ -77,27 +85,33 @@ export function syncPresence(): () => void {
 
 	loadLocalActivityStore();
 
-	const sync = createPresenceSync({
+	const current = createPresenceSync({
 		query,
 		dispatch: dispatchActivity,
 		schedule: scheduleTimeout,
 		refreshDelay: SETTINGS_REFRESH_MS,
 	});
-	const interval = setInterval(() => void sync.poll(), POLL_INTERVAL_MS);
-	const unsubscribe = storage.onChange(
+
+	sync = current;
+
+	setInterval(() => void current.poll(), POLL_INTERVAL_MS);
+	storage.onChange(
 		(payload) => payload.store === addon.id,
 		(payload) => {
 			if (payload.key?.startsWith('instance')) listenBrainz.invalidate();
 
-			sync.refresh();
+			current.refresh();
 		},
 	);
 
-	void sync.poll();
+	void current.poll();
+	recordApplied(1);
+}
 
-	return () => {
-		clearInterval(interval);
-		unsubscribe();
-		sync.stop();
-	};
+/**
+ * @description Stops the poll for good and clears the activity the plugin sent, which the Addon scope cannot see.
+ */
+export function stopPresence(): void {
+	sync?.stop();
+	sync = undefined;
 }

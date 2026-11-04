@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import { LASTFM_API_KEY, SETTINGS } from '~/constants';
-import { LastFmScrobbler, parseRecentTracks, recentTracksUrl } from '~/scrobblers/lastfm';
+import { LASTFM_API_KEY } from '~/constants';
+import { SETTINGS } from './defaults';
+import { LastFmScrobbler, parseRecentTracks, recentTracksUrl } from '~/presence/scrobblers/lastfm';
 import type { Fetcher } from '~/types';
 
 const preferences = { ...SETTINGS, username: 'rini' };
