@@ -1,7 +1,7 @@
 import type { FluxStore } from '@unbound-app/api/flux';
 import { flux } from '@unbound-app/api';
 
-import { GuildMemberStore, MessageStore, RoleStore, UserStore } from '~/modules';
+import { GuildMemberStore, MessageStore, RoleStore, UserStore } from '~/avatars/modules';
 
 type ChangeSource = Partial<FluxStore> | undefined;
 
@@ -11,10 +11,10 @@ function isStore(source: ChangeSource): source is FluxStore {
 
 /**
  * @description Calls `onChange` once per tick after any store a mention resolves from changes.
+ * The Addon scope stops the listeners when the plugin stops.
  * @param onChange Called when a waiting mention may now resolve.
- * @returns A function that stops listening.
  */
-export function subscribeMentionSources(onChange: () => void): () => void {
+export function subscribeMentionSources(onChange: () => void): void {
 	const sources = [MessageStore, UserStore, GuildMemberStore, RoleStore] as ChangeSource[];
 	let queued = false;
 
@@ -28,11 +28,5 @@ export function subscribeMentionSources(onChange: () => void): () => void {
 		}, 0);
 	}
 
-	const removers = sources.filter(isStore).map((store) => flux.onStoreChange(store, listener));
-
-	return () => {
-		for (const remove of removers) remove();
-	};
+	for (const store of sources.filter(isStore)) flux.onStoreChange(store, listener);
 }
-
-export default subscribeMentionSources;

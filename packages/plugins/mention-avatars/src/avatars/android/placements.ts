@@ -1,6 +1,6 @@
 import type { SpanRange } from '@unbound-plugins/shared/native/android/spans';
 
-import { type Mention, selectMentionLabel } from '~/mentions';
+import { type Mention, selectMentionLabel } from '~/avatars/mentions';
 
 export const IMAGE_CHARACTER = '￼';
 export const IMAGE_PADDING = ' ';

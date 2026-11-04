@@ -1,8 +1,8 @@
 import type { NativeObjCBridge } from '@unbound-app/api/native';
 
-import { roleSymbol, roundedAvatar, tintRoleSymbol } from '~/ios/images';
-import type { Bridge, Handle } from '~/ios/bridge';
-import type { Mention, MentionType } from '~/mentions';
+import { roleSymbol, roundedAvatar, tintRoleSymbol } from '~/avatars/ios/images';
+import type { Bridge, Handle } from '~/avatars/ios/bridge';
+import type { Mention, MentionType } from '~/avatars/mentions';
 
 type ImageBytes = ArrayBuffer | Uint8Array;
 

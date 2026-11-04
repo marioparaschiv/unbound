@@ -36,9 +36,9 @@ import {
 	type TextRewriteEdit,
 } from '@unbound-plugins/shared/native/android/text-rewrites';
 
-import { planPlacements, type Placement, type SpanRange } from '~/android/placements';
-import type { MentionIndex } from '~/mention-index';
-import type { Mention } from '~/mentions';
+import { planPlacements, type Placement, type SpanRange } from '~/avatars/android/placements';
+import type { MentionIndex } from '~/avatars/mention-index';
+import type { Mention } from '~/avatars/mentions';
 import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 const TEXT_VIEW = 'com.facebook.drawee.span.SimpleDraweeSpanTextView';

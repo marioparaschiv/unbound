@@ -1,9 +1,9 @@
 import type { FluxChannel } from '@unbound-app/api/flux';
 import { metro } from '@unbound-app/api';
 
-import { avatarPngURL, extractMentionTokens, roleImageSource } from '~/mentions';
-import { ChannelStore, GuildMemberStore, RoleStore, UserStore } from '~/modules';
-import type { Mention, Role } from '~/mentions';
+import { avatarPngURL, extractMentionTokens, roleImageSource } from '~/avatars/mentions';
+import { ChannelStore, GuildMemberStore, RoleStore, UserStore } from '~/avatars/modules';
+import type { Mention, Role } from '~/avatars/mentions';
 
 type Channel = FluxChannel & {
 	guildId?: string;

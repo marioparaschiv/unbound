@@ -33,7 +33,6 @@
 			"files": [
 				"avatar-radius/src/index.tsx",
 				"chat-bubbles/src/index.tsx",
-				"mention-avatars/src/index.ts",
 				"message-latency/src/index.tsx",
 				"message-link-embeds/src/index.ts",
 				"more-user-tags/src/index.tsx",

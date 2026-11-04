@@ -3,14 +3,14 @@ import {
 	textEngine,
 } from '@unbound-plugins/shared/native/ios/text-attachments';
 
-import { insertMentionImages } from '~/ios/attributed-text';
-import type { ImageCache } from '~/ios/image-cache';
-import type { Bridge, Handle } from '~/ios/bridge';
+import { insertMentionImages } from '~/avatars/ios/attributed-text';
+import type { ImageCache } from '~/avatars/ios/image-cache';
+import type { Bridge, Handle } from '~/avatars/ios/bridge';
 import viewKey from '@unbound-plugins/shared/native/ios/view-key';
 
 import { MENTION_PLACEHOLDER } from '~/constants';
-import { rebuildsFromLiveText } from '~/mentions';
-import type { Mention } from '~/mentions';
+import { rebuildsFromLiveText } from '~/avatars/mentions';
+import type { Mention } from '~/avatars/mentions';
 
 type TextViewState = {
 	expiresAt: number;

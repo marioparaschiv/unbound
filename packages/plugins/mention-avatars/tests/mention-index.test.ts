@@ -8,7 +8,7 @@ const messages: TestMessage[] = [];
 const resolvable = new Set<string>();
 const collected: string[] = [];
 
-mock.module('~/modules', () => ({
+mock.module('~/avatars/modules', () => ({
 	SelectedChannelStore: { getChannelId: () => 'c1' },
 	MessageStore: {
 		getMessages: () => ({ _array: messages }),
@@ -17,7 +17,7 @@ mock.module('~/modules', () => ({
 	},
 }));
 
-mock.module('~/resolve-mentions', () => ({
+mock.module('~/avatars/resolve-mentions', () => ({
 	collectMentions: (message: TestMessage) => {
 		collected.push(message.id);
 
@@ -30,7 +30,7 @@ mock.module('~/resolve-mentions', () => ({
 	},
 }));
 
-const { createMentionIndex } = await import('~/mention-index');
+const { createMentionIndex } = await import('~/avatars/mention-index');
 
 function message(id: string, content = 'hi'): TestMessage {
 	return { id, channel_id: 'c1', content };

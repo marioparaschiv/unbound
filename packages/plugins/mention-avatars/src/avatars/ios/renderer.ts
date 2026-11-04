@@ -5,17 +5,17 @@ import {
 import type { NativeObjCBridge } from '@unbound-app/api/native';
 import viewKey from '@unbound-plugins/shared/native/ios/view-key';
 
-import { createTextViews, findTextViews } from '~/ios/text-views';
-import { createBridge, type Handle } from '~/ios/bridge';
-import { createImageCache } from '~/ios/image-cache';
-import type { MentionIndex } from '~/mention-index';
+import { createTextViews, findTextViews } from '~/avatars/ios/text-views';
+import { createBridge, type Handle } from '~/avatars/ios/bridge';
+import { createImageCache } from '~/avatars/ios/image-cache';
+import type { MentionIndex } from '~/avatars/mention-index';
 import {
 	createCellMessages,
 	isSettledWithoutMentions,
 	planRetries,
 	retryTargets,
 	shouldWait,
-} from '~/ios/render-plan';
+} from '~/avatars/ios/render-plan';
 
 const SETTLE_MS = 250;
 const MAX_WAITING = 96;

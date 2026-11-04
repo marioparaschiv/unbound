@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { bundledFilePath } from '~/ios/image-cache';
+import { bundledFilePath } from '~/avatars/ios/image-cache';
 
 test('reads a bundled default avatar from its decoded file path', () => {
 	expect(bundledFilePath('file:///private/Discord.app/default%20avatar.png')).toBe(

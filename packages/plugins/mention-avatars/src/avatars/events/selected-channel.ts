@@ -1,8 +1,8 @@
 import { flux } from '@unbound-app/api';
 
-import type { VisibleCellScanner } from '~/ios/visible-cells';
-import type { Renderer } from '~/ios/renderer';
-import { SelectedChannelStore } from '~/modules';
+import type { VisibleCellScanner } from '~/avatars/ios/visible-cells';
+import type { Renderer } from '~/avatars/ios/renderer';
+import { SelectedChannelStore } from '~/avatars/modules';
 
 function selectedChannelId(): string | undefined {
 	return SelectedChannelStore.getChannelId() ?? SelectedChannelStore.getLastSelectedChannelId();
