@@ -1,4 +1,4 @@
-import { recordApplied, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
 import {
@@ -35,18 +35,5 @@ export function startImages(): void {
 
 	const opened: SheetRef = { current: null };
 
-	const features = { 'action sheets': patchActionSheets, 'context menus': patchContextMenus };
-	const failed: string[] = [];
-
-	for (const [name, patch] of Object.entries(features)) {
-		try {
-			patch(opened);
-			recordApplied(1);
-		} catch (error) {
-			console.error(`[View Icons] Failed to patch the ${name}:`, error);
-			failed.push(name);
-		}
-	}
-
-	if (failed.length) recordFailure(`could not patch the ${failed.join(' and ')}`);
+	startFeatures('View Icons', [() => patchActionSheets(opened), () => patchContextMenus(opened)]);
 }
