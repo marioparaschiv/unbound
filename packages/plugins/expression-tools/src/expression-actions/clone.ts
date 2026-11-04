@@ -8,7 +8,7 @@ import {
 	type Expression,
 	type Sticker,
 } from '~/expression-actions/expression';
-import { Auth, EmojiActions, Users } from '~/expression-actions/modules';
+import { Auth, EmojiActions, UserStore } from '~/expression-actions/modules';
 import { getErrorMessage } from '~/expression-actions/errors';
 import type { Guild } from '~/expression-actions/guilds';
 import { notify } from '~/expression-actions/notify';
@@ -106,7 +106,7 @@ async function uploadSticker(sticker: Sticker, guild: Guild, name: string): Prom
 	void flux.dispatch({
 		type: 'GUILD_STICKERS_CREATE_SUCCESS',
 		guildId: guild.id,
-		sticker: { ...body, user: Users.getCurrentUser() },
+		sticker: { ...body, user: UserStore.getCurrentUser() },
 	});
 }
 

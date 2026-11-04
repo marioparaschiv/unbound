@@ -4,7 +4,8 @@
 
 ### Changed
 
-- The buttons, toasts and the clone sheet can now be translated. The plugin works the same as before.
+- The buttons, toasts and the clone sheet can now be translated.
+- The buttons come back on sticker and emoji sheets after the plugin is turned off and on again, and one sheet that fails to patch no longer takes the other sheet's buttons with it.
 
 ## [1.0.4] - 2026-11-03
 

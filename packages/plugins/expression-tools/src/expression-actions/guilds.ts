@@ -1,4 +1,4 @@
-import { Guilds, Users } from '~/expression-actions/modules';
+import { GuildStore, UserStore } from '~/expression-actions/modules';
 
 export type Guild = {
 	id: string;
@@ -12,11 +12,11 @@ export type Guild = {
  * @returns The owned servers, sorted by name.
  */
 export function getOwnedGuilds(): Guild[] {
-	const id = Users.getCurrentUser()?.id;
+	const id = UserStore.getCurrentUser()?.id;
 
 	if (!id) return [];
 
-	const guilds: Guild[] = Object.values(Guilds.getGuilds());
+	const guilds: Guild[] = Object.values(GuildStore.getGuilds());
 
 	return guilds
 		.filter((guild) => guild.ownerId === id)

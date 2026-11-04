@@ -1,7 +1,10 @@
-import { beforeEach, describe, expect, test } from 'bun:test';
-import { flux, metro, render, startPlugin, toasts } from '@unbound-app/api/testing';
-import { createElement } from 'react';
+import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { flux, metro, render, startPlugin, stopPlugin, toasts } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
+import { createElement, memo } from 'react';
 import { Text, View } from 'react-native';
+
+import { selfTest } from '~/index';
 
 const copied: string[] = [];
 const favorites = new Set<string>();
@@ -48,6 +51,17 @@ function press(view: ReturnType<typeof render>, label: string) {
 	view.act(() => button.props.onPress?.(Object.create(null)));
 }
 
+function GuildStickerDetail(_props: object) {
+	return <View>{[<Text key='name'>wave</Text>]}</View>;
+}
+
+// Discord opens the sticker sheet from a message without `openLazy`, as a memo that renders the detail.
+const stickerSheet = {
+	default: memo(function StickerDetailActionSheet(props: { sticker: object }) {
+		return <GuildStickerDetail {...props} />;
+	}),
+};
+
 const emoji = { emoji: { id: '123', name: 'moai', animated: true } };
 
 beforeEach(async () => {
@@ -60,7 +74,7 @@ beforeEach(async () => {
 	metro.register({ hideStickerDetailActionSheet: () => {} });
 	metro.register({ uploadEmoji: async () => {} });
 	metro.register({ getToken: () => 'token' });
-	metro.register({ default: () => null }, 'modules/stickers/native/StickerDetailActionSheet.tsx');
+	metro.register(stickerSheet, 'modules/stickers/native/StickerDetailActionSheet.tsx');
 	flux.seed({
 		Guild: { getGuilds: () => ({}) },
 		User: { getCurrentUser: () => ({ id: '1' }) },
@@ -114,5 +128,49 @@ describe('the sticker sheet', () => {
 
 		expect(toasts.shown).toMatchObject([{ content: 'wave added to favorites.' }]);
 		expect(view.findAll('Pressable').map((node) => node.text())).toContain('Unfavorite');
+	});
+
+	test('adds the buttons to the sheet a message opens, which skips openLazy', () => {
+		const view = render(createElement(stickerSheet.default, sticker));
+
+		expect(view.findAll('Pressable').map((node) => node.text())).toContain('Favorite');
+	});
+});
+
+describe('starting', () => {
+	async function restart() {
+		await stopPlugin();
+		resetHealth();
+		await startPlugin();
+	}
+
+	test('reports both patches applied to the self test', async () => {
+		await restart();
+
+		expect(selfTest()).toEqual({ ok: true, detail: '2 features applied' });
+	});
+
+	test('keeps the emoji sheet buttons when the sticker sheet cannot be patched', async () => {
+		const errors = spyOn(console, 'error').mockImplementation(() => {});
+
+		const sheet = stickerSheet.default;
+
+		stickerSheet.default = 'not a component' as never;
+		await restart();
+		errors.mockRestore();
+		stickerSheet.default = sheet;
+
+		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
+
+		expect(view.findAll('Pressable')).toHaveLength(3);
+		expect(selfTest()).toMatchObject({ ok: false });
+	});
+
+	test('draws the buttons again after the plugin stops and starts', async () => {
+		await restart();
+
+		const view = await openSheet('EmojiDetailActionSheet', createSheet(), emoji);
+
+		expect(view.findAll('Pressable')).toHaveLength(3);
 	});
 });
