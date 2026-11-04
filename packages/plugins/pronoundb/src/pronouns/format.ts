@@ -1,4 +1,4 @@
-import { PronounLabels, SENTENCE_CODES } from '~/constants';
+import { PRONOUN_LABELS, SENTENCE_CODES } from '~/constants';
 
 /**
  * @description Turns PronounDB's pronoun codes into the label shown next to a message.
@@ -18,7 +18,7 @@ export function formatPronouns(codes: string[] | undefined, capitalized: boolean
 	}
 
 	const [code] = codes;
-	const label = PronounLabels[code] ?? code;
+	const label = PRONOUN_LABELS[code]?.() ?? code;
 
 	return capitalized || SENTENCE_CODES.includes(code) ? label : label.toLowerCase();
 }

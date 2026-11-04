@@ -1,5 +1,6 @@
-import { formatPronouns } from '~/pronouns';
-import { settings } from '~/modules';
+import { settings } from '@unbound-app/settings';
+
+import { formatPronouns } from '~/pronouns/format';
 import { Lookup } from '~/constants';
 
 type LookupResponse = Record<string, { sets?: Record<string, string[]> }>;
@@ -47,7 +48,7 @@ export function createLookup(onResolved: () => void) {
 			return;
 		}
 
-		const capitalized = settings.get('format', 'lowercase') === 'capitalized';
+		const capitalized = settings.format === 'capitalized';
 
 		for (const id of ids) cache.set(id, formatPronouns(result[id]?.sets?.en, capitalized));
 
