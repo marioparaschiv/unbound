@@ -10,12 +10,12 @@
 		"test": "bun test"
 	},
 	"dependencies": {
-		"@shikijs/langs": "4.5.0",
-		"@shikijs/themes": "4.5.0",
+		"@shikijs/langs": "4.6.0",
+		"@shikijs/themes": "4.6.0",
 		"@unbound-plugins/shared": "workspace:*",
 		"highlight.js": "11.12.0",
 		"jsonc-parser": "3.3.1",
-		"shiki": "4.5.0"
+		"shiki": "4.6.0"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
@@ -23,6 +23,6 @@
 		"@unbound-app/api": "workspace:*",
 		"@unbound-app/cli": "workspace:*",
 		"react-native": "^0.86.0",
-		"rollup": "^4.66.0"
+		"rollup": "^4.67.5"
 	}
 }

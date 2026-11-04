@@ -2,8 +2,9 @@ import type { PublishedManifest } from '@unbound-app/contracts/manifest';
 import type { ListedAddon } from '@unbound-app/contracts/addons';
 
 import { dependentsOf, planDependencies, type ListedDependency } from '~/addons/dependencies';
-import { confirm, showDialog } from '~/dialogs/api';
 import MarketplaceStore from '~/marketplace/state';
+import { alert, showDialog } from '~/dialogs/api';
+import { confirmText } from '~/dialogs/feedback';
 import { toRelease } from '~/addons/versions';
 import { messages, format } from '~/i18n/api';
 import { Manager } from '~/addons/manager';
@@ -68,12 +69,10 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 	const { name } = manifest;
 
 	if (plan.unavailable.length) {
-		showDialog({
-			title: format('UNBOUND_DEPENDENCIES_TITLE', { name }),
-			body: format('UNBOUND_DEPENDENCIES_UNAVAILABLE', {
-				names: plan.unavailable.join(', '),
-			}),
-			cancel: messages.UNBOUND_OK,
+		void alert('UNBOUND_DEPENDENCIES_TITLE', {
+			titleVars: { name },
+			body: 'UNBOUND_DEPENDENCIES_UNAVAILABLE',
+			bodyVars: { names: plan.unavailable.join(', ') },
 		});
 
 		return false;
@@ -83,11 +82,12 @@ export async function installDependencies(manifest: PublishedManifest): Promise<
 		return true;
 	}
 
-	const approved = await confirm({
+	// The body lists each dependency, so it is composed here rather than one message key.
+	const approved = await confirmText(showDialog, {
 		title: format('UNBOUND_DEPENDENCIES_TITLE', { name }),
 		body: `${format('UNBOUND_DEPENDENCIES_BODY', { count: plan.ordered.length })}\n\n${describePlan(plan.install, plan.update)}`,
-		confirmLabel: messages.UNBOUND_DEPENDENCIES_CONFIRM,
-		cancelLabel: messages.UNBOUND_CANCEL,
+		confirm: messages.UNBOUND_DEPENDENCIES_CONFIRM,
+		cancel: messages.UNBOUND_CANCEL,
 	});
 
 	if (!approved) {

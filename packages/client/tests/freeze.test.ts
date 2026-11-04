@@ -3,6 +3,8 @@ import { describe, expect, mock, test } from 'bun:test';
 import type { AddonAttribution } from '~/addons/crash-guard';
 import type { CrashEvent } from '~/diagnostics/crash-report';
 
+import { coreI18nMock } from './helpers/core-i18n';
+
 type RecordedToast = { content?: unknown };
 
 const toasts: RecordedToast[] = [];
@@ -13,6 +15,8 @@ mock.module('~/diagnostics/crash-reports', () => ({
 		crashes.push(event);
 	},
 }));
+mock.module('~/i18n/api', coreI18nMock);
+
 const actualToasts = await import('~/toasts/api');
 
 mock.module('~/toasts/api', () => ({

@@ -24,6 +24,8 @@ export type Report = {
 	candidateModules: number;
 	reactNativeModule: number | undefined;
 	pascalCaseFunctions: number;
+	/** How many asset names `assets.gen.d.ts` lists, by file type. */
+	assetNames: Record<string, number>;
 	components: number;
 	exportedComponents: number;
 	props: number;
@@ -40,6 +42,7 @@ export type ScanStats = {
 	candidateModules: number;
 	reactNativeModule: number | undefined;
 	pascalCaseFunctions: number;
+	assetNames: Record<string, number>;
 };
 
 /**

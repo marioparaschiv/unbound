@@ -1,7 +1,6 @@
 import type {
 	Autocomplete,
 	Awaitable,
-	Choice,
 	CommandContext,
 	IconSource,
 	OptionKind,
@@ -12,6 +11,7 @@ import type {
 } from '@unbound-app/types/commands';
 
 import type { DiscordOptionExtras } from '~/commands/options';
+import type { CommandLocales } from '~/commands/locales';
 import { UNBOUND_ICON } from '~/commands/unbound-icon';
 import { getKind } from '~/commands/options';
 
@@ -23,8 +23,9 @@ export type Section = {
 };
 
 export type NormalizedChoice = {
+	/** The message key of the label. */
 	readonly label: string;
-	readonly value: string | number;
+	readonly value: string;
 };
 
 export type ErasedArgs = Readonly<Record<string, OptionValue<OptionKind> | undefined>>;
@@ -36,7 +37,8 @@ export type ErasedAutocomplete = Autocomplete<string | number>;
 
 export type NormalizedOption = {
 	readonly name: string;
-	readonly description: string;
+	/** The message key of the description; `undefined` shows the option's name. */
+	readonly description: string | undefined;
 	readonly kind: OptionKind;
 	readonly type: number;
 	readonly required: boolean;
@@ -51,11 +53,15 @@ export type CommandRecord = {
 	readonly id: string;
 	/** The root command's id; equal to `id` for a root leaf. */
 	readonly rootId: string;
+	/** The message key of the root's description. */
 	readonly rootDescription: string;
 	readonly owner: string;
 	readonly section: Section;
+	/** Resolves every message key of the record in the user's locale. */
+	readonly locales: CommandLocales;
 	/** 1 to 3 names: root, optional group, subcommand. */
 	readonly path: readonly string[];
+	/** The message key of the description. */
 	readonly description: string;
 	/** Required options first, then optional ones, each in declaration order. */
 	readonly options: readonly NormalizedOption[];
@@ -76,6 +82,8 @@ export type NormalizeInput = {
 	owner: string;
 	section: Section;
 	tree: ErasedTree;
+	/** The owner's translations, which every message key must be in. */
+	locales: CommandLocales;
 	/** Discord's SUB_COMMAND_KEY_SEPARATOR. */
 	separator?: string;
 };
@@ -83,6 +91,7 @@ export type NormalizeInput = {
 type Walk = {
 	owner: string;
 	section: Section;
+	locales: CommandLocales;
 	separator: string;
 	rootId: string;
 	rootDescription: string;
@@ -96,6 +105,7 @@ const NAME = /^[-_\p{L}\p{N}]{1,32}$/u;
 const MAX_DEPTH = 3;
 const MAX_ENTRIES = 25;
 const MAX_TEXT = 100;
+const SOURCE_FILE = 'i18n/en-US.json';
 // Discord's own built-ins use -1..-99.
 const RESERVED_IDS = 100;
 
@@ -141,13 +151,14 @@ export function resolveSection(owner: string, input: SectionInput | undefined): 
  * @returns The records, roots in declaration order.
  */
 export function normalize(input: NormalizeInput): CommandRecord[] {
-	const { owner, section, tree, separator = SUB_COMMAND_SEPARATOR } = input;
+	const { owner, section, tree, locales, separator = SUB_COMMAND_SEPARATOR } = input;
 	const records: CommandRecord[] = [];
 
 	for (const [name, node] of Object.entries(tree)) {
 		const walk: Walk = {
 			owner,
 			section,
+			locales,
 			separator,
 			rootId: commandId(owner, name),
 			rootDescription: node?.description,
@@ -172,7 +183,7 @@ function visit(walk: Walk, node: ErasedNode, path: string[]) {
 		throw fail('a command must be an object.');
 	}
 
-	assertText(node.description, 'description', fail);
+	assertKey(walk.locales, node.description, 'description', fail);
 
 	const isGroup = node.subcommands !== undefined;
 
@@ -208,7 +219,9 @@ function visit(walk: Walk, node: ErasedNode, path: string[]) {
 		throw fail(`a command has at most ${MAX_ENTRIES} options.`);
 	}
 
-	const options = declared.map(([option, spec]) => normalizeOption(option, spec, fail));
+	const options = declared.map(([option, spec]) =>
+		normalizeOption(walk.locales, option, spec, fail),
+	);
 	const id =
 		path.length === 1 ? walk.rootId : [walk.rootId, ...path.slice(1)].join(walk.separator);
 
@@ -219,6 +232,7 @@ function visit(walk: Walk, node: ErasedNode, path: string[]) {
 			rootDescription: walk.rootDescription,
 			owner: walk.owner,
 			section: walk.section,
+			locales: walk.locales,
 			path: Object.freeze([...path]),
 			description: node.description,
 			// Discord rejects a required option after an optional one.
@@ -232,6 +246,7 @@ function visit(walk: Walk, node: ErasedNode, path: string[]) {
 }
 
 function normalizeOption(
+	locales: CommandLocales,
 	name: string,
 	spec: OptionSpec,
 	fail: (reason: string) => CommandDefinitionError,
@@ -246,10 +261,12 @@ function normalizeOption(
 		throw fail(`option "${name}": names are 1-32 lowercase letters, digits, - or _.`);
 	}
 
-	const description = spec.description ?? name;
+	const { description } = spec;
 	const autocomplete = 'autocomplete' in spec.settings ? spec.settings.autocomplete : undefined;
 
-	assertText(description, `option "${name}" description`, fail);
+	if (description !== undefined) {
+		assertKey(locales, description, `option "${name}" description`, fail);
+	}
 
 	if (autocomplete !== undefined && typeof autocomplete !== 'function') {
 		throw fail(`option "${name}": autocomplete must be a function.`);
@@ -261,54 +278,64 @@ function normalizeOption(
 		kind: spec.kind,
 		type: kind.type,
 		required: spec.required,
-		choices: spec.choices && normalizeChoices(name, spec, fail),
+		choices: spec.choices && normalizeChoices(locales, name, spec.choices, fail),
 		extras: kind.toDiscord(spec.settings),
 		autocomplete,
 	});
 }
 
 function normalizeChoices(
+	locales: CommandLocales,
 	name: string,
-	spec: OptionSpec,
+	map: Readonly<Record<string, string>>,
 	fail: (reason: string) => CommandDefinitionError,
 ): readonly NormalizedChoice[] {
-	const choices = (spec.choices ?? []).map(toChoice);
-	const labels = new Set(choices.map((choice) => choice.label));
-	const valueType = spec.kind === 'string' ? 'string' : 'number';
+	if (typeof map !== 'object' || map === null || Array.isArray(map)) {
+		throw fail(`option "${name}" choices must map each value to a message key.`);
+	}
+
+	const choices = Object.entries(map).map(([value, label]) => Object.freeze({ label, value }));
 
 	if (choices.length < 1 || choices.length > MAX_ENTRIES) {
 		throw fail(`option "${name}" needs 1 to ${MAX_ENTRIES} choices.`);
 	}
 
-	// Discord maps a picked label back to the first choice with it, so a duplicate is unreachable.
-	if (labels.size !== choices.length) {
-		throw fail(`option "${name}" has two choices with the same label.`);
+	for (const choice of choices) {
+		assertKey(locales, choice.label, `option "${name}" choice "${choice.value}" label`, fail);
+
+		if (!choice.value.trim() || choice.value.length > MAX_TEXT) {
+			throw fail(`option "${name}" choice values must be 1-${MAX_TEXT} characters.`);
+		}
 	}
 
-	for (const choice of choices) {
-		assertText(choice.label, `option "${name}" choice label`, fail);
-
-		if (typeof choice.value !== valueType) {
-			throw fail(`option "${name}" mixes string and number choices.`);
-		}
+	// Discord maps a picked label back to the first choice with it, so a duplicate is unreachable.
+	if (new Set(choices.map((choice) => locales.source(choice.label))).size !== choices.length) {
+		throw fail(`option "${name}" has two choices with the same en-US label.`);
 	}
 
 	return Object.freeze(choices);
 }
 
-function toChoice(choice: Choice<string | number>): NormalizedChoice {
-	return typeof choice === 'object'
-		? Object.freeze({ label: choice.label, value: choice.value })
-		: Object.freeze({ label: String(choice), value: choice });
-}
-
-function assertText(
-	text: string | undefined,
+// Keys are checked on the owner's en-US table, which every other locale falls back to.
+function assertKey(
+	locales: CommandLocales,
+	// UNKNOWN: an author's tree reaches here unchecked at runtime, so a key may be any value.
+	key: unknown,
 	what: string,
 	fail: (reason: string) => CommandDefinitionError,
 ) {
-	if (typeof text !== 'string' || !text.trim() || text.length > MAX_TEXT) {
-		throw fail(`${what} must be 1-${MAX_TEXT} characters.`);
+	const text = typeof key === 'string' ? locales.source(key) : undefined;
+
+	if (typeof key !== 'string' || text === undefined) {
+		throw fail(
+			`${what} ${JSON.stringify(key)} is not a key in ${SOURCE_FILE}. Use a key, and add it there.`,
+		);
+	}
+
+	if (!text.trim() || text.length > MAX_TEXT) {
+		throw fail(
+			`${what} ${key} must be 1-${MAX_TEXT} characters in ${SOURCE_FILE}, not ${text.length}.`,
+		);
 	}
 }
 

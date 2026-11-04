@@ -32,7 +32,42 @@ export function currentUsername() {
 }
 ```
 
-In a component, read the store with `flux.useStore` instead. The component then re-renders when the store changes. See [flux](/docs/sdk/latest/flux) in the SDK reference.
+In a component, read the store with `flux.useStore` instead. Pass the store and a selector. The selector gets the store, and the component re-renders only when the value it returns changes.
+
+```tsx
+import { Discord } from '@unbound-app/api/metro/components';
+import { flux } from '@unbound-app/api';
+
+const UserStore = flux.getStore('User');
+
+function Username() {
+	const username = flux.useStore(UserStore, (store) => store.getCurrentUser()?.username);
+
+	return <Discord.Text variant='text-md/medium'>{username}</Discord.Text>;
+}
+```
+
+To read several stores, pass them as an array. The selector gets the same array. If the selector uses a prop, pass it in `deps`, so the value is read again when it changes.
+
+```ts
+const status = flux.useStore([PresenceStore, UserStore], ([presence]) => presence.getStatus(userId), {
+	deps: [userId],
+});
+```
+
+A selector that returns a new object or array re-renders the component on every store change, because the new value is never `===` the old one. Wrap it in `utils.react.useShallow`. The component then re-renders only when a top-level field changes.
+
+```ts
+const { username, avatar } = flux.useStore(
+	UserStore,
+	utils.react.useShallow((store) => ({
+		username: store.getCurrentUser()?.username,
+		avatar: store.getCurrentUser()?.avatar,
+	})),
+);
+```
+
+For any other comparison, pass `isEqual`. It gets the old and new values, and returns `true` to skip the re-render. `utils.react.shallow` is the comparison `useShallow` uses. See [flux](/docs/sdk/latest/flux) in the SDK reference.
 
 ## Listening for an action
 

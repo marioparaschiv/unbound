@@ -10,9 +10,13 @@
 	"trailingComma": "all",
 	"ignorePatterns": [
 		"*.gen.ts",
+		"**/src/unbound-settings.d.ts",
+		"**/src/unbound-i18n.d.ts",
+		"packages/client/src/i18n/core-messages.d.ts",
 		"drizzle",
 		"packages/discord-types/src/**",
 		"packages/cli/templates/**",
+		"packages/cli/tests/fixtures/migrate-entry/**",
 		"CHANGELOG.md",
 		"docs/**/*.mdx",
 		"packages/loader/bootstrap/devtools.js",

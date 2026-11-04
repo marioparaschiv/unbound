@@ -3,7 +3,6 @@ import { unbound } from '@unbound-app/cli/rollup';
 import { lazyBundled } from './rollup/lazy-bundled.mjs';
 
 const config = unbound(import.meta.url, {
-	settingsPanel: true,
 	lazyModules: [
 		'highlight.js/lib/common',
 		'shiki/core',

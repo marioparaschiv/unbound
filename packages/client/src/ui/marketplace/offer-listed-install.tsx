@@ -3,8 +3,8 @@ import type { AddonKind } from '@unbound-app/types/addons';
 
 import { getInstalledVersion, installVersion } from '~/marketplace/install';
 import { getInstallStatus } from '~/marketplace/catalog';
-import { messages, format } from '~/i18n/api';
 import { confirm } from '~/dialogs/api';
+import { format } from '~/i18n/api';
 import { show } from '~/toasts/api';
 
 /**
@@ -22,18 +22,19 @@ export async function offerListedInstall(kind: AddonKind, addon: ListedAddon): P
 	}
 
 	const update = status === 'update';
-	const approved = await confirm({
-		title: format(update ? 'UNBOUND_LINK_UPDATE_TITLE' : 'UNBOUND_LINK_INSTALL_TITLE', {
-			name,
-		}),
-		body: format('UNBOUND_LINK_BODY', {
-			version,
-			authors: authors.map((author) => author.name).join(', '),
-			description,
-		}),
-		confirmLabel: format(update ? 'UNBOUND_UPDATE' : 'UNBOUND_INSTALL'),
-		cancelLabel: messages.UNBOUND_CANCEL,
-	});
+	const approved = await confirm(
+		update ? 'UNBOUND_LINK_UPDATE_TITLE' : 'UNBOUND_LINK_INSTALL_TITLE',
+		{
+			titleVars: { name },
+			body: 'UNBOUND_LINK_BODY',
+			bodyVars: {
+				version,
+				authors: authors.map((author) => author.name).join(', '),
+				description,
+			},
+			confirm: update ? 'UNBOUND_UPDATE' : 'UNBOUND_INSTALL',
+		},
+	);
 
 	if (!approved) {
 		return false;

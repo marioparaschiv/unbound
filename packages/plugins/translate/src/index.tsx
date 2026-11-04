@@ -6,14 +6,10 @@ import { patchActionSheets } from '~/patches/action-sheets';
 import SettingsPanel from '~/components/settings-panel';
 import { ActionSheets } from '~/modules';
 
-function start() {
+export function start() {
 	if (!ensureModules('Translate', { ActionSheets })) return;
 
 	applyFeatures('Translate', [patchActionSheets]);
 }
 
-export default {
-	start,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

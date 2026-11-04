@@ -97,10 +97,11 @@ async function generate() {
 	}
 
 	const seconds = ((performance.now() - start) / 1000).toFixed(1);
+	const assetNames = Object.values(report.assetNames).reduce((sum, count) => sum + count, 0);
 	const rss = Math.round(process.memoryUsage().rss / 1e6);
 
 	logger.success(
-		`Typed ${report.components} components (${report.exportedComponents} exported) of ${report.pascalCaseFunctions} PascalCase functions in ${report.modules} modules; ${report.typedProps}/${report.props} props (${report.typedPercent}%) typed beyond unknown. ${files.size} files in ${seconds}s, RSS ${rss} MB.`,
+		`Typed ${report.components} components (${report.exportedComponents} exported) of ${report.pascalCaseFunctions} PascalCase functions in ${report.modules} modules; ${report.typedProps}/${report.props} props (${report.typedPercent}%) typed beyond unknown; ${assetNames} asset names. ${files.size} files in ${seconds}s, RSS ${rss} MB.`,
 	);
 }
 

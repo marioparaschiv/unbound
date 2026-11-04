@@ -26,6 +26,25 @@ Each helper searches a different part of a module:
 | `findByPrototypes('method')` | Default export's prototype has every method | Classes |
 | `flux.getStore('User')` | Flux store is named `UserStore` | Stores. See [Flux Stores](/docs/developer/plugins/flux) |
 
+## Typed results
+
+`findByProps`, `findByName` and `findByFilePath` suggest Discord's export names, component names and file paths as you type, and still take any string. A result is typed where Discord's types are known, the design components, and open everywhere else:
+
+```ts
+// Typed: the design module's components, with their props.
+const { TableRow } = metro.findByProps('TableRow', 'TableRowGroup');
+
+// Not typed yet: an open object with `sendMessage` and `receiveMessage`.
+const Messages = metro.findByProps('sendMessage', 'receiveMessage');
+```
+
+- **A result is never closed.** Any export the types don't list still reads, as `any`, since Discord adds exports between builds.
+- **Component props are loose.** Every known prop is optional, a prop the types don't list is allowed, and only a prop with a simple type, such as a `string`, `boolean` or callback, has its value checked.
+- **Several typed modules match:** you get the union of them. Add a name only the one you want has.
+- **Nothing typed matches:** you get an object with the names you passed.
+
+The types describe one Discord build. They refresh when Unbound regenerates its Discord types after an update (`bun run generate-discord-types`, which writes `packages/discord-types/src/metro.gen.d.ts`).
+
 ## Searches are lazy
 
 Every helper above returns a stand-in at once, and searches only the first time you read from it. A search walks every module, so this keeps a plugin from slowing Discord's launch. It also makes lookups safe at the top of a file.
@@ -44,9 +63,60 @@ export function currentUsername() {
 
 Pass `{ lazy: false }` as the last argument to search right away. Do that only inside a function, never at the top of a file. The [standards](/docs/developer/addons/standards#no-eager-lookups-while-the-plugin-loads) lint rule reports it there.
 
-<Note>
-	Results are cached, so a repeat search for the same names is cheap. Prefer the helpers over `metro.find` with a filter function you write yourself, which can't be cached.
-</Note>
+Results are cached, so a repeat search for the same names is cheap.
+
+## Custom filters
+
+When no helper fits, write the test yourself. Caching is automatic and shared: write any filter, and the build gives it a cache key. Only a dynamic filter searches uncached.
+
+Combine filters with `metro.filters.all`, `any` and `not`. A part can be a helper or a function you write:
+
+```ts
+import { metro } from '@unbound-app/api';
+
+const { all, byProps } = metro.filters;
+
+// Lazy, like findByProps.
+const Tokens = metro.find(all(byProps('colors'), (m) => typeof m.unsafe_rawColors === 'object'));
+```
+
+To reuse one filter with different values, define it with `metro.filter`. Its parameters after the module are its arguments:
+
+```ts
+const byRoute = metro.filter((m, route: string) => m.route === route);
+
+const Settings = metro.find(byRoute('SETTINGS'));
+```
+
+The build hashes each filter's code, ignoring names, quotes and formatting. Every plugin with the same filter shares one cache entry, and changed code gets a new one. Arguments must be JSON values: strings, numbers, booleans, `null`, arrays and plain objects.
+
+A filter can read only its parameters and built-in globals such as `Object`. If it reads a variable from outside, two plugins could share a key while matching different modules, so the build fails. Pass the value as an argument instead:
+
+```ts
+const wanted = 'SETTINGS';
+
+// Fails the build: the filter reads `wanted`.
+metro.find((m) => m.route === wanted);
+
+// Works: `wanted` is an argument.
+metro.find(byRoute(wanted));
+```
+
+The build traces a filter to its definition through `const`s, imports and re-exports. A filter it can't trace, such as one passed through a parameter or chosen with `? :`, searches uncached, and the build warns at the call.
+
+You can write a filter the way you think of it. The build turns common shapes into the matching helpers, so they share the client's cache too:
+
+| You write | The build uses |
+| --- | --- |
+| `m.name === 'X'` | `byName('X')` |
+| `m.displayName === 'X'` | `byDisplayName('X')` |
+| `m.type?.name === 'X'` | `byTypeName('X')` |
+| `m.a !== undefined && m.b !== undefined` | `byProps('a', 'b')` |
+| `m.prototype?.render !== undefined` | `byPrototypes('render')` |
+| `m._dispatcher && m.getName?.() === 'UserStore'` | `byFluxStore('UserStore', false)` |
+| `&&` or `\|\|` of these | `all(…)` or `any(…)` |
+
+The build rewrites a filter only when it matches exactly the same modules. `m.a && m.b` stays as written, since it also rejects a `0` or `''` export; use `byProps('a', 'b')` if that never happens. `ubd build --verbose` lists each rewrite.
 
 ## Waiting for a module that hasn't loaded
 

@@ -22,3 +22,6 @@ export const spare = new Counter();
 export function render(): void {}
 
 export type Widget = { id: string };
+
+/** @internal */
+export function reset(): void {}

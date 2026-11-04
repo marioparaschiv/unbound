@@ -5,14 +5,10 @@ import { patchUserProfileCard } from '~/patches/user-profile-card';
 import SettingsPanel from '~/components/settings-panel';
 import { notifyNewReviews } from '~/new-reviews';
 
-function start() {
+export function start() {
 	void notifyNewReviews();
 
 	applyFeatures('ReviewDB', [patchUserProfileCard]);
 }
 
-export default {
-	start,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

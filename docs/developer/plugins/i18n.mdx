@@ -20,19 +20,18 @@ So a missing translation never breaks your plugin. It shows English until someon
 
 ## Lay out the files
 
-Keep translations in their own domain folder: one JSON file per language, and one file that loads them.
+Keep one JSON file per language in an `i18n` folder at the root of your plugin, beside `src`.
 
 <FileTree>
+	<File name='manifest.json' />
+	<Folder name='i18n' note='One file per language'>
+		<File name='en-US.json' note='Every key. Required, and the fallback for the rest' />
+		<File name='de.json' note='German' />
+		<File name='fr.json' note='French' />
+	</Folder>
 	<Folder name='src'>
 		<File name='index.tsx' />
-		<Folder name='i18n' note='Everything about translations'>
-			<File name='index.ts' note='Loads the files and exports messages and format' />
-			<Folder name='locales'>
-				<File name='en-US.json' note='Every key. The fallback for the rest' />
-				<File name='de.json' note='German' />
-				<File name='fr.json' note='French' />
-			</Folder>
-		</Folder>
+		<File name='unbound-i18n.d.ts' note='Generated from en-US.json. Commit it' />
 	</Folder>
 </FileTree>
 
@@ -42,7 +41,7 @@ Name each file after Discord's code for the language. Most are two letters, such
 
 Each file maps keys to strings. Use the same keys in every file.
 
-```json src/i18n/locales/en-US.json
+```json i18n/en-US.json
 {
 	"GREETING_TITLE": "Welcome back",
 	"GREETING_BODY": "Hello, {name}!",
@@ -50,7 +49,7 @@ Each file maps keys to strings. Use the same keys in every file.
 }
 ```
 
-```json src/i18n/locales/de.json
+```json i18n/de.json
 {
 	"GREETING_TITLE": "Willkommen zurück",
 	"GREETING_BODY": "Hallo, {name}!",
@@ -60,30 +59,16 @@ Each file maps keys to strings. Use the same keys in every file.
 
 Strings use ICU message syntax. `{name}` is a placeholder. `{count, plural, ...}` picks a form by number, and `#` prints the number. Each language writes its own plural forms.
 
-## Load them
-
-`i18n.defineMessages` takes every language, keyed by its code, and returns two ways to read them.
-
-```ts src/i18n/index.ts
-import { i18n } from '@unbound-app/api';
-
-import enUS from '~/i18n/locales/en-US.json';
-import de from '~/i18n/locales/de.json';
-import fr from '~/i18n/locales/fr.json';
-
-export const { messages, format } = i18n.defineMessages({ 'en-US': enUS, de, fr });
-```
-
-Your strings are kept apart from Unbound's and every other plugin's, so your keys need no prefix.
-
 ## Use them
+
+Import `messages` and `format` from `@unbound-app/i18n`. That is not a package you install: the build makes the module from your `i18n` folder, and every file that imports it gets the same one. Your strings are kept apart from Unbound's and every other plugin's, so your keys need no prefix.
 
 Read plain strings from `messages`. Use `format` for strings with placeholders, and pass the values.
 
 ```ts src/greeting/index.ts
 import { toasts } from '@unbound-app/api';
 
-import { format, messages } from '~/i18n';
+import { format, messages } from '@unbound-app/i18n';
 
 export function showGreeting(name: string) {
 	toasts.show({
@@ -93,14 +78,87 @@ export function showGreeting(name: string) {
 }
 ```
 
+Both are typed from `en-US.json`. A key that is not there is an error. `format` knows each key's placeholders: `GREETING_BODY` needs `{ name }`, `UNREAD_COUNT` needs `{ count }` as a number, and a key with no placeholders takes no values.
+
+| Placeholder                      | Type             |
+| -------------------------------- | ---------------- |
+| `{name}`                         | `string \| number` |
+| `{count, number}`, `{count, plural, ...}` | `number` |
+| `{when, date}`, `{when, time}`   | `Date \| number` |
+| `{kind, select, a {...} b {...}}` | `'a' \| 'b'`, plus any string when there is an `other` branch |
+
+<Warning>
+	Import `@unbound-app/i18n`, never the `i18n` folder or one of its files by path. `import de from '../i18n/de.json'` would put German in your bundle, so the build stops and tells you to import from `'@unbound-app/i18n'` instead.
+</Warning>
+
 <Warning>
 	Read strings when you show them, not once at the top of a file. `messages` looks up the user's current language on every read. A string saved in a constant at load stays in whatever language was active then.
 </Warning>
 
+## Use them in a component
+
+A component uses the same `messages` and `format`. It must render again when the user changes language or a translation finishes loading, and `useMessages()` does that. The build adds `useMessages()` for you to every component and hook that reads `messages` or `format`, even inside a callback such as `onPress`, or through a helper in the same file.
+
+```tsx src/components/unread-badge.tsx
+import { Text } from 'react-native';
+
+import { format, messages } from '@unbound-app/i18n';
+
+export function UnreadBadge({ count }: { count: number }) {
+	return (
+		<Text>
+			{messages.GREETING_TITLE} · {format('UNREAD_COUNT', { count })}
+		</Text>
+	);
+}
+```
+
+A component counts when it is a PascalCase function, a function passed to `memo` or `forwardRef`, or a `use*` hook, the same rules React's hooks follow. Set `UNBOUND_VERBOSE=1` to see each one the build adds it to.
+
+Call `useMessages()` yourself, once at the top, in three cases:
+
+- The component gets its strings from a helper in another file. The build only follows helpers in the same file.
+- A memoised value builds on strings. `useMessages()` returns the active locale code, so pass it as a dependency, as below.
+- You want the component to follow the language for another reason.
+
+```tsx src/components/greeting.tsx
+import { format, useMessages } from '@unbound-app/i18n';
+import { useMemo } from 'react';
+import { Text } from 'react-native';
+
+export function Greeting({ name }: { name: string }) {
+	const locale = useMessages();
+	const greeting = useMemo(() => format('GREETING_BODY', { name }), [name, locale]);
+
+	return <Text>{greeting}</Text>;
+}
+```
+
+A `React.memo` child that shows strings gets `useMessages()` itself, so it renders again on a language change even when its props stay the same. A class component cannot use hooks: the build warns, with its file and line, when one reads `messages` or `format`.
+
+## What ships to the user
+
+`en-US.json` goes into your bundle, so English is there from the first frame. Every other language is its own file beside the bundle, `dist/i18n/<code>.json`, listed under `locales` in `dist/manifest.json`.
+
+Unbound downloads all of them when the user installs or updates your plugin. It reads one into memory only when your plugin first shows a string in that language, and keeps only that one beside English. When the user changes language, it drops the old one and reads the new one. Until it has loaded, your plugin shows English, and a component that uses `useMessages()` switches when it arrives.
+
+## What the build checks
+
+`ubd build` stops when a file is not a JSON object, when a value is not a string, or when a string is not valid ICU syntax. It warns when a translation has a key that `en-US.json` does not, and leaves that key out. It also warns when a translation's placeholders differ from the English ones.
+
+It also writes `src/unbound-i18n.d.ts`, which declares the `@unbound-app/i18n` module from `en-US.json`. Your `tsconfig.json` already includes `src`, so TypeScript finds it with no setup. Commit it, so your editor and type checks work before the first build. Do not edit it. A plugin that imports `@unbound-app/i18n` without an `i18n/en-US.json` fails to build, with a message saying so.
+
+## While you develop
+
+`ubd dev` watches your `i18n` folder. When you save `en-US.json`, it rewrites `src/unbound-i18n.d.ts` at once, before the rebuild, so your editor offers a new key within a second. Saving any language file also rebuilds the plugin and pushes it with its translations to the device, as any other save does.
+
 ## Adding a language
 
-1. Copy `en-US.json` to a file named after the language's code.
+1. Copy `i18n/en-US.json` to a file named after the language's code, such as `i18n/ja.json`.
 2. Translate each string. Keep the keys and placeholders exactly as they are.
-3. Import the file in `src/i18n/index.ts`, and add it to `defineMessages`.
 
 You can ship a partly translated file. Every key it leaves out falls back to `en-US`.
+
+## Check your translations
+
+`ubd i18n` reports how much of `en-US.json` each language covers, and every placeholder or ICU syntax problem. `--fix` adds missing keys, `--unused` lists keys your code never uses, and `--add` adds a key to `en-US.json`. See [the CLI reference](/docs/developer/development/cli#translations).

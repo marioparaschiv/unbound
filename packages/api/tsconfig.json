@@ -10,5 +10,6 @@
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true
 	},
-	"include": ["src/**/*", "testing/**/*", "tests/**/*"]
+	"include": ["src/**/*", "testing/**/*", "tests/**/*"],
+	"exclude": ["tests/fixtures/plugin/**"]
 }

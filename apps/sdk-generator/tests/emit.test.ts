@@ -56,7 +56,8 @@ describe('buildRoot', () => {
 		];
 
 		expect(buildRoot(entries)).toBe(
-			"export * as assets from './assets';\nexport * as metro from './metro/index';\n",
+			'/// <reference path="../ambient/image-modules.d.ts" />\n\n' +
+				"export * as assets from './assets';\nexport * as metro from './metro/index';\n",
 		);
 	});
 });
@@ -92,6 +93,9 @@ describe('buildExports', () => {
 			'./assets': './src/assets.d.ts',
 			'./global': './src/global.d.ts',
 			'./testing': './testing/index.ts',
+			'./testing/icu-parse': './testing/icu-parse.ts',
+			'./testing/preset': './testing/preset.ts',
+			'./types': './src/_types.d.ts',
 		});
 	});
 
@@ -119,7 +123,8 @@ describe('namespace aliases', () => {
 		expect(
 			buildRoot(entries, [{ name: 'old', target: 'next', doc: '@deprecated Use next' }]),
 		).toBe(
-			"export * as next from './next';\n/** @deprecated Use next */\nexport declare const old: typeof import('./next');\n",
+			'/// <reference path="../ambient/image-modules.d.ts" />\n\n' +
+				"export * as next from './next';\n/** @deprecated Use next */\nexport declare const old: typeof import('./next');\n",
 		);
 	});
 });

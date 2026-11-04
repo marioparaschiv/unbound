@@ -6,14 +6,107 @@ icon: 'bell'
 
 Use a **toast** to report something without stopping the user, such as "Copied". Use a **dialog** when you need an answer before you go on, such as "Reset all settings?".
 
-## Toasts
+## Shorthands
 
-A toast slides in at the top of the screen and closes on its own.
+Each common case is one line. Every text is a key from your plugin's `i18n/en-US.json`, read in the user's language. See [Translations](/developer/plugins/i18n). Like `format(key, vars)`, a key with placeholders takes its values right after it.
+
+```ts
+import { dialogs, toasts } from '@unbound-app/api';
+
+toasts.success('STARRED', { name });
+toasts.info('SYNCING');
+toasts.warning('OFFLINE', { duration: 0 });
+toasts.error(error);
+toasts.error('FAILED_TO_SYNC', error);
+
+const confirmed = await dialogs.confirm('DELETE_TITLE', {
+	titleVars: { name },
+	body: 'DELETE_BODY',
+	confirm: 'DELETE',
+	destructive: true,
+});
+
+await dialogs.alert('SYNC_DONE', { body: 'SYNC_DONE_BODY' });
+```
+
+| Shorthand | Looks like |
+| --- | --- |
+| `toasts.success(key, vars?, options?)` | A toast with a check icon |
+| `toasts.info(key, vars?, options?)` | A toast with an info icon |
+| `toasts.warning(key, vars?, options?)` | A toast with a warning icon |
+| `toasts.error(error)` | A toast with an X icon, titled "Something went wrong", with the error's message under it |
+| `toasts.error(key, vars?, error, options?)` | The same, titled by your key |
+| `dialogs.confirm(key, options)` | Discord's alert with your confirm button and a Cancel button |
+| `dialogs.alert(key, options?)` | Discord's alert with one OK button |
+
+### Keys, not text
+
+Pass a key. When its string has placeholders, pass their values next, as you would to `format`. Your editor knows your keys and their placeholders from `en-US.json`:
+
+```ts
+toasts.success('SAVED');
+toasts.success('SAVED_N', { count: 3 });
+
+toasts.success('Saved!'); // Type error: not one of your keys
+toasts.success('SAVED_N'); // Type error: SAVED_N needs { count }
+toasts.success('SAVED', { count: 3 }); // Type error: SAVED has no placeholders
+```
+
+A toast shorthand's last argument sets `icon` (replacing the variant's), `duration` and `id`, as in [`show`](#low-level-toasts):
+
+```ts
+toasts.success('SAVED_N', { count: 3 }, { duration: 0, id: 'save' });
+```
+
+`ubd build` also reports a literal key that `en-US.json` lacks:
+
+```
+src/settings.tsx:12:17  'SAVD' is not a key in i18n/en-US.json.  Fix: add "SAVD" to i18n/en-US.json, or pass a key it has.
+```
+
+### Errors
+
+`toasts.error` logs the error with your plugin's logger, then shows it. The error's own message is the toast's text, since it changes every time. Pass the error itself, whatever was thrown: an `Error`, a string, or anything else.
+
+```ts
+try {
+	await sync();
+} catch (error) {
+	toasts.error('FAILED_TO_SYNC', error);
+}
+```
+
+With one argument, the argument is always the error. To title the toast with a key, pass the key first. The key's vars, if it has placeholders, come next, then the error, so a key and its vars always sit together:
+
+```ts
+toasts.error('FAILED_TO_SAVE', { name: file.name }, error);
+```
+
+### Confirm and alert
+
+Both take the title's key first, and the rest in an options object. `dialogs.confirm` resolves `true` when the user presses your confirm button. It resolves `false` when they press Cancel, tap outside the dialog, or swipe it away. `destructive: true` colors the confirm button red. Use it whenever confirming loses data.
+
+| Option | What it does |
+| --- | --- |
+| `titleVars` | The title's placeholder values. Required when the title has placeholders |
+| `body` | The key of the text under the title |
+| `bodyVars` | The body's placeholder values. Required when the body has placeholders |
+| `confirm` | The confirm button's key. `alert` only: optional, `OK` when omitted |
+| `cancel` | `confirm` only: the Cancel button's key, `Cancel` when omitted |
+| `destructive` | `confirm` only: colors the confirm button red |
+
+`dialogs.alert` resolves once the dialog closes, however it closes.
+
+## Low-level toasts
+
+`toasts.show` takes text, not keys, for a toast the shorthands don't cover, such as one with a body, buttons or your own icon.
 
 ```ts
 import { toasts } from '@unbound-app/api';
 
-toasts.show({ title: 'Copied', content: 'The message link is on your clipboard.' });
+import { messages } from '@unbound-app/i18n';
+
+toasts.show({ title: messages.COPIED, content: messages.COPIED_LINK, icon: 'LinkIcon' });
 ```
 
 | Option | What it does |
@@ -24,53 +117,31 @@ toasts.show({ title: 'Copied', content: 'The message link is on your clipboard.'
 | `id` | Showing another toast with the same `id` replaces this one |
 | `buttons` | Buttons under the text, each with `content` and `onPress` |
 
-`show` returns a handle. Use it to change a toast that's still open, such as a progress message, and to close it.
+`show` and each shorthand return a handle. Use it to change a toast that's still open, such as a progress message, and to close it.
 
 ```ts
-const toast = toasts.show({ title: 'Checking for updates', duration: 0 });
+const toast = toasts.show({ title: messages.CHECKING, duration: 0 });
 const response = await fetch('https://example.com/latest.json');
 
-toast.update({ title: response.ok ? 'Up to date' : 'Could not check' });
+toast.update({ title: response.ok ? messages.UP_TO_DATE : messages.CHECK_FAILED });
 setTimeout(() => toast.close(), 3000);
 ```
 
-## Asking a yes or no question
-
-`dialogs.confirm` shows Discord's own alert with two buttons. It resolves `true` when the user confirms, and `false` when they cancel or close it any other way.
-
-```ts
-import { dialogs, storage } from '@unbound-app/api';
-
-const settings = storage.getBucket();
-
-export async function resetSettings() {
-	const confirmed = await dialogs.confirm({
-		title: 'Reset all settings?',
-		body: "You can't undo this.",
-		confirmLabel: 'Reset',
-		destructive: true,
-	});
-
-	if (confirmed) settings.clear();
-}
-```
-
-`destructive` colors the confirm button red. Use it whenever confirming loses data.
-
 ## A dialog with your own buttons
 
-`dialogs.showDialog` takes any number of buttons. Each button closes the dialog, then runs its `onPress`.
+`dialogs.showDialog` takes text, and any number of buttons. Each button closes the dialog, then runs its `onPress`.
 
 ```ts
 dialogs.showDialog({
-	title: 'Reset settings',
-	body: 'Choose what to reset.',
+	title: messages.RESET_TITLE,
+	body: messages.RESET_BODY,
 	buttons: [
-		{ label: 'Reset colors', onPress: () => settings.remove('colors') },
-		{ label: 'Reset everything', variant: 'destructive', onPress: () => settings.clear() },
+		{ label: messages.RESET_COLORS, onPress: () => settings.remove('colors') },
+		{ label: messages.RESET_ALL, variant: 'destructive', onPress: () => settings.clear() },
 	],
 	cancel: true,
+	onDismiss: () => logger.info('Closed without choosing'),
 });
 ```
 
-`cancel: true` adds a cancel button last. Pass a string instead to change its label. For more than text, pass a component as `content`. It gets a `dismiss` function to close the dialog.
+`cancel: true` adds a cancel button last. Pass a string instead to change its label. `onDismiss` runs when the dialog closes without a button. For more than text, pass a component as `content`. It gets a `dismiss` function to close the dialog.

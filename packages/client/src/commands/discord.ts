@@ -23,7 +23,7 @@ export const DEFAULT_ENUMS: CommandEnums = {
 export type DiscordChoice = {
 	name: string;
 	displayName: string;
-	value: string | number;
+	value: string;
 };
 
 export type DiscordOption = DiscordOptionExtras & {
@@ -89,8 +89,8 @@ export type IndexState = {
 const STALE_VERSION = 'unbound:stale';
 
 /**
- * @description Maps a record to Discord's client command shape. `applicationId` is the section id, because
- * the picker finds a row's section by it.
+ * @description Maps a record to Discord's client command shape, its message keys read in the user's locale.
+ * `applicationId` is the section id, because the picker finds a row's section by it.
  * @param record The record.
  * @param execute The record's runtime execute.
  * @param enums Discord's enum values.
@@ -103,6 +103,7 @@ export function toDiscordCommand(
 ): DiscordCommand {
 	const [root, ...subpath] = record.path;
 	const name = record.path.join(' ');
+	const { locales } = record;
 	const base = {
 		type: enums.chat,
 		inputType: enums.builtInText,
@@ -114,19 +115,21 @@ export function toDiscordCommand(
 		name,
 		untranslatedName: name,
 		displayName: name,
-		untranslatedDescription: record.description,
-		displayDescription: record.description,
+		untranslatedDescription: locales.source(record.description) ?? record.description,
+		displayDescription: locales.text(record.description),
 		options: record.options.map((option) => ({
 			...option.extras,
 			name: option.name,
 			displayName: option.name,
-			description: option.description,
-			displayDescription: option.description,
+			description: option.description
+				? (locales.source(option.description) ?? option.description)
+				: option.name,
+			displayDescription: option.description ? locales.text(option.description) : option.name,
 			type: option.type,
 			required: option.required,
 			choices: option.choices?.map((choice) => ({
-				name: choice.label,
-				displayName: choice.label,
+				name: locales.source(choice.label) ?? choice.label,
+				displayName: locales.text(choice.label),
 				value: choice.value,
 			})),
 		})),
@@ -150,8 +153,9 @@ export function toDiscordCommand(
 			name: root,
 			untranslatedName: root,
 			displayName: root,
-			untranslatedDescription: record.rootDescription,
-			displayDescription: record.rootDescription,
+			untranslatedDescription:
+				locales.source(record.rootDescription) ?? record.rootDescription,
+			displayDescription: locales.text(record.rootDescription),
 		},
 	};
 }

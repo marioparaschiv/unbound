@@ -29,6 +29,11 @@ type SdkConfig = {
 	 */
 	excludeSubpaths: string[];
 	/**
+	 * Modules a plugin's build generates, which the bundler cannot follow: each specifier, mapping a referenced name
+	 * to its export. A module referencing one gets a type import of it.
+	 */
+	generatedModules: Record<string, Record<string, string>>;
+	/**
 	 * Extra subpath entries to emit beyond what barrel derivation finds. `source` is relative to the
 	 * barrel's directory. Rarely needed - derivation covers every `export * as`.
 	 */
@@ -47,6 +52,9 @@ export const config: SdkConfig = {
 	entryPath: 'packages/client/src/core/index.ts',
 	outDir: 'packages/api/src',
 	excludeSubpaths: [],
+	generatedModules: {
+		'@unbound-app/i18n': { MessageKey: 'MessageKey', MessageVars: 'FormatVars' },
+	},
 	additionalSubpaths: [],
 };
 

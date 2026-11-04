@@ -58,8 +58,10 @@ export const GUIDE_NAV: Record<GuideTab, GuideTabNav> = {
 					'plugins/settings',
 					'plugins/commands',
 					'plugins/feedback',
+					'plugins/assets',
 					'plugins/i18n',
 					'plugins/ui-thread',
+					'plugins/testing',
 				],
 			},
 			{

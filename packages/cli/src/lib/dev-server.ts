@@ -1,13 +1,21 @@
+import { LOCALES_DIRECTORY } from '@unbound-app/contracts/addon-locales';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
+import toError from '@unbound-app/utils/to-error';
 import { watch, type FSWatcher } from 'node:fs';
 import { resolve, join, sep } from 'node:path';
 
 import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
 import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
+import { LOCALE_TYPINGS, writeLocaleTypings } from '~/rollup/locales';
 import { buildAddon, HOT_BUILD_ENV } from '~/lib/build-addon';
+import { SETTINGS_TYPINGS } from '~/rollup/settings-typings';
 import type { DiscoveredAddon } from '~/lib/discovery';
+import { buildWithReport } from '~/lib/build-report';
+import { formatSummary } from '~/lib/report-format';
 import type { ResolvedConfig } from '~/lib/config';
 import { discoverAddons } from '~/lib/discovery';
+
+const GENERATED_TYPINGS = [SETTINGS_TYPINGS, LOCALE_TYPINGS];
 
 /** How long file changes inside one addon settle before that addon rebuilds. */
 const DEBOUNCE_MS = 150;
@@ -64,7 +72,27 @@ export class DevServer {
 
 		if (!addon.static && isInside(changedPath, addon.output)) return;
 
+		// The build writes these from settings.ts and i18n/en-US.json, so a change to them is the build's own.
+		if (GENERATED_TYPINGS.some((typings) => changedPath === join(addon.dir, typings))) return;
+
+		if (isLocalePath(changedPath, addon.dir)) {
+			this.refreshLocaleTypings(addon);
+		}
+
 		this.scheduleRebuild(addon);
+	}
+
+	// Runs ahead of the debounced rebuild, so the editor sees a new key as soon as en-US.json is saved.
+	private refreshLocaleTypings(addon: DiscoveredAddon) {
+		try {
+			if (writeLocaleTypings(addon.dir)) {
+				process.stdout.write(`Updated the ${LOCALE_TYPINGS} typings of ${addon.id}.\n`);
+			}
+		} catch (error) {
+			process.stderr.write(
+				`Failed to update the ${LOCALE_TYPINGS} typings of ${addon.id}: ${toError(error).message}\n`,
+			);
+		}
 	}
 
 	private scheduleRebuild(addon: DiscoveredAddon) {
@@ -87,9 +115,14 @@ export class DevServer {
 			process.stdout.write(`Building ${addon.id}…\n`);
 		}
 
-		const ok =
-			(await buildAddon(addon, this.resolved.config.build, HOT_BUILD_ENV)) &&
-			(await runBuildChecks(addon, DEV_BUILD_CHECKS));
+		const { ok, report } = await buildWithReport(
+			addon,
+			async (env) =>
+				(await buildAddon(addon, this.resolved.config.build, {
+					...HOT_BUILD_ENV,
+					...env,
+				})) && (await runBuildChecks(addon, DEV_BUILD_CHECKS)),
+		);
 
 		if (!ok) {
 			process.stderr.write(`Failed to build ${addon.id}.\n`);
@@ -98,7 +131,9 @@ export class DevServer {
 		}
 
 		if (!addon.static) {
-			process.stdout.write(`Built ${addon.id}.\n`);
+			process.stdout.write(
+				report ? `Built ${addon.id}: ${formatSummary(report)}\n` : `Built ${addon.id}.\n`,
+			);
 		}
 
 		await this.transport.reload(toBuiltAddon(addon));
@@ -143,6 +178,10 @@ function isIgnoredPath(changedPath: string): boolean {
 
 function isInside(changedPath: string, dir: string): boolean {
 	return changedPath === dir || changedPath.startsWith(dir + sep);
+}
+
+function isLocalePath(changedPath: string, dir: string): boolean {
+	return isInside(changedPath, join(dir, LOCALES_DIRECTORY)) && changedPath.endsWith('.json');
 }
 
 function isManifestPath(changedPath: string): boolean {

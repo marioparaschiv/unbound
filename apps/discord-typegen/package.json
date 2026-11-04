@@ -12,6 +12,7 @@
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",
+		"rolldown": "^1.2.16",
 		"ts-morph": "^28.0.0",
 		"typescript": "catalog:"
 	}

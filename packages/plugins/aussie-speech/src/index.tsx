@@ -7,18 +7,18 @@ import { translate } from '~/translation/translator';
 
 let dispose = () => {};
 
-function start() {
+export function start() {
 	if (!ensureModules('Aussie Speech', { Messages: metro.api.Messages })) return;
 
 	dispose = applyFeatures('Aussie Speech', [startTranslation]);
 }
 
-function stop() {
+export function stop() {
 	dispose();
 	dispose = () => {};
 }
 
-function selfTest() {
+export function selfTest() {
 	const translated = translate('thank you');
 	const ok = isTranslating() && translated !== 'thank you';
 
@@ -27,5 +27,3 @@ function selfTest() {
 		detail: `${isTranslating() ? 'patched' : 'not patched'} sending, "thank you" became "${translated}"`,
 	};
 }
-
-export default { start, stop, selfTest };

@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import type { ReactElement } from 'react';
+import enUS from '@i18n/en-US.json';
+
+import { coreI18nMock } from './helpers/core-i18n';
 
 type ActionButtonProps = {
 	text: string;
@@ -13,11 +16,20 @@ type ActionsProps = {
 	children: ActionButton[];
 };
 
+type WatcherProps = {
+	onClose?: () => void;
+};
+
+type ExtraContentProps = {
+	children: ReactElement<WatcherProps>[];
+};
+
 type Opened = {
 	key: string;
 	props: {
 		title: string;
 		content?: string;
+		extraContent: ReactElement<ExtraContentProps>;
 		actions: ReactElement<ActionsProps>;
 	};
 };
@@ -37,10 +49,26 @@ mock.module('~/metro/design', () => ({
 	},
 }));
 
-const { confirm, dismissAll, showDialog } = await import('~/dialogs/api');
+mock.module('~/i18n/api', coreI18nMock);
+
+const { alert, confirm, dismissAll, showDialog } = await import('~/dialogs/api');
 
 function buttonsOf(dialog: Opened | undefined): ActionButton[] {
 	return [dialog?.props.actions.props.children ?? []].flat();
+}
+
+// Discord unmounts the dialog's content when the backdrop or the back gesture closes it.
+function unmount(dialog: Opened | undefined) {
+	for (const child of dialog?.props.extraContent.props.children ?? []) {
+		child?.props?.onClose?.();
+	}
+}
+
+function settled<T>(promise: Promise<T>): Promise<T | 'pending'> {
+	return Promise.race([
+		promise,
+		new Promise<'pending'>((done) => setTimeout(done, 0, 'pending')),
+	]);
 }
 
 beforeEach(() => {
@@ -87,17 +115,72 @@ describe('dialogs', () => {
 		expect(dismissed).toEqual([first.key]);
 	});
 
-	test('confirm resolves with the button the user pressed', async () => {
-		const yes = confirm({ title: 'Install?', confirmLabel: 'Install' });
+	test('confirm resolves true on the confirm button, with each key resolved', async () => {
+		const yes = confirm('UNBOUND_DELETE_TITLE', {
+			titleVars: { name: 'Rule' },
+			body: 'UNBOUND_DELETE_BODY',
+			confirm: 'UNBOUND_DELETE',
+			destructive: true,
+		});
+		const [dialog] = opened;
+		const buttons = buttonsOf(dialog);
 
+		expect(dialog?.props).toMatchObject({
+			title: 'Delete {name}? {"name":"Rule"}',
+			content: enUS.UNBOUND_DELETE_BODY,
+		});
+		expect(buttons.map((button) => [button.props.text, button.props.variant])).toEqual([
+			['Delete', 'destructive'],
+			['Cancel', 'secondary'],
+		]);
+
+		buttons[0]?.props.onPress();
+		unmount(dialog);
+		expect(await yes).toBe(true);
+	});
+
+	test('confirm resolves false on cancel, the backdrop and a dismiss', async () => {
+		const cancelled = confirm('UNBOUND_DELETE', { confirm: 'UNBOUND_DELETE' });
+
+		buttonsOf(opened[0])[1]?.props.onPress();
+		unmount(opened[0]);
+		expect(await cancelled).toBe(false);
+
+		const backdrop = confirm('UNBOUND_DELETE', { confirm: 'UNBOUND_DELETE' });
+
+		expect(await settled(backdrop)).toBe('pending');
+		unmount(opened[1]);
+		expect(await backdrop).toBe(false);
+
+		const dismissed = confirm('UNBOUND_DELETE', { confirm: 'UNBOUND_DELETE' });
+
+		dismissAll();
+		expect(await dismissed).toBe(false);
+	});
+
+	test('the confirm button keeps its result when the press unmounts the dialog first', async () => {
+		const yes = confirm('UNBOUND_DELETE', { confirm: 'UNBOUND_DELETE' });
+
+		unmount(opened[0]);
 		buttonsOf(opened[0])[0]?.props.onPress();
 		expect(await yes).toBe(true);
+	});
 
-		const no = confirm({ title: 'Install?', confirmLabel: 'Install', destructive: true });
-		const buttons = buttonsOf(opened[1]);
+	test('alert shows one OK button and resolves however it closes', async () => {
+		const pressed = alert('UNBOUND_OK', { body: 'UNBOUND_DELETE_BODY' });
+		const buttons = buttonsOf(opened[0]);
 
-		expect(buttons[0]?.props.variant).toBe('destructive');
-		buttons[1]?.props.onPress();
-		expect(await no).toBe(false);
+		expect(buttons.map((button) => button.props.text)).toEqual(['OK']);
+		buttons[0]?.props.onPress();
+		expect(await settled(pressed)).toBeUndefined();
+
+		const closed = alert('UNBOUND_DEPENDENCIES_TITLE', {
+			titleVars: { name: 'Rule' },
+			confirm: 'UNBOUND_DELETE',
+		});
+
+		expect(buttonsOf(opened[1]).map((button) => button.props.text)).toEqual(['Delete']);
+		unmount(opened[1]);
+		expect(await settled(closed)).toBeUndefined();
 	});
 });

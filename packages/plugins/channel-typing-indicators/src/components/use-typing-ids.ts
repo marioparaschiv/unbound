@@ -1,5 +1,4 @@
 import { flux, storage } from '@unbound-app/api';
-import { useRef } from 'react';
 
 import { sameIds, visibleTypingIds } from '~/typing-users';
 import type { Channel } from '~/types';
@@ -19,7 +18,6 @@ import {
  */
 function useTypingIds(channel: Channel, muted: boolean): string[] {
 	const store = storage.useBucket(addon.id);
-	const previousIds = useRef<string[]>([]);
 	const includeCurrent = store.get('includeCurrentChannel', true);
 	const includeMuted = store.get('includeMutedChannels', false);
 	const includeBlocked = store.get('includeBlockedUsers', false);
@@ -45,16 +43,6 @@ function useTypingIds(channel: Channel, muted: boolean): string[] {
 		});
 	}
 
-	function readKeepingPreviousWhenSame(): string[] {
-		const next = visible();
-
-		if (!sameIds(previousIds.current, next)) {
-			previousIds.current = next;
-		}
-
-		return previousIds.current;
-	}
-
 	const stores = [
 		TypingStore,
 		RelationshipStore,
@@ -62,15 +50,18 @@ function useTypingIds(channel: Channel, muted: boolean): string[] {
 		SelectedChannelStore,
 	].filter((store) => Reflect.get(store, 'module'));
 
-	return flux.useStore(stores, readKeepingPreviousWhenSame, [
-		channel.id,
-		channel.guild_id,
-		muted,
-		includeCurrent,
-		includeMuted,
-		includeBlocked,
-		includeIgnored,
-	]);
+	return flux.useStore(stores, visible, {
+		deps: [
+			channel.id,
+			channel.guild_id,
+			muted,
+			includeCurrent,
+			includeMuted,
+			includeBlocked,
+			includeIgnored,
+		],
+		isEqual: sameIds,
+	});
 }
 
 export default useTypingIds;

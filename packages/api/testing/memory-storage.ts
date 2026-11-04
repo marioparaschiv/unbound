@@ -1,6 +1,6 @@
 import type { Bucket, SettingsPayload, SettingsPredicate } from '../src/storage';
 import type { SettingsObject, SettingsValue } from '../src/global';
-import type { Widen } from '../src/utils';
+import type { Widen } from '../src/_types';
 
 /** In-memory Buckets: `storage.getBucket(name)` without a device, and the settings each holds. */
 export type MemoryStorage = {

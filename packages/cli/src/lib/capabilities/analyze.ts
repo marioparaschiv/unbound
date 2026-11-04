@@ -4,22 +4,30 @@ import {
 } from '@unbound-app/types/native';
 import type { NativePluginCapability, NativePluginPlatform } from '@unbound-app/types/native';
 import { relative, sep } from 'node:path';
-import ts from 'typescript';
+import ts from 'typescript-api';
 
-import type { BridgeCall, FileFacts, PlatformHandler } from '~/lib/capabilities/file-facts';
+import type { BridgeCall, FileFacts, PlatformHandler, Site } from '~/lib/capabilities/file-facts';
 import { readFileFacts, realPath } from '~/lib/capabilities/file-facts';
 import { createBridgeTypes } from '~/lib/capabilities/bridge-types';
+import type { TypeScriptCache } from '~/lib/check/typescript-cache';
+import { createCachedProgram } from '~/lib/check/typescript-cache';
 
 export type PlatformCapabilities = Partial<Record<NativePluginPlatform, NativePluginCapability[]>>;
 
+/** A dynamic or misplaced bridge access, at the node it starts at. */
+export type CapabilityError = {
+	site: Site;
+	message: string;
+};
+
 export type CapabilityAnalysis = {
 	platforms: PlatformCapabilities;
-	errors: string[];
+	errors: CapabilityError[];
 };
 
 type Graph = {
 	files: string[];
-	errors: string[];
+	errors: CapabilityError[];
 };
 
 const PLATFORM_CAPABILITIES: Record<NativePluginPlatform, readonly string[]> =
@@ -39,11 +47,16 @@ const DEFAULT_OPTIONS: ts.CompilerOptions = {
  * code.
  * @param dir The addon's directory; the nearest `tsconfig.json` from here sets the compiler options.
  * @param entry The absolute path of the addon's entry file.
+ * @param cache Keeps parsed files across runs, so `ubd check --watch` re-parses only edited ones.
  * @returns The platforms with their Capabilities, and one error per dynamic or misplaced access.
  */
-export function analyzeCapabilities(dir: string, entry: string): CapabilityAnalysis {
+export function analyzeCapabilities(
+	dir: string,
+	entry: string,
+	cache?: TypeScriptCache,
+): CapabilityAnalysis {
 	const root = realPath(entry);
-	const program = createProgram(dir, root);
+	const program = createProgram(dir, root, cache);
 	const context = { program, bridge: createBridgeTypes(program), siteRoot: realPath(dir) };
 	const facts = new Map<string, FileFacts>();
 
@@ -69,7 +82,7 @@ export function analyzeCapabilities(dir: string, entry: string): CapabilityAnaly
 
 	function walk(starts: string[], enter: (to: string, from: string) => string | boolean): Graph {
 		const seen = new Set<string>();
-		const errors: string[] = [];
+		const errors: CapabilityError[] = [];
 		const queue = [...starts];
 
 		for (let path = queue.shift(); path !== undefined; path = queue.shift()) {
@@ -83,7 +96,7 @@ export function analyzeCapabilities(dir: string, entry: string): CapabilityAnaly
 				const decision = enter(edge.path, path);
 
 				if (typeof decision === 'string') {
-					errors.push(`${edge.site} ${decision}`);
+					errors.push({ site: edge.site, message: decision });
 				} else if (decision) {
 					queue.push(edge.path);
 				}
@@ -97,10 +110,10 @@ export function analyzeCapabilities(dir: string, entry: string): CapabilityAnaly
 	const handlers = whole.files.flatMap((path) => factsOf(path).handlers);
 	const callsIn = (files: string[]) => files.flatMap((path) => factsOf(path).calls);
 	const errors = whole.files.flatMap((path) =>
-		factsOf(path).dynamic.map(
-			(access) =>
-				`${access.site} ${access.reason}; ubd build cannot tell which native method it reaches, so call the method by name.`,
-		),
+		factsOf(path).dynamic.map((access) => ({
+			site: access.site,
+			message: `${access.reason}; ubd build cannot tell which native method it reaches, so call the method by name.`,
+		})),
 	);
 
 	if (!handlers.length) {
@@ -168,10 +181,21 @@ export function analyzeCapabilities(dir: string, entry: string): CapabilityAnaly
 		platforms[platform] = capabilitiesOf(platform, calls);
 	}
 
-	return { platforms, errors: [...new Set(errors)] };
+	return { platforms, errors: unique(errors) };
 }
 
-function createProgram(dir: string, entry: string): ts.Program {
+function unique(errors: CapabilityError[]): CapabilityError[] {
+	const byKey = new Map(
+		errors.map((error) => [
+			`${error.site.file}:${error.site.line}:${error.site.column} ${error.message}`,
+			error,
+		]),
+	);
+
+	return [...byKey.values()];
+}
+
+function createProgram(dir: string, entry: string, cache?: TypeScriptCache): ts.Program {
 	const configPath = ts.findConfigFile(dir, (path) => ts.sys.fileExists(path));
 	const parsed = configPath
 		? ts.getParsedCommandLineOfConfigFile(
@@ -182,10 +206,12 @@ function createProgram(dir: string, entry: string): ts.Program {
 		: undefined;
 	const globalDeclarations = parsed?.fileNames.filter((name) => name.endsWith('.d.ts')) ?? [];
 
-	return ts.createProgram({
-		rootNames: [entry, ...globalDeclarations],
-		options: { ...(parsed?.options ?? DEFAULT_OPTIONS), noEmit: true },
-	});
+	return createCachedProgram(
+		`capabilities:${dir}`,
+		[entry, ...globalDeclarations],
+		{ ...(parsed?.options ?? DEFAULT_OPTIONS), noEmit: true },
+		cache,
+	);
 }
 
 function capabilitiesOf(
@@ -203,17 +229,26 @@ function misplacedCalls(platform: NativePluginPlatform, calls: BridgeCall[]): Br
 	return calls.filter((call) => !PLATFORM_CAPABILITIES[platform].includes(call.capability));
 }
 
-function describeMisplaced(platform: NativePluginPlatform, calls: BridgeCall[]): string[] {
+function describeMisplaced(platform: NativePluginPlatform, calls: BridgeCall[]): CapabilityError[] {
 	const byCapability = new Map<NativePluginCapability, BridgeCall[]>();
 
 	for (const call of calls) {
 		byCapability.set(call.capability, [...(byCapability.get(call.capability) ?? []), call]);
 	}
 
-	return [...byCapability].map(([capability, [first, ...rest]]) => {
+	return [...byCapability].flatMap(([capability, [first, ...rest]]) => {
+		if (!first) {
+			return [];
+		}
+
 		const more = rest.length ? ` and ${rest.length} more` : '';
 
-		return `${platform} cannot provide ${capability}, which ${first?.site} needs for ${first?.method}${more}; select the platform's code with native.definePlatform.`;
+		return [
+			{
+				site: first.site,
+				message: `${platform} cannot provide ${capability}, which ${first.method} needs${more}; select the platform's code with native.definePlatform.`,
+			},
+		];
 	});
 }
 

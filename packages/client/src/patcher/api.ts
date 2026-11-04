@@ -16,9 +16,9 @@ import * as Possess from 'possess';
 
 import { patchWhenLoaded, pendingPatchCallers } from '~/patcher/apply';
 import { patch, recordRemovals } from '~/hot-refresh/live-patch';
-
-/** Whether `T` is `any`, so a patch on an untyped method keeps loose types. */
-type IsUntyped<T> = 0 extends 1 & T ? true : false;
+import type { IsUntyped } from '~/patcher/is-untyped';
+import { createReactPatcher } from '~/patcher/react';
+import type { PatchPlace } from '~/patcher/react';
 
 /** The arguments a patch receives for method `F`: its parameters, or its constructor's for a class. */
 type ArgsOf<F> =
@@ -43,6 +43,19 @@ type ResultOf<F> =
 /** The `this` a patch receives: the method's declared `this`, else the object `M` holding it. */
 type SelfOf<M, F> = unknown extends ThisParameterType<F> ? M : ThisParameterType<F>;
 
+export type {
+	ReactAfterCallback,
+	ReactAfterContext,
+	ReactBeforeCallback,
+	ReactBeforeContext,
+	ReactInsteadCallback,
+	ReactInsteadContext,
+	ReactPatch,
+	ReactPatcher,
+	ReactPatchTarget,
+	ReactPropsOf,
+	ReactSelfOf,
+} from '~/patcher/react';
 export type { PatchOptions, PatchParent, PropOf } from 'possess';
 
 /**
@@ -117,6 +130,19 @@ export const PATCH_SYMBOL = Possess.PATCH_SYMBOL;
 /** The kinds of patch: before, instead and after. */
 export const PatchType = Possess.PatchType;
 
+function patchAt(
+	type: Possess.PatchType,
+	parent: PatchParent,
+	locate: (loaded: PatchParent) => PatchPlace,
+	options?: PatchOptions,
+) {
+	return patchWhenLoaded(parent, options?.caller, (target) => {
+		const place = locate(target);
+
+		return patch(type, place.parent, place.method, place.callback, options);
+	});
+}
+
 /**
  * @description Runs a callback before a method, which can replace its arguments by returning an array.
  * @template M The object holding the method.
@@ -139,8 +165,11 @@ export function before(
 	callback: PatchCallback,
 	options?: PatchOptions,
 ): () => void {
-	return patchWhenLoaded(parent, options?.caller, (target) =>
-		patch(Possess.PatchType.Before, target, method, callback, options),
+	return patchAt(
+		Possess.PatchType.Before,
+		parent,
+		(target) => ({ parent: target, method, callback }),
+		options,
 	);
 }
 
@@ -166,8 +195,11 @@ export function instead(
 	callback: PatchCallback,
 	options?: PatchOptions,
 ): () => void {
-	return patchWhenLoaded(parent, options?.caller, (target) =>
-		patch(Possess.PatchType.Instead, target, method, callback, options),
+	return patchAt(
+		Possess.PatchType.Instead,
+		parent,
+		(target) => ({ parent: target, method, callback }),
+		options,
 	);
 }
 
@@ -193,10 +225,19 @@ export function after(
 	callback: PatchCallback,
 	options?: PatchOptions,
 ): () => void {
-	return patchWhenLoaded(parent, options?.caller, (target) =>
-		patch(Possess.PatchType.After, target, method, callback, options),
+	return patchAt(
+		Possess.PatchType.After,
+		parent,
+		(target) => ({ parent: target, method, callback }),
+		options,
 	);
 }
+
+/**
+ * `before`, `instead` and `after` for React components. Each takes a `memo`, `forwardRef` or class component and
+ * finds its render, or the object and key holding any component, which a plain function component needs.
+ */
+export const react = createReactPatcher(patchAt);
 
 /**
  * @description Removes every patch.

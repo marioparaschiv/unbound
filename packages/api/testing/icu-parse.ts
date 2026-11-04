@@ -1,0 +1,277 @@
+/** The branches of a `plural`, `selectordinal` or `select` argument, by selector, such as `one` or `=0`. */
+export type IcuBranches = Map<string, IcuNode[]>;
+
+/** A simple argument: `{name}`, or a formatted one such as `{count, number, integer}`. */
+export type IcuArgumentNode = { kind: 'argument'; name: string; type: string; style: string };
+
+/** A `plural` or `selectordinal` argument. */
+export type IcuPluralNode = {
+	kind: 'plural';
+	name: string;
+	ordinal: boolean;
+	offset: number;
+	branches: IcuBranches;
+};
+
+/** A `select` argument. */
+export type IcuSelectNode = { kind: 'select'; name: string; branches: IcuBranches };
+
+/** One piece of a parsed ICU MessageFormat string. */
+export type IcuNode =
+	| { kind: 'text'; text: string }
+	| { kind: 'pound' }
+	| IcuArgumentNode
+	| IcuPluralNode
+	| IcuSelectNode;
+
+/** A syntax error in an ICU message; `position` is the 1-based character it stopped at. */
+export class IcuSyntaxError extends Error {
+	readonly position: number;
+
+	// Node's strip-only TypeScript, which loads this under the CLI's `rollup -c`, has no parameter properties.
+	constructor(reason: string, position: number) {
+		super(`${reason} at character ${position}`);
+		this.position = position;
+	}
+}
+
+type Reader = { text: string; index: number };
+
+type BranchList = { branches: IcuBranches; offset: number };
+
+function isSpace(char: string): boolean {
+	return char !== '' && char.trim() === '';
+}
+
+function fail(reader: Reader, reason: string): never {
+	throw new IcuSyntaxError(reason, reader.index + 1);
+}
+
+function peek(reader: Reader): string {
+	return reader.text[reader.index] ?? '';
+}
+
+function skipSpace(reader: Reader) {
+	while (isSpace(peek(reader))) reader.index++;
+}
+
+function readWord(reader: Reader): string {
+	skipSpace(reader);
+
+	const start = reader.index;
+
+	while (reader.index < reader.text.length) {
+		const char = peek(reader);
+
+		if (isSpace(char) || char === ',' || char === '{' || char === '}') {
+			break;
+		}
+
+		reader.index++;
+	}
+
+	return reader.text.slice(start, reader.index);
+}
+
+function expect(reader: Reader, char: string) {
+	skipSpace(reader);
+
+	if (peek(reader) !== char) {
+		fail(reader, `Expected "${char}"`);
+	}
+
+	reader.index++;
+}
+
+// An apostrophe quotes a following `{`, `}` or (in a plural) `#` up to the next lone apostrophe; `''` is one apostrophe.
+function readQuoted(reader: Reader, inPlural: boolean): string {
+	const next = reader.text[reader.index + 1] ?? '';
+
+	if (next === "'") {
+		reader.index += 2;
+
+		return "'";
+	}
+
+	if (next !== '{' && next !== '}' && !(inPlural && next === '#')) {
+		reader.index++;
+
+		return "'";
+	}
+
+	let quoted = '';
+
+	reader.index++;
+
+	while (reader.index < reader.text.length) {
+		const char = peek(reader);
+
+		if (char === "'" && reader.text[reader.index + 1] === "'") {
+			quoted += "'";
+			reader.index += 2;
+		} else if (char === "'") {
+			reader.index++;
+
+			return quoted;
+		} else {
+			quoted += char;
+			reader.index++;
+		}
+	}
+
+	return quoted;
+}
+
+function readMessage(reader: Reader, nested: boolean, inPlural: boolean): IcuNode[] {
+	const nodes: IcuNode[] = [];
+	let text = '';
+
+	function flush() {
+		if (text) {
+			nodes.push({ kind: 'text', text });
+		}
+
+		text = '';
+	}
+
+	while (reader.index < reader.text.length) {
+		const char = peek(reader);
+
+		if (char === "'") {
+			text += readQuoted(reader, inPlural);
+		} else if (char === '{') {
+			flush();
+			reader.index++;
+			nodes.push(readArgument(reader));
+		} else if (char === '}') {
+			if (!nested) {
+				fail(reader, 'Unmatched "}"');
+			}
+
+			flush();
+
+			return nodes;
+		} else if (char === '#' && inPlural) {
+			flush();
+			nodes.push({ kind: 'pound' });
+			reader.index++;
+		} else {
+			text += char;
+			reader.index++;
+		}
+	}
+
+	if (nested) {
+		fail(reader, 'Unclosed "{"');
+	}
+
+	flush();
+
+	return nodes;
+}
+
+function readBranches(reader: Reader, inPlural: boolean): BranchList {
+	const branches: IcuBranches = new Map();
+	let offset = 0;
+
+	skipSpace(reader);
+
+	while (reader.index < reader.text.length && peek(reader) !== '}') {
+		const selector = readWord(reader);
+
+		if (!selector) {
+			fail(reader, 'Expected a selector');
+		}
+
+		if (selector.startsWith('offset:')) {
+			offset = Number(selector.slice('offset:'.length));
+		} else {
+			expect(reader, '{');
+			branches.set(selector, readMessage(reader, true, inPlural));
+			expect(reader, '}');
+		}
+
+		skipSpace(reader);
+	}
+
+	return { branches, offset };
+}
+
+function readStyle(reader: Reader): string {
+	const start = reader.index;
+	let depth = 0;
+
+	while (reader.index < reader.text.length) {
+		const char = peek(reader);
+
+		if (char === '}' && depth === 0) {
+			return reader.text.slice(start, reader.index).trim();
+		}
+
+		if (char === '{') {
+			depth++;
+		}
+
+		if (char === '}') {
+			depth--;
+		}
+
+		reader.index++;
+	}
+
+	return fail(reader, 'Unclosed argument');
+}
+
+function readArgument(reader: Reader): IcuNode {
+	const name = readWord(reader);
+
+	if (!name) {
+		fail(reader, 'Expected an argument name');
+	}
+
+	skipSpace(reader);
+
+	if (peek(reader) === '}') {
+		reader.index++;
+
+		return { kind: 'argument', name, type: '', style: '' };
+	}
+
+	expect(reader, ',');
+
+	const type = readWord(reader);
+	let node: IcuNode;
+
+	skipSpace(reader);
+
+	if (type === 'plural' || type === 'selectordinal') {
+		expect(reader, ',');
+
+		const { branches, offset } = readBranches(reader, true);
+
+		node = { kind: 'plural', name, ordinal: type === 'selectordinal', offset, branches };
+	} else if (type === 'select') {
+		expect(reader, ',');
+		node = { kind: 'select', name, branches: readBranches(reader, false).branches };
+	} else {
+		if (peek(reader) === ',') {
+			reader.index++;
+		}
+
+		node = { kind: 'argument', name, type, style: readStyle(reader) };
+	}
+
+	expect(reader, '}');
+
+	return node;
+}
+
+/**
+ * @description Parses an ICU MessageFormat string: arguments, `number`/`date`/`time`, `plural`, `selectordinal`,
+ * `select`, `#`, `offset:` and apostrophe quoting. The CLI's i18n typings and checks and the testing kit share it.
+ * @param message The message, such as `{count, plural, one {# file} other {# files}}`.
+ * @returns The message's nodes; throws an `IcuSyntaxError` naming the position of a syntax error.
+ */
+export function parseIcu(message: string): IcuNode[] {
+	return readMessage({ text: message, index: 0 }, false, false);
+}

@@ -1,3 +1,4 @@
+import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join } from 'node:path';
@@ -19,7 +20,7 @@ export type InstallOptions = {
 const SAFE_ADDON_ID = /^[\w.-]+$/;
 
 /**
- * @description Lists the built files a plugin install copies onto a device: its manifest and bundle.
+ * @description Lists the built files a plugin install copies onto a device: its manifest, bundle and the extra files the manifest lists.
  * @param addon The built plugin.
  * @returns The plugin's id and files, or why its id cannot be used as a folder name on the device.
  */
@@ -29,7 +30,11 @@ export function readPluginPayload(addon: DiscoveredAddon): PluginPayload | { err
 	}
 
 	const { manifest } = readBuiltAddon(addon);
-	const names = [MANIFEST_FILENAME, getBundleName(addon.static, manifest.main)];
+	const names = [
+		MANIFEST_FILENAME,
+		getBundleName(addon.static, manifest.main),
+		...listAddonFiles(manifest).map((file) => file.path),
+	];
 
 	return { id: addon.id, files: names.map((name) => ({ name, path: join(addon.output, name) })) };
 }

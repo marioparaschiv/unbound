@@ -26,7 +26,7 @@
 		"@unbound-app/logger": "workspace:*",
 		"@unbound-app/web": "workspace:*",
 		"colorette": "^2.0.20",
-		"discord.js": "^14.27.0",
+		"discord.js": "^14.28.1",
 		"drizzle-orm": "1.0.0-rc.5",
 		"postgres": "^4.0.0",
 		"sharp": "^0.35.5"

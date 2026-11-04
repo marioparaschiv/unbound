@@ -4,13 +4,13 @@ description: "Change what Discord's components render."
 icon: 'atom'
 ---
 
-Discord's screens are React components your plugin doesn't own. To change one, you patch the function that renders it, usually with an `after` patch, and edit the elements it returns. Your changes become part of Discord's real tree, so they can use its context and survive its re-renders.
+Discord's screens are React components your plugin doesn't own. To change one, you patch its render, usually with an `after` patch, and edit the elements it returns. Your changes become part of Discord's real tree, so they can use its context and survive its re-renders.
 
 Read [Patching Functions](/docs/developer/plugins/patching) first. This page applies the same patcher to components.
 
 ## Patching a render
 
-A component renders through a function. Find the module that owns the component, patch that function with `after`, and return the tree you want.
+`patcher.react` has the same `before`, `after` and `instead` as the patcher, but each takes a component. Pass the module that holds the component and its key, and return the tree you want.
 
 ```tsx src/toasts/index.tsx
 import { metro, patcher } from '@unbound-app/api';
@@ -18,88 +18,94 @@ import { metro, patcher } from '@unbound-app/api';
 const Toasts = metro.findByProps('ToastContainer');
 
 export function startToastPatch() {
-	patcher.after(Toasts.ToastContainer, 'type', ({ result }) => {
+	patcher.react.after(Toasts, 'ToastContainer', ({ props, result }) => {
 		// wrap, replace, or return the original tree
 		return result;
 	});
 }
 ```
 
-## Where the render function lives
+Like every patch, this waits for a [lazy lookup](/docs/developer/plugins/metro#searches-are-lazy) to load, so it never makes Discord load the module early.
 
-Each kind of component keeps its render function in a different place, so where you patch depends on the kind.
+Each callback gets:
+
+| Field | Holds |
+| --- | --- |
+| `props` | The props of this render. For a class component, `this.props`. |
+| `result` | What the component rendered, after earlier patches. `after` only. |
+| `original` | Renders the unpatched component. Pass new props to render it with those. |
+| `this` | The class instance rendering, or `undefined` for a function component. |
 
 <Tabs>
-	<Tab title='Memo'>
-		`React.memo` wraps the real component and stores it on `.type`. Patch `.type`, not the wrapper. React calls the inner component, so a patch on the wrapper never runs.
+	<Tab title='after'>
+		Runs after the component renders. Return a tree to replace `result`, or nothing to keep it.
 
 		```tsx
-		const { SomeMemoComponent } = metro.findByProps('SomeMemoComponent');
-
-		patcher.after(SomeMemoComponent, 'type', ({ result }) => {
-			return result;
-		});
-		```
-	</Tab>
-	<Tab title='Class'>
-		A class component renders through `render` on its prototype. The instance is `this`, so you can read its `props` and `state`.
-
-		```tsx
-		const SomeClassComponent = metro.findByName('SomeClassComponent');
-
-		patcher.after(SomeClassComponent.prototype, 'render', ({ this: instance, result }) => {
-			logger.log('Rendering with', instance.props);
+		patcher.react.after(Profile, 'UserProfile', ({ props, result }) => {
+			logger.log('Rendering profile of', props.userId);
 
 			return result;
 		});
 		```
 	</Tab>
-	<Tab title='Function'>
-		A plain function component has no prototype and often no useful name, so Metro can't find it directly. Reach it through the parent that renders it:
+	<Tab title='before'>
+		Runs before the component renders. Return new props to render with those instead.
 
-		1. Patch the parent's render.
-		2. Find the child in the parent's result.
-		3. Patch the child from there.
+		```tsx
+		patcher.react.before(Profile, 'UserProfile', ({ props }) => {
+			return { ...props, compact: true };
+		});
+		```
 
-		See [Reaching into a render](#reaching-into-a-render).
+		A class component renders from `this.props`, so its `before` patches can't replace them.
+	</Tab>
+	<Tab title='instead'>
+		Renders your return value in place of the component. Call `original` when you still want Discord's tree.
+
+		```tsx
+		patcher.react.instead(Profile, 'UserProfile', ({ props, original }) => {
+			if (props.isBot) return null;
+
+			return original();
+		});
+		```
 	</Tab>
 </Tabs>
 
+Every patch returns a function that removes it, and takes `{ once: true }` as its last argument, as in [Undoing a patch](/docs/developer/plugins/patching#undoing-a-patch).
+
+## Where the render function lives
+
+Each kind of component keeps its render in a different place. `patcher.react` looks the kind up and patches the right one:
+
+| Component | `patcher.react` patches |
+| --- | --- |
+| `React.memo` | The wrapped component on `.type`, unwrapping a `forwardRef` or class inside |
+| `React.forwardRef` | `.render` |
+| Class | `prototype.render` |
+| Plain function | The key that holds it |
+
+You can also pass a `memo`, `forwardRef` or class component by itself, such as `patcher.react.after(SomeMemo, callback)`. A plain function has no wrapper to patch, so it needs the object holding it and its key. Passed alone, it throws.
+
+<Note>
+	Passing the component itself reads it, so a lazy lookup loads its module right away. Pass the module and key to keep the patch waiting.
+</Note>
+
 ## Reaching into a render
 
-A render result is a tree of React elements. On each element, `type` is the component, `props` its props, and `props.children` what it renders inside. Walk that tree to find the element you want.
+A render result is a tree of React elements. On each element, `type` is the component, `props` its props, and `props.children` what it renders inside. `utils.react.findComponent` walks that tree and returns the first element that matches:
 
-```ts src/components/find-in-tree.ts
-import { isValidElement, type ReactElement, type ReactNode } from 'react';
+- A component name, matched against `displayName` or `name`, through `memo` and `forwardRef`.
+- A host type such as `'RCTView'`.
+- A function that gets each element and returns `true` for the one you want.
 
-type Props = { children?: ReactNode; style?: unknown };
-
-export function findInTree(
-	node: ReactNode,
-	matches: (element: ReactElement<Props>) => boolean,
-): ReactElement<Props> | undefined {
-	if (!isValidElement<Props>(node)) return undefined;
-	if (matches(node)) return node;
-
-	const { children } = node.props;
-
-	for (const child of Array.isArray(children) ? children : [children]) {
-		const found = findInTree(child, matches);
-
-		if (found) return found;
-	}
-
-	return undefined;
-}
-
-export function isNamed(element: ReactElement, name: string): boolean {
-	return typeof element.type === 'function' && element.type.name === name;
-}
-```
+`utils.react.filterComponents` returns every match instead.
 
 ```tsx
-patcher.after(Parent, 'type', ({ result }) => {
-	const row = findInTree(result, (element) => isNamed(element, 'Row'));
+import { patcher, utils } from '@unbound-app/api';
+
+patcher.react.after(Profile, 'UserProfile', ({ result }) => {
+	const row = utils.react.findComponent(result, 'Row');
 
 	if (row) {
 		row.props.style = [row.props.style, { opacity: 0.5 }];
@@ -111,7 +117,7 @@ patcher.after(Parent, 'type', ({ result }) => {
 
 Other plugins may patch the same component, so:
 
-- Guard every lookup. `findInTree` returns `undefined` when Discord changes its tree, or another plugin already has.
+- Guard every lookup. `findComponent` returns `undefined` when Discord changes its tree, or another plugin already has.
 - Add to `children` instead of replacing it. Replacing it removes what earlier plugins added.
 
 ## Patching a child for one render
@@ -119,53 +125,119 @@ Other plugins may patch the same component, so:
 Some children are created fresh on every parent render. A patch left on one targets a component that no longer exists on the next render. Patch it from inside the parent's patch instead, with `{ once: true }`, so the child's patch lasts for exactly one render.
 
 ```tsx
-patcher.after(Parent, 'type', ({ result }) => {
-	const child = findInTree(result, (element) => isNamed(element, 'Child'));
+patcher.react.after(Profile, 'UserProfile', ({ result }) => {
+	const child = utils.react.findComponent(result, 'ProfileBadges');
 
 	if (child) {
-		patcher.after(child.type, 'type', ({ result: childResult }) => childResult, { once: true });
+		patcher.react.after(child.type, ({ result: badges }) => badges, { once: true });
 	}
 
 	return result;
 });
 ```
 
-## Cleaning up
+This works when `child.type` is a `memo`, `forwardRef` or class. For a plain function, patch it where its module exports it.
 
-Unbound removes your patches when the plugin stops. That restores Discord's render function, but not what's on screen. A component that already rendered with your patch keeps showing your output until React renders it again. So force a re-render when the plugin stops.
+## Patching class components
+
+`patcher.react` patches a class's `render`. Its other members live in three places, and each is patched differently. Check where a member lives before you patch it:
+
+```ts
+Object.hasOwn(SomeClass.prototype, 'componentDidMount'); // true: a prototype method
+Object.hasOwn(SomeClass, 'getDerivedStateFromProps'); // true: a static method
+Object.hasOwn(SomeClass.prototype, 'onPress'); // false: a class field, on each instance
+```
 
 <Tabs>
-	<Tab title='Class'>
-		A class instance has `forceUpdate`. Keep the instance your patch saw, and call it in `stop`.
+	<Tab title='Prototype method'>
+		Lifecycle methods and methods declared as `name() {}` live on the prototype. Patch them there with the regular patcher. Mounted instances call the patched method from their next call on, because they read it from the prototype.
 
-		```tsx src/index.tsx
-		import { metro, patcher } from '@unbound-app/api';
-		import type { Component } from 'react';
+		```tsx
+		const SomeClass = metro.findByName('SomeClass');
 
-		const SomeClassComponent = metro.findByName('SomeClassComponent');
-		let mounted: Component | undefined;
+		patcher.after(SomeClass.prototype, 'componentDidUpdate', ({ this: instance }) => {
+			logger.log('Updated with', instance.props);
+		});
+		```
 
-		export default {
-			start() {
-				patcher.after(SomeClassComponent.prototype, 'render', ({ this: instance, result }) => {
-					mounted = instance;
+		A mounted instance has already run `componentDidMount`, so a patch on it only runs for instances mounted afterwards.
+	</Tab>
+	<Tab title='Class field'>
+		A field written as `onPress = () => {}` is created on each instance in the constructor, so the prototype doesn't have it. Patch `render` to reach each instance as `this`, then patch the instance itself, once. Use `before`, so the render that reached the instance already passes the patched field down.
 
-					return result;
-				});
-			},
-			stop() {
-				patcher.unpatchAll();
-				mounted?.forceUpdate();
-			},
-		};
+		```tsx
+		const SomeClass = metro.findByName('SomeClass');
+		const patched = new WeakSet<object>();
+
+		patcher.react.before(SomeClass, ({ this: instance }) => {
+			if (patched.has(instance)) return;
+
+			patched.add(instance);
+			patcher.before(instance, 'onPress', () => {
+				logger.log('Pressed');
+			});
+		});
+		```
+
+		The instance patches are yours too, so they are removed when the plugin stops.
+	</Tab>
+	<Tab title='Static method'>
+		A `static` method lives on the class itself. Patch it there.
+
+		```tsx
+		const SomeClass = metro.findByName('SomeClass');
+
+		patcher.after(SomeClass, 'getDerivedStateFromProps', ({ args: [props], result }) => {
+			return { ...result, compact: props.compact ?? false };
+		});
 		```
 	</Tab>
-	<Tab title='Function'>
-		A function component has no `forceUpdate`. Re-rendering it isn't safe either. If your patch called hooks, the unpatched render calls fewer, and React throws `Rendered fewer hooks than expected`.
+	<Tab title='Constructor'>
+		To run code when an instance is created, patch the class where its module exports it. The patcher calls the original with `new`, and `result` is the new instance.
 
-		Remount it instead. Give the element a new `key` from the parent that renders it. React then throws the old element away and mounts a fresh one, which runs Discord's original render from the start.
+		```tsx
+		const SomeClassModule = metro.findByProps('SomeClass');
+
+		patcher.after(SomeClassModule, 'SomeClass', ({ result: instance }) => {
+			logger.log('Created', instance);
+		});
+		```
+
+		The patch only sees instances created after it, through that export. Instances already mounted have run their constructor.
 	</Tab>
 </Tabs>
+
+## Undoing a component patch
+
+Unbound removes your patches when the plugin stops, and so does the function each patch returns. You don't need to re-render anything. Mounted components re-render with Discord's original render, and function components keep their state, even when your patch called hooks.
+
+Your `stop` still undoes changes a callback made outside the render, such as a value it wrote onto a Discord object.
+
+## Searching any tree
+
+`utils.findInTree` searches any object, not only render results. It walks every key depth-first and returns the first value your function matches. `utils.filterInTree` returns every match.
+
+```ts
+import { utils } from '@unbound-app/api';
+
+const channel = utils.findInTree(state, (node) => node?.type === 'GUILD_TEXT');
+```
+
+`utils.react.findInTree` and `utils.react.filterInTree` search React's own trees. They walk the keys elements and fibers keep their tree in (`props`, `children`, `type`, `child`, `sibling`, `memoizedProps`, `memoizedState` and `stateNode`), and only downward. Start from an element, a fiber, or a class instance's `_reactInternals`.
+
+```ts
+const fiber = utils.react.findInTree(instance._reactInternals, (node) => node?.memoizedProps?.channelId);
+```
+
+Every search takes options as its last argument:
+
+| Option | Does |
+| --- | --- |
+| `walkable` | `utils.findInTree`: the only keys to walk. `utils.react`: keys to walk as well, such as `'return'` to go up a fiber tree. |
+| `ignore` | Keys never to walk. |
+| `maxDepth` | How many levels to walk below the start. Defaults to `100`. |
+
+Every search skips a value it has already seen, so a tree that points back at itself can't loop forever. See [utils](/docs/sdk/latest/utils) in the SDK reference.
 
 <Tip>
 	Patch the smallest component that does the job. A patch on a large component that renders often runs your code on every render.

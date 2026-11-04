@@ -1,0 +1,65 @@
+    r10 = r7.__d;
+    r0 = 900001;
+    r9 = [2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        r3 = a5;
+        r2 = {'sendFake': null, 'receiveFake': null};
+        r4 = function(a0, a1, a2, a3, a4, a5) { // Original name: helper
+            r3 = a5;
+            r3['notAnExport'] = r0;
+            return r0;
+        };
+        r2[0] = r4;
+        r2[1] = r4;
+        r2['editFake'] = r4;
+        r4 = a6;
+        r5 = r4[r0];
+        r0 = undefined;
+        r4 = a1;
+        r6 = r4.bind(r0)(r5);
+        r5 = r6.fileFinishedImporting;
+        r4 = 'actions/FakeActionCreators.tsx';
+        r4 = r5.bind(r6)(r4);
+        r3['default'] = r2;
+        return r0;
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);
+    r10 = r7.__d;
+    r0 = 900002;
+    r9 = [2];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        r2 = a5;
+        r1 = function(a0) { // Original name: sendFake
+            return a0;
+        };
+        r2['sendFake'] = r1;
+        r1 = function(a0) { // Original name: formatFake
+            return a0;
+        };
+        r2['formatFake'] = r1;
+        r2 = {};
+        r2['reusedRegister'] = r1;
+        r4 = a6;
+        r5 = r4[r0];
+        r0 = undefined;
+        r4 = a1;
+        r6 = r4.bind(r0)(r5);
+        r5 = r6.fileFinishedImporting;
+        r4 = 'utils/FakeUtils.tsx';
+        r4 = r5.bind(r6)(r4);
+        return r0;
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);
+    r10 = r7.__d;
+    r0 = 900003;
+    r9 = [];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        r2 = a5;
+        r1 = function(a0) { // Original name: formatFake
+            return a0;
+        };
+        r2['formatFake'] = r1;
+        r2['parseFake'] = r1;
+        return r0;
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

@@ -8,7 +8,6 @@ import {
 	validatePluginDirectory,
 	validatePluginFolder,
 	validatePluginDocs,
-	validateSettingsPanel,
 	validateTextInputProps,
 } from './validate-plugins';
 import { PLUGINS_DIR } from './paths';
@@ -116,35 +115,6 @@ test('reports only the folder when the manifest is not an object', () => {
 	expect(validatePluginFolder('Example_Plugin', [])).toEqual([
 		'folder must use lowercase kebab-case',
 		'manifest must be an object',
-	]);
-});
-
-function createEntry(config: string, entry: string): string {
-	const directory = createPlugin({});
-
-	mkdirSync(join(directory, 'src'));
-	writeFileSync(join(directory, 'rollup.config.mjs'), config);
-	writeFileSync(join(directory, 'src', 'index.tsx'), entry);
-
-	return directory;
-}
-
-const panelConfig = 'export default unbound(import.meta.url, { settingsPanel: true });';
-const plainConfig = 'export default unbound(import.meta.url);';
-const panelEntry = 'export default { start, stop, getSettingsPanel: () => <SettingsPanel /> };';
-const plainEntry = 'export default { start, stop };';
-
-test('accepts a settingsPanel flag that matches the entry file', () => {
-	expect(validateSettingsPanel(createEntry(panelConfig, panelEntry))).toEqual([]);
-	expect(validateSettingsPanel(createEntry(plainConfig, plainEntry))).toEqual([]);
-});
-
-test('reports a settingsPanel flag that disagrees with the entry file', () => {
-	expect(validateSettingsPanel(createEntry(plainConfig, panelEntry))).toEqual([
-		'rollup.config.mjs must set settingsPanel: true because src/index exports getSettingsPanel',
-	]);
-	expect(validateSettingsPanel(createEntry(panelConfig, plainEntry))).toEqual([
-		'rollup.config.mjs sets settingsPanel: true but src/index does not export getSettingsPanel',
 	]);
 });
 

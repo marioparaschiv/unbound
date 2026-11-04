@@ -1,8 +1,12 @@
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { PredicateResult, SettingsValue, Widen } from '@unbound-app/types';
+import { settingEntries } from '@unbound-app/contracts/settings-schema';
+import type { SettingsSchema } from '@unbound-app/types/settings';
 import debounce from '@unbound-app/utils/debounce';
-import { useEffect, useState } from 'react';
 
 import { createSettingsBackend, type SettingsStores } from '~/storage/backend';
+import { createDefinedSettings, type DefinedSettings } from '~/storage/define';
+import { maskSecrets, registerSecrets } from '~/storage/secrets';
 import { EventEmitter } from '~/core/event-emitter';
 
 /** Payload describing a settings change, passed to `onChange` listeners and predicates. */
@@ -40,12 +44,28 @@ const Events = new EventEmitter<EventMap>();
 
 const backend = createSettingsBackend();
 
+/** The last `useSetting` snapshot, and the Bucket revision and selector it was taken with. */
+type Selection<T> = {
+	name: string;
+	revision: number;
+	selector: (bucket: Bucket) => T;
+	value: T;
+};
+
+// Counts each Bucket's changes, so a `useSetting` snapshot stays the same object until its Bucket changes.
+const revisions = new Map<string, number>();
+
 /**
  * @description Reads every Bucket at once. Most callers should read single keys, which stay in native code.
+ * @param options Set `includeSecrets` to read `displayAs: 'secret'` settings as they are; otherwise they are masked.
  * @returns Every Bucket by name.
  */
-export function snapshot(): SettingsStores {
-	return backend.readAll();
+export function snapshot({
+	includeSecrets = false,
+}: { includeSecrets?: boolean } = {}): SettingsStores {
+	const stores = backend.readAll();
+
+	return includeSecrets ? stores : maskSecrets(stores);
 }
 
 /**
@@ -69,6 +89,12 @@ export function onChange(
 	return () => void Events.off('changed', handler);
 }
 
+function changed(payload: SettingsPayload) {
+	revisions.set(payload.store, (revisions.get(payload.store) ?? 0) + 1);
+
+	Events.emit('changed', payload);
+}
+
 function read<T>(store: string, key: string, def: T): Widen<T> {
 	const value = backend.read(store, key);
 
@@ -78,7 +104,7 @@ function read<T>(store: string, key: string, def: T): Widen<T> {
 function write(store: string, key: string, value: SettingsValue) {
 	backend.write({ store, key, value });
 
-	Events.emit('changed', { store, key, value });
+	changed({ store, key, value });
 }
 
 function remove(store: string, key: string) {
@@ -86,7 +112,7 @@ function remove(store: string, key: string) {
 
 	backend.write({ store, key, remove: true });
 
-	Events.emit('changed', { store, key, value: undefined });
+	changed({ store, key, value: undefined });
 }
 
 function clear(store: string) {
@@ -94,7 +120,7 @@ function clear(store: string) {
 
 	backend.write({ store, clear: true });
 
-	Events.emit('changed', { store, key: null, value: undefined });
+	changed({ store, key: null, value: undefined });
 }
 
 /**
@@ -115,6 +141,31 @@ export function getBucket(name?: string): Bucket {
 		remove: (key) => remove(name, key),
 		clear: () => clear(name),
 	};
+}
+
+/**
+ * @description Binds a settings schema to a Bucket: reads apply defaults and writes are validated against the schema.
+ * Plugins reach it through `@unbound-app/settings`, which the build generates from their settings.ts.
+ * @param schema The settings schema.
+ * @param name The Bucket name. A plugin may omit it to use its own Bucket.
+ * @returns The settings, their hook and their reset.
+ * @throws When `name` is omitted outside a plugin.
+ */
+export function define(schema: SettingsSchema, name?: string): DefinedSettings {
+	if (name === undefined) {
+		throw new Error('define needs a Bucket name outside a plugin.');
+	}
+
+	registerSecrets(
+		name,
+		settingEntries(schema).flatMap(({ path, field }) =>
+			field.kind === 'string' && field.displayAs === 'secret' ? [path] : [],
+		),
+	);
+
+	return createDefinedSettings(schema, getBucket(name), (callback) =>
+		onChange((payload) => payload.store === name, callback),
+	);
 }
 
 /**
@@ -139,6 +190,50 @@ export function useBucket(name: string, predicate?: SettingsPredicate): Bucket {
 }
 
 /**
+ * @description React hook that selects from a Bucket, re-rendering only when the selection changes.
+ * @template T The value the selector returns.
+ * @param name The Bucket to read.
+ * @param selector Reads the value from the Bucket.
+ * @param isEqual Decides whether a new selection equals the last one, which skips the re-render. Defaults to `Object.is`.
+ * @returns The selector's latest value.
+ */
+export function useSetting<T>(
+	name: string,
+	selector: (bucket: Bucket) => T,
+	isEqual: (previous: T, next: T) => boolean = Object.is,
+): T {
+	const selected = useRef<Selection<T>>(undefined);
+	const subscribe = useCallback(
+		(notify: () => void) => onChange(({ store }) => store === name, notify),
+		[name],
+	);
+
+	// useSyncExternalStore re-renders when the snapshot's identity changes, so the snapshot is reused until the
+	// Bucket or selector changes, and an equal selection keeps the previous one.
+	function getSnapshot() {
+		const previous = selected.current;
+		const revision = revisions.get(name) ?? 0;
+
+		if (
+			previous?.name === name &&
+			previous.revision === revision &&
+			previous.selector === selector
+		) {
+			return previous.value;
+		}
+
+		const next = selector(getBucket(name));
+		const value = previous && isEqual(previous.value, next) ? previous.value : next;
+
+		selected.current = { name, revision, selector, value };
+
+		return value;
+	}
+
+	return useSyncExternalStore(subscribe, getSnapshot);
+}
+
+/**
  * @description Saves the settings changed since the last call. Each change already reached the loader when it was made.
  * @returns A promise that resolves once the loader has saved them.
  */
@@ -152,9 +247,11 @@ Events.on(
 );
 
 export default {
+	define,
 	getBucket,
 	onChange,
 	persist,
 	snapshot,
 	useBucket,
+	useSetting,
 };

@@ -16,7 +16,10 @@ type TransformResult = { code: string };
 
 type Transform = (this: TransformContext, code: string) => TransformResult | null;
 
-type UsePlugin = { start: () => unknown[] };
+// What the entry's `start` returns: each shimmed library's marker.
+type ShimExports = { start: () => string[] };
+
+type UsePlugin = { __load: () => ShimExports };
 
 const roots: string[] = [];
 
@@ -86,13 +89,13 @@ describe('shimImports', () => {
 			import moment from 'moment';
 			import Svg, { Path } from 'react-native-svg';
 			import * as lodash from 'lodash';
-			export default { start: () => [moment(), Svg, Path, lodash.chunk] };
+			export const start = () => [moment(), Svg, Path, lodash.chunk];
 		`);
 		const plugin: UsePlugin = runInNewContext(`(${code})`, { unbound });
 
 		expect(code).not.toContain('window.');
 		expect(reads).toEqual([]);
-		expect(plugin.start()).toEqual(['now', 'Svg', 'Path', 'chunk']);
+		expect(plugin.__load().start()).toEqual(['now', 'Svg', 'Path', 'chunk']);
 	});
 
 	test('leaves named imports and other libraries unchanged', () => {

@@ -47,7 +47,7 @@ export function useListenState(activity: SpotifyActivity): ListenState {
 	const reason = flux.useStore(
 		[SpotifyStore, SpotifyProtocolStore, UserStore],
 		() => disabledReason(activity, userId),
-		[activity, userId],
+		{ deps: [activity, userId] },
 	);
 
 	return { disabledReason: reason, userId };

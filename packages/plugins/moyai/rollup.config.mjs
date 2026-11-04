@@ -1,3 +1,3 @@
 import { unbound } from '@unbound-app/cli/rollup';
 
-export default unbound(import.meta.url, { settingsPanel: true });
+export default unbound(import.meta.url);

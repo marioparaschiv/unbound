@@ -27,10 +27,10 @@
 			"packages/plugin-scripts"
 		],
 		"catalog": {
-			"typescript": "^5.9.3",
+			"typescript": "^7.0.2",
 			"possess": "^1.1.0",
 			"@types/bun": "latest",
-			"better-auth": "1.7.14"
+			"better-auth": "1.7.16"
 		},
 		"catalogs": {
 			"react": {
@@ -76,25 +76,28 @@
 		"release": "semantic-release"
 	},
 	"devDependencies": {
-		"@commitlint/cli": "^21.0.2",
+		"@commitlint/cli": "^21.2.4",
 		"@marioparaschiv/oxc-config": "^0.2.0",
 		"@semantic-release/exec": "^7.1.0",
 		"@semantic-release/git": "^11.0.1",
 		"@stylistic/eslint-plugin": "^5.10.0",
 		"@types/bun": "catalog:",
 		"dts-bundle-generator": "^9.5.1",
-		"eslint-plugin-jsdoc": "^65.4.2",
-		"eslint-plugin-perfectionist": "^5.9.1",
+		"eslint-plugin-jsdoc": "^65.4.3",
+		"eslint-plugin-perfectionist": "^5.13.0",
 		"eslint-plugin-unicorn": "^79.0.0",
-		"lefthook": "^2.1.9",
-		"oxfmt": "^0.75.0",
-		"oxlint": "^1.90.0",
-		"oxlint-tsgolint": "^7.0.2003",
-		"semantic-release": "^25.0.8",
-		"ts-morph": "^28.0.0"
+		"lefthook": "^2.2.2",
+		"oxfmt": "^0.76.0",
+		"oxlint": "^1.91.0",
+		"oxlint-tsgolint": "^7.0.2005",
+		"semantic-release": "^25.0.9",
+		"ts-morph": "^28.0.0",
+		"typescript": "catalog:"
 	},
 	"overrides": {
-		"typescript": "5.9.3"
+		"dts-bundle-generator": {
+			"typescript": "5.9.3"
+		}
 	},
 	"patchedDependencies": {
 		"possess@1.1.0": "patches/possess@1.1.0.patch"

@@ -194,6 +194,7 @@ async function handlePluginPush(request: PluginPushRequest) {
 			request.bundle,
 			request.manifest,
 			runtimeBytecode(request),
+			request.files,
 		);
 
 		if (result.ok) {

@@ -1,0 +1,5 @@
+{
+	"APPEARANCE": "Appearance",
+	"COLOR_THRESHOLDS": "Color thresholds",
+	"COLOR_THRESHOLDS_SUBTITLE": "Warn as the message approaches Discord’s character limit."
+}

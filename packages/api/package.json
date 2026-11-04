@@ -1,6 +1,6 @@
 {
 	"name": "@unbound-app/api",
-	"version": "0.12.0-3e7b4ddc413a55579d633dbd0f61baee5e1ee445f5c860426373906059c0d839",
+	"version": "0.12.0-1e165c3c4bc44b2d105f73d275cb3ab5935b6ce11da27a63d0c7620dcf0f7b1d",
 	"author": {
 		"name": "Mario P.",
 		"email": "contact@marioparaschiv.com",
@@ -13,8 +13,10 @@
 	},
 	"files": [
 		"src",
+		"ambient",
 		"testing"
 	],
+	"type": "module",
 	"types": "./src/index.d.ts",
 	"exports": {
 		".": "./src/index.d.ts",
@@ -43,10 +45,15 @@
 		"./storage": "./src/storage.d.ts",
 		"./sync": "./src/sync.d.ts",
 		"./testing": "./testing/index.ts",
+		"./testing/icu-parse": "./testing/icu-parse.ts",
+		"./testing/preset": "./testing/preset.ts",
 		"./themes": "./src/themes.d.ts",
 		"./toasts": "./src/toasts.d.ts",
+		"./types": "./src/_types.d.ts",
 		"./ui": "./src/ui.d.ts",
-		"./updates": "./src/updates.d.ts"
+		"./updates": "./src/updates.d.ts",
+		"./utils": "./src/utils/index.d.ts",
+		"./utils/react": "./src/utils/react/index.d.ts"
 	},
 	"scripts": {
 		"typecheck": "tsc --noEmit -p ."

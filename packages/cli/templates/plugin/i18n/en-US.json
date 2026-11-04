@@ -1,0 +1,5 @@
+{
+	"GREETING_BODY": "{name} is running.",
+	"GREET_ON_START": "Greet on start",
+	"GREET_ON_START_SUBTITLE": "Show a greeting when the plugin starts."
+}

@@ -1,0 +1,123 @@
+import { BUILD_CHECKS, DECLARED_CAPABILITY_CHECKS } from '~/lib/build-checks';
+import { textInputPropsCheck } from '~/lib/checks/text-input-props';
+import { manifestCheck } from '~/lib/checks/manifest';
+import type { Diagnostic } from '~/rollup/diagnostic';
+import { bundleCheck } from '~/lib/checks/bundle';
+import { typesCheck } from '~/lib/checks/types';
+import type { Check } from '~/lib/check/check';
+import { lintCheck } from '~/lib/checks/lint';
+
+/**
+ * The checks `ubd check` runs beside `BUILD_CHECKS`; register a feature's check with one line here.
+ * A rollup plugin's check runs through the bundle check; add its id to `BUNDLE_REPORTED_CHECKS`.
+ */
+// Checks start in this order and the synchronous ones block: oxlint and rollup go first, so they run
+// while the TypeScript checks hold the thread.
+export const CHECKS: readonly Check[] = [
+	lintCheck,
+	bundleCheck,
+	manifestCheck,
+	textInputPropsCheck,
+];
+
+/** Ids rollup plugins report under with `reportDiagnostic`, which `--only` accepts. */
+export const BUNDLE_REPORTED_CHECKS: readonly string[] = [
+	'locales',
+	'filters',
+	'assets',
+	'commands',
+	'entry',
+	'settings',
+];
+
+/** The opt-in checks, too slow to run by default. */
+export const OPT_IN_CHECKS: readonly Check[] = [typesCheck];
+
+export type CheckSelection = {
+	checks: Check[];
+	/** Keeps only these checks' diagnostics; `undefined` keeps every one. */
+	only?: Set<string>;
+};
+
+export type SelectOptions = {
+	declaredCapabilities?: boolean;
+	types?: boolean;
+	only?: readonly string[];
+};
+
+/**
+ * @description Lists every check id `--only` accepts.
+ * @returns The ids, in run order.
+ */
+export function listCheckIds(): string[] {
+	const all = [...BUILD_CHECKS, ...CHECKS, ...OPT_IN_CHECKS].map((check) => check.id);
+
+	return [...new Set([...all, ...BUNDLE_REPORTED_CHECKS])];
+}
+
+/**
+ * @description Picks the checks to run: the registered ones, then the build's, then `types` when
+ * asked for, narrowed to `only`. An id reported from a rollup plugin runs the bundle check.
+ * @param options The capabilities mode, whether to type-check, and the ids to keep.
+ * @returns The checks and the ids to keep, or the unknown ids.
+ */
+export function selectChecks({
+	declaredCapabilities = false,
+	types = false,
+	only = [],
+}: SelectOptions): CheckSelection | { unknown: string[] } {
+	const build = declaredCapabilities ? DECLARED_CAPABILITY_CHECKS : BUILD_CHECKS;
+	const optIn = types || only.includes('types') ? OPT_IN_CHECKS : [];
+	const all = [...CHECKS, ...build, ...optIn];
+
+	if (!only.length) {
+		return { checks: all };
+	}
+
+	const known = new Set(listCheckIds());
+	const unknown = only.filter((id) => !known.has(id));
+
+	if (unknown.length) {
+		return { unknown };
+	}
+
+	const wanted = new Set(only);
+	const viaBundle = only.some((id) => BUNDLE_REPORTED_CHECKS.includes(id));
+
+	return {
+		checks: all.filter((check) => wanted.has(check.id) || (viaBundle && check === bundleCheck)),
+		only: wanted,
+	};
+}
+
+/**
+ * @description Keeps the diagnostics of the selected checks. The bundle check's own errors stay when
+ * it ran for a plugin-reported id, since a broken import or parse error stops those plugins.
+ * @param selection The selection the checks ran under.
+ * @param diagnostics The diagnostics they found.
+ * @returns The diagnostics to report.
+ */
+export function keepSelected(
+	selection: CheckSelection,
+	diagnostics: readonly Diagnostic[],
+): Diagnostic[] {
+	const { only } = selection;
+
+	if (!only) {
+		return [...diagnostics];
+	}
+
+	return diagnostics.filter(
+		({ check = '', severity }) =>
+			only.has(check) || (check === bundleCheck.id && severity === 'error'),
+	);
+}
+
+export default {
+	CHECKS,
+	BUNDLE_REPORTED_CHECKS,
+	OPT_IN_CHECKS,
+	listCheckIds,
+	selectChecks,
+	keepSelected,
+};

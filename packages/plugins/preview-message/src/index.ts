@@ -17,7 +17,7 @@ import {
 
 let dispose = () => {};
 
-function start() {
+export function start() {
 	const EyeIcon = assets.getIdByName('EyeIcon');
 
 	const ready = ensureModules('Preview Message', {
@@ -44,9 +44,9 @@ function start() {
 	]);
 }
 
-function stop() {
+export function stop() {
 	dispose();
 	dispose = () => {};
 }
 
-export default { start, stop, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

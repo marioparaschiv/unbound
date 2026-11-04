@@ -56,15 +56,21 @@ export type AutocompleteContext = CommandContext & {
 	values: Readonly<Record<string, RawOptionValue>>;
 };
 
-/** A value with the label the picker shows for it. */
+/**
+ * A key of the owner's `i18n/en-US.json`. The picker shows its message in the user's locale, falling back to en-US;
+ * a plugin's keys come from its generated `src/unbound-i18n.d.ts`.
+ */
+export type CommandMessageKey = Extract<keyof UnboundMessageKeys, string>;
+
+/** An autocomplete suggestion's value with the label the picker shows for it. */
 export type ChoiceWithLabel<V extends string | number> = {
-	/** The text the picker shows. Labels in one `option.choice` list must be unique. */
+	/** The text the picker shows: data, such as a name, so it is not a message key. */
 	label: string;
 	/** The value the handler receives when this choice is picked. */
 	value: V;
 };
 
-/** A choice or suggestion: a bare value, shown as itself, or a value with a label. */
+/** An autocomplete suggestion: a bare value, shown as itself, or a value with a label. */
 export type Choice<V extends string | number> = V | ChoiceWithLabel<V>;
 
 /** A value, or a promise of one. */
@@ -209,12 +215,12 @@ export type OptionSpec<
 	readonly kind: K;
 	/** Whether Discord requires the option. Defaults to `false`; required options are listed first. */
 	readonly required: R;
-	/** The text the picker shows for the option; `undefined` shows the option's name. */
+	/** The message key of the text the picker shows for the option; `undefined` shows the option's name. */
 	readonly description: string | undefined;
 	/** The kind-specific settings given to the builder; empty for `option.choice`. */
 	readonly settings: OptionSettings<K>;
-	/** The allowed values from `option.choice`; `undefined` for every other builder. */
-	readonly choices: readonly Choice<string | number>[] | undefined;
+	/** Each value from `option.choice` mapped to its label's message key; `undefined` for every other builder. */
+	readonly choices: Readonly<Record<string, string>> | undefined;
 	/** Carries the handler's value type for inference only; never set at runtime. */
 	readonly [valueType]?: V;
 };
@@ -233,8 +239,8 @@ export type OptionArgs<O> = {
  * `execute` uses method syntax so its parameter stays bivariant and the registry can hold it erased.
  */
 export type LeafCommand<O> = {
-	/** The text the picker shows under the command name, 1 to 100 characters. */
-	description: string;
+	/** The message key of the text the picker shows under the command name; 1 to 100 characters in en-US. */
+	description: CommandMessageKey;
 	/** The command's options keyed by name, made with the `option` builders. At most 25. */
 	options?: O;
 	/** Runs the command with the parsed options. A throw or rejection shows the user an ephemeral error. */
@@ -245,8 +251,8 @@ export type LeafCommand<O> = {
 
 /** A command that only groups subcommands: `/root sub` or `/root group sub`. */
 export type CommandGroup<S> = {
-	/** The text the picker shows under the group name, 1 to 100 characters. */
-	description: string;
+	/** The message key of the text the picker shows under the group name; 1 to 100 characters in en-US. */
+	description: CommandMessageKey;
 	/** The group's commands keyed by name, 1 to 25 of them. */
 	subcommands: CommandTree<S>;
 	/** Never set on a group; only a {@link LeafCommand} takes options. */
@@ -279,14 +285,19 @@ export type CommandsHandle = {
 
 /** Settings every builder accepts. */
 export type BuilderInput<K extends OptionKind, R extends boolean> = OptionSettings<K> & {
-	description?: string;
+	/** The message key of the text the picker shows for the option; 1 to 100 characters in en-US. Omitted, its name. */
+	description?: CommandMessageKey;
+	/** Whether Discord requires the option. Defaults to `false`. */
 	required?: R;
 };
 
+/** Each value `option.choice` allows, mapped to the message key of its label. Labels must differ in en-US. */
+export type ChoiceMap = Readonly<Record<string, CommandMessageKey>>;
+
 /** Settings `option.choice` accepts. */
 export type ChoiceInput<R extends boolean> = {
-	/** The text the picker shows for the option, 1 to 100 characters. Omitted, the option's name. */
-	description?: string;
+	/** The message key of the text the picker shows for the option; 1 to 100 characters in en-US. Omitted, its name. */
+	description?: CommandMessageKey;
 	/** Whether Discord requires the option. Defaults to `false`. */
 	required?: R;
 };
@@ -296,20 +307,15 @@ export type OptionBuilder<K extends OptionKind> = <const R extends boolean = fal
 	settings?: BuilderInput<K, R>,
 ) => OptionSpec<K, R>;
 
-/** The kind a choice list maps to: strings are a string option, numbers an integer or number option. */
-export type ChoiceKind<V extends string | number> = V extends string
-	? 'string'
-	: 'integer' | 'number';
-
 /** The `option` builders: one per kind, plus `choice`. */
 export type OptionBuilders = { [K in OptionKind]: OptionBuilder<K> } & {
 	/**
-	 * Restricts an option to listed values; the handler gets their literal union.
-	 * @param choices Values, or `{ label, value }` pairs. 1 to 25, with unique labels.
+	 * Restricts a string option to listed values; the handler gets their literal union.
+	 * @param choices Each value mapped to its label's message key, in picker order: `{ heads: 'COIN_HEADS' }`. 1 to 25.
 	 * @param settings The option's description and whether it is required.
 	 */
-	choice<const V extends string | number, const R extends boolean = false>(
-		choices: readonly Choice<V>[],
+	choice<const M extends ChoiceMap, const R extends boolean = false>(
+		choices: M,
 		settings?: ChoiceInput<R>,
-	): OptionSpec<ChoiceKind<V>, R, V>;
+	): OptionSpec<'string', R, keyof M & string>;
 };

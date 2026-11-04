@@ -7,9 +7,9 @@ import useSignIn from '~/ui/account/use-sign-in';
 import { Linking, Invites } from '~/metro/api';
 import { Discord } from '~/metro/components';
 import { useAccount } from '~/account/api';
-import { showDialog } from '~/dialogs/api';
 import { useBucket } from '~/storage/api';
 import { reload } from '~/native/native';
+import { confirm } from '~/dialogs/api';
 import { SYNC_STORE } from '~/sync/api';
 import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';
@@ -44,26 +44,21 @@ function GeneralPage() {
 	const signIn = useSignIn();
 	const sync = useBucket(SYNC_STORE, ({ key }) => key === 'enabled');
 
-	function openSync() {
+	async function openSync() {
 		if (account) {
 			navigation.push(Screens.Sync);
 
 			return;
 		}
 
-		// Discord's confirm modal styles its button as destructive; signing in is the primary action.
-		showDialog({
-			title: messages.UNBOUND_SYNC_SIGN_IN_TITLE,
-			body: messages.UNBOUND_SYNC_SIGN_IN_DESC,
-			buttons: [
-				{
-					label: messages.UNBOUND_SIGN_IN,
-					variant: 'primary',
-					onPress: () => signIn.start(() => navigation.push(Screens.Sync)),
-				},
-			],
-			cancel: messages.UNBOUND_CANCEL,
+		const confirmed = await confirm('UNBOUND_SYNC_SIGN_IN_TITLE', {
+			body: 'UNBOUND_SYNC_SIGN_IN_DESC',
+			confirm: 'UNBOUND_SIGN_IN',
 		});
+
+		if (confirmed) {
+			signIn.start(() => navigation.push(Screens.Sync));
+		}
 	}
 
 	function setRecoveryMode(value: boolean) {

@@ -9,7 +9,7 @@ import { createLookup } from '~/lookup';
 
 let dispose = () => {};
 
-function start() {
+export function start() {
 	if (!ensureModules('PronounDB', { MessageRowData, UserProfileStore, UserStore })) return;
 
 	// Without the message store, fetched pronouns show on the next re-render instead of at once.
@@ -18,14 +18,9 @@ function start() {
 	dispose = applyFeatures('PronounDB', [() => lookup.dispose, () => patchMessageRowData(lookup)]);
 }
 
-function stop() {
+export function stop() {
 	dispose();
 	dispose = () => {};
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

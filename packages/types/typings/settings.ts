@@ -40,3 +40,138 @@ export type SettingsValue = string | number | boolean | null | SettingsValue[] |
 
 /** A settings store, or a nested group of settings within one. */
 export type SettingsObject = { [key: string]: SettingsValue };
+
+/** A value one schema-declared setting holds. */
+export type SettingPrimitive = string | number | boolean;
+
+/** A value any schema-declared setting holds. */
+export type SettingValue = SettingPrimitive | string[];
+
+/**
+ * When a row shows or is enabled: a boolean setting's dot-separated key, or a predicate the build lifted
+ * out of settings.ts into the plugin bundle, where the panel finds it by the setting's key.
+ */
+export type SettingCondition = string | { predicate: true };
+
+/** What every setting and section carries. Labels are message keys of the plugin's `i18n/en-US.json`. */
+export type SettingCommon = {
+	/** The message key of the row's label or the section's title; only a hidden setting may omit it. */
+	title?: string;
+	/** The message key of the row's sub-label. */
+	subtitle?: string;
+	/** Stored and typed, but not drawn in the generated panel. */
+	hidden?: boolean;
+	/** Draws the row only while this holds. */
+	visibleWhen?: SettingCondition;
+	/** Draws the row disabled while this holds. */
+	disabledWhen?: SettingCondition;
+	/** Changing the setting shows a hint to restart Discord. */
+	requiresRestart?: boolean;
+};
+
+/** One option of a `choice` setting. */
+export type SettingChoice = {
+	const: string;
+	/** The message key of the option's label. */
+	title: string;
+	/** The message key of the text under the option; only a radio group shows it. */
+	subtitle?: string;
+};
+
+/** The displays of a `string` setting that pick a Discord entity by its id. */
+export type EntityDisplay = 'user' | 'channel' | 'guild' | 'role';
+
+/** How a `string` setting displays; each validates the text its own way. */
+export type StringDisplay =
+	| 'input'
+	| 'multiline'
+	| 'secret'
+	| 'url'
+	| 'color'
+	| 'image'
+	| 'font'
+	| 'emoji'
+	| EntityDisplay;
+
+/** A duration's units, smallest first. */
+export type DurationUnit = 'ms' | 's' | 'm' | 'h' | 'd';
+
+/** A string setting: the primitive `array` items can be too. */
+export type StringSettingSchema = {
+	kind: 'string';
+	displayAs: StringDisplay;
+	default: string;
+	minLength?: number;
+	maxLength?: number;
+	/** The message key of the text shown while the input is empty. */
+	placeholder?: string;
+	/** `color`: also takes an alpha channel, `#RRGGBBAA`. */
+	alpha?: boolean;
+	/** `color`: colors offered first. */
+	presets?: string[];
+	/** `color`: draws `presets` inline instead of a swatch row. */
+	palette?: boolean;
+	/** `image`: the largest file accepted, in bytes. */
+	maxSize?: number;
+};
+
+/** A choice setting: one of its options' keys. */
+export type ChoiceSettingSchema = {
+	kind: 'choice';
+	displayAs: 'radio' | 'picker' | 'segmented';
+	default: string;
+	options: SettingChoice[];
+};
+
+/** One schema-declared setting, by the primitive it stores. */
+export type SettingSchema = SettingCommon &
+	(
+		| { kind: 'boolean'; displayAs: 'switch' | 'checkbox'; default: boolean }
+		| {
+				kind: 'number' | 'integer';
+				displayAs: 'input' | 'slider' | 'stepper' | 'duration';
+				/** A `duration` is in milliseconds. */
+				default: number;
+				minimum?: number;
+				maximum?: number;
+				/** The slider's or stepper's step; values must be a multiple of it. */
+				multipleOf?: number;
+				/** `duration`: the units offered. */
+				units?: DurationUnit[];
+		  }
+		| StringSettingSchema
+		| ChoiceSettingSchema
+		| {
+				kind: 'array';
+				displayAs: 'list' | 'checkboxes' | EntityDisplay;
+				default: string[];
+				/** What each item is: a string, or one of a choice's options. */
+				of: Omit<StringSettingSchema, 'default'> | Omit<ChoiceSettingSchema, 'default'>;
+				minItems?: number;
+				maxItems?: number;
+		  }
+	);
+
+/** A button row: it stores nothing, and calls the export `action` of the plugin's `src/actions.ts`. */
+export type ButtonSchema = SettingCommon & {
+	kind: 'button';
+	displayAs: 'button' | 'danger';
+	action: string;
+	/** The message key of a confirmation asked before `run`. */
+	confirm?: string;
+};
+
+/** A nested object: its settings, drawn as their own section titled by `title`. */
+export type SettingsGroupSchema = SettingCommon & {
+	kind: 'section';
+	displayAs: 'group' | 'collapsible';
+	properties: Record<string, SettingSchema | ButtonSchema>;
+};
+
+/** A plugin's settings schema, the JSON its settings.ts `defineSettings(...)` evaluates to at build time. */
+export type SettingsSchema = {
+	kind: 'settings';
+	/** The message key of the title of the section holding the top-level settings. */
+	title?: string;
+	properties: Record<string, SettingSchema | ButtonSchema | SettingsGroupSchema>;
+};

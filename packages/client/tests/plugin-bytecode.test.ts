@@ -9,9 +9,7 @@ type Evaluation = [folder: string, bytecodeVersion: number];
 
 let evaluations: Evaluation[];
 
-type CompiledModule = { default: Plugin };
-
-let compiled: (() => CompiledModule) | undefined;
+let compiled: (() => Plugin) | undefined;
 
 function compiledPlugin(marker: string): Plugin {
 	return { start: () => void evaluations.push([marker, 0]), stop: () => {} };
@@ -35,7 +33,7 @@ beforeEach(() => {
 	Reflect.set(globalThis, 'React', { createElement: () => null });
 	states['bytecode.example'] = true;
 	evaluations = [];
-	compiled = () => ({ default: compiledPlugin('bytecode') });
+	compiled = () => compiledPlugin('bytecode');
 	installUnboundNative([]);
 	Object.defineProperty(globalThis, 'NativePlatform', {
 		configurable: true,

@@ -36,6 +36,7 @@ const DOMAINS = new Set([
 	'dialogs',
 	'diagnostics',
 	'links',
+	'utils',
 ]);
 
 function sourceFiles(): string[] {

@@ -167,6 +167,7 @@ export function now(strategy: SyncStrategy = MODE_STRATEGIES[getMode()]): Promis
  * @description Starts syncing for an account that just signed in: turns syncing on, and asks how to
  * combine this device with a setup the cloud already holds before the first sync.
  * @returns Whether the cloud could be read. Failures are recorded as `lastError`.
+ * @internal
  */
 export async function connect(): Promise<boolean> {
 	try {
@@ -193,6 +194,7 @@ export async function connect(): Promise<boolean> {
 /**
  * @description Stops syncing after the account signed out and forgets what was agreed with its
  * cloud setup. Installed addons and settings stay as they are.
+ * @internal
  */
 export function disconnect() {
 	Store.set('pendingChoice', false);

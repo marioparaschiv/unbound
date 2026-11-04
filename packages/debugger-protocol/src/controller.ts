@@ -31,6 +31,7 @@ type PluginPush = {
 	bundle: string;
 	manifest: PushedManifest;
 	bytecode?: Record<string, string>;
+	files?: Record<string, string>;
 };
 
 const EVAL_RESULT_GRACE_MS = 5_000;

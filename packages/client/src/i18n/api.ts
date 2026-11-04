@@ -5,42 +5,28 @@ import { i18n as Discord, Moment } from '~/metro/common';
 import { DEV, I18N_BASE_URL } from '~/core/constants';
 import { onModuleLoaded } from '~/metro/wait';
 import { Dispatcher } from '~/flux/modules';
-import { findByName } from '~/metro/search';
 import { byProps } from '~/metro/filters';
 import { getBucket } from '~/storage/api';
 import fs from '~/native/fs';
+
+import type { AddonLocales, LocaleSource } from './addon-locales';
+import type { FormatVars, LocaleStrings } from './locale-strings';
 
 import createMomentCalendarLocale from './create-moment-calendar-locale';
 import createMomentLocaleDefiner from './create-moment-locale-definer';
 import createMomentLocaleSetter from './create-moment-locale-setter';
 import resolveMomentLocale from './resolve-moment-locale';
+import { parseLocaleStrings } from './locale-strings';
+import { createAddonLocales } from './addon-locales';
+import { getLocale, setLocale } from './locale';
+import { formatWith } from './message-format';
 
-/** One locale's messages, keyed by message key. */
-type LocaleStrings = Record<string, string>;
 /** A string table: each locale code, such as `en-US`, mapped to its messages. */
 type StringStore = Record<string, LocaleStrings>;
-/** The values `format` puts into a message's ICU `MessageFormat` placeholders, by placeholder name. */
-type FormatVars = Record<string, string | number | boolean | Date>;
 type I18nLoadSuccess = { locale: string };
-
-/** A `messages`/`format` pair over one string table, as `defineMessages` returns. */
-type Localizations = {
-	/** Each message in the active locale, falling back to en-US, then the key itself. */
-	messages: Record<string, string>;
-	/** Formats a message in the active locale, filling its placeholders from `vars`. */
-	format: (key: string, vars?: FormatVars) => string;
-};
-
-type MessageFormatInstance = {
-	format: (vars?: FormatVars) => string;
-};
-
-type MessageFormatConstructor = new (message: string) => MessageFormatInstance;
 
 // UNKNOWN: Moment comes untyped from Discord's bundle.
 type MomentMethod = (this: unknown, ...args: unknown[]) => unknown;
-
-let currentLocale: string | null = null;
 
 const strings: StringStore = { 'en-US': enUS };
 const storage = getBucket('unbound::i18n');
@@ -56,19 +42,6 @@ let originalMomentDefineLocale: MomentMethod | null = null;
 let wrappedMomentDefineLocale: MomentMethod | null = null;
 // Discord loads Moment when it first shows a date; until then there is no locale to sync.
 let momentLoaded = false;
-
-let MessageFormat: MessageFormatConstructor | undefined;
-
-/**
- * @description Resolves and memoises the `MessageFormat` constructor. Uses `findByName` (which unwraps
- * the module's default export) because the value is used with `new`; a lazy proxy cannot be constructed.
- * @returns The `MessageFormat` constructor.
- */
-function getMessageFormat() {
-	MessageFormat ??= findByName('MessageFormat');
-
-	return MessageFormat;
-}
 
 function syncMomentLocale(locale: string): void {
 	if (
@@ -86,7 +59,7 @@ function syncMomentLocale(locale: string): void {
 		originalMomentLocaleSetter = localeSetter;
 		wrappedMomentLocaleSetter = createMomentLocaleSetter(
 			localeSetter,
-			() => currentLocale ?? Discord.intl?.currentLocale ?? locale,
+			() => getLocale() ?? Discord.intl?.currentLocale ?? locale,
 			() => Moment.locales(),
 		);
 		Moment.locale = wrappedMomentLocaleSetter;
@@ -97,7 +70,7 @@ function syncMomentLocale(locale: string): void {
 			originalMomentInstanceLocaleSetter = instanceLocaleSetter;
 			wrappedMomentInstanceLocaleSetter = createMomentLocaleSetter(
 				instanceLocaleSetter,
-				() => currentLocale ?? Discord.intl?.currentLocale ?? locale,
+				() => getLocale() ?? Discord.intl?.currentLocale ?? locale,
 				() => Moment.locales(),
 			);
 			Moment.prototype.locale = wrappedMomentInstanceLocaleSetter;
@@ -108,7 +81,7 @@ function syncMomentLocale(locale: string): void {
 			wrappedMomentDefineLocale = createMomentLocaleDefiner(Moment.defineLocale, () =>
 				Reflect.apply(localeSetter, Moment, [
 					resolveMomentLocale(
-						currentLocale ?? Discord.intl?.currentLocale ?? locale,
+						getLocale() ?? Discord.intl?.currentLocale ?? locale,
 						Moment.locales(),
 					),
 				]),
@@ -123,7 +96,7 @@ function syncMomentLocale(locale: string): void {
 			originalMomentCalendar = calendar;
 			wrappedMomentCalendar = createMomentCalendarLocale(
 				calendar,
-				() => currentLocale ?? Discord.intl?.currentLocale ?? locale,
+				() => getLocale() ?? Discord.intl?.currentLocale ?? locale,
 				() => Moment.locales(),
 				instanceLocale,
 			);
@@ -162,31 +135,6 @@ function createMessages(
 			},
 		},
 	) as Record<string, string>;
-}
-
-/**
- * @description Parses a locale's string table, as served or cached.
- * @param text The table's JSON.
- * @returns The table, mapping each key to its string.
- */
-function parseLocaleStrings(text: string): LocaleStrings {
-	const value: unknown = JSON.parse(text);
-
-	if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-		throw new Error('A locale table must be a JSON object.');
-	}
-
-	const table: LocaleStrings = {};
-
-	for (const [key, string] of Object.entries(value)) {
-		if (typeof string !== 'string') {
-			throw new Error(`Locale string ${key} is not a string.`);
-		}
-
-		table[key] = string;
-	}
-
-	return table;
 }
 
 /**
@@ -250,17 +198,7 @@ async function ensureLocale(locale: string): Promise<void> {
 }
 
 /** The core messages proxy, resolving Unbound's own UI strings against the active Discord locale. */
-export const messages = createMessages(strings, () => currentLocale, enUS);
-
-function formatWith(messages: Record<string, string>, key: string, vars?: FormatVars): string {
-	const MessageFormat = getMessageFormat();
-
-	if (!MessageFormat) {
-		return messages[key];
-	}
-
-	return new MessageFormat(messages[key]).format(vars);
-}
+export const messages = createMessages(strings, getLocale, enUS);
 
 /**
  * @description Formats a localized string, interpolating ICU `MessageFormat` placeholders.
@@ -273,29 +211,37 @@ export function format(key: string, vars?: FormatVars): string {
 }
 
 /**
- * @description Creates an isolated, in-memory `messages`/`format` pair over an addon-supplied string table, sharing the active locale with core.
- * @param table The addon's string store, keyed by locale then message key.
- * @returns A `messages` proxy and `format` function scoped to the supplied table.
+ * @description Creates a plugin's messages over its bundled en-US table, reading its other locales from its folder.
+ * A plugin's scope supplies `source`; plugins import their `i18n/` folder, which `ubd build` turns into a module, instead.
+ * @param fallback The plugin's en-US messages.
+ * @param source The plugin's locales and how to read them; only a plugin's scope has one.
+ * @returns The plugin's messages, `format`, `useMessages` and `dispose`.
+ * @internal
  */
-export function defineMessages(table: StringStore): Localizations {
-	const local = createMessages(table, () => currentLocale);
+export function createLocales(fallback: LocaleStrings, source?: LocaleSource): AddonLocales {
+	if (!source) {
+		throw new Error(
+			'i18n.createLocales runs only inside a plugin, which imports its i18n/ folder.',
+		);
+	}
 
-	return { messages: local, format: (key, vars) => formatWith(local, key, vars) };
+	return createAddonLocales(fallback, source, formatWith);
 }
 
 /**
  * @description Loads the fallback and active locales, then subscribes to Discord locale changes. Fire-and-forget; never blocks startup. Twin of {@link destroy}.
  * @returns A promise that resolves once the initial locales have been ensured and the subscription is wired.
+ * @internal
  */
 export async function init(): Promise<void> {
 	const locale = Discord.intl?.currentLocale ?? Discord.getSystemLocale?.() ?? null;
 	const initialLocale = locale ?? 'en-US';
 
-	currentLocale = initialLocale;
+	setLocale(initialLocale);
 	subscriptions.push(
 		onModuleLoaded(byProps('isMoment'), () => {
 			momentLoaded = true;
-			syncMomentLocale(currentLocale ?? initialLocale);
+			syncMomentLocale(getLocale() ?? initialLocale);
 		}),
 	);
 
@@ -304,9 +250,10 @@ export async function init(): Promise<void> {
 
 		const activeLocale = Discord.intl?.currentLocale ?? locale;
 
-		currentLocale = activeLocale;
 		syncMomentLocale(activeLocale);
 		await ensureLocale(activeLocale);
+		// Listeners such as the commands re-read strings, so they hear of a change once its table has loaded.
+		setLocale(activeLocale);
 	}
 
 	Dispatcher.subscribe('I18N_LOAD_SUCCESS', handler);
@@ -314,18 +261,19 @@ export async function init(): Promise<void> {
 
 	await ensureLocale('en-US');
 
-	const activeLocale = Discord.intl?.currentLocale ?? currentLocale ?? 'en-US';
+	const activeLocale = Discord.intl?.currentLocale ?? getLocale() ?? 'en-US';
 
 	if (activeLocale !== 'en-US') {
 		await ensureLocale(activeLocale);
 	}
 
-	currentLocale = activeLocale;
+	setLocale(activeLocale);
 	syncMomentLocale(activeLocale);
 }
 
 /**
  * @description Drains every active locale-change subscription. Idempotent. Twin of {@link init}.
+ * @internal
  */
 export function destroy() {
 	subscriptions.splice(0).map((unsubscribe) => unsubscribe());

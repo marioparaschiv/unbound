@@ -4,6 +4,7 @@
 		"module": "preserve",
 		"verbatimModuleSyntax": true,
 		"noUncheckedIndexedAccess": true,
-		"noImplicitOverride": true
+		"noImplicitOverride": true,
+		"types": ["bun"]
 	}
 }

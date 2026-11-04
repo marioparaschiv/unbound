@@ -7,7 +7,7 @@ import { patchAuthorNames, patchReplyNames } from '~/patches/message-row-data';
 import { MessageRowData, UserStore, settings } from '~/modules';
 import SettingsPanel from '~/components/settings-panel';
 
-function start() {
+export function start() {
 	if (!ensureModules('Show Me Your Name', { MessageRowData, UserStore })) return;
 
 	applyFeatures('Show Me Your Name', [
@@ -16,8 +16,4 @@ function start() {
 	]);
 }
 
-export default {
-	start,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

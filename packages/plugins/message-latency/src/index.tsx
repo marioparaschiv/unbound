@@ -12,7 +12,7 @@ import { Theme, UserStore } from '~/modules';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	if (!ensureModules('Message Latency', { UserStore, Theme })) return;
 
 	const records = createLatencyRecords();
@@ -27,16 +27,11 @@ function start(context: PluginContext) {
 	]);
 }
 
-async function stop() {
+export async function stop() {
 	const finished = dispose();
 
 	dispose = () => undefined;
 	await finished;
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

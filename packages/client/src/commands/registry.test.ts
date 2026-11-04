@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import type { ErasedTree, Section } from './normalize';
 
+import { anyKeyLocales } from '../../tests/helpers/command-locales';
 import { CommandDefinitionError, normalize } from './normalize';
 import { createRegistry } from './registry';
 
@@ -24,7 +25,7 @@ function leaves(...names: string[]): ErasedTree {
 }
 
 function records(owner: string, tree: ErasedTree, section = shared) {
-	return normalize({ owner, section, tree });
+	return normalize({ owner, section, tree, locales: anyKeyLocales });
 }
 
 function listed(registry: ReturnType<typeof createRegistry>) {

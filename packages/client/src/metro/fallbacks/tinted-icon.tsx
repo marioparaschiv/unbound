@@ -1,11 +1,11 @@
-import type { ColorValue } from 'react-native';
+import type { ColorValue, ImageSourcePropType } from 'react-native';
 import { Image } from 'react-native';
 import { memo } from 'react';
 
 import { Theme } from '~/metro/common';
 
 type TintedIconProps = {
-	source: number;
+	source: ImageSourcePropType;
 	size?: number;
 	tint?: ColorValue;
 };

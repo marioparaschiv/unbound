@@ -1,0 +1,5 @@
+{
+	"GREETING_TITLE": "Welcome back",
+	"GREETING_BODY": "Hello, {name}!",
+	"UNREAD_COUNT": "{count, plural, one {# unread message} other {# unread messages}}"
+}

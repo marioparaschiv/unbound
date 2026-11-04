@@ -16,7 +16,7 @@ import {
 
 let markStopped = () => {};
 
-function start() {
+export function start() {
 	if (!ensureModules('Channel Typing Indicators', { Theme })) return;
 
 	const stores = [TypingStoreFilter, UserStoreFilter];
@@ -27,13 +27,8 @@ function start() {
 	recordApplied(3);
 }
 
-function stop() {
+export function stop() {
 	markStopped();
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

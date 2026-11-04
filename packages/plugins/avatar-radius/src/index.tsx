@@ -14,7 +14,7 @@ const radiusSetting = () => storedRadius(settings.get('radius', undefined));
 let rounded: (() => number | Promise<number>) | null = null;
 let unrounded: (() => Promise<number>) | null = null;
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
 
 	const radius = radiusSetting;
@@ -35,7 +35,7 @@ function start(context: PluginContext) {
 	};
 }
 
-function stop() {
+export function stop() {
 	const stopping = dispose();
 
 	dispose = () => {};
@@ -43,7 +43,7 @@ function stop() {
 	return stopping;
 }
 
-async function selfTest() {
+export async function selfTest() {
 	if (!rounded) {
 		return { ok: false, detail: 'avatars are not being rounded' };
 	}
@@ -60,9 +60,4 @@ async function selfTest() {
 	return { ok: true, detail: `${await rounded()} avatars rounded to ${radiusSetting()} points` };
 }
 
-export default {
-	start,
-	stop,
-	selfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { SettingsPanel };

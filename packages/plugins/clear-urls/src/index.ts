@@ -5,7 +5,7 @@ import { cleanUrls, compileRules } from '~/clean-urls';
 import { DEFAULT_RULES } from '~/constants';
 import { MessageActions } from '~/modules';
 
-function start() {
+export function start() {
 	if (!ensureModules('Clear URLs', { MessageActions })) return;
 
 	patchMessageActions();
@@ -14,7 +14,7 @@ function start() {
 const SAMPLE = 'https://example.com/a?utm_source=x&id=7&fbclid=y';
 const CLEANED = 'https://example.com/a?id=7';
 
-function selfTest() {
+export function selfTest() {
 	const methods = patchedMethods();
 	const cleaned = cleanUrls(SAMPLE, compileRules(DEFAULT_RULES));
 	const ok = methods.length > 0 && cleaned === CLEANED;
@@ -24,5 +24,3 @@ function selfTest() {
 		detail: `patched ${methods.join(', ') || 'nothing'}, sample link ${cleaned === CLEANED ? 'cleaned' : `came out as ${cleaned}`}`,
 	};
 }
-
-export default { start, selfTest };

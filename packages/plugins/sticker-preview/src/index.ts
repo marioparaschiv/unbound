@@ -7,15 +7,15 @@ import { RequiredModules } from '~/modules';
 
 let dispose = () => {};
 
-function start() {
+export function start() {
 	dispose = applyFeatures('Sticker Preview', [
 		() => whenAllLoaded(RequiredModules, applyStickerPreview),
 	]);
 }
 
-function stop() {
+export function stop() {
 	dispose();
 	dispose = () => {};
 }
 
-export default { start, stop, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

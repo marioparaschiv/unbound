@@ -3,22 +3,11 @@
 /** The settings store Sync keeps its mode and last agreed document in. Never synced. */
 export declare const SYNC_STORE = 'unbound::sync';
 /**
- * @description Starts syncing for an account that just signed in: turns syncing on, and asks how to
- * combine this device with a setup the cloud already holds before the first sync.
- * @returns Whether the cloud could be read. Failures are recorded as `lastError`.
- */
-export declare function connect(): Promise<boolean>;
-/**
  * @description Deletes the stored document and turns syncing off on this device, so it is not
  * uploaded again. Other devices keep what they have installed.
  * @returns Whether the document was deleted. Failures are recorded as `lastError`.
  */
 export declare function deleteData(): Promise<boolean>;
-/**
- * @description Stops syncing after the account signed out and forgets what was agreed with its
- * cloud setup. Installed addons and settings stay as they are.
- */
-export declare function disconnect(): void;
 /** @returns Which way automatic syncs move changes on this device. */
 export declare function getMode(): SyncMode;
 /**

@@ -7,15 +7,15 @@ import { MultiAccountStore } from '~/modules';
 
 let dispose = () => {};
 
-function start() {
+export function start() {
 	if (!ensureModules('Multi Account', { MultiAccountStore })) return;
 
 	dispose = applyFeatures('Multi Account', [patchMultiAccountStore]);
 }
 
-function stop() {
+export function stop() {
 	dispose();
 	dispose = () => {};
 }
 
-export default { start, stop, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

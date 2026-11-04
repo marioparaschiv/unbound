@@ -6,6 +6,12 @@ export type LiteralUnion<T extends string> = T | (string & {});
 
 /** A hexadecimal colour string prefixed with `#`. */
 export type HexColor = `#${string}`;
+/** An http or https URL, as a `url` setting holds it. */
+export type HttpUrl = `https://${string}` | `http://${string}`;
+/** A Discord id. */
+export type Snowflake = `${bigint}`;
+/** A Unicode emoji, or a custom emoji's name then `:` and its id. */
+export type EmojiString = string;
 /** An `rgba(...)` colour string. */
 export type RgbaColor = `rgba(${string})`;
 /** Any supported colour string: a {@link HexColor} or {@link RgbaColor}. */
@@ -26,3 +32,8 @@ export type Widen<T> = T extends number
 		: T extends boolean
 			? boolean
 			: T;
+
+/** `T` without the keys `K`. Unlike `Omit`, it keeps the known keys of a type that also has an index signature. */
+export type Without<T, K extends PropertyKey> = {
+	[Key in keyof T as Key extends K ? never : Key]: T[Key];
+};

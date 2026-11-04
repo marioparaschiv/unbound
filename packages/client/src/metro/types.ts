@@ -1,5 +1,10 @@
 import '~/metro/registry';
 
+import type {
+	MetroModuleByName,
+	MetroModuleByPath,
+	MetroModuleByProps,
+} from '@unbound-app/types/metro';
 import type { DiscordFunction } from '@unbound-app/types/components';
 
 import type { MetroFilter } from '~/metro/filters';
@@ -67,6 +72,18 @@ export type MetroStringFindWithOptions<T extends string, Options = MetroSearchOp
 	Options,
 ];
 
+/** The arguments a `findBy*` lookup takes: search terms, optionally ending in options, or bulk param bags. */
+export type MetroLookupArgs<T extends string> =
+	| T[]
+	| MetroStringFindWithOptions<T>
+	| MetroBulkFind<T>;
+
+/**
+ * The first argument of a `findBy*` lookup: a search term, or a bulk find's first param bag. It is its own
+ * parameter because only a non-rest parameter offers its string literals as completions.
+ */
+export type MetroLookupFirst<T extends string> = T | AnyProps<MetroParamsBag<string>>;
+
 /** An object of shape `T` widened with an arbitrary property index. */
 export type AnyProps<T = unknown> = T & Record<PropertyKey, MetroExport>;
 
@@ -85,13 +102,29 @@ type MetroBulkMarker = {
 	bulk: true;
 };
 
-/** A record keyed by the non-options entries of a find argument tuple. */
-type MetroPropsRecord<T extends any[]> = {
-	[k in Exclude<T[number], object>]: MetroExport;
-};
+/** A record keyed by the requested prop names. */
+type MetroPropsRecord<K extends PropertyKey> = { [P in K]: MetroExport };
 
-/** A record keyed by the prop names listed in a single bulk item's `params`. */
-type MetroParamsRecord<Params extends PropertyKey[]> = { [P in Params[number]]: MetroExport };
+/** `T`, or `Fallback` when `T` is `never`. */
+type Otherwise<T, Fallback> = [T] extends [never] ? Fallback : T;
+
+/**
+ * The module exposing the props `K`, typed from Discord's module index, else a record of the props.
+ * Either stays {@link AnyProps}: the index misses exports made at runtime, such as `export *` copies.
+ */
+type MetroModuleWithProps<K extends PropertyKey> = string extends K
+	? AnyProps<MetroPropsRecord<K>>
+	: AnyProps<Otherwise<MetroModuleByProps<K>, MetroPropsRecord<K>>>;
+
+/** The default export named `N`, typed from Discord's module index, else an untyped {@link MetroFunction}. */
+type MetroNamedExport<N> = string extends N
+	? MetroFunction
+	: Otherwise<MetroModuleByName<N>, MetroFunction>;
+
+/** The exports of the module at path `P`, typed from Discord's module index, else {@link AnyProps}. */
+type MetroModuleAtPath<P> = string extends P
+	? AnyProps
+	: AnyProps<Otherwise<MetroModuleByPath<P>, unknown>>;
 
 /** Tuple of param bags followed by a `{ bulk: true }` marker, describing a bulk find. */
 export type MetroBulkFind<T extends string> = [
@@ -111,30 +144,51 @@ export type MetroSingleModuleByProperty<T extends any[]> = T extends [
 	...any,
 	infer O extends MetroSearchOptions,
 ]
-	? MetroAllValues<O, AnyProps<MetroPropsRecord<T>>>
-	: AnyProps<MetroPropsRecord<T>>;
+	? MetroAllValues<O, MetroModuleWithProps<Exclude<T[number], object>>>
+	: MetroModuleWithProps<Exclude<T[number], object>>;
 
 /** Result shape of a by-name search: the matched function (or its default export). */
 export type MetroSingleModuleByName<T extends any[]> = T extends [
 	...any,
 	infer O extends MetroSearchOptions,
 ]
-	? MetroAllValues<O, O extends { interop: false } ? { default: MetroFunction } : MetroFunction>
-	: MetroFunction;
+	? MetroAllValues<
+			O,
+			O extends { interop: false }
+				? { default: MetroNamedExport<Exclude<T[number], object>> }
+				: MetroNamedExport<Exclude<T[number], object>>
+		>
+	: MetroNamedExport<Exclude<T[number], object>>;
+
+/** Result shape of a by-path search: the module's exports. */
+export type MetroSingleModuleByPath<T extends any[]> = T extends [
+	...any,
+	infer O extends MetroSearchOptions,
+]
+	? MetroAllValues<O, MetroModuleAtPath<Exclude<T[number], object>>>
+	: MetroModuleAtPath<Exclude<T[number], object>>;
 
 /** Result shape of a bulk by-property search, one record per requested item. */
 export type MetroBulkModuleByProperty<T extends any[]> = {
-	[K in keyof T]: AnyProps<MetroParamsRecord<T[K]['params']>>;
+	[K in keyof T]: MetroModuleWithProps<T[K]['params'][number]>;
 };
 
 /** Result shape of a bulk by-name search, one function per requested item. */
 export type MetroBulkModuleByName<T extends any[]> = {
-	[K in keyof T]: T[K] extends { interop: false } ? { default: MetroFunction } : MetroFunction;
+	[K in keyof T]: T[K] extends { interop: false }
+		? { default: MetroNamedExport<T[K]['params'][number]> }
+		: MetroNamedExport<T[K]['params'][number]>;
 };
 
-/** Dispatches to the bulk or single by-property result shape based on the argument tuple. */
+/**
+ * Dispatches to the bulk or single by-property result shape based on the argument tuple.
+ */
 export type MetroPropertyRecordOrArray<T extends any[], U extends string> =
 	T extends MetroBulkFind<U> ? MetroBulkModuleByProperty<T> : MetroSingleModuleByProperty<T>;
+
+/** Dispatches to the bulk or single by-path result shape based on the argument tuple. */
+export type MetroModuleOrArray<T extends any[], U extends string> =
+	T extends MetroBulkFind<U> ? AnyProps : MetroSingleModuleByPath<T>;
 
 /** Dispatches to the bulk or single by-name result shape based on the argument tuple. */
 export type MetroFunctionSignatureOrArray<T extends any[], U extends string> =

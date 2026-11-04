@@ -1,4 +1,5 @@
-import type { Plugin } from 'rollup';
+import type { Plugin, RollupCache } from 'rollup';
+import { statSync } from 'node:fs';
 import { rollup } from 'rollup';
 
 import type { Globals } from './globals.ts';
@@ -7,6 +8,12 @@ export type LazyModuleBuild = {
 	plugins: () => Plugin[];
 	external: (id: string) => boolean;
 	globals: Globals;
+};
+
+/** A deferred module's rendered source, and the modification time of every file it was built from. */
+type Rendered = {
+	files: Map<string, number>;
+	source: string;
 };
 
 const virtualPrefix = '\0lazy-module:';
@@ -49,6 +56,10 @@ export function lazyModuleSource(code: string, exportNames: string[]): string {
  */
 export function lazyModules(specifiers: string[], build: LazyModuleBuild): Plugin {
 	const deferred = new Set(specifiers);
+	// A watching build reuses this plugin: a deferred module whose files kept their times is not
+	// rebuilt, and a changed one re-transforms only what changed.
+	const caches = new Map<string, RollupCache>();
+	const rendered = new Map<string, Rendered>();
 
 	return {
 		name: 'lazy-modules',
@@ -62,10 +73,21 @@ export function lazyModules(specifiers: string[], build: LazyModuleBuild): Plugi
 		async load(id) {
 			if (!id.startsWith(virtualPrefix)) return null;
 
+			const previous = rendered.get(id);
+
+			if (previous && isUnchanged(previous.files)) {
+				for (const file of previous.files.keys()) {
+					this.addWatchFile(file);
+				}
+
+				return previous.source;
+			}
+
 			const bundle = await rollup({
 				input: id.slice(virtualPrefix.length),
 				external: build.external,
 				plugins: build.plugins(),
+				cache: caches.get(id),
 				onwarn: (warning) => this.warn(warning),
 			});
 			const {
@@ -84,9 +106,34 @@ export function lazyModules(specifiers: string[], build: LazyModuleBuild): Plugi
 
 			await bundle.close();
 
-			return lazyModuleSource(chunk.code, chunk.exports);
+			const source = lazyModuleSource(chunk.code, chunk.exports);
+
+			if (bundle.cache) {
+				caches.set(id, bundle.cache);
+			}
+
+			rendered.set(id, { files: stamp(bundle.watchFiles), source });
+
+			return source;
 		},
 	};
+}
+
+function modifiedAt(file: string): number {
+	try {
+		return statSync(file).mtimeMs;
+	} catch {
+		// A virtual or deleted module has no time, so it never matches and forces a rebuild.
+		return Number.NaN;
+	}
+}
+
+function stamp(files: string[]): Map<string, number> {
+	return new Map(files.map((file) => [file, modifiedAt(file)]));
+}
+
+function isUnchanged(files: Map<string, number>): boolean {
+	return [...files].every(([file, time]) => modifiedAt(file) === time);
 }
 
 export default { lazyModuleSource, lazyModules };

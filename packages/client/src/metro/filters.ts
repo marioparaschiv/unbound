@@ -10,6 +10,13 @@ export type MetroFilter = ((mdl: any, id: number | string) => PredicateResult) &
 	filePath?: string;
 };
 
+type Combinator = 'all' | 'any';
+
+type CombinedKeys = { kind: Combinator; keys: string[] };
+
+// The sorted part keys of each keyed `all` and `any` filter, so a nested one of the same kind flattens into its parent's key.
+const combinedKeys = new WeakMap<MetroFilter, CombinedKeys>();
+
 /**
  * @description Builds a filter matching a module that exposes all of the given property names.
  * @param props The property names the module must expose.
@@ -125,6 +132,102 @@ export function byFluxStore(name: string, short: boolean = true): MetroFilter {
 	const filter = (mdl: any) => mdl._dispatcher && mdl.getName?.() === named;
 
 	filter[CACHE_KEY] = `byStore::${named}`;
+
+	return filter;
+}
+
+/**
+ * @description Builds a filter matching a module every part matches, testing the parts in order.
+ * @param parts The filters to combine; none may be a raw filter such as `byFilePath`.
+ * @returns A {@link MetroFilter} keyed by its parts' keys in any order, or unkeyed when a part is.
+ */
+export function all(...parts: MetroFilter[]): MetroFilter {
+	const filter: MetroFilter = (mdl, id) => {
+		for (let i = 0, len = parts.length; i < len; i++) {
+			if (!parts[i](mdl, id)) {
+				return false;
+			}
+		}
+
+		return true;
+	};
+
+	return combine(filter, 'all', parts);
+}
+
+/**
+ * @description Builds a filter matching a module any part matches, testing the parts in order.
+ * @param parts The filters to combine; none may be a raw filter such as `byFilePath`.
+ * @returns A {@link MetroFilter} keyed by its parts' keys in any order, or unkeyed when a part is.
+ */
+export function any(...parts: MetroFilter[]): MetroFilter {
+	const filter: MetroFilter = (mdl, id) => {
+		for (let i = 0, len = parts.length; i < len; i++) {
+			if (parts[i](mdl, id)) {
+				return true;
+			}
+		}
+
+		return false;
+	};
+
+	return combine(filter, 'any', parts);
+}
+
+/**
+ * @description Builds a filter matching a module the given filter does not match.
+ * @param part The filter to negate; it may not be a raw filter such as `byFilePath`.
+ * @returns A {@link MetroFilter} keyed by the part's key, or unkeyed when the part is.
+ */
+export function not(part: MetroFilter): MetroFilter {
+	assertCombinable('not', part);
+
+	const filter: MetroFilter = (mdl, id) => !part(mdl, id);
+	const key = part[CACHE_KEY];
+
+	if (key) {
+		filter[CACHE_KEY] = `not(${JSON.stringify(key)})`;
+	}
+
+	return filter;
+}
+
+// A raw filter tests the module record, not its exports, so it cannot share a call with the other parts.
+function assertCombinable(kind: Combinator | 'not', part: MetroFilter) {
+	if (part.isRaw) {
+		throw new TypeError(
+			`Failed to combine filters: ${kind}() cannot take a raw filter such as byFilePath.`,
+		);
+	}
+}
+
+// A part without a key leaves the whole combination unkeyed: a partial key would let it answer for other filters.
+function combine(filter: MetroFilter, kind: Combinator, parts: MetroFilter[]) {
+	const keys: string[] = [];
+	let keyed = true;
+
+	for (const part of parts) {
+		assertCombinable(kind, part);
+
+		const nested = combinedKeys.get(part);
+
+		if (nested?.kind === kind) {
+			keys.push(...nested.keys);
+		} else if (part[CACHE_KEY]) {
+			keys.push(part[CACHE_KEY]);
+		} else {
+			keyed = false;
+		}
+	}
+
+	if (!keyed) {
+		return filter;
+	}
+
+	const sorted = [...new Set(keys)].sort();
+
+	combinedKeys.set(filter, { kind, keys: sorted });
+	filter[CACHE_KEY] = `${kind}(${sorted.map((key) => JSON.stringify(key)).join(',')})`;
 
 	return filter;
 }

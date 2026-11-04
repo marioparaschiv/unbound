@@ -8,29 +8,42 @@ A plugin is a bundle of JavaScript that Unbound loads and runs inside Discord. I
 
 ## The shape of a plugin
 
-A plugin's entry file default-exports an object. Every member is optional.
+A plugin's entry file exports its lifecycle as named functions. Every export is optional: a plugin that only patches at the top level of its files needs none.
 
 ```tsx src/index.tsx
-export default {
-	start() {
-		// set up patches, listeners and commands
-	},
-	stop() {
-		// undo what the Addon scope can't see
-	},
-	getSettingsPanel: () => <Settings />,
-};
+export function start() {
+	// set up patches, listeners and commands
+}
+
+export function stop() {
+	// undo what the Addon scope can't see
+}
+
+export function SettingsPanel() {
+	return <Settings />;
+}
 ```
 
-| Member | When Unbound calls it |
-| --- | --- |
-| `start` | When the plugin is turned on, and at launch if it was on |
-| `stop` | When the plugin is turned off. A returned promise is awaited |
-| `getSettingsPanel` | When the user opens the plugin's settings. See [Settings and Storage](/docs/developer/plugins/settings) |
+| Export | Type | When Unbound uses it |
+| --- | --- | --- |
+| `start` | `(context) => void \| Promise<void>` | When the plugin is turned on, and at launch if it was on. A rejected promise counts as a failed start |
+| `stop` | `() => void \| Promise<void>` | When the plugin is turned off. A returned promise is awaited |
+| `SettingsPanel` | A React component | Rendered as `<SettingsPanel />` when the user opens the plugin's settings. See [Settings and Storage](/docs/developer/plugins/settings) |
+
+The build checks the entry against this table:
+
+- A default export fails the build. Export `start` and `stop` as named functions instead, or run `ubd migrate entry` to rewrite an old `export default { start, stop, getSettingsPanel }` entry.
+- A misspelt lifecycle name, such as `Start`, `onStart` or `getSettingsPanel`, fails the build with the name to use.
+- A `stop` that takes parameters, or an `async` `SettingsPanel`, fails the build.
+- Any other export prints a warning. Unbound does not read it. Put settings button handlers in `src/actions.ts`.
+
+A plugin built before named exports still runs: Unbound reads its default object's `start`, `stop` and `getSettingsPanel`, and in a developer build logs one note asking you to rebuild it.
+
+The settings button on the plugin's card shows while the plugin has a panel, and opens it only while the plugin runs. It is disabled while an async `start` or `stop` is in flight or after a failed start. If the plugin stops while its panel is open, the panel closes into a notice.
 
 ## The lifecycle
 
-Each time the plugin starts, Unbound evaluates its bundle again with a fresh Addon scope, then calls `start`. When the user turns it off, Unbound calls `stop`, then disposes the scope.
+Each time the plugin starts, Unbound evaluates its bundle again with a fresh Addon scope, then calls the exported `start`. When the user turns it off, Unbound calls `stop`, then disposes the scope.
 
 <Flow>
 	<FlowStep title='Evaluate' detail='Top-level code runs' />
@@ -43,7 +56,7 @@ Each time the plugin starts, Unbound evaluates its bundle again with a fresh Add
 The top level of your files runs during evaluation, before `start`. At launch, that delays Discord itself, so keep it cheap.
 
 <Warning>
-	Make no eager [Metro](/docs/developer/plugins/metro) search at the top level. `metro.find` and any search with `{ lazy: false }` walk every module right away. The `findBy*` helpers and `flux.getStore` are lazy by default, so they're safe there.
+	Make no eager [Metro](/docs/developer/plugins/metro) search at the top level. Any search with `{ lazy: false }` walks every module right away. `metro.find`, the `findBy*` helpers and `flux.getStore` are lazy by default, so they're safe there.
 </Warning>
 
 ## The Addon scope
@@ -52,7 +65,7 @@ Each plugin runs with its own **Addon scope**: a set of globals that belong to i
 
 | Global | What it is |
 | --- | --- |
-| `unbound` | The API. Its `patcher`, `commands`, `metro`, `storage` and `flux` are the plugin's own versions |
+| `unbound` | The API. Its `patcher`, `commands`, `metro`, `storage`, `flux`, `settings` and `assets` are the plugin's own versions |
 | `addon` | The plugin's handle: `id`, `name`, `version`, `manifest` and its state |
 | `logger` | A logger that prefixes every line with the plugin's name |
 | `setTimeout`, `setInterval` | Timers that are cleared when the plugin stops |
@@ -65,6 +78,8 @@ Imports from `@unbound-app/api` read from the scoped `unbound`. So `import { pat
 - Listeners from `metro.onModuleLoad`, and `metro.findLazy` waits that haven't resolved.
 - Listeners from `storage.onChange`.
 - Listeners and interceptors from `flux.onStoreChange`, `flux.onAction` and `flux.interceptAction`.
+- Settings sections from `settings.registerSection`.
+- Listeners from `assets.onAssetRegistered`.
 
 ```ts src/channel-log/index.ts
 import { flux, storage } from '@unbound-app/api';
@@ -86,8 +101,9 @@ This feature needs no `stop`. The scope removes the Flux listener when the plugi
 The scope only sees what went through it. Undo these yourself:
 
 - A listener you added straight to a Discord module.
-- A settings section you registered.
-- Anything a patched component already rendered. [Cleaning up](/docs/developer/plugins/react-patching#cleaning-up) shows how to re-render it.
+- A built-in you registered with `builtins.register`.
+- A settings section of Discord's or Unbound's that you removed. The scope can't restore it.
+- A change a patch callback made outside the render, such as a value it wrote onto a Discord object. Mounted components re-render on their own, as [Undoing a component patch](/docs/developer/plugins/react-patching#undoing-a-component-patch) explains.
 
 Themes, icon packs and fonts ship no code, so they have no scope.
 
@@ -107,13 +123,11 @@ A plugin should cost almost nothing until it's used. Two habits get you there.
 		Move code that pulls in many modules into its own file, and `import()` it inside `start`. That code then loads only when the plugin runs.
 
 		```ts src/index.tsx
-		export default {
-			async start() {
-				const { startEditor } = await import('~/editor');
+		export async function start() {
+			const { startEditor } = await import('~/editor');
 
-				startEditor();
-			},
-		};
+			startEditor();
+		}
 		```
 	</Step>
 </Steps>

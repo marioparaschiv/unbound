@@ -11,6 +11,7 @@ import {
 	downloadManifest,
 	verifySignature,
 } from '~/addons/download';
+import { downloadAddonFiles, writeAddonFiles, type AddonFiles } from '~/addons/files';
 import { getLoader, getSha256 } from '~/native/unbound-native';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import type { InstalledEntry } from '~/updates/addon-updates';
@@ -89,6 +90,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 	 * @param bundle The freshly built bundle source.
 	 * @param pushed The freshly built manifest, as received; it is validated before anything is swapped.
 	 * @param bytecode The bundle compiled for this runtime, base64-encoded, whose digest the manifest lists.
+	 * @param files The extra files to write beside the bundle, such as images, by path; the ones on disk stay when omitted.
 	 * @returns The reload outcome: `{ ok: true }`, or `{ ok: false, error }` on failure.
 	 */
 	async reload(
@@ -96,6 +98,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 		bundle: string,
 		pushed: PushedManifest,
 		bytecode?: string,
+		files?: AddonFiles,
 	): Promise<ReloadResult> {
 		const resolved = this.resolve(entity);
 
@@ -127,6 +130,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			try {
 				await this.persist(bundle, manifest);
 				await this.persistBytecode(manifest, bytecode);
+				await this.persistFiles(manifest, files);
 				this.register(bundle, manifest);
 
 				const loaded = this.getEntity(manifest.id);
@@ -157,6 +161,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 
 			await this.persist(bundle, manifest);
 			await this.persistBytecode(manifest, bytecode);
+			await this.persistFiles(manifest, files);
 
 			this.pendingStarts.delete(resolved.id);
 
@@ -222,9 +227,10 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 			const manifest = await this.fetchManifest(url);
 			const origin = url.split('/').slice(0, -1).join('/');
 			const bundleUrl = new URL(manifest.main, `${origin}/`).toString();
-			const [bundle, bytecode] = await Promise.all([
+			const [bundle, bytecode, files] = await Promise.all([
 				downloadBundle(bundleUrl),
 				this.fetchBytecode(manifest, bundleUrl),
+				downloadAddonFiles(manifest, bundleUrl, this.logger),
 			]);
 
 			if (digest) {
@@ -236,6 +242,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 
 			await this.persist(bundle, trusted);
 			await this.persistBytecode(trusted, bytecode);
+			await this.persistFiles(trusted, files);
 
 			this.register(bundle, trusted);
 			const entity = this.getEntity(manifest.id);
@@ -276,7 +283,10 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 				this.fetchManifest(update.manifestUrl),
 				downloadBundle(update.bundleUrl),
 			]);
-			const bytecode = await this.fetchBytecode(manifest, update.bundleUrl);
+			const [bytecode, files] = await Promise.all([
+				this.fetchBytecode(manifest, update.bundleUrl),
+				downloadAddonFiles(manifest, update.bundleUrl, this.logger),
+			]);
 
 			assertTextDigest(bundle, update.sha256);
 
@@ -285,6 +295,7 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 				bundle,
 				verifySignature(manifest, bundle, resolved.manifest.trust),
 				bytecode,
+				files,
 			);
 
 			if (!result.ok) {
@@ -488,6 +499,17 @@ export abstract class Addons<I extends object> extends AddonLifecycle<I> {
 		const path = `${this.directoryOf(manifest.id)}/${compiledBundlePath(manifest.main, bytecodeVersion)}`;
 
 		await fs.writeFile(path, bytecode, 'base64');
+	}
+
+	/**
+	 * @description Replaces the extra files beside the bundle, such as the images a plugin registers when it starts.
+	 * @param manifest The addon's validated manifest.
+	 * @param files The files, base64-encoded, by path; the ones on disk stay when omitted.
+	 */
+	protected async persistFiles(manifest: AddonManifest, files?: AddonFiles): Promise<void> {
+		if (!files) return;
+
+		await writeAddonFiles(this.directoryOf(manifest.id), manifest, files);
 	}
 
 	/**

@@ -107,7 +107,15 @@ export async function installOnAndroid(
 }
 
 function stagingPath(plugin: PluginPayload, name: string): string {
-	return `${STAGING_DIRECTORY}/${plugin.id}-${name}`;
+	return `${STAGING_DIRECTORY}/${plugin.id}-${name.replaceAll('/', '_')}`;
+}
+
+function parentDirectories(plugin: PluginPayload, destination: string): string[] {
+	const nested = plugin.files
+		.filter((file) => file.name.includes('/'))
+		.map((file) => `${destination}/${file.name.slice(0, file.name.lastIndexOf('/'))}`);
+
+	return [destination, ...new Set(nested)];
 }
 
 function copyIntoPlaceScript(plugin: PluginPayload, destination: string): string {
@@ -116,7 +124,7 @@ function copyIntoPlaceScript(plugin: PluginPayload, destination: string): string
 		.map((file, index) => `cp ${staged[index]} ${destination}/${file.name}`)
 		.join(' && ');
 
-	return `mkdir -p ${destination} && ${copies} && touch ${destination}/${DEVELOPMENT_MARKER} && chown -R $(stat -c %u:%g ${ANDROID_PLUGINS_DIRECTORY}) ${destination} && chmod 600 ${destination}/* && rm -f ${staged.join(' ')}`;
+	return `mkdir -p ${parentDirectories(plugin, destination).join(' ')} && ${copies} && touch ${destination}/${DEVELOPMENT_MARKER} && chown -R $(stat -c %u:%g ${ANDROID_PLUGINS_DIRECTORY}) ${destination} && chmod -R u=rwX,go= ${destination} && rm -f ${staged.join(' ')}`;
 }
 
 export default installOnAndroid;

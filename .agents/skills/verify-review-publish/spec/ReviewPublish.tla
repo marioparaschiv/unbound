@@ -12,8 +12,8 @@ CONSTANTS
     Reviewers,             \* concurrent POST /api/v1/submissions/$id/review requests
     MaxPendingUpdates,     \* env SUBMISSION_MAX_PENDING_UPDATES (default 1)
     PublishAfterCommit,    \* FALSE = current code; TRUE = public writes moved after decide()
-    CasOnStatus,           \* decide() WHERE status = 'pending_review' (review.ts:335)
-    HashCheck,             \* publishArtifact re-hash check (review.ts:229-240)
+    CasOnStatus,           \* decide() WHERE status = 'pending_review' (review.ts:379)
+    HashCheck,             \* publishArtifact re-hash check (review.ts:263-274)
     None                   \* model value: no row, no object
 
 Subs     == SubsV1 \cup SubsV2
@@ -33,12 +33,13 @@ VARIABLES
     publicBundle,   \* public bucket addons/{id}/{version}/{main}: [from, bytes]
     publicManifest, \* public bucket addons/{id}/{version}/manifest.json: submission whose row it renders
     publicPage,     \* public bucket addons/{id}/{version}/ADDON.md, page.json, media/*: submission they came from
+    publicFiles,    \* public bucket addons/{id}/{version}/assets/*, i18n/*: submission whose manifest listed them
     decisions,      \* committed decide() transactions per submission
-    pc, target, dec, rowSha, bytes, wroteB, wroteM, wroteP \* per review request
+    pc, target, dec, rowSha, bytes, wroteB, wroteM, wroteP, wroteF \* per review request
 
 vars == <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-          publicManifest, publicPage, decisions, pc, target, dec, rowSha, bytes, wroteB, wroteM,
-          wroteP>>
+          publicManifest, publicPage, publicFiles, decisions, pc, target, dec, rowSha, bytes,
+          wroteB, wroteM, wroteP, wroteF>>
 
 Init ==
     /\ status = [s \in Subs |-> None]
@@ -50,6 +51,7 @@ Init ==
     /\ publicBundle = [v \in Versions |-> None]
     /\ publicManifest = [v \in Versions |-> None]
     /\ publicPage = [v \in Versions |-> None]
+    /\ publicFiles = [v \in Versions |-> None]
     /\ decisions = [s \in Subs |-> 0]
     /\ pc = [r \in Reviewers |-> "idle"]
     /\ target = [r \in Reviewers |-> None]
@@ -59,25 +61,28 @@ Init ==
     /\ wroteB = [r \in Reviewers |-> FALSE]
     /\ wroteM = [r \in Reviewers |-> FALSE]
     /\ wroteP = [r \in Reviewers |-> FALSE]
+    /\ wroteF = [r \in Reviewers |-> FALSE]
 
 OpenSubs == {o \in Subs : status[o] \in Open}
 
-ReviewerVars == <<pc, target, dec, rowSha, bytes, wroteB, wroteM, wroteP>>
-StoreVars    == <<addonExists, versionRow, publicBundle, publicManifest, publicPage, decisions>>
+ReviewerVars == <<pc, target, dec, rowSha, bytes, wroteB, wroteM, wroteP, wroteF>>
+StoreVars    == <<addonExists, versionRow, publicBundle, publicManifest, publicPage, publicFiles,
+                 decisions>>
 
 (* ---------------- Authors and background jobs ---------------- *)
 
-\* createSubmission -> stageAndReserve (submissions.ts:339-358): the bundle read from the pinned blob
+\* createSubmission -> stageAndReserve (submissions.ts:362-381): the bundle read from the pinned blob
 \* is written to staging before the row exists. A refused claim deletes it again, which Orphan covers.
+\* Only the bundle is staged; extra files and media never are.
 Stage(s) ==
     /\ status[s] = None
     /\ staged' = [staged EXCEPT ![s] = s]
     /\ UNCHANGED <<status, kind, recordedSha, StoreVars, ReviewerVars>>
 
-\* reserve(), one serializable transaction retried whole on a serialization failure (submissions.ts:272-337),
-\* inserting the row as pending_review with the sha256 of the bytes read at the pin. Update: addon
-\* exists (checkClaim 136, 143), version not live (162-177), open < cap (200). Listing: no open
-\* submission claims the id (207; submission_listing_claim_uidx).
+\* reserve(), one serializable transaction retried whole on a serialization failure (submissions.ts:285-360),
+\* inserting the row as pending_review with the sha256 of the bytes read at the pin and the manifest,
+\* whose assets and locales list each extra file's SHA-256. Update: addon exists, version not live,
+\* open < cap (checkClaim 149-249). Listing: no open submission claims the id (submission_listing_claim_uidx).
 Create(s) ==
     /\ status[s] = None
     /\ IF addonExists
@@ -97,8 +102,8 @@ Tamper(s) ==
     /\ staged' = [staged EXCEPT ![s] = Evil]
     /\ UNCHANGED <<status, kind, recordedSha, StoreVars, ReviewerVars>>
 
-\* purgeUserSubmissions on ban (staging.ts:105-144, auth.ts:129): cancels any open submission,
-\* pending_review too. reserve()'s supersede (submissions.ts:284-289, 383) moves the author's own
+\* purgeUserSubmissions on ban (staging.ts:105-144, auth.ts:135): cancels any open submission,
+\* pending_review too. reserve()'s supersede (submissions.ts:304-309, 428) moves the author's own
 \* changes_requested row out of Open and deletes its bundle: Purge then Create.
 Purge(s) ==
     /\ status[s] \in Open
@@ -114,9 +119,9 @@ Orphan(s) ==
     /\ staged' = [staged EXCEPT ![s] = None]
     /\ UNCHANGED <<status, kind, recordedSha, StoreVars, ReviewerVars>>
 
-(* ---------------- reviewSubmission (review.ts:377-410) ---------------- *)
+(* ---------------- reviewSubmission (review.ts:421-454) ---------------- *)
 
-\* requirePendingReview (review.ts:160-191): reads the row (169), status check at 177.
+\* requirePendingReview (review.ts:173-204): reads the row (182), status check at 190.
 Start(r, s, d) ==
     /\ pc[r] = "idle"
     /\ status[s] = "pending_review"
@@ -128,23 +133,27 @@ Start(r, s, d) ==
     /\ wroteB' = [wroteB EXCEPT ![r] = FALSE]
     /\ wroteM' = [wroteM EXCEPT ![r] = FALSE]
     /\ wroteP' = [wroteP EXCEPT ![r] = FALSE]
+    /\ wroteF' = [wroteF EXCEPT ![r] = FALSE]
     /\ UNCHANGED <<status, kind, staged, recordedSha, StoreVars>>
 
 Done(r) ==
     /\ pc' = [pc EXCEPT ![r] = "idle"]
-    /\ UNCHANGED <<target, dec, rowSha, bytes, wroteB, wroteM, wroteP>>
+    /\ UNCHANGED <<target, dec, rowSha, bytes, wroteB, wroteM, wroteP, wroteF>>
 
 Got(r, b) ==
     /\ bytes' = [bytes EXCEPT ![r] = b]
     /\ pc' = [pc EXCEPT ![r] = IF PublishAfterCommit THEN "decide" ELSE "write"]
-    /\ UNCHANGED <<target, dec, rowSha, wroteB, wroteM, wroteP>>
+    /\ UNCHANGED <<target, dec, rowSha, wroteB, wroteM, wroteP, wroteF>>
 
-\* publishArtifact read (review.ts:227-240, readBundle 202-206): the staged bytes, or, when the object
-\* is gone, the pinned blob read again (refetchBundle 195-200). The blob is content-addressed and readBlob checks its
+\* publishArtifact read (review.ts:257-274, readBundle 215-219): the staged bytes, or, when the object
+\* is gone, the pinned blob read again (refetchBundle 208-213). The blob is content-addressed and readBlob checks its
 \* SHA-1, so a refetch yields the honest bytes or fails with github_unavailable. Then the re-hash; a
-\* mismatch throws artifact_mismatch and the request ends. readPinnedStorePage (208-225) runs alongside: it re-reads
-\* every media file from the pinned commit's content-addressed blobs (never staged, so Tamper cannot
-\* reach them), which yields the submitted bytes or throws; a throw ends the request before any write.
+\* mismatch throws artifact_mismatch and the request ends. Two reads run alongside in one Promise.all:
+\* readPinnedStorePage (221-238) re-reads every media file, and readPinnedFiles (241-255, addon-files.ts
+\* readListedFiles 47-104) every extra file listAddonFiles names, each checked against the SHA-256 the
+\* row's manifest lists (a locale also against a JSON object of strings). Both read the pinned commit's
+\* content-addressed blobs, never staging, so Tamper cannot reach them: they yield the submitted bytes or
+\* throw, and a throw ends the request before any write (the Done branch).
 ReadStaged(r) ==
     LET s == target[r] IN
     /\ pc[r] = "read"
@@ -158,40 +167,56 @@ ReadStaged(r) ==
 
 AfterWrite == IF PublishAfterCommit THEN "cleanup" ELSE "decide"
 
-\* publishArtifact writes (review.ts:242-245): writeArtifact (artifacts.ts 94-111) PUTs the bundle and
-\* manifest; the review path passes no compiled bytecode. writeStorePage (artifacts.ts 120-142) PUTs
-\* ADDON.md, page.json and each media file. All run at once. Every submission here has a store page,
-\* the case with the most writes. Its PUTs are one action.
+\* publishArtifact writes (review.ts:276-279): writeArtifact (artifacts.ts 102-127) PUTs the bundle, the
+\* manifest and each extra file at addons/{id}/{version}/<path>; the review path passes no compiled
+\* bytecode. writeStorePage (artifacts.ts 136-158) PUTs ADDON.md, page.json and each media file. All run
+\* at once. Every submission here has a store page and extra files, the case with the most writes. The
+\* page's PUTs are one action, and so are the extra files'.
 WriteBundle(r) ==
     LET s == target[r] IN
     /\ pc[r] = "write" /\ ~wroteB[r]
     /\ publicBundle' = [publicBundle EXCEPT ![VersionOf(s)] = [from |-> s, bytes |-> bytes[r]]]
     /\ wroteB' = [wroteB EXCEPT ![r] = TRUE]
-    /\ pc' = [pc EXCEPT ![r] = IF wroteM[r] /\ wroteP[r] THEN AfterWrite ELSE "write"]
+    /\ pc' = [pc EXCEPT ![r] = IF wroteM[r] /\ wroteP[r] /\ wroteF[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicManifest,
-                   publicPage, decisions, target, dec, rowSha, bytes, wroteM, wroteP>>
+                   publicPage, publicFiles, decisions, target, dec, rowSha, bytes, wroteM, wroteP,
+                   wroteF>>
 
 WriteManifest(r) ==
     LET s == target[r] IN
     /\ pc[r] = "write" /\ ~wroteM[r]
     /\ publicManifest' = [publicManifest EXCEPT ![VersionOf(s)] = s]
     /\ wroteM' = [wroteM EXCEPT ![r] = TRUE]
-    /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteP[r] THEN AfterWrite ELSE "write"]
+    /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteP[r] /\ wroteF[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-                   publicPage, decisions, target, dec, rowSha, bytes, wroteB, wroteP>>
+                   publicPage, publicFiles, decisions, target, dec, rowSha, bytes, wroteB, wroteP,
+                   wroteF>>
 
 WritePage(r) ==
     LET s == target[r] IN
     /\ pc[r] = "write" /\ ~wroteP[r]
     /\ publicPage' = [publicPage EXCEPT ![VersionOf(s)] = s]
     /\ wroteP' = [wroteP EXCEPT ![r] = TRUE]
-    /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteM[r] THEN AfterWrite ELSE "write"]
+    /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteM[r] /\ wroteF[r] THEN AfterWrite ELSE "write"]
     /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
-                   publicManifest, decisions, target, dec, rowSha, bytes, wroteB, wroteM>>
+                   publicManifest, publicFiles, decisions, target, dec, rowSha, bytes, wroteB, wroteM,
+                   wroteF>>
 
-\* decide (review.ts:319-366): one serializable transaction, retried whole on a serialization failure.
-\* CAS at 335, throw at 338-343. Approval runs publishVersion (351), which inserts addon (293, PK id)
-\* for a listing and addon_version (307, PK addonId+version); a conflict throws and rolls it all back.
+\* writeArtifact's PUTs of the extra files (artifacts.ts 112-118): the bytes readPinnedFiles read and
+\* checked, so they are always the files s's manifest lists.
+WriteFiles(r) ==
+    LET s == target[r] IN
+    /\ pc[r] = "write" /\ ~wroteF[r]
+    /\ publicFiles' = [publicFiles EXCEPT ![VersionOf(s)] = s]
+    /\ wroteF' = [wroteF EXCEPT ![r] = TRUE]
+    /\ pc' = [pc EXCEPT ![r] = IF wroteB[r] /\ wroteM[r] /\ wroteP[r] THEN AfterWrite ELSE "write"]
+    /\ UNCHANGED <<status, kind, staged, recordedSha, addonExists, versionRow, publicBundle,
+                   publicManifest, publicPage, decisions, target, dec, rowSha, bytes, wroteB, wroteM,
+                   wroteP>>
+
+\* decide (review.ts:363-410): one serializable transaction, retried whole on a serialization failure.
+\* CAS at 379, throw at 382-387. Approval runs publishVersion (395), which inserts addon (325, PK id)
+\* for a listing and addon_version (340, PK addonId+version); a conflict throws and rolls it all back.
 Decide(r) ==
     LET s == target[r]
         v == VersionOf(s)
@@ -211,11 +236,11 @@ Decide(r) ==
                      ELSE UNCHANGED <<versionRow, addonExists>>
                /\ pc' = [pc EXCEPT ![r] =
                         IF d = "approved" /\ PublishAfterCommit THEN "write" ELSE "cleanup"]
-               /\ UNCHANGED <<publicBundle, publicManifest, publicPage, target, dec, rowSha, bytes,
-                              wroteB, wroteM, wroteP>>
+               /\ UNCHANGED <<publicBundle, publicManifest, publicPage, publicFiles, target, dec,
+                              rowSha, bytes, wroteB, wroteM, wroteP, wroteF>>
     /\ UNCHANGED <<kind, staged, recordedSha>>
 
-\* review.ts:398-400: approve and reject delete the staged bundle; changes_requested keeps it.
+\* review.ts:442-444: approve and reject delete the staged bundle; changes_requested keeps it.
 Cleanup(r) ==
     LET s == target[r] IN
     /\ pc[r] = "cleanup"
@@ -227,7 +252,7 @@ Next ==
     \/ \E s \in Subs : Stage(s) \/ Create(s) \/ Tamper(s) \/ Purge(s) \/ Orphan(s)
     \/ \E r \in Reviewers, s \in Subs, d \in Decisions : Start(r, s, d)
     \/ \E r \in Reviewers : ReadStaged(r) \/ WriteBundle(r) \/ WriteManifest(r) \/ WritePage(r)
-                          \/ Decide(r) \/ Cleanup(r)
+                          \/ WriteFiles(r) \/ Decide(r) \/ Cleanup(r)
 
 Spec == Init /\ [][Next]_vars
 
@@ -238,7 +263,8 @@ ReviewerSymmetry == Permutations(Reviewers)
 
 NoStrayFiles ==
     \A v \in Versions :
-        (publicBundle[v] # None \/ publicManifest[v] # None \/ publicPage[v] # None) =>
+        (publicBundle[v] # None \/ publicManifest[v] # None \/ publicPage[v] # None
+            \/ publicFiles[v] # None) =>
             versionRow[v] # None
 
 \* Public files for a version exist only once that version is live (an addon_version row).
@@ -247,12 +273,14 @@ PublicOnlyIfLive == NoStrayFiles
 \* The same, checked only when no review request is in flight: files that stay public for good.
 PublicOnlyIfLiveAtRest == (\A r \in Reviewers : pc[r] = "idle") => NoStrayFiles
 
-\* Public bytes are the bytes whose sha256 the live row records; the manifest and store page are that row's.
+\* Public bytes are the bytes whose sha256 the live row records; the manifest, store page and extra files
+\* are that row's.
 PublicMatchesLive ==
     \A v \in Versions : versionRow[v] # None =>
         /\ publicBundle[v] # None => publicBundle[v].bytes = versionRow[v].sha
         /\ publicManifest[v] # None => publicManifest[v] = versionRow[v].sub
         /\ publicPage[v] # None => publicPage[v] = versionRow[v].sub
+        /\ publicFiles[v] # None => publicFiles[v] = versionRow[v].sub
 
 \* A live version's sha256 is the one create recorded from the pin, i.e. the bytes reviewers were shown.
 LiveIsReviewed ==
@@ -268,5 +296,6 @@ RejectedNeverPublic ==
         /\ publicBundle[v] # None => status[publicBundle[v].from] # "rejected"
         /\ publicManifest[v] # None => status[publicManifest[v]] # "rejected"
         /\ publicPage[v] # None => status[publicPage[v]] # "rejected"
+        /\ publicFiles[v] # None => status[publicFiles[v]] # "rejected"
 
 =============================================================================

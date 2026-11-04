@@ -1,0 +1,17 @@
+{
+	"GREETING_TITLE": "Hello!",
+	"GREETING_BODY": "{name} is running.",
+	"STARS": "{count, plural, =0 {No stars} one {# star} other {# stars}}",
+	"STARRED": "{name} starred {user}.",
+	"ROLE": "{role, select, admin {An admin} other {A member}}",
+	"PLACE": "{place, selectordinal, one {#st} two {#nd} few {#rd} other {#th}}",
+	"QUOTED": "Use '{'braces'}' and it''s fine.",
+	"GREET_ON_START": "Greet on start",
+	"GREET_ON_START_SUBTITLE": "Show a greeting when the plugin starts.",
+	"APPEARANCE": "Appearance",
+	"SIZE": "Size",
+	"ACCENT": "Accent",
+	"STAR_DESCRIPTION": "Stars a user.",
+	"UNSTAR_TITLE": "Unstar?",
+	"UNSTAR": "Unstar"
+}

@@ -15,7 +15,7 @@ import { patchContextMenus } from '~/patches/context-menus';
 import { patchActionSheets } from '~/patches/action-sheets';
 import type { SheetRef } from '~/opened-sheet';
 
-function start() {
+export function start() {
 	const ready = ensureModules('View Icons', {
 		IconUtils,
 		Media,
@@ -33,4 +33,4 @@ function start() {
 	applyFeatures('View Icons', [() => patchActionSheets(opened), () => patchContextMenus(opened)]);
 }
 
-export default { start, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

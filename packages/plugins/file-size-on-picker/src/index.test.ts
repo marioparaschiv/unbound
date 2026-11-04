@@ -71,7 +71,7 @@ mock.module('@unbound-app/api', () => scope.unbound);
 
 mock.module('react-native', () => ({ Text: 'Text', View: 'View' }));
 
-const { default: plugin } = await import('~/index');
+const plugin = await import('~/index');
 
 test('stop releases the content resolver handles the Android lookup acquired', async () => {
 	plugin.start(context as PluginContext);

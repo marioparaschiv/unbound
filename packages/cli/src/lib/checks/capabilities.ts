@@ -7,10 +7,12 @@ import { getBundleName } from '@unbound-app/contracts/workspace';
 import { join } from 'node:path';
 
 import type { PlatformCapabilities } from '~/lib/capabilities/analyze';
-import type { BuildCheck, BuildCheckIssue } from '~/lib/build-checks';
 import { analyzeCapabilities } from '~/lib/capabilities/analyze';
+import type { Check, CheckContext } from '~/lib/check/check';
 import type { DiscoveredAddon } from '~/lib/discovery';
+import type { Diagnostic } from '~/rollup/diagnostic';
 import { readDevManifest } from '~/lib/manifest';
+import { diagnostic } from '~/rollup/diagnostic';
 import { findFile } from '~/rollup/source-alias';
 
 type DevManifest = ReturnType<typeof readDevManifest>;
@@ -21,8 +23,8 @@ type GeneratedPlatforms = Partial<Record<NativePluginPlatform, GeneratedPlatform
 
 const GENERATED_FIELDS = ['capabilities', 'platforms'] as const;
 
-function error(message: string): BuildCheckIssue {
-	return { severity: 'error', message };
+function manifestError(message: string, path?: string, fix?: string): Diagnostic {
+	return diagnostic({ file: MANIFEST_FILENAME, path, severity: 'error', message, fix });
 }
 
 function findEntry(dir: string, main: string): string | null {
@@ -68,43 +70,48 @@ function writeBuiltManifest(
 	renameSync(temporary, target);
 }
 
-export const capabilitiesCheck: BuildCheck = {
-	name: 'capabilities',
+export const capabilitiesCheck: Check = {
+	id: 'capabilities',
 	/**
-	 * @description Generates a built plugin's platforms and Capabilities from its code into
-	 * `{output}/manifest.json`.
-	 * @param addon The addon to check.
+	 * @description Generates a built plugin's platforms and Capabilities from its code, into
+	 * `{output}/manifest.json` when the context emits.
+	 * @param context The addon to check.
 	 * @returns One error per hand-written field, dynamic or misplaced bridge access, or undeclarable Capability.
 	 */
-	run(addon) {
-		return checkCapabilities(addon, false);
+	run(context) {
+		return checkCapabilities(context, false);
 	},
 };
 
-export const declaredCapabilitiesCheck: BuildCheck = {
-	name: 'capabilities',
+export const declaredCapabilitiesCheck: Check = {
+	id: 'capabilities',
 	/**
 	 * @description Like the capabilities check, but a plugin that still hand-writes its platforms and
 	 * Capabilities keeps them, checked against what each platform provides, instead of failing.
-	 * @param addon The addon to check.
+	 * @param context The addon to check.
 	 * @returns One error per problem in the hand-written fields, or what the capabilities check returns.
 	 */
-	run(addon) {
-		return checkCapabilities(addon, true);
+	run(context) {
+		return checkCapabilities(context, true);
 	},
 };
 
-function checkCapabilities(addon: DiscoveredAddon, acceptDeclared: boolean): BuildCheckIssue[] {
+function checkCapabilities(
+	{ addon, emit, cache }: CheckContext,
+	acceptDeclared: boolean,
+): Diagnostic[] {
 	const manifest = readDevManifest(addon.dir);
 	const declared = GENERATED_FIELDS.filter((field) => manifest[field] !== void 0);
 
 	if (addon.static || addon.kind !== 'plugin' || (acceptDeclared && declared.length)) {
-		return validateAddonCapabilities(manifest).map(error);
+		return validateAddonCapabilities(manifest).map((message) => manifestError(message));
 	}
 
 	const issues = declared.map((field) =>
-		error(
-			`${MANIFEST_FILENAME} declares "${field}"; ubd build generates platforms and Capabilities from the code, so remove it.`,
+		manifestError(
+			`Declares "${field}", which ubd build generates from the code`,
+			field,
+			'remove it',
 		),
 	);
 	const entry = findEntry(addon.dir, manifest.main);
@@ -112,15 +119,21 @@ function checkCapabilities(addon: DiscoveredAddon, acceptDeclared: boolean): Bui
 	if (!entry) {
 		return [
 			...issues,
-			error(`Found neither src/index nor ${manifest.main} to read the native calls from.`),
+			manifestError(
+				`Found neither src/index nor ${manifest.main} to read the native calls from.`,
+			),
 		];
 	}
 
-	const analysis = analyzeCapabilities(addon.dir, entry);
+	const analysis = analyzeCapabilities(addon.dir, entry, cache.typescript);
 
-	issues.push(...analysis.errors.map(error));
+	issues.push(
+		...analysis.errors.map(({ site, message }) =>
+			diagnostic({ ...site, severity: 'error', message }),
+		),
+	);
 
-	if (!issues.length) {
+	if (emit && !issues.length) {
 		writeBuiltManifest(addon, manifest, analysis.platforms);
 	}
 

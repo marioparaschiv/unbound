@@ -53,6 +53,13 @@ declare global {
 	var NativePlatform: NativePlatformBridge | undefined;
 
 	/**
+	 * The message keys command text takes, one member per key. A plugin's generated `src/unbound-i18n.d.ts` fills it
+	 * from its `i18n/en-US.json` and the client from Unbound's; an interface so each declaration merges into it.
+	 */
+	// oxlint-disable-next-line typescript/consistent-type-definitions -- only an interface merges across files.
+	interface UnboundMessageKeys {}
+
+	/**
 	 * Hermes engine internals, exposing runtime metadata (bytecode version, GC, build).
 	 * @internal
 	 */

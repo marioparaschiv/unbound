@@ -84,7 +84,8 @@
 							"packages/client/src/hot-refresh",
 							"packages/client/src/dialogs",
 							"packages/client/src/diagnostics",
-							"packages/client/src/links"
+							"packages/client/src/links",
+							"packages/client/src/utils"
 						],
 						"deny": ["~/ui"],
 						"except": [
@@ -191,9 +192,13 @@
 	"ignorePatterns": [
 		"dist",
 		"*.gen.ts",
+		"**/src/unbound-settings.d.ts",
+		"**/src/unbound-i18n.d.ts",
+		"packages/client/src/i18n/core-messages.d.ts",
 		"packages/api/src/**",
 		"packages/discord-types/src/**",
 		"packages/cli/templates/**",
+		"packages/cli/tests/fixtures/migrate-entry/**",
 		"packages/plugins/**",
 		"packages/plugin-scripts/**",
 		"packages/loader/bootstrap/devtools.js",

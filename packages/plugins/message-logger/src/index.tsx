@@ -16,7 +16,7 @@ import { purgeLog } from '~/history/actions';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 
-function start() {
+export function start() {
 	if (!ensureModules(PLUGIN_NAME, { ActionSheets, ChatManager, MessageStore, RowManager }))
 		return;
 
@@ -33,7 +33,7 @@ function start() {
 	]);
 }
 
-function stop() {
+export function stop() {
 	const pending = dispose();
 
 	dispose = () => undefined;
@@ -41,9 +41,4 @@ function stop() {
 	return pending;
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

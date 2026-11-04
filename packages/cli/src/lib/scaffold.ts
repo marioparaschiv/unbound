@@ -4,8 +4,13 @@ import { join } from 'node:path';
 
 import type { Tokens } from '~/lib/templates';
 
-/** npm and bun drop dotfiles named `.gitignore` from tarballs, so templates store it undotted. */
-const GITIGNORE_SOURCE = 'gitignore';
+/** Template files stored undotted, by the name they get when scaffolded. */
+// npm and bun drop `.gitignore` from tarballs, and a dotted `.oxlintrc.json` would be picked up by this
+// repository's own lint, where the `@unbound-app/cli/oxlint` plugin it loads does not resolve.
+const DOTFILES = new Map([
+	['gitignore', '.gitignore'],
+	['oxlintrc.json', '.oxlintrc.json'],
+]);
 
 /**
  * @description Applies `{{token}}` substitution to a string, replacing every known token with its
@@ -32,8 +37,7 @@ export function scaffoldTemplate(from: string, to: string, tokens: Tokens): void
 	for (const entry of readdirSync(from, { withFileTypes: true })) {
 		const source = join(from, entry.name);
 
-		const name =
-			entry.name === GITIGNORE_SOURCE ? '.gitignore' : substitute(entry.name, tokens);
+		const name = DOTFILES.get(entry.name) ?? substitute(entry.name, tokens);
 		const target = join(to, name);
 
 		if (entry.isDirectory()) {

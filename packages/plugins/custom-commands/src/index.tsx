@@ -5,15 +5,11 @@ import SettingsPanel from '~/components/settings-panel';
 import { patchCommands } from '~/patches/commands';
 import { Commands, Messages } from '~/modules';
 
-function start() {
+export function start() {
 	if (!ensureModules('Custom Commands', { Commands, Messages })) return;
 
 	patchCommands();
 	recordApplied(1);
 }
 
-export default {
-	start,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

@@ -1,0 +1,19 @@
+    r10 = r7.__d;
+    r0 = 15842;
+    r9 = [1134];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        r1 = a6;
+        r2 = r1[r0];
+        r0 = undefined;
+        r1 = a1;
+        r3 = r1.bind(r0)(r2);
+        r2 = r3.registerAsset;
+        r1 = {'__packager_asset': true, 'httpServerLocation': '/assets/design/components/Icon/native/redesign/generated/images', 'width': 24, 'height': 24, 'scales': null, 'hash': '45e29ff493e27168e5d63eb6f088968a', 'name': 'WrenchIcon', 'type': 'png'};
+        r4 = [2, 3];
+        r1[4] = r4;
+        r2 = r2.bind(r3)(r1);
+        r1 = a4;
+        r1['exports'] = r2;
+        return r0;
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

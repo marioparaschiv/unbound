@@ -18,14 +18,16 @@ import type { Token, Tokens } from 'marked';
 import { Lexer, walkTokens } from 'marked';
 import { dirname, join } from 'node:path';
 
-import type { BuildCheck, BuildCheckIssue } from '~/lib/build-checks';
+import type { Diagnostic } from '~/rollup/diagnostic';
 import { measureMedia } from '~/lib/media-probe';
+import { diagnostic } from '~/rollup/diagnostic';
+import type { Check } from '~/lib/check/check';
 import type { MediaLimits } from '~/lib/env';
 import { parseMediaLimits } from '~/lib/env';
 
 /** Every issue found reading ADDON.md, and the measured page when nothing failed. */
 export type PageResult = {
-	issues: BuildCheckIssue[];
+	issues: Diagnostic[];
 	page?: AddonPage;
 };
 
@@ -78,7 +80,7 @@ export async function readPage(dir: string, limits: MediaLimits): Promise<PageRe
 	const source = readFileSync(join(dir, ADDON_PAGE_FILENAME), 'utf8');
 	const split = splitFrontmatter(source);
 	const parsed = parseAddonPage(source);
-	const issues: BuildCheckIssue[] = [];
+	const issues: Diagnostic[] = [];
 	let frontmatter: AddonPageFrontmatter | undefined;
 
 	if (split.frontmatter === void 0) {
@@ -144,9 +146,9 @@ function checkBodyPath(href: string): string | undefined {
 	return `${ADDON_PAGE_FILENAME} shows ${href}: ${parsed.error.issues.map((issue) => issue.message).join(' ')}`;
 }
 
-function checkPosters(page: AddonPage): BuildCheckIssue[] {
+function checkPosters(page: AddonPage): Diagnostic[] {
 	const measured = new Map(page.media.map((media) => [media.path, media]));
-	const issues: BuildCheckIssue[] = [];
+	const issues: Diagnostic[] = [];
 
 	for (const entry of page.frontmatter.media) {
 		if (!('video' in entry) || !entry.poster) {
@@ -187,34 +189,37 @@ function firstLine(token: Token): string {
 	return token.raw.trim().split('\n')[0] ?? '';
 }
 
-function error(message: string): BuildCheckIssue {
-	return { severity: 'error', message };
+function error(message: string): Diagnostic {
+	return diagnostic({ file: ADDON_PAGE_FILENAME, severity: 'error', message });
 }
 
-function warning(message: string): BuildCheckIssue {
-	return { severity: 'warning', message };
+function warning(message: string): Diagnostic {
+	return diagnostic({ file: ADDON_PAGE_FILENAME, severity: 'warning', message });
 }
 
-export const pageCheck: BuildCheck = {
-	name: 'page',
+export const pageCheck: Check = {
+	id: 'page',
 	/**
-	 * @description Checks ADDON.md and writes the measured page to `{output}/page.json`. An addon
-	 * without ADDON.md has no page; a page that fails the check leaves no stale `page.json` behind.
-	 * @param addon The addon to check.
+	 * @description Checks ADDON.md and, when the context emits, writes the measured page to
+	 * `{output}/page.json`. An addon without ADDON.md has no page; a page that fails the check leaves
+	 * no stale `page.json` behind.
+	 * @param context The addon to check.
 	 * @returns One error per rule the page breaks, and warnings for pages the store shows partly.
 	 */
-	async run(addon) {
+	async run({ addon, emit }) {
 		if (!existsSync(join(addon.dir, ADDON_PAGE_FILENAME))) {
 			return [];
 		}
 
 		const target = join(addon.output, MEASURED_PAGE_FILENAME);
 
-		rmSync(target, { force: true });
+		if (emit) {
+			rmSync(target, { force: true });
+		}
 
 		const { issues, page } = await readPage(addon.dir, parseMediaLimits());
 
-		if (page) {
+		if (emit && page) {
 			writePage(target, page);
 		}
 

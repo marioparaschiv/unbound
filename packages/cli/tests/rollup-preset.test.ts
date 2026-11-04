@@ -7,7 +7,9 @@ import { join } from 'node:path';
 
 import { buildBundle } from './helpers/rollup';
 
-type ScopedPlugin = { start: () => string[] };
+type ScopedExports = { start: () => string[] };
+
+type ScopedPlugin = { __load: () => ScopedExports };
 
 let pluginRoot = '';
 
@@ -18,9 +20,9 @@ import { createElement } from 'react';
 import { View } from 'react-native';
 import moment from 'moment';
 
-export default {
-	start() { return [patcher.name, Moment.name, createElement.name, View.name, moment.name]; },
-};
+export function start() {
+	return [patcher.name, Moment.name, createElement.name, View.name, moment.name];
+}
 `;
 
 beforeAll(async () => {
@@ -50,5 +52,11 @@ test('reads the client API, React and shared libraries from bare globals', async
 	const plugin: ScopedPlugin = runInNewContext(`(${code})`, { unbound, React, ReactNative });
 
 	expect(code).not.toContain('window.');
-	expect(plugin.start()).toEqual(['patcher', 'moment', 'createElement', 'View', 'moment']);
+	expect(plugin.__load().start()).toEqual([
+		'patcher',
+		'moment',
+		'createElement',
+		'View',
+		'moment',
+	]);
 });

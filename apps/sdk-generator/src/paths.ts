@@ -23,6 +23,9 @@ export const INLINED_LIBRARIES = config.inlinedLibraries;
 /** Auto-derived subpaths left out of the SDK. */
 export const EXCLUDE_SUBPATHS = config.excludeSubpaths;
 
+/** Modules a plugin's build generates, by specifier: each name a bundle references, mapped to the name the module exports. */
+export const GENERATED_MODULES = config.generatedModules;
+
 /** Subpaths added beyond the ones derived from the barrel. */
 export const ADDITIONAL_SUBPATHS = config.additionalSubpaths;
 
@@ -32,11 +35,14 @@ export const API_MANIFEST = join(ROOT, 'packages', 'api', 'package.json');
 /** The `@unbound-app/types` index; its bundle feeds the `_internal` hoist file and the globals. */
 export const TYPES_INDEX = join(ROOT, 'packages', 'types', 'index.d.ts');
 
-/** The `@unbound-app/types/utils` typings; its bundle is the public `utils` hoist file. */
+/** The `@unbound-app/types/utils` typings; its bundle is the public `_types` hoist file. */
 export const UTILS_INDEX = join(ROOT, 'packages', 'types', 'typings', 'utils.ts');
 
-/** The generated home for the public utility types (`Fn`, `Widen`, …), imported relative to modules. */
-export const UTILS_OUT = join(API_SRC, 'utils.d.ts');
+/**
+ * The generated home for the public utility types (`Fn`, `Widen`, …), imported relative to modules.
+ * Not `utils.d.ts`: that name would shadow the `utils` module's `utils/index.d.ts`.
+ */
+export const UTILS_OUT = join(API_SRC, '_types.d.ts');
 
 /** The generated home for the non-public shared `@unbound-app/types` surface; also feeds `global.d.ts`. */
 export const INTERNAL_OUT = join(API_SRC, '_internal.d.ts');

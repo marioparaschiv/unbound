@@ -6,7 +6,7 @@ import { createFileSizes } from '~/file-sizes/platform';
 
 let releaseFileSizes = () => {};
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	const sizes = createFileSizes(context);
 
 	releaseFileSizes = sizes.release;
@@ -14,8 +14,8 @@ function start(context: PluginContext) {
 	recordApplied(1);
 }
 
-function stop() {
+export function stop() {
 	releaseFileSizes();
 }
 
-export default { start, stop, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

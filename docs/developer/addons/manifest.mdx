@@ -70,6 +70,12 @@ Every kind uses the same manifest. A few kinds need an extra file or field.
 <AccordionGroup>
 	<Accordion title='Plugins' icon='plug'>
 		Nothing extra. `main` names your entry file in `src/`, and `ubd build` turns it into the bundle. See [Your First Plugin](/docs/developer/addons/creating).
+
+		When your plugin ships [images](/docs/developer/plugins/assets), `ubd build` adds an `assets` field to the built manifest in `dist/`. Don't write it yourself.
+
+		<ParamField path='assets' type='Record<string, { type, width, height, scales }>'>
+			Each image by name: its type (`png`, `jpg`, `webp` or `gif`), its size in points, and the SHA-256 of its file at each scale (`1`, `2`, `3`). Each file sits beside the bundle at `assets/<sha256>.<type>`.
+		</ParamField>
 	</Accordion>
 	<Accordion title='Themes' icon='paintbrush'>
 		A theme ships a **`bundle.json`** next to its manifest, holding the palette and background. See [Theme Colors](/docs/developer/themes/types).

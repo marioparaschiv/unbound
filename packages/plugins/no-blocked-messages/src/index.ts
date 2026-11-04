@@ -10,7 +10,7 @@ import { patchRowManager } from '~/patches/row-manager';
 
 let dispose = () => {};
 
-function start() {
+export function start() {
 	if (!ensureModules('No Blocked Messages', { ChatManager, RowManager, ChatUpdatesQueue })) {
 		return;
 	}
@@ -26,9 +26,9 @@ function start() {
 	);
 }
 
-function stop() {
+export function stop() {
 	dispose();
 	dispose = () => {};
 }
 
-export default { start, stop, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

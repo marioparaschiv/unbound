@@ -6,14 +6,10 @@ import { patchPendingReplyActions } from '~/patches/pending-reply-actions';
 import SettingsPanel from '~/components/settings-panel';
 import { PendingReplyActions } from '~/modules';
 
-function start() {
+export function start() {
 	if (!ensureModules('No Reply Mention', { PendingReplyActions })) return;
 
 	applyFeatures('No Reply Mention', [patchPendingReplyActions]);
 }
 
-export default {
-	start,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

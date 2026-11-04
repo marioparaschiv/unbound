@@ -81,7 +81,16 @@ function isPublic(property: MorphSymbol): boolean {
 
 	const flags = ts.getDeclarationModifierFlagsFromSymbol(property.compilerSymbol);
 
-	return (flags & (ts.ModifierFlags.Private | ts.ModifierFlags.Protected)) === 0;
+	if ((flags & (ts.ModifierFlags.Private | ts.ModifierFlags.Protected)) !== 0) {
+		return false;
+	}
+
+	// The SDK build strips `@internal` members, so they are not public surface.
+	return !property.getDeclarations().some((declaration) => isInternal(declaration.compilerNode));
+}
+
+function isInternal(node: ts.Node): boolean {
+	return ts.getJSDocTags(node).some((tag) => tag.tagName.text === 'internal');
 }
 
 function walk(type: Type, prefix: string, state: Walk) {

@@ -18,7 +18,7 @@ import { startEmbeds } from '~/platform';
 
 let embeds: Embeds | undefined;
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	// `ChatItem` has a fallback search, so it is checked when an embed renders.
 	const modules = {
 		ChannelStore,
@@ -39,7 +39,7 @@ function start(context: PluginContext) {
 	embeds = startEmbeds(context.native, renderers);
 }
 
-function stop() {
+export function stop() {
 	const finished = embeds?.dispose();
 
 	embeds = undefined;
@@ -47,12 +47,10 @@ function stop() {
 	return finished;
 }
 
-function selfTest() {
+export function selfTest() {
 	const empty = emptyEmbeds();
 
 	if (empty.length) return { ok: false, detail: `${empty.length} embeds stayed empty` };
 
 	return drawnSelfTest(embeds?.drawn, 'embeds');
 }
-
-export default { start, stop, selfTest };

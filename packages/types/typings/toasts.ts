@@ -1,6 +1,8 @@
 import type { ImageSourcePropType } from 'react-native';
 import type { ComponentType } from 'react';
 
+import type { IconInput } from './components';
+
 /** A button rendered inside a toast. */
 export type ToastButton = {
 	/** The Discord button style. Defaults to `'primary'`. */
@@ -11,8 +13,8 @@ export type ToastButton = {
 	iconPosition?: 'start' | 'end';
 	/** The button's label. */
 	content: string;
-	/** An asset id, drawn beside the label. */
-	icon?: number;
+	/** An asset id, an element such as `<Star />`, or an icon component such as `Star`, drawn beside the label. */
+	icon?: IconInput;
 	/** Runs when the button is tapped. The toast stays open; call `close` on its handle to dismiss it. */
 	onPress: () => void;
 };
@@ -27,13 +29,13 @@ export type ToastOptions = {
 	duration?: number;
 	/** Declared for callers, but the client does not call it yet. */
 	onTimeout?: () => void;
-	/** An asset name, asset id or image source; a name with no matching asset draws no image. */
-	icon?: string | number | ImageSourcePropType;
+	/** An asset name, asset id, image source, element such as `<Star />`, or icon component such as `Star`; a name with no matching asset draws no image. */
+	icon?: string | IconInput | ImageSourcePropType;
 	/** Identifies the toast; showing another toast with the same id replaces it. Omitted, a random id. */
 	id?: string;
 	/** Buttons in a row under the content. */
 	buttons?: ToastButton[];
-	/** Tints the icon with the theme's icon colour. Defaults to `true`; set `false` for a coloured icon. */
+	/** Tints an image icon with the theme's icon colour. Defaults to `true`; set `false` for a coloured image. An element or component draws its own colour. */
 	tintedIcon?: boolean;
 };
 

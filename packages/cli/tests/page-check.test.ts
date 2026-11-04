@@ -6,7 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import sharp from 'sharp';
 
-import { createTempDir, runUbd, type TempDir } from './helpers/ubd';
+import { createTempDir, runUbd, withoutProgress, type TempDir } from './helpers/ubd';
 
 const dirs: TempDir[] = [];
 
@@ -138,7 +138,7 @@ describe('ubd build measures ADDON.md media', () => {
 			},
 		});
 
-		expect(result.stderr).toBe('');
+		expect(withoutProgress(result.stderr)).toBe('');
 		expect(result.exitCode).toBe(0);
 
 		const parsed = safeParse(addonPageSchema, JSON.parse(readFileSync(result.output, 'utf8')));
@@ -211,7 +211,7 @@ describe('ubd build measures ADDON.md media', () => {
 
 		expect(result.exitCode).toBe(0);
 		expect(result.stderr).toContain(
-			'warning [page] The poster media/poster.png is 320x320 but its video media/demo.mp4 is 320x180',
+			'ADDON.md  The poster media/poster.png is 320x320 but its video media/demo.mp4 is 320x180',
 		);
 
 		const written = parse(addonPageSchema, JSON.parse(readFileSync(result.output, 'utf8')));
@@ -225,7 +225,7 @@ describe('ubd build measures ADDON.md media', () => {
 		const result = await build({ page: 'A plugin.\n' });
 
 		expect(result.exitCode).toBe(0);
-		expect(result.stderr).toContain('warning [page] ADDON.md has no frontmatter');
+		expect(result.stderr).toContain('ADDON.md  ADDON.md has no frontmatter');
 		expect(existsSync(result.output)).toBe(false);
 	});
 });
@@ -241,7 +241,7 @@ const REJECTIONS: Rejection[] = [
 	{
 		name: 'a missing media file',
 		fixture: { page: page('banner: media/banner.png') },
-		message: 'error [page] media/banner.png does not exist.',
+		message: 'ADDON.md  media/banner.png does not exist.',
 	},
 	{
 		name: 'an external image',
@@ -250,7 +250,7 @@ const REJECTIONS: Rejection[] = [
 			images: { 'media/banner.png': BANNER },
 		},
 		message:
-			'error [page] ADDON.md shows https://example.com/logo.png, which is not in the repository',
+			'ADDON.md  ADDON.md shows https://example.com/logo.png, which is not in the repository',
 	},
 	{
 		name: 'an image outside media/',
@@ -259,7 +259,7 @@ const REJECTIONS: Rejection[] = [
 			images: { 'media/banner.png': BANNER },
 		},
 		message:
-			'error [page] ADDON.md shows shot.png: Must be a relative path inside the media/ folder.',
+			'ADDON.md  ADDON.md shows shot.png: Must be a relative path inside the media/ folder.',
 	},
 	{
 		name: 'a table',
@@ -267,7 +267,7 @@ const REJECTIONS: Rejection[] = [
 			page: page('banner: media/banner.png', '| Key | Value |\n| --- | --- |\n| a | b |\n'),
 			images: { 'media/banner.png': BANNER },
 		},
-		message: 'error [page] ADDON.md has a table at "| Key | Value |"',
+		message: 'ADDON.md  ADDON.md has a table at "| Key | Value |"',
 	},
 	{
 		name: 'a leading H1',
@@ -275,7 +275,7 @@ const REJECTIONS: Rejection[] = [
 			page: page('banner: media/banner.png', '# My Plugin\n\nA plugin.\n'),
 			images: { 'media/banner.png': BANNER },
 		},
-		message: 'error [page] ADDON.md starts with the heading "# My Plugin"',
+		message: 'ADDON.md  ADDON.md starts with the heading "# My Plugin"',
 	},
 	{
 		name: 'a title in the frontmatter',
@@ -283,7 +283,7 @@ const REJECTIONS: Rejection[] = [
 			page: page('title: My Plugin\nbanner: media/banner.png'),
 			images: { 'media/banner.png': BANNER },
 		},
-		message: 'error [page] ADDON.md has invalid frontmatter:',
+		message: 'ADDON.md  ADDON.md has invalid frontmatter:',
 	},
 	{
 		name: 'a banner that is not 3:1',
@@ -291,7 +291,7 @@ const REJECTIONS: Rejection[] = [
 			page: page('banner: media/banner.png'),
 			images: { 'media/banner.png': { width: 1600, height: 900 } },
 		},
-		message: 'error [page] The banner must be exactly 3:1 and at least 1200x400',
+		message: 'ADDON.md  The banner must be exactly 3:1 and at least 1200x400',
 	},
 	{
 		name: 'a gallery image taller than 9:16',
@@ -301,7 +301,7 @@ const REJECTIONS: Rejection[] = [
 			),
 			images: { 'media/banner.png': BANNER, 'media/tall.png': { width: 100, height: 400 } },
 		},
-		message: 'error [page] Media must be between 9:16 and 21:9; media/tall.png is 100x400.',
+		message: 'ADDON.md  Media must be between 9:16 and 21:9; media/tall.png is 100x400.',
 	},
 	{
 		name: 'a file whose contents do not match its extension',
@@ -309,7 +309,7 @@ const REJECTIONS: Rejection[] = [
 			page: page('banner: media/banner.jpg'),
 			images: { 'media/banner.jpg': BANNER },
 		},
-		message: 'error [page] media/banner.jpg is not a jpg file; its contents are png.',
+		message: 'ADDON.md  media/banner.jpg is not a jpg file; its contents are png.',
 	},
 	{
 		name: 'a file over the per-file limit',
@@ -336,7 +336,7 @@ const REJECTIONS: Rejection[] = [
 			images: { 'media/banner.png': BANNER },
 		},
 		env: { ADDON_MEDIA_MAX_BYTES: 'many' },
-		message: 'error [page] The check crashed: Invalid environment',
+		message: 'The page check crashed: Invalid environment',
 	},
 ];
 
@@ -392,7 +392,7 @@ describe('ubd build rejects a broken ADDON.md', () => {
 		await expectRejected(
 			dir,
 			{},
-			'error [page] media/demo.webm has no length; a video must play for longer than zero seconds.',
+			'ADDON.md  media/demo.webm has no length; a video must play for longer than zero seconds.',
 		);
 	});
 });

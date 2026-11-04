@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import type { FluxAction, FluxChangeListener } from '@unbound-app/types/flux';
+import type { SettingsEntry } from '@unbound-app/types/settings';
 import type { AddonManifest } from '@unbound-app/types';
 
 import { createCacheMock } from './helpers/cache';
@@ -85,14 +86,31 @@ const commands = await import('~/commands/api');
 const storage = await import('~/storage/api');
 const metro = { ...(await import('~/metro/search')), ...(await import('~/metro/wait')) };
 const flux = await import('~/flux/api');
+const settings = await import('~/settings/api');
 const { registry } = await import('~/commands/registry');
 const { data } = await import('~/metro/state');
 const { Plugins } = await import('~/plugins/manager');
+const { createAddonLocales } = await import('~/i18n/addon-locales');
 
 // Metro's own listeners, such as the one serving module waits, are not the plugin's.
 const metroListeners = data.listeners.size;
 
 const seen: string[] = [];
+const assetListeners = new Set<() => void>();
+// The real `i18n` reaches Discord's MessageFormat; its addon locales need only a formatter.
+const i18n = {
+	createLocales: (
+		fallback: Record<string, string>,
+		source: Parameters<typeof createAddonLocales>[1],
+	) => createAddonLocales(fallback, source, (messages, key) => messages[key] ?? key),
+};
+const assets = {
+	onAssetRegistered(listener: () => void) {
+		assetListeners.add(listener);
+
+		return () => void assetListeners.delete(listener);
+	},
+};
 
 function startPlugin(bundle: string) {
 	const plugins = new Plugins();
@@ -112,6 +130,16 @@ function manifest(): AddonManifest {
 		authors: [{ name: 'Mario', id: '1' }],
 		main: 'index.js',
 		version: '1.0.0',
+	};
+}
+
+function section(key: string): SettingsEntry {
+	return {
+		type: 'route',
+		key,
+		useTitle: () => key,
+		parent: null,
+		screen: { route: key, getComponent: () => () => null },
 	};
 }
 
@@ -136,7 +164,16 @@ function registered() {
 beforeEach(() => {
 	seen.length = 0;
 	Reflect.set(globalThis, 'React', { createElement: () => null });
-	Reflect.set(globalThis, 'unbound', { patcher, metro, flux, storage, commands });
+	Reflect.set(globalThis, 'unbound', {
+		patcher,
+		metro,
+		flux,
+		storage,
+		commands,
+		settings,
+		assets,
+		i18n,
+	});
 	Reflect.set(globalThis, '__wiringSeen', seen);
 	Reflect.set(globalThis, '__wiringStore', store);
 });
@@ -144,6 +181,8 @@ beforeEach(() => {
 afterEach(() => {
 	storage.getBucket(ID).clear();
 	storage.getBucket('other').clear();
+	settings.removeSection('core', 'wired', 'removed');
+	assetListeners.clear();
 
 	for (const key of ['React', 'unbound', '__wiringSeen', '__wiringStore', '__wiringLate']) {
 		Reflect.deleteProperty(globalThis, key);
@@ -162,8 +201,10 @@ describe('addon scope wiring', () => {
 				unbound.flux.onAction('WIRING', () => seen.push('action'));
 				unbound.flux.interceptAction('WIRING', () => true);
 				unbound.flux.onStoreChange(globalThis.__wiringStore, () => {});
-				commands.register({ wired: { description: 'Ping', execute: () => 'pong' } });
-				unbound.commands.register({ shared: { description: 'Ping', execute: () => 'pong' } });
+				// What the build's locale module does before any command registers.
+				unbound.i18n.createLocales({ PING: 'Ping' });
+				commands.register({ wired: { description: 'PING', execute: () => 'pong' } });
+				unbound.commands.register({ shared: { description: 'PING', execute: () => 'pong' } });
 				globalThis.__wiringLate = () => unbound.flux.onAction('WIRING', () => seen.push('late'));
 			},
 			stop() {},
@@ -216,6 +257,41 @@ describe('addon scope wiring', () => {
 		expect(data.listeners.size).toBe(metroListeners);
 	});
 
+	test('a settings section the plugin registers is gone after it stops, and one it did not register stays', async () => {
+		settings.registerSection(section('core'));
+
+		const plugins = startPlugin(`({
+			start() {
+				const entry = (key) => ({ type: 'route', key, useTitle: () => key, parent: null, screen: { route: key, getComponent: () => () => null } });
+
+				unbound.settings.registerSection(entry('wired'), entry('removed'));
+				unbound.settings.removeSection('removed');
+			},
+			stop() {},
+		})`);
+
+		expect(Object.keys(settings.getSections()).toSorted()).toEqual(['core', 'wired']);
+
+		await plugins.stop(ID);
+
+		expect(Object.keys(settings.getSections())).toEqual(['core']);
+	});
+
+	test('an asset registration listener is removed after the plugin stops', async () => {
+		const plugins = startPlugin(`({
+			start() {
+				unbound.assets.onAssetRegistered(() => {});
+			},
+			stop() {},
+		})`);
+
+		expect(assetListeners.size).toBe(1);
+
+		await plugins.stop(ID);
+
+		expect(assetListeners.size).toBe(0);
+	});
+
 	test("getBucket with no name returns the plugin's own Bucket, and named Buckets stay reachable", async () => {
 		const plugins = startPlugin(`({
 			start() {
@@ -230,5 +306,29 @@ describe('addon scope wiring', () => {
 		expect(() => storage.getBucket()).toThrow('outside a plugin');
 
 		await plugins.stop(ID);
+	});
+
+	test('an entry built with named exports has its scope disposed after its async stop', async () => {
+		const plugins =
+			startPlugin(`({__plugin:null,__load(){if(this.__plugin)return this.__plugin;this.__plugin=function(){
+			return {
+				start() {
+					unbound.flux.onAction('WIRING', () => globalThis.__wiringSeen.push('action'));
+					unbound.flux.onStoreChange(globalThis.__wiringStore, () => {});
+				},
+				async stop() {
+					await null;
+					globalThis.__wiringSeen.push('stop');
+				},
+			};
+		}();return this.__plugin;}})`);
+
+		expect(registered()).toMatchObject({ actionListeners: 1, storeListeners: 1 });
+
+		await plugins.stop(ID);
+		await flux.dispatch({ type: 'WIRING' });
+
+		expect(registered()).toMatchObject({ actionListeners: 0, storeListeners: 0 });
+		expect(seen).toEqual(['stop']);
 	});
 });

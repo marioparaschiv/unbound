@@ -11,12 +11,13 @@ import type { UpdatableKind } from '~/addons/manager-of';
 import type { AvailableChoice } from '~/addons/versions';
 import { installsFromManifest } from '~/addons/addons';
 import { compareVersions } from '~/core/versions';
+import { confirmText } from '~/dialogs/feedback';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
 import { Manager } from '~/addons/manager';
 import { Screens } from '~/core/constants';
+import { showDialog } from '~/dialogs/api';
 import { ActionSheets } from '~/metro/api';
-import { confirm } from '~/dialogs/api';
 import { icons } from '~/assets/api';
 import { show } from '~/toasts/api';
 
@@ -80,11 +81,12 @@ function confirmChoice(
 			: null,
 	];
 
-	return confirm({
+	// The body joins whichever warnings apply, so it is composed here rather than one message key.
+	return confirmText(showDialog, {
 		title: format('UNBOUND_VERSION_CONFIRM_TITLE', { name, version }),
 		body: lines.filter(Boolean).join('\n\n'),
-		confirmLabel: messages.UNBOUND_INSTALL,
-		cancelLabel: messages.UNBOUND_CANCEL,
+		confirm: messages.UNBOUND_INSTALL,
+		cancel: messages.UNBOUND_CANCEL,
 	});
 }
 

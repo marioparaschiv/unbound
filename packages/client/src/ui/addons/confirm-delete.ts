@@ -1,7 +1,7 @@
 import { dependentsOf } from '~/addons/dependencies';
+import { confirm, showDialog } from '~/dialogs/api';
 import { messages, format } from '~/i18n/api';
 import type { Addon } from '~/addons/addon';
-import { showDialog } from '~/dialogs/api';
 import { show } from '~/toasts/api';
 
 type DeletingManager = {
@@ -26,18 +26,12 @@ export function confirmDelete(manager: DeletingManager, addon: Addon) {
 	const name = addon.name;
 
 	if (dependents.length === 0) {
-		showDialog({
-			title: format('UNBOUND_DELETE_TITLE', { name }),
-			body: messages.UNBOUND_DELETE_BODY,
-			buttons: [
-				{
-					label: messages.UNBOUND_DELETE,
-					variant: 'destructive',
-					onPress: () => void manager.delete(addon.id),
-				},
-			],
-			cancel: messages.UNBOUND_CANCEL,
-		});
+		void confirm('UNBOUND_DELETE_TITLE', {
+			titleVars: { name },
+			body: 'UNBOUND_DELETE_BODY',
+			confirm: 'UNBOUND_DELETE',
+			destructive: true,
+		}).then((confirmed) => confirmed && manager.delete(addon.id));
 
 		return;
 	}

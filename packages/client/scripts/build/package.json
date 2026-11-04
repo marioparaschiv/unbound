@@ -7,10 +7,10 @@
 	"dependencies": {
 		"@unbound-app/contracts": "workspace:*",
 		"@unbound-app/logger": "workspace:*",
-		"typebox": "^1.4.3"
+		"typebox": "^1.4.4"
 	},
 	"devDependencies": {
-		"@babel/core": "^7.28.6",
+		"@babel/core": "^7.29.7",
 		"@babel/plugin-transform-block-scoping": "^8.0.10",
 		"@jridgewell/trace-mapping": "^0.3.31",
 		"@rollup/plugin-replace": "^6.0.3",
@@ -21,7 +21,7 @@
 		"rollup-plugin-swc3": "^0.12.1"
 	},
 	"peerDependencies": {
-		"typescript": "^5"
+		"typescript": "catalog:"
 	},
 	"trustedDependencies": [
 		"@swc/core"
