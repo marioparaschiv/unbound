@@ -9,7 +9,7 @@ import { buildBundle } from './helpers/rollup';
 
 type LazyEntry = { use: () => (string | number)[] };
 
-type LazyPlugin = { __load: () => { default?: LazyEntry } & LazyEntry };
+type LazyPlugin = { __load: () => LazyEntry };
 
 const RUNS = '__lazyModuleRuns';
 
@@ -24,10 +24,8 @@ export default { base: 3, add(value) { return this.base + value; } };
 
 const entryModule = `
 import counter, { Box, greet } from '~/heavy';
-export default {
-	start() {},
-	use() { return [greet('hermes'), new Box(2).value, counter.add(4), counter.base]; },
-};
+export function start() {}
+export function use() { return [greet('hermes'), new Box(2).value, counter.add(4), counter.base]; }
 `;
 
 beforeAll(async () => {
@@ -46,9 +44,8 @@ afterAll(async () => {
 async function loadPlugin(lazyModules: string[]) {
 	const url = pathToFileURL(join(pluginRoot, 'rollup.config.mjs')).href;
 	const plugin: LazyPlugin = runInThisContext(`(${await buildBundle(url, { lazyModules })})`);
-	const module = plugin.__load();
 
-	return module.default ?? module;
+	return plugin.__load();
 }
 
 function runs() {

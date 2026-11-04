@@ -19,10 +19,13 @@ const Navigation = findByProps('getRootNavigationRef', { lazy: true });
 export function start() {
 	Commands.register({
 		eval: {
-			description: 'Evaluate JavaScript and show the result',
+			description: 'UNBOUND_COMMAND_EVAL_DESC',
 			options: {
-				code: option.string({ description: 'The code to evaluate', required: true }),
-				send: option.boolean({ description: 'Send the result to the channel' }),
+				code: option.string({
+					description: 'UNBOUND_COMMAND_EVAL_CODE_DESC',
+					required: true,
+				}),
+				send: option.boolean({ description: 'UNBOUND_COMMAND_EVAL_SEND_DESC' }),
 			},
 			async execute({ code, send = false }) {
 				// Await so a promise shows its resolved value.
@@ -34,23 +37,23 @@ export function start() {
 			},
 		},
 		reload: {
-			description: 'Reload Discord',
+			description: 'UNBOUND_COMMAND_RELOAD_DESC',
 			execute: () => void reload(),
 		},
 		debug: {
-			description: 'Send debug info',
+			description: 'UNBOUND_COMMAND_DEBUG_DESC',
 			execute: (_args, context) => sendDebugReport(context?.channel?.id),
 		},
 		recovery: {
-			description: 'Turn recovery mode on or off and restart',
+			description: 'UNBOUND_COMMAND_RECOVERY_DESC',
 			execute: () => confirmRecovery(),
 		},
 		plugins: {
-			description: 'Open the Unbound plugins settings',
+			description: 'UNBOUND_COMMAND_PLUGINS_DESC',
 			execute: () => openScreen(Screens.Plugins),
 		},
 		themes: {
-			description: 'Open the Unbound themes settings',
+			description: 'UNBOUND_COMMAND_THEMES_DESC',
 			execute() {
 				// The Design page opens on the tab it last showed; themes are tab 0.
 				getBucket('design').set('tab', 0);
@@ -63,10 +66,10 @@ export function start() {
 	if (import.meta.env.DEV_TOOLS) {
 		Commands.register({
 			debugger: {
-				description: 'Turn the WebSocket debugger on or off, or connect it to an address',
+				description: 'UNBOUND_COMMAND_DEBUGGER_DESC',
 				options: {
 					address: option.string({
-						description: 'The bridge address, such as 192.168.1.2:9090',
+						description: 'UNBOUND_COMMAND_DEBUGGER_ADDRESS_DESC',
 					}),
 				},
 				execute({ address }) {

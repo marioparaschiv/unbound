@@ -81,15 +81,17 @@ const LABELS: Record<string, string> = {
 	Purge: 'purgeUserSubmissions (ban) cancels',
 	Orphan: 'sweepStaging deletes an orphaned staged object',
 	Start: 'reviewSubmission -> requirePendingReview passes',
-	ReadStaged: 'publishArtifact reads (or refetches from the pin) and re-hashes the bundle',
+	ReadStaged:
+		'publishArtifact reads (or refetches from the pin) and re-hashes the bundle, and reads the pinned media and extra files',
 	WriteBundle: 'publishArtifact writes the public bundle',
 	WriteManifest: 'publishArtifact writes the public manifest.json',
 	WritePage: 'publishArtifact writes the public ADDON.md, page.json and media/',
+	WriteFiles: 'publishArtifact writes the public extra files (assets/, i18n/)',
 	Decide: 'decide() transaction',
 	Cleanup: 'staging.delete(row.stagingKey)',
 };
 
-const HIDDEN = new Set(['rowSha', 'wroteB', 'wroteM', 'wroteP']);
+const HIDDEN = new Set(['rowSha', 'wroteB', 'wroteM', 'wroteP', 'wroteF']);
 
 async function ensureJar() {
 	if (!existsSync(JAR)) {

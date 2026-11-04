@@ -6,7 +6,7 @@ import { patchContextMenus } from '~/patches/context-menus';
 import { patchActionSheets, type SheetState } from '~/patches/action-sheets';
 import { ActionSheets, Theme } from '~/modules';
 
-function start() {
+export function start() {
 	if (!ensureModules('View Raw', { ActionSheets, Theme })) return;
 
 	const state: SheetState = { open: null, profileUserId: null };
@@ -14,4 +14,4 @@ function start() {
 	applyFeatures('View Raw', [() => patchActionSheets(state), () => patchContextMenus(state)]);
 }
 
-export default { start, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

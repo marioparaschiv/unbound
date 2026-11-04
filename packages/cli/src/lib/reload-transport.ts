@@ -1,5 +1,6 @@
 import type { ControllerClient } from '@unbound-app/debugger-protocol/controller';
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
+import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import { getBundleName } from '@unbound-app/contracts/workspace';
 import type { PushedManifest } from '@unbound-app/types';
@@ -33,6 +34,8 @@ export type ReadAddon = {
 	manifest: PushedManifest;
 	bundle: string;
 	bytecode?: Record<string, string>;
+	/** Each extra file the manifest lists beside the bundle, such as an image, base64-encoded, by path. */
+	files?: Record<string, string>;
 };
 
 /**
@@ -128,16 +131,32 @@ export function readBuiltAddon(addon: BuiltAddon): ReadAddon {
 
 	const bundle = readFileSync(bundlePath, 'utf8');
 	const bytecode = addon.static ? new Map<string, Buffer>() : readFreshBytecode(bundlePath);
+	const files = readExtraFiles(addon.output, manifest);
 
 	if (!bytecode.size) {
-		return { manifest, bundle };
+		return { manifest, bundle, ...files };
 	}
 
 	return {
 		manifest: { ...manifest, bytecode: sha512Digests(bytecode) },
 		bundle,
+		...files,
 		bytecode: Object.fromEntries(
 			[...bytecode].map(([version, contents]) => [version, contents.toString('base64')]),
+		),
+	};
+}
+
+function readExtraFiles(output: string, manifest: PushedManifest): Pick<ReadAddon, 'files'> {
+	const listed = listAddonFiles(manifest);
+
+	if (!listed.length) {
+		return {};
+	}
+
+	return {
+		files: Object.fromEntries(
+			listed.map(({ path }) => [path, readFileSync(join(output, path)).toString('base64')]),
 		),
 	};
 }

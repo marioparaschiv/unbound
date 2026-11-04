@@ -8,7 +8,7 @@ import { ActionSheets } from '~/modules';
 
 const sheets = createExpressionSheetPatches();
 
-function start() {
+export function start() {
 	if (!ensureModules(PLUGIN_NAME, { ActionSheets })) return;
 
 	patchActionSheets(sheets);
@@ -16,8 +16,8 @@ function start() {
 	recordApplied(2);
 }
 
-function stop() {
+export function stop() {
 	sheets.stop();
 }
 
-export default { start, stop, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

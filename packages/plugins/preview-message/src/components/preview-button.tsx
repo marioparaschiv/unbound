@@ -19,7 +19,7 @@ function useDraft(channelId: string): string {
 	return flux.useStore(
 		DraftStore,
 		() => DraftStore.getDraft(channelId, CHANNEL_MESSAGE_DRAFT_TYPE) ?? '',
-		[channelId],
+		{ deps: [channelId] },
 	);
 }
 

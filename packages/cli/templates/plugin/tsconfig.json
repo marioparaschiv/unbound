@@ -7,11 +7,12 @@
 		"jsx": "react-jsx",
 		"strict": true,
 		"skipLibCheck": true,
+		"resolveJsonModule": true,
 		"noEmit": true,
-		"types": ["bun"],
+		"types": ["bun", "@unbound-app/api/global"],
 		"paths": {
 			"~/*": ["./src/*"]
 		}
 	},
-	"include": ["src"]
+	"include": ["src", "tests", "settings.ts"]
 }

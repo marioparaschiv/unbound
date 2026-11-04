@@ -1,0 +1,13 @@
+{
+	"id": "fixture-plugin",
+	"name": "Fixture Plugin",
+	"description": "The plugin the testing preset's own tests run against.",
+	"authors": [
+		{
+			"name": "Unbound",
+			"id": "100000000000000000"
+		}
+	],
+	"version": "1.0.0",
+	"main": "index.tsx"
+}

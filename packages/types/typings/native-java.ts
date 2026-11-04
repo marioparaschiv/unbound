@@ -36,6 +36,7 @@ export type NativeJavaReference = NativeJavaHandle | NativeJavaHandleValue;
 
 declare const nativeJavaCallPlan: unique symbol;
 
+/** A method resolved once by `java.prepare`, for calling many times without the lookup. */
 export type NativeJavaCallPlan = NativeJavaHandle & {
 	readonly [nativeJavaCallPlan]: true;
 };
@@ -49,17 +50,21 @@ export type NativeJavaHookEvent<Receiver extends boolean = true> = {
 	self: Receiver extends true ? NativeJavaValue : undefined;
 	/** The call's arguments. */
 	args: NativeJavaValue[];
+	/** The method argument index each entry of `args` came from, as trimmed by `payload.arguments`. */
 	argumentIndexes: number[];
+	/** Whether the listener heard the call before or after the method ran. */
 	phase: 'before' | 'after';
 };
 
 /** Options for `hooks.hook`. */
 export type NativeJavaHookOptions<Receiver extends boolean = boolean> = {
+	/** Collapses queued `after` events for the same receiver into one; needs a non-static method and an `after` payload. */
 	coalesce?: 'receiver';
 	/** Returns a value set with `setReturnValue` for a matching call instead of running the method. Defaults to false. */
 	replace?: boolean;
 	/** Whether the listener hears calls: before the method by default, `after` once it has run, `false` never. */
 	notify?: boolean | 'after';
+	/** Trims the receiver, arguments and phase each event sends, to cut crossing cost on hot methods. */
 	payload?: NativeHookPayload<Receiver>;
 };
 
@@ -194,21 +199,25 @@ export type NativeJavaBridge = {
 	): NativeJavaValue;
 	/** Calls a method on the JavaScript thread. */
 	invoke(handle: NativeJavaReference, name: string, args?: NativeJavaArgument[]): NativeJavaValue;
+	/** Resolves a method by name and parameter types once, for repeated calls through `invokePrepared`. */
 	prepare(
 		target: NativeJavaReference,
 		name: string,
 		parameterTypes: readonly string[],
 	): NativeJavaCallPlan;
+	/** Calls a prepared method on the JavaScript thread, like `invoke`. */
 	invokePrepared(
 		plan: NativeJavaCallPlan,
 		target: NativeJavaReference,
 		args?: NativeJavaArgument[],
 	): NativeJavaValue;
+	/** Calls a prepared method on the main thread and resolves with its result, like `invokeAsync`. */
 	invokePreparedAsync(
 		plan: NativeJavaCallPlan,
 		target: NativeJavaReference,
 		args?: NativeJavaArgument[],
 	): NativeCancelablePromise<NativeJavaValue>;
+	/** Frees a call plan; using it afterwards throws. */
 	disposePlan(plan: NativeJavaCallPlan): void;
 	/** Calls a method on the main thread and resolves with its result. Needs `native.java.invokeAsync`. */
 	invokeAsync(

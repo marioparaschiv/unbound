@@ -3,8 +3,6 @@ import toError from '@unbound-app/utils/to-error';
 
 import {
 	beginAddonStart,
-	crashDisabledNotice,
-	crashedAddon,
 	crashGuardKey,
 	finishAddonStart,
 	withAddonAttribution,
@@ -22,6 +20,7 @@ import type { AddonEvents, AddonResolveable, AddonState } from '~/addons/addon';
 import { validateNativePluginRequirements } from '~/native/capabilities';
 import { announceFreeze, freezeDisables } from '~/addons/freezes';
 import { crashReportAddon } from '~/diagnostics/crash-report';
+import { disableIfCrashed } from '~/addons/crash-disable';
 import { reportCrash } from '~/diagnostics/crash-reports';
 import { beginNativeStop } from '~/native/plugin-context';
 import type { NativeConsents } from '~/native/consent';
@@ -295,14 +294,29 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 						this.handleBundle(state.bundle, resolved.id, pluginScope),
 					);
 
+			state.panel = state.instance?.SettingsPanel;
 			state.context = this.createContext(resolved);
 			const context = state.context;
 
-			withAddonScope(scope, () => state.instance?.start?.(context));
+			const starting = withAddonScope(scope, () => state.instance?.start?.(context));
+
+			// An async start runs on in the background, so its rejection is recorded like a deferred failure.
+			if (starting && typeof starting.then === 'function') {
+				state.settling = 'starting';
+				starting.then(
+					() => this.settle(resolved, 'starting'),
+					(cause: unknown) => {
+						this.settle(resolved, 'starting');
+						this.recordStartFailure(resolved, toError(cause), 'running');
+					},
+				);
+			}
+
 			state.started = true;
 			this.startDurations.set(resolved.id, monotonicNow() - startedAt);
 
 			this.emit('started', resolved);
+			this.emit('changed', resolved);
 		} catch (error) {
 			state.context?.dispose();
 			state.context = undefined;
@@ -340,6 +354,16 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		announceFreeze(entity, freeze, count, disable, this.logger);
 	}
 
+	// An async start or stop finished; a stop that began meanwhile keeps its own phase.
+	private settle(resolved: Addon<I>, phase: 'starting' | 'stopping'): void {
+		const state = this.stateOf(resolved);
+
+		if (state.settling !== phase) return;
+
+		state.settling = void 0;
+		this.emit('changed', resolved);
+	}
+
 	private recordStartFailure(
 		resolved: Addon<I>,
 		failure: Error,
@@ -348,6 +372,7 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		this.logger.error(`Failed to start addon ${resolved.id}:`, failure);
 		this.errors.set(resolved.id, failure);
 		this.stateOf(resolved).failed = true;
+		this.emit('changed', resolved);
 		void reportCrash({
 			kind: 'start-failure',
 			phase,
@@ -373,26 +398,13 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 	 * @returns Whether the addon was disabled instead of started.
 	 */
 	private disableAfterCrash(entity: Addon<I>): boolean {
-		const crashed = crashedAddon(crashGuardKey(this.bucket, entity.id));
+		return disableIfCrashed(entity, this.bucket, this.logger, () => {
+			const states = this.getStates();
 
-		if (!crashed) {
-			return false;
-		}
-
-		const states = this.getStates();
-
-		states[entity.id] = false;
-		this.settings.set('states', states);
-		void storage.persist();
-
-		this.logger.warn(crashDisabledNotice(crashed, entity.name));
-		void reportCrash({
-			kind: crashed.phase === 'frozen' ? 'freeze' : 'crash',
-			phase: crashed.phase,
-			addon: crashReportAddon(entity),
+			states[entity.id] = false;
+			this.settings.set('states', states);
+			void storage.persist();
 		});
-
-		return true;
 	}
 
 	/**
@@ -461,6 +473,8 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 					});
 
 				this.pendingStops.set(resolved.id, pending);
+				state.settling = 'stopping';
+				this.emit('changed', resolved);
 
 				return pending;
 			}
@@ -478,6 +492,11 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 		error?: Error,
 	): boolean {
 		const newestFirst = [context, scope];
+		const state = this.stateOf(resolved);
+
+		// Stopped, whatever the outcome: the panel is gone and nothing is in flight.
+		state.settling = void 0;
+		state.panel = void 0;
 
 		for (const part of newestFirst) {
 			try {
@@ -495,12 +514,14 @@ export abstract class AddonLifecycle<I extends object> extends Manager<
 
 		if (error) {
 			this.fail('stop', resolved.id, error);
+			this.emit('changed', resolved);
 
 			return false;
 		}
 
 		try {
 			this.emit('stopped', resolved);
+			this.emit('changed', resolved);
 
 			return true;
 		} catch (emitError) {

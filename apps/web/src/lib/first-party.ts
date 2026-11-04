@@ -5,6 +5,7 @@ import type {
 	SubmissionKind,
 } from '@unbound-app/contracts/publish';
 import type { PublishedManifest } from '@unbound-app/contracts/manifest';
+import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { and, eq, inArray, ne, sql } from 'drizzle-orm';
 
 import { VERSION_SOURCE, writeArtifact, writeStorePage, type StorePage } from '~/lib/artifacts';
@@ -34,11 +35,21 @@ type Claim = { kind: SubmissionKind } | { kind: 'replace' } | { kind: 'unchanged
 /** What a version's live content is compared on: the bundle and the bundles compiled from it. */
 type Content = Pick<AddonSource, 'sha256' | 'manifest'>;
 
-function sameBytecode(left: PublishedManifest['bytecode'], right: PublishedManifest['bytecode']) {
+function sameDigests(left: PublishedManifest['bytecode'], right: PublishedManifest['bytecode']) {
 	const leftEntries = Object.entries(left ?? {}).toSorted(([a], [b]) => a.localeCompare(b));
 	const rightEntries = Object.entries(right ?? {}).toSorted(([a], [b]) => a.localeCompare(b));
 
 	return JSON.stringify(leftEntries) === JSON.stringify(rightEntries);
+}
+
+// Compares which file each asset and locale ships, since the stored manifest's key order is Postgres's.
+function sameFiles(left: PublishedManifest, right: PublishedManifest) {
+	const paths = (manifest: PublishedManifest) =>
+		listAddonFiles(manifest)
+			.map((file) => `${file.label} ${file.path} ${file.sha256}`)
+			.toSorted();
+
+	return JSON.stringify(paths(left)) === JSON.stringify(paths(right));
 }
 
 function isRepository(candidate: string | null, repository: string): boolean {
@@ -115,7 +126,8 @@ async function checkClaim(
 
 	if (
 		live.sha256 !== content.sha256 ||
-		!sameBytecode(live.manifest.bytecode, manifest.bytecode)
+		!sameDigests(live.manifest.bytecode, manifest.bytecode) ||
+		!sameFiles(live.manifest, manifest)
 	) {
 		return { kind: 'replace' };
 	}
@@ -237,7 +249,10 @@ export async function publishFirstParty(
 	const page = toStorePage(source);
 
 	await Promise.all([
-		writeArtifact(ctx, target, source.bundle, source.bytecode),
+		writeArtifact(ctx, target, source.bundle, {
+			bytecode: source.bytecode,
+			files: source.files,
+		}),
 		page ? writeStorePage(ctx, target, page) : undefined,
 	]);
 

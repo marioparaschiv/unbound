@@ -13,6 +13,7 @@ import type {
 	MetroBulkFind,
 	MetroPropertyRecordOrArray,
 	MetroFunctionSignatureOrArray,
+	MetroModuleOrArray,
 	MetroModuleLoadListener,
 } from '~/metro/types';
 import {
@@ -45,6 +46,10 @@ import { onModuleLoaded } from '~/metro/wait';
 import { CACHE_KEY } from '~/core/constants';
 
 const Logger = createLogger('Metro');
+
+// `bulk` tests many filters in one pass, which no single key can name.
+const uncachedByDesign = new WeakSet<MetroFilter>();
+let warnedUncached = false;
 
 for (const id in state.moduleFlags) {
 	if (hasModuleFlag(Number(id), ModuleFlags.BLACKLISTED)) {
@@ -247,6 +252,14 @@ export function find(filter: MetroFilter, options: MetroSearchOptions = {}) {
 	const key = filter[CACHE_KEY];
 	const cached = key ? getModuleCacheForKey(key) : void 0;
 
+	if (import.meta.env.DEV_TOOLS && !key && !warnedUncached && !uncachedByDesign.has(filter)) {
+		warnedUncached = true;
+		Logger.warn(
+			'A metro filter without a cache key searched uncached. The build keys every predicate it can trace to its definition; one built at runtime, passed through a parameter or chosen conditionally is not. The stack names the call site:',
+			new Error('Uncached metro filter'),
+		);
+	}
+
 	// Tests each module of `ids` in order; an uninitialized one is skipped, or initialized first when `force` is set.
 	// With a `path`, only the module from that file can match.
 	function scan(ids: readonly number[], force: boolean, path?: string) {
@@ -383,45 +396,44 @@ function recordMissing(key: string | undefined, errored: boolean) {
 export function bulk(...items: MetroBulkItem[]) {
 	const result = Array.from<any>({ length: items.length });
 	const hasAll = items.some((i) => i.all);
+	const filter: MetroFilter = (mdl, id) => {
+		for (let i = 0, len = items.length; i < len; i++) {
+			const item = items[i];
 
-	find(
-		((mdl, id) => {
-			for (let i = 0, len = items.length; i < len; i++) {
-				const item = items[i];
-
-				if (!item.filter) {
-					continue;
-				}
-
-				if (item.filter(mdl, id)) {
-					if (item.all) {
-						result[i] ??= [];
-						result[i].push(mdl);
-						continue;
-					}
-
-					result[i] = mdl;
-					continue;
-				}
-
-				if (mdl.default && item.filter(mdl.default, id)) {
-					const payload = (item.interop ?? true) ? mdl.default : mdl;
-
-					if (item.all) {
-						result[i] ??= [];
-						result[i].push(payload);
-						continue;
-					}
-
-					result[i] = payload;
-				}
+			if (!item.filter) {
+				continue;
 			}
 
-			// Loop through whole registry if any of the items have "all" as an option
-			return hasAll ? false : result.filter(Boolean).length === items.length;
-		}) as MetroFilter,
-		{ interop: false },
-	);
+			if (item.filter(mdl, id)) {
+				if (item.all) {
+					result[i] ??= [];
+					result[i].push(mdl);
+					continue;
+				}
+
+				result[i] = mdl;
+				continue;
+			}
+
+			if (mdl.default && item.filter(mdl.default, id)) {
+				const payload = (item.interop ?? true) ? mdl.default : mdl;
+
+				if (item.all) {
+					result[i] ??= [];
+					result[i].push(payload);
+					continue;
+				}
+
+				result[i] = payload;
+			}
+		}
+
+		// Loop through whole registry if any of the items have "all" as an option
+		return hasAll ? false : result.filter(Boolean).length === items.length;
+	};
+
+	uncachedByDesign.add(filter);
+	find(filter, { interop: false });
 
 	return result;
 }
@@ -452,7 +464,7 @@ export function findByProps<
 export function findByFilePath<
 	U extends string,
 	T extends U[] | MetroStringFindWithOptions<U> | MetroBulkFind<U>,
->(...args: T): AnyProps {
+>(...args: T): MetroModuleOrArray<T, U> {
 	const [name, options] = parseOptions<MetroInternalOptions, T>(args);
 
 	return searchWithOptions(name, options, byFilePath);

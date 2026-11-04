@@ -1,4 +1,10 @@
-import type { AssetsModule, UnboundAsset } from '@unbound-app/types/assets';
+import type {
+	AssetName,
+	AssetsModule,
+	AssetType,
+	DiscordAssetName,
+	UnboundAsset,
+} from '@unbound-app/types/assets';
 import { createLogger } from '@unbound-app/logger';
 
 import {
@@ -9,11 +15,20 @@ import {
 	removeAssetFromCache,
 	state,
 } from '~/metro/cache';
+import {
+	isUnregistered,
+	registerOwnedAsset,
+	type AssetRegistration,
+	type RegisteredAsset,
+} from '~/assets/plugin-assets';
 import { find as findModule, initializeModule } from '~/metro/search';
+import { recordedAssets } from '~/assets/registered';
 import { isAssetModule } from '~/metro/candidates';
 import { onModuleLoaded } from '~/metro/wait';
 import { byProps } from '~/metro/filters';
 import { data } from '~/metro/state';
+
+export type { AssetRegistration, RegisteredAsset } from '~/assets/plugin-assets';
 
 /** Called with each asset Discord registers, and its id. */
 export type AssetRegistrationListener = (asset: UnboundAsset, id: number) => void;
@@ -21,7 +36,7 @@ export type AssetRegistrationListener = (asset: UnboundAsset, id: number) => voi
 const Logger = createLogger('Assets');
 
 /** Map of registered asset ids to their {@link UnboundAsset} record. */
-export const assets = new Map<number, UnboundAsset>();
+export const assets: Map<number, UnboundAsset> = recordedAssets;
 
 // `name.type` of each registered asset to its id, so a lookup by name skips a scan.
 const ids = new Map<string, number>();
@@ -48,11 +63,15 @@ export function find(filter: (asset: UnboundAsset) => boolean): UnboundAsset | u
 
 /**
  * @description Finds an asset by its name and type, initializing the module that registers it if needed.
+ * @template T The asset's file type, which picks the names suggested for `name`.
  * @param name The asset name to match.
- * @param type The asset type to match.
+ * @param type The asset type to match, `png` by default.
  * @returns The matched {@link UnboundAsset}, or `undefined` if none match.
  */
-export function getByName(name: string, type: 'svg' | 'png' = 'png'): UnboundAsset | undefined {
+export function getByName<T extends AssetType = 'png'>(
+	name: AssetName<T>,
+	type?: T,
+): UnboundAsset | undefined {
 	const id = getIdByName(name, type);
 
 	return id === void 0 ? void 0 : assets.get(id);
@@ -64,21 +83,27 @@ export function getByName(name: string, type: 'svg' | 'png' = 'png'): UnboundAss
  * @returns The matched {@link UnboundAsset}, or `undefined` if none is registered for that id.
  */
 export function getById(id: number): UnboundAsset | undefined {
+	if (isUnregistered(id)) return;
+
 	return registry?.getAssetByID(id) ?? void 0;
 }
 
 /**
  * @description Looks up an asset's id by its name and type, initializing the module that registers it if needed.
+ * @template T The asset's file type, which picks the names suggested for `name`.
  * @param name The asset name to match.
- * @param type The asset type to match.
+ * @param type The asset type to match, `png` by default.
  * @returns The matched asset's id, or `undefined` if none match.
  */
-export function getIdByName(name: string, type: 'svg' | 'png' = 'png'): number | undefined {
-	const key = keyOf(name, type);
+export function getIdByName<T extends AssetType = 'png'>(
+	name: AssetName<T>,
+	type?: T,
+): number | undefined {
+	const key = keyOf(name, type ?? 'png');
 	const known = ids.get(key);
 
 	if (known !== void 0) {
-		return known;
+		return isUnregistered(known) ? void 0 : known;
 	}
 
 	if (swept) {
@@ -127,8 +152,20 @@ export function onAssetRegistered(listener: AssetRegistrationListener): () => vo
 	return () => void listeners.delete(listener);
 }
 
-/** Proxy resolving any property name to its asset id via {@link getIdByName}. */
-export const icons: Record<string, number | undefined> = new Proxy(
+/**
+ * @description Registers an image generated at runtime, such as a `data:` URI or a file the plugin wrote, with
+ * Discord's asset registry, so `<Image source={id}>` and Discord's icon props draw it. Images a plugin imports
+ * are registered for it. A plugin's names never collide with another's, and its registrations end when it stops.
+ * @param options The image: its name, `uri` or `path`, size in points, type and other `scales`.
+ * @returns The asset's id, and `unregister`.
+ */
+export function register(options: AssetRegistration): RegisteredAsset {
+	return registerOwnedAsset(void 0, options);
+}
+
+/** Proxy resolving any property name to its PNG asset id via {@link getIdByName}; Discord's names are suggested. */
+export const icons: Readonly<Partial<Record<DiscordAssetName<'png'>, number>>> &
+	Readonly<Record<string, number | undefined>> = new Proxy(
 	{},
 	{
 		get: (_, name) => {
@@ -255,5 +292,6 @@ export default {
 	getById,
 	getIdByName,
 	getAll,
+	register,
 	icons,
 };

@@ -5,10 +5,10 @@ import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { patchTypingIndicator } from '~/patches/typing-indicator';
 import { Avatars, UserStore } from '~/modules';
 
-function start() {
+export function start() {
 	if (!ensureModules('Typing Avatars', { Avatars, UserStore })) return;
 
 	applyFeatures('Typing Avatars', [patchTypingIndicator]);
 }
 
-export default { start, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

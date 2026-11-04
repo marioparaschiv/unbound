@@ -1,0 +1,5 @@
+{
+	"GREETING_TITLE": "Hallo!",
+	"GREETING_BODY": "{name} läuft.",
+	"STARS": "{count, plural, =0 {Keine Sterne} one {# Stern} other {# Sterne}}"
+}

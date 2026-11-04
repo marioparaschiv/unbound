@@ -72,12 +72,12 @@ function compress(hash: Int32Array, view: DataView, offset: number) {
 }
 
 /**
- * @description Computes the SHA-256 digest of a string's UTF-8 encoding, with lone surrogates encoded as U+FFFD.
- * @param input The string to hash.
+ * @description Computes the SHA-256 digest of bytes, or of a string's UTF-8 encoding with lone surrogates encoded as U+FFFD.
+ * @param input The bytes or string to hash.
  * @returns The digest as 64 lowercase hexadecimal characters.
  */
-function sha256(input: string): string {
-	const bytes = new TextEncoder().encode(input);
+function sha256(input: string | Uint8Array): string {
+	const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : input;
 	const length = bytes.length;
 	const blocks = new Uint8Array(Math.ceil((length + 9) / 64) * 64);
 	const view = new DataView(blocks.buffer);

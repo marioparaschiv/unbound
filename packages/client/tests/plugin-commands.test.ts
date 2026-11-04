@@ -1,3 +1,5 @@
+import './helpers/core-messages';
+
 import { describe, expect, test } from 'bun:test';
 import type { Plugin } from '@unbound-app/types';
 
@@ -22,7 +24,10 @@ class CommandPlugins extends Plugins {
 			start: () => {
 				// One root per plugin: the registry is shared, and a root another owner holds is refused.
 				createCommands(id).register({
-					[rootOf(id)]: { description: 'Ping', execute: () => 'pong' },
+					[rootOf(id)]: {
+						description: 'UNBOUND_COMMAND_RELOAD_DESC',
+						execute: () => 'pong',
+					},
 				});
 
 				if (startThrows) {

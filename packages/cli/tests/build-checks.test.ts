@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 
-import type { BuildCheck, BuildCheckIssue } from '../src/lib/build-checks';
 import type { DiscoveredAddon } from '../src/lib/discovery';
+import type { Diagnostic } from '../src/rollup/diagnostic';
+import type { Check } from '../src/lib/check/check';
 
 import { createTempDir, runUbd, type TempDir } from './helpers/ubd';
 import { buildWithChecks } from '../src/lib/build-checks';
@@ -44,10 +45,14 @@ async function findAddon(dir: TempDir, id: string): Promise<DiscoveredAddon> {
 	return addon;
 }
 
-function reporting(issues: BuildCheckIssue[], seen: string[] = []): BuildCheck {
+function issue(severity: Diagnostic['severity'], message: string): Diagnostic {
+	return { file: 'src/index.tsx', line: 1, column: 1, severity, message };
+}
+
+function reporting(issues: Diagnostic[], seen: string[] = []): Check {
 	return {
-		name: 'fixture',
-		run(addon) {
+		id: 'fixture',
+		run({ addon }) {
 			seen.push(addon.id);
 
 			return issues;
@@ -58,22 +63,22 @@ function reporting(issues: BuildCheckIssue[], seen: string[] = []): BuildCheck {
 describe('buildWithChecks', () => {
 	test('an error from a check fails the build', async () => {
 		const addon = await findAddon(workspace('true'), 'com.example.built');
-		const check = reporting([{ severity: 'error', message: 'broken layout' }]);
+		const check = reporting([issue('error', 'broken layout')]);
 
 		expect(await buildWithChecks(addon, 'true', [check])).toBe(false);
 	});
 
 	test('a warning from a check does not fail the build', async () => {
 		const addon = await findAddon(workspace('true'), 'com.example.built');
-		const check = reporting([{ severity: 'warning', message: 'large media' }]);
+		const check = reporting([issue('warning', 'large media')]);
 
 		expect(await buildWithChecks(addon, 'true', [check])).toBe(true);
 	});
 
 	test('a check that throws fails the build', async () => {
 		const addon = await findAddon(workspace('true'), 'com.example.built');
-		const check: BuildCheck = {
-			name: 'crashing',
+		const check: Check = {
+			id: 'crashing',
 			run() {
 				throw new Error('boom');
 			},
@@ -85,7 +90,7 @@ describe('buildWithChecks', () => {
 	test('a static addon skips the bundle step but runs the checks', async () => {
 		const addon = await findAddon(workspace('exit 1'), 'com.example.static');
 		const seen: string[] = [];
-		const check = reporting([{ severity: 'error', message: 'broken layout' }], seen);
+		const check = reporting([issue('error', 'broken layout')], seen);
 
 		expect(addon.static).toBe(true);
 		expect(await buildWithChecks(addon, 'exit 1', [check])).toBe(false);
@@ -104,7 +109,7 @@ describe('buildWithChecks', () => {
 		const addon = await findAddon(workspace('true'), 'com.example.built');
 		const seen: string[] = [];
 		const checks = ['first', 'second', 'third'].map((name) => ({
-			name,
+			id: name,
 			run() {
 				seen.push(name);
 
@@ -123,9 +128,9 @@ describe('ubd build', () => {
 		const result = await runUbd(['build'], dir.path, {});
 
 		expect(result.exitCode).toBe(0);
-		expect(result.stdout).toContain('Building com.example.built…');
-		expect(result.stdout).toContain('Checking com.example.static (static addon)…');
-		expect(result.stdout).toContain('Built com.example.static.');
+		expect(result.stderr).toContain('Building com.example.built…');
+		expect(result.stderr).toContain('Checking com.example.static (static addon)…');
+		expect(result.stderr).toContain('Built com.example.static.');
 	});
 
 	test('fails when the bundle step fails', async () => {

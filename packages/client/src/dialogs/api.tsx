@@ -2,6 +2,11 @@ import type { ComponentType, ReactNode } from 'react';
 import uuid from '@unbound-app/utils/uuid';
 import { Alert } from 'react-native';
 
+import type { AlertOptions, ConfirmOptions, DialogReadOptions } from '~/dialogs/feedback';
+import type { MessageKey, PlainMessageKey, VarsMessageKey } from '~/i18n/message';
+import DialogCloseWatcher from '~/dialogs/dialog-close-watcher';
+import { createFeedbackDialogs } from '~/dialogs/feedback';
+import { coreMessages } from '~/i18n/core-lookup';
 import { Discord } from '~/metro/design';
 
 /** A dialog button's style; the system alert fallback only distinguishes `destructive`. */
@@ -37,6 +42,8 @@ export type AlertDialogProps = {
 	cancel?: boolean | string;
 	/** Runs when the cancel button closes the dialog. */
 	onCancel?: () => void;
+	/** Runs when the dialog closes without a button: the backdrop, the back gesture, or its handle's `dismiss`. */
+	onDismiss?: () => void;
 };
 
 /** An open dialog, as {@link showDialog} returns it. */
@@ -47,22 +54,19 @@ export type DialogHandle = {
 	dismiss: () => void;
 };
 
-/** The question {@link confirm} asks. */
-export type ConfirmOptions = {
-	/** The question, shown as the dialog's heading. */
-	title: string;
-	/** Text shown below the title. */
-	body?: string;
-	/** The text on the button that resolves `true`. */
-	confirmLabel: string;
-	/** The text on the button that resolves `false`; `Cancel` when omitted. */
-	cancelLabel?: string;
-	/** Styles the confirm button as `destructive` instead of `primary`. */
-	destructive?: boolean;
-};
-
 const DEFAULT_CANCEL_LABEL = 'Cancel';
-const open = new Set<string>();
+// Each open dialog's key, mapped to what runs when it closes without a button.
+const open = new Map<string, (() => void) | undefined>();
+const feedback = createFeedbackDialogs({ messages: coreMessages, core: coreMessages, showDialog });
+
+function closeWithoutButton(key: string) {
+	if (!open.has(key)) return;
+
+	const onDismiss = open.get(key);
+
+	open.delete(key);
+	onDismiss?.();
+}
 
 function allButtons(options: AlertDialogProps): DialogButton[] {
 	const buttons = [...(options.buttons ?? [])];
@@ -98,6 +102,7 @@ function showNativeAlert(options: AlertDialogProps, buttons: DialogButton[]) {
 			style: nativeStyle(button, Boolean(options.cancel) && index === buttons.length - 1),
 			onPress: button.onPress,
 		})),
+		options.onDismiss ? { cancelable: true, onDismiss: options.onDismiss } : undefined,
 	);
 }
 
@@ -113,9 +118,15 @@ export function showDialog(options: AlertDialogProps): DialogHandle {
 	const buttons = allButtons(options);
 
 	function dismiss() {
-		if (!open.delete(key)) return;
+		if (!open.has(key)) return;
 
 		Discord.dismissAlert?.(key);
+		closeWithoutButton(key);
+	}
+
+	// A press may unmount the dialog before its handler runs; waiting a microtask lets the press claim the key first.
+	function handleUnmount() {
+		void Promise.resolve().then(() => closeWithoutButton(key));
 	}
 
 	if (
@@ -130,9 +141,14 @@ export function showDialog(options: AlertDialogProps): DialogHandle {
 
 	const { AlertModal, AlertActionButton } = Discord;
 	const Content = options.content;
-	const extraContent: ReactNode = Content ? <Content dismiss={dismiss} /> : undefined;
+	const extraContent: ReactNode = (
+		<>
+			{Content ? <Content dismiss={dismiss} /> : null}
+			<DialogCloseWatcher onClose={handleUnmount} />
+		</>
+	);
 
-	open.add(key);
+	open.set(key, options.onDismiss);
 	Discord.openAlert(
 		key,
 		<AlertModal
@@ -161,44 +177,71 @@ export function showDialog(options: AlertDialogProps): DialogHandle {
 }
 
 /**
- * @description Asks a yes-or-no question with a confirm and a cancel button.
- * @param options The question and the confirm button's label.
- * @returns Whether the user confirmed; closing the dialog any other way counts as no.
+ * @description Asks a yes-or-no question with a confirm and a cancel button, each text a message key.
+ * @template T The title's key.
+ * @template B The body's key.
+ * @param title The question's message key.
+ * @param options The `body`, `confirm` and `cancel` keys, `titleVars` and `bodyVars` for keys with placeholders, and `destructive`.
+ * @returns Whether the user confirmed; cancel, the backdrop, the back gesture or a dismiss resolve `false`.
  */
-export function confirm(options: ConfirmOptions): Promise<boolean> {
-	return new Promise((resolve) => {
-		showDialog({
-			title: options.title,
-			body: options.body,
-			buttons: [
-				{
-					label: options.confirmLabel,
-					variant: options.destructive ? 'destructive' : 'primary',
-					onPress: () => resolve(true),
-				},
-			],
-			cancel: options.cancelLabel ?? true,
-			onCancel: () => resolve(false),
-		});
-	});
+export function confirm<T extends MessageKey, B extends MessageKey = never>(
+	title: T,
+	options: ConfirmOptions<T, B>,
+): Promise<boolean> {
+	return feedback.confirm(title, options);
 }
 
 /**
- * @description Closes every dialog this API opened.
+ * @description Tells the user something in a dialog with one button, each text a message key.
+ * @template T The title's key.
+ * @template B The body's key.
+ * @param title The dialog's message key.
+ * @param options The `body` and `confirm` keys, and `titleVars` and `bodyVars` for keys with placeholders.
+ * @returns A promise that resolves once the dialog closes, however it closes.
+ */
+export function alert<T extends PlainMessageKey, B extends MessageKey = never>(
+	title: T,
+	options?: AlertOptions<T, B>,
+): Promise<void>;
+/**
+ * @description Tells the user something in a dialog with one button, titled by a key with placeholders.
+ * @template T The title's key.
+ * @template B The body's key.
+ * @param title The dialog's message key.
+ * @param options `titleVars`, then the `body` and `confirm` keys, and `bodyVars` for a body with placeholders.
+ * @returns A promise that resolves once the dialog closes, however it closes.
+ */
+export function alert<T extends VarsMessageKey, B extends MessageKey = never>(
+	title: T,
+	options: AlertOptions<T, B>,
+): Promise<void>;
+export function alert(title: MessageKey, options?: DialogReadOptions): Promise<void> {
+	return Reflect.apply(feedback.alert, undefined, [title, options]);
+}
+
+/**
+ * @description Closes every dialog this API opened, running each one's `onDismiss`.
  */
 export function dismissAll() {
-	for (const key of open) {
-		open.delete(key);
+	// Deleting the current entry while iterating a Map is safe; the loop moves on to the next.
+	for (const key of open.keys()) {
 		Discord.dismissAlert?.(key);
+		closeWithoutButton(key);
 	}
 }
 
-/** Starts the dialogs API; it keeps no state until a dialog opens. */
+/**
+ * Starts the dialogs API; it keeps no state until a dialog opens.
+ * @internal
+ */
 export function start() {}
 
-/** Closes any dialog still open. */
+/**
+ * Closes any dialog still open.
+ * @internal
+ */
 export function stop() {
 	dismissAll();
 }
 
-export default { showDialog, confirm, dismissAll, start, stop };
+export default { showDialog, confirm, alert, dismissAll, start, stop };

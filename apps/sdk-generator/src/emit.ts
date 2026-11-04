@@ -68,8 +68,11 @@ export function buildRoot(entries: ModuleEntry[], aliases: NamespaceAlias[] = []
 			`${docComment(alias.doc)}export declare const ${alias.name}: typeof import('${specifierOf.get(alias.target)}');`,
 	);
 
-	return `${[...lines, ...declarations].join('\n')}\n`;
+	return `${IMAGE_MODULES_REFERENCE}\n\n${[...lines, ...declarations].join('\n')}\n`;
 }
+
+// Types image imports; hand-written outside the generated `src`, and loaded by both the root barrel and the globals.
+const IMAGE_MODULES_REFERENCE = '/// <reference path="../ambient/image-modules.d.ts" />';
 
 function docComment(doc: string): string {
 	return doc ? `/** ${doc} */\n` : '';
@@ -268,12 +271,12 @@ export function buildGlobal(
 			})),
 	);
 
-	return `${sourceFile.getFullText().trim()}\n`;
+	return `${IMAGE_MODULES_REFERENCE}\n\n${sourceFile.getFullText().trim()}\n`;
 }
 
 /**
  * @description Builds the `@unbound-app/api` `exports` map: the root, the globals, each module, and the
- * hand-written testing kit in `packages/api/testing`, which lives outside the generated `src`.
+ * shared types, and the hand-written testing kit in `packages/api/testing` (its preset and the ICU parser the CLI shares).
  * @param entries The emitted module entries.
  * @returns The map, sorted by subpath.
  */
@@ -282,6 +285,9 @@ export function buildExports(entries: ModuleEntry[]): Record<string, string> {
 		'.': './src/index.d.ts',
 		'./global': './src/global.d.ts',
 		'./testing': './testing/index.ts',
+		'./testing/icu-parse': './testing/icu-parse.ts',
+		'./testing/preset': './testing/preset.ts',
+		'./types': './src/_types.d.ts',
 	};
 
 	for (const entry of entries) {
@@ -312,7 +318,9 @@ export function writeManifest(version: string, entries: ModuleEntry[]) {
 
 	manifest.version = version;
 	manifest.exports = buildExports(entries);
-	manifest.files = ['src', 'testing'];
+	manifest.files = ['src', 'ambient', 'testing'];
+	// The testing kit is ESM TypeScript that the CLI's rollup config imports under Node.
+	manifest.type = 'module';
 
 	writeFileSync(API_MANIFEST, JSON.stringify(manifest, null, '\t') + '\n');
 }

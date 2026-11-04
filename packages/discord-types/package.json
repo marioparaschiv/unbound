@@ -18,7 +18,9 @@
 	"types": "./src/index.gen.d.ts",
 	"exports": {
 		".": "./src/index.gen.d.ts",
-		"./design": "./src/barrels.gen.d.ts"
+		"./design": "./src/barrels.gen.d.ts",
+		"./assets": "./src/assets.gen.d.ts",
+		"./metro": "./src/metro.gen.d.ts"
 	},
 	"peerDependencies": {
 		"@types/react": "catalog:react",

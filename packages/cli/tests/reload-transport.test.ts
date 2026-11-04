@@ -224,6 +224,27 @@ describe('readBuiltAddon', () => {
 		});
 	});
 
+	test('sends each image the built manifest lists, base64-encoded, by path', () => {
+		const plugin = builtPlugin();
+		const image = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
+		const digest = createHash('sha256').update(image).digest('hex');
+
+		mkdirSync(join(plugin.output, 'assets'));
+		writeFileSync(join(plugin.output, 'assets', `${digest}.png`), image);
+		writeFileSync(
+			join(plugin.output, 'manifest.json'),
+			JSON.stringify({
+				id: 'com.example.sample',
+				main: 'index.js',
+				assets: { star: { type: 'png', width: 4, height: 4, scales: { 1: digest } } },
+			}),
+		);
+
+		expect(readBuiltAddon(plugin).files).toEqual({
+			[`assets/${digest}.png`]: image.toString('base64'),
+		});
+	});
+
 	test('falls back to the source manifest when the build wrote none', () => {
 		const plugin = builtPlugin();
 		const { manifest, bundle } = readBuiltAddon(plugin);

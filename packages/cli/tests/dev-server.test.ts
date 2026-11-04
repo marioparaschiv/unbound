@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { describe, expect, test, afterEach } from 'bun:test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -132,5 +132,73 @@ export function start(context: PluginContext) {
 				platforms: { ios: { capabilities: ['native.objc.classes'] } },
 			}),
 		]);
+	});
+});
+
+async function waitFor(check: () => boolean, timeoutMs: number): Promise<boolean> {
+	const deadline = Date.now() + timeoutMs;
+
+	while (Date.now() < deadline) {
+		if (check()) {
+			return true;
+		}
+
+		await Bun.sleep(20);
+	}
+
+	return check();
+}
+
+describe('DevServer locales', () => {
+	test('rewrites the typings within a second of saving en-US.json', async () => {
+		// The build command writes nothing, so the typings can only come from the watcher.
+		const root = workspace('true');
+		const pluginDir = join(root, 'plugins', 'sample');
+		const typings = join(pluginDir, 'src', 'unbound-i18n.d.ts');
+
+		mkdirSync(join(pluginDir, 'i18n'));
+		writeFileSync(join(pluginDir, 'i18n', 'en-US.json'), JSON.stringify({ TITLE: 'Hi' }));
+
+		const server = new DevServer(loadWorkspace(root), recordingTransport());
+
+		await server.start();
+
+		writeFileSync(
+			join(pluginDir, 'i18n', 'en-US.json'),
+			JSON.stringify({ TITLE: 'Hi', GREETING: 'Hello, {name}!' }),
+		);
+
+		const updated = await waitFor(
+			() => existsSync(typings) && readFileSync(typings, 'utf8').includes('GREETING:'),
+			1_000,
+		);
+
+		server.stop();
+
+		expect(updated).toBe(true);
+		expect(readFileSync(typings, 'utf8')).toContain('GREETING: { name: string | number };');
+	});
+});
+
+describe('DevServer settings typings', () => {
+	function pending(server: DevServer): number {
+		return (Reflect.get(server, 'timers') as Map<string, unknown>).size;
+	}
+
+	test('rebuilds on a settings.ts or en-US change, but not on the typings the build writes', async () => {
+		const root = workspace('true');
+		const server = new DevServer(loadWorkspace(root), recordingTransport());
+		const plugin = join(root, 'plugins', 'sample');
+		const onChange = (path: string) =>
+			Reflect.apply(Reflect.get(server, 'onChange'), server, [path]);
+
+		await server.start();
+		onChange(join(plugin, 'src', 'unbound-settings.d.ts'));
+		onChange(join(plugin, 'src', 'unbound-i18n.d.ts'));
+		expect(pending(server)).toBe(0);
+
+		onChange(join(plugin, 'settings.ts'));
+		expect(pending(server)).toBe(1);
+		server.stop();
 	});
 });

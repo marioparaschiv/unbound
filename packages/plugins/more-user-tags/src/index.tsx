@@ -25,7 +25,7 @@ let settled = () => Promise.resolve();
 let gradientProblems: () => Promise<string[]> = () => Promise.resolve([]);
 let gradientsDrawn = () => 0;
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	const modules = { DiscordConstants, PermissionUtils, TagProperties, ChannelStore, GuildStore };
 
 	if (!ensureModules('More User Tags', modules)) return;
@@ -56,7 +56,7 @@ function start(context: PluginContext) {
 	]);
 }
 
-function stop() {
+export function stop() {
 	clearTagProblems();
 	dispose();
 	dispose = () => {};
@@ -64,7 +64,7 @@ function stop() {
 	return settled();
 }
 
-async function selfTest() {
+export async function selfTest() {
 	const problems = [...tagProblems(), ...(await gradientProblems())];
 
 	if (problems.length) {
@@ -82,9 +82,4 @@ async function selfTest() {
 		: features;
 }
 
-export default {
-	start,
-	stop,
-	selfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { SettingsPanel };

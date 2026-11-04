@@ -25,7 +25,7 @@ describe('checkSurface', () => {
 		PROGRAM_TIMEOUT_MS,
 	);
 
-	test('reads value exports and public class members, without types, default or private members', () => {
+	test('reads value exports and public class members, without types, default, private or @internal members', () => {
 		const { surfaces } = readRuntimeSurfaces(SOURCES);
 
 		expect(surfaces).toEqual({

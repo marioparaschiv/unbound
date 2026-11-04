@@ -1,0 +1,19 @@
+    r10 = r7.__d;
+    r0 = 14213;
+    r9 = [1134];
+    r8 = function(a0, a1, a2, a3, a4, a5, a6) {
+        r1 = a6;
+        r2 = r1[r0];
+        r0 = undefined;
+        r1 = a1;
+        r3 = r1.bind(r0)(r2);
+        r2 = r3.registerAsset;
+        r1 = {'__packager_asset': true, 'httpServerLocation': '/assets/design/components/LottieIcon/native/generated/lotties', 'scales': null, 'hash': '6a5cd110534b64950591f570afc3306f', 'name': 'NitroGem1', 'type': 'lottie'};
+        r4 = [1];
+        r1[2] = r4;
+        r2 = r2.bind(r3)(r1);
+        r1 = a4;
+        r1['exports'] = r2;
+        return r0;
+    };
+    r8 = r10.bind(r5)(r8, r0, r9);

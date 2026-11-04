@@ -1,7 +1,8 @@
 import type { DesignBarrelComponents } from '@unbound-app/discord-types/design';
 import type { ImageStyle, TextStyle, ViewStyle } from 'react-native';
-import type { ReactNode } from 'react';
+import type { ComponentType, ReactElement, ReactNode } from 'react';
 
+import type { LooseModule } from './loose-props';
 import type { LiteralUnion } from './utils';
 
 /** A function exported by a Discord module, whose signature Discord does not document. */
@@ -9,6 +10,20 @@ export type DiscordFunction<T = any> = (...args: any[]) => T;
 
 /** A semantic colour token from `Theme.colors`, which `useToken` resolves to a colour string. */
 export type SemanticColorToken = Readonly<Record<string, string | number | boolean>>;
+
+/** The sizes of Discord's icons, from 12 points (`xxs`) to 32 (`lg`); `custom` leaves the size to `style`. */
+export type DiscordIconSize = 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'custom' | 'refresh_sm';
+
+/** The props Discord passes its `*Icon` components, such as `WrenchIcon`, and an imported SVG takes. */
+export type DiscordIconProps = {
+	/** A size on Discord's scale, or points. Defaults to `'md'` (24). */
+	size?: DiscordIconSize | number;
+	/** A theme token or a colour. Defaults to the theme's interactive icon colour. */
+	color?: SemanticColorToken | string;
+};
+
+/** An icon a row or toast draws: an asset id, an element such as `<Star />`, or an icon component such as `Star`. */
+export type IconInput = number | ReactElement | ComponentType<DiscordIconProps>;
 
 /** The components of Discord's design module, each of which Unbound can stand in for when Discord drops it. */
 export const DESIGN_COMPONENTS = [
@@ -52,8 +67,11 @@ export const DESIGN_COMPONENTS = [
 /** The name of one component in {@link DESIGN_COMPONENTS}. */
 export type DesignComponentName = (typeof DESIGN_COMPONENTS)[number];
 
-/** Every component the `design/native.tsx` barrel exports, typed only by `bun run generate-discord-types`. */
-export type DesignComponents = DesignBarrelComponents;
+/**
+ * Every component the `design/native.tsx` barrel exports, typed by `bun run generate-discord-types` and made
+ * {@link LooseModule | loose}: known props optional and checked where concrete, unknown props allowed.
+ */
+export type DesignComponents = LooseModule<DesignBarrelComponents>;
 
 /**
  * The Discord mobile design system module (keyed by `createStyles` / `dismissAlerts` / `ContextMenu`).
@@ -194,6 +212,8 @@ export type SegmentedControlStateOptions = {
 	defaultIndex?: number;
 	/** Called with the new index when the selected page changes. */
 	onPageChange?: (index: number) => void;
+	/** Called with the index of the tab the user selects. */
+	onSetActiveIndex?: (index: number) => void;
 };
 
 /* ------------------------------------------------------------------ *

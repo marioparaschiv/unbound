@@ -155,7 +155,7 @@ export function collectLocalDocument(): SyncDocument {
 	);
 	const synced: SyncDocument['settings'] = {};
 
-	for (const [name, store] of Object.entries(snapshot())) {
+	for (const [name, store] of Object.entries(snapshot({ includeSecrets: true }))) {
 		if (name.startsWith(SYNC_LOCAL_STORE_PREFIX) || RESERVED_STORES.has(name)) {
 			continue;
 		}

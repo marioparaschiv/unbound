@@ -6,6 +6,7 @@ import type {
 } from '@unbound-app/contracts/review';
 import type { ReviewDecision, SubmissionKind } from '@unbound-app/contracts/publish';
 import { submissionKindSchema } from '@unbound-app/contracts/publish';
+import { listAddonFiles } from '@unbound-app/contracts/addon-files';
 import { and, eq } from 'drizzle-orm';
 
 import { toAddonVersion, writeArtifact, writeStorePage, type StorePage } from '~/lib/artifacts';
@@ -21,6 +22,7 @@ import { readPageMedia } from '~/lib/addon-page-source';
 import { requirePermission } from '~/lib/api/caller';
 import type { Permissions } from '~/lib/auth/access';
 import { connectGitHubIfLinked } from '~/lib/github';
+import { readListedFiles } from '~/lib/addon-files';
 import { hasPermission } from '~/lib/auth/access';
 import type { Transaction } from '~/db/database';
 import { toVersionKey } from '~/lib/version-key';
@@ -235,8 +237,29 @@ async function readPinnedStorePage(
 	return { addonMd, measured: page, media: await readPageMedia(ctx.env, github, location, page) };
 }
 
+// Extra files are never staged: like media, approval re-reads them from the pinned commit's blobs.
+async function readPinnedFiles(
+	ctx: AppContext,
+	row: SourcedSubmissionRow,
+): Promise<ReadonlyMap<string, Uint8Array>> {
+	if (!listAddonFiles(row.manifest).length) {
+		return new Map();
+	}
+
+	const { commitSha, bundlePath } = row.source;
+	const github = await connectGitHubIfLinked(ctx, row.authorId);
+	const tree = await github.getTree(row.repository, commitSha);
+	const location = { repository: row.repository, tree, bundlePath, commitSha };
+
+	return readListedFiles(ctx.env, github, location, row.manifest);
+}
+
 async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<string> {
-	const [bundle, page] = await Promise.all([readBundle(ctx, row), readPinnedStorePage(ctx, row)]);
+	const [bundle, page, files] = await Promise.all([
+		readBundle(ctx, row),
+		readPinnedStorePage(ctx, row),
+		readPinnedFiles(ctx, row),
+	]);
 	const sha256 = new Bun.CryptoHasher('sha256').update(bundle).digest('hex');
 
 	if (
@@ -251,7 +274,7 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
 	}
 
 	await Promise.all([
-		writeArtifact(ctx, row, bundle),
+		writeArtifact(ctx, row, bundle, { files }),
 		page ? writeStorePage(ctx, row, page) : undefined,
 	]);
 

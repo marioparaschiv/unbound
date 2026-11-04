@@ -153,7 +153,7 @@ export function resolveLibraryTypes(library: string): string | undefined {
  * @param out The absolute output path of this hoist file, used to resolve relative import specifiers.
  * @param ownerByName Names already owned by an earlier hoist file. Declarations for these names are
  * pruned so each shared type is declared in exactly one file (e.g. the utils names claimed by
- * `utils.d.ts` are removed from the `@unbound-app/types` index bundle that would otherwise re-declare
+ * `_types.d.ts` are removed from the `@unbound-app/types` index bundle that would otherwise re-declare
  * them in `_internal.d.ts`); any pruned name still referenced by a surviving declaration is imported
  * from its owning hoist file so the reference resolves.
  * @returns The bundle text and the set of names it declares, or `undefined` if it has no typings.
@@ -227,7 +227,7 @@ export function bundleLibrary(
 	const survivors = sourceFile.getStatements();
 
 	// A pruned name still referenced by a surviving declaration must be imported from its owning hoist
-	// file so the reference resolves (e.g. `_internal.d.ts` referencing `Fn`, now owned by `utils.d.ts`).
+	// file so the reference resolves (e.g. `_internal.d.ts` referencing `Fn`, now owned by `_types.d.ts`).
 	const referenced = collectReferencedNames(survivors);
 	const importsByOwner = groupByOwner(
 		[...referenced].filter((name) => ownerByName.get(name) !== out),
@@ -276,7 +276,7 @@ export function buildHoistFiles(): HoistFiles {
 	const ownerByName = new Map<string, string>();
 	const hoistedValues = new Set<string>();
 
-	// The utils typings are hoisted first so their names claim the public `utils.d.ts` home before the
+	// The utils typings are hoisted first so their names claim the public `_types.d.ts` home before the
 	// `@unbound-app/types` index claims the rest for `_internal.d.ts`.
 	const assigned = new Set<string>([UTILS_OUT, INTERNAL_OUT]);
 
@@ -289,8 +289,8 @@ export function buildHoistFiles(): HoistFiles {
 			return out;
 		}
 
-		// A scope-stripped name that is already taken (e.g. `@unbound-app/utils` vs the fixed
-		// `utils.d.ts` home) keeps its scope so distinct libraries never share a file.
+		// A scope-stripped name that is already taken (e.g. a library named like a fixed
+		// hoist home) keeps its scope so distinct libraries never share a file.
 		const scoped = flat(library.replace(/^@/, ''));
 
 		if (!assigned.has(scoped)) {

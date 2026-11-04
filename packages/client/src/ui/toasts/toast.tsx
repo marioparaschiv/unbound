@@ -10,6 +10,7 @@ import { Discord } from '~/metro/components';
 import useToastStore from '~/toasts/state';
 import { icons } from '~/assets/api';
 
+import isIconComponent from './is-icon-component';
 import useToastState from './use-toast-state';
 import ToastContent from './toast-content';
 import ToastSurface from './toast-surface';
@@ -100,7 +101,13 @@ function Toast({ id }: ToastProps) {
 									size={button.size || 'sm'}
 									onPress={button.onPress}
 									iconPosition={button.iconPosition || 'start'}
-									icon={button.icon || undefined}
+									icon={
+										isIconComponent(button.icon) ? (
+											<button.icon size='sm' />
+										) : (
+											button.icon || undefined
+										)
+									}
 									text={button.content}
 								/>
 							))}

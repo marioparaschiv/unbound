@@ -7,7 +7,7 @@ import { patchMessageActions } from '~/patches/message-actions';
 import { patchReplyActions } from '~/patches/reply-actions';
 import { createKeptReplies } from '~/kept-replies';
 
-function start() {
+export function start() {
 	if (!ensureModules('GIF Paste', { MessageActions, ReplyActions, PendingReplyStore })) return;
 
 	const keptReplies = createKeptReplies();
@@ -18,4 +18,4 @@ function start() {
 	]);
 }
 
-export default { start, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

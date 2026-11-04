@@ -42,6 +42,17 @@ export async function runUbd(args: string[], cwd: string, env: EnvSource): Promi
 	return { exitCode, stdout, stderr };
 }
 
+const BUILD_PROGRESS = /^(Building|Checking|Built) .*\n/gm;
+
+/**
+ * @description Drops the progress lines `ubd build` prints on stderr, leaving its warnings and errors.
+ * @param stderr The command's stderr.
+ * @returns The stderr without progress lines.
+ */
+export function withoutProgress(stderr: string): string {
+	return stderr.replace(BUILD_PROGRESS, '');
+}
+
 /**
  * @description Creates a temporary directory holding the given files.
  * @param files File contents by path relative to the directory.

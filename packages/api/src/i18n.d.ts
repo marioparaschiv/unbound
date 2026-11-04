@@ -3,39 +3,44 @@
 /** The core messages proxy, resolving Unbound's own UI strings against the active Discord locale. */
 export declare const messages: Record<string, string>;
 /**
- * @description Creates an isolated, in-memory `messages`/`format` pair over an addon-supplied string table, sharing the active locale with core.
- * @param table The addon's string store, keyed by locale then message key.
- * @returns A `messages` proxy and `format` function scoped to the supplied table.
- */
-export declare function defineMessages(table: StringStore): Localizations;
-/**
- * @description Drains every active locale-change subscription. Idempotent. Twin of {@link init}.
- */
-export declare function destroy(): void;
-/**
  * @description Formats a localized string, interpolating ICU `MessageFormat` placeholders.
  * @param key The message key to resolve and format.
  * @param vars The variables to interpolate into the message.
  * @returns The formatted string.
  */
 export declare function format(key: string, vars?: FormatVars): string;
-/**
- * @description Loads the fallback and active locales, then subscribes to Discord locale changes. Fire-and-forget; never blocks startup. Twin of {@link destroy}.
- * @returns A promise that resolves once the initial locales have been ensured and the subscription is wired.
- */
-export declare function init(): Promise<void>;
-/** The values `format` puts into a message's ICU `MessageFormat` placeholders, by placeholder name. */
-export type FormatVars = Record<string, string | number | boolean | Date>;
-/** One locale's messages, keyed by message key. */
-export type LocaleStrings = Record<string, string>;
-/** A `messages`/`format` pair over one string table, as `defineMessages` returns. */
-export type Localizations = {
+/** An addon's `messages`, `format` and `useMessages`, over en-US and at most one other locale. */
+export type AddonLocales = {
 	/** Each message in the active locale, falling back to en-US, then the key itself. */
-	messages: Record<string, string>;
+	messages: LocaleStrings;
 	/** Formats a message in the active locale, filling its placeholders from `vars`. */
 	format: (key: string, vars?: FormatVars) => string;
+	/**
+	 * Re-renders the component when the locale changes or its table loads. Returns the active locale code,
+	 * a dependency for `useMemo` and `useCallback` over strings.
+	 */
+	useMessages: () => string;
+	/** The en-US messages inlined in the bundle. */
+	source: Readonly<LocaleStrings>;
+	/** Calls the listener when the locale changes or its table loads; returns the remover. */
+	subscribe: (listener: () => void) => () => void;
+	/** The locales held in memory: en-US, and the active one once it loaded. */
+	loadedLocales: () => string[];
+	/** Stops following locale changes and drops the loaded table. */
+	dispose: () => void;
 };
-/** A string table: each locale code, such as `en-US`, mapped to its messages. */
-export type StringStore = Record<string, LocaleStrings>;
+/** The values `format` puts into a message's ICU `MessageFormat` placeholders, by placeholder name. */
+export type FormatVars = Record<string, string | number | boolean | Date>;
+/** Where an addon's translations live: the codes its manifest lists, and how to read one. */
+export type LocaleSource = {
+	/** The addon's id, named in errors. */
+	owner: string;
+	/** Every locale the addon ships beside its bundle, en-US aside. */
+	codes: readonly string[];
+	/** Reads one locale's JSON, such as from `<addon folder>/i18n/<code>.json`. */
+	read: (code: string) => Promise<string>;
+};
+/** One locale's messages, keyed by message key. */
+export type LocaleStrings = Record<string, string>;
 
 export {};

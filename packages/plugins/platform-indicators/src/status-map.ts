@@ -42,7 +42,7 @@ export function usePlatformStatuses(userId: string): PlatformStatus[] {
 	const key = flux.useStore(
 		[PresenceStore, SessionsStore],
 		() => statusesKey(getPlatformStatuses(userId)),
-		[userId],
+		{ deps: [userId] },
 	);
 
 	return useMemo(() => parseStatusesKey(key), [key]);

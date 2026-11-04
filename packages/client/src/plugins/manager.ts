@@ -9,11 +9,14 @@ import { Addons, rememberSourceDigest } from '~/addons/addons';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
+import { readPluginEntry } from '~/plugins/legacy-entry';
 import type { ReloadResult } from '~/addons/addons';
 import { createAddonScope } from '~/addons/scope';
 import { setOwnerCheck } from '~/commands/owners';
+import type { AddonFiles } from '~/addons/files';
 import { registry } from '~/commands/registry';
 import { Manager } from '~/addons/manager';
+import fs from '~/native/fs';
 
 /**
  * @description Manages plugins, building on the base {@link Addons} manager to load and evaluate plugin bundles.
@@ -32,8 +35,11 @@ type EvaluatedPlugin = {
 	factory: PluginFactory;
 };
 
-// The module `__load` returns is read through the wrapper's own methods, so only the call matters here.
-type LazyPlugin = { __load: () => void };
+// The CLI's entrypoint wraps the module; `__load` runs it and returns its named exports.
+type LazyPlugin = {
+	// UNKNOWN: the module is whatever the entry exported; `readPluginEntry` narrows it.
+	__load: () => unknown;
+};
 
 // UNKNOWN: a bundle's payload is whatever its IIFE returned.
 function isLazyPlugin(value: unknown): value is LazyPlugin {
@@ -104,6 +110,7 @@ export class Plugins extends Addons<Plugin> {
 	 * @param bundle The freshly built bundle source.
 	 * @param manifest The freshly built manifest, as received; {@link Addons.reload} validates it.
 	 * @param bytecode The bundle compiled for this runtime, base64-encoded, which then runs instead of the source.
+	 * @param files The extra files to write beside the bundle, such as images, by path.
 	 * @returns The reload outcome.
 	 */
 	async reload(
@@ -111,6 +118,7 @@ export class Plugins extends Addons<Plugin> {
 		bundle: string,
 		manifest: PushedManifest,
 		bytecode?: string,
+		files?: AddonFiles,
 	): Promise<ReloadResult> {
 		// The bytecode lookup during the reload reads this entry; a rejected push puts the old one back.
 		const previous = this.scanned.get(manifest.id);
@@ -119,7 +127,7 @@ export class Plugins extends Addons<Plugin> {
 			this.scanned.set(manifest.id, { bundle, folder: manifest.id });
 		}
 
-		const result = await super.reload(entity, bundle, manifest, bytecode);
+		const result = await super.reload(entity, bundle, manifest, bytecode, files);
 
 		if (!result.ok && bytecode) {
 			if (previous) {
@@ -143,16 +151,19 @@ export class Plugins extends Addons<Plugin> {
 	}
 
 	protected createScope(entity: Addon<Plugin>): PluginScope {
-		return createAddonScope(entity);
+		return createAddonScope(
+			entity,
+			entity.manifest.path ?? `${fs.documentsPath}/${this.directoryOf(entity.id)}`,
+		);
 	}
 
 	/**
-	 * @description Evaluates a plugin bundle's IIFE with its scope's globals and resolves it to the plugin
-	 * instance. A bundle built by `ubd dev` registers its components for hot refresh under the plugin's id.
+	 * @description Evaluates a plugin bundle's IIFE with its scope's globals and resolves it to the entry's named
+	 * exports. A bundle built by `ubd dev` registers its components for hot refresh under the plugin's id.
 	 * @param bundle The raw plugin bundle to evaluate.
 	 * @param id The plugin's id.
 	 * @param scope The globals {@link createScope} made for this start.
-	 * @returns The resolved plugin instance.
+	 * @returns The entry's named exports: `start`, `stop` and `SettingsPanel`.
 	 */
 	protected handleBundle(bundle: string, id: string, scope: PluginScope): Plugin {
 		const iife = this.factoryFor(bundle, id);
@@ -162,13 +173,9 @@ export class Plugins extends Addons<Plugin> {
 			const payload = iife(...globals);
 			const instance = typeof payload === 'function' ? payload() : payload;
 
-			// The CLI's entrypoint defers the module body to first use; running it here registers its components
-			// under this plugin's refresh scope. `start` runs right after, so nothing loads earlier than it would.
-			if (isLazyPlugin(instance)) {
-				instance.__load();
-			}
-
-			return instance?.default ?? instance;
+			// Running the module here registers its components under this plugin's refresh scope. Each start
+			// evaluates the IIFE afresh, so `__load` runs the module once per start.
+			return readPluginEntry(id, isLazyPlugin(instance) ? instance.__load() : instance);
 		});
 	}
 

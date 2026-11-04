@@ -3,24 +3,31 @@ import { NATIVE_PLUGIN_METHOD_CAPABILITIES } from '@unbound-app/types/native-met
 import { NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
 import { relative, sep } from 'node:path';
 import { realpathSync } from 'node:fs';
-import ts from 'typescript';
+import ts from 'typescript-api';
 
 import type { BridgeTypes } from '~/lib/capabilities/bridge-types';
+
+/** Where a node starts: the file relative to the addon, with 1-based line and column. */
+export type Site = {
+	file: string;
+	line: number;
+	column: number;
+};
 
 export type BridgeCall = {
 	method: string;
 	capability: NativePluginCapability;
-	site: string;
+	site: Site;
 };
 
 export type DynamicAccess = {
 	reason: string;
-	site: string;
+	site: Site;
 };
 
 export type ImportEdge = {
 	path: string;
-	site: string;
+	site: Site;
 };
 
 export type PlatformHandler = {
@@ -74,10 +81,14 @@ export function readFileFacts(file: ts.SourceFile, context: FactsContext): FileF
 	const facts: FileFacts = { calls: [], dynamic: [], imports: [], handlers: [] };
 	const path = realPath(file.fileName);
 
-	function site(node: ts.Node): string {
-		const { line } = file.getLineAndCharacterOfPosition(node.getStart(file));
+	function site(node: ts.Node): Site {
+		const { line, character } = file.getLineAndCharacterOfPosition(node.getStart(file));
 
-		return `${relative(context.siteRoot, path).split(sep).join('/')}:${line + 1}`;
+		return {
+			file: relative(context.siteRoot, path).split(sep).join('/'),
+			line: line + 1,
+			column: character + 1,
+		};
 	}
 
 	function record(namespace: string, member: string, node: ts.Node) {

@@ -21,6 +21,8 @@ export type Registry = {
 	remove(owner: string, root: string): void;
 	/** Removes every record of an owner. Idempotent. */
 	release(owner: string): void;
+	/** Gives an owner's records new identities, so the picker reads their text again after a locale change. */
+	refresh(owner: string): void;
 	snapshot(): RegistrySnapshot;
 	/** Calls the listener after every change that bumped the version. */
 	subscribe(listener: () => void): () => void;
@@ -146,6 +148,21 @@ export function createRegistry(): Registry {
 		}
 	}
 
+	function refresh(owner: string) {
+		const entries = owners.get(owner);
+
+		if (!entries) return;
+
+		for (const [root, entry] of entries) {
+			entries.set(root, {
+				token: entry.token,
+				records: entry.records.map((record) => Object.freeze({ ...record })),
+			});
+		}
+
+		bump();
+	}
+
 	function snapshot(): RegistrySnapshot {
 		cached ??= build(version, owners);
 
@@ -158,7 +175,7 @@ export function createRegistry(): Registry {
 		return () => void listeners.delete(listener);
 	}
 
-	return { add, remove, release, snapshot, subscribe };
+	return { add, remove, release, refresh, snapshot, subscribe };
 }
 
 function build(version: number, owners: Map<string, Map<string, RootEntry>>): RegistrySnapshot {

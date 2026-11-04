@@ -1,10 +1,11 @@
-import { startGreeting } from '~/greeting';
-import Settings from '~/settings';
+import { settings } from '@unbound-app/settings';
+import { toasts } from '@unbound-app/api';
 
-export default {
-	start() {
-		startGreeting();
-	},
+import icon from '../assets/icon.png';
 
-	getSettingsPanel: () => <Settings />,
-};
+/** Greets the user, unless they turned the greeting off. */
+export function start() {
+	if (!settings.greetOnStart) return;
+
+	toasts.success('GREETING_BODY', { name: addon.name }, { icon });
+}

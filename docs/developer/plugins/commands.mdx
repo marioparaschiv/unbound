@@ -1,14 +1,25 @@
 ---
 title: 'Slash Commands'
-description: "Add commands to Discord's / picker, with typed options."
+description: "Add commands to Discord's / picker, with typed options in the user's language."
 icon: 'command'
 ---
 
 A plugin can add its own slash commands. They show in Discord's `/` picker, in an **Unbound** section. When the user sends one, your plugin runs it on the phone, so it works in every channel and DM without a bot.
 
+Every text the picker shows is a message key from your plugin's `i18n/en-US.json`, so the picker shows it in the user's language and falls back to en-US. See [Translations](/developer/plugins/i18n) for the `i18n/` folder.
+
 ## A first command
 
-`commands.register` takes an object of commands, keyed by name.
+Add the text to `i18n/en-US.json`:
+
+```json i18n/en-US.json
+{
+	"SHRUG_DESC": "Send a message with a shrug on the end",
+	"SHRUG_MESSAGE_DESC": "What to say"
+}
+```
+
+`commands.register` takes an object of commands, keyed by name:
 
 ```ts src/shrug/index.ts
 import { commands } from '@unbound-app/api';
@@ -16,9 +27,9 @@ import { commands } from '@unbound-app/api';
 export function startShrug() {
 	commands.register({
 		shrug: {
-			description: 'Send a message with a shrug on the end',
+			description: 'SHRUG_DESC',
 			options: {
-				message: commands.option.string({ description: 'What to say', required: true }),
+				message: commands.option.string({ description: 'SHRUG_MESSAGE_DESC', required: true }),
 			},
 			execute: ({ message }) => `${message} ¯\\_(ツ)_/¯`,
 		},
@@ -26,9 +37,11 @@ export function startShrug() {
 }
 ```
 
+`description` takes a key of `i18n/en-US.json`, and TypeScript rejects anything else: literal text such as `'Send a shrug'` and a key the file lacks are both type errors. Command and option **names** stay literal, because Discord only accepts lowercase ASCII names.
+
 `execute` gets the options the user filled in, already typed from `options`. Here `message` is a `string`, because the option is a required string. An optional option arrives as `undefined` when the user leaves it out.
 
-Unbound removes your commands when the plugin stops.
+Unbound removes your commands when the plugin stops. When the user changes Discord's language, the picker shows the new language's text.
 
 ## What a command can reply
 
@@ -46,7 +59,7 @@ If `execute` throws, the user sees the error as an ephemeral message.
 ```ts
 commands.register({
 	'channel-id': {
-		description: 'Show the id of this channel',
+		description: 'CHANNEL_ID_DESC',
 		execute: (_options, { channel }) => ({ ephemeral: true, content: channel.id }),
 	},
 });
@@ -56,7 +69,7 @@ The second argument is the context: the `channel` the command was sent in, and i
 
 ## Options
 
-Each option is made with a builder on `commands.option`. Every builder takes a `description` and `required`.
+Each option is made with a builder on `commands.option`. Every builder takes a `description` key and `required`. Without a `description`, the picker shows the option's name.
 
 | Builder | The handler gets | Extra settings |
 | --- | --- | --- |
@@ -64,21 +77,38 @@ Each option is made with a builder on `commands.option`. Every builder takes a `
 | `integer()`, `number()` | A number | `minValue`, `maxValue`, `autocomplete` |
 | `boolean()` | `true` or `false` | None |
 | `user()`, `channel()`, `role()` | The picked user, channel or role | None |
-| `choice([...])` | One of the listed values | None |
+| `choice({ ... })` | One of the map's values | None |
 
-`choice` limits an option to fixed values, and types the handler's value as their union:
+`choice` limits an option to fixed values. It takes a map from each value to the key of its label, and types the handler's value as the union of the map's values:
+
+```json i18n/en-US.json
+{
+	"COIN_DESC": "Flip a coin",
+	"COIN_CALL_DESC": "Heads or tails",
+	"COIN_HEADS": "Heads",
+	"COIN_TAILS": "Tails"
+}
+```
 
 ```ts
 commands.register({
 	coin: {
-		description: 'Flip a coin',
+		description: 'COIN_DESC',
 		options: {
-			call: commands.option.choice(['heads', 'tails'], { required: true }),
+			call: commands.option.choice(
+				{ heads: 'COIN_HEADS', tails: 'COIN_TAILS' },
+				{ description: 'COIN_CALL_DESC', required: true },
+			),
 		},
+		// `call` is 'heads' | 'tails'.
 		execute: ({ call }) => (Math.random() < 0.5 ? call : `Not ${call}`),
 	},
 });
 ```
+
+The picker lists the choices in the map's order. The values are strings; for a number, use `integer()` or `number()` with `minValue` and `maxValue`.
+
+Autocomplete suggestions are data, such as names, so their labels are plain strings, not keys.
 
 ## Grouping commands
 
@@ -89,17 +119,17 @@ const notes: string[] = [];
 
 commands.register({
 	notes: {
-		description: 'Keep notes',
+		description: 'NOTES_DESC',
 		subcommands: {
 			add: {
-				description: 'Add a note',
+				description: 'NOTES_ADD_DESC',
 				options: { text: commands.option.string({ required: true }) },
 				execute: ({ text }) => {
 					notes.push(text);
 				},
 			},
 			list: {
-				description: 'List your notes',
+				description: 'NOTES_LIST_DESC',
 				execute: () => ({ ephemeral: true, content: notes.join('\n') }),
 			},
 		},
@@ -107,11 +137,37 @@ commands.register({
 });
 ```
 
+## Build errors
+
+`ubd build` checks every `commands.register({ ... })` it can read and lists all problems at once, then exits with an error. `ubd dev` prints the same list and keeps the last good build on the device.
+
+```text
+Command text must be message keys from i18n/en-US.json (3 problems):
+src/index.ts:3:23  /coin  description "Flip a coin" is literal text where a message key is required.  Fix: use its key "COIN_DESC".
+src/index.ts:9:32  /coin  option "call" choice "edge" label key "COIN_EDGE" is missing from i18n/en-US.json.  Fix: add "COIN_EDGE": "<en-US text>" to i18n/en-US.json.
+src/notes.ts:2:1  /notes  registers commands, but the plugin has no i18n/ folder.  Fix: add i18n/en-US.json with a key for each command description.
+```
+
+Each line gives the file, line and column, the command, the problem and its fix. The build reports:
+
+- a key missing from `i18n/en-US.json`;
+- literal text where a key is required;
+- an en-US text longer than 100 characters;
+- `option.choice` called with an array, the old form;
+- a plugin that registers commands without an `i18n/` folder.
+
+A tree the build cannot read, such as one built at runtime or a key from a variable, is checked when it registers.
+
 ## Limits
 
-`register` checks every command and throws a `CommandDefinitionError` that names the one it rejected:
+`register` checks every command and throws a `CommandDefinitionError` that names the command it rejected, and the key:
+
+```text
+Invalid command "/coin" from my-plugin: description "COIN_EDGE" is not a key in i18n/en-US.json. Use a key, and add it there.
+```
 
 - Names are 1 to 32 lowercase letters, digits, `-` or `_`.
-- A description is 1 to 100 characters.
+- Every description and choice label is a key of `i18n/en-US.json`, whose en-US text is 1 to 100 characters.
+- The labels of one `choice` differ in en-US.
 - A command has at most 25 options, a group 1 to 25 subcommands, and a `choice` 1 to 25 values.
 - A name another plugin already registered is taken.

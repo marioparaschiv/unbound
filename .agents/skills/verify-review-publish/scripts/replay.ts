@@ -1,6 +1,8 @@
+import type { PublishedManifest } from '@unbound-app/contracts/manifest';
+
+import type { SourceSeed } from '../../../../apps/web/tests/helpers/addons.ts';
 import type { AppContext } from '../../../../apps/web/tests/helpers/index.ts';
 import type { Caller } from '../../../../apps/web/src/lib/api/caller.ts';
-import type { SourceSeed } from '../../../../apps/web/tests/helpers/addons.ts';
 import type { EnvSource } from '../../../../apps/web/src/lib/env.ts';
 
 import {
@@ -80,6 +82,30 @@ function sha256(bytes: Uint8Array | string): string {
 	return new Bun.CryptoHasher('sha256').update(bytes).digest('hex');
 }
 
+const LOCALE = JSON.stringify({ greeting: 'Hallo' });
+const IMAGE = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 1, 2, 3]);
+
+// The manifest fields listing one locale and one image, and their files as the build commits them
+// beside the bundle at `${dir}/dist/`. `locale` replaces the committed locale's bytes, not its digest.
+function extraFiles(dir: string, locale: string = LOCALE) {
+	const image = `assets/${sha256(IMAGE)}.png`;
+
+	return {
+		listing: {
+			locales: { de: sha256(LOCALE) },
+			assets: {
+				star: { type: 'png' as const, width: 1, height: 1, scales: { '1': sha256(IMAGE) } },
+			},
+		},
+		committed: { [`${dir}/dist/i18n/de.json`]: locale, [`${dir}/dist/${image}`]: IMAGE },
+		paths: { 'i18n/de.json': LOCALE, [image]: IMAGE },
+	};
+}
+
+function isExtraFile(key: string): boolean {
+	return key.includes('/assets/') || key.includes('/i18n/');
+}
+
 async function setup(env: EnvSource = {}): Promise<Seeded> {
 	const { ctx, close } = await createTestContext(env);
 	const staging = new MemoryBucket();
@@ -125,11 +151,12 @@ async function stage(
 	bundle: string,
 	kind: 'listing' | 'update',
 	source: SourceSeed = {},
+	listing: Partial<PublishedManifest> = {},
 ) {
 	const row = await seedSubmission(
 		seeded.ctx,
 		seeded.author,
-		manifest(ADDON, version),
+		manifest(ADDON, version, listing),
 		{ kind, bundleSize: Buffer.byteLength(bundle), sha256: sha256(bundle) },
 		source,
 	);
@@ -150,25 +177,35 @@ async function settle(promise: Promise<unknown>): Promise<string> {
 }
 
 // current.cfg RejectedNeverPublic: an approval is held inside publishArtifact's writes while a
-// rejection of the same submission commits.
+// rejection of the same submission commits. The submission has a store page and extra files.
 async function approveRacesReject(): Promise<Checks> {
 	const github = serveGitHub({ repositories: { [REPOSITORY]: {} }, tokens: {} });
 	const seeded = await setup({ GITHUB_API_URL: github.url.href });
 	const [a, b] = seeded.reviewers;
+	const extras = extraFiles(PAGE_DIR);
 	const files = Object.entries(committedPageFiles()).map(([name, content]) => [
 		`${PAGE_DIR}/${name}`,
 		content,
 	]);
 
 	try {
-		const commitSha = github.repository(REPOSITORY).commit(Object.fromEntries(files));
-		const row = await stage(seeded, '1.0.0', 'export default 1;', 'listing', {
-			repository: REPOSITORY,
-			commitSha,
-			path: PAGE_DIR,
-			addonMd: COMMITTED_ADDON_MD,
-			page: committedPage(64),
-		});
+		const commitSha = github
+			.repository(REPOSITORY)
+			.commit({ ...Object.fromEntries(files), ...extras.committed });
+		const row = await stage(
+			seeded,
+			'1.0.0',
+			'export default 1;',
+			'listing',
+			{
+				repository: REPOSITORY,
+				commitSha,
+				path: PAGE_DIR,
+				addonMd: COMMITTED_ADDON_MD,
+				page: committedPage(64),
+			},
+			extras.listing,
+		);
 		let release = () => {};
 
 		seeded.public.held = new Promise((resolve) => (release = resolve));
@@ -196,6 +233,7 @@ async function approveRacesReject(): Promise<Checks> {
 		console.log(`    submission.status = ${status}, addon_version rows = ${versions.length}`);
 		console.log(`    public bucket = ${keys.join(', ') || '(empty)'}`);
 		console.log(`    of which store page media = ${media.length}`);
+		console.log(`    of which extra files = ${keys.filter(isExtraFile).length}`);
 
 		return {
 			DecidedOnce: [approved, rejected].filter((result) => result === 'ok').length <= 1,
@@ -296,6 +334,67 @@ async function refetchLostBundle(): Promise<Checks> {
 	}
 }
 
+// ReadStaged's extra-file branch: readPinnedFiles checks each listed file against its SHA-256 (and a
+// locale against a JSON object of strings) before any write, so a bad file publishes nothing.
+async function checkExtraFiles(): Promise<Checks> {
+	const github = serveGitHub({ repositories: { [REPOSITORY]: {} }, tokens: {} });
+	const seeded = await setup({ GITHUB_API_URL: github.url.href });
+	const [a] = seeded.reviewers;
+	const altered = extraFiles('plugins/altered', JSON.stringify({ greeting: 'Bonjour' }));
+	const shape = extraFiles('plugins/shape', JSON.stringify({ greeting: 1 }));
+	const honest = extraFiles('plugins/honest');
+
+	// A locale that is not a string table still needs its digest listed, so the check under test is the shape.
+	shape.listing.locales.de = sha256(JSON.stringify({ greeting: 1 }));
+
+	try {
+		const commitSha = github
+			.repository(REPOSITORY)
+			.commit({ ...altered.committed, ...shape.committed, ...honest.committed });
+
+		async function approve(version: string, dir: string, listing: Partial<PublishedManifest>) {
+			const source = { repository: REPOSITORY, commitSha, path: dir, addonMd: null };
+			const row = await stage(
+				seeded,
+				version,
+				`export default "${version}";`,
+				'update',
+				source,
+				listing,
+			);
+
+			return settle(reviewSubmission(seeded.ctx, a, row.id, { decision: 'approved' }));
+		}
+
+		await seedApprovedAddon(seeded.ctx, seeded.author, manifest(ADDON, '0.1.0'));
+
+		const results = [
+			await approve('1.0.0', 'plugins/altered', altered.listing),
+			await approve('1.0.1', 'plugins/shape', shape.listing),
+			await approve('1.0.2', 'plugins/honest', honest.listing),
+		];
+		const keys = [...seeded.public.objects.keys()];
+		const served = Object.entries(honest.paths).map(([path, bytes]) => {
+			const object = seeded.public.objects.get(`addons/${ADDON}/1.0.2/${path}`);
+
+			return Boolean(object) && sha256(object ?? '') === sha256(bytes);
+		});
+
+		console.log(`    approve altered locale:    ${results[0]}`);
+		console.log(`    approve non-string locale: ${results[1]}`);
+		console.log(`    approve honest files:      ${results[2]}`);
+		console.log(`    public bucket = ${keys.join(', ') || '(empty)'}`);
+
+		return {
+			PublicOnlyIfLiveAtRest: !keys.some((key) => /\/1\.0\.[01]\//.test(key)),
+			PublicMatchesLive: results[2] === 'ok' && served.every(Boolean),
+		};
+	} finally {
+		await seeded.close();
+		await github.stop();
+	}
+}
+
 // `violated` is what the code at the sync commit does; change it only with ../SKILL.md's findings.
 const REPLAYS: Replay[] = [
 	{
@@ -312,6 +411,11 @@ const REPLAYS: Replay[] = [
 		name: 'approval refetches a lost bundle',
 		violated: [],
 		run: refetchLostBundle,
+	},
+	{
+		name: 'approval checks extra files',
+		violated: [],
+		run: checkExtraFiles,
 	},
 ];
 

@@ -22,10 +22,11 @@ The pre-commit hook validates every plugin folder, manifest, naming collision, a
 my-plugin/
 ├── manifest.json
 ├── package.json
-├── rollup.config.mjs     # unbound(import.meta.url, { settingsPanel })
+├── rollup.config.mjs     # unbound(import.meta.url)
+├── settings.ts           # defineSettings(...), when the plugin has settings
 ├── tsconfig.json         # maps ~/* to ./src/*
 └── src/
-    ├── index.ts(x)       # start, stop, getSettingsPanel. Nothing else.
+    ├── index.ts(x)       # named exports start, stop, SettingsPanel. Nothing else.
     ├── constants.ts      # every module-level constant
     ├── modules.ts        # every metro lookup and the settings store, all lazy
     ├── patches/          # one file per patched module, named after it
@@ -45,7 +46,7 @@ Create only the folders a plugin needs. Import across folders with `~/`, such as
 ```tsx
 let dispose = () => {};
 
-function start() {
+export function start() {
 	const DCDSoundManager = native.getNativeModule<SoundManager>('DCDSoundManager');
 
 	if (!ensureModules('Moyai', { DCDSoundManager, SelectedChannelStore })) return;
@@ -59,12 +60,12 @@ function start() {
 	]);
 }
 
-function stop() {
+export function stop() {
 	dispose();
 	dispose = () => {};
 }
 
-export default { start, stop, getSettingsPanel: () => <SettingsPanel /> };
+export { SettingsPanel };
 ```
 
 - Each feature function (`subscribeX`, `patchX`, `createX`) applies itself and returns the function that removes it.
@@ -97,7 +98,7 @@ export const settings = storage.getBucket('unbound.my-plugin');
 - To patch every module that matches a filter, not just the first, pass loaded ones from `metro.find(filter, { all: true, initialize: false })` and later ones from `metro.onModuleLoad`. A plain `{ all: true }` search loads every module in the build.
 - Import a library Discord ships by its package name: `import moment from 'moment'`, `import { Svg, Path } from 'react-native-svg'`. The build reads each import from Discord's copy where it is used, so importing loads nothing at start. `packages/client/src/core/shim-libraries.json` lists the libraries. Add the package as a devDependency only for its types.
 - Prefer what Unbound already resolves: `metro.common` (`Clipboard`, `Constants`, `Theme`, `Moment`, `Reanimated`), `metro.stores`, `metro.api`, and `metro.components` (`Discord`, `Forms`, `Media`).
-- Prefer `flux.getStore`, `metro.findByProps`, and `metro.findByName` over a hand-written filter. A custom filter goes through `metro.filters.createCacheable`.
+- Prefer `flux.getStore`, `metro.findByProps`, and `metro.findByName` over a hand-written filter. A custom filter is keyed for the cache by the build; it reads only its parameters, so pass outside values through `metro.filter((m, value) => …)(value)`.
 - Resolve React Native native modules with `native.getNativeModule(...names)`.
 
 ## Patches
@@ -119,9 +120,9 @@ Code that uses the Objective-C ABI (`context.native.objc`, `ffi`, `fabric`) live
 
 ## Settings
 
-- The settings panel is `src/components/settings-panel.tsx`. Build it from the SDK's `ui` namespace (`ui.Page`, `ui.Section`, `ui.Row`, `ui.SwitchRow`, `ui.SliderRow`, `ui.ColorRow`, `ui.ResetRow`) and the rest of `metro.components.Discord`.
-- Read and write values with the `settings` store from `modules.ts`. In React, call `settings.useSettingsStore()`.
-- Set `settingsPanel: true` in `rollup.config.mjs` exactly when the plugin exports `getSettingsPanel`.
+- Declare settings in `settings.ts` beside `src/`, with `defineSettings` and `setting` from `@unbound-app/settings/schema`; labels are keys of `i18n/en-US.json`. The build generates the panel from it. See `docs/developer/plugins/settings.mdx`.
+- Read and write settings through `settings` and `useSetting` from `@unbound-app/settings`.
+- Write a custom panel, `src/components/settings-panel.tsx` exported from the entry as `SettingsPanel` (`export { SettingsPanel }`), only when the generated one cannot express it. Build it from the SDK's `ui` namespace and the rest of `metro.components.Discord`.
 
 ## Constants and text
 

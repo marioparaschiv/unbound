@@ -17,7 +17,7 @@ import { reactionFeatures } from '~/platform';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	// `UserSummaryItem` is found when a reaction first renders, and the surface renders nothing without it.
 	const modules = {
 		ReactionActions,
@@ -45,7 +45,7 @@ function start(context: PluginContext) {
 	dispose = applyFeatures('Reaction Avatars', reactionFeatures(context.native, surfaceName));
 }
 
-function stop() {
+export function stop() {
 	const finished = dispose();
 
 	dispose = () => undefined;
@@ -53,4 +53,4 @@ function stop() {
 	return finished;
 }
 
-export default { start, stop, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

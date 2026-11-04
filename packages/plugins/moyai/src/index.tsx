@@ -13,7 +13,7 @@ import { msPerDurationUnit } from '~/platform';
 
 let disposePlayer = () => {};
 
-function start() {
+export function start() {
 	const DCDSoundManager = native.getNativeModule<SoundManager>('DCDSoundManager');
 
 	if (!ensureModules('Moyai', { DCDSoundManager, SelectedChannelStore })) return;
@@ -28,14 +28,9 @@ function start() {
 	]);
 }
 
-function stop() {
+export function stop() {
 	disposePlayer();
 	disposePlayer = () => {};
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

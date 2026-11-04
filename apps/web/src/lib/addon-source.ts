@@ -15,7 +15,6 @@ import type {
 	RepositoryDetails,
 	SourcePin,
 } from '@unbound-app/contracts/source';
-import { formatChangelogIssues, parseChangelog } from '@unbound-app/contracts/changelog';
 import { addonManifestSchema, MANIFEST_FILENAME } from '@unbound-app/contracts/manifest';
 import type { WorkspaceAddon, WorkspaceConfig } from '@unbound-app/contracts/workspace';
 import type { CreateSubmissionRequest } from '@unbound-app/contracts/publish';
@@ -33,7 +32,9 @@ import type {
 	TreeEntry,
 } from '~/lib/github';
 import { readAddonPage, type PageMediaFiles } from '~/lib/addon-page-source';
+import { readChangelog } from '~/lib/addon-changelog';
 import { readBytecode } from '~/lib/addon-bytecode';
+import { readListedFiles } from '~/lib/addon-files';
 import type { AppContext } from '~/lib/context';
 import { ApiError } from '~/lib/api/errors';
 import type { Env } from '~/lib/env';
@@ -54,6 +55,8 @@ export type AddonSource = {
 	bundle: Uint8Array;
 	/** The bundle compiled to Hermes bytecode, by bytecode version, as `manifest.bytecode` lists it. */
 	bytecode: ReadonlyMap<string, Uint8Array>;
+	/** Each extra file beside the bundle, such as an image, by path relative to the manifest, as the manifest lists it. */
+	files: ReadonlyMap<string, Uint8Array>;
 	bundleSize: number;
 	sha256: string;
 	addonMd: string | null;
@@ -431,26 +434,6 @@ function checkAddon(
 	return { blocker: undefined, manifest, bundle, issues: [] };
 }
 
-function readChangelog(path: string, text: string | undefined, version: string): Changelog | null {
-	if (text === undefined) {
-		return null;
-	}
-
-	const parsed = parseChangelog(text);
-
-	if (parsed.issues.length > 0) {
-		throw new ApiError('invalid_changelog', formatChangelogIssues(parsed.issues, path));
-	}
-
-	const release = parsed.releases.get(version);
-
-	if (!release) {
-		throw new ApiError('invalid_changelog', `${path} has no entry for ${version}.`);
-	}
-
-	return release;
-}
-
 function toDetails(
 	repo: GitHubRepository,
 	extras: RepositoryExtras,
@@ -666,9 +649,15 @@ export async function readAddonSource(
 
 	const changelogPath = childPath(path, CHANGELOG_MD);
 	const addonMdPath = childPath(path, ADDON_MD);
-	const [bundle, bytecode, extraTexts] = await Promise.all([
+	const [bundle, bytecode, files, extraTexts] = await Promise.all([
 		github.readBlob(repository, bundleEntry.sha),
 		readBytecode(ctx.env, github, repository, tree, addon.bundle, manifest, commitSha),
+		readListedFiles(
+			ctx.env,
+			github,
+			{ repository, tree, bundlePath: addon.bundle, commitSha },
+			manifest,
+		),
 		readTexts(github, repository, tree, [addonMdPath, changelogPath]),
 	]);
 	const addonMd = extraTexts.get(addonMdPath) ?? null;
@@ -694,6 +683,7 @@ export async function readAddonSource(
 		manifest,
 		bundle,
 		bytecode,
+		files,
 		bundleSize: bundle.length,
 		sha256: new Bun.CryptoHasher('sha256').update(bundle).digest('hex'),
 		addonMd,

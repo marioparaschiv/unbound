@@ -58,33 +58,82 @@ The plugin lives in `plugins/hello-world`. Each feature gets its own folder unde
 	<Folder name='hello-world'>
 		<File name='manifest.json' note='Who the plugin is: its id, name and version' />
 		<File name='ADDON.md' note='The page the store shows' />
+		<File name='settings.ts' note='The settings, from which Unbound builds the settings panel' />
+		<Folder name='i18n'>
+			<File name='en-US.json' note='Every string the plugin shows' />
+		</Folder>
+		<Folder name='assets'>
+			<File name='icon.png' note="The greeting toast's icon" />
+		</Folder>
 		<Folder name='media' note='Images for the store page' />
 		<Folder name='src'>
 			<File name='index.tsx' note='Starts each feature' />
-			<File name='settings.tsx' note='The settings panel' />
-			<File name='constants.ts' note='Setting keys' />
-			<Folder name='greeting' note='One feature: the greeting toast'>
-				<File name='index.ts' />
-				<File name='platform.ts' note='Picks the iOS or Android version' />
-			</Folder>
+			<File name='unbound-i18n.d.ts' note='Generated from en-US.json. Commit it' />
+			<File name='unbound-settings.d.ts' note='Generated from settings.ts. Commit it' />
+		</Folder>
+		<File name='bunfig.toml' note='Loads the testing preset for bun test' />
+		<Folder name='tests'>
+			<File name='index.test.ts' note='Runs with bun test' />
 		</Folder>
 	</Folder>
 </FileTree>
 
-The entry file exports the plugin. Unbound calls `start` when the plugin is turned on, and shows `getSettingsPanel` in its settings.
+The entry file exports `start`, which Unbound calls when the plugin is turned on. It reads the plugin's own settings from `@unbound-app/settings`, a module the build makes from `settings.ts`. `toasts.success` takes a key of `i18n/en-US.json` and its placeholder values, and shows the message in the user's language. The image imports like a module, as its asset id.
 
 ```tsx src/index.tsx
-import { startGreeting } from '~/greeting';
-import Settings from '~/settings';
+import { settings } from '@unbound-app/settings';
+import { toasts } from '@unbound-app/api';
 
-export default {
-	start() {
-		startGreeting();
-	},
+import icon from '../assets/icon.png';
 
-	getSettingsPanel: () => <Settings />,
-};
+/** Greets the user, unless they turned the greeting off. */
+export function start() {
+	if (!settings.greetOnStart) return;
+
+	toasts.success('GREETING_BODY', { name: addon.name }, { icon });
+}
 ```
+
+`settings.ts` declares one switch. Its `title` and `subtitle` are keys of `i18n/en-US.json`, so the settings panel Unbound builds from it is translated with the rest of the plugin.
+
+```ts settings.ts
+import { defineSettings, setting } from '@unbound-app/settings/schema';
+
+export default defineSettings({
+	greetOnStart: setting.boolean({
+		default: true,
+		title: 'GREET_ON_START',
+		subtitle: 'GREET_ON_START_SUBTITLE',
+	}),
+});
+```
+
+`tests/index.test.ts` starts the plugin under the testing preset that `bunfig.toml` loads, and checks the toast it shows. Run it with `bun test`; [Testing](/docs/developer/plugins/testing) covers the preset.
+
+```ts tests/index.test.ts
+import { startPlugin, stopPlugin, toasts } from '@unbound-app/api/testing';
+import { settings } from '@unbound-app/settings';
+import { describe, expect, test } from 'bun:test';
+
+describe('start', () => {
+	test('greets with the plugin name', async () => {
+		await startPlugin();
+
+		expect(toasts.shown).toMatchObject([{ key: 'GREETING_BODY', title: 'Hello World is running.' }]);
+		await stopPlugin();
+	});
+
+	test('stays quiet when greetOnStart is off', async () => {
+		settings.greetOnStart = false;
+		await startPlugin();
+
+		expect(toasts.shown).toEqual([]);
+		await stopPlugin();
+	});
+});
+```
+
+[Translations](/docs/developer/plugins/i18n), [Images](/docs/developer/plugins/assets) and [Settings and Storage](/docs/developer/plugins/settings) cover each in full.
 
 ## Make it change Discord
 
@@ -109,18 +158,20 @@ export function startMessageLog() {
 Then start the feature from the entry file:
 
 ```tsx src/index.tsx
+import { settings } from '@unbound-app/settings';
+import { toasts } from '@unbound-app/api';
+
 import { startMessageLog } from '~/message-log';
-import { startGreeting } from '~/greeting';
-import Settings from '~/settings';
+import icon from '../assets/icon.png';
 
-export default {
-	start() {
-		startGreeting();
-		startMessageLog();
-	},
+/** Starts the message log, and greets the user unless they turned the greeting off. */
+export function start() {
+	startMessageLog();
 
-	getSettingsPanel: () => <Settings />,
-};
+	if (!settings.greetOnStart) return;
+
+	toasts.success('GREETING_BODY', { name: addon.name }, { icon });
+}
 ```
 
 Save, and `dev` reloads the plugin. Send a message on your phone, and the log line appears in the bridge's terminal.

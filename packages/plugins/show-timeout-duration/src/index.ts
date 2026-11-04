@@ -5,7 +5,7 @@ import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { ChannelStore, GuildMemberStore, MessageRowData } from '~/modules';
 import { patchTimeoutDurations } from '~/patches/message-row-data';
 
-function start() {
+export function start() {
 	if (
 		!ensureModules('Show Timeout Duration', { MessageRowData, GuildMemberStore, ChannelStore })
 	) {
@@ -15,4 +15,4 @@ function start() {
 	applyFeatures('Show Timeout Duration', [patchTimeoutDurations]);
 }
 
-export default { start, selfTest: featureSelfTest };
+export { featureSelfTest as selfTest };

@@ -42,7 +42,8 @@ type DevicePluginContext = {
 
 type DevicePluginInstance = {
 	selfTest?(): unknown;
-	getSettingsPanel?(): unknown;
+	// UNKNOWN: a component, which may be a memo or forwardRef object; React.createElement takes it as is.
+	SettingsPanel?: unknown;
 };
 
 type DeviceEntity = {

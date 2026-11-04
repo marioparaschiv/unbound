@@ -4,6 +4,8 @@ import type {
 	NativePluginPlatform,
 } from '@unbound-app/types';
 import { NATIVE_PLUGIN_CAPABILITIES, NATIVE_PLUGIN_PLATFORMS } from '@unbound-app/types/native';
+import { ASSET_SCALES, isAssetName, isAssetType } from '@unbound-app/contracts/addon-assets';
+import { isLocaleCode } from '@unbound-app/contracts/addon-locales';
 
 import { NativePluginCapabilityError, NativePluginUnsupportedPlatformError } from '~/native/errors';
 import { isSafeAddonId, isSafeAddonMain } from '~/addons/paths';
@@ -72,6 +74,83 @@ function assertPlatforms(platforms: unknown): void {
 	}
 }
 
+const SHA256 = /^[\da-f]{64}$/;
+
+// UNKNOWN: the manifest arrives as JSON from the network, the loader or the debugger socket.
+function assertLocales(locales: unknown): void {
+	if (typeof locales !== 'object' || locales === null || Array.isArray(locales)) {
+		throw new Error('Manifest locales must be an object');
+	}
+
+	for (const [code, digest] of Object.entries(locales)) {
+		if (!isLocaleCode(code)) {
+			// The guard narrows `code` to `never` here, though it is the string that failed.
+			throw new Error(`Manifest locales has an invalid locale code: ${String(code)}`);
+		}
+
+		if (typeof digest !== 'string' || !SHA256.test(digest)) {
+			throw new Error(`Manifest locales.${code} must be a SHA-256 digest`);
+		}
+	}
+}
+
+function isRecord(value: unknown): value is object {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+// UNKNOWN: a width or height read from manifest JSON.
+function isPositiveSize(value: unknown): value is number {
+	return typeof value === 'number' && Number.isInteger(value) && value > 0;
+}
+
+// UNKNOWN: the manifest arrives as JSON from the network, the loader or the debugger socket.
+function assertAsset(name: string, asset: unknown): void {
+	if (!isRecord(asset)) {
+		throw new Error(`Manifest assets.${name} must be an object`);
+	}
+
+	if (!isAssetType(Reflect.get(asset, 'type'))) {
+		throw new Error(`Manifest assets.${name}.type must be png, jpg, webp or gif`);
+	}
+
+	if (
+		!isPositiveSize(Reflect.get(asset, 'width')) ||
+		!isPositiveSize(Reflect.get(asset, 'height'))
+	) {
+		throw new Error(`Manifest assets.${name} must have a positive integer width and height`);
+	}
+
+	const scales: unknown = Reflect.get(asset, 'scales');
+	const entries = isRecord(scales) ? Object.entries(scales) : [];
+
+	if (
+		!entries.length ||
+		entries.some(
+			([scale, digest]) =>
+				!ASSET_SCALES.some((known) => known === scale) ||
+				typeof digest !== 'string' ||
+				!SHA256.test(digest),
+		)
+	) {
+		throw new Error(`Manifest assets.${name}.scales must map 1, 2 or 3 to a SHA-256 digest`);
+	}
+}
+
+// UNKNOWN: the manifest arrives as JSON from the network, the loader or the debugger socket.
+function assertAssets(assets: unknown): void {
+	if (!isRecord(assets)) {
+		throw new Error('Manifest assets must be an object');
+	}
+
+	for (const [name, asset] of Object.entries(assets)) {
+		if (!isAssetName(name)) {
+			throw new Error(`Manifest assets has an invalid asset name: ${String(name)}`);
+		}
+
+		assertAsset(name, asset);
+	}
+}
+
 // UNKNOWN: the manifest arrives as JSON from the network, the loader or the debugger socket.
 function assertAddonManifest(
 	raw: unknown,
@@ -111,6 +190,18 @@ function assertAddonManifest(
 
 	if (platforms !== undefined) {
 		assertPlatforms(platforms);
+	}
+
+	const locales: unknown = Reflect.get(raw, 'locales');
+
+	if (locales !== undefined) {
+		assertLocales(locales);
+	}
+
+	const assets: unknown = Reflect.get(raw, 'assets');
+
+	if (assets !== undefined) {
+		assertAssets(assets);
 	}
 
 	const unbound: unknown = Reflect.get(raw, 'unbound');

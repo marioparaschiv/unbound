@@ -21,7 +21,7 @@ import { SETTINGS } from '~/constants';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 
-function start() {
+export function start() {
 	const ready = ensureModules('Permissions Viewer', {
 		ActionSheets,
 		ChannelStore,
@@ -49,7 +49,7 @@ function start() {
 	]);
 }
 
-function stop() {
+export function stop() {
 	const pending = dispose();
 
 	dispose = () => undefined;
@@ -57,9 +57,4 @@ function stop() {
 	return pending;
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

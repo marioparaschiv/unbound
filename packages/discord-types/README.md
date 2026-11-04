@@ -44,6 +44,20 @@ type TextProps = ComponentProps<DesignBarrelComponents['Text']>;
 
 `DiscordComponentsByName` maps each export name that is unique in the build to its component type.
 
+`@unbound-app/discord-types/metro` is the module index Unbound's Metro lookups are typed from. `DiscordExportName` and `DiscordModulePath` list the export names and source paths suggested for a lookup: those of modules with two or more distinctive export names (each in at most three modules). `DiscordModules` holds the shapes of only the modules with a typed export, the design-barrel components, keyed by source path, or by `~` and a hash of the export names for a module without one, never by Metro's numeric id, which changes every build. `DiscordModuleProps` maps their export names to the keys exposing them, and `DiscordModulesByName` maps default-exported components by name.
+
+### Asset names
+
+`@unbound-app/discord-types/assets` lists the name of every asset the build registers, by file type (`png`, `svg`, `lottie`, `jpg`, `webm`). Unbound's `assets.getIdByName`, `assets.getByName` and `assets.icons` take these names, so an editor completes them and a name the build lacks is a type error:
+
+```ts
+import type { DiscordAssetName } from '@unbound-app/discord-types/assets';
+
+const icon: DiscordAssetName<'png'> = 'WrenchIcon';
+```
+
+`DiscordAssetNames` maps each file type to its names, and `DiscordAssetName<T>` is the names of the types `T`, all of them by default. Every icon component Discord exports, such as `WrenchIcon`, draws the PNG asset of the same name. Compiled translation catalogs (`jsona`) are left out: their names carry a content hash that changes every build.
+
 ## Best effort
 
 The types are inferred from how each component uses its props in the decompiled JavaScript, not from Discord's source. A prop whose type the generator could not infer is `unknown`. A component that may read props the generator could not see also accepts any extra key. Discord changes components between builds, so check the build line above against the app version you target.
@@ -56,4 +70,4 @@ In the [Unbound repository](https://github.com/marioparaschiv/unbound), decompil
 bun run generate-discord-types -- ~/.cache/unbound/discord-<build>
 ```
 
-This rewrites `src/*.gen.d.ts` and the build line of this README. Fix a wrong type in the generator (`apps/discord-typegen`), never by hand.
+This rewrites `src/*.gen.d.ts`, `src/assets.gen.d.ts` included, and the build line of this README. Then run `bun run generate-sdk`, so the plugin SDK's asset lookups take the new names. Fix a wrong type in the generator (`apps/discord-typegen`), never by hand.

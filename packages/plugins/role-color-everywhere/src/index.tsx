@@ -18,7 +18,7 @@ import { PLUGIN_NAME } from '~/constants';
 let dispose = () => {};
 let settled = () => Promise.resolve();
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	if (!ensureModules(PLUGIN_NAME, { GuildMemberStore })) return;
 
 	const nativeMentions = createNativeMentions(context);
@@ -35,16 +35,11 @@ function start(context: PluginContext) {
 	]);
 }
 
-function stop() {
+export function stop() {
 	dispose();
 	dispose = () => {};
 
 	return settled();
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

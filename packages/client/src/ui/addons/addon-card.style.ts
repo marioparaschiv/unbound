@@ -34,6 +34,10 @@ export default Discord.createStyles({
 	spacer: {
 		flex: 1,
 	},
+	badges: {
+		flexDirection: 'row',
+		gap: 6,
+	},
 	version: {
 		paddingHorizontal: 6,
 		paddingVertical: 2,

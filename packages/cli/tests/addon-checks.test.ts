@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { join } from 'node:path';
 
-import { createTempDir, runUbd, type TempDir } from './helpers/ubd';
+import { createTempDir, runUbd, withoutProgress, type TempDir } from './helpers/ubd';
+import { checkContext, reportLines } from './helpers/check';
 import { namingCheck } from '../src/lib/checks/naming';
 import { discoverAddons } from '../src/lib/discovery';
 import { loadWorkspace } from './helpers/config';
@@ -69,7 +70,7 @@ describe('ubd build checks', () => {
 		const result = await runUbd(['build'], workspace('my-plugin', STANDARD_LAYOUT).path, {});
 
 		expect(result.exitCode).toBe(0);
-		expect(result.stderr).toBe('');
+		expect(withoutProgress(result.stderr)).toBe('');
 	});
 
 	test('a plugin outside the standard layout warns but still builds', async () => {
@@ -80,15 +81,14 @@ describe('ubd build checks', () => {
 			'src/messages/android/hook.ts': 'export {};',
 		});
 		const result = await runUbd(['build'], dir.path, {});
-		const warnings = result.stderr.trim().split('\n');
 
 		expect(result.exitCode).toBe(0);
-		expect(warnings).toEqual([
-			"example.my-plugin: warning [layout] src/index.tsx is missing; the entry registers the addon's features",
-			'example.my-plugin: warning [layout] src/index.ts is not a standard root file; move it into a domain folder',
-			'example.my-plugin: warning [layout] src/ios/ holds platform code outside a domain; move it into the domain it belongs to',
-			'example.my-plugin: warning [layout] src/messages/ has android/ but no platform.ts to select the platform handler',
-			'example.my-plugin: warning [layout] src/patches.ts is not a standard root file; move it into a domain folder',
+		expect(reportLines(result.stderr)).toEqual([
+			'warning  plugins/my-plugin/src/index.ts  is not a standard root file.  Fix: move it into a domain folder.',
+			"warning  plugins/my-plugin/src/index.tsx  is missing.  Fix: add the entry that registers the addon's features.",
+			'warning  plugins/my-plugin/src/ios  holds platform code outside a domain.  Fix: move it into the domain it belongs to.',
+			'warning  plugins/my-plugin/src/messages  has android/ but no platform.ts.  Fix: add platform.ts to select the platform handler.',
+			'warning  plugins/my-plugin/src/patches.ts  is not a standard root file.  Fix: move it into a domain folder.',
 		]);
 	});
 
@@ -97,9 +97,9 @@ describe('ubd build checks', () => {
 		const result = await runUbd(['build'], dir.path, {});
 
 		expect(result.exitCode).toBe(0);
-		expect(result.stderr).toBe(
-			'example.my-plugin: warning [naming] name must use title-case words separated by spaces\n',
-		);
+		expect(reportLines(result.stderr)).toEqual([
+			'warning  plugins/my-plugin/manifest.json  name must use title-case words separated by spaces.',
+		]);
 	});
 
 	test('a hand-written Capability list fails the build', async () => {
@@ -110,7 +110,7 @@ describe('ubd build checks', () => {
 
 		expect(result.exitCode).not.toBe(0);
 		expect(result.stderr).toContain(
-			'example.my-plugin: error [capabilities] manifest.json declares "capabilities"',
+			'error    plugins/my-plugin/manifest.json  capabilities  Declares "capabilities", which ubd build generates from the code.  Fix: remove it.',
 		);
 	});
 
@@ -129,7 +129,7 @@ describe('ubd build checks', () => {
 		}
 
 		expect(addon.path).toBe('');
-		expect(await namingCheck.run(addon)).toEqual([]);
+		expect(await namingCheck.run(checkContext(addon))).toEqual([]);
 	});
 });
 
@@ -139,7 +139,7 @@ describe('first-party plugins', () => {
 		const issues: string[] = [];
 
 		for (const addon of addons) {
-			for (const issue of await namingCheck.run(addon)) {
+			for (const issue of await namingCheck.run(checkContext(addon))) {
 				issues.push(`${addon.id}: ${issue.message}`);
 			}
 		}

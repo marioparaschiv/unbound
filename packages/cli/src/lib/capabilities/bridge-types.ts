@@ -1,4 +1,4 @@
-import ts from 'typescript';
+import ts from 'typescript-api';
 
 export type BridgeTypes = {
 	namespaceOfMember(symbol: ts.Symbol | undefined): string | undefined;

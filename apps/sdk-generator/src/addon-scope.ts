@@ -27,7 +27,7 @@ const ADDON_SCOPE: Record<string, ScopeGlobal> = {
 	},
 	unbound: {
 		sdkType: 'UnboundGlobal',
-		doc: 'The Unbound API, with the `metro`, `storage`, `flux`, `patcher` and `commands` listeners scoped to this plugin.',
+		doc: 'The Unbound API, with the `metro`, `storage`, `flux`, `patcher`, `commands`, `settings` and `assets` registrations scoped to this plugin, and `toasts`, `dialogs` and `i18n` reading its own messages.',
 		declare: true,
 	},
 	// Not `AddonHandle<Plugin>`: `_internal.d.ts` declares `Plugin` as `Plugin$1`, and the bare name is lib.dom's.

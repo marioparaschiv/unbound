@@ -145,7 +145,7 @@ class AttributedAddons extends FakeAddons {
 	starts = new Map<string, (scope?: PluginScope) => void>();
 
 	protected createScope(entity: Addon<Plugin>): PluginScope {
-		return createAddonScope(entity);
+		return createAddonScope(entity, '/plugins');
 	}
 
 	protected handleBundle(bundle: string, _id?: string, scope?: PluginScope) {

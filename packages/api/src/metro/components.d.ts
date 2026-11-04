@@ -2,9 +2,9 @@
 
 export type { DesignComponentName, DesignModule } from '../_internal';
 export { DESIGN_COMPONENTS } from '../_internal';
-import type { DesignComponentName, DesignModule, FormsFormSwitchProps } from '../_internal';
+import type { DesignComponentName, DesignModule } from '../_internal';
 import * as React$1 from 'react';
-import { ComponentProps, ElementType, ReactNode } from 'react';
+import { ComponentProps, ComponentType, ElementType, FunctionComponent, ReactNode } from 'react';
 import * as RN from 'react-native';
 import { ColorValue, ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
@@ -62,10 +62,7 @@ export declare function HelpMessage(
  */
 export declare function Switch(
 	props: SwitchProps,
-): import('react').ReactElement<
-	FormsFormSwitchProps,
-	string | import('react').JSXElementConstructor<any>
->;
+): import('react').ReactElement<SwitchProps, string | import('react').JSXElementConstructor<any>>;
 /**
  * @description Tells whether a value can be rendered as a React element type: a function or class
  * component, or a `memo`/`forwardRef`/`lazy` object.

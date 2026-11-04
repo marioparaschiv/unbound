@@ -16,7 +16,7 @@ import { startMentions } from '~/platform';
 
 let renderer: ReturnType<typeof startMentions> | undefined;
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	const modules = {
 		MessageStore,
 		SelectedChannelStore,
@@ -38,12 +38,12 @@ function start(context: PluginContext) {
 	renderer = startMentions(context.native, index, () => settings.get('showAtSymbol', true));
 }
 
-function stop() {
+export function stop() {
 	void renderer?.dispose();
 	renderer = undefined;
 }
 
-function selfTest() {
+export function selfTest() {
 	const missing = renderer?.failed() ?? [];
 
 	if (missing.length) {
@@ -52,9 +52,3 @@ function selfTest() {
 
 	return drawnSelfTest(renderer?.rendered, 'mention avatars', renderer?.settling);
 }
-
-export default {
-	start,
-	stop,
-	selfTest,
-};

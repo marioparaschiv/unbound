@@ -196,7 +196,7 @@ describe('installAddonGlobals', () => {
 
 		scope.logger.warn('careful', 1);
 		scope.commands.register({
-			hello: { description: 'Says hello.', execute: () => ({ content: 'hi' }) },
+			hello: { description: 'COIN_FLIP', execute: () => ({ content: 'hi' }) },
 		});
 		scope.storage.getBucket().set('enabled', true);
 

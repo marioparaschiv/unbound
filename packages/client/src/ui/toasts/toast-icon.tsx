@@ -1,28 +1,41 @@
+import type { IconInput } from '@unbound-app/types/components';
 import type { ImageSourcePropType } from 'react-native';
+import { isValidElement, memo } from 'react';
 import { View, Image } from 'react-native';
-import { memo } from 'react';
 
 import TintedIcon from '~/metro/fallbacks/tinted-icon';
 import { icons } from '~/assets/api';
 
+import isIconComponent from './is-icon-component';
 import useStyles from './toast.style';
 
 type ToastIconProps = {
-	icon: string | number | ImageSourcePropType;
+	icon: string | IconInput | ImageSourcePropType;
 	tinted?: boolean;
 };
 
-function resolveIcon(icon: string | number): number {
-	if (typeof icon === 'string') {
-		return icons[icon] ?? 0;
-	}
-
-	return icon;
+function resolveIcon(icon: string | number | ImageSourcePropType): ImageSourcePropType {
+	return typeof icon === 'string' ? (icons[icon] ?? 0) : icon;
 }
 
 function ToastIcon({ icon, tinted = true }: ToastIconProps) {
 	const styles = useStyles();
-	const source = resolveIcon(icon as string | number);
+
+	if (isValidElement(icon)) {
+		return <View style={styles.icon}>{icon}</View>;
+	}
+
+	if (isIconComponent(icon)) {
+		const Icon = icon;
+
+		return (
+			<View style={styles.icon}>
+				<Icon size='md' />
+			</View>
+		);
+	}
+
+	const source = resolveIcon(icon);
 
 	return (
 		<View style={styles.icon}>

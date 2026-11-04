@@ -11,7 +11,7 @@ let placed: (() => number) | null = null;
 let settling: (() => boolean) | null = null;
 let problems: (() => string[] | Promise<string[]>) | null = null;
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	if (!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities)) return;
 
 	const bubbles = drawBubbles(context.native);
@@ -30,7 +30,7 @@ function start(context: PluginContext) {
 	};
 }
 
-function stop() {
+export function stop() {
 	const stopping = dispose();
 
 	dispose = () => {};
@@ -38,7 +38,7 @@ function stop() {
 	return stopping;
 }
 
-async function selfTest() {
+export async function selfTest() {
 	if (!placed) {
 		return { ok: false, detail: 'bubbles are not drawing' };
 	}
@@ -62,9 +62,4 @@ async function selfTest() {
 	};
 }
 
-export default {
-	start,
-	stop,
-	selfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { SettingsPanel };

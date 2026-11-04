@@ -9,7 +9,12 @@ patcher.unpatchAll();
 unpatch();
 
 const removeCommands: () => void = commands.register({
-	hello: { description: 'Says hello.', execute: () => ({ content: greeting }) },
+	hello: { description: 'HELLO_DESC', execute: () => ({ content: greeting }) },
+});
+
+commands.register({
+	// @ts-expect-error command text is a message key, not literal text
+	literal: { description: 'Says hello.', execute: () => ({ content: greeting }) },
 });
 
 commands.unregister('hello');

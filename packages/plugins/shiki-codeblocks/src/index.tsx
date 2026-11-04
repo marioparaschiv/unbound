@@ -14,7 +14,7 @@ import type { Cards } from '~/types';
 let dispose: () => Promise<void> | undefined = () => undefined;
 let cards: Cards | undefined;
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	if (
 		!ensureCapabilities(PLUGIN_NAME, context.native, context.capabilities) ||
 		!ensureModules(PLUGIN_NAME, { MessageStore, SelectedChannelStore })
@@ -29,7 +29,7 @@ function start(context: PluginContext) {
 	}
 }
 
-function stop() {
+export function stop() {
 	const finished = dispose();
 
 	dispose = () => undefined;
@@ -38,7 +38,7 @@ function stop() {
 	return finished;
 }
 
-async function selfTest() {
+export async function selfTest() {
 	const { theme, hljs } = readPreferences();
 	const tokens = await createHighlighter()
 		.tokenize({ code: 'const answer: number = 42;', language: 'typescript' }, theme, hljs)
@@ -63,9 +63,4 @@ async function selfTest() {
 	};
 }
 
-export default {
-	start,
-	stop,
-	selfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { SettingsPanel };

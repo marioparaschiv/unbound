@@ -84,6 +84,11 @@ export function toCleyeCommand(definition: CommandDefinition<TObject>): Command 
 				input[name] = inputValue(value);
 			}
 
+			// A command that streams, such as `ubd check --watch`, declares `json` to print JSON itself.
+			if (Object.hasOwn(properties, 'json')) {
+				input.json = Boolean(json);
+			}
+
 			const booleans = Object.keys(flags).filter((name) => flags[name]!.type === Boolean);
 			const { off, unmatched } = negatedFlags(parsed.unknownFlags, booleans);
 

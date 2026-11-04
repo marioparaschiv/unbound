@@ -5,7 +5,7 @@ import type {
 	Plugin,
 	PluginContext,
 } from '@unbound-app/types';
-import type { ReactNode } from 'react';
+import type { ComponentType } from 'react';
 
 import type { AddonLifecycle } from '~/addons/lifecycle';
 import type { PluginScope } from '~/addons/scope';
@@ -20,7 +20,14 @@ export type AddonState<I extends object> = {
 	scope: PluginScope | undefined;
 	started: boolean;
 	failed: boolean;
+	/** An async `start` or `stop` still in flight. */
+	settling?: 'starting' | 'stopping';
+	/** The `SettingsPanel` its last start exported, kept until the stop finishes. */
+	panel?: ComponentType;
 };
+
+/** Where an addon is in its lifecycle, for UI that must not act mid-transition. */
+export type AddonPhase = 'stopped' | 'starting' | 'running' | 'stopping' | 'failed';
 
 /** An addon referenced either by its id or the {@link Addon} itself. */
 export type AddonResolveable<I extends object = object> = string | Addon<I>;
@@ -42,6 +49,8 @@ export type AddonEvents<T> = {
 	'update-error': (entity: T, error: Error) => void;
 	deleted: (entity: T) => void;
 	'consent-required': (entity: T) => void;
+	/** Any change to {@link Addon.phase} or its settings panel: a start, an async settle, a stop or a failure. */
+	changed: (entity: T) => void;
 };
 
 /** The manager calls an {@link Addon} forwards to. */
@@ -99,11 +108,25 @@ export class Addon<I extends object = object> implements AddonHandle {
 		return this.#state.failed;
 	}
 
-	/** Renders the settings panel the running addon provides, if any. */
-	get settingsPanel(): (() => ReactNode) | undefined {
-		const instance = this.#state.instance;
+	/** Where the addon is in its lifecycle; `failed` wins over the rest. */
+	get phase(): AddonPhase {
+		const state = this.#state;
 
-		return instance?.getSettingsPanel ? () => instance.getSettingsPanel?.() : void 0;
+		if (state.failed) {
+			return 'failed';
+		}
+
+		return state.settling ?? (state.started ? 'running' : 'stopped');
+	}
+
+	/** Whether the addon's current or last start exported a settings panel; kept while it starts, stops or failed. */
+	get hasSettingsPanel(): boolean {
+		return Boolean(this.#state.panel);
+	}
+
+	/** The settings panel component the addon exports as `SettingsPanel`, only while it is running. */
+	get SettingsPanel(): ComponentType | undefined {
+		return this.phase === 'running' ? this.#state.panel : void 0;
 	}
 
 	// `context`, `instance` and `bundle` are for first-party device tooling (the CLI's probes and the

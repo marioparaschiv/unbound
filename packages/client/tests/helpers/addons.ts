@@ -10,6 +10,8 @@ import { mock } from 'bun:test';
 
 import type { Addon, AddonState } from '~/addons/addon';
 
+import { coreI18nMock } from './core-i18n';
+
 // The base Addons manager reaches native FS and storage through these modules, which pull in
 // react-native. Stub both so the pure lifecycle logic loads under bun with no device harness.
 export const writes: string[] = [];
@@ -89,15 +91,28 @@ mock.module('~/storage/api', () => {
 	};
 });
 
+// Plugin scopes register their images through the asset registry, which reads Discord's modules; no test plugin ships one.
+mock.module('~/assets/plugin-assets', () => ({
+	registerOwnedAsset: () => ({ id: 0, unregister: () => undefined }),
+	findOwnedId: () => undefined,
+	isUnregistered: () => false,
+	manifestRegistrations: () => [],
+}));
+
 mock.module('react-native', () => ({
 	Alert: { alert: () => undefined },
 	NativeModules: {},
 	Platform: { OS: 'ios' },
 	TurboModuleRegistry: { get: () => undefined },
+	Pressable: 'Pressable',
+	ScrollView: 'ScrollView',
 	Switch: 'Switch',
 	Text: 'Text',
 	View: 'View',
 }));
+
+// The toasts API formats its error title with core i18n, whose real module reads Discord's globals on import.
+mock.module('~/i18n/api', coreI18nMock);
 
 // Loaded dynamically after the mocks above: static imports hoist above `mock.module`, which would let
 // the real react-native-backed fs/storage load before the stubs are registered.

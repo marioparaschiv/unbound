@@ -126,31 +126,6 @@ export function validatePluginSources(pluginDirectory: string): string[] {
 	);
 }
 
-/**
- * @description Checks that rollup.config.mjs sets `settingsPanel: true` exactly when the entry file exports `getSettingsPanel`.
- * @param pluginDirectory The plugin's folder.
- * @returns The mismatch found, empty when the flag and the entry file agree.
- */
-export function validateSettingsPanel(pluginDirectory: string): string[] {
-	const configPath = join(pluginDirectory, 'rollup.config.mjs');
-	const entryPath = ['index.tsx', 'index.ts']
-		.map((name) => join(pluginDirectory, 'src', name))
-		.find((path) => existsSync(path));
-
-	if (!existsSync(configPath) || !entryPath) return [];
-
-	const flagged = /\bsettingsPanel:\s*true\b/.test(readFileSync(configPath, 'utf8'));
-	const exported = /\bgetSettingsPanel\b/.test(readFileSync(entryPath, 'utf8'));
-
-	if (flagged === exported) return [];
-
-	return [
-		exported
-			? 'rollup.config.mjs must set settingsPanel: true because src/index exports getSettingsPanel'
-			: 'rollup.config.mjs sets settingsPanel: true but src/index does not export getSettingsPanel',
-	];
-}
-
 export function validatePluginDirectory(pluginsDirectory: string): string[] {
 	const errors: string[] = [];
 	const ids = new Map<string, string>();
@@ -192,9 +167,6 @@ export function validatePluginDirectory(pluginsDirectory: string): string[] {
 			errors.push(`${folder}: ${error}`);
 
 		for (const error of validatePluginSources(pluginDirectory))
-			errors.push(`${folder}: ${error}`);
-
-		for (const error of validateSettingsPanel(pluginDirectory))
 			errors.push(`${folder}: ${error}`);
 
 		if (isManifestObject(manifest)) {

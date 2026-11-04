@@ -38,11 +38,7 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 	const disabled = addon.failed || recovery;
 
 	const developmentCopy = useDevelopmentCopy(kind, addon.id);
-	const tag = library
-		? messages.UNBOUND_LIBRARY
-		: developmentCopy
-			? messages.UNBOUND_DEVELOPMENT_COPY
-			: void 0;
+	const tag = library ? messages.UNBOUND_LIBRARY : void 0;
 
 	const trailing =
 		kind === 'plugin' ? (
@@ -83,13 +79,27 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 				) : (
 					<View style={styles.spacer} />
 				)}
-				<View style={styles.version}>
-					<Discord.Text
-						variant='text-xxs/semibold'
-						style={{ color: Theme.colors.TEXT_MUTED }}
-					>
-						v{version}
-					</Discord.Text>
+				<View style={styles.badges}>
+					{developmentCopy ? (
+						<View style={styles.version}>
+							<Discord.Text
+								variant='text-xxs/semibold'
+								style={{
+									color: Theme.colors.TEXT_BRAND ?? Theme.colors.TEXT_MUTED,
+								}}
+							>
+								{messages.UNBOUND_DEVELOPMENT_COPY}
+							</Discord.Text>
+						</View>
+					) : null}
+					<View style={styles.version}>
+						<Discord.Text
+							variant='text-xxs/semibold'
+							style={{ color: Theme.colors.TEXT_MUTED }}
+						>
+							v{version}
+						</Discord.Text>
+					</View>
 				</View>
 			</View>
 			{error ? (

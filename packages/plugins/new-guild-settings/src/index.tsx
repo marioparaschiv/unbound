@@ -10,13 +10,13 @@ import SettingsPanel from '~/settings';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 
-function start() {
+export function start() {
 	if (!ensureModules(PLUGIN_NAME, { NotificationSettings, UserGuildSettingsStore })) return;
 
 	dispose = applyFeatures(PLUGIN_NAME, [applyOnJoin, addApplyMenuItems]);
 }
 
-function stop() {
+export function stop() {
 	const pending = dispose();
 
 	dispose = () => undefined;
@@ -24,9 +24,4 @@ function stop() {
 	return pending;
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

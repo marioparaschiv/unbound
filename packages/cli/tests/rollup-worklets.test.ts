@@ -1,7 +1,8 @@
 import type { TransformPluginContext, TransformResult } from 'rollup';
 import { describe, expect, test } from 'bun:test';
 
-import { declaresWorklet, worklets } from '../src/rollup/worklets';
+import { needsWorklets } from '../src/rollup/needs-worklets';
+import { worklets } from '../src/rollup/worklets';
 
 type Transform = (
 	this: TransformPluginContext,
@@ -18,14 +19,76 @@ async function transform(code: string, id = '/plugin/src/index.js') {
 }
 
 describe('worklets', () => {
-	test('finds the worklet directive in either quote style', () => {
-		expect(declaresWorklet("function f() { 'worklet'; }")).toBe(true);
-		expect(declaresWorklet('function f() { "worklet"; }')).toBe(true);
-		expect(declaresWorklet('const worklet = 1;')).toBe(false);
+	test('workletizes a useAnimatedStyle callback that has no directive', async () => {
+		const code = await transform(
+			"import { useAnimatedStyle } from 'react-native-reanimated'; export const useStyle = (offset) => useAnimatedStyle(() => ({ opacity: offset.value }));",
+		);
+
+		expect(code).toContain('__workletHash');
+		expect(code).toContain('__initData');
+		expect(code).toContain('const{offset}=this.__closure');
+	});
+
+	test('still compiles modules with a worklet directive in either quote style', async () => {
+		expect(await transform("export function f() { 'worklet'; return 1; }")).toContain(
+			'__workletHash',
+		);
+		expect(needsWorklets('function f() { "worklet"; }', '/a.js')).toBe(true);
+		expect(needsWorklets("'worklet'; export const f = () => 1;", '/a.js')).toBe(true);
 	});
 
 	test('leaves modules without worklets alone', async () => {
 		expect(await transform('export const value = 1;')).toBeNull();
+		expect(
+			await transform("const worklet = 'worklet'; export const s = useState(() => 1);"),
+		).toBeNull();
+		expect(await transform('export const t = withTiming(1, { duration: 200 });')).toBeNull();
+	});
+
+	test('matches hooks by name wherever they come from, as the Reanimated plugin does', async () => {
+		const code = await transform(
+			"import { useAnimatedStyle } from './my-hooks'; export const s = useAnimatedStyle(() => ({ opacity: 1 }));",
+		);
+
+		expect(code).toContain('__workletHash');
+		expect(needsWorklets('lib.useDerivedValue(() => 1);', '/a.js')).toBe(true);
+		expect(needsWorklets('(0, r.runOnUI)(() => {})();', '/a.js')).toBe(true);
+		expect(needsWorklets('useAnimatedStyleish(() => ({}));', '/a.js')).toBe(false);
+		expect(needsWorklets('lib.useAnimated(() => ({}));', '/a.js')).toBe(false);
+	});
+
+	test('checks the argument positions each hook workletizes', () => {
+		expect(needsWorklets('withTiming(1, {}, (done) => {});', '/a.js')).toBe(true);
+		expect(needsWorklets('withTiming(() => 1);', '/a.js')).toBe(false);
+		expect(needsWorklets('useAnimatedReaction(() => 1, (v) => {});', '/a.js')).toBe(true);
+		expect(needsWorklets('useAnimatedScrollHandler({ onScroll: (e) => {} });', '/a.js')).toBe(
+			true,
+		);
+		expect(needsWorklets('useAnimatedStyle({ opacity: 1 });', '/a.js')).toBe(false);
+		expect(needsWorklets('const f = () => ({}); useAnimatedStyle(f);', '/a.js')).toBe(true);
+		expect(needsWorklets('useAnimatedStyle((() => ({})) as never);', '/a.ts')).toBe(true);
+	});
+
+	test('catches gesture builder callbacks', async () => {
+		const code = await transform(
+			"import { Gesture } from 'react-native-gesture-handler'; export const pan = Gesture.Pan().minDistance(1).onUpdate((e) => { e.translationX; });",
+		);
+
+		expect(code).toContain('__workletHash');
+		expect(needsWorklets('Gesture.Tap().onEnd(function () {});', '/a.js')).toBe(true);
+		expect(needsWorklets('emitter.onUpdate(() => {});', '/a.js')).toBe(false);
+		expect(needsWorklets('Gesture.Swipe().onUpdate(() => {});', '/a.js')).toBe(false);
+	});
+
+	test('catches layout animation callbacks, worklet classes and context objects', () => {
+		expect(needsWorklets('FadeIn.duration(300).withCallback((done) => {});', '/a.js')).toBe(
+			true,
+		);
+		expect(needsWorklets('new ZoomIn().withCallback(() => {});', '/a.js')).toBe(true);
+		expect(needsWorklets('Toast.withCallback(() => {});', '/a.js')).toBe(false);
+		expect(needsWorklets('class A { __workletClass = true; }', '/a.js')).toBe(true);
+		expect(needsWorklets('const o = { __workletContextObject: true };', '/a.js')).toBe(true);
+		expect(needsWorklets('const { __workletContextObject } = o;', '/a.js')).toBe(false);
 	});
 
 	test('compiles worklets for the Reanimated version Discord ships', async () => {

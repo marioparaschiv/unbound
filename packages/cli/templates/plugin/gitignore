@@ -1,0 +1,2 @@
+node_modules
+# src/unbound-i18n.d.ts and src/unbound-settings.d.ts are generated, but committed so the editor works before a build.

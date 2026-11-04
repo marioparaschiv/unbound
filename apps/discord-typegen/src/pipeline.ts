@@ -1,13 +1,23 @@
 import type { ComponentRecord, ModuleFacts, ModuleRecord, ModuleSummary } from './types';
+import type { ModuleShape } from './module-shapes';
+import type { AssetRecord } from './assets';
 import type { HostProps } from './hosts';
 import type { Report } from './report';
 
+import {
+	BARREL_FILE,
+	declaredComponents,
+	emitModuleIndex,
+	MODULE_INDEX_FILE,
+} from './emit-modules';
+import { ASSETS_FILE, collectAssets, emitAssets, namesByType } from './assets';
 import { createResolver, findReactNative, listExports } from './resolve';
 import { createConstantLookup, resolveConstantRefs } from './constants';
 import { isComponentCandidate, summarize } from './split';
 import { createParser, extractModule } from './extract';
 import { assignNames, sortComponents } from './naming';
 import { bindPassed, isHookName } from './evidence';
+import { shapeOf } from './module-shapes';
 import { parseCallees } from './callees';
 import { buildReport } from './report';
 import { infer } from './infer';
@@ -29,7 +39,8 @@ export function isComponent(component: ComponentRecord): boolean {
 }
 
 /**
- * @description Runs every stage over a build's modules: extract, resolve, infer, emit.
+ * @description Runs every stage over a build's modules: extract, resolve, infer, emit. Also emits the names of
+ * the assets the build registers.
  * @param build The build's name, printed in the generated docs.
  * @param modules The build's modules, as the splitter yields them.
  * @param hosts React Native host props.
@@ -43,14 +54,19 @@ export async function runPipeline(
 	const parser = createParser();
 	const summaries: ModuleSummary[] = [];
 	const facts: ModuleFacts[] = [];
+	const shapes: ModuleShape[] = [];
 	const unparsed = new Map<number, ModuleRecord>();
+	const assets: AssetRecord[] = [];
 
 	for await (const module of modules) {
 		const summary = summarize(module);
+
+		assets.push(...collectAssets(module));
 		const reExports = summary.exportNames.some((name) => /^[A-Z]/.test(name));
 		const hooks = summary.exportNames.some(isHookName);
 
 		summaries.push(summary);
+		shapes.push(shapeOf(module));
 
 		// Modules that only re-export a component (`Button.native.tsx`) are parsed too, so lookups resolve, and so are
 		// hook modules, whose summaries type the components spreading a hook's result.
@@ -82,6 +98,12 @@ export async function runPipeline(
 	const paths = new Map(summaries.map((summary) => [summary.id, summary.path]));
 	const exports = listExports(facts, resolve, new Set(components), paths);
 	const files = emit({ build, components, names, inference, resolve, exports });
+	const assetNames = namesByType(assets);
+	const typed = declaredComponents(files.get(BARREL_FILE) ?? '');
+
+	files.set(ASSETS_FILE, emitAssets(build, assetNames));
+	files.set(MODULE_INDEX_FILE, emitModuleIndex({ build, shapes, exports, names, typed }));
+
 	const report = buildReport(
 		{
 			build,
@@ -89,6 +111,9 @@ export async function runPipeline(
 			candidateModules: facts.length,
 			reactNativeModule: reactNative,
 			pascalCaseFunctions: found.length,
+			assetNames: Object.fromEntries(
+				[...assetNames].map(([type, list]) => [type, list.length]),
+			),
 		},
 		components,
 		names,

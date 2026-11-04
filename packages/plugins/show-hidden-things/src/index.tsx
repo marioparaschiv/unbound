@@ -7,15 +7,11 @@ import { patchTimeoutIcons } from '~/patches/message-row-data';
 import SettingsPanel from '~/components/settings-panel';
 import { settings } from '~/modules';
 
-function start() {
+export function start() {
 	applyFeatures('Show Hidden Things', [
 		() => whileEnabled(settings, 'showTimeouts', true, patchTimeoutIcons),
 		() => whileEnabled(settings, 'showInvitesPaused', true, patchInvitePermissions),
 	]);
 }
 
-export default {
-	start,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

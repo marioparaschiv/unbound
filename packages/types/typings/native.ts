@@ -169,28 +169,41 @@ export type NativeResourceCounts = {
 
 /** Main-thread drains since launch or the last counter reset. */
 export type NativeMainWorkCounts = {
+	/** Times the loader drained its main-thread queue. */
 	drains: number;
+	/** Work items run across every drain. */
 	items: number;
+	/** Total time spent draining. */
 	drainMs: number;
+	/** The longest single drain. */
 	maxDrainMs: number;
+	/** The most items one drain ran. */
 	maxDrainItems: number;
 };
 
 /** How long main-thread crossings for one addon, kind and call label waited and ran. */
 export type NativeMainWaitCounts = {
+	/** The id of the addon that made the crossings. */
 	addon: string;
+	/** How the caller crossed: blocking (`sync`), fire-and-forget (`posted`) or awaiting a promise (`async`). */
 	kind: 'sync' | 'posted' | 'async' | 'unknown';
+	/** The call label the crossings ran under, `(other)` once the table is full. */
 	label: string;
+	/** Crossings queued for the main thread. */
 	posted: number;
+	/** Crossings that began running on the main thread. */
 	started: number;
+	/** Crossings that finished running on the main thread. */
 	finished: number;
 	/** Crossings that timed out or were refused before they started. */
 	expired: number;
 	/** Total time between posting and starting on the main thread. */
 	queuedMs: number;
+	/** The longest wait between posting and starting. */
 	maxQueuedMs: number;
 	/** Total time spent running on the main thread. */
 	runMs: number;
+	/** The longest single run on the main thread. */
 	maxRunMs: number;
 };
 
@@ -204,7 +217,9 @@ export type NativeDebugEnvironmentOptions = {
 
 /** Which runtimes a debug garbage collection reached. */
 export type NativeGarbageCollection = {
+	/** Whether garbage was collected on the runtime that made the call. */
 	runtime: boolean;
+	/** Whether garbage was collected on the UI runtime; false when no UI runtime is registered or collection failed. */
 	uiRuntime: boolean;
 };
 

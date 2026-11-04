@@ -1,0 +1,3 @@
+[test]
+# The fixture plugin's tests need the testing preset, so tests/preset.test.ts runs them from the fixture's own folder.
+pathIgnorePatterns = ["tests/fixtures/**"]

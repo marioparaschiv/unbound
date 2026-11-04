@@ -10,7 +10,9 @@ import {
 	ADDON_MAIN_PATTERN,
 	SEMVER_PATTERN,
 } from './manifest-patterns';
+import { ASSET_NAME_PATTERN, ASSET_SCALES, ASSET_TYPES } from './addon-assets';
 import { DEVELOPMENT_MARKER, MANIFEST_FILENAME } from './manifest-files';
+import { LOCALE_CODE_PATTERN } from './addon-locales';
 import { Type, type StaticDecode } from './schema';
 
 export {
@@ -54,6 +56,45 @@ export const bytecodeDigestsSchema = Type.Record(
 		pattern: '^[\\da-f]{128}$',
 		errorMessage: 'Must be a lowercase SHA-512 digest.',
 	}),
+	{ additionalProperties: false },
+);
+
+/** Maps each locale a plugin ships beside its bundle, other than en-US, to the SHA-256 of that `i18n/<code>.json`. */
+export const localeDigestsSchema = Type.Record(
+	Type.String({ pattern: LOCALE_CODE_PATTERN, errorMessage: 'Must be a Discord locale code.' }),
+	Type.String({
+		pattern: '^[\\da-f]{64}$',
+		errorMessage: 'Must be a lowercase SHA-256 digest.',
+	}),
+	{ additionalProperties: false },
+);
+
+/** One image a plugin ships: its type, its size in points at scale 1, and the SHA-256 of its file at each scale. */
+export const addonAssetSchema = Type.Object(
+	{
+		type: Type.Enum(ASSET_TYPES),
+		width: Type.Integer({ minimum: 1, maximum: 16_384 }),
+		height: Type.Integer({ minimum: 1, maximum: 16_384 }),
+		scales: Type.Record(
+			Type.Enum(ASSET_SCALES),
+			Type.String({
+				pattern: '^[\\da-f]{64}$',
+				errorMessage: 'Must be a lowercase SHA-256 digest.',
+			}),
+			{ additionalProperties: false, minProperties: 1 },
+		),
+	},
+	{ additionalProperties: false },
+);
+
+/** Maps each image a plugin ships, by asset name, to its {@link addonAssetSchema} entry. */
+export const addonAssetsSchema = Type.Record(
+	Type.String({
+		pattern: ASSET_NAME_PATTERN,
+		maxLength: 200,
+		errorMessage: 'Must be an asset name.',
+	}),
+	addonAssetSchema,
 	{ additionalProperties: false },
 );
 
@@ -113,6 +154,10 @@ export const addonManifestSchema = Type.Object(
 		minNativePluginApi: Type.Optional(Type.String()),
 		unbound: Type.Optional(Type.Object({ min: Type.Optional(semverSchema) })),
 		bytecode: Type.Optional(bytecodeDigestsSchema),
+		/** The locale files `ubd build` emits beside the bundle, by code; en-US is in the bundle. */
+		locales: Type.Optional(localeDigestsSchema),
+		/** The images `ubd build` emits beside the bundle, by asset name. */
+		assets: Type.Optional(addonAssetsSchema),
 		/** Marks a plugin other plugins build on, which the plugin list hides by default. */
 		library: Type.Optional(Type.Boolean()),
 		/** The addons this one needs, by id, each with the semver range it accepts. */
@@ -134,6 +179,9 @@ export default {
 	addonIdSchema,
 	addonMainSchema,
 	bytecodeDigestsSchema,
+	localeDigestsSchema,
+	addonAssetSchema,
+	addonAssetsSchema,
 	addonPlatformsSchema,
 	addonAuthorSchema,
 	addonManifestSchema,

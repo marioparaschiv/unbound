@@ -1,0 +1,3 @@
+[test]
+# The plugin template's tests run in a scaffolded plugin (tests/scaffold-plugin.test.ts), where its tokens are filled in.
+pathIgnorePatterns = ["templates/**"]

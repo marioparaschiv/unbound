@@ -38,7 +38,7 @@ const FEATURES: Record<SettingKey, () => () => void> = {
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 
-function start() {
+export function start() {
 	if (!ensureModules(PLUGIN_NAME, { PresenceStore, SessionsStore, UserStore })) return;
 
 	dispose = applyFeatures(
@@ -49,7 +49,7 @@ function start() {
 	);
 }
 
-function stop() {
+export function stop() {
 	const pending = dispose();
 
 	dispose = () => undefined;
@@ -57,9 +57,4 @@ function stop() {
 	return pending;
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

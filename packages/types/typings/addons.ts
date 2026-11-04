@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ComponentType } from 'react';
 
 import type {
 	NativePluginPlatformCapability,
@@ -55,6 +55,18 @@ export type AddonPlatforms = {
 	[P in NativePluginPlatform]?: AddonPlatform<P>;
 };
 
+/** One image a plugin ships beside its bundle, as `ubd build` lists it in the manifest. */
+export type AddonAsset = {
+	/** The file type. */
+	type: 'png' | 'jpg' | 'webp' | 'gif';
+	/** Width in points at scale 1. */
+	width: number;
+	/** Height in points at scale 1. */
+	height: number;
+	/** The SHA-256 of the file at each pixel density it ships at; the file is `assets/<sha256>.<type>` beside the bundle. */
+	scales: Partial<Record<'1' | '2' | '3', string>>;
+};
+
 /** The manifest an author ships in an addon's `manifest.json`: its metadata and entry point. */
 export type AuthoredAddonManifest = {
 	/** The unique id: alphanumeric runs joined by single `.`, `_` or `-`, at most 100 characters. */
@@ -92,6 +104,10 @@ export type AuthoredAddonManifest = {
 	dependencies?: Record<string, string>;
 	/** The SHA-512 of each bundle compiled to Hermes bytecode, by bytecode version; covered by `signature`. */
 	bytecode?: Record<string, string>;
+	/** The SHA-256 of each locale file beside the bundle (`i18n/<code>.json`), by locale code; en-US is in the bundle. */
+	locales?: Record<string, string>;
+	/** The images `ubd build` emits beside the bundle, by asset name, such as `icons/star`. */
+	assets?: Record<string, AddonAsset>;
 	/** Requirements on the Unbound client running the addon. */
 	unbound?: {
 		/** The minimum Unbound client version (semver) the addon supports. */
@@ -120,6 +136,8 @@ export type PushedManifest = {
 	main: string;
 	/** The SHA-512 of each bytecode build the push carries, by bytecode version; the CLI fills it in. */
 	bytecode?: Record<string, string>;
+	/** The images the build emitted beside the bundle, as in {@link AuthoredAddonManifest.assets}. */
+	assets?: Record<string, AddonAsset>;
 };
 
 /** Whether an addon's bundle carries a valid Unbound signature. */
@@ -166,14 +184,14 @@ export type PluginSelfTestResult = {
 	detail: string;
 };
 
-/** The lifecycle and settings contract implemented by a plugin. */
+/** The named exports of a plugin's entry module the client reads: its lifecycle and its settings panel. */
 export type Plugin = {
-	/** Called when the plugin starts, inside its Addon scope, with its native bridge context. */
-	start?(context?: PluginContext): void;
+	/** Called when the plugin starts, inside its Addon scope, with its native bridge context; a rejected promise is recorded as a start failure. */
+	start?(context?: PluginContext): void | Promise<void>;
 	/** Called when the plugin stops; a returned promise is awaited, and the scope is disposed even if it throws. */
 	stop?(): void | Promise<void>;
-	/** Renders the plugin's settings panel; called only while the plugin is running. */
-	getSettingsPanel?(): ReactNode;
+	/** The plugin's settings panel, rendered as `<SettingsPanel />` only while the plugin is running. */
+	SettingsPanel?: ComponentType;
 	/** Checks, without side effects, that the running plugin works on this device; the device matrix calls it after a restart. */
 	selfTest?(): PluginSelfTestResult | Promise<PluginSelfTestResult>;
 };

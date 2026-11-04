@@ -9,14 +9,14 @@ import { PLUGIN_NAME } from '~/constants';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 
-function start() {
+export function start() {
 	dispose = applyFeatures(PLUGIN_NAME, [
 		patchMediaModalYoutube,
 		patchMediaModalYoutubeEmbedError,
 	]);
 }
 
-function stop() {
+export function stop() {
 	const pending = dispose();
 
 	dispose = () => undefined;
@@ -24,8 +24,6 @@ function stop() {
 	return pending;
 }
 
-function selfTest() {
+export function selfTest() {
 	return loadSelfTest(featureSelfTest(), loadStatus.pending());
 }
-
-export default { start, stop, selfTest };

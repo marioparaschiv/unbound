@@ -9,20 +9,31 @@ import json from '@rollup/plugin-json';
 import { readFileSync } from 'node:fs';
 import iife from 'rollup-plugin-iife';
 
+import type { BudgetOptions } from './build-report.ts';
 import type { Globals } from './globals.ts';
 
+import { settingsModule, settingsPanel, type SettingsState } from './settings.ts';
+import { assetImports, assets, createAssetCollector } from './assets.ts';
+import { BUILD_REPORT_ENV, buildReport } from './build-report.ts';
 import { hermesExpressionEntrypoint } from './entrypoint.ts';
 import { externalFor, unboundGlobals } from './globals.ts';
 import { findFile, sourceAlias } from './source-alias.ts';
+import { commandLocales } from './command-locales.ts';
 import { hermesBytecode } from './hermes-bytecode.ts';
+import { localeModule, locales } from './locales.ts';
+import { entryExports } from './entry-exports.ts';
 import { lazyModules } from './lazy-modules.ts';
+import { localeHooks } from './locale-hooks.ts';
+import { filterKeys } from './filter-keys.ts';
+import { outputOnly } from './output-only.ts';
+import { svgImports } from './svg-assets.ts';
 import { shimImports } from './shims.ts';
 import { worklets } from './worklets.ts';
 
 export type PluginConfigOptions = {
-	settingsPanel?: boolean;
 	lazyModules?: string[];
 	bytecode?: boolean;
+	budget?: BudgetOptions;
 };
 
 // `ubd dev` and `ubd push` set UNBOUND_HOT: components register for hot refresh and keep their hooks' state on push.
@@ -55,7 +66,7 @@ function manifestToDist(pluginRoot: string): Plugin {
  * @description Builds a plugin's rollup config with the given runtime globals.
  * @param pluginUrl The `import.meta.url` of the plugin's `rollup.config.mjs`.
  * @param globals Maps each import the client provides at runtime to its global.
- * @param options Set `settingsPanel` when the plugin exports `getSettingsPanel`, list `lazyModules` to run only on first use, and set `bytecode: false` to skip Hermes bytecode.
+ * @param options List `lazyModules` to run only on first use, set `bytecode: false` to skip Hermes bytecode, and `budget` to change the build report's size limits.
  * @returns The rollup config.
  */
 export function pluginConfig(
@@ -63,15 +74,27 @@ export function pluginConfig(
 	globals: Globals,
 	options: PluginConfigOptions = {},
 ): RollupOptions {
-	const { settingsPanel = false, lazyModules: deferred = [], bytecode = true } = options;
+	const { lazyModules: deferred = [], bytecode = true, budget } = options;
 	const pluginRoot = dirname(fileURLToPath(pluginUrl));
 	const sourceRoot = resolve(pluginRoot, 'src');
+	const input = findFile(resolve(sourceRoot, 'index')) ?? void 0;
 	const external = externalFor(globals);
-	const modulePlugins = () => [
+	const images = createAssetCollector();
+	const settings: SettingsState = {};
+	// Each lazy module builds on its own, with its own settings state; only the main build has the entry.
+	const modulePlugins = (state?: SettingsState) => [
+		settingsModule(pluginRoot, state),
+		localeModule(pluginRoot),
+		svgImports(pluginRoot),
+		assetImports(pluginRoot, images),
+		// Before every source transform, so its positions are the source file's.
+		commandLocales(pluginRoot),
 		sourceAlias(sourceRoot),
 		nodeResolve(),
 		commonjs(),
 		json(),
+		// Before swc, so React Refresh signatures include the `useMessages()` it adds.
+		localeHooks(pluginRoot),
 		worklets(),
 		swc({
 			tsconfig: false,
@@ -86,23 +109,31 @@ export function pluginConfig(
 	];
 
 	return {
-		input: findFile(resolve(sourceRoot, 'index')) ?? void 0,
+		input,
 		external,
 		plugins: [
-			lazyModules(deferred, { plugins: modulePlugins, external, globals }),
-			...modulePlugins(),
-			iife(),
-			minify(minifyOptions),
-			hermesExpressionEntrypoint({ hasSettingsPanel: settingsPanel }),
+			// The entry's own exports are checked before the generated panel is re-exported from it.
+			...(input ? [entryExports(input, pluginRoot), settingsPanel(input, settings)] : []),
+			lazyModules(deferred, { plugins: () => modulePlugins(), external, globals }),
+			...modulePlugins(settings),
+			filterKeys(pluginRoot),
+			outputOnly(iife()),
+			outputOnly(minify(minifyOptions)),
+			outputOnly(hermesExpressionEntrypoint()),
 			...(bytecode
 				? [
-						hermesBytecode({
-							versions: hermes.bytecodeVersions,
-							sourceName: basename(pluginRoot),
-						}),
+						outputOnly(
+							hermesBytecode({
+								versions: hermes.bytecodeVersions,
+								sourceName: basename(pluginRoot),
+							}),
+						),
 					]
 				: []),
 			manifestToDist(pluginRoot),
+			locales(pluginRoot),
+			assets(pluginRoot, images),
+			buildReport({ pluginRoot, budget, reportFile: process.env[BUILD_REPORT_ENV] }),
 		],
 		output: {
 			dir: resolve(pluginRoot, 'dist'),
@@ -118,7 +149,7 @@ export function pluginConfig(
 /**
  * @description The Unbound plugin preset: bundles `src/index`, reads `unbound`, `React` and the other shared libraries from the bare globals, and emits the manifest and the Hermes expression entrypoint.
  * @param pluginUrl The `import.meta.url` of the plugin's `rollup.config.mjs`.
- * @param options Set `settingsPanel` when the plugin exports `getSettingsPanel`, list `lazyModules` to run only on first use, and set `bytecode: false` to skip Hermes bytecode.
+ * @param options List `lazyModules` to run only on first use, set `bytecode: false` to skip Hermes bytecode, and `budget` to change the build report's size limits.
  * @returns The rollup config.
  */
 export function unbound(pluginUrl: string, options: PluginConfigOptions = {}): RollupOptions {

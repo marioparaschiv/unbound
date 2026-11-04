@@ -73,7 +73,7 @@ import type {
 	NativeResourceCounts,
 } from './_internal';
 import * as React$1 from 'react';
-import { ReactNode } from 'react';
+import { ComponentType } from 'react';
 /** The loader's platform bridge, read from `globalThis.NativePlatform` at import; `undefined` when no loader injected it. */
 declare const NativePlatform$1: NativePlatformBridge | undefined;
 

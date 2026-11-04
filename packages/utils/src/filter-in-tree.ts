@@ -1,0 +1,21 @@
+import type { TreeNode, TreePredicate, TreeSearchOptions } from './walk-tree';
+
+import walkTree from './walk-tree';
+
+/**
+ * @description Finds every node in an object graph a predicate matches, depth-first from the root. Cycle-safe.
+ * @template T The matched nodes' type.
+ * @param root The node to start from; it is tested too.
+ * @param predicate Tests each non-nullish node.
+ * @param options Which keys to descend into or skip, and how deep.
+ * @returns Every match, in visiting order.
+ */
+function filterInTree<T = TreeNode>(
+	root: TreeNode,
+	predicate: TreePredicate,
+	options: TreeSearchOptions = {},
+): T[] {
+	return walkTree(root, predicate, options, true);
+}
+
+export default filterInTree;

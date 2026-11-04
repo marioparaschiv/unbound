@@ -84,22 +84,38 @@ export function getArtifactKeys(addonId: string, version: string, main: string):
 	return { manifest: `${directory}/manifest.json`, bundle: `${directory}/${main}` };
 }
 
+/** The verified files a version ships beside its bundle. */
+export type ArtifactExtras = {
+	/** The compiled bundles, by bytecode version. */
+	bytecode?: ReadonlyMap<string, Uint8Array>;
+	/** The extra files the manifest lists, such as images, by path relative to the manifest. */
+	files?: ReadonlyMap<string, Uint8Array>;
+};
+
 /**
- * @description Writes a version's bundle and `manifest.json` to the public bucket at its {@link getArtifactKeys}.
+ * @description Writes a version's bundle, `manifest.json`, compiled bundles and extra files to the public bucket at its {@link getArtifactKeys}.
  * @param ctx The application context.
  * @param target The addon id, version and manifest the files are published as.
  * @param bundle The verified bundle bytes.
- * @param bytecode The verified compiled bundles, by bytecode version.
+ * @param extras The verified compiled bundles and extra files.
  */
 export async function writeArtifact(
 	ctx: AppContext,
 	target: ArtifactVersion,
 	bundle: Uint8Array,
-	bytecode: ReadonlyMap<string, Uint8Array> = new Map(),
+	{ bytecode = new Map(), files = new Map() }: ArtifactExtras = {},
 ): Promise<void> {
 	const keys = getArtifactKeys(target.addonId, target.version, target.manifest.main);
+	const directory = getVersionDirectory(target.addonId, target.version);
 
 	await Promise.all([
+		...[...files].map(([path, bytes]) =>
+			ctx.storage.public.write(
+				`${directory}/${path}`,
+				bytes,
+				path.endsWith('.json') ? { type: 'application/json' } : undefined,
+			),
+		),
 		...[...bytecode].map(([bytecodeVersion, bytes]) =>
 			ctx.storage.public.write(getBytecodeKey(keys.bundle, bytecodeVersion), bytes),
 		),

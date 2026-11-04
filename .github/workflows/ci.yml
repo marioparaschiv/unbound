@@ -64,7 +64,7 @@ jobs:
               env:
                   DATABASE_URL: postgres://unbound_bot:unbound_bot@localhost:5432/postgres
                   POSTGRES_SUPERUSER_URL: postgres://postgres:postgres@localhost:5432/postgres
-              run: bun test --parallel --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/plugin-scripts/**' --path-ignore-patterns 'packages/client/**' --path-ignore-patterns 'packages/cli/**'
+              run: bun test --parallel --path-ignore-patterns 'packages/plugins/**' --path-ignore-patterns 'packages/plugin-scripts/**' --path-ignore-patterns 'packages/client/**' --path-ignore-patterns 'packages/cli/**' --path-ignore-patterns 'packages/api/tests/fixtures/**'
             - name: Run CLI tests
               working-directory: packages/cli
               env:

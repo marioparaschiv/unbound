@@ -4,6 +4,7 @@ import { describe, expect, test } from 'bun:test';
 import type { AutocompleteAction, CommandEffects, DiscordContext, RawOption } from './run';
 import type { ErasedArgs, ErasedTree, Section } from './normalize';
 
+import { anyKeyLocales, key } from '../../tests/helpers/command-locales';
 import { normalize } from './normalize';
 import { createExecute } from './run';
 import { option } from './options';
@@ -47,7 +48,10 @@ function harness(): Harness {
 }
 
 function command(tree: ErasedTree, effects: CommandEffects, leaf = 0) {
-	return createExecute(normalize({ owner: 'demo', section, tree })[leaf], effects);
+	return createExecute(
+		normalize({ owner: 'demo', section, tree, locales: anyKeyLocales })[leaf],
+		effects,
+	);
 }
 
 function greet(execute: (args: ErasedArgs) => Reply | Promise<Reply>): ErasedTree {
@@ -56,7 +60,7 @@ function greet(execute: (args: ErasedArgs) => Reply | Promise<Reply>): ErasedTre
 			description: 'Greet',
 			options: {
 				user: option.user({ required: true }),
-				style: option.choice(['wave', { label: 'High five', value: 'high-five' }]),
+				style: option.choice({ wave: key('wave'), 'high-five': key('High five') }),
 				note: option.string(),
 			},
 			execute,

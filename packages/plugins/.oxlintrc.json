@@ -6,7 +6,12 @@
 			"specifier": "../../scripts/oxlint/plugin.ts"
 		}
 	],
-	"ignorePatterns": ["**/dist/**", "**/node_modules/**"],
+	"ignorePatterns": [
+		"**/dist/**",
+		"**/node_modules/**",
+		"**/src/unbound-settings.d.ts",
+		"**/src/unbound-i18n.d.ts"
+	],
 	"rules": {
 		"eslint/no-control-regex": "off",
 		"unicorn/no-useless-spread": "off",

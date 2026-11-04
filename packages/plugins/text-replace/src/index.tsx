@@ -7,7 +7,7 @@ import SettingsPanel from '~/components/settings-panel';
 import { normalizeStoredRules } from '~/stored-rules';
 import { Messages } from '~/modules';
 
-function start() {
+export function start() {
 	normalizeStoredRules();
 
 	if (!ensureModules('Text Replace', { Messages })) return;
@@ -17,7 +17,7 @@ function start() {
 
 const SAMPLE_RULE = { id: 'self-test', find: 'teh', replace: 'the', onlyIfIncludes: '' };
 
-function selfTest() {
+export function selfTest() {
 	const replaced = applyRules('teh cat', [SAMPLE_RULE], []);
 	const ok = isPatched() && replaced === 'the cat';
 
@@ -27,8 +27,4 @@ function selfTest() {
 	};
 }
 
-export default {
-	start,
-	selfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { SettingsPanel };

@@ -3,12 +3,14 @@ import { afterEach, describe, expect, test } from 'bun:test';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type { BuildCheck } from '../src/lib/build-checks';
+import type { Check } from '../src/lib/check/check';
 
 import { capabilitiesCheck, declaredCapabilitiesCheck } from '../src/lib/checks/capabilities';
+import { formatDiagnostic } from '../src/rollup/diagnostic';
 import { createTempDir, type TempDir } from './helpers/ubd';
 import { discoverAddons } from '../src/lib/discovery';
 import { loadWorkspace } from './helpers/config';
+import { checkContext } from './helpers/check';
 
 const dirs: TempDir[] = [];
 
@@ -66,14 +68,14 @@ function plugin(files: Files, fields: ManifestFields = {}): TempDir {
 	return dir;
 }
 
-async function check(dir: TempDir, buildCheck: BuildCheck = capabilitiesCheck) {
+async function check(dir: TempDir, buildCheck: Check = capabilitiesCheck) {
 	const [addon] = await discoverAddons(loadWorkspace(dir.path));
 
 	if (!addon) {
 		throw new Error('The fixture plugin was not discovered.');
 	}
 
-	return (await buildCheck.run(addon)).map((issue) => issue.message);
+	return (await buildCheck.run(checkContext(addon))).map((issue) => formatDiagnostic(issue));
 }
 
 function builtManifest(dir: TempDir) {
@@ -141,8 +143,8 @@ export const start = definePlatform({ android });`,
 		const anywhere = plugin({ 'src/index.ts': 'export function start() {}' });
 
 		expect(await check(iosCode)).toEqual([
-			"android cannot provide native.objc.invoke, which src/index.ts:3 needs for objc.invoke; select the platform's code with native.definePlatform.",
-			"android cannot provide native.objc.classes, which src/index.ts:3 needs for objc.getClass; select the platform's code with native.definePlatform.",
+			"src/index.ts:3:2  android cannot provide native.objc.invoke, which objc.invoke needs; select the platform's code with native.definePlatform.",
+			"src/index.ts:3:29  android cannot provide native.objc.classes, which objc.getClass needs; select the platform's code with native.definePlatform.",
 		]);
 		expect(await check(anywhere)).toEqual([]);
 		expect(builtManifest(anywhere)).toEqual({ id: 'example.paint', main: 'index.js' });
@@ -171,7 +173,7 @@ export const start = definePlatform({ android });`,
 		const dir = plugin({ 'src/index.ts': 'export function start() {}' }, { [field]: [] });
 
 		expect(await check(dir)).toEqual([
-			`manifest.json declares "${field}"; ubd build generates platforms and Capabilities from the code, so remove it.`,
+			`manifest.json  ${field}  Declares "${field}", which ubd build generates from the code.  Fix: remove it.`,
 		]);
 		expect(existsSync(join(dir.path, 'dist', 'manifest.json'))).toBe(false);
 	});
@@ -189,7 +191,7 @@ export const start = definePlatform({ android });`,
 		expect(await check(valid, declaredCapabilitiesCheck)).toEqual([]);
 		expect(existsSync(join(valid.path, 'dist', 'manifest.json'))).toBe(false);
 		expect(await check(invalid, declaredCapabilitiesCheck)).toEqual([
-			'capabilities contains an unsupported value: native.objc.unknown',
+			'manifest.json  capabilities contains an unsupported value: native.objc.unknown.',
 		]);
 	});
 
@@ -204,8 +206,8 @@ export function start(context: PluginContext, name: 'invoke' | 'getClass') {
 		});
 
 		expect(await check(dir)).toEqual([
-			'src/index.ts:4 reads a bridge member by a computed name (`objc[name]`); ubd build cannot tell which native method it reaches, so call the method by name.',
-			'src/index.ts:5 spreads a bridge (`...objc`); ubd build cannot tell which native method it reaches, so call the method by name.',
+			'src/index.ts:4:7  reads a bridge member by a computed name (`objc[name]`); ubd build cannot tell which native method it reaches, so call the method by name.',
+			'src/index.ts:5:9  spreads a bridge (`...objc`); ubd build cannot tell which native method it reaches, so call the method by name.',
 		]);
 	});
 
@@ -223,7 +225,7 @@ export function start(context: PluginContext) {
 		});
 
 		expect(await check(dir)).toEqual([
-			"android cannot provide native.objc.classes, which src/index.ts:5 needs for objc.getClass; select the platform's code with native.definePlatform.",
+			"src/index.ts:5:2  android cannot provide native.objc.classes, which objc.getClass needs; select the platform's code with native.definePlatform.",
 		]);
 	});
 
@@ -239,7 +241,7 @@ export function start(context: PluginContext) { paint(context); paintIOS(context
 		});
 
 		expect(await check(dir)).toEqual([
-			'src/index.ts:3 imports the ios handler src/ios/paint.ts outside native.definePlatform, so its Capabilities would reach other platforms.',
+			'src/index.ts:3:1  imports the ios handler src/ios/paint.ts outside native.definePlatform, so its Capabilities would reach other platforms.',
 		]);
 	});
 });

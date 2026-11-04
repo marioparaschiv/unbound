@@ -15,6 +15,7 @@ import {
 	type ModuleEntry,
 } from './paths';
 import { buildRoot, buildGlobal, writeManifest, normalizeForHash } from './emit';
+import { importGeneratedModules } from './generated-modules';
 import { bundleInWorkers } from './bundle-pool';
 import { buildOwnership } from './ownership';
 import { buildHoistFiles } from './bundle';
@@ -85,18 +86,17 @@ async function generate() {
 			}
 		}
 
-		outputs.set(
+		const stripped = strip(
+			bundled.get(entry.source)!,
 			entry.out,
-			strip(
-				bundled.get(entry.source)!,
-				entry.out,
-				children,
-				ownerByName,
-				usedOwners,
-				ownedByModule.get(entry.out) ?? new Set<string>(),
-				hoistedValues,
-			),
+			children,
+			ownerByName,
+			usedOwners,
+			ownedByModule.get(entry.out) ?? new Set<string>(),
+			hoistedValues,
 		);
+
+		outputs.set(entry.out, importGeneratedModules(stripped));
 	}
 
 	outputs.set(root.out, buildRoot(entries, aliases));

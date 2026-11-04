@@ -14,6 +14,7 @@ export type NativePlatformDevice = {
 	getOSVersionString(): string;
 	/** Whether the device is jailbroken on iOS or has an `su` binary on Android. */
 	isRooted(): boolean;
+	/** The active iOS jailbreak's name, such as `Dopamine 2.4`, or an empty string on Android and when none is found; older loaders lack it. */
 	getJailbreak?(): string;
 	/** Whether Discord is installed as a system app. */
 	isSystemApp(): boolean;

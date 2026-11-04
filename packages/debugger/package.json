@@ -27,12 +27,12 @@
 	"dependencies": {
 		"@unbound-app/debugger-protocol": "workspace:*",
 		"cleye": "^2.7.0",
-		"terminal-kit": "^3.1.2"
+		"terminal-kit": "^3.1.4"
 	},
 	"devDependencies": {
 		"@types/bun": "catalog:",
 		"@types/terminal-kit": "^2.5.7",
-		"tsdown": "^0.23.4"
+		"tsdown": "^0.23.5"
 	},
 	"peerDependencies": {
 		"typescript": "catalog:"

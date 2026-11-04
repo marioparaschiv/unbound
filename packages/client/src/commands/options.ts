@@ -1,6 +1,6 @@
 import type {
 	BuilderInput,
-	Choice,
+	ChoiceMap,
 	CommandChannel,
 	CommandContext,
 	CommandRole,
@@ -139,16 +139,6 @@ export function getKind(kind: string): ErasedKindSpec | undefined {
 	return Object.hasOwn(OptionKinds, kind) ? OptionKinds[kind as OptionKind] : undefined;
 }
 
-function choiceKind(choices: readonly Choice<string | number>[]): OptionKind {
-	const values = choices.map((choice) => (typeof choice === 'object' ? choice.value : choice));
-
-	if (values.every((value) => typeof value === 'number')) {
-		return values.every((value) => Number.isInteger(value)) ? 'integer' : 'number';
-	}
-
-	return 'string';
-}
-
 function createBuilder<K extends OptionKind>(kind: K): OptionBuilder<K> {
 	function build<const R extends boolean = false>(
 		input: BuilderInput<K, R> = {},
@@ -175,15 +165,15 @@ function createBuilders(): OptionBuilders {
 	}
 
 	function choice(
-		choices: readonly Choice<string | number>[],
+		choices: ChoiceMap,
 		{ description, required = false }: ChoiceSettings = {},
 	): OptionSpec {
 		return Object.freeze({
-			kind: choiceKind(choices),
+			kind: 'string',
 			required,
 			description,
 			settings: {},
-			choices: Object.freeze([...choices]),
+			choices: Object.freeze({ ...choices }),
 		});
 	}
 
@@ -195,5 +185,5 @@ type ChoiceSettings = {
 	required?: boolean;
 };
 
-/** The option builders: `option.string({ required: true })`, `option.user()`, `option.choice([...])`. */
+/** The option builders: `option.string({ required: true })`, `option.user()`, `option.choice({ ... })`. */
 export const option: OptionBuilders = createBuilders();

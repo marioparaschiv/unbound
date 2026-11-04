@@ -1,0 +1,8 @@
+{
+	"id": "settings.fixture",
+	"name": "Settings Fixture",
+	"description": "Builds the generated settings panel.",
+	"authors": [{ "name": "Wumpus", "id": "123456789012345678" }],
+	"version": "1.0.0",
+	"main": "src/index.ts"
+}

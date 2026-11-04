@@ -6,7 +6,7 @@ import { startRotation } from '~/rotation';
 
 let dispose = () => {};
 
-function start(context: PluginContext) {
+export function start(context: PluginContext) {
 	if (!isAussieDevice()) return;
 
 	dispose = applyFeatures('Aussie Mode', [
@@ -14,9 +14,7 @@ function start(context: PluginContext) {
 	]);
 }
 
-function stop() {
+export function stop() {
 	dispose();
 	dispose = () => {};
 }
-
-export default { start, stop };

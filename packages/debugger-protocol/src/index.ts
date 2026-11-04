@@ -51,6 +51,8 @@ export type PluginPushRequest = {
 	manifest: PushedManifest;
 	/** The bundle compiled to Hermes bytecode, base64-encoded, by bytecode version; its digests are in `manifest.bytecode`. */
 	bytecode?: Record<string, string>;
+	/** Each extra file the manifest lists beside the bundle, such as an image, base64-encoded, by path. */
+	files?: Record<string, string>;
 };
 
 /** The outcome of a {@link PluginPushRequest}, sent device → bridge → the one waiting controller. */
@@ -196,7 +198,8 @@ function hasRequiredFields(frame: unknown): frame is BridgeMessage {
 				frame.manifest !== null &&
 				(!('bytecode' in frame) ||
 					frame.bytecode === void 0 ||
-					isStringRecord(frame.bytecode))
+					isStringRecord(frame.bytecode)) &&
+				(!('files' in frame) || frame.files === void 0 || isStringRecord(frame.files))
 			);
 		case 'hello':
 			return 'device' in frame && isDeviceInfo(frame.device);

@@ -12,7 +12,7 @@ import { Icons, PLUGIN_NAME } from '~/constants';
 
 let dispose: () => unknown = () => undefined;
 
-function start() {
+export function start() {
 	const on = assets.getIdByName(Icons.on);
 	const off = assets.getIdByName(Icons.off);
 
@@ -33,7 +33,7 @@ function start() {
 	]);
 }
 
-function stop() {
+export function stop() {
 	const pending = dispose();
 
 	dispose = () => undefined;
@@ -41,9 +41,4 @@ function stop() {
 	return pending;
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export { featureSelfTest as selfTest, SettingsPanel };

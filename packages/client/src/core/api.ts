@@ -20,3 +20,4 @@ export * as i18n from '~/i18n/api';
 export * as sync from '~/sync/api';
 export * as fs from '~/native/fs';
 export * as metro from '~/metro';
+export * as utils from '~/utils';

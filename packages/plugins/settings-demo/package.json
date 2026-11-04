@@ -1,0 +1,15 @@
+{
+	"name": "settings-demo",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Shows every generated settings row.",
+	"type": "module",
+	"scripts": {
+		"build": "rollup -c"
+	},
+	"devDependencies": {
+		"@unbound-app/api": "workspace:*",
+		"@unbound-app/cli": "workspace:*",
+		"rollup": "^4.66.0"
+	}
+}

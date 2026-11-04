@@ -18,6 +18,14 @@ import { finder } from '~/metro/finders';
 
 export type * from '@unbound-app/types/flux';
 
+/** Options for {@link useStore}. */
+export type UseStoreOptions<T> = {
+	/** Values the selector closes over. While they stay the same, a render reuses the last value instead of re-running the selector. */
+	deps?: DependencyList;
+	/** Decides whether a new selection equals the last one, which skips the re-render. Defaults to `Object.is`. */
+	isEqual?: (previous: T, next: T) => boolean;
+};
+
 type FluxDispatcher = {
 	dispatch(action: FluxAction): Promise<void>;
 	subscribe<K extends string>(type: K, listener: FluxActionListener<K>): void;
@@ -77,19 +85,20 @@ export function getStore<K extends FluxStoreName>(
 }
 
 /**
- * @description Reads state from Flux stores in a component, re-rendering when any of them changes.
- * @template T The value the getter returns.
- * @param stores The store, or stores, the getter reads.
- * @param getter Reads the value from the stores.
- * @param deps Values the getter closes over; a change re-runs it.
- * @returns The getter's latest value.
+ * @description Selects state from Flux stores in a component, re-rendering only when the selection changes.
+ * @template S The store, or tuple of stores.
+ * @template T The value the selector returns.
+ * @param stores The store, or stores, the selector reads.
+ * @param selector Reads the value from the stores, which it receives as passed.
+ * @param options The selector's `deps`, and the `isEqual` that compares two selections.
+ * @returns The selector's latest value.
  */
-export function useStore<T>(
-	stores: FluxStore | FluxStore[],
-	getter: () => T,
-	deps?: DependencyList,
+export function useStore<const S extends FluxStore | readonly FluxStore[], T>(
+	stores: S,
+	selector: (stores: S) => T,
+	{ deps, isEqual = Object.is }: UseStoreOptions<T> = {},
 ): T {
-	return FluxHooks.useStateFromStores([stores].flat(), getter, deps);
+	return FluxHooks.useStateFromStores([stores].flat(), () => selector(stores), deps, isEqual);
 }
 
 /**

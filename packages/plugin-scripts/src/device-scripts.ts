@@ -383,7 +383,9 @@ function openSettingsScreen(id: string) {
 	const entity = unbound.plugins.get(id);
 	const instance = entity?.instance;
 
-	if (!entity || !instance || typeof instance.getSettingsPanel !== 'function') return 'none';
+	const SettingsPanel = instance?.SettingsPanel;
+
+	if (!entity || !SettingsPanel) return 'none';
 
 	const { React } = unbound.metro.common;
 	const probe: SettingsProbeState = { rendered: false, error: '', boundary: null };
@@ -416,7 +418,7 @@ function openSettingsScreen(id: string) {
 	const Panel = () => {
 		probe.rendered = true;
 
-		return instance.getSettingsPanel?.();
+		return React.createElement(SettingsPanel);
 	};
 
 	unbound.metro

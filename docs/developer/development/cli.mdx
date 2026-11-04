@@ -49,6 +49,8 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 
 		`build` builds every addon once and reports which succeeded. `dev` watches every addon, rebuilds only the one whose files changed, and reloads it in the running client after each successful build.
 
+		`ubd build --verbose` also logs each [metro filter](/docs/developer/plugins/metro#custom-filters) the build rewrote into a built-in filter, with its file and line.
+
 		To send one plugin to the device without watching, use `push`. It builds the plugin, installs it if the device doesn't have it yet, and hot reloads it. Pass `--build=false` to push the existing build.
 
 		```bash
@@ -74,6 +76,115 @@ Commands that act on the running client, such as `eval`, `push`, `reload` and `d
 		`publish` takes `--addon` (required when the workspace has several addons), `--ref` (defaults to the tag on `HEAD`, otherwise its commit), and `--repository` (defaults to the `origin` remote). `ubd logout` deletes the stored credentials.
 	</Step>
 </Steps>
+
+## Translations
+
+`ubd i18n` checks a plugin's `i18n/` folder against `i18n/en-US.json`. Run it in the plugin, or pass `--plugin <dir>`. For each language it prints how many keys are translated, which are missing, which keys `en-US.json` does not have, and every ICU problem: placeholders that differ from English, a `plural` or `select` without an `other` branch, and a syntax error with its file, line and position.
+
+```bash
+ubd i18n
+ubd i18n --fix
+ubd i18n --unused
+ubd i18n --add GREETING "Hello, {name}!"
+ubd i18n --json
+```
+
+| Flag | Meaning |
+| --- | --- |
+| `--fix` | Adds every missing key to each translation, with its English text, in `en-US.json`'s key order. The file keeps its indentation and trailing newline. Running it twice changes nothing. |
+| `--prune` | Also removes keys that `en-US.json` does not have. Implies `--fix`. |
+| `--unused` | Lists `en-US.json` keys that no file in `src/` or `settings.ts` uses, and keys used there that `en-US.json` lacks. |
+| `--add <key> <text>` | Adds a key to `en-US.json`, in sorted place when the file is sorted and last otherwise, then rewrites `src/unbound-i18n.d.ts` the way `ubd dev` does. |
+| `--strict` | Fails on missing translations too. |
+| `--json` | Prints the report as JSON, for CI. |
+
+The command exits `1` on an ICU problem, a key `en-US.json` does not have, a file it cannot read, or, with `--unused`, a used key `en-US.json` lacks. Missing translations only fail with `--strict`.
+
+`--fix` lists each key it added in `i18n/untranslated.jsonc`, with the English text it wrote. The report counts such a key as missing until its text changes, so commit that file. The build never reads it, and a stub shows the English text the user would see anyway. The next `--fix` drops keys that have been translated, and updates stubs whose English changed.
+
+`--unused` finds keys where the source passes a string literal:
+
+| Call | Keys read |
+| --- | --- |
+| `messages.KEY`, `messages['KEY']` | The property, when `messages` comes from `@unbound-app/i18n` |
+| `format('KEY', …)` | The first argument, when `format` comes from `@unbound-app/i18n` |
+| `defineSettings(...)` | `title`, `subtitle`, `label`, `options` and `confirm` values |
+| `commands.register(...)` | `description` and `label` values |
+| `option.choice({ value: 'KEY' })` | Each label key in the choice map |
+| `toasts.success('KEY', vars)`, and `error`, `info`, `warning` | The first argument |
+| `dialogs.confirm('KEY', …)`, `dialogs.alert('KEY', …)` | The first argument, and the `body`, `confirm` and `cancel` options |
+
+A key built at run time, such as `messages[name]`, cannot be found this way. The report counts these reads, so you can check that the keys it lists as unused are really unused.
+
+## Check an addon
+
+`ubd check` runs every check `ubd build` runs, without producing a bundle. It also validates the manifest against the publish rules, runs the plugin lint with the nearest `.oxlintrc.json`, and runs the build's rollup plugins over the module graph, so a broken import or a problem a plugin reports shows up too. Nothing in the output folder changes.
+
+```bash
+ubd check                       # the addon holding the current directory
+ubd check --plugin plugins/demo # another addon; repeat --plugin for several
+ubd check --all                 # every addon in the workspace
+ubd check --only lint,manifest  # just these checks
+```
+
+It prints each problem as `file:line:column  <path>  <problem>.  Fix: <fix>.`, grouped by file with errors first, then a summary such as `3 errors, 1 warning in 2 files`. `ubd build` prints its checks the same way.
+
+| Flag | Meaning |
+| --- | --- |
+| `--watch` | Re-check an addon each time you save a file in it, and print only the problems that appeared or were fixed. |
+| `--json` | Print the diagnostics as JSON. With `--watch`, print one JSON line per run. |
+| `--only` | Run only the named checks, comma-separated. `ubd check --help` lists them. |
+| `--strict` | Fail on warnings too. Without it, only an error exits non-zero. |
+| `--types` | Also type-check the addon with its `tsconfig.json`, as `tsc --noEmit` does. It is slow, so it is off by default. |
+| `--declared-capabilities` | Check capabilities as `ubd build --declared-capabilities` does. |
+
+While you edit, keep `ubd check --watch` running in a terminal beside the editor. In CI, run `ubd check --all --json` and read the exit code: `1` means at least one error.
+
+## Build report
+
+After each plugin builds, `ubd build` prints what it ships and warns when a size passes its budget:
+
+```text
+starred-users 1.2.0
+  bundle      index.js            18.4 KB   (gzip 6.1 KB)   bytecode 41.2 KB
+  inlined     en-US strings        1.1 KB
+              svg (3)              2.4 KB
+  shipped     i18n (2 locales)     2.0 KB
+              assets (4)          12.8 KB
+  metro       filters 9 keyed · 1 uncached  (src/index.tsx:12)
+  ⚠ bundle over 50 KB budget (61.2 KB)
+```
+
+| Line | Measures |
+| --- | --- |
+| `bundle` | The written `index.js`, its gzip size, and the largest Hermes bytecode file. |
+| `inlined` | What the build inlined into the bundle, such as en-US strings and SVG icons, as the plugins that inline them count it. |
+| `shipped` | The files the manifest lists beside the bundle (translations and images), as publish and install read them. |
+| `metro` | The Metro filters that got a cache key, and where each one that searches uncached is. |
+
+`--verbose` also lists the five largest source modules. `--json` prints the same data for CI. `ubd dev` prints one line per rebuild instead, such as `Built my-plugin: 18.4 KB · 1 uncached filter`.
+
+### Budgets
+
+The bundle budget is `50kb` and the assets budget is `500kb`. Change them in `rollup.config.mjs`:
+
+```js rollup.config.mjs
+import { unbound } from '@unbound-app/cli/rollup';
+
+export default unbound(import.meta.url, { budget: { bundle: '80kb', assets: '1mb' } });
+```
+
+A size over its budget is a warning. Pass `--strict-budget` to fail the build instead. The report also warns when the bundle contains a library from `node_modules` that the client already provides, such as a file of `lodash` imported by path. Import the library by its name so the plugin uses the client's copy.
+
+### Add a line from a rollup plugin
+
+A rollup plugin adds a line by emitting `reportLine(entry)` with `this.emitFile`, from any hook up to `generateBundle`. Entries with the same `section` and `label` merge: their `bytes` add up, `unit` shows how many merged, `tally` counts them by kind, `location` lists where each came from, and `issue` names them in the `ubd dev` line. The entries never reach `dist`.
+
+```js
+import { reportLine } from '@unbound-app/cli/rollup';
+
+this.emitFile(reportLine({ section: 'inlined', label: 'svg', unit: '', bytes: xml.length }));
+```
 
 ## Run code and reload
 
@@ -121,7 +232,7 @@ ubd device reset
 
 ## AI clients
 
-`ubd mcp` serves the bridge commands above, plus `install` and `device`, as tools of a stdio [MCP](https://modelcontextprotocol.io) server over one connection to the bridge, so an AI client can evaluate code, inspect views, and push plugins. `build`, `dev`, `create`, `logs`, `login`, `logout` and `publish` stay CLI only.
+`ubd mcp` serves the bridge commands above, plus `install` and `device`, as tools of a stdio [MCP](https://modelcontextprotocol.io) server over one connection to the bridge, so an AI client can evaluate code, inspect views, and push plugins. `build`, `check`, `dev`, `create`, `logs`, `login`, `logout` and `publish` stay CLI only.
 
 Two tools are also available from the command line under `ubd mcp`: `ubd mcp route` prints the focused navigation route with its params and navigator path, and `ubd mcp open <screen>` opens an Unbound or Discord settings screen from anywhere in the app.
 
