@@ -1,59 +1,19 @@
-import { createFakeReactNative, metro, render, startPlugin } from '@unbound-app/api/testing';
+import { metro, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import { memo, type ComponentType, type ReactNode } from 'react';
+import { memo, type ComponentType } from 'react';
 
 import type { StoreSeeds } from '@unbound-app/api/testing';
 
-class AnimatedValue {
-	constructor(public value: number) {}
-
-	setValue(value: number) {
-		this.value = value;
-	}
-
-	stopAnimation() {}
-
-	interpolate() {
-		return this;
-	}
-}
-
-// The kit's `react-native` has no `Animated`; these finish at once.
-const reactNative = createFakeReactNative();
-
-mock.module('react-native', () => ({
-	...reactNative,
-	Animated: {
-		Value: AnimatedValue,
-		View: 'View',
-		Image: 'Image',
-		timing: (value: AnimatedValue, { toValue }: { toValue: number }) => ({
-			start: (done?: () => void) => {
-				value.setValue(toValue);
-				done?.();
-			},
-		}),
-	},
-	TextInput: { State: {} },
-}));
-
-// The kit has no fakes for `native`, `plugins` or Discord's design components, so stand in for them.
+// The kit has no fake for `plugins`, which `applyTextReplace` reads to see whether Text Replace runs.
 mock.module('~/preview/text-replace', () => ({ applyTextReplace: (content: string) => content }));
-mock.module('@unbound-app/api/metro/components', () => ({
-	Portal: { Portal: ({ children }: { children: ReactNode }) => children },
-}));
-
-const { patchChatInputRightActions } = await import('~/preview/ios/right-actions');
-
-mock.module('~/preview/platform', () => ({ patchPreviewButton: patchChatInputRightActions }));
 
 const ChatInputRightActions = {
 	default: memo((_props: { channel: { id: string } }) => <ActionsView />),
 };
 
-// Host components by name: a static `react-native` import would load before the mock below.
+// Host components by name.
 const ActionsView = 'View' as unknown as ComponentType;
-const HostText = 'Text' as unknown as ComponentType<{ children?: ReactNode }>;
+const HostText = 'Text' as unknown as ComponentType<{ children?: string }>;
 const Message = ({ content }: { content: string }) => <HostText>{content}</HostText>;
 
 function stores(draft: string): StoreSeeds {
