@@ -1,7 +1,7 @@
 import { metro, toasts } from '@unbound-app/api';
 import { Share } from 'react-native';
 
-import { serializeRuleset, type Ruleset } from '~/ruleset';
+import { serializeRuleset, type Ruleset } from '~/replace/ruleset';
 
 async function copy(value: string): Promise<boolean> {
 	try {
@@ -22,18 +22,13 @@ export async function shareRuleset(ruleset: Ruleset): Promise<void> {
 	const value = serializeRuleset(ruleset);
 	const copied = await copy(value);
 
-	let content: string;
-
 	try {
 		await Share.share({ message: value });
-		content = copied ? 'Ruleset copied and ready to share.' : 'Ruleset shared.';
+		toasts.success(copied ? 'RULESET_COPIED_AND_SHARED' : 'RULESET_SHARED');
 	} catch {
-		content = copied
-			? 'Ruleset copied to your clipboard.'
-			: 'Sharing is unavailable on this client build.';
+		if (copied) toasts.success('RULESET_COPIED');
+		else toasts.warning('SHARING_UNAVAILABLE');
 	}
-
-	toasts.show({ title: 'Text Replace', content });
 }
 
 /**

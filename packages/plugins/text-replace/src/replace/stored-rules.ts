@@ -4,9 +4,9 @@ import {
 	type TextReplaceRule,
 } from '@unbound-plugins/shared/text-replace/rules';
 
-import { hasRuleContent, type Ruleset } from '~/ruleset';
+import { hasRuleContent, type Ruleset } from '~/replace/ruleset';
 import type { RuleKind } from '~/constants';
-import { settings } from '~/modules';
+import { settings } from '~/replace/modules';
 
 type SettingsReader = Pick<typeof settings, 'get'>;
 

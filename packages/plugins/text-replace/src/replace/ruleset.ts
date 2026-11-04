@@ -1,5 +1,7 @@
 import { normalizeRules, type TextReplaceRule } from '@unbound-plugins/shared/text-replace/rules';
 
+import { messages } from '@unbound-app/i18n';
+
 import { RULESET_VERSION } from '~/constants';
 
 export type Ruleset = {
@@ -58,17 +60,17 @@ export function parseRuleset(value: string): Ruleset {
 	try {
 		parsed = JSON.parse(value);
 	} catch {
-		throw new Error('This is not valid JSON.');
+		throw new Error(messages.INVALID_JSON);
 	}
 
 	if (!parsed || typeof parsed !== 'object') {
-		throw new Error('This is not a Text Replace ruleset.');
+		throw new Error(messages.NOT_A_RULESET);
 	}
 
 	const { version, stringRules, regexRules } = parsed;
 
 	if (version !== RULESET_VERSION || !Array.isArray(stringRules) || !Array.isArray(regexRules)) {
-		throw new Error('This Text Replace ruleset is unsupported.');
+		throw new Error(messages.UNSUPPORTED_RULESET);
 	}
 
 	return {
