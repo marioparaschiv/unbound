@@ -1,6 +1,6 @@
 import type { LayoutChangeEvent } from 'react-native';
 import { Text, View } from 'react-native';
-import { flux } from '@unbound-app/api';
+import { flux, utils } from '@unbound-app/api';
 
 import { findUserSummaryItem, UserStore } from '~/reactions/modules';
 import { surfaceStates } from '~/reactions/surface-states';
@@ -35,17 +35,13 @@ function stopPropagation(event: PropagationEvent) {
 	event.stopPropagation?.();
 }
 
-function isSameUsers(previous: Reactor[], next: Reactor[]): boolean {
-	return previous.length === next.length && previous.every((user, index) => user === next[index]);
-}
-
 function ReactionAvatarSurface({ surfaceId }: SurfaceProps) {
 	const state = surfaceStates.get(surfaceId);
 	const Summary = findUserSummaryItem();
 	const users = flux.useStore(
 		UserStore,
 		(store) => (state?.users ?? []).map((user) => store.getUser(user.id) ?? user),
-		{ deps: [state], isEqual: isSameUsers },
+		{ deps: [state], isEqual: utils.react.shallow },
 	);
 
 	if (!state || !Summary) return null;
