@@ -1,6 +1,6 @@
 import { expect, mock, test } from 'bun:test';
 
-mock.module('react-native', () => ({ NativeModules: {}, View: 'View' }));
+mock.module('react-native', () => ({ NativeModules: {}, AppState: {}, View: 'View' }));
 
 const { deviceLocale } = await import('~/locale/android/device-locale');
 
