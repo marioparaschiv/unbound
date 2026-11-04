@@ -3,17 +3,21 @@ import Logger from '@unbound-app/logger';
 
 import type { HotUpdate } from '../build';
 
+import * as outcome from './outcome';
+
 /** The parts of rolldown's dev engine that track which patches each client has run. */
 export type ClientTracker = {
 	registerClient(clientId: string): Promise<void>;
 	removeClient(clientId: string): Promise<void>;
 	notifyPayloadDelivered(filename: string): Promise<void>;
-	ensureLatestBuildOutput(): Promise<void>;
 };
 
 type SocketData = { clientId: string };
 
-type ClientMessage = { type: 'applied'; filename: string } | { type: 'rejected' };
+type ClientMessage =
+	| { type: 'applied'; filename: string }
+	| { type: 'refreshed'; fibers: number; remounted: number; ms: number }
+	| { type: 'rejected'; reason?: string };
 
 const logger = Logger.create('Serve', 'Refresh');
 
@@ -23,7 +27,18 @@ function isClientMessage(value: unknown): value is ClientMessage {
 	}
 
 	if (value.type === 'rejected') {
-		return true;
+		return !('reason' in value) || typeof value.reason === 'string';
+	}
+
+	if (value.type === 'refreshed') {
+		return (
+			'fibers' in value &&
+			typeof value.fibers === 'number' &&
+			'remounted' in value &&
+			typeof value.remounted === 'number' &&
+			'ms' in value &&
+			typeof value.ms === 'number'
+		);
 	}
 
 	return value.type === 'applied' && 'filename' in value && typeof value.filename === 'string';
@@ -69,17 +84,31 @@ export function upgrade(req: Request, server: Server<SocketData>): Response | un
 }
 
 /**
- * @description Sends a patch to the device it was built for, or a reload to every device once the rebuild is on disk.
+ * @description Sends a patch to the device it was built for, and records the build's progress for `/__outcome`.
+ * A change no patch covers reloads through the loader's `/__hot` stream once its build is on disk.
  * @param update The dev engine's update.
  * @returns Resolves once the update is sent.
  */
 export async function deliver(update: HotUpdate) {
-	if (update.type === 'reload') {
-		await tracker?.ensureLatestBuildOutput();
+	switch (update.type) {
+		case 'change':
+			outcome.changed(update.file);
 
-		for (const socket of sockets.values()) socket.send(JSON.stringify(update));
+			return;
+		case 'failed':
+			outcome.failed(update.error);
 
-		return;
+			return;
+		case 'built':
+			outcome.built();
+
+			return;
+		case 'reload':
+			outcome.needsReload(update.reason);
+
+			return;
+		case 'patch':
+			break;
 	}
 
 	const socket = sockets.get(update.clientId);
@@ -87,6 +116,7 @@ export async function deliver(update: HotUpdate) {
 	if (!socket) return;
 
 	logger.info(`Patching ${update.changedIds.join(', ')}`);
+	outcome.sent();
 	socket.send(JSON.stringify(update));
 }
 
@@ -101,13 +131,15 @@ export const websocket: WebSocketHandler<SocketData> = {
 		sockets.set(clientId, socket);
 		await tracker?.registerClient(clientId);
 		logger.info(`Device connected (${sockets.size} total).`);
+		outcome.reconnected();
 	},
 	/**
-	 * @description Records an applied patch, or answers a reload request with the latest build.
+	 * @description Records an applied or refreshed patch, or a rejected one the loader must reload for.
 	 * @param socket The device's socket.
+	 * @param _socket
 	 * @param raw The device's message.
 	 */
-	async message(socket, raw) {
+	async message(_socket, raw) {
 		const message = parseClientMessage(raw);
 
 		if (!message) {
@@ -122,8 +154,13 @@ export const websocket: WebSocketHandler<SocketData> = {
 			return;
 		}
 
-		await tracker?.ensureLatestBuildOutput();
-		socket.send(JSON.stringify({ type: 'reload' }));
+		if (message.type === 'refreshed') {
+			outcome.patched(message.fibers, message.remounted, message.ms);
+
+			return;
+		}
+
+		outcome.needsReload(message.reason ?? 'the device could not patch in place');
 	},
 	/**
 	 * @description Forgets a disconnected device.

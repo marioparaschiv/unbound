@@ -47,7 +47,7 @@ if grep -q '^object' <<<"$result"; then
 	echo 'ok   device connected and Unbound running'
 
 	# Another agent may have pointed the loader at its own server; the device then never runs this dev server's build.
-	url=$("$here/ubd" eval 'unbound.storage.get("unbound", "loader.update.url", "")' 2>&1 | tail -n 1)
+	url=$("$here/ubd" eval 'unbound.storage.getBucket("unbound").get("loader.update.url", "")' 2>&1 | tail -n 1 | tr -d '"')
 
 	if [[ $url == "http://$DEV_HOST:$UNBOUND_DEV_PORT/"* ]]; then
 		echo "ok   device loads its bundle from this dev server ($url)"

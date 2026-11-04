@@ -1,6 +1,9 @@
 import { formatDuration, killGroup, spawnGroup } from '~/lib/run-command';
 import type { DiscoveredAddon } from '~/lib/discovery';
 
+/** The environment of a build a running client hot-reloads: the preset compiles React Fast Refresh into it. */
+export const HOT_BUILD_ENV = { UNBOUND_HOT: '1' };
+
 /**
  * @description Builds a single addon by running the config's `build` command with cwd set to the
  * addon directory. Static addons carry no build step, so they resolve immediately as successful.

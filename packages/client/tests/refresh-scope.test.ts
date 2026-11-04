@@ -33,10 +33,13 @@ describe('refresh scope', () => {
 		expect(stableType(card)).not.toBe(stableType(other));
 	});
 
-	test('leaves the refresh globals as they were once the bundle has run', () => {
-		withRefreshScope('plugin.d', () => register(() => 'd', 'Card'));
+	test('leaves inert refresh globals once the bundle has run, so a lazy module can still call them', () => {
+		const late = () => 'late';
 
-		expect(globalThis.$RefreshReg$).toBeUndefined();
-		expect(globalThis.$RefreshSig$).toBeUndefined();
+		withRefreshScope('plugin.d', () => register(() => 'd', 'Card'));
+		register(late, 'Late');
+
+		expect(stableType(late)).toBe(late);
+		expect(globalThis.$RefreshSig$?.()(late, 'key')).toBe(late);
 	});
 });

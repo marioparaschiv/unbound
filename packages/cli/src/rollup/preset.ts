@@ -25,6 +25,9 @@ export type PluginConfigOptions = {
 	bytecode?: boolean;
 };
 
+// `ubd dev` and `ubd push` set UNBOUND_HOT: components register for hot refresh and keep their hooks' state on push.
+const hot = process.env.UNBOUND_HOT === '1';
+
 const minifyOptions = {
 	compress: { keep_classnames: true, keep_fnames: true },
 	mangle: false,
@@ -70,7 +73,15 @@ export function pluginConfig(
 		commonjs(),
 		json(),
 		worklets(),
-		swc({ tsconfig: false }),
+		swc({
+			tsconfig: false,
+			// swc applies `refresh` only in development mode.
+			jsc: {
+				transform: {
+					react: { refresh: hot && { emitFullSignatures: true }, development: hot },
+				},
+			},
+		}),
 		shimImports(),
 	];
 

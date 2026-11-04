@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import type { Fiber, Hook } from '~/hot-refresh/refresh';
+import { HOOK_COSTS } from '~/hot-refresh/hook-diff';
 
 // UNKNOWN: a hook method takes and returns whatever the React hook it implements does.
 type HookMethod = (...args: unknown[]) => unknown;
@@ -20,6 +21,8 @@ export type Budget = {
 	unknown: boolean;
 	/** A re-render pass, where React reuses the hook list and nothing may be inserted. */
 	strict: boolean;
+	/** Hook objects to insert once `limit` is used, after which calls reuse the list again; for a hook-order change. */
+	insert?: number;
 };
 
 type Frame = {
@@ -36,34 +39,6 @@ type Internals = { H: Dispatcher | null };
 
 type ReactWithInternals = typeof React & {
 	__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE: Internals;
-};
-
-// How many hook objects each dispatcher method adds to a component's hook list, read from React 19's source.
-const HOOK_COSTS: Record<string, number> = {
-	useState: 1,
-	useReducer: 1,
-	useMemo: 1,
-	useCallback: 1,
-	useRef: 1,
-	useEffect: 1,
-	useLayoutEffect: 1,
-	useInsertionEffect: 1,
-	useImperativeHandle: 1,
-	useId: 1,
-	useDeferredValue: 1,
-	useOptimistic: 1,
-	useCacheRefresh: 1,
-	useEffectEvent: 1,
-	useTransition: 2,
-	useSyncExternalStore: 2,
-	useActionState: 3,
-	useFormState: 3,
-	readContext: 0,
-	useContext: 0,
-	use: 0,
-	useDebugValue: 0,
-	useMemoCache: 0,
-	useHostTransitionStatus: 0,
 };
 
 const internals = (React as ReactWithInternals)
@@ -314,6 +289,15 @@ function consume(frame: Frame, method: string, args: unknown[]): unknown {
 		return base[method](...args);
 	}
 
+	if (budget.insert !== void 0 && mount) {
+		const inserting = budget.used < budget.limit + budget.insert;
+
+		budget.used += cost;
+
+		// See the mount below: an inserted hook leaves React's current-hook pointer on the next kept one.
+		return inserting ? mount[method](...args) : base[method](...args);
+	}
+
 	if (budget.strict || !mount) {
 		throw new LateHook(method);
 	}
@@ -348,8 +332,17 @@ function isEffect(state: unknown): state is Effect {
 
 captureMount();
 
+/**
+ * @description Whether hooks can be inserted into a mounted component: React's mount dispatcher has been seen.
+ * @returns `true` once a component has mounted since this module loaded.
+ */
+export function canInsertHooks(): boolean {
+	return mount !== null;
+}
+
 export default {
 	LateHook,
+	canInsertHooks,
 	dispatcherKind,
 	runWithBudget,
 	enterBudget,

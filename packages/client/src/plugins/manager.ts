@@ -8,7 +8,6 @@ import { Addons, rememberSourceDigest } from '~/addons/addons';
 import type { Addon, AddonResolveable } from '~/addons/addon';
 import { createPluginContext } from '~/native/plugin-context';
 import type { AddonAttribution } from '~/addons/crash-guard';
-import { reload as reloadApp } from '~/native/native';
 import type { ReloadResult } from '~/addons/addons';
 import { createAddonScope } from '~/addons/scope';
 import { setOwnerCheck } from '~/commands/owners';
@@ -31,6 +30,19 @@ type EvaluatedPlugin = {
 	bundle: string;
 	factory: PluginFactory;
 };
+
+// The module `__load` returns is read through the wrapper's own methods, so only the call matters here.
+type LazyPlugin = { __load: () => void };
+
+// UNKNOWN: a bundle's payload is whatever its IIFE returned.
+function isLazyPlugin(value: unknown): value is LazyPlugin {
+	return (
+		typeof value === 'object' &&
+		value !== null &&
+		'__load' in value &&
+		typeof value.__load === 'function'
+	);
+}
 
 export class Plugins extends Addons<Plugin> {
 	private scanned = new Map<string, ScannedPlugin>();
@@ -116,9 +128,14 @@ export class Plugins extends Addons<Plugin> {
 			}
 		}
 
-		if (result.ok && performRefresh().needsRemount) {
-			this.logger.info(`${manifest.id} changed a component's hooks; reloading.`);
-			reloadApp();
+		if (result.ok) {
+			const { remounted } = performRefresh();
+
+			if (remounted) {
+				this.logger.info(
+					`${manifest.id}: remounted ${remounted} components whose hooks changed.`,
+				);
+			}
 		}
 
 		return result;
@@ -143,6 +160,12 @@ export class Plugins extends Addons<Plugin> {
 		return withRefreshScope(id, () => {
 			const payload = iife(...globals);
 			const instance = typeof payload === 'function' ? payload() : payload;
+
+			// The CLI's entrypoint defers the module body to first use; running it here registers its components
+			// under this plugin's refresh scope. `start` runs right after, so nothing loads earlier than it would.
+			if (isLazyPlugin(instance)) {
+				instance.__load();
+			}
 
 			return instance?.default ?? instance;
 		});

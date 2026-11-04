@@ -12,12 +12,14 @@ export type AddonTarget = { addon: DiscoveredAddon } | { error: string };
  * @param target The addon's manifest id, or a path to its directory.
  * @param build Whether to run the workspace build command for it first.
  * @param buildTimeoutMs How long the build may run before it fails; unbounded when omitted.
+ * @param env Variables added to the build's environment.
  * @returns The addon, or the reason it could not be found or built.
  */
 export async function resolveAddonTarget(
 	target: string,
 	build: boolean,
 	buildTimeoutMs?: number,
+	env: Record<string, string> = {},
 ): Promise<AddonTarget> {
 	const resolved = loadConfig();
 
@@ -38,7 +40,7 @@ export async function resolveAddonTarget(
 	}
 
 	const built =
-		(await buildAddon(addon, resolved.config.build, {}, buildTimeoutMs)) &&
+		(await buildAddon(addon, resolved.config.build, env, buildTimeoutMs)) &&
 		(await runBuildChecks(addon, DEV_BUILD_CHECKS));
 
 	if (!built) {

@@ -1,5 +1,8 @@
 import type { FunctionComponent } from 'react';
 
+import { HOOK_COSTS, hookName, planHooks } from '~/hot-refresh/hook-diff';
+import type { HookCall, HookPlan } from '~/hot-refresh/hook-diff';
+
 /** A component or a `memo` / `forwardRef` object, as the refresh transform registers it. */
 export type RefreshType = FunctionComponent<never> | { $$typeof: symbol };
 
@@ -14,11 +17,18 @@ type Signature = {
 	getCustomHooks: () => unknown[];
 };
 
-/** What a refresh found: families whose component changed compatibly, and those that need a remount. */
+/**
+ * What a refresh found: families whose component changed compatibly, and those whose hooks changed. A stale
+ * family with a plan can splice its mounted hook lists in place; one without needs a remount.
+ */
 export type RefreshUpdate = {
 	updatedFamilies: Set<Family>;
 	staleFamilies: Set<Family>;
+	plans: Map<Family, HookPlan>;
 };
+
+// Custom hooks nest; a cycle or a deep chain is treated as unknown rather than followed.
+const MAX_HOOK_DEPTH = 8;
 
 type ForwardRef = { $$typeof: symbol; render: RefreshType };
 
@@ -172,6 +182,7 @@ export function performReactRefresh(): RefreshUpdate | null {
 	try {
 		const updatedFamilies = new Set<Family>();
 		const staleFamilies = new Set<Family>();
+		const plans = new Map<Family, HookPlan>();
 		const updates = pending.slice();
 
 		pending.length = 0;
@@ -183,12 +194,20 @@ export function performReactRefresh(): RefreshUpdate | null {
 
 			if (isCompatible(previous, next)) {
 				updatedFamilies.add(family);
-			} else {
-				staleFamilies.add(family);
+
+				continue;
+			}
+
+			staleFamilies.add(family);
+
+			const plan = planHookChange(previous, next);
+
+			if (plan) {
+				plans.set(family, plan);
 			}
 		}
 
-		return { updatedFamilies, staleFamilies };
+		return { updatedFamilies, staleFamilies, plans };
 	} finally {
 		refreshing = false;
 	}
@@ -243,6 +262,76 @@ function collectCustomHooksForSignature(type: RefreshType): void {
 	if (signature) {
 		computeFullKey(signature);
 	}
+}
+
+// Only plain function components whose hooks were read from full signatures can splice; the rest remount.
+function planHookChange(previous: RefreshType, next: RefreshType): HookPlan | null {
+	if (typeof previous !== 'function' || typeof next !== 'function') return null;
+
+	if (
+		(previous as WithPrototype).prototype?.isReactComponent ||
+		(next as WithPrototype).prototype?.isReactComponent
+	) {
+		return null;
+	}
+
+	const previousCalls = hookCalls(previous);
+	const nextCalls = hookCalls(next);
+
+	return previousCalls && nextCalls ? planHooks(previousCalls, nextCalls) : null;
+}
+
+/**
+ * @description Expands a component's or custom hook's full signature into the hook calls it makes, custom hooks
+ * inlined from their own signatures.
+ * @param type The component or hook.
+ * @param depth How many custom hooks deep this call is.
+ * @returns The calls, or `null` when the signature is missing, hashed or asks for a reset.
+ */
+function hookCalls(type: RefreshType, depth = 0): HookCall[] | null {
+	const signature = signatures.get(type);
+
+	if (!signature || signature.forceReset) return null;
+
+	let custom: unknown[];
+
+	try {
+		custom = signature.getCustomHooks();
+	} catch {
+		return null;
+	}
+
+	const calls: HookCall[] = [];
+	// Oxc joins full-signature lines with an escaped `\n`, a backslash and an `n`, rather than a newline.
+	const lines = signature.ownKey ? signature.ownKey.split(/\n|\\n/) : [];
+
+	let next = 0;
+
+	for (const line of lines) {
+		const { name, builtIn } = hookName(line);
+
+		if (builtIn) {
+			calls.push({ key: line, cost: HOOK_COSTS[name] ?? null });
+
+			continue;
+		}
+
+		const hook = custom[next++];
+		const nested =
+			typeof hook === 'function' && depth < MAX_HOOK_DEPTH
+				? hookCalls(hook as RefreshType, depth + 1)
+				: null;
+
+		if (nested) {
+			calls.push(
+				...nested.map((call) => ({ key: `${line} > ${call.key}`, cost: call.cost })),
+			);
+		} else {
+			calls.push({ key: line, cost: null });
+		}
+	}
+
+	return calls;
 }
 
 // A class component, or a component whose type changed, must remount; otherwise the hook order decides.

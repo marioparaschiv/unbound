@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Blocks until Unbound runs on the device, then prints the time taken, the route and the last bundle fetch.
 # Usage: ready.sh [--fresh] [--timeout <seconds>]
-#   --fresh    also wait until the device fetched the bundle after the served checkout's build last changed it
+#   --fresh    also wait until the device runs the served checkout's current build (its loader etag matches the bundle)
 #   --timeout  give up after this many seconds (default 30), exit 1
 set -uo pipefail
 . "$(dirname "$0")/env.sh"
@@ -27,32 +27,29 @@ last_fetch() {
 	grep -ao '([0-9:]*) GET /unbound\.[0-9]*\.bundle' "$log" 2>/dev/null | tail -n 1
 }
 
-# Idle rebuilds rewrite manifest.json but leave an unchanged bundle's mtime alone, so the bundle's mtime dates the build.
-# The log stamps the time of day only, so a stamp later than now is from yesterday.
-fetched_after_build() {
-	local fetch at bundle
+# The same hash the dev server sends as the bundle's ETag (packages/client/scripts/serve/hot-reload.ts).
+served_etag() {
+	bun -e 'console.log(Bun.hash(require("fs").readFileSync(process.argv[1])).toString(16))' "$dist/unbound.js" 2>/dev/null
+}
 
-	fetch=$(last_fetch)
-	[[ $fetch =~ \(([0-9:]{8})\)\ GET\ /(unbound\.[0-9]+\.bundle) ]] || return 1
-	at=$(date -d "${BASH_REMATCH[1]}" +%s)
-	bundle=$dist/${BASH_REMATCH[2]}
+# Compares content, not fetch times: an app already running the current build, or a restart that rebuilt it
+# unchanged, fetches nothing new.
+runs_served_build() {
+	local device
 
-	if ((at > $(date +%s) + 60)); then
-		((at -= 86400))
-	fi
-
-	((at >= $(stat -c %Y "$bundle")))
+	device=$("$here/ubd" eval 'unbound.storage.getBucket("unbound").get("loader.update.etag")' 2>&1 | grep -o '[0-9a-f]\{8,\}' | tail -n 1)
+	[[ -n $device && $device == "$(served_etag)" ]]
 }
 
 while :; do
 	result=$("$here/ubd" eval 'typeof unbound' 2>&1)
 
 	if grep -q '^object' <<<"$result"; then
-		if ((!fresh)) || fetched_after_build; then
+		if ((!fresh)) || runs_served_build; then
 			break
 		fi
 
-		state="Unbound runs, but the last bundle fetch ($(last_fetch)) is older than the build in $dist"
+		state="Unbound runs, but not the build in $dist (last bundle fetch: $(last_fetch))"
 	else
 		state=$(tail -n 1 <<<"$result")
 	fi

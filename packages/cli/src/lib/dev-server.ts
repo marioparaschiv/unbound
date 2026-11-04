@@ -4,12 +4,10 @@ import { resolve, join, sep } from 'node:path';
 
 import type { ReloadTransport, BuiltAddon } from '~/lib/reload-transport';
 import { DEV_BUILD_CHECKS, runBuildChecks } from '~/lib/build-checks';
+import { buildAddon, HOT_BUILD_ENV } from '~/lib/build-addon';
 import type { DiscoveredAddon } from '~/lib/discovery';
 import type { ResolvedConfig } from '~/lib/config';
 import { discoverAddons } from '~/lib/discovery';
-import { buildAddon } from '~/lib/build-addon';
-
-const DEV_BUILD_ENV = { UNBOUND_HOT: '1' };
 
 /** How long file changes inside one addon settle before that addon rebuilds. */
 const DEBOUNCE_MS = 150;
@@ -90,7 +88,7 @@ export class DevServer {
 		}
 
 		const ok =
-			(await buildAddon(addon, this.resolved.config.build, DEV_BUILD_ENV)) &&
+			(await buildAddon(addon, this.resolved.config.build, HOT_BUILD_ENV)) &&
 			(await runBuildChecks(addon, DEV_BUILD_CHECKS));
 
 		if (!ok) {
