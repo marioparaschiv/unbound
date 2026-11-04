@@ -1,4 +1,4 @@
-import applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 import { featureSelfTest } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 
@@ -8,19 +8,21 @@ import { PLUGIN_NAME } from '~/constants';
 import { startJoins } from '~/joins';
 import SettingsPanel from '~/settings';
 
-let disposers: (() => unknown)[] = [];
+let stopFeatures: (() => Promise<void>) | undefined;
 
 export function start() {
 	if (!ensureModules(PLUGIN_NAME, { NotificationSettings, UserGuildSettingsStore })) return;
 
-	// One call per feature, so a feature that throws is logged and recorded while the others still start.
-	disposers = [startJoins, startGuildSheets, startGuildContextMenus].map((feature) =>
-		applyFeatures(PLUGIN_NAME, [feature]),
-	);
+	stopFeatures = startFeatures(PLUGIN_NAME, [
+		startJoins,
+		startGuildSheets,
+		startGuildContextMenus,
+	]);
 }
 
-export function stop() {
-	for (const dispose of disposers.splice(0)) dispose();
+export async function stop() {
+	await stopFeatures?.();
+	stopFeatures = undefined;
 }
 
 export { featureSelfTest as selfTest, SettingsPanel };
