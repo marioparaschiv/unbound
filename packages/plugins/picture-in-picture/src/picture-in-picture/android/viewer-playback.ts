@@ -15,7 +15,6 @@ type VideoStateStore = {
 };
 
 const VideoControlsModule = metro.findByFilePath(VIDEO_CONTROLS_PATH, {
-	lazy: true,
 	interop: false,
 });
 

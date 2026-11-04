@@ -1,3 +1,5 @@
+import { utils } from '@unbound-app/api';
+
 export type TreeElement = {
 	type?: unknown;
 	props?: Record<string, unknown> & { children?: unknown };
@@ -50,64 +52,6 @@ function replaceIn(
 	return replaced === children ? node : clone(node, { children: replaced });
 }
 
-function collect(
-	node: unknown,
-	predicate: (element: TreeElement) => boolean,
-	found: TreeElement[],
-	depth: number,
-) {
-	if (depth > MAX_DEPTH) return;
-
-	if (Array.isArray(node)) {
-		for (const child of node) collect(child, predicate, found, depth + 1);
-
-		return;
-	}
-
-	if (!isElement(node)) return;
-	if (predicate(node)) found.push(node);
-
-	collect(node.props?.children, predicate, found, depth + 1);
-}
-
-/**
- * @description Finds every element in a render result that matches, in tree order.
- * @param tree The render result.
- * @param predicate Decides whether an element matches.
- * @returns The matching elements.
- */
-export function findElements(
-	tree: unknown,
-	predicate: (element: TreeElement) => boolean,
-): TreeElement[] {
-	const found: TreeElement[] = [];
-
-	collect(tree, predicate, found, 0);
-
-	return found;
-}
-
-/**
- * @description Returns a copy of a render result with the first matching element given extra props, cloning only the elements on its path.
- * @param tree The render result.
- * @param predicate Decides which element to change.
- * @param props Builds the props to set on it from the element.
- * @param clone Clones an element with changed props, such as React's `cloneElement`.
- * @returns The new render result, or the same one when nothing matches.
- */
-export function withElementProps(
-	tree: unknown,
-	predicate: (element: TreeElement) => boolean,
-	props: (element: TreeElement) => Record<string, unknown>,
-	clone: CloneElement,
-): unknown {
-	const [target] = findElements(tree, predicate);
-
-	if (!target) return tree;
-
-	return replaceIn(tree, target, (element) => clone(element, props(element)), clone, 0);
-}
-
 /**
  * @description Returns a copy of a render result with an element added to the last row of buttons, just before that row's last button.
  * @param tree The render result.
@@ -122,7 +66,7 @@ export function insertBeforeLastButton(
 	addition: unknown,
 	clone: CloneElement,
 ): unknown {
-	const rows = findElements(tree, (element) =>
+	const rows = utils.react.filterComponents(tree, (element) =>
 		childrenOf(element).some((child) => isElement(child) && isButton(child)),
 	);
 	const row = rows.at(-1);
