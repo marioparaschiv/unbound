@@ -1,3 +1,4 @@
+import { isProfileMenu } from '~/viewer/context-menus/profile-menu';
 import { asId, type Target } from '~/viewer/action-sheets/targets';
 
 export type MenuItem = {
@@ -22,13 +23,6 @@ export type ContextMenu = {
 };
 
 export type ProfileRecord = { key: string; guildId: string; userId: string };
-
-const PROFILE_MENU_LABELS =
-	/^(?:View (?:Main )?Profile|Message|Change Friend Nickname|Copy Username|Copy User ID|Report User Profile)$/;
-
-function isProfileMenu(menu: ContextMenu): boolean {
-	return Boolean(menu.items?.some((item) => PROFILE_MENU_LABELS.test(item.label ?? '')));
-}
 
 /**
  * @description Recognizes the context menus that get View Permissions: a server's menu, a user menu inside a server, and the overflow menu of a profile opened from a server.
@@ -62,7 +56,7 @@ export function contextMenuTarget(
 
 	if (key && isGuild(key)) return { kind: 'guild', guildId: key };
 
-	return profile && isProfileMenu(menu)
+	return profile && isProfileMenu(menu.items)
 		? { kind: 'member', guildId: profile.guildId, userId: profile.userId }
 		: undefined;
 }

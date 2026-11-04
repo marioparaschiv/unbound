@@ -1,16 +1,10 @@
 import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
 import { settings } from '@unbound-app/settings';
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
 import { View } from 'react-native';
 
 type MenuItem = { label?: string; action?: () => void };
 type Menu = { items: MenuItem[]; key?: string; guild?: { id: string } };
-
-// The testing kit cannot serve `@unbound-app/api/metro/components` yet, so the pieces the plugin reads are stubbed here.
-mock.module('@unbound-app/api/metro/components', () => ({
-	Discord: { Text: 'Text' },
-	BottomSheets: {},
-}));
 
 const ContextMenus = {
 	showContextMenu: (_menu?: Menu) => {},

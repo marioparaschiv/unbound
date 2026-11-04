@@ -3,7 +3,7 @@ import { flux, metro } from '@unbound-app/api';
 import { ROLES_CARD_PATH } from '~/constants';
 import type { GuildRoleStore as GuildRoles, PermissionSpecModule } from '~/types';
 
-export const ActionSheets = metro.findByProps('openLazy', 'hideActionSheet');
+export const { ActionSheets } = metro.api;
 export const Icons = metro.findByProps('ShieldUserIcon');
 export const { Clipboard, Constants, i18n } = metro.common;
 export const ContextMenus = metro.findByProps('showContextMenu', 'hideContextMenu');

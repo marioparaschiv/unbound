@@ -1,10 +1,21 @@
-import { describe, expect, test } from 'bun:test';
+import { metro } from '@unbound-app/api/testing';
+import { beforeEach, describe, expect, test } from 'bun:test';
 
 import { closesProfile, contextMenuTarget } from '~/viewer/context-menus/targets';
 
 const isGuild = (id: string) => id === 'g';
 const profile = { key: 'UserProfile1', guildId: 'g', userId: 'u' };
-const profileItems = [{ label: 'Copy User ID' }];
+// Discord's own wording for Copy User ID, as it shows it in German.
+const profileItems = [{ label: 'Benutzer-ID kopieren' }];
+
+beforeEach(() => {
+	metro.register({
+		getLanguages: () => [],
+		getSystemLocale: () => 'de',
+		t: { QvQeLv: 'QvQeLv' },
+		intl: { formatToPlainString: () => 'Benutzer-ID kopieren' },
+	});
+});
 
 describe('contextMenuTarget', () => {
 	test("a server's long-press menu targets the server", () => {
@@ -89,6 +100,14 @@ describe('closesProfile', () => {
 
 		expect(
 			contextMenuTarget({ key: 'x', items: profileItems }, record, isGuild),
+		).toBeUndefined();
+	});
+});
+
+describe('contextMenuTarget on a menu with other rows', () => {
+	test('leaves it alone', () => {
+		expect(
+			contextMenuTarget({ key: 'x', items: [{ label: 'Something else' }] }, profile, isGuild),
 		).toBeUndefined();
 	});
 });
