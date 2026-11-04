@@ -4,7 +4,7 @@ export const MediaKeyboardActions = metro.find(
 	metro.filters.byTypeName('MediaKeyboardBottomSheetActions'),
 );
 export const Icons = metro.findByProps('SpotifyNeutralIcon');
-export const MessageActions = metro.findByProps('sendMessage', 'revealMessage');
+export const MessageActions = metro.api.Messages;
 export const DraftActions = metro.findByProps('clearDraft');
 
 export const SpotifyStore = flux.getStore('Spotify');
