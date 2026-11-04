@@ -1,9 +1,11 @@
 import getTimeoutDeadline from '@unbound-plugins/shared/members/timeout-deadline';
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import type { FluxGuildMember } from '@unbound-app/api/flux';
+import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 
-import { ChannelStore, GuildMemberStore, MessageRowData } from '~/modules';
+import { ChannelStore, GuildMemberStore, MessageRowData } from '~/timeouts/modules';
 
 type Message = {
 	guild_id?: string;
@@ -25,9 +27,10 @@ type Row = {
 
 /**
  * @description Shows the timeout icon next to timed-out members in chat.
- * @returns A function that removes the patch.
+ * Patches `generateMessageRowData` on Discord's message row module, reads members from `GuildMemberStore` and
+ * channels from `ChannelStore`, and does nothing while `showTimeouts` is off. The Addon scope removes the patch when the plugin stops.
  */
-export function patchTimeoutIcons(): () => void {
+export function startTimeoutIcons(): void {
 	if (
 		!ensureModules('Show Hidden Things: timeout icons', {
 			MessageRowData,
@@ -35,14 +38,14 @@ export function patchTimeoutIcons(): () => void {
 			ChannelStore,
 		})
 	) {
-		return () => {};
+		return;
 	}
 
-	return patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+	patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const row: Row | undefined = result?.message;
 		const message: Message | undefined = args[0]?.message;
 
-		if (!row || !message) return;
+		if (!settings.showTimeouts || !row || !message) return;
 
 		const channelId = message.channel_id ?? message.channelId;
 		const guildId =
@@ -58,4 +61,6 @@ export function patchTimeoutIcons(): () => void {
 		if (getTimeoutDeadline(member?.communicationDisabledUntil))
 			row.communicationDisabled = true;
 	});
+
+	recordApplied(1);
 }
