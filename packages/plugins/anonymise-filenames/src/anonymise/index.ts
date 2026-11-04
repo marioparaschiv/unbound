@@ -1,4 +1,4 @@
-import { recordApplied, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 import { settings } from '@unbound-app/settings';
 
 import { patchUploadPreviewSheet } from '~/anonymise/preview-sheet';
@@ -14,24 +14,12 @@ import { PLUGIN_NAME } from '~/constants';
  * The Addon scope removes the patches and module waits when the plugin stops.
  * A patch that throws, such as on an unexpected sheet shape, is logged and recorded, and the others still apply.
  */
-export function startAnonymise(): void {
+export function startAnonymise(): () => Promise<void> {
 	const choices = createUploadChoices(() => settings);
 
-	const failures: string[] = [];
-	let applied = 0;
-
-	for (const patch of [patchCloudUpload, patchSend, patchUploadPreviewSheet]) {
-		try {
-			patch(choices);
-			applied++;
-		} catch (error) {
-			console.error(`[${PLUGIN_NAME}] Failed to apply ${patch.name}:`, error);
-			failures.push(error instanceof Error ? error.message : String(error));
-		}
-	}
-
-	recordApplied(applied);
-
-	// Recorded last: counting applied patches clears a recorded failure.
-	if (failures.length) recordFailure(failures.join('; '));
+	return startFeatures(PLUGIN_NAME, [
+		() => patchCloudUpload(choices),
+		() => patchSend(choices),
+		() => patchUploadPreviewSheet(choices),
+	]);
 }
