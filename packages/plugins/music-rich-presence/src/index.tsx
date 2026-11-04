@@ -9,13 +9,13 @@ import SettingsPanel from '~/components/settings-panel';
 
 let dispose: () => Promise<void> | undefined = () => undefined;
 
-function start() {
+export function start() {
 	if (!ensureModules(PLUGIN_NAME, { UserStore })) return;
 
 	dispose = applyFeatures(PLUGIN_NAME, [syncPresence]);
 }
 
-function stop() {
+export function stop() {
 	const pending = dispose();
 
 	dispose = () => undefined;
@@ -23,9 +23,5 @@ function stop() {
 	return pending;
 }
 
-export default {
-	start,
-	stop,
-	selfTest: featureSelfTest,
-	getSettingsPanel: () => <SettingsPanel />,
-};
+export const selfTest = featureSelfTest;
+export { SettingsPanel };
