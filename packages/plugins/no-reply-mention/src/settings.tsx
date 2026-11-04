@@ -1,18 +1,25 @@
 import { Discord } from '@unbound-app/api/metro/components';
-import { storage, toasts, ui } from '@unbound-app/api';
+import { settings, useSetting } from '@unbound-app/settings';
+import { messages } from '@unbound-app/i18n';
+import { toasts, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
-import { addUserId, editUserId, isUserId, parseUserList, removeUserId } from '~/user-list';
+import {
+	addUserId,
+	editUserId,
+	isUserId,
+	parseUserList,
+	removeUserId,
+} from '~/reply-mention/user-list';
 import UserIdEditor from '~/components/user-id-editor';
 
 // `original` is the ID being edited, or `null` while adding a new one.
 type Editor = { original: string | null };
 
 function SettingsPanel() {
-	const store = storage.useBucket(addon.id);
+	const userList = useSetting('userList');
+	const pingListed = useSetting('shouldPingListed');
 	const [editor, setEditor] = useState<Editor | null>(null);
-	const userList = store.get('userList', '');
-	const pingListed = store.get('shouldPingListed', false);
 	const userIds = parseUserList(userList);
 
 	function save(value: string) {
@@ -20,19 +27,16 @@ function SettingsPanel() {
 
 		if (!isUserId(userId)) {
 			toasts.show({
-				title: 'No Reply Mention',
-				content: 'Enter a numeric Discord user ID.',
+				title: messages.PLUGIN_NAME,
+				content: messages.INVALID_USER_ID,
 			});
 
 			return;
 		}
 
-		store.set(
-			'userList',
-			editor?.original
-				? editUserId(userList, editor.original, userId)
-				: addUserId(userList, userId),
-		);
+		settings.userList = editor?.original
+			? editUserId(userList, editor.original, userId)
+			: addUserId(userList, userId);
 		setEditor(null);
 	}
 
@@ -49,10 +53,10 @@ function SettingsPanel() {
 
 	return (
 		<ui.Page>
-			<ui.Section title='Exceptions'>
+			<ui.Section title={messages.EXCEPTIONS}>
 				<ui.Row
-					label='Add user ID'
-					subLabel='Replies can mention these users when the exception is enabled'
+					label={messages.ADD_USER_ID}
+					subLabel={messages.ADD_USER_ID_SUBTITLE}
 					arrow
 					onPress={() => setEditor({ original: null })}
 				/>
@@ -65,26 +69,23 @@ function SettingsPanel() {
 							<ui.Row
 								key={userId}
 								label={userId}
-								subLabel='Tap to edit'
+								subLabel={messages.TAP_TO_EDIT}
 								onPress={() => setEditor({ original: userId })}
 								trailing={
 									<Discord.Stack direction='horizontal' spacing={8}>
 										<Discord.Button
 											size='sm'
 											variant='secondary'
-											text='Edit'
+											text={messages.EDIT}
 											onPress={() => setEditor({ original: userId })}
 										/>
 										<Discord.Button
 											size='sm'
 											variant='destructive'
-											text='Delete'
-											onPress={() =>
-												store.set(
-													'userList',
-													removeUserId(userList, userId),
-												)
-											}
+											text={messages.DELETE}
+											onPress={() => {
+												settings.userList = removeUserId(userList, userId);
+											}}
 										/>
 									</Discord.Stack>
 								}
@@ -92,17 +93,17 @@ function SettingsPanel() {
 						),
 					)
 				) : (
-					<ui.Row label='No users added yet.' />
+					<ui.Row label={messages.NO_USERS} />
 				)}
 				<ui.SwitchRow
-					label='Only Ping Listed Users'
+					label={messages.ONLY_PING_LISTED}
 					subLabel={
-						pingListed
-							? 'Replies mention only the users listed above'
-							: 'Replies do not mention anyone by default'
+						pingListed ? messages.ONLY_PING_LISTED_ON : messages.ONLY_PING_LISTED_OFF
 					}
 					value={pingListed}
-					onValueChange={(value) => store.set('shouldPingListed', value)}
+					onValueChange={(value) => {
+						settings.shouldPingListed = value;
+					}}
 				/>
 			</ui.Section>
 		</ui.Page>

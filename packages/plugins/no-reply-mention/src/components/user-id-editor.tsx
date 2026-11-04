@@ -1,4 +1,5 @@
 import { Discord } from '@unbound-app/api/metro/components';
+import { messages } from '@unbound-app/i18n';
 import { useState } from 'react';
 
 type UserIdEditorProps = {
@@ -13,8 +14,8 @@ function UserIdEditor({ initialValue, onCancel, onSave }: UserIdEditorProps) {
 	return (
 		<Discord.Stack spacing={12}>
 			<Discord.TextInput
-				label={initialValue ? 'Edit user ID' : 'Add user ID'}
-				placeholder='Discord user ID'
+				label={initialValue ? messages.EDIT_USER_ID : messages.ADD_USER_ID}
+				placeholder={messages.USER_ID_PLACEHOLDER}
 				keyboardType='number-pad'
 				autoCapitalize='none'
 				autoCorrect={false}
@@ -22,8 +23,18 @@ function UserIdEditor({ initialValue, onCancel, onSave }: UserIdEditorProps) {
 				onChange={setValue}
 			/>
 			<Discord.Stack direction='horizontal' spacing={12}>
-				<Discord.Button grow variant='secondary' text='Cancel' onPress={onCancel} />
-				<Discord.Button grow variant='primary' text='Save' onPress={() => onSave(value)} />
+				<Discord.Button
+					grow
+					variant='secondary'
+					text={messages.CANCEL}
+					onPress={onCancel}
+				/>
+				<Discord.Button
+					grow
+					variant='primary'
+					text={messages.SAVE}
+					onPress={() => onSave(value)}
+				/>
 			</Discord.Stack>
 		</Discord.Stack>
 	);
