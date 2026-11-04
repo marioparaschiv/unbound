@@ -35,13 +35,14 @@ function dismissTarget(value: unknown): object | null {
 /**
  * @description Shows each row's log: deleted messages in red with a deleted marker, earlier versions above edited text, and deleted attachments marked.
  * @param log The message log.
- * Patches `generate` on Discord's `RowManager` and reads the message from `MessageStore`. The Addon scope removes the patch.
+ * Patches `generate` on Discord's `RowManager` and reads the message from `MessageStore`.
+ * @returns A function that removes the patch.
  */
-export function patchRowManager(log: MessageLog): void {
+export function patchRowManager(log: MessageLog): () => void {
 	if (typeof RowManager.prototype?.generate !== 'function') {
 		console.error(`[${PLUGIN_NAME}] Skipped, RowManager.generate not found.`);
 
-		return;
+		return () => {};
 	}
 
 	let renderingVersion = false;
@@ -67,35 +68,39 @@ export function patchRowManager(log: MessageLog): void {
 		}
 	}
 
-	patcher.after(RowManager.prototype, 'generate', ({ args: [input], result, this: self }) => {
-		const row = result as ChatRow | undefined;
-		const messageId = row?.message?.id;
+	return patcher.after(
+		RowManager.prototype,
+		'generate',
+		({ args: [input], result, this: self }) => {
+			const row = result as ChatRow | undefined;
+			const messageId = row?.message?.id;
 
-		if (renderingVersion || !row || !messageId || !log.hasHistory(messageId)) return;
+			if (renderingVersion || !row || !messageId || !log.hasHistory(messageId)) return;
 
-		const deleted = log.isDeleted(messageId);
-		const color = deleted ? processColor(DELETED_TEXT_COLOR) : null;
-		const channelId = row.message?.channelId;
-		const previousVersions = settings.inlineEdits
-			? log
-					.editsOf(messageId)
-					.map((edit) =>
-						versionContent(self as RowGenerator, input as RowInput, edit.content),
-					)
-					.filter((content): content is ContentNode[] => content !== null)
-			: [];
+			const deleted = log.isDeleted(messageId);
+			const color = deleted ? processColor(DELETED_TEXT_COLOR) : null;
+			const channelId = row.message?.channelId;
+			const previousVersions = settings.inlineEdits
+				? log
+						.editsOf(messageId)
+						.map((edit) =>
+							versionContent(self as RowGenerator, input as RowInput, edit.content),
+						)
+						.filter((content): content is ContentNode[] => content !== null)
+				: [];
 
-		decorateRow(row, {
-			deleted,
-			redText: settings.redText,
-			deletedMarker: settings.deletedMarker,
-			deletedColor: typeof color === 'number' ? color : null,
-			dismissTarget:
-				deleted && channelId
-					? dismissTarget(MessageStore.getMessage(channelId, messageId))
-					: null,
-			previousVersions,
-			deletedAttachmentIds: new Set(log.deletedAttachmentIds(messageId)),
-		});
-	});
+			decorateRow(row, {
+				deleted,
+				redText: settings.redText,
+				deletedMarker: settings.deletedMarker,
+				deletedColor: typeof color === 'number' ? color : null,
+				dismissTarget:
+					deleted && channelId
+						? dismissTarget(MessageStore.getMessage(channelId, messageId))
+						: null,
+				previousVersions,
+				deletedAttachmentIds: new Set(log.deletedAttachmentIds(messageId)),
+			});
+		},
+	);
 }
