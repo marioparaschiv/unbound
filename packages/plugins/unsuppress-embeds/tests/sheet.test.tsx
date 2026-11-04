@@ -8,8 +8,11 @@ import {
 	toasts,
 } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { View } from 'react-native';
 import { createElement } from 'react';
+
+import { selfTest } from '~/index';
 
 const ME = '1';
 const SUPPRESS_FLAG = 4;
@@ -20,6 +23,8 @@ type Request = { url: string; body: { flags: number } };
 let requests: Request[];
 let hidden: string[];
 let rejection: unknown;
+let deleteLabel: string;
+let localised: boolean;
 
 const sheets = {
 	openLazy: (_sheet: Promise<unknown>, _key: string, _props: unknown) => {},
@@ -41,8 +46,14 @@ function MessageSheet() {
 				{[
 					<ActionSheetRow key='reply' label='Responder' onPress={() => {}} />,
 					<ActionSheetRow
+						key='report'
+						label='Denunciar mensaje'
+						variant='danger'
+						onPress={() => {}}
+					/>,
+					<ActionSheetRow
 						key='delete'
-						label='Eliminar mensaje'
+						label={deleteLabel}
 						variant='danger'
 						onPress={() => {}}
 					/>,
@@ -73,6 +84,17 @@ const labels = (view: ReturnType<typeof render>) =>
 
 function registerDiscord() {
 	metro.register(sheets);
+
+	if (localised) {
+		// Discord's localisation module: `intl.string` turns the "Delete Message" message into the user's language.
+		metro.register({
+			getLanguages: () => [],
+			getSystemLocale: () => 'es',
+			intl: { string: (message: string) => (message === 'xwMqD7' ? deleteLabel : message) },
+			t: { xwMqD7: 'xwMqD7' },
+		});
+	}
+
 	metro.register({
 		getAPIBaseURL: () => '',
 		patch: async (request: Request) => {
@@ -94,6 +116,9 @@ function registerDiscord() {
 }
 
 beforeEach(() => {
+	resetHealth();
+	deleteLabel = 'Eliminar mensaje';
+	localised = true;
 	requests = [];
 	hidden = [];
 	rejection = undefined;
@@ -108,10 +133,36 @@ describe('starting', () => {
 		await stopPlugin();
 	});
 
+	test('reports healthy once it has patched the sheets', async () => {
+		registerDiscord();
+		await startPlugin();
+
+		expect((await selfTest()).ok).toBe(true);
+		await stopPlugin();
+	});
+
 	test('patches nothing while a Discord module is missing', async () => {
 		await startPlugin();
 
 		expect(patches.applied).toEqual([]);
+	});
+});
+
+describe('a Discord build that renamed its Delete Message message', () => {
+	beforeEach(async () => {
+		deleteLabel = 'Delete Message';
+		localised = false;
+		registerDiscord();
+		await startPlugin();
+	});
+
+	test('still gets Suppress Embeds above the English delete row', async () => {
+		expect(labels(await openSheet())).toEqual([
+			'Responder',
+			'Denunciar mensaje',
+			'Suppress Embeds',
+			'Delete Message',
+		]);
 	});
 });
 
@@ -121,9 +172,10 @@ describe('the message sheet', () => {
 		await startPlugin();
 	});
 
-	test('gets Suppress Embeds above the delete row, whatever its language', async () => {
+	test('gets Suppress Embeds above the delete row, not above Report Message', async () => {
 		expect(labels(await openSheet())).toEqual([
 			'Responder',
+			'Denunciar mensaje',
 			'Suppress Embeds',
 			'Eliminar mensaje',
 		]);
@@ -136,7 +188,11 @@ describe('the message sheet', () => {
 	});
 
 	test('gets no row on a message without embeds', async () => {
-		expect(labels(await openSheet({ embeds: [] }))).toEqual(['Responder', 'Eliminar mensaje']);
+		expect(labels(await openSheet({ embeds: [] }))).toEqual([
+			'Responder',
+			'Denunciar mensaje',
+			'Eliminar mensaje',
+		]);
 	});
 
 	test('gets no row on a sheet that is not for a message', async () => {
@@ -147,6 +203,7 @@ describe('the message sheet', () => {
 
 		expect(labels(render(createElement(module.default)))).toEqual([
 			'Responder',
+			'Denunciar mensaje',
 			'Eliminar mensaje',
 		]);
 	});
