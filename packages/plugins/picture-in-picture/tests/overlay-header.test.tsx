@@ -1,9 +1,11 @@
 import { metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
-import { afterEach, describe, expect, test } from 'bun:test';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import type { ReactNode } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { OVERLAY_BUTTON_PATH, OVERLAY_HEADER_PATH } from '~/constants';
+import { selfTest } from '~/index';
 
 type ButtonProps = { accessibilityLabel?: string; onPress?: () => void };
 
@@ -40,6 +42,7 @@ async function start(rows: ReactNode) {
 	return header;
 }
 
+beforeEach(resetHealth);
 afterEach(stopPlugin);
 
 describe('the media viewer header', () => {
@@ -87,5 +90,11 @@ describe('the media viewer header', () => {
 
 		expect(labels(view)).toEqual([]);
 		expect(view.text()).toBe('clip.mp4');
+	});
+
+	test('reports the header patch as applied', async () => {
+		await start(rows);
+
+		expect((await selfTest()).ok).toBe(true);
 	});
 });
