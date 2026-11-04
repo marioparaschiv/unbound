@@ -1,8 +1,11 @@
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
+import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 
-import { MessageRowData, RelationshipStore, UserStore, settings } from '~/modules';
-import { formatName, type NameMode } from '~/format-name';
+import { MessageRowData, RelationshipStore, UserStore } from '~/names/modules';
 import { AUTOMOD_MESSAGE_TYPE } from '~/constants';
+import { formatName } from '~/names/format-name';
 
 type Author = {
 	id?: string;
@@ -46,50 +49,42 @@ function relabel(row: Row | undefined, messageAuthor: Author | undefined) {
 	if (!author) return;
 
 	const username =
-		settings.get('displayNames', false) && author.globalName
-			? author.globalName
-			: author.username;
+		settings.displayNames && author.globalName ? author.globalName : author.username;
 
 	if (!username) return;
 
 	const nickname =
-		settings.get('friendNicknames', true) && author.id
-			? RelationshipStore.getNickname?.(author.id)
-			: null;
+		settings.friendNicknames && author.id ? RelationshipStore.getNickname?.(author.id) : null;
 
 	row.username = formatName({
 		displayed: row.username,
 		username,
 		nickname,
-		mode: settings.get('mode', 'nick-user') as NameMode,
+		mode: settings.mode,
 	});
 }
 
 /**
- * @description Shows usernames in the author label of each message.
- * @returns A function that removes the patch.
+ * @description Shows usernames in the author label of each message, and of reply previews while `inReplies` is on.
+ * Patches `generateMessageRowData` on Discord's message row data module and reads authors from `UserStore` and
+ * friend nicknames from `RelationshipStore`. The Addon scope removes the patch when the plugin stops.
  */
-export function patchAuthorNames(): () => void {
-	return patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
+export function startNames(): void {
+	if (!ensureModules('Show Me Your Name', { MessageRowData, UserStore })) return;
+
+	patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
 		const message: Message | undefined = args[0]?.message;
 
-		if (isAutomod(message)) return;
+		if (!isAutomod(message)) relabel(result?.message, message?.author);
 
-		relabel(result?.message, message?.author);
-	});
-}
+		if (!settings.inReplies) return;
 
-/**
- * @description Shows usernames in the author label of reply previews.
- * @returns A function that removes the patch.
- */
-export function patchReplyNames(): () => void {
-	return patcher.after(MessageRowData, 'generateMessageRowData', ({ args, result }) => {
-		const message: Message | undefined = args[0]?.message;
 		const reply = message?.referencedMessage?.message ?? message?.referenced_message;
 
 		if (isAutomod(message) || isAutomod(reply)) return;
 
 		relabel(result?.message?.referencedMessage?.message, reply?.author);
 	});
+
+	recordApplied(1);
 }
