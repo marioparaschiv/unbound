@@ -48,7 +48,7 @@ A feature never runs half-working. When anything it depends on is missing, it ch
 
 ## Self-test and device matrix
 
-Export `selfTest` from the plugin's entry, usually as `export { featureSelfTest as selfTest }`. A plugin that draws its own UI exports a test built on `drawnSelfTest`, which also checks that something is on screen.
+Export `selfTest` from the plugin's entry, usually as `export { featureSelfTest as selfTest }`. A plugin that draws its own UI exports a test built on `drawnSelfTest`, which also checks that something is on screen. Two plugins export none: `aussie-mode` does nothing outside an Australian device, so it would fail the matrix everywhere else, and `settings-demo` only demonstrates the settings panel.
 
 The device matrix runs the plugins on real devices. It restarts Discord, calls each `selfTest`, and cycles each plugin through stop, start and reload to look for leaked hooks. Configure the devices in `.device-matrix.json` (see `.device-matrix.example.json`), then run `bun packages/plugin-scripts/src/run-device-matrix.ts --out <dir>`. Use `--only <id,id>` for a few plugins and `--lenient` to fail only on problems that are new since the last run.
 

@@ -396,6 +396,10 @@ A plugin that ships images keeps them in an `assets/` folder beside `src/`. Impo
 `ADDON.md` is what the store shows for the plugin. It has no title, because the store takes the title and summary from the manifest.
 
 ```md ADDON.md quoted
+---
+banner: media/banner.png
+---
+
 ## :sparkle: What it does
 
 - :text: Shows length over your limit, like `120/2000`, while you type.
@@ -408,7 +412,7 @@ A plugin that ships images keeps them in an `assets/` folder beside `src/`. Impo
 - :color-palette: **Color thresholds** turns the counter yellow at 50% of the limit, orange at 75% and red at 90%. Off, it stays in Discord's brand color. On by default.
 ```
 
-A page starts with frontmatter that names the banner, `media/banner.png`, and an optional gallery. All of it lives in a `media/` folder beside `ADDON.md`. A page with no frontmatter builds with a warning, and the store shows no banner. [Store Page](/docs/developer/addons/store-page) lists the rules for the banner, the gallery and the `:name:` icons.
+The frontmatter names the banner, `media/banner.png`, and can add a gallery. All of it lives in a `media/` folder beside `ADDON.md`. A page with no frontmatter builds with a warning, and the store shows no banner. First-party banners come from `bun run plugins:banners`, which draws one from the manifest's name, description and icon and leaves a hand-made banner alone. [Store Page](/docs/developer/addons/store-page) lists the rules for the banner, the gallery and the `:name:` icons.
 
 `CHANGELOG.md` lists what changed in each version, newest first, and the version in it matches `manifest.json`.
 
