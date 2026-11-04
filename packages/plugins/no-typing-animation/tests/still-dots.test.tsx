@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import { createElement } from 'react';
 import { View } from 'react-native';
 
+import { selfTest } from '~/index';
+
 function AnimatedEllipsisDot(_props: { delay: number }) {
 	return <View />;
 }
@@ -51,5 +53,11 @@ describe('the typing dots', () => {
 		const view = await renderDots(EllipsisDot);
 
 		expect(view.findAll('EllipsisDot').length).toBe(3);
+	});
+
+	test('are reported as applied to the self test', async () => {
+		await renderDots(AnimatedEllipsisDot);
+
+		expect(selfTest()).toMatchObject({ ok: true });
 	});
 });
