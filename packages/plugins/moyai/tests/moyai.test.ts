@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { flux, native, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { settings } from '@unbound-app/settings';
 
 import { Sound } from '~/constants';
@@ -81,4 +82,15 @@ test('releases the sound when the plugin stops', async () => {
 	await stopPlugin();
 
 	expect(released).toEqual([Sound.id]);
+});
+
+test('reports both listeners applied to the self test', async () => {
+	await stopPlugin();
+	resetHealth();
+	await startPlugin();
+
+	// Imported here: loading the entry looks up DCDSoundManager, which beforeEach registers.
+	const { selfTest } = await import('~/index');
+
+	expect(selfTest()).toEqual({ ok: true, detail: '2 features applied' });
 });
