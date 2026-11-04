@@ -1,4 +1,4 @@
-import { recordApplied, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
+import { startFeatures } from '@unbound-plugins/shared/lifecycle/start-features';
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
 import { settings } from '@unbound-app/settings';
 
@@ -10,18 +10,6 @@ import { patchToggleRow } from '~/embeds/toggle-row';
 import { patchRowRebind } from '~/embeds/row-rebind';
 import { createToggles } from '~/embeds/toggles';
 import { PLUGIN_NAME } from '~/constants';
-
-// One feature failing to start must not take the others down; it is logged, recorded for the self-test, and counted out.
-function attempt<T>(name: string, start: () => T, fallback: T): [T, number] {
-	try {
-		return [start(), 1];
-	} catch (error) {
-		recordFailure(`${name}: ${error instanceof Error ? error.message : String(error)}`);
-		console.error(`[${PLUGIN_NAME}] Failed to start ${name}:`, error);
-
-		return [fallback, 0];
-	}
-}
 
 /**
  * @description Shows DeArrow titles and thumbnails on YouTube embeds, and adds a row to the message menu that switches an embed back to the original.
@@ -36,37 +24,11 @@ export function startEmbeds(): () => Promise<void> | void {
 	const lookup = createLookup(requestBranding, pending.resolve);
 	const toggles = createToggles(() => settings.dearrowByDefault);
 
-	const [stopRowRebind, rebound] = attempt(
-		'row rebind',
+	return startFeatures(PLUGIN_NAME, [
 		() => patchRowRebind(pending),
-		() => Promise.resolve(),
-	);
-	const [stopRowData, patched] = attempt(
-		'row data',
+		() => lookup.dispose,
 		() => patchMessageRowData(lookup, toggles, pending),
-		() => undefined,
-	);
-	const [stopToggleRow, menu] = attempt(
-		'message menu',
 		() => patchToggleRow(lookup, toggles, pending),
-		() => undefined,
-	);
-	const [stopSettings] = attempt(
-		'settings redraw',
 		() => subscribeSettings(pending),
-		() => undefined,
-	);
-	const applied = rebound + patched + menu;
-
-	recordApplied(applied);
-
-	return () => {
-		recordApplied(-applied);
-		stopSettings?.();
-		stopToggleRow();
-		stopRowData();
-		lookup.dispose();
-
-		return stopRowRebind();
-	};
+	]);
 }
