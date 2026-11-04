@@ -318,7 +318,7 @@ describe('createFakeMetro', () => {
 		metro.register({ sendMessage: () => 'sent', receiveMessage: () => 'received' });
 
 		expect(metro.find(metro.filters.byProps('tag'), { all: true })).toEqual([first, second]);
-		expect(metro.find(metro.filters.byTypeName('Chat'))).toBe(second);
+		expect(metro.find(metro.filters.byTypeName('Chat'), { lazy: false })).toBe(second);
 		expect(metro.api.Messages.sendMessage()).toBe('sent');
 		expect(metro.findByProps('tag', { all: true })).toEqual([first, second]);
 	});

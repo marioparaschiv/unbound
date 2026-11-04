@@ -34,6 +34,14 @@ export type JavaPlain =
 /** A method a test registers on a Java class: it receives the object and the call's plain arguments, and returns a plain value. */
 export type JavaMethod = (self: NativeJavaHandle, ...args: JavaPlain[]) => JavaPlain;
 
+/** The types a method declares, as `java.describe` lists them. A type is a class name such as `java.lang.String`, or `int`. */
+export type JavaSignature = {
+	/** The parameters' class names, in order; none when omitted. */
+	parameters?: string[];
+	/** The return type's class name; `java.lang.Object` when omitted. */
+	returnType?: string;
+};
+
 /** What a test registers for a Java class. */
 export type JavaClassSpec = {
 	/** The fully qualified name of the class whose members this one inherits. */
@@ -46,6 +54,10 @@ export type JavaClassSpec = {
 	fields?: Record<string, JavaPlain>;
 	/** The static fields, such as `INSTANCE`. */
 	staticFields?: Record<string, JavaPlain>;
+	/** The types of the methods and static methods, by name, that `java.describe` returns. */
+	signatures?: Record<string, JavaSignature>;
+	/** The types of the fields and static fields, by name, that `java.describe` returns; `java.lang.Object` when omitted. */
+	fieldTypes?: Record<string, string>;
 	/** Runs when `java.construct` makes an object, with the constructor's plain arguments. */
 	construct?: (self: NativeJavaHandle, ...args: JavaPlain[]) => void;
 };
@@ -383,36 +395,36 @@ export function createFakeJava(log: NativeCallLog = createCallLog()): FakeJava {
 				throw new Error(`Failed to describe Java class ${name}: the test registered none.`);
 			}
 
+			const describeMethod = (method: string, isStatic: boolean) => ({
+				name: method,
+				parameters: spec.signatures?.[method]?.parameters ?? [],
+				returnType: spec.signatures?.[method]?.returnType ?? 'java.lang.Object',
+				static: isStatic,
+			});
+			const describeField = (field: string, isStatic: boolean) => ({
+				name: field,
+				type: spec.fieldTypes?.[field] ?? 'java.lang.Object',
+				static: isStatic,
+			});
+
 			return {
 				name,
 				superclass: spec.superclass ?? null,
 				interfaces: [],
 				constructors: [[]],
 				methods: [
-					...Object.keys(spec.methods ?? {}).map((method) => ({
-						name: method,
-						parameters: [],
-						returnType: 'java.lang.Object',
-						static: false,
-					})),
-					...Object.keys(spec.staticMethods ?? {}).map((method) => ({
-						name: method,
-						parameters: [],
-						returnType: 'java.lang.Object',
-						static: true,
-					})),
+					...Object.keys(spec.methods ?? {}).map((method) =>
+						describeMethod(method, false),
+					),
+					...Object.keys(spec.staticMethods ?? {}).map((method) =>
+						describeMethod(method, true),
+					),
 				],
 				fields: [
-					...Object.keys(spec.fields ?? {}).map((field) => ({
-						name: field,
-						type: 'java.lang.Object',
-						static: false,
-					})),
-					...Object.keys(spec.staticFields ?? {}).map((field) => ({
-						name: field,
-						type: 'java.lang.Object',
-						static: true,
-					})),
+					...Object.keys(spec.fields ?? {}).map((field) => describeField(field, false)),
+					...Object.keys(spec.staticFields ?? {}).map((field) =>
+						describeField(field, true),
+					),
 				],
 			};
 		},

@@ -7,7 +7,7 @@ import type {
 import type { AddonManifest } from '../src/global';
 import type { FakeModule } from './fake-metro';
 
-import { createCallLog, type NativeCallLog } from './fake-native-bridge';
+import { createCallLog, overlayBridge, type NativeCallLog } from './fake-native-bridge';
 import { createFakeJava, type FakeJava } from './fake-java';
 import { createFakeObjc, type FakeObjc } from './fake-objc';
 
@@ -176,15 +176,25 @@ export function createFakeNative(): FakeNative {
 				apiVersion: '1.0.0',
 				abiVersion: '1',
 				capabilities,
-				objc: state.platform === 'ios' ? objc.bridge : emptyMember(),
 				ffi: emptyMember(),
 				fabric: emptyMember(),
 				runtime: emptyMember(),
-				java: state.platform === 'android' ? java.bridge : emptyMember(),
-				hooks: state.platform === 'android' ? java.hooks : emptyMember(),
 				debug: emptyMember(),
 				ui: emptyMember(),
 				...native,
+				// The overrides lie over the fake's members, so one the test gave wins and the rest stay.
+				objc: overlayBridge(
+					state.platform === 'ios' ? objc.bridge : emptyMember(),
+					native?.objc,
+				),
+				java: overlayBridge(
+					state.platform === 'android' ? java.bridge : emptyMember(),
+					native?.java,
+				),
+				hooks: overlayBridge(
+					state.platform === 'android' ? java.hooks : emptyMember(),
+					native?.hooks,
+				),
 			};
 
 			return {

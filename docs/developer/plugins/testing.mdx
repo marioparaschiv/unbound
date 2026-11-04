@@ -152,7 +152,7 @@ Your plugin finds Discord's code with `metro`. In a test, `metro` finds only wha
 | `metro.components` | See below |
 | `metro.filters` | `byProps`, `byName`, `byDisplayName`, `byTypeName`, `byFilePath`, `all`, `any` and `not` |
 
-`metro.find(filter, { all: true })` and `metro.findByProps(..., { all: true })` return every match.
+`metro.find(filter)` and the `findBy*` finders return a lazy handle, as on device: it looks the module up on each access, so a module a later test registers is found. `{ lazy: false }` returns the module registered now, or `undefined`. `metro.find(filter, { all: true })` and `metro.findByProps(..., { all: true })` return every match now.
 
 ```ts
 import { metro } from '@unbound-app/api/testing';
@@ -206,11 +206,11 @@ native.java.registerClass('android.view.View', {
 | --- | --- |
 | `native.objc.registerClass(name, { superclass?, methods?, classMethods? })` | Adds a class. A method takes the object and the call's arguments; `callSuper` reaches the superclass's |
 | `native.objc.create(name, ivars?)` | Makes an object, with the instance variables `getIvar` reads |
-| `native.java.registerClass(name, { superclass?, methods?, staticMethods?, fields?, staticFields?, construct? })` | Adds a class. A method takes the object and the call's plain arguments, and returns a plain value, which the bridge tags as `string`, `int`, `double`, `boolean`, `null`, `handle` or `array`. `construct` runs for `java.construct` |
+| `native.java.registerClass(name, { superclass?, methods?, staticMethods?, fields?, staticFields?, signatures?, fieldTypes?, construct? })` | Adds a class. A method takes the object and the call's plain arguments, and returns a plain value, which the bridge tags as `string`, `int`, `double`, `boolean`, `null`, `handle` or `array`. `construct` runs for `java.construct`. `signatures` gives each method's `{ parameters?, returnType? }` and `fieldTypes` each field's type, by name; `java.describe` returns them in the bridge's shape, so code that finds a member by its types, such as Discord's `MessageView` bind method, runs. A type left out is `java.lang.Object` |
 | `native.java.create(name, fields?)` | Makes an object, as a `handle` value |
 | `native.calls` | Every `objc`, `java` and `hooks` call the plugin made this test: its `bridge`, `method`, `target` class, `name` (selector or method) and `args` |
 
-`objc` fakes `getClass`, `alloc`, `create`, `className`, `respondsTo`, `call`, `invoke`, `invokeAsync`, `callSuper`, `invokeSuper`, `batch`, `prepare`, `invokePrepared`, `getIvar`, `setIvar`, the associated objects, `struct` and `hook`. `java` fakes `getClass`, `construct`, `describe`, `className`, `respondsTo`, `invoke`, `invokeAsync`, `getField`, `setField`, `batch`, `batchAsync`, `prepare`, `invokePrepared`, the associated objects and `release`, and `hooks` fakes `hook`, `remove` and the return values. A hook runs when a registered method is called, as `objc.hook`'s `before`, `replace` and `after` do. A class, selector, method or field a test did not register throws, naming how to add it. A member the kit does not fake throws too; give your own with `startPlugin({ native: { objc: { snapshot } } })`.
+`objc` fakes `getClass`, `alloc`, `create`, `className`, `respondsTo`, `call`, `invoke`, `invokeAsync`, `callSuper`, `invokeSuper`, `batch`, `prepare`, `invokePrepared`, `getIvar`, `setIvar`, the associated objects, `struct` and `hook`. `java` fakes `getClass`, `construct`, `describe`, `className`, `respondsTo`, `invoke`, `invokeAsync`, `getField`, `setField`, `batch`, `batchAsync`, `prepare`, `invokePrepared`, the associated objects and `release`, and `hooks` fakes `hook`, `remove` and the return values. A hook runs when a registered method is called, as `objc.hook`'s `before`, `replace` and `after` do. A class, selector, method or field a test did not register throws, naming how to add it. A member the kit does not fake throws too; give your own with `startPlugin({ native: { objc: { snapshot } } })`. Members you pass for `objc`, `java` or `hooks` are laid over the fake: yours win, and the fake's others stay.
 
 ### Other plugins
 

@@ -3,6 +3,8 @@ import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Pressable, View } from 'react-native';
 
+import { selfTest } from '~/index';
+
 import { createFakes } from './fakes';
 import type { Sticker } from '@unbound-plugins/shared/stickers/staged-stickers';
 
@@ -120,10 +122,7 @@ describe('a picked sticker', () => {
 		expect(globalThis.__unboundStagedStickers?.channels()).toEqual([]);
 	});
 
-	test('is reported as applied by the self test', async () => {
-		// Imported late: the plugin looks its modules up when it first loads, after the test registered them.
-		const { selfTest } = await import('~/index');
-
+	test('is reported as applied by the self test', () => {
 		expect(selfTest()).toMatchObject({ ok: true });
 	});
 });

@@ -36,12 +36,9 @@ async function startWithPendingWindow() {
 		classMethods: { sharedApplication: () => native.objc.create('UIApplication') },
 		methods: { keyWindow: () => native.objc.create('UIWindow') },
 	});
-	const objc = new Proxy(native.objc.bridge, {
-		get: (bridge, key) =>
-			key === 'findViews' ? () => new Promise(() => undefined) : Reflect.get(bridge, key),
-	});
+	const objc = { findViews: () => new Promise(() => undefined) };
 
-	await startPlugin({ native: { objc } });
+	await startPlugin({ native: { objc: objc as never } });
 }
 
 const labels = (view: ReturnType<typeof render>) =>

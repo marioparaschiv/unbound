@@ -97,7 +97,7 @@ export type FakeMetro = {
 		any: (...parts: FakeFilter[]) => FakeFilter;
 		not: (part: FakeFilter) => FakeFilter;
 	};
-	/** The first registered module the filter matches, or every match with `all: true`. */
+	/** A lazy handle to the first registered module the filter matches, as on device; `lazy: false` gives the module now, and `all: true` every match now. */
 	find: {
 		(filter: FakeFilter, options: FindAll): FakeModule[];
 		(filter: FakeFilter, options?: FindOptions): FakeModule | undefined;
@@ -200,12 +200,12 @@ export function createFakeMetro(): FakeMetro {
 	function find(filter: FakeFilter, options: FindAll): FakeModule[];
 	function find(filter: FakeFilter, options?: FindOptions): FakeModule | undefined;
 	function find(filter: FakeFilter, options: FindOptions = {}) {
-		return options.all ? modules.filter((module) => filter(module)) : first(filter);
+		return lookup(filter, 'the filter', [options]);
 	}
 
 	function lookup(filter: FakeFilter, description: string, options: (string | FindOptions)[]) {
 		if (options.some((arg) => typeof arg === 'object' && arg.all)) {
-			return find(filter, { all: true });
+			return modules.filter((module) => filter(module));
 		}
 
 		if (isEager(options)) {

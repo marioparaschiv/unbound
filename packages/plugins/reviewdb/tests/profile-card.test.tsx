@@ -4,20 +4,21 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
 import { selfTest } from '~/index';
 
-import { card, type CardProps, startReviewdb } from './start-reviewdb';
+import { type CardProps, startReviewdb } from './start-reviewdb';
 
 function UserInfo(_: { userId: string }) {
 	return null;
 }
 
+let card: Awaited<ReturnType<typeof startReviewdb>>;
+
 function renderCard(props: CardProps) {
 	return render(<card.default {...props} />, { stores: { User: { getUser: () => undefined } } });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
 	resetHealth();
-
-	return startReviewdb();
+	card = await startReviewdb();
 });
 afterEach(stopPlugin);
 
