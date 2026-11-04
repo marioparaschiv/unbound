@@ -1,9 +1,11 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { forwardRef } from 'react';
 import { View, type ViewProps } from 'react-native';
 
 import { INJECTED_FLAG } from '~/webview/adblock-script';
+import { selfTest } from '~/index';
 
 type WebViewProps = { source?: { uri?: string }; injectedJavaScript?: string };
 
@@ -16,6 +18,7 @@ function renderWebView(props: WebViewProps) {
 }
 
 beforeEach(async () => {
+	resetHealth();
 	metro.register({ WebView });
 	await startPlugin();
 });
@@ -51,5 +54,11 @@ describe('a WebView', () => {
 		const props = renderWebView({ source: { uri: 'https://example.com/' } });
 
 		expect(props.injectedJavaScript).toBeUndefined();
+	});
+});
+
+describe('the self test', () => {
+	test('reports ok once the WebView is patched', () => {
+		expect(selfTest().ok).toBe(true);
 	});
 });

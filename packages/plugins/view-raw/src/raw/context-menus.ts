@@ -55,7 +55,6 @@ export function patchContextMenus(state: SheetState): void {
 
 		if (
 			!profileUserId ||
-			!mainProfileLabel ||
 			!menu.items?.some((item: MenuItem) => item.label === mainProfileLabel)
 		) {
 			return;

@@ -1,3 +1,5 @@
+export const PLUGIN_NAME = 'Youtube Adblock';
+
 export const YOUTUBE_DOMAINS = ['youtube.com', 'youtube-nocookie.com'];
 
 export const ACTIVITY_DOMAIN = 'discordsays.com';

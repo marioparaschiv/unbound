@@ -8,11 +8,12 @@ import { PLUGIN_NAME } from '~/constants';
 type Bubbles = ReturnType<typeof drawBubbles>;
 
 let bubbles: Bubbles | null = null;
+let unwatch: (() => void) | null = null;
 
 /**
  * @description Draws a rounded bubble behind each message, and repaints them when the theme or a bubble setting changes.
  * Hooks the native message views of each platform, and depends on the Theme, Message, User and SelectedChannel stores.
- * The Addon scope stops the appearance listeners; `stopBubbles` removes the native bubbles, which the scope cannot see.
+ * `stopBubbles` stops the appearance listeners first, then removes the native bubbles, which the scope cannot see.
  * @param context The plugin's native bridge and granted capabilities.
  */
 export function startBubbles(context: PluginContext): void {
@@ -21,7 +22,7 @@ export function startBubbles(context: PluginContext): void {
 	const drawn = drawBubbles(context.native);
 
 	bubbles = drawn;
-	watchAppearance(() => drawn.refresh());
+	unwatch = watchAppearance(() => drawn.refresh());
 }
 
 /**
@@ -31,6 +32,8 @@ export function startBubbles(context: PluginContext): void {
 export async function stopBubbles(): Promise<void> {
 	const drawn = bubbles;
 
+	unwatch?.();
+	unwatch = null;
 	bubbles = null;
 
 	await drawn?.dispose();
