@@ -41,10 +41,14 @@ UIKIT_EXTERN API_AVAILABLE(ios(2.0))
 
 @interface UITableViewCell : UIView <UIDemoDelegate>
 @end
+
+@interface AVPictureInPictureController : NSObject
+@property(nonatomic, readonly, getter = isPictureInPicturePossible) BOOL pictureInPicturePossible;
+@end
 `)
 	index.addTBD(`objc-classes:    [ UIView, _UIPrivateView, 
                        UITableViewCellContentView ]`)
-	for _, selector := range []string{"backgroundColor", "setBackgroundColor:", "isHidden", "completion", "setCompletion:", "layoutSubviews", "insertSubview:belowSubview:", "viewWithTintColor:", "didMoveToWindow"} {
+	for _, selector := range []string{"backgroundColor", "setBackgroundColor:", "isHidden", "isPictureInPicturePossible", "completion", "setCompletion:", "layoutSubviews", "insertSubview:belowSubview:", "viewWithTintColor:", "didMoveToWindow"} {
 		if !index.Selectors[selector] {
 			t.Errorf("selector %q was not indexed", selector)
 		}
@@ -57,6 +61,23 @@ UIKIT_EXTERN API_AVAILABLE(ios(2.0))
 	}
 	if found, _ := index.declares("UITableViewCell", "isEqual:"); !found {
 		t.Error("protocol methods must be inherited")
+	}
+	if found, owner := index.declares("AVPictureInPictureController", "isPictureInPicturePossible"); !found || owner != "AVPictureInPictureController" {
+		t.Errorf("spaced Objective-C property getters must be indexed on their class, got %v %q", found, owner)
+	}
+	results := evaluateCompat(
+		[]*compatReference{{
+			Kind:      referenceObjCMethod,
+			Platform:  "ios",
+			Component: "plugin:picture-in-picture",
+			Class:     "AVPictureInPictureController",
+			Name:      "isPictureInPicturePossible",
+		}},
+		[]*compatTarget{{Platform: "ios", objc: newObjCIndex(), sdk: index}},
+		nil,
+	)
+	if len(results.Findings) != 1 || results.Findings[0].Status != compatOK {
+		t.Errorf("the PiP SDK getter should be compatible, got %+v", results.Findings)
 	}
 	if index.Classes["NSArray"].Super != "NSObject" || index.Classes["UITableViewCell"].Super != "UIView" {
 		t.Error("superclasses were not parsed")

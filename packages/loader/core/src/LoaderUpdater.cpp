@@ -4,6 +4,7 @@
 #include <cctype>
 #include <stdexcept>
 
+#include "LoaderBundleRecord.h"
 #include "LoaderFiles.h"
 #include "LoaderLog.h"
 #include "LoaderPreferences.h"
@@ -106,22 +107,6 @@ static std::string urlFileName(const std::string &url)
     return slash == std::string::npos ? path : path.substr(slash + 1);
 }
 
-static nlohmann::json parseRecord(const std::optional<std::string> &text)
-{
-    if (!text)
-    {
-        return nlohmann::json();
-    }
-    nlohmann::json record = nlohmann::json::parse(*text, nullptr, false);
-    return record.is_object() ? record : nlohmann::json();
-}
-
-static std::string recordField(const nlohmann::json &record, const char *key)
-{
-    auto field = record.find(key);
-    return field != record.end() && field->is_string() ? field->get<std::string>() : "";
-}
-
 std::optional<std::string> BundleUpdater::fetch(const std::string &url) const
 {
     return fetchText_ ? fetchText_(url, kManifestFetchTimeoutSeconds) : std::nullopt;
@@ -141,8 +126,8 @@ bool BundleUpdater::developerMode() const
 // default bundle in place for developer mode, which must not count as a pending switch.
 std::optional<bool> BundleUpdater::recordedDeveloperMode(const std::string &path) const
 {
-    std::string mode =
-        recordField(parseRecord(readTextFile(path + kBundleTrustSuffix)), "developerMode");
+    std::string mode = bundleRecordField(parseBundleRecord(readTextFile(path + kBundleTrustSuffix)),
+                                         "developerMode");
     return mode.empty() ? std::nullopt : std::optional<bool>(mode == "1");
 }
 
@@ -192,17 +177,17 @@ std::string BundleUpdater::bundlePath(const std::string &extension) const
 
 std::optional<std::string> BundleUpdater::candidateProblem(const std::string &candidatePath) const
 {
-    nlohmann::json record = parseRecord(readTextFile(candidatePath + kBundleTrustSuffix));
+    nlohmann::json record = parseBundleRecord(readTextFile(candidatePath + kBundleTrustSuffix));
     if (record.is_null())
     {
         return std::string("it has no verification record");
     }
 
-    std::string kind = recordField(record, "kind");
-    std::string url  = recordField(record, "url");
+    std::string kind = bundleRecordField(record, "kind");
+    std::string url  = bundleRecordField(record, "url");
     if (kind == "exempt")
     {
-        std::string reason = recordField(record, "exemption");
+        std::string reason = bundleRecordField(record, "exemption");
         if (!isExemptionCurrent(reason, url))
         {
             return "it was downloaded without verification (" + reason +
@@ -222,14 +207,14 @@ std::optional<std::string> BundleUpdater::candidateProblem(const std::string &ca
         return std::string("it could not be read");
     }
 
-    std::string source    = recordField(record, "source");
-    std::string signature = recordField(record, "signature");
+    std::string source    = bundleRecordField(record, "source");
+    std::string signature = bundleRecordField(record, "signature");
     if (kind != "manifest")
     {
         return "its verification record has an unknown kind \"" + kind + "\"";
     }
 
-    std::string manifestText = recordField(record, "manifest");
+    std::string manifestText = bundleRecordField(record, "manifest");
     if (verifyTrustedSignature(manifestText, signature, trust_) == TrustedSigner::None)
     {
         return std::string("its stored manifest signature does not match");
@@ -239,7 +224,7 @@ std::optional<std::string> BundleUpdater::candidateProblem(const std::string &ca
     {
         return std::string("its stored manifest is incomplete");
     }
-    auto hash = manifest->sha512.find(recordField(record, "file"));
+    auto hash = manifest->sha512.find(bundleRecordField(record, "file"));
     if (hash == manifest->sha512.end() || hash->second != sha512Hex(*bundle))
     {
         return std::string("its SHA-512 does not match its signed manifest");
@@ -484,21 +469,23 @@ std::optional<std::string> BundleUpdater::verifiedRecord(const DownloadPlan &pla
 
 void BundleUpdater::recordBaseline(const std::string &record)
 {
-    nlohmann::json parsed = parseRecord(record);
-    if (recordField(parsed, "kind") != "manifest")
+    nlohmann::json parsed = parseBundleRecord(record);
+    if (bundleRecordField(parsed, "kind") != "manifest")
     {
         settings_.setString(kBundleBaselineSetting, "");
         return;
     }
 
-    std::optional<BundleManifest> manifest = parseBundleManifest(recordField(parsed, "manifest"));
+    std::optional<BundleManifest> manifest =
+        parseBundleManifest(bundleRecordField(parsed, "manifest"));
     if (!manifest)
     {
         settings_.setString(kBundleBaselineSetting, "");
         return;
     }
-    settings_.setString(kBundleBaselineSetting, serializeBaseline(baselineFromManifest(
-                                                    *manifest, recordField(parsed, "source"))));
+    settings_.setString(
+        kBundleBaselineSetting,
+        serializeBaseline(baselineFromManifest(*manifest, bundleRecordField(parsed, "source"))));
 }
 
 bool isAcceptedDownloadStatus(int status)
@@ -544,7 +531,7 @@ std::string BundleUpdater::downloadBundle(const std::string                &pref
     // The stored ETag belongs to whichever file the active bundle came from, so it only
     // describes the download when the plan selects that same file.
     std::string activeFile =
-        recordField(parseRecord(readTextFile(targetPath + kBundleTrustSuffix)), "file");
+        bundleRecordField(parseBundleRecord(readTextFile(targetPath + kBundleTrustSuffix)), "file");
     if (fileExists(targetPath) && isVerified && !forceUpdate && !storedEtag.empty() &&
         activeFile == urlFileName(url))
     {

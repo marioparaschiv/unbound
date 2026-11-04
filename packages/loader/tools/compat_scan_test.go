@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/binary"
 	"errors"
+	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -83,6 +85,32 @@ const label = 'don\'t match this';
 	}
 	if findReference(references, referenceModulePath, "@unbound-app/api/metro") != nil {
 		t.Fatal("import specifiers must be ignored")
+	}
+}
+
+func TestPictureInPictureAndroidModulePathIsPlatformScoped(t *testing.T) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("could not locate test source")
+	}
+	root := filepath.Join(filepath.Dir(filename), "..", "..", "..")
+	sources, err := collectCompatReferences(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	found := false
+	for _, reference := range sources.sorted() {
+		if reference.Kind != referenceModulePath || reference.Name != "modules/external_pip/ExternalPipView.android.tsx" {
+			continue
+		}
+		found = true
+		if reference.Platform != "android" {
+			t.Fatalf("Android-only PiP module path has platform %q at %+v", reference.Platform, reference.Locations)
+		}
+	}
+	if !found {
+		t.Fatal("Android PiP module path was not extracted")
 	}
 }
 

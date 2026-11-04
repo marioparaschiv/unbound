@@ -19,7 +19,7 @@ banner: media/banner.png
 - :text: **Custom Status Text** is the activity name, with `{artist}`, `{album}` and `{title}` for the playing track. "some music" by default.
 - :pen: **Activity Name** uses the custom text, the music service name, **Artist - Song**, **Song - Artist**, the artist, the song, or the album.
 - :users: **Member List Shows** the activity name, the artist or the track next to your name. The artist by default.
-- :image: **Without Album Art** shows the large scrobbler logo or a generic placeholder.
+- :photo: **Without Album Art** shows the large scrobbler logo or a generic placeholder.
 - :toggle: **Listening Status**, **Clickable Links**, **Profile Button**, **Album Cover**, **Scrobbler Logo**, **Hide With Spotify** and **Hide With Other Activities** match the Vencord options. Clickable links, album cover, logo and hiding with Spotify are on by default.
 
 ## :circle-info: Limits

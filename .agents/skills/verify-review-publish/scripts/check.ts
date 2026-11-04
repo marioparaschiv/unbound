@@ -15,6 +15,8 @@ type Outcome = 'holds' | 'violated';
 type Job = {
 	config: string;
 	invariants: string[];
+	// Set for a liveness job: checked as a PROPERTY and named in `violated` when it fails.
+	property?: string;
 	expected: Outcome;
 };
 
@@ -53,25 +55,35 @@ const INVARIANTS = [
 ];
 
 // Invariants each config is expected to violate; every other one must hold. `current*` describe the
-// code at the sync commit, so a violation there is a known finding (see ../SKILL.md).
+// code at the sync commit, so a violation there is a bug; `before-fix*` keep the old order as witnesses.
 const EXPECTED: Record<string, string[]> = {
-	current: [
+	current: [],
+	'current-pending-updates': [],
+	// The code before approval published after `decide`: the same findings the replays showed on it.
+	'before-fix': [
 		'PublicOnlyIfLive',
 		'PublicOnlyIfLiveAtRest',
 		'PublicMatchesLive',
 		'RejectedNeverPublic',
 	],
-	'current-pending-updates': [
+	'before-fix-pending-updates': [
 		'PublicOnlyIfLive',
 		'PublicOnlyIfLiveAtRest',
 		'PublicMatchesLive',
 		'RejectedNeverPublic',
 	],
-	reordered: [],
-	'reordered-pending-updates': [],
 	// Without the CAS a late reject also overwrites an approval whose files are already public.
 	'broken-no-cas': ['DecidedOnce', 'RejectedNeverPublic'],
-	'broken-no-hash-check': ['LiveIsReviewed'],
+	// A repeated approval also publishes whatever the staged object holds, so a tampered one goes public.
+	'broken-no-hash-check': ['LiveIsReviewed', 'PublicMatchesLive'],
+};
+
+// Liveness jobs: configs run under fairness, each checking LiveEventuallyPublic.
+const LIVENESS = 'LiveEventuallyPublic';
+const EXPECTED_LIVENESS: Record<string, Outcome> = {
+	'current-liveness': 'holds',
+	// Without the recovery step a failed public write leaves a live version without its files for good.
+	'broken-no-recovery': 'violated',
 };
 
 const LABELS: Record<string, string> = {
@@ -80,13 +92,17 @@ const LABELS: Record<string, string> = {
 	Tamper: 'a write to the staging bucket outside the app',
 	Purge: 'purgeUserSubmissions (ban) cancels',
 	Orphan: 'sweepStaging deletes an orphaned staged object',
-	Start: 'reviewSubmission -> requirePendingReview passes',
+	Start: 'reviewSubmission -> requireReviewable passes',
+	RetryStart: 'the approval is repeated: requireReviewable sees the live version and republishes',
+	ReadFail: 'readArtifact fails (staging, GitHub)',
+	ReadOk: 'readArtifact reads (or refetches from the pin) and re-hashes the bundle',
+	WriteFail: 'a public write fails after decide committed; the request errors with no cleanup',
 	ReadStaged:
-		'publishArtifact reads (or refetches from the pin) and re-hashes the bundle, and reads the pinned media and extra files',
-	WriteBundle: 'publishArtifact writes the public bundle',
-	WriteManifest: 'publishArtifact writes the public manifest.json',
-	WritePage: 'publishArtifact writes the public ADDON.md, page.json and media/',
-	WriteFiles: 'publishArtifact writes the public extra files (assets/, i18n/)',
+		'readArtifact reads (or refetches from the pin) and re-hashes the bundle, and reads the pinned media and extra files',
+	WriteBundle: 'publishArtifact (after decide) writes the public bundle',
+	WriteManifest: 'publishArtifact (after decide) writes the public manifest.json',
+	WritePage: 'publishArtifact (after decide) writes the public ADDON.md, page.json and media/',
+	WriteFiles: 'publishArtifact (after decide) writes the public extra files (assets/, i18n/)',
 	Decide: 'decide() transaction',
 	Cleanup: 'staging.delete(row.stagingKey)',
 };
@@ -132,12 +148,15 @@ async function run(job: Job, scratch: string): Promise<Result> {
 		);
 	}
 
-	const dir = join(scratch, `${job.config}-${job.invariants.join('-') || 'none'}`);
+	const dir = join(scratch, `${job.config}-${checked(job).join('-') || 'none'}`);
 	const base = readFileSync(join(SPEC_DIR, `${job.config}.cfg`), 'utf8');
 
 	// TLC resolves -config against the spec's directory, so each job runs on its own copy.
 	mkdirSync(dir, { recursive: true });
-	writeFileSync(join(dir, 'model.cfg'), `${base}INVARIANT ${job.invariants.join(' ')}\n`);
+	writeFileSync(
+		join(dir, 'model.cfg'),
+		`${base}${job.property ? 'PROPERTY' : 'INVARIANT'} ${checked(job).join(' ')}\n`,
+	);
 	copyFileSync(join(SPEC_DIR, 'ReviewPublish.tla'), join(dir, 'ReviewPublish.tla'));
 
 	const started = performance.now();
@@ -166,7 +185,9 @@ async function run(job: Job, scratch: string): Promise<Result> {
 	await child.exited;
 
 	const output = stdout + stderr;
-	const violated = /Invariant (\w+) is violated/.exec(output)?.[1];
+	const violated =
+		/Invariant (\w+) is violated/.exec(output)?.[1] ??
+		(output.includes('Temporal properties were violated') ? job.property : undefined);
 	const states = /([\d,]+) distinct states found/.exec(output)?.[1] ?? '?';
 	let actual: Result['actual'] = 'error';
 
@@ -240,17 +261,30 @@ function printTrace(result: Result) {
 	}
 }
 
-function plan(): Job[] {
-	return Object.entries(EXPECTED).flatMap(([config, violated]) => {
-		const holding = INVARIANTS.filter((invariant) => !violated.includes(invariant));
-		const jobs: Job[] = violated.map((invariant) => ({
-			config,
-			invariants: [invariant],
-			expected: 'violated',
-		}));
+function checked(job: Job): string[] {
+	return job.property ? [job.property] : job.invariants;
+}
 
-		return [...jobs, { config, invariants: holding, expected: 'holds' }];
-	});
+function plan(): Job[] {
+	return Object.entries(EXPECTED)
+		.flatMap(([config, violated]) => {
+			const holding = INVARIANTS.filter((invariant) => !violated.includes(invariant));
+			const jobs: Job[] = violated.map((invariant) => ({
+				config,
+				invariants: [invariant],
+				expected: 'violated',
+			}));
+
+			return [...jobs, { config, invariants: holding, expected: 'holds' }];
+		})
+		.concat(
+			Object.entries(EXPECTED_LIVENESS).map(([config, expected]) => ({
+				config,
+				invariants: [],
+				property: LIVENESS,
+				expected,
+			})),
+		);
 }
 
 async function main() {
@@ -258,15 +292,26 @@ async function main() {
 	const wanted = traceArg === -1 ? undefined : process.argv[traceArg + 1];
 	const jobs = wanted
 		? [
-				{
-					config: wanted.split(':')[0],
-					invariants: [wanted.split(':')[1]],
-					expected: 'violated' as const,
-				},
+				wanted.endsWith(`:${LIVENESS}`)
+					? {
+							config: wanted.split(':')[0],
+							invariants: [],
+							property: LIVENESS,
+							expected: 'violated' as const,
+						}
+					: {
+							config: wanted.split(':')[0],
+							invariants: [wanted.split(':')[1]],
+							expected: 'violated' as const,
+						},
 			]
 		: plan();
 
-	if (wanted && !(jobs[0].config in EXPECTED && INVARIANTS.includes(jobs[0].invariants[0]))) {
+	const known = jobs[0].property
+		? jobs[0].config in EXPECTED_LIVENESS
+		: jobs[0].config in EXPECTED && INVARIANTS.includes(jobs[0].invariants[0]);
+
+	if (wanted && !known) {
 		throw new Error(
 			`No job ${wanted}; use <config>:<Invariant>, e.g. current:RejectedNeverPublic.`,
 		);
@@ -294,11 +339,11 @@ async function main() {
 		const result = await run(job, scratch);
 		const ok =
 			result.actual === result.expected &&
-			(result.expected === 'holds' || result.violated === job.invariants[0]);
+			(result.expected === 'holds' || result.violated === checked(job)[0]);
 
 		unexpected += ok ? 0 : 1;
 		console.log(
-			`${ok ? 'ok  ' : 'FAIL'} ${job.config.padEnd(26)} ${(result.violated ?? job.invariants.join(',')).padEnd(24)} ${result.actual.padEnd(9)} (expected ${job.expected}, ${result.states} states, ${result.seconds.toFixed(1)}s)`,
+			`${ok ? 'ok  ' : 'FAIL'} ${job.config.padEnd(26)} ${(result.violated ?? checked(job).join(',')).padEnd(24)} ${result.actual.padEnd(9)} (expected ${job.expected}, ${result.states} states, ${result.seconds.toFixed(1)}s)`,
 		);
 
 		if (result.actual === 'error') {

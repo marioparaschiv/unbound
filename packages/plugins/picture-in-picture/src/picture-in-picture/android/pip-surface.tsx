@@ -7,7 +7,9 @@ import { useRef, useSyncExternalStore, type ComponentType, type ReactNode } from
 import { StyleSheet, View } from 'react-native';
 
 import type { PipClip, PipClipStore } from '~/picture-in-picture/android/pip-clip';
-import { EXTERNAL_PIP_VIEW_PATH, OVERLAY_PATH, PLUGIN_NAME, VIDEO_PROTOTYPE } from '~/constants';
+import { OVERLAY_PATH, PLUGIN_NAME, VIDEO_PROTOTYPE } from '~/constants';
+
+const EXTERNAL_PIP_VIEW_PATH = 'modules/external_pip/ExternalPipView.android.tsx';
 
 type VideoHandle = { seek?: (seconds: number) => void };
 

@@ -18,11 +18,11 @@ Linux builds need glibc 2.35 or newer (Ubuntu 22.04, Debian 12). The builds are 
 
 ## How it connects
 
-1. The loader evaluates `packages/loader/bootstrap/devtools.js` before Discord's bundle when `loader.devtools` is `true`. That file is react-devtools-core 8's backend. It supports React 19, which Discord uses.
+1. When `loader.devtools` is `true`, the loader evaluates `devtools.<bytecode>.bundle` before Discord's bundle. It is react-devtools-core 8's backend, which supports React 19, compiled to Hermes bytecode by the client build (`packages/client/scripts/build/devtools`) and published with the client bundles on builds.unbound.rip. The loader downloads it from wherever its bundle came from, checks it against that build's signed manifest, and caches it.
 2. **Connect device** asks the device, over the Unbound debugger bridge, to dial this app on port 8097. The device dials the host from its own `debugger.address` setting, unless you pass `--advertise-host`.
 3. The app decodes the backend's messages into the component tree and keeps it live.
 
-The vendored 4.27 backend could not attach to React 19. To rebuild `devtools.js` from a newer react-devtools-core, run `bun harness/build-backend.mjs`.
+To move to a newer backend, bump `react-devtools-core` in `packages/client/scripts/build/package.json` and in `harness/package.json` together.
 
 ## Run
 

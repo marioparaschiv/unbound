@@ -35,7 +35,6 @@ export const IOS_VIEW_SEARCH = {
 	stopAtMatch: true,
 } as const;
 
-export const EXTERNAL_PIP_VIEW_PATH = 'modules/external_pip/ExternalPipView.android.tsx';
 export const VIDEO_CONTROLS_PATH = 'modules/media_viewer/native/useVideoControls.tsx';
 export const VIDEO_PROTOTYPE = ['toTypeString', 'stringsOnlyObject'];
 export const PLAYER_PROGRESS_EVENT = 'MediaPlayerProgress';

@@ -12,8 +12,12 @@ const root = resolve(import.meta.dir, '..');
 export const PROJECTS = [
 	'apps/web',
 	'apps/discord-bot',
+	'apps/sdk-generator',
 	'packages/cli',
 	'packages/client',
+	'packages/client/scripts/build',
+	'packages/client/scripts/dev',
+	'packages/client/scripts/serve',
 	'packages/plugin-scripts',
 	'packages/api',
 	'packages/contracts',

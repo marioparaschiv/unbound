@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { savePreviewReturn, usePreviewReturn } from '~/components/staff/use-preview-return';
 import ReviewDecisionDialog from '~/components/review/review-decision-dialog';
+import PublishRetryButton from '~/components/review/publish-retry-button';
 import { TagList } from '~/components/addon-filters/filter-parts';
 import AtlasIcon from '~/components/addon-icon-picker/atlas-icon';
 import { formatDateTime } from '~/components/admin/format-date';
@@ -59,6 +60,8 @@ function ReviewCard({ entry }: ReviewCardProps) {
 	const Icon = fieldValue(entry, 'type') === 'theme' ? IconPalette : IconPlug;
 	const description = fieldValue(entry, 'description');
 	const detailsId = `review-${submission.id}`;
+	// Approval committed but the public files did not write; the only action left is repeating it.
+	const publishFailed = submission.status === 'approved';
 
 	usePreviewReturn(submission.id, setOpen);
 
@@ -76,6 +79,7 @@ function ReviewCard({ entry }: ReviewCardProps) {
 						<Tag variant={submission.kind === 'listing' ? 'primary' : 'default'}>
 							{submission.kind === 'listing' ? 'New listing' : 'Update'}
 						</Tag>
+						{publishFailed ? <Tag variant='destructive'>Publishing failed</Tag> : null}
 					</div>
 					<Text
 						as='div'
@@ -163,6 +167,8 @@ function ReviewCard({ entry }: ReviewCardProps) {
 							<IconLock size={16} />
 							You maintain this addon, so another reviewer has to decide.
 						</Text>
+					) : publishFailed ? (
+						<PublishRetryButton entry={entry} />
 					) : (
 						<>
 							<ReviewDecisionDialog entry={entry} decision='changes_requested' />

@@ -5,7 +5,7 @@ banner: media/banner.png
 ## :sparkle: What it does
 
 - :video: YouTube videos you open from a message play without ads. Ads are removed before the player sees them, and an ad that still starts is skipped.
-- :eye-slash: Ad banners and overlays on the player are hidden.
+- :eye: Ad banners and overlays on the player are hidden.
 - :users: Watch Together plays without ads too. This only changes your own player, so others in the activity still see ads.
 - :link: Works with Fix Youtube Embeds: its fallback player is covered as well.
 - :circle-info: Other pages Discord shows in the app, such as sign-in pages and other activities, are left alone. The blocker only runs on youtube.com and youtube-nocookie.com.

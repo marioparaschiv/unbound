@@ -28,7 +28,7 @@ const ENTRY = join(import.meta.dir, '..', '..', 'src', 'index.ts');
 export async function runUbd(args: string[], cwd: string, env: EnvSource): Promise<UbdResult> {
 	const child = Bun.spawn([process.execPath, ENTRY, ...args], {
 		cwd,
-		env: { ...process.env, ...env },
+		env: { ...process.env, NO_COLOR: '1', ...env },
 		stdout: 'pipe',
 		stderr: 'pipe',
 	});

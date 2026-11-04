@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { createFakeMetro, createFakeNative } from '../testing';
 
-const manifest = { id: 'third-pass' } as never;
+const manifest: never = Object.assign({ id: 'third-pass' }) as never;
 
 // A bridge with only the members a test gives, as `startPlugin({ native })` takes.
 const own = (members: Record<string, () => string | { id: string }>) => members as never;
@@ -74,10 +74,10 @@ describe('native overrides', () => {
 			native: { hooks: own({ hook }), java: own({ release: () => 'mine' }) },
 		}).native;
 
-		expect(hooks.hook).toBe(hook as never);
+		expect(Reflect.get(hooks, 'hook')).toBe(hook);
 		expect(Reflect.get(hooks, 'remove')).toBeInstanceOf(Function);
 		expect(java.describe('a.B').name).toBe('a.B');
-		expect(Reflect.apply(java.release, java, [])).toBe('mine' as never);
+		expect(Reflect.apply(Reflect.get(java, 'release'), java, [])).toBe('mine' as never);
 	});
 });
 

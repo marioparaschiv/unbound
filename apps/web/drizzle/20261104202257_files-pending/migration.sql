@@ -1,0 +1,1 @@
+ALTER TABLE "addon_version" ADD COLUMN "files_pending_since" timestamp(3) with time zone;

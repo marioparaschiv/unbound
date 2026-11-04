@@ -183,6 +183,8 @@ export const addonVersion = pgTable(
 		bundleSize: integer('bundle_size').notNull(),
 		sha256: text('sha256').notNull(),
 		publishedAt: timestampMs('published_at').defaultNow().notNull(),
+		/** Set when review approved the version and cleared once its public files are written; `null` means published. */
+		filesPendingSince: timestampMs('files_pending_since'),
 		/** The rollback event that withdrew this version from serving; `null` is live. */
 		withdrawnBy: bigint('withdrawn_by', { mode: 'number' }).references(
 			() => moderationEvent.id,
