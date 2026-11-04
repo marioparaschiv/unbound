@@ -41,12 +41,12 @@ import {
 	union,
 	type Box,
 	type Edges,
-} from '~/geometry';
+} from '~/bubbles/geometry';
 import { AndroidClass, BubbleLayout, CARD_INSET, PLUGIN_NAME } from '~/constants';
-import { forgetBubbles, installBindGuard, rememberBubble } from '~/android/ui-bubbles';
-import { currentAppearance } from '~/theme';
-import { argb } from '~/style';
-import { isOwnMessage } from '~/author';
+import { forgetBubbles, installBindGuard, rememberBubble } from '~/bubbles/android/ui-bubbles';
+import { currentAppearance } from '~/bubbles/theme';
+import { argb } from '~/bubbles/style';
+import { isOwnMessage } from '~/bubbles/author';
 import { RECEIVER_ONLY_AFTER_CALL } from '@unbound-plugins/shared/native/android/hook-options';
 
 type AndroidNative = {

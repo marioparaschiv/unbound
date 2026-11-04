@@ -8,7 +8,7 @@ import {
 	IOSClass,
 	MEDIA_VIEW_CLASSES,
 } from '~/constants';
-import type { Box } from '~/geometry';
+import type { Box } from '~/bubbles/geometry';
 
 export type SnapshotNode = Pick<
 	NativeViewSnapshotNode,

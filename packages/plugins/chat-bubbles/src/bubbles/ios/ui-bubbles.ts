@@ -5,7 +5,7 @@ import type {
 	NativeUIScope,
 } from '@unbound-app/api/native';
 
-import type { BubbleColor } from '~/style';
+import type { BubbleColor } from '~/bubbles/style';
 
 const STATE_KEY = '__unboundChatBubbles';
 const MAX_CACHED = 400;
