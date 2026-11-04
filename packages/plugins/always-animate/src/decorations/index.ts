@@ -2,7 +2,8 @@ import { whenLoaded } from '@unbound-plugins/shared/metro/when-loaded';
 import type { AnyProps } from '@unbound-app/api/metro';
 
 import { combineCleanups, forceAnimateArguments, forceProps } from '~/force/patches';
-import { AVATAR_DECORATION_PATH, AVATAR_UTILS_PATH, DECORATION_ARGUMENTS } from '~/constants';
+import { CutoutableAvatarDecoration } from '~/decorations/modules';
+import { AVATAR_UTILS_PATH, DECORATION_ARGUMENTS } from '~/constants';
 
 /**
  * @description Animates avatar decorations, in chat rows and in React Native views.
@@ -15,6 +16,6 @@ export function animateDecorations(): () => void {
 		whenLoaded<AnyProps>(AVATAR_UTILS_PATH, (module) =>
 			forceAnimateArguments(module, DECORATION_ARGUMENTS),
 		),
-		forceProps(AVATAR_DECORATION_PATH, { animate: true }),
+		forceProps(CutoutableAvatarDecoration, { animate: true }),
 	]);
 }

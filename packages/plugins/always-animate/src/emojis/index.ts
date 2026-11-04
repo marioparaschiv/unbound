@@ -1,5 +1,5 @@
 import { combineCleanups, forceProps, forceRowFields, forceUserSetting } from '~/force/patches';
-import { ACTIVITY_EMOJI_PATH } from '~/constants';
+import { ActivityEmoji } from '~/emojis/modules';
 
 /**
  * @description Animates custom emojis everywhere: messages, reactions, custom statuses and pickers.
@@ -10,6 +10,6 @@ export function animateEmojis(): () => void {
 	return combineCleanups([
 		forceUserSetting('AnimateEmoji', true),
 		forceRowFields(() => ({ animateEmoji: true })),
-		forceProps(ACTIVITY_EMOJI_PATH, { animate: true }),
+		forceProps(ActivityEmoji, { animate: true }),
 	]);
 }

@@ -14,5 +14,5 @@
 	],
 	"version": "1.0.3",
 	"icon": "GiftIcon",
-	"main": "index.ts"
+	"main": "index.tsx"
 }

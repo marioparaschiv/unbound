@@ -1,9 +1,5 @@
 import type { ProviderId } from '~/types';
 
-export const PLUGIN_NAME = 'GIF Provider Switcher';
-
-export const DEFAULT_PROVIDER: ProviderId = 'tenor';
-
 export const PROVIDERS: readonly { id: ProviderId; label: string }[] = [
 	{ id: 'tenor', label: 'Tenor' },
 	{ id: 'giphy', label: 'Giphy' },
@@ -29,5 +25,3 @@ export const SUGGESTION_LIMIT = 5;
 export const DEFAULT_LOCALE = 'en-US';
 
 export const DEFAULT_MEDIA_FORMAT = 'mp4';
-
-export const GIF_PICKER_HEADER_PATH = 'modules/gif_picker/native/GIFPickerHeader.tsx';

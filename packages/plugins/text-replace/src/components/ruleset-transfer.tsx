@@ -1,10 +1,11 @@
 import { Discord } from '@unbound-app/api/metro/components';
+import { messages } from '@unbound-app/i18n';
 import { toasts, ui } from '@unbound-app/api';
 import { useState } from 'react';
 
-import { readClipboard, shareRuleset } from '~/transfer';
-import { parseRuleset, type Ruleset } from '~/ruleset';
-import { saveRuleset } from '~/stored-rules';
+import { readClipboard, shareRuleset } from '~/replace/transfer';
+import { parseRuleset, type Ruleset } from '~/replace/ruleset';
+import { saveRuleset } from '~/replace/stored-rules';
 
 type RulesetTransferProps = {
 	ruleset: Ruleset;
@@ -13,14 +14,11 @@ type RulesetTransferProps = {
 function importRuleset(value: string): boolean {
 	try {
 		saveRuleset(parseRuleset(value));
-		toasts.show({ title: 'Text Replace', content: 'Ruleset imported.' });
+		toasts.success('RULESET_IMPORTED');
 
 		return true;
 	} catch (error) {
-		toasts.show({
-			title: 'Text Replace',
-			content: error instanceof Error ? error.message : 'Could not import ruleset.',
-		});
+		toasts.error('IMPORT_FAILED', error);
 
 		return false;
 	}
@@ -39,10 +37,7 @@ function RulesetTransfer({ ruleset }: RulesetTransferProps) {
 		const value = await readClipboard();
 
 		if (!value.trim()) {
-			toasts.show({
-				title: 'Text Replace',
-				content: 'Your clipboard does not contain a ruleset.',
-			});
+			toasts.warning('CLIPBOARD_HAS_NO_RULESET');
 
 			return;
 		}
@@ -52,16 +47,16 @@ function RulesetTransfer({ ruleset }: RulesetTransferProps) {
 
 	return (
 		<Discord.Stack spacing={12}>
-			<ui.Section
-				title='Share rules'
-				description='Export or import both rule lists as portable JSON.'
-			>
-				<ui.Row label='Export & share' onPress={() => void shareRuleset(ruleset)} />
-				<ui.Row label='Import clipboard' onPress={() => void importClipboard()} />
+			<ui.Section title={messages.SHARE_RULES} description={messages.SHARE_RULES_DESCRIPTION}>
+				<ui.Row
+					label={messages.EXPORT_AND_SHARE}
+					onPress={() => void shareRuleset(ruleset)}
+				/>
+				<ui.Row label={messages.IMPORT_CLIPBOARD} onPress={() => void importClipboard()} />
 			</ui.Section>
 			<Discord.TextInput
-				label='Paste JSON'
-				placeholder='Paste exported Text Replace JSON here'
+				label={messages.PASTE_JSON}
+				placeholder={messages.PASTE_JSON_PLACEHOLDER}
 				autoCapitalize='none'
 				autoCorrect={false}
 				multiline
@@ -69,7 +64,7 @@ function RulesetTransfer({ ruleset }: RulesetTransferProps) {
 				onChange={setPasted}
 			/>
 			<Discord.Button
-				text='Import pasted'
+				text={messages.IMPORT_PASTED}
 				variant='secondary'
 				disabled={!pasted.trim()}
 				onPress={() => importValue(pasted)}

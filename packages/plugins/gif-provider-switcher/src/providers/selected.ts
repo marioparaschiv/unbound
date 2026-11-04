@@ -1,7 +1,6 @@
+import { settings } from '@unbound-app/settings';
 import { storage } from '@unbound-app/api';
 
-import { DEFAULT_PROVIDER } from '~/constants';
-import { normalizeProvider } from '~/providers/selection';
 import type { ProviderId } from '~/types';
 
 /**
@@ -9,7 +8,7 @@ import type { ProviderId } from '~/types';
  * @returns The provider.
  */
 export function getSelectedProvider(): ProviderId {
-	return normalizeProvider(storage.getBucket().get<string>('provider', DEFAULT_PROVIDER));
+	return settings.provider;
 }
 
 /**
@@ -17,7 +16,7 @@ export function getSelectedProvider(): ProviderId {
  * @param id The provider.
  */
 export function setSelectedProvider(id: ProviderId): void {
-	storage.getBucket().set('provider', id);
+	settings.provider = id;
 }
 
 /**
