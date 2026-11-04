@@ -120,12 +120,13 @@ export function platformGlyph(platform: string): string {
 /**
  * @description Describes where a user is online for screen readers.
  * @param statuses The user's platforms.
+ * @param locale The locale code that joins the platform names into a list.
  * @returns Text such as `Online on Desktop and Mobile`, or an empty string for no platforms.
  */
-export function describePlatforms(statuses: PlatformStatus[]): string {
+export function describePlatforms(statuses: PlatformStatus[], locale: string): string {
 	if (!statuses.length) return '';
 
-	const list = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' }).format(
+	const list = new Intl.ListFormat(locale, { style: 'long', type: 'conjunction' }).format(
 		statuses.map(({ platform }) => platformLabel(platform)),
 	);
 

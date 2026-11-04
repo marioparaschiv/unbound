@@ -2,7 +2,7 @@ import { settings } from '@unbound-app/settings';
 import { patcher } from '@unbound-app/api';
 
 import { getPlatformStatuses } from '~/indicators/status-map';
-import { MessageRowData } from '~/indicators/modules';
+import { MessageRowData, i18n } from '~/indicators/modules';
 import { addPlatforms } from '~/indicators/header';
 
 type Author = { id?: string; bot?: boolean; system?: boolean };
@@ -28,6 +28,6 @@ export function patchMessageRow(): void {
 
 		if (!row) return;
 
-		addPlatforms(row, getPlatformStatuses(author.id));
+		addPlatforms(row, getPlatformStatuses(author.id), i18n.intl?.currentLocale ?? 'en-US');
 	});
 }

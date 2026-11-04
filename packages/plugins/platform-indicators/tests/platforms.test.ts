@@ -90,17 +90,32 @@ describe('isMobileShown', () => {
 
 describe('describePlatforms', () => {
 	test('lists the platforms in words', () => {
-		expect(describePlatforms([{ platform: 'desktop', status: 'online' }])).toBe(
+		expect(describePlatforms([{ platform: 'desktop', status: 'online' }], 'en-US')).toBe(
 			'Online on Desktop',
 		);
 		expect(
-			describePlatforms([
-				{ platform: 'desktop', status: 'online' },
-				{ platform: 'mobile', status: 'idle' },
-				{ platform: 'vr', status: 'dnd' },
-			]),
+			describePlatforms(
+				[
+					{ platform: 'desktop', status: 'online' },
+					{ platform: 'mobile', status: 'idle' },
+					{ platform: 'vr', status: 'dnd' },
+				],
+				'en-US',
+			),
 		).toBe('Online on Desktop, Mobile, and VR');
-		expect(describePlatforms([])).toBe('');
+		expect(describePlatforms([], 'en-US')).toBe('');
+	});
+
+	test('joins the list the way the locale does', () => {
+		expect(
+			describePlatforms(
+				[
+					{ platform: 'desktop', status: 'online' },
+					{ platform: 'mobile', status: 'idle' },
+				],
+				'de',
+			),
+		).toBe('Online on Desktop und Mobile');
 	});
 });
 

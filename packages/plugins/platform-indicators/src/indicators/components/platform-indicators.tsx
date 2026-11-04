@@ -1,6 +1,6 @@
 import { useSetting } from '@unbound-app/settings';
 import { toasts } from '@unbound-app/api';
-import { messages } from '@unbound-app/i18n';
+import { messages, useMessages } from '@unbound-app/i18n';
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import PlatformIcon from '~/indicators/components/platform-icon';
@@ -26,6 +26,7 @@ function showPlatform(platform: string) {
 function PlatformIndicators({ setting, userId, small, pressable, style }: PlatformIndicatorsProps) {
 	const enabled = useSetting(setting);
 	const statuses = usePlatformStatuses(userId);
+	const locale = useMessages();
 
 	// Hides itself when its switch turns off, so rows already on screen follow it.
 	if (!enabled || !statuses.length) return null;
@@ -33,7 +34,7 @@ function PlatformIndicators({ setting, userId, small, pressable, style }: Platfo
 	return (
 		<View
 			accessible={!pressable}
-			accessibilityLabel={describePlatforms(statuses)}
+			accessibilityLabel={describePlatforms(statuses, locale)}
 			style={[
 				{ flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: small ? 4 : 0 },
 				style,

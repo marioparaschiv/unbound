@@ -28,6 +28,7 @@ export const SessionsStore = flux.getStore('Sessions');
 export const ThemeStore: ThemeFluxStore = flux.getStore('Theme');
 export const UserStore = flux.getStore('User');
 export const Theme = metro.common.Theme;
+export const { i18n } = metro.common;
 export const MessageRowData = metro.findByProps('generateMessageRowData');
 export const UserRow = metro.findByFilePath(
 	'modules/main_tabs_v2/native/shared_components/user_list/UserRow.tsx',

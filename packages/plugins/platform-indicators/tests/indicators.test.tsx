@@ -1,5 +1,6 @@
-import { beforeEach, describe, expect, mock, test } from 'bun:test';
-import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import { flux, metro, render, setLocale, startPlugin } from '@unbound-app/api/testing';
+import { flux as unbound } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 import { createElement, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
@@ -9,7 +10,7 @@ import type { StoreSeeds } from '@unbound-app/api/testing';
 const USER_ROW_PATH = 'modules/main_tabs_v2/native/shared_components/user_list/UserRow.tsx';
 const PROFILE_PATH = 'modules/user_profile/native/UserProfilePrimaryInfo.tsx';
 
-const presence = { desktop: 'online', mobile: 'idle' } as Record<string, string> | null;
+let presence = { desktop: 'online', mobile: 'idle' } as Record<string, string> | null;
 
 const stores: StoreSeeds = {
 	Presence: { getClientStatus: () => presence, isMobileOnline: () => false },
@@ -22,6 +23,12 @@ function TableRow({ label }: { label?: ReactNode }) {
 	return <Text>{label}</Text>;
 }
 
+const discord = {
+	getLanguages: () => [],
+	getSystemLocale: () => 'en-US',
+	intl: { currentLocale: 'en-US' },
+};
+
 const userRow = { default: ({ user }: { user: { id: string } }) => <TableRow label={user.id} /> };
 const profile = { default: () => <View /> };
 const rowData = {
@@ -30,12 +37,12 @@ const rowData = {
 	}),
 };
 
-// The testing kit has no `ui`, which the settings panel imports.
-mock.module('~/settings', () => ({ SettingsPanel: () => null }));
-
 beforeEach(async () => {
 	flux.seed(stores);
+	presence = { desktop: 'online', mobile: 'idle' };
+	discord.intl.currentLocale = 'en-US';
 	metro.register({ colors: { STATUS_ONLINE: 'x' }, internal: {} });
+	metro.register(discord);
 	metro.register({ Svg: View, Path: View });
 	metro.register(userRow, USER_ROW_PATH);
 	metro.register(profile, PROFILE_PATH);
@@ -67,6 +74,16 @@ describe('the member list', () => {
 	});
 });
 
+describe('the screen-reader list', () => {
+	test('follows the language of the plugin', () => {
+		setLocale('de');
+
+		const view = render(createElement(userRow.default, { user: { id: 'wumpus' } }), { stores });
+
+		expect(labels(view)).toEqual(['Online on Desktop und Mobile']);
+	});
+});
+
 describe('profiles', () => {
 	test('show a button per platform under the name', () => {
 		const view = render(createElement(profile.default, { user: { id: '2' } }), { stores });
@@ -79,6 +96,29 @@ describe('profiles', () => {
 	});
 });
 
+describe('the mobile status shape', () => {
+	function isMobileOnline(userId: string) {
+		return unbound.getStore('Presence').isMobileOnline(userId);
+	}
+
+	test('shows for a user on mobile who is not online', () => {
+		presence = { mobile: 'idle' };
+
+		expect(isMobileOnline('2')).toBe(true);
+	});
+
+	test('stays hidden for a user who is online on desktop', () => {
+		expect(isMobileOnline('2')).toBe(false);
+	});
+
+	test('stays as Discord drew it when Color Mobile Indicator is off', () => {
+		presence = { mobile: 'idle' };
+		settings.colorMobileIndicator = false;
+
+		expect(isMobileOnline('2')).toBe(false);
+	});
+});
+
 describe('messages', () => {
 	const message = { type: 0, author: { id: '2' } };
 
@@ -87,6 +127,14 @@ describe('messages', () => {
 			timestamp: 'Today at 12:00 • 🖥️📱',
 			timestampAccessibilityLabel: 'Today at 12:00 • Online on Desktop and Mobile',
 		});
+	});
+
+	test('join the list in the language Discord shows', () => {
+		discord.intl.currentLocale = 'de';
+
+		expect(
+			rowData.generateMessageRowData({ message }).message.timestampAccessibilityLabel,
+		).toBe('Today at 12:00 • Online on Desktop und Mobile');
 	});
 
 	test('stay as they were when Messages is off', () => {
@@ -103,5 +151,18 @@ describe('messages', () => {
 				message: { ...message, author: { id: '3', bot: true } },
 			}).message.timestamp,
 		).toBe('Today at 12:00');
+	});
+});
+
+describe('the settings panel', () => {
+	test('has a switch for each setting, under two headings', async () => {
+		const { SettingsPanel } = await import('~/settings');
+		const view = render(createElement(SettingsPanel));
+
+		expect(view.findAll('Section').map((node) => node.props.title)).toEqual([
+			'Show Indicators',
+			'Status',
+		]);
+		expect(view.findAll('SwitchRow').map((node) => node.props.label)).toHaveLength(4);
 	});
 });

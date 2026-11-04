@@ -19,14 +19,15 @@ export function platformSuffix(statuses: PlatformStatus[]): string {
  * @description Adds the author's platforms to a message header: as symbols after the timestamp, which Discord makes room for by shortening the name, and in words to its accessibility label.
  * @param row The message row Discord generated, changed in place.
  * @param statuses The author's platforms.
+ * @param locale The locale code that joins the platform names into a list.
  */
-export function addPlatforms(row: MessageRow, statuses: PlatformStatus[]): void {
+export function addPlatforms(row: MessageRow, statuses: PlatformStatus[], locale: string): void {
 	const suffix = platformSuffix(statuses);
 	const timestamp = row.timestamp;
 
 	if (!suffix || typeof timestamp !== 'string') return;
 
-	const description = describePlatforms(statuses);
+	const description = describePlatforms(statuses, locale);
 
 	if (
 		typeof row.timestampAccessibilityLabel === 'string' &&
