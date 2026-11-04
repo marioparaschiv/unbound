@@ -1,8 +1,11 @@
 import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { settings } from '@unbound-app/settings';
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { memo } from 'react';
 import { TextInput, View } from 'react-native';
+
+import { selfTest } from '~/index';
 
 type Request = { url: string; query?: Record<string, unknown> };
 
@@ -28,6 +31,7 @@ const GIFPickerHeader = memo(
 const realFetch = globalThis.fetch;
 
 beforeEach(() => {
+	resetHealth();
 	metro.register(REST);
 	metro.register({ default: GIFPickerHeader }, 'modules/gif_picker/native/GIFPickerHeader.tsx');
 	calls.length = 0;
@@ -65,6 +69,20 @@ describe('GIF requests', () => {
 
 		expect(response.body).toEqual(['from discord']);
 		expect(calls).toEqual(['discord /gifs/suggest']);
+	});
+
+	test('go to Discord again, not to the provider, when the plugin stops', async () => {
+		globalThis.fetch = (async () =>
+			Response.json({
+				tags: [{ searchterm: 'cat', image: 'cat.gif' }],
+			})) as unknown as typeof fetch;
+		await startPlugin();
+		await REST.get({ url: '/gifs/trending', query: { locale: 'en-US' } });
+		calls.length = 0;
+
+		await stopPlugin();
+
+		expect(calls).toEqual(['discord /gifs/trending']);
 	});
 
 	test('other requests are left alone', async () => {
@@ -108,5 +126,13 @@ describe('the GIF picker header', () => {
 
 		expect(view.find('TextInput').props.placeholder).toBe('Search Klipy');
 		expect(() => view.find('Button')).toThrow();
+	});
+});
+
+describe('health', () => {
+	test('the self test reports the picker and the requests applied', async () => {
+		await startPlugin();
+
+		expect(selfTest()).toEqual({ ok: true, detail: '2 features applied' });
 	});
 });

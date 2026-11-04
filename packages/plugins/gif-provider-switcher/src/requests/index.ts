@@ -1,3 +1,4 @@
+import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
 import { flux, patcher } from '@unbound-app/api';
 
 import { answerRoute, PASS_THROUGH, toErrorResponse, toResponse } from '~/requests/handlers';
@@ -82,6 +83,8 @@ export function startRequests(): void {
 		stopListening();
 		for (const unpatch of unpatches) unpatch();
 	};
+
+	recordApplied(1);
 }
 
 /**
