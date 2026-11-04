@@ -1,0 +1,23 @@
+{
+	"id": "unbound.unsuppress-embeds",
+	"name": "Unsuppress Embeds",
+	"description": "Adds a message long-press row that brings back suppressed link embeds, or suppresses them.",
+	"authors": [
+		{
+			"name": "rad",
+			"id": "610945092504780823"
+		},
+		{
+			"name": "HypedDomi",
+			"id": "354191516979429376"
+		},
+		{
+			"name": "adrian",
+			"id": "224617799434108928"
+		}
+	],
+	"version": "1.0.0",
+	"icon": "EmbedIcon",
+	"main": "index.ts",
+	"startAfterFirstFrame": true
+}
