@@ -16,5 +16,6 @@
 		"noUnusedParameters": false,
 		"noPropertyAccessFromIndexSignature": false,
 		"noImplicitAny": false
-	}
+	},
+	"exclude": ["tests/fixtures"]
 }

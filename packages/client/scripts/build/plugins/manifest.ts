@@ -81,7 +81,7 @@ export function parseNativeBridgeVersion(header: string): NativeBridgeVersion {
 	function read(name: string): string {
 		const match = header.match(new RegExp(`${name}\\[\\]\\s*=\\s*"(\\d+\\.\\d+\\.\\d+)"`));
 
-		if (!match) {
+		if (!match?.[1]) {
 			throw new Error(`NativePluginVersion.h does not declare ${name}.`);
 		}
 
