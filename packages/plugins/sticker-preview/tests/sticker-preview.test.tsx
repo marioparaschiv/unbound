@@ -1,9 +1,8 @@
-import { flux, metro, render, startPlugin } from '@unbound-app/api/testing';
+import { flux, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { Pressable, View } from 'react-native';
 
-import { behaviour, ChatInputs, drafts, Messages, sent, stickerSends } from './fakes';
-import { stop } from '~/index';
+import { createFakes } from './fakes';
 import type { Sticker } from '@unbound-plugins/shared/stickers/staged-stickers';
 
 type PickerRowProps = { onPressSticker: (sticker: Sticker) => void };
@@ -26,19 +25,19 @@ const modules = {
 	},
 };
 
+let { drafts, stickerSends } = createFakes();
+
 beforeEach(async () => {
-	sent.length = 0;
-	stickerSends.length = 0;
-	drafts.clear();
+	const fakes = createFakes();
+
+	({ drafts, stickerSends } = fakes);
 	flux.seed({
 		Draft: { getDraft: (channelId: string) => drafts.get(channelId) ?? '' },
 		SelectedChannel: { getChannelId: () => 'c1', getCurrentlySelectedChannelId: () => 'c1' },
 		Channel: { getChannel: () => ({ id: 'c1' }) },
 	});
-	behaviour.activeInput = undefined;
-	behaviour.sendResult = () => undefined;
-	metro.register(ChatInputs);
-	metro.register(Messages);
+	metro.register(fakes.ChatInputs);
+	metro.register(fakes.Messages);
 	metro.register(modules.picker, 'modules/stickers/native/StickerPickerListRow.tsx');
 	metro.register(modules.sticker, 'modules/stickers/native/Sticker.tsx');
 	metro.register(modules.container, 'modules/chat_input/native/FloatingChatInputContainer.tsx');
@@ -85,14 +84,14 @@ describe('a picked sticker', () => {
 		expect(stickerSends).toEqual([{ channelId: 'c1', stickerIds: ['1'] }]);
 	});
 
-	test('is dropped when the plugin stops', () => {
+	test('is dropped when the plugin stops', async () => {
 		const Picker = modules.picker.default;
 		const Container = modules.container.default;
 
 		render(<Picker onPressSticker={() => undefined} />)
 			.find('Pressable')
 			.props.onPress?.(undefined as never);
-		stop();
+		await stopPlugin();
 
 		expect(render(<Container channel={{ id: 'c1' }} />).findAll('Pressable')).toEqual([]);
 	});

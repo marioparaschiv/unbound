@@ -1,18 +1,19 @@
 import { flux, metro } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
 
-import { behaviour, ChatInputs, drafts, fakeInput, Messages, sent, stickerSends } from './fakes';
+import { createFakes, fakeInput } from './fakes';
 import { createStaging } from '~/sticker-staging/staging';
 
+let { behaviour, drafts, sent, stickerSends } = createFakes();
+
 beforeEach(() => {
+	const fakes = createFakes();
+
+	({ behaviour, drafts, sent, stickerSends } = fakes);
 	flux.seed({ Draft: { getDraft: (channelId: string) => drafts.get(channelId) ?? '' } });
-	metro.register(ChatInputs);
-	metro.register(Messages);
-	sent.length = 0;
-	stickerSends.length = 0;
-	drafts.clear();
+	metro.register(fakes.ChatInputs);
+	metro.register(fakes.Messages);
 	behaviour.activeInput = fakeInput();
-	behaviour.sendResult = () => undefined;
 	globalThis.__unboundStagedStickers = undefined;
 });
 

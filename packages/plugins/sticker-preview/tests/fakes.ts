@@ -10,37 +10,41 @@ export type FakeInput = {
 	openSystemKeyboard: () => void;
 };
 
-export const sent: SentMessage[] = [];
-export const stickerSends: { channelId: string; stickerIds: string[] }[] = [];
-export const drafts = new Map<string, string>();
+/** Fresh Discord fakes for one test; the kit clears registered modules between tests. */
+export function createFakes() {
+	const sent: SentMessage[] = [];
+	const stickerSends: { channelId: string; stickerIds: string[] }[] = [];
+	const drafts = new Map<string, string>();
 
-// Metro caches each lookup for the whole run, so every test file shares these two modules and changes what they do here.
-export const behaviour: { activeInput?: FakeInput; sendResult: () => unknown } = {
-	sendResult: () => undefined,
-};
+	const behaviour: { activeInput?: FakeInput; sendResult: () => unknown } = {
+		sendResult: () => undefined,
+	};
 
-export const ChatInputs = {
-	getBestActiveInputForChannelId: () => behaviour.activeInput,
-};
+	const ChatInputs = {
+		getBestActiveInputForChannelId: () => behaviour.activeInput,
+	};
 
-export const Messages = {
-	sendMessage: () => undefined,
-	receiveMessage: () => undefined,
-	_sendMessage(
-		channelId: string,
-		message: { content: string },
-		options: { stickerIds: string[] },
-	) {
-		sent.push({ channelId, content: message.content, stickerIds: options.stickerIds });
+	const Messages = {
+		sendMessage: () => undefined,
+		receiveMessage: () => undefined,
+		_sendMessage(
+			channelId: string,
+			message: { content: string },
+			options: { stickerIds: string[] },
+		) {
+			sent.push({ channelId, content: message.content, stickerIds: options.stickerIds });
 
-		return behaviour.sendResult();
-	},
-	sendStickers(channelId: string, stickerIds: string[]) {
-		stickerSends.push({ channelId, stickerIds });
+			return behaviour.sendResult();
+		},
+		sendStickers(channelId: string, stickerIds: string[]) {
+			stickerSends.push({ channelId, stickerIds });
 
-		return behaviour.sendResult();
-	},
-};
+			return behaviour.sendResult();
+		},
+	};
+
+	return { sent, stickerSends, drafts, behaviour, ChatInputs, Messages };
+}
 
 export function fakeInput(text = ''): FakeInput {
 	const input: FakeInput = {
