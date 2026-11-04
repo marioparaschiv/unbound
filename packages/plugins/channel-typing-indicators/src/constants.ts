@@ -1,3 +1,5 @@
+export const PLUGIN_NAME = 'Channel Typing Indicators';
+
 // Bit flags stored in the `indicatorMode` setting.
 export const IndicatorMode = {
 	Dots: 1,

@@ -1,7 +1,8 @@
 import ensureModules from '@unbound-plugins/shared/metro/ensure-modules';
-import { recordApplied } from '@unbound-plugins/shared/lifecycle/health';
+import { recordApplied, recordFailure } from '@unbound-plugins/shared/lifecycle/health';
 import { metro } from '@unbound-app/api';
 
+import { PLUGIN_NAME } from '~/constants';
 import { patchThreadChannel } from '~/typing-indicator/thread-channel';
 import { patchTextChannel } from '~/typing-indicator/text-channel';
 
@@ -11,11 +12,26 @@ import { patchTextChannel } from '~/typing-indicator/text-channel';
  * (`.../items/ThreadChannel.tsx`), and reads `TypingStore`, `UserStore`, `RelationshipStore`, `SelectedChannelStore`,
  * `UserGuildSettingsStore` and `GuildMemberStore`, `UserSummaryItem`, `UserProfileActionSheet` and the tooltip module.
  * The Addon scope removes both patches when the plugin stops, and the rows draw without the indicator again.
+ * A patch that throws on an unexpected component is logged and recorded, and the other still applies.
  */
 export function startTypingIndicators(): void {
-	if (!ensureModules('Channel Typing Indicators', { Theme: metro.common.Theme })) return;
+	if (!ensureModules(PLUGIN_NAME, { Theme: metro.common.Theme })) return;
 
-	patchTextChannel();
-	patchThreadChannel();
-	recordApplied(2);
+	const failures: string[] = [];
+	let applied = 0;
+
+	for (const patch of [patchTextChannel, patchThreadChannel]) {
+		try {
+			patch();
+			applied++;
+		} catch (error) {
+			console.error(`[${PLUGIN_NAME}] Failed to apply ${patch.name}:`, error);
+			failures.push(error instanceof Error ? error.message : String(error));
+		}
+	}
+
+	recordApplied(applied);
+
+	// Recorded last: counting applied patches clears a recorded failure.
+	if (failures.length) recordFailure(failures.join('; '));
 }
