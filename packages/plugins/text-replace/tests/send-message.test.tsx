@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { storage } from '@unbound-app/api';
 import { Share } from 'react-native';
 
+import { selfTest } from '~/index';
 import RulesetTransfer from '~/components/ruleset-transfer';
 import { RULES_CHANNEL_ID } from '~/constants';
 
@@ -79,6 +80,12 @@ describe('outgoing messages', () => {
 		Messages.sendMessage('1', { content: 'teh' });
 
 		expect(sent).toEqual([{ channelId: '1', content: 'teh' }]);
+	});
+
+	test('report themselves applied to the self test once started', async () => {
+		await startPlugin();
+
+		expect(selfTest().ok).toBe(true);
 	});
 
 	test('give stored rules an id when the plugin starts', async () => {

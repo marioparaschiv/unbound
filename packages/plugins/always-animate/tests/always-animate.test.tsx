@@ -1,6 +1,9 @@
-import { metro, render, startPlugin } from '@unbound-app/api/testing';
+import { logs, metro, render, startPlugin, stopPlugin } from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, test } from 'bun:test';
+
+import { selfTest } from '~/index';
 import { memo, type ReactNode } from 'react';
 import { Text } from 'react-native';
 
@@ -20,6 +23,7 @@ const PATHS = {
 type Components = Record<keyof typeof PATHS, ReturnType<typeof memo>>;
 
 const components = {} as Components;
+const modules = {} as Record<keyof typeof PATHS, { default: unknown }>;
 
 const avatarUtils = {
 	getUserAvatarURL: (_user: object, animated: boolean) =>
@@ -37,9 +41,12 @@ function createComponent() {
 }
 
 beforeEach(() => {
+	resetHealth();
+
 	for (const name of Object.keys(PATHS) as (keyof typeof PATHS)[]) {
 		components[name] = createComponent();
-		metro.register({ default: components[name] }, PATHS[name]);
+		modules[name] = { default: components[name] };
+		metro.register(modules[name], PATHS[name]);
 	}
 
 	metro.register(avatarUtils, 'utils/AvatarUtils.tsx');
@@ -155,5 +162,28 @@ describe('expressions', () => {
 
 		expect(stickerUtils.shouldAnimateSticker()).toBe(true);
 		expect(rendered(components.activityEmoji)).toBe('animate:true loop:false');
+	});
+});
+
+describe('health', () => {
+	test('the self test passes once started and fails once stopped', async () => {
+		await startPlugin();
+
+		expect(selfTest()).toEqual({ ok: true, detail: '8 features applied' });
+
+		await stopPlugin();
+
+		expect(selfTest().ok).toBe(false);
+	});
+
+	test('a part that cannot start leaves the others animating', async () => {
+		modules.nameplate.default = 'not a component';
+
+		await startPlugin();
+
+		expect(rendered(components.decoration)).toBe('animate:true loop:false');
+		expect(avatarUtils.getGuildIconURL({ canAnimate: false })).toBe('icon.gif');
+		expect(selfTest()).toMatchObject({ ok: false });
+		expect(logs.entries.some((entry) => entry.level === 'error')).toBe(true);
 	});
 });

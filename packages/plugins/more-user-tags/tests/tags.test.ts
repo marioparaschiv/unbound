@@ -1,4 +1,12 @@
-import { createFakeReactNative, flux, metro, startPlugin } from '@unbound-app/api/testing';
+import {
+	createFakeReactNative,
+	flux,
+	metro,
+	startPlugin,
+	stopPlugin,
+} from '@unbound-app/api/testing';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
+import { storage } from '@unbound-app/api';
 import { settings } from '@unbound-app/settings';
 import { beforeEach, describe, expect, mock, test } from 'bun:test';
 
@@ -33,6 +41,7 @@ function memberMessage(id: string) {
 }
 
 beforeEach(async () => {
+	resetHealth();
 	permissionsOf.value = 0n;
 	metro.register({ Permissions: PERMISSIONS, ThemeTypes: {} });
 	metro.register({ computePermissions: () => permissionsOf.value, canEveryoneRole: () => false });
@@ -48,7 +57,15 @@ beforeEach(async () => {
 		native: {
 			ui: {
 				createScope: () => ({ dispose() {} }),
-				call: () => Object.assign(Promise.resolve(true as never), { cancel() {} }),
+				call: ((fn: { name: string }, ..._args: unknown[]) =>
+					Object.assign(
+						Promise.resolve(
+							(fn.name === 'inspectTagGradients'
+								? { problems: [], painted: 2 }
+								: true) as never,
+						),
+						{ cancel() {} },
+					)) as never,
 				run() {},
 				callback: () => () => {},
 			},
@@ -91,5 +108,33 @@ describe('tags', () => {
 		settings.useOpTagStyle = true;
 
 		expect(tagFor(webhookMessage())).toMatchObject({ opTagText: 'Webhook', tagText: null });
+	});
+});
+
+describe('the cached tag colors', () => {
+	const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+	test('are saved a moment after a tag appears', async () => {
+		tagFor(webhookMessage());
+		await wait(1100);
+
+		expect(storage.getBucket().get('appearanceCache', undefined)).toBeDefined();
+	});
+
+	test('are not written once the plugin stops', async () => {
+		tagFor(webhookMessage());
+		await stopPlugin();
+		await wait(1100);
+
+		expect(storage.getBucket().get('appearanceCache', undefined)).toBeUndefined();
+	});
+});
+
+describe('health', () => {
+	test('the self test passes once started', async () => {
+		// Imported here so the mocked `react-native` above is in place first.
+		const { selfTest } = await import('~/index');
+
+		expect((await selfTest()).ok).toBe(true);
 	});
 });
