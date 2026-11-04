@@ -40,6 +40,7 @@ import { Route as ApiV1AddonsRouteImport } from './routes/api/v1/addons'
 import { Route as ApiV1CatalogRouteImport } from './routes/api/v1/catalog'
 import { Route as ApiV1CrashReportsRouteImport } from './routes/api/v1/crash-reports'
 import { Route as ApiV1MeRouteImport } from './routes/api/v1/me'
+import { Route as ApiV1OpenapiDotjsonRouteImport } from './routes/api/v1/openapi[.]json'
 import { Route as ApiV1SubmissionsRouteImport } from './routes/api/v1/submissions'
 import { Route as ApiV1SyncRouteImport } from './routes/api/v1/sync'
 import { Route as ApiV1UpdatesRouteImport } from './routes/api/v1/updates'
@@ -51,6 +52,7 @@ import { Route as SiteAddonsListingThemesRouteImport } from './routes/_site/addo
 import { Route as SiteDocsPackageIndexRouteImport } from './routes/_site/docs/$package/index'
 import { Route as SiteDocsPackageVersionRouteRouteImport } from './routes/_site/docs/$package/$version/route'
 import { Route as SiteDocsDeveloperSplatRouteImport } from './routes/_site/docs/developer/$'
+import { Route as SiteDocsHttpIndexRouteImport } from './routes/_site/docs/http/index'
 import { Route as SiteDocsUserSplatRouteImport } from './routes/_site/docs/user/$'
 import { Route as ApiV1AuthDiscordRouteImport } from './routes/api/v1/auth/discord'
 import { Route as ApiV1FirstPartyAddonsRouteImport } from './routes/api/v1/first-party/addons'
@@ -236,6 +238,11 @@ const ApiV1MeRoute = ApiV1MeRouteImport.update({
   path: '/api/v1/me',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiV1OpenapiDotjsonRoute = ApiV1OpenapiDotjsonRouteImport.update({
+  id: '/api/v1/openapi.json',
+  path: '/api/v1/openapi.json',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiV1SubmissionsRoute = ApiV1SubmissionsRouteImport.update({
   id: '/api/v1/submissions',
   path: '/api/v1/submissions',
@@ -292,6 +299,11 @@ const SiteDocsPackageVersionRouteRoute =
 const SiteDocsDeveloperSplatRoute = SiteDocsDeveloperSplatRouteImport.update({
   id: '/developer/$',
   path: '/developer/$',
+  getParentRoute: () => SiteDocsRouteRoute,
+} as any)
+const SiteDocsHttpIndexRoute = SiteDocsHttpIndexRouteImport.update({
+  id: '/http/',
+  path: '/http/',
   getParentRoute: () => SiteDocsRouteRoute,
 } as any)
 const SiteDocsUserSplatRoute = SiteDocsUserSplatRouteImport.update({
@@ -486,6 +498,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/catalog': typeof ApiV1CatalogRoute
   '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
+  '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
   '/api/v1/sync': typeof ApiV1SyncRoute
   '/api/v1/updates': typeof ApiV1UpdatesRoute
@@ -512,6 +525,7 @@ export interface FileRoutesByFullPath {
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/admin/': typeof SiteStaffAdminIndexRoute
   '/docs/$package/': typeof SiteDocsPackageIndexRoute
+  '/docs/http/': typeof SiteDocsHttpIndexRoute
   '/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
   '/admin/users/$id': typeof SiteStaffAdminUsersIdRoute
   '/docs/$package/$version/$symbol': typeof SiteDocsPackageVersionSymbolRoute
@@ -558,6 +572,7 @@ export interface FileRoutesByTo {
   '/api/v1/catalog': typeof ApiV1CatalogRoute
   '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
+  '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
   '/api/v1/sync': typeof ApiV1SyncRoute
   '/api/v1/updates': typeof ApiV1UpdatesRoute
@@ -582,6 +597,7 @@ export interface FileRoutesByTo {
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/admin': typeof SiteStaffAdminIndexRoute
   '/docs/$package': typeof SiteDocsPackageIndexRoute
+  '/docs/http': typeof SiteDocsHttpIndexRoute
   '/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
   '/admin/users/$id': typeof SiteStaffAdminUsersIdRoute
   '/docs/$package/$version/$symbol': typeof SiteDocsPackageVersionSymbolRoute
@@ -632,6 +648,7 @@ export interface FileRoutesById {
   '/api/v1/catalog': typeof ApiV1CatalogRoute
   '/api/v1/crash-reports': typeof ApiV1CrashReportsRoute
   '/api/v1/me': typeof ApiV1MeRouteWithChildren
+  '/api/v1/openapi.json': typeof ApiV1OpenapiDotjsonRoute
   '/api/v1/submissions': typeof ApiV1SubmissionsRouteWithChildren
   '/api/v1/sync': typeof ApiV1SyncRoute
   '/api/v1/updates': typeof ApiV1UpdatesRoute
@@ -658,6 +675,7 @@ export interface FileRoutesById {
   '/api/v1/submissions/preview': typeof ApiV1SubmissionsPreviewRoute
   '/_site/_staff/admin/': typeof SiteStaffAdminIndexRoute
   '/_site/docs/$package/': typeof SiteDocsPackageIndexRoute
+  '/_site/docs/http/': typeof SiteDocsHttpIndexRoute
   '/_site/_staff/admin/addons/$id': typeof SiteStaffAdminAddonsIdRoute
   '/_site/_staff/admin/users/$id': typeof SiteStaffAdminUsersIdRoute
   '/_site/docs/$package/$version/$symbol': typeof SiteDocsPackageVersionSymbolRoute
@@ -707,6 +725,7 @@ export interface FileRouteTypes {
     | '/api/v1/catalog'
     | '/api/v1/crash-reports'
     | '/api/v1/me'
+    | '/api/v1/openapi.json'
     | '/api/v1/submissions'
     | '/api/v1/sync'
     | '/api/v1/updates'
@@ -733,6 +752,7 @@ export interface FileRouteTypes {
     | '/api/v1/submissions/preview'
     | '/admin/'
     | '/docs/$package/'
+    | '/docs/http/'
     | '/admin/addons/$id'
     | '/admin/users/$id'
     | '/docs/$package/$version/$symbol'
@@ -779,6 +799,7 @@ export interface FileRouteTypes {
     | '/api/v1/catalog'
     | '/api/v1/crash-reports'
     | '/api/v1/me'
+    | '/api/v1/openapi.json'
     | '/api/v1/submissions'
     | '/api/v1/sync'
     | '/api/v1/updates'
@@ -803,6 +824,7 @@ export interface FileRouteTypes {
     | '/api/v1/submissions/preview'
     | '/admin'
     | '/docs/$package'
+    | '/docs/http'
     | '/admin/addons/$id'
     | '/admin/users/$id'
     | '/docs/$package/$version/$symbol'
@@ -852,6 +874,7 @@ export interface FileRouteTypes {
     | '/api/v1/catalog'
     | '/api/v1/crash-reports'
     | '/api/v1/me'
+    | '/api/v1/openapi.json'
     | '/api/v1/submissions'
     | '/api/v1/sync'
     | '/api/v1/updates'
@@ -878,6 +901,7 @@ export interface FileRouteTypes {
     | '/api/v1/submissions/preview'
     | '/_site/_staff/admin/'
     | '/_site/docs/$package/'
+    | '/_site/docs/http/'
     | '/_site/_staff/admin/addons/$id'
     | '/_site/_staff/admin/users/$id'
     | '/_site/docs/$package/$version/$symbol'
@@ -911,6 +935,7 @@ export interface RootRouteChildren {
   ApiV1CatalogRoute: typeof ApiV1CatalogRoute
   ApiV1CrashReportsRoute: typeof ApiV1CrashReportsRoute
   ApiV1MeRoute: typeof ApiV1MeRouteWithChildren
+  ApiV1OpenapiDotjsonRoute: typeof ApiV1OpenapiDotjsonRoute
   ApiV1SubmissionsRoute: typeof ApiV1SubmissionsRouteWithChildren
   ApiV1SyncRoute: typeof ApiV1SyncRoute
   ApiV1UpdatesRoute: typeof ApiV1UpdatesRoute
@@ -1146,6 +1171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiV1MeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/v1/openapi.json': {
+      id: '/api/v1/openapi.json'
+      path: '/api/v1/openapi.json'
+      fullPath: '/api/v1/openapi.json'
+      preLoaderRoute: typeof ApiV1OpenapiDotjsonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/v1/submissions': {
       id: '/api/v1/submissions'
       path: '/api/v1/submissions'
@@ -1221,6 +1253,13 @@ declare module '@tanstack/react-router' {
       path: '/developer/$'
       fullPath: '/docs/developer/$'
       preLoaderRoute: typeof SiteDocsDeveloperSplatRouteImport
+      parentRoute: typeof SiteDocsRouteRoute
+    }
+    '/_site/docs/http/': {
+      id: '/_site/docs/http/'
+      path: '/http'
+      fullPath: '/docs/http/'
+      preLoaderRoute: typeof SiteDocsHttpIndexRouteImport
       parentRoute: typeof SiteDocsRouteRoute
     }
     '/_site/docs/user/$': {
@@ -1487,6 +1526,7 @@ interface SiteDocsRouteRouteChildren {
   SiteDocsDeveloperSplatRoute: typeof SiteDocsDeveloperSplatRoute
   SiteDocsUserSplatRoute: typeof SiteDocsUserSplatRoute
   SiteDocsPackageIndexRoute: typeof SiteDocsPackageIndexRoute
+  SiteDocsHttpIndexRoute: typeof SiteDocsHttpIndexRoute
 }
 
 const SiteDocsRouteRouteChildren: SiteDocsRouteRouteChildren = {
@@ -1496,6 +1536,7 @@ const SiteDocsRouteRouteChildren: SiteDocsRouteRouteChildren = {
   SiteDocsDeveloperSplatRoute: SiteDocsDeveloperSplatRoute,
   SiteDocsUserSplatRoute: SiteDocsUserSplatRoute,
   SiteDocsPackageIndexRoute: SiteDocsPackageIndexRoute,
+  SiteDocsHttpIndexRoute: SiteDocsHttpIndexRoute,
 }
 
 const SiteDocsRouteRouteWithChildren = SiteDocsRouteRoute._addFileChildren(
@@ -1676,6 +1717,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiV1CatalogRoute: ApiV1CatalogRoute,
   ApiV1CrashReportsRoute: ApiV1CrashReportsRoute,
   ApiV1MeRoute: ApiV1MeRouteWithChildren,
+  ApiV1OpenapiDotjsonRoute: ApiV1OpenapiDotjsonRoute,
   ApiV1SubmissionsRoute: ApiV1SubmissionsRouteWithChildren,
   ApiV1SyncRoute: ApiV1SyncRoute,
   ApiV1UpdatesRoute: ApiV1UpdatesRoute,

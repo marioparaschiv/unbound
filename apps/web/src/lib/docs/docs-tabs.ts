@@ -1,8 +1,8 @@
 import type { GuideTab } from '~/lib/guides/guide-nav';
 
-export type DocsTabKey = GuideTab | 'api';
+export type DocsTabKey = GuideTab | 'api' | 'http';
 
-/** A tab of the docs area: the two guide tabs and the SDK reference. */
+/** A tab of the docs area: the two guide tabs, the SDK reference and the HTTP reference. */
 export type DocsTab = {
 	key: DocsTabKey;
 	label: string;
@@ -14,6 +14,7 @@ export const DOCS_TABS: DocsTab[] = [
 	{ key: 'user', label: 'User', path: '/docs/user' },
 	{ key: 'developer', label: 'Developer', path: '/docs/developer' },
 	{ key: 'api', label: 'SDK & API', path: '/docs/api' },
+	{ key: 'http', label: 'HTTP', path: '/docs/http' },
 ];
 
 /**
