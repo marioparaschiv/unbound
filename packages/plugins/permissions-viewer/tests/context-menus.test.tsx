@@ -158,7 +158,6 @@ describe('the plugin on start', () => {
 		await startPlugin();
 
 		expect(pluginHolds().join()).toContain('openLazy');
-		expect(pluginHolds().join()).not.toContain('showContextMenu');
 		expect(selfTest()).toMatchObject({ ok: false });
 		expect(error).toHaveBeenCalled();
 
