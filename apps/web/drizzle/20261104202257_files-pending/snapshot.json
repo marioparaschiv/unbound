@@ -1,0 +1,47 @@
+{
+  "type": "diff",
+  "version": "9",
+  "dialect": "postgres",
+  "id": "ceab8cca-54e3-4a44-afcc-ef131058c8e9",
+  "prevIds": [
+    "d7ca31c7-9406-4ee2-a73c-cefab41c1faa"
+  ],
+  "footprints": [
+    {
+      "statementType": "add_column",
+      "statementTarget": [
+        "column",
+        "public",
+        "addon_version",
+        "files_pending_since"
+      ],
+      "writes": [
+        "s|col|public.addon_version.files_pending_since",
+        "n|col|public.addon_version.files_pending_since",
+        "e|col|public.addon_version.files_pending_since"
+      ],
+      "reads": [
+        "n|tbl|public.addon_version",
+        "n|sch|public"
+      ]
+    }
+  ],
+  "deltas": [
+    {
+      "op": "create",
+      "row": {
+        "schema": "public",
+        "table": "addon_version",
+        "name": "files_pending_since",
+        "type": "timestamp(3) with time zone",
+        "typeSchema": null,
+        "notNull": false,
+        "dimensions": 0,
+        "default": null,
+        "generated": null,
+        "identity": null,
+        "entityType": "columns"
+      }
+    }
+  ]
+}

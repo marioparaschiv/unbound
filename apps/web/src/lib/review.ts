@@ -7,7 +7,7 @@ import type {
 import type { ReviewDecision, SubmissionKind } from '@unbound-app/contracts/publish';
 import { submissionKindSchema } from '@unbound-app/contracts/publish';
 import { listAddonFiles } from '@unbound-app/contracts/addon-files';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, isNotNull } from 'drizzle-orm';
 
 import { toAddonVersion, writeArtifact, writeStorePage, type StorePage } from '~/lib/artifacts';
 import { applySubmissionMaintainers, describeMaintainerChanges } from '~/lib/maintainers';
@@ -80,7 +80,7 @@ export function toVersionRow(
 
 /**
  * @description Lists the submissions waiting for review that the caller may review, oldest first,
- * each with its source and content, its submitter, the addon's newest approved version and ADDON.md,
+ * plus approved ones whose files failed to publish (`submission.status` is `approved`), each with its source and content, its submitter, the addon's newest approved version and ADDON.md,
  * and a presigned download of the staged bundle.
  * @param ctx The application context.
  * @param caller The reviewer.
@@ -98,8 +98,19 @@ export async function listReviewQueue(
 		throw new ApiError('forbidden', 'You do not have permission to review these submissions.');
 	}
 
+	// An approved submission stays queued while its version's public files are unwritten.
+	const unpublished = await ctx.db
+		.select({ id: addonVersion.submissionId })
+		.from(addonVersion)
+		.where(isNotNull(addonVersion.filesPendingSince));
 	const rows = await ctx.db.query.submission.findMany({
-		where: { status: 'pending_review', kind: { in: kinds } },
+		where: {
+			kind: { in: kinds },
+			OR: [
+				{ status: 'pending_review' },
+				{ id: { in: unpublished.map((entry) => entry.id) } },
+			],
+		},
 		with: { author: { columns: { id: true, name: true, image: true } }, source: true },
 		orderBy: { submittedAt: 'asc', id: 'asc' },
 	});
@@ -170,11 +181,18 @@ export async function listReviewQueue(
 	return { submissions };
 }
 
-async function requirePendingReview(
+type ReviewTarget = {
+	row: SourcedSubmissionRow;
+	// The approval already committed and its version is live: the request only republishes the files.
+	republish: boolean;
+};
+
+async function requireReviewable(
 	ctx: AppContext,
 	caller: Caller,
 	id: string,
-): Promise<SourcedSubmissionRow> {
+	request: ReviewSubmissionRequest,
+): Promise<ReviewTarget> {
 	if (getReviewableKinds(caller).length === 0) {
 		throw new ApiError('forbidden', 'You do not have permission to review submissions.');
 	}
@@ -187,7 +205,9 @@ async function requirePendingReview(
 
 	requirePermission(caller, REVIEW_PERMISSIONS[row.kind]);
 
-	if (row.status !== 'pending_review') {
+	const republish = await isRepublish(ctx, row, request);
+
+	if (row.status !== 'pending_review' && !republish) {
 		throw new ApiError('submission_not_pending', `Submission ${id} is ${row.status}.`);
 	}
 
@@ -200,7 +220,25 @@ async function requirePendingReview(
 		throw new ApiError('self_review', `You cannot review ${row.addonId}: you maintain it.`);
 	}
 
-	return requireSourced(row);
+	return { row: requireSourced(row), republish };
+}
+
+// A repeated approval finishes a failed write only while the version is still this submission's and unpublished.
+async function isRepublish(
+	ctx: AppContext,
+	row: SubmissionRow,
+	request: ReviewSubmissionRequest,
+): Promise<boolean> {
+	if (request.decision !== 'approved' || row.status !== 'approved') {
+		return false;
+	}
+
+	const live = await ctx.db.query.addonVersion.findFirst({
+		where: { addonId: row.addonId, version: row.version },
+		columns: { submissionId: true, filesPendingSince: true },
+	});
+
+	return live?.submissionId === row.id && live.filesPendingSince !== null;
 }
 
 // b2/staging-lifecycle.json hides staged objects after 14 days, so re-read the pinned blob
@@ -254,7 +292,16 @@ async function readPinnedFiles(
 	return readListedFiles(ctx.env, github, location, row.manifest);
 }
 
-async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<string> {
+type VerifiedArtifact = {
+	sha256: string;
+	bundle: Uint8Array;
+	page: StorePage | undefined;
+	files: ReadonlyMap<string, Uint8Array>;
+};
+
+// Reads and verifies everything an approval publishes without writing it: the files go public only
+// once `decide` has committed the approval (see publishArtifact).
+async function readArtifact(ctx: AppContext, row: SourcedSubmissionRow): Promise<VerifiedArtifact> {
 	const [bundle, page, files] = await Promise.all([
 		readBundle(ctx, row),
 		readPinnedStorePage(ctx, row),
@@ -273,12 +320,23 @@ async function publishArtifact(ctx: AppContext, row: SourcedSubmissionRow): Prom
 		);
 	}
 
+	return { sha256, bundle, page, files };
+}
+
+// Runs after `decide` commits, and again on a repeated approval. Writing earlier let a losing request leave files under the version's keys.
+async function publishArtifact(
+	ctx: AppContext,
+	row: SourcedSubmissionRow,
+	{ bundle, page, files }: VerifiedArtifact,
+): Promise<void> {
 	await Promise.all([
 		writeArtifact(ctx, row, bundle, { files }),
 		page ? writeStorePage(ctx, row, page) : undefined,
 	]);
-
-	return sha256;
+	await ctx.db
+		.update(addonVersion)
+		.set({ filesPendingSince: null })
+		.where(and(eq(addonVersion.addonId, row.addonId), eq(addonVersion.submissionId, row.id)));
 }
 
 /**
@@ -337,7 +395,9 @@ export async function publishVersion(
 		});
 	}
 
-	await tx.insert(addonVersion).values(toVersionRow(row, sha256, publishedAt));
+	await tx
+		.insert(addonVersion)
+		.values({ ...toVersionRow(row, sha256, publishedAt), filesPendingSince: publishedAt });
 
 	if (row.tags) {
 		await replaceAddonTags(tx, row.addonId, row.tags);
@@ -358,7 +418,7 @@ export async function publishVersion(
 
 /**
  * Records the decision on a submission still pending review; anything else means another reviewer
- * decided first. Approval goes live in the same transaction, after its files are public.
+ * decided first. Approval goes live in the same transaction; its files are written after this commits.
  */
 function decide(
 	ctx: AppContext,
@@ -411,7 +471,8 @@ function decide(
 
 /**
  * @description Approves, rejects or requests changes on a pending submission. Reviewers need the
- * review permission for its kind and may not maintain the addon.
+ * review permission for its kind and may not maintain the addon. Repeating an approval that committed
+ * but failed to publish its files writes them again, whichever reviewer repeats it.
  * @param ctx The application context.
  * @param caller The reviewer.
  * @param id The submission id.
@@ -424,7 +485,7 @@ export async function reviewSubmission(
 	id: string,
 	request: ReviewSubmissionRequest,
 ): Promise<ReviewSubmissionResponse> {
-	const row = await requirePendingReview(ctx, caller, id);
+	const { row, republish } = await requireReviewable(ctx, caller, id, request);
 	const decision: Decision = {
 		decision: request.decision,
 		note: request.note ?? null,
@@ -432,10 +493,11 @@ export async function reviewSubmission(
 		reviewedAt: ctx.now(),
 	};
 
-	const sha256 = request.decision === 'approved' ? await publishArtifact(ctx, row) : undefined;
-	const reviewed = await decide(ctx, row, decision, sha256);
+	const artifact = request.decision === 'approved' ? await readArtifact(ctx, row) : undefined;
+	const reviewed = republish ? row : await decide(ctx, row, decision, artifact?.sha256);
 
-	if (sha256) {
+	if (artifact) {
+		await publishArtifact(ctx, row, artifact);
 		requestProfileRefresh();
 	}
 
