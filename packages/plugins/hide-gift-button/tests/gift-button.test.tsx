@@ -1,7 +1,10 @@
 import { metro, render, startPlugin } from '@unbound-app/api/testing';
 import { beforeEach, describe, expect, test } from 'bun:test';
+import { resetHealth } from '@unbound-plugins/shared/lifecycle/health';
 import { memo, type ReactNode } from 'react';
 import { Text, View } from 'react-native';
+
+import { selfTest } from '~/index';
 
 type ButtonProps = { hideGiftButton?: boolean };
 type ActionsProps = { shouldShowGiftButton?: boolean };
@@ -28,6 +31,8 @@ const ChatInputRightActions = memo(({ shouldShowGiftButton }: ActionsProps) => (
 const folder = 'modules/chat_input/native/action_buttons/';
 
 beforeEach(async () => {
+	resetHealth();
+
 	metro.register(
 		{ default: GiftOrThreadButton },
 		`${folder}ChatInputActionButtonGiftOrThread.tsx`,
@@ -52,5 +57,11 @@ describe('the composer actions', () => {
 
 	test('leaves the actions alone when no gift shows', () => {
 		expect(render(<ChatInputRightActions />).text()).toBe('expressions');
+	});
+});
+
+describe('health', () => {
+	test('the self test passes once started', () => {
+		expect(selfTest()).toEqual({ ok: true, detail: '2 features applied' });
 	});
 });
