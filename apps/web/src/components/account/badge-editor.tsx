@@ -179,8 +179,7 @@ function BadgeEditor({ claim, perk, editable }: BadgeEditorProps) {
 						Your badges
 					</Text>
 					<Text variant='text-xs' color='muted'>
-						They show on your Discord profile for everyone using Unbound. Animated GIFs
-						work too.
+						They show on your Discord profile for everyone using Unbound.
 					</Text>
 				</div>
 				{editable ? (
