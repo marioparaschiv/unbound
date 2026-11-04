@@ -35,9 +35,9 @@ export type KeySite = {
 export const KEY_SITES: readonly KeySite[] = [
 	{ site: "format('KEY', …)", callees: [`${LOCALE_MODULE}#format`], firstArgument: true },
 	{
-		site: 'defineSettings({ title, subtitle, options, confirm })',
+		site: 'defineSettings({ title, subtitle, placeholder, options, confirm })',
 		callees: ['@unbound-app/settings/schema#defineSettings'],
-		properties: ['title', 'subtitle', 'label', 'options', 'confirm'],
+		properties: ['title', 'subtitle', 'placeholder', 'label', 'options', 'confirm'],
 	},
 	{
 		site: 'commands.register({ description, label })',
