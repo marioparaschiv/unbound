@@ -1,7 +1,7 @@
 import type applyFeatures from '@unbound-plugins/shared/lifecycle/apply-features';
 import type { FluxStore } from '@unbound-app/api/flux';
 
-import type { Reaction } from '~/reaction-context';
+import type { Reaction } from '~/reactions/reaction-context';
 
 export type Feature = Parameters<typeof applyFeatures>[1][number];
 
