@@ -79,6 +79,15 @@ export const PUBLIC_OPERATIONS = {
 			version: 'The installed loader version.',
 		},
 	},
+	'GET /api/v1/loader/android-builds': {
+		tag: 'Updates',
+		summary: 'List patched Android Discord builds',
+		description:
+			"A channel's patched Discord builds with each gzipped split's URL, newest Discord first. Rate limited per IP.",
+		parameters: {
+			channel: 'The Google Play channel the builds were made from.',
+		},
+	},
 	'GET /api/v1/users/$id/badges': {
 		tag: 'Users',
 		summary: "List a user's badges",
