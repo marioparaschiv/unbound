@@ -51,6 +51,10 @@ func run(args []string) error {
 		return runPublishLoaderReleases(args[1:])
 	case "generate-loader-changelog":
 		return runGenerateLoaderChangelog(args[1:])
+	case "loader-version":
+		return runLoaderVersion(args[1:])
+	case "publish-loader-build":
+		return runPublishLoaderBuild(args[1:])
 	case "attest":
 		return runAttest(args[1:])
 	case "bundle-key":
@@ -129,7 +133,9 @@ func printUsage() {
 	fmt.Println("       go run ./tools publish-android-build --apks <path> --channel <stable|beta|alpha> --commit <sha> [--split <apk>...] [--work-dir <dir>] [--dry-run]")
 	fmt.Println("       go run ./tools release-candidate --channel <stable|testflight|android-beta|android-alpha>")
 	fmt.Println("       go run ./tools publish-loader-releases --version <semver> --ios-url <release-url> --android-url <release-url> [--changelog-file <path>]")
-	fmt.Println("       go run ./tools generate-loader-changelog --version <semver> --output <path>")
+	fmt.Println("       go run ./tools generate-loader-changelog --version <semver> --output <path> [--api-url <releases-url>]")
+	fmt.Println("       go run ./tools loader-version [--root <path>] [--set <semver>]")
+	fmt.Println("       go run ./tools publish-loader-build --version <semver> --deb <path> --module <path> --commit <sha> [--changelog-file <path>] [--dry-run]")
 	fmt.Println("       go run ./tools attest <enabled|stage|sign|verify> [flags]")
 	fmt.Println("       go run ./tools bundle-key generate --out <dir> [--name bundle-signing|pr-bundle-signing]")
 	fmt.Println("       go run ./tools bundle-key verify --dir <dist> [--pr <n>] [--public-key <file>]")

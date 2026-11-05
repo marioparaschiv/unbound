@@ -46,6 +46,10 @@ on:
             source_ipa_artifact:
                 default: ''
                 type: string
+            loader_version:
+                default: ''
+                description: 'Loader version to stamp into ios/control before building; empty keeps the checked-in one'
+                type: string
         outputs:
             deb_url:
                 description: 'Download URL for the deb package artifact'
@@ -145,6 +149,12 @@ jobs:
               uses: ./.github/actions/setup-go-tools
               with:
                   prebuilt: 'true'
+
+            - name: Stamp the loader version
+              if: inputs.loader_version != ''
+              env:
+                  LOADER_VERSION: ${{ inputs.loader_version }}
+              run: unbound-tools loader-version --set "$LOADER_VERSION"
 
             - name: Check cache
               run: printf 'upstream_heads=%s-%s\n' "$(git ls-remote https://github.com/theos/theos | awk 'NR == 1 { print $1 }')" "$(git ls-remote https://github.com/theos/sdks | awk 'NR == 1 { print $1 }')" >> "$GITHUB_ENV"
@@ -435,6 +445,13 @@ jobs:
               uses: ./.github/actions/setup-go-tools
               with:
                   prebuilt: 'true'
+
+            # The simulator build compiles and attests the tweak again, so it needs the same version as the deb.
+            - name: Stamp the loader version
+              if: inputs.loader_version != ''
+              env:
+                  LOADER_VERSION: ${{ inputs.loader_version }}
+              run: unbound-tools loader-version --set "$LOADER_VERSION"
 
             - name: Extract app name
               run: |

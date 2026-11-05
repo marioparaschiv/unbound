@@ -1,6 +1,7 @@
-name: Loader Publish in-app Android builds
+name: Loader Publish loader changes
 
-# Every loader change on main republishes each channel's patched Discord, so the Updates screen offers loader fixes without a new Discord version.
+# Every loader change on main publishes the deb and the Xposed module as loader 1.0.<loader commits> and republishes each channel's patched
+# Discord, so the Updates screen offers loader fixes on every platform without a new Discord version.
 on:
     push:
         branches: [main]
@@ -16,12 +17,13 @@ permissions: {}
 
 # A newer push replaces a queued run, so only the latest loader is published; a running publish always finishes.
 concurrency:
-    group: loader-android-builds-${{ github.ref }}
+    group: loader-publish-${{ github.ref }}
     cancel-in-progress: false
 
 jobs:
-    # The channels run one after another: calls in one run share artifact names, and a download takes the newest artifact of a name.
-    # contents: write only satisfies loader-build's release jobs, which GitHub checks before skipping them; publish-only mode creates no release.
+    # The calls run one after another: calls in one run share artifact names, and a download takes the newest artifact of a name.
+    # contents: write only satisfies loader-build's release jobs, which GitHub checks before skipping them; publish-only modes create no release.
+    # The stable call builds the deb and the module once for the loader publish and publishes the in-app Android stable build from the same run.
     stable:
         if: github.repository == 'marioparaschiv/unbound'
         permissions:
@@ -32,8 +34,7 @@ jobs:
             actions: read
         uses: ./.github/workflows/loader-build.yml
         with:
-            android_channel: stable
-            android_publish_only: true
+            loader_publish_only: true
             skip_core: true
         secrets:
             ANDROID_SIGNING_KEYSTORE_BASE64: ${{ secrets.ANDROID_SIGNING_KEYSTORE_BASE64 }}
