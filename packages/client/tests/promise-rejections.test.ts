@@ -1,6 +1,6 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 
-import { stop, trackRejections } from '~/builtins/promise-rejections';
+import { trackPromiseRejections } from '~/diagnostics/promise-rejections';
 
 function installHermes() {
 	let options: PromiseRejectionTrackerOptions | undefined;
@@ -29,10 +29,10 @@ function errorsLoggedBy(reject: () => void): string {
 }
 
 describe('promise rejections', () => {
-	test('logs every unhandled rejection', () => {
+	test('logs every unhandled rejection the tracker reports', () => {
 		const tracker = installHermes();
 
-		trackRejections();
+		trackPromiseRejections();
 
 		expect(tracker()?.allRejections).toBe(true);
 		expect(errorsLoggedBy(() => tracker()?.onUnhandled?.(4, new TypeError('probe')))).toContain(
@@ -40,12 +40,9 @@ describe('promise rejections', () => {
 		);
 	});
 
-	test('stops logging once stopped', () => {
-		const tracker = installHermes();
+	test('does nothing without Hermes', () => {
+		(globalThis as { HermesInternal?: unknown }).HermesInternal = null;
 
-		trackRejections();
-		stop();
-
-		expect(errorsLoggedBy(() => tracker()?.onUnhandled?.(5, new Error('late')))).toBe('');
+		expect(() => trackPromiseRejections()).not.toThrow();
 	});
 });
