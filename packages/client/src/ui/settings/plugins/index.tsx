@@ -78,25 +78,36 @@ function PluginsPage() {
 				<InstallMenu kind='plugin' size='md' />
 				<FilterMenu value={filter} counts={counts} labels={labels} onChange={pick} />
 			</Discord.Stack>
-			<FlashList
-				ref={list}
-				data={visible}
-				extraData={`${filter}:${shown}`}
-				keyExtractor={keyOf}
-				renderItem={renderCard}
-				estimatedItemSize={128}
-				ListEmptyComponent={
-					<Empty image='sticker_search_empty'>{messages.UNBOUND_EMPTY_RESULTS}</Empty>
-				}
-				ListFooterComponent={
-					// The bottom inset pads the end of the list, so the cards scroll under the home indicator.
-					<SafeArea.SafeAreaPaddingView bottom>
-						<LibrariesToggle count={libraries.size} shown={shown} onToggle={toggle} />
-					</SafeArea.SafeAreaPaddingView>
-				}
-				keyboardDismissMode='on-drag'
-				contentContainerStyle={styles.content}
-			/>
+			{visible.length ? (
+				<FlashList
+					ref={list}
+					data={visible}
+					extraData={`${filter}:${shown}`}
+					keyExtractor={keyOf}
+					renderItem={renderCard}
+					estimatedItemSize={128}
+					ListFooterComponent={
+						// The bottom inset pads the end of the list, so the cards scroll under the home indicator.
+						<SafeArea.SafeAreaPaddingView bottom>
+							<LibrariesToggle
+								count={libraries.size}
+								shown={shown}
+								onToggle={toggle}
+							/>
+						</SafeArea.SafeAreaPaddingView>
+					}
+					keyboardDismissMode='on-drag'
+					contentContainerStyle={styles.content}
+				/>
+			) : (
+				// Fills the space under the controls without scrolling, so the empty state sits in its centre.
+				<SafeArea.SafeAreaPaddingView bottom style={styles.empty}>
+					<View style={styles.center}>
+						<Empty image='sticker_search_empty'>{messages.UNBOUND_EMPTY_RESULTS}</Empty>
+					</View>
+					<LibrariesToggle count={libraries.size} shown={shown} onToggle={toggle} />
+				</SafeArea.SafeAreaPaddingView>
+			)}
 		</View>
 	);
 }

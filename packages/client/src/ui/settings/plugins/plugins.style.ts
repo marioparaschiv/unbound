@@ -22,4 +22,12 @@ export default Discord.createStyles({
 	content: {
 		padding: 16,
 	},
+	empty: {
+		flex: 1,
+		padding: 16,
+	},
+	center: {
+		flex: 1,
+		justifyContent: 'center',
+	},
 });
