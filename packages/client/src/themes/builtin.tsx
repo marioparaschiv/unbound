@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { getSetting, useUnboundSettings } from '~/settings/unbound';
 import { byFilePath, byFluxStore, byProps } from '~/metro/filters';
+import { clearGuardUnderlay } from '~/themes/clear-guard-underlay';
 import { resolveChatBackground } from '~/themes/chat-background';
 import { resolveThemeColor, withOpacity } from '~/themes/colors';
 import { clearDMGreeting } from '~/themes/clear-dm-greeting';
@@ -57,6 +58,7 @@ let stopWaiting: (() => void) | null = null;
 let stopWaitingForChat: (() => void) | null = null;
 let stopWaitingForInputScrim: (() => void) | null = null;
 let restoreDMGreeting: (() => void) | null = null;
+let restoreGuardUnderlay: (() => void) | null = null;
 let stopFollowingBackground: (() => void) | null = null;
 let stopWaitingForStore: (() => void) | null = null;
 let stopWaitingForProvider: (() => void) | null = null;
@@ -196,6 +198,7 @@ export function start() {
 	stopWaitingForChat = onModuleLoaded(byFilePath(CHAT_VIEW_PATH), drawChatBackground);
 	stopWaitingForInputScrim = onModuleLoaded(byFilePath(INPUT_SCRIM_PATH), hideInputShadow);
 	restoreDMGreeting = clearDMGreeting();
+	restoreGuardUnderlay = clearGuardUnderlay();
 	syncBackground();
 	stopFollowingBackground = onChange(
 		({ key }) => Boolean(key?.startsWith('chat-background.')),
@@ -258,6 +261,8 @@ export function stop() {
 	stopWaitingForInputScrim = null;
 	restoreDMGreeting?.();
 	restoreDMGreeting = null;
+	restoreGuardUnderlay?.();
+	restoreGuardUnderlay = null;
 	stopFollowingBackground?.();
 	stopFollowingBackground = null;
 	ThemeStore.getState().setBackground(null);
