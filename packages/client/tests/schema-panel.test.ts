@@ -1,5 +1,6 @@
 import type { SettingSchema, SettingsSchema, SettingValue } from '@unbound-app/types/settings';
 import { describe, expect, mock, test } from 'bun:test';
+import type { ViewStyle } from 'react-native';
 import type { ReactElement } from 'react';
 
 import type { SettingsValues } from '~/storage/define';
@@ -13,7 +14,9 @@ const discord = new Proxy(
 	{},
 	{
 		get: (_target, key) =>
-			key === 'createStyles' ? (sheet: Record<string, unknown>) => () => sheet : String(key),
+			key === 'createStyles'
+				? (sheet: Record<string, ViewStyle>) => () => sheet
+				: String(key),
 	},
 );
 

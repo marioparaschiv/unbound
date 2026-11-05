@@ -1,5 +1,6 @@
 import { describe, expect, mock, test } from 'bun:test';
 import type { ReactElement, ReactNode } from 'react';
+import type { ViewStyle } from 'react-native';
 
 import { createHookRenderer } from './helpers/render-hook';
 
@@ -38,7 +39,9 @@ const discord = new Proxy(
 	{},
 	{
 		get: (_target, key) =>
-			key === 'createStyles' ? (sheet: Record<string, unknown>) => () => sheet : String(key),
+			key === 'createStyles'
+				? (sheet: Record<string, ViewStyle>) => () => sheet
+				: String(key),
 	},
 );
 
