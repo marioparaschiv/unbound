@@ -1,6 +1,8 @@
 #include <cassert>
 #include <string>
 
+#include "LoaderRequiredLoader.h"
+#include "LoaderVersion.h"
 #include "bundle_test_server.h"
 
 using bundle_test::Server;
@@ -303,6 +305,25 @@ static void skipsChecksWithoutAKey()
     assert(trustRecord(server.active())["exemption"] == "unkeyed");
 }
 
+static void refusesBundlesThatNeedANewerLoader()
+{
+    Server server;
+    server.publish(kBase, kCurrent, {{kBundle, "current"}});
+    loader::BundleUpdater updater = server.updater(bundle_test::productionTrust());
+    assert(server.install(updater, std::nullopt));
+
+    server.publish(kBase, kNewer, {{kBundle, "next"}}, {}, "beta", "abc1234", "999.0.0");
+    assert(!server.download(updater, std::nullopt));
+    assert(server.activeContents() == "current");
+    assert(loader::requiredLoaderVersion(server.root.string()) == "999.0.0");
+
+    server.publish(kBase, kNewer, {{kBundle, "next"}}, {}, "beta", "abc1234",
+                   loader::loaderVersion());
+    assert(server.install(updater, std::nullopt));
+    assert(server.activeContents() == "next");
+    assert(!loader::requiredLoaderVersion(server.root.string()));
+}
+
 int main()
 {
     acceptsASignedManifestAndBundle();
@@ -320,5 +341,6 @@ int main()
     replacesAPreSigningActiveBundle();
     forgetsTheTrustRecordOfAnInterruptedPromotion();
     skipsChecksWithoutAKey();
+    refusesBundlesThatNeedANewerLoader();
     return 0;
 }

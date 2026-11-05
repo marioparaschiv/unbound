@@ -7,6 +7,7 @@
 #include "LoaderJSI.h"
 #include "LoaderLog.h"
 #include "LoaderLogFile.h"
+#include "LoaderVersion.h"
 #include "NativePlatformBridge.h"
 
 namespace loader {
@@ -69,10 +70,14 @@ void LoaderPipeline::prepare()
     // A saved bundle from the other flavour runs at the next launch anyway, so this launch waits
     // for its replacement rather than leaving the switch to a second restart.
     bool flavourSwitch = hasSaved && !savedFlavourIsCurrent(savedPath);
+    // The first launch after a loader update waits too, as the bundle this loader can now run would
+    // otherwise need a second restart.
+    bool loaderChanged =
+        hasSaved && settings_.getString(kCheckedLoaderSetting, "") != loaderVersion();
     // Hot reload waits for the newest bundle too: reloading once it lands would tear the runtime
     // down while Discord's bundle is still starting its native modules.
     bool hotReload       = settings_.getBoolean("loader.update.hmr", false);
-    bool waitForDownload = !hasSaved || flavourSwitch || hotReload;
+    bool waitForDownload = !hasSaved || flavourSwitch || loaderChanged || hotReload;
     {
         std::lock_guard<std::mutex> lock(savedMutex_);
         if (hasSaved && waitForDownload)
@@ -111,9 +116,12 @@ void LoaderPipeline::updateInBackground(std::string savedPath, bool hasSaved, bo
         {
             downloaded = updater_.downloadBundle(savedPath, host_->resolveUpdateURL(),
                                                  host_->runtimeBytecodeVersion());
+            settings_.setString(kCheckedLoaderSetting, loaderVersion());
         }
         catch (const std::exception &error)
         {
+            // Even a failed check counts, so an offline launch does not wait again next time.
+            settings_.setString(kCheckedLoaderSetting, loaderVersion());
             log(hasSaved ? LogLevel::Warning : LogLevel::Error, LOG_CATEGORY_DEFAULT,
                 std::string("Bundle download failed. (") + error.what() + ")" +
                     (hasSaved ? "; using the cached bundle" : ""));

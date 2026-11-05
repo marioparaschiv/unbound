@@ -293,7 +293,7 @@ Browser login (`LoaderBrowserLogin`) and the loader's attestation digest (`Loade
 }
 ```
 
-`channel` comes from `UNBOUND_CHANNEL` (`build-bundle.yml` sets `beta` for pushes to main and `stable` for releases; local builds write `local`, dev builds `dev`). `buildTime` is ISO 8601 in UTC. `sha512` holds the lowercase hex SHA-512 of every bundle in the build. `nativeBridge` holds the native bridge `api` and `abi` versions from `core/include/NativePluginVersion.h` that the bundle was built against.
+`channel` comes from `UNBOUND_CHANNEL` (`build-bundle.yml` sets `beta` for pushes to main and `stable` for releases; local builds write `local`, dev builds `dev`). `buildTime` is ISO 8601 in UTC. `sha512` holds the lowercase hex SHA-512 of every bundle in the build. `nativeBridge` holds the native bridge `api` and `abi` versions from `core/include/NativePluginVersion.h` that the bundle was built against. `minLoaderVersion` is the oldest loader that runs the bundle, from `unbound.minLoaderVersion` in `packages/client/package.json`.
 
 When `UNBOUND_BUNDLE_SIGNING_KEY` holds a PEM PKCS#8 Ed25519 key, the build refreshes `sha512` and writes a base64 Ed25519 signature of the manifest's exact bytes to `manifest.json.sig`. The bundles are covered by their SHA-512 in the signed manifest. Without the key, the build writes no signatures and still succeeds, so local and fork builds keep working.
 
@@ -304,7 +304,7 @@ To sign a build that already exists, run `bun run --cwd packages/client sign [--
 The loader compiles in `core/keys/bundle-signing.pub`, the production public key (raw 32 bytes as base64). CMake and the iOS Makefile log at configure time whether verification is on. Every update check then works like this:
 
 1. Fetch `manifest.json` and `manifest.json.sig` from the update URL and verify the signature with the vendored Monocypher Ed25519 implementation (`vendor/monocypher`).
-2. Refuse the manifest if it lacks `buildTime`, `revision`, `channel` or a hash for the bundle the loader picked, if anti-rollback (below) rejects it, or if its `nativeBridge` needs a different ABI major version or a newer API than the loader provides. A refused update keeps the current bundle running; the log names the version to update the loader to. A manifest without `nativeBridge` is accepted.
+2. Refuse the manifest if it lacks `buildTime`, `revision`, `channel` or a hash for the bundle the loader picked, if anti-rollback (below) rejects it, if its `minLoaderVersion` is newer than the loader, or if its `nativeBridge` needs a different ABI major version or a newer API than the loader provides. A refused update keeps the current bundle running; the log names the version to update the loader to. A manifest without `nativeBridge` is accepted. A `minLoaderVersion` refusal also writes that version to `unbound.required-loader` in the documents folder, which `UnboundNative.getLoader().requiredVersion` reports to the client until a bundle fits again. The first launch after the loader version changes waits for the update check, so a bundle the new loader unlocks runs without a second restart.
 3. Download the bundle and compare its SHA-512 with the manifest. A mismatch rejects the candidate, and the current bundle keeps running.
 4. Store the signed manifest and its signature beside the candidate as `<candidate>.trust`.
 

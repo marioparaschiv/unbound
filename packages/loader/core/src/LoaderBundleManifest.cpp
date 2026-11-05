@@ -143,6 +143,7 @@ std::optional<BundleManifest> parseBundleManifest(const std::string &text)
         manifest.nativeBridgeApi = stringField(*bridge, "api");
         manifest.nativeBridgeAbi = stringField(*bridge, "abi");
     }
+    manifest.minLoaderVersion = stringField(json, "minLoaderVersion");
 
     auto hashes = json.find("sha512");
     if (hashes != json.end() && hashes->is_object())
@@ -327,6 +328,30 @@ std::optional<std::string> nativeBridgeProblem(const BundleManifest &manifest,
                " but this loader provides " + std::string(loaderApi);
     }
     return std::nullopt;
+}
+
+std::optional<std::string> loaderVersionProblem(const BundleManifest &manifest,
+                                                std::string_view      loaderVersion)
+{
+    if (manifest.minLoaderVersion.empty())
+    {
+        return std::nullopt;
+    }
+
+    auto required  = parseVersion(manifest.minLoaderVersion);
+    auto installed = parseVersion(loaderVersion);
+    if (!required)
+    {
+        return "the bundle declares an unreadable minimum loader version (" +
+               manifest.minLoaderVersion + ")";
+    }
+    // A development loader's version is not semver; it is trusted to run any bundle.
+    if (!installed || *installed >= *required)
+    {
+        return std::nullopt;
+    }
+    return "the bundle needs loader " + manifest.minLoaderVersion + " but this is loader " +
+           std::string(loaderVersion);
 }
 
 std::optional<std::string> rollbackProblem(const BundleManifest                &manifest,

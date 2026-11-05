@@ -73,10 +73,12 @@ export const PUBLIC_OPERATIONS = {
 	'GET /api/v1/loader/updates': {
 		tag: 'Updates',
 		summary: 'Check for loader updates',
-		description: 'The newest loader release, or `null` when current. Rate limited per IP.',
+		description:
+			'The newest loader release, or `null` when current, and the loader version the newest bundle on `channel` needs when the installed loader is older. Rate limited per IP.',
 		parameters: {
 			platform: 'The platform the loader runs on.',
 			version: 'The installed loader version.',
+			channel: 'The bundle channel the client runs.',
 		},
 	},
 	'GET /api/v1/loader/android-builds': {

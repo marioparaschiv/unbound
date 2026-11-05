@@ -30,7 +30,7 @@ export function applyAll(): Promise<void> {
  * @returns The newer loader's version, or `null` when there is none or the check failed.
  */
 export async function checkLoader(): Promise<string | null> {
-	const update = await findLoaderUpdate();
+	const { update } = await findLoaderUpdate();
 
 	return update?.version ?? null;
 }

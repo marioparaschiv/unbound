@@ -1,5 +1,8 @@
+import { describeRequiredLoader } from '~/updates/describe-required-loader';
 import { automaticUpdates } from '~/updates/addon-updates';
+import { readInstallKind } from '~/updates/install-kind';
 import { useUnboundSettings } from '~/settings/unbound';
+import NoticeRow from '~/ui/settings-kit/notice-row';
 import type { UpdatesState } from '~/updates/state';
 import { messages, format } from '~/i18n/api';
 import { Discord } from '~/metro/components';
@@ -36,12 +39,19 @@ function UpdatesPage() {
 	const updates = state.status === 'ready' ? state.updates : [];
 	const loader = state.status === 'ready' ? state.loader : null;
 	const discord = state.status === 'ready' ? state.discord : null;
+	const requiredLoader = state.status === 'ready' ? state.requiredLoader : null;
 	const pending = updates.length > 0 || loader !== null;
 	// Held addons keep their own Update button but sit out Update all.
 	const automatic = automaticUpdates(updates, (kind) => Manager.for(kind));
 
 	return (
 		<Page>
+			{requiredLoader ? (
+				<NoticeRow
+					tone='warning'
+					title={describeRequiredLoader(requiredLoader, readInstallKind())}
+				/>
+			) : null}
 			<Discord.TableRowGroup helperText={describeStatus(state)}>
 				<Discord.TableRow
 					label={messages.UNBOUND_UPDATES_CHECK}
@@ -62,6 +72,13 @@ function UpdatesPage() {
 					icon={<Discord.TableRowIcon source={icons.ClockIcon} />}
 					value={settings.get('updater.auto')}
 					onValueChange={(value) => settings.set('updater.auto', value)}
+				/>
+				<Discord.TableSwitchRow
+					label={messages.UNBOUND_UPDATES_NOTIFY}
+					subLabel={messages.UNBOUND_UPDATES_NOTIFY_DESC}
+					icon={<Discord.TableRowIcon source={icons.BellIcon} />}
+					value={settings.get('updater.notify')}
+					onValueChange={(value) => settings.set('updater.notify', value)}
 				/>
 			</Discord.TableRowGroup>
 

@@ -106,7 +106,8 @@ struct Signer {
 inline std::string manifestText(const std::string                        &buildTime,
                                 const std::map<std::string, std::string> &bundles,
                                 const std::string                        &channel  = "beta",
-                                const std::string                        &revision = "abc1234")
+                                const std::string                        &revision = "abc1234",
+                                const std::string                        &minLoaderVersion = "")
 {
     std::string hashes;
     for (const auto &[file, contents] : bundles)
@@ -115,8 +116,10 @@ inline std::string manifestText(const std::string                        &buildT
                   loader::sha512Hex(contents) + "\"";
     }
     return "{\n  \"revision\": \"" + revision + "\",\n  \"channel\": \"" + channel +
-           "\",\n  \"buildTime\": \"" + buildTime +
-           "\",\n  \"bytecodeVersions\": [98],\n  \"sha512\": {" + hashes + "}\n}";
+           "\",\n  \"buildTime\": \"" + buildTime + "\",\n  \"bytecodeVersions\": [98],\n  " +
+           (minLoaderVersion.empty() ? ""
+                                     : "\"minLoaderVersion\": \"" + minLoaderVersion + "\",\n  ") +
+           "\"sha512\": {" + hashes + "}\n}";
 }
 
 inline std::filesystem::path makeTemporaryDirectory()
@@ -148,9 +151,11 @@ struct Server {
 
     void publish(const std::string &base, const std::string &buildTime,
                  const std::map<std::string, std::string> &bundles, Signer signer = {},
-                 const std::string &channel = "beta", const std::string &revision = "abc1234")
+                 const std::string &channel = "beta", const std::string &revision = "abc1234",
+                 const std::string &minLoaderVersion = "")
     {
-        std::string manifest              = manifestText(buildTime, bundles, channel, revision);
+        std::string manifest =
+            manifestText(buildTime, bundles, channel, revision, minLoaderVersion);
         files[base + "manifest.json"]     = manifest;
         files[base + "manifest.json.sig"] = signer.key->sign(manifest, signer.pullRequest) + "\n";
         for (const auto &[file, contents] : bundles)
