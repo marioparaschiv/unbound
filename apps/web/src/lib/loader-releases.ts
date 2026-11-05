@@ -9,6 +9,7 @@ import { MAX_UPDATE_CHANGELOGS } from '@unbound-app/contracts/updates';
 import { and, desc, eq, gt, like } from 'drizzle-orm';
 
 import { RELEASE_KEY_SUFFIX, isReleaseKey, toVersionKey } from '~/lib/version-key';
+import { findRequiredLoader } from '~/lib/bundle-releases';
 import { requirePermission } from '~/lib/api/caller';
 import type { AppContext } from '~/lib/context';
 import type { Caller } from '~/lib/api/caller';
@@ -128,23 +129,27 @@ export function newerLoaderReleases(ctx: AppContext, query: LoaderUpdateQuery) {
 
 /**
  * @description Resolves a loader update check: the newest release the installed loader may move to,
- * with the changelog of every version it skips over.
+ * with the changelog of every version it skips over, and the loader the channel's newest bundle needs.
  * @param ctx The application context.
- * @param query The installed loader's platform and version.
+ * @param query The installed loader's platform and version, and the client's bundle channel.
  * @returns The update, or `null` when the installed loader is current.
  */
 export async function findLoaderUpdate(
 	ctx: AppContext,
 	query: LoaderUpdateQuery,
 ): Promise<LoaderUpdateResponse> {
-	const rows = await newerLoaderReleases(ctx, query);
+	const [rows, requiredVersion] = await Promise.all([
+		newerLoaderReleases(ctx, query),
+		findRequiredLoader(ctx, query),
+	]);
 	const [newest] = rows;
 
 	if (!newest) {
-		return { update: null };
+		return { update: null, requiredVersion };
 	}
 
 	return {
+		requiredVersion,
 		update: {
 			...toLoaderRelease(newest),
 			changelogs: rows.map((row) => ({
