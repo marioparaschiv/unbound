@@ -170,6 +170,8 @@ A release also publishes each split for Discord's in-app updater. `publish-andro
 go run ./tools publish-android-build --apks Unbound.apks --split emulator/config.x86_64.apk --channel stable --commit "$(git rev-parse HEAD)" --dry-run
 ```
 
+Loader changes reach the in-app updater without a new Discord version. Every push to `main` that touches `packages/loader` runs `loader-android-builds.yml`, which calls `loader-build.yml` with `android_publish_only` once per channel. Each call patches the Discord that the channel's latest Unbound release uses (`released-android-code --channel <stable|beta|alpha>`), signs it with the release key, runs the smoke test, and publishes the splits. It creates no GitHub release and does not change `Unbound.apks` or Obtainium. Off `main`, the publish step runs with `--dry-run`.
+
 </details>
 
 </details>

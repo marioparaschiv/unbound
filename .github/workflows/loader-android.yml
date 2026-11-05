@@ -83,12 +83,15 @@ on:
             patched_url:
                 description: 'Download URL for the LSPatch-patched Discord artifact'
                 value: ${{ jobs.patch-discord.outputs.patched_url }}
+            attested:
+                description: 'Whether the module is attested, so the smoke test ran and gated the build'
+                value: ${{ jobs.build-module.outputs.attested }}
 
 permissions:
     contents: read
 
 concurrency:
-    group: android-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+    group: android-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}-${{ inputs.discord_channel }}
     cancel-in-progress: true
 
 defaults:
