@@ -1,7 +1,6 @@
 import { createLogger } from '@unbound-app/logger';
 import type { ReactNode } from 'react';
 
-import { getSetting, useUnboundSettings } from '~/settings/unbound';
 import { byFilePath, byFluxStore, byProps } from '~/metro/filters';
 import { clearGuardUnderlay } from '~/themes/clear-guard-underlay';
 import { resolveChatBackground } from '~/themes/chat-background';
@@ -11,6 +10,7 @@ import { clearDMGreeting } from '~/themes/clear-dm-greeting';
 import { createPatcher } from '~/patcher/create-patcher';
 import type { SectionEntry } from '~/settings/section';
 import ChatBackdrop from '~/ui/themes/chat-backdrop';
+import { getSetting } from '~/settings/unbound';
 import { onModuleLoaded } from '~/metro/wait';
 import DesignPage from '~/ui/settings/design';
 import { Screens } from '~/core/constants';
@@ -107,12 +107,13 @@ function drawChatBackground(mdl: ChatViewModule) {
 	Patcher.after(mdl.default, 'type', ({ result }) => <ChatBackdrop>{result}</ChatBackdrop>);
 }
 
-// The original always renders, so its hooks run on every render whichever way the setting flips.
+// The fade would darken a chat background, so it hides while one is drawn. The original always renders, so its hooks
+// run on every render whichever way the background flips.
 function hideInputShadow(mdl: InputScrimModule) {
 	Patcher.after(mdl, 'ChatInputScrimGradient', ({ result }) => {
-		const settings = useUnboundSettings(({ key }) => key === 'chat-input.shadow');
+		const hasBackground = ThemeStore((state) => Boolean(state.background));
 
-		return settings.get('chat-input.shadow') ? result : null;
+		return hasBackground ? null : result;
 	});
 }
 

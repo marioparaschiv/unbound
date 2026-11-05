@@ -6,7 +6,6 @@ import { isPickedChatBackground, pickChatBackground } from '~/themes/pick-chat-b
 import type { ChatBackgroundSource } from '~/themes/chat-background';
 import { getDefault, useUnboundSettings } from '~/settings/unbound';
 import SliderRow from '~/ui/settings-kit/slider-row';
-import SwitchRow from '~/ui/settings-kit/switch-row';
 import RadioRow from '~/ui/settings-kit/radio-row';
 import UrlRow from '~/ui/settings-kit/url-row';
 import { Discord } from '~/metro/components';
@@ -32,13 +31,11 @@ function formatPercent(fraction: number): string {
 
 /**
  * @description The Chat tab, laid out as Discord's appearance settings: a radio group for where the chat background
- * comes from, the user's own photo or image URL and how it looks when they pick Custom, then the chat input.
+ * comes from, then the user's own photo or image URL and how it looks when they pick Custom.
  */
 function ChatTab() {
 	const styles = useStyles();
-	const settings = useUnboundSettings(
-		({ key }) => key?.startsWith('chat-background.') || key === 'chat-input.shadow',
-	);
+	const settings = useUnboundSettings(({ key }) => key?.startsWith('chat-background.'));
 	const recommended = ThemeStore((state) => Boolean(state.data?.background));
 	const source = settings.get('chat-background.source');
 	const url = settings.get('chat-background.url');
@@ -139,14 +136,6 @@ function ChatTab() {
 					/>
 				</Discord.TableRowGroup>
 			) : null}
-			<Discord.TableRowGroup title={messages.UNBOUND_CHAT_INPUT}>
-				<SwitchRow
-					label={messages.UNBOUND_CHAT_INPUT_SHADOW}
-					subLabel={messages.UNBOUND_CHAT_INPUT_SHADOW_HINT}
-					value={settings.get('chat-input.shadow')}
-					onValueChange={() => settings.toggle('chat-input.shadow')}
-				/>
-			</Discord.TableRowGroup>
 		</Page>
 	);
 }
