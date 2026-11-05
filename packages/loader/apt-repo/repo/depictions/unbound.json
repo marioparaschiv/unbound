@@ -13,7 +13,7 @@
                     "class": "DepictionSubheaderView"
                 },
                 {
-                    "markdown": "Discord mobile client aimed at providing the user control, stability and customizability.",
+                    "markdown": "A client modification for Discord on mobile. Install plugins, themes, fonts, and icon packs on the official Discord app.",
                     "useSpacing": true,
                     "class": "DepictionMarkdownView"
                 },

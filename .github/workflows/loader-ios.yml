@@ -610,15 +610,15 @@ jobs:
                   name: rootless package
                   path: packages/loader/apt-repo/repo/debs
 
+            # Every feed deploy rebuilds Packages from debs/, so an app-repo deploy needs the deb too or it empties the APT repo.
             - name: Download latest release deb
-              if: inputs.only_apt_repo == true
+              if: inputs.only_apt_repo == true || inputs.only_app_repo == true
               run: |
                   mkdir -p apt-repo/repo/debs
                   LATEST_TAG=$(gh release list --repo "${{ github.repository }}" --limit 100 --json tagName,isPrerelease --jq '[.[] | select((.tagName | startswith("discord-")) and (.tagName | endswith("-ios")) and (.isPrerelease | not))][0].tagName')
                   gh release download "$LATEST_TAG" --repo "${{ github.repository }}" --pattern '*arm64.deb' --dir apt-repo/repo/debs --clobber
 
             - name: Capture new deb filename
-              if: inputs.only_app_repo != true
               run: |
                   DEB_FILE=$(find apt-repo/repo/debs -maxdepth 1 -type f -name '*.deb' -print -quit)
                   echo "NEW_DEB_FILENAME=$(basename "$DEB_FILE")" >> "$GITHUB_ENV"
@@ -659,12 +659,15 @@ jobs:
 
                   PAGES_URL="${FEED_URL%/}"
 
-                  curl -fsSL "$PAGES_URL/app-repo.json" -o apt-repo/repo/app-repo.json.live \
-                    && mv apt-repo/repo/app-repo.json.live apt-repo/repo/app-repo.json \
-                    || echo "No live app-repo.json yet, using repo template"
-
-                  curl -fsSL "$PAGES_URL/depictions/web/$PACKAGE_ID/info.xml" -o "apt-repo/repo/depictions/web/$PACKAGE_ID/info.xml" \
-                    || echo "No live depiction yet, using repo template"
+                  # The template owns each app's name, icon and description; only the published versions carry over from the live feed.
+                  if curl -fsSL "$PAGES_URL/app-repo.json" -o app-repo.live.json; then
+                    jq --slurpfile live app-repo.live.json \
+                      '.apps |= map(. as $app | .versions = ([$live[0].apps[] | select(.bundleIdentifier == $app.bundleIdentifier) | .versions][0] // []))' \
+                      apt-repo/app-repo.json > apt-repo/repo/app-repo.json
+                    rm app-repo.live.json
+                  else
+                    echo "No live app-repo.json yet, using repo template"
+                  fi
 
                   if curl -fsSL "$PAGES_URL/Packages" -o previous-Packages; then
                     grep '^Filename:' previous-Packages | awk '{print $2}' | sed 's|^\./||' | while read -r deb_path; do
@@ -727,7 +730,6 @@ jobs:
                   mv temp.json apt-repo/repo/app-repo.json
 
             - name: Update depiction version
-              if: inputs.only_app_repo != true
               run: |
                   DEB_FILE="apt-repo/repo/debs/$NEW_DEB_FILENAME"
                   VERSION=$(dpkg-deb -f "$DEB_FILE" Version)

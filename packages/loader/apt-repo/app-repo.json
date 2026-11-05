@@ -8,8 +8,8 @@
       "bundleIdentifier": "com.hammerandchisel.discord",
       "developerName": "Unbound Team",
       "iconURL": "https://assets.unbound.rip/logo/logo.png",
-      "localizedDescription": "A client mod for Discord",
-      "subtitle": "A client mod for Discord",
+      "localizedDescription": "A client modification for Discord on mobile. Install plugins, themes, fonts, and icon packs on the official Discord app.",
+      "subtitle": "A client modification for Discord on mobile.",
       "tintColor": "aa454d",
       "category": "social",
       "versions": []
@@ -20,8 +20,8 @@
       "developerName": "Unbound Team",
       "beta": true,
       "iconURL": "https://assets.unbound.rip/logo/logo.png",
-      "localizedDescription": "A client mod for Discord (TestFlight builds)",
-      "subtitle": "A client mod for Discord (TestFlight builds)",
+      "localizedDescription": "A client modification for Discord on mobile, built on Discord's TestFlight beta. Install plugins, themes, fonts, and icon packs on the official Discord app.",
+      "subtitle": "A client modification for Discord on mobile (TestFlight builds).",
       "tintColor": "aa454d",
       "category": "social",
       "versions": []
