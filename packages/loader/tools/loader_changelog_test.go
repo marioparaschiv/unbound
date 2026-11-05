@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -85,6 +86,26 @@ func TestRenderLoaderChangelogGroupsBreakingAndMaintenanceChanges(t *testing.T) 
 	}
 	if strings.Contains(changelog, "## Features") || strings.Contains(changelog, "## Other Changes") {
 		t.Fatalf("loader changelog contains an empty or unneeded category: %s", changelog)
+	}
+}
+
+func TestRenderLoaderChangelogFitsTheReleaseAPILimit(t *testing.T) {
+	subjects := make([]string, 0, 1000)
+	for i := 0; i < 1000; i++ {
+		subjects = append(subjects, "feat(native): add a change that the release notes list")
+	}
+	changelog := renderLoaderChangelog("1.0.0", subjects)
+	if len(changelog) > maxLoaderChangelogLength {
+		t.Fatalf("loader changelog is %d bytes, over the %d byte limit", len(changelog), maxLoaderChangelogLength)
+	}
+	for _, expected := range []string{"# Loader 1.0.0", "## Features", "**native:** Add a change"} {
+		if !strings.Contains(changelog, expected) {
+			t.Fatalf("loader changelog omitted %q", expected)
+		}
+	}
+	kept := strings.Count(changelog, "\n- ")
+	if !strings.HasSuffix(changelog, fmt.Sprintf("...and %d more changes.", 1000-kept)) {
+		t.Fatalf("loader changelog does not count the %d dropped changes: %s", 1000-kept, changelog[len(changelog)-80:])
 	}
 }
 
