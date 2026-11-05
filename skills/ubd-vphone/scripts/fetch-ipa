@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Runs fetch-ipa.py with the .env settings (DKRYPT_API_KEY) loaded.
+. "$(dirname "$0")/env.sh"
+exec python3 "$here/fetch-ipa.py" "$@"

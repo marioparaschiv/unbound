@@ -106,7 +106,7 @@ const REQUIRED_CHECKS = ['ok   debugger bridge', 'ok   device connected'];
  */
 export async function runDoctor(repo: string, require = true): Promise<string> {
 	const child = Bun.spawn({
-		cmd: ['bash', join(repo, '.agents/skills/unbound-dev/scripts/doctor.sh')],
+		cmd: ['bash', join(repo, 'skills/ubd-vphone/scripts/doctor.sh')],
 		cwd: repo,
 		stdout: 'pipe',
 		stderr: 'pipe',
@@ -123,7 +123,7 @@ export async function runDoctor(repo: string, require = true): Promise<string> {
 		!REQUIRED_CHECKS.every((check) => out.split('\n').some((line) => line.startsWith(check)))
 	) {
 		throw new Error(
-			`Failed to pass the doctor's bridge and device checks; fix them per SETUP.md:\n${text}`,
+			`Failed to pass the doctor's bridge and device checks; fix them per skills/ubd-vphone/setup.md:\n${text}`,
 		);
 	}
 

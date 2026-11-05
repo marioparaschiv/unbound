@@ -1,6 +1,6 @@
 # Design System
 
-This documents the Discord design-system primitives Unbound composes for its UI. It is the reference for anyone building settings pages, addon views, or toasts. Compose these primitives directly and verify live on device (the `client-ui` and `unbound-dev` skills).
+This documents the Discord design-system primitives Unbound composes for its UI. It is the reference for anyone building settings pages, addon views, or toasts. Compose these primitives directly and verify live on device (the `unbound-client` and `ubd-vphone` skills).
 
 ## The barrel
 
@@ -37,7 +37,7 @@ import { Discord } from '~/metro/components';
 </Discord.TableRowGroup>;
 ```
 
-Styles come from `Discord.createStyles({ … })` in a sibling `*.style.ts`; reference tokens through `Theme.colors.*` and `Constants.Fonts.*`, never hard-coded values (see the `client-ui` skill).
+Styles come from `Discord.createStyles({ … })` in a sibling `*.style.ts`; reference tokens through `Theme.colors.*` and `Constants.Fonts.*`, never hard-coded values (see the `unbound-client` skill).
 
 ---
 

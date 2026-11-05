@@ -17,14 +17,12 @@ Test: `turn-check` is clean and `bun run typecheck` passes.
 
 **Load the skill before writing the code it covers.**
 
-| Task                                                   | Skill            |
-| ------------------------------------------------------ | ---------------- |
-| Client component, hook or `.style.ts`                  | `client-ui`      |
-| Client domain, store, public API, builtin, or `metro/` | `client-domains` |
-| A class, `addons/`, or a `<kind>/manager.ts`           | `addon-managers` |
-| Proving a client change on Discord                     | `unbound-dev`    |
-| How Discord implements something                       | `hermes`         |
-| `apps/web` pages, endpoints or auth                    | `verify-web`     |
+| Task                                                   | Skill              |
+| ------------------------------------------------------ | ------------------ |
+| Client code: components, domains, API, managers, metro | `unbound-client`   |
+| Changing Discord behaviour, finding modules, patching  | `unbound-patching` |
+| Proving a client change on the vphone                  | `ubd-vphone`       |
+| `apps/web` pages, endpoints, auth or review publishing | `unbound-web`      |
 
 Name things with `GLOSSARY.md` terms. `DESIGN.md` lists the design-system primitives.
 

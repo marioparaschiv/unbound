@@ -29,7 +29,7 @@ function latestBuild(): string {
 
 	if (!builds[0]) {
 		throw new Error(
-			`No decompiled build in '${CACHE_DIR}'. Decompile one with the hermes skill.`,
+			`No decompiled build in '${CACHE_DIR}'. Build one with skills/unbound-patching/scripts/source.sh.`,
 		);
 	}
 

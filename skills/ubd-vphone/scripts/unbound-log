@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Runs unbound-log.ts with the .env settings loaded.
+. "$(dirname "$0")/env.sh"
+exec bun "$here/unbound-log.ts" "$@"
