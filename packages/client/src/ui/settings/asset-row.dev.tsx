@@ -1,11 +1,15 @@
 import type { UnboundAsset } from '@unbound-app/types';
-import { Image, View } from 'react-native';
 import { memo, useRef } from 'react';
+import { Image } from 'react-native';
 
 import { Discord, Media } from '~/metro/components';
 import { findByProps } from '~/metro/search';
 
-import useStyles from './assets.style';
+import useStyles from './asset-row.style';
+
+export type Rect = { x: number; y: number; width: number; height: number };
+
+export type ToScreen = (rect: Rect, done: (rect: Rect) => void) => void;
 
 /** An asset paired with its resolved id and a pre-lowercased name, computed once for the whole list. */
 export type IndexedAsset = {
@@ -18,21 +22,22 @@ type AssetRowProps = {
 	item: IndexedAsset;
 	index: number;
 	total: number;
+	/** Moves a rect measured inside the page onto the screen, where the media viewer lays out. */
+	toScreen: ToScreen;
 };
 
 const AssetHandler = findByProps('getAssetUriForEmbed', { lazy: true });
 
 /**
- * @description Opens an asset in Discord's fullscreen media viewer (pinch-to-zoom). The viewer grows
- * out of `originLayout`, so a real on-screen rect is passed as the origin; a zero-size origin makes the
- * viewer appear to open from the whole screen instead.
+ * @description Opens an asset in Discord's fullscreen media viewer (pinch-to-zoom), growing out of the on-screen rect
+ * passed as `originViewOrOriginLayout`; without one the viewer zooms in from the middle of the screen.
  */
-function openAsset(id: number, x: number, y: number, size: number) {
+function openAsset(id: number, origin: Rect) {
 	const uri = AssetHandler.getAssetUriForEmbed(id);
 
 	Image.getSize(uri, (width, height) => {
 		Media.openMediaModal({
-			originLayout: { x, y, width: size, height: size, resizeMode: 'cover' },
+			originViewOrOriginLayout: { ...origin, resizeMode: 'contain' },
 			initialIndex: 0,
 			initialSources: [{ uri, sourceURI: uri, width, height }],
 		});
@@ -41,16 +46,18 @@ function openAsset(id: number, x: number, y: number, size: number) {
 
 /**
  * @description One asset row, memoized so a keystroke only re-renders rows whose props changed. Tapping
- * anywhere on the row measures the thumbnail's on-screen position and opens the media viewer anchored to
- * it, so the open animation grows from the thumbnail.
+ * anywhere on the row measures the thumbnail's on-screen rect and opens the media viewer anchored to it, so the
+ * open animation grows from the thumbnail.
  */
-function AssetRow({ item, index, total }: AssetRowProps) {
+function AssetRow({ item, index, total, toScreen }: AssetRowProps) {
 	const styles = useStyles();
-	const ref = useRef<View>(null);
+	const ref = useRef<Image>(null);
 	const { asset, id } = item;
 
 	function open() {
-		ref.current?.measureInWindow((x, y, width) => openAsset(id, x, y, width));
+		ref.current?.measureInWindow((x, y, width, height) =>
+			toScreen({ x, y, width, height }, (origin) => openAsset(id, origin)),
+		);
 	}
 
 	return (
@@ -61,9 +68,8 @@ function AssetRow({ item, index, total }: AssetRowProps) {
 			onPress={open}
 			trailing={<Discord.TableRow.TrailingText text={`${asset.width}×${asset.height}`} />}
 			icon={
-				<View ref={ref} collapsable={false}>
-					<Image source={id} style={styles.thumbnail} />
-				</View>
+				// The thumbnail itself is measured: the icon slot around it is wider than the image.
+				<Image ref={ref} source={id} style={styles.thumbnail} />
 			}
 		/>
 	);

@@ -3,6 +3,8 @@ import type { FlexAlignType, ViewStyle } from 'react-native';
 import type { ComponentProps } from 'react';
 import { View } from 'react-native';
 
+import useStyles from './fallback-stack.style';
+
 type StackProps = ComponentProps<DesignModule['Stack']>;
 
 type JustifyContent = NonNullable<ViewStyle['justifyContent']>;
@@ -47,13 +49,14 @@ function FallbackStack({
 	children,
 	onLayout,
 }: StackProps) {
+	const styles = useStyles();
+
 	return (
 		<View
 			onLayout={onLayout}
 			style={[
+				direction === 'horizontal' ? styles.horizontal : styles.vertical,
 				{
-					width: '100%',
-					flexDirection: direction === 'horizontal' ? 'row' : 'column',
 					gap: spacing,
 					alignItems: isAlignItems(align) ? align : undefined,
 					justifyContent: isJustifyContent(justify) ? justify : undefined,

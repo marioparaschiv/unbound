@@ -1,18 +1,13 @@
 import LOGO_COLORS from '~/ui/icons/logo-colors';
 import { Discord } from '~/metro/components';
-import { Theme } from '~/metro/common';
 
 export default Discord.createStyles({
 	card: {
 		gap: 10,
 		padding: 18,
-		borderRadius: 16,
-		backgroundColor: Theme.colors.TABLEROW_BACKGROUND_DEFAULT,
 	},
-	heading: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 10,
+	title: {
+		flexShrink: 1,
 	},
 	// The logo's red marks the one call to action on the page.
 	heart: {
@@ -22,6 +17,9 @@ export default Discord.createStyles({
 		justifyContent: 'center',
 		borderRadius: 9,
 		backgroundColor: LOGO_COLORS.red,
+	},
+	heartIcon: {
+		tintColor: '#FFFFFF',
 	},
 	body: {
 		lineHeight: 19,

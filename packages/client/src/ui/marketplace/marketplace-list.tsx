@@ -8,11 +8,11 @@ import MarketplaceStore from '~/marketplace/state';
 import Empty from '~/ui/components/empty-state';
 import { messages, format } from '~/i18n/api';
 import { Manager } from '~/addons/manager';
-import { Theme } from '~/metro/common';
 import { show } from '~/toasts/api';
 
 import MarketplaceSkeleton from './marketplace-skeleton';
 import MarketplaceCard from './marketplace-card';
+import useStyles from './marketplace-list.style';
 import useCardMotion from './use-card-motion';
 import SearchContext from './search-context';
 
@@ -25,6 +25,7 @@ type MarketplaceListProps = {
  * cards. Pulling down refreshes the catalog; a failed refresh keeps the stored copy and says so.
  */
 function MarketplaceList({ kind }: MarketplaceListProps) {
+	const styles = useStyles();
 	const state = MarketplaceStore((store) => store.state);
 	const search = useContext(SearchContext);
 	const motion = useCardMotion();
@@ -71,13 +72,13 @@ function MarketplaceList({ kind }: MarketplaceListProps) {
 
 	return (
 		<ScrollView
-			contentContainerStyle={{ flexGrow: 1, padding: 16, gap: 12 }}
+			contentContainerStyle={styles.list}
 			keyboardDismissMode='on-drag'
 			refreshControl={
 				<RefreshControl
 					refreshing={pulling}
 					onRefresh={pull}
-					tintColor={Theme.colors.INTERACTIVE_ICON_DEFAULT}
+					tintColor={styles.spinner.color}
 				/>
 			}
 		>

@@ -5,12 +5,8 @@ export default Discord.createStyles({
 		gap: 14,
 		padding: 16,
 	},
-	row: {
-		flexDirection: 'row',
-		alignItems: 'flex-start',
-		gap: 12,
-	},
 	body: {
 		flex: 1,
+		minWidth: 0,
 	},
 });

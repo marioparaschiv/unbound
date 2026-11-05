@@ -2,7 +2,6 @@ import type { BooleanSettingKey } from '~/settings/unbound';
 import { useUnboundSettings } from '~/settings/unbound';
 import { Discord } from '~/metro/components';
 import { Screens } from '~/core/constants';
-import { reload } from '~/native/native';
 import Page from '~/ui/components/page';
 import { messages } from '~/i18n/api';
 import { icons } from '~/assets/api';
@@ -90,11 +89,6 @@ function DeveloperPage() {
 					subLabel={messages.UNBOUND_LOADER_DEVTOOLS_DESC}
 					icon={<Discord.TableRowIcon source={icons.WrenchIcon} />}
 					{...switchProps('loader.devtools')}
-				/>
-				<Discord.TableRow
-					label={messages.UNBOUND_RESTART}
-					icon={<Discord.TableRowIcon source={icons.RetryIcon} />}
-					onPress={reload}
 				/>
 			</Discord.TableRowGroup>
 

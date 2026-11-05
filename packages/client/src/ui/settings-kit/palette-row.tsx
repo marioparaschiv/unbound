@@ -1,7 +1,9 @@
-import { Pressable, View } from 'react-native';
 import type { ReactElement } from 'react';
+import { Pressable } from 'react-native';
 
 import { Discord } from '~/metro/components';
+
+import useStyles from './palette-row.style';
 
 /** Props for `PaletteRow`. */
 export type PaletteRowProps = {
@@ -32,17 +34,19 @@ function PaletteRow({
 	disabled = false,
 	onChange,
 }: PaletteRowProps): ReactElement {
+	const styles = useStyles();
+
 	return (
 		<Discord.TableRow
 			label={label}
 			subLabel={
-				<View style={{ gap: 8 }}>
+				<Discord.Stack spacing={8}>
 					{subLabel ? (
 						<Discord.Text variant='text-sm/medium' color='text-muted'>
 							{subLabel}
 						</Discord.Text>
 					) : null}
-					<View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+					<Discord.Stack direction='horizontal' spacing={8} style={styles.swatches}>
 						{presets.map((color) => (
 							<Pressable
 								key={color}
@@ -54,19 +58,17 @@ function PaletteRow({
 								}}
 								disabled={disabled}
 								onPress={() => onChange(color)}
-								style={{
-									width: 32,
-									height: 32,
-									borderRadius: 16,
-									backgroundColor: color,
-									borderWidth:
-										color.toLowerCase() === value.toLowerCase() ? 3 : 1,
-									borderColor: 'rgba(255, 255, 255, 0.6)',
-								}}
+								style={[
+									styles.swatch,
+									{ backgroundColor: color },
+									color.toLowerCase() === value.toLowerCase()
+										? styles.picked
+										: null,
+								]}
 							/>
 						))}
-					</View>
-				</View>
+					</Discord.Stack>
+				</Discord.Stack>
 			}
 		/>
 	);

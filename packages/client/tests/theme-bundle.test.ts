@@ -31,6 +31,12 @@ describe('parseThemeBundle', () => {
 		});
 	});
 
+	test('reads every Discord base theme', () => {
+		for (const type of ['light', 'dark', 'darker', 'midnight'] as const) {
+			expect(parseThemeBundle(JSON.stringify({ type })).type).toBe(type);
+		}
+	});
+
 	test('refuses a bundle that is not a JSON object', () => {
 		expect(() => parseThemeBundle('[]')).toThrow('A theme bundle must be a JSON object.');
 		expect(() => parseThemeBundle('{')).toThrow();

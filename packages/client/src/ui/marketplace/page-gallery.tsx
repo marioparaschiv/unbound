@@ -3,6 +3,7 @@ import { ScrollView } from 'react-native';
 
 import { findPageMedia, type StorePage } from '~/marketplace/store-page';
 
+import useStyles, { GALLERY_HEIGHT } from './page-gallery.style';
 import PageMedia from './page-media';
 
 type PageGalleryProps = {
@@ -10,18 +11,18 @@ type PageGalleryProps = {
 	entries: AddonPage['frontmatter']['media'];
 };
 
-const HEIGHT = 200;
-
 /**
  * @description The frontmatter's `media` as a row that scrolls sideways, each entry at one height and its
  * own aspect ratio, in the order ADDON.md lists them.
  */
 function PageGallery({ page, entries }: PageGalleryProps) {
+	const styles = useStyles();
+
 	return (
 		<ScrollView
 			horizontal
 			showsHorizontalScrollIndicator={false}
-			contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
+			contentContainerStyle={styles.row}
 		>
 			{entries.map((entry) => {
 				const path = 'image' in entry ? entry.image : entry.video;
@@ -37,7 +38,10 @@ function PageGallery({ page, entries }: PageGalleryProps) {
 						media={media}
 						alt={entry.alt}
 						poster={poster}
-						style={{ height: HEIGHT, width: (HEIGHT * media.width) / media.height }}
+						style={[
+							styles.media,
+							{ width: (GALLERY_HEIGHT * media.width) / media.height },
+						]}
 					/>
 				) : null;
 			})}

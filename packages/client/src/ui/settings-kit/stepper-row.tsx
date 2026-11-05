@@ -1,7 +1,8 @@
 import type { ReactElement } from 'react';
-import { View } from 'react-native';
 
 import { Discord } from '~/metro/components';
+
+import useStyles from './stepper-row.style';
 
 /** Props for `StepperRow`. */
 export type StepperRowProps = {
@@ -38,6 +39,7 @@ function StepperRow({
 	disabled = false,
 	onChange,
 }: StepperRowProps): ReactElement {
+	const styles = useStyles();
 	const decimals = String(step).split('.')[1]?.length ?? 0;
 	const move = (direction: number) =>
 		onChange(
@@ -53,7 +55,12 @@ function StepperRow({
 			subLabel={subLabel}
 			disabled={disabled}
 			trailing={
-				<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+				<Discord.Stack
+					direction='horizontal'
+					spacing={8}
+					align='center'
+					style={styles.trailing}
+				>
 					<Discord.Button
 						size='sm'
 						variant='secondary'
@@ -71,7 +78,7 @@ function StepperRow({
 						disabled={disabled || value >= maximum}
 						onPress={() => move(1)}
 					/>
-				</View>
+				</Discord.Stack>
 			}
 		/>
 	);

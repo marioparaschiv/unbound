@@ -1,14 +1,14 @@
 import { Pressable } from 'react-native';
 import { memo } from 'react';
 
-import TintedIcon from '~/metro/fallbacks/tinted-icon';
 import useAddonState from '~/ui/hooks/use-addon-state';
 import { Discord } from '~/metro/components';
 import type { Addon } from '~/addons/addon';
 import { Manager } from '~/addons/manager';
 import { reload } from '~/native/native';
 import { messages } from '~/i18n/api';
-import { icons } from '~/assets/api';
+
+import useStyles from './addon-radio.style';
 
 type AddonRadioProps = {
 	addon: Addon;
@@ -19,10 +19,12 @@ type AddonRadioProps = {
 /**
  * @description The trailing control for a theme or icon-pack card: a single-select indicator. Selecting
  * applies this addon via its manager; the previously applied one deselects because state is derived
- * from the manager, not held here. Discord's design module exposes no bare radio-dot primitive (only
- * the full `TableRadioRow`), so the indicator is a tinted check icon shown only while selected.
+ * from the manager, not held here. A theme applies live, and asks to restart only when native views
+ * cannot follow it until then. The indicator is Discord's bare `FormRadio`, which only draws; the
+ * surrounding `Pressable` handles the press.
  */
 function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
+	const styles = useStyles();
 	const { enabled } = useAddonState(kind, addon.id);
 	const manager = Manager.for(kind);
 
@@ -33,7 +35,7 @@ function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 			manager.enable(addon.id);
 		}
 
-		if (kind !== 'theme') return;
+		if (kind !== 'theme' || enabled || !Manager.for('theme').needsRestart(addon.id)) return;
 
 		Discord.showConfirmModal({
 			title: messages.UNBOUND_RESTART,
@@ -48,10 +50,12 @@ function AddonRadio({ addon, kind, disabled }: AddonRadioProps) {
 		<Pressable
 			disabled={disabled}
 			hitSlop={8}
-			style={{ width: 24, height: 24, alignItems: 'center', justifyContent: 'center' }}
+			accessibilityRole='radio'
+			accessibilityState={{ selected: enabled, disabled }}
+			style={styles.radio}
 			onPress={toggle}
 		>
-			{enabled ? <TintedIcon source={icons['CircleCheckIcon'] ?? 0} size={20} /> : null}
+			<Discord.FormRadio selected={enabled} />
 		</Pressable>
 	);
 }

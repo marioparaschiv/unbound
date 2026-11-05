@@ -13,6 +13,9 @@ export default {
 		paddingTop: 72,
 		gap: 16,
 	},
+	details: {
+		gap: 16,
+	},
 	title: {
 		fontSize: 22,
 		fontWeight: '700',

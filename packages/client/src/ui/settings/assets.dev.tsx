@@ -1,25 +1,37 @@
-import { useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Dimensions, View } from 'react-native';
 
-import { Discord, FlashList } from '~/metro/components';
-import SearchIcon from '~/ui/components/search-icon';
+import { Discord, SafeArea } from '~/metro/components';
 import { getAll, getIdByName } from '~/assets/api';
+import FlashList from '~/ui/components/flash-list';
 import Empty from '~/ui/components/empty-state';
 import { messages, format } from '~/i18n/api';
 
-import type { IndexedAsset } from './asset-row.dev';
+import type { IndexedAsset, ToScreen } from './asset-row.dev';
 
 import AssetRow from './asset-row.dev';
 import useStyles from './assets.style';
 
 type AssetRowInfo = { item: IndexedAsset; index: number };
 
+const keyOf = (entry: IndexedAsset) => entry.asset.name;
+
 /**
- * @description Searchable browser over registered PNG assets, previewing each as a thumbnail.
+ * @description Searchable browser over registered PNG assets: a pinned search field over a virtualised list of
+ * thumbnail rows that runs to the bottom edge.
  */
 function AssetsPage() {
 	const styles = useStyles();
 	const [search, setSearch] = useState('');
+	const page = useRef<View>(null);
+
+	// Settings is a bottom-anchored sheet with its own root; the media viewer lays out from the screen's top.
+	// The gap under the page's bottom edge is how far down the sheet sits.
+	const toScreen = useCallback<ToScreen>((rect, done) => {
+		page.current?.measureInWindow((_x, y, _width, height) =>
+			done({ ...rect, y: rect.y + Dimensions.get('window').height - (y + height) }),
+		);
+	}, []);
 
 	// Resolve ids and pre-lowercase names once, dropping assets that don't resolve, so neither the
 	// per-row lookup nor the per-keystroke case-folding happens during render.
@@ -55,33 +67,37 @@ function AssetsPage() {
 
 	const total = filtered.length;
 
+	function renderRow({ item, index }: AssetRowInfo) {
+		return <AssetRow item={item} index={index} total={total} toScreen={toScreen} />;
+	}
+
 	return (
-		<View style={styles.container}>
-			<View style={styles.search}>
-				<Discord.TextField
+		<View ref={page} style={styles.page}>
+			<View style={styles.controls}>
+				<Discord.SearchBar
 					size='md'
 					value={search}
 					onChange={setSearch}
-					isClearable
-					isRound
 					placeholder={format('UNBOUND_SEARCH', { type: messages.UNBOUND_ASSETS })}
-					leadingIcon={SearchIcon}
 				/>
 			</View>
-			{total ? (
-				<FlashList.FlashList
-					data={filtered}
-					keyExtractor={(entry: IndexedAsset) => entry.asset.name}
-					estimatedItemSize={48}
-					renderItem={({ item, index }: AssetRowInfo) => (
-						<AssetRow item={item} index={index} total={total} />
-					)}
-				/>
-			) : (
-				<Empty image={search ? 'sticker_search_empty' : 'empty_permission'}>
-					{search ? messages.UNBOUND_EMPTY_RESULTS : messages.UNBOUND_NO_ASSETS}
-				</Empty>
-			)}
+			<FlashList
+				data={filtered}
+				// The first and last rows round their corners, so a new count redraws them.
+				extraData={String(total)}
+				keyExtractor={keyOf}
+				renderItem={renderRow}
+				estimatedItemSize={48}
+				ListEmptyComponent={
+					<Empty image={search ? 'sticker_search_empty' : 'empty_permission'}>
+						{search ? messages.UNBOUND_EMPTY_RESULTS : messages.UNBOUND_NO_ASSETS}
+					</Empty>
+				}
+				// The bottom inset pads the end of the list, so the rows scroll under the home indicator.
+				ListFooterComponent={<SafeArea.SafeAreaPaddingView bottom />}
+				keyboardDismissMode='on-drag'
+				contentContainerStyle={styles.content}
+			/>
 		</View>
 	);
 }

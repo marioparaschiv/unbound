@@ -1,7 +1,8 @@
 import { Discord } from '~/metro/components';
 
 export default Discord.createStyles({
-	top: {
-		gap: 12,
+	thumbnail: {
+		width: 24,
+		height: 24,
 	},
 });

@@ -1,8 +1,10 @@
 import { useState, type ReactElement } from 'react';
-import { View } from 'react-native';
 
 import { Discord } from '~/metro/components';
 import { messages } from '~/i18n/api';
+import { icons } from '~/assets/api';
+
+import useStyles from './list-row.style';
 
 /** Props for `ListRow`. */
 export type ListRowProps = {
@@ -47,6 +49,7 @@ function ListRow({
 	disabled = false,
 	onChange,
 }: ListRowProps): ReactElement {
+	const styles = useStyles();
 	const [draft, setDraft] = useState('');
 	const [error, setError] = useState<string | undefined>(undefined);
 	const full = value.length >= maxItems;
@@ -74,18 +77,25 @@ function ListRow({
 					label={item}
 					disabled={disabled}
 					trailing={
-						<View style={{ flexDirection: 'row', gap: 4 }}>
-							<Discord.Button
+						<Discord.Stack
+							direction='horizontal'
+							spacing={4}
+							align='center'
+							style={styles.trailing}
+						>
+							<Discord.IconButton
 								size='sm'
 								variant='secondary'
-								text='↑'
+								icon={icons['ArrowSmallUpIcon'] ?? 0}
+								accessibilityLabel={messages.UNBOUND_MOVE_UP}
 								disabled={disabled || index === 0}
 								onPress={() => onChange(moved(value, index, index - 1))}
 							/>
-							<Discord.Button
+							<Discord.IconButton
 								size='sm'
 								variant='secondary'
-								text='↓'
+								icon={icons['ArrowSmallDownIcon'] ?? 0}
+								accessibilityLabel={messages.UNBOUND_MOVE_DOWN}
 								disabled={disabled || index === value.length - 1}
 								onPress={() => onChange(moved(value, index, index + 1))}
 							/>
@@ -96,7 +106,7 @@ function ListRow({
 								disabled={disabled}
 								onPress={() => onChange(value.filter((_, at) => at !== index))}
 							/>
-						</View>
+						</Discord.Stack>
 					}
 				/>
 			))}

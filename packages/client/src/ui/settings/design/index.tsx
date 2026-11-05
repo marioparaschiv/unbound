@@ -1,61 +1,43 @@
-import { Dimensions, View } from 'react-native';
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { installsFromManifest } from '~/addons/addons';
-import { Discord, SafeArea } from '~/metro/components';
-import InstallButton from '~/ui/addons/install-button';
-import AddonTab from '~/ui/settings/addon-tab';
-import { getBucket } from '~/storage/api';
+import { Discord } from '~/metro/components';
 
-import FontsTab from './fonts';
+import type { HeaderOptions } from './navigation';
 
-/** The segmented tabs in order; each tab's id is the manager kind its install button targets. */
-const TABS: { id: 'theme' | 'icon-pack' | 'font'; label: string }[] = [
-	{ id: 'theme', label: 'Themes' },
-	{ id: 'icon-pack', label: 'Icons' },
-	{ id: 'font', label: 'Fonts' },
-];
+import { ReportPicker, type PickerKind } from './picker-report';
+import DesignTabs, { type DesignTab } from './design-tabs';
+import DiscordPicker from './discord-picker';
+
+const renderPicker = (kind: PickerKind) => <DiscordPicker kind={kind} />;
 
 /**
- * @description The Design settings page: a segmented Themes / Icons / Fonts control over swipeable
- * pages, with a floating install button that targets the active tab. The selected tab persists.
+ * @description The Design settings page: Discord's App Theme picker for themes and icon packs, beside Fonts,
+ * full-screen under its transparent header. The active picker owns the header; Fonts keeps the back
+ * button and title only.
  */
 function DesignPage() {
-	const [tab, setTab] = useState(getBucket('design').get('tab', 0));
+	const navigation = Discord.useNavigation();
+	const [tab, setTab] = useState<DesignTab>('theme');
+	const [headers, setHeaders] = useState<Partial<Record<PickerKind, HeaderOptions>>>({});
 
-	const items = useMemo(
-		() =>
-			TABS.map(({ id, label }) => ({
-				id,
-				label,
-				page: id === 'font' ? <FontsTab /> : <AddonTab kind={id} />,
-			})),
+	const report = useCallback(
+		(kind: PickerKind, options: HeaderOptions) =>
+			setHeaders((previous) => ({ ...previous, [kind]: options })),
 		[],
 	);
-	const kind = TABS[tab]?.id;
 
-	const state = Discord.useSegmentedControlState({
-		items,
-		pageWidth: Dimensions.get('window').width,
-		defaultIndex: tab,
-		onPageChange: (index: number) => {
-			setTab(index);
-			getBucket('design').set('tab', index);
-		},
-	});
+	useEffect(() => {
+		const base = (tab === 'font' ? undefined : headers[tab]) ?? headers.theme;
+
+		if (!base) return;
+
+		navigation.setOptions(tab === 'font' ? { ...base, headerRight: () => null } : base);
+	}, [navigation, tab, headers]);
 
 	return (
-		<SafeArea.SafeAreaPaddingView bottom style={{ flex: 1 }}>
-			<View style={{ flex: 1 }}>
-				<View style={{ flexGrow: 0, flexShrink: 0, paddingHorizontal: 16, paddingTop: 16 }}>
-					<Discord.SegmentedControl state={state} />
-				</View>
-				<View style={{ flex: 1 }}>
-					<Discord.SegmentedControlPages state={state} />
-					{kind && installsFromManifest(kind) ? <InstallButton kind={kind} /> : null}
-				</View>
-			</View>
-		</SafeArea.SafeAreaPaddingView>
+		<ReportPicker.Provider value={report}>
+			<DesignTabs renderPage={renderPicker} onTabChange={setTab} />
+		</ReportPicker.Provider>
 	);
 }
 

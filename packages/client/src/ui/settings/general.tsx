@@ -1,5 +1,3 @@
-import { View } from 'react-native';
-
 import { Screens, SOCIAL_LINKS, DISCORD_INVITE } from '~/core/constants';
 import { useUnboundSettings } from '~/settings/unbound';
 import AccountGroup from '~/ui/account/account-group';
@@ -19,7 +17,6 @@ import confirmRestart from './confirm-restart';
 import GeneralHeader from './general-header';
 import QuickActions from './quick-actions';
 import SponsorCard from './sponsor-card';
-import useStyles from './general.style';
 
 function openSupportServer() {
 	Invites.acceptInviteAndTransitionToInviteChannel({
@@ -37,7 +34,6 @@ function onOff(on: boolean) {
  * preferences, advanced switches and help.
  */
 function GeneralPage() {
-	const styles = useStyles();
 	const navigation = Discord.useNavigation();
 	const settings = useUnboundSettings();
 	const account = useAccount();
@@ -101,7 +97,7 @@ function GeneralPage() {
 
 	return (
 		<Page>
-			<View style={styles.top}>
+			<Discord.Stack spacing={12}>
 				<GeneralHeader />
 				<QuickActions />
 				<Discord.TableRowGroup>
@@ -115,7 +111,7 @@ function GeneralPage() {
 						onValueChange={setRecoveryMode}
 					/>
 				</Discord.TableRowGroup>
-			</View>
+			</Discord.Stack>
 
 			<AccountGroup />
 

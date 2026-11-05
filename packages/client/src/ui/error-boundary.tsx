@@ -40,7 +40,7 @@ function ErrorFallback({
 	return (
 		<View style={styles.screen}>
 			<ScrollView contentContainerStyle={styles.content}>
-				<Animated.View entering={FadeInDown.duration(320)} style={{ gap: 16 }}>
+				<Animated.View entering={FadeInDown.duration(320)} style={styles.details}>
 					<Text style={styles.title}>{messages.UNBOUND_CRASH_TITLE}</Text>
 					<Text style={styles.subtitle}>{messages.UNBOUND_CRASH_DESCRIPTION}</Text>
 					<View style={styles.errorCard}>

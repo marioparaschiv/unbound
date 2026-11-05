@@ -2,8 +2,7 @@ import type { AddonKind } from '@unbound-app/types/addons';
 import { View } from 'react-native';
 import { memo } from 'react';
 
-import { Discord } from '~/metro/components';
-import { SVG, Theme } from '~/metro/common';
+import { SVG } from '~/metro/common';
 
 import DEFAULT_ADDON_ICONS from './default-addon-icons';
 import useAddonIconSvg from './use-addon-icon-svg';
@@ -21,12 +20,10 @@ type AddonIconProps = {
 function AddonIcon({ id, kind }: AddonIconProps) {
 	const styles = useStyles();
 	const svg = useAddonIconSvg(id) ?? DEFAULT_ADDON_ICONS[kind];
-	// The SVG's color prop takes a plain string, not the theme's dynamic colour object.
-	const color = Discord.useToken(Theme.colors.TEXT_STRONG);
 
 	return (
-		<View style={[styles.tile, { width: 40, height: 40, borderRadius: 12 }]}>
-			<SVG.SvgXml xml={svg} width={22} height={22} color={color} />
+		<View style={styles.tile}>
+			<SVG.SvgXml xml={svg} width={22} height={22} color={styles.glyph.color} />
 		</View>
 	);
 }

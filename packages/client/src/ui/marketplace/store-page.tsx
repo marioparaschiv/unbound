@@ -9,6 +9,7 @@ import { Discord, SafeArea } from '~/metro/components';
 import Empty from '~/ui/components/empty-state';
 import { messages } from '~/i18n/api';
 
+import useStyles from './store-page.style';
 import PageGallery from './page-gallery';
 import useResource from './use-resource';
 import PageMedia from './page-media';
@@ -29,6 +30,7 @@ type StorePageScreenProps = {
  * ADDON.md body. A version without a page on the CDN says so; a failed fetch offers a retry.
  */
 function StorePageScreen({ route }: StorePageScreenProps) {
+	const styles = useStyles();
 	const { addon, kind } = route.params;
 	const { manifest, pageUrl } = addon.latestVersion;
 	const navigation = Discord.useNavigation();
@@ -43,12 +45,12 @@ function StorePageScreen({ route }: StorePageScreenProps) {
 	}
 
 	if (state.status === 'loading') {
-		return <ActivityIndicator style={{ flex: 1 }} />;
+		return <ActivityIndicator style={styles.fill} />;
 	}
 
 	if (state.status === 'failed') {
 		return (
-			<View style={{ flex: 1 }}>
+			<View style={styles.fill}>
 				<Empty>{messages.UNBOUND_STORE_PAGE_FAILED}</Empty>
 				<Discord.Button
 					text={messages.UNBOUND_UPDATES_RETRY}
@@ -64,20 +66,20 @@ function StorePageScreen({ route }: StorePageScreenProps) {
 	const banner = frontmatter ? findPageMedia(page, frontmatter.banner) : undefined;
 
 	return (
-		<ScrollView contentContainerStyle={{ paddingVertical: 16 }}>
-			<SafeArea.SafeAreaPaddingView bottom style={{ gap: 16 }}>
+		<ScrollView contentContainerStyle={styles.scroll}>
+			<SafeArea.SafeAreaPaddingView bottom style={styles.content}>
 				{banner ? (
-					<View style={{ paddingHorizontal: 16 }}>
+					<View style={styles.inset}>
 						<PageMedia media={banner} alt={manifest.name} />
 					</View>
 				) : null}
-				<View style={{ paddingHorizontal: 16 }}>
+				<View style={styles.inset}>
 					<AddonCardHeader id={addon.id} kind={kind} manifest={manifest} />
 				</View>
 				{frontmatter?.media.length ? (
 					<PageGallery page={page} entries={frontmatter.media} />
 				) : null}
-				<View style={{ paddingHorizontal: 16 }}>
+				<View style={styles.inset}>
 					<PageBody page={page} />
 				</View>
 			</SafeArea.SafeAreaPaddingView>

@@ -201,7 +201,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 			style={styles.card}
 			onPress={pageUrl ? openPage : void 0}
 		>
-			<View style={styles.row}>
+			<Discord.Stack direction='horizontal' spacing={12} align='flex-start'>
 				<View style={styles.body}>
 					<AddonCardHeader id={addon.id} kind={kind} manifest={manifest} />
 				</View>
@@ -213,7 +213,7 @@ function MarketplaceCard({ addon, kind }: MarketplaceCardProps) {
 					onPress={press}
 					onLongPress={updatable === undefined ? void 0 : () => hold(updatable)}
 				/>
-			</View>
+			</Discord.Stack>
 		</Discord.Card>
 	);
 }

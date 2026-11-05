@@ -1,6 +1,6 @@
 import type { Theme, ThemeSemanticColor } from '@unbound-app/types';
 
-const THEME_TYPES: readonly Theme['type'][] = ['midnight', 'darker', 'light'];
+const THEME_TYPES: readonly Theme['type'][] = ['light', 'dark', 'darker', 'midnight'];
 
 type ThemeBackground = NonNullable<Theme['background']>;
 

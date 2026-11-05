@@ -1,7 +1,9 @@
 import type { ReactElement, ReactNode } from 'react';
-import { View, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 
-import { SafeArea } from '~/metro/components';
+import { Discord, SafeArea } from '~/metro/components';
+
+import useStyles from './page.style';
 
 /** The props of {@link Page}. */
 type PageProps = {
@@ -15,10 +17,12 @@ type PageProps = {
  * it as the root of every settings page.
  */
 function Page({ children }: PageProps): ReactElement {
+	const styles = useStyles();
+
 	return (
-		<ScrollView contentContainerStyle={{ padding: 16 }} keyboardShouldPersistTaps='handled'>
+		<ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps='handled'>
 			<SafeArea.SafeAreaPaddingView bottom>
-				<View style={{ gap: 24 }}>{children}</View>
+				<Discord.Stack spacing={24}>{children}</Discord.Stack>
 			</SafeArea.SafeAreaPaddingView>
 		</ScrollView>
 	);

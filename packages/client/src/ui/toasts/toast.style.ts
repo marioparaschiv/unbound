@@ -2,6 +2,13 @@ import { Discord } from '~/metro/components';
 import { Theme } from '~/metro/common';
 
 export default Discord.createStyles({
+	// A closing toast slides under the ones still showing.
+	open: {
+		zIndex: 10,
+	},
+	closing: {
+		zIndex: 0,
+	},
 	list: {
 		position: 'absolute',
 		top: 0,
@@ -47,9 +54,9 @@ export default Discord.createStyles({
 		aspectRatio: 1,
 	},
 	closeButton: {
-		marginVertical: 10,
-		marginLeft: 12,
-		marginRight: 12,
+		marginVertical: 6,
+		marginLeft: 8,
+		marginRight: 8,
 	},
 	buttons: {
 		flexWrap: 'wrap',

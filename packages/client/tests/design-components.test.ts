@@ -1,5 +1,5 @@
+import { DESIGN_COMPONENTS, NEWER_DESIGN_COMPONENTS } from '@unbound-app/types/components';
 import type { DesignComponents, DesignHelpers } from '@unbound-app/types/components';
-import { DESIGN_COMPONENTS } from '@unbound-app/types/components';
 import { describe, expect, mock, test } from 'bun:test';
 import { forwardRef, memo } from 'react';
 import { readFileSync } from 'node:fs';
@@ -19,6 +19,7 @@ const { default: FallbackSwitch } = await import('~/metro/fallbacks/fallback-swi
 const { default: FallbackStack } = await import('~/metro/fallbacks/fallback-stack');
 const { default: FallbackText } = await import('~/metro/fallbacks/fallback-text');
 const { default: FallbackCard } = await import('~/metro/fallbacks/fallback-card');
+const { default: FallbackBadge } = await import('~/metro/fallbacks/fallback-badge');
 
 const BARREL_MEMBER = /^\s*(\w+): \w+Component;$/;
 
@@ -43,8 +44,12 @@ const helpersShadowNoComponent: [Extract<keyof DesignHelpers, keyof DesignCompon
 	: false = true;
 
 describe('design components', () => {
-	test('names only components the generated design barrel exports', () => {
-		expect(generatedBarrelComponents()).toEqual(expect.arrayContaining([...DESIGN_COMPONENTS]));
+	test('names only components the generated design barrel exports, or a newer build adds', () => {
+		const newer: readonly string[] = NEWER_DESIGN_COMPONENTS;
+		const generated = DESIGN_COMPONENTS.filter((name) => !newer.includes(name));
+
+		expect(generatedBarrelComponents()).toEqual(expect.arrayContaining(generated));
+		expect(generatedBarrelComponents()).not.toEqual(expect.arrayContaining([...newer]));
 	});
 
 	test('keeps hand-typed helpers apart from generated components', () => {
@@ -71,6 +76,8 @@ describe('design components', () => {
 		expect(components.Discord.Stack).toBe(FallbackStack);
 		expect(components.Discord.Card).toBe(FallbackCard);
 		expect(components.isRenderable(components.Discord.SearchField)).toBe(true);
+		expect(components.isRenderable(components.Discord.SearchBar)).toBe(true);
+		expect(components.Discord.Badge).toBe(FallbackBadge);
 		expect(components.Discord.Button).toBeUndefined();
 		expect('Text' in components.Discord).toBe(true);
 	});
@@ -89,6 +96,8 @@ describe('design components', () => {
 		expect(audit.native).toEqual([]);
 		expect(audit.fallback).toEqual(
 			expect.arrayContaining([
+				'SearchBar',
+				'Badge',
 				'SearchField',
 				'Text',
 				'Heading',

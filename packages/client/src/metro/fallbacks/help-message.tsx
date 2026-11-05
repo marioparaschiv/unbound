@@ -2,8 +2,7 @@ import type { ColorValue } from 'react-native';
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
-import { Discord } from '~/metro/design';
-import { Theme } from '~/metro/common';
+import { Discord, isRenderable } from '~/metro/design';
 import { icons } from '~/assets/api';
 
 import useStyles from './help-message.style';
@@ -40,47 +39,49 @@ export type HelpMessageProps = {
 };
 
 const TONES = {
-	[HelpMessageTypes.WARNING]: { icon: 'WarningIcon', tone: 'WARNING' },
-	[HelpMessageTypes.INFO]: { icon: 'CircleInformationIcon', tone: 'INFO' },
-	[HelpMessageTypes.ERROR]: { icon: 'CircleXIcon', tone: 'CRITICAL' },
-	[HelpMessageTypes.SUCCESS]: { icon: 'CircleCheckIcon', tone: 'POSITIVE' },
+	[HelpMessageTypes.WARNING]: { icon: 'WarningIcon', tone: 'warning' },
+	[HelpMessageTypes.INFO]: { icon: 'CircleInformationIcon', tone: 'info' },
+	[HelpMessageTypes.ERROR]: { icon: 'CircleXIcon', tone: 'critical' },
+	[HelpMessageTypes.SUCCESS]: { icon: 'CircleCheckIcon', tone: 'positive' },
 } as const;
 
 /**
- * @description A tinted notice with an icon, shaped like Discord's `HelpMessage`, for Discord builds that no longer ship it.
+ * @description For Discord builds that no longer ship `HelpMessage`: Discord's `InlineNotice` for a plain-text
+ * message, else a tinted notice with an icon shaped like `HelpMessage`, which also takes a button and text styling.
  * @param props The message, its type, text styling, corner radius and an optional trailing button.
  * @returns The notice.
  */
 function HelpMessage({
 	children,
 	messageType = HelpMessageTypes.WARNING,
-	textVariant = 'text-sm/medium',
+	textVariant,
 	textColor,
-	borderRadius = 8,
+	borderRadius,
 	button,
 }: HelpMessageProps) {
 	const styles = useStyles();
 	const { icon, tone } = TONES[messageType] ?? TONES[HelpMessageTypes.WARNING];
-	const background = Discord.useToken(Theme.colors[`BACKGROUND_FEEDBACK_${tone}`]);
-	const border = Discord.useToken(Theme.colors[`BORDER_FEEDBACK_${tone}`]);
-	const tint = Discord.useToken(Theme.colors[`ICON_FEEDBACK_${tone}`]);
-	const text = Discord.useToken(Theme.colors.TEXT_DEFAULT);
+	const text = typeof children === 'string' || typeof children === 'number';
+	const styled =
+		textVariant !== undefined || textColor !== undefined || borderRadius !== undefined;
+
+	// The tones are InlineNotice's own types; it draws only text, so a button or custom styling keeps Unbound's.
+	if (text && !styled && !button && isRenderable(Discord.InlineNotice)) {
+		return <Discord.InlineNotice type={tone} message={String(children)} />;
+	}
 
 	return (
-		<View
-			style={[
-				styles.container,
-				{
-					borderRadius,
-					backgroundColor: background,
-					borderColor: border,
-				},
-			]}
-		>
-			<TintedIcon source={icons[icon] ?? 0} size={20} tint={tint} />
+		<View style={[styles.container, styles[tone], { borderRadius: borderRadius ?? 8 }]}>
+			<TintedIcon source={icons[icon] ?? 0} size={20} style={styles[`${tone}Icon`]} />
 			<View style={styles.text}>
-				{typeof children === 'string' || typeof children === 'number' ? (
-					<Discord.Text variant={textVariant} style={{ color: textColor ?? text }}>
+				{text ? (
+					<Discord.Text
+						variant={textVariant ?? 'text-sm/medium'}
+						style={[
+							styles.message,
+							textColor === undefined ? null : { color: textColor },
+						]}
+					>
 						{children}
 					</Discord.Text>
 				) : (

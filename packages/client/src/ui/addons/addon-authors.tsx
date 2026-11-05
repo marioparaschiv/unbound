@@ -1,11 +1,10 @@
-import type { PressableStateCallbackType } from 'react-native';
+import type { PressableStateCallbackType, StyleProp, TextStyle, ViewStyle } from 'react-native';
 import type { AddonAuthor } from '@unbound-app/types';
 import { Pressable } from 'react-native';
 import { memo } from 'react';
 
 import { AvatarPiles, Discord, Avatars } from '~/metro/components';
 import { ActionSheets, UserProfiles } from '~/metro/api';
-import { Theme } from '~/metro/common';
 
 import AddonAuthorsSheet from './addon-authors-sheet';
 import useAuthorUsers from './use-author-users';
@@ -13,6 +12,9 @@ import useStyles from './addon-authors.style';
 
 type AddonAuthorsProps = {
 	authors: AddonAuthor[];
+	style?: StyleProp<ViewStyle>;
+	/** An animated style for the names, such as a theme picker's, which recolours them as its preview changes base. */
+	nameStyle?: StyleProp<TextStyle>;
 };
 
 const SHEET_KEY = 'unbound-addon-authors';
@@ -21,7 +23,7 @@ const SHEET_KEY = 'unbound-addon-authors';
  * @description An addon's author line: their avatars in a pile, then their manifest names. Pressing it
  * opens the profile of a sole resolved author, or a sheet listing every author.
  */
-function AddonAuthors({ authors }: AddonAuthorsProps) {
+function AddonAuthors({ authors, style, nameStyle }: AddonAuthorsProps) {
 	const styles = useStyles();
 	const resolved = useAuthorUsers(authors);
 	const names = authors.map((author) => author.name);
@@ -52,6 +54,7 @@ function AddonAuthors({ authors }: AddonAuthorsProps) {
 			onPress={press}
 			style={({ pressed }: PressableStateCallbackType) => [
 				styles.container,
+				style,
 				pressed ? styles.pressed : null,
 			]}
 		>
@@ -66,7 +69,9 @@ function AddonAuthors({ authors }: AddonAuthorsProps) {
 			</AvatarPile>
 			<Discord.Text
 				variant='text-xs/medium'
-				style={[styles.names, { color: Theme.colors.TEXT_MUTED }]}
+				animated={Boolean(nameStyle)}
+				color={nameStyle ? void 0 : 'text-muted'}
+				style={[styles.names, nameStyle]}
 				numberOfLines={1}
 			>
 				{label}

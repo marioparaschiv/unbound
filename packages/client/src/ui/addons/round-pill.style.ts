@@ -1,23 +1,8 @@
 import { Discord } from '~/metro/components';
-import { Theme } from '~/metro/common';
 
-// Background colours only render on device when they come through createStyles, not inline.
+// Discord's `IconButton` takes its corner radius from the theme's button token; its `pillStyle` overrides it.
 export default Discord.createStyles({
-	button: {
-		width: 32,
-		height: 32,
-		borderRadius: 16,
-		borderWidth: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: Theme.colors.CONTROL_SECONDARY_BACKGROUND_DEFAULT,
-		borderColor: Theme.colors.CONTROL_SECONDARY_BORDER_DEFAULT,
-	},
-	pressed: {
-		backgroundColor: Theme.colors.CONTROL_SECONDARY_BACKGROUND_ACTIVE,
-		borderColor: Theme.colors.CONTROL_SECONDARY_BORDER_ACTIVE,
-	},
-	disabled: {
-		opacity: 0.4,
+	pill: {
+		borderRadius: 999,
 	},
 });

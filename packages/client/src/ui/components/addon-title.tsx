@@ -1,10 +1,9 @@
-import { View } from 'react-native';
 import { memo } from 'react';
 
 import { Discord } from '~/metro/components';
-import { Theme } from '~/metro/common';
 
 import useStyles from './addon-title.style';
+import AddonTag from './addon-tag';
 
 type AddonTitleProps = {
 	name: string;
@@ -14,41 +13,19 @@ type AddonTitleProps = {
 };
 
 /**
- * @description An addon's name on one line, followed by its version and an optional tag, each in a badge.
+ * @description An addon's name on one line, followed by its version and an optional tag, each in a small tag.
  */
 function AddonTitle({ name, version, tag }: AddonTitleProps) {
 	const styles = useStyles();
 
 	return (
-		<View style={styles.row}>
-			<Discord.Text
-				variant='text-md/semibold'
-				style={[styles.name, { color: Theme.colors.TEXT_STRONG }]}
-				numberOfLines={1}
-			>
+		<Discord.Stack direction='horizontal' spacing={8} align='center'>
+			<Discord.Text variant='text-md/semibold' style={styles.name} numberOfLines={1}>
 				{name}
 			</Discord.Text>
-			{version ? (
-				<View style={styles.versionBadge}>
-					<Discord.Text
-						variant='text-xxs/semibold'
-						style={{ color: Theme.colors.TEXT_MUTED }}
-					>
-						v{version}
-					</Discord.Text>
-				</View>
-			) : null}
-			{tag ? (
-				<View style={styles.versionBadge}>
-					<Discord.Text
-						variant='text-xxs/semibold'
-						style={{ color: Theme.colors.TEXT_BRAND ?? Theme.colors.TEXT_MUTED }}
-					>
-						{tag}
-					</Discord.Text>
-				</View>
-			) : null}
-		</View>
+			{version ? <AddonTag>{`v${version}`}</AddonTag> : null}
+			{tag ? <AddonTag variant='brand'>{tag}</AddonTag> : null}
+		</Discord.Stack>
 	);
 }
 

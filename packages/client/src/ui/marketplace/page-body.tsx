@@ -1,6 +1,5 @@
 import { Children, Fragment, isValidElement, useMemo, type ReactNode } from 'react';
 import type { MarkdownState } from '@unbound-app/types/markdown';
-import { View } from 'react-native';
 
 import { findPageMedia, splitPageBody, type StorePage } from '~/marketplace/store-page';
 import { MarkdownParser } from '~/metro/common';
@@ -65,7 +64,7 @@ function PageBody({ page }: PageBodyProps) {
 	}, [page]);
 
 	return (
-		<View style={{ gap: 12 }}>
+		<Discord.Stack spacing={12}>
 			{blocks.map((block, index) => {
 				if (block.kind === 'markdown') {
 					return (
@@ -79,7 +78,7 @@ function PageBody({ page }: PageBodyProps) {
 
 				return media ? <PageMedia key={index} media={media} alt={block.alt} /> : null;
 			})}
-		</View>
+		</Discord.Stack>
 	);
 }
 

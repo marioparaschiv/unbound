@@ -5,10 +5,10 @@ import useDevelopmentCopy from '~/ui/hooks/use-development-copy';
 import { useUnboundSettings } from '~/settings/unbound';
 import AddonTitle from '~/ui/components/addon-title';
 import AddonIcon from '~/ui/components/addon-icon';
+import AddonTag from '~/ui/components/addon-tag';
 import { Discord } from '~/metro/components';
 import type { Addon } from '~/addons/addon';
 import { Manager } from '~/addons/manager';
-import { Theme } from '~/metro/common';
 import { messages } from '~/i18n/api';
 
 import AddonOverflow from './addon-overflow';
@@ -56,57 +56,40 @@ function AddonCard({ addon, kind, library }: AddonCardProps) {
 			shadow='low'
 			style={[styles.card, disabled ? styles.failed : null]}
 		>
-			<View style={styles.top}>
+			<Discord.Stack direction='horizontal' spacing={12} align='flex-start'>
 				<AddonIcon id={addon.id} kind={kind} />
 				<View style={styles.heading}>
 					<AddonTitle name={name} tag={tag} />
 					{authors?.length ? <AddonAuthors authors={authors} /> : null}
 				</View>
-				<View style={styles.actions}>
+				<Discord.Stack
+					direction='horizontal'
+					spacing={8}
+					align='center'
+					style={styles.actions}
+				>
 					{kind === 'plugin' ? <AddonSettings addon={addon} disabled={disabled} /> : null}
 					<AddonOverflow addon={addon} kind={kind} developmentCopy={developmentCopy} />
 					{trailing}
-				</View>
-			</View>
+				</Discord.Stack>
+			</Discord.Stack>
 			<View style={styles.bottom}>
 				{description ? (
-					<Discord.Text
-						variant='text-sm/normal'
-						style={[styles.description, { color: Theme.colors.TEXT_DEFAULT }]}
-					>
+					<Discord.Text variant='text-sm/normal' style={styles.description}>
 						{description}
 					</Discord.Text>
 				) : (
 					<View style={styles.spacer} />
 				)}
-				<View style={styles.badges}>
+				<Discord.Stack direction='horizontal' spacing={6} style={styles.badges}>
 					{developmentCopy ? (
-						<View style={styles.version}>
-							<Discord.Text
-								variant='text-xxs/semibold'
-								style={{
-									color: Theme.colors.TEXT_BRAND ?? Theme.colors.TEXT_MUTED,
-								}}
-							>
-								{messages.UNBOUND_DEVELOPMENT_COPY}
-							</Discord.Text>
-						</View>
+						<AddonTag variant='brand'>{messages.UNBOUND_DEVELOPMENT_COPY}</AddonTag>
 					) : null}
-					<View style={styles.version}>
-						<Discord.Text
-							variant='text-xxs/semibold'
-							style={{ color: Theme.colors.TEXT_MUTED }}
-						>
-							v{version}
-						</Discord.Text>
-					</View>
-				</View>
+					<AddonTag>{`v${version}`}</AddonTag>
+				</Discord.Stack>
 			</View>
 			{error ? (
-				<Discord.Text
-					variant='text-xs/medium'
-					style={[styles.error, { color: Theme.colors.TEXT_FEEDBACK_CRITICAL }]}
-				>
+				<Discord.Text variant='text-xs/medium' style={styles.error}>
 					{String(error.message ?? error)}
 				</Discord.Text>
 			) : null}

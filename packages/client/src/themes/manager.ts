@@ -1,8 +1,8 @@
 import toError from '@unbound-app/utils/to-error';
 import type { Theme } from '@unbound-app/types';
 
+import { getLoader, getThemes } from '~/native/unbound-native';
 import type { AddonResolveable } from '~/addons/addon';
-import { getThemes } from '~/native/unbound-native';
 import { parseThemeBundle } from '~/themes/bundle';
 import { Manager } from '~/addons/manager';
 import { Addons } from '~/addons/addons';
@@ -62,6 +62,34 @@ export class Themes extends Addons<Theme> {
 	}
 
 	/**
+	 * @description Reports whether a theme is the applied one, overriding the base implementation: only one theme applies,
+	 * so the `applied` setting decides, not a `states` map that can hold more than one.
+	 * @param id The theme's id.
+	 * @returns Whether it is applied.
+	 */
+	isEnabled(id: string): boolean {
+		return this.getAppliedId() === id;
+	}
+
+	/**
+	 * @description Reports whether a theme reaches native views only after a restart. Applying is live, but the
+	 * loader recolours native views from the theme files it scanned at launch, so a theme installed or changed since lags.
+	 * @param entity The theme id or entity.
+	 * @returns Whether the loader's launch copy of the theme is missing or differs.
+	 */
+	needsRestart(entity: AddonResolveable<Theme>): boolean {
+		const resolved = this.resolve(entity);
+
+		if (!resolved || !getLoader()) {
+			return false;
+		}
+
+		return !getThemes().some(
+			({ bundle, manifest }) => manifest.id === resolved.id && bundle === resolved.bundle,
+		);
+	}
+
+	/**
 	 * @description Enables a theme, overriding the base implementation: stops any previously applied theme, records
 	 * this one as `applied`, starts it if needed, and pushes it onto {@link ThemeStore}. Twin of {@link disable}.
 	 * @param entity The theme id or entity to enable.
@@ -73,6 +101,7 @@ export class Themes extends Addons<Theme> {
 
 		try {
 			const prev = this.getAppliedId();
+			const states = this.getStates();
 
 			if (prev && prev !== resolved.id) {
 				const prevEntity = this.getEntity(prev);
@@ -80,11 +109,12 @@ export class Themes extends Addons<Theme> {
 				if (prevEntity && prevEntity.started) {
 					this.stop(prevEntity);
 				}
+
+				// Only one theme applies, so the one it replaces reads as disabled.
+				states[prev] = false;
 			}
 
 			this.settings.set('applied', resolved.id);
-
-			const states = this.getStates();
 
 			states[resolved.id] = true;
 			this.settings.set('states', states);

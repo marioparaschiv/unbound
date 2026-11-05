@@ -1,3 +1,5 @@
+import type { ColorValue } from 'react-native';
+
 import { SVG } from '~/metro/common';
 
 import buildLogoMarkup from './logo-markup';
@@ -10,8 +12,8 @@ const markups = new Map<boolean, string>();
 type LogoProps = {
 	/** The logo's height; its width follows the logo's proportions. */
 	height: number;
-	/** The body's colour, as a plain colour string; the red and cyan fringes keep theirs. White when omitted. */
-	tint?: string;
+	/** The body's colour, resolved, not a theme token; the red and cyan fringes keep theirs. White when omitted. */
+	tint?: ColorValue;
 	/** Whether to draw the drop shadow and scanlines; turn off at icon sizes, where they muddy the mark. */
 	textured?: boolean;
 };
