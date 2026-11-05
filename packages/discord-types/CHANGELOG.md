@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/marioparaschiv/unbound/compare/discord-types-v0.1.0...discord-types-v0.2.0) (2026-11-05)
+
+
+### Features
+
+* **cli:** overhaul the plugin developer experience ([#907](https://github.com/marioparaschiv/unbound/issues/907)) ([64e34e7](https://github.com/marioparaschiv/unbound/commit/64e34e7729ed1edf3677acdabbd32900a0945c9a))
+
 ## 0.1.0 (2026-10-29)
 
 

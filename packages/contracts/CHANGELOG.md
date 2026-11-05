@@ -1,5 +1,57 @@
 # Changelog
 
+## [0.13.0](https://github.com/marioparaschiv/unbound/compare/contracts-v0.12.0...contracts-v0.13.0) (2026-11-05)
+
+
+### Features
+
+* **client:** move fonts to a native font store with presets ([#969](https://github.com/marioparaschiv/unbound/issues/969)) ([40ff081](https://github.com/marioparaschiv/unbound/commit/40ff081f49917861523acf3e0a1ad0e8b6ec14f0))
+* **client:** redesign settings and add a shared Unbound account ([#810](https://github.com/marioparaschiv/unbound/issues/810)) ([859add1](https://github.com/marioparaschiv/unbound/commit/859add1230f6dce2ff67c2088f4590199a8ab667))
+* **cli:** generate platforms and Capabilities in ubd build ([#729](https://github.com/marioparaschiv/unbound/issues/729)) ([7deb4b2](https://github.com/marioparaschiv/unbound/commit/7deb4b23cb810fa7643557613ed4d763aded3b5f))
+* **cli:** measure ADDON.md media in ubd build ([#704](https://github.com/marioparaschiv/unbound/issues/704)) ([efe25d9](https://github.com/marioparaschiv/unbound/commit/efe25d92051183c8d39f4847ac71264e3702961e))
+* **cli:** overhaul the plugin developer experience ([#907](https://github.com/marioparaschiv/unbound/issues/907)) ([64e34e7](https://github.com/marioparaschiv/unbound/commit/64e34e7729ed1edf3677acdabbd32900a0945c9a))
+* **cli:** validate addon naming, Capabilities and layout ([#699](https://github.com/marioparaschiv/unbound/issues/699)) ([a8f2704](https://github.com/marioparaschiv/unbound/commit/a8f2704b743e08a306607bd18d5717756edf09b4))
+* **contracts:** add the ADDON.md page contract ([#687](https://github.com/marioparaschiv/unbound/issues/687)) ([16339c6](https://github.com/marioparaschiv/unbound/commit/16339c633867fb185a7fdf2e686824427af0b369))
+* **contracts:** add the manifest platforms field ([#691](https://github.com/marioparaschiv/unbound/issues/691)) ([edac1ed](https://github.com/marioparaschiv/unbound/commit/edac1ed2f287a26e869bf02057c2244684494aba))
+* **discord-bot:** v2 addon cards with gallery and author avatars ([#871](https://github.com/marioparaschiv/unbound/issues/871)) ([444fe85](https://github.com/marioparaschiv/unbound/commit/444fe854746bc7e5a0b654e0ad17ffaecb8f7bc5))
+* **loader:** add an in-app updater for patched Discord ([#956](https://github.com/marioparaschiv/unbound/issues/956)) ([747ef3b](https://github.com/marioparaschiv/unbound/commit/747ef3bde0f5b712e1548a4d3b4c3aad7394bcc6))
+* require a minimum loader version per bundle ([#962](https://github.com/marioparaschiv/unbound/issues/962)) ([840bcfa](https://github.com/marioparaschiv/unbound/commit/840bcfa3912c370623fad8b7e810af46e5598d8f))
+* type all of window.unbound and publish versioned API docs ([#784](https://github.com/marioparaschiv/unbound/issues/784)) ([3174a68](https://github.com/marioparaschiv/unbound/commit/3174a68aa9713d44631bf2527b0014a7d79f2a8c))
+* **web,cli:** read the built manifest for publish and ubd dev ([#696](https://github.com/marioparaschiv/unbound/issues/696)) ([f417abc](https://github.com/marioparaschiv/unbound/commit/f417abc0d88f19f2144dc9a2dc5b7f8dde9b7cdd))
+* **web:** allow animated GIF sponsor badges ([#912](https://github.com/marioparaschiv/unbound/issues/912)) ([77e53df](https://github.com/marioparaschiv/unbound/commit/77e53dfd28b6cc37ab7ae79996eeaef58f03ed48))
+* **web:** catalog versions carry their store page URL ([#718](https://github.com/marioparaschiv/unbound/issues/718)) ([5f1f0f3](https://github.com/marioparaschiv/unbound/commit/5f1f0f31402ce2b4d9890f63a55b454f410f2d2e))
+* **web:** draw :name: icon shortcodes on addon store pages ([#872](https://github.com/marioparaschiv/unbound/issues/872)) ([9d3e3f5](https://github.com/marioparaschiv/unbound/commit/9d3e3f54d096cbba4b47b9c0984e494465d7b179))
+* **web:** read the measured ADDON.md page on submission ([#706](https://github.com/marioparaschiv/unbound/issues/706)) ([29627b6](https://github.com/marioparaschiv/unbound/commit/29627b6b13831e2ab949a4cfa6216f51b20ff096))
+* **web:** redesign the GitHub submit flow ([#715](https://github.com/marioparaschiv/unbound/issues/715)) ([d582e06](https://github.com/marioparaschiv/unbound/commit/d582e067b9fb5839e6503e686e4e36b38744d7da))
+* **web:** sponsor badges as PNGs, $5 tier and profile perks ([#809](https://github.com/marioparaschiv/unbound/issues/809)) ([c19e946](https://github.com/marioparaschiv/unbound/commit/c19e94652620ad34cb09a6c21aa91247914380a9))
+
+
+### Bug Fixes
+
+* clear the lint, type and test failures on main ([#932](https://github.com/marioparaschiv/unbound/issues/932)) ([594831f](https://github.com/marioparaschiv/unbound/commit/594831f1839c6bc0278cc552d52aa368b3c5c841))
+* **web:** limit emails to the dev team and block role escalation ([#765](https://github.com/marioparaschiv/unbound/issues/765)) ([137cc50](https://github.com/marioparaschiv/unbound/commit/137cc50253533181a22c9d1a5066b094288ec667))
+* **web:** list a user's badges by their Discord id ([#913](https://github.com/marioparaschiv/unbound/issues/913)) ([28bb3a4](https://github.com/marioparaschiv/unbound/commit/28bb3a471d259e9c446beb9c54096aa1ae4551dc))
+
+
+### Performance Improvements
+
+* **client:** cut the bundle by 28% and move off zod ([#868](https://github.com/marioparaschiv/unbound/issues/868)) ([e662499](https://github.com/marioparaschiv/unbound/commit/e662499d9553f8025a0f72ab03710273ba0507da))
+* **loader:** third native round, legacy removal, three Vencord ports ([#885](https://github.com/marioparaschiv/unbound/issues/885)) ([7311206](https://github.com/marioparaschiv/unbound/commit/7311206e0f0fad007bfc086fadd1c17181679fae))
+
+
+### Code Refactoring
+
+* **client:** add AddonKind and Manager.for ([#684](https://github.com/marioparaschiv/unbound/issues/684)) ([82c0cd6](https://github.com/marioparaschiv/unbound/commit/82c0cd6e92471066f0d3511622e6a5666c2a87f0))
+* **plugins:** migrate every plugin to the new plugin setup ([#910](https://github.com/marioparaschiv/unbound/issues/910)) ([bea93f7](https://github.com/marioparaschiv/unbound/commit/bea93f7d146092cb72ed7892c3c97174ba7af6ae))
+* rename astral back to unbound ([#751](https://github.com/marioparaschiv/unbound/issues/751)) ([05faca1](https://github.com/marioparaschiv/unbound/commit/05faca1a9fef48992fd80f981f009d02da943b40))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @unbound-app/types bumped to 0.12.0
+
 ## [0.12.0](https://github.com/marioparaschiv/unbound/compare/contracts-v0.11.0...contracts-v0.12.0) (2026-10-31)
 
 
