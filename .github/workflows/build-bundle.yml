@@ -17,9 +17,9 @@ on:
         paths:
             - packages/client/src/**
             - packages/client/scripts/build/**
+            - packages/rollup-plugin-hermes/src/**
     repository_dispatch:
         types:
-            - rollup-plugin-updated
             - hermesc-published
     workflow_call:
         inputs:

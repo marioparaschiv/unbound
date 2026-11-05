@@ -30,6 +30,7 @@
 		"packages/types": { "component": "types", "draft": true, "force-tag-creation": true },
 		"packages/utils": { "component": "utils", "draft": true, "force-tag-creation": true },
 		"packages/logger": { "component": "logger", "draft": true, "force-tag-creation": true },
+		"packages/rollup-plugin-hermes": { "component": "rollup-plugin-hermes" },
 		"apps/web": { "component": "web", "draft": true, "force-tag-creation": true },
 		"apps/sdk-generator": {
 			"component": "sdk-generator",

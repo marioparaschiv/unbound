@@ -26,6 +26,7 @@ export const PROJECTS = [
 	'packages/logger',
 	'packages/plugin-test',
 	'packages/plugins-shared',
+	'packages/rollup-plugin-hermes',
 	'packages/types',
 	'packages/utils',
 	'scripts',

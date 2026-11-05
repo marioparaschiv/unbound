@@ -1,0 +1,19 @@
+{
+	"name": "@unbound-app/hermesc",
+	"version": "0.0.0",
+	"description": "Hermes compiler binaries for Linux, macOS and Windows, one npm major per bytecode version.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/marioparaschiv/unbound.git",
+		"directory": "packages/hermesc"
+	},
+	"files": [
+		"linux/hermesc",
+		"darwin/hermesc",
+		"win32/hermesc.exe",
+		"win32/msvcp140.dll",
+		"win32/vcruntime140.dll",
+		"win32/vcruntime140_1.dll"
+	]
+}
