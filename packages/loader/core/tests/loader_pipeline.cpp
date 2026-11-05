@@ -90,7 +90,7 @@ void keepsTheSavedBundleUntilTheNextLaunch()
     assert(loader::readTextFile(launch.server.candidate()) == "next");
 }
 
-void reloadsForAnUpdateWithHotReloadOn()
+void runsAHotReloadUpdateWithoutReloading()
 {
     Launch launch;
     launch.server.settings.set("unbound", "loader.update.hmr", true);
@@ -100,7 +100,23 @@ void reloadsForAnUpdateWithHotReloadOn()
 
     launch.pipeline.prepare();
 
-    assert(launch.host->reloads == 1);
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bundle == "next");
+    assert(launch.host->reloads == 0);
+}
+
+void runsTheSavedBundleWithHotReloadOnAndNoUpdate()
+{
+    Launch launch;
+    launch.server.settings.set("unbound", "loader.update.hmr", true);
+    launch.server.publish(kBase, "2026-10-02T00:00:00.000Z", {{kBundle, "current"}});
+    assert(launch.server.install(launch.updater, std::nullopt));
+
+    launch.pipeline.prepare();
+
+    std::optional<loader::LoaderPipeline::SavedBundle> bundle = launch.pipeline.takeSavedBundle();
+    assert(bundle && bundle->bundle == "current");
+    assert(launch.host->reloads == 0);
 }
 
 void runsTheSavedBundleWhenItsFlavourMatches()
@@ -203,7 +219,8 @@ int main()
 {
     leavesAFirstDownloadForTheRuntime();
     keepsTheSavedBundleUntilTheNextLaunch();
-    reloadsForAnUpdateWithHotReloadOn();
+    runsAHotReloadUpdateWithoutReloading();
+    runsTheSavedBundleWithHotReloadOnAndNoUpdate();
     runsTheSavedBundleWhenItsFlavourMatches();
     runsTheDevBundleItDownloadedForTheSwitch();
     fallsBackToTheSavedBundleWhenTheSwitchDownloadFails();
